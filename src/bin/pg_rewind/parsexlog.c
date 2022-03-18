@@ -432,7 +432,7 @@ extractPageInfo(XLogReaderState *record)
 				 RmgrNames[rmid], info);
 	}
 
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		RelFileNode rnode;
 		ForkNumber	forknum;

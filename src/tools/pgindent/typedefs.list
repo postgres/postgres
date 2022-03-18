@@ -533,6 +533,7 @@ DeadLockState
 DeallocateStmt
 DeclareCursorStmt
 DecodedBkpBlock
+DecodedXLogRecord
 DecodingOutputState
 DefElem
 DefElemAction
@@ -2941,6 +2942,7 @@ XLogPageHeader
 XLogPageHeaderData
 XLogPageReadCB
 XLogPageReadPrivate
+XLogPageReadResult
 XLogReaderRoutine
 XLogReaderState
 XLogRecData
