@@ -3642,7 +3642,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 			case TIMEOID:
 			case TIMETZOID:
 				{
-					const char *tz = (typeoid == TIMETZOID ? "(+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
+					const char *tz = (typeoid == TIMETZOID ? "(\\+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
 
 					if (typmod == -1)
 						appendStringInfo(&result,
@@ -3665,7 +3665,7 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 			case TIMESTAMPOID:
 			case TIMESTAMPTZOID:
 				{
-					const char *tz = (typeoid == TIMESTAMPTZOID ? "(+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
+					const char *tz = (typeoid == TIMESTAMPTZOID ? "(\\+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
 
 					if (typmod == -1)
 						appendStringInfo(&result,
