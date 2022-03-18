@@ -1102,15 +1102,8 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		fatal("could not close temporary file: %m");
 
 	if (len != th->fileLen)
-	{
-		char		buf1[32],
-					buf2[32];
-
-		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) len);
-		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) th->fileLen);
-		fatal("actual file length (%s) does not match expected (%s)",
-			  buf1, buf2);
-	}
+		fatal("actual file length (%lld) does not match expected (%lld)",
+			  (long long) len, (long long) th->fileLen);
 
 	pad = tarPaddingBytesRequired(len);
 	for (i = 0; i < pad; i++)
@@ -1140,24 +1133,14 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	/* Go to end of current file, if any */
 	if (ctx->tarFHpos != 0)
 	{
-		char		buf1[100],
-					buf2[100];
-
-		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) ctx->tarFHpos);
-		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) ctx->tarNextMember);
-		pg_log_debug("moving from position %s to next member at file position %s",
-					 buf1, buf2);
+		pg_log_debug("moving from position %lld to next member at file position %lld",
+					 (long long) ctx->tarFHpos, (long long) ctx->tarNextMember);
 
 		while (ctx->tarFHpos < ctx->tarNextMember)
 			_tarReadRaw(AH, &c, 1, NULL, ctx->tarFH);
 	}
 
-	{
-		char		buf[100];
-
-		snprintf(buf, sizeof(buf), INT64_FORMAT, (int64) ctx->tarFHpos);
-		pg_log_debug("now at file position %s", buf);
-	}
+	pg_log_debug("now at file position %lld", (long long) ctx->tarFHpos);
 
 	/* We are at the start of the file, or at the next member */
 
@@ -1265,25 +1248,12 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	len = read_tar_number(&h[124], 12);
 
-	{
-		char		posbuf[32];
-		char		lenbuf[32];
-
-		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT, (uint64) hPos);
-		snprintf(lenbuf, sizeof(lenbuf), UINT64_FORMAT, (uint64) len);
-		pg_log_debug("TOC Entry %s at %s (length %s, checksum %d)",
-					 tag, posbuf, lenbuf, sum);
-	}
+	pg_log_debug("TOC Entry %s at %llu (length %llu, checksum %d)",
+				 tag, (unsigned long long) hPos, (unsigned long long) len, sum);
 
 	if (chk != sum)
-	{
-		char		posbuf[32];
-
-		snprintf(posbuf, sizeof(posbuf), UINT64_FORMAT,
-				 (uint64) ftello(ctx->tarFH));
-		fatal("corrupt tar header found in %s (expected %d, computed %d) file position %s",
-			  tag, sum, chk, posbuf);
-	}
+		fatal("corrupt tar header found in %s (expected %d, computed %d) file position %llu",
+			  tag, sum, chk, (unsigned long long) ftello(ctx->tarFH));
 
 	th->targetFile = pg_strdup(tag);
 	th->fileLen = len;
