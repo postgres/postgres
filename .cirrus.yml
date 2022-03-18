@@ -73,10 +73,12 @@ task:
     chown -R postgres:postgres .
     mkdir -p ${CCACHE_DIR}
     chown -R postgres:postgres ${CCACHE_DIR}
-  setup_cores_script: |
+  setup_core_files_script: |
     mkdir -m 770 /tmp/cores
     chown root:postgres /tmp/cores
     sysctl kern.corefile='/tmp/cores/%N.%P.core'
+  setup_additional_packages_script: |
+    #pkg install -y ...
 
   # NB: Intentionally build without --with-llvm. The freebsd image size is
   # already large enough to make VM startup slow, and even without llvm
@@ -180,10 +182,13 @@ task:
     chown -R postgres:postgres ${CCACHE_DIR}
     echo '* - memlock 134217728' > /etc/security/limits.d/postgres.conf
     su postgres -c "ulimit -l -H && ulimit -l -S"
-  setup_cores_script: |
+  setup_core_files_script: |
     mkdir -m 770 /tmp/cores
     chown root:postgres /tmp/cores
     sysctl kernel.core_pattern='/tmp/cores/%e-%s-%p.core'
+  setup_additional_packages_script: |
+    #apt-get update
+    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
   configure_script: |
     su postgres <<-EOF
@@ -237,7 +242,7 @@ task:
     ulimit -a -H && ulimit -a -S
     export
 
-  setup_cores_script:
+  setup_core_files_script:
     - mkdir ${HOME}/cores
     - sudo sysctl kern.corefile="${HOME}/cores/core.%P"
 
@@ -254,7 +259,7 @@ task:
   # packages do not need to be downloaded.
   homebrew_cache:
     folder: $HOMEBREW_CACHE
-  homebrew_install_script: |
+  setup_additional_packages_script: |
     brew install \
       ccache \
       icu4c \
@@ -389,6 +394,9 @@ task:
     powershell -Command get-psdrive -psprovider filesystem
     set
 
+  setup_additional_packages_script: |
+    REM choco install -y --no-progress ...
+
   configure_script:
     # copy errors out when using forward slashes
     - copy src\tools\ci\windows_build_config.pl src\tools\msvc\config.pl
@@ -483,6 +491,10 @@ task:
 
   ccache_cache:
     folder: $CCACHE_DIR
+
+  setup_additional_packages_script: |
+    #apt-get update
+    #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
   ###
   # Test that code can be built with gcc/clang without warnings
