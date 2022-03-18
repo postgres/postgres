@@ -107,7 +107,7 @@ task:
         \
         CC="ccache cc" \
         CXX="ccache c++" \
-        CFLAGS="-O0 -ggdb"
+        CFLAGS="-Og -ggdb"
     EOF
   build_script: su postgres -c "gmake -s -j${BUILD_JOBS} world-bin"
   upload_caches: ccache
@@ -201,8 +201,8 @@ task:
         CC="ccache gcc" \
         CXX="ccache g++" \
         CLANG="ccache clang" \
-        CFLAGS="-O0 -ggdb" \
-        CXXFLAGS="-O0 -ggdb"
+        CFLAGS="-Og -ggdb" \
+        CXXFLAGS="-Og -ggdb"
     EOF
   build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
   upload_caches: ccache
@@ -315,8 +315,8 @@ task:
       CC="ccache cc" \
       CXX="ccache c++" \
       CLANG="ccache ${brewpath}/llvm/bin/ccache" \
-      CFLAGS="-O0 -ggdb" \
-      CXXFLAGS="-O0 -ggdb" \
+      CFLAGS="-Og -ggdb" \
+      CXXFLAGS="-Og -ggdb" \
       \
       LLVM_CONFIG=${brewpath}/llvm/bin/llvm-config \
       PYTHON=python3
