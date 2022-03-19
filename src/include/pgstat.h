@@ -190,8 +190,8 @@ typedef struct PgStat_TableXactStatus
 	PgStat_Counter tuples_inserted; /* tuples inserted in (sub)xact */
 	PgStat_Counter tuples_updated;	/* tuples updated in (sub)xact */
 	PgStat_Counter tuples_deleted;	/* tuples deleted in (sub)xact */
-	bool		truncdropped;		/* relation truncated/dropped in this
-									 * (sub)xact */
+	bool		truncdropped;	/* relation truncated/dropped in this
+								 * (sub)xact */
 	/* tuples i/u/d prior to truncate/drop */
 	PgStat_Counter inserted_pre_truncdrop;
 	PgStat_Counter updated_pre_truncdrop;

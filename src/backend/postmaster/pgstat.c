@@ -265,7 +265,7 @@ typedef struct TwoPhasePgStatRecord
 	PgStat_Counter deleted_pre_truncdrop;
 	Oid			t_id;			/* table's OID */
 	bool		t_shared;		/* is it a shared catalog? */
-	bool		t_truncdropped;	/* was the relation truncated/dropped? */
+	bool		t_truncdropped; /* was the relation truncated/dropped? */
 } TwoPhasePgStatRecord;
 
 /*
@@ -2622,11 +2622,11 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 			{
 				/*
 				 * When there isn't an immediate parent state, we can just
-				 * reuse the record instead of going through a
-				 * palloc/pfree pushup (this works since it's all in
-				 * TopTransactionContext anyway).  We have to re-link it
-				 * into the parent level, though, and that might mean
-				 * pushing a new entry into the pgStatXactStack.
+				 * reuse the record instead of going through a palloc/pfree
+				 * pushup (this works since it's all in TopTransactionContext
+				 * anyway).  We have to re-link it into the parent level,
+				 * though, and that might mean pushing a new entry into the
+				 * pgStatXactStack.
 				 */
 				PgStat_SubXactStatus *upper_xact_state;
 
@@ -3352,9 +3352,9 @@ pgstat_send_wal(bool force)
 		WalUsage	walusage;
 
 		/*
-		 * Calculate how much WAL usage counters were increased by
-		 * subtracting the previous counters from the current ones. Fill the
-		 * results in WAL stats message.
+		 * Calculate how much WAL usage counters were increased by subtracting
+		 * the previous counters from the current ones. Fill the results in
+		 * WAL stats message.
 		 */
 		MemSet(&walusage, 0, sizeof(WalUsage));
 		WalUsageAccumDiff(&walusage, &pgWalUsage, &prevWalUsage);
@@ -4211,7 +4211,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 	bool		found;
 	const char *statfile = permanent ? PGSTAT_STAT_PERMANENT_FILENAME : pgstat_stat_filename;
 	int			i;
-	TimestampTz	ts;
+	TimestampTz ts;
 
 	/*
 	 * The tables will live in pgStatLocalContext.
@@ -4473,7 +4473,7 @@ pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
 					PgStat_StatSubEntry *subentry;
 
 					if (fread(&subbuf, 1, sizeof(PgStat_StatSubEntry), fpin)
-							!= sizeof(PgStat_StatSubEntry))
+						!= sizeof(PgStat_StatSubEntry))
 					{
 						ereport(pgStatRunningInCollector ? LOG : WARNING,
 								(errmsg("corrupted statistics file \"%s\"",
@@ -5250,6 +5250,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_updated += tabmsg->t_counts.t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg->t_counts.t_tuples_deleted;
 			tabentry->tuples_hot_updated += tabmsg->t_counts.t_tuples_hot_updated;
+
 			/*
 			 * If table was truncated/dropped, first reset the live/dead
 			 * counters.
@@ -5412,7 +5413,10 @@ pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 {
 	if (msg->m_resettarget == RESET_BGWRITER)
 	{
-		/* Reset the global, bgwriter and checkpointer statistics for the cluster. */
+		/*
+		 * Reset the global, bgwriter and checkpointer statistics for the
+		 * cluster.
+		 */
 		memset(&globalStats, 0, sizeof(globalStats));
 		globalStats.bgwriter.stat_reset_timestamp = GetCurrentTimestamp();
 	}
