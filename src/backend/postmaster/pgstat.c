@@ -223,6 +223,12 @@ static HTAB *pgStatTabHash = NULL;
 static HTAB *pgStatFunctions = NULL;
 
 /*
+ * Indicates if backend has some relation stats that it hasn't yet
+ * sent to the collector.
+ */
+static bool have_relation_stats = false;
+
+/*
  * Indicates if backend has some function stats that it hasn't yet
  * sent to the collector.
  */
@@ -338,7 +344,9 @@ static bool pgstat_db_requested(Oid databaseid);
 static PgStat_StatReplSlotEntry *pgstat_get_replslot_entry(NameData name, bool create_it);
 static void pgstat_reset_replslot(PgStat_StatReplSlotEntry *slotstats, TimestampTz ts);
 
+static void pgstat_send_tabstats(TimestampTz now, bool disconnect);
 static void pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now);
+static void pgstat_update_dbstats(PgStat_MsgTabstat *tsmsg, TimestampTz now);
 static void pgstat_send_funcstats(void);
 static void pgstat_send_slru(void);
 static HTAB *pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid);
@@ -866,15 +874,9 @@ allow_immediate_pgstat_restart(void)
 void
 pgstat_report_stat(bool disconnect)
 {
-	/* we assume this inits to all zeroes: */
-	static const PgStat_TableCounts all_zeroes;
 	static TimestampTz last_report = 0;
 
 	TimestampTz now;
-	PgStat_MsgTabstat regular_msg;
-	PgStat_MsgTabstat shared_msg;
-	TabStatusArray *tsa;
-	int			i;
 
 	pgstat_assert_is_up();
 
@@ -887,7 +889,7 @@ pgstat_report_stat(bool disconnect)
 	 * generates no WAL records can write or sync WAL data when flushing the
 	 * data pages.
 	 */
-	if ((pgStatTabList == NULL || pgStatTabList->tsa_used == 0) &&
+	if (!have_relation_stats &&
 		pgStatXactCommit == 0 && pgStatXactRollback == 0 &&
 		pgWalUsage.wal_records == prevWalUsage.wal_records &&
 		WalStats.m_wal_write == 0 && WalStats.m_wal_sync == 0 &&
@@ -907,6 +909,32 @@ pgstat_report_stat(bool disconnect)
 
 	if (disconnect)
 		pgstat_report_disconnect(MyDatabaseId);
+
+	/* First, send relation statistics */
+	pgstat_send_tabstats(now, disconnect);
+
+	/* Now, send function statistics */
+	pgstat_send_funcstats();
+
+	/* Send WAL statistics */
+	pgstat_send_wal(true);
+
+	/* Finally send SLRU statistics */
+	pgstat_send_slru();
+}
+
+/*
+ * Subroutine for pgstat_report_stat: Send relation statistics
+ */
+static void
+pgstat_send_tabstats(TimestampTz now, bool disconnect)
+{
+	/* we assume this inits to all zeroes: */
+	static const PgStat_TableCounts all_zeroes;
+	PgStat_MsgTabstat regular_msg;
+	PgStat_MsgTabstat shared_msg;
+	TabStatusArray *tsa;
+	int			i;
 
 	/*
 	 * Destroy pgStatTabHash before we start invalidating PgStat_TableEntry
@@ -980,18 +1008,11 @@ pgstat_report_stat(bool disconnect)
 	if (shared_msg.m_nentries > 0)
 		pgstat_send_tabstat(&shared_msg, now);
 
-	/* Now, send function statistics */
-	pgstat_send_funcstats();
-
-	/* Send WAL statistics */
-	pgstat_send_wal(true);
-
-	/* Finally send SLRU statistics */
-	pgstat_send_slru();
+	have_relation_stats = false;
 }
 
 /*
- * Subroutine for pgstat_report_stat: finish and send a tabstat message
+ * Subroutine for pgstat_send_tabstats: finish and send one tabstat message
  */
 static void
 pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now)
@@ -1007,6 +1028,23 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now)
 	 * Report and reset accumulated xact commit/rollback and I/O timings
 	 * whenever we send a normal tabstat message
 	 */
+	pgstat_update_dbstats(tsmsg, now);
+
+	n = tsmsg->m_nentries;
+	len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
+		n * sizeof(PgStat_TableEntry);
+
+	pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+	pgstat_send(tsmsg, len);
+}
+
+/*
+ * Subroutine for pgstat_send_tabstat: Handle xact commit/rollback and I/O
+ * timings.
+ */
+static void
+pgstat_update_dbstats(PgStat_MsgTabstat *tsmsg, TimestampTz now)
+{
 	if (OidIsValid(tsmsg->m_databaseid))
 	{
 		tsmsg->m_xact_commit = pgStatXactCommit;
@@ -1052,13 +1090,6 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now)
 		tsmsg->m_active_time = 0;
 		tsmsg->m_idle_in_xact_time = 0;
 	}
-
-	n = tsmsg->m_nentries;
-	len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
-		n * sizeof(PgStat_TableEntry);
-
-	pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
-	pgstat_send(tsmsg, len);
 }
 
 /*
@@ -2178,6 +2209,8 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 	bool		found;
 
 	pgstat_assert_is_up();
+
+	have_relation_stats = true;
 
 	/*
 	 * Create hash table if we don't have it already.
