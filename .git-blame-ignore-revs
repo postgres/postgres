@@ -14,11 +14,20 @@
 #
 # $ git log --pretty=format:"%H # %cd %n# %s" $PGINDENTGITHASH -1 --date=iso
 
+a3a75b982b5bb6fba95ad8b3d48e70439dcd2329 # 2022-03-19 11:42:22 -0700
+# pgstat: run pgindent on pgstat.c/h.
+
+d231be00cbf29bf24e5b4fc79e587982bbc00ebb # 2022-02-16 09:22:34 +0200
+# Run pgindent on xlog.c.
+
 e1c1c30f635390b6a3ae4993e8cac213a33e6e3f # 2021-06-28 11:05:54 -0400
 # Pre branch pgindent / pgperltidy run
 
 def5b065ff22a16a80084587613599fe15627213 # 2021-05-12 13:14:10 -0400
 # Initial pgindent and pgperltidy run for v14.
+
+ed43677e20369040ca4e50c698010c39d5ac0f47 # 2021-01-19 08:10:13 +0530
+# pgindent worker.c.
 
 8b411b8ff41566a1aa601d1f05aeebbebbdb4a54 # 2021-01-13 16:14:38 -0500
 # Run reformat-dat-files to declutter the catalog data files.
