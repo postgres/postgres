@@ -375,11 +375,12 @@ task:
     # "suites".
     T_C: "\"C:/Program Files/Git/usr/bin/timeout.exe\" -v -k60s 15m"
 
-    # Temporarily work around cirrus-ci bug causing processes started from a
-    # script to be killed, even if intentionally running in background. See
-    # https://github.com/cirruslabs/cirrus-ci-agent/issues/218
-    # https://postgr.es/m/CA%2BhUKGKx7k14n2nAALSvv6M_AB6oHasNBA65X6Dvo8hwfi9y0A%40mail.gmail.com
-    CIRRUS_AGENT_VERSION: 1.73.2
+    # startcreate_script starts a postgres instance that we don't want to get
+    # killed at the end of that script (it's stopped in stop_script). Can't
+    # trivially use background_scripts because a) need pg_ctl's dropping of
+    # permissions b) need to wait for startup to have finished, and we don't
+    # currently have a tool for that...
+    CIRRUS_ESCAPING_PROCESSES: 1
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
