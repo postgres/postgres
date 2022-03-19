@@ -1517,9 +1517,9 @@ ldelete:;
  * for the caller.
  *
  * False is returned if the tuple we're trying to move is found to have been
- * concurrently updated.  In that case, the caller must to check if the
- * updated tuple that's returned in *retry_slot still needs to be re-routed,
- * and call this function again or perform a regular update accordingly.
+ * concurrently updated.  In that case, the caller must check if the updated
+ * tuple (in updateCxt->cpUpdateRetrySlot) still needs to be re-routed, and
+ * call this function again or perform a regular update accordingly.
  */
 static bool
 ExecCrossPartitionUpdate(ModifyTableContext *context,
