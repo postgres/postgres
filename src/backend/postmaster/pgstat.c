@@ -348,6 +348,8 @@ static void pgstat_send_tabstats(TimestampTz now, bool disconnect);
 static void pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now);
 static void pgstat_update_dbstats(PgStat_MsgTabstat *tsmsg, TimestampTz now);
 static void pgstat_send_funcstats(void);
+static void pgstat_wal_initialize(void);
+static bool pgstat_wal_pending(void);
 static void pgstat_send_slru(void);
 static HTAB *pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid);
 static bool pgstat_should_report_connstat(void);
@@ -882,17 +884,10 @@ pgstat_report_stat(bool disconnect)
 
 	/*
 	 * Don't expend a clock check if nothing to do.
-	 *
-	 * To determine whether any WAL activity has occurred since last time, not
-	 * only the number of generated WAL records but also the numbers of WAL
-	 * writes and syncs need to be checked. Because even transaction that
-	 * generates no WAL records can write or sync WAL data when flushing the
-	 * data pages.
 	 */
 	if (!have_relation_stats &&
 		pgStatXactCommit == 0 && pgStatXactRollback == 0 &&
-		pgWalUsage.wal_records == prevWalUsage.wal_records &&
-		WalStats.m_wal_write == 0 && WalStats.m_wal_sync == 0 &&
+		!pgstat_wal_pending() &&
 		!have_function_stats && !disconnect)
 		return;
 
@@ -3168,12 +3163,7 @@ pgstat_initialize(void)
 {
 	Assert(!pgstat_is_initialized);
 
-	/*
-	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
-	 * calculate how much pgWalUsage counters are increased by subtracting
-	 * prevWalUsage from pgWalUsage.
-	 */
-	prevWalUsage = pgWalUsage;
+	pgstat_wal_initialize();
 
 	/* Set up a process-exit hook to clean up */
 	before_shmem_exit(pgstat_shutdown_hook, 0);
@@ -3413,6 +3403,32 @@ pgstat_send_wal(bool force)
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&WalStats, 0, sizeof(WalStats));
+}
+
+static void
+pgstat_wal_initialize(void)
+{
+	/*
+	 * Initialize prevWalUsage with pgWalUsage so that pgstat_send_wal() can
+	 * calculate how much pgWalUsage counters are increased by subtracting
+	 * prevWalUsage from pgWalUsage.
+	 */
+	prevWalUsage = pgWalUsage;
+}
+
+/*
+ * To determine whether any WAL activity has occurred since last time, not
+ * only the number of generated WAL records but also the numbers of WAL
+ * writes and syncs need to be checked. Because even transaction that
+ * generates no WAL records can write or sync WAL data when flushing the
+ * data pages.
+ */
+static bool
+pgstat_wal_pending(void)
+{
+	return pgWalUsage.wal_records != prevWalUsage.wal_records ||
+		WalStats.m_wal_write != 0 ||
+		WalStats.m_wal_sync != 0;
 }
 
 /* ----------
