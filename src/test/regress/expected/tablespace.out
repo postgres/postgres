@@ -905,6 +905,16 @@ SELECT COUNT(*) FROM testschema.atable;		-- checks heap
      3
 (1 row)
 
+-- let's try moving a materialized view from one place to another
+CREATE MATERIALIZED VIEW testschema.amv AS SELECT * FROM testschema.atable;
+ALTER MATERIALIZED VIEW testschema.amv SET TABLESPACE regress_tblspace;
+REFRESH MATERIALIZED VIEW testschema.amv;
+SELECT COUNT(*) FROM testschema.amv;
+ count 
+-------
+     3
+(1 row)
+
 -- Will fail with bad path
 CREATE TABLESPACE regress_badspace LOCATION '/no/such/location';
 ERROR:  directory "/no/such/location" does not exist
@@ -939,18 +949,22 @@ RESET ROLE;
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 -- Should show notice that nothing was done
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;
 DROP SCHEMA testschema CASCADE;
-NOTICE:  drop cascades to 6 other objects
+NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to table testschema.foo
 drop cascades to table testschema.asselect
 drop cascades to table testschema.asexecute
 drop cascades to table testschema.part
 drop cascades to table testschema.atable
+drop cascades to materialized view testschema.amv
 drop cascades to table testschema.tablespace_acl
 DROP ROLE regress_tablespace_user1;
 DROP ROLE regress_tablespace_user2;

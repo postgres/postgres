@@ -380,6 +380,12 @@ INSERT INTO testschema.atable VALUES(3);	-- ok
 INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
 SELECT COUNT(*) FROM testschema.atable;		-- checks heap
 
+-- let's try moving a materialized view from one place to another
+CREATE MATERIALIZED VIEW testschema.amv AS SELECT * FROM testschema.atable;
+ALTER MATERIALIZED VIEW testschema.amv SET TABLESPACE regress_tblspace;
+REFRESH MATERIALIZED VIEW testschema.amv;
+SELECT COUNT(*) FROM testschema.amv;
+
 -- Will fail with bad path
 CREATE TABLESPACE regress_badspace LOCATION '/no/such/location';
 
@@ -414,9 +420,11 @@ ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 
 -- Should show notice that nothing was done
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;
