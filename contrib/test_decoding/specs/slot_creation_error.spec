@@ -35,7 +35,7 @@ step s2_init {
 # The tests first start a transaction with an xid assigned in s1, then create
 # a slot in s2. The slot creation waits for s1's transaction to end. Instead
 # we cancel / terminate s2.
-permutation s1_b s1_xid s2_init s1_view_slot s1_cancel_s2 s1_view_slot s1_c
+permutation s1_b s1_xid s2_init s1_view_slot s1_cancel_s2(s2_init) s1_view_slot s1_c
 permutation s1_b s1_xid s2_init s1_c s1_view_slot s1_drop_slot # check slot creation still works
-permutation s1_b s1_xid s2_init s1_terminate_s2 s1_c s1_view_slot
+permutation s1_b s1_xid s2_init s1_terminate_s2(s2_init) s1_c s1_view_slot
 # can't run tests after this, due to s2's connection failure

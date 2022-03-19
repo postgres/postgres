@@ -23,14 +23,15 @@ step s1_cancel_s2:
     SELECT pg_cancel_backend(pid)
     FROM pg_stat_activity
     WHERE application_name = 'isolation/slot_creation_error/s2';
-
+ <waiting ...>
+step s2_init: <... completed>
+ERROR:  canceling statement due to user request
+step s1_cancel_s2: <... completed>
 pg_cancel_backend
 -----------------
 t                
 (1 row)
 
-step s2_init: <... completed>
-ERROR:  canceling statement due to user request
 step s1_view_slot: 
     SELECT slot_name, slot_type, active FROM pg_replication_slots WHERE slot_name = 'slot_creation_error'
 
@@ -90,17 +91,18 @@ step s1_terminate_s2:
     SELECT pg_terminate_backend(pid)
     FROM pg_stat_activity
     WHERE application_name = 'isolation/slot_creation_error/s2';
-
-pg_terminate_backend
---------------------
-t                   
-(1 row)
-
+ <waiting ...>
 step s2_init: <... completed>
 FATAL:  terminating connection due to administrator command
 server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
+
+step s1_terminate_s2: <... completed>
+pg_terminate_backend
+--------------------
+t                   
+(1 row)
 
 step s1_c: COMMIT;
 step s1_view_slot: 
