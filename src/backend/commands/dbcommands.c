@@ -109,7 +109,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	char	   *src_collate = NULL;
 	char	   *src_ctype = NULL;
 	char	   *src_iculocale = NULL;
-	char		src_locprovider;
+	char		src_locprovider = '\0';
 	char	   *src_collversion = NULL;
 	bool		src_istemplate;
 	bool		src_allowconn;
