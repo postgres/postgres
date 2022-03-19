@@ -170,8 +170,18 @@ ALTER TABLE heaptable SET ACCESS METHOD heap2;
 SELECT amname FROM pg_class c, pg_am am
   WHERE c.relam = am.oid AND c.oid = 'heaptable'::regclass;
 SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heaptable;
+-- ALTER MATERIALIZED VIEW SET ACCESS METHOD
+CREATE MATERIALIZED VIEW heapmv USING heap AS SELECT * FROM heaptable;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heapmv'::regclass;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+SELECT amname FROM pg_class c, pg_am am
+  WHERE c.relam = am.oid AND c.oid = 'heapmv'::regclass;
+SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heapmv;
 -- No support for multiple subcommands
 ALTER TABLE heaptable SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
+DROP MATERIALIZED VIEW heapmv;
 DROP TABLE heaptable;
 -- No support for partitioned tables.
 CREATE TABLE am_partitioned(x INT, y INT)

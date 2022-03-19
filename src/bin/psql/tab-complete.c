@@ -2124,7 +2124,11 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("TO");
 	/* ALTER MATERIALIZED VIEW xxx SET */
 	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "SET"))
-		COMPLETE_WITH("(", "SCHEMA", "TABLESPACE", "WITHOUT CLUSTER");
+		COMPLETE_WITH("(", "ACCESS METHOD", "SCHEMA", "TABLESPACE", "WITHOUT CLUSTER");
+	/* ALTER MATERIALIZED VIEW xxx SET ACCESS METHOD */
+	else if (Matches("ALTER", "MATERIALIZED", "VIEW", MatchAny, "SET", "ACCESS", "METHOD"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_table_access_methods);
+
 	/* ALTER POLICY <name> */
 	else if (Matches("ALTER", "POLICY"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_policies);
