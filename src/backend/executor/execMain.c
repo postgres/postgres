@@ -44,6 +44,7 @@
 #include "access/transam.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
+#include "catalog/partition.h"
 #include "catalog/pg_publication.h"
 #include "commands/matview.h"
 #include "commands/trigger.h"
@@ -1279,7 +1280,8 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
  * in es_trig_target_relations.
  */
 ResultRelInfo *
-ExecGetTriggerResultRel(EState *estate, Oid relid)
+ExecGetTriggerResultRel(EState *estate, Oid relid,
+						ResultRelInfo *rootRelInfo)
 {
 	ResultRelInfo *rInfo;
 	ListCell   *l;
@@ -1330,7 +1332,7 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	InitResultRelInfo(rInfo,
 					  rel,
 					  0,		/* dummy rangetable index */
-					  NULL,
+					  rootRelInfo,
 					  estate->es_instrument);
 	estate->es_trig_target_relations =
 		lappend(estate->es_trig_target_relations, rInfo);
@@ -1342,6 +1344,69 @@ ExecGetTriggerResultRel(EState *estate, Oid relid)
 	 */
 
 	return rInfo;
+}
+
+/*
+ * Return the ancestor relations of a given leaf partition result relation
+ * up to and including the query's root target relation.
+ *
+ * These work much like the ones opened by ExecGetTriggerResultRel, except
+ * that we need to keep them in a separate list.
+ *
+ * These are closed by ExecCloseResultRelations.
+ */
+List *
+ExecGetAncestorResultRels(EState *estate, ResultRelInfo *resultRelInfo)
+{
+	ResultRelInfo *rootRelInfo = resultRelInfo->ri_RootResultRelInfo;
+	Relation	partRel = resultRelInfo->ri_RelationDesc;
+	Oid			rootRelOid;
+
+	if (!partRel->rd_rel->relispartition)
+		elog(ERROR, "cannot find ancestors of a non-partition result relation");
+	Assert(rootRelInfo != NULL);
+	rootRelOid = RelationGetRelid(rootRelInfo->ri_RelationDesc);
+	if (resultRelInfo->ri_ancestorResultRels == NIL)
+	{
+		ListCell   *lc;
+		List	   *oids = get_partition_ancestors(RelationGetRelid(partRel));
+		List	   *ancResultRels = NIL;
+
+		foreach(lc, oids)
+		{
+			Oid			ancOid = lfirst_oid(lc);
+			Relation	ancRel;
+			ResultRelInfo *rInfo;
+
+			/*
+			 * Ignore the root ancestor here, and use ri_RootResultRelInfo
+			 * (below) for it instead.  Also, we stop climbing up the
+			 * hierarchy when we find the table that was mentioned in the
+			 * query.
+			 */
+			if (ancOid == rootRelOid)
+				break;
+
+			/*
+			 * All ancestors up to the root target relation must have been
+			 * locked by the planner or AcquireExecutorLocks().
+			 */
+			ancRel = table_open(ancOid, NoLock);
+			rInfo = makeNode(ResultRelInfo);
+
+			/* dummy rangetable index */
+			InitResultRelInfo(rInfo, ancRel, 0, NULL,
+							  estate->es_instrument);
+			ancResultRels = lappend(ancResultRels, rInfo);
+		}
+		ancResultRels = lappend(ancResultRels, rootRelInfo);
+		resultRelInfo->ri_ancestorResultRels = ancResultRels;
+	}
+
+	/* We must have found some ancestor */
+	Assert(resultRelInfo->ri_ancestorResultRels != NIL);
+
+	return resultRelInfo->ri_ancestorResultRels;
 }
 
 /* ----------------------------------------------------------------
@@ -1443,12 +1508,29 @@ ExecCloseResultRelations(EState *estate)
 	/*
 	 * close indexes of result relation(s) if any.  (Rels themselves are
 	 * closed in ExecCloseRangeTableRelations())
+	 *
+	 * In addition, close the stub RTs that may be in each resultrel's
+	 * ri_ancestorResultRels.
 	 */
 	foreach(l, estate->es_opened_result_relations)
 	{
 		ResultRelInfo *resultRelInfo = lfirst(l);
+		ListCell   *lc;
 
 		ExecCloseIndices(resultRelInfo);
+		foreach(lc, resultRelInfo->ri_ancestorResultRels)
+		{
+			ResultRelInfo *rInfo = lfirst(lc);
+
+			/*
+			 * Ancestors with RTI > 0 (should only be the root ancestor) are
+			 * closed by ExecCloseRangeTableRelations.
+			 */
+			if (rInfo->ri_RangeTableIndex > 0)
+				continue;
+
+			table_close(rInfo->ri_RelationDesc, NoLock);
+		}
 	}
 
 	/* Close any relations that have been opened by ExecGetTriggerResultRel(). */

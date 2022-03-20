@@ -530,6 +530,12 @@ typedef struct ResultRelInfo
 
 	/* for use by copyfrom.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
+
+	/*
+	 * Used when a leaf partition is involved in a cross-partition update of
+	 * one of its ancestors; see ExecCrossPartitionUpdateForeignKey().
+	 */
+	List	   *ri_ancestorResultRels;
 } ResultRelInfo;
 
 /* ----------------

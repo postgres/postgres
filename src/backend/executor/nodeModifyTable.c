@@ -122,6 +122,12 @@ static void ExecBatchInsert(ModifyTableState *mtstate,
 							int numSlots,
 							EState *estate,
 							bool canSetTag);
+static void ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
+											   ResultRelInfo *sourcePartInfo,
+											   ResultRelInfo *destPartInfo,
+											   ItemPointer tupleid,
+											   TupleTableSlot *oldslot,
+											   TupleTableSlot *newslot);
 static bool ExecOnConflictUpdate(ModifyTableContext *context,
 								 ResultRelInfo *resultRelInfo,
 								 ItemPointer conflictTid,
@@ -635,6 +641,9 @@ ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
  *		slot contains the new tuple value to be stored.
  *
  *		Returns RETURNING result if any, otherwise NULL.
+ *		*inserted_tuple is the tuple that's effectively inserted;
+ *		*inserted_destrel is the relation where it was inserted.
+ *		These are only set on success.
  *
  *		This may change the currently active tuple conversion map in
  *		mtstate->mt_transition_capture, so the callers must take care to
@@ -645,7 +654,9 @@ static TupleTableSlot *
 ExecInsert(ModifyTableContext *context,
 		   ResultRelInfo *resultRelInfo,
 		   TupleTableSlot *slot,
-		   bool canSetTag)
+		   bool canSetTag,
+		   TupleTableSlot **inserted_tuple,
+		   ResultRelInfo **insert_destrel)
 {
 	ModifyTableState *mtstate = context->mtstate;
 	EState	   *estate = context->estate;
@@ -1008,11 +1019,14 @@ ExecInsert(ModifyTableContext *context,
 	if (mtstate->operation == CMD_UPDATE && mtstate->mt_transition_capture
 		&& mtstate->mt_transition_capture->tcs_update_new_table)
 	{
-		ExecARUpdateTriggers(estate, resultRelInfo, NULL,
+		ExecARUpdateTriggers(estate, resultRelInfo,
+							 NULL, NULL,
+							 NULL,
 							 NULL,
 							 slot,
 							 NULL,
-							 mtstate->mt_transition_capture);
+							 mtstate->mt_transition_capture,
+							 false);
 
 		/*
 		 * We've already captured the NEW TABLE row, so make sure any AR
@@ -1045,6 +1059,11 @@ ExecInsert(ModifyTableContext *context,
 	/* Process RETURNING if present */
 	if (resultRelInfo->ri_projectReturning)
 		result = ExecProcessReturning(resultRelInfo, slot, planSlot);
+
+	if (inserted_tuple)
+		*inserted_tuple = slot;
+	if (insert_destrel)
+		*insert_destrel = resultRelInfo;
 
 	return result;
 }
@@ -1160,7 +1179,7 @@ ExecDeleteAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
  */
 static void
 ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
-				   ItemPointer tupleid, HeapTuple oldtuple)
+				   ItemPointer tupleid, HeapTuple oldtuple, bool changingPart)
 {
 	ModifyTableState *mtstate = context->mtstate;
 	EState	   *estate = context->estate;
@@ -1176,8 +1195,11 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	if (mtstate->operation == CMD_UPDATE && mtstate->mt_transition_capture &&
 		mtstate->mt_transition_capture->tcs_update_old_table)
 	{
-		ExecARUpdateTriggers(estate, resultRelInfo, tupleid, oldtuple,
-							 NULL, NULL, mtstate->mt_transition_capture);
+		ExecARUpdateTriggers(estate, resultRelInfo,
+							 NULL, NULL,
+							 tupleid, oldtuple,
+							 NULL, NULL, mtstate->mt_transition_capture,
+							 false);
 
 		/*
 		 * We've already captured the NEW TABLE row, so make sure any AR
@@ -1188,7 +1210,7 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 
 	/* AFTER ROW DELETE Triggers */
 	ExecARDeleteTriggers(estate, resultRelInfo, tupleid, oldtuple,
-						 ar_delete_trig_tcs);
+						 ar_delete_trig_tcs, changingPart);
 }
 
 /* ----------------------------------------------------------------
@@ -1457,7 +1479,7 @@ ldelete:;
 	if (tupleDeleted)
 		*tupleDeleted = true;
 
-	ExecDeleteEpilogue(context, resultRelInfo, tupleid, oldtuple);
+	ExecDeleteEpilogue(context, resultRelInfo, tupleid, oldtuple, changingPart);
 
 	/* Process RETURNING if present and if requested */
 	if (processReturning && resultRelInfo->ri_projectReturning)
@@ -1526,7 +1548,10 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 						 ResultRelInfo *resultRelInfo,
 						 ItemPointer tupleid, HeapTuple oldtuple,
 						 TupleTableSlot *slot,
-						 bool canSetTag, UpdateContext *updateCxt)
+						 bool canSetTag,
+						 UpdateContext *updateCxt,
+						 TupleTableSlot **inserted_tuple,
+						 ResultRelInfo **insert_destrel)
 {
 	ModifyTableState *mtstate = context->mtstate;
 	EState	   *estate = mtstate->ps.state;
@@ -1652,7 +1677,8 @@ ExecCrossPartitionUpdate(ModifyTableContext *context,
 
 	/* Tuple routing starts from the root table. */
 	context->cpUpdateReturningSlot =
-		ExecInsert(context, mtstate->rootResultRelInfo, slot, canSetTag);
+		ExecInsert(context, mtstate->rootResultRelInfo, slot, canSetTag,
+				   inserted_tuple, insert_destrel);
 
 	/*
 	 * Reset the transition state that may possibly have been written by
@@ -1793,6 +1819,9 @@ lreplace:;
 	 */
 	if (partition_constraint_failed)
 	{
+		TupleTableSlot *inserted_tuple;
+		ResultRelInfo *insert_destrel;
+
 		/*
 		 * ExecCrossPartitionUpdate will first DELETE the row from the
 		 * partition it's currently in and then insert it back into the root
@@ -1801,11 +1830,37 @@ lreplace:;
 		 */
 		if (ExecCrossPartitionUpdate(context, resultRelInfo,
 									 tupleid, oldtuple, slot,
-									 canSetTag, updateCxt))
+									 canSetTag, updateCxt,
+									 &inserted_tuple,
+									 &insert_destrel))
 		{
 			/* success! */
 			updateCxt->updated = true;
 			updateCxt->crossPartUpdate = true;
+
+			/*
+			 * If the partitioned table being updated is referenced in foreign
+			 * keys, queue up trigger events to check that none of them were
+			 * violated.  No special treatment is needed in
+			 * non-cross-partition update situations, because the leaf
+			 * partition's AR update triggers will take care of that.  During
+			 * cross-partition updates implemented as delete on the source
+			 * partition followed by insert on the destination partition,
+			 * AR-UPDATE triggers of the root table (that is, the table
+			 * mentioned in the query) must be fired.
+			 *
+			 * NULL insert_destrel means that the move failed to occur, that
+			 * is, the update failed, so no need to anything in that case.
+			 */
+			if (insert_destrel &&
+				resultRelInfo->ri_TrigDesc &&
+				resultRelInfo->ri_TrigDesc->trig_update_after_row)
+				ExecCrossPartitionUpdateForeignKey(context,
+												   resultRelInfo,
+												   insert_destrel,
+												   tupleid, slot,
+												   inserted_tuple);
+
 			return TM_Ok;
 		}
 
@@ -1871,11 +1926,13 @@ ExecUpdateEpilogue(ModifyTableContext *context, UpdateContext *updateCxt,
 
 	/* AFTER ROW UPDATE Triggers */
 	ExecARUpdateTriggers(context->estate, resultRelInfo,
+						 NULL, NULL,
 						 tupleid, oldtuple, slot,
 						 recheckIndexes,
 						 mtstate->operation == CMD_INSERT ?
 						 mtstate->mt_oc_transition_capture :
-						 mtstate->mt_transition_capture);
+						 mtstate->mt_transition_capture,
+						 false);
 
 	/*
 	 * Check any WITH CHECK OPTION constraints from parent views.  We are
@@ -1891,6 +1948,74 @@ ExecUpdateEpilogue(ModifyTableContext *context, UpdateContext *updateCxt,
 							 slot, context->estate);
 }
 
+/*
+ * Queues up an update event using the target root partitioned table's
+ * trigger to check that a cross-partition update hasn't broken any foreign
+ * keys pointing into it.
+ */
+static void
+ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
+								   ResultRelInfo *sourcePartInfo,
+								   ResultRelInfo *destPartInfo,
+								   ItemPointer tupleid,
+								   TupleTableSlot *oldslot,
+								   TupleTableSlot *newslot)
+{
+	ListCell   *lc;
+	ResultRelInfo *rootRelInfo;
+	List	   *ancestorRels;
+
+	rootRelInfo = sourcePartInfo->ri_RootResultRelInfo;
+	ancestorRels = ExecGetAncestorResultRels(context->estate, sourcePartInfo);
+
+	/*
+	 * For any foreign keys that point directly into a non-root ancestors of
+	 * the source partition, we can in theory fire an update event to enforce
+	 * those constraints using their triggers, if we could tell that both the
+	 * source and the destination partitions are under the same ancestor. But
+	 * for now, we simply report an error that those cannot be enforced.
+	 */
+	foreach(lc, ancestorRels)
+	{
+		ResultRelInfo *rInfo = lfirst(lc);
+		TriggerDesc *trigdesc = rInfo->ri_TrigDesc;
+		bool		has_noncloned_fkey = false;
+
+		/* Root ancestor's triggers will be processed. */
+		if (rInfo == rootRelInfo)
+			continue;
+
+		if (trigdesc && trigdesc->trig_update_after_row)
+		{
+			for (int i = 0; i < trigdesc->numtriggers; i++)
+			{
+				Trigger    *trig = &trigdesc->triggers[i];
+
+				if (!trig->tgisclone &&
+					RI_FKey_trigger_type(trig->tgfoid) == RI_TRIGGER_PK)
+				{
+					has_noncloned_fkey = true;
+					break;
+				}
+			}
+		}
+
+		if (has_noncloned_fkey)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot move tuple across partitions when a non-root ancestor of the source partition is directly referenced in a foreign key"),
+					 errdetail("A foreign key points to ancestor \"%s\", but not the root ancestor \"%s\".",
+							   RelationGetRelationName(rInfo->ri_RelationDesc),
+							   RelationGetRelationName(rootRelInfo->ri_RelationDesc)),
+					 errhint("Consider defining the foreign key on \"%s\".",
+							 RelationGetRelationName(rootRelInfo->ri_RelationDesc))));
+	}
+
+	/* Perform the root table's triggers. */
+	ExecARUpdateTriggers(context->estate,
+						 rootRelInfo, sourcePartInfo, destPartInfo,
+						 tupleid, NULL, newslot, NIL, NULL, true);
+}
 
 /* ----------------------------------------------------------------
  *		ExecUpdate
@@ -2745,7 +2870,7 @@ ExecModifyTable(PlanState *pstate)
 					ExecInitInsertProjection(node, resultRelInfo);
 				slot = ExecGetInsertNewTuple(resultRelInfo, planSlot);
 				slot = ExecInsert(&context, resultRelInfo, slot,
-								  node->canSetTag);
+								  node->canSetTag, NULL, NULL);
 				break;
 
 			case CMD_UPDATE:

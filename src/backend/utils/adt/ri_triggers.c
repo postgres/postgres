@@ -1261,6 +1261,12 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	TransactionId xmin;
 	bool		isnull;
 
+	/*
+	 * AfterTriggerSaveEvent() handles things such that this function is never
+	 * called for partitioned tables.
+	 */
+	Assert(fk_rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE);
+
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 
 	ri_nullcheck = ri_NullCheck(RelationGetDescr(fk_rel), newslot, riinfo, false);

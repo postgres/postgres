@@ -316,6 +316,13 @@ UPDATE <replaceable class="parameter">count</replaceable>
    partition (provided the foreign data wrapper supports tuple routing), they
    cannot be moved from a foreign-table partition to another partition.
   </para>
+
+  <para>
+   An attempt of moving a row from one partition to another will fail if a
+   foreign key is found to directly reference an ancestor of the source
+   partition that is not the same as the ancestor that's mentioned in the
+   <command>UPDATE</command> query.
+  </para>
  </refsect1>
 
  <refsect1>

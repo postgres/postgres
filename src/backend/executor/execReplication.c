@@ -517,8 +517,9 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 
 		/* AFTER ROW UPDATE Triggers */
 		ExecARUpdateTriggers(estate, resultRelInfo,
+							 NULL, NULL,
 							 tid, NULL, slot,
-							 recheckIndexes, NULL);
+							 recheckIndexes, NULL, false);
 
 		list_free(recheckIndexes);
 	}
@@ -557,7 +558,7 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 
 		/* AFTER ROW DELETE Triggers */
 		ExecARDeleteTriggers(estate, resultRelInfo,
-							 tid, NULL, NULL);
+							 tid, NULL, NULL, false);
 	}
 }
 

@@ -214,7 +214,8 @@ extern void ExecARDeleteTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 ItemPointer tupleid,
 								 HeapTuple fdw_trigtuple,
-								 TransitionCaptureState *transition_capture);
+								 TransitionCaptureState *transition_capture,
+								 bool is_crosspart_update);
 extern bool ExecIRDeleteTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 HeapTuple trigtuple);
@@ -231,11 +232,14 @@ extern bool ExecBRUpdateTriggers(EState *estate,
 								 TupleTableSlot *slot);
 extern void ExecARUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
+								 ResultRelInfo *src_partinfo,
+								 ResultRelInfo *dst_partinfo,
 								 ItemPointer tupleid,
 								 HeapTuple fdw_trigtuple,
 								 TupleTableSlot *slot,
 								 List *recheckIndexes,
-								 TransitionCaptureState *transition_capture);
+								 TransitionCaptureState *transition_capture,
+								 bool is_crosspart_update);
 extern bool ExecIRUpdateTriggers(EState *estate,
 								 ResultRelInfo *relinfo,
 								 HeapTuple trigtuple,
