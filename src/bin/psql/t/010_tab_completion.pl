@@ -338,6 +338,19 @@ check_completion(
 
 clear_line();
 
+# check timezone name completion
+check_completion(
+	"SET timezone TO am\t",
+	qr|'America/|,
+	"offer partial timezone name");
+
+check_completion(
+	"new_\t",
+	qr|New_York|,
+	"complete partial timezone name");
+
+clear_line();
+
 # check completion of a keyword offered in addition to object names;
 # such a keyword should obey COMP_KEYWORD_CASE
 foreach (
