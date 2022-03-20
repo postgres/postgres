@@ -1986,6 +1986,34 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 #endif							/* USE_ICU */
 
 /*
+ * Check if the given locale ID is valid, and ereport(ERROR) if it isn't.
+ */
+void
+check_icu_locale(const char *icu_locale)
+{
+#ifdef USE_ICU
+	UCollator  *collator;
+	UErrorCode  status;
+
+	status = U_ZERO_ERROR;
+	collator = ucol_open(icu_locale, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("could not open collator for locale \"%s\": %s",
+						icu_locale, u_errorName(status))));
+
+	if (U_ICU_VERSION_MAJOR_NUM < 54)
+		icu_set_collation_attributes(collator, icu_locale);
+	ucol_close(collator);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ICU is not supported in this build"), \
+			 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
+#endif
+}
+
+/*
  * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.
  * Therefore we keep them here rather than with the mbutils code.
  */

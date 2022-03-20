@@ -55,10 +55,6 @@
 #include <signal.h>
 #include <time.h>
 
-#ifdef USE_ICU
-#include <unicode/ucol.h>
-#endif
-
 #ifdef HAVE_SHM_OPEN
 #include "sys/mman.h"
 #endif
@@ -2205,22 +2201,10 @@ setlocales(void)
 		}
 
 		/*
-		 * Check ICU locale ID
+		 * In supported builds, the ICU locale ID will be checked by the
+		 * backend when performing the post-boostrap initialization.
 		 */
-#ifdef USE_ICU
-		{
-			UErrorCode	status;
-
-			status = U_ZERO_ERROR;
-			ucol_open(icu_locale, &status);
-			if (U_FAILURE(status))
-			{
-				pg_log_error("could not open collator for locale \"%s\": %s",
-							 icu_locale, u_errorName(status));
-				exit(1);
-			}
-		}
-#else
+#ifndef USE_ICU
 		pg_log_error("ICU is not supported in this build");
 		fprintf(stderr, _("You need to rebuild PostgreSQL using %s.\n"), "--with-icu");
 		exit(1);

@@ -458,23 +458,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	}
 
 	if (dblocprovider == COLLPROVIDER_ICU)
-	{
-#ifdef USE_ICU
-		UErrorCode  status;
-
-		status = U_ZERO_ERROR;
-		ucol_open(dbiculocale, &status);
-		if (U_FAILURE(status))
-			ereport(ERROR,
-					(errmsg("could not open collator for locale \"%s\": %s",
-							dbiculocale, u_errorName(status))));
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ICU is not supported in this build"), \
-				 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
-#endif
-	}
+		check_icu_locale(dbiculocale);
 
 	/*
 	 * Check that the new encoding and locale settings match the source

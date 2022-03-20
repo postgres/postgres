@@ -116,6 +116,7 @@ extern char *get_collation_actual_version(char collprovider, const char *collcol
 extern int32_t icu_to_uchar(UChar **buff_uchar, const char *buff, size_t nbytes);
 extern int32_t icu_from_uchar(char **result, const UChar *buff_uchar, int32_t len_uchar);
 #endif
+extern void check_icu_locale(const char *icu_locale);
 
 /* These functions convert from/to libc's wchar_t, *not* pg_wchar_t */
 extern size_t wchar2char(char *to, const wchar_t *from, size_t tolen,

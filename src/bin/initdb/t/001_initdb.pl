@@ -105,7 +105,7 @@ if ($ENV{with_icu} eq 'yes')
 		'option --icu-locale');
 
 	command_fails_like(['initdb', '--no-sync', '--locale-provider=icu', '--icu-locale=@colNumeric=lower', "$tempdir/dataX"],
-		qr/initdb: error: could not open collator for locale/,
+		qr/FATAL:  could not open collator for locale/,
 		'fails for invalid ICU locale');
 }
 else

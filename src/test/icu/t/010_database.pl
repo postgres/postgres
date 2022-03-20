@@ -16,11 +16,11 @@ $node1->init;
 $node1->start;
 
 $node1->safe_psql('postgres',
-	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu LOCALE 'C' ICU_LOCALE 'en-u-kf-upper' ENCODING 'UTF8' TEMPLATE template0});
+	q{CREATE DATABASE dbicu LOCALE_PROVIDER icu LOCALE 'C' ICU_LOCALE 'en@colCaseFirst=upper' ENCODING 'UTF8' TEMPLATE template0});
 
 $node1->safe_psql('dbicu',
 q{
-CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper');
+CREATE COLLATION upperfirst (provider = icu, locale = 'en@colCaseFirst=upper');
 CREATE TABLE icu (def text, en text COLLATE "en-x-icu", upfirst text COLLATE upperfirst);
 INSERT INTO icu VALUES ('a', 'a', 'a'), ('b', 'b', 'b'), ('A', 'A', 'A'), ('B', 'B', 'B');
 });

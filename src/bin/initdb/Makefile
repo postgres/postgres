@@ -40,7 +40,7 @@ OBJS = \
 all: initdb
 
 initdb: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
-	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) $(ICU_LIBS) -o $@$(X)
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
 # We must pull in localtime.c from src/timezones
 localtime.c: % : $(top_srcdir)/src/timezone/%
