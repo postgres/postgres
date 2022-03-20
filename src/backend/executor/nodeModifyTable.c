@@ -1820,7 +1820,7 @@ lreplace:;
 	if (partition_constraint_failed)
 	{
 		TupleTableSlot *inserted_tuple;
-		ResultRelInfo *insert_destrel;
+		ResultRelInfo *insert_destrel = NULL;
 
 		/*
 		 * ExecCrossPartitionUpdate will first DELETE the row from the
