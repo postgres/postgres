@@ -488,7 +488,7 @@ ExecStart=/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGINT
-TimeoutSec=0
+TimeoutSec=infinity
 
 [Install]
 WantedBy=multi-user.target
@@ -500,11 +500,11 @@ WantedBy=multi-user.target
      <para>
       Consider carefully the timeout
       setting.  <application>systemd</application> has a default timeout of 90
-      seconds as of this writing and will kill a process that does not notify
+      seconds as of this writing and will kill a process that does not report
       readiness within that time.  But a <productname>PostgreSQL</productname>
       server that might have to perform crash recovery at startup could take
-      much longer to become ready.  The suggested value of 0 disables the
-      timeout logic.
+      much longer to become ready.  The suggested value
+      of <literal>infinity</literal> disables the timeout logic.
      </para>
     </listitem>
 
