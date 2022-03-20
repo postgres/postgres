@@ -53,15 +53,27 @@ my $outputdir = $PostgreSQL::Test::Utils::tmp_check;
 
 # Run the regression tests against the primary.
 my $extra_opts = $ENV{EXTRA_REGRESS_OPTS} || "";
-system_or_bail($ENV{PG_REGRESS} . " $extra_opts " .
-			   "--dlpath=\"$dlpath\" " .
-			   "--bindir= " .
-			   "--host=" . $node_primary->host . " " .
-			   "--port=" . $node_primary->port . " " .
-			   "--schedule=../regress/parallel_schedule " .
-			   "--max-concurrent-tests=20 " .
-			   "--inputdir=../regress " .
-			   "--outputdir=\"$outputdir\"");
+my $rc = system($ENV{PG_REGRESS} . " $extra_opts " .
+			    "--dlpath=\"$dlpath\" " .
+			    "--bindir= " .
+			    "--host=" . $node_primary->host . " " .
+			    "--port=" . $node_primary->port . " " .
+			    "--schedule=../regress/parallel_schedule " .
+			    "--max-concurrent-tests=20 " .
+			    "--inputdir=../regress " .
+			    "--outputdir=\"$outputdir\"");
+if ($rc != 0)
+{
+	# Dump out the regression diffs file, if there is one
+	my $diffs = "$outputdir/regression.diffs";
+	if (-e $diffs)
+	{
+		print "=== dumping $diffs ===\n";
+		print slurp_file($diffs);
+		print "=== EOF ===\n";
+	}
+}
+is($rc, 0, 'regression tests pass');
 
 # Clobber all sequences with their next value, so that we don't have
 # differences between nodes due to caching.
