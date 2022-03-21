@@ -2042,4 +2042,49 @@ order by a, b, c;
    |   |  
 (11 rows)
 
+-- test handling of outer GroupingFunc within subqueries
+explain (costs off)
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
+        QUERY PLAN         
+---------------------------
+ MixedAggregate
+   Hash Key: $2
+   Group Key: ()
+   InitPlan 1 (returns $1)
+     ->  Result
+   InitPlan 3 (returns $2)
+     ->  Result
+   ->  Result
+   SubPlan 2
+     ->  Result
+(10 rows)
+
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by cube(v1);
+ grouping 
+----------
+        1
+        0
+(2 rows)
+
+explain (costs off)
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
+        QUERY PLAN         
+---------------------------
+ GroupAggregate
+   Group Key: $2
+   InitPlan 1 (returns $1)
+     ->  Result
+   InitPlan 3 (returns $2)
+     ->  Result
+   ->  Result
+   SubPlan 2
+     ->  Result
+(9 rows)
+
+select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
+ grouping 
+----------
+        0
+(1 row)
+
 -- end
