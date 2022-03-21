@@ -9,7 +9,7 @@
  * Portions Copyright (c) 2010-2020, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_gzip.c
+ *	  src/backend/replication/basebackup_target.c
  *
  *-------------------------------------------------------------------------
  */
