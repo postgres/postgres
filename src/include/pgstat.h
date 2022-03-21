@@ -1102,7 +1102,7 @@ extern void pgstat_initialize(void);
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
-extern void pgstat_initstats(Relation rel);
+extern void pgstat_relation_init(Relation rel);
 
 #define pgstat_relation_should_count(rel)                           \
 	(likely((rel)->pgstat_info != NULL))
