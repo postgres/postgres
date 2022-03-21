@@ -174,37 +174,23 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 
 	/*
 	 * Make a dependency so that the pg_attrdef entry goes away if the column
-	 * (or whole table) is deleted.
+	 * (or whole table) is deleted.  In the case of a generated column, make
+	 * it an internal dependency to prevent the default expression from being
+	 * deleted separately.
 	 */
 	colobject.classId = RelationRelationId;
 	colobject.objectId = RelationGetRelid(rel);
 	colobject.objectSubId = attnum;
 
-	recordDependencyOn(&defobject, &colobject, DEPENDENCY_AUTO);
+	recordDependencyOn(&defobject, &colobject,
+					   attgenerated ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Record dependencies on objects used in the expression, too.
 	 */
-	if (attgenerated)
-	{
-		/*
-		 * Generated column: Dropping anything that the generation expression
-		 * refers to automatically drops the generated column.
-		 */
-		recordDependencyOnSingleRelExpr(&colobject, expr, RelationGetRelid(rel),
-										DEPENDENCY_AUTO,
-										DEPENDENCY_AUTO, false);
-	}
-	else
-	{
-		/*
-		 * Normal default: Dropping anything that the default refers to
-		 * requires CASCADE and drops the default only.
-		 */
-		recordDependencyOnSingleRelExpr(&defobject, expr, RelationGetRelid(rel),
-										DEPENDENCY_NORMAL,
-										DEPENDENCY_NORMAL, false);
-	}
+	recordDependencyOnSingleRelExpr(&defobject, expr, RelationGetRelid(rel),
+									DEPENDENCY_NORMAL,
+									DEPENDENCY_NORMAL, false);
 
 	/*
 	 * Post creation hook for attribute defaults.

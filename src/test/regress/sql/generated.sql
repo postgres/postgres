@@ -231,7 +231,8 @@ SELECT * FROM gtest_tableoid;
 
 -- drop column behavior
 CREATE TABLE gtest10 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
-ALTER TABLE gtest10 DROP COLUMN b;
+ALTER TABLE gtest10 DROP COLUMN b;  -- fails
+ALTER TABLE gtest10 DROP COLUMN b CASCADE;  -- drops c too
 
 \d gtest10
 
@@ -260,6 +261,7 @@ SELECT gf1(10);  -- not allowed
 SELECT a, c FROM gtest12s;  -- allowed
 RESET ROLE;
 
+DROP FUNCTION gf1(int);  -- fail
 DROP TABLE gtest11s, gtest12s;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;
