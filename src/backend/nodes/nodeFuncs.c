@@ -746,6 +746,8 @@ expression_returns_set_walker(Node *node, void *context)
 	/* Avoid recursion for some cases that parser checks not to return a set */
 	if (IsA(node, Aggref))
 		return false;
+	if (IsA(node, GroupingFunc))
+		return false;
 	if (IsA(node, WindowFunc))
 		return false;
 
