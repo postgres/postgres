@@ -1578,39 +1578,11 @@ get_object_address_attrdef(ObjectType objtype, List *object,
 
 	tupdesc = RelationGetDescr(relation);
 
-	/* Look up attribute number and scan pg_attrdef to find its tuple */
+	/* Look up attribute number and fetch the pg_attrdef OID */
 	attnum = get_attnum(reloid, attname);
 	defoid = InvalidOid;
 	if (attnum != InvalidAttrNumber && tupdesc->constr != NULL)
-	{
-		Relation	attrdef;
-		ScanKeyData keys[2];
-		SysScanDesc scan;
-		HeapTuple	tup;
-
-		attrdef = relation_open(AttrDefaultRelationId, AccessShareLock);
-		ScanKeyInit(&keys[0],
-					Anum_pg_attrdef_adrelid,
-					BTEqualStrategyNumber,
-					F_OIDEQ,
-					ObjectIdGetDatum(reloid));
-		ScanKeyInit(&keys[1],
-					Anum_pg_attrdef_adnum,
-					BTEqualStrategyNumber,
-					F_INT2EQ,
-					Int16GetDatum(attnum));
-		scan = systable_beginscan(attrdef, AttrDefaultIndexId, true,
-								  NULL, 2, keys);
-		if (HeapTupleIsValid(tup = systable_getnext(scan)))
-		{
-			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tup);
-
-			defoid = atdform->oid;
-		}
-
-		systable_endscan(scan);
-		relation_close(attrdef, AccessShareLock);
-	}
+		defoid = GetAttrDefaultOid(reloid, attnum);
 	if (!OidIsValid(defoid))
 	{
 		if (!missing_ok)
@@ -3161,48 +3133,21 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 
 		case OCLASS_DEFAULT:
 			{
-				Relation	attrdefDesc;
-				ScanKeyData skey[1];
-				SysScanDesc adscan;
-				HeapTuple	tup;
-				Form_pg_attrdef attrdef;
 				ObjectAddress colobject;
 
-				attrdefDesc = table_open(AttrDefaultRelationId, AccessShareLock);
+				colobject = GetAttrDefaultColumnAddress(object->objectId);
 
-				ScanKeyInit(&skey[0],
-							Anum_pg_attrdef_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, NULL, 1, skey);
-
-				tup = systable_getnext(adscan);
-
-				if (!HeapTupleIsValid(tup))
+				if (!OidIsValid(colobject.objectId))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for attrdef %u",
 							 object->objectId);
-
-					systable_endscan(adscan);
-					table_close(attrdefDesc, AccessShareLock);
 					break;
 				}
-
-				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
-
-				colobject.classId = RelationRelationId;
-				colobject.objectId = attrdef->adrelid;
-				colobject.objectSubId = attrdef->adnum;
 
 				/* translator: %s is typically "column %s of table %s" */
 				appendStringInfo(&buffer, _("default value for %s"),
 								 getObjectDescription(&colobject, false));
-
-				systable_endscan(adscan);
-				table_close(attrdefDesc, AccessShareLock);
 				break;
 			}
 
@@ -5006,50 +4951,22 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case OCLASS_DEFAULT:
 			{
-				Relation	attrdefDesc;
-				ScanKeyData skey[1];
-				SysScanDesc adscan;
-
-				HeapTuple	tup;
-				Form_pg_attrdef attrdef;
 				ObjectAddress colobject;
 
-				attrdefDesc = table_open(AttrDefaultRelationId, AccessShareLock);
+				colobject = GetAttrDefaultColumnAddress(object->objectId);
 
-				ScanKeyInit(&skey[0],
-							Anum_pg_attrdef_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, NULL, 1, skey);
-
-				tup = systable_getnext(adscan);
-
-				if (!HeapTupleIsValid(tup))
+				if (!OidIsValid(colobject.objectId))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for attrdef %u",
 							 object->objectId);
-
-					systable_endscan(adscan);
-					table_close(attrdefDesc, AccessShareLock);
 					break;
 				}
-
-				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
-
-				colobject.classId = RelationRelationId;
-				colobject.objectId = attrdef->adrelid;
-				colobject.objectSubId = attrdef->adnum;
 
 				appendStringInfo(&buffer, "for %s",
 								 getObjectIdentityParts(&colobject,
 														objname, objargs,
 														false));
-
-				systable_endscan(adscan);
-				table_close(attrdefDesc, AccessShareLock);
 				break;
 			}
 

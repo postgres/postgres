@@ -19,6 +19,7 @@
 #define PG_ATTRDEF_H
 
 #include "catalog/genbki.h"
+#include "catalog/objectaddress.h"
 #include "catalog/pg_attrdef_d.h"
 
 /* ----------------
@@ -53,5 +54,17 @@ DECLARE_UNIQUE_INDEX(pg_attrdef_adrelid_adnum_index, 2656, AttrDefaultIndexId, o
 DECLARE_UNIQUE_INDEX_PKEY(pg_attrdef_oid_index, 2657, AttrDefaultOidIndexId, on pg_attrdef using btree(oid oid_ops));
 
 DECLARE_FOREIGN_KEY((adrelid, adnum), pg_attribute, (attrelid, attnum));
+
+
+extern Oid	StoreAttrDefault(Relation rel, AttrNumber attnum,
+							 Node *expr, bool is_internal,
+							 bool add_column_mode);
+extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
+							  DropBehavior behavior,
+							  bool complain, bool internal);
+extern void RemoveAttrDefaultById(Oid attrdefId);
+
+extern Oid	GetAttrDefaultOid(Oid relid, AttrNumber attnum);
+extern ObjectAddress GetAttrDefaultColumnAddress(Oid attrdefoid);
 
 #endif							/* PG_ATTRDEF_H */
