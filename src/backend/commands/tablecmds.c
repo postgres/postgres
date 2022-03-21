@@ -293,12 +293,18 @@ static const struct dropmsgstrings dropmsgstringarray[] = {
 	{'\0', 0, NULL, NULL, NULL, NULL}
 };
 
+/* communication between RemoveRelations and RangeVarCallbackForDropRelation */
 struct DropRelationCallbackState
 {
-	char		relkind;
+	/* These fields are set by RemoveRelations: */
+	char		expected_relkind;
+	LOCKMODE	heap_lockmode;
+	/* These fields are state to track which subsidiary locks are held: */
 	Oid			heapOid;
 	Oid			partParentOid;
-	bool		concurrent;
+	/* These fields are passed back by RangeVarCallbackForDropRelation: */
+	char		actual_relkind;
+	char		actual_relpersistence;
 };
 
 /* Alter table target-type flags for ATSimplePermissions */
@@ -1394,10 +1400,13 @@ RemoveRelations(DropStmt *drop)
 		AcceptInvalidationMessages();
 
 		/* Look up the appropriate relation using namespace search. */
-		state.relkind = relkind;
+		state.expected_relkind = relkind;
+		state.heap_lockmode = drop->concurrent ?
+			ShareUpdateExclusiveLock : AccessExclusiveLock;
+		/* We must initialize these fields to show that no locks are held: */
 		state.heapOid = InvalidOid;
 		state.partParentOid = InvalidOid;
-		state.concurrent = drop->concurrent;
+
 		relOid = RangeVarGetRelidExtended(rel, lockmode, RVR_MISSING_OK,
 										  RangeVarCallbackForDropRelation,
 										  (void *) &state);
@@ -1411,10 +1420,10 @@ RemoveRelations(DropStmt *drop)
 
 		/*
 		 * Decide if concurrent mode needs to be used here or not.  The
-		 * relation persistence cannot be known without its OID.
+		 * callback retrieved the rel's persistence for us.
 		 */
 		if (drop->concurrent &&
-			get_rel_persistence(relOid) != RELPERSISTENCE_TEMP)
+			state.actual_relpersistence != RELPERSISTENCE_TEMP)
 		{
 			Assert(list_length(drop->objects) == 1 &&
 				   drop->removeType == OBJECT_INDEX);
@@ -1426,11 +1435,23 @@ RemoveRelations(DropStmt *drop)
 		 * either.
 		 */
 		if ((flags & PERFORM_DELETION_CONCURRENTLY) != 0 &&
-			get_rel_relkind(relOid) == RELKIND_PARTITIONED_INDEX)
+			state.actual_relkind == RELKIND_PARTITIONED_INDEX)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot drop partitioned index \"%s\" concurrently",
 							rel->relname)));
+
+		/*
+		 * If we're told to drop a partitioned index, we must acquire lock on
+		 * all the children of its parent partitioned table before proceeding.
+		 * Otherwise we'd try to lock the child index partitions before their
+		 * tables, leading to potential deadlock against other sessions that
+		 * will lock those objects in the other order.
+		 */
+		if (state.actual_relkind == RELKIND_PARTITIONED_INDEX)
+			(void) find_all_inheritors(state.heapOid,
+									   state.heap_lockmode,
+									   NULL);
 
 		/* OK, we're ready to delete this one */
 		obj.classId = RelationRelationId;
@@ -1457,7 +1478,6 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 {
 	HeapTuple	tuple;
 	struct DropRelationCallbackState *state;
-	char		relkind;
 	char		expected_relkind;
 	bool		is_partition;
 	Form_pg_class classform;
@@ -1465,9 +1485,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	bool		invalid_system_index = false;
 
 	state = (struct DropRelationCallbackState *) arg;
-	relkind = state->relkind;
-	heap_lockmode = state->concurrent ?
-		ShareUpdateExclusiveLock : AccessExclusiveLock;
+	heap_lockmode = state->heap_lockmode;
 
 	/*
 	 * If we previously locked some other index's heap, and the name we're
@@ -1501,6 +1519,10 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 	is_partition = classform->relispartition;
 
+	/* Pass back some data to save lookups in RemoveRelations */
+	state->actual_relkind = classform->relkind;
+	state->actual_relpersistence = classform->relpersistence;
+
 	/*
 	 * Both RELKIND_RELATION and RELKIND_PARTITIONED_TABLE are OBJECT_TABLE,
 	 * but RemoveRelations() can only pass one relkind for a given relation.
@@ -1516,13 +1538,15 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	else
 		expected_relkind = classform->relkind;
 
-	if (relkind != expected_relkind)
-		DropErrorMsgWrongType(rel->relname, classform->relkind, relkind);
+	if (state->expected_relkind != expected_relkind)
+		DropErrorMsgWrongType(rel->relname, classform->relkind,
+							  state->expected_relkind);
 
 	/* Allow DROP to either table owner or schema owner */
 	if (!pg_class_ownercheck(relOid, GetUserId()) &&
 		!pg_namespace_ownercheck(classform->relnamespace, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relOid)),
+		aclcheck_error(ACLCHECK_NOT_OWNER,
+					   get_relkind_objtype(classform->relkind),
 					   rel->relname);
 
 	/*
@@ -1531,7 +1555,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 * only concerns indexes of toast relations that became invalid during a
 	 * REINDEX CONCURRENTLY process.
 	 */
-	if (IsSystemClass(relOid, classform) && relkind == RELKIND_INDEX)
+	if (IsSystemClass(relOid, classform) && classform->relkind == RELKIND_INDEX)
 	{
 		HeapTuple	locTuple;
 		Form_pg_index indexform;
@@ -1567,9 +1591,10 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	 * locking the index.  index_drop() will need this anyway, and since
 	 * regular queries lock tables before their indexes, we risk deadlock if
 	 * we do it the other way around.  No error if we don't find a pg_index
-	 * entry, though --- the relation may have been dropped.
+	 * entry, though --- the relation may have been dropped.  Note that this
+	 * code will execute for either plain or partitioned indexes.
 	 */
-	if ((relkind == RELKIND_INDEX || relkind == RELKIND_PARTITIONED_INDEX) &&
+	if (expected_relkind == RELKIND_INDEX &&
 		relOid != oldRelOid)
 	{
 		state->heapOid = IndexGetRelation(relOid, true);
@@ -1580,7 +1605,7 @@ RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid, Oid oldRelOid,
 	/*
 	 * Similarly, if the relation is a partition, we must acquire lock on its
 	 * parent before locking the partition.  That's because queries lock the
-	 * parent before its partitions, so we risk deadlock it we do it the other
+	 * parent before its partitions, so we risk deadlock if we do it the other
 	 * way around.
 	 */
 	if (is_partition && relOid != oldRelOid)
