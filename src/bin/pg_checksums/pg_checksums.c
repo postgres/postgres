@@ -132,8 +132,6 @@ static void
 progress_report(bool finished)
 {
 	int			percent;
-	char		total_size_str[32];
-	char		current_size_str[32];
 	pg_time_t	now;
 
 	Assert(showprogress);
@@ -152,18 +150,9 @@ progress_report(bool finished)
 	/* Calculate current percentage of size done */
 	percent = total_size ? (int) ((current_size) * 100 / total_size) : 0;
 
-	/*
-	 * Separate step to keep platform-dependent format code out of
-	 * translatable strings.  And we only test for INT64_FORMAT availability
-	 * in snprintf, not fprintf.
-	 */
-	snprintf(total_size_str, sizeof(total_size_str), INT64_FORMAT,
-			 total_size / (1024 * 1024));
-	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
-			 current_size / (1024 * 1024));
-
-	fprintf(stderr, _("%*s/%s MB (%d%%) computed"),
-			(int) strlen(current_size_str), current_size_str, total_size_str,
+	fprintf(stderr, _("%lld/%lld MB (%d%%) computed"),
+			(long long) (current_size / (1024 * 1024)),
+			(long long) (total_size / (1024 * 1024)),
 			percent);
 
 	/*
@@ -657,11 +646,11 @@ main(int argc, char *argv[])
 			progress_report(true);
 
 		printf(_("Checksum operation completed\n"));
-		printf(_("Files scanned:   %s\n"), psprintf(INT64_FORMAT, files_scanned));
-		printf(_("Blocks scanned:  %s\n"), psprintf(INT64_FORMAT, blocks_scanned));
+		printf(_("Files scanned:   %lld\n"), (long long) files_scanned);
+		printf(_("Blocks scanned:  %lld\n"), (long long) blocks_scanned);
 		if (mode == PG_MODE_CHECK)
 		{
-			printf(_("Bad checksums:  %s\n"), psprintf(INT64_FORMAT, badblocks));
+			printf(_("Bad checksums:  %lld\n"), (long long) badblocks);
 			printf(_("Data checksum version: %u\n"), ControlFile->data_checksum_version);
 
 			if (badblocks > 0)
@@ -669,8 +658,8 @@ main(int argc, char *argv[])
 		}
 		else if (mode == PG_MODE_ENABLE)
 		{
-			printf(_("Files written:  %s\n"), psprintf(INT64_FORMAT, files_written));
-			printf(_("Blocks written: %s\n"), psprintf(INT64_FORMAT, blocks_written));
+			printf(_("Files written:  %lld\n"), (long long) files_written);
+			printf(_("Blocks written: %lld\n"), (long long) blocks_written);
 		}
 	}
 

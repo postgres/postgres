@@ -115,21 +115,19 @@ void
 CopyFromErrorCallback(void *arg)
 {
 	CopyFromState cstate = (CopyFromState) arg;
-	char		curlineno_str[32];
-
-	snprintf(curlineno_str, sizeof(curlineno_str), UINT64_FORMAT,
-			 cstate->cur_lineno);
 
 	if (cstate->opts.binary)
 	{
 		/* can't usefully display the data */
 		if (cstate->cur_attname)
-			errcontext("COPY %s, line %s, column %s",
-					   cstate->cur_relname, curlineno_str,
+			errcontext("COPY %s, line %llu, column %s",
+					   cstate->cur_relname,
+					   (unsigned long long) cstate->cur_lineno,
 					   cstate->cur_attname);
 		else
-			errcontext("COPY %s, line %s",
-					   cstate->cur_relname, curlineno_str);
+			errcontext("COPY %s, line %llu",
+					   cstate->cur_relname,
+					   (unsigned long long) cstate->cur_lineno);
 	}
 	else
 	{
@@ -139,16 +137,19 @@ CopyFromErrorCallback(void *arg)
 			char	   *attval;
 
 			attval = limit_printout_length(cstate->cur_attval);
-			errcontext("COPY %s, line %s, column %s: \"%s\"",
-					   cstate->cur_relname, curlineno_str,
-					   cstate->cur_attname, attval);
+			errcontext("COPY %s, line %llu, column %s: \"%s\"",
+					   cstate->cur_relname,
+					   (unsigned long long) cstate->cur_lineno,
+					   cstate->cur_attname,
+					   attval);
 			pfree(attval);
 		}
 		else if (cstate->cur_attname)
 		{
 			/* error is relevant to a particular column, value is NULL */
-			errcontext("COPY %s, line %s, column %s: null input",
-					   cstate->cur_relname, curlineno_str,
+			errcontext("COPY %s, line %llu, column %s: null input",
+					   cstate->cur_relname,
+					   (unsigned long long) cstate->cur_lineno,
 					   cstate->cur_attname);
 		}
 		else
@@ -163,14 +164,16 @@ CopyFromErrorCallback(void *arg)
 				char	   *lineval;
 
 				lineval = limit_printout_length(cstate->line_buf.data);
-				errcontext("COPY %s, line %s: \"%s\"",
-						   cstate->cur_relname, curlineno_str, lineval);
+				errcontext("COPY %s, line %llu: \"%s\"",
+						   cstate->cur_relname,
+						   (unsigned long long) cstate->cur_lineno, lineval);
 				pfree(lineval);
 			}
 			else
 			{
-				errcontext("COPY %s, line %s",
-						   cstate->cur_relname, curlineno_str);
+				errcontext("COPY %s, line %llu",
+						   cstate->cur_relname,
+						   (unsigned long long) cstate->cur_lineno);
 			}
 		}
 	}
