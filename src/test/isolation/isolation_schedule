@@ -77,6 +77,7 @@ test: vacuum-concurrent-drop
 test: predicate-hash
 test: predicate-gist
 test: predicate-gin
+test: partition-drop-index-locking
 test: partition-key-update-1
 test: partition-key-update-2
 test: partition-key-update-3
