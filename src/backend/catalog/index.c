@@ -1743,7 +1743,7 @@ index_concurrently_swap(Oid newIndexId, Oid oldIndexId, const char *oldName)
 		tabentry = pgstat_fetch_stat_tabentry(oldIndexId);
 		if (tabentry)
 		{
-			if (newClassRel->pgstat_info)
+			if (pgstat_relation_should_count(newClassRel))
 			{
 				newClassRel->pgstat_info->t_counts.t_numscans = tabentry->numscans;
 				newClassRel->pgstat_info->t_counts.t_tuples_returned = tabentry->tuples_returned;

@@ -1709,7 +1709,7 @@ pgstat_report_analyze(Relation rel,
 	 *
 	 * Waste no time on partitioned tables, though.
 	 */
-	if (rel->pgstat_info != NULL &&
+	if (pgstat_relation_should_count(rel) &&
 		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		PgStat_TableXactStatus *trans;
@@ -2359,13 +2359,12 @@ add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
 void
 pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
 {
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
-
-	if (pgstat_info != NULL)
+	if (pgstat_relation_should_count(rel))
 	{
-		/* We have to log the effect at the proper transactional level */
+		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 		int			nest_level = GetCurrentTransactionNestLevel();
 
+		/* We have to log the effect at the proper transactional level */
 		if (pgstat_info->trans == NULL ||
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
@@ -2380,13 +2379,12 @@ pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
 void
 pgstat_count_heap_update(Relation rel, bool hot)
 {
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
-
-	if (pgstat_info != NULL)
+	if (pgstat_relation_should_count(rel))
 	{
-		/* We have to log the effect at the proper transactional level */
+		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 		int			nest_level = GetCurrentTransactionNestLevel();
 
+		/* We have to log the effect at the proper transactional level */
 		if (pgstat_info->trans == NULL ||
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
@@ -2405,13 +2403,12 @@ pgstat_count_heap_update(Relation rel, bool hot)
 void
 pgstat_count_heap_delete(Relation rel)
 {
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
-
-	if (pgstat_info != NULL)
+	if (pgstat_relation_should_count(rel))
 	{
-		/* We have to log the effect at the proper transactional level */
+		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 		int			nest_level = GetCurrentTransactionNestLevel();
 
+		/* We have to log the effect at the proper transactional level */
 		if (pgstat_info->trans == NULL ||
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
@@ -2463,13 +2460,12 @@ pgstat_truncdrop_restore_counters(PgStat_TableXactStatus *trans)
 void
 pgstat_count_truncate(Relation rel)
 {
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
-
-	if (pgstat_info != NULL)
+	if (pgstat_relation_should_count(rel))
 	{
-		/* We have to log the effect at the proper transactional level */
+		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 		int			nest_level = GetCurrentTransactionNestLevel();
 
+		/* We have to log the effect at the proper transactional level */
 		if (pgstat_info->trans == NULL ||
 			pgstat_info->trans->nest_level != nest_level)
 			add_tabstat_xact_level(pgstat_info, nest_level);
@@ -2492,10 +2488,12 @@ pgstat_count_truncate(Relation rel)
 void
 pgstat_update_heap_dead_tuples(Relation rel, int delta)
 {
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+	if (pgstat_relation_should_count(rel))
+	{
+		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_info != NULL)
 		pgstat_info->t_counts.t_delta_dead_tuples -= delta;
+	}
 }
 
 /*
