@@ -169,7 +169,7 @@ typedef struct
 {
 	LOCKMODE	lockmode;		/* lock mode to use */
 	bool		nowait;			/* no wait mode */
-	Oid			viewowner;		/* view owner for checking the privilege */
+	Oid			check_as_user;	/* user for checking the privilege */
 	Oid			viewoid;		/* OID of the view to be locked */
 	List	   *ancestor_views; /* OIDs of ancestor views */
 } LockViewRecurse_context;
@@ -215,8 +215,12 @@ LockViewRecurse_walker(Node *node, LockViewRecurse_context *context)
 			if (list_member_oid(context->ancestor_views, relid))
 				continue;
 
-			/* Check permissions with the view owner's privilege. */
-			aclresult = LockTableAclCheck(relid, context->lockmode, context->viewowner);
+			/*
+			 * Check permissions as the specified user.  This will either be
+			 * the view owner or the current user.
+			 */
+			aclresult = LockTableAclCheck(relid, context->lockmode,
+										  context->check_as_user);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, get_relkind_objtype(relkind), relname);
 
@@ -259,9 +263,16 @@ LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,
 	view = table_open(reloid, NoLock);
 	viewquery = get_view_query(view);
 
+	/*
+	 * If the view has the security_invoker property set, check permissions as
+	 * the current user.  Otherwise, check permissions as the view owner.
+	 */
 	context.lockmode = lockmode;
 	context.nowait = nowait;
-	context.viewowner = view->rd_rel->relowner;
+	if (RelationHasSecurityInvoker(view))
+		context.check_as_user = GetUserId();
+	else
+		context.check_as_user = view->rd_rel->relowner;
 	context.viewoid = reloid;
 	context.ancestor_views = lappend_oid(ancestor_views, reloid);
 

@@ -122,10 +122,59 @@ BEGIN;
 LOCK TABLE ONLY lock_tbl1;
 ROLLBACK;
 RESET ROLE;
+REVOKE UPDATE ON TABLE lock_tbl1 FROM regress_rol_lock1;
+
+-- Tables referred to by views are locked without explicit permission to do so
+-- as long as we have permission to lock the view itself.
+SET ROLE regress_rol_lock1;
+-- fail without permissions on the view
+BEGIN;
+LOCK TABLE lock_view1;
+ROLLBACK;
+RESET ROLE;
+GRANT UPDATE ON TABLE lock_view1 TO regress_rol_lock1;
+SET ROLE regress_rol_lock1;
+BEGIN;
+LOCK TABLE lock_view1 IN ACCESS EXCLUSIVE MODE;
+-- lock_view1 and lock_tbl1 (plus children lock_tbl2 and lock_tbl3) are locked.
+select relname from pg_locks l, pg_class c
+ where l.relation = c.oid and relname like '%lock_%' and mode = 'AccessExclusiveLock'
+ order by relname;
+ROLLBACK;
+RESET ROLE;
+REVOKE UPDATE ON TABLE lock_view1 FROM regress_rol_lock1;
+
+-- Tables referred to by security invoker views require explicit permission to
+-- be locked.
+CREATE VIEW lock_view8 WITH (security_invoker) AS SELECT * FROM lock_tbl1;
+SET ROLE regress_rol_lock1;
+-- fail without permissions on the view
+BEGIN;
+LOCK TABLE lock_view8;
+ROLLBACK;
+RESET ROLE;
+GRANT UPDATE ON TABLE lock_view8 TO regress_rol_lock1;
+SET ROLE regress_rol_lock1;
+-- fail without permissions on the table referenced by the view
+BEGIN;
+LOCK TABLE lock_view8;
+ROLLBACK;
+RESET ROLE;
+GRANT UPDATE ON TABLE lock_tbl1 TO regress_rol_lock1;
+BEGIN;
+LOCK TABLE lock_view8 IN ACCESS EXCLUSIVE MODE;
+-- lock_view8 and lock_tbl1 (plus children lock_tbl2 and lock_tbl3) are locked.
+select relname from pg_locks l, pg_class c
+ where l.relation = c.oid and relname like '%lock_%' and mode = 'AccessExclusiveLock'
+ order by relname;
+ROLLBACK;
+RESET ROLE;
+REVOKE UPDATE ON TABLE lock_view8 FROM regress_rol_lock1;
 
 --
 -- Clean up
 --
+DROP VIEW lock_view8;
 DROP VIEW lock_view7;
 DROP VIEW lock_view6;
 DROP VIEW lock_view5;

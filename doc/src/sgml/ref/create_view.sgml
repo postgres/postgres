@@ -137,8 +137,6 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
           This parameter may be either <literal>local</literal> or
           <literal>cascaded</literal>, and is equivalent to specifying
           <literal>WITH [ CASCADED | LOCAL ] CHECK OPTION</literal> (see below).
-          This option can be changed on existing views using <link
-          linkend="sql-alterview"><command>ALTER VIEW</command></link>.
          </para>
         </listitem>
        </varlistentry>
@@ -152,7 +150,22 @@ CREATE VIEW [ <replaceable>schema</replaceable> . ] <replaceable>view_name</repl
          </para>
         </listitem>
        </varlistentry>
-      </variablelist></para>
+
+       <varlistentry>
+        <term><literal>security_invoker</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          This option causes the underlying base relations to be checked
+          against the privileges of the user of the view rather than the view
+          owner.  See the notes below for full details.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist>
+
+      All of the above options can be changed on existing views using <link
+      linkend="sql-alterview"><command>ALTER VIEW</command></link>.
+     </para>
     </listitem>
    </varlistentry>
 
@@ -265,18 +278,74 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    </para>
 
    <para>
-    Access to tables referenced in the view is determined by permissions of
-    the view owner.  In some cases, this can be used to provide secure but
-    restricted access to the underlying tables.  However, not all views are
-    secure against tampering; see <xref linkend="rules-privileges"/> for
-    details.  Functions called in the view are treated the same as if they had
-    been called directly from the query using the view.  Therefore the user of
-    a view must have permissions to call all functions used by the view.
+    By default, access to the underlying base relations referenced in the view
+    is determined by the permissions of the view owner.  In some cases, this
+    can be used to provide secure but restricted access to the underlying
+    tables.  However, not all views are secure against tampering; see <xref
+    linkend="rules-privileges"/> for details.
    </para>
 
    <para>
-    When <command>CREATE OR REPLACE VIEW</command> is used on an
-    existing view, only the view's defining SELECT rule is changed.
+    If the view has the <literal>security_invoker</literal> property set to
+    <literal>true</literal>, access to the underlying base relations is
+    determined by the permissions of the user executing the query, rather than
+    the view owner.  Thus, the user of a security invoker view must have the
+    relevant permissions on the view and its underlying base relations.
+   </para>
+
+   <para>
+    If any of the underlying base relations is a security invoker view, it
+    will be treated as if it had been accessed directly from the original
+    query.  Thus, a security invoker view will always check its underlying
+    base relations using the permissions of the current user, even if it is
+    accessed from a view without the <literal>security_invoker</literal>
+    property.
+   </para>
+
+   <para>
+    If any of the underlying base relations has
+    <link linkend="ddl-rowsecurity">row-level security</link> enabled, then
+    by default, the row-level security policies of the view owner are applied,
+    and access to any additional relations referred to by those policies is
+    determined by the permissions of the view owner.  However, if the view has
+    <literal>security_invoker</literal> set to <literal>true</literal>, then
+    the policies and permissions of the invoking user are used instead, as if
+    the base relations had been referenced directly from the query using the
+    view.
+   </para>
+
+   <para>
+    Functions called in the view are treated the same as if they had been
+    called directly from the query using the view.  Therefore, the user of
+    a view must have permissions to call all functions used by the view.
+    Functions in the view are executed with the privileges of the user
+    executing the query or the function owner, depending on whether the
+    functions are defined as <literal>SECURITY INVOKER</literal> or
+    <literal>SECURITY DEFINER</literal>.  Thus, for example, calling
+    <literal>CURRENT_USER</literal> directly in a view will always return the
+    invoking user, not the view owner.  This is not affected by the view's
+    <literal>security_invoker</literal> setting, and so a view with
+    <literal>security_invoker</literal> set to <literal>false</literal> is
+    <emphasis>not</emphasis> equivalent to a
+    <literal>SECURITY DEFINER</literal> function and those concepts should not
+    be confused.
+   </para>
+
+   <para>
+    The user creating or replacing a view must have <literal>USAGE</literal>
+    privileges on any schemas referred to in the view query, in order to look
+    up the referenced objects in those schemas.  Note, however, that this
+    lookup only happens when the view is created or replaced.  Therefore, the
+    user of the view only requires the <literal>USAGE</literal> privilege on
+    the schema containing the view, not on the schemas referred to in the view
+    query, even for a security invoker view.
+   </para>
+
+   <para>
+    When <command>CREATE OR REPLACE VIEW</command> is used on an existing
+    view, only the view's defining SELECT rule, plus any
+    <literal>WITH ( ... )</literal> parameters and its
+    <literal>CHECK OPTION</literal> are changed.
     Other view properties, including ownership, permissions, and non-SELECT
     rules, remain unchanged.  You must own the view
     to replace it (this includes being a member of the owning role).
@@ -387,10 +456,13 @@ CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
    <para>
     Note that the user performing the insert, update or delete on the view
     must have the corresponding insert, update or delete privilege on the
-    view.  In addition the view's owner must have the relevant privileges on
-    the underlying base relations, but the user performing the update does
-    not need any permissions on the underlying base relations (see
-    <xref linkend="rules-privileges"/>).
+    view.  In addition, by default, the view's owner must have the relevant
+    privileges on the underlying base relations, whereas the user performing
+    the update does not need any permissions on the underlying base relations
+    (see <xref linkend="rules-privileges"/>).  However, if the view has
+    <literal>security_invoker</literal> set to <literal>true</literal>, the
+    user performing the update, rather than the view owner, must have the
+    relevant privileges on the underlying base relations.
    </para>
   </refsect2>
  </refsect1>
@@ -486,7 +558,8 @@ UNION ALL
    <command>CREATE OR REPLACE VIEW</command> is a
    <productname>PostgreSQL</productname> language extension.
    So is the concept of a temporary view.
-   The <literal>WITH ( ... )</literal> clause is an extension as well.
+   The <literal>WITH ( ... )</literal> clause is an extension as well, as are
+   security barrier views and security invoker views.
   </para>
  </refsect1>
 

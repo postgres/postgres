@@ -3242,18 +3242,24 @@ rewriteTargetView(Query *parsetree, Relation view)
 				   0);
 
 	/*
-	 * Mark the new target RTE for the permissions checks that we want to
-	 * enforce against the view owner, as distinct from the query caller.  At
-	 * the relation level, require the same INSERT/UPDATE/DELETE permissions
-	 * that the query caller needs against the view.  We drop the ACL_SELECT
-	 * bit that is presumably in new_rte->requiredPerms initially.
+	 * If the view has "security_invoker" set, mark the new target RTE for the
+	 * permissions checks that we want to enforce against the query caller.
+	 * Otherwise we want to enforce them against the view owner.
+	 *
+	 * At the relation level, require the same INSERT/UPDATE/DELETE
+	 * permissions that the query caller needs against the view.  We drop the
+	 * ACL_SELECT bit that is presumably in new_rte->requiredPerms initially.
 	 *
 	 * Note: the original view RTE remains in the query's rangetable list.
 	 * Although it will be unused in the query plan, we need it there so that
 	 * the executor still performs appropriate permissions checks for the
 	 * query caller's use of the view.
 	 */
-	new_rte->checkAsUser = view->rd_rel->relowner;
+	if (RelationHasSecurityInvoker(view))
+		new_rte->checkAsUser = InvalidOid;
+	else
+		new_rte->checkAsUser = view->rd_rel->relowner;
+
 	new_rte->requiredPerms = view_rte->requiredPerms;
 
 	/*

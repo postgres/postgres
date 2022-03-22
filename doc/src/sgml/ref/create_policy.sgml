@@ -608,7 +608,9 @@ AND
    This does not change how views
    work, however.  As with normal queries and views, permission checks and
    policies for the tables which are referenced by a view will use the view
-   owner's rights and any policies which apply to the view owner.
+   owner's rights and any policies which apply to the view owner, except if
+   the view is defined using the <literal>security_invoker</literal> option
+   (see <link linkend="sql-createview"><command>CREATE VIEW</command></link>).
   </para>
 
   <para>

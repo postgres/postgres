@@ -142,6 +142,15 @@ static relopt_bool boolRelOpts[] =
 	},
 	{
 		{
+			"security_invoker",
+			"Privileges on underlying relations are checked as the invoking user, not the view owner",
+			RELOPT_KIND_VIEW,
+			AccessExclusiveLock
+		},
+		false
+	},
+	{
+		{
 			"vacuum_truncate",
 			"Enables vacuum to truncate empty pages at the end of this table",
 			RELOPT_KIND_HEAP | RELOPT_KIND_TOAST,
@@ -1996,6 +2005,8 @@ view_reloptions(Datum reloptions, bool validate)
 	static const relopt_parse_elt tab[] = {
 		{"security_barrier", RELOPT_TYPE_BOOL,
 		offsetof(ViewOptions, security_barrier)},
+		{"security_invoker", RELOPT_TYPE_BOOL,
+		offsetof(ViewOptions, security_invoker)},
 		{"check_option", RELOPT_TYPE_ENUM,
 		offsetof(ViewOptions, check_option)}
 	};
