@@ -192,6 +192,11 @@ _PG_fini(void)
 static void
 emit_audit_message(const char *type, const char *hook, char *action, char *objName)
 {
+	/*
+	 * Ensure that audit messages are not duplicated by only emitting them from
+	 * a leader process, not a worker process. This makes the test results
+	 * deterministic even if run with force_parallel_mode = regress.
+	 */
 	if (REGRESS_audit && !IsParallelWorker())
 	{
 		const char *who = superuser_arg(GetUserId()) ? "superuser" : "non-superuser";

@@ -39,7 +39,7 @@ SET test_oat_hooks.deny_object_access = true;
 SET test_oat_hooks.deny_exec_perms = true;
 SET test_oat_hooks.deny_utility_commands = true;
 
--- Try again as non-superuser with permisisons denied
+-- Try again as non-superuser with permissions denied
 SET SESSION AUTHORIZATION regress_test_user;
 SELECT * FROM regress_test_table;
 SELECT regress_test_func('arg');

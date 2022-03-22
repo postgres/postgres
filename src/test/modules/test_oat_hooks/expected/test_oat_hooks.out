@@ -155,7 +155,7 @@ NOTICE:  in process utility: superuser attempting set
 NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_utility_commands]
 NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_utility_commands]
 NOTICE:  in process utility: superuser finished set
--- Try again as non-superuser with permisisons denied
+-- Try again as non-superuser with permissions denied
 SET SESSION AUTHORIZATION regress_test_user;
 NOTICE:  in process utility: superuser attempting set
 NOTICE:  in object_access_hook_str: non-superuser attempting alter (set) [session_authorization]

@@ -1,13 +1,10 @@
 # src/test/modules/test_oat_hooks/Makefile
 
 MODULE_big = test_oat_hooks
-OBJS = \
-	$(WIN32RES) \
-	test_oat_hooks.o
+OBJS = test_oat_hooks.o $(WIN32RES)
 PGFILEDESC = "test_oat_hooks - example use of object access hooks"
 
 REGRESS = test_oat_hooks
-NO_INSTALLCHECK = 1
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
