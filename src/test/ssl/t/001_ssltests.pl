@@ -83,8 +83,13 @@ switch_server_cert($node, 'server-cn-only');
 
 note "running client tests";
 
+# Set of default settings for SSL parameters in connection string.  This
+# makes the tests protected against any defaults the environment may have
+# in ~/.postgresql/.
+my $default_ssl_connstr = "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid";
+
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 # The server should not accept non-SSL connections
 note "test that the server doesn't accept non-SSL connections";
@@ -139,7 +144,7 @@ test_connect_ok(
 # match the hostname in the server's certificate.
 note "test mismatch between hostname and server certificate";
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok("sslmode=require host=wronghost.test");
 test_connect_ok("sslmode=verify-ca host=wronghost.test");
@@ -150,7 +155,7 @@ switch_server_cert($node, 'server-multiple-alt-names');
 
 note "test hostname matching with X.509 Subject Alternative Names";
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok("host=dns1.alt-name.pg-ssltest.test");
 test_connect_ok("host=dns2.alt-name.pg-ssltest.test");
@@ -165,7 +170,7 @@ switch_server_cert($node, 'server-single-alt-name');
 
 note "test hostname matching with a single X.509 Subject Alternative Name";
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok("host=single.alt-name.pg-ssltest.test");
 
@@ -178,7 +183,7 @@ switch_server_cert($node, 'server-cn-and-alt-names');
 
 note "test certificate with both a CN and SANs";
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR sslmode=verify-full";
 
 test_connect_ok("host=dns1.alt-name.pg-ssltest.test");
 test_connect_ok("host=dns2.alt-name.pg-ssltest.test");
@@ -188,7 +193,7 @@ test_connect_fails("host=common-name.pg-ssltest.test");
 # not a very sensible certificate, but libpq should handle it gracefully.
 switch_server_cert($node, 'server-no-names');
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok("sslmode=verify-ca host=common-name.pg-ssltest.test");
 test_connect_fails("sslmode=verify-full host=common-name.pg-ssltest.test");
@@ -198,7 +203,7 @@ note "testing client-side CRL";
 switch_server_cert($node, 'server-revoked');
 
 $common_connstr =
-"user=ssltestuser dbname=trustdb sslcert=invalid hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
+"$default_ssl_connstr user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
 
 # Without the CRL, succeeds. With it, fails.
 test_connect_ok("sslrootcert=ssl/root+server_ca.crt sslmode=verify-ca");
@@ -212,7 +217,7 @@ test_connect_fails(
 
 note "testing certificate authorization";
 $common_connstr =
-"sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
+"$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR";
 
 # no client cert
 test_connect_fails("user=ssltestuser sslcert=invalid");
@@ -233,7 +238,7 @@ test_connect_fails(
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, 'server-cn-only', 'root_ca');
 $common_connstr =
-"user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
+"$default_ssl_connstr user=ssltestuser dbname=certdb sslkey=ssl/client_tmp.key sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR";
 
 test_connect_ok("sslmode=require sslcert=ssl/client+client_ca.crt");
 test_connect_fails("sslmode=require sslcert=ssl/client.crt");
