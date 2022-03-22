@@ -62,8 +62,13 @@ configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
 # 001 test does.
 switch_server_cert($node, 'server-revoked');
 
+# Set of default settings for SSL parameters in connection string.  This
+# makes the tests protected against any defaults the environment may have
+# in ~/.postgresql/.
+my $default_ssl_connstr = "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
+
 $common_connstr =
-  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR host=localhost " .
+  "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR host=localhost " .
   "user=ssltestuser sslcert=ssl/client_ext.crt sslkey=$client_tmp_key";
 
 # Make sure we can connect even though previous test suites have established this
@@ -93,7 +98,7 @@ $result = $node->safe_psql("certdb", "SELECT ssl_client_cert_present();",
 is($result, 't', "ssl_client_cert_present() for connection with cert");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_cert_present();",
-  connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
+  connstr => "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require " .
   "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, 'f', "ssl_client_cert_present() for connection without cert");
 
@@ -108,7 +113,7 @@ $result = $node->psql("certdb", "SELECT ssl_client_dn_field('invalid');",
 is($result, '3', "ssl_client_dn_field() for an invalid field");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_dn_field('commonName');",
-  connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
+  connstr => "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require " .
   "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, '', "ssl_client_dn_field() for connection without cert");
 
