@@ -13,6 +13,7 @@
 
 #include "postgres.h"
 
+#include "access/parallel.h"
 #include "catalog/dependency.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_proc.h"
@@ -68,15 +69,6 @@ void		_PG_fini(void);
 void
 _PG_init(void)
 {
-	/*
-	 * We allow to load the Object Access Type test module on single-user-mode
-	 * or shared_preload_libraries settings only.
-	 */
-	if (IsUnderPostmaster)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("test_oat_hooks must be loaded via shared_preload_libraries")));
-
 	/*
 	 * test_oat_hooks.deny_set_variable = (on|off)
 	 */
@@ -200,7 +192,7 @@ _PG_fini(void)
 static void
 emit_audit_message(const char *type, const char *hook, char *action, char *objName)
 {
-	if (REGRESS_audit)
+	if (REGRESS_audit && !IsParallelWorker())
 	{
 		const char *who = superuser_arg(GetUserId()) ? "superuser" : "non-superuser";
 

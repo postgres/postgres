@@ -2,6 +2,7 @@
 -- object_access_hook_str.  Since the auditing GUC starts out false, we miss the
 -- initial "attempting" audit message from the ProcessUtility_hook, but we
 -- should thereafter see the audit messages
+LOAD 'test_oat_hooks';
 SET test_oat_hooks.audit = true;
 
 -- Create objects for use in the test
