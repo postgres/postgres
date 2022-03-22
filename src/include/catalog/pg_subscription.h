@@ -17,6 +17,7 @@
 #ifndef PG_SUBSCRIPTION_H
 #define PG_SUBSCRIPTION_H
 
+#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_subscription_d.h"
 
