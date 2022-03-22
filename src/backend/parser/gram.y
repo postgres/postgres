@@ -635,14 +635,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <defelt>		hash_partbound_elem
 
 
-%type <node>		json_format_clause_opt
-					json_representation
-					json_value_expr
-					json_output_clause_opt
-
-%type <ival>		json_encoding
-					json_encoding_clause_opt
-
 /*
  * Non-keyword token types.  These are hard-wired into the "flex" lexer.
  * They must be listed first so that their numeric codes do not depend on
@@ -694,7 +686,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	EXTENSION EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FILTER FINALIZE FIRST_P FLOAT_P FOLLOWING FOR
-	FORCE FOREIGN FORMAT FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
+	FORCE FOREIGN FORWARD FREEZE FROM FULL FUNCTION FUNCTIONS
 
 	GENERATED GLOBAL GRANT GRANTED GREATEST GROUP_P GROUPING GROUPS
 
@@ -705,7 +697,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P INTEGER
 	INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
-	JOIN JSON
+	JOIN
 
 	KEY
 
@@ -789,7 +781,6 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 
 /* Precedence: lowest to highest */
 %nonassoc	SET				/* see relation_expr_opt_alias */
-%right		FORMAT
 %left		UNION EXCEPT
 %left		INTERSECT
 %left		OR
@@ -15244,54 +15235,6 @@ opt_asymmetric: ASYMMETRIC
 			| /*EMPTY*/
 		;
 
-/* SQL/JSON support */
-
-json_value_expr:
-			a_expr json_format_clause_opt
-			{
-				$$ = (Node *) makeJsonValueExpr((Expr *) $1, $2);
-			}
-		;
-
-json_format_clause_opt:
-			FORMAT json_representation
-				{
-					$$ = $2;
-					$$.location = @1;
-				}
-			| /* EMPTY */
-				{
-					$$ = (Node *) makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
-				}
-		;
-
-json_representation:
-			JSON json_encoding_clause_opt
-				{
-					$$ = (Node *) makeJsonFormat(JS_FORMAT_JSON, $2, @1);
-				}
-		/*	| other implementation defined JSON representation options (BSON, AVRO etc) */
-		;
-
-json_encoding_clause_opt:
-			ENCODING json_encoding					{ $$ = $2; }
-			| /* EMPTY */							{ $$ = JS_ENC_DEFAULT; }
-		;
-
-json_encoding:
-			name									{ $$ = makeJsonEncoding($1); }
-		;
-
-json_output_clause_opt:
-			RETURNING Typename json_format_clause_opt
-				{
-					JsonOutput *n = makeNode(JsonOutput);
-					n->typeName = $2;
-					n->returning.format = $3;
-					$$ = (Node *) n;
-				}
-			| /* EMPTY */							{ $$ = NULL; }
-		;
 
 /*****************************************************************************
  *
@@ -15833,7 +15776,6 @@ unreserved_keyword:
 			| FIRST_P
 			| FOLLOWING
 			| FORCE
-			| FORMAT
 			| FORWARD
 			| FUNCTION
 			| FUNCTIONS
@@ -15865,7 +15807,6 @@ unreserved_keyword:
 			| INSTEAD
 			| INVOKER
 			| ISOLATION
-			| JSON
 			| KEY
 			| LABEL
 			| LANGUAGE
@@ -16382,7 +16323,6 @@ bare_label_keyword:
 			| FOLLOWING
 			| FORCE
 			| FOREIGN
-			| FORMAT
 			| FORWARD
 			| FREEZE
 			| FULL
@@ -16427,7 +16367,6 @@ bare_label_keyword:
 			| IS
 			| ISOLATION
 			| JOIN
-			| JSON
 			| KEY
 			| LABEL
 			| LANGUAGE
