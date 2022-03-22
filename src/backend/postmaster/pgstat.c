@@ -2132,7 +2132,7 @@ pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
 }
 
 /* ----------
- * pgstat_replslot_entry
+ * pgstat_get_replslot_entry
  *
  * Return the entry of replication slot stats with the given name. Return
  * NULL if not found and the caller didn't request to create it.
