@@ -362,19 +362,24 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
 </screen>
    The LSN of the transaction that contains the change violating the constraint and
    the replication origin name can be found from the server log (LSN 0/14C0378 and
-   replication origin <literal>pg_16395</literal> in the above case).  To skip the
-   transaction, the subscription needs to be disabled temporarily by
-   <command>ALTER SUBSCRIPTION ... DISABLE</command> first or alternatively, the
+   replication origin <literal>pg_16395</literal> in the above case).  The
+   transaction that produces conflict can be skipped by using
+   <command>ALTER SUBSCRIPTION ... SKIP</command> with the finish LSN
+   (i.e., LSN 0/14C0378).  The finish LSN could be an LSN at which the transaction
+   is committed or prepared on the publisher.  Alternatively, the transaction can
+   also be skipped by calling the <link linkend="pg-replication-origin-advance">
+   <function>pg_replication_origin_advance()</function></link> function
+   transaction.  Before using this function, the subscription needs to be disabled
+   temporarily either by <command>ALTER SUBSCRIPTION ... DISABLE</command> or, the
    subscription can be used with the <literal>disable_on_error</literal> option.
-   Then, the transaction can be skipped by calling the
-   <link linkend="pg-replication-origin-advance">
-   <function>pg_replication_origin_advance()</function></link> function with
-   the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>) and the
-   next LSN of the transaction's LSN (i.e., LSN 0/14C0379).  After that the replication
-   can be resumed by <command>ALTER SUBSCRIPTION ... ENABLE</command>.  The current
-   position of origins can be seen in the
-   <link linkend="view-pg-replication-origin-status">
+   Then, you can use <function>pg_replication_origin_advance()</function> function
+   with the <parameter>node_name</parameter> (i.e., <literal>pg_16395</literal>)
+   and the next LSN of the finish LSN (i.e., 0/14C0379).  The current position of
+   origins can be seen in the <link linkend="view-pg-replication-origin-status">
    <structname>pg_replication_origin_status</structname></link> system view.
+   Please note that skipping the whole transaction include skipping changes that
+   might not violate any constraint.  This can easily make the subscriber
+   inconsistent.
   </para>
  </sect1>
 

@@ -9983,6 +9983,15 @@ AlterSubscriptionStmt:
 											(Node *)makeBoolean(false), @1));
 					$$ = (Node *)n;
 				}
+			| ALTER SUBSCRIPTION name SKIP definition
+				{
+					AlterSubscriptionStmt *n =
+						makeNode(AlterSubscriptionStmt);
+					n->kind = ALTER_SUBSCRIPTION_SKIP;
+					n->subname = $3;
+					n->options = $5;
+					$$ = (Node *)n;
+				}
 		;
 
 /*****************************************************************************
