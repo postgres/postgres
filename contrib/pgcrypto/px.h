@@ -47,7 +47,7 @@
 #define PXE_ERR_GENERIC				-1
 #define PXE_NO_HASH					-2
 #define PXE_NO_CIPHER				-3
-#define PXE_NOTBLOCKSIZE			-4
+/* -4 is unused */
 #define PXE_BAD_OPTION				-5
 #define PXE_BAD_FORMAT				-6
 #define PXE_KEY_TOO_BIG				-7
@@ -144,8 +144,8 @@ struct px_cipher
 	unsigned	(*iv_size) (PX_Cipher *c);
 
 	int			(*init) (PX_Cipher *c, const uint8 *key, unsigned klen, const uint8 *iv);
-	int			(*encrypt) (PX_Cipher *c, const uint8 *data, unsigned dlen, uint8 *res);
-	int			(*decrypt) (PX_Cipher *c, const uint8 *data, unsigned dlen, uint8 *res);
+	int			(*encrypt) (PX_Cipher *c, int padding, const uint8 *data, unsigned dlen, uint8 *res, unsigned *rlen);
+	int			(*decrypt) (PX_Cipher *c, int padding, const uint8 *data, unsigned dlen, uint8 *res, unsigned *rlen);
 	void		(*free) (PX_Cipher *c);
 	/* private */
 	void	   *ptr;
@@ -208,10 +208,10 @@ void		px_debug(const char *fmt,...) pg_attribute_printf(1, 2);
 #define px_cipher_block_size(c)		(c)->block_size(c)
 #define px_cipher_iv_size(c)		(c)->iv_size(c)
 #define px_cipher_init(c, k, klen, iv)	(c)->init(c, k, klen, iv)
-#define px_cipher_encrypt(c, data, dlen, res) \
-					(c)->encrypt(c, data, dlen, res)
-#define px_cipher_decrypt(c, data, dlen, res) \
-					(c)->decrypt(c, data, dlen, res)
+#define px_cipher_encrypt(c, padding, data, dlen, res, rlen) \
+					(c)->encrypt(c, padding, data, dlen, res, rlen)
+#define px_cipher_decrypt(c, padding, data, dlen, res, rlen) \
+					(c)->decrypt(c, padding, data, dlen, res, rlen)
 #define px_cipher_free(c)		(c)->free(c)
 
 
