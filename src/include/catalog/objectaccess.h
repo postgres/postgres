@@ -121,15 +121,23 @@ typedef struct
 	bool		result;
 } ObjectAccessNamespaceSearch;
 
-/* Plugin provides a hook function matching this signature. */
+/* Plugin provides a hook function matching one or both of these signatures. */
 typedef void (*object_access_hook_type) (ObjectAccessType access,
 										 Oid classId,
 										 Oid objectId,
 										 int subId,
 										 void *arg);
 
+typedef void (*object_access_hook_type_str) (ObjectAccessType access,
+										 Oid classId,
+										 const char *objectStr,
+										 int subId,
+										 void *arg);
+
 /* Plugin sets this variable to a suitable hook function. */
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
+extern PGDLLIMPORT object_access_hook_type_str object_access_hook_str;
+
 
 /* Core code uses these functions to call the hook (see macros below). */
 extern void RunObjectPostCreateHook(Oid classId, Oid objectId, int subId,
@@ -141,6 +149,18 @@ extern void RunObjectPostAlterHook(Oid classId, Oid objectId, int subId,
 								   Oid auxiliaryId, bool is_internal);
 extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
 extern void RunFunctionExecuteHook(Oid objectId);
+
+/* String versions */
+extern void RunObjectPostCreateHookStr(Oid classId, const char *objectStr, int subId,
+									bool is_internal);
+extern void RunObjectDropHookStr(Oid classId, const char *objectStr, int subId,
+							  int dropflags);
+extern void RunObjectTruncateHookStr(const char *objectStr);
+extern void RunObjectPostAlterHookStr(Oid classId, const char *objectStr, int subId,
+								   Oid auxiliaryId, bool is_internal);
+extern bool RunNamespaceSearchHookStr(const char *objectStr, bool ereport_on_violation);
+extern void RunFunctionExecuteHookStr(const char *objectStr);
+
 
 /*
  * The following macros are wrappers around the functions above; these should
@@ -193,5 +213,53 @@ extern void RunFunctionExecuteHook(Oid objectId);
 		if (object_access_hook)					\
 			RunFunctionExecuteHook(objectId);	\
 	} while(0)
+
+
+#define InvokeObjectPostCreateHookStr(classId,objectName,subId)			\
+	InvokeObjectPostCreateHookArgStr((classId),(objectName),(subId),false)
+#define InvokeObjectPostCreateHookArgStr(classId,objectName,subId,is_internal) \
+	do {															\
+		if (object_access_hook_str)										\
+			RunObjectPostCreateHookStr((classId),(objectName),(subId),	\
+									(is_internal));					\
+	} while(0)
+
+#define InvokeObjectDropHookStr(classId,objectName,subId)				\
+	InvokeObjectDropHookArgStr((classId),(objectName),(subId),0)
+#define InvokeObjectDropHookArgStr(classId,objectName,subId,dropflags)	\
+	do {															\
+		if (object_access_hook_str)										\
+			RunObjectDropHookStr((classId),(objectName),(subId),			\
+							  (dropflags));							\
+	} while(0)
+
+#define InvokeObjectTruncateHookStr(objectName)							\
+	do {															\
+		if (object_access_hook_str)										\
+			RunObjectTruncateHookStr(objectName);						\
+	} while(0)
+
+#define InvokeObjectPostAlterHookStr(className,objectName,subId)			\
+	InvokeObjectPostAlterHookArgStr((classId),(objectName),(subId),		\
+								 InvalidOid,false)
+#define InvokeObjectPostAlterHookArgStr(classId,objectName,subId,		\
+									 auxiliaryId,is_internal)		\
+	do {															\
+		if (object_access_hook_str)										\
+			RunObjectPostAlterHookStr((classId),(objectName),(subId),	\
+								   (auxiliaryId),(is_internal));	\
+	} while(0)
+
+#define InvokeNamespaceSearchHookStr(objectName, ereport_on_violation)	\
+	(!object_access_hook_str										\
+	 ? true															\
+	 : RunNamespaceSearchHookStr((objectName), (ereport_on_violation)))
+
+#define InvokeFunctionExecuteHookStr(objectName)		\
+	do {										\
+		if (object_access_hook_str)					\
+			RunFunctionExecuteHookStr(objectName);	\
+	} while(0)
+
 
 #endif							/* OBJECTACCESS_H */

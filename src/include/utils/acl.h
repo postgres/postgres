@@ -146,9 +146,11 @@ typedef struct ArrayType Acl;
 #define ACL_CREATE_CHR			'C'
 #define ACL_CREATE_TEMP_CHR		'T'
 #define ACL_CONNECT_CHR			'c'
+#define ACL_SET_VALUE_CHR		's'
+#define ACL_ALTER_SYSTEM_CHR	'A'
 
 /* string holding all privilege code chars, in order by bitmask position */
-#define ACL_ALL_RIGHTS_STR	"arwdDxtXUCTc"
+#define ACL_ALL_RIGHTS_STR	"arwdDxtXUCTcsA"
 
 /*
  * Bitmasks defining "all rights" for each supported object type

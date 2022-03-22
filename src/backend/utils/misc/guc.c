@@ -43,6 +43,7 @@
 #include "access/xlog_internal.h"
 #include "access/xlogrecovery.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
 #include "catalog/storage.h"
 #include "commands/async.h"
@@ -8737,6 +8738,18 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	}
 
 	/*
+	 * Invoke the post-alter hook for altering this GUC variable.
+	 *
+	 * We do this here rather than at the end, because ALTER SYSTEM is not
+	 * transactional.  If the hook aborts our transaction, it will be cleaner
+	 * to do so before we touch any files.
+	 */
+	InvokeObjectPostAlterHookArgStr(InvalidOid, name,
+									ACL_ALTER_SYSTEM,
+									altersysstmt->setstmt->kind,
+									false);
+
+	/*
 	 * To ensure crash safety, first write the new file data to a temp file,
 	 * then atomically rename it into place.
 	 *
@@ -8907,6 +8920,10 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			ResetAllOptions();
 			break;
 	}
+
+	/* Invoke the post-alter hook for setting this GUC variable. */
+	InvokeObjectPostAlterHookArgStr(InvalidOid, stmt->name,
+									ACL_SET_VALUE, stmt->kind, false);
 }
 
 /*
