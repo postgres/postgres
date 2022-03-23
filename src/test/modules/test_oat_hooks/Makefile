@@ -1,7 +1,9 @@
 # src/test/modules/test_oat_hooks/Makefile
 
 MODULE_big = test_oat_hooks
-OBJS = test_oat_hooks.o $(WIN32RES)
+OBJS = \
+	$(WIN32RES) \
+	test_oat_hooks.o
 PGFILEDESC = "test_oat_hooks - example use of object access hooks"
 
 REGRESS = test_oat_hooks
