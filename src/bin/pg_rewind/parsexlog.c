@@ -102,7 +102,9 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 	 * If 'endpoint' didn't point exactly at a record boundary, the caller
 	 * messed up.
 	 */
-	Assert(xlogreader->EndRecPtr == endpoint);
+	if (xlogreader->EndRecPtr != endpoint)
+		pg_fatal("end pointer %X/%X is not a valid end point; expected %X/%X",
+				 LSN_FORMAT_ARGS(endpoint), LSN_FORMAT_ARGS(xlogreader->EndRecPtr));
 
 	XLogReaderFree(xlogreader);
 	if (xlogreadfd != -1)
