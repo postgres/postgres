@@ -6,6 +6,9 @@ PGFILEDESC = "test_oat_hooks - example use of object access hooks"
 
 REGRESS = test_oat_hooks
 
+# disable installcheck for now
+NO_INSTALLCHECK = 1
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
