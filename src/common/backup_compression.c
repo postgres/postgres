@@ -72,6 +72,7 @@ get_bc_algorithm_name(bc_algorithm algorithm)
 			/* no default, to provoke compiler warnings if values are added */
 	}
 	Assert(false);
+	return "???";	/* placate compiler */
 }
 
 /*
