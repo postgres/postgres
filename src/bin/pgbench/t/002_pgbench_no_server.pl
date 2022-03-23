@@ -188,6 +188,16 @@ my @options = (
 		'-i --partition-method=hash',
 		[qr{partition-method requires greater than zero --partitions}]
 	],
+	[
+		'bad maximum number of tries',
+		'--max-tries -10',
+		[qr{invalid number of maximum tries: "-10"}]
+	],
+	[
+		'an infinite number of tries',
+		'--max-tries 0',
+		[qr{an unlimited number of transaction tries can only be used with --latency-limit or a duration}]
+	],
 
 	# logging sub-options
 	[

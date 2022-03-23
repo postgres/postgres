@@ -73,6 +73,8 @@ typedef struct ConditionalStackData *ConditionalStack;
 
 extern ConditionalStack conditional_stack_create(void);
 
+extern void conditional_stack_reset(ConditionalStack cstack);
+
 extern void conditional_stack_destroy(ConditionalStack cstack);
 
 extern int	conditional_stack_depth(ConditionalStack cstack);

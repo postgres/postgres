@@ -56,20 +56,29 @@ scaling factor: 10
 query mode: simple
 number of clients: 10
 number of threads: 1
+maximum number of tries: 1
 number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
+number of failed transactions: 0 (0.000%)
 latency average = 11.013 ms
 latency stddev = 7.351 ms
 initial connection time = 45.758 ms
 tps = 896.967014 (without initial connection time)
 </screen>
 
-  The first six lines report some of the most important parameter
-  settings.  The next line reports the number of transactions completed
+  The first seven lines report some of the most important parameter
+  settings.
+  The sixth line reports the maximum number of tries for transactions with
+  serialization or deadlock errors (see <xref linkend="failures-and-retries"/> 
+  for more information).
+  The eighth line reports the number of transactions completed
   and intended (the latter being just the product of number of clients
   and number of transactions per client); these will be equal unless the run
-  failed before completion.  (In <option>-T</option> mode, only the actual
-  number of transactions is printed.)
+  failed before completion or some SQL command(s) failed.  (In
+  <option>-T</option> mode, only the actual number of transactions is printed.)
+  The next line reports the number of failed transactions due to
+  serialization or deadlock errors (see <xref linkend="failures-and-retries"/>
+  for more information).
   The last line reports the number of transactions per second.
  </para>
 
@@ -531,6 +540,17 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         at all. They are counted and reported separately as
         <firstterm>skipped</firstterm>.
        </para>
+       <para>
+        When the <option>--max-tries</option> option is used, the transaction with
+        serialization or deadlock error cannot be retried if the total time of
+        all its tries is greater than <replaceable>limit</replaceable> ms. To
+        limit only the time of tries and not their number, use
+        <literal>--max-tries=0</literal>. By default option
+        <option>--max-tries</option> is set to 1 and transactions with
+        serialization/deadlock errors are not retried. See <xref
+        linkend="failures-and-retries"/> for more information about retrying
+        such transactions.
+       </para>
        </listitem>
      </varlistentry>
 
@@ -597,23 +617,29 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Show progress report every <replaceable>sec</replaceable> seconds.  The report
         includes the time since the beginning of the run, the TPS since the
-        last report, and the transaction latency average and standard
-        deviation since the last report.  Under throttling (<option>-R</option>),
-        the latency is computed with respect to the transaction scheduled
-        start time, not the actual transaction beginning time, thus it also
-        includes the average schedule lag time.
+        last report, and the transaction latency average, standard deviation,
+        and the number of failed transactions since the last report. Under
+        throttling (<option>-R</option>), the latency is computed with respect
+        to the transaction scheduled start time, not the actual transaction
+        beginning time, thus it also includes the average schedule lag time.
+        When <option>--max-tries</option> is used to enable transactions retries
+        after serialization/deadlock errors, the report includes the number of
+        retried transactions and the sum of all retries.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-r</option></term>
-      <term><option>--report-latencies</option></term>
+      <term><option>--report-per-command</option></term>
       <listitem>
        <para>
-        Report the average per-statement latency (execution time from the
-        perspective of the client) of each command after the benchmark
-        finishes.  See below for details.
+        Report the following statistics for each command after the benchmark
+        finishes: the average per-statement latency (execution time from the
+        perspective of the client), the number of failures and the number of
+        retries after serialization or deadlock errors in this command.  The
+        report displays retry statistics only if the
+        <option>--max-tries</option> option is not equal to 1.
        </para>
       </listitem>
      </varlistentry>
@@ -742,11 +768,60 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
+      <term><option>--failures-detailed</option></term>
+      <listitem>
+       <para>
+        Report failures in per-transaction and aggregation logs, as well as in
+        the main and per-script reports, grouped by the following types:
+        <itemizedlist>
+         <listitem>
+          <para>serialization failures;</para>
+         </listitem>
+         <listitem>
+          <para>deadlock failures;</para>
+         </listitem>
+        </itemizedlist>
+        See <xref linkend="failures-and-retries"/> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--log-prefix=<replaceable>prefix</replaceable></option></term>
       <listitem>
        <para>
         Set the filename prefix for the log files created by
         <option>--log</option>.  The default is <literal>pgbench_log</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--max-tries=<replaceable>number_of_tries</replaceable></option></term>
+      <listitem>
+       <para>
+        Enable retries for transactions with serialization/deadlock errors and
+        set the maximum number of these tries. This option can be combined with
+        the <option>--latency-limit</option> option which limits the total time
+        of all transaction tries; moreover, you cannot use an unlimited number
+        of tries (<literal>--max-tries=0</literal>) without
+        <option>--latency-limit</option> or <option>--time</option>.
+        The default value is 1 and transactions with serialization/deadlock
+        errors are not retried. See <xref linkend="failures-and-retries"/>
+        for more information about retrying such transactions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--verbose-errors</option></term>
+      <listitem>
+       <para>
+        Print messages about all errors and failures (errors without retrying)
+        including which limit for retries was violated and how far it was
+        exceeded for the serialization/deadlock failures. (Note that in this
+        case the output can be significantly increased.).
+        See <xref linkend="failures-and-retries"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -948,8 +1023,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
  <refsect1>
   <title>Notes</title>
 
- <refsect2>
-  <title>What Is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
+ <refsect2 id="transactions-and-scripts" xreflabel="What is the &quot;Transaction&quot; Actually Performed in pgbench?">
+  <title>What is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
    <application>pgbench</application> executes test scripts chosen randomly
@@ -1021,6 +1096,11 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
     by a meta command).  If you need to create a script file that works with
     both old and new versions of <application>pgbench</application>, be sure to write
     each SQL command on a single line ending with a semicolon.
+   </para>
+   <para>
+    It is assumed that pgbench scripts do not contain incomplete blocks of SQL
+    transactions. If at runtime the client reaches the end of the script without
+    completing the last transaction block, it will be aborted.
    </para>
   </note>
 
@@ -2212,7 +2292,7 @@ END;
    The format of the log is:
 
 <synopsis>
-<replaceable>client_id</replaceable> <replaceable>transaction_no</replaceable> <replaceable>time</replaceable> <replaceable>script_no</replaceable> <replaceable>time_epoch</replaceable> <replaceable>time_us</replaceable> <optional> <replaceable>schedule_lag</replaceable> </optional>
+<replaceable>client_id</replaceable> <replaceable>transaction_no</replaceable> <replaceable>time</replaceable> <replaceable>script_no</replaceable> <replaceable>time_epoch</replaceable> <replaceable>time_us</replaceable> <optional> <replaceable>schedule_lag</replaceable> </optional> <optional> <replaceable>retries</replaceable> </optional>
 </synopsis>
 
    where
@@ -2233,6 +2313,16 @@ END;
    When both <option>--rate</option> and <option>--latency-limit</option> are used,
    the <replaceable>time</replaceable> for a skipped transaction will be reported as
    <literal>skipped</literal>.
+   <replaceable>retries</replaceable> is the sum of all retries after the
+   serialization or deadlock errors during the current script execution. It is
+   present only if the <option>--max-tries</option> option is not equal to 1.
+   If the transaction ends with a failure, its <replaceable>time</replaceable>
+   will be reported as <literal>failed</literal>. If you use the
+   <option>--failures-detailed</option> option, the
+   <replaceable>time</replaceable> of the failed transaction will be reported as
+   <literal>serialization</literal> or
+   <literal>deadlock</literal> depending on the type of failure (see
+   <xref linkend="failures-and-retries"/> for more information).
   </para>
 
   <para>
@@ -2262,6 +2352,41 @@ END;
   </para>
 
   <para>
+   The following example shows a snippet of a log file with failures and
+   retries, with the maximum number of tries set to 10 (note the additional
+   <replaceable>retries</replaceable> column):
+<screen>
+3 0 47423 0 1499414498 34501 3
+3 1 8333 0 1499414498 42848 0
+3 2 8358 0 1499414498 51219 0
+4 0 72345 0 1499414498 59433 6
+1 3 41718 0 1499414498 67879 4
+1 4 8416 0 1499414498 76311 0
+3 3 33235 0 1499414498 84469 3
+0 0 failed 0 1499414498 84905 9
+2 0 failed 0 1499414498 86248 9
+3 4 8307 0 1499414498 92788 0
+</screen>
+  </para>
+
+  <para>
+   If <option>--failures-detailed</option> option is used, the type of
+   failure is reported in the <replaceable>time</replaceable> like this:
+<screen>
+3 0 47423 0 1499414498 34501 3
+3 1 8333 0 1499414498 42848 0
+3 2 8358 0 1499414498 51219 0
+4 0 72345 0 1499414498 59433 6
+1 3 41718 0 1499414498 67879 4
+1 4 8416 0 1499414498 76311 0
+3 3 33235 0 1499414498 84469 3
+0 0 serialization 0 1499414498 84905 9
+2 0 serialization 0 1499414498 86248 9
+3 4 8307 0 1499414498 92788 0
+</screen>
+  </para>
+
+  <para>
    When running a long test on hardware that can handle a lot of transactions,
    the log files can become very large.  The <option>--sampling-rate</option> option
    can be used to log only a random sample of transactions.
@@ -2276,7 +2401,7 @@ END;
    format is used for the log files:
 
 <synopsis>
-<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable>&zwsp; <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable>&zwsp; <optional> <replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <optional> <replaceable>skipped</replaceable> </optional> </optional>
+<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable> <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable> { <replaceable>failures</replaceable> | <replaceable>serialization_failures</replaceable> <replaceable>deadlock_failures</replaceable> } <optional> <replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <optional> <replaceable>skipped</replaceable> </optional> </optional> <optional> <replaceable>retried</replaceable> <replaceable>retries</replaceable> </optional>
 </synopsis>
 
    where
@@ -2290,7 +2415,16 @@ END;
    transaction latencies within the interval,
    <replaceable>min_latency</replaceable> is the minimum latency within the interval,
    and
-   <replaceable>max_latency</replaceable> is the maximum latency within the interval.
+   <replaceable>max_latency</replaceable> is the maximum latency within the interval,
+   <replaceable>failures</replaceable> is the number of transactions that ended
+   with a failed SQL command within the interval. If you use option
+   <option>--failures-detailed</option>, instead of the sum of all failed
+   transactions you will get more detailed statistics for the failed
+   transactions grouped by the following types:
+   <replaceable>serialization_failures</replaceable> is the number of
+   transactions that got a serialization error and were not retried after this,
+   <replaceable>deadlock_failures</replaceable> is the number of transactions
+   that got a deadlock error and were not retried after this.
    The next fields,
    <replaceable>sum_lag</replaceable>, <replaceable>sum_lag_2</replaceable>, <replaceable>min_lag</replaceable>,
    and <replaceable>max_lag</replaceable>, are only present if the <option>--rate</option>
@@ -2298,21 +2432,25 @@ END;
    They provide statistics about the time each transaction had to wait for the
    previous one to finish, i.e., the difference between each transaction's
    scheduled start time and the time it actually started.
-   The very last field, <replaceable>skipped</replaceable>,
+   The next field, <replaceable>skipped</replaceable>,
    is only present if the <option>--latency-limit</option> option is used, too.
    It counts the number of transactions skipped because they would have
    started too late.
+   The <replaceable>retried</replaceable> and <replaceable>retries</replaceable>
+   fields are present only if the <option>--max-tries</option> option is not
+   equal to 1. They report the number of retried transactions and the sum of all
+   retries after serialization or deadlock errors within the interval.
    Each transaction is counted in the interval when it was committed.
   </para>
 
   <para>
    Here is some example output:
 <screen>
-1345828501 5601 1542744 483552416 61 2573
-1345828503 7884 1979812 565806736 60 1479
-1345828505 7208 1979422 567277552 59 1391
-1345828507 7685 1980268 569784714 60 1398
-1345828509 7073 1979779 573489941 236 1411
+1345828501 5601 1542744 483552416 61 2573 0
+1345828503 7884 1979812 565806736 60 1479 0
+1345828505 7208 1979422 567277552 59 1391 0
+1345828507 7685 1980268 569784714 60 1398 0
+1345828509 7073 1979779 573489941 236 1411 0
 </screen></para>
 
   <para>
@@ -2324,13 +2462,42 @@ END;
  </refsect2>
 
  <refsect2>
-  <title>Per-Statement Latencies</title>
+  <title>Per-Statement Report</title>
 
   <para>
-   With the <option>-r</option> option, <application>pgbench</application> collects
-   the elapsed transaction time of each statement executed by every
-   client.  It then reports an average of those values, referred to
-   as the latency for each statement, after the benchmark has finished.
+   With the <option>-r</option> option, <application>pgbench</application>
+   collects the following statistics for each statement:
+   <itemizedlist>
+     <listitem>
+       <para>
+         <literal>latency</literal> &mdash; elapsed transaction time for each
+         statement. <application>pgbench</application> reports an average value
+         of all successful runs of the statement.
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+         The number of failures in this statement. See
+         <xref linkend="failures-and-retries"/> for more information.
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+         The number of retries after a serialization or a deadlock error in this
+         statement. See <xref linkend="failures-and-retries"/> for more information.
+       </para>
+     </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   The report displays retry statistics only if the <option>--max-tries</option>
+   option is not equal to 1.
+  </para>
+
+  <para>
+   All values are computed for each statement executed by every client and are
+   reported after the benchmark has finished.
   </para>
 
   <para>
@@ -2342,29 +2509,67 @@ scaling factor: 1
 query mode: simple
 number of clients: 10
 number of threads: 1
+maximum number of tries: 1
 number of transactions per client: 1000
 number of transactions actually processed: 10000/10000
-latency average = 10.870 ms
-latency stddev = 7.341 ms
-initial connection time = 30.954 ms
-tps = 907.949122 (without initial connection time)
-statement latencies in milliseconds:
-    0.001  \set aid random(1, 100000 * :scale)
-    0.001  \set bid random(1, 1 * :scale)
-    0.001  \set tid random(1, 10 * :scale)
-    0.000  \set delta random(-5000, 5000)
-    0.046  BEGIN;
-    0.151  UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
-    0.107  SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
-    4.241  UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
-    5.245  UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
-    0.102  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
-    0.974  END;
+number of failed transactions: 0 (0.000%)
+number of transactions above the 50.0 ms latency limit: 1311/10000 (13.110 %)
+latency average = 28.488 ms
+latency stddev = 21.009 ms
+initial connection time = 69.068 ms
+tps = 346.224794 (without initial connection time)
+statement latencies in milliseconds and failures:
+   0.012  0  \set aid random(1, 100000 * :scale)
+   0.002  0  \set bid random(1, 1 * :scale)
+   0.002  0  \set tid random(1, 10 * :scale)
+   0.002  0  \set delta random(-5000, 5000)
+   0.319  0  BEGIN;
+   0.834  0  UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
+   0.641  0  SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+  11.126  0  UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
+  12.961  0  UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
+   0.634  0  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+   1.957  0  END;
 </screen>
+
+   Another example of output for the default script using serializable default
+   transaction isolation level (<command>PGOPTIONS='-c
+   default_transaction_isolation=serializable' pgbench ...</command>):
+<screen>
+starting vacuum...end.
+transaction type: &lt;builtin: TPC-B (sort of)&gt;
+scaling factor: 1
+query mode: simple
+number of clients: 10
+number of threads: 1
+maximum number of tries: 10
+number of transactions per client: 1000
+number of transactions actually processed: 6317/10000
+number of failed transactions: 3683 (36.830%)
+number of transactions retried: 7667 (76.670%)
+total number of retries: 45339
+number of transactions above the 50.0 ms latency limit: 106/6317 (1.678 %)
+latency average = 17.016 ms
+latency stddev = 13.283 ms
+initial connection time = 45.017 ms
+tps = 186.792667 (without initial connection time)
+statement latencies in milliseconds, failures and retries:
+  0.006     0      0  \set aid random(1, 100000 * :scale)
+  0.001     0      0  \set bid random(1, 1 * :scale)
+  0.001     0      0  \set tid random(1, 10 * :scale)
+  0.001     0      0  \set delta random(-5000, 5000)
+  0.385     0      0  BEGIN;
+  0.773     0      1  UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid;
+  0.624     0      0  SELECT abalance FROM pgbench_accounts WHERE aid = :aid;
+  1.098   320   3762  UPDATE pgbench_tellers SET tbalance = tbalance + :delta WHERE tid = :tid;
+  0.582  3363  41576  UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
+  0.465     0      0  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
+  1.933     0      0  END;
+ </screen>
   </para>
 
   <para>
-   If multiple script files are specified, the averages are reported
+   If multiple script files are specified, all statistics are reported
    separately for each script file.
   </para>
 
@@ -2375,6 +2580,140 @@ statement latencies in milliseconds:
    of slowdown varies significantly depending on platform and hardware.
    Comparing average TPS values with and without latency reporting enabled
    is a good way to measure if the timing overhead is significant.
+  </para>
+ </refsect2>
+
+ <refsect2 id="failures-and-retries" xreflabel="Failures and Serialization/Deadlock Retries">
+  <title>Failures and Serialization/Deadlock Retries</title>
+
+  <para>
+   When executing <application>pgbench</application>, there are three main types
+   of errors:
+   <itemizedlist>
+     <listitem>
+       <para>
+         Errors of the main program. They are the most serious and always result
+         in an immediate exit from the <application>pgbench</application> with
+         the corresponding error message. They include:
+         <itemizedlist>
+           <listitem>
+             <para>
+               errors at the beginning of the <application>pgbench</application>
+               (e.g. an invalid option value);
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+               errors in the initialization mode (e.g. the query to create
+               tables for built-in scripts fails);
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+               errors before starting threads (e.g. we could not connect to the
+               database server / the syntax error in the meta command / thread
+               creation failure);
+             </para>
+           </listitem>
+           <listitem>
+             <para>
+               internal <application>pgbench</application> errors (which are
+               supposed to never occur...).
+             </para>
+           </listitem>
+         </itemizedlist>
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+         Errors when the thread manages its clients (e.g. the client could not
+         start a connection to the database server / the socket for connecting
+         the client to the database server has become invalid). In such cases
+         all clients of this thread stop while other threads continue to work.
+       </para>
+     </listitem>
+     <listitem>
+       <para>
+         Direct client errors. They lead to immediate exit from the
+         <application>pgbench</application> with the corresponding error message
+         only in the case of an internal <application>pgbench</application>
+         error (which are supposed to never occur...). Otherwise in the worst
+         case they only lead to the abortion of the failed client while other
+         clients continue their run (but some client errors are handled without
+         an abortion of the client and reported separately, see below). Later in
+         this section it is assumed that the discussed errors are only the
+         direct client errors and they are not internal
+         <application>pgbench</application> errors.
+       </para>
+     </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   Client's run is aborted in case of a serious error, for example, the
+   connection with the database server was lost or the end of script reached
+   without completing the last transaction. In addition, if an execution of SQL
+   or meta command fails for reasons other than serialization or deadlock errors,
+   the client is aborted. Otherwise, if an SQL fails with serialization or
+   deadlock errors, the client is not aborted. In such cases, the current
+   transaction is rolled back, which also includes setting the client variables
+   as they were before the run of this transaction (it is assumed that one
+   transaction script contains only one transaction; see
+   <xref linkend="transactions-and-scripts"/> for more information).
+   Transactions with serialization or deadlock errors are repeated after
+   rollbacks until they complete successfully or reach the maximum
+   number of tries (specified by the <option>--max-tries</option> option) / the maximum
+   time of retries (specified by the <option>--latency-limit</option> option) / the end
+   of benchmark (specified by the <option>--time</option> option). If
+   the last trial run fails, this transaction will be reported as failed but
+   the client is not aborted and continue to work.
+  </para>
+
+  <note>
+   <para>
+    Without specifying the <option>--max-tries</option> option a transaction will
+    never be retried after a serialization or deadlock error because its default
+    values is 1. Use an unlimited number of tries (<literal>--max-tries=0</literal>)
+    and the <option>--latency-limit</option> option to limit only the maximum time
+    of tries. You can also use the <option>--time</option> option to limit the
+    benchmark duration under an unlimited number of tries.
+   </para>
+   <para>
+    Be careful when repeating scripts that contain multiple transactions: the
+    script is always retried completely, so the successful transactions can be
+    performed several times.
+   </para>
+   <para>
+    Be careful when repeating transactions with shell commands. Unlike the
+    results of SQL commands, the results of shell commands are not rolled back,
+    except for the variable value of the <command>\setshell</command> command.
+   </para>
+  </note>
+
+  <para>
+   The latency of a successful transaction includes the entire time of
+   transaction execution with rollbacks and retries. The latency is measured
+   only for successful transactions and commands but not for failed transactions
+   or commands.
+  </para>
+
+  <para>
+   The main report contains the number of failed transactions. If the
+   <option>--max-tries</option> option is not equal to 1, the main report also
+   contains the statistics related to retries: the total number of retried
+   transactions and total number of retries. The per-script report inherits all
+   these fields from the main report. The per-statement report displays retry
+   statistics only if the <option>--max-tries</option> option is not equal to 1.
+  </para>
+
+  <para>
+   If you want to group failures by basic types in per-transaction and
+   aggregation logs, as well as in the main and per-script reports, use the
+   <option>--failures-detailed</option> option. If you also want to distinguish
+   all errors and failures (errors without retrying) by type including which
+   limit for retries was violated and how far it was exceeded for the
+   serialization/deadlock failures, use the <option>--verbose-errors</option>
+   option.
   </para>
  </refsect2>
 

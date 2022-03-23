@@ -11,7 +11,9 @@ use Config;
 
 # start a pgbench specific server
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
+# Set to untranslated messages, to be able to compare program output with
+# expected strings.
+$node->init(extra => [ '--locale', 'C' ]);
 $node->start;
 
 # tablespace for testing, because partitioned tables cannot use pg_default
@@ -109,7 +111,8 @@ $node->pgbench(
 		qr{builtin: TPC-B},
 		qr{clients: 2\b},
 		qr{processed: 10/10},
-		qr{mode: simple}
+		qr{mode: simple},
+		qr{maximum number of tries: 1}
 	],
 	[qr{^$}],
 	'pgbench tpcb-like');
@@ -1197,6 +1200,214 @@ $node->pgbench(
 # The ID of a single client (1st field) should match 0.
 check_pgbench_logs($bdir, '001_pgbench_log_3', 1, 10, 10,
 	qr{^0 \d{1,2} \d+ \d \d+ \d+$});
+
+# abortion of the client if the script contains an incomplete transaction block
+$node->pgbench(
+	'--no-vacuum', 2, [ qr{processed: 1/10} ],
+	[ qr{client 0 aborted: end of script reached without completing the last transaction} ],
+	'incomplete transaction block',
+	{ '001_pgbench_incomplete_transaction_block' => q{BEGIN;SELECT 1;} });
+
+# Test the concurrent update in the table row and deadlocks.
+
+$node->safe_psql('postgres',
+	'CREATE UNLOGGED TABLE first_client_table (value integer); '
+  . 'CREATE UNLOGGED TABLE xy (x integer, y integer); '
+  . 'INSERT INTO xy VALUES (1, 2);');
+
+# Serialization error and retry
+
+local $ENV{PGOPTIONS} = "-c default_transaction_isolation=repeatable\\ read";
+
+# Check that we have a serialization error and the same random value of the
+# delta variable in the next try
+my $err_pattern =
+    "client (0|1) got an error in command 3 \\(SQL\\) of script 0; "
+  . "ERROR:  could not serialize access due to concurrent update\\b.*"
+  . "\\g1";
+
+$node->pgbench(
+	"-n -c 2 -t 1 -d --verbose-errors --max-tries 2",
+	0,
+	[ qr{processed: 2/2\b}, qr{number of transactions retried: 1\b},
+	  qr{total number of retries: 1\b} ],
+	[ qr/$err_pattern/s ],
+	'concurrent update with retrying',
+	{
+		'001_pgbench_serialization' => q{
+-- What's happening:
+-- The first client starts the transaction with the isolation level Repeatable
+-- Read:
+--
+-- BEGIN;
+-- UPDATE xy SET y = ... WHERE x = 1;
+--
+-- The second client starts a similar transaction with the same isolation level:
+--
+-- BEGIN;
+-- UPDATE xy SET y = ... WHERE x = 1;
+-- <waiting for the first client>
+--
+-- The first client commits its transaction, and the second client gets a
+-- serialization error.
+
+\set delta random(-5000, 5000)
+
+-- The second client will stop here
+SELECT pg_advisory_lock(0);
+
+-- Start transaction with concurrent update
+BEGIN;
+UPDATE xy SET y = y + :delta WHERE x = 1 AND pg_advisory_lock(1) IS NOT NULL;
+
+-- Wait for the second client
+DO $$
+DECLARE
+  exists boolean;
+  waiters integer;
+BEGIN
+  -- The second client always comes in second, and the number of rows in the
+  -- table first_client_table reflect this. Here the first client inserts a row,
+  -- so the second client will see a non-empty table when repeating the
+  -- transaction after the serialization error.
+  SELECT EXISTS (SELECT * FROM first_client_table) INTO STRICT exists;
+  IF NOT exists THEN
+	-- Let the second client begin
+	PERFORM pg_advisory_unlock(0);
+	-- And wait until the second client tries to get the same lock
+	LOOP
+	  SELECT COUNT(*) INTO STRICT waiters FROM pg_locks WHERE
+	  locktype = 'advisory' AND objsubid = 1 AND
+	  ((classid::bigint << 32) | objid::bigint = 1::bigint) AND NOT granted;
+	  IF waiters = 1 THEN
+		INSERT INTO first_client_table VALUES (1);
+
+		-- Exit loop
+		EXIT;
+	  END IF;
+	END LOOP;
+  END IF;
+END$$;
+
+COMMIT;
+SELECT pg_advisory_unlock_all();
+}
+	});
+
+# Clean up
+
+$node->safe_psql('postgres', 'DELETE FROM first_client_table;');
+
+local $ENV{PGOPTIONS} = "-c default_transaction_isolation=read\\ committed";
+
+# Deadlock error and retry
+
+# Check that we have a deadlock error
+$err_pattern =
+	"client (0|1) got an error in command (3|5) \\(SQL\\) of script 0; "
+  . "ERROR:  deadlock detected\\b";
+
+$node->pgbench(
+	"-n -c 2 -t 1 --max-tries 2 --verbose-errors",
+	0,
+	[ qr{processed: 2/2\b}, qr{number of transactions retried: 1\b},
+	  qr{total number of retries: 1\b} ],
+	[ qr{$err_pattern} ],
+	'deadlock with retrying',
+	{
+		'001_pgbench_deadlock' => q{
+-- What's happening:
+-- The first client gets the lock 2.
+-- The second client gets the lock 3 and tries to get the lock 2.
+-- The first client tries to get the lock 3 and one of them gets a deadlock
+-- error.
+--
+-- A client that does not get a deadlock error must hold a lock at the
+-- transaction start. Thus in the end it releases all of its locks before the
+-- client with the deadlock error starts a retry (we do not want any errors
+-- again).
+
+-- Since the client with the deadlock error has not released the blocking locks,
+-- let's do this here.
+SELECT pg_advisory_unlock_all();
+
+-- The second client and the client with the deadlock error stop here
+SELECT pg_advisory_lock(0);
+SELECT pg_advisory_lock(1);
+
+-- The second client and the client with the deadlock error always come after
+-- the first and the number of rows in the table first_client_table reflects
+-- this. Here the first client inserts a row, so in the future the table is
+-- always non-empty.
+DO $$
+DECLARE
+  exists boolean;
+BEGIN
+  SELECT EXISTS (SELECT * FROM first_client_table) INTO STRICT exists;
+  IF exists THEN
+	-- We are the second client or the client with the deadlock error
+
+	-- The first client will take care by itself of this lock (see below)
+	PERFORM pg_advisory_unlock(0);
+
+	PERFORM pg_advisory_lock(3);
+
+	-- The second client can get a deadlock here
+	PERFORM pg_advisory_lock(2);
+  ELSE
+	-- We are the first client
+
+	-- This code should not be used in a new transaction after an error
+	INSERT INTO first_client_table VALUES (1);
+
+	PERFORM pg_advisory_lock(2);
+  END IF;
+END$$;
+
+DO $$
+DECLARE
+  num_rows integer;
+  waiters integer;
+BEGIN
+  -- Check if we are the first client
+  SELECT COUNT(*) FROM first_client_table INTO STRICT num_rows;
+  IF num_rows = 1 THEN
+	-- This code should not be used in a new transaction after an error
+	INSERT INTO first_client_table VALUES (2);
+
+	-- Let the second client begin
+	PERFORM pg_advisory_unlock(0);
+	PERFORM pg_advisory_unlock(1);
+
+	-- Make sure the second client is ready for deadlock
+	LOOP
+	  SELECT COUNT(*) INTO STRICT waiters FROM pg_locks WHERE
+	  locktype = 'advisory' AND
+	  objsubid = 1 AND
+	  ((classid::bigint << 32) | objid::bigint = 2::bigint) AND
+	  NOT granted;
+
+	  IF waiters = 1 THEN
+	    -- Exit loop
+		EXIT;
+	  END IF;
+	END LOOP;
+
+	PERFORM pg_advisory_lock(0);
+    -- And the second client took care by itself of the lock 1
+  END IF;
+END$$;
+
+-- The first client can get a deadlock here
+SELECT pg_advisory_lock(3);
+
+SELECT pg_advisory_unlock_all();
+}
+	});
+
+# Clean up
+$node->safe_psql('postgres', 'DROP TABLE first_client_table, xy;');
+
 
 # done
 $node->safe_psql('postgres', 'DROP TABLESPACE regress_pgbench_tap_1_ts');

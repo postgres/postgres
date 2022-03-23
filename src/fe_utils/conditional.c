@@ -24,13 +24,25 @@ conditional_stack_create(void)
 }
 
 /*
+ * Destroy all the elements from the stack. The stack itself is not freed.
+ */
+void
+conditional_stack_reset(ConditionalStack cstack)
+{
+	if (!cstack)
+		return;					/* nothing to do here */
+
+	while (conditional_stack_pop(cstack))
+		continue;
+}
+
+/*
  * destroy stack
  */
 void
 conditional_stack_destroy(ConditionalStack cstack)
 {
-	while (conditional_stack_pop(cstack))
-		continue;
+	conditional_stack_reset(cstack);
 	free(cstack);
 }
 
