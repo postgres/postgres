@@ -204,7 +204,7 @@ search_directory(const char *directory, const char *fname)
 			if (IsXLogFileName(xlde->d_name))
 			{
 				fd = open_file_in_directory(directory, xlde->d_name);
-				fname = xlde->d_name;
+				fname = pg_strdup(xlde->d_name);
 				break;
 			}
 		}
