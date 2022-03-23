@@ -11856,9 +11856,12 @@ if test "$ac_res" != no; then :
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if ${ac_cv_search_dlopen+:} false; then :
+# gcc/clang's sanitizer helper library provides dlopen but not dlsym, thus
+# when enabling asan the dlopen check doesn't notice that -ldl is actually
+# required. Just checking for dlsym() ought to suffice.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlsym" >&5
+$as_echo_n "checking for library containing dlsym... " >&6; }
+if ${ac_cv_search_dlsym+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_func_search_save_LIBS=$LIBS
@@ -11871,11 +11874,11 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dlopen ();
+char dlsym ();
 int
 main ()
 {
-return dlopen ();
+return dlsym ();
   ;
   return 0;
 }
@@ -11888,25 +11891,25 @@ for ac_lib in '' dl; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
+  ac_cv_search_dlsym=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-  if ${ac_cv_search_dlopen+:} false; then :
+  if ${ac_cv_search_dlsym+:} false; then :
   break
 fi
 done
-if ${ac_cv_search_dlopen+:} false; then :
+if ${ac_cv_search_dlsym+:} false; then :
 
 else
-  ac_cv_search_dlopen=no
+  ac_cv_search_dlsym=no
 fi
 rm conftest.$ac_ext
 LIBS=$ac_func_search_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlsym" >&5
+$as_echo "$ac_cv_search_dlsym" >&6; }
+ac_res=$ac_cv_search_dlsym
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
