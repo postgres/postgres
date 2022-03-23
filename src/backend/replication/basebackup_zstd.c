@@ -60,8 +60,6 @@ const bbsink_ops bbsink_zstd_ops = {
 bbsink *
 bbsink_zstd_new(bbsink *next, bc_specification *compress)
 {
-	int		compresslevel;
-
 #ifndef USE_ZSTD
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -69,6 +67,7 @@ bbsink_zstd_new(bbsink *next, bc_specification *compress)
 	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_zstd *sink;
+	int		compresslevel;
 
 	Assert(next != NULL);
 

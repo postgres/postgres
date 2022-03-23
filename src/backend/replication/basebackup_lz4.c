@@ -61,8 +61,6 @@ const bbsink_ops bbsink_lz4_ops = {
 bbsink *
 bbsink_lz4_new(bbsink *next, bc_specification *compress)
 {
-	int		compresslevel;
-
 #ifndef USE_LZ4
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -70,6 +68,7 @@ bbsink_lz4_new(bbsink *next, bc_specification *compress)
 	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_lz4 *sink;
+	int		compresslevel;
 
 	Assert(next != NULL);
 
