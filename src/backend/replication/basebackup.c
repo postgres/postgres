@@ -17,6 +17,7 @@
 #include <time.h>
 
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
+#include "common/backup_compression.h"
 #include "common/file_perm.h"
 #include "commands/defrem.h"
 #include "lib/stringinfo.h"
@@ -54,14 +55,6 @@
  */
 #define SINK_BUFFER_LENGTH			Max(32768, BLCKSZ)
 
-typedef enum
-{
-	BACKUP_COMPRESSION_NONE,
-	BACKUP_COMPRESSION_GZIP,
-	BACKUP_COMPRESSION_LZ4,
-	BACKUP_COMPRESSION_ZSTD
-} basebackup_compression_type;
-
 typedef struct
 {
 	const char *label;
@@ -75,8 +68,8 @@ typedef struct
 	bool		use_copytblspc;
 	BaseBackupTargetHandle *target_handle;
 	backup_manifest_option manifest;
-	basebackup_compression_type	compression;
-	int			compression_level;
+	bc_algorithm compression;
+	bc_specification compression_specification;
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
@@ -713,12 +706,14 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	char	   *target_str = NULL;
 	char	   *target_detail_str = NULL;
 	bool		o_compression = false;
-	bool		o_compression_level = false;
+	bool		o_compression_detail = false;
+	char	   *compression_detail_str = NULL;
 
 	MemSet(opt, 0, sizeof(*opt));
 	opt->manifest = MANIFEST_OPTION_NO;
 	opt->manifest_checksum_type = CHECKSUM_TYPE_CRC32C;
 	opt->compression = BACKUP_COMPRESSION_NONE;
+	opt->compression_specification.algorithm = BACKUP_COMPRESSION_NONE;
 
 	foreach(lopt, options)
 	{
@@ -885,29 +880,21 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			if (strcmp(optval, "none") == 0)
-				opt->compression = BACKUP_COMPRESSION_NONE;
-			else if (strcmp(optval, "gzip") == 0)
-				opt->compression = BACKUP_COMPRESSION_GZIP;
-			else if (strcmp(optval, "lz4") == 0)
-				opt->compression = BACKUP_COMPRESSION_LZ4;
-			else if (strcmp(optval, "zstd") == 0)
-				opt->compression = BACKUP_COMPRESSION_ZSTD;
-			else
+			if (!parse_bc_algorithm(optval, &opt->compression))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("unrecognized compression algorithm: \"%s\"",
+						 errmsg("unrecognized compression algorithm \"%s\"",
 								optval)));
 			o_compression = true;
 		}
-		else if (strcmp(defel->defname, "compression_level") == 0)
+		else if (strcmp(defel->defname, "compression_detail") == 0)
 		{
-			if (o_compression_level)
+			if (o_compression_detail)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			opt->compression_level = defGetInt32(defel);
-			o_compression_level = true;
+			compression_detail_str = defGetString(defel);
+			o_compression_detail = true;
 		}
 		else
 			ereport(ERROR,
@@ -949,10 +936,25 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		opt->target_handle =
 			BaseBackupGetTargetHandle(target_str, target_detail_str);
 
-	if (o_compression_level && !o_compression)
+	if (o_compression_detail && !o_compression)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("compression level requires compression")));
+				 errmsg("compression detail requires compression")));
+
+	if (o_compression)
+	{
+		char	   *error_detail;
+
+		parse_bc_specification(opt->compression, compression_detail_str,
+							   &opt->compression_specification);
+		error_detail =
+			validate_bc_specification(&opt->compression_specification);
+		if (error_detail != NULL)
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("invalid compression specification: %s",
+						   error_detail));
+	}
 }
 
 
@@ -998,11 +1000,11 @@ SendBaseBackup(BaseBackupCmd *cmd)
 
 	/* Set up server-side compression, if client requested it */
 	if (opt.compression == BACKUP_COMPRESSION_GZIP)
-		sink = bbsink_gzip_new(sink, opt.compression_level);
+		sink = bbsink_gzip_new(sink, &opt.compression_specification);
 	else if (opt.compression == BACKUP_COMPRESSION_LZ4)
-		sink = bbsink_lz4_new(sink, opt.compression_level);
+		sink = bbsink_lz4_new(sink, &opt.compression_specification);
 	else if (opt.compression == BACKUP_COMPRESSION_ZSTD)
-		sink = bbsink_zstd_new(sink, opt.compression_level);
+		sink = bbsink_zstd_new(sink, &opt.compression_specification);
 
 	/* Set up progress reporting. */
 	sink = bbsink_progress_new(sink, opt.progress);

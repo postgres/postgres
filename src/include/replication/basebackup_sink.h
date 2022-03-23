@@ -27,6 +27,7 @@
 #define BASEBACKUP_SINK_H
 
 #include "access/xlog_internal.h"
+#include "common/backup_compression.h"
 #include "nodes/pg_list.h"
 
 /* Forward declarations. */
@@ -283,9 +284,9 @@ extern void bbsink_forward_cleanup(bbsink *sink);
 
 /* Constructors for various types of sinks. */
 extern bbsink *bbsink_copystream_new(bool send_to_client);
-extern bbsink *bbsink_gzip_new(bbsink *next, int compresslevel);
-extern bbsink *bbsink_lz4_new(bbsink *next, int compresslevel);
-extern bbsink *bbsink_zstd_new(bbsink *next, int compresslevel);
+extern bbsink *bbsink_gzip_new(bbsink *next, bc_specification *);
+extern bbsink *bbsink_lz4_new(bbsink *next, bc_specification *);
+extern bbsink *bbsink_zstd_new(bbsink *next, bc_specification *);
 extern bbsink *bbsink_progress_new(bbsink *next, bool estimate_backup_size);
 extern bbsink *bbsink_server_new(bbsink *next, char *pathname);
 extern bbsink *bbsink_throttle_new(bbsink *next, uint32 maxrate);

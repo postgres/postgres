@@ -2731,14 +2731,24 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
-        <term><literal>COMPRESSION_LEVEL</literal> <replaceable>level</replaceable></term>
+        <term><literal>COMPRESSION_DETAIL</literal> <replaceable>detail</replaceable></term>
         <listitem>
          <para>
-          Specifies the compression level to be used. This should only be
-          used in conjunction with the <literal>COMPRESSION</literal> option.
-          For <literal>gzip</literal> the value should be an integer between 1
-          and 9, for <literal>lz4</literal> between 1 and 12, and for
-          <literal>zstd</literal> it should be between 1 and 22.
+          Specifies details for the chosen compression method. This should only
+          be used in conjunction with the <literal>COMPRESSION</literal>
+          option.  If the value is an integer, it specifies the compression
+          level.  Otherwise, it should be a comma-separated list of items,
+          each of the form <literal>keyword</literal> or
+          <literal>keyword=value</literal>. Currently, the only supported
+          keyword is <literal>level</literal>, which sets the compression
+          level.
+        </para>
+
+        <para>
+          For <literal>gzip</literal> the compression level should be an
+          integer between 1 and 9, for <literal>lz4</literal> an integer
+          between 1 and 12, and for <literal>zstd</literal> an integer
+          between 1 and 22.
          </para>
         </listitem>
        </varlistentry>

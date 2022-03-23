@@ -63,7 +63,7 @@ const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
  * blocks.
  */
 bbstreamer *
-bbstreamer_zstd_compressor_new(bbstreamer *next, int compresslevel)
+bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 {
 #ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
@@ -85,7 +85,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, int compresslevel)
 
 	/* Initialize stream compression preferences */
 	ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
-						   compresslevel);
+						   compress->level);
 
 	/* Initialize the ZSTD output buffer. */
 	streamer->zstd_outBuf.dst = streamer->base.bbs_buffer.data;

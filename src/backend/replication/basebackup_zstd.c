@@ -55,12 +55,13 @@ const bbsink_ops bbsink_zstd_ops = {
 #endif
 
 /*
- * Create a new basebackup sink that performs zstd compression using the
- * designated compression level.
+ * Create a new basebackup sink that performs zstd compression.
  */
 bbsink *
-bbsink_zstd_new(bbsink *next, int compresslevel)
+bbsink_zstd_new(bbsink *next, bc_specification *compress)
 {
+	int		compresslevel;
+
 #ifndef USE_ZSTD
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -71,11 +72,13 @@ bbsink_zstd_new(bbsink *next, int compresslevel)
 
 	Assert(next != NULL);
 
-	if (compresslevel < 0 || compresslevel > 22)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("zstd compression level %d is out of range",
-						compresslevel)));
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) == 0)
+		compresslevel = 0;
+	else
+	{
+		compresslevel = compress->level;
+		Assert(compresslevel >= 1 && compresslevel <= 22);
+	}
 
 	sink = palloc0(sizeof(bbsink_zstd));
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_zstd_ops;

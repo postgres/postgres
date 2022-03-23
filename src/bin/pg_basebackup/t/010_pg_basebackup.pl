@@ -42,16 +42,12 @@ $node->command_fails(['pg_basebackup'],
 # Sanity checks for options
 $node->command_fails_like(
 	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none:1' ],
-	qr/\Qpg_basebackup: error: cannot use compression level with method none/,
+	qr/\Qcompression algorithm "none" does not accept a compression level/,
 	'failure if method "none" specified with compression level');
 $node->command_fails_like(
 	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none+' ],
-	qr/\Qpg_basebackup: error: invalid value "none+" for option/,
+	qr/\Qunrecognized compression algorithm "none+"/,
 	'failure on incorrect separator to define compression level');
-$node->command_fails_like(
-	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none:' ],
-	qr/\Qpg_basebackup: error: no compression level defined for method none/,
-	'failure on missing compression level value');
 
 # Some Windows ANSI code pages may reject this filename, in which case we
 # quietly proceed without this bit of test coverage.
@@ -88,6 +84,70 @@ print $conf "max_wal_senders = 10\n";
 print $conf "wal_level = replica\n";
 close $conf;
 $node->restart;
+
+# Now that we have a server that supports replication commands, test whether
+# certain invalid compression commands fail on the client side with client-side
+# compression and on the server side with server-side compression.
+my $client_fails =
+	'pg_basebackup: error: ';
+my $server_fails =
+	'pg_basebackup: error: could not initiate base backup: ERROR:  ';
+my @compression_failure_tests = (
+	[
+		'extrasquishy',
+		'unrecognized compression algorithm "extrasquishy"',
+		'failure on invalid compression algorithm'
+	],
+	[
+		'gzip:',
+		'invalid compression specification: found empty string where a compression option was expected',
+		'failure on empty compression options list'
+	],
+	[
+		'gzip:thunk',
+		'invalid compression specification: unknown compression option "thunk"',
+		'failure on unknown compression option'
+	],
+	[
+		'gzip:level',
+		'invalid compression specification: compression option "level" requires a value',
+		'failure on missing compression level'
+	],
+	[
+		'gzip:level=',
+		'invalid compression specification: value for compression option "level" must be an integer',
+		'failure on empty compression level'
+	],
+	[
+		'gzip:level=high',
+		'invalid compression specification: value for compression option "level" must be an integer',
+		'failure on non-numeric compression level'
+	],
+	[
+		'gzip:level=236',
+		'invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9',
+		'failure on out-of-range compression level'
+	],
+	[
+		'gzip:level=9,',
+		'invalid compression specification: found empty string where a compression option was expected',
+		'failure on extra, empty compression option'
+	],
+);
+for my $cft (@compression_failure_tests)
+{
+	my $cfail = quotemeta($client_fails . $cft->[1]);
+	my $sfail = quotemeta($server_fails . $cft->[1]);
+	$node->command_fails_like(
+		[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', $cft->[0] ],
+		qr/$cfail/,
+		'client '. $cft->[2]);
+	$node->command_fails_like(
+		[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress',
+		   'server-' . $cft->[0] ],
+		qr/$sfail/,
+		'server ' . $cft->[2]);
+}
 
 # Write some files to test that they are not copied.
 foreach my $filename (

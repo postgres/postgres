@@ -56,12 +56,13 @@ const bbsink_ops bbsink_gzip_ops = {
 #endif
 
 /*
- * Create a new basebackup sink that performs gzip compression using the
- * designated compression level.
+ * Create a new basebackup sink that performs gzip compression.
  */
 bbsink *
-bbsink_gzip_new(bbsink *next, int compresslevel)
+bbsink_gzip_new(bbsink *next, bc_specification *compress)
 {
+	int		compresslevel;
+
 #ifndef HAVE_LIBZ
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -71,15 +72,14 @@ bbsink_gzip_new(bbsink *next, int compresslevel)
 	bbsink_gzip *sink;
 
 	Assert(next != NULL);
-	Assert(compresslevel >= 0 && compresslevel <= 9);
 
-	if (compresslevel == 0)
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) == 0)
 		compresslevel = Z_DEFAULT_COMPRESSION;
-	else if (compresslevel < 0 || compresslevel > 9)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("gzip compression level %d is out of range",
-						compresslevel)));
+	else
+	{
+		compresslevel = compress->level;
+		Assert(compresslevel >= 1 && compresslevel <= 9);
+	}
 
 	sink = palloc0(sizeof(bbsink_gzip));
 	*((const bbsink_ops **) &sink->base.bbs_ops) = &bbsink_gzip_ops;

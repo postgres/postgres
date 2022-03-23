@@ -47,6 +47,7 @@ LIBS += $(PTHREAD_LIBS)
 
 OBJS_COMMON = \
 	archive.o \
+	backup_compression.o \
 	base64.o \
 	checksum_helper.o \
 	config_info.o \

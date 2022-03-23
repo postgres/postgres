@@ -67,7 +67,7 @@ const bbstreamer_ops bbstreamer_lz4_decompressor_ops = {
  * blocks.
  */
 bbstreamer *
-bbstreamer_lz4_compressor_new(bbstreamer *next, int compresslevel)
+bbstreamer_lz4_compressor_new(bbstreamer *next, bc_specification *compress)
 {
 #ifdef USE_LZ4
 	bbstreamer_lz4_frame   *streamer;
@@ -89,7 +89,7 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, int compresslevel)
 	prefs = &streamer->prefs;
 	memset(prefs, 0, sizeof(LZ4F_preferences_t));
 	prefs->frameInfo.blockSizeID = LZ4F_max256KB;
-	prefs->compressionLevel = compresslevel;
+	prefs->compressionLevel = compress->level;
 
 	/*
 	 * Find out the compression bound, it specifies the minimum destination

@@ -76,7 +76,8 @@ const bbstreamer_ops bbstreamer_gzip_decompressor_ops = {
  * closed so that the data may be written there.
  */
 bbstreamer *
-bbstreamer_gzip_writer_new(char *pathname, FILE *file, int compresslevel)
+bbstreamer_gzip_writer_new(char *pathname, FILE *file,
+						   bc_specification *compress)
 {
 #ifdef HAVE_LIBZ
 	bbstreamer_gzip_writer *streamer;
@@ -115,11 +116,11 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file, int compresslevel)
 		}
 	}
 
-	if (gzsetparams(streamer->gzfile, compresslevel,
+	if (gzsetparams(streamer->gzfile, compress->level,
 					Z_DEFAULT_STRATEGY) != Z_OK)
 	{
 		pg_log_error("could not set compression level %d: %s",
-					 compresslevel, get_gz_error(streamer->gzfile));
+					 compress->level, get_gz_error(streamer->gzfile));
 		exit(1);
 	}
 
