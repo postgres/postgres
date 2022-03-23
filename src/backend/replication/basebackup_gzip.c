@@ -61,8 +61,6 @@ const bbsink_ops bbsink_gzip_ops = {
 bbsink *
 bbsink_gzip_new(bbsink *next, bc_specification *compress)
 {
-	int		compresslevel;
-
 #ifndef HAVE_LIBZ
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -70,6 +68,7 @@ bbsink_gzip_new(bbsink *next, bc_specification *compress)
 	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_gzip *sink;
+	int		compresslevel;
 
 	Assert(next != NULL);
 

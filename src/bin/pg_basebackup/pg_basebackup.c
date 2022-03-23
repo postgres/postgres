@@ -541,12 +541,12 @@ typedef struct
 	char		xlog[MAXPGPATH];	/* directory or tarfile depending on mode */
 	char	   *sysidentifier;
 	int			timeline;
+	WalCompressionMethod	wal_compress_method;
+	int			wal_compress_level;
 } logstreamer_param;
 
 static int
-LogStreamerMain(logstreamer_param *param,
-				WalCompressionMethod wal_compress_method,
-				int wal_compress_level)
+LogStreamerMain(logstreamer_param *param)
 {
 	StreamCtl	stream;
 
@@ -575,8 +575,8 @@ LogStreamerMain(logstreamer_param *param,
 													stream.do_sync);
 	else
 		stream.walmethod = CreateWalTarMethod(param->xlog,
-											  wal_compress_method,
-											  wal_compress_level,
+											  param->wal_compress_method,
+											  param->wal_compress_level,
 											  stream.do_sync);
 
 	if (!ReceiveXlogStream(param->bgconn, &stream))
@@ -634,6 +634,8 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	param = pg_malloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
 	param->sysidentifier = sysidentifier;
+	param->wal_compress_method = wal_compress_method;
+	param->wal_compress_level = wal_compress_level;
 
 	/* Convert the starting position */
 	if (sscanf(startpos, "%X/%X", &hi, &lo) != 2)
@@ -724,7 +726,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 		int			ret;
 
 		/* in child process */
-		ret = LogStreamerMain(param, wal_compress_method, wal_compress_level);
+		ret = LogStreamerMain(param);
 
 		/* temp debugging aid to analyze 019_replslot_limit failures */
 		if (verbose)
