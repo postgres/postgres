@@ -10383,6 +10383,10 @@ VerifyOverwriteContrecord(xl_overwrite_contrecord *xlrec, XLogReaderState *state
 			 (uint32) (state->overwrittenRecPtr >> 32),
 			 (uint32) state->overwrittenRecPtr);
 
+	/* We have safely skipped the aborted record */
+	abortedRecPtr = InvalidXLogRecPtr;
+	missingContrecPtr = InvalidXLogRecPtr;
+
 	ereport(LOG,
 			(errmsg("successfully skipped missing contrecord at %X/%X, overwritten at %s",
 					(uint32) (xlrec->overwritten_lsn >> 32),
