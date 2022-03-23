@@ -322,6 +322,10 @@ pg_decode_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 	txndata->xact_wrote_changes = false;
 	txn->output_plugin_private = txndata;
 
+	/*
+	 * If asked to skip empty transactions, we'll emit BEGIN at the point where
+	 * the first operation is received for this transaction.
+	 */
 	if (data->skip_empty_xacts)
 		return;
 
@@ -378,6 +382,10 @@ pg_decode_begin_prepare_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 	txndata->xact_wrote_changes = false;
 	txn->output_plugin_private = txndata;
 
+	/*
+	 * If asked to skip empty transactions, we'll emit BEGIN at the point where
+	 * the first operation is received for this transaction.
+	 */
 	if (data->skip_empty_xacts)
 		return;
 
@@ -392,6 +400,10 @@ pg_decode_prepare_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	TestDecodingData *data = ctx->output_plugin_private;
 	TestDecodingTxnData *txndata = txn->output_plugin_private;
 
+	/*
+	 * If asked to skip empty transactions, we'll emit PREPARE at the point
+	 * where the first operation is received for this transaction.
+	 */
 	if (data->skip_empty_xacts && !txndata->xact_wrote_changes)
 		return;
 
