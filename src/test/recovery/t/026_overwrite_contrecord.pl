@@ -13,7 +13,7 @@ use Test::More;
 # Test: Create a physical replica that's missing the last WAL file,
 # then restart the primary to create a divergent WAL file and observe
 # that the replica replays the "overwrite contrecord" from that new
-# file.
+# file and the standby promotes successfully.
 
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(allows_streaming => 1);
@@ -99,6 +99,9 @@ like(
 	$log,
 	qr[successfully skipped missing contrecord at],
 	"found log line in standby");
+
+# Verify promotion is successful
+$node_standby->promote;
 
 $node->stop;
 $node_standby->stop;

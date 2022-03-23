@@ -1948,6 +1948,10 @@ xlogrecovery_redo(XLogReaderState *record, TimeLineID replayTLI)
 				 LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
 				 LSN_FORMAT_ARGS(record->overwrittenRecPtr));
 
+		/* We have safely skipped the aborted record */
+		abortedRecPtr = InvalidXLogRecPtr;
+		missingContrecPtr = InvalidXLogRecPtr;
+
 		ereport(LOG,
 				(errmsg("successfully skipped missing contrecord at %X/%X, overwritten at %s",
 						LSN_FORMAT_ARGS(xlrec.overwritten_lsn),
