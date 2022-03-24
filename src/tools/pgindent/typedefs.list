@@ -153,6 +153,7 @@ AttrMissing
 AttrNumber
 AttributeOpts
 AuthRequest
+AuthToken
 AutoPrewarmSharedState
 AutoVacOpts
 AutoVacuumShmemStruct
@@ -1063,7 +1064,6 @@ HashState
 HashTapeInfo
 HashValueFunc
 HbaLine
-HbaToken
 HeadlineJsonState
 HeadlineParsedText
 HeadlineWordEntry
@@ -2699,7 +2699,7 @@ ToastTupleContext
 ToastedAttribute
 TocEntry
 TokenAuxData
-TokenizedLine
+TokenizedAuthLine
 TrackItem
 TransInvalidationInfo
 TransState
