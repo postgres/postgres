@@ -10,6 +10,8 @@ DATA = pg_freespacemap--1.1.sql pg_freespacemap--1.1--1.2.sql \
 	pg_freespacemap--1.0--1.1.sql
 PGFILEDESC = "pg_freespacemap - monitoring of free space map"
 
+REGRESS = pg_freespacemap
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

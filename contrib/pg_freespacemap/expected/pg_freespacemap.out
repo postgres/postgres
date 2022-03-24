@@ -1,0 +1,85 @@
+CREATE EXTENSION pg_freespacemap;
+CREATE TABLE freespace_tab (c1 int) WITH (autovacuum_enabled = off);
+CREATE INDEX freespace_brin ON freespace_tab USING brin (c1);
+CREATE INDEX freespace_btree ON freespace_tab USING btree (c1);
+CREATE INDEX freespace_hash ON freespace_tab USING hash (c1);
+-- report all the sizes of the FSMs for all the relation blocks.
+WITH rel AS (SELECT oid::regclass AS id FROM pg_class WHERE relname ~ 'freespace')
+  SELECT rel.id, fsm.blkno, (fsm.avail > 0) AS is_avail
+    FROM rel, LATERAL pg_freespace(rel.id) AS fsm
+    ORDER BY 1, 2;
+       id        | blkno | is_avail 
+-----------------+-------+----------
+ freespace_brin  |     0 | f
+ freespace_brin  |     1 | f
+ freespace_brin  |     2 | t
+ freespace_btree |     0 | f
+ freespace_hash  |     0 | f
+ freespace_hash  |     1 | f
+ freespace_hash  |     2 | f
+ freespace_hash  |     3 | f
+ freespace_hash  |     4 | f
+ freespace_hash  |     5 | f
+ freespace_hash  |     6 | f
+ freespace_hash  |     7 | f
+ freespace_hash  |     8 | f
+ freespace_hash  |     9 | f
+(14 rows)
+
+INSERT INTO freespace_tab VALUES (1);
+VACUUM freespace_tab;
+WITH rel AS (SELECT oid::regclass AS id FROM pg_class WHERE relname ~ 'freespace')
+  SELECT rel.id, fsm.blkno, (fsm.avail > 0) AS is_avail
+    FROM rel, LATERAL pg_freespace(rel.id) AS fsm
+    ORDER BY 1, 2;
+       id        | blkno | is_avail 
+-----------------+-------+----------
+ freespace_tab   |     0 | t
+ freespace_brin  |     0 | f
+ freespace_brin  |     1 | f
+ freespace_brin  |     2 | t
+ freespace_btree |     0 | f
+ freespace_btree |     1 | f
+ freespace_hash  |     0 | f
+ freespace_hash  |     1 | f
+ freespace_hash  |     2 | f
+ freespace_hash  |     3 | f
+ freespace_hash  |     4 | f
+ freespace_hash  |     5 | f
+ freespace_hash  |     6 | f
+ freespace_hash  |     7 | f
+ freespace_hash  |     8 | f
+ freespace_hash  |     9 | f
+(16 rows)
+
+DELETE FROM freespace_tab;
+VACUUM freespace_tab;
+WITH rel AS (SELECT oid::regclass AS id FROM pg_class WHERE relname ~ 'freespace')
+  SELECT rel.id, fsm.blkno, (fsm.avail > 0) AS is_avail
+    FROM rel, LATERAL pg_freespace(rel.id) AS fsm
+    ORDER BY 1, 2;
+       id        | blkno | is_avail 
+-----------------+-------+----------
+ freespace_brin  |     0 | f
+ freespace_brin  |     1 | f
+ freespace_brin  |     2 | t
+ freespace_btree |     0 | f
+ freespace_btree |     1 | f
+ freespace_hash  |     0 | f
+ freespace_hash  |     1 | f
+ freespace_hash  |     2 | f
+ freespace_hash  |     3 | f
+ freespace_hash  |     4 | f
+ freespace_hash  |     5 | f
+ freespace_hash  |     6 | f
+ freespace_hash  |     7 | f
+ freespace_hash  |     8 | f
+ freespace_hash  |     9 | f
+(15 rows)
+
+-- failures with incorrect block number
+SELECT * FROM pg_freespace('freespace_tab', -1);
+ERROR:  invalid block number
+SELECT * FROM pg_freespace('freespace_tab', 4294967295);
+ERROR:  invalid block number
+DROP TABLE freespace_tab;
