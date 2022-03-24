@@ -31,7 +31,9 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
+    SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [, ... ]
     ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
+    ALL SEQUENCES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -44,13 +46,13 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   </para>
 
   <para>
-   The first three variants change which tables/schemas are part of the
-   publication.  The <literal>SET</literal> clause will replace the list of
-   tables/schemas in the publication with the specified list; the existing
-   tables/schemas that were present in the publication will be removed.  The
-   <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
-   remove one or more tables/schemas from the publication.  Note that adding
-   tables/schemas to a publication that is already subscribed to will require an
+   The first three variants change which objects (tables, sequences or schemas)
+   are part of the publication.  The <literal>SET</literal> clause will replace
+   the list of objects in the publication with the specified list; the existing
+   objects that were present in the publication will be removed.
+   The <literal>ADD</literal> and <literal>DROP</literal> clauses will add and
+   remove one or more objects from the publication.  Note that adding objects
+   to a publication that is already subscribed to will require an
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
    subscribing side in order to become effective. Note also that the combination
    of <literal>DROP</literal> with a <literal>WHERE</literal> clause is not
@@ -118,6 +120,15 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
       are required around the expression. The
       <replaceable class="parameter">expression</replaceable> is evaluated with
       the role used for the replication connection.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">sequence_name</replaceable></term>
+    <listitem>
+     <para>
+      Name of an existing sequence.
      </para>
     </listitem>
    </varlistentry>

@@ -49,6 +49,7 @@ CREATE TRANSFORM FOR int LANGUAGE SQL (
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
 CREATE PUBLICATION addr_pub_schema FOR ALL TABLES IN SCHEMA addr_nsp;
+CREATE PUBLICATION addr_pub_schema2 FOR ALL SEQUENCES IN SCHEMA addr_nsp;
 RESET client_min_messages;
 CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
@@ -198,7 +199,8 @@ WITH objects (type, name, args) AS (VALUES
 				('transform', '{int}', '{sql}'),
 				('access method', '{btree}', '{}'),
 				('publication', '{addr_pub}', '{}'),
-				('publication namespace', '{addr_nsp}', '{addr_pub_schema}'),
+				('publication namespace', '{addr_nsp}', '{addr_pub_schema,t}'),
+				('publication namespace', '{addr_nsp}', '{addr_pub_schema2,s}'),
 				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
 				('subscription', '{regress_addr_sub}', '{}'),
 				('statistics object', '{addr_nsp, gentable_stat}', '{}')
@@ -218,6 +220,7 @@ SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
 DROP FOREIGN DATA WRAPPER addr_fdw CASCADE;
 DROP PUBLICATION addr_pub;
 DROP PUBLICATION addr_pub_schema;
+DROP PUBLICATION addr_pub_schema2;
 DROP SUBSCRIPTION regress_addr_sub;
 
 DROP SCHEMA addr_nsp CASCADE;

@@ -636,7 +636,9 @@ void
 CheckSubscriptionRelkind(char relkind, const char *nspname,
 						 const char *relname)
 {
-	if (relkind != RELKIND_RELATION && relkind != RELKIND_PARTITIONED_TABLE)
+	if (relkind != RELKIND_RELATION &&
+		relkind != RELKIND_PARTITIONED_TABLE &&
+		relkind != RELKIND_SEQUENCE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot use relation \"%s.%s\" as logical replication target",

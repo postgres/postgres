@@ -27,7 +27,7 @@ CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publis
 
 \dRp
 
-ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete');
+ALTER PUBLICATION testpub_default SET (publish = 'insert, update, delete, sequence');
 
 \dRp
 
@@ -46,6 +46,8 @@ ALTER PUBLICATION testpub_foralltables SET (publish = 'insert, update');
 CREATE TABLE testpub_tbl2 (id serial primary key, data text);
 -- fail - can't add to for all tables publication
 ALTER PUBLICATION testpub_foralltables ADD TABLE testpub_tbl2;
+-- fail - can't add a table using ADD SEQUENCE command
+ALTER PUBLICATION testpub_foralltables ADD SEQUENCE testpub_tbl2;
 -- fail - can't drop from all tables publication
 ALTER PUBLICATION testpub_foralltables DROP TABLE testpub_tbl2;
 -- fail - can't add to for all tables publication
@@ -103,6 +105,183 @@ RESET client_min_messages;
 
 DROP TABLE testpub_tbl3, testpub_tbl3a;
 DROP PUBLICATION testpub3, testpub4;
+
+--- adding sequences
+CREATE SEQUENCE testpub_seq0;
+CREATE SEQUENCE pub_test.testpub_seq1;
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_forallsequences FOR ALL SEQUENCES WITH (publish = 'sequence');
+RESET client_min_messages;
+ALTER PUBLICATION testpub_forallsequences SET (publish = 'insert, sequence');
+
+CREATE SEQUENCE testpub_seq2;
+-- fail - can't add to for all sequences publication
+ALTER PUBLICATION testpub_forallsequences ADD SEQUENCE testpub_seq2;
+-- fail - can't drop from all sequences publication
+ALTER PUBLICATION testpub_forallsequences DROP SEQUENCE testpub_seq2;
+-- fail - can't add to for all sequences publication
+ALTER PUBLICATION testpub_forallsequences SET SEQUENCE pub_test.testpub_seq1;
+
+-- fail - can't add schema to 'FOR ALL SEQUENCES' publication
+ALTER PUBLICATION testpub_forallsequences ADD ALL SEQUENCES IN SCHEMA pub_test;
+-- fail - can't drop schema from 'FOR ALL SEQUENCES' publication
+ALTER PUBLICATION testpub_forallsequences DROP ALL SEQUENCES IN SCHEMA pub_test;
+-- fail - can't set schema to 'FOR ALL SEQUENCES' publication
+ALTER PUBLICATION testpub_forallsequences SET ALL SEQUENCES IN SCHEMA pub_test;
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_forsequence FOR SEQUENCE testpub_seq0;
+RESET client_min_messages;
+-- should be able to add schema to 'FOR SEQUENCE' publication
+ALTER PUBLICATION testpub_forsequence ADD ALL SEQUENCES IN SCHEMA pub_test;
+\dRp+ testpub_forsequence
+-- fail - can't add sequence from the schema we already added
+ALTER PUBLICATION testpub_forsequence ADD SEQUENCE pub_test.testpub_seq1;
+-- fail - can't add sequence using ADD TABLE command
+ALTER PUBLICATION testpub_forsequence ADD TABLE pub_test.testpub_seq1;
+-- should be able to drop schema from 'FOR SEQUENCE' publication
+ALTER PUBLICATION testpub_forsequence DROP ALL SEQUENCES IN SCHEMA pub_test;
+\dRp+ testpub_forsequence
+-- should be able to set schema to 'FOR SEQUENCE' publication
+ALTER PUBLICATION testpub_forsequence SET ALL SEQUENCES IN SCHEMA pub_test;
+\dRp+ testpub_forsequence
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_forschema FOR ALL SEQUENCES IN SCHEMA pub_test;
+RESET client_min_messages;
+-- fail - can't create publication with schema and sequence of the same schema
+CREATE PUBLICATION testpub_for_seq_schema FOR ALL SEQUENCES IN SCHEMA pub_test, SEQUENCE pub_test.testpub_seq1;
+-- fail - can't add a sequence of the same schema to the schema publication
+ALTER PUBLICATION testpub_forschema ADD SEQUENCE pub_test.testpub_seq1;
+-- fail - can't drop a sequence from the schema publication which isn't in the
+-- publication
+ALTER PUBLICATION testpub_forschema DROP SEQUENCE pub_test.testpub_seq1;
+-- should be able to set sequence to schema publication
+ALTER PUBLICATION testpub_forschema SET SEQUENCE pub_test.testpub_seq1;
+\dRp+ testpub_forschema
+
+SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname = 'testpub_forallsequences';
+\d+ pub_test.testpub_seq1
+\dRp+ testpub_forallsequences
+DROP SEQUENCE testpub_seq0, pub_test.testpub_seq1, testpub_seq2;
+DROP PUBLICATION testpub_forallsequences, testpub_forsequence, testpub_forschema;
+
+-- Publication mixing tables and sequences
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_mix;
+RESET client_min_messages;
+
+CREATE SEQUENCE testpub_seq1;
+CREATE SEQUENCE pub_test.testpub_seq2;
+
+ALTER PUBLICATION testpub_mix ADD SEQUENCE testpub_seq1, TABLE testpub_tbl1;
+\dRp+ testpub_mix
+
+ALTER PUBLICATION testpub_mix ADD ALL SEQUENCES IN SCHEMA pub_test, ALL TABLES IN SCHEMA pub_test;
+\dRp+ testpub_mix
+
+ALTER PUBLICATION testpub_mix DROP ALL SEQUENCES IN SCHEMA pub_test;
+\dRp+ testpub_mix
+
+ALTER PUBLICATION testpub_mix DROP ALL TABLES IN SCHEMA pub_test;
+\dRp+ testpub_mix
+
+DROP PUBLICATION testpub_mix;
+DROP SEQUENCE testpub_seq1;
+DROP SEQUENCE pub_test.testpub_seq2;
+
+
+-- make sure we replicate only the correct relation type
+CREATE SCHEMA pub_test1;
+CREATE SEQUENCE pub_test1.test_seq1;
+CREATE TABLE pub_test1.test_tbl1 (a int primary key, b int);
+
+CREATE SCHEMA pub_test2;
+CREATE SEQUENCE pub_test2.test_seq2;
+CREATE TABLE pub_test2.test_tbl2 (a int primary key, b int);
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_schemas;
+RESET client_min_messages;
+
+-- add tables from one schema, sequences from the other
+ALTER PUBLICATION testpub_schemas ADD ALL TABLES IN SCHEMA pub_test2;
+ALTER PUBLICATION testpub_schemas ADD ALL SEQUENCES IN SCHEMA pub_test1;
+
+\dRp+ testpub_schemas
+
+\dn+ pub_test1
+\dn+ pub_test2
+
+\d+ pub_test1.test_seq1;
+\d+ pub_test1.test_tbl1;
+
+\d+ pub_test2.test_seq2;
+\d+ pub_test2.test_tbl2;
+
+-- add the other object type from each schema
+ALTER PUBLICATION testpub_schemas ADD ALL TABLES IN SCHEMA pub_test1;
+ALTER PUBLICATION testpub_schemas ADD ALL SEQUENCES IN SCHEMA pub_test2;
+
+\dRp+ testpub_schemas
+
+\dn+ pub_test1
+\dn+ pub_test2
+
+\d+ pub_test1.test_seq1;
+\d+ pub_test1.test_tbl1;
+
+\d+ pub_test2.test_seq2;
+\d+ pub_test2.test_tbl2;
+
+-- now drop the object type added first
+ALTER PUBLICATION testpub_schemas DROP ALL TABLES IN SCHEMA pub_test2;
+ALTER PUBLICATION testpub_schemas DROP ALL SEQUENCES IN SCHEMA pub_test1;
+
+\dRp+ testpub_schemas
+
+\dn+ pub_test1
+\dn+ pub_test2
+
+\d+ pub_test1.test_seq1;
+\d+ pub_test1.test_tbl1;
+
+\d+ pub_test2.test_seq2;
+\d+ pub_test2.test_tbl2;
+
+-- should fail (publication contains the whole schema)
+ALTER PUBLICATION testpub_schemas ADD TABLE pub_test1.test_tbl1;
+ALTER PUBLICATION testpub_schemas ADD SEQUENCE pub_test2.test_seq2;
+
+-- should work (different schema)
+ALTER PUBLICATION testpub_schemas ADD TABLE pub_test2.test_tbl2;
+ALTER PUBLICATION testpub_schemas ADD SEQUENCE pub_test1.test_seq1;
+
+\dRp+ testpub_schemas
+
+\d+ pub_test1.test_seq1;
+\d+ pub_test1.test_tbl1;
+
+\d+ pub_test2.test_seq2;
+\d+ pub_test2.test_tbl2;
+
+-- now drop the explicitly added objects again
+ALTER PUBLICATION testpub_schemas DROP TABLE pub_test2.test_tbl2;
+ALTER PUBLICATION testpub_schemas DROP SEQUENCE pub_test1.test_seq1;
+
+\dRp+ testpub_schemas
+
+\d+ pub_test1.test_seq1;
+\d+ pub_test1.test_tbl1;
+
+\d+ pub_test2.test_seq2;
+\d+ pub_test2.test_tbl2;
+
+DROP PUBLICATION testpub_schemas;
+DROP TABLE pub_test1.test_tbl1, pub_test2.test_tbl2;
+DROP SEQUENCE pub_test1.test_seq1, pub_test2.test_seq2;
+DROP SCHEMA pub_test1, pub_test2;
 
 -- Tests for partitioned tables
 SET client_min_messages = 'ERROR';
@@ -717,32 +896,51 @@ CREATE SCHEMA sch1;
 CREATE SCHEMA sch2;
 CREATE TABLE sch1.tbl1 (a int) PARTITION BY RANGE(a);
 CREATE TABLE sch2.tbl1_part1 PARTITION OF sch1.tbl1 FOR VALUES FROM (1) to (10);
+CREATE SEQUENCE sch1.seq1;
+CREATE SEQUENCE sch2.seq2;
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
+ALTER PUBLICATION pub ADD ALL SEQUENCES IN SCHEMA sch2;
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 DROP PUBLICATION pub;
 -- Table publication that does not include the parent table
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
+ALTER PUBLICATION pub ADD SEQUENCE sch2.seq2;
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 -- Table publication that includes both the parent table and the child table
 ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
+ALTER PUBLICATION pub ADD SEQUENCE sch1.seq1;
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 DROP PUBLICATION pub;
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
+ALTER PUBLICATION pub ADD SEQUENCE sch1.seq1;
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+DROP PUBLICATION pub;
+-- Sequence publication
+CREATE PUBLICATION pub FOR SEQUENCE sch2.seq2;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 DROP PUBLICATION pub;
 -- Table publication that does not include the parent table
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 -- Table publication that includes both the parent table and the child table
 ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
+ALTER PUBLICATION pub ADD ALL SEQUENCES IN SCHEMA sch2;
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 DROP PUBLICATION pub;
 DROP TABLE sch2.tbl1_part1;
@@ -755,10 +953,36 @@ CREATE TABLE sch1.tbl1_part3 (a int) PARTITION BY RANGE(a);
 ALTER TABLE sch1.tbl1 ATTACH PARTITION sch1.tbl1_part3 FOR VALUES FROM (20) to (30);
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+DROP PUBLICATION pub;
+-- Schema publication
+CREATE PUBLICATION pub FOR SEQUENCE sch2.seq2;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+DROP PUBLICATION pub;
+-- Sequence publication
+CREATE PUBLICATION pub FOR ALL SEQUENCES IN SCHEMA sch2;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+ALTER PUBLICATION pub ADD SEQUENCE sch1.seq1;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+ALTER PUBLICATION pub DROP SEQUENCE sch1.seq1;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
+
+ALTER PUBLICATION pub ADD ALL SEQUENCES IN SCHEMA sch1;
+SELECT * FROM pg_publication_tables;
+SELECT * FROM pg_publication_sequences;
 
 RESET client_min_messages;
 DROP PUBLICATION pub;
 DROP TABLE sch1.tbl1;
+DROP SEQUENCE sch1.seq1, sch2.seq2;
 DROP SCHEMA sch1 cascade;
 DROP SCHEMA sch2 cascade;
 

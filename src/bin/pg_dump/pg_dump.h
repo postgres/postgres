@@ -615,10 +615,12 @@ typedef struct _PublicationInfo
 	DumpableObject dobj;
 	const char *rolname;
 	bool		puballtables;
+	bool		puballsequences;
 	bool		pubinsert;
 	bool		pubupdate;
 	bool		pubdelete;
 	bool		pubtruncate;
+	bool		pubsequence;
 	bool		pubviaroot;
 } PublicationInfo;
 
@@ -643,6 +645,7 @@ typedef struct _PublicationSchemaInfo
 	DumpableObject dobj;
 	PublicationInfo *publication;
 	NamespaceInfo *pubschema;
+	char pubtype;
 } PublicationSchemaInfo;
 
 /*

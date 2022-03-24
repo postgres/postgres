@@ -3665,6 +3665,10 @@ typedef enum PublicationObjSpecType
 	PUBLICATIONOBJ_TABLES_IN_SCHEMA,	/* All tables in schema */
 	PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA,	/* All tables in first element of
 											 * search_path */
+	PUBLICATIONOBJ_SEQUENCE,		/* Sequence type */
+	PUBLICATIONOBJ_SEQUENCES_IN_SCHEMA, /* Sequences in schema type */
+	PUBLICATIONOBJ_SEQUENCES_IN_CUR_SCHEMA, /* Get the first element of
+											 * search_path */
 	PUBLICATIONOBJ_CONTINUATION /* Continuation of previous type */
 } PublicationObjSpecType;
 
@@ -3683,7 +3687,7 @@ typedef struct CreatePublicationStmt
 	char	   *pubname;		/* Name of the publication */
 	List	   *options;		/* List of DefElem nodes */
 	List	   *pubobjects;		/* Optional list of publication objects */
-	bool		for_all_tables; /* Special publication for all tables in db */
+	List	   *for_all_objects; /* Special publication for all objects in db */
 } CreatePublicationStmt;
 
 typedef enum AlterPublicationAction
@@ -3706,7 +3710,7 @@ typedef struct AlterPublicationStmt
 	 * objects.
 	 */
 	List	   *pubobjects;		/* Optional list of publication objects */
-	bool		for_all_tables; /* Special publication for all tables in db */
+	List	   *for_all_objects; /* Special publication for all objects in db */
 	AlterPublicationAction action;	/* What action to perform with the given
 									 * objects */
 } AlterPublicationStmt;
