@@ -59,8 +59,9 @@ extern TransactionId GetOldestActiveTransactionId(void);
 extern TransactionId GetOldestSafeDecodingTransactionId(bool catalogOnly);
 extern void GetReplicationHorizons(TransactionId *slot_xmin, TransactionId *catalog_xmin);
 
-extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids);
-extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids, int nvxids);
+extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids, int type);
+extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids,
+										 int nvxids, int type);
 
 extern PGPROC *BackendPidGetProc(int pid);
 extern PGPROC *BackendPidGetProcWithLock(int pid);
