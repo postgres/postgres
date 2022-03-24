@@ -31,6 +31,8 @@ static const char *progname;
 static int	WalSegSz;
 static volatile sig_atomic_t time_to_stop = false;
 
+static const RelFileNode emptyRelFileNode = {0, 0, 0};
+
 typedef struct XLogDumpPrivate
 {
 	TimeLineID	timeline;
@@ -55,6 +57,13 @@ typedef struct XLogDumpConfig
 	bool		filter_by_rmgr_enabled;
 	TransactionId filter_by_xid;
 	bool		filter_by_xid_enabled;
+	RelFileNode filter_by_relation;
+	bool		filter_by_extended;
+	bool		filter_by_relation_enabled;
+	BlockNumber filter_by_relation_block;
+	bool		filter_by_relation_block_enabled;
+	ForkNumber	filter_by_relation_forknum;
+	bool		filter_by_fpw;
 } XLogDumpConfig;
 
 typedef struct Stats
@@ -389,6 +398,59 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 	}
 
 	return count;
+}
+
+/*
+ * Boolean to return whether the given WAL record matches a specific relation
+ * and optionally block.
+ */
+static bool
+XLogRecordMatchesRelationBlock(XLogReaderState *record,
+							   RelFileNode matchRnode,
+							   BlockNumber matchBlock,
+							   ForkNumber matchFork)
+{
+	int			block_id;
+
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
+	{
+		RelFileNode rnode;
+		ForkNumber	forknum;
+		BlockNumber blk;
+
+		if (!XLogRecHasBlockRef(record, block_id))
+			continue;
+
+		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
+
+		if ((matchFork == InvalidForkNumber || matchFork == forknum) &&
+			(RelFileNodeEquals(matchRnode, emptyRelFileNode) ||
+			 RelFileNodeEquals(matchRnode, rnode)) &&
+			(matchBlock == InvalidBlockNumber || matchBlock == blk))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Boolean to return whether the given WAL record contains a full page write.
+ */
+static bool
+XLogRecordHasFPW(XLogReaderState *record)
+{
+	int			block_id;
+
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
+	{
+		if (!XLogRecHasBlockRef(record, block_id))
+			continue;
+
+		if (XLogRecHasBlockImage(record, block_id))
+			return true;
+	}
+
+	return false;
 }
 
 /*
@@ -765,6 +827,10 @@ usage(void)
 	printf(_("  -b, --bkp-details      output detailed information about backup blocks\n"));
 	printf(_("  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"));
 	printf(_("  -f, --follow           keep retrying after reaching end of WAL\n"));
+	printf(_("  -k, --block=N          with --relation, only show records matching this block\n"));
+	printf(_("  -F, --fork=N           only show records matching a specific fork number\n"
+			 "                         (defaults to showing all)\n"));
+	printf(_("  -l, --relation=N/N/N   only show records that affect a specific relation\n"));
 	printf(_("  -n, --limit=N          number of records to display\n"));
 	printf(_("  -p, --path=PATH        directory in which to find log segment files or a\n"
 			 "                         directory with a ./pg_wal that contains such files\n"
@@ -777,6 +843,7 @@ usage(void)
 			 "                         (default: 1 or the value used in STARTSEG)\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -x, --xid=XID          only show records with transaction ID XID\n"));
+	printf(_("  -w, --fullpage         only show records with a full page write\n"));
 	printf(_("  -z, --stats[=record]   show statistics instead of records\n"
 			 "                         (optionally, show per-record statistics)\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -800,12 +867,16 @@ main(int argc, char **argv)
 
 	static struct option long_options[] = {
 		{"bkp-details", no_argument, NULL, 'b'},
+		{"block", required_argument, NULL, 'k'},
 		{"end", required_argument, NULL, 'e'},
 		{"follow", no_argument, NULL, 'f'},
+		{"fork", required_argument, NULL, 'F'},
+		{"fullpage", no_argument, NULL, 'w'},
 		{"help", no_argument, NULL, '?'},
 		{"limit", required_argument, NULL, 'n'},
 		{"path", required_argument, NULL, 'p'},
 		{"quiet", no_argument, NULL, 'q'},
+		{"relation", required_argument, NULL, 'l'},
 		{"rmgr", required_argument, NULL, 'r'},
 		{"start", required_argument, NULL, 's'},
 		{"timeline", required_argument, NULL, 't'},
@@ -858,6 +929,11 @@ main(int argc, char **argv)
 	config.filter_by_rmgr_enabled = false;
 	config.filter_by_xid = InvalidTransactionId;
 	config.filter_by_xid_enabled = false;
+	config.filter_by_extended = false;
+	config.filter_by_relation_enabled = false;
+	config.filter_by_relation_block_enabled = false;
+	config.filter_by_relation_forknum = InvalidForkNumber;
+	config.filter_by_fpw = false;
 	config.stats = false;
 	config.stats_per_record = false;
 
@@ -870,7 +946,7 @@ main(int argc, char **argv)
 		goto bad_argument;
 	}
 
-	while ((option = getopt_long(argc, argv, "be:fn:p:qr:s:t:x:z",
+	while ((option = getopt_long(argc, argv, "be:fF:k:l:n:p:qr:s:t:wx:z",
 								 long_options, &optindex)) != -1)
 	{
 		switch (option)
@@ -889,6 +965,47 @@ main(int argc, char **argv)
 				break;
 			case 'f':
 				config.follow = true;
+				break;
+			case 'F':
+				{
+					unsigned int forknum;
+
+					if (sscanf(optarg, "%u", &forknum) != 1 ||
+						forknum > MAX_FORKNUM)
+					{
+						pg_log_error("could not parse valid fork number (0..%d) \"%s\"",
+									 MAX_FORKNUM, optarg);
+						goto bad_argument;
+					}
+					config.filter_by_relation_forknum = (ForkNumber) forknum;
+					config.filter_by_extended = true;
+				}
+				break;
+			case 'k':
+				if (sscanf(optarg, "%u", &config.filter_by_relation_block) != 1 ||
+					!BlockNumberIsValid(config.filter_by_relation_block))
+				{
+					pg_log_error("could not parse valid block number \"%s\"", optarg);
+					goto bad_argument;
+				}
+				config.filter_by_relation_block_enabled = true;
+				config.filter_by_extended = true;
+				break;
+			case 'l':
+				if (sscanf(optarg, "%u/%u/%u",
+						   &config.filter_by_relation.spcNode,
+						   &config.filter_by_relation.dbNode,
+						   &config.filter_by_relation.relNode) != 3 ||
+					!OidIsValid(config.filter_by_relation.spcNode) ||
+					!OidIsValid(config.filter_by_relation.relNode))
+				{
+					pg_log_error("could not parse valid relation from \"%s\""
+								 " (expecting \"tablespace OID/database OID/"
+								 "relation filenode\")", optarg);
+					goto bad_argument;
+				}
+				config.filter_by_relation_enabled = true;
+				config.filter_by_extended = true;
 				break;
 			case 'n':
 				if (sscanf(optarg, "%d", &config.stop_after_records) != 1)
@@ -947,6 +1064,9 @@ main(int argc, char **argv)
 					goto bad_argument;
 				}
 				break;
+			case 'w':
+				config.filter_by_fpw = true;
+				break;
 			case 'x':
 				if (sscanf(optarg, "%u", &config.filter_by_xid) != 1)
 				{
@@ -974,6 +1094,13 @@ main(int argc, char **argv)
 			default:
 				goto bad_argument;
 		}
+	}
+
+	if (config.filter_by_relation_block_enabled &&
+		!config.filter_by_relation_enabled)
+	{
+		pg_log_error("--block option requires --relation option to be specified");
+		goto bad_argument;
 	}
 
 	if ((optind + 2) < argc)
@@ -1146,6 +1273,21 @@ main(int argc, char **argv)
 
 		if (config.filter_by_xid_enabled &&
 			config.filter_by_xid != record->xl_xid)
+			continue;
+
+		/* check for extended filtering */
+		if (config.filter_by_extended &&
+			!XLogRecordMatchesRelationBlock(xlogreader_state,
+											config.filter_by_relation_enabled ?
+											config.filter_by_relation :
+											emptyRelFileNode,
+											config.filter_by_relation_block_enabled ?
+											config.filter_by_relation_block :
+											InvalidBlockNumber,
+											config.filter_by_relation_forknum))
+			continue;
+
+		if (config.filter_by_fpw && !XLogRecordHasFPW(xlogreader_state))
 			continue;
 
 		/* perform any per-record work */
