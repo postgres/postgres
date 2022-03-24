@@ -326,6 +326,22 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	RelationPreTruncate(rel);
 
 	/*
+	 * Make sure that a concurrent checkpoint can't complete while truncation
+	 * is in progress.
+	 *
+	 * The truncation operation might drop buffers that the checkpoint
+	 * otherwise would have flushed. If it does, then it's essential that
+	 * the files actually get truncated on disk before the checkpoint record
+	 * is written. Otherwise, if reply begins from that checkpoint, the
+	 * to-be-truncated blocks might still exist on disk but have older
+	 * contents than expected, which can cause replay to fail. It's OK for
+	 * the blocks to not exist on disk at all, but not for them to have the
+	 * wrong contents.
+	 */
+	Assert((MyProc->delayChkpt & DELAY_CHKPT_COMPLETE) == 0);
+	MyProc->delayChkpt |= DELAY_CHKPT_COMPLETE;
+
+	/*
 	 * We WAL-log the truncation before actually truncating, which means
 	 * trouble if the truncation fails. If we then crash, the WAL replay
 	 * likely isn't going to succeed in the truncation either, and cause a
@@ -363,13 +379,24 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 			XLogFlush(lsn);
 	}
 
-	/* Do the real work to truncate relation forks */
+	/*
+	 * This will first remove any buffers from the buffer pool that should no
+	 * longer exist after truncation is complete, and then truncate the
+	 * corresponding files on disk.
+	 */
 	smgrtruncate(rel->rd_smgr, forks, nforks, blocks);
+
+	/* We've done all the critical work, so checkpoints are OK now. */
+	MyProc->delayChkpt &= ~DELAY_CHKPT_COMPLETE;
 
 	/*
 	 * Update upper-level FSM pages to account for the truncation. This is
 	 * important because the just-truncated pages were likely marked as
 	 * all-free, and would be preferentially selected.
+	 *
+	 * NB: There's no point in delaying checkpoints until this is done.
+	 * Because the FSM is not WAL-logged, we have to be prepared for the
+	 * possibility of corruption after a crash anyway.
 	 */
 	if (need_fsm_vacuum)
 		FreeSpaceMapVacuumRange(rel, nblocks, InvalidBlockNumber);
