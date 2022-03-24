@@ -682,6 +682,13 @@ check_is_install_user(ClusterInfo *cluster)
 }
 
 
+/*
+ *	check_proper_datallowconn
+ *
+ *	Ensure that all non-template0 databases allow connections since they
+ *	otherwise won't be restored; and that template0 explicitly doesn't allow
+ *	connections since it would make pg_dumpall --globals restore fail.
+ */
 static void
 check_proper_datallowconn(ClusterInfo *cluster)
 {
@@ -691,8 +698,15 @@ check_proper_datallowconn(ClusterInfo *cluster)
 	int			ntups;
 	int			i_datname;
 	int			i_datallowconn;
+	FILE	   *script = NULL;
+	char		output_path[MAXPGPATH];
+	bool		found = false;
 
 	prep_status("Checking database connection settings");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "databases_with_datallowconn_false.txt");
 
 	conn_template1 = connectToServer(cluster, "template1");
 
@@ -724,8 +738,14 @@ check_proper_datallowconn(ClusterInfo *cluster)
 			 * restore
 			 */
 			if (strcmp(datallowconn, "f") == 0)
-				pg_fatal("All non-template0 databases must allow connections, "
-						 "i.e. their pg_database.datallowconn must be true\n");
+			{
+				found = true;
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s\n",
+							 output_path, strerror(errno));
+
+				fprintf(script, "%s\n", datname);
+			}
 		}
 	}
 
@@ -733,7 +753,22 @@ check_proper_datallowconn(ClusterInfo *cluster)
 
 	PQfinish(conn_template1);
 
-	check_ok();
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("All non-template0 databases must allow connections, i.e. their\n"
+				 "pg_database.datallowconn must be true.  Your installation contains\n"
+				 "non-template0 databases with their pg_database.datallowconn set to\n"
+				 "false.  Consider allowing connection for all non-template0 databases\n"
+				 "or drop the databases which do not allow connections.  A list of\n"
+				 "databases with the problem is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
 }
 
 
