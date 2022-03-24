@@ -93,7 +93,6 @@ use warnings;
 
 use Carp;
 use Config;
-use Cwd;
 use Fcntl qw(:mode);
 use File::Basename;
 use File::Path qw(rmtree);

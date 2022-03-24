@@ -3,8 +3,6 @@
 
 use strict;
 use warnings;
-use Cwd;
-use Config;
 use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
 use Fcntl qw(:seek);

@@ -6,7 +6,6 @@
 #
 use strict;
 use warnings;
-use Config;
 use File::stat qw(stat);
 use IPC::Run 'run';
 use PostgreSQL::Test::Cluster;

@@ -9,7 +9,6 @@ use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
-use Config;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');

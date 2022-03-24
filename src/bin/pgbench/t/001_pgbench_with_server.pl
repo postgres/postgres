@@ -7,7 +7,6 @@ use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
-use Config;
 
 # start a pgbench specific server
 my $node = PostgreSQL::Test::Cluster->new('main');
