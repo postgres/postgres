@@ -5919,6 +5919,29 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-recursive-worktable-factor" xreflabel="recursive_worktable_factor">
+      <term><varname>recursive_worktable_factor</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>recursive_worktable_factor</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the average size of the working
+        table of a <link linkend="queries-with-recursive">recursive
+        query</link>, as a multiple of the estimated size of the initial
+        non-recursive term of the query.  This helps the planner choose
+        the most appropriate method for joining the working table to the
+        query's other tables.
+        The default value is <literal>10.0</literal>.  A smaller value
+        such as <literal>1.0</literal> can be helpful when the recursion
+        has low <quote>fan-out</quote> from one step to the next, as for
+        example in shortest-path queries.  Graph analytics queries may
+        benefit from larger-than-default values.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
    </sect1>

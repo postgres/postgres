@@ -426,6 +426,7 @@
 					# JOIN clauses
 #plan_cache_mode = auto			# auto, force_generic_plan or
 					# force_custom_plan
+#recursive_worktable_factor = 10.0	# range 0.001-1000000
 
 
 #------------------------------------------------------------------------------
