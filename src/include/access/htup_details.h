@@ -733,6 +733,7 @@ extern size_t varsize_any(void *p);
 extern HeapTuple heap_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
 extern MinimalTuple minimal_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleDesc);
 
+#ifndef FRONTEND
 /*
  *	fastgetattr
  *		Fetch a user attribute's value as a Datum (might be either a
@@ -801,5 +802,6 @@ heap_getattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 	else
 		return heap_getsysattr(tup, attnum, tupleDesc, isnull);
 }
+#endif							/* FRONTEND */
 
 #endif							/* HTUP_DETAILS_H */
