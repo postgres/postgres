@@ -27,6 +27,7 @@
 #include "catalog/storage.h"
 #include "catalog/storage_xlog.h"
 #include "storage/freespace.h"
+#include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -249,6 +250,22 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 		visibilitymap_truncate(rel, nblocks);
 
 	/*
+	 * Make sure that a concurrent checkpoint can't complete while truncation
+	 * is in progress.
+	 *
+	 * The truncation operation might drop buffers that the checkpoint
+	 * otherwise would have flushed. If it does, then it's essential that
+	 * the files actually get truncated on disk before the checkpoint record
+	 * is written. Otherwise, if reply begins from that checkpoint, the
+	 * to-be-truncated blocks might still exist on disk but have older
+	 * contents than expected, which can cause replay to fail. It's OK for
+	 * the blocks to not exist on disk at all, but not for them to have the
+	 * wrong contents.
+	 */
+	Assert((MyPgXact->delayChkpt & DELAY_CHKPT_COMPLETE) == 0);
+	MyPgXact->delayChkpt |= DELAY_CHKPT_COMPLETE;
+
+	/*
 	 * We WAL-log the truncation before actually truncating, which means
 	 * trouble if the truncation fails. If we then crash, the WAL replay
 	 * likely isn't going to succeed in the truncation either, and cause a
@@ -286,8 +303,15 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 			XLogFlush(lsn);
 	}
 
-	/* Do the real work */
+	/*
+	 * This will first remove any buffers from the buffer pool that should no
+	 * longer exist after truncation is complete, and then truncate the
+	 * corresponding files on disk.
+	 */
 	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
+
+	/* We've done all the critical work, so checkpoints are OK now. */
+	MyPgXact->delayChkpt &= ~DELAY_CHKPT_COMPLETE;
 }
 
 /*
