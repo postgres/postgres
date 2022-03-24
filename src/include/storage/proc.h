@@ -84,6 +84,41 @@ struct XidCache
 #define INVALID_PGPROCNO		PG_INT32_MAX
 
 /*
+ * Flags for PGPROC.delayChkpt
+ *
+ * These flags can be used to delay the start or completion of a checkpoint
+ * for short periods. A flag is in effect if the corresponding bit is set in
+ * the PGPROC of any backend.
+ *
+ * For our purposes here, a checkpoint has three phases: (1) determine the
+ * location to which the redo pointer will be moved, (2) write all the
+ * data durably to disk, and (3) WAL-log the checkpoint.
+ *
+ * Setting DELAY_CHKPT_START prevents the system from moving from phase 1
+ * to phase 2. This is useful when we are performing a WAL-logged modification
+ * of data that will be flushed to disk in phase 2. By setting this flag
+ * before writing WAL and clearing it after we've both written WAL and
+ * performed the corresponding modification, we ensure that if the WAL record
+ * is inserted prior to the new redo point, the corresponding data changes will
+ * also be flushed to disk before the checkpoint can complete. (In the
+ * extremely common case where the data being modified is in shared buffers
+ * and we acquire an exclusive content lock on the relevant buffers before
+ * writing WAL, this mechanism is not needed, because phase 2 will block
+ * until we release the content lock and then flush the modified data to
+ * disk.)
+ *
+ * Setting DELAY_CHKPT_COMPLETE prevents the system from moving from phase 2
+ * to phase 3. This is useful if we are performing a WAL-logged operation that
+ * might invalidate buffers, such as relation truncation. In this case, we need
+ * to ensure that any buffers which were invalidated and thus not flushed by
+ * the checkpoint are actaully destroyed on disk. Replay can cope with a file
+ * or block that doesn't exist, but not with a block that has the wrong
+ * contents.
+ */
+#define DELAY_CHKPT_START		(1<<0)
+#define DELAY_CHKPT_COMPLETE	(1<<1)
+
+/*
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
  *
@@ -149,7 +184,7 @@ struct PGPROC
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on this
 								 * lock object by this backend */
 
-	bool		delayChkpt;		/* true if this proc delays checkpoint start */
+	int			delayChkpt;		/* for DELAY_CHKPT_* flags */
 
 	/*
 	 * Info to allow us to wait for synchronous replication, if needed.
