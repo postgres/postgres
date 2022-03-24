@@ -1222,7 +1222,8 @@ local $ENV{PGOPTIONS} = "-c default_transaction_isolation=repeatable\\ read";
 # Check that we have a serialization error and the same random value of the
 # delta variable in the next try
 my $err_pattern =
-    "client (0|1) got an error in command 3 \\(SQL\\) of script 0; "
+	"(client (0|1) sending UPDATE xy SET y = y \\+ -?\\d+\\b).*"
+  . "client \\g2 got an error in command 3 \\(SQL\\) of script 0; "
   . "ERROR:  could not serialize access due to concurrent update\\b.*"
   . "\\g1";
 
