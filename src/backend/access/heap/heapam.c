@@ -1131,52 +1131,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 }
 
 
-#if defined(DISABLE_COMPLEX_MACRO)
-/*
- * This is formatted so oddly so that the correspondence to the macro
- * definition in access/htup_details.h is maintained.
- */
-Datum
-fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
-			bool *isnull)
-{
-	return (
-			(attnum) > 0 ?
-			(
-			 (*(isnull) = false),
-			 HeapTupleNoNulls(tup) ?
-			 (
-			  TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff >= 0 ?
-			  (
-			   fetchatt(TupleDescAttr((tupleDesc), (attnum) - 1),
-						(char *) (tup)->t_data + (tup)->t_data->t_hoff +
-						TupleDescAttr((tupleDesc), (attnum) - 1)->attcacheoff)
-			   )
-			  :
-			  nocachegetattr((tup), (attnum), (tupleDesc))
-			  )
-			 :
-			 (
-			  att_isnull((attnum) - 1, (tup)->t_data->t_bits) ?
-			  (
-			   (*(isnull) = true),
-			   (Datum) NULL
-			   )
-			  :
-			  (
-			   nocachegetattr((tup), (attnum), (tupleDesc))
-			   )
-			  )
-			 )
-			:
-			(
-			 (Datum) NULL
-			 )
-		);
-}
-#endif							/* defined(DISABLE_COMPLEX_MACRO) */
-
-
 /* ----------------------------------------------------------------
  *					 heap access method interface
  * ----------------------------------------------------------------
