@@ -2726,6 +2726,37 @@ sub pg_recvlogical_upto
 
 =pod
 
+=item $node->corrupt_page_checksum(self, file, page_offset)
+
+Intentionally corrupt the checksum field of one page in a file.
+The server must be stopped for this to work reliably.
+
+The file name should be specified relative to the cluster datadir.
+page_offset had better be a multiple of the cluster's block size.
+
+=cut
+
+sub corrupt_page_checksum
+{
+	my ($self, $file, $page_offset) = @_;
+	my $pgdata = $self->data_dir;
+	my $pageheader;
+
+	open my $fh, '+<', "$pgdata/$file" or die "open($file) failed: $!";
+	binmode $fh;
+	sysseek($fh, $page_offset, 0) or die "sysseek failed: $!";
+	sysread($fh, $pageheader, 24) or die "sysread failed: $!";
+	# This inverts the pd_checksum field (only); see struct PageHeaderData
+	$pageheader ^= "\0\0\0\0\0\0\0\0\xff\xff";
+	sysseek($fh, $page_offset, 0) or die "sysseek failed: $!";
+	syswrite($fh, $pageheader) or die "syswrite failed: $!";
+	close $fh;
+
+	return;
+}
+
+=pod
+
 =back
 
 =cut

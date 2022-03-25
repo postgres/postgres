@@ -7,7 +7,6 @@ use warnings;
 use PostgresNode;
 use TestLib;
 
-use Fcntl qw(:seek);
 use Test::More tests => 80;
 
 my ($node, $result);
@@ -127,8 +126,8 @@ sub corrupt_first_page
 	# Corrupt some line pointers.  The values are chosen to hit the
 	# various line-pointer-corruption checks in verify_heapam.c
 	# on both little-endian and big-endian architectures.
-	seek($fh, 32, SEEK_SET)
-	  or BAIL_OUT("seek failed: $!");
+	sysseek($fh, 32, 0)
+	  or BAIL_OUT("sysseek failed: $!");
 	syswrite(
 		$fh,
 		pack("L*",
