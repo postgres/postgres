@@ -409,9 +409,6 @@ contain_invalid_rfcolumn(Oid pubid, Relation relation, List *ancestors,
 		context.bms_replident = bms;
 		rfnode = stringToNode(TextDatumGetCString(rfdatum));
 		result = contain_invalid_rfcolumn_walker(rfnode, &context);
-
-		bms_free(bms);
-		pfree(rfnode);
 	}
 
 	ReleaseSysCache(rftuple);
@@ -1181,9 +1178,6 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 					}
 				}
 			}
-
-			if (oldrelwhereclause)
-				pfree(oldrelwhereclause);
 
 			/*
 			 * Add the non-matched relations to a list so that they can be
