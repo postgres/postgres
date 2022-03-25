@@ -5,7 +5,6 @@ use strict;
 use warnings;
 use File::Basename qw(basename dirname);
 use File::Path qw(rmtree);
-use Fcntl qw(:seek);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
@@ -56,7 +55,7 @@ if (open my $badchars, '>>', "$tempdir/pgdata/FOO\xe0\xe0\xe0BAR")
 }
 
 $node->set_replication_conf();
-system_or_bail 'pg_ctl', '-D', $pgdata, 'reload';
+$node->reload;
 
 $node->command_fails(
 	[ @pg_basebackup_defs, '-D', "$tempdir/backup" ],
@@ -706,17 +705,13 @@ my $file_corrupt2 = $node->safe_psql('postgres',
 	q{CREATE TABLE corrupt2 AS SELECT b FROM generate_series(1,2) AS b; ALTER TABLE corrupt2 SET (autovacuum_enabled=false); SELECT pg_relation_filepath('corrupt2')}
 );
 
-# set page header and block sizes
-my $pageheader_size = 24;
+# get block size for corruption steps
 my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 
 # induce corruption
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt1";
-seek($file, $pageheader_size, SEEK_SET);
-syswrite($file, "\0\0\0\0\0\0\0\0\0");
-close $file;
-system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
+$node->stop;
+$node->corrupt_page_checksum($file_corrupt1, 0);
+$node->start;
 
 $node->command_checks_all(
 	[ @pg_basebackup_defs, '-D', "$tempdir/backup_corrupt" ],
@@ -727,16 +722,12 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt");
 
 # induce further corruption in 5 more blocks
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt1";
+$node->stop;
 for my $i (1 .. 5)
 {
-	my $offset = $pageheader_size + $i * $block_size;
-	seek($file, $offset, SEEK_SET);
-	syswrite($file, "\0\0\0\0\0\0\0\0\0");
+	$node->corrupt_page_checksum($file_corrupt1, $i * $block_size);
 }
-close $file;
-system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
+$node->start;
 
 $node->command_checks_all(
 	[ @pg_basebackup_defs, '-D', "$tempdir/backup_corrupt2" ],
@@ -747,12 +738,9 @@ $node->command_checks_all(
 rmtree("$tempdir/backup_corrupt2");
 
 # induce corruption in a second file
-system_or_bail 'pg_ctl', '-D', $pgdata, 'stop';
-open $file, '+<', "$pgdata/$file_corrupt2";
-seek($file, $pageheader_size, SEEK_SET);
-syswrite($file, "\0\0\0\0\0\0\0\0\0");
-close $file;
-system_or_bail 'pg_ctl', '-D', $pgdata, 'start';
+$node->stop;
+$node->corrupt_page_checksum($file_corrupt2, 0);
+$node->start;
 
 $node->command_checks_all(
 	[ @pg_basebackup_defs, '-D', "$tempdir/backup_corrupt3" ],
