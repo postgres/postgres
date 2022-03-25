@@ -45,6 +45,9 @@
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
+static void publication_translate_columns(Relation targetrel, List *columns,
+										  int *natts, AttrNumber **attrs);
+
 /*
  * Check if relation can be in given publication and throws appropriate
  * error if not.
@@ -395,6 +398,8 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 	Oid			relid = RelationGetRelid(targetrel);
 	Oid			pubreloid;
 	Publication *pub = GetPublication(pubid);
+	AttrNumber *attarray = NULL;
+	int			natts = 0;
 	ObjectAddress myself,
 				referenced;
 	List	   *relids = NIL;
@@ -422,6 +427,14 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 
 	check_publication_add_relation(targetrel);
 
+	/*
+	 * Translate column names to attnums and make sure the column list contains
+	 * only allowed elements (no system or generated columns etc.). Also build
+	 * an array of attnums, for storing in the catalog.
+	 */
+	publication_translate_columns(pri->relation, pri->columns,
+								  &natts, &attarray);
+
 	/* Form a tuple. */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
@@ -439,6 +452,12 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 		values[Anum_pg_publication_rel_prqual - 1] = CStringGetTextDatum(nodeToString(pri->whereClause));
 	else
 		nulls[Anum_pg_publication_rel_prqual - 1] = true;
+
+	/* Add column list, if available */
+	if (pri->columns)
+		values[Anum_pg_publication_rel_prattrs - 1] = PointerGetDatum(buildint2vector(attarray, natts));
+	else
+		nulls[Anum_pg_publication_rel_prattrs - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -463,6 +482,13 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 										DEPENDENCY_NORMAL, DEPENDENCY_NORMAL,
 										false);
 
+	/* Add dependency on the columns, if any are listed */
+	for (int i = 0; i < natts; i++)
+	{
+		ObjectAddressSubSet(referenced, RelationRelationId, relid, attarray[i]);
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
 	/* Close the table. */
 	table_close(rel, RowExclusiveLock);
 
@@ -480,6 +506,125 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 	InvalidatePublicationRels(relids);
 
 	return myself;
+}
+
+/* qsort comparator for attnums */
+static int
+compare_int16(const void *a, const void *b)
+{
+	int			av = *(const int16 *) a;
+	int			bv = *(const int16 *) b;
+
+	/* this can't overflow if int is wider than int16 */
+	return (av - bv);
+}
+
+/*
+ * Translate a list of column names to an array of attribute numbers
+ * and a Bitmapset with them; verify that each attribute is appropriate
+ * to have in a publication column list (no system or generated attributes,
+ * no duplicates).  Additional checks with replica identity are done later;
+ * see check_publication_columns.
+ *
+ * Note that the attribute numbers are *not* offset by
+ * FirstLowInvalidHeapAttributeNumber; system columns are forbidden so this
+ * is okay.
+ */
+static void
+publication_translate_columns(Relation targetrel, List *columns,
+							  int *natts, AttrNumber **attrs)
+{
+	AttrNumber *attarray = NULL;
+	Bitmapset  *set = NULL;
+	ListCell   *lc;
+	int			n = 0;
+	TupleDesc	tupdesc = RelationGetDescr(targetrel);
+
+	/* Bail out when no column list defined. */
+	if (!columns)
+		return;
+
+	/*
+	 * Translate list of columns to attnums. We prohibit system attributes and
+	 * make sure there are no duplicate columns.
+	 */
+	attarray = palloc(sizeof(AttrNumber) * list_length(columns));
+	foreach(lc, columns)
+	{
+		char	   *colname = strVal(lfirst(lc));
+		AttrNumber	attnum = get_attnum(RelationGetRelid(targetrel), colname);
+
+		if (attnum == InvalidAttrNumber)
+			ereport(ERROR,
+					errcode(ERRCODE_UNDEFINED_COLUMN),
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   colname, RelationGetRelationName(targetrel)));
+
+		if (!AttrNumberIsForUserDefinedAttr(attnum))
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("cannot reference system column \"%s\" in publication column list",
+						   colname));
+
+		if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("cannot reference generated column \"%s\" in publication column list",
+						   colname));
+
+		if (bms_is_member(attnum, set))
+			ereport(ERROR,
+					errcode(ERRCODE_DUPLICATE_OBJECT),
+					errmsg("duplicate column \"%s\" in publication column list",
+						   colname));
+
+		set = bms_add_member(set, attnum);
+		attarray[n++] = attnum;
+	}
+
+	/* Be tidy, so that the catalog representation is always sorted */
+	qsort(attarray, n, sizeof(AttrNumber), compare_int16);
+
+	*natts = n;
+	*attrs = attarray;
+
+	bms_free(set);
+}
+
+/*
+ * Transform the column list (represented by an array) to a bitmapset.
+ */
+Bitmapset *
+pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
+{
+	Bitmapset  *result = NULL;
+	ArrayType  *arr;
+	int			nelems;
+	int16	   *elems;
+	MemoryContext	oldcxt;
+
+	/*
+	 * If an existing bitmap was provided, use it. Otherwise just use NULL
+	 * and build a new bitmap.
+	 */
+	if (columns)
+		result = columns;
+
+	arr = DatumGetArrayTypeP(pubcols);
+	nelems = ARR_DIMS(arr)[0];
+	elems = (int16 *) ARR_DATA_PTR(arr);
+
+	/* If a memory context was specified, switch to it. */
+	if (mcxt)
+		oldcxt = MemoryContextSwitchTo(mcxt);
+
+	for (int i = 0; i < nelems; i++)
+		result = bms_add_member(result, elems[i]);
+
+	if (mcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return result;
 }
 
 /*

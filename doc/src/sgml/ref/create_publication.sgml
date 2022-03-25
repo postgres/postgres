@@ -33,7 +33,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
-    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
+    TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
     SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [ * ] [, ... ]
     ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
     ALL SEQUENCES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
@@ -91,6 +91,13 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       evaluates to false or null will not be published. Note that parentheses
       are required around the expression. It has no effect on
       <literal>TRUNCATE</literal> commands.
+     </para>
+
+     <para>
+      When a column list is specified, only the named columns are replicated.
+      If no column list is specified, all columns of the table are replicated
+      through this publication, including any columns added later.  If a column
+      list is specified, it must include the replica identity columns.
      </para>
 
      <para>
@@ -348,6 +355,14 @@ CREATE PUBLICATION production_publication FOR TABLE users, departments, ALL TABL
    <structname>sales</structname>:
 <programlisting>
 CREATE PUBLICATION sales_publication FOR ALL TABLES IN SCHEMA marketing, sales;
+</programlisting></para>
+
+  <para>
+   Create a publication that publishes all changes for table <structname>users</structname>,
+   but replicates only columns <structname>user_id</structname> and
+   <structname>firstname</structname>:
+<programlisting>
+CREATE PUBLICATION users_filtered FOR TABLE users (user_id, firstname);
 </programlisting></para>
  </refsect1>
 

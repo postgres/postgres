@@ -9749,13 +9749,14 @@ CreatePublicationStmt:
  * relation_expr here.
  */
 PublicationObjSpec:
-			TABLE relation_expr OptWhereClause
+			TABLE relation_expr opt_column_list OptWhereClause
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_TABLE;
 					$$->pubtable = makeNode(PublicationTable);
 					$$->pubtable->relation = $2;
-					$$->pubtable->whereClause = $3;
+					$$->pubtable->columns = $3;
+					$$->pubtable->whereClause = $4;
 				}
 			| ALL TABLES IN_P SCHEMA ColId
 				{
@@ -9790,11 +9791,15 @@ PublicationObjSpec:
 					$$->pubobjtype = PUBLICATIONOBJ_SEQUENCES_IN_CUR_SCHEMA;
 					$$->location = @5;
 				}
-			| ColId OptWhereClause
+			| ColId opt_column_list OptWhereClause
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_CONTINUATION;
-					if ($2)
+					/*
+					 * If either a row filter or column list is specified, create
+					 * a PublicationTable object.
+					 */
+					if ($2 || $3)
 					{
 						/*
 						 * The OptWhereClause must be stored here but it is
@@ -9804,7 +9809,8 @@ PublicationObjSpec:
 						 */
 						$$->pubtable = makeNode(PublicationTable);
 						$$->pubtable->relation = makeRangeVar(NULL, $1, @1);
-						$$->pubtable->whereClause = $2;
+						$$->pubtable->columns = $2;
+						$$->pubtable->whereClause = $3;
 					}
 					else
 					{
@@ -9812,23 +9818,25 @@ PublicationObjSpec:
 					}
 					$$->location = @1;
 				}
-			| ColId indirection OptWhereClause
+			| ColId indirection opt_column_list OptWhereClause
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_CONTINUATION;
 					$$->pubtable = makeNode(PublicationTable);
 					$$->pubtable->relation = makeRangeVarFromQualifiedName($1, $2, @1, yyscanner);
-					$$->pubtable->whereClause = $3;
+					$$->pubtable->columns = $3;
+					$$->pubtable->whereClause = $4;
 					$$->location = @1;
 				}
 			/* grammar like tablename * , ONLY tablename, ONLY ( tablename ) */
-			| extended_relation_expr OptWhereClause
+			| extended_relation_expr opt_column_list OptWhereClause
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_CONTINUATION;
 					$$->pubtable = makeNode(PublicationTable);
 					$$->pubtable->relation = $1;
-					$$->pubtable->whereClause = $2;
+					$$->pubtable->columns = $2;
+					$$->pubtable->whereClause = $3;
 				}
 			| CURRENT_SCHEMA
 				{
@@ -17522,6 +17530,13 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),
 						errmsg("WHERE clause not allowed for schema"),
+						parser_errposition(pubobj->location));
+
+			/* Column list is not allowed on a schema object */
+			if (pubobj->pubtable && pubobj->pubtable->columns)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("column specification not allowed for schema"),
 						parser_errposition(pubobj->location));
 
 			/*

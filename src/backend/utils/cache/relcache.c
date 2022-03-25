@@ -5575,6 +5575,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		memset(pubdesc, 0, sizeof(PublicationDesc));
 		pubdesc->rf_valid_for_update = true;
 		pubdesc->rf_valid_for_delete = true;
+		pubdesc->cols_valid_for_update = true;
+		pubdesc->cols_valid_for_delete = true;
 		return;
 	}
 
@@ -5587,6 +5589,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	memset(pubdesc, 0, sizeof(PublicationDesc));
 	pubdesc->rf_valid_for_update = true;
 	pubdesc->rf_valid_for_delete = true;
+	pubdesc->cols_valid_for_update = true;
+	pubdesc->cols_valid_for_delete = true;
 
 	/* Fetch the publication membership info. */
 	puboids = GetRelationPublications(relid);
@@ -5657,13 +5661,30 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		 */
 		if (!pubform->puballtables &&
 			(pubform->pubupdate || pubform->pubdelete) &&
-			contain_invalid_rfcolumn(pubid, relation, ancestors,
+			pub_rf_contains_invalid_column(pubid, relation, ancestors,
 									 pubform->pubviaroot))
 		{
 			if (pubform->pubupdate)
 				pubdesc->rf_valid_for_update = false;
 			if (pubform->pubdelete)
 				pubdesc->rf_valid_for_delete = false;
+		}
+
+		/*
+		 * Check if all columns are part of the REPLICA IDENTITY index or not.
+		 *
+		 * If the publication is FOR ALL TABLES then it means the table has no
+		 * column list and we can skip the validation.
+		 */
+		if (!pubform->puballtables &&
+			(pubform->pubupdate || pubform->pubdelete) &&
+			pub_collist_contains_invalid_column(pubid, relation, ancestors,
+									 pubform->pubviaroot))
+		{
+			if (pubform->pubupdate)
+				pubdesc->cols_valid_for_update = false;
+			if (pubform->pubdelete)
+				pubdesc->cols_valid_for_delete = false;
 		}
 
 		ReleaseSysCache(tup);
@@ -5676,6 +5697,16 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		if (pubdesc->pubactions.pubinsert && pubdesc->pubactions.pubupdate &&
 			pubdesc->pubactions.pubdelete && pubdesc->pubactions.pubtruncate &&
 			!pubdesc->rf_valid_for_update && !pubdesc->rf_valid_for_delete)
+			break;
+
+		/*
+		 * If we know everything is replicated and the column list is invalid
+		 * for update and delete, there is no point to check for other
+		 * publications.
+		 */
+		if (pubdesc->pubactions.pubinsert && pubdesc->pubactions.pubupdate &&
+			pubdesc->pubactions.pubdelete && pubdesc->pubactions.pubtruncate &&
+			!pubdesc->cols_valid_for_update && !pubdesc->cols_valid_for_delete)
 			break;
 	}
 

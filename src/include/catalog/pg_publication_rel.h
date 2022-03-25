@@ -34,6 +34,7 @@ CATALOG(pg_publication_rel,6106,PublicationRelRelationId)
 
 #ifdef	CATALOG_VARLEN			/* variable-length fields start here */
 	pg_node_tree prqual;		/* qualifications */
+	int2vector	prattrs;		/* columns to replicate */
 #endif
 } FormData_pg_publication_rel;
 

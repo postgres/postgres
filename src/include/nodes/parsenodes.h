@@ -3654,6 +3654,7 @@ typedef struct PublicationTable
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to be published */
 	Node	   *whereClause;	/* qualifications */
+	List	   *columns;		/* List of columns in a publication table */
 } PublicationTable;
 
 /*

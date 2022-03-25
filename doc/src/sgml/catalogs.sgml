@@ -4410,7 +4410,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        This is an array of <structfield>indnatts</structfield> values that
-       indicate which table columns this index indexes.  For example a value
+       indicate which table columns this index indexes.  For example, a value
        of <literal>1 3</literal> would mean that the first and the third table
        columns make up the index entries.  Key columns come before non-key
        (included) columns.  A zero in this array indicates that the
@@ -6289,6 +6289,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Reference to schema
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>prattrs</structfield> <type>int2vector</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       This is an array of values that indicates which table columns are
+       part of the publication.  For example, a value of <literal>1 3</literal>
+       would mean that the first and the third table columns are published.
+       A null value indicates that all columns are published.
       </para></entry>
      </row>
     </tbody>

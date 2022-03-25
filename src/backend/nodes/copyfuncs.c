@@ -4850,6 +4850,7 @@ _copyPublicationTable(const PublicationTable *from)
 
 	COPY_NODE_FIELD(relation);
 	COPY_NODE_FIELD(whereClause);
+	COPY_NODE_FIELD(columns);
 
 	return newnode;
 }

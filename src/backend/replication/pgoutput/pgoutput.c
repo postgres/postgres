@@ -30,6 +30,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rel.h"
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 
@@ -90,7 +91,8 @@ static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
 										uint32 hashvalue);
 static void send_relation_and_attrs(Relation relation, TransactionId xid,
-									LogicalDecodingContext *ctx);
+									LogicalDecodingContext *ctx,
+									Bitmapset *columns);
 static void send_repl_origin(LogicalDecodingContext *ctx,
 							 RepOriginId origin_id, XLogRecPtr origin_lsn,
 							 bool send_origin);
@@ -148,9 +150,6 @@ typedef struct RelationSyncEntry
 	 */
 	ExprState  *exprstate[NUM_ROWFILTER_PUBACTIONS];
 	EState	   *estate;			/* executor state used for row filter */
-	MemoryContext cache_expr_cxt;	/* private context for exprstate and
-									 * estate, if any */
-
 	TupleTableSlot *new_slot;	/* slot for storing new tuple */
 	TupleTableSlot *old_slot;	/* slot for storing old tuple */
 
@@ -169,6 +168,19 @@ typedef struct RelationSyncEntry
 	 * having identical TupleDesc.
 	 */
 	AttrMap    *attrmap;
+
+	/*
+	 * Columns included in the publication, or NULL if all columns are
+	 * included implicitly.  Note that the attnums in this bitmap are not
+	 * shifted by FirstLowInvalidHeapAttributeNumber.
+	 */
+	Bitmapset  *columns;
+
+	/*
+	 * Private context to store additional data for this entry - state for
+	 * the row filter expressions, column list, etc.
+	 */
+	MemoryContext entry_cxt;
 } RelationSyncEntry;
 
 /* Map used to remember which relation schemas we sent. */
@@ -199,6 +211,11 @@ static bool pgoutput_row_filter(Relation relation, TupleTableSlot *old_slot,
 								TupleTableSlot **new_slot_ptr,
 								RelationSyncEntry *entry,
 								ReorderBufferChangeType *action);
+
+/* column list routines */
+static void pgoutput_column_list_init(PGOutputData *data,
+									  List *publications,
+									  RelationSyncEntry *entry);
 
 /*
  * Specify output plugin callbacks
@@ -622,11 +639,11 @@ maybe_send_schema(LogicalDecodingContext *ctx,
 	{
 		Relation	ancestor = RelationIdGetRelation(relentry->publish_as_relid);
 
-		send_relation_and_attrs(ancestor, xid, ctx);
+		send_relation_and_attrs(ancestor, xid, ctx, relentry->columns);
 		RelationClose(ancestor);
 	}
 
-	send_relation_and_attrs(relation, xid, ctx);
+	send_relation_and_attrs(relation, xid, ctx, relentry->columns);
 
 	if (in_streaming)
 		set_schema_sent_in_streamed_txn(relentry, topxid);
@@ -639,7 +656,8 @@ maybe_send_schema(LogicalDecodingContext *ctx,
  */
 static void
 send_relation_and_attrs(Relation relation, TransactionId xid,
-						LogicalDecodingContext *ctx)
+						LogicalDecodingContext *ctx,
+						Bitmapset *columns)
 {
 	TupleDesc	desc = RelationGetDescr(relation);
 	int			i;
@@ -662,13 +680,17 @@ send_relation_and_attrs(Relation relation, TransactionId xid,
 		if (att->atttypid < FirstGenbkiObjectId)
 			continue;
 
+		/* Skip this attribute if it's not present in the column list */
+		if (columns != NULL && !bms_is_member(att->attnum, columns))
+			continue;
+
 		OutputPluginPrepareWrite(ctx, false);
 		logicalrep_write_typ(ctx->out, xid, att->atttypid);
 		OutputPluginWrite(ctx, false);
 	}
 
 	OutputPluginPrepareWrite(ctx, false);
-	logicalrep_write_rel(ctx->out, xid, relation);
+	logicalrep_write_rel(ctx->out, xid, relation, columns);
 	OutputPluginWrite(ctx, false);
 }
 
@@ -720,6 +742,28 @@ pgoutput_row_filter_exec_expr(ExprState *state, ExprContext *econtext)
 		return false;
 
 	return DatumGetBool(ret);
+}
+
+/*
+ * Make sure the per-entry memory context exists.
+ */
+static void
+pgoutput_ensure_entry_cxt(PGOutputData *data, RelationSyncEntry *entry)
+{
+	Relation	relation;
+
+	/* The context may already exist, in which case bail out. */
+	if (entry->entry_cxt)
+		return;
+
+	relation = RelationIdGetRelation(entry->publish_as_relid);
+
+	entry->entry_cxt = AllocSetContextCreate(data->cachectx,
+											 "entry private context",
+											 ALLOCSET_SMALL_SIZES);
+
+	MemoryContextCopyAndSetIdentifier(entry->entry_cxt,
+									  RelationGetRelationName(relation));
 }
 
 /*
@@ -842,21 +886,13 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	{
 		Relation	relation = RelationIdGetRelation(entry->publish_as_relid);
 
-		Assert(entry->cache_expr_cxt == NULL);
-
-		/* Create the memory context for row filters */
-		entry->cache_expr_cxt = AllocSetContextCreate(data->cachectx,
-													  "Row filter expressions",
-													  ALLOCSET_DEFAULT_SIZES);
-
-		MemoryContextCopyAndSetIdentifier(entry->cache_expr_cxt,
-										  RelationGetRelationName(relation));
+		pgoutput_ensure_entry_cxt(data, entry);
 
 		/*
 		 * Now all the filters for all pubactions are known. Combine them when
 		 * their pubactions are the same.
 		 */
-		oldctx = MemoryContextSwitchTo(entry->cache_expr_cxt);
+		oldctx = MemoryContextSwitchTo(entry->entry_cxt);
 		entry->estate = create_estate_for_relation(relation);
 		for (idx = 0; idx < NUM_ROWFILTER_PUBACTIONS; idx++)
 		{
@@ -877,6 +913,105 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 
 		RelationClose(relation);
 	}
+}
+
+/*
+ * Initialize the column list.
+ */
+static void
+pgoutput_column_list_init(PGOutputData *data, List *publications,
+						  RelationSyncEntry *entry)
+{
+	ListCell   *lc;
+
+	/*
+	 * Find if there are any column lists for this relation. If there are,
+	 * build a bitmap merging all the column lists.
+	 *
+	 * All the given publication-table mappings must be checked.
+	 *
+	 * Multiple publications might have multiple column lists for this relation.
+	 *
+	 * FOR ALL TABLES and FOR ALL TABLES IN SCHEMA implies "don't use column
+	 * list" so it takes precedence.
+	 */
+	foreach(lc, publications)
+	{
+		Publication *pub = lfirst(lc);
+		HeapTuple	cftuple = NULL;
+		Datum		cfdatum = 0;
+
+		/*
+		 * Assume there's no column list. Only if we find pg_publication_rel
+		 * entry with a column list we'll switch it to false.
+		 */
+		bool		pub_no_list = true;
+
+		/*
+		 * If the publication is FOR ALL TABLES then it is treated the same as if
+		 * there are no column lists (even if other publications have a list).
+		 */
+		if (!pub->alltables)
+		{
+			/*
+			 * Check for the presence of a column list in this publication.
+			 *
+			 * Note: If we find no pg_publication_rel row, it's a publication
+			 * defined for a whole schema, so it can't have a column list, just
+			 * like a FOR ALL TABLES publication.
+			 */
+			cftuple = SearchSysCache2(PUBLICATIONRELMAP,
+									  ObjectIdGetDatum(entry->publish_as_relid),
+									  ObjectIdGetDatum(pub->oid));
+
+			if (HeapTupleIsValid(cftuple))
+			{
+				/*
+				 * Lookup the column list attribute.
+				 *
+				 * Note: We update the pub_no_list value directly, because if
+				 * the value is NULL, we have no list (and vice versa).
+				 */
+				cfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, cftuple,
+										  Anum_pg_publication_rel_prattrs,
+										  &pub_no_list);
+
+				/*
+				 * Build the column list bitmap in the per-entry context.
+				 *
+				 * We need to merge column lists from all publications, so we
+				 * update the same bitmapset. If the column list is null, we
+				 * interpret it as replicating all columns.
+				 */
+				if (!pub_no_list)	/* when not null */
+				{
+					pgoutput_ensure_entry_cxt(data, entry);
+
+					entry->columns = pub_collist_to_bitmapset(entry->columns,
+															  cfdatum,
+															  entry->entry_cxt);
+				}
+			}
+		}
+
+		/*
+		 * Found a publication with no column list, so we're done. But first
+		 * discard column list we might have from preceding publications.
+		 */
+		if (pub_no_list)
+		{
+			if (cftuple)
+				ReleaseSysCache(cftuple);
+
+			bms_free(entry->columns);
+			entry->columns = NULL;
+
+			break;
+		}
+
+		ReleaseSysCache(cftuple);
+	}	/* loop all subscribed publications */
+
 }
 
 /*
@@ -1243,7 +1378,7 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 
 			OutputPluginPrepareWrite(ctx, true);
 			logicalrep_write_insert(ctx->out, xid, targetrel, new_slot,
-									data->binary);
+									data->binary, relentry->columns);
 			OutputPluginWrite(ctx, true);
 			break;
 		case REORDER_BUFFER_CHANGE_UPDATE:
@@ -1297,11 +1432,13 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 			{
 				case REORDER_BUFFER_CHANGE_INSERT:
 					logicalrep_write_insert(ctx->out, xid, targetrel,
-											new_slot, data->binary);
+											new_slot, data->binary,
+											relentry->columns);
 					break;
 				case REORDER_BUFFER_CHANGE_UPDATE:
 					logicalrep_write_update(ctx->out, xid, targetrel,
-											old_slot, new_slot, data->binary);
+											old_slot, new_slot, data->binary,
+											relentry->columns);
 					break;
 				case REORDER_BUFFER_CHANGE_DELETE:
 					logicalrep_write_delete(ctx->out, xid, targetrel,
@@ -1794,8 +1931,9 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		entry->new_slot = NULL;
 		entry->old_slot = NULL;
 		memset(entry->exprstate, 0, sizeof(entry->exprstate));
-		entry->cache_expr_cxt = NULL;
+		entry->entry_cxt = NULL;
 		entry->publish_as_relid = InvalidOid;
+		entry->columns = NULL;
 		entry->attrmap = NULL;
 	}
 
@@ -1841,6 +1979,8 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		entry->schema_sent = false;
 		list_free(entry->streamed_txns);
 		entry->streamed_txns = NIL;
+		bms_free(entry->columns);
+		entry->columns = NULL;
 		entry->pubactions.pubinsert = false;
 		entry->pubactions.pubupdate = false;
 		entry->pubactions.pubdelete = false;
@@ -1865,17 +2005,18 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		/*
 		 * Row filter cache cleanups.
 		 */
-		if (entry->cache_expr_cxt)
-			MemoryContextDelete(entry->cache_expr_cxt);
+		if (entry->entry_cxt)
+			MemoryContextDelete(entry->entry_cxt);
 
-		entry->cache_expr_cxt = NULL;
+		entry->entry_cxt = NULL;
 		entry->estate = NULL;
 		memset(entry->exprstate, 0, sizeof(entry->exprstate));
 
 		/*
 		 * Build publication cache. We can't use one provided by relcache as
-		 * relcache considers all publications given relation is in, but here
-		 * we only need to consider ones that the subscriber requested.
+		 * relcache considers all publications that the given relation is in,
+		 * but here we only need to consider ones that the subscriber
+		 * requested.
 		 */
 		foreach(lc, data->publications)
 		{
@@ -1946,6 +2087,9 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 			}
 
 			/*
+			 * If the relation is to be published, determine actions to
+			 * publish, and list of columns, if appropriate.
+			 *
 			 * Don't publish changes for partitioned tables, because
 			 * publishing those of its partitions suffices, unless partition
 			 * changes won't be published due to pubviaroot being set.
@@ -2007,6 +2151,9 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 			/* Initialize the row filter */
 			pgoutput_row_filter_init(data, rel_publications, entry);
+
+			/* Initialize the column list */
+			pgoutput_column_list_init(data, rel_publications, entry);
 		}
 
 		list_free(pubids);

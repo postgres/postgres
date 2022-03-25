@@ -634,6 +634,7 @@ typedef struct _PublicationRelInfo
 	PublicationInfo *publication;
 	TableInfo  *pubtable;
 	char	   *pubrelqual;
+	char	   *pubrattrs;
 } PublicationRelInfo;
 
 /*

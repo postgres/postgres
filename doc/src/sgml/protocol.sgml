@@ -7016,7 +7016,8 @@ Relation
 </listitem>
 </varlistentry>
 </variablelist>
-        Next, the following message part appears for each column (except generated columns):
+        Next, the following message part appears for each column included in
+        the publication (except generated columns):
 <variablelist>
 <varlistentry>
 <term>
