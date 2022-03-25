@@ -34,6 +34,164 @@
 /* GUC variable */
 bool		ignore_invalid_pages = false;
 
+
+/*
+ * If a create database WAL record is being replayed more than once during
+ * crash recovery on a standby, it is possible that either the tablespace
+ * directory or the template database directory is missing.  This happens when
+ * the directories are removed by replay of subsequent drop records.  Note
+ * that this problem happens only on standby and not on master.  On master, a
+ * checkpoint is created at the end of create database operation. On standby,
+ * however, such a strategy (creating restart points during replay) is not
+ * viable because it will slow down WAL replay.
+ *
+ * The alternative is to track references to each missing directory
+ * encountered when performing crash recovery in the following hash table.
+ * Similar to invalid page table above, the expectation is that each missing
+ * directory entry should be matched with a drop database or drop tablespace
+ * WAL record by the end of crash recovery.
+ */
+typedef struct xl_missing_dir_key
+{
+	Oid			spcNode;
+	Oid			dbNode;
+} xl_missing_dir_key;
+
+typedef struct xl_missing_dir
+{
+	xl_missing_dir_key key;
+	char		path[MAXPGPATH];
+} xl_missing_dir;
+
+static HTAB *missing_dir_tab = NULL;
+
+
+/*
+ * Keep track of a directory that wasn't found while replaying database
+ * creation records.  These should match up with tablespace removal records
+ * later in the WAL stream; we verify that before reaching consistency.
+ */
+void
+XLogRememberMissingDir(Oid spcNode, Oid dbNode, char *path)
+{
+	xl_missing_dir_key key;
+	bool		found;
+	xl_missing_dir *entry;
+
+	/*
+	 * Database OID may be invalid but tablespace OID must be valid.  If
+	 * dbNode is InvalidOid, we are logging a missing tablespace directory,
+	 * otherwise we are logging a missing database directory.
+	 */
+	Assert(OidIsValid(spcNode));
+
+	if (missing_dir_tab == NULL)
+	{
+		/* create hash table when first needed */
+		HASHCTL		ctl;
+
+		memset(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(xl_missing_dir_key);
+		ctl.entrysize = sizeof(xl_missing_dir);
+
+		missing_dir_tab = hash_create("XLOG missing directory table",
+									  100,
+									  &ctl,
+									  HASH_ELEM | HASH_BLOBS);
+	}
+
+	key.spcNode = spcNode;
+	key.dbNode = dbNode;
+
+	entry = hash_search(missing_dir_tab, &key, HASH_ENTER, &found);
+
+	if (found)
+	{
+		if (dbNode == InvalidOid)
+			elog(DEBUG1, "missing directory %s (tablespace %u) already exists: %s",
+				 path, spcNode, entry->path);
+		else
+			elog(DEBUG1, "missing directory %s (tablespace %u database %u) already exists: %s",
+				 path, spcNode, dbNode, entry->path);
+	}
+	else
+	{
+		strlcpy(entry->path, path, sizeof(entry->path));
+		if (dbNode == InvalidOid)
+			elog(DEBUG1, "logged missing dir %s (tablespace %u)",
+				 path, spcNode);
+		else
+			elog(DEBUG1, "logged missing dir %s (tablespace %u database %u)",
+				 path, spcNode, dbNode);
+	}
+}
+
+/*
+ * Remove an entry from the list of directories not found.  This is to be done
+ * when the matching tablespace removal WAL record is found.
+ */
+void
+XLogForgetMissingDir(Oid spcNode, Oid dbNode)
+{
+	xl_missing_dir_key key;
+
+	key.spcNode = spcNode;
+	key.dbNode = dbNode;
+
+	/* Database OID may be invalid but tablespace OID must be valid. */
+	Assert(OidIsValid(spcNode));
+
+	if (missing_dir_tab == NULL)
+		return;
+
+	if (hash_search(missing_dir_tab, &key, HASH_REMOVE, NULL) != NULL)
+	{
+		if (dbNode == InvalidOid)
+		{
+			elog(DEBUG2, "forgot missing dir (tablespace %u)", spcNode);
+		}
+		else
+		{
+			char	   *path = GetDatabasePath(dbNode, spcNode);
+
+			elog(DEBUG2, "forgot missing dir %s (tablespace %u database %u)",
+				 path, spcNode, dbNode);
+			pfree(path);
+		}
+	}
+}
+
+/*
+ * This is called at the end of crash recovery, before entering archive
+ * recovery on a standby.  PANIC if the hash table is not empty.
+ */
+void
+XLogCheckMissingDirs(void)
+{
+	HASH_SEQ_STATUS status;
+	xl_missing_dir *hentry;
+	bool		foundone = false;
+
+	if (missing_dir_tab == NULL)
+		return;					/* nothing to do */
+
+	hash_seq_init(&status, missing_dir_tab);
+
+	while ((hentry = (xl_missing_dir *) hash_seq_search(&status)) != NULL)
+	{
+		elog(WARNING, "missing directory \"%s\" tablespace %u database %u",
+			 hentry->path, hentry->key.spcNode, hentry->key.dbNode);
+		foundone = true;
+	}
+
+	if (foundone)
+		elog(PANIC, "WAL contains references to missing directories");
+
+	hash_destroy(missing_dir_tab);
+	missing_dir_tab = NULL;
+}
+
+
 /*
  * During XLOG replay, we may see XLOG records for incremental updates of
  * pages that no longer exist, because their relation was later dropped or
@@ -58,7 +216,6 @@ typedef struct xl_invalid_page
 } xl_invalid_page;
 
 static HTAB *invalid_page_tab = NULL;
-
 
 /* Report a reference to an invalid page */
 static void

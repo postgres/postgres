@@ -58,6 +58,7 @@
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xloginsert.h"
+#include "access/xlogutils.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
@@ -1528,6 +1529,22 @@ tblspc_redo(XLogReaderState *record)
 	else if (info == XLOG_TBLSPC_DROP)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
+
+		if (!reachedConsistency)
+			XLogForgetMissingDir(xlrec->ts_id, InvalidOid);
+
+		/*
+		 * Before we remove the tablespace directory, update minimum recovery
+		 * point to cover this WAL record. Once the tablespace is removed,
+		 * there's no going back.  This manually enforces the WAL-first rule.
+		 * Doing this before the removal means that if the removal fails for
+		 * some reason, the directory is left alone and needs to be manually
+		 * removed.  Alternatively we could update the minimum recovery point
+		 * after removal, but that would leave a small window where the
+		 * WAL-first rule could be violated.
+		 */
+		if (!reachedConsistency)
+			XLogFlush(record->EndRecPtr);
 
 		/*
 		 * If we issued a WAL record for a drop tablespace it implies that
