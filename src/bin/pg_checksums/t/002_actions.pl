@@ -19,6 +19,7 @@ sub check_relation_corruption
 	my $tablespace = shift;
 	my $pgdata     = $node->data_dir;
 
+	# Create table and discover its filesystem location.
 	$node->safe_psql(
 		'postgres',
 		"SELECT a INTO $table FROM generate_series(1,10000) AS a;
@@ -32,9 +33,6 @@ sub check_relation_corruption
 	my $relfilenode_corrupted = $node->safe_psql('postgres',
 		"SELECT relfilenode FROM pg_class WHERE relname = '$table';");
 
-	# Set page header and block size
-	my $pageheader_size = 24;
-	my $block_size = $node->safe_psql('postgres', 'SHOW block_size;');
 	$node->stop;
 
 	# Checksums are correct for single relfilenode as the table is not
@@ -49,10 +47,7 @@ sub check_relation_corruption
 	);
 
 	# Time to create some corruption
-	open my $file, '+<', "$pgdata/$file_corrupted";
-	seek($file, $pageheader_size, 0);
-	syswrite($file, "\0\0\0\0\0\0\0\0\0");
-	close $file;
+	$node->corrupt_page_checksum($file_corrupted, 0);
 
 	# Checksum checks on single relfilenode fail
 	$node->command_checks_all(
