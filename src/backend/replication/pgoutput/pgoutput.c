@@ -1804,7 +1804,8 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 	{
 		Oid			schemaId = get_rel_namespace(relid);
 		List	   *pubids = GetRelationPublications(relid);
-		char		objectType = pub_get_object_type_for_relkind(get_rel_relkind(relid));
+		char		relkind = get_rel_relkind(relid);
+		char		objectType = pub_get_object_type_for_relkind(relkind);
 		/*
 		 * We don't acquire a lock on the namespace system table as we build
 		 * the cache entry using a historic snapshot and all the later changes
@@ -1815,7 +1816,6 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 		Oid			publish_as_relid = relid;
 		int			publish_ancestor_level = 0;
 		bool		am_partition = get_rel_relispartition(relid);
-		char		relkind = get_rel_relkind(relid);
 		List	   *rel_publications = NIL;
 
 		/* Reload publications if needed before use. */

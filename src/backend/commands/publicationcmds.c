@@ -175,8 +175,7 @@ parse_publication_options(ParseState *pstate,
 static void
 ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 						   List **tables, List **sequences,
-						   List **tables_schemas, List **sequences_schemas,
-						   List **schemas)
+						   List **tables_schemas, List **sequences_schemas)
 {
 	ListCell   *cell;
 	PublicationObjSpec *pubobj;
@@ -204,14 +203,12 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*tables_schemas = list_append_unique_oid(*tables_schemas, schemaid);
-				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
 			case PUBLICATIONOBJ_SEQUENCES_IN_SCHEMA:
 				schemaid = get_namespace_oid(pubobj->name, false);
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*sequences_schemas = list_append_unique_oid(*sequences_schemas, schemaid);
-				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
 			case PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA:
 				search_path = fetch_search_path(false);
@@ -225,7 +222,6 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*tables_schemas = list_append_unique_oid(*tables_schemas, schemaid);
-				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
 			case PUBLICATIONOBJ_SEQUENCES_IN_CUR_SCHEMA:
 				search_path = fetch_search_path(false);
@@ -239,7 +235,6 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 
 				/* Filter out duplicates if user specifies "sch1, sch1" */
 				*sequences_schemas = list_append_unique_oid(*sequences_schemas, schemaid);
-				*schemas = list_append_unique_oid(*schemas, schemaid);
 				break;
 			default:
 				/* shouldn't happen */
@@ -679,7 +674,6 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 	List	   *sequences = NIL;
 	List	   *tables_schemaidlist = NIL;
 	List	   *sequences_schemaidlist = NIL;
-	List	   *schemaidlist = NIL;
 
 	bool		for_all_tables = false;
 	bool		for_all_sequences = false;
@@ -705,6 +699,12 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to create FOR ALL TABLES publication")));
+
+	/* FOR ALL SEQUENCES requires superuser */
+	if (for_all_sequences && !superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("must be superuser to create FOR ALL SEQUENCES publication")));
 
 	rel = table_open(PublicationRelationId, RowExclusiveLock);
 
@@ -782,8 +782,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate,
 								   &tables, &sequences,
 								   &tables_schemaidlist,
-								   &sequences_schemaidlist,
-								   &schemaidlist);
+								   &sequences_schemaidlist);
 
 		/* FOR ALL TABLES IN SCHEMA requires superuser */
 		if (list_length(tables_schemaidlist) > 0 && !superuser())
@@ -1321,7 +1320,7 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 						NameStr(pubform->pubname)),
 				 errdetail("Tables cannot be added to or dropped from FOR ALL TABLES publications.")));
 
-	/* Check that user is allowed to manipulate the publication tables. */
+	/* Check that user is allowed to manipulate the publication sequences. */
 	if (sequences && pubform->puballsequences)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1462,14 +1461,12 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 		List	   *sequences = NIL;
 		List	   *tables_schemaidlist = NIL;
 		List	   *sequences_schemaidlist = NIL;
-		List	   *schemaidlist = NIL;
 		Oid			pubid = pubform->oid;
 
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate,
 								   &tables, &sequences,
 								   &tables_schemaidlist,
-								   &sequences_schemaidlist,
-								   &schemaidlist);
+								   &sequences_schemaidlist);
 
 		CheckAlterPublication(stmt, tup,
 							  tables, tables_schemaidlist,

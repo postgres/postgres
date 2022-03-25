@@ -7141,7 +7141,7 @@ Sequence
 </term>
 <listitem>
 <para>
-                1 if the sequence update is transactions, 0 otherwise.
+                1 if the sequence update is transactional, 0 otherwise.
 </para>
 </listitem>
 </varlistentry>

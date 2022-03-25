@@ -193,7 +193,7 @@ AssertObjectTypeValid(char objectType)
 }
 
 /*
- * Determine object type given the object type set for a schema.
+ * Determine object type matching a given a relkind value.
  */
 char
 pub_get_object_type_for_relkind(char relkind)
