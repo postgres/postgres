@@ -167,6 +167,22 @@ SELECT pubname, puballtables, puballsequences FROM pg_publication WHERE pubname 
 DROP SEQUENCE testpub_seq0, pub_test.testpub_seq1, testpub_seq2;
 DROP PUBLICATION testpub_forallsequences, testpub_forsequence, testpub_forschema;
 
+
+-- publication testing multiple sequences at the same time
+CREATE SEQUENCE testpub_seq1;
+CREATE SEQUENCE testpub_seq2;
+
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_multi FOR SEQUENCE testpub_seq1, testpub_seq2;
+RESET client_min_messages;
+
+\dRp+ testpub_multi
+
+DROP PUBLICATION testpub_multi;
+DROP SEQUENCE testpub_seq1;
+DROP SEQUENCE testpub_seq2;
+
+
 -- Publication mixing tables and sequences
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_mix;

@@ -17493,7 +17493,8 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 		if (pubobj->pubobjtype == PUBLICATIONOBJ_CONTINUATION)
 			pubobj->pubobjtype = prevobjtype;
 
-		if (pubobj->pubobjtype == PUBLICATIONOBJ_TABLE)
+		if (pubobj->pubobjtype == PUBLICATIONOBJ_TABLE ||
+			pubobj->pubobjtype == PUBLICATIONOBJ_SEQUENCE)
 		{
 			/* relation name or pubtable must be set for this type of object */
 			if (!pubobj->name && !pubobj->pubtable)
@@ -17531,6 +17532,30 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 				pubobj->pubobjtype = PUBLICATIONOBJ_TABLES_IN_SCHEMA;
 			else if (!pubobj->name && !pubobj->pubtable)
 				pubobj->pubobjtype = PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA;
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("invalid schema name at or near"),
+						parser_errposition(pubobj->location));
+		}
+		else if (pubobj->pubobjtype == PUBLICATIONOBJ_SEQUENCES_IN_SCHEMA ||
+				 pubobj->pubobjtype == PUBLICATIONOBJ_SEQUENCES_IN_CUR_SCHEMA)
+		{
+			/* WHERE clause is not allowed on a schema object */
+			if (pubobj->pubtable && pubobj->pubtable->whereClause)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("WHERE clause not allowed for schema"),
+						parser_errposition(pubobj->location));
+
+			/*
+			 * We can distinguish between the different type of schema
+			 * objects based on whether name and pubtable is set.
+			 */
+			if (pubobj->name)
+				pubobj->pubobjtype = PUBLICATIONOBJ_SEQUENCES_IN_SCHEMA;
+			else if (!pubobj->name && !pubobj->pubtable)
+				pubobj->pubobjtype = PUBLICATIONOBJ_SEQUENCES_IN_CUR_SCHEMA;
 			else
 				ereport(ERROR,
 						errcode(ERRCODE_SYNTAX_ERROR),

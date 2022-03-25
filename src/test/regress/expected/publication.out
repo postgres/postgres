@@ -319,6 +319,24 @@ Publications:
 
 DROP SEQUENCE testpub_seq0, pub_test.testpub_seq1, testpub_seq2;
 DROP PUBLICATION testpub_forallsequences, testpub_forsequence, testpub_forschema;
+-- publication testing multiple sequences at the same time
+CREATE SEQUENCE testpub_seq1;
+CREATE SEQUENCE testpub_seq2;
+SET client_min_messages = 'ERROR';
+CREATE PUBLICATION testpub_multi FOR SEQUENCE testpub_seq1, testpub_seq2;
+RESET client_min_messages;
+\dRp+ testpub_multi
+                                               Publication testpub_multi
+          Owner           | All tables | All sequences | Inserts | Updates | Deletes | Truncates | Sequences | Via root 
+--------------------------+------------+---------------+---------+---------+---------+-----------+-----------+----------
+ regress_publication_user | f          | f             | t       | t       | t       | t         | t         | f
+Sequences:
+    "public.testpub_seq1"
+    "public.testpub_seq2"
+
+DROP PUBLICATION testpub_multi;
+DROP SEQUENCE testpub_seq1;
+DROP SEQUENCE testpub_seq2;
 -- Publication mixing tables and sequences
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_mix;
