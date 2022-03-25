@@ -483,11 +483,6 @@ file_exists(const char *name)
 }
 
 
-/* Example format: ".so" */
-#ifndef DLSUFFIX
-#error "DLSUFFIX must be defined to compile this file."
-#endif
-
 /*
  * If name contains a slash, check if the file exists, if so return
  * the name.  Else (no slash) try to expand using search path (see

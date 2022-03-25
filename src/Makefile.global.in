@@ -545,6 +545,8 @@ WIN32_STACK_RLIMIT=4194304
 # Set if we have a working win32 crashdump header
 have_win32_dbghelp = @have_win32_dbghelp@
 
+DLSUFFIX = @DLSUFFIX@
+
 # Pull in platform-specific magic
 include $(top_builddir)/src/Makefile.port
 

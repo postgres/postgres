@@ -103,6 +103,9 @@ AC_SUBST(PORTNAME)
 need_tas=no
 tas_file=dummy.s
 
+# Default, works for most platforms, override in template file if needed
+DLSUFFIX=".so"
+
 
 
 ##
@@ -720,6 +723,10 @@ else
   TAS=""
 fi
 AC_SUBST(TAS)
+
+AC_SUBST(DLSUFFIX)dnl
+AC_DEFINE_UNQUOTED([DLSUFFIX], ["$DLSUFFIX"],
+                   [Define to the file name extension of dynamically-loadable modules.])
 
 #
 # Set up pkg_config in case we need it below

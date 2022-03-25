@@ -529,9 +529,6 @@ typedef unsigned short mode_t;
 #define W_OK 2
 #define R_OK 4
 
-/* Pulled from Makefile.port in MinGW */
-#define DLSUFFIX ".dll"
-
 #endif							/* _MSC_VER */
 
 #if (defined(_MSC_VER) && (_MSC_VER < 1900)) || \

@@ -3,8 +3,6 @@ AROPT = cr
 export_dynamic = -Wl,-export-dynamic
 rpath = -Wl,-R'$(rpathdir)'
 
-DLSUFFIX = .so
-
 # extra stuff for $(with_temp_install)
 # we need this to get LD_LIBRARY_PATH searched ahead of the compiled-in
 # rpath, if no DT_RUNPATH is present in the executable. The conditions

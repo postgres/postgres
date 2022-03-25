@@ -42,6 +42,9 @@
 /* Define to the default TCP port number as a string constant. */
 #undef DEF_PGPORT_STR
 
+/* Define to the file name extension of dynamically-loadable modules. */
+#undef DLSUFFIX
+
 /* Define to build with GSSAPI support. (--with-gssapi) */
 #undef ENABLE_GSS
 

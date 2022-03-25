@@ -25,8 +25,7 @@ endif
 
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
-	'-DSHELLPROG="$(SHELL)"' \
-	'-DDLSUFFIX="$(DLSUFFIX)"'
+	'-DSHELLPROG="$(SHELL)"'
 
 ##
 ## Prepare for tests

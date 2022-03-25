@@ -1,7 +1,5 @@
 AROPT = crs
 
-DLSUFFIX = .so
-
 # env var name to use in place of LD_LIBRARY_PATH
 ld_library_path_var = DYLD_LIBRARY_PATH
 

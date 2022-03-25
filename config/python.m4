@@ -120,7 +120,9 @@ else
 	found_shlib=0
 	for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
 	do
-		# We don't know the platform DLSUFFIX here, so check 'em all.
+		# Note: DLSUFFIX is for loadable modules, not shared
+		# libraries, so cannot be used here portably.  Just
+		# check all known possibilities.
 		for e in .so .dll .dylib .sl; do
 			if test -e "$d/lib${ldlibrary}$e"; then
 				python_libdir="$d"

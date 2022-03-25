@@ -216,6 +216,7 @@ sub GenerateFiles
 		CONFIGURE_ARGS             => '"' . $self->GetFakeConfigure() . '"',
 		DEF_PGPORT                 => $port,
 		DEF_PGPORT_STR             => qq{"$port"},
+		DLSUFFIX                   => '".dll"',
 		ENABLE_GSS                 => $self->{options}->{gss} ? 1 : undef,
 		ENABLE_NLS                 => $self->{options}->{nls} ? 1 : undef,
 		ENABLE_THREAD_SAFETY       => 1,
