@@ -12,14 +12,14 @@ subdir = src/common/unicode
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -DFRONTEND $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -I. $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
 # By default, do nothing.
 all:
 
 update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_east_asian_fw_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
-	mv $^ ../../../src/include/common/
+	mv $^ $(top_srcdir)/src/include/common/
 	$(MAKE) normalization-check
 
 # These files are part of the Unicode Character Database. Download
@@ -33,7 +33,7 @@ UnicodeData.txt EastAsianWidth.txt DerivedNormalizationProps.txt CompositionExcl
 unicode_norm_hashfunc.h: unicode_norm_table.h
 
 unicode_norm_table.h: generate-unicode_norm_table.pl UnicodeData.txt CompositionExclusions.txt
-	$(PERL) generate-unicode_norm_table.pl
+	$(PERL) $<
 
 unicode_combining_table.h: generate-unicode_combining_table.pl UnicodeData.txt
 	$(PERL) $^ >$@
@@ -58,7 +58,7 @@ submake-common:
 	$(MAKE) -C .. all
 
 norm_test_table.h: generate-norm_test_table.pl NormalizationTest.txt
-	perl generate-norm_test_table.pl NormalizationTest.txt $@
+	perl $^ $@
 
 .PHONY: normalization-check
 
