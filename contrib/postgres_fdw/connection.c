@@ -110,8 +110,7 @@ static bool pgfdw_exec_cleanup_query(PGconn *conn, const char *query,
 									 bool ignore_errors);
 static bool pgfdw_get_cleanup_result(PGconn *conn, TimestampTz endtime,
 									 PGresult **result, bool *timed_out);
-static void pgfdw_abort_cleanup(ConnCacheEntry *entry, const char *sql,
-								bool toplevel);
+static void pgfdw_abort_cleanup(ConnCacheEntry *entry, bool toplevel);
 static void pgfdw_finish_pre_commit_cleanup(List *pending_entries);
 static void pgfdw_finish_pre_subcommit_cleanup(List *pending_entries,
 											   int curlevel);
@@ -1015,8 +1014,8 @@ pgfdw_xact_callback(XactEvent event, void *arg)
 					break;
 				case XACT_EVENT_PARALLEL_ABORT:
 				case XACT_EVENT_ABORT:
-
-					pgfdw_abort_cleanup(entry, "ABORT TRANSACTION", true);
+					/* Rollback all remote transactions during abort */
+					pgfdw_abort_cleanup(entry, true);
 					break;
 			}
 		}
@@ -1109,10 +1108,7 @@ pgfdw_subxact_callback(SubXactEvent event, SubTransactionId mySubid,
 		else
 		{
 			/* Rollback all remote subtransactions during abort */
-			snprintf(sql, sizeof(sql),
-					 "ROLLBACK TO SAVEPOINT s%d; RELEASE SAVEPOINT s%d",
-					 curlevel, curlevel);
-			pgfdw_abort_cleanup(entry, sql, false);
+			pgfdw_abort_cleanup(entry, false);
 		}
 
 		/* OK, we're outta that level of subtransaction */
@@ -1465,10 +1461,7 @@ exit:	;
 }
 
 /*
- * Abort remote transaction.
- *
- * The statement specified in "sql" is sent to the remote server,
- * in order to rollback the remote transaction.
+ * Abort remote transaction or subtransaction.
  *
  * "toplevel" should be set to true if toplevel (main) transaction is
  * rollbacked, false otherwise.
@@ -1476,8 +1469,10 @@ exit:	;
  * Set entry->changing_xact_state to false on success, true on failure.
  */
 static void
-pgfdw_abort_cleanup(ConnCacheEntry *entry, const char *sql, bool toplevel)
+pgfdw_abort_cleanup(ConnCacheEntry *entry, bool toplevel)
 {
+	char		sql[100];
+
 	/*
 	 * Don't try to clean up the connection if we're already in error
 	 * recursion trouble.
@@ -1509,8 +1504,14 @@ pgfdw_abort_cleanup(ConnCacheEntry *entry, const char *sql, bool toplevel)
 		!pgfdw_cancel_query(entry->conn))
 		return;					/* Unable to cancel running query */
 
+	if (toplevel)
+		snprintf(sql, sizeof(sql), "ABORT TRANSACTION");
+	else
+		snprintf(sql, sizeof(sql),
+				 "ROLLBACK TO SAVEPOINT s%d; RELEASE SAVEPOINT s%d",
+				 entry->xact_depth, entry->xact_depth);
 	if (!pgfdw_exec_cleanup_query(entry->conn, sql, false))
-		return;					/* Unable to abort remote transaction */
+		return;					/* Unable to abort remote (sub)transaction */
 
 	if (toplevel)
 	{
