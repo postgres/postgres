@@ -592,7 +592,11 @@ publication_translate_columns(Relation targetrel, List *columns,
 }
 
 /*
- * Transform the column list (represented by an array) to a bitmapset.
+ * Transform a column list (represented by an array Datum) to a bitmapset.
+ *
+ * If columns isn't NULL, add the column numbers to that set.
+ *
+ * If mcxt isn't NULL, build the bitmapset in that context.
  */
 Bitmapset *
 pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
@@ -601,7 +605,7 @@ pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
 	ArrayType  *arr;
 	int			nelems;
 	int16	   *elems;
-	MemoryContext	oldcxt;
+	MemoryContext	oldcxt = NULL;
 
 	/*
 	 * If an existing bitmap was provided, use it. Otherwise just use NULL
