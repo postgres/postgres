@@ -722,7 +722,7 @@ $node_subscriber->safe_psql('postgres', qq(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub8;
 ));
 
-$node_publisher->wait_for_catchup('sub1');
+wait_for_subscription_sync($node_subscriber);
 
 $node_publisher->safe_psql('postgres', qq(
 	INSERT INTO test_part_c VALUES (3, 7, 8);
