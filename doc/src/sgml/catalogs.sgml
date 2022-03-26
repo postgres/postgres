@@ -6291,19 +6291,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        Reference to schema
       </para></entry>
      </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>prattrs</structfield> <type>int2vector</type>
-       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
-      </para>
-      <para>
-       This is an array of values that indicates which table columns are
-       part of the publication.  For example, a value of <literal>1 3</literal>
-       would mean that the first and the third table columns are published.
-       A null value indicates that all columns are published.
-      </para></entry>
-     </row>
     </tbody>
    </tgroup>
   </table>
@@ -6374,6 +6361,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>Expression tree (in <function>nodeToString()</function>
       representation) for the relation's publication qualifying condition. Null
       if there is no publication qualifying condition.</para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>prattrs</structfield> <type>int2vector</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       This is an array of values that indicates which table columns are
+       part of the publication.  For example, a value of <literal>1 3</literal>
+       would mean that the first and the third table columns are published.
+       A null value indicates that all columns are published.
+      </para></entry>
      </row>
     </tbody>
    </tgroup>
