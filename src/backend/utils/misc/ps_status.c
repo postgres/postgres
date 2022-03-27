@@ -443,6 +443,7 @@ get_ps_display(int *displen)
 
 	return ps_buffer + ps_buffer_fixed_size;
 #else
+	*displen = 0;
 	return "";
 #endif
 }
