@@ -58,6 +58,15 @@ brin_page_type(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	/* verify the special space has the expected size */
+	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(BrinSpecialSpace)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "BRIN"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(BrinSpecialSpace)),
+							   (int) PageGetSpecialSize(page))));
+
 	switch (BrinPageType(page))
 	{
 		case BRIN_PAGETYPE_META:
@@ -85,6 +94,15 @@ static Page
 verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
 	Page		page = get_page_from_raw(raw_page);
+
+	/* verify the special space has the expected size */
+	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(BrinSpecialSpace)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "BRIN"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(BrinSpecialSpace)),
+							   (int) PageGetSpecialSize(page))));
 
 	/* verify the special space says this page is what we want */
 	if (BrinPageType(page) != type)

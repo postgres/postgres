@@ -35,15 +35,23 @@ FROM gin_leafpage_items(get_raw_page('test1_y_idx',
 -[ RECORD 1 ]
 ?column? | t
 
-DROP TABLE test1;
--- Failure with incorrect page size
+-- Failure with various modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
--- page sizes.
+-- page sizes and architectures.
 \set VERBOSITY terse
+-- invalid page size
 SELECT gin_leafpage_items('aaa'::bytea);
 ERROR:  invalid page size
 SELECT gin_metapage_info('bbb'::bytea);
 ERROR:  invalid page size
 SELECT gin_page_opaque_info('ccc'::bytea);
 ERROR:  invalid page size
+-- invalid special area size
+SELECT * FROM gin_metapage_info(get_raw_page('test1', 0));
+ERROR:  input page is not a valid GIN metapage
+SELECT * FROM gin_page_opaque_info(get_raw_page('test1', 0));
+ERROR:  input page is not a valid GIN data leaf page
+SELECT * FROM gin_leafpage_items(get_raw_page('test1', 0));
+ERROR:  input page is not a valid GIN data leaf page
 \set VERBOSITY default
+DROP TABLE test1;

@@ -30,13 +30,18 @@ SELECT itemoffset, ctid, itemlen FROM gist_page_items_bytea(get_raw_page('test_g
 CREATE INDEX test_gist_btree on test_gist(t);
 SELECT gist_page_items(get_raw_page('test_gist_btree', 0), 'test_gist_btree');
 
--- Failure with incorrect page size
+-- Failure with various modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
--- page sizes.
+-- page sizes and architectures.
 \set VERBOSITY terse
+-- invalid page size
 SELECT gist_page_items_bytea('aaa'::bytea);
 SELECT gist_page_items('aaa'::bytea, 'test_gist_idx'::regclass);
 SELECT gist_page_opaque_info('aaa'::bytea);
+-- invalid special area size
+SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist', 0));
+SELECT gist_page_items_bytea(get_raw_page('test_gist', 0));
+SELECT gist_page_items_bytea(get_raw_page('test_gist_btree', 0));
 \set VERBOSITY default
 
 DROP TABLE test_gist;
