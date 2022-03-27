@@ -832,7 +832,7 @@ static void doLog(TState *thread, CState *st,
 				  StatsData *agg, bool skipped, double latency, double lag);
 static void processXactStats(TState *thread, CState *st, pg_time_usec_t *now,
 							 bool skipped, StatsData *agg);
-static void addScript(ParsedScript script);
+static void addScript(const ParsedScript *script);
 static THREAD_FUNC_RETURN_TYPE THREAD_FUNC_CC threadRun(void *arg);
 static void finishCon(CState *st);
 static void setalarm(int seconds);
@@ -5743,15 +5743,15 @@ ConditionError(const char *desc, int cmdn, const char *msg)
  * Partial evaluation of conditionals before recording and running the script.
  */
 static void
-CheckConditional(ParsedScript ps)
+CheckConditional(const ParsedScript *ps)
 {
 	/* statically check conditional structure */
 	ConditionalStack cs = conditional_stack_create();
 	int			i;
 
-	for (i = 0; ps.commands[i] != NULL; i++)
+	for (i = 0; ps->commands[i] != NULL; i++)
 	{
-		Command    *cmd = ps.commands[i];
+		Command    *cmd = ps->commands[i];
 
 		if (cmd->type == META_COMMAND)
 		{
@@ -5762,20 +5762,20 @@ CheckConditional(ParsedScript ps)
 					break;
 				case META_ELIF:
 					if (conditional_stack_empty(cs))
-						ConditionError(ps.desc, i + 1, "\\elif without matching \\if");
+						ConditionError(ps->desc, i + 1, "\\elif without matching \\if");
 					if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
-						ConditionError(ps.desc, i + 1, "\\elif after \\else");
+						ConditionError(ps->desc, i + 1, "\\elif after \\else");
 					break;
 				case META_ELSE:
 					if (conditional_stack_empty(cs))
-						ConditionError(ps.desc, i + 1, "\\else without matching \\if");
+						ConditionError(ps->desc, i + 1, "\\else without matching \\if");
 					if (conditional_stack_peek(cs) == IFSTATE_ELSE_FALSE)
-						ConditionError(ps.desc, i + 1, "\\else after \\else");
+						ConditionError(ps->desc, i + 1, "\\else after \\else");
 					conditional_stack_poke(cs, IFSTATE_ELSE_FALSE);
 					break;
 				case META_ENDIF:
 					if (!conditional_stack_pop(cs))
-						ConditionError(ps.desc, i + 1, "\\endif without matching \\if");
+						ConditionError(ps->desc, i + 1, "\\endif without matching \\if");
 					break;
 				default:
 					/* ignore anything else... */
@@ -5784,7 +5784,7 @@ CheckConditional(ParsedScript ps)
 		}
 	}
 	if (!conditional_stack_empty(cs))
-		ConditionError(ps.desc, i + 1, "\\if without matching \\endif");
+		ConditionError(ps->desc, i + 1, "\\if without matching \\endif");
 	conditional_stack_destroy(cs);
 }
 
@@ -5916,7 +5916,7 @@ ParseScript(const char *script, const char *desc, int weight)
 
 	ps.commands[index] = NULL;
 
-	addScript(ps);
+	addScript(&ps);
 
 	termPQExpBuffer(&line_buf);
 	psql_scan_finish(sstate);
@@ -6093,11 +6093,11 @@ parseScriptWeight(const char *option, char **script)
 
 /* append a script to the list of scripts to process */
 static void
-addScript(ParsedScript script)
+addScript(const ParsedScript *script)
 {
-	if (script.commands == NULL || script.commands[0] == NULL)
+	if (script->commands == NULL || script->commands[0] == NULL)
 	{
-		pg_log_fatal("empty command list for script \"%s\"", script.desc);
+		pg_log_fatal("empty command list for script \"%s\"", script->desc);
 		exit(1);
 	}
 
@@ -6109,7 +6109,7 @@ addScript(ParsedScript script)
 
 	CheckConditional(script);
 
-	sql_script[num_scripts] = script;
+	sql_script[num_scripts] = *script;
 	num_scripts++;
 }
 
