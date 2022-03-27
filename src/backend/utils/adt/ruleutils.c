@@ -9907,9 +9907,11 @@ get_json_constructor(JsonConstructorExpr *ctor, deparse_context *context,
 			funcname = "JSON_ARRAY";
 			break;
 		case JSCTOR_JSON_OBJECTAGG:
-			return get_json_agg_constructor(ctor, context, "JSON_OBJECTAGG", true);
+			get_json_agg_constructor(ctor, context, "JSON_OBJECTAGG", true);
+			return;
 		case JSCTOR_JSON_ARRAYAGG:
-			return get_json_agg_constructor(ctor, context, "JSON_ARRAYAGG", false);
+			get_json_agg_constructor(ctor, context, "JSON_ARRAYAGG", false);
+			return;
 		default:
 			elog(ERROR, "invalid JsonConstructorExprType %d", ctor->type);
 	}
@@ -10064,8 +10066,8 @@ get_agg_expr_helper(Aggref *aggref, deparse_context *context,
 static void
 get_agg_expr(Aggref *aggref, deparse_context *context, Aggref *original_aggref)
 {
-	return get_agg_expr_helper(aggref, context, original_aggref, NULL, NULL,
-							   false);
+	get_agg_expr_helper(aggref, context, original_aggref, NULL, NULL,
+						false);
 }
 
 /*
@@ -10182,7 +10184,7 @@ get_windowfunc_expr_helper(WindowFunc *wfunc, deparse_context *context,
 static void
 get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 {
-	return get_windowfunc_expr_helper(wfunc, context, NULL, NULL, false);
+	get_windowfunc_expr_helper(wfunc, context, NULL, NULL, false);
 }
 
 /*
@@ -10438,13 +10440,13 @@ get_json_agg_constructor(JsonConstructorExpr *ctor, deparse_context *context,
 	get_json_constructor_options(ctor, &options);
 
 	if (IsA(ctor->func, Aggref))
-		return get_agg_expr_helper((Aggref *) ctor->func, context,
-								   (Aggref *) ctor->func,
-								   funcname, options.data, is_json_objectagg);
+		get_agg_expr_helper((Aggref *) ctor->func, context,
+							(Aggref *) ctor->func,
+							funcname, options.data, is_json_objectagg);
 	else if (IsA(ctor->func, WindowFunc))
-		return get_windowfunc_expr_helper((WindowFunc *) ctor->func, context,
-										  funcname, options.data,
-										  is_json_objectagg);
+		get_windowfunc_expr_helper((WindowFunc *) ctor->func, context,
+								   funcname, options.data,
+								   is_json_objectagg);
 	else
 		elog(ERROR, "invalid JsonConstructorExpr underlying node type: %d",
 			 nodeTag(ctor->func));

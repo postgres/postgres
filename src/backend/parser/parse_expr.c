@@ -3415,7 +3415,6 @@ transformJsonConstructorOutput(ParseState *pstate, JsonOutput *output,
 	if (!OidIsValid(returning->typid))
 	{
 		ListCell   *lc;
-		bool		have_json = false;
 		bool		have_jsonb = false;
 
 		foreach(lc, args)
@@ -3423,7 +3422,6 @@ transformJsonConstructorOutput(ParseState *pstate, JsonOutput *output,
 			Node	   *expr = lfirst(lc);
 			Oid			typid = exprType(expr);
 
-			have_json |= typid == JSONOID;
 			have_jsonb |= typid == JSONBOID;
 
 			if (have_jsonb)
@@ -3437,8 +3435,6 @@ transformJsonConstructorOutput(ParseState *pstate, JsonOutput *output,
 		}
 		else
 		{
-			/* Note: this includes the have_json case */
-			
 			/* XXX TEXT is default by the standard, but we return JSON */
 			returning->typid = JSONOID;
 			returning->format->format_type = JS_FORMAT_JSON;
