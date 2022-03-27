@@ -35,7 +35,6 @@ use strict;
 use warnings;
 
 use Carp;
-use Config;
 use Exporter 'import';
 use File::Copy;
 use File::Path qw(rmtree);

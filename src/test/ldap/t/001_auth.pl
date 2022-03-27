@@ -6,7 +6,6 @@ use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
 use Test::More;
-use Config;
 
 
 my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
