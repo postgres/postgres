@@ -1,5 +1,5 @@
-CREATE TABLE test1 (a int8, b text);
-INSERT INTO test1 VALUES (72057594037927937, 'text');
+CREATE TABLE test1 (a int8, b int4range);
+INSERT INTO test1 VALUES (72057594037927937, '[0,1)');
 CREATE INDEX test1_a_idx ON test1 USING btree (a);
 \x
 SELECT * FROM bt_metap('test1_a_idx');
@@ -78,11 +78,25 @@ SELECT bt_page_stats('test1_a_hash', 0);
 ERROR:  "test1_a_hash" is not a btree index
 SELECT bt_page_items('test1_a_hash', 0);
 ERROR:  "test1_a_hash" is not a btree index
--- Failure with incorrect page size
+SELECT bt_page_items(get_raw_page('test1_a_hash', 0));
+ERROR:  block is a meta page
+CREATE INDEX test1_b_gist ON test1 USING gist(b);
+-- Special area of GiST is the same as btree, this complains about inconsistent
+-- leaf data on the page.
+SELECT bt_page_items(get_raw_page('test1_b_gist', 0));
+ERROR:  block is not a valid btree leaf page
+-- Several failure modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
--- page sizes.
+-- page sizes and architectures.
 \set VERBOSITY terse
+-- invalid page size
 SELECT bt_page_items('aaa'::bytea);
 ERROR:  invalid page size
+-- invalid special area size
+CREATE INDEX test1_a_brin ON test1 USING brin(a);
+SELECT bt_page_items(get_raw_page('test1', 0));
+ERROR:  input page is not a valid btree page
+SELECT bt_page_items(get_raw_page('test1_a_brin', 0));
+ERROR:  input page is not a valid btree page
 \set VERBOSITY default
 DROP TABLE test1;

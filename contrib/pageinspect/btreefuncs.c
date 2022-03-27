@@ -613,12 +613,26 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 		uargs->offset = FirstOffsetNumber;
 
+		/* verify the special space has the expected size */
+		if (PageGetSpecialSize(uargs->page) != MAXALIGN(sizeof(BTPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "btree"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(BTPageOpaqueData)),
+							   (int) PageGetSpecialSize(uargs->page))));
+
 		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
 
 		if (P_ISMETA(opaque))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("block is a meta page")));
+
+		if (P_ISLEAF(opaque) && opaque->btpo_level != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("block is not a valid btree leaf page")));
 
 		if (P_ISDELETED(opaque))
 			elog(NOTICE, "page is deleted");

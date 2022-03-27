@@ -18,13 +18,18 @@ FROM gin_leafpage_items(get_raw_page('test1_y_idx',
                         (pg_relation_size('test1_y_idx') /
                          current_setting('block_size')::bigint)::int - 1));
 
-DROP TABLE test1;
-
--- Failure with incorrect page size
+-- Failure with various modes.
 -- Suppress the DETAIL message, to allow the tests to work across various
--- page sizes.
+-- page sizes and architectures.
 \set VERBOSITY terse
+-- invalid page size
 SELECT gin_leafpage_items('aaa'::bytea);
 SELECT gin_metapage_info('bbb'::bytea);
 SELECT gin_page_opaque_info('ccc'::bytea);
+-- invalid special area size
+SELECT * FROM gin_metapage_info(get_raw_page('test1', 0));
+SELECT * FROM gin_page_opaque_info(get_raw_page('test1', 0));
+SELECT * FROM gin_leafpage_items(get_raw_page('test1', 0));
 \set VERBOSITY default
+
+DROP TABLE test1;
