@@ -5,8 +5,8 @@
 --set debug_print_rewritten = true;
 --set debug_print_parse = true;
 --set debug_print_pretty = true;
-CREATE USER merge_privs;
-CREATE USER merge_no_privs;
+CREATE USER regress_merge_privs;
+CREATE USER regress_merge_no_privs;
 DROP TABLE IF EXISTS target;
 NOTICE:  table "target" does not exist, skipping
 DROP TABLE IF EXISTS source;
@@ -24,14 +24,14 @@ SELECT t.ctid is not null as matched, t.*, s.* FROM source s FULL OUTER JOIN tar
  t       |   3 |      30 |     |      
 (3 rows)
 
-ALTER TABLE target OWNER TO merge_privs;
-ALTER TABLE source OWNER TO merge_privs;
+ALTER TABLE target OWNER TO regress_merge_privs;
+ALTER TABLE source OWNER TO regress_merge_privs;
 CREATE TABLE target2 (tid integer, balance integer);
 CREATE TABLE source2 (sid integer, delta integer);
-ALTER TABLE target2 OWNER TO merge_no_privs;
-ALTER TABLE source2 OWNER TO merge_no_privs;
-GRANT INSERT ON target TO merge_no_privs;
-SET SESSION AUTHORIZATION merge_privs;
+ALTER TABLE target2 OWNER TO regress_merge_no_privs;
+ALTER TABLE source2 OWNER TO regress_merge_no_privs;
+GRANT INSERT ON target TO regress_merge_no_privs;
+SET SESSION AUTHORIZATION regress_merge_privs;
 EXPLAIN (COSTS OFF)
 MERGE INTO target t
 USING source AS s
@@ -151,16 +151,16 @@ ON target.tid = source2.sid
 WHEN MATCHED THEN
 	UPDATE SET balance = 0;
 ERROR:  permission denied for table source2
-GRANT INSERT ON target TO merge_no_privs;
-SET SESSION AUTHORIZATION merge_no_privs;
+GRANT INSERT ON target TO regress_merge_no_privs;
+SET SESSION AUTHORIZATION regress_merge_no_privs;
 MERGE INTO target
 USING source2
 ON target.tid = source2.sid
 WHEN MATCHED THEN
 	UPDATE SET balance = 0;
 ERROR:  permission denied for table target
-GRANT UPDATE ON target2 TO merge_privs;
-SET SESSION AUTHORIZATION merge_privs;
+GRANT UPDATE ON target2 TO regress_merge_privs;
+SET SESSION AUTHORIZATION regress_merge_privs;
 MERGE INTO target2
 USING source
 ON target2.tid = source.sid
@@ -1930,5 +1930,5 @@ RESET SESSION AUTHORIZATION;
 DROP TABLE target, target2;
 DROP TABLE source, source2;
 DROP FUNCTION merge_trigfunc();
-DROP USER merge_privs;
-DROP USER merge_no_privs;
+DROP USER regress_merge_privs;
+DROP USER regress_merge_no_privs;

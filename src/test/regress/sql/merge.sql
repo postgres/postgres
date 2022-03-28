@@ -8,8 +8,8 @@
 --set debug_print_pretty = true;
 
 
-CREATE USER merge_privs;
-CREATE USER merge_no_privs;
+CREATE USER regress_merge_privs;
+CREATE USER regress_merge_no_privs;
 DROP TABLE IF EXISTS target;
 DROP TABLE IF EXISTS source;
 CREATE TABLE target (tid integer, balance integer);
@@ -19,18 +19,18 @@ INSERT INTO target VALUES (2, 20);
 INSERT INTO target VALUES (3, 30);
 SELECT t.ctid is not null as matched, t.*, s.* FROM source s FULL OUTER JOIN target t ON s.sid = t.tid ORDER BY t.tid, s.sid;
 
-ALTER TABLE target OWNER TO merge_privs;
-ALTER TABLE source OWNER TO merge_privs;
+ALTER TABLE target OWNER TO regress_merge_privs;
+ALTER TABLE source OWNER TO regress_merge_privs;
 
 CREATE TABLE target2 (tid integer, balance integer);
 CREATE TABLE source2 (sid integer, delta integer);
 
-ALTER TABLE target2 OWNER TO merge_no_privs;
-ALTER TABLE source2 OWNER TO merge_no_privs;
+ALTER TABLE target2 OWNER TO regress_merge_no_privs;
+ALTER TABLE source2 OWNER TO regress_merge_no_privs;
 
-GRANT INSERT ON target TO merge_no_privs;
+GRANT INSERT ON target TO regress_merge_no_privs;
 
-SET SESSION AUTHORIZATION merge_privs;
+SET SESSION AUTHORIZATION regress_merge_privs;
 
 EXPLAIN (COSTS OFF)
 MERGE INTO target t
@@ -116,8 +116,8 @@ ON target.tid = source2.sid
 WHEN MATCHED THEN
 	UPDATE SET balance = 0;
 
-GRANT INSERT ON target TO merge_no_privs;
-SET SESSION AUTHORIZATION merge_no_privs;
+GRANT INSERT ON target TO regress_merge_no_privs;
+SET SESSION AUTHORIZATION regress_merge_no_privs;
 
 MERGE INTO target
 USING source2
@@ -125,8 +125,8 @@ ON target.tid = source2.sid
 WHEN MATCHED THEN
 	UPDATE SET balance = 0;
 
-GRANT UPDATE ON target2 TO merge_privs;
-SET SESSION AUTHORIZATION merge_privs;
+GRANT UPDATE ON target2 TO regress_merge_privs;
+SET SESSION AUTHORIZATION regress_merge_privs;
 
 MERGE INTO target2
 USING source
@@ -1269,5 +1269,5 @@ RESET SESSION AUTHORIZATION;
 DROP TABLE target, target2;
 DROP TABLE source, source2;
 DROP FUNCTION merge_trigfunc();
-DROP USER merge_privs;
-DROP USER merge_no_privs;
+DROP USER regress_merge_privs;
+DROP USER regress_merge_no_privs;
