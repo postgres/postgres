@@ -85,7 +85,7 @@ PostgreSQL documentation
        <para>
         Only display records that modify the given block.  The relation must
         also be provided with <option>--relation</option> or
-        <option>-l</option>.
+        <option>-R</option>.
        </para>
       </listitem>
      </varlistentry>
