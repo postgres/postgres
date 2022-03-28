@@ -67,6 +67,8 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 {
 #ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
+	int			compresslevel;
+	size_t		ret;
 
 	Assert(next != NULL);
 
@@ -81,11 +83,24 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 
 	streamer->cctx = ZSTD_createCCtx();
 	if (!streamer->cctx)
+	{
 		pg_log_error("could not create zstd compression context");
+		exit(1);
+	}
 
 	/* Initialize stream compression preferences */
-	ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
-						   compress->level);
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) == 0)
+		compresslevel = 0;
+	else
+		compresslevel = compress->level;
+	ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
+								 compresslevel);
+	if (ZSTD_isError(ret))
+	{
+		pg_log_error("could not set zstd compression level to %d: %s",
+					 compresslevel, ZSTD_getErrorName(ret));
+		exit(1);
+	}
 
 	/* Initialize the ZSTD output buffer. */
 	streamer->zstd_outBuf.dst = streamer->base.bbs_buffer.data;

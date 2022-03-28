@@ -98,13 +98,17 @@ bbsink_zstd_begin_backup(bbsink *sink)
 {
 	bbsink_zstd *mysink = (bbsink_zstd *) sink;
 	size_t		output_buffer_bound;
+	size_t		ret;
 
 	mysink->cctx = ZSTD_createCCtx();
 	if (!mysink->cctx)
 		elog(ERROR, "could not create zstd compression context");
 
-	ZSTD_CCtx_setParameter(mysink->cctx, ZSTD_c_compressionLevel,
-						   mysink->compresslevel);
+	ret = ZSTD_CCtx_setParameter(mysink->cctx, ZSTD_c_compressionLevel,
+								 mysink->compresslevel);
+	if (ZSTD_isError(ret))
+		elog(ERROR, "could not set zstd compression level to %d: %s",
+			 mysink->compresslevel, ZSTD_getErrorName(ret));
 
 	/*
 	 * We need our own buffer, because we're going to pass different data to

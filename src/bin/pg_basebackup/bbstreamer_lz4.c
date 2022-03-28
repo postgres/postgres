@@ -89,7 +89,8 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, bc_specification *compress)
 	prefs = &streamer->prefs;
 	memset(prefs, 0, sizeof(LZ4F_preferences_t));
 	prefs->frameInfo.blockSizeID = LZ4F_max256KB;
-	prefs->compressionLevel = compress->level;
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0)
+		prefs->compressionLevel = compress->level;
 
 	/*
 	 * Find out the compression bound, it specifies the minimum destination

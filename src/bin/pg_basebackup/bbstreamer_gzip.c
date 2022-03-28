@@ -116,7 +116,8 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file,
 		}
 	}
 
-	if (gzsetparams(streamer->gzfile, compress->level,
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0 &&
+		gzsetparams(streamer->gzfile, compress->level,
 					Z_DEFAULT_STRATEGY) != Z_OK)
 	{
 		pg_log_error("could not set compression level %d: %s",
