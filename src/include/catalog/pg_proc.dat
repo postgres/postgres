@@ -5377,7 +5377,7 @@
   proargnames => '{slot_name,slot_name,spill_txns,spill_count,spill_bytes,stream_txns,stream_count,stream_bytes,total_txns,total_bytes,stats_reset}',
   prosrc => 'pg_stat_get_replication_slot' },
 { oid => '8523', descr => 'statistics: information about subscription stats',
-  proname => 'pg_stat_get_subscription_stats', proisstrict => 'f',
+  proname => 'pg_stat_get_subscription_stats',
   provolatile => 's', proparallel => 'r',
   prorettype => 'record', proargtypes => 'oid',
   proallargtypes => '{oid,oid,int8,int8,timestamptz}',

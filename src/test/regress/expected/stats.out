@@ -262,4 +262,10 @@ SELECT pg_stat_get_replication_slot(NULL);
  
 (1 row)
 
+SELECT pg_stat_get_subscription_stats(NULL);
+ pg_stat_get_subscription_stats 
+--------------------------------
+ 
+(1 row)
+
 -- End of Stats Test
