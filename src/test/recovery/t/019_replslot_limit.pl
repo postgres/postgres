@@ -339,8 +339,8 @@ my $senderpid;
 # We've seen occasional cases where multiple walsender pids are active. It
 # could be that we're just observing process shutdown being slow. To collect
 # more information, retry a couple times, print a bit of debugging information
-# each iteration. For now report a test failure even if later iterations
-# succeed.
+# each iteration. Don't fail the test if retries find just one pid, the
+# buildfarm failures are too noisy.
 my $i = 0;
 while (1)
 {
@@ -349,7 +349,9 @@ while (1)
 	$senderpid = $node_primary3->safe_psql('postgres',
 	    "SELECT pid FROM pg_stat_activity WHERE backend_type = 'walsender'");
 
-	last if like($senderpid, qr/^[0-9]+$/, "have walsender pid $senderpid");
+	last if $senderpid =~ qr/^[0-9]+$/;
+
+	diag "multiple walsenders active in iteration $i";
 
 	# show information about all active connections
 	$node_primary3->psql('postgres',
@@ -369,6 +371,8 @@ while (1)
 
 	usleep(100_000);
 }
+
+like($senderpid, qr/^[0-9]+$/, "have walsender pid $senderpid");
 
 my $receiverpid = $node_standby3->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walreceiver'");

@@ -702,7 +702,12 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	slot->active_pid = 0;
 	slot->in_use = false;
 	LWLockRelease(ReplicationSlotControlLock);
+
+	elog(DEBUG3, "replication slot drop: %s: marked as not in use", NameStr(slot->data.name));
+
 	ConditionVariableBroadcast(&slot->active_cv);
+
+	elog(DEBUG3, "replication slot drop: %s: notified others", NameStr(slot->data.name));
 
 	/*
 	 * Slot is dead and doesn't prevent resource removal anymore, recompute
@@ -710,6 +715,8 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 */
 	ReplicationSlotsComputeRequiredXmin(false);
 	ReplicationSlotsComputeRequiredLSN();
+
+	elog(DEBUG3, "replication slot drop: %s: computed required", NameStr(slot->data.name));
 
 	/*
 	 * If removing the directory fails, the worst thing that will happen is
@@ -719,6 +726,8 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	if (!rmtree(tmppath, true))
 		ereport(WARNING,
 				(errmsg("could not remove directory \"%s\"", tmppath)));
+
+	elog(DEBUG3, "replication slot drop: %s: removed directory", NameStr(slot->data.name));
 
 	/*
 	 * Send a message to drop the replication slot to the stats collector.
