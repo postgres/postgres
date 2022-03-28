@@ -4940,6 +4940,8 @@ set_deparse_plan(deparse_namespace *dpns, Plan *plan)
 	 * For a WorkTableScan, locate the parent RecursiveUnion plan node and use
 	 * that as INNER referent.
 	 *
+	 * For MERGE, make the inner tlist point to the merge source tlist, which
+	 * is same as the targetlist that the ModifyTable's source plan provides.
 	 * For ON CONFLICT .. UPDATE we just need the inner tlist to point to the
 	 * excluded expression's tlist. (Similar to the SubqueryScan we don't want
 	 * to reuse OUTER, it's used for RETURNING in some modify table cases,
@@ -4959,7 +4961,12 @@ set_deparse_plan(deparse_namespace *dpns, Plan *plan)
 		dpns->inner_plan = innerPlan(plan);
 
 	if (IsA(plan, ModifyTable))
-		dpns->inner_tlist = ((ModifyTable *) plan)->exclRelTlist;
+	{
+		if (((ModifyTable *) plan)->operation == CMD_MERGE)
+			dpns->inner_tlist = dpns->outer_plan->targetlist;
+		else
+			dpns->inner_tlist = ((ModifyTable *) plan)->exclRelTlist;
+	}
 	else if (dpns->inner_plan)
 		dpns->inner_tlist = dpns->inner_plan->targetlist;
 	else

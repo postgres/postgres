@@ -389,6 +389,22 @@ typedef struct OnConflictSetState
 	ExprState  *oc_WhereClause; /* state for the WHERE clause */
 } OnConflictSetState;
 
+/* ----------------
+ *	 MergeActionState information
+ *
+ *	Executor state for a MERGE action.
+ * ----------------
+ */
+typedef struct MergeActionState
+{
+	NodeTag		type;
+
+	MergeAction *mas_action;	/* associated MergeAction node */
+	ProjectionInfo *mas_proj;	/* projection of the action's targetlist for
+								 * this rel */
+	ExprState  *mas_whenqual;	/* WHEN [NOT] MATCHED AND conditions */
+} MergeActionState;
+
 /*
  * ResultRelInfo
  *
@@ -499,6 +515,10 @@ typedef struct ResultRelInfo
 
 	/* ON CONFLICT evaluation state */
 	OnConflictSetState *ri_onConflict;
+
+	/* for MERGE, lists of MergeActionState */
+	List	   *ri_matchedMergeAction;
+	List	   *ri_notMatchedMergeAction;
 
 	/* partition check expression state (NULL if not set up yet) */
 	ExprState  *ri_PartitionCheckExpr;
@@ -1190,6 +1210,12 @@ typedef struct ProjectSetState
 	MemoryContext argcontext;	/* context for SRF arguments */
 } ProjectSetState;
 
+
+/* flags for mt_merge_subcommands */
+#define MERGE_INSERT	0x01
+#define MERGE_UPDATE	0x02
+#define MERGE_DELETE	0x04
+
 /* ----------------
  *	 ModifyTableState information
  * ----------------
@@ -1197,7 +1223,7 @@ typedef struct ProjectSetState
 typedef struct ModifyTableState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	CmdType		operation;		/* INSERT, UPDATE, or DELETE */
+	CmdType		operation;		/* INSERT, UPDATE, DELETE, or MERGE */
 	bool		canSetTag;		/* do we set the command tag/es_processed? */
 	bool		mt_done;		/* are we done? */
 	int			mt_nrels;		/* number of entries in resultRelInfo[] */
@@ -1239,6 +1265,14 @@ typedef struct ModifyTableState
 
 	/* controls transition table population for INSERT...ON CONFLICT UPDATE */
 	struct TransitionCaptureState *mt_oc_transition_capture;
+
+	/* Flags showing which subcommands are present INS/UPD/DEL/DO NOTHING */
+	int			mt_merge_subcommands;
+
+	/* tuple counters for MERGE */
+	double		mt_merge_inserted;
+	double		mt_merge_updated;
+	double		mt_merge_deleted;
 } ModifyTableState;
 
 /* ----------------

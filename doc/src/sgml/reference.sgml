@@ -186,6 +186,7 @@
    &listen;
    &load;
    &lock;
+   &merge;
    &move;
    &notify;
    &prepare;

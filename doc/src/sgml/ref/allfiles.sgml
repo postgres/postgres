@@ -158,6 +158,7 @@ Complete list of usable sgml source files in this directory.
 <!ENTITY listen             SYSTEM "listen.sgml">
 <!ENTITY load               SYSTEM "load.sgml">
 <!ENTITY lock               SYSTEM "lock.sgml">
+<!ENTITY merge              SYSTEM "merge.sgml">
 <!ENTITY move               SYSTEM "move.sgml">
 <!ENTITY notify             SYSTEM "notify.sgml">
 <!ENTITY prepare            SYSTEM "prepare.sgml">

@@ -1,0 +1,117 @@
+Parsed test spec with 2 sessions
+
+starting permutation: delete c1 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step c1: COMMIT;
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: merge_delete c1 select2 c2
+step merge_delete: MERGE INTO target t USING (SELECT 1 as key) s ON s.key = t.key WHEN MATCHED THEN DELETE;
+step c1: COMMIT;
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: delete c1 update1 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step c1: COMMIT;
+step update1: UPDATE target t SET val = t.val || ' updated by update1' WHERE t.key = 1;
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: merge_delete c1 update1 select2 c2
+step merge_delete: MERGE INTO target t USING (SELECT 1 as key) s ON s.key = t.key WHEN MATCHED THEN DELETE;
+step c1: COMMIT;
+step update1: UPDATE target t SET val = t.val || ' updated by update1' WHERE t.key = 1;
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: delete c1 merge2 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step c1: COMMIT;
+step merge2: MERGE INTO target t USING (SELECT 1 as key, 'merge2a' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
+step select2: SELECT * FROM target;
+key|val    
+---+-------
+  1|merge2a
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: merge_delete c1 merge2 select2 c2
+step merge_delete: MERGE INTO target t USING (SELECT 1 as key) s ON s.key = t.key WHEN MATCHED THEN DELETE;
+step c1: COMMIT;
+step merge2: MERGE INTO target t USING (SELECT 1 as key, 'merge2a' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val;
+step select2: SELECT * FROM target;
+key|val    
+---+-------
+  1|merge2a
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: delete update1 c1 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step update1: UPDATE target t SET val = t.val || ' updated by update1' WHERE t.key = 1; <waiting ...>
+step c1: COMMIT;
+step update1: <... completed>
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: merge_delete update1 c1 select2 c2
+step merge_delete: MERGE INTO target t USING (SELECT 1 as key) s ON s.key = t.key WHEN MATCHED THEN DELETE;
+step update1: UPDATE target t SET val = t.val || ' updated by update1' WHERE t.key = 1; <waiting ...>
+step c1: COMMIT;
+step update1: <... completed>
+step select2: SELECT * FROM target;
+key|val
+---+---
+(0 rows)
+
+step c2: COMMIT;
+
+starting permutation: delete merge2 c1 select2 c2
+step delete: DELETE FROM target t WHERE t.key = 1;
+step merge2: MERGE INTO target t USING (SELECT 1 as key, 'merge2a' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val; <waiting ...>
+step c1: COMMIT;
+step merge2: <... completed>
+step select2: SELECT * FROM target;
+key|val    
+---+-------
+  1|merge2a
+(1 row)
+
+step c2: COMMIT;
+
+starting permutation: merge_delete merge2 c1 select2 c2
+step merge_delete: MERGE INTO target t USING (SELECT 1 as key) s ON s.key = t.key WHEN MATCHED THEN DELETE;
+step merge2: MERGE INTO target t USING (SELECT 1 as key, 'merge2a' as val) s ON s.key = t.key WHEN NOT MATCHED THEN INSERT VALUES (s.key, s.val) WHEN MATCHED THEN UPDATE set key = t.key + 1, val = t.val || ' updated by ' || s.val; <waiting ...>
+step c1: COMMIT;
+step merge2: <... completed>
+step select2: SELECT * FROM target;
+key|val    
+---+-------
+  1|merge2a
+(1 row)
+
+step c2: COMMIT;

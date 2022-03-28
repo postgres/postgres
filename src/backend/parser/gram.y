@@ -278,6 +278,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	struct SelectLimit	*selectlimit;
 	SetQuantifier	 setquantifier;
 	struct GroupClause  *groupclause;
+	MergeWhenClause		*mergewhen;
 	struct KeyActions	*keyactions;
 	struct KeyAction	*keyaction;
 }
@@ -307,7 +308,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 		DropTransformStmt
 		DropUserMappingStmt ExplainStmt FetchStmt
 		GrantStmt GrantRoleStmt ImportForeignSchemaStmt IndexStmt InsertStmt
-		ListenStmt LoadStmt LockStmt NotifyStmt ExplainableStmt PreparableStmt
+		ListenStmt LoadStmt LockStmt MergeStmt NotifyStmt ExplainableStmt PreparableStmt
 		CreateFunctionStmt AlterFunctionStmt ReindexStmt RemoveAggrStmt
 		RemoveFuncStmt RemoveOperStmt RenameStmt ReturnStmt RevokeStmt RevokeRoleStmt
 		RuleActionStmt RuleActionStmtOrEmpty RuleStmt
@@ -433,6 +434,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				any_operator expr_list attrs
 				distinct_clause opt_distinct_clause
 				target_list opt_target_list insert_column_list set_target_list
+				merge_values_clause
 				set_clause_list set_clause
 				def_list operator_def_list indirection opt_indirection
 				reloption_list TriggerFuncArgs opclass_item_list opclass_drop_list
@@ -506,6 +508,10 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <istmt>	insert_rest
 %type <infer>	opt_conf_expr
 %type <onconflict> opt_on_conflict
+%type <mergewhen>	merge_insert merge_update merge_delete
+
+%type <node>	merge_when_clause opt_merge_when_condition
+%type <list>	merge_when_list
 
 %type <vsetstmt> generic_set set_rest set_rest_more generic_reset reset_rest
 				 SetResetClause FunctionSetResetClause
@@ -734,7 +740,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	LEADING LEAKPROOF LEAST LEFT LEVEL LIKE LIMIT LISTEN LOAD LOCAL
 	LOCALTIME LOCALTIMESTAMP LOCATION LOCK_P LOCKED LOGGED
 
-	MAPPING MATCH MATERIALIZED MAXVALUE METHOD MINUTE_P MINVALUE MODE MONTH_P MOVE
+	MAPPING MATCH MATCHED MATERIALIZED MAXVALUE MERGE METHOD
+	MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NFC NFD NFKC NFKD NO NONE
 	NORMALIZE NORMALIZED
@@ -1061,6 +1068,7 @@ stmt:
 			| RefreshMatViewStmt
 			| LoadStmt
 			| LockStmt
+			| MergeStmt
 			| NotifyStmt
 			| PrepareStmt
 			| ReassignOwnedStmt
@@ -11123,6 +11131,7 @@ ExplainableStmt:
 			| InsertStmt
 			| UpdateStmt
 			| DeleteStmt
+			| MergeStmt
 			| DeclareCursorStmt
 			| CreateAsStmt
 			| CreateMatViewStmt
@@ -11155,7 +11164,8 @@ PreparableStmt:
 			SelectStmt
 			| InsertStmt
 			| UpdateStmt
-			| DeleteStmt					/* by default all are $$=$1 */
+			| DeleteStmt
+			| MergeStmt						/* by default all are $$=$1 */
 		;
 
 /*****************************************************************************
@@ -11539,6 +11549,166 @@ set_target_list:
 			| set_target_list ',' set_target		{ $$ = lappend($1,$3); }
 		;
 
+
+/*****************************************************************************
+ *
+ *		QUERY:
+ *				MERGE
+ *
+ *****************************************************************************/
+
+MergeStmt:
+			opt_with_clause MERGE INTO relation_expr_opt_alias
+			USING table_ref
+			ON a_expr
+			merge_when_list
+				{
+					MergeStmt *m = makeNode(MergeStmt);
+
+					m->withClause = $1;
+					m->relation = $4;
+					m->sourceRelation = $6;
+					m->joinCondition = $8;
+					m->mergeWhenClauses = $9;
+
+					$$ = (Node *)m;
+				}
+		;
+
+merge_when_list:
+			merge_when_clause						{ $$ = list_make1($1); }
+			| merge_when_list merge_when_clause		{ $$ = lappend($1,$2); }
+		;
+
+merge_when_clause:
+			WHEN MATCHED opt_merge_when_condition THEN merge_update
+				{
+					$5->matched = true;
+					$5->condition = $3;
+
+					$$ = (Node *) $5;
+				}
+			| WHEN MATCHED opt_merge_when_condition THEN merge_delete
+				{
+					$5->matched = true;
+					$5->condition = $3;
+
+					$$ = (Node *) $5;
+				}
+			| WHEN NOT MATCHED opt_merge_when_condition THEN merge_insert
+				{
+					$6->matched = false;
+					$6->condition = $4;
+
+					$$ = (Node *) $6;
+				}
+			| WHEN MATCHED opt_merge_when_condition THEN DO NOTHING
+				{
+					MergeWhenClause *m = makeNode(MergeWhenClause);
+
+					m->matched = true;
+					m->commandType = CMD_NOTHING;
+					m->condition = $3;
+
+					$$ = (Node *)m;
+				}
+			| WHEN NOT MATCHED opt_merge_when_condition THEN DO NOTHING
+				{
+					MergeWhenClause *m = makeNode(MergeWhenClause);
+
+					m->matched = false;
+					m->commandType = CMD_NOTHING;
+					m->condition = $4;
+
+					$$ = (Node *)m;
+				}
+		;
+
+opt_merge_when_condition:
+			AND a_expr				{ $$ = $2; }
+			|						{ $$ = NULL; }
+		;
+
+merge_update:
+			UPDATE SET set_clause_list
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_UPDATE;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = $3;
+					n->values = NIL;
+
+					$$ = n;
+				}
+		;
+
+merge_delete:
+			DELETE_P
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_DELETE;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = NIL;
+
+					$$ = n;
+				}
+		;
+
+merge_insert:
+			INSERT merge_values_clause
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = $2;
+					$$ = n;
+				}
+			| INSERT OVERRIDING override_kind VALUE_P merge_values_clause
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = $3;
+					n->targetList = NIL;
+					n->values = $5;
+					$$ = n;
+				}
+			| INSERT '(' insert_column_list ')' merge_values_clause
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = $3;
+					n->values = $5;
+					$$ = n;
+				}
+			| INSERT '(' insert_column_list ')' OVERRIDING override_kind VALUE_P merge_values_clause
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = $6;
+					n->targetList = $3;
+					n->values = $8;
+					$$ = n;
+				}
+			| INSERT DEFAULT VALUES
+				{
+					MergeWhenClause *n = makeNode(MergeWhenClause);
+					n->commandType = CMD_INSERT;
+					n->override = OVERRIDING_NOT_SET;
+					n->targetList = NIL;
+					n->values = NIL;
+					$$ = n;
+				}
+		;
+
+merge_values_clause:
+			VALUES '(' expr_list ')'
+				{
+					$$ = $3;
+				}
+		;
 
 /*****************************************************************************
  *
@@ -16155,8 +16325,10 @@ unreserved_keyword:
 			| LOGGED
 			| MAPPING
 			| MATCH
+			| MATCHED
 			| MATERIALIZED
 			| MAXVALUE
+			| MERGE
 			| METHOD
 			| MINUTE_P
 			| MINVALUE
@@ -16734,8 +16906,10 @@ bare_label_keyword:
 			| LOGGED
 			| MAPPING
 			| MATCH
+			| MATCHED
 			| MATERIALIZED
 			| MAXVALUE
+			| MERGE
 			| METHOD
 			| MINVALUE
 			| MODE

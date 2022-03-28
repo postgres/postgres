@@ -774,8 +774,8 @@ add_row_identity_var(PlannerInfo *root, Var *orig_var,
 	Assert(orig_var->varlevelsup == 0);
 
 	/*
-	 * If we're doing non-inherited UPDATE/DELETE, there's little need for
-	 * ROWID_VAR shenanigans.  Just shove the presented Var into the
+	 * If we're doing non-inherited UPDATE/DELETE/MERGE, there's little need
+	 * for ROWID_VAR shenanigans.  Just shove the presented Var into the
 	 * processed_tlist, and we're done.
 	 */
 	if (rtindex == root->parse->resultRelation)
@@ -862,14 +862,16 @@ add_row_identity_columns(PlannerInfo *root, Index rtindex,
 	char		relkind = target_relation->rd_rel->relkind;
 	Var		   *var;
 
-	Assert(commandType == CMD_UPDATE || commandType == CMD_DELETE);
+	Assert(commandType == CMD_UPDATE || commandType == CMD_DELETE || commandType == CMD_MERGE);
 
-	if (relkind == RELKIND_RELATION ||
+	if (commandType == CMD_MERGE ||
+		relkind == RELKIND_RELATION ||
 		relkind == RELKIND_MATVIEW ||
 		relkind == RELKIND_PARTITIONED_TABLE)
 	{
 		/*
-		 * Emit CTID so that executor can find the row to update or delete.
+		 * Emit CTID so that executor can find the row to merge, update or
+		 * delete.
 		 */
 		var = makeVar(rtindex,
 					  SelfItemPointerAttributeNumber,
@@ -942,8 +944,11 @@ distribute_row_identity_vars(PlannerInfo *root)
 	RelOptInfo *target_rel;
 	ListCell   *lc;
 
-	/* There's nothing to do if this isn't an inherited UPDATE/DELETE. */
-	if (parse->commandType != CMD_UPDATE && parse->commandType != CMD_DELETE)
+	/*
+	 * There's nothing to do if this isn't an inherited UPDATE/DELETE/MERGE.
+	 */
+	if (parse->commandType != CMD_UPDATE && parse->commandType != CMD_DELETE &&
+		parse->commandType != CMD_MERGE)
 	{
 		Assert(root->row_identity_vars == NIL);
 		return;

@@ -133,6 +133,86 @@ static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
 
 /*
+ * transform_MERGE_to_join
+ *		Replace a MERGE's jointree to also include the target relation.
+ */
+void
+transform_MERGE_to_join(Query *parse)
+{
+	RangeTblEntry *joinrte;
+	JoinExpr   *joinexpr;
+	JoinType	jointype;
+	int			joinrti;
+	List	   *vars;
+
+	if (parse->commandType != CMD_MERGE)
+		return;
+
+	/* XXX probably bogus */
+	vars = NIL;
+
+	/*
+	 * When any WHEN NOT MATCHED THEN INSERT clauses exist, we need to use an
+	 * outer join so that we process all unmatched tuples from the source
+	 * relation.  If none exist, we can use an inner join.
+	 */
+	if (parse->mergeUseOuterJoin)
+		jointype = JOIN_RIGHT;
+	else
+		jointype = JOIN_INNER;
+
+	/* Manufacture a join RTE to use. */
+	joinrte = makeNode(RangeTblEntry);
+	joinrte->rtekind = RTE_JOIN;
+	joinrte->jointype = jointype;
+	joinrte->joinmergedcols = 0;
+	joinrte->joinaliasvars = vars;
+	joinrte->joinleftcols = NIL;	/* MERGE does not allow JOIN USING */
+	joinrte->joinrightcols = NIL;	/* ditto */
+	joinrte->join_using_alias = NULL;
+
+	joinrte->alias = NULL;
+	joinrte->eref = makeAlias("*MERGE*", NIL);
+	joinrte->lateral = false;
+	joinrte->inh = false;
+	joinrte->inFromCl = true;
+	joinrte->requiredPerms = 0;
+	joinrte->checkAsUser = InvalidOid;
+	joinrte->selectedCols = NULL;
+	joinrte->insertedCols = NULL;
+	joinrte->updatedCols = NULL;
+	joinrte->extraUpdatedCols = NULL;
+	joinrte->securityQuals = NIL;
+
+	/*
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.
+	 */
+	parse->rtable = lappend(parse->rtable, joinrte);
+	joinrti = list_length(parse->rtable);
+
+	/*
+	 * Create a JOIN between the target and the source relation.
+	 */
+	joinexpr = makeNode(JoinExpr);
+	joinexpr->jointype = jointype;
+	joinexpr->isNatural = false;
+	joinexpr->larg = (Node *) makeNode(RangeTblRef);
+	((RangeTblRef *) joinexpr->larg)->rtindex = parse->resultRelation;
+	joinexpr->rarg = linitial(parse->jointree->fromlist);	/* original join */
+	joinexpr->usingClause = NIL;
+	joinexpr->join_using_alias = NULL;
+	/* The quals are removed from the jointree and into this specific join */
+	joinexpr->quals = parse->jointree->quals;
+	joinexpr->alias = NULL;
+	joinexpr->rtindex = joinrti;
+
+	/* Make the new join be the sole entry in the query's jointree */
+	parse->jointree->fromlist = list_make1(joinexpr);
+	parse->jointree->quals = NULL;
+}
+
+/*
  * replace_empty_jointree
  *		If the Query's jointree is empty, replace it with a dummy RTE_RESULT
  *		relation.
@@ -2057,6 +2137,17 @@ perform_pullup_replace_vars(PlannerInfo *root,
 		 * We assume ON CONFLICT's arbiterElems, arbiterWhere, exclRelTlist
 		 * can't contain any references to a subquery.
 		 */
+	}
+	if (parse->mergeActionList)
+	{
+		foreach(lc, parse->mergeActionList)
+		{
+			MergeAction *action = lfirst(lc);
+
+			action->qual = pullup_replace_vars(action->qual, rvcontext);
+			action->targetList = (List *)
+				pullup_replace_vars((Node *) action->targetList, rvcontext);
+		}
 	}
 	replace_vars_in_jointree((Node *) parse->jointree, rvcontext,
 							 lowest_nulling_outer_join);

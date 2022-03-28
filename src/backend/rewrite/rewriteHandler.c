@@ -1643,6 +1643,10 @@ matchLocks(CmdType event,
 	if (rulelocks == NULL)
 		return NIL;
 
+	/* No rule support for MERGE */
+	if (parsetree->commandType == CMD_MERGE)
+		return NIL;
+
 	if (parsetree->commandType != CMD_SELECT)
 	{
 		if (parsetree->resultRelation != varno)
@@ -3671,8 +3675,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 	}
 
 	/*
-	 * If the statement is an insert, update, or delete, adjust its targetlist
-	 * as needed, and then fire INSERT/UPDATE/DELETE rules on it.
+	 * If the statement is an insert, update, delete, or merge, adjust its
+	 * targetlist as needed, and then fire INSERT/UPDATE/DELETE rules on it.
 	 *
 	 * SELECT rules are handled later when we have all the queries that should
 	 * get executed.  Also, utilities aren't rewritten at all (do we still
@@ -3770,6 +3774,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		}
 		else if (event == CMD_UPDATE)
 		{
+			Assert(parsetree->override == OVERRIDING_NOT_SET);
 			parsetree->targetList =
 				rewriteTargetListIU(parsetree->targetList,
 									parsetree->commandType,
@@ -3779,6 +3784,38 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 
 			/* Also populate extraUpdatedCols (for generated columns) */
 			fill_extraUpdatedCols(rt_entry, rt_entry_relation);
+		}
+		else if (event == CMD_MERGE)
+		{
+			Assert(parsetree->override == OVERRIDING_NOT_SET);
+
+			/*
+			 * Rewrite each action targetlist separately
+			 */
+			foreach(lc1, parsetree->mergeActionList)
+			{
+				MergeAction *action = (MergeAction *) lfirst(lc1);
+
+				switch (action->commandType)
+				{
+					case CMD_NOTHING:
+					case CMD_DELETE:	/* Nothing to do here */
+						break;
+					case CMD_UPDATE:
+					case CMD_INSERT:
+						/* XXX is it possible to have a VALUES clause? */
+						action->targetList =
+							rewriteTargetListIU(action->targetList,
+												action->commandType,
+												action->override,
+												rt_entry_relation,
+												NULL, 0, NULL);
+						break;
+					default:
+						elog(ERROR, "unrecognized commandType: %d", action->commandType);
+						break;
+				}
+			}
 		}
 		else if (event == CMD_DELETE)
 		{

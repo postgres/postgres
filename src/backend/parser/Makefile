@@ -23,6 +23,7 @@ OBJS = \
 	parse_enr.o \
 	parse_expr.o \
 	parse_func.o \
+	parse_merge.o \
 	parse_node.o \
 	parse_oper.o \
 	parse_param.o \

@@ -1308,6 +1308,7 @@ ExpandAllTables(ParseState *pstate, int location)
 							 expandNSItemAttrs(pstate,
 											   nsitem,
 											   0,
+											   true,
 											   location));
 	}
 
@@ -1370,7 +1371,7 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 	if (make_target_entry)
 	{
 		/* expandNSItemAttrs handles permissions marking */
-		return expandNSItemAttrs(pstate, nsitem, sublevels_up, location);
+		return expandNSItemAttrs(pstate, nsitem, sublevels_up, true, location);
 	}
 	else
 	{

@@ -952,6 +952,7 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 		case T_ModifyTable:
 			{
 				ModifyTable *splan = (ModifyTable *) plan;
+				Plan	   *subplan = outerPlan(splan);
 
 				Assert(splan->plan.targetlist == NIL);
 				Assert(splan->plan.qual == NIL);
@@ -963,7 +964,6 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 				if (splan->returningLists)
 				{
 					List	   *newRL = NIL;
-					Plan	   *subplan = outerPlan(splan);
 					ListCell   *lcrl,
 							   *lcrr;
 
@@ -1028,6 +1028,68 @@ set_plan_refs(PlannerInfo *root, Plan *plan, int rtoffset)
 
 					splan->exclRelTlist =
 						fix_scan_list(root, splan->exclRelTlist, rtoffset, 1);
+				}
+
+				/*
+				 * The MERGE statement produces the target rows by performing
+				 * a right join between the target relation and the source
+				 * relation (which could be a plain relation or a subquery).
+				 * The INSERT and UPDATE actions of the MERGE statement
+				 * require access to the columns from the source relation. We
+				 * arrange things so that the source relation attributes are
+				 * available as INNER_VAR and the target relation attributes
+				 * are available from the scan tuple.
+				 */
+				if (splan->mergeActionLists != NIL)
+				{
+					ListCell   *lca,
+							   *lcr;
+
+					/*
+					 * Fix the targetList of individual action nodes so that
+					 * the so-called "source relation" Vars are referenced as
+					 * INNER_VAR.  Note that for this to work correctly during
+					 * execution, the ecxt_innertuple must be set to the tuple
+					 * obtained by executing the subplan, which is what
+					 * constitutes the "source relation".
+					 *
+					 * We leave the Vars from the result relation (i.e. the
+					 * target relation) unchanged i.e. those Vars would be
+					 * picked from the scan slot. So during execution, we must
+					 * ensure that ecxt_scantuple is setup correctly to refer
+					 * to the tuple from the target relation.
+					 */
+					indexed_tlist *itlist;
+
+					itlist = build_tlist_index(subplan->targetlist);
+
+					forboth(lca, splan->mergeActionLists,
+							lcr, splan->resultRelations)
+					{
+						List	   *mergeActionList = lfirst(lca);
+						Index		resultrel = lfirst_int(lcr);
+
+						foreach(l, mergeActionList)
+						{
+							MergeAction *action = (MergeAction *) lfirst(l);
+
+							/* Fix targetList of each action. */
+							action->targetList = fix_join_expr(root,
+															   action->targetList,
+															   NULL, itlist,
+															   resultrel,
+															   rtoffset,
+															   NUM_EXEC_TLIST(plan));
+
+							/* Fix quals too. */
+							action->qual = (Node *) fix_join_expr(root,
+																  (List *) action->qual,
+																  NULL, itlist,
+																  resultrel,
+																  rtoffset,
+																  NUM_EXEC_QUAL(plan));
+						}
+					}
 				}
 
 				splan->nominalRelation += rtoffset;

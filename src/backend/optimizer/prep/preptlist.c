@@ -125,6 +125,43 @@ preprocess_targetlist(PlannerInfo *root)
 	}
 
 	/*
+	 * For MERGE we need to handle the target list for the target relation,
+	 * and also target list for each action (only INSERT/UPDATE matter).
+	 */
+	if (command_type == CMD_MERGE)
+	{
+		ListCell   *l;
+
+		/*
+		 * For MERGE, add any junk column(s) needed to allow the executor to
+		 * identify the rows to be inserted or updated.
+		 */
+		root->processed_tlist = tlist;
+		add_row_identity_columns(root, result_relation,
+								 target_rte, target_relation);
+
+		tlist = root->processed_tlist;
+
+		/*
+		 * For MERGE, handle targetlist of each MergeAction separately. Give
+		 * the same treatment to MergeAction->targetList as we would have
+		 * given to a regular INSERT.  For UPDATE, collect the column numbers
+		 * being modified.
+		 */
+		foreach(l, parse->mergeActionList)
+		{
+			MergeAction *action = (MergeAction *) lfirst(l);
+
+			if (action->commandType == CMD_INSERT)
+				action->targetList = expand_insert_targetlist(action->targetList,
+															  target_relation);
+			else if (action->commandType == CMD_UPDATE)
+				action->updateColnos =
+					extract_update_targetlist_colnos(action->targetList);
+		}
+	}
+
+	/*
 	 * Add necessary junk columns for rowmarked rels.  These values are needed
 	 * for locking of rels selected FOR UPDATE/SHARE, and to do EvalPlanQual
 	 * rechecking.  See comments for PlanRowMark in plannodes.h.  If you

@@ -1,0 +1,620 @@
+<!--
+doc/src/sgml/ref/merge.sgml
+PostgreSQL documentation
+-->
+
+<refentry id="sql-merge">
+
+ <refmeta>
+  <refentrytitle>MERGE</refentrytitle>
+  <manvolnum>7</manvolnum>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>MERGE</refname>
+  <refpurpose>conditionally insert, update, or delete rows of a table</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+[ WITH <replaceable class="parameter">with_query</replaceable> [, ...] ]
+MERGE INTO <replaceable class="parameter">target_table_name</replaceable> [ [ AS ] <replaceable class="parameter">target_alias</replaceable> ]
+USING <replaceable class="parameter">data_source</replaceable> ON <replaceable class="parameter">join_condition</replaceable>
+<replaceable class="parameter">when_clause</replaceable> [...]
+
+<phrase>where <replaceable class="parameter">data_source</replaceable> is</phrase>
+
+{ <replaceable class="parameter">source_table_name</replaceable> | ( <replaceable class="parameter">source_query</replaceable> ) } [ [ AS ] <replaceable class="parameter">source_alias</replaceable> ]
+
+<phrase>and <replaceable class="parameter">when_clause</replaceable> is</phrase>
+
+{ WHEN MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_update</replaceable> | <replaceable class="parameter">merge_delete</replaceable> | DO NOTHING } |
+  WHEN NOT MATCHED [ AND <replaceable class="parameter">condition</replaceable> ] THEN { <replaceable class="parameter">merge_insert</replaceable> | DO NOTHING } }
+
+<phrase>and <replaceable class="parameter">merge_insert</replaceable> is</phrase>
+
+INSERT [( <replaceable class="parameter">column_name</replaceable> [, ...] )]
+[ OVERRIDING { SYSTEM | USER } VALUE ]
+{ VALUES ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) | DEFAULT VALUES }
+
+<phrase>and <replaceable class="parameter">merge_update</replaceable> is</phrase>
+
+UPDATE SET { <replaceable class="parameter">column_name</replaceable> = { <replaceable class="parameter">expression</replaceable> | DEFAULT } |
+             ( <replaceable class="parameter">column_name</replaceable> [, ...] ) = ( { <replaceable class="parameter">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
+
+<phrase>and <replaceable class="parameter">merge_delete</replaceable> is</phrase>
+
+DELETE
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>MERGE</command> performs actions that modify rows in the
+   <replaceable class="parameter">target_table_name</replaceable>,
+   using the <replaceable class="parameter">data_source</replaceable>.
+   <command>MERGE</command> provides a single <acronym>SQL</acronym>
+   statement that can conditionally <command>INSERT</command>,
+   <command>UPDATE</command> or <command>DELETE</command> rows, a task
+   that would otherwise require multiple procedural language statements.
+  </para>
+
+  <para>
+   First, the <command>MERGE</command> command performs a join
+   from <replaceable class="parameter">data_source</replaceable> to
+   <replaceable class="parameter">target_table_name</replaceable>
+   producing zero or more candidate change rows.  For each candidate change
+   row, the status of <literal>MATCHED</literal> or <literal>NOT MATCHED</literal>
+   is set just once, after which <literal>WHEN</literal> clauses are evaluated
+   in the order specified.  For each candidate change row, the first clause to
+   evaluate as true is executed.  No more than one <literal>WHEN</literal>
+   clause is executed for any candidate change row.
+  </para>
+
+  <para>
+   <command>MERGE</command> actions have the same effect as
+   regular <command>UPDATE</command>, <command>INSERT</command>, or
+   <command>DELETE</command> commands of the same names. The syntax of
+   those commands is different, notably that there is no <literal>WHERE</literal>
+   clause and no table name is specified.  All actions refer to the
+   <replaceable class="parameter">target_table_name</replaceable>,
+   though modifications to other tables may be made using triggers.
+  </para>
+
+  <para>
+   When <literal>DO NOTHING</literal> is specified, the source row is
+   skipped. Since actions are evaluated in their specified order, <literal>DO
+   NOTHING</literal> can be handy to skip non-interesting source rows before
+   more fine-grained handling.
+  </para>
+
+  <para>
+   There is no separate <literal>MERGE</literal> privilege.
+   If you specify an update action, you must have the
+   <literal>UPDATE</literal> privilege on the column(s)
+   of the <replaceable class="parameter">target_table_name</replaceable>
+   that are referred to in the <literal>SET</literal> clause.
+   If you specify an insert action, you must have the <literal>INSERT</literal>
+   privilege on the <replaceable class="parameter">target_table_name</replaceable>.
+   If you specify an delete action, you must have the <literal>DELETE</literal>
+   privilege on the <replaceable class="parameter">target_table_name</replaceable>.
+   Privileges are tested once at statement start and are checked
+   whether or not particular <literal>WHEN</literal> clauses are executed.
+   You will require the <literal>SELECT</literal> privilege on the
+   <replaceable class="parameter">data_source</replaceable> and any column(s)
+   of the <replaceable class="parameter">target_table_name</replaceable>
+   referred to in a <literal>condition</literal>.
+  </para>
+
+  <para>
+   <command>MERGE</command> is not supported if the
+   <replaceable class="parameter">target_table_name</replaceable> is a
+   materialized view, foreign table, or if it has any
+   rules defined on it.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">target_table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the target table to merge into.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">target_alias</replaceable></term>
+    <listitem>
+     <para>
+      A substitute name for the target table. When an alias is
+      provided, it completely hides the actual name of the table.  For
+      example, given <literal>MERGE INTO foo AS f</literal>, the remainder of the
+      <command>MERGE</command> statement must refer to this table as
+      <literal>f</literal> not <literal>foo</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">source_table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the source table, view, or
+      transition table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">source_query</replaceable></term>
+    <listitem>
+     <para>
+      A query (<command>SELECT</command> statement or <command>VALUES</command>
+      statement) that supplies the rows to be merged into the
+      <replaceable class="parameter">target_table_name</replaceable>.
+      Refer to the <xref linkend="sql-select"/>
+      statement or <xref linkend="sql-values"/>
+      statement for a description of the syntax.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">source_alias</replaceable></term>
+    <listitem>
+     <para>
+      A substitute name for the data source. When an alias is
+      provided, it completely hides the actual name of the table or the fact
+      that a query was issued.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">join_condition</replaceable></term>
+    <listitem>
+     <para>
+      <replaceable class="parameter">join_condition</replaceable> is
+      an expression resulting in a value of type
+      <type>boolean</type> (similar to a <literal>WHERE</literal>
+      clause) that specifies which rows in the
+      <replaceable class="parameter">data_source</replaceable>
+      match rows in the
+      <replaceable class="parameter">target_table_name</replaceable>.
+     </para>
+     <warning>
+      <para>
+       Only columns from <replaceable class="parameter">target_table_name</replaceable>
+       that attempt to match <replaceable class="parameter">data_source</replaceable>
+       rows should appear in <replaceable class="parameter">join_condition</replaceable>.
+       <replaceable class="parameter">join_condition</replaceable> subexpressions that
+       only reference <replaceable class="parameter">target_table_name</replaceable>
+       columns can affect which action is taken, often in surprising ways.
+      </para>
+     </warning>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">when_clause</replaceable></term>
+    <listitem>
+     <para>
+      At least one <literal>WHEN</literal> clause is required.
+     </para>
+     <para>
+      If the <literal>WHEN</literal> clause specifies <literal>WHEN MATCHED</literal>
+      and the candidate change row matches a row in the
+      <replaceable class="parameter">target_table_name</replaceable>,
+      the <literal>WHEN</literal> clause is executed if the
+      <replaceable class="parameter">condition</replaceable> is
+      absent or it evaluates to <literal>true</literal>.
+     </para>
+     <para>
+      Conversely, if the <literal>WHEN</literal> clause specifies
+      <literal>WHEN NOT MATCHED</literal>
+      and the candidate change row does not match a row in the
+      <replaceable class="parameter">target_table_name</replaceable>,
+      the <literal>WHEN</literal> clause is executed if the
+      <replaceable class="parameter">condition</replaceable> is
+      absent or it evaluates to <literal>true</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">condition</replaceable></term>
+    <listitem>
+     <para>
+      An expression that returns a value of type <type>boolean</type>.
+      If this expression for a <literal>WHEN</literal> clause
+      returns <literal>true</literal>, then the action for that clause
+      is executed for that row.
+     </para>
+     <para>
+      A condition on a <literal>WHEN MATCHED</literal> clause can refer to columns
+      in both the source and the target relations. A condition on a
+      <literal>WHEN NOT MATCHED</literal> clause can only refer to columns from
+      the source relation, since by definition there is no matching target row.
+      Only the system attributes from the target table are accessible.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">merge_insert</replaceable></term>
+    <listitem>
+     <para>
+      The specification of an <literal>INSERT</literal> action that inserts
+      one row into the target table.
+      The target column names can be listed in any order. If no list of
+      column names is given at all, the default is all the columns of the
+      table in their declared order.
+     </para>
+     <para>
+      Each column not present in the explicit or implicit column list will be
+      filled with a default value, either its declared default value
+      or null if there is none.
+     </para>
+     <para>
+      If the expression for any column is not of the correct data type,
+      automatic type conversion will be attempted.
+     </para>
+     <para>
+      If <replaceable class="parameter">target_table_name</replaceable>
+      is a partitioned table, each row is routed to the appropriate partition
+      and inserted into it.
+      If <replaceable class="parameter">target_table_name</replaceable>
+      is a partition, an error will occur if any input row violates the
+      partition constraint.
+     </para>
+     <para>
+      Column names may not be specified more than once.
+      <command>INSERT</command> actions cannot contain sub-selects.
+     </para>
+     <para>
+      Only one <literal>VALUES</literal> clause can be specified.
+      The <literal>VALUES</literal> clause can only refer to columns from
+      the source relation, since by definition there is no matching target row.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">merge_update</replaceable></term>
+    <listitem>
+     <para>
+      The specification of an <literal>UPDATE</literal> action that updates
+      the current row of the <replaceable class="parameter">target_table_name</replaceable>.
+      Column names may not be specified more than once.
+     </para>
+     <para>
+      Neither a table name nor a <literal>WHERE</literal> clause are allowed.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">merge_delete</replaceable></term>
+    <listitem>
+     <para>
+      Specifies a <literal>DELETE</literal> action that deletes the current row
+      of the <replaceable class="parameter">target_table_name</replaceable>.
+      Do not include the table name or any other clauses, as you would normally
+      do with a <xref linkend="sql-delete"/> command.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column in the <replaceable
+      class="parameter">target_table_name</replaceable>.  The column name
+      can be qualified with a subfield name or array subscript, if
+      needed.  (Inserting into only some fields of a composite
+      column leaves the other fields null.)
+      Do not include the table's name in the specification
+      of a target column.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OVERRIDING SYSTEM VALUE</literal></term>
+    <listitem>
+     <para>
+      Without this clause, it is an error to specify an explicit value
+      (other than <literal>DEFAULT</literal>) for an identity column defined
+      as <literal>GENERATED ALWAYS</literal>.  This clause overrides that
+      restriction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>OVERRIDING USER VALUE</literal></term>
+    <listitem>
+     <para>
+      If this clause is specified, then any values supplied for identity
+      columns defined as <literal>GENERATED BY DEFAULT</literal> are ignored
+      and the default sequence-generated values are applied.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT VALUES</literal></term>
+    <listitem>
+     <para>
+      All columns will be filled with their default values.
+      (An <literal>OVERRIDING</literal> clause is not permitted in this
+      form.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">expression</replaceable></term>
+    <listitem>
+     <para>
+      An expression to assign to the column.  If used in a
+      <literal>WHEN MATCHED</literal> clause, the expression can use values
+      from the original row in the target table, and values from the
+      <literal>data_source</literal> row.
+      If used in a <literal>WHEN NOT MATCHED</literal> clause, the
+      expression can use values from the <literal>data_source</literal>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DEFAULT</literal></term>
+    <listitem>
+     <para>
+      Set the column to its default value (which will be <literal>NULL</literal>
+      if no specific default expression has been assigned to it).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">with_query</replaceable></term>
+    <listitem>
+     <para>
+      The <literal>WITH</literal> clause allows you to specify one or more
+      subqueries that can be referenced by name in the <command>MERGE</command>
+      query. See <xref linkend="queries-with"/> and <xref linkend="sql-select"/>
+      for details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Outputs</title>
+
+  <para>
+   On successful completion, a <command>MERGE</command> command returns a command
+   tag of the form
+<screen>
+MERGE <replaceable class="parameter">total_count</replaceable>
+</screen>
+   The <replaceable class="parameter">total_count</replaceable> is the total
+   number of rows changed (whether inserted, updated, or deleted).
+   If <replaceable class="parameter">total_count</replaceable> is 0, no rows
+   were changed in any way.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The following steps take place during the execution of
+   <command>MERGE</command>.
+    <orderedlist>
+     <listitem>
+      <para>
+       Perform any <literal>BEFORE STATEMENT</literal> triggers for all
+       actions specified, whether or not their <literal>WHEN</literal>
+       clauses match.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Perform a join from source to target table.
+       The resulting query will be optimized normally and will produce
+       a set of candidate change rows. For each candidate change row,
+       <orderedlist>
+        <listitem>
+         <para>
+          Evaluate whether each row is <literal>MATCHED</literal> or
+          <literal>NOT MATCHED</literal>.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          Test each <literal>WHEN</literal> condition in the order
+          specified until one returns true.
+         </para>
+        </listitem>
+        <listitem>
+         <para>
+          When a condition returns true, perform the following actions:
+          <orderedlist>
+           <listitem>
+            <para>
+             Perform any <literal>BEFORE ROW</literal> triggers that fire
+             for the action's event type.
+            </para>
+           </listitem>
+           <listitem>
+            <para>
+             Perform the specified action, invoking any check constraints on the
+             target table.
+            </para>
+           </listitem>
+           <listitem>
+            <para>
+             Perform any <literal>AFTER ROW</literal> triggers that fire for
+             the action's event type.
+            </para>
+           </listitem>
+          </orderedlist>
+         </para>
+        </listitem>
+       </orderedlist>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Perform any <literal>AFTER STATEMENT</literal> triggers for actions
+       specified, whether or not they actually occur.  This is similar to the
+       behavior of an <command>UPDATE</command> statement that modifies no rows.
+      </para>
+     </listitem>
+    </orderedlist>
+   In summary, statement triggers for an event type (say,
+   <command>INSERT</command>) will be fired whenever we
+   <emphasis>specify</emphasis> an action of that kind.
+   In contrast, row-level triggers will fire only for the specific event type
+   being <emphasis>executed</emphasis>.
+   So a <command>MERGE</command> command might fire statement triggers for both
+   <command>UPDATE</command> and <command>INSERT</command>, even though only
+   <command>UPDATE</command> row triggers were fired.
+  </para>
+
+  <para>
+   You should ensure that the join produces at most one candidate change row
+   for each target row.  In other words, a target row shouldn't join to more
+   than one data source row.  If it does, then only one of the candidate change
+   rows will be used to modify the target row; later attempts to modify the
+   row will cause an error.
+   This can also occur if row triggers make changes to the target table
+   and the rows so modified are then subsequently also modified by
+   <command>MERGE</command>.
+   If the repeated action is an <command>INSERT</command>, this will
+   cause a uniqueness violation, while a repeated <command>UPDATE</command>
+   or <command>DELETE</command> will cause a cardinality violation; the
+   latter behavior is required by the <acronym>SQL</acronym> standard.
+   This differs from historical <productname>PostgreSQL</productname>
+   behavior of joins in <command>UPDATE</command> and
+   <command>DELETE</command> statements where second and subsequent
+   attempts to modify the same row are simply ignored.
+  </para>
+
+  <para>
+   If a <literal>WHEN</literal> clause omits an <literal>AND</literal>
+   sub-clause, it becomes the final reachable clause of that
+   kind (<literal>MATCHED</literal> or <literal>NOT MATCHED</literal>).
+   If a later <literal>WHEN</literal> clause of that kind
+   is specified it would be provably unreachable and an error is raised.
+   If no final reachable clause is specified of either kind, it is
+   possible that no action will be taken for a candidate change row.
+  </para>
+
+  <para>
+   The order in which rows are generated from the data source is
+   indeterminate by default.
+   A <replaceable class="parameter">source_query</replaceable> can be
+   used to specify a consistent ordering, if required, which might be
+   needed to avoid deadlocks between concurrent transactions.
+  </para>
+
+  <para>
+   There is no <literal>RETURNING</literal> clause with
+   <command>MERGE</command>.  Actions of <command>INSERT</command>,
+   <command>UPDATE</command> and <command>DELETE</command> cannot contain
+   <literal>RETURNING</literal> or <literal>WITH</literal> clauses.
+  </para>
+
+  <para>
+   You may also wish to consider using <command>INSERT ... ON CONFLICT</command>
+   as an alternative statement which offers the ability to run an
+   <command>UPDATE</command> if a concurrent <command>INSERT</command>
+   occurs.  There are a variety of differences and restrictions between
+   the two statement types and they are not interchangeable.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Perform maintenance on <literal>CustomerAccounts</literal> based
+   upon new <literal>Transactions</literal>.
+
+<programlisting>
+MERGE INTO CustomerAccount CA
+USING RecentTransactions T
+ON T.CustomerId = CA.CustomerId
+WHEN MATCHED THEN
+  UPDATE SET Balance = Balance + TransactionValue
+WHEN NOT MATCHED THEN
+  INSERT (CustomerId, Balance)
+  VALUES (T.CustomerId, T.TransactionValue);
+</programlisting>
+  </para>
+
+  <para>
+   Notice that this would be exactly equivalent to the following
+   statement because the <literal>MATCHED</literal> result does not change
+   during execution.
+
+<programlisting>
+MERGE INTO CustomerAccount CA
+USING (Select CustomerId, TransactionValue From RecentTransactions) AS T
+ON CA.CustomerId = T.CustomerId
+WHEN NOT MATCHED THEN
+  INSERT (CustomerId, Balance)
+  VALUES (T.CustomerId, T.TransactionValue)
+WHEN MATCHED THEN
+  UPDATE SET Balance = Balance + TransactionValue;
+</programlisting>
+  </para>
+
+  <para>
+   Attempt to insert a new stock item along with the quantity of stock. If
+   the item already exists, instead update the stock count of the existing
+   item. Don't allow entries that have zero stock.
+<programlisting>
+MERGE INTO wines w
+USING wine_stock_changes s
+ON s.winename = w.winename
+WHEN NOT MATCHED AND s.stock_delta > 0 THEN
+  INSERT VALUES(s.winename, s.stock_delta)
+WHEN MATCHED AND w.stock + s.stock_delta > 0 THEN
+  UPDATE SET stock = w.stock + s.stock_delta;
+WHEN MATCHED THEN
+  DELETE;
+</programlisting>
+
+   The <literal>wine_stock_changes</literal> table might be, for example, a
+   temporary table recently loaded into the database.
+  </para>
+
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+   <para>
+    This command conforms to the <acronym>SQL</acronym> standard.
+  </para>
+   <para>
+    The WITH clause and <literal>DO NOTHING</literal> action are extensions to
+    the <acronym>SQL</acronym> standard.
+  </para>
+ </refsect1>
+</refentry>

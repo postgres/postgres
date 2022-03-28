@@ -1388,7 +1388,7 @@ EXECUTE format('SELECT count(*) FROM %I '
      Another restriction on parameter symbols is that they only work in
      optimizable SQL commands
      (<command>SELECT</command>, <command>INSERT</command>, <command>UPDATE</command>,
-     <command>DELETE</command>, and certain commands containing one of these).
+     <command>DELETE</command>, <command>MERGE</command>, and certain commands containing one of these).
      In other statement
      types (generically called utility statements), you must insert
      values textually even if they are just data values.
@@ -1666,7 +1666,8 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
           </listitem>
           <listitem>
            <para>
-            <command>UPDATE</command>, <command>INSERT</command>, and <command>DELETE</command>
+            <command>UPDATE</command>, <command>INSERT</command>, <command>DELETE</command>,
+            and <command>MERGE</command>
             statements set <literal>FOUND</literal> true if at least one
             row is affected, false if no row is affected.
            </para>

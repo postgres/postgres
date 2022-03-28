@@ -20,6 +20,7 @@
 #include "catalog/pg_type.h"
 #include "executor/execPartition.h"
 #include "executor/executor.h"
+#include "executor/nodeModifyTable.h"
 #include "foreign/fdwapi.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -182,6 +183,7 @@ static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 												  bool *isnull,
 												  int maxfieldlen);
 static List *adjust_partition_colnos(List *colnos, ResultRelInfo *leaf_part_rri);
+static List *adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap);
 static void ExecInitPruningContext(PartitionPruneContext *context,
 								   List *pruning_steps,
 								   PartitionDesc partdesc,
@@ -853,6 +855,99 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		lappend(estate->es_tuple_routing_result_relations,
 				leaf_part_rri);
 
+	/*
+	 * Initialize information about this partition that's needed to handle
+	 * MERGE.  We take the "first" result relation's mergeActionList as
+	 * reference and make copy for this relation, converting stuff that
+	 * references attribute numbers to match this relation's.
+	 *
+	 * This duplicates much of the logic in ExecInitMerge(), so something
+	 * changes there, look here too.
+	 */
+	if (node && node->operation == CMD_MERGE)
+	{
+		List	   *firstMergeActionList = linitial(node->mergeActionLists);
+		ListCell   *lc;
+		ExprContext *econtext = mtstate->ps.ps_ExprContext;
+
+		if (part_attmap == NULL)
+			part_attmap =
+				build_attrmap_by_name(RelationGetDescr(partrel),
+									  RelationGetDescr(firstResultRel));
+
+		if (unlikely(!leaf_part_rri->ri_projectNewInfoValid))
+			ExecInitMergeTupleSlots(mtstate, leaf_part_rri);
+
+		foreach(lc, firstMergeActionList)
+		{
+			/* Make a copy for this relation to be safe.  */
+			MergeAction *action = copyObject(lfirst(lc));
+			MergeActionState *action_state;
+			List	  **list;
+
+			/* Generate the action's state for this relation */
+			action_state = makeNode(MergeActionState);
+			action_state->mas_action = action;
+
+			/* And put the action in the appropriate list */
+			if (action->matched)
+				list = &leaf_part_rri->ri_matchedMergeAction;
+			else
+				list = &leaf_part_rri->ri_notMatchedMergeAction;
+			*list = lappend(*list, action_state);
+
+			switch (action->commandType)
+			{
+				case CMD_INSERT:
+
+					/*
+					 * ExecCheckPlanOutput() already done on the targetlist
+					 * when "first" result relation initialized and it is same
+					 * for all result relations.
+					 */
+					action_state->mas_proj =
+						ExecBuildProjectionInfo(action->targetList, econtext,
+												leaf_part_rri->ri_newTupleSlot,
+												&mtstate->ps,
+												RelationGetDescr(partrel));
+					break;
+				case CMD_UPDATE:
+
+					/*
+					 * Convert updateColnos from "first" result relation
+					 * attribute numbers to this result rel's.
+					 */
+					if (part_attmap)
+						action->updateColnos =
+							adjust_partition_colnos_using_map(action->updateColnos,
+															  part_attmap);
+					action_state->mas_proj =
+						ExecBuildUpdateProjection(action->targetList,
+												  true,
+												  action->updateColnos,
+												  RelationGetDescr(leaf_part_rri->ri_RelationDesc),
+												  econtext,
+												  leaf_part_rri->ri_newTupleSlot,
+												  NULL);
+					break;
+				case CMD_DELETE:
+					break;
+
+				default:
+					elog(ERROR, "unknown action in MERGE WHEN clause");
+			}
+
+			/* found_whole_row intentionally ignored. */
+			action->qual =
+				map_variable_attnos(action->qual,
+									firstVarno, 0,
+									part_attmap,
+									RelationGetForm(partrel)->reltype,
+									&found_whole_row);
+			action_state->mas_whenqual =
+				ExecInitQual((List *) action->qual, &mtstate->ps);
+		}
+	}
 	MemoryContextSwitchTo(oldcxt);
 
 	return leaf_part_rri;
@@ -1433,13 +1528,23 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
 static List *
 adjust_partition_colnos(List *colnos, ResultRelInfo *leaf_part_rri)
 {
-	List	   *new_colnos = NIL;
 	TupleConversionMap *map = ExecGetChildToRootMap(leaf_part_rri);
-	AttrMap    *attrMap;
+
+	return adjust_partition_colnos_using_map(colnos, map->attrMap);
+}
+
+/*
+ * adjust_partition_colnos_using_map
+ *		Like adjust_partition_colnos, but uses a caller-supplied map instead
+ *		of assuming to map from the "root" result relation.
+ */
+static List *
+adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)
+{
+	List	   *new_colnos = NIL;
 	ListCell   *lc;
 
-	Assert(map != NULL);		/* else we shouldn't be here */
-	attrMap = map->attrMap;
+	Assert(attrMap != NULL);	/* else we shouldn't be here */
 
 	foreach(lc, colnos)
 	{
