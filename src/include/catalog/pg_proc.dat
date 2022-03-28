@@ -5370,7 +5370,7 @@
   proargnames => '{pid,status,receive_start_lsn,receive_start_tli,written_lsn,flushed_lsn,received_tli,last_msg_send_time,last_msg_receipt_time,latest_end_lsn,latest_end_time,slot_name,sender_host,sender_port,conninfo}',
   prosrc => 'pg_stat_get_wal_receiver' },
 { oid => '6169', descr => 'statistics: information about replication slot',
-  proname => 'pg_stat_get_replication_slot', proisstrict => 'f', provolatile => 's',
+  proname => 'pg_stat_get_replication_slot', provolatile => 's',
   proparallel => 'r', prorettype => 'record', proargtypes => 'text',
   proallargtypes => '{text,text,int8,int8,int8,int8,int8,int8,int8,int8,timestamptz}',
   proargmodes => '{i,o,o,o,o,o,o,o,o,o,o}',
