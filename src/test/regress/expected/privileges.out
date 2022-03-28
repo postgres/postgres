@@ -1653,14 +1653,8 @@ SET ROLE regress_priv_group2;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: SET ROLE did not help
 ERROR:  must have admin option on role "regress_priv_group2"
 SET SESSION AUTHORIZATION regress_priv_group2;
-GRANT regress_priv_group2 TO regress_priv_user5; -- ok: a role can self-admin
-NOTICE:  role "regress_priv_user5" is already a member of role "regress_priv_group2"
-CREATE FUNCTION dogrant_fails() RETURNS void LANGUAGE sql SECURITY DEFINER AS
-	'GRANT regress_priv_group2 TO regress_priv_user5';
-SELECT dogrant_fails();			-- fails: no self-admin in SECURITY DEFINER
+GRANT regress_priv_group2 TO regress_priv_user5; -- fails: no self-admin
 ERROR:  must have admin option on role "regress_priv_group2"
-CONTEXT:  SQL function "dogrant_fails" statement 1
-DROP FUNCTION dogrant_fails();
 SET SESSION AUTHORIZATION regress_priv_user4;
 DROP FUNCTION dogrant_ok();
 REVOKE regress_priv_group2 FROM regress_priv_user5;

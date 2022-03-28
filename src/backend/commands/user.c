@@ -1425,11 +1425,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 	 * The role membership grantor of record has little significance at
 	 * present.  Nonetheless, inasmuch as users might look to it for a crude
 	 * audit trail, let only superusers impute the grant to a third party.
-	 *
-	 * Before lifting this restriction, give the member == role case of
-	 * is_admin_of_role() a fresh look.  Ensure that the current role cannot
-	 * use an explicit grantor specification to take advantage of the session
-	 * user's self-admin right.
 	 */
 	if (grantorId != GetUserId() && !superuser())
 		ereport(ERROR,

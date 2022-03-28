@@ -1089,11 +1089,7 @@ SET ROLE regress_priv_group2;
 GRANT regress_priv_group2 TO regress_priv_user5; -- fails: SET ROLE did not help
 
 SET SESSION AUTHORIZATION regress_priv_group2;
-GRANT regress_priv_group2 TO regress_priv_user5; -- ok: a role can self-admin
-CREATE FUNCTION dogrant_fails() RETURNS void LANGUAGE sql SECURITY DEFINER AS
-	'GRANT regress_priv_group2 TO regress_priv_user5';
-SELECT dogrant_fails();			-- fails: no self-admin in SECURITY DEFINER
-DROP FUNCTION dogrant_fails();
+GRANT regress_priv_group2 TO regress_priv_user5; -- fails: no self-admin
 
 SET SESSION AUTHORIZATION regress_priv_user4;
 DROP FUNCTION dogrant_ok();
