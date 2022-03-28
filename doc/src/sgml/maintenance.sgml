@@ -291,6 +291,15 @@
    </para>
 
    <para>
+    Tuples changed in partitions and inheritance children do not trigger
+    analyze on the parent table.  If the parent table is empty or rarely
+    changed, it may never be processed by autovacuum, and the statistics for
+    the inheritance tree as a whole won't be collected. It is necessary to
+    run <command>ANALYZE</command> on the parent table manually in order to
+    keep the statistics up to date.
+   </para>
+
+   <para>
     As with vacuuming for space recovery, frequent updates of statistics
     are more useful for heavily-updated tables than for seldom-updated
     ones. But even for a heavily-updated table, there might be no need for
@@ -347,6 +356,19 @@
      <command>ANALYZE</command> commands on those tables on a suitable schedule.
     </para>
    </tip>
+
+   <tip>
+    <para>
+     The autovacuum daemon does not issue <command>ANALYZE</command> commands
+     for partitioned tables.  Inheritance parents will only be analyzed if the
+     parent itself is changed - changes to child tables do not trigger
+     autoanalyze on the parent table.  If your queries require statistics on
+     parent tables for proper planning, it is necessary to periodically run
+     a manual <command>ANALYZE</command> on those tables to keep the statistics
+     up to date.
+    </para>
+   </tip>
+
   </sect2>
 
   <sect2 id="vacuum-for-visibility-map">
@@ -817,6 +839,13 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 </programlisting>
     is compared to the total number of tuples inserted, updated, or deleted
     since the last <command>ANALYZE</command>.
+   </para>
+
+   <para>
+    Partitioned tables are not processed by autovacuum.  Statistics
+    should be collected by running a manual <command>ANALYZE</command> when it is
+    first populated, and again whenever the distribution of data in its
+    partitions changes significantly.
    </para>
 
    <para>
