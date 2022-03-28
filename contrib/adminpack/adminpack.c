@@ -79,7 +79,7 @@ convert_and_check_filename(text *arg)
 	 * files on the server as the PG user, so no need to do any further checks
 	 * here.
 	 */
-	if (is_member_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
+	if (has_privs_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
 		return filename;
 
 	/*

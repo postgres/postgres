@@ -16,7 +16,7 @@
  </para>
 
  <para>
-  By default use is restricted to superusers and members of the
+  By default use is restricted to superusers and roles with privileges of the
   <literal>pg_stat_scan_tables</literal> role. Access may be granted to others
   using <command>GRANT</command>.
  </para>

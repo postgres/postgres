@@ -1403,12 +1403,12 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	/* Fetch values */
 	values[0] = Int32GetDatum(pid);
 
-	if (!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
+	if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
 		/*
-		 * Only superusers and members of pg_read_all_stats can see details.
-		 * Other users only get the pid value to know whether it is a WAL
-		 * receiver, but no details.
+		 * Only superusers and roles with privileges of pg_read_all_stats
+		 * can see details. Other users only get the pid value to know whether
+		 * it is a WAL receiver, but no details.
 		 */
 		MemSet(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
 	}

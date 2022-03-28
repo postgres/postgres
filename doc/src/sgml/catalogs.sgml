@@ -10044,8 +10044,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    By default, the <structname>pg_backend_memory_contexts</structname> view can be
-   read only by superusers or members of the <literal>pg_read_all_stats</literal>
-   role.
+   read only by superusers or roles with the privileges of the
+   <literal>pg_read_all_stats</literal> role.
   </para>
  </sect1>
 
@@ -12552,7 +12552,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        Configuration file the current value was set in (null for
        values set from sources other than configuration files, or when
-       examined by a user who is neither a superuser or a member of
+       examined by a user who neither is a superuser nor has privileges of
        <literal>pg_read_all_settings</literal>); helpful when using
        <literal>include</literal> directives in configuration files
       </para></entry>
@@ -12565,7 +12565,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        Line number within the configuration file the current value was
        set at (null for values set from sources other than configuration files,
-       or when examined by a user who is neither a superuser or a member of
+       or when examined by a user who neither is a superuser nor has privileges of
        <literal>pg_read_all_settings</literal>).
       </para></entry>
      </row>
@@ -12941,8 +12941,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    By default, the <structname>pg_shmem_allocations</structname> view can be
-   read only by superusers or members of the <literal>pg_read_all_stats</literal>
-   role.
+   read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
   </para>
  </sect1>
 

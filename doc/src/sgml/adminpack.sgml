@@ -22,9 +22,9 @@
   functions in <xref linkend="functions-admin-genfile-table"/>, which
   provide read-only access.)
   Only files within the database cluster directory can be accessed, unless the
-  user is a superuser or given one of the pg_read_server_files, or pg_write_server_files
-  roles, as appropriate for the function, but either a relative or absolute path is
-  allowable.
+  user is a superuser or given privileges of one of the pg_read_server_files, 
+  or pg_write_server_files roles, as appropriate for the function, but either a
+  relative or absolute path is allowable.
  </para>
 
  <table id="functions-adminpack-table">

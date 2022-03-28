@@ -104,7 +104,7 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 								  ACL_SELECT);
 	if (aclresult != ACLCHECK_OK)
-		aclresult = is_member_of_role(GetUserId(), ROLE_PG_STAT_SCAN_TABLES) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
+		aclresult = has_privs_of_role(GetUserId(), ROLE_PG_STAT_SCAN_TABLES) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_relkind_objtype(rel->rd_rel->relkind),

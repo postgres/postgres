@@ -25435,7 +25435,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         Cancels the current query of the session whose backend process has the
         specified process ID.  This is also allowed if the
         calling role is a member of the role whose backend is being canceled or
-        the calling role has been granted <literal>pg_signal_backend</literal>,
+        the calling role has privileges of <literal>pg_signal_backend</literal>,
         however only superusers can cancel superuser backends.
        </para></entry>
       </row>
@@ -25508,7 +25508,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         Terminates the session whose backend process has the
         specified process ID.  This is also allowed if the calling role
         is a member of the role whose backend is being terminated or the
-        calling role has been granted <literal>pg_signal_backend</literal>,
+        calling role has privileges of <literal>pg_signal_backend</literal>,
         however only superusers can terminate superuser backends.
        </para>
        <para>
@@ -26783,7 +26783,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         Computes the total disk space used by the database with the specified
         name or OID.  To use this function, you must
         have <literal>CONNECT</literal> privilege on the specified database
-        (which is granted by default) or be a member of
+        (which is granted by default) or have privileges of
         the <literal>pg_read_all_stats</literal> role.
        </para></entry>
       </row>
@@ -26913,7 +26913,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
         Computes the total disk space used in the tablespace with the
         specified name or OID. To use this function, you must
         have <literal>CREATE</literal> privilege on the specified tablespace
-        or be a member of the <literal>pg_read_all_stats</literal> role,
+        or have privileges of the <literal>pg_read_all_stats</literal> role,
         unless it is the default tablespace for the current database.
        </para></entry>
       </row>
@@ -27392,7 +27392,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         a dot, directories, and other special files are excluded.
        </para>
        <para>
-        This function is restricted to superusers and members of
+        This function is restricted to superusers and roles with privileges of
         the <literal>pg_monitor</literal> role by default, but other users can
         be granted EXECUTE to run the function.
        </para></entry>
@@ -27416,7 +27416,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         are excluded.
        </para>
        <para>
-        This function is restricted to superusers and members of
+        This function is restricted to superusers and roles with privileges of 
         the <literal>pg_monitor</literal> role by default, but other users can
         be granted EXECUTE to run the function.
        </para></entry>

@@ -1503,8 +1503,8 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 
-	/* Superusers or members of pg_read_all_stats members are allowed */
-	is_allowed_role = is_member_of_role(userid, ROLE_PG_READ_ALL_STATS);
+	/* Superusers or roles with the privileges of pg_read_all_stats members are allowed */
+	is_allowed_role = has_privs_of_role(userid, ROLE_PG_READ_ALL_STATS);
 
 	/* hash table must exist already */
 	if (!pgss || !pgss_hash)

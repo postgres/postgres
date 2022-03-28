@@ -3473,12 +3473,12 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(pid);
 
-		if (!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
+		if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 		{
 			/*
-			 * Only superusers and members of pg_read_all_stats can see
-			 * details. Other users only get the pid value to know it's a
-			 * walsender, but no details.
+			 * Only superusers and roles with privileges of pg_read_all_stats
+			 * can see details. Other users only get the pid value to know
+			 * it's a walsender, but no details.
 			 */
 			MemSet(&nulls[1], true, PG_STAT_GET_WAL_SENDERS_COLS - 1);
 		}
