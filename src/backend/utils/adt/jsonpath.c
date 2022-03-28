@@ -500,9 +500,13 @@ printJsonPathItem(StringInfo buf, JsonPathItem *v, bool inKey,
 			escape_json(buf, jspGetString(v, NULL));
 			break;
 		case jpiNumeric:
+			if (jspHasNext(v))
+				appendStringInfoChar(buf, '(');
 			appendStringInfoString(buf,
 								   DatumGetCString(DirectFunctionCall1(numeric_out,
 																	   NumericGetDatum(jspGetNumeric(v)))));
+			if (jspHasNext(v))
+				appendStringInfoChar(buf, ')');
 			break;
 		case jpiBool:
 			if (jspGetBool(v))

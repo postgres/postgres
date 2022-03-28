@@ -82,11 +82,13 @@ other		[^\?\%\$\.\[\]\{\}\(\)\|\&\!\=\<\>\@\#\,\*:\-\+\/\\\" \t\n\r\f]
 
 digit		[0-9]
 integer		(0|[1-9]{digit}*)
-decimal		{integer}\.{digit}+
-decimalfail	{integer}\.
+decimal		({integer}\.{digit}*|\.{digit}+)
 real		({integer}|{decimal})[Ee][-+]?{digit}+
-realfail1	({integer}|{decimal})[Ee]
-realfail2	({integer}|{decimal})[Ee][-+]
+realfail	({integer}|{decimal})[Ee][-+]
+
+integer_junk	{integer}{other}
+decimal_junk	{decimal}{other}
+real_junk		{real}{other}
 
 hex_dig		[0-9A-Fa-f]
 unicode		\\u({hex_dig}{4}|\{{hex_dig}{1,6}\})
@@ -242,16 +244,10 @@ hex_fail	\\x{hex_dig}{0,1}
 									return INT_P;
 								}
 
-{decimalfail}					{
-									/* throw back the ., and treat as integer */
-									yyless(yyleng - 1);
-									addstring(true, yytext, yyleng);
-									addchar(false, '\0');
-									yylval->str = scanstring;
-									return INT_P;
-								}
-
-({realfail1}|{realfail2})		{ yyerror(NULL, "invalid floating point number"); }
+{realfail}						{ yyerror(NULL, "invalid numeric literal"); }
+{integer_junk}					{ yyerror(NULL, "trailing junk after numeric literal"); }
+{decimal_junk}					{ yyerror(NULL, "trailing junk after numeric literal"); }
+{real_junk}						{ yyerror(NULL, "trailing junk after numeric literal"); }
 
 \"								{
 									addchar(true, '\0');

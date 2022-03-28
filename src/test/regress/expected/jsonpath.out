@@ -354,21 +354,19 @@ select 'null.type()'::jsonpath;
 (1 row)
 
 select '1.type()'::jsonpath;
- jsonpath 
-----------
- 1.type()
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "1.t" of jsonpath input
+LINE 1: select '1.type()'::jsonpath;
+               ^
 select '(1).type()'::jsonpath;
- jsonpath 
-----------
- 1.type()
+  jsonpath  
+------------
+ (1).type()
 (1 row)
 
 select '1.2.type()'::jsonpath;
-  jsonpath  
-------------
- 1.2.type()
+   jsonpath   
+--------------
+ (1.2).type()
 (1 row)
 
 select '"aaa".type()'::jsonpath;
@@ -545,9 +543,9 @@ select '(($))'::jsonpath;
 (1 row)
 
 select '((($ + 1)).a + ((2)).b ? ((((@ > 1)) || (exists(@.c)))))'::jsonpath;
-                    jsonpath                     
--------------------------------------------------
- (($ + 1)."a" + 2."b"?(@ > 1 || exists (@."c")))
+                     jsonpath                      
+---------------------------------------------------
+ (($ + 1)."a" + (2)."b"?(@ > 1 || exists (@."c")))
 (1 row)
 
 select '$ ? (@.a < 1)'::jsonpath;
@@ -569,17 +567,23 @@ select '$ ? (@.a < +1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < .1)'::jsonpath;
-               ^
+    jsonpath     
+-----------------
+ $?(@."a" < 0.1)
+(1 row)
+
 select '$ ? (@.a < -.1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < -.1)'::jsonpath;
-               ^
+     jsonpath     
+------------------
+ $?(@."a" < -0.1)
+(1 row)
+
 select '$ ? (@.a < +.1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < +.1)'::jsonpath;
-               ^
+    jsonpath     
+-----------------
+ $?(@."a" < 0.1)
+(1 row)
+
 select '$ ? (@.a < 0.1)'::jsonpath;
     jsonpath     
 -----------------
@@ -635,17 +639,23 @@ select '$ ? (@.a < +1e1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < .1e1)'::jsonpath;
-               ^
+   jsonpath    
+---------------
+ $?(@."a" < 1)
+(1 row)
+
 select '$ ? (@.a < -.1e1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < -.1e1)'::jsonpath;
-               ^
+    jsonpath    
+----------------
+ $?(@."a" < -1)
+(1 row)
+
 select '$ ? (@.a < +.1e1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < +.1e1)'::jsonpath;
-               ^
+   jsonpath    
+---------------
+ $?(@."a" < 1)
+(1 row)
+
 select '$ ? (@.a < 0.1e1)'::jsonpath;
    jsonpath    
 ---------------
@@ -701,17 +711,23 @@ select '$ ? (@.a < +1e-1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e-1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < .1e-1)'::jsonpath;
-               ^
+     jsonpath     
+------------------
+ $?(@."a" < 0.01)
+(1 row)
+
 select '$ ? (@.a < -.1e-1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < -.1e-1)'::jsonpath;
-               ^
+     jsonpath      
+-------------------
+ $?(@."a" < -0.01)
+(1 row)
+
 select '$ ? (@.a < +.1e-1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < +.1e-1)'::jsonpath;
-               ^
+     jsonpath     
+------------------
+ $?(@."a" < 0.01)
+(1 row)
+
 select '$ ? (@.a < 0.1e-1)'::jsonpath;
      jsonpath     
 ------------------
@@ -767,17 +783,23 @@ select '$ ? (@.a < +1e+1)'::jsonpath;
 (1 row)
 
 select '$ ? (@.a < .1e+1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < .1e+1)'::jsonpath;
-               ^
+   jsonpath    
+---------------
+ $?(@."a" < 1)
+(1 row)
+
 select '$ ? (@.a < -.1e+1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < -.1e+1)'::jsonpath;
-               ^
+    jsonpath    
+----------------
+ $?(@."a" < -1)
+(1 row)
+
 select '$ ? (@.a < +.1e+1)'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '$ ? (@.a < +.1e+1)'::jsonpath;
-               ^
+   jsonpath    
+---------------
+ $?(@."a" < 1)
+(1 row)
+
 select '$ ? (@.a < 0.1e+1)'::jsonpath;
    jsonpath    
 ---------------
@@ -821,7 +843,7 @@ select '0'::jsonpath;
 (1 row)
 
 select '00'::jsonpath;
-ERROR:  syntax error, unexpected IDENT_P at end of jsonpath input
+ERROR:  trailing junk after numeric literal at or near "00" of jsonpath input
 LINE 1: select '00'::jsonpath;
                ^
 select '0.0'::jsonpath;
@@ -878,30 +900,60 @@ select '0.0010e+2'::jsonpath;
  0.10
 (1 row)
 
+select '.001'::jsonpath;
+ jsonpath 
+----------
+ 0.001
+(1 row)
+
+select '.001e1'::jsonpath;
+ jsonpath 
+----------
+ 0.01
+(1 row)
+
+select '1.'::jsonpath;
+ jsonpath 
+----------
+ 1
+(1 row)
+
+select '1.e1'::jsonpath;
+ jsonpath 
+----------
+ 10
+(1 row)
+
+select '1a'::jsonpath;
+ERROR:  trailing junk after numeric literal at or near "1a" of jsonpath input
+LINE 1: select '1a'::jsonpath;
+               ^
 select '1e'::jsonpath;
-ERROR:  invalid floating point number at or near "1e" of jsonpath input
+ERROR:  trailing junk after numeric literal at or near "1e" of jsonpath input
 LINE 1: select '1e'::jsonpath;
                ^
 select '1.e'::jsonpath;
- jsonpath 
-----------
- 1."e"
-(1 row)
-
+ERROR:  trailing junk after numeric literal at or near "1.e" of jsonpath input
+LINE 1: select '1.e'::jsonpath;
+               ^
+select '1.2a'::jsonpath;
+ERROR:  trailing junk after numeric literal at or near "1.2a" of jsonpath input
+LINE 1: select '1.2a'::jsonpath;
+               ^
 select '1.2e'::jsonpath;
-ERROR:  invalid floating point number at or near "1.2e" of jsonpath input
+ERROR:  trailing junk after numeric literal at or near "1.2e" of jsonpath input
 LINE 1: select '1.2e'::jsonpath;
                ^
 select '1.2.e'::jsonpath;
- jsonpath 
-----------
- 1.2."e"
+ jsonpath  
+-----------
+ (1.2)."e"
 (1 row)
 
 select '(1.2).e'::jsonpath;
- jsonpath 
-----------
- 1.2."e"
+ jsonpath  
+-----------
+ (1.2)."e"
 (1 row)
 
 select '1e3'::jsonpath;
@@ -913,19 +965,19 @@ select '1e3'::jsonpath;
 select '1.e3'::jsonpath;
  jsonpath 
 ----------
- 1."e3"
+ 1000
 (1 row)
 
 select '1.e3.e'::jsonpath;
   jsonpath  
 ------------
- 1."e3"."e"
+ (1000)."e"
 (1 row)
 
 select '1.e3.e4'::jsonpath;
   jsonpath   
 -------------
- 1."e3"."e4"
+ (1000)."e4"
 (1 row)
 
 select '1.2e3'::jsonpath;
@@ -934,31 +986,49 @@ select '1.2e3'::jsonpath;
  1200
 (1 row)
 
+select '1.2e3a'::jsonpath;
+ERROR:  trailing junk after numeric literal at or near "1.2e3a" of jsonpath input
+LINE 1: select '1.2e3a'::jsonpath;
+               ^
 select '1.2.e3'::jsonpath;
- jsonpath 
-----------
- 1.2."e3"
+  jsonpath  
+------------
+ (1.2)."e3"
 (1 row)
 
 select '(1.2).e3'::jsonpath;
- jsonpath 
-----------
- 1.2."e3"
+  jsonpath  
+------------
+ (1.2)."e3"
 (1 row)
 
 select '1..e'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '1..e'::jsonpath;
-               ^
+ jsonpath 
+----------
+ (1)."e"
+(1 row)
+
 select '1..e3'::jsonpath;
-ERROR:  syntax error, unexpected '.' at or near "." of jsonpath input
-LINE 1: select '1..e3'::jsonpath;
-               ^
+ jsonpath 
+----------
+ (1)."e3"
+(1 row)
+
 select '(1.).e'::jsonpath;
-ERROR:  syntax error, unexpected ')' at or near ")" of jsonpath input
-LINE 1: select '(1.).e'::jsonpath;
-               ^
+ jsonpath 
+----------
+ (1)."e"
+(1 row)
+
 select '(1.).e3'::jsonpath;
-ERROR:  syntax error, unexpected ')' at or near ")" of jsonpath input
-LINE 1: select '(1.).e3'::jsonpath;
-               ^
+ jsonpath 
+----------
+ (1)."e3"
+(1 row)
+
+select '1?(2>3)'::jsonpath;
+  jsonpath   
+-------------
+ (1)?(2 > 3)
+(1 row)
+
