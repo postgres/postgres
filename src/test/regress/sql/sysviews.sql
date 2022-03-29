@@ -25,8 +25,9 @@ select count(*) = 0 as ok from pg_cursors;
 
 select count(*) >= 0 as ok from pg_file_settings;
 
--- There will surely be at least one rule
-select count(*) > 0 as ok from pg_hba_file_rules;
+-- There will surely be at least one rule, with no errors.
+select count(*) > 0 as ok, count(*) FILTER (WHERE error IS NOT NULL) = 0 AS no_err
+  from pg_hba_file_rules;
 
 -- There will surely be at least one active lock
 select count(*) > 0 as ok from pg_locks;
