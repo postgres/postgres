@@ -115,12 +115,12 @@ $node->command_checks_all(
 
 # Check database creation strategy
 $node->issues_sql_like(
-	[ 'createdb', '-T', 'foobar2', 'foobar6', '-S', 'wal_log'],
+	[ 'createdb', '-T', 'foobar2', '-S', 'wal_log', 'foobar6' ],
 	qr/statement: CREATE DATABASE foobar6 STRATEGY wal_log TEMPLATE foobar2/,
 	'create database with WAL_LOG strategy');
 
 $node->issues_sql_like(
-	[ 'createdb', '-T', 'foobar2', 'foobar7', '-S', 'file_copy'],
+	[ 'createdb', '-T', 'foobar2', '-S', 'file_copy', 'foobar7' ],
 	qr/statement: CREATE DATABASE foobar7 STRATEGY file_copy TEMPLATE foobar2/,
 	'create database with FILE_COPY strategy');
 
