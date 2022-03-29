@@ -55,6 +55,23 @@
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term>
+     <varname>basebackup_to_shell.required_role</varname> (<type>string</type>)
+     <indexterm>
+      <primary><varname>basebackup_to_shell.required_role</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      A role which replication whose privileges users are required to possess
+      in order to make use of the <literal>shell</literal> backup target.
+      If this is not set, any replication user may make use of the
+      <literal>shell</literal> backup target.
+     </para>
+    </listitem>
+   </varlistentry>
   </variablelist>
  </sect2>
 
