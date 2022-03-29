@@ -2581,6 +2581,16 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
          </varlistentry>
        </variablelist>
       </para>
+
+      <para>
+       As a special case, the <literal>library</literal> attribute may be
+       queried without an existing connection by passing NULL as the
+       <literal>conn</literal> argument. The historical behavior was to return
+       NULL for any attribute when a NULL <literal>conn</literal> was provided;
+       client programs needing to differentiate between the newer and older
+       implementations may check the
+       <literal>LIBPQ_HAS_SSL_LIBRARY_DETECTION</literal> feature macro.
+      </para>
      </listitem>
     </varlistentry>
 

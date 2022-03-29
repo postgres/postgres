@@ -1631,13 +1631,13 @@ PQsslAttributeNames(PGconn *conn)
 const char *
 PQsslAttribute(PGconn *conn, const char *attribute_name)
 {
+	if (strcmp(attribute_name, "library") == 0)
+		return "OpenSSL";
+
 	if (!conn)
 		return NULL;
 	if (conn->ssl == NULL)
 		return NULL;
-
-	if (strcmp(attribute_name, "library") == 0)
-		return "OpenSSL";
 
 	if (strcmp(attribute_name, "key_bits") == 0)
 	{

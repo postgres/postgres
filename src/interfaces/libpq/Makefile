@@ -13,6 +13,7 @@ subdir = src/interfaces/libpq
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+export with_ssl
 
 PGFILEDESC = "PostgreSQL Access Library"
 
