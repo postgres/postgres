@@ -23,10 +23,6 @@ extern void XLogDropDatabase(Oid dbid);
 extern void XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
 								 BlockNumber nblocks);
 
-extern void XLogRememberMissingDir(Oid spcNode, Oid dbNode, char *path);
-extern void XLogForgetMissingDir(Oid spcNode, Oid dbNode);
-extern void XLogCheckMissingDirs(void);
-
 /* Result codes for XLogReadBufferForRedo[Extended] */
 typedef enum
 {
