@@ -115,4 +115,21 @@ NOTIFY foo, 'bar';",
 	qr/^Asynchronous notification "foo" with payload "bar" received from server process with PID \d+\.$/,
 	'notification with payload');
 
+# test behavior and output on server crash
+my ($ret, $out, $err) = $node->psql(
+	'postgres',
+	"SELECT 'before' AS running;\n" .
+	"SELECT pg_terminate_backend(pg_backend_pid());\n" .
+	"SELECT 'AFTER' AS not_running;\n");
+
+is($ret, 2, 'server crash: psql exit code');
+like($out, qr/before/, 'server crash: output before crash');
+ok($out !~ qr/AFTER/, 'server crash: no output after crash');
+is($err, 'psql:<stdin>:2: FATAL:  terminating connection due to administrator command
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+psql:<stdin>:2: fatal: connection to server was lost',
+	'server crash: error message');
+
 done_testing();
