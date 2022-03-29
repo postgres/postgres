@@ -2185,9 +2185,7 @@ dbase_redo(XLogReaderState *record)
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) XLogRecGetData(record);
 		char	   *src_path;
 		char	   *dst_path;
-		char	   *parent_path;
 		struct stat st;
-		bool		skip = false;
 
 		src_path = GetDatabasePath(xlrec->src_db_id, xlrec->src_tablespace_id);
 		dst_path = GetDatabasePath(xlrec->db_id, xlrec->tablespace_id);
@@ -2205,56 +2203,6 @@ dbase_redo(XLogReaderState *record)
 						(errmsg("some useless files may be left behind in old database directory \"%s\"",
 								dst_path)));
 		}
-		else if (!reachedConsistency)
-		{
-			/*
-			 * It is possible that a drop tablespace record appearing later in
-			 * WAL has already been replayed -- in other words, that we are
-			 * replaying the database creation record a second time with no
-			 * intervening checkpoint.  In that case, the tablespace directory
-			 * has already been removed and the create database operation
-			 * cannot be replayed.  Skip the replay itself, but remember the
-			 * fact that the tablespace directory is missing, to be matched
-			 * with the expected tablespace drop record later.
-			 */
-			parent_path = pstrdup(dst_path);
-			get_parent_directory(parent_path);
-			if (!(stat(parent_path, &st) == 0 && S_ISDIR(st.st_mode)))
-			{
-				XLogRememberMissingDir(xlrec->tablespace_id, InvalidOid, parent_path);
-				skip = true;
-				ereport(WARNING,
-						(errmsg("skipping replay of database creation WAL record"),
-						 errdetail("The target tablespace \"%s\" directory was not found.",
-								   parent_path),
-						 errhint("A future WAL record that removes the directory before reaching consistent mode is expected.")));
-			}
-			pfree(parent_path);
-		}
-
-		/*
-		 * If the source directory is missing, skip the copy and make a note of
-		 * it for later.
-		 *
-		 * One possible reason for this is that the template database used for
-		 * creating this database may have been dropped, as noted above.
-		 * Moving a database from one tablespace may also be a partner in the
-		 * crime.
-		 */
-		if (!(stat(src_path, &st) == 0 && S_ISDIR(st.st_mode)) &&
-			!reachedConsistency)
-		{
-			XLogRememberMissingDir(xlrec->src_tablespace_id, xlrec->src_db_id, src_path);
-			skip = true;
-			ereport(WARNING,
-					(errmsg("skipping replay of database creation WAL record"),
-					 errdetail("The source database directory \"%s\" was not found.",
-							   src_path),
-					 errhint("A future WAL record that removes the directory before reaching consistent mode is expected.")));
-		}
-
-		if (skip)
-			return;
 
 		/*
 		 * Force dirty buffers out to disk, to ensure source database is
@@ -2312,10 +2260,6 @@ dbase_redo(XLogReaderState *record)
 				ereport(WARNING,
 						(errmsg("some useless files may be left behind in old database directory \"%s\"",
 								dst_path)));
-
-			if (!reachedConsistency)
-				XLogForgetMissingDir(xlrec->tablespace_ids[i], xlrec->db_id);
-
 			pfree(dst_path);
 		}
 
