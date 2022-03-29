@@ -25,6 +25,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
+           [ STRATEGY [=] <replaceable class="parameter">strategy</replaceable> ] ]
            [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
@@ -115,6 +116,27 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         <productname>PostgreSQL</productname> server are described in
         <xref linkend="multibyte-charset-supported"/>. See below for
         additional restrictions.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry id="create-database-strategy" xreflabel="CREATE DATABASE STRATEGY">
+      <term><replaceable class="parameter">strategy</replaceable></term>
+      <listitem>
+       <para>
+        Strategy to be used in creating the new database.  If
+        the <literal>WAL_LOG</literal> strategy is used, the database will be
+        copied block by block and each block will be separately written
+        to the write-ahead log. This is the most efficient strategy in
+        cases where the template database is small, and therefore it is the
+        default. The older <literal>FILE_COPY</literal> strategy is also
+        available. This strategy writes a small record to the write-ahead log
+        for each tablespace used by the target database. Each such record
+        represents copying an entire directory to a new location at the
+        filesystem level. While this does reduce the write-ahed
+        log volume substantially, especially if the template database is large,
+        it also forces the system to perform a checkpoint both before and
+        after the creation of the new database. In some situations, this may
+        have a noticeable negative impact on overall system performance.
        </para>
       </listitem>
      </varlistentry>

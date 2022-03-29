@@ -461,6 +461,8 @@ CoverPos
 CreateAmStmt
 CreateCastStmt
 CreateConversionStmt
+CreateDBRelInfo
+CreateDBStrategy
 CreateDomainStmt
 CreateEnumStmt
 CreateEventTrigStmt
@@ -3705,7 +3707,8 @@ xl_btree_update
 xl_btree_vacuum
 xl_clog_truncate
 xl_commit_ts_truncate
-xl_dbase_create_rec
+xl_dbase_create_file_copy_rec
+xl_dbase_create_wal_log_rec
 xl_dbase_drop_rec
 xl_end_of_recovery
 xl_hash_add_ovfl_page

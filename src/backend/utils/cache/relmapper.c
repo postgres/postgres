@@ -252,6 +252,63 @@ RelationMapFilenodeToOid(Oid filenode, bool shared)
 }
 
 /*
+ * RelationMapOidToFilenodeForDatabase
+ *
+ * Like RelationMapOidToFilenode, but reads the mapping from the indicated
+ * path instead of using the one for the current database.
+ */
+Oid
+RelationMapOidToFilenodeForDatabase(char *dbpath, Oid relationId)
+{
+	RelMapFile	map;
+	int			i;
+
+	/* Read the relmap file from the source database. */
+	read_relmap_file(&map, dbpath, false, ERROR);
+
+	/* Iterate over the relmap entries to find the input relation OID. */
+	for (i = 0; i < map.num_mappings; i++)
+	{
+		if (relationId == map.mappings[i].mapoid)
+			return map.mappings[i].mapfilenode;
+	}
+
+	return InvalidOid;
+}
+
+/*
+ * RelationMapCopy
+ *
+ * Copy relmapfile from source db path to the destination db path and WAL log
+ * the operation. This is intended for use in creating a new relmap file
+ * for a database that doesn't have one yet, not for replacing an existing
+ * relmap file.
+ */
+void
+RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath, char *dstdbpath)
+{
+	RelMapFile map;
+
+	/*
+	 * Read the relmap file from the source database.
+	 */
+	read_relmap_file(&map, srcdbpath, false, ERROR);
+
+	/*
+	 * Write the same data into the destination database's relmap file.
+	 *
+	 * No sinval is needed because no one can be connected to the destination
+	 * database yet. For the same reason, there is no need to acquire
+	 * RelationMappingLock.
+	 *
+	 * There's no point in trying to preserve files here. The new database
+	 * isn't usable yet anyway, and won't ever be if we can't install a
+	 * relmap file.
+	 */
+	write_relmap_file(&map, true, false, false, dbid, tsid, dstdbpath);
+}
+
+/*
  * RelationMapUpdateMap
  *
  * Install a new relfilenode mapping for the specified relation.
@@ -1031,6 +1088,13 @@ relmap_redo(XLogReaderState *record)
 		 *
 		 * There shouldn't be anyone else updating relmaps during WAL replay,
 		 * but grab the lock to interlock against load_relmap_file().
+		 *
+		 * Note that we use the same WAL record for updating the relmap of
+		 * an existing database as we do for creating a new database. In
+		 * the latter case, taking the relmap log and sending sinval messages
+		 * is unnecessary, but harmless. If we wanted to avoid it, we could
+		 * add a flag to the WAL record to indicate which opration is being
+		 * performed.
 		 */
 		LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);
 		write_relmap_file(&newmap, false, true, false,

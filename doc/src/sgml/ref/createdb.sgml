@@ -178,6 +178,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-S <replaceable class="parameter">template</replaceable></option></term>
+      <term><option>--strategy=<replaceable class="parameter">strategy</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the database creation strategy.  See
+        <xref linkend="create-database-strategy" /> for more details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-T <replaceable class="parameter">template</replaceable></option></term>
       <term><option>--template=<replaceable class="parameter">template</replaceable></option></term>
       <listitem>

@@ -22,7 +22,9 @@
 /* GUC variables */
 extern int	wal_skip_threshold;
 
-extern SMgrRelation RelationCreateStorage(RelFileNode rnode, char relpersistence);
+extern SMgrRelation RelationCreateStorage(RelFileNode rnode,
+										  char relpersistence,
+										  bool register_delete);
 extern void RelationDropStorage(Relation rel);
 extern void RelationPreserveStorage(RelFileNode rnode, bool atCommit);
 extern void RelationPreTruncate(Relation rel);

@@ -104,4 +104,24 @@ $node->command_checks_all(
 	],
 	'createdb with incorrect --lc-ctype');
 
+$node->command_checks_all(
+	[ 'createdb', '--strategy', "foo", 'foobar2' ],
+	1,
+	[qr/^$/],
+	[
+		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy|^createdb: error: database creation failed: ERROR:  invalid create database strategy foo/s
+	],
+	'createdb with incorrect --strategy');
+
+# Check database creation strategy
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', 'foobar6', '-S', 'wal_log'],
+	qr/statement: CREATE DATABASE foobar6 STRATEGY wal_log TEMPLATE foobar2/,
+	'create database with WAL_LOG strategy');
+
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', 'foobar7', '-S', 'file_copy'],
+	qr/statement: CREATE DATABASE foobar7 STRATEGY file_copy TEMPLATE foobar2/,
+	'create database with FILE_COPY strategy');
+
 done_testing();
