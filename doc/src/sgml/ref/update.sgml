@@ -387,23 +387,23 @@ UPDATE employees SET sales_count = sales_count + 1 WHERE id =
 
   <para>
    Update contact names in an accounts table to match the currently assigned
-   salesmen:
+   salespeople:
 <programlisting>
 UPDATE accounts SET (contact_first_name, contact_last_name) =
-    (SELECT first_name, last_name FROM salesmen
-     WHERE salesmen.id = accounts.sales_id);
+    (SELECT first_name, last_name FROM employees
+     WHERE employees.id = accounts.sales_person);
 </programlisting>
    A similar result could be accomplished with a join:
 <programlisting>
 UPDATE accounts SET contact_first_name = first_name,
                     contact_last_name = last_name
-  FROM salesmen WHERE salesmen.id = accounts.sales_id;
+  FROM employees WHERE employees.id = accounts.sales_person;
 </programlisting>
    However, the second query may give unexpected results
-   if <structname>salesmen</structname>.<structfield>id</structfield> is not a unique key, whereas
+   if <structname>employees</structname>.<structfield>id</structfield> is not a unique key, whereas
    the first query is guaranteed to raise an error if there are multiple
    <structfield>id</structfield> matches.  Also, if there is no match for a particular
-   <structname>accounts</structname>.<structfield>sales_id</structfield> entry, the first query
+   <structname>accounts</structname>.<structfield>sales_person</structfield> entry, the first query
    will set the corresponding name fields to NULL, whereas the second query
    will not update that row at all.
   </para>
