@@ -2502,8 +2502,7 @@ sub run_log
 
 	local %ENV = $self->_get_env();
 
-	PostgreSQL::Test::Utils::run_log(@_);
-	return;
+	return PostgreSQL::Test::Utils::run_log(@_);
 }
 
 =pod
