@@ -205,6 +205,14 @@ SInvalShmemSize(void)
 	Size		size;
 
 	size = offsetof(SISeg, procState);
+
+	/*
+	 * In Hot Standby mode, the startup process requests a procState array
+	 * slot using InitRecoveryTransactionEnvironment(). Even though MaxBackends
+	 * doesn't account for the startup process, it is guaranteed to get a
+	 * free slot. This is because the autovacuum launcher and worker processes,
+	 * which are included in MaxBackends, are not started in Hot Standby mode.
+	 */
 	size = add_size(size, mul_size(sizeof(ProcState), GetMaxBackends()));
 
 	return size;
