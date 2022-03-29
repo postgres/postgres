@@ -887,25 +887,22 @@ do { \
 } while (0)
 
 /*
- * Macros for handling pg_ident problems.
- * Much as above, but currently the message level is hardwired as LOG
- * and there is no provision for an err_msg string.
+ * Macros for handling pg_ident problems, similar as above.
  *
  * IDENT_FIELD_ABSENT:
- * Log a message and exit the function if the given ident field ListCell is
- * not populated.
+ * Reports when the given ident field ListCell is not populated.
  *
  * IDENT_MULTI_VALUE:
- * Log a message and exit the function if the given ident token List has more
- * than one element.
+ * Reports when the given ident token List has more than one element.
  */
 #define IDENT_FIELD_ABSENT(field) \
 do { \
 	if (!field) { \
-		ereport(LOG, \
+		ereport(elevel, \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("missing entry in file \"%s\" at end of line %d", \
 						IdentFileName, line_num))); \
+		*err_msg = psprintf("missing entry at end of line"); \
 		return NULL; \
 	} \
 } while (0)
@@ -913,11 +910,12 @@ do { \
 #define IDENT_MULTI_VALUE(tokens) \
 do { \
 	if (tokens->length > 1) { \
-		ereport(LOG, \
+		ereport(elevel, \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("multiple values in ident field"), \
 				 errcontext("line %d of configuration file \"%s\"", \
 							line_num, IdentFileName))); \
+		*err_msg = psprintf("multiple values in ident field"); \
 		return NULL; \
 	} \
 } while (0)
@@ -2306,7 +2304,8 @@ load_hba(void)
  * Parse one tokenised line from the ident config file and store the result in
  * an IdentLine structure.
  *
- * If parsing fails, log a message and return NULL.
+ * If parsing fails, log a message at ereport level elevel, store an error
+ * string in tok_line->err_msg and return NULL.
  *
  * If ident_user is a regular expression (ie. begins with a slash), it is
  * compiled and stored in IdentLine structure.
@@ -2315,10 +2314,11 @@ load_hba(void)
  * to have set a memory context that will be reset if this function returns
  * NULL.
  */
-static IdentLine *
-parse_ident_line(TokenizedAuthLine *tok_line)
+IdentLine *
+parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 {
 	int			line_num = tok_line->line_num;
+	char	  **err_msg = &tok_line->err_msg;
 	ListCell   *field;
 	List	   *tokens;
 	AuthToken  *token;
@@ -2372,10 +2372,13 @@ parse_ident_line(TokenizedAuthLine *tok_line)
 			char		errstr[100];
 
 			pg_regerror(r, &parsedline->re, errstr, sizeof(errstr));
-			ereport(LOG,
+			ereport(elevel,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 					 errmsg("invalid regular expression \"%s\": %s",
 							parsedline->ident_user + 1, errstr)));
+
+			*err_msg = psprintf("invalid regular expression \"%s\": %s",
+								parsedline->ident_user + 1, errstr);
 
 			pfree(wstr);
 			return NULL;
@@ -2627,7 +2630,7 @@ load_ident(void)
 			continue;
 		}
 
-		if ((newline = parse_ident_line(tok_line)) == NULL)
+		if ((newline = parse_ident_line(tok_line, LOG)) == NULL)
 		{
 			/* Parse error; remember there's trouble */
 			ok = false;

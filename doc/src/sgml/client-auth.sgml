@@ -897,6 +897,16 @@ mymap   /^(.*)@otherdomain\.com$   guest
   </para>
 
   <para>
+   The system view
+   <link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link>
+   can be helpful for pre-testing changes to the
+   <filename>pg_ident.conf</filename> file, or for diagnosing problems if
+   loading of the file did not have the desired effects.  Rows in the view with
+   non-null <structfield>error</structfield> fields indicate problems in the
+   corresponding lines of the file.
+  </para>
+
+  <para>
    A <filename>pg_ident.conf</filename> file that could be used in
    conjunction with the <filename>pg_hba.conf</filename> file in <xref
    linkend="example-pg-hba.conf"/> is shown in <xref

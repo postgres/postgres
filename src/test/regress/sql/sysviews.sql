@@ -29,6 +29,10 @@ select count(*) >= 0 as ok from pg_file_settings;
 select count(*) > 0 as ok, count(*) FILTER (WHERE error IS NOT NULL) = 0 AS no_err
   from pg_hba_file_rules;
 
+-- There may be no rules, and there should be no errors.
+select count(*) >= 0 as ok, count(*) FILTER (WHERE error IS NOT NULL) = 0 AS no_err
+  from pg_ident_file_mappings;
+
 -- There will surely be at least one active lock
 select count(*) > 0 as ok from pg_locks;
 

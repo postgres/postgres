@@ -617,6 +617,12 @@ CREATE VIEW pg_hba_file_rules AS
 REVOKE ALL ON pg_hba_file_rules FROM PUBLIC;
 REVOKE EXECUTE ON FUNCTION pg_hba_file_rules() FROM PUBLIC;
 
+CREATE VIEW pg_ident_file_mappings AS
+   SELECT * FROM pg_ident_file_mappings() AS A;
+
+REVOKE ALL ON pg_ident_file_mappings FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION pg_ident_file_mappings() FROM PUBLIC;
+
 CREATE VIEW pg_timezone_abbrevs AS
     SELECT * FROM pg_timezone_abbrevs();
 

@@ -9592,6 +9592,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      </row>
 
      <row>
+      <entry><link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link></entry>
+      <entry>summary of client user name mapping configuration file contents</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-indexes"><structname>pg_indexes</structname></link></entry>
       <entry>indexes</entry>
      </row>
@@ -10571,6 +10576,108 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If not null, an error message indicating why this
+       line could not be processed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Usually, a row reflecting an incorrect entry will have values for only
+   the <structfield>line_number</structfield> and <structfield>error</structfield> fields.
+  </para>
+
+  <para>
+   See <xref linkend="client-authentication"/> for more information about
+   client authentication configuration.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-ident-file-mappings">
+  <title><structname>pg_ident_file_mappings</structname></title>
+
+  <indexterm zone="view-pg-ident-file-mappings">
+   <primary>pg_ident_file_mappings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_ident_file_mappings</structname> provides a summary
+   of the contents of the client user name mapping configuration file,
+   <link linkend="auth-username-maps"><filename>pg_ident.conf</filename></link>.
+   A row appears in this view for each non-empty, non-comment line in the file,
+   with annotations indicating whether the rule could be applied successfully.
+  </para>
+
+  <para>
+   This view can be helpful for checking whether planned changes in the
+   authentication configuration file will work, or for diagnosing a previous
+   failure.  Note that this view reports on the <emphasis>current</emphasis>
+   contents of the file, not on what was last loaded by the server.
+  </para>
+
+  <para>
+   By default, the <structname>pg_ident_file_mappings</structname> view can be
+   read only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_ident_file_mappings</structname> Columns</title> <tgroup
+   cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>line_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number of this rule in <filename>pg_ident.conf</filename>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>map_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the map
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sys_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Detected user name of the client
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pg_username</structfield> <type>text</type>
+      </para>
+      <para>
+       Requested PostgreSQL user name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>error</structfield> <type>text</type>
+      </para>
+      <para>
+       If not <literal>NULL</literal>, an error message indicating why this
        line could not be processed
       </para></entry>
      </row>

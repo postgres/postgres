@@ -25475,8 +25475,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
         sending a <systemitem>SIGHUP</systemitem> signal to the postmaster
         process, which in turn sends <systemitem>SIGHUP</systemitem> to each
         of its children.) You can use the
-        <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link> and
-        <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> views
+        <link linkend="view-pg-file-settings"><structname>pg_file_settings</structname></link>,
+        <link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link> and
+        <link linkend="view-pg-hba-file-rules"><structname>pg_ident_file_mappings</structname></link> views
         to check the configuration files for possible errors, before reloading.
        </para></entry>
       </row>
