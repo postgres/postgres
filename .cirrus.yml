@@ -101,6 +101,7 @@ task:
         --with-ssl=openssl \
         --with-tcl --with-tclconfig=/usr/local/lib/tcl8.6/ \
         --with-uuid=bsd \
+        --with-zstd \
         \
         --with-includes=/usr/local/include \
         --with-libs=/usr/local/lib \
@@ -142,6 +143,7 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
   --with-systemd
   --with-tcl --with-tclconfig=/usr/lib/tcl8.6/
   --with-uuid=ossp
+  --with-zstd
 
 
 task:
@@ -270,7 +272,8 @@ task:
       openldap \
       openssl \
       python \
-      tcl-tk
+      tcl-tk \
+      zstd
 
     brew cleanup -s # to reduce cache size
   upload_caches: homebrew
@@ -282,7 +285,7 @@ task:
     INCLUDES="${brewpath}/include:${INCLUDES}"
     LIBS="${brewpath}/lib:${LIBS}"
 
-    for pkg in icu4c krb5 openldap openssl ; do
+    for pkg in icu4c krb5 openldap openssl zstd ; do
       pkgpath="${brewpath}/opt/${pkg}"
       INCLUDES="${pkgpath}/include:${INCLUDES}"
       LIBS="${pkgpath}/lib:${LIBS}"
@@ -307,6 +310,7 @@ task:
       --with-ssl=openssl \
       --with-tcl --with-tclconfig=${brewpath}/opt/tcl-tk/lib/ \
       --with-uuid=e2fs \
+      --with-zstd \
       \
       --prefix=${HOME}/install \
       --with-includes="${INCLUDES}" \
