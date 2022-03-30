@@ -2961,7 +2961,7 @@ CopyFromInsertBatch(CopyState cstate, EState *estate, CommandId mycid,
 
 	/*
 	 * Print error context information correctly, if one of the operations
-	 * below fail.
+	 * below fails.
 	 */
 	cstate->line_buf_valid = false;
 	save_cur_lineno = cstate->cur_lineno;
