@@ -191,8 +191,16 @@ parse_bc_specification(bc_algorithm algorithm, char *specification,
 		if (value != NULL)
 			pfree(value);
 
-		/* If we got an error or have reached the end of the string, stop. */
-		if (result->parse_error != NULL || *kwend == '\0' || *vend == '\0')
+		/*
+		 * If we got an error or have reached the end of the string, stop.
+		 *
+		 * If there is no value, then the end of the keyword might have been
+		 * the end of the string. If there is a value, then the end of the
+		 * keyword cannot have been the end of the string, but the end of the
+		 * value might have been.
+		 */
+		if (result->parse_error != NULL ||
+			(vend == NULL ? *kwend == '\0' : *vend == '\0'))
 			break;
 
 		/* Advance to next entry and loop around. */
