@@ -572,10 +572,19 @@ FROM    (VALUES
           ('[h,j)'::textrange)
         ) t(r);
 
+--
+-- range_intersect_agg function
+--
 select range_intersect_agg(nmr) from nummultirange_test;
 select range_intersect_agg(nmr) from nummultirange_test where false;
+select range_intersect_agg(null::nummultirange) from nummultirange_test;
+select range_intersect_agg(nmr) from (values ('{[1,3]}'::nummultirange), ('{[6,12]}'::nummultirange)) t(nmr);
+select range_intersect_agg(nmr) from (values ('{[1,6]}'::nummultirange), ('{[3,12]}'::nummultirange)) t(nmr);
+select range_intersect_agg(nmr) from (values ('{[1,6], [10,12]}'::nummultirange), ('{[4,14]}'::nummultirange)) t(nmr);
 -- test with just one input:
+select range_intersect_agg(nmr) from (values ('{}'::nummultirange)) t(nmr);
 select range_intersect_agg(nmr) from (values ('{[1,2]}'::nummultirange)) t(nmr);
+select range_intersect_agg(nmr) from (values ('{[1,6], [10,12]}'::nummultirange)) t(nmr);
 select range_intersect_agg(nmr) from nummultirange_test where nmr @> 4.0;
 
 create table nummultirange_test2(nmr nummultirange);
