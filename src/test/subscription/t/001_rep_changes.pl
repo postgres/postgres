@@ -473,6 +473,34 @@ $node_publisher->safe_psql('postgres', "INSERT INTO tab_full VALUES(0)");
 
 $node_publisher->wait_for_catchup('tap_sub');
 
+# Check that we don't send BEGIN and COMMIT because of empty transaction
+# optimization.  We have to look for the DEBUG1 log messages about that, so
+# temporarily bump up the log verbosity.
+$node_publisher->append_conf('postgresql.conf', "log_min_messages = debug1");
+$node_publisher->reload;
+
+# Note that the current location of the log file is not grabbed immediately
+# after reloading the configuration, but after sending one SQL command to
+# the node so that we are sure that the reloading has taken effect.
+$log_location = -s $node_publisher->logfile;
+
+$node_publisher->safe_psql('postgres', "INSERT INTO tab_notrep VALUES (11)");
+
+$node_publisher->wait_for_catchup('tap_sub');
+
+$logfile = slurp_file($node_publisher->logfile, $log_location);
+ok( $logfile =~
+	  qr/skipped replication of an empty transaction with XID/,
+	'empty transaction is skipped');
+
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM tab_notrep");
+is($result, qq(0), 'check non-replicated table is empty on subscriber');
+
+$node_publisher->append_conf('postgresql.conf',
+	"log_min_messages = warning");
+$node_publisher->reload;
+
 # note that data are different on provider and subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), min(a), max(a) FROM tab_ins");
