@@ -314,6 +314,64 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 }
 
 /*
+ * Extract a CopyHeaderChoice value from a DefElem.  This is like
+ * defGetBoolean() but also accepts the special value "match".
+ */
+static CopyHeaderChoice
+defGetCopyHeaderChoice(DefElem *def)
+{
+	/*
+	 * If no parameter given, assume "true" is meant.
+	 */
+	if (def->arg == NULL)
+		return COPY_HEADER_TRUE;
+
+	/*
+	 * Allow 0, 1, "true", "false", "on", "off", or "match".
+	 */
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			switch (intVal(def->arg))
+			{
+				case 0:
+					return COPY_HEADER_FALSE;
+				case 1:
+					return COPY_HEADER_TRUE;
+				default:
+					/* otherwise, error out below */
+					break;
+			}
+			break;
+		default:
+			{
+				char	*sval = defGetString(def);
+
+				/*
+				 * The set of strings accepted here should match up with the
+				 * grammar's opt_boolean_or_string production.
+				 */
+				if (pg_strcasecmp(sval, "true") == 0)
+					return COPY_HEADER_TRUE;
+				if (pg_strcasecmp(sval, "false") == 0)
+					return COPY_HEADER_FALSE;
+				if (pg_strcasecmp(sval, "on") == 0)
+					return COPY_HEADER_TRUE;
+				if (pg_strcasecmp(sval, "off") == 0)
+					return COPY_HEADER_FALSE;
+				if (pg_strcasecmp(sval, "match") == 0)
+					return COPY_HEADER_MATCH;
+			}
+			break;
+	}
+	ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a Boolean value or \"match\"",
+					def->defname)));
+	return COPY_HEADER_FALSE;	/* keep compiler quiet */
+}
+
+/*
  * Process the statement option list for COPY.
  *
  * Scan the options list (a list of DefElem) and transpose the information
@@ -394,7 +452,7 @@ ProcessCopyOptions(ParseState *pstate,
 			if (header_specified)
 				errorConflictingDefElem(defel, pstate);
 			header_specified = true;
-			opts_out->header_line = defGetBoolean(defel);
+			opts_out->header_line = defGetCopyHeaderChoice(defel);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{

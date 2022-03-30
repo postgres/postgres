@@ -197,3 +197,36 @@ copy tab_progress_reporting from :'filename'
 drop trigger check_after_tab_progress_reporting on tab_progress_reporting;
 drop function notice_after_tab_progress_reporting();
 drop table tab_progress_reporting;
+
+-- Test header matching feature
+create table header_copytest (
+	a int,
+	b int,
+	c text
+);
+copy header_copytest from stdin with (header wrong_choice);
+copy header_copytest from stdin with (header match);
+a	b	c
+1	2	foo
+\.
+copy header_copytest from stdin with (header match);
+a	b	\N
+1	2	foo
+\.
+copy header_copytest from stdin with (header match);
+a	b
+1	2
+\.
+copy header_copytest from stdin with (header match);
+a	b	c	d
+1	2	foo	bar
+\.
+copy header_copytest from stdin with (header match);
+a	b	d
+1	2	foo
+\.
+copy header_copytest from stdin with (header match, format csv);
+a,b,c
+1,2,foo
+\.
+drop table header_copytest;

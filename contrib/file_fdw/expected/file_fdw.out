@@ -113,6 +113,21 @@ CREATE FOREIGN TABLE agg_bad (
 ) SERVER file_server
 OPTIONS (format 'csv', filename :'filename', header 'true', delimiter ';', quote '@', escape '"', null '');
 ALTER FOREIGN TABLE agg_bad ADD CHECK (a >= 0);
+-- test header matching
+\set filename :abs_srcdir '/data/list1.csv'
+CREATE FOREIGN TABLE header_match ("1" int, foo text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', delimiter ',', header 'match');
+SELECT * FROM header_match;
+ 1 | foo 
+---+-----
+ 1 | bar
+(1 row)
+
+CREATE FOREIGN TABLE header_doesnt_match (a int, foo text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', delimiter ',', header 'match');
+SELECT * FROM header_doesnt_match; -- ERROR
+ERROR:  column name mismatch in header line field 1: got "1", expected "a"
+CONTEXT:  COPY header_doesnt_match, line 1: "1,foo"
 -- per-column options tests
 \set filename :abs_srcdir '/data/text.csv'
 CREATE FOREIGN TABLE text_csv (
@@ -464,12 +479,14 @@ SET ROLE regress_file_fdw_superuser;
 -- cleanup
 RESET ROLE;
 DROP EXTENSION file_fdw CASCADE;
-NOTICE:  drop cascades to 7 other objects
+NOTICE:  drop cascades to 9 other objects
 DETAIL:  drop cascades to server file_server
 drop cascades to user mapping for regress_file_fdw_superuser on server file_server
 drop cascades to user mapping for regress_no_priv_user on server file_server
 drop cascades to foreign table agg_text
 drop cascades to foreign table agg_csv
 drop cascades to foreign table agg_bad
+drop cascades to foreign table header_match
+drop cascades to foreign table header_doesnt_match
 drop cascades to foreign table text_csv
 DROP ROLE regress_file_fdw_superuser, regress_file_fdw_user, regress_no_priv_user;

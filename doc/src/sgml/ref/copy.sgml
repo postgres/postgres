@@ -36,7 +36,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
     FREEZE [ <replaceable class="parameter">boolean</replaceable> ]
     DELIMITER '<replaceable class="parameter">delimiter_character</replaceable>'
     NULL '<replaceable class="parameter">null_string</replaceable>'
-    HEADER [ <replaceable class="parameter">boolean</replaceable> ]
+    HEADER [ <replaceable class="parameter">boolean</replaceable> | <literal>match</literal> ]
     QUOTE '<replaceable class="parameter">quote_character</replaceable>'
     ESCAPE '<replaceable class="parameter">escape_character</replaceable>'
     FORCE_QUOTE { ( <replaceable class="parameter">column_name</replaceable> [, ...] ) | * }
@@ -276,7 +276,11 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
      <para>
       Specifies that the file contains a header line with the names of each
       column in the file.  On output, the first line contains the column
-      names from the table, and on input, the first line is ignored.
+      names from the table.  On input, the first line is discarded when this
+      option is set to <literal>true</literal> (or equivalent Boolean value).
+      If this option is set to <literal>match</literal>, the number and names
+      of the columns in the header line must match the actual column names of
+      the table, otherwise an error is raised.
       This option is not allowed when using <literal>binary</literal> format.
      </para>
     </listitem>

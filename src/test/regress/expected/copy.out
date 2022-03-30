@@ -176,3 +176,26 @@ INFO:  progress: {"type": "FILE", "command": "COPY FROM", "relname": "tab_progre
 drop trigger check_after_tab_progress_reporting on tab_progress_reporting;
 drop function notice_after_tab_progress_reporting();
 drop table tab_progress_reporting;
+-- Test header matching feature
+create table header_copytest (
+	a int,
+	b int,
+	c text
+);
+copy header_copytest from stdin with (header wrong_choice);
+ERROR:  header requires a Boolean value or "match"
+copy header_copytest from stdin with (header match);
+copy header_copytest from stdin with (header match);
+ERROR:  column name mismatch in header line field 3: got null value ("\N"), expected "c"
+CONTEXT:  COPY header_copytest, line 1: "a	b	\N"
+copy header_copytest from stdin with (header match);
+ERROR:  wrong number of fields in header line: field count is 2, expected 3
+CONTEXT:  COPY header_copytest, line 1: "a	b"
+copy header_copytest from stdin with (header match);
+ERROR:  wrong number of fields in header line: field count is 4, expected 3
+CONTEXT:  COPY header_copytest, line 1: "a	b	c	d"
+copy header_copytest from stdin with (header match);
+ERROR:  column name mismatch in header line field 3: got "d", expected "c"
+CONTEXT:  COPY header_copytest, line 1: "a	b	d"
+copy header_copytest from stdin with (header match, format csv);
+drop table header_copytest;
