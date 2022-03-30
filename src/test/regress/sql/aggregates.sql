@@ -1025,6 +1025,105 @@ SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
 
+-- GROUP BY optimization by reorder columns
+
+SELECT
+	i AS id,
+	i/2 AS p,
+	format('%60s', i%2) AS v,
+	i/4 AS c,
+	i/8 AS d,
+	(random() * (10000/8))::int as e --the same as d but no correlation with p
+	INTO btg
+FROM
+	generate_series(1, 10000) i;
+
+VACUUM btg;
+ANALYZE btg;
+
+-- GROUP BY optimization by reorder columns by frequency
+
+SET enable_hashagg=off;
+SET max_parallel_workers= 0;
+SET max_parallel_workers_per_gather = 0;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, v;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY v, p, c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, d, c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY v, p, d ,c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY p, v, d ,c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, d, e;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, e, d;
+
+CREATE STATISTICS btg_dep ON d, e, p FROM btg;
+ANALYZE btg;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, d, e;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, e, d;
+
+
+-- GROUP BY optimization by reorder columns by index scan
+
+CREATE INDEX ON btg(p, v);
+SET enable_seqscan=off;
+SET enable_bitmapscan=off;
+VACUUM btg;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, v;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY p, v ORDER BY p, v;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p ORDER BY p, v;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, c;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY p, v;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, c, p, d;
+
+EXPLAIN (COSTS off)
+SELECT count(*) FROM btg GROUP BY v, c, p, d ORDER BY p, v;
+
+DROP TABLE btg;
+
+RESET enable_hashagg;
+RESET max_parallel_workers;
+RESET max_parallel_workers_per_gather;
+RESET enable_seqscan;
+RESET enable_bitmapscan;
+
+
 -- Secondly test the case of a parallel aggregate combiner function
 -- returning NULL. For that use normal transition function, but a
 -- combiner function returning NULL.

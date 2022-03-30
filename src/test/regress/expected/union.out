@@ -1303,24 +1303,22 @@ select distinct q1 from
    union all
    select distinct * from int8_tbl i82) ss
 where q2 = q2;
-                        QUERY PLAN                        
-----------------------------------------------------------
- Unique
-   ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
+                     QUERY PLAN                     
+----------------------------------------------------
+ HashAggregate
+   Group Key: "*SELECT* 1".q1
+   ->  Append
          ->  Subquery Scan on "*SELECT* 1"
-               ->  Unique
-                     ->  Sort
-                           Sort Key: i81.q1, i81.q2
-                           ->  Seq Scan on int8_tbl i81
-                                 Filter: (q2 IS NOT NULL)
+               ->  HashAggregate
+                     Group Key: i81.q1, i81.q2
+                     ->  Seq Scan on int8_tbl i81
+                           Filter: (q2 IS NOT NULL)
          ->  Subquery Scan on "*SELECT* 2"
-               ->  Unique
-                     ->  Sort
-                           Sort Key: i82.q1, i82.q2
-                           ->  Seq Scan on int8_tbl i82
-                                 Filter: (q2 IS NOT NULL)
-(15 rows)
+               ->  HashAggregate
+                     Group Key: i82.q1, i82.q2
+                     ->  Seq Scan on int8_tbl i82
+                           Filter: (q2 IS NOT NULL)
+(13 rows)
 
 select distinct q1 from
   (select distinct * from int8_tbl i81
@@ -1339,24 +1337,22 @@ select distinct q1 from
    union all
    select distinct * from int8_tbl i82) ss
 where -q1 = q2;
-                       QUERY PLAN                       
---------------------------------------------------------
- Unique
-   ->  Merge Append
-         Sort Key: "*SELECT* 1".q1
+                    QUERY PLAN                    
+--------------------------------------------------
+ HashAggregate
+   Group Key: "*SELECT* 1".q1
+   ->  Append
          ->  Subquery Scan on "*SELECT* 1"
-               ->  Unique
-                     ->  Sort
-                           Sort Key: i81.q1, i81.q2
-                           ->  Seq Scan on int8_tbl i81
-                                 Filter: ((- q1) = q2)
+               ->  HashAggregate
+                     Group Key: i81.q1, i81.q2
+                     ->  Seq Scan on int8_tbl i81
+                           Filter: ((- q1) = q2)
          ->  Subquery Scan on "*SELECT* 2"
-               ->  Unique
-                     ->  Sort
-                           Sort Key: i82.q1, i82.q2
-                           ->  Seq Scan on int8_tbl i82
-                                 Filter: ((- q1) = q2)
-(15 rows)
+               ->  HashAggregate
+                     Group Key: i82.q1, i82.q2
+                     ->  Seq Scan on int8_tbl i82
+                           Filter: ((- q1) = q2)
+(13 rows)
 
 select distinct q1 from
   (select distinct * from int8_tbl i81

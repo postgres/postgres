@@ -114,7 +114,9 @@ extern void cost_incremental_sort(Path *path,
 								  Cost input_startup_cost, Cost input_total_cost,
 								  double input_tuples, int width, Cost comparison_cost, int sort_mem,
 								  double limit_tuples);
-extern void cost_append(AppendPath *path);
+extern Cost cost_sort_estimate(PlannerInfo *root, List *pathkeys,
+							   int nPresortedKeys, double tuples);
+extern void cost_append(AppendPath *path, PlannerInfo *root);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,

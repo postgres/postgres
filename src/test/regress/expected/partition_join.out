@@ -466,52 +466,41 @@ EXPLAIN (COSTS OFF)
 SELECT a, b FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b)
   WHERE a BETWEEN 490 AND 510
   GROUP BY 1, 2 ORDER BY 1, 2;
-                                                   QUERY PLAN                                                    
------------------------------------------------------------------------------------------------------------------
+                                                QUERY PLAN                                                 
+-----------------------------------------------------------------------------------------------------------
  Group
    Group Key: (COALESCE(prt1.a, p2.a)), (COALESCE(prt1.b, p2.b))
-   ->  Merge Append
+   ->  Sort
          Sort Key: (COALESCE(prt1.a, p2.a)), (COALESCE(prt1.b, p2.b))
-         ->  Group
-               Group Key: (COALESCE(prt1.a, p2.a)), (COALESCE(prt1.b, p2.b))
-               ->  Sort
-                     Sort Key: (COALESCE(prt1.a, p2.a)), (COALESCE(prt1.b, p2.b))
-                     ->  Merge Full Join
-                           Merge Cond: ((prt1.a = p2.a) AND (prt1.b = p2.b))
-                           Filter: ((COALESCE(prt1.a, p2.a) >= 490) AND (COALESCE(prt1.a, p2.a) <= 510))
-                           ->  Sort
-                                 Sort Key: prt1.a, prt1.b
-                                 ->  Seq Scan on prt1_p1 prt1
-                           ->  Sort
-                                 Sort Key: p2.a, p2.b
-                                 ->  Seq Scan on prt2_p1 p2
-         ->  Group
-               Group Key: (COALESCE(prt1_1.a, p2_1.a)), (COALESCE(prt1_1.b, p2_1.b))
-               ->  Sort
-                     Sort Key: (COALESCE(prt1_1.a, p2_1.a)), (COALESCE(prt1_1.b, p2_1.b))
-                     ->  Merge Full Join
-                           Merge Cond: ((prt1_1.a = p2_1.a) AND (prt1_1.b = p2_1.b))
-                           Filter: ((COALESCE(prt1_1.a, p2_1.a) >= 490) AND (COALESCE(prt1_1.a, p2_1.a) <= 510))
-                           ->  Sort
-                                 Sort Key: prt1_1.a, prt1_1.b
-                                 ->  Seq Scan on prt1_p2 prt1_1
-                           ->  Sort
-                                 Sort Key: p2_1.a, p2_1.b
-                                 ->  Seq Scan on prt2_p2 p2_1
-         ->  Group
-               Group Key: (COALESCE(prt1_2.a, p2_2.a)), (COALESCE(prt1_2.b, p2_2.b))
-               ->  Sort
-                     Sort Key: (COALESCE(prt1_2.a, p2_2.a)), (COALESCE(prt1_2.b, p2_2.b))
-                     ->  Merge Full Join
-                           Merge Cond: ((prt1_2.a = p2_2.a) AND (prt1_2.b = p2_2.b))
-                           Filter: ((COALESCE(prt1_2.a, p2_2.a) >= 490) AND (COALESCE(prt1_2.a, p2_2.a) <= 510))
-                           ->  Sort
-                                 Sort Key: prt1_2.a, prt1_2.b
-                                 ->  Seq Scan on prt1_p3 prt1_2
-                           ->  Sort
-                                 Sort Key: p2_2.a, p2_2.b
-                                 ->  Seq Scan on prt2_p3 p2_2
-(43 rows)
+         ->  Append
+               ->  Merge Full Join
+                     Merge Cond: ((prt1_1.a = p2_1.a) AND (prt1_1.b = p2_1.b))
+                     Filter: ((COALESCE(prt1_1.a, p2_1.a) >= 490) AND (COALESCE(prt1_1.a, p2_1.a) <= 510))
+                     ->  Sort
+                           Sort Key: prt1_1.a, prt1_1.b
+                           ->  Seq Scan on prt1_p1 prt1_1
+                     ->  Sort
+                           Sort Key: p2_1.a, p2_1.b
+                           ->  Seq Scan on prt2_p1 p2_1
+               ->  Merge Full Join
+                     Merge Cond: ((prt1_2.a = p2_2.a) AND (prt1_2.b = p2_2.b))
+                     Filter: ((COALESCE(prt1_2.a, p2_2.a) >= 490) AND (COALESCE(prt1_2.a, p2_2.a) <= 510))
+                     ->  Sort
+                           Sort Key: prt1_2.a, prt1_2.b
+                           ->  Seq Scan on prt1_p2 prt1_2
+                     ->  Sort
+                           Sort Key: p2_2.a, p2_2.b
+                           ->  Seq Scan on prt2_p2 p2_2
+               ->  Merge Full Join
+                     Merge Cond: ((prt1_3.b = p2_3.b) AND (prt1_3.a = p2_3.a))
+                     Filter: ((COALESCE(prt1_3.a, p2_3.a) >= 490) AND (COALESCE(prt1_3.a, p2_3.a) <= 510))
+                     ->  Sort
+                           Sort Key: prt1_3.b, prt1_3.a
+                           ->  Seq Scan on prt1_p3 prt1_3
+                     ->  Sort
+                           Sort Key: p2_3.b, p2_3.a
+                           ->  Seq Scan on prt2_p3 p2_3
+(32 rows)
 
 SELECT a, b FROM prt1 FULL JOIN prt2 p2(b,a,c) USING(a,b)
   WHERE a BETWEEN 490 AND 510

@@ -1984,8 +1984,8 @@ USING (name);
 ------+----+----
  bb   | 12 | 13
  cc   | 22 | 23
- dd   |    | 33
  ee   | 42 |   
+ dd   |    | 33
 (4 rows)
 
 -- Cases with non-nullable expressions in subquery results;
@@ -2019,8 +2019,8 @@ NATURAL FULL JOIN
 ------+------+------+------+------
  bb   |   12 |    2 |   13 |    3
  cc   |   22 |    2 |   23 |    3
- dd   |      |      |   33 |    3
  ee   |   42 |    2 |      |     
+ dd   |      |      |   33 |    3
 (4 rows)
 
 SELECT * FROM
@@ -4618,18 +4618,20 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
-              QUERY PLAN              
---------------------------------------
- Merge Right Join
-   Merge Cond: (b.id = d.a)
-   ->  Unique
-         ->  Sort
-               Sort Key: b.id, b.c_id
-               ->  Seq Scan on b
+                 QUERY PLAN                  
+---------------------------------------------
+ Merge Left Join
+   Merge Cond: (d.a = s.id)
    ->  Sort
          Sort Key: d.a
          ->  Seq Scan on d
-(9 rows)
+   ->  Sort
+         Sort Key: s.id
+         ->  Subquery Scan on s
+               ->  HashAggregate
+                     Group Key: b.id, b.c_id
+                     ->  Seq Scan on b
+(11 rows)
 
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
@@ -6336,44 +6338,39 @@ select * from j1 natural join j2;
 explain (verbose, costs off)
 select * from j1
 inner join (select distinct id from j3) j3 on j1.id = j3.id;
-               QUERY PLAN                
------------------------------------------
+            QUERY PLAN             
+-----------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
-   ->  Unique
+   ->  HashAggregate
          Output: j3.id
-         ->  Sort
+         Group Key: j3.id
+         ->  Seq Scan on public.j3
                Output: j3.id
-               Sort Key: j3.id
-               ->  Seq Scan on public.j3
-                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-(13 rows)
+(11 rows)
 
 -- ensure group by clause allows the inner to become unique
 explain (verbose, costs off)
 select * from j1
 inner join (select id from j3 group by id) j3 on j1.id = j3.id;
-               QUERY PLAN                
------------------------------------------
+            QUERY PLAN             
+-----------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
-   ->  Group
+   ->  HashAggregate
          Output: j3.id
          Group Key: j3.id
-         ->  Sort
+         ->  Seq Scan on public.j3
                Output: j3.id
-               Sort Key: j3.id
-               ->  Seq Scan on public.j3
-                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-(14 rows)
+(11 rows)
 
 drop table j1;
 drop table j2;
