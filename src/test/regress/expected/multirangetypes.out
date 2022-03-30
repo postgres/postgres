@@ -2784,6 +2784,67 @@ FROM    (VALUES
  {[a,f],[g,j)}
 (1 row)
 
+-- range_agg with multirange inputs
+select range_agg(nmr) from nummultirange_test;
+ range_agg 
+-----------
+ {(,)}
+(1 row)
+
+select range_agg(nmr) from nummultirange_test where false;
+ range_agg 
+-----------
+ 
+(1 row)
+
+select range_agg(null::nummultirange) from nummultirange_test;
+ range_agg 
+-----------
+ 
+(1 row)
+
+select range_agg(nmr) from (values ('{}'::nummultirange)) t(nmr);
+ range_agg 
+-----------
+ {}
+(1 row)
+
+select range_agg(nmr) from (values ('{}'::nummultirange), ('{}'::nummultirange)) t(nmr);
+ range_agg 
+-----------
+ {}
+(1 row)
+
+select range_agg(nmr) from (values ('{[1,2]}'::nummultirange)) t(nmr);
+ range_agg 
+-----------
+ {[1,2]}
+(1 row)
+
+select range_agg(nmr) from (values ('{[1,2], [5,6]}'::nummultirange)) t(nmr);
+   range_agg   
+---------------
+ {[1,2],[5,6]}
+(1 row)
+
+select range_agg(nmr) from (values ('{[1,2], [2,3]}'::nummultirange)) t(nmr);
+ range_agg 
+-----------
+ {[1,3]}
+(1 row)
+
+select range_agg(nmr) from (values ('{[1,2]}'::nummultirange), ('{[5,6]}'::nummultirange)) t(nmr);
+   range_agg   
+---------------
+ {[1,2],[5,6]}
+(1 row)
+
+select range_agg(nmr) from (values ('{[1,2]}'::nummultirange), ('{[2,3]}'::nummultirange)) t(nmr);
+ range_agg 
+-----------
+ {[1,3]}
+(1 row)
+
 --
 -- range_intersect_agg function
 --

@@ -201,7 +201,8 @@ ORDER BY 1, 2;
  timestamp without time zone | timestamp with time zone
  bit                         | bit varying
  txid_snapshot               | pg_snapshot
-(4 rows)
+ anyrange                    | anymultirange
+(5 rows)
 
 SELECT DISTINCT p1.proargtypes[2]::regtype, p2.proargtypes[2]::regtype
 FROM pg_proc AS p1, pg_proc AS p2

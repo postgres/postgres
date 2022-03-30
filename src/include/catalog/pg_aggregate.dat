@@ -563,6 +563,9 @@
 { aggfnoid => 'range_agg(anyrange)', aggtransfn => 'range_agg_transfn',
   aggfinalfn => 'range_agg_finalfn', aggfinalextra => 't',
   aggtranstype => 'internal' },
+{ aggfnoid => 'range_agg(anymultirange)', aggtransfn => 'multirange_agg_transfn',
+  aggfinalfn => 'multirange_agg_finalfn', aggfinalextra => 't',
+  aggtranstype => 'internal' },
 
 # json
 { aggfnoid => 'json_agg', aggtransfn => 'json_agg_transfn',

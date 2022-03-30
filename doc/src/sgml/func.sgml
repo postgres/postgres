@@ -20007,6 +20007,11 @@ SELECT NULLIF(value, '(none)') ...
          <type>anyrange</type> )
         <returnvalue>anymultirange</returnvalue>
        </para>
+       <para role="func_signature">
+        <function>range_agg</function> ( <parameter>value</parameter>
+         <type>anymultirange</type> )
+        <returnvalue>anymultirange</returnvalue>
+       </para>
        <para>
         Computes the union of the non-null input values.
        </para></entry>
