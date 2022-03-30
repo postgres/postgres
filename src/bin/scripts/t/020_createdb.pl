@@ -109,7 +109,7 @@ $node->command_checks_all(
 	1,
 	[qr/^$/],
 	[
-		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy|^createdb: error: database creation failed: ERROR:  invalid create database strategy foo/s
+		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy foo/s
 	],
 	'createdb with incorrect --strategy');
 
