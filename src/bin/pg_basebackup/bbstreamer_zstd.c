@@ -67,7 +67,6 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 {
 #ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
-	int			compresslevel;
 	size_t		ret;
 
 	Assert(next != NULL);
@@ -88,18 +87,35 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 		exit(1);
 	}
 
-	/* Initialize stream compression preferences */
-	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) == 0)
-		compresslevel = 0;
-	else
-		compresslevel = compress->level;
-	ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
-								 compresslevel);
-	if (ZSTD_isError(ret))
+	/* Set compression level, if specified */
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0)
 	{
-		pg_log_error("could not set zstd compression level to %d: %s",
-					 compresslevel, ZSTD_getErrorName(ret));
-		exit(1);
+		ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
+									 compress->level);
+		if (ZSTD_isError(ret))
+		{
+			pg_log_error("could not set zstd compression level to %d: %s",
+						 compress->level, ZSTD_getErrorName(ret));
+			exit(1);
+		}
+	}
+
+	/* Set # of workers, if specified */
+	if ((compress->options & BACKUP_COMPRESSION_OPTION_WORKERS) != 0)
+	{
+		/*
+		 * On older versions of libzstd, this option does not exist, and
+		 * trying to set it will fail. Similarly for newer versions if they
+		 * are compiled without threading support.
+		 */
+		ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_nbWorkers,
+									 compress->workers);
+		if (ZSTD_isError(ret))
+		{
+			pg_log_error("could not set compression worker count to %d: %s",
+						 compress->workers, ZSTD_getErrorName(ret));
+			exit(1);
+		}
 	}
 
 	/* Initialize the ZSTD output buffer. */

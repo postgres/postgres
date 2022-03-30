@@ -23,12 +23,14 @@ typedef enum bc_algorithm
 } bc_algorithm;
 
 #define	BACKUP_COMPRESSION_OPTION_LEVEL			(1 << 0)
+#define BACKUP_COMPRESSION_OPTION_WORKERS		(1 << 1)
 
 typedef struct bc_specification
 {
 	bc_algorithm algorithm;
 	unsigned	options;		/* OR of BACKUP_COMPRESSION_OPTION constants */
 	int			level;
+	int			workers;
 	char	   *parse_error;	/* NULL if parsing was OK, else message */
 } bc_specification;
 

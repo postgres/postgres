@@ -2739,16 +2739,22 @@ The commands accepted in replication mode are:
           option.  If the value is an integer, it specifies the compression
           level.  Otherwise, it should be a comma-separated list of items,
           each of the form <literal>keyword</literal> or
-          <literal>keyword=value</literal>. Currently, the only supported
-          keyword is <literal>level</literal>, which sets the compression
-          level.
+          <literal>keyword=value</literal>. Currently, the supported keywords
+          are <literal>level</literal> and <literal>workers</literal>.
         </para>
 
         <para>
+          The <literal>level</literal> keyword sets the compression level.
           For <literal>gzip</literal> the compression level should be an
           integer between 1 and 9, for <literal>lz4</literal> an integer
           between 1 and 12, and for <literal>zstd</literal> an integer
           between 1 and 22.
+         </para>
+
+        <para>
+          The <literal>workers</literal> keyword sets the number of threads
+          that should be used for parallel compression. Parallel compression
+          is supported only for <literal>zstd</literal>.
          </para>
         </listitem>
        </varlistentry>

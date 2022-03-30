@@ -130,6 +130,11 @@ my @compression_failure_tests = (
 		'invalid compression specification: found empty string where a compression option was expected',
 		'failure on extra, empty compression option'
 	],
+	[
+		'gzip:workers=3',
+		'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
+		'failure on worker count for gzip'
+	],
 );
 for my $cft (@compression_failure_tests)
 {
