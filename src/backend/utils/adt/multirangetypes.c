@@ -1345,9 +1345,7 @@ range_agg_transfn(PG_FUNCTION_ARGS)
 
 	rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_range(rngtypoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("range_agg must be called with a range")));
+		elog(ERROR, "range_agg must be called with a range");
 
 	if (PG_ARGISNULL(0))
 		state = initArrayResult(rngtypoid, aggContext, false);
@@ -1416,9 +1414,7 @@ multirange_intersect_agg_transfn(PG_FUNCTION_ARGS)
 
 	mltrngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_multirange(mltrngtypoid))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("range_intersect_agg must be called with a multirange")));
+		elog(ERROR, "range_intersect_agg must be called with a multirange");
 
 	typcache = multirange_get_typcache(fcinfo, mltrngtypoid);
 

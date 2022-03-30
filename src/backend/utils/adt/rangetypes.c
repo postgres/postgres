@@ -1211,7 +1211,7 @@ range_intersect_agg_transfn(PG_FUNCTION_ARGS)
 
 	rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_range(rngtypoid))
-		ereport(ERROR, (errmsg("range_intersect_agg must be called with a range")));
+		elog(ERROR, "range_intersect_agg must be called with a range");
 
 	typcache = range_get_typcache(fcinfo, rngtypoid);
 
