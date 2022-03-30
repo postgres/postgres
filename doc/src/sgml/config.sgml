@@ -1184,7 +1184,13 @@ include_dir 'conf.d'
      <title>SSL</title>
 
      <para>
-      See <xref linkend="ssl-tcp"/> for more information about setting up SSL.
+      See <xref linkend="ssl-tcp"/> for more information about setting up
+      <acronym>SSL</acronym>. The configuration parameters for controlling
+      transfer encryption using <acronym>TLS</acronym> protocols are named
+      <literal>ssl</literal> for historic reasons, even though support for
+      the <acronym>SSL</acronym> protocol has been deprecated.
+      <acronym>SSL</acronym> is in this context used interchangeably with
+      <acronym>TLS</acronym>.
      </para>
 
      <variablelist>

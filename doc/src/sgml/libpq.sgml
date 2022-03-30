@@ -8292,12 +8292,14 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <indexterm zone="libpq-ssl">
    <primary>SSL</primary>
+   <secondary>TLS</secondary>
   </indexterm>
 
   <para>
    <productname>PostgreSQL</productname> has native support for using <acronym>SSL</acronym>
-   connections to encrypt client/server communications for increased
-   security. See <xref linkend="ssl-tcp"/> for details about the server-side
+   connections to encrypt client/server communications using
+   <acronym>TLS</acronym> protocols for increased security.
+   See <xref linkend="ssl-tcp"/> for details about the server-side
    <acronym>SSL</acronym> functionality.
   </para>
 
