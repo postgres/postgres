@@ -1860,10 +1860,15 @@ make_template0(FILE *cmdfd)
 	 * objects in the old cluster, the problem scenario only exists if the OID
 	 * that is in use in the old cluster is also used in the new cluster - and
 	 * the new cluster should be the result of a fresh initdb.)
+	 *
+	 * We use "STRATEGY = file_copy" here because checkpoints during initdb
+	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would
+	 * be a little bit slower and make the new cluster a little bit bigger.
 	 */
 	static const char *const template0_setup[] = {
 		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false OID = "
-		CppAsString2(Template0ObjectId) ";\n\n",
+		CppAsString2(Template0ObjectId)
+		" STRATEGY = file_copy;\n\n",
 
 		/*
 		 * template0 shouldn't have any collation-dependent objects, so unset
@@ -1906,9 +1911,12 @@ make_postgres(FILE *cmdfd)
 {
 	const char *const *line;
 
-	/* Assign a fixed OID to postgres, for the same reasons as template0 */
+	/*
+	 * Just as we did for template0, and for the same reasons, assign a fixed
+	 * OID to postgres and select the file_copy strategy.
+	 */
 	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres OID = " CppAsString2(PostgresObjectId) ";\n\n",
+		"CREATE DATABASE postgres OID = " CppAsString2(PostgresObjectId) " STRATEGY = file_copy;\n\n",
 		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		NULL
 	};
