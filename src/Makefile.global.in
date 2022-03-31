@@ -448,6 +448,7 @@ ifeq ($(enable_tap_tests),yes)
 
 ifndef PGXS
 define prove_installcheck
+echo "+++ tap install-check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
@@ -458,6 +459,7 @@ cd $(srcdir) && \
 endef
 else # PGXS case
 define prove_installcheck
+echo "+++ tap install-check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
@@ -469,6 +471,7 @@ endef
 endif # PGXS
 
 define prove_check
+echo "+++ tap check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
@@ -663,6 +666,7 @@ pg_regress_locale_flags = $(if $(ENCODING),--encoding=$(ENCODING)) $(NOLOCALE)
 pg_regress_clean_files = results/ regression.diffs regression.out tmp_check/ tmp_check_iso/ log/ output_iso/
 
 pg_regress_check = \
+    echo "+++ regress check in $(subdir) +++" && \
     $(with_temp_install) \
     $(top_builddir)/src/test/regress/pg_regress \
     --temp-instance=./tmp_check \
@@ -671,12 +675,14 @@ pg_regress_check = \
     $(TEMP_CONF) \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 pg_regress_installcheck = \
+    echo "+++ regress install-check in $(subdir) +++" && \
     $(top_builddir)/src/test/regress/pg_regress \
     --inputdir=$(srcdir) \
     --bindir='$(bindir)' \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 
 pg_isolation_regress_check = \
+    echo "+++ isolation check in $(subdir) +++" && \
     $(with_temp_install) \
     $(top_builddir)/src/test/isolation/pg_isolation_regress \
     --temp-instance=./tmp_check_iso \
@@ -685,6 +691,7 @@ pg_isolation_regress_check = \
     $(TEMP_CONF) \
     $(pg_regress_locale_flags) $(EXTRA_REGRESS_OPTS)
 pg_isolation_regress_installcheck = \
+    echo "+++ isolation install-check in $(subdir) +++" && \
     $(top_builddir)/src/test/isolation/pg_isolation_regress \
     --inputdir=$(srcdir) --outputdir=output_iso \
     --bindir='$(bindir)' \
