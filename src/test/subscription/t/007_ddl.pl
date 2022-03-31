@@ -41,6 +41,43 @@ COMMIT;
 
 pass "subscription disable and drop in same transaction did not hang";
 
+# One of the specified publications exists.
+my ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
+	"CREATE SUBSCRIPTION mysub1 CONNECTION '$publisher_connstr' PUBLICATION mypub, non_existent_pub"
+);
+ok( $stderr =~
+	  m/WARNING:  publication "non_existent_pub" does not exist in the publisher/,
+	"Create subscription throws warning for non-existent publication");
+
+$node_publisher->wait_for_catchup('mysub1');
+
+# Also wait for initial table sync to finish.
+my $synced_query =
+  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
+# Also wait for initial table sync to finish.
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
+# Specifying non-existent publication along with add publication.
+($ret, $stdout, $stderr) = $node_subscriber->psql(
+	'postgres',
+	"ALTER SUBSCRIPTION mysub1 ADD PUBLICATION non_existent_pub1, non_existent_pub2"
+);
+ok( $stderr =~
+	  m/WARNING:  publications "non_existent_pub1", "non_existent_pub2" do not exist in the publisher/,
+	"Alter subscription add publication throws warning for non-existent publications");
+
+# Specifying non-existent publication along with set publication.
+($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
+	"ALTER SUBSCRIPTION mysub1 SET PUBLICATION non_existent_pub"
+);
+ok( $stderr =~
+	  m/WARNING:  publication "non_existent_pub" does not exist in the publisher/,
+	"Alter subscription set publication throws warning for non-existent publication");
+
 $node_subscriber->stop;
 $node_publisher->stop;
 

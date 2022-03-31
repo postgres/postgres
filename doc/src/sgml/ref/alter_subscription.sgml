@@ -114,7 +114,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       replaces the entire list of publications with a new list,
       <literal>ADD</literal> adds additional publications to the list of
       publications, and <literal>DROP</literal> removes the publications from
-      the list of publications.  See <xref linkend="sql-createsubscription"/>
+      the list of publications.  We allow non-existent publications to be
+      specified in <literal>ADD</literal> and <literal>SET</literal> variants
+      so that users can add those later.  See <xref linkend="sql-createsubscription"/>
       for more information.  By default, this command will also act like
       <literal>REFRESH PUBLICATION</literal>.
      </para>
