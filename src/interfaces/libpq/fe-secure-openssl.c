@@ -1126,7 +1126,7 @@ initialize_SSL(PGconn *conn)
 		if (!S_ISREG(buf.st_mode))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("private key file \"%s\" is not a regular file"),
+							  libpq_gettext("private key file \"%s\" is not a regular file\n"),
 							  fnbuf);
 			return -1;
 		}
