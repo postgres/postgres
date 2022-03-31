@@ -273,7 +273,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   </para>
 
   <para>
-    By constrast, if the table being analyzed has inheritance children,
+    By contrast, if the table being analyzed has inheritance children,
     <command>ANALYZE</command> gathers two sets of statistics: one on the rows
     of the parent table only, and a second including rows of both the parent
     table and all of its children.  This second set of statistics is needed when
