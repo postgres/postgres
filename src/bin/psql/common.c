@@ -32,6 +32,7 @@
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);
+static bool ExecQueryAndProcessResult(const char *query, double *elapsed_msec, bool *svpt_gone_p);
 static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
 
@@ -1195,12 +1196,12 @@ bool
 SendQuery(const char *query)
 {
 	bool		timing = pset.timing;
-	PGresult   *result;
 	PGTransactionStatusType transaction_status;
 	double		elapsed_msec = 0;
 	bool		OK = false;
 	int			i;
 	bool		on_error_rollback_savepoint = false;
+	bool		svpt_gone = false;
 
 	if (!pset.db)
 	{
@@ -1247,6 +1248,8 @@ SendQuery(const char *query)
 		!pset.autocommit &&
 		!command_no_begin(query))
 	{
+		PGresult   *result;
+
 		result = PQexec(pset.db, "BEGIN");
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
 		{
@@ -1264,6 +1267,8 @@ SendQuery(const char *query)
 		(pset.cur_cmd_interactive ||
 		 pset.on_error_rollback == PSQL_ERROR_ROLLBACK_ON))
 	{
+		PGresult   *result;
+
 		result = PQexec(pset.db, "SAVEPOINT pg_psql_temporary_savepoint");
 		if (PQresultStatus(result) != PGRES_COMMAND_OK)
 		{
@@ -1281,41 +1286,18 @@ SendQuery(const char *query)
 		/* Describe query's result columns, without executing it */
 		OK = DescribeQuery(query, &elapsed_msec);
 		ResetCancelConn();
-		result = NULL;			/* PQclear(NULL) does nothing */
 	}
 	else if (pset.fetch_count <= 0 || pset.gexec_flag ||
 			 pset.crosstab_flag || !is_select_command(query))
 	{
 		/* Default fetch-it-all-and-print mode */
-		instr_time	before,
-					after;
-
-		if (timing)
-			INSTR_TIME_SET_CURRENT(before);
-
-		result = PQexec(pset.db, query);
-
-		/* these operations are included in the timing result: */
-		ResetCancelConn();
-		OK = ProcessResult(&result);
-
-		if (timing)
-		{
-			INSTR_TIME_SET_CURRENT(after);
-			INSTR_TIME_SUBTRACT(after, before);
-			elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
-		}
-
-		/* but printing result isn't: */
-		if (OK && result)
-			OK = PrintQueryResult(result);
+		OK = ExecQueryAndProcessResult(query, &elapsed_msec, &svpt_gone);
 	}
 	else
 	{
 		/* Fetch-in-segments mode */
 		OK = ExecQueryUsingCursor(query, &elapsed_msec);
 		ResetCancelConn();
-		result = NULL;			/* PQclear(NULL) does nothing */
 	}
 
 	if (!OK && pset.echo == PSQL_ECHO_ERRORS)
@@ -1340,20 +1322,11 @@ SendQuery(const char *query)
 				break;
 
 			case PQTRANS_INTRANS:
-
 				/*
-				 * Do nothing if they are messing with savepoints themselves:
-				 * If the user did COMMIT AND CHAIN, RELEASE or ROLLBACK, our
-				 * savepoint is gone. If they issued a SAVEPOINT, releasing
-				 * ours would remove theirs.
+				 * Release our savepoint, but do nothing if they are messing
+				 * with savepoints themselves
 				 */
-				if (result &&
-					(strcmp(PQcmdStatus(result), "COMMIT") == 0 ||
-					 strcmp(PQcmdStatus(result), "SAVEPOINT") == 0 ||
-					 strcmp(PQcmdStatus(result), "RELEASE") == 0 ||
-					 strcmp(PQcmdStatus(result), "ROLLBACK") == 0))
-					svptcmd = NULL;
-				else
+				if (!svpt_gone)
 					svptcmd = "RELEASE pg_psql_temporary_savepoint";
 				break;
 
@@ -1379,15 +1352,12 @@ SendQuery(const char *query)
 				ClearOrSaveResult(svptres);
 				OK = false;
 
-				PQclear(result);
 				ResetCancelConn();
 				goto sendquery_cleanup;
 			}
 			PQclear(svptres);
 		}
 	}
-
-	ClearOrSaveResult(result);
 
 	/* Possible microtiming output */
 	if (timing)
@@ -1559,6 +1529,60 @@ DescribeQuery(const char *query, double *elapsed_msec)
 	}
 
 	SetResultVariables(result, OK);
+	ClearOrSaveResult(result);
+
+	return OK;
+}
+
+
+/*
+ * ExecQueryAndProcessResults: SendQuery() subroutine for the normal way to
+ * send a query
+ */
+static bool
+ExecQueryAndProcessResult(const char *query, double *elapsed_msec, bool *svpt_gone_p)
+{
+	bool		timing = pset.timing;
+	bool		OK;
+	instr_time	before,
+				after;
+	PGresult   *result;
+
+	if (timing)
+		INSTR_TIME_SET_CURRENT(before);
+
+	result = PQexec(pset.db, query);
+
+	/* these operations are included in the timing result: */
+	ResetCancelConn();
+	OK = ProcessResult(&result);
+
+	if (timing)
+	{
+		INSTR_TIME_SET_CURRENT(after);
+		INSTR_TIME_SUBTRACT(after, before);
+		*elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
+	}
+
+	/* but printing result isn't: */
+	if (OK && result)
+		OK = PrintQueryResult(result);
+
+	/*
+	 * Check if the user ran any command that would destroy our internal
+	 * savepoint: If the user did COMMIT AND CHAIN, RELEASE or ROLLBACK, our
+	 * savepoint is gone. If they issued a SAVEPOINT, releasing ours would
+	 * remove theirs.
+	 */
+	if (result && svpt_gone_p)
+	{
+		const char *cmd = PQcmdStatus(result);
+		*svpt_gone_p = (strcmp(cmd, "COMMIT") == 0 ||
+						strcmp(cmd, "SAVEPOINT") == 0 ||
+						strcmp(cmd, "RELEASE") == 0 ||
+						strcmp(cmd, "ROLLBACK") == 0);
+	}
+
 	ClearOrSaveResult(result);
 
 	return OK;
