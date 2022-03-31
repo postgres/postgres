@@ -1388,7 +1388,7 @@ sub _set_pg_version
 #
 # Routines that call Postgres binaries need to call this routine like this:
 #
-#    local %ENV = $self->_get_env{[%extra_settings]);
+#    local %ENV = $self->_get_env([%extra_settings]);
 #
 # A copy of the environment is taken and node's host and port settings are
 # added as PGHOST and PGPORT, then the extra settings (if any) are applied.
