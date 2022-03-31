@@ -4077,15 +4077,18 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	plpgsql_create_econtext(estate);
 
 	/*
-	 * Let the plugin see this function before we initialize any local
-	 * PL/pgSQL variables - note that we also give the plugin a few function
-	 * pointers so it can call back into PL/pgSQL for doing things like
-	 * variable assignments and stack traces
+	 * Let the plugin, if any, see this function before we initialize local
+	 * PL/pgSQL variables.  Note that we also give the plugin a few function
+	 * pointers, so it can call back into PL/pgSQL for doing things like
+	 * variable assignments and stack traces.
 	 */
 	if (*plpgsql_plugin_ptr)
 	{
 		(*plpgsql_plugin_ptr)->error_callback = plpgsql_exec_error_callback;
 		(*plpgsql_plugin_ptr)->assign_expr = exec_assign_expr;
+		(*plpgsql_plugin_ptr)->assign_value = exec_assign_value;
+		(*plpgsql_plugin_ptr)->eval_datum = exec_eval_datum;
+		(*plpgsql_plugin_ptr)->cast_value = exec_cast_value;
 
 		if ((*plpgsql_plugin_ptr)->func_setup)
 			((*plpgsql_plugin_ptr)->func_setup) (estate, func);
