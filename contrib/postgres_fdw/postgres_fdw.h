@@ -143,6 +143,9 @@ extern bool is_foreign_expr(PlannerInfo *root,
 extern bool is_foreign_param(PlannerInfo *root,
 				 RelOptInfo *baserel,
 				 Expr *expr);
+extern bool is_foreign_pathkey(PlannerInfo *root,
+							   RelOptInfo *baserel,
+							   PathKey *pathkey);
 extern void deparseInsertSql(StringInfo buf, PlannerInfo *root,
 				 Index rtindex, Relation rel,
 				 List *targetAttrs, bool doNothing, List *returningList,
@@ -173,7 +176,9 @@ extern void deparseAnalyzeSizeSql(StringInfo buf, Relation rel);
 extern void deparseAnalyzeSql(StringInfo buf, Relation rel,
 				  List **retrieved_attrs);
 extern void deparseStringLiteral(StringInfo buf, const char *val);
-extern Expr *find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel);
+extern EquivalenceMember *find_em_for_rel(PlannerInfo *root,
+										  EquivalenceClass *ec,
+										  RelOptInfo *rel);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
 						RelOptInfo *foreignrel, List *tlist,

@@ -17,6 +17,7 @@
 #include "access/htup_details.h"
 #include "access/sysattr.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_opfamily.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/vacuum.h"
@@ -788,8 +789,6 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 		foreach(lc, root->query_pathkeys)
 		{
 			PathKey    *pathkey = (PathKey *) lfirst(lc);
-			EquivalenceClass *pathkey_ec = pathkey->pk_eclass;
-			Expr	   *em_expr;
 
 			/*
 			 * The planner and executor don't have any clever strategy for
@@ -797,13 +796,8 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 			 * getting it to be sorted by all of those pathkeys. We'll just
 			 * end up resorting the entire data set.  So, unless we can push
 			 * down all of the query pathkeys, forget it.
-			 *
-			 * is_foreign_expr would detect volatile expressions as well, but
-			 * checking ec_has_volatile here saves some cycles.
 			 */
-			if (pathkey_ec->ec_has_volatile ||
-				!(em_expr = find_em_expr_for_rel(pathkey_ec, rel)) ||
-				!is_foreign_expr(root, rel, em_expr))
+			if (!is_foreign_pathkey(root, rel, pathkey))
 			{
 				query_pathkeys_ok = false;
 				break;
@@ -847,16 +841,19 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel)
 	foreach(lc, useful_eclass_list)
 	{
 		EquivalenceClass *cur_ec = lfirst(lc);
-		Expr	   *em_expr;
 		PathKey    *pathkey;
 
 		/* If redundant with what we did above, skip it. */
 		if (cur_ec == query_ec)
 			continue;
 
+		/* Can't push down the sort if the EC's opfamily is not shippable. */
+		if (!is_shippable(linitial_oid(cur_ec->ec_opfamilies),
+						  OperatorFamilyRelationId, fpinfo))
+			continue;
+
 		/* If no pushable expression for this rel, skip it. */
-		em_expr = find_em_expr_for_rel(cur_ec, rel);
-		if (em_expr == NULL || !is_foreign_expr(root, rel, em_expr))
+		if (find_em_for_rel(root, cur_ec, rel) == NULL)
 			continue;
 
 		/* Looks like we can generate a pathkey, so let's do it. */
@@ -5247,30 +5244,35 @@ conversion_error_callback(void *arg)
 }
 
 /*
- * Find an equivalence class member expression, all of whose Vars, come from
- * the indicated relation.
+ * Given an EquivalenceClass and a foreign relation, find an EC member
+ * that can be used to sort the relation remotely according to a pathkey
+ * using this EC.
+ *
+ * If there is more than one suitable candidate, return an arbitrary
+ * one of them.  If there is none, return NULL.
+ *
+ * This checks that the EC member expression uses only Vars from the given
+ * rel and is shippable.  Caller must separately verify that the pathkey's
+ * ordering operator is shippable.
  */
-extern Expr *
-find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
+EquivalenceMember *
+find_em_for_rel(PlannerInfo *root, EquivalenceClass *ec, RelOptInfo *rel)
 {
-	ListCell   *lc_em;
+	ListCell   *lc;
 
-	foreach(lc_em, ec->ec_members)
+	foreach(lc, ec->ec_members)
 	{
-		EquivalenceMember *em = lfirst(lc_em);
+		EquivalenceMember *em = (EquivalenceMember *) lfirst(lc);
 
+		/*
+		 * Note we require !bms_is_empty, else we'd accept constant
+		 * expressions which are not suitable for the purpose.
+		 */
 		if (bms_is_subset(em->em_relids, rel->relids) &&
-			!bms_is_empty(em->em_relids))
-		{
-			/*
-			 * If there is more than one equivalence member whose Vars are
-			 * taken entirely from this relation, we'll be content to choose
-			 * any one of those.
-			 */
-			return em->em_expr;
-		}
+			!bms_is_empty(em->em_relids) &&
+			is_foreign_expr(root, rel, em->em_expr))
+			return em;
 	}
 
-	/* We didn't find any suitable equivalence class expression */
 	return NULL;
 }
