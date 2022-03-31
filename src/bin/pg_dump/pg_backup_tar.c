@@ -65,11 +65,6 @@ static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 
 typedef struct
 {
-#ifdef HAVE_LIBZ
-	gzFile		zFH;
-#else
-	FILE	   *zFH;
-#endif
 	FILE	   *nFH;
 	FILE	   *tarFH;
 	FILE	   *tmpFH;
@@ -248,14 +243,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
 	if (te->dataDumper != NULL)
 	{
-#ifdef HAVE_LIBZ
-		if (AH->compression == 0)
-			sprintf(fn, "%d.dat", te->dumpId);
-		else
-			sprintf(fn, "%d.dat.gz", te->dumpId);
-#else
-		sprintf(fn, "%d.dat", te->dumpId);
-#endif
+		snprintf(fn, sizeof(fn), "%d.dat", te->dumpId);
 		ctx->filename = pg_strdup(fn);
 	}
 	else
@@ -320,10 +308,6 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	TAR_MEMBER *tm;
 
-#ifdef HAVE_LIBZ
-	char		fmode[14];
-#endif
-
 	if (mode == 'r')
 	{
 		tm = _tarPositionTo(AH, filename);
@@ -344,16 +328,10 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 			}
 		}
 
-#ifdef HAVE_LIBZ
-
 		if (AH->compression == 0)
 			tm->nFH = ctx->tarFH;
 		else
 			fatal("compression is not supported by tar archive format");
-		/* tm->zFH = gzdopen(dup(fileno(ctx->tarFH)), "rb"); */
-#else
-		tm->nFH = ctx->tarFH;
-#endif
 	}
 	else
 	{
@@ -405,21 +383,10 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		umask(old_umask);
 
-#ifdef HAVE_LIBZ
-
-		if (AH->compression != 0)
-		{
-			sprintf(fmode, "wb%d", AH->compression);
-			tm->zFH = gzdopen(dup(fileno(tm->tmpFH)), fmode);
-			if (tm->zFH == NULL)
-				fatal("could not open temporary file");
-		}
-		else
+		if (AH->compression == 0)
 			tm->nFH = tm->tmpFH;
-#else
-
-		tm->nFH = tm->tmpFH;
-#endif
+		else
+			fatal("compression is not supported by tar archive format");
 
 		tm->AH = AH;
 		tm->targetFile = pg_strdup(filename);
@@ -434,15 +401,8 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 static void
 tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 {
-	/*
-	 * Close the GZ file since we dup'd. This will flush the buffers.
-	 */
 	if (AH->compression != 0)
-	{
-		errno = 0;				/* in case gzclose() doesn't set it */
-		if (GZCLOSE(th->zFH) != 0)
-			fatal("could not close tar member: %m");
-	}
+		fatal("compression is not supported by tar archive format");
 
 	if (th->mode == 'w')
 		_tarAddFile(AH, th);	/* This will close the temp file */
@@ -456,7 +416,6 @@ tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 		free(th->targetFile);
 
 	th->nFH = NULL;
-	th->zFH = NULL;
 }
 
 #ifdef __NOT_USED__
@@ -542,29 +501,9 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 		}
 		else if (th)
 		{
-			if (th->zFH)
-			{
-				res = GZREAD(&((char *) buf)[used], 1, len, th->zFH);
-				if (res != len && !GZEOF(th->zFH))
-				{
-#ifdef HAVE_LIBZ
-					int			errnum;
-					const char *errmsg = gzerror(th->zFH, &errnum);
-
-					fatal("could not read from input file: %s",
-						  errnum == Z_ERRNO ? strerror(errno) : errmsg);
-#else
-					fatal("could not read from input file: %s",
-						  strerror(errno));
-#endif
-				}
-			}
-			else
-			{
-				res = fread(&((char *) buf)[used], 1, len, th->nFH);
-				if (res != len && !feof(th->nFH))
-					READ_ERROR_EXIT(th->nFH);
-			}
+			res = fread(&((char *) buf)[used], 1, len, th->nFH);
+			if (res != len && !feof(th->nFH))
+				READ_ERROR_EXIT(th->nFH);
 		}
 	}
 
@@ -596,10 +535,7 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 {
 	size_t		res;
 
-	if (th->zFH != NULL)
-		res = GZWRITE(buf, 1, len, th->zFH);
-	else
-		res = fwrite(buf, 1, len, th->nFH);
+	res = fwrite(buf, 1, len, th->nFH);
 
 	th->pos += res;
 	return res;
@@ -949,17 +885,14 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 	char		fname[255];
-	char	   *sfx;
 
 	if (oid == 0)
 		fatal("invalid OID for large object (%u)", oid);
 
 	if (AH->compression != 0)
-		sfx = ".gz";
-	else
-		sfx = "";
+		fatal("compression is not supported by tar archive format");
 
-	sprintf(fname, "blob_%u.dat%s", oid, sfx);
+	sprintf(fname, "blob_%u.dat", oid);
 
 	tarPrintf(ctx->blobToc, "%u %s\n", oid, fname);
 
