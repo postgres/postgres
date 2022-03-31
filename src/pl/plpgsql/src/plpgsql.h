@@ -1151,7 +1151,7 @@ typedef struct PLpgSQL_plugin
 								 Datum value, bool isNull,
 								 Oid valtype, int32 valtypmod);
 	void		(*eval_datum) (PLpgSQL_execstate *estate, PLpgSQL_datum *datum,
-							   Oid *typeid, int32 *typetypmod,
+							   Oid *typeId, int32 *typetypmod,
 							   Datum *value, bool *isnull);
 	Datum		(*cast_value) (PLpgSQL_execstate *estate,
 							   Datum value, bool *isnull,
