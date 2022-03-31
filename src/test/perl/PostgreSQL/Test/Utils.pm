@@ -426,8 +426,16 @@ sub pump_until
 	while (1)
 	{
 		last if $$stream =~ /$until/;
-		return 0 if ($timeout->is_expired);
-		return 0 if (not $proc->pumpable());
+		if ($timeout->is_expired)
+		{
+			diag("pump_until: timeout expired when searching for \"$until\" with stream: \"$$stream\"");
+			return 0;
+		}
+		if (not $proc->pumpable())
+		{
+			diag("pump_until: process terminated unexpectedly when searching for \"$until\" with stream: \"$$stream\"");
+			return 0;
+		}
 		$proc->pump();
 	}
 	return 1;
