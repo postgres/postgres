@@ -4251,7 +4251,7 @@ transformJsonFuncExprOutput(ParseState *pstate,	JsonFuncExpr *func,
 }
 
 /*
- * Coerce a expression in JSON DEFAULT behavior to the target output type.
+ * Coerce an expression in JSON DEFAULT behavior to the target output type.
  */
 static Node *
 coerceDefaultJsonExpr(ParseState *pstate, JsonExpr *jsexpr, Node *defexpr)

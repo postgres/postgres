@@ -1001,7 +1001,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Try to find a expression computable from the reltarget.
+	 * Try to find an expression computable from the reltarget.
 	 */
 	em = find_computable_ec_member(root, ec, target->exprs, rel->relids,
 								   require_parallel_safe);
