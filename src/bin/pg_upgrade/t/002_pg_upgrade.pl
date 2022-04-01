@@ -4,6 +4,7 @@ use warnings;
 
 use Cwd qw(abs_path getcwd);
 use File::Basename qw(dirname);
+use File::Compare;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
@@ -111,8 +112,18 @@ else
 		$inputdir
 	];
 
-	$oldnode->command_ok(@regress_command,
-		'regression test run on old instance');
+	my $rc = run_log(@regress_command);
+	if ($rc != 0)
+	{
+		# Dump out the regression diffs file, if there is one
+		my $diffs = "$outputdir/regression.diffs";
+		if (-e $diffs)
+		{
+			print "=== dumping $diffs ===\n";
+			print slurp_file($diffs);
+			print "=== EOF ===\n";
+		}
+	}
 }
 
 # Before dumping, get rid of objects not existing or not supported in later
@@ -214,11 +225,9 @@ if (-d $log_path)
 {
 	foreach my $log (glob("$log_path/*"))
 	{
-		note "###########################";
-		note "Contents of log file $log";
-		note "###########################";
-		my $log_contents = slurp_file($log);
-		print "$log_contents\n";
+		note "=== contents of $log ===\n";
+		print slurp_file($log);
+		print "=== EOF ===\n";
 	}
 }
 
@@ -231,7 +240,20 @@ $newnode->run_log(
 	]);
 
 # Compare the two dumps, there should be no differences.
-command_ok([ 'diff', '-q', "$tempdir/dump1.sql", "$tempdir/dump2.sql" ],
-	'old and new dump match after pg_upgrade');
+my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");
+is($compare_res, 0, 'old and new dumps match after pg_upgrade');
+
+# Provide more context if the dumps do not match.
+if ($compare_res != 0)
+{
+	my ($stdout, $stderr) =
+	  run_command([ 'diff', "$tempdir/dump1.sql", "$tempdir/dump2.sql" ]);
+	print "=== diff of $tempdir/dump1.sql and $tempdir/dump2.sql\n";
+	print "=== stdout ===\n";
+	print $stdout;
+	print "=== stderr ===\n";
+	print $stderr;
+	print "=== EOF ===\n";
+}
 
 done_testing();
