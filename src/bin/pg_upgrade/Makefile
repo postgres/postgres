@@ -28,6 +28,10 @@ OBJS = \
 override CPPFLAGS := -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
+# required for 002_pg_upgrade.pl
+REGRESS_SHLIB=$(abs_top_builddir)/src/test/regress/regress$(DLSUFFIX)
+export REGRESS_SHLIB
+
 all: pg_upgrade
 
 pg_upgrade: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
@@ -47,17 +51,8 @@ clean distclean maintainer-clean:
 	rm -rf delete_old_cluster.sh log/ tmp_check/ \
 	       reindex_hash.sql
 
-# When $(MAKE) is present, make automatically infers that this is a
-# recursive make. which is not actually what we want here, as that
-# e.g. prevents output synchronization from working (as make thinks
-# that the subsidiary make knows how to deal with that itself, but
-# we're invoking a shell script that doesn't know). Referencing
-# $(MAKE) indirectly avoids that behaviour.
-# See https://www.gnu.org/software/make/manual/html_node/MAKE-Variable.html#MAKE-Variable
-NOTSUBMAKEMAKE=$(MAKE)
+check:
+	$(prove_check)
 
-check: test.sh all temp-install
-	MAKE=$(NOTSUBMAKEMAKE) $(with_temp_install) bindir=$(abs_top_builddir)/tmp_install/$(bindir) EXTRA_REGRESS_OPTS="$(EXTRA_REGRESS_OPTS)" $(SHELL) $<
-
-# installcheck is not supported because there's no meaningful way to test
-# pg_upgrade against a single already-running server
+installcheck:
+	$(prove_installcheck)

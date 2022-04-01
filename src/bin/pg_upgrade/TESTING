@@ -2,25 +2,22 @@ THE SHORT VERSION
 -----------------
 
 On non-Windows machines, you can execute the testing process
-described below by running
+described below by running the following command in this directory:
 	make check
-in this directory.  This will run the shell script test.sh, performing
-an upgrade from the version in this source tree to a new instance of
-the same version.
 
-To test an upgrade from a different version, you must have a built
-source tree for the old version as well as this version, and you
-must have done "make install" for both versions.  Then do:
+This will run the TAP tests to run pg_upgrade, performing an upgrade
+from the version in this source tree to a new instance of the same
+version.
 
-export oldsrc=...somewhere/postgresql	(old version's source tree)
-export oldbindir=...otherversion/bin	(old version's installed bin dir)
-export bindir=...thisversion/bin	(this version's installed bin dir)
-export libdir=...thisversion/lib	(this version's installed lib dir)
-sh test.sh
+Testing an upgrade from a different version requires a dump to set up
+the contents of this instance, with its set of binaries.  The following
+variables are available to control the test (see DETAILS below about
+the creation of the dump):
+export olddump=...somewhere/dump.sql	(old version's dump)
+export oldinstall=...otherversion/	(old version's install base path)
 
-In this case, you will have to manually eyeball the resulting dump
-diff for version-specific differences, as explained below.
-
+Finally, the tests can be done by running
+	make check
 
 DETAILS
 -------
@@ -29,51 +26,22 @@ The most effective way to test pg_upgrade, aside from testing on user
 data, is by upgrading the PostgreSQL regression database.
 
 This testing process first requires the creation of a valid regression
-database dump.  Such files contain most database features and are
-specific to each major version of Postgres.
+database dump that can be then used for $olddump.  Such files contain
+most database features and are specific to each major version of Postgres.
 
-Here are the steps needed to create a regression database dump file:
+Here are the steps needed to create a dump file:
 
 1)  Create and populate the regression database in the old cluster.
     This database can be created by running 'make installcheck' from
-    src/test/regress.
+    src/test/regress using its source code tree.
 
-2)  Use pg_dump to dump out the regression database.  Use the new
-    cluster's pg_dump on the old database to minimize whitespace
-    differences in the diff.
+2)  Use pg_dumpall to dump out the contents of the instance, including the
+    regression database, in the shape of a SQL file.  This requires the *old*
+    cluster's pg_dumpall so as the dump created is compatible with the
+    version of the cluster it is dumped into.
 
-3)  Adjust the regression database dump file
-
-    a)  Perform the load/dump twice
-        This fixes problems with the ordering of COPY columns for
-        inherited tables.
-
-    b)  Change CREATE FUNCTION shared object paths to use '$libdir'
-        The old and new cluster will have different shared object paths.
-
-    c)  Fix any wrapping format differences
-        Commands like CREATE TRIGGER and ALTER TABLE sometimes have
-        differences.
-
-Once the dump is created, it can be repeatedly loaded into the old
-database, upgraded, and dumped out of the new database, and then
-compared to the original version. To test the dump file, perform these
-steps:
-
-1)  Create the old and new clusters in different directories.
-
-2)  Copy the regression shared object files into the appropriate /lib
-    directory for old and new clusters.
-
-3)  Create the regression database in the old server.
-
-4)  Load the dump file created above into the regression database;
-    check for errors while loading.
-
-5)  Upgrade the old database to the new major version, as outlined in
-    the pg_upgrade manual section.
-
-6)  Use pg_dump to dump out the regression database in the new cluster.
-
-7)  Diff the regression database dump file with the regression dump
-    file loaded into the old server.
+Once the dump is created, it can be repeatedly used with $olddump and
+`make check`, that automates the dump of the old database, its upgrade,
+the dump out of the new database and the comparison of the dumps between
+the old and new databases.  The contents of the dumps can also be manually
+compared.
