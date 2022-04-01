@@ -1366,7 +1366,13 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
     existing column, if the <literal>USING</literal> clause does not change
     the column contents and the old type is either binary coercible to the new
     type or an unconstrained domain over the new type, a table rewrite is not
-    needed; but any indexes on the affected columns must still be rebuilt.
+    needed. However, indexes must always be rebuilt unless the system can
+    verify that the new index would be logically equivalent to the existing
+    one.  For example, if the collation for a column has been changed an index
+    rebuild is always required because the new sort order might be different.
+    However, in the absence of a collation change, a column can be changed
+    from <type>text</type> to <type>varchar</type> (or vice versa) without
+    rebuilding the indexes because these data types sort identically.
     Table and/or index rebuilds may take a
     significant amount of time for a large table; and will temporarily require
     as much as double the disk space.
