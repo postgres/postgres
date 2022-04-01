@@ -1073,7 +1073,7 @@ AC_MSG_RESULT([$with_zstd])
 AC_SUBST(with_zstd)
 
 if test "$with_zstd" = yes; then
-  PKG_CHECK_MODULES(ZSTD, libzstd)
+  PKG_CHECK_MODULES(ZSTD, libzstd >= 1.4.0)
   # We only care about -I, -D, and -L switches;
   # note that -lzstd will be added by AC_CHECK_LIB below.
   for pgac_option in $ZSTD_CFLAGS; do

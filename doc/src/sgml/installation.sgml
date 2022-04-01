@@ -250,7 +250,7 @@ su - postgres
       encrypted client connections.  <productname>OpenSSL</productname> is
       also required for random number generation on platforms that do not
       have <filename>/dev/urandom</filename> (except Windows).  The minimum
-      version required is 1.0.1.
+      required version is 1.0.1.
      </para>
     </listitem>
 
@@ -265,7 +265,7 @@ su - postgres
     <listitem>
      <para>
       You need <productname>LZ4</productname>, if you want to support
-      compression of data with this method; see
+      compression of data with that method; see
       <xref linkend="guc-default-toast-compression"/> and
       <xref linkend="guc-wal-compression"/>.
      </para>
@@ -274,8 +274,9 @@ su - postgres
     <listitem>
      <para>
       You need <productname>zstd</productname>, if you want to support
-      compression of data with this method; see
+      compression of data with that method; see
       <xref linkend="guc-wal-compression"/>.
+      The minimum required version is 1.4.0.
      </para>
     </listitem>
 
