@@ -305,6 +305,64 @@ $node->connect_fails(
 	  qr/\Qserver certificate for "single.alt-name.pg-ssltest.test" does not match host name "deep.subdomain.wildcard.pg-ssltest.test"\E/
 );
 
+SKIP:
+{
+	skip 'IPv6 addresses in certificates not support on this platform', 1
+	  unless check_pg_config('#define HAVE_INET_PTON 1');
+
+	# Test certificate with IP addresses in the SANs.
+	switch_server_cert($node, certfile => 'server-ip-alt-names');
+
+	$node->connect_ok("$common_connstr host=192.0.2.1",
+		"host matching an IPv4 address (Subject Alternative Name 1)");
+
+	$node->connect_ok(
+		"$common_connstr host=192.000.002.001",
+		"host matching an IPv4 address in alternate form (Subject Alternative Name 1)"
+	);
+
+	$node->connect_fails(
+		"$common_connstr host=192.0.2.2",
+		"host not matching an IPv4 address (Subject Alternative Name 1)",
+		expected_stderr =>
+		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "192.0.2.2"\E/
+	);
+
+	$node->connect_fails(
+		"$common_connstr host=192.0.2.1/32",
+		"IPv4 host with CIDR mask does not match",
+		expected_stderr =>
+		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "192.0.2.1\/32"\E/
+	);
+
+	$node->connect_ok("$common_connstr host=2001:DB8::1",
+		"host matching an IPv6 address (Subject Alternative Name 2)");
+
+	$node->connect_ok(
+		"$common_connstr host=2001:db8:0:0:0:0:0:1",
+		"host matching an IPv6 address in alternate form (Subject Alternative Name 2)"
+	);
+
+	$node->connect_ok(
+		"$common_connstr host=2001:db8::0.0.0.1",
+		"host matching an IPv6 address in mixed form (Subject Alternative Name 2)"
+	);
+
+	$node->connect_fails(
+		"$common_connstr host=::1",
+		"host not matching an IPv6 address (Subject Alternative Name 2)",
+		expected_stderr =>
+		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "::1"\E/
+	);
+
+	$node->connect_fails(
+		"$common_connstr host=2001:DB8::1/128",
+		"IPv6 host with CIDR mask does not match",
+		expected_stderr =>
+		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "2001:DB8::1\/128"\E/
+	);
+}
+
 # Test server certificate with a CN and DNS SANs. Per RFCs 2818 and 6125, the CN
 # should be ignored when the certificate has both.
 switch_server_cert($node, certfile => 'server-cn-and-alt-names');
@@ -322,6 +380,46 @@ $node->connect_fails(
 	expected_stderr =>
 	  qr/\Qserver certificate for "dns1.alt-name.pg-ssltest.test" (and 1 other name) does not match host name "common-name.pg-ssltest.test"\E/
 );
+
+SKIP:
+{
+	skip 'IPv6 addresses in certificates not support on this platform', 1
+	  unless check_pg_config('#define HAVE_INET_PTON 1');
+
+	# But we will fall back to check the CN if the SANs contain only IP addresses.
+	switch_server_cert($node, certfile => 'server-cn-and-ip-alt-names');
+
+	$node->connect_ok(
+		"$common_connstr host=common-name.pg-ssltest.test",
+		"certificate with both a CN and IP SANs matches CN");
+	$node->connect_ok("$common_connstr host=192.0.2.1",
+		"certificate with both a CN and IP SANs matches SAN 1");
+	$node->connect_ok("$common_connstr host=2001:db8::1",
+		"certificate with both a CN and IP SANs matches SAN 2");
+
+	# And now the same tests, but with IP addresses and DNS names swapped.
+	switch_server_cert($node, certfile => 'server-ip-cn-and-alt-names');
+
+	$node->connect_ok("$common_connstr host=192.0.2.2",
+		"certificate with both an IP CN and IP SANs 1");
+	$node->connect_ok("$common_connstr host=2001:db8::1",
+		"certificate with both an IP CN and IP SANs 2");
+	$node->connect_fails(
+		"$common_connstr host=192.0.2.1",
+		"certificate with both an IP CN and IP SANs ignores CN",
+		expected_stderr =>
+		  qr/\Qserver certificate for "192.0.2.2" (and 1 other name) does not match host name "192.0.2.1"\E/
+	);
+}
+
+switch_server_cert($node, certfile => 'server-ip-cn-and-dns-alt-names');
+
+$node->connect_ok("$common_connstr host=192.0.2.1",
+	"certificate with both an IP CN and DNS SANs matches CN");
+$node->connect_ok("$common_connstr host=dns1.alt-name.pg-ssltest.test",
+	"certificate with both an IP CN and DNS SANs matches SAN 1");
+$node->connect_ok("$common_connstr host=dns2.alt-name.pg-ssltest.test",
+	"certificate with both an IP CN and DNS SANs matches SAN 2");
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
 # not a very sensible certificate, but libpq should handle it gracefully.

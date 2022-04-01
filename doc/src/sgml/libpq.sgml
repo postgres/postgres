@@ -8356,15 +8356,30 @@ ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
 
   <para>
    In <literal>verify-full</literal> mode, the host name is matched against the
-   certificate's Subject Alternative Name attribute(s), or against the
-   Common Name attribute if no Subject Alternative Name of type <literal>dNSName</literal> is
+   certificate's Subject Alternative Name attribute(s) (SAN), or against the
+   Common Name attribute if no SAN of type <literal>dNSName</literal> is
    present.  If the certificate's name attribute starts with an asterisk
    (<literal>*</literal>), the asterisk will be treated as
    a wildcard, which will match all characters <emphasis>except</emphasis> a dot
    (<literal>.</literal>). This means the certificate will not match subdomains.
    If the connection is made using an IP address instead of a host name, the
-   IP address will be matched (without doing any DNS lookups).
+   IP address will be matched (without doing any DNS lookups) against SANs of
+   type <literal>iPAddress</literal> or <literal>dNSName</literal>.  If no
+   <literal>iPAddress</literal> SAN is present and no
+   matching <literal>dNSName</literal> SAN is present, the host IP address is
+   matched against the Common Name attribute.
   </para>
+
+  <note>
+   <para>
+    For backward compatibility with earlier versions of PostgreSQL, the host
+    IP address is verified in a manner different
+    from <ulink url="https://tools.ietf.org/html/rfc6125">RFC 6125</ulink>.
+    The host IP address is always matched against <literal>dNSName</literal>
+    SANs as well as <literal>iPAddress</literal> SANs, and can be matched
+    against the Common Name attribute if no relevant SANs exist.
+   </para>
+  </note>
 
   <para>
    To allow server certificate verification, one or more root certificates

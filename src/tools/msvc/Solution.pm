@@ -288,6 +288,7 @@ sub GenerateFiles
 		HAVE_HISTORY_TRUNCATE_FILE                  => undef,
 		HAVE_IFADDRS_H                              => undef,
 		HAVE_INET_ATON                              => undef,
+		HAVE_INET_PTON                              => 1,
 		HAVE_INT_TIMEZONE                           => 1,
 		HAVE_INT64                                  => undef,
 		HAVE_INT8                                   => undef,

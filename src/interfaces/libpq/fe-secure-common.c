@@ -19,6 +19,8 @@
 
 #include "postgres_fe.h"
 
+#include <arpa/inet.h>
+
 #include "fe-secure-common.h"
 
 #include "libpq-int.h"
@@ -142,6 +144,108 @@ pq_verify_peer_name_matches_certificate_name(PGconn *conn,
 
 	*store_name = name;
 	return result;
+}
+
+/*
+ * Check if an IP address from a server's certificate matches the peer's
+ * hostname (which must itself be an IPv4/6 address).
+ *
+ * Returns 1 if the address matches, and 0 if it does not. On error, returns
+ * -1, and sets the libpq error message.
+ *
+ * A string representation of the certificate's IP address is returned in
+ * *store_name. The caller is responsible for freeing it.
+ */
+int
+pq_verify_peer_name_matches_certificate_ip(PGconn *conn,
+										   const unsigned char *ipdata,
+										   size_t iplen,
+										   char **store_name)
+{
+	char	   *addrstr;
+	int			match = 0;
+	char	   *host = conn->connhost[conn->whichhost].host;
+	int			family;
+	char		tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+	char		sebuf[PG_STRERROR_R_BUFLEN];
+
+	*store_name = NULL;
+
+	if (!(host && host[0] != '\0'))
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("host name must be specified\n"));
+		return -1;
+	}
+
+	/*
+	 * The data from the certificate is in network byte order. Convert our
+	 * host string to network-ordered bytes as well, for comparison. (The host
+	 * string isn't guaranteed to actually be an IP address, so if this
+	 * conversion fails we need to consider it a mismatch rather than an
+	 * error.)
+	 */
+	if (iplen == 4)
+	{
+		/* IPv4 */
+		struct in_addr addr;
+
+		family = AF_INET;
+
+		/*
+		 * The use of inet_aton() is deliberate; we accept alternative IPv4
+		 * address notations that are accepted by inet_aton() but not
+		 * inet_pton() as server addresses.
+		 */
+		if (inet_aton(host, &addr))
+		{
+			if (memcmp(ipdata, &addr.s_addr, iplen) == 0)
+				match = 1;
+		}
+	}
+	/*
+	 * If they don't have inet_pton(), skip this.  Then, an IPv6 address in a
+	 * certificate will cause an error.
+	 */
+#ifdef HAVE_INET_PTON
+	else if (iplen == 16)
+	{
+		/* IPv6 */
+		struct in6_addr addr;
+
+		family = AF_INET6;
+
+		if (inet_pton(AF_INET6, host, &addr) == 1)
+		{
+			if (memcmp(ipdata, &addr.s6_addr, iplen) == 0)
+				match = 1;
+		}
+	}
+#endif
+	else
+	{
+		/*
+		 * Not IPv4 or IPv6. We could ignore the field, but leniency seems
+		 * wrong given the subject matter.
+		 */
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("certificate contains IP address with invalid length %lu\n"),
+						  (unsigned long) iplen);
+		return -1;
+	}
+
+	/* Generate a human-readable representation of the certificate's IP. */
+	addrstr = pg_inet_net_ntop(family, ipdata, 8 * iplen, tmp, sizeof(tmp));
+	if (!addrstr)
+	{
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("could not convert certificate's IP address to string: %s\n"),
+						  strerror_r(errno, sebuf, sizeof(sebuf)));
+		return -1;
+	}
+
+	*store_name = strdup(addrstr);
+	return match;
 }
 
 /*
