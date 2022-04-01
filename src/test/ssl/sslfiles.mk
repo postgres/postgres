@@ -23,6 +23,8 @@
 #
 SERVERS := server-cn-and-alt-names \
 	server-cn-only \
+	server-ip-cn-only \
+	server-ip-in-dnsname \
 	server-single-alt-name \
 	server-multiple-alt-names \
 	server-no-names \
