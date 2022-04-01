@@ -1774,7 +1774,7 @@ _bt_killitems(IndexScanDesc scan)
 		}
 	}
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque = BTPageGetOpaque(page);
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
 
@@ -2474,7 +2474,7 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 {
 	int16		natts = IndexRelationGetNumberOfAttributes(rel);
 	int16		nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	IndexTuple	itup;
 	int			tupnatts;
 
@@ -2662,7 +2662,7 @@ _bt_check_third_page(Relation rel, Relation heap, bool needheaptidspace,
 	 * Internal page insertions cannot fail here, because that would mean that
 	 * an earlier leaf level insertion that should have failed didn't
 	 */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque = BTPageGetOpaque(page);
 	if (!P_ISLEAF(opaque))
 		elog(ERROR, "cannot insert oversized tuple of size %zu on internal page of index \"%s\"",
 			 itemsz, RelationGetRelationName(rel));

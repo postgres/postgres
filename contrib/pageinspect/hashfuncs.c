@@ -72,7 +72,7 @@ verify_hash_page(bytea *raw_page, int flags)
 							   (int) MAXALIGN(sizeof(HashPageOpaqueData)),
 							   (int) PageGetSpecialSize(page))));
 
-		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		pageopaque = HashPageGetOpaque(page);
 		if (pageopaque->hasho_page_id != HASHO_PAGE_ID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -154,7 +154,7 @@ static void
 GetHashPageStatistics(Page page, HashPageStat *stat)
 {
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
-	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	HashPageOpaque opaque = HashPageGetOpaque(page);
 	int			off;
 
 	stat->dead_items = stat->live_items = 0;
@@ -206,7 +206,7 @@ hash_page_type(PG_FUNCTION_ARGS)
 		type = "unused";
 	else
 	{
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 
 		/* page type (flags) */
 		pagetype = opaque->hasho_flag & LH_PAGE_TYPE;

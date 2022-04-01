@@ -85,6 +85,8 @@ typedef struct HashPageOpaqueData
 
 typedef HashPageOpaqueData *HashPageOpaque;
 
+#define HashPageGetOpaque(page) ((HashPageOpaque) PageGetSpecialPointer(page))
+
 #define H_NEEDS_SPLIT_CLEANUP(opaque)	(((opaque)->hasho_flag & LH_BUCKET_NEEDS_SPLIT_CLEANUP) != 0)
 #define H_BUCKET_BEING_SPLIT(opaque)	(((opaque)->hasho_flag & LH_BUCKET_BEING_SPLIT) != 0)
 #define H_BUCKET_BEING_POPULATED(opaque)	(((opaque)->hasho_flag & LH_BUCKET_BEING_POPULATED) != 0)

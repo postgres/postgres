@@ -239,7 +239,7 @@ _hash_checkpage(Relation rel, Buffer buf, int flags)
 
 	if (flags)
 	{
-		HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		HashPageOpaque opaque = HashPageGetOpaque(page);
 
 		if ((opaque->hasho_flag & flags) == 0)
 			ereport(ERROR,
@@ -574,7 +574,7 @@ _hash_kill_items(IndexScanDesc scan)
 		buf = _hash_getbuf(rel, blkno, HASH_READ, LH_OVERFLOW_PAGE);
 
 	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	opaque = HashPageGetOpaque(page);
 	maxoff = PageGetMaxOffsetNumber(page);
 
 	for (i = 0; i < numKilled; i++)

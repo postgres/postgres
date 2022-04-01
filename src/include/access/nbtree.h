@@ -70,6 +70,8 @@ typedef struct BTPageOpaqueData
 
 typedef BTPageOpaqueData *BTPageOpaque;
 
+#define BTPageGetOpaque(page) ((BTPageOpaque) PageGetSpecialPointer(page))
+
 /* Bits defined in btpo_flags */
 #define BTP_LEAF		(1 << 0)	/* leaf page, i.e. not internal page */
 #define BTP_ROOT		(1 << 1)	/* root page (has no parent) */
@@ -241,7 +243,7 @@ BTPageSetDeleted(Page page, FullTransactionId safexid)
 	PageHeader	header;
 	BTDeletedPageData *contents;
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque = BTPageGetOpaque(page);
 	header = ((PageHeader) page);
 
 	opaque->btpo_flags &= ~BTP_HALF_DEAD;
@@ -263,7 +265,7 @@ BTPageGetDeleteXid(Page page)
 
 	/* We only expect to be called with a deleted page */
 	Assert(!PageIsNew(page));
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque = BTPageGetOpaque(page);
 	Assert(P_ISDELETED(opaque));
 
 	/* pg_upgrade'd deleted page -- must be safe to delete now */
@@ -294,7 +296,7 @@ BTPageIsRecyclable(Page page)
 	Assert(!PageIsNew(page));
 
 	/* Recycling okay iff page is deleted and safexid is old enough */
-	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	opaque = BTPageGetOpaque(page);
 	if (P_ISDELETED(opaque))
 	{
 		/*

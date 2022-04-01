@@ -62,7 +62,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 				minoff,
 				maxoff;
 	Page		page = BufferGetPage(buf);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	Page		newpage;
 	BTDedupState state;
 	Size		pagesaving = 0;
@@ -231,7 +231,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 */
 	if (P_HAS_GARBAGE(opaque))
 	{
-		BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(newpage);
+		BTPageOpaque nopaque = BTPageGetOpaque(newpage);
 
 		nopaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 	}
@@ -310,7 +310,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 				minoff,
 				maxoff;
 	Page		page = BufferGetPage(buf);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	BTDedupState state;
 	TM_IndexDeleteOp delstate;
 	bool		neverdedup;

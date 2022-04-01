@@ -515,7 +515,7 @@ loop_top:
 		_hash_checkpage(rel, buf, LH_BUCKET_PAGE);
 
 		page = BufferGetPage(buf);
-		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		bucket_opaque = HashPageGetOpaque(page);
 
 		/*
 		 * If the bucket contains tuples that are moved by split, then we need
@@ -717,7 +717,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		vacuum_delay_point();
 
 		page = BufferGetPage(buf);
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 
 		/* Scan each tuple in page */
 		maxoffno = PageGetMaxOffsetNumber(page);
@@ -884,7 +884,7 @@ hashbucketcleanup(Relation rel, Bucket cur_bucket, Buffer bucket_buf,
 		Page		page;
 
 		page = BufferGetPage(bucket_buf);
-		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		bucket_opaque = HashPageGetOpaque(page);
 
 		/* No ereport(ERROR) until changes are logged */
 		START_CRIT_SECTION();

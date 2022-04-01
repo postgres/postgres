@@ -152,7 +152,7 @@ _bt_findsplitloc(Relation rel,
 	SplitPoint	leftpage,
 				rightpage;
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
+	opaque = BTPageGetOpaque(origpage);
 	maxoff = PageGetMaxOffsetNumber(origpage);
 
 	/* Total free space available on a btree page, after fixed overhead */

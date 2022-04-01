@@ -159,7 +159,7 @@ _hash_addovflpage(Relation rel, Buffer metabuf, Buffer buf, bool retain_pin)
 		BlockNumber nextblkno;
 
 		page = BufferGetPage(buf);
-		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		pageopaque = HashPageGetOpaque(page);
 		nextblkno = pageopaque->hasho_nextblkno;
 
 		if (!BlockNumberIsValid(nextblkno))
@@ -364,7 +364,7 @@ found:
 
 	/* initialize new overflow page */
 	ovflpage = BufferGetPage(ovflbuf);
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	ovflopaque = HashPageGetOpaque(ovflpage);
 	ovflopaque->hasho_prevblkno = BufferGetBlockNumber(buf);
 	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
 	ovflopaque->hasho_bucket = pageopaque->hasho_bucket;
@@ -516,7 +516,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	_hash_checkpage(rel, ovflbuf, LH_OVERFLOW_PAGE);
 	ovflblkno = BufferGetBlockNumber(ovflbuf);
 	ovflpage = BufferGetPage(ovflbuf);
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	ovflopaque = HashPageGetOpaque(ovflpage);
 	nextblkno = ovflopaque->hasho_nextblkno;
 	prevblkno = ovflopaque->hasho_prevblkno;
 	writeblkno = BufferGetBlockNumber(wbuf);
@@ -600,7 +600,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	 */
 	_hash_pageinit(ovflpage, BufferGetPageSize(ovflbuf));
 
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	ovflopaque = HashPageGetOpaque(ovflpage);
 
 	ovflopaque->hasho_prevblkno = InvalidBlockNumber;
 	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -613,7 +613,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	if (BufferIsValid(prevbuf))
 	{
 		Page		prevpage = BufferGetPage(prevbuf);
-		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
+		HashPageOpaque prevopaque = HashPageGetOpaque(prevpage);
 
 		Assert(prevopaque->hasho_bucket == bucket);
 		prevopaque->hasho_nextblkno = nextblkno;
@@ -622,7 +622,7 @@ _hash_freeovflpage(Relation rel, Buffer bucketbuf, Buffer ovflbuf,
 	if (BufferIsValid(nextbuf))
 	{
 		Page		nextpage = BufferGetPage(nextbuf);
-		HashPageOpaque nextopaque = (HashPageOpaque) PageGetSpecialPointer(nextpage);
+		HashPageOpaque nextopaque = HashPageGetOpaque(nextpage);
 
 		Assert(nextopaque->hasho_bucket == bucket);
 		nextopaque->hasho_prevblkno = prevblkno;
@@ -751,7 +751,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 
 	/* initialize the page's special space */
-	op = (HashPageOpaque) PageGetSpecialPointer(pg);
+	op = HashPageGetOpaque(pg);
 	op->hasho_prevblkno = InvalidBlockNumber;
 	op->hasho_nextblkno = InvalidBlockNumber;
 	op->hasho_bucket = InvalidBucket;
@@ -824,7 +824,7 @@ _hash_squeezebucket(Relation rel,
 	wblkno = bucket_blkno;
 	wbuf = bucket_buf;
 	wpage = BufferGetPage(wbuf);
-	wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
+	wopaque = HashPageGetOpaque(wpage);
 
 	/*
 	 * if there aren't any overflow pages, there's nothing to squeeze. caller
@@ -855,7 +855,7 @@ _hash_squeezebucket(Relation rel,
 										  LH_OVERFLOW_PAGE,
 										  bstrategy);
 		rpage = BufferGetPage(rbuf);
-		ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
+		ropaque = HashPageGetOpaque(rpage);
 		Assert(ropaque->hasho_bucket == bucket);
 	} while (BlockNumberIsValid(ropaque->hasho_nextblkno));
 
@@ -1005,7 +1005,7 @@ readpage:
 
 				wbuf = next_wbuf;
 				wpage = BufferGetPage(wbuf);
-				wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
+				wopaque = HashPageGetOpaque(wpage);
 				Assert(wopaque->hasho_bucket == bucket);
 				retain_pin = false;
 
@@ -1076,7 +1076,7 @@ readpage:
 										  LH_OVERFLOW_PAGE,
 										  bstrategy);
 		rpage = BufferGetPage(rbuf);
-		ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
+		ropaque = HashPageGetOpaque(rpage);
 		Assert(ropaque->hasho_bucket == bucket);
 	}
 

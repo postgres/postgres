@@ -187,7 +187,7 @@ _hash_readnext(IndexScanDesc scan,
 	{
 		*pagep = BufferGetPage(*bufp);
 		TestForOldSnapshot(scan->xs_snapshot, rel, *pagep);
-		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
+		*opaquep = HashPageGetOpaque(*pagep);
 	}
 }
 
@@ -233,7 +233,7 @@ _hash_readprev(IndexScanDesc scan,
 							 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 		*pagep = BufferGetPage(*bufp);
 		TestForOldSnapshot(scan->xs_snapshot, rel, *pagep);
-		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
+		*opaquep = HashPageGetOpaque(*pagep);
 
 		/*
 		 * We always maintain the pin on bucket page for whole scan operation,
@@ -258,7 +258,7 @@ _hash_readprev(IndexScanDesc scan,
 
 		LockBuffer(*bufp, BUFFER_LOCK_SHARE);
 		*pagep = BufferGetPage(*bufp);
-		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
+		*opaquep = HashPageGetOpaque(*pagep);
 
 		/* move to the end of bucket chain */
 		while (BlockNumberIsValid((*opaquep)->hasho_nextblkno))
@@ -352,7 +352,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	PredicateLockPage(rel, BufferGetBlockNumber(buf), scan->xs_snapshot);
 	page = BufferGetPage(buf);
 	TestForOldSnapshot(scan->xs_snapshot, rel, page);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	opaque = HashPageGetOpaque(page);
 	bucket = opaque->hasho_bucket;
 
 	so->hashso_bucket_buf = buf;
@@ -398,7 +398,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
 		page = BufferGetPage(buf);
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 		Assert(opaque->hasho_bucket == bucket);
 
 		if (H_BUCKET_BEING_POPULATED(opaque))
@@ -463,7 +463,7 @@ _hash_readpage(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	Assert(BufferIsValid(buf));
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	opaque = HashPageGetOpaque(page);
 
 	so->currPos.buf = buf;
 	so->currPos.currPage = BufferGetBlockNumber(buf);

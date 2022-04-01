@@ -203,7 +203,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 				  true);
 	/* update backlink */
 	ovflpage = BufferGetPage(ovflbuf);
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+	ovflopaque = HashPageGetOpaque(ovflpage);
 	ovflopaque->hasho_prevblkno = leftblk;
 
 	PageSetLSN(ovflpage, lsn);
@@ -215,7 +215,7 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 		HashPageOpaque leftopaque;
 
 		leftpage = BufferGetPage(leftbuf);
-		leftopaque = (HashPageOpaque) PageGetSpecialPointer(leftpage);
+		leftopaque = HashPageGetOpaque(leftpage);
 		leftopaque->hasho_nextblkno = rightblk;
 
 		PageSetLSN(leftpage, lsn);
@@ -342,7 +342,7 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 		HashPageOpaque oldopaque;
 
 		oldpage = BufferGetPage(oldbuf);
-		oldopaque = (HashPageOpaque) PageGetSpecialPointer(oldpage);
+		oldopaque = HashPageGetOpaque(oldpage);
 
 		oldopaque->hasho_flag = xlrec->old_bucket_flag;
 		oldopaque->hasho_prevblkno = xlrec->new_bucket;
@@ -465,7 +465,7 @@ hash_xlog_split_complete(XLogReaderState *record)
 		HashPageOpaque oldopaque;
 
 		oldpage = BufferGetPage(oldbuf);
-		oldopaque = (HashPageOpaque) PageGetSpecialPointer(oldpage);
+		oldopaque = HashPageGetOpaque(oldpage);
 
 		oldopaque->hasho_flag = xlrec->old_bucket_flag;
 
@@ -488,7 +488,7 @@ hash_xlog_split_complete(XLogReaderState *record)
 		HashPageOpaque nopaque;
 
 		newpage = BufferGetPage(newbuf);
-		nopaque = (HashPageOpaque) PageGetSpecialPointer(newpage);
+		nopaque = HashPageGetOpaque(newpage);
 
 		nopaque->hasho_flag = xlrec->new_bucket_flag;
 
@@ -710,7 +710,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 		 */
 		if (xldata->is_prev_bucket_same_wrt)
 		{
-			HashPageOpaque writeopaque = (HashPageOpaque) PageGetSpecialPointer(writepage);
+			HashPageOpaque writeopaque = HashPageGetOpaque(writepage);
 
 			writeopaque->hasho_nextblkno = xldata->nextblkno;
 		}
@@ -729,7 +729,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 
 		_hash_pageinit(ovflpage, BufferGetPageSize(ovflbuf));
 
-		ovflopaque = (HashPageOpaque) PageGetSpecialPointer(ovflpage);
+		ovflopaque = HashPageGetOpaque(ovflpage);
 
 		ovflopaque->hasho_prevblkno = InvalidBlockNumber;
 		ovflopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -748,7 +748,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 		XLogReadBufferForRedo(record, 3, &prevbuf) == BLK_NEEDS_REDO)
 	{
 		Page		prevpage = BufferGetPage(prevbuf);
-		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
+		HashPageOpaque prevopaque = HashPageGetOpaque(prevpage);
 
 		prevopaque->hasho_nextblkno = xldata->nextblkno;
 
@@ -766,7 +766,7 @@ hash_xlog_squeeze_page(XLogReaderState *record)
 		if (XLogReadBufferForRedo(record, 4, &nextbuf) == BLK_NEEDS_REDO)
 		{
 			Page		nextpage = BufferGetPage(nextbuf);
-			HashPageOpaque nextopaque = (HashPageOpaque) PageGetSpecialPointer(nextpage);
+			HashPageOpaque nextopaque = HashPageGetOpaque(nextpage);
 
 			nextopaque->hasho_prevblkno = xldata->prevblkno;
 
@@ -903,7 +903,7 @@ hash_xlog_delete(XLogReaderState *record)
 		{
 			HashPageOpaque pageopaque;
 
-			pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			pageopaque = HashPageGetOpaque(page);
 			pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 		}
 
@@ -933,7 +933,7 @@ hash_xlog_split_cleanup(XLogReaderState *record)
 
 		page = (Page) BufferGetPage(buffer);
 
-		bucket_opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		bucket_opaque = HashPageGetOpaque(page);
 		bucket_opaque->hasho_flag &= ~LH_BUCKET_NEEDS_SPLIT_CLEANUP;
 		PageSetLSN(page, lsn);
 		MarkBufferDirty(buffer);
@@ -1024,7 +1024,7 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 		 * Mark the page as not containing any LP_DEAD items. See comments in
 		 * _hash_vacuum_one_page() for details.
 		 */
-		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		pageopaque = HashPageGetOpaque(page);
 		pageopaque->hasho_flag &= ~LH_PAGE_HAS_DEAD_TUPLES;
 
 		PageSetLSN(page, lsn);
@@ -1116,7 +1116,7 @@ hash_mask(char *pagedata, BlockNumber blkno)
 	mask_page_hint_bits(page);
 	mask_unused_space(page);
 
-	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	opaque = HashPageGetOpaque(page);
 
 	pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
 	if (pagetype == LH_UNUSED_PAGE)

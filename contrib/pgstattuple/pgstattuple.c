@@ -415,7 +415,7 @@ pgstat_btree_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	{
 		BTPageOpaque opaque;
 
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		opaque = BTPageGetOpaque(page);
 		if (P_IGNORE(opaque))
 		{
 			/* deleted or half-dead page */
@@ -452,7 +452,7 @@ pgstat_hash_page(pgstattuple_type *stat, Relation rel, BlockNumber blkno,
 	{
 		HashPageOpaque opaque;
 
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 		switch (opaque->hasho_flag & LH_PAGE_TYPE)
 		{
 			case LH_UNUSED_PAGE:

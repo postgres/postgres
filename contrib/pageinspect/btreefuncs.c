@@ -93,7 +93,7 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat *stat)
 	Page		page = BufferGetPage(buffer);
 	PageHeader	phdr = (PageHeader) page;
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	int			item_size = 0;
 	int			off;
 
@@ -525,7 +525,7 @@ bt_page_items_internal(PG_FUNCTION_ARGS, enum pageinspect_version ext_version)
 
 		uargs->offset = FirstOffsetNumber;
 
-		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
+		opaque = BTPageGetOpaque(uargs->page);
 
 		if (!P_ISDELETED(opaque))
 			fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
@@ -622,7 +622,7 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 							   (int) MAXALIGN(sizeof(BTPageOpaqueData)),
 							   (int) PageGetSpecialSize(uargs->page))));
 
-		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
+		opaque = BTPageGetOpaque(uargs->page);
 
 		if (P_ISMETA(opaque))
 			ereport(ERROR,
