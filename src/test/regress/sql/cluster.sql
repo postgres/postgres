@@ -104,6 +104,9 @@ WHERE pg_class.oid=indexrelid
 	AND pg_class_2.relname = 'clstr_tst'
 	AND indisclustered;
 
+-- Verify that toast tables are clusterable
+CLUSTER pg_toast.pg_toast_826 USING pg_toast_826_index;
+
 -- Verify that clustering all tables does in fact cluster the right ones
 CREATE USER regress_clstr_user;
 CREATE TABLE clstr_1 (a INT PRIMARY KEY);
@@ -202,11 +205,28 @@ CREATE TABLE clustertest (f1 int PRIMARY KEY);
 CLUSTER clustertest USING clustertest_pkey;
 CLUSTER clustertest;
 
--- Check that partitioned tables cannot be clustered
+-- Check that partitioned tables can be clustered
 CREATE TABLE clstrpart (a int) PARTITION BY RANGE (a);
+CREATE TABLE clstrpart1 PARTITION OF clstrpart FOR VALUES FROM (1) TO (10) PARTITION BY RANGE (a);
+CREATE TABLE clstrpart11 PARTITION OF clstrpart1 FOR VALUES FROM (1) TO (5);
+CREATE TABLE clstrpart12 PARTITION OF clstrpart1 FOR VALUES FROM (5) TO (10) PARTITION BY RANGE (a);
+CREATE TABLE clstrpart2 PARTITION OF clstrpart FOR VALUES FROM (10) TO (20);
+CREATE TABLE clstrpart3 PARTITION OF clstrpart DEFAULT PARTITION BY RANGE (a);
+CREATE TABLE clstrpart33 PARTITION OF clstrpart3 DEFAULT;
+CREATE INDEX clstrpart_only_idx ON ONLY clstrpart (a);
+CLUSTER clstrpart USING clstrpart_only_idx; -- fails
+DROP INDEX clstrpart_only_idx;
 CREATE INDEX clstrpart_idx ON clstrpart (a);
-ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
+-- Check that clustering sets new relfilenodes:
+CREATE TEMP TABLE old_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
 CLUSTER clstrpart USING clstrpart_idx;
+CREATE TEMP TABLE new_cluster_info AS SELECT relname, level, relfilenode, relkind FROM pg_partition_tree('clstrpart'::regclass) AS tree JOIN pg_class c ON c.oid=tree.relid ;
+SELECT relname, old.level, old.relkind, old.relfilenode = new.relfilenode FROM old_cluster_info AS old JOIN new_cluster_info AS new USING (relname) ORDER BY relname COLLATE "C";
+-- Partitioned indexes aren't and can't be marked un/clustered:
+\d clstrpart
+CLUSTER clstrpart;
+ALTER TABLE clstrpart SET WITHOUT CLUSTER;
+ALTER TABLE clstrpart CLUSTER ON clstrpart_idx;
 DROP TABLE clstrpart;
 
 -- Test CLUSTER with external tuplesorting

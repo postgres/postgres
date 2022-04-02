@@ -196,6 +196,13 @@ CLUSTER [VERBOSE]
     in the <structname>pg_stat_progress_cluster</structname> view. See
     <xref linkend="cluster-progress-reporting"/> for details.
   </para>
+
+   <para>
+    Clustering a partitioned table clusters each of its partitions using the
+    partition of the specified partitioned index.  When clustering a partitioned
+    table, the index may not be omitted.
+   </para>
+
  </refsect1>
 
  <refsect1>
