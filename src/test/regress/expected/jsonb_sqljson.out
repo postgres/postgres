@@ -949,18 +949,22 @@ Check constraints:
 
 SELECT check_clause
 FROM information_schema.check_constraints
-WHERE constraint_name LIKE 'test_jsonb_constraint%';
+WHERE constraint_name LIKE 'test_jsonb_constraint%'
+ORDER BY 1;
                                                        check_clause                                                       
 --------------------------------------------------------------------------------------------------------------------------
+ ((JSON_EXISTS((js)::jsonb, 'strict $."a"' RETURNING integer TRUE ON ERROR) < 2))
+ ((JSON_QUERY((js)::jsonb, '$."a"' RETURNING character(5) OMIT QUOTES EMPTY ARRAY ON EMPTY) > ('a'::bpchar COLLATE "C")))
+ ((JSON_QUERY((js)::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) < '[10]'::jsonb))
+ ((JSON_VALUE((js)::jsonb, '$."a"' RETURNING integer DEFAULT (('12'::text || i))::integer ON EMPTY ERROR ON ERROR) > i))
  ((js IS JSON))
  (JSON_EXISTS((js)::jsonb, '$."a"' PASSING (i + 5) AS int, (i)::text AS txt, ARRAY[1, 2, 3] AS arr))
- ((JSON_VALUE((js)::jsonb, '$."a"' RETURNING integer DEFAULT (('12'::text || i))::integer ON EMPTY ERROR ON ERROR) > i))
- ((JSON_QUERY((js)::jsonb, '$."a"' RETURNING jsonb WITH CONDITIONAL WRAPPER EMPTY OBJECT ON ERROR) < '[10]'::jsonb))
- ((JSON_QUERY((js)::jsonb, '$."a"' RETURNING character(5) OMIT QUOTES EMPTY ARRAY ON EMPTY) > ('a'::bpchar COLLATE "C")))
- ((JSON_EXISTS((js)::jsonb, 'strict $."a"' RETURNING integer TRUE ON ERROR) < 2))
 (6 rows)
 
-SELECT pg_get_expr(adbin, adrelid) FROM pg_attrdef WHERE adrelid = 'test_jsonb_constraints'::regclass;
+SELECT pg_get_expr(adbin, adrelid)
+FROM pg_attrdef
+WHERE adrelid = 'test_jsonb_constraints'::regclass
+ORDER BY 1;
                                   pg_get_expr                                   
 --------------------------------------------------------------------------------
  JSON_QUERY('[1, 2]'::jsonb, '$[*]' RETURNING jsonb WITH UNCONDITIONAL WRAPPER)

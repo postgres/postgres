@@ -280,9 +280,13 @@ CREATE TABLE test_jsonb_constraints (
 
 SELECT check_clause
 FROM information_schema.check_constraints
-WHERE constraint_name LIKE 'test_jsonb_constraint%';
+WHERE constraint_name LIKE 'test_jsonb_constraint%'
+ORDER BY 1;
 
-SELECT pg_get_expr(adbin, adrelid) FROM pg_attrdef WHERE adrelid = 'test_jsonb_constraints'::regclass;
+SELECT pg_get_expr(adbin, adrelid)
+FROM pg_attrdef
+WHERE adrelid = 'test_jsonb_constraints'::regclass
+ORDER BY 1;
 
 INSERT INTO test_jsonb_constraints VALUES ('', 1);
 INSERT INTO test_jsonb_constraints VALUES ('1', 1);
