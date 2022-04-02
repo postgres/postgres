@@ -319,7 +319,6 @@ typedef struct StdRdOptions
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int			fillfactor;		/* page fill factor in percent (0..100) */
-	/* fraction of newly inserted tuples prior to trigger index cleanup */
 	int			toast_tuple_target; /* target for tuple toasting */
 	AutoVacOpts autovacuum;		/* autovacuum-related options */
 	bool		user_catalog_table; /* use as an additional catalog relation */
