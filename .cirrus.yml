@@ -443,8 +443,6 @@ task:
     %T_C% perl src/tools/msvc/vcregress.pl recoverycheck
   test_bin_script: |
     %T_C% perl src/tools/msvc/vcregress.pl bincheck
-  test_pg_upgrade_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl upgradecheck
   test_ecpg_script: |
     rem tries to build additional stuff
     vcvarsall x64

@@ -470,7 +470,6 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress isolationcheck</userinput>
 <userinput>vcregress bincheck</userinput>
 <userinput>vcregress recoverycheck</userinput>
-<userinput>vcregress upgradecheck</userinput>
 </screen>
 
    To change the schedule used (default is parallel), append it to the

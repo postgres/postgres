@@ -106,7 +106,7 @@ my %command = (
 	ISOLATIONCHECK => \&isolationcheck,
 	BINCHECK       => \&bincheck,
 	RECOVERYCHECK  => \&recoverycheck,
-	UPGRADECHECK   => \&upgradecheck,
+	UPGRADECHECK   => \&upgradecheck,     # no-op
 	TAPTEST        => \&taptest,);
 
 my $proc = $command{$what};
@@ -286,9 +286,6 @@ sub bincheck
 	foreach my $dir (@bin_dirs)
 	{
 		next unless -d "$dir/t";
-		# Do not consider pg_upgrade, as it is handled by
-		# upgradecheck.
-		next if ($dir =~ "/pg_upgrade/");
 
 		my $status = tap_check($dir);
 		$mstat ||= $status;
@@ -498,31 +495,11 @@ sub quote_system_arg
 	return "\"$arg\"";
 }
 
-# Generate a database with a name made of a range of ASCII characters, useful
-# for testing pg_upgrade.
-sub generate_db
-{
-	my ($prefix, $from_char, $to_char, $suffix) = @_;
-
-	my $dbname = $prefix;
-	for my $i ($from_char .. $to_char)
-	{
-		next if $i == 7 || $i == 10 || $i == 13;    # skip BEL, LF, and CR
-		$dbname = $dbname . sprintf('%c', $i);
-	}
-	$dbname .= $suffix;
-
-	system('createdb', quote_system_arg($dbname));
-	my $status = $? >> 8;
-	exit $status if $status;
-	return;
-}
-
 sub upgradecheck
 {
-	InstallTemp();
-	my $mstat = tap_check("$topdir/src/bin/pg_upgrade");
-	exit $mstat if $mstat;
+	# pg_upgrade is now handled by bincheck, but keep this target for
+	# backward compatibility.
+	print "upgradecheck is a no-op, use bincheck instead.\n";
 	return;
 }
 
@@ -640,7 +617,7 @@ sub usage
 	  "  plcheck        run tests of PL languages\n",
 	  "  recoverycheck  run recovery test suite\n",
 	  "  taptest        run an arbitrary TAP test set\n",
-	  "  upgradecheck   run tests of pg_upgrade\n",
+	  "  upgradecheck   run tests of pg_upgrade (no-op)\n",
 	  "\nOptions for <arg>: (used by check and installcheck)\n",
 	  "  serial         serial mode\n",
 	  "  parallel       parallel mode\n",
