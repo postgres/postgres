@@ -306,30 +306,24 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 {
 	LVRelState *vacrel;
 	bool		verbose,
-				instrument;
+				instrument,
+				aggressive,
+				skipwithvm,
+				frozenxid_updated,
+				minmulti_updated;
+	TransactionId OldestXmin,
+				FreezeLimit;
+	MultiXactId MultiXactCutoff;
+	BlockNumber orig_rel_pages,
+				new_rel_pages,
+				new_rel_allvisible;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-	WalUsage	walusage_start = pgWalUsage;
-	WalUsage	walusage = {0, 0, 0};
-	long		secs;
-	int			usecs;
-	double		read_rate,
-				write_rate;
-	bool		aggressive,
-				skipwithvm;
-	bool		frozenxid_updated,
-				minmulti_updated;
-	BlockNumber orig_rel_pages;
-	char	  **indnames = NULL;
-	BlockNumber new_rel_pages;
-	BlockNumber new_rel_allvisible;
-	double		new_live_tuples;
-	ErrorContextCallback errcallback;
 	PgStat_Counter startreadtime = 0;
 	PgStat_Counter startwritetime = 0;
-	TransactionId OldestXmin;
-	TransactionId FreezeLimit;
-	MultiXactId MultiXactCutoff;
+	WalUsage	walusage_start = pgWalUsage;
+	ErrorContextCallback errcallback;
+	char	  **indnames = NULL;
 
 	verbose = (params->options & VACOPT_VERBOSE) != 0;
 	instrument = (verbose || (IsAutoVacuumWorkerProcess() &&
@@ -557,7 +551,6 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * relpages to.
 	 */
 	new_rel_pages = vacrel->rel_pages;	/* After possible rel truncation */
-	new_live_tuples = vacrel->new_live_tuples;
 	visibilitymap_count(rel, &new_rel_allvisible, NULL);
 	if (new_rel_allvisible > new_rel_pages)
 		new_rel_allvisible = new_rel_pages;
@@ -578,7 +571,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 		/* Cannot advance relfrozenxid/relminmxid */
 		Assert(!aggressive);
 		frozenxid_updated = minmulti_updated = false;
-		vac_update_relstats(rel, new_rel_pages, new_live_tuples,
+		vac_update_relstats(rel, new_rel_pages, vacrel->new_live_tuples,
 							new_rel_allvisible, vacrel->nindexes > 0,
 							InvalidTransactionId, InvalidMultiXactId,
 							NULL, NULL, false);
@@ -587,7 +580,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	{
 		Assert(vacrel->scanned_pages + vacrel->frozenskipped_pages ==
 			   orig_rel_pages);
-		vac_update_relstats(rel, new_rel_pages, new_live_tuples,
+		vac_update_relstats(rel, new_rel_pages, vacrel->new_live_tuples,
 							new_rel_allvisible, vacrel->nindexes > 0,
 							FreezeLimit, MultiXactCutoff,
 							&frozenxid_updated, &minmulti_updated, false);
@@ -605,7 +598,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	pgstat_report_vacuum(RelationGetRelid(rel),
 						 rel->rd_rel->relisshared,
-						 Max(new_live_tuples, 0),
+						 Max(vacrel->new_live_tuples, 0),
 						 vacrel->recently_dead_tuples +
 						 vacrel->missed_dead_tuples);
 	pgstat_progress_end_command();
@@ -618,6 +611,11 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			TimestampDifferenceExceeds(starttime, endtime,
 									   params->log_min_duration))
 		{
+			long		secs;
+			int			usecs;
+			WalUsage	walusage;
+			double		read_rate,
+						write_rate;
 			StringInfoData buf;
 			char	   *msgfmt;
 			int32		diff;
@@ -674,7 +672,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 							 vacrel->num_index_scans);
 			appendStringInfo(&buf, _("pages: %u removed, %u remain, %u scanned (%.2f%% of total)\n"),
 							 vacrel->removed_pages,
-							 vacrel->rel_pages,
+							 new_rel_pages,
 							 vacrel->scanned_pages,
 							 orig_rel_pages == 0 ? 100.0 :
 							 100.0 * vacrel->scanned_pages / orig_rel_pages);
