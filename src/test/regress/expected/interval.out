@@ -826,6 +826,16 @@ SELECT  interval '+1 -1:00:00',
  1 day -01:00:00 | -1 days +01:00:00 | 1 year 2 mons -3 days +04:05:06.789 | -1 years -2 mons +3 days -04:05:06.789
 (1 row)
 
+-- cases that trigger sign-matching rules in the sql style
+SELECT  interval '-23 hours 45 min 12.34 sec',
+        interval '-1 day 23 hours 45 min 12.34 sec',
+        interval '-1 year 2 months 1 day 23 hours 45 min 12.34 sec',
+        interval '-1 year 2 months 1 day 23 hours 45 min +12.34 sec';
+   interval   |       interval       |          interval           |          interval           
+--------------+----------------------+-----------------------------+-----------------------------
+ -22:14:47.66 | -1 days +23:45:12.34 | -10 mons +1 day 23:45:12.34 | -10 mons +1 day 23:45:12.34
+(1 row)
+
 -- test output of couple non-standard interval values in the sql style
 SET IntervalStyle TO sql_standard;
 SELECT  interval '1 day -1 hours',
@@ -835,6 +845,16 @@ SELECT  interval '1 day -1 hours',
      interval     |     interval     |       interval       |       ?column?       
 ------------------+------------------+----------------------+----------------------
  +0-0 +1 -1:00:00 | +0-0 -1 +1:00:00 | +1-2 -3 +4:05:06.789 | -1-2 +3 -4:05:06.789
+(1 row)
+
+-- cases that trigger sign-matching rules in the sql style
+SELECT  interval '-23 hours 45 min 12.34 sec',
+        interval '-1 day 23 hours 45 min 12.34 sec',
+        interval '-1 year 2 months 1 day 23 hours 45 min 12.34 sec',
+        interval '-1 year 2 months 1 day 23 hours 45 min +12.34 sec';
+   interval   |    interval    |       interval       |       interval        
+--------------+----------------+----------------------+-----------------------
+ -23:45:12.34 | -1 23:45:12.34 | -1-2 -1 -23:45:12.34 | -0-10 +1 +23:45:12.34
 (1 row)
 
 -- test outputting iso8601 intervals
