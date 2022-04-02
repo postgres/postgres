@@ -720,8 +720,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
 
     <para>
      As a safety device, an aggressive vacuum scan will
-     occur for any table whose multixact-age (see <xref
-     linkend="vacuum-for-multixact-wraparound"/>) is greater than <xref
+     occur for any table whose multixact-age is greater than <xref
      linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Also, if the
      storage occupied by multixacts members exceeds 2GB, aggressive vacuum
      scans will occur more often for all tables, starting with those that
