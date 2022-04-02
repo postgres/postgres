@@ -493,16 +493,17 @@
     will skip pages that don't have any dead row versions even if those pages
     might still have row versions with old XID values.  Therefore, normal
     <command>VACUUM</command>s won't always freeze every old row version in the table.
-    Periodically, <command>VACUUM</command> will perform an <firstterm>aggressive
-    vacuum</firstterm>, skipping only those pages which contain neither dead rows nor
-    any unfrozen XID or MXID values.
+    When that happens, <command>VACUUM</command> will eventually need to perform an
+    <firstterm>aggressive vacuum</firstterm>, which will freeze all eligible unfrozen
+    XID and MXID values, including those from all-visible but not all-frozen pages.
+    In practice most tables require periodic aggressive vacuuming.
     <xref linkend="guc-vacuum-freeze-table-age"/>
     controls when <command>VACUUM</command> does that: all-visible but not all-frozen
     pages are scanned if the number of transactions that have passed since the
     last such scan is greater than <varname>vacuum_freeze_table_age</varname> minus
     <varname>vacuum_freeze_min_age</varname>. Setting
     <varname>vacuum_freeze_table_age</varname> to 0 forces <command>VACUUM</command> to
-    use this more aggressive strategy for all scans.
+    always use its aggressive strategy.
    </para>
 
    <para>
@@ -711,8 +712,9 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     </para>
 
     <para>
-     Aggressive <command>VACUUM</command> scans, regardless of
-     what causes them, enable advancing the value for that table.
+     Aggressive <command>VACUUM</command>s, regardless of what causes
+     them, are <emphasis>guaranteed</emphasis> to be able to advance
+     the table's <structfield>relminmxid</structfield>.
      Eventually, as all tables in all databases are scanned and their
      oldest multixact values are advanced, on-disk storage for older
      multixacts can be removed.
