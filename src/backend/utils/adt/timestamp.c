@@ -37,6 +37,7 @@
 #include "utils/datetime.h"
 #include "utils/float.h"
 #include "utils/numeric.h"
+#include "utils/sortsupport.h"
 
 /*
  * gcc's -ffast-math switch breaks routines that expect exact results from
@@ -2155,6 +2156,7 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
+#ifndef USE_FLOAT8_BYVAL
 /* note: this is used for timestamptz also */
 static int
 timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
@@ -2164,13 +2166,22 @@ timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
 
 	return timestamp_cmp_internal(a, b);
 }
+#endif
 
 Datum
 timestamp_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
+#ifdef USE_FLOAT8_BYVAL
+	/*
+	 * If this build has pass-by-value timestamps, then we can use a standard
+	 * comparator function.
+	 */
+	ssup->comparator = ssup_datum_signed_cmp;
+#else
 	ssup->comparator = timestamp_fastcmp;
+#endif
 	PG_RETURN_VOID();
 }
 

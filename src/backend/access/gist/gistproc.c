@@ -37,7 +37,6 @@ static uint64 part_bits32_by2(uint32 x);
 static uint32 ieee_float32_to_uint32(float f);
 static int	gist_bbox_zorder_cmp(Datum a, Datum b, SortSupport ssup);
 static Datum gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup);
-static int	gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup);
 static bool gist_bbox_zorder_abbrev_abort(int memtupcount, SortSupport ssup);
 
 
@@ -1726,21 +1725,6 @@ gist_bbox_zorder_abbrev_convert(Datum original, SortSupport ssup)
 #endif
 }
 
-static int
-gist_bbox_zorder_cmp_abbrev(Datum z1, Datum z2, SortSupport ssup)
-{
-	/*
-	 * Compare the pre-computed Z-orders as unsigned integers. Datum is a
-	 * typedef for 'uintptr_t', so no casting is required.
-	 */
-	if (z1 > z2)
-		return 1;
-	else if (z1 < z2)
-		return -1;
-	else
-		return 0;
-}
-
 /*
  * We never consider aborting the abbreviation.
  *
@@ -1764,7 +1748,7 @@ gist_point_sortsupport(PG_FUNCTION_ARGS)
 
 	if (ssup->abbreviate)
 	{
-		ssup->comparator = gist_bbox_zorder_cmp_abbrev;
+		ssup->comparator = ssup_datum_unsigned_cmp;
 		ssup->abbrev_converter = gist_bbox_zorder_abbrev_convert;
 		ssup->abbrev_abort = gist_bbox_zorder_abbrev_abort;
 		ssup->abbrev_full_comparator = gist_bbox_zorder_cmp;

@@ -34,7 +34,6 @@ typedef struct
 static void string_to_uuid(const char *source, pg_uuid_t *uuid);
 static int	uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2);
 static int	uuid_fast_cmp(Datum x, Datum y, SortSupport ssup);
-static int	uuid_cmp_abbrev(Datum x, Datum y, SortSupport ssup);
 static bool uuid_abbrev_abort(int memtupcount, SortSupport ssup);
 static Datum uuid_abbrev_convert(Datum original, SortSupport ssup);
 
@@ -255,7 +254,7 @@ uuid_sortsupport(PG_FUNCTION_ARGS)
 
 		ssup->ssup_extra = uss;
 
-		ssup->comparator = uuid_cmp_abbrev;
+		ssup->comparator = ssup_datum_unsigned_cmp;
 		ssup->abbrev_converter = uuid_abbrev_convert;
 		ssup->abbrev_abort = uuid_abbrev_abort;
 		ssup->abbrev_full_comparator = uuid_fast_cmp;
@@ -276,20 +275,6 @@ uuid_fast_cmp(Datum x, Datum y, SortSupport ssup)
 	pg_uuid_t  *arg2 = DatumGetUUIDP(y);
 
 	return uuid_internal_cmp(arg1, arg2);
-}
-
-/*
- * Abbreviated key comparison func
- */
-static int
-uuid_cmp_abbrev(Datum x, Datum y, SortSupport ssup)
-{
-	if (x > y)
-		return 1;
-	else if (x == y)
-		return 0;
-	else
-		return -1;
 }
 
 /*
@@ -390,10 +375,10 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 	/*
 	 * Byteswap on little-endian machines.
 	 *
-	 * This is needed so that uuid_cmp_abbrev() (an unsigned integer 3-way
-	 * comparator) works correctly on all platforms.  If we didn't do this,
-	 * the comparator would have to call memcmp() with a pair of pointers to
-	 * the first byte of each abbreviated key, which is slower.
+	 * This is needed so that ssup_datum_unsigned_cmp() (an unsigned integer
+	 * 3-way comparator) works correctly on all platforms.  If we didn't do
+	 * this, the comparator would have to call memcmp() with a pair of pointers
+	 * to the first byte of each abbreviated key, which is slower.
 	 */
 	res = DatumBigEndianToNative(res);
 

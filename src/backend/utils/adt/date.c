@@ -439,25 +439,12 @@ date_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static int
-date_fastcmp(Datum x, Datum y, SortSupport ssup)
-{
-	DateADT		a = DatumGetDateADT(x);
-	DateADT		b = DatumGetDateADT(y);
-
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	return 0;
-}
-
 Datum
 date_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = date_fastcmp;
+	ssup->comparator = ssup_datum_int32_cmp;
 	PG_RETURN_VOID();
 }
 

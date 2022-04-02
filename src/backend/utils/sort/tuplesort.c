@@ -670,12 +670,99 @@ static void tuplesort_free(Tuplesortstate *state);
 static void tuplesort_updatemax(Tuplesortstate *state);
 
 /*
+ * Specialized comparators that we can inline into specialized sorts.  The goal
+ * is to try to sort two tuples without having to follow the pointers to the
+ * comparator or the tuple.
+ *
+ * XXX: For now, these fall back to comparator functions that will compare the
+ * leading datum a second time.
+ *
+ * XXX: For now, there is no specialization for cases where datum1 is
+ * authoritative and we don't even need to fall back to a callback at all (that
+ * would be true for types like int4/int8/timestamp/date, but not true for
+ * abbreviations of text or multi-key sorts.  There could be!  Is it worth it?
+ */
+
+/* Used if first key's comparator is ssup_datum_unsigned_compare */
+static pg_attribute_always_inline int
+qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
+{
+	int			compare;
+
+	compare = ApplyUnsignedSortComparator(a->datum1, a->isnull1,
+										  b->datum1, b->isnull1,
+										  &state->sortKeys[0]);
+	if (compare != 0)
+		return compare;
+
+	return state->comparetup(a, b, state);
+}
+
+/* Used if first key's comparator is ssup_datum_signed_compare */
+static pg_attribute_always_inline int
+qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
+{
+	int			compare;
+
+	compare = ApplySignedSortComparator(a->datum1, a->isnull1,
+										b->datum1, b->isnull1,
+										&state->sortKeys[0]);
+	if (compare != 0)
+		return compare;
+
+	return state->comparetup(a, b, state);
+}
+
+/* Used if first key's comparator is ssup_datum_int32_compare */
+static pg_attribute_always_inline int
+qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
+{
+	int			compare;
+
+	compare = ApplyInt32SortComparator(a->datum1, a->isnull1,
+										b->datum1, b->isnull1,
+										&state->sortKeys[0]);
+	if (compare != 0)
+		return compare;
+
+	return state->comparetup(a, b, state);
+}
+
+/*
  * Special versions of qsort just for SortTuple objects.  qsort_tuple() sorts
  * any variant of SortTuples, using the appropriate comparetup function.
  * qsort_ssup() is specialized for the case where the comparetup function
  * reduces to ApplySortComparator(), that is single-key MinimalTuple sorts
- * and Datum sorts.
+ * and Datum sorts.  qsort_tuple_{unsigned,signed,int32} are specialized for
+ * common comparison functions on pass-by-value leading datums.
  */
+
+#define ST_SORT qsort_tuple_unsigned
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE(a, b, state) qsort_tuple_unsigned_compare(a, b, state)
+#define ST_COMPARE_ARG_TYPE Tuplesortstate
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DEFINE
+#include "lib/sort_template.h"
+
+#define ST_SORT qsort_tuple_signed
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE(a, b, state) qsort_tuple_signed_compare(a, b, state)
+#define ST_COMPARE_ARG_TYPE Tuplesortstate
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DEFINE
+#include "lib/sort_template.h"
+
+#define ST_SORT qsort_tuple_int32
+#define ST_ELEMENT_TYPE SortTuple
+#define ST_COMPARE(a, b, state) qsort_tuple_int32_compare(a, b, state)
+#define ST_COMPARE_ARG_TYPE Tuplesortstate
+#define ST_CHECK_FOR_INTERRUPTS
+#define ST_SCOPE static
+#define ST_DEFINE
+#include "lib/sort_template.h"
 
 #define ST_SORT qsort_tuple
 #define ST_ELEMENT_TYPE SortTuple
@@ -3506,15 +3593,40 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 
 	if (state->memtupcount > 1)
 	{
+		/* Do we have a specialization for the leading column's comparator? */
+		if (state->sortKeys &&
+			state->sortKeys[0].comparator == ssup_datum_unsigned_cmp)
+		{
+			elog(DEBUG1, "qsort_tuple_unsigned");
+			qsort_tuple_unsigned(state->memtuples, state->memtupcount, state);
+		}
+		else if (state->sortKeys &&
+				 state->sortKeys[0].comparator == ssup_datum_signed_cmp)
+		{
+			elog(DEBUG1, "qsort_tuple_signed");
+			qsort_tuple_signed(state->memtuples, state->memtupcount, state);
+		}
+		else if (state->sortKeys &&
+				 state->sortKeys[0].comparator == ssup_datum_int32_cmp)
+		{
+			elog(DEBUG1, "qsort_tuple_int32");
+			qsort_tuple_int32(state->memtuples, state->memtupcount, state);
+		}
 		/* Can we use the single-key sort function? */
-		if (state->onlyKey != NULL)
+		else if (state->onlyKey != NULL)
+		{
+			elog(DEBUG1, "qsort_ssup");
 			qsort_ssup(state->memtuples, state->memtupcount,
 					   state->onlyKey);
+		}
 		else
+		{
+			elog(DEBUG1, "qsort_tuple");
 			qsort_tuple(state->memtuples,
 						state->memtupcount,
 						state->comparetup,
 						state);
+		}
 	}
 }
 
@@ -4699,4 +4811,48 @@ free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
 		pfree(stup->tuple);
 		stup->tuple = NULL;
 	}
+}
+
+int
+ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	if (x < y)
+		return -1;
+	else if (x > y)
+		return 1;
+	else
+		return 0;
+}
+
+int
+ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
+{
+#if SIZEOF_DATUM == 8
+	int64		xx = (int64) x;
+	int64		yy = (int64) y;
+#else
+	int32		xx = (int32) x;
+	int32		yy = (int32) y;
+#endif
+
+	if (xx < yy)
+		return -1;
+	else if (xx > yy)
+		return 1;
+	else
+		return 0;
+}
+
+int
+ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup)
+{
+	int32		xx = (int32) x;
+	int32		yy = (int32) y;
+
+	if (xx < yy)
+		return -1;
+	else if (xx > yy)
+		return 1;
+	else
+		return 0;
 }
