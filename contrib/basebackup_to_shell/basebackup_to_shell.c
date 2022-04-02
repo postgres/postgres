@@ -90,7 +90,7 @@ _PG_init(void)
 }
 
 /*
- * We choose to defer sanity sanity checking until shell_get_sink(), and so
+ * We choose to defer sanity checking until shell_get_sink(), and so
  * just pass the target detail through without doing anything. However, we do
  * permissions checks here, before any real work has been done.
  */
@@ -103,7 +103,7 @@ shell_check_detail(char *target, char *target_detail)
 
 		StartTransactionCommand();
 		roleid = get_role_oid(shell_required_role, true);
-		if (!is_member_of_role(GetUserId(), roleid))
+		if (!has_privs_of_role(GetUserId(), roleid))
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to use basebackup_to_shell")));
