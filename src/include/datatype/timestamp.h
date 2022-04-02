@@ -40,6 +40,10 @@ typedef int64 TimestampTz;
 typedef int64 TimeOffset;
 typedef int32 fsec_t;			/* fractional seconds (in microseconds) */
 
+
+/*
+ * Storage format for type interval.
+ */
 typedef struct
 {
 	TimeOffset	time;			/* all time units other than days, months and
@@ -47,6 +51,41 @@ typedef struct
 	int32		day;			/* days, after time for alignment */
 	int32		month;			/* months and years, after time for alignment */
 } Interval;
+
+/*
+ * Data structure representing a broken-down interval.
+ *
+ * For historical reasons, this is modeled on struct pg_tm for timestamps.
+ * Unlike the situation for timestamps, there's no magic interpretation
+ * needed for months or years: they're just zero or not.  Note that fields
+ * can be negative; however, because of the divisions done while converting
+ * from struct Interval, only tm_mday could be INT_MIN.  This is important
+ * because we may need to negate the values in some code paths.
+ */
+struct pg_itm
+{
+	int			tm_usec;
+	int			tm_sec;
+	int			tm_min;
+	int64		tm_hour;		/* needs to be wide */
+	int			tm_mday;
+	int			tm_mon;
+	int			tm_year;
+};
+
+/*
+ * Data structure for decoding intervals.  We could just use struct pg_itm,
+ * but then the requirement for tm_usec to be 64 bits would propagate to
+ * places where it's not really needed.  Also, omitting the fields that
+ * aren't used during decoding seems like a good error-prevention measure.
+ */
+struct pg_itm_in
+{
+	int64		tm_usec;		/* needs to be wide */
+	int			tm_mday;
+	int			tm_mon;
+	int			tm_year;
+};
 
 
 /* Limits on the "precision" option (typmod) for these data types */

@@ -889,9 +889,8 @@ interval_in(PG_FUNCTION_ARGS)
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *result;
-	fsec_t		fsec;
-	struct pg_tm tt,
-			   *tm = &tt;
+	struct pg_itm_in tt,
+			   *itm_in = &tt;
 	int			dtype;
 	int			nf;
 	int			range;
@@ -900,13 +899,10 @@ interval_in(PG_FUNCTION_ARGS)
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[256];
 
-	tm->tm_year = 0;
-	tm->tm_mon = 0;
-	tm->tm_mday = 0;
-	tm->tm_hour = 0;
-	tm->tm_min = 0;
-	tm->tm_sec = 0;
-	fsec = 0;
+	itm_in->tm_year = 0;
+	itm_in->tm_mon = 0;
+	itm_in->tm_mday = 0;
+	itm_in->tm_usec = 0;
 
 	if (typmod >= 0)
 		range = INTERVAL_RANGE(typmod);
@@ -917,12 +913,12 @@ interval_in(PG_FUNCTION_ARGS)
 						  ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeInterval(field, ftype, nf, range,
-							   &dtype, tm, &fsec);
+							   &dtype, itm_in);
 
 	/* if those functions think it's a bad format, try ISO8601 style */
 	if (dterr == DTERR_BAD_FORMAT)
 		dterr = DecodeISO8601Interval(str,
-									  &dtype, tm, &fsec);
+									  &dtype, itm_in);
 
 	if (dterr != 0)
 	{
@@ -936,7 +932,7 @@ interval_in(PG_FUNCTION_ARGS)
 	switch (dtype)
 	{
 		case DTK_DELTA:
-			if (tm2interval(tm, fsec, result) != 0)
+			if (itmin2interval(itm_in, result) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
@@ -960,15 +956,12 @@ interval_out(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	char	   *result;
-	struct pg_tm tt,
-			   *tm = &tt;
-	fsec_t		fsec;
+	struct pg_itm tt,
+			   *itm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	if (interval2tm(*span, tm, &fsec) != 0)
-		elog(ERROR, "could not convert interval to tm");
-
-	EncodeInterval(tm, fsec, IntervalStyle, buf);
+	interval2itm(*span, itm);
+	EncodeInterval(itm, IntervalStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
@@ -1960,50 +1953,77 @@ tm2timestamp(struct pg_tm *tm, fsec_t fsec, int *tzp, Timestamp *result)
 }
 
 
-/* interval2tm()
- * Convert an interval data type to a tm structure.
+/* interval2itm()
+ * Convert an Interval to a pg_itm structure.
+ * Note: overflow is not possible, because the pg_itm fields are
+ * wide enough for all possible conversion results.
  */
-int
-interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec)
+void
+interval2itm(Interval span, struct pg_itm *itm)
 {
 	TimeOffset	time;
 	TimeOffset	tfrac;
 
-	tm->tm_year = span.month / MONTHS_PER_YEAR;
-	tm->tm_mon = span.month % MONTHS_PER_YEAR;
-	tm->tm_mday = span.day;
+	itm->tm_year = span.month / MONTHS_PER_YEAR;
+	itm->tm_mon = span.month % MONTHS_PER_YEAR;
+	itm->tm_mday = span.day;
 	time = span.time;
 
 	tfrac = time / USECS_PER_HOUR;
 	time -= tfrac * USECS_PER_HOUR;
-	tm->tm_hour = tfrac;
-	if (!SAMESIGN(tm->tm_hour, tfrac))
-		ereport(ERROR,
-				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("interval out of range")));
+	itm->tm_hour = tfrac;
 	tfrac = time / USECS_PER_MINUTE;
 	time -= tfrac * USECS_PER_MINUTE;
-	tm->tm_min = tfrac;
+	itm->tm_min = (int) tfrac;
 	tfrac = time / USECS_PER_SEC;
-	*fsec = time - (tfrac * USECS_PER_SEC);
-	tm->tm_sec = tfrac;
-
-	return 0;
+	time -= tfrac * USECS_PER_SEC;
+	itm->tm_sec = (int) tfrac;
+	itm->tm_usec = (int) time;
 }
 
+/* itm2interval()
+ * Convert a pg_itm structure to an Interval.
+ * Returns 0 if OK, -1 on overflow.
+ */
 int
-tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span)
+itm2interval(struct pg_itm *itm, Interval *span)
 {
-	double		total_months = (double) tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon;
+	int64		total_months = (int64) itm->tm_year * MONTHS_PER_YEAR + itm->tm_mon;
 
 	if (total_months > INT_MAX || total_months < INT_MIN)
 		return -1;
-	span->month = total_months;
-	span->day = tm->tm_mday;
-	span->time = (((((tm->tm_hour * INT64CONST(60)) +
-					 tm->tm_min) * INT64CONST(60)) +
-				   tm->tm_sec) * USECS_PER_SEC) + fsec;
+	span->month = (int32) total_months;
+	span->day = itm->tm_mday;
+	if (pg_mul_s64_overflow(itm->tm_hour, USECS_PER_HOUR,
+							&span->time))
+		return -1;
+	/* tm_min, tm_sec are 32 bits, so intermediate products can't overflow */
+	if (pg_add_s64_overflow(span->time, itm->tm_min * USECS_PER_MINUTE,
+							&span->time))
+		return -1;
+	if (pg_add_s64_overflow(span->time, itm->tm_sec * USECS_PER_SEC,
+							&span->time))
+		return -1;
+	if (pg_add_s64_overflow(span->time, itm->tm_usec,
+							&span->time))
+		return -1;
+	return 0;
+}
 
+/* itmin2interval()
+ * Convert a pg_itm_in structure to an Interval.
+ * Returns 0 if OK, -1 on overflow.
+ */
+int
+itmin2interval(struct pg_itm_in *itm_in, Interval *span)
+{
+	int64		total_months = (int64) itm_in->tm_year * MONTHS_PER_YEAR + itm_in->tm_mon;
+
+	if (total_months > INT_MAX || total_months < INT_MIN)
+		return -1;
+	span->month = (int32) total_months;
+	span->day = itm_in->tm_mday;
+	span->time = itm_in->tm_usec;
 	return 0;
 }
 
@@ -3612,10 +3632,9 @@ timestamp_age(PG_FUNCTION_ARGS)
 	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
 	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
-	fsec_t		fsec,
-				fsec1,
+	fsec_t		fsec1,
 				fsec2;
-	struct pg_tm tt,
+	struct pg_itm tt,
 			   *tm = &tt;
 	struct pg_tm tt1,
 			   *tm1 = &tt1;
@@ -3628,7 +3647,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL, NULL) == 0)
 	{
 		/* form the symbolic difference */
-		fsec = fsec1 - fsec2;
+		tm->tm_usec = fsec1 - fsec2;
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
 		tm->tm_min = tm1->tm_min - tm2->tm_min;
 		tm->tm_hour = tm1->tm_hour - tm2->tm_hour;
@@ -3639,7 +3658,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 		/* flip sign if necessary... */
 		if (dt1 < dt2)
 		{
-			fsec = -fsec;
+			tm->tm_usec = -tm->tm_usec;
 			tm->tm_sec = -tm->tm_sec;
 			tm->tm_min = -tm->tm_min;
 			tm->tm_hour = -tm->tm_hour;
@@ -3649,9 +3668,9 @@ timestamp_age(PG_FUNCTION_ARGS)
 		}
 
 		/* propagate any negative fields into the next higher field */
-		while (fsec < 0)
+		while (tm->tm_usec < 0)
 		{
-			fsec += USECS_PER_SEC;
+			tm->tm_usec += USECS_PER_SEC;
 			tm->tm_sec--;
 		}
 
@@ -3696,7 +3715,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 		/* recover sign if necessary... */
 		if (dt1 < dt2)
 		{
-			fsec = -fsec;
+			tm->tm_usec = -tm->tm_usec;
 			tm->tm_sec = -tm->tm_sec;
 			tm->tm_min = -tm->tm_min;
 			tm->tm_hour = -tm->tm_hour;
@@ -3705,7 +3724,7 @@ timestamp_age(PG_FUNCTION_ARGS)
 			tm->tm_year = -tm->tm_year;
 		}
 
-		if (tm2interval(tm, fsec, result) != 0)
+		if (itm2interval(tm, result) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("interval out of range")));
@@ -3731,10 +3750,9 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	TimestampTz dt1 = PG_GETARG_TIMESTAMPTZ(0);
 	TimestampTz dt2 = PG_GETARG_TIMESTAMPTZ(1);
 	Interval   *result;
-	fsec_t		fsec,
-				fsec1,
+	fsec_t		fsec1,
 				fsec2;
-	struct pg_tm tt,
+	struct pg_itm tt,
 			   *tm = &tt;
 	struct pg_tm tt1,
 			   *tm1 = &tt1;
@@ -3749,7 +3767,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		timestamp2tm(dt2, &tz2, tm2, &fsec2, NULL, NULL) == 0)
 	{
 		/* form the symbolic difference */
-		fsec = fsec1 - fsec2;
+		tm->tm_usec = fsec1 - fsec2;
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
 		tm->tm_min = tm1->tm_min - tm2->tm_min;
 		tm->tm_hour = tm1->tm_hour - tm2->tm_hour;
@@ -3760,7 +3778,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		/* flip sign if necessary... */
 		if (dt1 < dt2)
 		{
-			fsec = -fsec;
+			tm->tm_usec = -tm->tm_usec;
 			tm->tm_sec = -tm->tm_sec;
 			tm->tm_min = -tm->tm_min;
 			tm->tm_hour = -tm->tm_hour;
@@ -3770,9 +3788,9 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		}
 
 		/* propagate any negative fields into the next higher field */
-		while (fsec < 0)
+		while (tm->tm_usec < 0)
 		{
-			fsec += USECS_PER_SEC;
+			tm->tm_usec += USECS_PER_SEC;
 			tm->tm_sec--;
 		}
 
@@ -3821,7 +3839,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 		/* recover sign if necessary... */
 		if (dt1 < dt2)
 		{
-			fsec = -fsec;
+			tm->tm_usec = -tm->tm_usec;
 			tm->tm_sec = -tm->tm_sec;
 			tm->tm_min = -tm->tm_min;
 			tm->tm_hour = -tm->tm_hour;
@@ -3830,7 +3848,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			tm->tm_year = -tm->tm_year;
 		}
 
-		if (tm2interval(tm, fsec, result) != 0)
+		if (itm2interval(tm, result) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("interval out of range")));
@@ -4317,8 +4335,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 	int			type,
 				val;
 	char	   *lowunits;
-	fsec_t		fsec;
-	struct pg_tm tt,
+	struct pg_itm tt,
 			   *tm = &tt;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -4331,8 +4348,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (interval2tm(*interval, tm, &fsec) == 0)
-		{
+		interval2itm(*interval, tm);
 			switch (val)
 			{
 				case DTK_MILLENNIUM:
@@ -4366,10 +4382,10 @@ interval_trunc(PG_FUNCTION_ARGS)
 					tm->tm_sec = 0;
 					/* FALL THRU */
 				case DTK_SECOND:
-					fsec = 0;
+					tm->tm_usec = 0;
 					break;
 				case DTK_MILLISEC:
-					fsec = (fsec / 1000) * 1000;
+					tm->tm_usec = (tm->tm_usec / 1000) * 1000;
 					break;
 				case DTK_MICROSEC:
 					break;
@@ -4382,13 +4398,10 @@ interval_trunc(PG_FUNCTION_ARGS)
 							 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
 			}
 
-			if (tm2interval(tm, fsec, result) != 0)
+			if (itm2interval(tm, result) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("interval out of range")));
-		}
-		else
-			elog(ERROR, "could not convert interval to tm");
 	}
 	else
 	{
@@ -5200,8 +5213,7 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	int			type,
 				val;
 	char	   *lowunits;
-	fsec_t		fsec;
-	struct pg_tm tt,
+	struct pg_itm tt,
 			   *tm = &tt;
 
 	lowunits = downcase_truncate_identifier(VARDATA_ANY(units),
@@ -5214,12 +5226,11 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 
 	if (type == UNITS)
 	{
-		if (interval2tm(*interval, tm, &fsec) == 0)
-		{
+		interval2itm(*interval, tm);
 			switch (val)
 			{
 				case DTK_MICROSEC:
-					intresult = tm->tm_sec * INT64CONST(1000000) + fsec;
+					intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
 					break;
 
 				case DTK_MILLISEC:
@@ -5228,9 +5239,9 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 						 * tm->tm_sec * 1000 + fsec / 1000
 						 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
 						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 3));
+						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
 					else
-						PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + fsec / 1000.0);
+						PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
 					break;
 
 				case DTK_SECOND:
@@ -5239,9 +5250,9 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 						 * tm->tm_sec + fsec / 1'000'000
 						 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
 						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + fsec, 6));
+						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
 					else
-						PG_RETURN_FLOAT8(tm->tm_sec + fsec / 1000000.0);
+						PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
 					break;
 
 				case DTK_MINUTE:
@@ -5290,12 +5301,6 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 									lowunits, format_type_be(INTERVALOID))));
 					intresult = 0;
 			}
-		}
-		else
-		{
-			elog(ERROR, "could not convert interval to tm");
-			intresult = 0;
-		}
 	}
 	else if (type == RESERV && val == DTK_EPOCH)
 	{

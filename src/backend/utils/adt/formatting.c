@@ -491,11 +491,28 @@ typedef struct
 
 /* ----------
  * Datetime to char conversion
+ *
+ * To support intervals as well as timestamps, we use a custom "tm" struct
+ * that is almost like struct pg_tm, but has a 64-bit tm_hour field.
+ * We omit the tm_isdst and tm_zone fields, which are not used here.
  * ----------
  */
+struct fmt_tm
+{
+	int			tm_sec;
+	int			tm_min;
+	int64		tm_hour;
+	int			tm_mday;
+	int			tm_mon;
+	int			tm_year;
+	int			tm_wday;
+	int			tm_yday;
+	long int	tm_gmtoff;
+};
+
 typedef struct TmToChar
 {
-	struct pg_tm tm;			/* classic 'tm' struct */
+	struct fmt_tm tm;			/* almost the classic 'tm' struct */
 	fsec_t		fsec;			/* fractional seconds */
 	const char *tzn;			/* timezone */
 } TmToChar;
@@ -504,12 +521,25 @@ typedef struct TmToChar
 #define tmtcTzn(_X) ((_X)->tzn)
 #define tmtcFsec(_X)	((_X)->fsec)
 
+/* Note: this is used to copy pg_tm to fmt_tm, so not quite a bitwise copy */
+#define COPY_tm(_DST, _SRC) \
+do {	\
+	(_DST)->tm_sec = (_SRC)->tm_sec; \
+	(_DST)->tm_min = (_SRC)->tm_min; \
+	(_DST)->tm_hour = (_SRC)->tm_hour; \
+	(_DST)->tm_mday = (_SRC)->tm_mday; \
+	(_DST)->tm_mon = (_SRC)->tm_mon; \
+	(_DST)->tm_year = (_SRC)->tm_year; \
+	(_DST)->tm_wday = (_SRC)->tm_wday; \
+	(_DST)->tm_yday = (_SRC)->tm_yday; \
+	(_DST)->tm_gmtoff = (_SRC)->tm_gmtoff; \
+} while(0)
+
+/* Caution: this is used to zero both pg_tm and fmt_tm structs */
 #define ZERO_tm(_X) \
 do {	\
-	(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
-	(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
-	(_X)->tm_mday = (_X)->tm_mon  = 1; \
-	(_X)->tm_zone = NULL; \
+	memset(_X, 0, sizeof(*(_X))); \
+	(_X)->tm_mday = (_X)->tm_mon = 1; \
 } while(0)
 
 #define ZERO_tmtc(_X) \
@@ -2649,7 +2679,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 {
 	FormatNode *n;
 	char	   *s;
-	struct pg_tm *tm = &in->tm;
+	struct fmt_tm *tm = &in->tm;
 	int			i;
 
 	/* cache localized days and months */
@@ -2698,16 +2728,17 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * display time as shown on a 12-hour clock, even for
 				 * intervals
 				 */
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
-						tm->tm_hour % (HOURS_PER_DAY / 2));
+				sprintf(s, "%0*lld", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ?
+						(long long) (HOURS_PER_DAY / 2) :
+						(long long) (tm->tm_hour % (HOURS_PER_DAY / 2)));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_HH24:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						tm->tm_hour);
+				sprintf(s, "%0*lld", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						(long long) tm->tm_hour);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -2755,9 +2786,10 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 #undef DCH_to_char_fsec
 			case DCH_SSSS:
-				sprintf(s, "%d", tm->tm_hour * SECS_PER_HOUR +
-						tm->tm_min * SECS_PER_MINUTE +
-						tm->tm_sec);
+				sprintf(s, "%lld",
+						(long long) (tm->tm_hour * SECS_PER_HOUR +
+									 tm->tm_min * SECS_PER_MINUTE +
+									 tm->tm_sec));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -4088,7 +4120,8 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
+	struct pg_tm tt;
+	struct fmt_tm *tm;
 	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
@@ -4097,10 +4130,11 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, NULL, tm, &tmtcFsec(&tmtc), NULL, NULL) != 0)
+	if (timestamp2tm(dt, NULL, &tt, &tmtcFsec(&tmtc), NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+	COPY_tm(tm, &tt);
 
 	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 	tm->tm_wday = (thisdate + 1) % 7;
@@ -4120,7 +4154,8 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 			   *res;
 	TmToChar	tmtc;
 	int			tz;
-	struct pg_tm *tm;
+	struct pg_tm tt;
+	struct fmt_tm *tm;
 	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
@@ -4129,10 +4164,11 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, &tz, tm, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
+	if (timestamp2tm(dt, &tz, &tt, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
+	COPY_tm(tm, &tt);
 
 	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 	tm->tm_wday = (thisdate + 1) % 7;
@@ -4156,7 +4192,9 @@ interval_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
+	struct fmt_tm *tm;
+	struct pg_itm tt,
+			   *itm = &tt;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0)
 		PG_RETURN_NULL();
@@ -4164,8 +4202,14 @@ interval_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (interval2tm(*it, tm, &tmtcFsec(&tmtc)) != 0)
-		PG_RETURN_NULL();
+	interval2itm(*it, itm);
+	tmtc.fsec = itm->tm_usec;
+	tm->tm_sec = itm->tm_sec;
+	tm->tm_min = itm->tm_min;
+	tm->tm_hour = itm->tm_hour;
+	tm->tm_mday = itm->tm_mday;
+	tm->tm_mon = itm->tm_mon;
+	tm->tm_year = itm->tm_year;
 
 	/* wday is meaningless, yday approximates the total span in days */
 	tm->tm_yday = (tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon) * DAYS_PER_MONTH + tm->tm_mday;

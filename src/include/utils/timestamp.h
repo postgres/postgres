@@ -88,8 +88,9 @@ extern int	timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm,
 						 fsec_t *fsec, const char **tzn, pg_tz *attimezone);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
-extern int	interval2tm(Interval span, struct pg_tm *tm, fsec_t *fsec);
-extern int	tm2interval(struct pg_tm *tm, fsec_t fsec, Interval *span);
+extern void interval2itm(Interval span, struct pg_itm *itm);
+extern int	itm2interval(struct pg_itm *itm, Interval *span);
+extern int	itmin2interval(struct pg_itm_in *itm_in, Interval *span);
 
 extern Timestamp SetEpochTimestamp(void);
 extern void GetEpochTime(struct pg_tm *tm);
