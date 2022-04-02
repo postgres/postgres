@@ -64,7 +64,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
 							   (int) PageGetSpecialSize(page))));
 
-	opaq = (GISTPageOpaque) PageGetSpecialPointer(page);
+	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -139,7 +139,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
 							   (int) PageGetSpecialSize(page))));
 
-	opaq = (GISTPageOpaque) PageGetSpecialPointer(page);
+	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
