@@ -4134,11 +4134,13 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
-	COPY_tm(tm, &tt);
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-	tm->tm_wday = (thisdate + 1) % 7;
-	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
+	/* calculate wday and yday, because timestamp2tm doesn't */
+	thisdate = date2j(tt.tm_year, tt.tm_mon, tt.tm_mday);
+	tt.tm_wday = (thisdate + 1) % 7;
+	tt.tm_yday = thisdate - date2j(tt.tm_year, 1, 1) + 1;
+
+	COPY_tm(tm, &tt);
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
@@ -4168,11 +4170,13 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
-	COPY_tm(tm, &tt);
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-	tm->tm_wday = (thisdate + 1) % 7;
-	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
+	/* calculate wday and yday, because timestamp2tm doesn't */
+	thisdate = date2j(tt.tm_year, tt.tm_mon, tt.tm_mday);
+	tt.tm_wday = (thisdate + 1) % 7;
+	tt.tm_yday = thisdate - date2j(tt.tm_year, 1, 1) + 1;
+
+	COPY_tm(tm, &tt);
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();

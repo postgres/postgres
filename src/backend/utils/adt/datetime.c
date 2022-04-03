@@ -668,19 +668,50 @@ AdjustYears(int64 val, int scale,
 }
 
 
-/* Fetch a fractional-second value with suitable error checking */
+/*
+ * Parse the fractional part of a number (decimal point and optional digits,
+ * followed by end of string).  Returns the fractional value into *frac.
+ *
+ * Returns 0 if successful, DTERR code if bogus input detected.
+ */
+static int
+ParseFraction(char *cp, double *frac)
+{
+	/* Caller should always pass the start of the fraction part */
+	Assert(*cp == '.');
+
+	/*
+	 * We want to allow just "." with no digits, but some versions of strtod
+	 * will report EINVAL for that, so special-case it.
+	 */
+	if (cp[1] == '\0')
+	{
+		*frac = 0;
+	}
+	else
+	{
+		errno = 0;
+		*frac = strtod(cp, &cp);
+		/* check for parse failure */
+		if (*cp != '\0' || errno != 0)
+			return DTERR_BAD_FORMAT;
+	}
+	return 0;
+}
+
+/*
+ * Fetch a fractional-second value with suitable error checking.
+ * Same as ParseFraction except we convert the result to integer microseconds.
+ */
 static int
 ParseFractionalSecond(char *cp, fsec_t *fsec)
 {
 	double		frac;
+	int			dterr;
 
-	/* Caller should always pass the start of the fraction part */
-	Assert(*cp == '.');
-	errno = 0;
-	frac = strtod(cp, &cp);
-	/* check for parse failure */
-	if (*cp != '\0' || errno != 0)
-		return DTERR_BAD_FORMAT;
+	dterr = ParseFraction(cp, &frac);
+	if (dterr)
+		return dterr;
 	*fsec = rint(frac * 1000000);
 	return 0;
 }
@@ -1248,10 +1279,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							{
 								double		time;
 
-								errno = 0;
-								time = strtod(cp, &cp);
-								if (*cp != '\0' || errno != 0)
-									return DTERR_BAD_FORMAT;
+								dterr = ParseFraction(cp, &time);
+								if (dterr)
+									return dterr;
 								time *= USECS_PER_DAY;
 								dt2time(time,
 										&tm->tm_hour, &tm->tm_min,
@@ -2146,10 +2176,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							{
 								double		time;
 
-								errno = 0;
-								time = strtod(cp, &cp);
-								if (*cp != '\0' || errno != 0)
-									return DTERR_BAD_FORMAT;
+								dterr = ParseFraction(cp, &time);
+								if (dterr)
+									return dterr;
 								time *= USECS_PER_DAY;
 								dt2time(time,
 										&tm->tm_hour, &tm->tm_min,
@@ -3035,13 +3064,21 @@ DecodeNumberField(int len, char *str, int fmask,
 		 * Can we use ParseFractionalSecond here?  Not clear whether trailing
 		 * junk should be rejected ...
 		 */
-		double		frac;
+		if (cp[1] == '\0')
+		{
+			/* avoid assuming that strtod will accept "." */
+			*fsec = 0;
+		}
+		else
+		{
+			double		frac;
 
-		errno = 0;
-		frac = strtod(cp, NULL);
-		if (errno != 0)
-			return DTERR_BAD_FORMAT;
-		*fsec = rint(frac * 1000000);
+			errno = 0;
+			frac = strtod(cp, NULL);
+			if (errno != 0)
+				return DTERR_BAD_FORMAT;
+			*fsec = rint(frac * 1000000);
+		}
 		/* Now truncate off the fraction for further processing */
 		*cp = '\0';
 		len = strlen(str);
@@ -3467,11 +3504,9 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
 				}
 				else if (*cp == '.')
 				{
-					errno = 0;
-					fval = strtod(cp, &cp);
-					if (*cp != '\0' || errno != 0)
-						return DTERR_BAD_FORMAT;
-
+					dterr = ParseFraction(cp, &fval);
+					if (dterr)
+						return dterr;
 					if (*field[i] == '-')
 						fval = -fval;
 				}
@@ -3650,6 +3685,7 @@ DecodeInterval(char **field, int *ftype, int nf, int range,
  * Helper functions to avoid duplicated code in DecodeISO8601Interval.
  *
  * Parse a decimal value and break it into integer and fractional parts.
+ * Set *endptr to end+1 of the parsed substring.
  * Returns 0 or DTERR code.
  */
 static int
@@ -3676,7 +3712,20 @@ ParseISO8601Number(char *str, char **endptr, int64 *ipart, double *fpart)
 
 	/* Parse fractional part if there is any */
 	if (**endptr == '.')
-		*fpart = strtod(*endptr, endptr) * sign;
+	{
+		/*
+		 * As in ParseFraction, some versions of strtod insist on seeing some
+		 * digits after '.', but some don't.  We want to allow zero digits
+		 * after '.' as long as there were some before it.
+		 */
+		if (isdigit((unsigned char) *(*endptr + 1)))
+			*fpart = strtod(*endptr, endptr) * sign;
+		else
+		{
+			(*endptr)++;		/* advance over '.' */
+			str++;				/* so next test will fail if no digits */
+		}
+	}
 
 	/* did we not see anything that looks like a number? */
 	if (*endptr == str || errno != 0)

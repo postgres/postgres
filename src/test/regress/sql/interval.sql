@@ -312,6 +312,14 @@ select  interval 'P0002'                  AS "year only",
         interval 'PT10'                   AS "hour only",
         interval 'PT10:30'                AS "hour minute";
 
+-- Check handling of fractional fields in ISO8601 format.
+select interval 'P1Y0M3DT4H5M6S';
+select interval 'P1.0Y0M3DT4H5M6S';
+select interval 'P1.1Y0M3DT4H5M6S';
+select interval 'P1.Y0M3DT4H5M6S';
+select interval 'P.1Y0M3DT4H5M6S';
+select interval 'P.Y0M3DT4H5M6S';  -- error
+
 -- test a couple rounding cases that changed since 8.3 w/ HAVE_INT64_TIMESTAMP.
 SET IntervalStyle to postgres_verbose;
 select interval '-10 mons -3 days +03:55:06.70';
