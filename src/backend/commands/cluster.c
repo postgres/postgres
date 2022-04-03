@@ -806,9 +806,10 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	Form_pg_class relform;
 	TupleDesc	oldTupDesc PG_USED_FOR_ASSERTS_ONLY;
 	TupleDesc	newTupDesc PG_USED_FOR_ASSERTS_ONLY;
-	TransactionId OldestXmin;
-	TransactionId FreezeXid;
-	MultiXactId MultiXactCutoff;
+	TransactionId OldestXmin,
+				FreezeXid;
+	MultiXactId OldestMxact,
+				MultiXactCutoff;
 	bool		use_sort;
 	double		num_tuples = 0,
 				tups_vacuumed = 0,
@@ -896,8 +897,8 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 	 * Since we're going to rewrite the whole table anyway, there's no reason
 	 * not to be aggressive about this.
 	 */
-	vacuum_set_xid_limits(OldHeap, 0, 0, 0, 0,
-						  &OldestXmin, &FreezeXid, &MultiXactCutoff);
+	vacuum_set_xid_limits(OldHeap, 0, 0, 0, 0, &OldestXmin, &OldestMxact,
+						  &FreezeXid, &MultiXactCutoff);
 
 	/*
 	 * FreezeXid will become the table's new relfrozenxid, and that mustn't go

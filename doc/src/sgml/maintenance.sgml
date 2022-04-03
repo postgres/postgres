@@ -586,11 +586,11 @@
     statistics in the system tables <structname>pg_class</structname> and
     <structname>pg_database</structname>.  In particular,
     the <structfield>relfrozenxid</structfield> column of a table's
-    <structname>pg_class</structname> row contains the freeze cutoff XID that was used
-    by the last aggressive <command>VACUUM</command> for that table.  All rows
-    inserted by transactions with XIDs older than this cutoff XID are
-    guaranteed to have been frozen.  Similarly,
-    the <structfield>datfrozenxid</structfield> column of a database's
+    <structname>pg_class</structname> row contains the oldest remaining unfrozen
+    XID at the end of the most recent <command>VACUUM</command> that successfully
+    advanced <structfield>relfrozenxid</structfield> (typically the most recent
+    aggressive VACUUM).  Similarly, the
+    <structfield>datfrozenxid</structfield> column of a database's
     <structname>pg_database</structname> row is a lower bound on the unfrozen XIDs
     appearing in that database &mdash; it is just the minimum of the
     per-table <structfield>relfrozenxid</structfield> values within the database.
@@ -638,7 +638,11 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     set <literal>age(relfrozenxid)</literal> to a value just a little more than the
     <varname>vacuum_freeze_min_age</varname> setting
     that was used (more by the number of transactions started since the
-    <command>VACUUM</command> started).  If no <structfield>relfrozenxid</structfield>-advancing
+    <command>VACUUM</command> started).  <command>VACUUM</command>
+    will set <structfield>relfrozenxid</structfield> to the oldest XID
+    that remains in the table, so it's possible that the final value
+    will be much more recent than strictly required.
+    If no <structfield>relfrozenxid</structfield>-advancing
     <command>VACUUM</command> is issued on the table until
     <varname>autovacuum_freeze_max_age</varname> is reached, an autovacuum will soon
     be forced for the table.

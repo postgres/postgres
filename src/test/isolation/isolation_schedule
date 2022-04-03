@@ -84,7 +84,7 @@ test: alter-table-4
 test: create-trigger
 test: sequence-ddl
 test: async-notify
-test: vacuum-reltuples
+test: vacuum-no-cleanup-lock
 test: timeouts
 test: vacuum-concurrent-drop
 test: vacuum-conflict
