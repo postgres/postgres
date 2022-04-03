@@ -307,6 +307,12 @@ struct Tuplesortstate
 							LogicalTape *tape, unsigned int len);
 
 	/*
+	 * Whether SortTuple's datum1 and isnull1 members are maintained by the
+	 * above routines.  If not, some sort specializations are disabled.
+	 */
+	bool		haveDatum1;
+
+	/*
 	 * This array holds the tuples now in sort memory.  If we are in state
 	 * INITIAL, the tuples are in no particular order; if we are in state
 	 * SORTEDINMEM, the tuples are in final sorted order; in states BUILDRUNS
@@ -1016,6 +1022,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	state->copytup = copytup_heap;
 	state->writetup = writetup_heap;
 	state->readtup = readtup_heap;
+	state->haveDatum1 = true;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
 	state->abbrevNext = 10;
@@ -1094,6 +1101,15 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 	state->abbrevNext = 10;
 
 	state->indexInfo = BuildIndexInfo(indexRel);
+
+	/*
+	 * If we don't have a simple leading attribute, we don't currently
+	 * initialize datum1, so disable optimizations that require it.
+	 */
+	if (state->indexInfo->ii_IndexAttrNumbers[0] == 0)
+		state->haveDatum1 = false;
+	else
+		state->haveDatum1 = true;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
 
@@ -1188,6 +1204,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
 	state->abbrevNext = 10;
+	state->haveDatum1 = true;
 
 	state->heapRel = heapRel;
 	state->indexRel = indexRel;
@@ -1262,6 +1279,7 @@ tuplesort_begin_index_hash(Relation heapRel,
 	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
+	state->haveDatum1 = true;
 
 	state->heapRel = heapRel;
 	state->indexRel = indexRel;
@@ -1302,6 +1320,7 @@ tuplesort_begin_index_gist(Relation heapRel,
 	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
+	state->haveDatum1 = true;
 
 	state->heapRel = heapRel;
 	state->indexRel = indexRel;
@@ -1366,6 +1385,7 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 	state->writetup = writetup_datum;
 	state->readtup = readtup_datum;
 	state->abbrevNext = 10;
+	state->haveDatum1 = true;
 
 	state->datumType = datumType;
 
@@ -3593,27 +3613,40 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 
 	if (state->memtupcount > 1)
 	{
-		/* Do we have a specialization for the leading column's comparator? */
-		if (state->sortKeys &&
-			state->sortKeys[0].comparator == ssup_datum_unsigned_cmp)
+		/*
+		 * Do we have the leading column's value or abbreviation in datum1,
+		 * and is there a specialization for its comparator?
+		 */
+		if (state->haveDatum1 && state->sortKeys)
 		{
-			elog(DEBUG1, "qsort_tuple_unsigned");
-			qsort_tuple_unsigned(state->memtuples, state->memtupcount, state);
+			if (state->sortKeys[0].comparator == ssup_datum_unsigned_cmp)
+			{
+				elog(DEBUG1, "qsort_tuple_unsigned");
+				qsort_tuple_unsigned(state->memtuples,
+									 state->memtupcount,
+									 state);
+				return;
+			}
+			else if (state->sortKeys[0].comparator == ssup_datum_signed_cmp)
+			{
+				elog(DEBUG1, "qsort_tuple_signed");
+				qsort_tuple_signed(state->memtuples,
+								   state->memtupcount,
+								   state);
+				return;
+			}
+			else if (state->sortKeys[0].comparator == ssup_datum_int32_cmp)
+			{
+				elog(DEBUG1, "qsort_tuple_int32");
+				qsort_tuple_int32(state->memtuples,
+								  state->memtupcount,
+								  state);
+				return;
+			}
 		}
-		else if (state->sortKeys &&
-				 state->sortKeys[0].comparator == ssup_datum_signed_cmp)
-		{
-			elog(DEBUG1, "qsort_tuple_signed");
-			qsort_tuple_signed(state->memtuples, state->memtupcount, state);
-		}
-		else if (state->sortKeys &&
-				 state->sortKeys[0].comparator == ssup_datum_int32_cmp)
-		{
-			elog(DEBUG1, "qsort_tuple_int32");
-			qsort_tuple_int32(state->memtuples, state->memtupcount, state);
-		}
+
 		/* Can we use the single-key sort function? */
-		else if (state->onlyKey != NULL)
+		if (state->onlyKey != NULL)
 		{
 			elog(DEBUG1, "qsort_ssup");
 			qsort_ssup(state->memtuples, state->memtupcount,
@@ -4019,7 +4052,6 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 				datum2;
 	bool		isnull1,
 				isnull2;
-	AttrNumber	leading = state->indexInfo->ii_IndexAttrNumbers[0];
 
 	/* Be prepared to compare additional sort keys */
 	ltup = (HeapTuple) a->tuple;
@@ -4027,7 +4059,7 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 	tupDesc = state->tupDesc;
 
 	/* Compare the leading sort key, if it's simple */
-	if (leading != 0)
+	if (state->haveDatum1)
 	{
 		compare = ApplySortComparator(a->datum1, a->isnull1,
 									  b->datum1, b->isnull1,
@@ -4037,6 +4069,8 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 
 		if (sortKey->abbrev_converter)
 		{
+			AttrNumber	leading = state->indexInfo->ii_IndexAttrNumbers[0];
+
 			datum1 = heap_getattr(ltup, leading, tupDesc, &isnull1);
 			datum2 = heap_getattr(rtup, leading, tupDesc, &isnull2);
 
@@ -4134,7 +4168,7 @@ copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
 	 * set up first-column key value, and potentially abbreviate, if it's a
 	 * simple column
 	 */
-	if (state->indexInfo->ii_IndexAttrNumbers[0] == 0)
+	if (!state->haveDatum1)
 		return;
 
 	original = heap_getattr(tuple,
@@ -4229,7 +4263,7 @@ readtup_cluster(Tuplesortstate *state, SortTuple *stup,
 		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
 	stup->tuple = (void *) tuple;
 	/* set up first-column key value, if it's a simple column */
-	if (state->indexInfo->ii_IndexAttrNumbers[0] != 0)
+	if (state->haveDatum1)
 		stup->datum1 = heap_getattr(tuple,
 									state->indexInfo->ii_IndexAttrNumbers[0],
 									state->tupDesc,
