@@ -601,13 +601,12 @@ dshash_memhash(const void *v, size_t size, void *arg)
 }
 
 /*
- * dshash_seq_init/_next/_term
- *           Sequentially scan through dshash table and return all the
- *           elements one by one, return NULL when no more.
+ * Sequentially scan through dshash table and return all the elements one by
+ * one, return NULL when all elements have been returned.
  *
- * dshash_seq_term should always be called when a scan finished.
- * The caller may delete returned elements midst of a scan by using
- * dshash_delete_current(). exclusive must be true to delete elements.
+ * dshash_seq_term needs to be called when a scan finished.  The caller may
+ * delete returned elements midst of a scan by using dshash_delete_current()
+ * if exclusive = true.
  */
 void
 dshash_seq_init(dshash_seq_status *status, dshash_table *hash_table,
@@ -625,34 +624,38 @@ dshash_seq_init(dshash_seq_status *status, dshash_table *hash_table,
 /*
  * Returns the next element.
  *
- * Returned elements are locked and the caller must not explicitly release
- * it. It is released at the next call to dshash_next().
+ * Returned elements are locked and the caller may not release the lock. It is
+ * released by future calls to dshash_seq_next() or dshash_seq_term().
  */
 void *
 dshash_seq_next(dshash_seq_status *status)
 {
 	dsa_pointer next_item_pointer;
 
-	if (status->curitem == NULL)
+	/*
+	 * Not yet holding any partition locks. Need to determine the size of the
+	 * hash table, it could have been resized since we were looking
+	 * last. Since we iterate in partition order, we can start by
+	 * unconditionally lock partition 0.
+	 *
+	 * Once we hold the lock, no resizing can happen until the scan ends. So
+	 * we don't need to repeatedly call ensure_valid_bucket_pointers().
+	 */
+	if (status->curpartition == -1)
 	{
-		int			partition;
-
 		Assert(status->curbucket == 0);
 		Assert(!status->hash_table->find_locked);
 
-		/* first shot. grab the first item. */
-		partition =
-			PARTITION_FOR_BUCKET_INDEX(status->curbucket,
-									   status->hash_table->size_log2);
-		LWLockAcquire(PARTITION_LOCK(status->hash_table, partition),
-					  status->exclusive ? LW_EXCLUSIVE : LW_SHARED);
-		status->curpartition = partition;
+		status->curpartition = 0;
 
-		/* resize doesn't happen from now until seq scan ends */
-		status->nbuckets =
-			NUM_BUCKETS(status->hash_table->control->size_log2);
+		LWLockAcquire(PARTITION_LOCK(status->hash_table,
+									 status->curpartition),
+					  status->exclusive ? LW_EXCLUSIVE : LW_SHARED);
+
 		ensure_valid_bucket_pointers(status->hash_table);
 
+		status->nbuckets =
+			NUM_BUCKETS(status->hash_table->control->size_log2);
 		next_item_pointer = status->hash_table->buckets[status->curbucket];
 	}
 	else
@@ -714,7 +717,7 @@ dshash_seq_next(dshash_seq_status *status)
 /*
  * Terminates the seqscan and release all locks.
  *
- * Should be always called when finishing or exiting a seqscan.
+ * Needs to be called after finishing or when exiting a seqscan.
  */
 void
 dshash_seq_term(dshash_seq_status *status)
@@ -726,7 +729,9 @@ dshash_seq_term(dshash_seq_status *status)
 		LWLockRelease(PARTITION_LOCK(status->hash_table, status->curpartition));
 }
 
-/* Remove the current entry while a seq scan. */
+/*
+ * Remove the current entry of the seq scan.
+ */
 void
 dshash_delete_current(dshash_seq_status *status)
 {
@@ -744,13 +749,6 @@ dshash_delete_current(dshash_seq_status *status)
 								LW_EXCLUSIVE));
 
 	delete_item(hash_table, item);
-}
-
-/* Get the current entry while a seq scan. */
-void *
-dshash_get_current(dshash_seq_status *status)
-{
-	return ENTRY_FROM_ITEM(status->curitem);
 }
 
 /*

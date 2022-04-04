@@ -101,7 +101,6 @@ extern void dshash_seq_init(dshash_seq_status *status, dshash_table *hash_table,
 extern void *dshash_seq_next(dshash_seq_status *status);
 extern void dshash_seq_term(dshash_seq_status *status);
 extern void dshash_delete_current(dshash_seq_status *status);
-extern void *dshash_get_current(dshash_seq_status *status);
 
 /* Convenience hash and compare functions wrapping memcmp and tag_hash. */
 extern int	dshash_memcmp(const void *a, const void *b, size_t size, void *arg);
