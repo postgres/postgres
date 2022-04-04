@@ -86,6 +86,12 @@ typedef enum
 	SORT_SPACE_TYPE_MEMORY
 } TuplesortSpaceType;
 
+/* Bitwise option flags for tuple sorts */
+#define TUPLESORT_NONE					0
+
+/* specifies whether non-sequential access to the sort result is required */
+#define	TUPLESORT_RANDOMACCESS			(1 << 0)
+
 typedef struct TuplesortInstrumentation
 {
 	TuplesortMethod sortMethod; /* sort algorithm used */
@@ -201,32 +207,33 @@ extern Tuplesortstate *tuplesort_begin_heap(TupleDesc tupDesc,
 											Oid *sortOperators, Oid *sortCollations,
 											bool *nullsFirstFlags,
 											int workMem, SortCoordinate coordinate,
-											bool randomAccess);
+											int sortopt);
 extern Tuplesortstate *tuplesort_begin_cluster(TupleDesc tupDesc,
 											   Relation indexRel, int workMem,
-											   SortCoordinate coordinate, bool randomAccess);
+											   SortCoordinate coordinate,
+											   int sortopt);
 extern Tuplesortstate *tuplesort_begin_index_btree(Relation heapRel,
 												   Relation indexRel,
 												   bool enforceUnique,
 												   bool uniqueNullsNotDistinct,
 												   int workMem, SortCoordinate coordinate,
-												   bool randomAccess);
+												   int sortopt);
 extern Tuplesortstate *tuplesort_begin_index_hash(Relation heapRel,
 												  Relation indexRel,
 												  uint32 high_mask,
 												  uint32 low_mask,
 												  uint32 max_buckets,
 												  int workMem, SortCoordinate coordinate,
-												  bool randomAccess);
+												  int sortopt);
 extern Tuplesortstate *tuplesort_begin_index_gist(Relation heapRel,
 												  Relation indexRel,
 												  int workMem, SortCoordinate coordinate,
-												  bool randomAccess);
+												  int sortopt);
 extern Tuplesortstate *tuplesort_begin_datum(Oid datumType,
 											 Oid sortOperator, Oid sortCollation,
 											 bool nullsFirstFlag,
 											 int workMem, SortCoordinate coordinate,
-											 bool randomAccess);
+											 int sortopt);
 
 extern void tuplesort_set_bound(Tuplesortstate *state, int64 bound);
 extern bool tuplesort_used_bound(Tuplesortstate *state);

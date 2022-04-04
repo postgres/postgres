@@ -271,7 +271,7 @@ gistbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 														  index,
 														  maintenance_work_mem,
 														  NULL,
-														  false);
+														  TUPLESORT_NONE);
 
 		/* Scan the table, adding all tuples to the tuplesort */
 		reltuples = table_index_build_scan(heap, index, indexInfo, true, true,
