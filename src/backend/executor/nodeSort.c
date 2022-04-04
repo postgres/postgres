@@ -99,6 +99,8 @@ ExecSort(PlanState *pstate)
 
 		if (node->randomAccess)
 			tuplesortopts |= TUPLESORT_RANDOMACCESS;
+		if (node->bounded)
+			tuplesortopts |= TUPLESORT_ALLOWBOUNDED;
 
 		if (node->datumSort)
 			tuplesortstate = tuplesort_begin_datum(TupleDescAttr(tupDesc, 0)->atttypid,

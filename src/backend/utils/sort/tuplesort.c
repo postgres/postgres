@@ -935,11 +935,21 @@ tuplesort_begin_batch(Tuplesortstate *state)
 	 * eases memory management.  Resetting at key points reduces
 	 * fragmentation. Note that the memtuples array of SortTuples is allocated
 	 * in the parent context, not this context, because there is no need to
-	 * free memtuples early.
+	 * free memtuples early.  For bounded sorts, tuples may be pfreed in any
+	 * order, so we use a regular aset.c context so that it can make use of
+	 * free'd memory.  When the sort is not bounded, we make use of a
+	 * generation.c context as this keeps allocations more compact with less
+	 * wastage.  Allocations are also slightly more CPU efficient.
 	 */
-	state->tuplecontext = AllocSetContextCreate(state->sortcontext,
-												"Caller tuples",
-												ALLOCSET_DEFAULT_SIZES);
+	if (state->sortopt & TUPLESORT_ALLOWBOUNDED)
+		state->tuplecontext = AllocSetContextCreate(state->sortcontext,
+													"Caller tuples",
+													ALLOCSET_DEFAULT_SIZES);
+	else
+		state->tuplecontext = GenerationContextCreate(state->sortcontext,
+													  "Caller tuples",
+													  ALLOCSET_DEFAULT_SIZES);
+
 
 	state->status = TSS_INITIAL;
 	state->bounded = false;
@@ -1444,6 +1454,8 @@ tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 {
 	/* Assert we're called before loading any tuples */
 	Assert(state->status == TSS_INITIAL && state->memtupcount == 0);
+	/* Assert we allow bounded sorts */
+	Assert(state->sortopt & TUPLESORT_ALLOWBOUNDED);
 	/* Can't set the bound twice, either */
 	Assert(!state->bounded);
 	/* Also, this shouldn't be called in a parallel worker */

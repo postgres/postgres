@@ -92,6 +92,9 @@ typedef enum
 /* specifies whether non-sequential access to the sort result is required */
 #define	TUPLESORT_RANDOMACCESS			(1 << 0)
 
+/* specifies if the tuplesort is able to support bounded sorts */
+#define TUPLESORT_ALLOWBOUNDED			(1 << 1)
+
 typedef struct TuplesortInstrumentation
 {
 	TuplesortMethod sortMethod; /* sort algorithm used */
