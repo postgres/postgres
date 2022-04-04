@@ -16,8 +16,14 @@ if (PostgreSQL::Test::Utils::has_wal_read_bug)
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
+
+# Increase some settings that Cluster->new makes too low by default.
 $node_primary->adjust_conf('postgresql.conf', 'max_connections', '25');
 $node_primary->append_conf('postgresql.conf', 'max_prepared_transactions = 10');
+# We'll stick with Cluster->new's small default shared_buffers, but since that
+# makes synchronized seqscans more probable, it risks changing the results of
+# some test queries.  Disable synchronized seqscans to prevent that.
+$node_primary->append_conf('postgresql.conf', 'synchronize_seqscans = off');
 
 # WAL consistency checking is resource intensive so require opt-in with the
 # PG_TEST_EXTRA environment variable.
