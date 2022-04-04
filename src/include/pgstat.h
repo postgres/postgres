@@ -776,9 +776,6 @@ typedef union PgStat_Msg
 
 #define PGSTAT_FILE_FORMAT_ID	0x01A5BCA6
 
-/*
- * Archiver statistics kept in the stats collector
- */
 typedef struct PgStat_ArchiverStats
 {
 	PgStat_Counter archived_count;	/* archival successes */
@@ -792,9 +789,6 @@ typedef struct PgStat_ArchiverStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_ArchiverStats;
 
-/*
- * Background writer statistics kept in the stats collector
- */
 typedef struct PgStat_BgWriterStats
 {
 	PgStat_Counter buf_written_clean;
@@ -803,9 +797,6 @@ typedef struct PgStat_BgWriterStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_BgWriterStats;
 
-/*
- * Checkpointer statistics kept in the stats collector
- */
 typedef struct PgStat_CheckpointerStats
 {
 	TimestampTz stats_timestamp;	/* time of stats file update */
@@ -818,10 +809,6 @@ typedef struct PgStat_CheckpointerStats
 	PgStat_Counter buf_fsync_backend;
 } PgStat_CheckpointerStats;
 
-/* ----------
- * PgStat_StatDBEntry			The collector's data per database
- * ----------
- */
 typedef struct PgStat_StatDBEntry
 {
 	Oid			databaseid;
@@ -866,10 +853,6 @@ typedef struct PgStat_StatDBEntry
 	HTAB	   *functions;
 } PgStat_StatDBEntry;
 
-/* ----------
- * PgStat_StatFuncEntry			The collector's data per function
- * ----------
- */
 typedef struct PgStat_StatFuncEntry
 {
 	Oid			functionid;
@@ -880,9 +863,6 @@ typedef struct PgStat_StatFuncEntry
 	PgStat_Counter f_self_time;
 } PgStat_StatFuncEntry;
 
-/*
- * Global statistics kept in the stats collector
- */
 typedef struct PgStat_GlobalStats
 {
 	TimestampTz stats_timestamp;	/* time of stats file update */
@@ -891,9 +871,6 @@ typedef struct PgStat_GlobalStats
 	PgStat_BgWriterStats bgwriter;
 } PgStat_GlobalStats;
 
-/*
- * Replication slot statistics kept in the stats collector
- */
 typedef struct PgStat_StatReplSlotEntry
 {
 	NameData	slotname;
@@ -908,9 +885,6 @@ typedef struct PgStat_StatReplSlotEntry
 	TimestampTz stat_reset_timestamp;
 } PgStat_StatReplSlotEntry;
 
-/*
- * SLRU statistics kept in the stats collector
- */
 typedef struct PgStat_SLRUStats
 {
 	PgStat_Counter blocks_zeroed;
@@ -923,9 +897,6 @@ typedef struct PgStat_SLRUStats
 	TimestampTz stat_reset_timestamp;
 } PgStat_SLRUStats;
 
-/*
- * Subscription statistics kept in the stats collector.
- */
 typedef struct PgStat_StatSubEntry
 {
 	Oid			subid;			/* hash key (must be first) */
@@ -935,10 +906,6 @@ typedef struct PgStat_StatSubEntry
 	TimestampTz stat_reset_timestamp;
 } PgStat_StatSubEntry;
 
-/* ----------
- * PgStat_StatTabEntry			The collector's data per table (or index)
- * ----------
- */
 typedef struct PgStat_StatTabEntry
 {
 	Oid			tableid;
@@ -971,9 +938,6 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter autovac_analyze_count;
 } PgStat_StatTabEntry;
 
-/*
- * WAL statistics kept in the stats collector
- */
 typedef struct PgStat_WalStats
 {
 	PgStat_Counter wal_records;
