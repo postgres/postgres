@@ -22,15 +22,12 @@
 #include "utils/pgstat_internal.h"
 
 
-/* ----------
- * pgstat_reset_replslot_counter() -
+/*
+ * Tell the statistics collector to reset a single replication slot
+ * counter, or all replication slots counters (when name is null).
  *
- *	Tell the statistics collector to reset a single replication slot
- *	counter, or all replication slots counters (when name is null).
- *
- *	Permission checking for this function is managed through the normal
- *	GRANT system.
- * ----------
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 void
 pgstat_reset_replslot_counter(const char *name)
@@ -53,11 +50,8 @@ pgstat_reset_replslot_counter(const char *name)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_report_replslot() -
- *
- *	Tell the collector about replication slot statistics.
- * ----------
+/*
+ * Tell the collector about replication slot statistics.
  */
 void
 pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
@@ -82,11 +76,8 @@ pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
 }
 
-/* ----------
- * pgstat_report_replslot_create() -
- *
- *	Tell the collector about creating the replication slot.
- * ----------
+/*
+ * Tell the collector about creating the replication slot.
  */
 void
 pgstat_report_replslot_create(const char *slotname)
@@ -100,11 +91,8 @@ pgstat_report_replslot_create(const char *slotname)
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
 }
 
-/* ----------
- * pgstat_report_replslot_drop() -
- *
- *	Tell the collector about dropping the replication slot.
- * ----------
+/*
+ * Tell the collector about dropping the replication slot.
  */
 void
 pgstat_report_replslot_drop(const char *slotname)

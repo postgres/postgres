@@ -206,8 +206,7 @@ pgstat_send_funcstats(void)
 }
 
 /*
- * find_funcstat_entry - find any existing PgStat_BackendFunctionEntry entry
- *		for specified function
+ * find any existing PgStat_BackendFunctionEntry entry for specified function
  *
  * If no entry, return NULL, don't create a new one
  */

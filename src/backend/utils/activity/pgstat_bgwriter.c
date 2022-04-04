@@ -28,11 +28,8 @@
 PgStat_MsgBgWriter PendingBgWriterStats;
 
 
-/* ----------
- * pgstat_send_bgwriter() -
- *
- *		Send bgwriter statistics to the collector
- * ----------
+/*
+ * Send bgwriter statistics to the collector
  */
 void
 pgstat_send_bgwriter(void)

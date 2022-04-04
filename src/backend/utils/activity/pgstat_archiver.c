@@ -21,12 +21,9 @@
 #include "utils/timestamp.h"
 
 
-/* ----------
- * pgstat_send_archiver() -
- *
- *	Tell the collector about the WAL file that we successfully
- *	archived or failed to archive.
- * ----------
+/*
+ * Tell the collector about the WAL file that we successfully
+ * archived or failed to archive.
  */
 void
 pgstat_send_archiver(const char *xlog, bool failed)

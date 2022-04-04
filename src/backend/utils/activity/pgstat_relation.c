@@ -95,17 +95,14 @@ bool		have_relation_stats;
 static HTAB *pgStatTabHash = NULL;
 
 
-/* ----------
- * pgstat_relation_init() -
+/*
+ * Initialize a relcache entry to count access statistics.
+ * Called whenever a relation is opened.
  *
- *	Initialize a relcache entry to count access statistics.
- *	Called whenever a relation is opened.
- *
- *	We assume that a relcache entry's pgstat_info field is zeroed by
- *	relcache.c when the relcache entry is made; thereafter it is long-lived
- *	data.  We can avoid repeated searches of the TabStatus arrays when the
- *	same relation is touched repeatedly within a transaction.
- * ----------
+ * We assume that a relcache entry's pgstat_info field is zeroed by
+ * relcache.c when the relcache entry is made; thereafter it is long-lived
+ * data.  We can avoid repeated searches of the TabStatus arrays when the
+ * same relation is touched repeatedly within a transaction.
  */
 void
 pgstat_relation_init(Relation rel)
@@ -141,16 +138,13 @@ pgstat_relation_init(Relation rel)
 	rel->pgstat_info = get_tabstat_entry(rel_id, rel->rd_rel->relisshared);
 }
 
-/* ----------
- * pgstat_drop_relation() -
+/*
+ * Tell the collector that we just dropped a relation.
+ * (If the message gets lost, we will still clean the dead entry eventually
+ * via future invocations of pgstat_vacuum_stat().)
  *
- *	Tell the collector that we just dropped a relation.
- *	(If the message gets lost, we will still clean the dead entry eventually
- *	via future invocations of pgstat_vacuum_stat().)
- *
- *	Currently not used for lack of any good place to call it; we rely
- *	entirely on pgstat_vacuum_stat() to clean out stats for dead rels.
- * ----------
+ * Currently not used for lack of any good place to call it; we rely
+ * entirely on pgstat_vacuum_stat() to clean out stats for dead rels.
  */
 #ifdef NOT_USED
 void
@@ -173,13 +167,10 @@ pgstat_drop_relation(Oid relid)
 }
 #endif							/* NOT_USED */
 
-/* ----------
- * pgstat_report_autovac() -
- *
- *	Called from autovacuum.c to report startup of an autovacuum process.
- *	We are called before InitPostgres is done, so can't rely on MyDatabaseId;
- *	the db OID must be passed in, instead.
- * ----------
+/*
+ * Called from autovacuum.c to report startup of an autovacuum process.
+ * We are called before InitPostgres is done, so can't rely on MyDatabaseId;
+ * the db OID must be passed in, instead.
  */
 void
 pgstat_report_autovac(Oid dboid)
@@ -196,11 +187,8 @@ pgstat_report_autovac(Oid dboid)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ---------
- * pgstat_report_vacuum() -
- *
- *	Tell the collector about the table we just vacuumed.
- * ---------
+/*
+ * Tell the collector about the table we just vacuumed.
  */
 void
 pgstat_report_vacuum(Oid tableoid, bool shared,
@@ -221,14 +209,11 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_analyze() -
- *
- *	Tell the collector about the table we just analyzed.
+/*
+ * Tell the collector about the table we just analyzed.
  *
  * Caller must provide new live- and dead-tuples estimates, as well as a
  * flag indicating whether to reset the changes_since_analyze counter.
- * --------
  */
 void
 pgstat_report_analyze(Relation rel,
@@ -281,7 +266,7 @@ pgstat_report_analyze(Relation rel,
 }
 
 /*
- * pgstat_count_heap_insert - count a tuple insertion of n tuples
+ * count a tuple insertion of n tuples
  */
 void
 pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
@@ -296,7 +281,7 @@ pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
 }
 
 /*
- * pgstat_count_heap_update - count a tuple update
+ * count a tuple update
  */
 void
 pgstat_count_heap_update(Relation rel, bool hot)
@@ -315,7 +300,7 @@ pgstat_count_heap_update(Relation rel, bool hot)
 }
 
 /*
- * pgstat_count_heap_delete - count a tuple deletion
+ * count a tuple deletion
  */
 void
 pgstat_count_heap_delete(Relation rel)
@@ -330,7 +315,7 @@ pgstat_count_heap_delete(Relation rel)
 }
 
 /*
- * pgstat_count_truncate - update tuple counters due to truncate
+ * update tuple counters due to truncate
  */
 void
 pgstat_count_truncate(Relation rel)
@@ -348,7 +333,7 @@ pgstat_count_truncate(Relation rel)
 }
 
 /*
- * pgstat_update_heap_dead_tuples - update dead-tuples count
+ * update dead-tuples count
  *
  * The semantics of this are that we are reporting the nontransactional
  * recovery of "delta" dead tuples; so t_delta_dead_tuples decreases
@@ -367,7 +352,7 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
 }
 
 /*
- * find_tabstat_entry - find any existing PgStat_TableStatus entry for rel
+ * find any existing PgStat_TableStatus entry for rel
  *
  * If no entry, return NULL, don't create a new one
  *
@@ -772,7 +757,7 @@ pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now)
 }
 
 /*
- * get_tabstat_entry - find or create a PgStat_TableStatus entry for rel
+ * find or create a PgStat_TableStatus entry for rel
  */
 static PgStat_TableStatus *
 get_tabstat_entry(Oid rel_id, bool isshared)
@@ -858,7 +843,7 @@ get_tabstat_entry(Oid rel_id, bool isshared)
 }
 
 /*
- * add_tabstat_xact_level - add a new (sub)transaction state record
+ * add a new (sub)transaction state record
  */
 static void
 add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
@@ -898,8 +883,6 @@ ensure_tabstat_xact_level(PgStat_TableStatus *pgstat_info)
 }
 
 /*
- * pgstat_truncdrop_save_counters
- *
  * Whenever a table is truncated/dropped, we save its i/u/d counters so that
  * they can be cleared, and if the (sub)xact that executed the truncate/drop
  * later aborts, the counters can be restored to the saved (pre-truncate/drop)
@@ -921,7 +904,7 @@ pgstat_truncdrop_save_counters(PgStat_TableXactStatus *trans, bool is_drop)
 }
 
 /*
- * pgstat_truncdrop_restore_counters - restore counters when a truncate aborts
+ * restore counters when a truncate aborts
  */
 static void
 pgstat_truncdrop_restore_counters(PgStat_TableXactStatus *trans)

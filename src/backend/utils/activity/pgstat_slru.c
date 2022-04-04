@@ -32,15 +32,12 @@ static inline PgStat_MsgSLRU *slru_entry(int slru_idx);
 static PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
 
 
-/* ----------
- * pgstat_reset_slru_counter() -
+/*
+ * Tell the statistics collector to reset a single SLRU counter, or all
+ * SLRU counters (when name is null).
  *
- *	Tell the statistics collector to reset a single SLRU counter, or all
- *	SLRU counters (when name is null).
- *
- *	Permission checking for this function is managed through the normal
- *	GRANT system.
- * ----------
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 void
 pgstat_reset_slru_counter(const char *name)
@@ -103,8 +100,6 @@ pgstat_count_slru_truncate(int slru_idx)
 }
 
 /*
- * pgstat_slru_name
- *
  * Returns SLRU name for an index. The index may be above SLRU_NUM_ELEMENTS,
  * in which case this returns NULL. This allows writing code that does not
  * know the number of entries in advance.
@@ -119,8 +114,6 @@ pgstat_slru_name(int slru_idx)
 }
 
 /*
- * pgstat_slru_index
- *
  * Determine index of entry for a SLRU with a given name. If there's no exact
  * match, returns index of the last "other" entry used for SLRUs defined in
  * external projects.
@@ -140,11 +133,8 @@ pgstat_slru_index(const char *name)
 	return (SLRU_NUM_ELEMENTS - 1);
 }
 
-/* ----------
- * pgstat_send_slru() -
- *
- *		Send SLRU statistics to the collector
- * ----------
+/*
+ * Send SLRU statistics to the collector
  */
 void
 pgstat_send_slru(void)
@@ -179,8 +169,6 @@ pgstat_send_slru(void)
 }
 
 /*
- * slru_entry
- *
  * Returns pointer to entry with counters for given SLRU (based on the name
  * stored in SlruCtl as lwlock tranche name).
  */

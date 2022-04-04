@@ -38,14 +38,11 @@ PgStat_MsgWal WalStats;
 static WalUsage prevWalUsage;
 
 
-/* ----------
- * pgstat_send_wal() -
- *
- *	Send WAL statistics to the collector.
+/*
+ * Send WAL statistics to the collector.
  *
  * If 'force' is not set, WAL stats message is only sent if enough time has
  * passed since last one was sent to reach PGSTAT_STAT_INTERVAL.
- * ----------
  */
 void
 pgstat_send_wal(bool force)

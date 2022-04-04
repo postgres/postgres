@@ -240,14 +240,11 @@ static bool pgstat_is_shutdown = false;
  * ------------------------------------------------------------
  */
 
-/* ----------
- * pgstat_init() -
- *
- *	Called from postmaster at startup. Create the resources required
- *	by the statistics collector process.  If unable to do so, do not
- *	fail --- better to let the postmaster start with stats collection
- *	disabled.
- * ----------
+/*
+ * Called from postmaster at startup. Create the resources required
+ * by the statistics collector process.  If unable to do so, do not
+ * fail --- better to let the postmaster start with stats collection
+ * disabled.
  */
 void
 pgstat_init(void)
@@ -579,8 +576,6 @@ pgstat_reset_remove_files(const char *directory)
 }
 
 /*
- * pgstat_reset_all() -
- *
  * Remove the stats files.  This is currently used only if WAL
  * recovery is needed after a crash.
  */
@@ -594,8 +589,6 @@ pgstat_reset_all(void)
 #ifdef EXEC_BACKEND
 
 /*
- * pgstat_forkexec() -
- *
  * Format up the arglist for, then fork and exec, statistics collector process
  */
 static pid_t
@@ -617,14 +610,12 @@ pgstat_forkexec(void)
 
 
 /*
- * pgstat_start() -
+ * Called from postmaster at startup or after an existing collector
+ * died.  Attempt to fire up a fresh statistics collector.
  *
- *	Called from postmaster at startup or after an existing collector
- *	died.  Attempt to fire up a fresh statistics collector.
+ * Returns PID of child process, or 0 if fail.
  *
- *	Returns PID of child process, or 0 if fail.
- *
- *	Note: if fail, we will be called again from the postmaster main loop.
+ * Note: if fail, we will be called again from the postmaster main loop.
  */
 int
 pgstat_start(void)
@@ -727,14 +718,11 @@ pgstat_shutdown_hook(int code, Datum arg)
 #endif
 }
 
-/* ----------
- * pgstat_initialize() -
+/*
+ * Initialize pgstats state, and set up our on-proc-exit hook. Called from
+ * BaseInit().
  *
- *	Initialize pgstats state, and set up our on-proc-exit hook. Called from
- *	BaseInit().
- *
- *	NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
- * ----------
+ * NOTE: MyDatabaseId isn't set yet; so the shutdown hook has to be careful.
  */
 void
 pgstat_initialize(void)
@@ -757,11 +745,8 @@ pgstat_initialize(void)
  * ------------------------------------------------------------
  */
 
-/* ----------
- * AtEOXact_PgStat
- *
- *	Called from access/transam/xact.c at top-level transaction commit/abort.
- * ----------
+/*
+ * Called from access/transam/xact.c at top-level transaction commit/abort.
  */
 void
 AtEOXact_PgStat(bool isCommit, bool parallel)
@@ -785,11 +770,8 @@ AtEOXact_PgStat(bool isCommit, bool parallel)
 	pgstat_clear_snapshot();
 }
 
-/* ----------
- * AtEOSubXact_PgStat
- *
- *	Called from access/transam/xact.c at subtransaction commit/abort.
- * ----------
+/*
+ * Called from access/transam/xact.c at subtransaction commit/abort.
  */
 void
 AtEOSubXact_PgStat(bool isCommit, int nestDepth)
@@ -811,8 +793,7 @@ AtEOSubXact_PgStat(bool isCommit, int nestDepth)
 }
 
 /*
- * AtPrepare_PgStat
- *		Save the transactional stats state at 2PC transaction prepare.
+ * Save the transactional stats state at 2PC transaction prepare.
  */
 void
 AtPrepare_PgStat(void)
@@ -830,8 +811,7 @@ AtPrepare_PgStat(void)
 }
 
 /*
- * PostPrepare_PgStat
- *		Clean up after successful PREPARE.
+ * Clean up after successful PREPARE.
  *
  * Note: AtEOXact_PgStat is not called during PREPARE.
  */
@@ -858,15 +838,12 @@ PostPrepare_PgStat(void)
 	pgstat_clear_snapshot();
 }
 
-/* ----------
- * pgstat_clear_snapshot() -
+/*
+ * Discard any data collected in the current transaction.  Any subsequent
+ * request will cause new snapshots to be read.
  *
- *	Discard any data collected in the current transaction.  Any subsequent
- *	request will cause new snapshots to be read.
- *
- *	This is also invoked during transaction commit or abort to discard
- *	the no-longer-wanted snapshot.
- * ----------
+ * This is also invoked during transaction commit or abort to discard
+ * the no-longer-wanted snapshot.
  */
 void
 pgstat_clear_snapshot(void)
@@ -920,19 +897,16 @@ pgstat_xact_stack_level_get(int nest_level)
  * ------------------------------------------------------------
  */
 
-/* ----------
- * pgstat_report_stat() -
+/*
+ * Must be called by processes that performs DML: tcop/postgres.c, logical
+ * receiver processes, SPI worker, etc. to send the so far collected
+ * per-table and function usage statistics to the collector.  Note that this
+ * is called only when not within a transaction, so it is fair to use
+ * transaction stop time as an approximation of current time.
  *
- *	Must be called by processes that performs DML: tcop/postgres.c, logical
- *	receiver processes, SPI worker, etc. to send the so far collected
- *	per-table and function usage statistics to the collector.  Note that this
- *	is called only when not within a transaction, so it is fair to use
- *	transaction stop time as an approximation of current time.
- *
- *	"disconnect" is "true" only for the last call before the backend
- *	exits.  This makes sure that no data is lost and that interrupted
- *	sessions are reported correctly.
- * ----------
+ * "disconnect" is "true" only for the last call before the backend
+ * exits.  This makes sure that no data is lost and that interrupted
+ * sessions are reported correctly.
  */
 void
 pgstat_report_stat(bool disconnect)
@@ -979,11 +953,8 @@ pgstat_report_stat(bool disconnect)
 	pgstat_send_slru();
 }
 
-/* ----------
- * pgstat_vacuum_stat() -
- *
- *	Will tell the collector about objects he can get rid of.
- * ----------
+/*
+ * Will tell the collector about objects he can get rid of.
  */
 void
 pgstat_vacuum_stat(void)
@@ -1201,14 +1172,11 @@ pgstat_vacuum_stat(void)
 	}
 }
 
-/* ----------
- * pgstat_collect_oids() -
- *
- *	Collect the OIDs of all objects listed in the specified system catalog
- *	into a temporary hash table.  Caller should hash_destroy the result
- *	when done with it.  (However, we make the table in CurrentMemoryContext
- *	so that it will be freed properly in event of an error.)
- * ----------
+/*
+ * Collect the OIDs of all objects listed in the specified system catalog
+ * into a temporary hash table.  Caller should hash_destroy the result
+ * when done with it.  (However, we make the table in CurrentMemoryContext
+ * so that it will be freed properly in event of an error.)
  */
 static HTAB *
 pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
@@ -1250,14 +1218,11 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 	return htab;
 }
 
-/* ----------
- * pgstat_reset_counters() -
+/*
+ * Tell the statistics collector to reset counters for our database.
  *
- *	Tell the statistics collector to reset counters for our database.
- *
- *	Permission checking for this function is managed through the normal
- *	GRANT system.
- * ----------
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 void
 pgstat_reset_counters(void)
@@ -1272,14 +1237,11 @@ pgstat_reset_counters(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_reset_single_counter() -
+/*
+ * Tell the statistics collector to reset a single counter.
  *
- *	Tell the statistics collector to reset a single counter.
- *
- *	Permission checking for this function is managed through the normal
- *	GRANT system.
- * ----------
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 void
 pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
@@ -1297,14 +1259,11 @@ pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_reset_shared_counters() -
+/*
+ * Tell the statistics collector to reset cluster-wide shared counters.
  *
- *	Tell the statistics collector to reset cluster-wide shared counters.
- *
- *	Permission checking for this function is managed through the normal
- *	GRANT system.
- * ----------
+ * Permission checking for this function is managed through the normal
+ * GRANT system.
  */
 void
 pgstat_reset_shared_counters(const char *target)
@@ -1330,11 +1289,8 @@ pgstat_reset_shared_counters(const char *target)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_ping() -
- *
- *	Send some junk data to the collector to increase traffic.
- * ----------
+/*
+ * Send some junk data to the collector to increase traffic.
  */
 void
 pgstat_ping(void)
@@ -1348,11 +1304,8 @@ pgstat_ping(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_send_inquiry() -
- *
- *	Notify collector that we need fresh data.
- * ----------
+/*
+ * Notify collector that we need fresh data.
  */
 static void
 pgstat_send_inquiry(TimestampTz clock_time, TimestampTz cutoff_time, Oid databaseid)
@@ -1366,14 +1319,11 @@ pgstat_send_inquiry(TimestampTz clock_time, TimestampTz cutoff_time, Oid databas
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* ----------
- * pgstat_fetch_stat_dbentry() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	the collected statistics for one database or NULL. NULL doesn't mean
- *	that the database doesn't exist, it is just not yet known by the
- *	collector, so the caller is better off to report ZERO instead.
- * ----------
+/*
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * the collected statistics for one database or NULL. NULL doesn't mean
+ * that the database doesn't exist, it is just not yet known by the
+ * collector, so the caller is better off to report ZERO instead.
  */
 PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dbid)
@@ -1393,12 +1343,8 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 }
 
 /*
- * ---------
- * pgstat_fetch_global() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the global statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the global statistics struct.
  */
 PgStat_GlobalStats *
 pgstat_fetch_global(void)
@@ -1408,14 +1354,11 @@ pgstat_fetch_global(void)
 	return &globalStats;
 }
 
-/* ----------
- * pgstat_fetch_stat_tabentry() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	the collected statistics for one table or NULL. NULL doesn't mean
- *	that the table doesn't exist, it is just not yet known by the
- *	collector, so the caller is better off to report ZERO instead.
- * ----------
+/*
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * the collected statistics for one table or NULL. NULL doesn't mean
+ * that the table doesn't exist, it is just not yet known by the
+ * collector, so the caller is better off to report ZERO instead.
  */
 PgStat_StatTabEntry *
 pgstat_fetch_stat_tabentry(Oid relid)
@@ -1466,12 +1409,9 @@ pgstat_fetch_stat_tabentry(Oid relid)
 }
 
 
-/* ----------
- * pgstat_fetch_stat_funcentry() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	the collected statistics for one function or NULL.
- * ----------
+/*
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * the collected statistics for one function or NULL.
  */
 PgStat_StatFuncEntry *
 pgstat_fetch_stat_funcentry(Oid func_id)
@@ -1495,12 +1435,8 @@ pgstat_fetch_stat_funcentry(Oid func_id)
 }
 
 /*
- * ---------
- * pgstat_fetch_stat_archiver() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the archiver statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the archiver statistics struct.
  */
 PgStat_ArchiverStats *
 pgstat_fetch_stat_archiver(void)
@@ -1511,12 +1447,8 @@ pgstat_fetch_stat_archiver(void)
 }
 
 /*
- * ---------
- * pgstat_fetch_stat_bgwriter() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the bgwriter statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the bgwriter statistics struct.
  */
 PgStat_BgWriterStats *
 pgstat_fetch_stat_bgwriter(void)
@@ -1527,12 +1459,8 @@ pgstat_fetch_stat_bgwriter(void)
 }
 
 /*
- * ---------
- * pgstat_fetch_stat_checkpointer() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the checkpointer statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the checkpointer statistics struct.
  */
 PgStat_CheckpointerStats *
 pgstat_fetch_stat_checkpointer(void)
@@ -1543,12 +1471,8 @@ pgstat_fetch_stat_checkpointer(void)
 }
 
 /*
- * ---------
- * pgstat_fetch_stat_wal() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the WAL statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the WAL statistics struct.
  */
 PgStat_WalStats *
 pgstat_fetch_stat_wal(void)
@@ -1559,12 +1483,8 @@ pgstat_fetch_stat_wal(void)
 }
 
 /*
- * ---------
- * pgstat_fetch_slru() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the slru statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the slru statistics struct.
  */
 PgStat_SLRUStats *
 pgstat_fetch_slru(void)
@@ -1575,12 +1495,8 @@ pgstat_fetch_slru(void)
 }
 
 /*
- * ---------
- * pgstat_fetch_replslot() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	a pointer to the replication slot statistics struct.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the replication slot statistics struct.
  */
 PgStat_StatReplSlotEntry *
 pgstat_fetch_replslot(NameData slotname)
@@ -1591,12 +1507,8 @@ pgstat_fetch_replslot(NameData slotname)
 }
 
 /*
- * ---------
- * pgstat_fetch_stat_subscription() -
- *
- *	Support function for the SQL-callable pgstat* functions. Returns
- *	the collected statistics for one subscription or NULL.
- * ---------
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * the collected statistics for one subscription or NULL.
  */
 PgStat_StatSubEntry *
 pgstat_fetch_stat_subscription(Oid subid)
@@ -1613,11 +1525,8 @@ pgstat_fetch_stat_subscription(Oid subid)
  * ------------------------------------------------------------
  */
 
-/* ----------
- * pgstat_setup_memcxt() -
- *
- *	Create pgStatLocalContext, if not already done.
- * ----------
+/*
+ * Create pgStatLocalContext, if not already done.
  */
 static void
 pgstat_setup_memcxt(void)
@@ -1641,11 +1550,8 @@ pgstat_assert_is_up(void)
 }
 #endif
 
-/* ----------
- * pgstat_setheader() -
- *
- *		Set common header fields in a statistics message
- * ----------
+/*
+ * Set common header fields in a statistics message
  */
 void
 pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype)
@@ -1654,11 +1560,8 @@ pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype)
 }
 
 
-/* ----------
- * pgstat_send() -
- *
- *		Send out one statistics message to the collector
- * ----------
+/*
+ * Send out one statistics message to the collector
  */
 void
 pgstat_send(void *msg, int len)
@@ -1685,14 +1588,11 @@ pgstat_send(void *msg, int len)
 #endif
 }
 
-/* ----------
- * PgstatCollectorMain() -
+/*
+ * Start up the statistics collector process.  This is the body of the
+ * postmaster child process.
  *
- *	Start up the statistics collector process.  This is the body of the
- *	postmaster child process.
- *
- *	The argc/argv parameters are valid only in EXEC_BACKEND case.
- * ----------
+ * The argc/argv parameters are valid only in EXEC_BACKEND case.
  */
 NON_EXEC_STATIC void
 PgstatCollectorMain(int argc, char *argv[])
@@ -2131,14 +2031,11 @@ pgstat_get_tab_entry(PgStat_StatDBEntry *dbentry, Oid tableoid, bool create)
 	return result;
 }
 
-/* ----------
- * pgstat_get_replslot_entry
- *
+/*
  * Return the entry of replication slot stats with the given name. Return
  * NULL if not found and the caller didn't request to create it.
  *
  * create tells whether to create the new slot entry if it is not found.
- * ----------
  */
 static PgStat_StatReplSlotEntry *
 pgstat_get_replslot_entry(NameData name, bool create)
@@ -2187,11 +2084,8 @@ pgstat_get_replslot_entry(NameData name, bool create)
 	return slotent;
 }
 
-/* ----------
- * pgstat_reset_replslot
- *
+/*
  * Reset the given replication slot stats.
- * ----------
  */
 static void
 pgstat_reset_replslot(PgStat_StatReplSlotEntry *slotent, TimestampTz ts)
@@ -2208,13 +2102,10 @@ pgstat_reset_replslot(PgStat_StatReplSlotEntry *slotent, TimestampTz ts)
 	slotent->stat_reset_timestamp = ts;
 }
 
-/* ----------
- * pgstat_get_subscription_entry
- *
+/*
  * Return the subscription statistics entry with the given subscription OID.
  * If no subscription entry exists, initialize it, if the create parameter is
  * true.  Else, return NULL.
- * ----------
  */
 static PgStat_StatSubEntry *
 pgstat_get_subscription_entry(Oid subid, bool create)
@@ -2256,11 +2147,8 @@ pgstat_get_subscription_entry(Oid subid, bool create)
 	return subentry;
 }
 
-/* ----------
- * pgstat_reset_subscription
- *
+/*
  * Reset the given subscription stats.
- * ----------
  */
 static void
 pgstat_reset_subscription(PgStat_StatSubEntry *subentry, TimestampTz ts)
@@ -2276,19 +2164,17 @@ pgstat_reset_subscription(PgStat_StatSubEntry *subentry, TimestampTz ts)
  * ------------------------------------------------------------
  */
 
-/* ----------
- * pgstat_write_statsfiles() -
- *		Write the global statistics file, as well as requested DB files.
+/*
+ * Write the global statistics file, as well as requested DB files.
  *
- *	'permanent' specifies writing to the permanent files not temporary ones.
- *	When true (happens only when the collector is shutting down), also remove
- *	the temporary files so that backends starting up under a new postmaster
- *	can't read old data before the new collector is ready.
+ * 'permanent' specifies writing to the permanent files not temporary ones.
+ * When true (happens only when the collector is shutting down), also remove
+ * the temporary files so that backends starting up under a new postmaster
+ * can't read old data before the new collector is ready.
  *
- *	When 'allDbs' is false, only the requested databases (listed in
- *	pending_write_requests) will be written; otherwise, all databases
- *	will be written.
- * ----------
+ * When 'allDbs' is false, only the requested databases (listed in
+ * pending_write_requests) will be written; otherwise, all databases
+ * will be written.
  */
 static void
 pgstat_write_statsfiles(bool permanent, bool allDbs)
@@ -2475,15 +2361,13 @@ get_dbstat_filename(bool permanent, bool tempname, Oid databaseid,
 		elog(ERROR, "overlength pgstat path");
 }
 
-/* ----------
- * pgstat_write_db_statsfile() -
- *		Write the stat file for a single database.
+/*
+ * Write the stat file for a single database.
  *
- *	If writing to the permanent file (happens when the collector is
- *	shutting down only), remove the temporary file so that backends
- *	starting up under a new postmaster can't read the old data before
- *	the new collector is ready.
- * ----------
+ * If writing to the permanent file (happens when the collector is
+ * shutting down only), remove the temporary file so that backends
+ * starting up under a new postmaster can't read the old data before
+ * the new collector is ready.
  */
 static void
 pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent)
@@ -2588,25 +2472,22 @@ pgstat_write_db_statsfile(PgStat_StatDBEntry *dbentry, bool permanent)
 	}
 }
 
-/* ----------
- * pgstat_read_statsfiles() -
+/*
+ * Reads in some existing statistics collector files and returns the
+ * databases hash table that is the top level of the data.
  *
- *	Reads in some existing statistics collector files and returns the
- *	databases hash table that is the top level of the data.
+ * If 'onlydb' is not InvalidOid, it means we only want data for that DB
+ * plus the shared catalogs ("DB 0").  We'll still populate the DB hash
+ * table for all databases, but we don't bother even creating table/function
+ * hash tables for other databases.
  *
- *	If 'onlydb' is not InvalidOid, it means we only want data for that DB
- *	plus the shared catalogs ("DB 0").  We'll still populate the DB hash
- *	table for all databases, but we don't bother even creating table/function
- *	hash tables for other databases.
+ * 'permanent' specifies reading from the permanent files not temporary ones.
+ * When true (happens only when the collector is starting up), remove the
+ * files after reading; the in-memory status is now authoritative, and the
+ * files would be out of date in case somebody else reads them.
  *
- *	'permanent' specifies reading from the permanent files not temporary ones.
- *	When true (happens only when the collector is starting up), remove the
- *	files after reading; the in-memory status is now authoritative, and the
- *	files would be out of date in case somebody else reads them.
- *
- *	If a 'deep' read is requested, table/function stats are read, otherwise
- *	the table/function hash tables remain empty.
- * ----------
+ * If a 'deep' read is requested, table/function stats are read, otherwise
+ * the table/function hash tables remain empty.
  */
 static HTAB *
 pgstat_read_statsfiles(Oid onlydb, bool permanent, bool deep)
@@ -2936,19 +2817,16 @@ done:
 }
 
 
-/* ----------
- * pgstat_read_db_statsfile() -
+/*
+ * Reads in the existing statistics collector file for the given database,
+ * filling the passed-in tables and functions hash tables.
  *
- *	Reads in the existing statistics collector file for the given database,
- *	filling the passed-in tables and functions hash tables.
+ * As in pgstat_read_statsfiles, if the permanent file is requested, it is
+ * removed after reading.
  *
- *	As in pgstat_read_statsfiles, if the permanent file is requested, it is
- *	removed after reading.
- *
- *	Note: this code has the ability to skip storing per-table or per-function
- *	data, if NULL is passed for the corresponding hashtable.  That's not used
- *	at the moment though.
- * ----------
+ * Note: this code has the ability to skip storing per-table or per-function
+ * data, if NULL is passed for the corresponding hashtable.  That's not used
+ * at the moment though.
  */
 static void
 pgstat_read_db_statsfile(Oid databaseid, HTAB *tabhash, HTAB *funchash,
@@ -3095,23 +2973,20 @@ done:
 	}
 }
 
-/* ----------
- * pgstat_read_db_statsfile_timestamp() -
+/*
+ * Attempt to determine the timestamp of the last db statfile write.
+ * Returns true if successful; the timestamp is stored in *ts. The caller must
+ * rely on timestamp stored in *ts iff the function returns true.
  *
- *	Attempt to determine the timestamp of the last db statfile write.
- *	Returns true if successful; the timestamp is stored in *ts. The caller must
- *	rely on timestamp stored in *ts iff the function returns true.
+ * This needs to be careful about handling databases for which no stats file
+ * exists, such as databases without a stat entry or those not yet written:
  *
- *	This needs to be careful about handling databases for which no stats file
- *	exists, such as databases without a stat entry or those not yet written:
+ * - if there's a database entry in the global file, return the corresponding
+ * stats_timestamp value.
  *
- *	- if there's a database entry in the global file, return the corresponding
- *	stats_timestamp value.
- *
- *	- if there's no db stat entry (e.g. for a new or inactive database),
- *	there's no stats_timestamp value, but also nothing to write so we return
- *	the timestamp of the global statfile.
- * ----------
+ * - if there's no db stat entry (e.g. for a new or inactive database),
+ * there's no stats_timestamp value, but also nothing to write so we return
+ * the timestamp of the global statfile.
  */
 static bool
 pgstat_read_db_statsfile_timestamp(Oid databaseid, bool permanent,
@@ -3424,11 +3299,8 @@ backend_read_statsfile(void)
 		pgStatDBHash = pgstat_read_statsfiles(MyDatabaseId, false, true);
 }
 
-/* ----------
- * pgstat_write_statsfile_needed() -
- *
- *	Do we need to write out any stats files?
- * ----------
+/*
+ * Do we need to write out any stats files?
  */
 static bool
 pgstat_write_statsfile_needed(void)
@@ -3440,11 +3312,8 @@ pgstat_write_statsfile_needed(void)
 	return false;
 }
 
-/* ----------
- * pgstat_db_requested() -
- *
- *	Checks whether stats for a particular DB need to be written to a file.
- * ----------
+/*
+ * Checks whether stats for a particular DB need to be written to a file.
  */
 static bool
 pgstat_db_requested(Oid databaseid)
@@ -3471,11 +3340,8 @@ pgstat_db_requested(Oid databaseid)
  * ------------------------------------------------------------
  */
 
-/* ----------
- * pgstat_recv_inquiry() -
- *
- *	Process stat inquiry requests.
- * ----------
+/*
+ * Process stat inquiry requests.
  */
 static void
 pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
@@ -3563,11 +3429,8 @@ pgstat_recv_inquiry(PgStat_MsgInquiry *msg, int len)
 										 msg->databaseid);
 }
 
-/* ----------
- * pgstat_recv_tabstat() -
- *
- *	Count what the backend has done.
- * ----------
+/*
+ * Count what the backend has done.
  */
 static void
 pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
@@ -3680,11 +3543,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_tabpurge() -
- *
- *	Arrange for dead table removal.
- * ----------
+/*
+ * Arrange for dead table removal.
  */
 static void
 pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
@@ -3712,11 +3572,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_dropdb() -
- *
- *	Arrange for dead database removal
- * ----------
+/*
+ * Arrange for dead database removal
  */
 static void
 pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
@@ -3754,11 +3611,8 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_resetcounter() -
- *
- *	Reset the statistics for the specified database.
- * ----------
+/*
+ * Reset the statistics for the specified database.
  */
 static void
 pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
@@ -3792,11 +3646,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	reset_dbentry_counters(dbentry);
 }
 
-/* ----------
- * pgstat_recv_resetsharedcounter() -
- *
- *	Reset some shared statistics of the cluster.
- * ----------
+/*
+ * Reset some shared statistics of the cluster.
  */
 static void
 pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
@@ -3829,12 +3680,9 @@ pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 	 */
 }
 
-/* ----------
- * pgstat_recv_resetsinglecounter() -
- *
- *	Reset a statistics for a single object, which may be of current
- *	database or shared across all databases in the cluster.
- * ----------
+/*
+ * Reset a statistics for a single object, which may be of current
+ * database or shared across all databases in the cluster.
  */
 static void
 pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
@@ -3861,11 +3709,8 @@ pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
 						   HASH_REMOVE, NULL);
 }
 
-/* ----------
- * pgstat_recv_resetslrucounter() -
- *
- *	Reset some SLRU statistics of the cluster.
- * ----------
+/*
+ * Reset some SLRU statistics of the cluster.
  */
 static void
 pgstat_recv_resetslrucounter(PgStat_MsgResetslrucounter *msg, int len)
@@ -3884,11 +3729,8 @@ pgstat_recv_resetslrucounter(PgStat_MsgResetslrucounter *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_resetreplslotcounter() -
- *
- *	Reset some replication slot statistics of the cluster.
- * ----------
+/*
+ * Reset some replication slot statistics of the cluster.
  */
 static void
 pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg,
@@ -3929,11 +3771,8 @@ pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg,
 	}
 }
 
-/* ----------
- * pgstat_recv_resetsubcounter() -
- *
- *	Reset some subscription statistics of the cluster.
- * ----------
+/*
+ * Reset some subscription statistics of the cluster.
  */
 static void
 pgstat_recv_resetsubcounter(PgStat_MsgResetsubcounter *msg, int len)
@@ -3974,11 +3813,8 @@ pgstat_recv_resetsubcounter(PgStat_MsgResetsubcounter *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_autovac() -
- *
- *	Process an autovacuum signaling message.
- * ----------
+/*
+ * Process an autovacuum signaling message.
  */
 static void
 pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
@@ -3993,11 +3829,8 @@ pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len)
 	dbentry->last_autovac_time = msg->m_start_time;
 }
 
-/* ----------
- * pgstat_recv_vacuum() -
- *
- *	Process a VACUUM message.
- * ----------
+/*
+ * Process a VACUUM message.
  */
 static void
 pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
@@ -4039,11 +3872,8 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_analyze() -
- *
- *	Process an ANALYZE message.
- * ----------
+/*
+ * Process an ANALYZE message.
  */
 static void
 pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
@@ -4081,11 +3911,8 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_archiver() -
- *
- *	Process a ARCHIVER message.
- * ----------
+/*
+ * Process a ARCHIVER message.
  */
 static void
 pgstat_recv_archiver(PgStat_MsgArchiver *msg, int len)
@@ -4108,11 +3935,8 @@ pgstat_recv_archiver(PgStat_MsgArchiver *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_bgwriter() -
- *
- *	Process a BGWRITER message.
- * ----------
+/*
+ * Process a BGWRITER message.
  */
 static void
 pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
@@ -4122,11 +3946,8 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.bgwriter.buf_alloc += msg->m_buf_alloc;
 }
 
-/* ----------
- * pgstat_recv_checkpointer() -
- *
- *	Process a CHECKPOINTER message.
- * ----------
+/*
+ * Process a CHECKPOINTER message.
  */
 static void
 pgstat_recv_checkpointer(PgStat_MsgCheckpointer *msg, int len)
@@ -4140,11 +3961,8 @@ pgstat_recv_checkpointer(PgStat_MsgCheckpointer *msg, int len)
 	globalStats.checkpointer.buf_fsync_backend += msg->m_buf_fsync_backend;
 }
 
-/* ----------
- * pgstat_recv_wal() -
- *
- *	Process a WAL message.
- * ----------
+/*
+ * Process a WAL message.
  */
 static void
 pgstat_recv_wal(PgStat_MsgWal *msg, int len)
@@ -4159,11 +3977,8 @@ pgstat_recv_wal(PgStat_MsgWal *msg, int len)
 	walStats.wal_sync_time += msg->m_wal_sync_time;
 }
 
-/* ----------
- * pgstat_recv_slru() -
- *
- *	Process a SLRU message.
- * ----------
+/*
+ * Process a SLRU message.
  */
 static void
 pgstat_recv_slru(PgStat_MsgSLRU *msg, int len)
@@ -4177,11 +3992,8 @@ pgstat_recv_slru(PgStat_MsgSLRU *msg, int len)
 	slruStats[msg->m_index].truncate += msg->m_truncate;
 }
 
-/* ----------
- * pgstat_recv_recoveryconflict() -
- *
- *	Process a RECOVERYCONFLICT message.
- * ----------
+/*
+ * Process a RECOVERYCONFLICT message.
  */
 static void
 pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
@@ -4217,11 +4029,8 @@ pgstat_recv_recoveryconflict(PgStat_MsgRecoveryConflict *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_deadlock() -
- *
- *	Process a DEADLOCK message.
- * ----------
+/*
+ * Process a DEADLOCK message.
  */
 static void
 pgstat_recv_deadlock(PgStat_MsgDeadlock *msg, int len)
@@ -4233,11 +4042,8 @@ pgstat_recv_deadlock(PgStat_MsgDeadlock *msg, int len)
 	dbentry->n_deadlocks++;
 }
 
-/* ----------
- * pgstat_recv_checksum_failure() -
- *
- *	Process a CHECKSUMFAILURE message.
- * ----------
+/*
+ * Process a CHECKSUMFAILURE message.
  */
 static void
 pgstat_recv_checksum_failure(PgStat_MsgChecksumFailure *msg, int len)
@@ -4250,11 +4056,8 @@ pgstat_recv_checksum_failure(PgStat_MsgChecksumFailure *msg, int len)
 	dbentry->last_checksum_failure = msg->m_failure_time;
 }
 
-/* ----------
- * pgstat_recv_replslot() -
- *
- *	Process a REPLSLOT message.
- * ----------
+/*
+ * Process a REPLSLOT message.
  */
 static void
 pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
@@ -4301,11 +4104,8 @@ pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_connect() -
- *
- *	Process a CONNECT message.
- * ----------
+/*
+ * Process a CONNECT message.
  */
 static void
 pgstat_recv_connect(PgStat_MsgConnect *msg, int len)
@@ -4316,11 +4116,8 @@ pgstat_recv_connect(PgStat_MsgConnect *msg, int len)
 	dbentry->n_sessions++;
 }
 
-/* ----------
- * pgstat_recv_disconnect() -
- *
- *	Process a DISCONNECT message.
- * ----------
+/*
+ * Process a DISCONNECT message.
  */
 static void
 pgstat_recv_disconnect(PgStat_MsgDisconnect *msg, int len)
@@ -4347,11 +4144,8 @@ pgstat_recv_disconnect(PgStat_MsgDisconnect *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_tempfile() -
- *
- *	Process a TEMPFILE message.
- * ----------
+/*
+ * Process a TEMPFILE message.
  */
 static void
 pgstat_recv_tempfile(PgStat_MsgTempFile *msg, int len)
@@ -4364,11 +4158,8 @@ pgstat_recv_tempfile(PgStat_MsgTempFile *msg, int len)
 	dbentry->n_temp_files += 1;
 }
 
-/* ----------
- * pgstat_recv_funcstat() -
- *
- *	Count what the backend has done.
- * ----------
+/*
+ * Count what the backend has done.
  */
 static void
 pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
@@ -4412,11 +4203,8 @@ pgstat_recv_funcstat(PgStat_MsgFuncstat *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_funcpurge() -
- *
- *	Arrange for dead function removal.
- * ----------
+/*
+ * Arrange for dead function removal.
  */
 static void
 pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len)
@@ -4444,11 +4232,8 @@ pgstat_recv_funcpurge(PgStat_MsgFuncpurge *msg, int len)
 	}
 }
 
-/* ----------
- * pgstat_recv_subscription_drop() -
- *
- *	Process a SUBSCRIPTIONDROP message.
- * ----------
+/*
+ * Process a SUBSCRIPTIONDROP message.
  */
 static void
 pgstat_recv_subscription_drop(PgStat_MsgSubscriptionDrop *msg, int len)
@@ -4462,11 +4247,8 @@ pgstat_recv_subscription_drop(PgStat_MsgSubscriptionDrop *msg, int len)
 					   HASH_REMOVE, NULL);
 }
 
-/* ----------
- * pgstat_recv_subscription_error() -
- *
- *	Process a SUBSCRIPTIONERROR message.
- * ----------
+/*
+ * Process a SUBSCRIPTIONERROR message.
  */
 static void
 pgstat_recv_subscription_error(PgStat_MsgSubscriptionError *msg, int len)

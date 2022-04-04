@@ -36,13 +36,10 @@ SessionEndType pgStatSessionEndCause = DISCONNECT_NORMAL;
 static PgStat_Counter pgLastSessionReportTime = 0;
 
 
-/* ----------
- * pgstat_drop_database() -
- *
- *	Tell the collector that we just dropped a database.
- *	(If the message gets lost, we will still clean the dead DB eventually
- *	via future invocations of pgstat_vacuum_stat().)
- * ----------
+/*
+ * Tell the collector that we just dropped a database.
+ * (If the message gets lost, we will still clean the dead DB eventually
+ * via future invocations of pgstat_vacuum_stat().)
  */
 void
 pgstat_drop_database(Oid databaseid)
@@ -57,11 +54,8 @@ pgstat_drop_database(Oid databaseid)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_recovery_conflict() -
- *
- *	Tell the collector about a Hot Standby recovery conflict.
- * --------
+/*
+ * Tell the collector about a Hot Standby recovery conflict.
  */
 void
 pgstat_report_recovery_conflict(int reason)
@@ -77,11 +71,8 @@ pgstat_report_recovery_conflict(int reason)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_deadlock() -
- *
- *	Tell the collector about a deadlock detected.
- * --------
+/*
+ * Tell the collector about a deadlock detected.
  */
 void
 pgstat_report_deadlock(void)
@@ -96,11 +87,8 @@ pgstat_report_deadlock(void)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_checksum_failures_in_db() -
- *
- *	Tell the collector about one or more checksum failures.
- * --------
+/*
+ * Tell the collector about one or more checksum failures.
  */
 void
 pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
@@ -118,11 +106,8 @@ pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_checksum_failure() -
- *
- *	Tell the collector about a checksum failure.
- * --------
+/*
+ * Tell the collector about a checksum failure.
  */
 void
 pgstat_report_checksum_failure(void)
@@ -130,11 +115,8 @@ pgstat_report_checksum_failure(void)
 	pgstat_report_checksum_failures_in_db(MyDatabaseId, 1);
 }
 
-/* --------
- * pgstat_report_tempfile() -
- *
- *	Tell the collector about a temporary file.
- * --------
+/*
+ * Tell the collector about a temporary file.
  */
 void
 pgstat_report_tempfile(size_t filesize)
@@ -150,11 +132,8 @@ pgstat_report_tempfile(size_t filesize)
 	pgstat_send(&msg, sizeof(msg));
 }
 
-/* --------
- * pgstat_report_connect() -
- *
- *	Tell the collector about a new connection.
- * --------
+/*
+ * Tell the collector about a new connection.
  */
 void
 pgstat_report_connect(Oid dboid)
@@ -171,11 +150,8 @@ pgstat_report_connect(Oid dboid)
 	pgstat_send(&msg, sizeof(PgStat_MsgConnect));
 }
 
-/* --------
- * pgstat_report_disconnect() -
- *
- *	Tell the collector about a disconnect.
- * --------
+/*
+ * Tell the collector about a disconnect.
  */
 void
 pgstat_report_disconnect(Oid dboid)
@@ -262,15 +238,12 @@ pgstat_update_dbstats(PgStat_MsgTabstat *tsmsg, TimestampTz now)
 	}
 }
 
-/* --------
- * pgstat_should_report_connstats() -
- *
- *	We report session statistics only for normal backend processes.  Parallel
- *	workers run in parallel, so they don't contribute to session times, even
- *	though they use CPU time. Walsender processes could be considered here,
- *	but they have different session characteristics from normal backends (for
- *	example, they are always "active"), so they would skew session statistics.
- * ----------
+/*
+ * We report session statistics only for normal backend processes.  Parallel
+ * workers run in parallel, so they don't contribute to session times, even
+ * though they use CPU time. Walsender processes could be considered here,
+ * but they have different session characteristics from normal backends (for
+ * example, they are always "active"), so they would skew session statistics.
  */
 static bool
 pgstat_should_report_connstat(void)
