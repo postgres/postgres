@@ -1316,3 +1316,144 @@ DROP TABLE oer_test;
 \set ECHO errors
 SELECT * FROM notexists;
 \set ECHO all
+
+--
+-- combined queries
+--
+CREATE FUNCTION warn(msg TEXT) RETURNS BOOLEAN LANGUAGE plpgsql
+AS $$
+  BEGIN RAISE NOTICE 'warn %', msg ; RETURN TRUE ; END
+$$;
+
+-- show both
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+-- \gset applies to last query only
+SELECT 3 AS three \; SELECT warn('3.5') \; SELECT 4 AS four \gset
+\echo :three :four
+-- syntax error stops all processing
+SELECT 5 \; SELECT 6 + \; SELECT warn('6.5') \; SELECT 7 ;
+-- with aborted transaction, stop on first error
+BEGIN \; SELECT 8 AS eight \; SELECT 9/0 AS nine \; ROLLBACK \; SELECT 10 AS ten ;
+-- close previously aborted transaction
+ROLLBACK;
+
+-- miscellaneous SQL commands
+-- (non SELECT output is sent to stderr, thus is not shown in expected results)
+SELECT 'ok' AS "begin" \;
+CREATE TABLE psql_comics(s TEXT) \;
+INSERT INTO psql_comics VALUES ('Calvin'), ('hobbes') \;
+COPY psql_comics FROM STDIN \;
+UPDATE psql_comics SET s = 'Hobbes' WHERE s = 'hobbes' \;
+DELETE FROM psql_comics WHERE s = 'Moe' \;
+COPY psql_comics TO STDOUT \;
+TRUNCATE psql_comics \;
+DROP TABLE psql_comics \;
+SELECT 'ok' AS "done" ;
+Moe
+Susie
+\.
+
+\set SHOW_ALL_RESULTS off
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+
+\set SHOW_ALL_RESULTS on
+DROP FUNCTION warn(TEXT);
+
+--
+-- AUTOCOMMIT and combined queries
+--
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+-- BEGIN is now implicit
+
+CREATE TABLE foo(s TEXT) \;
+ROLLBACK;
+
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+
+DROP TABLE foo \;
+ROLLBACK;
+
+-- table foo is still there
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo \;
+COMMIT;
+
+\set AUTOCOMMIT on
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+-- BEGIN now explicit for multi-statement transactions
+
+BEGIN \;
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+
+BEGIN \;
+DROP TABLE foo \;
+ROLLBACK \;
+
+-- implicit transactions
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo;
+
+--
+-- test ON_ERROR_ROLLBACK and combined queries
+--
+CREATE FUNCTION psql_error(msg TEXT) RETURNS BOOLEAN AS $$
+  BEGIN
+    RAISE EXCEPTION 'error %', msg;
+  END;
+$$ LANGUAGE plpgsql;
+
+\set ON_ERROR_ROLLBACK on
+\echo '# ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+
+BEGIN;
+CREATE TABLE bla(s NO_SUCH_TYPE);               -- fails
+CREATE TABLE bla(s TEXT);                       -- succeeds
+SELECT psql_error('oops!');                     -- fails
+INSERT INTO bla VALUES ('Calvin'), ('Hobbes');
+COMMIT;
+
+SELECT * FROM bla ORDER BY 1;
+
+BEGIN;
+INSERT INTO bla VALUES ('Susie');         -- succeeds
+-- now with combined queries
+INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
+SELECT 'before error' AS show \;          -- will show nevertheless!
+  SELECT psql_error('boum!') \;           -- failure
+  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+INSERT INTO bla(s) VALUES ('Moe') \;      -- will rollback
+  SELECT psql_error('bam!');
+INSERT INTO bla VALUES ('Miss Wormwood'); -- succeeds
+COMMIT;
+SELECT * FROM bla ORDER BY 1;
+
+-- some with autocommit off
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+
+-- implicit BEGIN
+INSERT INTO bla VALUES ('Dad');           -- succeeds
+SELECT psql_error('bad!');                -- implicit partial rollback
+
+INSERT INTO bla VALUES ('Mum') \;         -- will rollback
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- but be counted here
+SELECT psql_error('bad!');                -- implicit partial rollback
+COMMIT;
+
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- no mum here
+SELECT * FROM bla ORDER BY 1;
+
+-- reset all
+\set AUTOCOMMIT on
+\set ON_ERROR_ROLLBACK off
+\echo '# final ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+DROP TABLE bla;
+DROP FUNCTION psql_error;

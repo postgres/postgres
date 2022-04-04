@@ -5290,3 +5290,245 @@ ERROR:  relation "notexists" does not exist
 LINE 1: SELECT * FROM notexists;
                       ^
 STATEMENT:  SELECT * FROM notexists;
+--
+-- combined queries
+--
+CREATE FUNCTION warn(msg TEXT) RETURNS BOOLEAN LANGUAGE plpgsql
+AS $$
+  BEGIN RAISE NOTICE 'warn %', msg ; RETURN TRUE ; END
+$$;
+-- show both
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+ one 
+-----
+   1
+(1 row)
+
+NOTICE:  warn 1.5
+CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
+ warn 
+------
+ t
+(1 row)
+
+ two 
+-----
+   2
+(1 row)
+
+-- \gset applies to last query only
+SELECT 3 AS three \; SELECT warn('3.5') \; SELECT 4 AS four \gset
+ three 
+-------
+     3
+(1 row)
+
+NOTICE:  warn 3.5
+CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
+ warn 
+------
+ t
+(1 row)
+
+\echo :three :four
+:three 4
+-- syntax error stops all processing
+SELECT 5 \; SELECT 6 + \; SELECT warn('6.5') \; SELECT 7 ;
+ERROR:  syntax error at or near ";"
+LINE 1: SELECT 5 ; SELECT 6 + ; SELECT warn('6.5') ; SELECT 7 ;
+                              ^
+-- with aborted transaction, stop on first error
+BEGIN \; SELECT 8 AS eight \; SELECT 9/0 AS nine \; ROLLBACK \; SELECT 10 AS ten ;
+ eight 
+-------
+     8
+(1 row)
+
+ERROR:  division by zero
+-- close previously aborted transaction
+ROLLBACK;
+-- miscellaneous SQL commands
+-- (non SELECT output is sent to stderr, thus is not shown in expected results)
+SELECT 'ok' AS "begin" \;
+CREATE TABLE psql_comics(s TEXT) \;
+INSERT INTO psql_comics VALUES ('Calvin'), ('hobbes') \;
+COPY psql_comics FROM STDIN \;
+UPDATE psql_comics SET s = 'Hobbes' WHERE s = 'hobbes' \;
+DELETE FROM psql_comics WHERE s = 'Moe' \;
+COPY psql_comics TO STDOUT \;
+TRUNCATE psql_comics \;
+DROP TABLE psql_comics \;
+SELECT 'ok' AS "done" ;
+ begin 
+-------
+ ok
+(1 row)
+
+Calvin
+Susie
+Hobbes
+ done 
+------
+ ok
+(1 row)
+
+\set SHOW_ALL_RESULTS off
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+NOTICE:  warn 1.5
+CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
+ two 
+-----
+   2
+(1 row)
+
+\set SHOW_ALL_RESULTS on
+DROP FUNCTION warn(TEXT);
+--
+-- AUTOCOMMIT and combined queries
+--
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+# AUTOCOMMIT: off
+-- BEGIN is now implicit
+CREATE TABLE foo(s TEXT) \;
+ROLLBACK;
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+DROP TABLE foo \;
+ROLLBACK;
+-- table foo is still there
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo \;
+COMMIT;
+   s   
+-------
+ hello
+ world
+(2 rows)
+
+\set AUTOCOMMIT on
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+# AUTOCOMMIT: on
+-- BEGIN now explicit for multi-statement transactions
+BEGIN \;
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+BEGIN \;
+DROP TABLE foo \;
+ROLLBACK \;
+-- implicit transactions
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo;
+   s   
+-------
+ hello
+ world
+(2 rows)
+
+--
+-- test ON_ERROR_ROLLBACK and combined queries
+--
+CREATE FUNCTION psql_error(msg TEXT) RETURNS BOOLEAN AS $$
+  BEGIN
+    RAISE EXCEPTION 'error %', msg;
+  END;
+$$ LANGUAGE plpgsql;
+\set ON_ERROR_ROLLBACK on
+\echo '# ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+# ON_ERROR_ROLLBACK: on
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+# AUTOCOMMIT: on
+BEGIN;
+CREATE TABLE bla(s NO_SUCH_TYPE);               -- fails
+ERROR:  type "no_such_type" does not exist
+LINE 1: CREATE TABLE bla(s NO_SUCH_TYPE);
+                           ^
+CREATE TABLE bla(s TEXT);                       -- succeeds
+SELECT psql_error('oops!');                     -- fails
+ERROR:  error oops!
+CONTEXT:  PL/pgSQL function psql_error(text) line 3 at RAISE
+INSERT INTO bla VALUES ('Calvin'), ('Hobbes');
+COMMIT;
+SELECT * FROM bla ORDER BY 1;
+   s    
+--------
+ Calvin
+ Hobbes
+(2 rows)
+
+BEGIN;
+INSERT INTO bla VALUES ('Susie');         -- succeeds
+-- now with combined queries
+INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
+SELECT 'before error' AS show \;          -- will show nevertheless!
+  SELECT psql_error('boum!') \;           -- failure
+  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+     show     
+--------------
+ before error
+(1 row)
+
+ERROR:  error boum!
+CONTEXT:  PL/pgSQL function psql_error(text) line 3 at RAISE
+INSERT INTO bla(s) VALUES ('Moe') \;      -- will rollback
+  SELECT psql_error('bam!');
+ERROR:  error bam!
+CONTEXT:  PL/pgSQL function psql_error(text) line 3 at RAISE
+INSERT INTO bla VALUES ('Miss Wormwood'); -- succeeds
+COMMIT;
+SELECT * FROM bla ORDER BY 1;
+       s       
+---------------
+ Calvin
+ Hobbes
+ Miss Wormwood
+ Susie
+(4 rows)
+
+-- some with autocommit off
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+# AUTOCOMMIT: off
+-- implicit BEGIN
+INSERT INTO bla VALUES ('Dad');           -- succeeds
+SELECT psql_error('bad!');                -- implicit partial rollback
+ERROR:  error bad!
+CONTEXT:  PL/pgSQL function psql_error(text) line 3 at RAISE
+INSERT INTO bla VALUES ('Mum') \;         -- will rollback
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- but be counted here
+SELECT psql_error('bad!');                -- implicit partial rollback
+ #mum 
+------
+    1
+(1 row)
+
+ERROR:  error bad!
+CONTEXT:  PL/pgSQL function psql_error(text) line 3 at RAISE
+COMMIT;
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- no mum here
+SELECT * FROM bla ORDER BY 1;
+ #mum 
+------
+    0
+(1 row)
+
+       s       
+---------------
+ Calvin
+ Dad
+ Hobbes
+ Miss Wormwood
+ Susie
+(5 rows)
+
+-- reset all
+\set AUTOCOMMIT on
+\set ON_ERROR_ROLLBACK off
+\echo '# final ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+# final ON_ERROR_ROLLBACK: off
+DROP TABLE bla;
+DROP FUNCTION psql_error;

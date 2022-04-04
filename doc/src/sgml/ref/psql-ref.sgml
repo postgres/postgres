@@ -127,18 +127,11 @@ echo '\x \\ SELECT * FROM foo;' | psql
        commands included in the string to divide it into multiple
        transactions.  (See <xref linkend="protocol-flow-multi-statement"/>
        for more details about how the server handles multi-query strings.)
-       Also, <application>psql</application> only prints the
-       result of the last <acronym>SQL</acronym> command in the string.
-       This is different from the behavior when the same string is read from
-       a file or fed to <application>psql</application>'s standard input,
-       because then <application>psql</application> sends
-       each <acronym>SQL</acronym> command separately.
       </para>
       <para>
-       Because of this behavior, putting more than one SQL command in a
-       single <option>-c</option> string often has unexpected results.
-       It's better to use repeated <option>-c</option> commands or feed
-       multiple commands to <application>psql</application>'s standard input,
+       If having several commands executed in one transaction is not desired, 
+       use repeated <option>-c</option> commands or feed multiple commands to
+       <application>psql</application>'s standard input,
        either using <application>echo</application> as illustrated above, or
        via a shell here-document, for example:
 <programlisting>
@@ -3570,10 +3563,6 @@ select 1\; select 2\; select 3;
         commands included in the string to divide it into multiple
         transactions.  (See <xref linkend="protocol-flow-multi-statement"/>
         for more details about how the server handles multi-query strings.)
-        <application>psql</application> prints only the last query result
-        it receives for each request; in this example, although all
-        three <command>SELECT</command>s are indeed executed, <application>psql</application>
-        only prints the <literal>3</literal>.
         </para>
         </listitem>
       </varlistentry>
@@ -4160,6 +4149,18 @@ bar
       </varlistentry>
 
       <varlistentry>
+        <term><varname>SHOW_ALL_RESULTS</varname></term>
+        <listitem>
+        <para>
+        When this variable is set to <literal>off</literal>, only the last
+        result of a combined query (<literal>\;</literal>) is shown instead of
+        all of them.  The default is <literal>on</literal>.  The off behavior
+        is for compatibility with older versions of psql.
+        </para>
+        </listitem>
+      </varlistentry>
+
+       <varlistentry>
         <term><varname>SHOW_CONTEXT</varname></term>
         <listitem>
         <para>
