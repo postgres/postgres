@@ -246,7 +246,7 @@ typedef struct LVSavedErrInfo
 
 
 /* non-export function prototypes */
-static void lazy_scan_heap(LVRelState *vacrel, int nworkers);
+static void lazy_scan_heap(LVRelState *vacrel);
 static BlockNumber lazy_scan_skip(LVRelState *vacrel, Buffer *vmbuffer,
 								  BlockNumber next_block,
 								  bool *next_unskippable_allvis,
@@ -515,10 +515,27 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	vacrel->skippedallvis = false;
 
 	/*
+	 * Allocate dead_items array memory using dead_items_alloc.  This handles
+	 * parallel VACUUM initialization as part of allocating shared memory
+	 * space used for dead_items.  (But do a failsafe precheck first, to
+	 * ensure that parallel VACUUM won't be attempted at all when relfrozenxid
+	 * is already dangerously old.)
+	 */
+	lazy_check_wraparound_failsafe(vacrel);
+	dead_items_alloc(vacrel, params->nworkers);
+
+	/*
 	 * Call lazy_scan_heap to perform all required heap pruning, index
 	 * vacuuming, and heap vacuuming (plus related processing)
 	 */
-	lazy_scan_heap(vacrel, params->nworkers);
+	lazy_scan_heap(vacrel);
+
+	/*
+	 * Free resources managed by dead_items_alloc.  This ends parallel mode in
+	 * passing when necessary.
+	 */
+	dead_items_cleanup(vacrel);
+	Assert(!IsInParallelMode());
 
 	/*
 	 * Update pg_class entries for each of rel's indexes where appropriate.
@@ -825,14 +842,14 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
  *		supply.
  */
 static void
-lazy_scan_heap(LVRelState *vacrel, int nworkers)
+lazy_scan_heap(LVRelState *vacrel)
 {
-	VacDeadItems *dead_items;
 	BlockNumber rel_pages = vacrel->rel_pages,
 				blkno,
 				next_unskippable_block,
-				next_failsafe_block,
-				next_fsm_block_to_vacuum;
+				next_failsafe_block = 0,
+				next_fsm_block_to_vacuum = 0;
+	VacDeadItems *dead_items = vacrel->dead_items;
 	Buffer		vmbuffer = InvalidBuffer;
 	bool		next_unskippable_allvis,
 				skipping_current_range;
@@ -842,23 +859,6 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		PROGRESS_VACUUM_MAX_DEAD_TUPLES
 	};
 	int64		initprog_val[3];
-
-	/*
-	 * Do failsafe precheck before calling dead_items_alloc.  This ensures
-	 * that parallel VACUUM won't be attempted when relfrozenxid is already
-	 * dangerously old.
-	 */
-	lazy_check_wraparound_failsafe(vacrel);
-	next_failsafe_block = 0;
-
-	/*
-	 * Allocate the space for dead_items.  Note that this handles parallel
-	 * VACUUM initialization as part of allocating shared memory space used
-	 * for dead_items.
-	 */
-	dead_items_alloc(vacrel, nworkers);
-	dead_items = vacrel->dead_items;
-	next_fsm_block_to_vacuum = 0;
 
 	/* Report that we're scanning the heap, advertising total # of blocks */
 	initprog_val[0] = PROGRESS_VACUUM_PHASE_SCAN_HEAP;
@@ -1236,11 +1236,12 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		}
 	}
 
+	vacrel->blkno = InvalidBlockNumber;
+	if (BufferIsValid(vmbuffer))
+		ReleaseBuffer(vmbuffer);
+
 	/* report that everything is now scanned */
 	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_SCANNED, blkno);
-
-	/* Clear the block number information */
-	vacrel->blkno = InvalidBlockNumber;
 
 	/* now we can compute the new value for pg_class.reltuples */
 	vacrel->new_live_tuples = vac_estimate_reltuples(vacrel->rel, rel_pages,
@@ -1256,15 +1257,9 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 		vacrel->missed_dead_tuples;
 
 	/*
-	 * Release any remaining pin on visibility map page.
+	 * Do index vacuuming (call each index's ambulkdelete routine), then do
+	 * related heap vacuuming
 	 */
-	if (BufferIsValid(vmbuffer))
-	{
-		ReleaseBuffer(vmbuffer);
-		vmbuffer = InvalidBuffer;
-	}
-
-	/* Perform a final round of index and heap vacuuming */
 	if (dead_items->num_items > 0)
 		lazy_vacuum(vacrel);
 
@@ -1278,16 +1273,9 @@ lazy_scan_heap(LVRelState *vacrel, int nworkers)
 	/* report all blocks vacuumed */
 	pgstat_progress_update_param(PROGRESS_VACUUM_HEAP_BLKS_VACUUMED, blkno);
 
-	/* Do post-vacuum cleanup */
+	/* Do final index cleanup (call each index's amvacuumcleanup routine) */
 	if (vacrel->nindexes > 0 && vacrel->do_index_cleanup)
 		lazy_cleanup_all_indexes(vacrel);
-
-	/*
-	 * Free resources managed by dead_items_alloc.  This ends parallel mode in
-	 * passing when necessary.
-	 */
-	dead_items_cleanup(vacrel);
-	Assert(!IsInParallelMode());
 }
 
 /*
