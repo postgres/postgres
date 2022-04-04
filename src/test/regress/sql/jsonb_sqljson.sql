@@ -319,3 +319,287 @@ CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime() 
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, 0 to $.a ? (@.datetime() == $x)]' PASSING '12:34'::time AS x));
 CREATE INDEX ON test_jsonb_mutability (JSON_QUERY(js, '$[1, $.a ? (@.datetime("HH:MI") == $x)]' PASSING '12:34'::time AS x));
 DROP TABLE test_jsonb_mutability;
+
+-- JSON_TABLE
+
+-- Should fail (JSON_TABLE can be used only in FROM clause)
+SELECT JSON_TABLE('[]', '$');
+
+-- Should fail (no columns)
+SELECT * FROM JSON_TABLE(NULL, '$' COLUMNS ());
+
+-- NULL => empty table
+SELECT * FROM JSON_TABLE(NULL::jsonb, '$' COLUMNS (foo int)) bar;
+
+--
+SELECT * FROM JSON_TABLE(jsonb '123', '$'
+	COLUMNS (item int PATH '$', foo int)) bar;
+
+-- JSON_TABLE: basic functionality
+CREATE DOMAIN jsonb_test_domain AS text CHECK (value <> 'foo');
+
+SELECT *
+FROM
+	(VALUES
+		('1'),
+		('[]'),
+		('{}'),
+		('[1, 1.23, "2", "aaaaaaa", "foo", null, false, true, {"aaa": 123}, "[1,2]", "\"str\""]')
+	) vals(js)
+	LEFT OUTER JOIN
+-- JSON_TABLE is implicitly lateral
+	JSON_TABLE(
+		vals.js::jsonb, 'lax $[*]'
+		COLUMNS (
+			id FOR ORDINALITY,
+			id2 FOR ORDINALITY, -- allowed additional ordinality columns
+			"int" int PATH '$',
+			"text" text PATH '$',
+			"char(4)" char(4) PATH '$',
+			"bool" bool PATH '$',
+			"numeric" numeric PATH '$',
+			"domain" jsonb_test_domain PATH '$',
+			js json PATH '$',
+			jb jsonb PATH '$',
+			jst text    FORMAT JSON  PATH '$',
+			jsc char(4) FORMAT JSON  PATH '$',
+			jsv varchar(4) FORMAT JSON  PATH '$',
+			jsb jsonb FORMAT JSON PATH '$',
+			jsbq jsonb FORMAT JSON PATH '$' OMIT QUOTES,
+			aaa int, -- implicit path '$."aaa"',
+			aaa1 int PATH '$.aaa',
+			exists1 bool EXISTS PATH '$.aaa',
+			exists2 int EXISTS PATH '$.aaa',
+			exists3 int EXISTS PATH 'strict $.aaa' UNKNOWN ON ERROR,
+			exists4 text EXISTS PATH 'strict $.aaa' FALSE ON ERROR,
+
+			js2 json PATH '$',
+			jsb2w jsonb PATH '$' WITH WRAPPER,
+			jsb2q jsonb PATH '$' OMIT QUOTES,
+			ia int[] PATH '$',
+			ta text[] PATH '$',
+			jba jsonb[] PATH '$'
+		)
+	) jt
+	ON true;
+
+-- JSON_TABLE: Test backward parsing
+
+CREATE VIEW jsonb_table_view AS
+SELECT * FROM
+	JSON_TABLE(
+		jsonb 'null', 'lax $[*]' PASSING 1 + 2 AS a, json '"foo"' AS "b c"
+		COLUMNS (
+			id FOR ORDINALITY,
+			id2 FOR ORDINALITY, -- allowed additional ordinality columns
+			"int" int PATH '$',
+			"text" text PATH '$',
+			"char(4)" char(4) PATH '$',
+			"bool" bool PATH '$',
+			"numeric" numeric PATH '$',
+			"domain" jsonb_test_domain PATH '$',
+			js json PATH '$',
+			jb jsonb PATH '$',
+			jst text    FORMAT JSON  PATH '$',
+			jsc char(4) FORMAT JSON  PATH '$',
+			jsv varchar(4) FORMAT JSON  PATH '$',
+			jsb jsonb   FORMAT JSON PATH '$',
+			jsbq jsonb FORMAT JSON PATH '$' OMIT QUOTES,
+			aaa int, -- implicit path '$."aaa"',
+			aaa1 int PATH '$.aaa',
+			exists1 bool EXISTS PATH '$.aaa',
+			exists2 int EXISTS PATH '$.aaa' TRUE ON ERROR,
+			exists3 text EXISTS PATH 'strict $.aaa' UNKNOWN ON ERROR,
+
+			js2 json PATH '$',
+			jsb2w jsonb PATH '$' WITH WRAPPER,
+			jsb2q jsonb PATH '$' OMIT QUOTES,
+			ia int[] PATH '$',
+			ta text[] PATH '$',
+			jba jsonb[] PATH '$',
+
+			NESTED PATH '$[1]' COLUMNS (
+				a1 int,
+				NESTED PATH '$[*]' COLUMNS (
+					a11 text
+				),
+				b1 text
+			),
+			NESTED PATH '$[2]' COLUMNS (
+				NESTED PATH '$[*]' COLUMNS (
+					a21 text
+				),
+				NESTED PATH '$[*]' COLUMNS (
+					a22 text
+				)
+			)
+		)
+	);
+
+\sv jsonb_table_view
+
+EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM jsonb_table_view;
+
+DROP VIEW jsonb_table_view;
+DROP DOMAIN jsonb_test_domain;
+
+-- JSON_TABLE: ON EMPTY/ON ERROR behavior
+SELECT *
+FROM
+	(VALUES ('1'), ('"err"')) vals(js),
+	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$')) jt;
+
+SELECT *
+FROM
+	(VALUES ('1'), ('"err"')) vals(js)
+		LEFT OUTER JOIN
+	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$') ERROR ON ERROR) jt
+		ON true;
+
+SELECT *
+FROM
+	(VALUES ('1'), ('"err"')) vals(js)
+		LEFT OUTER JOIN
+	JSON_TABLE(vals.js::jsonb, '$' COLUMNS (a int PATH '$' ERROR ON ERROR)) jt
+		ON true;
+
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH '$.a' ERROR ON EMPTY)) jt;
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'strict $.a' ERROR ON EMPTY) ERROR ON ERROR) jt;
+SELECT * FROM JSON_TABLE(jsonb '1', '$' COLUMNS (a int PATH 'lax $.a' ERROR ON EMPTY) ERROR ON ERROR) jt;
+
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH '$'   DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'strict $.a' DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int PATH 'lax $.a' DEFAULT 1 ON EMPTY DEFAULT 2 ON ERROR)) jt;
+
+-- JSON_TABLE: EXISTS PATH types
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int4 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int2 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a int8 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a float4 EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a char(3) EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a json EXISTS PATH '$.a'));
+SELECT * FROM JSON_TABLE(jsonb '"a"', '$' COLUMNS (a jsonb EXISTS PATH '$.a'));
+
+-- JSON_TABLE: nested paths and plans
+
+-- Should fail (column names must be distinct)
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$'
+	COLUMNS (
+		a int,
+		b text,
+		a jsonb
+	)
+) jt;
+
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$'
+	COLUMNS (
+		b int,
+		NESTED PATH '$'
+		COLUMNS (
+			c int,
+			b text
+		)
+	)
+) jt;
+
+SELECT * FROM JSON_TABLE(
+	jsonb '[]', '$'
+	COLUMNS (
+		NESTED PATH '$'
+		COLUMNS (
+			b int
+		),
+		NESTED PATH '$'
+		COLUMNS (
+			NESTED PATH '$'
+			COLUMNS (
+				c int,
+				b text
+			)
+		)
+	)
+) jt;
+
+-- JSON_TABLE: plan execution
+
+CREATE TEMP TABLE jsonb_table_test (js jsonb);
+
+INSERT INTO jsonb_table_test
+VALUES (
+	'[
+		{"a":  1,  "b": [], "c": []},
+		{"a":  2,  "b": [1, 2, 3], "c": [10, null, 20]},
+		{"a":  3,  "b": [1, 2], "c": []},
+		{"x": "4", "b": [1, 2], "c": 123}
+	 ]'
+);
+
+-- unspecified plan (outer, union)
+select
+	jt.*
+from
+	jsonb_table_test jtt,
+	json_table (
+		jtt.js,'strict $[*]'
+		columns (
+			n for ordinality,
+			a int path 'lax $.a' default -1 on empty,
+			nested path 'strict $.b[*]' columns ( b int path '$' ),
+			nested path 'strict $.c[*]' columns ( c int path '$' )
+		)
+	) jt;
+
+-- Should succeed (JSON arguments are passed to root and nested paths)
+SELECT *
+FROM
+	generate_series(1, 4) x,
+	generate_series(1, 3) y,
+	JSON_TABLE(jsonb
+		'[[1,2,3],[2,3,4,5],[3,4,5,6]]',
+		'strict $[*] ? (@[*] < $x)'
+		PASSING x AS x, y AS y
+		COLUMNS (
+			y text FORMAT JSON PATH '$',
+			NESTED PATH 'strict $[*] ? (@ >= $y)'
+			COLUMNS (
+				z int PATH '$'
+			)
+		)
+	) jt;
+
+-- Should fail (JSON arguments are not passed to column paths)
+SELECT *
+FROM JSON_TABLE(
+	jsonb '[1,2,3]',
+	'$[*] ? (@ < $x)'
+		PASSING 10 AS x
+		COLUMNS (y text FORMAT JSON PATH '$ ? (@ < $x)')
+	) jt;
+
+-- Extension: non-constant JSON path
+SELECT JSON_EXISTS(jsonb '{"a": 123}', '$' || '.' || 'a');
+SELECT JSON_VALUE(jsonb '{"a": 123}', '$' || '.' || 'a');
+SELECT JSON_VALUE(jsonb '{"a": 123}', '$' || '.' || 'b' DEFAULT 'foo' ON EMPTY);
+SELECT JSON_QUERY(jsonb '{"a": 123}', '$' || '.' || 'a');
+SELECT JSON_QUERY(jsonb '{"a": 123}', '$' || '.' || 'a' WITH WRAPPER);
+-- Should fail (invalid path)
+SELECT JSON_QUERY(jsonb '{"a": 123}', 'error' || ' ' || 'error');
+-- Should fail (not supported)
+SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
+
+-- Test parallel JSON_VALUE()
+CREATE TABLE test_parallel_jsonb_value AS
+SELECT i::text::jsonb AS js
+FROM generate_series(1, 1000000) i;
+
+-- Should be non-parallel due to subtransactions
+EXPLAIN (COSTS OFF)
+SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value;
+SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value;
+
+-- Should be parallel
+EXPLAIN (COSTS OFF)
+SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_parallel_jsonb_value;
+SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_parallel_jsonb_value;

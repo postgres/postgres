@@ -1606,6 +1606,19 @@ typedef enum JsonQuotes
 } JsonQuotes;
 
 /*
+ * JsonTableColumnType -
+ *		enumeration of JSON_TABLE column types
+ */
+typedef enum
+{
+	JTC_FOR_ORDINALITY,
+	JTC_REGULAR,
+	JTC_EXISTS,
+	JTC_FORMATTED,
+	JTC_NESTED,
+} JsonTableColumnType;
+
+/*
  * JsonPathSpec -
  *		representation of JSON path constant
  */
@@ -1663,6 +1676,41 @@ typedef struct JsonFuncExpr
 	bool		omit_quotes;	/* omit or keep quotes? (JSON_QUERY only) */
 	int			location;		/* token location, or -1 if unknown */
 } JsonFuncExpr;
+
+/*
+ * JsonTableColumn -
+ *		untransformed representation of JSON_TABLE column
+ */
+typedef struct JsonTableColumn
+{
+	NodeTag		type;
+	JsonTableColumnType coltype;	/* column type */
+	char	   *name;				/* column name */
+	TypeName   *typeName;			/* column type name */
+	JsonPathSpec pathspec;			/* path specification, if any */
+	JsonFormat *format;				/* JSON format clause, if specified */
+	JsonWrapper	wrapper;			/* WRAPPER behavior for formatted columns */
+	bool		omit_quotes;		/* omit or keep quotes on scalar strings? */
+	List	   *columns;			/* nested columns */
+	JsonBehavior *on_empty;			/* ON EMPTY behavior */
+	JsonBehavior *on_error;			/* ON ERROR behavior */
+	int			location;			/* token location, or -1 if unknown */
+} JsonTableColumn;
+
+/*
+ * JsonTable -
+ *		untransformed representation of JSON_TABLE
+ */
+typedef struct JsonTable
+{
+	NodeTag		type;
+	JsonCommon *common;					/* common JSON path syntax fields */
+	List	   *columns;				/* list of JsonTableColumn */
+	JsonBehavior *on_error;				/* ON ERROR behavior, if specified */
+	Alias	   *alias;					/* table alias in FROM clause */
+	bool		lateral;				/* does it have LATERAL prefix? */
+	int			location;				/* token location, or -1 if unknown */
+} JsonTable;
 
 /*
  * JsonKeyValue -

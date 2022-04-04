@@ -3796,7 +3796,13 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			break;
 		case T_TableFuncScan:
 			Assert(rte->rtekind == RTE_TABLEFUNC);
-			objectname = "xmltable";
+			if (rte->tablefunc)
+				if (rte->tablefunc->functype == TFT_XMLTABLE)
+					objectname = "xmltable";
+				else /* Must be TFT_JSON_TABLE */
+					objectname = "json_table";
+			else
+				objectname = NULL;
 			objecttag = "Table Function Name";
 			break;
 		case T_ValuesScan:

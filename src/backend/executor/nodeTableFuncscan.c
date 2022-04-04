@@ -28,6 +28,7 @@
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "utils/builtins.h"
+#include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/xml.h"
@@ -161,8 +162,9 @@ ExecInitTableFuncScan(TableFuncScan *node, EState *estate, int eflags)
 	scanstate->ss.ps.qual =
 		ExecInitQual(node->scan.plan.qual, &scanstate->ss.ps);
 
-	/* Only XMLTABLE is supported currently */
-	scanstate->routine = &XmlTableRoutine;
+	/* Only XMLTABLE and JSON_TABLE are supported currently */
+	scanstate->routine =
+		tf->functype == TFT_XMLTABLE ? &XmlTableRoutine : &JsonbTableRoutine;
 
 	scanstate->perTableCxt =
 		AllocSetContextCreate(CurrentMemoryContext,
@@ -381,14 +383,17 @@ tfuncInitialize(TableFuncScanState *tstate, ExprContext *econtext, Datum doc)
 		routine->SetNamespace(tstate, ns_name, ns_uri);
 	}
 
-	/* Install the row filter expression into the table builder context */
-	value = ExecEvalExpr(tstate->rowexpr, econtext, &isnull);
-	if (isnull)
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("row filter expression must not be null")));
+	if (routine->SetRowFilter)
+	{
+		/* Install the row filter expression into the table builder context */
+		value = ExecEvalExpr(tstate->rowexpr, econtext, &isnull);
+		if (isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("row filter expression must not be null")));
 
-	routine->SetRowFilter(tstate, TextDatumGetCString(value));
+		routine->SetRowFilter(tstate, TextDatumGetCString(value));
+	}
 
 	/*
 	 * Install the column filter expressions into the table builder context.

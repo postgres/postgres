@@ -571,6 +571,7 @@ _readTableFunc(void)
 {
 	READ_LOCALS(TableFunc);
 
+	READ_ENUM_FIELD(functype, TableFuncType);
 	READ_NODE_FIELD(ns_uris);
 	READ_NODE_FIELD(ns_names);
 	READ_NODE_FIELD(docexpr);
@@ -581,7 +582,9 @@ _readTableFunc(void)
 	READ_NODE_FIELD(colcollations);
 	READ_NODE_FIELD(colexprs);
 	READ_NODE_FIELD(coldefexprs);
+	READ_NODE_FIELD(colvalexprs);
 	READ_BITMAPSET_FIELD(notnulls);
+	READ_NODE_FIELD(plan);
 	READ_INT_FIELD(ordinalitycol);
 	READ_LOCATION_FIELD(location);
 
@@ -1528,6 +1531,30 @@ _readJsonExpr(void)
 	READ_ENUM_FIELD(wrapper, JsonWrapper);
 	READ_BOOL_FIELD(omit_quotes);
 	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+static JsonTableParent *
+_readJsonTableParent(void)
+{
+	READ_LOCALS(JsonTableParent);
+
+	READ_NODE_FIELD(path);
+	READ_NODE_FIELD(child);
+	READ_INT_FIELD(colMin);
+	READ_INT_FIELD(colMax);
+
+	READ_DONE();
+}
+
+static JsonTableSibling *
+_readJsonTableSibling(void)
+{
+	READ_LOCALS(JsonTableSibling);
+
+	READ_NODE_FIELD(larg);
+	READ_NODE_FIELD(rarg);
 
 	READ_DONE();
 }
@@ -3194,6 +3221,10 @@ parseNodeString(void)
 		return_value = _readJsonCoercion();
 	else if (MATCH("JSONITEMCOERCIONS", 17))
 		return_value = _readJsonItemCoercions();
+	else if (MATCH("JSONTABPNODE", 12))
+		return_value = _readJsonTableParent();
+	else if (MATCH("JSONTABSNODE", 12))
+		return_value = _readJsonTableSibling();
 	else
 	{
 		elog(ERROR, "badly formatted node string \"%.32s\"...", token);

@@ -4093,7 +4093,7 @@ transformJsonExprCommon(ParseState *pstate, JsonFuncExpr *func)
 	Node	   *pathspec;
 	JsonFormatType format;
 
-	if (func->common->pathname)
+	if (func->common->pathname && func->op != JSON_TABLE_OP)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("JSON_TABLE path name is not allowed here"),
@@ -4131,14 +4131,19 @@ transformJsonExprCommon(ParseState *pstate, JsonFuncExpr *func)
 	transformJsonPassingArgs(pstate, format, func->common->passing,
 							 &jsexpr->passing_values, &jsexpr->passing_names);
 
-	if (func->op != JSON_EXISTS_OP)
+	if (func->op != JSON_EXISTS_OP && func->op != JSON_TABLE_OP)
 		jsexpr->on_empty = transformJsonBehavior(pstate, func->on_empty,
 												 JSON_BEHAVIOR_NULL);
 
-	jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
-											 func->op == JSON_EXISTS_OP ?
-											 JSON_BEHAVIOR_FALSE :
-											 JSON_BEHAVIOR_NULL);
+	if (func->op == JSON_EXISTS_OP)
+		jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
+												 JSON_BEHAVIOR_FALSE);
+	else if (func->op == JSON_TABLE_OP)
+		jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
+												 JSON_BEHAVIOR_EMPTY);
+	else
+		jsexpr->on_error = transformJsonBehavior(pstate, func->on_error,
+												 JSON_BEHAVIOR_NULL);
 
 	return jsexpr;
 }
@@ -4438,6 +4443,21 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 				if (jsexpr->result_coercion->expr == (Node *) placeholder)
 					jsexpr->result_coercion->expr = NULL;
 			}
+			break;
+
+		case JSON_TABLE_OP:
+			jsexpr->returning = makeNode(JsonReturning);
+			jsexpr->returning->format = makeJsonFormat(JS_FORMAT_DEFAULT, JS_ENC_DEFAULT, -1);
+			jsexpr->returning->typid = exprType(contextItemExpr);
+			jsexpr->returning->typmod = -1;
+
+			if (jsexpr->returning->typid != JSONBOID)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("JSON_TABLE() is not yet implemented for json type"),
+						 errhint("Try casting the argument to jsonb"),
+						 parser_errposition(pstate, func->location)));
+
 			break;
 	}
 

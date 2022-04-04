@@ -73,8 +73,14 @@ typedef struct RangeVar
 	int			location;		/* token location, or -1 if unknown */
 } RangeVar;
 
+typedef enum TableFuncType
+{
+	TFT_XMLTABLE,
+	TFT_JSON_TABLE
+} TableFuncType;
+
 /*
- * TableFunc - node for a table function, such as XMLTABLE.
+ * TableFunc - node for a table function, such as XMLTABLE or JSON_TABLE.
  *
  * Entries in the ns_names list are either String nodes containing
  * literal namespace names, or NULL pointers to represent DEFAULT.
@@ -82,6 +88,7 @@ typedef struct RangeVar
 typedef struct TableFunc
 {
 	NodeTag		type;
+	TableFuncType functype;		/* XMLTABLE or JSON_TABLE */
 	List	   *ns_uris;		/* list of namespace URI expressions */
 	List	   *ns_names;		/* list of namespace names or NULL */
 	Node	   *docexpr;		/* input document expression */
@@ -92,7 +99,9 @@ typedef struct TableFunc
 	List	   *colcollations;	/* OID list of column collation OIDs */
 	List	   *colexprs;		/* list of column filter expressions */
 	List	   *coldefexprs;	/* list of column default expressions */
+	List	   *colvalexprs;	/* list of column value expressions */
 	Bitmapset  *notnulls;		/* nullability flag for each output column */
+	Node	   *plan;			/* JSON_TABLE plan */
 	int			ordinalitycol;	/* counts from 0; -1 if none specified */
 	int			location;		/* token location, or -1 if unknown */
 } TableFunc;
@@ -1241,7 +1250,8 @@ typedef enum JsonExprOp
 {
 	JSON_VALUE_OP,				/* JSON_VALUE() */
 	JSON_QUERY_OP,				/* JSON_QUERY() */
-	JSON_EXISTS_OP				/* JSON_EXISTS() */
+	JSON_EXISTS_OP,				/* JSON_EXISTS() */
+	JSON_TABLE_OP               /* JSON_TABLE() */
 } JsonExprOp;
 
 /*
@@ -1454,6 +1464,31 @@ typedef struct JsonExpr
 	bool		omit_quotes;	/* KEEP/OMIT QUOTES for JSON_QUERY */
 	int			location;		/* token location, or -1 if unknown */
 } JsonExpr;
+
+/*
+ * JsonTableParent -
+ *		transformed representation of parent JSON_TABLE plan node
+ */
+typedef struct JsonTableParent
+{
+	NodeTag		type;
+	Const	   *path;		/* jsonpath constant */
+	Node	   *child;		/* nested columns, if any */
+	int			colMin;		/* min column index in the resulting column list */
+	int			colMax;		/* max column index in the resulting column list */
+	bool		errorOnError; /* ERROR/EMPTY ON ERROR behavior */
+} JsonTableParent;
+
+/*
+ * JsonTableSibling -
+ *		transformed representation of joined sibling JSON_TABLE plan node
+ */
+typedef struct JsonTableSibling
+{
+	NodeTag		type;
+	Node	   *larg;		/* left join node */
+	Node	   *rarg;		/* right join node */
+} JsonTableSibling;
 
 /* ----------------
  * NullTest

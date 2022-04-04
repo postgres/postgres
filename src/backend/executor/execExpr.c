@@ -2635,6 +2635,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					var->typmod = exprTypmod((Node *) argexpr);
 					var->estate = ExecInitExpr(argexpr, state->parent);
 					var->econtext = NULL;
+					var->mcxt = NULL;
 					var->evaluated = false;
 					var->value = (Datum) 0;
 					var->isnull = true;

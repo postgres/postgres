@@ -13,3 +13,9 @@ SELECT JSON_QUERY(NULL FORMAT JSON, '$');
 ERROR:  JSON_QUERY() is not yet implemented for json type
 LINE 1: SELECT JSON_QUERY(NULL FORMAT JSON, '$');
                ^
+-- JSON_TABLE
+SELECT * FROM JSON_TABLE(NULL FORMAT JSON, '$' COLUMNS (foo text));
+ERROR:  JSON_TABLE() is not yet implemented for json type
+LINE 1: SELECT * FROM JSON_TABLE(NULL FORMAT JSON, '$' COLUMNS (foo ...
+                                 ^
+HINT:  Try casting the argument to jsonb
