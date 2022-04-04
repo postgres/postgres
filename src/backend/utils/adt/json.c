@@ -979,12 +979,6 @@ json_unique_check_init(JsonUniqueCheckState *cxt)
 					   HASH_ELEM | HASH_CONTEXT | HASH_FUNCTION | HASH_COMPARE);
 }
 
-static void
-json_unique_check_free(JsonUniqueCheckState *cxt)
-{
-	hash_destroy(*cxt);
-}
-
 static bool
 json_unique_check_key(JsonUniqueCheckState *cxt, const char *key, int object_id)
 {
@@ -1009,12 +1003,10 @@ json_unique_builder_init(JsonUniqueBuilderState *cxt)
 }
 
 static void
-json_unique_builder_free(JsonUniqueBuilderState *cxt)
+json_unique_builder_clean(JsonUniqueBuilderState *cxt)
 {
-	json_unique_check_free(&cxt->check);
-
 	if (cxt->skipped_keys.data)
-		pfree(cxt->skipped_keys.data);
+		resetStringInfo(&cxt->skipped_keys);
 }
 
 /* On-demand initialization of skipped_keys StringInfo structure */
@@ -1224,7 +1216,7 @@ json_object_agg_finalfn(PG_FUNCTION_ARGS)
 	if (state == NULL)
 		PG_RETURN_NULL();
 
-	json_unique_builder_free(&state->unique_check);
+	json_unique_builder_clean(&state->unique_check);
 
 	/* Else return state with appropriate object terminator added */
 	PG_RETURN_TEXT_P(catenate_stringinfo_string(state->str, " }"));
@@ -1333,7 +1325,7 @@ json_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
 	appendStringInfoChar(result, '}');
 
 	if (unique_keys)
-		json_unique_builder_free(&unique_check);
+		json_unique_builder_clean(&unique_check);
 
 	return PointerGetDatum(cstring_to_text_with_len(result->data, result->len));
 }
