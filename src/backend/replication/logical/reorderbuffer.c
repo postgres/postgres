@@ -370,8 +370,15 @@ ReorderBufferAllocate(void)
 											SLAB_DEFAULT_BLOCK_SIZE,
 											sizeof(ReorderBufferTXN));
 
+	/*
+	 * XXX the allocation sizes used below pre-date generation context's block
+	 * growing code.  These values should likely be benchmarked and set to
+	 * more suitable values.
+	 */
 	buffer->tup_context = GenerationContextCreate(new_ctx,
 												  "Tuples",
+												  SLAB_LARGE_BLOCK_SIZE,
+												  SLAB_LARGE_BLOCK_SIZE,
 												  SLAB_LARGE_BLOCK_SIZE);
 
 	hash_ctl.keysize = sizeof(TransactionId);

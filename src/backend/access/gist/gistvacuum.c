@@ -158,9 +158,15 @@ gistvacuumscan(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 	 * pages in page_set_context.  Internally, the integer set will remember
 	 * this context so that the subsequent allocations for these integer sets
 	 * will be done from the same context.
+	 *
+	 * XXX the allocation sizes used below pre-date generation context's block
+	 * growing code.  These values should likely be benchmarked and set to
+	 * more suitable values.
 	 */
 	vstate.page_set_context = GenerationContextCreate(CurrentMemoryContext,
 													  "GiST VACUUM page set context",
+													  16 * 1024,
+													  16 * 1024,
 													  16 * 1024);
 	oldctx = MemoryContextSwitchTo(vstate.page_set_context);
 	vstate.internal_page_set = intset_create();
