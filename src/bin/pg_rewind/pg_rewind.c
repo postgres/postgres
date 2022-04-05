@@ -537,10 +537,7 @@ perform_rewind(filemap_t *filemap, rewind_source *source,
 				break;
 
 			case FILE_ACTION_COPY:
-				/* Truncate the old file out of the way, if any */
-				open_target_file(entry->path, true);
-				source->queue_fetch_range(source, entry->path,
-										  0, entry->source_size);
+				source->queue_fetch_file(source, entry->path, entry->source_size);
 				break;
 
 			case FILE_ACTION_TRUNCATE:

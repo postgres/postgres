@@ -63,6 +63,7 @@ static void process_queued_fetch_requests(libpq_source *src);
 /* public interface functions */
 static void libpq_traverse_files(rewind_source *source,
 								 process_file_callback_t callback);
+static void libpq_queue_fetch_file(rewind_source *source, const char *path, size_t len);
 static void libpq_queue_fetch_range(rewind_source *source, const char *path,
 									off_t off, size_t len);
 static void libpq_finish_fetch(rewind_source *source);
@@ -88,6 +89,7 @@ init_libpq_source(PGconn *conn)
 
 	src->common.traverse_files = libpq_traverse_files;
 	src->common.fetch_file = libpq_fetch_file;
+	src->common.queue_fetch_file = libpq_queue_fetch_file;
 	src->common.queue_fetch_range = libpq_queue_fetch_range;
 	src->common.finish_fetch = libpq_finish_fetch;
 	src->common.get_current_wal_insert_lsn = libpq_get_current_wal_insert_lsn;
@@ -305,6 +307,36 @@ libpq_traverse_files(rewind_source *source, process_file_callback_t callback)
 		process_source_file(path, type, filesize, link_target);
 	}
 	PQclear(res);
+}
+
+/*
+ * Queue up a request to fetch a file from remote system.
+ */
+static void
+libpq_queue_fetch_file(rewind_source *source, const char *path, size_t len)
+{
+	/*
+	 * Truncate the target file immediately, and queue a request to fetch it
+	 * from the source. If the file is small, smaller than MAX_CHUNK_SIZE,
+	 * request fetching a full-sized chunk anyway, so that if the file has
+	 * become larger in the source system, after we scanned the source
+	 * directory, we still fetch the whole file. This only works for files up
+	 * to MAX_CHUNK_SIZE, but that's good enough for small configuration files
+	 * and such that are changed every now and then, but not WAL-logged. For
+	 * larger files, we fetch up to the original size.
+	 *
+	 * Even with that mechanism, there is an inherent race condition if the
+	 * file is modified at the same instant that we're copying it, so that we
+	 * might copy a torn version of the file with one half from the old
+	 * version and another half from the new. But pg_basebackup has the same
+	 * problem, and it hasn't been a problem in practice.
+	 *
+	 * It might seem more natural to truncate the file later, when we receive
+	 * it from the source server, but then we'd need to track which
+	 * fetch-requests are for a whole file.
+	 */
+	open_target_file(path, true);
+	libpq_queue_fetch_range(source, path, 0, Max(len, MAX_CHUNK_SIZE));
 }
 
 /*

@@ -48,6 +48,19 @@ typedef struct rewind_source
 									  off_t offset, size_t len);
 
 	/*
+	 * Like queue_fetch_range(), but requests replacing the whole local file
+	 * from the source system. 'len' is the expected length of the file,
+	 * although when the source is a live server, the file may change
+	 * concurrently. The implementation is not obliged to copy more than 'len'
+	 * bytes, even if the file is larger. However, to avoid copying a
+	 * truncated version of the file, which can cause trouble if e.g. a
+	 * configuration file is modified concurrently, the implementation should
+	 * try to copy the whole file, even if it's larger than expected.
+	 */
+	void		(*queue_fetch_file) (struct rewind_source *, const char *path,
+									 size_t len);
+
+	/*
 	 * Execute all requests queued up with queue_fetch_range().
 	 */
 	void		(*finish_fetch) (struct rewind_source *);
