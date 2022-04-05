@@ -110,7 +110,7 @@ ok( pump_until(
 		$killme,
 		$psql_timeout,
 		\$killme_stderr,
-		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
+		qr/WARNING:  terminating connection because of unexpected SIGQUIT signal|server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
 	),
 	"psql query died successfully after SIGQUIT");
 $killme_stderr = '';
@@ -124,7 +124,7 @@ ok( pump_until(
 		$monitor,
 		$psql_timeout,
 		\$monitor_stderr,
-		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
 	),
 	"psql monitor died successfully after SIGQUIT");
 $monitor->finish;
@@ -190,7 +190,7 @@ ok( pump_until(
 		$killme,
 		$psql_timeout,
 		\$killme_stderr,
-		qr/server closed the connection unexpectedly|connection to server was lost/m
+		qr/server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
 	),
 	"psql query died successfully after SIGKILL");
 $killme->finish;
@@ -202,7 +202,7 @@ ok( pump_until(
 		$monitor,
 		$psql_timeout,
 		\$monitor_stderr,
-		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost/m
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
 	),
 	"psql monitor died successfully after SIGKILL");
 $monitor->finish;
