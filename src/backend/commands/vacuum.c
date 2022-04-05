@@ -1340,7 +1340,11 @@ vac_update_relstats(Relation relation,
 	Relation	rd;
 	HeapTuple	ctup;
 	Form_pg_class pgcform;
-	bool		dirty;
+	bool		dirty,
+				futurexid,
+				futuremxid;
+	TransactionId oldfrozenxid;
+	MultiXactId oldminmulti;
 
 	rd = table_open(RelationRelationId, RowExclusiveLock);
 
@@ -1406,32 +1410,49 @@ vac_update_relstats(Relation relation,
 	 * This should match vac_update_datfrozenxid() concerning what we consider
 	 * to be "in the future".
 	 */
+	oldfrozenxid = pgcform->relfrozenxid;
+	futurexid = false;
 	if (frozenxid_updated)
 		*frozenxid_updated = false;
-	if (TransactionIdIsNormal(frozenxid) &&
-		pgcform->relfrozenxid != frozenxid &&
-		(TransactionIdPrecedes(pgcform->relfrozenxid, frozenxid) ||
-		 TransactionIdPrecedes(ReadNextTransactionId(),
-							   pgcform->relfrozenxid)))
+	if (TransactionIdIsNormal(frozenxid) && oldfrozenxid != frozenxid)
 	{
-		if (frozenxid_updated)
-			*frozenxid_updated = true;
-		pgcform->relfrozenxid = frozenxid;
-		dirty = true;
+		bool	update = false;
+
+		if (TransactionIdPrecedes(oldfrozenxid, frozenxid))
+			update = true;
+		else if (TransactionIdPrecedes(ReadNextTransactionId(), oldfrozenxid))
+			futurexid = update = true;
+
+		if (update)
+		{
+			pgcform->relfrozenxid = frozenxid;
+			dirty = true;
+			if (frozenxid_updated)
+				*frozenxid_updated = true;
+		}
 	}
 
 	/* Similarly for relminmxid */
+	oldminmulti = pgcform->relminmxid;
+	futuremxid = false;
 	if (minmulti_updated)
 		*minmulti_updated = false;
-	if (MultiXactIdIsValid(minmulti) &&
-		pgcform->relminmxid != minmulti &&
-		(MultiXactIdPrecedes(pgcform->relminmxid, minmulti) ||
-		 MultiXactIdPrecedes(ReadNextMultiXactId(), pgcform->relminmxid)))
+	if (MultiXactIdIsValid(minmulti) && oldminmulti != minmulti)
 	{
-		if (minmulti_updated)
-			*minmulti_updated = true;
-		pgcform->relminmxid = minmulti;
-		dirty = true;
+		bool	update = false;
+
+		if (MultiXactIdPrecedes(oldminmulti, minmulti))
+			update = true;
+		else if (MultiXactIdPrecedes(ReadNextMultiXactId(), oldminmulti))
+			futuremxid = update = true;
+
+		if (update)
+		{
+			pgcform->relminmxid = minmulti;
+			dirty = true;
+			if (minmulti_updated)
+				*minmulti_updated = true;
+		}
 	}
 
 	/* If anything changed, write out the tuple. */
@@ -1439,6 +1460,19 @@ vac_update_relstats(Relation relation,
 		heap_inplace_update(rd, ctup);
 
 	table_close(rd, RowExclusiveLock);
+
+	if (futurexid)
+		ereport(WARNING,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_internal("overwrote invalid relfrozenxid value %u with new value %u for table \"%s\"",
+								 oldfrozenxid, frozenxid,
+								 RelationGetRelationName(relation))));
+	if (futuremxid)
+		ereport(WARNING,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg_internal("overwrote invalid relminmxid value %u with new value %u for table \"%s\"",
+								 oldminmulti, minmulti,
+								 RelationGetRelationName(relation))));
 }
 
 
