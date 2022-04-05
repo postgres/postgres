@@ -114,8 +114,8 @@ local_queue_fetch_file(rewind_source *source, const char *path, size_t len)
 	 * check that the size of the file matches our earlier expectation.
 	 */
 	if (written_len != len)
-		pg_fatal("size of source file \"%s\" changed concurrently: " UINT64_FORMAT " bytes expected, " UINT64_FORMAT " copied",
-				 srcpath, len, written_len);
+		pg_fatal("size of source file \"%s\" changed concurrently: %d bytes expected, %d copied",
+				 srcpath, (int) len, (int) written_len);
 
 	if (close(srcfd) != 0)
 		pg_fatal("could not close file \"%s\": %m", srcpath);
