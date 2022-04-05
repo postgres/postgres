@@ -175,6 +175,7 @@ struct JsonTableScanState
 	Datum		current;
 	int			ordinal;
 	bool		currentIsNull;
+	bool		outerJoin;
 	bool		errorOnError;
 	bool		advanceNested;
 	bool		reset;
@@ -188,6 +189,7 @@ struct JsonTableJoinState
 		{
 			JsonTableJoinState *left;
 			JsonTableJoinState *right;
+			bool		cross;
 			bool		advanceRight;
 		}			join;
 		JsonTableScanState scan;
@@ -3166,6 +3168,7 @@ JsonTableInitScanState(JsonTableContext *cxt, JsonTableScanState *scan,
 	int			i;
 
 	scan->parent = parent;
+	scan->outerJoin = node->outerJoin;
 	scan->errorOnError = node->errorOnError;
 	scan->path = DatumGetJsonPathP(node->path->constvalue);
 	scan->args = args;
@@ -3192,6 +3195,7 @@ JsonTableInitPlanState(JsonTableContext *cxt, Node *plan,
 		JsonTableSibling *join = castNode(JsonTableSibling, plan);
 
 		state->is_join = true;
+		state->u.join.cross = join->cross;
 		state->u.join.left = JsonTableInitPlanState(cxt, join->larg, parent);
 		state->u.join.right = JsonTableInitPlanState(cxt, join->rarg, parent);
 	}
@@ -3328,8 +3332,26 @@ JsonTableSetDocument(TableFuncScanState *state, Datum value)
 	JsonTableResetContextItem(&cxt->root, value);
 }
 
+/* Recursively reset scan and its child nodes */
+static void
+JsonTableRescanRecursive(JsonTableJoinState *state)
+{
+	if (state->is_join)
+	{
+		JsonTableRescanRecursive(state->u.join.left);
+		JsonTableRescanRecursive(state->u.join.right);
+		state->u.join.advanceRight = false;
+	}
+	else
+	{
+		JsonTableRescan(&state->u.scan);
+		if (state->u.scan.nested)
+			JsonTableRescanRecursive(state->u.scan.nested);
+	}
+}
+
 /*
- * Fetch next row from a union joined scan.
+ * Fetch next row from a cross/union joined scan.
  *
  * Returns false at the end of a scan, true otherwise.
  */
@@ -3339,17 +3361,48 @@ JsonTableNextJoinRow(JsonTableJoinState *state)
 	if (!state->is_join)
 		return JsonTableNextRow(&state->u.scan);
 
-	if (!state->u.join.advanceRight)
+	if (state->u.join.advanceRight)
 	{
-		/* fetch next outer row */
-		if (JsonTableNextJoinRow(state->u.join.left))
+		/* fetch next inner row */
+		if (JsonTableNextJoinRow(state->u.join.right))
 			return true;
 
-		state->u.join.advanceRight = true;	/* next inner row */
+		/* inner rows are exhausted */
+		if (state->u.join.cross)
+			state->u.join.advanceRight = false;	/* next outer row */
+		else
+			return false;	/* end of scan */
 	}
 
-	/* fetch next inner row */
-	return JsonTableNextJoinRow(state->u.join.right);
+	while (!state->u.join.advanceRight)
+	{
+		/* fetch next outer row */
+		bool		left = JsonTableNextJoinRow(state->u.join.left);
+
+		if (state->u.join.cross)
+		{
+			if (!left)
+				return false;	/* end of scan */
+
+			JsonTableRescanRecursive(state->u.join.right);
+
+			if (!JsonTableNextJoinRow(state->u.join.right))
+				continue;	/* next outer row */
+
+			state->u.join.advanceRight = true;	/* next inner row */
+		}
+		else if (!left)
+		{
+			if (!JsonTableNextJoinRow(state->u.join.right))
+				return false;	/* end of scan */
+
+			state->u.join.advanceRight = true;	/* next inner row */
+		}
+
+		break;
+	}
+
+	return true;
 }
 
 /* Recursively set 'reset' flag of scan and its child nodes */
@@ -3373,16 +3426,13 @@ JsonTableJoinReset(JsonTableJoinState *state)
 }
 
 /*
- * Fetch next row from a simple scan with outer joined nested subscans.
+ * Fetch next row from a simple scan with outer/inner joined nested subscans.
  *
  * Returns false at the end of a scan, true otherwise.
  */
 static bool
 JsonTableNextRow(JsonTableScanState *scan)
 {
-	JsonbValue *jbv;
-	MemoryContext oldcxt;
-
 	/* reset context item if requested */
 	if (scan->reset)
 	{
@@ -3394,34 +3444,42 @@ JsonTableNextRow(JsonTableScanState *scan)
 	if (scan->advanceNested)
 	{
 		/* fetch next nested row */
-		if (JsonTableNextJoinRow(scan->nested))
-			return true;
-
-		scan->advanceNested = false;
-	}
-
-	/* fetch next row */
-	jbv = JsonValueListNext(&scan->found, &scan->iter);
-
-	if (!jbv)
-	{
-		scan->current = PointerGetDatum(NULL);
-		scan->currentIsNull = true;
-		return false;	/* end of scan */
-	}
-
-	/* set current row item */
-	oldcxt = MemoryContextSwitchTo(scan->mcxt);
-	scan->current = JsonbPGetDatum(JsonbValueToJsonb(jbv));
-	scan->currentIsNull = false;
-	MemoryContextSwitchTo(oldcxt);
-
-	scan->ordinal++;
-
-	if (scan->nested)
-	{
-		JsonTableJoinReset(scan->nested);
 		scan->advanceNested = JsonTableNextJoinRow(scan->nested);
+
+		if (scan->advanceNested)
+			return true;
+	}
+
+	for (;;)
+	{
+		/* fetch next row */
+		JsonbValue *jbv = JsonValueListNext(&scan->found, &scan->iter);
+		MemoryContext oldcxt;
+
+		if (!jbv)
+		{
+			scan->current = PointerGetDatum(NULL);
+			scan->currentIsNull = true;
+			return false;	/* end of scan */
+		}
+
+		/* set current row item */
+		oldcxt = MemoryContextSwitchTo(scan->mcxt);
+		scan->current = JsonbPGetDatum(JsonbValueToJsonb(jbv));
+		scan->currentIsNull = false;
+		MemoryContextSwitchTo(oldcxt);
+
+		scan->ordinal++;
+
+		if (!scan->nested)
+			break;
+
+		JsonTableJoinReset(scan->nested);
+
+		scan->advanceNested = JsonTableNextJoinRow(scan->nested);
+
+		if (scan->advanceNested || scan->outerJoin)
+			break;
 	}
 
 	return true;

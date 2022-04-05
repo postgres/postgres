@@ -868,6 +868,25 @@ makeJsonBehavior(JsonBehaviorType type, Node *default_expr)
 }
 
 /*
+ * makeJsonTableJoinedPlan -
+ *	   creates a joined JsonTablePlan node
+ */
+Node *
+makeJsonTableJoinedPlan(JsonTablePlanJoinType type, Node *plan1, Node *plan2,
+						int location)
+{
+	JsonTablePlan *n = makeNode(JsonTablePlan);
+
+	n->plan_type = JSTP_JOINED;
+	n->join_type = type;
+	n->plan1 = castNode(JsonTablePlan, plan1);
+	n->plan2 = castNode(JsonTablePlan, plan2);
+	n->location = location;
+
+	return (Node *) n;
+}
+
+/*
  * makeJsonEncoding -
  *	  converts JSON encoding name to enum JsonEncoding
  */

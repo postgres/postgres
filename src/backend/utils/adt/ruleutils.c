@@ -11169,8 +11169,52 @@ get_json_table_nested_columns(TableFunc *tf, Node *node,
 		 appendStringInfoChar(context->buf, ' ');
 		 appendContextKeyword(context,  "NESTED PATH ", 0, 0, 0);
 		 get_const_expr(n->path, context, -1);
+		 appendStringInfo(context->buf, " AS %s", quote_identifier(n->name));
 		 get_json_table_columns(tf, n, context, showimplicit);
 	}
+}
+
+/*
+ * get_json_table_plan - Parse back a JSON_TABLE plan
+ */
+static void
+get_json_table_plan(TableFunc *tf, Node *node, deparse_context *context,
+					bool parenthesize)
+{
+	if (parenthesize)
+		appendStringInfoChar(context->buf, '(');
+
+	if (IsA(node, JsonTableSibling))
+	{
+		JsonTableSibling *n = (JsonTableSibling *) node;
+
+		get_json_table_plan(tf, n->larg, context,
+							IsA(n->larg, JsonTableSibling) ||
+							castNode(JsonTableParent, n->larg)->child);
+
+		appendStringInfoString(context->buf, n->cross ? " CROSS " : " UNION ");
+
+		get_json_table_plan(tf, n->rarg, context,
+							IsA(n->rarg, JsonTableSibling) ||
+							castNode(JsonTableParent, n->rarg)->child);
+	}
+	else
+	{
+		 JsonTableParent *n = castNode(JsonTableParent, node);
+
+		 appendStringInfoString(context->buf, quote_identifier(n->name));
+
+		 if (n->child)
+		 {
+			appendStringInfoString(context->buf,
+								   n->outerJoin ? " OUTER " : " INNER ");
+			get_json_table_plan(tf, n->child, context,
+								IsA(n->child, JsonTableSibling));
+		 }
+	}
+
+	if (parenthesize)
+		appendStringInfoChar(context->buf, ')');
 }
 
 /*
@@ -11301,6 +11345,8 @@ get_json_table(TableFunc *tf, deparse_context *context, bool showimplicit)
 
 	get_const_expr(root->path, context, -1);
 
+	appendStringInfo(buf, " AS %s", quote_identifier(root->name));
+
 	if (jexpr->passing_values)
 	{
 		ListCell   *lc1, *lc2;
@@ -11332,6 +11378,10 @@ get_json_table(TableFunc *tf, deparse_context *context, bool showimplicit)
 	}
 
 	get_json_table_columns(tf, root, context, showimplicit);
+
+	appendStringInfoChar(buf, ' ');
+	appendContextKeyword(context, "PLAN ", 0, 0, 0);
+	get_json_table_plan(tf, (Node *) root, context, true);
 
 	if (jexpr->on_error->btype != JSON_BEHAVIOR_EMPTY)
 		get_json_behavior(jexpr->on_error, context, "ERROR");

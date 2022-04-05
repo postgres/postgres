@@ -518,6 +518,7 @@ typedef enum NodeTag
 	T_JsonIsPredicate,
 	T_JsonTable,
 	T_JsonTableColumn,
+	T_JsonTablePlan,
 	T_JsonCommon,
 	T_JsonArgument,
 	T_JsonKeyValue,
