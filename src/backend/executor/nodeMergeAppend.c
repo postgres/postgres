@@ -86,29 +86,17 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 	{
 		PartitionPruneState *prunestate;
 
-		/* We may need an expression context to evaluate partition exprs */
-		ExecAssignExprContext(estate, &mergestate->ps);
-
-		prunestate = ExecCreatePartitionPruneState(&mergestate->ps,
-												   node->part_prune_info);
+		/*
+		 * Set up pruning data structure.  This also initializes the set of
+		 * subplans to initialize (validsubplans) by taking into account the
+		 * result of performing initial pruning if any.
+		 */
+		prunestate = ExecInitPartitionPruning(&mergestate->ps,
+											  list_length(node->mergeplans),
+											  node->part_prune_info,
+											  &validsubplans);
 		mergestate->ms_prune_state = prunestate;
-
-		/* Perform an initial partition prune, if required. */
-		if (prunestate->do_initial_prune)
-		{
-			/* Determine which subplans survive initial pruning */
-			validsubplans = ExecFindInitialMatchingSubPlans(prunestate,
-															list_length(node->mergeplans));
-
-			nplans = bms_num_members(validsubplans);
-		}
-		else
-		{
-			/* We'll need to initialize all subplans */
-			nplans = list_length(node->mergeplans);
-			Assert(nplans > 0);
-			validsubplans = bms_add_range(NULL, 0, nplans - 1);
-		}
+		nplans = bms_num_members(validsubplans);
 
 		/*
 		 * When no run-time pruning is required and there's at least one
@@ -230,7 +218,7 @@ ExecMergeAppend(PlanState *pstate)
 		 */
 		if (node->ms_valid_subplans == NULL)
 			node->ms_valid_subplans =
-				ExecFindMatchingSubPlans(node->ms_prune_state);
+				ExecFindMatchingSubPlans(node->ms_prune_state, false);
 
 		/*
 		 * First time through: pull the first tuple from each valid subplan,

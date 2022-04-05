@@ -22,6 +22,17 @@
 typedef struct PartitionDispatchData *PartitionDispatch;
 typedef struct PartitionTupleRouting PartitionTupleRouting;
 
+extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(EState *estate,
+															 Relation rel);
+extern ResultRelInfo *ExecFindPartition(ModifyTableState *mtstate,
+										ResultRelInfo *rootResultRelInfo,
+										PartitionTupleRouting *proute,
+										TupleTableSlot *slot,
+										EState *estate);
+extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
+									PartitionTupleRouting *proute);
+
+
 /*
  * PartitionedRelPruningData - Per-partitioned-table data for run-time pruning
  * of partitions.  For a multilevel partitioned table, we have one of these
@@ -110,19 +121,11 @@ typedef struct PartitionPruneState
 	PartitionPruningData *partprunedata[FLEXIBLE_ARRAY_MEMBER];
 } PartitionPruneState;
 
-extern PartitionTupleRouting *ExecSetupPartitionTupleRouting(EState *estate,
-															 Relation rel);
-extern ResultRelInfo *ExecFindPartition(ModifyTableState *mtstate,
-										ResultRelInfo *rootResultRelInfo,
-										PartitionTupleRouting *proute,
-										TupleTableSlot *slot,
-										EState *estate);
-extern void ExecCleanupTupleRouting(ModifyTableState *mtstate,
-									PartitionTupleRouting *proute);
-extern PartitionPruneState *ExecCreatePartitionPruneState(PlanState *planstate,
-														  PartitionPruneInfo *partitionpruneinfo);
-extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate);
-extern Bitmapset *ExecFindInitialMatchingSubPlans(PartitionPruneState *prunestate,
-												  int nsubplans);
+extern PartitionPruneState *ExecInitPartitionPruning(PlanState *planstate,
+													 int n_total_subplans,
+													 PartitionPruneInfo *pruneinfo,
+													 Bitmapset **initially_valid_subplans);
+extern Bitmapset *ExecFindMatchingSubPlans(PartitionPruneState *prunestate,
+										   bool initial_prune);
 
 #endif							/* EXECPARTITION_H */

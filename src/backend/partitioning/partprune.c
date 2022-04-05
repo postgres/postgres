@@ -798,6 +798,7 @@ prune_append_rel_partitions(RelOptInfo *rel)
 
 	/* These are not valid when being called from the planner */
 	context.planstate = NULL;
+	context.exprcontext = NULL;
 	context.exprstates = NULL;
 
 	/* Actual pruning happens here. */
@@ -808,8 +809,8 @@ prune_append_rel_partitions(RelOptInfo *rel)
  * get_matching_partitions
  *		Determine partitions that survive partition pruning
  *
- * Note: context->planstate must be set to a valid PlanState when the
- * pruning_steps were generated with a target other than PARTTARGET_PLANNER.
+ * Note: context->exprcontext must be valid when the pruning_steps were
+ * generated with a target other than PARTTARGET_PLANNER.
  *
  * Returns a Bitmapset of the RelOptInfo->part_rels indexes of the surviving
  * partitions.
@@ -3654,9 +3655,9 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
  * exprstate array.
  *
  * Note that the evaluated result may be in the per-tuple memory context of
- * context->planstate->ps_ExprContext, and we may have leaked other memory
- * there too.  This memory must be recovered by resetting that ExprContext
- * after we're done with the pruning operation (see execPartition.c).
+ * context->exprcontext, and we may have leaked other memory there too.
+ * This memory must be recovered by resetting that ExprContext after
+ * we're done with the pruning operation (see execPartition.c).
  */
 static void
 partkey_datum_from_expr(PartitionPruneContext *context,
@@ -3677,13 +3678,18 @@ partkey_datum_from_expr(PartitionPruneContext *context,
 		ExprContext *ectx;
 
 		/*
-		 * We should never see a non-Const in a step unless we're running in
-		 * the executor.
+		 * We should never see a non-Const in a step unless the caller has
+		 * passed a valid ExprContext.
+		 *
+		 * When context->planstate is valid, context->exprcontext is same as
+		 * context->planstate->ps_ExprContext.
 		 */
-		Assert(context->planstate != NULL);
+		Assert(context->planstate != NULL || context->exprcontext != NULL);
+		Assert(context->planstate == NULL ||
+			   (context->exprcontext == context->planstate->ps_ExprContext));
 
 		exprstate = context->exprstates[stateidx];
-		ectx = context->planstate->ps_ExprContext;
+		ectx = context->exprcontext;
 		*value = ExecEvalExprSwitchContext(exprstate, ectx, isnull);
 	}
 }

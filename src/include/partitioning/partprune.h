@@ -41,6 +41,7 @@ struct RelOptInfo;
  *					subsidiary data, such as the FmgrInfos.
  * planstate		Points to the parent plan node's PlanState when called
  *					during execution; NULL when called from the planner.
+ * exprcontext		ExprContext to use when evaluating pruning expressions
  * exprstates		Array of ExprStates, indexed as per PruneCxtStateIdx; one
  *					for each partition key in each pruning step.  Allocated if
  *					planstate is non-NULL, otherwise NULL.
@@ -56,6 +57,7 @@ typedef struct PartitionPruneContext
 	FmgrInfo   *stepcmpfuncs;
 	MemoryContext ppccontext;
 	PlanState  *planstate;
+	ExprContext *exprcontext;
 	ExprState **exprstates;
 } PartitionPruneContext;
 
