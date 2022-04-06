@@ -1,36 +1,84 @@
+-- Creating privileges on a placeholder GUC should create entries in the
+-- pg_parameter_acl catalog which conservatively grant no privileges to public.
+CREATE ROLE regress_role_joe;
+GRANT SET ON PARAMETER test_oat_hooks.user_var1 TO regress_role_joe;
+GRANT SET ON PARAMETER test_oat_hooks.super_var1 TO regress_role_joe;
 -- SET commands fire both the ProcessUtility_hook and the
 -- object_access_hook_str.  Since the auditing GUC starts out false, we miss the
 -- initial "attempting" audit message from the ProcessUtility_hook, but we
--- should thereafter see the audit messages
+-- should thereafter see the audit messages.
 LOAD 'test_oat_hooks';
 SET test_oat_hooks.audit = true;
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.audit]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.audit]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.audit]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.audit]
 NOTICE:  in process utility: superuser finished set
+-- Creating privileges on an existent custom GUC should create precisely the
+-- right privileges, not overly conservative ones.
+GRANT SET ON PARAMETER test_oat_hooks.user_var2 TO regress_role_joe;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+GRANT SET ON PARAMETER test_oat_hooks.super_var2 TO regress_role_joe;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+-- Granting multiple privileges on a parameter should be reported correctly to
+-- the OAT hook, but beware that WITH GRANT OPTION is not represented.
+GRANT SET, ALTER SYSTEM ON PARAMETER none.such TO regress_role_joe;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+GRANT SET, ALTER SYSTEM ON PARAMETER another.bogus TO regress_role_joe WITH GRANT OPTION;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+-- Check when the hooks fire relative to dependency based abort of a drop
+DROP ROLE regress_role_joe;
+NOTICE:  in process utility: superuser attempting DropRoleStmt
+NOTICE:  in object access: superuser attempting drop (subId=0x0) []
+NOTICE:  in object access: superuser finished drop (subId=0x0) []
+ERROR:  role "regress_role_joe" cannot be dropped because some objects depend on it
+DETAIL:  privileges for parameter test_oat_hooks.user_var1
+privileges for parameter test_oat_hooks.super_var1
+privileges for parameter test_oat_hooks.user_var2
+privileges for parameter test_oat_hooks.super_var2
+privileges for parameter none.such
+privileges for parameter another.bogus
+-- Check the behavior of the hooks relative to do-nothing grants and revokes
+GRANT SET ON PARAMETER work_mem TO PUBLIC;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM PUBLIC;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+-- Check the behavior of the hooks relative to unrecognized parameters
+GRANT ALL ON PARAMETER "none.such" TO PUBLIC;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+-- Check relative to an operation that causes the catalog entry to be deleted
+REVOKE ALL ON PARAMETER "none.such" FROM PUBLIC;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
 -- Create objects for use in the test
 CREATE USER regress_test_user;
 NOTICE:  in process utility: superuser attempting CreateRoleStmt
-NOTICE:  in object access: superuser attempting create (subId=0) [explicit]
-NOTICE:  in object access: superuser finished create (subId=0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
 NOTICE:  in process utility: superuser finished CreateRoleStmt
 CREATE TABLE regress_test_table (t text);
 NOTICE:  in process utility: superuser attempting CreateStmt
-NOTICE:  in object access: superuser attempting namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: CREATE TABLE regress_test_table (t text);
                      ^
-NOTICE:  in object access: superuser finished namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: CREATE TABLE regress_test_table (t text);
                      ^
-NOTICE:  in object access: superuser attempting create (subId=0) [explicit]
-NOTICE:  in object access: superuser finished create (subId=0) [explicit]
-NOTICE:  in object access: superuser attempting create (subId=0) [explicit]
-NOTICE:  in object access: superuser finished create (subId=0) [explicit]
-NOTICE:  in object access: superuser attempting create (subId=0) [explicit]
-NOTICE:  in object access: superuser finished create (subId=0) [explicit]
-NOTICE:  in object access: superuser attempting create (subId=0) [internal]
-NOTICE:  in object access: superuser finished create (subId=0) [internal]
-NOTICE:  in object access: superuser attempting create (subId=0) [internal]
-NOTICE:  in object access: superuser finished create (subId=0) [internal]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [internal]
+NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [internal]
+NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
 NOTICE:  in process utility: superuser finished CreateStmt
 GRANT SELECT ON Table regress_test_table TO public;
 NOTICE:  in process utility: superuser attempting GrantStmt
@@ -39,8 +87,8 @@ CREATE FUNCTION regress_test_func (t text) RETURNS text AS $$
 	SELECT $1;
 $$ LANGUAGE sql;
 NOTICE:  in process utility: superuser attempting CreateFunctionStmt
-NOTICE:  in object access: superuser attempting create (subId=0) [explicit]
-NOTICE:  in object access: superuser finished create (subId=0) [explicit]
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
 NOTICE:  in process utility: superuser finished CreateFunctionStmt
 GRANT EXECUTE ON FUNCTION regress_test_func (text) TO public;
 NOTICE:  in process utility: superuser attempting GrantStmt
@@ -63,35 +111,35 @@ NOTICE:  in executor check perms: superuser finished execute
 
 SET work_mem = 8192;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: superuser finished set
 RESET work_mem;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: superuser finished set
 ALTER SYSTEM SET work_mem = 8192;
 NOTICE:  in process utility: superuser attempting alter system
-NOTICE:  in object_access_hook_str: superuser attempting alter (alter system set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (alter system set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x2000, alter system) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in process utility: superuser finished alter system
 ALTER SYSTEM RESET work_mem;
 NOTICE:  in process utility: superuser attempting alter system
-NOTICE:  in object_access_hook_str: superuser attempting alter (alter system set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (alter system set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x2000, alter system) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in process utility: superuser finished alter system
 -- Do those same things as non-superuser
 SET SESSION AUTHORIZATION regress_test_user;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: non-superuser attempting alter (set) [session_authorization]
-NOTICE:  in object_access_hook_str: non-superuser finished alter (set) [session_authorization]
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [session_authorization]
+NOTICE:  in object_access_hook_str: non-superuser finished alter (subId=0x1000, set) [session_authorization]
 NOTICE:  in process utility: non-superuser finished set
 SELECT * FROM regress_test_table;
-NOTICE:  in object access: non-superuser attempting namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: non-superuser attempting namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: SELECT * FROM regress_test_table;
                       ^
-NOTICE:  in object access: non-superuser finished namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: non-superuser finished namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: SELECT * FROM regress_test_table;
                       ^
 NOTICE:  in executor check perms: non-superuser attempting execute
@@ -110,61 +158,89 @@ NOTICE:  in executor check perms: non-superuser finished execute
 
 SET work_mem = 8192;
 NOTICE:  in process utility: non-superuser attempting set
-NOTICE:  in object_access_hook_str: non-superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: non-superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: non-superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: non-superuser finished set
 RESET work_mem;
 NOTICE:  in process utility: non-superuser attempting set
-NOTICE:  in object_access_hook_str: non-superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: non-superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: non-superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: non-superuser finished set
 ALTER SYSTEM SET work_mem = 8192;
 NOTICE:  in process utility: non-superuser attempting alter system
-ERROR:  must be superuser to execute ALTER SYSTEM command
+ERROR:  permission denied to set parameter "work_mem"
 ALTER SYSTEM RESET work_mem;
 NOTICE:  in process utility: non-superuser attempting alter system
-ERROR:  must be superuser to execute ALTER SYSTEM command
+ERROR:  permission denied to set parameter "work_mem"
+SET test_oat_hooks.user_var1 = true;
+NOTICE:  in process utility: non-superuser attempting set
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [test_oat_hooks.user_var1]
+NOTICE:  in object_access_hook_str: non-superuser finished alter (subId=0x1000, set) [test_oat_hooks.user_var1]
+NOTICE:  in process utility: non-superuser finished set
+SET test_oat_hooks.super_var1 = true;
+NOTICE:  in process utility: non-superuser attempting set
+ERROR:  permission denied to set parameter "test_oat_hooks.super_var1"
+ALTER SYSTEM SET test_oat_hooks.user_var1 = true;
+NOTICE:  in process utility: non-superuser attempting alter system
+ERROR:  permission denied to set parameter "test_oat_hooks.user_var1"
+ALTER SYSTEM SET test_oat_hooks.super_var1 = true;
+NOTICE:  in process utility: non-superuser attempting alter system
+ERROR:  permission denied to set parameter "test_oat_hooks.super_var1"
+SET test_oat_hooks.user_var2 = true;
+NOTICE:  in process utility: non-superuser attempting set
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [test_oat_hooks.user_var2]
+NOTICE:  in object_access_hook_str: non-superuser finished alter (subId=0x1000, set) [test_oat_hooks.user_var2]
+NOTICE:  in process utility: non-superuser finished set
+SET test_oat_hooks.super_var2 = true;
+NOTICE:  in process utility: non-superuser attempting set
+ERROR:  permission denied to set parameter "test_oat_hooks.super_var2"
+ALTER SYSTEM SET test_oat_hooks.user_var2 = true;
+NOTICE:  in process utility: non-superuser attempting alter system
+ERROR:  permission denied to set parameter "test_oat_hooks.user_var2"
+ALTER SYSTEM SET test_oat_hooks.super_var2 = true;
+NOTICE:  in process utility: non-superuser attempting alter system
+ERROR:  permission denied to set parameter "test_oat_hooks.super_var2"
 RESET SESSION AUTHORIZATION;
 NOTICE:  in process utility: non-superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [session_authorization]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [session_authorization]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [session_authorization]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [session_authorization]
 NOTICE:  in process utility: superuser finished set
 -- Turn off non-superuser permissions
 SET test_oat_hooks.deny_set_variable = true;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_set_variable]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_set_variable]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.deny_set_variable]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.deny_set_variable]
 NOTICE:  in process utility: superuser finished set
 SET test_oat_hooks.deny_alter_system = true;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_alter_system]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_alter_system]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.deny_alter_system]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.deny_alter_system]
 NOTICE:  in process utility: superuser finished set
 SET test_oat_hooks.deny_object_access = true;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_object_access]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_object_access]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.deny_object_access]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.deny_object_access]
 NOTICE:  in process utility: superuser finished set
 SET test_oat_hooks.deny_exec_perms = true;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_exec_perms]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_exec_perms]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.deny_exec_perms]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.deny_exec_perms]
 NOTICE:  in process utility: superuser finished set
 SET test_oat_hooks.deny_utility_commands = true;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [test_oat_hooks.deny_utility_commands]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [test_oat_hooks.deny_utility_commands]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [test_oat_hooks.deny_utility_commands]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [test_oat_hooks.deny_utility_commands]
 NOTICE:  in process utility: superuser finished set
 -- Try again as non-superuser with permissions denied
 SET SESSION AUTHORIZATION regress_test_user;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: non-superuser attempting alter (set) [session_authorization]
+NOTICE:  in object_access_hook_str: non-superuser attempting alter (subId=0x1000, set) [session_authorization]
 ERROR:  permission denied: set session_authorization
 SELECT * FROM regress_test_table;
-NOTICE:  in object access: superuser attempting namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: superuser attempting namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: SELECT * FROM regress_test_table;
                       ^
-NOTICE:  in object access: superuser finished namespace search (subId=0) [no report on violation, allowed]
+NOTICE:  in object access: superuser finished namespace search (subId=0x0) [no report on violation, allowed]
 LINE 1: SELECT * FROM regress_test_table;
                       ^
 NOTICE:  in executor check perms: superuser attempting execute
@@ -183,28 +259,43 @@ NOTICE:  in executor check perms: superuser finished execute
 
 SET work_mem = 8192;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: superuser finished set
 RESET work_mem;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [work_mem]
 NOTICE:  in process utility: superuser finished set
 ALTER SYSTEM SET work_mem = 8192;
 NOTICE:  in process utility: superuser attempting alter system
-NOTICE:  in object_access_hook_str: superuser attempting alter (alter system set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (alter system set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x2000, alter system) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in process utility: superuser finished alter system
 ALTER SYSTEM RESET work_mem;
 NOTICE:  in process utility: superuser attempting alter system
-NOTICE:  in object_access_hook_str: superuser attempting alter (alter system set) [work_mem]
-NOTICE:  in object_access_hook_str: superuser finished alter (alter system set) [work_mem]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x2000, alter system) [work_mem]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in process utility: superuser finished alter system
+-- Clean up
 RESET SESSION AUTHORIZATION;
 NOTICE:  in process utility: superuser attempting set
-NOTICE:  in object_access_hook_str: superuser attempting alter (set) [session_authorization]
-NOTICE:  in object_access_hook_str: superuser finished alter (set) [session_authorization]
+NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [session_authorization]
+NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [session_authorization]
 NOTICE:  in process utility: superuser finished set
 SET test_oat_hooks.audit = false;
 NOTICE:  in process utility: superuser attempting set
+DROP ROLE regress_role_joe;  -- fails
+ERROR:  role "regress_role_joe" cannot be dropped because some objects depend on it
+DETAIL:  privileges for parameter test_oat_hooks.user_var1
+privileges for parameter test_oat_hooks.super_var1
+privileges for parameter test_oat_hooks.user_var2
+privileges for parameter test_oat_hooks.super_var2
+privileges for parameter none.such
+privileges for parameter another.bogus
+REVOKE ALL PRIVILEGES ON PARAMETER
+	none.such, another.bogus,
+	test_oat_hooks.user_var1, test_oat_hooks.super_var1,
+	test_oat_hooks.user_var2, test_oat_hooks.super_var2
+	FROM regress_role_joe;
+DROP ROLE regress_role_joe;

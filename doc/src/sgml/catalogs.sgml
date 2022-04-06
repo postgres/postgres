@@ -221,6 +221,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-parameter-acl"><structname>pg_parameter_acl</structname></link></entry>
+      <entry>configuration parameters for which privileges have been granted</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-partitioned-table"><structname>pg_partitioned_table</structname></link></entry>
       <entry>information about partition key of tables</entry>
      </row>
@@ -5447,6 +5452,74 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
    <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.
   </para>
 
+ </sect1>
+
+
+ <sect1 id="catalog-pg-parameter-acl">
+  <title><structname>pg_parameter_acl</structname></title>
+
+  <indexterm zone="catalog-pg-parameter-acl">
+   <primary>pg_parameter_acl</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_parameter_acl</structname> records configuration
+   parameters for which privileges have been granted to one or more roles.
+   No entry is made for parameters that have default privileges.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_parameter_acl</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_parameter_acl</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_parameter_acl</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parname</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of a configuration parameter for which privileges are granted
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>paracl</structfield> <type>aclitem[]</type>
+      </para>
+      <para>
+       Access privileges; see <xref linkend="ddl-priv"/> for details
+      </para></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 
@@ -12747,7 +12820,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
       packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
-      environment variable), but only if the connecting user is a superuser.
+      environment variable), but only if the connecting user is a superuser
+      or has been granted the appropriate <literal>SET</literal> privilege.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
       <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
@@ -12781,6 +12855,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
       or within a session via the <command>SET</command> command; but only superusers
+      and users with the appropriate <literal>SET</literal> privilege
       can change them via <command>SET</command>.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.

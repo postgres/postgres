@@ -1691,7 +1691,8 @@ ALTER TABLE products RENAME TO items;
    <literal>INSERT</literal>, <literal>UPDATE</literal>, <literal>DELETE</literal>,
    <literal>TRUNCATE</literal>, <literal>REFERENCES</literal>, <literal>TRIGGER</literal>,
    <literal>CREATE</literal>, <literal>CONNECT</literal>, <literal>TEMPORARY</literal>,
-   <literal>EXECUTE</literal>, and <literal>USAGE</literal>.
+   <literal>EXECUTE</literal>, <literal>USAGE</literal>, <literal>SET</literal>
+   and <literal>ALTER SYSTEM</literal>.
    The privileges applicable to a particular
    object vary depending on the object's type (table, function, etc).
    More detail about the meanings of these privileges appears below.
@@ -1959,6 +1960,28 @@ REVOKE ALL ON accounts FROM PUBLIC;
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>SET</literal></term>
+     <listitem>
+      <para>
+       Allows a server configuration parameter to be set to a new value
+       within the current session.  (While this privilege can be granted
+       on any parameter, it is meaningless except for parameters that would
+       normally require superuser privilege to set.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>ALTER SYSTEM</literal></term>
+     <listitem>
+      <para>
+       Allows a server configuration parameter to be configured to a new
+       value using the <xref linkend="sql-altersystem"/> command.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
 
    The privileges required by other commands are listed on the
@@ -1976,7 +1999,8 @@ REVOKE ALL ON accounts FROM PUBLIC;
    foreign servers,
    large objects,
    schemas,
-   or tablespaces.
+   tablespaces,
+   or configuration parameters.
    For other types of objects, the default privileges
    granted to <literal>PUBLIC</literal> are as follows:
    <literal>CONNECT</literal> and <literal>TEMPORARY</literal> (create
@@ -2097,6 +2121,16 @@ REVOKE ALL ON accounts FROM PUBLIC;
        <literal>TYPE</literal>
       </entry>
      </row>
+     <row>
+      <entry><literal>SET</literal></entry>
+      <entry><literal>s</literal></entry>
+      <entry><literal>PARAMETER</literal></entry>
+     </row>
+     <row>
+      <entry><literal>ALTER SYSTEM</literal></entry>
+      <entry><literal>A</literal></entry>
+      <entry><literal>PARAMETER</literal></entry>
+     </row>
      </tbody>
    </tgroup>
   </table>
@@ -2166,6 +2200,12 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>rw</literal></entry>
       <entry>none</entry>
       <entry><literal>\dl+</literal></entry>
+     </row>
+     <row>
+      <entry><literal>PARAMETER</literal></entry>
+      <entry><literal>sA</literal></entry>
+      <entry>none</entry>
+      <entry>none</entry>
      </row>
      <row>
       <entry><literal>SCHEMA</literal></entry>

@@ -940,6 +940,7 @@ EventTriggerSupportsObjectType(ObjectType obtype)
 		case OBJECT_DATABASE:
 		case OBJECT_TABLESPACE:
 		case OBJECT_ROLE:
+		case OBJECT_PARAMETER_ACL:
 			/* no support for global objects */
 			return false;
 		case OBJECT_EVENT_TRIGGER:
@@ -1015,6 +1016,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_DATABASE:
 		case OCLASS_TBLSPACE:
 		case OCLASS_ROLE:
+		case OCLASS_PARAMETER_ACL:
 			/* no support for global objects */
 			return false;
 		case OCLASS_EVENT_TRIGGER:
@@ -2042,6 +2044,8 @@ stringify_grant_objtype(ObjectType objtype)
 			return "LARGE OBJECT";
 		case OBJECT_SCHEMA:
 			return "SCHEMA";
+		case OBJECT_PARAMETER_ACL:
+			return "PARAMETER";
 		case OBJECT_PROCEDURE:
 			return "PROCEDURE";
 		case OBJECT_ROUTINE:
@@ -2153,6 +2157,7 @@ stringify_adefprivs_objtype(ObjectType objtype)
 		case OBJECT_OPCLASS:
 		case OBJECT_OPERATOR:
 		case OBJECT_OPFAMILY:
+		case OBJECT_PARAMETER_ACL:
 		case OBJECT_POLICY:
 		case OBJECT_PUBLICATION:
 		case OBJECT_PUBLICATION_NAMESPACE:

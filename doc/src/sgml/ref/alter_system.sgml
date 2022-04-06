@@ -55,7 +55,8 @@ ALTER SYSTEM RESET ALL
   </para>
 
   <para>
-   Only superusers can use <command>ALTER SYSTEM</command>.  Also, since
+   Only superusers and users granted <literal>ALTER SYSTEM</literal> privilege
+   on a parameter can change it using <command>ALTER SYSTEM</command>.  Also, since
    this command acts directly on the file system and cannot be rolled back,
    it is not allowed inside a transaction block or function.
   </para>

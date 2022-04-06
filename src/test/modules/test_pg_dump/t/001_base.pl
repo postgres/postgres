@@ -316,6 +316,38 @@ my %tests = (
 		like         => { pg_dumpall_globals => 1, },
 	},
 
+	'GRANT ALTER SYSTEM ON PARAMETER full_page_writes TO regress_dump_test_role'
+	  => {
+		create_order => 2,
+		create_sql =>
+		  'GRANT ALTER SYSTEM ON PARAMETER full_page_writes TO regress_dump_test_role;',
+		regexp =>
+
+		  qr/^GRANT ALTER SYSTEM ON PARAMETER full_page_writes TO regress_dump_test_role;/m,
+		like => { pg_dumpall_globals => 1, },
+	  },
+
+	'GRANT ALL ON PARAMETER Custom.Knob TO regress_dump_test_role WITH GRANT OPTION'
+	  => {
+		create_order => 2,
+		create_sql =>
+		  'GRANT SET, ALTER SYSTEM ON PARAMETER Custom.Knob TO regress_dump_test_role WITH GRANT OPTION;',
+		regexp =>
+		  # "set" plus "alter system" is "all" privileges on parameters
+		  qr/^GRANT ALL ON PARAMETER "custom.knob" TO regress_dump_test_role WITH GRANT OPTION;/m,
+		like => { pg_dumpall_globals => 1, },
+	  },
+
+	'GRANT ALL ON PARAMETER DateStyle TO regress_dump_test_role' => {
+		create_order => 2,
+		create_sql =>
+		  'GRANT ALL ON PARAMETER "DateStyle" TO regress_dump_test_role WITH GRANT OPTION; REVOKE GRANT OPTION FOR ALL ON PARAMETER DateStyle FROM regress_dump_test_role;',
+		regexp =>
+		  # The revoke simplifies the ultimate grant so as to not include "with grant option"
+		  qr/^GRANT ALL ON PARAMETER datestyle TO regress_dump_test_role;/m,
+		like => { pg_dumpall_globals => 1, },
+	},
+
 	'CREATE SCHEMA public' => {
 		regexp => qr/^CREATE SCHEMA public;/m,
 		like   => {

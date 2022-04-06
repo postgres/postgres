@@ -45,6 +45,7 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/storage.h"
 #include "commands/async.h"
 #include "commands/prepare.h"
@@ -5714,6 +5715,65 @@ guc_name_compare(const char *namea, const char *nameb)
 
 
 /*
+ * Convert a GUC name to the form that should be used in pg_parameter_acl.
+ *
+ * We need to canonicalize entries since, for example, case should not be
+ * significant.  In addition, we apply the map_old_guc_names[] mapping so that
+ * any obsolete names will be converted when stored in a new PG version.
+ * Note however that this function does not verify legality of the name.
+ *
+ * The result is a palloc'd string.
+ */
+char *
+convert_GUC_name_for_parameter_acl(const char *name)
+{
+	char	   *result;
+
+	/* Apply old-GUC-name mapping. */
+	for (int i = 0; map_old_guc_names[i] != NULL; i += 2)
+	{
+		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
+		{
+			name = map_old_guc_names[i + 1];
+			break;
+		}
+	}
+
+	/* Apply case-folding that matches guc_name_compare(). */
+	result = pstrdup(name);
+	for (char *ptr = result; *ptr != '\0'; ptr++)
+	{
+		char		ch = *ptr;
+
+		if (ch >= 'A' && ch <= 'Z')
+		{
+			ch += 'a' - 'A';
+			*ptr = ch;
+		}
+	}
+
+	return result;
+}
+
+/*
+ * Check whether we should allow creation of a pg_parameter_acl entry
+ * for the given name.  (This can be applied either before or after
+ * canonicalizing it.)
+ */
+bool
+check_GUC_name_for_parameter_acl(const char *name)
+{
+	/* OK if the GUC exists. */
+	if (find_option(name, false, true, DEBUG1) != NULL)
+		return true;
+	/* Otherwise, it'd better be a valid custom GUC name. */
+	if (valid_custom_variable_name(name))
+		return true;
+	return false;
+}
+
+
+/*
  * Initialize GUC options during program startup.
  *
  * Note that we cannot read the config file yet, since we have not yet
@@ -7518,14 +7578,24 @@ set_config_option(const char *name, const char *value,
 			 */
 			break;
 		case PGC_SU_BACKEND:
-			/* Reject if we're connecting but user is not superuser */
 			if (context == PGC_BACKEND)
 			{
-				ereport(elevel,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								name)));
-				return 0;
+				/*
+				 * Check whether the current user has been granted privilege
+				 * to set this GUC.
+				 */
+				AclResult	aclresult;
+
+				aclresult = pg_parameter_aclcheck(name, GetUserId(), ACL_SET);
+				if (aclresult != ACLCHECK_OK)
+				{
+					/* No granted privilege */
+					ereport(elevel,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("permission denied to set parameter \"%s\"",
+									name)));
+					return 0;
+				}
 			}
 			/* fall through to process the same as PGC_BACKEND */
 			/* FALLTHROUGH */
@@ -7568,11 +7638,22 @@ set_config_option(const char *name, const char *value,
 		case PGC_SUSET:
 			if (context == PGC_USERSET || context == PGC_BACKEND)
 			{
-				ereport(elevel,
-						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("permission denied to set parameter \"%s\"",
-								name)));
-				return 0;
+				/*
+				 * Check whether the current user has been granted privilege
+				 * to set this GUC.
+				 */
+				AclResult	aclresult;
+
+				aclresult = pg_parameter_aclcheck(name, GetUserId(), ACL_SET);
+				if (aclresult != ACLCHECK_OK)
+				{
+					/* No granted privilege */
+					ereport(elevel,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("permission denied to set parameter \"%s\"",
+									name)));
+					return 0;
+				}
 			}
 			break;
 		case PGC_USERSET:
@@ -8617,11 +8698,6 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	char		AutoConfFileName[MAXPGPATH];
 	char		AutoConfTmpFileName[MAXPGPATH];
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("must be superuser to execute ALTER SYSTEM command")));
-
 	/*
 	 * Extract statement arguments
 	 */
@@ -8647,6 +8723,29 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 			elog(ERROR, "unrecognized alter system stmt type: %d",
 				 altersysstmt->setstmt->kind);
 			break;
+	}
+
+	/*
+	 * Check permission to run ALTER SYSTEM on the target variable
+	 */
+	if (!superuser())
+	{
+		if (resetall)
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied to perform ALTER SYSTEM RESET ALL")));
+		else
+		{
+			AclResult	aclresult;
+
+			aclresult = pg_parameter_aclcheck(name, GetUserId(),
+											  ACL_ALTER_SYSTEM);
+			if (aclresult != ACLCHECK_OK)
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied to set parameter \"%s\"",
+								name)));
+		}
 	}
 
 	/*
@@ -8760,13 +8859,18 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 	}
 
 	/*
-	 * Invoke the post-alter hook for altering this GUC variable.
+	 * Invoke the post-alter hook for setting this GUC variable.  GUCs
+	 * typically do not have corresponding entries in pg_parameter_acl, so we
+	 * call the hook using the name rather than a potentially-non-existent
+	 * OID.  Nonetheless, we pass ParameterAclRelationId so that this call
+	 * context can be distinguished from others.  (Note that "name" will be
+	 * NULL in the RESET ALL case.)
 	 *
 	 * We do this here rather than at the end, because ALTER SYSTEM is not
 	 * transactional.  If the hook aborts our transaction, it will be cleaner
 	 * to do so before we touch any files.
 	 */
-	InvokeObjectPostAlterHookArgStr(InvalidOid, name,
+	InvokeObjectPostAlterHookArgStr(ParameterAclRelationId, name,
 									ACL_ALTER_SYSTEM,
 									altersysstmt->setstmt->kind,
 									false);
@@ -8943,9 +9047,9 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 			break;
 	}
 
-	/* Invoke the post-alter hook for setting this GUC variable. */
-	InvokeObjectPostAlterHookArgStr(InvalidOid, stmt->name,
-									ACL_SET_VALUE, stmt->kind, false);
+	/* Invoke the post-alter hook for setting this GUC variable, by name. */
+	InvokeObjectPostAlterHookArgStr(ParameterAclRelationId, stmt->name,
+									ACL_SET, stmt->kind, false);
 }
 
 /*

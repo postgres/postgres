@@ -239,7 +239,7 @@ extern void RunFunctionExecuteHookStr(const char *objectStr);
 			RunObjectTruncateHookStr(objectName);						\
 	} while(0)
 
-#define InvokeObjectPostAlterHookStr(className,objectName,subId)			\
+#define InvokeObjectPostAlterHookStr(classId,objectName,subId)			\
 	InvokeObjectPostAlterHookArgStr((classId),(objectName),(subId),		\
 								 InvalidOid,false)
 #define InvokeObjectPostAlterHookArgStr(classId,objectName,subId,		\

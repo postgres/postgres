@@ -3737,7 +3737,8 @@ psql_completion(const char *text, int start, int end)
  * ALTER DEFAULT PRIVILEGES, so use TailMatches
  */
 	/* Complete GRANT/REVOKE with a list of roles and privileges */
-	else if (TailMatches("GRANT|REVOKE"))
+	else if (TailMatches("GRANT|REVOKE") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR"))
 	{
 		/*
 		 * With ALTER DEFAULT PRIVILEGES, restrict completion to grantable
@@ -3749,6 +3750,7 @@ psql_completion(const char *text, int start, int end)
 						  "EXECUTE", "USAGE", "ALL");
 		else
 			COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
+									 "GRANT",
 									 "SELECT",
 									 "INSERT",
 									 "UPDATE",
@@ -3761,14 +3763,48 @@ psql_completion(const char *text, int start, int end)
 									 "TEMPORARY",
 									 "EXECUTE",
 									 "USAGE",
+									 "SET",
+									 "ALTER SYSTEM",
 									 "ALL");
 	}
+
+	else if (TailMatches("REVOKE", "GRANT"))
+		COMPLETE_WITH("OPTION FOR");
+	else if (TailMatches("REVOKE", "GRANT", "OPTION"))
+		COMPLETE_WITH("FOR");
+
+	else if (TailMatches("GRANT|REVOKE", "ALTER") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", "ALTER"))
+		COMPLETE_WITH("SYSTEM");
+
+	else if (TailMatches("GRANT|REVOKE", "SET") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", "SET") ||
+			 TailMatches("GRANT|REVOKE", "ALTER", "SYSTEM") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", "ALTER", "SYSTEM"))
+		COMPLETE_WITH("ON PARAMETER");
+
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "PARAMETER") ||
+			 TailMatches("GRANT|REVOKE", MatchAny, MatchAny, "ON", "PARAMETER") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "PARAMETER") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, MatchAny, "ON", "PARAMETER"))
+		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
+
+	else if (TailMatches("GRANT", MatchAny, "ON", "PARAMETER", MatchAny) ||
+			 TailMatches("GRANT", MatchAny, MatchAny, "ON", "PARAMETER", MatchAny))
+		COMPLETE_WITH("TO");
+
+	else if (TailMatches("REVOKE", MatchAny, "ON", "PARAMETER", MatchAny) ||
+			 TailMatches("REVOKE", MatchAny, MatchAny, "ON", "PARAMETER", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "PARAMETER", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, MatchAny, "ON", "PARAMETER", MatchAny))
+		COMPLETE_WITH("FROM");
 
 	/*
 	 * Complete GRANT/REVOKE <privilege> with "ON", GRANT/REVOKE <role> with
 	 * TO/FROM
 	 */
-	else if (TailMatches("GRANT|REVOKE", MatchAny))
+	else if (TailMatches("GRANT|REVOKE", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny))
 	{
 		if (TailMatches("SELECT|INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|CREATE|CONNECT|TEMPORARY|TEMP|EXECUTE|USAGE|ALL"))
 			COMPLETE_WITH("ON");
@@ -3785,7 +3821,8 @@ psql_completion(const char *text, int start, int end)
 	 * here will only work if the privilege list contains exactly one
 	 * privilege.
 	 */
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON"))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON"))
 	{
 		/*
 		 * With ALTER DEFAULT PRIVILEGES, restrict completion to the kinds of
@@ -3807,6 +3844,7 @@ psql_completion(const char *text, int start, int end)
 											"FUNCTION",
 											"LANGUAGE",
 											"LARGE OBJECT",
+											"PARAMETER",
 											"PROCEDURE",
 											"ROUTINE",
 											"SCHEMA",
@@ -3815,13 +3853,15 @@ psql_completion(const char *text, int start, int end)
 											"TABLESPACE",
 											"TYPE");
 	}
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "ALL"))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "ALL") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "ALL"))
 		COMPLETE_WITH("FUNCTIONS IN SCHEMA",
 					  "PROCEDURES IN SCHEMA",
 					  "ROUTINES IN SCHEMA",
 					  "SEQUENCES IN SCHEMA",
 					  "TABLES IN SCHEMA");
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN"))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN") ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "FOREIGN"))
 		COMPLETE_WITH("DATA WRAPPER", "SERVER");
 
 	/*
@@ -3830,7 +3870,8 @@ psql_completion(const char *text, int start, int end)
 	 *
 	 * Complete "GRANT/REVOKE * ON *" with "TO/FROM".
 	 */
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", MatchAny))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", MatchAny))
 	{
 		if (TailMatches("DATABASE"))
 			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
@@ -3868,6 +3909,22 @@ psql_completion(const char *text, int start, int end)
 			 (HeadMatches("REVOKE") && TailMatches("FROM")))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
 								 Keywords_for_list_of_grant_roles);
+
+	/*
+	 * Offer grant options after that.
+	 */
+	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny))
+		COMPLETE_WITH("WITH ADMIN OPTION",
+					  "WITH GRANT OPTION",
+					  "GRANTED BY");
+	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH"))
+		COMPLETE_WITH("ADMIN OPTION",
+					  "GRANT OPTION");
+	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION"))
+		COMPLETE_WITH("GRANTED BY");
+	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION", "GRANTED", "BY"))
+		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
+								 Keywords_for_list_of_grant_roles);
 	/* Complete "ALTER DEFAULT PRIVILEGES ... GRANT/REVOKE ... TO/FROM */
 	else if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES") && TailMatches("TO|FROM"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
@@ -3879,7 +3936,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("FROM");
 
 	/* Complete "GRANT/REVOKE * ON ALL * IN SCHEMA *" with TO/FROM */
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "ALL", MatchAny, "IN", "SCHEMA", MatchAny))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "ALL", MatchAny, "IN", "SCHEMA", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "ALL", MatchAny, "IN", "SCHEMA", MatchAny))
 	{
 		if (TailMatches("GRANT", MatchAny, MatchAny, MatchAny, MatchAny, MatchAny, MatchAny, MatchAny))
 			COMPLETE_WITH("TO");
@@ -3888,7 +3946,8 @@ psql_completion(const char *text, int start, int end)
 	}
 
 	/* Complete "GRANT/REVOKE * ON FOREIGN DATA WRAPPER *" with TO/FROM */
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN", "DATA", "WRAPPER", MatchAny))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN", "DATA", "WRAPPER", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "FOREIGN", "DATA", "WRAPPER", MatchAny))
 	{
 		if (TailMatches("GRANT", MatchAny, MatchAny, MatchAny, MatchAny, MatchAny, MatchAny))
 			COMPLETE_WITH("TO");
@@ -3897,7 +3956,8 @@ psql_completion(const char *text, int start, int end)
 	}
 
 	/* Complete "GRANT/REVOKE * ON FOREIGN SERVER *" with TO/FROM */
-	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN", "SERVER", MatchAny))
+	else if (TailMatches("GRANT|REVOKE", MatchAny, "ON", "FOREIGN", "SERVER", MatchAny) ||
+			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "FOREIGN", "SERVER", MatchAny))
 	{
 		if (TailMatches("GRANT", MatchAny, MatchAny, MatchAny, MatchAny, MatchAny))
 			COMPLETE_WITH("TO");

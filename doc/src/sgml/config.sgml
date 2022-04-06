@@ -274,6 +274,9 @@ shared_buffers = 128MB
        The <link linkend="sql-set"><command>SET</command></link> command allows modification of the
        current value of those parameters that can be set locally to a
        session; it has no effect on other sessions.
+       Many parameters can be set this way by any user, but some can
+       only be set by superusers and users who have been
+       granted <literal>SET</literal> privilege on that parameter.
        The corresponding SQL function is
        <function>set_config(setting_name, new_value, is_local)</function>
        (see <xref linkend="functions-admin-set"/>).
@@ -1976,7 +1979,8 @@ include_dir 'conf.d'
         The default setting is two megabytes (<literal>2MB</literal>), which
         is conservatively small and unlikely to risk crashes.  However,
         it might be too small to allow execution of complex functions.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -2089,7 +2093,8 @@ include_dir 'conf.d'
         this limit will be canceled.
         If this value is specified without units, it is taken as kilobytes.
         <literal>-1</literal> (the default) means no limit.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         This setting constrains the total space used at any instant by all
@@ -3166,7 +3171,8 @@ include_dir 'conf.d'
         <literal>zstd</literal> (if <productname>PostgreSQL</productname>
         was compiled with <option>--with-zstd</option>).
         The default value is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -3341,7 +3347,8 @@ include_dir 'conf.d'
         performed if <varname>fsync</varname> is disabled.
         If this value is specified without units, it is taken as microseconds.
         The default <varname>commit_delay</varname> is zero (no delay).
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         In <productname>PostgreSQL</productname> releases prior to 9.3,
@@ -6462,7 +6469,8 @@ local0.*    /var/log/postgresql
         to the log.  The default is <literal>WARNING</literal>.  Note that
         <literal>LOG</literal> has a different rank here than in
         <xref linkend="guc-client-min-messages"/>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -6492,7 +6500,8 @@ local0.*    /var/log/postgresql
         causing errors, log messages, fatal errors, or panics will be logged.
         To effectively turn off logging of failing statements,
         set this parameter to <literal>PANIC</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -6514,7 +6523,9 @@ local0.*    /var/log/postgresql
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero prints all statement durations.
          <literal>-1</literal> (the default) disables logging statement
-         durations. Only superusers can change this setting.
+         durations.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
 
         <para>
@@ -6566,7 +6577,9 @@ local0.*    /var/log/postgresql
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero samples all statement durations.
          <literal>-1</literal> (the default) disables sampling statement
-         durations. Only superusers can change this setting.
+         durations.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
 
         <para>
@@ -6603,7 +6616,8 @@ local0.*    /var/log/postgresql
          the same as setting
          <varname>log_min_duration_sample</varname> to
          <literal>-1</literal>.
-         Only superusers can change this setting.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
        </listitem>
      </varlistentry>
@@ -6627,7 +6641,8 @@ local0.*    /var/log/postgresql
          The default is <literal>0</literal>, meaning not to log
          statements from any additional transactions.  Setting this
          to <literal>1</literal> logs all statements of all transactions.
-         Only superusers can change this setting.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
        <note>
         <para>
@@ -6892,7 +6907,8 @@ local0.*    /var/log/postgresql
         Causes each attempted connection to the server to be logged,
         as well as successful completion of both client authentication (if
         necessary) and authorization.
-        Only superusers can change this parameter at session start,
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this parameter at session start,
         and it cannot be changed at all within a session.
         The default is <literal>off</literal>.
        </para>
@@ -6919,7 +6935,8 @@ local0.*    /var/log/postgresql
         Causes session terminations to be logged.  The log output
         provides information similar to <varname>log_connections</varname>,
         plus the duration of the session.
-        Only superusers can change this parameter at session start,
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this parameter at session start,
         and it cannot be changed at all within a session.
         The default is <literal>off</literal>.
        </para>
@@ -6937,7 +6954,8 @@ local0.*    /var/log/postgresql
        <para>
         Causes the duration of every completed statement to be logged.
         The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -6978,7 +6996,8 @@ local0.*    /var/log/postgresql
         <literal>VERBOSE</literal> output includes the <symbol>SQLSTATE</symbol> error
         code (see also <xref linkend="errcodes-appendix"/>) and the source code file name, function name,
         and line number that generated the error.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7233,7 +7252,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         longer than <xref linkend="guc-deadlock-timeout"/> to acquire a
         lock.  This is useful in determining if lock waits are causing
         poor performance.  The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7274,7 +7294,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         <literal>-1</literal> (the default) allows bind parameters to be
         logged in full.
         If this value is specified without units, it is taken as bytes.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -7341,8 +7362,9 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
        </para>
 
        <para>
-        The default is <literal>none</literal>. Only superusers can change this
-        setting.
+        The default is <literal>none</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <note>
@@ -7371,7 +7393,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         Causes each replication command to be logged in the server log.
         See <xref linkend="protocol-replication"/> for more information about
         replication command. The default value is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7394,7 +7417,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         the specified amount of data.
         If this value is specified without units, it is taken as kilobytes.
         The default setting is -1, which disables such logging.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7784,7 +7808,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         This setting defaults to <literal>on</literal> on most platforms, but it
         defaults to <literal>off</literal> on Windows due to that platform's larger
         overhead for updating the process title.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7823,7 +7848,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         visible to all users, only to superusers and the user owning
         the session being reported on, so it should not represent a
         security risk.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7857,7 +7883,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Enables collection of statistics on database activity.
         This parameter is on by default, because the autovacuum
         daemon needs the collected information.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7882,9 +7909,10 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         is used, in the output of <xref linkend="sql-vacuum"/> when
         the <literal>VERBOSE</literal> option is used, by autovacuum
         for auto-vacuums and auto-analyzes, when <xref
-         linkend="guc-log-autovacuum-min-duration"/> is set and by
-        <xref linkend="pgstatstatements"/>.  Only superusers can
-        change this setting.
+        linkend="guc-log-autovacuum-min-duration"/> is set and by
+        <xref linkend="pgstatstatements"/>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7904,8 +7932,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         measure the overhead of timing on your system.
         I/O timing information is
         displayed in <link linkend="monitoring-pg-stat-wal-view">
-        <structname>pg_stat_wal</structname></link>.  Only superusers can
-        change this setting.
+        <structname>pg_stat_wal</structname></link>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7922,7 +7951,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <literal>pl</literal> to track only procedural-language functions,
         <literal>all</literal> to also track SQL and C language functions.
         The default is <literal>none</literal>, which disables function
-        statistics tracking.  Only superusers can change this setting.
+        statistics tracking.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <note>
@@ -8028,7 +8059,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         statement statistics, while the others report per-module statistics.
         <varname>log_statement_stats</varname> cannot be enabled together with
         any of the per-module options.  All of these options are disabled by
-        default.   Only superusers can change these settings.
+        default.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change these settings.
        </para>
       </listitem>
      </varlistentry>
@@ -8814,10 +8847,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Controls firing of replication-related triggers and rules for the
-        current session.  Setting this variable requires
-        superuser privilege and results in discarding any previously cached
-        query plans.  Possible values are <literal>origin</literal> (the default),
+        current session.
+        Possible values are <literal>origin</literal> (the default),
         <literal>replica</literal> and <literal>local</literal>.
+        Setting this parameter results in discarding any previously cached
+        query plans.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -9432,10 +9468,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
        </para>
 
        <para>
-        Only superusers can change this setting, because it affects the
-        messages sent to the server log as well as to the client, and
-        an improper value might obscure the readability of the server
-        logs.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -9630,7 +9664,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
         The parameter value only takes effect at the start of the connection.
         Subsequent changes have no effect.  If a specified library is not
         found, the connection attempt will fail.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -9780,7 +9815,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        This parameter can be changed at run time by superusers, but a
+        This parameter can be changed at run time by superusers and users
+        with the appropriate <literal>SET</literal> privilege, but a
         setting done that way will only persist until the end of the
         client connection, so this method should be reserved for
         development purposes. The recommended way to set this parameter
@@ -9844,8 +9880,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
         so as to improve the odds that a lock will be released before
-        the waiter decides to check for deadlock.  Only superusers can change
-        this setting.
+        the waiter decides to check for deadlock.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -10064,7 +10101,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         and writable by all users.  Setting this variable to <literal>on</literal>
         disables the new privilege checks, for compatibility with prior
         releases.  The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         Setting this variable does not disable all security checks related to
@@ -10717,7 +10755,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         is intended to allow testing replication scenarios where primary and
         standby servers are running on the same machine.  Such directories
         are likely to confuse backup tools that expect to find only symbolic
-        links in that location.  Only superusers can change this setting.
+        links in that location.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10734,7 +10774,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         certain other risky actions on system tables.  This is otherwise not
         allowed even for superusers.  Ill-advised use of this setting can
         cause irretrievable data loss or seriously corrupt the database
-        system.  Only superusers can change this setting.
+        system.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10760,7 +10802,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        This parameter can only be set by superusers.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -11145,8 +11188,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         the supported resource managers are <literal>heap</literal>,
         <literal>heap2</literal>, <literal>btree</literal>, <literal>hash</literal>,
         <literal>gin</literal>, <literal>gist</literal>, <literal>sequence</literal>,
-        <literal>spgist</literal>, <literal>brin</literal>, and <literal>generic</literal>. Only
-        superusers can change this setting.
+        <literal>spgist</literal>, <literal>brin</literal>, and <literal>generic</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -11187,7 +11231,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         you to get past the error and retrieve undamaged tuples that might still be
         present in the table if the block header is still sane. If the header is
         corrupt an error will be reported even if this option is enabled. The
-        default setting is <literal>off</literal>, and it can only be changed by a superuser.
+        default setting is <literal>off</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -11213,8 +11259,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         data from the damaged pages of a table.  Zeroed-out pages are not
         forced to disk so it is recommended to recreate the table or
         the index before turning this parameter off again.  The
-        default setting is <literal>off</literal>, and it can only be changed
-        by a superuser.
+        default setting is <literal>off</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -11272,7 +11319,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         file system, inside <xref linkend="guc-data-directory"/>. This is only
         useful for working on the internals of the JIT implementation.
         The default setting is <literal>off</literal>.
-        This parameter can only be changed by a superuser.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>

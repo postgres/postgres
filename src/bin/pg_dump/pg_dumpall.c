@@ -18,6 +18,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "catalog/pg_authid_d.h"
 #include "common/connect.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
@@ -36,6 +37,7 @@ static void help(void);
 static void dropRoles(PGconn *conn);
 static void dumpRoles(PGconn *conn);
 static void dumpRoleMembership(PGconn *conn);
+static void dumpRoleGUCPrivs(PGconn *conn);
 static void dropTablespaces(PGconn *conn);
 static void dumpTablespaces(PGconn *conn);
 static void dropDBs(PGconn *conn);
@@ -585,6 +587,10 @@ main(int argc, char *argv[])
 
 			/* Dump role memberships */
 			dumpRoleMembership(conn);
+
+			/* Dump role GUC privileges */
+			if (server_version >= 150000 && !skip_acls)
+				dumpRoleGUCPrivs(conn);
 		}
 
 		/* Dump tablespaces */
@@ -985,6 +991,65 @@ dumpRoleMembership(PGconn *conn)
 	PQclear(res);
 	destroyPQExpBuffer(buf);
 
+	fprintf(OPF, "\n\n");
+}
+
+
+/*
+ * Dump role configuration parameter privileges.  This code is used for 15.0
+ * and later servers.
+ *
+ * Note: we expect dumpRoles already created all the roles, but there are
+ * no per-role configuration parameter privileges yet.
+ */
+static void
+dumpRoleGUCPrivs(PGconn *conn)
+{
+	PGresult   *res;
+	int			i;
+
+	/*
+	 * Get all parameters that have non-default acls defined.
+	 */
+	res = executeQuery(conn, "SELECT parname, "
+					   "pg_catalog.pg_get_userbyid(" CppAsString2(BOOTSTRAP_SUPERUSERID) ") AS parowner, "
+					   "paracl, "
+					   "pg_catalog.acldefault('p', " CppAsString2(BOOTSTRAP_SUPERUSERID) ") AS acldefault "
+					   "FROM pg_catalog.pg_parameter_acl "
+					   "ORDER BY 1");
+
+	if (PQntuples(res) > 0)
+		fprintf(OPF, "--\n-- Role privileges on configuration parameters\n--\n\n");
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		PQExpBuffer buf = createPQExpBuffer();
+		char	   *parname = PQgetvalue(res, i, 0);
+		char	   *parowner = PQgetvalue(res, i, 1);
+		char	   *paracl = PQgetvalue(res, i, 2);
+		char	   *acldefault = PQgetvalue(res, i, 3);
+		char	   *fparname;
+
+		/* needed for buildACLCommands() */
+		fparname = pg_strdup(fmtId(parname));
+
+		if (!buildACLCommands(fparname, NULL, NULL, "PARAMETER",
+							  paracl, acldefault,
+							  parowner, "", server_version, buf))
+		{
+			pg_log_error("could not parse ACL list (%s) for parameter \"%s\"",
+						 paracl, parname);
+			PQfinish(conn);
+			exit_nicely(1);
+		}
+
+		fprintf(OPF, "%s", buf->data);
+
+		free(fparname);
+		destroyPQExpBuffer(buf);
+	}
+
+	PQclear(res);
 	fprintf(OPF, "\n\n");
 }
 

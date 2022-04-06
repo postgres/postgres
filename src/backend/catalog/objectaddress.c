@@ -45,6 +45,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
@@ -818,6 +819,10 @@ static const struct object_type_map
 	{
 		"event trigger", OBJECT_EVENT_TRIGGER
 	},
+	/* OCLASS_PARAMETER_ACL */
+	{
+		"parameter ACL", OBJECT_PARAMETER_ACL
+	},
 	/* OCLASS_POLICY */
 	{
 		"policy", OBJECT_POLICY
@@ -1014,6 +1019,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_FDW:
 			case OBJECT_FOREIGN_SERVER:
 			case OBJECT_EVENT_TRIGGER:
+			case OBJECT_PARAMETER_ACL:
 			case OBJECT_ACCESS_METHOD:
 			case OBJECT_PUBLICATION:
 			case OBJECT_SUBSCRIPTION:
@@ -1313,6 +1319,11 @@ get_object_address_unqualified(ObjectType objtype,
 		case OBJECT_EVENT_TRIGGER:
 			address.classId = EventTriggerRelationId;
 			address.objectId = get_event_trigger_oid(name, missing_ok);
+			address.objectSubId = 0;
+			break;
+		case OBJECT_PARAMETER_ACL:
+			address.classId = ParameterAclRelationId;
+			address.objectId = ParameterAclLookup(name, missing_ok);
 			address.objectSubId = 0;
 			break;
 		case OBJECT_PUBLICATION:
@@ -2307,6 +2318,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_FDW:
 		case OBJECT_FOREIGN_SERVER:
 		case OBJECT_LANGUAGE:
+		case OBJECT_PARAMETER_ACL:
 		case OBJECT_PUBLICATION:
 		case OBJECT_ROLE:
 		case OBJECT_SCHEMA:
@@ -2597,6 +2609,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
 		case OBJECT_ACCESS_METHOD:
+		case OBJECT_PARAMETER_ACL:
 			/* We treat these object types as being owned by superusers */
 			if (!superuser_arg(roleid))
 				ereport(ERROR,
@@ -3880,6 +3893,32 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				break;
 			}
 
+		case OCLASS_PARAMETER_ACL:
+			{
+				HeapTuple	tup;
+				Datum		nameDatum;
+				bool		isNull;
+				char	   *parname;
+
+				tup = SearchSysCache1(PARAMETERACLOID,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for parameter ACL %u",
+							 object->objectId);
+					break;
+				}
+				nameDatum = SysCacheGetAttr(PARAMETERACLOID, tup,
+											Anum_pg_parameter_acl_parname,
+											&isNull);
+				Assert(!isNull);
+				parname = TextDatumGetCString(nameDatum);
+				appendStringInfo(&buffer, _("parameter %s"), parname);
+				ReleaseSysCache(tup);
+				break;
+			}
+
 		case OCLASS_POLICY:
 			{
 				Relation	policy_rel;
@@ -4545,6 +4584,10 @@ getObjectTypeDescription(const ObjectAddress *object, bool missing_ok)
 
 		case OCLASS_EVENT_TRIGGER:
 			appendStringInfoString(&buffer, "event trigger");
+			break;
+
+		case OCLASS_PARAMETER_ACL:
+			appendStringInfoString(&buffer, "parameter ACL");
 			break;
 
 		case OCLASS_POLICY:
@@ -5689,6 +5732,34 @@ getObjectIdentityParts(const ObjectAddress *object,
 				appendStringInfoString(&buffer, quote_identifier(evtname));
 				if (objname)
 					*objname = list_make1(evtname);
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_PARAMETER_ACL:
+			{
+				HeapTuple	tup;
+				Datum		nameDatum;
+				bool		isNull;
+				char	   *parname;
+
+				tup = SearchSysCache1(PARAMETERACLOID,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for parameter ACL %u",
+							 object->objectId);
+					break;
+				}
+				nameDatum = SysCacheGetAttr(PARAMETERACLOID, tup,
+											Anum_pg_parameter_acl_parname,
+											&isNull);
+				Assert(!isNull);
+				parname = TextDatumGetCString(nameDatum);
+				appendStringInfoString(&buffer, parname);
+				if (objname)
+					*objname = list_make1(parname);
 				ReleaseSysCache(tup);
 				break;
 			}

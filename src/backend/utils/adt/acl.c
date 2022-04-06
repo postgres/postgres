@@ -23,6 +23,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_database.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "commands/proclang.h"
@@ -36,6 +37,7 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -109,6 +111,7 @@ static Oid	convert_tablespace_name(text *tablespacename);
 static AclMode convert_tablespace_priv_string(text *priv_type_text);
 static Oid	convert_type_name(text *typename);
 static AclMode convert_type_priv_string(text *priv_type_text);
+static AclMode convert_parameter_priv_string(text *priv_text);
 static AclMode convert_role_priv_string(text *priv_type_text);
 static AclResult pg_role_aclcheck(Oid role_oid, Oid roleid, AclMode mode);
 
@@ -305,6 +308,12 @@ aclparse(const char *s, AclItem *aip)
 				break;
 			case ACL_CONNECT_CHR:
 				read = ACL_CONNECT;
+				break;
+			case ACL_SET_CHR:
+				read = ACL_SET;
+				break;
+			case ACL_ALTER_SYSTEM_CHR:
+				read = ACL_ALTER_SYSTEM;
 				break;
 			case 'R':			/* ignore old RULE privileges */
 				read = 0;
@@ -794,6 +803,10 @@ acldefault(ObjectType objtype, Oid ownerId)
 			world_default = ACL_USAGE;
 			owner_default = ACL_ALL_RIGHTS_TYPE;
 			break;
+		case OBJECT_PARAMETER_ACL:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_PARAMETER_ACL;
+			break;
 		default:
 			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
 			world_default = ACL_NO_RIGHTS;	/* keep compiler quiet */
@@ -875,6 +888,9 @@ acldefault_sql(PG_FUNCTION_ARGS)
 			break;
 		case 'n':
 			objtype = OBJECT_SCHEMA;
+			break;
+		case 'p':
+			objtype = OBJECT_PARAMETER_ACL;
 			break;
 		case 't':
 			objtype = OBJECT_TABLESPACE;
@@ -1602,6 +1618,10 @@ convert_priv_string(text *priv_type_text)
 		return ACL_CREATE_TEMP;
 	if (pg_strcasecmp(priv_type, "CONNECT") == 0)
 		return ACL_CONNECT;
+	if (pg_strcasecmp(priv_type, "SET") == 0)
+		return ACL_SET;
+	if (pg_strcasecmp(priv_type, "ALTER SYSTEM") == 0)
+		return ACL_ALTER_SYSTEM;
 	if (pg_strcasecmp(priv_type, "RULE") == 0)
 		return 0;				/* ignore old RULE privileges */
 
@@ -1698,6 +1718,10 @@ convert_aclright_to_string(int aclright)
 			return "TEMPORARY";
 		case ACL_CONNECT:
 			return "CONNECT";
+		case ACL_SET:
+			return "SET";
+		case ACL_ALTER_SYSTEM:
+			return "ALTER SYSTEM";
 		default:
 			elog(ERROR, "unrecognized aclright: %d", aclright);
 			return NULL;
@@ -4429,6 +4453,96 @@ convert_type_priv_string(text *priv_type_text)
 	return convert_any_priv_string(priv_type_text, type_priv_map);
 }
 
+/*
+ * has_parameter_privilege variants
+ *		These are all named "has_parameter_privilege" at the SQL level.
+ *		They take various combinations of parameter name with
+ *		user name, user OID, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has been granted
+ *		the indicated privilege or false if not.
+ */
+
+/*
+ * has_param_priv_byname
+ *
+ *		Helper function to check user privileges on a parameter given the
+ *		role by Oid, parameter by text name, and privileges as AclMode.
+ */
+static bool
+has_param_priv_byname(Oid roleid, const text *parameter, AclMode priv)
+{
+	char	   *paramstr = text_to_cstring(parameter);
+
+	return pg_parameter_aclcheck(paramstr, roleid, priv) == ACLCHECK_OK;
+}
+
+/*
+ * has_parameter_privilege_name_name
+ *		Check user privileges on a parameter given name username, text
+ *		parameter, and text priv name.
+ */
+Datum
+has_parameter_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *parameter = PG_GETARG_TEXT_PP(1);
+	AclMode		priv = convert_parameter_priv_string(PG_GETARG_TEXT_PP(2));
+	Oid			roleid = get_role_oid_or_public(NameStr(*username));
+
+	PG_RETURN_BOOL(has_param_priv_byname(roleid, parameter, priv));
+}
+
+/*
+ * has_parameter_privilege_name
+ *		Check user privileges on a parameter given text parameter and text priv
+ *		name.  current_user is assumed
+ */
+Datum
+has_parameter_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *parameter = PG_GETARG_TEXT_PP(0);
+	AclMode		priv = convert_parameter_priv_string(PG_GETARG_TEXT_PP(1));
+
+	PG_RETURN_BOOL(has_param_priv_byname(GetUserId(), parameter, priv));
+}
+
+/*
+ * has_parameter_privilege_id_name
+ *		Check user privileges on a parameter given roleid, text parameter, and
+ *		text priv name.
+ */
+Datum
+has_parameter_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	Oid			roleid = PG_GETARG_OID(0);
+	text	   *parameter = PG_GETARG_TEXT_PP(1);
+	AclMode		priv = convert_parameter_priv_string(PG_GETARG_TEXT_PP(2));
+
+	PG_RETURN_BOOL(has_param_priv_byname(roleid, parameter, priv));
+}
+
+/*
+ *		Support routines for has_parameter_privilege family.
+ */
+
+/*
+ * convert_parameter_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_parameter_priv_string(text *priv_text)
+{
+	static const priv_map parameter_priv_map[] = {
+		{"SET", ACL_SET},
+		{"SET WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_SET)},
+		{"ALTER SYSTEM", ACL_ALTER_SYSTEM},
+		{"ALTER SYSTEM WITH GRANT OPTION", ACL_GRANT_OPTION_FOR(ACL_ALTER_SYSTEM)},
+		{NULL, 0}
+	};
+
+	return convert_any_priv_string(priv_text, parameter_priv_map);
+}
 
 /*
  * pg_has_role variants

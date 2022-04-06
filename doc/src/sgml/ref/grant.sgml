@@ -77,6 +77,11 @@ GRANT { { SELECT | UPDATE } [, ...] | ALL [ PRIVILEGES ] }
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
+GRANT { { SET | ALTER SYSTEM } [, ... ] | ALL [ PRIVILEGES ] }
+    ON PARAMETER <replaceable class="parameter">configuration_parameter</replaceable> [, ...]
+    TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
+    [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
+
 GRANT { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schema_name</replaceable> [, ...]
     TO <replaceable class="parameter">role_specification</replaceable> [, ...] [ WITH GRANT OPTION ]
@@ -111,9 +116,10 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
 
   <para>
    The <command>GRANT</command> command has two basic variants: one
-   that grants privileges on a database object (table, column, view, foreign
-   table, sequence, database, foreign-data wrapper, foreign server, function, procedure,
-   procedural language, schema, or tablespace), and one that grants
+   that grants privileges on a database object (table, column, view,
+   foreign table, sequence, database, foreign-data wrapper, foreign server,
+   function, procedure, procedural language, large object, configuration
+   parameter, schema, tablespace, or type), and one that grants
    membership in a role.  These variants are similar in many ways, but
    they are different enough to be described separately.
   </para>
@@ -185,6 +191,8 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
      <term><literal>TEMPORARY</literal></term>
      <term><literal>EXECUTE</literal></term>
      <term><literal>USAGE</literal></term>
+     <term><literal>SET</literal></term>
+     <term><literal>ALTER SYSTEM</literal></term>
      <listitem>
       <para>
        Specific types of privileges, as defined in <xref linkend="ddl-priv"/>.
@@ -452,7 +460,8 @@ GRANT admins TO joe;
    </para>
 
    <para>
-    Privileges on databases, tablespaces, schemas, and languages are
+    Privileges on databases, tablespaces, schemas, languages, and
+    configuration parameters are
     <productname>PostgreSQL</productname> extensions.
    </para>
  </refsect1>

@@ -37,7 +37,7 @@ static void AddAcl(PQExpBuffer aclbuf, const char *keyword,
  *	nspname: the namespace the object is in (NULL if none); not pre-quoted
  *	type: the object type (as seen in GRANT command: must be one of
  *		TABLE, SEQUENCE, FUNCTION, PROCEDURE, LANGUAGE, SCHEMA, DATABASE, TABLESPACE,
- *		FOREIGN DATA WRAPPER, SERVER, or LARGE OBJECT)
+ *		FOREIGN DATA WRAPPER, SERVER, PARAMETER or LARGE OBJECT)
  *	acls: the ACL string fetched from the database
  *	baseacls: the initial ACL string for this object
  *	owner: username of object owner (will be passed through fmtId); can be
@@ -501,6 +501,11 @@ do { \
 		CONVERT_PRIV('U', "USAGE");
 	else if (strcmp(type, "FOREIGN TABLE") == 0)
 		CONVERT_PRIV('r', "SELECT");
+	else if (strcmp(type, "PARAMETER") == 0)
+	{
+		CONVERT_PRIV('s', "SET");
+		CONVERT_PRIV('A', "ALTER SYSTEM");
+	}
 	else if (strcmp(type, "LARGE OBJECT") == 0)
 	{
 		CONVERT_PRIV('r', "SELECT");

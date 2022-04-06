@@ -34,6 +34,15 @@ static bool REGRESS_deny_exec_perms = false;
 static bool REGRESS_deny_utility_commands = false;
 static bool REGRESS_audit = false;
 
+/*
+ * GUCs for testing privileges on USERSET and SUSET variables,
+ * with and without privileges granted prior to module load.
+ */
+static bool REGRESS_userset_variable1 = false;
+static bool REGRESS_userset_variable2 = false;
+static bool REGRESS_suset_variable1 = false;
+static bool REGRESS_suset_variable2 = false;
+
 /* Saved hook values in case of unload */
 static object_access_hook_type next_object_access_hook = NULL;
 static object_access_hook_type_str next_object_access_hook_str = NULL;
@@ -153,6 +162,56 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
+	/*
+	 * test_oat_hooks.user_var{1,2} = (on|off)
+	 */
+	DefineCustomBoolVariable("test_oat_hooks.user_var1",
+							 "Dummy parameter settable by public",
+							 NULL,
+							 &REGRESS_userset_variable1,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	DefineCustomBoolVariable("test_oat_hooks.user_var2",
+							 "Dummy parameter settable by public",
+							 NULL,
+							 &REGRESS_userset_variable2,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	/*
+	 * test_oat_hooks.super_var{1,2} = (on|off)
+	 */
+	DefineCustomBoolVariable("test_oat_hooks.super_var1",
+							 "Dummy parameter settable by superuser",
+							 NULL,
+							 &REGRESS_suset_variable1,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL,
+							 NULL,
+							 NULL);
+
+	DefineCustomBoolVariable("test_oat_hooks.super_var2",
+							 "Dummy parameter settable by superuser",
+							 NULL,
+							 &REGRESS_suset_variable2,
+							 false,
+							 PGC_SUSET,
+							 GUC_NOT_IN_SAMPLE,
+							 NULL,
+							 NULL,
+							 NULL);
+
 	MarkGUCPrefixReserved("test_oat_hooks");
 
 	/* Object access hook */
@@ -250,7 +309,14 @@ REGRESS_object_access_hook_str(ObjectAccessType access, Oid classId, const char 
 	switch (access)
 	{
 		case OAT_POST_ALTER:
-			if (subId & ACL_SET_VALUE)
+			if ((subId & ACL_SET) && (subId & ACL_ALTER_SYSTEM))
+			{
+				if (REGRESS_deny_set_variable && !superuser_arg(GetUserId()))
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("permission denied: all privileges %s", objName)));
+			}
+			else if (subId & ACL_SET)
 			{
 				if (REGRESS_deny_set_variable && !superuser_arg(GetUserId()))
 					ereport(ERROR,
@@ -265,7 +331,7 @@ REGRESS_object_access_hook_str(ObjectAccessType access, Oid classId, const char 
 							 errmsg("permission denied: alter system set %s", objName)));
 			}
 			else
-				elog(ERROR, "Unknown SettingAclRelationId subId: %d", subId);
+				elog(ERROR, "Unknown ParameterAclRelationId subId: %d", subId);
 			break;
 		default:
 			break;
@@ -860,12 +926,14 @@ accesstype_to_string(ObjectAccessType access, int subId)
 			type = "UNRECOGNIZED ObjectAccessType";
 	}
 
-	if (subId & ACL_SET_VALUE)
-		return psprintf("%s (set)", type);
+	if ((subId & ACL_SET) && (subId & ACL_ALTER_SYSTEM))
+		return psprintf("%s (subId=0x%x, all privileges)", type, subId);
+	if (subId & ACL_SET)
+		return psprintf("%s (subId=0x%x, set)", type, subId);
 	if (subId & ACL_ALTER_SYSTEM)
-		return psprintf("%s (alter system set)", type);
+		return psprintf("%s (subId=0x%x, alter system)", type, subId);
 
-	return  psprintf("%s (subId=%d)", type, subId);
+	return psprintf("%s (subId=0x%x)", type, subId);
 }
 
 static char *

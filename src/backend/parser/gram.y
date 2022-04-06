@@ -371,8 +371,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <str>		foreign_server_version opt_foreign_server_version
 %type <str>		opt_in_database
 
-%type <str>		OptSchemaName
-%type <list>	OptSchemaEltList
+%type <str>		OptSchemaName parameter_name
+%type <list>	OptSchemaEltList parameter_name_list
 
 %type <chr>		am_type
 
@@ -827,7 +827,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 	ORDER ORDINALITY OTHERS OUT_P OUTER_P
 	OVER OVERLAPS OVERLAY OVERRIDING OWNED OWNER
 
-	PARALLEL PARSER PARTIAL PARTITION PASSING PASSWORD PATH PLACING PLAN PLANS POLICY
+	PARALLEL PARAMETER PARSER PARTIAL PARTITION PASSING PASSWORD PATH
+	PLACING PLAN PLANS POLICY
 	POSITION PRECEDING PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE PROCEDURES PROGRAM PUBLICATION
 
@@ -7197,12 +7198,41 @@ privilege:	SELECT opt_column_list
 				n->cols = $2;
 				$$ = n;
 			}
+		| ALTER SYSTEM_P
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = pstrdup("alter system");
+				n->cols = NIL;
+				$$ = n;
+			}
 		| ColId opt_column_list
 			{
 				AccessPriv *n = makeNode(AccessPriv);
 				n->priv_name = $1;
 				n->cols = $2;
 				$$ = n;
+			}
+		;
+
+parameter_name_list:
+		parameter_name
+			{
+				$$ = list_make1(makeString($1));
+			}
+		| parameter_name_list ',' parameter_name
+			{
+				$$ = lappend($1, makeString($3));
+			}
+		;
+
+parameter_name:
+		ColId
+			{
+				$$ = $1;
+			}
+		| parameter_name '.' ColId
+			{
+				$$ = psprintf("%s.%s", $1, $3);
 			}
 		;
 
@@ -7305,6 +7335,14 @@ privilege_target:
 					n->targtype = ACL_TARGET_OBJECT;
 					n->objtype = OBJECT_LARGEOBJECT;
 					n->objs = $3;
+					$$ = n;
+				}
+			| PARAMETER parameter_name_list
+				{
+					PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = OBJECT_PARAMETER_ACL;
+					n->objs = $2;
 					$$ = n;
 				}
 			| SCHEMA name_list
@@ -17065,6 +17103,7 @@ unreserved_keyword:
 			| OWNED
 			| OWNER
 			| PARALLEL
+			| PARAMETER
 			| PARSER
 			| PARTIAL
 			| PARTITION
@@ -17682,6 +17721,7 @@ bare_label_keyword:
 			| OWNED
 			| OWNER
 			| PARALLEL
+			| PARAMETER
 			| PARSER
 			| PARTIAL
 			| PARTITION

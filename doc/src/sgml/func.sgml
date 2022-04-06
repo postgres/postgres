@@ -22856,6 +22856,25 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>has_parameter_privilege</primary>
+        </indexterm>
+        <function>has_parameter_privilege</function> (
+          <optional> <parameter>user</parameter> <type>name</type> or <type>oid</type>, </optional>
+          <parameter>parameter</parameter> <type>text</type>,
+          <parameter>privilege</parameter> <type>text</type> )
+        <returnvalue>boolean</returnvalue>
+       </para>
+       <para>
+        Does user have privilege for configuration parameter?
+        The parameter name is case-insensitive.
+        Allowable privilege types are <literal>SET</literal>
+        and <literal>ALTER SYSTEM</literal>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>has_schema_privilege</primary>
         </indexterm>
         <function>has_schema_privilege</function> (
@@ -23137,6 +23156,7 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         'l' for <literal>LANGUAGE</literal>,
         'L' for <literal>LARGE OBJECT</literal>,
         'n' for <literal>SCHEMA</literal>,
+        'p' for <literal>PARAMETER</literal>,
         't' for <literal>TABLESPACE</literal>,
         'F' for <literal>FOREIGN DATA WRAPPER</literal>,
         'S' for <literal>FOREIGN SERVER</literal>,
@@ -23905,7 +23925,7 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         </simplelist>
        </para></entry>
       </row>
-      
+
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
@@ -27427,7 +27447,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         are excluded.
        </para>
        <para>
-        This function is restricted to superusers and roles with privileges of 
+        This function is restricted to superusers and roles with privileges of
         the <literal>pg_monitor</literal> role by default, but other users can
         be granted EXECUTE to run the function.
        </para></entry>
