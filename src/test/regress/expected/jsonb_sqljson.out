@@ -2088,9 +2088,9 @@ ERROR:  only string constants supported in JSON_TABLE path specification
 LINE 1: SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || '...
                                                      ^
 -- Test parallel JSON_VALUE()
-CREATE TABLE test_parallel_jsonb_value AS
+CREATE UNLOGGED TABLE test_parallel_jsonb_value AS
 SELECT i::text::jsonb AS js
-FROM generate_series(1, 1000000) i;
+FROM generate_series(1, 500000) i;
 -- Should be non-parallel due to subtransactions
 EXPLAIN (COSTS OFF)
 SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value;
@@ -2103,7 +2103,7 @@ SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value
 SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value;
      sum      
 --------------
- 500000500000
+ 125000250000
 (1 row)
 
 -- Should be parallel
@@ -2121,6 +2121,6 @@ SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_paral
 SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_parallel_jsonb_value;
      sum      
 --------------
- 500000500000
+ 125000250000
 (1 row)
 

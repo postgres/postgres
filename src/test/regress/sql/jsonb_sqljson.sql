@@ -948,9 +948,9 @@ SELECT JSON_QUERY(jsonb '{"a": 123}', 'error' || ' ' || 'error');
 SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
 
 -- Test parallel JSON_VALUE()
-CREATE TABLE test_parallel_jsonb_value AS
+CREATE UNLOGGED TABLE test_parallel_jsonb_value AS
 SELECT i::text::jsonb AS js
-FROM generate_series(1, 1000000) i;
+FROM generate_series(1, 500000) i;
 
 -- Should be non-parallel due to subtransactions
 EXPLAIN (COSTS OFF)
