@@ -536,16 +536,28 @@ typedef struct TidRangeScan
  * relation, we make this a descendant of Scan anyway for code-sharing
  * purposes.
  *
+ * SubqueryScanStatus caches the trivial_subqueryscan property of the node.
+ * SUBQUERY_SCAN_UNKNOWN means not yet determined.  This is only used during
+ * planning.
+ *
  * Note: we store the sub-plan in the type-specific subplan field, not in
  * the generic lefttree field as you might expect.  This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
  * ----------------
  */
+typedef enum SubqueryScanStatus
+{
+	SUBQUERY_SCAN_UNKNOWN,
+	SUBQUERY_SCAN_TRIVIAL,
+	SUBQUERY_SCAN_NONTRIVIAL
+} SubqueryScanStatus;
+
 typedef struct SubqueryScan
 {
 	Scan		scan;
 	Plan	   *subplan;
+	SubqueryScanStatus scanstatus;
 } SubqueryScan;
 
 /* ----------------

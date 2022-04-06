@@ -82,7 +82,7 @@ static List *get_gating_quals(PlannerInfo *root, List *quals);
 static Plan *create_gating_plan(PlannerInfo *root, Path *path, Plan *plan,
 								List *gating_quals);
 static Plan *create_join_plan(PlannerInfo *root, JoinPath *best_path);
-static bool is_async_capable_path(Path *path);
+static bool mark_async_capable_plan(Plan *plan, Path *path);
 static Plan *create_append_plan(PlannerInfo *root, AppendPath *best_path,
 								int flags);
 static Plan *create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
@@ -1110,14 +1110,30 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 }
 
 /*
- * is_async_capable_path
- *		Check whether a given Path node is async-capable.
+ * mark_async_capable_plan
+ *		Check whether a given Path node is async-capable, and if so, mark the
+ *		Plan node created from it as such and return true, otherwise return
+ *		false.
  */
 static bool
-is_async_capable_path(Path *path)
+mark_async_capable_plan(Plan *plan, Path *path)
 {
 	switch (nodeTag(path))
 	{
+		case T_SubqueryScanPath:
+			{
+				SubqueryScan *scan_plan = (SubqueryScan *) plan;
+
+				/*
+				 * If a SubqueryScan node atop of an async-capable plan node
+				 * is deletable, consider it as async-capable.
+				 */
+				if (trivial_subqueryscan(scan_plan) &&
+					mark_async_capable_plan(scan_plan->subplan,
+											((SubqueryScanPath *) path)->subpath))
+					break;
+				return false;
+			}
 		case T_ForeignPath:
 			{
 				FdwRoutine *fdwroutine = path->parent->fdwroutine;
@@ -1125,13 +1141,27 @@ is_async_capable_path(Path *path)
 				Assert(fdwroutine != NULL);
 				if (fdwroutine->IsForeignPathAsyncCapable != NULL &&
 					fdwroutine->IsForeignPathAsyncCapable((ForeignPath *) path))
-					return true;
+					break;
+				return false;
 			}
-			break;
+		case T_ProjectionPath:
+
+			/*
+			 * If the generated plan node doesn't include a Result node,
+			 * consider it as async-capable if the subpath is async-capable.
+			 */
+			if (!IsA(plan, Result) &&
+				mark_async_capable_plan(plan,
+										((ProjectionPath *) path)->subpath))
+				return true;
+			return false;
 		default:
-			break;
+			return false;
 	}
-	return false;
+
+	plan->async_capable = true;
+
+	return true;
 }
 
 /*
@@ -1294,14 +1324,14 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 			}
 		}
 
-		subplans = lappend(subplans, subplan);
-
-		/* Check to see if subplan can be executed asynchronously */
-		if (consider_async && is_async_capable_path(subpath))
+		/* If needed, check to see if subplan can be executed asynchronously */
+		if (consider_async && mark_async_capable_plan(subplan, subpath))
 		{
-			subplan->async_capable = true;
+			Assert(subplan->async_capable);
 			++nasyncplans;
 		}
+
+		subplans = lappend(subplans, subplan);
 	}
 
 	/*
@@ -5598,6 +5628,7 @@ make_subqueryscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
+	node->scanstatus = SUBQUERY_SCAN_UNKNOWN;
 
 	return node;
 }
