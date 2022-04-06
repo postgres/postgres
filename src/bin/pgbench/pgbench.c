@@ -4494,6 +4494,17 @@ doLog(TState *thread, CState *st,
 
 		while ((next = agg->start_time + agg_interval * INT64CONST(1000000)) <= now)
 		{
+			double		lag_sum = 0.0;
+			double		lag_sum2 = 0.0;
+			double		lag_min = 0.0;
+			double		lag_max = 0.0;
+			int64		skipped = 0;
+			int64		serialization_failures = 0;
+			int64		deadlock_failures = 0;
+			int64		serialization_or_deadlock_failures = 0;
+			int64		retried = 0;
+			int64		retries = 0;
+
 			/* print aggregated report to logfile */
 			fprintf(logfile, INT64_FORMAT " " INT64_FORMAT " %.0f %.0f %.0f %.0f",
 					agg->start_time / 1000000,	/* seconds since Unix epoch */
@@ -4503,27 +4514,41 @@ doLog(TState *thread, CState *st,
 					agg->latency.min,
 					agg->latency.max);
 
-			if (failures_detailed)
-				fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT,
-						agg->serialization_failures,
-						agg->deadlock_failures);
-			else
-				fprintf(logfile, " " INT64_FORMAT, getFailures(agg));
-
 			if (throttle_delay)
 			{
-				fprintf(logfile, " %.0f %.0f %.0f %.0f",
-						agg->lag.sum,
-						agg->lag.sum2,
-						agg->lag.min,
-						agg->lag.max);
-				if (latency_limit)
-					fprintf(logfile, " " INT64_FORMAT, agg->skipped);
+				lag_sum = agg->lag.sum;
+				lag_sum2 = agg->lag.sum2;
+				lag_min = agg->lag.min;
+				lag_max = agg->lag.max;
 			}
+			fprintf(logfile, " %.0f %.0f %.0f %.0f",
+						lag_sum,
+						lag_sum2,
+						lag_min,
+						lag_max);
+
+			if (latency_limit)
+				skipped = agg->skipped;
+			fprintf(logfile, " " INT64_FORMAT, skipped);
+
 			if (max_tries != 1)
-				fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT,
-						agg->retried,
-						agg->retries);
+			{
+				retried = agg->retried;
+				retries = agg->retries;
+			}
+			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT, retried, retries);
+
+			if (failures_detailed)
+			{
+				serialization_failures = agg->serialization_failures;
+				deadlock_failures = agg->deadlock_failures;
+			}
+			serialization_or_deadlock_failures = serialization_failures + deadlock_failures;
+			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT " " INT64_FORMAT,
+					serialization_or_deadlock_failures,
+					serialization_failures,
+					deadlock_failures);
+
 			fputc('\n', logfile);
 
 			/* reset data and move to next interval */

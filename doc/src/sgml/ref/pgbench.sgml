@@ -2401,7 +2401,9 @@ END;
    format is used for the log files:
 
 <synopsis>
-<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable> <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable> { <replaceable>failures</replaceable> | <replaceable>serialization_failures</replaceable> <replaceable>deadlock_failures</replaceable> } <optional> <replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <optional> <replaceable>skipped</replaceable> </optional> </optional> <optional> <replaceable>retried</replaceable> <replaceable>retries</replaceable> </optional>
+<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable> <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable>
+<replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <replaceable>skipped</replaceable>
+<replaceable>retried</replaceable> <replaceable>retries</replaceable> <replaceable>failures</replaceable> <replaceable>serialization_failures</replaceable> <replaceable>deadlock_failures</replaceable>
 </synopsis>
 
    where
@@ -2417,41 +2419,55 @@ END;
    and
    <replaceable>max_latency</replaceable> is the maximum latency within the interval,
    <replaceable>failures</replaceable> is the number of transactions that ended
-   with a failed SQL command within the interval. If you use option
-   <option>--failures-detailed</option>, instead of the sum of all failed
-   transactions you will get more detailed statistics for the failed
-   transactions grouped by the following types:
-   <replaceable>serialization_failures</replaceable> is the number of
-   transactions that got a serialization error and were not retried after this,
-   <replaceable>deadlock_failures</replaceable> is the number of transactions
-   that got a deadlock error and were not retried after this.
+   with a failed SQL command within the interval.
+  </para>
+  <para>
    The next fields,
    <replaceable>sum_lag</replaceable>, <replaceable>sum_lag_2</replaceable>, <replaceable>min_lag</replaceable>,
-   and <replaceable>max_lag</replaceable>, are only present if the <option>--rate</option>
-   option is used.
+   and <replaceable>max_lag</replaceable>, only meaningful if the <option>--rate</option>
+   option is used. Otherwise, they are all 0.0.
    They provide statistics about the time each transaction had to wait for the
    previous one to finish, i.e., the difference between each transaction's
    scheduled start time and the time it actually started.
    The next field, <replaceable>skipped</replaceable>,
-   is only present if the <option>--latency-limit</option> option is used, too.
+   is only meaningful if the <option>--latency-limit</option> option is used, too. Otherwise it is 0.
    It counts the number of transactions skipped because they would have
    started too late.
-   The <replaceable>retried</replaceable> and <replaceable>retries</replaceable>
-   fields are present only if the <option>--max-tries</option> option is not
-   equal to 1. They report the number of retried transactions and the sum of all
-   retries after serialization or deadlock errors within the interval.
-   Each transaction is counted in the interval when it was committed.
+  </para>
+  <para>
+   The <replaceable>retried</replaceable>
+   and <replaceable>retries</replaceable> fields are only meaningful if
+   the <option>--max-tries</option> option is not equal to 1. Otherwise they
+   are 0. They report the number of retried transactions and the sum of all
+   retries after serialization or deadlock errors within the interval.  Each
+   transaction is counted in the interval when it was committed.
+  </para>
+  <para>
+   <replaceable>failures</replaceable> is the sum of all failed transactions.
+   If <option>--failures-detailed</option> is specified, instead of the sum of
+   all failed transactions you will get more detailed statistics for the
+   failed transactions grouped by the following types:
+   <replaceable>serialization_failures</replaceable> is the number of
+   transactions that got a serialization error and were not retried after this,
+   <replaceable>deadlock_failures</replaceable> is the number of transactions
+   that got a deadlock error and were not retried after this.
+   If <option>--failures-detailed</option> is not
+   specified, <replaceable>serialization_failures</replaceable>
+   and <replaceable>deadlock_failures</replaceable> are always 0.
   </para>
 
   <para>
-   Here is some example output:
+   Here is some example output with following options:
 <screen>
-1345828501 5601 1542744 483552416 61 2573 0
-1345828503 7884 1979812 565806736 60 1479 0
-1345828505 7208 1979422 567277552 59 1391 0
-1345828507 7685 1980268 569784714 60 1398 0
-1345828509 7073 1979779 573489941 236 1411 0
-</screen></para>
+pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000
+--latency-limit=10 --failures-detailed --max-tries=10 test
+</screen>
+
+<screen>
+1649114136 5815 27552565 177846919143 1078 21716 2756787 7264696105 0 9661 0 7854 31472 4022 4022 0
+1649114146 5958 28460110 182785513108 1083 20391 2539395 6411761497 0 7268 0 8127 32595 4101 4101 0
+</screen>
+  </para>
 
   <para>
    Notice that while the plain (unaggregated) log file shows which script
