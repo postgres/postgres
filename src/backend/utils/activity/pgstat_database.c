@@ -55,6 +55,26 @@ pgstat_drop_database(Oid databaseid)
 }
 
 /*
+ * Called from autovacuum.c to report startup of an autovacuum process.
+ * We are called before InitPostgres is done, so can't rely on MyDatabaseId;
+ * the db OID must be passed in, instead.
+ */
+void
+pgstat_report_autovac(Oid dboid)
+{
+	PgStat_MsgAutovacStart msg;
+
+	if (pgStatSock == PGINVALID_SOCKET)
+		return;
+
+	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_AUTOVAC_START);
+	msg.m_databaseid = dboid;
+	msg.m_start_time = GetCurrentTimestamp();
+
+	pgstat_send(&msg, sizeof(msg));
+}
+
+/*
  * Tell the collector about a Hot Standby recovery conflict.
  */
 void

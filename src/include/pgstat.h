@@ -1025,6 +1025,7 @@ extern void pgstat_send_checkpointer(void);
  */
 
 extern void pgstat_drop_database(Oid databaseid);
+extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_recovery_conflict(int reason);
 extern void pgstat_report_deadlock(void);
 extern void pgstat_report_checksum_failures_in_db(Oid dboid, int failurecount);
@@ -1060,7 +1061,6 @@ extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_relation_init(Relation rel);
 
-extern void pgstat_report_autovac(Oid dboid);
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 								 PgStat_Counter livetuples, PgStat_Counter deadtuples);
 extern void pgstat_report_analyze(Relation rel,
