@@ -125,11 +125,24 @@ $killme_stderr2 = '';
 my $ret = PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
-# Close psql session
+# Close that psql session
 $killme->finish;
+
+# Wait till the other session reports failure, ensuring that the postmaster
+# has noticed its dead child and begun a restart cycle.
+$killme_stdin2 .= qq[
+SELECT pg_sleep($PostgreSQL::Test::Utils::timeout_default);
+];
+ok( pump_until(
+		$killme2,
+		$psql_timeout,
+		\$killme_stderr2,
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
+	),
+	"second psql session died successfully after SIGKILL");
 $killme2->finish;
 
-# Wait till server restarts
+# Wait till server finishes restarting
 $node->poll_query_until('postgres', undef, '');
 
 # Check for temporary files
@@ -214,11 +227,24 @@ $killme_stderr2 = '';
 $ret = PostgreSQL::Test::Utils::system_log('pg_ctl', 'kill', 'KILL', $pid);
 is($ret, 0, 'killed process with KILL');
 
-# Close psql session
+# Close that psql session
 $killme->finish;
+
+# Wait till the other session reports failure, ensuring that the postmaster
+# has noticed its dead child and begun a restart cycle.
+$killme_stdin2 .= qq[
+SELECT pg_sleep($PostgreSQL::Test::Utils::timeout_default);
+];
+ok( pump_until(
+		$killme2,
+		$psql_timeout,
+		\$killme_stderr2,
+		qr/WARNING:  terminating connection because of crash of another server process|server closed the connection unexpectedly|connection to server was lost|could not send data to server/m
+	),
+	"second psql session died successfully after SIGKILL");
 $killme2->finish;
 
-# Wait till server restarts
+# Wait till server finishes restarting
 $node->poll_query_until('postgres', undef, '');
 
 # Check for temporary files -- should be there
