@@ -65,7 +65,7 @@ _bt_dedup_one_page(Relation rel, Buffer buf, Relation heapRel,
 	OffsetNumber deletable[MaxIndexTuplesPerPage];
 	BTDedupState state;
 	int			ndeletable = 0;
-	Size		pagesaving = 0;
+	Size		pagesaving PG_USED_FOR_ASSERTS_ONLY = 0;
 	bool		singlevalstrat = false;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 
