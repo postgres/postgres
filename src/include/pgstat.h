@@ -969,13 +969,6 @@ extern void PgstatCollectorMain(int argc, char *argv[]) pg_attribute_noreturn();
 /* Functions for backend initialization */
 extern void pgstat_initialize(void);
 
-/* transactional integration */
-extern void AtEOXact_PgStat(bool isCommit, bool parallel);
-extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
-extern void AtPrepare_PgStat(void);
-extern void PostPrepare_PgStat(void);
-extern void pgstat_clear_snapshot(void);
-
 /* Functions called from backends */
 extern void pgstat_report_stat(bool force);
 extern void pgstat_vacuum_stat(void);
@@ -986,6 +979,7 @@ extern void pgstat_reset_single_counter(Oid objectid, PgStat_Single_Reset_Type t
 extern void pgstat_reset_shared_counters(const char *);
 
 /* stats accessors */
+extern void pgstat_clear_snapshot(void);
 extern PgStat_ArchiverStats *pgstat_fetch_stat_archiver(void);
 extern PgStat_BgWriterStats *pgstat_fetch_stat_bgwriter(void);
 extern PgStat_CheckpointerStats *pgstat_fetch_stat_checkpointer(void);
@@ -1155,6 +1149,16 @@ extern int	pgstat_slru_index(const char *name);
 extern void pgstat_reset_subscription_counter(Oid subid);
 extern void pgstat_report_subscription_error(Oid subid, bool is_apply_error);
 extern void pgstat_report_subscription_drop(Oid subid);
+
+
+/*
+ * Functions in pgstat_xact.c
+ */
+
+extern void AtEOXact_PgStat(bool isCommit, bool parallel);
+extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
+extern void AtPrepare_PgStat(void);
+extern void PostPrepare_PgStat(void);
 
 
 /*

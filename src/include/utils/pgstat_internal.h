@@ -77,7 +77,6 @@ static const char *const slru_names[] = {
  * Functions in pgstat.c
  */
 
-extern PgStat_SubXactStatus *pgstat_xact_stack_level_get(int nest_level);
 extern void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 extern void pgstat_send(void *msg, int len);
 #ifdef USE_ASSERT_CHECKING
@@ -127,6 +126,13 @@ extern void pgstat_send_slru(void);
 
 extern void pgstat_wal_initialize(void);
 extern bool pgstat_wal_pending(void);
+
+
+/*
+ * Functions in pgstat_xact.c
+ */
+
+extern PgStat_SubXactStatus *pgstat_xact_stack_level_get(int nest_level);
 
 
 /*

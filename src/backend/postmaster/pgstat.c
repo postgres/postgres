@@ -198,8 +198,6 @@ static time_t last_pgstat_start_time;
 
 static bool pgStatRunningInCollector = false;
 
-static PgStat_SubXactStatus *pgStatXactStack = NULL;
-
 /*
  * Info about current "snapshot" of stats file
  */
@@ -741,158 +739,6 @@ pgstat_initialize(void)
 
 
 /* ------------------------------------------------------------
- * Transaction integration
- * ------------------------------------------------------------
- */
-
-/*
- * Called from access/transam/xact.c at top-level transaction commit/abort.
- */
-void
-AtEOXact_PgStat(bool isCommit, bool parallel)
-{
-	PgStat_SubXactStatus *xact_state;
-
-	AtEOXact_PgStat_Database(isCommit, parallel);
-
-	/* handle transactional stats information */
-	xact_state = pgStatXactStack;
-	if (xact_state != NULL)
-	{
-		Assert(xact_state->nest_level == 1);
-		Assert(xact_state->prev == NULL);
-
-		AtEOXact_PgStat_Relations(xact_state, isCommit);
-	}
-	pgStatXactStack = NULL;
-
-	/* Make sure any stats snapshot is thrown away */
-	pgstat_clear_snapshot();
-}
-
-/*
- * Called from access/transam/xact.c at subtransaction commit/abort.
- */
-void
-AtEOSubXact_PgStat(bool isCommit, int nestDepth)
-{
-	PgStat_SubXactStatus *xact_state;
-
-	/* merge the sub-transaction's transactional stats into the parent */
-	xact_state = pgStatXactStack;
-	if (xact_state != NULL &&
-		xact_state->nest_level >= nestDepth)
-	{
-		/* delink xact_state from stack immediately to simplify reuse case */
-		pgStatXactStack = xact_state->prev;
-
-		AtEOSubXact_PgStat_Relations(xact_state, isCommit, nestDepth);
-
-		pfree(xact_state);
-	}
-}
-
-/*
- * Save the transactional stats state at 2PC transaction prepare.
- */
-void
-AtPrepare_PgStat(void)
-{
-	PgStat_SubXactStatus *xact_state;
-
-	xact_state = pgStatXactStack;
-	if (xact_state != NULL)
-	{
-		Assert(xact_state->nest_level == 1);
-		Assert(xact_state->prev == NULL);
-
-		AtPrepare_PgStat_Relations(xact_state);
-	}
-}
-
-/*
- * Clean up after successful PREPARE.
- *
- * Note: AtEOXact_PgStat is not called during PREPARE.
- */
-void
-PostPrepare_PgStat(void)
-{
-	PgStat_SubXactStatus *xact_state;
-
-	/*
-	 * We don't bother to free any of the transactional state, since it's all
-	 * in TopTransactionContext and will go away anyway.
-	 */
-	xact_state = pgStatXactStack;
-	if (xact_state != NULL)
-	{
-		Assert(xact_state->nest_level == 1);
-		Assert(xact_state->prev == NULL);
-
-		PostPrepare_PgStat_Relations(xact_state);
-	}
-	pgStatXactStack = NULL;
-
-	/* Make sure any stats snapshot is thrown away */
-	pgstat_clear_snapshot();
-}
-
-/*
- * Discard any data collected in the current transaction.  Any subsequent
- * request will cause new snapshots to be read.
- *
- * This is also invoked during transaction commit or abort to discard
- * the no-longer-wanted snapshot.
- */
-void
-pgstat_clear_snapshot(void)
-{
-	pgstat_assert_is_up();
-
-	/* Release memory, if any was allocated */
-	if (pgStatLocalContext)
-		MemoryContextDelete(pgStatLocalContext);
-
-	/* Reset variables */
-	pgStatLocalContext = NULL;
-	pgStatDBHash = NULL;
-	replSlotStatHash = NULL;
-	subscriptionStatHash = NULL;
-
-	/*
-	 * Historically the backend_status.c facilities lived in this file, and
-	 * were reset with the same function. For now keep it that way, and
-	 * forward the reset request.
-	 */
-	pgstat_clear_backend_activity_snapshot();
-}
-
-/*
- * Ensure (sub)transaction stack entry for the given nest_level exists, adding
- * it if needed.
- */
-PgStat_SubXactStatus *
-pgstat_xact_stack_level_get(int nest_level)
-{
-	PgStat_SubXactStatus *xact_state;
-
-	xact_state = pgStatXactStack;
-	if (xact_state == NULL || xact_state->nest_level != nest_level)
-	{
-		xact_state = (PgStat_SubXactStatus *)
-			MemoryContextAlloc(TopTransactionContext,
-							   sizeof(PgStat_SubXactStatus));
-		xact_state->nest_level = nest_level;
-		xact_state->prev = pgStatXactStack;
-		xact_state->first = NULL;
-		pgStatXactStack = xact_state;
-	}
-	return xact_state;
-}
-
-
-/* ------------------------------------------------------------
  * Public functions used by backends follow
  * ------------------------------------------------------------
  */
@@ -1317,6 +1163,36 @@ pgstat_send_inquiry(TimestampTz clock_time, TimestampTz cutoff_time, Oid databas
 	msg.cutoff_time = cutoff_time;
 	msg.databaseid = databaseid;
 	pgstat_send(&msg, sizeof(msg));
+}
+
+/*
+ * Discard any data collected in the current transaction.  Any subsequent
+ * request will cause new snapshots to be read.
+ *
+ * This is also invoked during transaction commit or abort to discard
+ * the no-longer-wanted snapshot.
+ */
+void
+pgstat_clear_snapshot(void)
+{
+	pgstat_assert_is_up();
+
+	/* Release memory, if any was allocated */
+	if (pgStatLocalContext)
+		MemoryContextDelete(pgStatLocalContext);
+
+	/* Reset variables */
+	pgStatLocalContext = NULL;
+	pgStatDBHash = NULL;
+	replSlotStatHash = NULL;
+	subscriptionStatHash = NULL;
+
+	/*
+	 * Historically the backend_status.c facilities lived in this file, and
+	 * were reset with the same function. For now keep it that way, and
+	 * forward the reset request.
+	 */
+	pgstat_clear_backend_activity_snapshot();
 }
 
 /*
