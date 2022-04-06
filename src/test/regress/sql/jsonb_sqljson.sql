@@ -948,9 +948,19 @@ SELECT JSON_QUERY(jsonb '{"a": 123}', 'error' || ' ' || 'error');
 SELECT * FROM JSON_TABLE(jsonb '{"a": 123}', '$' || '.' || 'a' COLUMNS (foo int));
 
 -- Test parallel JSON_VALUE()
+
+
 CREATE UNLOGGED TABLE test_parallel_jsonb_value AS
 SELECT i::text::jsonb AS js
-FROM generate_series(1, 500000) i;
+FROM generate_series(1, 50000) i;
+
+
+-- encourage use of parallel plans
+set parallel_setup_cost=0;
+set parallel_tuple_cost=0;
+set min_parallel_table_scan_size=0;
+set max_parallel_workers_per_gather=4;
+set parallel_leader_participation = off;
 
 -- Should be non-parallel due to subtransactions
 EXPLAIN (COSTS OFF)
@@ -961,3 +971,5 @@ SELECT sum(JSON_VALUE(js, '$' RETURNING numeric)) FROM test_parallel_jsonb_value
 EXPLAIN (COSTS OFF)
 SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_parallel_jsonb_value;
 SELECT sum(JSON_VALUE(js, '$' RETURNING numeric ERROR ON ERROR)) FROM test_parallel_jsonb_value;
+
+DROP TABLE test_parallel_jsonb_value;
