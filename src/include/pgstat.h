@@ -1053,6 +1053,8 @@ extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
  * Functions in pgstat_relation.c
  */
 
+extern void pgstat_copy_relation_stats(Relation dstrel, Relation srcrel);
+
 extern void pgstat_relation_init(Relation rel);
 
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
