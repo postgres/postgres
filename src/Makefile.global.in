@@ -367,7 +367,7 @@ DOWNLOAD = wget -O $@ --no-use-server-timestamps
 UNICODE_VERSION = 14.0.0
 
 # Pick a release from here: <http://cldr.unicode.org/index/downloads>
-CLDR_VERSION = 39
+CLDR_VERSION = 41
 
 
 # Tree-wide build support
