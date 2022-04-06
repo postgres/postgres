@@ -793,7 +793,7 @@ pgstat_report_stat(bool disconnect)
 	pgstat_send_funcstats();
 
 	/* Send WAL statistics */
-	pgstat_send_wal(true);
+	pgstat_report_wal(true);
 
 	/* Finally send SLRU statistics */
 	pgstat_send_slru();

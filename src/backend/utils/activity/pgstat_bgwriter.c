@@ -32,7 +32,7 @@ PgStat_MsgBgWriter PendingBgWriterStats;
  * Report bgwriter statistics
  */
 void
-pgstat_send_bgwriter(void)
+pgstat_report_bgwriter(void)
 {
 	/* We assume this initializes to zeroes */
 	static const PgStat_MsgBgWriter all_zeroes;

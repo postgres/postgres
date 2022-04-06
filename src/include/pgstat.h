@@ -997,21 +997,21 @@ extern PgStat_WalStats *pgstat_fetch_stat_wal(void);
  * Functions in pgstat_archiver.c
  */
 
-extern void pgstat_send_archiver(const char *xlog, bool failed);
+extern void pgstat_report_archiver(const char *xlog, bool failed);
 
 
 /*
  * Functions in pgstat_bgwriter.c
  */
 
-extern void pgstat_send_bgwriter(void);
+extern void pgstat_report_bgwriter(void);
 
 
 /*
  * Functions in pgstat_checkpointer.c
  */
 
-extern void pgstat_send_checkpointer(void);
+extern void pgstat_report_checkpointer(void);
 
 
 /*
@@ -1165,7 +1165,7 @@ extern void PostPrepare_PgStat(void);
  * Functions in pgstat_wal.c
  */
 
-extern void pgstat_send_wal(bool force);
+extern void pgstat_report_wal(bool force);
 
 
 /*

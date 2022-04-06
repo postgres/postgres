@@ -493,8 +493,8 @@ CheckpointerMain(void)
 		CheckArchiveTimeout();
 
 		/* Report pending statistics to the cumulative stats system */
-		pgstat_send_checkpointer();
-		pgstat_send_wal(true);
+		pgstat_report_checkpointer();
+		pgstat_report_wal(true);
 
 		/*
 		 * If any checkpoint flags have been set, redo the loop to handle the
@@ -571,8 +571,8 @@ HandleCheckpointerInterrupts(void)
 		 */
 		PendingCheckpointerStats.m_requested_checkpoints++;
 		ShutdownXLOG(0, 0);
-		pgstat_send_checkpointer();
-		pgstat_send_wal(true);
+		pgstat_report_checkpointer();
+		pgstat_report_wal(true);
 
 		/* Normal exit from the checkpointer is here */
 		proc_exit(0);			/* done */
@@ -715,7 +715,7 @@ CheckpointWriteDelay(int flags, double progress)
 		CheckArchiveTimeout();
 
 		/* Report interim statistics to the cumulative stats system */
-		pgstat_send_checkpointer();
+		pgstat_report_checkpointer();
 
 		/*
 		 * This sleep used to be connected to bgwriter_delay, typically 200ms.

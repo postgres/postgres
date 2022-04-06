@@ -25,7 +25,7 @@
  * Report archiver statistics
  */
 void
-pgstat_send_archiver(const char *xlog, bool failed)
+pgstat_report_archiver(const char *xlog, bool failed)
 {
 	PgStat_MsgArchiver msg;
 

@@ -241,7 +241,7 @@ BackgroundWriterMain(void)
 		can_hibernate = BgBufferSync(&wb_context);
 
 		/* Report pending statistics to the cumulative stats system */
-		pgstat_send_bgwriter();
+		pgstat_report_bgwriter();
 
 		if (FirstCallSinceLastCheckpoint())
 		{

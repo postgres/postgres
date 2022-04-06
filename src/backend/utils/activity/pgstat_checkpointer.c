@@ -32,7 +32,7 @@ PgStat_MsgCheckpointer PendingCheckpointerStats;
  * Report checkpointer statistics
  */
 void
-pgstat_send_checkpointer(void)
+pgstat_report_checkpointer(void)
 {
 	/* We assume this initializes to zeroes */
 	static const PgStat_MsgCheckpointer all_zeroes;
