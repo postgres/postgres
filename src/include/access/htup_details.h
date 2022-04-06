@@ -749,7 +749,7 @@ extern MinimalTuple minimal_expand_tuple(HeapTuple sourceTuple, TupleDesc tupleD
 static inline Datum
 fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 {
-	AssertMacro(attnum > 0);
+	Assert(attnum > 0);
 
 	*isnull = false;
 	if (HeapTupleNoNulls(tup))
