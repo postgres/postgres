@@ -481,10 +481,6 @@ extern void process_session_preload_libraries(void);
 extern void pg_bindtextdomain(const char *domain);
 extern bool has_rolreplication(Oid roleid);
 
-/* in access/transam/xlog.c */
-extern bool BackupInProgress(void);
-extern void CancelBackup(void);
-
 /* in executor/nodeHash.c */
 extern size_t get_hash_memory_limit(void);
 

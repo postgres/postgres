@@ -872,24 +872,6 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If we're trying to shut down, only superusers can connect, and new
-	 * replication connections are not allowed.
-	 */
-	if ((!am_superuser || am_walsender) &&
-		MyProcPort != NULL &&
-		MyProcPort->canAcceptConnections == CAC_SUPERUSER)
-	{
-		if (am_walsender)
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("new replication connections are not allowed during database shutdown")));
-		else
-			ereport(FATAL,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("must be superuser to connect during database shutdown")));
-	}
-
-	/*
 	 * Binary upgrades only allowed super-user connections
 	 */
 	if (IsBinaryUpgrade && !am_superuser)

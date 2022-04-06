@@ -184,10 +184,8 @@ static const struct exclude_list_item excludeFiles[] =
 	{RELCACHE_INIT_FILENAME, true},
 
 	/*
-	 * If there's a backup_label or tablespace_map file, it belongs to a
-	 * backup started by the user with pg_start_backup().  It is *not* correct
-	 * for this backup.  Our backup_label/tablespace_map is injected into the
-	 * tar separately.
+	 * backup_label and tablespace_map should not exist in in a running cluster
+	 * capable of doing an online backup, but exclude them just in case.
 	 */
 	{BACKUP_LABEL_FILE, false},
 	{TABLESPACE_MAP, false},
@@ -264,16 +262,16 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 	total_checksum_failures = 0;
 
 	basebackup_progress_wait_checkpoint();
-	state.startptr = do_pg_start_backup(opt->label, opt->fastcheckpoint,
+	state.startptr = do_pg_backup_start(opt->label, opt->fastcheckpoint,
 										&state.starttli,
 										labelfile, &state.tablespaces,
 										tblspc_map_file);
 
 	/*
-	 * Once do_pg_start_backup has been called, ensure that any failure causes
+	 * Once do_pg_backup_start has been called, ensure that any failure causes
 	 * us to abort the backup so we don't "leak" a backup counter. For this
-	 * reason, *all* functionality between do_pg_start_backup() and the end of
-	 * do_pg_stop_backup() should be inside the error cleanup block!
+	 * reason, *all* functionality between do_pg_backup_start() and the end of
+	 * do_pg_backup_stop() should be inside the error cleanup block!
 	 */
 
 	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));
@@ -394,7 +392,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 		}
 
 		basebackup_progress_wait_wal_archive(&state);
-		endptr = do_pg_stop_backup(labelfile->data, !opt->nowait, &endtli);
+		endptr = do_pg_backup_stop(labelfile->data, !opt->nowait, &endtli);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));
 
@@ -961,7 +959,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 /*
  * SendBaseBackup() - send a complete base backup.
  *
- * The function will put the system into backup mode like pg_start_backup()
+ * The function will put the system into backup mode like pg_backup_start()
  * does, so that the backup is consistent even though we read directly from
  * the filesystem, bypassing the buffer cache.
  */
@@ -1204,7 +1202,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 		 * error in that case. The error handler further up will call
 		 * do_pg_abort_backup() for us. Also check that if the backup was
 		 * started while still in recovery, the server wasn't promoted.
-		 * do_pg_stop_backup() will check that too, but it's better to stop
+		 * do_pg_backup_stop() will check that too, but it's better to stop
 		 * the backup early than continue to the end and fail there.
 		 */
 		CHECK_FOR_INTERRUPTS();

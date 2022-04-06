@@ -1183,9 +1183,14 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 	*backupLabelTLI = tli_from_walseg;
 
 	/*
-	 * BACKUP METHOD and BACKUP FROM lines are new in 9.2. We can't restore
-	 * from an older backup anyway, but since the information on it is not
-	 * strictly required, don't error out if it's missing for some reason.
+	 * BACKUP METHOD lets us know if this was a typical backup ("streamed",
+	 * which could mean either pg_basebackup or the pg_backup_start/stop
+	 * method was used) or if this label came from somewhere else (the only
+	 * other option today being from pg_rewind).  If this was a streamed
+	 * backup then we know that we need to play through until we get to the
+	 * end of the WAL which was generated during the backup (at which point
+	 * we will have reached consistency and backupEndRequired will be reset
+	 * to be false).
 	 */
 	if (fscanf(lfp, "BACKUP METHOD: %19s\n", backuptype) == 1)
 	{
@@ -1193,6 +1198,11 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 			*backupEndRequired = true;
 	}
 
+	/*
+	 * BACKUP FROM lets us know if this was from a primary or a standby.  If
+	 * it was from a standby, we'll double-check that the control file state
+	 * matches that of a standby.
+	 */
 	if (fscanf(lfp, "BACKUP FROM: %19s\n", backupfrom) == 1)
 	{
 		if (strcmp(backupfrom, "standby") == 0)
@@ -1970,7 +1980,7 @@ xlogrecovery_redo(XLogReaderState *record, TimeLineID replayTLI)
 		{
 			/*
 			 * We have reached the end of base backup, the point where
-			 * pg_stop_backup() was done.  The data on disk is now consistent
+			 * pg_backup_stop() was done.  The data on disk is now consistent
 			 * (assuming we have also reached minRecoveryPoint).  Set
 			 * backupEndPoint to the current LSN, so that the next call to
 			 * CheckRecoveryConsistency() will notice it and do the
@@ -2033,7 +2043,7 @@ CheckRecoveryConsistency(void)
 
 	/*
 	 * Have we passed our safe starting point? Note that minRecoveryPoint is
-	 * known to be incorrectly set if ControlFile->backupEndRequired, until
+	 * known to be incorrectly set if recovering from a backup, until
 	 * the XLOG_BACKUP_END arrives to advise us of the correct
 	 * minRecoveryPoint. All we know prior to that is that we're not
 	 * consistent yet.

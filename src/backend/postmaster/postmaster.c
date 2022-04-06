@@ -345,14 +345,7 @@ static PMState pmState = PM_INIT;
  * connsAllowed is a sub-state indicator showing the active restriction.
  * It is of no interest unless pmState is PM_RUN or PM_HOT_STANDBY.
  */
-typedef enum
-{
-	ALLOW_ALL_CONNS,			/* normal not-shutting-down state */
-	ALLOW_SUPERUSER_CONNS,		/* only superusers can connect */
-	ALLOW_NO_CONNS				/* no new connections allowed, period */
-} ConnsAllowedState;
-
-static ConnsAllowedState connsAllowed = ALLOW_ALL_CONNS;
+static bool connsAllowed = true;
 
 /* Start time of SIGKILL timeout during immediate shutdown or child crash */
 /* Zero means timeout is not running */
@@ -2409,9 +2402,6 @@ retry1:
 					(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 					 errmsg("sorry, too many clients already")));
 			break;
-		case CAC_SUPERUSER:
-			/* OK for now, will check in InitPostgres */
-			break;
 		case CAC_OK:
 			break;
 	}
@@ -2546,19 +2536,10 @@ canAcceptConnections(int backend_type)
 
 	/*
 	 * "Smart shutdown" restrictions are applied only to normal connections,
-	 * not to autovac workers or bgworkers.  When only superusers can connect,
-	 * we return CAC_SUPERUSER to indicate that superuserness must be checked
-	 * later.  Note that neither CAC_OK nor CAC_SUPERUSER can safely be
-	 * returned until we have checked for too many children.
+	 * not to autovac workers or bgworkers.
 	 */
-	if (connsAllowed != ALLOW_ALL_CONNS &&
-		backend_type == BACKEND_TYPE_NORMAL)
-	{
-		if (connsAllowed == ALLOW_SUPERUSER_CONNS)
-			result = CAC_SUPERUSER; /* allow superusers only */
-		else
-			return CAC_SHUTDOWN;	/* shutdown is pending */
-	}
+	if (!connsAllowed && backend_type == BACKEND_TYPE_NORMAL)
+		return CAC_SHUTDOWN;	/* shutdown is pending */
 
 	/*
 	 * Don't start too many children.
@@ -2877,17 +2858,12 @@ pmdie(SIGNAL_ARGS)
 #endif
 
 			/*
-			 * If we reached normal running, we have to wait for any online
-			 * backup mode to end; otherwise go straight to waiting for client
-			 * backends to exit.  (The difference is that in the former state,
-			 * we'll still let in new superuser clients, so that somebody can
-			 * end the online backup mode.)  If already in PM_STOP_BACKENDS or
+			 * If we reached normal running, we go straight to waiting for
+			 * client backends to exit.  If already in PM_STOP_BACKENDS or
 			 * a later state, do not change it.
 			 */
-			if (pmState == PM_RUN)
-				connsAllowed = ALLOW_SUPERUSER_CONNS;
-			else if (pmState == PM_HOT_STANDBY)
-				connsAllowed = ALLOW_NO_CONNS;
+			if (pmState == PM_RUN || pmState == PM_HOT_STANDBY)
+				connsAllowed = false;
 			else if (pmState == PM_STARTUP || pmState == PM_RECOVERY)
 			{
 				/* There should be no clients, so proceed to stop children */
@@ -3099,7 +3075,7 @@ reaper(SIGNAL_ARGS)
 			AbortStartTime = 0;
 			ReachedNormalRunning = true;
 			pmState = PM_RUN;
-			connsAllowed = ALLOW_ALL_CONNS;
+			connsAllowed = true;
 
 			/*
 			 * Crank up the background tasks, if we didn't do that already
@@ -3842,21 +3818,11 @@ PostmasterStateMachine(void)
 	/* If we're doing a smart shutdown, try to advance that state. */
 	if (pmState == PM_RUN || pmState == PM_HOT_STANDBY)
 	{
-		if (connsAllowed == ALLOW_SUPERUSER_CONNS)
+		if (!connsAllowed)
 		{
 			/*
-			 * ALLOW_SUPERUSER_CONNS state ends as soon as online backup mode
-			 * is not active.
-			 */
-			if (!BackupInProgress())
-				connsAllowed = ALLOW_NO_CONNS;
-		}
-
-		if (connsAllowed == ALLOW_NO_CONNS)
-		{
-			/*
-			 * ALLOW_NO_CONNS state ends when we have no normal client
-			 * backends running.  Then we're ready to stop other children.
+			 * This state ends when we have no normal client backends running.
+			 * Then we're ready to stop other children.
 			 */
 			if (CountChildren(BACKEND_TYPE_NORMAL) == 0)
 				pmState = PM_STOP_BACKENDS;
@@ -4044,18 +4010,6 @@ PostmasterStateMachine(void)
 		}
 		else
 		{
-			/*
-			 * Terminate exclusive backup mode to avoid recovery after a clean
-			 * fast shutdown.  Since an exclusive backup can only be taken
-			 * during normal running (and not, for example, while running
-			 * under Hot Standby) it only makes sense to do this if we reached
-			 * normal running. If we're still in recovery, the backup file is
-			 * one we're recovering *from*, and we must keep it around so that
-			 * recovery restarts from the right place.
-			 */
-			if (ReachedNormalRunning)
-				CancelBackup();
-
 			/*
 			 * Normal exit from the postmaster is here.  We don't need to log
 			 * anything here, since the UnlinkLockFiles proc_exit callback
@@ -4277,8 +4231,7 @@ BackendStartup(Port *port)
 
 	/* Pass down canAcceptConnections state */
 	port->canAcceptConnections = canAcceptConnections(BACKEND_TYPE_NORMAL);
-	bn->dead_end = (port->canAcceptConnections != CAC_OK &&
-					port->canAcceptConnections != CAC_SUPERUSER);
+	bn->dead_end = (port->canAcceptConnections != CAC_OK);
 
 	/*
 	 * Unless it's a dead_end child, assign it a child slot number
@@ -5287,7 +5240,7 @@ sigusr1_handler(SIGNAL_ARGS)
 #endif
 
 		pmState = PM_HOT_STANDBY;
-		connsAllowed = ALLOW_ALL_CONNS;
+		connsAllowed = true;
 
 		/* Some workers may be scheduled to start now */
 		StartWorkerNeeded = true;

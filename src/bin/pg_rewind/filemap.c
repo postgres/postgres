@@ -140,9 +140,9 @@ static const struct exclude_list_item excludeFiles[] =
 	{"pg_internal.init", true}, /* defined as RELCACHE_INIT_FILENAME */
 
 	/*
-	 * If there's a backup_label or tablespace_map file, it belongs to a
-	 * backup started by the user with pg_start_backup().  It is *not* correct
-	 * for this backup.  Our backup_label is written later on separately.
+	 * If there is a backup_label or tablespace_map file, it indicates that
+	 * a recovery failed and this cluster probably can't be rewound, but
+	 * exclude them anyway if they are found.
 	 */
 	{"backup_label", false},	/* defined as BACKUP_LABEL_FILE */
 	{"tablespace_map", false},	/* defined as TABLESPACE_MAP */

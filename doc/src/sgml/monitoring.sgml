@@ -6674,7 +6674,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal>waiting for checkpoint to finish</literal></entry>
       <entry>
        The WAL sender process is currently performing
-       <function>pg_start_backup</function> to prepare to
+       <function>pg_backup_start</function> to prepare to
        take a base backup, and waiting for the start-of-backup
        checkpoint to finish.
       </entry>
@@ -6697,7 +6697,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal>waiting for wal archiving to finish</literal></entry>
       <entry>
        The WAL sender process is currently performing
-       <function>pg_stop_backup</function> to finish the backup,
+       <function>pg_backup_stop</function> to finish the backup,
        and waiting for all the WAL files required for the base backup
        to be successfully archived.
        If either <literal>--wal-method=none</literal> or

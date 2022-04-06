@@ -69,7 +69,9 @@ $node_primary->safe_psql('dropme',
 $node_primary->safe_psql('postgres', 'CHECKPOINT;');
 
 my $backup_name = 'b1';
-$node_primary->backup_fs_hot($backup_name);
+$node_primary->stop();
+$node_primary->backup_fs_cold($backup_name);
+$node_primary->start();
 
 $node_primary->safe_psql('postgres',
 	q[SELECT pg_create_physical_replication_slot('phys_slot');]);

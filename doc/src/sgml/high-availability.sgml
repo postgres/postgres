@@ -1361,8 +1361,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 
    <para>
     If you need to re-create a standby server while transactions are
-    waiting, make sure that the commands pg_start_backup() and
-    pg_stop_backup() are run in a session with
+    waiting, make sure that the commands pg_backup_start() and
+    pg_backup_stop() are run in a session with
     <varname>synchronous_commit</varname> = <literal>off</literal>, otherwise those
     requests will wait forever for the standby to appear.
    </para>
@@ -2159,7 +2159,7 @@ HINT:  You can then restart the server after making the necessary configuration 
 
    <para>
     WAL file control commands will not work during recovery,
-    e.g., <function>pg_start_backup</function>, <function>pg_switch_wal</function> etc.
+    e.g., <function>pg_backup_start</function>, <function>pg_switch_wal</function> etc.
    </para>
 
    <para>

@@ -161,9 +161,7 @@ typedef struct ControlFileData
 	 *
 	 * If backupEndRequired is true, we know for sure that we're restoring
 	 * from a backup, and must see a backup-end record before we can safely
-	 * start up. If it's false, but backupStartPoint is set, a backup_label
-	 * file was found at startup but it may have been a leftover from a stray
-	 * pg_start_backup() call, not accompanied by pg_stop_backup().
+	 * start up.
 	 */
 	XLogRecPtr	minRecoveryPoint;
 	TimeLineID	minRecoveryPointTLI;

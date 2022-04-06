@@ -638,25 +638,6 @@ sub backup
 	return;
 }
 
-=item $node->backup_fs_hot(backup_name)
-
-Create a backup with a filesystem level copy in subdirectory B<backup_name> of
-B<< $node->backup_dir >>, including WAL.
-
-Archiving must be enabled, as B<pg_start_backup()> and B<pg_stop_backup()> are
-used. This is not checked or enforced.
-
-The backup name is passed as the backup label to B<pg_start_backup()>.
-
-=cut
-
-sub backup_fs_hot
-{
-	my ($self, $backup_name) = @_;
-	$self->_backup_fs($backup_name, 1);
-	return;
-}
-
 =item $node->backup_fs_cold(backup_name)
 
 Create a backup with a filesystem level copy in subdirectory B<backup_name> of
@@ -670,52 +651,17 @@ Use B<backup> or B<backup_fs_hot> if you want to back up a running server.
 sub backup_fs_cold
 {
 	my ($self, $backup_name) = @_;
-	$self->_backup_fs($backup_name, 0);
-	return;
-}
-
-
-# Common sub of backup_fs_hot and backup_fs_cold
-sub _backup_fs
-{
-	my ($self, $backup_name, $hot) = @_;
-	my $backup_path = $self->backup_dir . '/' . $backup_name;
-	my $port        = $self->port;
-	my $name        = $self->name;
-
-	print "# Taking filesystem backup $backup_name from node \"$name\"\n";
-
-	if ($hot)
-	{
-		my $stdout = $self->safe_psql('postgres',
-			"SELECT * FROM pg_start_backup('$backup_name');");
-		print "# pg_start_backup: $stdout\n";
-	}
 
 	PostgreSQL::Test::RecursiveCopy::copypath(
 		$self->data_dir,
-		$backup_path,
+		$self->backup_dir . '/' . $backup_name,
 		filterfn => sub {
 			my $src = shift;
 			return ($src ne 'log' and $src ne 'postmaster.pid');
 		});
 
-	if ($hot)
-	{
-
-		# We ignore pg_stop_backup's return value. We also assume archiving
-		# is enabled; otherwise the caller will have to copy the remaining
-		# segments.
-		my $stdout =
-		  $self->safe_psql('postgres', 'SELECT * FROM pg_stop_backup();');
-		print "# pg_stop_backup: $stdout\n";
-	}
-
-	print "# Backup finished\n";
 	return;
 }
-
-
 
 =pod
 
