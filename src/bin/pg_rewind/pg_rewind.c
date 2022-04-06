@@ -61,6 +61,7 @@ char	   *datadir_target = NULL;
 char	   *datadir_source = NULL;
 char	   *connstr_source = NULL;
 char	   *restore_command = NULL;
+char	   *config_file = NULL;
 
 static bool debug = false;
 bool		showprogress = false;
@@ -87,6 +88,8 @@ usage(const char *progname)
 	printf(_("Options:\n"));
 	printf(_("  -c, --restore-target-wal       use restore_command in target configuration to\n"
 			 "                                 retrieve WAL files from archives\n"));
+	printf(_("      --config-file=FILENAME     use specified main server configuration\n"));
+	printf(_("                                 file when running target cluster\n"));
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
@@ -115,6 +118,7 @@ main(int argc, char **argv)
 		{"source-pgdata", required_argument, NULL, 1},
 		{"source-server", required_argument, NULL, 2},
 		{"no-ensure-shutdown", no_argument, NULL, 4},
+		{"config-file", required_argument, NULL, 5},
 		{"version", no_argument, NULL, 'V'},
 		{"restore-target-wal", no_argument, NULL, 'c'},
 		{"dry-run", no_argument, NULL, 'n'},
@@ -204,6 +208,10 @@ main(int argc, char **argv)
 
 			case 4:
 				no_ensure_shutdown = true;
+				break;
+
+			case 5:
+				config_file = pg_strdup(optarg);
 				break;
 		}
 	}
@@ -1058,6 +1066,13 @@ getRestoreCommand(const char *argv0)
 	appendPQExpBufferStr(postgres_cmd, " -D ");
 	appendShellString(postgres_cmd, datadir_target);
 
+	/* add custom configuration file only if requested */
+	if (config_file != NULL)
+	{
+		appendPQExpBufferStr(postgres_cmd, " -c config_file=");
+		appendShellString(postgres_cmd, config_file);
+	}
+
 	/* add -C switch, for restore_command */
 	appendPQExpBufferStr(postgres_cmd, " -C restore_command");
 
@@ -1135,6 +1150,13 @@ ensureCleanShutdown(const char *argv0)
 	/* add set of options with properly quoted data directory */
 	appendPQExpBufferStr(postgres_cmd, " --single -F -D ");
 	appendShellString(postgres_cmd, datadir_target);
+
+	/* add custom configuration file only if requested */
+	if (config_file != NULL)
+	{
+		appendPQExpBufferStr(postgres_cmd, " -c config_file=");
+		appendShellString(postgres_cmd, config_file);
+	}
 
 	/* finish with the database name, and a properly quoted redirection */
 	appendPQExpBufferStr(postgres_cmd, " template1 < ");

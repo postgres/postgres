@@ -263,7 +263,9 @@ sub run_pg_rewind
 				"--debug",
 				"--source-pgdata=$standby_pgdata",
 				"--target-pgdata=$primary_pgdata",
-				"--no-sync"
+				"--no-sync",
+				"--config-file",
+				"$tmp_folder/primary-postgresql.conf.tmp"
 			],
 			'pg_rewind local');
 	}
@@ -276,7 +278,8 @@ sub run_pg_rewind
 				'pg_rewind',                       "--debug",
 				"--source-server",                 $standby_connstr,
 				"--target-pgdata=$primary_pgdata", "--no-sync",
-				"--write-recovery-conf"
+				"--write-recovery-conf",           "--config-file",
+				"$tmp_folder/primary-postgresql.conf.tmp"
 			],
 			'pg_rewind remote');
 
@@ -323,7 +326,8 @@ sub run_pg_rewind
 
 		# Note the use of --no-ensure-shutdown here.  WAL files are
 		# gone in this mode and the primary has been stopped
-		# gracefully already.
+		# gracefully already.  --config-file reuses the original
+		# postgresql.conf as restore_command has been enabled above.
 		command_ok(
 			[
 				'pg_rewind',
@@ -332,7 +336,9 @@ sub run_pg_rewind
 				"--target-pgdata=$primary_pgdata",
 				"--no-sync",
 				"--no-ensure-shutdown",
-				"--restore-target-wal"
+				"--restore-target-wal",
+				"--config-file",
+				"$primary_pgdata/postgresql.conf"
 			],
 			'pg_rewind archive');
 	}

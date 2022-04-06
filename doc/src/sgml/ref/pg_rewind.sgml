@@ -242,6 +242,21 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--config-file=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the specified main server configuration file for the target
+        cluster. This affects <application>pg_rewind</application> when
+        it uses internally the <application>postgres</application> command
+        for the rewind operation on this cluster (when retrieving
+        <varname>restore_command</varname> with the option
+        <option>-c/--restore-target-wal</option> and when forcing a
+        completion of crash recovery).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--debug</option></term>
       <listitem>
        <para>
