@@ -1237,10 +1237,11 @@ pgoutput_row_filter(Relation relation, TupleTableSlot *old_slot,
 	 * For inserts, we only have the new tuple.
 	 *
 	 * For updates, we can have only a new tuple when none of the replica
-	 * identity columns changed but we still need to evaluate the row filter
-	 * for new tuple as the existing values of those columns might not match
-	 * the filter. Also, users can use constant expressions in the row filter,
-	 * so we anyway need to evaluate it for the new tuple.
+	 * identity columns changed and none of those columns have external data
+	 * but we still need to evaluate the row filter for the new tuple as the
+	 * existing values of those columns might not match the filter. Also, users
+	 * can use constant expressions in the row filter, so we anyway need to
+	 * evaluate it for the new tuple.
 	 *
 	 * For deletes, we only have the old tuple.
 	 */
