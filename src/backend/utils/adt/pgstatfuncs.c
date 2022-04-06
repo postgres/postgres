@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * pgstatfuncs.c
- *	  Functions for accessing the statistics collector data
+ *	  Functions for accessing various forms of statistics data
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -1820,7 +1820,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 
 	SetSingleFuncCall(fcinfo, 0);
 
-	/* request SLRU stats from the stat collector */
+	/* request SLRU stats from the cumulative stats system */
 	stats = pgstat_fetch_slru();
 
 	for (i = 0;; i++)

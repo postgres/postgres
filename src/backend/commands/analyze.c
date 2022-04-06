@@ -680,7 +680,7 @@ do_analyze_rel(Relation onerel, VacuumParams *params,
 	}
 
 	/*
-	 * Now report ANALYZE to the stats collector.  For regular tables, we do
+	 * Now report ANALYZE to the cumulative stats system.  For regular tables, we do
 	 * it only if not doing inherited stats.  For partitioned tables, we only
 	 * do it for inherited stats. (We're never called for not-inherited stats
 	 * on partitioned tables anyway.)

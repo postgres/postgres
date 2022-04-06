@@ -693,9 +693,9 @@ allow_immediate_pgstat_restart(void)
 /*
  * Shut down a single backend's statistics reporting at process exit.
  *
- * Flush any remaining statistics counts out to the collector.
- * Without this, operations triggered during backend exit (such as
- * temp table deletions) won't be counted.
+ * Flush out any remaining statistics counts.  Without this, operations
+ * triggered during backend exit (such as temp table deletions) won't be
+ * counted.
  */
 static void
 pgstat_shutdown_hook(int code, Datum arg)
@@ -703,10 +703,10 @@ pgstat_shutdown_hook(int code, Datum arg)
 	Assert(!pgstat_is_shutdown);
 
 	/*
-	 * If we got as far as discovering our own database ID, we can report what
-	 * we did to the collector.  Otherwise, we'd be sending an invalid
-	 * database ID, so forget it.  (This means that accesses to pg_database
-	 * during failed backend starts might never get counted.)
+	 * If we got as far as discovering our own database ID, we can flush out
+	 * what we did so far.  Otherwise, we'd be reporting an invalid database
+	 * ID, so forget it.  (This means that accesses to pg_database during
+	 * failed backend starts might never get counted.)
 	 */
 	if (OidIsValid(MyDatabaseId))
 		pgstat_report_stat(true);
@@ -1065,7 +1065,7 @@ pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid)
 }
 
 /*
- * Tell the statistics collector to reset counters for our database.
+ * Reset counters for our database.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -1084,7 +1084,7 @@ pgstat_reset_counters(void)
 }
 
 /*
- * Tell the statistics collector to reset a single counter.
+ * Reset a single counter.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -1106,7 +1106,7 @@ pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
 }
 
 /*
- * Tell the statistics collector to reset cluster-wide shared counters.
+ * Reset cluster-wide shared counters.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -1198,8 +1198,8 @@ pgstat_clear_snapshot(void)
 /*
  * Support function for the SQL-callable pgstat* functions. Returns
  * the collected statistics for one database or NULL. NULL doesn't mean
- * that the database doesn't exist, it is just not yet known by the
- * collector, so the caller is better off to report ZERO instead.
+ * that the database doesn't exist, just that there are no statistics, so the
+ * caller is better off to report ZERO instead.
  */
 PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dbid)
@@ -1233,8 +1233,8 @@ pgstat_fetch_global(void)
 /*
  * Support function for the SQL-callable pgstat* functions. Returns
  * the collected statistics for one table or NULL. NULL doesn't mean
- * that the table doesn't exist, it is just not yet known by the
- * collector, so the caller is better off to report ZERO instead.
+ * that the table doesn't exist, just that there are no statistics, so the
+ * caller is better off to report ZERO instead.
  */
 PgStat_StatTabEntry *
 pgstat_fetch_stat_tabentry(Oid relid)

@@ -257,7 +257,7 @@ WalWriterMain(void)
 		else if (left_till_hibernate > 0)
 			left_till_hibernate--;
 
-		/* Send WAL statistics to the stats collector */
+		/* report pending statistics to the cumulative stats system */
 		pgstat_send_wal(false);
 
 		/*
@@ -295,12 +295,11 @@ HandleWalWriterInterrupts(void)
 	if (ShutdownRequestPending)
 	{
 		/*
-		 * Force to send remaining WAL statistics to the stats collector at
-		 * process exit.
+		 * Force reporting remaining WAL statistics at process exit.
 		 *
 		 * Since pgstat_send_wal is invoked with 'force' is false in main loop
-		 * to avoid overloading to the stats collector, there may exist unsent
-		 * stats counters for the WAL writer.
+		 * to avoid overloading the cumulative stats system, there may exist
+		 * unreported stats counters for the WAL writer.
 		 */
 		pgstat_send_wal(true);
 

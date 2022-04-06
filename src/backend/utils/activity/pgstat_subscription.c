@@ -21,8 +21,8 @@
 
 
 /*
- * Tell the statistics collector to reset a single subscription
- * counter, or all subscription counters (when subid is InvalidOid).
+ * Reset counters for a single subscription, or all subscriptions (when subid
+ * is InvalidOid).
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -42,7 +42,7 @@ pgstat_reset_subscription_counter(Oid subid)
 }
 
 /*
- * Tell the collector about the subscription error.
+ * Report a subscription error.
  */
 void
 pgstat_report_subscription_error(Oid subid, bool is_apply_error)
@@ -56,7 +56,7 @@ pgstat_report_subscription_error(Oid subid, bool is_apply_error)
 }
 
 /*
- * Tell the collector about dropping the subscription.
+ * Report dropping the subscription.
  */
 void
 pgstat_report_subscription_drop(Oid subid)

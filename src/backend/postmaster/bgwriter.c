@@ -240,9 +240,7 @@ BackgroundWriterMain(void)
 		 */
 		can_hibernate = BgBufferSync(&wb_context);
 
-		/*
-		 * Send off activity statistics to the stats collector
-		 */
+		/* Report pending statistics to the cumulative stats system */
 		pgstat_send_bgwriter();
 
 		if (FirstCallSinceLastCheckpoint())

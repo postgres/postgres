@@ -477,8 +477,8 @@ pgarch_ArchiverCopyLoop(void)
 				pgarch_archiveDone(xlog);
 
 				/*
-				 * Tell the collector about the WAL file that we successfully
-				 * archived
+				 * Tell the cumulative stats system about the WAL file that we
+				 * successfully archived
 				 */
 				pgstat_send_archiver(xlog, false);
 
@@ -487,8 +487,8 @@ pgarch_ArchiverCopyLoop(void)
 			else
 			{
 				/*
-				 * Tell the collector about the WAL file that we failed to
-				 * archive
+				 * Tell the cumulative stats system about the WAL file that we
+				 * failed to archive
 				 */
 				pgstat_send_archiver(xlog, true);
 

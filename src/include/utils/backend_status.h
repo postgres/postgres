@@ -85,8 +85,8 @@ typedef struct PgBackendGSSStatus
  *
  * Each live backend maintains a PgBackendStatus struct in shared memory
  * showing its current activity.  (The structs are allocated according to
- * BackendId, but that is not critical.)  Note that the collector process
- * has no involvement in, or even access to, these structs.
+ * BackendId, but that is not critical.)  Note that this is unrelated to the
+ * cumulative stats system (i.e. pgstat.c et al).
  *
  * Each auxiliary process also maintains a PgBackendStatus struct in shared
  * memory.

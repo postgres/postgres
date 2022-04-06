@@ -1,7 +1,7 @@
 /* ----------
  * pgstat_internal.h
  *
- * Definitions for the PostgreSQL activity statistics facility that should
+ * Definitions for the PostgreSQL cumulative statistics system that should
  * only be needed by files implementing statistics support (rather than ones
  * reporting / querying stats).
  *

@@ -1,5 +1,5 @@
 --
--- Test Statistics Collector
+-- Test cumulative stats system
 --
 -- Must be run after tenk2 has been created (by create_table),
 -- populated (by create_misc) and indexed (by create_index).

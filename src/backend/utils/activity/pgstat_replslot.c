@@ -23,8 +23,8 @@
 
 
 /*
- * Tell the statistics collector to reset a single replication slot
- * counter, or all replication slots counters (when name is null).
+ * Reset counters for a single replication slot, or all replication slots
+ * (when name is null).
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -51,7 +51,7 @@ pgstat_reset_replslot_counter(const char *name)
 }
 
 /*
- * Tell the collector about replication slot statistics.
+ * Report replication slot statistics.
  */
 void
 pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
@@ -77,7 +77,7 @@ pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
 }
 
 /*
- * Tell the collector about creating the replication slot.
+ * Report replication slot creation.
  */
 void
 pgstat_report_replslot_create(const char *slotname)
@@ -92,7 +92,7 @@ pgstat_report_replslot_create(const char *slotname)
 }
 
 /*
- * Tell the collector about dropping the replication slot.
+ * Report replication slot drop.
  */
 void
 pgstat_report_replslot_drop(const char *slotname)

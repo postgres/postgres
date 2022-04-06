@@ -1689,7 +1689,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		char		dbname[NAMEDATALEN];
 
 		/*
-		 * Report autovac startup to the stats collector.  We deliberately do
+		 * Report autovac startup to the cumulative stats system.  We deliberately do
 		 * this before InitPostgres, so that the last_autovac_time will get
 		 * updated even if the connection attempt fails.  This is to prevent
 		 * autovac from getting "stuck" repeatedly selecting an unopenable
@@ -1996,9 +1996,9 @@ do_autovacuum(void)
 	StartTransactionCommand();
 
 	/*
-	 * Clean up any dead statistics collector entries for this DB. We always
-	 * want to do this exactly once per DB-processing cycle, even if we find
-	 * nothing worth vacuuming in the database.
+	 * Clean up any dead statistics entries for this DB. We always want to do
+	 * this exactly once per DB-processing cycle, even if we find nothing
+	 * worth vacuuming in the database.
 	 */
 	pgstat_vacuum_stat();
 
@@ -3041,7 +3041,7 @@ recheck_relation_needs_vacanalyze(Oid relid,
  *
  * For analyze, the analysis done is that the number of tuples inserted,
  * deleted and updated since the last analyze exceeds a threshold calculated
- * in the same fashion as above.  Note that the collector actually stores
+ * in the same fashion as above.  Note that the cumulative stats system stores
  * the number of tuples (both live and dead) that there were as of the last
  * analyze.  This is asymmetric to the VACUUM case.
  *
@@ -3051,8 +3051,8 @@ recheck_relation_needs_vacanalyze(Oid relid,
  *
  * A table whose autovacuum_enabled option is false is
  * automatically skipped (unless we have to vacuum it due to freeze_max_age).
- * Thus autovacuum can be disabled for specific tables. Also, when the stats
- * collector does not have data about a table, it will be skipped.
+ * Thus autovacuum can be disabled for specific tables. Also, when the cumulative
+ * stats system does not have data about a table, it will be skipped.
  *
  * A table whose vac_base_thresh value is < 0 takes the base value from the
  * autovacuum_vacuum_threshold GUC variable.  Similarly, a vac_scale_factor

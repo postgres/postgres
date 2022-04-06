@@ -22,8 +22,7 @@
 
 
 /*
- * Tell the collector about the WAL file that we successfully
- * archived or failed to archive.
+ * Report archiver statistics
  */
 void
 pgstat_send_archiver(const char *xlog, bool failed)

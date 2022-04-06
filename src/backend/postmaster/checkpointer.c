@@ -492,12 +492,8 @@ CheckpointerMain(void)
 		/* Check for archive_timeout and switch xlog files if necessary. */
 		CheckArchiveTimeout();
 
-		/*
-		 * Send off activity statistics to the stats collector.
-		 */
+		/* Report pending statistics to the cumulative stats system */
 		pgstat_send_checkpointer();
-
-		/* Send WAL statistics to the stats collector. */
 		pgstat_send_wal(true);
 
 		/*
@@ -570,8 +566,8 @@ HandleCheckpointerInterrupts(void)
 		 * Close down the database.
 		 *
 		 * Since ShutdownXLOG() creates restartpoint or checkpoint, and
-		 * updates the statistics, increment the checkpoint request and send
-		 * the statistics to the stats collector.
+		 * updates the statistics, increment the checkpoint request and flush
+		 * out pending statistic.
 		 */
 		PendingCheckpointerStats.m_requested_checkpoints++;
 		ShutdownXLOG(0, 0);
@@ -718,9 +714,7 @@ CheckpointWriteDelay(int flags, double progress)
 
 		CheckArchiveTimeout();
 
-		/*
-		 * Report interim activity statistics.
-		 */
+		/* Report interim statistics to the cumulative stats system */
 		pgstat_send_checkpointer();
 
 		/*

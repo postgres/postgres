@@ -609,9 +609,9 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 						&frozenxid_updated, &minmulti_updated, false);
 
 	/*
-	 * Report results to the stats collector, too.
+	 * Report results to the cumulative stats system, too.
 	 *
-	 * Deliberately avoid telling the stats collector about LP_DEAD items that
+	 * Deliberately avoid telling the stats system about LP_DEAD items that
 	 * remain in the table due to VACUUM bypassing index and heap vacuuming.
 	 * ANALYZE will consider the remaining LP_DEAD items to be dead "tuples".
 	 * It seems like a good idea to err on the side of not vacuuming again too
@@ -2228,10 +2228,10 @@ lazy_vacuum(LVRelState *vacrel)
 		 * dead_items space is not CPU cache resident.
 		 *
 		 * We don't take any special steps to remember the LP_DEAD items (such
-		 * as counting them in our final report to the stats collector) when
+		 * as counting them in our final update to the stats system) when
 		 * the optimization is applied.  Though the accounting used in
 		 * analyze.c's acquire_sample_rows() will recognize the same LP_DEAD
-		 * items as dead rows in its own stats collector report, that's okay.
+		 * items as dead rows in its own stats report, that's okay.
 		 * The discrepancy should be negligible.  If this optimization is ever
 		 * expanded to cover more cases then this may need to be reconsidered.
 		 */

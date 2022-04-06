@@ -647,7 +647,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		fflush(stderr);
 
 		/*
-		 * Let the statistics collector know. Only mark the session as
+		 * Let the cumulative stats system know. Only mark the session as
 		 * terminated by fatal error if there is no other known cause.
 		 */
 		if (pgStatSessionEndCause == DISCONNECT_NORMAL)

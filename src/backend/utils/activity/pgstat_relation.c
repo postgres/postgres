@@ -168,7 +168,7 @@ pgstat_drop_relation(Oid relid)
 #endif							/* NOT_USED */
 
 /*
- * Tell the collector about the table we just vacuumed.
+ * Report that the table was just vacuumed.
  */
 void
 pgstat_report_vacuum(Oid tableoid, bool shared,
@@ -190,7 +190,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 }
 
 /*
- * Tell the collector about the table we just analyzed.
+ * Report that the table was just analyzed.
  *
  * Caller must provide new live- and dead-tuples estimates, as well as a
  * flag indicating whether to reset the changes_since_analyze counter.
@@ -210,10 +210,10 @@ pgstat_report_analyze(Relation rel,
 	 * already inserted and/or deleted rows in the target table. ANALYZE will
 	 * have counted such rows as live or dead respectively. Because we will
 	 * report our counts of such rows at transaction end, we should subtract
-	 * off these counts from what we send to the collector now, else they'll
-	 * be double-counted after commit.  (This approach also ensures that the
-	 * collector ends up with the right numbers if we abort instead of
-	 * committing.)
+	 * off these counts from the update we're making now, else they'll be
+	 * double-counted after commit.  (This approach also ensures that the
+	 * shared stats entry ends up with the right numbers if we abort instead
+	 * of committing.)
 	 *
 	 * Waste no time on partitioned tables, though.
 	 */
@@ -537,8 +537,8 @@ AtPrepare_PgStat_Relations(PgStat_SubXactStatus *xact_state)
 /*
  * All we need do here is unlink the transaction stats state from the
  * nontransactional state.  The nontransactional action counts will be
- * reported to the stats collector immediately, while the effects on
- * live and dead tuple counts are preserved in the 2PC state file.
+ * reported to the stats system immediately, while the effects on live and
+ * dead tuple counts are preserved in the 2PC state file.
  *
  * Note: AtEOXact_PgStat_Relations is not called during PREPARE.
  */

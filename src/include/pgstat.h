@@ -1,7 +1,7 @@
 /* ----------
  *	pgstat.h
  *
- *	Definitions for the PostgreSQL statistics collector daemon.
+ *	Definitions for the PostgreSQL cumulative statistics system.
  *
  *	Copyright (c) 2001-2022, PostgreSQL Global Development Group
  *
@@ -86,7 +86,7 @@ typedef enum PgStat_Single_Reset_Type
  * it against zeroes to detect whether there are any counts to transmit.
  *
  * Note that the time counters are in instr_time format here.  We convert to
- * microseconds in PgStat_Counter format when transmitting to the collector.
+ * microseconds in PgStat_Counter format when flushing out pending statistics.
  * ----------
  */
 typedef struct PgStat_FunctionCounts
