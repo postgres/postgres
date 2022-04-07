@@ -21,27 +21,6 @@
 
 
 /*
- * Reset counters for a single subscription, or all subscriptions (when subid
- * is InvalidOid).
- *
- * Permission checking for this function is managed through the normal
- * GRANT system.
- */
-void
-pgstat_reset_subscription_counter(Oid subid)
-{
-	PgStat_MsgResetsubcounter msg;
-
-	if (pgStatSock == PGINVALID_SOCKET)
-		return;
-
-	msg.m_subid = subid;
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSUBCOUNTER);
-
-	pgstat_send(&msg, sizeof(msg));
-}
-
-/*
  * Report a subscription error.
  */
 void

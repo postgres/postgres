@@ -23,30 +23,45 @@
 
 
 /*
- * Reset counters for a single replication slot, or all replication slots
- * (when name is null).
+ * Reset counters for a single replication slot.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
  */
 void
-pgstat_reset_replslot_counter(const char *name)
+pgstat_reset_replslot(const char *name)
 {
+	ReplicationSlot *slot;
 	PgStat_MsgResetreplslotcounter msg;
+
+	AssertArg(name != NULL);
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
-	if (name)
-	{
-		namestrcpy(&msg.m_slotname, name);
-		msg.clearall = false;
-	}
-	else
-		msg.clearall = true;
+	/*
+	 * Check if the slot exists with the given name. It is possible that by
+	 * the time this message is executed the slot is dropped but at least this
+	 * check will ensure that the given name is for a valid slot.
+	 */
+	slot = SearchNamedReplicationSlot(name, true);
+
+	if (!slot)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("replication slot \"%s\" does not exist",
+						name)));
+
+	/*
+	 * Nothing to do for physical slots as we collect stats only for logical
+	 * slots.
+	 */
+	if (SlotIsPhysical(slot))
+		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETREPLSLOTCOUNTER);
-
+	namestrcpy(&msg.m_slotname, name);
+	msg.clearall = false;
 	pgstat_send(&msg, sizeof(msg));
 }
 

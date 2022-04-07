@@ -124,7 +124,7 @@ static bool pgstat_write_statsfile_needed(void);
 static bool pgstat_db_requested(Oid databaseid);
 
 static PgStat_StatReplSlotEntry *pgstat_get_replslot_entry(NameData name, bool create_it);
-static void pgstat_reset_replslot(PgStat_StatReplSlotEntry *slotstats, TimestampTz ts);
+static void pgstat_reset_replslot_entry(PgStat_StatReplSlotEntry *slotstats, TimestampTz ts);
 
 static HTAB *pgstat_collect_oids(Oid catalogid, AttrNumber anum_oid);
 
@@ -1084,55 +1084,110 @@ pgstat_reset_counters(void)
 }
 
 /*
- * Reset a single counter.
+ * Reset a single variable-numbered entry.
+ *
+ * If the stats kind is within a database, also reset the database's
+ * stat_reset_timestamp.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
  */
 void
-pgstat_reset_single_counter(Oid objoid, PgStat_Single_Reset_Type type)
+pgstat_reset(PgStat_Kind kind, Oid dboid, Oid objoid)
 {
-	PgStat_MsgResetsinglecounter msg;
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSINGLECOUNTER);
-	msg.m_databaseid = MyDatabaseId;
-	msg.m_resettype = type;
-	msg.m_objectid = objoid;
+	switch (kind)
+	{
+		case PGSTAT_KIND_FUNCTION:
+		case PGSTAT_KIND_RELATION:
+			{
+				PgStat_MsgResetsinglecounter msg;
 
-	pgstat_send(&msg, sizeof(msg));
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSINGLECOUNTER);
+				msg.m_databaseid = dboid;
+				msg.m_resettype = kind;
+				msg.m_objectid = objoid;
+				pgstat_send(&msg, sizeof(msg));
+			}
+			break;
+
+		case PGSTAT_KIND_SUBSCRIPTION:
+			{
+				PgStat_MsgResetsubcounter msg;
+
+				Assert(dboid == InvalidOid);
+				msg.m_subid = objoid;
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSUBCOUNTER);
+			}
+			break;
+
+		default:
+			elog(ERROR, "unexpected");
+	}
 }
 
 /*
- * Reset cluster-wide shared counters.
+ * Reset stats for all entries of a kind.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
  */
 void
-pgstat_reset_shared_counters(const char *target)
+pgstat_reset_of_kind(PgStat_Kind kind)
 {
-	PgStat_MsgResetsharedcounter msg;
-
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
-	if (strcmp(target, "archiver") == 0)
-		msg.m_resettarget = RESET_ARCHIVER;
-	else if (strcmp(target, "bgwriter") == 0)
-		msg.m_resettarget = RESET_BGWRITER;
-	else if (strcmp(target, "wal") == 0)
-		msg.m_resettarget = RESET_WAL;
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("unrecognized reset target: \"%s\"", target),
-				 errhint("Target must be \"archiver\", \"bgwriter\", or \"wal\".")));
+	switch (kind)
+	{
+		case PGSTAT_KIND_ARCHIVER:
+		case PGSTAT_KIND_BGWRITER:
+		case PGSTAT_KIND_CHECKPOINTER:
+		case PGSTAT_KIND_WAL:
+			{
+				PgStat_MsgResetsharedcounter msg;
 
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSHAREDCOUNTER);
-	pgstat_send(&msg, sizeof(msg));
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSHAREDCOUNTER);
+				msg.m_resettarget = kind;
+				pgstat_send(&msg, sizeof(msg));
+			}
+			break;
+		case PGSTAT_KIND_SLRU:
+			{
+				PgStat_MsgResetslrucounter msg;
+
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSLRUCOUNTER);
+				msg.m_index = -1;
+				pgstat_send(&msg, sizeof(msg));
+			}
+			break;
+		case PGSTAT_KIND_REPLSLOT:
+			{
+				PgStat_MsgResetreplslotcounter msg;
+
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETREPLSLOTCOUNTER);
+				msg.clearall = true;
+				pgstat_send(&msg, sizeof(msg));
+			}
+			break;
+
+		case PGSTAT_KIND_SUBSCRIPTION:
+			{
+				PgStat_MsgResetsubcounter msg;
+
+				msg.m_subid = InvalidOid;
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSUBCOUNTER);
+
+				pgstat_send(&msg, sizeof(msg));
+			}
+			break;
+
+		default:
+			elog(ERROR, "unexpected");
+	}
 }
 
 /*
@@ -1954,7 +2009,7 @@ pgstat_get_replslot_entry(NameData name, bool create)
 	if (create && !found)
 	{
 		namestrcpy(&(slotent->slotname), NameStr(name));
-		pgstat_reset_replslot(slotent, 0);
+		pgstat_reset_replslot_entry(slotent, 0);
 	}
 
 	return slotent;
@@ -1964,7 +2019,7 @@ pgstat_get_replslot_entry(NameData name, bool create)
  * Reset the given replication slot stats.
  */
 static void
-pgstat_reset_replslot(PgStat_StatReplSlotEntry *slotent, TimestampTz ts)
+pgstat_reset_replslot_entry(PgStat_StatReplSlotEntry *slotent, TimestampTz ts)
 {
 	/* reset only counters. Don't clear slot name */
 	slotent->spill_txns = 0;
@@ -3528,7 +3583,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 static void
 pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 {
-	if (msg->m_resettarget == RESET_BGWRITER)
+	if (msg->m_resettarget == PGSTAT_KIND_BGWRITER ||
+		msg->m_resettarget == PGSTAT_KIND_CHECKPOINTER)
 	{
 		/*
 		 * Reset the global, bgwriter and checkpointer statistics for the
@@ -3537,13 +3593,13 @@ pgstat_recv_resetsharedcounter(PgStat_MsgResetsharedcounter *msg, int len)
 		memset(&globalStats, 0, sizeof(globalStats));
 		globalStats.bgwriter.stat_reset_timestamp = GetCurrentTimestamp();
 	}
-	else if (msg->m_resettarget == RESET_ARCHIVER)
+	else if (msg->m_resettarget == PGSTAT_KIND_ARCHIVER)
 	{
 		/* Reset the archiver statistics for the cluster. */
 		memset(&archiverStats, 0, sizeof(archiverStats));
 		archiverStats.stat_reset_timestamp = GetCurrentTimestamp();
 	}
-	else if (msg->m_resettarget == RESET_WAL)
+	else if (msg->m_resettarget == PGSTAT_KIND_WAL)
 	{
 		/* Reset the WAL statistics for the cluster. */
 		memset(&walStats, 0, sizeof(walStats));
@@ -3577,10 +3633,10 @@ pgstat_recv_resetsinglecounter(PgStat_MsgResetsinglecounter *msg, int len)
 	dbentry->stat_reset_timestamp = GetCurrentTimestamp();
 
 	/* Remove object if it exists, ignore it if not */
-	if (msg->m_resettype == RESET_TABLE)
+	if (msg->m_resettype == PGSTAT_KIND_RELATION)
 		(void) hash_search(dbentry->tables, (void *) &(msg->m_objectid),
 						   HASH_REMOVE, NULL);
-	else if (msg->m_resettype == RESET_FUNCTION)
+	else if (msg->m_resettype == PGSTAT_KIND_FUNCTION)
 		(void) hash_search(dbentry->functions, (void *) &(msg->m_objectid),
 						   HASH_REMOVE, NULL);
 }
@@ -3626,7 +3682,7 @@ pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg,
 
 		hash_seq_init(&sstat, replSlotStatHash);
 		while ((slotent = (PgStat_StatReplSlotEntry *) hash_seq_search(&sstat)) != NULL)
-			pgstat_reset_replslot(slotent, ts);
+			pgstat_reset_replslot_entry(slotent, ts);
 	}
 	else
 	{
@@ -3643,7 +3699,7 @@ pgstat_recv_resetreplslotcounter(PgStat_MsgResetreplslotcounter *msg,
 			return;
 
 		/* Reset the stats for the requested replication slot */
-		pgstat_reset_replslot(slotent, ts);
+		pgstat_reset_replslot_entry(slotent, ts);
 	}
 }
 
@@ -3963,7 +4019,7 @@ pgstat_recv_replslot(PgStat_MsgReplSlot *msg, int len)
 			 * lost, slotent has stats for the old slot. So we initialize all
 			 * counters at slot creation.
 			 */
-			pgstat_reset_replslot(slotent, 0);
+			pgstat_reset_replslot_entry(slotent, 0);
 		}
 		else
 		{

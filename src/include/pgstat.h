@@ -82,21 +82,6 @@ typedef enum SessionEndType
  */
 typedef int64 PgStat_Counter;
 
-/* Possible targets for resetting cluster-wide shared values */
-typedef enum PgStat_Shared_Reset_Target
-{
-	RESET_ARCHIVER,
-	RESET_BGWRITER,
-	RESET_WAL
-} PgStat_Shared_Reset_Target;
-
-/* Possible object types for resetting single counters */
-typedef enum PgStat_Single_Reset_Type
-{
-	RESET_TABLE,
-	RESET_FUNCTION
-} PgStat_Single_Reset_Type;
-
 
 /* ------------------------------------------------------------
  * Structures kept in backend local memory while accumulating counts
@@ -415,7 +400,7 @@ typedef struct PgStat_MsgResetcounter
 typedef struct PgStat_MsgResetsharedcounter
 {
 	PgStat_MsgHdr m_hdr;
-	PgStat_Shared_Reset_Target m_resettarget;
+	PgStat_Kind m_resettarget;
 } PgStat_MsgResetsharedcounter;
 
 /* ----------
@@ -427,7 +412,7 @@ typedef struct PgStat_MsgResetsinglecounter
 {
 	PgStat_MsgHdr m_hdr;
 	Oid			m_databaseid;
-	PgStat_Single_Reset_Type m_resettype;
+	PgStat_Kind m_resettype;
 	Oid			m_objectid;
 } PgStat_MsgResetsinglecounter;
 
@@ -999,8 +984,8 @@ extern void pgstat_vacuum_stat(void);
 extern void pgstat_ping(void);
 
 extern void pgstat_reset_counters(void);
-extern void pgstat_reset_single_counter(Oid objectid, PgStat_Single_Reset_Type type);
-extern void pgstat_reset_shared_counters(const char *);
+extern void pgstat_reset(PgStat_Kind kind, Oid dboid, Oid objectid);
+extern void pgstat_reset_of_kind(PgStat_Kind kind);
 
 /* stats accessors */
 extern void pgstat_clear_snapshot(void);
@@ -1146,7 +1131,7 @@ extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
  * Functions in pgstat_replslot.c
  */
 
-extern void pgstat_reset_replslot_counter(const char *name);
+extern void pgstat_reset_replslot(const char *name);
 extern void pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat);
 extern void pgstat_report_replslot_create(const char *slotname);
 extern void pgstat_report_replslot_drop(const char *slotname);
@@ -1156,7 +1141,7 @@ extern void pgstat_report_replslot_drop(const char *slotname);
  * Functions in pgstat_slru.c
  */
 
-extern void pgstat_reset_slru_counter(const char *);
+extern void pgstat_reset_slru(const char *);
 extern void pgstat_count_slru_page_zeroed(int slru_idx);
 extern void pgstat_count_slru_page_hit(int slru_idx);
 extern void pgstat_count_slru_page_read(int slru_idx);
@@ -1172,7 +1157,6 @@ extern int	pgstat_slru_index(const char *name);
  * Functions in pgstat_subscription.c
  */
 
-extern void pgstat_reset_subscription_counter(Oid subid);
 extern void pgstat_report_subscription_error(Oid subid, bool is_apply_error);
 extern void pgstat_report_subscription_drop(Oid subid);
 

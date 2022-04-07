@@ -33,21 +33,23 @@ static PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
 
 
 /*
- * Reset counters for a single SLRU, or all SLRUs (when name is null).
+ * Reset counters for a single SLRU.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
  */
 void
-pgstat_reset_slru_counter(const char *name)
+pgstat_reset_slru(const char *name)
 {
 	PgStat_MsgResetslrucounter msg;
+
+	AssertArg(name != NULL);
 
 	if (pgStatSock == PGINVALID_SOCKET)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSLRUCOUNTER);
-	msg.m_index = (name) ? pgstat_slru_index(name) : -1;
+	msg.m_index = pgstat_slru_index(name);
 
 	pgstat_send(&msg, sizeof(msg));
 }
