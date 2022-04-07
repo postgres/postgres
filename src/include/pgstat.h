@@ -426,6 +426,8 @@ extern TimestampTz pgstat_get_stat_snapshot_timestamp(bool *have_snapshot);
 
 /* helpers */
 extern PgStat_Kind pgstat_get_kind_from_str(char *kind_str);
+extern bool pgstat_have_entry(PgStat_Kind kind, Oid dboid, Oid objoid);
+
 
 /*
  * Functions in pgstat_archiver.c

@@ -5376,6 +5376,12 @@
   proargmodes => '{i,o,o,o,o,o,o,o,o,o,o}',
   proargnames => '{slot_name,slot_name,spill_txns,spill_count,spill_bytes,stream_txns,stream_count,stream_bytes,total_txns,total_bytes,stats_reset}',
   prosrc => 'pg_stat_get_replication_slot' },
+
+{ oid => '8384', descr => 'statistics: check if a stats object exists',
+  proname => 'pg_stat_have_stats', provolatile => 'v', proparallel => 'r',
+  prorettype => 'bool', proargtypes => 'text oid oid',
+  prosrc => 'pg_stat_have_stats' },
+
 { oid => '8523', descr => 'statistics: information about subscription stats',
   proname => 'pg_stat_get_subscription_stats',
   provolatile => 's', proparallel => 'r',

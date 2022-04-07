@@ -872,6 +872,16 @@ pgstat_get_stat_snapshot_timestamp(bool *have_snapshot)
 	return 0;
 }
 
+bool
+pgstat_have_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
+{
+	/* fixed-numbered stats always exist */
+	if (pgstat_get_kind_info(kind)->fixed_amount)
+		return true;
+
+	return pgstat_get_entry_ref(kind, dboid, objoid, false, NULL) != NULL;
+}
+
 /*
  * Ensure snapshot for fixed-numbered 'kind' exists.
  *
