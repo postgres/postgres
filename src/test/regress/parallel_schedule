@@ -123,6 +123,9 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 
 # ----------
 # Another group of parallel tests
+#
+# The stats test resets stats, so nothing else needing stats access can be in
+# this group.
 # ----------
 test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain compression memoize stats
 
