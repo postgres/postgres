@@ -1,0 +1,124 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1brr s2brc s2ip2 s1sp s2c s1sp s1ifp2 s1c s1sfp
+step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2ip2: INSERT INTO pk_noparted VALUES (2);
+step s1sp: SELECT * FROM pk_noparted;
+a
+-
+1
+(1 row)
+
+step s2c: COMMIT;
+step s1sp: SELECT * FROM pk_noparted;
+a
+-
+1
+(1 row)
+
+step s1ifp2: INSERT INTO fk_parted_pk VALUES (2);
+ERROR:  insert or update on table "fk_parted_pk_2" violates foreign key constraint "fk_parted_pk_a_fkey"
+step s1c: COMMIT;
+step s1sfp: SELECT * FROM fk_parted_pk;
+a
+-
+1
+(1 row)
+
+
+starting permutation: s2ip2 s2brr s1brc s1ifp2 s2sfp s1c s2sfp s2ifn2 s2c s2sfn
+step s2ip2: INSERT INTO pk_noparted VALUES (2);
+step s2brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1ifp2: INSERT INTO fk_parted_pk VALUES (2);
+step s2sfp: SELECT * FROM fk_parted_pk;
+a
+-
+1
+(1 row)
+
+step s1c: COMMIT;
+step s2sfp: SELECT * FROM fk_parted_pk;
+a
+-
+1
+(1 row)
+
+step s2ifn2: INSERT INTO fk_noparted VALUES (2);
+step s2c: COMMIT;
+step s2sfn: SELECT * FROM fk_noparted;
+a
+-
+1
+2
+(2 rows)
+
+
+starting permutation: s1brc s2brc s2ip2 s1sp s2c s1sp s1ifp2 s2brc s2sfp s1c s1sfp s2ifn2 s2c s2sfn
+step s1brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2ip2: INSERT INTO pk_noparted VALUES (2);
+step s1sp: SELECT * FROM pk_noparted;
+a
+-
+1
+(1 row)
+
+step s2c: COMMIT;
+step s1sp: SELECT * FROM pk_noparted;
+a
+-
+1
+2
+(2 rows)
+
+step s1ifp2: INSERT INTO fk_parted_pk VALUES (2);
+step s2brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2sfp: SELECT * FROM fk_parted_pk;
+a
+-
+1
+(1 row)
+
+step s1c: COMMIT;
+step s1sfp: SELECT * FROM fk_parted_pk;
+a
+-
+1
+2
+(2 rows)
+
+step s2ifn2: INSERT INTO fk_noparted VALUES (2);
+step s2c: COMMIT;
+step s2sfn: SELECT * FROM fk_noparted;
+a
+-
+1
+2
+(2 rows)
+
+
+starting permutation: s1brr s1dfp s1ifp1 s1c s1sfn
+step s1brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s1dfp: DELETE FROM fk_parted_pk WHERE a = 1;
+step s1ifp1: INSERT INTO fk_parted_pk VALUES (1);
+step s1c: COMMIT;
+step s1sfn: SELECT * FROM fk_noparted;
+a
+-
+1
+(1 row)
+
+
+starting permutation: s1brc s1dfp s1ifp1 s1c s1sfn
+step s1brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s1dfp: DELETE FROM fk_parted_pk WHERE a = 1;
+step s1ifp1: INSERT INTO fk_parted_pk VALUES (1);
+step s1c: COMMIT;
+step s1sfn: SELECT * FROM fk_noparted;
+a
+-
+1
+(1 row)
+
