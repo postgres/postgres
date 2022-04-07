@@ -356,7 +356,7 @@ ReplicationSlotCreate(const char *name, bool db_specific,
 	 * ReplicationSlotAllocationLock.
 	 */
 	if (SlotIsLogical(slot))
-		pgstat_report_replslot_create(NameStr(slot->data.name));
+		pgstat_create_replslot(slot);
 
 	/*
 	 * Now that the slot has been marked as in_use and active, it's safe to
@@ -397,6 +397,22 @@ SearchNamedReplicationSlot(const char *name, bool need_lock)
 		LWLockRelease(ReplicationSlotControlLock);
 
 	return slot;
+}
+
+/*
+ * Return the index of the replication slot in
+ * ReplicationSlotCtl->replication_slots.
+ *
+ * This is mainly useful to have an efficient key for storing replication slot
+ * stats.
+ */
+int
+ReplicationSlotIndex(ReplicationSlot *slot)
+{
+	Assert(slot >= ReplicationSlotCtl->replication_slots &&
+		   slot < ReplicationSlotCtl->replication_slots + max_replication_slots);
+
+	return slot - ReplicationSlotCtl->replication_slots;
 }
 
 /*
@@ -746,7 +762,7 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 * doesn't seem worth doing as in practice this won't happen frequently.
 	 */
 	if (SlotIsLogical(slot))
-		pgstat_report_replslot_drop(NameStr(slot->data.name));
+		pgstat_drop_replslot(slot);
 
 	/*
 	 * We release this at the very end, so that nobody starts trying to create

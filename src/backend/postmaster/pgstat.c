@@ -862,7 +862,15 @@ pgstat_vacuum_stat(void)
 			CHECK_FOR_INTERRUPTS();
 
 			if (SearchNamedReplicationSlot(NameStr(slotentry->slotname), true) == NULL)
-				pgstat_report_replslot_drop(NameStr(slotentry->slotname));
+			{
+				PgStat_MsgReplSlot msg;
+
+				pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REPLSLOT);
+				namestrcpy(&msg.m_slotname, NameStr(slotentry->slotname));
+				msg.m_create = false;
+				msg.m_drop = true;
+				pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
+			}
 		}
 	}
 

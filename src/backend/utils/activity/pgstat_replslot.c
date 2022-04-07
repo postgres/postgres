@@ -69,7 +69,7 @@ pgstat_reset_replslot(const char *name)
  * Report replication slot statistics.
  */
 void
-pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
+pgstat_report_replslot(ReplicationSlot *slot, const PgStat_StatReplSlotEntry *repSlotStat)
 {
 	PgStat_MsgReplSlot msg;
 
@@ -93,14 +93,17 @@ pgstat_report_replslot(const PgStat_StatReplSlotEntry *repSlotStat)
 
 /*
  * Report replication slot creation.
+ *
+ * NB: This gets called with ReplicationSlotAllocationLock already held, be
+ * careful about calling back into slot.c.
  */
 void
-pgstat_report_replslot_create(const char *slotname)
+pgstat_create_replslot(ReplicationSlot *slot)
 {
 	PgStat_MsgReplSlot msg;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REPLSLOT);
-	namestrcpy(&msg.m_slotname, slotname);
+	namestrcpy(&msg.m_slotname, NameStr(slot->data.name));
 	msg.m_create = true;
 	msg.m_drop = false;
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
@@ -110,12 +113,12 @@ pgstat_report_replslot_create(const char *slotname)
  * Report replication slot drop.
  */
 void
-pgstat_report_replslot_drop(const char *slotname)
+pgstat_drop_replslot(ReplicationSlot *slot)
 {
 	PgStat_MsgReplSlot msg;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_REPLSLOT);
-	namestrcpy(&msg.m_slotname, slotname);
+	namestrcpy(&msg.m_slotname, NameStr(slot->data.name));
 	msg.m_create = false;
 	msg.m_drop = true;
 	pgstat_send(&msg, sizeof(PgStat_MsgReplSlot));
