@@ -223,7 +223,7 @@ typedef struct LVRelState
  */
 typedef struct LVPagePruneState
 {
-	bool		hastup;			/* Page is truncatable? */
+	bool		hastup;			/* Page prevents rel truncation? */
 	bool		has_lpdead_items;	/* includes existing LP_DEAD items */
 
 	/*
@@ -1393,7 +1393,7 @@ lazy_scan_skip(LVRelState *vacrel, Buffer *vmbuffer, BlockNumber next_block,
  *
  * It's necessary to consider new pages as a special case, since the rules for
  * maintaining the visibility map and FSM with empty pages are a little
- * different (though new pages can be truncated based on the usual rules).
+ * different (though new pages can be truncated away during rel truncation).
  *
  * Empty pages are not really a special case -- they're just heap pages that
  * have no allocated tuples (including even LP_UNUSED items).  You might
@@ -1561,6 +1561,11 @@ lazy_scan_prune(LVRelState *vacrel,
 
 	Assert(BufferGetBlockNumber(buf) == blkno);
 
+	/*
+	 * maxoff might be reduced following line pointer array truncation in
+	 * heap_page_prune.  That's safe for us to ignore, since the reclaimed
+	 * space will continue to look like LP_UNUSED items below.
+	 */
 	maxoff = PageGetMaxOffsetNumber(page);
 
 retry:
@@ -1768,7 +1773,7 @@ retry:
 		 * Check tuple left behind after pruning to see if needs to be frozen
 		 * now.
 		 */
-		prunestate->hastup = true;	/* page won't be truncatable */
+		prunestate->hastup = true;	/* page makes rel truncation unsafe */
 		if (heap_prepare_freeze_tuple(tuple.t_data,
 									  vacrel->relfrozenxid,
 									  vacrel->relminmxid,

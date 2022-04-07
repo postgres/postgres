@@ -688,22 +688,14 @@ compactify_tuples(itemIdCompact itemidbase, int nitems, Page page, bool presorte
  *
  * This routine is usable for heap pages only, but see PageIndexMultiDelete.
  *
- * Never removes unused line pointers.  PageTruncateLinePointerArray can
- * safely remove some unused line pointers.  It ought to be safe for this
- * routine to free unused line pointers in roughly the same way, but it's not
- * clear that that would be beneficial.
- *
- * PageTruncateLinePointerArray is only called during VACUUM's second pass
- * over the heap.  Any unused line pointers that it sees are likely to have
- * been set to LP_UNUSED (from LP_DEAD) immediately before the time it is
- * called.  On the other hand, many tables have the vast majority of all
- * required pruning performed opportunistically (not during VACUUM).  And so
- * there is, in general, a good chance that even large groups of unused line
- * pointers that we see here will be recycled quickly.
+ * This routine removes unused line pointers from the end of the line pointer
+ * array.  This is possible when dead heap-only tuples get removed by pruning,
+ * especially when there were HOT chains with several tuples each beforehand.
  *
  * Caller had better have a full cleanup lock on page's buffer.  As a side
  * effect the page's PD_HAS_FREE_LINES hint bit will be set or unset as
- * needed.
+ * needed.  Caller might also need to account for a reduction in the length of
+ * the line pointer array following array truncation.
  */
 void
 PageRepairFragmentation(Page page)
@@ -718,6 +710,7 @@ PageRepairFragmentation(Page page)
 	int			nline,
 				nstorage,
 				nunused;
+	OffsetNumber finalusedlp = InvalidOffsetNumber;
 	int			i;
 	Size		totallen;
 	bool		presorted = true;	/* For now */
@@ -771,10 +764,13 @@ PageRepairFragmentation(Page page)
 				totallen += itemidptr->alignedlen;
 				itemidptr++;
 			}
+
+			finalusedlp = i;	/* Could be the final non-LP_UNUSED item */
 		}
 		else
 		{
 			/* Unused entries should have lp_len = 0, but make sure */
+			Assert(!ItemIdHasStorage(lp));
 			ItemIdSetUnused(lp);
 			nunused++;
 		}
@@ -796,6 +792,19 @@ PageRepairFragmentation(Page page)
 							(unsigned int) totallen, pd_special - pd_lower)));
 
 		compactify_tuples(itemidbase, nstorage, page, presorted);
+	}
+
+	if (finalusedlp != nline)
+	{
+		/* The last line pointer is not the last used line pointer */
+		int		nunusedend = nline - finalusedlp;
+
+		Assert(nunused >= nunusedend && nunusedend > 0);
+
+		/* remove trailing unused line pointers from the count */
+		nunused -= nunusedend;
+		/* truncate the line pointer array */
+		((PageHeader) page)->pd_lower -= (sizeof(ItemIdData) * nunusedend);
 	}
 
 	/* Set hint bit for PageAddItemExtended */
