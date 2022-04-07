@@ -49,6 +49,28 @@ static instr_time total_func_time;
 
 
 /*
+ * Ensure that stats are dropped if transaction aborts.
+ */
+void
+pgstat_create_function(Oid proid)
+{
+	pgstat_create_transactional(PGSTAT_KIND_FUNCTION,
+								MyDatabaseId,
+								proid);
+}
+
+/*
+ * Ensure that stats are dropped if transaction commits.
+ */
+void
+pgstat_drop_function(Oid proid)
+{
+	pgstat_drop_transactional(PGSTAT_KIND_FUNCTION,
+							  MyDatabaseId,
+							  proid);
+}
+
+/*
  * Initialize function call usage data.
  * Called by the executor before invoking a function.
  */

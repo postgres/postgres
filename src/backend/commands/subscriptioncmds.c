@@ -738,6 +738,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 	table_close(rel, RowExclusiveLock);
 
+	pgstat_create_subscription(subid);
+
 	if (opts.enabled)
 		ApplyLauncherWakeupAtCommit();
 
@@ -1592,7 +1594,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * gets lost.
 	 */
 	if (slotname)
-		pgstat_report_subscription_drop(subid);
+		pgstat_drop_subscription(subid);
 
 	table_close(rel, NoLock);
 }

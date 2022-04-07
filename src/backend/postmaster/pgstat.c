@@ -886,7 +886,7 @@ pgstat_vacuum_stat(void)
 			CHECK_FOR_INTERRUPTS();
 
 			if (hash_search(htab, (void *) &(subentry->subid), HASH_FIND, NULL) == NULL)
-				pgstat_report_subscription_drop(subentry->subid);
+				pgstat_drop_subscription(subentry->subid);
 		}
 
 		hash_destroy(htab);

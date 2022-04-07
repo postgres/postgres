@@ -1049,6 +1049,9 @@ extern void pgstat_report_connect(Oid dboid);
  * Functions in pgstat_function.c
  */
 
+extern void pgstat_create_function(Oid proid);
+extern void pgstat_drop_function(Oid proid);
+
 struct FunctionCallInfoBaseData;
 extern void pgstat_init_function_usage(struct FunctionCallInfoBaseData *fcinfo,
 									   PgStat_FunctionCallUsage *fcu);
@@ -1062,6 +1065,8 @@ extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
  * Functions in pgstat_relation.c
  */
 
+extern void pgstat_create_relation(Relation rel);
+extern void pgstat_drop_relation(Relation rel);
 extern void pgstat_copy_relation_stats(Relation dstrel, Relation srcrel);
 
 extern void pgstat_relation_init(Relation rel);
@@ -1158,7 +1163,8 @@ extern int	pgstat_slru_index(const char *name);
  */
 
 extern void pgstat_report_subscription_error(Oid subid, bool is_apply_error);
-extern void pgstat_report_subscription_drop(Oid subid);
+extern void pgstat_create_subscription(Oid subid);
+extern void pgstat_drop_subscription(Oid subid);
 
 
 /*
@@ -1169,6 +1175,9 @@ extern void AtEOXact_PgStat(bool isCommit, bool parallel);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
 extern void AtPrepare_PgStat(void);
 extern void PostPrepare_PgStat(void);
+struct xl_xact_stats_item;
+extern int	pgstat_get_transactional_drops(bool isCommit, struct xl_xact_stats_item **items);
+extern void pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items, bool is_redo);
 
 
 /*

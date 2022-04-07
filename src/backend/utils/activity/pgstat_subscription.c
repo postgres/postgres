@@ -35,14 +35,31 @@ pgstat_report_subscription_error(Oid subid, bool is_apply_error)
 }
 
 /*
- * Report dropping the subscription.
+ * Report creating the subscription.
+ *
+ * Ensures that stats are dropped if transaction rolls back.
  */
 void
-pgstat_report_subscription_drop(Oid subid)
+pgstat_create_subscription(Oid subid)
+{
+	pgstat_create_transactional(PGSTAT_KIND_SUBSCRIPTION,
+								InvalidOid, subid);
+}
+
+/*
+ * Report dropping the subscription.
+ *
+ * Ensures that stats are dropped if transaction commits.
+ */
+void
+pgstat_drop_subscription(Oid subid)
 {
 	PgStat_MsgSubscriptionDrop msg;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_SUBSCRIPTIONDROP);
 	msg.m_subid = subid;
 	pgstat_send(&msg, sizeof(PgStat_MsgSubscriptionDrop));
+
+	pgstat_drop_transactional(PGSTAT_KIND_SUBSCRIPTION,
+							  InvalidOid, subid);
 }

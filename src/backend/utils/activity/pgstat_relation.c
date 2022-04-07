@@ -171,33 +171,26 @@ pgstat_relation_init(Relation rel)
 }
 
 /*
- * Tell the collector that we just dropped a relation.
- * (If the message gets lost, we will still clean the dead entry eventually
- * via future invocations of pgstat_vacuum_stat().)
- *
- * Currently not used for lack of any good place to call it; we rely
- * entirely on pgstat_vacuum_stat() to clean out stats for dead rels.
+ * Ensure that stats are dropped if transaction aborts.
  */
-#ifdef NOT_USED
 void
-pgstat_drop_relation(Oid relid)
+pgstat_create_relation(Relation rel)
 {
-	PgStat_MsgTabpurge msg;
-	int			len;
-
-	if (pgStatSock == PGINVALID_SOCKET)
-		return;
-
-	msg.m_tableid[0] = relid;
-	msg.m_nentries = 1;
-
-	len = offsetof(PgStat_MsgTabpurge, m_tableid[0]) + sizeof(Oid);
-
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
-	msg.m_databaseid = MyDatabaseId;
-	pgstat_send(&msg, len);
+	pgstat_create_transactional(PGSTAT_KIND_RELATION,
+								rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId,
+								RelationGetRelid(rel));
 }
-#endif							/* NOT_USED */
+
+/*
+ * Ensure that stats are dropped if transaction commits.
+ */
+void
+pgstat_drop_relation(Relation rel)
+{
+	pgstat_drop_transactional(PGSTAT_KIND_RELATION,
+							  rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId,
+							  RelationGetRelid(rel));
+}
 
 /*
  * Report that the table was just vacuumed.

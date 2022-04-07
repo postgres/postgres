@@ -43,6 +43,16 @@ typedef struct PgStat_SubXactStatus
 	struct PgStat_SubXactStatus *prev;	/* higher-level subxact if any */
 
 	/*
+	 * Dropping the statistics for objects that dropped transactionally itself
+	 * needs to be transactional. Therefore we collect the stats dropped in
+	 * the current (sub-)transaction and only execute the stats drop when we
+	 * know if the transaction commits/aborts. To handle replicas and crashes,
+	 * stats drops are included in commit records.
+	 */
+	dlist_head	pending_drops;
+	int			pending_drops_count;
+
+	/*
 	 * Tuple insertion/deletion counts for an open transaction can't be
 	 * propagated into PgStat_TableStatus counters until we know if it is
 	 * going to commit or abort.  Hence, we keep these counts in per-subxact
@@ -133,6 +143,9 @@ extern bool pgstat_wal_pending(void);
  */
 
 extern PgStat_SubXactStatus *pgstat_xact_stack_level_get(int nest_level);
+extern void pgstat_drop_transactional(PgStat_Kind kind, Oid dboid, Oid objoid);
+extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid);
+
 
 
 /*
