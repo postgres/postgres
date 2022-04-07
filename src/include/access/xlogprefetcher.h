@@ -14,6 +14,8 @@
 #define XLOGPREFETCHER_H
 
 #include "access/xlogdefs.h"
+#include "access/xlogreader.h"
+#include "access/xlogrecord.h"
 
 /* GUCs */
 extern int	recovery_prefetch;
