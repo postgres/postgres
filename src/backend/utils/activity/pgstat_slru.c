@@ -20,7 +20,7 @@
 #include "utils/pgstat_internal.h"
 
 
-static inline PgStat_MsgSLRU *slru_entry(int slru_idx);
+static inline PgStat_MsgSLRU *get_slru_entry(int slru_idx);
 
 
 /*
@@ -49,7 +49,7 @@ pgstat_reset_slru(const char *name)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSLRUCOUNTER);
-	msg.m_index = pgstat_slru_index(name);
+	msg.m_index = pgstat_get_slru_index(name);
 
 	pgstat_send(&msg, sizeof(msg));
 }
@@ -61,43 +61,43 @@ pgstat_reset_slru(const char *name)
 void
 pgstat_count_slru_page_zeroed(int slru_idx)
 {
-	slru_entry(slru_idx)->m_blocks_zeroed += 1;
+	get_slru_entry(slru_idx)->m_blocks_zeroed += 1;
 }
 
 void
 pgstat_count_slru_page_hit(int slru_idx)
 {
-	slru_entry(slru_idx)->m_blocks_hit += 1;
+	get_slru_entry(slru_idx)->m_blocks_hit += 1;
 }
 
 void
 pgstat_count_slru_page_exists(int slru_idx)
 {
-	slru_entry(slru_idx)->m_blocks_exists += 1;
+	get_slru_entry(slru_idx)->m_blocks_exists += 1;
 }
 
 void
 pgstat_count_slru_page_read(int slru_idx)
 {
-	slru_entry(slru_idx)->m_blocks_read += 1;
+	get_slru_entry(slru_idx)->m_blocks_read += 1;
 }
 
 void
 pgstat_count_slru_page_written(int slru_idx)
 {
-	slru_entry(slru_idx)->m_blocks_written += 1;
+	get_slru_entry(slru_idx)->m_blocks_written += 1;
 }
 
 void
 pgstat_count_slru_flush(int slru_idx)
 {
-	slru_entry(slru_idx)->m_flush += 1;
+	get_slru_entry(slru_idx)->m_flush += 1;
 }
 
 void
 pgstat_count_slru_truncate(int slru_idx)
 {
-	slru_entry(slru_idx)->m_truncate += 1;
+	get_slru_entry(slru_idx)->m_truncate += 1;
 }
 
 /*
@@ -106,7 +106,7 @@ pgstat_count_slru_truncate(int slru_idx)
  * know the number of entries in advance.
  */
 const char *
-pgstat_slru_name(int slru_idx)
+pgstat_get_slru_name(int slru_idx)
 {
 	if (slru_idx < 0 || slru_idx >= SLRU_NUM_ELEMENTS)
 		return NULL;
@@ -120,7 +120,7 @@ pgstat_slru_name(int slru_idx)
  * external projects.
  */
 int
-pgstat_slru_index(const char *name)
+pgstat_get_slru_index(const char *name)
 {
 	int			i;
 
@@ -174,7 +174,7 @@ pgstat_send_slru(void)
  * stored in SlruCtl as lwlock tranche name).
  */
 static inline PgStat_MsgSLRU *
-slru_entry(int slru_idx)
+get_slru_entry(int slru_idx)
 {
 	pgstat_assert_is_up();
 

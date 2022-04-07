@@ -130,7 +130,7 @@ pgstat_report_wal(bool force)
 }
 
 void
-pgstat_wal_initialize(void)
+pgstat_init_wal(void)
 {
 	/*
 	 * Initialize prevWalUsage with pgWalUsage so that pgstat_report_wal() can
@@ -148,7 +148,7 @@ pgstat_wal_initialize(void)
  * data pages.
  */
 bool
-pgstat_wal_pending(void)
+pgstat_have_pending_wal(void)
 {
 	return pgWalUsage.wal_records != prevWalUsage.wal_records ||
 		WalStats.m_wal_write != 0 ||

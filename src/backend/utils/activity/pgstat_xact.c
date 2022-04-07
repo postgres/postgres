@@ -139,7 +139,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 	if (xact_state->pending_drops_count == 0)
 		return;
 
-	parent_xact_state = pgstat_xact_stack_level_get(nestDepth - 1);
+	parent_xact_state = pgstat_get_xact_stack_level(nestDepth - 1);
 
 	dlist_foreach_modify(iter, &xact_state->pending_drops)
 	{
@@ -228,7 +228,7 @@ PostPrepare_PgStat(void)
  * it if needed.
  */
 PgStat_SubXactStatus *
-pgstat_xact_stack_level_get(int nest_level)
+pgstat_get_xact_stack_level(int nest_level)
 {
 	PgStat_SubXactStatus *xact_state;
 
@@ -324,7 +324,7 @@ create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool
 	PgStat_PendingDroppedStatsItem *drop = (PgStat_PendingDroppedStatsItem *)
 	MemoryContextAlloc(TopTransactionContext, sizeof(PgStat_PendingDroppedStatsItem));
 
-	xact_state = pgstat_xact_stack_level_get(nest_level);
+	xact_state = pgstat_get_xact_stack_level(nest_level);
 
 	drop->is_create = is_create;
 	drop->item.kind = kind;

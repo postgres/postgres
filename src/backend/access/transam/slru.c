@@ -215,7 +215,7 @@ SimpleLruInit(SlruCtl ctl, const char *name, int nslots, int nlsns,
 
 		/* shared->latest_page_number will be set later */
 
-		shared->slru_stats_idx = pgstat_slru_index(name);
+		shared->slru_stats_idx = pgstat_get_slru_index(name);
 
 		ptr = (char *) shared;
 		offset = MAXALIGN(sizeof(SlruSharedData));

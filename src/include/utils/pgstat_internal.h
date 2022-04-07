@@ -134,18 +134,17 @@ extern void pgstat_send_slru(void);
  * Functions in pgstat_wal.c
  */
 
-extern void pgstat_wal_initialize(void);
-extern bool pgstat_wal_pending(void);
+extern void pgstat_init_wal(void);
+extern bool pgstat_have_pending_wal(void);
 
 
 /*
  * Functions in pgstat_xact.c
  */
 
-extern PgStat_SubXactStatus *pgstat_xact_stack_level_get(int nest_level);
+extern PgStat_SubXactStatus *pgstat_get_xact_stack_level(int nest_level);
 extern void pgstat_drop_transactional(PgStat_Kind kind, Oid dboid, Oid objoid);
 extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid);
-
 
 
 /*

@@ -34,7 +34,7 @@
  * for the life of the backend.  Also, we zero out the t_id fields of the
  * contained PgStat_TableStatus structs whenever they are not actively in use.
  * This allows relcache pgstat_info pointers to be treated as long-lived data,
- * avoiding repeated searches in pgstat_relation_init() when a relation is
+ * avoiding repeated searches in pgstat_init_relation() when a relation is
  * repeatedly opened during a transaction.
  */
 #define TABSTAT_QUANTUM		100 /* we alloc this many at a time */
@@ -78,8 +78,8 @@ static PgStat_TableStatus *get_tabstat_entry(Oid rel_id, bool isshared);
 static void pgstat_send_tabstat(PgStat_MsgTabstat *tsmsg, TimestampTz now);
 static void add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level);
 static void ensure_tabstat_xact_level(PgStat_TableStatus *pgstat_info);
-static void pgstat_truncdrop_save_counters(PgStat_TableXactStatus *trans, bool is_drop);
-static void pgstat_truncdrop_restore_counters(PgStat_TableXactStatus *trans);
+static void save_truncdrop_counters(PgStat_TableXactStatus *trans, bool is_drop);
+static void restore_truncdrop_counters(PgStat_TableXactStatus *trans);
 
 
 /*
@@ -109,7 +109,7 @@ pgstat_copy_relation_stats(Relation dst, Relation src)
 	if (!srcstats)
 		return;
 
-	if (pgstat_relation_should_count(dst))
+	if (pgstat_should_count_relation(dst))
 	{
 		/*
 		 * XXX: temporarily this does not actually quite do what the name
@@ -137,7 +137,7 @@ pgstat_copy_relation_stats(Relation dst, Relation src)
  * same relation is touched repeatedly within a transaction.
  */
 void
-pgstat_relation_init(Relation rel)
+pgstat_init_relation(Relation rel)
 {
 	Oid			rel_id = rel->rd_id;
 	char		relkind = rel->rd_rel->relkind;
@@ -242,7 +242,7 @@ pgstat_report_analyze(Relation rel,
 	 *
 	 * Waste no time on partitioned tables, though.
 	 */
-	if (pgstat_relation_should_count(rel) &&
+	if (pgstat_should_count_relation(rel) &&
 		rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE)
 	{
 		PgStat_TableXactStatus *trans;
@@ -276,7 +276,7 @@ pgstat_report_analyze(Relation rel,
 void
 pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
 {
-	if (pgstat_relation_should_count(rel))
+	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -291,7 +291,7 @@ pgstat_count_heap_insert(Relation rel, PgStat_Counter n)
 void
 pgstat_count_heap_update(Relation rel, bool hot)
 {
-	if (pgstat_relation_should_count(rel))
+	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -310,7 +310,7 @@ pgstat_count_heap_update(Relation rel, bool hot)
 void
 pgstat_count_heap_delete(Relation rel)
 {
-	if (pgstat_relation_should_count(rel))
+	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -325,12 +325,12 @@ pgstat_count_heap_delete(Relation rel)
 void
 pgstat_count_truncate(Relation rel)
 {
-	if (pgstat_relation_should_count(rel))
+	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
 		ensure_tabstat_xact_level(pgstat_info);
-		pgstat_truncdrop_save_counters(pgstat_info->trans, false);
+		save_truncdrop_counters(pgstat_info->trans, false);
 		pgstat_info->trans->tuples_inserted = 0;
 		pgstat_info->trans->tuples_updated = 0;
 		pgstat_info->trans->tuples_deleted = 0;
@@ -348,7 +348,7 @@ pgstat_count_truncate(Relation rel)
 void
 pgstat_update_heap_dead_tuples(Relation rel, int delta)
 {
-	if (pgstat_relation_should_count(rel))
+	if (pgstat_should_count_relation(rel))
 	{
 		PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -405,7 +405,7 @@ AtEOXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit)
 		Assert(tabstat->trans == trans);
 		/* restore pre-truncate/drop stats (if any) in case of aborted xact */
 		if (!isCommit)
-			pgstat_truncdrop_restore_counters(trans);
+			restore_truncdrop_counters(trans);
 		/* count attempted actions regardless of commit/abort */
 		tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 		tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
@@ -470,7 +470,7 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 				if (trans->truncdropped)
 				{
 					/* propagate the truncate/drop status one level up */
-					pgstat_truncdrop_save_counters(trans->upper, false);
+					save_truncdrop_counters(trans->upper, false);
 					/* replace upper xact stats with ours */
 					trans->upper->tuples_inserted = trans->tuples_inserted;
 					trans->upper->tuples_updated = trans->tuples_updated;
@@ -497,7 +497,7 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 				 */
 				PgStat_SubXactStatus *upper_xact_state;
 
-				upper_xact_state = pgstat_xact_stack_level_get(nestDepth - 1);
+				upper_xact_state = pgstat_get_xact_stack_level(nestDepth - 1);
 				trans->next = upper_xact_state->first;
 				upper_xact_state->first = trans;
 				trans->nest_level = nestDepth - 1;
@@ -511,7 +511,7 @@ AtEOSubXact_PgStat_Relations(PgStat_SubXactStatus *xact_state, bool isCommit, in
 			 */
 
 			/* first restore values obliterated by truncate/drop */
-			pgstat_truncdrop_restore_counters(trans);
+			restore_truncdrop_counters(trans);
 			/* count attempted actions regardless of commit/abort */
 			tabstat->t_counts.t_tuples_inserted += trans->tuples_inserted;
 			tabstat->t_counts.t_tuples_updated += trans->tuples_updated;
@@ -860,7 +860,7 @@ add_tabstat_xact_level(PgStat_TableStatus *pgstat_info, int nest_level)
 	 * If this is the first rel to be modified at the current nest level, we
 	 * first have to push a transaction stack entry.
 	 */
-	xact_state = pgstat_xact_stack_level_get(nest_level);
+	xact_state = pgstat_get_xact_stack_level(nest_level);
 
 	/* Now make a per-table stack entry */
 	trans = (PgStat_TableXactStatus *)
@@ -897,7 +897,7 @@ ensure_tabstat_xact_level(PgStat_TableStatus *pgstat_info)
  * subxact level only.
  */
 static void
-pgstat_truncdrop_save_counters(PgStat_TableXactStatus *trans, bool is_drop)
+save_truncdrop_counters(PgStat_TableXactStatus *trans, bool is_drop)
 {
 	if (!trans->truncdropped || is_drop)
 	{
@@ -912,7 +912,7 @@ pgstat_truncdrop_save_counters(PgStat_TableXactStatus *trans, bool is_drop)
  * restore counters when a truncate aborts
  */
 static void
-pgstat_truncdrop_restore_counters(PgStat_TableXactStatus *trans)
+restore_truncdrop_counters(PgStat_TableXactStatus *trans)
 {
 	if (trans->truncdropped)
 	{

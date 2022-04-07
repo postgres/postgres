@@ -73,7 +73,7 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	if (RelationUsesLocalBuffers(r))
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
 
-	pgstat_relation_init(r);
+	pgstat_init_relation(r);
 
 	return r;
 }
@@ -123,7 +123,7 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 	if (RelationUsesLocalBuffers(r))
 		MyXactFlags |= XACT_FLAGS_ACCESSEDTEMPNAMESPACE;
 
-	pgstat_relation_init(r);
+	pgstat_init_relation(r);
 
 	return r;
 }

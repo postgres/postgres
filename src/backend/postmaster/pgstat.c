@@ -727,7 +727,7 @@ pgstat_initialize(void)
 {
 	Assert(!pgstat_is_initialized);
 
-	pgstat_wal_initialize();
+	pgstat_init_wal();
 
 	/* Set up a process-exit hook to clean up */
 	before_shmem_exit(pgstat_shutdown_hook, 0);
@@ -768,7 +768,7 @@ pgstat_report_stat(bool disconnect)
 	 */
 	if (!have_relation_stats &&
 		pgStatXactCommit == 0 && pgStatXactRollback == 0 &&
-		!pgstat_wal_pending() &&
+		!pgstat_have_pending_wal() &&
 		!have_function_stats && !disconnect)
 		return;
 

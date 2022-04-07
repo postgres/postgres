@@ -1069,7 +1069,7 @@ extern void pgstat_create_relation(Relation rel);
 extern void pgstat_drop_relation(Relation rel);
 extern void pgstat_copy_relation_stats(Relation dstrel, Relation srcrel);
 
-extern void pgstat_relation_init(Relation rel);
+extern void pgstat_init_relation(Relation rel);
 
 extern void pgstat_report_vacuum(Oid tableoid, bool shared,
 								 PgStat_Counter livetuples, PgStat_Counter deadtuples);
@@ -1077,44 +1077,44 @@ extern void pgstat_report_analyze(Relation rel,
 								  PgStat_Counter livetuples, PgStat_Counter deadtuples,
 								  bool resetcounter);
 
-#define pgstat_relation_should_count(rel)                           \
+#define pgstat_should_count_relation(rel)                           \
 	(likely((rel)->pgstat_info != NULL))
 
 /* nontransactional event counts are simple enough to inline */
 
 #define pgstat_count_heap_scan(rel)									\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
 #define pgstat_count_heap_getnext(rel)								\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_tuples_returned++;		\
 	} while (0)
 #define pgstat_count_heap_fetch(rel)								\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_tuples_fetched++;		\
 	} while (0)
 #define pgstat_count_index_scan(rel)								\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
 #define pgstat_count_index_tuples(rel, n)							\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_tuples_returned += (n);	\
 	} while (0)
 #define pgstat_count_buffer_read(rel)								\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_blocks_fetched++;		\
 	} while (0)
 #define pgstat_count_buffer_hit(rel)								\
 	do {															\
-		if (pgstat_relation_should_count(rel))						\
+		if (pgstat_should_count_relation(rel))						\
 			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
 	} while (0)
 
@@ -1155,8 +1155,8 @@ extern void pgstat_count_slru_page_written(int slru_idx);
 extern void pgstat_count_slru_page_exists(int slru_idx);
 extern void pgstat_count_slru_flush(int slru_idx);
 extern void pgstat_count_slru_truncate(int slru_idx);
-extern const char *pgstat_slru_name(int slru_idx);
-extern int	pgstat_slru_index(const char *name);
+extern const char *pgstat_get_slru_name(int slru_idx);
+extern int	pgstat_get_slru_index(const char *name);
 
 
 /*

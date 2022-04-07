@@ -1830,7 +1830,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 		PgStat_SLRUStats stat;
 		const char *name;
 
-		name = pgstat_slru_name(i);
+		name = pgstat_get_slru_name(i);
 
 		if (!name)
 			break;
