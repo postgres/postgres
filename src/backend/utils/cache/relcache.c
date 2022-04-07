@@ -56,7 +56,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
-#include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_shseclabel.h"
 #include "catalog/pg_statistic_ext.h"
@@ -5568,8 +5567,6 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	Oid			schemaid;
 	List	   *ancestors = NIL;
 	Oid			relid = RelationGetRelid(relation);
-	char		relkind = relation->rd_rel->relkind;
-	char		objType;
 
 	/*
 	 * If not publishable, it publishes no actions.  (pgoutput_change() will
@@ -5600,15 +5597,8 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 	/* Fetch the publication membership info. */
 	puboids = GetRelationPublications(relid);
 	schemaid = RelationGetNamespace(relation);
-	objType = pub_get_object_type_for_relkind(relkind);
+	puboids = list_concat_unique_oid(puboids, GetSchemaPublications(schemaid));
 
-	puboids = list_concat_unique_oid(puboids,
-									 GetSchemaPublications(schemaid, objType));
-
-	/*
-	 * If this is a partion (and thus a table), lookup all ancestors and track
-	 * all publications them too.
-	 */
 	if (relation->rd_rel->relispartition)
 	{
 		/* Add publications that the ancestors are in too. */
@@ -5620,23 +5610,12 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 
 			puboids = list_concat_unique_oid(puboids,
 											 GetRelationPublications(ancestor));
-
-			/* include all publications publishing schema of all ancestors */
 			schemaid = get_rel_namespace(ancestor);
 			puboids = list_concat_unique_oid(puboids,
-											 GetSchemaPublications(schemaid,
-																   PUB_OBJTYPE_TABLE));
+											 GetSchemaPublications(schemaid));
 		}
 	}
-
-	/*
-	 * Consider also FOR ALL TABLES and FOR ALL SEQUENCES publications,
-	 * depending on the relkind of the relation.
-	 */
-	if (relation->rd_rel->relkind == RELKIND_SEQUENCE)
-		puboids = list_concat_unique_oid(puboids, GetAllSequencesPublications());
-	else
-		puboids = list_concat_unique_oid(puboids, GetAllTablesPublications());
+	puboids = list_concat_unique_oid(puboids, GetAllTablesPublications());
 
 	foreach(lc, puboids)
 	{
@@ -5655,7 +5634,6 @@ RelationBuildPublicationDesc(Relation relation, PublicationDesc *pubdesc)
 		pubdesc->pubactions.pubupdate |= pubform->pubupdate;
 		pubdesc->pubactions.pubdelete |= pubform->pubdelete;
 		pubdesc->pubactions.pubtruncate |= pubform->pubtruncate;
-		pubdesc->pubactions.pubsequence |= pubform->pubsequence;
 
 		/*
 		 * Check if all columns referenced in the filter expression are part of

@@ -1633,19 +1633,28 @@ describeOneTableDetails(const char *schemaname,
 	if (tableinfo.relkind == RELKIND_SEQUENCE)
 	{
 		PGresult   *result = NULL;
+		printQueryOpt myopt = pset.popt;
+		char	   *footers[2] = {NULL, NULL};
 
 		if (pset.sversion >= 100000)
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT pg_catalog.format_type(seqtypid, NULL),\n"
-							  "       seqstart,\n"
-							  "       seqmin,\n"
-							  "       seqmax,\n"
-							  "       seqincrement,\n"
-							  "       CASE WHEN seqcycle THEN '%s' ELSE '%s' END,\n"
-							  "       seqcache\n",
+							  "SELECT pg_catalog.format_type(seqtypid, NULL) AS \"%s\",\n"
+							  "       seqstart AS \"%s\",\n"
+							  "       seqmin AS \"%s\",\n"
+							  "       seqmax AS \"%s\",\n"
+							  "       seqincrement AS \"%s\",\n"
+							  "       CASE WHEN seqcycle THEN '%s' ELSE '%s' END AS \"%s\",\n"
+							  "       seqcache AS \"%s\"\n",
+							  gettext_noop("Type"),
+							  gettext_noop("Start"),
+							  gettext_noop("Minimum"),
+							  gettext_noop("Maximum"),
+							  gettext_noop("Increment"),
 							  gettext_noop("yes"),
-							  gettext_noop("no"));
+							  gettext_noop("no"),
+							  gettext_noop("Cycles?"),
+							  gettext_noop("Cache"));
 			appendPQExpBuffer(&buf,
 							  "FROM pg_catalog.pg_sequence\n"
 							  "WHERE seqrelid = '%s';",
@@ -1654,15 +1663,22 @@ describeOneTableDetails(const char *schemaname,
 		else
 		{
 			printfPQExpBuffer(&buf,
-							  "SELECT 'bigint',\n"
-							  "       start_value,\n"
-							  "       min_value,\n"
-							  "       max_value,\n"
-							  "       increment_by,\n"
-							  "       CASE WHEN is_cycled THEN '%s' ELSE '%s' END,\n"
-							  "       cache_value\n",
+							  "SELECT 'bigint' AS \"%s\",\n"
+							  "       start_value AS \"%s\",\n"
+							  "       min_value AS \"%s\",\n"
+							  "       max_value AS \"%s\",\n"
+							  "       increment_by AS \"%s\",\n"
+							  "       CASE WHEN is_cycled THEN '%s' ELSE '%s' END AS \"%s\",\n"
+							  "       cache_value AS \"%s\"\n",
+							  gettext_noop("Type"),
+							  gettext_noop("Start"),
+							  gettext_noop("Minimum"),
+							  gettext_noop("Maximum"),
+							  gettext_noop("Increment"),
 							  gettext_noop("yes"),
-							  gettext_noop("no"));
+							  gettext_noop("no"),
+							  gettext_noop("Cycles?"),
+							  gettext_noop("Cache"));
 			appendPQExpBuffer(&buf, "FROM %s", fmtId(schemaname));
 			/* must be separate because fmtId isn't reentrant */
 			appendPQExpBuffer(&buf, ".%s;", fmtId(relationname));
@@ -1671,57 +1687,6 @@ describeOneTableDetails(const char *schemaname,
 		res = PSQLexec(buf.data);
 		if (!res)
 			goto error_return;
-
-		numrows = PQntuples(res);
-
-		/* XXX reset to use expanded output for sequences (maybe we should
-		 * keep this disabled, just like for tables?) */
-		myopt.expanded = pset.popt.topt.expanded;
-
-		printTableInit(&cont, &myopt, title.data, 7, numrows);
-		printTableInitialized = true;
-
-		if (tableinfo.relpersistence == 'u')
-			printfPQExpBuffer(&title, _("Unlogged sequence \"%s.%s\""),
-							  schemaname, relationname);
-		else
-			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
-							  schemaname, relationname);
-
-		printTableAddHeader(&cont, gettext_noop("Type"), true, 'l');
-		printTableAddHeader(&cont, gettext_noop("Start"), true, 'r');
-		printTableAddHeader(&cont, gettext_noop("Minimum"), true, 'r');
-		printTableAddHeader(&cont, gettext_noop("Maximum"), true, 'r');
-		printTableAddHeader(&cont, gettext_noop("Increment"), true, 'r');
-		printTableAddHeader(&cont, gettext_noop("Cycles?"), true, 'l');
-		printTableAddHeader(&cont, gettext_noop("Cache"), true, 'r');
-
-		/* Generate table cells to be printed */
-		for (i = 0; i < numrows; i++)
-		{
-			/* Type */
-			printTableAddCell(&cont, PQgetvalue(res, i, 0), false, false);
-
-			/* Start */
-			printTableAddCell(&cont, PQgetvalue(res, i, 1), false, false);
-
-			/* Minimum */
-			printTableAddCell(&cont, PQgetvalue(res, i, 2), false, false);
-
-			/* Maximum */
-			printTableAddCell(&cont, PQgetvalue(res, i, 3), false, false);
-
-			/* Increment */
-			printTableAddCell(&cont, PQgetvalue(res, i, 4), false, false);
-
-			/* Cycles? */
-			printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
-
-			/* Cache */
-			printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false);
-		}
-
-		/* Footer information about a sequence */
 
 		/* Get the column that owns this sequence */
 		printfPQExpBuffer(&buf, "SELECT pg_catalog.quote_ident(nspname) || '.' ||"
@@ -1754,63 +1719,33 @@ describeOneTableDetails(const char *schemaname,
 			switch (PQgetvalue(result, 0, 1)[0])
 			{
 				case 'a':
-					printTableAddFooter(&cont,
-										psprintf(_("Owned by: %s"),
-												 PQgetvalue(result, 0, 0)));
+					footers[0] = psprintf(_("Owned by: %s"),
+										  PQgetvalue(result, 0, 0));
 					break;
 				case 'i':
-					printTableAddFooter(&cont,
-										psprintf(_("Sequence for identity column: %s"),
-												 PQgetvalue(result, 0, 0)));
+					footers[0] = psprintf(_("Sequence for identity column: %s"),
+										  PQgetvalue(result, 0, 0));
 					break;
 			}
 		}
 		PQclear(result);
 
-		/* print any publications */
-		if (pset.sversion >= 150000)
-		{
-			int			tuples = 0;
+		if (tableinfo.relpersistence == 'u')
+			printfPQExpBuffer(&title, _("Unlogged sequence \"%s.%s\""),
+							  schemaname, relationname);
+		else
+			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
+							  schemaname, relationname);
 
-			printfPQExpBuffer(&buf,
-							  "SELECT pubname\n"
-							  "FROM pg_catalog.pg_publication p\n"
-							  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
-							  "		JOIN pg_catalog.pg_class pc ON pc.relnamespace = pn.pnnspid\n"
-							  "WHERE pc.oid ='%s' and pn.pntype = 's' and pg_catalog.pg_relation_is_publishable('%s')\n"
-							  "UNION\n"
-							  "SELECT pubname\n"
-							  "FROM pg_catalog.pg_publication p\n"
-							  "		JOIN pg_catalog.pg_publication_rel pr ON p.oid = pr.prpubid\n"
-							  "WHERE pr.prrelid = '%s'\n"
-							  "UNION\n"
-							  "SELECT pubname\n"
-							  "FROM pg_catalog.pg_publication p\n"
-							  "WHERE p.puballsequences AND pg_catalog.pg_relation_is_publishable('%s')\n"
-							  "ORDER BY 1;",
-							  oid, oid, oid, oid);
+		myopt.footers = footers;
+		myopt.topt.default_footer = false;
+		myopt.title = title.data;
+		myopt.translate_header = true;
 
-			result = PSQLexec(buf.data);
-			if (!result)
-				goto error_return;
-			else
-				tuples = PQntuples(result);
+		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
-			if (tuples > 0)
-				printTableAddFooter(&cont, _("Publications:"));
-
-			/* Might be an empty set - that's ok */
-			for (i = 0; i < tuples; i++)
-			{
-				printfPQExpBuffer(&buf, "    \"%s\"",
-								  PQgetvalue(result, i, 0));
-
-				printTableAddFooter(&cont, buf.data);
-			}
-			PQclear(result);
-		}
-
-		printTable(&cont, pset.queryFout, false, pset.logfile);
+		if (footers[0])
+			free(footers[0]);
 
 		retval = true;
 		goto error_return;		/* not an error, just return early */
@@ -2036,11 +1971,6 @@ describeOneTableDetails(const char *schemaname,
 
 	for (i = 0; i < cols; i++)
 		printTableAddHeader(&cont, headers[i], true, 'l');
-
-	res = PSQLexec(buf.data);
-	if (!res)
-		goto error_return;
-	numrows = PQntuples(res);
 
 	/* Generate table cells to be printed */
 	for (i = 0; i < numrows; i++)
@@ -2968,7 +2898,7 @@ describeOneTableDetails(const char *schemaname,
 								  "FROM pg_catalog.pg_publication p\n"
 								  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
 								  "		JOIN pg_catalog.pg_class pc ON pc.relnamespace = pn.pnnspid\n"
-								  "WHERE pc.oid ='%s' and pn.pntype = 't' and pg_catalog.pg_relation_is_publishable('%s')\n"
+								  "WHERE pc.oid ='%s' and pg_catalog.pg_relation_is_publishable('%s')\n"
 								  "UNION\n"
 								  "SELECT pubname\n"
 								  "		, pg_get_expr(pr.prqual, c.oid)\n"
@@ -4872,7 +4802,7 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 		int			i;
 
 		printfPQExpBuffer(&buf,
-						  "SELECT pubname, (CASE WHEN pntype = 't' THEN 'tables' ELSE 'sequences' END) AS pubtype\n"
+						  "SELECT pubname \n"
 						  "FROM pg_catalog.pg_publication p\n"
 						  "		JOIN pg_catalog.pg_publication_namespace pn ON p.oid = pn.pnpubid\n"
 						  "		JOIN pg_catalog.pg_namespace n ON n.oid = pn.pnnspid \n"
@@ -4901,9 +4831,8 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 			/* Might be an empty set - that's ok */
 			for (i = 0; i < pub_schema_tuples; i++)
 			{
-				printfPQExpBuffer(&buf, "    \"%s\" (%s)",
-								  PQgetvalue(result, i, 0),
-								  PQgetvalue(result, i, 1));
+				printfPQExpBuffer(&buf, "    \"%s\"",
+								  PQgetvalue(result, i, 0));
 
 				footers[i + 1] = pg_strdup(buf.data);
 			}
@@ -5908,7 +5837,7 @@ listPublications(const char *pattern)
 	PQExpBufferData buf;
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
-	static const bool translate_columns[] = {false, false, false, false, false, false, false, false, false, false};
+	static const bool translate_columns[] = {false, false, false, false, false, false, false, false};
 
 	if (pset.sversion < 100000)
 	{
@@ -5922,45 +5851,23 @@ listPublications(const char *pattern)
 
 	initPQExpBuffer(&buf);
 
-	if (pset.sversion >= 150000)
-		printfPQExpBuffer(&buf,
-						  "SELECT pubname AS \"%s\",\n"
-						  "  pg_catalog.pg_get_userbyid(pubowner) AS \"%s\",\n"
-						  "  puballtables AS \"%s\",\n"
-						  "  puballsequences AS \"%s\",\n"
-						  "  pubinsert AS \"%s\",\n"
-						  "  pubupdate AS \"%s\",\n"
-						  "  pubdelete AS \"%s\"",
-						  gettext_noop("Name"),
-						  gettext_noop("Owner"),
-						  gettext_noop("All tables"),
-						  gettext_noop("All sequences"),
-						  gettext_noop("Inserts"),
-						  gettext_noop("Updates"),
-						  gettext_noop("Deletes"));
-	else
-		printfPQExpBuffer(&buf,
-						  "SELECT pubname AS \"%s\",\n"
-						  "  pg_catalog.pg_get_userbyid(pubowner) AS \"%s\",\n"
-						  "  puballtables AS \"%s\",\n"
-						  "  pubinsert AS \"%s\",\n"
-						  "  pubupdate AS \"%s\",\n"
-						  "  pubdelete AS \"%s\"",
-						  gettext_noop("Name"),
-						  gettext_noop("Owner"),
-						  gettext_noop("All tables"),
-						  gettext_noop("Inserts"),
-						  gettext_noop("Updates"),
-						  gettext_noop("Deletes"));
-
+	printfPQExpBuffer(&buf,
+					  "SELECT pubname AS \"%s\",\n"
+					  "  pg_catalog.pg_get_userbyid(pubowner) AS \"%s\",\n"
+					  "  puballtables AS \"%s\",\n"
+					  "  pubinsert AS \"%s\",\n"
+					  "  pubupdate AS \"%s\",\n"
+					  "  pubdelete AS \"%s\"",
+					  gettext_noop("Name"),
+					  gettext_noop("Owner"),
+					  gettext_noop("All tables"),
+					  gettext_noop("Inserts"),
+					  gettext_noop("Updates"),
+					  gettext_noop("Deletes"));
 	if (pset.sversion >= 110000)
 		appendPQExpBuffer(&buf,
 						  ",\n  pubtruncate AS \"%s\"",
 						  gettext_noop("Truncates"));
-	if (pset.sversion >= 150000)
-		appendPQExpBuffer(&buf,
-						  ",\n  pubsequence AS \"%s\"",
-						  gettext_noop("Sequences"));
 	if (pset.sversion >= 130000)
 		appendPQExpBuffer(&buf,
 						  ",\n  pubviaroot AS \"%s\"",
@@ -6050,7 +5957,6 @@ describePublications(const char *pattern)
 	PGresult   *res;
 	bool		has_pubtruncate;
 	bool		has_pubviaroot;
-	bool		has_pubsequence;
 
 	PQExpBufferData title;
 	printTableContent cont;
@@ -6067,7 +5973,6 @@ describePublications(const char *pattern)
 
 	has_pubtruncate = (pset.sversion >= 110000);
 	has_pubviaroot = (pset.sversion >= 130000);
-	has_pubsequence = (pset.sversion >= 150000);
 
 	initPQExpBuffer(&buf);
 
@@ -6075,17 +5980,12 @@ describePublications(const char *pattern)
 					  "SELECT oid, pubname,\n"
 					  "  pg_catalog.pg_get_userbyid(pubowner) AS owner,\n"
 					  "  puballtables, pubinsert, pubupdate, pubdelete");
-
 	if (has_pubtruncate)
 		appendPQExpBufferStr(&buf,
 							 ", pubtruncate");
 	if (has_pubviaroot)
 		appendPQExpBufferStr(&buf,
 							 ", pubviaroot");
-	if (has_pubsequence)
-		appendPQExpBufferStr(&buf,
-							 ", puballsequences, pubsequence");
-
 	appendPQExpBufferStr(&buf,
 						 "\nFROM pg_catalog.pg_publication\n");
 
@@ -6126,7 +6026,6 @@ describePublications(const char *pattern)
 		char	   *pubid = PQgetvalue(res, i, 0);
 		char	   *pubname = PQgetvalue(res, i, 1);
 		bool		puballtables = strcmp(PQgetvalue(res, i, 3), "t") == 0;
-		bool		puballsequences = strcmp(PQgetvalue(res, i, 9), "t") == 0;
 		printTableOpt myopt = pset.popt.topt;
 
 		if (has_pubtruncate)
@@ -6134,43 +6033,29 @@ describePublications(const char *pattern)
 		if (has_pubviaroot)
 			ncols++;
 
-		/* sequences have two extra columns (puballsequences, pubsequences) */
-		if (has_pubsequence)
-			ncols += 2;
-
 		initPQExpBuffer(&title);
 		printfPQExpBuffer(&title, _("Publication %s"), pubname);
 		printTableInit(&cont, &myopt, title.data, ncols, nrows);
 
 		printTableAddHeader(&cont, gettext_noop("Owner"), true, align);
 		printTableAddHeader(&cont, gettext_noop("All tables"), true, align);
-		if (has_pubsequence)
-			printTableAddHeader(&cont, gettext_noop("All sequences"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Inserts"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Updates"), true, align);
 		printTableAddHeader(&cont, gettext_noop("Deletes"), true, align);
 		if (has_pubtruncate)
 			printTableAddHeader(&cont, gettext_noop("Truncates"), true, align);
-		if (has_pubsequence)
-			printTableAddHeader(&cont, gettext_noop("Sequences"), true, align);
 		if (has_pubviaroot)
 			printTableAddHeader(&cont, gettext_noop("Via root"), true, align);
 
-		printTableAddCell(&cont, PQgetvalue(res, i, 2), false, false); /* owner */
-		printTableAddCell(&cont, PQgetvalue(res, i, 3), false, false); /* all tables */
-
-		if (has_pubsequence)
-			printTableAddCell(&cont, PQgetvalue(res, i, 9), false, false); /* all sequences */
-
-		printTableAddCell(&cont, PQgetvalue(res, i, 4), false, false); /* insert */
-		printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false); /* update */
-		printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false); /* delete */
+		printTableAddCell(&cont, PQgetvalue(res, i, 2), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 3), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 4), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 5), false, false);
+		printTableAddCell(&cont, PQgetvalue(res, i, 6), false, false);
 		if (has_pubtruncate)
-			printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false); /* truncate */
-		if (has_pubsequence)
-			printTableAddCell(&cont, PQgetvalue(res, i, 10), false, false); /* sequence */
+			printTableAddCell(&cont, PQgetvalue(res, i, 7), false, false);
 		if (has_pubviaroot)
-			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false); /* via root */
+			printTableAddCell(&cont, PQgetvalue(res, i, 8), false, false);
 
 		if (!puballtables)
 		{
@@ -6201,7 +6086,6 @@ describePublications(const char *pattern)
 							  "WHERE c.relnamespace = n.oid\n"
 							  "  AND c.oid = pr.prrelid\n"
 							  "  AND pr.prpubid = '%s'\n"
-							  "  AND c.relkind != 'S'\n" /* exclude sequences */
 							  "ORDER BY 1,2", pubid);
 			if (!addFooterToPublicationDesc(&buf, "Tables:", false, &cont))
 				goto error_return;
@@ -6213,40 +6097,9 @@ describePublications(const char *pattern)
 								  "SELECT n.nspname\n"
 								  "FROM pg_catalog.pg_namespace n\n"
 								  "     JOIN pg_catalog.pg_publication_namespace pn ON n.oid = pn.pnnspid\n"
-								  "WHERE pn.pnpubid = '%s' AND pn.pntype = 't'\n"
+								  "WHERE pn.pnpubid = '%s'\n"
 								  "ORDER BY 1", pubid);
 				if (!addFooterToPublicationDesc(&buf, "Tables from schemas:",
-												true, &cont))
-					goto error_return;
-			}
-		}
-
-		if (!puballsequences)
-		{
-			/* Get the sequences for the specified publication */
-			printfPQExpBuffer(&buf,
-							  "SELECT n.nspname, c.relname, NULL, NULL\n"
-							  "FROM pg_catalog.pg_class c,\n"
-							  "     pg_catalog.pg_namespace n,\n"
-							  "     pg_catalog.pg_publication_rel pr\n"
-							  "WHERE c.relnamespace = n.oid\n"
-							  "  AND c.oid = pr.prrelid\n"
-							  "  AND pr.prpubid = '%s'\n"
-							  "  AND c.relkind = 'S'\n" /* only sequences */
-							  "ORDER BY 1,2", pubid);
-			if (!addFooterToPublicationDesc(&buf, "Sequences:", false, &cont))
-				goto error_return;
-
-			if (pset.sversion >= 150000)
-			{
-				/* Get the schemas for the specified publication */
-				printfPQExpBuffer(&buf,
-								  "SELECT n.nspname\n"
-								  "FROM pg_catalog.pg_namespace n\n"
-								  "     JOIN pg_catalog.pg_publication_namespace pn ON n.oid = pn.pnnspid\n"
-								  "WHERE pn.pnpubid = '%s' AND pn.pntype = 's'\n"
-								  "ORDER BY 1", pubid);
-				if (!addFooterToPublicationDesc(&buf, "Sequences from schemas:",
 												true, &cont))
 					goto error_return;
 			}

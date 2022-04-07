@@ -1941,14 +1941,12 @@ get_object_address_publication_schema(List *object, bool missing_ok)
 	char	   *pubname;
 	char	   *schemaname;
 	Oid			schemaid;
-	char	   *objtype;
 
 	ObjectAddressSet(address, PublicationNamespaceRelationId, InvalidOid);
 
 	/* Fetch schema name and publication name from input list */
 	schemaname = strVal(linitial(object));
 	pubname = strVal(lsecond(object));
-	objtype = strVal(lthird(object));
 
 	schemaid = get_namespace_oid(schemaname, missing_ok);
 	if (!OidIsValid(schemaid))
@@ -1961,12 +1959,10 @@ get_object_address_publication_schema(List *object, bool missing_ok)
 
 	/* Find the publication schema mapping in syscache */
 	address.objectId =
-		GetSysCacheOid3(PUBLICATIONNAMESPACEMAP,
+		GetSysCacheOid2(PUBLICATIONNAMESPACEMAP,
 						Anum_pg_publication_namespace_oid,
 						ObjectIdGetDatum(schemaid),
-						ObjectIdGetDatum(pub->oid),
-						CharGetDatum(objtype[0]));
-
+						ObjectIdGetDatum(pub->oid));
 	if (!OidIsValid(address.objectId) && !missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -2247,6 +2243,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_DOMCONSTRAINT:
 		case OBJECT_CAST:
 		case OBJECT_USER_MAPPING:
+		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
 		case OBJECT_DEFACL:
 		case OBJECT_TRANSFORM:
@@ -2271,7 +2268,6 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			/* fall through to check args length */
 			/* FALLTHROUGH */
 		case OBJECT_OPERATOR:
-		case OBJECT_PUBLICATION_NAMESPACE:
 			if (list_length(args) != 2)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2343,8 +2339,6 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 			objnode = (Node *) list_make2(name, linitial(args));
 			break;
 		case OBJECT_PUBLICATION_NAMESPACE:
-			objnode = (Node *) list_make3(linitial(name), linitial(args), lsecond(args));
-			break;
 		case OBJECT_USER_MAPPING:
 			objnode = (Node *) list_make2(linitial(name), linitial(args));
 			break;
@@ -2900,12 +2894,11 @@ get_catalog_object_by_oid(Relation catalog, AttrNumber oidcol, Oid objectId)
  *
  * Get publication name and schema name from the object address into pubname and
  * nspname. Both pubname and nspname are palloc'd strings which will be freed by
- * the caller. The last parameter specifies which object type is included from
- * the schema.
+ * the caller.
  */
 static bool
 getPublicationSchemaInfo(const ObjectAddress *object, bool missing_ok,
-						 char **pubname, char **nspname, char **objtype)
+						 char **pubname, char **nspname)
 {
 	HeapTuple	tup;
 	Form_pg_publication_namespace pnform;
@@ -2940,13 +2933,6 @@ getPublicationSchemaInfo(const ObjectAddress *object, bool missing_ok,
 				 schemaid);
 		return false;
 	}
-
-	/*
-	 * The type is always a single character, but we need to pass it as a string,
-	 * so allocate two charaters and set the first one. The second one is \0.
-	 */
-	*objtype = palloc0(2);
-	*objtype[0] = pnform->pntype;
 
 	ReleaseSysCache(tup);
 	return true;
@@ -3979,17 +3965,15 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 			{
 				char	   *pubname;
 				char	   *nspname;
-				char	   *objtype;
 
 				if (!getPublicationSchemaInfo(object, missing_ok,
-											  &pubname, &nspname, &objtype))
+											  &pubname, &nspname))
 					break;
 
-				appendStringInfo(&buffer, _("publication of schema %s in publication %s type %s"),
-								 nspname, pubname, objtype);
+				appendStringInfo(&buffer, _("publication of schema %s in publication %s"),
+								 nspname, pubname);
 				pfree(pubname);
 				pfree(nspname);
-				pfree(objtype);
 				break;
 			}
 
@@ -5816,23 +5800,17 @@ getObjectIdentityParts(const ObjectAddress *object,
 			{
 				char	   *pubname;
 				char	   *nspname;
-				char	   *objtype;
 
 				if (!getPublicationSchemaInfo(object, missing_ok, &pubname,
-											  &nspname, &objtype))
+											  &nspname))
 					break;
-				appendStringInfo(&buffer, "%s in publication %s type %s",
-								 nspname, pubname, objtype);
+				appendStringInfo(&buffer, "%s in publication %s",
+								 nspname, pubname);
 
 				if (objargs)
 					*objargs = list_make1(pubname);
 				else
 					pfree(pubname);
-
-				if (objargs)
-					*objargs = lappend(*objargs, objtype);
-				else
-					pfree(objtype);
 
 				if (objname)
 					*objname = list_make1(nspname);

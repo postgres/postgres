@@ -42,7 +42,6 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_publication_namespace.h"
 #include "catalog/pg_statistic_ext.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
@@ -16409,14 +16408,11 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 	 * Check that setting the relation to a different schema won't result in a
 	 * publication having both a schema and the same schema's table, as this
 	 * is not supported.
-	 *
-	 * XXX We do this for tables and sequences, but it's better to keep the two
-	 * blocks separate, to make the strings easier to translate.
 	 */
 	if (stmt->objectType == OBJECT_TABLE)
 	{
 		ListCell   *lc;
-		List	   *schemaPubids = GetSchemaPublications(nspOid, PUB_OBJTYPE_TABLE);
+		List	   *schemaPubids = GetSchemaPublications(nspOid);
 		List	   *relPubids = GetRelationPublications(RelationGetRelid(rel));
 
 		foreach(lc, relPubids)
@@ -16429,27 +16425,6 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 						errmsg("cannot move table \"%s\" to schema \"%s\"",
 							   RelationGetRelationName(rel), stmt->newschema),
 						errdetail("The schema \"%s\" and same schema's table \"%s\" cannot be part of the same publication \"%s\".",
-								  stmt->newschema,
-								  RelationGetRelationName(rel),
-								  get_publication_name(pubid, false)));
-		}
-	}
-	else if (stmt->objectType == OBJECT_SEQUENCE)
-	{
-		ListCell   *lc;
-		List	   *schemaPubids = GetSchemaPublications(nspOid, PUB_OBJTYPE_SEQUENCE);
-		List	   *relPubids = GetRelationPublications(RelationGetRelid(rel));
-
-		foreach(lc, relPubids)
-		{
-			Oid			pubid = lfirst_oid(lc);
-
-			if (list_member_oid(schemaPubids, pubid))
-				ereport(ERROR,
-						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("cannot move sequence \"%s\" to schema \"%s\"",
-							   RelationGetRelationName(rel), stmt->newschema),
-						errdetail("The schema \"%s\" and same schema's sequence \"%s\" cannot be part of the same publication \"%s\".",
 								  stmt->newschema,
 								  RelationGetRelationName(rel),
 								  get_publication_name(pubid, false)));

@@ -22,21 +22,14 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
-    [ FOR ALL <replaceable class="parameter">object_type</replaceable> [, ...]
+    [ FOR ALL TABLES
       | FOR <replaceable class="parameter">publication_object</replaceable> [, ... ] ]
     [ WITH ( <replaceable class="parameter">publication_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] ) ]
-
-<phrase>where <replaceable class="parameter">object type</replaceable> is one of:</phrase>
-
-    TABLES
-    SEQUENCES
 
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
-    SEQUENCE <replaceable class="parameter">sequence_name</replaceable> [ * ] [, ... ]
     ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
-    ALL SEQUENCES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -122,42 +115,26 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FOR SEQUENCE</literal></term>
-    <listitem>
-     <para>
-      Specifies a list of sequences to add to the publication.
-     </para>
-
-     <para>
-      Specifying a sequence that is part of a schema specified by <literal>FOR
-      ALL SEQUENCES IN SCHEMA</literal> is not supported.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term><literal>FOR ALL TABLES</literal></term>
-    <term><literal>FOR ALL SEQUENCES</literal></term>
     <listitem>
      <para>
-      Marks the publication as one that replicates changes for all tables/sequences in
-      the database, including tables/sequences created in the future.
+      Marks the publication as one that replicates changes for all tables in
+      the database, including tables created in the future.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term><literal>FOR ALL TABLES IN SCHEMA</literal></term>
-    <term><literal>FOR ALL SEQUENCES IN SCHEMA</literal></term>
     <listitem>
      <para>
-      Marks the publication as one that replicates changes for all sequences/tables in
-      the specified list of schemas, including sequences/tables created in the future.
+      Marks the publication as one that replicates changes for all tables in
+      the specified list of schemas, including tables created in the future.
      </para>
 
      <para>
-      Specifying a schema along with a sequence/table which belongs to the specified
-      schema using <literal>FOR SEQUENCE</literal>/<literal>FOR TABLE</literal> is not supported.
+      Specifying a schema along with a table which belongs to the specified
+      schema using <literal>FOR TABLE</literal> is not supported.
      </para>
 
      <para>
@@ -232,9 +209,10 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   If <literal>FOR TABLE</literal>, <literal>FOR SEQUENCE</literal>, etc. is
-   not specified, then the publication starts out with an empty set of tables
-   and sequences.  That is useful if objects are to be added later.
+   If <literal>FOR TABLE</literal>, <literal>FOR ALL TABLES</literal> or
+   <literal>FOR ALL TABLES IN SCHEMA</literal> are not specified, then the
+   publication starts out with an empty set of tables.  That is useful if
+   tables or schemas are to be added later.
   </para>
 
   <para>
@@ -249,9 +227,10 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   To add a table or a sequence to a publication, the invoking user must
-   have ownership rights on the object.  The <command>FOR ALL ...</command>
-   clauses require the invoking user to be a superuser.
+   To add a table to a publication, the invoking user must have ownership
+   rights on the table.  The <command>FOR ALL TABLES</command> and
+   <command>FOR ALL TABLES IN SCHEMA</command> clauses require the invoking
+   user to be a superuser.
   </para>
 
   <para>
