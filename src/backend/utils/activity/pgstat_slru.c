@@ -18,18 +18,21 @@
 #include "postgres.h"
 
 #include "utils/pgstat_internal.h"
+#include "utils/timestamp.h"
 
 
-static inline PgStat_MsgSLRU *get_slru_entry(int slru_idx);
+static inline PgStat_SLRUStats *get_slru_entry(int slru_idx);
+static void pgstat_reset_slru_counter_internal(int index, TimestampTz ts);
 
 
 /*
- * SLRU statistics counts waiting to be sent to the collector.  These are
- * stored directly in stats message format so they can be sent without needing
- * to copy things around.  We assume this variable inits to zeroes.  Entries
- * are one-to-one with slru_names[].
+ * SLRU statistics counts waiting to be flushed out.  We assume this variable
+ * inits to zeroes.  Entries are one-to-one with slru_names[].  Changes of
+ * SLRU counters are reported within critical sections so we use static memory
+ * in order to avoid memory allocation.
  */
-static PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
+static PgStat_SLRUStats pending_SLRUStats[SLRU_NUM_ELEMENTS];
+bool		have_slrustats = false;
 
 
 /*
@@ -41,17 +44,11 @@ static PgStat_MsgSLRU SLRUStats[SLRU_NUM_ELEMENTS];
 void
 pgstat_reset_slru(const char *name)
 {
-	PgStat_MsgResetslrucounter msg;
+	TimestampTz ts = GetCurrentTimestamp();
 
 	AssertArg(name != NULL);
 
-	if (pgStatSock == PGINVALID_SOCKET)
-		return;
-
-	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETSLRUCOUNTER);
-	msg.m_index = pgstat_get_slru_index(name);
-
-	pgstat_send(&msg, sizeof(msg));
+	pgstat_reset_slru_counter_internal(pgstat_get_slru_index(name), ts);
 }
 
 /*
@@ -61,43 +58,55 @@ pgstat_reset_slru(const char *name)
 void
 pgstat_count_slru_page_zeroed(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_blocks_zeroed += 1;
+	get_slru_entry(slru_idx)->blocks_zeroed += 1;
 }
 
 void
 pgstat_count_slru_page_hit(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_blocks_hit += 1;
+	get_slru_entry(slru_idx)->blocks_hit += 1;
 }
 
 void
 pgstat_count_slru_page_exists(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_blocks_exists += 1;
+	get_slru_entry(slru_idx)->blocks_exists += 1;
 }
 
 void
 pgstat_count_slru_page_read(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_blocks_read += 1;
+	get_slru_entry(slru_idx)->blocks_read += 1;
 }
 
 void
 pgstat_count_slru_page_written(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_blocks_written += 1;
+	get_slru_entry(slru_idx)->blocks_written += 1;
 }
 
 void
 pgstat_count_slru_flush(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_flush += 1;
+	get_slru_entry(slru_idx)->flush += 1;
 }
 
 void
 pgstat_count_slru_truncate(int slru_idx)
 {
-	get_slru_entry(slru_idx)->m_truncate += 1;
+	get_slru_entry(slru_idx)->truncate += 1;
+}
+
+/*
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the slru statistics struct.
+ */
+PgStat_SLRUStats *
+pgstat_fetch_slru(void)
+{
+	pgstat_snapshot_fixed(PGSTAT_KIND_SLRU);
+
+	return pgStatLocal.snapshot.slru;
 }
 
 /*
@@ -135,45 +144,81 @@ pgstat_get_slru_index(const char *name)
 }
 
 /*
- * Send SLRU statistics to the collector
+ * Flush out locally pending SLRU stats entries
+ *
+ * If nowait is true, this function returns false on lock failure. Otherwise
+ * this function always returns true. Writer processes are mutually excluded
+ * using LWLock, but readers are expected to use change-count protocol to avoid
+ * interference with writers.
+ *
+ * If nowait is true, this function returns true if the lock could not be
+ * acquired. Otherwise return false.
  */
-void
-pgstat_send_slru(void)
+bool
+pgstat_slru_flush(bool nowait)
 {
-	/* We assume this initializes to zeroes */
-	static const PgStat_MsgSLRU all_zeroes;
+	PgStatShared_SLRU *stats_shmem = &pgStatLocal.shmem->slru;
+	int			i;
 
-	for (int i = 0; i < SLRU_NUM_ELEMENTS; i++)
+	if (!have_slrustats)
+		return false;
+
+	if (!nowait)
+		LWLockAcquire(&stats_shmem->lock, LW_EXCLUSIVE);
+	else if (!LWLockConditionalAcquire(&stats_shmem->lock, LW_EXCLUSIVE))
+		return true;
+
+	for (i = 0; i < SLRU_NUM_ELEMENTS; i++)
 	{
-		/*
-		 * This function can be called even if nothing at all has happened. In
-		 * this case, avoid sending a completely empty message to the stats
-		 * collector.
-		 */
-		if (memcmp(&SLRUStats[i], &all_zeroes, sizeof(PgStat_MsgSLRU)) == 0)
-			continue;
+		PgStat_SLRUStats *sharedent = &stats_shmem->stats[i];
+		PgStat_SLRUStats *pendingent = &pending_SLRUStats[i];
 
-		/* set the SLRU type before each send */
-		SLRUStats[i].m_index = i;
-
-		/*
-		 * Prepare and send the message
-		 */
-		pgstat_setheader(&SLRUStats[i].m_hdr, PGSTAT_MTYPE_SLRU);
-		pgstat_send(&SLRUStats[i], sizeof(PgStat_MsgSLRU));
-
-		/*
-		 * Clear out the statistics buffer, so it can be re-used.
-		 */
-		MemSet(&SLRUStats[i], 0, sizeof(PgStat_MsgSLRU));
+#define SLRU_ACC(fld) sharedent->fld += pendingent->fld
+		SLRU_ACC(blocks_zeroed);
+		SLRU_ACC(blocks_hit);
+		SLRU_ACC(blocks_read);
+		SLRU_ACC(blocks_written);
+		SLRU_ACC(blocks_exists);
+		SLRU_ACC(flush);
+		SLRU_ACC(truncate);
+#undef SLRU_ACC
 	}
+
+	/* done, clear the pending entry */
+	MemSet(pending_SLRUStats, 0, sizeof(pending_SLRUStats));
+
+	LWLockRelease(&stats_shmem->lock);
+
+	have_slrustats = false;
+
+	return false;
+}
+
+void
+pgstat_slru_reset_all_cb(TimestampTz ts)
+{
+	for (int i = 0; i < SLRU_NUM_ELEMENTS; i++)
+		pgstat_reset_slru_counter_internal(i, ts);
+}
+
+void
+pgstat_slru_snapshot_cb(void)
+{
+	PgStatShared_SLRU *stats_shmem = &pgStatLocal.shmem->slru;
+
+	LWLockAcquire(&stats_shmem->lock, LW_SHARED);
+
+	memcpy(pgStatLocal.snapshot.slru, &stats_shmem->stats,
+		   sizeof(stats_shmem->stats));
+
+	LWLockRelease(&stats_shmem->lock);
 }
 
 /*
  * Returns pointer to entry with counters for given SLRU (based on the name
  * stored in SlruCtl as lwlock tranche name).
  */
-static inline PgStat_MsgSLRU *
+static inline PgStat_SLRUStats *
 get_slru_entry(int slru_idx)
 {
 	pgstat_assert_is_up();
@@ -186,5 +231,20 @@ get_slru_entry(int slru_idx)
 
 	Assert((slru_idx >= 0) && (slru_idx < SLRU_NUM_ELEMENTS));
 
-	return &SLRUStats[slru_idx];
+	have_slrustats = true;
+
+	return &pending_SLRUStats[slru_idx];
+}
+
+static void
+pgstat_reset_slru_counter_internal(int index, TimestampTz ts)
+{
+	PgStatShared_SLRU *stats_shmem = &pgStatLocal.shmem->slru;
+
+	LWLockAcquire(&stats_shmem->lock, LW_EXCLUSIVE);
+
+	memset(&stats_shmem->stats[index], 0, sizeof(PgStat_SLRUStats));
+	stats_shmem->stats[index].stat_reset_timestamp = ts;
+
+	LWLockRelease(&stats_shmem->lock);
 }

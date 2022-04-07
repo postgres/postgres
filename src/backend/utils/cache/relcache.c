@@ -73,6 +73,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
+#include "pgstat.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rowsecurity.h"
 #include "storage/lmgr.h"
@@ -2409,6 +2410,9 @@ RelationDestroyRelation(Relation relation, bool remember_tupdesc)
 	 */
 	RelationCloseSmgr(relation);
 
+	/* break mutual link with stats entry */
+	pgstat_unlink_relation(relation);
+
 	/*
 	 * Free all the subsidiary data structures of the relcache entry, then the
 	 * entry itself.
@@ -2716,8 +2720,9 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(RowSecurityDesc *, rd_rsdesc);
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
-		/* pgstat_info must be preserved */
+		/* pgstat_info / enabled must be preserved */
 		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
+		SWAPFIELD(bool, pgstat_enabled);
 		/* preserve old partition key if we have one */
 		if (keep_partkey)
 		{

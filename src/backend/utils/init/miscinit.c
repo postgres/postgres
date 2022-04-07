@@ -288,9 +288,6 @@ GetBackendTypeDesc(BackendType backendType)
 		case B_ARCHIVER:
 			backendDesc = "archiver";
 			break;
-		case B_STATS_COLLECTOR:
-			backendDesc = "stats collector";
-			break;
 		case B_LOGGER:
 			backendDesc = "logger";
 			break;

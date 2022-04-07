@@ -68,6 +68,7 @@ static void
 AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 {
 	dlist_mutable_iter iter;
+	int			not_freed_count = 0;
 
 	if (xact_state->pending_drops_count == 0)
 	{
@@ -79,6 +80,7 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 	{
 		PgStat_PendingDroppedStatsItem *pending =
 		dlist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
+		xl_xact_stats_item *it = &pending->item;
 
 		if (isCommit && !pending->is_create)
 		{
@@ -86,7 +88,8 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that dropped an object committed. Drop the stats
 			 * too.
 			 */
-			/* will do work in subsequent commit */
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+				not_freed_count++;
 		}
 		else if (!isCommit && pending->is_create)
 		{
@@ -94,13 +97,17 @@ AtEOXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state, bool isCommit)
 			 * Transaction that created an object aborted. Drop the stats
 			 * associated with the object.
 			 */
-			/* will do work in subsequent commit */
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+				not_freed_count++;
 		}
 
 		dlist_delete(&pending->node);
 		xact_state->pending_drops_count--;
 		pfree(pending);
 	}
+
+	if (not_freed_count > 0)
+		pgstat_request_entry_refs_gc();
 }
 
 /*
@@ -135,6 +142,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 {
 	PgStat_SubXactStatus *parent_xact_state;
 	dlist_mutable_iter iter;
+	int			not_freed_count = 0;
 
 	if (xact_state->pending_drops_count == 0)
 		return;
@@ -145,6 +153,7 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 	{
 		PgStat_PendingDroppedStatsItem *pending =
 		dlist_container(PgStat_PendingDroppedStatsItem, node, iter.cur);
+		xl_xact_stats_item *it = &pending->item;
 
 		dlist_delete(&pending->node);
 		xact_state->pending_drops_count--;
@@ -155,7 +164,8 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 			 * Subtransaction creating a new stats object aborted. Drop the
 			 * stats object.
 			 */
-			/* will do work in subsequent commit */
+			if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+				not_freed_count++;
 			pfree(pending);
 		}
 		else if (isCommit)
@@ -175,6 +185,8 @@ AtEOSubXact_PgStat_DroppedStats(PgStat_SubXactStatus *xact_state,
 	}
 
 	Assert(xact_state->pending_drops_count == 0);
+	if (not_freed_count > 0)
+		pgstat_request_entry_refs_gc();
 }
 
 /*
@@ -307,13 +319,21 @@ pgstat_get_transactional_drops(bool isCommit, xl_xact_stats_item **items)
 void
 pgstat_execute_transactional_drops(int ndrops, struct xl_xact_stats_item *items, bool is_redo)
 {
+	int			not_freed_count = 0;
+
 	if (ndrops == 0)
 		return;
 
 	for (int i = 0; i < ndrops; i++)
 	{
-		/* will do work in subsequent commit */
+		xl_xact_stats_item *it = &items[i];
+
+		if (!pgstat_drop_entry(it->kind, it->dboid, it->objoid))
+			not_freed_count++;
 	}
+
+	if (not_freed_count > 0)
+		pgstat_request_entry_refs_gc();
 }
 
 static void
@@ -345,6 +365,15 @@ create_drop_transactional_internal(PgStat_Kind kind, Oid dboid, Oid objoid, bool
 void
 pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
 {
+	if (pgstat_get_entry_ref(kind, dboid, objoid, false, NULL))
+	{
+		ereport(WARNING,
+				errmsg("resetting existing stats for type %s, db=%d, oid=%d",
+					   (pgstat_get_kind_info(kind))->name, dboid, objoid));
+
+		pgstat_reset(kind, dboid, objoid);
+	}
+
 	create_drop_transactional_internal(kind, dboid, objoid, /* create */ true);
 }
 

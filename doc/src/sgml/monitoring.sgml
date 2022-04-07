@@ -1111,10 +1111,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting in main loop of logical replication launcher process.</entry>
      </row>
      <row>
-      <entry><literal>PgStatMain</literal></entry>
-      <entry>Waiting in main loop of statistics collector process.</entry>
-     </row>
-     <row>
       <entry><literal>RecoveryWalStream</literal></entry>
       <entry>Waiting in main loop of startup process for WAL to arrive, during
        streaming recovery.</entry>
@@ -2114,6 +2110,18 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>SerializablePredicateList</literal></entry>
       <entry>Waiting to access the list of predicate locks held by
        serializable transactions.</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatsDSA</literal></entry>
+      <entry>Waiting for stats dynamic shared memory allocator access</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatsHash</literal></entry>
+      <entry>Waiting for stats shared memory hash table access</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatsData</literal></entry>
+      <entry>Waiting for shared memory stats data access</entry>
      </row>
      <row>
       <entry><literal>SerializableXactHash</literal></entry>
@@ -5142,7 +5150,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>timestamp with time zone</returnvalue>
        </para>
        <para>
-        Returns the timestamp of the current statistics snapshot.
+        Returns the timestamp of the current statistics snapshot, or NULL if
+        no statistics snapshot has been taken.
        </para></entry>
       </row>
 

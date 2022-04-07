@@ -20,12 +20,7 @@
 #include "utils/pgstat_internal.h"
 
 
-/*
- * BgWriter global statistics counters.  Stored directly in a stats
- * message structure so they can be sent without needing to copy things
- * around.  We assume this init to zeroes.
- */
-PgStat_MsgBgWriter PendingBgWriterStats;
+PgStat_BgWriterStats PendingBgWriterStats = {0};
 
 
 /*
@@ -34,27 +29,82 @@ PgStat_MsgBgWriter PendingBgWriterStats;
 void
 pgstat_report_bgwriter(void)
 {
-	/* We assume this initializes to zeroes */
-	static const PgStat_MsgBgWriter all_zeroes;
+	PgStatShared_BgWriter *stats_shmem = &pgStatLocal.shmem->bgwriter;
+	static const PgStat_BgWriterStats all_zeroes;
 
+	Assert(!pgStatLocal.shmem->is_shutdown);
 	pgstat_assert_is_up();
 
 	/*
 	 * This function can be called even if nothing at all has happened. In
-	 * this case, avoid sending a completely empty message to the stats
-	 * collector.
+	 * this case, avoid unnecessarily modifying the stats entry.
 	 */
-	if (memcmp(&PendingBgWriterStats, &all_zeroes, sizeof(PgStat_MsgBgWriter)) == 0)
+	if (memcmp(&PendingBgWriterStats, &all_zeroes, sizeof(all_zeroes)) == 0)
 		return;
 
-	/*
-	 * Prepare and send the message
-	 */
-	pgstat_setheader(&PendingBgWriterStats.m_hdr, PGSTAT_MTYPE_BGWRITER);
-	pgstat_send(&PendingBgWriterStats, sizeof(PendingBgWriterStats));
+	pgstat_begin_changecount_write(&stats_shmem->changecount);
+
+#define BGWRITER_ACC(fld) stats_shmem->stats.fld += PendingBgWriterStats.fld
+	BGWRITER_ACC(buf_written_clean);
+	BGWRITER_ACC(maxwritten_clean);
+	BGWRITER_ACC(buf_alloc);
+#undef BGWRITER_ACC
+
+	pgstat_end_changecount_write(&stats_shmem->changecount);
 
 	/*
 	 * Clear out the statistics buffer, so it can be re-used.
 	 */
 	MemSet(&PendingBgWriterStats, 0, sizeof(PendingBgWriterStats));
+}
+
+/*
+ * Support function for the SQL-callable pgstat* functions. Returns
+ * a pointer to the bgwriter statistics struct.
+ */
+PgStat_BgWriterStats *
+pgstat_fetch_stat_bgwriter(void)
+{
+	pgstat_snapshot_fixed(PGSTAT_KIND_BGWRITER);
+
+	return &pgStatLocal.snapshot.bgwriter;
+}
+
+void
+pgstat_bgwriter_reset_all_cb(TimestampTz ts)
+{
+	PgStatShared_BgWriter *stats_shmem = &pgStatLocal.shmem->bgwriter;
+
+	/* see explanation above PgStatShared_BgWriter for the reset protocol */
+	LWLockAcquire(&stats_shmem->lock, LW_EXCLUSIVE);
+	pgstat_copy_changecounted_stats(&stats_shmem->reset_offset,
+									&stats_shmem->stats,
+									sizeof(stats_shmem->stats),
+									&stats_shmem->changecount);
+	stats_shmem->stats.stat_reset_timestamp = ts;
+	LWLockRelease(&stats_shmem->lock);
+}
+
+void
+pgstat_bgwriter_snapshot_cb(void)
+{
+	PgStatShared_BgWriter *stats_shmem = &pgStatLocal.shmem->bgwriter;
+	PgStat_BgWriterStats *reset_offset = &stats_shmem->reset_offset;
+	PgStat_BgWriterStats reset;
+
+	pgstat_copy_changecounted_stats(&pgStatLocal.snapshot.bgwriter,
+									&stats_shmem->stats,
+									sizeof(stats_shmem->stats),
+									&stats_shmem->changecount);
+
+	LWLockAcquire(&stats_shmem->lock, LW_SHARED);
+	memcpy(&reset, reset_offset, sizeof(stats_shmem->stats));
+	LWLockRelease(&stats_shmem->lock);
+
+	/* compensate by reset offsets */
+#define BGWRITER_COMP(fld) pgStatLocal.snapshot.bgwriter.fld -= reset.fld;
+	BGWRITER_COMP(buf_written_clean);
+	BGWRITER_COMP(maxwritten_clean);
+	BGWRITER_COMP(buf_alloc);
+#undef BGWRITER_COMP
 }

@@ -28,6 +28,7 @@
 
 #include "access/amapi.h"
 #include "access/table.h"
+#include "access/xact.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "optimizer/paths.h"
@@ -35,6 +36,7 @@
 #include "storage/bufmgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 
 /*
  * DSM keys for parallel vacuum.  Unlike other parallel execution code, since

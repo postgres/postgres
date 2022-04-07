@@ -23,6 +23,7 @@ OBJS = \
 	pgstat_function.o \
 	pgstat_relation.o \
 	pgstat_replslot.o \
+	pgstat_shmem.o \
 	pgstat_slru.o \
 	pgstat_subscription.o \
 	pgstat_wal.o \

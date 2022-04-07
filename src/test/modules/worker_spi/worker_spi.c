@@ -265,7 +265,7 @@ worker_spi_main(Datum main_arg)
 		PopActiveSnapshot();
 		CommitTransactionCommand();
 		debug_query_string = NULL;
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 		pgstat_report_activity(STATE_IDLE, NULL);
 	}
 

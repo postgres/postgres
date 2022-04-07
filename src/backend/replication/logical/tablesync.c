@@ -141,7 +141,7 @@ finish_sync_worker(void)
 	if (IsTransactionState())
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 
 	/* And flush all writes. */
@@ -580,7 +580,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	if (started_tx)
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 }
 
@@ -1386,7 +1386,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 							   MyLogicalRepWorker->relstate,
 							   MyLogicalRepWorker->relstate_lsn);
 	CommitTransactionCommand();
-	pgstat_report_stat(false);
+	pgstat_report_stat(true);
 
 	StartTransactionCommand();
 
@@ -1630,7 +1630,7 @@ AllTablesyncsReady(void)
 	if (started_tx)
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 
 	/*
