@@ -326,6 +326,7 @@ extern void RmgrCleanup(void);
 extern void RmgrNotFound(RmgrId rmid);
 extern void RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr);
 
+#ifndef FRONTEND
 static inline bool
 RmgrIdExists(RmgrId rmid)
 {
@@ -339,6 +340,7 @@ GetRmgr(RmgrId rmid)
 		RmgrNotFound(rmid);
 	return RmgrTable[rmid];
 }
+#endif
 
 /*
  * Exported to support xlog switching from checkpointer
