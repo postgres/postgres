@@ -54,6 +54,14 @@
 #define TransactionIdToPage(xid) ((xid) / (TransactionId) SUBTRANS_XACTS_PER_PAGE)
 #define TransactionIdToEntry(xid) ((xid) % (TransactionId) SUBTRANS_XACTS_PER_PAGE)
 
+/*
+ * Single-item cache for results of SubTransGetTopmostTransaction().  It's
+ * worth having such a cache because we frequently find ourselves repeatedly
+ * checking the same XID, for example when scanning a table just after a
+ * bulk insert, update, or delete.
+ */
+static TransactionId cachedFetchSubXid = InvalidTransactionId;
+static TransactionId cachedFetchTopmostXid = InvalidTransactionId;
 
 /*
  * Link to shared-memory data structures for SUBTRANS control
@@ -155,6 +163,13 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	/* Can't ask about stuff that might not be around anymore */
 	Assert(TransactionIdFollowsOrEquals(xid, TransactionXmin));
 
+	/*
+	 * Before going to the subtrans log, check our single item cache to see if
+	 * we know the result from a previous/recent request.
+	 */
+	if (TransactionIdEquals(xid, cachedFetchSubXid))
+		return cachedFetchTopmostXid;
+
 	while (TransactionIdIsValid(parentXid))
 	{
 		previousXid = parentXid;
@@ -173,6 +188,9 @@ SubTransGetTopmostTransaction(TransactionId xid)
 	}
 
 	Assert(TransactionIdIsValid(previousXid));
+
+	cachedFetchSubXid = xid;
+	cachedFetchTopmostXid = previousXid;
 
 	return previousXid;
 }
