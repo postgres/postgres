@@ -4365,6 +4365,68 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 }
 
 /*
+ * \dconfig
+ *
+ * Describes configuration parameters.
+ */
+bool
+describeConfigurationParameters(const char *pattern, bool verbose,
+								bool showSystem)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+	printfPQExpBuffer(&buf,
+					  "SELECT s.name AS \"%s\", "
+					  "pg_catalog.current_setting(s.name) AS \"%s\"",
+					  gettext_noop("Parameter"),
+					  gettext_noop("Value"));
+
+	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  ", s.vartype AS \"%s\", s.context AS \"%s\", ",
+						  gettext_noop("Type"),
+						  gettext_noop("Context"));
+		if (pset.sversion >= 150000)
+			printACLColumn(&buf, "p.paracl");
+		else
+			appendPQExpBuffer(&buf, "NULL AS \"%s\"",
+							  gettext_noop("Access privileges"));
+	}
+
+	appendPQExpBufferStr(&buf, "\nFROM pg_catalog.pg_settings s\n");
+
+	if (verbose && pset.sversion >= 150000)
+		appendPQExpBufferStr(&buf,
+							 "  LEFT JOIN pg_catalog.pg_parameter_acl p\n"
+							 "  ON pg_catalog.lower(s.name) = p.parname\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern,
+						  false, false,
+						  NULL, "pg_catalog.lower(s.name)", NULL,
+						  NULL);
+
+	appendPQExpBufferStr(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of configuration parameters");
+	myopt.translate_header = true;
+
+	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
  * \dy
  *
  * Describes Event Triggers.

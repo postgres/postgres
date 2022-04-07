@@ -918,8 +918,12 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 	 * Convert shell-style 'pattern' into the regular expression(s) we want to
 	 * execute.  Quoting/escaping into SQL literal format will be done below
 	 * using appendStringLiteralConn().
+	 *
+	 * If the caller provided a schemavar, we want to split the pattern on
+	 * ".", otherwise not.
 	 */
-	patternToSQLRegex(PQclientEncoding(conn), NULL, &schemabuf, &namebuf,
+	patternToSQLRegex(PQclientEncoding(conn), NULL,
+					  (schemavar ? &schemabuf : NULL), &namebuf,
 					  pattern, force_escape);
 
 	/*

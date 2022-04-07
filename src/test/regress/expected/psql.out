@@ -5090,6 +5090,23 @@ List of access methods
  hash  | uuid_ops        | uuid                 | uuid                  |      2 | uuid_hash_extended
 (5 rows)
 
+-- check \dconfig
+set work_mem = 10240;
+\dconfig work_mem
+List of configuration parameters
+ Parameter | Value 
+-----------+-------
+ work_mem  | 10MB
+(1 row)
+
+\dconfig+ work*
+             List of configuration parameters
+ Parameter | Value |  Type   | Context | Access privileges 
+-----------+-------+---------+---------+-------------------
+ work_mem  | 10MB  | integer | user    | 
+(1 row)
+
+reset work_mem;
 -- check \df, \do with argument specifications
 \df *sqrt
                              List of functions

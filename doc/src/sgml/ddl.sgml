@@ -2205,7 +2205,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
       <entry><literal>PARAMETER</literal></entry>
       <entry><literal>sA</literal></entry>
       <entry>none</entry>
-      <entry>none</entry>
+      <entry><literal>\dconfig+</literal></entry>
      </row>
      <row>
       <entry><literal>SCHEMA</literal></entry>

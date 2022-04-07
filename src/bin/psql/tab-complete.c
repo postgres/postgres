@@ -1004,6 +1004,7 @@ static const SchemaQuery Query_for_trigger_of_table = {
 "SELECT nspname FROM pg_catalog.pg_namespace "\
 " WHERE nspname LIKE '%s'"
 
+/* Use COMPLETE_WITH_QUERY_VERBATIM with these queries for GUC names: */
 #define Query_for_list_of_alter_system_set_vars \
 "SELECT name FROM "\
 " (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
@@ -1690,7 +1691,7 @@ psql_completion(const char *text, int start, int end)
 		"\\connect", "\\conninfo", "\\C", "\\cd", "\\copy",
 		"\\copyright", "\\crosstabview",
 		"\\d", "\\da", "\\dA", "\\dAc", "\\dAf", "\\dAo", "\\dAp",
-		"\\db", "\\dc", "\\dC", "\\dd", "\\ddp", "\\dD",
+		"\\db", "\\dc", "\\dconfig", "\\dC", "\\dd", "\\ddp", "\\dD",
 		"\\des", "\\det", "\\deu", "\\dew", "\\dE", "\\df",
 		"\\dF", "\\dFd", "\\dFp", "\\dFt", "\\dg", "\\di", "\\dl", "\\dL",
 		"\\dm", "\\dn", "\\do", "\\dO", "\\dp", "\\dP", "\\dPi", "\\dPt",
@@ -3780,7 +3781,7 @@ psql_completion(const char *text, int start, int end)
 			 TailMatches("GRANT|REVOKE", MatchAny, MatchAny, "ON", "PARAMETER") ||
 			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, "ON", "PARAMETER") ||
 			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", MatchAny, MatchAny, "ON", "PARAMETER"))
-		COMPLETE_WITH_QUERY(Query_for_list_of_alter_system_set_vars);
+		COMPLETE_WITH_QUERY_VERBATIM(Query_for_list_of_alter_system_set_vars);
 
 	else if (TailMatches("GRANT", MatchAny, "ON", "PARAMETER", MatchAny) ||
 			 TailMatches("GRANT", MatchAny, MatchAny, "ON", "PARAMETER", MatchAny))
@@ -4532,6 +4533,8 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_access_methods);
 	else if (TailMatchesCS("\\db*"))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
+	else if (TailMatchesCS("\\dconfig*"))
+		COMPLETE_WITH_QUERY_VERBATIM(Query_for_list_of_show_vars);
 	else if (TailMatchesCS("\\dD*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_domains);
 	else if (TailMatchesCS("\\des*"))

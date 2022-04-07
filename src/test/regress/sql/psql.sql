@@ -1241,6 +1241,12 @@ drop role regress_partitioning_role;
 \dAp+ btree float_ops
 \dAp * pg_catalog.uuid_ops
 
+-- check \dconfig
+set work_mem = 10240;
+\dconfig work_mem
+\dconfig+ work*
+reset work_mem;
+
 -- check \df, \do with argument specifications
 \df *sqrt
 \df *sqrt num*

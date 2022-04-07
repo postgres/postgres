@@ -76,6 +76,10 @@ extern bool listDomains(const char *pattern, bool verbose, bool showSystem);
 /* \dc */
 extern bool listConversions(const char *pattern, bool verbose, bool showSystem);
 
+/* \dconfig */
+extern bool describeConfigurationParameters(const char *pattern, bool verbose,
+											bool showSystem);
+
 /* \dC */
 extern bool listCasts(const char *pattern, bool verbose);
 

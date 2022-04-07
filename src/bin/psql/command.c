@@ -780,7 +780,14 @@ exec_command_d(PsqlScanState scan_state, bool active_branch, const char *cmd)
 				success = describeTablespaces(pattern, show_verbose);
 				break;
 			case 'c':
-				success = listConversions(pattern, show_verbose, show_system);
+				if (strncmp(cmd, "dconfig", 7) == 0)
+					success = describeConfigurationParameters(pattern,
+															  show_verbose,
+															  show_system);
+				else
+					success = listConversions(pattern,
+											  show_verbose,
+											  show_system);
 				break;
 			case 'C':
 				success = listCasts(pattern, show_verbose);
