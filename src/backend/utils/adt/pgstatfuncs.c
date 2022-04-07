@@ -2067,6 +2067,16 @@ pg_stat_clear_snapshot(PG_FUNCTION_ARGS)
 }
 
 
+/* Force statistics to be reported at the next occasion */
+Datum
+pg_stat_force_next_flush(PG_FUNCTION_ARGS)
+{
+	pgstat_force_next_flush();
+
+	PG_RETURN_VOID();
+}
+
+
 /* Reset all counters for the current database */
 Datum
 pg_stat_reset(PG_FUNCTION_ARGS)

@@ -124,7 +124,7 @@ test: plancache limit plpgsql copy2 temp domain rangefuncs prepare conversion tr
 # ----------
 # Another group of parallel tests
 # ----------
-test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain compression memoize
+test: partition_join partition_prune reloptions hash_part indexing partition_aggregate partition_info tuplesort explain compression memoize stats
 
 # event_trigger cannot run concurrently with any test that runs DDL
 # oidjoins is read-only, though, and should run late for best coverage
@@ -132,6 +132,3 @@ test: event_trigger oidjoins
 
 # this test also uses event triggers, so likewise run it by itself
 test: fast_default
-
-# run stats by itself because its delay may be insufficient under heavy load
-test: stats

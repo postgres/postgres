@@ -27,64 +27,6 @@ SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
  WHERE t.relname='tenk2' AND b.relname='tenk2';
 COMMIT;
 
--- function to wait for counters to advance
-create function wait_for_stats() returns void as $$
-declare
-  start_time timestamptz := clock_timestamp();
-  updated1 bool;
-  updated2 bool;
-  updated3 bool;
-  updated4 bool;
-begin
-  SET LOCAL stats_fetch_consistency = snapshot;
-
-  -- We don't want to wait forever.  No timeout suffices if the OS drops our
-  -- stats traffic because an earlier test file left a full UDP buffer.
-  -- Hence, don't use PG_TEST_TIMEOUT_DEFAULT, which may be large for
-  -- can't-happen timeouts.  Exit after 30 seconds.
-  for i in 1 .. 300 loop
-
-    -- With parallel query, the seqscan and indexscan on tenk2 might be done
-    -- in parallel worker processes, which will send their stats counters
-    -- asynchronously to what our own session does.  So we must check for
-    -- those counts to be registered separately from the update counts.
-
-    -- check to see if seqscan has been sensed
-    SELECT (st.seq_scan >= pr.seq_scan + 1) INTO updated1
-      FROM pg_stat_user_tables AS st, pg_class AS cl, prevstats AS pr
-     WHERE st.relname='tenk2' AND cl.relname='tenk2';
-
-    -- check to see if indexscan has been sensed
-    SELECT (st.idx_scan >= pr.idx_scan + 1) INTO updated2
-      FROM pg_stat_user_tables AS st, pg_class AS cl, prevstats AS pr
-     WHERE st.relname='tenk2' AND cl.relname='tenk2';
-
-    -- check to see if all updates have been sensed
-    SELECT (n_tup_ins > 0) INTO updated3
-      FROM pg_stat_user_tables WHERE relname='trunc_stats_test4';
-
-    -- We must also check explicitly that pg_stat_get_snapshot_timestamp has
-    -- advanced, because that comes from the global stats file which might
-    -- be older than the per-DB stats file we got the other values from.
-    SELECT (pr.snap_ts < pg_stat_get_snapshot_timestamp()) INTO updated4
-      FROM prevstats AS pr;
-
-    exit when updated1 and updated2 and updated3 and updated4;
-
-    -- wait a little
-    perform pg_sleep_for('100 milliseconds');
-
-    -- reset stats snapshot so we can test again
-    perform pg_stat_clear_snapshot();
-
-  end loop;
-
-  -- report time waited in postmaster log (where it won't change test output)
-  raise log 'wait_for_stats delayed % seconds',
-    extract(epoch from clock_timestamp() - start_time);
-end
-$$ language plpgsql;
-
 -- test effects of TRUNCATE on n_live_tup/n_dead_tup counters
 CREATE TABLE trunc_stats_test(id serial);
 CREATE TABLE trunc_stats_test1(id serial, stuff text);
@@ -151,16 +93,8 @@ SET enable_bitmapscan TO off;
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 RESET enable_bitmapscan;
 
--- We can't just call wait_for_stats() at this point, because we only
--- transmit stats when the session goes idle, and we probably didn't
--- transmit the last couple of counts yet thanks to the rate-limiting logic
--- in pgstat_report_stat().  But instead of waiting for the rate limiter's
--- timeout to elapse, let's just start a new session.  The old one will
--- then send its stats before dying.
-\c -
-
--- wait for stats collector to update
-SELECT wait_for_stats();
+-- ensure pending stats are flushed
+SELECT pg_stat_force_next_flush();
 
 -- check effects
 BEGIN;
@@ -189,55 +123,6 @@ COMMIT;
 
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
-
--- test BRIN index doesn't block HOT update - we include this test here, as it
--- relies on statistics collector and so it may occasionally fail, especially
--- on slower systems
-CREATE TABLE brin_hot (
-        id  integer PRIMARY KEY,
-        val integer NOT NULL
-) WITH (autovacuum_enabled = off, fillfactor = 70);
-
-INSERT INTO brin_hot SELECT *, 0 FROM generate_series(1, 235);
-CREATE INDEX val_brin ON brin_hot using brin(val);
-
-CREATE FUNCTION wait_for_hot_stats() RETURNS void AS $$
-DECLARE
-        start_time timestamptz := clock_timestamp();
-        updated bool;
-BEGIN
-        -- we don't want to wait forever; loop will exit after 30 seconds
-        FOR i IN 1 .. 300 LOOP
-                SELECT (pg_stat_get_tuples_hot_updated('brin_hot'::regclass::oid) > 0) INTO updated;
-                EXIT WHEN updated;
-
-                -- wait a little
-                PERFORM pg_sleep_for('100 milliseconds');
-                -- reset stats snapshot so we can test again
-                PERFORM pg_stat_clear_snapshot();
-        END LOOP;
-        -- report time waited in postmaster log (where it won't change test output)
-        RAISE log 'wait_for_hot_stats delayed % seconds',
-          EXTRACT(epoch FROM clock_timestamp() - start_time);
-END
-$$ LANGUAGE plpgsql;
-
-UPDATE brin_hot SET val = -3 WHERE id = 42;
-
--- We can't just call wait_for_hot_stats() at this point, because we only
--- transmit stats when the session goes idle, and we probably didn't
--- transmit the last couple of counts yet thanks to the rate-limiting logic
--- in pgstat_report_stat().  But instead of waiting for the rate limiter's
--- timeout to elapse, let's just start a new session.  The old one will
--- then send its stats before dying.
-\c -
-
-SELECT wait_for_hot_stats();
-SELECT pg_stat_get_tuples_hot_updated('brin_hot'::regclass::oid);
-
-DROP TABLE brin_hot;
-DROP FUNCTION wait_for_hot_stats();
-
 
 -- ensure that stats accessors handle NULL input correctly
 SELECT pg_stat_get_replication_slot(NULL);

@@ -526,3 +526,22 @@ SET enable_seqscan = off;
 
 EXPLAIN (COSTS OFF) SELECT * FROM brin_hot_2 WHERE a = 2 AND b = 100;
 SELECT COUNT(*) FROM brin_hot_2 WHERE a = 2 AND b = 100;
+
+
+-- test BRIN index doesn't block HOT update
+CREATE TABLE brin_hot (
+        id  integer PRIMARY KEY,
+        val integer NOT NULL
+) WITH (autovacuum_enabled = off, fillfactor = 70);
+
+INSERT INTO brin_hot SELECT *, 0 FROM generate_series(1, 235);
+CREATE INDEX val_brin ON brin_hot using brin(val);
+
+UPDATE brin_hot SET val = -3 WHERE id = 42;
+
+-- ensure pending stats are flushed
+SELECT pg_stat_force_next_flush();
+
+SELECT pg_stat_get_tuples_hot_updated('brin_hot'::regclass::oid);
+
+DROP TABLE brin_hot;
