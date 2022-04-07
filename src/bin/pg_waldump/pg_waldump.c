@@ -749,7 +749,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 					tot_len;
 		const RmgrDescData *desc;
 
-		if (!RMID_IS_VALID(ri))
+		if (!RmgrIdIsValid(ri))
 			continue;
 
 		desc = GetRmgrDesc(ri);
@@ -761,7 +761,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 			fpi_len = stats->rmgr_stats[ri].fpi_len;
 			tot_len = rec_len + fpi_len;
 
-			if (RMID_IS_CUSTOM(ri) && count == 0)
+			if (RmgrIdIsCustom(ri) && count == 0)
 				continue;
 
 			XLogDumpStatsRow(desc->rm_name,
@@ -1025,7 +1025,7 @@ main(int argc, char **argv)
 					 */
 					if (sscanf(optarg, "custom%03d", &rmid) == 1)
 					{
-						if (!RMID_IS_CUSTOM(rmid))
+						if (!RmgrIdIsCustom(rmid))
 						{
 							pg_log_error("custom resource manager \"%s\" does not exist",
 										 optarg);

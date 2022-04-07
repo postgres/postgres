@@ -101,7 +101,7 @@ RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr)
 		ereport(ERROR, (errmsg("custom resource manager name is invalid"),
 						errhint("Provide a non-empty name for the custom resource manager.")));
 
-	if (!RMID_IS_CUSTOM(rmid))
+	if (!RmgrIdIsCustom(rmid))
 		ereport(ERROR, (errmsg("custom resource manager ID %d is out of range", rmid),
 						errhint("Provide a custom resource manager ID between %d and %d.",
 								RM_MIN_CUSTOM_ID, RM_MAX_CUSTOM_ID)));
@@ -153,7 +153,7 @@ pg_get_wal_resource_managers(PG_FUNCTION_ARGS)
 			continue;
 		values[0] = Int32GetDatum(rmid);
 		values[1] = CStringGetTextDatum(GetRmgr(rmid).rm_name);
-		values[2] = BoolGetDatum(RMID_IS_BUILTIN(rmid));
+		values[2] = BoolGetDatum(RmgrIdIsBuiltin(rmid));
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 

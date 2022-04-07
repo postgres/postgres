@@ -1102,7 +1102,7 @@ ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 							  (uint32) SizeOfXLogRecord, record->xl_tot_len);
 		return false;
 	}
-	if (!RMID_IS_VALID(record->xl_rmid))
+	if (!RmgrIdIsValid(record->xl_rmid))
 	{
 		report_invalid_record(state,
 							  "invalid resource manager ID %u at %X/%X",

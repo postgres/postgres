@@ -37,10 +37,20 @@ typedef enum RmgrIds
 #define RM_N_IDS			(UINT8_MAX + 1)
 #define RM_N_BUILTIN_IDS	(RM_MAX_BUILTIN_ID + 1)
 #define RM_N_CUSTOM_IDS		(RM_MAX_CUSTOM_ID - RM_MIN_CUSTOM_ID + 1)
-#define RMID_IS_BUILTIN(rmid) ((rmid) <= RM_MAX_BUILTIN_ID)
-#define RMID_IS_CUSTOM(rmid) ((rmid) >= RM_MIN_CUSTOM_ID && \
-							  (rmid) <= RM_MAX_CUSTOM_ID)
-#define RMID_IS_VALID(rmid) (RMID_IS_BUILTIN((rmid)) || RMID_IS_CUSTOM((rmid)))
+
+static inline bool
+RmgrIdIsBuiltin(int rmid)
+{
+	return rmid <= RM_MAX_BUILTIN_ID;
+}
+
+static inline bool
+RmgrIdIsCustom(int rmid)
+{
+	return rmid >= RM_MIN_CUSTOM_ID && rmid <= RM_MAX_CUSTOM_ID;
+}
+
+#define RmgrIdIsValid(rmid) (RmgrIdIsBuiltin((rmid)) || RmgrIdIsCustom((rmid)))
 
 /*
  * RmgrId to use for extensions that require an RmgrId, but are still in
