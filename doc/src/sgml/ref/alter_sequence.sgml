@@ -31,6 +31,7 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable>
     [ RESTART [ [ WITH ] <replaceable class="parameter">restart</replaceable> ] ]
     [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table_name</replaceable>.<replaceable class="parameter">column_name</replaceable> | NONE } ]
+ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET { LOGGED | UNLOGGED }
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
 ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
@@ -233,6 +234,17 @@ ALTER SEQUENCE [ IF EXISTS ] <replaceable class="parameter">name</replaceable> S
         If neither <literal>CYCLE</literal> or <literal>NO
         CYCLE</literal> are specified, the old cycle behavior will be
         maintained.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>SET { LOGGED | UNLOGGED }</literal></term>
+      <listitem>
+       <para>
+        This form changes the sequence from unlogged to logged or vice-versa
+        (see <xref linkend="sql-createsequence"/>).  It cannot be applied to a
+        temporary sequence.
        </para>
       </listitem>
      </varlistentry>

@@ -30,6 +30,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/pg_sequence.h"
 #include "catalog/pg_type.h"
+#include "catalog/storage_xlog.h"
 #include "commands/defrem.h"
 #include "commands/sequence.h"
 #include "commands/tablecmds.h"
@@ -95,6 +96,7 @@ static HTAB *seqhashtab = NULL; /* hash table for SeqTable items */
 static SeqTableData *last_used_seq = NULL;
 
 static void fill_seq_with_data(Relation rel, HeapTuple tuple);
+static void fill_seq_fork_with_data(Relation rel, HeapTuple tuple, ForkNumber forkNum);
 static Relation lock_and_open_sequence(SeqTable seq);
 static void create_seq_hashtable(void);
 static void init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel);
@@ -132,12 +134,6 @@ DefineSequence(ParseState *pstate, CreateSeqStmt *seq)
 	Datum		pgs_values[Natts_pg_sequence];
 	bool		pgs_nulls[Natts_pg_sequence];
 	int			i;
-
-	/* Unlogged sequences are not implemented -- not clear if useful. */
-	if (seq->sequence->relpersistence == RELPERSISTENCE_UNLOGGED)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("unlogged sequences are not supported")));
 
 	/*
 	 * If if_not_exists was given and a relation with the same name already
@@ -492,9 +488,33 @@ SetSequence(Oid seq_relid, bool transactional, int64 last_value, int64 log_cnt, 
 
 /*
  * Initialize a sequence's relation with the specified tuple as content
+ *
+ * This handles unlogged sequences by writing to both the main and the init
+ * fork as necessary.
  */
 static void
 fill_seq_with_data(Relation rel, HeapTuple tuple)
+{
+	fill_seq_fork_with_data(rel, tuple, MAIN_FORKNUM);
+
+	if (rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED)
+	{
+		SMgrRelation srel;
+
+		srel = smgropen(rel->rd_node, InvalidBackendId);
+		smgrcreate(srel, INIT_FORKNUM, false);
+		log_smgrcreate(&rel->rd_node, INIT_FORKNUM);
+		fill_seq_fork_with_data(rel, tuple, INIT_FORKNUM);
+		FlushRelationBuffers(rel);
+		smgrclose(srel);
+	}
+}
+
+/*
+ * Initialize a sequence's relation fork with the specified tuple as content
+ */
+static void
+fill_seq_fork_with_data(Relation rel, HeapTuple tuple, ForkNumber forkNum)
 {
 	Buffer		buf;
 	Page		page;
@@ -503,7 +523,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 
 	/* Initialize first page of relation with special magic number */
 
-	buf = ReadBuffer(rel, P_NEW);
+	buf = ReadBufferExtended(rel, forkNum, P_NEW, RBM_NORMAL, NULL);
 	Assert(BufferGetBlockNumber(buf) == 0);
 
 	page = BufferGetPage(buf);
@@ -549,7 +569,7 @@ fill_seq_with_data(Relation rel, HeapTuple tuple)
 		elog(ERROR, "failed to add sequence tuple to page");
 
 	/* XLOG stuff */
-	if (RelationNeedsWAL(rel))
+	if (RelationNeedsWAL(rel) || forkNum == INIT_FORKNUM)
 	{
 		xl_seq_rec	xlrec;
 		XLogRecPtr	recptr;
@@ -680,6 +700,28 @@ AlterSequence(ParseState *pstate, AlterSeqStmt *stmt)
 	relation_close(seqrel, NoLock);
 
 	return address;
+}
+
+void
+SequenceChangePersistence(Oid relid, char newrelpersistence)
+{
+	SeqTable	elm;
+	Relation	seqrel;
+	Buffer		buf;
+	HeapTupleData seqdatatuple;
+
+	init_sequence(relid, &elm, &seqrel);
+
+	/* check the comment above nextval_internal()'s equivalent call. */
+	if (RelationNeedsWAL(seqrel))
+		GetTopTransactionId();
+
+	(void) read_seq_tuple(seqrel, &buf, &seqdatatuple);
+	RelationSetNewRelfilenode(seqrel, newrelpersistence);
+	fill_seq_with_data(seqrel, &seqdatatuple);
+	UnlockReleaseBuffer(buf);
+
+	relation_close(seqrel, NoLock);
 }
 
 void

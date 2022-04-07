@@ -981,9 +981,10 @@ PostgreSQL documentation
       <term><option>--no-unlogged-table-data</option></term>
       <listitem>
        <para>
-        Do not dump the contents of unlogged tables.  This option has no
-        effect on whether or not the table definitions (schema) are dumped;
-        it only suppresses dumping the table data. Data in unlogged tables
+        Do not dump the contents of unlogged tables and sequences.  This
+        option has no effect on whether or not the table and sequence
+        definitions (schema) are dumped; it only suppresses dumping the table
+        and sequence data. Data in unlogged tables and sequences
         is always excluded when dumping from a standby server.
        </para>
       </listitem>

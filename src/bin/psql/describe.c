@@ -1681,8 +1681,12 @@ describeOneTableDetails(const char *schemaname,
 		printTableInit(&cont, &myopt, title.data, 7, numrows);
 		printTableInitialized = true;
 
-		printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
-						  schemaname, relationname);
+		if (tableinfo.relpersistence == 'u')
+			printfPQExpBuffer(&title, _("Unlogged sequence \"%s.%s\""),
+							  schemaname, relationname);
+		else
+			printfPQExpBuffer(&title, _("Sequence \"%s.%s\""),
+							  schemaname, relationname);
 
 		printTableAddHeader(&cont, gettext_noop("Type"), true, 'l');
 		printTableAddHeader(&cont, gettext_noop("Start"), true, 'r');

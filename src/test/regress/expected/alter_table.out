@@ -3461,7 +3461,7 @@ ORDER BY relname;
  unlogged1             | r       | u
  unlogged1 toast index | i       | u
  unlogged1 toast table | t       | u
- unlogged1_f1_seq      | S       | p
+ unlogged1_f1_seq      | S       | u
  unlogged1_pkey        | i       | u
 (5 rows)
 
@@ -3528,7 +3528,7 @@ ORDER BY relname;
  logged1             | r       | u
  logged1 toast index | i       | u
  logged1 toast table | t       | u
- logged1_f1_seq      | S       | p
+ logged1_f1_seq      | S       | u
  logged1_pkey        | i       | u
 (5 rows)
 

@@ -215,6 +215,11 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       Any indexes created on an unlogged table are automatically unlogged as
       well.
      </para>
+
+     <para>
+      If this is specified, any sequences created together with the unlogged
+      table (for identity or serial columns) are also created as unlogged.
+     </para>
     </listitem>
    </varlistentry>
 

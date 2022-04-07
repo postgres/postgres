@@ -2116,7 +2116,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SEQUENCE <name> */
 	else if (Matches("ALTER", "SEQUENCE", MatchAny))
 		COMPLETE_WITH("AS", "INCREMENT", "MINVALUE", "MAXVALUE", "RESTART",
-					  "NO", "CACHE", "CYCLE", "SET SCHEMA", "OWNED BY",
+					  "NO", "CACHE", "CYCLE", "SET", "OWNED BY",
 					  "OWNER TO", "RENAME TO");
 	/* ALTER SEQUENCE <name> AS */
 	else if (TailMatches("ALTER", "SEQUENCE", MatchAny, "AS"))
@@ -2124,6 +2124,9 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SEQUENCE <name> NO */
 	else if (Matches("ALTER", "SEQUENCE", MatchAny, "NO"))
 		COMPLETE_WITH("MINVALUE", "MAXVALUE", "CYCLE");
+	/* ALTER SEQUENCE <name> SET */
+	else if (Matches("ALTER", "SEQUENCE", MatchAny, "SET"))
+		COMPLETE_WITH("SCHEMA", "LOGGED", "UNLOGGED");
 	/* ALTER SERVER <name> */
 	else if (Matches("ALTER", "SERVER", MatchAny))
 		COMPLETE_WITH("VERSION", "OPTIONS", "OWNER TO", "RENAME TO");
