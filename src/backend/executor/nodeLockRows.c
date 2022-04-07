@@ -79,7 +79,10 @@ lnext:
 		Datum		datum;
 		bool		isNull;
 		ItemPointerData tid;
+		TM_FailureData tmfd;
 		LockTupleMode lockmode;
+		int			lockflags = 0;
+		TM_Result	test;
 		TupleTableSlot *markSlot;
 
 		/* clear any leftover test tuple for this rel */
@@ -176,11 +179,74 @@ lnext:
 				break;
 		}
 
-		/* skip tuple if it couldn't be locked */
-		if (!ExecLockTableTuple(erm->relation, &tid, markSlot,
-								estate->es_snapshot, estate->es_output_cid,
-								lockmode, erm->waitPolicy, &epq_needed))
-			goto lnext;
+		lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS;
+		if (!IsolationUsesXactSnapshot())
+			lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
+
+		test = table_tuple_lock(erm->relation, &tid, estate->es_snapshot,
+								markSlot, estate->es_output_cid,
+								lockmode, erm->waitPolicy,
+								lockflags,
+								&tmfd);
+
+		switch (test)
+		{
+			case TM_WouldBlock:
+				/* couldn't lock tuple in SKIP LOCKED mode */
+				goto lnext;
+
+			case TM_SelfModified:
+
+				/*
+				 * The target tuple was already updated or deleted by the
+				 * current command, or by a later command in the current
+				 * transaction.  We *must* ignore the tuple in the former
+				 * case, so as to avoid the "Halloween problem" of repeated
+				 * update attempts.  In the latter case it might be sensible
+				 * to fetch the updated tuple instead, but doing so would
+				 * require changing heap_update and heap_delete to not
+				 * complain about updating "invisible" tuples, which seems
+				 * pretty scary (table_tuple_lock will not complain, but few
+				 * callers expect TM_Invisible, and we're not one of them). So
+				 * for now, treat the tuple as deleted and do not process.
+				 */
+				goto lnext;
+
+			case TM_Ok:
+
+				/*
+				 * Got the lock successfully, the locked tuple saved in
+				 * markSlot for, if needed, EvalPlanQual testing below.
+				 */
+				if (tmfd.traversed)
+					epq_needed = true;
+				break;
+
+			case TM_Updated:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				elog(ERROR, "unexpected table_tuple_lock status: %u",
+					 test);
+				break;
+
+			case TM_Deleted:
+				if (IsolationUsesXactSnapshot())
+					ereport(ERROR,
+							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
+							 errmsg("could not serialize access due to concurrent update")));
+				/* tuple was deleted so don't return it */
+				goto lnext;
+
+			case TM_Invisible:
+				elog(ERROR, "attempted to lock invisible tuple");
+				break;
+
+			default:
+				elog(ERROR, "unrecognized table_tuple_lock status: %u",
+					 test);
+		}
 
 		/* Remember locked tuple's TID for EPQ testing and WHERE CURRENT OF */
 		erm->curCtid = tid;
@@ -213,91 +279,6 @@ lnext:
 
 	/* Got all locks, so return the current tuple */
 	return slot;
-}
-
-/*
- * ExecLockTableTuple
- * 		Locks tuple with the specified TID in lockmode following given wait
- * 		policy
- *
- * Returns true if the tuple was successfully locked.  Locked tuple is loaded
- * into provided slot.
- */
-bool
-ExecLockTableTuple(Relation relation, ItemPointer tid, TupleTableSlot *slot,
-				   Snapshot snapshot, CommandId cid,
-				   LockTupleMode lockmode, LockWaitPolicy waitPolicy,
-				   bool *epq_needed)
-{
-	TM_FailureData tmfd;
-	int			lockflags = TUPLE_LOCK_FLAG_LOCK_UPDATE_IN_PROGRESS;
-	TM_Result	test;
-
-	if (!IsolationUsesXactSnapshot())
-		lockflags |= TUPLE_LOCK_FLAG_FIND_LAST_VERSION;
-
-	test = table_tuple_lock(relation, tid, snapshot, slot, cid, lockmode,
-							waitPolicy, lockflags, &tmfd);
-
-	switch (test)
-	{
-		case TM_WouldBlock:
-			/* couldn't lock tuple in SKIP LOCKED mode */
-			return false;
-
-		case TM_SelfModified:
-
-			/*
-			 * The target tuple was already updated or deleted by the current
-			 * command, or by a later command in the current transaction.  We
-			 * *must* ignore the tuple in the former case, so as to avoid the
-			 * "Halloween problem" of repeated update attempts.  In the latter
-			 * case it might be sensible to fetch the updated tuple instead,
-			 * but doing so would require changing heap_update and heap_delete
-			 * to not complain about updating "invisible" tuples, which seems
-			 * pretty scary (table_tuple_lock will not complain, but few
-			 * callers expect TM_Invisible, and we're not one of them). So for
-			 * now, treat the tuple as deleted and do not process.
-			 */
-			return false;
-
-		case TM_Ok:
-
-			/*
-			 * Got the lock successfully, the locked tuple saved in slot for
-			 * EvalPlanQual, if asked by the caller.
-			 */
-			if (tmfd.traversed && epq_needed)
-				*epq_needed = true;
-			break;
-
-		case TM_Updated:
-			if (IsolationUsesXactSnapshot())
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			elog(ERROR, "unexpected table_tuple_lock status: %u",
-				 test);
-			break;
-
-		case TM_Deleted:
-			if (IsolationUsesXactSnapshot())
-				ereport(ERROR,
-						(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
-						 errmsg("could not serialize access due to concurrent update")));
-			/* tuple was deleted so don't return it */
-			return false;
-
-		case TM_Invisible:
-			elog(ERROR, "attempted to lock invisible tuple");
-			return false;
-
-		default:
-			elog(ERROR, "unrecognized table_tuple_lock status: %u", test);
-			return false;
-	}
-
-	return true;
 }
 
 /* ----------------------------------------------------------------
