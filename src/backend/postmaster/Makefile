@@ -21,7 +21,6 @@ OBJS = \
 	fork_process.o \
 	interrupt.o \
 	pgarch.o \
-	pgstat.o \
 	postmaster.o \
 	shell_archive.o \
 	startup.o \

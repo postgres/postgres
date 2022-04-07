@@ -84,7 +84,7 @@
  * Copyright (c) 2001-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/postmaster/pgstat.c
+ *	  src/backend/utils/activity/pgstat.c
  * ----------
  */
 #include "postgres.h"
