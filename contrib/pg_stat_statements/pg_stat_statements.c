@@ -78,12 +78,7 @@ PG_MODULE_MAGIC;
 #define PGSS_DUMP_FILE	PGSTAT_STAT_PERMANENT_DIRECTORY "/pg_stat_statements.stat"
 
 /*
- * Location of external query text file.  We don't keep it in the core
- * system's stats_temp_directory.  The core system can safely use that GUC
- * setting, because the statistics collector temp file paths are set only once
- * as part of changing the GUC, but pg_stat_statements has no way of avoiding
- * race conditions.  Besides, we only expect modest, infrequent I/O for query
- * strings, so placing the file on a faster filesystem is not compelling.
+ * Location of external query text file.
  */
 #define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 

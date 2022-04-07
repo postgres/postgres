@@ -88,9 +88,8 @@ struct exclude_list_item
 static const char *excludeDirContents[] =
 {
 	/*
-	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped even
-	 * when stats_temp_directory is set because PGSS_TEXT_FILE is always
-	 * created there.
+	 * Skip temporary statistics files. PG_STAT_TMP_DIR must be skipped
+	 * because extensions like pg_stat_statements store data there.
 	 */
 	"pg_stat_tmp",				/* defined as PG_STAT_TMP_DIR */
 

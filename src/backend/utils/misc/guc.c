@@ -217,7 +217,6 @@ static bool check_effective_io_concurrency(int *newval, void **extra, GucSource 
 static bool check_maintenance_io_concurrency(int *newval, void **extra, GucSource source);
 static bool check_huge_page_size(int *newval, void **extra, GucSource source);
 static bool check_client_connection_check_interval(int *newval, void **extra, GucSource source);
-static void assign_pgstat_temp_directory(const char *newval, void *extra);
 static bool check_application_name(char **newval, void **extra, GucSource source);
 static void assign_application_name(const char *newval, void *extra);
 static bool check_cluster_name(char **newval, void **extra, GucSource source);
@@ -4558,17 +4557,6 @@ static struct config_string ConfigureNamesString[] =
 		&ssl_crl_dir,
 		"",
 		NULL, NULL, NULL
-	},
-
-	{
-		{"stats_temp_directory", PGC_SIGHUP, STATS_COLLECTOR,
-			gettext_noop("Writes temporary statistics files to the specified directory."),
-			NULL,
-			GUC_SUPERUSER_ONLY
-		},
-		&pgstat_temp_directory,
-		PG_STAT_TMP_DIR,
-		check_canonical_path, assign_pgstat_temp_directory, NULL
 	},
 
 	{
@@ -12373,35 +12361,6 @@ check_client_connection_check_interval(int *newval, void **extra, GucSource sour
 		return false;
 	}
 	return true;
-}
-
-static void
-assign_pgstat_temp_directory(const char *newval, void *extra)
-{
-	/* check_canonical_path already canonicalized newval for us */
-	char	   *dname;
-	char	   *tname;
-	char	   *fname;
-
-	/* directory */
-	dname = guc_malloc(ERROR, strlen(newval) + 1);	/* runtime dir */
-	sprintf(dname, "%s", newval);
-
-	/* global stats */
-	tname = guc_malloc(ERROR, strlen(newval) + 12); /* /global.tmp */
-	sprintf(tname, "%s/global.tmp", newval);
-	fname = guc_malloc(ERROR, strlen(newval) + 13); /* /global.stat */
-	sprintf(fname, "%s/global.stat", newval);
-
-	if (pgstat_stat_directory)
-		free(pgstat_stat_directory);
-	pgstat_stat_directory = dname;
-	if (pgstat_stat_tmpname)
-		free(pgstat_stat_tmpname);
-	pgstat_stat_tmpname = tname;
-	if (pgstat_stat_filename)
-		free(pgstat_stat_filename);
-	pgstat_stat_filename = fname;
 }
 
 static bool

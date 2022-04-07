@@ -480,10 +480,6 @@ sub init
 	print $conf PostgreSQL::Test::Utils::slurp_file($ENV{TEMP_CONFIG})
 	  if defined $ENV{TEMP_CONFIG};
 
-	# XXX Neutralize any stats_temp_directory in TEMP_CONFIG.  Nodes running
-	# concurrently must not share a stats_temp_directory.
-	print $conf "stats_temp_directory = 'pg_stat_tmp'\n";
-
 	if ($params{allows_streaming})
 	{
 		if ($params{allows_streaming} eq "logical")
