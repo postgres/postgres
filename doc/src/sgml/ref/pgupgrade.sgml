@@ -499,7 +499,7 @@ pg_upgrade.exe
      is running.
     </para>
 
-    <substeps>
+    <procedure>
 
      <step>
       <title>Install the new PostgreSQL binaries on standby servers</title>
@@ -624,7 +624,7 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
       </para>
      </step>
 
-    </substeps>
+    </procedure>
 
    </step>
 
