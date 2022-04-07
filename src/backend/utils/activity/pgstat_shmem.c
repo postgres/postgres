@@ -292,8 +292,8 @@ pgstat_reinit_entry(PgStat_Kind kind, PgStatShared_HashEntry *shhashent)
 
 	/* reinitialize content */
 	Assert(shheader->magic == 0xdeadbeef);
-	memset(shheader, 0, pgstat_get_kind_info(shhashent->key.kind)->shared_size);
-	shheader->magic = 0xdeadbeef;
+	memset(pgstat_get_entry_data(kind, shheader), 0,
+		   pgstat_get_entry_len(kind));
 
 	return shheader;
 }
