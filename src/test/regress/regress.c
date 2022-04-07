@@ -41,6 +41,7 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/typcache.h"
@@ -1215,4 +1216,48 @@ binary_coercible(PG_FUNCTION_ARGS)
 	Oid			targettype = PG_GETARG_OID(1);
 
 	PG_RETURN_BOOL(IsBinaryCoercible(srctype, targettype));
+}
+
+/*
+ * Return the column offset of the last data in the given array of
+ * data types.  The input data types must be fixed-length data types.
+ */
+PG_FUNCTION_INFO_V1(get_column_offset);
+Datum
+get_column_offset(PG_FUNCTION_ARGS)
+{
+	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+	Oid			*type_oids;
+	int			ntypes;
+	int			column_offset = 0;
+
+	if (ARR_HASNULL(ta) && array_contains_nulls(ta))
+		elog(ERROR, "argument must not contain nulls");
+
+	if (ARR_NDIM(ta) > 1)
+		elog(ERROR, "argument must be empty or one-dimensional array");
+
+	type_oids = (Oid *) ARR_DATA_PTR(ta);
+	ntypes = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
+	for (int i = 0; i < ntypes; i++)
+	{
+		Oid typeoid = type_oids[i];
+		int16		typlen;
+		bool		typbyval;
+		char		typalign;
+
+		get_typlenbyvalalign(typeoid, &typlen, &typbyval, &typalign);
+
+		/* the data type must be fixed-length */
+		if (!(typbyval || (typlen > 0)))
+			elog(ERROR, "type %u is not fixed-length data type", typeoid);
+
+		column_offset = att_align_nominal(column_offset, typalign);
+
+		/* not include the last type size */
+		if (i != (ntypes - 1))
+			column_offset += typlen;
+	}
+
+	PG_RETURN_INT32(column_offset);
 }

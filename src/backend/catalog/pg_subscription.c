@@ -63,6 +63,7 @@ GetSubscription(Oid subid, bool missing_ok)
 	sub = (Subscription *) palloc(sizeof(Subscription));
 	sub->oid = subid;
 	sub->dbid = subform->subdbid;
+	sub->skiplsn = subform->subskiplsn;
 	sub->name = pstrdup(NameStr(subform->subname));
 	sub->owner = subform->subowner;
 	sub->enabled = subform->subenabled;
@@ -70,7 +71,6 @@ GetSubscription(Oid subid, bool missing_ok)
 	sub->stream = subform->substream;
 	sub->twophasestate = subform->subtwophasestate;
 	sub->disableonerr = subform->subdisableonerr;
-	sub->skiplsn = subform->subskiplsn;
 
 	/* Get conninfo */
 	datum = SysCacheGetAttr(SUBSCRIPTIONOID,

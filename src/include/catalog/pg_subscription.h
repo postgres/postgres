@@ -54,6 +54,10 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	Oid			subdbid BKI_LOOKUP(pg_database);	/* Database the
 													 * subscription is in. */
+
+	XLogRecPtr	subskiplsn;		/* All changes finished at this LSN are
+								 * skipped */
+
 	NameData	subname;		/* Name of the subscription */
 
 	Oid			subowner BKI_LOOKUP(pg_authid); /* Owner of the subscription */
@@ -70,9 +74,6 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	bool		subdisableonerr;	/* True if a worker error should cause the
 									 * subscription to be disabled */
-
-	XLogRecPtr	subskiplsn;		/* All changes finished at this LSN are
-								 * skipped */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
@@ -103,6 +104,8 @@ typedef struct Subscription
 	Oid			oid;			/* Oid of the subscription */
 	Oid			dbid;			/* Oid of the database which subscription is
 								 * in */
+	XLogRecPtr	skiplsn;		/* All changes finished at this LSN are
+								 * skipped */
 	char	   *name;			/* Name of the subscription */
 	Oid			owner;			/* Oid of the subscription owner */
 	bool		enabled;		/* Indicates if the subscription is enabled */
@@ -113,8 +116,6 @@ typedef struct Subscription
 	bool		disableonerr;	/* Indicates if the subscription should be
 								 * automatically disabled if a worker error
 								 * occurs */
-	XLogRecPtr	skiplsn;		/* All changes finished at this LSN are
-								 * skipped */
 	char	   *conninfo;		/* Connection string to the publisher */
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
