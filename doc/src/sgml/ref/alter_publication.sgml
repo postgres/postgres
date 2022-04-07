@@ -218,8 +218,7 @@ ALTER PUBLICATION sales_publication ADD ALL TABLES IN SCHEMA marketing, sales;
    <structname>production_publication</structname>:
 <programlisting>
 ALTER PUBLICATION production_publication ADD TABLE users, departments, ALL TABLES IN SCHEMA production;
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1>

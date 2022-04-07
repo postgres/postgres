@@ -923,8 +923,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
         </para>
        </listitem>
       </varlistentry>
-     </variablelist>
-     </para>
+     </variablelist></para>
     </listitem>
    </varlistentry>
 

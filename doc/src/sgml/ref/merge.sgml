@@ -472,11 +472,9 @@ MERGE <replaceable class="parameter">total_count</replaceable>
              the action's event type.
             </para>
            </listitem>
-          </orderedlist>
-         </para>
+          </orderedlist></para>
         </listitem>
-       </orderedlist>
-      </para>
+       </orderedlist></para>
      </listitem>
      <listitem>
       <para>

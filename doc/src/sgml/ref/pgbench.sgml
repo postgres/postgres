@@ -2459,11 +2459,9 @@ END;
   <para>
    Here is some example output with following options:
 <screen>
-pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000
---latency-limit=10 --failures-detailed --max-tries=10 test
-</screen>
+<userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000
+--latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
 
-<screen>
 1649114136 5815 27552565 177846919143 1078 21716 2756787 7264696105 0 9661 0 7854 31472 4022 4022 0
 1649114146 5958 28460110 182785513108 1083 20391 2539395 6411761497 0 7268 0 8127 32595 4101 4101 0
 </screen>
@@ -2581,8 +2579,7 @@ statement latencies in milliseconds, failures and retries:
   0.582  3363  41576  UPDATE pgbench_branches SET bbalance = bbalance + :delta WHERE bid = :bid;
   0.465     0      0  INSERT INTO pgbench_history (tid, bid, aid, delta, mtime) VALUES (:tid, :bid, :aid, :delta, CURRENT_TIMESTAMP);
   1.933     0      0  END;
- </screen>
-  </para>
+</screen></para>
 
   <para>
    If multiple script files are specified, all statistics are reported
@@ -2637,8 +2634,7 @@ statement latencies in milliseconds, failures and retries:
                supposed to never occur...).
              </para>
            </listitem>
-         </itemizedlist>
-       </para>
+         </itemizedlist></para>
      </listitem>
      <listitem>
        <para>

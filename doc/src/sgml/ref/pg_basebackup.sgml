@@ -994,8 +994,7 @@ PostgreSQL documentation
    directory <filename>backup</filename>:
 <screen>
 <prompt>$</prompt> <userinput>pg_basebackup -D backup -Ft --compress=gzip:9</userinput>
-</screen>
-  </para>
+</screen></para>
 
  </refsect1>
 
