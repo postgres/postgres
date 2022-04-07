@@ -1942,6 +1942,7 @@ PgStat_FunctionCallUsage
 PgStat_FunctionCounts
 PgStat_FunctionEntry
 PgStat_GlobalStats
+PgStat_Kind
 PgStat_Msg
 PgStat_MsgAnalyze
 PgStat_MsgAnlAncestors

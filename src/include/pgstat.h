@@ -33,6 +33,30 @@
 /* Default directory to store temporary statistics data in */
 #define PG_STAT_TMP_DIR		"pg_stat_tmp"
 
+/* The types of statistics entries */
+typedef enum PgStat_Kind
+{
+	/* use 0 for INVALID, to catch zero-initialized data */
+	PGSTAT_KIND_INVALID = 0,
+
+	/* stats for variable-numbered objects */
+	PGSTAT_KIND_DATABASE,		/* database-wide statistics */
+	PGSTAT_KIND_RELATION,		/* per-table statistics */
+	PGSTAT_KIND_FUNCTION,		/* per-function statistics */
+	PGSTAT_KIND_REPLSLOT,		/* per-slot statistics */
+	PGSTAT_KIND_SUBSCRIPTION,	/* per-subscription statistics */
+
+	/* stats for fixed-numbered objects */
+	PGSTAT_KIND_ARCHIVER,
+	PGSTAT_KIND_BGWRITER,
+	PGSTAT_KIND_CHECKPOINTER,
+	PGSTAT_KIND_SLRU,
+	PGSTAT_KIND_WAL,
+} PgStat_Kind;
+
+#define PGSTAT_KIND_FIRST_VALID PGSTAT_KIND_DATABASE
+#define PGSTAT_KIND_LAST PGSTAT_KIND_WAL
+#define PGSTAT_NUM_KINDS (PGSTAT_KIND_LAST + 1)
 
 /* Values for track_functions GUC variable --- order is significant! */
 typedef enum TrackFunctionsLevel
