@@ -105,7 +105,7 @@ step s1_slru_save_stats {
 }
 step s1_listen { LISTEN stats_test_nothing; }
 step s1_big_notify { SELECT pg_notify('stats_test_use',
-                repeat('0', current_setting('block_size')::int / 2)) FROM generate_series(1, 3);
+                repeat(i::text, current_setting('block_size')::int / 2)) FROM generate_series(1, 3) g(i);
                 }
 
 step s1_slru_check_stats {
@@ -147,7 +147,7 @@ step s2_table_update_k1 { UPDATE test_stat_tab SET value = value + 1 WHERE key =
 
 # SLRU stats steps
 step s2_big_notify { SELECT pg_notify('stats_test_use',
-                repeat('0', current_setting('block_size')::int / 2)) FROM generate_series(1, 3);
+                repeat(i::text, current_setting('block_size')::int / 2)) FROM generate_series(1, 3) g(i);
                 }
 
 
