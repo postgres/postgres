@@ -27,6 +27,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "nodes/supportnodes.h"
 #ifdef OPTIMIZER_DEBUG
 #include "nodes/print.h"
 #endif
@@ -2158,6 +2159,269 @@ has_multiple_baserels(PlannerInfo *root)
 }
 
 /*
+ * find_window_run_conditions
+ *		Determine if 'wfunc' is really a WindowFunc and call its prosupport
+ *		function to determine the function's monotonic properties.  We then
+ *		see if 'opexpr' can be used to short-circuit execution.
+ *
+ * For example row_number() over (order by ...) always produces a value one
+ * higher than the previous.  If someone has a window function in a subquery
+ * and has a WHERE clause in the outer query to filter rows <= 10, then we may
+ * as well stop processing the windowagg once the row number reaches 11.  Here
+ * we check if 'opexpr' might help us to stop doing needless extra processing
+ * in WindowAgg nodes.
+ *
+ * '*keep_original' is set to true if the caller should also use 'opexpr' for
+ * its original purpose.  This is set to false if the caller can assume that
+ * the run condition will handle all of the required filtering.
+ *
+ * Returns true if 'opexpr' was found to be useful and was added to the
+ * WindowClauses runCondition. We also set *keep_original accordingly.
+ * If the 'opexpr' cannot be used then we set *keep_original to true and
+ * return false.
+ */
+static bool
+find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
+						   AttrNumber attno, WindowFunc *wfunc, OpExpr *opexpr,
+						   bool wfunc_left, bool *keep_original)
+{
+	Oid			prosupport;
+	Expr	   *otherexpr;
+	SupportRequestWFuncMonotonic req;
+	SupportRequestWFuncMonotonic *res;
+	WindowClause *wclause;
+	List	   *opinfos;
+	OpExpr	   *runopexpr;
+	Oid			runoperator;
+	ListCell   *lc;
+
+	*keep_original = true;
+
+	while (IsA(wfunc, RelabelType))
+		wfunc = (WindowFunc *) ((RelabelType *) wfunc)->arg;
+
+	/* we can only work with window functions */
+	if (!IsA(wfunc, WindowFunc))
+		return false;
+
+	prosupport = get_func_support(wfunc->winfnoid);
+
+	/* Check if there's a support function for 'wfunc' */
+	if (!OidIsValid(prosupport))
+		return false;
+
+	/* get the Expr from the other side of the OpExpr */
+	if (wfunc_left)
+		otherexpr = lsecond(opexpr->args);
+	else
+		otherexpr = linitial(opexpr->args);
+
+	/*
+	 * The value being compared must not change during the evaluation of the
+	 * window partition.
+	 */
+	if (!is_pseudo_constant_clause((Node *) otherexpr))
+		return false;
+
+	/* find the window clause belonging to the window function */
+	wclause = (WindowClause *) list_nth(subquery->windowClause,
+										wfunc->winref - 1);
+
+	req.type = T_SupportRequestWFuncMonotonic;
+	req.window_func = wfunc;
+	req.window_clause = wclause;
+
+	/* call the support function */
+	res = (SupportRequestWFuncMonotonic *)
+		DatumGetPointer(OidFunctionCall1(prosupport,
+										 PointerGetDatum(&req)));
+
+	/*
+	 * Nothing to do if the function is neither monotonically increasing nor
+	 * monotonically decreasing.
+	 */
+	if (res == NULL || res->monotonic == MONOTONICFUNC_NONE)
+		return false;
+
+	runopexpr = NULL;
+	runoperator = InvalidOid;
+	opinfos = get_op_btree_interpretation(opexpr->opno);
+
+	foreach(lc, opinfos)
+	{
+		OpBtreeInterpretation *opinfo = (OpBtreeInterpretation *) lfirst(lc);
+		int			strategy = opinfo->strategy;
+
+		/* handle < / <= */
+		if (strategy == BTLessStrategyNumber ||
+			strategy == BTLessEqualStrategyNumber)
+		{
+			/*
+			 * < / <= is supported for monotonically increasing functions in
+			 * the form <wfunc> op <pseudoconst> and <pseudoconst> op <wfunc>
+			 * for monotonically decreasing functions.
+			 */
+			if ((wfunc_left && (res->monotonic & MONOTONICFUNC_INCREASING)) ||
+				(!wfunc_left && (res->monotonic & MONOTONICFUNC_DECREASING)))
+			{
+				*keep_original = false;
+				runopexpr = opexpr;
+				runoperator = opexpr->opno;
+			}
+			break;
+		}
+		/* handle > / >= */
+		else if (strategy == BTGreaterStrategyNumber ||
+				 strategy == BTGreaterEqualStrategyNumber)
+		{
+			/*
+			 * > / >= is supported for monotonically decreasing functions in
+			 * the form <wfunc> op <pseudoconst> and <pseudoconst> op <wfunc>
+			 * for monotonically increasing functions.
+			 */
+			if ((wfunc_left && (res->monotonic & MONOTONICFUNC_DECREASING)) ||
+				(!wfunc_left && (res->monotonic & MONOTONICFUNC_INCREASING)))
+			{
+				*keep_original = false;
+				runopexpr = opexpr;
+				runoperator = opexpr->opno;
+			}
+			break;
+		}
+		/* handle = */
+		else if (strategy == BTEqualStrategyNumber)
+		{
+			int16		newstrategy;
+
+			/*
+			 * When both monotonically increasing and decreasing then the
+			 * return value of the window function will be the same each time.
+			 * We can simply use 'opexpr' as the run condition without
+			 * modifying it.
+			 */
+			if ((res->monotonic & MONOTONICFUNC_BOTH) == MONOTONICFUNC_BOTH)
+			{
+				*keep_original = false;
+				runopexpr = opexpr;
+				break;
+			}
+
+			/*
+			 * When monotonically increasing we make a qual with <wfunc> <=
+			 * <value> or <value> >= <wfunc> in order to filter out values
+			 * which are above the value in the equality condition.  For
+			 * monotonically decreasing functions we want to filter values
+			 * below the value in the equality condition.
+			 */
+			if (res->monotonic & MONOTONICFUNC_INCREASING)
+				newstrategy = wfunc_left ? BTLessEqualStrategyNumber : BTGreaterEqualStrategyNumber;
+			else
+				newstrategy = wfunc_left ? BTGreaterEqualStrategyNumber : BTLessEqualStrategyNumber;
+
+			/* We must keep the original equality qual */
+			*keep_original = true;
+			runopexpr = opexpr;
+
+			/* determine the operator to use for the runCondition qual */
+			runoperator = get_opfamily_member(opinfo->opfamily_id,
+											  opinfo->oplefttype,
+											  opinfo->oprighttype,
+											  newstrategy);
+			break;
+		}
+	}
+
+	if (runopexpr != NULL)
+	{
+		Expr	   *newexpr;
+
+		/*
+		 * Build the qual required for the run condition keeping the
+		 * WindowFunc on the same side as it was originally.
+		 */
+		if (wfunc_left)
+			newexpr = make_opclause(runoperator,
+									runopexpr->opresulttype,
+									runopexpr->opretset, (Expr *) wfunc,
+									otherexpr, runopexpr->opcollid,
+									runopexpr->inputcollid);
+		else
+			newexpr = make_opclause(runoperator,
+									runopexpr->opresulttype,
+									runopexpr->opretset,
+									otherexpr, (Expr *) wfunc,
+									runopexpr->opcollid,
+									runopexpr->inputcollid);
+
+		wclause->runCondition = lappend(wclause->runCondition, newexpr);
+
+		return true;
+	}
+
+	/* unsupported OpExpr */
+	return false;
+}
+
+/*
+ * check_and_push_window_quals
+ *		Check if 'clause' is a qual that can be pushed into a WindowFunc's
+ *		WindowClause as a 'runCondition' qual.  These, when present, allow
+ *		some unnecessary work to be skipped during execution.
+ *
+ * Returns true if the caller still must keep the original qual or false if
+ * the caller can safely ignore the original qual because the WindowAgg node
+ * will use the runCondition to stop returning tuples.
+ */
+static bool
+check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
+							Node *clause)
+{
+	OpExpr	   *opexpr = (OpExpr *) clause;
+	bool		keep_original = true;
+	Var		   *var1;
+	Var		   *var2;
+
+	/* We're only able to use OpExprs with 2 operands */
+	if (!IsA(opexpr, OpExpr))
+		return true;
+
+	if (list_length(opexpr->args) != 2)
+		return true;
+
+	/*
+	 * Check for plain Vars that reference window functions in the subquery.
+	 * If we find any, we'll ask find_window_run_conditions() if 'opexpr' can
+	 * be used as part of the run condition.
+	 */
+
+	/* Check the left side of the OpExpr */
+	var1 = linitial(opexpr->args);
+	if (IsA(var1, Var) && var1->varattno > 0)
+	{
+		TargetEntry *tle = list_nth(subquery->targetList, var1->varattno - 1);
+		WindowFunc *wfunc = (WindowFunc *) tle->expr;
+
+		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
+									   opexpr, true, &keep_original))
+			return keep_original;
+	}
+
+	/* and check the right side */
+	var2 = lsecond(opexpr->args);
+	if (IsA(var2, Var) && var2->varattno > 0)
+	{
+		TargetEntry *tle = list_nth(subquery->targetList, var2->varattno - 1);
+		WindowFunc *wfunc = (WindowFunc *) tle->expr;
+
+		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
+									   opexpr, false, &keep_original))
+			return keep_original;
+	}
+
+	return true;
+}
+
+/*
  * set_subquery_pathlist
  *		Generate SubqueryScan access paths for a subquery RTE
  *
@@ -2245,19 +2509,31 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		foreach(l, rel->baserestrictinfo)
 		{
 			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			Node	   *clause = (Node *) rinfo->clause;
 
 			if (!rinfo->pseudoconstant &&
 				qual_is_pushdown_safe(subquery, rti, rinfo, &safetyInfo))
 			{
-				Node	   *clause = (Node *) rinfo->clause;
-
 				/* Push it down */
 				subquery_push_qual(subquery, rte, rti, clause);
 			}
 			else
 			{
-				/* Keep it in the upper query */
-				upperrestrictlist = lappend(upperrestrictlist, rinfo);
+				/*
+				 * Since we can't push the qual down into the subquery, check
+				 * if it happens to reference a window function.  If so then
+				 * it might be useful to use for the WindowAgg's runCondition.
+				 */
+				if (!subquery->hasWindowFuncs ||
+					check_and_push_window_quals(subquery, rte, rti, clause))
+				{
+					/*
+					 * subquery has no window funcs or the clause is not a
+					 * suitable window run condition qual or it is, but the
+					 * original must also be kept in the upper query.
+					 */
+					upperrestrictlist = lappend(upperrestrictlist, rinfo);
+				}
 			}
 		}
 		rel->baserestrictinfo = upperrestrictlist;

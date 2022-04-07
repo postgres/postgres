@@ -24,6 +24,7 @@
 #include "nodes/supportnodes.h"
 #include "optimizer/optimizer.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 
 
 typedef struct
@@ -816,6 +817,49 @@ Datum
 int8dec_any(PG_FUNCTION_ARGS)
 {
 	return int8dec(fcinfo);
+}
+
+/*
+ * int8inc_support
+ *		prosupport function for int8inc() and int8inc_any()
+ */
+Datum
+int8inc_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+		MonotonicFunction monotonic = MONOTONICFUNC_NONE;
+		int			frameOptions = req->window_clause->frameOptions;
+
+		/* No ORDER BY clause then all rows are peers */
+		if (req->window_clause->orderClause == NIL)
+			monotonic = MONOTONICFUNC_BOTH;
+		else
+		{
+			/*
+			 * Otherwise take into account the frame options.  When the frame
+			 * bound is the start of the window then the resulting value can
+			 * never decrease, therefore is monotonically increasing
+			 */
+			if (frameOptions & FRAMEOPTION_START_UNBOUNDED_PRECEDING)
+				monotonic |= MONOTONICFUNC_INCREASING;
+
+			/*
+			 * Likewise, if the frame bound is the end of the window then the
+			 * resulting value can never decrease.
+			 */
+			if (frameOptions & FRAMEOPTION_END_UNBOUNDED_FOLLOWING)
+				monotonic |= MONOTONICFUNC_DECREASING;
+		}
+
+		req->monotonic = monotonic;
+		PG_RETURN_POINTER(req);
+	}
+
+	PG_RETURN_POINTER(NULL);
 }
 
 

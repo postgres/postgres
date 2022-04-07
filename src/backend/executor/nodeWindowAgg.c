@@ -1249,6 +1249,20 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 		return;					/* whole partition done already */
 
 	/*
+	 * When in pass-through mode we can just exhaust all tuples in the current
+	 * partition.  We don't need these tuples for any further window function
+	 * evaluation, however, we do need to keep them around if we're not the
+	 * top-level window as another WindowAgg node above must see these.
+	 */
+	if (winstate->status != WINDOWAGG_RUN)
+	{
+		Assert(winstate->status == WINDOWAGG_PASSTHROUGH ||
+			   winstate->status == WINDOWAGG_PASSTHROUGH_STRICT);
+
+		pos = -1;
+	}
+
+	/*
 	 * If the tuplestore has spilled to disk, alternate reading and writing
 	 * becomes quite expensive due to frequent buffer flushes.  It's cheaper
 	 * to force the entire partition to get spooled in one go.
@@ -1256,7 +1270,7 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 	 * XXX this is a horrid kluge --- it'd be better to fix the performance
 	 * problem inside tuplestore.  FIXME
 	 */
-	if (!tuplestore_in_memory(winstate->buffer))
+	else if (!tuplestore_in_memory(winstate->buffer))
 		pos = -1;
 
 	outerPlan = outerPlanState(winstate);
@@ -1295,9 +1309,16 @@ spool_tuples(WindowAggState *winstate, int64 pos)
 			}
 		}
 
-		/* Still in partition, so save it into the tuplestore */
-		tuplestore_puttupleslot(winstate->buffer, outerslot);
-		winstate->spooled_rows++;
+		/*
+		 * Remember the tuple unless we're the top-level window and we're in
+		 * pass-through mode.
+		 */
+		if (winstate->status != WINDOWAGG_PASSTHROUGH_STRICT)
+		{
+			/* Still in partition, so save it into the tuplestore */
+			tuplestore_puttupleslot(winstate->buffer, outerslot);
+			winstate->spooled_rows++;
+		}
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2023,13 +2044,14 @@ static TupleTableSlot *
 ExecWindowAgg(PlanState *pstate)
 {
 	WindowAggState *winstate = castNode(WindowAggState, pstate);
+	TupleTableSlot *slot;
 	ExprContext *econtext;
 	int			i;
 	int			numfuncs;
 
 	CHECK_FOR_INTERRUPTS();
 
-	if (winstate->all_done)
+	if (winstate->status == WINDOWAGG_DONE)
 		return NULL;
 
 	/*
@@ -2099,143 +2121,224 @@ ExecWindowAgg(PlanState *pstate)
 		winstate->all_first = false;
 	}
 
-	if (winstate->buffer == NULL)
+	/* We need to loop as the runCondition or qual may filter out tuples */
+	for (;;)
 	{
-		/* Initialize for first partition and set current row = 0 */
-		begin_partition(winstate);
-		/* If there are no input rows, we'll detect that and exit below */
-	}
-	else
-	{
-		/* Advance current row within partition */
-		winstate->currentpos++;
-		/* This might mean that the frame moves, too */
-		winstate->framehead_valid = false;
-		winstate->frametail_valid = false;
-		/* we don't need to invalidate grouptail here; see below */
-	}
-
-	/*
-	 * Spool all tuples up to and including the current row, if we haven't
-	 * already
-	 */
-	spool_tuples(winstate, winstate->currentpos);
-
-	/* Move to the next partition if we reached the end of this partition */
-	if (winstate->partition_spooled &&
-		winstate->currentpos >= winstate->spooled_rows)
-	{
-		release_partition(winstate);
-
-		if (winstate->more_partitions)
+		if (winstate->buffer == NULL)
 		{
+			/* Initialize for first partition and set current row = 0 */
 			begin_partition(winstate);
-			Assert(winstate->spooled_rows > 0);
+			/* If there are no input rows, we'll detect that and exit below */
 		}
 		else
 		{
-			winstate->all_done = true;
-			return NULL;
+			/* Advance current row within partition */
+			winstate->currentpos++;
+			/* This might mean that the frame moves, too */
+			winstate->framehead_valid = false;
+			winstate->frametail_valid = false;
+			/* we don't need to invalidate grouptail here; see below */
 		}
-	}
 
-	/* final output execution is in ps_ExprContext */
-	econtext = winstate->ss.ps.ps_ExprContext;
+		/*
+		 * Spool all tuples up to and including the current row, if we haven't
+		 * already
+		 */
+		spool_tuples(winstate, winstate->currentpos);
 
-	/* Clear the per-output-tuple context for current row */
-	ResetExprContext(econtext);
-
-	/*
-	 * Read the current row from the tuplestore, and save in ScanTupleSlot.
-	 * (We can't rely on the outerplan's output slot because we may have to
-	 * read beyond the current row.  Also, we have to actually copy the row
-	 * out of the tuplestore, since window function evaluation might cause the
-	 * tuplestore to dump its state to disk.)
-	 *
-	 * In GROUPS mode, or when tracking a group-oriented exclusion clause, we
-	 * must also detect entering a new peer group and update associated state
-	 * when that happens.  We use temp_slot_2 to temporarily hold the previous
-	 * row for this purpose.
-	 *
-	 * Current row must be in the tuplestore, since we spooled it above.
-	 */
-	tuplestore_select_read_pointer(winstate->buffer, winstate->current_ptr);
-	if ((winstate->frameOptions & (FRAMEOPTION_GROUPS |
-								   FRAMEOPTION_EXCLUDE_GROUP |
-								   FRAMEOPTION_EXCLUDE_TIES)) &&
-		winstate->currentpos > 0)
-	{
-		ExecCopySlot(winstate->temp_slot_2, winstate->ss.ss_ScanTupleSlot);
-		if (!tuplestore_gettupleslot(winstate->buffer, true, true,
-									 winstate->ss.ss_ScanTupleSlot))
-			elog(ERROR, "unexpected end of tuplestore");
-		if (!are_peers(winstate, winstate->temp_slot_2,
-					   winstate->ss.ss_ScanTupleSlot))
+		/* Move to the next partition if we reached the end of this partition */
+		if (winstate->partition_spooled &&
+			winstate->currentpos >= winstate->spooled_rows)
 		{
-			winstate->currentgroup++;
-			winstate->groupheadpos = winstate->currentpos;
-			winstate->grouptail_valid = false;
+			release_partition(winstate);
+
+			if (winstate->more_partitions)
+			{
+				begin_partition(winstate);
+				Assert(winstate->spooled_rows > 0);
+
+				/* Come out of pass-through mode when changing partition */
+				winstate->status = WINDOWAGG_RUN;
+			}
+			else
+			{
+				/* No further partitions?  We're done */
+				winstate->status = WINDOWAGG_DONE;
+				return NULL;
+			}
 		}
-		ExecClearTuple(winstate->temp_slot_2);
+
+		/* final output execution is in ps_ExprContext */
+		econtext = winstate->ss.ps.ps_ExprContext;
+
+		/* Clear the per-output-tuple context for current row */
+		ResetExprContext(econtext);
+
+		/*
+		 * Read the current row from the tuplestore, and save in
+		 * ScanTupleSlot. (We can't rely on the outerplan's output slot
+		 * because we may have to read beyond the current row.  Also, we have
+		 * to actually copy the row out of the tuplestore, since window
+		 * function evaluation might cause the tuplestore to dump its state to
+		 * disk.)
+		 *
+		 * In GROUPS mode, or when tracking a group-oriented exclusion clause,
+		 * we must also detect entering a new peer group and update associated
+		 * state when that happens.  We use temp_slot_2 to temporarily hold
+		 * the previous row for this purpose.
+		 *
+		 * Current row must be in the tuplestore, since we spooled it above.
+		 */
+		tuplestore_select_read_pointer(winstate->buffer, winstate->current_ptr);
+		if ((winstate->frameOptions & (FRAMEOPTION_GROUPS |
+									   FRAMEOPTION_EXCLUDE_GROUP |
+									   FRAMEOPTION_EXCLUDE_TIES)) &&
+			winstate->currentpos > 0)
+		{
+			ExecCopySlot(winstate->temp_slot_2, winstate->ss.ss_ScanTupleSlot);
+			if (!tuplestore_gettupleslot(winstate->buffer, true, true,
+										 winstate->ss.ss_ScanTupleSlot))
+				elog(ERROR, "unexpected end of tuplestore");
+			if (!are_peers(winstate, winstate->temp_slot_2,
+						   winstate->ss.ss_ScanTupleSlot))
+			{
+				winstate->currentgroup++;
+				winstate->groupheadpos = winstate->currentpos;
+				winstate->grouptail_valid = false;
+			}
+			ExecClearTuple(winstate->temp_slot_2);
+		}
+		else
+		{
+			if (!tuplestore_gettupleslot(winstate->buffer, true, true,
+										 winstate->ss.ss_ScanTupleSlot))
+				elog(ERROR, "unexpected end of tuplestore");
+		}
+
+		/* don't evaluate the window functions when we're in pass-through mode */
+		if (winstate->status == WINDOWAGG_RUN)
+		{
+			/*
+			 * Evaluate true window functions
+			 */
+			numfuncs = winstate->numfuncs;
+			for (i = 0; i < numfuncs; i++)
+			{
+				WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
+
+				if (perfuncstate->plain_agg)
+					continue;
+				eval_windowfunction(winstate, perfuncstate,
+									&(econtext->ecxt_aggvalues[perfuncstate->wfuncstate->wfuncno]),
+									&(econtext->ecxt_aggnulls[perfuncstate->wfuncstate->wfuncno]));
+			}
+
+			/*
+			 * Evaluate aggregates
+			 */
+			if (winstate->numaggs > 0)
+				eval_windowaggregates(winstate);
+		}
+
+		/*
+		 * If we have created auxiliary read pointers for the frame or group
+		 * boundaries, force them to be kept up-to-date, because we don't know
+		 * whether the window function(s) will do anything that requires that.
+		 * Failing to advance the pointers would result in being unable to
+		 * trim data from the tuplestore, which is bad.  (If we could know in
+		 * advance whether the window functions will use frame boundary info,
+		 * we could skip creating these pointers in the first place ... but
+		 * unfortunately the window function API doesn't require that.)
+		 */
+		if (winstate->framehead_ptr >= 0)
+			update_frameheadpos(winstate);
+		if (winstate->frametail_ptr >= 0)
+			update_frametailpos(winstate);
+		if (winstate->grouptail_ptr >= 0)
+			update_grouptailpos(winstate);
+
+		/*
+		 * Truncate any no-longer-needed rows from the tuplestore.
+		 */
+		tuplestore_trim(winstate->buffer);
+
+		/*
+		 * Form and return a projection tuple using the windowfunc results and
+		 * the current row.  Setting ecxt_outertuple arranges that any Vars
+		 * will be evaluated with respect to that row.
+		 */
+		econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
+
+		slot = ExecProject(winstate->ss.ps.ps_ProjInfo);
+
+		if (winstate->status == WINDOWAGG_RUN)
+		{
+			econtext->ecxt_scantuple = slot;
+
+			/*
+			 * Now evaluate the run condition to see if we need to go into
+			 * pass-through mode, or maybe stop completely.
+			 */
+			if (!ExecQual(winstate->runcondition, econtext))
+			{
+				/*
+				 * Determine which mode to move into.  If there is no
+				 * PARTITION BY clause and we're the top-level WindowAgg then
+				 * we're done.  This tuple and any future tuples cannot
+				 * possibly match the runcondition.  However, when there is a
+				 * PARTITION BY clause or we're not the top-level window we
+				 * can't just stop as we need to either process other
+				 * partitions or ensure WindowAgg nodes above us receive all
+				 * of the tuples they need to process their WindowFuncs.
+				 */
+				if (winstate->use_pass_through)
+				{
+					/*
+					 * STRICT pass-through mode is required for the top window
+					 * when there is a PARTITION BY clause.  Otherwise we must
+					 * ensure we store tuples that don't match the
+					 * runcondition so they're available to WindowAggs above.
+					 */
+					if (winstate->top_window)
+					{
+						winstate->status = WINDOWAGG_PASSTHROUGH_STRICT;
+						continue;
+					}
+					else
+						winstate->status = WINDOWAGG_PASSTHROUGH;
+				}
+				else
+				{
+					/*
+					 * Pass-through not required.  We can just return NULL.
+					 * Nothing else will match the runcondition.
+					 */
+					winstate->status = WINDOWAGG_DONE;
+					return NULL;
+				}
+			}
+
+			/*
+			 * Filter out any tuples we don't need in the top-level WindowAgg.
+			 */
+			if (!ExecQual(winstate->ss.ps.qual, econtext))
+			{
+				InstrCountFiltered1(winstate, 1);
+				continue;
+			}
+
+			break;
+		}
+
+		/*
+		 * When not in WINDOWAGG_RUN mode, we must still return this tuple if
+		 * we're anything apart from the top window.
+		 */
+		else if (!winstate->top_window)
+			break;
 	}
-	else
-	{
-		if (!tuplestore_gettupleslot(winstate->buffer, true, true,
-									 winstate->ss.ss_ScanTupleSlot))
-			elog(ERROR, "unexpected end of tuplestore");
-	}
 
-	/*
-	 * Evaluate true window functions
-	 */
-	numfuncs = winstate->numfuncs;
-	for (i = 0; i < numfuncs; i++)
-	{
-		WindowStatePerFunc perfuncstate = &(winstate->perfunc[i]);
-
-		if (perfuncstate->plain_agg)
-			continue;
-		eval_windowfunction(winstate, perfuncstate,
-							&(econtext->ecxt_aggvalues[perfuncstate->wfuncstate->wfuncno]),
-							&(econtext->ecxt_aggnulls[perfuncstate->wfuncstate->wfuncno]));
-	}
-
-	/*
-	 * Evaluate aggregates
-	 */
-	if (winstate->numaggs > 0)
-		eval_windowaggregates(winstate);
-
-	/*
-	 * If we have created auxiliary read pointers for the frame or group
-	 * boundaries, force them to be kept up-to-date, because we don't know
-	 * whether the window function(s) will do anything that requires that.
-	 * Failing to advance the pointers would result in being unable to trim
-	 * data from the tuplestore, which is bad.  (If we could know in advance
-	 * whether the window functions will use frame boundary info, we could
-	 * skip creating these pointers in the first place ... but unfortunately
-	 * the window function API doesn't require that.)
-	 */
-	if (winstate->framehead_ptr >= 0)
-		update_frameheadpos(winstate);
-	if (winstate->frametail_ptr >= 0)
-		update_frametailpos(winstate);
-	if (winstate->grouptail_ptr >= 0)
-		update_grouptailpos(winstate);
-
-	/*
-	 * Truncate any no-longer-needed rows from the tuplestore.
-	 */
-	tuplestore_trim(winstate->buffer);
-
-	/*
-	 * Form and return a projection tuple using the windowfunc results and the
-	 * current row.  Setting ecxt_outertuple arranges that any Vars will be
-	 * evaluated with respect to that row.
-	 */
-	econtext->ecxt_outertuple = winstate->ss.ss_ScanTupleSlot;
-
-	return ExecProject(winstate->ss.ps.ps_ProjInfo);
+	return slot;
 }
 
 /* -----------------
@@ -2300,12 +2403,32 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 							  "WindowAgg Aggregates",
 							  ALLOCSET_DEFAULT_SIZES);
 
+	/* Only the top-level WindowAgg may have a qual */
+	Assert(node->plan.qual == NIL || node->topWindow);
+
+	/* Initialize the qual */
+	winstate->ss.ps.qual = ExecInitQual(node->plan.qual,
+										(PlanState *) winstate);
+
 	/*
-	 * WindowAgg nodes never have quals, since they can only occur at the
-	 * logical top level of a query (ie, after any WHERE or HAVING filters)
+	 * Setup the run condition, if we received one from the query planner.
+	 * When set, this may allow us to move into pass-through mode so that we
+	 * don't have to perform any further evaluation of WindowFuncs in the
+	 * current partition or possibly stop returning tuples altogether when all
+	 * tuples are in the same partition.
 	 */
-	Assert(node->plan.qual == NIL);
-	winstate->ss.ps.qual = NULL;
+	winstate->runcondition = ExecInitQual(node->runCondition,
+										  (PlanState *) winstate);
+
+	/*
+	 * When we're not the top-level WindowAgg node or we are but have a
+	 * PARTITION BY clause we must move into one of the WINDOWAGG_PASSTHROUGH*
+	 * modes when the runCondition becomes false.
+	 */
+	winstate->use_pass_through = !node->topWindow || node->partNumCols > 0;
+
+	/* remember if we're the top-window or we are below the top-window */
+	winstate->top_window = node->topWindow;
 
 	/*
 	 * initialize child nodes
@@ -2500,6 +2623,9 @@ ExecInitWindowAgg(WindowAgg *node, EState *estate, int eflags)
 		winstate->agg_winobj = agg_winobj;
 	}
 
+	/* Set the status to running */
+	winstate->status = WINDOWAGG_RUN;
+
 	/* copy frame options to state node for easy access */
 	winstate->frameOptions = frameOptions;
 
@@ -2579,7 +2705,7 @@ ExecReScanWindowAgg(WindowAggState *node)
 	PlanState  *outerPlan = outerPlanState(node);
 	ExprContext *econtext = node->ss.ps.ps_ExprContext;
 
-	node->all_done = false;
+	node->status = WINDOWAGG_RUN;
 	node->all_first = true;
 
 	/* release tuplestore et al */

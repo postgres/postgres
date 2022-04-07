@@ -1843,6 +1843,9 @@ typedef struct WindowAggPath
 	Path		path;
 	Path	   *subpath;		/* path representing input source */
 	WindowClause *winclause;	/* WindowClause we'll be using */
+	List	   *qual;			/* lower-level WindowAgg runconditions */
+	bool		topwindow;		/* false for all apart from the WindowAgg
+								 * that's closest to the root of the plan */
 } WindowAggPath;
 
 /*

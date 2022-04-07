@@ -2406,6 +2406,18 @@ typedef struct AggState
 typedef struct WindowStatePerFuncData *WindowStatePerFunc;
 typedef struct WindowStatePerAggData *WindowStatePerAgg;
 
+/*
+ * WindowAggStatus -- Used to track the status of WindowAggState
+ */
+typedef enum WindowAggStatus
+{
+	WINDOWAGG_DONE,				/* No more processing to do */
+	WINDOWAGG_RUN,				/* Normal processing of window funcs */
+	WINDOWAGG_PASSTHROUGH,		/* Don't eval window funcs */
+	WINDOWAGG_PASSTHROUGH_STRICT	/* Pass-through plus don't store new
+									 * tuples during spool */
+} WindowAggStatus;
+
 typedef struct WindowAggState
 {
 	ScanState	ss;				/* its first field is NodeTag */
@@ -2432,6 +2444,7 @@ typedef struct WindowAggState
 	struct WindowObjectData *agg_winobj;	/* winobj for aggregate fetches */
 	int64		aggregatedbase; /* start row for current aggregates */
 	int64		aggregatedupto; /* rows before this one are aggregated */
+	WindowAggStatus status;		/* run status of WindowAggState */
 
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	ExprState  *startOffset;	/* expression for starting bound offset */
@@ -2458,8 +2471,17 @@ typedef struct WindowAggState
 	MemoryContext curaggcontext;	/* current aggregate's working data */
 	ExprContext *tmpcontext;	/* short-term evaluation context */
 
+	ExprState  *runcondition;	/* Condition which must remain true otherwise
+								 * execution of the WindowAgg will finish or
+								 * go into pass-through mode.  NULL when there
+								 * is no such condition. */
+
+	bool		use_pass_through;	/* When false, stop execution when
+									 * runcondition is no longer true.  Else
+									 * just stop evaluating window funcs. */
+	bool		top_window;		/* true if this is the top-most WindowAgg or
+								 * the only WindowAgg in this query level */
 	bool		all_first;		/* true if the scan is starting */
-	bool		all_done;		/* true if the scan is finished */
 	bool		partition_spooled;	/* true if all tuples in current partition
 									 * have been spooled into tuplestore */
 	bool		more_partitions;	/* true if there's more partitions after
