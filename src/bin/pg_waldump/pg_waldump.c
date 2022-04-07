@@ -720,7 +720,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 	 * calculate column totals.
 	 */
 
-	for (ri = 0; ri < RM_MAX_ID; ri++)
+	for (ri = 0; ri <= RM_MAX_ID; ri++)
 	{
 		total_count += stats->rmgr_stats[ri].count;
 		total_rec_len += stats->rmgr_stats[ri].rec_len;
