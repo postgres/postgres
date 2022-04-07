@@ -180,18 +180,21 @@ void
 pgstat_drop_relation(Relation rel)
 {
 	int			nest_level = GetCurrentTransactionNestLevel();
-	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+	PgStat_TableStatus *pgstat_info;
 
 	pgstat_drop_transactional(PGSTAT_KIND_RELATION,
 							  rel->rd_rel->relisshared ? InvalidOid : MyDatabaseId,
 							  RelationGetRelid(rel));
 
+	if (!pgstat_should_count_relation(rel))
+		return;
+
 	/*
 	 * Transactionally set counters to 0. That ensures that accesses to
 	 * pg_stat_xact_all_tables inside the transaction show 0.
 	 */
-	if (pgstat_info &&
-		pgstat_info->trans != NULL &&
+	pgstat_info = rel->pgstat_info;
+	if (pgstat_info->trans &&
 		pgstat_info->trans->nest_level == nest_level)
 	{
 		save_truncdrop_counters(pgstat_info->trans, true);
