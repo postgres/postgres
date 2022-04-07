@@ -1634,8 +1634,8 @@ PerformWalRecovery(void)
 
 #ifdef WAL_DEBUG
 			if (XLOG_DEBUG ||
-				(rmid == RM_XACT_ID && trace_recovery_messages <= DEBUG2) ||
-				(rmid != RM_XACT_ID && trace_recovery_messages <= DEBUG3))
+				(record->xl_rmid == RM_XACT_ID && trace_recovery_messages <= DEBUG2) ||
+				(record->xl_rmid != RM_XACT_ID && trace_recovery_messages <= DEBUG3))
 			{
 				StringInfoData buf;
 
