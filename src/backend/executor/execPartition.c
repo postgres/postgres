@@ -176,8 +176,9 @@ static void FormPartitionKeyDatum(PartitionDispatch pd,
 								  EState *estate,
 								  Datum *values,
 								  bool *isnull);
-static int	get_partition_for_tuple(PartitionDispatch pd, Datum *values,
-									bool *isnull);
+static int	get_partition_for_tuple(PartitionKey key,
+									PartitionDesc partdesc,
+									Datum *values, bool *isnull);
 static char *ExecBuildSlotPartitionKeyDescription(Relation rel,
 												  Datum *values,
 												  bool *isnull,
@@ -318,7 +319,9 @@ ExecFindPartition(ModifyTableState *mtstate,
 		 * these values, error out.
 		 */
 		if (partdesc->nparts == 0 ||
-			(partidx = get_partition_for_tuple(dispatch, values, isnull)) < 0)
+			(partidx = get_partition_for_tuple(dispatch->key,
+											   dispatch->partdesc,
+											   values, isnull)) < 0)
 		{
 			char	   *val_desc;
 
@@ -1341,12 +1344,12 @@ FormPartitionKeyDatum(PartitionDispatch pd,
  * found or -1 if none found.
  */
 static int
-get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
+get_partition_for_tuple(PartitionKey key,
+						PartitionDesc partdesc,
+						Datum *values, bool *isnull)
 {
 	int			bound_offset;
 	int			part_index = -1;
-	PartitionKey key = pd->key;
-	PartitionDesc partdesc = pd->partdesc;
 	PartitionBoundInfo boundinfo = partdesc->boundinfo;
 
 	/* Route as appropriate based on partitioning strategy. */
@@ -1436,6 +1439,165 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 		part_index = boundinfo->default_index;
 
 	return part_index;
+}
+
+/*
+ * ExecGetLeafPartitionForKey
+ *		Finds the leaf partition of partitioned table 'root_rel' that would
+ *		contain the specified key tuple.
+ *
+ * A subset of the table's columns (including all of the partition key columns)
+ * must be specified:
+ * - 'key_natts' indicats the number of columns contained in the key
+ * - 'key_attnums' indicates their attribute numbers as defined in 'root_rel'
+ * - 'key_vals' and 'key_nulls' specify the key tuple
+ *
+ * Returns the leaf partition, locked with the given lockmode, or NULL if
+ * there isn't one.  Caller is responsibly for closing it.  All intermediate
+ * partitions are also locked with the same lockmode.  Caller must have locked
+ * the root already.
+ *
+ * In addition, the OID of the index of a unique constraint on the root table
+ * must be given as 'root_idxoid'; *leaf_idxoid will be set to the OID of the
+ * corresponding index on the returned leaf partition.  (This can be used by
+ * caller to search for a tuple matching the key in the leaf partition.)
+ *
+ * This works because the unique key defined on the root relation is required
+ * to contain the partition key columns of all of the ancestors that lead up to
+ * a given leaf partition.
+ */
+Relation
+ExecGetLeafPartitionForKey(Relation root_rel, int key_natts,
+						   const AttrNumber *key_attnums,
+						   Datum *key_vals, char *key_nulls,
+						   Oid root_idxoid, int lockmode,
+						   Oid *leaf_idxoid)
+{
+	Relation	found_leafpart = NULL;
+	Relation	rel = root_rel;
+	Oid			constr_idxoid = root_idxoid;
+	PartitionDirectory partdir;
+
+	Assert(root_rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
+
+	*leaf_idxoid = InvalidOid;
+
+	partdir = CreatePartitionDirectory(CurrentMemoryContext, true);
+
+	/*
+	 * Descend through partitioned parents to find the leaf partition that
+	 * would accept a row with the provided key values, starting with the root
+	 * parent.
+	 */
+	for (;;)
+	{
+		PartitionKey partkey = RelationGetPartitionKey(rel);
+		PartitionDesc partdesc;
+		Datum		partkey_vals[PARTITION_MAX_KEYS];
+		bool		partkey_isnull[PARTITION_MAX_KEYS];
+		AttrNumber *root_partattrs = partkey->partattrs;
+		int			found_att;
+		int			partidx;
+		Oid			partoid;
+
+		CHECK_FOR_INTERRUPTS();
+
+		/*
+		 * Collect partition key values from the unique key.
+		 *
+		 * Because we only have the root table's copy of pk_attnums, must map
+		 * any non-root table's partition key attribute numbers to the root
+		 * table's.
+		 */
+		if (rel != root_rel)
+		{
+			/*
+			 * map->attnums will contain root table attribute numbers for each
+			 * attribute of the current partitioned relation.
+			 */
+			AttrMap    *map;
+
+			map = build_attrmap_by_name_if_req(RelationGetDescr(root_rel),
+											   RelationGetDescr(rel));
+			if (map)
+			{
+				root_partattrs = palloc(partkey->partnatts *
+										sizeof(AttrNumber));
+				for (int att = 0; att < partkey->partnatts; att++)
+				{
+					AttrNumber	partattno = partkey->partattrs[att];
+
+					root_partattrs[att] = map->attnums[partattno - 1];
+				}
+
+				free_attrmap(map);
+			}
+		}
+
+		/*
+		 * Map the values/isnulls to match the partition description, as
+		 * necessary.
+		 *
+		 * (Referenced key specification does not allow expressions, so there
+		 * would not be expressions in the partition keys either.)
+		 */
+		Assert(partkey->partexprs == NIL);
+		found_att = 0;
+		for (int keyatt = 0; keyatt < key_natts; keyatt++)
+		{
+			for (int att = 0; att < partkey->partnatts; att++)
+			{
+				if (root_partattrs[att] == key_attnums[keyatt])
+				{
+					partkey_vals[found_att] = key_vals[keyatt];
+					partkey_isnull[found_att] = (key_nulls[keyatt] == 'n');
+					found_att++;
+					break;
+				}
+			}
+		}
+		/* We had better have found values for all partition keys */
+		Assert(found_att == partkey->partnatts);
+
+		if (root_partattrs != partkey->partattrs)
+			pfree(root_partattrs);
+
+		/* Get the PartitionDesc using the partition directory machinery.  */
+		partdesc = PartitionDirectoryLookup(partdir, rel);
+		if (partdesc->nparts == 0)
+			break;
+
+		/* Find the partition for the key. */
+		partidx = get_partition_for_tuple(partkey, partdesc,
+										  partkey_vals, partkey_isnull);
+		Assert(partidx < 0 || partidx < partdesc->nparts);
+
+		/* close the previous parent if any, but keep lock */
+		if (rel != root_rel)
+			table_close(rel, NoLock);
+
+		/* No partition found. */
+		if (partidx < 0)
+			break;
+
+		partoid = partdesc->oids[partidx];
+		rel = table_open(partoid, lockmode);
+		constr_idxoid = index_get_partition(rel, constr_idxoid);
+
+		/*
+		 * We're done if the partition is a leaf, else find its partition in
+		 * the next iteration.
+		 */
+		if (partdesc->is_leaf[partidx])
+		{
+			*leaf_idxoid = constr_idxoid;
+			found_leafpart = rel;
+			break;
+		}
+	}
+
+	DestroyPartitionDirectory(partdir);
+	return found_leafpart;
 }
 
 /*

@@ -46,10 +46,7 @@ step s2sfn	{ SELECT * FROM fk_noparted; }
 # inserting into referencing tables in transaction-snapshot mode
 # PK table is non-partitioned
 permutation s1brr s2brc s2ip2 s1sp s2c s1sp s1ifp2 s1c s1sfp
-# PK table is partitioned: buggy, because s2's serialization transaction can
-# see the uncommitted row thanks to the latest snapshot taken for
-# partition lookup to work correctly also ends up getting used by the PK index
-# scan
+# PK table is partitioned
 permutation s2ip2 s2brr s1brc s1ifp2 s2sfp s1c s2sfp s2ifn2 s2c s2sfn
 
 # inserting into referencing tables in up-to-date snapshot mode

@@ -652,6 +652,14 @@ extern void CheckSubscriptionRelkind(char relkind, const char *nspname,
 									 const char *relname);
 
 /*
+ * prototypes from functions in nodeLockRows.c
+ */
+extern bool ExecLockTableTuple(Relation relation, ItemPointer tid,
+							   TupleTableSlot *slot, Snapshot snapshot,
+							   CommandId cid, LockTupleMode lockmode,
+							   LockWaitPolicy waitPolicy, bool *epq_needed);
+
+/*
  * prototypes from functions in nodeModifyTable.c
  */
 extern TupleTableSlot *ExecGetUpdateNewTuple(ResultRelInfo *relinfo,
