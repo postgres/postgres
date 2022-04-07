@@ -16,6 +16,8 @@ SET enable_seqscan TO on;
 SET enable_indexscan TO on;
 -- for the moment, we don't want index-only scans here
 SET enable_indexonlyscan TO off;
+-- not enabled by default, but we want to test it...
+SET track_functions TO 'all';
 -- save counters
 BEGIN;
 SET LOCAL stats_fetch_consistency = snapshot;
@@ -146,8 +148,477 @@ FROM prevstats AS pr;
 (1 row)
 
 COMMIT;
+----
+-- Basic tests for track_functions
+---
+CREATE FUNCTION stats_test_func1() RETURNS VOID LANGUAGE plpgsql AS $$BEGIN END;$$;
+SELECT 'stats_test_func1()'::regprocedure::oid AS stats_test_func1_oid \gset
+CREATE FUNCTION stats_test_func2() RETURNS VOID LANGUAGE plpgsql AS $$BEGIN END;$$;
+SELECT 'stats_test_func2()'::regprocedure::oid AS stats_test_func2_oid \gset
+-- test that stats are accumulated
+BEGIN;
+SET LOCAL stats_fetch_consistency = none;
+SELECT pg_stat_get_function_calls(:stats_test_func1_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+SELECT pg_stat_get_xact_function_calls(:stats_test_func1_oid);
+ pg_stat_get_xact_function_calls 
+---------------------------------
+                                
+(1 row)
+
+SELECT stats_test_func1();
+ stats_test_func1 
+------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_xact_function_calls(:stats_test_func1_oid);
+ pg_stat_get_xact_function_calls 
+---------------------------------
+                               1
+(1 row)
+
+SELECT stats_test_func1();
+ stats_test_func1 
+------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_xact_function_calls(:stats_test_func1_oid);
+ pg_stat_get_xact_function_calls 
+---------------------------------
+                               2
+(1 row)
+
+SELECT pg_stat_get_function_calls(:stats_test_func1_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                          0
+(1 row)
+
+COMMIT;
+-- Verify that function stats are not transactional
+-- rolled back savepoint in committing transaction
+BEGIN;
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+SAVEPOINT foo;
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+ROLLBACK TO SAVEPOINT foo;
+SELECT pg_stat_get_xact_function_calls(:stats_test_func2_oid);
+ pg_stat_get_xact_function_calls 
+---------------------------------
+                               2
+(1 row)
+
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+COMMIT;
+-- rolled back transaction
+BEGIN;
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+ROLLBACK;
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+-- check collected stats
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func1_oid;
+     funcname     | calls 
+------------------+-------
+ stats_test_func1 |     2
+(1 row)
+
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func2_oid;
+     funcname     | calls 
+------------------+-------
+ stats_test_func2 |     4
+(1 row)
+
+-- check that a rolled back drop function stats leaves stats alive
+BEGIN;
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func1_oid;
+     funcname     | calls 
+------------------+-------
+ stats_test_func1 |     2
+(1 row)
+
+DROP FUNCTION stats_test_func1();
+-- shouldn't be visible via view
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func1_oid;
+ funcname | calls 
+----------+-------
+(0 rows)
+
+-- but still via oid access
+SELECT pg_stat_get_function_calls(:stats_test_func1_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                          2
+(1 row)
+
+ROLLBACK;
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func1_oid;
+     funcname     | calls 
+------------------+-------
+ stats_test_func1 |     2
+(1 row)
+
+SELECT pg_stat_get_function_calls(:stats_test_func1_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                          2
+(1 row)
+
+-- check that function dropped in main transaction leaves no stats behind
+BEGIN;
+DROP FUNCTION stats_test_func1();
+COMMIT;
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func1_oid;
+ funcname | calls 
+----------+-------
+(0 rows)
+
+SELECT pg_stat_get_function_calls(:stats_test_func1_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+-- check that function dropped in a subtransaction leaves no stats behind
+BEGIN;
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+SAVEPOINT a;
+SELECT stats_test_func2();
+ stats_test_func2 
+------------------
+ 
+(1 row)
+
+SAVEPOINT b;
+DROP FUNCTION stats_test_func2();
+COMMIT;
+SELECT funcname, calls FROM pg_stat_user_functions WHERE funcid = :stats_test_func2_oid;
+ funcname | calls 
+----------+-------
+(0 rows)
+
+SELECT pg_stat_get_function_calls(:stats_test_func2_oid);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+-- Check that stats for relations are dropped. For that we need to access stats
+-- by oid after the DROP TABLE. Save oids.
+CREATE TABLE drop_stats_test();
+INSERT INTO drop_stats_test DEFAULT VALUES;
+SELECT 'drop_stats_test'::regclass::oid AS drop_stats_test_oid \gset
+CREATE TABLE drop_stats_test_xact();
+INSERT INTO drop_stats_test_xact DEFAULT VALUES;
+SELECT 'drop_stats_test_xact'::regclass::oid AS drop_stats_test_xact_oid \gset
+CREATE TABLE drop_stats_test_subxact();
+INSERT INTO drop_stats_test_subxact DEFAULT VALUES;
+SELECT 'drop_stats_test_subxact'::regclass::oid AS drop_stats_test_subxact_oid \gset
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_live_tuples(:drop_stats_test_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       1
+(1 row)
+
+DROP TABLE drop_stats_test;
+SELECT pg_stat_get_live_tuples(:drop_stats_test_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       0
+(1 row)
+
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                0
+(1 row)
+
+-- check that rollback protects against having stats dropped and that local
+-- modifications don't pose a problem
+SELECT pg_stat_get_live_tuples(:drop_stats_test_xact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       1
+(1 row)
+
+SELECT pg_stat_get_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_tuples_inserted 
+-----------------------------
+                           1
+(1 row)
+
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                0
+(1 row)
+
+BEGIN;
+INSERT INTO drop_stats_test_xact DEFAULT VALUES;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                1
+(1 row)
+
+DROP TABLE drop_stats_test_xact;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                0
+(1 row)
+
+ROLLBACK;
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_live_tuples(:drop_stats_test_xact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       1
+(1 row)
+
+SELECT pg_stat_get_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_tuples_inserted 
+-----------------------------
+                           2
+(1 row)
+
+-- transactional drop
+SELECT pg_stat_get_live_tuples(:drop_stats_test_xact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       1
+(1 row)
+
+SELECT pg_stat_get_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_tuples_inserted 
+-----------------------------
+                           2
+(1 row)
+
+BEGIN;
+INSERT INTO drop_stats_test_xact DEFAULT VALUES;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                1
+(1 row)
+
+DROP TABLE drop_stats_test_xact;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                0
+(1 row)
+
+COMMIT;
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_live_tuples(:drop_stats_test_xact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       0
+(1 row)
+
+SELECT pg_stat_get_tuples_inserted(:drop_stats_test_xact_oid);
+ pg_stat_get_tuples_inserted 
+-----------------------------
+                           0
+(1 row)
+
+-- savepoint rollback (2 levels)
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       1
+(1 row)
+
+BEGIN;
+INSERT INTO drop_stats_test_subxact DEFAULT VALUES;
+SAVEPOINT sp1;
+INSERT INTO drop_stats_test_subxact DEFAULT VALUES;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_subxact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                2
+(1 row)
+
+SAVEPOINT sp2;
+DROP TABLE drop_stats_test_subxact;
+ROLLBACK TO SAVEPOINT sp2;
+SELECT pg_stat_get_xact_tuples_inserted(:drop_stats_test_subxact_oid);
+ pg_stat_get_xact_tuples_inserted 
+----------------------------------
+                                2
+(1 row)
+
+COMMIT;
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       3
+(1 row)
+
+-- savepoint rolback (1 level)
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       3
+(1 row)
+
+BEGIN;
+SAVEPOINT sp1;
+DROP TABLE drop_stats_test_subxact;
+SAVEPOINT sp2;
+ROLLBACK TO SAVEPOINT sp1;
+COMMIT;
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       3
+(1 row)
+
+-- and now actually drop
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       3
+(1 row)
+
+BEGIN;
+SAVEPOINT sp1;
+DROP TABLE drop_stats_test_subxact;
+SAVEPOINT sp2;
+RELEASE SAVEPOINT sp1;
+COMMIT;
+SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
+ pg_stat_get_live_tuples 
+-------------------------
+                       0
+(1 row)
+
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
+----
+-- pg_stat_get_snapshot_timestamp behavior
+----
+BEGIN;
+SET LOCAL stats_fetch_consistency = snapshot;
+-- no snapshot yet, return NULL
+SELECT pg_stat_get_snapshot_timestamp();
+ pg_stat_get_snapshot_timestamp 
+--------------------------------
+ 
+(1 row)
+
+-- any attempt at accessing stats will build snapshot
+SELECT pg_stat_get_function_calls(0);
+ pg_stat_get_function_calls 
+----------------------------
+                           
+(1 row)
+
+SELECT pg_stat_get_snapshot_timestamp() >= NOW();
+ ?column? 
+----------
+ t
+(1 row)
+
+-- shows NULL again after clearing
+SELECT pg_stat_clear_snapshot();
+ pg_stat_clear_snapshot 
+------------------------
+ 
+(1 row)
+
+SELECT pg_stat_get_snapshot_timestamp();
+ pg_stat_get_snapshot_timestamp 
+--------------------------------
+ 
+(1 row)
+
+COMMIT;
+----
+-- pg_stat_have_stats behavior
+----
+-- fixed-numbered stats exist
+SELECT pg_stat_have_stats('bgwriter', 0, 0);
+ pg_stat_have_stats 
+--------------------
+ t
+(1 row)
+
+-- unknown stats kinds error out
+SELECT pg_stat_have_stats('zaphod', 0, 0);
+ERROR:  invalid statistics kind: "zaphod"
+-- db stats have objoid 0
+SELECT pg_stat_have_stats('database', (SELECT oid FROM pg_database WHERE datname = current_database()), 1);
+ pg_stat_have_stats 
+--------------------
+ f
+(1 row)
+
+SELECT pg_stat_have_stats('database', (SELECT oid FROM pg_database WHERE datname = current_database()), 0);
+ pg_stat_have_stats 
+--------------------
+ t
+(1 row)
+
 -- ensure that stats accessors handle NULL input correctly
 SELECT pg_stat_get_replication_slot(NULL);
  pg_stat_get_replication_slot 
