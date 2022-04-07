@@ -262,6 +262,7 @@ break is not needed in a wider output rendering.
   &tableam;
   &indexam;
   &generic-wal;
+  &custom-rmgr;
   &btree;
   &gist;
   &spgist;

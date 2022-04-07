@@ -6356,6 +6356,13 @@
   prorettype => 'text', proargtypes => '',
   prosrc => 'pg_get_wal_replay_pause_state' },
 
+{ oid => '8189', descr => 'get resource managers loaded in system',
+  proname => 'pg_get_wal_resource_managers', prorows => '50', proretset => 't',
+  provolatile => 'v', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{int4,text,bool}', proargmodes => '{o,o,o}',
+  proargnames => '{rm_id, rm_name, rm_builtin}',
+  prosrc => 'pg_get_wal_resource_managers' },
+
 { oid => '2621', descr => 'reload configuration files',
   proname => 'pg_reload_conf', provolatile => 'v', prorettype => 'bool',
   proargtypes => '', prosrc => 'pg_reload_conf' },

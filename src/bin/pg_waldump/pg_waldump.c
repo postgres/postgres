@@ -80,8 +80,8 @@ typedef struct XLogDumpStats
 	uint64		count;
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
-	Stats		rmgr_stats[RM_NEXT_ID];
-	Stats		record_stats[RM_NEXT_ID][MAX_XLINFO_TYPES];
+	Stats		rmgr_stats[RM_MAX_ID + 1];
+	Stats		record_stats[RM_MAX_ID + 1][MAX_XLINFO_TYPES];
 } XLogDumpStats;
 
 #define fatal_error(...) do { pg_log_fatal(__VA_ARGS__); exit(EXIT_FAILURE); } while(0)
@@ -104,9 +104,9 @@ print_rmgr_list(void)
 {
 	int			i;
 
-	for (i = 0; i <= RM_MAX_ID; i++)
+	for (i = 0; i <= RM_MAX_BUILTIN_ID; i++)
 	{
-		printf("%s\n", RmgrDescTable[i].rm_name);
+		printf("%s\n", GetRmgrDesc(i)->rm_name);
 	}
 }
 
@@ -535,7 +535,7 @@ static void
 XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 {
 	const char *id;
-	const RmgrDescData *desc = &RmgrDescTable[XLogRecGetRmid(record)];
+	const RmgrDescData *desc = GetRmgrDesc(XLogRecGetRmid(record));
 	uint32		rec_len;
 	uint32		fpi_len;
 	RelFileNode rnode;
@@ -720,7 +720,7 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 	 * calculate column totals.
 	 */
 
-	for (ri = 0; ri < RM_NEXT_ID; ri++)
+	for (ri = 0; ri < RM_MAX_ID; ri++)
 	{
 		total_count += stats->rmgr_stats[ri].count;
 		total_rec_len += stats->rmgr_stats[ri].rec_len;
@@ -741,13 +741,18 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 		   "Type", "N", "(%)", "Record size", "(%)", "FPI size", "(%)", "Combined size", "(%)",
 		   "----", "-", "---", "-----------", "---", "--------", "---", "-------------", "---");
 
-	for (ri = 0; ri < RM_NEXT_ID; ri++)
+	for (ri = 0; ri <= RM_MAX_ID; ri++)
 	{
 		uint64		count,
 					rec_len,
 					fpi_len,
 					tot_len;
-		const RmgrDescData *desc = &RmgrDescTable[ri];
+		const RmgrDescData *desc;
+
+		if (!RMID_IS_VALID(ri))
+			continue;
+
+		desc = GetRmgrDesc(ri);
 
 		if (!config->stats_per_record)
 		{
@@ -755,6 +760,9 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 			rec_len = stats->rmgr_stats[ri].rec_len;
 			fpi_len = stats->rmgr_stats[ri].fpi_len;
 			tot_len = rec_len + fpi_len;
+
+			if (RMID_IS_CUSTOM(ri) && count == 0)
+				continue;
 
 			XLogDumpStatsRow(desc->rm_name,
 							 count, total_count, rec_len, total_rec_len,
@@ -1000,7 +1008,7 @@ main(int argc, char **argv)
 				break;
 			case 'r':
 				{
-					int			i;
+					int			rmid;
 
 					if (pg_strcasecmp(optarg, "list") == 0)
 					{
@@ -1008,20 +1016,42 @@ main(int argc, char **argv)
 						exit(EXIT_SUCCESS);
 					}
 
-					for (i = 0; i <= RM_MAX_ID; i++)
+					/*
+					 * First look for the generated name of a custom rmgr, of
+					 * the form "custom###". We accept this form, because the
+					 * custom rmgr module is not loaded, so there's no way to
+					 * know the real name. This convention should be
+					 * consistent with that in rmgrdesc.c.
+					 */
+					if (sscanf(optarg, "custom%03d", &rmid) == 1)
 					{
-						if (pg_strcasecmp(optarg, RmgrDescTable[i].rm_name) == 0)
+						if (!RMID_IS_CUSTOM(rmid))
 						{
-							config.filter_by_rmgr[i] = true;
-							config.filter_by_rmgr_enabled = true;
-							break;
+							pg_log_error("custom resource manager \"%s\" does not exist",
+										 optarg);
+							goto bad_argument;
 						}
+						config.filter_by_rmgr[rmid] = true;
+						config.filter_by_rmgr_enabled = true;
 					}
-					if (i > RM_MAX_ID)
+					else
 					{
-						pg_log_error("resource manager \"%s\" does not exist",
-									 optarg);
-						goto bad_argument;
+						/* then look for builtin rmgrs */
+						for (rmid = 0; rmid <= RM_MAX_BUILTIN_ID; rmid++)
+						{
+							if (pg_strcasecmp(optarg, GetRmgrDesc(rmid)->rm_name) == 0)
+							{
+								config.filter_by_rmgr[rmid] = true;
+								config.filter_by_rmgr_enabled = true;
+								break;
+							}
+						}
+						if (rmid > RM_MAX_BUILTIN_ID)
+						{
+							pg_log_error("resource manager \"%s\" does not exist",
+										 optarg);
+							goto bad_argument;
+						}
 					}
 				}
 				break;

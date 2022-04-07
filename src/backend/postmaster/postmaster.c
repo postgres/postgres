@@ -1040,6 +1040,12 @@ PostmasterMain(int argc, char *argv[])
 	InitializeShmemGUCs();
 
 	/*
+	 * Now that modules have been loaded, we can process any custom resource
+	 * managers specified in the wal_consistency_checking GUC.
+	 */
+	InitializeWalConsistencyChecking();
+
+	/*
 	 * If -C was specified with a runtime-computed GUC, we held off printing
 	 * the value earlier, as the GUC was not yet initialized.  We handle -C
 	 * for most GUCs before we lock the data directory so that the option may

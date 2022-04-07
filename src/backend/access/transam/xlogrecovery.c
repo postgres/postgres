@@ -1541,7 +1541,6 @@ ShutdownWalRecovery(void)
 void
 PerformWalRecovery(void)
 {
-	int			rmid;
 	XLogRecord *record;
 	bool		reachedRecoveryTarget = false;
 	TimeLineID	replayTLI;
@@ -1614,12 +1613,7 @@ PerformWalRecovery(void)
 
 		InRedo = true;
 
-		/* Initialize resource managers */
-		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
-		{
-			if (RmgrTable[rmid].rm_startup != NULL)
-				RmgrTable[rmid].rm_startup();
-		}
+		RmgrStartup();
 
 		ereport(LOG,
 				(errmsg("redo starts at %X/%X",
@@ -1756,12 +1750,7 @@ PerformWalRecovery(void)
 			}
 		}
 
-		/* Allow resource managers to do any required cleanup. */
-		for (rmid = 0; rmid <= RM_MAX_ID; rmid++)
-		{
-			if (RmgrTable[rmid].rm_cleanup != NULL)
-				RmgrTable[rmid].rm_cleanup();
-		}
+		RmgrCleanup();
 
 		ereport(LOG,
 				(errmsg("redo done at %X/%X system usage: %s",
@@ -1881,7 +1870,7 @@ ApplyWalRecord(XLogReaderState *xlogreader, XLogRecord *record, TimeLineID *repl
 		xlogrecovery_redo(xlogreader, *replayTLI);
 
 	/* Now apply the WAL record itself */
-	RmgrTable[record->xl_rmid].rm_redo(xlogreader);
+	GetRmgr(record->xl_rmid).rm_redo(xlogreader);
 
 	/*
 	 * After redo, check whether the backup pages associated with the WAL
@@ -2111,20 +2100,20 @@ rm_redo_error_callback(void *arg)
 void
 xlog_outdesc(StringInfo buf, XLogReaderState *record)
 {
-	RmgrId		rmid = XLogRecGetRmid(record);
+	RmgrData	rmgr = GetRmgr(XLogRecGetRmid(record));
 	uint8		info = XLogRecGetInfo(record);
 	const char *id;
 
-	appendStringInfoString(buf, RmgrTable[rmid].rm_name);
+	appendStringInfoString(buf, rmgr.rm_name);
 	appendStringInfoChar(buf, '/');
 
-	id = RmgrTable[rmid].rm_identify(info);
+	id = rmgr.rm_identify(info);
 	if (id == NULL)
 		appendStringInfo(buf, "UNKNOWN (%X): ", info & ~XLR_INFO_MASK);
 	else
 		appendStringInfo(buf, "%s: ", id);
 
-	RmgrTable[rmid].rm_desc(buf, record);
+	rmgr.rm_desc(buf, record);
 }
 
 #ifdef WAL_DEBUG
@@ -2273,7 +2262,7 @@ getRecordTimestamp(XLogReaderState *record, TimestampTz *recordXtime)
 static void
 verifyBackupPageConsistency(XLogReaderState *record)
 {
-	RmgrId		rmid = XLogRecGetRmid(record);
+	RmgrData	rmgr = GetRmgr(XLogRecGetRmid(record));
 	RelFileNode rnode;
 	ForkNumber	forknum;
 	BlockNumber blkno;
@@ -2353,10 +2342,10 @@ verifyBackupPageConsistency(XLogReaderState *record)
 		 * If masking function is defined, mask both the primary and replay
 		 * images
 		 */
-		if (RmgrTable[rmid].rm_mask != NULL)
+		if (rmgr.rm_mask != NULL)
 		{
-			RmgrTable[rmid].rm_mask(replay_image_masked, blkno);
-			RmgrTable[rmid].rm_mask(primary_image_masked, blkno);
+			rmgr.rm_mask(replay_image_masked, blkno);
+			rmgr.rm_mask(primary_image_masked, blkno);
 		}
 
 		/* Time to compare the primary and replay images. */

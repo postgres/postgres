@@ -105,6 +105,7 @@
 <!ENTITY storage    SYSTEM "storage.sgml">
 <!ENTITY tablesample-method SYSTEM "tablesample-method.sgml">
 <!ENTITY generic-wal SYSTEM "generic-wal.sgml">
+<!ENTITY custom-rmgr SYSTEM "custom-rmgr.sgml">
 <!ENTITY backup-manifest SYSTEM "backup-manifest.sgml">
 
 <!-- contrib information -->

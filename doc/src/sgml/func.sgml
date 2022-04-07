@@ -26001,6 +26001,25 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
         without recovery, the function returns <literal>NULL</literal>.
        </para></entry>
       </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_get_wal_resource_managers</primary>
+        </indexterm>
+        <function>pg_get_wal_resource_managers</function> ()
+        <returnvalue>setof record</returnvalue>
+        ( <parameter>rm_id</parameter> <type>integer</type>,
+        <parameter>rm_name</parameter> <type>text</type>,
+        <parameter>rm_builtin</parameter> <type>boolean</type> )
+       </para>
+       <para>
+        Returns the currently-loaded WAL resource managers in the system. The
+        column <parameter>rm_builtin</parameter> indicates whether it's a
+        built-in resource manager, or a custom resource manager loaded by an
+        extension.
+       </para></entry>
+      </row>
      </tbody>
     </tgroup>
    </table>

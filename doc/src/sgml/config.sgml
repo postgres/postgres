@@ -11189,8 +11189,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         <literal>heap2</literal>, <literal>btree</literal>, <literal>hash</literal>,
         <literal>gin</literal>, <literal>gist</literal>, <literal>sequence</literal>,
         <literal>spgist</literal>, <literal>brin</literal>, and <literal>generic</literal>.
-        Only superusers and users with the appropriate <literal>SET</literal>
-        privilege can change this setting.
+        Extensions may define additional resource managers. Only superusers and users with
+        the appropriate <literal>SET</literal> privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>

@@ -1,0 +1,98 @@
+<!-- doc/src/sgml/custom-rmgr.sgml -->
+
+<chapter id="custom-rmgr">
+ <title>Custom WAL Resource Managers</title>
+
+ <para>
+  This chapter explains the interface between the core
+  <productname>PostgreSQL</productname> system and custom WAL resource
+  managers, which enable extensions to integrate directly with the <link
+  linkend="wal"><acronym>WAL</acronym></link>.
+ </para>
+ <para>
+  An extension, especially a <link linkend="tableam">Table Access
+  Method</link> or <link linkend="indexam">Index Access Method</link>, may
+  need to use WAL for recovery, replication, and/or <link
+  linkend="logicaldecoding">Logical Decoding</link>. Custom resource managers
+  are a more flexible alternative to <link linkend="generic-wal">Generic
+  WAL</link> (which does not support logical decoding), but more complex for
+  an extension to implement.
+ </para>
+ <para>
+  To create a new custom WAL resouce manager, first define an
+  <structname>RmgrData</structname> structure with implementations for the
+  resource manager methods. Refer to
+  <filename>src/backend/access/transam/README</filename> and
+  <filename>src/include/access/xlog_internal.h</filename> in the
+  <productname>PostgreSQL</productname> source.
+<programlisting>
+/*
+ * Method table for resource managers.
+ *
+ * This struct must be kept in sync with the PG_RMGR definition in
+ * rmgr.c.
+ *
+ * rm_identify must return a name for the record based on xl_info (without
+ * reference to the rmid). For example, XLOG_BTREE_VACUUM would be named
+ * "VACUUM". rm_desc can then be called to obtain additional detail for the
+ * record, if available (e.g. the last block).
+ *
+ * rm_mask takes as input a page modified by the resource manager and masks
+ * out bits that shouldn't be flagged by wal_consistency_checking.
+ *
+ * RmgrTable[] is indexed by RmgrId values (see rmgrlist.h). If rm_name is
+ * NULL, the corresponding RmgrTable entry is considered invalid.
+ */
+typedef struct RmgrData
+{
+    const char *rm_name;
+    void        (*rm_redo) (XLogReaderState *record);
+    void        (*rm_desc) (StringInfo buf, XLogReaderState *record);
+    const char *(*rm_identify) (uint8 info);
+    void        (*rm_startup) (void);
+    void        (*rm_cleanup) (void);
+    void        (*rm_mask) (char *pagedata, BlockNumber blkno);
+    void        (*rm_decode) (struct LogicalDecodingContext *ctx,
+                              struct XLogRecordBuffer *buf);
+} RmgrData;
+</programlisting>  
+ </para>
+ <para>
+  Then, register your new resource
+  manager.
+
+<programlisting>
+/*
+ * Register a new custom WAL resource manager.
+ *
+ * Resource manager IDs must be globally unique across all extensions. Refer
+ * to https://wiki.postgresql.org/wiki/CustomWALResourceManager to reserve a
+ * unique RmgrId for your extension, to avoid conflicts with other extension
+ * developers. During development, use RM_EXPERIMENTAL_ID to avoid needlessly
+ * reserving a new ID.
+ */
+extern void RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr);
+</programlisting>
+  <function>RegisterCustomRmgr</function> must be called from the
+  extension module's <link linkend="xfunc-c-dynload">_PG_init</link> function.
+  While developing a new extension, use <literal>RM_EXPERIMENTAL_ID</literal>
+  for <parameter>rmid</parameter>. When you ready to release the extension to
+  users, reserve a new resource manager ID at the <ulink
+  url="https://wiki.postgresql.org/wiki/CustomWALResourceManagers">Custom WAL
+  Resource Manager</ulink> page.
+ </para>
+
+ <para>
+  Place the extension module implementing the custom resource manager in <xref
+  linkend="guc-shared-preload-libraries"/> so that it will be loaded early
+  during <productname>PostgreSQL</productname> startup.
+ </para>
+ <note>
+   <para>    
+    The extension must remain in shared_preload_libraries as long as any
+    custom WAL records may exist in the system. Otherwise
+    <productname>PostgreSQL</productname> will not be able to apply or decode
+    the custom WAL records, which may prevent the server from starting.
+   </para>
+ </note>
+</chapter>

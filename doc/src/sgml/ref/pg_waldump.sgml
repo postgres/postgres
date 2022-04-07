@@ -173,6 +173,14 @@ PostgreSQL documentation
         If <literal>list</literal> is passed as name, print a list of valid resource manager
         names, and exit.
        </para>
+       <para>
+        Extensions may define custom resource managers, but pg_waldump does
+        not load the extension module and therefore does not recognize custom
+        resource managers by name. Instead, you can specify the custom
+        resource managers as <literal>custom###</literal> where
+        "<literal>###</literal>" is the three-digit resource manager ID. Names
+        of this form will always be considered valid.
+       </para>
       </listitem>
      </varlistentry>
 
