@@ -4427,7 +4427,7 @@ GetXLogReplayRecPtr(TimeLineID *replayTLI)
 /*
  * Get position of last applied, or the record being applied.
  *
- * This is different from GetLogReplayRecPtr() in that if a WAL
+ * This is different from GetXLogReplayRecPtr() in that if a WAL
  * record is currently being applied, this includes that record.
  */
 XLogRecPtr
