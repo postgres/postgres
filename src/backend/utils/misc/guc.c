@@ -41,6 +41,7 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogprefetcher.h"
 #include "access/xlogrecovery.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
@@ -217,6 +218,7 @@ static bool check_effective_io_concurrency(int *newval, void **extra, GucSource 
 static bool check_maintenance_io_concurrency(int *newval, void **extra, GucSource source);
 static bool check_huge_page_size(int *newval, void **extra, GucSource source);
 static bool check_client_connection_check_interval(int *newval, void **extra, GucSource source);
+static void assign_maintenance_io_concurrency(int newval, void *extra);
 static bool check_application_name(char **newval, void **extra, GucSource source);
 static void assign_application_name(const char *newval, void *extra);
 static bool check_cluster_name(char **newval, void **extra, GucSource source);
@@ -492,6 +494,19 @@ static const struct config_enum_entry huge_pages_options[] = {
 	{"no", HUGE_PAGES_OFF, true},
 	{"1", HUGE_PAGES_ON, true},
 	{"0", HUGE_PAGES_OFF, true},
+	{NULL, 0, false}
+};
+
+static const struct config_enum_entry recovery_prefetch_options[] = {
+	{"off", RECOVERY_PREFETCH_OFF, false},
+	{"on", RECOVERY_PREFETCH_ON, false},
+	{"try", RECOVERY_PREFETCH_TRY, false},
+	{"true", RECOVERY_PREFETCH_ON, true},
+	{"false", RECOVERY_PREFETCH_OFF, true},
+	{"yes", RECOVERY_PREFETCH_ON, true},
+	{"no", RECOVERY_PREFETCH_OFF, true},
+	{"1", RECOVERY_PREFETCH_ON, true},
+	{"0", RECOVERY_PREFETCH_OFF, true},
 	{NULL, 0, false}
 };
 
@@ -785,6 +800,8 @@ const char *const config_group_names[] =
 	gettext_noop("Write-Ahead Log / Checkpoints"),
 	/* WAL_ARCHIVING */
 	gettext_noop("Write-Ahead Log / Archiving"),
+	/* WAL_RECOVERY */
+	gettext_noop("Write-Ahead Log / Recovery"),
 	/* WAL_ARCHIVE_RECOVERY */
 	gettext_noop("Write-Ahead Log / Archive Recovery"),
 	/* WAL_RECOVERY_TARGET */
@@ -2819,6 +2836,17 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_RECOVERY,
+			gettext_noop("Maximum buffer size for reading ahead in the WAL during recovery."),
+			gettext_noop("This controls the maximum distance we can read ahead in the WAL to prefetch referenced blocks."),
+			GUC_UNIT_BYTE
+		},
+		&wal_decode_buffer_size,
+		512 * 1024, 64 * 1024, MaxAllocSize,
+		NULL, NULL, NULL
+	},
+
+	{
 		{"wal_keep_size", PGC_SIGHUP, REPLICATION_SENDING,
 			gettext_noop("Sets the size of WAL files held for standby servers."),
 			NULL,
@@ -3141,7 +3169,8 @@ static struct config_int ConfigureNamesInt[] =
 		0,
 #endif
 		0, MAX_IO_CONCURRENCY,
-		check_maintenance_io_concurrency, NULL, NULL
+		check_maintenance_io_concurrency, assign_maintenance_io_concurrency,
+		NULL
 	},
 
 	{
@@ -5011,6 +5040,16 @@ static struct config_enum ConfigureNamesEnum[] =
 		&huge_pages,
 		HUGE_PAGES_TRY, huge_pages_options,
 		NULL, NULL, NULL
+	},
+
+	{
+		{"recovery_prefetch", PGC_SIGHUP, WAL_RECOVERY,
+			gettext_noop("Prefetch referenced blocks during recovery"),
+			gettext_noop("Look ahead in the WAL to find references to uncached data.")
+		},
+		&recovery_prefetch,
+		RECOVERY_PREFETCH_TRY, recovery_prefetch_options,
+		check_recovery_prefetch, assign_recovery_prefetch, NULL
 	},
 
 	{
@@ -12420,6 +12459,20 @@ check_client_connection_check_interval(int *newval, void **extra, GucSource sour
 		return false;
 	}
 	return true;
+}
+
+static void
+assign_maintenance_io_concurrency(int newval, void *extra)
+{
+#ifdef USE_PREFETCH
+	/*
+	 * Reconfigure recovery prefetching, because a setting it depends on
+	 * changed.
+	 */
+	maintenance_io_concurrency = newval;
+	if (AmStartupProcess())
+		XLogPrefetchReconfigure();
+#endif
 }
 
 static bool

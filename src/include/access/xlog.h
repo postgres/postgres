@@ -50,6 +50,7 @@ extern bool *wal_consistency_checking;
 extern char *wal_consistency_checking_string;
 extern bool log_checkpoints;
 extern bool track_wal_io_timing;
+extern int	wal_decode_buffer_size;
 
 extern int	CheckPointSegments;
 

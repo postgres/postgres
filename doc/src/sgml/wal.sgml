@@ -803,6 +803,18 @@
    counted as <literal>wal_write</literal> and <literal>wal_sync</literal>
    in <structname>pg_stat_wal</structname>, respectively.
   </para>
+
+  <para>
+   The <xref linkend="guc-recovery-prefetch"/> parameter can be used to reduce
+   I/O wait times during recovery by instructing the kernel to initiate reads
+   of disk blocks that will soon be needed but are not currently in
+   <productname>PostgreSQL</productname>'s buffer pool.
+   The <xref linkend="guc-maintenance-io-concurrency"/> and
+   <xref linkend="guc-wal-decode-buffer-size"/> settings limit prefetching
+   concurrency and distance, respectively.  By default, it is set to
+   <literal>try</literal>, which enabled the feature on systems where
+   <function>posix_fadvise</function> is available.
+  </para>
  </sect1>
 
  <sect1 id="wal-internals">

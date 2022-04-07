@@ -649,6 +649,8 @@ ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
 				pg_atomic_write_u32(&bufHdr->state,
 									buf_state + BUF_USAGECOUNT_ONE);
 
+			pgBufferUsage.local_blks_hit++;
+
 			return true;
 		}
 	}
@@ -679,6 +681,8 @@ ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
 				PinBuffer(bufHdr, NULL);	/* bump pin count */
 			else
 				PinBuffer_Locked(bufHdr);	/* pin for first time */
+
+			pgBufferUsage.shared_blks_hit++;
 
 			return true;
 		}

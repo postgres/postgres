@@ -1421,6 +1421,9 @@ LogicalRepWorker
 LogicalRewriteMappingData
 LogicalTape
 LogicalTapeSet
+LsnReadQueue
+LsnReadQueueNextFun
+LsnReadQueueNextStatus
 LtreeGistOptions
 LtreeSignature
 MAGIC
@@ -2949,6 +2952,9 @@ XLogPageHeaderData
 XLogPageReadCB
 XLogPageReadPrivate
 XLogPageReadResult
+XLogPrefetcher
+XLogPrefetcherFilter
+XLogPrefetchStats
 XLogReaderRoutine
 XLogReaderState
 XLogRecData

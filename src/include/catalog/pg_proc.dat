@@ -5654,6 +5654,13 @@
   proargmodes => '{o,o,o,o,o,o,o,o,o}',
   proargnames => '{wal_records,wal_fpi,wal_bytes,wal_buffers_full,wal_write,wal_sync,wal_write_time,wal_sync_time,stats_reset}',
   prosrc => 'pg_stat_get_wal' },
+{ oid => '9085', descr => 'statistics: information about WAL prefetching',
+  proname => 'pg_stat_get_recovery_prefetch', prorows => '1', provolatile => 'v',
+  proretset => 't', prorettype => 'record', proargtypes => '',
+  proallargtypes => '{timestamptz,int8,int8,int8,int8,int8,int8,int4,int4,int4}',
+  proargmodes => '{o,o,o,o,o,o,o,o,o,o}',
+  proargnames => '{stats_reset,prefetch,hit,skip_init,skip_new,skip_fpw,skip_rep,wal_distance,block_distance,io_depth}',
+  prosrc => 'pg_stat_get_recovery_prefetch' },
 
 { oid => '2306', descr => 'statistics: information about SLRU caches',
   proname => 'pg_stat_get_slru', prorows => '100', proisstrict => 'f',

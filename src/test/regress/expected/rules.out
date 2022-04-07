@@ -2019,6 +2019,17 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param7 AS num_dead_tuples
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
+pg_stat_recovery_prefetch| SELECT s.stats_reset,
+    s.prefetch,
+    s.hit,
+    s.skip_init,
+    s.skip_new,
+    s.skip_fpw,
+    s.skip_rep,
+    s.wal_distance,
+    s.block_distance,
+    s.io_depth
+   FROM pg_stat_get_recovery_prefetch() s(stats_reset, prefetch, hit, skip_init, skip_new, skip_fpw, skip_rep, wal_distance, block_distance, io_depth);
 pg_stat_replication| SELECT s.pid,
     s.usesysid,
     u.rolname AS usename,

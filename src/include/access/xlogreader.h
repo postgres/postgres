@@ -39,6 +39,7 @@
 #endif
 
 #include "access/xlogrecord.h"
+#include "storage/buf.h"
 
 /* WALOpenSegment represents a WAL segment being read. */
 typedef struct WALOpenSegment
@@ -124,6 +125,9 @@ typedef struct
 	RelFileNode rnode;
 	ForkNumber	forknum;
 	BlockNumber blkno;
+
+	/* Prefetching workspace. */
+	Buffer		prefetch_buffer;
 
 	/* copy of the fork_flags field from the XLogRecordBlockHeader */
 	uint8		flags;
@@ -430,5 +434,9 @@ extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *
 extern bool XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 							   RelFileNode *rnode, ForkNumber *forknum,
 							   BlockNumber *blknum);
+extern bool XLogRecGetBlockTagExtended(XLogReaderState *record, uint8 block_id,
+									   RelFileNode *rnode, ForkNumber *forknum,
+									   BlockNumber *blknum,
+									   Buffer *prefetch_buffer);
 
 #endif							/* XLOGREADER_H */

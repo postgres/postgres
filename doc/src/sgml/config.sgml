@@ -3657,6 +3657,70 @@ include_dir 'conf.d'
      </variablelist>
     </sect2>
 
+   <sect2 id="runtime-config-wal-recovery">
+
+    <title>Recovery</title>
+
+     <indexterm>
+      <primary>configuration</primary>
+      <secondary>of recovery</secondary>
+      <tertiary>general settings</tertiary>
+     </indexterm>
+
+    <para>
+     This section describes the settings that apply to recovery in general,
+     affecting crash recovery, streaming replication and archive-based
+     replication.
+    </para>
+
+
+    <variablelist>
+     <varlistentry id="guc-recovery-prefetch" xreflabel="recovery_prefetch">
+      <term><varname>recovery_prefetch</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>recovery_prefetch</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Whether to try to prefetch blocks that are referenced in the WAL that
+        are not yet in the buffer pool, during recovery.  Valid values are
+        <literal>off</literal> (the default), <literal>on</literal> and
+        <literal>try</literal>.  The setting <literal>try</literal> enables
+        prefetching only if the operating system provides the
+        <function>posix_fadvise</function> function, which is currently used
+        to implement prefetching.  Note that some operating systems provide the
+        function, but it doesn't do anything.
+       </para>
+       <para>
+        Prefetching blocks that will soon be needed can reduce I/O wait times
+        during recovery with some workloads.
+        See also the <xref linkend="guc-wal-decode-buffer-size"/> and
+        <xref linkend="guc-maintenance-io-concurrency"/> settings, which limit
+        prefetching activity.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-decode-buffer-size" xreflabel="wal_decode_buffer_size">
+      <term><varname>wal_decode_buffer_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_decode_buffer_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        A limit on how far ahead the server can look in the WAL, to find
+        blocks to prefetch.  If this value is specified without units, it is
+        taken as bytes.
+        The default is 512kB.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </sect2>
+
   <sect2 id="runtime-config-wal-archive-recovery">
 
     <title>Archive Recovery</title>
