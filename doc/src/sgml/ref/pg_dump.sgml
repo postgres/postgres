@@ -1329,7 +1329,7 @@ PostgreSQL documentation
 
   <para>
    The database activity of <application>pg_dump</application> is
-   normally collected by the statistics collector.  If this is
+   normally collected by the cumulative statistics system.  If this is
    undesirable, you can set parameter <varname>track_counts</varname>
    to false via <envar>PGOPTIONS</envar> or the <literal>ALTER
    USER</literal> command.

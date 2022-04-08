@@ -839,7 +839,7 @@ vacuum insert threshold = vacuum base insert threshold + vacuum insert scale fac
     it may be beneficial to lower the table's
     <xref linkend="reloption-autovacuum-freeze-min-age"/> as this may allow
     tuples to be frozen by earlier vacuums.  The number of obsolete tuples and
-    the number of inserted tuples are obtained from the statistics collector;
+    the number of inserted tuples are obtained from the cumulative statistics system;
     it is a semi-accurate count updated by each <command>UPDATE</command>,
     <command>DELETE</command> and <command>INSERT</command> operation.  (It is
     only semi-accurate because some information might be lost under heavy

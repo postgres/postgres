@@ -2227,12 +2227,13 @@ HINT:  You can then restart the server after making the necessary configuration 
    </para>
 
    <para>
-    The statistics collector is active during recovery. All scans, reads, blocks,
-    index usage, etc., will be recorded normally on the standby. Replayed
-    actions will not duplicate their effects on primary, so replaying an
-    insert will not increment the Inserts column of pg_stat_user_tables.
-    The stats file is deleted at the start of recovery, so stats from primary
-    and standby will differ; this is considered a feature, not a bug.
+    The cumulative statistics system is active during recovery. All scans,
+    reads, blocks, index usage, etc., will be recorded normally on the
+    standby. However, WAL replay will not increment relation and database
+    specific counters. I.e. replay will not increment pg_stat_all_tables
+    columns (like n_tup_ins), nor will reads or writes performed by the
+    startup process be tracked in the pg_statio views, nor will associated
+    pg_stat_database columns be incremented.
    </para>
 
    <para>

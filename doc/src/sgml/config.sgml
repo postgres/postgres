@@ -7885,15 +7885,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
    <sect1 id="runtime-config-statistics">
     <title>Run-time Statistics</title>
 
-    <sect2 id="runtime-config-statistics-collector">
-     <title>Query and Index Statistics Collector</title>
+    <sect2 id="runtime-config-cumulative-statistics">
+     <title>Cumulative Query and Index Statistics</title>
 
      <para>
-      These parameters control server-wide statistics collection features.
-      When statistics collection is enabled, the data that is produced can be
-      accessed via the <structname>pg_stat</structname> and
-      <structname>pg_statio</structname> family of system views.
-      Refer to <xref linkend="monitoring"/> for more information.
+      These parameters control the server-wide cumulative statistics system.
+      When enabled, the data that is collected can be accessed via the
+      <structname>pg_stat</structname> and <structname>pg_statio</structname>
+      family of system views.  Refer to <xref linkend="monitoring"/> for more
+      information.
      </para>
 
      <variablelist>
@@ -8031,22 +8031,37 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-stats-temp-directory" xreflabel="stats_temp_directory">
-      <term><varname>stats_temp_directory</varname> (<type>string</type>)
+     <varlistentry id="guc-stats-fetch-consistency" xreflabel="stats_fetch_consistency">
+      <term><varname>stats_fetch_consistency</varname> (<type>enum</type>)
       <indexterm>
-       <primary><varname>stats_temp_directory</varname> configuration parameter</primary>
+       <primary><varname>stats_fetch_consistency</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Sets the directory to store temporary statistics data in. This can be
-        a path relative to the data directory or an absolute path. The default
-        is <filename>pg_stat_tmp</filename>. Pointing this at a RAM-based
-        file system will decrease physical I/O requirements and can lead to
-        improved performance.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        Determines the behavior when cumulative statistics are accessed
+        multiple times within a transaction. When set to
+        <literal>none</literal>, each access re-fetches counters from shared
+        memory. When set to <literal>cache</literal>, the first access to
+        statistics for an object caches those statistics until the end of the
+        transaction unless <function>pg_stat_clear_snapshot()</function> is
+        called. When set to <literal>snapshot</literal>, the first statistics
+        access caches all statistics accessible in the current database, until
+        the end of the transaction unless
+        <function>pg_stat_clear_snapshot()</function> is called. The default
+        is <literal>cache</literal>.
        </para>
+       <note>
+        <para>
+         <literal>none</literal> is most suitable for monitoring systems. If
+         values are only accessed once, it is the most
+         efficient. <literal>cache</literal> ensures repeat accesses yield the
+         same values, which is important for queries involving
+         e.g. self-joins. <literal>snapshot</literal> can be useful when
+         interactively inspecting statistics, but has higher overhead,
+         particularly if many database objects exist.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 

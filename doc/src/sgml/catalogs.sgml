@@ -9593,9 +9593,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    <xref linkend="view-table"/> lists the system views described here.
    More detailed documentation of each view follows below.
-   There are some additional views that provide access to the results of
-   the statistics collector; they are described in <xref
-   linkend="monitoring-stats-views-table"/>.
+   There are some additional views that provide access to accumulated
+   statistics; they are described in
+   <xref linkend="monitoring-stats-views-table"/>.
   </para>
 
   <para>

@@ -22,7 +22,7 @@
   <para>
    Several tools are available for monitoring database activity and
    analyzing performance.  Most of this chapter is devoted to describing
-   <productname>PostgreSQL</productname>'s statistics collector,
+   <productname>PostgreSQL</productname>'s cumulative statistics system,
    but one should not neglect regular Unix monitoring programs such as
    <command>ps</command>, <command>top</command>, <command>iostat</command>, and <command>vmstat</command>.
    Also, once one has identified a
@@ -53,7 +53,6 @@ postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: back
 postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer
 postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: walwriter
 postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher
-postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector
 postgres  15582  0.0  0.0  58772  3080 ?        Ss   18:04   0:00 postgres: joe runbug 127.0.0.1 idle
 postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl regression [local] SELECT waiting
 postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction
@@ -63,11 +62,10 @@ postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl 
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
    primary server process.  The command arguments
-   shown for it are the same ones used when it was launched.  The next five
+   shown for it are the same ones used when it was launched.  The next four
    processes are background worker processes automatically launched by the
-   primary process.  (The <quote>stats collector</quote> process will not be present
-   if you have set the system not to start the statistics collector; likewise
-   the <quote>autovacuum launcher</quote> process can be disabled.)
+   primary process.  (The <quote>autovacuum launcher</quote> process will not
+   be present if you have set the system not to run autovacuum.)
    Each of the remaining
    processes is a server process handling one client connection.  Each such
    process sets its command line display in the form
@@ -130,20 +128,20 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
  </sect1>
 
  <sect1 id="monitoring-stats">
-  <title>The Statistics Collector</title>
+  <title>The Cumulative Statistics System</title>
 
   <indexterm zone="monitoring-stats">
    <primary>statistics</primary>
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <firstterm>statistics collector</firstterm>
-   is a subsystem that supports collection and reporting of information about
-   server activity.  Presently, the collector can count accesses to tables
-   and indexes in both disk-block and individual-row terms.  It also tracks
-   the total number of rows in each table, and information about vacuum and
-   analyze actions for each table.  It can also count calls to user-defined
-   functions and the total time spent in each one.
+   <productname>PostgreSQL</productname>'s <firstterm>cumulative statistics
+   system</firstterm> supports collection and reporting of information about
+   server activity.  Presently, accesses to tables and indexes in both
+   disk-block and individual-row terms are counted.  The total number of rows
+   in each table, and information about vacuum and analyze actions for each
+   table are also counted.  If enabled, calls to user-defined functions and
+   the total time spent in each one are counted as well.
   </para>
 
   <para>
@@ -151,7 +149,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    information about exactly what is going on in the system right now, such as
    the exact command currently being executed by other server processes, and
    which other connections exist in the system.  This facility is independent
-   of the collector process.
+   of the cumulative statistics system.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -172,7 +170,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    The parameter <xref linkend="guc-track-counts"/> controls whether
-   statistics are collected about table and index accesses.
+   cumulative statistics are collected about table and index accesses.
   </para>
 
   <para>
@@ -201,18 +199,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   The statistics collector transmits the collected information to other
-   <productname>PostgreSQL</productname> processes through temporary files.
-   These files are stored in the directory named by the
-   <xref linkend="guc-stats-temp-directory"/> parameter,
-   <filename>pg_stat_tmp</filename> by default.
-   For better performance, <varname>stats_temp_directory</varname> can be
-   pointed at a RAM-based file system, decreasing physical I/O requirements.
-   When the server shuts down cleanly, a permanent copy of the statistics
-   data is stored in the <filename>pg_stat</filename> subdirectory, so that
-   statistics can be retained across server restarts.  When recovery is
-   performed at server start (e.g., after immediate shutdown, server crash,
-   and point-in-time recovery), all statistics counters are reset.
+   Cumulative statistics are collected in shared memory. Every
+   <productname>PostgreSQL</productname> process collects statistics locally
+   then updates the shared data at appropriate intervals.  When a server,
+   including a physical replica, shuts down cleanly, a permanent copy of the
+   statistics data is stored in the <filename>pg_stat</filename> subdirectory,
+   so that statistics can be retained across server restarts.  In contrast,
+   when starting from an unclean shutdown (e.g., after an immediate shutdown,
+   a server crash, starting from a base backup, and point-in-time recovery),
+   all statistics counters are reset.
   </para>
 
  </sect2>
@@ -225,48 +220,58 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    linkend="monitoring-stats-dynamic-views-table"/>, are available to show
    the current state of the system. There are also several other
    views, listed in <xref
-   linkend="monitoring-stats-views-table"/>, available to show the results
-   of statistics collection.  Alternatively, one can
-   build custom views using the underlying statistics functions, as discussed
-   in <xref linkend="monitoring-stats-functions"/>.
+   linkend="monitoring-stats-views-table"/>, available to show the accumulated
+   statistics.  Alternatively, one can
+   build custom views using the underlying cumulative statistics functions, as
+   discussed in <xref linkend="monitoring-stats-functions"/>.
   </para>
 
   <para>
-   When using the statistics to monitor collected data, it is important
-   to realize that the information does not update instantaneously.
-   Each individual server process transmits new statistical counts to
-   the collector just before going idle; so a query or transaction still in
-   progress does not affect the displayed totals.  Also, the collector itself
-   emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
-   milliseconds (500 ms unless altered while building the server).  So the
-   displayed information lags behind actual activity.  However, current-query
-   information collected by <varname>track_activities</varname> is
-   always up-to-date.
+   When using the cumulative statistics views and functions to monitor
+   collected data, it is important to realize that the information does not
+   update instantaneously.  Each individual server process flushes out
+   accumulated statistics to shared memory just before going idle, but not
+   more frequently than once per <varname>PGSTAT_MIN_INTERVAL</varname>
+   milliseconds (1 second unless altered while building the server); so a
+   query or transaction still in progress does not affect the displayed totals
+   and the displayed information lags behind actual activity.  However,
+   current-query information collected by <varname>track_activities</varname>
+   is always up-to-date.
   </para>
 
   <para>
    Another important point is that when a server process is asked to display
-   any of these statistics, it first fetches the most recent report emitted by
-   the collector process and then continues to use this snapshot for all
-   statistical views and functions until the end of its current transaction.
-   So the statistics will show static information as long as you continue the
-   current transaction.  Similarly, information about the current queries of
-   all sessions is collected when any such information is first requested
-   within a transaction, and the same information will be displayed throughout
-   the transaction.
-   This is a feature, not a bug, because it allows you to perform several
-   queries on the statistics and correlate the results without worrying that
-   the numbers are changing underneath you.  But if you want to see new
-   results with each query, be sure to do the queries outside any transaction
-   block.  Alternatively, you can invoke
-   <function>pg_stat_clear_snapshot</function>(), which will discard the
-   current transaction's statistics snapshot (if any).  The next use of
-   statistical information will cause a new snapshot to be fetched.
+   any of the accumulated statistics, accessed values are cached until the end
+   of its current transaction in the default configuration. So the statistics
+   will show static information as long as you continue the current
+   transaction. Similarly, information about the current queries of all
+   sessions is collected when any such information is first requested within a
+   transaction, and the same information will be displayed throughout the
+   transaction. This is a feature, not a bug, because it allows you to perform
+   several queries on the statistics and correlate the results without
+   worrying that the numbers are changing underneath you.
+
+   When analyzing statistics interactively, or with expensive queries, the
+   time delta between accesses to individual statistics can lead to
+   significant skew in the cached statistics. To minimize skew,
+   <varname>stats_fetch_consistency</varname> can be set to
+   <literal>snapshot</literal>, at the price of increased memory usage for
+   caching not-needed statistics data.  Conversely, if it's known that
+   statistics are only accessed once, caching accessed statistics is
+   unnecessary and can be avoided by setting
+   <varname>stats_fetch_consistency</varname> to <literal>none</literal>.
+
+   You can invoke <function>pg_stat_clear_snapshot</function>() to discard the
+   current transaction's statistics snapshot or cached values (if any).  The
+   next use of statistical information will (when in snapshot mode) cause a
+   new snapshot to be built or (when in cache mode) accessed statistics to be
+   cached.
   </para>
 
   <para>
-   A transaction can also see its own statistics (as yet untransmitted to the
-   collector) in the views <structname>pg_stat_xact_all_tables</structname>,
+   A transaction can also see its own statistics (not yet flushed out to the
+   shared memory statistics) in the views
+   <structname>pg_stat_xact_all_tables</structname>,
    <structname>pg_stat_xact_sys_tables</structname>,
    <structname>pg_stat_xact_user_tables</structname>, and
    <structname>pg_stat_xact_user_functions</structname>.  These numbers do not act as
@@ -663,7 +668,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    kernel's I/O cache, and might therefore still be fetched without
    requiring a physical read. Users interested in obtaining more
    detailed information on <productname>PostgreSQL</productname> I/O behavior are
-   advised to use the <productname>PostgreSQL</productname> statistics collector
+   advised to use the <productname>PostgreSQL</productname> statistics views
    in combination with operating system utilities that allow insight
    into the kernel's handling of I/O.
   </para>
@@ -5171,8 +5176,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </para>
 
   <para>
-   Additional functions related to statistics collection are listed in <xref
-   linkend="monitoring-stats-funcs-table"/>.
+   Additional functions related to the cumulative statistics system are listed
+   in <xref linkend="monitoring-stats-funcs-table"/>.
   </para>
 
    <table id="monitoring-stats-funcs-table">
@@ -5228,7 +5233,10 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        </para>
        <para>
         Returns the timestamp of the current statistics snapshot, or NULL if
-        no statistics snapshot has been taken.
+        no statistics snapshot has been taken. A snapshot is taken the first
+        time cumulative statistics are accessed in a transaction if
+        <varname>stats_fetch_consistency</varname> is set to
+        <literal>snapshot</literal>
        </para></entry>
       </row>
 
@@ -5241,7 +5249,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Discards the current statistics snapshot.
+        Discards the current statistics snapshot or cached information.
        </para></entry>
       </row>
 
@@ -6405,8 +6413,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>
        <command>VACUUM</command> is performing final cleanup.  During this phase,
        <command>VACUUM</command> will vacuum the free space map, update statistics
-       in <literal>pg_class</literal>, and report statistics to the statistics
-       collector.  When this phase is completed, <command>VACUUM</command> will end.
+       in <literal>pg_class</literal>, and report statistics to the cumulative
+       statistics system. When this phase is completed, <command>VACUUM</command> will end.
      </entry>
     </row>
    </tbody>
