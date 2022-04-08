@@ -344,9 +344,7 @@ extern void XLogReaderSetDecodeBuffer(XLogReaderState *state,
 
 /* Position the XLogReader to given record */
 extern void XLogBeginRead(XLogReaderState *state, XLogRecPtr RecPtr);
-#ifdef FRONTEND
 extern XLogRecPtr XLogFindNextRecord(XLogReaderState *state, XLogRecPtr RecPtr);
-#endif							/* FRONTEND */
 
 /* Return values from XLogPageReadCB. */
 typedef enum XLogPageReadResult

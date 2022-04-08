@@ -320,7 +320,7 @@ typedef struct RmgrData
 							  struct XLogRecordBuffer *buf);
 } RmgrData;
 
-extern RmgrData RmgrTable[];
+extern PGDLLIMPORT RmgrData RmgrTable[];
 extern void RmgrStartup(void);
 extern void RmgrCleanup(void);
 extern void RmgrNotFound(RmgrId rmid);
@@ -349,6 +349,10 @@ extern pg_time_t GetLastSegSwitchData(XLogRecPtr *lastSwitchLSN);
 extern XLogRecPtr RequestXLogSwitch(bool mark_unimportant);
 
 extern void GetOldestRestartPoint(XLogRecPtr *oldrecptr, TimeLineID *oldtli);
+
+extern void XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
+								   bool detailed_format, StringInfo buf,
+								   uint32 *fpi_len);
 
 /*
  * Exported for the functions in timeline.c and xlogarchive.c.  Only valid

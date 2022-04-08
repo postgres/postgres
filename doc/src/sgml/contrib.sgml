@@ -131,6 +131,7 @@ CREATE EXTENSION <replaceable>module_name</replaceable>;
  &pgsurgery;
  &pgtrgm;
  &pgvisibility;
+ &pgwalinspect;
  &postgres-fdw;
  &seg;
  &sepgsql;

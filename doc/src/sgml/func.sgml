@@ -29205,7 +29205,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
       </row>
 
       <row>
-       <entry role="func_table_entry"><para role="func_signature">
+       <entry id="pg-logical-emit-message" role="func_table_entry"><para role="func_signature">
         <indexterm>
          <primary>pg_logical_emit_message</primary>
         </indexterm>

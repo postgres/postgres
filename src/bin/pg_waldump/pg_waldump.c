@@ -21,10 +21,16 @@
 #include "access/xlog_internal.h"
 #include "access/xlogreader.h"
 #include "access/xlogrecord.h"
+#include "access/xlogstats.h"
 #include "common/fe_memutils.h"
 #include "common/logging.h"
 #include "getopt_long.h"
 #include "rmgrdesc.h"
+
+/*
+ * NOTE: For any code change or issue fix here, it is highly recommended to
+ * give a thought about doing the same in pg_walinspect contrib module as well.
+ */
 
 static const char *progname;
 
@@ -65,24 +71,6 @@ typedef struct XLogDumpConfig
 	ForkNumber	filter_by_relation_forknum;
 	bool		filter_by_fpw;
 } XLogDumpConfig;
-
-typedef struct Stats
-{
-	uint64		count;
-	uint64		rec_len;
-	uint64		fpi_len;
-} Stats;
-
-#define MAX_XLINFO_TYPES 16
-
-typedef struct XLogDumpStats
-{
-	uint64		count;
-	XLogRecPtr	startptr;
-	XLogRecPtr	endptr;
-	Stats		rmgr_stats[RM_MAX_ID + 1];
-	Stats		record_stats[RM_MAX_ID + 1][MAX_XLINFO_TYPES];
-} XLogDumpStats;
 
 #define fatal_error(...) do { pg_log_fatal(__VA_ARGS__); exit(EXIT_FAILURE); } while(0)
 
@@ -454,81 +442,6 @@ XLogRecordHasFPW(XLogReaderState *record)
 }
 
 /*
- * Calculate the size of a record, split into !FPI and FPI parts.
- */
-static void
-XLogDumpRecordLen(XLogReaderState *record, uint32 *rec_len, uint32 *fpi_len)
-{
-	int			block_id;
-
-	/*
-	 * Calculate the amount of FPI data in the record.
-	 *
-	 * XXX: We peek into xlogreader's private decoded backup blocks for the
-	 * bimg_len indicating the length of FPI data.
-	 */
-	*fpi_len = 0;
-	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
-	{
-		if (XLogRecHasBlockImage(record, block_id))
-			*fpi_len += XLogRecGetBlock(record, block_id)->bimg_len;
-	}
-
-	/*
-	 * Calculate the length of the record as the total length - the length of
-	 * all the block images.
-	 */
-	*rec_len = XLogRecGetTotalLen(record) - *fpi_len;
-}
-
-/*
- * Store per-rmgr and per-record statistics for a given record.
- */
-static void
-XLogDumpCountRecord(XLogDumpConfig *config, XLogDumpStats *stats,
-					XLogReaderState *record)
-{
-	RmgrId		rmid;
-	uint8		recid;
-	uint32		rec_len;
-	uint32		fpi_len;
-
-	stats->count++;
-
-	rmid = XLogRecGetRmid(record);
-
-	XLogDumpRecordLen(record, &rec_len, &fpi_len);
-
-	/* Update per-rmgr statistics */
-
-	stats->rmgr_stats[rmid].count++;
-	stats->rmgr_stats[rmid].rec_len += rec_len;
-	stats->rmgr_stats[rmid].fpi_len += fpi_len;
-
-	/*
-	 * Update per-record statistics, where the record is identified by a
-	 * combination of the RmgrId and the four bits of the xl_info field that
-	 * are the rmgr's domain (resulting in sixteen possible entries per
-	 * RmgrId).
-	 */
-
-	recid = XLogRecGetInfo(record) >> 4;
-
-	/*
-	 * XACT records need to be handled differently. Those records use the
-	 * first bit of those four bits for an optional flag variable and the
-	 * following three bits for the opcode. We filter opcode out of xl_info
-	 * and use it as the identifier of the record.
-	 */
-	if (rmid == RM_XACT_ID)
-		recid &= 0x07;
-
-	stats->record_stats[rmid][recid].count++;
-	stats->record_stats[rmid][recid].rec_len += rec_len;
-	stats->record_stats[rmid][recid].fpi_len += fpi_len;
-}
-
-/*
  * Print a record to stdout
  */
 static void
@@ -538,15 +451,11 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 	const RmgrDescData *desc = GetRmgrDesc(XLogRecGetRmid(record));
 	uint32		rec_len;
 	uint32		fpi_len;
-	RelFileNode rnode;
-	ForkNumber	forknum;
-	BlockNumber blk;
-	int			block_id;
 	uint8		info = XLogRecGetInfo(record);
 	XLogRecPtr	xl_prev = XLogRecGetPrev(record);
 	StringInfoData s;
 
-	XLogDumpRecordLen(record, &rec_len, &fpi_len);
+	XLogRecGetLen(record, &rec_len, &fpi_len);
 
 	printf("rmgr: %-11s len (rec/tot): %6u/%6u, tx: %10u, lsn: %X/%08X, prev %X/%08X, ",
 		   desc->rm_name,
@@ -564,93 +473,11 @@ XLogDumpDisplayRecord(XLogDumpConfig *config, XLogReaderState *record)
 	initStringInfo(&s);
 	desc->rm_desc(&s, record);
 	printf("%s", s.data);
+
+	resetStringInfo(&s);
+	XLogRecGetBlockRefInfo(record, true, config->bkp_details, &s, NULL);
+	printf("%s", s.data);
 	pfree(s.data);
-
-	if (!config->bkp_details)
-	{
-		/* print block references (short format) */
-		for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
-		{
-			if (!XLogRecHasBlockRef(record, block_id))
-				continue;
-
-			XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
-			if (forknum != MAIN_FORKNUM)
-				printf(", blkref #%d: rel %u/%u/%u fork %s blk %u",
-					   block_id,
-					   rnode.spcNode, rnode.dbNode, rnode.relNode,
-					   forkNames[forknum],
-					   blk);
-			else
-				printf(", blkref #%d: rel %u/%u/%u blk %u",
-					   block_id,
-					   rnode.spcNode, rnode.dbNode, rnode.relNode,
-					   blk);
-			if (XLogRecHasBlockImage(record, block_id))
-			{
-				if (XLogRecBlockImageApply(record, block_id))
-					printf(" FPW");
-				else
-					printf(" FPW for WAL verification");
-			}
-		}
-		putchar('\n');
-	}
-	else
-	{
-		/* print block references (detailed format) */
-		putchar('\n');
-		for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
-		{
-			if (!XLogRecHasBlockRef(record, block_id))
-				continue;
-
-			XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
-			printf("\tblkref #%d: rel %u/%u/%u fork %s blk %u",
-				   block_id,
-				   rnode.spcNode, rnode.dbNode, rnode.relNode,
-				   forkNames[forknum],
-				   blk);
-			if (XLogRecHasBlockImage(record, block_id))
-			{
-				uint8		bimg_info = XLogRecGetBlock(record, block_id)->bimg_info;
-
-				if (BKPIMAGE_COMPRESSED(bimg_info))
-				{
-					const char *method;
-
-					if ((bimg_info & BKPIMAGE_COMPRESS_PGLZ) != 0)
-						method = "pglz";
-					else if ((bimg_info & BKPIMAGE_COMPRESS_LZ4) != 0)
-						method = "lz4";
-					else if ((bimg_info & BKPIMAGE_COMPRESS_ZSTD) != 0)
-						method = "zstd";
-					else
-						method = "unknown";
-
-					printf(" (FPW%s); hole: offset: %u, length: %u, "
-						   "compression saved: %u, method: %s",
-						   XLogRecBlockImageApply(record, block_id) ?
-						   "" : " for WAL verification",
-						   XLogRecGetBlock(record, block_id)->hole_offset,
-						   XLogRecGetBlock(record, block_id)->hole_length,
-						   BLCKSZ -
-						   XLogRecGetBlock(record, block_id)->hole_length -
-						   XLogRecGetBlock(record, block_id)->bimg_len,
-						   method);
-				}
-				else
-				{
-					printf(" (FPW%s); hole: offset: %u, length: %u",
-						   XLogRecBlockImageApply(record, block_id) ?
-						   "" : " for WAL verification",
-						   XLogRecGetBlock(record, block_id)->hole_offset,
-						   XLogRecGetBlock(record, block_id)->hole_length);
-				}
-			}
-			putchar('\n');
-		}
-	}
 }
 
 /*
@@ -698,7 +525,7 @@ XLogDumpStatsRow(const char *name,
  * Display summary statistics about the records seen so far.
  */
 static void
-XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
+XLogDumpDisplayStats(XLogDumpConfig *config, XLogStats *stats)
 {
 	int			ri,
 				rj;
@@ -722,6 +549,9 @@ XLogDumpDisplayStats(XLogDumpConfig *config, XLogDumpStats *stats)
 
 	for (ri = 0; ri <= RM_MAX_ID; ri++)
 	{
+		if (!RmgrIdIsValid(ri))
+			continue;
+
 		total_count += stats->rmgr_stats[ri].count;
 		total_rec_len += stats->rmgr_stats[ri].rec_len;
 		total_fpi_len += stats->rmgr_stats[ri].fpi_len;
@@ -867,7 +697,7 @@ main(int argc, char **argv)
 	XLogReaderState *xlogreader_state;
 	XLogDumpPrivate private;
 	XLogDumpConfig config;
-	XLogDumpStats stats;
+	XLogStats stats;
 	XLogRecord *record;
 	XLogRecPtr	first_record;
 	char	   *waldir = NULL;
@@ -921,7 +751,7 @@ main(int argc, char **argv)
 
 	memset(&private, 0, sizeof(XLogDumpPrivate));
 	memset(&config, 0, sizeof(XLogDumpConfig));
-	memset(&stats, 0, sizeof(XLogDumpStats));
+	memset(&stats, 0, sizeof(XLogStats));
 
 	private.timeline = 1;
 	private.startptr = InvalidXLogRecPtr;
@@ -1319,7 +1149,7 @@ main(int argc, char **argv)
 		{
 			if (config.stats == true)
 			{
-				XLogDumpCountRecord(&config, &stats, xlogreader_state);
+				XLogRecStoreStats(&stats, xlogreader_state);
 				stats.endptr = xlogreader_state->EndRecPtr;
 			}
 			else

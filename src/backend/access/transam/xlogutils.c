@@ -80,6 +80,10 @@ typedef struct xl_invalid_page
 
 static HTAB *invalid_page_tab = NULL;
 
+static int
+read_local_xlog_page_guts(XLogReaderState *state, XLogRecPtr targetPagePtr,
+						  int reqLen, XLogRecPtr targetRecPtr,
+						  char *cur_page, bool wait_for_wal);
 
 /* Report a reference to an invalid page */
 static void
@@ -871,6 +875,31 @@ int
 read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 					 int reqLen, XLogRecPtr targetRecPtr, char *cur_page)
 {
+	return read_local_xlog_page_guts(state, targetPagePtr, reqLen,
+									 targetRecPtr, cur_page, true);
+}
+
+/*
+ * Same as read_local_xlog_page except that it doesn't wait for future WAL
+ * to be available.
+ */
+int
+read_local_xlog_page_no_wait(XLogReaderState *state, XLogRecPtr targetPagePtr,
+							 int reqLen, XLogRecPtr targetRecPtr,
+							 char *cur_page)
+{
+	return read_local_xlog_page_guts(state, targetPagePtr, reqLen,
+									 targetRecPtr, cur_page, false);
+}
+
+/*
+ * Implementation of read_local_xlog_page and its no wait version.
+ */
+static int
+read_local_xlog_page_guts(XLogReaderState *state, XLogRecPtr targetPagePtr,
+						  int reqLen, XLogRecPtr targetRecPtr,
+						  char *cur_page, bool wait_for_wal)
+{
 	XLogRecPtr	read_upto,
 				loc;
 	TimeLineID	tli;
@@ -923,6 +952,10 @@ read_local_xlog_page(XLogReaderState *state, XLogRecPtr targetPagePtr,
 		{
 
 			if (loc <= read_upto)
+				break;
+
+			/* If asked, let's not wait for future WAL. */
+			if (!wait_for_wal)
 				break;
 
 			CHECK_FOR_INTERRUPTS();
