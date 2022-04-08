@@ -11,6 +11,12 @@ DATA = pg_walinspect--1.0.sql
 
 REGRESS = pg_walinspect
 
+REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/pg_walinspect/walinspect.conf
+
+# Disabled because these tests require "wal_level=replica", which
+# some installcheck users do not have (e.g. buildfarm clients).
+NO_INSTALLCHECK = 1
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)

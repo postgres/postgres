@@ -1,9 +1,13 @@
 CREATE EXTENSION pg_walinspect;
-CREATE TABLE sample_tbl(col1 int, col2 int);
 -- Make sure checkpoints don't interfere with the test.
-SELECT lsn as wal_lsn1 FROM
-  pg_create_physical_replication_slot('regress_pg_walinspect_slot', true, false)
-  \gset
+SELECT 'init' FROM pg_create_physical_replication_slot('regress_pg_walinspect_slot', true, false);
+ ?column? 
+----------
+ init
+(1 row)
+
+CREATE TABLE sample_tbl(col1 int, col2 int);
+SELECT pg_current_wal_lsn() AS wal_lsn1 \gset
 INSERT INTO sample_tbl SELECT * FROM generate_series(1, 2);
 SELECT pg_current_wal_lsn() AS wal_lsn2 \gset
 INSERT INTO sample_tbl SELECT * FROM generate_series(1, 2);
