@@ -4873,6 +4873,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         will end recovery without further waiting.
        </para>
        <para>
+        WAL records must be kept on the standby until they are ready to be
+        applied. Therefore, longer delays will result in a greater accumulation
+        of WAL files, increasing disk space requirements for the standby's
+        <filename>pg_wal</filename> directory.
+       </para>
+       <para>
         This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases
         except crash recovery.
