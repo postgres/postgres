@@ -52,6 +52,7 @@
 #include "common/hashfn.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
+#include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/planner.h"
@@ -188,6 +189,17 @@ typedef struct Counters
 	int64		wal_records;	/* # of WAL records generated */
 	int64		wal_fpi;		/* # of WAL full page images generated */
 	uint64		wal_bytes;		/* total amount of WAL generated in bytes */
+	int64		jit_functions;	/* total number of JIT functions emitted */
+	double		jit_generation_time;	/* total time to generate jit code */
+	int64		jit_inlining_count; /* number of times inlining time has been
+									 * > 0 */
+	double		jit_inlining_time;	/* total time to inline jit code */
+	int64		jit_optimization_count; /* number of times optimization time
+										 * has been > 0 */
+	double		jit_optimization_time;	/* total time to optimize jit code */
+	int64		jit_emission_count; /* number of times emission time has been
+									 * > 0 */
+	double		jit_emission_time;	/* total time to emit jit code */
 } Counters;
 
 /*
@@ -330,6 +342,7 @@ static void pgss_store(const char *query, uint64 queryId,
 					   double total_time, uint64 rows,
 					   const BufferUsage *bufusage,
 					   const WalUsage *walusage,
+					   const struct JitInstrumentation *jitusage,
 					   JumbleState *jstate);
 static void pg_stat_statements_internal(FunctionCallInfo fcinfo,
 										pgssVersion api_version,
@@ -854,6 +867,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				   0,
 				   NULL,
 				   NULL,
+				   NULL,
 				   jstate);
 }
 
@@ -938,6 +952,7 @@ pgss_planner(Query *parse,
 				   0,
 				   &bufusage,
 				   &walusage,
+				   NULL,
 				   NULL);
 	}
 	else
@@ -1056,6 +1071,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
 				   &queryDesc->totaltime->walusage,
+				   queryDesc->estate->es_jit ? &queryDesc->estate->es_jit->instr : NULL,
 				   NULL);
 	}
 
@@ -1173,6 +1189,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				   rows,
 				   &bufusage,
 				   &walusage,
+				   NULL,
 				   NULL);
 	}
 	else
@@ -1206,6 +1223,7 @@ pgss_store(const char *query, uint64 queryId,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
 		   const WalUsage *walusage,
+		   const struct JitInstrumentation *jitusage,
 		   JumbleState *jstate)
 {
 	pgssHashKey key;
@@ -1375,6 +1393,23 @@ pgss_store(const char *query, uint64 queryId,
 		e->counters.wal_records += walusage->wal_records;
 		e->counters.wal_fpi += walusage->wal_fpi;
 		e->counters.wal_bytes += walusage->wal_bytes;
+		if (jitusage)
+		{
+			e->counters.jit_functions += jitusage->created_functions;
+			e->counters.jit_generation_time += INSTR_TIME_GET_MILLISEC(jitusage->generation_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->inlining_counter))
+				e->counters.jit_inlining_count++;
+			e->counters.jit_inlining_time += INSTR_TIME_GET_MILLISEC(jitusage->inlining_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->optimization_counter))
+				e->counters.jit_optimization_count++;
+			e->counters.jit_optimization_time += INSTR_TIME_GET_MILLISEC(jitusage->optimization_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->emission_counter))
+				e->counters.jit_emission_count++;
+			e->counters.jit_emission_time += INSTR_TIME_GET_MILLISEC(jitusage->emission_counter);
+		}
 
 		SpinLockRelease(&e->mutex);
 	}
@@ -1424,8 +1459,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_3	23
 #define PG_STAT_STATEMENTS_COLS_V1_8	32
 #define PG_STAT_STATEMENTS_COLS_V1_9	33
-#define PG_STAT_STATEMENTS_COLS_V1_10	35
-#define PG_STAT_STATEMENTS_COLS			35	/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS_V1_10	43
+#define PG_STAT_STATEMENTS_COLS			43	/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -1785,6 +1820,17 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 											ObjectIdGetDatum(0),
 											Int32GetDatum(-1));
 			values[i++] = wal_bytes;
+		}
+		if (api_version >= PGSS_V1_10)
+		{
+			values[i++] = Int64GetDatumFast(tmp.jit_functions);
+			values[i++] = Float8GetDatumFast(tmp.jit_generation_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_inlining_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_inlining_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_optimization_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_optimization_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_emission_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_emission_time);
 		}
 
 		Assert(i == (api_version == PGSS_V1_0 ? PG_STAT_STATEMENTS_COLS_V1_0 :
