@@ -116,6 +116,7 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file,
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support gzip compression");
+	return NULL;				/* keep compiler quiet */
 #endif
 }
 
@@ -248,6 +249,7 @@ bbstreamer_gzip_decompressor_new(bbstreamer *next)
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support gzip compression");
+	return NULL;				/* keep compiler quiet */
 #endif
 }
 

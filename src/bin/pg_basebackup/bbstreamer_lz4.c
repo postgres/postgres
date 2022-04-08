@@ -99,6 +99,7 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, bc_specification *compress)
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support lz4 compression");
+	return NULL;				/* keep compiler quiet */
 #endif
 }
 
@@ -296,6 +297,7 @@ bbstreamer_lz4_decompressor_new(bbstreamer *next)
 	return &streamer->base;
 #else
 	pg_fatal("this build does not support lz4 compression");
+	return NULL;				/* keep compiler quiet */
 #endif
 }
 
