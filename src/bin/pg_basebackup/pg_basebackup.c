@@ -322,20 +322,14 @@ tablespace_list_append(const char *arg)
 	for (arg_ptr = arg; *arg_ptr; arg_ptr++)
 	{
 		if (dst_ptr - dst >= MAXPGPATH)
-		{
-			pg_log_error("directory name too long");
-			exit(1);
-		}
+			pg_fatal("directory name too long");
 
 		if (*arg_ptr == '\\' && *(arg_ptr + 1) == '=')
 			;					/* skip backslash escaping = */
 		else if (*arg_ptr == '=' && (arg_ptr == arg || *(arg_ptr - 1) != '\\'))
 		{
 			if (*cell->new_dir)
-			{
-				pg_log_error("multiple \"=\" signs in tablespace mapping");
-				exit(1);
-			}
+				pg_fatal("multiple \"=\" signs in tablespace mapping");
 			else
 				dst = dst_ptr = cell->new_dir;
 		}
@@ -344,10 +338,7 @@ tablespace_list_append(const char *arg)
 	}
 
 	if (!*cell->old_dir || !*cell->new_dir)
-	{
-		pg_log_error("invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"", arg);
-		exit(1);
-	}
+		pg_fatal("invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\"", arg);
 
 	/*
 	 * This check isn't absolutely necessary.  But all tablespaces are created
@@ -356,18 +347,12 @@ tablespace_list_append(const char *arg)
 	 * consistent with the new_dir check.
 	 */
 	if (!is_absolute_path(cell->old_dir))
-	{
-		pg_log_error("old directory is not an absolute path in tablespace mapping: %s",
-					 cell->old_dir);
-		exit(1);
-	}
+		pg_fatal("old directory is not an absolute path in tablespace mapping: %s",
+				 cell->old_dir);
 
 	if (!is_absolute_path(cell->new_dir))
-	{
-		pg_log_error("new directory is not an absolute path in tablespace mapping: %s",
-					 cell->new_dir);
-		exit(1);
-	}
+		pg_fatal("new directory is not an absolute path in tablespace mapping: %s",
+				 cell->new_dir);
 
 	/*
 	 * Comparisons done with these values should involve similarly
@@ -483,17 +468,11 @@ reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 			MemSet(xlogend, 0, sizeof(xlogend));
 			r = read(bgpipe[0], xlogend, sizeof(xlogend) - 1);
 			if (r < 0)
-			{
-				pg_log_error("could not read from ready pipe: %m");
-				exit(1);
-			}
+				pg_fatal("could not read from ready pipe: %m");
 
 			if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
-			{
-				pg_log_error("could not parse write-ahead log location \"%s\"",
-							 xlogend);
-				exit(1);
-			}
+				pg_fatal("could not parse write-ahead log location \"%s\"",
+						 xlogend);
 			xlogendptr = ((uint64) hi) << 32 | lo;
 			has_xlogendptr = 1;
 
@@ -639,11 +618,8 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 
 	/* Convert the starting position */
 	if (sscanf(startpos, "%X/%X", &hi, &lo) != 2)
-	{
-		pg_log_error("could not parse write-ahead log location \"%s\"",
-					 startpos);
-		exit(1);
-	}
+		pg_fatal("could not parse write-ahead log location \"%s\"",
+				 startpos);
 	param->startptr = ((uint64) hi) << 32 | lo;
 	/* Round off to even segment position */
 	param->startptr -= XLogSegmentOffset(param->startptr, WalSegSz);
@@ -651,10 +627,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 #ifndef WIN32
 	/* Create our background pipe */
 	if (pipe(bgpipe) < 0)
-	{
-		pg_log_error("could not create pipe for background process: %m");
-		exit(1);
-	}
+		pg_fatal("could not create pipe for background process: %m");
 #endif
 
 	/* Get a second connection */
@@ -709,10 +682,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 				 "pg_xlog" : "pg_wal");
 
 		if (pg_mkdir_p(statusdir, pg_dir_create_mode) != 0 && errno != EEXIST)
-		{
-			pg_log_error("could not create directory \"%s\": %m", statusdir);
-			exit(1);
-		}
+			pg_fatal("could not create directory \"%s\": %m", statusdir);
 	}
 
 	/*
@@ -735,10 +705,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 		exit(ret);
 	}
 	else if (bgchild < 0)
-	{
-		pg_log_error("could not create background process: %m");
-		exit(1);
-	}
+		pg_fatal("could not create background process: %m");
 
 	/*
 	 * Else we are in the parent process and all is well.
@@ -747,10 +714,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 #else							/* WIN32 */
 	bgchild = _beginthreadex(NULL, 0, (void *) LogStreamerMain, param, 0, NULL);
 	if (bgchild == 0)
-	{
-		pg_log_error("could not create background thread: %m");
-		exit(1);
-	}
+		pg_fatal("could not create background thread: %m");
 #endif
 }
 
@@ -770,10 +734,7 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 			 * Does not exist, so create
 			 */
 			if (pg_mkdir_p(dirname, pg_dir_create_mode) == -1)
-			{
-				pg_log_error("could not create directory \"%s\": %m", dirname);
-				exit(1);
-			}
+				pg_fatal("could not create directory \"%s\": %m", dirname);
 			if (created)
 				*created = true;
 			return;
@@ -792,15 +753,13 @@ verify_dir_is_empty_or_create(char *dirname, bool *created, bool *found)
 			/*
 			 * Exists, not empty
 			 */
-			pg_log_error("directory \"%s\" exists but is not empty", dirname);
-			exit(1);
+			pg_fatal("directory \"%s\" exists but is not empty", dirname);
 		case -1:
 
 			/*
 			 * Access problem
 			 */
-			pg_log_error("could not access directory \"%s\": %m", dirname);
-			exit(1);
+			pg_fatal("could not access directory \"%s\": %m", dirname);
 	}
 }
 
@@ -929,23 +888,16 @@ parse_max_rate(char *src)
 	errno = 0;
 	result = strtod(src, &after_num);
 	if (src == after_num)
-	{
-		pg_log_error("transfer rate \"%s\" is not a valid value", src);
-		exit(1);
-	}
+		pg_fatal("transfer rate \"%s\" is not a valid value", src);
 	if (errno != 0)
-	{
-		pg_log_error("invalid transfer rate \"%s\": %m", src);
-		exit(1);
-	}
+		pg_fatal("invalid transfer rate \"%s\": %m", src);
 
 	if (result <= 0)
 	{
 		/*
 		 * Reject obviously wrong values here.
 		 */
-		pg_log_error("transfer rate must be greater than zero");
-		exit(1);
+		pg_fatal("transfer rate must be greater than zero");
 	}
 
 	/*
@@ -975,27 +927,18 @@ parse_max_rate(char *src)
 		after_num++;
 
 	if (*after_num != '\0')
-	{
-		pg_log_error("invalid --max-rate unit: \"%s\"", suffix);
-		exit(1);
-	}
+		pg_fatal("invalid --max-rate unit: \"%s\"", suffix);
 
 	/* Valid integer? */
 	if ((uint64) result != (uint64) ((uint32) result))
-	{
-		pg_log_error("transfer rate \"%s\" exceeds integer range", src);
-		exit(1);
-	}
+		pg_fatal("transfer rate \"%s\" exceeds integer range", src);
 
 	/*
 	 * The range is checked on the server side too, but avoid the server
 	 * connection if a nonsensical value was passed.
 	 */
 	if (result < MAX_RATE_LOWER || result > MAX_RATE_UPPER)
-	{
-		pg_log_error("transfer rate \"%s\" is out of range", src);
-		exit(1);
-	}
+		pg_fatal("transfer rate \"%s\" is out of range", src);
 
 	return (int32) result;
 }
@@ -1091,11 +1034,8 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 	/* Get the COPY data stream. */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_COPY_OUT)
-	{
-		pg_log_error("could not get COPY data stream: %s",
-					 PQerrorMessage(conn));
-		exit(1);
-	}
+		pg_fatal("could not get COPY data stream: %s",
+				 PQerrorMessage(conn));
 	PQclear(res);
 
 	/* Loop over chunks until done. */
@@ -1111,17 +1051,11 @@ ReceiveCopyData(PGconn *conn, WriteDataCallback callback,
 			break;
 		}
 		else if (r == -2)
-		{
-			pg_log_error("could not read COPY data: %s",
-						 PQerrorMessage(conn));
-			exit(1);
-		}
+			pg_fatal("could not read COPY data: %s",
+					 PQerrorMessage(conn));
 
 		if (bgchild_exited)
-		{
-			pg_log_error("background process terminated unexpectedly");
-			exit(1);
-		}
+			pg_fatal("background process terminated unexpectedly");
 
 		(*callback) (r, copybuf, callback_data);
 
@@ -1209,13 +1143,13 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	if (must_parse_archive && !is_tar && !is_compressed_tar)
 	{
 		pg_log_error("unable to parse archive: %s", archive_name);
-		pg_log_info("only tar archives can be parsed");
+		pg_log_error_detail("Only tar archives can be parsed.");
 		if (format == 'p')
-			pg_log_info("plain format requires pg_basebackup to parse the archive");
+			pg_log_error_detail("Plain format requires pg_basebackup to parse the archive.");
 		if (inject_manifest)
-			pg_log_info("using - as the output directory requires pg_basebackup to parse the archive");
+			pg_log_error_detail("Using - as the output directory requires pg_basebackup to parse the archive.");
 		if (writerecoveryconf)
-			pg_log_info("the -R option requires pg_basebackup to parse the archive");
+			pg_log_error_detail("The -R option requires pg_basebackup to parse the archive.");
 		exit(1);
 	}
 
@@ -1427,10 +1361,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				/* Sanity check. */
 				if (state->manifest_buffer != NULL ||
 					state->manifest_file !=NULL)
-				{
-					pg_log_error("archives should precede manifest");
-					exit(1);
-				}
+					pg_fatal("archives should precede manifest");
 
 				/* Parse the rest of the CopyData message. */
 				archive_name = GetCopyDataString(r, copybuf, &cursor);
@@ -1445,11 +1376,8 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				if (archive_name[0] == '\0' || archive_name[0] == '.' ||
 					strchr(archive_name, '/') != NULL ||
 					strchr(archive_name, '\\') != NULL)
-				{
-					pg_log_error("invalid archive name: \"%s\"",
-								 archive_name);
-					exit(1);
-				}
+					pg_fatal("invalid archive name: \"%s\"",
+							 archive_name);
 
 				/*
 				 * An empty spclocation is treated as NULL. We expect this
@@ -1509,9 +1437,8 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 						 */
 						if (errno == 0)
 							errno = ENOSPC;
-						pg_log_error("could not write to file \"%s\": %m",
-									 state->manifest_filename);
-						exit(1);
+						pg_fatal("could not write to file \"%s\": %m",
+								 state->manifest_filename);
 					}
 				}
 				else if (state->streamer != NULL)
@@ -1521,10 +1448,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 									   r - 1, BBSTREAMER_UNKNOWN);
 				}
 				else
-				{
-					pg_log_error("unexpected payload data");
-					exit(1);
-				}
+					pg_fatal("unexpected payload data");
 				break;
 			}
 
@@ -1577,11 +1501,8 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 						state->manifest_file =
 							fopen(state->manifest_filename, "wb");
 						if (state->manifest_file == NULL)
-						{
-							pg_log_error("could not create file \"%s\": %m",
-										 state->manifest_filename);
-							exit(1);
-						}
+							pg_fatal("could not create file \"%s\": %m",
+									 state->manifest_filename);
 					}
 				}
 				break;
@@ -1670,11 +1591,10 @@ static void
 ReportCopyDataParseError(size_t r, char *copybuf)
 {
 	if (r == 0)
-		pg_log_error("empty COPY message");
+		pg_fatal("empty COPY message");
 	else
-		pg_log_error("malformed COPY message of type %d, length %zu",
-					 copybuf[0], r);
-	exit(1);
+		pg_fatal("malformed COPY message of type %d, length %zu",
+				 copybuf[0], r);
 }
 
 /*
@@ -1720,10 +1640,7 @@ ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
 		initPQExpBuffer(&buf);
 		ReceiveBackupManifestInMemory(conn, &buf);
 		if (PQExpBufferDataBroken(buf))
-		{
-			pg_log_error("out of memory");
-			exit(1);
-		}
+			pg_fatal("out of memory");
 
 		/* Inject it into the output tarfile. */
 		bbstreamer_inject_file(manifest_inject_streamer, "backup_manifest",
@@ -1793,10 +1710,7 @@ ReceiveBackupManifest(PGconn *conn)
 			 "%s/backup_manifest.tmp", basedir);
 	state.file = fopen(state.filename, "wb");
 	if (state.file == NULL)
-	{
-		pg_log_error("could not create file \"%s\": %m", state.filename);
-		exit(1);
-	}
+		pg_fatal("could not create file \"%s\": %m", state.filename);
 
 	ReceiveCopyData(conn, ReceiveBackupManifestChunk, &state);
 
@@ -1817,8 +1731,7 @@ ReceiveBackupManifestChunk(size_t r, char *copybuf, void *callback_data)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		pg_log_error("could not write to file \"%s\": %m", state->filename);
-		exit(1);
+		pg_fatal("could not write to file \"%s\": %m", state->filename);
 	}
 }
 
@@ -1878,9 +1791,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	{
 		const char *serverver = PQparameterStatus(conn, "server_version");
 
-		pg_log_error("incompatible server version %s",
-					 serverver ? serverver : "'unknown'");
-		exit(1);
+		pg_fatal("incompatible server version %s",
+				 serverver ? serverver : "'unknown'");
 	}
 	if (serverMajor >= 1500)
 		use_new_option_syntax = true;
@@ -1963,16 +1875,10 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		char	   *colon;
 
 		if (serverMajor < 1500)
-		{
-			pg_log_error("backup targets are not supported by this server version");
-			exit(1);
-		}
+			pg_fatal("backup targets are not supported by this server version");
 
 		if (writerecoveryconf)
-		{
-			pg_log_error("recovery configuration cannot be written when a backup target is used");
-			exit(1);
-		}
+			pg_fatal("recovery configuration cannot be written when a backup target is used");
 
 		AppendPlainCommandOption(&buf, use_new_option_syntax, "TABLESPACE_MAP");
 
@@ -1999,10 +1905,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	if (compressloc == COMPRESS_LOCATION_SERVER)
 	{
 		if (!use_new_option_syntax)
-		{
-			pg_log_error("server does not support server-side compression");
-			exit(1);
-		}
+			pg_fatal("server does not support server-side compression");
 		AppendStringCommandOption(&buf, use_new_option_syntax,
 								  "COMPRESSION", compression_algorithm);
 		if (compression_detail != NULL)
@@ -2029,28 +1932,19 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		basebkp = psprintf("BASE_BACKUP %s", buf.data);
 
 	if (PQsendQuery(conn, basebkp) == 0)
-	{
-		pg_log_error("could not send replication command \"%s\": %s",
-					 "BASE_BACKUP", PQerrorMessage(conn));
-		exit(1);
-	}
+		pg_fatal("could not send replication command \"%s\": %s",
+				 "BASE_BACKUP", PQerrorMessage(conn));
 
 	/*
 	 * Get the starting WAL location
 	 */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		pg_log_error("could not initiate base backup: %s",
-					 PQerrorMessage(conn));
-		exit(1);
-	}
+		pg_fatal("could not initiate base backup: %s",
+				 PQerrorMessage(conn));
 	if (PQntuples(res) != 1)
-	{
-		pg_log_error("server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields",
-					 PQntuples(res), PQnfields(res), 1, 2);
-		exit(1);
-	}
+		pg_fatal("server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields",
+				 PQntuples(res), PQnfields(res), 1, 2);
 
 	strlcpy(xlogstart, PQgetvalue(res, 0, 0), sizeof(xlogstart));
 
@@ -2078,16 +1972,10 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	 */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		pg_log_error("could not get backup header: %s",
-					 PQerrorMessage(conn));
-		exit(1);
-	}
+		pg_fatal("could not get backup header: %s",
+				 PQerrorMessage(conn));
 	if (PQntuples(res) < 1)
-	{
-		pg_log_error("no data returned from server");
-		exit(1);
-	}
+		pg_fatal("no data returned from server");
 
 	/*
 	 * Sum up the total size, for progress reporting
@@ -2122,11 +2010,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	writing_to_stdout = format == 't' && basedir != NULL &&
 		strcmp(basedir, "-") == 0;
 	if (writing_to_stdout && PQntuples(res) > 1)
-	{
-		pg_log_error("can only write single tablespace to stdout, database has %d",
-					 PQntuples(res));
-		exit(1);
-	}
+		pg_fatal("can only write single tablespace to stdout, database has %d",
+				 PQntuples(res));
 
 	/*
 	 * If we're streaming WAL, start the streaming session before we start
@@ -2221,16 +2106,10 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	 */
 	res = PQgetResult(conn);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		pg_log_error("backup failed: %s",
-					 PQerrorMessage(conn));
-		exit(1);
-	}
+		pg_fatal("backup failed: %s",
+				 PQerrorMessage(conn));
 	if (PQntuples(res) != 1)
-	{
-		pg_log_error("no write-ahead log end position returned from server");
-		exit(1);
-	}
+		pg_fatal("no write-ahead log end position returned from server");
 	strlcpy(xlogend, PQgetvalue(res, 0, 0), sizeof(xlogend));
 	if (verbose && includewal != NO_WAL)
 		pg_log_info("write-ahead log end point: %s", xlogend);
@@ -2277,28 +2156,16 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 
 #ifndef WIN32
 		if (write(bgpipe[1], xlogend, strlen(xlogend)) != strlen(xlogend))
-		{
-			pg_log_info("could not send command to background pipe: %m");
-			exit(1);
-		}
+			pg_fatal("could not send command to background pipe: %m");
 
 		/* Just wait for the background process to exit */
 		r = waitpid(bgchild, &status, 0);
 		if (r == (pid_t) -1)
-		{
-			pg_log_error("could not wait for child process: %m");
-			exit(1);
-		}
+			pg_fatal("could not wait for child process: %m");
 		if (r != bgchild)
-		{
-			pg_log_error("child %d died, expected %d", (int) r, (int) bgchild);
-			exit(1);
-		}
+			pg_fatal("child %d died, expected %d", (int) r, (int) bgchild);
 		if (status != 0)
-		{
-			pg_log_error("%s", wait_result_to_str(status));
-			exit(1);
-		}
+			pg_fatal("%s", wait_result_to_str(status));
 		/* Exited normally, we're happy! */
 #else							/* WIN32 */
 
@@ -2308,11 +2175,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * it's there.
 		 */
 		if (sscanf(xlogend, "%X/%X", &hi, &lo) != 2)
-		{
-			pg_log_error("could not parse write-ahead log location \"%s\"",
-						 xlogend);
-			exit(1);
-		}
+			pg_fatal("could not parse write-ahead log location \"%s\"",
+					 xlogend);
 		xlogendptr = ((uint64) hi) << 32 | lo;
 		InterlockedIncrement(&has_xlogendptr);
 
@@ -2321,21 +2185,16 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 			WAIT_OBJECT_0)
 		{
 			_dosmaperr(GetLastError());
-			pg_log_error("could not wait for child thread: %m");
-			exit(1);
+			pg_fatal("could not wait for child thread: %m");
 		}
 		if (GetExitCodeThread((HANDLE) bgchild_handle, &status) == 0)
 		{
 			_dosmaperr(GetLastError());
-			pg_log_error("could not get child thread exit status: %m");
-			exit(1);
+			pg_fatal("could not get child thread exit status: %m");
 		}
 		if (status != 0)
-		{
-			pg_log_error("child thread exited with error %u",
-						 (unsigned int) status);
-			exit(1);
-		}
+			pg_fatal("child thread exited with error %u",
+					 (unsigned int) status);
 		/* Exited normally, we're happy */
 #endif
 	}
@@ -2402,11 +2261,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		else
 		{
 			if (rename(tmp_filename, filename) != 0)
-			{
-				pg_log_error("could not rename file \"%s\" to \"%s\": %m",
-							 tmp_filename, filename);
-				exit(1);
-			}
+				pg_fatal("could not rename file \"%s\" to \"%s\": %m",
+						 tmp_filename, filename);
 		}
 	}
 
@@ -2500,11 +2356,8 @@ main(int argc, char **argv)
 				else if (strcmp(optarg, "t") == 0 || strcmp(optarg, "tar") == 0)
 					format = 't';
 				else
-				{
-					pg_log_error("invalid output format \"%s\", must be \"plain\" or \"tar\"",
-								 optarg);
-					exit(1);
-				}
+					pg_fatal("invalid output format \"%s\", must be \"plain\" or \"tar\"",
+							 optarg);
 				break;
 			case 'r':
 				maxrate = parse_max_rate(optarg);
@@ -2547,11 +2400,8 @@ main(int argc, char **argv)
 					includewal = STREAM_WAL;
 				}
 				else
-				{
-					pg_log_error("invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"",
-								 optarg);
-					exit(1);
-				}
+					pg_fatal("invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\"",
+							 optarg);
 				break;
 			case 1:
 				xlog_dir = pg_strdup(optarg);
@@ -2580,11 +2430,8 @@ main(int argc, char **argv)
 				else if (pg_strcasecmp(optarg, "spread") == 0)
 					fastcheckpoint = false;
 				else
-				{
-					pg_log_error("invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"",
-								 optarg);
-					exit(1);
-				}
+					pg_fatal("invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\"",
+							 optarg);
 				break;
 			case 'd':
 				connection_string = pg_strdup(optarg);
@@ -2633,12 +2480,8 @@ main(int argc, char **argv)
 				manifest_checksums = pg_strdup(optarg);
 				break;
 			default:
-
-				/*
-				 * getopt_long already emitted a complaint
-				 */
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-						progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -2650,8 +2493,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2673,8 +2515,7 @@ main(int argc, char **argv)
 	if (backup_target != NULL && format != '\0')
 	{
 		pg_log_error("cannot specify both format and backup target");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 	if (format == '\0')
@@ -2686,15 +2527,13 @@ main(int argc, char **argv)
 	if (basedir == NULL && backup_target == NULL)
 	{
 		pg_log_error("must specify output directory or backup target");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 	if (basedir != NULL && backup_target != NULL)
 	{
 		pg_log_error("cannot specify both output directory and backup target");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2723,20 +2562,14 @@ main(int argc, char **argv)
 		char	   *error_detail;
 
 		if (!parse_bc_algorithm(compression_algorithm, &alg))
-		{
-			pg_log_error("unrecognized compression algorithm \"%s\"",
-						 compression_algorithm);
-			exit(1);
-		}
+			pg_fatal("unrecognized compression algorithm \"%s\"",
+					 compression_algorithm);
 
 		parse_bc_specification(alg, compression_detail, &client_compress);
 		error_detail = validate_bc_specification(&client_compress);
 		if (error_detail != NULL)
-		{
-			pg_log_error("invalid compression specification: %s",
-						 error_detail);
-			exit(1);
-		}
+			pg_fatal("invalid compression specification: %s",
+					 error_detail);
 	}
 	else
 	{
@@ -2752,8 +2585,7 @@ main(int argc, char **argv)
 	if (backup_target != NULL && compressloc == COMPRESS_LOCATION_CLIENT)
 	{
 		pg_log_error("client-side compression is not possible when a backup target is specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2764,8 +2596,7 @@ main(int argc, char **argv)
 		client_compress.algorithm != BACKUP_COMPRESSION_NONE)
 	{
 		pg_log_error("only tar mode backups can be compressed");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2775,23 +2606,20 @@ main(int argc, char **argv)
 	if (backup_target != NULL && includewal == STREAM_WAL)
 	{
 		pg_log_error("WAL cannot be streamed when a backup target is specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 	if (format == 't' && includewal == STREAM_WAL && strcmp(basedir, "-") == 0)
 	{
 		pg_log_error("cannot stream write-ahead logs in tar mode to stdout");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (replication_slot && includewal != STREAM_WAL)
 	{
 		pg_log_error("replication slots can only be used with WAL streaming");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2803,8 +2631,7 @@ main(int argc, char **argv)
 		if (replication_slot)
 		{
 			pg_log_error("--no-slot cannot be used with slot name");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 		temp_replication_slot = false;
@@ -2816,8 +2643,7 @@ main(int argc, char **argv)
 		{
 			pg_log_error("%s needs a slot to be specified using --slot",
 						 "--create-slot");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 
@@ -2825,8 +2651,7 @@ main(int argc, char **argv)
 		{
 			pg_log_error("%s and %s are incompatible options",
 						 "--create-slot", "--no-slot");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 	}
@@ -2839,15 +2664,13 @@ main(int argc, char **argv)
 		if (backup_target != NULL)
 		{
 			pg_log_error("WAL directory location cannot be specified along with a backup target");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 		if (format != 'p')
 		{
 			pg_log_error("WAL directory location can only be specified in plain mode");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 
@@ -2856,8 +2679,7 @@ main(int argc, char **argv)
 		if (!is_absolute_path(xlog_dir))
 		{
 			pg_log_error("WAL directory location must be an absolute path");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 	}
@@ -2869,8 +2691,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("%s and %s are incompatible options",
 					 "--progress", "--no-estimate-size");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2881,8 +2702,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("%s and %s are incompatible options",
 					 "--no-manifest", "--manifest-checksums");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2890,8 +2710,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("%s and %s are incompatible options",
 					 "--no-manifest", "--manifest-force-encode");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -2959,13 +2778,9 @@ main(int argc, char **argv)
 
 #ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, linkloc) != 0)
-		{
-			pg_log_error("could not create symbolic link \"%s\": %m", linkloc);
-			exit(1);
-		}
+			pg_fatal("could not create symbolic link \"%s\": %m", linkloc);
 #else
-		pg_log_error("symlinks are not supported on this platform");
-		exit(1);
+		pg_fatal("symlinks are not supported on this platform");
 #endif
 		free(linkloc);
 	}

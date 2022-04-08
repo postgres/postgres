@@ -151,6 +151,9 @@ pg_logging_init(const char *argv0)
 	}
 }
 
+/*
+ * Change the logging flags.
+ */
 void
 pg_logging_config(int new_flags)
 {
@@ -194,17 +197,19 @@ pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno)
 }
 
 void
-pg_log_generic(enum pg_log_level level, const char *pg_restrict fmt,...)
+pg_log_generic(enum pg_log_level level, enum pg_log_part part,
+			   const char *pg_restrict fmt,...)
 {
 	va_list		ap;
 
 	va_start(ap, fmt);
-	pg_log_generic_v(level, fmt, ap);
+	pg_log_generic_v(level, part, fmt, ap);
 	va_end(ap);
 }
 
 void
-pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list ap)
+pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
+				 const char *pg_restrict fmt, va_list ap)
 {
 	int			save_errno = errno;
 	const char *filename = NULL;
@@ -232,7 +237,8 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 
 	fmt = _(fmt);
 
-	if (!(log_flags & PG_LOG_FLAG_TERSE) || filename)
+	if (part == PG_LOG_PRIMARY &&
+		(!(log_flags & PG_LOG_FLAG_TERSE) || filename))
 	{
 		if (sgr_locus)
 			fprintf(stderr, ANSI_ESCAPE_FMT, sgr_locus);
@@ -251,30 +257,34 @@ pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list a
 
 	if (!(log_flags & PG_LOG_FLAG_TERSE))
 	{
-		switch (level)
+		switch (part)
 		{
-			case PG_LOG_FATAL:
-				if (sgr_error)
-					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_error);
-				fprintf(stderr, _("fatal: "));
-				if (sgr_error)
-					fprintf(stderr, ANSI_ESCAPE_RESET);
+			case PG_LOG_PRIMARY:
+				switch (level)
+				{
+					case PG_LOG_ERROR:
+						if (sgr_error)
+							fprintf(stderr, ANSI_ESCAPE_FMT, sgr_error);
+						fprintf(stderr, _("error: "));
+						if (sgr_error)
+							fprintf(stderr, ANSI_ESCAPE_RESET);
+						break;
+					case PG_LOG_WARNING:
+						if (sgr_warning)
+							fprintf(stderr, ANSI_ESCAPE_FMT, sgr_warning);
+						fprintf(stderr, _("warning: "));
+						if (sgr_warning)
+							fprintf(stderr, ANSI_ESCAPE_RESET);
+						break;
+					default:
+						break;
+				}
 				break;
-			case PG_LOG_ERROR:
-				if (sgr_error)
-					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_error);
-				fprintf(stderr, _("error: "));
-				if (sgr_error)
-					fprintf(stderr, ANSI_ESCAPE_RESET);
+			case PG_LOG_DETAIL:
+				fprintf(stderr, _("detail: "));
 				break;
-			case PG_LOG_WARNING:
-				if (sgr_warning)
-					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_warning);
-				fprintf(stderr, _("warning: "));
-				if (sgr_warning)
-					fprintf(stderr, ANSI_ESCAPE_RESET);
-				break;
-			default:
+			case PG_LOG_HINT:
+				fprintf(stderr, _("hint: "));
 				break;
 		}
 	}

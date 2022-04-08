@@ -186,8 +186,7 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 
 		default:
 			/* Shouldn't happen. */
-			pg_log_error("unexpected state while injecting recovery settings");
-			exit(1);
+			pg_fatal("unexpected state while injecting recovery settings");
 	}
 
 	bbstreamer_content(mystreamer->base.bbs_next, &mystreamer->member,

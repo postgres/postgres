@@ -93,13 +93,12 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, bc_specification *compress)
 
 	ctxError = LZ4F_createCompressionContext(&streamer->cctx, LZ4F_VERSION);
 	if (LZ4F_isError(ctxError))
-			pg_log_error("could not create lz4 compression context: %s",
-						 LZ4F_getErrorName(ctxError));
+		pg_log_error("could not create lz4 compression context: %s",
+					 LZ4F_getErrorName(ctxError));
 
 	return &streamer->base;
 #else
-	pg_log_error("this build does not support compression");
-	exit(1);
+	pg_fatal("this build does not support lz4 compression");
 #endif
 }
 
@@ -291,16 +290,12 @@ bbstreamer_lz4_decompressor_new(bbstreamer *next)
 	/* Initialize internal stream state for decompression */
 	ctxError = LZ4F_createDecompressionContext(&streamer->dctx, LZ4F_VERSION);
 	if (LZ4F_isError(ctxError))
-	{
-		pg_log_error("could not initialize compression library: %s",
-				LZ4F_getErrorName(ctxError));
-		exit(1);
-	}
+		pg_fatal("could not initialize compression library: %s",
+				 LZ4F_getErrorName(ctxError));
 
 	return &streamer->base;
 #else
-	pg_log_error("this build does not support compression");
-	exit(1);
+	pg_fatal("this build does not support lz4 compression");
 #endif
 }
 

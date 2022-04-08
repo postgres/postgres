@@ -12,6 +12,9 @@
 
 #include "libpq-fe.h"
 
+/* For now, pg_upgrade does not use common/logging.c; use our own pg_fatal */
+#undef pg_fatal
+
 /* Use port in the private/dynamic port number range */
 #define DEF_PGUPORT			50432
 

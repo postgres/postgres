@@ -241,16 +241,12 @@ bbstreamer_tar_parser_content(bbstreamer *streamer, bbstreamer_member *member,
 				 */
 				bbstreamer_buffer_bytes(streamer, &data, &len, len);
 				if (len > 2 * TAR_BLOCK_SIZE)
-				{
-					pg_log_error("tar file trailer exceeds 2 blocks");
-					exit(1);
-				}
+					pg_fatal("tar file trailer exceeds 2 blocks");
 				return;
 
 			default:
 				/* Shouldn't happen. */
-				pg_log_error("unexpected state while parsing tar archive");
-				exit(1);
+				pg_fatal("unexpected state while parsing tar archive");
 		}
 	}
 }
@@ -297,10 +293,7 @@ bbstreamer_tar_header(bbstreamer_tar_parser *mystreamer)
 	 */
 	strlcpy(member->pathname, &buffer[0], MAXPGPATH);
 	if (member->pathname[0] == '\0')
-	{
-		pg_log_error("tar member has empty name");
-		exit(1);
-	}
+		pg_fatal("tar member has empty name");
 	member->size = read_tar_number(&buffer[124], 12);
 	member->mode = read_tar_number(&buffer[100], 8);
 	member->uid = read_tar_number(&buffer[108], 8);
@@ -332,10 +325,7 @@ bbstreamer_tar_parser_finalize(bbstreamer *streamer)
 	if (mystreamer->next_context != BBSTREAMER_ARCHIVE_TRAILER &&
 		(mystreamer->next_context != BBSTREAMER_MEMBER_HEADER ||
 		 mystreamer->base.bbs_buffer.len > 0))
-	{
-		pg_log_error("COPY stream ended before last file was finished");
-		exit(1);
-	}
+		pg_fatal("COPY stream ended before last file was finished");
 
 	/* Send the archive trailer, even if empty. */
 	bbstreamer_content(streamer->bbs_next, NULL,

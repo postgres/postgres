@@ -1195,9 +1195,8 @@ tar_close(Walfile f, WalCloseMethod method)
 	if (tar_sync(f) < 0)
 	{
 		/* XXX this seems pretty bogus; why is only this case fatal? */
-		pg_log_fatal("could not fsync file \"%s\": %s",
-					 tf->pathname, tar_getlasterror());
-		exit(1);
+		pg_fatal("could not fsync file \"%s\": %s",
+				 tf->pathname, tar_getlasterror());
 	}
 
 	/* Clean up and done */

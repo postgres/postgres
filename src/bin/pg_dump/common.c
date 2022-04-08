@@ -340,9 +340,9 @@ flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 			/* With partitions there can only be one parent */
 			if (tblinfo[i].numParents != 1)
-				fatal("invalid number of parents %d for table \"%s\"",
-					  tblinfo[i].numParents,
-					  tblinfo[i].dobj.name);
+				pg_fatal("invalid number of parents %d for table \"%s\"",
+						 tblinfo[i].numParents,
+						 tblinfo[i].dobj.name);
 
 			attachinfo = (TableAttachInfo *) palloc(sizeof(TableAttachInfo));
 			attachinfo->dobj.objType = DO_TABLE_ATTACH;
@@ -1001,13 +1001,10 @@ findParentsByOid(TableInfo *self,
 
 				parent = findTableByOid(inhinfo[i].inhparent);
 				if (parent == NULL)
-				{
-					pg_log_error("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
-								 inhinfo[i].inhparent,
-								 self->dobj.name,
-								 oid);
-					exit_nicely(1);
-				}
+					pg_fatal("failed sanity check, parent OID %u of table \"%s\" (OID %u) not found",
+							 inhinfo[i].inhparent,
+							 self->dobj.name,
+							 oid);
 				self->parents[j++] = parent;
 			}
 		}
@@ -1043,10 +1040,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 			if (j > 0)
 			{
 				if (argNum >= arraysize)
-				{
-					pg_log_error("could not parse numeric array \"%s\": too many numbers", str);
-					exit_nicely(1);
-				}
+					pg_fatal("could not parse numeric array \"%s\": too many numbers", str);
 				temp[j] = '\0';
 				array[argNum++] = atooid(temp);
 				j = 0;
@@ -1058,10 +1052,7 @@ parseOidArray(const char *str, Oid *array, int arraysize)
 		{
 			if (!(isdigit((unsigned char) s) || s == '-') ||
 				j >= sizeof(temp) - 1)
-			{
-				pg_log_error("could not parse numeric array \"%s\": invalid character in number", str);
-				exit_nicely(1);
-			}
+				pg_fatal("could not parse numeric array \"%s\": invalid character in number", str);
 			temp[j++] = s;
 		}
 	}

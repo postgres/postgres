@@ -166,7 +166,8 @@ main(int argc, char *argv[])
 				interactive = true;
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -181,7 +182,7 @@ main(int argc, char *argv[])
 		default:
 			pg_log_error("too many command-line arguments (first is \"%s\")",
 						 argv[optind + 1]);
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 	}
 
@@ -274,11 +275,8 @@ main(int argc, char *argv[])
 												   newuser,
 												   NULL);
 		if (!encrypted_password)
-		{
-			pg_log_error("password encryption failed: %s",
-						 PQerrorMessage(conn));
-			exit(1);
-		}
+			pg_fatal("password encryption failed: %s",
+					 PQerrorMessage(conn));
 		appendStringLiteralConn(&sql, encrypted_password, conn);
 		PQfreemem(encrypted_password);
 	}

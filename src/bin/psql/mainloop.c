@@ -77,10 +77,7 @@ MainLoop(FILE *source)
 	if (PQExpBufferBroken(query_buf) ||
 		PQExpBufferBroken(previous_buf) ||
 		PQExpBufferBroken(history_buf))
-	{
-		pg_log_error("out of memory");
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("out of memory");
 
 	/* main loop to get queries and execute them */
 	while (successResult == EXIT_SUCCESS)
@@ -398,10 +395,7 @@ MainLoop(FILE *source)
 			prompt_status = prompt_tmp;
 
 			if (PQExpBufferBroken(query_buf))
-			{
-				pg_log_error("out of memory");
-				exit(EXIT_FAILURE);
-			}
+				pg_fatal("out of memory");
 
 			/*
 			 * Increase statement line number counter for each linebreak added

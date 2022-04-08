@@ -193,10 +193,7 @@ OutputFsync(TimestampTz now)
 		return true;
 
 	if (fsync(outfd) != 0)
-	{
-		pg_log_fatal("could not fsync file \"%s\": %m", outfile);
-		exit(1);
-	}
+		pg_fatal("could not fsync file \"%s\": %m", outfile);
 
 	return true;
 }
@@ -780,18 +777,12 @@ main(int argc, char **argv)
 /* replication options */
 			case 'I':
 				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
-				{
-					pg_log_error("could not parse start position \"%s\"", optarg);
-					exit(1);
-				}
+					pg_fatal("could not parse start position \"%s\"", optarg);
 				startpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'E':
 				if (sscanf(optarg, "%X/%X", &hi, &lo) != 2)
-				{
-					pg_log_error("could not parse end position \"%s\"", optarg);
-					exit(1);
-				}
+					pg_fatal("could not parse end position \"%s\"", optarg);
 				endpos = ((uint64) hi) << 32 | lo;
 				break;
 			case 'o':
@@ -842,12 +833,8 @@ main(int argc, char **argv)
 				break;
 
 			default:
-
-				/*
-				 * getopt_long already emitted a complaint
-				 */
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-						progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -859,8 +846,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -870,64 +856,56 @@ main(int argc, char **argv)
 	if (replication_slot == NULL)
 	{
 		pg_log_error("no slot specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (do_start_slot && outfile == NULL)
 	{
 		pg_log_error("no target file specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (!do_drop_slot && dbname == NULL)
 	{
 		pg_log_error("no database specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (!do_drop_slot && !do_create_slot && !do_start_slot)
 	{
 		pg_log_error("at least one action needs to be specified");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (do_drop_slot && (do_create_slot || do_start_slot))
 	{
 		pg_log_error("cannot use --create-slot or --start together with --drop-slot");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (startpos != InvalidXLogRecPtr && (do_create_slot || do_drop_slot))
 	{
 		pg_log_error("cannot use --create-slot or --drop-slot together with --startpos");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (endpos != InvalidXLogRecPtr && !do_start_slot)
 	{
 		pg_log_error("--endpos may only be specified with --start");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (two_phase && !do_create_slot)
 	{
 		pg_log_error("--two-phase may only be specified with --create-slot");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -958,10 +936,7 @@ main(int argc, char **argv)
 		exit(1);
 
 	if (db_name == NULL)
-	{
-		pg_log_error("could not establish database-specific replication connection");
-		exit(1);
-	}
+		pg_fatal("could not establish database-specific replication connection");
 
 	/*
 	 * Set umask so that directories/files are created with the same
@@ -1011,10 +986,7 @@ main(int argc, char **argv)
 			exit(0);
 		}
 		else if (noloop)
-		{
-			pg_log_error("disconnected");
-			exit(1);
-		}
+			pg_fatal("disconnected");
 		else
 		{
 			/* translator: check source for value for %d */
