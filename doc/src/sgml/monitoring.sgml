@@ -3049,11 +3049,9 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
   <para>
    The <structname>pg_stat_recovery_prefetch</structname> view will contain
-   only one row.  It is filled with nulls if recovery has not run or
-   <xref linkend="guc-recovery-prefetch"/> is not enabled.  The
-   columns <structfield>wal_distance</structfield>,
-   <structfield>block_distance</structfield>
-   and <structfield>io_depth</structfield> show current values, and the
+   only one row.  The columns <structfield>wal_distance</structfield>,
+   <structfield>block_distance</structfield> and
+   <structfield>io_depth</structfield> show current values, and the
    other columns show cumulative counters that can be reset
    with the <function>pg_stat_reset_shared</function> function.
   </para>
