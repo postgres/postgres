@@ -226,7 +226,7 @@ struct PGPROC
 	pg_atomic_uint64 waitStart; /* time at which wait for lock acquisition
 								 * started */
 
-	int			delayChkpt;		/* for DELAY_CHKPT_* flags */
+	int			delayChkptFlags;	/* for DELAY_CHKPT_* flags */
 
 	uint8		statusFlags;	/* this backend's status flags, see PROC_*
 								 * above. mirrored in

@@ -1387,14 +1387,14 @@ RecordTransactionCommit(void)
 		 * RecordTransactionAbort.  That's because loss of a transaction abort
 		 * is noncritical; the presumption would be that it aborted, anyway.
 		 *
-		 * It's safe to change the delayChkpt flag of our own backend without
-		 * holding the ProcArrayLock, since we're the only one modifying it.
-		 * This makes checkpoint's determination of which xacts are delayChkpt
-		 * a bit fuzzy, but it doesn't matter.
+		 * It's safe to change the delayChkptFlags flag of our own backend
+		 * without holding the ProcArrayLock, since we're the only one
+		 * modifying it.  This makes checkpoint's determination of which xacts
+		 * are delaying the checkpoint a bit fuzzy, but it doesn't matter.
 		 */
-		Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
+		Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
 		START_CRIT_SECTION();
-		MyProc->delayChkpt |= DELAY_CHKPT_START;
+		MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1496,7 +1496,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+		MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 		END_CRIT_SECTION();
 	}
 
