@@ -33,6 +33,9 @@ XLogRecGetLen(XLogReaderState *record, uint32 *rec_len,
 	*fpi_len = 0;
 	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
+		if (!XLogRecHasBlockRef(record, block_id))
+			continue;
+
 		if (XLogRecHasBlockImage(record, block_id))
 			*fpi_len += XLogRecGetBlock(record, block_id)->bimg_len;
 	}
