@@ -5966,8 +5966,8 @@ listPublications(const char *pattern)
  * Add footer to publication description.
  */
 static bool
-addFooterToPublicationDesc(PQExpBuffer buf, char *footermsg,
-						   bool as_schema, printTableContent *cont)
+addFooterToPublicationDesc(PQExpBuffer buf, const char *footermsg,
+						   bool as_schema, printTableContent *const cont)
 {
 	PGresult   *res;
 	int			count = 0;
@@ -5980,7 +5980,7 @@ addFooterToPublicationDesc(PQExpBuffer buf, char *footermsg,
 		count = PQntuples(res);
 
 	if (count > 0)
-		printTableAddFooter(cont, _(footermsg));
+		printTableAddFooter(cont, footermsg);
 
 	for (i = 0; i < count; i++)
 	{
@@ -6149,7 +6149,7 @@ describePublications(const char *pattern)
 							  "  AND c.oid = pr.prrelid\n"
 							  "  AND pr.prpubid = '%s'\n"
 							  "ORDER BY 1,2", pubid);
-			if (!addFooterToPublicationDesc(&buf, "Tables:", false, &cont))
+			if (!addFooterToPublicationDesc(&buf, _("Tables:"), false, &cont))
 				goto error_return;
 
 			if (pset.sversion >= 150000)
@@ -6161,7 +6161,7 @@ describePublications(const char *pattern)
 								  "     JOIN pg_catalog.pg_publication_namespace pn ON n.oid = pn.pnnspid\n"
 								  "WHERE pn.pnpubid = '%s'\n"
 								  "ORDER BY 1", pubid);
-				if (!addFooterToPublicationDesc(&buf, "Tables from schemas:",
+				if (!addFooterToPublicationDesc(&buf, _("Tables from schemas:"),
 												true, &cont))
 					goto error_return;
 			}
