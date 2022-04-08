@@ -38,16 +38,16 @@
 #define LOCALE_NAME_BUFLEN 128
 
 /* GUC settings */
-extern char *locale_messages;
-extern char *locale_monetary;
-extern char *locale_numeric;
-extern char *locale_time;
+extern PGDLLIMPORT char *locale_messages;
+extern PGDLLIMPORT char *locale_monetary;
+extern PGDLLIMPORT char *locale_numeric;
+extern PGDLLIMPORT char *locale_time;
 
 /* lc_time localization cache */
-extern char *localized_abbrev_days[];
-extern char *localized_full_days[];
-extern char *localized_abbrev_months[];
-extern char *localized_full_months[];
+extern PGDLLIMPORT char *localized_abbrev_days[];
+extern PGDLLIMPORT char *localized_full_days[];
+extern PGDLLIMPORT char *localized_abbrev_months[];
+extern PGDLLIMPORT char *localized_full_months[];
 
 
 extern bool check_locale_messages(char **newval, void **extra, GucSource source);
@@ -103,7 +103,7 @@ struct pg_locale_struct
 
 typedef struct pg_locale_struct *pg_locale_t;
 
-extern struct pg_locale_struct default_locale;
+extern PGDLLIMPORT struct pg_locale_struct default_locale;
 
 extern void make_icu_collator(const char *iculocstr,
 							  struct pg_locale_struct *resultp);

@@ -19,7 +19,7 @@
 #include "lib/stringinfo.h"
 #include "nodes/parsenodes.h"
 
-extern bool allow_in_place_tablespaces;
+extern PGDLLIMPORT bool allow_in_place_tablespaces;
 
 /* XLOG stuff */
 #define XLOG_TBLSPC_CREATE		0x00

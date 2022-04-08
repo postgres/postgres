@@ -49,33 +49,33 @@ typedef enum RecoveryPauseState
 } RecoveryPauseState;
 
 /* User-settable GUC parameters */
-extern bool recoveryTargetInclusive;
-extern int	recoveryTargetAction;
-extern int	recovery_min_apply_delay;
-extern char *PrimaryConnInfo;
-extern char *PrimarySlotName;
-extern char *recoveryRestoreCommand;
-extern char *recoveryEndCommand;
-extern char *archiveCleanupCommand;
+extern PGDLLIMPORT bool recoveryTargetInclusive;
+extern PGDLLIMPORT int recoveryTargetAction;
+extern PGDLLIMPORT int recovery_min_apply_delay;
+extern PGDLLIMPORT char *PrimaryConnInfo;
+extern PGDLLIMPORT char *PrimarySlotName;
+extern PGDLLIMPORT char *recoveryRestoreCommand;
+extern PGDLLIMPORT char *recoveryEndCommand;
+extern PGDLLIMPORT char *archiveCleanupCommand;
 
 /* indirectly set via GUC system */
-extern TransactionId recoveryTargetXid;
-extern char *recovery_target_time_string;
-extern TimestampTz recoveryTargetTime;
-extern const char *recoveryTargetName;
-extern XLogRecPtr recoveryTargetLSN;
-extern RecoveryTargetType recoveryTarget;
-extern char *PromoteTriggerFile;
-extern bool wal_receiver_create_temp_slot;
-extern RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal;
-extern TimeLineID recoveryTargetTLIRequested;
-extern TimeLineID recoveryTargetTLI;
+extern PGDLLIMPORT TransactionId recoveryTargetXid;
+extern PGDLLIMPORT char *recovery_target_time_string;
+extern PGDLLIMPORT TimestampTz recoveryTargetTime;
+extern PGDLLIMPORT const char *recoveryTargetName;
+extern PGDLLIMPORT XLogRecPtr recoveryTargetLSN;
+extern PGDLLIMPORT RecoveryTargetType recoveryTarget;
+extern PGDLLIMPORT char *PromoteTriggerFile;
+extern PGDLLIMPORT bool wal_receiver_create_temp_slot;
+extern PGDLLIMPORT RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal;
+extern PGDLLIMPORT TimeLineID recoveryTargetTLIRequested;
+extern PGDLLIMPORT TimeLineID recoveryTargetTLI;
 
 /* Have we already reached a consistent database state? */
-extern bool reachedConsistency;
+extern PGDLLIMPORT bool reachedConsistency;
 
 /* Are we currently in standby mode? */
-extern bool StandbyMode;
+extern PGDLLIMPORT bool StandbyMode;
 
 extern Size XLogRecoveryShmemSize(void);
 extern void XLogRecoveryShmemInit(void);

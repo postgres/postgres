@@ -424,12 +424,12 @@ typedef enum
 	PGERROR_VERBOSE				/* all the facts, ma'am */
 }			PGErrorVerbosity;
 
-extern int	Log_error_verbosity;
-extern char *Log_line_prefix;
-extern int	Log_destination;
-extern char *Log_destination_string;
-extern bool syslog_sequence_numbers;
-extern bool syslog_split_messages;
+extern PGDLLIMPORT int Log_error_verbosity;
+extern PGDLLIMPORT char *Log_line_prefix;
+extern PGDLLIMPORT int Log_destination;
+extern PGDLLIMPORT char *Log_destination_string;
+extern PGDLLIMPORT bool syslog_sequence_numbers;
+extern PGDLLIMPORT bool syslog_split_messages;
 
 /* Log destination bitmap */
 #define LOG_DESTINATION_STDERR	 1

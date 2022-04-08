@@ -279,7 +279,7 @@ extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
 extern PGDLLIMPORT WritebackContext BackendWritebackContext;
 
 /* in localbuf.c */
-extern BufferDesc *LocalBufferDescriptors;
+extern PGDLLIMPORT BufferDesc *LocalBufferDescriptors;
 
 /* in bufmgr.c */
 
@@ -298,7 +298,7 @@ typedef struct CkptSortItem
 	int			buf_id;
 } CkptSortItem;
 
-extern CkptSortItem *CkptBufferIds;
+extern PGDLLIMPORT CkptSortItem *CkptBufferIds;
 
 /*
  * Internal buffer management routines

@@ -56,7 +56,7 @@ typedef enum ForkNumber
 
 #define FORKNAMECHARS	4		/* max chars for a fork name */
 
-extern const char *const forkNames[];
+extern PGDLLIMPORT const char *const forkNames[];
 
 extern ForkNumber forkname_to_number(const char *forkName);
 extern int	forkname_chars(const char *str, ForkNumber *fork);

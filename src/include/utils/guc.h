@@ -239,53 +239,53 @@ typedef enum
 
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
-extern bool Debug_print_plan;
-extern bool Debug_print_parse;
-extern bool Debug_print_rewritten;
-extern bool Debug_pretty_print;
+extern PGDLLIMPORT bool Debug_print_plan;
+extern PGDLLIMPORT bool Debug_print_parse;
+extern PGDLLIMPORT bool Debug_print_rewritten;
+extern PGDLLIMPORT bool Debug_pretty_print;
 
-extern bool log_parser_stats;
-extern bool log_planner_stats;
-extern bool log_executor_stats;
-extern bool log_statement_stats;
-extern bool log_btree_build_stats;
+extern PGDLLIMPORT bool log_parser_stats;
+extern PGDLLIMPORT bool log_planner_stats;
+extern PGDLLIMPORT bool log_executor_stats;
+extern PGDLLIMPORT bool log_statement_stats;
+extern PGDLLIMPORT bool log_btree_build_stats;
 
 extern PGDLLIMPORT bool check_function_bodies;
-extern bool session_auth_is_superuser;
+extern PGDLLIMPORT bool session_auth_is_superuser;
 
-extern bool log_duration;
-extern int	log_parameter_max_length;
-extern int	log_parameter_max_length_on_error;
-extern int	log_min_error_statement;
+extern PGDLLIMPORT bool log_duration;
+extern PGDLLIMPORT int log_parameter_max_length;
+extern PGDLLIMPORT int log_parameter_max_length_on_error;
+extern PGDLLIMPORT int log_min_error_statement;
 extern PGDLLIMPORT int log_min_messages;
 extern PGDLLIMPORT int client_min_messages;
-extern int	log_min_duration_sample;
-extern int	log_min_duration_statement;
-extern int	log_temp_files;
-extern double log_statement_sample_rate;
-extern double log_xact_sample_rate;
-extern char *backtrace_functions;
-extern char *backtrace_symbol_list;
+extern PGDLLIMPORT int log_min_duration_sample;
+extern PGDLLIMPORT int log_min_duration_statement;
+extern PGDLLIMPORT int log_temp_files;
+extern PGDLLIMPORT double log_statement_sample_rate;
+extern PGDLLIMPORT double log_xact_sample_rate;
+extern PGDLLIMPORT char *backtrace_functions;
+extern PGDLLIMPORT char *backtrace_symbol_list;
 
-extern int	temp_file_limit;
+extern PGDLLIMPORT int temp_file_limit;
 
-extern int	num_temp_buffers;
+extern PGDLLIMPORT int num_temp_buffers;
 
 extern PGDLLIMPORT char *cluster_name;
 extern PGDLLIMPORT char *ConfigFileName;
-extern char *HbaFileName;
-extern char *IdentFileName;
-extern char *external_pid_file;
+extern PGDLLIMPORT char *HbaFileName;
+extern PGDLLIMPORT char *IdentFileName;
+extern PGDLLIMPORT char *external_pid_file;
 
 extern PGDLLIMPORT char *application_name;
 
-extern int	tcp_keepalives_idle;
-extern int	tcp_keepalives_interval;
-extern int	tcp_keepalives_count;
-extern int	tcp_user_timeout;
+extern PGDLLIMPORT int tcp_keepalives_idle;
+extern PGDLLIMPORT int tcp_keepalives_interval;
+extern PGDLLIMPORT int tcp_keepalives_count;
+extern PGDLLIMPORT int tcp_user_timeout;
 
 #ifdef TRACE_SORT
-extern bool trace_sort;
+extern PGDLLIMPORT bool trace_sort;
 #endif
 
 /*

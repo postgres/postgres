@@ -112,8 +112,8 @@ typedef enum
 }			ForceParallelMode;
 
 /* GUC parameters */
-extern int	force_parallel_mode;
-extern bool parallel_leader_participation;
+extern PGDLLIMPORT int force_parallel_mode;
+extern PGDLLIMPORT bool parallel_leader_participation;
 
 extern struct PlannedStmt *planner(Query *parse, const char *query_string,
 								   int cursorOptions,

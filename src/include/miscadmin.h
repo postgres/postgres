@@ -182,15 +182,15 @@ extern PGDLLIMPORT pg_time_t MyStartTime;
 extern PGDLLIMPORT TimestampTz MyStartTimestamp;
 extern PGDLLIMPORT struct Port *MyProcPort;
 extern PGDLLIMPORT struct Latch *MyLatch;
-extern int32 MyCancelKey;
-extern int	MyPMChildSlot;
+extern PGDLLIMPORT int32 MyCancelKey;
+extern PGDLLIMPORT int MyPMChildSlot;
 
-extern char OutputFileName[];
+extern PGDLLIMPORT char OutputFileName[];
 extern PGDLLIMPORT char my_exec_path[];
-extern char pkglib_path[];
+extern PGDLLIMPORT char pkglib_path[];
 
 #ifdef EXEC_BACKEND
-extern char postgres_exec_path[];
+extern PGDLLIMPORT char postgres_exec_path[];
 #endif
 
 /*
@@ -255,25 +255,25 @@ extern PGDLLIMPORT int IntervalStyle;
 
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
-extern bool enableFsync;
+extern PGDLLIMPORT bool enableFsync;
 extern PGDLLIMPORT bool allowSystemTableMods;
 extern PGDLLIMPORT int work_mem;
 extern PGDLLIMPORT double hash_mem_multiplier;
 extern PGDLLIMPORT int maintenance_work_mem;
 extern PGDLLIMPORT int max_parallel_maintenance_workers;
 
-extern int	VacuumCostPageHit;
-extern int	VacuumCostPageMiss;
-extern int	VacuumCostPageDirty;
-extern int	VacuumCostLimit;
-extern double VacuumCostDelay;
+extern PGDLLIMPORT int VacuumCostPageHit;
+extern PGDLLIMPORT int VacuumCostPageMiss;
+extern PGDLLIMPORT int VacuumCostPageDirty;
+extern PGDLLIMPORT int VacuumCostLimit;
+extern PGDLLIMPORT double VacuumCostDelay;
 
-extern int64 VacuumPageHit;
-extern int64 VacuumPageMiss;
-extern int64 VacuumPageDirty;
+extern PGDLLIMPORT int64 VacuumPageHit;
+extern PGDLLIMPORT int64 VacuumPageMiss;
+extern PGDLLIMPORT int64 VacuumPageDirty;
 
-extern int	VacuumCostBalance;
-extern bool VacuumCostActive;
+extern PGDLLIMPORT int VacuumCostBalance;
+extern PGDLLIMPORT bool VacuumCostActive;
 
 
 /* in tcop/postgres.c */
@@ -299,7 +299,7 @@ extern void PreventCommandIfParallelMode(const char *cmdname);
 extern void PreventCommandDuringRecovery(const char *cmdname);
 
 /* in utils/misc/guc.c */
-extern int	trace_recovery_messages;
+extern PGDLLIMPORT int trace_recovery_messages;
 extern int	trace_recovery(int trace_level);
 
 /*****************************************************************************
@@ -312,7 +312,7 @@ extern int	trace_recovery(int trace_level);
 #define SECURITY_RESTRICTED_OPERATION	0x0002
 #define SECURITY_NOFORCE_RLS			0x0004
 
-extern char *DatabasePath;
+extern PGDLLIMPORT char *DatabasePath;
 
 /* now in utils/init/miscinit.c */
 extern void InitPostmasterChild(void);
@@ -337,7 +337,7 @@ typedef enum BackendType
 	B_LOGGER,
 } BackendType;
 
-extern BackendType MyBackendType;
+extern PGDLLIMPORT BackendType MyBackendType;
 
 extern const char *GetBackendTypeDesc(BackendType backendType);
 
@@ -400,7 +400,7 @@ typedef enum ProcessingMode
 	NormalProcessing			/* normal processing */
 } ProcessingMode;
 
-extern ProcessingMode Mode;
+extern PGDLLIMPORT ProcessingMode Mode;
 
 #define IsBootstrapProcessingMode() (Mode == BootstrapProcessing)
 #define IsInitProcessingMode()		(Mode == InitProcessing)
@@ -438,7 +438,7 @@ typedef enum
 	NUM_AUXPROCTYPES			/* Must be last! */
 } AuxProcType;
 
-extern AuxProcType MyAuxProcType;
+extern PGDLLIMPORT AuxProcType MyAuxProcType;
 
 #define AmStartupProcess()			(MyAuxProcType == StartupProcess)
 #define AmBackgroundWriterProcess() (MyAuxProcType == BgWriterProcess)
@@ -456,19 +456,19 @@ extern AuxProcType MyAuxProcType;
 /* in utils/init/postinit.c */
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
 extern void InitializeMaxBackends(void);
-extern int GetMaxBackends(void);
+extern int	GetMaxBackends(void);
 extern void SetMaxBackends(int max_backends);
 extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 						 Oid useroid, char *out_dbname, bool override_allow_connections);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
-extern bool IgnoreSystemIndexes;
+extern PGDLLIMPORT bool IgnoreSystemIndexes;
 extern PGDLLIMPORT bool process_shared_preload_libraries_in_progress;
-extern bool process_shared_preload_libraries_done;
-extern char *session_preload_libraries_string;
-extern char *shared_preload_libraries_string;
-extern char *local_preload_libraries_string;
+extern PGDLLIMPORT bool process_shared_preload_libraries_done;
+extern PGDLLIMPORT char *session_preload_libraries_string;
+extern PGDLLIMPORT char *shared_preload_libraries_string;
+extern PGDLLIMPORT char *local_preload_libraries_string;
 
 extern void CreateDataDirLockFile(bool amPostmaster);
 extern void CreateSocketLockFile(const char *socketfile, bool amPostmaster,

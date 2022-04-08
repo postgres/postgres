@@ -38,7 +38,7 @@
 #define XACT_REPEATABLE_READ	2
 #define XACT_SERIALIZABLE		3
 
-extern int	DefaultXactIsoLevel;
+extern PGDLLIMPORT int DefaultXactIsoLevel;
 extern PGDLLIMPORT int XactIsoLevel;
 
 /*
@@ -52,18 +52,18 @@ extern PGDLLIMPORT int XactIsoLevel;
 #define IsolationIsSerializable() (XactIsoLevel == XACT_SERIALIZABLE)
 
 /* Xact read-only state */
-extern bool DefaultXactReadOnly;
-extern bool XactReadOnly;
+extern PGDLLIMPORT bool DefaultXactReadOnly;
+extern PGDLLIMPORT bool XactReadOnly;
 
 /* flag for logging statements in this transaction */
-extern bool xact_is_sampled;
+extern PGDLLIMPORT bool xact_is_sampled;
 
 /*
  * Xact is deferrable -- only meaningful (currently) for read only
  * SERIALIZABLE transactions
  */
-extern bool DefaultXactDeferrable;
-extern bool XactDeferrable;
+extern PGDLLIMPORT bool DefaultXactDeferrable;
+extern PGDLLIMPORT bool XactDeferrable;
 
 typedef enum
 {
@@ -80,7 +80,7 @@ typedef enum
 #define SYNCHRONOUS_COMMIT_ON	SYNCHRONOUS_COMMIT_REMOTE_FLUSH
 
 /* Synchronous commit level */
-extern int	synchronous_commit;
+extern PGDLLIMPORT int synchronous_commit;
 
 /* used during logical streaming of a transaction */
 extern PGDLLIMPORT TransactionId CheckXidAlive;
@@ -93,7 +93,7 @@ extern PGDLLIMPORT bool bsysscan;
  * globally accessible, so can be set from anywhere in the code which requires
  * recording flags.
  */
-extern int	MyXactFlags;
+extern PGDLLIMPORT int MyXactFlags;
 
 /*
  * XACT_FLAGS_ACCESSEDTEMPNAMESPACE - set when a temporary object is accessed.

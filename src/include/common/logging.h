@@ -55,7 +55,7 @@ enum pg_log_level
 	PG_LOG_OFF,
 };
 
-extern enum pg_log_level __pg_log_level;
+extern PGDLLIMPORT enum pg_log_level __pg_log_level;
 
 /*
  * Kind of a hack to be able to produce the psql output exactly as required by

@@ -28,10 +28,10 @@ typedef uint8 TwoPhaseRmgrId;
 #define TWOPHASE_RM_PREDICATELOCK_ID	4
 #define TWOPHASE_RM_MAX_ID			TWOPHASE_RM_PREDICATELOCK_ID
 
-extern const TwoPhaseCallback twophase_recover_callbacks[];
-extern const TwoPhaseCallback twophase_postcommit_callbacks[];
-extern const TwoPhaseCallback twophase_postabort_callbacks[];
-extern const TwoPhaseCallback twophase_standby_recover_callbacks[];
+extern PGDLLIMPORT const TwoPhaseCallback twophase_recover_callbacks[];
+extern PGDLLIMPORT const TwoPhaseCallback twophase_postcommit_callbacks[];
+extern PGDLLIMPORT const TwoPhaseCallback twophase_postabort_callbacks[];
+extern PGDLLIMPORT const TwoPhaseCallback twophase_standby_recover_callbacks[];
 
 
 extern void RegisterTwoPhaseRecord(TwoPhaseRmgrId rmid, uint16 info,

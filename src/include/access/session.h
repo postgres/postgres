@@ -39,6 +39,6 @@ extern void AttachSession(dsm_handle handle);
 extern void DetachSession(void);
 
 /* The current session, or NULL for none. */
-extern Session *CurrentSession;
+extern PGDLLIMPORT Session *CurrentSession;
 
 #endif							/* SESSION_H */

@@ -19,7 +19,7 @@
 
 /* GUC parameters */
 #define DEFAULT_CURSOR_TUPLE_FRACTION 0.1
-extern double cursor_tuple_fraction;
+extern PGDLLIMPORT double cursor_tuple_fraction;
 
 /* query_planner callback to compute query_pathkeys */
 typedef void (*query_pathkeys_callback) (PlannerInfo *root, void *extra);
@@ -64,8 +64,8 @@ extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 /*
  * prototypes for plan/initsplan.c
  */
-extern int	from_collapse_limit;
-extern int	join_collapse_limit;
+extern PGDLLIMPORT int from_collapse_limit;
+extern PGDLLIMPORT int join_collapse_limit;
 
 extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void add_other_rels_to_query(PlannerInfo *root);

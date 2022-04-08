@@ -27,9 +27,9 @@
 #define BOOTCOL_NULL_FORCE_NULL		2
 #define BOOTCOL_NULL_FORCE_NOT_NULL 3
 
-extern Relation boot_reldesc;
-extern Form_pg_attribute attrtypes[MAXATTR];
-extern int	numattr;
+extern PGDLLIMPORT Relation boot_reldesc;
+extern PGDLLIMPORT Form_pg_attribute attrtypes[MAXATTR];
+extern PGDLLIMPORT int numattr;
 
 
 extern void BootstrapModeMain(int argc, char *argv[], bool check_only) pg_attribute_noreturn();

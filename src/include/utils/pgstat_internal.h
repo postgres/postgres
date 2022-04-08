@@ -638,14 +638,14 @@ extern void pgstat_create_transactional(PgStat_Kind kind, Oid dboid, Oid objoid)
  * Variables in pgstat.c
  */
 
-extern PgStat_LocalState pgStatLocal;
+extern PGDLLIMPORT PgStat_LocalState pgStatLocal;
 
 
 /*
  * Variables in pgstat_slru.c
  */
 
-extern bool have_slrustats;
+extern PGDLLIMPORT bool have_slrustats;
 
 
 /*

@@ -28,7 +28,7 @@ typedef struct ObjectAddress
 	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
 } ObjectAddress;
 
-extern const ObjectAddress InvalidObjectAddress;
+extern PGDLLIMPORT const ObjectAddress InvalidObjectAddress;
 
 #define ObjectAddressSubSet(addr, class_id, object_id, object_sub_id) \
 	do { \

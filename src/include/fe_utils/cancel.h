@@ -18,7 +18,7 @@
 
 #include "libpq-fe.h"
 
-extern volatile sig_atomic_t CancelRequested;
+extern PGDLLIMPORT volatile sig_atomic_t CancelRequested;
 
 extern void SetCancelConn(PGconn *conn);
 extern void ResetCancelConn(void);

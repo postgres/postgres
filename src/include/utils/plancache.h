@@ -35,7 +35,7 @@ typedef enum
 }			PlanCacheMode;
 
 /* GUC parameter */
-extern int	plan_cache_mode;
+extern PGDLLIMPORT int plan_cache_mode;
 
 #define CACHEDPLANSOURCE_MAGIC		195726186
 #define CACHEDPLAN_MAGIC			953717834

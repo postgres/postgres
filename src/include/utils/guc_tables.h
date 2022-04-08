@@ -249,10 +249,10 @@ struct config_enum
 };
 
 /* constant tables corresponding to enums above and in guc.h */
-extern const char *const config_group_names[];
-extern const char *const config_type_names[];
-extern const char *const GucContext_Names[];
-extern const char *const GucSource_Names[];
+extern PGDLLIMPORT const char *const config_group_names[];
+extern PGDLLIMPORT const char *const config_type_names[];
+extern PGDLLIMPORT const char *const GucContext_Names[];
+extern PGDLLIMPORT const char *const GucSource_Names[];
 
 /* get the current set of variables */
 extern struct config_generic **get_guc_variables(void);

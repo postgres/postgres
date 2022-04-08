@@ -75,10 +75,10 @@ extern char *map_sql_identifier_to_xml_name(const char *ident, bool fully_escape
 extern char *map_xml_name_to_sql_identifier(const char *name);
 extern char *map_sql_value_to_xml_value(Datum value, Oid type, bool xml_escape_strings);
 
-extern int	xmlbinary;			/* XmlBinaryType, but int for guc enum */
+extern PGDLLIMPORT int xmlbinary;	/* XmlBinaryType, but int for guc enum */
 
-extern int	xmloption;			/* XmlOptionType, but int for guc enum */
+extern PGDLLIMPORT int xmloption;	/* XmlOptionType, but int for guc enum */
 
-extern const TableFuncRoutine XmlTableRoutine;
+extern PGDLLIMPORT const TableFuncRoutine XmlTableRoutine;
 
 #endif							/* XML_H */

@@ -23,9 +23,9 @@
 #include <ntstatus.h>
 #include <winternl.h>
 
-typedef NTSTATUS (__stdcall *RtlGetLastNtStatus_t) (void);
+typedef NTSTATUS (__stdcall * RtlGetLastNtStatus_t) (void);
 
-extern RtlGetLastNtStatus_t pg_RtlGetLastNtStatus;
+extern PGDLLIMPORT RtlGetLastNtStatus_t pg_RtlGetLastNtStatus;
 
 extern int	initialize_ntdll(void);
 

@@ -21,7 +21,7 @@
  * potentially perform work during recovery should check RecoveryInProgress().
  * See XLogCtl notes in xlog.c.
  */
-extern bool InRecovery;
+extern PGDLLIMPORT bool InRecovery;
 
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
@@ -52,7 +52,7 @@ typedef enum
 	STANDBY_SNAPSHOT_READY
 } HotStandbyState;
 
-extern HotStandbyState standbyState;
+extern PGDLLIMPORT HotStandbyState standbyState;
 
 #define InHotStandby (standbyState >= STANDBY_SNAPSHOT_PENDING)
 

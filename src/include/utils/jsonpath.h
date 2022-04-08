@@ -283,6 +283,6 @@ extern JsonbValue *JsonPathValue(Datum jb, JsonPath *jp, bool *empty,
 extern int EvalJsonPathVar(void *vars, char *varName, int varNameLen,
 						   JsonbValue *val, JsonbValue *baseObject);
 
-extern const TableFuncRoutine JsonbTableRoutine;
+extern PGDLLIMPORT const TableFuncRoutine JsonbTableRoutine;
 
 #endif

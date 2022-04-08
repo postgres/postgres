@@ -58,7 +58,7 @@ extern const PGDLLIMPORT PQcommMethods *PqCommMethods;
 /*
  * prototypes for functions in pqcomm.c
  */
-extern WaitEventSet *FeBeWaitSet;
+extern PGDLLIMPORT WaitEventSet *FeBeWaitSet;
 
 #define FeBeWaitSetSocketPos 0
 #define FeBeWaitSetLatchPos 1
@@ -87,17 +87,17 @@ extern bool pq_check_connection(void);
 /*
  * prototypes for functions in be-secure.c
  */
-extern char *ssl_library;
-extern char *ssl_cert_file;
-extern char *ssl_key_file;
-extern char *ssl_ca_file;
-extern char *ssl_crl_file;
-extern char *ssl_crl_dir;
-extern char *ssl_dh_params_file;
+extern PGDLLIMPORT char *ssl_library;
+extern PGDLLIMPORT char *ssl_cert_file;
+extern PGDLLIMPORT char *ssl_key_file;
+extern PGDLLIMPORT char *ssl_ca_file;
+extern PGDLLIMPORT char *ssl_crl_file;
+extern PGDLLIMPORT char *ssl_crl_dir;
+extern PGDLLIMPORT char *ssl_dh_params_file;
 extern PGDLLIMPORT char *ssl_passphrase_command;
 extern PGDLLIMPORT bool ssl_passphrase_command_supports_reload;
 #ifdef USE_SSL
-extern bool ssl_loaded_verify_locations;
+extern PGDLLIMPORT bool ssl_loaded_verify_locations;
 #endif
 
 extern int	secure_initialize(bool isServerStart);
@@ -118,11 +118,11 @@ extern ssize_t secure_open_gssapi(Port *port);
 #endif
 
 /* GUCs */
-extern char *SSLCipherSuites;
-extern char *SSLECDHCurve;
-extern bool SSLPreferServerCiphers;
-extern int	ssl_min_protocol_version;
-extern int	ssl_max_protocol_version;
+extern PGDLLIMPORT char *SSLCipherSuites;
+extern PGDLLIMPORT char *SSLECDHCurve;
+extern PGDLLIMPORT bool SSLPreferServerCiphers;
+extern PGDLLIMPORT int ssl_min_protocol_version;
+extern PGDLLIMPORT int ssl_max_protocol_version;
 
 enum ssl_protocol_versions
 {

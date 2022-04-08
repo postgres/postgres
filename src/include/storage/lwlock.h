@@ -110,7 +110,7 @@ typedef enum LWLockMode
 
 
 #ifdef LOCK_DEBUG
-extern bool Trace_lwlocks;
+extern PGDLLIMPORT bool Trace_lwlocks;
 #endif
 
 extern bool LWLockAcquire(LWLock *lock, LWLockMode mode);
@@ -121,7 +121,7 @@ extern void LWLockReleaseClearVar(LWLock *lock, uint64 *valptr, uint64 val);
 extern void LWLockReleaseAll(void);
 extern bool LWLockHeldByMe(LWLock *lock);
 extern bool LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode);
-extern int LWLockHeldCount(void);
+extern int	LWLockHeldCount(void);
 
 extern bool LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval);
 extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);

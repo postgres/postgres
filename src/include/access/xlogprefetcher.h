@@ -18,7 +18,7 @@
 #include "access/xlogrecord.h"
 
 /* GUCs */
-extern int	recovery_prefetch;
+extern PGDLLIMPORT int recovery_prefetch;
 
 /* Possible values for recovery_prefetch */
 typedef enum

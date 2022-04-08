@@ -36,7 +36,7 @@ extern void PgArchForceDirScan(void);
 /*
  * The value of the archive_library GUC.
  */
-extern char *XLogArchiveLibrary;
+extern PGDLLIMPORT char *XLogArchiveLibrary;
 
 /*
  * Archive module callbacks
@@ -55,19 +55,19 @@ typedef struct ArchiveModuleCallbacks
 	ArchiveCheckConfiguredCB check_configured_cb;
 	ArchiveFileCB archive_file_cb;
 	ArchiveShutdownCB shutdown_cb;
-} ArchiveModuleCallbacks;
+}			ArchiveModuleCallbacks;
 
 /*
  * Type of the shared library symbol _PG_archive_module_init that is looked
  * up when loading an archive library.
  */
-typedef void (*ArchiveModuleInit) (ArchiveModuleCallbacks *cb);
+typedef void (*ArchiveModuleInit) (ArchiveModuleCallbacks * cb);
 
 /*
  * Since the logic for archiving via a shell command is in the core server
  * and does not need to be loaded via a shared library, it has a special
  * initialization function.
  */
-extern void shell_archive_init(ArchiveModuleCallbacks *cb);
+extern void shell_archive_init(ArchiveModuleCallbacks * cb);
 
 #endif							/* _PGARCH_H */

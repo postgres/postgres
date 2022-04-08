@@ -25,11 +25,11 @@
 /* Required daylight between max_stack_depth and the kernel limit, in bytes */
 #define STACK_DEPTH_SLOP (512 * 1024L)
 
-extern CommandDest whereToSendOutput;
+extern PGDLLIMPORT CommandDest whereToSendOutput;
 extern PGDLLIMPORT const char *debug_query_string;
-extern int	max_stack_depth;
-extern int	PostAuthDelay;
-extern int	client_connection_check_interval;
+extern PGDLLIMPORT int max_stack_depth;
+extern PGDLLIMPORT int PostAuthDelay;
+extern PGDLLIMPORT int client_connection_check_interval;
 
 /* GUC-configurable parameters */
 

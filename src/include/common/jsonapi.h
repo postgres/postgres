@@ -128,7 +128,7 @@ extern JsonParseErrorType pg_parse_json(JsonLexContext *lex,
 										JsonSemAction *sem);
 
 /* the null action object used for pure validation */
-extern JsonSemAction nullSemAction;
+extern PGDLLIMPORT JsonSemAction nullSemAction;
 
 /*
  * json_count_array_elements performs a fast secondary parse to determine the

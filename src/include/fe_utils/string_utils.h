@@ -20,7 +20,7 @@
 #include "pqexpbuffer.h"
 
 /* Global variables controlling behavior of fmtId() and fmtQualifiedId() */
-extern int	quote_all_identifiers;
+extern PGDLLIMPORT int quote_all_identifiers;
 extern PQExpBuffer (*getLocalPQExpBuffer) (void);
 
 /* Functions */

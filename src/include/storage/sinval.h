@@ -123,9 +123,9 @@ typedef union
 
 
 /* Counter of messages processed; don't worry about overflow. */
-extern uint64 SharedInvalidMessageCounter;
+extern PGDLLIMPORT uint64 SharedInvalidMessageCounter;
 
-extern volatile sig_atomic_t catchupInterruptPending;
+extern PGDLLIMPORT volatile sig_atomic_t catchupInterruptPending;
 
 extern void SendSharedInvalidMessages(const SharedInvalidationMessage *msgs,
 									  int n);

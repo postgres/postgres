@@ -67,18 +67,18 @@ typedef union
 #define PIPE_PROTO_DEST_JSONLOG	0x40
 
 /* GUC options */
-extern bool Logging_collector;
-extern int	Log_RotationAge;
-extern int	Log_RotationSize;
+extern PGDLLIMPORT bool Logging_collector;
+extern PGDLLIMPORT int Log_RotationAge;
+extern PGDLLIMPORT int Log_RotationSize;
 extern PGDLLIMPORT char *Log_directory;
 extern PGDLLIMPORT char *Log_filename;
-extern bool Log_truncate_on_rotation;
-extern int	Log_file_mode;
+extern PGDLLIMPORT bool Log_truncate_on_rotation;
+extern PGDLLIMPORT int Log_file_mode;
 
 #ifndef WIN32
-extern int	syslogPipe[2];
+extern PGDLLIMPORT int syslogPipe[2];
 #else
-extern HANDLE syslogPipe[2];
+extern PGDLLIMPORT HANDLE syslogPipe[2];
 #endif
 
 
