@@ -7,19 +7,16 @@ ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (1, '<value>one</value>');
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (2, '<value>two</value>');
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (3, '<wrong');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (3, '<wrong');
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT * FROM xmltest;
  id | data 
 ----+------
@@ -28,35 +25,28 @@ SELECT * FROM xmltest;
 SELECT xmlcomment('test');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlcomment('-test');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlcomment('test-');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlcomment('--test');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlcomment('te st');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat(xmlcomment('hello'),
                  xmlelement(NAME qux, 'foo'),
                  xmlcomment('world'));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat('hello', 'you');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlconcat('hello', 'you');
                          ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
 LINE 1: SELECT xmlconcat(1, 2);
@@ -66,19 +56,16 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xmlconcat('bad', '<syntax');
                          ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standa...
                          ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml...
                          ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlconcat(NULL);
  xmlconcat 
 -----------
@@ -96,238 +83,184 @@ SELECT xmlelement(name element,
                   'content');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name element,
                   xmlattributes ('unnamed and wrong'));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name num, 37);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, text 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xml 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, text 'b<a/>r');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xml 'b<a/>r');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, array[1, 2, 3]);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET xmlbinary TO base64;
 SELECT xmlelement(name foo, bytea 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET xmlbinary TO hex;
 SELECT xmlelement(name foo, bytea 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xmlattributes(true as bar));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xmlattributes('2009-04-09 00:24:37'::timestamp as bar));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xmlattributes('infinity'::timestamp as bar));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xmlattributes('<>&"''' as funny, xml 'b<a/>r' as funnier));
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '  ');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content 'abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<abc>x</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<invalidentity>&</invalidentity>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<undefinedentity>&idontexist;</undefinedentity>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<invalidns xmlns=''&lt;''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<relativens xmlns=''relative''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<twoerrors>&idontexist;</unbalanced>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<nosuchprefix:tag/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '   ');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document 'abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<abc>x</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<invalidentity>&</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<undefinedentity>&idontexist;</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<invalidns xmlns=''&lt;''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<relativens xmlns=''relative''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<twoerrors>&idontexist;</unbalanced>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<nosuchprefix:tag/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name xml);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name xmlstuff);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, 'in?>valid');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, null);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name xml, null);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name xmlstuff, null);
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name "xml-stylesheet", 'href="mystyle.css" type="text/css"');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, '   bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot(xml '<foo/>', version no value, standalone no...
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version '2.0');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot(xml '<foo/>', version '2.0');
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot(xml '<foo/>', version no value, standalone ye...
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no value, standalone yes);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no...
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version...
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>...
                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no value);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>...
                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>...
                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlroot (
   xmlelement (
     name gazonk,
@@ -345,7 +278,6 @@ SELECT xmlroot (
 );
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlserialize(content data as character varying(20)) FROM xmltest;
  xmlserialize 
 --------------
@@ -356,43 +288,36 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xmlserialize(content 'good' as char(10));
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlserialize(document 'bad' as text);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xmlserialize(document 'bad' as text);
                                      ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<foo>bar</foo>' IS DOCUMENT;
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<abc/>' IS NOT DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<abc/>' IS NOT DOCUMENT;
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml 'abc' IS NOT DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml 'abc' IS NOT DOCUMENT;
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT '<>' IS NOT DOCUMENT;
 ERROR:  unsupported XML feature
 LINE 1: SELECT '<>' IS NOT DOCUMENT;
                ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlagg(data) FROM xmltest;
  xmlagg 
 --------
@@ -408,22 +333,18 @@ SELECT xmlagg(data) FROM xmltest WHERE id > 10;
 SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Check mapping SQL identifier to XML name
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlpi(name "123");
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
 ERROR:  unsupported XML feature
 LINE 1: PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
                                               ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET XML OPTION DOCUMENT;
 EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
@@ -434,7 +355,6 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!DOCTYPE a><a/><b/>';
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET XML OPTION CONTENT;
 EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
@@ -445,37 +365,31 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!-- in SQL:2006+ a doc is content too--> <?y z?...
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<?xml version="1.0"?> <!-- hi--> <!DOCTYPE a><a/>';
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<?xml version="1.0"?> <!-- hi--> <!DOCTYPE a><a/...
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<!DOCTYPE a><a/>';
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!DOCTYPE a><a/>';
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<!-- hi--> oops <!DOCTYPE a><a/>';
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!-- hi--> oops <!DOCTYPE a><a/>';
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<!-- hi--> <oops/> <!DOCTYPE a><a/>';
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!-- hi--> <oops/> <!DOCTYPE a><a/>';
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml '<!DOCTYPE a><a/><b/>';
 ERROR:  unsupported XML feature
 LINE 1: SELECT xml '<!DOCTYPE a><a/><b/>';
                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Test backwards parsing
 CREATE VIEW xmlview1 AS SELECT xmlcomment('test');
 CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
@@ -483,38 +397,31 @@ ERROR:  unsupported XML feature
 LINE 1: CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
                                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview3 AS SELECT xmlelement(name element, xmlattributes (1 as ":one:", 'deuce' as two), 'content&');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview4 AS SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview5 AS SELECT xmlparse(content '<abc>x</abc>');
 CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
 ERROR:  unsupported XML feature
 LINE 1: CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version...
                                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 ERROR:  unsupported XML feature
 LINE 1: ...EATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as ...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
 ERROR:  unsupported XML feature
 LINE 1: ...EATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as ...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
  table_name |                                view_definition                                 
@@ -539,91 +446,76 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('', '<!-- error -->');
                          ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//text()', '<local:data xmlns:local="http://12...
                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc', 'http://127.0.0.1']]);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//loc:piece/@id', '<local:data xmlns:local="ht...
                                         ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//loc:piece', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc', 'http://127.0.0.1']]);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//loc:piece', '<local:data xmlns:local="http:/...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//loc:piece', '<local:data xmlns:local="http://127.0.0.1" xmlns="http://127.0.0.2"><local:piece id="1"><internal>number one</internal><internal2/></local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc', 'http://127.0.0.1']]);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//loc:piece', '<local:data xmlns:local="http:/...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//b', '<a>one <b>two</b> three <b>etc</b></a>'...
                             ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//text()', '<root>&lt;</root>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//text()', '<root>&lt;</root>');
                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('//@value', '<root value="&lt;"/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('//@value', '<root value="&lt;"/>');
                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('''<<invalid>>''', '<root/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('''<<invalid>>''', '<root/>');
                                         ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('count(//*)', '<root><sub/><sub/></root>');
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('count(//*)=0', '<root><sub/><sub/></root>');
                                      ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('count(//*)=3', '<root><sub/><sub/></root>');
                                      ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('name(/*)', '<root><sub/><sub/></root>');
                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('/nosuchtag', '<root/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('/nosuchtag', '<root/>');
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath('root', '<root/>');
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('root', '<root/>');
                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Round-trip non-ASCII data through xpath().
 DO $$
 DECLARE
@@ -665,61 +557,51 @@ ERROR:  unsupported XML feature
 LINE 1: ...sts('//town[text() = ''Toronto'']' PASSING BY REF '<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlexists('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>');
 ERROR:  unsupported XML feature
 LINE 1: ...sts('//town[text() = ''Cwmbran'']' PASSING BY REF '<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>');
 ERROR:  unsupported XML feature
 LINE 1: ...LECT xmlexists('count(/nosuchtag)' PASSING BY REF '<root/>')...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath_exists('//town[text() = ''Toronto'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: ...ELECT xpath_exists('//town[text() = ''Toronto'']','<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><town>Bidford-on-Avon</town><town>Cwmbran</town><town>Bristol</town></towns>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: ...ELECT xpath_exists('//town[text() = ''Cwmbran'']','<towns><t...
                                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: SELECT xpath_exists('count(/nosuchtag)', '<root/>'::xml);
                                                  ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (4, '<menu><beers><name>Budvar</n...
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (5, '<menu><beers><name>Molson</name><cost>free</cost><name>Carling</name><cost>lots</cost></beers></menu>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (5, '<menu><beers><name>Molson</n...
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (6, '<myns:menu xmlns:myns="http://myns.com"><myns:beers><myns:name>Budvar</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (6, '<myns:menu xmlns:myns="http:...
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (7, '<myns:menu xmlns:myns="http://myns.com"><myns:beers><myns:name>Molson</myns:name><myns:cost>free</myns:cost><myns:name>Carling</myns:name><myns:cost>lots</myns:cost></myns:beers></myns:menu>'::xml);
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest VALUES (7, '<myns:menu xmlns:myns="http:...
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT COUNT(id) FROM xmltest WHERE xmlexists('/menu/beer' PASSING data);
  count 
 -------
@@ -792,81 +674,62 @@ SELECT COUNT(id) FROM xmltest, query WHERE xmlexists(expr PASSING BY REF data);
 SELECT xml_is_well_formed_document('<foo>bar</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed_document('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed_content('<foo>bar</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed_content('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET xmloption TO DOCUMENT;
 SELECT xml_is_well_formed('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<abc/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<foo>bar</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<foo>bar</foo');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<foo><bar>baz</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</my:foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</pg:foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<invalidentity>&</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<undefinedentity>&idontexist;</abc>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<invalidns xmlns=''&lt;''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<relativens xmlns=''relative''/>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xml_is_well_formed('<twoerrors>&idontexist;</unbalanced>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- Since xpath() deals with namespaces, it's a bit stricter about
 -- what's well-formed and what's not. If we don't obey these rules
 -- (i.e. ignore namespace-related errors from libxml), xpath()
@@ -887,7 +750,6 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('/*', '<nosuchprefix:tag/>');
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- XPath deprecates relative namespaces, but they're not supposed to
 -- throw an error, only a warning.
 SELECT xpath('/*', '<relativens xmlns=''relative''/>');
@@ -895,21 +757,17 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT xpath('/*', '<relativens xmlns=''relative''/>');
                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- External entity references should not leak filesystem information.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/passwd">]><foo>&c;</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE foo [<!ENTITY c SYSTEM "/etc/no.such.file">]><foo>&c;</foo>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- This might or might not load the requested DTD, but it mustn't throw error.
 SELECT XMLPARSE(DOCUMENT '<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"><chapter>&nbsp;</chapter>');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- XMLPATH tests
 CREATE TABLE xmldata(data xml);
 INSERT INTO xmldata VALUES('<ROWS>
@@ -948,7 +806,6 @@ ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmldata VALUES('<ROWS>
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- XMLTABLE with columns
 SELECT  xmltable.*
    FROM (SELECT data FROM xmldata) x,
@@ -1025,7 +882,6 @@ ERROR:  unsupported XML feature
 LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE VIEW xmltableview2 AS SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
                       '/zz:rows/zz:row'
                       PASSING '<rows xmlns="http://x.y"><row><a>10</a></row></rows>'
@@ -1034,7 +890,6 @@ ERROR:  unsupported XML feature
 LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT * FROM xmltableview2;
 ERROR:  relation "xmltableview2" does not exist
 LINE 1: SELECT * FROM xmltableview2;
@@ -1047,7 +902,6 @@ ERROR:  unsupported XML feature
 LINE 3:                       PASSING '<rows xmlns="http://x.y"><row...
                                       ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT * FROM XMLTABLE('.'
                        PASSING '<foo/>'
                        COLUMNS a text PATH 'foo/namespace::node()');
@@ -1055,7 +909,6 @@ ERROR:  unsupported XML feature
 LINE 2:                        PASSING '<foo/>'
                                        ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- used in prepare statements
 PREPARE pp AS
 SELECT  xmltable.*
@@ -1115,33 +968,28 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM xmltable('/root' passing '<root><element>a1a<!...
                                                ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT * FROM xmltable('/root' passing '<root><element>a1a<!-- aaaa -->a2a<?aaaaa?> <!--z-->  bbbb<x>xxx</x>cccc</element></root>' COLUMNS element text PATH 'element/text()'); -- should fail
 ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM xmltable('/root' passing '<root><element>a1a<!...
                                                ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- CDATA test
 select * from xmltable('d/r' passing '<d><r><c><![CDATA[<hello> &"<>!<a>foo</a>]]></c></r><r><c>2</c></r></d>' columns c text);
 ERROR:  unsupported XML feature
 LINE 1: select * from xmltable('d/r' passing '<d><r><c><![CDATA[<hel...
                                              ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- XML builtin entities
 SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</ent></a><a><ent>&quot;</ent></a><a><ent>&amp;</ent></a><a><ent>&lt;</ent></a><a><ent>&gt;</ent></a></x>' COLUMNS ent text);
 ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</en...
                                               ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</ent></a><a><ent>&quot;</ent></a><a><ent>&amp;</ent></a><a><ent>&lt;</ent></a><a><ent>&gt;</ent></a></x>' COLUMNS ent xml);
 ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM xmltable('/x/a' PASSING '<x><a><ent>&apos;</en...
                                               ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT  xmltable.*
    FROM (SELECT data FROM xmldata) x,
@@ -1208,7 +1056,6 @@ ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmldata VALUES('<ROWS>
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmldata VALUES('<ROWS>
 <ROW id="20">
   <COUNTRY_ID>EG</COUNTRY_ID>
@@ -1225,7 +1072,6 @@ ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmldata VALUES('<ROWS>
                                    ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT  xmltable.*
    FROM (SELECT data FROM xmldata) x,
         LATERAL XMLTABLE('/ROWS/ROW'
@@ -1327,7 +1173,6 @@ WITH
    EXCEPT SELECT * FROM x;
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 -- multi line xml test, result should be empty too
 WITH
    x AS (SELECT proname, proowner, procost::numeric, pronargs,
@@ -1352,32 +1197,27 @@ WITH
    EXCEPT SELECT * FROM x;
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 CREATE TABLE xmltest2(x xml, _path text);
 INSERT INTO xmltest2 VALUES('<d><r><ac>1</ac></r></d>', 'A');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest2 VALUES('<d><r><ac>1</ac></r></d>', 'A')...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest2 VALUES('<d><r><bc>2</bc></r></d>', 'B');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest2 VALUES('<d><r><bc>2</bc></r></d>', 'B')...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest2 VALUES('<d><r><cc>3</cc></r></d>', 'C');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest2 VALUES('<d><r><cc>3</cc></r></d>', 'C')...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 INSERT INTO xmltest2 VALUES('<d><r><dc>2</dc></r></d>', 'D');
 ERROR:  unsupported XML feature
 LINE 1: INSERT INTO xmltest2 VALUES('<d><r><dc>2</dc></r></d>', 'D')...
                                     ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 SELECT xmltable.* FROM xmltest2, LATERAL xmltable('/d/r' PASSING x COLUMNS a int PATH '' || lower(_path) || 'c');
  a 
 ---
@@ -1399,16 +1239,13 @@ ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM XMLTABLE('*' PASSING '<a>a</a>' COLUMNS a xml ...
                                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 \x
 SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH 'node()', y xml PATH '/');
 ERROR:  unsupported XML feature
 LINE 1: SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?...
                                            ^
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.
 \x
 SELECT * FROM XMLTABLE('.' PASSING XMLELEMENT(NAME a) columns a varchar(20) PATH '"<foo/>"', b xml PATH '"<foo/>"');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires the server to be built with libxml support.
-HINT:  You need to rebuild PostgreSQL using --with-libxml.

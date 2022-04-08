@@ -2214,7 +2214,6 @@ setlocales(void)
 		 */
 #ifndef USE_ICU
 		pg_log_error("ICU is not supported in this build");
-		fprintf(stderr, _("You need to rebuild PostgreSQL using %s.\n"), "--with-icu");
 		exit(1);
 #endif
 	}

@@ -1462,8 +1462,7 @@ make_icu_collator(const char *iculocstr,
 	/* could get here if a collation was created by a build with ICU */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ICU is not supported in this build"), \
-			 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
+			 errmsg("ICU is not supported in this build")));
 #endif							/* not USE_ICU */
 }
 
@@ -2008,8 +2007,7 @@ check_icu_locale(const char *icu_locale)
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("ICU is not supported in this build"), \
-			 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
+			 errmsg("ICU is not supported in this build")));
 #endif
 }
 

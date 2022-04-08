@@ -1010,7 +1010,6 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostssl record cannot match because SSL is not supported by this build"),
-					 errhint("Compile with --with-ssl to use SSL connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			*err_msg = "hostssl record cannot match because SSL is not supported by this build";
@@ -1023,7 +1022,6 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostgssenc record cannot match because GSSAPI is not supported by this build"),
-					 errhint("Compile with --with-gssapi to use GSSAPI connections."),
 					 errcontext("line %d of configuration file \"%s\"",
 								line_num, HbaFileName)));
 			*err_msg = "hostgssenc record cannot match because GSSAPI is not supported by this build";
