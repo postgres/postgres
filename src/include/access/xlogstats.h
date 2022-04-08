@@ -13,6 +13,9 @@
 #ifndef XLOGSTATS_H
 #define XLOGSTATS_H
 
+#include "access/rmgr.h"
+#include "access/xlogreader.h"
+
 #define MAX_XLINFO_TYPES 16
 
 typedef struct XLogRecStats
