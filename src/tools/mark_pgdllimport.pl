@@ -34,7 +34,7 @@ for my $include_file (@ARGV)
 	{
 		my	$needs_pgdllimport = 1;
 
-		# By convention we declare global variables explicitly extern. We're 
+		# By convention we declare global variables explicitly extern. We're
 		# looking for those not already marked with PGDLLIMPORT.
 		$needs_pgdllimport = 0 if $raw_line !~ /^extern\s+/
 			|| $raw_line =~ /PGDLLIMPORT/;

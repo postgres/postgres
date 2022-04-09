@@ -1294,7 +1294,7 @@ DROP TABLE ruletest2;
 --
 -- Test non-SELECT rule on security invoker view.
 -- Should use view owner's permissions.
--- 
+--
 CREATE USER regress_rule_user1;
 
 CREATE TABLE ruletest_t1 (x int);
