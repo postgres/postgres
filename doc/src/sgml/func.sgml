@@ -19881,12 +19881,11 @@ SELECT JSON_SERIALIZE(JSON_SCALAR('foo'));
  "foo"
 (1 row)
 
-SELECT JSON_SERIALIZE('{"foo": "bar", "baz": [1, 2, 3]}' RETURNING bytea);
-                           json_serialize                           
---------------------------------------------------------------------
- \x7b22666f6f223a2022626172222c202262617a223a205b312c20322c20335d7d
+SELECT JSON_SERIALIZE('{"foo": "bar", "baz": [1, 2]}' RETURNING bytea);
+                        json_serialize
+--------------------------------------------------------------
+ \x7b22666f6f223a2022626172222c202262617a223a205b312c20325d7d
 (1 row)
-
 </screen>
     </sect5>
    </sect4>
