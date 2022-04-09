@@ -613,7 +613,7 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 			/* OK, supported */
 			break;
 		default:
-			errdetail_msg = _("Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations and immutable built-in functions.");
+			errdetail_msg = _("Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions.");
 			break;
 	}
 

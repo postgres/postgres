@@ -441,7 +441,7 @@ CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELECT genera
 ERROR:  invalid publication WHERE expression
 LINE 1: ...ICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELE...
                                                              ^
-DETAIL:  Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations and immutable built-in functions.
+DETAIL:  Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions.
 -- fail - system columns are not allowed
 CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE ('(0,1)'::tid = ctid);
 ERROR:  invalid publication WHERE expression
