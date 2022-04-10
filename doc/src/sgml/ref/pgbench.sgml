@@ -2289,33 +2289,96 @@ END;
   </para>
 
   <para>
-   The format of the log is:
+   Each line in a log file describes one transaction.
+   It contains the following space-separated fields:
 
-<synopsis>
-<replaceable>client_id</replaceable> <replaceable>transaction_no</replaceable> <replaceable>time</replaceable> <replaceable>script_no</replaceable> <replaceable>time_epoch</replaceable> <replaceable>time_us</replaceable> <optional> <replaceable>schedule_lag</replaceable> </optional> <optional> <replaceable>retries</replaceable> </optional>
-</synopsis>
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>client_id</replaceable></term>
+     <listitem>
+      <para>
+       identifies the client session that ran the transaction
+      </para>
+     </listitem>
+    </varlistentry>
 
-   where
-   <replaceable>client_id</replaceable> indicates which client session ran the transaction,
-   <replaceable>transaction_no</replaceable> counts how many transactions have been
-   run by that session,
-   <replaceable>time</replaceable> is the total elapsed transaction time in microseconds,
-   <replaceable>script_no</replaceable> identifies which script file was used (useful when
-   multiple scripts were specified with <option>-f</option> or <option>-b</option>),
-   and <replaceable>time_epoch</replaceable>/<replaceable>time_us</replaceable> are a
-   Unix-epoch time stamp and an offset
-   in microseconds (suitable for creating an ISO 8601
-   time stamp with fractional seconds) showing when
-   the transaction completed.
-   The <replaceable>schedule_lag</replaceable> field is the difference between the
-   transaction's scheduled start time, and the time it actually started, in
-   microseconds. It is only present when the <option>--rate</option> option is used.
+    <varlistentry>
+     <term><replaceable>transaction_no</replaceable></term>
+     <listitem>
+      <para>
+       counts how many transactions have been run by that session
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>time</replaceable></term>
+     <listitem>
+      <para>
+       transaction's elapsed time, in microseconds
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>script_no</replaceable></term>
+     <listitem>
+      <para>
+       identifies the script file that was used for the transaction
+       (useful when multiple scripts are specified
+       with <option>-f</option> or <option>-b</option>)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>time_epoch</replaceable></term>
+     <listitem>
+      <para>
+       transaction's completion time, as a Unix-epoch time stamp
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>time_us</replaceable></term>
+     <listitem>
+      <para>
+       fractional-second part of transaction's completion time, in
+       microseconds
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>schedule_lag</replaceable></term>
+     <listitem>
+      <para>
+       transaction start delay, that is the difference between the
+       transaction's scheduled start time and the time it actually
+       started, in microseconds
+       (present only if <option>--rate</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>retries</replaceable></term>
+     <listitem>
+      <para>
+       count of retries after serialization or deadlock errors during the
+       transaction
+       (present only if <option>--max-tries</option> is not equal to one)
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+
+  <para>
    When both <option>--rate</option> and <option>--latency-limit</option> are used,
    the <replaceable>time</replaceable> for a skipped transaction will be reported as
    <literal>skipped</literal>.
-   <replaceable>retries</replaceable> is the sum of all retries after the
-   serialization or deadlock errors during the current script execution. It is
-   present only if the <option>--max-tries</option> option is not equal to 1.
    If the transaction ends with a failure, its <replaceable>time</replaceable>
    will be reported as <literal>failed</literal>. If you use the
    <option>--failures-detailed</option> option, the
@@ -2398,69 +2461,173 @@ END;
 
   <para>
    With the <option>--aggregate-interval</option> option, a different
-   format is used for the log files:
+   format is used for the log files.  Each log line describes one
+   aggregation interval.  It contains the following space-separated
+   fields:
 
-<synopsis>
-<replaceable>interval_start</replaceable> <replaceable>num_transactions</replaceable> <replaceable>sum_latency</replaceable> <replaceable>sum_latency_2</replaceable> <replaceable>min_latency</replaceable> <replaceable>max_latency</replaceable>
-<replaceable>sum_lag</replaceable> <replaceable>sum_lag_2</replaceable> <replaceable>min_lag</replaceable> <replaceable>max_lag</replaceable> <replaceable>skipped</replaceable>
-<replaceable>retried</replaceable> <replaceable>retries</replaceable> <replaceable>failures</replaceable> <replaceable>serialization_failures</replaceable> <replaceable>deadlock_failures</replaceable>
-</synopsis>
+   <variablelist>
+    <varlistentry>
+     <term><replaceable>interval_start</replaceable></term>
+     <listitem>
+      <para>
+       start time of the interval, as a Unix-epoch time stamp
+      </para>
+     </listitem>
+    </varlistentry>
 
-   where
-   <replaceable>interval_start</replaceable> is the start of the interval (as a Unix
-   epoch time stamp),
-   <replaceable>num_transactions</replaceable> is the number of transactions
-   within the interval,
-   <replaceable>sum_latency</replaceable> is the sum of the transaction
-   latencies within the interval,
-   <replaceable>sum_latency_2</replaceable> is the sum of squares of the
-   transaction latencies within the interval,
-   <replaceable>min_latency</replaceable> is the minimum latency within the interval,
-   and
-   <replaceable>max_latency</replaceable> is the maximum latency within the interval,
-   <replaceable>failures</replaceable> is the number of transactions that ended
-   with a failed SQL command within the interval.
-  </para>
-  <para>
-   The next fields,
-   <replaceable>sum_lag</replaceable>, <replaceable>sum_lag_2</replaceable>, <replaceable>min_lag</replaceable>,
-   and <replaceable>max_lag</replaceable>, only meaningful if the <option>--rate</option>
-   option is used. Otherwise, they are all 0.0.
-   They provide statistics about the time each transaction had to wait for the
-   previous one to finish, i.e., the difference between each transaction's
-   scheduled start time and the time it actually started.
-   The next field, <replaceable>skipped</replaceable>,
-   is only meaningful if the <option>--latency-limit</option> option is used, too. Otherwise it is 0.
-   It counts the number of transactions skipped because they would have
-   started too late.
-  </para>
-  <para>
-   The <replaceable>retried</replaceable>
-   and <replaceable>retries</replaceable> fields are only meaningful if
-   the <option>--max-tries</option> option is not equal to 1. Otherwise they
-   are 0. They report the number of retried transactions and the sum of all
-   retries after serialization or deadlock errors within the interval.  Each
-   transaction is counted in the interval when it was committed.
-  </para>
-  <para>
-   <replaceable>failures</replaceable> is the sum of all failed transactions.
-   If <option>--failures-detailed</option> is specified, instead of the sum of
-   all failed transactions you will get more detailed statistics for the
-   failed transactions grouped by the following types:
-   <replaceable>serialization_failures</replaceable> is the number of
-   transactions that got a serialization error and were not retried after this,
-   <replaceable>deadlock_failures</replaceable> is the number of transactions
-   that got a deadlock error and were not retried after this.
-   If <option>--failures-detailed</option> is not
-   specified, <replaceable>serialization_failures</replaceable>
-   and <replaceable>deadlock_failures</replaceable> are always 0.
+    <varlistentry>
+     <term><replaceable>num_transactions</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions within the interval
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>sum_latency</replaceable></term>
+     <listitem>
+      <para>
+       sum of transaction latencies
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>sum_latency_2</replaceable></term>
+     <listitem>
+      <para>
+       sum of squares of transaction latencies
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>min_latency</replaceable></term>
+     <listitem>
+      <para>
+       minimum transaction latency
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>max_latency</replaceable></term>
+     <listitem>
+      <para>
+       maximum transaction latency
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>sum_lag</replaceable></term>
+     <listitem>
+      <para>
+       sum of transaction start delays
+       (zero unless <option>--rate</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>sum_lag_2</replaceable></term>
+     <listitem>
+      <para>
+       sum of squares of transaction start delays
+       (zero unless <option>--rate</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>min_lag</replaceable></term>
+     <listitem>
+      <para>
+       minimum transaction start delay
+       (zero unless <option>--rate</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>max_lag</replaceable></term>
+     <listitem>
+      <para>
+       maximum transaction start delay
+       (zero unless <option>--rate</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>skipped</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions skipped because they would have started too late
+       (zero unless <option>--rate</option>
+       and <option>--latency-limit</option> are specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>retried</replaceable></term>
+     <listitem>
+      <para>
+       number of retried transactions
+       (zero unless <option>--max-tries</option> is not equal to one)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>retries</replaceable></term>
+     <listitem>
+      <para>
+       number of retries after serialization or deadlock errors
+       (zero unless <option>--max-tries</option> is not equal to one)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>failures</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions that ended with a failed SQL command
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>serialization_failures</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions that got a serialization error and were not
+       retried afterwards
+       (zero unless <option>--failures-detailed</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>deadlock_failures</replaceable></term>
+     <listitem>
+      <para>
+       number of transactions that got a deadlock error and were not
+       retried afterwards
+       (zero unless <option>--failures-detailed</option> is specified)
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
   </para>
 
   <para>
-   Here is some example output with following options:
+   Here is some example output generated with these options:
 <screen>
-<userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000
---latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
+<userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000 --latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
 
 1649114136 5815 27552565 177846919143 1078 21716 2756787 7264696105 0 9661 0 7854 31472 4022 4022 0
 1649114146 5958 28460110 182785513108 1083 20391 2539395 6411761497 0 7268 0 8127 32595 4101 4101 0
@@ -2468,8 +2635,8 @@ END;
   </para>
 
   <para>
-   Notice that while the plain (unaggregated) log file shows which script
-   was used for each transaction, the aggregated log does not. Therefore if
+   Notice that while the plain (unaggregated) log format shows which script
+   was used for each transaction, the aggregated format does not. Therefore if
    you need per-script data, you need to aggregate the data on your own.
   </para>
 
