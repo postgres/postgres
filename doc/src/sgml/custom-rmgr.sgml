@@ -19,7 +19,7 @@
   an extension to implement.
  </para>
  <para>
-  To create a new custom WAL resouce manager, first define an
+  To create a new custom WAL resource manager, first define an
   <structname>RmgrData</structname> structure with implementations for the
   resource manager methods. Refer to
   <filename>src/backend/access/transam/README</filename> and

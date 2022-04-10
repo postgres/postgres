@@ -889,7 +889,7 @@ SELECT pg_backup_start(label => 'label', fast => false);
      regularly scheduled checkpoint to complete, which may take a long time (see the
      configuration parameters <xref linkend="guc-checkpoint-timeout"/> and
      <xref linkend="guc-checkpoint-completion-target"/>).  This is
-     usually preferrable as it minimizes the impact on the running system.  If you
+     usually preferable as it minimizes the impact on the running system.  If you
      want to start the backup as soon as possible, pass <literal>true</literal> as
      the second parameter to <function>pg_backup_start</function> and it will
      request an immediate checkpoint, which will finish as fast as possible using
