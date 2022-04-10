@@ -4,7 +4,7 @@
 
 INCLUDES="-I src/tools/msvc -I src/tools/msvc/dummylib -I src/backend/catalog"
 INCLUDES="-I src/test/perl -I src/backend/utils/mb/Unicode $INCLUDES"
-INCLUDES="-I src/bin/pg_rewind -I src/test/ssl $INCLUDES"
+INCLUDES="-I src/bin/pg_rewind -I src/test/ssl/t $INCLUDES"
 
 set -e
 
