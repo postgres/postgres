@@ -28,10 +28,12 @@ static void (*log_locus_callback) (const char **, uint64 *);
 
 static const char *sgr_error = NULL;
 static const char *sgr_warning = NULL;
+static const char *sgr_note = NULL;
 static const char *sgr_locus = NULL;
 
 #define SGR_ERROR_DEFAULT "01;31"
 #define SGR_WARNING_DEFAULT "01;35"
+#define SGR_NOTE_DEFAULT "01;36"
 #define SGR_LOCUS_DEFAULT "01"
 
 #define ANSI_ESCAPE_FMT "\x1b[%sm"
@@ -134,6 +136,8 @@ pg_logging_init(const char *argv0)
 							sgr_error = strdup(value);
 						if (strcmp(name, "warning") == 0)
 							sgr_warning = strdup(value);
+						if (strcmp(name, "note") == 0)
+							sgr_note = strdup(value);
 						if (strcmp(name, "locus") == 0)
 							sgr_locus = strdup(value);
 					}
@@ -146,6 +150,7 @@ pg_logging_init(const char *argv0)
 		{
 			sgr_error = SGR_ERROR_DEFAULT;
 			sgr_warning = SGR_WARNING_DEFAULT;
+			sgr_note = SGR_NOTE_DEFAULT;
 			sgr_locus = SGR_LOCUS_DEFAULT;
 		}
 	}
@@ -281,10 +286,18 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 				}
 				break;
 			case PG_LOG_DETAIL:
+				if (sgr_note)
+					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_note);
 				fprintf(stderr, _("detail: "));
+				if (sgr_note)
+					fprintf(stderr, ANSI_ESCAPE_RESET);
 				break;
 			case PG_LOG_HINT:
+				if (sgr_note)
+					fprintf(stderr, ANSI_ESCAPE_FMT, sgr_note);
 				fprintf(stderr, _("hint: "));
+				if (sgr_note)
+					fprintf(stderr, ANSI_ESCAPE_RESET);
 				break;
 		}
 	}

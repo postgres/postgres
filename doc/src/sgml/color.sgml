@@ -75,6 +75,14 @@
     </varlistentry>
 
     <varlistentry>
+     <term><literal>note</literal></term>
+     <listitem>
+      <para>used to highlight the text <quote>detail</quote> and
+      <quote>hint</quote> in such messages</para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><literal>locus</literal></term>
      <listitem>
       <para>used to highlight location information (e.g., program name and
@@ -85,9 +93,11 @@
   </para>
 
   <para>
-   The default value is <literal>error=01;31:warning=01;35:locus=01</literal>
+   The default value is
+   <literal>error=01;31:warning=01;35:note=01;36:locus=01</literal>
    (<literal>01;31</literal> = bold red, <literal>01;35</literal> = bold
-   magenta, <literal>01</literal> = bold default color).
+   magenta, <literal>01;36</literal> = bold cyan, <literal>01</literal> = bold
+   default color).
   </para>
 
   <tip>
