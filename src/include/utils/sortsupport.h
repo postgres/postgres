@@ -24,7 +24,7 @@
  * function will have a shim set up by sort support automatically.  However,
  * opclasses that support the optional additional abbreviated key capability
  * must always provide an authoritative comparator used to tie-break
- * inconclusive abbreviated comparisons and also used  when aborting
+ * inconclusive abbreviated comparisons and also used when aborting
  * abbreviation.  Furthermore, a converter and abort/costing function must be
  * provided.
  *

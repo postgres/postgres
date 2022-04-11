@@ -1470,7 +1470,7 @@ heap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 		 * heap_set_tidrange will have used heap_setscanlimits to limit the
 		 * range of pages we scan to only ones that can contain the TID range
 		 * we're scanning for.  Here we must filter out any tuples from these
-		 * pages that are outwith that range.
+		 * pages that are outside of that range.
 		 */
 		if (ItemPointerCompare(&scan->rs_ctup.t_self, mintid) < 0)
 		{

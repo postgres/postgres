@@ -1464,7 +1464,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				GetCopyDataEnd(r, copybuf, cursor);
 
 				/*
-				 * The server shouldn't send progres report messages too
+				 * The server shouldn't send progress report messages too
 				 * often, so we force an update each time we receive one.
 				 */
 				progress_report(state->tablespacenum, true, false);

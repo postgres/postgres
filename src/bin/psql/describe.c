@@ -3080,7 +3080,7 @@ describeOneTableDetails(const char *schemaname,
 		 * servers between v11 and v14, though these must still be shown to
 		 * the user.  So we use another property that is true for such
 		 * inherited triggers to avoid them being hidden, which is their
-		 * dependendence on another trigger.
+		 * dependence on another trigger.
 		 */
 		if (pset.sversion >= 110000 && pset.sversion < 150000)
 			appendPQExpBufferStr(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D') \n"

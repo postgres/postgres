@@ -300,7 +300,7 @@ XLogReleasePreviousRecord(XLogReaderState *state)
 	/* Release the space. */
 	if (unlikely(record->oversized))
 	{
-		/* It's not in the the decode buffer, so free it to release space. */
+		/* It's not in the decode buffer, so free it to release space. */
 		pfree(record);
 	}
 	else

@@ -3450,7 +3450,7 @@ discardUntilSync(CState *st)
 		PQclear(res);
 	}
 
-	/* exit pipline */
+	/* exit pipeline */
 	if (PQexitPipelineMode(st->con) != 1)
 	{
 		pg_log_error("client %d aborted: failed to exit pipeline mode for rolling back the failed transaction",
@@ -7261,7 +7261,7 @@ main(int argc, char **argv)
 
 	/*
 	 * All connections should be already closed in threadRun(), so this
-	 * disconnect_all() will be a no-op, but clean up the connecions just to
+	 * disconnect_all() will be a no-op, but clean up the connections just to
 	 * be sure. We don't need to measure the disconnection delays here.
 	 */
 	disconnect_all(state, nclients);

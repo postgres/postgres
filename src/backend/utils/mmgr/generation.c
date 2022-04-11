@@ -27,7 +27,7 @@
  *	context's 'freeblock' field.  If the freeblock field is already occupied
  *	by another free block we simply return the newly empty block to malloc.
  *
- *	This approach to free blocks requires fewer malloc/free calls for truely
+ *	This approach to free blocks requires fewer malloc/free calls for truly
  *	first allocated, first free'd allocation patterns.
  *
  *-------------------------------------------------------------------------

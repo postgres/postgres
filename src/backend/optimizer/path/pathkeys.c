@@ -2383,16 +2383,16 @@ pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
  *		Count the number of pathkeys that are useful for grouping (instead of
  *		explicit sort)
  *
- * Group pathkeys could be reordered to benefit from the odering. The ordering
- * may not be "complete" and may require incremental sort, but that's fine. So
- * we simply count prefix pathkeys with a matching group key, and stop once we
- * find the first pathkey without a match.
+ * Group pathkeys could be reordered to benefit from the ordering. The
+ * ordering may not be "complete" and may require incremental sort, but that's
+ * fine. So we simply count prefix pathkeys with a matching group key, and
+ * stop once we find the first pathkey without a match.
  *
  * So e.g. with pathkeys (a,b,c) and group keys (a,b,e) this determines (a,b)
  * pathkeys are useful for grouping, and we might do incremental sort to get
  * path ordered by (a,b,e).
  *
- * This logic is necessary to retain paths with ordeding not matching grouping
+ * This logic is necessary to retain paths with ordering not matching grouping
  * keys directly, without the reordering.
  *
  * Returns the length of pathkey prefix with matching group keys.

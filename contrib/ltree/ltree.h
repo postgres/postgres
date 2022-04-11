@@ -24,7 +24,7 @@
  * modified to look for -D compile flags in Makefiles, so here, in order to
  * get the historic behavior of LOWER_NODE not being defined on MSVC, we only
  * define it when not building in that environment.  This is important as we
- * want to maintain the same LOWER_NODE behavior after a pg_update.
+ * want to maintain the same LOWER_NODE behavior after a pg_upgrade.
  */
 #ifndef _MSC_VER
 #define LOWER_NODE

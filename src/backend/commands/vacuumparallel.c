@@ -12,7 +12,7 @@
  * the memory space for storing dead items allocated in the DSM segment.  We
  * launch parallel worker processes at the start of parallel index
  * bulk-deletion and index cleanup and once all indexes are processed, the
- * parallel worker processes exit.  Each time we process indexes parallelly,
+ * parallel worker processes exit.  Each time we process indexes in parallel,
  * the parallel context is re-initialized so that the same DSM can be used for
  * multiple passes of index bulk-deletion and index cleanup.
  *

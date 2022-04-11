@@ -3507,7 +3507,7 @@ transformJsonOutput(ParseState *pstate, const JsonOutput *output,
 }
 
 /*
- * Transform JSON output clause of JSON contructor functions.
+ * Transform JSON output clause of JSON constructor functions.
  *
  * Derive RETURNING type, if not specified, from argument types.
  */

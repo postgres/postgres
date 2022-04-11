@@ -2975,7 +2975,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 			/*
 			 * When not in standby mode we find that WAL ends in an incomplete
 			 * record, keep track of that record.  After recovery is done,
-			 * we'll write a record to indicate downstream WAL readers that
+			 * we'll write a record to indicate to downstream WAL readers that
 			 * that portion is to be ignored.
 			 */
 			if (!StandbyMode &&

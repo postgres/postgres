@@ -248,7 +248,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 		dict = lookup_ts_dictionary_cache(ld->curDictId);
 
 		/*
-		 * Dictionary ld->curDictId asks  us about following words
+		 * Dictionary ld->curDictId asks us about following words
 		 */
 
 		while (ld->curSub)
