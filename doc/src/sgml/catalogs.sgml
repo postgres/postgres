@@ -2065,8 +2065,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>relpersistence</structfield> <type>char</type>
       </para>
       <para>
-       <literal>p</literal> = permanent table, <literal>u</literal> = unlogged table,
-       <literal>t</literal> = temporary table
+       <literal>p</literal> = permanent table/sequence, <literal>u</literal> = unlogged table/sequence,
+       <literal>t</literal> = temporary table/sequence
       </para></entry>
      </row>
 
