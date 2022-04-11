@@ -405,10 +405,9 @@ XLogRecordMatchesRelationBlock(XLogReaderState *record,
 		ForkNumber	forknum;
 		BlockNumber blk;
 
-		if (!XLogRecHasBlockRef(record, block_id))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blk, NULL))
 			continue;
-
-		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 
 		if ((matchFork == InvalidForkNumber || matchFork == forknum) &&
 			(RelFileNodeEquals(matchRnode, emptyRelFileNode) ||

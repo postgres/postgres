@@ -2172,10 +2172,10 @@ xlog_block_info(StringInfo buf, XLogReaderState *record)
 		ForkNumber	forknum;
 		BlockNumber blk;
 
-		if (!XLogRecHasBlockRef(record, block_id))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blk, NULL))
 			continue;
 
-		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 		if (forknum != MAIN_FORKNUM)
 			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, fork %u, blk %u",
 							 block_id,
@@ -2303,7 +2303,8 @@ verifyBackupPageConsistency(XLogReaderState *record)
 		Buffer		buf;
 		Page		page;
 
-		if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blkno, NULL))
 		{
 			/*
 			 * WAL record doesn't contain a block reference with the given id.

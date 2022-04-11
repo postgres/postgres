@@ -369,7 +369,8 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 									&prefetch_buffer))
 	{
 		/* Caller specified a bogus block_id */
-		elog(PANIC, "failed to locate backup block with ID %d", block_id);
+		elog(PANIC, "failed to locate backup block with ID %d in WAL record",
+			 block_id);
 	}
 
 	/*

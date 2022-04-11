@@ -37,6 +37,8 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "utils/memutils.h"
+#else
+#include "common/logging.h"
 #endif
 
 static void report_invalid_record(XLogReaderState *state, const char *fmt,...)
@@ -1918,14 +1920,25 @@ err:
 
 /*
  * Returns information about the block that a block reference refers to.
- * See XLogRecGetBlockTagExtended().
+ *
+ * This is like XLogRecGetBlockTagExtended, except that the block reference
+ * must exist and there's no access to prefetch_buffer.
  */
-bool
+void
 XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 				   RelFileNode *rnode, ForkNumber *forknum, BlockNumber *blknum)
 {
-	return XLogRecGetBlockTagExtended(record, block_id, rnode, forknum, blknum,
-									  NULL);
+	if (!XLogRecGetBlockTagExtended(record, block_id, rnode, forknum, blknum,
+									NULL))
+	{
+#ifndef FRONTEND
+		elog(ERROR, "failed to locate backup block with ID %d in WAL record",
+			 block_id);
+#else
+		pg_fatal("failed to locate backup block with ID %d in WAL record",
+				 block_id);
+#endif
+	}
 }
 
 /*
@@ -1944,8 +1957,7 @@ XLogRecGetBlockTagExtended(XLogReaderState *record, uint8 block_id,
 {
 	DecodedBkpBlock *bkpb;
 
-	if (block_id > record->record->max_block_id ||
-		!record->record->blocks[block_id].in_use)
+	if (!XLogRecHasBlockRef(record, block_id))
 		return false;
 
 	bkpb = &record->record->blocks[block_id];
