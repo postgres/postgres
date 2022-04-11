@@ -491,7 +491,7 @@ OPTIONS (ADD password_required 'false');
       <para>
        For a foreign server with this option enabled, if many remote
        (sub)transactions are opened on the foreign server in a local
-       (sub)transaction, this option might increase the remote server’s load
+       (sub)transaction, this option might increase the remote server's load
        when the local (sub)transaction commits, so be careful when using this
        option.
       </para>
@@ -1040,7 +1040,7 @@ postgres=# SELECT postgres_fdw_disconnect_all();
         <row>
          <entry><literal>%C</literal></entry>
          <entry>
-          Cluster name in local server
+          Cluster name on local server
           (see <xref linkend="guc-cluster-name"/> for details)
          </entry>
         </row>

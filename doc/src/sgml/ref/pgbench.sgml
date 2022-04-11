@@ -541,15 +541,15 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         <firstterm>skipped</firstterm>.
        </para>
        <para>
-        When the <option>--max-tries</option> option is used, the transaction with
-        serialization or deadlock error cannot be retried if the total time of
-        all its tries is greater than <replaceable>limit</replaceable> ms. To
-        limit only the time of tries and not their number, use
-        <literal>--max-tries=0</literal>. By default option
-        <option>--max-tries</option> is set to 1 and transactions with
-        serialization/deadlock errors are not retried. See <xref
-        linkend="failures-and-retries"/> for more information about retrying
-        such transactions.
+        When the <option>--max-tries</option> option is used, a transaction
+        which fails due to a serialization anomaly or from a deadlock will not
+        be retried if the total time of all its tries is greater than
+        <replaceable>limit</replaceable> ms. To limit only the time of tries
+        and not their number, use <literal>--max-tries=0</literal>. By
+        default, the option <option>--max-tries</option> is set to 1 and
+        transactions with serialization/deadlock errors are not retried. See
+        <xref linkend="failures-and-retries"/> for more information about
+        retrying such transactions.
        </para>
        </listitem>
      </varlistentry>
@@ -622,7 +622,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
         throttling (<option>-R</option>), the latency is computed with respect
         to the transaction scheduled start time, not the actual transaction
         beginning time, thus it also includes the average schedule lag time.
-        When <option>--max-tries</option> is used to enable transactions retries
+        When <option>--max-tries</option> is used to enable transaction retries
         after serialization/deadlock errors, the report includes the number of
         retried transactions and the sum of all retries.
        </para>
@@ -818,7 +818,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
       <listitem>
        <para>
         Print messages about all errors and failures (errors without retrying)
-        including which limit for retries was violated and how far it was
+        including which limit for retries was exceeded and how far it was
         exceeded for the serialization/deadlock failures. (Note that in this
         case the output can be significantly increased.).
         See <xref linkend="failures-and-retries"/> for more information.
@@ -2433,7 +2433,7 @@ END;
   </para>
 
   <para>
-   If <option>--failures-detailed</option> option is used, the type of
+   If the <option>--failures-detailed</option> option is used, the type of
    failure is reported in the <replaceable>time</replaceable> like this:
 <screen>
 3 0 47423 0 1499414498 34501 3
@@ -2773,12 +2773,12 @@ statement latencies in milliseconds, failures and retries:
      <listitem>
        <para>
          Errors of the main program. They are the most serious and always result
-         in an immediate exit from the <application>pgbench</application> with
-         the corresponding error message. They include:
+         in an immediate exit from <application>pgbench</application> with the
+         corresponding error message. They include:
          <itemizedlist>
            <listitem>
              <para>
-               errors at the beginning of the <application>pgbench</application>
+               errors at the beginning of <application>pgbench</application>
                (e.g. an invalid option value);
              </para>
            </listitem>
@@ -2790,8 +2790,8 @@ statement latencies in milliseconds, failures and retries:
            </listitem>
            <listitem>
              <para>
-               errors before starting threads (e.g. we could not connect to the
-               database server / the syntax error in the meta command / thread
+               errors before starting threads (e.g. could not connect to the
+               database server, syntax error in the meta command, thread
                creation failure);
              </para>
            </listitem>
@@ -2813,7 +2813,7 @@ statement latencies in milliseconds, failures and retries:
      </listitem>
      <listitem>
        <para>
-         Direct client errors. They lead to immediate exit from the
+         Direct client errors. They lead to immediate exit from
          <application>pgbench</application> with the corresponding error message
          only in the case of an internal <application>pgbench</application>
          error (which are supposed to never occur...). Otherwise in the worst
@@ -2829,11 +2829,11 @@ statement latencies in milliseconds, failures and retries:
   </para>
 
   <para>
-   Client's run is aborted in case of a serious error, for example, the
-   connection with the database server was lost or the end of script reached
-   without completing the last transaction. In addition, if an execution of SQL
+   A client's run is aborted in case of a serious error; for example, the
+   connection with the database server was lost or the end of script was reached
+   without completing the last transaction. In addition, if execution of an SQL
    or meta command fails for reasons other than serialization or deadlock errors,
-   the client is aborted. Otherwise, if an SQL fails with serialization or
+   the client is aborted. Otherwise, if an SQL command fails with serialization or
    deadlock errors, the client is not aborted. In such cases, the current
    transaction is rolled back, which also includes setting the client variables
    as they were before the run of this transaction (it is assumed that one
@@ -2845,21 +2845,21 @@ statement latencies in milliseconds, failures and retries:
    time of retries (specified by the <option>--latency-limit</option> option) / the end
    of benchmark (specified by the <option>--time</option> option). If
    the last trial run fails, this transaction will be reported as failed but
-   the client is not aborted and continue to work.
+   the client is not aborted and continues to work.
   </para>
 
   <note>
    <para>
-    Without specifying the <option>--max-tries</option> option a transaction will
+    Without specifying the <option>--max-tries</option> option, a transaction will
     never be retried after a serialization or deadlock error because its default
-    values is 1. Use an unlimited number of tries (<literal>--max-tries=0</literal>)
+    value is 1. Use an unlimited number of tries (<literal>--max-tries=0</literal>)
     and the <option>--latency-limit</option> option to limit only the maximum time
     of tries. You can also use the <option>--time</option> option to limit the
     benchmark duration under an unlimited number of tries.
    </para>
    <para>
     Be careful when repeating scripts that contain multiple transactions: the
-    script is always retried completely, so the successful transactions can be
+    script is always retried completely, so successful transactions can be
     performed several times.
    </para>
    <para>
@@ -2879,7 +2879,7 @@ statement latencies in milliseconds, failures and retries:
   <para>
    The main report contains the number of failed transactions. If the
    <option>--max-tries</option> option is not equal to 1, the main report also
-   contains the statistics related to retries: the total number of retried
+   contains statistics related to retries: the total number of retried
    transactions and total number of retries. The per-script report inherits all
    these fields from the main report. The per-statement report displays retry
    statistics only if the <option>--max-tries</option> option is not equal to 1.
@@ -2890,7 +2890,7 @@ statement latencies in milliseconds, failures and retries:
    aggregation logs, as well as in the main and per-script reports, use the
    <option>--failures-detailed</option> option. If you also want to distinguish
    all errors and failures (errors without retrying) by type including which
-   limit for retries was violated and how far it was exceeded for the
+   limit for retries was exceeded and how much it was exceeded by for the
    serialization/deadlock failures, use the <option>--verbose-errors</option>
    option.
   </para>

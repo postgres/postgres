@@ -200,7 +200,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    Cumulative statistics are collected in shared memory. Every
-   <productname>PostgreSQL</productname> process collects statistics locally
+   <productname>PostgreSQL</productname> process collects statistics locally,
    then updates the shared data at appropriate intervals.  When a server,
    including a physical replica, shuts down cleanly, a permanent copy of the
    statistics data is stored in the <filename>pg_stat</filename> subdirectory,

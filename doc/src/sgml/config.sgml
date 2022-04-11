@@ -5047,7 +5047,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Enables or disables reodering of keys in <literal>GROUP BY</literal>
+        Enables or disables reordering of keys in <literal>GROUP BY</literal>
         clause. The default is <literal>on</literal>.
        </para>
       </listitem>
@@ -7657,8 +7657,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </para>
 
      <para>
-      Each log line is serialized as a JSON object as of the following
-      set of keys with their values.
+      Each log line is serialized as a JSON object with the following
+      set of keys and their associated values.
      </para>
 
      <table>

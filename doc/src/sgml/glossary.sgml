@@ -137,7 +137,7 @@
      <!-- NB: In the code, the autovac launcher doesn't use the auxiliary
           process scaffolding; however it does behave as one so we list it
           here anyway. In addition, logger isn't connected to shared memory so
-          most code outside postmaster.c doesn't even consider them "procs" in
+          most code outside postmaster.c doesn't even consider it a "proc" in
           the first place.
           -->
      the <glossterm linkend="glossary-autovacuum">autovacuum launcher</glossterm>
