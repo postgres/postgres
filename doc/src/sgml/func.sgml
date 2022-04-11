@@ -17764,7 +17764,7 @@ $.* ? (@ like_regex "^\\d+$")
     <sect5>
      <title>Examples</title>
      <para>
-      Construct a JSON the provided strings:
+      Construct JSON using the provided strings:
      </para>
 <screen>
 SELECT JSON('{ "a" : 123, "b": [ true, "foo" ], "a" : "bar" }');
@@ -17819,7 +17819,7 @@ ERROR:  duplicate JSON object key value
           <acronym>JSON</acronym> value.
           For null input, <acronym>SQL</acronym>  null
           (not a <acronym>JSON</acronym> null) value is returned.
-          For any scalar other than a number or a Boolean the text
+          For any scalar other than a number or a Boolean, the text
           representation will be used, with escaping as necessary to make
           it a valid <acronym>JSON</acronym> string value.
           For details, see
@@ -17855,7 +17855,7 @@ ERROR:  duplicate JSON object key value
     <sect5>
      <title>Examples</title>
      <para>
-      Construct a JSON from the provided values various types:
+      Construct JSON scalars from the provided values of various types:
      </para>
 <screen>
 SELECT JSON_SCALAR(123.45);
@@ -18113,9 +18113,7 @@ WHERE f.did = 103;
      <para>
       The <function>JSON_OBJECTAGG</function> function aggregates the provided data
       into a <acronym>JSON</acronym> object. You can use this function to combine values
-      stored in different table columns into pairs. If you specify a <command>GROUP BY</command>
-      or an <command>ORDER BY</command> clause, this function returns a separate JSON object
-      for each table row.
+      stored in different table columns into pairs.
     </para>
     </sect5>
 
@@ -18691,7 +18689,7 @@ INSERT INTO my_films VALUES (
      <title>Description</title>
 
      <para>
-      <function>JSON_EXISTS</function> function checks whether the provided
+      The <function>JSON_EXISTS</function> function checks whether the provided
       <acronym>JSON</acronym> path expression can return any <acronym>SQL/JSON</acronym> items.
      </para>
     </sect5>
@@ -18804,7 +18802,7 @@ SELECT JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]');
      <title>Description</title>
 
   <para>
-   <function>JSON_VALUE</function> function extracts a value from the provided
+   The <function>JSON_VALUE</function> function extracts a value from the provided
    <acronym>JSON</acronym> data and converts it to an <acronym>SQL</acronym> scalar.
    If the specified JSON path expression returns more than one
    <acronym>SQL/JSON</acronym> item, an error occurs. To extract
@@ -18963,7 +18961,7 @@ SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 1 ON ERROR);
      <title>Description</title>
 
   <para>
-   <function>JSON_QUERY</function> function extracts an <acronym>SQL/JSON</acronym>
+   The <function>JSON_QUERY</function> function extracts an <acronym>SQL/JSON</acronym>
    array or object from <acronym>JSON</acronym> data. This function must return
    a JSON string, so if the path expression returns a scalar or multiple SQL/JSON
    items, you must wrap the result using the <literal>WITH WRAPPER</literal> clause.
@@ -19366,7 +19364,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
      <title>Description</title>
 
      <para>
-      <function>JSON_TABLE</function> function queries <acronym>JSON</acronym> data
+      The <function>JSON_TABLE</function> function queries <acronym>JSON</acronym> data
       and presents the results as a relational view, which can be accessed as a
       regular SQL table. You can only use <function>JSON_TABLE</function> inside the
       <literal>FROM</literal> clause of the <literal>SELECT</literal> statement
@@ -19620,7 +19618,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
     <para>
      The optional <replaceable>json_path_name</replaceable> serves as an
      identifier of the provided <replaceable>json_path_specification</replaceable>.
-     The path name must be unique and cannot coincide with column names.
+     The path name must be unique and distinct from the column names.
      When using the <literal>PLAN</literal> clause, you must specify the names
      for all the paths, including the row pattern. Each path name can appear in
      the <literal>PLAN</literal> clause only once.
@@ -19820,7 +19818,7 @@ JSON_SERIALIZE (
      <title>Description</title>
 
      <para>
-      <function>JSON_SERIALIZE</function> function transforms a SQL/JSON value
+      The <function>JSON_SERIALIZE</function> function transforms a SQL/JSON value
       into a character or binary string.
      </para>
     </sect5>
@@ -19872,7 +19870,7 @@ JSON_SERIALIZE (
     <sect5>
      <title>Examples</title>
      <para>
-      Construct a JSON the provided strings:
+      Construct serialized JSON using the provided strings:
      </para>
 <screen>
 SELECT JSON_SERIALIZE(JSON_SCALAR('foo'));
@@ -19961,7 +19959,7 @@ SELECT JSON_SERIALIZE('{"foo": "bar", "baz": [1, 2]}' RETURNING bytea);
        supports the following types: <type>json</type>, <type>jsonb</type>,
        <type>bytea</type>, and character string types (<type>text</type>, <type>char</type>,
        <type>varchar</type>, and <type>nchar</type>).
-       To use other types, you must create the <literal>CAST</literal> from <type>json</type> for this type.
+       To use another type, you must create a cast from <type>json</type> to that type.
        By default, the <type>json</type> type is returned.
      </para>
      <para>
@@ -22392,7 +22390,7 @@ SELECT NULLIF(value, '(none)') ...
         Collects all the key/value pairs into a JSON object.  Key arguments
         are coerced to text; value arguments are converted as per
         <function>to_json</function> or <function>to_jsonb</function>
-        Values can be null, but not keys.
+        Values can be null, but keys cannot.
        </para></entry>
        <entry>No</entry>
       </row>
@@ -22449,7 +22447,7 @@ SELECT NULLIF(value, '(none)') ...
         Collects all the key/value pairs into a JSON object.  Key arguments
         are coerced to text; value arguments are converted as per
         <function>to_json</function> or <function>to_jsonb</function>.
-        Values can be null, but not keys.
+        Values can be null, but keys cannot.
         If there is a duplicate key an error is thrown.
        </para></entry>
        <entry>No</entry>
