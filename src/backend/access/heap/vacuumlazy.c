@@ -2478,13 +2478,6 @@ lazy_vacuum_heap_rel(LVRelState *vacrel)
  * index is an offset into the vacrel->dead_items array for the first listed
  * LP_DEAD item on the page.  The return value is the first index immediately
  * after all LP_DEAD items for the same page in the array.
- *
- * Prior to PostgreSQL 14 there were rare cases where this routine had to set
- * tuples with storage to unused.  These days it is strictly responsible for
- * marking LP_DEAD stub line pointers as unused.  This only happens for those
- * LP_DEAD items on the page that were determined to be LP_DEAD items back
- * when the same page was visited by lazy_scan_prune() (i.e. those whose TID
- * was recorded in the dead_items array at the time).
  */
 static int
 lazy_vacuum_heap_page(LVRelState *vacrel, BlockNumber blkno, Buffer buffer,
