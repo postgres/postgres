@@ -275,7 +275,12 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    considerations are rather different.  <command>REINDEX</command> locks out writes
    but not reads of the index's parent table.  It also takes an
    <literal>ACCESS EXCLUSIVE</literal> lock on the specific index being processed,
-   which will block reads that attempt to use that index.  In contrast,
+   which will block reads that attempt to use that index. In particular,
+   the query planner tries to take an <literal>ACCESS SHARE</literal>
+   lock on every index of the table, regardless of the query, and so
+   <command>REINDEX</command> blocks virtually any queries except for some
+   prepared queries whose plan has been cached and which don't use this very
+   index. In contrast,
    <command>DROP INDEX</command> momentarily takes an
    <literal>ACCESS EXCLUSIVE</literal> lock on the parent table, blocking both
    writes and reads.  The subsequent <command>CREATE INDEX</command> locks out
