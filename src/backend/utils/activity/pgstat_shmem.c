@@ -920,7 +920,7 @@ pgstat_reset_entry(PgStat_Kind kind, Oid dboid, Oid objoid, TimestampTz ts)
 	if (!entry_ref || entry_ref->shared_entry->dropped)
 		return;
 
-	pgstat_lock_entry(entry_ref, false);
+	(void) pgstat_lock_entry(entry_ref, false);
 	shared_stat_reset_contents(kind, entry_ref->shared_stats, ts);
 	pgstat_unlock_entry(entry_ref);
 }
