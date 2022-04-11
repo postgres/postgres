@@ -88,8 +88,6 @@ usage(const char *progname)
 	printf(_("Options:\n"));
 	printf(_("  -c, --restore-target-wal       use restore_command in target configuration to\n"
 			 "                                 retrieve WAL files from archives\n"));
-	printf(_("      --config-file=FILENAME     use specified main server configuration\n"));
-	printf(_("                                 file when running target cluster\n"));
 	printf(_("  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"));
 	printf(_("      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"));
 	printf(_("      --source-server=CONNSTR    source server to synchronize with\n"));
@@ -99,6 +97,8 @@ usage(const char *progname)
 	printf(_("  -P, --progress                 write progress messages\n"));
 	printf(_("  -R, --write-recovery-conf      write configuration for replication\n"
 			 "                                 (requires --source-server)\n"));
+	printf(_("      --config-file=FILENAME     use specified main server configuration\n"
+			 "                                 file when running target cluster\n"));
 	printf(_("      --debug                    write a lot of debug messages\n"));
 	printf(_("      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"));
 	printf(_("  -V, --version                  output version information, then exit\n"));
