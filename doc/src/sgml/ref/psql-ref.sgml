@@ -129,7 +129,7 @@ echo '\x \\ SELECT * FROM foo;' | psql
        for more details about how the server handles multi-query strings.)
       </para>
       <para>
-       If having several commands executed in one transaction is not desired, 
+       If having several commands executed in one transaction is not desired,
        use repeated <option>-c</option> commands or feed multiple commands to
        <application>psql</application>'s standard input,
        either using <application>echo</application> as illustrated above, or
@@ -1385,9 +1385,11 @@ testdb=&gt;
         <listitem>
         <para>
         Lists server configuration parameters and their values.
-        If <replaceable class="parameter">pattern</replaceable>
-        is specified, only parameters whose names match the pattern are
-        listed.
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only parameters whose names match the pattern are listed.  Without
+        a <replaceable class="parameter">pattern</replaceable>, only
+        parameters that are set to non-default values are listed.
+        (Use <literal>\dconfig *</literal> to see all parameters.)
         If <literal>+</literal> is appended to the command name, each
         parameter is listed with its data type, context in which the
         parameter can be set, and access privileges (if non-default access

@@ -4404,10 +4404,13 @@ describeConfigurationParameters(const char *pattern, bool verbose,
 							 "  LEFT JOIN pg_catalog.pg_parameter_acl p\n"
 							 "  ON pg_catalog.lower(s.name) = p.parname\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern,
-						  false, false,
-						  NULL, "pg_catalog.lower(s.name)", NULL,
-						  NULL);
+	if (pattern)
+		processSQLNamePattern(pset.db, &buf, pattern,
+							  false, false,
+							  NULL, "pg_catalog.lower(s.name)", NULL,
+							  NULL);
+	else
+		appendPQExpBufferStr(&buf, "WHERE s.source <> 'default'\n");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -4417,7 +4420,10 @@ describeConfigurationParameters(const char *pattern, bool verbose,
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of configuration parameters");
+	if (pattern)
+		myopt.title = _("List of configuration parameters");
+	else
+		myopt.title = _("List of non-default configuration parameters");
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
