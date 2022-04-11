@@ -3,7 +3,7 @@
  * basebackup_zstd.c
  *	  Basebackup sink implementing zstd compression.
  *
- * Portions Copyright (c) 2010-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/basebackup_zstd.c
