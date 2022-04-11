@@ -1498,7 +1498,7 @@ pgstat_read_statsfile(void)
 	 */
 	for (;;)
 	{
-		char		t = fgetc(fpin);
+		int			t = fgetc(fpin);
 
 		switch (t)
 		{
