@@ -52,7 +52,7 @@ static bool do_drop_slot = false;
 static bool do_sync = true;
 static bool synchronous = false;
 static char *replication_slot = NULL;
-static WalCompressionMethod compression_method = COMPRESSION_NONE;
+static pg_compress_algorithm compression_algorithm = PG_COMPRESSION_NONE;
 static XLogRecPtr endpos = InvalidXLogRecPtr;
 
 
@@ -114,7 +114,7 @@ usage(void)
  */
 static bool
 is_xlogfilename(const char *filename, bool *ispartial,
-				WalCompressionMethod *wal_compression_method)
+				pg_compress_algorithm *wal_compression_algorithm)
 {
 	size_t		fname_len = strlen(filename);
 	size_t		xlog_pattern_len = strspn(filename, "0123456789ABCDEF");
@@ -127,7 +127,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 	if (fname_len == XLOG_FNAME_LEN)
 	{
 		*ispartial = false;
-		*wal_compression_method = COMPRESSION_NONE;
+		*wal_compression_algorithm = PG_COMPRESSION_NONE;
 		return true;
 	}
 
@@ -136,7 +136,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		strcmp(filename + XLOG_FNAME_LEN, ".gz") == 0)
 	{
 		*ispartial = false;
-		*wal_compression_method = COMPRESSION_GZIP;
+		*wal_compression_algorithm = PG_COMPRESSION_GZIP;
 		return true;
 	}
 
@@ -145,7 +145,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		strcmp(filename + XLOG_FNAME_LEN, ".lz4") == 0)
 	{
 		*ispartial = false;
-		*wal_compression_method = COMPRESSION_LZ4;
+		*wal_compression_algorithm = PG_COMPRESSION_LZ4;
 		return true;
 	}
 
@@ -154,7 +154,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		strcmp(filename + XLOG_FNAME_LEN, ".partial") == 0)
 	{
 		*ispartial = true;
-		*wal_compression_method = COMPRESSION_NONE;
+		*wal_compression_algorithm = PG_COMPRESSION_NONE;
 		return true;
 	}
 
@@ -163,7 +163,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		strcmp(filename + XLOG_FNAME_LEN, ".gz.partial") == 0)
 	{
 		*ispartial = true;
-		*wal_compression_method = COMPRESSION_GZIP;
+		*wal_compression_algorithm = PG_COMPRESSION_GZIP;
 		return true;
 	}
 
@@ -172,7 +172,7 @@ is_xlogfilename(const char *filename, bool *ispartial,
 		strcmp(filename + XLOG_FNAME_LEN, ".lz4.partial") == 0)
 	{
 		*ispartial = true;
-		*wal_compression_method = COMPRESSION_LZ4;
+		*wal_compression_algorithm = PG_COMPRESSION_LZ4;
 		return true;
 	}
 
@@ -279,11 +279,11 @@ FindStreamingStart(uint32 *tli)
 	{
 		uint32		tli;
 		XLogSegNo	segno;
-		WalCompressionMethod wal_compression_method;
+		pg_compress_algorithm wal_compression_algorithm;
 		bool		ispartial;
 
 		if (!is_xlogfilename(dirent->d_name,
-							 &ispartial, &wal_compression_method))
+							 &ispartial, &wal_compression_algorithm))
 			continue;
 
 		/*
@@ -309,7 +309,7 @@ FindStreamingStart(uint32 *tli)
 		 * where WAL segments could have been compressed by a different source
 		 * than pg_receivewal, like an archive_command with lz4.
 		 */
-		if (!ispartial && wal_compression_method == COMPRESSION_NONE)
+		if (!ispartial && wal_compression_algorithm == PG_COMPRESSION_NONE)
 		{
 			struct stat statbuf;
 			char		fullpath[MAXPGPATH * 2];
@@ -325,7 +325,7 @@ FindStreamingStart(uint32 *tli)
 				continue;
 			}
 		}
-		else if (!ispartial && wal_compression_method == COMPRESSION_GZIP)
+		else if (!ispartial && wal_compression_algorithm == PG_COMPRESSION_GZIP)
 		{
 			int			fd;
 			char		buf[4];
@@ -364,7 +364,7 @@ FindStreamingStart(uint32 *tli)
 				continue;
 			}
 		}
-		else if (!ispartial && wal_compression_method == COMPRESSION_LZ4)
+		else if (!ispartial && wal_compression_algorithm == PG_COMPRESSION_LZ4)
 		{
 #ifdef USE_LZ4
 #define LZ4_CHUNK_SZ	64 * 1024	/* 64kB as maximum chunk size read */
@@ -590,7 +590,7 @@ StreamLog(void)
 	stream.do_sync = do_sync;
 	stream.mark_done = false;
 	stream.walmethod = CreateWalDirectoryMethod(basedir,
-												compression_method,
+												compression_algorithm,
 												compresslevel,
 												stream.do_sync);
 	stream.partial_suffix = ".partial";
@@ -750,11 +750,11 @@ main(int argc, char **argv)
 				break;
 			case 6:
 				if (pg_strcasecmp(optarg, "gzip") == 0)
-					compression_method = COMPRESSION_GZIP;
+					compression_algorithm = PG_COMPRESSION_GZIP;
 				else if (pg_strcasecmp(optarg, "lz4") == 0)
-					compression_method = COMPRESSION_LZ4;
+					compression_algorithm = PG_COMPRESSION_LZ4;
 				else if (pg_strcasecmp(optarg, "none") == 0)
-					compression_method = COMPRESSION_NONE;
+					compression_algorithm = PG_COMPRESSION_NONE;
 				else
 					pg_fatal("invalid value \"%s\" for option %s",
 							 optarg, "--compression-method");
@@ -814,9 +814,9 @@ main(int argc, char **argv)
 	/*
 	 * Compression-related options.
 	 */
-	switch (compression_method)
+	switch (compression_algorithm)
 	{
-		case COMPRESSION_NONE:
+		case PG_COMPRESSION_NONE:
 			if (compresslevel != 0)
 			{
 				pg_log_error("cannot use --compress with --compression-method=%s",
@@ -825,7 +825,7 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			break;
-		case COMPRESSION_GZIP:
+		case PG_COMPRESSION_GZIP:
 #ifdef HAVE_LIBZ
 			if (compresslevel == 0)
 			{
@@ -837,7 +837,7 @@ main(int argc, char **argv)
 					 "gzip");
 #endif
 			break;
-		case COMPRESSION_LZ4:
+		case PG_COMPRESSION_LZ4:
 #ifdef USE_LZ4
 			if (compresslevel != 0)
 			{
@@ -851,7 +851,7 @@ main(int argc, char **argv)
 					 "LZ4");
 #endif
 			break;
-		case COMPRESSION_ZSTD:
+		case PG_COMPRESSION_ZSTD:
 			pg_fatal("compression with %s is not yet supported", "ZSTD");
 			break;
 	}

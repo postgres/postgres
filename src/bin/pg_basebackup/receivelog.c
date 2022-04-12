@@ -114,7 +114,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	 * When streaming to tar, no file with this name will exist before, so we
 	 * never have to verify a size.
 	 */
-	if (stream->walmethod->compression_method() == COMPRESSION_NONE &&
+	if (stream->walmethod->compression_algorithm() == PG_COMPRESSION_NONE &&
 		stream->walmethod->existsfile(fn))
 	{
 		size = stream->walmethod->get_file_size(fn);

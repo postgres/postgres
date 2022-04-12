@@ -520,7 +520,7 @@ typedef struct
 	char		xlog[MAXPGPATH];	/* directory or tarfile depending on mode */
 	char	   *sysidentifier;
 	int			timeline;
-	WalCompressionMethod	wal_compress_method;
+	pg_compress_algorithm wal_compress_algorithm;
 	int			wal_compress_level;
 } logstreamer_param;
 
@@ -550,11 +550,11 @@ LogStreamerMain(logstreamer_param *param)
 	stream.replication_slot = replication_slot;
 	if (format == 'p')
 		stream.walmethod = CreateWalDirectoryMethod(param->xlog,
-													COMPRESSION_NONE, 0,
+													PG_COMPRESSION_NONE, 0,
 													stream.do_sync);
 	else
 		stream.walmethod = CreateWalTarMethod(param->xlog,
-											  param->wal_compress_method,
+											  param->wal_compress_algorithm,
 											  param->wal_compress_level,
 											  stream.do_sync);
 
@@ -602,7 +602,7 @@ LogStreamerMain(logstreamer_param *param)
  */
 static void
 StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
-				 WalCompressionMethod wal_compress_method,
+				 pg_compress_algorithm wal_compress_algorithm,
 				 int wal_compress_level)
 {
 	logstreamer_param *param;
@@ -613,7 +613,7 @@ StartLogStreamer(char *startpos, uint32 timeline, char *sysidentifier,
 	param = pg_malloc0(sizeof(logstreamer_param));
 	param->timeline = timeline;
 	param->sysidentifier = sysidentifier;
-	param->wal_compress_method = wal_compress_method;
+	param->wal_compress_algorithm = wal_compress_algorithm;
 	param->wal_compress_level = wal_compress_level;
 
 	/* Convert the starting position */
@@ -2019,7 +2019,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	 */
 	if (includewal == STREAM_WAL)
 	{
-		WalCompressionMethod	wal_compress_method;
+		pg_compress_algorithm	wal_compress_algorithm;
 		int		wal_compress_level;
 
 		if (verbose)
@@ -2027,19 +2027,19 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 
 		if (client_compress->algorithm == PG_COMPRESSION_GZIP)
 		{
-			wal_compress_method = COMPRESSION_GZIP;
+			wal_compress_algorithm = PG_COMPRESSION_GZIP;
 			wal_compress_level =
 				(client_compress->options & PG_COMPRESSION_OPTION_LEVEL)
 				!= 0 ? client_compress->level : 0;
 		}
 		else
 		{
-			wal_compress_method = COMPRESSION_NONE;
+			wal_compress_algorithm = PG_COMPRESSION_NONE;
 			wal_compress_level = 0;
 		}
 
 		StartLogStreamer(xlogstart, starttli, sysidentifier,
-						 wal_compress_method, wal_compress_level);
+						 wal_compress_algorithm, wal_compress_level);
 	}
 
 	if (serverMajor >= 1500)
