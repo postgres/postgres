@@ -182,8 +182,8 @@ PostgreSQL documentation
         to be written safely to disk.  This option causes
         <command>pg_rewind</command> to return without waiting, which is
         faster, but means that a subsequent operating system crash can leave
-        the synchronized data directory corrupt.  Generally, this option is
-        useful for testing but should not be used when creating a production
+        the data directory corrupt.  Generally, this option is useful for
+        testing but should not be used when creating a production
         installation.
        </para>
       </listitem>
