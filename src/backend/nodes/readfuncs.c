@@ -3217,7 +3217,7 @@ parseNodeString(void)
 		return_value = _readJsonReturning();
 	else if (MATCH("JSONVALUEEXPR", 13))
 		return_value = _readJsonValueExpr();
-	else if (MATCH("JSONCTOREXPR", 12))
+	else if (MATCH("JSONCONSTRUCTOREXPR", 19))
 		return_value = _readJsonConstructorExpr();
 	else if (MATCH("JSONISPREDICATE", 15))
 		return_value = _readJsonIsPredicate();

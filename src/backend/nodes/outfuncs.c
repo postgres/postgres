@@ -1792,7 +1792,7 @@ _outJsonValueExpr(StringInfo str, const JsonValueExpr *node)
 static void
 _outJsonConstructorExpr(StringInfo str, const JsonConstructorExpr *node)
 {
-	WRITE_NODE_TYPE("JSONCTOREXPR");
+	WRITE_NODE_TYPE("JSONCONSTRUCTOREXPR");
 
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(func);
