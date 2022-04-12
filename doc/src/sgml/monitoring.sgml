@@ -336,7 +336,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><structname>pg_stat_recovery_prefetch</structname><indexterm><primary>pg_stat_recovery_prefetch</primary></indexterm></entry>
       <entry>Only one row, showing statistics about blocks prefetched during recovery.
-       See <xref linkend="pg-stat-recovery-prefetch-view"/> for details.
+       See <link linkend="monitoring-pg-stat-recovery-prefetch">
+       <structname>pg_stat_recovery_prefetch</structname></link> for details.
       </entry>
      </row>
 
@@ -2977,80 +2978,12 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
  </sect2>
 
- <sect2 id="monitoring-pg-stat-subscription">
-  <title><structname>pg_stat_subscription</structname></title>
+ <sect2 id="monitoring-pg-stat-recovery-prefetch">
+  <title><structname>pg_stat_recovery_prefetch</structname></title>
 
   <indexterm>
-   <primary>pg_stat_subscription</primary>
+   <primary>pg_stat_recovery_prefetch</primary>
   </indexterm>
-
-  <para>
-   The <structname>pg_stat_subscription</structname> view will contain one
-   row per subscription for main worker (with null PID if the worker is
-   not running), and additional rows for workers handling the initial data
-   copy of the subscribed tables.
-  </para>
-
-  <table id="pg-stat-recovery-prefetch-view" xreflabel="pg_stat_recovery_prefetch">
-   <title><structname>pg_stat_recovery_prefetch</structname> View</title>
-   <tgroup cols="3">
-    <thead>
-    <row>
-      <entry>Column</entry>
-      <entry>Type</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-   <tbody>
-    <row>
-     <entry><structfield>prefetch</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks prefetched because they were not in the buffer pool</entry>
-    </row>
-    <row>
-     <entry><structfield>hit</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they were already in the buffer pool</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_init</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they would be zero-initialized</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_new</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they didn't exist yet</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_fpw</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because a full page image was included in the WAL</entry>
-    </row>
-    <row>
-     <entry><structfield>skip_rep</structfield></entry>
-     <entry><type>bigint</type></entry>
-     <entry>Number of blocks not prefetched because they were already recently prefetched</entry>
-    </row>
-    <row>
-     <entry><structfield>wal_distance</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>How many bytes ahead the prefetcher is looking</entry>
-    </row>
-    <row>
-     <entry><structfield>block_distance</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>How many blocks ahead the prefetcher is looking</entry>
-    </row>
-    <row>
-     <entry><structfield>io_depth</structfield></entry>
-     <entry><type>integer</type></entry>
-     <entry>How many prefetches have been initiated but are not yet known to have completed</entry>
-    </row>
-    </tbody>
-   </tgroup>
-  </table>
 
   <para>
    The <structname>pg_stat_recovery_prefetch</structname> view will contain
@@ -3060,6 +2993,132 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    other columns show cumulative counters that can be reset
    with the <function>pg_stat_reset_shared</function> function.
   </para>
+
+  <table id="pg-stat-recovery-prefetch-view" xreflabel="pg_stat_recovery_prefetch">
+   <title><structname>pg_stat_recovery_prefetch</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>prefetch</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks prefetched because they were not in the buffer pool
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>hit</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they were already in the buffer pool
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_init</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they would be zero-initialized
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_new</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they didn't exist yet
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_fpw</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because a full page image was included in the WAL
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_rep</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they were already recently prefetched
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>wal_distance</structfield> <type>int</type>
+       </para>
+       <para>
+        How many bytes ahead the prefetcher is looking
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>block_distance</structfield> <type>int</type>
+       </para>
+       <para>
+        How many blocks ahead the prefetcher is looking
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>io_depth</structfield> <type>int</type>
+       </para>
+       <para>
+        How many prefetches have been initiated but are not yet known to have completed
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
+ <sect2 id="monitoring-pg-stat-subscription">
+  <title><structname>pg_stat_subscription</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_subscription</primary>
+  </indexterm>
 
   <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
    <title><structname>pg_stat_subscription</structname> View</title>
