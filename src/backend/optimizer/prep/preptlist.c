@@ -107,14 +107,15 @@ preprocess_targetlist(PlannerInfo *root)
 		root->update_colnos = extract_update_targetlist_colnos(tlist);
 
 	/*
-	 * For non-inherited UPDATE/DELETE, register any junk column(s) needed to
-	 * allow the executor to identify the rows to be updated or deleted.  In
-	 * the inheritance case, we do nothing now, leaving this to be dealt with
-	 * when expand_inherited_rtentry() makes the leaf target relations.  (But
-	 * there might not be any leaf target relations, in which case we must do
-	 * this in distribute_row_identity_vars().)
+	 * For non-inherited UPDATE/DELETE/MERGE, register any junk column(s)
+	 * needed to allow the executor to identify the rows to be updated or
+	 * deleted.  In the inheritance case, we do nothing now, leaving this to
+	 * be dealt with when expand_inherited_rtentry() makes the leaf target
+	 * relations.  (But there might not be any leaf target relations, in which
+	 * case we must do this in distribute_row_identity_vars().)
 	 */
-	if ((command_type == CMD_UPDATE || command_type == CMD_DELETE) &&
+	if ((command_type == CMD_UPDATE || command_type == CMD_DELETE ||
+		 command_type == CMD_MERGE) &&
 		!target_rte->inh)
 	{
 		/* row-identity logic expects to add stuff to processed_tlist */
@@ -125,22 +126,14 @@ preprocess_targetlist(PlannerInfo *root)
 	}
 
 	/*
-	 * For MERGE we need to handle the target list for the target relation,
-	 * and also target list for each action (only INSERT/UPDATE matter).
+	 * For MERGE we also need to handle the target list for each INSERT and
+	 * UPDATE action separately.  In addition, we examine the qual of each
+	 * action and add any Vars there (other than those of the target rel) to
+	 * the subplan targetlist.
 	 */
 	if (command_type == CMD_MERGE)
 	{
 		ListCell   *l;
-
-		/*
-		 * For MERGE, add any junk column(s) needed to allow the executor to
-		 * identify the rows to be inserted or updated.
-		 */
-		root->processed_tlist = tlist;
-		add_row_identity_columns(root, result_relation,
-								 target_rte, target_relation);
-
-		tlist = root->processed_tlist;
 
 		/*
 		 * For MERGE, handle targetlist of each MergeAction separately. Give
@@ -151,6 +144,8 @@ preprocess_targetlist(PlannerInfo *root)
 		foreach(l, parse->mergeActionList)
 		{
 			MergeAction *action = (MergeAction *) lfirst(l);
+			List	   *vars;
+			ListCell   *l2;
 
 			if (action->commandType == CMD_INSERT)
 				action->targetList = expand_insert_targetlist(action->targetList,
@@ -158,6 +153,36 @@ preprocess_targetlist(PlannerInfo *root)
 			else if (action->commandType == CMD_UPDATE)
 				action->updateColnos =
 					extract_update_targetlist_colnos(action->targetList);
+
+			/*
+			 * Add resjunk entries for any Vars used in each action's
+			 * targetlist and WHEN condition that belong to relations other
+			 * than target.  Note that aggregates, window functions and
+			 * placeholder vars are not possible anywhere in MERGE's WHEN
+			 * clauses.  (PHVs may be added later, but they don't concern us
+			 * here.)
+			 */
+			vars = pull_var_clause((Node *)
+								   list_concat_copy((List *) action->qual,
+													action->targetList),
+								   0);
+			foreach(l2, vars)
+			{
+				Var		   *var = (Var *) lfirst(l2);
+				TargetEntry *tle;
+
+				if (IsA(var, Var) && var->varno == result_relation)
+					continue;	/* don't need it */
+
+				if (tlist_member((Expr *) var, tlist))
+					continue;	/* already got it */
+
+				tle = makeTargetEntry((Expr *) var,
+									  list_length(tlist) + 1,
+									  NULL, true);
+				tlist = lappend(tlist, tle);
+			}
+			list_free(vars);
 		}
 	}
 

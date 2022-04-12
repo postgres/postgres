@@ -2748,7 +2748,7 @@ search_indexed_tlist_for_sortgroupref(Expr *node,
  *	   relation target lists.  Also perform opcode lookup and add
  *	   regclass OIDs to root->glob->relationOids.
  *
- * This is used in three different scenarios:
+ * This is used in four different scenarios:
  * 1) a normal join clause, where all the Vars in the clause *must* be
  *	  replaced by OUTER_VAR or INNER_VAR references.  In this case
  *	  acceptable_rel should be zero so that any failure to match a Var will be
@@ -2763,6 +2763,11 @@ search_indexed_tlist_for_sortgroupref(Expr *node,
  *	  to-be-updated relation) alone. Correspondingly inner_itlist is to be
  *	  EXCLUDED elements, outer_itlist = NULL and acceptable_rel the target
  *	  relation.
+ * 4) MERGE.  In this case, references to the source relation are to be
+ *    replaced with INNER_VAR references, leaving Vars of the target
+ *    relation (the to-be-modified relation) alone.  So inner_itlist is to be
+ *    the source relation elements, outer_itlist = NULL and acceptable_rel
+ *    the target relation.
  *
  * 'clauses' is the targetlist or list of join clauses
  * 'outer_itlist' is the indexed target list of the outer join relation,

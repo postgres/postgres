@@ -18,7 +18,6 @@
 #include "access/sysattr.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
 #include "parser/analyze.h"
 #include "parser/parse_collate.h"
 #include "parser/parsetree.h"
@@ -205,9 +204,11 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 					   pstate->p_target_nsitem->p_names->aliasname),
 				errdetail("The name is used both as MERGE target table and data source."));
 
-	qry->targetList = expandNSItemAttrs(pstate, nsitem, 0, false,
-										exprLocation(stmt->sourceRelation));
-
+	/*
+	 * There's no need for a targetlist here; it'll be set up by
+	 * preprocess_targetlist later.
+	 */
+	qry->targetList = NIL;
 	qry->rtable = pstate->p_rtable;
 
 	/*
