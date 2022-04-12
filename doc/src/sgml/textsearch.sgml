@@ -3602,7 +3602,7 @@ SELECT plainto_tsquery('supernovae stars');
  </sect1>
 
  <sect1 id="textsearch-indexes">
-  <title>GIN and GiST Index Types</title>
+  <title>Preferred Index Types for Text Search</title>
 
   <indexterm zone="textsearch-indexes">
    <primary>text search</primary>
@@ -3611,10 +3611,16 @@ SELECT plainto_tsquery('supernovae stars');
 
   <para>
    There are two kinds of indexes that can be used to speed up full text
-   searches.
+   searches:
+   <link linkend="gin"><acronym>GIN</acronym></link> and
+   <link linkend="gist"><acronym>GiST</acronym></link>.
    Note that indexes are not mandatory for full text searching, but in
    cases where a column is searched on a regular basis, an index is
    usually desirable.
+  </para>
+
+  <para>
+   To create such an index, do one of:
 
    <variablelist>
 
