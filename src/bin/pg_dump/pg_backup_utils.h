@@ -34,8 +34,7 @@ extern void exit_nicely(int code) pg_attribute_noreturn();
 /* In pg_dump, we modify pg_fatal to call exit_nicely instead of exit */
 #undef pg_fatal
 #define pg_fatal(...) do { \
-		if (likely(__pg_log_level <= PG_LOG_ERROR)) \
-			pg_log_generic(PG_LOG_ERROR, PG_LOG_PRIMARY, __VA_ARGS__); \
+		pg_log_generic(PG_LOG_ERROR, PG_LOG_PRIMARY, __VA_ARGS__); \
 		exit_nicely(1); \
 	} while(0)
 

@@ -228,6 +228,10 @@ pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
 	Assert(fmt);
 	Assert(fmt[strlen(fmt) - 1] != '\n');
 
+	/* Do nothing if log level is too low. */
+	if (level < __pg_log_level)
+		return;
+
 	/*
 	 * Flush stdout before output to stderr, to ensure sync even when stdout
 	 * is buffered.
