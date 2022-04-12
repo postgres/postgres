@@ -63,7 +63,7 @@ const bbstreamer_ops bbstreamer_zstd_decompressor_ops = {
  * blocks.
  */
 bbstreamer *
-bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
+bbstreamer_zstd_compressor_new(bbstreamer *next, pg_compress_specification *compress)
 {
 #ifdef USE_ZSTD
 	bbstreamer_zstd_frame *streamer;
@@ -85,7 +85,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 		pg_fatal("could not create zstd compression context");
 
 	/* Set compression level, if specified */
-	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0)
+	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
 	{
 		ret = ZSTD_CCtx_setParameter(streamer->cctx, ZSTD_c_compressionLevel,
 									 compress->level);
@@ -95,7 +95,7 @@ bbstreamer_zstd_compressor_new(bbstreamer *next, bc_specification *compress)
 	}
 
 	/* Set # of workers, if specified */
-	if ((compress->options & BACKUP_COMPRESSION_OPTION_WORKERS) != 0)
+	if ((compress->options & PG_COMPRESSION_OPTION_WORKERS) != 0)
 	{
 		/*
 		 * On older versions of libzstd, this option does not exist, and

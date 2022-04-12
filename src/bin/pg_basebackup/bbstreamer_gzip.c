@@ -77,7 +77,7 @@ const bbstreamer_ops bbstreamer_gzip_decompressor_ops = {
  */
 bbstreamer *
 bbstreamer_gzip_writer_new(char *pathname, FILE *file,
-						   bc_specification *compress)
+						   pg_compress_specification *compress)
 {
 #ifdef HAVE_LIBZ
 	bbstreamer_gzip_writer *streamer;
@@ -107,7 +107,7 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file,
 			pg_fatal("could not open output file: %m");
 	}
 
-	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0 &&
+	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0 &&
 		gzsetparams(streamer->gzfile, compress->level,
 					Z_DEFAULT_STRATEGY) != Z_OK)
 		pg_fatal("could not set compression level %d: %s",

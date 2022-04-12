@@ -14,7 +14,7 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    receivelog.c \
                    streamutil.c \
                    walmethods.c \
-                   ../../common/backup_compression.c \
+                   ../../common/compression.c \
                    ../../common/fe_memutils.c \
                    ../../common/file_utils.c \
                    ../../fe_utils/recovery_gen.c

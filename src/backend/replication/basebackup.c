@@ -17,7 +17,7 @@
 #include <time.h>
 
 #include "access/xlog_internal.h"	/* for pg_start/stop_backup */
-#include "common/backup_compression.h"
+#include "common/compression.h"
 #include "common/file_perm.h"
 #include "commands/defrem.h"
 #include "lib/stringinfo.h"
@@ -68,8 +68,8 @@ typedef struct
 	bool		use_copytblspc;
 	BaseBackupTargetHandle *target_handle;
 	backup_manifest_option manifest;
-	bc_algorithm compression;
-	bc_specification compression_specification;
+	pg_compress_algorithm compression;
+	pg_compress_specification compression_specification;
 	pg_checksum_type manifest_checksum_type;
 } basebackup_options;
 
@@ -691,8 +691,8 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	MemSet(opt, 0, sizeof(*opt));
 	opt->manifest = MANIFEST_OPTION_NO;
 	opt->manifest_checksum_type = CHECKSUM_TYPE_CRC32C;
-	opt->compression = BACKUP_COMPRESSION_NONE;
-	opt->compression_specification.algorithm = BACKUP_COMPRESSION_NONE;
+	opt->compression = PG_COMPRESSION_NONE;
+	opt->compression_specification.algorithm = PG_COMPRESSION_NONE;
 
 	foreach(lopt, options)
 	{
@@ -859,7 +859,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("duplicate option \"%s\"", defel->defname)));
-			if (!parse_bc_algorithm(optval, &opt->compression))
+			if (!parse_compress_algorithm(optval, &opt->compression))
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("unrecognized compression algorithm \"%s\"",
@@ -924,10 +924,10 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 	{
 		char	   *error_detail;
 
-		parse_bc_specification(opt->compression, compression_detail_str,
-							   &opt->compression_specification);
+		parse_compress_specification(opt->compression, compression_detail_str,
+									 &opt->compression_specification);
 		error_detail =
-			validate_bc_specification(&opt->compression_specification);
+			validate_compress_specification(&opt->compression_specification);
 		if (error_detail != NULL)
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
@@ -978,11 +978,11 @@ SendBaseBackup(BaseBackupCmd *cmd)
 		sink = bbsink_throttle_new(sink, opt.maxrate);
 
 	/* Set up server-side compression, if client requested it */
-	if (opt.compression == BACKUP_COMPRESSION_GZIP)
+	if (opt.compression == PG_COMPRESSION_GZIP)
 		sink = bbsink_gzip_new(sink, &opt.compression_specification);
-	else if (opt.compression == BACKUP_COMPRESSION_LZ4)
+	else if (opt.compression == PG_COMPRESSION_LZ4)
 		sink = bbsink_lz4_new(sink, &opt.compression_specification);
-	else if (opt.compression == BACKUP_COMPRESSION_ZSTD)
+	else if (opt.compression == PG_COMPRESSION_ZSTD)
 		sink = bbsink_zstd_new(sink, &opt.compression_specification);
 
 	/* Set up progress reporting. */

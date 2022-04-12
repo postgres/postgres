@@ -1,8 +1,8 @@
 /*-------------------------------------------------------------------------
  *
- * backup_compression.c
+ * compression.c
  *
- * Shared code for backup compression methods and specifications.
+ * Shared code for compression methods and specifications.
  *
  * A compression specification specifies the parameters that should be used
  * when performing compression with a specific algorithm. The simplest
@@ -12,12 +12,12 @@
  * Otherwise, a compression specification is a comma-separated list of items,
  * each having the form keyword or keyword=value.
  *
- * Currently, the only supported keyword is "level".
+ * Currently, the only supported keywords are "level" and "workers".
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/common/backup_compression.c
+ *		  src/common/compression.c
  *-------------------------------------------------------------------------
  */
 
@@ -27,26 +27,26 @@
 #include "postgres_fe.h"
 #endif
 
-#include "common/backup_compression.h"
+#include "common/compression.h"
 
 static int	expect_integer_value(char *keyword, char *value,
-								 bc_specification *result);
+								 pg_compress_specification *result);
 
 /*
  * Look up a compression algorithm by name. Returns true and sets *algorithm
  * if the name is recognized. Otherwise returns false.
  */
 bool
-parse_bc_algorithm(char *name, bc_algorithm *algorithm)
+parse_compress_algorithm(char *name, pg_compress_algorithm *algorithm)
 {
 	if (strcmp(name, "none") == 0)
-		*algorithm = BACKUP_COMPRESSION_NONE;
+		*algorithm = PG_COMPRESSION_NONE;
 	else if (strcmp(name, "gzip") == 0)
-		*algorithm = BACKUP_COMPRESSION_GZIP;
+		*algorithm = PG_COMPRESSION_GZIP;
 	else if (strcmp(name, "lz4") == 0)
-		*algorithm = BACKUP_COMPRESSION_LZ4;
+		*algorithm = PG_COMPRESSION_LZ4;
 	else if (strcmp(name, "zstd") == 0)
-		*algorithm = BACKUP_COMPRESSION_ZSTD;
+		*algorithm = PG_COMPRESSION_ZSTD;
 	else
 		return false;
 	return true;
@@ -57,17 +57,17 @@ parse_bc_algorithm(char *name, bc_algorithm *algorithm)
  * algorithm.
  */
 const char *
-get_bc_algorithm_name(bc_algorithm algorithm)
+get_compress_algorithm_name(pg_compress_algorithm algorithm)
 {
 	switch (algorithm)
 	{
-		case BACKUP_COMPRESSION_NONE:
+		case PG_COMPRESSION_NONE:
 			return "none";
-		case BACKUP_COMPRESSION_GZIP:
+		case PG_COMPRESSION_GZIP:
 			return "gzip";
-		case BACKUP_COMPRESSION_LZ4:
+		case PG_COMPRESSION_LZ4:
 			return "lz4";
-		case BACKUP_COMPRESSION_ZSTD:
+		case PG_COMPRESSION_ZSTD:
 			return "zstd";
 			/* no default, to provoke compiler warnings if values are added */
 	}
@@ -88,12 +88,12 @@ get_bc_algorithm_name(bc_algorithm algorithm)
  * Note, however, even if there's no parse error, the string might not make
  * sense: e.g. for gzip, level=12 is not sensible, but it does parse OK.
  *
- * Use validate_bc_specification() to find out whether a compression
+ * Use validate_compress_specification() to find out whether a compression
  * specification is semantically sensible.
  */
 void
-parse_bc_specification(bc_algorithm algorithm, char *specification,
-					   bc_specification *result)
+parse_compress_specification(pg_compress_algorithm algorithm, char *specification,
+					   pg_compress_specification *result)
 {
 	int			bare_level;
 	char	   *bare_level_endp;
@@ -113,7 +113,7 @@ parse_bc_specification(bc_algorithm algorithm, char *specification,
 	if (specification != bare_level_endp && *bare_level_endp == '\0')
 	{
 		result->level = bare_level;
-		result->options |= BACKUP_COMPRESSION_OPTION_LEVEL;
+		result->options |= PG_COMPRESSION_OPTION_LEVEL;
 		return;
 	}
 
@@ -175,12 +175,12 @@ parse_bc_specification(bc_algorithm algorithm, char *specification,
 		if (strcmp(keyword, "level") == 0)
 		{
 			result->level = expect_integer_value(keyword, value, result);
-			result->options |= BACKUP_COMPRESSION_OPTION_LEVEL;
+			result->options |= PG_COMPRESSION_OPTION_LEVEL;
 		}
 		else if (strcmp(keyword, "workers") == 0)
 		{
 			result->workers = expect_integer_value(keyword, value, result);
-			result->options |= BACKUP_COMPRESSION_OPTION_WORKERS;
+			result->options |= PG_COMPRESSION_OPTION_WORKERS;
 		}
 		else
 			result->parse_error =
@@ -215,7 +215,7 @@ parse_bc_specification(bc_algorithm algorithm, char *specification,
  * and return -1.
  */
 static int
-expect_integer_value(char *keyword, char *value, bc_specification *result)
+expect_integer_value(char *keyword, char *value, pg_compress_specification *result)
 {
 	int			ivalue;
 	char	   *ivalue_endp;
@@ -247,7 +247,7 @@ expect_integer_value(char *keyword, char *value, bc_specification *result)
  * compression method.
  */
 char *
-validate_bc_specification(bc_specification *spec)
+validate_compress_specification(pg_compress_specification *spec)
 {
 	/* If it didn't even parse OK, it's definitely no good. */
 	if (spec->parse_error != NULL)
@@ -258,24 +258,24 @@ validate_bc_specification(bc_specification *spec)
 	 * a compression level and that the level is within the legal range for
 	 * the algorithm.
 	 */
-	if ((spec->options & BACKUP_COMPRESSION_OPTION_LEVEL) != 0)
+	if ((spec->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
 	{
 		int			min_level = 1;
 		int			max_level;
 
-		if (spec->algorithm == BACKUP_COMPRESSION_GZIP)
+		if (spec->algorithm == PG_COMPRESSION_GZIP)
 			max_level = 9;
-		else if (spec->algorithm == BACKUP_COMPRESSION_LZ4)
+		else if (spec->algorithm == PG_COMPRESSION_LZ4)
 			max_level = 12;
-		else if (spec->algorithm == BACKUP_COMPRESSION_ZSTD)
+		else if (spec->algorithm == PG_COMPRESSION_ZSTD)
 			max_level = 22;
 		else
 			return psprintf(_("compression algorithm \"%s\" does not accept a compression level"),
-							get_bc_algorithm_name(spec->algorithm));
+							get_compress_algorithm_name(spec->algorithm));
 
 		if (spec->level < min_level || spec->level > max_level)
 			return psprintf(_("compression algorithm \"%s\" expects a compression level between %d and %d"),
-							get_bc_algorithm_name(spec->algorithm),
+							get_compress_algorithm_name(spec->algorithm),
 							min_level, max_level);
 	}
 
@@ -283,11 +283,11 @@ validate_bc_specification(bc_specification *spec)
 	 * Of the compression algorithms that we currently support, only zstd
 	 * allows parallel workers.
 	 */
-	if ((spec->options & BACKUP_COMPRESSION_OPTION_WORKERS) != 0 &&
-		(spec->algorithm != BACKUP_COMPRESSION_ZSTD))
+	if ((spec->options & PG_COMPRESSION_OPTION_WORKERS) != 0 &&
+		(spec->algorithm != PG_COMPRESSION_ZSTD))
 	{
 		return psprintf(_("compression algorithm \"%s\" does not accept a worker count"),
-						get_bc_algorithm_name(spec->algorithm));
+						get_compress_algorithm_name(spec->algorithm));
 	}
 
 	return NULL;

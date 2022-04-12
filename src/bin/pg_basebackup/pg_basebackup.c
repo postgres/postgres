@@ -29,7 +29,7 @@
 
 #include "access/xlog_internal.h"
 #include "bbstreamer.h"
-#include "common/backup_compression.h"
+#include "common/compression.h"
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
@@ -58,7 +58,7 @@ typedef struct TablespaceList
 typedef struct ArchiveStreamState
 {
 	int			tablespacenum;
-	bc_specification   *compress;
+	pg_compress_specification   *compress;
 	bbstreamer *streamer;
 	bbstreamer *manifest_inject_streamer;
 	PQExpBuffer manifest_buffer;
@@ -198,7 +198,7 @@ static bbstreamer *CreateBackupStreamer(char *archive_name, char *spclocation,
 										bbstreamer **manifest_inject_streamer_p,
 										bool is_recovery_guc_supported,
 										bool expect_unterminated_tarfile,
-										bc_specification *compress);
+										pg_compress_specification *compress);
 static void ReceiveArchiveStreamChunk(size_t r, char *copybuf,
 									  void *callback_data);
 static char GetCopyDataByte(size_t r, char *copybuf, size_t *cursor);
@@ -207,7 +207,7 @@ static uint64 GetCopyDataUInt64(size_t r, char *copybuf, size_t *cursor);
 static void GetCopyDataEnd(size_t r, char *copybuf, size_t cursor);
 static void ReportCopyDataParseError(size_t r, char *copybuf);
 static void ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
-						   bool tablespacenum, bc_specification *compress);
+						   bool tablespacenum, pg_compress_specification *compress);
 static void ReceiveTarCopyChunk(size_t r, char *copybuf, void *callback_data);
 static void ReceiveBackupManifest(PGconn *conn);
 static void ReceiveBackupManifestChunk(size_t r, char *copybuf,
@@ -217,7 +217,7 @@ static void ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
 											   void *callback_data);
 static void BaseBackup(char *compression_algorithm, char *compression_detail,
 					   CompressionLocation compressloc,
-					   bc_specification *client_compress);
+					   pg_compress_specification *client_compress);
 
 static bool reached_end_position(XLogRecPtr segendpos, uint32 timeline,
 								 bool segment_finished);
@@ -1077,7 +1077,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 					 bbstreamer **manifest_inject_streamer_p,
 					 bool is_recovery_guc_supported,
 					 bool expect_unterminated_tarfile,
-					 bc_specification *compress)
+					 pg_compress_specification *compress)
 {
 	bbstreamer *streamer = NULL;
 	bbstreamer *manifest_inject_streamer = NULL;
@@ -1193,23 +1193,23 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 			archive_file = NULL;
 		}
 
-		if (compress->algorithm == BACKUP_COMPRESSION_NONE)
+		if (compress->algorithm == PG_COMPRESSION_NONE)
 			streamer = bbstreamer_plain_writer_new(archive_filename,
 												   archive_file);
-		else if (compress->algorithm == BACKUP_COMPRESSION_GZIP)
+		else if (compress->algorithm == PG_COMPRESSION_GZIP)
 		{
 			strlcat(archive_filename, ".gz", sizeof(archive_filename));
 			streamer = bbstreamer_gzip_writer_new(archive_filename,
 												  archive_file, compress);
 		}
-		else if (compress->algorithm == BACKUP_COMPRESSION_LZ4)
+		else if (compress->algorithm == PG_COMPRESSION_LZ4)
 		{
 			strlcat(archive_filename, ".lz4", sizeof(archive_filename));
 			streamer = bbstreamer_plain_writer_new(archive_filename,
 												   archive_file);
 			streamer = bbstreamer_lz4_compressor_new(streamer, compress);
 		}
-		else if (compress->algorithm == BACKUP_COMPRESSION_ZSTD)
+		else if (compress->algorithm == PG_COMPRESSION_ZSTD)
 		{
 			strlcat(archive_filename, ".zst", sizeof(archive_filename));
 			streamer = bbstreamer_plain_writer_new(archive_filename,
@@ -1288,7 +1288,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
  * manifest if present - as a single COPY stream.
  */
 static void
-ReceiveArchiveStream(PGconn *conn, bc_specification *compress)
+ReceiveArchiveStream(PGconn *conn, pg_compress_specification *compress)
 {
 	ArchiveStreamState state;
 
@@ -1604,7 +1604,7 @@ ReportCopyDataParseError(size_t r, char *copybuf)
  */
 static void
 ReceiveTarFile(PGconn *conn, char *archive_name, char *spclocation,
-			   bool tablespacenum, bc_specification *compress)
+			   bool tablespacenum, pg_compress_specification *compress)
 {
 	WriteTarState state;
 	bbstreamer *manifest_inject_streamer;
@@ -1758,7 +1758,7 @@ ReceiveBackupManifestInMemoryChunk(size_t r, char *copybuf,
 
 static void
 BaseBackup(char *compression_algorithm, char *compression_detail,
-		   CompressionLocation compressloc, bc_specification *client_compress)
+		   CompressionLocation compressloc, pg_compress_specification *client_compress)
 {
 	PGresult   *res;
 	char	   *sysidentifier;
@@ -2025,11 +2025,11 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		if (verbose)
 			pg_log_info("starting background WAL receiver");
 
-		if (client_compress->algorithm == BACKUP_COMPRESSION_GZIP)
+		if (client_compress->algorithm == PG_COMPRESSION_GZIP)
 		{
 			wal_compress_method = COMPRESSION_GZIP;
 			wal_compress_level =
-				(client_compress->options & BACKUP_COMPRESSION_OPTION_LEVEL)
+				(client_compress->options & PG_COMPRESSION_OPTION_LEVEL)
 				!= 0 ? client_compress->level : 0;
 		}
 		else
@@ -2316,7 +2316,7 @@ main(int argc, char **argv)
 	char	   *compression_algorithm = "none";
 	char	   *compression_detail = NULL;
 	CompressionLocation	compressloc = COMPRESS_LOCATION_UNSPECIFIED;
-	bc_specification	client_compress;
+	pg_compress_specification	client_compress;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -2558,15 +2558,15 @@ main(int argc, char **argv)
 	 */
 	if (compressloc == COMPRESS_LOCATION_CLIENT)
 	{
-		bc_algorithm	alg;
+		pg_compress_algorithm	alg;
 		char	   *error_detail;
 
-		if (!parse_bc_algorithm(compression_algorithm, &alg))
+		if (!parse_compress_algorithm(compression_algorithm, &alg))
 			pg_fatal("unrecognized compression algorithm \"%s\"",
 					 compression_algorithm);
 
-		parse_bc_specification(alg, compression_detail, &client_compress);
-		error_detail = validate_bc_specification(&client_compress);
+		parse_compress_specification(alg, compression_detail, &client_compress);
+		error_detail = validate_compress_specification(&client_compress);
 		if (error_detail != NULL)
 			pg_fatal("invalid compression specification: %s",
 					 error_detail);
@@ -2574,7 +2574,7 @@ main(int argc, char **argv)
 	else
 	{
 		Assert(compressloc == COMPRESS_LOCATION_SERVER);
-		client_compress.algorithm = BACKUP_COMPRESSION_NONE;
+		client_compress.algorithm = PG_COMPRESSION_NONE;
 		client_compress.options = 0;
 	}
 
@@ -2593,7 +2593,7 @@ main(int argc, char **argv)
 	 * Client-side compression doesn't make sense unless tar format is in use.
 	 */
 	if (format == 'p' && compressloc == COMPRESS_LOCATION_CLIENT &&
-		client_compress.algorithm != BACKUP_COMPRESSION_NONE)
+		client_compress.algorithm != PG_COMPRESSION_NONE)
 	{
 		pg_log_error("only tar mode backups can be compressed");
 		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
