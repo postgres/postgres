@@ -219,13 +219,13 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
      <para>
       Skips applying all changes of the remote transaction.  If incoming data
       violates any constraints, logical replication will stop until it is
-      resolved.  By using <command>ALTER SUBSCRIPTION ... SKIP</command> command,
+      resolved.  By using the <command>ALTER SUBSCRIPTION ... SKIP</command> command,
       the logical replication worker skips all data modification changes within
       the transaction.  This option has no effect on the transactions that are
       already prepared by enabling <literal>two_phase</literal> on
       subscriber.
-      After logical replication worker successfully skips the transaction or
-      finishes a transaction, LSN (stored in
+      After the logical replication worker successfully skips the transaction or
+      finishes a transaction, the LSN (stored in
       <structname>pg_subscription</structname>.<structfield>subskiplsn</structfield>)
       is cleared.  See <xref linkend="logical-replication-conflicts"/> for
       the details of logical replication conflicts.  Using this command requires
@@ -244,7 +244,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
           Specifies the finish LSN of the remote transaction whose changes
           are to be skipped by the logical replication worker.  The finish LSN
           is the LSN at which the transaction is either committed or prepared.
-          Skipping individual subtransaction is not supported.  Setting
+          Skipping individual subtransactions is not supported.  Setting
           <literal>NONE</literal> resets the LSN.
          </para>
         </listitem>
