@@ -1832,8 +1832,9 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
    </table>
 
   <para>
-   The <function>random()</function> function uses a simple linear
-   congruential algorithm.  It is fast but not suitable for cryptographic
+   The <function>random()</function> function uses a deterministic
+   pseudo-random number generator.
+   It is fast but not suitable for cryptographic
    applications; see the <xref linkend="pgcrypto"/> module for a more
    secure alternative.
    If <function>setseed()</function> is called, the series of results of
