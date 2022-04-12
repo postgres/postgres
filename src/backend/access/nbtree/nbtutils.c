@@ -2072,7 +2072,7 @@ BTreeShmemSize(void)
 	Size		size;
 
 	size = offsetof(BTVacInfo, vacuums);
-	size = add_size(size, mul_size(GetMaxBackends(), sizeof(BTOneVacInfo)));
+	size = add_size(size, mul_size(MaxBackends, sizeof(BTOneVacInfo)));
 	return size;
 }
 
@@ -2101,7 +2101,7 @@ BTreeShmemInit(void)
 		btvacinfo->cycle_ctr = (BTCycleId) time(NULL);
 
 		btvacinfo->num_vacuums = 0;
-		btvacinfo->max_vacuums = GetMaxBackends();
+		btvacinfo->max_vacuums = MaxBackends;
 	}
 	else
 		Assert(found);

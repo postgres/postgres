@@ -559,14 +559,13 @@ pg_safe_snapshot_blocking_pids(PG_FUNCTION_ARGS)
 	int		   *blockers;
 	int			num_blockers;
 	Datum	   *blocker_datums;
-	int			max_backends = GetMaxBackends();
 
 	/* A buffer big enough for any possible blocker list without truncation */
-	blockers = (int *) palloc(max_backends * sizeof(int));
+	blockers = (int *) palloc(MaxBackends * sizeof(int));
 
 	/* Collect a snapshot of processes waited for by GetSafeSnapshot */
 	num_blockers =
-		GetSafeSnapshotBlockingPids(blocked_pid, blockers, max_backends);
+		GetSafeSnapshotBlockingPids(blocked_pid, blockers, MaxBackends);
 
 	/* Convert int array to Datum array */
 	if (num_blockers > 0)

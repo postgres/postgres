@@ -264,7 +264,6 @@ TwoPhaseShmemInit(void)
 	{
 		GlobalTransaction gxacts;
 		int			i;
-		int			max_backends = GetMaxBackends();
 
 		Assert(!found);
 		TwoPhaseState->freeGXacts = NULL;
@@ -298,7 +297,7 @@ TwoPhaseShmemInit(void)
 			 * prepared transaction. Currently multixact.c uses that
 			 * technique.
 			 */
-			gxacts[i].dummyBackendId = max_backends + 1 + i;
+			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
 		}
 	}
 	else

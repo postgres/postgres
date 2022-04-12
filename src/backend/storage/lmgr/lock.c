@@ -55,7 +55,7 @@
 int			max_locks_per_xact; /* set by guc.c */
 
 #define NLOCKENTS() \
-	mul_size(max_locks_per_xact, add_size(GetMaxBackends(), max_prepared_xacts))
+	mul_size(max_locks_per_xact, add_size(MaxBackends, max_prepared_xacts))
 
 
 /*
@@ -2924,7 +2924,6 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 	LWLock	   *partitionLock;
 	int			count = 0;
 	int			fast_count = 0;
-	int			max_backends = GetMaxBackends();
 
 	if (lockmethodid <= 0 || lockmethodid >= lengthof(LockMethods))
 		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
@@ -2943,12 +2942,12 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 			vxids = (VirtualTransactionId *)
 				MemoryContextAlloc(TopMemoryContext,
 								   sizeof(VirtualTransactionId) *
-								   (max_backends + max_prepared_xacts + 1));
+								   (MaxBackends + max_prepared_xacts + 1));
 	}
 	else
 		vxids = (VirtualTransactionId *)
 			palloc0(sizeof(VirtualTransactionId) *
-					(max_backends + max_prepared_xacts + 1));
+					(MaxBackends + max_prepared_xacts + 1));
 
 	/* Compute hash code and partition lock, and look up conflicting modes. */
 	hashcode = LockTagHashCode(locktag);
@@ -3105,7 +3104,7 @@ GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode, int *countp)
 
 	LWLockRelease(partitionLock);
 
-	if (count > max_backends + max_prepared_xacts)	/* should never happen */
+	if (count > MaxBackends + max_prepared_xacts)	/* should never happen */
 		elog(PANIC, "too many conflicting locks found");
 
 	vxids[count].backendId = InvalidBackendId;
@@ -3652,12 +3651,11 @@ GetLockStatusData(void)
 	int			els;
 	int			el;
 	int			i;
-	int			max_backends = GetMaxBackends();
 
 	data = (LockData *) palloc(sizeof(LockData));
 
 	/* Guess how much space we'll need. */
-	els = max_backends;
+	els = MaxBackends;
 	el = 0;
 	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * els);
 
@@ -3691,7 +3689,7 @@ GetLockStatusData(void)
 
 			if (el >= els)
 			{
-				els += max_backends;
+				els += MaxBackends;
 				data->locks = (LockInstanceData *)
 					repalloc(data->locks, sizeof(LockInstanceData) * els);
 			}
@@ -3723,7 +3721,7 @@ GetLockStatusData(void)
 
 			if (el >= els)
 			{
-				els += max_backends;
+				els += MaxBackends;
 				data->locks = (LockInstanceData *)
 					repalloc(data->locks, sizeof(LockInstanceData) * els);
 			}
@@ -3852,7 +3850,7 @@ GetBlockerStatusData(int blocked_pid)
 	 * for the procs[] array; the other two could need enlargement, though.)
 	 */
 	data->nprocs = data->nlocks = data->npids = 0;
-	data->maxprocs = data->maxlocks = data->maxpids = GetMaxBackends();
+	data->maxprocs = data->maxlocks = data->maxpids = MaxBackends;
 	data->procs = (BlockedProcData *) palloc(sizeof(BlockedProcData) * data->maxprocs);
 	data->locks = (LockInstanceData *) palloc(sizeof(LockInstanceData) * data->maxlocks);
 	data->waiter_pids = (int *) palloc(sizeof(int) * data->maxpids);
@@ -3927,7 +3925,6 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 	PGPROC	   *proc;
 	int			queue_size;
 	int			i;
-	int			max_backends = GetMaxBackends();
 
 	/* Nothing to do if this proc is not blocked */
 	if (theLock == NULL)
@@ -3956,7 +3953,7 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 
 		if (data->nlocks >= data->maxlocks)
 		{
-			data->maxlocks += max_backends;
+			data->maxlocks += MaxBackends;
 			data->locks = (LockInstanceData *)
 				repalloc(data->locks, sizeof(LockInstanceData) * data->maxlocks);
 		}
@@ -3985,7 +3982,7 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 
 	if (queue_size > data->maxpids - data->npids)
 	{
-		data->maxpids = Max(data->maxpids + max_backends,
+		data->maxpids = Max(data->maxpids + MaxBackends,
 							data->npids + queue_size);
 		data->waiter_pids = (int *) repalloc(data->waiter_pids,
 											 sizeof(int) * data->maxpids);
