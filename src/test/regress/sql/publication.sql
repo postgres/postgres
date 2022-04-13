@@ -352,6 +352,10 @@ UPDATE rf_tbl_abcd_part_pk SET a = 1;
 -- fail - cannot set PUBLISH_VIA_PARTITION_ROOT to false if any row filter is
 -- used for partitioned table
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
+-- remove partitioned table's row filter
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk;
+-- ok - we don't have row filter for partitioned table.
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- Now change the root filter to use a column "b"
 -- (which is not in the replica identity)
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 WHERE (b > 99);
@@ -634,6 +638,10 @@ ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk (a);
 UPDATE rf_tbl_abcd_part_pk SET a = 1;
 -- fail - cannot set PUBLISH_VIA_PARTITION_ROOT to false if any column list is
 -- used for partitioned table
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
+-- remove partitioned table's column list
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk;
+-- ok - we don't have column list for partitioned table.
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- Now change the root column list to use a column "b"
 -- (which is not in the replica identity)
