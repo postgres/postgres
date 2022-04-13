@@ -232,7 +232,7 @@ cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel)
 	if (rel != NULL)
 	{
 		Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-		check_index_is_clusterable(rel, indexOid, true, AccessShareLock);
+		check_index_is_clusterable(rel, indexOid, AccessShareLock);
 		rtcs = get_tables_to_cluster_partitioned(cluster_context, indexOid);
 
 		/* close relation, releasing lock on parent table */
@@ -434,7 +434,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
 
 	/* Check heap and index are valid to cluster on */
 	if (OidIsValid(indexOid))
-		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
+		check_index_is_clusterable(OldHeap, indexOid, AccessExclusiveLock);
 
 	/*
 	 * Quietly ignore the request if this is a materialized view which has not
@@ -480,7 +480,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
  * protection here.
  */
 void
-check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMODE lockmode)
+check_index_is_clusterable(Relation OldHeap, Oid indexOid, LOCKMODE lockmode)
 {
 	Relation	OldIndex;
 
