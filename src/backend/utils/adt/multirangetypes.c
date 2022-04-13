@@ -1181,7 +1181,6 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 				 */
 				range_count3++;
 				r2 = ++i2 >= range_count2 ? NULL : ranges2[i2];
-
 			}
 			else if (range_overlaps_internal(rangetyp, r1, r2))
 			{
@@ -1200,7 +1199,6 @@ multirange_minus_internal(Oid mltrngtypoid, TypeCacheEntry *rangetyp,
 					break;
 				else
 					r2 = ++i2 >= range_count2 ? NULL : ranges2[i2];
-
 			}
 			else
 			{

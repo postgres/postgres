@@ -4168,7 +4168,6 @@ json_strip_nulls(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(cstring_to_text_with_len(state->strval->data,
 											  state->strval->len));
-
 }
 
 /*

@@ -584,7 +584,6 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 			else
 				addHLParsedLex(prs, query, lexs, NULL);
 		} while (norms);
-
 	} while (type > 0);
 
 	FunctionCall1(&(prsobj->prsend), PointerGetDatum(prsdata));
@@ -629,7 +628,6 @@ generateHeadline(HeadlineParsedText *prs)
 					memcpy(ptr, prs->fragdelim, prs->fragdelimlen);
 					ptr += prs->fragdelimlen;
 				}
-
 			}
 			if (wrd->replace)
 			{

@@ -1734,7 +1734,6 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-
 	PG_RETURN_VOID();
 }
 

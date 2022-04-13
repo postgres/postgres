@@ -3094,7 +3094,6 @@ convert_database_priv_string(text *priv_type_text)
 	};
 
 	return convert_any_priv_string(priv_type_text, database_priv_map);
-
 }
 
 

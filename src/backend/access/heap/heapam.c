@@ -8481,7 +8481,6 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 		{
 			xlrec.cmin = InvalidCommandId;
 			xlrec.cmax = HeapTupleHeaderGetRawCommandId(hdr);
-
 		}
 		xlrec.combocid = InvalidCommandId;
 	}

@@ -1849,7 +1849,6 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 	if (qbuffer)
 		free(qbuffer);
-
 }
 
 /* Number of output arguments (columns) for pg_stat_statements_info */

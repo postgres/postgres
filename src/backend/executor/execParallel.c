@@ -1439,7 +1439,6 @@ ParallelQueryMain(dsm_segment *seg, shm_toc *toc)
 
 		paramexec_space = dsa_get_address(area, fpes->param_exec);
 		RestoreParamExecParams(paramexec_space, queryDesc->estate);
-
 	}
 	pwcxt.toc = toc;
 	pwcxt.seg = seg;

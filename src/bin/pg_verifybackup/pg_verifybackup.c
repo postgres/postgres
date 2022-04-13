@@ -740,8 +740,6 @@ verify_file_checksum(verifier_context *context, manifest_file *m,
 			close(fd);
 			return;
 		}
-
-
 	}
 	if (rc < 0)
 		report_backup_error(context, "could not read file \"%s\": %m",

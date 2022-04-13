@@ -210,7 +210,6 @@ makepol(WORKSTATE *state)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("syntax error")));
 				return ERR;
-
 		}
 	}
 

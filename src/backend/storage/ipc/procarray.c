@@ -243,7 +243,6 @@ typedef struct ComputeXidHorizonsResult
 	 * session's temporary tables.
 	 */
 	TransactionId temp_oldest_nonremovable;
-
 } ComputeXidHorizonsResult;
 
 /*
@@ -1839,7 +1838,6 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 			/* Catalog tables need to consider all backends in this db */
 			h->catalog_oldest_nonremovable =
 				TransactionIdOlder(h->catalog_oldest_nonremovable, xmin);
-
 		}
 	}
 

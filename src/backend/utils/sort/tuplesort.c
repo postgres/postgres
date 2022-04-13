@@ -3186,7 +3186,6 @@ mergeonerun(Tuplesortstate *state)
 		{
 			stup.srctape = srcTapeIndex;
 			tuplesort_heap_replace_top(state, &stup);
-
 		}
 		else
 		{

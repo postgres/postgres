@@ -2407,7 +2407,6 @@ setup_locale_encoding(void)
 	if (!check_locale_encoding(lc_ctype, encodingid) ||
 		!check_locale_encoding(lc_collate, encodingid))
 		exit(1);				/* check_locale_encoding printed the error */
-
 }
 
 
@@ -2486,7 +2485,6 @@ setup_text_search(void)
 
 	printf(_("The default text search configuration will be set to \"%s\".\n"),
 		   default_text_search_config);
-
 }
 
 

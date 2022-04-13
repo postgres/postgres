@@ -2073,7 +2073,6 @@ lazy_scan_noprune(LVRelState *vacrel,
 				elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 				break;
 		}
-
 	}
 
 	vacrel->offnum = InvalidOffsetNumber;

@@ -328,7 +328,6 @@ pgstat_prep_database_pending(Oid dboid)
 										  NULL);
 
 	return entry_ref->pending;
-
 }
 
 /*

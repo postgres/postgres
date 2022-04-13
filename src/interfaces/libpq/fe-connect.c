@@ -664,7 +664,6 @@ PQconnectdbParams(const char *const *keywords,
 		(void) connectDBComplete(conn);
 
 	return conn;
-
 }
 
 /*

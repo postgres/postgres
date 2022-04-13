@@ -104,7 +104,6 @@ gbt_bit_l2n(GBT_VARKEY *leaf, FmgrInfo *flinfo)
 	pfree(o);
 
 	return out;
-
 }
 
 static const gbtree_vinfo tinfo =

@@ -1373,7 +1373,6 @@ dumpDatabases(PGconn *conn)
 				pg_fatal("could not re-open the output file \"%s\": %m",
 						 filename);
 		}
-
 	}
 
 	PQclear(res);

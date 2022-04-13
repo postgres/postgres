@@ -257,7 +257,6 @@ typedef struct BloomFilter
 
 	/* data of the bloom filter */
 	char		data[FLEXIBLE_ARRAY_MEMBER];
-
 } BloomFilter;
 
 

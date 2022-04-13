@@ -192,7 +192,6 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
 		ereport(ERROR,
 				(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 				 errmsg("cannot manipulate replication origins during recovery")));
-
 }
 
 

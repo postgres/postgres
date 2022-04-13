@@ -2683,7 +2683,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						appendStringInfo(buf, "%*s", padding, psdisp);
 					else
 						appendBinaryStringInfo(buf, psdisp, displen);
-
 				}
 				else if (padding != 0)
 					appendStringInfoSpaces(buf,
@@ -2722,7 +2721,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 							appendStringInfo(buf, "(%s)",
 											 MyProcPort->remote_port);
 					}
-
 				}
 				else if (padding != 0)
 					appendStringInfoSpaces(buf,

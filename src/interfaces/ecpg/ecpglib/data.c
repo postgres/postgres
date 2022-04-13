@@ -564,7 +564,6 @@ ecpg_get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						}
 
 						pval += size;
-
 					}
 					break;
 

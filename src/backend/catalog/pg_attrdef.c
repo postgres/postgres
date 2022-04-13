@@ -167,7 +167,6 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 
 		if (!missingIsNull)
 			pfree(DatumGetPointer(missingval));
-
 	}
 	table_close(attrrel, RowExclusiveLock);
 	heap_freetuple(atttup);

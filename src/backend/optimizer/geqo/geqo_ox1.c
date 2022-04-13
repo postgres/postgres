@@ -89,7 +89,6 @@ ox1(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 		}
 		p = (p + 1) % num_gene; /* increment tour2-index */
 	}
-
 }
 
 #endif							/* defined(OX1) */

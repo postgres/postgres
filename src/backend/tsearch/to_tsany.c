@@ -569,7 +569,6 @@ pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, 
 		}
 
 		pfree(prs.words);
-
 	}
 	else
 		pushStop(state);
@@ -720,5 +719,4 @@ websearch_to_tsquery(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(DirectFunctionCall2(websearch_to_tsquery_byid,
 										ObjectIdGetDatum(cfgId),
 										PointerGetDatum(in)));
-
 }

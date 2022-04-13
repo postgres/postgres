@@ -316,7 +316,6 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					buf[0] = *p;
 					buf[1] = '\0';
 					break;
-
 			}
 			esc = false;
 		}

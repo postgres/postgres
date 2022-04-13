@@ -1710,7 +1710,6 @@ SearchCatCacheList(CatCache *cache,
 		 * we'd better do so before we start marking the members as belonging
 		 * to the list.
 		 */
-
 	}
 	PG_CATCH();
 	{
@@ -1962,7 +1961,6 @@ CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
 							   att->attbyval,
 							   att->attlen);
 	}
-
 }
 
 /*

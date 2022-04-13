@@ -497,12 +497,10 @@ check_foreign_key(PG_FUNCTION_ARGS)
 								 nv, (is_char_type > 0) ? "'" : "", (k < nkeys) ? ", " : "");
 					}
 					strcat(sql, " where ");
-
 				}
 				else
 					/* DELETE */
 					snprintf(sql, sizeof(sql), "delete from %s where ", relname);
-
 			}
 
 			/*

@@ -192,7 +192,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 		v_tupleheaderp =
 			l_load_struct_gep(b, v_heapslot, FIELDNO_HEAPTUPLETABLESLOT_TUPLE,
 							  "tupleheader");
-
 	}
 	else if (ops == &TTSOpsMinimalTuple)
 	{
@@ -357,7 +356,6 @@ slot_compile_deform(LLVMJitContext *context, TupleDesc desc,
 
 			LLVMAddCase(v_switch, v_attno, attcheckattnoblocks[attnum]);
 		}
-
 	}
 	else
 	{

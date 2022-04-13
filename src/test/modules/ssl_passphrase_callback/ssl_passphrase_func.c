@@ -89,5 +89,4 @@ rot13_passphrase(char *buf, int size, int rwflag, void *userdata)
 	}
 
 	return strlen(buf);
-
 }

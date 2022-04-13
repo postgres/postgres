@@ -98,7 +98,6 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 		}
 
 		extractPageInfo(xlogreader);
-
 	} while (xlogreader->EndRecPtr < endpoint);
 
 	/*

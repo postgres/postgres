@@ -4898,7 +4898,6 @@ timestamp_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 								lowunits, format_type_be(TIMESTAMPOID))));
 				intresult = 0;
 		}
-
 	}
 	else
 	{
@@ -5123,7 +5122,6 @@ timestamptz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 								lowunits, format_type_be(TIMESTAMPTZOID))));
 				intresult = 0;
 		}
-
 	}
 	else if (type == RESERV)
 	{

@@ -165,7 +165,6 @@ gbt_inet_penalty(PG_FUNCTION_ARGS)
 	penalty_num(result, origentry->lower, origentry->upper, newentry->lower, newentry->upper);
 
 	PG_RETURN_POINTER(result);
-
 }
 
 Datum

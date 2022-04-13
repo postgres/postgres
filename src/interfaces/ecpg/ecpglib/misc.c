@@ -191,7 +191,6 @@ ECPGtransactionStatus(const char *connection_name)
 	}
 
 	return PQtransactionStatus(con->connection);
-
 }
 
 bool

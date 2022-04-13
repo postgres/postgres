@@ -851,7 +851,6 @@ datum_to_jsonb(Datum val, bool is_null, JsonbInState *result,
 					sem.object_field_start = jsonb_in_object_field_start;
 
 					pg_parse_json_or_ereport(lex, &sem);
-
 				}
 				break;
 			case JSONBTYPE_JSONB:

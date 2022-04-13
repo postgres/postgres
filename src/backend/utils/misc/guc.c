@@ -5906,7 +5906,6 @@ InitializeWalConsistencyChecking(void)
 		/* checking should not be deferred again */
 		Assert(!check_wal_consistency_checking_deferred);
 	}
-
 }
 
 /*

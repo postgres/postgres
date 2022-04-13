@@ -896,7 +896,6 @@ CreateAuxProcessResourceOwner(void)
 	 * owner.  (This needs to run after, e.g., ShutdownXLOG.)
 	 */
 	on_shmem_exit(ReleaseAuxProcessResourcesCallback, 0);
-
 }
 
 /*

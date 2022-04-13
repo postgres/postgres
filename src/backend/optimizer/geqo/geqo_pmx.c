@@ -131,7 +131,6 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 
 				j++;
 			}
-
 		}
 
 		if (!(found))
@@ -140,7 +139,6 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 			indx[mx_fail] = k;
 			mx_fail++;
 		}
-
 	}							/* ... for */
 
 
@@ -172,9 +170,7 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 
 				j++;
 			}
-
 		}						/* ... for	 */
-
 	}							/* ... if	 */
 
 
@@ -206,12 +202,10 @@ pmx(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene)
 
 						j++;
 					}
-
 				}				/* ... if	 */
 
 				i++;
 			}					/* end while */
-
 		}
 	}							/* ... for	 */
 

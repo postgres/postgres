@@ -1173,7 +1173,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			if (opt_border == 2)
 				fputs(dformat->rightvrule, fout);
 			fputc('\n', fout);
-
 		} while (more_lines);
 	}
 

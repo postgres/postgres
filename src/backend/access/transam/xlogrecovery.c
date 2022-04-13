@@ -1790,7 +1790,6 @@ PerformWalRecovery(void)
 		/* there are no WAL records following the checkpoint */
 		ereport(LOG,
 				(errmsg("redo is not required")));
-
 	}
 
 	/*

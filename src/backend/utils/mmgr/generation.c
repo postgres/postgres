@@ -620,7 +620,6 @@ GenerationBlockMarkEmpty(GenerationBlock *block)
 	block->nchunks = 0;
 	block->nfree = 0;
 	block->freeptr = ((char *) block) + Generation_BLOCKHDRSZ;
-
 }
 
 /*

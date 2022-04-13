@@ -863,8 +863,6 @@ PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout
 {
 	if (TIMESTAMP_NOT_FINITE(*tin))
 		*tout = *tin;
-
-
 	else
 	{
 		if (span->month != 0)
@@ -872,7 +870,6 @@ PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout
 			struct tm	tt,
 					   *tm = &tt;
 			fsec_t		fsec;
-
 
 			if (timestamp2tm(*tin, NULL, tm, &fsec, NULL) != 0)
 				return -1;
@@ -898,12 +895,11 @@ PGTYPEStimestamp_add_interval(timestamp * tin, interval * span, timestamp * tout
 				return -1;
 		}
 
-
 		*tin += span->time;
 		*tout = *tin;
 	}
-	return 0;
 
+	return 0;
 }
 
 
@@ -924,7 +920,6 @@ PGTYPEStimestamp_sub_interval(timestamp * tin, interval * span, timestamp * tout
 
 	tspan.month = -span->month;
 	tspan.time = -span->time;
-
 
 	return PGTYPEStimestamp_add_interval(tin, &tspan, tout);
 }

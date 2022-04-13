@@ -1674,5 +1674,4 @@ ExecReScanMergeJoin(MergeJoinState *node)
 		ExecReScan(node->js.ps.lefttree);
 	if (node->js.ps.righttree->chgParam == NULL)
 		ExecReScan(node->js.ps.righttree);
-
 }

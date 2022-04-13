@@ -97,7 +97,6 @@ typedef struct CopyToStateData
 	FmgrInfo   *out_functions;	/* lookup info for output functions */
 	MemoryContext rowcontext;	/* per-row evaluation context */
 	uint64		bytes_processed;	/* number of bytes processed so far */
-
 } CopyToStateData;
 
 /* DestReceiver for COPY (query) TO */
