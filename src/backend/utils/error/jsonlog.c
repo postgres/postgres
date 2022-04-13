@@ -235,7 +235,7 @@ write_jsonlog(ErrorData *edata)
 
 	/* if printed internal query, print internal pos too */
 	if (edata->internalpos > 0 && edata->internalquery != NULL)
-		appendJSONKeyValueFmt(&buf, "internal_position", false, "%u",
+		appendJSONKeyValueFmt(&buf, "internal_position", false, "%d",
 							  edata->internalpos);
 
 	/* errcontext */
