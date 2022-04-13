@@ -912,7 +912,7 @@ InitFileAccess(void)
 void
 InitTemporaryFileAccess(void)
 {
-	Assert(SizeVfdCache != 0);	/* InitFileAccess() needs to have run*/
+	Assert(SizeVfdCache != 0);	/* InitFileAccess() needs to have run */
 	Assert(!temporary_files_allowed);	/* call me only once */
 
 	/*

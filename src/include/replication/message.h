@@ -32,7 +32,7 @@ typedef struct xl_logical_message
 extern XLogRecPtr LogLogicalMessage(const char *prefix, const char *message,
 									size_t size, bool transactional);
 
-/* RMGR API*/
+/* RMGR API */
 #define XLOG_LOGICAL_MESSAGE	0x00
 void		logicalmsg_redo(XLogReaderState *record);
 void		logicalmsg_desc(StringInfo buf, XLogReaderState *record);
