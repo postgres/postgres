@@ -4408,7 +4408,8 @@ describeConfigurationParameters(const char *pattern, bool verbose,
 							  NULL, "pg_catalog.lower(s.name)", NULL,
 							  NULL);
 	else
-		appendPQExpBufferStr(&buf, "WHERE s.source <> 'default'\n");
+		appendPQExpBufferStr(&buf, "WHERE s.source <> 'default' AND\n"
+							 "      s.setting IS DISTINCT FROM s.boot_val\n");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
