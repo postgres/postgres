@@ -57,6 +57,8 @@ static XLogRecPtr endpos = InvalidXLogRecPtr;
 
 
 static void usage(void);
+static void parse_compress_options(char *option, char **algorithm,
+								   char **detail);
 static DIR *get_destination_dir(char *dest_folder);
 static void close_destination_dir(DIR *dest_dir, char *dest_folder);
 static XLogRecPtr FindStreamingStart(uint32 *tli);
@@ -90,9 +92,8 @@ usage(void)
 	printf(_("      --synchronous      flush write-ahead log immediately after writing\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
-	printf(_("      --compression-method=METHOD\n"
-			 "                         method to compress logs\n"));
-	printf(_("  -Z, --compress=1-9     compress logs with given compression level\n"));
+	printf(_("  -Z, --compress=METHOD[:DETAIL]\n"
+			 "                         compress as specified\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
 	printf(_("\nConnection options:\n"));
 	printf(_("  -d, --dbname=CONNSTR   connection string\n"));
@@ -106,6 +107,66 @@ usage(void)
 	printf(_("      --drop-slot        drop the replication slot (for the slot's name see --slot)\n"));
 	printf(_("\nReport bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
+}
+
+/*
+ * Basic parsing of a value specified for -Z/--compress
+ *
+ * The parsing consists of a METHOD:DETAIL string fed later on to a more
+ * advanced routine in charge of proper validation checks.  This only extracts
+ * METHOD and DETAIL.  If only an integer is found, the method is implied by
+ * the value specified.
+ */
+static void
+parse_compress_options(char *option, char **algorithm, char **detail)
+{
+	char	   *sep;
+	char	   *endp;
+	long		result;
+
+	/*
+	 * Check whether the compression specification consists of a bare integer.
+	 *
+	 * For backward-compatibility, assume "none" if the integer found is zero
+	 * and "gzip" otherwise.
+	 */
+	result = strtol(option, &endp, 10);
+	if (*endp == '\0')
+	{
+		if (result == 0)
+		{
+			*algorithm = pstrdup("none");
+			*detail = NULL;
+		}
+		else
+		{
+			*algorithm = pstrdup("gzip");
+			*detail = pstrdup(option);
+		}
+		return;
+	}
+
+	/*
+	 * Check whether there is a compression detail following the algorithm
+	 * name.
+	 */
+	sep = strchr(option, ':');
+	if (sep == NULL)
+	{
+		*algorithm = pstrdup(option);
+		*detail = NULL;
+	}
+	else
+	{
+		char	   *alg;
+
+		alg = palloc((sep - option) + 1);
+		memcpy(alg, option, sep - option);
+		alg[sep - option] = '\0';
+
+		*algorithm = alg;
+		*detail = pstrdup(sep + 1);
+	}
 }
 
 /*
@@ -651,7 +712,6 @@ main(int argc, char **argv)
 		{"if-not-exists", no_argument, NULL, 3},
 		{"synchronous", no_argument, NULL, 4},
 		{"no-sync", no_argument, NULL, 5},
-		{"compression-method", required_argument, NULL, 6},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -660,6 +720,10 @@ main(int argc, char **argv)
 	char	   *db_name;
 	uint32		hi,
 				lo;
+	pg_compress_specification compression_spec;
+	char	   *compression_detail = NULL;
+	char	   *compression_algorithm_str = "none";
+	char	   *error_detail = NULL;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -728,9 +792,8 @@ main(int argc, char **argv)
 				verbose++;
 				break;
 			case 'Z':
-				if (!option_parse_int(optarg, "-Z/--compress", 1, 9,
-									  &compresslevel))
-					exit(1);
+				parse_compress_options(optarg, &compression_algorithm_str,
+									   &compression_detail);
 				break;
 /* action */
 			case 1:
@@ -747,17 +810,6 @@ main(int argc, char **argv)
 				break;
 			case 5:
 				do_sync = false;
-				break;
-			case 6:
-				if (pg_strcasecmp(optarg, "gzip") == 0)
-					compression_algorithm = PG_COMPRESSION_GZIP;
-				else if (pg_strcasecmp(optarg, "lz4") == 0)
-					compression_algorithm = PG_COMPRESSION_LZ4;
-				else if (pg_strcasecmp(optarg, "none") == 0)
-					compression_algorithm = PG_COMPRESSION_NONE;
-				else
-					pg_fatal("invalid value \"%s\" for option %s",
-							 optarg, "--compression-method");
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -810,24 +862,33 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-
 	/*
-	 * Compression-related options.
+	 * Compression options
 	 */
+	if (!parse_compress_algorithm(compression_algorithm_str,
+								  &compression_algorithm))
+		pg_fatal("unrecognized compression algorithm \"%s\"",
+				 compression_algorithm_str);
+
+	parse_compress_specification(compression_algorithm, compression_detail,
+								 &compression_spec);
+	error_detail = validate_compress_specification(&compression_spec);
+	if (error_detail != NULL)
+		pg_fatal("invalid compression specification: %s",
+				 error_detail);
+
+	/* Extract the compression level, if found in the specification */
+	if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) != 0)
+		compresslevel = compression_spec.level;
+
 	switch (compression_algorithm)
 	{
 		case PG_COMPRESSION_NONE:
-			if (compresslevel != 0)
-			{
-				pg_log_error("cannot use --compress with --compression-method=%s",
-							 "none");
-				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
-				exit(1);
-			}
+			/* nothing to do */
 			break;
 		case PG_COMPRESSION_GZIP:
 #ifdef HAVE_LIBZ
-			if (compresslevel == 0)
+			if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) == 0)
 			{
 				pg_log_info("no value specified for --compress, switching to default");
 				compresslevel = Z_DEFAULT_COMPRESSION;
@@ -838,15 +899,7 @@ main(int argc, char **argv)
 #endif
 			break;
 		case PG_COMPRESSION_LZ4:
-#ifdef USE_LZ4
-			if (compresslevel != 0)
-			{
-				pg_log_error("cannot use --compress with --compression-method=%s",
-							 "lz4");
-				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
-				exit(1);
-			}
-#else
+#ifndef USE_LZ4
 			pg_fatal("this build does not support compression with %s",
 					 "LZ4");
 #endif

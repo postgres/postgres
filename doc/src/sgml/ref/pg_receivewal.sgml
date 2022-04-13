@@ -263,37 +263,36 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>--compression-method=<replaceable class="parameter">method</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
+      <term><option>-Z <replaceable class="parameter">method</replaceable>[:<replaceable>detail</replaceable>]</option></term>
+      <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
+      <term><option>--compress=<replaceable class="parameter">method</replaceable>[:<replaceable>detail</replaceable>]</option></term>
       <listitem>
        <para>
-        Enables compression of write-ahead logs using the specified method.
-        Supported values are <literal>gzip</literal>, <literal>lz4</literal>
-        (if <productname>PostgreSQL</productname> was compiled with
-        <option>--with-lz4</option>), and <literal>none</literal>.
+        Enables compression of write-ahead logs.
        </para>
-
+       <para>
+        The compression method can be set to <literal>gzip</literal>,
+        <literal>lz4</literal> (if <productname>PostgreSQL</productname>
+        was compiled with <option>--with-lz4</option>) or
+        <literal>none</literal> for no compression.
+        A compression detail string can optionally be specified.  If the
+        detail string is an integer, it specifies the compression level.
+        Otherwise, it should be a comma-separated list of items, each of the
+        form <literal>keyword</literal> or <literal>keyword=value</literal>.
+        Currently, the only supported keyword is <literal>level</literal>.
+       </para>
+       <para>
+        If no compression level is specified, the default compression level
+        will be used. If only a level is specified without mentioning an
+        algorithm, <literal>gzip</literal> compression will be used if the
+        level is greater than 0, and no compression will be used if the level
+        is 0.
+       </para>
        <para>
         The suffix <filename>.gz</filename> will automatically be added to
         all filenames when using <literal>gzip</literal>, and the suffix
         <filename>.lz4</filename> is added when using <literal>lz4</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-Z <replaceable class="parameter">level</replaceable></option></term>
-      <term><option>--compress=<replaceable class="parameter">level</replaceable></option></term>
-      <listitem>
-       <para>
-        Specifies the compression level (<literal>1</literal> through
-        <literal>9</literal>, <literal>1</literal> being worst compression
-        and <literal>9</literal> being best compression) for WAL segments
-        compressed with <application>gzip</application>.
-       </para>
-
-       <para>
-        This option requires <option>--compression-method</option> to be
-        specified with <literal>gzip</literal>.
        </para>
       </listitem>
      </varlistentry>
