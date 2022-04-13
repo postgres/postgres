@@ -1405,10 +1405,13 @@ heap_getnextslot(TableScanDesc sscan, ScanDirection direction, TupleTableSlot *s
  * must unpin the buffer when done with the tuple.
  *
  * If the tuple is not found (ie, item number references a deleted slot),
- * then tuple->t_data is set to NULL and false is returned.
+ * then tuple->t_data is set to NULL, *userbuf is set to InvalidBuffer,
+ * and false is returned.
  *
  * If the tuple is found but fails the time qual check, then false is returned
- * but tuple->t_data is left pointing to the tuple.
+ * and *userbuf is set to InvalidBuffer, but tuple->t_data is left pointing
+ * to the tuple.  (Note that it is unsafe to dereference tuple->t_data in
+ * this case, but callers might choose to test it for NULL-ness.)
  *
  * heap_fetch does not follow HOT chains: only the exact TID requested will
  * be fetched.
@@ -1427,6 +1430,25 @@ heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
 		   Buffer *userbuf)
+{
+	return heap_fetch_extended(relation, snapshot, tuple, userbuf, false);
+}
+
+/*
+ *	heap_fetch_extended		- fetch tuple even if it fails snapshot test
+ *
+ * If keep_buf is true, then upon finding a tuple that is valid but fails
+ * the snapshot check, we return the tuple pointer in tuple->t_data and the
+ * buffer ID in *userbuf, keeping the buffer pin, just as if it had passed
+ * the snapshot.  (The function result is still "false" though.)
+ * If keep_buf is false then this behaves identically to heap_fetch().
+ */
+bool
+heap_fetch_extended(Relation relation,
+					Snapshot snapshot,
+					HeapTuple tuple,
+					Buffer *userbuf,
+					bool keep_buf)
 {
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
@@ -1508,9 +1530,14 @@ heap_fetch(Relation relation,
 		return true;
 	}
 
-	/* Tuple failed time qual */
-	ReleaseBuffer(buffer);
-	*userbuf = InvalidBuffer;
+	/* Tuple failed time qual, but maybe caller wants to see it anyway. */
+	if (keep_buf)
+		*userbuf = buffer;
+	else
+	{
+		ReleaseBuffer(buffer);
+		*userbuf = InvalidBuffer;
+	}
 
 	return false;
 }
@@ -1533,8 +1560,7 @@ heap_fetch(Relation relation,
  * are vacuumable, false if not.
  *
  * Unlike heap_fetch, the caller must already have pin and (at least) share
- * lock on the buffer; it is still pinned/locked at exit.  Also unlike
- * heap_fetch, we do not report any pgstats count; caller may do so if wanted.
+ * lock on the buffer; it is still pinned/locked at exit.
  */
 bool
 heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
