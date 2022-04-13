@@ -370,7 +370,7 @@ $ENV{MSBFLAGS}="/m";
   </para>
 
   <para>
-   To use a server-side third party library such as <productname>python</productname> or
+   To use a server-side third party library such as <productname>Python</productname> or
    <productname>OpenSSL</productname>, this library <emphasis>must</emphasis> also be
    64-bit. There is no support for loading a 32-bit library in a 64-bit
    server. Several of the third party libraries that PostgreSQL supports may
