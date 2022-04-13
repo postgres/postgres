@@ -314,7 +314,7 @@ initdb --locale=sv_SE
       A locale can be selected separately for each database.  The SQL command
       <command>CREATE DATABASE</command> and its command-line equivalent
       <command>createdb</command> have options for that.  Use this for example
-      if a database cluster houses databases for multiple tennants with
+      if a database cluster houses databases for multiple tenants with
       different requirements.
      </para>
     </listitem>
@@ -346,7 +346,7 @@ initdb --locale=sv_SE
     providers</firstterm>.  This specifies which library supplies the locale
     data.  One standard provider name is <literal>libc</literal>, which uses
     the locales provided by the operating system C library.  These are the
-    locales that most tools provided by the operating system use.  Another
+    locales used by most tools provided by the operating system.  Another
     provider is <literal>icu</literal>, which uses the external
     ICU<indexterm><primary>ICU</primary></indexterm> library.  ICU locales can
     only be used if support for ICU was configured when PostgreSQL was built.
@@ -361,8 +361,8 @@ initdb --locale=sv_SE
 <programlisting>
 initdb --locale-provider=icu --icu-locale=en
 </programlisting>
-    See the description of the respective commands and programs for the
-    respective details.  Note that you can mix locale providers on different
+    See the description of the respective commands and programs for
+    details.  Note that you can mix locale providers at different
     granularities, for example use <literal>libc</literal> by default for the
     cluster but have one database that uses the <literal>icu</literal>
     provider, and then have collation objects using either provider within
@@ -610,8 +610,8 @@ SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";
     definition has a <firstterm>provider</firstterm> that specifies which
     library supplies the locale data.  One standard provider name
     is <literal>libc</literal>, which uses the locales provided by the
-    operating system C library.  These are the locales that most tools
-    provided by the operating system use.  Another provider
+    operating system C library.  These are the locales used by most tools
+    provided by the operating system.  Another provider
     is <literal>icu</literal>, which uses the external
     ICU<indexterm><primary>ICU</primary></indexterm> library.  ICU locales can only be
     used if support for ICU was configured when PostgreSQL was built.

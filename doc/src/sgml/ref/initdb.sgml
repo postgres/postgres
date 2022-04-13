@@ -108,7 +108,7 @@ PostgreSQL documentation
    Alternatively, the ICU library can be used to provide locale services.
    (Again, this only sets the default for subsequently created databases.)  To
    select this option, specify <literal>--locale-provider=icu</literal>.
-   To chose the specific ICU locale ID to apply, use the option
+   To choose the specific ICU locale ID to apply, use the option
    <option>--icu-locale</option>.  Note that
    for implementation reasons and to support legacy code,
    <command>initdb</command> will still select and initialize libc locale
