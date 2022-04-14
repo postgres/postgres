@@ -545,6 +545,12 @@ bt_page_items_bytea(PG_FUNCTION_ARGS)
 
 		uargs->page = get_page_from_raw(raw_page);
 
+		if (PageIsNew(uargs->page))
+		{
+			MemoryContextSwitchTo(mctx);
+			PG_RETURN_NULL();
+		}
+
 		uargs->offset = FirstOffsetNumber;
 
 		/* verify the special space has the expected size */

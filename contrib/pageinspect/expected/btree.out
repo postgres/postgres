@@ -93,4 +93,10 @@ ERROR:  input page is not a valid btree page
 SELECT bt_page_items(get_raw_page('test1_a_brin', 0));
 ERROR:  input page is not a valid btree page
 \set VERBOSITY default
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT bt_page_items(decode(repeat('00', :block_size), 'hex'));
+-[ RECORD 1 ]-+-
+bt_page_items | 
+
 DROP TABLE test1;

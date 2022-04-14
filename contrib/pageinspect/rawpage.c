@@ -296,5 +296,8 @@ page_checksum(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	PG_RETURN_INT16(pg_checksum_page((char *) page, blkno));
 }
