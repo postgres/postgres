@@ -266,8 +266,8 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * the blocks to not exist on disk at all, but not for them to have the
 	 * wrong contents.
 	 */
-	Assert((MyPgXact->delayChkpt & DELAY_CHKPT_COMPLETE) == 0);
-	MyPgXact->delayChkpt |= DELAY_CHKPT_COMPLETE;
+	Assert(!MyProc->delayChkptEnd);
+	MyProc->delayChkptEnd = true;
 
 	/*
 	 * We WAL-log the truncation before actually truncating, which means
@@ -315,7 +315,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
 
 	/* We've done all the critical work, so checkpoints are OK now. */
-	MyPgXact->delayChkpt &= ~DELAY_CHKPT_COMPLETE;
+	MyProc->delayChkptEnd = false;
 }
 
 /*

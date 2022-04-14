@@ -92,9 +92,12 @@ extern TransactionId GetOldestXmin(Relation rel, int flags);
 extern TransactionId GetOldestActiveTransactionId(void);
 extern TransactionId GetOldestSafeDecodingTransactionId(bool catalogOnly);
 
-extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids, int type);
+extern VirtualTransactionId *GetVirtualXIDsDelayingChkpt(int *nvxids);
+extern VirtualTransactionId *GetVirtualXIDsDelayingChkptEnd(int *nvxids);
 extern bool HaveVirtualXIDsDelayingChkpt(VirtualTransactionId *vxids,
-										 int nvxids, int type);
+										 int nvxids);
+extern bool HaveVirtualXIDsDelayingChkptEnd(VirtualTransactionId *vxids,
+											int nvxids);
 
 extern PGPROC *BackendPidGetProc(int pid);
 extern PGPROC *BackendPidGetProcWithLock(int pid);
