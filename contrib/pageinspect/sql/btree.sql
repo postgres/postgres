@@ -44,4 +44,8 @@ SELECT bt_page_items(get_raw_page('test1', 0));
 SELECT bt_page_items(get_raw_page('test1_a_brin', 0));
 \set VERBOSITY default
 
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT bt_page_items(decode(repeat('00', :block_size), 'hex'));
+
 DROP TABLE test1;

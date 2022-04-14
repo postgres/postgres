@@ -44,4 +44,10 @@ SELECT gist_page_items_bytea(get_raw_page('test_gist', 0));
 SELECT gist_page_items_bytea(get_raw_page('test_gist_btree', 0));
 \set VERBOSITY default
 
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT gist_page_items_bytea(decode(repeat('00', :block_size), 'hex'));
+SELECT gist_page_items(decode(repeat('00', :block_size), 'hex'), 'test_gist_idx'::regclass);
+SELECT gist_page_opaque_info(decode(repeat('00', :block_size), 'hex'));
+
 DROP TABLE test_gist;

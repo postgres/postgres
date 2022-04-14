@@ -46,6 +46,10 @@ fsm_page_contents(PG_FUNCTION_ARGS)
 				 errmsg("must be superuser to use raw page functions")));
 
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	fsmpage = (FSMPage) PageGetContents(page);
 
 	initStringInfo(&sinfo);
