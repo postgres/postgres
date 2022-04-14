@@ -4072,13 +4072,15 @@ static JsonBehavior *
 transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 					  JsonBehaviorType default_behavior)
 {
-	JsonBehaviorType behavior_type;
-	Node	   *default_expr;
+	JsonBehaviorType behavior_type = default_behavior;
+	Node	   *default_expr = NULL;
 
-	behavior_type = behavior ? behavior->btype : default_behavior;
-	default_expr = behavior_type != JSON_BEHAVIOR_DEFAULT ? NULL :
-		transformExprRecurse(pstate, behavior->default_expr);
-
+	if (behavior)
+	{
+		behavior_type = behavior->btype;
+		if (behavior_type == JSON_BEHAVIOR_DEFAULT)
+			default_expr = transformExprRecurse(pstate, behavior->default_expr);
+	}
 	return makeJsonBehavior(behavior_type, default_expr);
 }
 
