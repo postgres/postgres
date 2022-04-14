@@ -1647,10 +1647,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
  * Given an index on a partitioned table, return a list of RelToCluster for
  * all the children leaves tables/indexes.
  *
- * Caller must hold lock on the table containing the index.
- *
  * Like expand_vacuum_rel, but here caller must hold AccessExclusiveLock
- * on the table already.
+ * on the table containing the index.
  */
 static List *
 get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
@@ -1663,9 +1661,6 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 	/* Do not lock the children until they're processed */
 	inhoids = find_all_inheritors(indexOid, NoLock, NULL);
 
-	/* Use a permanent memory context for the result list */
-	old_context = MemoryContextSwitchTo(cluster_context);
-
 	foreach(lc, inhoids)
 	{
 		Oid			indexrelid = lfirst_oid(lc);
@@ -1676,12 +1671,22 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 		if (get_rel_relkind(indexrelid) != RELKIND_INDEX)
 			continue;
 
+		/* Silently skip partitions which the user has no access to. */
+		if (!pg_class_ownercheck(relid, GetUserId()) &&
+			(!pg_database_ownercheck(MyDatabaseId, GetUserId()) ||
+			 IsSharedRelation(relid)))
+			continue;
+
+		/* Use a permanent memory context for the result list */
+		old_context = MemoryContextSwitchTo(cluster_context);
+
 		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
 		rtc->tableOid = relid;
 		rtc->indexOid = indexrelid;
 		rtcs = lappend(rtcs, rtc);
+
+		MemoryContextSwitchTo(old_context);
 	}
 
-	MemoryContextSwitchTo(old_context);
 	return rtcs;
 }
