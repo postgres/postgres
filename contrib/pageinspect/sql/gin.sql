@@ -31,3 +31,9 @@ SELECT * FROM gin_metapage_info(get_raw_page('test1', 0));
 SELECT * FROM gin_page_opaque_info(get_raw_page('test1', 0));
 SELECT * FROM gin_leafpage_items(get_raw_page('test1', 0));
 \set VERBOSITY default
+
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT gin_leafpage_items(decode(repeat('00', :block_size), 'hex'));
+SELECT gin_metapage_info(decode(repeat('00', :block_size), 'hex'));
+SELECT gin_page_opaque_info(decode(repeat('00', :block_size), 'hex'));
