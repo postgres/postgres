@@ -76,36 +76,8 @@ struct XidCache
 #define INVALID_PGPROCNO		PG_INT32_MAX
 
 /*
- * Flags for PGPROC.delayChkpt
- *
- * These flags can be used to delay the start or completion of a checkpoint
- * for short periods. A flag is in effect if the corresponding bit is set in
- * the PGPROC of any backend.
- *
- * For our purposes here, a checkpoint has three phases: (1) determine the
- * location to which the redo pointer will be moved, (2) write all the
- * data durably to disk, and (3) WAL-log the checkpoint.
- *
- * Setting DELAY_CHKPT_START prevents the system from moving from phase 1
- * to phase 2. This is useful when we are performing a WAL-logged modification
- * of data that will be flushed to disk in phase 2. By setting this flag
- * before writing WAL and clearing it after we've both written WAL and
- * performed the corresponding modification, we ensure that if the WAL record
- * is inserted prior to the new redo point, the corresponding data changes will
- * also be flushed to disk before the checkpoint can complete. (In the
- * extremely common case where the data being modified is in shared buffers
- * and we acquire an exclusive content lock on the relevant buffers before
- * writing WAL, this mechanism is not needed, because phase 2 will block
- * until we release the content lock and then flush the modified data to
- * disk.)
- *
- * Setting DELAY_CHKPT_COMPLETE prevents the system from moving from phase 2
- * to phase 3. This is useful if we are performing a WAL-logged operation that
- * might invalidate buffers, such as relation truncation. In this case, we need
- * to ensure that any buffers which were invalidated and thus not flushed by
- * the checkpoint are actaully destroyed on disk. Replay can cope with a file
- * or block that doesn't exist, but not with a block that has the wrong
- * contents.
+ * Flags used only for type of internal functions
+ * GetVirtualXIDsDelayingChkptGuts and HaveVirtualXIDsDelayingChkptGuts.
  */
 #define DELAY_CHKPT_START		(1<<0)
 #define DELAY_CHKPT_COMPLETE	(1<<1)
@@ -181,6 +153,12 @@ struct PGPROC
 	 */
 	XLogRecPtr	waitLSN;		/* waiting for this LSN or higher */
 	int			syncRepState;	/* wait state for sync rep */
+	bool		delayChkptEnd;	/* true if this proc delays checkpoint end;
+								 * this doesn't have anything to do with
+								 * sync rep but we don't want to change
+								 * the size of PGPROC in released branches
+								 * and thus must fit this new field into
+								 * existing padding space  */
 	SHM_QUEUE	syncRepLinks;	/* list link if process is in syncrep queue */
 
 	/*
@@ -252,7 +230,7 @@ typedef struct PGXACT
 
 	uint8		vacuumFlags;	/* vacuum-related flags, see above */
 	bool		overflowed;
-	int			delayChkpt;		/* for DELAY_CHKPT_* flags */
+	bool		delayChkpt;		/* true if this proc delays checkpoint start */
 
 	uint8		nxids;
 } PGXACT;

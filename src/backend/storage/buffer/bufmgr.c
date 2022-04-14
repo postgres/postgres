@@ -3469,8 +3469,8 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 			 * essential that CreateCheckpoint waits for virtual transactions
 			 * rather than full transactionids.
 			 */
-			Assert((MyPgXact->delayChkpt & DELAY_CHKPT_START) == 0);
-			MyPgXact->delayChkpt |= DELAY_CHKPT_START;
+			Assert(!MyPgXact->delayChkpt);
+			MyPgXact->delayChkpt = true;
 			delayChkpt = true;
 			lsn = XLogSaveBufferForHint(buffer, buffer_std);
 		}
@@ -3504,7 +3504,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		UnlockBufHdr(bufHdr, buf_state);
 
 		if (delayChkpt)
-			MyPgXact->delayChkpt &= ~DELAY_CHKPT_START;
+			MyPgXact->delayChkpt = false;
 
 		if (dirtied)
 		{

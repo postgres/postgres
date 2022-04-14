@@ -9022,27 +9022,25 @@ CreateCheckPoint(int flags)
 	 * and we will correctly flush the update below.  So we cannot miss any
 	 * xacts we need to wait for.
 	 */
-	vxids = GetVirtualXIDsDelayingChkpt(&nvxids, DELAY_CHKPT_START);
+	vxids = GetVirtualXIDsDelayingChkpt(&nvxids);
 	if (nvxids > 0)
 	{
 		do
 		{
 			pg_usleep(10000L);	/* wait for 10 msec */
-		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
-											  DELAY_CHKPT_START));
+		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids));
 	}
 	pfree(vxids);
 
 	CheckPointGuts(checkPoint.redo, flags);
 
-	vxids = GetVirtualXIDsDelayingChkpt(&nvxids, DELAY_CHKPT_COMPLETE);
+	vxids = GetVirtualXIDsDelayingChkptEnd(&nvxids);
 	if (nvxids > 0)
 	{
 		do
 		{
 			pg_usleep(10000L);	/* wait for 10 msec */
-		} while (HaveVirtualXIDsDelayingChkpt(vxids, nvxids,
-											  DELAY_CHKPT_COMPLETE));
+		} while (HaveVirtualXIDsDelayingChkptEnd(vxids, nvxids));
 	}
 	pfree(vxids);
 
