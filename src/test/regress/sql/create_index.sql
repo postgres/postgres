@@ -21,13 +21,28 @@ CREATE INDEX onek_hundred ON onek USING btree(hundred int4_ops);
 
 CREATE INDEX onek_stringu1 ON onek USING btree(stringu1 name_ops);
 
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
+
 CREATE INDEX tenk1_unique1 ON tenk1 USING btree(unique1 int4_ops);
+
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
 
 CREATE INDEX tenk1_unique2 ON tenk1 USING btree(unique2 int4_ops);
 
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
+
 CREATE INDEX tenk1_hundred ON tenk1 USING btree(hundred int4_ops);
 
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
+
 CREATE INDEX tenk1_thous_tenthous ON tenk1 (thousand, tenthous);
+
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
 
 CREATE INDEX tenk2_unique1 ON tenk2 USING btree(unique1 int4_ops);
 
@@ -369,6 +384,10 @@ DROP TABLE unlogged_hash_table;
 -- maintenance_work_mem setting and fillfactor:
 SET maintenance_work_mem = '1MB';
 CREATE INDEX hash_tuplesort_idx ON tenk1 USING hash (stringu1 name_ops) WITH (fillfactor = 10);
+
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
+
 EXPLAIN (COSTS OFF)
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
 SELECT count(*) FROM tenk1 WHERE stringu1 = 'TVAAAA';
@@ -745,6 +764,9 @@ EXPLAIN (COSTS OFF)
     WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
 SELECT count(*) FROM dupindexcols
   WHERE f1 BETWEEN 'WA' AND 'ZZZ' and id < 1000 and f1 ~<~ 'YX';
+
+select relallvisible::float8/relpages as visfrac
+from pg_class where relname = 'tenk1';
 
 --
 -- Check ordering of =ANY indexqual results (bug in 9.2.0)
