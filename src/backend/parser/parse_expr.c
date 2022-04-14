@@ -4456,7 +4456,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (jsexpr->returning->typid != JSONBOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("JSON_TABLE() is not yet implemented for json type"),
+						 errmsg("JSON_TABLE() is not yet implemented for the json type"),
 						 errhint("Try casting the argument to jsonb"),
 						 parser_errposition(pstate, func->location)));
 
@@ -4466,7 +4466,8 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 	if (exprType(contextItemExpr) != JSONBOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("%s() is not yet implemented for json type", func_name),
+				 errmsg("%s() is not yet implemented for the json type", func_name),
+				 errhint("Try casting the argument to jsonb"),
 				 parser_errposition(pstate, func->location)));
 
 	return (Node *) jsexpr;
