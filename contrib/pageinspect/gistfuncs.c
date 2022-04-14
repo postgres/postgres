@@ -55,6 +55,9 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
 			ereport(ERROR,
@@ -155,6 +158,9 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 	MemoryContextSwitchTo(oldcontext);
 
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
@@ -271,6 +277,12 @@ gist_page_items(PG_FUNCTION_ARGS)
 						RelationGetRelationName(indexRel), "GiST")));
 
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+	{
+		index_close(indexRel, AccessShareLock);
+		PG_RETURN_NULL();
+	}
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))

@@ -91,3 +91,9 @@ SELECT fsm_page_contents('aaa'::bytea);
 SELECT page_checksum('bbb'::bytea, 0);
 SELECT page_header('ccc'::bytea);
 \set VERBOSITY default
+
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT fsm_page_contents(decode(repeat('00', :block_size), 'hex'));
+SELECT page_header(decode(repeat('00', :block_size), 'hex'));
+SELECT page_checksum(decode(repeat('00', :block_size), 'hex'), 1);

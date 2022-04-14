@@ -58,6 +58,9 @@ brin_page_type(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(BrinSpecialSpace)))
 			ereport(ERROR,
@@ -94,6 +97,9 @@ static Page
 verify_brin_page(bytea *raw_page, uint16 type, const char *strtype)
 {
 	Page		page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+		return page;
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(BrinSpecialSpace)))
@@ -181,6 +187,13 @@ brin_page_items(PG_FUNCTION_ARGS)
 
 	/* minimally verify the page we got */
 	page = verify_brin_page(raw_page, BRIN_PAGETYPE_REGULAR, "regular");
+
+	if (PageIsNew(page))
+	{
+		brin_free_desc(bdesc);
+		index_close(indexRel, AccessShareLock);
+		PG_RETURN_NULL();
+	}
 
 	/*
 	 * Initialize output functions for all indexed datatypes; simplifies
@@ -359,6 +372,9 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 
 	page = verify_brin_page(raw_page, BRIN_PAGETYPE_META, "metapage");
 
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
@@ -409,6 +425,12 @@ brin_revmap_data(PG_FUNCTION_ARGS)
 
 		/* minimally verify the page we got */
 		page = verify_brin_page(raw_page, BRIN_PAGETYPE_REVMAP, "revmap");
+
+		if (PageIsNew(page))
+		{
+			MemoryContextSwitchTo(mctx);
+			PG_RETURN_NULL();
+		}
 
 		state = palloc(sizeof(*state));
 		state->tids = ((RevmapContents *) PageGetContents(page))->rm_tids;

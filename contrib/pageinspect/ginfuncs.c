@@ -49,6 +49,9 @@ gin_metapage_info(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GinPageOpaqueData)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -114,6 +117,9 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 				 errmsg("must be superuser to use raw page functions")));
 
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
 
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GinPageOpaqueData)))
 		ereport(ERROR,
@@ -199,6 +205,12 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		mctx = MemoryContextSwitchTo(fctx->multi_call_memory_ctx);
 
 		page = get_page_from_raw(raw_page);
+
+		if (PageIsNew(page))
+		{
+			MemoryContextSwitchTo(mctx);
+			PG_RETURN_NULL();
+		}
 
 		if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GinPageOpaqueData)))
 			ereport(ERROR,
