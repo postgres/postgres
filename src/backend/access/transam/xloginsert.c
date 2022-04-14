@@ -925,7 +925,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 	/*
 	 * Ensure no checkpoint can change our view of RedoRecPtr.
 	 */
-	Assert((MyProc->delayChkpt & DELAY_CHKPT_START) != 0);
+	Assert(MyProc->delayChkpt);
 
 	/*
 	 * Update RedoRecPtr so that we can make the right decision

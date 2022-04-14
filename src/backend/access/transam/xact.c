@@ -1335,9 +1335,9 @@ RecordTransactionCommit(void)
 		 * This makes checkpoint's determination of which xacts are delayChkpt
 		 * a bit fuzzy, but it doesn't matter.
 		 */
-		Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
+		Assert(!MyProc->delayChkpt);
 		START_CRIT_SECTION();
-		MyProc->delayChkpt |= DELAY_CHKPT_START;
+		MyProc->delayChkpt = true;
 
 		SetCurrentTransactionStopTimestamp();
 
@@ -1438,7 +1438,7 @@ RecordTransactionCommit(void)
 	 */
 	if (markXidCommitted)
 	{
-		MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+		MyProc->delayChkpt = false;
 		END_CRIT_SECTION();
 	}
 

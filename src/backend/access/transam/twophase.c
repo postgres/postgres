@@ -474,8 +474,9 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	}
 	proc->xid = xid;
 	Assert(proc->xmin == InvalidTransactionId);
-	proc->delayChkpt = 0;
+	proc->delayChkpt = false;
 	proc->statusFlags = 0;
+	proc->delayChkptEnd = false;
 	proc->pid = 0;
 	proc->databaseId = databaseid;
 	proc->roleId = owner;
@@ -1165,8 +1166,8 @@ EndPrepare(GlobalTransaction gxact)
 
 	START_CRIT_SECTION();
 
-	Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
-	MyProc->delayChkpt |= DELAY_CHKPT_START;
+	Assert(!MyProc->delayChkpt);
+	MyProc->delayChkpt = true;
 
 	XLogBeginInsert();
 	for (record = records.head; record != NULL; record = record->next)
@@ -1209,7 +1210,7 @@ EndPrepare(GlobalTransaction gxact)
 	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
-	MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+	MyProc->delayChkpt = false;
 
 	/*
 	 * Remember that we have this GlobalTransaction entry locked for us.  If
@@ -2276,8 +2277,8 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
-	Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
-	MyProc->delayChkpt |= DELAY_CHKPT_START;
+	Assert(!MyProc->delayChkpt);
+	MyProc->delayChkpt = true;
 
 	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC commits as
@@ -2325,7 +2326,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */
-	MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+	MyProc->delayChkpt = false;
 
 	END_CRIT_SECTION();
 
