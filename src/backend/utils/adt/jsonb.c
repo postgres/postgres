@@ -2264,7 +2264,7 @@ JsonbUnquote(Jsonb *jb)
 	{
 		JsonbValue	v;
 
-		JsonbExtractScalar(&jb->root, &v);
+		(void) JsonbExtractScalar(&jb->root, &v);
 
 		if (v.type == jbvString)
 			return pnstrdup(v.val.string.val, v.val.string.len);

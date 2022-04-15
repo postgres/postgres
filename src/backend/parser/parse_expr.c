@@ -3569,7 +3569,7 @@ coerceJsonFuncExpr(ParseState *pstate, Node *expr,
 	location = exprLocation(expr);
 
 	if (location < 0)
-		location = returning ? returning->format->location : -1;
+		location = returning->format->location;
 
 	/* special case for RETURNING bytea FORMAT json */
 	if (returning->format->format_type == JS_FORMAT_JSON &&
