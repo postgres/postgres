@@ -166,7 +166,7 @@ typedef struct PgStat_SnapshotEntry
 static void pgstat_write_statsfile(void);
 static void pgstat_read_statsfile(void);
 
-static void pgstat_reset_after_failure(TimestampTz ts);
+static void pgstat_reset_after_failure(void);
 
 static bool pgstat_flush_pending_entries(bool nowait);
 
@@ -427,6 +427,12 @@ pgstat_discard_stats(void)
 				 errmsg("unlinked permanent statistics file \"%s\"",
 						PGSTAT_STAT_PERMANENT_FILENAME)));
 	}
+
+	/*
+	 * Reset stats contents. This will set reset timestamps of fixed-numbered
+	 * stats to the current time (no variable stats exist).
+	 */
+	pgstat_reset_after_failure();
 }
 
 /*
@@ -1422,7 +1428,6 @@ pgstat_read_statsfile(void)
 	bool		found;
 	const char *statfile = PGSTAT_STAT_PERMANENT_FILENAME;
 	PgStat_ShmemControl *shmem = pgStatLocal.shmem;
-	TimestampTz ts = GetCurrentTimestamp();
 
 	/* shouldn't be called from postmaster */
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
@@ -1445,7 +1450,7 @@ pgstat_read_statsfile(void)
 					(errcode_for_file_access(),
 					 errmsg("could not open statistics file \"%s\": %m",
 							statfile)));
-		pgstat_reset_after_failure(ts);
+		pgstat_reset_after_failure();
 		return;
 	}
 
@@ -1597,19 +1602,20 @@ error:
 	ereport(LOG,
 			(errmsg("corrupted statistics file \"%s\"", statfile)));
 
-	/* Set the current timestamp as reset timestamp */
-	pgstat_reset_after_failure(ts);
+	pgstat_reset_after_failure();
 
 	goto done;
 }
 
 /*
- * Helper to reset / drop stats after restoring stats from disk failed,
- * potentially after already loading parts.
+ * Helper to reset / drop stats after a crash or after restoring stats from
+ * disk failed, potentially after already loading parts.
  */
 static void
-pgstat_reset_after_failure(TimestampTz ts)
+pgstat_reset_after_failure(void)
 {
+	TimestampTz ts = GetCurrentTimestamp();
+
 	/* reset fixed-numbered stats */
 	for (int kind = PGSTAT_KIND_FIRST_VALID; kind <= PGSTAT_KIND_LAST; kind++)
 	{
