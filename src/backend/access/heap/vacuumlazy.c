@@ -633,29 +633,18 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			TimestampDifferenceExceeds(starttime, endtime,
 									   params->log_min_duration))
 		{
-			long		secs;
-			int			usecs;
+			long		secs_dur;
+			int			usecs_dur;
 			WalUsage	walusage;
-			double		read_rate,
-						write_rate;
 			StringInfoData buf;
 			char	   *msgfmt;
 			int32		diff;
+			double		read_rate = 0,
+						write_rate = 0;
 
-			TimestampDifference(starttime, endtime, &secs, &usecs);
-
+			TimestampDifference(starttime, endtime, &secs_dur, &usecs_dur);
 			memset(&walusage, 0, sizeof(WalUsage));
 			WalUsageAccumDiff(&walusage, &pgWalUsage, &walusage_start);
-
-			read_rate = 0;
-			write_rate = 0;
-			if ((secs > 0) || (usecs > 0))
-			{
-				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
-					(secs + usecs / 1000000.0);
-				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
-					(secs + usecs / 1000000.0);
-			}
 
 			initStringInfo(&buf);
 			if (verbose)
@@ -710,20 +699,20 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 								 vacrel->missed_dead_pages);
 			diff = (int32) (ReadNextTransactionId() - OldestXmin);
 			appendStringInfo(&buf,
-							 _("removable cutoff: %u, older by %d xids when operation ended\n"),
+							 _("removable cutoff: %u, which was %d XIDs old when operation ended\n"),
 							 OldestXmin, diff);
 			if (frozenxid_updated)
 			{
 				diff = (int32) (vacrel->NewRelfrozenXid - vacrel->relfrozenxid);
 				appendStringInfo(&buf,
-								 _("new relfrozenxid: %u, which is %d xids ahead of previous value\n"),
+								 _("new relfrozenxid: %u, which is %d XIDs ahead of previous value\n"),
 								 vacrel->NewRelfrozenXid, diff);
 			}
 			if (minmulti_updated)
 			{
 				diff = (int32) (vacrel->NewRelminMxid - vacrel->relminmxid);
 				appendStringInfo(&buf,
-								 _("new relminmxid: %u, which is %d mxids ahead of previous value\n"),
+								 _("new relminmxid: %u, which is %d MXIDs ahead of previous value\n"),
 								 vacrel->NewRelminMxid, diff);
 			}
 			if (orig_rel_pages > 0)
@@ -773,6 +762,13 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 
 				appendStringInfo(&buf, _("I/O timings: read: %.3f ms, write: %.3f ms\n"),
 								 read_ms, write_ms);
+			}
+			if (secs_dur > 0 || usecs_dur > 0)
+			{
+				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+					(secs_dur + usecs_dur / 1000000.0);
+				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+					(secs_dur + usecs_dur / 1000000.0);
 			}
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
