@@ -325,9 +325,12 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 				new_rel_allvisible;
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
-	PgStat_Counter startreadtime = 0;
-	PgStat_Counter startwritetime = 0;
-	WalUsage	walusage_start = pgWalUsage;
+	PgStat_Counter startreadtime = 0,
+				   startwritetime = 0;
+	WalUsage	startwalusage = pgWalUsage;
+	int64		StartPageHit = VacuumPageHit,
+				StartPageMiss = VacuumPageMiss,
+				StartPageDirty = VacuumPageDirty;
 	ErrorContextCallback errcallback;
 	char	  **indnames = NULL;
 
@@ -639,12 +642,15 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			StringInfoData buf;
 			char	   *msgfmt;
 			int32		diff;
+			int64		PageHitOp = VacuumPageHit - StartPageHit,
+						PageMissOp = VacuumPageMiss - StartPageMiss,
+						PageDirtyOp = VacuumPageDirty - StartPageDirty;
 			double		read_rate = 0,
 						write_rate = 0;
 
 			TimestampDifference(starttime, endtime, &secs_dur, &usecs_dur);
 			memset(&walusage, 0, sizeof(WalUsage));
-			WalUsageAccumDiff(&walusage, &pgWalUsage, &walusage_start);
+			WalUsageAccumDiff(&walusage, &pgWalUsage, &startwalusage);
 
 			initStringInfo(&buf);
 			if (verbose)
@@ -763,18 +769,18 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 			}
 			if (secs_dur > 0 || usecs_dur > 0)
 			{
-				read_rate = (double) BLCKSZ * VacuumPageMiss / (1024 * 1024) /
+				read_rate = (double) BLCKSZ * PageMissOp / (1024 * 1024) /
 					(secs_dur + usecs_dur / 1000000.0);
-				write_rate = (double) BLCKSZ * VacuumPageDirty / (1024 * 1024) /
+				write_rate = (double) BLCKSZ * PageDirtyOp / (1024 * 1024) /
 					(secs_dur + usecs_dur / 1000000.0);
 			}
 			appendStringInfo(&buf, _("avg read rate: %.3f MB/s, avg write rate: %.3f MB/s\n"),
 							 read_rate, write_rate);
 			appendStringInfo(&buf,
 							 _("buffer usage: %lld hits, %lld misses, %lld dirtied\n"),
-							 (long long) VacuumPageHit,
-							 (long long) VacuumPageMiss,
-							 (long long) VacuumPageDirty);
+							 (long long) PageHitOp,
+							 (long long) PageMissOp,
+							 (long long) PageDirtyOp);
 			appendStringInfo(&buf,
 							 _("WAL usage: %lld records, %lld full page images, %llu bytes\n"),
 							 (long long) walusage.wal_records,
