@@ -715,31 +715,29 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 								 _("new relminmxid: %u, which is %d MXIDs ahead of previous value\n"),
 								 vacrel->NewRelminMxid, diff);
 			}
-			if (orig_rel_pages > 0)
+			if (vacrel->do_index_vacuuming)
 			{
-				if (vacrel->do_index_vacuuming)
-				{
-					if (vacrel->nindexes == 0 || vacrel->num_index_scans == 0)
-						appendStringInfoString(&buf, _("index scan not needed: "));
-					else
-						appendStringInfoString(&buf, _("index scan needed: "));
-
-					msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
-				}
+				if (vacrel->nindexes == 0 || vacrel->num_index_scans == 0)
+					appendStringInfoString(&buf, _("index scan not needed: "));
 				else
-				{
-					if (!vacrel->failsafe_active)
-						appendStringInfoString(&buf, _("index scan bypassed: "));
-					else
-						appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
+					appendStringInfoString(&buf, _("index scan needed: "));
 
-					msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
-				}
-				appendStringInfo(&buf, msgfmt,
-								 vacrel->lpdead_item_pages,
-								 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
-								 (long long) vacrel->lpdead_items);
+				msgfmt = _("%u pages from table (%.2f%% of total) had %lld dead item identifiers removed\n");
 			}
+			else
+			{
+				if (!vacrel->failsafe_active)
+					appendStringInfoString(&buf, _("index scan bypassed: "));
+				else
+					appendStringInfoString(&buf, _("index scan bypassed by failsafe: "));
+
+				msgfmt = _("%u pages from table (%.2f%% of total) have %lld dead item identifiers\n");
+			}
+			appendStringInfo(&buf, msgfmt,
+							 vacrel->lpdead_item_pages,
+							 orig_rel_pages == 0 ? 100.0 :
+							 100.0 * vacrel->lpdead_item_pages / orig_rel_pages,
+							 (long long) vacrel->lpdead_items);
 			for (int i = 0; i < vacrel->nindexes; i++)
 			{
 				IndexBulkDeleteResult *istat = vacrel->indstats[i];
