@@ -1810,21 +1810,28 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 			TransactionIdOlder(h->shared_oldest_nonremovable, xmin);
 
 		/*
-		 * Normally queries in other databases are ignored for anything but
-		 * the shared horizon. But in recovery we cannot compute an accurate
-		 * per-database horizon as all xids are managed via the
-		 * KnownAssignedXids machinery.
+		 * Normally sessions in other databases are ignored for anything but
+		 * the shared horizon.
 		 *
-		 * Be careful to compute a pessimistic value when MyDatabaseId is not
-		 * set. If this is a backend in the process of starting up, we may not
-		 * use a "too aggressive" horizon (otherwise we could end up using it
-		 * to prune still needed data away). If the current backend never
-		 * connects to a database that is harmless, because
-		 * data_oldest_nonremovable will never be utilized.
+		 * However, include them when MyDatabaseId is not (yet) set.  A
+		 * backend in the process of starting up must not compute a "too
+		 * aggressive" horizon, otherwise we could end up using it to prune
+		 * still-needed data away.  If the current backend never connects to a
+		 * database this is harmless, because data_oldest_nonremovable will
+		 * never be utilized.
+		 *
+		 * Also, sessions marked with PROC_AFFECTS_ALL_HORIZONS should always
+		 * be included.  (This flag is used for hot standby feedback, which
+		 * can't be tied to a specific database.)
+		 *
+		 * Also, while in recovery we cannot compute an accurate per-database
+		 * horizon, as all xids are managed via the KnownAssignedXids
+		 * machinery.
 		 */
-		if (in_recovery ||
-			MyDatabaseId == InvalidOid || proc->databaseId == MyDatabaseId ||
-			proc->databaseId == 0)	/* always include WalSender */
+		if (proc->databaseId == MyDatabaseId ||
+			MyDatabaseId == InvalidOid ||
+			(statusFlags & PROC_AFFECTS_ALL_HORIZONS) ||
+			in_recovery)
 		{
 			/*
 			 * We can ignore this backend if it's running CREATE INDEX
@@ -2681,10 +2688,14 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 		/* Install xmin */
 		MyProc->xmin = TransactionXmin = xmin;
 
-		/* Flags being copied must be valid copy-able flags. */
-		Assert((proc->statusFlags & (~PROC_COPYABLE_FLAGS)) == 0);
-		MyProc->statusFlags = proc->statusFlags;
-		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
+		/* walsender cheats by passing proc == MyProc, don't check its flags */
+		if (proc != MyProc)
+		{
+			/* Flags being copied must be valid copy-able flags. */
+			Assert((proc->statusFlags & (~PROC_COPYABLE_FLAGS)) == 0);
+			MyProc->statusFlags = proc->statusFlags;
+			ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
+		}
 
 		result = true;
 	}

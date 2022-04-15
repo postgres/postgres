@@ -285,6 +285,21 @@ InitWalSender(void)
 	MarkPostmasterChildWalSender();
 	SendPostmasterSignal(PMSIGNAL_ADVANCE_STATE_MACHINE);
 
+	/*
+	 * If the client didn't specify a database to connect to, show in PGPROC
+	 * that our advertised xmin should affect vacuum horizons in all
+	 * databases.  This allows physical replication clients to send hot
+	 * standby feedback that will delay vacuum cleanup in all databases.
+	 */
+	if (MyDatabaseId == InvalidOid)
+	{
+		Assert(MyProc->xmin == InvalidTransactionId);
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+		MyProc->statusFlags |= PROC_AFFECTS_ALL_HORIZONS;
+		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
+		LWLockRelease(ProcArrayLock);
+	}
+
 	/* Initialize empty timestamp buffer for lag tracking. */
 	lag_tracker = MemoryContextAllocZero(TopMemoryContext, sizeof(LagTracker));
 }

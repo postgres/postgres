@@ -60,6 +60,9 @@ struct XidCache
 #define		PROC_VACUUM_FOR_WRAPAROUND	0x08	/* set by autovac only */
 #define		PROC_IN_LOGICAL_DECODING	0x10	/* currently doing logical
 												 * decoding outside xact */
+#define		PROC_AFFECTS_ALL_HORIZONS	0x20	/* this proc's xmin must be
+												 * included in vacuum horizons
+												 * in all databases */
 
 /* flags reset at EOXact */
 #define		PROC_VACUUM_STATE_MASK \
