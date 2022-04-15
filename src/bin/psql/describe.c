@@ -904,7 +904,7 @@ listAllDbs(const char *pattern, bool verbose)
 						  gettext_noop("Locale Provider"));
 	else
 		appendPQExpBuffer(&buf,
-						  "       d.datcollate as \"%s\",\n"
+						  "       NULL as \"%s\",\n"
 						  "       'libc' AS \"%s\",\n",
 						  gettext_noop("ICU Locale"),
 						  gettext_noop("Locale Provider"));
