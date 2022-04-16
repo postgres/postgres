@@ -838,7 +838,8 @@ SKIP:
 $node->safe_psql('postgres',
 	q{CREATE TABLE t AS SELECT a FROM generate_series(1,10000) AS a;});
 
-my $sigchld_bb_timeout = IPC::Run::timer(60);
+my $sigchld_bb_timeout =
+  IPC::Run::timer($PostgreSQL::Test::Utils::timeout_default);
 my ($sigchld_bb_stdin, $sigchld_bb_stdout, $sigchld_bb_stderr) = ('', '', '');
 my $sigchld_bb = IPC::Run::start(
 	[
