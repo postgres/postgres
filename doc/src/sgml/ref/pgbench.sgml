@@ -69,7 +69,7 @@ tps = 896.967014 (without initial connection time)
   The first seven lines report some of the most important parameter
   settings.
   The sixth line reports the maximum number of tries for transactions with
-  serialization or deadlock errors (see <xref linkend="failures-and-retries"/> 
+  serialization or deadlock errors (see <xref linkend="failures-and-retries"/>
   for more information).
   The eighth line reports the number of transactions completed
   and intended (the latter being just the product of number of clients

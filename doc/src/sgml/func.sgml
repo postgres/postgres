@@ -17758,7 +17758,7 @@ $.* ? (@ like_regex "^\\d+$")
      <title>Notes</title>
      <para>
       Alternatively, you can construct <acronym>JSON</acronym> values simply
-      using <productname>PostgreSQL</productname>-specific casts to 
+      using <productname>PostgreSQL</productname>-specific casts to
       <type>json</type> and <type>jsonb</type> types.
      </para>
     </sect5>
@@ -19127,7 +19127,7 @@ FROM my_films;
 SELECT
     JSON_QUERY(js, '$.favorites[*].kind' ERROR ON ERROR)
 FROM my_films;
-ERROR: more than one SQL/JSON item 
+ERROR: more than one SQL/JSON item
 </screen>
 
      <para>
@@ -19175,7 +19175,7 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING text OMIT QUOTES);
 
 <synopsis>
 <replaceable class="parameter">expression</replaceable>
-  IS <optional> NOT </optional> JSON 
+  IS <optional> NOT </optional> JSON
   <optional> { VALUE | SCALAR | ARRAY | OBJECT } </optional>
   <optional> { WITH | WITHOUT } UNIQUE <optional> KEYS </optional> </optional>
 </synopsis>
@@ -19294,16 +19294,16 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING text OMIT QUOTES);
      </para>
      <screen>
 SELECT
-    js, 
-    js IS JSON "is json", 
+    js,
+    js IS JSON "is json",
     js IS NOT JSON "is not json",
     js IS JSON SCALAR "is scalar",
     js IS JSON OBJECT "is object",
     js IS JSON ARRAY "is array"
-FROM 
+FROM
     (VALUES ('123'), ('"abc"'), ('{"a": "b"}'), ('[1,2]'), ('abc')) foo(js);
 
-     js     | is json | is not json | is scalar | is object | is array 
+     js     | is json | is not json | is scalar | is object | is array
 ------------+---------+-------------+-----------+-----------|-------------
  123        | t       | f           | t         | f         | f
  "abc"      | t       | f           | t         | f         | f
@@ -19704,7 +19704,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
     <listitem>
 
     <para>
-     Use <literal>CROSS JOIN</literal>, so that the output includes 
+     Use <literal>CROSS JOIN</literal>, so that the output includes
      a row for every possible combination of rows from the left-hand
      and the right-hand columns.
     </para>
@@ -19743,7 +19743,7 @@ where <replaceable class="parameter">json_table_column</replaceable> is:
       some JSON data about the films and create a view that
       distributes the film genre, title, and director between separate columns:
 <screen>
-SELECT jt.* FROM 
+SELECT jt.* FROM
  my_films,
  JSON_TABLE ( js, '$.favorites[*]' COLUMNS (
    id FOR ORDINALITY,
@@ -19864,7 +19864,7 @@ JSON_SERIALIZE (
      <title>Notes</title>
      <para>
       Alternatively, you can construct <acronym>JSON</acronym> values simply
-      using <productname>PostgreSQL</productname>-specific casts to 
+      using <productname>PostgreSQL</productname>-specific casts to
       <type>json</type> and <type>jsonb</type> types.
      </para>
     </sect5>
