@@ -1583,6 +1583,10 @@ pgstat_read_statsfile(void)
 					break;
 				}
 			case 'E':
+				/* check that 'E' actually signals end of file */
+				if (fgetc(fpin) != EOF)
+					goto error;
+
 				goto done;
 
 			default:

@@ -878,7 +878,7 @@ pgstat_drop_all_entries(void)
 	PgStatShared_HashEntry *ps;
 	uint64		not_freed_count = 0;
 
-	dshash_seq_init(&hstat, pgStatLocal.shared_hash, false);
+	dshash_seq_init(&hstat, pgStatLocal.shared_hash, true);
 	while ((ps = dshash_seq_next(&hstat)) != NULL)
 	{
 		if (ps->dropped)
