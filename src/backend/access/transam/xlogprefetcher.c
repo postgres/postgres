@@ -487,8 +487,8 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			 */
 			nonblocking = XLogReaderHasQueuedRecordOrError(reader);
 
-			/* Certain records act as barriers for all readahead. */
-			if (nonblocking && replaying_lsn < prefetcher->no_readahead_until)
+			/* Readahead is disabled until we replay past a certain point. */
+			if (nonblocking && replaying_lsn <= prefetcher->no_readahead_until)
 				return LRQ_NEXT_AGAIN;
 
 			record = XLogReadAhead(prefetcher->reader, nonblocking);
@@ -496,8 +496,13 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			{
 				/*
 				 * We can't read any more, due to an error or lack of data in
-				 * nonblocking mode.
+				 * nonblocking mode.  Don't try to read ahead again until
+				 * we've replayed everything already decoded.
 				 */
+				if (nonblocking && prefetcher->reader->decode_queue_tail)
+					prefetcher->no_readahead_until =
+						prefetcher->reader->decode_queue_tail->lsn;
+
 				return LRQ_NEXT_AGAIN;
 			}
 
