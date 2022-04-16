@@ -1646,11 +1646,11 @@ HaveRegisteredOrActiveSnapshot(void)
 	 * removed at any time due to invalidation processing. If explicitly
 	 * registered more than one snapshot has to be in RegisteredSnapshots.
 	 */
-	if (pairingheap_is_empty(&RegisteredSnapshots) ||
-		!pairingheap_is_singular(&RegisteredSnapshots))
+	if (CatalogSnapshot != NULL &&
+		pairingheap_is_singular(&RegisteredSnapshots))
 		return false;
 
-	return CatalogSnapshot == NULL;
+	return !pairingheap_is_empty(&RegisteredSnapshots);
 }
 
 
