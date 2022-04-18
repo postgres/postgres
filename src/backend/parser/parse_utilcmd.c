@@ -3042,7 +3042,7 @@ transformAlterTableStmt(Oid relid, AlterTableStmt *stmt,
 					 * if attribute not found, something will error about it
 					 * later
 					 */
-					if (attnum != InvalidAttrNumber && get_attidentity(relid, attnum))
+					if (attnum > 0 && get_attidentity(relid, attnum))
 					{
 						Oid			seq_relid = getOwnedSequence(relid, attnum);
 						Oid			typeOid = typenameTypeId(pstate, def->typeName);
