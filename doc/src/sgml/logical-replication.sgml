@@ -118,6 +118,8 @@
    any combination of <command>INSERT</command>, <command>UPDATE</command>,
    <command>DELETE</command>, and <command>TRUNCATE</command>, similar to how triggers are fired by
    particular event types.  By default, all operation types are replicated.
+   (Row filters have no effect for <command>TRUNCATE</command>. See 
+   <xref linkend="logical-replication-row-filter"/>).
   </para>
 
   <para>
@@ -315,6 +317,566 @@
     </itemizedlist>
    </para>
   </sect2>
+ </sect1>
+
+ <sect1 id="logical-replication-row-filter">
+  <title>Row Filters</title>
+
+  <para>
+   By default, all data from all published tables will be replicated to the
+   appropriate subscribers. The replicated data can be reduced by using a 
+   <firstterm>row filter</firstterm>. A user might choose to use row filters
+   for behavioral, security or performance reasons. If a published table sets a
+   row filter, a row is replicated only if its data satisfies the row filter
+   expression. This allows a set of tables to be partially replicated. The row
+   filter is defined per table. Use a <literal>WHERE</literal> clause after the
+   table name for each published table that requires data to be filtered out.
+   The <literal>WHERE</literal> clause must be enclosed by parentheses. See
+   <xref linkend="sql-createpublication"/> for details.
+  </para>
+
+  <sect2 id="logical-replication-row-filter-rules">
+   <title>Row Filter Rules</title>
+
+   <para>
+    Row filters are applied <emphasis>before</emphasis> publishing the changes.
+    If the row filter evaluates to <literal>false</literal> or <literal>NULL</literal>
+    then the row is not replicated. The <literal>WHERE</literal> clause expression
+    is evaluated with the same role used for the replication connection (i.e.
+    the role specified in the <literal>CONNECTION</literal> clause of the
+    <xref linkend="sql-createsubscription"/>). Row filters have no effect for
+    <command>TRUNCATE</command> command.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-restrictions">
+   <title>Expression Restrictions</title>
+
+   <para>
+    The <literal>WHERE</literal> clause allows only simple expressions. It
+    cannot contain user-defined functions, operators, types, and collations,
+    system column references or non-immutable built-in functions.
+   </para>
+
+   <para>
+    If a publication publishes <command>UPDATE</command> or
+    <command>DELETE</command> operations, the row filter <literal>WHERE</literal>
+    clause must contain only columns that are covered by the replica identity
+    (see <xref linkend="sql-altertable-replica-identity"/>). If a publication
+    publishes only <command>INSERT</command> operations, the row filter
+    <literal>WHERE</literal> clause can use any column.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-transformations">
+   <title>UPDATE Transformations</title>
+
+   <para>
+    Whenever an <command>UPDATE</command> is processed, the row filter
+    expression is evaluated for both the old and new row (i.e. using the data
+    before and after the update). If both evaluations are <literal>true</literal>,
+    it replicates the <command>UPDATE</command> change. If both evaluations are
+    <literal>false</literal>, it doesn't replicate the change. If only one of
+    the old/new rows matches the row filter expression, the <command>UPDATE</command>
+    is transformed to <command>INSERT</command> or <command>DELETE</command>, to
+    avoid any data inconsistency. The row on the subscriber should reflect what
+    is defined by the row filter expression on the publisher.
+   </para>
+
+   <para>
+    If the old row satisfies the row filter expression (it was sent to the
+    subscriber) but the new row doesn't, then, from a data consistency
+    perspective the old row should be removed from the subscriber.
+    So the <command>UPDATE</command> is transformed into a <command>DELETE</command>.
+   </para>
+
+   <para>
+    If the old row doesn't satisfy the row filter expression (it wasn't sent
+    to the subscriber) but the new row does, then, from a data consistency
+    perspective the new row should be added to the subscriber.
+    So the <command>UPDATE</command> is transformed into an <command>INSERT</command>.
+   </para>
+
+   <table>
+    <title><command>UPDATE</command> Transformation Summary</title>
+    <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Old row</entry><entry>New row</entry><entry>Transformation</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry>no match</entry><entry>no match</entry><entry>don't replicate</entry>
+     </row>
+     <row>
+      <entry>no match</entry><entry>match</entry><entry><literal>INSERT</literal></entry>
+     </row>
+     <row>
+      <entry>match</entry><entry>no match</entry><entry><literal>DELETE</literal></entry>
+     </row>
+     <row>
+      <entry>match</entry><entry>match</entry><entry><literal>UPDATE</literal></entry>
+     </row>
+    </tbody>
+   </tgroup>
+   </table>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-partitioned-table">
+   <title>Partitioned Tables</title>
+
+   <para>
+    If the publication contains a partitioned table, the publication parameter
+    <literal>publish_via_partition_root</literal> determines which row filter
+    is used. If <literal>publish_via_partition_root</literal> is <literal>true</literal>,
+    the <emphasis>root partitioned table's</emphasis> row filter is used. Otherwise,
+    if <literal>publish_via_partition_root</literal> is <literal>false</literal>
+    (default), each <emphasis>partition's</emphasis> row filter is used.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-initial-data-sync">
+   <title>Initial Data Synchronization</title>
+
+   <para>
+    If the subscription requires copying pre-existing table data
+    and a publication contains <literal>WHERE</literal> clauses, only data that
+    satisfies the row filter expressions is copied to the subscriber.
+   </para>
+
+   <para>
+    If the subscription has several publications in which a table has been
+    published with different <literal>WHERE</literal> clauses, rows that satisfy
+    <emphasis>any</emphasis> of the expressions will be copied. See
+    <xref linkend="logical-replication-row-filter-combining"/> for details.
+   </para>
+
+   <note>
+    <para>
+     If the subscriber is in a release prior to 15, copy pre-existing data
+     doesn't use row filters even if they are defined in the publication.
+     This is because old releases can only copy the entire table data.
+    </para>
+   </note>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-combining">
+   <title>Combining Multiple Row Filters</title>
+
+   <para>
+    If the subscription has several publications in which the same table has
+    been published with different row filters (for the same <literal>publish</literal>
+    operation), those expressions get ORed together, so that rows satisfying
+    <emphasis>any</emphasis> of the expressions will be replicated. This means all
+    the other row filters for the same table become redundant if:
+    <itemizedlist>
+     <listitem>
+      <para>
+       one of the publications has no row filter.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       one of the publications was created using <literal>FOR ALL TABLES</literal>.
+       This clause does not allow row filters.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       one of the publications was created using
+       <literal>FOR ALL TABLES IN SCHEMA</literal> and the table belongs to
+       the referred schema. This clause does not allow row filters.
+      </para>
+     </listitem>
+    </itemizedlist></para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-row-filter-examples">
+   <title>Examples</title>
+
+   <para>
+    Create some tables to be used in the following examples.
+<programlisting>
+test_pub=# CREATE TABLE t1(a int, b int, c text, PRIMARY KEY(a,c));
+CREATE TABLE
+test_pub=# CREATE TABLE t2(d int, e int, f int, PRIMARY KEY(d));
+CREATE TABLE
+test_pub=# CREATE TABLE t3(g int, h int, i int, PRIMARY KEY(g));
+CREATE TABLE
+</programlisting></para>
+
+   <para>
+    Create some publications. Publication <literal>p1</literal> has one table
+    (<literal>t1</literal>) and that table has a row filter. Publication
+    <literal>p2</literal> has two tables. Table <literal>t1</literal> has no row
+    filter, and table <literal>t2</literal> has a row filter. Publication
+    <literal>p3</literal> has two tables, and both of them have a row filter.
+<programlisting>
+test_pub=# CREATE PUBLICATION p1 FOR TABLE t1 WHERE (a > 5 AND c = 'NSW');
+CREATE PUBLICATION
+test_pub=# CREATE PUBLICATION p2 FOR TABLE t1, t2 WHERE (e = 99);
+CREATE PUBLICATION
+test_pub=# CREATE PUBLICATION p3 FOR TABLE t2 WHERE (d = 10), t3 WHERE (g = 10);
+CREATE PUBLICATION
+</programlisting></para>
+
+   <para>
+    <command>psql</command> can be used to show the row filter expressions (if
+    defined) for each publication.
+<programlisting>
+test_pub=# \dRp+
+                               Publication p1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+----------+------------+---------+---------+---------+-----------+----------
+ postgres | f          | t       | t       | t       | t         | f
+Tables:
+    "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
+
+                               Publication p2
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+----------+------------+---------+---------+---------+-----------+----------
+ postgres | f          | t       | t       | t       | t         | f
+Tables:
+    "public.t1"
+    "public.t2" WHERE (e = 99)
+
+                               Publication p3
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+----------+------------+---------+---------+---------+-----------+----------
+ postgres | f          | t       | t       | t       | t         | f
+Tables:
+    "public.t2" WHERE (d = 10)
+    "public.t3" WHERE (g = 10)
+</programlisting></para>
+
+   <para>
+    <command>psql</command> can be used to show the row filter expressions (if
+    defined) for each table. See that table <literal>t1</literal> is a member
+    of two publications, but has a row filter only in <literal>p1</literal>.
+    See that table <literal>t2</literal> is a member of two publications, and
+    has a different row filter in each of them.
+<programlisting>
+test_pub=# \d t1
+                 Table "public.t1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           | not null | 
+ b      | integer |           |          | 
+ c      | text    |           | not null | 
+Indexes:
+    "t1_pkey" PRIMARY KEY, btree (a, c)
+Publications:
+    "p1" WHERE ((a > 5) AND (c = 'NSW'::text))
+    "p2"
+
+test_pub=# \d t2
+                 Table "public.t2"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ d      | integer |           | not null | 
+ e      | integer |           |          | 
+ f      | integer |           |          | 
+Indexes:
+    "t2_pkey" PRIMARY KEY, btree (d)
+Publications:
+    "p2" WHERE (e = 99)
+    "p3" WHERE (d = 10)
+
+test_pub=# \d t3
+                 Table "public.t3"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ g      | integer |           | not null | 
+ h      | integer |           |          | 
+ i      | integer |           |          | 
+Indexes:
+    "t3_pkey" PRIMARY KEY, btree (g)
+Publications:
+    "p3" WHERE (g = 10)
+</programlisting></para>
+
+   <para>
+    On the subscriber node, create a table <literal>t1</literal> with the same
+    definition as the one on the publisher, and also create the subscription
+    <literal>s1</literal> that subscribes to the publication <literal>p1</literal>.
+<programlisting>
+test_sub=# CREATE TABLE t1(a int, b int, c text, PRIMARY KEY(a,c));
+CREATE TABLE
+test_sub=# CREATE SUBSCRIPTION s1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=s1'
+test_sub-# PUBLICATION p1;
+CREATE SUBSCRIPTION
+</programlisting></para>
+
+   <para>
+    Insert some rows. Only the rows satisfying the <literal>t1 WHERE</literal>
+    clause of publication <literal>p1</literal> are replicated.
+<programlisting>
+test_pub=# INSERT INTO t1 VALUES (2, 102, 'NSW');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (3, 103, 'QLD');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (4, 104, 'VIC');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (5, 105, 'ACT');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (6, 106, 'NSW');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (7, 107, 'NT');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (8, 108, 'QLD');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES (9, 109, 'NSW');
+INSERT 0 1
+
+test_pub=# SELECT * FROM t1; 
+ a |  b  |  c
+---+-----+-----
+ 2 | 102 | NSW
+ 3 | 103 | QLD
+ 4 | 104 | VIC
+ 5 | 105 | ACT
+ 6 | 106 | NSW
+ 7 | 107 | NT
+ 8 | 108 | QLD
+ 9 | 109 | NSW
+(8 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM t1;
+ a |  b  |  c  
+---+-----+-----
+ 6 | 106 | NSW
+ 9 | 109 | NSW
+(2 rows)
+</programlisting></para>
+
+   <para>
+    Update some data, where the old and new row values both
+    satisfy the <literal>t1 WHERE</literal> clause of publication
+    <literal>p1</literal>. The <command>UPDATE</command> replicates
+    the change as normal.
+<programlisting>
+test_pub=# UPDATE t1 SET b = 999 WHERE a = 6;
+UPDATE 1
+
+test_pub=# SELECT * FROM t1;
+ a |  b  |  c  
+---+-----+-----
+ 2 | 102 | NSW
+ 3 | 103 | QLD
+ 4 | 104 | VIC
+ 5 | 105 | ACT
+ 7 | 107 | NT
+ 8 | 108 | QLD
+ 9 | 109 | NSW
+ 6 | 999 | NSW
+(8 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM t1;
+ a |  b  |  c  
+---+-----+-----
+ 9 | 109 | NSW
+ 6 | 999 | NSW
+(2 rows)
+</programlisting></para>
+
+   <para>
+    Update some data, where the old row values did not satisfy
+    the <literal>t1 WHERE</literal> clause of publication <literal>p1</literal>,
+    but the new row values do satisfy it. The <command>UPDATE</command> is
+    transformed into an <command>INSERT</command> and the change is replicated.
+    See the new row on the subscriber.
+<programlisting>
+test_pub=# UPDATE t1 SET a = 555 WHERE a = 2;
+UPDATE 1
+
+test_pub=# SELECT * FROM t1;
+  a  |  b  |  c  
+-----+-----+-----
+   3 | 103 | QLD
+   4 | 104 | VIC
+   5 | 105 | ACT
+   7 | 107 | NT
+   8 | 108 | QLD
+   9 | 109 | NSW
+   6 | 999 | NSW
+ 555 | 102 | NSW
+(8 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM t1;
+  a  |  b  |  c  
+-----+-----+-----
+   9 | 109 | NSW
+   6 | 999 | NSW
+ 555 | 102 | NSW
+(3 rows)
+</programlisting></para>
+
+   <para>
+    Update some data, where the old row values satisfied
+    the <literal>t1 WHERE</literal> clause of publication <literal>p1</literal>,
+    but the new row values do not satisfy it. The <command>UPDATE</command> is
+    transformed into a <command>DELETE</command> and the change is replicated.
+    See that the row is removed from the subscriber.
+<programlisting>
+test_pub=# UPDATE t1 SET c = 'VIC' WHERE a = 9;
+UPDATE 1
+
+test_pub=# SELECT * FROM t1;
+  a  |  b  |  c  
+-----+-----+-----
+   3 | 103 | QLD
+   4 | 104 | VIC
+   5 | 105 | ACT
+   7 | 107 | NT
+   8 | 108 | QLD
+   6 | 999 | NSW
+ 555 | 102 | NSW
+   9 | 109 | VIC
+(8 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM t1;
+  a  |  b  |  c  
+-----+-----+-----
+   6 | 999 | NSW
+ 555 | 102 | NSW
+(2 rows)
+</programlisting></para>
+
+   <para>
+    The following examples show how the publication parameter
+    <literal>publish_via_partition_root</literal> determines whether the row
+    filter of the parent or child table will be used in the case of partitioned
+    tables.
+   </para>
+
+   <para>
+    Create a partitioned table on the publisher.
+<programlisting>
+test_pub=# CREATE TABLE parent(a int PRIMARY KEY) PARTITION BY RANGE(a);
+CREATE TABLE
+test_pub=# CREATE TABLE child PARTITION OF parent DEFAULT;
+CREATE TABLE
+</programlisting>
+   Create the same tables on the subscriber.
+<programlisting>
+test_sub=# CREATE TABLE parent(a int PRIMARY KEY) PARTITION BY RANGE(a);
+CREATE TABLE
+test_sub=# CREATE TABLE child PARTITION OF parent DEFAULT;
+CREATE TABLE
+</programlisting></para>
+
+   <para>
+    Create a publication <literal>p4</literal>, and then subscribe to it. The
+    publication parameter <literal>publish_via_partition_root</literal> is set
+    as true. There are row filters defined on both the partitioned table
+    (<literal>parent</literal>), and on the partition (<literal>child</literal>).
+<programlisting>
+test_pub=# CREATE PUBLICATION p4 FOR TABLE parent WHERE (a &lt; 5), child WHERE (a >= 5)
+test_pub-# WITH (publish_via_partition_root=true);
+CREATE PUBLICATION
+</programlisting>
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION s4
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=s4'
+test_sub-# PUBLICATION p4;
+CREATE SUBSCRIPTION
+</programlisting></para>
+
+   <para>
+    Insert some values directly into the <literal>parent</literal> and
+    <literal>child</literal> tables. They replicate using the row filter of
+    <literal>parent</literal> (because <literal>publish_via_partition_root</literal>
+    is true).
+<programlisting>
+test_pub=# INSERT INTO parent VALUES (2), (4), (6);
+INSERT 0 3
+test_pub=# INSERT INTO child VALUES (3), (5), (7);
+INSERT 0 3
+
+test_pub=# SELECT * FROM parent ORDER BY a;
+ a 
+---
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+(6 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM parent ORDER BY a;
+ a 
+---
+ 2
+ 3
+ 4
+(3 rows)
+</programlisting></para>
+
+   <para>
+    Repeat the same test, but with a different value for <literal>publish_via_partition_root</literal>.
+    The publication parameter <literal>publish_via_partition_root</literal> is
+    set as false. A row filter is defined on the partition (<literal>child</literal>).
+<programlisting>
+test_pub=# DROP PUBLICATION p4;
+DROP PUBLICATION
+test_pub=# CREATE PUBLICATION p4 FOR TABLE parent, child WHERE (a >= 5)
+test_pub-# WITH (publish_via_partition_root=false);
+CREATE PUBLICATION
+</programlisting>
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION s4 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+
+   <para>
+    Do the inserts on the publisher same as before. They replicate using the
+    row filter of <literal>child</literal> (because
+    <literal>publish_via_partition_root</literal> is false).
+<programlisting>
+test_pub=# TRUNCATE parent;
+TRUNCATE TABLE
+test_pub=# INSERT INTO parent VALUES (2), (4), (6);
+INSERT 0 3
+test_pub=# INSERT INTO child VALUES (3), (5), (7);
+INSERT 0 3
+
+test_pub=# SELECT * FROM parent ORDER BY a;
+ a 
+---
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+(6 rows)
+</programlisting>
+<programlisting>
+test_sub=# SELECT * FROM child ORDER BY a;
+ a 
+---
+ 5
+ 6
+ 7
+(3 rows)
+</programlisting></para>
+
+  </sect2>
+
  </sect1>
 
  <sect1 id="logical-replication-conflicts">
