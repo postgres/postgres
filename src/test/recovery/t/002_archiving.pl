@@ -46,12 +46,15 @@ $node_standby->start;
 # Create some content on primary
 $node_primary->safe_psql('postgres',
 	"CREATE TABLE tab_int AS SELECT generate_series(1,1000) AS a");
-my $current_lsn =
-  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 
 # Note the presence of this checkpoint for the archive_cleanup_command
 # check done below, before switching to a new segment.
 $node_primary->safe_psql('postgres', "CHECKPOINT");
+
+# Done after the checkpoint to ensure that it is replayed on the standby,
+# for archive_cleanup_command.
+my $current_lsn =
+  $node_primary->safe_psql('postgres', "SELECT pg_current_wal_lsn();");
 
 # Force archiving of WAL file to make it present on primary
 $node_primary->safe_psql('postgres', "SELECT pg_switch_wal()");
