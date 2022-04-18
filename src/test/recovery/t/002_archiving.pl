@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 3;
+use Test::More tests => 4;
 use File::Copy;
 
 # Initialize master node, doing archives
@@ -21,6 +21,8 @@ $node_master->backup($backup_name);
 
 # Initialize standby node from backup, fetching WAL from archives
 my $node_standby = get_new_node('standby');
+# Note that this makes the standby store its contents on the archives
+# of the primary.
 $node_standby->init_from_backup($node_master, $backup_name,
 	has_restoring => 1);
 $node_standby->append_conf('postgresql.conf',
@@ -55,19 +57,39 @@ is($result, qq(1000), 'check content from archives');
 # file, switch to a timeline large enough to allow a standby to recover
 # a history file from an archive.  As this requires at least two timeline
 # switches, promote the existing standby first.  Then create a second
-# standby based on the promoted one.  Finally, the second standby is
-# promoted.
+# standby based on the primary, using its archives.  Finally, the second
+# standby is promoted.
 $node_standby->promote;
+
+# Wait until the history file has been stored on the archives of the
+# primary once the promotion of the standby completes.  This ensures that
+# the second standby created below will be able to restore this file,
+# creating a RECOVERYHISTORY.
+my $primary_archive = $node_master->archive_dir;
+$caughtup_query =
+  "SELECT size IS NOT NULL FROM pg_stat_file('$primary_archive/00000002.history')";
+$node_master->poll_query_until('postgres', $caughtup_query)
+  or die "Timed out while waiting for archiving of 00000002.history";
 
 my $node_standby2 = get_new_node('standby2');
 $node_standby2->init_from_backup($node_master, $backup_name,
 	has_restoring => 1);
 $node_standby2->start;
 
+my $log_location = -s $node_standby2->logfile;
+
 # Now promote standby2, and check that temporary files specifically
 # generated during archive recovery are removed by the end of recovery.
 $node_standby2->promote;
+
+# Check the logs of the standby to see that the commands have failed.
+my $log_contents       = slurp_file($node_standby2->logfile, $log_location);
 my $node_standby2_data = $node_standby2->data_dir;
+
+like(
+	$log_contents,
+	qr/restored log file "00000002.history" from archive/s,
+	"00000002.history retrieved from the archives");
 ok( !-f "$node_standby2_data/pg_wal/RECOVERYHISTORY",
 	"RECOVERYHISTORY removed after promotion");
 ok( !-f "$node_standby2_data/pg_wal/RECOVERYXLOG",
