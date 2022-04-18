@@ -165,6 +165,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	{
 		size_t		ctx_out;
 		size_t		header_size;
+		LZ4F_preferences_t prefs;
 
 		ctx_out = LZ4F_createCompressionContext(&ctx, LZ4F_VERSION);
 		if (LZ4F_isError(ctx_out))
@@ -177,8 +178,12 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		lz4bufsize = LZ4F_compressBound(LZ4_IN_SIZE, NULL);
 		lz4buf = pg_malloc0(lz4bufsize);
 
+		/* assign the compression level, default is 0 */
+		memset(&prefs, 0, sizeof(prefs));
+		prefs.compressionLevel = dir_data->compression_level;
+
 		/* add the header */
-		header_size = LZ4F_compressBegin(ctx, lz4buf, lz4bufsize, NULL);
+		header_size = LZ4F_compressBegin(ctx, lz4buf, lz4bufsize, &prefs);
 		if (LZ4F_isError(header_size))
 		{
 			dir_data->lasterrstring = LZ4F_getErrorName(header_size);
