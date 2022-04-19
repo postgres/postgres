@@ -2592,15 +2592,6 @@ END;
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>failures</replaceable></term>
-     <listitem>
-      <para>
-       number of transactions that ended with a failed SQL command
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><replaceable>serialization_failures</replaceable></term>
      <listitem>
       <para>
@@ -2629,8 +2620,8 @@ END;
 <screen>
 <userinput>pgbench --aggregate-interval=10 --time=20 --client=10 --log --rate=1000 --latency-limit=10 --failures-detailed --max-tries=10 test</userinput>
 
-1649114136 5815 27552565 177846919143 1078 21716 2756787 7264696105 0 9661 0 7854 31472 4022 4022 0
-1649114146 5958 28460110 182785513108 1083 20391 2539395 6411761497 0 7268 0 8127 32595 4101 4101 0
+1650260552 5178 26171317 177284491527 1136 44462 2647617 7321113867 0 9866 64 7564 28340 4148 0
+1650260562 4808 25573984 220121792172 1171 62083 3037380 9666800914 0 9998 598 7392 26621 4527 0
 </screen>
   </para>
 

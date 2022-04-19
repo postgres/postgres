@@ -4498,7 +4498,6 @@ doLog(TState *thread, CState *st,
 			int64		skipped = 0;
 			int64		serialization_failures = 0;
 			int64		deadlock_failures = 0;
-			int64		serialization_or_deadlock_failures = 0;
 			int64		retried = 0;
 			int64		retries = 0;
 
@@ -4540,9 +4539,7 @@ doLog(TState *thread, CState *st,
 				serialization_failures = agg->serialization_failures;
 				deadlock_failures = agg->deadlock_failures;
 			}
-			serialization_or_deadlock_failures = serialization_failures + deadlock_failures;
-			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT " " INT64_FORMAT,
-					serialization_or_deadlock_failures,
+			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT,
 					serialization_failures,
 					deadlock_failures);
 
