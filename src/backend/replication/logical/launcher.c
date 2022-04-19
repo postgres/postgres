@@ -372,11 +372,11 @@ retry:
 	}
 
 	/*
-	 * If we reached the sync worker limit per subscription, just exit
-	 * silently as we might get here because of an otherwise harmless race
-	 * condition.
+	 * We don't allow to invoke more sync workers once we have reached the sync
+	 * worker limit per subscription. So, just return silently as we might get
+	 * here because of an otherwise harmless race condition.
 	 */
-	if (nsyncworkers >= max_sync_workers_per_subscription)
+	if (OidIsValid(relid) && nsyncworkers >= max_sync_workers_per_subscription)
 	{
 		LWLockRelease(LogicalRepWorkerLock);
 		return;
