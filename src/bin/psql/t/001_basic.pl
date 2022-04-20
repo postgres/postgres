@@ -129,7 +129,7 @@ is($err, 'psql:<stdin>:2: FATAL:  terminating connection due to administrator co
 psql:<stdin>:2: server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
-psql:<stdin>:2: fatal: connection to server was lost',
+psql:<stdin>:2: error: connection to server was lost',
 	'server crash: error message');
 
 # test \errverbose

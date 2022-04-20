@@ -904,7 +904,7 @@ listAllDbs(const char *pattern, bool verbose)
 						  gettext_noop("Locale Provider"));
 	else
 		appendPQExpBuffer(&buf,
-						  "       d.datcollate as \"%s\",\n"
+						  "       NULL as \"%s\",\n"
 						  "       'libc' AS \"%s\",\n",
 						  gettext_noop("ICU Locale"),
 						  gettext_noop("Locale Provider"));
@@ -2622,7 +2622,6 @@ describeOneTableDetails(const char *schemaname,
 									  PQgetvalue(result, i, 4));
 
 				printTableAddFooter(&cont, buf.data);
-
 			}
 			PQclear(result);
 		}
@@ -3080,7 +3079,7 @@ describeOneTableDetails(const char *schemaname,
 		 * servers between v11 and v14, though these must still be shown to
 		 * the user.  So we use another property that is true for such
 		 * inherited triggers to avoid them being hidden, which is their
-		 * dependendence on another trigger.
+		 * dependence on another trigger.
 		 */
 		if (pset.sversion >= 110000 && pset.sversion < 150000)
 			appendPQExpBufferStr(&buf, "(NOT t.tgisinternal OR (t.tgisinternal AND t.tgenabled = 'D') \n"
@@ -3172,7 +3171,6 @@ describeOneTableDetails(const char *schemaname,
 							case 4:
 								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
 								break;
-
 						}
 						printTableAddFooter(&cont, buf.data);
 						have_heading = true;
@@ -4404,10 +4402,14 @@ describeConfigurationParameters(const char *pattern, bool verbose,
 							 "  LEFT JOIN pg_catalog.pg_parameter_acl p\n"
 							 "  ON pg_catalog.lower(s.name) = p.parname\n");
 
-	processSQLNamePattern(pset.db, &buf, pattern,
-						  false, false,
-						  NULL, "pg_catalog.lower(s.name)", NULL,
-						  NULL);
+	if (pattern)
+		processSQLNamePattern(pset.db, &buf, pattern,
+							  false, false,
+							  NULL, "pg_catalog.lower(s.name)", NULL,
+							  NULL);
+	else
+		appendPQExpBufferStr(&buf, "WHERE s.source <> 'default' AND\n"
+							 "      s.setting IS DISTINCT FROM s.boot_val\n");
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -4417,7 +4419,10 @@ describeConfigurationParameters(const char *pattern, bool verbose,
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of configuration parameters");
+	if (pattern)
+		myopt.title = _("List of configuration parameters");
+	else
+		myopt.title = _("List of non-default configuration parameters");
 	myopt.translate_header = true;
 
 	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);

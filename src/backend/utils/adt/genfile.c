@@ -59,9 +59,9 @@ convert_and_check_filename(text *arg)
 	canonicalize_path(filename);	/* filename can change length here */
 
 	/*
-	 * Roles with privleges of the 'pg_read_server_files' role are allowed to access
-	 * any files on the server as the PG user, so no need to do any further checks
-	 * here.
+	 * Roles with privileges of the 'pg_read_server_files' role are allowed to
+	 * access any files on the server as the PG user, so no need to do any
+	 * further checks here.
 	 */
 	if (has_privs_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
 		return filename;

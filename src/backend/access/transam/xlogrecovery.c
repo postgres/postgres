@@ -1790,7 +1790,6 @@ PerformWalRecovery(void)
 		/* there are no WAL records following the checkpoint */
 		ereport(LOG,
 				(errmsg("redo is not required")));
-
 	}
 
 	/*
@@ -2172,10 +2171,10 @@ xlog_block_info(StringInfo buf, XLogReaderState *record)
 		ForkNumber	forknum;
 		BlockNumber blk;
 
-		if (!XLogRecHasBlockRef(record, block_id))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blk, NULL))
 			continue;
 
-		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 		if (forknum != MAIN_FORKNUM)
 			appendStringInfo(buf, "; blkref #%d: rel %u/%u/%u, fork %u, blk %u",
 							 block_id,
@@ -2303,7 +2302,8 @@ verifyBackupPageConsistency(XLogReaderState *record)
 		Buffer		buf;
 		Page		page;
 
-		if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blkno, NULL))
 		{
 			/*
 			 * WAL record doesn't contain a block reference with the given id.
@@ -2975,7 +2975,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 			/*
 			 * When not in standby mode we find that WAL ends in an incomplete
 			 * record, keep track of that record.  After recovery is done,
-			 * we'll write a record to indicate downstream WAL readers that
+			 * we'll write a record to indicate to downstream WAL readers that
 			 * that portion is to be ignored.
 			 */
 			if (!StandbyMode &&

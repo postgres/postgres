@@ -182,16 +182,17 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				break;
 
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
 
 	if (optind < argc)
 	{
-		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
-				progname, argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error("too many command-line arguments (first is \"%s\")",
+					 argv[optind]);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 }
@@ -328,11 +329,8 @@ sql_conn(struct options *my_opts)
 		conn = PQconnectdbParams(keywords, values, true);
 
 		if (!conn)
-		{
-			pg_log_error("could not connect to database %s",
-						 my_opts->dbname);
-			exit(1);
-		}
+			pg_fatal("could not connect to database %s",
+					 my_opts->dbname);
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
@@ -359,7 +357,7 @@ sql_conn(struct options *my_opts)
 					 PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);
-		exit(-1);
+		exit(1);
 	}
 	PQclear(res);
 
@@ -390,11 +388,11 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 	if (!res || PQresultStatus(res) > 2)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
-		pg_log_error("query was: %s", todo);
+		pg_log_error_detail("Query was: %s", todo);
 
 		PQclear(res);
 		PQfinish(conn);
-		exit(-1);
+		exit(1);
 	}
 
 	/* get the number of fields */

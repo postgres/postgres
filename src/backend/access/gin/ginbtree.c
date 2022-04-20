@@ -527,7 +527,6 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 									   BufferGetBlockNumber(stack->buffer),
 									   BufferGetBlockNumber(rbuffer));
 			}
-
 		}
 		else
 		{

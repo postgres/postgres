@@ -132,7 +132,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         available. This strategy writes a small record to the write-ahead log
         for each tablespace used by the target database. Each such record
         represents copying an entire directory to a new location at the
-        filesystem level. While this does reduce the write-ahed
+        filesystem level. While this does reduce the write-ahead
         log volume substantially, especially if the template database is large,
         it also forces the system to perform a checkpoint both before and
         after the creation of the new database. In some situations, this may
@@ -278,11 +278,11 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        <listitem>
         <para>
          The object identifier to be used for the new database. If this
-         parameter is not specified, the database will choose a suitable
-         OID automatically. This parameter is primarily intended for internal
-         use by <application>pg_upgrade</application>, and only
-         <application>pg_upgrade</application> can specify a value less
-         than 16384.
+         parameter is not specified, <productname>PostgreSQL</productname>
+         will choose a suitable OID automatically. This parameter is primarily
+         intended for internal use by <application>pg_upgrade</application>,
+         and only <application>pg_upgrade</application> can specify a value
+         less than 16384.
         </para>
        </listitem>
       </varlistentry>

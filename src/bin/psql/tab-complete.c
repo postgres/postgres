@@ -1006,24 +1006,18 @@ static const SchemaQuery Query_for_trigger_of_table = {
 
 /* Use COMPLETE_WITH_QUERY_VERBATIM with these queries for GUC names: */
 #define Query_for_list_of_alter_system_set_vars \
-"SELECT name FROM "\
-" (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
-"  WHERE context != 'internal' "\
-" ) ss "\
-" WHERE name LIKE '%s'"
+"SELECT pg_catalog.lower(name) FROM pg_catalog.pg_settings "\
+" WHERE context != 'internal' "\
+"   AND pg_catalog.lower(name) LIKE pg_catalog.lower('%s')"
 
 #define Query_for_list_of_set_vars \
-"SELECT name FROM "\
-" (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
-"  WHERE context IN ('user', 'superuser') "\
-" ) ss "\
-" WHERE name LIKE '%s'"
+"SELECT pg_catalog.lower(name) FROM pg_catalog.pg_settings "\
+" WHERE context IN ('user', 'superuser') "\
+"   AND pg_catalog.lower(name) LIKE pg_catalog.lower('%s')"
 
 #define Query_for_list_of_show_vars \
-"SELECT name FROM "\
-" (SELECT pg_catalog.lower(name) AS name FROM pg_catalog.pg_settings "\
-" ) ss "\
-" WHERE name LIKE '%s'"
+"SELECT pg_catalog.lower(name) FROM pg_catalog.pg_settings "\
+" WHERE pg_catalog.lower(name) LIKE pg_catalog.lower('%s')"
 
 #define Query_for_list_of_roles \
 " SELECT rolname "\
@@ -2257,7 +2251,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("COLUMN", "CONSTRAINT", "CHECK", "UNIQUE", "PRIMARY KEY",
 					  "EXCLUDE", "FOREIGN KEY");
 	}
-	/* ATER TABLE xxx ADD [COLUMN] yyy */
+	/* ALTER TABLE xxx ADD [COLUMN] yyy */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN", MatchAny) ||
 			 (Matches("ALTER", "TABLE", MatchAny, "ADD", MatchAny) &&
 			  !Matches("ALTER", "TABLE", MatchAny, "ADD", "COLUMN|CONSTRAINT|CHECK|UNIQUE|PRIMARY|EXCLUDE|FOREIGN")))

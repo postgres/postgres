@@ -1775,7 +1775,6 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 			hbaline->pam_use_hostname = true;
 		else
 			hbaline->pam_use_hostname = false;
-
 	}
 	else if (strcmp(name, "ldapurl") == 0)
 	{

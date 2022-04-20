@@ -868,7 +868,6 @@ translate(PG_FUNCTION_ARGS)
 				target += len;
 				retlen += len;
 			}
-
 		}
 		else
 		{

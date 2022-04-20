@@ -304,7 +304,7 @@ CheckConnection(void)
 	{
 		if (!pset.cur_cmd_interactive)
 		{
-			pg_log_fatal("connection to server was lost");
+			pg_log_error("connection to server was lost");
 			exit(EXIT_BADCONN);
 		}
 

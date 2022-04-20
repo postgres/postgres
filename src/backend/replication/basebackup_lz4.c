@@ -3,7 +3,7 @@
  * basebackup_lz4.c
  *	  Basebackup sink implementing lz4 compression.
  *
- * Portions Copyright (c) 2010-2020, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/basebackup_lz4.c
@@ -59,7 +59,7 @@ const bbsink_ops bbsink_lz4_ops = {
  * Create a new basebackup sink that performs lz4 compression.
  */
 bbsink *
-bbsink_lz4_new(bbsink *next, bc_specification *compress)
+bbsink_lz4_new(bbsink *next, pg_compress_specification *compress)
 {
 #ifndef USE_LZ4
 	ereport(ERROR,
@@ -72,7 +72,7 @@ bbsink_lz4_new(bbsink *next, bc_specification *compress)
 
 	Assert(next != NULL);
 
-	if ((compress->options & BACKUP_COMPRESSION_OPTION_LEVEL) == 0)
+	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) == 0)
 		compresslevel = 0;
 	else
 	{

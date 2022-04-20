@@ -1044,7 +1044,7 @@ perform_relmap_update(bool shared, const RelMapFile *updates)
 					  (shared ? "global" : DatabasePath));
 
 	/*
-	 * We succesfully wrote the updated file, so it's now safe to rely on the
+	 * We successfully wrote the updated file, so it's now safe to rely on the
 	 * new values in this process, too.
 	 */
 	if (shared)
@@ -1093,7 +1093,7 @@ relmap_redo(XLogReaderState *record)
 		 * an existing database as we do for creating a new database. In
 		 * the latter case, taking the relmap log and sending sinval messages
 		 * is unnecessary, but harmless. If we wanted to avoid it, we could
-		 * add a flag to the WAL record to indicate which opration is being
+		 * add a flag to the WAL record to indicate which operation is being
 		 * performed.
 		 */
 		LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);

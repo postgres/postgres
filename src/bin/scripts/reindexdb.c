@@ -170,7 +170,8 @@ main(int argc, char *argv[])
 				tablespace = pg_strdup(optarg);
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -189,7 +190,7 @@ main(int argc, char *argv[])
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -205,30 +206,15 @@ main(int argc, char *argv[])
 	if (alldb)
 	{
 		if (dbname)
-		{
-			pg_log_error("cannot reindex all databases and a specific one at the same time");
-			exit(1);
-		}
+			pg_fatal("cannot reindex all databases and a specific one at the same time");
 		if (syscatalog)
-		{
-			pg_log_error("cannot reindex all databases and system catalogs at the same time");
-			exit(1);
-		}
+			pg_fatal("cannot reindex all databases and system catalogs at the same time");
 		if (schemas.head != NULL)
-		{
-			pg_log_error("cannot reindex specific schema(s) in all databases");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific schema(s) in all databases");
 		if (tables.head != NULL)
-		{
-			pg_log_error("cannot reindex specific table(s) in all databases");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific table(s) in all databases");
 		if (indexes.head != NULL)
-		{
-			pg_log_error("cannot reindex specific index(es) in all databases");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific index(es) in all databases");
 
 		cparams.dbname = maintenance_db;
 
@@ -238,26 +224,14 @@ main(int argc, char *argv[])
 	else if (syscatalog)
 	{
 		if (schemas.head != NULL)
-		{
-			pg_log_error("cannot reindex specific schema(s) and system catalogs at the same time");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific schema(s) and system catalogs at the same time");
 		if (tables.head != NULL)
-		{
-			pg_log_error("cannot reindex specific table(s) and system catalogs at the same time");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific table(s) and system catalogs at the same time");
 		if (indexes.head != NULL)
-		{
-			pg_log_error("cannot reindex specific index(es) and system catalogs at the same time");
-			exit(1);
-		}
+			pg_fatal("cannot reindex specific index(es) and system catalogs at the same time");
 
 		if (concurrentCons > 1)
-		{
-			pg_log_error("cannot use multiple jobs to reindex system catalogs");
-			exit(1);
-		}
+			pg_fatal("cannot use multiple jobs to reindex system catalogs");
 
 		if (dbname == NULL)
 		{
@@ -283,10 +257,7 @@ main(int argc, char *argv[])
 		 * depending on the same relation.
 		 */
 		if (concurrentCons > 1 && indexes.head != NULL)
-		{
-			pg_log_error("cannot use multiple jobs to reindex indexes");
-			exit(1);
-		}
+			pg_fatal("cannot use multiple jobs to reindex indexes");
 
 		if (dbname == NULL)
 		{
@@ -349,17 +320,15 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 	if (concurrently && PQserverVersion(conn) < 120000)
 	{
 		PQfinish(conn);
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
-					 "concurrently", "12");
-		exit(1);
+		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+				 "concurrently", "12");
 	}
 
 	if (tablespace && PQserverVersion(conn) < 140000)
 	{
 		PQfinish(conn);
-		pg_log_error("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
-					 "tablespace", "14");
-		exit(1);
+		pg_fatal("cannot use the \"%s\" option on server versions older than PostgreSQL %s",
+				 "tablespace", "14");
 	}
 
 	if (!parallel)

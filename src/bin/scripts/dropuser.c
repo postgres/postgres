@@ -91,7 +91,8 @@ main(int argc, char *argv[])
 				/* this covers the long options */
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -106,7 +107,7 @@ main(int argc, char *argv[])
 		default:
 			pg_log_error("too many command-line arguments (first is \"%s\")",
 						 argv[optind + 1]);
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 	}
 
@@ -119,7 +120,7 @@ main(int argc, char *argv[])
 		else
 		{
 			pg_log_error("missing required argument role name");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 	}

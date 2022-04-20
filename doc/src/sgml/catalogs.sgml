@@ -2065,8 +2065,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>relpersistence</structfield> <type>char</type>
       </para>
       <para>
-       <literal>p</literal> = permanent table, <literal>u</literal> = unlogged table,
-       <literal>t</literal> = temporary table
+       <literal>p</literal> = permanent table/sequence, <literal>u</literal> = unlogged table/sequence,
+       <literal>t</literal> = temporary table/sequence
       </para></entry>
      </row>
 
@@ -12962,7 +12962,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The <structname>pg_shmem_allocations</structname> view shows allocations
    made from the server's main shared memory segment.  This includes both
-   memory allocated by <productname>postgres</productname> itself and memory
+   memory allocated by <productname>PostgreSQL</productname> itself and memory
    allocated by extensions using the mechanisms detailed in
    <xref linkend="xfunc-shared-addin" />.
   </para>

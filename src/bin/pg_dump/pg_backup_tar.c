@@ -169,14 +169,14 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		{
 			ctx->tarFH = fopen(AH->fSpec, PG_BINARY_W);
 			if (ctx->tarFH == NULL)
-				fatal("could not open TOC file \"%s\" for output: %m",
-					  AH->fSpec);
+				pg_fatal("could not open TOC file \"%s\" for output: %m",
+						 AH->fSpec);
 		}
 		else
 		{
 			ctx->tarFH = stdout;
 			if (ctx->tarFH == NULL)
-				fatal("could not open TOC file for output: %m");
+				pg_fatal("could not open TOC file for output: %m");
 		}
 
 		ctx->tarFHpos = 0;
@@ -195,7 +195,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 * positioning.
 		 */
 		if (AH->compression != 0)
-			fatal("compression is not supported by tar archive format");
+			pg_fatal("compression is not supported by tar archive format");
 	}
 	else
 	{							/* Read Mode */
@@ -203,14 +203,14 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		{
 			ctx->tarFH = fopen(AH->fSpec, PG_BINARY_R);
 			if (ctx->tarFH == NULL)
-				fatal("could not open TOC file \"%s\" for input: %m",
-					  AH->fSpec);
+				pg_fatal("could not open TOC file \"%s\" for input: %m",
+						 AH->fSpec);
 		}
 		else
 		{
 			ctx->tarFH = stdin;
 			if (ctx->tarFH == NULL)
-				fatal("could not open TOC file for input: %m");
+				pg_fatal("could not open TOC file for input: %m");
 		}
 
 		/*
@@ -319,7 +319,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 				 * Couldn't find the requested file. Future: do SEEK(0) and
 				 * retry.
 				 */
-				fatal("could not find file \"%s\" in archive", filename);
+				pg_fatal("could not find file \"%s\" in archive", filename);
 			}
 			else
 			{
@@ -331,7 +331,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 		if (AH->compression == 0)
 			tm->nFH = ctx->tarFH;
 		else
-			fatal("compression is not supported by tar archive format");
+			pg_fatal("compression is not supported by tar archive format");
 	}
 	else
 	{
@@ -379,14 +379,14 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 #endif
 
 		if (tm->tmpFH == NULL)
-			fatal("could not generate temporary file name: %m");
+			pg_fatal("could not generate temporary file name: %m");
 
 		umask(old_umask);
 
 		if (AH->compression == 0)
 			tm->nFH = tm->tmpFH;
 		else
-			fatal("compression is not supported by tar archive format");
+			pg_fatal("compression is not supported by tar archive format");
 
 		tm->AH = AH;
 		tm->targetFile = pg_strdup(filename);
@@ -402,7 +402,7 @@ static void
 tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 {
 	if (AH->compression != 0)
-		fatal("compression is not supported by tar archive format");
+		pg_fatal("compression is not supported by tar archive format");
 
 	if (th->mode == 'w')
 		_tarAddFile(AH, th);	/* This will close the temp file */
@@ -621,8 +621,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 			pos1 = (int) strlen(te->copyStmt) - 13;
 			if (pos1 < 6 || strncmp(te->copyStmt, "COPY ", 5) != 0 ||
 				strcmp(te->copyStmt + pos1, " FROM stdin;\n") != 0)
-				fatal("unexpected COPY statement syntax: \"%s\"",
-					  te->copyStmt);
+				pg_fatal("unexpected COPY statement syntax: \"%s\"",
+						 te->copyStmt);
 
 			/* Emit all but the FROM part ... */
 			ahwrite(te->copyStmt, 1, pos1, AH);
@@ -723,7 +723,7 @@ _ReadByte(ArchiveHandle *AH)
 	res = tarRead(&c, 1, ctx->FH);
 	if (res != 1)
 		/* We already would have exited for errors on reads, must be EOF */
-		fatal("could not read from input file: end of file");
+		pg_fatal("could not read from input file: end of file");
 	ctx->filePos += 1;
 	return c;
 }
@@ -746,7 +746,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
 
 	if (tarRead(buf, len, ctx->FH) != len)
 		/* We already would have exited for errors on reads, must be EOF */
-		fatal("could not read from input file: end of file");
+		pg_fatal("could not read from input file: end of file");
 
 	ctx->filePos += len;
 }
@@ -887,10 +887,10 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	char		fname[255];
 
 	if (oid == 0)
-		fatal("invalid OID for large object (%u)", oid);
+		pg_fatal("invalid OID for large object (%u)", oid);
 
 	if (AH->compression != 0)
-		fatal("compression is not supported by tar archive format");
+		pg_fatal("compression is not supported by tar archive format");
 
 	sprintf(fname, "blob_%u.dat", oid);
 
@@ -1013,12 +1013,12 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 * Find file len & go back to start.
 	 */
 	if (fseeko(tmp, 0, SEEK_END) != 0)
-		fatal("error during file seek: %m");
+		pg_fatal("error during file seek: %m");
 	th->fileLen = ftello(tmp);
 	if (th->fileLen < 0)
-		fatal("could not determine seek position in archive file: %m");
+		pg_fatal("could not determine seek position in archive file: %m");
 	if (fseeko(tmp, 0, SEEK_SET) != 0)
-		fatal("error during file seek: %m");
+		pg_fatal("error during file seek: %m");
 
 	_tarWriteHeader(th);
 
@@ -1032,11 +1032,11 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 		READ_ERROR_EXIT(tmp);
 
 	if (fclose(tmp) != 0)		/* This *should* delete it... */
-		fatal("could not close temporary file: %m");
+		pg_fatal("could not close temporary file: %m");
 
 	if (len != th->fileLen)
-		fatal("actual file length (%lld) does not match expected (%lld)",
-			  (long long) len, (long long) th->fileLen);
+		pg_fatal("actual file length (%lld) does not match expected (%lld)",
+				 (long long) len, (long long) th->fileLen);
 
 	pad = tarPaddingBytesRequired(len);
 	for (i = 0; i < pad; i++)
@@ -1081,7 +1081,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	if (!_tarGetHeader(AH, th))
 	{
 		if (filename)
-			fatal("could not find header for file \"%s\" in tar archive", filename);
+			pg_fatal("could not find header for file \"%s\" in tar archive", filename);
 		else
 		{
 			/*
@@ -1099,9 +1099,9 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 
 		id = atoi(th->targetFile);
 		if ((TocIDRequired(AH, id) & REQ_DATA) != 0)
-			fatal("restoring data out of order is not supported in this archive format: "
-				  "\"%s\" is required, but comes before \"%s\" in the archive file.",
-				  th->targetFile, filename);
+			pg_fatal("restoring data out of order is not supported in this archive format: "
+					 "\"%s\" is required, but comes before \"%s\" in the archive file.",
+					 th->targetFile, filename);
 
 		/* Header doesn't match, so read to next header */
 		len = th->fileLen;
@@ -1112,7 +1112,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 			_tarReadRaw(AH, &header[0], TAR_BLOCK_SIZE, NULL, ctx->tarFH);
 
 		if (!_tarGetHeader(AH, th))
-			fatal("could not find header for file \"%s\" in tar archive", filename);
+			pg_fatal("could not find header for file \"%s\" in tar archive", filename);
 	}
 
 	ctx->tarNextMember = ctx->tarFHpos + th->fileLen
@@ -1146,10 +1146,10 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 			return 0;
 
 		if (len != TAR_BLOCK_SIZE)
-			fatal(ngettext("incomplete tar header found (%lu byte)",
-						   "incomplete tar header found (%lu bytes)",
-						   len),
-				  (unsigned long) len);
+			pg_fatal(ngettext("incomplete tar header found (%lu byte)",
+							  "incomplete tar header found (%lu bytes)",
+							  len),
+					 (unsigned long) len);
 
 		/* Calc checksum */
 		chk = tarChecksum(h);
@@ -1185,8 +1185,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 				 tag, (unsigned long long) hPos, (unsigned long long) len, sum);
 
 	if (chk != sum)
-		fatal("corrupt tar header found in %s (expected %d, computed %d) file position %llu",
-			  tag, sum, chk, (unsigned long long) ftello(ctx->tarFH));
+		pg_fatal("corrupt tar header found in %s (expected %d, computed %d) file position %llu",
+				 tag, sum, chk, (unsigned long long) ftello(ctx->tarFH));
 
 	th->targetFile = pg_strdup(tag);
 	th->fileLen = len;

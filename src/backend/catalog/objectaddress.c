@@ -1007,7 +1007,6 @@ get_object_address(ObjectType objtype, Node *object,
 					address.objectId = get_domain_constraint_oid(domaddr.objectId,
 																 constrname, missing_ok);
 					address.objectSubId = 0;
-
 				}
 				break;
 			case OBJECT_DATABASE:
@@ -5621,7 +5620,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 					systable_endscan(rcscan);
 					table_close(defaclrel, AccessShareLock);
 					break;
-
 				}
 
 				defacl = (Form_pg_default_acl) GETSTRUCT(tup);

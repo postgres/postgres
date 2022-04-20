@@ -386,7 +386,7 @@ ScanSourceDatabasePgClassPage(Page page, Buffer buf, Oid tbid, Oid dbid,
  * needs to be copied from the source database to the destination database,
  * and if so, construct a CreateDBRelInfo for it.
  *
- * Visbility checks are handled by the caller, so our job here is just
+ * Visibility checks are handled by the caller, so our job here is just
  * to assess the data stored in the tuple.
  */
 CreateDBRelInfo *

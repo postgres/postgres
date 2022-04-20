@@ -2173,7 +2173,6 @@ llvm_compile_expr(ExprState *state)
 										  "");
 
 							LLVMBuildBr(b, opblocks[opno + 1]);
-
 						}
 
 						LLVMPositionBuilderAtEnd(b, b_no_init);

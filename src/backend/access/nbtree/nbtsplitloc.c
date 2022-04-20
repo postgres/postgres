@@ -35,7 +35,6 @@ typedef struct
 	/* split point identifying fields (returned by _bt_findsplitloc) */
 	OffsetNumber firstrightoff; /* first origpage item on rightpage */
 	bool		newitemonleft;	/* new item goes on left, or right? */
-
 } SplitPoint;
 
 typedef struct

@@ -162,7 +162,6 @@ InitSync(void)
 								 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 		pendingUnlinks = NIL;
 	}
-
 }
 
 /*

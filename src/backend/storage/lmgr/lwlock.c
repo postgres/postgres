@@ -1096,7 +1096,6 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 #ifdef LOCK_DEBUG
 	pg_atomic_fetch_add_u32(&lock->nwaiters, 1);
 #endif
-
 }
 
 /*

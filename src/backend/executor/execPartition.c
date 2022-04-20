@@ -1530,11 +1530,15 @@ ExecBuildSlotPartitionKeyDescription(Relation rel,
  * adjust_partition_colnos
  *		Adjust the list of UPDATE target column numbers to account for
  *		attribute differences between the parent and the partition.
+ *
+ * Note: mustn't be called if no adjustment is required.
  */
 static List *
 adjust_partition_colnos(List *colnos, ResultRelInfo *leaf_part_rri)
 {
 	TupleConversionMap *map = ExecGetChildToRootMap(leaf_part_rri);
+
+	Assert(map != NULL);
 
 	return adjust_partition_colnos_using_map(colnos, map->attrMap);
 }
@@ -1543,6 +1547,8 @@ adjust_partition_colnos(List *colnos, ResultRelInfo *leaf_part_rri)
  * adjust_partition_colnos_using_map
  *		Like adjust_partition_colnos, but uses a caller-supplied map instead
  *		of assuming to map from the "root" result relation.
+ *
+ * Note: mustn't be called if no adjustment is required.
  */
 static List *
 adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)

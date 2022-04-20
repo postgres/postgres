@@ -72,7 +72,6 @@ typedef struct XLogDumpConfig
 	bool		filter_by_fpw;
 } XLogDumpConfig;
 
-#define fatal_error(...) do { pg_log_fatal(__VA_ARGS__); exit(EXIT_FAILURE); } while(0)
 
 /*
  * When sigint is called, just tell the system to exit at the next possible
@@ -158,7 +157,7 @@ open_file_in_directory(const char *directory, const char *fname)
 	fd = open(fpath, O_RDONLY | PG_BINARY, 0);
 
 	if (fd < 0 && errno != ENOENT)
-		fatal_error("could not open file \"%s\": %m", fname);
+		pg_fatal("could not open file \"%s\": %m", fname);
 	return fd;
 }
 
@@ -214,17 +213,17 @@ search_directory(const char *directory, const char *fname)
 			WalSegSz = longhdr->xlp_seg_size;
 
 			if (!IsValidWalSegSize(WalSegSz))
-				fatal_error(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte",
-									 "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes",
-									 WalSegSz),
-							fname, WalSegSz);
+				pg_fatal(ngettext("WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte",
+								  "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes",
+								  WalSegSz),
+						 fname, WalSegSz);
 		}
 		else if (r < 0)
-			fatal_error("could not read file \"%s\": %m",
-						fname);
+			pg_fatal("could not read file \"%s\": %m",
+					 fname);
 		else
-			fatal_error("could not read file \"%s\": read %d of %d",
-						fname, r, XLOG_BLCKSZ);
+			pg_fatal("could not read file \"%s\": read %d of %d",
+					 fname, r, XLOG_BLCKSZ);
 		close(fd);
 		return true;
 	}
@@ -284,9 +283,9 @@ identify_target_directory(char *directory, char *fname)
 
 	/* could not locate WAL file */
 	if (fname)
-		fatal_error("could not locate WAL file \"%s\"", fname);
+		pg_fatal("could not locate WAL file \"%s\"", fname);
 	else
-		fatal_error("could not find any WAL file");
+		pg_fatal("could not find any WAL file");
 
 	return NULL;				/* not reached */
 }
@@ -327,7 +326,7 @@ WALDumpOpenSegment(XLogReaderState *state, XLogSegNo nextSegNo,
 		break;
 	}
 
-	fatal_error("could not find file \"%s\": %m", fname);
+	pg_fatal("could not find file \"%s\": %m", fname);
 }
 
 /*
@@ -376,13 +375,13 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
 		if (errinfo.wre_errno != 0)
 		{
 			errno = errinfo.wre_errno;
-			fatal_error("could not read from file %s, offset %d: %m",
-						fname, errinfo.wre_off);
+			pg_fatal("could not read from file %s, offset %d: %m",
+					 fname, errinfo.wre_off);
 		}
 		else
-			fatal_error("could not read from file %s, offset %d: read %d of %d",
-						fname, errinfo.wre_off, errinfo.wre_read,
-						errinfo.wre_req);
+			pg_fatal("could not read from file %s, offset %d: read %d of %d",
+					 fname, errinfo.wre_off, errinfo.wre_read,
+					 errinfo.wre_req);
 	}
 
 	return count;
@@ -406,10 +405,9 @@ XLogRecordMatchesRelationBlock(XLogReaderState *record,
 		ForkNumber	forknum;
 		BlockNumber blk;
 
-		if (!XLogRecHasBlockRef(record, block_id))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blk, NULL))
 			continue;
-
-		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 
 		if ((matchFork == InvalidForkNumber || matchFork == forknum) &&
 			(RelFileNodeEquals(matchRnode, emptyRelFileNode) ||
@@ -989,13 +987,13 @@ main(int argc, char **argv)
 			waldir = directory;
 
 			if (!verify_directory(waldir))
-				fatal_error("could not open directory \"%s\": %m", waldir);
+				pg_fatal("could not open directory \"%s\": %m", waldir);
 		}
 
 		waldir = identify_target_directory(waldir, fname);
 		fd = open_file_in_directory(waldir, fname);
 		if (fd < 0)
-			fatal_error("could not open file \"%s\"", fname);
+			pg_fatal("could not open file \"%s\"", fname);
 		close(fd);
 
 		/* parse position from file */
@@ -1025,15 +1023,15 @@ main(int argc, char **argv)
 
 			fd = open_file_in_directory(waldir, fname);
 			if (fd < 0)
-				fatal_error("could not open file \"%s\"", fname);
+				pg_fatal("could not open file \"%s\"", fname);
 			close(fd);
 
 			/* parse position from file */
 			XLogFromFileName(fname, &private.timeline, &endsegno, WalSegSz);
 
 			if (endsegno < segno)
-				fatal_error("ENDSEG %s is before STARTSEG %s",
-							argv[optind + 1], argv[optind]);
+				pg_fatal("ENDSEG %s is before STARTSEG %s",
+						 argv[optind + 1], argv[optind]);
 
 			if (XLogRecPtrIsInvalid(private.endptr))
 				XLogSegNoOffsetToRecPtr(endsegno + 1, 0, WalSegSz,
@@ -1073,14 +1071,14 @@ main(int argc, char **argv)
 									  .segment_close = WALDumpCloseSegment),
 						   &private);
 	if (!xlogreader_state)
-		fatal_error("out of memory while allocating a WAL reading processor");
+		pg_fatal("out of memory while allocating a WAL reading processor");
 
 	/* first find a valid recptr to start from */
 	first_record = XLogFindNextRecord(xlogreader_state, private.startptr);
 
 	if (first_record == InvalidXLogRecPtr)
-		fatal_error("could not find a valid record after %X/%X",
-					LSN_FORMAT_ARGS(private.startptr));
+		pg_fatal("could not find a valid record after %X/%X",
+				 LSN_FORMAT_ARGS(private.startptr));
 
 	/*
 	 * Display a message that we're skipping data if `from` wasn't a pointer
@@ -1170,15 +1168,15 @@ main(int argc, char **argv)
 		exit(0);
 
 	if (errormsg)
-		fatal_error("error in WAL record at %X/%X: %s",
-					LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
-					errormsg);
+		pg_fatal("error in WAL record at %X/%X: %s",
+				 LSN_FORMAT_ARGS(xlogreader_state->ReadRecPtr),
+				 errormsg);
 
 	XLogReaderFree(xlogreader_state);
 
 	return EXIT_SUCCESS;
 
 bad_argument:
-	fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+	pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 	return EXIT_FAILURE;
 }

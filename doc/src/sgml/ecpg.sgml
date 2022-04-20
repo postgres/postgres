@@ -8233,7 +8233,7 @@ $COMMIT;
    you functions that have the same name and the same basic behavior but it is
    no drop-in replacement if you are using <productname>Informix</productname> at the moment. Moreover,
    some of the data types are different. For example,
-   <productname>PostgreSQL's</productname> datetime and interval types do not
+   <productname>PostgreSQL</productname>'s datetime and interval types do not
    know about ranges like for example <literal>YEAR TO MINUTE</literal> so you won't
    find support in ECPG for that either.
   </para>

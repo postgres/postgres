@@ -90,10 +90,7 @@ bbstreamer_plain_writer_new(char *pathname, FILE *file)
 	{
 		streamer->file = fopen(pathname, "wb");
 		if (streamer->file == NULL)
-		{
-			pg_log_error("could not create file \"%s\": %m", pathname);
-			exit(1);
-		}
+			pg_fatal("could not create file \"%s\": %m", pathname);
 		streamer->should_close_file = true;
 	}
 
@@ -121,9 +118,8 @@ bbstreamer_plain_writer_content(bbstreamer *streamer,
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		pg_log_error("could not write to file \"%s\": %m",
-					 mystreamer->pathname);
-		exit(1);
+		pg_fatal("could not write to file \"%s\": %m",
+				 mystreamer->pathname);
 	}
 }
 
@@ -139,11 +135,8 @@ bbstreamer_plain_writer_finalize(bbstreamer *streamer)
 	mystreamer = (bbstreamer_plain_writer *) streamer;
 
 	if (mystreamer->should_close_file && fclose(mystreamer->file) != 0)
-	{
-		pg_log_error("could not close file \"%s\": %m",
-					 mystreamer->pathname);
-		exit(1);
-	}
+		pg_fatal("could not close file \"%s\": %m",
+				 mystreamer->pathname);
 
 	mystreamer->file = NULL;
 	mystreamer->should_close_file = false;
@@ -262,9 +255,8 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 				/* if write didn't set errno, assume problem is no disk space */
 				if (errno == 0)
 					errno = ENOSPC;
-				pg_log_error("could not write to file \"%s\": %m",
-							 mystreamer->filename);
-				exit(1);
+				pg_fatal("could not write to file \"%s\": %m",
+						 mystreamer->filename);
 			}
 			break;
 
@@ -280,8 +272,7 @@ bbstreamer_extractor_content(bbstreamer *streamer, bbstreamer_member *member,
 
 		default:
 			/* Shouldn't happen. */
-			pg_log_error("unexpected state while extracting archive");
-			exit(1);
+			pg_fatal("unexpected state while extracting archive");
 	}
 }
 
@@ -304,20 +295,14 @@ extract_directory(const char *filename, mode_t mode)
 			   pg_str_endswith(filename, "/pg_xlog") ||
 			   pg_str_endswith(filename, "/archive_status")) &&
 			  errno == EEXIST))
-		{
-			pg_log_error("could not create directory \"%s\": %m",
-						 filename);
-			exit(1);
-		}
+			pg_fatal("could not create directory \"%s\": %m",
+					 filename);
 	}
 
 #ifndef WIN32
 	if (chmod(filename, mode))
-	{
-		pg_log_error("could not set permissions on directory \"%s\": %m",
-					 filename);
-		exit(1);
-	}
+		pg_fatal("could not set permissions on directory \"%s\": %m",
+				 filename);
 #endif
 }
 
@@ -335,11 +320,8 @@ static void
 extract_link(const char *filename, const char *linktarget)
 {
 	if (symlink(linktarget, filename) != 0)
-	{
-		pg_log_error("could not create symbolic link from \"%s\" to \"%s\": %m",
-					 filename, linktarget);
-		exit(1);
-	}
+		pg_fatal("could not create symbolic link from \"%s\" to \"%s\": %m",
+				 filename, linktarget);
 }
 
 /*
@@ -354,18 +336,12 @@ create_file_for_extract(const char *filename, mode_t mode)
 
 	file = fopen(filename, "wb");
 	if (file == NULL)
-	{
-		pg_log_error("could not create file \"%s\": %m", filename);
-		exit(1);
-	}
+		pg_fatal("could not create file \"%s\": %m", filename);
 
 #ifndef WIN32
 	if (chmod(filename, mode))
-	{
-		pg_log_error("could not set permissions on file \"%s\": %m",
-					 filename);
-		exit(1);
-	}
+		pg_fatal("could not set permissions on file \"%s\": %m",
+				 filename);
 #endif
 
 	return file;

@@ -1570,7 +1570,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 */
 		if (slotname)
 			ReplicationSlotDropAtPubNode(wrconn, slotname, false);
-
 	}
 	PG_FINALLY();
 	{

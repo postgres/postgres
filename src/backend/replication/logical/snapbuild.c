@@ -1380,7 +1380,6 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 * records so incremental cleanup can be performed.
 	 */
 	return true;
-
 }
 
 /* ---

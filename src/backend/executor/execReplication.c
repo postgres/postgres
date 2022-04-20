@@ -548,7 +548,6 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										   tid, NULL, NULL);
-
 	}
 
 	if (!skip_tuple)

@@ -947,7 +947,6 @@ interval2tm(interval span, struct tm *tm, fsec_t *fsec)
 	{
 		tm->tm_year = span.month / MONTHS_PER_YEAR;
 		tm->tm_mon = span.month % MONTHS_PER_YEAR;
-
 	}
 	else
 	{

@@ -58,10 +58,7 @@ usage(unsigned short int pager)
 	{
 		user = get_user_name(&errstr);
 		if (!user)
-		{
-			pg_log_fatal("%s", errstr);
-			exit(EXIT_FAILURE);
-		}
+			pg_fatal("%s", errstr);
 	}
 
 	/*

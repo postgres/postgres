@@ -293,8 +293,7 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 #define SIMPLEHASH_H
 
 #ifdef FRONTEND
-#define sh_error(...) \
-	do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
+#define sh_error(...) pg_fatal(__VA_ARGS__)
 #define sh_log(...) pg_log_info(__VA_ARGS__)
 #else
 #define sh_error(...) elog(ERROR, __VA_ARGS__)

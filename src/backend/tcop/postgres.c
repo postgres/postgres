@@ -2636,7 +2636,6 @@ exec_describe_statement_message(const char *stmt_name)
 	}
 	else
 		pq_putemptymessage('n');	/* NoData */
-
 }
 
 /*

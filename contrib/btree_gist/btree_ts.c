@@ -377,7 +377,6 @@ gbt_ts_penalty(PG_FUNCTION_ARGS)
 	penalty_num(result, orgdbl[0], orgdbl[1], newdbl[0], newdbl[1]);
 
 	PG_RETURN_POINTER(result);
-
 }
 
 

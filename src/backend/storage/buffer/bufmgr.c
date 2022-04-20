@@ -2676,7 +2676,6 @@ CheckForBufferLeaks(void)
 			PrintBufferLeakWarning(res->buffer);
 			RefCountErrors++;
 		}
-
 	}
 
 	Assert(RefCountErrors == 0);
@@ -3652,7 +3651,6 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 					break;
 				}
 			}
-
 		}
 		else
 		{
@@ -4021,7 +4019,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 	{
 		XLogRecPtr	lsn = InvalidXLogRecPtr;
 		bool		dirtied = false;
-		bool		delayChkpt = false;
+		bool		delayChkptFlags = false;
 		uint32		buf_state;
 
 		/*
@@ -4071,9 +4069,9 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 			 * essential that CreateCheckPoint waits for virtual transactions
 			 * rather than full transactionids.
 			 */
-			Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
-			MyProc->delayChkpt |= DELAY_CHKPT_START;
-			delayChkpt = true;
+			Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+			MyProc->delayChkptFlags |= DELAY_CHKPT_START;
+			delayChkptFlags = true;
 			lsn = XLogSaveBufferForHint(buffer, buffer_std);
 		}
 
@@ -4105,8 +4103,8 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 		buf_state |= BM_DIRTY | BM_JUST_DIRTIED;
 		UnlockBufHdr(bufHdr, buf_state);
 
-		if (delayChkpt)
-			MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+		if (delayChkptFlags)
+			MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
 		if (dirtied)
 		{

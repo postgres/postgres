@@ -116,12 +116,6 @@ typedef struct ModifyTableContext
 	 * cross-partition UPDATE
 	 */
 	TupleTableSlot *cpUpdateReturningSlot;
-
-	/*
-	 * Lock mode to acquire on the latest tuple version before performing
-	 * EvalPlanQual on it
-	 */
-	LockTupleMode lockmode;
 } ModifyTableContext;
 
 /*
@@ -132,6 +126,12 @@ typedef struct UpdateContext
 	bool		updated;		/* did UPDATE actually occur? */
 	bool		updateIndexes;	/* index update required? */
 	bool		crossPartUpdate;	/* was it a cross-partition update? */
+
+	/*
+	 * Lock mode to acquire on the latest tuple version before performing
+	 * EvalPlanQual on it
+	 */
+	LockTupleMode lockmode;
 } UpdateContext;
 
 
@@ -1971,7 +1971,7 @@ lreplace:;
 								estate->es_snapshot,
 								estate->es_crosscheck_snapshot,
 								true /* wait for commit */ ,
-								&context->tmfd, &context->lockmode,
+								&context->tmfd, &updateCxt->lockmode,
 								&updateCxt->updateIndexes);
 	if (result == TM_Ok)
 		updateCxt->updated = true;
@@ -2251,7 +2251,7 @@ redo_act:
 					result = table_tuple_lock(resultRelationDesc, tupleid,
 											  estate->es_snapshot,
 											  inputslot, estate->es_output_cid,
-											  context->lockmode, LockWaitBlock,
+											  updateCxt.lockmode, LockWaitBlock,
 											  TUPLE_LOCK_FLAG_FIND_LAST_VERSION,
 											  &context->tmfd);
 
@@ -3452,7 +3452,6 @@ ExecModifyTable(PlanState *pstate)
 	ResultRelInfo *resultRelInfo;
 	PlanState  *subplanstate;
 	TupleTableSlot *slot;
-	TupleTableSlot *planSlot;
 	TupleTableSlot *oldSlot;
 	ItemPointerData tuple_ctid;
 	HeapTupleData oldtupdata;
@@ -3525,10 +3524,10 @@ ExecModifyTable(PlanState *pstate)
 		if (pstate->ps_ExprContext)
 			ResetExprContext(pstate->ps_ExprContext);
 
-		planSlot = ExecProcNode(subplanstate);
+		context.planSlot = ExecProcNode(subplanstate);
 
 		/* No more tuples to process? */
-		if (TupIsNull(planSlot))
+		if (TupIsNull(context.planSlot))
 			break;
 
 		/*
@@ -3542,7 +3541,7 @@ ExecModifyTable(PlanState *pstate)
 			bool		isNull;
 			Oid			resultoid;
 
-			datum = ExecGetJunkAttribute(planSlot, node->mt_resultOidAttno,
+			datum = ExecGetJunkAttribute(context.planSlot, node->mt_resultOidAttno,
 										 &isNull);
 			if (isNull)
 			{
@@ -3556,10 +3555,7 @@ ExecModifyTable(PlanState *pstate)
 				 */
 				if (operation == CMD_MERGE)
 				{
-					EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
-
-					context.planSlot = planSlot;
-					context.lockmode = 0;
+					EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
 					ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
 					continue;	/* no RETURNING support yet */
@@ -3589,13 +3585,13 @@ ExecModifyTable(PlanState *pstate)
 			 * ExecProcessReturning by IterateDirectModify, so no need to
 			 * provide it here.
 			 */
-			slot = ExecProcessReturning(resultRelInfo, NULL, planSlot);
+			slot = ExecProcessReturning(resultRelInfo, NULL, context.planSlot);
 
 			return slot;
 		}
 
-		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
-		slot = planSlot;
+		EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
+		slot = context.planSlot;
 
 		tupleid = NULL;
 		oldtuple = NULL;
@@ -3637,10 +3633,7 @@ ExecModifyTable(PlanState *pstate)
 				{
 					if (operation == CMD_MERGE)
 					{
-						EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
-
-						context.planSlot = planSlot;
-						context.lockmode = 0;
+						EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
 						ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
 						continue;	/* no RETURNING support yet */
@@ -3697,17 +3690,13 @@ ExecModifyTable(PlanState *pstate)
 			}
 		}
 
-		/* complete context setup */
-		context.planSlot = planSlot;
-		context.lockmode = 0;
-
 		switch (operation)
 		{
 			case CMD_INSERT:
 				/* Initialize projection info if first time for this table */
 				if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
 					ExecInitInsertProjection(node, resultRelInfo);
-				slot = ExecGetInsertNewTuple(resultRelInfo, planSlot);
+				slot = ExecGetInsertNewTuple(resultRelInfo, context.planSlot);
 				slot = ExecInsert(&context, resultRelInfo, slot,
 								  node->canSetTag, NULL, NULL);
 				break;
@@ -3737,7 +3726,7 @@ ExecModifyTable(PlanState *pstate)
 													   oldSlot))
 						elog(ERROR, "failed to fetch tuple being updated");
 				}
-				slot = internalGetUpdateNewTuple(resultRelInfo, planSlot,
+				slot = internalGetUpdateNewTuple(resultRelInfo, context.planSlot,
 												 oldSlot, NULL);
 				context.GetUpdateNewTuple = internalGetUpdateNewTuple;
 				context.relaction = NULL;

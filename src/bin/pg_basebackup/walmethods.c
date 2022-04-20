@@ -49,7 +49,7 @@
 typedef struct DirectoryMethodData
 {
 	char	   *basedir;
-	WalCompressionMethod compression_method;
+	pg_compress_algorithm compression_algorithm;
 	int			compression_level;
 	bool		sync;
 	const char *lasterrstring;	/* if set, takes precedence over lasterrno */
@@ -97,8 +97,8 @@ dir_get_file_name(const char *pathname, const char *temp_suffix)
 
 	snprintf(filename, MAXPGPATH, "%s%s%s",
 			 pathname,
-			 dir_data->compression_method == COMPRESSION_GZIP ? ".gz" :
-			 dir_data->compression_method == COMPRESSION_LZ4 ? ".lz4" : "",
+			 dir_data->compression_algorithm == PG_COMPRESSION_GZIP ? ".gz" :
+			 dir_data->compression_algorithm == PG_COMPRESSION_LZ4 ? ".lz4" : "",
 			 temp_suffix ? temp_suffix : "");
 
 	return filename;
@@ -141,7 +141,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	}
 
 #ifdef HAVE_LIBZ
-	if (dir_data->compression_method == COMPRESSION_GZIP)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		gzfp = gzdopen(fd, "wb");
 		if (gzfp == NULL)
@@ -161,10 +161,11 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	}
 #endif
 #ifdef USE_LZ4
-	if (dir_data->compression_method == COMPRESSION_LZ4)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 	{
 		size_t		ctx_out;
 		size_t		header_size;
+		LZ4F_preferences_t prefs;
 
 		ctx_out = LZ4F_createCompressionContext(&ctx, LZ4F_VERSION);
 		if (LZ4F_isError(ctx_out))
@@ -177,8 +178,12 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		lz4bufsize = LZ4F_compressBound(LZ4_IN_SIZE, NULL);
 		lz4buf = pg_malloc0(lz4bufsize);
 
+		/* assign the compression level, default is 0 */
+		memset(&prefs, 0, sizeof(prefs));
+		prefs.compressionLevel = dir_data->compression_level;
+
 		/* add the header */
-		header_size = LZ4F_compressBegin(ctx, lz4buf, lz4bufsize, NULL);
+		header_size = LZ4F_compressBegin(ctx, lz4buf, lz4bufsize, &prefs);
 		if (LZ4F_isError(header_size))
 		{
 			dir_data->lasterrstring = LZ4F_getErrorName(header_size);
@@ -202,7 +207,7 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 #endif
 
 	/* Do pre-padding on non-compressed files */
-	if (pad_to_size && dir_data->compression_method == COMPRESSION_NONE)
+	if (pad_to_size && dir_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
 		PGAlignedXLogBlock zerobuf;
 		int			bytes;
@@ -241,12 +246,12 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		{
 			dir_data->lasterrno = errno;
 #ifdef HAVE_LIBZ
-			if (dir_data->compression_method == COMPRESSION_GZIP)
+			if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 				gzclose(gzfp);
 			else
 #endif
 #ifdef USE_LZ4
-			if (dir_data->compression_method == COMPRESSION_LZ4)
+			if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 			{
 				(void) LZ4F_compressEnd(ctx, lz4buf, lz4bufsize, NULL);
 				(void) LZ4F_freeCompressionContext(ctx);
@@ -262,11 +267,11 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 
 	f = pg_malloc0(sizeof(DirectoryMethodFile));
 #ifdef HAVE_LIBZ
-	if (dir_data->compression_method == COMPRESSION_GZIP)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 		f->gzfp = gzfp;
 #endif
 #ifdef USE_LZ4
-	if (dir_data->compression_method == COMPRESSION_LZ4)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 	{
 		f->ctx = ctx;
 		f->lz4buf = lz4buf;
@@ -294,7 +299,7 @@ dir_write(Walfile f, const void *buf, size_t count)
 	dir_clear_error();
 
 #ifdef HAVE_LIBZ
-	if (dir_data->compression_method == COMPRESSION_GZIP)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		errno = 0;
 		r = (ssize_t) gzwrite(df->gzfp, buf, count);
@@ -307,7 +312,7 @@ dir_write(Walfile f, const void *buf, size_t count)
 	else
 #endif
 #ifdef USE_LZ4
-	if (dir_data->compression_method == COMPRESSION_LZ4)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 	{
 		size_t		chunk;
 		size_t		remaining;
@@ -387,7 +392,7 @@ dir_close(Walfile f, WalCloseMethod method)
 	dir_clear_error();
 
 #ifdef HAVE_LIBZ
-	if (dir_data->compression_method == COMPRESSION_GZIP)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		errno = 0;				/* in case gzclose() doesn't set it */
 		r = gzclose(df->gzfp);
@@ -395,7 +400,7 @@ dir_close(Walfile f, WalCloseMethod method)
 	else
 #endif
 #ifdef USE_LZ4
-	if (dir_data->compression_method == COMPRESSION_LZ4)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 	{
 		size_t		compressed;
 
@@ -514,7 +519,7 @@ dir_sync(Walfile f)
 		return 0;
 
 #ifdef HAVE_LIBZ
-	if (dir_data->compression_method == COMPRESSION_GZIP)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		if (gzflush(((DirectoryMethodFile *) f)->gzfp, Z_SYNC_FLUSH) != Z_OK)
 		{
@@ -524,7 +529,7 @@ dir_sync(Walfile f)
 	}
 #endif
 #ifdef USE_LZ4
-	if (dir_data->compression_method == COMPRESSION_LZ4)
+	if (dir_data->compression_algorithm == PG_COMPRESSION_LZ4)
 	{
 		DirectoryMethodFile *df = (DirectoryMethodFile *) f;
 		size_t		compressed;
@@ -571,10 +576,10 @@ dir_get_file_size(const char *pathname)
 	return statbuf.st_size;
 }
 
-static WalCompressionMethod
-dir_compression_method(void)
+static pg_compress_algorithm
+dir_compression_algorithm(void)
 {
-	return dir_data->compression_method;
+	return dir_data->compression_algorithm;
 }
 
 static bool
@@ -618,7 +623,7 @@ dir_finish(void)
 
 WalWriteMethod *
 CreateWalDirectoryMethod(const char *basedir,
-						 WalCompressionMethod compression_method,
+						 pg_compress_algorithm compression_algorithm,
 						 int compression_level, bool sync)
 {
 	WalWriteMethod *method;
@@ -629,7 +634,7 @@ CreateWalDirectoryMethod(const char *basedir,
 	method->get_current_pos = dir_get_current_pos;
 	method->get_file_size = dir_get_file_size;
 	method->get_file_name = dir_get_file_name;
-	method->compression_method = dir_compression_method;
+	method->compression_algorithm = dir_compression_algorithm;
 	method->close = dir_close;
 	method->sync = dir_sync;
 	method->existsfile = dir_existsfile;
@@ -637,7 +642,7 @@ CreateWalDirectoryMethod(const char *basedir,
 	method->getlasterror = dir_getlasterror;
 
 	dir_data = pg_malloc0(sizeof(DirectoryMethodData));
-	dir_data->compression_method = compression_method;
+	dir_data->compression_algorithm = compression_algorithm;
 	dir_data->compression_level = compression_level;
 	dir_data->basedir = pg_strdup(basedir);
 	dir_data->sync = sync;
@@ -672,7 +677,7 @@ typedef struct TarMethodData
 {
 	char	   *tarfilename;
 	int			fd;
-	WalCompressionMethod compression_method;
+	pg_compress_algorithm compression_algorithm;
 	int			compression_level;
 	bool		sync;
 	TarMethodFile *currentfile;
@@ -759,7 +764,7 @@ tar_write(Walfile f, const void *buf, size_t count)
 	tar_clear_error();
 
 	/* Tarfile will always be positioned at the end */
-	if (tar_data->compression_method == COMPRESSION_NONE)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
 		errno = 0;
 		r = write(tar_data->fd, buf, count);
@@ -773,7 +778,7 @@ tar_write(Walfile f, const void *buf, size_t count)
 		return r;
 	}
 #ifdef HAVE_LIBZ
-	else if (tar_data->compression_method == COMPRESSION_GZIP)
+	else if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		if (!tar_write_compressed_data(unconstify(void *, buf), count, false))
 			return -1;
@@ -842,7 +847,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		}
 
 #ifdef HAVE_LIBZ
-		if (tar_data->compression_method == COMPRESSION_GZIP)
+		if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 		{
 			tar_data->zp = (z_streamp) pg_malloc(sizeof(z_stream));
 			tar_data->zp->zalloc = Z_NULL;
@@ -893,7 +898,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	pg_free(tmppath);
 
 #ifdef HAVE_LIBZ
-	if (tar_data->compression_method == COMPRESSION_GZIP)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		/* Flush existing data */
 		if (!tar_write_compressed_data(NULL, 0, true))
@@ -918,7 +923,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	}
 	tar_data->currentfile->currpos = 0;
 
-	if (tar_data->compression_method == COMPRESSION_NONE)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
 		errno = 0;
 		if (write(tar_data->fd, tar_data->currentfile->header,
@@ -932,7 +937,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		}
 	}
 #ifdef HAVE_LIBZ
-	else if (tar_data->compression_method == COMPRESSION_GZIP)
+	else if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		/* Write header through the zlib APIs but with no compression */
 		if (!tar_write_compressed_data(tar_data->currentfile->header,
@@ -962,7 +967,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	if (pad_to_size)
 	{
 		tar_data->currentfile->pad_to_size = pad_to_size;
-		if (tar_data->compression_method == COMPRESSION_NONE)
+		if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 		{
 			/* Uncompressed, so pad now */
 			if (!tar_write_padding_data(tar_data->currentfile, pad_to_size))
@@ -993,10 +998,10 @@ tar_get_file_size(const char *pathname)
 	return -1;
 }
 
-static WalCompressionMethod
-tar_compression_method(void)
+static pg_compress_algorithm
+tar_compression_algorithm(void)
 {
-	return tar_data->compression_method;
+	return tar_data->compression_algorithm;
 }
 
 static off_t
@@ -1023,7 +1028,7 @@ tar_sync(Walfile f)
 	 * Always sync the whole tarfile, because that's all we can do. This makes
 	 * no sense on compressed files, so just ignore those.
 	 */
-	if (tar_data->compression_method != COMPRESSION_NONE)
+	if (tar_data->compression_algorithm != PG_COMPRESSION_NONE)
 		return 0;
 
 	r = fsync(tar_data->fd);
@@ -1044,7 +1049,7 @@ tar_close(Walfile f, WalCloseMethod method)
 
 	if (method == CLOSE_UNLINK)
 	{
-		if (tar_data->compression_method != COMPRESSION_NONE)
+		if (tar_data->compression_algorithm != PG_COMPRESSION_NONE)
 		{
 			tar_set_error("unlink not supported with compression");
 			return -1;
@@ -1075,7 +1080,7 @@ tar_close(Walfile f, WalCloseMethod method)
 	 */
 	if (tf->pad_to_size)
 	{
-		if (tar_data->compression_method == COMPRESSION_GZIP)
+		if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 		{
 			/*
 			 * A compressed tarfile is padded on close since we cannot know
@@ -1116,7 +1121,7 @@ tar_close(Walfile f, WalCloseMethod method)
 
 
 #ifdef HAVE_LIBZ
-	if (tar_data->compression_method == COMPRESSION_GZIP)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		/* Flush the current buffer */
 		if (!tar_write_compressed_data(NULL, 0, true))
@@ -1145,7 +1150,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		tar_data->lasterrno = errno;
 		return -1;
 	}
-	if (tar_data->compression_method == COMPRESSION_NONE)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
 		errno = 0;
 		if (write(tar_data->fd, tf->header, TAR_BLOCK_SIZE) != TAR_BLOCK_SIZE)
@@ -1156,7 +1161,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		}
 	}
 #ifdef HAVE_LIBZ
-	else if (tar_data->compression_method == COMPRESSION_GZIP)
+	else if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		/* Turn off compression */
 		if (deflateParams(tar_data->zp, 0, 0) != Z_OK)
@@ -1195,9 +1200,8 @@ tar_close(Walfile f, WalCloseMethod method)
 	if (tar_sync(f) < 0)
 	{
 		/* XXX this seems pretty bogus; why is only this case fatal? */
-		pg_log_fatal("could not fsync file \"%s\": %s",
-					 tf->pathname, tar_getlasterror());
-		exit(1);
+		pg_fatal("could not fsync file \"%s\": %s",
+				 tf->pathname, tar_getlasterror());
 	}
 
 	/* Clean up and done */
@@ -1231,7 +1235,7 @@ tar_finish(void)
 
 	/* A tarfile always ends with two empty blocks */
 	MemSet(zerobuf, 0, sizeof(zerobuf));
-	if (tar_data->compression_method == COMPRESSION_NONE)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
 		errno = 0;
 		if (write(tar_data->fd, zerobuf, sizeof(zerobuf)) != sizeof(zerobuf))
@@ -1242,7 +1246,7 @@ tar_finish(void)
 		}
 	}
 #ifdef HAVE_LIBZ
-	else if (tar_data->compression_method == COMPRESSION_GZIP)
+	else if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 	{
 		if (!tar_write_compressed_data(zerobuf, sizeof(zerobuf), false))
 			return false;
@@ -1325,18 +1329,18 @@ tar_finish(void)
 }
 
 /*
- * The argument compression_method is currently ignored. It is in place for
+ * The argument compression_algorithm is currently ignored. It is in place for
  * symmetry with CreateWalDirectoryMethod which uses it for distinguishing
  * between the different compression methods. CreateWalTarMethod and its family
  * of functions handle only zlib compression.
  */
 WalWriteMethod *
 CreateWalTarMethod(const char *tarbase,
-				   WalCompressionMethod compression_method,
+				   pg_compress_algorithm compression_algorithm,
 				   int compression_level, bool sync)
 {
 	WalWriteMethod *method;
-	const char *suffix = (compression_method == COMPRESSION_GZIP) ?
+	const char *suffix = (compression_algorithm == PG_COMPRESSION_GZIP) ?
 	".tar.gz" : ".tar";
 
 	method = pg_malloc0(sizeof(WalWriteMethod));
@@ -1345,7 +1349,7 @@ CreateWalTarMethod(const char *tarbase,
 	method->get_current_pos = tar_get_current_pos;
 	method->get_file_size = tar_get_file_size;
 	method->get_file_name = tar_get_file_name;
-	method->compression_method = tar_compression_method;
+	method->compression_algorithm = tar_compression_algorithm;
 	method->close = tar_close;
 	method->sync = tar_sync;
 	method->existsfile = tar_existsfile;
@@ -1356,11 +1360,11 @@ CreateWalTarMethod(const char *tarbase,
 	tar_data->tarfilename = pg_malloc0(strlen(tarbase) + strlen(suffix) + 1);
 	sprintf(tar_data->tarfilename, "%s%s", tarbase, suffix);
 	tar_data->fd = -1;
-	tar_data->compression_method = compression_method;
+	tar_data->compression_algorithm = compression_algorithm;
 	tar_data->compression_level = compression_level;
 	tar_data->sync = sync;
 #ifdef HAVE_LIBZ
-	if (compression_method == COMPRESSION_GZIP)
+	if (compression_algorithm == PG_COMPRESSION_GZIP)
 		tar_data->zlibOut = (char *) pg_malloc(ZLIB_OUT_SIZE + 1);
 #endif
 
@@ -1372,7 +1376,7 @@ FreeWalTarMethod(void)
 {
 	pg_free(tar_data->tarfilename);
 #ifdef HAVE_LIBZ
-	if (tar_data->compression_method == COMPRESSION_GZIP)
+	if (tar_data->compression_algorithm == PG_COMPRESSION_GZIP)
 		pg_free(tar_data->zlibOut);
 #endif
 	pg_free(tar_data);

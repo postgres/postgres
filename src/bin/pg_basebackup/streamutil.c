@@ -88,10 +88,7 @@ GetConnection(void)
 	{
 		conn_opts = PQconninfoParse(connection_string, &err_msg);
 		if (conn_opts == NULL)
-		{
-			pg_log_error("%s", err_msg);
-			exit(1);
-		}
+			pg_fatal("%s", err_msg);
 
 		for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 		{
@@ -182,10 +179,7 @@ GetConnection(void)
 		 * and PQconnectdbParams returns NULL, we call exit(1) directly.
 		 */
 		if (!tmpconn)
-		{
-			pg_log_error("could not connect to server");
-			exit(1);
-		}
+			pg_fatal("could not connect to server");
 
 		/* If we need a password and -w wasn't given, loop back and get one */
 		if (PQstatus(tmpconn) == CONNECTION_BAD &&

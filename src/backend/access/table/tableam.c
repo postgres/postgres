@@ -381,7 +381,6 @@ simple_table_tuple_update(Relation rel, ItemPointer otid,
 			elog(ERROR, "unrecognized table_tuple_update status: %u", result);
 			break;
 	}
-
 }
 
 

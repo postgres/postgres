@@ -232,7 +232,7 @@ cluster(ParseState *pstate, ClusterStmt *stmt, bool isTopLevel)
 	if (rel != NULL)
 	{
 		Assert(rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE);
-		check_index_is_clusterable(rel, indexOid, true, AccessShareLock);
+		check_index_is_clusterable(rel, indexOid, AccessShareLock);
 		rtcs = get_tables_to_cluster_partitioned(cluster_context, indexOid);
 
 		/* close relation, releasing lock on parent table */
@@ -434,7 +434,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
 
 	/* Check heap and index are valid to cluster on */
 	if (OidIsValid(indexOid))
-		check_index_is_clusterable(OldHeap, indexOid, recheck, AccessExclusiveLock);
+		check_index_is_clusterable(OldHeap, indexOid, AccessExclusiveLock);
 
 	/*
 	 * Quietly ignore the request if this is a materialized view which has not
@@ -480,7 +480,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
  * protection here.
  */
 void
-check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck, LOCKMODE lockmode)
+check_index_is_clusterable(Relation OldHeap, Oid indexOid, LOCKMODE lockmode)
 {
 	Relation	OldIndex;
 
@@ -1647,10 +1647,8 @@ get_tables_to_cluster(MemoryContext cluster_context)
  * Given an index on a partitioned table, return a list of RelToCluster for
  * all the children leaves tables/indexes.
  *
- * Caller must hold lock on the table containing the index.
- *
  * Like expand_vacuum_rel, but here caller must hold AccessExclusiveLock
- * on the table already.
+ * on the table containing the index.
  */
 static List *
 get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
@@ -1663,9 +1661,6 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 	/* Do not lock the children until they're processed */
 	inhoids = find_all_inheritors(indexOid, NoLock, NULL);
 
-	/* Use a permanent memory context for the result list */
-	old_context = MemoryContextSwitchTo(cluster_context);
-
 	foreach(lc, inhoids)
 	{
 		Oid			indexrelid = lfirst_oid(lc);
@@ -1676,12 +1671,22 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 		if (get_rel_relkind(indexrelid) != RELKIND_INDEX)
 			continue;
 
+		/* Silently skip partitions which the user has no access to. */
+		if (!pg_class_ownercheck(relid, GetUserId()) &&
+			(!pg_database_ownercheck(MyDatabaseId, GetUserId()) ||
+			 IsSharedRelation(relid)))
+			continue;
+
+		/* Use a permanent memory context for the result list */
+		old_context = MemoryContextSwitchTo(cluster_context);
+
 		rtc = (RelToCluster *) palloc(sizeof(RelToCluster));
 		rtc->tableOid = relid;
 		rtc->indexOid = indexrelid;
 		rtcs = lappend(rtcs, rtc);
+
+		MemoryContextSwitchTo(old_context);
 	}
 
-	MemoryContextSwitchTo(old_context);
 	return rtcs;
 }

@@ -38,7 +38,6 @@ out_gistxlogDelete(StringInfo buf, gistxlogDelete *xlrec)
 {
 	appendStringInfo(buf, "delete: latestRemovedXid %u, nitems: %u",
 					 xlrec->latestRemovedXid, xlrec->ntodelete);
-
 }
 
 static void

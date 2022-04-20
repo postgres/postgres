@@ -4,7 +4,7 @@
  *	  JSON logging
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of Californi
+ * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
@@ -235,7 +235,7 @@ write_jsonlog(ErrorData *edata)
 
 	/* if printed internal query, print internal pos too */
 	if (edata->internalpos > 0 && edata->internalquery != NULL)
-		appendJSONKeyValueFmt(&buf, "internal_position", false, "%u",
+		appendJSONKeyValueFmt(&buf, "internal_position", false, "%d",
 							  edata->internalpos);
 
 	/* errcontext */

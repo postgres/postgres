@@ -70,11 +70,8 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 						ControlFilePath)));
 #else
 	if ((fd = open(ControlFilePath, O_RDONLY | PG_BINARY, 0)) == -1)
-	{
-		pg_log_fatal("could not open file \"%s\" for reading: %m",
-					 ControlFilePath);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("could not open file \"%s\" for reading: %m",
+				 ControlFilePath);
 #endif
 
 	r = read(fd, ControlFile, sizeof(ControlFileData));
@@ -86,10 +83,7 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 					(errcode_for_file_access(),
 					 errmsg("could not read file \"%s\": %m", ControlFilePath)));
 #else
-		{
-			pg_log_fatal("could not read file \"%s\": %m", ControlFilePath);
-			exit(EXIT_FAILURE);
-		}
+			pg_fatal("could not read file \"%s\": %m", ControlFilePath);
 #endif
 		else
 #ifndef FRONTEND
@@ -98,11 +92,8 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 					 errmsg("could not read file \"%s\": read %d of %zu",
 							ControlFilePath, r, sizeof(ControlFileData))));
 #else
-		{
-			pg_log_fatal("could not read file \"%s\": read %d of %zu",
-						 ControlFilePath, r, sizeof(ControlFileData));
-			exit(EXIT_FAILURE);
-		}
+			pg_fatal("could not read file \"%s\": read %d of %zu",
+					 ControlFilePath, r, sizeof(ControlFileData));
 #endif
 	}
 
@@ -114,10 +105,7 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 						ControlFilePath)));
 #else
 	if (close(fd) != 0)
-	{
-		pg_log_fatal("could not close file \"%s\": %m", ControlFilePath);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("could not close file \"%s\": %m", ControlFilePath);
 #endif
 
 	/* Check the CRC. */
@@ -203,10 +191,7 @@ update_controlfile(const char *DataDir,
 #else
 	if ((fd = open(ControlFilePath, O_WRONLY | PG_BINARY,
 				   pg_file_create_mode)) == -1)
-	{
-		pg_log_fatal("could not open file \"%s\": %m", ControlFilePath);
-		exit(EXIT_FAILURE);
-	}
+		pg_fatal("could not open file \"%s\": %m", ControlFilePath);
 #endif
 
 	errno = 0;
@@ -225,8 +210,7 @@ update_controlfile(const char *DataDir,
 				 errmsg("could not write file \"%s\": %m",
 						ControlFilePath)));
 #else
-		pg_log_fatal("could not write file \"%s\": %m", ControlFilePath);
-		exit(EXIT_FAILURE);
+		pg_fatal("could not write file \"%s\": %m", ControlFilePath);
 #endif
 	}
 #ifndef FRONTEND
@@ -245,10 +229,7 @@ update_controlfile(const char *DataDir,
 		pgstat_report_wait_end();
 #else
 		if (fsync(fd) != 0)
-		{
-			pg_log_fatal("could not fsync file \"%s\": %m", ControlFilePath);
-			exit(EXIT_FAILURE);
-		}
+			pg_fatal("could not fsync file \"%s\": %m", ControlFilePath);
 #endif
 	}
 
@@ -260,8 +241,7 @@ update_controlfile(const char *DataDir,
 				 errmsg("could not close file \"%s\": %m",
 						ControlFilePath)));
 #else
-		pg_log_fatal("could not close file \"%s\": %m", ControlFilePath);
-		exit(EXIT_FAILURE);
+		pg_fatal("could not close file \"%s\": %m", ControlFilePath);
 #endif
 	}
 }

@@ -254,6 +254,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    <literal>publish_via_partition_root</literal> determines if it uses the
    partition's row filter (if the parameter is false, the default) or the root
    partitioned table's row filter.
+   See <xref linkend="logical-replication-row-filter"/> for details about row
+   filters.
   </para>
 
   <para>

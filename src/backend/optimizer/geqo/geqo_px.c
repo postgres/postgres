@@ -96,15 +96,12 @@ px(PlannerInfo *root, Gene *tour1, Gene *tour2, Gene *offspring, int num_gene,
 			{					/* next city in tour2 has been used */
 				tour2_index++;
 			}
-
 		}
 		else
 		{						/* next position in offspring is filled */
 			offspring_index++;
 		}
-
 	}
-
 }
 
 #endif							/* defined(PX) */

@@ -135,7 +135,8 @@ main(int argc, char *argv[])
 				icu_locale = pg_strdup(optarg);
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -154,22 +155,16 @@ main(int argc, char *argv[])
 		default:
 			pg_log_error("too many command-line arguments (first is \"%s\")",
 						 argv[optind + 2]);
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 	}
 
 	if (locale)
 	{
 		if (lc_ctype)
-		{
-			pg_log_error("only one of --locale and --lc-ctype can be specified");
-			exit(1);
-		}
+			pg_fatal("only one of --locale and --lc-ctype can be specified");
 		if (lc_collate)
-		{
-			pg_log_error("only one of --locale and --lc-collate can be specified");
-			exit(1);
-		}
+			pg_fatal("only one of --locale and --lc-collate can be specified");
 		lc_ctype = locale;
 		lc_collate = locale;
 	}
@@ -177,10 +172,7 @@ main(int argc, char *argv[])
 	if (encoding)
 	{
 		if (pg_char_to_encoding(encoding) < 0)
-		{
-			pg_log_error("\"%s\" is not a valid encoding name", encoding);
-			exit(1);
-		}
+			pg_fatal("\"%s\" is not a valid encoding name", encoding);
 	}
 
 	if (dbname == NULL)

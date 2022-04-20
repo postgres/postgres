@@ -1523,7 +1523,7 @@ omicron         bryanh                  guest1
    </note>
 
    <para>
-    The following configuration options are supported for <productname>ident</productname>:
+    The following configuration options are supported for <literal>ident</literal>:
     <variablelist>
      <varlistentry>
       <term><literal>map</literal></term>
@@ -1597,7 +1597,7 @@ omicron         bryanh                  guest1
    </para>
 
    <para>
-    The following configuration options are supported for <productname>peer</productname>:
+    The following configuration options are supported for <literal>peer</literal>:
     <variablelist>
      <varlistentry>
       <term><literal>map</literal></term>

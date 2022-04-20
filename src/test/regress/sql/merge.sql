@@ -527,6 +527,15 @@ WHEN MATCHED AND t.balance = 199 OR s.balance > 100 THEN
 	UPDATE SET balance = t.balance + s.balance;
 SELECT * FROM wq_target;
 
+-- check source-side whole-row references
+BEGIN;
+MERGE INTO wq_target t
+USING wq_source s ON (t.tid = s.sid)
+WHEN matched and t = s or t.tid = s.sid THEN
+	UPDATE SET balance = t.balance + s.balance;
+SELECT * FROM wq_target;
+ROLLBACK;
+
 -- check if subqueries work in the conditions?
 MERGE INTO wq_target t
 USING wq_source s ON t.tid = s.sid

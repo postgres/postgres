@@ -57,6 +57,9 @@ bytesToHex(uint8 b[16], char *s)
  *						  characters.  you thus need to provide an array
  *						  of 33 characters, including the trailing '\0'.
  *
+ *				  errstr  filled with a constant-string error message
+ *						  on failure return; NULL on success.
+ *
  *	RETURNS		  false on failure (out of memory for internal buffers
  *				  or MD5 computation failure) or true on success.
  *
@@ -72,9 +75,13 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
 	uint8		sum[MD5_DIGEST_LENGTH];
 	pg_cryptohash_ctx *ctx;
 
+	*errstr = NULL;
 	ctx = pg_cryptohash_create(PG_MD5);
 	if (ctx == NULL)
+	{
+		*errstr = pg_cryptohash_error(NULL);	/* returns OOM */
 		return false;
+	}
 
 	if (pg_cryptohash_init(ctx) < 0 ||
 		pg_cryptohash_update(ctx, buff, len) < 0 ||
@@ -90,6 +97,12 @@ pg_md5_hash(const void *buff, size_t len, char *hexsum, const char **errstr)
 	return true;
 }
 
+/*
+ * pg_md5_binary
+ *
+ * As above, except that the MD5 digest is returned as a binary string
+ * (of size MD5_DIGEST_LENGTH) rather than being converted to ASCII hex.
+ */
 bool
 pg_md5_binary(const void *buff, size_t len, void *outbuf, const char **errstr)
 {

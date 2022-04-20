@@ -1470,7 +1470,7 @@ heap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
 		 * heap_set_tidrange will have used heap_setscanlimits to limit the
 		 * range of pages we scan to only ones that can contain the TID range
 		 * we're scanning for.  Here we must filter out any tuples from these
-		 * pages that are outwith that range.
+		 * pages that are outside of that range.
 		 */
 		if (ItemPointerCompare(&scan->rs_ctup.t_self, mintid) < 0)
 		{
@@ -1530,10 +1530,14 @@ heap_getnextslot_tidrange(TableScanDesc sscan, ScanDirection direction,
  * must unpin the buffer when done with the tuple.
  *
  * If the tuple is not found (ie, item number references a deleted slot),
- * then tuple->t_data is set to NULL and false is returned.
+ * then tuple->t_data is set to NULL, *userbuf is set to InvalidBuffer,
+ * and false is returned.
  *
- * If the tuple is found but fails the time qual check, then false is returned
- * but tuple->t_data is left pointing to the tuple.
+ * If the tuple is found but fails the time qual check, then the behavior
+ * depends on the keep_buf parameter.  If keep_buf is false, the results
+ * are the same as for the tuple-not-found case.  If keep_buf is true,
+ * then tuple->t_data and *userbuf are returned as for the success case,
+ * and again the caller must unpin the buffer; but false is returned.
  *
  * heap_fetch does not follow HOT chains: only the exact TID requested will
  * be fetched.
@@ -1551,7 +1555,8 @@ bool
 heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
-		   Buffer *userbuf)
+		   Buffer *userbuf,
+		   bool keep_buf)
 {
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
@@ -1634,9 +1639,15 @@ heap_fetch(Relation relation,
 		return true;
 	}
 
-	/* Tuple failed time qual */
-	ReleaseBuffer(buffer);
-	*userbuf = InvalidBuffer;
+	/* Tuple failed time qual, but maybe caller wants to see it anyway. */
+	if (keep_buf)
+		*userbuf = buffer;
+	else
+	{
+		ReleaseBuffer(buffer);
+		*userbuf = InvalidBuffer;
+		tuple->t_data = NULL;
+	}
 
 	return false;
 }
@@ -1659,8 +1670,7 @@ heap_fetch(Relation relation,
  * are vacuumable, false if not.
  *
  * Unlike heap_fetch, the caller must already have pin and (at least) share
- * lock on the buffer; it is still pinned/locked at exit.  Also unlike
- * heap_fetch, we do not report any pgstats count; caller may do so if wanted.
+ * lock on the buffer; it is still pinned/locked at exit.
  */
 bool
 heap_hot_search_buffer(ItemPointer tid, Relation relation, Buffer buffer,
@@ -5379,7 +5389,7 @@ heap_lock_updated_tuple_rec(Relation rel, ItemPointer tid, TransactionId xid,
 		block = ItemPointerGetBlockNumber(&tupid);
 		ItemPointerCopy(&tupid, &(mytup.t_self));
 
-		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf))
+		if (!heap_fetch(rel, SnapshotAny, &mytup, &buf, false))
 		{
 			/*
 			 * if we fail to find the updated version of the tuple, it's
@@ -8481,7 +8491,6 @@ log_heap_new_cid(Relation relation, HeapTuple tup)
 		{
 			xlrec.cmin = InvalidCommandId;
 			xlrec.cmax = HeapTupleHeaderGetRawCommandId(hdr);
-
 		}
 		xlrec.combocid = InvalidCommandId;
 	}
@@ -9363,7 +9372,7 @@ heap_xlog_update(XLogReaderState *record, bool hot_update)
 	oldtup.t_len = 0;
 
 	XLogRecGetBlockTag(record, 0, &rnode, NULL, &newblk);
-	if (XLogRecGetBlockTag(record, 1, NULL, NULL, &oldblk))
+	if (XLogRecGetBlockTagExtended(record, 1, NULL, NULL, &oldblk, NULL))
 	{
 		/* HOT updates are never done across pages */
 		Assert(!hot_update);

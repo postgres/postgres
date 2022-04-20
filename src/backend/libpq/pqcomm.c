@@ -334,7 +334,6 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 	struct addrinfo hint;
 	int			listen_index = 0;
 	int			added = 0;
-	int			max_backends = GetMaxBackends();
 
 #ifdef HAVE_UNIX_SOCKETS
 	char		unixSocketPath[MAXPGPATH];
@@ -557,7 +556,7 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		 * intended to provide a clamp on the request on platforms where an
 		 * overly large request provokes a kernel error (are there any?).
 		 */
-		maxconn = max_backends * 2;
+		maxconn = MaxBackends * 2;
 		if (maxconn > PG_SOMAXCONN)
 			maxconn = PG_SOMAXCONN;
 

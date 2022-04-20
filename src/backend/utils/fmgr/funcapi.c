@@ -69,7 +69,7 @@ static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
  * descriptor coming from expectedDesc, which is the tuple descriptor
  * expected by the caller.  SRF_SINGLE_BLESS can be set to complete the
  * information associated to the tuple descriptor, which is necessary
- * in some cases  where the tuple descriptor comes from a transient
+ * in some cases where the tuple descriptor comes from a transient
  * RECORD datatype.
  */
 void

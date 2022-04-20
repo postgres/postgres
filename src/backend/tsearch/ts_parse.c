@@ -248,7 +248,7 @@ LexizeExec(LexizeData *ld, ParsedLex **correspondLexem)
 		dict = lookup_ts_dictionary_cache(ld->curDictId);
 
 		/*
-		 * Dictionary ld->curDictId asks  us about following words
+		 * Dictionary ld->curDictId asks us about following words
 		 */
 
 		while (ld->curSub)
@@ -584,7 +584,6 @@ hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int bu
 			else
 				addHLParsedLex(prs, query, lexs, NULL);
 		} while (norms);
-
 	} while (type > 0);
 
 	FunctionCall1(&(prsobj->prsend), PointerGetDatum(prsdata));
@@ -629,7 +628,6 @@ generateHeadline(HeadlineParsedText *prs)
 					memcpy(ptr, prs->fragdelim, prs->fragdelimlen);
 					ptr += prs->fragdelimlen;
 				}
-
 			}
 			if (wrd->replace)
 			{

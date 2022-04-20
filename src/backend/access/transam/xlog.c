@@ -6505,11 +6505,11 @@ CreateCheckPoint(int flags)
 	 * protected by different locks, but again that seems best on grounds of
 	 * minimizing lock contention.)
 	 *
-	 * A transaction that has not yet set delayChkpt when we look cannot be at
-	 * risk, since he's not inserted his commit record yet; and one that's
-	 * already cleared it is not at risk either, since he's done fixing clog
-	 * and we will correctly flush the update below.  So we cannot miss any
-	 * xacts we need to wait for.
+	 * A transaction that has not yet set delayChkptFlags when we look cannot
+	 * be at risk, since it has not inserted its commit record yet; and one
+	 * that's already cleared it is not at risk either, since it's done fixing
+	 * clog and we will correctly flush the update below.  So we cannot miss
+	 * any xacts we need to wait for.
 	 */
 	vxids = GetVirtualXIDsDelayingChkpt(&nvxids, DELAY_CHKPT_START);
 	if (nvxids > 0)
@@ -8037,23 +8037,26 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
  * function. It creates the necessary starting checkpoint and constructs the
  * backup label and tablespace map.
  *
- * The backup label and tablespace map contents are returned in *labelfile and
+ * Input parameters are "backupidstr" (the backup label string) and "fast"
+ * (if true, we do the checkpoint in immediate mode to make it faster).
+ *
+ * The backup label and tablespace map contents are appended to *labelfile and
  * *tblspcmapfile, and the caller is responsible for including them in the
- * backup archive as 'backup_label' and 'tablespace_map'. There can be many
- * backups active at the same time.
+ * backup archive as 'backup_label' and 'tablespace_map'.
+ * tblspcmapfile is required mainly for tar format in windows as native windows
+ * utilities are not able to create symlinks while extracting files from tar.
+ * However for consistency and platform-independence, we do it the same way
+ * everywhere.
  *
  * If "tablespaces" isn't NULL, it receives a list of tablespaceinfo structs
  * describing the cluster's tablespaces.
- *
- * tblspcmapfile is required mainly for tar format in windows as native windows
- * utilities are not able to create symlinks while extracting files from tar.
- * However for consistency, the same is used for all platforms.
  *
  * Returns the minimum WAL location that must be present to restore from this
  * backup, and the corresponding timeline ID in *starttli_p.
  *
  * Every successfully started backup must be stopped by calling
- * do_pg_backup_stop() or do_pg_abort_backup().
+ * do_pg_backup_stop() or do_pg_abort_backup(). There can be many
+ * backups active at the same time.
  *
  * It is the responsibility of the caller of this function to verify the
  * permissions of the calling user!
@@ -8244,12 +8247,8 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		XLogFileName(xlogfilename, starttli, _logSegNo, wal_segment_size);
 
 		/*
-		 * Construct tablespace_map file.  If caller isn't interested in this,
-		 * we make a local StringInfo.
+		 * Construct tablespace_map file.
 		 */
-		if (tblspcmapfile == NULL)
-			tblspcmapfile = makeStringInfo();
-
 		datadirpathlen = strlen(DataDir);
 
 		/* Collect information about all tablespaces */
@@ -8350,11 +8349,8 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		FreeDir(tblspcdir);
 
 		/*
-		 * Construct backup label file.  If caller isn't interested in this,
-		 * we make a local StringInfo.
+		 * Construct backup label file.
 		 */
-		if (labelfile == NULL)
-			labelfile = makeStringInfo();
 
 		/* Use the log timezone here, not the session timezone */
 		stamp_time = (pg_time_t) time(NULL);

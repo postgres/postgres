@@ -1432,7 +1432,6 @@ initialize_SSL(PGconn *conn)
 			}
 
 			SSLerrfree(err);
-
 		}
 	}
 

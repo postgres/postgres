@@ -878,7 +878,7 @@ pgstat_drop_all_entries(void)
 	PgStatShared_HashEntry *ps;
 	uint64		not_freed_count = 0;
 
-	dshash_seq_init(&hstat, pgStatLocal.shared_hash, false);
+	dshash_seq_init(&hstat, pgStatLocal.shared_hash, true);
 	while ((ps = dshash_seq_next(&hstat)) != NULL)
 	{
 		if (ps->dropped)
@@ -920,7 +920,7 @@ pgstat_reset_entry(PgStat_Kind kind, Oid dboid, Oid objoid, TimestampTz ts)
 	if (!entry_ref || entry_ref->shared_entry->dropped)
 		return;
 
-	pgstat_lock_entry(entry_ref, false);
+	(void) pgstat_lock_entry(entry_ref, false);
 	shared_stat_reset_contents(kind, entry_ref->shared_stats, ts);
 	pgstat_unlock_entry(entry_ref);
 }

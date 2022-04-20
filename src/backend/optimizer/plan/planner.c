@@ -6848,7 +6848,6 @@ create_partial_grouping_paths(PlannerInfo *root,
 											   dNumPartialGroups));
 			}
 		}
-
 	}
 
 	if (can_sort && cheapest_partial_path != NULL)

@@ -2800,7 +2800,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
      ->  Result
            Output: 1, 'cte_basic val'::text
    ->  Hash Right Join
-         Output: (0), ('merge source SubPlan'::text), m.ctid
+         Output: m.ctid, (0), ('merge source SubPlan'::text)
          Hash Cond: (m.k = (0))
          ->  Seq Scan on public.m
                Output: m.ctid, m.k
@@ -2847,7 +2847,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
                  Output: (cte_init.b || ' merge update'::text)
                  Filter: (cte_init.a = 1)
    ->  Hash Right Join
-         Output: (1), ('merge source InitPlan'::text), m.ctid
+         Output: m.ctid, (1), ('merge source InitPlan'::text)
          Hash Cond: (m.k = (1))
          ->  Seq Scan on public.m
                Output: m.ctid, m.k
@@ -2889,7 +2889,7 @@ WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text
      ->  CTE Scan on merge_source_cte merge_source_cte_2
            Output: ((merge_source_cte_2.*)::text || ' merge insert'::text)
    ->  Hash Right Join
-         Output: merge_source_cte.a, merge_source_cte.b, m.ctid
+         Output: m.ctid, merge_source_cte.a, merge_source_cte.b
          Hash Cond: (m.k = merge_source_cte.a)
          ->  Seq Scan on public.m
                Output: m.ctid, m.k

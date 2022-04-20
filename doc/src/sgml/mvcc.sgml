@@ -932,12 +932,14 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         The <command>SELECT FOR UPDATE</command> and
-         <command>SELECT FOR SHARE</command> commands acquire a
-         lock of this mode on the target table(s) (in addition to
-         <literal>ACCESS SHARE</literal> locks on any other tables
-         that are referenced but not selected
-         <option>FOR UPDATE/FOR SHARE</option>).
+         The <command>SELECT</command> command acquires a lock of this mode
+         on all tables on which one of the <option>FOR UPDATE</option>,
+         <option>FOR NO KEY UPDATE</option>,
+         <option>FOR SHARE</option>, or
+         <option>FOR KEY SHARE</option> options is specified
+         (in addition to <literal>ACCESS SHARE</literal> locks on any other
+         tables that are referenced without any explicit
+         <option>FOR ...</option> locking option).
         </para>
        </listitem>
       </varlistentry>

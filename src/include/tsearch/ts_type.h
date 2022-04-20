@@ -171,7 +171,7 @@ typedef struct
 
 extern PGDLLIMPORT const int tsearch_op_priority[OP_COUNT];
 
-/* get operation priority  by its code*/
+/* get operation priority by its code */
 #define OP_PRIORITY(x)	( tsearch_op_priority[(x) - 1] )
 /* get QueryOperator priority */
 #define QO_PRIORITY(x)	OP_PRIORITY(((QueryOperator *) (x))->oper)

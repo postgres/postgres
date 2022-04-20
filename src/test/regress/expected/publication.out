@@ -441,7 +441,7 @@ CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELECT genera
 ERROR:  invalid publication WHERE expression
 LINE 1: ...ICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE (a IN (SELE...
                                                              ^
-DETAIL:  Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations and immutable built-in functions.
+DETAIL:  Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions.
 -- fail - system columns are not allowed
 CREATE PUBLICATION testpub6 FOR TABLE testpub_rf_tbl1 WHERE ('(0,1)'::tid = ctid);
 ERROR:  invalid publication WHERE expression
@@ -588,8 +588,12 @@ UPDATE rf_tbl_abcd_part_pk SET a = 1;
 -- fail - cannot set PUBLISH_VIA_PARTITION_ROOT to false if any row filter is
 -- used for partitioned table
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
-ERROR:  cannot set publish_via_partition_root = false for publication "testpub6"
-DETAIL:  The publication contains a WHERE clause for a partitioned table "rf_tbl_abcd_part_pk" which is not allowed when publish_via_partition_root is false.
+ERROR:  cannot set parameter "publish_via_partition_root" to false for publication "testpub6"
+DETAIL:  The publication contains a WHERE clause for partitioned table "rf_tbl_abcd_part_pk", which is not allowed when "publish_via_partition_root" is false.
+-- remove partitioned table's row filter
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk;
+-- ok - we don't have row filter for partitioned table.
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- Now change the root filter to use a column "b"
 -- (which is not in the replica identity)
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 WHERE (b > 99);
@@ -951,8 +955,12 @@ UPDATE rf_tbl_abcd_part_pk SET a = 1;
 -- fail - cannot set PUBLISH_VIA_PARTITION_ROOT to false if any column list is
 -- used for partitioned table
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
-ERROR:  cannot set publish_via_partition_root = false for publication "testpub6"
-DETAIL:  The publication contains a column list for a partitioned table "rf_tbl_abcd_part_pk" which is not allowed when publish_via_partition_root is false.
+ERROR:  cannot set parameter "publish_via_partition_root" to false for publication "testpub6"
+DETAIL:  The publication contains a column list for partitioned table "rf_tbl_abcd_part_pk", which is not allowed when "publish_via_partition_root" is false.
+-- remove partitioned table's column list
+ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk;
+-- ok - we don't have column list for partitioned table.
+ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- Now change the root column list to use a column "b"
 -- (which is not in the replica identity)
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 (b);

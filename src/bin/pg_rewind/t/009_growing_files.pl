@@ -71,6 +71,6 @@ my $last;
 open my $f, '<', "$standby_pgdata/tst_both_dir/file1";
 $last = $_ while (<$f>);
 close $f;
-like($last, qr/fatal: size of source file/, "Check error message");
+like($last, qr/error: size of source file/, "Check error message");
 
 done_testing();

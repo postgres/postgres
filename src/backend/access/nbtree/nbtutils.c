@@ -2072,7 +2072,7 @@ BTreeShmemSize(void)
 	Size		size;
 
 	size = offsetof(BTVacInfo, vacuums);
-	size = add_size(size, mul_size(GetMaxBackends(), sizeof(BTOneVacInfo)));
+	size = add_size(size, mul_size(MaxBackends, sizeof(BTOneVacInfo)));
 	return size;
 }
 
@@ -2101,7 +2101,7 @@ BTreeShmemInit(void)
 		btvacinfo->cycle_ctr = (BTCycleId) time(NULL);
 
 		btvacinfo->num_vacuums = 0;
-		btvacinfo->max_vacuums = GetMaxBackends();
+		btvacinfo->max_vacuums = MaxBackends;
 	}
 	else
 		Assert(found);
@@ -2116,14 +2116,12 @@ btoptions(Datum reloptions, bool validate)
 		offsetof(BTOptions, vacuum_cleanup_index_scale_factor)},
 		{"deduplicate_items", RELOPT_TYPE_BOOL,
 		offsetof(BTOptions, deduplicate_items)}
-
 	};
 
 	return (bytea *) build_reloptions(reloptions, validate,
 									  RELOPT_KIND_BTREE,
 									  sizeof(BTOptions),
 									  tab, lengthof(tab));
-
 }
 
 /*
@@ -2591,7 +2589,6 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 
 			/* Use generic heapkeyspace pivot tuple handling */
 		}
-
 	}
 
 	/* Handle heapkeyspace pivot tuples (excluding minus infinity items) */

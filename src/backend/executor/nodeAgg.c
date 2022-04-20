@@ -4119,7 +4119,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 								 2,
 								 InvalidOid,
 								 (void *) aggstate, NULL);
-
 	}
 
 	/*

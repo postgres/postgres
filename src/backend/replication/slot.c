@@ -247,7 +247,7 @@ ReplicationSlotValidateName(const char *name, int elevel)
  *     to be enabled only at the slot creation time. If we allow this option
  *     to be changed during decoding then it is quite possible that we skip
  *     prepare first time because this option was not enabled. Now next time
- *     during getting changes, if the two_phase  option is enabled it can skip
+ *     during getting changes, if the two_phase option is enabled it can skip
  *     prepare because by that time start decoding point has been moved. So the
  *     user will only get commit prepared.
  */

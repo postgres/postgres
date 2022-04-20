@@ -100,7 +100,7 @@ ExecInitMergeAppend(MergeAppend *node, EState *estate, int eflags)
 
 		/*
 		 * When no run-time pruning is required and there's at least one
-		 * subplan, we can fill as_valid_subplans immediately, preventing
+		 * subplan, we can fill ms_valid_subplans immediately, preventing
 		 * later calls to ExecFindMatchingSubPlans.
 		 */
 		if (!prunestate->do_exec_prune && nplans > 0)

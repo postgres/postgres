@@ -548,7 +548,7 @@ protocol to make nodes agree on a serializable transactional order.
    rollforward will take considerably longer, so that technique only
    offers a solution for disaster recovery, not high availability.
    A standby server can also be used for read-only queries, in which case
-   it is called a <firstterm>hot standby</firstterm> server. See 
+   it is called a <firstterm>hot standby</firstterm> server. See
    <xref linkend="hot-standby"/> for more information.
   </para>
 

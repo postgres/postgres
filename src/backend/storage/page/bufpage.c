@@ -563,7 +563,6 @@ compactify_tuples(itemIdCompact itemidbase, int nitems, Page page, bool presorte
 
 			/* update the line pointer to reference the new offset */
 			lp->lp_off = upper;
-
 		}
 
 		/* move the remaining tuples. */
@@ -669,7 +668,6 @@ compactify_tuples(itemIdCompact itemidbase, int nitems, Page page, bool presorte
 
 			/* update the line pointer to reference the new offset */
 			lp->lp_off = upper;
-
 		}
 
 		/* Copy the remaining chunk */

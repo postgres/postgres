@@ -3134,7 +3134,7 @@ JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("only bool, numeric and text types could be "
+					 errmsg("only bool, numeric, and text types could be "
 							"casted to supported jsonpath types.")));
 	}
 }

@@ -195,9 +195,9 @@ bbsink_server_end_archive(bbsink *sink)
 
 	/*
 	 * We intentionally don't use data_sync_elevel here, because the server
-	 * shouldn't PANIC just because we can't guarantee the the backup has been
-	 * written down to disk. Running recovery won't fix anything in this case
-	 * anyway.
+	 * shouldn't PANIC just because we can't guarantee that the backup has
+	 * been written down to disk. Running recovery won't fix anything in this
+	 * case anyway.
 	 */
 	if (FileSync(mysink->file, WAIT_EVENT_BASEBACKUP_SYNC) < 0)
 		ereport(ERROR,

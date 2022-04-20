@@ -2196,7 +2196,6 @@ insertStatEntry(MemoryContext persistentContext, TSVectorStat *stat, TSVector tx
 			else
 				pnode->right = node;
 		}
-
 	}
 	else
 	{

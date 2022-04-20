@@ -150,7 +150,7 @@ postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_ty
     <listitem>
      <para>
       This function is same as <function>pg_get_wal_records_info()</function>
-      except that it gets information of all the valid WAL records from 
+      except that it gets information of all the valid WAL records from
       <replaceable>start_lsn</replaceable> till the end of WAL.
      </para>
     </listitem>

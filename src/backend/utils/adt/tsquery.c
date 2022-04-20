@@ -261,7 +261,7 @@ parse_or_operator(TSQueryParserState pstate)
 		/*
 		 * Suppose, we found an operand, but could be a not correct operand.
 		 * So we still treat OR literal as operation with possibly incorrect
-		 * operand and  will not search it as lexeme
+		 * operand and will not search it as lexeme
 		 */
 		if (!t_isspace(ptr))
 			break;

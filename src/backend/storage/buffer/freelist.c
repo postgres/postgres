@@ -308,7 +308,6 @@ StrategyGetBuffer(BufferAccessStrategy strategy, uint32 *buf_state)
 				return buf;
 			}
 			UnlockBufHdr(buf, local_buf_state);
-
 		}
 	}
 

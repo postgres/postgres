@@ -2194,7 +2194,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    <acronym>TLS</acronym> protocol. <acronym>SSL</acronym> protocols are the
    precursors to <acronym>TLS</acronym> protocols, and the term
    <acronym>SSL</acronym> is still used for encrypted connections even though
-   <acronym>SSL</acronym> protocols are no longer supported. 
+   <acronym>SSL</acronym> protocols are no longer supported.
    <acronym>SSL</acronym> is used interchangeably with <acronym>TLS</acronym>
    in <productname>PostgreSQL</productname>.
 

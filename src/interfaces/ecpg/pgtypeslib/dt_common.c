@@ -1740,7 +1740,6 @@ ParseDateTime(char *timestr, char *lowstr,
 		{
 			(*endstr)++;
 			continue;
-
 		}
 		/* otherwise, something is not right... */
 		else

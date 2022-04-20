@@ -190,10 +190,7 @@ get_restricted_token(void)
 			WaitForSingleObject(pi.hProcess, INFINITE);
 
 			if (!GetExitCodeProcess(pi.hProcess, &x))
-			{
-				pg_log_error("could not get exit code from subprocess: error code %lu", GetLastError());
-				exit(1);
-			}
+				pg_fatal("could not get exit code from subprocess: error code %lu", GetLastError());
 			exit(x);
 		}
 		pg_free(cmdline);

@@ -113,7 +113,23 @@ overwrite_file($og_stats, "ZZZZZZZZZZZZZ");
 $node->start;
 
 # no stats present due to invalid stats file
-$sect = "invalid";
+$sect = "invalid_overwrite";
+is(have_stats('database', $dboid, 0), 'f', "$sect: db stats do not exist");
+is(have_stats('function', $dboid, $funcoid),
+	'f', "$sect: function stats do not exist");
+is(have_stats('relation', $dboid, $tableoid),
+	'f', "$sect: relation stats do not exist");
+
+
+## check invalid stats file starting with valid contents, but followed by
+## invalid content is handled.
+
+trigger_funcrel_stat();
+$node->stop;
+append_file($og_stats, "XYZ");
+$node->start;
+
+$sect = "invalid_append";
 is(have_stats('database', $dboid, 0), 'f', "$sect: db stats do not exist");
 is(have_stats('function', $dboid, $funcoid),
 	'f', "$sect: function stats do not exist");
@@ -250,6 +266,16 @@ cmp_ok(
 	$wal_restart2->{reset},
 	"$sect: newer stats_reset");
 
+$node->stop('immediate');
+$node->start;
+
+$sect = "post immediate restart";
+my $wal_restart_immediate = wal_stats();
+
+cmp_ok(
+	$wal_reset_restart->{reset}, 'lt',
+	$wal_restart_immediate->{reset},
+	"$sect: reset timestamp is new");
 
 $node->stop;
 done_testing();
@@ -275,7 +301,17 @@ sub overwrite_file
 {
 	my ($filename, $str) = @_;
 	open my $fh, ">", $filename
-	  or die "could not write \"$filename\": $!";
+	  or die "could not overwrite \"$filename\": $!";
+	print $fh $str;
+	close $fh;
+	return;
+}
+
+sub append_file
+{
+	my ($filename, $str) = @_;
+	open my $fh, ">>", $filename
+	  or die "could not append to \"$filename\": $!";
 	print $fh $str;
 	close $fh;
 	return;

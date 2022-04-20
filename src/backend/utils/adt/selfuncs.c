@@ -3628,7 +3628,6 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 					 */
 					if (estinfo != NULL && varinfo2->isdefault)
 						estinfo->flags |= SELFLAG_USED_DEFAULT;
-
 				}
 
 				/* we're done with this relation */

@@ -218,3 +218,23 @@ ERROR:  invalid page size
 SELECT page_header('ccc'::bytea);
 ERROR:  invalid page size
 \set VERBOSITY default
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT fsm_page_contents(decode(repeat('00', :block_size), 'hex'));
+ fsm_page_contents 
+-------------------
+ 
+(1 row)
+
+SELECT page_header(decode(repeat('00', :block_size), 'hex'));
+      page_header      
+-----------------------
+ (0/0,0,0,0,0,0,0,0,0)
+(1 row)
+
+SELECT page_checksum(decode(repeat('00', :block_size), 'hex'), 1);
+ page_checksum 
+---------------
+              
+(1 row)
+

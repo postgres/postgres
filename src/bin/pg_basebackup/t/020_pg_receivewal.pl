@@ -34,12 +34,9 @@ $primary->command_fails(
 	[ 'pg_receivewal', '-D', $stream_dir, '--synchronous', '--no-sync' ],
 	'failure if --synchronous specified with --no-sync');
 $primary->command_fails_like(
-	[
-		'pg_receivewal', '-D', $stream_dir, '--compression-method', 'none',
-		'--compress',    '1'
-	],
-	qr/\Qpg_receivewal: error: cannot use --compress with --compression-method=none/,
-	'failure if --compress specified with --compression-method=none');
+	[ 'pg_receivewal', '-D', $stream_dir, '--compress', 'none:1', ],
+	qr/\Qpg_receivewal: error: invalid compression specification: compression algorithm "none" does not accept a compression level/,
+	'failure if --compress none:N (where N > 0)');
 
 # Slot creation and drop
 my $slot_name = 'test';
@@ -48,7 +45,7 @@ $primary->command_ok(
 	'creating a replication slot');
 my $slot = $primary->slot($slot_name);
 is($slot->{'slot_type'}, 'physical', 'physical replication slot was created');
-is($slot->{'restart_lsn'}, '', 'restart LSN of new slot is null');
+is($slot->{'restart_lsn'}, '',       'restart LSN of new slot is null');
 $primary->command_ok([ 'pg_receivewal', '--slot', $slot_name, '--drop-slot' ],
 	'dropping a replication slot');
 is($primary->slot($slot_name)->{'slot_type'},
@@ -93,15 +90,10 @@ SKIP:
 	chomp($nextlsn);
 	$primary->psql('postgres', 'INSERT INTO test_table VALUES (2);');
 
-	# Note the trailing whitespace after the value of --compress, that is
-	# a valid value.
 	$primary->command_ok(
 		[
-			'pg_receivewal',        '-D',
-			$stream_dir,            '--verbose',
-			'--endpos',             $nextlsn,
-			'--compression-method', 'gzip',
-			'--compress',           '1 ',
+			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
+			'--endpos',      $nextlsn, '--compress', 'gzip:1',
 			'--no-loop'
 		],
 		"streaming some WAL using ZLIB compression");
@@ -153,13 +145,11 @@ SKIP:
 	# Stream up to the given position.
 	$primary->command_ok(
 		[
-			'pg_receivewal', '-D',
-			$stream_dir,     '--verbose',
-			'--endpos',      $nextlsn,
-			'--no-loop',     '--compression-method',
+			'pg_receivewal', '-D',     $stream_dir, '--verbose',
+			'--endpos',      $nextlsn, '--no-loop', '--compress',
 			'lz4'
 		],
-		'streaming some WAL using --compression-method=lz4');
+		'streaming some WAL using --compress=lz4');
 
 	# Verify that the stored files are generated with their expected
 	# names.

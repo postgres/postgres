@@ -62,4 +62,29 @@ ERROR:  input page is not a valid BRIN page
 SELECT * FROM brin_revmap_data(get_raw_page('test1', 0));
 ERROR:  input page is not a valid BRIN page
 \set VERBOSITY default
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT brin_page_type(decode(repeat('00', :block_size), 'hex'));
+ brin_page_type 
+----------------
+ 
+(1 row)
+
+SELECT brin_page_items(decode(repeat('00', :block_size), 'hex'), 'test1_a_idx');
+ brin_page_items 
+-----------------
+(0 rows)
+
+SELECT brin_metapage_info(decode(repeat('00', :block_size), 'hex'));
+ brin_metapage_info 
+--------------------
+ 
+(1 row)
+
+SELECT brin_revmap_data(decode(repeat('00', :block_size), 'hex'));
+ brin_revmap_data 
+------------------
+ 
+(1 row)
+
 DROP TABLE test1;

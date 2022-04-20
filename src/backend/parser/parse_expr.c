@@ -3507,7 +3507,7 @@ transformJsonOutput(ParseState *pstate, const JsonOutput *output,
 }
 
 /*
- * Transform JSON output clause of JSON contructor functions.
+ * Transform JSON output clause of JSON constructor functions.
  *
  * Derive RETURNING type, if not specified, from argument types.
  */
@@ -3569,7 +3569,7 @@ coerceJsonFuncExpr(ParseState *pstate, Node *expr,
 	location = exprLocation(expr);
 
 	if (location < 0)
-		location = returning ? returning->format->location : -1;
+		location = returning->format->location;
 
 	/* special case for RETURNING bytea FORMAT json */
 	if (returning->format->format_type == JS_FORMAT_JSON &&
@@ -4072,13 +4072,15 @@ static JsonBehavior *
 transformJsonBehavior(ParseState *pstate, JsonBehavior *behavior,
 					  JsonBehaviorType default_behavior)
 {
-	JsonBehaviorType behavior_type;
-	Node	   *default_expr;
+	JsonBehaviorType behavior_type = default_behavior;
+	Node	   *default_expr = NULL;
 
-	behavior_type = behavior ? behavior->btype : default_behavior;
-	default_expr = behavior_type != JSON_BEHAVIOR_DEFAULT ? NULL :
-		transformExprRecurse(pstate, behavior->default_expr);
-
+	if (behavior)
+	{
+		behavior_type = behavior->btype;
+		if (behavior_type == JSON_BEHAVIOR_DEFAULT)
+			default_expr = transformExprRecurse(pstate, behavior->default_expr);
+	}
 	return makeJsonBehavior(behavior_type, default_expr);
 }
 
@@ -4454,7 +4456,7 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 			if (jsexpr->returning->typid != JSONBOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("JSON_TABLE() is not yet implemented for json type"),
+						 errmsg("JSON_TABLE() is not yet implemented for the json type"),
 						 errhint("Try casting the argument to jsonb"),
 						 parser_errposition(pstate, func->location)));
 
@@ -4464,7 +4466,8 @@ transformJsonFuncExpr(ParseState *pstate, JsonFuncExpr *func)
 	if (exprType(contextItemExpr) != JSONBOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("%s() is not yet implemented for json type", func_name),
+				 errmsg("%s() is not yet implemented for the json type", func_name),
+				 errhint("Try casting the argument to jsonb"),
 				 parser_errposition(pstate, func->location)));
 
 	return (Node *) jsexpr;

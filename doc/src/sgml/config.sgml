@@ -4873,6 +4873,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         will end recovery without further waiting.
        </para>
        <para>
+        WAL records must be kept on the standby until they are ready to be
+        applied. Therefore, longer delays will result in a greater accumulation
+        of WAL files, increasing disk space requirements for the standby's
+        <filename>pg_wal</filename> directory.
+       </para>
+       <para>
         This parameter is intended for use with streaming replication deployments;
         however, if the parameter is specified it will be honored in all cases
         except crash recovery.
@@ -5047,7 +5053,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Enables or disables reodering of keys in <literal>GROUP BY</literal>
+        Enables or disables reordering of keys in <literal>GROUP BY</literal>
         clause. The default is <literal>on</literal>.
        </para>
       </listitem>
@@ -7657,8 +7663,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </para>
 
      <para>
-      Each log line is serialized as a JSON object as of the following
-      set of keys with their values.
+      Each log line is serialized as a JSON object with the following
+      set of keys and their associated values.
      </para>
 
      <table>
@@ -8095,8 +8101,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         which lets modules such as <xref linkend="pgstatstatements"/>
         automatically enable it, and <literal>regress</literal> which
         has the same effect as <literal>auto</literal>, except that the
-        query identifier is hidden in the <literal>EXPLAIN</literal> output
-        to facilitate automated regression testing.
+        query identifier is not shown in the <literal>EXPLAIN</literal> output
+        in order to facilitate automated regression testing.
         The default is <literal>auto</literal>.
        </para>
        <note>

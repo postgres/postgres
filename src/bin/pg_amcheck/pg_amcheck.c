@@ -202,9 +202,9 @@ static void compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 
 #define log_no_match(...) do { \
 		if (opts.strict_names) \
-			pg_log_generic(PG_LOG_ERROR, __VA_ARGS__); \
+			pg_log_error(__VA_ARGS__); \
 		else \
-			pg_log_generic(PG_LOG_WARNING, __VA_ARGS__); \
+			pg_log_warning(__VA_ARGS__); \
 	} while(0)
 
 #define FREE_AND_SET_NULL(x) do { \
@@ -396,39 +396,24 @@ main(int argc, char *argv[])
 				else if (pg_strcasecmp(optarg, "none") == 0)
 					opts.skip = "none";
 				else
-				{
-					pg_log_error("invalid argument for option %s", "--skip");
-					exit(1);
-				}
+					pg_fatal("invalid argument for option %s", "--skip");
 				break;
 			case 7:
 				errno = 0;
 				optval = strtoul(optarg, &endptr, 10);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
-				{
-					pg_log_error("invalid start block");
-					exit(1);
-				}
+					pg_fatal("invalid start block");
 				if (optval > MaxBlockNumber)
-				{
-					pg_log_error("start block out of bounds");
-					exit(1);
-				}
+					pg_fatal("start block out of bounds");
 				opts.startblock = optval;
 				break;
 			case 8:
 				errno = 0;
 				optval = strtoul(optarg, &endptr, 10);
 				if (endptr == optarg || *endptr != '\0' || errno != 0)
-				{
-					pg_log_error("invalid end block");
-					exit(1);
-				}
+					pg_fatal("invalid end block");
 				if (optval > MaxBlockNumber)
-				{
-					pg_log_error("end block out of bounds");
-					exit(1);
-				}
+					pg_fatal("end block out of bounds");
 				opts.endblock = optval;
 				break;
 			case 9:
@@ -450,18 +435,14 @@ main(int argc, char *argv[])
 					opts.install_schema = pg_strdup(optarg);
 				break;
 			default:
-				fprintf(stderr,
-						_("Try \"%s --help\" for more information.\n"),
-						progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
 
 	if (opts.endblock >= 0 && opts.endblock < opts.startblock)
-	{
-		pg_log_error("end block precedes start block");
-		exit(1);
-	}
+		pg_fatal("end block precedes start block");
 
 	/*
 	 * A single non-option arguments specifies a database name or connection
@@ -477,7 +458,7 @@ main(int argc, char *argv[])
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -495,19 +476,13 @@ main(int argc, char *argv[])
 	if (opts.alldb)
 	{
 		if (db != NULL)
-		{
-			pg_log_error("cannot specify a database name with --all");
-			exit(1);
-		}
+			pg_fatal("cannot specify a database name with --all");
 		cparams.dbname = maintenance_db;
 	}
 	else if (db != NULL)
 	{
 		if (opts.dbpattern)
-		{
-			pg_log_error("cannot specify both a database name and database patterns");
-			exit(1);
-		}
+			pg_fatal("cannot specify both a database name and database patterns");
 		cparams.dbname = db;
 	}
 
@@ -535,7 +510,7 @@ main(int argc, char *argv[])
 	{
 		if (conn != NULL)
 			disconnectDatabase(conn);
-		pg_log_error("no databases to check");
+		pg_log_warning("no databases to check");
 		exit(0);
 	}
 
@@ -593,7 +568,7 @@ main(int argc, char *argv[])
 			/* Querying the catalog failed. */
 			pg_log_error("database \"%s\": %s",
 						 PQdb(conn), PQerrorMessage(conn));
-			pg_log_info("query was: %s", amcheck_sql);
+			pg_log_error_detail("Query was: %s", amcheck_sql);
 			PQclear(result);
 			disconnectDatabase(conn);
 			exit(1);
@@ -669,8 +644,7 @@ main(int argc, char *argv[])
 	{
 		if (conn != NULL)
 			disconnectDatabase(conn);
-		pg_log_error("no relations to check");
-		exit(1);
+		pg_fatal("no relations to check");
 	}
 	progress_report(reltotal, relprogress, pagestotal, pageschecked,
 					NULL, true, false);
@@ -919,7 +893,7 @@ run_command(ParallelSlot *slot, const char *sql)
 		pg_log_error("error sending command to database \"%s\": %s",
 					 PQdb(slot->connection),
 					 PQerrorMessage(slot->connection));
-		pg_log_error("command was: %s", sql);
+		pg_log_error_detail("Command was: %s", sql);
 		exit(1);
 	}
 }
@@ -1123,9 +1097,9 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 			pg_log_warning("btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d",
 						   rel->datinfo->datname, rel->nspname, rel->relname, ntups);
 			if (opts.verbose)
-				pg_log_info("query was: %s", rel->sql);
-			pg_log_warning("Are %s's and amcheck's versions compatible?",
-						   progname);
+				pg_log_warning_detail("Query was: %s", rel->sql);
+			pg_log_warning_hint("Are %s's and amcheck's versions compatible?",
+								progname);
 			progress_since_last_stderr = false;
 		}
 	}
@@ -1648,7 +1622,7 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
-		pg_log_info("query was: %s", sql.data);
+		pg_log_error_detail("Query was: %s", sql.data);
 		disconnectDatabase(conn);
 		exit(1);
 	}
@@ -1673,11 +1647,8 @@ compile_database_list(PGconn *conn, SimplePtrList *databases,
 			 */
 			fatal = opts.strict_names;
 			if (pattern_id >= opts.include.len)
-			{
-				pg_log_error("internal error: received unexpected database pattern_id %d",
-							 pattern_id);
-				exit(1);
-			}
+				pg_fatal("internal error: received unexpected database pattern_id %d",
+						 pattern_id);
 			log_no_match("no connectable databases to check matching \"%s\"",
 						 opts.include.data[pattern_id].pattern);
 		}
@@ -2096,7 +2067,7 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
-		pg_log_info("query was: %s", sql.data);
+		pg_log_error_detail("Query was: %s", sql.data);
 		disconnectDatabase(conn);
 		exit(1);
 	}
@@ -2136,11 +2107,8 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 			 */
 
 			if (pattern_id >= opts.include.len)
-			{
-				pg_log_error("internal error: received unexpected relation pattern_id %d",
-							 pattern_id);
-				exit(1);
-			}
+				pg_fatal("internal error: received unexpected relation pattern_id %d",
+						 pattern_id);
 
 			opts.include.data[pattern_id].matched = true;
 		}

@@ -921,11 +921,11 @@ usage(void)
 		   "  --log-prefix=PREFIX      prefix for transaction time log file\n"
 		   "                           (default: \"pgbench_log\")\n"
 		   "  --max-tries=NUM          max number of tries to run transaction (default: 1)\n"
-		   "  --verbose-errors         print messages of all errors\n"
 		   "  --progress-timestamp     use Unix epoch timestamps for progress\n"
 		   "  --random-seed=SEED       set random seed (\"time\", \"rand\", integer)\n"
 		   "  --sampling-rate=NUM      fraction of transactions to log (e.g., 0.01 for 1%%)\n"
 		   "  --show-script=NAME       show builtin script code, then exit\n"
+		   "  --verbose-errors         print messages of all errors\n"
 		   "\nCommon options:\n"
 		   "  -d, --debug              print debugging output\n"
 		   "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -1502,8 +1502,7 @@ accumStats(StatsData *stats, bool skipped, double lat, double lag,
 			break;
 		default:
 			/* internal error which should never occur */
-			pg_log_fatal("unexpected error status: %d", estatus);
-			exit(1);
+			pg_fatal("unexpected error status: %d", estatus);
 	}
 }
 
@@ -1516,8 +1515,8 @@ executeStatement(PGconn *con, const char *sql)
 	res = PQexec(con, sql);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		pg_log_fatal("query failed: %s", PQerrorMessage(con));
-		pg_log_info("query was: %s", sql);
+		pg_log_error("query failed: %s", PQerrorMessage(con));
+		pg_log_error_detail("Query was: %s", sql);
 		exit(1);
 	}
 	PQclear(res);
@@ -1533,7 +1532,7 @@ tryExecuteStatement(PGconn *con, const char *sql)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		pg_log_error("%s", PQerrorMessage(con));
-		pg_log_info("(ignoring this error and continuing anyway)");
+		pg_log_error_detail("(ignoring this error and continuing anyway)");
 	}
 	PQclear(res);
 }
@@ -2878,8 +2877,7 @@ evaluateExpr(CState *st, PgBenchExpr *expr, PgBenchValue *retval)
 
 		default:
 			/* internal error which should never occur */
-			pg_log_fatal("unexpected enode type in evaluation: %d", expr->etype);
-			exit(1);
+			pg_fatal("unexpected enode type in evaluation: %d", expr->etype);
 	}
 }
 
@@ -3452,7 +3450,7 @@ discardUntilSync(CState *st)
 		PQclear(res);
 	}
 
-	/* exit pipline */
+	/* exit pipeline */
 	if (PQexitPipelineMode(st->con) != 1)
 	{
 		pg_log_error("client %d aborted: failed to exit pipeline mode for rolling back the failed transaction",
@@ -3517,11 +3515,11 @@ printVerboseErrorMessages(CState *st, pg_time_usec_t *now, bool is_retry)
 					  (is_retry ?
 						"repeats the transaction after the error" :
 						"ends the failed transaction"));
-	appendPQExpBuffer(buf, " (try %d", st->tries);
+	appendPQExpBuffer(buf, " (try %u", st->tries);
 
 	/* Print max_tries if it is not unlimitted. */
 	if (max_tries)
-		appendPQExpBuffer(buf, "/%d", max_tries);
+		appendPQExpBuffer(buf, "/%u", max_tries);
 
 	/*
 	 * If the latency limit is used, print a percentage of the current transaction
@@ -4447,8 +4445,7 @@ getResultString(bool skipped, EStatus estatus)
 				return "deadlock";
 			default:
 				/* internal error which should never occur */
-				pg_log_fatal("unexpected error status: %d", estatus);
-				exit(1);
+				pg_fatal("unexpected error status: %d", estatus);
 		}
 	}
 	else
@@ -4501,7 +4498,6 @@ doLog(TState *thread, CState *st,
 			int64		skipped = 0;
 			int64		serialization_failures = 0;
 			int64		deadlock_failures = 0;
-			int64		serialization_or_deadlock_failures = 0;
 			int64		retried = 0;
 			int64		retries = 0;
 
@@ -4543,9 +4539,7 @@ doLog(TState *thread, CState *st,
 				serialization_failures = agg->serialization_failures;
 				deadlock_failures = agg->deadlock_failures;
 			}
-			serialization_or_deadlock_failures = serialization_failures + deadlock_failures;
-			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT " " INT64_FORMAT,
-					serialization_or_deadlock_failures,
+			fprintf(logfile, " " INT64_FORMAT " " INT64_FORMAT,
 					serialization_failures,
 					deadlock_failures);
 
@@ -4575,7 +4569,7 @@ doLog(TState *thread, CState *st,
 		if (throttle_delay)
 			fprintf(logfile, " %.0f", lag);
 		if (max_tries != 1)
-			fprintf(logfile, " %d", st->tries - 1);
+			fprintf(logfile, " %u", st->tries - 1);
 		fputc('\n', logfile);
 	}
 }
@@ -4901,10 +4895,7 @@ initGenerateDataClientSide(PGconn *con)
 	res = PQexec(con, copy_statement);
 
 	if (PQresultStatus(res) != PGRES_COPY_IN)
-	{
-		pg_log_fatal("unexpected copy in result: %s", PQerrorMessage(con));
-		exit(1);
-	}
+		pg_fatal("unexpected copy in result: %s", PQerrorMessage(con));
 	PQclear(res);
 
 	start = pg_time_now();
@@ -4918,10 +4909,7 @@ initGenerateDataClientSide(PGconn *con)
 						  INT64_FORMAT "\t" INT64_FORMAT "\t%d\t\n",
 						  j, k / naccounts + 1, 0);
 		if (PQputline(con, sql.data))
-		{
-			pg_log_fatal("PQputline failed");
-			exit(1);
-		}
+			pg_fatal("PQputline failed");
 
 		if (CancelRequested)
 			break;
@@ -4963,15 +4951,9 @@ initGenerateDataClientSide(PGconn *con)
 		fputc('\n', stderr);	/* Need to move to next line */
 
 	if (PQputline(con, "\\.\n"))
-	{
-		pg_log_fatal("very last PQputline failed");
-		exit(1);
-	}
+		pg_fatal("very last PQputline failed");
 	if (PQendcopy(con))
-	{
-		pg_log_fatal("PQendcopy failed");
-		exit(1);
-	}
+		pg_fatal("PQendcopy failed");
 
 	termPQExpBuffer(&sql);
 
@@ -5111,17 +5093,14 @@ static void
 checkInitSteps(const char *initialize_steps)
 {
 	if (initialize_steps[0] == '\0')
-	{
-		pg_log_fatal("no initialization steps specified");
-		exit(1);
-	}
+		pg_fatal("no initialization steps specified");
 
 	for (const char *step = initialize_steps; *step != '\0'; step++)
 	{
 		if (strchr(ALL_INIT_STEPS " ", *step) == NULL)
 		{
-			pg_log_fatal("unrecognized initialization step \"%c\"", *step);
-			pg_log_info("Allowed step characters are: \"" ALL_INIT_STEPS "\".");
+			pg_log_error("unrecognized initialization step \"%c\"", *step);
+			pg_log_error_detail("Allowed step characters are: \"" ALL_INIT_STEPS "\".");
 			exit(1);
 		}
 	}
@@ -5142,10 +5121,7 @@ runInitSteps(const char *initialize_steps)
 	initPQExpBuffer(&stats);
 
 	if ((con = doConnect()) == NULL)
-	{
-		pg_log_fatal("could not create connection for initialization");
-		exit(1);
-	}
+		pg_fatal("could not create connection for initialization");
 
 	setup_cancel_handler(NULL);
 	SetCancelConn(con);
@@ -5188,7 +5164,7 @@ runInitSteps(const char *initialize_steps)
 			case ' ':
 				break;			/* ignore */
 			default:
-				pg_log_fatal("unrecognized initialization step \"%c\"", *step);
+				pg_log_error("unrecognized initialization step \"%c\"", *step);
 				PQfinish(con);
 				exit(1);
 		}
@@ -5232,21 +5208,18 @@ GetTableInfo(PGconn *con, bool scale_given)
 	{
 		char	   *sqlState = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 
-		pg_log_fatal("could not count number of branches: %s", PQerrorMessage(con));
+		pg_log_error("could not count number of branches: %s", PQerrorMessage(con));
 
 		if (sqlState && strcmp(sqlState, ERRCODE_UNDEFINED_TABLE) == 0)
-			pg_log_info("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\"",
-						PQdb(con));
+			pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".",
+							  PQdb(con));
 
 		exit(1);
 	}
 	scale = atoi(PQgetvalue(res, 0, 0));
 	if (scale < 0)
-	{
-		pg_log_fatal("invalid count(*) from pgbench_branches: \"%s\"",
-					 PQgetvalue(res, 0, 0));
-		exit(1);
-	}
+		pg_fatal("invalid count(*) from pgbench_branches: \"%s\"",
+				 PQgetvalue(res, 0, 0));
 	PQclear(res);
 
 	/* warn if we override user-given -s switch */
@@ -5293,8 +5266,8 @@ GetTableInfo(PGconn *con, bool scale_given)
 		 * This case is unlikely as pgbench already found "pgbench_branches"
 		 * above to compute the scale.
 		 */
-		pg_log_fatal("no pgbench_accounts table found in search_path");
-		pg_log_info("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
+		pg_log_error("no pgbench_accounts table found in search_path");
+		pg_log_error_hint("Perhaps you need to do initialization (\"pgbench -i\") in database \"%s\".", PQdb(con));
 		exit(1);
 	}
 	else						/* PQntupes(res) == 1 */
@@ -5316,8 +5289,7 @@ GetTableInfo(PGconn *con, bool scale_given)
 			else
 			{
 				/* possibly a newer version with new partition method */
-				pg_log_fatal("unexpected partition method: \"%s\"", ps);
-				exit(1);
+				pg_fatal("unexpected partition method: \"%s\"", ps);
 			}
 		}
 
@@ -5409,7 +5381,7 @@ syntax_error(const char *source, int lineno,
 	if (command != NULL)
 		appendPQExpBuffer(&buf, " in command \"%s\"", command);
 
-	pg_log_fatal("%s", buf.data);
+	pg_log_error("%s", buf.data);
 
 	termPQExpBuffer(&buf);
 
@@ -5759,9 +5731,8 @@ process_backslash_command(PsqlScanState sstate, const char *source)
 static void
 ConditionError(const char *desc, int cmdn, const char *msg)
 {
-	pg_log_fatal("condition error in script \"%s\" command %d: %s",
-				 desc, cmdn, msg);
-	exit(1);
+	pg_fatal("condition error in script \"%s\" command %d: %s",
+			 desc, cmdn, msg);
 }
 
 /*
@@ -5997,18 +5968,12 @@ process_file(const char *filename, int weight)
 	if (strcmp(filename, "-") == 0)
 		fd = stdin;
 	else if ((fd = fopen(filename, "r")) == NULL)
-	{
-		pg_log_fatal("could not open file \"%s\": %m", filename);
-		exit(1);
-	}
+		pg_fatal("could not open file \"%s\": %m", filename);
 
 	buf = read_file_contents(fd);
 
 	if (ferror(fd))
-	{
-		pg_log_fatal("could not read file \"%s\": %m", filename);
-		exit(1);
-	}
+		pg_fatal("could not read file \"%s\": %m", filename);
 
 	if (fd != stdin)
 		fclose(fd);
@@ -6061,9 +6026,9 @@ findBuiltin(const char *name)
 
 	/* error cases */
 	if (found == 0)
-		pg_log_fatal("no builtin script found for name \"%s\"", name);
+		pg_log_error("no builtin script found for name \"%s\"", name);
 	else						/* found > 1 */
-		pg_log_fatal("ambiguous builtin name: %d builtin scripts found for prefix \"%s\"", found, name);
+		pg_log_error("ambiguous builtin name: %d builtin scripts found for prefix \"%s\"", found, name);
 
 	listAvailableScripts();
 	exit(1);
@@ -6095,16 +6060,10 @@ parseScriptWeight(const char *option, char **script)
 		errno = 0;
 		wtmp = strtol(sep + 1, &badp, 10);
 		if (errno != 0 || badp == sep + 1 || *badp != '\0')
-		{
-			pg_log_fatal("invalid weight specification: %s", sep);
-			exit(1);
-		}
+			pg_fatal("invalid weight specification: %s", sep);
 		if (wtmp > INT_MAX || wtmp < 0)
-		{
-			pg_log_fatal("weight specification out of range (0 .. %d): %lld",
-						 INT_MAX, (long long) wtmp);
-			exit(1);
-		}
+			pg_fatal("weight specification out of range (0 .. %d): %lld",
+					 INT_MAX, (long long) wtmp);
 		weight = wtmp;
 	}
 	else
@@ -6121,16 +6080,10 @@ static void
 addScript(const ParsedScript *script)
 {
 	if (script->commands == NULL || script->commands[0] == NULL)
-	{
-		pg_log_fatal("empty command list for script \"%s\"", script->desc);
-		exit(1);
-	}
+		pg_fatal("empty command list for script \"%s\"", script->desc);
 
 	if (num_scripts >= MAX_SCRIPTS)
-	{
-		pg_log_fatal("at most %d SQL scripts are allowed", MAX_SCRIPTS);
-		exit(1);
-	}
+		pg_fatal("at most %d SQL scripts are allowed", MAX_SCRIPTS);
 
 	CheckConditional(script);
 
@@ -6309,7 +6262,7 @@ printResults(StatsData *total,
 	printf("number of threads: %d\n", nthreads);
 
 	if (max_tries)
-		printf("maximum number of tries: %d\n", max_tries);
+		printf("maximum number of tries: %u\n", max_tries);
 
 	if (duration <= 0)
 	{
@@ -6530,7 +6483,7 @@ set_random_seed(const char *seed)
 		if (sscanf(seed, "%lu%c", &ulseed, &garbage) != 1)
 		{
 			pg_log_error("unrecognized random seed option \"%s\"", seed);
-			pg_log_info("Expecting an unsigned integer, \"time\" or \"rand\"");
+			pg_log_error_detail("Expecting an unsigned integer, \"time\" or \"rand\".");
 			return false;
 		}
 		iseed = (uint64) ulseed;
@@ -6664,10 +6617,7 @@ main(int argc, char **argv)
 
 	/* set random seed early, because it may be used while parsing scripts. */
 	if (!set_random_seed(getenv("PGBENCH_RANDOM_SEED")))
-	{
-		pg_log_fatal("error while setting random seed from PGBENCH_RANDOM_SEED environment variable");
-		exit(1);
-	}
+		pg_fatal("error while setting random seed from PGBENCH_RANDOM_SEED environment variable");
 
 	while ((c = getopt_long(argc, argv, "iI:h:nvp:dqb:SNc:j:Crs:t:T:U:lf:D:F:M:P:R:L:", long_options, &optindex)) != -1)
 	{
@@ -6714,15 +6664,12 @@ main(int argc, char **argv)
 #else							/* but BSD doesn't ... */
 				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
 #endif							/* RLIMIT_NOFILE */
-				{
-					pg_log_fatal("getrlimit failed: %m");
-					exit(1);
-				}
+					pg_fatal("getrlimit failed: %m");
 				if (rlim.rlim_cur < nclients + 3)
 				{
-					pg_log_fatal("need at least %d open files, but system limit is %ld",
+					pg_log_error("need at least %d open files, but system limit is %ld",
 								 nclients + 3, (long) rlim.rlim_cur);
-					pg_log_info("Reduce number of clients, or use limit/ulimit to increase the system limit.");
+					pg_log_error_hint("Reduce number of clients, or use limit/ulimit to increase the system limit.");
 					exit(1);
 				}
 #endif							/* HAVE_GETRLIMIT */
@@ -6736,10 +6683,7 @@ main(int argc, char **argv)
 				}
 #ifndef ENABLE_THREAD_SAFETY
 				if (nthreads != 1)
-				{
-					pg_log_fatal("threads are not supported on this platform; use -j1");
-					exit(1);
-				}
+					pg_fatal("threads are not supported on this platform; use -j1");
 #endif							/* !ENABLE_THREAD_SAFETY */
 				break;
 			case 'C':
@@ -6812,10 +6756,7 @@ main(int argc, char **argv)
 					benchmarking_option_set = true;
 
 					if ((p = strchr(optarg, '=')) == NULL || p == optarg || *(p + 1) == '\0')
-					{
-						pg_log_fatal("invalid variable definition: \"%s\"", optarg);
-						exit(1);
-					}
+						pg_fatal("invalid variable definition: \"%s\"", optarg);
 
 					*p++ = '\0';
 					if (!putVariable(&state[0].variables, "option", optarg, p))
@@ -6834,10 +6775,7 @@ main(int argc, char **argv)
 					if (strcmp(optarg, QUERYMODE[querymode]) == 0)
 						break;
 				if (querymode >= NUM_QUERYMODE)
-				{
-					pg_log_fatal("invalid query mode (-M): \"%s\"", optarg);
-					exit(1);
-				}
+					pg_fatal("invalid query mode (-M): \"%s\"", optarg);
 				break;
 			case 'P':
 				benchmarking_option_set = true;
@@ -6853,10 +6791,7 @@ main(int argc, char **argv)
 					benchmarking_option_set = true;
 
 					if (throttle_value <= 0.0)
-					{
-						pg_log_fatal("invalid rate limit: \"%s\"", optarg);
-						exit(1);
-					}
+						pg_fatal("invalid rate limit: \"%s\"", optarg);
 					/* Invert rate limit into per-transaction delay in usec */
 					throttle_delay = 1000000.0 / throttle_value;
 				}
@@ -6866,10 +6801,7 @@ main(int argc, char **argv)
 					double		limit_ms = atof(optarg);
 
 					if (limit_ms <= 0.0)
-					{
-						pg_log_fatal("invalid latency limit: \"%s\"", optarg);
-						exit(1);
-					}
+						pg_fatal("invalid latency limit: \"%s\"", optarg);
 					benchmarking_option_set = true;
 					latency_limit = (int64) (limit_ms * 1000);
 				}
@@ -6890,10 +6822,7 @@ main(int argc, char **argv)
 				benchmarking_option_set = true;
 				sample_rate = atof(optarg);
 				if (sample_rate <= 0.0 || sample_rate > 1.0)
-				{
-					pg_log_fatal("invalid sampling rate: \"%s\"", optarg);
-					exit(1);
-				}
+					pg_fatal("invalid sampling rate: \"%s\"", optarg);
 				break;
 			case 5:				/* aggregate-interval */
 				benchmarking_option_set = true;
@@ -6916,10 +6845,7 @@ main(int argc, char **argv)
 			case 9:				/* random-seed */
 				benchmarking_option_set = true;
 				if (!set_random_seed(optarg))
-				{
-					pg_log_fatal("error while setting random seed from --random-seed option");
-					exit(1);
-				}
+					pg_fatal("error while setting random seed from --random-seed option");
 				break;
 			case 10:			/* list */
 				{
@@ -6942,11 +6868,8 @@ main(int argc, char **argv)
 				else if (pg_strcasecmp(optarg, "hash") == 0)
 					partition_method = PART_HASH;
 				else
-				{
-					pg_log_fatal("invalid partition method, expecting \"range\" or \"hash\", got: \"%s\"",
-								 optarg);
-					exit(1);
-				}
+					pg_fatal("invalid partition method, expecting \"range\" or \"hash\", got: \"%s\"",
+							 optarg);
 				break;
 			case 13:			/* failures-detailed */
 				benchmarking_option_set = true;
@@ -6957,10 +6880,7 @@ main(int argc, char **argv)
 					int32		max_tries_arg = atoi(optarg);
 
 					if (max_tries_arg < 0)
-					{
-						pg_log_fatal("invalid number of maximum tries: \"%s\"", optarg);
-						exit(1);
-					}
+						pg_fatal("invalid number of maximum tries: \"%s\"", optarg);
 
 					benchmarking_option_set = true;
 					max_tries = (uint32) max_tries_arg;
@@ -6971,9 +6891,9 @@ main(int argc, char **argv)
 				verbose_errors = true;
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
-				break;
 		}
 	}
 
@@ -6999,10 +6919,7 @@ main(int argc, char **argv)
 	}
 
 	if (total_weight == 0 && !is_init_mode)
-	{
-		pg_log_fatal("total script weight must not be zero");
-		exit(1);
-	}
+		pg_fatal("total script weight must not be zero");
 
 	/* show per script stats if several scripts are used */
 	if (num_scripts > 1)
@@ -7037,25 +6954,19 @@ main(int argc, char **argv)
 
 	if (optind < argc)
 	{
-		pg_log_fatal("too many command-line arguments (first is \"%s\")",
+		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	if (is_init_mode)
 	{
 		if (benchmarking_option_set)
-		{
-			pg_log_fatal("some of the specified options cannot be used in initialization (-i) mode");
-			exit(1);
-		}
+			pg_fatal("some of the specified options cannot be used in initialization (-i) mode");
 
 		if (partitions == 0 && partition_method != PART_NONE)
-		{
-			pg_log_fatal("--partition-method requires greater than zero --partitions");
-			exit(1);
-		}
+			pg_fatal("--partition-method requires greater than zero --partitions");
 
 		/* set default method */
 		if (partitions > 0 && partition_method == PART_NONE)
@@ -7091,17 +7002,11 @@ main(int argc, char **argv)
 	else
 	{
 		if (initialization_option_set)
-		{
-			pg_log_fatal("some of the specified options cannot be used in benchmarking mode");
-			exit(1);
-		}
+			pg_fatal("some of the specified options cannot be used in benchmarking mode");
 	}
 
 	if (nxacts > 0 && duration > 0)
-	{
-		pg_log_fatal("specify either a number of transactions (-t) or a duration (-T), not both");
-		exit(1);
-	}
+		pg_fatal("specify either a number of transactions (-t) or a duration (-T), not both");
 
 	/* Use DEFAULT_NXACTS if neither nxacts nor duration is specified. */
 	if (nxacts <= 0 && duration <= 0)
@@ -7109,55 +7014,31 @@ main(int argc, char **argv)
 
 	/* --sampling-rate may be used only with -l */
 	if (sample_rate > 0.0 && !use_log)
-	{
-		pg_log_fatal("log sampling (--sampling-rate) is allowed only when logging transactions (-l)");
-		exit(1);
-	}
+		pg_fatal("log sampling (--sampling-rate) is allowed only when logging transactions (-l)");
 
 	/* --sampling-rate may not be used with --aggregate-interval */
 	if (sample_rate > 0.0 && agg_interval > 0)
-	{
-		pg_log_fatal("log sampling (--sampling-rate) and aggregation (--aggregate-interval) cannot be used at the same time");
-		exit(1);
-	}
+		pg_fatal("log sampling (--sampling-rate) and aggregation (--aggregate-interval) cannot be used at the same time");
 
 	if (agg_interval > 0 && !use_log)
-	{
-		pg_log_fatal("log aggregation is allowed only when actually logging transactions");
-		exit(1);
-	}
+		pg_fatal("log aggregation is allowed only when actually logging transactions");
 
 	if (!use_log && logfile_prefix)
-	{
-		pg_log_fatal("log file prefix (--log-prefix) is allowed only when logging transactions (-l)");
-		exit(1);
-	}
+		pg_fatal("log file prefix (--log-prefix) is allowed only when logging transactions (-l)");
 
 	if (duration > 0 && agg_interval > duration)
-	{
-		pg_log_fatal("number of seconds for aggregation (%d) must not be higher than test duration (%d)", agg_interval, duration);
-		exit(1);
-	}
+		pg_fatal("number of seconds for aggregation (%d) must not be higher than test duration (%d)", agg_interval, duration);
 
 	if (duration > 0 && agg_interval > 0 && duration % agg_interval != 0)
-	{
-		pg_log_fatal("duration (%d) must be a multiple of aggregation interval (%d)", duration, agg_interval);
-		exit(1);
-	}
+		pg_fatal("duration (%d) must be a multiple of aggregation interval (%d)", duration, agg_interval);
 
 	if (progress_timestamp && progress == 0)
-	{
-		pg_log_fatal("--progress-timestamp is allowed only under --progress");
-		exit(1);
-	}
+		pg_fatal("--progress-timestamp is allowed only under --progress");
 
 	if (!max_tries)
 	{
 		if (!latency_limit && duration <= 0)
-		{
-			pg_log_fatal("an unlimited number of transaction tries can only be used with --latency-limit or a duration (-T)");
-			exit(1);
-		}
+			pg_fatal("an unlimited number of transaction tries can only be used with --latency-limit or a duration (-T)");
 	}
 
 	/*
@@ -7207,10 +7088,7 @@ main(int argc, char **argv)
 	/* opening connection... */
 	con = doConnect();
 	if (con == NULL)
-	{
-		pg_log_fatal("could not create connection for setup");
-		exit(1);
-	}
+		pg_fatal("could not create connection for setup");
 
 	/* report pgbench and server versions */
 	printVersion(con);
@@ -7318,10 +7196,7 @@ main(int argc, char **argv)
 
 	errno = THREAD_BARRIER_INIT(&barrier, nthreads);
 	if (errno != 0)
-	{
-		pg_log_fatal("could not initialize barrier: %m");
-		exit(1);
-	}
+		pg_fatal("could not initialize barrier: %m");
 
 #ifdef ENABLE_THREAD_SAFETY
 	/* start all threads but thread 0 which is executed directly later */
@@ -7333,10 +7208,7 @@ main(int argc, char **argv)
 		errno = THREAD_CREATE(&thread->thread, threadRun, thread);
 
 		if (errno != 0)
-		{
-			pg_log_fatal("could not create thread: %m");
-			exit(1);
-		}
+			pg_fatal("could not create thread: %m");
 	}
 #else
 	Assert(nthreads == 1);
@@ -7386,7 +7258,7 @@ main(int argc, char **argv)
 
 	/*
 	 * All connections should be already closed in threadRun(), so this
-	 * disconnect_all() will be a no-op, but clean up the connecions just to
+	 * disconnect_all() will be a no-op, but clean up the connections just to
 	 * be sure. We don't need to measure the disconnection delays here.
 	 */
 	disconnect_all(state, nclients);
@@ -7404,7 +7276,7 @@ main(int argc, char **argv)
 	THREAD_BARRIER_DESTROY(&barrier);
 
 	if (exit_code != 0)
-		pg_log_fatal("Run was aborted; the above results are incomplete.");
+		pg_log_error("Run was aborted; the above results are incomplete.");
 
 	return exit_code;
 }
@@ -7438,10 +7310,7 @@ threadRun(void *arg)
 		thread->logfile = fopen(logpath, "w");
 
 		if (thread->logfile == NULL)
-		{
-			pg_log_fatal("could not open logfile \"%s\": %m", logpath);
-			exit(1);
-		}
+			pg_fatal("could not open logfile \"%s\": %m", logpath);
 	}
 
 	/* explicitly initialize the state machines */
@@ -7466,9 +7335,8 @@ threadRun(void *arg)
 			if ((state[i].con = doConnect()) == NULL)
 			{
 				/* coldly abort on initial connection failure */
-				pg_log_fatal("could not create connection for client %d",
-							 state[i].id);
-				exit(1);
+				pg_fatal("could not create connection for client %d",
+						 state[i].id);
 			}
 		}
 	}
@@ -7738,10 +7606,7 @@ setalarm(int seconds)
 		!CreateTimerQueueTimer(&timer, queue,
 							   win32_timer_callback, NULL, seconds * 1000, 0,
 							   WT_EXECUTEINTIMERTHREAD | WT_EXECUTEONLYONCE))
-	{
-		pg_log_fatal("failed to set timer");
-		exit(1);
-	}
+		pg_fatal("failed to set timer");
 }
 
 #endif							/* WIN32 */
@@ -7885,8 +7750,7 @@ add_socket_to_set(socket_set *sa, int fd, int idx)
 		 * Doing a hard exit here is a bit grotty, but it doesn't seem worth
 		 * complicating the API to make it less grotty.
 		 */
-		pg_log_fatal("too many client connections for select()");
-		exit(1);
+		pg_fatal("too many client connections for select()");
 	}
 	FD_SET(fd, &sa->fds);
 	if (fd > sa->maxfd)

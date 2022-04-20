@@ -202,16 +202,11 @@ main(int argc, char *argv[])
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
-			pg_log_error("The program \"%s\" is needed by %s but was not found in the\n"
-						 "same directory as \"%s\".\n"
-						 "Check your installation.",
-						 "pg_dump", progname, full_path);
+			pg_fatal("program \"%s\" is needed by %s but was not found in the same directory as \"%s\"",
+					 "pg_dump", progname, full_path);
 		else
-			pg_log_error("The program \"%s\" was found by \"%s\"\n"
-						 "but was not the same version as %s.\n"
-						 "Check your installation.",
-						 "pg_dump", full_path, progname);
-		exit_nicely(1);
+			pg_fatal("program \"%s\" was found by \"%s\" but was not the same version as %s",
+					 "pg_dump", full_path, progname);
 	}
 
 	pgdumpopts = createPQExpBuffer();
@@ -341,7 +336,8 @@ main(int argc, char *argv[])
 				break;
 
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit_nicely(1);
 		}
 	}
@@ -351,8 +347,7 @@ main(int argc, char *argv[])
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
@@ -360,8 +355,7 @@ main(int argc, char *argv[])
 		(globals_only || roles_only || tablespaces_only))
 	{
 		pg_log_error("option --exclude-database cannot be used together with -g/--globals-only, -r/--roles-only, or -t/--tablespaces-only");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
@@ -369,30 +363,24 @@ main(int argc, char *argv[])
 	if (globals_only && roles_only)
 	{
 		pg_log_error("options -g/--globals-only and -r/--roles-only cannot be used together");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
 	if (globals_only && tablespaces_only)
 	{
 		pg_log_error("options -g/--globals-only and -t/--tablespaces-only cannot be used together");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
 	if (if_exists && !output_clean)
-	{
-		pg_log_error("option --if-exists requires option -c/--clean");
-		exit_nicely(1);
-	}
+		pg_fatal("option --if-exists requires option -c/--clean");
 
 	if (roles_only && tablespaces_only)
 	{
 		pg_log_error("options -r/--roles-only and -t/--tablespaces-only cannot be used together");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
@@ -453,10 +441,7 @@ main(int argc, char *argv[])
 							   prompt_password, false);
 
 		if (!conn)
-		{
-			pg_log_error("could not connect to database \"%s\"", pgdb);
-			exit_nicely(1);
-		}
+			pg_fatal("could not connect to database \"%s\"", pgdb);
 	}
 	else
 	{
@@ -470,8 +455,7 @@ main(int argc, char *argv[])
 		{
 			pg_log_error("could not connect to databases \"postgres\" or \"template1\"\n"
 						 "Please specify an alternative database.");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit_nicely(1);
 		}
 	}
@@ -489,11 +473,8 @@ main(int argc, char *argv[])
 	{
 		OPF = fopen(filename, PG_BINARY_W);
 		if (!OPF)
-		{
-			pg_log_error("could not open output file \"%s\": %m",
-						 filename);
-			exit_nicely(1);
-		}
+			pg_fatal("could not open output file \"%s\": %m",
+					 filename);
 	}
 	else
 		OPF = stdout;
@@ -504,11 +485,8 @@ main(int argc, char *argv[])
 	if (dumpencoding)
 	{
 		if (PQsetClientEncoding(conn, dumpencoding) < 0)
-		{
-			pg_log_error("invalid client encoding \"%s\" specified",
-						 dumpencoding);
-			exit_nicely(1);
-		}
+			pg_fatal("invalid client encoding \"%s\" specified",
+					 dumpencoding);
 	}
 
 	/*
@@ -1386,22 +1364,15 @@ dumpDatabases(PGconn *conn)
 
 		ret = runPgDump(dbname, create_opts);
 		if (ret != 0)
-		{
-			pg_log_error("pg_dump failed on database \"%s\", exiting", dbname);
-			exit_nicely(1);
-		}
+			pg_fatal("pg_dump failed on database \"%s\", exiting", dbname);
 
 		if (filename)
 		{
 			OPF = fopen(filename, PG_BINARY_A);
 			if (!OPF)
-			{
-				pg_log_error("could not re-open the output file \"%s\": %m",
-							 filename);
-				exit_nicely(1);
-			}
+				pg_fatal("could not re-open the output file \"%s\": %m",
+						 filename);
 		}
-
 	}
 
 	PQclear(res);
@@ -1535,10 +1506,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 		{
 			conn_opts = PQconninfoParse(connection_string, &err_msg);
 			if (conn_opts == NULL)
-			{
-				pg_log_error("%s", err_msg);
-				exit_nicely(1);
-			}
+				pg_fatal("%s", err_msg);
 
 			for (conn_opt = conn_opts; conn_opt->keyword != NULL; conn_opt++)
 			{
@@ -1605,10 +1573,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 		conn = PQconnectdbParams(keywords, values, true);
 
 		if (!conn)
-		{
-			pg_log_error("could not connect to database \"%s\"", dbname);
-			exit_nicely(1);
-		}
+			pg_fatal("could not connect to database \"%s\"", dbname);
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
 			PQconnectionNeedsPassword(conn) &&
@@ -1625,10 +1590,7 @@ connectDatabase(const char *dbname, const char *connection_string,
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		if (fail_on_error)
-		{
-			pg_log_error("%s", PQerrorMessage(conn));
-			exit_nicely(1);
-		}
+			pg_fatal("%s", PQerrorMessage(conn));
 		else
 		{
 			PQfinish(conn);
@@ -1654,17 +1616,11 @@ connectDatabase(const char *dbname, const char *connection_string,
 	/* Check version */
 	remoteversion_str = PQparameterStatus(conn, "server_version");
 	if (!remoteversion_str)
-	{
-		pg_log_error("could not get server version");
-		exit_nicely(1);
-	}
+		pg_fatal("could not get server version");
 	server_version = PQserverVersion(conn);
 	if (server_version == 0)
-	{
-		pg_log_error("could not parse server version \"%s\"",
-					 remoteversion_str);
-		exit_nicely(1);
-	}
+		pg_fatal("could not parse server version \"%s\"",
+				 remoteversion_str);
 
 	my_version = PG_VERSION_NUM;
 
@@ -1676,9 +1632,9 @@ connectDatabase(const char *dbname, const char *connection_string,
 		&& (server_version < 90200 ||
 			(server_version / 100) > (my_version / 100)))
 	{
-		pg_log_error("server version: %s; %s version: %s",
-					 remoteversion_str, progname, PG_VERSION);
 		pg_log_error("aborting because of server version mismatch");
+		pg_log_error_detail("server version: %s; %s version: %s",
+							remoteversion_str, progname, PG_VERSION);
 		exit_nicely(1);
 	}
 
@@ -1740,7 +1696,7 @@ executeQuery(PGconn *conn, const char *query)
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
-		pg_log_error("query was: %s", query);
+		pg_log_error_detail("Query was: %s", query);
 		PQfinish(conn);
 		exit_nicely(1);
 	}
@@ -1763,7 +1719,7 @@ executeCommand(PGconn *conn, const char *query)
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		pg_log_error("query failed: %s", PQerrorMessage(conn));
-		pg_log_error("query was: %s", query);
+		pg_log_error_detail("Query was: %s", query);
 		PQfinish(conn);
 		exit_nicely(1);
 	}

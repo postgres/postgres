@@ -747,7 +747,6 @@ spgoptions(Datum reloptions, bool validate)
 									  RELOPT_KIND_SPGIST,
 									  sizeof(SpGistOptions),
 									  tab, lengthof(tab));
-
 }
 
 /*

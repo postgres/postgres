@@ -278,7 +278,6 @@ win32_langinfo(const char *ctype)
 					strcpy(r, codepage);
 			}
 		}
-
 	}
 #endif
 

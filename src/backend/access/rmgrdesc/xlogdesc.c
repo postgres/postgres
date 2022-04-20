@@ -219,14 +219,13 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 
 	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
-		RelFileNode rnode = {InvalidOid, InvalidOid, InvalidOid};
-		ForkNumber	forknum = InvalidForkNumber;
-		BlockNumber blk = InvalidBlockNumber;
+		RelFileNode rnode;
+		ForkNumber	forknum;
+		BlockNumber blk;
 
-		if (!XLogRecHasBlockRef(record, block_id))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blk, NULL))
 			continue;
-
-		XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blk);
 
 		if (detailed_format)
 		{

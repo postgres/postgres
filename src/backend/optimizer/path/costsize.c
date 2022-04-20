@@ -1976,8 +1976,8 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 		 * by calling estimate_num_groups_incremental(), which estimates the
 		 * group size for "new" pathkeys.
 		 *
-		 * Note: estimate_num_groups_incremntal does not handle fake Vars, so use
-		 * a default estimate otherwise.
+		 * Note: estimate_num_groups_incremental does not handle fake Vars, so
+		 * use a default estimate otherwise.
 		 */
 		if (!has_fake_var)
 			nGroups = estimate_num_groups_incremental(root, pathkeyExprs,
@@ -6471,7 +6471,7 @@ compute_bitmap_pages(PlannerInfo *root, RelOptInfo *baserel, Path *bitmapqual,
 		exact_pages = heap_pages - lossy_pages;
 
 		/*
-		 * If there are lossy pages then recompute the  number of tuples
+		 * If there are lossy pages then recompute the number of tuples
 		 * processed by the bitmap heap node.  We assume here that the chance
 		 * of a given tuple coming from an exact page is the same as the
 		 * chance that a given page is exact.  This might not be true, but

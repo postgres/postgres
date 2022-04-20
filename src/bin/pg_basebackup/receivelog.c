@@ -114,7 +114,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 	 * When streaming to tar, no file with this name will exist before, so we
 	 * never have to verify a size.
 	 */
-	if (stream->walmethod->compression_method() == COMPRESSION_NONE &&
+	if (stream->walmethod->compression_algorithm() == PG_COMPRESSION_NONE &&
 		stream->walmethod->existsfile(fn))
 	{
 		size = stream->walmethod->get_file_size(fn);
@@ -140,7 +140,7 @@ open_walfile(StreamCtl *stream, XLogRecPtr startpoint)
 			/* fsync file in case of a previous crash */
 			if (stream->walmethod->sync(f) != 0)
 			{
-				pg_log_fatal("could not fsync existing write-ahead log file \"%s\": %s",
+				pg_log_error("could not fsync existing write-ahead log file \"%s\": %s",
 							 fn, stream->walmethod->getlasterror());
 				stream->walmethod->close(f, CLOSE_UNLINK);
 				exit(1);
@@ -778,11 +778,8 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 		if (stream->synchronous && lastFlushPosition < blockpos && walfile != NULL)
 		{
 			if (stream->walmethod->sync(walfile) != 0)
-			{
-				pg_log_fatal("could not fsync file \"%s\": %s",
-							 current_walfile_name, stream->walmethod->getlasterror());
-				exit(1);
-			}
+				pg_fatal("could not fsync file \"%s\": %s",
+						 current_walfile_name, stream->walmethod->getlasterror());
 			lastFlushPosition = blockpos;
 
 			/*
@@ -1030,11 +1027,8 @@ ProcessKeepaliveMsg(PGconn *conn, StreamCtl *stream, char *copybuf, int len,
 			 * shutdown of the server.
 			 */
 			if (stream->walmethod->sync(walfile) != 0)
-			{
-				pg_log_fatal("could not fsync file \"%s\": %s",
-							 current_walfile_name, stream->walmethod->getlasterror());
-				exit(1);
-			}
+				pg_fatal("could not fsync file \"%s\": %s",
+						 current_walfile_name, stream->walmethod->getlasterror());
 			lastFlushPosition = blockpos;
 		}
 

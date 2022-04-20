@@ -2269,7 +2269,7 @@ write_console(const char *line, int len)
 	/*
 	 * Conversion on non-win32 platforms is not implemented yet. It requires
 	 * non-throw version of pg_do_encoding_conversion(), that converts
-	 * unconvertable characters to '?' without errors.
+	 * unconvertible characters to '?' without errors.
 	 *
 	 * XXX: We have a no-throw version now. It doesn't convert to '?' though.
 	 */
@@ -2683,7 +2683,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 						appendStringInfo(buf, "%*s", padding, psdisp);
 					else
 						appendBinaryStringInfo(buf, psdisp, displen);
-
 				}
 				else if (padding != 0)
 					appendStringInfoSpaces(buf,
@@ -2722,7 +2721,6 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 							appendStringInfo(buf, "(%s)",
 											 MyProcPort->remote_port);
 					}
-
 				}
 				else if (padding != 0)
 					appendStringInfoSpaces(buf,

@@ -298,10 +298,7 @@ connect_slot(ParallelSlotArray *sa, int slotno, const char *dbname)
 	sa->cparams->override_dbname = old_override;
 
 	if (PQsocket(slot->connection) >= FD_SETSIZE)
-	{
-		pg_log_fatal("too many jobs for this platform");
-		exit(1);
-	}
+		pg_fatal("too many jobs for this platform");
 
 	/* Setup the connection using the supplied command, if any. */
 	if (sa->initcmd)

@@ -264,7 +264,6 @@ TwoPhaseShmemInit(void)
 	{
 		GlobalTransaction gxacts;
 		int			i;
-		int			max_backends = GetMaxBackends();
 
 		Assert(!found);
 		TwoPhaseState->freeGXacts = NULL;
@@ -298,7 +297,7 @@ TwoPhaseShmemInit(void)
 			 * prepared transaction. Currently multixact.c uses that
 			 * technique.
 			 */
-			gxacts[i].dummyBackendId = max_backends + 1 + i;
+			gxacts[i].dummyBackendId = MaxBackends + 1 + i;
 		}
 	}
 	else
@@ -479,7 +478,7 @@ MarkAsPreparingGuts(GlobalTransaction gxact, TransactionId xid, const char *gid,
 	}
 	proc->xid = xid;
 	Assert(proc->xmin == InvalidTransactionId);
-	proc->delayChkpt = 0;
+	proc->delayChkptFlags = 0;
 	proc->statusFlags = 0;
 	proc->pid = 0;
 	proc->databaseId = databaseid;
@@ -1173,11 +1172,11 @@ EndPrepare(GlobalTransaction gxact)
 	 * Now writing 2PC state data to WAL. We let the WAL's CRC protection
 	 * cover us, so no need to calculate a separate CRC.
 	 *
-	 * We have to set delayChkpt here, too; otherwise a checkpoint starting
-	 * immediately after the WAL record is inserted could complete without
-	 * fsync'ing our state file.  (This is essentially the same kind of race
-	 * condition as the COMMIT-to-clog-write case that RecordTransactionCommit
-	 * uses delayChkpt for; see notes there.)
+	 * We have to set DELAY_CHKPT_START here, too; otherwise a checkpoint
+	 * starting immediately after the WAL record is inserted could complete
+	 * without fsync'ing our state file.  (This is essentially the same kind
+	 * of race condition as the COMMIT-to-clog-write case that
+	 * RecordTransactionCommit uses DELAY_CHKPT_START for; see notes there.)
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
@@ -1186,8 +1185,8 @@ EndPrepare(GlobalTransaction gxact)
 
 	START_CRIT_SECTION();
 
-	Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
-	MyProc->delayChkpt |= DELAY_CHKPT_START;
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
 	XLogBeginInsert();
 	for (record = records.head; record != NULL; record = record->next)
@@ -1230,7 +1229,7 @@ EndPrepare(GlobalTransaction gxact)
 	 * checkpoint starting after this will certainly see the gxact as a
 	 * candidate for fsyncing.
 	 */
-	MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
 	/*
 	 * Remember that we have this GlobalTransaction entry locked for us.  If
@@ -1817,7 +1816,7 @@ CheckPointTwoPhase(XLogRecPtr redo_horizon)
 	 *
 	 * Note that it isn't possible for there to be a GXACT with a
 	 * prepare_end_lsn set prior to the last checkpoint yet is marked invalid,
-	 * because of the efforts with delayChkpt.
+	 * because of the efforts with delayChkptFlags.
 	 */
 	LWLockAcquire(TwoPhaseStateLock, LW_SHARED);
 	for (i = 0; i < TwoPhaseState->numPrepXacts; i++)
@@ -2275,7 +2274,7 @@ ProcessTwoPhaseBuffer(TransactionId xid,
  *	RecordTransactionCommitPrepared
  *
  * This is basically the same as RecordTransactionCommit (q.v. if you change
- * this function): in particular, we must set the delayChkpt flag to avoid a
+ * this function): in particular, we must set DELAY_CHKPT_START to avoid a
  * race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
@@ -2308,8 +2307,8 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
-	Assert((MyProc->delayChkpt & DELAY_CHKPT_START) == 0);
-	MyProc->delayChkpt |= DELAY_CHKPT_START;
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_START) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_START;
 
 	/*
 	 * Emit the XLOG commit record. Note that we mark 2PC commits as
@@ -2358,7 +2357,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	TransactionIdCommitTree(xid, nchildren, children);
 
 	/* Checkpoint can proceed now */
-	MyProc->delayChkpt &= ~DELAY_CHKPT_START;
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_START;
 
 	END_CRIT_SECTION();
 

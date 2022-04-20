@@ -581,3 +581,27 @@ declare c2 scroll cursor for select generate_series(1,3) as g;
 fetch all in c2;
 fetch backward all in c2;
 rollback;
+
+-- Check fetching of toasted datums via cursors.
+begin;
+
+-- Other compression algorithms may cause the compressed data to be stored
+-- inline.  Use pglz to ensure consistent results.
+set default_toast_compression = 'pglz';
+
+create table toasted_data (f1 int[]);
+insert into toasted_data
+  select array_agg(i) from generate_series(12345678, 12345678 + 1000) i;
+
+declare local_portal cursor for select * from toasted_data;
+fetch all in local_portal;
+
+declare held_portal cursor with hold for select * from toasted_data;
+
+commit;
+
+drop table toasted_data;
+
+fetch all in held_portal;
+
+reset default_toast_compression;

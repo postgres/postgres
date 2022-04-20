@@ -959,6 +959,41 @@ SELECT JSON_OBJECT('foo' : '1' FORMAT JSON, 'bar' : 'baz' RETURNING json);
 CREATE OR REPLACE VIEW public.json_object_view AS
  SELECT JSON_OBJECT('foo' : '1'::text FORMAT JSON, 'bar' : 'baz'::text RETURNING json) AS "json_object"
 DROP VIEW json_object_view;
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v WITH UNIQUE KEYS) OVER (ORDER BY k)
+FROM (VALUES (1,1), (2,2)) a(k,v);
+       a       |    json_objectagg    
+---------------+----------------------
+ {"k":1,"v":1} | { "1" : 1 }
+ {"k":2,"v":2} | { "1" : 1, "2" : 2 }
+(2 rows)
+
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v WITH UNIQUE KEYS) OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,2), (2,2)) a(k,v);
+ERROR:  duplicate JSON key "1"
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL WITH UNIQUE KEYS)
+   OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+ERROR:  duplicate JSON key "1"
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL)
+OVER (ORDER BY k)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+        a         |    json_objectagg    
+------------------+----------------------
+ {"k":1,"v":1}    | { "1" : 1 }
+ {"k":1,"v":null} | { "1" : 1 }
+ {"k":2,"v":2}    | { "1" : 1, "2" : 2 }
+(3 rows)
+
+SELECT to_json(a) AS a, JSON_OBJECTAGG(k : v ABSENT ON NULL)
+OVER (ORDER BY k RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM (VALUES (1,1), (1,null), (2,2)) a(k,v);
+        a         |    json_objectagg    
+------------------+----------------------
+ {"k":1,"v":1}    | { "1" : 1, "2" : 2 }
+ {"k":1,"v":null} | { "1" : 1, "2" : 2 }
+ {"k":2,"v":2}    | { "1" : 1, "2" : 2 }
+(3 rows)
+
 -- Test JSON_ARRAY deparsing
 EXPLAIN (VERBOSE, COSTS OFF)
 SELECT JSON_ARRAY('1' FORMAT JSON, 2 RETURNING json);
