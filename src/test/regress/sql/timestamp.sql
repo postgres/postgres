@@ -247,3 +247,18 @@ SELECT i,
 
 -- timestamp numeric fields constructor
 SELECT make_timestamp(2014,12,28,6,30,45.887);
+
+-- generate_series for timestamp
+select * from generate_series('2020-01-01 00:00'::timestamp,
+                              '2020-01-02 03:00'::timestamp,
+                              '1 hour'::interval);
+-- errors
+select * from generate_series('-infinity'::timestamp,
+                              '2020-01-02 03:00'::timestamp,
+                              '1 hour'::interval);
+select * from generate_series('2020-01-01 00:00'::timestamp,
+                              'infinity'::timestamp,
+                              '1 hour'::interval);
+select * from generate_series('2020-01-01 00:00'::timestamp,
+                              '2020-01-02 03:00'::timestamp,
+                              '0 hour'::interval);
