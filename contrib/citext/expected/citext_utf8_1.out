@@ -1,0 +1,9 @@
+/*
+ * This test must be run in a database with UTF-8 encoding
+ * and a Unicode-aware locale.
+ */
+SELECT getdatabaseencoding() <> 'UTF8' OR
+       current_setting('lc_ctype') = 'C'
+       AS skip_test \gset
+\if :skip_test
+\quit

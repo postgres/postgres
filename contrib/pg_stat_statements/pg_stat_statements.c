@@ -34,7 +34,7 @@
  * in the file to be read or written while holding only shared lock.
  *
  *
- * Copyright (c) 2008-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pg_stat_statements/pg_stat_statements.c
@@ -52,6 +52,7 @@
 #include "common/hashfn.h"
 #include "executor/instrument.h"
 #include "funcapi.h"
+#include "jit/jit.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "optimizer/planner.h"
@@ -78,17 +79,12 @@ PG_MODULE_MAGIC;
 #define PGSS_DUMP_FILE	PGSTAT_STAT_PERMANENT_DIRECTORY "/pg_stat_statements.stat"
 
 /*
- * Location of external query text file.  We don't keep it in the core
- * system's stats_temp_directory.  The core system can safely use that GUC
- * setting, because the statistics collector temp file paths are set only once
- * as part of changing the GUC, but pg_stat_statements has no way of avoiding
- * race conditions.  Besides, we only expect modest, infrequent I/O for query
- * strings, so placing the file on a faster filesystem is not compelling.
+ * Location of external query text file.
  */
 #define PGSS_TEXT_FILE	PG_STAT_TMP_DIR "/pgss_query_texts.stat"
 
 /* Magic number identifying the stats file format */
-static const uint32 PGSS_FILE_HEADER = 0x20201227;
+static const uint32 PGSS_FILE_HEADER = 0x20220408;
 
 /* PostgreSQL major version number, changes in which invalidate all entries */
 static const uint32 PGSS_PG_MAJOR_VERSION = PG_VERSION_NUM / 100;
@@ -121,7 +117,8 @@ typedef enum pgssVersion
 	PGSS_V1_2,
 	PGSS_V1_3,
 	PGSS_V1_8,
-	PGSS_V1_9
+	PGSS_V1_9,
+	PGSS_V1_10
 } pgssVersion;
 
 typedef enum pgssStoreKind
@@ -183,12 +180,26 @@ typedef struct Counters
 	int64		local_blks_written; /* # of local disk blocks written */
 	int64		temp_blks_read; /* # of temp blocks read */
 	int64		temp_blks_written;	/* # of temp blocks written */
-	double		blk_read_time;	/* time spent reading, in msec */
-	double		blk_write_time; /* time spent writing, in msec */
+	double		blk_read_time;	/* time spent reading blocks, in msec */
+	double		blk_write_time; /* time spent writing blocks, in msec */
+	double		temp_blk_read_time; /* time spent reading temp blocks, in msec */
+	double		temp_blk_write_time;	/* time spent writing temp blocks, in
+										 * msec */
 	double		usage;			/* usage factor */
 	int64		wal_records;	/* # of WAL records generated */
 	int64		wal_fpi;		/* # of WAL full page images generated */
 	uint64		wal_bytes;		/* total amount of WAL generated in bytes */
+	int64		jit_functions;	/* total number of JIT functions emitted */
+	double		jit_generation_time;	/* total time to generate jit code */
+	int64		jit_inlining_count; /* number of times inlining time has been
+									 * > 0 */
+	double		jit_inlining_time;	/* total time to inline jit code */
+	int64		jit_optimization_count; /* number of times optimization time
+										 * has been > 0 */
+	double		jit_optimization_time;	/* total time to optimize jit code */
+	int64		jit_emission_count; /* number of times emission time has been
+									 * > 0 */
+	double		jit_emission_time;	/* total time to emit jit code */
 } Counters;
 
 /*
@@ -302,6 +313,7 @@ PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_3);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_8);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_9);
+PG_FUNCTION_INFO_V1(pg_stat_statements_1_10);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
 PG_FUNCTION_INFO_V1(pg_stat_statements_info);
 
@@ -330,6 +342,7 @@ static void pgss_store(const char *query, uint64 queryId,
 					   double total_time, uint64 rows,
 					   const BufferUsage *bufusage,
 					   const WalUsage *walusage,
+					   const struct JitInstrumentation *jitusage,
 					   JumbleState *jstate);
 static void pg_stat_statements_internal(FunctionCallInfo fcinfo,
 										pgssVersion api_version,
@@ -437,7 +450,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	EmitWarningsOnPlaceholders("pg_stat_statements");
+	MarkGUCPrefixReserved("pg_stat_statements");
 
 	/*
 	 * Request additional shared resources.  (These are no-ops if we're not in
@@ -854,6 +867,7 @@ pgss_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 				   0,
 				   NULL,
 				   NULL,
+				   NULL,
 				   jstate);
 }
 
@@ -938,6 +952,7 @@ pgss_planner(Query *parse,
 				   0,
 				   &bufusage,
 				   &walusage,
+				   NULL,
 				   NULL);
 	}
 	else
@@ -1056,6 +1071,7 @@ pgss_ExecutorEnd(QueryDesc *queryDesc)
 				   queryDesc->estate->es_processed,
 				   &queryDesc->totaltime->bufusage,
 				   &queryDesc->totaltime->walusage,
+				   queryDesc->estate->es_jit ? &queryDesc->estate->es_jit->instr : NULL,
 				   NULL);
 	}
 
@@ -1173,6 +1189,7 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 				   rows,
 				   &bufusage,
 				   &walusage,
+				   NULL,
 				   NULL);
 	}
 	else
@@ -1191,10 +1208,6 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 /*
  * Store some statistics for a statement.
  *
- * If queryId is 0 then this is a utility statement for which we couldn't
- * compute a queryId during parse analysis, and we should compute a suitable
- * queryId internally.
- *
  * If jstate is not NULL then we're trying to create an entry for which
  * we have no statistics as yet; we just want to record the normalized
  * query string.  total_time, rows, bufusage and walusage are ignored in this
@@ -1210,6 +1223,7 @@ pgss_store(const char *query, uint64 queryId,
 		   double total_time, uint64 rows,
 		   const BufferUsage *bufusage,
 		   const WalUsage *walusage,
+		   const struct JitInstrumentation *jitusage,
 		   JumbleState *jstate)
 {
 	pgssHashKey key;
@@ -1373,10 +1387,29 @@ pgss_store(const char *query, uint64 queryId,
 		e->counters.temp_blks_written += bufusage->temp_blks_written;
 		e->counters.blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_read_time);
 		e->counters.blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->blk_write_time);
+		e->counters.temp_blk_read_time += INSTR_TIME_GET_MILLISEC(bufusage->temp_blk_read_time);
+		e->counters.temp_blk_write_time += INSTR_TIME_GET_MILLISEC(bufusage->temp_blk_write_time);
 		e->counters.usage += USAGE_EXEC(total_time);
 		e->counters.wal_records += walusage->wal_records;
 		e->counters.wal_fpi += walusage->wal_fpi;
 		e->counters.wal_bytes += walusage->wal_bytes;
+		if (jitusage)
+		{
+			e->counters.jit_functions += jitusage->created_functions;
+			e->counters.jit_generation_time += INSTR_TIME_GET_MILLISEC(jitusage->generation_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->inlining_counter))
+				e->counters.jit_inlining_count++;
+			e->counters.jit_inlining_time += INSTR_TIME_GET_MILLISEC(jitusage->inlining_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->optimization_counter))
+				e->counters.jit_optimization_count++;
+			e->counters.jit_optimization_time += INSTR_TIME_GET_MILLISEC(jitusage->optimization_counter);
+
+			if (INSTR_TIME_GET_MILLISEC(jitusage->emission_counter))
+				e->counters.jit_emission_count++;
+			e->counters.jit_emission_time += INSTR_TIME_GET_MILLISEC(jitusage->emission_counter);
+		}
 
 		SpinLockRelease(&e->mutex);
 	}
@@ -1426,7 +1459,8 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
 #define PG_STAT_STATEMENTS_COLS_V1_3	23
 #define PG_STAT_STATEMENTS_COLS_V1_8	32
 #define PG_STAT_STATEMENTS_COLS_V1_9	33
-#define PG_STAT_STATEMENTS_COLS			33	/* maximum of above */
+#define PG_STAT_STATEMENTS_COLS_V1_10	43
+#define PG_STAT_STATEMENTS_COLS			43	/* maximum of above */
 
 /*
  * Retrieve statement statistics.
@@ -1438,6 +1472,16 @@ pg_stat_statements_reset(PG_FUNCTION_ARGS)
  * expected API version is identified by embedding it in the C name of the
  * function.  Unfortunately we weren't bright enough to do that for 1.1.
  */
+Datum
+pg_stat_statements_1_10(PG_FUNCTION_ARGS)
+{
+	bool		showtext = PG_GETARG_BOOL(0);
+
+	pg_stat_statements_internal(fcinfo, PGSS_V1_10, showtext);
+
+	return (Datum) 0;
+}
+
 Datum
 pg_stat_statements_1_9(PG_FUNCTION_ARGS)
 {
@@ -1498,10 +1542,6 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 							bool showtext)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 	Oid			userid = GetUserId();
 	bool		is_allowed_role = false;
 	char	   *qbuffer = NULL;
@@ -1511,8 +1551,8 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 
-	/* Superusers or members of pg_read_all_stats members are allowed */
-	is_allowed_role = is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS);
+	/* Superusers or roles with the privileges of pg_read_all_stats members are allowed */
+	is_allowed_role = has_privs_of_role(userid, ROLE_PG_READ_ALL_STATS);
 
 	/* hash table must exist already */
 	if (!pgss || !pgss_hash)
@@ -1520,30 +1560,14 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Switch into long-lived context to construct returned data structures */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
+	SetSingleFuncCall(fcinfo, 0);
 
 	/*
 	 * Check we have the expected number of output arguments.  Aside from
 	 * being a good safety check, we need a kluge here to detect API version
 	 * 1.1, which was wedged into the code in an ill-considered way.
 	 */
-	switch (tupdesc->natts)
+	switch (rsinfo->setDesc->natts)
 	{
 		case PG_STAT_STATEMENTS_COLS_V1_0:
 			if (api_version != PGSS_V1_0)
@@ -1571,16 +1595,13 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			if (api_version != PGSS_V1_9)
 				elog(ERROR, "incorrect number of output arguments");
 			break;
+		case PG_STAT_STATEMENTS_COLS_V1_10:
+			if (api_version != PGSS_V1_10)
+				elog(ERROR, "incorrect number of output arguments");
+			break;
 		default:
 			elog(ERROR, "incorrect number of output arguments");
 	}
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * We'd like to load the query text file (if needed) while not holding any
@@ -1778,6 +1799,11 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			values[i++] = Float8GetDatumFast(tmp.blk_read_time);
 			values[i++] = Float8GetDatumFast(tmp.blk_write_time);
 		}
+		if (api_version >= PGSS_V1_10)
+		{
+			values[i++] = Float8GetDatumFast(tmp.temp_blk_read_time);
+			values[i++] = Float8GetDatumFast(tmp.temp_blk_write_time);
+		}
 		if (api_version >= PGSS_V1_8)
 		{
 			char		buf[256];
@@ -1795,6 +1821,17 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 											Int32GetDatum(-1));
 			values[i++] = wal_bytes;
 		}
+		if (api_version >= PGSS_V1_10)
+		{
+			values[i++] = Int64GetDatumFast(tmp.jit_functions);
+			values[i++] = Float8GetDatumFast(tmp.jit_generation_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_inlining_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_inlining_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_optimization_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_optimization_time);
+			values[i++] = Int64GetDatumFast(tmp.jit_emission_count);
+			values[i++] = Float8GetDatumFast(tmp.jit_emission_time);
+		}
 
 		Assert(i == (api_version == PGSS_V1_0 ? PG_STAT_STATEMENTS_COLS_V1_0 :
 					 api_version == PGSS_V1_1 ? PG_STAT_STATEMENTS_COLS_V1_1 :
@@ -1802,18 +1839,16 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 					 api_version == PGSS_V1_3 ? PG_STAT_STATEMENTS_COLS_V1_3 :
 					 api_version == PGSS_V1_8 ? PG_STAT_STATEMENTS_COLS_V1_8 :
 					 api_version == PGSS_V1_9 ? PG_STAT_STATEMENTS_COLS_V1_9 :
+					 api_version == PGSS_V1_10 ? PG_STAT_STATEMENTS_COLS_V1_10 :
 					 -1 /* fail if you forget to update this assert */ ));
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
-	/* clean up and return the tuplestore */
 	LWLockRelease(pgss->lock);
 
 	if (qbuffer)
 		free(qbuffer);
-
-	tuplestore_donestoring(tupstore);
 }
 
 /* Number of output arguments (columns) for pg_stat_statements_info */

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Tests dedicated to two-phase commit in recovery
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 24;
+use Test::More;
 
 my $psql_out = '';
 my $psql_rc  = '';
@@ -480,3 +480,5 @@ $cur_standby->psql(
 is( $psql_out,
 	qq{27|issued to paris},
 	"Check expected t_009_tbl2 data on standby");
+
+done_testing();

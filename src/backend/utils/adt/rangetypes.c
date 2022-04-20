@@ -19,7 +19,7 @@
  * value; we must detoast it first.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,6 +35,7 @@
 #include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/lsyscache.h"
@@ -1210,7 +1211,7 @@ range_intersect_agg_transfn(PG_FUNCTION_ARGS)
 
 	rngtypoid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	if (!type_is_range(rngtypoid))
-		ereport(ERROR, (errmsg("range_intersect_agg must be called with a range")));
+		elog(ERROR, "range_intersect_agg must be called with a range");
 
 	typcache = range_get_typcache(fcinfo, rngtypoid);
 
@@ -1363,7 +1364,7 @@ hash_range(PG_FUNCTION_ARGS)
 	/* Merge hashes of flags and bounds */
 	result = hash_uint32((uint32) flags);
 	result ^= lower_hash;
-	result = (result << 1) | (result >> 31);
+	result = pg_rotate_left32(result, 1);
 	result ^= upper_hash;
 
 	PG_RETURN_INT32(result);

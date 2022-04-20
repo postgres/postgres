@@ -3,7 +3,7 @@
  * timeline.c
  *	  timeline-related functions.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -73,19 +73,19 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 		{
 			/* expect a numeric timeline ID as first field of line */
 			pg_log_error("syntax error in history file: %s", fline);
-			pg_log_error("Expected a numeric timeline ID.");
+			pg_log_error_detail("Expected a numeric timeline ID.");
 			exit(1);
 		}
 		if (nfields != 3)
 		{
 			pg_log_error("syntax error in history file: %s", fline);
-			pg_log_error("Expected a write-ahead log switchpoint location.");
+			pg_log_error_detail("Expected a write-ahead log switchpoint location.");
 			exit(1);
 		}
 		if (entries && tli <= lasttli)
 		{
 			pg_log_error("invalid data in history file: %s", fline);
-			pg_log_error("Timeline IDs must be in increasing sequence.");
+			pg_log_error_detail("Timeline IDs must be in increasing sequence.");
 			exit(1);
 		}
 
@@ -106,7 +106,7 @@ rewind_parseTimeLineHistory(char *buffer, TimeLineID targetTLI, int *nentries)
 	if (entries && targetTLI <= lasttli)
 	{
 		pg_log_error("invalid data in history file");
-		pg_log_error("Timeline IDs must be less than child timeline's ID.");
+		pg_log_error_detail("Timeline IDs must be less than child timeline's ID.");
 		exit(1);
 	}
 

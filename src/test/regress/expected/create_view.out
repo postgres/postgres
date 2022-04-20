@@ -3,15 +3,36 @@
 -- Virtual class definitions
 --	(this also tests the query rewrite system)
 --
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
+CREATE FUNCTION interpt_pp(path, path)
+    RETURNS point
+    AS :'regresslib'
+    LANGUAGE C STRICT;
+CREATE TABLE real_city (
+	pop			int4,
+	cname		text,
+	outline 	path
+);
+\set filename :abs_srcdir '/data/real_city.data'
+COPY real_city FROM :'filename';
+ANALYZE real_city;
+SELECT *
+   INTO TABLE ramp
+   FROM ONLY road
+   WHERE name ~ '.*Ramp';
 CREATE VIEW street AS
    SELECT r.name, r.thepath, c.cname AS cname
    FROM ONLY road r, real_city c
-   WHERE c.outline ## r.thepath;
+   WHERE c.outline ?# r.thepath;
 CREATE VIEW iexit AS
    SELECT ih.name, ih.thepath,
 	interpt_pp(ih.thepath, r.thepath) AS exit
    FROM ihighway ih, ramp r
-   WHERE ih.thepath ## r.thepath;
+   WHERE ih.thepath ?# r.thepath;
 CREATE VIEW toyemp AS
    SELECT name, age, location, 12*salary AS annualsal
    FROM emp;
@@ -33,27 +54,27 @@ CREATE VIEW key_dependent_view_no_cols AS
 --
 -- CREATE OR REPLACE VIEW
 --
-CREATE TABLE viewtest_tbl (a int, b int);
+CREATE TABLE viewtest_tbl (a int, b int, c numeric(10,1), d text COLLATE "C");
 COPY viewtest_tbl FROM stdin;
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl;
 CREATE OR REPLACE VIEW viewtest AS
 	SELECT * FROM viewtest_tbl WHERE a > 10;
 SELECT * FROM viewtest;
- a  | b  
-----+----
- 15 | 20
- 20 | 25
+ a  | b  |  c  |   d   
+----+----+-----+-------
+ 15 | 20 | 3.3 | xyzz
+ 20 | 25 | 4.4 | xyzzy
 (2 rows)
 
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+	SELECT a, b, c, d FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
 SELECT * FROM viewtest;
- a  | b  
-----+----
- 20 | 25
- 15 | 20
- 10 | 15
+ a  | b  |  c  |   d   
+----+----+-----+-------
+ 20 | 25 | 4.4 | xyzzy
+ 15 | 20 | 3.3 | xyzz
+ 10 | 15 | 2.2 | xyz
 (3 rows)
 
 -- should fail
@@ -67,11 +88,19 @@ ERROR:  cannot change name of view column "a" to "?column?"
 HINT:  Use ALTER VIEW ... RENAME COLUMN ... to change name of view column instead.
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b::numeric FROM viewtest_tbl;
+	SELECT a, b::numeric, c, d FROM viewtest_tbl;
 ERROR:  cannot change data type of view column "b" from integer to numeric
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c::numeric(10,2), d FROM viewtest_tbl;
+ERROR:  cannot change data type of view column "c" from numeric(10,1) to numeric(10,2)
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c, d COLLATE "POSIX" FROM viewtest_tbl;
+ERROR:  cannot change collation of view column "d" from "C" to "POSIX"
 -- should work
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b, 0 AS c FROM viewtest_tbl;
+	SELECT a, b, c, d, 0 AS e FROM viewtest_tbl;
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
 -- tests for temporary views
@@ -267,17 +296,31 @@ ERROR:  invalid value for boolean option "security_barrier": 100
 CREATE VIEW mysecview6 WITH (invalid_option)		-- Error
        AS SELECT * FROM tbl1 WHERE a < 100;
 ERROR:  unrecognized parameter "invalid_option"
+CREATE VIEW mysecview7 WITH (security_invoker=true)
+       AS SELECT * FROM tbl1 WHERE a = 100;
+CREATE VIEW mysecview8 WITH (security_invoker=false, security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a > 100;
+CREATE VIEW mysecview9 WITH (security_invoker)
+       AS SELECT * FROM tbl1 WHERE a < 100;
+CREATE VIEW mysecview10 WITH (security_invoker=100)	-- Error
+       AS SELECT * FROM tbl1 WHERE a <> 100;
+ERROR:  invalid value for boolean option "security_invoker": 100
 SELECT relname, relkind, reloptions FROM pg_class
        WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
-                     'mysecview3'::regclass, 'mysecview4'::regclass)
+                     'mysecview3'::regclass, 'mysecview4'::regclass,
+                     'mysecview7'::regclass, 'mysecview8'::regclass,
+                     'mysecview9'::regclass)
        ORDER BY relname;
-  relname   | relkind |        reloptions        
-------------+---------+--------------------------
+  relname   | relkind |                   reloptions                   
+------------+---------+------------------------------------------------
  mysecview1 | v       | 
  mysecview2 | v       | {security_barrier=true}
  mysecview3 | v       | {security_barrier=false}
  mysecview4 | v       | {security_barrier=true}
-(4 rows)
+ mysecview7 | v       | {security_invoker=true}
+ mysecview8 | v       | {security_invoker=false,security_barrier=true}
+ mysecview9 | v       | {security_invoker=true}
+(7 rows)
 
 CREATE OR REPLACE VIEW mysecview1
        AS SELECT * FROM tbl1 WHERE a = 256;
@@ -287,17 +330,28 @@ CREATE OR REPLACE VIEW mysecview3 WITH (security_barrier=true)
        AS SELECT * FROM tbl1 WHERE a < 256;
 CREATE OR REPLACE VIEW mysecview4 WITH (security_barrier=false)
        AS SELECT * FROM tbl1 WHERE a <> 256;
+CREATE OR REPLACE VIEW mysecview7
+       AS SELECT * FROM tbl1 WHERE a > 256;
+CREATE OR REPLACE VIEW mysecview8 WITH (security_invoker=true)
+       AS SELECT * FROM tbl1 WHERE a < 256;
+CREATE OR REPLACE VIEW mysecview9 WITH (security_invoker=false, security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a <> 256;
 SELECT relname, relkind, reloptions FROM pg_class
        WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
-                     'mysecview3'::regclass, 'mysecview4'::regclass)
+                     'mysecview3'::regclass, 'mysecview4'::regclass,
+                     'mysecview7'::regclass, 'mysecview8'::regclass,
+                     'mysecview9'::regclass)
        ORDER BY relname;
-  relname   | relkind |        reloptions        
-------------+---------+--------------------------
+  relname   | relkind |                   reloptions                   
+------------+---------+------------------------------------------------
  mysecview1 | v       | 
  mysecview2 | v       | 
  mysecview3 | v       | {security_barrier=true}
  mysecview4 | v       | {security_barrier=false}
-(4 rows)
+ mysecview7 | v       | 
+ mysecview8 | v       | {security_invoker=true}
+ mysecview9 | v       | {security_invoker=false,security_barrier=true}
+(7 rows)
 
 -- Check that unknown literals are converted to "text" in CREATE VIEW,
 -- so that we don't end up with unknown-type columns.
@@ -1681,6 +1735,22 @@ select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
  4567890123456789 | -4567890123456789
 (5 rows)
 
+create table tt15v_log(o tt15v, n tt15v, incr bool);
+create rule updlog as on update to tt15v do also
+  insert into tt15v_log values(old, new, row(old,old) < row(new,new));
+\d+ tt15v
+                             View "testviewschm2.tt15v"
+ Column |      Type       | Collation | Nullable | Default | Storage  | Description 
+--------+-----------------+-----------+----------+---------+----------+-------------
+ row    | nestedcomposite |           |          |         | extended | 
+View definition:
+ SELECT ROW(i.*::int8_tbl)::nestedcomposite AS "row"
+   FROM int8_tbl i;
+Rules:
+ updlog AS
+    ON UPDATE TO tt15v DO  INSERT INTO tt15v_log (o, n, incr)
+  VALUES (old.*::tt15v, new.*::tt15v, (ROW(old.*::tt15v, old.*::tt15v) < ROW(new.*::tt15v, new.*::tt15v)))
+
 -- check unique-ification of overlength names
 create view tt18v as
   select * from int8_tbl xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxy
@@ -1994,7 +2064,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 73 other objects
+NOTICE:  drop cascades to 77 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2015,6 +2085,9 @@ drop cascades to view mysecview1
 drop cascades to view mysecview2
 drop cascades to view mysecview3
 drop cascades to view mysecview4
+drop cascades to view mysecview7
+drop cascades to view mysecview8
+drop cascades to view mysecview9
 drop cascades to view unspecified_types
 drop cascades to table tt1
 drop cascades to table tx1
@@ -2058,6 +2131,7 @@ drop cascades to type nestedcomposite
 drop cascades to view tt15v
 drop cascades to view tt16v
 drop cascades to view tt17v
+drop cascades to table tt15v_log
 drop cascades to view tt18v
 drop cascades to view tt19v
 drop cascades to view tt20v

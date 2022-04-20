@@ -12,10 +12,8 @@ extern void _PG_init(void);
 /* Linkage to functions in plpython module */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);
 static PLyObject_AsString_t PLyObject_AsString_p;
-#if PY_MAJOR_VERSION >= 3
 typedef PyObject *(*PLyUnicode_FromStringAndSize_t) (const char *s, Py_ssize_t size);
 static PLyUnicode_FromStringAndSize_t PLyUnicode_FromStringAndSize_p;
-#endif
 
 /* Linkage to functions in hstore module */
 typedef HStore *(*hstoreUpgrade_t) (Datum orig);
@@ -41,12 +39,10 @@ _PG_init(void)
 	PLyObject_AsString_p = (PLyObject_AsString_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyObject_AsString",
 							   true, NULL);
-#if PY_MAJOR_VERSION >= 3
 	AssertVariableIsOfType(&PLyUnicode_FromStringAndSize, PLyUnicode_FromStringAndSize_t);
 	PLyUnicode_FromStringAndSize_p = (PLyUnicode_FromStringAndSize_t)
 		load_external_function("$libdir/" PLPYTHON_LIBNAME, "PLyUnicode_FromStringAndSize",
 							   true, NULL);
-#endif
 	AssertVariableIsOfType(&hstoreUpgrade, hstoreUpgrade_t);
 	hstoreUpgrade_p = (hstoreUpgrade_t)
 		load_external_function("$libdir/hstore", "hstoreUpgrade",
@@ -102,16 +98,16 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 	{
 		PyObject   *key;
 
-		key = PyString_FromStringAndSize(HSTORE_KEY(entries, base, i),
-										 HSTORE_KEYLEN(entries, i));
+		key = PLyUnicode_FromStringAndSize(HSTORE_KEY(entries, base, i),
+										  HSTORE_KEYLEN(entries, i));
 		if (HSTORE_VALISNULL(entries, i))
 			PyDict_SetItem(dict, key, Py_None);
 		else
 		{
 			PyObject   *value;
 
-			value = PyString_FromStringAndSize(HSTORE_VAL(entries, base, i),
-											   HSTORE_VALLEN(entries, i));
+			value = PLyUnicode_FromStringAndSize(HSTORE_VAL(entries, base, i),
+												HSTORE_VALLEN(entries, i));
 			PyDict_SetItem(dict, key, value);
 			Py_XDECREF(value);
 		}

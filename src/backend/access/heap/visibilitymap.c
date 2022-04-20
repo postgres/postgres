@@ -3,7 +3,7 @@
  * visibilitymap.c
  *	  bitmap for tracking visibility of heap tuples
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -88,6 +88,7 @@
 
 #include "access/heapam_xlog.h"
 #include "access/visibilitymap.h"
+#include "access/xloginsert.h"
 #include "access/xlogutils.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"

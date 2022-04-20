@@ -3,7 +3,7 @@
  * storage.c
  *	  code to create and destroy physical storage for relations
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -112,12 +112,14 @@ AddPendingSync(const RelFileNode *rnode)
  * modules that need them.
  *
  * This function is transactional. The creation is WAL-logged, and if the
- * transaction aborts later on, the storage will be destroyed.
+ * transaction aborts later on, the storage will be destroyed.  A caller
+ * that does not want the storage to be destroyed in case of an abort may
+ * pass register_delete = false.
  */
 SMgrRelation
-RelationCreateStorage(RelFileNode rnode, char relpersistence)
+RelationCreateStorage(RelFileNode rnode, char relpersistence,
+					  bool register_delete)
 {
-	PendingRelDelete *pending;
 	SMgrRelation srel;
 	BackendId	backend;
 	bool		needs_wal;
@@ -149,15 +151,23 @@ RelationCreateStorage(RelFileNode rnode, char relpersistence)
 	if (needs_wal)
 		log_smgrcreate(&srel->smgr_rnode.node, MAIN_FORKNUM);
 
-	/* Add the relation to the list of stuff to delete at abort */
-	pending = (PendingRelDelete *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = rnode;
-	pending->backend = backend;
-	pending->atCommit = false;	/* delete if abort */
-	pending->nestLevel = GetCurrentTransactionNestLevel();
-	pending->next = pendingDeletes;
-	pendingDeletes = pending;
+	/*
+	 * Add the relation to the list of stuff to delete at abort, if we are
+	 * asked to do so.
+	 */
+	if (register_delete)
+	{
+		PendingRelDelete *pending;
+
+		pending = (PendingRelDelete *)
+			MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
+		pending->relnode = rnode;
+		pending->backend = backend;
+		pending->atCommit = false;	/* delete if abort */
+		pending->nestLevel = GetCurrentTransactionNestLevel();
+		pending->next = pendingDeletes;
+		pendingDeletes = pending;
+	}
 
 	if (relpersistence == RELPERSISTENCE_PERMANENT && !XLogIsNeeded())
 	{
@@ -326,6 +336,22 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	RelationPreTruncate(rel);
 
 	/*
+	 * Make sure that a concurrent checkpoint can't complete while truncation
+	 * is in progress.
+	 *
+	 * The truncation operation might drop buffers that the checkpoint
+	 * otherwise would have flushed. If it does, then it's essential that
+	 * the files actually get truncated on disk before the checkpoint record
+	 * is written. Otherwise, if reply begins from that checkpoint, the
+	 * to-be-truncated blocks might still exist on disk but have older
+	 * contents than expected, which can cause replay to fail. It's OK for
+	 * the blocks to not exist on disk at all, but not for them to have the
+	 * wrong contents.
+	 */
+	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_COMPLETE) == 0);
+	MyProc->delayChkptFlags |= DELAY_CHKPT_COMPLETE;
+
+	/*
 	 * We WAL-log the truncation before actually truncating, which means
 	 * trouble if the truncation fails. If we then crash, the WAL replay
 	 * likely isn't going to succeed in the truncation either, and cause a
@@ -363,13 +389,24 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 			XLogFlush(lsn);
 	}
 
-	/* Do the real work to truncate relation forks */
+	/*
+	 * This will first remove any buffers from the buffer pool that should no
+	 * longer exist after truncation is complete, and then truncate the
+	 * corresponding files on disk.
+	 */
 	smgrtruncate(RelationGetSmgr(rel), forks, nforks, blocks);
+
+	/* We've done all the critical work, so checkpoints are OK now. */
+	MyProc->delayChkptFlags &= ~DELAY_CHKPT_COMPLETE;
 
 	/*
 	 * Update upper-level FSM pages to account for the truncation. This is
 	 * important because the just-truncated pages were likely marked as
 	 * all-free, and would be preferentially selected.
+	 *
+	 * NB: There's no point in delaying checkpoints until this is done.
+	 * Because the FSM is not WAL-logged, we have to be prepared for the
+	 * possibility of corruption after a crash anyway.
 	 */
 	if (need_fsm_vacuum)
 		FreeSpaceMapVacuumRange(rel, nblocks, InvalidBlockNumber);

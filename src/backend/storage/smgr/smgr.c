@@ -6,7 +6,7 @@
  *	  All file system operations in POSTGRES dispatch through these
  *	  routines.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -41,6 +41,7 @@ typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
 	void		(*smgr_shutdown) (void);	/* may be NULL */
+	void		(*smgr_release) (void); /* may be NULL */
 	void		(*smgr_open) (SMgrRelation reln);
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
@@ -69,6 +70,7 @@ static const f_smgr smgrsw[] = {
 	{
 		.smgr_init = mdinit,
 		.smgr_shutdown = NULL,
+		.smgr_release = mdrelease,
 		.smgr_open = mdopen,
 		.smgr_close = mdclose,
 		.smgr_create = mdcreate,
@@ -414,11 +416,6 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	}
 
 	/*
-	 * It'd be nice to tell the stats collector to forget them immediately,
-	 * too. But we can't because we don't know the OIDs.
-	 */
-
-	/*
 	 * Send a shared-inval message to force other backends to close any
 	 * dangling smgr references they may have for these rels.  We should do
 	 * this before starting the actual unlinking, in case we fail partway
@@ -692,4 +689,20 @@ AtEOXact_SMgr(void)
 
 		smgrclose(rel);
 	}
+}
+
+/*
+ * This routine is called when we are ordered to release all open files by a
+ * ProcSignalBarrier.
+ */
+bool
+ProcessBarrierSmgrRelease(void)
+{
+	for (int i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_release)
+			smgrsw[i].smgr_release();
+	}
+
+	return true;
 }

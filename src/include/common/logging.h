@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  * Logging framework for frontend programs
  *
- * Copyright (c) 2018-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2018-2022, PostgreSQL Global Development Group
  *
  * src/include/common/logging.h
  *
@@ -16,7 +16,7 @@
 enum pg_log_level
 {
 	/*
-	 * Not initialized yet
+	 * Not initialized yet (not to be used as an actual message log level).
 	 */
 	PG_LOG_NOTSET = 0,
 
@@ -43,19 +43,41 @@ enum pg_log_level
 	PG_LOG_ERROR,
 
 	/*
-	 * Severe errors that cause program termination.  (One-shot programs may
-	 * chose to label even fatal errors as merely "errors".  The distinction
-	 * is up to the program.)
-	 */
-	PG_LOG_FATAL,
-
-	/*
-	 * Turn all logging off.
+	 * Turn all logging off (not to be used as an actual message log level).
 	 */
 	PG_LOG_OFF,
 };
 
+/*
+ * __pg_log_level is the minimum log level that will actually be shown.
+ */
 extern enum pg_log_level __pg_log_level;
+
+/*
+ * A log message can have several parts.  The primary message is required,
+ * others are optional.  When emitting multiple parts, do so in the order of
+ * this enum, for consistency.
+ */
+enum pg_log_part
+{
+	/*
+	 * The primary message.  Try to keep it to one line; follow the backend's
+	 * style guideline for primary messages.
+	 */
+	PG_LOG_PRIMARY,
+
+	/*
+	 * Additional detail.  Follow the backend's style guideline for detail
+	 * messages.
+	 */
+	PG_LOG_DETAIL,
+
+	/*
+	 * Hint (not guaranteed correct) about how to fix the problem.  Follow the
+	 * backend's style guideline for hint messages.
+	 */
+	PG_LOG_HINT,
+};
 
 /*
  * Kind of a hack to be able to produce the psql output exactly as required by
@@ -70,27 +92,65 @@ void		pg_logging_increase_verbosity(void);
 void		pg_logging_set_pre_callback(void (*cb) (void));
 void		pg_logging_set_locus_callback(void (*cb) (const char **filename, uint64 *lineno));
 
-void		pg_log_generic(enum pg_log_level level, const char *pg_restrict fmt,...) pg_attribute_printf(2, 3);
-void		pg_log_generic_v(enum pg_log_level level, const char *pg_restrict fmt, va_list ap) pg_attribute_printf(2, 0);
+void		pg_log_generic(enum pg_log_level level, enum pg_log_part part,
+						   const char *pg_restrict fmt,...)
+			pg_attribute_printf(3, 4);
+void		pg_log_generic_v(enum pg_log_level level, enum pg_log_part part,
+							 const char *pg_restrict fmt, va_list ap)
+			pg_attribute_printf(3, 0);
 
-#define pg_log_fatal(...) do { \
-		if (likely(__pg_log_level <= PG_LOG_FATAL)) pg_log_generic(PG_LOG_FATAL, __VA_ARGS__); \
-	} while(0)
+/*
+ * Preferred style is to use these macros to perform logging; don't call
+ * pg_log_generic[_v] directly, except perhaps in error interface code.
+ */
+#define pg_log_error(...) \
+	pg_log_generic(PG_LOG_ERROR, PG_LOG_PRIMARY, __VA_ARGS__)
 
-#define pg_log_error(...) do { \
-		if (likely(__pg_log_level <= PG_LOG_ERROR)) pg_log_generic(PG_LOG_ERROR, __VA_ARGS__); \
-	} while(0)
+#define pg_log_error_detail(...) \
+	pg_log_generic(PG_LOG_ERROR, PG_LOG_DETAIL, __VA_ARGS__)
 
-#define pg_log_warning(...) do { \
-		if (likely(__pg_log_level <= PG_LOG_WARNING)) pg_log_generic(PG_LOG_WARNING, __VA_ARGS__); \
-	} while(0)
+#define pg_log_error_hint(...) \
+	pg_log_generic(PG_LOG_ERROR, PG_LOG_HINT, __VA_ARGS__)
 
-#define pg_log_info(...) do { \
-		if (likely(__pg_log_level <= PG_LOG_INFO)) pg_log_generic(PG_LOG_INFO, __VA_ARGS__); \
-	} while(0)
+#define pg_log_warning(...) \
+	pg_log_generic(PG_LOG_WARNING, PG_LOG_PRIMARY, __VA_ARGS__)
+
+#define pg_log_warning_detail(...) \
+	pg_log_generic(PG_LOG_WARNING, PG_LOG_DETAIL, __VA_ARGS__)
+
+#define pg_log_warning_hint(...) \
+	pg_log_generic(PG_LOG_WARNING, PG_LOG_HINT, __VA_ARGS__)
+
+#define pg_log_info(...) \
+	pg_log_generic(PG_LOG_INFO, PG_LOG_PRIMARY, __VA_ARGS__)
+
+#define pg_log_info_detail(...) \
+	pg_log_generic(PG_LOG_INFO, PG_LOG_DETAIL, __VA_ARGS__)
+
+#define pg_log_info_hint(...) \
+	pg_log_generic(PG_LOG_INFO, PG_LOG_HINT, __VA_ARGS__)
 
 #define pg_log_debug(...) do { \
-		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) pg_log_generic(PG_LOG_DEBUG, __VA_ARGS__); \
+		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) \
+			pg_log_generic(PG_LOG_DEBUG, PG_LOG_PRIMARY, __VA_ARGS__); \
+	} while(0)
+
+#define pg_log_debug_detail(...) do { \
+		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) \
+			pg_log_generic(PG_LOG_DEBUG, PG_LOG_DETAIL, __VA_ARGS__); \
+	} while(0)
+
+#define pg_log_debug_hint(...) do { \
+		if (unlikely(__pg_log_level <= PG_LOG_DEBUG)) \
+			pg_log_generic(PG_LOG_DEBUG, PG_LOG_HINT, __VA_ARGS__); \
+	} while(0)
+
+/*
+ * A common shortcut: pg_log_error() and immediately exit(1).
+ */
+#define pg_fatal(...) do { \
+		pg_log_generic(PG_LOG_ERROR, PG_LOG_PRIMARY, __VA_ARGS__); \
+		exit(1); \
 	} while(0)
 
 #endif							/* COMMON_LOGGING_H */

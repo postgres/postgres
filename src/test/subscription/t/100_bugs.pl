@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Tests for various bugs found over time
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 7;
+use Test::More;
 
 # Bug #15114
 
@@ -306,3 +306,5 @@ is( $node_subscriber->safe_psql(
 
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
+
+done_testing();

@@ -2625,7 +2625,7 @@ LANGUAGE SQL IMMUTABLE STRICT;
      to functions in <productname>PostgreSQL</productname>.  An example is:
 <screen>
 SELECT concat_lower_or_upper('Hello', 'World', true);
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  HELLO WORLD
 (1 row)
@@ -2635,7 +2635,7 @@ SELECT concat_lower_or_upper('Hello', 'World', true);
      Another example is:
 <screen>
 SELECT concat_lower_or_upper('Hello', 'World');
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  hello world
 (1 row)
@@ -2661,7 +2661,7 @@ SELECT concat_lower_or_upper('Hello', 'World');
      For example:
 <screen>
 SELECT concat_lower_or_upper(a =&gt; 'Hello', b =&gt; 'World');
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  hello world
 (1 row)
@@ -2672,13 +2672,13 @@ SELECT concat_lower_or_upper(a =&gt; 'Hello', b =&gt; 'World');
      order, for example:
 <screen>
 SELECT concat_lower_or_upper(a =&gt; 'Hello', b =&gt; 'World', uppercase =&gt; true);
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  HELLO WORLD
 (1 row)
 
 SELECT concat_lower_or_upper(a =&gt; 'Hello', uppercase =&gt; true, b =&gt; 'World');
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  HELLO WORLD
 (1 row)
@@ -2689,7 +2689,7 @@ SELECT concat_lower_or_upper(a =&gt; 'Hello', uppercase =&gt; true, b =&gt; 'Wor
       An older syntax based on ":=" is supported for backward compatibility:
 <screen>
 SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  HELLO WORLD
 (1 row)
@@ -2711,7 +2711,7 @@ SELECT concat_lower_or_upper(a := 'Hello', uppercase := true, b := 'World');
     For example:
 <screen>
 SELECT concat_lower_or_upper('Hello', 'World', uppercase =&gt; true);
- concat_lower_or_upper 
+ concat_lower_or_upper
 -----------------------
  HELLO WORLD
 (1 row)

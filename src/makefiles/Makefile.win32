@@ -11,7 +11,6 @@ endif
 override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
 
 AROPT = crs
-DLSUFFIX = .dll
 
 ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))

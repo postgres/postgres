@@ -360,6 +360,28 @@ SET timezone = '04:15';
 SELECT to_char(now(), 'OF') as "OF", to_char(now(), 'TZH:TZM') as "TZH:TZM";
 RESET timezone;
 
+-- Check of, tzh, tzm with various zone offsets.
+SET timezone = '00:00';
+SELECT to_char(now(), 'of') as "Of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '+02:00';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '-13:00';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '-00:30';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '00:30';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '-04:30';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '04:30';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '-04:15';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+SET timezone = '04:15';
+SELECT to_char(now(), 'of') as "of", to_char(now(), 'tzh:tzm') as "tzh:tzm";
+RESET timezone;
+
+
 CREATE TABLE TIMESTAMPTZ_TST (a int , b timestamptz);
 
 -- Test year field value with len > 4

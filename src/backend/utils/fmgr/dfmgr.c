@@ -3,7 +3,7 @@
  * dfmgr.c
  *	  Dynamic function manager code.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -482,11 +482,6 @@ file_exists(const char *name)
 	return false;
 }
 
-
-/* Example format: ".so" */
-#ifndef DLSUFFIX
-#error "DLSUFFIX must be defined to compile this file."
-#endif
 
 /*
  * If name contains a slash, check if the file exists, if so return

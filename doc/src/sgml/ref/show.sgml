@@ -167,7 +167,7 @@ SHOW geqo;
    Show all settings:
 <programlisting>
 SHOW ALL;
-            name         | setting |                description                                                          
+            name         | setting |                description
 -------------------------+---------+-------------------------------------------------
  allow_system_table_mods | off     | Allows modifications of the structure of ...
     .

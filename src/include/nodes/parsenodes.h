@@ -12,7 +12,7 @@
  * identifying statement boundaries in multi-statement source strings.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/parsenodes.h
@@ -92,7 +92,9 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
 #define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define ACL_CONNECT		(1<<11) /* for databases */
-#define N_ACL_RIGHTS	12		/* 1 plus the last 1<<x */
+#define ACL_SET			(1<<12) /* for configuration parameters */
+#define ACL_ALTER_SYSTEM (1<<13)	/* for configuration parameters */
+#define N_ACL_RIGHTS	14		/* 1 plus the last 1<<x */
 #define ACL_NO_RIGHTS	0
 /* Currently, SELECT ... FOR [KEY] UPDATE/SHARE requires UPDATE privileges */
 #define ACL_SELECT_FOR_UPDATE	ACL_UPDATE
@@ -117,7 +119,7 @@ typedef struct Query
 {
 	NodeTag		type;
 
-	CmdType		commandType;	/* select|insert|update|delete|utility */
+	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
 
 	QuerySource querySource;	/* where did I come from? */
 
@@ -128,7 +130,7 @@ typedef struct Query
 	Node	   *utilityStmt;	/* non-null if commandType == CMD_UTILITY */
 
 	int			resultRelation; /* rtable index of target relation for
-								 * INSERT/UPDATE/DELETE; 0 for SELECT */
+								 * INSERT/UPDATE/DELETE/MERGE; 0 for SELECT */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasWindowFuncs; /* has window functions in tlist */
@@ -145,7 +147,11 @@ typedef struct Query
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
-	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses) */
+	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses);
+								 * also USING clause for MERGE */
+
+	List	   *mergeActionList;	/* list of actions for MERGE (only) */
+	bool		mergeUseOuterJoin;	/* whether to use outer join */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
@@ -304,6 +310,7 @@ typedef struct A_Const
 		Node		node;
 		Integer		ival;
 		Float		fval;
+		Boolean		boolval;
 		String		sval;
 		BitString	bsval;
 	}			val;
@@ -1218,7 +1225,9 @@ typedef enum WCOKind
 	WCO_VIEW_CHECK,				/* WCO on an auto-updatable view */
 	WCO_RLS_INSERT_CHECK,		/* RLS INSERT WITH CHECK policy */
 	WCO_RLS_UPDATE_CHECK,		/* RLS UPDATE WITH CHECK policy */
-	WCO_RLS_CONFLICT_CHECK		/* RLS ON CONFLICT DO UPDATE USING policy */
+	WCO_RLS_CONFLICT_CHECK,		/* RLS ON CONFLICT DO UPDATE USING policy */
+	WCO_RLS_MERGE_UPDATE_CHECK, /* RLS MERGE UPDATE USING policy */
+	WCO_RLS_MERGE_DELETE_CHECK	/* RLS MERGE DELETE USING policy */
 } WCOKind;
 
 typedef struct WithCheckOption
@@ -1393,6 +1402,7 @@ typedef struct WindowClause
 	int			frameOptions;	/* frame_clause options, see WindowDef */
 	Node	   *startOffset;	/* expression for starting bound, if any */
 	Node	   *endOffset;		/* expression for ending bound, if any */
+	List	   *runCondition;	/* qual to help short-circuit execution */
 	Oid			startInRangeFunc;	/* in_range function for startOffset */
 	Oid			endInRangeFunc; /* in_range function for endOffset */
 	Oid			inRangeColl;	/* collation for in_range tests */
@@ -1535,6 +1545,39 @@ typedef struct CommonTableExpr
 	 ((Query *) (cte)->ctequery)->returningList)
 
 /*
+ * MergeWhenClause -
+ *		raw parser representation of a WHEN clause in a MERGE statement
+ *
+ * This is transformed into MergeAction by parse analysis
+ */
+typedef struct MergeWhenClause
+{
+	NodeTag		type;
+	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
+	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
+	OverridingKind override;	/* OVERRIDING clause */
+	Node	   *condition;		/* WHEN conditions (raw parser) */
+	List	   *targetList;		/* INSERT/UPDATE targetlist */
+	/* the following members are only used in INSERT actions */
+	List	   *values;			/* VALUES to INSERT, or NULL */
+} MergeWhenClause;
+
+/*
+ * MergeAction -
+ *		Transformed representation of a WHEN clause in a MERGE statement
+ */
+typedef struct MergeAction
+{
+	NodeTag		type;
+	bool		matched;		/* true=MATCHED, false=NOT MATCHED */
+	CmdType		commandType;	/* INSERT/UPDATE/DELETE/DO NOTHING */
+	OverridingKind override;	/* OVERRIDING clause */
+	Node	   *qual;			/* transformed WHEN conditions */
+	List	   *targetList;		/* the target list (of TargetEntry) */
+	List	   *updateColnos;	/* target attribute numbers of an UPDATE */
+} MergeAction;
+
+/*
  * TriggerTransition -
  *	   representation of transition row or table naming clause
  *
@@ -1549,6 +1592,299 @@ typedef struct TriggerTransition
 	bool		isNew;
 	bool		isTable;
 } TriggerTransition;
+
+/* Nodes for SQL/JSON support */
+
+/*
+ * JsonQuotes -
+ *		representation of [KEEP|OMIT] QUOTES clause for JSON_QUERY()
+ */
+typedef enum JsonQuotes
+{
+	JS_QUOTES_UNSPEC,			/* unspecified */
+	JS_QUOTES_KEEP,				/* KEEP QUOTES */
+	JS_QUOTES_OMIT				/* OMIT QUOTES */
+} JsonQuotes;
+
+/*
+ * JsonTableColumnType -
+ *		enumeration of JSON_TABLE column types
+ */
+typedef enum
+{
+	JTC_FOR_ORDINALITY,
+	JTC_REGULAR,
+	JTC_EXISTS,
+	JTC_FORMATTED,
+	JTC_NESTED,
+} JsonTableColumnType;
+
+/*
+ * JsonPathSpec -
+ *		representation of JSON path constant
+ */
+typedef char *JsonPathSpec;
+
+/*
+ * JsonOutput -
+ *		representation of JSON output clause (RETURNING type [FORMAT format])
+ */
+typedef struct JsonOutput
+{
+	NodeTag		type;
+	TypeName   *typeName;		/* RETURNING type name, if specified */
+	JsonReturning *returning;	/* RETURNING FORMAT clause and type Oids */
+} JsonOutput;
+
+/*
+ * JsonArgument -
+ *		representation of argument from JSON PASSING clause
+ */
+typedef struct JsonArgument
+{
+	NodeTag		type;
+	JsonValueExpr *val;			/* argument value expression */
+	char	   *name;			/* argument name */
+} JsonArgument;
+
+/*
+ * JsonCommon -
+ *		representation of common syntax of functions using JSON path
+ */
+typedef struct JsonCommon
+{
+	NodeTag		type;
+	JsonValueExpr *expr;		/* context item expression */
+	Node	   *pathspec;		/* JSON path specification expression */
+	char	   *pathname;		/* path name, if any */
+	List	   *passing;		/* list of PASSING clause arguments, if any */
+	int			location;		/* token location, or -1 if unknown */
+} JsonCommon;
+
+/*
+ * JsonFuncExpr -
+ *		untransformed representation of JSON function expressions
+ */
+typedef struct JsonFuncExpr
+{
+	NodeTag		type;
+	JsonExprOp	op;				/* expression type */
+	JsonCommon *common;			/* common syntax */
+	JsonOutput *output;			/* output clause, if specified */
+	JsonBehavior *on_empty;		/* ON EMPTY behavior, if specified */
+	JsonBehavior *on_error;		/* ON ERROR behavior, if specified */
+	JsonWrapper	wrapper;		/* array wrapper behavior (JSON_QUERY only) */
+	bool		omit_quotes;	/* omit or keep quotes? (JSON_QUERY only) */
+	int			location;		/* token location, or -1 if unknown */
+} JsonFuncExpr;
+
+/*
+ * JsonTableColumn -
+ *		untransformed representation of JSON_TABLE column
+ */
+typedef struct JsonTableColumn
+{
+	NodeTag		type;
+	JsonTableColumnType coltype;	/* column type */
+	char	   *name;				/* column name */
+	TypeName   *typeName;			/* column type name */
+	JsonPathSpec pathspec;			/* path specification, if any */
+	char	   *pathname;			/* path name, if any */
+	JsonFormat *format;				/* JSON format clause, if specified */
+	JsonWrapper	wrapper;			/* WRAPPER behavior for formatted columns */
+	bool		omit_quotes;		/* omit or keep quotes on scalar strings? */
+	List	   *columns;			/* nested columns */
+	JsonBehavior *on_empty;			/* ON EMPTY behavior */
+	JsonBehavior *on_error;			/* ON ERROR behavior */
+	int			location;			/* token location, or -1 if unknown */
+} JsonTableColumn;
+
+/*
+ * JsonTablePlanType -
+ *		flags for JSON_TABLE plan node types representation
+ */
+typedef enum JsonTablePlanType
+{
+	JSTP_DEFAULT,
+	JSTP_SIMPLE,
+	JSTP_JOINED,
+} JsonTablePlanType;
+
+/*
+ * JsonTablePlanJoinType -
+ *		flags for JSON_TABLE join types representation
+ */
+typedef enum JsonTablePlanJoinType
+{
+	JSTPJ_INNER = 0x01,
+	JSTPJ_OUTER = 0x02,
+	JSTPJ_CROSS = 0x04,
+	JSTPJ_UNION = 0x08,
+} JsonTablePlanJoinType;
+
+typedef struct JsonTablePlan JsonTablePlan;
+
+/*
+ * JsonTablePlan -
+ *		untransformed representation of JSON_TABLE plan node
+ */
+struct JsonTablePlan
+{
+	NodeTag		type;
+	JsonTablePlanType plan_type;		/* plan type */
+	JsonTablePlanJoinType join_type;	/* join type (for joined plan only) */
+	JsonTablePlan *plan1;				/* first joined plan */
+	JsonTablePlan *plan2;				/* second joined plan */
+	char	   *pathname;				/* path name (for simple plan only) */
+	int			location;				/* token location, or -1 if unknown */
+};
+
+/*
+ * JsonTable -
+ *		untransformed representation of JSON_TABLE
+ */
+typedef struct JsonTable
+{
+	NodeTag		type;
+	JsonCommon *common;					/* common JSON path syntax fields */
+	List	   *columns;				/* list of JsonTableColumn */
+	JsonTablePlan *plan;				/* join plan, if specified */
+	JsonBehavior *on_error;				/* ON ERROR behavior, if specified */
+	Alias	   *alias;					/* table alias in FROM clause */
+	bool		lateral;				/* does it have LATERAL prefix? */
+	int			location;				/* token location, or -1 if unknown */
+} JsonTable;
+
+/*
+ * JsonKeyValue -
+ *		untransformed representation of JSON object key-value pair for
+ *		JSON_OBJECT() and JSON_OBJECTAGG()
+ */
+typedef struct JsonKeyValue
+{
+	NodeTag		type;
+	Expr	   *key;			/* key expression */
+	JsonValueExpr *value;		/* JSON value expression */
+} JsonKeyValue;
+
+/*
+ * JsonParseExpr -
+ *		untransformed representation of JSON()
+ */
+typedef struct JsonParseExpr
+{
+	NodeTag		type;
+	JsonValueExpr *expr;		/* string expression */
+	JsonOutput *output;			/* RETURNING clause, if specified */
+	bool		unique_keys;	/* WITH UNIQUE KEYS? */
+	int			location;		/* token location, or -1 if unknown */
+} JsonParseExpr;
+
+/*
+ * JsonScalarExpr -
+ *		untransformed representation of JSON_SCALAR()
+ */
+typedef struct JsonScalarExpr
+{
+	NodeTag		type;
+	Expr	   *expr;			/* scalar expression */
+	JsonOutput *output;			/* RETURNING clause, if specified */
+	int			location;		/* token location, or -1 if unknown */
+} JsonScalarExpr;
+
+/*
+ * JsonSerializeExpr -
+ *		untransformed representation of JSON_SERIALIZE() function
+ */
+typedef struct JsonSerializeExpr
+{
+	NodeTag		type;
+	JsonValueExpr *expr;		/* json value expression */
+	JsonOutput *output;			/* RETURNING clause, if specified  */
+	int			location;		/* token location, or -1 if unknown */
+} JsonSerializeExpr;
+
+/*
+ * JsonObjectConstructor -
+ *		untransformed representation of JSON_OBJECT() constructor
+ */
+typedef struct JsonObjectConstructor
+{
+	NodeTag		type;
+	List	   *exprs;			/* list of JsonKeyValue pairs */
+	JsonOutput *output;			/* RETURNING clause, if specified  */
+	bool		absent_on_null;	/* skip NULL values? */
+	bool		unique;			/* check key uniqueness? */
+	int			location;		/* token location, or -1 if unknown */
+} JsonObjectConstructor;
+
+/*
+ * JsonArrayConstructor -
+ *		untransformed representation of JSON_ARRAY(element,...) constructor
+ */
+typedef struct JsonArrayConstructor
+{
+	NodeTag		type;
+	List	   *exprs;			/* list of JsonValueExpr elements */
+	JsonOutput *output;			/* RETURNING clause, if specified  */
+	bool		absent_on_null;	/* skip NULL elements? */
+	int			location;		/* token location, or -1 if unknown */
+} JsonArrayConstructor;
+
+/*
+ * JsonArrayQueryConstructor -
+ *		untransformed representation of JSON_ARRAY(subquery) constructor
+ */
+typedef struct JsonArrayQueryConstructor
+{
+	NodeTag		type;
+	Node	   *query;			/* subquery */
+	JsonOutput *output;			/* RETURNING clause, if specified  */
+	JsonFormat *format;			/* FORMAT clause for subquery, if specified */
+	bool		absent_on_null;	/* skip NULL elements? */
+	int			location;		/* token location, or -1 if unknown */
+} JsonArrayQueryConstructor;
+
+/*
+ * JsonAggConstructor -
+ *		common fields of untransformed representation of
+ *		JSON_ARRAYAGG() and JSON_OBJECTAGG()
+ */
+typedef struct JsonAggConstructor
+{
+	NodeTag		type;
+	JsonOutput *output;			/* RETURNING clause, if any */
+	Node	   *agg_filter;		/* FILTER clause, if any */
+	List	   *agg_order;		/* ORDER BY clause, if any */
+	struct WindowDef *over;		/* OVER clause, if any */
+	int			location;		/* token location, or -1 if unknown */
+} JsonAggConstructor;
+
+/*
+ * JsonObjectAgg -
+ *		untransformed representation of JSON_OBJECTAGG()
+ */
+typedef struct JsonObjectAgg
+{
+	NodeTag		type;
+	JsonAggConstructor *constructor; /* common fields */
+	JsonKeyValue *arg;			/* object key-value pair */
+	bool		absent_on_null;	/* skip NULL values? */
+	bool		unique;			/* check key uniqueness? */
+} JsonObjectAgg;
+
+/*
+ * JsonArrayAgg -
+ *		untransformed representation of JSON_ARRRAYAGG()
+ */
+typedef struct JsonArrayAgg
+{
+	NodeTag		type;
+	JsonAggConstructor *constructor; /* common fields */
+	JsonValueExpr *arg;			/* array element expression */
+	bool		absent_on_null;	/* skip NULL elements? */
+} JsonArrayAgg;
+
 
 /*****************************************************************************
  *		Raw Grammar Output Statements
@@ -1626,6 +1962,20 @@ typedef struct UpdateStmt
 	List	   *returningList;	/* list of expressions to return */
 	WithClause *withClause;		/* WITH clause */
 } UpdateStmt;
+
+/* ----------------------
+ *		Merge Statement
+ * ----------------------
+ */
+typedef struct MergeStmt
+{
+	NodeTag		type;
+	RangeVar   *relation;		/* target relation to merge into */
+	Node	   *sourceRelation; /* source relation */
+	Node	   *joinCondition;	/* join condition between source and target */
+	List	   *mergeWhenClauses;	/* list of MergeWhenClause(es) */
+	WithClause *withClause;		/* WITH clause */
+} MergeStmt;
 
 /* ----------------------
  *		Select Statement
@@ -1813,6 +2163,7 @@ typedef enum ObjectType
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
 	OBJECT_OPFAMILY,
+	OBJECT_PARAMETER_ACL,
 	OBJECT_POLICY,
 	OBJECT_PROCEDURE,
 	OBJECT_PUBLICATION,
@@ -2276,6 +2627,7 @@ typedef struct Constraint
 	char		generated_when; /* ALWAYS or BY DEFAULT */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
+	bool		nulls_not_distinct;	/* null treatment for UNIQUE constraints */
 	List	   *keys;			/* String nodes naming referenced key
 								 * column(s) */
 	List	   *including;		/* String nodes naming referenced nonkey
@@ -2904,6 +3256,7 @@ typedef struct IndexStmt
 	SubTransactionId oldFirstRelfilenodeSubid;	/* rd_firstRelfilenodeSubid of
 												 * oldNode */
 	bool		unique;			/* is index unique? */
+	bool		nulls_not_distinct;	/* null treatment for UNIQUE constraints */
 	bool		primary;		/* is index a primary key? */
 	bool		isconstraint;	/* is it for a pkey/unique constraint? */
 	bool		deferrable;		/* is the constraint DEFERRABLE? */
@@ -3305,6 +3658,12 @@ typedef struct AlterDatabaseStmt
 	List	   *options;		/* List of DefElem nodes */
 } AlterDatabaseStmt;
 
+typedef struct AlterDatabaseRefreshCollStmt
+{
+	NodeTag		type;
+	char	   *dbname;
+} AlterDatabaseRefreshCollStmt;
+
 typedef struct AlterDatabaseSetStmt
 {
 	NodeTag		type;
@@ -3642,6 +4001,8 @@ typedef struct PublicationTable
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* relation to be published */
+	Node	   *whereClause;	/* qualifications */
+	List	   *columns;		/* List of columns in a publication table */
 } PublicationTable;
 
 /*
@@ -3649,10 +4010,10 @@ typedef struct PublicationTable
  */
 typedef enum PublicationObjSpecType
 {
-	PUBLICATIONOBJ_TABLE,		/* Table type */
-	PUBLICATIONOBJ_TABLE_IN_SCHEMA, /* Tables in schema type */
-	PUBLICATIONOBJ_TABLE_IN_CUR_SCHEMA, /* Get the first element from
-										 * search_path */
+	PUBLICATIONOBJ_TABLE,		/* A table */
+	PUBLICATIONOBJ_TABLES_IN_SCHEMA,	/* All tables in schema */
+	PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA,	/* All tables in first element of
+											 * search_path */
 	PUBLICATIONOBJ_CONTINUATION /* Continuation of previous type */
 } PublicationObjSpecType;
 
@@ -3674,6 +4035,13 @@ typedef struct CreatePublicationStmt
 	bool		for_all_tables; /* Special publication for all tables in db */
 } CreatePublicationStmt;
 
+typedef enum AlterPublicationAction
+{
+	AP_AddObjects,				/* add objects to publication */
+	AP_DropObjects,				/* remove objects from publication */
+	AP_SetObjects				/* set list of objects */
+} AlterPublicationAction;
+
 typedef struct AlterPublicationStmt
 {
 	NodeTag		type;
@@ -3688,8 +4056,8 @@ typedef struct AlterPublicationStmt
 	 */
 	List	   *pubobjects;		/* Optional list of publication objects */
 	bool		for_all_tables; /* Special publication for all tables in db */
-	DefElemAction action;		/* What action to perform with the
-								 * tables/schemas */
+	AlterPublicationAction action;	/* What action to perform with the given
+									 * objects */
 } AlterPublicationStmt;
 
 typedef struct CreateSubscriptionStmt
@@ -3709,7 +4077,8 @@ typedef enum AlterSubscriptionType
 	ALTER_SUBSCRIPTION_ADD_PUBLICATION,
 	ALTER_SUBSCRIPTION_DROP_PUBLICATION,
 	ALTER_SUBSCRIPTION_REFRESH,
-	ALTER_SUBSCRIPTION_ENABLED
+	ALTER_SUBSCRIPTION_ENABLED,
+	ALTER_SUBSCRIPTION_SKIP
 } AlterSubscriptionType;
 
 typedef struct AlterSubscriptionStmt

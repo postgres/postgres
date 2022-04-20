@@ -20,7 +20,7 @@
  * appropriate value for a free lock.  The meaning of the variable is up to
  * the caller, the lightweight lock code just assigns and compares it.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -176,7 +176,13 @@ static const char *const BuiltinTrancheNames[] = {
 	/* LWTRANCHE_PARALLEL_APPEND: */
 	"ParallelAppend",
 	/* LWTRANCHE_PER_XACT_PREDICATE_LIST: */
-	"PerXactPredicateList"
+	"PerXactPredicateList",
+	/* LWTRANCHE_PGSTATS_DSA: */
+	"PgStatsDSA",
+	/* LWTRANCHE_PGSTATS_HASH: */
+	"PgStatsHash",
+	/* LWTRANCHE_PGSTATS_DATA: */
+	"PgStatsData",
 };
 
 StaticAssertDecl(lengthof(BuiltinTrancheNames) ==
@@ -1090,7 +1096,6 @@ LWLockQueueSelf(LWLock *lock, LWLockMode mode)
 #ifdef LOCK_DEBUG
 	pg_atomic_fetch_add_u32(&lock->nwaiters, 1);
 #endif
-
 }
 
 /*
@@ -1944,4 +1949,11 @@ LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
 			return true;
 	}
 	return false;
+}
+
+/* temp debugging aid to analyze 019_replslot_limit failures */
+int
+LWLockHeldCount(void)
+{
+	return num_held_lwlocks;
 }

@@ -22,7 +22,7 @@
   <para>
    Several tools are available for monitoring database activity and
    analyzing performance.  Most of this chapter is devoted to describing
-   <productname>PostgreSQL</productname>'s statistics collector,
+   <productname>PostgreSQL</productname>'s cumulative statistics system,
    but one should not neglect regular Unix monitoring programs such as
    <command>ps</command>, <command>top</command>, <command>iostat</command>, and <command>vmstat</command>.
    Also, once one has identified a
@@ -53,7 +53,6 @@ postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: back
 postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer
 postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: walwriter
 postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher
-postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector
 postgres  15582  0.0  0.0  58772  3080 ?        Ss   18:04   0:00 postgres: joe runbug 127.0.0.1 idle
 postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl regression [local] SELECT waiting
 postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction
@@ -63,11 +62,10 @@ postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl 
    platforms, as do the details of what is shown.  This example is from a
    recent Linux system.)  The first process listed here is the
    primary server process.  The command arguments
-   shown for it are the same ones used when it was launched.  The next five
+   shown for it are the same ones used when it was launched.  The next four
    processes are background worker processes automatically launched by the
-   primary process.  (The <quote>stats collector</quote> process will not be present
-   if you have set the system not to start the statistics collector; likewise
-   the <quote>autovacuum launcher</quote> process can be disabled.)
+   primary process.  (The <quote>autovacuum launcher</quote> process will not
+   be present if you have set the system not to run autovacuum.)
    Each of the remaining
    processes is a server process handling one client connection.  Each such
    process sets its command line display in the form
@@ -130,20 +128,20 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
  </sect1>
 
  <sect1 id="monitoring-stats">
-  <title>The Statistics Collector</title>
+  <title>The Cumulative Statistics System</title>
 
   <indexterm zone="monitoring-stats">
    <primary>statistics</primary>
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <firstterm>statistics collector</firstterm>
-   is a subsystem that supports collection and reporting of information about
-   server activity.  Presently, the collector can count accesses to tables
-   and indexes in both disk-block and individual-row terms.  It also tracks
-   the total number of rows in each table, and information about vacuum and
-   analyze actions for each table.  It can also count calls to user-defined
-   functions and the total time spent in each one.
+   <productname>PostgreSQL</productname>'s <firstterm>cumulative statistics
+   system</firstterm> supports collection and reporting of information about
+   server activity.  Presently, accesses to tables and indexes in both
+   disk-block and individual-row terms are counted.  The total number of rows
+   in each table, and information about vacuum and analyze actions for each
+   table are also counted.  If enabled, calls to user-defined functions and
+   the total time spent in each one are counted as well.
   </para>
 
   <para>
@@ -151,7 +149,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    information about exactly what is going on in the system right now, such as
    the exact command currently being executed by other server processes, and
    which other connections exist in the system.  This facility is independent
-   of the collector process.
+   of the cumulative statistics system.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -172,7 +170,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
   <para>
    The parameter <xref linkend="guc-track-counts"/> controls whether
-   statistics are collected about table and index accesses.
+   cumulative statistics are collected about table and index accesses.
   </para>
 
   <para>
@@ -201,18 +199,15 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
   </para>
 
   <para>
-   The statistics collector transmits the collected information to other
-   <productname>PostgreSQL</productname> processes through temporary files.
-   These files are stored in the directory named by the
-   <xref linkend="guc-stats-temp-directory"/> parameter,
-   <filename>pg_stat_tmp</filename> by default.
-   For better performance, <varname>stats_temp_directory</varname> can be
-   pointed at a RAM-based file system, decreasing physical I/O requirements.
-   When the server shuts down cleanly, a permanent copy of the statistics
-   data is stored in the <filename>pg_stat</filename> subdirectory, so that
-   statistics can be retained across server restarts.  When recovery is
-   performed at server start (e.g., after immediate shutdown, server crash,
-   and point-in-time recovery), all statistics counters are reset.
+   Cumulative statistics are collected in shared memory. Every
+   <productname>PostgreSQL</productname> process collects statistics locally,
+   then updates the shared data at appropriate intervals.  When a server,
+   including a physical replica, shuts down cleanly, a permanent copy of the
+   statistics data is stored in the <filename>pg_stat</filename> subdirectory,
+   so that statistics can be retained across server restarts.  In contrast,
+   when starting from an unclean shutdown (e.g., after an immediate shutdown,
+   a server crash, starting from a base backup, and point-in-time recovery),
+   all statistics counters are reset.
   </para>
 
  </sect2>
@@ -225,48 +220,58 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    linkend="monitoring-stats-dynamic-views-table"/>, are available to show
    the current state of the system. There are also several other
    views, listed in <xref
-   linkend="monitoring-stats-views-table"/>, available to show the results
-   of statistics collection.  Alternatively, one can
-   build custom views using the underlying statistics functions, as discussed
-   in <xref linkend="monitoring-stats-functions"/>.
+   linkend="monitoring-stats-views-table"/>, available to show the accumulated
+   statistics.  Alternatively, one can
+   build custom views using the underlying cumulative statistics functions, as
+   discussed in <xref linkend="monitoring-stats-functions"/>.
   </para>
 
   <para>
-   When using the statistics to monitor collected data, it is important
-   to realize that the information does not update instantaneously.
-   Each individual server process transmits new statistical counts to
-   the collector just before going idle; so a query or transaction still in
-   progress does not affect the displayed totals.  Also, the collector itself
-   emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
-   milliseconds (500 ms unless altered while building the server).  So the
-   displayed information lags behind actual activity.  However, current-query
-   information collected by <varname>track_activities</varname> is
-   always up-to-date.
+   When using the cumulative statistics views and functions to monitor
+   collected data, it is important to realize that the information does not
+   update instantaneously.  Each individual server process flushes out
+   accumulated statistics to shared memory just before going idle, but not
+   more frequently than once per <varname>PGSTAT_MIN_INTERVAL</varname>
+   milliseconds (1 second unless altered while building the server); so a
+   query or transaction still in progress does not affect the displayed totals
+   and the displayed information lags behind actual activity.  However,
+   current-query information collected by <varname>track_activities</varname>
+   is always up-to-date.
   </para>
 
   <para>
    Another important point is that when a server process is asked to display
-   any of these statistics, it first fetches the most recent report emitted by
-   the collector process and then continues to use this snapshot for all
-   statistical views and functions until the end of its current transaction.
-   So the statistics will show static information as long as you continue the
-   current transaction.  Similarly, information about the current queries of
-   all sessions is collected when any such information is first requested
-   within a transaction, and the same information will be displayed throughout
-   the transaction.
-   This is a feature, not a bug, because it allows you to perform several
-   queries on the statistics and correlate the results without worrying that
-   the numbers are changing underneath you.  But if you want to see new
-   results with each query, be sure to do the queries outside any transaction
-   block.  Alternatively, you can invoke
-   <function>pg_stat_clear_snapshot</function>(), which will discard the
-   current transaction's statistics snapshot (if any).  The next use of
-   statistical information will cause a new snapshot to be fetched.
+   any of the accumulated statistics, accessed values are cached until the end
+   of its current transaction in the default configuration. So the statistics
+   will show static information as long as you continue the current
+   transaction. Similarly, information about the current queries of all
+   sessions is collected when any such information is first requested within a
+   transaction, and the same information will be displayed throughout the
+   transaction. This is a feature, not a bug, because it allows you to perform
+   several queries on the statistics and correlate the results without
+   worrying that the numbers are changing underneath you.
+
+   When analyzing statistics interactively, or with expensive queries, the
+   time delta between accesses to individual statistics can lead to
+   significant skew in the cached statistics. To minimize skew,
+   <varname>stats_fetch_consistency</varname> can be set to
+   <literal>snapshot</literal>, at the price of increased memory usage for
+   caching not-needed statistics data.  Conversely, if it's known that
+   statistics are only accessed once, caching accessed statistics is
+   unnecessary and can be avoided by setting
+   <varname>stats_fetch_consistency</varname> to <literal>none</literal>.
+
+   You can invoke <function>pg_stat_clear_snapshot</function>() to discard the
+   current transaction's statistics snapshot or cached values (if any).  The
+   next use of statistical information will (when in snapshot mode) cause a
+   new snapshot to be built or (when in cache mode) accessed statistics to be
+   cached.
   </para>
 
   <para>
-   A transaction can also see its own statistics (as yet untransmitted to the
-   collector) in the views <structname>pg_stat_xact_all_tables</structname>,
+   A transaction can also see its own statistics (not yet flushed out to the
+   shared memory statistics) in the views
+   <structname>pg_stat_xact_all_tables</structname>,
    <structname>pg_stat_xact_sys_tables</structname>,
    <structname>pg_stat_xact_user_tables</structname>, and
    <structname>pg_stat_xact_user_functions</structname>.  These numbers do not act as
@@ -280,7 +285,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    (sessions belonging to a role that they are a member of).  In rows about
    other sessions, many columns will be null.  Note, however, that the
    existence of a session and its general properties such as its sessions user
-   and database are visible to all users.  Superusers and members of the
+   and database are visible to all users.  Superusers and roles with privileges of
    built-in role <literal>pg_read_all_stats</literal> (see also <xref
    linkend="predefined-roles"/>) can see all the information about all sessions.
   </para>
@@ -325,6 +330,14 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        that receiver's connected server.
        See <link linkend="monitoring-pg-stat-wal-receiver-view">
        <structname>pg_stat_wal_receiver</structname></link> for details.
+      </entry>
+     </row>
+
+     <row>
+      <entry><structname>pg_stat_recovery_prefetch</structname><indexterm><primary>pg_stat_recovery_prefetch</primary></indexterm></entry>
+      <entry>Only one row, showing statistics about blocks prefetched during recovery.
+       See <link linkend="monitoring-pg-stat-recovery-prefetch">
+       <structname>pg_stat_recovery_prefetch</structname></link> for details.
       </entry>
      </row>
 
@@ -628,11 +641,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
 
      <row>
-      <entry><structname>pg_stat_subscription_workers</structname><indexterm><primary>pg_stat_subscription_workers</primary></indexterm></entry>
-      <entry>One row per subscription worker, showing statistics about errors
-      that occurred on that subscription worker.
-      See <link linkend="monitoring-pg-stat-subscription-workers">
-      <structname>pg_stat_subscription_workers</structname></link> for details.
+      <entry><structname>pg_stat_subscription_stats</structname><indexterm><primary>pg_stat_subscription_stats</primary></indexterm></entry>
+      <entry>One row per subscription, showing statistics about errors.
+      See <link linkend="monitoring-pg-stat-subscription-stats">
+      <structname>pg_stat_subscription_stats</structname></link> for details.
       </entry>
      </row>
 
@@ -657,7 +669,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
    kernel's I/O cache, and might therefore still be fetched without
    requiring a physical read. Users interested in obtaining more
    detailed information on <productname>PostgreSQL</productname> I/O behavior are
-   advised to use the <productname>PostgreSQL</productname> statistics collector
+   advised to use the <productname>PostgreSQL</productname> statistics views
    in combination with operating system utilities that allow insight
    into the kernel's handling of I/O.
   </para>
@@ -1112,10 +1124,6 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting in main loop of logical replication launcher process.</entry>
      </row>
      <row>
-      <entry><literal>PgStatMain</literal></entry>
-      <entry>Waiting in main loop of statistics collector process.</entry>
-     </row>
-     <row>
       <entry><literal>RecoveryWalStream</literal></entry>
       <entry>Waiting in main loop of startup process for WAL to arrive, during
        streaming recovery.</entry>
@@ -1502,6 +1510,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      <row>
       <entry><literal>TwophaseFileWrite</literal></entry>
       <entry>Waiting for a write of a two phase state file.</entry>
+     </row>
+     <row>
+      <entry><literal>VersionFileWrite</literal></entry>
+      <entry>Waiting for the version file to be written while creating a database.</entry>
      </row>
      <row>
       <entry><literal>WALBootstrapSync</literal></entry>
@@ -2113,6 +2125,18 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        serializable transactions.</entry>
      </row>
      <row>
+      <entry><literal>PgStatsDSA</literal></entry>
+      <entry>Waiting for stats dynamic shared memory allocator access</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatsHash</literal></entry>
+      <entry>Waiting for stats shared memory hash table access</entry>
+     </row>
+     <row>
+      <entry><literal>PgStatsData</literal></entry>
+      <entry>Waiting for shared memory stats data access</entry>
+     </row>
+     <row>
       <entry><literal>SerializableXactHash</literal></entry>
       <entry>Waiting to read or update information about serializable
        transactions.</entry>
@@ -2237,6 +2261,10 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting during base backup when throttling activity.</entry>
      </row>
      <row>
+      <entry><literal>CheckpointWriteDelay</literal></entry>
+      <entry>Waiting between writes while performing a checkpoint.</entry>
+     </row>
+     <row>
       <entry><literal>PgSleep</literal></entry>
       <entry>Waiting due to a call to <function>pg_sleep</function> or
        a sibling function.</entry>
@@ -2250,6 +2278,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry><literal>RecoveryRetrieveRetryInterval</literal></entry>
       <entry>Waiting during recovery when WAL data is not available from any
        source (<filename>pg_wal</filename>, archive or stream).</entry>
+     </row>
+     <row>
+      <entry><literal>RegisterSyncRequest</literal></entry>
+      <entry>Waiting while sending synchronization requests to the
+       checkpointer, because the request queue is full.</entry>
      </row>
      <row>
       <entry><literal>VacuumDelay</literal></entry>
@@ -2269,7 +2302,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
 <programlisting>
 SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
- pid  | wait_event_type | wait_event 
+ pid  | wait_event_type | wait_event
 ------+-----------------+------------
  2540 | Lock            | relation
  6644 | LWLock          | ProcArray
@@ -2945,19 +2978,147 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
  </sect2>
 
+ <sect2 id="monitoring-pg-stat-recovery-prefetch">
+  <title><structname>pg_stat_recovery_prefetch</structname></title>
+
+  <indexterm>
+   <primary>pg_stat_recovery_prefetch</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_stat_recovery_prefetch</structname> view will contain
+   only one row.  The columns <structfield>wal_distance</structfield>,
+   <structfield>block_distance</structfield> and
+   <structfield>io_depth</structfield> show current values, and the
+   other columns show cumulative counters that can be reset
+   with the <function>pg_stat_reset_shared</function> function.
+  </para>
+
+  <table id="pg-stat-recovery-prefetch-view" xreflabel="pg_stat_recovery_prefetch">
+   <title><structname>pg_stat_recovery_prefetch</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>prefetch</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks prefetched because they were not in the buffer pool
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>hit</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they were already in the buffer pool
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_init</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they would be zero-initialized
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_new</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they didn't exist yet
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_fpw</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because a full page image was included in the WAL
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>skip_rep</structfield> <type>bigint</type>
+       </para>
+       <para>
+        Number of blocks not prefetched because they were already recently prefetched
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>wal_distance</structfield> <type>int</type>
+       </para>
+       <para>
+        How many bytes ahead the prefetcher is looking
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>block_distance</structfield> <type>int</type>
+       </para>
+       <para>
+        How many blocks ahead the prefetcher is looking
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
+        <structfield>io_depth</structfield> <type>int</type>
+       </para>
+       <para>
+        How many prefetches have been initiated but are not yet known to have completed
+       </para>
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect2>
+
  <sect2 id="monitoring-pg-stat-subscription">
   <title><structname>pg_stat_subscription</structname></title>
 
   <indexterm>
    <primary>pg_stat_subscription</primary>
   </indexterm>
-
-  <para>
-   The <structname>pg_stat_subscription</structname> view will contain one
-   row per subscription for main worker (with null PID if the worker is
-   not running), and additional rows for workers handling the initial data
-   copy of the subscribed tables.
-  </para>
 
   <table id="pg-stat-subscription" xreflabel="pg_stat_subscription">
    <title><structname>pg_stat_subscription</structname> View</title>
@@ -3063,23 +3224,20 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
  </sect2>
 
- <sect2 id="monitoring-pg-stat-subscription-workers">
-  <title><structname>pg_stat_subscription_workers</structname></title>
+ <sect2 id="monitoring-pg-stat-subscription-stats">
+  <title><structname>pg_stat_subscription_stats</structname></title>
 
   <indexterm>
-   <primary>pg_stat_subscription_workers</primary>
+   <primary>pg_stat_subscription_stats</primary>
   </indexterm>
 
   <para>
-   The <structname>pg_stat_subscription_workers</structname> view will contain
-   one row per subscription worker on which errors have occurred, for workers
-   applying logical replication changes and workers handling the initial data
-   copy of the subscribed tables.  The statistics entry is removed when the
-   corresponding subscription is dropped.
+   The <structname>pg_stat_subscription_stats</structname> view will contain
+   one row per subscription.
   </para>
 
-  <table id="pg-stat-subscription-workers" xreflabel="pg_stat_subscription_workers">
-   <title><structname>pg_stat_subscription_workers</structname> View</title>
+  <table id="pg-stat-subscription-stats" xreflabel="pg_stat_subscription_stats">
+   <title><structname>pg_stat_subscription_stats</structname> View</title>
    <tgroup cols="1">
     <thead>
      <row>
@@ -3113,72 +3271,31 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>subrelid</structfield> <type>oid</type>
+       <structfield>apply_error_count</structfield> <type>bigint</type>
       </para>
       <para>
-       OID of the relation that the worker is synchronizing; null for the
-       main apply worker
+       Number of times an error occurred while applying changes
       </para></entry>
      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_relid</structfield> <type>oid</type>
+       <structfield>sync_error_count</structfield> <type>bigint</type>
       </para>
       <para>
-       OID of the relation that the worker was processing when the
-       error occurred
+       Number of times an error occurred during the initial table
+       synchronization
       </para></entry>
      </row>
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_command</structfield> <type>text</type>
+       <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Name of command being applied when the error occurred.  This field
-       is null if the error was reported during the initial data copy.
+       Time at which these statistics were last reset
       </para></entry>
      </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_xid</structfield> <type>xid</type>
-      </para>
-      <para>
-       Transaction ID of the publisher node being applied when the error
-       occurred.  This field is null if the error was reported
-       during the initial data copy.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_count</structfield> <type>uint8</type>
-      </para>
-      <para>
-       Number of consecutive times the error occurred
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_message</structfield> <type>text</type>
-      </para>
-      <para>
-       The error message
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>last_error_time</structfield> <type>timestamp with time zone</type>
-      </para>
-      <para>
-       Last time at which this error occurred
-      </para></entry>
-     </row>
-
     </tbody>
    </tgroup>
   </table>
@@ -3422,7 +3539,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_archived_wal</structfield> <type>text</type>
       </para>
       <para>
-       Name of the last WAL file successfully archived
+       Name of the WAL file most recently successfully archived
       </para></entry>
      </row>
 
@@ -3431,7 +3548,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_archived_time</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Time of the last successful archive operation
+       Time of the most recent successful archive operation
       </para></entry>
      </row>
 
@@ -3449,7 +3566,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_failed_wal</structfield> <type>text</type>
       </para>
       <para>
-       Name of the WAL file of the last failed archival operation
+       Name of the WAL file of the most recent failed archival operation
       </para></entry>
      </row>
 
@@ -3458,7 +3575,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>last_failed_time</structfield> <type>timestamp with time zone</type>
       </para>
       <para>
-       Time of the last failed archival operation
+       Time of the most recent failed archival operation
       </para></entry>
      </row>
 
@@ -3473,6 +3590,15 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+    Normally, WAL files are archived in order, oldest to newest, but that is
+    not guaranteed, and does not hold under special circumstances like when
+    promoting a standby or after crash recovery. Therefore it is not safe to
+    assume that all files older than
+    <structfield>last_archived_wal</structfield> have also been successfully
+    archived.
+  </para>
 
  </sect2>
 
@@ -5109,8 +5235,8 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
   </para>
 
   <para>
-   Additional functions related to statistics collection are listed in <xref
-   linkend="monitoring-stats-funcs-table"/>.
+   Additional functions related to the cumulative statistics system are listed
+   in <xref linkend="monitoring-stats-funcs-table"/>.
   </para>
 
    <table id="monitoring-stats-funcs-table">
@@ -5165,7 +5291,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>timestamp with time zone</returnvalue>
        </para>
        <para>
-        Returns the timestamp of the current statistics snapshot.
+        Returns the timestamp of the current statistics snapshot, or NULL if
+        no statistics snapshot has been taken. A snapshot is taken the first
+        time cumulative statistics are accessed in a transaction if
+        <varname>stats_fetch_consistency</varname> is set to
+        <literal>snapshot</literal>
        </para></entry>
       </row>
 
@@ -5178,7 +5308,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Discards the current statistics snapshot.
+        Discards the current statistics snapshot or cached information.
        </para></entry>
       </row>
 
@@ -5213,8 +5343,11 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
         all the counters shown in
         the <structname>pg_stat_bgwriter</structname>
         view, <literal>archiver</literal> to reset all the counters shown in
-        the <structname>pg_stat_archiver</structname> view or <literal>wal</literal>
-        to reset all the counters shown in the <structname>pg_stat_wal</structname> view.
+        the <structname>pg_stat_archiver</structname> view,
+        <literal>wal</literal> to reset all the counters shown in the
+        <structname>pg_stat_wal</structname> view or
+        <literal>recovery_prefetch</literal> to reset all the counters shown
+        in the <structname>pg_stat_recovery_prefetch</structname> view.
        </para>
        <para>
         This function is restricted to superusers by default, but other users
@@ -5311,22 +5444,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-          <primary>pg_stat_reset_subscription_worker</primary>
+          <primary>pg_stat_reset_subscription_stats</primary>
         </indexterm>
-        <function>pg_stat_reset_subscription_worker</function> ( <parameter>subid</parameter> <type>oid</type> <optional>, <parameter>relid</parameter> <type>oid</type> </optional> )
+        <function>pg_stat_reset_subscription_stats</function> ( <type>oid</type> )
         <returnvalue>void</returnvalue>
        </para>
        <para>
-        Resets the statistics of subscription workers running on the
-        subscription with <parameter>subid</parameter> shown in the
-        <structname>pg_stat_subscription_workers</structname> view.  If the
-        argument <parameter>relid</parameter> is not <literal>NULL</literal>,
-        resets statistics of the subscription worker handling the initial data
-        copy of the relation with <parameter>relid</parameter>.  Otherwise,
-        resets the subscription worker statistics of the main apply worker.
-        If the argument <parameter>relid</parameter> is omitted, resets the
-        statistics of all subscription workers running on the subscription
-        with <parameter>subid</parameter>.
+        Resets statistics for a single subscription shown in the
+        <structname>pg_stat_subscription_stats</structname> view to zero. If
+        the argument is <literal>NULL</literal>, reset statistics for all
+        subscriptions.
        </para>
        <para>
         This function is restricted to superusers by default, but other users
@@ -6345,8 +6472,8 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
      <entry>
        <command>VACUUM</command> is performing final cleanup.  During this phase,
        <command>VACUUM</command> will vacuum the free space map, update statistics
-       in <literal>pg_class</literal>, and report statistics to the statistics
-       collector.  When this phase is completed, <command>VACUUM</command> will end.
+       in <literal>pg_class</literal>, and report statistics to the cumulative
+       statistics system. When this phase is completed, <command>VACUUM</command> will end.
      </entry>
     </row>
    </tbody>
@@ -6703,7 +6830,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal>waiting for checkpoint to finish</literal></entry>
       <entry>
        The WAL sender process is currently performing
-       <function>pg_start_backup</function> to prepare to
+       <function>pg_backup_start</function> to prepare to
        take a base backup, and waiting for the start-of-backup
        checkpoint to finish.
       </entry>
@@ -6726,7 +6853,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
       <entry><literal>waiting for wal archiving to finish</literal></entry>
       <entry>
        The WAL sender process is currently performing
-       <function>pg_stop_backup</function> to finish the backup,
+       <function>pg_backup_stop</function> to finish the backup,
        and waiting for all the WAL files required for the base backup
        to be successfully archived.
        If either <literal>--wal-method=none</literal> or

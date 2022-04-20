@@ -237,7 +237,7 @@
  *    to filter expressions having to be evaluated early, and allows to JIT
  *    the entire expression into one native function.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -530,7 +530,7 @@ initialize_phase(AggState *aggstate, int newphase)
 												  sortnode->collations,
 												  sortnode->nullsFirst,
 												  work_mem,
-												  NULL, false);
+												  NULL, TUPLESORT_NONE);
 	}
 
 	aggstate->current_phase = newphase;
@@ -607,7 +607,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 									  pertrans->sortOperators[0],
 									  pertrans->sortCollations[0],
 									  pertrans->sortNullsFirst[0],
-									  work_mem, NULL, false);
+									  work_mem, NULL, TUPLESORT_NONE);
 		}
 		else
 			pertrans->sortstates[aggstate->current_set] =
@@ -617,7 +617,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 									 pertrans->sortOperators,
 									 pertrans->sortCollations,
 									 pertrans->sortNullsFirst,
-									 work_mem, NULL, false);
+									 work_mem, NULL, TUPLESORT_NONE);
 	}
 
 	/*
@@ -4119,7 +4119,6 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 								 2,
 								 InvalidOid,
 								 (void *) aggstate, NULL);
-
 	}
 
 	/*

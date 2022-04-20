@@ -2767,6 +2767,139 @@ RETURNING k, v;
 (0 rows)
 
 DROP TABLE withz;
+-- WITH referenced by MERGE statement
+CREATE TABLE m AS SELECT i AS k, (i || ' v')::text v FROM generate_series(1, 16, 3) i;
+ALTER TABLE m ADD UNIQUE (k);
+WITH RECURSIVE cte_basic AS (SELECT 1 a, 'cte_basic val' b)
+MERGE INTO m USING (select 0 k, 'merge source SubPlan' v) o ON m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = m.k LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+ERROR:  WITH RECURSIVE is not supported for MERGE statement
+-- Basic:
+WITH cte_basic AS MATERIALIZED (SELECT 1 a, 'cte_basic val' b)
+MERGE INTO m USING (select 0 k, 'merge source SubPlan' v offset 0) o ON m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = m.k LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+-- Examine
+SELECT * FROM m where k = 0;
+ k |          v           
+---+----------------------
+ 0 | merge source SubPlan
+(1 row)
+
+-- See EXPLAIN output for same query:
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH cte_basic AS MATERIALIZED (SELECT 1 a, 'cte_basic val' b)
+MERGE INTO m USING (select 0 k, 'merge source SubPlan' v offset 0) o ON m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_basic WHERE cte_basic.a = m.k LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Merge on public.m
+   CTE cte_basic
+     ->  Result
+           Output: 1, 'cte_basic val'::text
+   ->  Hash Right Join
+         Output: m.ctid, (0), ('merge source SubPlan'::text)
+         Hash Cond: (m.k = (0))
+         ->  Seq Scan on public.m
+               Output: m.ctid, m.k
+         ->  Hash
+               Output: (0), ('merge source SubPlan'::text)
+               ->  Result
+                     Output: 0, 'merge source SubPlan'::text
+   SubPlan 2
+     ->  Limit
+           Output: ((cte_basic.b || ' merge update'::text))
+           ->  CTE Scan on cte_basic
+                 Output: (cte_basic.b || ' merge update'::text)
+                 Filter: (cte_basic.a = m.k)
+(19 rows)
+
+-- InitPlan
+WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
+MERGE INTO m USING (select 1 k, 'merge source InitPlan' v offset 0) o ON m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_init WHERE a = 1 LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+-- Examine
+SELECT * FROM m where k = 1;
+ k |             v             
+---+---------------------------
+ 1 | cte_init val merge update
+(1 row)
+
+-- See EXPLAIN output for same query:
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH cte_init AS MATERIALIZED (SELECT 1 a, 'cte_init val' b)
+MERGE INTO m USING (select 1 k, 'merge source InitPlan' v offset 0) o ON m.k=o.k
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || ' merge update' FROM cte_init WHERE a = 1 LIMIT 1)
+WHEN NOT MATCHED THEN INSERT VALUES(o.k, o.v);
+                          QUERY PLAN                           
+---------------------------------------------------------------
+ Merge on public.m
+   CTE cte_init
+     ->  Result
+           Output: 1, 'cte_init val'::text
+   InitPlan 2 (returns $1)
+     ->  Limit
+           Output: ((cte_init.b || ' merge update'::text))
+           ->  CTE Scan on cte_init
+                 Output: (cte_init.b || ' merge update'::text)
+                 Filter: (cte_init.a = 1)
+   ->  Hash Right Join
+         Output: m.ctid, (1), ('merge source InitPlan'::text)
+         Hash Cond: (m.k = (1))
+         ->  Seq Scan on public.m
+               Output: m.ctid, m.k
+         ->  Hash
+               Output: (1), ('merge source InitPlan'::text)
+               ->  Result
+                     Output: 1, 'merge source InitPlan'::text
+(19 rows)
+
+-- MERGE source comes from CTE:
+WITH merge_source_cte AS MATERIALIZED (SELECT 15 a, 'merge_source_cte val' b)
+MERGE INTO m USING (select * from merge_source_cte) o ON m.k=o.a
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || merge_source_cte.*::text || ' merge update' FROM merge_source_cte WHERE a = 15)
+WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text || ' merge insert' FROM merge_source_cte));
+-- Examine
+SELECT * FROM m where k = 15;
+ k  |                              v                               
+----+--------------------------------------------------------------
+ 15 | merge_source_cte val(15,"merge_source_cte val") merge insert
+(1 row)
+
+-- See EXPLAIN output for same query:
+EXPLAIN (VERBOSE, COSTS OFF)
+WITH merge_source_cte AS MATERIALIZED (SELECT 15 a, 'merge_source_cte val' b)
+MERGE INTO m USING (select * from merge_source_cte) o ON m.k=o.a
+WHEN MATCHED THEN UPDATE SET v = (SELECT b || merge_source_cte.*::text || ' merge update' FROM merge_source_cte WHERE a = 15)
+WHEN NOT MATCHED THEN INSERT VALUES(o.a, o.b || (SELECT merge_source_cte.*::text || ' merge insert' FROM merge_source_cte));
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Merge on public.m
+   CTE merge_source_cte
+     ->  Result
+           Output: 15, 'merge_source_cte val'::text
+   InitPlan 2 (returns $1)
+     ->  CTE Scan on merge_source_cte merge_source_cte_1
+           Output: ((merge_source_cte_1.b || (merge_source_cte_1.*)::text) || ' merge update'::text)
+           Filter: (merge_source_cte_1.a = 15)
+   InitPlan 3 (returns $2)
+     ->  CTE Scan on merge_source_cte merge_source_cte_2
+           Output: ((merge_source_cte_2.*)::text || ' merge insert'::text)
+   ->  Hash Right Join
+         Output: m.ctid, merge_source_cte.a, merge_source_cte.b
+         Hash Cond: (m.k = merge_source_cte.a)
+         ->  Seq Scan on public.m
+               Output: m.ctid, m.k
+         ->  Hash
+               Output: merge_source_cte.a, merge_source_cte.b
+               ->  CTE Scan on merge_source_cte
+                     Output: merge_source_cte.a, merge_source_cte.b
+(20 rows)
+
+DROP TABLE m;
 -- check that run to completion happens in proper ordering
 TRUNCATE TABLE y;
 INSERT INTO y SELECT generate_series(1, 3);
@@ -3043,36 +3176,42 @@ SELECT * FROM parent;
 -- check EXPLAIN VERBOSE for a wCTE with RETURNING
 EXPLAIN (VERBOSE, COSTS OFF)
 WITH wcte AS ( INSERT INTO int8_tbl VALUES ( 42, 47 ) RETURNING q2 )
-DELETE FROM a USING wcte WHERE aa = q2;
-                         QUERY PLAN                         
-------------------------------------------------------------
- Delete on public.a
-   Delete on public.a a_1
-   Delete on public.b a_2
-   Delete on public.c a_3
-   Delete on public.d a_4
+DELETE FROM a_star USING wcte WHERE aa = q2;
+                                QUERY PLAN                                 
+---------------------------------------------------------------------------
+ Delete on public.a_star
+   Delete on public.a_star a_star_1
+   Delete on public.b_star a_star_2
+   Delete on public.c_star a_star_3
+   Delete on public.d_star a_star_4
+   Delete on public.e_star a_star_5
+   Delete on public.f_star a_star_6
    CTE wcte
      ->  Insert on public.int8_tbl
            Output: int8_tbl.q2
            ->  Result
                  Output: '42'::bigint, '47'::bigint
    ->  Hash Join
-         Output: wcte.*, a.tableoid, a.ctid
-         Hash Cond: (a.aa = wcte.q2)
+         Output: wcte.*, a_star.tableoid, a_star.ctid
+         Hash Cond: (a_star.aa = wcte.q2)
          ->  Append
-               ->  Seq Scan on public.a a_1
-                     Output: a_1.aa, a_1.tableoid, a_1.ctid
-               ->  Seq Scan on public.b a_2
-                     Output: a_2.aa, a_2.tableoid, a_2.ctid
-               ->  Seq Scan on public.c a_3
-                     Output: a_3.aa, a_3.tableoid, a_3.ctid
-               ->  Seq Scan on public.d a_4
-                     Output: a_4.aa, a_4.tableoid, a_4.ctid
+               ->  Seq Scan on public.a_star a_star_1
+                     Output: a_star_1.aa, a_star_1.tableoid, a_star_1.ctid
+               ->  Seq Scan on public.b_star a_star_2
+                     Output: a_star_2.aa, a_star_2.tableoid, a_star_2.ctid
+               ->  Seq Scan on public.c_star a_star_3
+                     Output: a_star_3.aa, a_star_3.tableoid, a_star_3.ctid
+               ->  Seq Scan on public.d_star a_star_4
+                     Output: a_star_4.aa, a_star_4.tableoid, a_star_4.ctid
+               ->  Seq Scan on public.e_star a_star_5
+                     Output: a_star_5.aa, a_star_5.tableoid, a_star_5.ctid
+               ->  Seq Scan on public.f_star a_star_6
+                     Output: a_star_6.aa, a_star_6.tableoid, a_star_6.ctid
          ->  Hash
                Output: wcte.*, wcte.q2
                ->  CTE Scan on wcte
                      Output: wcte.*, wcte.q2
-(26 rows)
+(32 rows)
 
 -- error cases
 -- data-modifying WITH tries to use its own output
@@ -3149,19 +3288,19 @@ with ordinality as (select 1 as x) select * from ordinality;
 (1 row)
 
 -- check sane response to attempt to modify CTE relation
-WITH test AS (SELECT 42) INSERT INTO test VALUES (1);
-ERROR:  relation "test" does not exist
-LINE 1: WITH test AS (SELECT 42) INSERT INTO test VALUES (1);
-                                             ^
+WITH with_test AS (SELECT 42) INSERT INTO with_test VALUES (1);
+ERROR:  relation "with_test" does not exist
+LINE 1: WITH with_test AS (SELECT 42) INSERT INTO with_test VALUES (...
+                                                  ^
 -- check response to attempt to modify table with same name as a CTE (perhaps
 -- surprisingly it works, because CTEs don't hide tables from data-modifying
 -- statements)
-create temp table test (i int);
-with test as (select 42) insert into test select * from test;
-select * from test;
+create temp table with_test (i int);
+with with_test as (select 42) insert into with_test select * from with_test;
+select * from with_test;
  i  
 ----
  42
 (1 row)
 
-drop table test;
+drop table with_test;

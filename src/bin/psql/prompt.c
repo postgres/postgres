@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/prompt.c
  */
@@ -316,7 +316,6 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					buf[0] = *p;
 					buf[1] = '\0';
 					break;
-
 			}
 			esc = false;
 		}

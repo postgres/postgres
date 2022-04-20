@@ -9,6 +9,8 @@ SUBDIRS = \
 		amcheck		\
 		auth_delay	\
 		auto_explain	\
+		basic_archive	\
+		basebackup_to_shell	\
 		bloom		\
 		btree_gin	\
 		btree_gist	\
@@ -39,6 +41,7 @@ SUBDIRS = \
 		pgrowlocks	\
 		pgstattuple	\
 		pg_visibility	\
+		pg_walinspect	\
 		postgres_fdw	\
 		seg		\
 		spi		\

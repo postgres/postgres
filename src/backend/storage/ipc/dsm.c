@@ -14,7 +14,7 @@
  * hard postmaster crash, remaining segments will be removed, if they
  * still exist, at the next postmaster startup.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -397,6 +397,7 @@ static void
 dsm_backend_startup(void)
 {
 #ifdef EXEC_BACKEND
+	if (IsUnderPostmaster)
 	{
 		void	   *control_address = NULL;
 
@@ -496,8 +497,12 @@ dsm_create(Size size, int flags)
 	FreePageManager *dsm_main_space_fpm = dsm_main_space_begin;
 	bool		using_main_dsm_region = false;
 
-	/* Unsafe in postmaster (and pointless in a stand-alone backend). */
-	Assert(IsUnderPostmaster);
+	/*
+	 * Unsafe in postmaster. It might seem pointless to allow use of dsm in
+	 * single user mode, but otherwise some subsystems will need dedicated
+	 * single user mode code paths.
+	 */
+	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
 
 	if (!dsm_init_done)
 		dsm_backend_startup();

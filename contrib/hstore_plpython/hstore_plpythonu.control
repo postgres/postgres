@@ -1,6 +1,0 @@
-# hstore_plpythonu extension
-comment = 'transform between hstore and plpythonu'
-default_version = '1.0'
-module_pathname = '$libdir/hstore_plpython2'
-relocatable = true
-requires = 'hstore,plpythonu'

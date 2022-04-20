@@ -42,6 +42,9 @@
 /* Define to the default TCP port number as a string constant. */
 #undef DEF_PGPORT_STR
 
+/* Define to the file name extension of dynamically-loadable modules. */
+#undef DLSUFFIX
+
 /* Define to build with GSSAPI support. (--with-gssapi) */
 #undef ENABLE_GSS
 
@@ -280,6 +283,9 @@
 /* Define to 1 if you have the `inet_aton' function. */
 #undef HAVE_INET_ATON
 
+/* Define to 1 if you have the `inet_pton' function. */
+#undef HAVE_INET_PTON
+
 /* Define to 1 if the system has the type `int64'. */
 #undef HAVE_INT64
 
@@ -351,6 +357,9 @@
 
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
+
+/* Define to 1 if you have the `zstd' library (-lzstd). */
+#undef HAVE_LIBZSTD
 
 /* Define to 1 if you have the `link' function. */
 #undef HAVE_LINK
@@ -459,10 +468,6 @@
 
 /* Define to 1 if you have the `readv' function. */
 #undef HAVE_READV
-
-/* Define to 1 if you have the global variable
-   'rl_completion_append_character'. */
-#undef HAVE_RL_COMPLETION_APPEND_CHARACTER
 
 /* Define to 1 if you have the `rl_completion_matches' function. */
 #undef HAVE_RL_COMPLETION_MATCHES
@@ -614,6 +619,9 @@
 /* Define to 1 if you have the <sys/ipc.h> header file. */
 #undef HAVE_SYS_IPC_H
 
+/* Define to 1 if you have the <sys/personality.h> header file. */
+#undef HAVE_SYS_PERSONALITY_H
+
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 #undef HAVE_SYS_PRCTL_H
 
@@ -634,6 +642,9 @@
 
 /* Define to 1 if you have the <sys/shm.h> header file. */
 #undef HAVE_SYS_SHM_H
+
+/* Define to 1 if you have the <sys/signalfd.h> header file. */
+#undef HAVE_SYS_SIGNALFD_H
 
 /* Define to 1 if you have the <sys/sockio.h> header file. */
 #undef HAVE_SYS_SOCKIO_H
@@ -736,6 +747,9 @@
 
 /* Define to 1 if your compiler understands __builtin_ctz. */
 #undef HAVE__BUILTIN_CTZ
+
+/* Define to 1 if your compiler understands __builtin_frame_address. */
+#undef HAVE__BUILTIN_FRAME_ADDRESS
 
 /* Define to 1 if your compiler understands __builtin_$op_overflow. */
 #undef HAVE__BUILTIN_OP_OVERFLOW
@@ -946,6 +960,9 @@
 
 /* Define to select Win32-style shared memory. */
 #undef USE_WIN32_SHARED_MEMORY
+
+/* Define to 1 to build with ZSTD support. (--with-zstd) */
+#undef USE_ZSTD
 
 /* Define to 1 if `wcstombs_l' requires <xlocale.h>. */
 #undef WCSTOMBS_L_IN_XLOCALE

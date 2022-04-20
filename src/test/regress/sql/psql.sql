@@ -1241,6 +1241,12 @@ drop role regress_partitioning_role;
 \dAp+ btree float_ops
 \dAp * pg_catalog.uuid_ops
 
+-- check \dconfig
+set work_mem = 10240;
+\dconfig work_mem
+\dconfig+ work*
+reset work_mem;
+
 -- check \df, \do with argument specifications
 \df *sqrt
 \df *sqrt num*
@@ -1315,4 +1321,387 @@ DROP TABLE oer_test;
 -- ECHO errors
 \set ECHO errors
 SELECT * FROM notexists;
-\set ECHO none
+\set ECHO all
+
+--
+-- combined queries
+--
+CREATE FUNCTION warn(msg TEXT) RETURNS BOOLEAN LANGUAGE plpgsql
+AS $$
+  BEGIN RAISE NOTICE 'warn %', msg ; RETURN TRUE ; END
+$$;
+
+-- show both
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+-- \gset applies to last query only
+SELECT 3 AS three \; SELECT warn('3.5') \; SELECT 4 AS four \gset
+\echo :three :four
+-- syntax error stops all processing
+SELECT 5 \; SELECT 6 + \; SELECT warn('6.5') \; SELECT 7 ;
+-- with aborted transaction, stop on first error
+BEGIN \; SELECT 8 AS eight \; SELECT 9/0 AS nine \; ROLLBACK \; SELECT 10 AS ten ;
+-- close previously aborted transaction
+ROLLBACK;
+
+-- miscellaneous SQL commands
+-- (non SELECT output is sent to stderr, thus is not shown in expected results)
+SELECT 'ok' AS "begin" \;
+CREATE TABLE psql_comics(s TEXT) \;
+INSERT INTO psql_comics VALUES ('Calvin'), ('hobbes') \;
+COPY psql_comics FROM STDIN \;
+UPDATE psql_comics SET s = 'Hobbes' WHERE s = 'hobbes' \;
+DELETE FROM psql_comics WHERE s = 'Moe' \;
+COPY psql_comics TO STDOUT \;
+TRUNCATE psql_comics \;
+DROP TABLE psql_comics \;
+SELECT 'ok' AS "done" ;
+Moe
+Susie
+\.
+
+\set SHOW_ALL_RESULTS off
+SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+
+\set SHOW_ALL_RESULTS on
+DROP FUNCTION warn(TEXT);
+
+--
+-- AUTOCOMMIT and combined queries
+--
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+-- BEGIN is now implicit
+
+CREATE TABLE foo(s TEXT) \;
+ROLLBACK;
+
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+
+DROP TABLE foo \;
+ROLLBACK;
+
+-- table foo is still there
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo \;
+COMMIT;
+
+\set AUTOCOMMIT on
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+-- BEGIN now explicit for multi-statement transactions
+
+BEGIN \;
+CREATE TABLE foo(s TEXT) \;
+INSERT INTO foo(s) VALUES ('hello'), ('world') \;
+COMMIT;
+
+BEGIN \;
+DROP TABLE foo \;
+ROLLBACK \;
+
+-- implicit transactions
+SELECT * FROM foo ORDER BY 1 \;
+DROP TABLE foo;
+
+--
+-- test ON_ERROR_ROLLBACK and combined queries
+--
+CREATE FUNCTION psql_error(msg TEXT) RETURNS BOOLEAN AS $$
+  BEGIN
+    RAISE EXCEPTION 'error %', msg;
+  END;
+$$ LANGUAGE plpgsql;
+
+\set ON_ERROR_ROLLBACK on
+\echo '# ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+
+BEGIN;
+CREATE TABLE bla(s NO_SUCH_TYPE);               -- fails
+CREATE TABLE bla(s TEXT);                       -- succeeds
+SELECT psql_error('oops!');                     -- fails
+INSERT INTO bla VALUES ('Calvin'), ('Hobbes');
+COMMIT;
+
+SELECT * FROM bla ORDER BY 1;
+
+BEGIN;
+INSERT INTO bla VALUES ('Susie');         -- succeeds
+-- now with combined queries
+INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
+SELECT 'before error' AS show \;          -- will show nevertheless!
+  SELECT psql_error('boum!') \;           -- failure
+  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+INSERT INTO bla(s) VALUES ('Moe') \;      -- will rollback
+  SELECT psql_error('bam!');
+INSERT INTO bla VALUES ('Miss Wormwood'); -- succeeds
+COMMIT;
+SELECT * FROM bla ORDER BY 1;
+
+-- some with autocommit off
+\set AUTOCOMMIT off
+\echo '# AUTOCOMMIT:' :AUTOCOMMIT
+
+-- implicit BEGIN
+INSERT INTO bla VALUES ('Dad');           -- succeeds
+SELECT psql_error('bad!');                -- implicit partial rollback
+
+INSERT INTO bla VALUES ('Mum') \;         -- will rollback
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- but be counted here
+SELECT psql_error('bad!');                -- implicit partial rollback
+COMMIT;
+
+SELECT COUNT(*) AS "#mum"
+FROM bla WHERE s = 'Mum' \;               -- no mum here
+SELECT * FROM bla ORDER BY 1;
+
+-- reset all
+\set AUTOCOMMIT on
+\set ON_ERROR_ROLLBACK off
+\echo '# final ON_ERROR_ROLLBACK:' :ON_ERROR_ROLLBACK
+DROP TABLE bla;
+DROP FUNCTION psql_error;
+
+-- check describing invalid multipart names
+\dA regression.heap
+\dA nonesuch.heap
+\dt host.regression.pg_catalog.pg_class
+\dt |.pg_catalog.pg_class
+\dt nonesuch.pg_catalog.pg_class
+\da host.regression.pg_catalog.sum
+\da +.pg_catalog.sum
+\da nonesuch.pg_catalog.sum
+\dAc nonesuch.brin
+\dAc regression.brin
+\dAf nonesuch.brin
+\dAf regression.brin
+\dAo nonesuch.brin
+\dAo regression.brin
+\dAp nonesuch.brin
+\dAp regression.brin
+\db nonesuch.pg_default
+\db regression.pg_default
+\dc host.regression.public.conversion
+\dc (.public.conversion
+\dc nonesuch.public.conversion
+\dC host.regression.pg_catalog.int8
+\dC ).pg_catalog.int8
+\dC nonesuch.pg_catalog.int8
+\dd host.regression.pg_catalog.pg_class
+\dd [.pg_catalog.pg_class
+\dd nonesuch.pg_catalog.pg_class
+\dD host.regression.public.gtestdomain1
+\dD ].public.gtestdomain1
+\dD nonesuch.public.gtestdomain1
+\ddp host.regression.pg_catalog.pg_class
+\ddp {.pg_catalog.pg_class
+\ddp nonesuch.pg_catalog.pg_class
+\dE host.regression.public.ft
+\dE }.public.ft
+\dE nonesuch.public.ft
+\di host.regression.public.tenk1_hundred
+\di ..public.tenk1_hundred
+\di nonesuch.public.tenk1_hundred
+\dm host.regression.public.mvtest_bb
+\dm ^.public.mvtest_bb
+\dm nonesuch.public.mvtest_bb
+\ds host.regression.public.check_seq
+\ds regression|mydb.public.check_seq
+\ds nonesuch.public.check_seq
+\dt host.regression.public.b_star
+\dt regres+ion.public.b_star
+\dt nonesuch.public.b_star
+\dv host.regression.public.shoe
+\dv regress(ion).public.shoe
+\dv nonesuch.public.shoe
+\des nonesuch.server
+\des regression.server
+\des nonesuch.server
+\des regression.server
+\des nonesuch.username
+\des regression.username
+\dew nonesuch.fdw
+\dew regression.fdw
+\df host.regression.public.namelen
+\df regres[qrstuv]ion.public.namelen
+\df nonesuch.public.namelen
+\dF host.regression.pg_catalog.arabic
+\dF regres{1,2}ion.pg_catalog.arabic
+\dF nonesuch.pg_catalog.arabic
+\dFd host.regression.pg_catalog.arabic_stem
+\dFd regres?ion.pg_catalog.arabic_stem
+\dFd nonesuch.pg_catalog.arabic_stem
+\dFp host.regression.pg_catalog.default
+\dFp ^regression.pg_catalog.default
+\dFp nonesuch.pg_catalog.default
+\dFt host.regression.pg_catalog.ispell
+\dFt regression$.pg_catalog.ispell
+\dFt nonesuch.pg_catalog.ispell
+\dg nonesuch.pg_database_owner
+\dg regression.pg_database_owner
+\dL host.regression.plpgsql
+\dL *.plpgsql
+\dL nonesuch.plpgsql
+\dn host.regression.public
+\dn """".public
+\dn nonesuch.public
+\do host.regression.public.!=-
+\do "regression|mydb".public.!=-
+\do nonesuch.public.!=-
+\dO host.regression.pg_catalog.POSIX
+\dO .pg_catalog.POSIX
+\dO nonesuch.pg_catalog.POSIX
+\dp host.regression.public.a_star
+\dp "regres+ion".public.a_star
+\dp nonesuch.public.a_star
+\dP host.regression.public.mlparted
+\dP "regres(sion)".public.mlparted
+\dP nonesuch.public.mlparted
+\drds nonesuch.lc_messages
+\drds regression.lc_messages
+\dRp public.mypub
+\dRp regression.mypub
+\dRs public.mysub
+\dRs regression.mysub
+\dT host.regression.public.widget
+\dT "regression{1,2}".public.widget
+\dT nonesuch.public.widget
+\dx regression.plpgsql
+\dx nonesuch.plpgsql
+\dX host.regression.public.func_deps_stat
+\dX "^regression$".public.func_deps_stat
+\dX nonesuch.public.func_deps_stat
+\dy regression.myevt
+\dy nonesuch.myevt
+
+-- check that dots within quoted name segments are not counted
+\dA "no.such.access.method"
+\dt "no.such.table.relation"
+\da "no.such.aggregate.function"
+\dAc "no.such.operator.class"
+\dAf "no.such.operator.family"
+\dAo "no.such.operator.of.operator.family"
+\dAp "no.such.operator.support.function.of.operator.family"
+\db "no.such.tablespace"
+\dc "no.such.conversion"
+\dC "no.such.cast"
+\dd "no.such.object.description"
+\dD "no.such.domain"
+\ddp "no.such.default.access.privilege"
+\di "no.such.index.relation"
+\dm "no.such.materialized.view"
+\ds "no.such.relation"
+\dt "no.such.relation"
+\dv "no.such.relation"
+\des "no.such.foreign.server"
+\dew "no.such.foreign.data.wrapper"
+\df "no.such.function"
+\dF "no.such.text.search.configuration"
+\dFd "no.such.text.search.dictionary"
+\dFp "no.such.text.search.parser"
+\dFt "no.such.text.search.template"
+\dg "no.such.role"
+\dL "no.such.language"
+\dn "no.such.schema"
+\do "no.such.operator"
+\dO "no.such.collation"
+\dp "no.such.access.privilege"
+\dP "no.such.partitioned.relation"
+\drds "no.such.setting"
+\dRp "no.such.publication"
+\dRs "no.such.subscription"
+\dT "no.such.data.type"
+\dx "no.such.installed.extension"
+\dX "no.such.extended.statistics"
+\dy "no.such.event.trigger"
+
+-- again, but with dotted schema qualifications.
+\dA "no.such.schema"."no.such.access.method"
+\dt "no.such.schema"."no.such.table.relation"
+\da "no.such.schema"."no.such.aggregate.function"
+\dAc "no.such.schema"."no.such.operator.class"
+\dAf "no.such.schema"."no.such.operator.family"
+\dAo "no.such.schema"."no.such.operator.of.operator.family"
+\dAp "no.such.schema"."no.such.operator.support.function.of.operator.family"
+\db "no.such.schema"."no.such.tablespace"
+\dc "no.such.schema"."no.such.conversion"
+\dC "no.such.schema"."no.such.cast"
+\dd "no.such.schema"."no.such.object.description"
+\dD "no.such.schema"."no.such.domain"
+\ddp "no.such.schema"."no.such.default.access.privilege"
+\di "no.such.schema"."no.such.index.relation"
+\dm "no.such.schema"."no.such.materialized.view"
+\ds "no.such.schema"."no.such.relation"
+\dt "no.such.schema"."no.such.relation"
+\dv "no.such.schema"."no.such.relation"
+\des "no.such.schema"."no.such.foreign.server"
+\dew "no.such.schema"."no.such.foreign.data.wrapper"
+\df "no.such.schema"."no.such.function"
+\dF "no.such.schema"."no.such.text.search.configuration"
+\dFd "no.such.schema"."no.such.text.search.dictionary"
+\dFp "no.such.schema"."no.such.text.search.parser"
+\dFt "no.such.schema"."no.such.text.search.template"
+\dg "no.such.schema"."no.such.role"
+\dL "no.such.schema"."no.such.language"
+\do "no.such.schema"."no.such.operator"
+\dO "no.such.schema"."no.such.collation"
+\dp "no.such.schema"."no.such.access.privilege"
+\dP "no.such.schema"."no.such.partitioned.relation"
+\drds "no.such.schema"."no.such.setting"
+\dRp "no.such.schema"."no.such.publication"
+\dRs "no.such.schema"."no.such.subscription"
+\dT "no.such.schema"."no.such.data.type"
+\dx "no.such.schema"."no.such.installed.extension"
+\dX "no.such.schema"."no.such.extended.statistics"
+\dy "no.such.schema"."no.such.event.trigger"
+
+-- again, but with current database and dotted schema qualifications.
+\dt regression."no.such.schema"."no.such.table.relation"
+\da regression."no.such.schema"."no.such.aggregate.function"
+\dc regression."no.such.schema"."no.such.conversion"
+\dC regression."no.such.schema"."no.such.cast"
+\dd regression."no.such.schema"."no.such.object.description"
+\dD regression."no.such.schema"."no.such.domain"
+\di regression."no.such.schema"."no.such.index.relation"
+\dm regression."no.such.schema"."no.such.materialized.view"
+\ds regression."no.such.schema"."no.such.relation"
+\dt regression."no.such.schema"."no.such.relation"
+\dv regression."no.such.schema"."no.such.relation"
+\df regression."no.such.schema"."no.such.function"
+\dF regression."no.such.schema"."no.such.text.search.configuration"
+\dFd regression."no.such.schema"."no.such.text.search.dictionary"
+\dFp regression."no.such.schema"."no.such.text.search.parser"
+\dFt regression."no.such.schema"."no.such.text.search.template"
+\do regression."no.such.schema"."no.such.operator"
+\dO regression."no.such.schema"."no.such.collation"
+\dp regression."no.such.schema"."no.such.access.privilege"
+\dP regression."no.such.schema"."no.such.partitioned.relation"
+\dT regression."no.such.schema"."no.such.data.type"
+\dX regression."no.such.schema"."no.such.extended.statistics"
+
+-- again, but with dotted database and dotted schema qualifications.
+\dt "no.such.database"."no.such.schema"."no.such.table.relation"
+\da "no.such.database"."no.such.schema"."no.such.aggregate.function"
+\dc "no.such.database"."no.such.schema"."no.such.conversion"
+\dC "no.such.database"."no.such.schema"."no.such.cast"
+\dd "no.such.database"."no.such.schema"."no.such.object.description"
+\dD "no.such.database"."no.such.schema"."no.such.domain"
+\ddp "no.such.database"."no.such.schema"."no.such.default.access.privilege"
+\di "no.such.database"."no.such.schema"."no.such.index.relation"
+\dm "no.such.database"."no.such.schema"."no.such.materialized.view"
+\ds "no.such.database"."no.such.schema"."no.such.relation"
+\dt "no.such.database"."no.such.schema"."no.such.relation"
+\dv "no.such.database"."no.such.schema"."no.such.relation"
+\df "no.such.database"."no.such.schema"."no.such.function"
+\dF "no.such.database"."no.such.schema"."no.such.text.search.configuration"
+\dFd "no.such.database"."no.such.schema"."no.such.text.search.dictionary"
+\dFp "no.such.database"."no.such.schema"."no.such.text.search.parser"
+\dFt "no.such.database"."no.such.schema"."no.such.text.search.template"
+\do "no.such.database"."no.such.schema"."no.such.operator"
+\dO "no.such.database"."no.such.schema"."no.such.collation"
+\dp "no.such.database"."no.such.schema"."no.such.access.privilege"
+\dP "no.such.database"."no.such.schema"."no.such.partitioned.relation"
+\dT "no.such.database"."no.such.schema"."no.such.data.type"
+\dX "no.such.database"."no.such.schema"."no.such.extended.statistics"

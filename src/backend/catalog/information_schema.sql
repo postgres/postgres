@@ -2,7 +2,7 @@
  * SQL Information Schema
  * as defined in ISO/IEC 9075-11:2016
  *
- * Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *
  * src/backend/catalog/information_schema.sql
  *
@@ -514,16 +514,18 @@ CREATE VIEW column_column_usage AS
            CAST(ad.attname AS sql_identifier) AS dependent_column
 
     FROM pg_namespace n, pg_class c, pg_depend d,
-         pg_attribute ac, pg_attribute ad
+         pg_attribute ac, pg_attribute ad, pg_attrdef atd
 
     WHERE n.oid = c.relnamespace
           AND c.oid = ac.attrelid
           AND c.oid = ad.attrelid
-          AND d.classid = 'pg_catalog.pg_class'::regclass
+          AND ac.attnum <> ad.attnum
+          AND ad.attrelid = atd.adrelid
+          AND ad.attnum = atd.adnum
+          AND d.classid = 'pg_catalog.pg_attrdef'::regclass
           AND d.refclassid = 'pg_catalog.pg_class'::regclass
-          AND d.objid = d.refobjid
-          AND c.oid = d.objid
-          AND d.objsubid = ad.attnum
+          AND d.objid = atd.oid
+          AND d.refobjid = ac.attrelid
           AND d.refobjsubid = ac.attnum
           AND ad.attgenerated <> ''
           AND pg_has_role(c.relowner, 'USAGE');
@@ -1838,7 +1840,11 @@ CREATE VIEW table_constraints AS
              AS is_deferrable,
            CAST(CASE WHEN c.condeferred THEN 'YES' ELSE 'NO' END AS yes_or_no)
              AS initially_deferred,
-           CAST('YES' AS yes_or_no) AS enforced
+           CAST('YES' AS yes_or_no) AS enforced,
+           CAST(CASE WHEN c.contype = 'u'
+                     THEN CASE WHEN (SELECT NOT indnullsnotdistinct FROM pg_index WHERE indexrelid = conindid) THEN 'YES' ELSE 'NO' END
+                     END
+                AS yes_or_no) AS nulls_distinct
 
     FROM pg_namespace nc,
          pg_namespace nr,
@@ -1868,7 +1874,8 @@ CREATE VIEW table_constraints AS
            CAST('CHECK' AS character_data) AS constraint_type,
            CAST('NO' AS yes_or_no) AS is_deferrable,
            CAST('NO' AS yes_or_no) AS initially_deferred,
-           CAST('YES' AS yes_or_no) AS enforced
+           CAST('YES' AS yes_or_no) AS enforced,
+           CAST(NULL AS yes_or_no) AS nulls_distinct
 
     FROM pg_namespace nr,
          pg_class r,

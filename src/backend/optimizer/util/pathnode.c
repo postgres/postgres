@@ -3,7 +3,7 @@
  * pathnode.c
  *	  Routines to manipulate pathlists and create path nodes
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1342,7 +1342,7 @@ create_append_path(PlannerInfo *root,
 		pathnode->path.pathkeys = child->pathkeys;
 	}
 	else
-		cost_append(pathnode);
+		cost_append(pathnode, root);
 
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
@@ -3388,6 +3388,10 @@ create_minmaxagg_path(PlannerInfo *root,
  * 'target' is the PathTarget to be computed
  * 'windowFuncs' is a list of WindowFunc structs
  * 'winclause' is a WindowClause that is common to all the WindowFuncs
+ * 'qual' WindowClause.runconditions from lower-level WindowAggPaths.
+ *		Must always be NIL when topwindow == false
+ * 'topwindow' pass as true only for the top-level WindowAgg. False for all
+ *		intermediate WindowAggs.
  *
  * The input must be sorted according to the WindowClause's PARTITION keys
  * plus ORDER BY keys.
@@ -3398,9 +3402,14 @@ create_windowagg_path(PlannerInfo *root,
 					  Path *subpath,
 					  PathTarget *target,
 					  List *windowFuncs,
-					  WindowClause *winclause)
+					  WindowClause *winclause,
+					  List *qual,
+					  bool topwindow)
 {
 	WindowAggPath *pathnode = makeNode(WindowAggPath);
+
+	/* qual can only be set for the topwindow */
+	Assert(qual == NIL || topwindow);
 
 	pathnode->path.pathtype = T_WindowAgg;
 	pathnode->path.parent = rel;
@@ -3416,6 +3425,8 @@ create_windowagg_path(PlannerInfo *root,
 
 	pathnode->subpath = subpath;
 	pathnode->winclause = winclause;
+	pathnode->qual = qual;
+	pathnode->topwindow = topwindow;
 
 	/*
 	 * For costing purposes, assume that there are no redundant partitioning
@@ -3620,6 +3631,7 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
  * 'rowMarks' is a list of PlanRowMarks (non-locking only)
  * 'onconflict' is the ON CONFLICT clause, or NULL
  * 'epqParam' is the ID of Param for EvalPlanQual re-eval
+ * 'mergeActionLists' is a list of lists of MERGE actions (one per rel)
  */
 ModifyTablePath *
 create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
@@ -3631,13 +3643,14 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 						List *updateColnosLists,
 						List *withCheckOptionLists, List *returningLists,
 						List *rowMarks, OnConflictExpr *onconflict,
-						int epqParam)
+						List *mergeActionLists, int epqParam)
 {
 	ModifyTablePath *pathnode = makeNode(ModifyTablePath);
 
-	Assert(operation == CMD_UPDATE ?
-		   list_length(resultRelations) == list_length(updateColnosLists) :
-		   updateColnosLists == NIL);
+	Assert(operation == CMD_MERGE ||
+		   (operation == CMD_UPDATE ?
+			list_length(resultRelations) == list_length(updateColnosLists) :
+			updateColnosLists == NIL));
 	Assert(withCheckOptionLists == NIL ||
 		   list_length(resultRelations) == list_length(withCheckOptionLists));
 	Assert(returningLists == NIL ||
@@ -3697,6 +3710,7 @@ create_modifytable_path(PlannerInfo *root, RelOptInfo *rel,
 	pathnode->rowMarks = rowMarks;
 	pathnode->onconflict = onconflict;
 	pathnode->epqParam = epqParam;
+	pathnode->mergeActionLists = mergeActionLists;
 
 	return pathnode;
 }

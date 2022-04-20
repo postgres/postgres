@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Tests for logical replication table syncing
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 8;
+use Test::More;
 
 # Initialize publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -178,3 +178,5 @@ is($result, qq(0),
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

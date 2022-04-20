@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Testing streaming replication where standby is promoted and a new cascading
 # standby (without WAL) is connected to the promoted standby.  Both archiving
@@ -13,7 +13,7 @@ use PostgreSQL::Test::Utils;
 
 use File::Basename;
 use FindBin;
-use Test::More tests => 1;
+use Test::More;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -28,7 +28,7 @@ $node_primary->init(allows_streaming => 1, has_archiving => 1);
 # Note: consistent use of forward slashes here avoids any escaping problems
 # that arise from use of backslashes. That means we need to double-quote all
 # the paths in the archive_command
-my $perlbin = PostgreSQL::Test::Utils::perl2host($^X);
+my $perlbin = $^X;
 $perlbin =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 my $archivedir_primary = $node_primary->archive_dir;
 $archivedir_primary =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
@@ -101,11 +101,12 @@ $node_cascade->start;
 $node_standby->safe_psql('postgres', "CREATE TABLE tab_int AS SELECT 1 AS a");
 
 # Wait for the replication to catch up
-$node_standby->wait_for_catchup($node_cascade, 'replay',
-	$node_standby->lsn('insert'));
+$node_standby->wait_for_catchup($node_cascade);
 
 # Check that cascading standby has the new content
 my $result =
   $node_cascade->safe_psql('postgres', "SELECT count(*) FROM tab_int");
 print "cascade: $result\n";
 is($result, 1, 'check streamed content on cascade standby');
+
+done_testing();

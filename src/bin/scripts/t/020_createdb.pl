@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 25;
+use Test::More;
 
 program_help_ok('createdb');
 program_version_ok('createdb');
@@ -25,8 +25,36 @@ $node->issues_sql_like(
 	qr/statement: CREATE DATABASE foobar2 ENCODING 'LATIN1'/,
 	'create database with encoding');
 
+if ($ENV{with_icu} eq 'yes')
+{
+	# This fails because template0 uses libc provider and has no ICU
+	# locale set.  It would succeed if template0 used the icu
+	# provider.  XXX Maybe split into multiple tests?
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		'create database with ICU fails without ICU locale specified');
+
+	$node->issues_sql_like(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=en', 'foobar5' ],
+		qr/statement: CREATE DATABASE foobar5 .* LOCALE_PROVIDER icu ICU_LOCALE 'en'/,
+		'create database with ICU locale specified');
+
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=@colNumeric=lower', 'foobarX' ],
+		'fails for invalid ICU locale');
+}
+else
+{
+	$node->command_fails(
+		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		'create database with ICU fails since no ICU support');
+}
+
 $node->command_fails([ 'createdb', 'foobar1' ],
 	'fails if database already exists');
+
+$node->command_fails([ 'createdb', '-T', 'template0', '--locale-provider=xyz', 'foobarX' ],
+	'fails for invalid locale provider');
 
 # Check use of templates with shared dependencies copied from the template.
 my ($ret, $stdout, $stderr) = $node->psql(
@@ -75,3 +103,25 @@ $node->command_checks_all(
 		qr/^createdb: error: database creation failed: ERROR:  invalid locale name|^createdb: error: database creation failed: ERROR:  new LC_CTYPE \(foo'; SELECT '1\) is incompatible with the LC_CTYPE of the template database/s
 	],
 	'createdb with incorrect --lc-ctype');
+
+$node->command_checks_all(
+	[ 'createdb', '--strategy', "foo", 'foobar2' ],
+	1,
+	[qr/^$/],
+	[
+		qr/^createdb: error: database creation failed: ERROR:  invalid create database strategy foo/s
+	],
+	'createdb with incorrect --strategy');
+
+# Check database creation strategy
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', '-S', 'wal_log', 'foobar6' ],
+	qr/statement: CREATE DATABASE foobar6 STRATEGY wal_log TEMPLATE foobar2/,
+	'create database with WAL_LOG strategy');
+
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', '-S', 'file_copy', 'foobar7' ],
+	qr/statement: CREATE DATABASE foobar7 STRATEGY file_copy TEMPLATE foobar2/,
+	'create database with FILE_COPY strategy');
+
+done_testing();

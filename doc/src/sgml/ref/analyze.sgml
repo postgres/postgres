@@ -263,9 +263,35 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
   </para>
 
   <para>
-    If any of the child tables are foreign tables whose foreign data wrappers
-    do not support <command>ANALYZE</command>, those child tables are ignored while
-    gathering inheritance statistics.
+    For partitioned tables, <command>ANALYZE</command> gathers statistics by
+    sampling rows from all partitions; in addition, it will recurse into each
+    partition and update its statistics.  Each leaf partition is analyzed only
+    once, even with multi-level partitioning.  No statistics are collected for
+    only the parent table (without data from its partitions), because with
+    partitioning it's guaranteed to be empty.
+  </para>
+
+  <para>
+    By contrast, if the table being analyzed has inheritance children,
+    <command>ANALYZE</command> gathers two sets of statistics: one on the rows
+    of the parent table only, and a second including rows of both the parent
+    table and all of its children.  This second set of statistics is needed when
+    planning queries that process the inheritance tree as a whole.  The child
+    tables themselves are not individually analyzed in this case.
+  </para>
+
+  <para>
+    The autovacuum daemon does not process partitioned tables, nor does it
+    process inheritance parents if only the children are ever modified.
+    It is usually necessary to periodically run a manual
+    <command>ANALYZE</command> to keep the statistics of the table hierarchy
+    up to date.
+  </para>
+
+  <para>
+    If any child tables or partitions are foreign tables whose foreign
+    data wrappers do not support <command>ANALYZE</command>, those tables are
+    ignored while gathering inheritance statistics.
   </para>
 
   <para>

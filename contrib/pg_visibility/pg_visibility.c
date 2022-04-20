@@ -3,7 +3,7 @@
  * pg_visibility.c
  *	  display visibility map information and page-level visibility bits
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  *	  contrib/pg_visibility/pg_visibility.c
  *-------------------------------------------------------------------------
@@ -13,6 +13,7 @@
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/visibilitymap.h"
+#include "access/xloginsert.h"
 #include "catalog/pg_type.h"
 #include "catalog/storage_xlog.h"
 #include "funcapi.h"

@@ -1,11 +1,11 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 42;
+use Test::More;
 
 program_help_ok('pg_receivewal');
 program_version_ok('pg_receivewal');
@@ -34,12 +34,9 @@ $primary->command_fails(
 	[ 'pg_receivewal', '-D', $stream_dir, '--synchronous', '--no-sync' ],
 	'failure if --synchronous specified with --no-sync');
 $primary->command_fails_like(
-	[
-		'pg_receivewal', '-D', $stream_dir, '--compression-method', 'none',
-		'--compress',    '1'
-	],
-	qr/\Qpg_receivewal: error: cannot use --compress with --compression-method=none/,
-	'failure if --compress specified with --compression-method=none');
+	[ 'pg_receivewal', '-D', $stream_dir, '--compress', 'none:1', ],
+	qr/\Qpg_receivewal: error: invalid compression specification: compression algorithm "none" does not accept a compression level/,
+	'failure if --compress none:N (where N > 0)');
 
 # Slot creation and drop
 my $slot_name = 'test';
@@ -48,7 +45,7 @@ $primary->command_ok(
 	'creating a replication slot');
 my $slot = $primary->slot($slot_name);
 is($slot->{'slot_type'}, 'physical', 'physical replication slot was created');
-is($slot->{'restart_lsn'}, '', 'restart LSN of new slot is null');
+is($slot->{'restart_lsn'}, '',       'restart LSN of new slot is null');
 $primary->command_ok([ 'pg_receivewal', '--slot', $slot_name, '--drop-slot' ],
 	'dropping a replication slot');
 is($primary->slot($slot_name)->{'slot_type'},
@@ -93,15 +90,10 @@ SKIP:
 	chomp($nextlsn);
 	$primary->psql('postgres', 'INSERT INTO test_table VALUES (2);');
 
-	# Note the trailing whitespace after the value of --compress, that is
-	# a valid value.
 	$primary->command_ok(
 		[
-			'pg_receivewal',        '-D',
-			$stream_dir,            '--verbose',
-			'--endpos',             $nextlsn,
-			'--compression-method', 'gzip',
-			'--compress',           '1 ',
+			'pg_receivewal', '-D',     $stream_dir,  '--verbose',
+			'--endpos',      $nextlsn, '--compress', 'gzip:1',
 			'--no-loop'
 		],
 		"streaming some WAL using ZLIB compression");
@@ -129,9 +121,8 @@ SKIP:
 	# available.
 	my $gzip = $ENV{GZIP_PROGRAM};
 	skip "program gzip is not found in your system", 1
-	  if ( !defined $gzip
-		|| $gzip eq ''
-		|| system_log($gzip, '--version') != 0);
+	  if (!defined $gzip
+		|| $gzip eq '');
 
 	my $gzip_is_valid = system_log($gzip, '--test', @zlib_wals);
 	is($gzip_is_valid, 0,
@@ -142,7 +133,7 @@ SKIP:
 SKIP:
 {
 	skip "postgres was not built with LZ4 support", 5
-	  if (!check_pg_config("#define HAVE_LIBLZ4 1"));
+	  if (!check_pg_config("#define USE_LZ4 1"));
 
 	# Generate more WAL including one completed, compressed segment.
 	$primary->psql('postgres', 'SELECT pg_switch_wal();');
@@ -154,13 +145,11 @@ SKIP:
 	# Stream up to the given position.
 	$primary->command_ok(
 		[
-			'pg_receivewal', '-D',
-			$stream_dir,     '--verbose',
-			'--endpos',      $nextlsn,
-			'--no-loop',     '--compression-method',
+			'pg_receivewal', '-D',     $stream_dir, '--verbose',
+			'--endpos',      $nextlsn, '--no-loop', '--compress',
 			'lz4'
 		],
-		'streaming some WAL using --compression-method=lz4');
+		'streaming some WAL using --compress=lz4');
 
 	# Verify that the stored files are generated with their expected
 	# names.
@@ -185,9 +174,8 @@ SKIP:
 	# command.
 	my $lz4 = $ENV{LZ4};
 	skip "program lz4 is not found in your system", 1
-	  if ( !defined $lz4
-		|| $lz4 eq ''
-		|| system_log($lz4, '--version') != 0);
+	  if (!defined $lz4
+		|| $lz4 eq '');
 
 	my $lz4_is_valid = system_log($lz4, '-t', @lz4_wals);
 	is($lz4_is_valid, 0,
@@ -290,7 +278,7 @@ $standby->psql(
 	"CREATE_REPLICATION_SLOT $archive_slot PHYSICAL (RESERVE_WAL)",
 	replication => 1);
 # Wait for standby catchup
-$primary->wait_for_catchup($standby, 'replay', $primary->lsn('write'));
+$primary->wait_for_catchup($standby);
 # Get a walfilename from before the promotion to make sure it is archived
 # after promotion
 my $standby_slot = $standby->slot($archive_slot);
@@ -334,3 +322,5 @@ ok(-e "$timeline_dir/$walfile_after_promotion",
 	"WAL segment $walfile_after_promotion archived after timeline jump");
 ok(-e "$timeline_dir/00000002.history",
 	"timeline history file archived after timeline jump");
+
+done_testing();

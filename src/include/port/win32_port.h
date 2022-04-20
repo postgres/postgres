@@ -6,7 +6,7 @@
  * Note this is read in MinGW as well as native Windows builds,
  * but not in Cygwin builds.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port/win32_port.h
@@ -449,8 +449,8 @@ extern char *pgwin32_setlocale(int category, const char *locale);
 /* In backend/port/win32/signal.c */
 extern PGDLLIMPORT volatile int pg_signal_queue;
 extern PGDLLIMPORT int pg_signal_mask;
-extern HANDLE pgwin32_signal_event;
-extern HANDLE pgwin32_initial_signal_pipe;
+extern PGDLLIMPORT HANDLE pgwin32_signal_event;
+extern PGDLLIMPORT HANDLE pgwin32_initial_signal_pipe;
 
 #define UNBLOCKED_SIGNAL_QUEUE()	(pg_signal_queue & ~pg_signal_mask)
 #define PG_SIGNAL_COUNT 32
@@ -485,7 +485,7 @@ int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
 int			pgwin32_send(SOCKET s, const void *buf, int len, int flags);
 int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 
-extern int	pgwin32_noblock;
+extern PGDLLIMPORT int pgwin32_noblock;
 
 #endif							/* FRONTEND */
 
@@ -528,9 +528,6 @@ typedef unsigned short mode_t;
 #define F_OK 0
 #define W_OK 2
 #define R_OK 4
-
-/* Pulled from Makefile.port in MinGW */
-#define DLSUFFIX ".dll"
 
 #endif							/* _MSC_VER */
 

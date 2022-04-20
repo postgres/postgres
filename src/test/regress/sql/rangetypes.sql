@@ -1,9 +1,8 @@
 -- Tests for range data types.
 
-create type textrange as range (subtype=text, collation="C");
-
 --
 -- test input parser
+-- (type textrange was already made in test_setup.sql)
 --
 
 -- negative tests; should fail
@@ -424,13 +423,12 @@ set timezone to default;
 
 --
 -- Test user-defined range of floats
+-- (type float8range was already made in test_setup.sql)
 --
 
 --should fail
-create type float8range as range (subtype=float8, subtype_diff=float4mi);
+create type bogus_float8range as range (subtype=float8, subtype_diff=float4mi);
 
---should succeed
-create type float8range as range (subtype=float8, subtype_diff=float8mi);
 select '[123.001, 5.e9)'::float8range @> 888.882::float8;
 create table float8range_test(f8r float8range, i int);
 insert into float8range_test values(float8range(-100.00007, '1.111113e9'), 42);

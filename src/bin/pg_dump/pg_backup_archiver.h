@@ -121,14 +121,14 @@ struct ParallelState;
 #define READ_ERROR_EXIT(fd) \
 	do { \
 		if (feof(fd)) \
-			fatal("could not read from input file: end of file"); \
+			pg_fatal("could not read from input file: end of file"); \
 		else \
-			fatal("could not read from input file: %m"); \
+			pg_fatal("could not read from input file: %m"); \
 	} while (0)
 
 #define WRITE_ERROR_EXIT \
 	do { \
-		fatal("could not write to output file: %m"); \
+		pg_fatal("could not write to output file: %m"); \
 	} while (0)
 
 typedef enum T_Action

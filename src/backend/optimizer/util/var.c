@@ -9,7 +9,7 @@
  * contains variables.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -87,6 +87,9 @@ static Relids alias_relid_set(Query *query, Relids relids);
  * pull_varnos
  *		Create a set of all the distinct varnos present in a parsetree.
  *		Only varnos that reference level-zero rtable entries are considered.
+ *
+ * "root" can be passed as NULL if it is not necessary to process
+ * PlaceHolderVars.
  *
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
@@ -168,9 +171,13 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 		/*
 		 * If a PlaceHolderVar is not of the target query level, ignore it,
 		 * instead recursing into its expression to see if it contains any
-		 * vars that are of the target level.
+		 * vars that are of the target level.  We'll also do that when the
+		 * caller doesn't pass a "root" pointer.  (We probably shouldn't see
+		 * PlaceHolderVars at all in such cases, but if we do, this is a
+		 * reasonable behavior.)
 		 */
-		if (phv->phlevelsup == context->sublevels_up)
+		if (phv->phlevelsup == context->sublevels_up &&
+			context->root != NULL)
 		{
 			/*
 			 * Ideally, the PHV's contribution to context->varnos is its
@@ -767,16 +774,13 @@ flatten_join_alias_vars_mutator(Node *node,
 			RowExpr    *rowexpr;
 			List	   *fields = NIL;
 			List	   *colnames = NIL;
-			AttrNumber	attnum;
 			ListCell   *lv;
 			ListCell   *ln;
 
-			attnum = 0;
 			Assert(list_length(rte->joinaliasvars) == list_length(rte->eref->colnames));
 			forboth(lv, rte->joinaliasvars, ln, rte->eref->colnames)
 			{
 				newvar = (Node *) lfirst(lv);
-				attnum++;
 				/* Ignore dropped columns */
 				if (newvar == NULL)
 					continue;
@@ -802,6 +806,7 @@ flatten_join_alias_vars_mutator(Node *node,
 			rowexpr->args = fields;
 			rowexpr->row_typeid = var->vartype;
 			rowexpr->row_format = COERCE_IMPLICIT_CAST;
+			/* vartype will always be RECORDOID, so we always need colnames */
 			rowexpr->colnames = colnames;
 			rowexpr->location = var->location;
 

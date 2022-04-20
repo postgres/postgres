@@ -52,7 +52,7 @@
  *	 HeapTupleSatisfiesAny()
  *		  all tuples are visible
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1564,8 +1564,8 @@ HeapTupleHeaderIsOnlyLocked(HeapTupleHeader tuple)
 static bool
 TransactionIdInArray(TransactionId xid, TransactionId *xip, Size num)
 {
-	return bsearch(&xid, xip, num,
-				   sizeof(TransactionId), xidComparator) != NULL;
+	return num > 0 &&
+		bsearch(&xid, xip, num, sizeof(TransactionId), xidComparator) != NULL;
 }
 
 /*

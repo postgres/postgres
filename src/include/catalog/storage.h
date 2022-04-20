@@ -4,7 +4,7 @@
  *	  prototypes for functions in backend/catalog/storage.c
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/storage.h
@@ -20,9 +20,11 @@
 #include "utils/relcache.h"
 
 /* GUC variables */
-extern int	wal_skip_threshold;
+extern PGDLLIMPORT int wal_skip_threshold;
 
-extern SMgrRelation RelationCreateStorage(RelFileNode rnode, char relpersistence);
+extern SMgrRelation RelationCreateStorage(RelFileNode rnode,
+										  char relpersistence,
+										  bool register_delete);
 extern void RelationDropStorage(Relation rel);
 extern void RelationPreserveStorage(RelFileNode rnode, bool atCommit);
 extern void RelationPreTruncate(Relation rel);

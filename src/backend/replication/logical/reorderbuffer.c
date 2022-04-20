@@ -4,11 +4,11 @@
  *	  PostgreSQL logical replay/reorder buffer management
  *
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  src/backend/replication/reorderbuffer.c
+ *	  src/backend/replication/logical/reorderbuffer.c
  *
  * NOTES
  *	  This module gets handed individual pieces of transactions in the order
@@ -328,8 +328,15 @@ ReorderBufferAllocate(void)
 											SLAB_DEFAULT_BLOCK_SIZE,
 											sizeof(ReorderBufferTXN));
 
+	/*
+	 * XXX the allocation sizes used below pre-date generation context's block
+	 * growing code.  These values should likely be benchmarked and set to
+	 * more suitable values.
+	 */
 	buffer->tup_context = GenerationContextCreate(new_ctx,
 												  "Tuples",
+												  SLAB_LARGE_BLOCK_SIZE,
+												  SLAB_LARGE_BLOCK_SIZE,
 												  SLAB_LARGE_BLOCK_SIZE);
 
 	hash_ctl.keysize = sizeof(TransactionId);
@@ -1869,7 +1876,7 @@ ReorderBufferStreamCommit(ReorderBuffer *rb, ReorderBufferTXN *txn)
  * xid 502 which is not visible to our snapshot.  And when we will try to
  * decode with that catalog tuple, it can lead to a wrong result or a crash.
  * So, it is necessary to detect concurrent aborts to allow streaming of
- * in-progress transactions or decoding of prepared  transactions.
+ * in-progress transactions or decoding of prepared transactions.
  *
  * For detecting the concurrent abort we set CheckXidAlive to the current
  * (sub)transaction's xid for which this change belongs to.  And, during

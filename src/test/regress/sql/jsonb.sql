@@ -1,3 +1,13 @@
+-- directory paths are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+
+CREATE TABLE testjsonb (
+       j jsonb
+);
+
+\set filename :abs_srcdir '/data/jsonb.data'
+COPY testjsonb FROM :'filename';
+
 -- Strings.
 SELECT '""'::jsonb;				-- OK.
 SELECT $$''$$::jsonb;			-- ERROR, single quotes are not allowed

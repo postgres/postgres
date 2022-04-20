@@ -3,7 +3,7 @@
  * proc.c
  *	  routines to manage per-process shared memory data structure
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -392,7 +392,7 @@ InitProcess(void)
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
 	MyProc->isBackgroundWorker = IsBackgroundWorker;
-	MyProc->delayChkpt = false;
+	MyProc->delayChkptFlags = 0;
 	MyProc->statusFlags = 0;
 	/* NB -- autovac launcher intentionally does not set IS_AUTOVACUUM */
 	if (IsAutoVacuumWorkerProcess())
@@ -577,7 +577,7 @@ InitAuxiliaryProcess(void)
 	MyProc->roleId = InvalidOid;
 	MyProc->tempNamespaceId = InvalidOid;
 	MyProc->isBackgroundWorker = IsBackgroundWorker;
-	MyProc->delayChkpt = false;
+	MyProc->delayChkptFlags = 0;
 	MyProc->statusFlags = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwWaitMode = 0;
@@ -829,13 +829,6 @@ ProcKill(int code, Datum arg)
 
 	/* Cancel any pending condition variable sleep, too */
 	ConditionVariableCancelSleep();
-
-	/* Make sure active replication slots are released */
-	if (MyReplicationSlot != NULL)
-		ReplicationSlotRelease();
-
-	/* Also cleanup all the temporary slots. */
-	ReplicationSlotCleanup();
 
 	/*
 	 * Detach from any lock group of which we are a member.  If the leader

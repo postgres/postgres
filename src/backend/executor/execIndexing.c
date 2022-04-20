@@ -95,7 +95,7 @@
  * with the higher XID backs out.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -935,11 +935,18 @@ static bool
 index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 						  IndexInfo *indexInfo, Relation indexRelation)
 {
-	Bitmapset  *updatedCols = ExecGetUpdatedCols(resultRelInfo, estate);
-	Bitmapset  *extraUpdatedCols = ExecGetExtraUpdatedCols(resultRelInfo, estate);
+	Bitmapset  *updatedCols;
+	Bitmapset  *extraUpdatedCols;
 	Bitmapset  *allUpdatedCols;
 	bool		hasexpression = false;
 	List	   *idxExprs;
+
+	/*
+	 * Check cache first
+	 */
+	if (indexInfo->ii_CheckedUnchanged)
+		return indexInfo->ii_IndexUnchanged;
+	indexInfo->ii_CheckedUnchanged = true;
 
 	/*
 	 * Check for indexed attribute overlap with updated columns.
@@ -947,7 +954,13 @@ index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 	 * Only do this for key columns.  A change to a non-key column within an
 	 * INCLUDE index should not be counted here.  Non-key column values are
 	 * opaque payload state to the index AM, a little like an extra table TID.
+	 *
+	 * Note that row-level BEFORE triggers won't affect our behavior, since
+	 * they don't affect the updatedCols bitmaps generally.  It doesn't seem
+	 * worth the trouble of checking which attributes were changed directly.
 	 */
+	updatedCols = ExecGetUpdatedCols(resultRelInfo, estate);
+	extraUpdatedCols = ExecGetExtraUpdatedCols(resultRelInfo, estate);
 	for (int attr = 0; attr < indexInfo->ii_NumIndexKeyAttrs; attr++)
 	{
 		int			keycol = indexInfo->ii_IndexAttrNumbers[attr];
@@ -968,6 +981,7 @@ index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 						  extraUpdatedCols))
 		{
 			/* Changed key column -- don't hint for this index */
+			indexInfo->ii_IndexUnchanged = false;
 			return false;
 		}
 	}
@@ -981,7 +995,10 @@ index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 	 * shows that the index as a whole is logically unchanged by UPDATE.
 	 */
 	if (!hasexpression)
+	{
+		indexInfo->ii_IndexUnchanged = true;
 		return true;
+	}
 
 	/*
 	 * Need to pass only one bms to expression_tree_walker helper function.
@@ -1008,8 +1025,18 @@ index_unchanged_by_update(ResultRelInfo *resultRelInfo, EState *estate,
 		bms_free(allUpdatedCols);
 
 	if (hasexpression)
+	{
+		indexInfo->ii_IndexUnchanged = false;
 		return false;
+	}
 
+	/*
+	 * Deliberately don't consider index predicates.  We should even give the
+	 * hint when result rel's "updated tuple" has no corresponding index
+	 * tuple, which is possible with a partial index (provided the usual
+	 * conditions are met).
+	 */
+	indexInfo->ii_IndexUnchanged = true;
 	return true;
 }
 

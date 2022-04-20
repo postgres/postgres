@@ -488,7 +488,7 @@ ExecStart=/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=mixed
 KillSignal=SIGINT
-TimeoutSec=0
+TimeoutSec=infinity
 
 [Install]
 WantedBy=multi-user.target
@@ -500,11 +500,11 @@ WantedBy=multi-user.target
      <para>
       Consider carefully the timeout
       setting.  <application>systemd</application> has a default timeout of 90
-      seconds as of this writing and will kill a process that does not notify
+      seconds as of this writing and will kill a process that does not report
       readiness within that time.  But a <productname>PostgreSQL</productname>
       server that might have to perform crash recovery at startup could take
-      much longer to become ready.  The suggested value of 0 disables the
-      timeout logic.
+      much longer to become ready.  The suggested value
+      of <literal>infinity</literal> disables the timeout logic.
      </para>
     </listitem>
 
@@ -1448,7 +1448,7 @@ export PG_OOM_ADJUST_VALUE=0
     server must be shut down to view this runtime-computed parameter.
     This might look like:
 <programlisting>
-$ <userinput>postgres -D $PGDATA -C shared_memory_size_in_huge_pages</userinput>
+$ <userinput>postgres -D $PGDATA -C shared_memory_size_in_huge_pages 2> /dev/null</userinput>
 3170
 $ <userinput>grep ^Hugepagesize /proc/meminfo</userinput>
 Hugepagesize:       2048 kB
@@ -1552,11 +1552,7 @@ $ <userinput>cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages</userinp
        After receiving <systemitem>SIGTERM</systemitem>, the server
        disallows new connections, but lets existing sessions end their
        work normally. It shuts down only after all of the sessions terminate.
-       If the server is in online backup mode, it additionally waits
-       until online backup mode is no longer active.  While backup mode is
-       active, new connections will still be allowed, but only to superusers
-       (this exception allows a superuser to connect to terminate
-       online backup mode).  If the server is in recovery when a smart
+       If the server is in recovery when a smart
        shutdown is requested, recovery and streaming replication will be
        stopped only after all regular sessions have terminated.
       </para>
@@ -1572,8 +1568,6 @@ $ <userinput>cat /sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages</userinp
        server processes <systemitem>SIGTERM</systemitem>, which will cause them
        to abort their current transactions and exit promptly. It then
        waits for all server processes to exit and finally shuts down.
-       If the server is in online backup mode, backup mode will be
-       terminated, rendering the backup useless.
       </para>
      </listitem>
     </varlistentry>
@@ -2182,6 +2176,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
 
   <indexterm zone="ssl-tcp">
    <primary>SSL</primary>
+   <secondary>TLS</secondary>
   </indexterm>
 
   <para>
@@ -2193,13 +2188,25 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    enabled at build time (see <xref linkend="installation"/>).
   </para>
 
+  <para>
+   The terms <acronym>SSL</acronym> and <acronym>TLS</acronym> are often used
+   interchangeably to mean a secure encrypted connection using a
+   <acronym>TLS</acronym> protocol. <acronym>SSL</acronym> protocols are the
+   precursors to <acronym>TLS</acronym> protocols, and the term
+   <acronym>SSL</acronym> is still used for encrypted connections even though
+   <acronym>SSL</acronym> protocols are no longer supported.
+   <acronym>SSL</acronym> is used interchangeably with <acronym>TLS</acronym>
+   in <productname>PostgreSQL</productname>.
+
+  </para>
   <sect2 id="ssl-setup">
    <title>Basic Setup</title>
 
   <para>
    With <acronym>SSL</acronym> support compiled in, the
    <productname>PostgreSQL</productname> server can be started with
-   <acronym>SSL</acronym> enabled by setting the parameter
+   support for encrypted connections using <acronym>TLS</acronym> protocols
+   enabled by by setting the parameter
    <xref linkend="guc-ssl"/> to <literal>on</literal> in
    <filename>postgresql.conf</filename>.  The server will listen for both normal
    and <acronym>SSL</acronym> connections on the same TCP port, and will negotiate

@@ -477,7 +477,12 @@ SELECT * FROM gtest_tableoid;
 
 -- drop column behavior
 CREATE TABLE gtest10 (a int PRIMARY KEY, b int, c int GENERATED ALWAYS AS (b * 2) STORED);
-ALTER TABLE gtest10 DROP COLUMN b;
+ALTER TABLE gtest10 DROP COLUMN b;  -- fails
+ERROR:  cannot drop column b of table gtest10 because other objects depend on it
+DETAIL:  column c of table gtest10 depends on column b of table gtest10
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+ALTER TABLE gtest10 DROP COLUMN b CASCADE;  -- drops c too
+NOTICE:  drop cascades to column c of table gtest10
 \d gtest10
               Table "public.gtest10"
  Column |  Type   | Collation | Nullable | Default 
@@ -519,6 +524,10 @@ SELECT a, c FROM gtest12s;  -- allowed
 (2 rows)
 
 RESET ROLE;
+DROP FUNCTION gf1(int);  -- fail
+ERROR:  cannot drop function gf1(integer) because other objects depend on it
+DETAIL:  column c of table gtest12s depends on function gf1(integer)
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP TABLE gtest11s, gtest12s;
 DROP FUNCTION gf1(int);
 DROP USER regress_user11;

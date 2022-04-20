@@ -6,7 +6,7 @@
  * NOTE: for historical reasons, this does not correspond to pqcomm.c.
  * pqcomm.c's routines are declared in libpq.h.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/libpq/pqcomm.h
@@ -135,7 +135,7 @@ typedef ProtocolVersion MsgType;
 
 typedef uint32 PacketLen;
 
-extern bool Db_user_namespace;
+extern PGDLLIMPORT bool Db_user_namespace;
 
 /*
  * In protocol 3.0 and later, the startup packet length is not fixed, but

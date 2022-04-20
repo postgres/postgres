@@ -3,13 +3,14 @@
  *
  *	server checks and output routines
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/check.c
  */
 
 #include "postgres_fe.h"
 
 #include "catalog/pg_authid_d.h"
+#include "catalog/pg_collation.h"
 #include "fe_utils/string_utils.h"
 #include "mb/pg_wchar.h"
 #include "pg_upgrade.h"
@@ -349,6 +350,18 @@ check_locale_and_encoding(DbInfo *olddb, DbInfo *newdb)
 	if (!equivalent_locale(LC_CTYPE, olddb->db_ctype, newdb->db_ctype))
 		pg_fatal("lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
 				 olddb->db_name, olddb->db_ctype, newdb->db_ctype);
+	if (olddb->db_collprovider != newdb->db_collprovider)
+		pg_fatal("locale providers for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name,
+				 collprovider_name(olddb->db_collprovider),
+				 collprovider_name(newdb->db_collprovider));
+	if ((olddb->db_iculocale == NULL && newdb->db_iculocale != NULL) ||
+		(olddb->db_iculocale != NULL && newdb->db_iculocale == NULL) ||
+		(olddb->db_iculocale != NULL && newdb->db_iculocale != NULL && strcmp(olddb->db_iculocale, newdb->db_iculocale) != 0))
+		pg_fatal("ICU locale values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n",
+				 olddb->db_name,
+				 olddb->db_iculocale ? olddb->db_iculocale : "(null)",
+				 newdb->db_iculocale ? newdb->db_iculocale : "(null)");
 }
 
 /*
@@ -669,6 +682,13 @@ check_is_install_user(ClusterInfo *cluster)
 }
 
 
+/*
+ *	check_proper_datallowconn
+ *
+ *	Ensure that all non-template0 databases allow connections since they
+ *	otherwise won't be restored; and that template0 explicitly doesn't allow
+ *	connections since it would make pg_dumpall --globals restore fail.
+ */
 static void
 check_proper_datallowconn(ClusterInfo *cluster)
 {
@@ -678,8 +698,15 @@ check_proper_datallowconn(ClusterInfo *cluster)
 	int			ntups;
 	int			i_datname;
 	int			i_datallowconn;
+	FILE	   *script = NULL;
+	char		output_path[MAXPGPATH];
+	bool		found = false;
 
 	prep_status("Checking database connection settings");
+
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
+			 "databases_with_datallowconn_false.txt");
 
 	conn_template1 = connectToServer(cluster, "template1");
 
@@ -711,8 +738,14 @@ check_proper_datallowconn(ClusterInfo *cluster)
 			 * restore
 			 */
 			if (strcmp(datallowconn, "f") == 0)
-				pg_fatal("All non-template0 databases must allow connections, "
-						 "i.e. their pg_database.datallowconn must be true\n");
+			{
+				found = true;
+				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
+					pg_fatal("could not open file \"%s\": %s\n",
+							 output_path, strerror(errno));
+
+				fprintf(script, "%s\n", datname);
+			}
 		}
 	}
 
@@ -720,7 +753,22 @@ check_proper_datallowconn(ClusterInfo *cluster)
 
 	PQfinish(conn_template1);
 
-	check_ok();
+	if (script)
+		fclose(script);
+
+	if (found)
+	{
+		pg_log(PG_REPORT, "fatal\n");
+		pg_fatal("All non-template0 databases must allow connections, i.e. their\n"
+				 "pg_database.datallowconn must be true.  Your installation contains\n"
+				 "non-template0 databases with their pg_database.datallowconn set to\n"
+				 "false.  Consider allowing connection for all non-template0 databases\n"
+				 "or drop the databases which do not allow connections.  A list of\n"
+				 "databases with the problem is in the file:\n"
+				 "    %s\n\n", output_path);
+	}
+	else
+		check_ok();
 }
 
 
@@ -783,7 +831,8 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		return;
 	}
 
-	snprintf(output_path, sizeof(output_path),
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
 			 "contrib_isn_and_int8_pass_by_value.txt");
 
 	for (dbnum = 0; dbnum < cluster->dbarr.ndbs; dbnum++)
@@ -860,7 +909,8 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 
 	prep_status("Checking for user-defined postfix operators");
 
-	snprintf(output_path, sizeof(output_path),
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
 			 "postfix_ops.txt");
 
 	/* Find any user defined postfix operators */
@@ -959,7 +1009,8 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 
 	prep_status("Checking for tables WITH OIDS");
 
-	snprintf(output_path, sizeof(output_path),
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
 			 "tables_with_oids.txt");
 
 	/* Find any tables declared WITH OIDS */
@@ -1214,7 +1265,8 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 
 	prep_status("Checking for user-defined encoding conversions");
 
-	snprintf(output_path, sizeof(output_path),
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir,
 			 "encoding_conversions.txt");
 
 	/* Find any user defined encoding conversions */

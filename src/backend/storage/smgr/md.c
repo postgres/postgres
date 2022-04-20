@@ -10,7 +10,7 @@
  * It doesn't matter whether the bits are on spinning rust or some other
  * storage technology.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -162,9 +162,11 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 {
 	/*
 	 * Close it first, to ensure that we notice if the fork has been unlinked
-	 * since we opened it.
+	 * since we opened it.  As an optimization, we can skip that in recovery,
+	 * which already closes relations when dropping them.
 	 */
-	mdclose(reln, forkNum);
+	if (!InRecovery)
+		mdclose(reln, forkNum);
 
 	return (mdopenfork(reln, forkNum, EXTENSION_RETURN_NULL) != NULL);
 }
@@ -547,6 +549,12 @@ mdclose(SMgrRelation reln, ForkNumber forknum)
 		_fdvec_resize(reln, forknum, nopensegs - 1);
 		nopensegs--;
 	}
+}
+
+void
+mdrelease(void)
+{
+	closeAllVfds();
 }
 
 /*

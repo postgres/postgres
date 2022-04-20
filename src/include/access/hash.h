@@ -4,7 +4,7 @@
  *	  header file for postgres hash access method implementation
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/hash.h
@@ -84,6 +84,8 @@ typedef struct HashPageOpaqueData
 } HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
+
+#define HashPageGetOpaque(page) ((HashPageOpaque) PageGetSpecialPointer(page))
 
 #define H_NEEDS_SPLIT_CLEANUP(opaque)	(((opaque)->hasho_flag & LH_BUCKET_NEEDS_SPLIT_CLEANUP) != 0)
 #define H_BUCKET_BEING_SPLIT(opaque)	(((opaque)->hasho_flag & LH_BUCKET_BEING_SPLIT) != 0)

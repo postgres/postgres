@@ -25,3 +25,10 @@ case $host in
 	fi
     ;;
 esac
+
+case $host_cpu in
+  ia64)
+    DLSUFFIX=".so";;
+  *)
+    DLSUFFIX=".sl";;
+esac

@@ -1,8 +1,6 @@
-DO $$ plpy.notice("This is plpythonu.") $$ LANGUAGE plpythonu;
-NOTICE:  This is plpythonu.
-DO $$ plpy.notice("This is plpython2u.") $$ LANGUAGE plpython2u;
-NOTICE:  This is plpython2u.
-DO $$ raise Exception("error test") $$ LANGUAGE plpythonu;
+DO $$ plpy.notice("This is plpython3u.") $$ LANGUAGE plpython3u;
+NOTICE:  This is plpython3u.
+DO $$ raise Exception("error test") $$ LANGUAGE plpython3u;
 ERROR:  Exception: error test
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>

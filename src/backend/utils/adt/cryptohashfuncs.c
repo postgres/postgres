@@ -3,7 +3,7 @@
  * cryptohashfuncs.c
  *	  Cryptographic hash functions
  *
- * Portions Copyright (c) 2018-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2018-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -35,15 +35,17 @@ md5_text(PG_FUNCTION_ARGS)
 	text	   *in_text = PG_GETARG_TEXT_PP(0);
 	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
+	const char *errstr = NULL;
 
 	/* Calculate the length of the buffer using varlena metadata */
 	len = VARSIZE_ANY_EXHDR(in_text);
 
 	/* get the hash result */
-	if (pg_md5_hash(VARDATA_ANY(in_text), len, hexsum) == false)
+	if (pg_md5_hash(VARDATA_ANY(in_text), len, hexsum, &errstr) == false)
 		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute %s hash: %s", "MD5",
+						errstr)));
 
 	/* convert to text and return it */
 	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
@@ -58,12 +60,14 @@ md5_bytea(PG_FUNCTION_ARGS)
 	bytea	   *in = PG_GETARG_BYTEA_PP(0);
 	size_t		len;
 	char		hexsum[MD5_HASH_LEN + 1];
+	const char *errstr = NULL;
 
 	len = VARSIZE_ANY_EXHDR(in);
-	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum) == false)
+	if (pg_md5_hash(VARDATA_ANY(in), len, hexsum, &errstr) == false)
 		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("could not compute %s hash: %s", "MD5",
+						errstr)));
 
 	PG_RETURN_TEXT_P(cstring_to_text(hexsum));
 }
@@ -111,12 +115,15 @@ cryptohash_internal(pg_cryptohash_type type, bytea *input)
 
 	ctx = pg_cryptohash_create(type);
 	if (pg_cryptohash_init(ctx) < 0)
-		elog(ERROR, "could not initialize %s context", typestr);
+		elog(ERROR, "could not initialize %s context: %s", typestr,
+			 pg_cryptohash_error(ctx));
 	if (pg_cryptohash_update(ctx, data, len) < 0)
-		elog(ERROR, "could not update %s context", typestr);
+		elog(ERROR, "could not update %s context: %s", typestr,
+			 pg_cryptohash_error(ctx));
 	if (pg_cryptohash_final(ctx, (unsigned char *) VARDATA(result),
 							digest_len) < 0)
-		elog(ERROR, "could not finalize %s context", typestr);
+		elog(ERROR, "could not finalize %s context: %s", typestr,
+			 pg_cryptohash_error(ctx));
 	pg_cryptohash_free(ctx);
 
 	SET_VARSIZE(result, digest_len + VARHDRSZ);

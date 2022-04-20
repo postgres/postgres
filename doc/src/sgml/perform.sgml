@@ -1221,7 +1221,7 @@ ANALYZE zipcodes;
 SELECT stxname, stxkeys, stxddependencies
   FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid)
   WHERE stxname = 'stts';
- stxname | stxkeys |             stxddependencies             
+ stxname | stxkeys |             stxddependencies
 ---------+---------+------------------------------------------
  stts    | 1 5     | {"1 => 5": 1.000000, "5 => 1": 0.423130}
 (1 row)
@@ -1337,7 +1337,7 @@ nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
     <title>Multivariate MCV Lists</title>
 
     <para>
-     Another type of statistics stored for each column are most-common value
+     Another type of statistic stored for each column are most-common value
      lists.  This allows very accurate estimates for individual columns, but
      may result in significant misestimates for queries with conditions on
      multiple columns.
@@ -1367,7 +1367,7 @@ ANALYZE zipcodes;
 SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
                 pg_mcv_list_items(stxdmcv) m WHERE stxname = 'stts3';
 
- index |         values         | nulls | frequency | base_frequency 
+ index |         values         | nulls | frequency | base_frequency
 -------+------------------------+-------+-----------+----------------
      0 | {Washington, DC}       | {f,f} |  0.003467 |        2.7e-05
      1 | {Apo, AE}              | {f,f} |  0.003067 |        1.9e-05

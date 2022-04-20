@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Tests dedicated to subtransactions in recovery
 use strict;
@@ -7,7 +7,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 # Setup primary node
 my $node_primary = PostgreSQL::Test::Cluster->new("primary");
@@ -103,8 +103,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	COMMIT;");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
@@ -150,8 +149,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(127);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
@@ -187,8 +185,7 @@ $node_primary->psql(
 	BEGIN;
 	SELECT hs_subxids(201);
 	PREPARE TRANSACTION 'xact_012_1';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 $node_standby->psql(
 	'postgres',
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
@@ -217,3 +214,5 @@ $node_primary->psql(
 	"SELECT coalesce(sum(id),-1) FROM t_012_tbl",
 	stdout => \$psql_out);
 is($psql_out, '-1', "Not visible");
+
+done_testing();

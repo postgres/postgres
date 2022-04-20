@@ -1,10 +1,10 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 23;
+use Test::More;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -191,4 +191,4 @@ run_test('local');
 run_test('remote');
 run_test('archive');
 
-exit(0);
+done_testing();

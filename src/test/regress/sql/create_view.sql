@@ -4,16 +4,43 @@
 --	(this also tests the query rewrite system)
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv abs_srcdir PG_ABS_SRCDIR
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION interpt_pp(path, path)
+    RETURNS point
+    AS :'regresslib'
+    LANGUAGE C STRICT;
+
+CREATE TABLE real_city (
+	pop			int4,
+	cname		text,
+	outline 	path
+);
+
+\set filename :abs_srcdir '/data/real_city.data'
+COPY real_city FROM :'filename';
+ANALYZE real_city;
+
+SELECT *
+   INTO TABLE ramp
+   FROM ONLY road
+   WHERE name ~ '.*Ramp';
+
 CREATE VIEW street AS
    SELECT r.name, r.thepath, c.cname AS cname
    FROM ONLY road r, real_city c
-   WHERE c.outline ## r.thepath;
+   WHERE c.outline ?# r.thepath;
 
 CREATE VIEW iexit AS
    SELECT ih.name, ih.thepath,
 	interpt_pp(ih.thepath, r.thepath) AS exit
    FROM ihighway ih, ramp r
-   WHERE ih.thepath ## r.thepath;
+   WHERE ih.thepath ?# r.thepath;
 
 CREATE VIEW toyemp AS
    SELECT name, age, location, 12*salary AS annualsal
@@ -40,12 +67,13 @@ CREATE VIEW key_dependent_view_no_cols AS
 -- CREATE OR REPLACE VIEW
 --
 
-CREATE TABLE viewtest_tbl (a int, b int);
+CREATE TABLE viewtest_tbl (a int, b int, c numeric(10,1), d text COLLATE "C");
+
 COPY viewtest_tbl FROM stdin;
-5	10
-10	15
-15	20
-20	25
+5	10	1.1	xy
+10	15	2.2	xyz
+15	20	3.3	xyzz
+20	25	4.4	xyzzy
 \.
 
 CREATE OR REPLACE VIEW viewtest AS
@@ -57,7 +85,7 @@ CREATE OR REPLACE VIEW viewtest AS
 SELECT * FROM viewtest;
 
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+	SELECT a, b, c, d FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
 
 SELECT * FROM viewtest;
 
@@ -71,11 +99,19 @@ CREATE OR REPLACE VIEW viewtest AS
 
 -- should fail
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b::numeric FROM viewtest_tbl;
+	SELECT a, b::numeric, c, d FROM viewtest_tbl;
+
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c::numeric(10,2), d FROM viewtest_tbl;
+
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b, c, d COLLATE "POSIX" FROM viewtest_tbl;
 
 -- should work
 CREATE OR REPLACE VIEW viewtest AS
-	SELECT a, b, 0 AS c FROM viewtest_tbl;
+	SELECT a, b, c, d, 0 AS e FROM viewtest_tbl;
 
 DROP VIEW viewtest;
 DROP TABLE viewtest_tbl;
@@ -218,9 +254,19 @@ CREATE VIEW mysecview5 WITH (security_barrier=100)	-- Error
        AS SELECT * FROM tbl1 WHERE a > 100;
 CREATE VIEW mysecview6 WITH (invalid_option)		-- Error
        AS SELECT * FROM tbl1 WHERE a < 100;
+CREATE VIEW mysecview7 WITH (security_invoker=true)
+       AS SELECT * FROM tbl1 WHERE a = 100;
+CREATE VIEW mysecview8 WITH (security_invoker=false, security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a > 100;
+CREATE VIEW mysecview9 WITH (security_invoker)
+       AS SELECT * FROM tbl1 WHERE a < 100;
+CREATE VIEW mysecview10 WITH (security_invoker=100)	-- Error
+       AS SELECT * FROM tbl1 WHERE a <> 100;
 SELECT relname, relkind, reloptions FROM pg_class
        WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
-                     'mysecview3'::regclass, 'mysecview4'::regclass)
+                     'mysecview3'::regclass, 'mysecview4'::regclass,
+                     'mysecview7'::regclass, 'mysecview8'::regclass,
+                     'mysecview9'::regclass)
        ORDER BY relname;
 
 CREATE OR REPLACE VIEW mysecview1
@@ -231,9 +277,17 @@ CREATE OR REPLACE VIEW mysecview3 WITH (security_barrier=true)
        AS SELECT * FROM tbl1 WHERE a < 256;
 CREATE OR REPLACE VIEW mysecview4 WITH (security_barrier=false)
        AS SELECT * FROM tbl1 WHERE a <> 256;
+CREATE OR REPLACE VIEW mysecview7
+       AS SELECT * FROM tbl1 WHERE a > 256;
+CREATE OR REPLACE VIEW mysecview8 WITH (security_invoker=true)
+       AS SELECT * FROM tbl1 WHERE a < 256;
+CREATE OR REPLACE VIEW mysecview9 WITH (security_invoker=false, security_barrier=true)
+       AS SELECT * FROM tbl1 WHERE a <> 256;
 SELECT relname, relkind, reloptions FROM pg_class
        WHERE oid in ('mysecview1'::regclass, 'mysecview2'::regclass,
-                     'mysecview3'::regclass, 'mysecview4'::regclass)
+                     'mysecview3'::regclass, 'mysecview4'::regclass,
+                     'mysecview7'::regclass, 'mysecview8'::regclass,
+                     'mysecview9'::regclass)
        ORDER BY relname;
 
 -- Check that unknown literals are converted to "text" in CREATE VIEW,
@@ -564,6 +618,11 @@ create view tt17v as select * from int8_tbl i where i in (values(i));
 select * from tt17v;
 select pg_get_viewdef('tt17v', true);
 select * from int8_tbl i where i.* in (values(i.*::int8_tbl));
+
+create table tt15v_log(o tt15v, n tt15v, incr bool);
+create rule updlog as on update to tt15v do also
+  insert into tt15v_log values(old, new, row(old,old) < row(new,new));
+\d+ tt15v
 
 -- check unique-ification of overlength names
 

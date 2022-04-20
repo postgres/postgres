@@ -4,7 +4,7 @@
  *
  * See src/backend/access/brin/README for details.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -1017,13 +1017,10 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 				 errhint("BRIN control functions cannot be executed during recovery.")));
 
 	if (heapBlk64 > BRIN_ALL_BLOCKRANGES || heapBlk64 < 0)
-	{
-		char	   *blk = psprintf(INT64_FORMAT, heapBlk64);
-
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("block number out of range: %s", blk)));
-	}
+				 errmsg("block number out of range: %lld",
+						(long long) heapBlk64)));
 	heapBlk = (BlockNumber) heapBlk64;
 
 	/*
@@ -1094,13 +1091,10 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 				 errhint("BRIN control functions cannot be executed during recovery.")));
 
 	if (heapBlk64 > MaxBlockNumber || heapBlk64 < 0)
-	{
-		char	   *blk = psprintf(INT64_FORMAT, heapBlk64);
-
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("block number out of range: %s", blk)));
-	}
+				 errmsg("block number out of range: %lld",
+						(long long) heapBlk64)));
 	heapBlk = (BlockNumber) heapBlk64;
 
 	/*
@@ -1261,8 +1255,6 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 	state->bs_rmAccess = revmap;
 	state->bs_bdesc = brin_build_desc(idxRel);
 	state->bs_dtuple = brin_new_memtuple(state->bs_bdesc);
-
-	brin_memtuple_initialize(state->bs_dtuple, state->bs_bdesc);
 
 	return state;
 }

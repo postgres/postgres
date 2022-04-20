@@ -41,8 +41,12 @@ select '1'::xid8 >= '2'::xid8, '2'::xid8 >= '2'::xid8, '2'::xid8 >= '1'::xid8;
 -- we also have a 3way compare for btrees
 select xid8cmp('1', '2'), xid8cmp('2', '2'), xid8cmp('2', '1');
 
--- xid8 has btree and hash opclasses
+-- min() and max() for xid8
 create table xid8_t1 (x xid8);
+insert into xid8_t1 values ('0'), ('010'), ('42'), ('0xffffffffffffffff'), ('-1');
+select min(x), max(x) from xid8_t1;
+
+-- xid8 has btree and hash opclasses
 create index on xid8_t1 using btree(x);
 create index on xid8_t1 using hash(x);
 drop table xid8_t1;

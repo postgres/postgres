@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -7,20 +7,16 @@ use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
 use Test::More;
 
-if ($ENV{with_ldap} eq 'yes')
-{
-	plan tests => 28;
-}
-else
-{
-	plan skip_all => 'LDAP not supported by this build';
-}
 
 my ($slapd, $ldap_bin_dir, $ldap_schema_dir);
 
 $ldap_bin_dir = undef;    # usually in PATH
 
-if ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
+if ($ENV{with_ldap} ne 'yes')
+{
+	plan skip_all => 'LDAP not supported by this build';
+}
+elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
 {
 	# typical paths for Homebrew
 	$slapd           = '/usr/local/opt/openldap/libexec/slapd';
@@ -42,6 +38,15 @@ elsif ($^O eq 'freebsd')
 {
 	$slapd           = '/usr/local/libexec/slapd';
 	$ldap_schema_dir = '/usr/local/etc/openldap/schema';
+}
+elsif ($^O eq 'openbsd')
+{
+	$slapd           = '/usr/local/libexec/slapd';
+	$ldap_schema_dir = '/usr/local/share/examples/openldap/schema';
+}
+else
+{
+	plan skip_all => "ldap tests not supported on $^O or dependencies not installed";
 }
 
 # make your own edits here
@@ -367,3 +372,5 @@ $node->restart;
 
 $ENV{"PGPASSWORD"} = 'secret1';
 test_access($node, 'test1', 2, 'bad combination of LDAPS and StartTLS');
+
+done_testing();

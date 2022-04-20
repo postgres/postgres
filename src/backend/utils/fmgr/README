@@ -305,6 +305,10 @@ If available, the expected tuple descriptor is passed in ReturnSetInfo;
 in other contexts the expectedDesc field will be NULL.  The function need
 not pay attention to expectedDesc, but it may be useful in special cases.
 
+SetSingleFuncCall() is a helper function able to setup the function's
+ReturnSetInfo for a single call, filling in the Tuplestore and the
+TupleDesc with the proper configuration for Materialize mode.
+
 There is no support for functions accepting sets; instead, the function will
 be called multiple times, once for each element of the input set.
 

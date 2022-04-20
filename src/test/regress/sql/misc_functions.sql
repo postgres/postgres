@@ -1,3 +1,9 @@
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
 --
 -- num_nulls()
 --
@@ -31,6 +37,38 @@ SELECT num_nonnulls();
 SELECT num_nulls();
 
 --
+-- canonicalize_path()
+--
+
+CREATE FUNCTION test_canonicalize_path(text)
+   RETURNS text
+   AS :'regresslib'
+   LANGUAGE C STRICT IMMUTABLE;
+
+SELECT test_canonicalize_path('/');
+SELECT test_canonicalize_path('/./abc/def/');
+SELECT test_canonicalize_path('/./../abc/def');
+SELECT test_canonicalize_path('/./../../abc/def/');
+SELECT test_canonicalize_path('/abc/.././def/ghi');
+SELECT test_canonicalize_path('/abc/./../def/ghi//');
+SELECT test_canonicalize_path('/abc/def/../..');
+SELECT test_canonicalize_path('/abc/def/../../..');
+SELECT test_canonicalize_path('/abc/def/../../../../ghi/jkl');
+SELECT test_canonicalize_path('.');
+SELECT test_canonicalize_path('./');
+SELECT test_canonicalize_path('./abc/..');
+SELECT test_canonicalize_path('abc/../');
+SELECT test_canonicalize_path('abc/../def');
+SELECT test_canonicalize_path('..');
+SELECT test_canonicalize_path('../abc/def');
+SELECT test_canonicalize_path('../abc/..');
+SELECT test_canonicalize_path('../abc/../def');
+SELECT test_canonicalize_path('../abc/../../def/ghi');
+SELECT test_canonicalize_path('./abc/./def/.');
+SELECT test_canonicalize_path('./abc/././def/.');
+SELECT test_canonicalize_path('./abc/./def/.././ghi/../../../jkl/mno');
+
+--
 -- pg_log_backend_memory_contexts()
 --
 -- Memory contexts are logged and they are not returned to the function.
@@ -40,6 +78,9 @@ SELECT num_nulls();
 --
 
 SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+
+SELECT pg_log_backend_memory_contexts(pid) FROM pg_stat_activity
+  WHERE backend_type = 'checkpointer';
 
 CREATE ROLE regress_log_memory;
 
@@ -83,6 +124,14 @@ from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
 select count(*) >= 0 as ok from pg_ls_archive_statusdir();
 
 select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
+-- Test missing_ok (second argument)
+select pg_ls_dir('does not exist', false, false); -- error
+select pg_ls_dir('does not exist', true, false); -- ok
+-- Test include_dot_dirs (third argument)
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, true) as ls where ls = '.';
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, false) as ls where ls = '.';
 
 select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
 
@@ -126,6 +175,11 @@ SELECT * FROM tenk1 a JOIN tenk1 b ON a.unique1 = b.unique1
 WHERE my_int_eq(a.unique2, 42);
 
 -- With support function that knows it's int4eq, we get a different plan
+CREATE FUNCTION test_support_func(internal)
+    RETURNS internal
+    AS :'regresslib', 'test_support_func'
+    LANGUAGE C STRICT;
+
 ALTER FUNCTION my_int_eq(int, int) SUPPORT test_support_func;
 
 EXPLAIN (COSTS OFF)

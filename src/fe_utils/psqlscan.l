@@ -24,7 +24,7 @@
  * See psqlscan_int.h for additional commentary.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -325,7 +325,7 @@ operator		{op_chars}+
  *
  * {decimalfail} is used because we would like "1..10" to lex as 1, dot_dot, 10.
  *
- * {realfail1} and {realfail2} are added to prevent the need for scanner
+ * {realfail} is added to prevent the need for scanner
  * backup when the {real} rule fails to match completely.
  */
 digit			[0-9]
@@ -334,10 +334,14 @@ integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
 decimalfail		{digit}+\.\.
 real			({integer}|{decimal})[Ee][-+]?{digit}+
-realfail1		({integer}|{decimal})[Ee]
-realfail2		({integer}|{decimal})[Ee][-+]
+realfail		({integer}|{decimal})[Ee][-+]
+
+integer_junk	{integer}{ident_start}
+decimal_junk	{decimal}{ident_start}
+real_junk		{real}{ident_start}
 
 param			\${integer}
+param_junk		\${integer}{ident_start}
 
 /* psql-specific: characters allowed in variable names */
 variable_char	[A-Za-z\200-\377_0-9]
@@ -839,6 +843,9 @@ other			.
 {param}			{
 					ECHO;
 				}
+{param_junk}	{
+					ECHO;
+				}
 
 {integer}		{
 					ECHO;
@@ -854,18 +861,16 @@ other			.
 {real}			{
 					ECHO;
 				}
-{realfail1}		{
-					/*
-					 * throw back the [Ee], and figure out whether what
-					 * remains is an {integer} or {decimal}.
-					 * (in psql, we don't actually care...)
-					 */
-					yyless(yyleng - 1);
+{realfail}		{
 					ECHO;
 				}
-{realfail2}		{
-					/* throw back the [Ee][+-], and proceed as above */
-					yyless(yyleng - 2);
+{integer_junk}	{
+					ECHO;
+				}
+{decimal_junk}	{
+					ECHO;
+				}
+{real_junk}		{
 					ECHO;
 				}
 

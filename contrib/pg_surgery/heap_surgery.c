@@ -3,7 +3,7 @@
  * heap_surgery.c
  *	  Functions to perform surgery on the damaged heap table.
  *
- * Copyright (c) 2020-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2020-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/pg_surgery/heap_surgery.c
@@ -14,6 +14,7 @@
 
 #include "access/heapam.h"
 #include "access/visibilitymap.h"
+#include "access/xloginsert.h"
 #include "catalog/pg_am_d.h"
 #include "catalog/pg_proc_d.h"
 #include "miscadmin.h"

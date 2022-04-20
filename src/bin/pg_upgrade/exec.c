@@ -3,7 +3,7 @@
  *
  *	execution functions
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/exec.c
  */
 
@@ -78,11 +78,12 @@ get_bin_version(ClusterInfo *cluster)
  * The code requires it be called first from the primary thread on Windows.
  */
 bool
-exec_prog(const char *log_file, const char *opt_log_file,
+exec_prog(const char *log_filename, const char *opt_log_file,
 		  bool report_error, bool exit_on_error, const char *fmt,...)
 {
 	int			result = 0;
 	int			written;
+	char		log_file[MAXPGPATH];
 
 #define MAXCMDLEN (2 * MAXPGPATH)
 	char		cmd[MAXCMDLEN];
@@ -96,6 +97,8 @@ exec_prog(const char *log_file, const char *opt_log_file,
 	if (mainThreadId == 0)
 		mainThreadId = GetCurrentThreadId();
 #endif
+
+	snprintf(log_file, MAXPGPATH, "%s/%s", log_opts.logdir, log_filename);
 
 	written = 0;
 	va_start(ap, fmt);

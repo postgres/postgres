@@ -17,28 +17,28 @@ plpy.info('This is message text.',
 plpy.notice('notice', detail='some detail')
 plpy.warning('warning', detail='some detail')
 plpy.error('stop on error', detail='some detail', hint='some hint')
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT elog_test();
 
-DO $$ plpy.info('other types', detail=(10, 20)) $$ LANGUAGE plpythonu;
+DO $$ plpy.info('other types', detail=(10, 20)) $$ LANGUAGE plpython3u;
 
 DO $$
 import time;
 from datetime import date
 plpy.info('other types', detail=date(2016, 2, 26))
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 DO $$
 basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 plpy.info('other types', detail=basket)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 -- should fail
-DO $$ plpy.info('wrong sqlstate', sqlstate='54444A') $$ LANGUAGE plpythonu;
-DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpythonu;
-DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpythonu;
-DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpythonu;
+DO $$ plpy.info('wrong sqlstate', sqlstate='54444A') $$ LANGUAGE plpython3u;
+DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpython3u;
+DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpython3u;
+DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpython3u;
 
 -- raise exception in python, handle exception in plgsql
 CREATE OR REPLACE FUNCTION raise_exception(_message text, _detail text DEFAULT NULL, _hint text DEFAULT NULL,
@@ -57,7 +57,7 @@ kwargs = {
 }
 # ignore None values
 plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT raise_exception('hello', 'world');
 SELECT raise_exception('message text', 'detail text', _sqlstate => 'YY333');
@@ -118,17 +118,13 @@ BEGIN
 END;
 $$;
 
--- The displayed context is different between Python2 and Python3,
--- but that's not important for this test.
-\set SHOW_CONTEXT never
-
 DO $$
 try:
     plpy.execute("select raise_exception(_message => 'my message', _sqlstate => 'XX987', _hint => 'some hint', _table_name => 'users_tab', _datatype_name => 'user_type')")
 except Exception as e:
     plpy.info(e.spidata)
     raise e
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 DO $$
 try:
@@ -136,4 +132,4 @@ try:
 except Exception as e:
     plpy.info('sqlstate: %s, hint: %s, table_name: %s, datatype_name: %s' % (e.sqlstate, e.hint, e.table_name, e.datatype_name))
     raise e
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;

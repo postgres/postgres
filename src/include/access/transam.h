@@ -4,7 +4,7 @@
  *	  postgres transaction access method support code
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/transam.h
@@ -195,6 +195,10 @@ FullTransactionIdAdvance(FullTransactionId *dest)
 #define FirstGenbkiObjectId		10000
 #define FirstUnpinnedObjectId	12000
 #define FirstNormalObjectId		16384
+
+/* OIDs of Template0 and Postgres database are fixed */
+#define Template0ObjectId		4
+#define PostgresObjectId		5
 
 /*
  * VariableCache is a data structure in shared memory that is used to track

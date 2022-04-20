@@ -6,7 +6,7 @@
  * See src/backend/optimizer/README for discussion of EquivalenceClasses.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -681,7 +681,18 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 
 			if (opcintype == cur_em->em_datatype &&
 				equal(expr, cur_em->em_expr))
-				return cur_ec;	/* Match! */
+			{
+				/*
+				 * Match!
+				 *
+				 * Copy the sortref if it wasn't set yet. That may happen if the
+				 * ec was constructed from WHERE clause, i.e. it doesn't have a
+				 * target reference at all.
+				 */
+				if (cur_ec->ec_sortref == 0 && sortref > 0)
+					cur_ec->ec_sortref = sortref;
+				return cur_ec;
+			}
 		}
 	}
 
@@ -932,35 +943,6 @@ is_exprlist_member(Expr *node, List *exprs)
 }
 
 /*
- * Find an equivalence class member expression, all of whose Vars, come from
- * the indicated relation.
- */
-Expr *
-find_em_expr_for_rel(EquivalenceClass *ec, RelOptInfo *rel)
-{
-	ListCell   *lc_em;
-
-	foreach(lc_em, ec->ec_members)
-	{
-		EquivalenceMember *em = lfirst(lc_em);
-
-		if (bms_is_subset(em->em_relids, rel->relids) &&
-			!bms_is_empty(em->em_relids))
-		{
-			/*
-			 * If there is more than one equivalence member whose Vars are
-			 * taken entirely from this relation, we'll be content to choose
-			 * any one of those.
-			 */
-			return em->em_expr;
-		}
-	}
-
-	/* We didn't find any suitable equivalence class expression */
-	return NULL;
-}
-
-/*
  * relation_can_be_sorted_early
  *		Can this relation be sorted on this EC before the final output step?
  *
@@ -1019,7 +1001,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Try to find a expression computable from the reltarget.
+	 * Try to find an expression computable from the reltarget.
 	 */
 	em = find_computable_ec_member(root, ec, target->exprs, rel->relids,
 								   require_parallel_safe);

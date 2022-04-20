@@ -5,7 +5,7 @@
  *	  commands.  At one time acted as an interface between the Lisp and C
  *	  systems.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -113,6 +113,7 @@ CommandIsReadOnly(PlannedStmt *pstmt)
 		case CMD_UPDATE:
 		case CMD_INSERT:
 		case CMD_DELETE:
+		case CMD_MERGE:
 			return false;
 		case CMD_UTILITY:
 			/* For now, treat all utility commands as read/write */
@@ -136,6 +137,7 @@ ClassifyUtilityCommandAsReadOnly(Node *parsetree)
 	switch (nodeTag(parsetree))
 	{
 		case T_AlterCollationStmt:
+		case T_AlterDatabaseRefreshCollStmt:
 		case T_AlterDatabaseSetStmt:
 		case T_AlterDatabaseStmt:
 		case T_AlterDefaultPrivilegesStmt:
@@ -777,6 +779,11 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 		case T_AlterDatabaseStmt:
 			/* no event triggers for global objects */
 			AlterDatabase(pstate, (AlterDatabaseStmt *) parsetree, isTopLevel);
+			break;
+
+		case T_AlterDatabaseRefreshCollStmt:
+			/* no event triggers for global objects */
+			AlterDatabaseRefreshColl((AlterDatabaseRefreshCollStmt *) parsetree);
 			break;
 
 		case T_AlterDatabaseSetStmt:
@@ -2118,6 +2125,8 @@ QueryReturnsTuples(Query *parsetree)
 		case CMD_SELECT:
 			/* returns tuples */
 			return true;
+		case CMD_MERGE:
+			return false;
 		case CMD_INSERT:
 		case CMD_UPDATE:
 		case CMD_DELETE:
@@ -2357,6 +2366,10 @@ CreateCommandTag(Node *parsetree)
 
 		case T_UpdateStmt:
 			tag = CMDTAG_UPDATE;
+			break;
+
+		case T_MergeStmt:
+			tag = CMDTAG_MERGE;
 			break;
 
 		case T_SelectStmt:
@@ -2801,9 +2814,7 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_AlterDatabaseStmt:
-			tag = CMDTAG_ALTER_DATABASE;
-			break;
-
+		case T_AlterDatabaseRefreshCollStmt:
 		case T_AlterDatabaseSetStmt:
 			tag = CMDTAG_ALTER_DATABASE;
 			break;
@@ -3121,6 +3132,9 @@ CreateCommandTag(Node *parsetree)
 					case CMD_DELETE:
 						tag = CMDTAG_DELETE;
 						break;
+					case CMD_MERGE:
+						tag = CMDTAG_MERGE;
+						break;
 					case CMD_UTILITY:
 						tag = CreateCommandTag(stmt->utilityStmt);
 						break;
@@ -3181,6 +3195,9 @@ CreateCommandTag(Node *parsetree)
 					case CMD_DELETE:
 						tag = CMDTAG_DELETE;
 						break;
+					case CMD_MERGE:
+						tag = CMDTAG_MERGE;
+						break;
 					case CMD_UTILITY:
 						tag = CreateCommandTag(stmt->utilityStmt);
 						break;
@@ -3229,6 +3246,7 @@ GetCommandLogLevel(Node *parsetree)
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_UpdateStmt:
+		case T_MergeStmt:
 			lev = LOGSTMT_MOD;
 			break;
 
@@ -3444,9 +3462,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_AlterDatabaseStmt:
-			lev = LOGSTMT_DDL;
-			break;
-
+		case T_AlterDatabaseRefreshCollStmt:
 		case T_AlterDatabaseSetStmt:
 			lev = LOGSTMT_DDL;
 			break;
@@ -3680,6 +3696,7 @@ GetCommandLogLevel(Node *parsetree)
 					case CMD_UPDATE:
 					case CMD_INSERT:
 					case CMD_DELETE:
+					case CMD_MERGE:
 						lev = LOGSTMT_MOD;
 						break;
 
@@ -3710,6 +3727,7 @@ GetCommandLogLevel(Node *parsetree)
 					case CMD_UPDATE:
 					case CMD_INSERT:
 					case CMD_DELETE:
+					case CMD_MERGE:
 						lev = LOGSTMT_MOD;
 						break;
 
@@ -3723,7 +3741,6 @@ GetCommandLogLevel(Node *parsetree)
 						lev = LOGSTMT_ALL;
 						break;
 				}
-
 			}
 			break;
 

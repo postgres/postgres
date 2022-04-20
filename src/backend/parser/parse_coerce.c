@@ -3,7 +3,7 @@
  * parse_coerce.c
  *		handle type coercions/conversions for parser
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1298,6 +1298,10 @@ parser_coercion_errposition(ParseState *pstate,
  * rather than throwing an error on failure.
  * 'which_expr': if not NULL, receives a pointer to the particular input
  * expression from which the result type was taken.
+ *
+ * Caution: "failure" just means that there were inputs of different type
+ * categories.  It is not guaranteed that all the inputs are coercible to the
+ * selected type; caller must check that (see verify_common_type).
  */
 Oid
 select_common_type(ParseState *pstate, List *exprs, const char *context,
@@ -1426,6 +1430,10 @@ select_common_type(ParseState *pstate, List *exprs, const char *context,
  * earlier entries in the array have some preference over later ones.
  * On failure, return InvalidOid if noerror is true, else throw an error.
  *
+ * Caution: "failure" just means that there were inputs of different type
+ * categories.  It is not guaranteed that all the inputs are coercible to the
+ * selected type; caller must check that (see verify_common_type_from_oids).
+ *
  * Note: neither caller will pass any UNKNOWNOID entries, so the tests
  * for that in this function are dead code.  However, they don't cost much,
  * and it seems better to keep this logic as close to select_common_type()
@@ -1546,6 +1554,48 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 						format_type_be(targetTypeId)),
 				 parser_errposition(pstate, exprLocation(node))));
 	return node;
+}
+
+/*
+ * verify_common_type()
+ *		Verify that all input types can be coerced to a proposed common type.
+ *		Return true if so, false if not all coercions are possible.
+ *
+ * Most callers of select_common_type() don't need to do this explicitly
+ * because the checks will happen while trying to convert input expressions
+ * to the right type, e.g. in coerce_to_common_type().  However, if a separate
+ * check step is needed to validate the applicability of the common type, call
+ * this.
+ */
+bool
+verify_common_type(Oid common_type, List *exprs)
+{
+	ListCell   *lc;
+
+	foreach(lc, exprs)
+	{
+		Node	   *nexpr = (Node *) lfirst(lc);
+		Oid			ntype = exprType(nexpr);
+
+		if (!can_coerce_type(1, &ntype, &common_type, COERCION_IMPLICIT))
+			return false;
+	}
+	return true;
+}
+
+/*
+ * verify_common_type_from_oids()
+ *		As above, but work from an array of type OIDs.
+ */
+static bool
+verify_common_type_from_oids(Oid common_type, int nargs, const Oid *typeids)
+{
+	for (int i = 0; i < nargs; i++)
+	{
+		if (!can_coerce_type(1, &typeids[i], &common_type, COERCION_IMPLICIT))
+			return false;
+	}
+	return true;
 }
 
 /*
@@ -1917,7 +1967,13 @@ check_generic_type_consistency(const Oid *actual_arg_types,
 										 true);
 
 		if (!OidIsValid(anycompatible_typeid))
-			return false;		/* there's no common supertype */
+			return false;		/* there's definitely no common supertype */
+
+		/* We have to verify that the selected type actually works */
+		if (!verify_common_type_from_oids(anycompatible_typeid,
+										  n_anycompatible_args,
+										  anycompatible_actual_types))
+			return false;
 
 		if (have_anycompatible_nonarray)
 		{
@@ -2493,6 +2549,14 @@ enforce_generic_type_consistency(const Oid *actual_arg_types,
 				select_common_type_from_oids(n_anycompatible_args,
 											 anycompatible_actual_types,
 											 false);
+
+			/* We have to verify that the selected type actually works */
+			if (!verify_common_type_from_oids(anycompatible_typeid,
+											  n_anycompatible_args,
+											  anycompatible_actual_types))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("arguments of anycompatible family cannot be cast to a common type")));
 
 			if (have_anycompatible_array)
 			{

@@ -3,7 +3,7 @@
  * clauses.c
  *	  routines to manipulate qualification clauses
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -28,6 +28,7 @@
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "executor/functions.h"
+#include "executor/execExpr.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -50,6 +51,9 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/json.h"
+#include "utils/jsonb.h"
+#include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
@@ -381,6 +385,45 @@ contain_mutable_functions_walker(Node *node, void *context)
 	if (check_functions_in_node(node, contain_mutable_functions_checker,
 								context))
 		return true;
+
+	if (IsA(node, JsonConstructorExpr))
+	{
+		const JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+		ListCell   *lc;
+		bool		is_jsonb =
+			ctor->returning->format->format_type == JS_FORMAT_JSONB;
+
+		/* Check argument_type => json[b] conversions */
+		foreach(lc, ctor->args)
+		{
+			Oid			typid = exprType(lfirst(lc));
+
+			if (is_jsonb ?
+				!to_jsonb_is_immutable(typid) :
+				!to_json_is_immutable(typid))
+				return true;
+		}
+
+		/* Check all subnodes */
+	}
+
+	if (IsA(node, JsonExpr))
+	{
+		JsonExpr   *jexpr = castNode(JsonExpr, node);
+		Const	   *cnst;
+
+		if (!IsA(jexpr->path_spec, Const))
+			return true;
+
+		cnst = castNode(Const, jexpr->path_spec);
+
+		Assert(cnst->consttype == JSONPATHOID);
+		if (cnst->constisnull)
+			return false;
+
+		return jspIsMutable(DatumGetJsonPathP(cnst->constvalue),
+							jexpr->passing_names, jexpr->passing_values);
+	}
 
 	if (IsA(node, SQLValueFunction))
 	{
@@ -851,6 +894,18 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 		return query_tree_walker(query,
 								 max_parallel_hazard_walker,
 								 context, 0);
+	}
+
+	/* JsonExpr is parallel-unsafe if subtransactions can be used. */
+	else if (IsA(node, JsonExpr))
+	{
+		JsonExpr  *jsexpr = (JsonExpr *) node;
+
+		if (ExecEvalJsonNeedsSubTransaction(jsexpr, NULL))
+		{
+			context->max_hazard = PROPARALLEL_UNSAFE;
+			return true;
+		}
 	}
 
 	/* Recurse to check arguments */
@@ -3512,6 +3567,29 @@ eval_const_expressions_mutator(Node *node,
 					return ece_evaluate_expr((Node *) newcre);
 				return (Node *) newcre;
 			}
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *jve = (JsonValueExpr *) node;
+				Node	   *raw = eval_const_expressions_mutator((Node *) jve->raw_expr,
+																 context);
+
+				if (raw && IsA(raw, Const))
+				{
+					Node	   *formatted;
+					Node	   *save_case_val = context->case_val;
+
+					context->case_val = raw;
+
+					formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
+																context);
+
+					context->case_val = save_case_val;
+
+					if (formatted && IsA(formatted, Const))
+						return formatted;
+				}
+				break;
+			}
 		default:
 			break;
 	}
@@ -5057,7 +5135,7 @@ inline_set_returning_function(PlannerInfo *root, RangeTblEntry *rte)
 		if (list_length(raw_parsetree_list) != 1)
 			goto fail;
 
-		querytree_list = pg_analyze_and_rewrite_params(linitial(raw_parsetree_list),
+		querytree_list = pg_analyze_and_rewrite_withcb(linitial(raw_parsetree_list),
 													   src,
 													   (ParserSetupHook) sql_fn_parser_setup,
 													   pinfo, NULL);

@@ -4,7 +4,7 @@
  *	Utility routines shared by pg_dump and pg_restore.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_backup_utils.h
@@ -31,6 +31,11 @@ extern void set_dump_section(const char *arg, int *dumpSections);
 extern void on_exit_nicely(on_exit_nicely_callback function, void *arg);
 extern void exit_nicely(int code) pg_attribute_noreturn();
 
-#define fatal(...) do { pg_log_error(__VA_ARGS__); exit_nicely(1); } while(0)
+/* In pg_dump, we modify pg_fatal to call exit_nicely instead of exit */
+#undef pg_fatal
+#define pg_fatal(...) do { \
+		pg_log_generic(PG_LOG_ERROR, PG_LOG_PRIMARY, __VA_ARGS__); \
+		exit_nicely(1); \
+	} while(0)
 
 #endif							/* PG_BACKUP_UTILS_H */

@@ -3,7 +3,7 @@
  * nbtdedup.c
  *	  Deduplicate or bottom-up delete items in Postgres btrees.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -16,6 +16,7 @@
 
 #include "access/nbtree.h"
 #include "access/nbtxlog.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "utils/rel.h"
 
@@ -61,10 +62,10 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 				minoff,
 				maxoff;
 	Page		page = BufferGetPage(buf);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	Page		newpage;
 	BTDedupState state;
-	Size		pagesaving = 0;
+	Size		pagesaving PG_USED_FOR_ASSERTS_ONLY = 0;
 	bool		singlevalstrat = false;
 	int			nkeyatts = IndexRelationGetNumberOfKeyAttributes(rel);
 
@@ -230,7 +231,7 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 	 */
 	if (P_HAS_GARBAGE(opaque))
 	{
-		BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(newpage);
+		BTPageOpaque nopaque = BTPageGetOpaque(newpage);
 
 		nopaque->btpo_flags &= ~BTP_HAS_GARBAGE;
 	}
@@ -309,7 +310,7 @@ _bt_bottomupdel_pass(Relation rel, Buffer buf, Relation heapRel,
 				minoff,
 				maxoff;
 	Page		page = BufferGetPage(buf);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	BTPageOpaque opaque = BTPageGetOpaque(page);
 	BTDedupState state;
 	TM_IndexDeleteOp delstate;
 	bool		neverdedup;

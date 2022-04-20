@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Tests relating to PostgreSQL crash recovery and redo
@@ -9,9 +9,6 @@ use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
-use Config;
-
-plan tests => 3;
 
 my $node = PostgreSQL::Test::Cluster->new('primary');
 $node->init(allows_streaming => 1);
@@ -62,3 +59,5 @@ is($node->safe_psql('postgres', qq[SELECT pg_xact_status('$xid');]),
 
 $stdin .= "\\q\n";
 $tx->finish;    # wait for psql to quit gracefully
+
+done_testing();

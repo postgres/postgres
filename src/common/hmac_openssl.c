@@ -5,7 +5,7 @@
  *
  * This should only be used if code is compiled with OpenSSL support.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -20,6 +20,8 @@
 #include "postgres_fe.h"
 #endif
 
+
+#include <openssl/err.h>
 #include <openssl/hmac.h>
 
 #include "common/hmac.h"
@@ -50,18 +52,39 @@
 #define FREE(ptr) free(ptr)
 #endif							/* FRONTEND */
 
-/*
- * Internal structure for pg_hmac_ctx->data with this implementation.
- */
+/* Set of error states */
+typedef enum pg_hmac_errno
+{
+	PG_HMAC_ERROR_NONE = 0,
+	PG_HMAC_ERROR_DEST_LEN,
+	PG_HMAC_ERROR_OPENSSL
+} pg_hmac_errno;
+
+/* Internal pg_hmac_ctx structure */
 struct pg_hmac_ctx
 {
 	HMAC_CTX   *hmacctx;
 	pg_cryptohash_type type;
+	pg_hmac_errno error;
+	const char *errreason;
 
 #ifndef FRONTEND
 	ResourceOwner resowner;
 #endif
 };
+
+static const char *
+SSLerrmessage(unsigned long ecode)
+{
+	if (ecode == 0)
+		return NULL;
+
+	/*
+	 * This may return NULL, but we would fall back to a default error path if
+	 * that were the case.
+	 */
+	return ERR_reason_error_string(ecode);
+}
 
 /*
  * pg_hmac_create
@@ -80,6 +103,8 @@ pg_hmac_create(pg_cryptohash_type type)
 	memset(ctx, 0, sizeof(pg_hmac_ctx));
 
 	ctx->type = type;
+	ctx->error = PG_HMAC_ERROR_NONE;
+	ctx->errreason = NULL;
 
 	/*
 	 * Initialization takes care of assigning the correct type for OpenSSL.
@@ -154,7 +179,11 @@ pg_hmac_init(pg_hmac_ctx *ctx, const uint8 *key, size_t len)
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
+	{
+		ctx->errreason = SSLerrmessage(ERR_get_error());
+		ctx->error = PG_HMAC_ERROR_OPENSSL;
 		return -1;
+	}
 
 	return 0;
 }
@@ -176,7 +205,11 @@ pg_hmac_update(pg_hmac_ctx *ctx, const uint8 *data, size_t len)
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
+	{
+		ctx->errreason = SSLerrmessage(ERR_get_error());
+		ctx->error = PG_HMAC_ERROR_OPENSSL;
 		return -1;
+	}
 	return 0;
 }
 
@@ -198,27 +231,45 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 	{
 		case PG_MD5:
 			if (len < MD5_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 		case PG_SHA1:
 			if (len < SHA1_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 		case PG_SHA224:
 			if (len < PG_SHA224_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 		case PG_SHA256:
 			if (len < PG_SHA256_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 		case PG_SHA384:
 			if (len < PG_SHA384_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 		case PG_SHA512:
 			if (len < PG_SHA512_DIGEST_LENGTH)
+			{
+				ctx->error = PG_HMAC_ERROR_DEST_LEN;
 				return -1;
+			}
 			break;
 	}
 
@@ -226,7 +277,11 @@ pg_hmac_final(pg_hmac_ctx *ctx, uint8 *dest, size_t len)
 
 	/* OpenSSL internals return 1 on success, 0 on failure */
 	if (status <= 0)
+	{
+		ctx->errreason = SSLerrmessage(ERR_get_error());
+		ctx->error = PG_HMAC_ERROR_OPENSSL;
 		return -1;
+	}
 	return 0;
 }
 
@@ -253,4 +308,37 @@ pg_hmac_free(pg_hmac_ctx *ctx)
 
 	explicit_bzero(ctx, sizeof(pg_hmac_ctx));
 	FREE(ctx);
+}
+
+/*
+ * pg_hmac_error
+ *
+ * Returns a static string providing details about an error that happened
+ * during a HMAC computation.
+ */
+const char *
+pg_hmac_error(pg_hmac_ctx *ctx)
+{
+	if (ctx == NULL)
+		return _("out of memory");
+
+	/*
+	 * If a reason is provided, rely on it, else fallback to any error code
+	 * set.
+	 */
+	if (ctx->errreason)
+		return ctx->errreason;
+
+	switch (ctx->error)
+	{
+		case PG_HMAC_ERROR_NONE:
+			return _("success");
+		case PG_HMAC_ERROR_DEST_LEN:
+			return _("destination buffer too small");
+		case PG_HMAC_ERROR_OPENSSL:
+			return _("OpenSSL failure");
+	}
+
+	Assert(false);				/* cannot be reached */
+	return _("success");
 }

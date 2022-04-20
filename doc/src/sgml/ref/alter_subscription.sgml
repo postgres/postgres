@@ -29,6 +29,7 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> REFRESH PUB
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> ENABLE
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> DISABLE
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SET ( <replaceable class="parameter">subscription_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
+ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> SKIP ( <replaceable class="parameter">skip_option</replaceable> = <replaceable class="parameter">value</replaceable> )
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> OWNER TO { <replaceable>new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }
 ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <replaceable>new_name</replaceable>
 </synopsis>
@@ -113,7 +114,9 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       replaces the entire list of publications with a new list,
       <literal>ADD</literal> adds additional publications to the list of
       publications, and <literal>DROP</literal> removes the publications from
-      the list of publications.  See <xref linkend="sql-createsubscription"/>
+      the list of publications.  We allow non-existent publications to be
+      specified in <literal>ADD</literal> and <literal>SET</literal> variants
+      so that users can add those later.  See <xref linkend="sql-createsubscription"/>
       for more information.  By default, this command will also act like
       <literal>REFRESH PUBLICATION</literal>.
      </para>
@@ -163,8 +166,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
          <para>
           Specifies whether to copy pre-existing data in the publications
           that are being subscribed to when the replication starts.
-          The default is <literal>true</literal>.  (Previously-subscribed
-          tables are not copied.)
+          The default is <literal>true</literal>.
+         </para>
+         <para>
+          Previously subscribed tables are not copied, even if a table's row
+          filter <literal>WHERE</literal> clause has since been modified.
          </para>
         </listitem>
        </varlistentry>
@@ -201,9 +207,49 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
       information.  The parameters that can be altered
       are <literal>slot_name</literal>,
       <literal>synchronous_commit</literal>,
-      <literal>binary</literal>, and
-      <literal>streaming</literal>.
+      <literal>binary</literal>, <literal>streaming</literal>, and
+      <literal>disable_on_error</literal>.
      </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SKIP ( <replaceable class="parameter">skip_option</replaceable> = <replaceable class="parameter">value</replaceable> )</literal></term>
+    <listitem>
+     <para>
+      Skips applying all changes of the remote transaction.  If incoming data
+      violates any constraints, logical replication will stop until it is
+      resolved.  By using the <command>ALTER SUBSCRIPTION ... SKIP</command> command,
+      the logical replication worker skips all data modification changes within
+      the transaction.  This option has no effect on the transactions that are
+      already prepared by enabling <literal>two_phase</literal> on
+      subscriber.
+      After the logical replication worker successfully skips the transaction or
+      finishes a transaction, the LSN (stored in
+      <structname>pg_subscription</structname>.<structfield>subskiplsn</structfield>)
+      is cleared.  See <xref linkend="logical-replication-conflicts"/> for
+      the details of logical replication conflicts.  Using this command requires
+      superuser privilege.
+     </para>
+
+     <para>
+      <replaceable>skip_option</replaceable> specifies options for this operation.
+      The supported option is:
+
+      <variablelist>
+       <varlistentry>
+        <term><literal>lsn</literal> (<type>pg_lsn</type>)</term>
+        <listitem>
+         <para>
+          Specifies the finish LSN of the remote transaction whose changes
+          are to be skipped by the logical replication worker.  The finish LSN
+          is the LSN at which the transaction is either committed or prepared.
+          Skipping individual subtransactions is not supported.  Setting
+          <literal>NONE</literal> resets the LSN.
+         </para>
+        </listitem>
+       </varlistentry>
+      </variablelist></para>
     </listitem>
    </varlistentry>
 

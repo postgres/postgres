@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Test that running pg_rewind with the source and target clusters
@@ -8,7 +8,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 
 use FindBin;
 use lib $FindBin::RealBin;
@@ -20,4 +20,5 @@ RewindTest::start_primary();
 RewindTest::create_standby();
 RewindTest::run_pg_rewind('local');
 RewindTest::clean_rewind_test();
-exit(0);
+
+done_testing();

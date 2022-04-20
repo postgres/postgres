@@ -291,6 +291,15 @@
    </para>
 
    <para>
+    Tuples changed in partitions and inheritance children do not trigger
+    analyze on the parent table.  If the parent table is empty or rarely
+    changed, it may never be processed by autovacuum, and the statistics for
+    the inheritance tree as a whole won't be collected. It is necessary to
+    run <command>ANALYZE</command> on the parent table manually in order to
+    keep the statistics up to date.
+   </para>
+
+   <para>
     As with vacuuming for space recovery, frequent updates of statistics
     are more useful for heavily-updated tables than for seldom-updated
     ones. But even for a heavily-updated table, there might be no need for
@@ -347,6 +356,19 @@
      <command>ANALYZE</command> commands on those tables on a suitable schedule.
     </para>
    </tip>
+
+   <tip>
+    <para>
+     The autovacuum daemon does not issue <command>ANALYZE</command> commands
+     for partitioned tables.  Inheritance parents will only be analyzed if the
+     parent itself is changed - changes to child tables do not trigger
+     autoanalyze on the parent table.  If your queries require statistics on
+     parent tables for proper planning, it is necessary to periodically run
+     a manual <command>ANALYZE</command> on those tables to keep the statistics
+     up to date.
+    </para>
+   </tip>
+
   </sect2>
 
   <sect2 id="vacuum-for-visibility-map">
@@ -471,16 +493,17 @@
     will skip pages that don't have any dead row versions even if those pages
     might still have row versions with old XID values.  Therefore, normal
     <command>VACUUM</command>s won't always freeze every old row version in the table.
-    Periodically, <command>VACUUM</command> will perform an <firstterm>aggressive
-    vacuum</firstterm>, skipping only those pages which contain neither dead rows nor
-    any unfrozen XID or MXID values.
+    When that happens, <command>VACUUM</command> will eventually need to perform an
+    <firstterm>aggressive vacuum</firstterm>, which will freeze all eligible unfrozen
+    XID and MXID values, including those from all-visible but not all-frozen pages.
+    In practice most tables require periodic aggressive vacuuming.
     <xref linkend="guc-vacuum-freeze-table-age"/>
     controls when <command>VACUUM</command> does that: all-visible but not all-frozen
     pages are scanned if the number of transactions that have passed since the
     last such scan is greater than <varname>vacuum_freeze_table_age</varname> minus
     <varname>vacuum_freeze_min_age</varname>. Setting
     <varname>vacuum_freeze_table_age</varname> to 0 forces <command>VACUUM</command> to
-    use this more aggressive strategy for all scans.
+    always use its aggressive strategy.
    </para>
 
    <para>
@@ -563,11 +586,11 @@
     statistics in the system tables <structname>pg_class</structname> and
     <structname>pg_database</structname>.  In particular,
     the <structfield>relfrozenxid</structfield> column of a table's
-    <structname>pg_class</structname> row contains the freeze cutoff XID that was used
-    by the last aggressive <command>VACUUM</command> for that table.  All rows
-    inserted by transactions with XIDs older than this cutoff XID are
-    guaranteed to have been frozen.  Similarly,
-    the <structfield>datfrozenxid</structfield> column of a database's
+    <structname>pg_class</structname> row contains the oldest remaining unfrozen
+    XID at the end of the most recent <command>VACUUM</command> that successfully
+    advanced <structfield>relfrozenxid</structfield> (typically the most recent
+    aggressive VACUUM).  Similarly, the
+    <structfield>datfrozenxid</structfield> column of a database's
     <structname>pg_database</structname> row is a lower bound on the unfrozen XIDs
     appearing in that database &mdash; it is just the minimum of the
     per-table <structfield>relfrozenxid</structfield> values within the database.
@@ -588,6 +611,19 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     cutoff XID to the current transaction's XID.
    </para>
 
+   <tip>
+    <para>
+     When the <command>VACUUM</command> command's <literal>VERBOSE</literal>
+     parameter is specified, <command>VACUUM</command> prints various
+     statistics about the table.  This includes information about how
+     <structfield>relfrozenxid</structfield> and
+     <structfield>relminmxid</structfield> advanced.  The same details appear
+     in the server log when autovacuum logging (controlled by <xref
+      linkend="guc-log-autovacuum-min-duration"/>) reports on a
+     <command>VACUUM</command> operation executed by autovacuum.
+    </para>
+   </tip>
+
    <para>
     <command>VACUUM</command> normally only scans pages that have been modified
     since the last vacuum, but <structfield>relfrozenxid</structfield> can only be
@@ -602,7 +638,11 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     set <literal>age(relfrozenxid)</literal> to a value just a little more than the
     <varname>vacuum_freeze_min_age</varname> setting
     that was used (more by the number of transactions started since the
-    <command>VACUUM</command> started).  If no <structfield>relfrozenxid</structfield>-advancing
+    <command>VACUUM</command> started).  <command>VACUUM</command>
+    will set <structfield>relfrozenxid</structfield> to the oldest XID
+    that remains in the table, so it's possible that the final value
+    will be much more recent than strictly required.
+    If no <structfield>relfrozenxid</structfield>-advancing
     <command>VACUUM</command> is issued on the table until
     <varname>autovacuum_freeze_max_age</varname> is reached, an autovacuum will soon
     be forced for the table.
@@ -689,8 +729,9 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
     </para>
 
     <para>
-     Aggressive <command>VACUUM</command> scans, regardless of
-     what causes them, enable advancing the value for that table.
+     Aggressive <command>VACUUM</command>s, regardless of what causes
+     them, are <emphasis>guaranteed</emphasis> to be able to advance
+     the table's <structfield>relminmxid</structfield>.
      Eventually, as all tables in all databases are scanned and their
      oldest multixact values are advanced, on-disk storage for older
      multixacts can be removed.
@@ -698,8 +739,7 @@ HINT:  Stop the postmaster and vacuum that database in single-user mode.
 
     <para>
      As a safety device, an aggressive vacuum scan will
-     occur for any table whose multixact-age (see <xref
-     linkend="vacuum-for-multixact-wraparound"/>) is greater than <xref
+     occur for any table whose multixact-age is greater than <xref
      linkend="guc-autovacuum-multixact-freeze-max-age"/>.  Also, if the
      storage occupied by multixacts members exceeds 2GB, aggressive vacuum
      scans will occur more often for all tables, starting with those that
@@ -799,7 +839,7 @@ vacuum insert threshold = vacuum base insert threshold + vacuum insert scale fac
     it may be beneficial to lower the table's
     <xref linkend="reloption-autovacuum-freeze-min-age"/> as this may allow
     tuples to be frozen by earlier vacuums.  The number of obsolete tuples and
-    the number of inserted tuples are obtained from the statistics collector;
+    the number of inserted tuples are obtained from the cumulative statistics system;
     it is a semi-accurate count updated by each <command>UPDATE</command>,
     <command>DELETE</command> and <command>INSERT</command> operation.  (It is
     only semi-accurate because some information might be lost under heavy
@@ -817,6 +857,13 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
 </programlisting>
     is compared to the total number of tuples inserted, updated, or deleted
     since the last <command>ANALYZE</command>.
+   </para>
+
+   <para>
+    Partitioned tables are not processed by autovacuum.  Statistics
+    should be collected by running a manual <command>ANALYZE</command> when it is
+    first populated, and again whenever the distribution of data in its
+    partitions changes significantly.
    </para>
 
    <para>

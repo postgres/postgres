@@ -4,7 +4,7 @@
  *	  Catalog-to-filenode mapping
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/relmapper.h
@@ -38,7 +38,9 @@ typedef struct xl_relmap_update
 extern Oid	RelationMapOidToFilenode(Oid relationId, bool shared);
 
 extern Oid	RelationMapFilenodeToOid(Oid relationId, bool shared);
-
+extern Oid RelationMapOidToFilenodeForDatabase(char *dbpath, Oid relationId);
+extern void RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath,
+							char *dstdbpath);
 extern void RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
 								 bool immediate);
 

@@ -1,11 +1,11 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
-use Test::More tests => 4;
+use Test::More;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
@@ -36,3 +36,5 @@ $node->issues_sql_like(
                    .*statement:\ RESET\ default_statistics_target;
                    .*statement:\ ANALYZE/sx,
 	'analyze more than one database in stages');
+
+done_testing();

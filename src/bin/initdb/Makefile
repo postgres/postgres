@@ -2,7 +2,7 @@
 #
 # Makefile for src/bin/initdb
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/bin/initdb/Makefile
@@ -61,6 +61,8 @@ clean distclean maintainer-clean:
 
 # ensure that changes in datadir propagate into object file
 initdb.o: initdb.c $(top_builddir)/src/Makefile.global
+
+export with_icu
 
 check:
 	$(prove_check)

@@ -2,7 +2,7 @@
  *
  * plpython.h - Python as a procedural language for PostgreSQL
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/pl/plpython/plpython.h
@@ -59,37 +59,6 @@
 #include <Python.h>
 #endif
 
-/*
- * Python 2/3 strings/unicode/bytes handling.  Python 2 has strings
- * and unicode, Python 3 has strings, which are unicode on the C
- * level, and bytes.  The porting convention, which is similarly used
- * in Python 2.6, is that "Unicode" is always unicode, and "Bytes" are
- * bytes in Python 3 and strings in Python 2.  Since we keep
- * supporting Python 2 and its usual strings, we provide a
- * compatibility layer for Python 3 that when asked to convert a C
- * string to a Python string it converts the C string from the
- * PostgreSQL server encoding to a Python Unicode object.
- */
-#if PY_MAJOR_VERSION >= 3
-#define PyString_Check(x) 0
-#define PyString_AsString(x) PLyUnicode_AsString(x)
-#define PyString_FromString(x) PLyUnicode_FromString(x)
-#define PyString_FromStringAndSize(x, size) PLyUnicode_FromStringAndSize(x, size)
-#endif
-
-/*
- * Python 3 only has long.
- */
-#if PY_MAJOR_VERSION >= 3
-#define PyInt_FromLong(x) PyLong_FromLong(x)
-#define PyInt_AsLong(x) PyLong_AsLong(x)
-#endif
-
-/* Python 3 removed the Py_TPFLAGS_HAVE_ITER flag */
-#if PY_MAJOR_VERSION >= 3
-#define Py_TPFLAGS_HAVE_ITER 0
-#endif
-
 /* define our text domain for translations */
 #undef TEXTDOMAIN
 #define TEXTDOMAIN PG_TEXTDOMAIN("plpython")
@@ -130,8 +99,7 @@
 #define printf(...)		pg_printf(__VA_ARGS__)
 
 /*
- * Used throughout, and also by the Python 2/3 porting layer, so it's easier to
- * just include it everywhere.
+ * Used throughout, so it's easier to just include it everywhere.
  */
 #include "plpy_util.h"
 

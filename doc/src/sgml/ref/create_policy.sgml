@@ -55,7 +55,8 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
   </para>
 
   <para>
-   For <command>INSERT</command> and <command>UPDATE</command> statements,
+   For <command>INSERT</command>, <command>UPDATE</command>, and
+   <command>MERGE</command> statements,
    <literal>WITH CHECK</literal> expressions are enforced after
    <literal>BEFORE</literal> triggers are fired, and before any actual data
    modifications are made.  Thus a <literal>BEFORE ROW</literal> trigger may
@@ -281,7 +282,9 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
       <listitem>
        <para>
          Using <literal>INSERT</literal> for a policy means that it will apply
-         to <literal>INSERT</literal> commands.  Rows being inserted that do
+         to <literal>INSERT</literal> commands and <literal>MERGE</literal>
+         commands that contain <literal>INSERT</literal> actions.
+         Rows being inserted that do
          not pass this policy will result in a policy violation error, and the
          entire <literal>INSERT</literal> command will be aborted.
          An <literal>INSERT</literal> policy cannot have
@@ -305,7 +308,9 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
          to <literal>UPDATE</literal>, <literal>SELECT FOR UPDATE</literal>
          and <literal>SELECT FOR SHARE</literal> commands, as well as
          auxiliary <literal>ON CONFLICT DO UPDATE</literal> clauses of
-         <literal>INSERT</literal> commands.  Since <literal>UPDATE</literal>
+         <literal>INSERT</literal> commands.
+         <literal>MERGE</literal> commands containing <literal>UPDATE</literal>
+         actions are affected as well.  Since <literal>UPDATE</literal>
          involves pulling an existing record and replacing it with a new
          modified record, <literal>UPDATE</literal>
          policies accept both a <literal>USING</literal> expression and
@@ -435,7 +440,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry>&mdash;</entry>
       </row>
       <row>
-       <entry><command>INSERT</command></entry>
+       <entry><command>INSERT</command> / <command>MERGE ... THEN INSERT</command></entry>
        <entry>&mdash;</entry>
        <entry>New row</entry>
        <entry>&mdash;</entry>
@@ -459,7 +464,7 @@ CREATE POLICY <replaceable class="parameter">name</replaceable> ON <replaceable 
        <entry>&mdash;</entry>
       </row>
       <row>
-       <entry><command>UPDATE</command></entry>
+       <entry><command>UPDATE</command> / <command>MERGE ... THEN UPDATE</command></entry>
        <entry>
         Existing &amp; new rows <footnoteref linkend="rls-select-priv"/>
        </entry>
@@ -608,7 +613,17 @@ AND
    This does not change how views
    work, however.  As with normal queries and views, permission checks and
    policies for the tables which are referenced by a view will use the view
-   owner's rights and any policies which apply to the view owner.
+   owner's rights and any policies which apply to the view owner, except if
+   the view is defined using the <literal>security_invoker</literal> option
+   (see <link linkend="sql-createview"><command>CREATE VIEW</command></link>).
+  </para>
+
+  <para>
+   No separate policy exists for <command>MERGE</command>. Instead, the policies
+   defined for <command>SELECT</command>, <command>INSERT</command>,
+   <command>UPDATE</command>, and <command>DELETE</command> are applied
+   while executing <command>MERGE</command>, depending on the actions that are
+   performed.
   </para>
 
   <para>

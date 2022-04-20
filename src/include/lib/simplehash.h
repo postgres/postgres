@@ -87,7 +87,7 @@
  *	  looking or is done - buckets following a deleted element are shifted
  *	  backwards, unless they're empty or already at their optimal position.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/lib/simplehash.h
@@ -293,8 +293,7 @@ SH_SCOPE void SH_STAT(SH_TYPE * tb);
 #define SIMPLEHASH_H
 
 #ifdef FRONTEND
-#define sh_error(...) \
-	do { pg_log_fatal(__VA_ARGS__); exit(1); } while(0)
+#define sh_error(...) pg_fatal(__VA_ARGS__)
 #define sh_log(...) pg_log_info(__VA_ARGS__)
 #else
 #define sh_error(...) elog(ERROR, __VA_ARGS__)

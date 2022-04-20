@@ -23,7 +23,7 @@
  * restart needs to be forced.)
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -38,6 +38,7 @@
 
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
+#include "access/xlogrecovery.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -212,6 +213,16 @@ CheckpointerMain(void)
 	last_checkpoint_time = last_xlog_switch_time = (pg_time_t) time(NULL);
 
 	/*
+	 * Write out stats after shutdown. This needs to be called by exactly one
+	 * process during a normal shutdown, and since checkpointer is shut down
+	 * very late...
+	 *
+	 * Walsenders are shut down after the checkpointer, but currently don't
+	 * report stats. If that changes, we need a more complicated solution.
+	 */
+	before_shmem_exit(pgstat_before_server_shutdown, 0);
+
+	/*
 	 * Create a memory context that we will do all our work in.  We do this so
 	 * that we can reset the context during error recovery and thereby avoid
 	 * possible memory leaks.  Formerly this code just ran in
@@ -357,7 +368,7 @@ CheckpointerMain(void)
 		if (((volatile CheckpointerShmemStruct *) CheckpointerShmem)->ckpt_flags)
 		{
 			do_checkpoint = true;
-			PendingCheckpointerStats.m_requested_checkpoints++;
+			PendingCheckpointerStats.requested_checkpoints++;
 		}
 
 		/*
@@ -371,7 +382,7 @@ CheckpointerMain(void)
 		if (elapsed_secs >= CheckPointTimeout)
 		{
 			if (!do_checkpoint)
-				PendingCheckpointerStats.m_timed_checkpoints++;
+				PendingCheckpointerStats.timed_checkpoints++;
 			do_checkpoint = true;
 			flags |= CHECKPOINT_CAUSE_TIME;
 		}
@@ -483,18 +494,17 @@ CheckpointerMain(void)
 			}
 
 			ckpt_active = false;
+
+			/* We may have received an interrupt during the checkpoint. */
+			HandleCheckpointerInterrupts();
 		}
 
 		/* Check for archive_timeout and switch xlog files if necessary. */
 		CheckArchiveTimeout();
 
-		/*
-		 * Send off activity statistics to the stats collector.
-		 */
-		pgstat_send_checkpointer();
-
-		/* Send WAL statistics to the stats collector. */
-		pgstat_send_wal(true);
+		/* Report pending statistics to the cumulative stats system */
+		pgstat_report_checkpointer();
+		pgstat_report_wal(true);
 
 		/*
 		 * If any checkpoint flags have been set, redo the loop to handle the
@@ -566,17 +576,21 @@ HandleCheckpointerInterrupts(void)
 		 * Close down the database.
 		 *
 		 * Since ShutdownXLOG() creates restartpoint or checkpoint, and
-		 * updates the statistics, increment the checkpoint request and send
-		 * the statistics to the stats collector.
+		 * updates the statistics, increment the checkpoint request and flush
+		 * out pending statistic.
 		 */
-		PendingCheckpointerStats.m_requested_checkpoints++;
+		PendingCheckpointerStats.requested_checkpoints++;
 		ShutdownXLOG(0, 0);
-		pgstat_send_checkpointer();
-		pgstat_send_wal(true);
+		pgstat_report_checkpointer();
+		pgstat_report_wal(true);
 
 		/* Normal exit from the checkpointer is here */
 		proc_exit(0);			/* done */
 	}
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }
 
 /*
@@ -710,10 +724,8 @@ CheckpointWriteDelay(int flags, double progress)
 
 		CheckArchiveTimeout();
 
-		/*
-		 * Report interim activity statistics.
-		 */
-		pgstat_send_checkpointer();
+		/* Report interim statistics to the cumulative stats system */
+		pgstat_report_checkpointer();
 
 		/*
 		 * This sleep used to be connected to bgwriter_delay, typically 200ms.
@@ -721,7 +733,10 @@ CheckpointWriteDelay(int flags, double progress)
 		 * Checkpointer and bgwriter are no longer related so take the Big
 		 * Sleep.
 		 */
-		pg_usleep(100000L);
+		WaitLatch(MyLatch, WL_LATCH_SET | WL_EXIT_ON_PM_DEATH | WL_TIMEOUT,
+				  100,
+				  WAIT_EVENT_CHECKPOINT_WRITE_DELAY);
+		ResetLatch(MyLatch);
 	}
 	else if (--absorb_counter <= 0)
 	{
@@ -1257,9 +1272,9 @@ AbsorbSyncRequests(void)
 	LWLockAcquire(CheckpointerCommLock, LW_EXCLUSIVE);
 
 	/* Transfer stats counts into pending pgstats message */
-	PendingCheckpointerStats.m_buf_written_backend
+	PendingCheckpointerStats.buf_written_backend
 		+= CheckpointerShmem->num_backend_writes;
-	PendingCheckpointerStats.m_buf_fsync_backend
+	PendingCheckpointerStats.buf_fsync_backend
 		+= CheckpointerShmem->num_backend_fsync;
 
 	CheckpointerShmem->num_backend_writes = 0;

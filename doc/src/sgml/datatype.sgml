@@ -3177,7 +3177,7 @@ CREATE TABLE person (
 );
 INSERT INTO person VALUES ('Moe', 'happy');
 SELECT * FROM person WHERE current_mood = 'happy';
- name | current_mood 
+ name | current_mood
 ------+--------------
  Moe  | happy
 (1 row)
@@ -3198,14 +3198,14 @@ SELECT * FROM person WHERE current_mood = 'happy';
 INSERT INTO person VALUES ('Larry', 'sad');
 INSERT INTO person VALUES ('Curly', 'ok');
 SELECT * FROM person WHERE current_mood > 'sad';
- name  | current_mood 
+ name  | current_mood
 -------+--------------
  Moe   | happy
  Curly | ok
 (2 rows)
 
 SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;
- name  | current_mood 
+ name  | current_mood
 -------+--------------
  Curly | ok
  Moe   | happy
@@ -3214,7 +3214,7 @@ SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;
 SELECT name
 FROM person
 WHERE current_mood = (SELECT MIN(current_mood) FROM person);
- name  
+ name
 -------
  Larry
 (1 row)
@@ -3253,7 +3253,7 @@ ERROR:  operator does not exist: mood = happiness
 <programlisting>
 SELECT person.name, holidays.num_weeks FROM person, holidays
   WHERE person.current_mood::text = holidays.happiness::text;
- name | num_weeks 
+ name | num_weeks
 ------+-----------
  Moe  |         4
 (1 row)
@@ -3982,7 +3982,7 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 <programlisting>
 SELECT macaddr8_set7bit('08:00:2b:01:02:03');
 <computeroutput>
-    macaddr8_set7bit     
+    macaddr8_set7bit
 -------------------------
  0a:00:2b:ff:fe:01:02:03
 (1 row)
@@ -4124,7 +4124,7 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
 
 <programlisting>
 SELECT $$the lexeme '    ' contains spaces$$::tsvector;
-                 tsvector                  
+                 tsvector
 -------------------------------------------
  '    ' 'contains' 'lexeme' 'spaces' 'the'
 </programlisting>
@@ -4135,7 +4135,7 @@ SELECT $$the lexeme '    ' contains spaces$$::tsvector;
 
 <programlisting>
 SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
-                    tsvector                    
+                    tsvector
 ------------------------------------------------
  'Joe''s' 'a' 'contains' 'lexeme' 'quote' 'the'
 </programlisting>
@@ -4165,7 +4165,7 @@ SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::ts
 
 <programlisting>
 SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
-          tsvector          
+          tsvector
 ----------------------------
  'a':1A 'cat':5 'fat':2B,4C
 </programlisting>
@@ -4184,7 +4184,7 @@ SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
 
 <programlisting>
 SELECT 'The Fat Rats'::tsvector;
-      tsvector      
+      tsvector
 --------------------
  'Fat' 'Rats' 'The'
 </programlisting>
@@ -4197,7 +4197,7 @@ SELECT 'The Fat Rats'::tsvector;
 
 <programlisting>
 SELECT to_tsvector('english', 'The Fat Rats');
-   to_tsvector   
+   to_tsvector
 -----------------
  'fat':2 'rat':3
 </programlisting>
@@ -4239,17 +4239,17 @@ SELECT to_tsvector('english', 'The Fat Rats');
 
 <programlisting>
 SELECT 'fat &amp; rat'::tsquery;
-    tsquery    
+    tsquery
 ---------------
  'fat' &amp; 'rat'
 
 SELECT 'fat &amp; (rat | cat)'::tsquery;
-          tsquery          
+          tsquery
 ---------------------------
  'fat' &amp; ( 'rat' | 'cat' )
 
 SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
-        tsquery         
+        tsquery
 ------------------------
  'fat' &amp; 'rat' &amp; !'cat'
 </programlisting>
@@ -4273,7 +4273,7 @@ SELECT 'fat:ab &amp; cat'::tsquery;
      to specify prefix matching:
 <programlisting>
 SELECT 'super:*'::tsquery;
-  tsquery  
+  tsquery
 -----------
  'super':*
 </programlisting>
@@ -4290,7 +4290,7 @@ SELECT 'super:*'::tsquery;
 
 <programlisting>
 SELECT to_tsquery('Fat:ab &amp; Cats');
-    to_tsquery    
+    to_tsquery
 ------------------
  'fat':AB &amp; 'cat'
 </programlisting>

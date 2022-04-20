@@ -2,7 +2,7 @@
  *
  * bbstreamer_inject.c
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/bbstreamer_inject.c
@@ -186,8 +186,7 @@ bbstreamer_recovery_injector_content(bbstreamer *streamer,
 
 		default:
 			/* Shouldn't happen. */
-			pg_log_error("unexpected state while injecting recovery settings");
-			exit(1);
+			pg_fatal("unexpected state while injecting recovery settings");
 	}
 
 	bbstreamer_content(mystreamer->base.bbs_next, &mystreamer->member,

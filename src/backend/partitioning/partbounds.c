@@ -3,7 +3,7 @@
  * partbounds.c
  *		Support routines for manipulating partition bounds
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -3793,8 +3793,8 @@ partition_hash_bsearch(PartitionBoundInfo boundinfo,
 static int32
 qsort_partition_hbound_cmp(const void *a, const void *b)
 {
-	PartitionHashBound *const h1 = (PartitionHashBound *const) a;
-	PartitionHashBound *const h2 = (PartitionHashBound *const) b;
+	const PartitionHashBound *h1 = (const PartitionHashBound *) a;
+	const PartitionHashBound *h2 = (const PartitionHashBound *) b;
 
 	return partition_hbound_cmp(h1->modulus, h1->remainder,
 								h2->modulus, h2->remainder);
@@ -3808,8 +3808,8 @@ qsort_partition_hbound_cmp(const void *a, const void *b)
 static int32
 qsort_partition_list_value_cmp(const void *a, const void *b, void *arg)
 {
-	Datum		val1 = ((PartitionListValue *const) a)->value,
-				val2 = ((PartitionListValue *const) b)->value;
+	Datum		val1 = ((const PartitionListValue *) a)->value,
+				val2 = ((const PartitionListValue *) b)->value;
 	PartitionKey key = (PartitionKey) arg;
 
 	return DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],

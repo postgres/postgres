@@ -4,7 +4,7 @@
  *		Functions for direct access to files
  *
  *
- * Copyright (c) 2004-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2004-2022, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
@@ -59,11 +59,11 @@ convert_and_check_filename(text *arg)
 	canonicalize_path(filename);	/* filename can change length here */
 
 	/*
-	 * Members of the 'pg_read_server_files' role are allowed to access any
-	 * files on the server as the PG user, so no need to do any further checks
-	 * here.
+	 * Roles with privileges of the 'pg_read_server_files' role are allowed to
+	 * access any files on the server as the PG user, so no need to do any
+	 * further checks here.
 	 */
-	if (is_member_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
+	if (has_privs_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
 		return filename;
 
 	/*
@@ -72,12 +72,6 @@ convert_and_check_filename(text *arg)
 	 */
 	if (is_absolute_path(filename))
 	{
-		/* Disallow '/a/b/data/..' */
-		if (path_contains_parent_reference(filename))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("reference to parent directory (\"..\") not allowed")));
-
 		/*
 		 * Allow absolute paths if within DataDir or Log_directory, even
 		 * though Log_directory might be outside DataDir.
@@ -483,12 +477,8 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 	char	   *location;
 	bool		missing_ok = false;
 	bool		include_dot_dirs = false;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
 	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
 	location = convert_and_check_filename(PG_GETARG_TEXT_PP(0));
 
@@ -501,29 +491,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 			include_dot_dirs = PG_GETARG_BOOL(2);
 	}
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	tupdesc = CreateTemplateTupleDesc(1);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_ls_dir", TEXTOID, -1, 0);
-
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
 
 	dirdesc = AllocateDir(location);
 	if (!dirdesc)
@@ -547,7 +515,8 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 		values[0] = CStringGetTextDatum(de->d_name);
 		nulls[0] = false;
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
 	}
 
 	FreeDir(dirdesc);
@@ -577,36 +546,10 @@ static Datum
 pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
 	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, 0);
 
 	/*
 	 * Now walk the directory.  Note that we must do this within a single SRF
@@ -654,7 +597,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 		values[2] = TimestampTzGetDatum(time_t_to_timestamptz(attrib.st_mtime));
 		memset(nulls, 0, sizeof(nulls));
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
 	FreeDir(dirdesc);

@@ -4,21 +4,21 @@
 
 CREATE FUNCTION test_setof_error() RETURNS SETOF text AS $$
 return 37
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT test_setof_error();
 
 
 CREATE FUNCTION test_setof_as_list(count integer, content text) RETURNS SETOF text AS $$
 return [ content ]*count
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION test_setof_as_tuple(count integer, content text) RETURNS SETOF text AS $$
 t = ()
 for i in range(count):
 	t += ( content, )
 return t
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION test_setof_as_iterator(count integer, content text) RETURNS SETOF text AS $$
 class producer:
@@ -27,13 +27,13 @@ class producer:
 		self.icount = icount
 	def __iter__ (self):
 		return self
-	def next (self):
+	def __next__ (self):
 		if self.icount == 0:
 			raise StopIteration
 		self.icount -= 1
 		return self.icontent
 return producer(count, content)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION test_setof_spi_in_iterator() RETURNS SETOF text AS
 $$
@@ -42,7 +42,7 @@ $$
         yield s
         plpy.execute('select 2')
 $$
-LANGUAGE plpythonu;
+LANGUAGE plpython3u;
 
 
 -- Test set returning functions
@@ -69,7 +69,7 @@ global x
 while x <= lim:
     yield x
     x = x + 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT ugly(1, 5);
 
@@ -81,7 +81,7 @@ CREATE OR REPLACE FUNCTION get_user_records()
 RETURNS SETOF users
 AS $$
     return plpy.execute("SELECT * FROM users ORDER BY username")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT get_user_records();
 SELECT * FROM get_user_records();
@@ -91,7 +91,7 @@ CREATE OR REPLACE FUNCTION get_user_records2()
 RETURNS TABLE(fname text, lname text, username text, userid int)
 AS $$
     return plpy.execute("SELECT * FROM users ORDER BY username")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT get_user_records2();
 SELECT * FROM get_user_records2();

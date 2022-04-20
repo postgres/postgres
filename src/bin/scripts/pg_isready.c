@@ -2,7 +2,7 @@
  *
  * pg_isready --- checks the status of the PostgreSQL server
  *
- * Copyright (c) 2013-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2013-2022, PostgreSQL Global Development Group
  *
  * src/bin/scripts/pg_isready.c
  *
@@ -93,7 +93,8 @@ main(int argc, char **argv)
 				pguser = pg_strdup(optarg);
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 
 				/*
 				 * We need to make sure we don't return 1 here because someone
@@ -107,7 +108,7 @@ main(int argc, char **argv)
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 
 		/*
 		 * We need to make sure we don't return 1 here because someone

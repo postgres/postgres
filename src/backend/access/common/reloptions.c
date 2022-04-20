@@ -3,7 +3,7 @@
  * reloptions.c
  *	  Core support for relation options (pg_class.reloptions)
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -135,6 +135,15 @@ static relopt_bool boolRelOpts[] =
 		{
 			"security_barrier",
 			"View acts as a row security barrier",
+			RELOPT_KIND_VIEW,
+			AccessExclusiveLock
+		},
+		false
+	},
+	{
+		{
+			"security_invoker",
+			"Privileges on underlying relations are checked as the invoking user, not the view owner",
 			RELOPT_KIND_VIEW,
 			AccessExclusiveLock
 		},
@@ -1996,6 +2005,8 @@ view_reloptions(Datum reloptions, bool validate)
 	static const relopt_parse_elt tab[] = {
 		{"security_barrier", RELOPT_TYPE_BOOL,
 		offsetof(ViewOptions, security_barrier)},
+		{"security_invoker", RELOPT_TYPE_BOOL,
+		offsetof(ViewOptions, security_invoker)},
 		{"check_option", RELOPT_TYPE_ENUM,
 		offsetof(ViewOptions, check_option)}
 	};

@@ -3,7 +3,7 @@
  * catcache.c
  *	  System catalog cache for tuples matching a key.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -26,6 +26,7 @@
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "miscadmin.h"
+#include "port/pg_bitutils.h"
 #ifdef CATCACHE_STATS
 #include "storage/ipc.h"		/* for on_proc_exit */
 #endif
@@ -281,25 +282,18 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 	{
 		case 4:
 			oneHash = (cc_hashfunc[3]) (v4);
-
-			hashValue ^= oneHash << 24;
-			hashValue ^= oneHash >> 8;
+			hashValue ^= pg_rotate_left32(oneHash, 24);
 			/* FALLTHROUGH */
 		case 3:
 			oneHash = (cc_hashfunc[2]) (v3);
-
-			hashValue ^= oneHash << 16;
-			hashValue ^= oneHash >> 16;
+			hashValue ^= pg_rotate_left32(oneHash, 16);
 			/* FALLTHROUGH */
 		case 2:
 			oneHash = (cc_hashfunc[1]) (v2);
-
-			hashValue ^= oneHash << 8;
-			hashValue ^= oneHash >> 24;
+			hashValue ^= pg_rotate_left32(oneHash, 8);
 			/* FALLTHROUGH */
 		case 1:
 			oneHash = (cc_hashfunc[0]) (v1);
-
 			hashValue ^= oneHash;
 			break;
 		default:
@@ -1716,7 +1710,6 @@ SearchCatCacheList(CatCache *cache,
 		 * we'd better do so before we start marking the members as belonging
 		 * to the list.
 		 */
-
 	}
 	PG_CATCH();
 	{
@@ -1968,7 +1961,6 @@ CatCacheCopyKeys(TupleDesc tupdesc, int nkeys, int *attnos,
 							   att->attbyval,
 							   att->attlen);
 	}
-
 }
 
 /*

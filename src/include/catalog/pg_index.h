@@ -4,7 +4,7 @@
  *	  definition of the "index" system catalog (pg_index)
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_index.h
@@ -34,6 +34,7 @@ CATALOG(pg_index,2610,IndexRelationId) BKI_SCHEMA_MACRO
 	int16		indnatts;		/* total number of columns in index */
 	int16		indnkeyatts;	/* number of key columns in index */
 	bool		indisunique;	/* is this a unique index? */
+	bool		indnullsnotdistinct;	/* null treatment in unique index */
 	bool		indisprimary;	/* is this index for primary key? */
 	bool		indisexclusion; /* is this index for exclusion constraint? */
 	bool		indimmediate;	/* is uniqueness enforced immediately? */

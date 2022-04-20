@@ -2,6 +2,17 @@
 -- Test for ALTER some_object {RENAME TO, OWNER TO, SET SCHEMA}
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION test_opclass_options_func(internal)
+    RETURNS void
+    AS :'regresslib', 'test_opclass_options_func'
+    LANGUAGE C;
+
 -- Clean up in case a prior regression run failed
 SET client_min_messages TO 'warning';
 

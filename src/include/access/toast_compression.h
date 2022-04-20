@@ -3,7 +3,7 @@
  * toast_compression.h
  *	  Functions for toast compression.
  *
- * Copyright (c) 2021, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2022, PostgreSQL Global Development Group
  *
  * src/include/access/toast_compression.h
  *
@@ -20,7 +20,7 @@
  * but the value is one of the char values defined below, as they appear in
  * pg_attribute.attcompression, e.g. TOAST_PGLZ_COMPRESSION.
  */
-extern int	default_toast_compression;
+extern PGDLLIMPORT int default_toast_compression;
 
 /*
  * Built-in compression method ID.  The toast compression header will store

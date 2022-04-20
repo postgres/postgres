@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -12,18 +12,23 @@ use File::Copy;
 use FindBin;
 use lib $FindBin::RealBin;
 
-use SSLServer;
+use SSL::Server;
 
 if ($ENV{with_ssl} ne 'openssl')
 {
 	plan skip_all => 'OpenSSL not supported by this build';
 }
-else
-{
-	plan tests => 13;
-}
 
 #### Some configuration
+my $ssl_server = SSL::Server->new();
+sub sslkey
+{
+	return $ssl_server->sslkey(@_);
+}
+sub switch_server_cert
+{
+	$ssl_server->switch_server_cert(@_);
+}
 
 # This is the hostname used to connect to the server. This cannot be a
 # hostname, because the server certificate is always for the domain
@@ -34,17 +39,6 @@ my $SERVERHOSTCIDR = '127.0.0.1/32';
 
 # Allocation of base connection string shared among multiple tests.
 my $common_connstr;
-
-# The client's private key must not be world-readable, so take a copy
-# of the key stored in the code tree and update its permissions.
-my $cert_tempdir = PostgreSQL::Test::Utils::tempdir();
-my $client_tmp_key = PostgreSQL::Test::Utils::perl2host("$cert_tempdir/client_ext.key");
-copy("ssl/client_ext.key", "$cert_tempdir/client_ext.key")
-  or die
-  "couldn't copy ssl/client_ext.key to $cert_tempdir/client_ext.key for permissions change: $!";
-chmod 0600, "$cert_tempdir/client_ext.key"
-  or die "failed to change permissions on $cert_tempdir/client_ext.key: $!";
-$client_tmp_key =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 
 #### Set up the server.
 
@@ -58,17 +52,22 @@ $ENV{PGHOST} = $node->host;
 $ENV{PGPORT} = $node->port;
 $node->start;
 
-configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
+$ssl_server->configure_test_server_for_ssl($node, $SERVERHOSTADDR, $SERVERHOSTCIDR,
 	'trust', extensions => [ qw(sslinfo) ]);
 
 # We aren't using any CRL's in this suite so we can keep using server-revoked
 # as server certificate for simple client.crt connection much like how the
 # 001 test does.
-switch_server_cert($node, 'server-revoked');
+switch_server_cert($node, certfile => 'server-revoked');
+
+# Set of default settings for SSL parameters in connection string.  This
+# makes the tests protected against any defaults the environment may have
+# in ~/.postgresql/.
+my $default_ssl_connstr = "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
 
 $common_connstr =
-  "sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR " .
-  "user=ssltestuser sslcert=ssl/client_ext.crt sslkey=$client_tmp_key";
+  "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=certdb hostaddr=$SERVERHOSTADDR host=localhost " .
+  "user=ssltestuser sslcert=ssl/client_ext.crt " . sslkey('client_ext.key');
 
 # Make sure we can connect even though previous test suites have established this
 $node->connect_ok(
@@ -97,8 +96,8 @@ $result = $node->safe_psql("certdb", "SELECT ssl_client_cert_present();",
 is($result, 't', "ssl_client_cert_present() for connection with cert");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_cert_present();",
-  connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
-  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser");
+  connstr => "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require " .
+  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, 'f', "ssl_client_cert_present() for connection without cert");
 
 $result = $node->safe_psql("certdb",
@@ -112,8 +111,8 @@ $result = $node->psql("certdb", "SELECT ssl_client_dn_field('invalid');",
 is($result, '3', "ssl_client_dn_field() for an invalid field");
 
 $result = $node->safe_psql("trustdb", "SELECT ssl_client_dn_field('commonName');",
-  connstr => "sslrootcert=ssl/root+server_ca.crt sslmode=require " .
-  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser");
+  connstr => "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require " .
+  "dbname=trustdb hostaddr=$SERVERHOSTADDR user=ssltestuser host=localhost");
 is($result, '', "ssl_client_dn_field() for connection without cert");
 
 $result = $node->safe_psql("certdb",
@@ -135,3 +134,5 @@ $result = $node->safe_psql("certdb",
   "SELECT value, critical FROM ssl_extension_info() WHERE name = 'basicConstraints';",
   connstr => $common_connstr);
 is($result, 'CA:FALSE|t', 'extract extension from cert');
+
+done_testing();

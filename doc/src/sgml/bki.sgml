@@ -175,19 +175,20 @@
     will demonstrate the key features:
    </para>
 
-<programlisting>
+<!-- The "slight modification" is the apostrophe in the description. -->
+<programlisting><![CDATA[
 [
 
 # A comment could appear here.
-{ oid =&gt; '1', oid_symbol =&gt; 'TemplateDbOid',
-  descr =&gt; 'database\'s default template',
-  datname =&gt; 'template1', encoding =&gt; 'ENCODING', datcollate =&gt; 'LC_COLLATE',
-  datctype =&gt; 'LC_CTYPE', datistemplate =&gt; 't', datallowconn =&gt; 't',
-  datconnlimit =&gt; '-1', datlastsysoid =&gt; '0', datfrozenxid =&gt; '0',
-  datminmxid =&gt; '1', dattablespace =&gt; 'pg_default', datacl =&gt; '_null_' },
+{ oid => '1', oid_symbol => 'TemplateDbOid',
+  descr => 'database\'s default template',
+  datname => 'template1', encoding => 'ENCODING', datistemplate => 't',
+  datallowconn => 't', datconnlimit => '-1', datfrozenxid => '0',
+  datminmxid => '1', dattablespace => 'pg_default', datcollate => 'LC_COLLATE',
+  datctype => 'LC_CTYPE', datacl => '_null_' },
 
 ]
-</programlisting>
+]]></programlisting>
 
    <para>
     Points to note:

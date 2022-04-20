@@ -1283,30 +1283,8 @@ drop table cchild;
 -- temporarily disable fancy output, so view changes create less diff noise
 \a\t
 SELECT viewname, definition FROM pg_views
-WHERE schemaname IN ('pg_catalog', 'public')
+WHERE schemaname = 'pg_catalog'
 ORDER BY viewname;
-iexit| SELECT ih.name,
-    ih.thepath,
-    interpt_pp(ih.thepath, r.thepath) AS exit
-   FROM ihighway ih,
-    ramp r
-  WHERE (ih.thepath ## r.thepath);
-key_dependent_view| SELECT view_base_table.key,
-    view_base_table.data
-   FROM view_base_table
-  GROUP BY view_base_table.key;
-key_dependent_view_no_cols| SELECT
-   FROM view_base_table
-  GROUP BY view_base_table.key
- HAVING (length((view_base_table.data)::text) > 0);
-mvtest_tv| SELECT mvtest_t.type,
-    sum(mvtest_t.amt) AS totamt
-   FROM mvtest_t
-  GROUP BY mvtest_t.type;
-mvtest_tvv| SELECT sum(mvtest_tv.totamt) AS grandtot
-   FROM mvtest_tv;
-mvtest_tvvmv| SELECT mvtest_tvvm.grandtot
-   FROM mvtest_tvvm;
 pg_available_extension_versions| SELECT e.name,
     e.version,
     (x.extname IS NOT NULL) AS installed,
@@ -1369,6 +1347,12 @@ pg_hba_file_rules| SELECT a.line_number,
     a.options,
     a.error
    FROM pg_hba_file_rules() a(line_number, type, database, user_name, address, netmask, auth_method, options, error);
+pg_ident_file_mappings| SELECT a.line_number,
+    a.map_name,
+    a.sys_name,
+    a.pg_username,
+    a.error
+   FROM pg_ident_file_mappings() a(line_number, map_name, sys_name, pg_username, error);
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     i.relname AS indexname,
@@ -2027,6 +2011,17 @@ pg_stat_progress_vacuum| SELECT s.pid,
     s.param7 AS num_dead_tuples
    FROM (pg_stat_get_progress_info('VACUUM'::text) s(pid, datid, relid, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10, param11, param12, param13, param14, param15, param16, param17, param18, param19, param20)
      LEFT JOIN pg_database d ON ((s.datid = d.oid)));
+pg_stat_recovery_prefetch| SELECT s.stats_reset,
+    s.prefetch,
+    s.hit,
+    s.skip_init,
+    s.skip_new,
+    s.skip_fpw,
+    s.skip_rep,
+    s.wal_distance,
+    s.block_distance,
+    s.io_depth
+   FROM pg_stat_get_recovery_prefetch() s(stats_reset, prefetch, hit, skip_init, skip_new, skip_fpw, skip_rep, wal_distance, block_distance, io_depth);
 pg_stat_replication| SELECT s.pid,
     s.usesysid,
     u.rolname AS usename,
@@ -2094,24 +2089,13 @@ pg_stat_subscription| SELECT su.oid AS subid,
     st.latest_end_time
    FROM (pg_subscription su
      LEFT JOIN pg_stat_get_subscription(NULL::oid) st(subid, relid, pid, received_lsn, last_msg_send_time, last_msg_receipt_time, latest_end_lsn, latest_end_time) ON ((st.subid = su.oid)));
-pg_stat_subscription_workers| SELECT w.subid,
+pg_stat_subscription_stats| SELECT ss.subid,
     s.subname,
-    w.subrelid,
-    w.last_error_relid,
-    w.last_error_command,
-    w.last_error_xid,
-    w.last_error_count,
-    w.last_error_message,
-    w.last_error_time
-   FROM ( SELECT pg_subscription.oid AS subid,
-            NULL::oid AS relid
-           FROM pg_subscription
-        UNION ALL
-         SELECT pg_subscription_rel.srsubid AS subid,
-            pg_subscription_rel.srrelid AS relid
-           FROM pg_subscription_rel) sr,
-    (LATERAL pg_stat_get_subscription_worker(sr.subid, sr.relid) w(subid, subrelid, last_error_relid, last_error_command, last_error_xid, last_error_count, last_error_message, last_error_time)
-     JOIN pg_subscription s ON ((w.subid = s.oid)));
+    ss.apply_error_count,
+    ss.sync_error_count,
+    ss.stats_reset
+   FROM pg_subscription s,
+    LATERAL pg_stat_get_subscription_stats(s.oid) ss(subid, apply_error_count, sync_error_count, stats_reset);
 pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.indexrelid,
     pg_stat_all_indexes.schemaname,
@@ -2294,19 +2278,24 @@ pg_statio_all_tables| SELECT c.oid AS relid,
     c.relname,
     (pg_stat_get_blocks_fetched(c.oid) - pg_stat_get_blocks_hit(c.oid)) AS heap_blks_read,
     pg_stat_get_blocks_hit(c.oid) AS heap_blks_hit,
-    (sum((pg_stat_get_blocks_fetched(i.indexrelid) - pg_stat_get_blocks_hit(i.indexrelid))))::bigint AS idx_blks_read,
-    (sum(pg_stat_get_blocks_hit(i.indexrelid)))::bigint AS idx_blks_hit,
+    i.idx_blks_read,
+    i.idx_blks_hit,
     (pg_stat_get_blocks_fetched(t.oid) - pg_stat_get_blocks_hit(t.oid)) AS toast_blks_read,
     pg_stat_get_blocks_hit(t.oid) AS toast_blks_hit,
-    (pg_stat_get_blocks_fetched(x.indexrelid) - pg_stat_get_blocks_hit(x.indexrelid)) AS tidx_blks_read,
-    pg_stat_get_blocks_hit(x.indexrelid) AS tidx_blks_hit
+    x.idx_blks_read AS tidx_blks_read,
+    x.idx_blks_hit AS tidx_blks_hit
    FROM ((((pg_class c
-     LEFT JOIN pg_index i ON ((c.oid = i.indrelid)))
      LEFT JOIN pg_class t ON ((c.reltoastrelid = t.oid)))
-     LEFT JOIN pg_index x ON ((t.oid = x.indrelid)))
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
-  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]))
-  GROUP BY c.oid, n.nspname, c.relname, t.oid, x.indexrelid;
+     LEFT JOIN LATERAL ( SELECT (sum((pg_stat_get_blocks_fetched(pg_index.indexrelid) - pg_stat_get_blocks_hit(pg_index.indexrelid))))::bigint AS idx_blks_read,
+            (sum(pg_stat_get_blocks_hit(pg_index.indexrelid)))::bigint AS idx_blks_hit
+           FROM pg_index
+          WHERE (pg_index.indrelid = c.oid)) i ON (true))
+     LEFT JOIN LATERAL ( SELECT (sum((pg_stat_get_blocks_fetched(pg_index.indexrelid) - pg_stat_get_blocks_hit(pg_index.indexrelid))))::bigint AS idx_blks_read,
+            (sum(pg_stat_get_blocks_hit(pg_index.indexrelid)))::bigint AS idx_blks_hit
+           FROM pg_index
+          WHERE (pg_index.indrelid = t.oid)) x ON (true))
+  WHERE (c.relkind = ANY (ARRAY['r'::"char", 't'::"char", 'm'::"char"]));
 pg_statio_sys_indexes| SELECT pg_statio_all_indexes.relid,
     pg_statio_all_indexes.indexrelid,
     pg_statio_all_indexes.schemaname,
@@ -2443,6 +2432,7 @@ pg_stats_ext| SELECT cn.nspname AS schemaname,
              JOIN pg_attribute a ON (((a.attrelid = s.stxrelid) AND (a.attnum = k.k))))) AS attnames,
     pg_get_statisticsobjdef_expressions(s.oid) AS exprs,
     s.stxkind AS kinds,
+    sd.stxdinherit AS inherited,
     sd.stxdndistinct AS n_distinct,
     sd.stxddependencies AS dependencies,
     m.most_common_vals,
@@ -2469,6 +2459,7 @@ pg_stats_ext_exprs| SELECT cn.nspname AS schemaname,
     s.stxname AS statistics_name,
     pg_get_userbyid(s.stxowner) AS statistics_owner,
     stat.expr,
+    sd.stxdinherit AS inherited,
     (stat.a).stanullfrac AS null_frac,
     (stat.a).stawidth AS avg_width,
     (stat.a).stadistinct AS n_distinct,
@@ -2590,204 +2581,14 @@ pg_views| SELECT n.nspname AS schemaname,
    FROM (pg_class c
      LEFT JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.relkind = 'v'::"char");
-rtest_v1| SELECT rtest_t1.a,
-    rtest_t1.b
-   FROM rtest_t1;
-rtest_vcomp| SELECT x.part,
-    (x.size * y.factor) AS size_in_cm
-   FROM rtest_comp x,
-    rtest_unitfact y
-  WHERE (x.unit = y.unit);
-rtest_vview1| SELECT x.a,
-    x.b
-   FROM rtest_view1 x
-  WHERE (0 < ( SELECT count(*) AS count
-           FROM rtest_view2 y
-          WHERE (y.a = x.a)));
-rtest_vview2| SELECT rtest_view1.a,
-    rtest_view1.b
-   FROM rtest_view1
-  WHERE rtest_view1.v;
-rtest_vview3| SELECT x.a,
-    x.b
-   FROM rtest_vview2 x
-  WHERE (0 < ( SELECT count(*) AS count
-           FROM rtest_view2 y
-          WHERE (y.a = x.a)));
-rtest_vview4| SELECT x.a,
-    x.b,
-    count(y.a) AS refcount
-   FROM rtest_view1 x,
-    rtest_view2 y
-  WHERE (x.a = y.a)
-  GROUP BY x.a, x.b;
-rtest_vview5| SELECT rtest_view1.a,
-    rtest_view1.b,
-    rtest_viewfunc1(rtest_view1.a) AS refcount
-   FROM rtest_view1;
-shoe| SELECT sh.shoename,
-    sh.sh_avail,
-    sh.slcolor,
-    sh.slminlen,
-    (sh.slminlen * un.un_fact) AS slminlen_cm,
-    sh.slmaxlen,
-    (sh.slmaxlen * un.un_fact) AS slmaxlen_cm,
-    sh.slunit
-   FROM shoe_data sh,
-    unit un
-  WHERE (sh.slunit = un.un_name);
-shoe_ready| SELECT rsh.shoename,
-    rsh.sh_avail,
-    rsl.sl_name,
-    rsl.sl_avail,
-    int4smaller(rsh.sh_avail, rsl.sl_avail) AS total_avail
-   FROM shoe rsh,
-    shoelace rsl
-  WHERE ((rsl.sl_color = rsh.slcolor) AND (rsl.sl_len_cm >= rsh.slminlen_cm) AND (rsl.sl_len_cm <= rsh.slmaxlen_cm));
-shoelace| SELECT s.sl_name,
-    s.sl_avail,
-    s.sl_color,
-    s.sl_len,
-    s.sl_unit,
-    (s.sl_len * u.un_fact) AS sl_len_cm
-   FROM shoelace_data s,
-    unit u
-  WHERE (s.sl_unit = u.un_name);
-shoelace_candelete| SELECT shoelace_obsolete.sl_name,
-    shoelace_obsolete.sl_avail,
-    shoelace_obsolete.sl_color,
-    shoelace_obsolete.sl_len,
-    shoelace_obsolete.sl_unit,
-    shoelace_obsolete.sl_len_cm
-   FROM shoelace_obsolete
-  WHERE (shoelace_obsolete.sl_avail = 0);
-shoelace_obsolete| SELECT shoelace.sl_name,
-    shoelace.sl_avail,
-    shoelace.sl_color,
-    shoelace.sl_len,
-    shoelace.sl_unit,
-    shoelace.sl_len_cm
-   FROM shoelace
-  WHERE (NOT (EXISTS ( SELECT shoe.shoename
-           FROM shoe
-          WHERE (shoe.slcolor = shoelace.sl_color))));
-street| SELECT r.name,
-    r.thepath,
-    c.cname
-   FROM ONLY road r,
-    real_city c
-  WHERE (c.outline ## r.thepath);
-test_tablesample_v1| SELECT test_tablesample.id
-   FROM test_tablesample TABLESAMPLE system ((10 * 2)) REPEATABLE (2);
-test_tablesample_v2| SELECT test_tablesample.id
-   FROM test_tablesample TABLESAMPLE system (99);
-toyemp| SELECT emp.name,
-    emp.age,
-    emp.location,
-    (12 * emp.salary) AS annualsal
-   FROM emp;
 SELECT tablename, rulename, definition FROM pg_rules
-WHERE schemaname IN ('pg_catalog', 'public')
+WHERE schemaname = 'pg_catalog'
 ORDER BY tablename, rulename;
 pg_settings|pg_settings_n|CREATE RULE pg_settings_n AS
     ON UPDATE TO pg_catalog.pg_settings DO INSTEAD NOTHING;
 pg_settings|pg_settings_u|CREATE RULE pg_settings_u AS
     ON UPDATE TO pg_catalog.pg_settings
    WHERE (new.name = old.name) DO  SELECT set_config(old.name, new.setting, false) AS set_config;
-rtest_emp|rtest_emp_del|CREATE RULE rtest_emp_del AS
-    ON DELETE TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (old.ename, CURRENT_USER, 'fired'::bpchar, '$0.00'::money, old.salary);
-rtest_emp|rtest_emp_ins|CREATE RULE rtest_emp_ins AS
-    ON INSERT TO public.rtest_emp DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (new.ename, CURRENT_USER, 'hired'::bpchar, new.salary, '$0.00'::money);
-rtest_emp|rtest_emp_upd|CREATE RULE rtest_emp_upd AS
-    ON UPDATE TO public.rtest_emp
-   WHERE (new.salary <> old.salary) DO  INSERT INTO rtest_emplog (ename, who, action, newsal, oldsal)
-  VALUES (new.ename, CURRENT_USER, 'honored'::bpchar, new.salary, old.salary);
-rtest_nothn1|rtest_nothn_r1|CREATE RULE rtest_nothn_r1 AS
-    ON INSERT TO public.rtest_nothn1
-   WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD NOTHING;
-rtest_nothn1|rtest_nothn_r2|CREATE RULE rtest_nothn_r2 AS
-    ON INSERT TO public.rtest_nothn1
-   WHERE ((new.a >= 30) AND (new.a < 40)) DO INSTEAD NOTHING;
-rtest_nothn2|rtest_nothn_r3|CREATE RULE rtest_nothn_r3 AS
-    ON INSERT TO public.rtest_nothn2
-   WHERE (new.a >= 100) DO INSTEAD  INSERT INTO rtest_nothn3 (a, b)
-  VALUES (new.a, new.b);
-rtest_nothn2|rtest_nothn_r4|CREATE RULE rtest_nothn_r4 AS
-    ON INSERT TO public.rtest_nothn2 DO INSTEAD NOTHING;
-rtest_order1|rtest_order_r1|CREATE RULE rtest_order_r1 AS
-    ON INSERT TO public.rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
-  VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 1 - this should run 1st'::text);
-rtest_order1|rtest_order_r2|CREATE RULE rtest_order_r2 AS
-    ON INSERT TO public.rtest_order1 DO  INSERT INTO rtest_order2 (a, b, c)
-  VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 2 - this should run 2nd'::text);
-rtest_order1|rtest_order_r3|CREATE RULE rtest_order_r3 AS
-    ON INSERT TO public.rtest_order1 DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
-  VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 3 - this should run 3rd'::text);
-rtest_order1|rtest_order_r4|CREATE RULE rtest_order_r4 AS
-    ON INSERT TO public.rtest_order1
-   WHERE (new.a < 100) DO INSTEAD  INSERT INTO rtest_order2 (a, b, c)
-  VALUES (new.a, nextval('rtest_seq'::regclass), 'rule 4 - this should run 4th'::text);
-rtest_person|rtest_pers_del|CREATE RULE rtest_pers_del AS
-    ON DELETE TO public.rtest_person DO  DELETE FROM rtest_admin
-  WHERE (rtest_admin.pname = old.pname);
-rtest_person|rtest_pers_upd|CREATE RULE rtest_pers_upd AS
-    ON UPDATE TO public.rtest_person DO  UPDATE rtest_admin SET pname = new.pname
-  WHERE (rtest_admin.pname = old.pname);
-rtest_system|rtest_sys_del|CREATE RULE rtest_sys_del AS
-    ON DELETE TO public.rtest_system DO ( DELETE FROM rtest_interface
-  WHERE (rtest_interface.sysname = old.sysname);
- DELETE FROM rtest_admin
-  WHERE (rtest_admin.sysname = old.sysname);
-);
-rtest_system|rtest_sys_upd|CREATE RULE rtest_sys_upd AS
-    ON UPDATE TO public.rtest_system DO ( UPDATE rtest_interface SET sysname = new.sysname
-  WHERE (rtest_interface.sysname = old.sysname);
- UPDATE rtest_admin SET sysname = new.sysname
-  WHERE (rtest_admin.sysname = old.sysname);
-);
-rtest_t4|rtest_t4_ins1|CREATE RULE rtest_t4_ins1 AS
-    ON INSERT TO public.rtest_t4
-   WHERE ((new.a >= 10) AND (new.a < 20)) DO INSTEAD  INSERT INTO rtest_t5 (a, b)
-  VALUES (new.a, new.b);
-rtest_t4|rtest_t4_ins2|CREATE RULE rtest_t4_ins2 AS
-    ON INSERT TO public.rtest_t4
-   WHERE ((new.a >= 20) AND (new.a < 30)) DO  INSERT INTO rtest_t6 (a, b)
-  VALUES (new.a, new.b);
-rtest_t5|rtest_t5_ins|CREATE RULE rtest_t5_ins AS
-    ON INSERT TO public.rtest_t5
-   WHERE (new.a > 15) DO  INSERT INTO rtest_t7 (a, b)
-  VALUES (new.a, new.b);
-rtest_t6|rtest_t6_ins|CREATE RULE rtest_t6_ins AS
-    ON INSERT TO public.rtest_t6
-   WHERE (new.a > 25) DO INSTEAD  INSERT INTO rtest_t8 (a, b)
-  VALUES (new.a, new.b);
-rtest_v1|rtest_v1_del|CREATE RULE rtest_v1_del AS
-    ON DELETE TO public.rtest_v1 DO INSTEAD  DELETE FROM rtest_t1
-  WHERE (rtest_t1.a = old.a);
-rtest_v1|rtest_v1_ins|CREATE RULE rtest_v1_ins AS
-    ON INSERT TO public.rtest_v1 DO INSTEAD  INSERT INTO rtest_t1 (a, b)
-  VALUES (new.a, new.b);
-rtest_v1|rtest_v1_upd|CREATE RULE rtest_v1_upd AS
-    ON UPDATE TO public.rtest_v1 DO INSTEAD  UPDATE rtest_t1 SET a = new.a, b = new.b
-  WHERE (rtest_t1.a = old.a);
-shoelace|shoelace_del|CREATE RULE shoelace_del AS
-    ON DELETE TO public.shoelace DO INSTEAD  DELETE FROM shoelace_data
-  WHERE (shoelace_data.sl_name = old.sl_name);
-shoelace|shoelace_ins|CREATE RULE shoelace_ins AS
-    ON INSERT TO public.shoelace DO INSTEAD  INSERT INTO shoelace_data (sl_name, sl_avail, sl_color, sl_len, sl_unit)
-  VALUES (new.sl_name, new.sl_avail, new.sl_color, new.sl_len, new.sl_unit);
-shoelace|shoelace_upd|CREATE RULE shoelace_upd AS
-    ON UPDATE TO public.shoelace DO INSTEAD  UPDATE shoelace_data SET sl_name = new.sl_name, sl_avail = new.sl_avail, sl_color = new.sl_color, sl_len = new.sl_len, sl_unit = new.sl_unit
-  WHERE (shoelace_data.sl_name = old.sl_name);
-shoelace_data|log_shoelace|CREATE RULE log_shoelace AS
-    ON UPDATE TO public.shoelace_data
-   WHERE (new.sl_avail <> old.sl_avail) DO  INSERT INTO shoelace_log (sl_name, sl_avail, log_who, log_when)
-  VALUES (new.sl_name, new.sl_avail, 'Al Bundy'::name, 'Thu Jan 01 00:00:00 1970'::timestamp without time zone);
-shoelace_ok|shoelace_ok_ins|CREATE RULE shoelace_ok_ins AS
-    ON INSERT TO public.shoelace_ok DO INSTEAD  UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant)
-  WHERE (shoelace.sl_name = new.ok_name);
 -- restore normal output mode
 \a\t
 --
@@ -3684,6 +3485,38 @@ CREATE RULE rules_parted_table_insert AS ON INSERT to rules_parted_table
 ALTER RULE rules_parted_table_insert ON rules_parted_table RENAME TO rules_parted_table_insert_redirect;
 DROP TABLE rules_parted_table;
 --
+-- test MERGE
+--
+CREATE TABLE rule_merge1 (a int, b text);
+CREATE TABLE rule_merge2 (a int, b text);
+CREATE RULE rule1 AS ON INSERT TO rule_merge1
+	DO INSTEAD INSERT INTO rule_merge2 VALUES (NEW.*);
+CREATE RULE rule2 AS ON UPDATE TO rule_merge1
+	DO INSTEAD UPDATE rule_merge2 SET a = NEW.a, b = NEW.b
+	WHERE a = OLD.a;
+CREATE RULE rule3 AS ON DELETE TO rule_merge1
+	DO INSTEAD DELETE FROM rule_merge2 WHERE a = OLD.a;
+-- MERGE not supported for table with rules
+MERGE INTO rule_merge1 t USING (SELECT 1 AS a) s
+	ON t.a = s.a
+	WHEN MATCHED AND t.a < 2 THEN
+		UPDATE SET b = b || ' updated by merge'
+	WHEN MATCHED AND t.a > 2 THEN
+		DELETE
+	WHEN NOT MATCHED THEN
+		INSERT VALUES (s.a, '');
+ERROR:  cannot execute MERGE on relation "rule_merge1"
+DETAIL:  MERGE is not supported for relations with rules.
+-- should be ok with the other table though
+MERGE INTO rule_merge2 t USING (SELECT 1 AS a) s
+	ON t.a = s.a
+	WHEN MATCHED AND t.a < 2 THEN
+		UPDATE SET b = b || ' updated by merge'
+	WHEN MATCHED AND t.a > 2 THEN
+		DELETE
+	WHEN NOT MATCHED THEN
+		INSERT VALUES (s.a, '');
+--
 -- Test enabling/disabling
 --
 CREATE TABLE ruletest1 (a int);
@@ -3717,3 +3550,33 @@ SELECT * FROM ruletest2;
 
 DROP TABLE ruletest1;
 DROP TABLE ruletest2;
+--
+-- Test non-SELECT rule on security invoker view.
+-- Should use view owner's permissions.
+--
+CREATE USER regress_rule_user1;
+CREATE TABLE ruletest_t1 (x int);
+CREATE TABLE ruletest_t2 (x int);
+CREATE VIEW ruletest_v1 WITH (security_invoker=true) AS
+    SELECT * FROM ruletest_t1;
+GRANT INSERT ON ruletest_v1 TO regress_rule_user1;
+CREATE RULE rule1 AS ON INSERT TO ruletest_v1
+    DO INSTEAD INSERT INTO ruletest_t2 VALUES (NEW.*);
+SET SESSION AUTHORIZATION regress_rule_user1;
+INSERT INTO ruletest_v1 VALUES (1);
+RESET SESSION AUTHORIZATION;
+SELECT * FROM ruletest_t1;
+ x 
+---
+(0 rows)
+
+SELECT * FROM ruletest_t2;
+ x 
+---
+ 1
+(1 row)
+
+DROP VIEW ruletest_v1;
+DROP TABLE ruletest_t2;
+DROP TABLE ruletest_t1;
+DROP USER regress_rule_user1;

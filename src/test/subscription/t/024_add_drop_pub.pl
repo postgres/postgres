@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # This test checks behaviour of ALTER SUBSCRIPTION ... ADD/DROP PUBLICATION
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 # Initialize publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -96,3 +96,5 @@ is($result, qq(20|1|10), 'check initial data is copied to subscriber');
 # shutdown
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test primary/standby scenario where the track_commit_timestamp GUC is
 # repeatedly toggled on and off.
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Utils;
-use Test::More tests => 4;
+use Test::More;
 use PostgreSQL::Test::Cluster;
 
 my $bkplabel = 'backup';
@@ -65,3 +65,5 @@ my $standby_ts = $standby->safe_psql('postgres',
 );
 isnt($standby_ts, '',
 	"standby gives valid value ($standby_ts) after promotion");
+
+done_testing();

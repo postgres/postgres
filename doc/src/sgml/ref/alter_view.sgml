@@ -156,7 +156,17 @@ ALTER VIEW [ IF EXISTS ] <replaceable class="parameter">name</replaceable> RESET
         <listitem>
          <para>
           Changes the security-barrier property of the view.  The value must
-          be Boolean value, such as <literal>true</literal>
+          be a Boolean value, such as <literal>true</literal>
+          or <literal>false</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+       <varlistentry>
+        <term><literal>security_invoker</literal> (<type>boolean</type>)</term>
+        <listitem>
+         <para>
+          Changes the security-invoker property of the view.  The value must
+          be a Boolean value, such as <literal>true</literal>
           or <literal>false</literal>.
          </para>
         </listitem>

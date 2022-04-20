@@ -9,7 +9,7 @@
  * context's MemoryContextMethods struct.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1042,8 +1042,14 @@ ProcessLogMemoryContextInterrupt(void)
 {
 	LogMemoryContextPending = false;
 
-	ereport(LOG,
-			(errmsg("logging memory contexts of PID %d", MyProcPid)));
+	/*
+	 * Use LOG_SERVER_ONLY to prevent this message from being sent to the
+	 * connected client.
+	 */
+	ereport(LOG_SERVER_ONLY,
+			(errhidestmt(true),
+			 errhidecontext(true),
+			 errmsg("logging memory contexts of PID %d", MyProcPid)));
 
 	/*
 	 * When a backend process is consuming huge memory, logging all its memory

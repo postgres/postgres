@@ -193,24 +193,20 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 	e_type_o = PyObject_GetAttrString(e, "__name__");
 	e_module_o = PyObject_GetAttrString(e, "__module__");
 	if (e_type_o)
-		e_type_s = PyString_AsString(e_type_o);
+		e_type_s = PLyUnicode_AsString(e_type_o);
 	if (e_type_s)
-		e_module_s = PyString_AsString(e_module_o);
+		e_module_s = PLyUnicode_AsString(e_module_o);
 
 	if (v && ((vob = PyObject_Str(v)) != NULL))
-		vstr = PyString_AsString(vob);
+		vstr = PLyUnicode_AsString(vob);
 	else
 		vstr = "unknown";
 
 	initStringInfo(&xstr);
 	if (!e_type_s || !e_module_s)
 	{
-		if (PyString_Check(e))
-			/* deprecated string exceptions */
-			appendStringInfoString(&xstr, PyString_AsString(e));
-		else
-			/* shouldn't happen */
-			appendStringInfoString(&xstr, "unrecognized exception");
+		/* shouldn't happen */
+		appendStringInfoString(&xstr, "unrecognized exception");
 	}
 	/* mimics behavior of traceback.format_exception_only */
 	else if (strcmp(e_module_s, "builtins") == 0
@@ -290,11 +286,11 @@ PLy_traceback(PyObject *e, PyObject *v, PyObject *tb,
 			if (*tb_depth == 1)
 				fname = "<module>";
 			else
-				fname = PyString_AsString(name);
+				fname = PLyUnicode_AsString(name);
 
 			proname = PLy_procedure_name(exec_ctx->curr_proc);
-			plain_filename = PyString_AsString(filename);
-			plain_lineno = PyInt_AsLong(lineno);
+			plain_filename = PLyUnicode_AsString(filename);
+			plain_lineno = PyLong_AsLong(lineno);
 
 			if (proname == NULL)
 				appendStringInfo(&tbstr, "\n  PL/Python anonymous code block, line %ld, in %s",
@@ -365,7 +361,7 @@ PLy_get_sqlerrcode(PyObject *exc, int *sqlerrcode)
 	if (sqlstate == NULL)
 		return;
 
-	buffer = PyString_AsString(sqlstate);
+	buffer = PLyUnicode_AsString(sqlstate);
 	if (strlen(buffer) == 5 &&
 		strspn(buffer, "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") == 5)
 	{
@@ -573,7 +569,7 @@ get_string_attr(PyObject *obj, char *attrname, char **str)
 	val = PyObject_GetAttrString(obj, attrname);
 	if (val != NULL && val != Py_None)
 	{
-		*str = pstrdup(PyString_AsString(val));
+		*str = pstrdup(PLyUnicode_AsString(val));
 	}
 	Py_XDECREF(val);
 }
@@ -589,7 +585,7 @@ set_string_attr(PyObject *obj, char *attrname, char *str)
 
 	if (str != NULL)
 	{
-		val = PyString_FromString(str);
+		val = PLyUnicode_FromString(str);
 		if (!val)
 			return false;
 	}

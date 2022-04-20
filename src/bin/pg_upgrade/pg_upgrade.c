@@ -3,7 +3,7 @@
  *
  *	main source file
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/pg_upgrade.c
  */
 
@@ -15,12 +15,13 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	While pg_class.oid and pg_class.relfilenode are initially the same
- *	in a cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM
- *	FULL.  In the new cluster, pg_class.oid and pg_class.relfilenode will
- *	be the same and will match the old pg_class.oid value.  Because of
- *	this, old/new pg_class.relfilenode values will not match if CLUSTER,
- *	REINDEX, or VACUUM FULL have been performed in the old cluster.
+ *	While pg_class.oid and pg_class.relfilenode are initially the same in a
+ *	cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM FULL. We
+ *	control assignments of pg_class.relfilenode because we want the filenames
+ *	to match between the old and new cluster.
+ *
+ *	We control assignment of pg_tablespace.oid because we want the oid to match
+ *	between the old and new cluster.
  *
  *	We control all assignments of pg_type.oid because these oids are stored
  *	in user composite type values.
@@ -36,6 +37,8 @@
 
 
 #include "postgres_fe.h"
+
+#include <time.h>
 
 #ifdef HAVE_LANGINFO_H
 #include <langinfo.h>
@@ -53,6 +56,7 @@ static void prepare_new_globals(void);
 static void create_new_objects(void);
 static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
+static void make_outputdirs(char *pgdata);
 static void setup(char *argv0, bool *live_check);
 static void cleanup(void);
 
@@ -91,6 +95,22 @@ main(int argc, char **argv)
 	adjust_data_dir(&old_cluster);
 	adjust_data_dir(&new_cluster);
 
+	/*
+	 * Set mask based on PGDATA permissions, needed for the creation of the
+	 * output directories with correct permissions.
+	 */
+	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
+		pg_fatal("could not read permissions of directory \"%s\": %s\n",
+				 new_cluster.pgdata, strerror(errno));
+
+	umask(pg_mode_mask);
+
+	/*
+	 * This needs to happen after adjusting the data directory of the new
+	 * cluster in adjust_data_dir().
+	 */
+	make_outputdirs(new_cluster.pgdata);
+
 	setup(argv[0], &live_check);
 
 	output_check_banner(live_check);
@@ -101,13 +121,6 @@ main(int argc, char **argv)
 	get_sock_dir(&new_cluster, false);
 
 	check_cluster_compatibility(live_check);
-
-	/* Set mask based on PGDATA permissions */
-	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
-		pg_fatal("could not read permissions of directory \"%s\": %s\n",
-				 new_cluster.pgdata, strerror(errno));
-
-	umask(pg_mode_mask);
 
 	check_and_dump_old_cluster(live_check);
 
@@ -194,6 +207,56 @@ main(int argc, char **argv)
 	cleanup();
 
 	return 0;
+}
+
+/*
+ * Create and assign proper permissions to the set of output directories
+ * used to store any data generated internally, filling in log_opts in
+ * the process.
+ */
+static void
+make_outputdirs(char *pgdata)
+{
+	FILE	   *fp;
+	char	  **filename;
+	time_t		run_time = time(NULL);
+	char		filename_path[MAXPGPATH];
+
+	log_opts.basedir = (char *) pg_malloc(MAXPGPATH);
+	snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
+	log_opts.dumpdir = (char *) pg_malloc(MAXPGPATH);
+	snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s", pgdata, DUMP_OUTPUTDIR);
+	log_opts.logdir = (char *) pg_malloc(MAXPGPATH);
+	snprintf(log_opts.logdir, MAXPGPATH, "%s/%s", pgdata, LOG_OUTPUTDIR);
+
+	if (mkdir(log_opts.basedir, pg_dir_create_mode))
+		pg_fatal("could not create directory \"%s\": %m\n", log_opts.basedir);
+	if (mkdir(log_opts.dumpdir, pg_dir_create_mode))
+		pg_fatal("could not create directory \"%s\": %m\n", log_opts.dumpdir);
+	if (mkdir(log_opts.logdir, pg_dir_create_mode))
+		pg_fatal("could not create directory \"%s\": %m\n", log_opts.logdir);
+
+	snprintf(filename_path, sizeof(filename_path), "%s/%s", log_opts.logdir,
+			 INTERNAL_LOG_FILE);
+	if ((log_opts.internal = fopen_priv(filename_path, "a")) == NULL)
+		pg_fatal("could not open log file \"%s\": %m\n", filename_path);
+
+	/* label start of upgrade in logfiles */
+	for (filename = output_files; *filename != NULL; filename++)
+	{
+		snprintf(filename_path, sizeof(filename_path), "%s/%s",
+				 log_opts.logdir, *filename);
+		if ((fp = fopen_priv(filename_path, "a")) == NULL)
+			pg_fatal("could not write to log file \"%s\": %m\n", filename_path);
+
+		/* Start with newline because we might be appending to a file. */
+		fprintf(fp, "\n"
+				"-----------------------------------------------------------------\n"
+				"  pg_upgrade run on %s"
+				"-----------------------------------------------------------------\n\n",
+				ctime(&run_time));
+		fclose(fp);
+	}
 }
 
 
@@ -305,8 +368,9 @@ prepare_new_globals(void)
 	prep_status("Restoring global objects in the new cluster");
 
 	exec_prog(UTILITY_LOG_FILE, NULL, true, true,
-			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s\"",
+			  "\"%s/psql\" " EXEC_PSQL_ARGS " %s -f \"%s/%s\"",
 			  new_cluster.bindir, cluster_conn_opts(&new_cluster),
+			  log_opts.dumpdir,
 			  GLOBALS_DUMP_FILE);
 	check_ok();
 }
@@ -317,7 +381,7 @@ create_new_objects(void)
 {
 	int			dbnum;
 
-	prep_status("Restoring database schemas in the new cluster\n");
+	prep_status_progress("Restoring database schemas in the new cluster");
 
 	/*
 	 * We cannot process the template1 database concurrently with others,
@@ -351,10 +415,11 @@ create_new_objects(void)
 				  true,
 				  true,
 				  "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
-				  "--dbname postgres \"%s\"",
+				  "--dbname postgres \"%s/%s\"",
 				  new_cluster.bindir,
 				  cluster_conn_opts(&new_cluster),
 				  create_opts,
+				  log_opts.dumpdir,
 				  sql_file_name);
 
 		break;					/* done once we've processed template1 */
@@ -388,10 +453,11 @@ create_new_objects(void)
 		parallel_exec_prog(log_file_name,
 						   NULL,
 						   "\"%s/pg_restore\" %s %s --exit-on-error --verbose "
-						   "--dbname template1 \"%s\"",
+						   "--dbname template1 \"%s/%s\"",
 						   new_cluster.bindir,
 						   cluster_conn_opts(&new_cluster),
 						   create_opts,
+						   log_opts.dumpdir,
 						   sql_file_name);
 	}
 
@@ -688,28 +754,5 @@ cleanup(void)
 
 	/* Remove dump and log files? */
 	if (!log_opts.retain)
-	{
-		int			dbnum;
-		char	  **filename;
-
-		for (filename = output_files; *filename != NULL; filename++)
-			unlink(*filename);
-
-		/* remove dump files */
-		unlink(GLOBALS_DUMP_FILE);
-
-		if (old_cluster.dbarr.dbs)
-			for (dbnum = 0; dbnum < old_cluster.dbarr.ndbs; dbnum++)
-			{
-				char		sql_file_name[MAXPGPATH],
-							log_file_name[MAXPGPATH];
-				DbInfo	   *old_db = &old_cluster.dbarr.dbs[dbnum];
-
-				snprintf(sql_file_name, sizeof(sql_file_name), DB_DUMP_FILE_MASK, old_db->db_oid);
-				unlink(sql_file_name);
-
-				snprintf(log_file_name, sizeof(log_file_name), DB_DUMP_LOG_FILE_MASK, old_db->db_oid);
-				unlink(log_file_name);
-			}
-	}
+		(void) rmtree(log_opts.basedir, true);
 }

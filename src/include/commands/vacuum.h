@@ -4,7 +4,7 @@
  *	  header file for postgres vacuum cleaner and statistics analyzer
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/vacuum.h
@@ -182,7 +182,7 @@ typedef struct VacAttrStats
 /* flag bits for VacuumParams->options */
 #define VACOPT_VACUUM 0x01		/* do VACUUM */
 #define VACOPT_ANALYZE 0x02		/* do ANALYZE */
-#define VACOPT_VERBOSE 0x04		/* print progress info */
+#define VACOPT_VERBOSE 0x04		/* output INFO instrumentation messages */
 #define VACOPT_FREEZE 0x08		/* FREEZE option */
 #define VACOPT_FULL 0x10		/* FULL (non-concurrent) vacuum */
 #define VACOPT_SKIP_LOCKED 0x20 /* skip if cannot get lock */
@@ -222,8 +222,8 @@ typedef struct VacuumParams
 											 * whole table */
 	bool		is_wraparound;	/* force a for-wraparound vacuum */
 	int			log_min_duration;	/* minimum execution threshold in ms at
-									 * which  verbose logs are activated, -1
-									 * to use default */
+									 * which autovacuum is logged, -1 to use
+									 * default */
 	VacOptValue index_cleanup;	/* Do index vacuum and cleanup */
 	VacOptValue truncate;		/* Truncate empty pages at the end */
 
@@ -252,17 +252,17 @@ typedef struct VacDeadItems
 
 /* GUC parameters */
 extern PGDLLIMPORT int default_statistics_target;	/* PGDLLIMPORT for PostGIS */
-extern int	vacuum_freeze_min_age;
-extern int	vacuum_freeze_table_age;
-extern int	vacuum_multixact_freeze_min_age;
-extern int	vacuum_multixact_freeze_table_age;
-extern int	vacuum_failsafe_age;
-extern int	vacuum_multixact_failsafe_age;
+extern PGDLLIMPORT int vacuum_freeze_min_age;
+extern PGDLLIMPORT int vacuum_freeze_table_age;
+extern PGDLLIMPORT int vacuum_multixact_freeze_min_age;
+extern PGDLLIMPORT int vacuum_multixact_freeze_table_age;
+extern PGDLLIMPORT int vacuum_failsafe_age;
+extern PGDLLIMPORT int vacuum_multixact_failsafe_age;
 
 /* Variables for cost-based parallel vacuum */
-extern pg_atomic_uint32 *VacuumSharedCostBalance;
-extern pg_atomic_uint32 *VacuumActiveNWorkers;
-extern int	VacuumCostBalanceLocal;
+extern PGDLLIMPORT pg_atomic_uint32 *VacuumSharedCostBalance;
+extern PGDLLIMPORT pg_atomic_uint32 *VacuumActiveNWorkers;
+extern PGDLLIMPORT int VacuumCostBalanceLocal;
 
 
 /* in commands/vacuum.c */
@@ -283,16 +283,17 @@ extern void vac_update_relstats(Relation relation,
 								bool hasindex,
 								TransactionId frozenxid,
 								MultiXactId minmulti,
+								bool *frozenxid_updated,
+								bool *minmulti_updated,
 								bool in_outer_xact);
-extern void vacuum_set_xid_limits(Relation rel,
+extern bool vacuum_set_xid_limits(Relation rel,
 								  int freeze_min_age, int freeze_table_age,
 								  int multixact_freeze_min_age,
 								  int multixact_freeze_table_age,
 								  TransactionId *oldestXmin,
+								  MultiXactId *oldestMxact,
 								  TransactionId *freezeLimit,
-								  TransactionId *xidFullScanLimit,
-								  MultiXactId *multiXactCutoff,
-								  MultiXactId *mxactFullScanLimit);
+								  MultiXactId *multiXactCutoff);
 extern bool vacuum_xid_failsafe_check(TransactionId relfrozenxid,
 									  MultiXactId relminmxid);
 extern void vac_update_datfrozenxid(void);

@@ -6,7 +6,7 @@
  * for developers.  If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/pg_config_manual.h
@@ -150,6 +150,17 @@
  */
 #if defined(WIN32) && !defined(__CYGWIN__)
 #define EXEC_BACKEND
+#endif
+
+/*
+ * If USE_BARRIER_SMGRRELEASE is defined, certain code paths that unlink
+ * directories will ask other backends to close all smgr file descriptors.
+ * This is enabled on Windows, because otherwise unlinked but still open files
+ * can prevent rmdir(containing_directory) from succeeding.  On other
+ * platforms, it can be defined to exercise those code paths.
+ */
+#if defined(WIN32)
+#define USE_BARRIER_SMGRRELEASE
 #endif
 
 /*

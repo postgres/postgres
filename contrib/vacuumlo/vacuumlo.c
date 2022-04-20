@@ -3,7 +3,7 @@
  * vacuumlo.c
  *	  This removes orphaned large objects from a database.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -492,19 +492,13 @@ main(int argc, char **argv)
 	{
 		switch (c)
 		{
-			case '?':
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-				exit(1);
 			case 'h':
 				param.pg_host = pg_strdup(optarg);
 				break;
 			case 'l':
 				param.transaction_limit = strtol(optarg, NULL, 10);
 				if (param.transaction_limit < 0)
-				{
-					pg_log_error("transaction limit must not be negative (0 disables)");
-					exit(1);
-				}
+					pg_fatal("transaction limit must not be negative (0 disables)");
 				break;
 			case 'n':
 				param.dry_run = 1;
@@ -513,10 +507,7 @@ main(int argc, char **argv)
 			case 'p':
 				port = strtol(optarg, NULL, 10);
 				if ((port < 1) || (port > 65535))
-				{
-					pg_log_error("invalid port number: %s", optarg);
-					exit(1);
-				}
+					pg_fatal("invalid port number: %s", optarg);
 				param.pg_port = pg_strdup(optarg);
 				break;
 			case 'U':
@@ -532,7 +523,8 @@ main(int argc, char **argv)
 				param.pg_prompt = TRI_YES;
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -541,7 +533,7 @@ main(int argc, char **argv)
 	if (optind >= argc)
 	{
 		pg_log_error("missing required argument: database name");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 

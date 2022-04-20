@@ -2,7 +2,7 @@
  * gistfuncs.c
  *		Functions to investigate the content of GiST indexes
  *
- * Copyright (c) 2014-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2014-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/pageinspect/gistfuncs.c
@@ -14,6 +14,7 @@
 #include "access/htup.h"
 #include "access/relation.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "pageinspect.h"
@@ -27,6 +28,8 @@
 PG_FUNCTION_INFO_V1(gist_page_opaque_info);
 PG_FUNCTION_INFO_V1(gist_page_items);
 PG_FUNCTION_INFO_V1(gist_page_items_bytea);
+
+#define IS_GIST(r) ((r)->rd_rel->relam == GIST_AM_OID)
 
 #define ItemPointerGetDatum(X)	 PointerGetDatum(X)
 
@@ -52,7 +55,26 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	page = get_page_from_raw(raw_page);
 
-	opaq = (GISTPageOpaque) PageGetSpecialPointer(page);
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
+	/* verify the special space has the expected size */
+	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "GiST"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+							   (int) PageGetSpecialSize(page))));
+
+	opaq = GistPageGetOpaque(page);
+	if (opaq->gist_page_id != GIST_PAGE_ID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "GiST"),
+					 errdetail("Expected %08x, got %08x.",
+							   GIST_PAGE_ID,
+							   opaq->gist_page_id)));
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -97,11 +119,8 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 {
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext oldcontext;
 	Page		page;
+	GISTPageOpaque opaq;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
 
@@ -110,31 +129,30 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, 0);
 
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+		PG_RETURN_NULL();
+
+	/* verify the special space has the expected size */
+	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "GiST"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+							   (int) PageGetSpecialSize(page))));
+
+	opaq = GistPageGetOpaque(page);
+	if (opaq->gist_page_id != GIST_PAGE_ID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "GiST"),
+					 errdetail("Expected %08x, got %08x.",
+							   GIST_PAGE_ID,
+							   opaq->gist_page_id)));
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -173,7 +191,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 		values[3] = BoolGetDatum(ItemIdIsDead(id));
 		values[4] = PointerGetDatum(tuple_bytea);
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
 	return (Datum) 0;
@@ -185,11 +203,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 	bytea	   *raw_page = PG_GETARG_BYTEA_P(0);
 	Oid			indexRelid = PG_GETARG_OID(1);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
 	Relation	indexRel;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext oldcontext;
 	Page		page;
 	OffsetNumber offset;
 	OffsetNumber maxoff = InvalidOffsetNumber;
@@ -199,34 +213,24 @@ gist_page_items(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, 0);
 
 	/* Open the relation */
 	indexRel = index_open(indexRelid, AccessShareLock);
 
+	if (!IS_GIST(indexRel))
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(indexRel), "GiST")));
+
 	page = get_page_from_raw(raw_page);
+
+	if (PageIsNew(page))
+	{
+		index_close(indexRel, AccessShareLock);
+		PG_RETURN_NULL();
+	}
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -272,7 +276,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 			nulls[4] = true;
 		}
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
 	}
 
 	relation_close(indexRel, AccessShareLock);

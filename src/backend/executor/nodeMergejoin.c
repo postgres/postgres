@@ -3,7 +3,7 @@
  * nodeMergejoin.c
  *	  routines supporting merge joins
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -893,11 +893,10 @@ ExecMergeJoin(PlanState *pstate)
 
 						if (compareResult == 0)
 							node->mj_JoinState = EXEC_MJ_JOINTUPLES;
-						else
-						{
-							Assert(compareResult < 0);
+						else if (compareResult < 0)
 							node->mj_JoinState = EXEC_MJ_NEXTOUTER;
-						}
+						else	/* compareResult > 0 should not happen */
+							elog(ERROR, "mergejoin input data is out of order");
 						break;
 					case MJEVAL_NONMATCHABLE:
 
@@ -1087,7 +1086,7 @@ ExecMergeJoin(PlanState *pstate)
 
 					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
 				}
-				else
+				else if (compareResult > 0)
 				{
 					/* ----------------
 					 *	if the new outer tuple didn't match the marked inner
@@ -1106,7 +1105,6 @@ ExecMergeJoin(PlanState *pstate)
 					 *	no more inners, no more matches are possible.
 					 * ----------------
 					 */
-					Assert(compareResult > 0);
 					innerTupleSlot = node->mj_InnerTupleSlot;
 
 					/* reload comparison data for current inner */
@@ -1140,10 +1138,12 @@ ExecMergeJoin(PlanState *pstate)
 							return NULL;
 					}
 				}
+				else			/* compareResult < 0 should not happen */
+					elog(ERROR, "mergejoin input data is out of order");
 				break;
 
 				/*----------------------------------------------------------
-				 * EXEC_MJ_SKIP means compare tuples and if they do not
+				 * EXEC_MJ_SKIP_TEST means compare tuples and if they do not
 				 * match, skip whichever is lesser.
 				 *
 				 * For example:
@@ -1199,8 +1199,8 @@ ExecMergeJoin(PlanState *pstate)
 				break;
 
 				/*
-				 * SKIPOUTER_ADVANCE: advance over an outer tuple that is
-				 * known not to join to any inner tuple.
+				 * EXEC_MJ_SKIPOUTER_ADVANCE: advance over an outer tuple that
+				 * is known not to join to any inner tuple.
 				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this outer tuple.
@@ -1261,8 +1261,8 @@ ExecMergeJoin(PlanState *pstate)
 				break;
 
 				/*
-				 * SKIPINNER_ADVANCE: advance over an inner tuple that is
-				 * known not to join to any outer tuple.
+				 * EXEC_MJ_SKIPINNER_ADVANCE: advance over an inner tuple that
+				 * is known not to join to any outer tuple.
 				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this inner tuple.
@@ -1674,5 +1674,4 @@ ExecReScanMergeJoin(MergeJoinState *node)
 		ExecReScan(node->js.ps.lefttree);
 	if (node->js.ps.righttree->chgParam == NULL)
 		ExecReScan(node->js.ps.righttree);
-
 }

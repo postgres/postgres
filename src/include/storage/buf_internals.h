@@ -5,7 +5,7 @@
  *	  strategy.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/buf_internals.h
@@ -279,7 +279,7 @@ extern PGDLLIMPORT BufferDescPadded *BufferDescriptors;
 extern PGDLLIMPORT WritebackContext BackendWritebackContext;
 
 /* in localbuf.c */
-extern BufferDesc *LocalBufferDescriptors;
+extern PGDLLIMPORT BufferDesc *LocalBufferDescriptors;
 
 /* in bufmgr.c */
 
@@ -298,7 +298,7 @@ typedef struct CkptSortItem
 	int			buf_id;
 } CkptSortItem;
 
-extern CkptSortItem *CkptBufferIds;
+extern PGDLLIMPORT CkptSortItem *CkptBufferIds;
 
 /*
  * Internal buffer management routines

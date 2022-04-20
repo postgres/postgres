@@ -3,7 +3,7 @@
  * mcxtfuncs.c
  *	  Functions to show backend memory context.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -120,73 +120,57 @@ Datum
 pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* Build a tuple descriptor for our result type */
-	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
-		elog(ERROR, "return type must be a row type");
-
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	tupstore = tuplestore_begin_heap(true, false, work_mem);
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	PutMemoryContextsStatsTupleStore(tupstore, tupdesc,
+	SetSingleFuncCall(fcinfo, 0);
+	PutMemoryContextsStatsTupleStore(rsinfo->setResult, rsinfo->setDesc,
 									 TopMemoryContext, NULL, 0);
-
-	/* clean up and return the tuplestore */
-	tuplestore_donestoring(tupstore);
 
 	return (Datum) 0;
 }
 
 /*
  * pg_log_backend_memory_contexts
- *		Signal a backend process to log its memory contexts.
+ *		Signal a backend or an auxiliary process to log its memory contexts.
  *
  * By default, only superusers are allowed to signal to log the memory
  * contexts because allowing any users to issue this request at an unbounded
  * rate would cause lots of log messages and which can lead to denial of
  * service. Additional roles can be permitted with GRANT.
  *
- * On receipt of this signal, a backend sets the flag in the signal
- * handler, which causes the next CHECK_FOR_INTERRUPTS() to log the
- * memory contexts.
+ * On receipt of this signal, a backend or an auxiliary process sets the flag
+ * in the signal handler, which causes the next CHECK_FOR_INTERRUPTS()
+ * or process-specific interrupt handler to log the memory contexts.
  */
 Datum
 pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	int			pid = PG_GETARG_INT32(0);
 	PGPROC	   *proc;
+	BackendId	backendId = InvalidBackendId;
 
 	proc = BackendPidGetProc(pid);
 
 	/*
-	 * BackendPidGetProc returns NULL if the pid isn't valid; but by the time
-	 * we reach kill(), a process for which we get a valid proc here might
-	 * have terminated on its own.  There's no way to acquire a lock on an
-	 * arbitrary process to prevent that. But since this mechanism is usually
-	 * used to debug a backend running and consuming lots of memory, that it
-	 * might end on its own first and its memory contexts are not logged is
-	 * not a problem.
+	 * See if the process with given pid is a backend or an auxiliary process.
+	 *
+	 * If the given process is a backend, use its backend id in
+	 * SendProcSignal() later to speed up the operation. Otherwise, don't do
+	 * that because auxiliary processes (except the startup process) don't
+	 * have a valid backend id.
+	 */
+	if (proc != NULL)
+		backendId = proc->backendId;
+	else
+		proc = AuxiliaryPidGetProc(pid);
+
+	/*
+	 * BackendPidGetProc() and AuxiliaryPidGetProc() return NULL if the pid
+	 * isn't valid; but by the time we reach kill(), a process for which we
+	 * get a valid proc here might have terminated on its own.  There's no way
+	 * to acquire a lock on an arbitrary process to prevent that. But since
+	 * this mechanism is usually used to debug a backend or an auxiliary
+	 * process running and consuming lots of memory, that it might end on its
+	 * own first and its memory contexts are not logged is not a problem.
 	 */
 	if (proc == NULL)
 	{
@@ -199,7 +183,7 @@ pg_log_backend_memory_contexts(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	}
 
-	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, proc->backendId) < 0)
+	if (SendProcSignal(pid, PROCSIG_LOG_MEMORY_CONTEXT, backendId) < 0)
 	{
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,

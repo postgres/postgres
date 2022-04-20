@@ -13,3 +13,26 @@ AS $$
   Example of source with void result.
 $$ LANGUAGE plsample;
 SELECT plsample_result_void('{foo, bar, hoge}');
+
+CREATE FUNCTION my_trigger_func() RETURNS trigger AS $$
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+$$ language plsample;
+
+CREATE TABLE my_table (num integer, description text);
+CREATE TRIGGER my_trigger_func BEFORE INSERT OR UPDATE ON my_table
+       FOR EACH ROW EXECUTE FUNCTION my_trigger_func();
+CREATE TRIGGER my_trigger_func2 AFTER INSERT OR UPDATE ON my_table
+       FOR EACH ROW EXECUTE FUNCTION my_trigger_func(8);
+
+INSERT INTO my_table (num, description)
+VALUES (1, 'first');
+
+UPDATE my_table
+SET description = 'first, modified once'
+WHERE num = 1;

@@ -4,15 +4,14 @@ MODULE_big = jsonb_plpython$(python_majorversion)
 OBJS = \
 	$(WIN32RES) \
 	jsonb_plpython.o
-PGFILEDESC = "jsonb_plpython - transform between jsonb and plpythonu"
+PGFILEDESC = "jsonb_plpython - jsonb transform for plpython"
 
 PG_CPPFLAGS = -I$(top_srcdir)/src/pl/plpython $(python_includespec) -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'
 
-EXTENSION = jsonb_plpythonu jsonb_plpython2u jsonb_plpython3u
-DATA = jsonb_plpythonu--1.0.sql jsonb_plpython2u--1.0.sql jsonb_plpython3u--1.0.sql
+EXTENSION = jsonb_plpython3u
+DATA = jsonb_plpython3u--1.0.sql
 
 REGRESS = jsonb_plpython
-REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config
@@ -33,9 +32,3 @@ else
 rpathdir = $(python_libdir)
 SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
-
-ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-extension=plpythonu --load-extension=jsonb_plpythonu
-endif
-
-include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk

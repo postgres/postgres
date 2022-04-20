@@ -17,7 +17,7 @@ plpy.info('This is message text.',
 plpy.notice('notice', detail='some detail')
 plpy.warning('warning', detail='some detail')
 plpy.error('stop on error', detail='some detail', hint='some hint')
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT elog_test();
 INFO:  info
 DETAIL:  some detail
@@ -38,42 +38,42 @@ CONTEXT:  Traceback (most recent call last):
   PL/Python function "elog_test", line 18, in <module>
     plpy.error('stop on error', detail='some detail', hint='some hint')
 PL/Python function "elog_test"
-DO $$ plpy.info('other types', detail=(10, 20)) $$ LANGUAGE plpythonu;
+DO $$ plpy.info('other types', detail=(10, 20)) $$ LANGUAGE plpython3u;
 INFO:  other types
 DETAIL:  (10, 20)
 DO $$
 import time;
 from datetime import date
 plpy.info('other types', detail=date(2016, 2, 26))
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 INFO:  other types
 DETAIL:  2016-02-26
 DO $$
 basket = ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 plpy.info('other types', detail=basket)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 INFO:  other types
 DETAIL:  ['apple', 'orange', 'apple', 'pear', 'orange', 'banana']
 -- should fail
-DO $$ plpy.info('wrong sqlstate', sqlstate='54444A') $$ LANGUAGE plpythonu;
+DO $$ plpy.info('wrong sqlstate', sqlstate='54444A') $$ LANGUAGE plpython3u;
 ERROR:  ValueError: invalid SQLSTATE code
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('wrong sqlstate', sqlstate='54444A') 
 PL/Python anonymous code block
-DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpythonu;
+DO $$ plpy.info('unsupported argument', blabla='fooboo') $$ LANGUAGE plpython3u;
 ERROR:  TypeError: 'blabla' is an invalid keyword argument for this function
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('unsupported argument', blabla='fooboo') 
 PL/Python anonymous code block
-DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpythonu;
+DO $$ plpy.info('first message', message='second message') $$ LANGUAGE plpython3u;
 ERROR:  TypeError: argument 'message' given by name and position
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
     plpy.info('first message', message='second message') 
 PL/Python anonymous code block
-DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpythonu;
+DO $$ plpy.info('first message', 'second message', message='third message') $$ LANGUAGE plpython3u;
 ERROR:  TypeError: argument 'message' given by name and position
 CONTEXT:  Traceback (most recent call last):
   PL/Python anonymous code block, line 1, in <module>
@@ -96,7 +96,7 @@ kwargs = {
 }
 # ignore None values
 plpy.error(**dict((k, v) for k, v in iter(kwargs.items()) if v))
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 SELECT raise_exception('hello', 'world');
 ERROR:  plpy.Error: hello
 DETAIL:  world
@@ -180,26 +180,35 @@ END;
 $$;
 NOTICE:  handled exception
 DETAIL:  message:(plpy.Error: message text), detail:(detail text), hint: (hint text), sqlstate: (XX555), schema_name:(schema text), table_name:(table text), column_name:(column text), datatype_name:(datatype text), constraint_name:(constraint text)
--- The displayed context is different between Python2 and Python3,
--- but that's not important for this test.
-\set SHOW_CONTEXT never
 DO $$
 try:
     plpy.execute("select raise_exception(_message => 'my message', _sqlstate => 'XX987', _hint => 'some hint', _table_name => 'users_tab', _datatype_name => 'user_type')")
 except Exception as e:
     plpy.info(e.spidata)
     raise e
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 INFO:  (119577128, None, 'some hint', None, 0, None, 'users_tab', None, 'user_type', None)
 ERROR:  plpy.SPIError: plpy.Error: my message
 HINT:  some hint
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 6, in <module>
+    raise e
+  PL/Python anonymous code block, line 3, in __plpython_inline_block
+    plpy.execute("select raise_exception(_message => 'my message', _sqlstate => 'XX987', _hint => 'some hint', _table_name => 'users_tab', _datatype_name => 'user_type')")
+PL/Python anonymous code block
 DO $$
 try:
     plpy.error(message  = 'my message', sqlstate = 'XX987', hint = 'some hint', table_name = 'users_tab', datatype_name = 'user_type')
 except Exception as e:
     plpy.info('sqlstate: %s, hint: %s, table_name: %s, datatype_name: %s' % (e.sqlstate, e.hint, e.table_name, e.datatype_name))
     raise e
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 INFO:  sqlstate: XX987, hint: some hint, table_name: users_tab, datatype_name: user_type
 ERROR:  plpy.Error: my message
 HINT:  some hint
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 6, in <module>
+    raise e
+  PL/Python anonymous code block, line 3, in __plpython_inline_block
+    plpy.error(message  = 'my message', sqlstate = 'XX987', hint = 'some hint', table_name = 'users_tab', datatype_name = 'user_type')
+PL/Python anonymous code block

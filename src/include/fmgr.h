@@ -8,7 +8,7 @@
  * or call fmgr-callable functions.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fmgr.h
@@ -721,7 +721,7 @@ extern bool CheckFunctionValidatorAccess(Oid validatorOid, Oid functionOid);
 /*
  * Routines in dfmgr.c
  */
-extern char *Dynamic_library_path;
+extern PGDLLIMPORT char *Dynamic_library_path;
 
 extern void *load_external_function(const char *filename, const char *funcname,
 									bool signalNotFound, void **filehandle);

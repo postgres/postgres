@@ -132,6 +132,34 @@ typedef struct IdentLine
 	regex_t		re;
 } IdentLine;
 
+/*
+ * A single string token lexed from an authentication configuration file
+ * (pg_ident.conf or pg_hba.conf), together with whether the token has
+ * been quoted.
+ */
+typedef struct AuthToken
+{
+	char	   *string;
+	bool		quoted;
+} AuthToken;
+
+/*
+ * TokenizedAuthLine represents one line lexed from an authentication
+ * configuration file.  Each item in the "fields" list is a sub-list of
+ * AuthTokens.  We don't emit a TokenizedAuthLine for empty or all-comment
+ * lines, so "fields" is never NIL (nor are any of its sub-lists).
+ *
+ * Exception: if an error occurs during tokenization, we might have
+ * fields == NIL, in which case err_msg != NULL.
+ */
+typedef struct TokenizedAuthLine
+{
+	List	   *fields;			/* List of lists of AuthTokens */
+	int			line_num;		/* Line number */
+	char	   *raw_line;		/* Raw line text */
+	char	   *err_msg;		/* Error message if any */
+} TokenizedAuthLine;
+
 /* kluge to avoid including libpq/libpq-be.h here */
 typedef struct Port hbaPort;
 
@@ -142,6 +170,10 @@ extern void hba_getauthmethod(hbaPort *port);
 extern int	check_usermap(const char *usermap_name,
 						  const char *pg_role, const char *auth_user,
 						  bool case_sensitive);
+extern HbaLine *parse_hba_line(TokenizedAuthLine *tok_line, int elevel);
+extern IdentLine *parse_ident_line(TokenizedAuthLine *tok_line, int elevel);
 extern bool pg_isblank(const char c);
+extern MemoryContext tokenize_auth_file(const char *filename, FILE *file,
+										List **tok_lines, int elevel);
 
 #endif							/* HBA_H */

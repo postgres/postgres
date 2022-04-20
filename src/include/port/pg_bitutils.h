@@ -4,7 +4,7 @@
  *	  Miscellaneous functions for bit-wise operations.
  *
  *
- * Copyright (c) 2019-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2019-2022, PostgreSQL Global Development Group
  *
  * src/include/port/pg_bitutils.h
  *
@@ -285,12 +285,18 @@ extern int	pg_popcount64(uint64 word);
 extern uint64 pg_popcount(const char *buf, int bytes);
 
 /*
- * Rotate the bits of "word" to the right by n bits.
+ * Rotate the bits of "word" to the right/left by n bits.
  */
 static inline uint32
 pg_rotate_right32(uint32 word, int n)
 {
-	return (word >> n) | (word << (sizeof(word) * BITS_PER_BYTE - n));
+	return (word >> n) | (word << (32 - n));
+}
+
+static inline uint32
+pg_rotate_left32(uint32 word, int n)
+{
+	return (word << n) | (word >> (32 - n));
 }
 
 #endif							/* PG_BITUTILS_H */

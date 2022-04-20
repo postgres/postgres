@@ -3,7 +3,7 @@
  * pg_publication.h
  *	  definition of the "publication" system catalog (pg_publication)
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_publication.h
@@ -74,6 +74,26 @@ typedef struct PublicationActions
 	bool		pubtruncate;
 } PublicationActions;
 
+typedef struct PublicationDesc
+{
+	PublicationActions pubactions;
+
+	/*
+	 * true if the columns referenced in row filters which are used for UPDATE
+	 * or DELETE are part of the replica identity or the publication actions
+	 * do not include UPDATE or DELETE.
+	 */
+	bool		rf_valid_for_update;
+	bool		rf_valid_for_delete;
+
+	/*
+	 * true if the columns are part of the replica identity or the publication actions
+	 * do not include UPDATE or DELETE.
+	 */
+	bool		cols_valid_for_update;
+	bool		cols_valid_for_delete;
+} PublicationDesc;
+
 typedef struct Publication
 {
 	Oid			oid;
@@ -86,6 +106,8 @@ typedef struct Publication
 typedef struct PublicationRelInfo
 {
 	Relation	relation;
+	Node	   *whereClause;
+	List	   *columns;
 } PublicationRelInfo;
 
 extern Publication *GetPublication(Oid pubid);
@@ -120,16 +142,20 @@ extern List *GetAllSchemaPublicationRelations(Oid puboid,
 extern List *GetPubPartitionOptionRelations(List *result,
 											PublicationPartOpt pub_partopt,
 											Oid relid);
+extern Oid	GetTopMostAncestorInPublication(Oid puboid, List *ancestors,
+											int *ancestor_level);
 
 extern bool is_publishable_relation(Relation rel);
 extern bool is_schema_publication(Oid pubid);
-extern ObjectAddress publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
+extern ObjectAddress publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 											  bool if_not_exists);
 extern ObjectAddress publication_add_schema(Oid pubid, Oid schemaid,
 											bool if_not_exists);
 
+extern Bitmapset *pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols,
+										   MemoryContext mcxt);
+
 extern Oid	get_publication_oid(const char *pubname, bool missing_ok);
 extern char *get_publication_name(Oid pubid, bool missing_ok);
-
 
 #endif							/* PG_PUBLICATION_H */

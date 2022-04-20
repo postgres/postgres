@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/large_obj.c
  */
@@ -260,44 +260,5 @@ do_lo_unlink(const char *loid_arg)
 
 	print_lo_result("lo_unlink %u", loid);
 
-	return true;
-}
-
-
-
-/*
- * do_lo_list()
- *
- * Show all large objects in database with comments
- */
-bool
-do_lo_list(void)
-{
-	PGresult   *res;
-	char		buf[1024];
-	printQueryOpt myopt = pset.popt;
-
-	snprintf(buf, sizeof(buf),
-			 "SELECT oid as \"%s\",\n"
-			 "  pg_catalog.pg_get_userbyid(lomowner) as \"%s\",\n"
-			 "  pg_catalog.obj_description(oid, 'pg_largeobject') as \"%s\"\n"
-			 "  FROM pg_catalog.pg_largeobject_metadata "
-			 "  ORDER BY oid",
-			 gettext_noop("ID"),
-			 gettext_noop("Owner"),
-			 gettext_noop("Description"));
-
-	res = PSQLexec(buf);
-	if (!res)
-		return false;
-
-	myopt.topt.tuples_only = false;
-	myopt.nullPrint = NULL;
-	myopt.title = _("Large objects");
-	myopt.translate_header = true;
-
-	printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
-
-	PQclear(res);
 	return true;
 }

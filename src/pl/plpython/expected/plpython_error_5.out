@@ -425,18 +425,18 @@ $$ LANGUAGE plpgsql;
 /* test the context stack trace for nested execution levels
  */
 CREATE FUNCTION notice_innerfunc() RETURNS int AS $$
-plpy.execute("DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$")
+plpy.execute("DO LANGUAGE plpython3u $x$ plpy.notice('inside DO') $x$")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 CREATE FUNCTION notice_outerfunc() RETURNS int AS $$
 plpy.execute("SELECT notice_innerfunc()")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 \set SHOW_CONTEXT always
 SELECT notice_outerfunc();
 NOTICE:  inside DO
 CONTEXT:  PL/Python anonymous code block
-SQL statement "DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$"
+SQL statement "DO LANGUAGE plpython3u $x$ plpy.notice('inside DO') $x$"
 PL/Python function "notice_innerfunc"
 SQL statement "SELECT notice_innerfunc()"
 PL/Python function "notice_outerfunc"

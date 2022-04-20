@@ -174,10 +174,15 @@ LOCK [ TABLE ] [ ONLY ] <replaceable class="parameter">name</replaceable> [ * ] 
    </para>
 
    <para>
-    The user performing the lock on the view must have the corresponding privilege
-    on the view.  In addition the view's owner must have the relevant privileges on
-    the underlying base relations, but the user performing the lock does
-    not need any permissions on the underlying base relations.
+    The user performing the lock on the view must have the corresponding
+    privilege on the view.  In addition, by default, the view's owner must
+    have the relevant privileges on the underlying base relations, whereas the
+    user performing the lock does not need any permissions on the underlying
+    base relations.  However, if the view has
+    <literal>security_invoker</literal> set to <literal>true</literal>
+    (see <link linkend="sql-createview"><command>CREATE VIEW</command></link>),
+    the user performing the lock, rather than the view owner, must have the
+    relevant privileges on the underlying base relations.
    </para>
 
    <para>

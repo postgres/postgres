@@ -4,7 +4,7 @@
  *	  definition of the "database" system catalog (pg_database)
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_database.h
@@ -40,11 +40,8 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	/* character encoding */
 	int32		encoding;
 
-	/* LC_COLLATE setting */
-	NameData	datcollate;
-
-	/* LC_CTYPE setting */
-	NameData	datctype;
+	/* locale provider, see pg_collation.collprovider */
+	char		datlocprovider;
 
 	/* allowed as CREATE DATABASE template? */
 	bool		datistemplate;
@@ -54,9 +51,6 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 
 	/* max connections allowed (-1=no limit) */
 	int32		datconnlimit;
-
-	/* highest OID to consider a system OID */
-	Oid			datlastsysoid;
 
 	/* all Xids < this are frozen in this DB */
 	TransactionId datfrozenxid;
@@ -68,6 +62,18 @@ CATALOG(pg_database,1262,DatabaseRelationId) BKI_SHARED_RELATION BKI_ROWTYPE_OID
 	Oid			dattablespace BKI_LOOKUP(pg_tablespace);
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
+	/* LC_COLLATE setting */
+	text		datcollate BKI_FORCE_NOT_NULL;
+
+	/* LC_CTYPE setting */
+	text		datctype BKI_FORCE_NOT_NULL;
+
+	/* ICU locale ID */
+	text		daticulocale;
+
+	/* provider-dependent version of collation data */
+	text		datcollversion BKI_DEFAULT(_null_);
+
 	/* access permissions */
 	aclitem		datacl[1];
 #endif

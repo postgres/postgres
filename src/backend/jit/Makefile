@@ -15,8 +15,6 @@ subdir = src/backend/jit
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS += -DDLSUFFIX=\"$(DLSUFFIX)\"
-
 OBJS = \
 	jit.o
 

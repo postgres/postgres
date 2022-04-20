@@ -6,11 +6,10 @@ OBJS = \
 	hstore_plpython.o
 PGFILEDESC = "hstore_plpython - hstore transform for plpython"
 
-EXTENSION = hstore_plpythonu hstore_plpython2u hstore_plpython3u
-DATA = hstore_plpythonu--1.0.sql hstore_plpython2u--1.0.sql hstore_plpython3u--1.0.sql
+EXTENSION = hstore_plpython3u
+DATA = hstore_plpython3u--1.0.sql
 
 REGRESS = hstore_plpython
-REGRESS_PLPYTHON3_MANGLE := $(REGRESS)
 
 PG_CPPFLAGS = $(python_includespec) -DPLPYTHON_LIBNAME='"plpython$(python_majorversion)"'
 
@@ -37,9 +36,4 @@ SHLIB_LINK += $(python_libspec) $(python_additional_libs)
 endif
 
 REGRESS_OPTS += --load-extension=hstore
-ifeq ($(python_majorversion),2)
-REGRESS_OPTS += --load-extension=plpythonu --load-extension=hstore_plpythonu
-endif
 EXTRA_INSTALL += contrib/hstore
-
-include $(top_srcdir)/src/pl/plpython/regress-python3-mangle.mk

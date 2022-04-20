@@ -174,7 +174,7 @@ ORDER BY c.relpages DESC LIMIT 10;
       hypothetically, undiscovered bugs in the underlying B-Tree index
       access method code.  Note that
       <function>bt_index_parent_check</function> cannot be used when
-      Hot Standby mode is enabled (i.e., on read-only physical
+      hot standby mode is enabled (i.e., on read-only physical
       replicas), unlike <function>bt_index_check</function>.
      </para>
     </listitem>

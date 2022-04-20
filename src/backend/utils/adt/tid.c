@@ -3,7 +3,7 @@
  * tid.c
  *	  Functions for the built-in type tuple id
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -64,10 +64,10 @@ tidin(PG_FUNCTION_ARGS)
 	BlockNumber blockNumber;
 	OffsetNumber offsetNumber;
 	char	   *badp;
-	int			hold_offset;
+	unsigned long cvt;
 
 	for (i = 0, p = str; *p && i < NTIDARGS && *p != RDELIM; p++)
-		if (*p == DELIM || (*p == LDELIM && !i))
+		if (*p == DELIM || (*p == LDELIM && i == 0))
 			coord[i++] = p + 1;
 
 	if (i < NTIDARGS)
@@ -77,22 +77,36 @@ tidin(PG_FUNCTION_ARGS)
 						"tid", str)));
 
 	errno = 0;
-	blockNumber = strtoul(coord[0], &badp, 10);
+	cvt = strtoul(coord[0], &badp, 10);
 	if (errno || *badp != DELIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));
+	blockNumber = (BlockNumber) cvt;
 
-	hold_offset = strtol(coord[1], &badp, 10);
-	if (errno || *badp != RDELIM ||
-		hold_offset > USHRT_MAX || hold_offset < 0)
+	/*
+	 * Cope with possibility that unsigned long is wider than BlockNumber, in
+	 * which case strtoul will not raise an error for some values that are out
+	 * of the range of BlockNumber.  (See similar code in oidin().)
+	 */
+#if SIZEOF_LONG > 4
+	if (cvt != (unsigned long) blockNumber &&
+		cvt != (unsigned long) ((int32) blockNumber))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s: \"%s\"",
 						"tid", str)));
+#endif
 
-	offsetNumber = hold_offset;
+	cvt = strtoul(coord[1], &badp, 10);
+	if (errno || *badp != RDELIM ||
+		cvt > USHRT_MAX)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"tid", str)));
+	offsetNumber = (OffsetNumber) cvt;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 

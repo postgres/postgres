@@ -1,6 +1,0 @@
-# ltree_plpython2u extension
-comment = 'transform between ltree and plpython2u'
-default_version = '1.0'
-module_pathname = '$libdir/ltree_plpython2'
-relocatable = true
-requires = 'ltree,plpython2u'

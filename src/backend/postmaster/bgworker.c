@@ -2,7 +2,7 @@
  * bgworker.c
  *		POSTGRES pluggable background workers implementation
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/postmaster/bgworker.c
@@ -531,7 +531,7 @@ BackgroundWorkerStopNotifications(pid_t pid)
  * This is called during a normal ("smart" or "fast") database shutdown.
  * After this point, no new background workers will be started, so anything
  * that might be waiting for them needs to be kicked off its wait.  We do
- * that by cancelling the bgworker registration entirely, which is perhaps
+ * that by canceling the bgworker registration entirely, which is perhaps
  * overkill, but since we're shutting down it does not matter whether the
  * registration record sticks around.
  *

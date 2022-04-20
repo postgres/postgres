@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Checks that snapshots on standbys behave in a minimally reasonable
 # way.
@@ -8,8 +8,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 10;
-use Config;
+use Test::More;
 
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
@@ -32,11 +31,8 @@ $node_standby->init_from_backup($node_primary, $backup_name,
 $node_standby->append_conf('postgresql.conf', 'max_prepared_transactions=10');
 $node_standby->start;
 
-# To avoid hanging while expecting some specific input from a psql
-# instance being driven by us, add a timeout high enough that it
-# should never trigger even on very slow machines, unless something
-# is really wrong.
-my $psql_timeout = IPC::Run::timer(300);
+my $psql_timeout =
+  IPC::Run::timer(2 * $PostgreSQL::Test::Utils::timeout_default);
 
 # One psql to primary and standby each, for all queries. That allows
 # to check uncommitted changes being replicated and such.
@@ -76,8 +72,7 @@ ok( send_query_and_wait(
 #
 $node_primary->psql('postgres',
 	"INSERT INTO test_visibility VALUES ('first insert')");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -98,8 +93,7 @@ UPDATE test_visibility SET data = 'first update' RETURNING data;
 	'UPDATE');
 
 $node_primary->psql('postgres', "SELECT txid_current();");  # ensure WAL flush
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -112,8 +106,7 @@ ok( send_query_and_wait(
 #
 ok(send_query_and_wait(\%psql_primary, q[COMMIT;], qr/^COMMIT$/m), 'COMMIT');
 
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -142,8 +135,7 @@ PREPARE TRANSACTION 'will_abort';
 		qr/^PREPARE TRANSACTION$/m),
 	'prepared will_abort');
 
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -154,8 +146,7 @@ ok( send_query_and_wait(
 # For some variation, finish prepared xacts via separate connections
 $node_primary->safe_psql('postgres', "COMMIT PREPARED 'will_commit';");
 $node_primary->safe_psql('postgres', "ROLLBACK PREPARED 'will_abort';");
-$node_primary->wait_for_catchup($node_standby, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_standby);
 
 ok( send_query_and_wait(
 		\%psql_standby,
@@ -187,9 +178,6 @@ sub send_query_and_wait
 	$$psql{run}->pump_nb();
 	while (1)
 	{
-		# See PostgreSQL::Test::Cluster.pm's psql()
-		$$psql{stdout} =~ s/\r\n/\n/g if $Config{osname} eq 'msys';
-
 		last if $$psql{stdout} =~ /$untl/;
 
 		if ($psql_timeout->is_expired)
@@ -213,3 +201,5 @@ sub send_query_and_wait
 
 	return 1;
 }
+
+done_testing();

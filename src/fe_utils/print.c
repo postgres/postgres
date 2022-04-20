@@ -8,7 +8,7 @@
  * pager open/close functions, all that stuff came with it.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/fe_utils/print.c
@@ -966,7 +966,8 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 
 			more_col_wrapping = col_count;
 			curr_nl_line = 0;
-			memset(header_done, false, col_count * sizeof(bool));
+			if (col_count > 0)
+				memset(header_done, false, col_count * sizeof(bool));
 			while (more_col_wrapping)
 			{
 				if (opt_border == 2)
@@ -1172,7 +1173,6 @@ print_aligned_text(const printTableContent *cont, FILE *fout, bool is_pager)
 			if (opt_border == 2)
 				fputs(dformat->rightvrule, fout);
 			fputc('\n', fout);
-
 		} while (more_lines);
 	}
 

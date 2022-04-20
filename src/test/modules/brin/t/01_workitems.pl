@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Verify that work items work correctly
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 use PostgreSQL::Test::Cluster;
 
 my $node = PostgreSQL::Test::Cluster->new('tango');
@@ -42,3 +42,5 @@ $count = $node->safe_psql('postgres',
 );
 is($count, 't', "index got summarized");
 $node->stop;
+
+done_testing();

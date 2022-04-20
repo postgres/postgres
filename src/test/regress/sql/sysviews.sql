@@ -13,7 +13,7 @@ select count(*) >= 0 as ok from pg_available_extension_versions;
 select count(*) >= 0 as ok from pg_available_extensions;
 
 -- The entire output of pg_backend_memory_contexts is not stable,
--- we test only the existance and basic condition of TopMemoryContext.
+-- we test only the existence and basic condition of TopMemoryContext.
 select name, ident, parent, level, total_bytes >= free_bytes
   from pg_backend_memory_contexts where level = 0;
 
@@ -25,8 +25,13 @@ select count(*) = 0 as ok from pg_cursors;
 
 select count(*) >= 0 as ok from pg_file_settings;
 
--- There will surely be at least one rule
-select count(*) > 0 as ok from pg_hba_file_rules;
+-- There will surely be at least one rule, with no errors.
+select count(*) > 0 as ok, count(*) FILTER (WHERE error IS NOT NULL) = 0 AS no_err
+  from pg_hba_file_rules;
+
+-- There may be no rules, and there should be no errors.
+select count(*) >= 0 as ok, count(*) FILTER (WHERE error IS NOT NULL) = 0 AS no_err
+  from pg_ident_file_mappings;
 
 -- There will surely be at least one active lock
 select count(*) > 0 as ok from pg_locks;

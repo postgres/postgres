@@ -3,7 +3,7 @@
  *
  *	relfilenode functions
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/relfilenode.c
  */
 
@@ -32,13 +32,13 @@ transfer_all_new_tablespaces(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 	switch (user_opts.transfer_mode)
 	{
 		case TRANSFER_MODE_CLONE:
-			pg_log(PG_REPORT, "Cloning user relation files\n");
+			prep_status_progress("Cloning user relation files");
 			break;
 		case TRANSFER_MODE_COPY:
-			pg_log(PG_REPORT, "Copying user relation files\n");
+			prep_status_progress("Copying user relation files");
 			break;
 		case TRANSFER_MODE_LINK:
-			pg_log(PG_REPORT, "Linking user relation files\n");
+			prep_status_progress("Linking user relation files");
 			break;
 	}
 
@@ -119,8 +119,6 @@ transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 									new_pgdata);
 		if (n_maps)
 		{
-			print_maps(mappings, n_maps, new_db->db_name);
-
 			transfer_single_new_db(mappings, n_maps, old_tablespace);
 		}
 		/* We allocate something even for n_maps == 0 */
@@ -195,15 +193,15 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 		snprintf(old_file, sizeof(old_file), "%s%s/%u/%u%s%s",
 				 map->old_tablespace,
 				 map->old_tablespace_suffix,
-				 map->old_db_oid,
-				 map->old_relfilenode,
+				 map->db_oid,
+				 map->relfilenode,
 				 type_suffix,
 				 extent_suffix);
 		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
 				 map->new_tablespace,
 				 map->new_tablespace_suffix,
-				 map->new_db_oid,
-				 map->new_relfilenode,
+				 map->db_oid,
+				 map->relfilenode,
 				 type_suffix,
 				 extent_suffix);
 

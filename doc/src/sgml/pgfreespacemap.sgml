@@ -9,14 +9,14 @@
 
  <para>
   The <filename>pg_freespacemap</filename> module provides a means for examining the
-  free space map (FSM). It provides a function called
-  <function>pg_freespace</function>, or two overloaded functions, to be
-  precise. The functions show the value recorded in the free space map for
-  a given page, or for all pages in the relation.
+  <link linkend="storage-fsm">free space map</link> (<acronym>FSM</acronym>).
+  It provides a function called <function>pg_freespace</function>, or two
+  overloaded functions, to be precise. The functions show the value recorded in
+  the free space map for a given page, or for all pages in the relation.
  </para>
 
  <para>
-  By default use is restricted to superusers and members of the
+  By default use is restricted to superusers and roles with privileges of the
   <literal>pg_stat_scan_tables</literal> role. Access may be granted to others
   using <command>GRANT</command>.
  </para>
@@ -36,7 +36,7 @@
     <listitem>
      <para>
       Returns the amount of free space on the page of the relation, specified
-      by <literal>blkno</literal>, according to the FSM.
+      by <literal>blkno</literal>, according to the <acronym>FSM</acronym>.
      </para>
     </listitem>
    </varlistentry>
@@ -50,7 +50,8 @@
     <listitem>
      <para>
       Displays the amount of free space on each page of the relation,
-      according to the FSM. A set of <literal>(blkno bigint, avail int2)</literal>
+      according to the <acronym>FSM</acronym>. A set of
+      <literal>(blkno bigint, avail int2)</literal>
       tuples is returned, one tuple for each page in the relation.
      </para>
     </listitem>
@@ -75,7 +76,7 @@
 
 <screen>
 postgres=# SELECT * FROM pg_freespace('foo');
- blkno | avail 
+ blkno | avail
 -------+-------
      0 |     0
      1 |     0
@@ -100,7 +101,7 @@ postgres=# SELECT * FROM pg_freespace('foo');
 (20 rows)
 
 postgres=# SELECT * FROM pg_freespace('foo', 7);
- pg_freespace 
+ pg_freespace
 --------------
          1216
 (1 row)
@@ -112,8 +113,8 @@ postgres=# SELECT * FROM pg_freespace('foo', 7);
 
   <para>
    Original version by Mark Kirkwood <email>markir@paradise.net.nz</email>.
-   Rewritten in version 8.4 to suit new FSM implementation by Heikki
-   Linnakangas <email>heikki@enterprisedb.com</email>
+   Rewritten in version 8.4 to suit new <acronym>FSM</acronym> implementation
+   by Heikki Linnakangas <email>heikki@enterprisedb.com</email>
   </para>
  </sect2>
 

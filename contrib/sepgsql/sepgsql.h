@@ -4,7 +4,7 @@
  *
  * Definitions corresponding to SE-PostgreSQL
  *
- * Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -227,6 +227,7 @@ extern int	sepgsql_set_mode(int new_mode);
 extern bool sepgsql_getenforce(void);
 
 extern void sepgsql_audit_log(bool denied,
+							  bool enforcing,
 							  const char *scontext,
 							  const char *tcontext,
 							  uint16 tclass,

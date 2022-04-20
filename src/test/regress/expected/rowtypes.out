@@ -1010,18 +1010,8 @@ select row_to_json(i) from int8_tbl i;
  {"q1":4567890123456789,"q2":-4567890123456789}
 (5 rows)
 
+-- since "i" is of type "int8_tbl", attaching aliases doesn't change anything:
 select row_to_json(i) from int8_tbl i(x,y);
-                 row_to_json                  
-----------------------------------------------
- {"x":123,"y":456}
- {"x":123,"y":4567890123456789}
- {"x":4567890123456789,"y":123}
- {"x":4567890123456789,"y":4567890123456789}
- {"x":4567890123456789,"y":-4567890123456789}
-(5 rows)
-
-create temp view vv1 as select * from int8_tbl;
-select row_to_json(i) from vv1 i;
                   row_to_json                   
 ------------------------------------------------
  {"q1":123,"q2":456}
@@ -1031,16 +1021,7 @@ select row_to_json(i) from vv1 i;
  {"q1":4567890123456789,"q2":-4567890123456789}
 (5 rows)
 
-select row_to_json(i) from vv1 i(x,y);
-                 row_to_json                  
-----------------------------------------------
- {"x":123,"y":456}
- {"x":123,"y":4567890123456789}
- {"x":4567890123456789,"y":123}
- {"x":4567890123456789,"y":4567890123456789}
- {"x":4567890123456789,"y":-4567890123456789}
-(5 rows)
-
+-- in these examples, we'll report the exposed column names of the subselect:
 select row_to_json(ss) from
   (select q1, q2 from int8_tbl) as ss;
                   row_to_json                   

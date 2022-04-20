@@ -3,7 +3,7 @@
  * copyto.c
  *		COPY <table> TO file/program/client
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -97,7 +97,6 @@ typedef struct CopyToStateData
 	FmgrInfo   *out_functions;	/* lookup info for output functions */
 	MemoryContext rowcontext;	/* per-row evaluation context */
 	uint64		bytes_processed;	/* number of bytes processed so far */
-
 } CopyToStateData;
 
 /* DestReceiver for COPY (query) TO */
@@ -116,8 +115,8 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 static void EndCopy(CopyToState cstate);
 static void ClosePipeToProgram(CopyToState cstate);
 static void CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot);
-static void CopyAttributeOutText(CopyToState cstate, char *string);
-static void CopyAttributeOutCSV(CopyToState cstate, char *string,
+static void CopyAttributeOutText(CopyToState cstate, const char *string);
+static void CopyAttributeOutCSV(CopyToState cstate, const char *string,
 								bool use_quote, bool single_attr);
 
 /* Low-level communications functions */
@@ -439,7 +438,7 @@ BeginCopyTo(ParseState *pstate,
 		 * Run parse analysis and rewrite.  Note this also acquires sufficient
 		 * locks on the source table(s).
 		 */
-		rewritten = pg_analyze_and_rewrite(raw_query,
+		rewritten = pg_analyze_and_rewrite_fixedparams(raw_query,
 										   pstate->p_sourcetext, NULL, 0,
 										   NULL);
 
@@ -657,8 +656,6 @@ BeginCopyTo(ParseState *pstate,
 
 	cstate->copy_dest = COPY_FILE;	/* default */
 
-	MemoryContextSwitchTo(oldcontext);
-
 	if (pipe)
 	{
 		progress_vals[1] = PROGRESS_COPY_TYPE_PIPE;
@@ -863,8 +860,11 @@ DoCopyTo(CopyToState cstate)
 
 				colname = NameStr(TupleDescAttr(tupDesc, attnum - 1)->attname);
 
-				CopyAttributeOutCSV(cstate, colname, false,
+				if (cstate->opts.csv_mode)
+					CopyAttributeOutCSV(cstate, colname, false,
 									list_length(cstate->attnumlist) == 1);
+				else
+					CopyAttributeOutText(cstate, colname);
 			}
 
 			CopySendEndOfRow(cstate);
@@ -1009,10 +1009,10 @@ CopyOneRowTo(CopyToState cstate, TupleTableSlot *slot)
 	} while (0)
 
 static void
-CopyAttributeOutText(CopyToState cstate, char *string)
+CopyAttributeOutText(CopyToState cstate, const char *string)
 {
-	char	   *ptr;
-	char	   *start;
+	const char *ptr;
+	const char *start;
 	char		c;
 	char		delimc = cstate->opts.delim[0];
 
@@ -1162,11 +1162,11 @@ CopyAttributeOutText(CopyToState cstate, char *string)
  * CSV-style escaping
  */
 static void
-CopyAttributeOutCSV(CopyToState cstate, char *string,
+CopyAttributeOutCSV(CopyToState cstate, const char *string,
 					bool use_quote, bool single_attr)
 {
-	char	   *ptr;
-	char	   *start;
+	const char *ptr;
+	const char *start;
 	char		c;
 	char		delimc = cstate->opts.delim[0];
 	char		quotec = cstate->opts.quote[0];
@@ -1194,7 +1194,7 @@ CopyAttributeOutCSV(CopyToState cstate, char *string,
 			use_quote = true;
 		else
 		{
-			char	   *tptr = ptr;
+			const char *tptr = ptr;
 
 			while ((c = *tptr) != '\0')
 			{

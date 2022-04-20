@@ -8,7 +8,7 @@
  * and only the receiver may receive.  This is intended to allow a user
  * backend to communicate with worker backends that it has registered.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/storage/ipc/shm_mq.c
@@ -773,8 +773,11 @@ shm_mq_receive(shm_mq_handle *mqh, Size *nbytesp, void **datap, bool nowait)
 
 		/* Copy as much as we can. */
 		Assert(mqh->mqh_partial_bytes + rb <= nbytes);
-		memcpy(&mqh->mqh_buffer[mqh->mqh_partial_bytes], rawdata, rb);
-		mqh->mqh_partial_bytes += rb;
+		if (rb > 0)
+		{
+			memcpy(&mqh->mqh_buffer[mqh->mqh_partial_bytes], rawdata, rb);
+			mqh->mqh_partial_bytes += rb;
+		}
 
 		/*
 		 * Update count of bytes that can be consumed, accounting for

@@ -275,7 +275,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
 
 <programlisting>
 SELECT to_tsvector('fat cats ate fat rats') @@ to_tsquery('fat &amp; rat');
- ?column? 
+ ?column?
 ----------
  t
 </programlisting>
@@ -284,7 +284,7 @@ SELECT to_tsvector('fat cats ate fat rats') @@ to_tsquery('fat &amp; rat');
 
 <programlisting>
 SELECT 'fat cats ate fat rats'::tsvector @@ to_tsquery('fat &amp; rat');
- ?column? 
+ ?column?
 ----------
  f
 </programlisting>
@@ -335,12 +335,12 @@ text @@ text
 
 <programlisting>
 SELECT to_tsvector('fatal error') @@ to_tsquery('fatal &lt;-&gt; error');
- ?column? 
+ ?column?
 ----------
  t
 
 SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
- ?column? 
+ ?column?
 ----------
  f
 </programlisting>
@@ -357,12 +357,12 @@ SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
 
 <programlisting>
 SELECT phraseto_tsquery('cats ate rats');
-       phraseto_tsquery        
+       phraseto_tsquery
 -------------------------------
  'cat' &lt;-&gt; 'ate' &lt;-&gt; 'rat'
 
 SELECT phraseto_tsquery('the cats ate the rats');
-       phraseto_tsquery        
+       phraseto_tsquery
 -------------------------------
  'cat' &lt;-&gt; 'ate' &lt;2&gt; 'rat'
 </programlisting>
@@ -828,7 +828,7 @@ to_tsquery(<optional> <replaceable class="parameter">config</replaceable> <type>
 
 <screen>
 SELECT to_tsquery('english', 'The &amp; Fat &amp; Rats');
-  to_tsquery   
+  to_tsquery
 ---------------
  'fat' &amp; 'rat'
 </screen>
@@ -839,7 +839,7 @@ SELECT to_tsquery('english', 'The &amp; Fat &amp; Rats');
 
 <screen>
 SELECT to_tsquery('english', 'Fat | Rats:AB');
-    to_tsquery    
+    to_tsquery
 ------------------
  'fat' | 'rat':AB
 </screen>
@@ -848,7 +848,7 @@ SELECT to_tsquery('english', 'Fat | Rats:AB');
 
 <screen>
 SELECT to_tsquery('supern:*A &amp; star:A*B');
-        to_tsquery        
+        to_tsquery
 --------------------------
  'supern':*A &amp; 'star':*AB
 </screen>
@@ -897,7 +897,7 @@ plainto_tsquery(<optional> <replaceable class="parameter">config</replaceable> <
 
 <screen>
 SELECT plainto_tsquery('english', 'The Fat Rats');
- plainto_tsquery 
+ plainto_tsquery
 -----------------
  'fat' &amp; 'rat'
 </screen>
@@ -908,7 +908,7 @@ SELECT plainto_tsquery('english', 'The Fat Rats');
 
 <screen>
 SELECT plainto_tsquery('english', 'The Fat &amp; Rats:C');
-   plainto_tsquery   
+   plainto_tsquery
 ---------------------
  'fat' &amp; 'rat' &amp; 'c'
 </screen>
@@ -1827,7 +1827,7 @@ CREATE TABLE aliases (t tsquery primary key, s tsquery);
 INSERT INTO aliases VALUES(to_tsquery('supernovae'), to_tsquery('supernovae|sn'));
 
 SELECT ts_rewrite(to_tsquery('supernovae &amp; crab'), 'SELECT * FROM aliases');
-           ts_rewrite            
+           ts_rewrite
 ---------------------------------
  'crab' &amp; ( 'supernova' | 'sn' )
 </screen>
@@ -1840,7 +1840,7 @@ SET s = to_tsquery('supernovae|sn &amp; !nebulae')
 WHERE t = to_tsquery('supernovae');
 
 SELECT ts_rewrite(to_tsquery('supernovae &amp; crab'), 'SELECT * FROM aliases');
-                 ts_rewrite                  
+                 ts_rewrite
 ---------------------------------------------
  'crab' &amp; ( 'supernova' | 'sn' &amp; !'nebula' )
 </screen>
@@ -1915,12 +1915,12 @@ tsvector_update_trigger(tsv, 'pg_catalog.english', title, body);
 INSERT INTO messages VALUES('title here', 'the body text is here');
 
 SELECT * FROM messages;
-   title    |         body          |            tsv             
+   title    |         body          |            tsv
 ------------+-----------------------+----------------------------
  title here | the body text is here | 'bodi':4 'text':5 'titl':1
 
 SELECT title, body FROM messages WHERE tsv @@ to_tsquery('title &amp; body');
-   title    |         body          
+   title    |         body
 ------------+-----------------------
  title here | the body text is here
 </screen>
@@ -2231,7 +2231,7 @@ LIMIT 10;
 
 <screen>
 SELECT alias, description, token FROM ts_debug('foo-bar-beta1');
-      alias      |               description                |     token     
+      alias      |               description                |     token
 -----------------+------------------------------------------+---------------
  numhword        | Hyphenated word, letters and digits      | foo-bar-beta1
  hword_asciipart | Hyphenated word part, all ASCII          | foo
@@ -2247,7 +2247,7 @@ SELECT alias, description, token FROM ts_debug('foo-bar-beta1');
 
 <screen>
 SELECT alias, description, token FROM ts_debug('http://example.com/stuff/index.html');
-  alias   |  description  |            token             
+  alias   |  description  |            token
 ----------+---------------+------------------------------
  protocol | Protocol head | http://
  url      | URL           | example.com/stuff/index.html
@@ -2571,7 +2571,7 @@ SELECT ts_lexize('public.simple_dict', 'The');
 
 <screen>
 SELECT * FROM ts_debug('english', 'Paris');
-   alias   |   description   | token |  dictionaries  |  dictionary  | lexemes 
+   alias   |   description   | token |  dictionaries  |  dictionary  | lexemes
 -----------+-----------------+-------+----------------+--------------+---------
  asciiword | Word, all ASCII | Paris | {english_stem} | english_stem | {pari}
 
@@ -2585,7 +2585,7 @@ ALTER TEXT SEARCH CONFIGURATION english
     WITH my_synonym, english_stem;
 
 SELECT * FROM ts_debug('english', 'Paris');
-   alias   |   description   | token |       dictionaries        | dictionary | lexemes 
+   alias   |   description   | token |       dictionaries        | dictionary | lexemes
 -----------+-----------------+-------+---------------------------+------------+---------
  asciiword | Word, all ASCII | Paris | {my_synonym,english_stem} | my_synonym | {paris}
 </screen>
@@ -2654,7 +2654,7 @@ mydb=# SELECT to_tsquery('tst', 'indices');
 (1 row)
 
 mydb=# SELECT 'indexes are very useful'::tsvector;
-            tsvector             
+            tsvector
 ---------------------------------
  'are' 'indexes' 'useful' 'very'
 (1 row)
@@ -3355,31 +3355,31 @@ ts_debug(<optional> <replaceable class="parameter">config</replaceable> <type>re
 
 <screen>
 SELECT * FROM ts_debug('english', 'a fat  cat sat on a mat - it ate a fat rats');
-   alias   |   description   | token |  dictionaries  |  dictionary  | lexemes 
+   alias   |   description   | token |  dictionaries  |  dictionary  | lexemes
 -----------+-----------------+-------+----------------+--------------+---------
  asciiword | Word, all ASCII | a     | {english_stem} | english_stem | {}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | fat   | {english_stem} | english_stem | {fat}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | cat   | {english_stem} | english_stem | {cat}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | sat   | {english_stem} | english_stem | {sat}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | on    | {english_stem} | english_stem | {}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | a     | {english_stem} | english_stem | {}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | mat   | {english_stem} | english_stem | {mat}
- blank     | Space symbols   |       | {}             |              | 
- blank     | Space symbols   | -     | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
+ blank     | Space symbols   | -     | {}             |              |
  asciiword | Word, all ASCII | it    | {english_stem} | english_stem | {}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | ate   | {english_stem} | english_stem | {ate}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | a     | {english_stem} | english_stem | {}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | fat   | {english_stem} | english_stem | {fat}
- blank     | Space symbols   |       | {}             |              | 
+ blank     | Space symbols   |       | {}             |              |
  asciiword | Word, all ASCII | rats  | {english_stem} | english_stem | {rat}
 </screen>
   </para>
@@ -3406,12 +3406,12 @@ ALTER TEXT SEARCH CONFIGURATION public.english
 
 <screen>
 SELECT * FROM ts_debug('public.english', 'The Brightest supernovaes');
-   alias   |   description   |    token    |         dictionaries          |   dictionary   |   lexemes   
+   alias   |   description   |    token    |         dictionaries          |   dictionary   |   lexemes
 -----------+-----------------+-------------+-------------------------------+----------------+-------------
  asciiword | Word, all ASCII | The         | {english_ispell,english_stem} | english_ispell | {}
- blank     | Space symbols   |             | {}                            |                | 
+ blank     | Space symbols   |             | {}                            |                |
  asciiword | Word, all ASCII | Brightest   | {english_ispell,english_stem} | english_ispell | {bright}
- blank     | Space symbols   |             | {}                            |                | 
+ blank     | Space symbols   |             | {}                            |                |
  asciiword | Word, all ASCII | supernovaes | {english_ispell,english_stem} | english_stem   | {supernova}
 </screen>
 
@@ -3445,12 +3445,12 @@ SELECT * FROM ts_debug('public.english', 'The Brightest supernovaes');
 <screen>
 SELECT alias, token, dictionary, lexemes
 FROM ts_debug('public.english', 'The Brightest supernovaes');
-   alias   |    token    |   dictionary   |   lexemes   
+   alias   |    token    |   dictionary   |   lexemes
 -----------+-------------+----------------+-------------
  asciiword | The         | english_ispell | {}
- blank     |             |                | 
+ blank     |             |                |
  asciiword | Brightest   | english_ispell | {bright}
- blank     |             |                | 
+ blank     |             |                |
  asciiword | supernovaes | english_stem   | {supernova}
 </screen>
   </para>
@@ -3516,7 +3516,7 @@ ts_token_type(<replaceable class="parameter">parser_oid</replaceable> <type>oid<
 
 <screen>
 SELECT * FROM ts_token_type('default');
- tokid |      alias      |               description                
+ tokid |      alias      |               description
 -------+-----------------+------------------------------------------
      1 | asciiword       | Word, all ASCII
      2 | word            | Word, all letters
@@ -3618,7 +3618,7 @@ SELECT plainto_tsquery('supernovae stars');
  </sect1>
 
  <sect1 id="textsearch-indexes">
-  <title>GIN and GiST Index Types</title>
+  <title>Preferred Index Types for Text Search</title>
 
   <indexterm zone="textsearch-indexes">
    <primary>text search</primary>
@@ -3627,10 +3627,16 @@ SELECT plainto_tsquery('supernovae stars');
 
   <para>
    There are two kinds of indexes that can be used to speed up full text
-   searches.
+   searches:
+   <link linkend="gin"><acronym>GIN</acronym></link> and
+   <link linkend="gist"><acronym>GiST</acronym></link>.
    Note that indexes are not mandatory for full text searching, but in
    cases where a column is searched on a regular basis, an index is
    usually desirable.
+  </para>
+
+  <para>
+   To create such an index, do one of:
 
    <variablelist>
 
@@ -3793,14 +3799,14 @@ SELECT plainto_tsquery('supernovae stars');
 <screen>
 =&gt; \dF russian
             List of text search configurations
-   Schema   |  Name   |            Description             
+   Schema   |  Name   |            Description
 ------------+---------+------------------------------------
  pg_catalog | russian | configuration for russian language
 
 =&gt; \dF+ russian
 Text search configuration "pg_catalog.russian"
 Parser: "pg_catalog.default"
-      Token      | Dictionaries 
+      Token      | Dictionaries
 -----------------+--------------
  asciihword      | english_stem
  asciiword       | english_stem
@@ -3878,21 +3884,21 @@ Parser: "pg_catalog.default"
 <screen>
 =&gt; \dFp
         List of text search parsers
-   Schema   |  Name   |     Description     
+   Schema   |  Name   |     Description
 ------------+---------+---------------------
  pg_catalog | default | default word parser
 =&gt; \dFp+
     Text search parser "pg_catalog.default"
-     Method      |    Function    | Description 
+     Method      |    Function    | Description
 -----------------+----------------+-------------
- Start parse     | prsd_start     | 
- Get next token  | prsd_nexttoken | 
- End parse       | prsd_end       | 
- Get headline    | prsd_headline  | 
- Get token types | prsd_lextype   | 
+ Start parse     | prsd_start     |
+ Get next token  | prsd_nexttoken |
+ End parse       | prsd_end       |
+ Get headline    | prsd_headline  |
+ Get token types | prsd_lextype   |
 
         Token types for parser "pg_catalog.default"
-   Token name    |               Description                
+   Token name    |               Description
 -----------------+------------------------------------------
  asciihword      | Hyphenated word, all ASCII
  asciiword       | Word, all ASCII
@@ -3931,7 +3937,7 @@ Parser: "pg_catalog.default"
 <screen>
 =&gt; \dFt
                            List of text search templates
-   Schema   |   Name    |                        Description                        
+   Schema   |   Name    |                        Description
 ------------+-----------+-----------------------------------------------------------
  pg_catalog | ispell    | ispell dictionary
  pg_catalog | simple    | simple dictionary: just lower case and check for stopword

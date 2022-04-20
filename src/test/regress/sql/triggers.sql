@@ -2,6 +2,39 @@
 -- TRIGGERS
 --
 
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+
+\set autoinclib :libdir '/autoinc' :dlsuffix
+\set refintlib :libdir '/refint' :dlsuffix
+\set regresslib :libdir '/regress' :dlsuffix
+
+CREATE FUNCTION autoinc ()
+	RETURNS trigger
+	AS :'autoinclib'
+	LANGUAGE C;
+
+CREATE FUNCTION check_primary_key ()
+	RETURNS trigger
+	AS :'refintlib'
+	LANGUAGE C;
+
+CREATE FUNCTION check_foreign_key ()
+	RETURNS trigger
+	AS :'refintlib'
+	LANGUAGE C;
+
+CREATE FUNCTION trigger_return_old ()
+        RETURNS trigger
+        AS :'regresslib'
+        LANGUAGE C;
+
+CREATE FUNCTION set_ttdummy (int4)
+        RETURNS int4
+        AS :'regresslib'
+        LANGUAGE C STRICT;
+
 create table pkeys (pkey1 int4 not null, pkey2 text not null);
 create table fkeys (fkey1 int4, fkey2 text, fkey3 int);
 create table fkeys2 (fkey21 int4, fkey22 text, pkey23 int not null);
@@ -1428,6 +1461,11 @@ create trigger trg1 after insert on trigpart3 for each row execute procedure tri
 alter table trigpart attach partition trigpart3 FOR VALUES FROM (2000) to (3000); -- fail
 drop table trigpart3;
 
+-- check display of unrelated triggers
+create trigger samename after delete on trigpart execute function trigger_nothing();
+create trigger samename after delete on trigpart1 execute function trigger_nothing();
+\d trigpart1
+
 drop table trigpart;
 drop function trigger_nothing();
 
@@ -2400,6 +2438,53 @@ insert into self_ref values (1, null), (2, 1), (3, 2), (4, 3);
 delete from self_ref where a = 1;
 
 drop table self_ref;
+
+--
+-- test transition tables with MERGE
+--
+create table merge_target_table (a int primary key, b text);
+create trigger merge_target_table_insert_trig
+  after insert on merge_target_table referencing new table as new_table
+  for each statement execute procedure dump_insert();
+create trigger merge_target_table_update_trig
+  after update on merge_target_table referencing old table as old_table new table as new_table
+  for each statement execute procedure dump_update();
+create trigger merge_target_table_delete_trig
+  after delete on merge_target_table referencing old table as old_table
+  for each statement execute procedure dump_delete();
+
+create table merge_source_table (a int, b text);
+insert into merge_source_table
+  values (1, 'initial1'), (2, 'initial2'),
+		 (3, 'initial3'), (4, 'initial4');
+
+merge into merge_target_table t
+using merge_source_table s
+on t.a = s.a
+when not matched then
+  insert values (a, b);
+
+merge into merge_target_table t
+using merge_source_table s
+on t.a = s.a
+when matched and s.a <= 2 then
+	update set b = t.b || ' updated by merge'
+when matched and s.a > 2 then
+	delete
+when not matched then
+  insert values (a, b);
+
+merge into merge_target_table t
+using merge_source_table s
+on t.a = s.a
+when matched and s.a <= 2 then
+	update set b = t.b || ' updated again by merge'
+when matched and s.a > 2 then
+	delete
+when not matched then
+  insert values (a, b);
+
+drop table merge_source_table, merge_target_table;
 
 -- cleanup
 drop function dump_insert();

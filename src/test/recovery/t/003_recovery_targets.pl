@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for recovery targets: name, timestamp, XID
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 9;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 # Create and test a standby from given backup, with a certain recovery target.
@@ -172,8 +172,8 @@ run_log(
 		$node_standby->logfile, 'start'
 	]);
 
-# wait up to 180s for postgres to terminate
-foreach my $i (0 .. 1800)
+# wait for postgres to terminate
+foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 {
 	last if !-f $node_standby->data_dir . '/postmaster.pid';
 	usleep(100_000);
@@ -182,3 +182,5 @@ $logfile = slurp_file($node_standby->logfile());
 ok( $logfile =~
 	  qr/FATAL: .* recovery ended before configured recovery target was reached/,
 	'recovery end before target reached is a fatal error');
+
+done_testing();

@@ -1,10 +1,10 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 20;
+use Test::More;
 
 program_help_ok('pg_config');
 program_version_ok('pg_config');
@@ -17,3 +17,5 @@ command_like([ 'pg_config', '--libdir', '--bindir' ],
 	qr/lib.*\n.*bin/, 'pg_config two options different order');
 command_like(['pg_config'], qr/.*\n.*\n.*/,
 	'pg_config without options prints many lines');
+
+done_testing();

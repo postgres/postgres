@@ -4,7 +4,7 @@
  *	  creator functions for various nodes. The functions here are for the
  *	  most frequently created nodes.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -19,6 +19,7 @@
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "utils/errcodes.h"
 #include "utils/lsyscache.h"
 
 
@@ -741,7 +742,7 @@ make_ands_implicit(Expr *clause)
  */
 IndexInfo *
 makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid, List *expressions,
-			  List *predicates, bool unique, bool isready, bool concurrent)
+			  List *predicates, bool unique, bool nulls_not_distinct, bool isready, bool concurrent)
 {
 	IndexInfo  *n = makeNode(IndexInfo);
 
@@ -750,7 +751,10 @@ makeIndexInfo(int numattrs, int numkeyattrs, Oid amoid, List *expressions,
 	Assert(n->ii_NumIndexKeyAttrs != 0);
 	Assert(n->ii_NumIndexKeyAttrs <= n->ii_NumIndexAttrs);
 	n->ii_Unique = unique;
+	n->ii_NullsNotDistinct = nulls_not_distinct;
 	n->ii_ReadyForInserts = isready;
+	n->ii_CheckedUnchanged = false;
+	n->ii_IndexUnchanged = false;
 	n->ii_Concurrent = concurrent;
 
 	/* expressions */
@@ -814,4 +818,125 @@ makeVacuumRelation(RangeVar *relation, Oid oid, List *va_cols)
 	v->oid = oid;
 	v->va_cols = va_cols;
 	return v;
+}
+
+/*
+ * makeJsonFormat -
+ *	  creates a JsonFormat node
+ */
+JsonFormat *
+makeJsonFormat(JsonFormatType type, JsonEncoding encoding, int location)
+{
+	JsonFormat *jf = makeNode(JsonFormat);
+
+	jf->format_type = type;
+	jf->encoding = encoding;
+	jf->location = location;
+
+	return jf;
+}
+
+/*
+ * makeJsonValueExpr -
+ *	  creates a JsonValueExpr node
+ */
+JsonValueExpr *
+makeJsonValueExpr(Expr *expr, JsonFormat *format)
+{
+	JsonValueExpr *jve = makeNode(JsonValueExpr);
+
+	jve->raw_expr = expr;
+	jve->formatted_expr = NULL;
+	jve->format = format;
+
+	return jve;
+}
+
+/*
+ * makeJsonBehavior -
+ *	  creates a JsonBehavior node
+ */
+JsonBehavior *
+makeJsonBehavior(JsonBehaviorType type, Node *default_expr)
+{
+	JsonBehavior *behavior = makeNode(JsonBehavior);
+
+	behavior->btype = type;
+	behavior->default_expr = default_expr;
+
+	return behavior;
+}
+
+/*
+ * makeJsonTableJoinedPlan -
+ *	   creates a joined JsonTablePlan node
+ */
+Node *
+makeJsonTableJoinedPlan(JsonTablePlanJoinType type, Node *plan1, Node *plan2,
+						int location)
+{
+	JsonTablePlan *n = makeNode(JsonTablePlan);
+
+	n->plan_type = JSTP_JOINED;
+	n->join_type = type;
+	n->plan1 = castNode(JsonTablePlan, plan1);
+	n->plan2 = castNode(JsonTablePlan, plan2);
+	n->location = location;
+
+	return (Node *) n;
+}
+
+/*
+ * makeJsonEncoding -
+ *	  converts JSON encoding name to enum JsonEncoding
+ */
+JsonEncoding
+makeJsonEncoding(char *name)
+{
+	if (!pg_strcasecmp(name, "utf8"))
+		return JS_ENC_UTF8;
+	if (!pg_strcasecmp(name, "utf16"))
+		return JS_ENC_UTF16;
+	if (!pg_strcasecmp(name, "utf32"))
+		return JS_ENC_UTF32;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("unrecognized JSON encoding: %s", name)));
+
+	return JS_ENC_DEFAULT;
+}
+
+/*
+ * makeJsonKeyValue -
+ *	  creates a JsonKeyValue node
+ */
+Node *
+makeJsonKeyValue(Node *key, Node *value)
+{
+	JsonKeyValue *n = makeNode(JsonKeyValue);
+
+	n->key = (Expr *) key;
+	n->value = castNode(JsonValueExpr, value);
+
+	return (Node *) n;
+}
+
+/*
+ * makeJsonIsPredicate -
+ *	  creates a JsonIsPredicate node
+ */
+Node *
+makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType value_type,
+					bool unique_keys, int location)
+{
+	JsonIsPredicate *n = makeNode(JsonIsPredicate);
+
+	n->expr = expr;
+	n->format = format;
+	n->value_type = value_type;
+	n->unique_keys = unique_keys;
+	n->location = location;
+
+	return (Node *) n;
 }

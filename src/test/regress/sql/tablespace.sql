@@ -1,11 +1,18 @@
--- directory paths are passed to us in environment variables
-\getenv abs_builddir PG_ABS_BUILDDIR
+-- relative tablespace locations are not allowed
+CREATE TABLESPACE regress_tblspace LOCATION 'relative'; -- fail
 
-\set testtablespace :abs_builddir '/testtablespace'
+-- empty tablespace locations are not usually allowed
+CREATE TABLESPACE regress_tblspace LOCATION ''; -- fail
+
+-- as a special developer-only option to allow us to use tablespaces
+-- with streaming replication on the same server, an empty location
+-- can be allowed as a way to say that the tablespace should be created
+-- as a directory in pg_tblspc, rather than being a symlink
+SET allow_in_place_tablespaces = true;
 
 -- create a tablespace using WITH clause
-CREATE TABLESPACE regress_tblspacewith LOCATION :'testtablespace' WITH (some_nonexistent_parameter = true); -- fail
-CREATE TABLESPACE regress_tblspacewith LOCATION :'testtablespace' WITH (random_page_cost = 3.0); -- ok
+CREATE TABLESPACE regress_tblspacewith LOCATION '' WITH (some_nonexistent_parameter = true); -- fail
+CREATE TABLESPACE regress_tblspacewith LOCATION '' WITH (random_page_cost = 3.0); -- ok
 
 -- check to see the parameter was used
 SELECT spcoptions FROM pg_tablespace WHERE spcname = 'regress_tblspacewith';
@@ -14,7 +21,11 @@ SELECT spcoptions FROM pg_tablespace WHERE spcname = 'regress_tblspacewith';
 DROP TABLESPACE regress_tblspacewith;
 
 -- create a tablespace we can use
-CREATE TABLESPACE regress_tblspace LOCATION :'testtablespace';
+CREATE TABLESPACE regress_tblspace LOCATION '';
+-- This returns a relative path as of an effect of allow_in_place_tablespaces,
+-- masking the tablespace OID used in the path name.
+SELECT regexp_replace(pg_tablespace_location(oid), '(pg_tblspc)/(\d+)', '\1/NNN')
+  FROM pg_tablespace  WHERE spcname = 'regress_tblspace';
 
 -- try setting and resetting some properties for the new tablespace
 ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0, seq_page_cost = 1.1);
@@ -369,6 +380,12 @@ INSERT INTO testschema.atable VALUES(3);	-- ok
 INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
 SELECT COUNT(*) FROM testschema.atable;		-- checks heap
 
+-- let's try moving a materialized view from one place to another
+CREATE MATERIALIZED VIEW testschema.amv AS SELECT * FROM testschema.atable;
+ALTER MATERIALIZED VIEW testschema.amv SET TABLESPACE regress_tblspace;
+REFRESH MATERIALIZED VIEW testschema.amv;
+SELECT COUNT(*) FROM testschema.amv;
+
 -- Will fail with bad path
 CREATE TABLESPACE regress_badspace LOCATION '/no/such/location';
 
@@ -403,9 +420,11 @@ ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 
 -- Should show notice that nothing was done
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;

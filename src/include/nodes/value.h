@@ -4,7 +4,7 @@
  *	  interface for value nodes
  *
  *
- * Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *
  * src/include/nodes/value.h
  *
@@ -28,7 +28,7 @@
 typedef struct Integer
 {
 	NodeTag		type;
-	int			val;
+	int			ival;
 } Integer;
 
 /*
@@ -45,27 +45,35 @@ typedef struct Integer
 typedef struct Float
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *fval;
 } Float;
+
+typedef struct Boolean
+{
+	NodeTag		type;
+	bool		boolval;
+} Boolean;
 
 typedef struct String
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *sval;
 } String;
 
 typedef struct BitString
 {
 	NodeTag		type;
-	char	   *val;
+	char	   *bsval;
 } BitString;
 
-#define intVal(v)		(castNode(Integer, v)->val)
-#define floatVal(v)		atof(castNode(Float, v)->val)
-#define strVal(v)		(castNode(String, v)->val)
+#define intVal(v)		(castNode(Integer, v)->ival)
+#define floatVal(v)		atof(castNode(Float, v)->fval)
+#define boolVal(v)		(castNode(Boolean, v)->boolval)
+#define strVal(v)		(castNode(String, v)->sval)
 
 extern Integer *makeInteger(int i);
 extern Float *makeFloat(char *numericStr);
+extern Boolean *makeBoolean(bool var);
 extern String *makeString(char *str);
 extern BitString *makeBitString(char *str);
 

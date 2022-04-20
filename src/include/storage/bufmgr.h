@@ -4,7 +4,7 @@
  *	  POSTGRES buffer manager definitions.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/bufmgr.h
@@ -65,16 +65,16 @@ struct SMgrRelationData;
 extern PGDLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
-extern bool zero_damaged_pages;
-extern int	bgwriter_lru_maxpages;
-extern double bgwriter_lru_multiplier;
-extern bool track_io_timing;
-extern int	effective_io_concurrency;
-extern int	maintenance_io_concurrency;
+extern PGDLLIMPORT bool zero_damaged_pages;
+extern PGDLLIMPORT int bgwriter_lru_maxpages;
+extern PGDLLIMPORT double bgwriter_lru_multiplier;
+extern PGDLLIMPORT bool track_io_timing;
+extern PGDLLIMPORT int effective_io_concurrency;
+extern PGDLLIMPORT int maintenance_io_concurrency;
 
-extern int	checkpoint_flush_after;
-extern int	backend_flush_after;
-extern int	bgwriter_flush_after;
+extern PGDLLIMPORT int checkpoint_flush_after;
+extern PGDLLIMPORT int backend_flush_after;
+extern PGDLLIMPORT int bgwriter_flush_after;
 
 /* in buf_init.c */
 extern PGDLLIMPORT char *BufferBlocks;
@@ -184,7 +184,8 @@ extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 								 BufferAccessStrategy strategy);
 extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode,
 										ForkNumber forkNum, BlockNumber blockNum,
-										ReadBufferMode mode, BufferAccessStrategy strategy);
+										ReadBufferMode mode, BufferAccessStrategy strategy,
+										bool permanent);
 extern void ReleaseBuffer(Buffer buffer);
 extern void UnlockReleaseBuffer(Buffer buffer);
 extern void MarkBufferDirty(Buffer buffer);
@@ -203,6 +204,9 @@ extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
 extern void FlushOneBuffer(Buffer buffer);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
+extern void CreateAndCopyRelationData(RelFileNode src_rnode,
+									  RelFileNode dst_rnode,
+									  bool permanent);
 extern void FlushDatabaseBuffers(Oid dbid);
 extern void DropRelFileNodeBuffers(struct SMgrRelationData *smgr_reln, ForkNumber *forkNum,
 								   int nforks, BlockNumber *firstDelBlock);

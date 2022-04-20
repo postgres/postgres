@@ -4,7 +4,7 @@
  *	  POSTGRES multivariate MCV lists
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -134,7 +134,7 @@ static int	count_distinct_groups(int numrows, SortItem *items,
  * This bound is at most 25, and approaches 0 as n approaches 0 or N. The
  * case where n approaches 0 cannot happen in practice, since the sample
  * size is at least 300.  The case where n approaches N corresponds to
- * sampling the whole the table, in which case it is reasonable to keep
+ * sampling the whole table, in which case it is reasonable to keep
  * the whole MCV list (have no lower bound), so it makes sense to apply
  * this formula for all inputs, even though the above derivation is
  * technically only valid when the right hand side is at least around 10.
@@ -295,7 +295,7 @@ statext_mcv_build(StatsBuildData *data, double totalrows, int stattarget)
 		/* Copy the first chunk of groups into the result. */
 		for (i = 0; i < nitems; i++)
 		{
-			/* just pointer to the proper place in the list */
+			/* just point to the proper place in the list */
 			MCVItem    *item = &mcvlist->items[i];
 
 			item->values = (Datum *) palloc(sizeof(Datum) * numattrs);
@@ -556,15 +556,16 @@ build_column_frequencies(SortItem *groups, int ngroups,
 
 /*
  * statext_mcv_load
- *		Load the MCV list for the indicated pg_statistic_ext tuple.
+ *		Load the MCV list for the indicated pg_statistic_ext_data tuple.
  */
 MCVList *
-statext_mcv_load(Oid mvoid)
+statext_mcv_load(Oid mvoid, bool inh)
 {
 	MCVList    *result;
 	bool		isnull;
 	Datum		mcvlist;
-	HeapTuple	htup = SearchSysCache1(STATEXTDATASTXOID, ObjectIdGetDatum(mvoid));
+	HeapTuple	htup = SearchSysCache2(STATEXTDATASTXOID,
+									   ObjectIdGetDatum(mvoid), BoolGetDatum(inh));
 
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "cache lookup failed for statistics object %u", mvoid);
@@ -1619,7 +1620,7 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 	Assert(mcvlist->nitems <= STATS_MCVLIST_MAX_ITEMS);
 
 	matches = palloc(sizeof(bool) * mcvlist->nitems);
-	memset(matches, !is_or,  sizeof(bool) * mcvlist->nitems);
+	memset(matches, !is_or, sizeof(bool) * mcvlist->nitems);
 
 	/*
 	 * Loop through the list of clauses, and for each of them evaluate all the
@@ -2038,12 +2039,13 @@ mcv_clauselist_selectivity(PlannerInfo *root, StatisticExtInfo *stat,
 	int			i;
 	MCVList    *mcv;
 	Selectivity s = 0.0;
+	RangeTblEntry *rte = root->simple_rte_array[rel->relid];
 
 	/* match/mismatch bitmap for each MCV item */
 	bool	   *matches = NULL;
 
 	/* load the MCV list stored in the statistics object */
-	mcv = statext_mcv_load(stat->statOid);
+	mcv = statext_mcv_load(stat->statOid, rte->inh);
 
 	/* build a match bitmap for the clauses */
 	matches = mcv_get_match_bitmap(root, clauses, stat->keys, stat->exprs,

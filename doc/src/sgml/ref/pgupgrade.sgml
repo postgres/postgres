@@ -24,8 +24,7 @@ PostgreSQL documentation
    <command>pg_upgrade</command>
    <arg choice="plain"><option>-b</option></arg>
    <arg choice="plain"><replaceable>oldbindir</replaceable></arg>
-   <arg choice="plain"><option>-B</option></arg>
-   <arg choice="plain"><replaceable>newbindir</replaceable></arg>
+   <arg choice="opt"><option>-B</option> <replaceable>newbindir</replaceable></arg>
    <arg choice="plain"><option>-d</option></arg>
    <arg choice="plain"><replaceable>oldconfigdir</replaceable></arg>
    <arg choice="plain"><option>-D</option></arg>
@@ -139,7 +138,7 @@ PostgreSQL documentation
         of the upgraded cluster to be written safely to disk.  This option
         causes <command>pg_upgrade</command> to return without waiting, which
         is faster, but means that a subsequent operating system crash can leave
-        the synchronized data directory corrupt.  Generally, this option is
+        the data directory corrupt.  Generally, this option is
         useful for testing but should not be used on a production
         installation.
        </para>
@@ -499,7 +498,7 @@ pg_upgrade.exe
      is running.
     </para>
 
-    <substeps>
+    <procedure>
 
      <step>
       <title>Install the new PostgreSQL binaries on standby servers</title>
@@ -618,13 +617,13 @@ rsync --archive --delete --hard-links --size-only --no-inc-recursive /vol1/pg_tb
 
       <para>
        Configure the servers for log shipping.  (You do not need to run
-       <function>pg_start_backup()</function> and <function>pg_stop_backup()</function>
+       <function>pg_backup_start()</function> and <function>pg_backup_stop()</function>
        or take a file system backup as the standbys are still synchronized
        with the primary.)
       </para>
      </step>
 
-    </substeps>
+    </procedure>
 
    </step>
 
@@ -768,8 +767,8 @@ psql --username=postgres --file=script.sql postgres
 
   <para>
    <application>pg_upgrade</application> creates various working files, such
-   as schema dumps, in the current working directory.  For security, be sure
-   that that directory is not readable or writable by any other users.
+   as schema dumps, stored within <literal>pg_upgrade_output.d</literal> in
+   the directory of the new cluster.
   </para>
 
   <para>

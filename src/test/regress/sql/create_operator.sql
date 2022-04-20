@@ -9,14 +9,6 @@ CREATE OPERATOR ## (
    commutator = ##
 );
 
-CREATE OPERATOR <% (
-   leftarg = point,
-   rightarg = widget,
-   procedure = pt_in_widget,
-   commutator = >% ,
-   negator = >=%
-);
-
 CREATE OPERATOR @#@ (
    rightarg = int8,		-- prefix
    procedure = factorial
@@ -28,8 +20,7 @@ CREATE OPERATOR #%# (
 );
 
 -- Test operator created above
-SELECT point '(1,2)' <% widget '(0,0,3)' AS t,
-       point '(1,2)' <% widget '(0,0,1)' AS f;
+SELECT @#@ 24;
 
 -- Test comments
 COMMENT ON OPERATOR ###### (NONE, int4) IS 'bad prefix';

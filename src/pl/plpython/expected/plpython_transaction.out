@@ -1,6 +1,6 @@
 CREATE TABLE test1 (a int, b text);
 CREATE PROCEDURE transaction_test1()
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 AS $$
 for i in range(0, 10):
     plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
@@ -22,7 +22,7 @@ SELECT * FROM test1;
 
 TRUNCATE test1;
 DO
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 $$
 for i in range(0, 10):
     plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
@@ -44,7 +44,7 @@ SELECT * FROM test1;
 TRUNCATE test1;
 -- not allowed in a function
 CREATE FUNCTION transaction_test2() RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 AS $$
 for i in range(0, 10):
     plpy.execute("INSERT INTO test1 (a) VALUES (%d)" % i)
@@ -55,8 +55,11 @@ for i in range(0, 10):
 return 1
 $$;
 SELECT transaction_test2();
-ERROR:  invalid transaction termination
-CONTEXT:  PL/Python function "transaction_test2"
+ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "transaction_test2", line 5, in <module>
+    plpy.commit()
+PL/Python function "transaction_test2"
 SELECT * FROM test1;
  a | b 
 ---+---
@@ -64,13 +67,13 @@ SELECT * FROM test1;
 
 -- also not allowed if procedure is called from a function
 CREATE FUNCTION transaction_test3() RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 AS $$
 plpy.execute("CALL transaction_test1()")
 return 1
 $$;
 SELECT transaction_test3();
-ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+ERROR:  spiexceptions.InvalidTransactionTermination: spiexceptions.InvalidTransactionTermination: invalid transaction termination
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "transaction_test3", line 2, in <module>
     plpy.execute("CALL transaction_test1()")
@@ -82,31 +85,34 @@ SELECT * FROM test1;
 
 -- DO block inside function
 CREATE FUNCTION transaction_test4() RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 AS $$
-plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
+plpy.execute("DO LANGUAGE plpython3u $x$ plpy.commit() $x$")
 return 1
 $$;
 SELECT transaction_test4();
-ERROR:  spiexceptions.InvalidTransactionTermination: invalid transaction termination
+ERROR:  spiexceptions.InvalidTransactionTermination: spiexceptions.InvalidTransactionTermination: invalid transaction termination
 CONTEXT:  Traceback (most recent call last):
   PL/Python function "transaction_test4", line 2, in <module>
-    plpy.execute("DO LANGUAGE plpythonu $x$ plpy.commit() $x$")
+    plpy.execute("DO LANGUAGE plpython3u $x$ plpy.commit() $x$")
 PL/Python function "transaction_test4"
 -- commit inside subtransaction (prohibited)
-DO LANGUAGE plpythonu $$
+DO LANGUAGE plpython3u $$
 s = plpy.subtransaction()
 s.enter()
 plpy.commit()
 $$;
 WARNING:  forcibly aborting a subtransaction that has not been exited
-ERROR:  cannot commit while a subtransaction is active
-CONTEXT:  PL/Python anonymous code block
+ERROR:  spiexceptions.InvalidTransactionTermination: cannot commit while a subtransaction is active
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 4, in <module>
+    plpy.commit()
+PL/Python anonymous code block
 -- commit inside cursor loop
 CREATE TABLE test2 (x int);
 INSERT INTO test2 VALUES (0), (1), (2), (3), (4);
 TRUNCATE test1;
-DO LANGUAGE plpythonu $$
+DO LANGUAGE plpython3u $$
 for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
     plpy.commit()
@@ -129,7 +135,7 @@ SELECT * FROM pg_cursors;
 
 -- error in cursor loop with commit
 TRUNCATE test1;
-DO LANGUAGE plpythonu $$
+DO LANGUAGE plpython3u $$
 for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (12/(%s-2))" % row['x'])
     plpy.commit()
@@ -153,7 +159,7 @@ SELECT * FROM pg_cursors;
 
 -- rollback inside cursor loop
 TRUNCATE test1;
-DO LANGUAGE plpythonu $$
+DO LANGUAGE plpython3u $$
 for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
     plpy.rollback()
@@ -170,7 +176,7 @@ SELECT * FROM pg_cursors;
 
 -- first commit then rollback inside cursor loop
 TRUNCATE test1;
-DO LANGUAGE plpythonu $$
+DO LANGUAGE plpython3u $$
 for row in plpy.cursor("SELECT * FROM test2 ORDER BY x"):
     plpy.execute("INSERT INTO test1 (a) VALUES (%s)" % row['x'])
     if row['x'] % 2 == 0:
@@ -190,6 +196,55 @@ SELECT * FROM pg_cursors;
  name | statement | is_holdable | is_binary | is_scrollable | creation_time 
 ------+-----------+-------------+-----------+---------------+---------------
 (0 rows)
+
+-- check handling of an error during COMMIT
+CREATE TABLE testpk (id int PRIMARY KEY);
+CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
+DO LANGUAGE plpython3u $$
+# this insert will fail during commit:
+plpy.execute("INSERT INTO testfk VALUES (0)")
+plpy.commit()
+plpy.warning('should not get here')
+$$;
+ERROR:  spiexceptions.ForeignKeyViolation: insert or update on table "testfk" violates foreign key constraint "testfk_f1_fkey"
+DETAIL:  Key (f1)=(0) is not present in table "testpk".
+CONTEXT:  Traceback (most recent call last):
+  PL/Python anonymous code block, line 4, in <module>
+    plpy.commit()
+PL/Python anonymous code block
+SELECT * FROM testpk;
+ id 
+----
+(0 rows)
+
+SELECT * FROM testfk;
+ f1 
+----
+(0 rows)
+
+DO LANGUAGE plpython3u $$
+# this insert will fail during commit:
+plpy.execute("INSERT INTO testfk VALUES (0)")
+try:
+    plpy.commit()
+except Exception as e:
+    plpy.info('sqlstate: %s' % (e.sqlstate))
+# these inserts should work:
+plpy.execute("INSERT INTO testpk VALUES (1)")
+plpy.execute("INSERT INTO testfk VALUES (1)")
+$$;
+INFO:  sqlstate: 23503
+SELECT * FROM testpk;
+ id 
+----
+  1
+(1 row)
+
+SELECT * FROM testfk;
+ f1 
+----
+  1
+(1 row)
 
 DROP TABLE test1;
 DROP TABLE test2;

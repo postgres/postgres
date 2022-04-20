@@ -289,6 +289,17 @@ make check-world PG_TEST_EXTRA='kerberos ldap ssl'
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>wal_consistency_checking</literal></term>
+     <listitem>
+      <para>
+       Uses <literal>wal_consistency_checking=all</literal> while running
+       certain tests under <filename>src/test/recovery</filename>.  Not
+       enabled by default because it is resource intensive.
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
 
    Tests for features that are not supported by the current build
@@ -390,52 +401,6 @@ make check EXTRA_REGRESS_OPTS="--temp-config=test_postgresql.conf"
 make check EXTRA_TESTS=numeric_big
 </screen>
    </para>
-  </sect2>
-
-  <sect2>
-   <title>Testing Hot Standby</title>
-
-  <para>
-   The source distribution also contains regression tests for the static
-   behavior of Hot Standby. These tests require a running primary server
-   and a running standby server that is accepting new WAL changes from the
-   primary (using either file-based log shipping or streaming replication).
-   Those servers are not automatically created for you, nor is replication
-   setup documented here. Please check the various sections of the
-   documentation devoted to the required commands and related issues.
-  </para>
-
-  <para>
-   To run the Hot Standby tests, first create a database
-   called <literal>regression</literal> on the primary:
-<screen>
-psql -h primary -c "CREATE DATABASE regression"
-</screen>
-   Next, run the preparatory script
-   <filename>src/test/regress/sql/hs_primary_setup.sql</filename>
-   on the primary in the regression database, for example:
-<screen>
-psql -h primary -f src/test/regress/sql/hs_primary_setup.sql regression
-</screen>
-   Allow these changes to propagate to the standby.
-  </para>
-
-  <para>
-   Now arrange for the default database connection to be to the standby
-   server under test (for example, by setting the <envar>PGHOST</envar> and
-   <envar>PGPORT</envar> environment variables).
-   Finally, run <literal>make standbycheck</literal> in the regression directory:
-<screen>
-cd src/test/regress
-make standbycheck
-</screen>
-  </para>
-
-  <para>
-   Some extreme behaviors can also be generated on the primary using the
-   script <filename>src/test/regress/sql/hs_primary_extremes.sql</filename>
-   to allow the behavior of the standby to be tested.
-  </para>
   </sect2>
   </sect1>
 

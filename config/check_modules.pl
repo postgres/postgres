@@ -6,6 +6,7 @@
 #
 use strict;
 use warnings;
+use Config;
 
 use IPC::Run 0.79;
 
@@ -19,5 +20,9 @@ diag("IPC::Run::VERSION: $IPC::Run::VERSION");
 diag("Test::More::VERSION: $Test::More::VERSION");
 diag("Time::HiRes::VERSION: $Time::HiRes::VERSION");
 
+# Check that if prove is using msys perl it is for an msys target
+ok(($ENV{__CONFIG_HOST_OS__} || "") eq 'msys',
+   "Msys perl used for correct target")
+  if $Config{osname} eq 'msys';
 ok(1);
 done_testing();

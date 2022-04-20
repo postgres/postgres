@@ -3,13 +3,12 @@
  *
  *	options functions
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/option.c
  */
 
 #include "postgres_fe.h"
 
-#include <time.h>
 #ifdef WIN32
 #include <io.h>
 #endif
@@ -63,9 +62,6 @@ parseCommandLine(int argc, char *argv[])
 	int			option;			/* Command line option */
 	int			optindex = 0;	/* used by getopt_long */
 	int			os_user_effective_id;
-	FILE	   *fp;
-	char	  **filename;
-	time_t		run_time = time(NULL);
 
 	user_opts.do_sync = true;
 	user_opts.transfer_mode = TRANSFER_MODE_COPY;
@@ -208,26 +204,10 @@ parseCommandLine(int argc, char *argv[])
 	if (optind < argc)
 		pg_fatal("too many command-line arguments (first is \"%s\")\n", argv[optind]);
 
-	if ((log_opts.internal = fopen_priv(INTERNAL_LOG_FILE, "a")) == NULL)
-		pg_fatal("could not open log file \"%s\": %m\n", INTERNAL_LOG_FILE);
-
 	if (log_opts.verbose)
 		pg_log(PG_REPORT, "Running in verbose mode\n");
 
-	/* label start of upgrade in logfiles */
-	for (filename = output_files; *filename != NULL; filename++)
-	{
-		if ((fp = fopen_priv(*filename, "a")) == NULL)
-			pg_fatal("could not write to log file \"%s\": %m\n", *filename);
-
-		/* Start with newline because we might be appending to a file. */
-		fprintf(fp, "\n"
-				"-----------------------------------------------------------------\n"
-				"  pg_upgrade run on %s"
-				"-----------------------------------------------------------------\n\n",
-				ctime(&run_time));
-		fclose(fp);
-	}
+	log_opts.isatty = isatty(fileno(stdout));
 
 	/* Turn off read-only mode;  add prefix to PGOPTIONS? */
 	if (getenv("PGOPTIONS"))

@@ -43,6 +43,8 @@ ALTER MATERIALIZED VIEW ALL IN TABLESPACE <replaceable class="parameter">name</r
     ALTER [ COLUMN ] <replaceable class="parameter">column_name</replaceable> SET COMPRESSION <replaceable class="parameter">compression_method</replaceable>
     CLUSTER ON <replaceable class="parameter">index_name</replaceable>
     SET WITHOUT CLUSTER
+    SET ACCESS METHOD <replaceable class="parameter">new_access_method</replaceable>
+    SET TABLESPACE <replaceable class="parameter">new_tablespace</replaceable>
     SET ( <replaceable class="parameter">storage_parameter</replaceable> [= <replaceable class="parameter">value</replaceable>] [, ... ] )
     RESET ( <replaceable class="parameter">storage_parameter</replaceable> [, ... ] )
     OWNER TO { <replaceable class="parameter">new_owner</replaceable> | CURRENT_ROLE | CURRENT_USER | SESSION_USER }

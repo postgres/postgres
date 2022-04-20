@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1987, 1993, 1994
  * The Regents of the University of California.  All rights reserved.
  *
- * Portions Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *
  * src/include/pg_getopt.h
  */
@@ -33,10 +33,10 @@
  */
 #ifndef HAVE_GETOPT_H
 
-extern char *optarg;
-extern int	optind;
-extern int	opterr;
-extern int	optopt;
+extern PGDLLIMPORT char *optarg;
+extern PGDLLIMPORT int optind;
+extern PGDLLIMPORT int opterr;
+extern PGDLLIMPORT int optopt;
 
 #endif							/* HAVE_GETOPT_H */
 
@@ -45,7 +45,7 @@ extern int	optopt;
  * Cygwin, however, doesn't like this either.
  */
 #if defined(HAVE_INT_OPTRESET) && !defined(__CYGWIN__)
-extern int	optreset;
+extern PGDLLIMPORT int optreset;
 #endif
 
 /* Provide getopt() declaration if the platform doesn't have it */

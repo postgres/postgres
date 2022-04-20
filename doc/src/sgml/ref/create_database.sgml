@@ -25,13 +25,18 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
     [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
+           [ STRATEGY [=] <replaceable class="parameter">strategy</replaceable> ] ]
            [ LOCALE [=] <replaceable class="parameter">locale</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
            [ LC_CTYPE [=] <replaceable class="parameter">lc_ctype</replaceable> ]
+           [ ICU_LOCALE [=] <replaceable class="parameter">icu_locale</replaceable> ]
+           [ LOCALE_PROVIDER [=] <replaceable class="parameter">locale_provider</replaceable> ]
+           [ COLLATION_VERSION = <replaceable>collation_version</replaceable> ]
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ]
-           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ] ]
+           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
+           [ OID [=] <replaceable class="parameter">oid</replaceable> ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -114,6 +119,27 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+     <varlistentry id="create-database-strategy" xreflabel="CREATE DATABASE STRATEGY">
+      <term><replaceable class="parameter">strategy</replaceable></term>
+      <listitem>
+       <para>
+        Strategy to be used in creating the new database.  If
+        the <literal>WAL_LOG</literal> strategy is used, the database will be
+        copied block by block and each block will be separately written
+        to the write-ahead log. This is the most efficient strategy in
+        cases where the template database is small, and therefore it is the
+        default. The older <literal>FILE_COPY</literal> strategy is also
+        available. This strategy writes a small record to the write-ahead log
+        for each tablespace used by the target database. Each such record
+        represents copying an entire directory to a new location at the
+        filesystem level. While this does reduce the write-ahead
+        log volume substantially, especially if the template database is large,
+        it also forces the system to perform a checkpoint both before and
+        after the creation of the new database. In some situations, this may
+        have a noticeable negative impact on overall system performance.
+       </para>
+      </listitem>
+     </varlistentry>
      <varlistentry>
       <term><replaceable class="parameter">locale</replaceable></term>
       <listitem>
@@ -157,6 +183,49 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">icu_locale</replaceable></term>
+      <listitem>
+       <para>
+        Specifies the ICU locale ID if the ICU locale provider is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>locale_provider</replaceable></term>
+
+      <listitem>
+       <para>
+        Specifies the provider to use for the default collation in this
+        database.  Possible values are:
+        <literal>icu</literal>,<indexterm><primary>ICU</primary></indexterm>
+        <literal>libc</literal>.  <literal>libc</literal> is the default.  The
+        available choices depend on the operating system and build options.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>collation_version</replaceable></term>
+
+      <listitem>
+       <para>
+        Specifies the collation version string to store with the database.
+        Normally, this should be omitted, which will cause the version to be
+        computed from the actual version of the database collation as provided
+        by the operating system.  This option is intended to be used by
+        <command>pg_upgrade</command> for copying the version from an existing
+        installation.
+       </para>
+
+       <para>
+        See also <xref linkend="sql-alterdatabase"/> for how to handle
+        database collation version mismatches.
+       </para>
+     </listitem>
+    </varlistentry>
      <varlistentry>
       <term><replaceable class="parameter">tablespace_name</replaceable></term>
       <listitem>
@@ -203,6 +272,21 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term><replaceable class="parameter">oid</replaceable></term>
+       <listitem>
+        <para>
+         The object identifier to be used for the new database. If this
+         parameter is not specified, <productname>PostgreSQL</productname>
+         will choose a suitable OID automatically. This parameter is primarily
+         intended for internal use by <application>pg_upgrade</application>,
+         and only <application>pg_upgrade</application> can specify a value
+         less than 16384.
+        </para>
+       </listitem>
+      </varlistentry>
+
     </variablelist>
 
   <para>
@@ -275,6 +359,13 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
    result in a database that is corrupt according to the new settings.
    <literal>template0</literal>, however, is known to not contain any data or
    indexes that would be affected.
+  </para>
+
+  <para>
+   There is currently no option to use a database locale with nondeterministic
+   comparisons (see <link linkend="sql-createcollation"><command>CREATE
+   COLLATION</command></link> for an explanation).  If this is needed, then
+   per-column collations would need to be used.
   </para>
 
   <para>

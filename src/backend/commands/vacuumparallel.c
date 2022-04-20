@@ -12,11 +12,11 @@
  * the memory space for storing dead items allocated in the DSM segment.  We
  * launch parallel worker processes at the start of parallel index
  * bulk-deletion and index cleanup and once all indexes are processed, the
- * parallel worker processes exit.  Each time we process indexes parallelly,
+ * parallel worker processes exit.  Each time we process indexes in parallel,
  * the parallel context is re-initialized so that the same DSM can be used for
  * multiple passes of index bulk-deletion and index cleanup.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -28,6 +28,7 @@
 
 #include "access/amapi.h"
 #include "access/table.h"
+#include "access/xact.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "optimizer/paths.h"
@@ -35,6 +36,7 @@
 #include "storage/bufmgr.h"
 #include "tcop/tcopprot.h"
 #include "utils/lsyscache.h"
+#include "utils/rel.h"
 
 /*
  * DSM keys for parallel vacuum.  Unlike other parallel execution code, since
@@ -55,7 +57,8 @@
 typedef struct PVShared
 {
 	/*
-	 * Target table relid and log level.  These fields are not modified during
+	 * Target table relid and log level (for messages about parallel workers
+	 * launched during VACUUM VERBOSE).  These fields are not modified during
 	 * the parallel vacuum.
 	 */
 	Oid			relid;
@@ -830,7 +833,7 @@ parallel_vacuum_process_one_index(ParallelVacuumState *pvs, Relation indrel,
 	ivinfo.index = indrel;
 	ivinfo.analyze_only = false;
 	ivinfo.report_progress = false;
-	ivinfo.message_level = pvs->shared->elevel;
+	ivinfo.message_level = DEBUG2;
 	ivinfo.estimated_count = pvs->shared->estimated_count;
 	ivinfo.num_heap_tuples = pvs->shared->reltuples;
 	ivinfo.strategy = pvs->bstrategy;

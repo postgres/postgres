@@ -3,7 +3,7 @@
  * walsender.h
  *	  Exports from replication/walsender.c.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * src/include/replication/walsender.h
  *
@@ -25,15 +25,15 @@ typedef enum
 } CRSSnapshotAction;
 
 /* global state */
-extern bool am_walsender;
-extern bool am_cascading_walsender;
-extern bool am_db_walsender;
-extern bool wake_wal_senders;
+extern PGDLLIMPORT bool am_walsender;
+extern PGDLLIMPORT bool am_cascading_walsender;
+extern PGDLLIMPORT bool am_db_walsender;
+extern PGDLLIMPORT bool wake_wal_senders;
 
 /* user-settable parameters */
-extern int	max_wal_senders;
-extern int	wal_sender_timeout;
-extern bool log_replication_commands;
+extern PGDLLIMPORT int max_wal_senders;
+extern PGDLLIMPORT int wal_sender_timeout;
+extern PGDLLIMPORT bool log_replication_commands;
 
 extern void InitWalSender(void);
 extern bool exec_replication_command(const char *query_string);

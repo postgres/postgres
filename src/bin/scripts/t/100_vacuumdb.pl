@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 58;
+use Test::More;
 
 program_help_ok('vacuumdb');
 program_version_ok('vacuumdb');
@@ -146,3 +146,5 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
 	qr/GREATEST.*relfrozenxid.*2147483001/,
 	'vacuumdb --table --min-xid-age');
+
+done_testing();

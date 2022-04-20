@@ -17,7 +17,7 @@
  * the backend's "backend/libpq" is quite separate from "interfaces/libpq".
  * All that remains is similarities of names to trap the unwary...
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	src/backend/libpq/pqcomm.c
@@ -204,7 +204,7 @@ pq_init(void)
 				(errmsg("could not set socket to nonblocking mode: %m")));
 #endif
 
-	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, 3);
+	FeBeWaitSet = CreateWaitEventSet(TopMemoryContext, FeBeWaitSetNEvents);
 	socket_pos = AddWaitEventToSet(FeBeWaitSet, WL_SOCKET_WRITEABLE,
 								   MyProcPort->sock, NULL, NULL);
 	latch_pos = AddWaitEventToSet(FeBeWaitSet, WL_LATCH_SET, PGINVALID_SOCKET,
@@ -277,30 +277,15 @@ socket_close(int code, Datum arg)
 		secure_close(MyProcPort);
 
 		/*
-		 * On most platforms, we leave the socket open until the process dies.
-		 * This allows clients to perform a "synchronous close" if they care
-		 * --- wait till the transport layer reports connection closure, and
-		 * you can be sure the backend has exited.  Saves a kernel call, too.
+		 * Formerly we did an explicit close() here, but it seems better to
+		 * leave the socket open until the process dies.  This allows clients
+		 * to perform a "synchronous close" if they care --- wait till the
+		 * transport layer reports connection closure, and you can be sure the
+		 * backend has exited.
 		 *
-		 * However, that does not work on Windows: if the kernel closes the
-		 * socket it will invoke an "abortive shutdown" that discards any data
-		 * not yet sent to the client.  (This is a flat-out violation of the
-		 * TCP RFCs, but count on Microsoft not to care about that.)  To get
-		 * the spec-compliant "graceful shutdown" behavior, we must invoke
-		 * closesocket() explicitly.  When using OpenSSL, it seems that clean
-		 * shutdown also requires an explicit shutdown() call.
-		 *
-		 * This code runs late enough during process shutdown that we should
-		 * have finished all externally-visible shutdown activities, so that
-		 * in principle it's good enough to act as a synchronous close on
-		 * Windows too.  But it's a lot more fragile than the other way.
+		 * We do set sock to PGINVALID_SOCKET to prevent any further I/O,
+		 * though.
 		 */
-#ifdef WIN32
-		shutdown(MyProcPort->sock, SD_SEND);
-		closesocket(MyProcPort->sock);
-#endif
-
-		/* In any case, set sock to PGINVALID_SOCKET to prevent further I/O */
 		MyProcPort->sock = PGINVALID_SOCKET;
 	}
 }
@@ -408,7 +393,7 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
-		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr->ai_family))
+		if (family != AF_UNIX && addr->ai_family == AF_UNIX)
 		{
 			/*
 			 * Only set up a unix domain socket when they really asked for it.
@@ -493,7 +478,7 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		 * unpredictable behavior. With no flags at all, win32 behaves as Unix
 		 * with SO_REUSEADDR.
 		 */
-		if (!IS_AF_UNIX(addr->ai_family))
+		if (addr->ai_family != AF_UNIX)
 		{
 			if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 							(char *) &one, sizeof(one))) == -1)
@@ -545,7 +530,7 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 					 errmsg("could not bind %s address \"%s\": %m",
 							familyDesc, addrDesc),
 					 saved_errno == EADDRINUSE ?
-					 (IS_AF_UNIX(addr->ai_family) ?
+					 (addr->ai_family == AF_UNIX ?
 					  errhint("Is another postmaster already running on port %d?",
 							  (int) portNumber) :
 					  errhint("Is another postmaster already running on port %d?"
@@ -763,7 +748,7 @@ StreamConnection(pgsocket server_fd, Port *port)
 	}
 
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
-	if (!IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port->laddr.addr.ss_family != AF_UNIX)
 	{
 		int			on;
 #ifdef WIN32
@@ -1638,7 +1623,7 @@ int
 pq_getkeepalivesidle(Port *port)
 {
 #if defined(PG_TCP_KEEPALIVE_IDLE) || defined(SIO_KEEPALIVE_VALS)
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return 0;
 
 	if (port->keepalives_idle != 0)
@@ -1672,7 +1657,7 @@ pq_getkeepalivesidle(Port *port)
 int
 pq_setkeepalivesidle(int idle, Port *port)
 {
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return STATUS_OK;
 
 /* check SIO_KEEPALIVE_VALS here, not just WIN32, as some toolchains lack it */
@@ -1723,7 +1708,7 @@ int
 pq_getkeepalivesinterval(Port *port)
 {
 #if defined(TCP_KEEPINTVL) || defined(SIO_KEEPALIVE_VALS)
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return 0;
 
 	if (port->keepalives_interval != 0)
@@ -1757,7 +1742,7 @@ pq_getkeepalivesinterval(Port *port)
 int
 pq_setkeepalivesinterval(int interval, Port *port)
 {
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return STATUS_OK;
 
 #if defined(TCP_KEEPINTVL) || defined(SIO_KEEPALIVE_VALS)
@@ -1807,7 +1792,7 @@ int
 pq_getkeepalivescount(Port *port)
 {
 #ifdef TCP_KEEPCNT
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return 0;
 
 	if (port->keepalives_count != 0)
@@ -1836,7 +1821,7 @@ pq_getkeepalivescount(Port *port)
 int
 pq_setkeepalivescount(int count, Port *port)
 {
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return STATUS_OK;
 
 #ifdef TCP_KEEPCNT
@@ -1882,7 +1867,7 @@ int
 pq_gettcpusertimeout(Port *port)
 {
 #ifdef TCP_USER_TIMEOUT
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return 0;
 
 	if (port->tcp_user_timeout != 0)
@@ -1911,7 +1896,7 @@ pq_gettcpusertimeout(Port *port)
 int
 pq_settcpusertimeout(int timeout, Port *port)
 {
-	if (port == NULL || IS_AF_UNIX(port->laddr.addr.ss_family))
+	if (port == NULL || port->laddr.addr.ss_family == AF_UNIX)
 		return STATUS_OK;
 
 #ifdef TCP_USER_TIMEOUT
@@ -1959,33 +1944,33 @@ pq_settcpusertimeout(int timeout, Port *port)
 bool
 pq_check_connection(void)
 {
-#if defined(POLLRDHUP)
-	/*
-	 * POLLRDHUP is a Linux extension to poll(2) to detect sockets closed by
-	 * the other end.  We don't have a portable way to do that without
-	 * actually trying to read or write data on other systems.  We don't want
-	 * to read because that would be confused by pipelined queries and COPY
-	 * data. Perhaps in future we'll try to write a heartbeat message instead.
-	 */
-	struct pollfd pollfd;
+	WaitEvent	events[FeBeWaitSetNEvents];
 	int			rc;
 
-	pollfd.fd = MyProcPort->sock;
-	pollfd.events = POLLOUT | POLLIN | POLLRDHUP;
-	pollfd.revents = 0;
+	/*
+	 * It's OK to modify the socket event filter without restoring, because
+	 * all FeBeWaitSet socket wait sites do the same.
+	 */
+	ModifyWaitEvent(FeBeWaitSet, FeBeWaitSetSocketPos, WL_SOCKET_CLOSED, NULL);
 
-	rc = poll(&pollfd, 1, 0);
-
-	if (rc < 0)
+retry:
+	rc = WaitEventSetWait(FeBeWaitSet, 0, events, lengthof(events), 0);
+	for (int i = 0; i < rc; ++i)
 	{
-		ereport(COMMERROR,
-				(errcode_for_socket_access(),
-				 errmsg("could not poll socket: %m")));
-		return false;
+		if (events[i].events & WL_SOCKET_CLOSED)
+			return false;
+		if (events[i].events & WL_LATCH_SET)
+		{
+			/*
+			 * A latch event might be preventing other events from being
+			 * reported.  Reset it and poll again.  No need to restore it
+			 * because no code should expect latches to survive across
+			 * CHECK_FOR_INTERRUPTS().
+			 */
+			 ResetLatch(MyLatch);
+			 goto retry;
+		}
 	}
-	else if (rc == 1 && (pollfd.revents & (POLLHUP | POLLRDHUP)))
-		return false;
-#endif
 
 	return true;
 }

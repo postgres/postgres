@@ -4,7 +4,7 @@
  *	  POSTGRES disk block definitions.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/block.h
@@ -68,14 +68,14 @@ typedef BlockIdData *BlockId;	/* block identifier */
  *		True iff blockNumber is valid.
  */
 #define BlockNumberIsValid(blockNumber) \
-	((bool) ((BlockNumber) (blockNumber) != InvalidBlockNumber))
+	((BlockNumber) (blockNumber) != InvalidBlockNumber)
 
 /*
  * BlockIdIsValid
  *		True iff the block identifier is valid.
  */
 #define BlockIdIsValid(blockId) \
-	((bool) PointerIsValid(blockId))
+	PointerIsValid(blockId)
 
 /*
  * BlockIdSet
@@ -83,7 +83,6 @@ typedef BlockIdData *BlockId;	/* block identifier */
  */
 #define BlockIdSet(blockId, blockNumber) \
 ( \
-	AssertMacro(PointerIsValid(blockId)), \
 	(blockId)->bi_hi = (blockNumber) >> 16, \
 	(blockId)->bi_lo = (blockNumber) & 0xffff \
 )
@@ -94,8 +93,6 @@ typedef BlockIdData *BlockId;	/* block identifier */
  */
 #define BlockIdCopy(toBlockId, fromBlockId) \
 ( \
-	AssertMacro(PointerIsValid(toBlockId)), \
-	AssertMacro(PointerIsValid(fromBlockId)), \
 	(toBlockId)->bi_hi = (fromBlockId)->bi_hi, \
 	(toBlockId)->bi_lo = (fromBlockId)->bi_lo \
 )
@@ -113,9 +110,6 @@ typedef BlockIdData *BlockId;	/* block identifier */
  *		Retrieve the block number from a block identifier.
  */
 #define BlockIdGetBlockNumber(blockId) \
-( \
-	AssertMacro(BlockIdIsValid(blockId)), \
-	(BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) \
-)
+	((((BlockNumber) (blockId)->bi_hi) << 16) | ((BlockNumber) (blockId)->bi_lo))
 
 #endif							/* BLOCK_H */

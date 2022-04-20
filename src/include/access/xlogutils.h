@@ -3,7 +3,7 @@
  *
  * Utilities for replaying WAL records.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/xlogutils.h
@@ -21,7 +21,7 @@
  * potentially perform work during recovery should check RecoveryInProgress().
  * See XLogCtl notes in xlog.c.
  */
-extern bool InRecovery;
+extern PGDLLIMPORT bool InRecovery;
 
 /*
  * Like InRecovery, standbyState is only valid in the startup process.
@@ -52,7 +52,7 @@ typedef enum
 	STANDBY_SNAPSHOT_READY
 } HotStandbyState;
 
-extern HotStandbyState standbyState;
+extern PGDLLIMPORT HotStandbyState standbyState;
 
 #define InHotStandby (standbyState >= STANDBY_SNAPSHOT_PENDING)
 
@@ -84,7 +84,8 @@ extern XLogRedoAction XLogReadBufferForRedoExtended(XLogReaderState *record,
 													Buffer *buf);
 
 extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
-									 BlockNumber blkno, ReadBufferMode mode);
+									 BlockNumber blkno, ReadBufferMode mode,
+									 Buffer recent_buffer);
 
 extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
 extern void FreeFakeRelcacheEntry(Relation fakerel);
@@ -92,6 +93,10 @@ extern void FreeFakeRelcacheEntry(Relation fakerel);
 extern int	read_local_xlog_page(XLogReaderState *state,
 								 XLogRecPtr targetPagePtr, int reqLen,
 								 XLogRecPtr targetRecPtr, char *cur_page);
+extern int	read_local_xlog_page_no_wait(XLogReaderState *state,
+										 XLogRecPtr targetPagePtr, int reqLen,
+										 XLogRecPtr targetRecPtr,
+										 char *cur_page);
 extern void wal_segment_open(XLogReaderState *state,
 							 XLogSegNo nextSegNo,
 							 TimeLineID *tli_p);

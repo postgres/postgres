@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/settings.h
  */
@@ -94,9 +94,9 @@ typedef struct _psqlSettings
 	printQueryOpt *gsavepopt;	/* if not null, saved print format settings */
 
 	char	   *gset_prefix;	/* one-shot prefix argument for \gset */
-	bool		gdesc_flag;		/* one-shot request to describe query results */
-	bool		gexec_flag;		/* one-shot request to execute query results */
-	bool		crosstab_flag;	/* one-shot request to crosstab results */
+	bool		gdesc_flag;		/* one-shot request to describe query result */
+	bool		gexec_flag;		/* one-shot request to execute query result */
+	bool		crosstab_flag;	/* one-shot request to crosstab result */
 	char	   *ctv_args[4];	/* \crosstabview arguments */
 
 	bool		notty;			/* stdin or stdout is not a tty (as determined
@@ -148,6 +148,7 @@ typedef struct _psqlSettings
 	const char *prompt2;
 	const char *prompt3;
 	PGVerbosity verbosity;		/* current error verbosity level */
+	bool		show_all_results;
 	PGContextVisibility show_context;	/* current context display level */
 } PsqlSettings;
 

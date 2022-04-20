@@ -6,112 +6,6 @@
 \getenv abs_srcdir PG_ABS_SRCDIR
 \getenv abs_builddir PG_ABS_BUILDDIR
 
--- CLASS POPULATION
---	(any resemblance to real life is purely coincidental)
---
-\set filename :abs_srcdir '/data/agg.data'
-COPY aggtest FROM :'filename';
-
-\set filename :abs_srcdir '/data/onek.data'
-COPY onek FROM :'filename';
-
-\set filename :abs_builddir '/results/onek.data'
-COPY onek TO :'filename';
-
-DELETE FROM onek;
-
-COPY onek FROM :'filename';
-
-\set filename :abs_srcdir '/data/tenk.data'
-COPY tenk1 FROM :'filename';
-
-\set filename :abs_srcdir '/data/rect.data'
-COPY slow_emp4000 FROM :'filename';
-
-\set filename :abs_srcdir '/data/person.data'
-COPY person FROM :'filename';
-
-\set filename :abs_srcdir '/data/emp.data'
-COPY emp FROM :'filename';
-
-\set filename :abs_srcdir '/data/student.data'
-COPY student FROM :'filename';
-
-\set filename :abs_srcdir '/data/stud_emp.data'
-COPY stud_emp FROM :'filename';
-
-\set filename :abs_srcdir '/data/streets.data'
-COPY road FROM :'filename';
-
-\set filename :abs_srcdir '/data/real_city.data'
-COPY real_city FROM :'filename';
-
-\set filename :abs_srcdir '/data/hash.data'
-COPY hash_i4_heap FROM :'filename';
-
-COPY hash_name_heap FROM :'filename';
-
-COPY hash_txt_heap FROM :'filename';
-
-COPY hash_f8_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/tsearch.data'
-COPY test_tsvector FROM :'filename';
-
-\set filename :abs_srcdir '/data/jsonb.data'
-COPY testjsonb FROM :'filename';
-
--- the data in this file has a lot of duplicates in the index key
--- fields, leading to long bucket chains and lots of table expansion.
--- this is therefore a stress test of the bucket overflow code (unlike
--- the data in hash.data, which has unique index keys).
---
--- \set filename :abs_srcdir '/data/hashovfl.data'
--- COPY hash_ovfl_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/desc.data'
-COPY bt_i4_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/hash.data'
-COPY bt_name_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/desc.data'
-COPY bt_txt_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/hash.data'
-COPY bt_f8_heap FROM :'filename';
-
-\set filename :abs_srcdir '/data/array.data'
-COPY array_op_test FROM :'filename';
-
-\set filename :abs_srcdir '/data/array.data'
-COPY array_index_op_test FROM :'filename';
-
--- analyze all the data we just loaded, to ensure plan consistency
--- in later tests
-
-ANALYZE aggtest;
-ANALYZE onek;
-ANALYZE tenk1;
-ANALYZE slow_emp4000;
-ANALYZE person;
-ANALYZE emp;
-ANALYZE student;
-ANALYZE stud_emp;
-ANALYZE road;
-ANALYZE real_city;
-ANALYZE hash_i4_heap;
-ANALYZE hash_name_heap;
-ANALYZE hash_txt_heap;
-ANALYZE hash_f8_heap;
-ANALYZE test_tsvector;
-ANALYZE bt_i4_heap;
-ANALYZE bt_name_heap;
-ANALYZE bt_txt_heap;
-ANALYZE bt_f8_heap;
-ANALYZE array_op_test;
-ANALYZE array_index_op_test;
-
 --- test copying in CSV mode with various styles
 --- of embedded line ending characters
 
@@ -159,6 +53,18 @@ this is just a line full of junk that would error out if parsed
 \.
 
 copy copytest3 to stdout csv header;
+
+create temp table copytest4 (
+	c1 int,
+	"colname with tab: 	" text);
+
+copy copytest4 from stdin (header);
+this is just a line full of junk that would error out if parsed
+1	a
+2	b
+\.
+
+copy copytest4 to stdout (header);
 
 -- test copy from with a partitioned table
 create table parted_copytest (
@@ -291,3 +197,36 @@ copy tab_progress_reporting from :'filename'
 drop trigger check_after_tab_progress_reporting on tab_progress_reporting;
 drop function notice_after_tab_progress_reporting();
 drop table tab_progress_reporting;
+
+-- Test header matching feature
+create table header_copytest (
+	a int,
+	b int,
+	c text
+);
+copy header_copytest from stdin with (header wrong_choice);
+copy header_copytest from stdin with (header match);
+a	b	c
+1	2	foo
+\.
+copy header_copytest from stdin with (header match);
+a	b	\N
+1	2	foo
+\.
+copy header_copytest from stdin with (header match);
+a	b
+1	2
+\.
+copy header_copytest from stdin with (header match);
+a	b	c	d
+1	2	foo	bar
+\.
+copy header_copytest from stdin with (header match);
+a	b	d
+1	2	foo
+\.
+copy header_copytest from stdin with (header match, format csv);
+a,b,c
+1,2,foo
+\.
+drop table header_copytest;

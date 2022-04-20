@@ -3,7 +3,7 @@
 --
 
 --
--- Tests for SQLVAlueFunction
+-- Tests for SQLValueFunction
 --
 
 
@@ -36,35 +36,6 @@ SELECT current_schema;
 SET search_path = 'pg_catalog';
 SELECT current_schema;
 RESET search_path;
-
-
---
--- Tests for BETWEEN
---
-
-explain (costs off)
-select count(*) from date_tbl
-  where f1 between '1997-01-01' and '1998-01-01';
-select count(*) from date_tbl
-  where f1 between '1997-01-01' and '1998-01-01';
-
-explain (costs off)
-select count(*) from date_tbl
-  where f1 not between '1997-01-01' and '1998-01-01';
-select count(*) from date_tbl
-  where f1 not between '1997-01-01' and '1998-01-01';
-
-explain (costs off)
-select count(*) from date_tbl
-  where f1 between symmetric '1997-01-01' and '1998-01-01';
-select count(*) from date_tbl
-  where f1 between symmetric '1997-01-01' and '1998-01-01';
-
-explain (costs off)
-select count(*) from date_tbl
-  where f1 not between symmetric '1997-01-01' and '1998-01-01';
-select count(*) from date_tbl
-  where f1 not between symmetric '1997-01-01' and '1998-01-01';
 
 
 --
@@ -101,6 +72,22 @@ explain (verbose, costs off) select * from bpchar_view
   where f1::bpchar = 'foo';
 
 rollback;
+
+
+--
+-- Ordinarily, IN/NOT IN can be converted to a ScalarArrayOpExpr
+-- with a suitably-chosen array type.
+--
+explain (verbose, costs off)
+select random() IN (1, 4, 8.0);
+explain (verbose, costs off)
+select random()::int IN (1, 4, 8.0);
+-- However, if there's not a common supertype for the IN elements,
+-- we should instead try to produce "x = v1 OR x = v2 OR ...".
+-- In most cases that'll fail for lack of all the requisite = operators,
+-- but it can succeed sometimes.  So this should complain about lack of
+-- an = operator, not about cast failure.
+select '(0,0)'::point in ('(0,0,0,0)'::box, point(0,0));
 
 
 --

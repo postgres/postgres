@@ -4,7 +4,7 @@
  *	  Support routines for various kinds of object creation.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -58,7 +58,9 @@ defGetString(DefElem *def)
 		case T_Integer:
 			return psprintf("%ld", (long) intVal(def->arg));
 		case T_Float:
-			return castNode(Float, def->arg)->val;
+			return castNode(Float, def->arg)->fval;
+		case T_Boolean:
+			return boolVal(def->arg) ? "true" : "false";
 		case T_String:
 			return strVal(def->arg);
 		case T_TypeName:
@@ -201,7 +203,7 @@ defGetInt64(DefElem *def)
 			 * strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
-													 CStringGetDatum(castNode(Float, def->arg)->val)));
+													 CStringGetDatum(castNode(Float, def->arg)->fval)));
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),

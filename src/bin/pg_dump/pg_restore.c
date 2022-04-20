@@ -66,6 +66,7 @@ main(int argc, char **argv)
 	static int	enable_row_security = 0;
 	static int	if_exists = 0;
 	static int	no_data_for_failed_tables = 0;
+	static int	outputNoTableAm = 0;
 	static int	outputNoTablespaces = 0;
 	static int	use_setsessauth = 0;
 	static int	no_comments = 0;
@@ -112,6 +113,7 @@ main(int argc, char **argv)
 		{"enable-row-security", no_argument, &enable_row_security, 1},
 		{"if-exists", no_argument, &if_exists, 1},
 		{"no-data-for-failed-tables", no_argument, &no_data_for_failed_tables, 1},
+		{"no-table-access-method", no_argument, &outputNoTableAm, 1},
 		{"no-tablespaces", no_argument, &outputNoTablespaces, 1},
 		{"role", required_argument, NULL, 2},
 		{"section", required_argument, NULL, 3},
@@ -285,7 +287,8 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit_nicely(1);
 		}
 	}
@@ -301,17 +304,13 @@ main(int argc, char **argv)
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 
 	/* Complain if neither -f nor -d was specified (except if dumping TOC) */
 	if (!opts->cparams.dbname && !opts->filename && !opts->tocSummary)
-	{
-		pg_log_error("one of -d/--dbname and -f/--file must be specified");
-		exit_nicely(1);
-	}
+		pg_fatal("one of -d/--dbname and -f/--file must be specified");
 
 	/* Should get at most one of -d and -f, else user is confused */
 	if (opts->cparams.dbname)
@@ -319,45 +318,33 @@ main(int argc, char **argv)
 		if (opts->filename)
 		{
 			pg_log_error("options -d/--dbname and -f/--file cannot be used together");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-					progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit_nicely(1);
 		}
 		opts->useDB = 1;
 	}
 
 	if (opts->dataOnly && opts->schemaOnly)
-	{
-		pg_log_error("options -s/--schema-only and -a/--data-only cannot be used together");
-		exit_nicely(1);
-	}
+		pg_fatal("options -s/--schema-only and -a/--data-only cannot be used together");
 
 	if (opts->dataOnly && opts->dropSchema)
-	{
-		pg_log_error("options -c/--clean and -a/--data-only cannot be used together");
-		exit_nicely(1);
-	}
+		pg_fatal("options -c/--clean and -a/--data-only cannot be used together");
 
 	/*
 	 * -C is not compatible with -1, because we can't create a database inside
 	 * a transaction block.
 	 */
 	if (opts->createDB && opts->single_txn)
-	{
-		pg_log_error("options -C/--create and -1/--single-transaction cannot be used together");
-		exit_nicely(1);
-	}
+		pg_fatal("options -C/--create and -1/--single-transaction cannot be used together");
 
 	/* Can't do single-txn mode with multiple connections */
 	if (opts->single_txn && numWorkers > 1)
-	{
-		pg_log_error("cannot specify both --single-transaction and multiple jobs");
-		exit_nicely(1);
-	}
+		pg_fatal("cannot specify both --single-transaction and multiple jobs");
 
 	opts->disable_triggers = disable_triggers;
 	opts->enable_row_security = enable_row_security;
 	opts->noDataForFailedTables = no_data_for_failed_tables;
+	opts->noTableAm = outputNoTableAm;
 	opts->noTablespace = outputNoTablespaces;
 	opts->use_setsessauth = use_setsessauth;
 	opts->no_comments = no_comments;
@@ -366,10 +353,7 @@ main(int argc, char **argv)
 	opts->no_subscriptions = no_subscriptions;
 
 	if (if_exists && !opts->dropSchema)
-	{
-		pg_log_error("option --if-exists requires option -c/--clean");
-		exit_nicely(1);
-	}
+		pg_fatal("option --if-exists requires option -c/--clean");
 	opts->if_exists = if_exists;
 	opts->strict_names = strict_names;
 
@@ -393,9 +377,8 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				pg_log_error("unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"",
-							 opts->formatName);
-				exit_nicely(1);
+				pg_fatal("unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\"",
+						 opts->formatName);
 		}
 	}
 
@@ -487,6 +470,7 @@ usage(const char *progname)
 	printf(_("  --no-publications            do not restore publications\n"));
 	printf(_("  --no-security-labels         do not restore security labels\n"));
 	printf(_("  --no-subscriptions           do not restore subscriptions\n"));
+	printf(_("  --no-table-access-method     do not restore table access methods\n"));
 	printf(_("  --no-tablespaces             do not restore tablespace assignments\n"));
 	printf(_("  --section=SECTION            restore named section (pre-data, data, or post-data)\n"));
 	printf(_("  --strict-names               require table and/or schema include patterns to\n"

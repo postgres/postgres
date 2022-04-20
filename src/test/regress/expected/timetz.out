@@ -178,9 +178,9 @@ SELECT EXTRACT(HOUR        FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-
 (1 row)
 
 SELECT EXTRACT(DAY         FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');  -- error
-ERROR:  "time with time zone" units "day" not recognized
+ERROR:  unit "day" not supported for type time with time zone
 SELECT EXTRACT(FORTNIGHT   FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04');  -- error
-ERROR:  "time with time zone" units "fortnight" not recognized
+ERROR:  unit "fortnight" not recognized for type time with time zone
 SELECT EXTRACT(TIMEZONE    FROM TIME WITH TIME ZONE '2020-05-26 13:30:25.575401-04:30');
  extract 
 ---------

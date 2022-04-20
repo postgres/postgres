@@ -7,7 +7,7 @@
  *	  of the API of the memory management subsystem.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/memutils.h
@@ -183,7 +183,9 @@ extern MemoryContext SlabContextCreate(MemoryContext parent,
 /* generation.c */
 extern MemoryContext GenerationContextCreate(MemoryContext parent,
 											 const char *name,
-											 Size blockSize);
+											 Size minContextSize,
+											 Size initBlockSize,
+											 Size maxBlockSize);
 
 /*
  * Recommended default alloc parameters, suitable for "ordinary" contexts

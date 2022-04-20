@@ -1,0 +1,136 @@
+<!-- doc/src/sgml/archive-modules.sgml -->
+
+<chapter id="archive-modules">
+ <title>Archive Modules</title>
+ <indexterm zone="archive-modules">
+  <primary>Archive Modules</primary>
+ </indexterm>
+
+ <para>
+  PostgreSQL provides infrastructure to create custom modules for continuous
+  archiving (see <xref linkend="continuous-archiving"/>).  While archiving via
+  a shell command (i.e., <xref linkend="guc-archive-command"/>) is much
+  simpler, a custom archive module will often be considerably more robust and
+  performant.
+ </para>
+
+ <para>
+  When a custom <xref linkend="guc-archive-library"/> is configured, PostgreSQL
+  will submit completed WAL files to the module, and the server will avoid
+  recycling or removing these WAL files until the module indicates that the files
+  were successfully archived.  It is ultimately up to the module to decide what
+  to do with each WAL file, but many recommendations are listed at
+  <xref linkend="backup-archiving-wal"/>.
+ </para>
+
+ <para>
+  Archiving modules must at least consist of an initialization function (see
+  <xref linkend="archive-module-init"/>) and the required callbacks (see
+  <xref linkend="archive-module-callbacks"/>).  However, archive modules are
+  also permitted to do much more (e.g., declare GUCs and register background
+  workers).
+ </para>
+
+ <para>
+  The <filename>contrib/basic_archive</filename> module contains a working
+  example, which demonstrates some useful techniques.
+ </para>
+
+ <sect1 id="archive-module-init">
+  <title>Initialization Functions</title>
+  <indexterm zone="archive-module-init">
+   <primary>_PG_archive_module_init</primary>
+  </indexterm>
+  <para>
+   An archive library is loaded by dynamically loading a shared library with the
+   <xref linkend="guc-archive-library"/>'s name as the library base name.  The
+   normal library search path is used to locate the library.  To provide the
+   required archive module callbacks and to indicate that the library is
+   actually an archive module, it needs to provide a function named
+   <function>_PG_archive_module_init</function>.  This function is passed a
+   struct that needs to be filled with the callback function pointers for
+   individual actions.
+
+<programlisting>
+typedef struct ArchiveModuleCallbacks
+{
+    ArchiveCheckConfiguredCB check_configured_cb;
+    ArchiveFileCB archive_file_cb;
+    ArchiveShutdownCB shutdown_cb;
+} ArchiveModuleCallbacks;
+typedef void (*ArchiveModuleInit) (struct ArchiveModuleCallbacks *cb);
+</programlisting>
+
+   Only the <function>archive_file_cb</function> callback is required.  The
+   others are optional.
+  </para>
+ </sect1>
+
+ <sect1 id="archive-module-callbacks">
+  <title>Archive Module Callbacks</title>
+  <para>
+   The archive callbacks define the actual archiving behavior of the module.
+   The server will call them as required to process each individual WAL file.
+  </para>
+
+  <sect2 id="archive-module-check">
+   <title>Check Callback</title>
+   <para>
+    The <function>check_configured_cb</function> callback is called to determine
+    whether the module is fully configured and ready to accept WAL files (e.g.,
+    its configuration parameters are set to valid values).  If no
+    <function>check_configured_cb</function> is defined, the server always
+    assumes the module is configured.
+
+<programlisting>
+typedef bool (*ArchiveCheckConfiguredCB) (void);
+</programlisting>
+
+    If <literal>true</literal> is returned, the server will proceed with
+    archiving the file by calling the <function>archive_file_cb</function>
+    callback.  If <literal>false</literal> is returned, archiving will not
+    proceed, and the archiver will emit the following message to the server log:
+<screen>
+WARNING:  archive_mode enabled, yet archiving is not configured
+</screen>
+    In the latter case, the server will periodically call this function, and
+    archiving will proceed only when it returns <literal>true</literal>.
+   </para>
+  </sect2>
+
+  <sect2 id="archive-module-archive">
+   <title>Archive Callback</title>
+   <para>
+    The <function>archive_file_cb</function> callback is called to archive a
+    single WAL file.
+
+<programlisting>
+typedef bool (*ArchiveFileCB) (const char *file, const char *path);
+</programlisting>
+
+    If <literal>true</literal> is returned, the server proceeds as if the file
+    was successfully archived, which may include recycling or removing the
+    original WAL file.  If <literal>false</literal> is returned, the server will
+    keep the original WAL file and retry archiving later.
+    <literal>file</literal> will contain just the file name of the WAL file to
+    archive, while <literal>path</literal> contains the full path of the WAL
+    file (including the file name).
+   </para>
+  </sect2>
+
+  <sect2 id="archive-module-shutdown">
+   <title>Shutdown Callback</title>
+   <para>
+    The <function>shutdown_cb</function> callback is called when the archiver
+    process exits (e.g., after an error) or the value of
+    <xref linkend="guc-archive-library"/> changes.  If no
+    <function>shutdown_cb</function> is defined, no special action is taken in
+    these situations.
+
+<programlisting>
+typedef void (*ArchiveShutdownCB) (void);
+</programlisting>
+   </para>
+  </sect2>
+ </sect1>
+</chapter>

@@ -2,7 +2,7 @@
  * bgworker_internals.h
  *		POSTGRES pluggable background workers internals
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -42,7 +42,7 @@ typedef struct RegisteredBgWorker
 	slist_node	rw_lnode;		/* list link */
 } RegisteredBgWorker;
 
-extern slist_head BackgroundWorkerList;
+extern PGDLLIMPORT slist_head BackgroundWorkerList;
 
 extern Size BackgroundWorkerShmemSize(void);
 extern void BackgroundWorkerShmemInit(void);

@@ -3,7 +3,7 @@
  * Query-result printing support for frontend code
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fe_utils/print.h
@@ -177,11 +177,12 @@ typedef struct printQueryOpt
 } printQueryOpt;
 
 
-extern volatile sig_atomic_t cancel_pressed;
+extern PGDLLIMPORT volatile sig_atomic_t cancel_pressed;
 
-extern const printTextFormat pg_asciiformat;
-extern const printTextFormat pg_asciiformat_old;
-extern printTextFormat pg_utf8format;	/* ideally would be const, but... */
+extern PGDLLIMPORT const printTextFormat pg_asciiformat;
+extern PGDLLIMPORT const printTextFormat pg_asciiformat_old;
+extern PGDLLIMPORT printTextFormat pg_utf8format;	/* ideally would be const,
+													 * but... */
 
 
 extern void disable_sigpipe_trap(void);

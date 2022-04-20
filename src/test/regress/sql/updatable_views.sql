@@ -410,6 +410,7 @@ DROP TABLE base_tbl CASCADE;
 
 CREATE USER regress_view_user1;
 CREATE USER regress_view_user2;
+CREATE USER regress_view_user3;
 
 SET SESSION AUTHORIZATION regress_view_user1;
 CREATE TABLE base_tbl(a int, b text, c float);
@@ -552,8 +553,187 @@ RESET SESSION AUTHORIZATION;
 
 DROP TABLE base_tbl CASCADE;
 
+-- security invoker view permissions
+
+SET SESSION AUTHORIZATION regress_view_user1;
+CREATE TABLE base_tbl(a int, b text, c float);
+INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
+CREATE VIEW rw_view1 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
+ALTER VIEW rw_view1 SET (security_invoker = true);
+INSERT INTO rw_view1 VALUES ('Row 2', 2.0, 2);
+GRANT SELECT ON rw_view1 TO regress_view_user2;
+GRANT UPDATE (bb,cc) ON rw_view1 TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM base_tbl; -- not allowed
+SELECT * FROM rw_view1; -- not allowed
+INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- not allowed
+INSERT INTO rw_view1 VALUES ('Row 3', 3.0, 3); -- not allowed
+UPDATE base_tbl SET a=a; -- not allowed
+UPDATE rw_view1 SET bb=bb, cc=cc; -- not allowed
+DELETE FROM base_tbl; -- not allowed
+DELETE FROM rw_view1; -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT SELECT ON base_tbl TO regress_view_user2;
+GRANT UPDATE (a,c) ON base_tbl TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM base_tbl; -- ok
+SELECT * FROM rw_view1; -- ok
+UPDATE base_tbl SET a=a, c=c; -- ok
+UPDATE base_tbl SET b=b; -- not allowed
+UPDATE rw_view1 SET cc=cc; -- ok
+UPDATE rw_view1 SET aa=aa; -- not allowed
+UPDATE rw_view1 SET bb=bb; -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- ok
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
+DELETE FROM base_tbl WHERE a=1; -- ok
+DELETE FROM rw_view1 WHERE aa=2; -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user1;
+REVOKE INSERT, DELETE ON base_tbl FROM regress_view_user2;
+GRANT INSERT, DELETE ON rw_view1 TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
+DELETE FROM rw_view1 WHERE aa=2; -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- ok
+DELETE FROM rw_view1 WHERE aa=2; -- ok
+SELECT * FROM base_tbl; -- ok
+
+RESET SESSION AUTHORIZATION;
+
+DROP TABLE base_tbl CASCADE;
+
+-- ordinary view on top of security invoker view permissions
+
+CREATE TABLE base_tbl(a int, b text, c float);
+INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
+
+SET SESSION AUTHORIZATION regress_view_user1;
+CREATE VIEW rw_view1 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
+ALTER VIEW rw_view1 SET (security_invoker = true);
+SELECT * FROM rw_view1;  -- not allowed
+UPDATE rw_view1 SET aa=aa;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user2;
+CREATE VIEW rw_view2 AS SELECT cc AS ccc, aa AS aaa, bb AS bbb FROM rw_view1;
+GRANT SELECT, UPDATE ON rw_view2 TO regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+
+RESET SESSION AUTHORIZATION;
+
+GRANT SELECT ON base_tbl TO regress_view_user1;
+GRANT UPDATE (a, b) ON base_tbl TO regress_view_user1;
+
+SET SESSION AUTHORIZATION regress_view_user1;
+SELECT * FROM rw_view1; -- ok
+UPDATE rw_view1 SET aa=aa, bb=bb;  -- ok
+UPDATE rw_view1 SET cc=cc;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT SELECT ON rw_view1 TO regress_view_user2;
+GRANT UPDATE (bb, cc) ON rw_view1 TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+
+RESET SESSION AUTHORIZATION;
+
+GRANT SELECT ON base_tbl TO regress_view_user2;
+GRANT UPDATE (a, c) ON base_tbl TO regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- ok
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- not allowed
+
+RESET SESSION AUTHORIZATION;
+
+GRANT SELECT ON base_tbl TO regress_view_user3;
+GRANT UPDATE (a, c) ON base_tbl TO regress_view_user3;
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+
+RESET SESSION AUTHORIZATION;
+
+REVOKE SELECT, UPDATE ON base_tbl FROM regress_view_user1;
+
+SET SESSION AUTHORIZATION regress_view_user1;
+SELECT * FROM rw_view1;  -- not allowed
+UPDATE rw_view1 SET aa=aa;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- ok
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+
+RESET SESSION AUTHORIZATION;
+
+REVOKE SELECT, UPDATE ON base_tbl FROM regress_view_user2;
+
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- not allowed
+
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+
+RESET SESSION AUTHORIZATION;
+
+DROP TABLE base_tbl CASCADE;
+
 DROP USER regress_view_user1;
 DROP USER regress_view_user2;
+DROP USER regress_view_user3;
 
 -- column defaults
 

@@ -2,7 +2,7 @@
  * hashfuncs.c
  *		Functions to investigate the content of HASH indexes
  *
- * Copyright (c) 2017-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2017-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		contrib/pageinspect/hashfuncs.c
@@ -66,14 +66,17 @@ verify_hash_page(bytea *raw_page, int flags)
 
 		if (PageGetSpecialSize(page) != MAXALIGN(sizeof(HashPageOpaqueData)))
 			ereport(ERROR,
-					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index table contains corrupted page")));
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("input page is not a valid %s page", "hash"),
+					 errdetail("Expected special size %d, got %d.",
+							   (int) MAXALIGN(sizeof(HashPageOpaqueData)),
+							   (int) PageGetSpecialSize(page))));
 
-		pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		pageopaque = HashPageGetOpaque(page);
 		if (pageopaque->hasho_page_id != HASHO_PAGE_ID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("page is not a hash page"),
+					 errmsg("input page is not a valid %s page", "hash"),
 					 errdetail("Expected %08x, got %08x.",
 							   HASHO_PAGE_ID, pageopaque->hasho_page_id)));
 
@@ -134,7 +137,7 @@ verify_hash_page(bytea *raw_page, int flags)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("invalid version for metadata"),
-					 errdetail("Expected %d, got %d",
+					 errdetail("Expected %d, got %d.",
 							   HASH_VERSION, metap->hashm_version)));
 	}
 
@@ -151,7 +154,7 @@ static void
 GetHashPageStatistics(Page page, HashPageStat *stat)
 {
 	OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
-	HashPageOpaque opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	HashPageOpaque opaque = HashPageGetOpaque(page);
 	int			off;
 
 	stat->dead_items = stat->live_items = 0;
@@ -203,7 +206,7 @@ hash_page_type(PG_FUNCTION_ARGS)
 		type = "unused";
 	else
 	{
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 
 		/* page type (flags) */
 		pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
@@ -417,8 +420,10 @@ hash_bitmap_info(PG_FUNCTION_ARGS)
 	indexRel = index_open(indexRelid, AccessShareLock);
 
 	if (!IS_HASH(indexRel))
-		elog(ERROR, "relation \"%s\" is not a hash index",
-			 RelationGetRelationName(indexRel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a %s index",
+						RelationGetRelationName(indexRel), "hash")));
 
 	if (RELATION_IS_OTHER_TEMP(indexRel))
 		ereport(ERROR,

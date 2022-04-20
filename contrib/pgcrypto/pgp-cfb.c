@@ -220,7 +220,9 @@ cfb_process(PGP_CFB *ctx, const uint8 *data, int len, uint8 *dst,
 
 	while (len > 0)
 	{
-		px_cipher_encrypt(ctx->ciph, ctx->fr, ctx->block_size, ctx->fre);
+		unsigned	rlen;
+
+		px_cipher_encrypt(ctx->ciph, 0, ctx->fr, ctx->block_size, ctx->fre, &rlen);
 		if (ctx->block_no < 5)
 			ctx->block_no++;
 

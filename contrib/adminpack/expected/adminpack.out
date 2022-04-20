@@ -51,7 +51,7 @@ SELECT pg_file_write(current_setting('data_directory') || '/test_file4', 'test4'
 (1 row)
 
 SELECT pg_file_write(current_setting('data_directory') || '/../test_file4', 'test4', false);
-ERROR:  reference to parent directory ("..") not allowed
+ERROR:  absolute path not allowed
 RESET ROLE;
 REVOKE EXECUTE ON FUNCTION pg_file_write(text,text,bool) FROM regress_user1;
 REVOKE pg_read_all_settings FROM regress_user1;

@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 13;
+use Test::More;
 
 program_help_ok('dropdb');
 program_version_ok('dropdb');
@@ -30,3 +30,5 @@ $node->issues_sql_like(
 
 $node->command_fails([ 'dropdb', 'nonexistent' ],
 	'fails with nonexistent database');
+
+done_testing();

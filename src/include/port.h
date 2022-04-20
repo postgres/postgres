@@ -3,7 +3,7 @@
  * port.h
  *	  Header for src/port/ compatibility functions.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/port.h
@@ -14,8 +14,6 @@
 #define PG_PORT_H
 
 #include <ctype.h>
-#include <netdb.h>
-#include <pwd.h>
 
 /*
  * Windows has enough specialized port stuff that we push most of it off
@@ -139,6 +137,11 @@ extern char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 /* Doesn't belong here, but this is used with find_other_exec(), so... */
 #define PG_BACKEND_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
+
+#ifdef EXEC_BACKEND
+/* Disable ASLR before exec, for developer builds only (in exec.c) */
+extern int pg_disable_aslr(void);
+#endif
 
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -479,17 +482,11 @@ extern char *dlerror(void);
 #define RTLD_GLOBAL 0
 #endif
 
-/* thread.h */
+/* thread.c */
 #ifndef WIN32
-extern int	pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
-					   size_t buflen, struct passwd **result);
+extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);
+extern bool pg_get_user_home_dir(uid_t user_id, char *buffer, size_t buflen);
 #endif
-
-extern int	pqGethostbyname(const char *name,
-							struct hostent *resultbuf,
-							char *buffer, size_t buflen,
-							struct hostent **result,
-							int *herrno);
 
 extern void pg_qsort(void *base, size_t nel, size_t elsize,
 					 int (*cmp) (const void *, const void *));

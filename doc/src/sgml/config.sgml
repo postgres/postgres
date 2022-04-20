@@ -274,6 +274,9 @@ shared_buffers = 128MB
        The <link linkend="sql-set"><command>SET</command></link> command allows modification of the
        current value of those parameters that can be set locally to a
        session; it has no effect on other sessions.
+       Many parameters can be set this way by any user, but some can
+       only be set by superusers and users who have been
+       granted <literal>SET</literal> privilege on that parameter.
        The corresponding SQL function is
        <function>set_config(setting_name, new_value, is_local)</function>
        (see <xref linkend="functions-admin-set"/>).
@@ -1012,9 +1015,9 @@ include_dir 'conf.d'
         the kernel reports that the connection is closed.
        </para>
        <para>
-        This option is currently available only on systems that support the
-        non-standard <symbol>POLLRDHUP</symbol> extension to the
-        <symbol>poll</symbol> system call, including Linux.
+        This option relies on kernel events exposed by Linux, macOS, illumos
+        and the BSD family of operating systems, and is not currently available
+        on other systems.
        </para>
        <para>
         If the value is specified without units, it is taken as milliseconds.
@@ -1184,7 +1187,13 @@ include_dir 'conf.d'
      <title>SSL</title>
 
      <para>
-      See <xref linkend="ssl-tcp"/> for more information about setting up SSL.
+      See <xref linkend="ssl-tcp"/> for more information about setting up
+      <acronym>SSL</acronym>. The configuration parameters for controlling
+      transfer encryption using <acronym>TLS</acronym> protocols are named
+      <literal>ssl</literal> for historic reasons, even though support for
+      the <acronym>SSL</acronym> protocol has been deprecated.
+      <acronym>SSL</acronym> is in this context used interchangeably with
+      <acronym>TLS</acronym>.
      </para>
 
      <variablelist>
@@ -1849,9 +1858,8 @@ include_dir 'conf.d'
         operations can use.  The final limit is determined by
         multiplying <varname>work_mem</varname> by
         <varname>hash_mem_multiplier</varname>.  The default value is
-        1.0, which makes hash-based operations subject to the same
-        simple <varname>work_mem</varname> maximum as sort-based
-        operations.
+        2.0, which makes hash-based operations use twice the usual
+        <varname>work_mem</varname> base amount.
        </para>
        <para>
         Consider increasing <varname>hash_mem_multiplier</varname> in
@@ -1859,7 +1867,7 @@ include_dir 'conf.d'
         occurrence, especially when simply increasing
         <varname>work_mem</varname> results in memory pressure (memory
         pressure typically takes the form of intermittent out of
-        memory errors).  A setting of 1.5 or 2.0 may be effective with
+        memory errors).  The default setting of 2.0 is often effective with
         mixed workloads.  Higher settings in the range of 2.0 - 8.0 or
         more may be effective in environments where
         <varname>work_mem</varname> has already been increased to 40MB
@@ -1971,7 +1979,8 @@ include_dir 'conf.d'
         The default setting is two megabytes (<literal>2MB</literal>), which
         is conservatively small and unlikely to risk crashes.  However,
         it might be too small to allow execution of complex functions.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -2084,7 +2093,8 @@ include_dir 'conf.d'
         this limit will be canceled.
         If this value is specified without units, it is taken as kilobytes.
         <literal>-1</literal> (the default) means no limit.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         This setting constrains the total space used at any instant by all
@@ -3155,10 +3165,14 @@ include_dir 'conf.d'
         server compresses full page images written to WAL when
         <xref linkend="guc-full-page-writes"/> is on or during a base backup.
         A compressed page image will be decompressed during WAL replay.
-        The supported methods are <literal>pglz</literal> and
-        <literal>lz4</literal> (if <productname>PostgreSQL</productname> was
-        compiled with <option>--with-lz4</option>). The default value is
-        <literal>off</literal>. Only superusers can change this setting.
+        The supported methods are <literal>pglz</literal>,
+        <literal>lz4</literal> (if <productname>PostgreSQL</productname>
+        was compiled with <option>--with-lz4</option>) and
+        <literal>zstd</literal> (if <productname>PostgreSQL</productname>
+        was compiled with <option>--with-zstd</option>).
+        The default value is <literal>off</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -3333,7 +3347,8 @@ include_dir 'conf.d'
         performed if <varname>fsync</varname> is disabled.
         If this value is specified without units, it is taken as microseconds.
         The default <varname>commit_delay</varname> is zero (no delay).
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         In <productname>PostgreSQL</productname> releases prior to 9.3,
@@ -3479,7 +3494,7 @@ include_dir 'conf.d'
         Maximum size to let the WAL grow during automatic
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</varname> under special circumstances, such as
-        heavy load, a failing <varname>archive_command</varname>, or a high
+        heavy load, a failing <varname>archive_library</varname>, or a high
         <varname>wal_keep_size</varname> setting.
         If this value is specified without units, it is taken as megabytes.
         The default is 1 GB.
@@ -3528,7 +3543,7 @@ include_dir 'conf.d'
        <para>
         When <varname>archive_mode</varname> is enabled, completed WAL segments
         are sent to archive storage by setting
-        <xref linkend="guc-archive-command"/>. In addition to <literal>off</literal>,
+        <xref linkend="guc-archive-library"/>. In addition to <literal>off</literal>,
         to disable, there are two modes: <literal>on</literal>, and
         <literal>always</literal>. During normal operation, there is no
         difference between the two modes, but when set to <literal>always</literal>
@@ -3538,12 +3553,31 @@ include_dir 'conf.d'
         <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
-        <varname>archive_mode</varname> and <varname>archive_command</varname> are
-        separate variables so that <varname>archive_command</varname> can be
-        changed without leaving archiving mode.
         This parameter can only be set at server start.
         <varname>archive_mode</varname> cannot be enabled when
         <varname>wal_level</varname> is set to <literal>minimal</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-archive-library" xreflabel="archive_library">
+      <term><varname>archive_library</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>archive_library</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        The library to use for archiving completed WAL file segments.  If set to
+        an empty string (the default), archiving via shell is enabled, and
+        <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
+        shared library is used for archiving.  For more information, see
+        <xref linkend="backup-archiving-wal"/> and
+        <xref linkend="archive-modules"/>.
+       </para>
+       <para>
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3570,9 +3604,11 @@ include_dir 'conf.d'
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.  It is ignored unless
-        <varname>archive_mode</varname> was enabled at server start.
+        <varname>archive_mode</varname> was enabled at server start and
+        <varname>archive_library</varname> specifies to archive via shell command.
         If <varname>archive_command</varname> is an empty string (the default) while
-        <varname>archive_mode</varname> is enabled, WAL archiving is temporarily
+        <varname>archive_mode</varname> is enabled and <varname>archive_library</varname>
+        specifies archiving via shell, WAL archiving is temporarily
         disabled, but the server continues to accumulate WAL segment files in
         the expectation that a command will soon be provided.  Setting
         <varname>archive_command</varname> to a command that does nothing but
@@ -3592,7 +3628,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The <xref linkend="guc-archive-command"/> is only invoked for
+        The <xref linkend="guc-archive-library"/> is only invoked for
         completed WAL segments. Hence, if your server generates little WAL
         traffic (or has slack periods where it does so), there could be a
         long delay between the completion of a transaction and its safe
@@ -3620,6 +3656,71 @@ include_dir 'conf.d'
 
      </variablelist>
     </sect2>
+
+   <sect2 id="runtime-config-wal-recovery">
+
+    <title>Recovery</title>
+
+     <indexterm>
+      <primary>configuration</primary>
+      <secondary>of recovery</secondary>
+      <tertiary>general settings</tertiary>
+     </indexterm>
+
+    <para>
+     This section describes the settings that apply to recovery in general,
+     affecting crash recovery, streaming replication and archive-based
+     replication.
+    </para>
+
+
+    <variablelist>
+     <varlistentry id="guc-recovery-prefetch" xreflabel="recovery_prefetch">
+      <term><varname>recovery_prefetch</varname> (<type>enum</type>)
+      <indexterm>
+       <primary><varname>recovery_prefetch</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Whether to try to prefetch blocks that are referenced in the WAL that
+        are not yet in the buffer pool, during recovery.  Valid values are
+        <literal>off</literal>, <literal>on</literal> and
+        <literal>try</literal> (the default).  The setting
+        <literal>try</literal> enables
+        prefetching only if the operating system provides the
+        <function>posix_fadvise</function> function, which is currently used
+        to implement prefetching.  Note that some operating systems provide the
+        function, but it doesn't do anything.
+       </para>
+       <para>
+        Prefetching blocks that will soon be needed can reduce I/O wait times
+        during recovery with some workloads.
+        See also the <xref linkend="guc-wal-decode-buffer-size"/> and
+        <xref linkend="guc-maintenance-io-concurrency"/> settings, which limit
+        prefetching activity.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-wal-decode-buffer-size" xreflabel="wal_decode_buffer_size">
+      <term><varname>wal_decode_buffer_size</varname> (<type>integer</type>)
+      <indexterm>
+       <primary><varname>wal_decode_buffer_size</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        A limit on how far ahead the server can look in the WAL, to find
+        blocks to prefetch.  If this value is specified without units, it is
+        taken as bytes.
+        The default is 512kB.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </sect2>
 
   <sect2 id="runtime-config-wal-archive-recovery">
 
@@ -4530,7 +4631,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        When Hot Standby is active, this parameter determines how long the
+        When hot standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
@@ -4562,7 +4663,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        When Hot Standby is active, this parameter determines how long the
+        When hot standby is active, this parameter determines how long the
         standby server should wait before canceling standby queries that
         conflict with about-to-be-applied WAL entries, as described in
         <xref linkend="hot-standby-conflict"/>.
@@ -4723,7 +4824,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         log file by reducing the value of this parameter. On a system with
         low WAL activity, increasing it reduces the amount of requests necessary
         to access WAL archives, something useful for example in cloud
-        environments where the amount of times an infrastructure is accessed
+        environments where the number of times an infrastructure is accessed
         is taken into account.
        </para>
       </listitem>
@@ -4770,6 +4871,12 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         The delay occurs once the database in recovery has reached a consistent
         state, until the standby is promoted or triggered. After that the standby
         will end recovery without further waiting.
+       </para>
+       <para>
+        WAL records must be kept on the standby until they are ready to be
+        applied. Therefore, longer delays will result in a greater accumulation
+        of WAL files, increasing disk space requirements for the standby's
+        <filename>pg_wal</filename> directory.
        </para>
        <para>
         This parameter is intended for use with streaming replication deployments;
@@ -4934,6 +5041,20 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of gather
         merge plan types. The default is <literal>on</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-enable-groupby-reordering" xreflabel="enable_group_by_reordering">
+      <term><varname>enable_group_by_reordering</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>enable_group_by_reordering</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Enables or disables reordering of keys in <literal>GROUP BY</literal>
+        clause. The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -5896,6 +6017,29 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-recursive-worktable-factor" xreflabel="recursive_worktable_factor">
+      <term><varname>recursive_worktable_factor</varname> (<type>floating point</type>)
+      <indexterm>
+       <primary><varname>recursive_worktable_factor</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Sets the planner's estimate of the average size of the working
+        table of a <link linkend="queries-with-recursive">recursive
+        query</link>, as a multiple of the estimated size of the initial
+        non-recursive term of the query.  This helps the planner choose
+        the most appropriate method for joining the working table to the
+        query's other tables.
+        The default value is <literal>10.0</literal>.  A smaller value
+        such as <literal>1.0</literal> can be helpful when the recursion
+        has low <quote>fan-out</quote> from one step to the next, as for
+        example in shortest-path queries.  Graph analytics queries may
+        benefit from larger-than-default values.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect2>
    </sect1>
@@ -5931,7 +6075,8 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         <productname>PostgreSQL</productname> supports several methods
          for logging server messages, including
-         <systemitem>stderr</systemitem>, <systemitem>csvlog</systemitem> and
+         <systemitem>stderr</systemitem>, <systemitem>csvlog</systemitem>,
+         <systemitem>jsonlog</systemitem>, and
          <systemitem>syslog</systemitem>. On Windows,
          <systemitem>eventlog</systemitem> is also supported. Set this
          parameter to a list of desired log destinations separated by
@@ -5950,25 +6095,35 @@ SELECT * FROM parent WHERE key = 2400;
         CSV-format log output.
        </para>
        <para>
-        When either <systemitem>stderr</systemitem> or
-        <systemitem>csvlog</systemitem> are included, the file
-        <filename>current_logfiles</filename> is created to record the location
-        of the log file(s) currently in use by the logging collector and the
-        associated logging destination. This provides a convenient way to
-        find the logs currently in use by the instance. Here is an example of
-        this file's content:
+        If <systemitem>jsonlog</systemitem> is included in
+        <varname>log_destination</varname>, log entries are output in
+        <acronym>JSON</acronym> format, which is convenient for loading logs
+        into programs.
+        See <xref linkend="runtime-config-logging-jsonlog"/> for details.
+        <xref linkend="guc-logging-collector"/> must be enabled to generate
+        JSON-format log output.
+       </para>
+       <para>
+        When either <systemitem>stderr</systemitem>,
+        <systemitem>csvlog</systemitem> or <systemitem>jsonlog</systemitem> are
+        included, the file <filename>current_logfiles</filename> is created to
+        record the location of the log file(s) currently in use by the logging
+        collector and the associated logging destination. This provides a
+        convenient way to find the logs currently in use by the instance. Here
+        is an example of this file's content:
 <programlisting>
 stderr log/postgresql.log
 csvlog log/postgresql.csv
+jsonlog log/postgresql.json
 </programlisting>
 
         <filename>current_logfiles</filename> is recreated when a new log file
         is created as an effect of rotation, and
         when <varname>log_destination</varname> is reloaded.  It is removed when
-        neither <systemitem>stderr</systemitem>
-        nor <systemitem>csvlog</systemitem> are included
-        in <varname>log_destination</varname>, and when the logging collector is
-        disabled.
+        none of <systemitem>stderr</systemitem>,
+        <systemitem>csvlog</systemitem> or <systemitem>jsonlog</systemitem> are
+        included in <varname>log_destination</varname>, and when the logging
+        collector is disabled.
        </para>
 
        <note>
@@ -6103,6 +6258,13 @@ local0.*    /var/log/postgresql
         If CSV-format output is enabled in <varname>log_destination</varname>,
         <literal>.csv</literal> will be appended to the timestamped
         log file name to create the file name for CSV-format output.
+        (If <varname>log_filename</varname> ends in <literal>.log</literal>, the suffix is
+        replaced instead.)
+       </para>
+       <para>
+        If JSON-format output is enabled in <varname>log_destination</varname>,
+        <literal>.json</literal> will be appended to the timestamped
+        log file name to create the file name for JSON-format output.
         (If <varname>log_filename</varname> ends in <literal>.log</literal>, the suffix is
         replaced instead.)
        </para>
@@ -6378,7 +6540,8 @@ local0.*    /var/log/postgresql
         to the log.  The default is <literal>WARNING</literal>.  Note that
         <literal>LOG</literal> has a different rank here than in
         <xref linkend="guc-client-min-messages"/>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -6408,7 +6571,8 @@ local0.*    /var/log/postgresql
         causing errors, log messages, fatal errors, or panics will be logged.
         To effectively turn off logging of failing statements,
         set this parameter to <literal>PANIC</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -6430,7 +6594,9 @@ local0.*    /var/log/postgresql
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero prints all statement durations.
          <literal>-1</literal> (the default) disables logging statement
-         durations. Only superusers can change this setting.
+         durations.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
 
         <para>
@@ -6482,7 +6648,9 @@ local0.*    /var/log/postgresql
          If this value is specified without units, it is taken as milliseconds.
          Setting this to zero samples all statement durations.
          <literal>-1</literal> (the default) disables sampling statement
-         durations. Only superusers can change this setting.
+         durations.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
 
         <para>
@@ -6519,7 +6687,8 @@ local0.*    /var/log/postgresql
          the same as setting
          <varname>log_min_duration_sample</varname> to
          <literal>-1</literal>.
-         Only superusers can change this setting.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
        </listitem>
      </varlistentry>
@@ -6543,7 +6712,8 @@ local0.*    /var/log/postgresql
          The default is <literal>0</literal>, meaning not to log
          statements from any additional transactions.  Setting this
          to <literal>1</literal> logs all statements of all transactions.
-         Only superusers can change this setting.
+         Only superusers and users with the appropriate <literal>SET</literal>
+         privilege can change this setting.
         </para>
        <note>
         <para>
@@ -6808,7 +6978,8 @@ local0.*    /var/log/postgresql
         Causes each attempted connection to the server to be logged,
         as well as successful completion of both client authentication (if
         necessary) and authorization.
-        Only superusers can change this parameter at session start,
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this parameter at session start,
         and it cannot be changed at all within a session.
         The default is <literal>off</literal>.
        </para>
@@ -6835,7 +7006,8 @@ local0.*    /var/log/postgresql
         Causes session terminations to be logged.  The log output
         provides information similar to <varname>log_connections</varname>,
         plus the duration of the session.
-        Only superusers can change this parameter at session start,
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this parameter at session start,
         and it cannot be changed at all within a session.
         The default is <literal>off</literal>.
        </para>
@@ -6853,7 +7025,8 @@ local0.*    /var/log/postgresql
        <para>
         Causes the duration of every completed statement to be logged.
         The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -6894,7 +7067,8 @@ local0.*    /var/log/postgresql
         <literal>VERBOSE</literal> output includes the <symbol>SQLSTATE</symbol> error
         code (see also <xref linkend="errcodes-appendix"/>) and the source code file name, function name,
         and line number that generated the error.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7149,7 +7323,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         longer than <xref linkend="guc-deadlock-timeout"/> to acquire a
         lock.  This is useful in determining if lock waits are causing
         poor performance.  The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7190,7 +7365,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         <literal>-1</literal> (the default) allows bind parameters to be
         logged in full.
         If this value is specified without units, it is taken as bytes.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -7257,8 +7433,9 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
        </para>
 
        <para>
-        The default is <literal>none</literal>. Only superusers can change this
-        setting.
+        The default is <literal>none</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <note>
@@ -7287,7 +7464,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         Causes each replication command to be logged in the server log.
         See <xref linkend="protocol-replication"/> for more information about
         replication command. The default value is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7310,7 +7488,8 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         the specified amount of data.
         If this value is specified without units, it is taken as kilobytes.
         The default setting is -1, which disables such logging.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7467,6 +7646,187 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </orderedlist>
       </para>
     </sect2>
+     <sect2 id="runtime-config-logging-jsonlog">
+     <title>Using JSON-Format Log Output</title>
+
+     <para>
+      Including <literal>jsonlog</literal> in the
+      <varname>log_destination</varname> list provides a convenient way to
+      import log files into many different programs. This option emits log
+      lines in <acronym>JSON</acronym> format.
+     </para>
+
+     <para>
+      String fields with null values are excluded from output.
+      Additional fields may be added in the future. User applications that
+      process <literal>jsonlog</literal> output should ignore unknown fields.
+     </para>
+
+     <para>
+      Each log line is serialized as a JSON object with the following
+      set of keys and their associated values.
+     </para>
+
+     <table>
+      <title>Keys and values of JSON log entries</title>
+      <tgroup cols="3">
+       <thead>
+        <row>
+         <entry>Key name</entry>
+         <entry>Type</entry>
+         <entry>Description</entry>
+        </row>
+       </thead>
+       <tbody>
+        <row>
+         <entry><literal>timestamp</literal></entry>
+         <entry>string</entry>
+         <entry>Time stamp with milliseconds</entry>
+        </row>
+        <row>
+         <entry><literal>user</literal></entry>
+         <entry>string</entry>
+         <entry>User name</entry>
+        </row>
+        <row>
+         <entry><literal>dbname</literal></entry>
+         <entry>string</entry>
+         <entry>Database name</entry>
+        </row>
+        <row>
+         <entry><literal>pid</literal></entry>
+         <entry>number</entry>
+         <entry>Process ID</entry>
+        </row>
+        <row>
+         <entry><literal>remote_host</literal></entry>
+         <entry>string</entry>
+         <entry>Client host</entry>
+        </row>
+        <row>
+         <entry><literal>remote_port</literal></entry>
+         <entry>number</entry>
+         <entry>Client port</entry>
+        </row>
+        <row>
+         <entry><literal>session_id</literal></entry>
+         <entry>string</entry>
+         <entry>Session ID</entry>
+        </row>
+        <row>
+         <entry><literal>line_num</literal></entry>
+         <entry>number</entry>
+         <entry>Per-session line number</entry>
+        </row>
+        <row>
+         <entry><literal>ps</literal></entry>
+         <entry>string</entry>
+         <entry>Current ps display</entry>
+        </row>
+        <row>
+         <entry><literal>session_start</literal></entry>
+         <entry>string</entry>
+         <entry>Session start time</entry>
+        </row>
+        <row>
+         <entry><literal>vxid</literal></entry>
+         <entry>string</entry>
+         <entry>Virtual transaction ID</entry>
+        </row>
+        <row>
+         <entry><literal>txid</literal></entry>
+         <entry>string</entry>
+         <entry>Regular transaction ID</entry>
+        </row>
+        <row>
+         <entry><literal>error_severity</literal></entry>
+         <entry>string</entry>
+         <entry>Error severity</entry>
+        </row>
+        <row>
+         <entry><literal>state_code</literal></entry>
+         <entry>string</entry>
+         <entry>SQLSTATE code</entry>
+        </row>
+        <row>
+         <entry><literal>message</literal></entry>
+         <entry>string</entry>
+         <entry>Error message</entry>
+        </row>
+        <row>
+         <entry><literal>detail</literal></entry>
+         <entry>string</entry>
+         <entry>Error message detail</entry>
+        </row>
+        <row>
+         <entry><literal>hint</literal></entry>
+         <entry>string</entry>
+         <entry>Error message hint</entry>
+        </row>
+        <row>
+         <entry><literal>internal_query</literal></entry>
+         <entry>string</entry>
+         <entry>Internal query that led to the error</entry>
+        </row>
+        <row>
+         <entry><literal>internal_position</literal></entry>
+         <entry>number</entry>
+         <entry>Cursor index into internal query</entry>
+        </row>
+        <row>
+         <entry><literal>context</literal></entry>
+         <entry>string</entry>
+         <entry>Error context</entry>
+        </row>
+        <row>
+         <entry><literal>statement</literal></entry>
+         <entry>string</entry>
+         <entry>Client-supplied query string</entry>
+        </row>
+        <row>
+         <entry><literal>cursor_position</literal></entry>
+         <entry>string</entry>
+         <entry>Cursor index into query string</entry>
+        </row>
+        <row>
+         <entry><literal>func_name</literal></entry>
+         <entry>string</entry>
+         <entry>Error location function name</entry>
+        </row>
+        <row>
+         <entry><literal>file_name</literal></entry>
+         <entry>string</entry>
+         <entry>File name of error location</entry>
+        </row>
+        <row>
+         <entry><literal>file_line_num</literal></entry>
+         <entry>number</entry>
+         <entry>File line number of the error location</entry>
+        </row>
+        <row>
+         <entry><literal>application_name</literal></entry>
+         <entry>string</entry>
+         <entry>Client application name</entry>
+        </row>
+        <row>
+         <entry><literal>backend_type</literal></entry>
+         <entry>string</entry>
+         <entry>Type of backend</entry>
+        </row>
+        <row>
+         <entry><literal>leader_pid</literal></entry>
+         <entry>number</entry>
+         <entry>Process ID of leader for active parallel workers</entry>
+        </row>
+        <row>
+         <entry><literal>query_id</literal></entry>
+         <entry>number</entry>
+         <entry>Query ID</entry>
+        </row>
+       </tbody>
+      </tgroup>
+     </table>
+    </sect2>
 
    <sect2>
     <title>Process Title</title>
@@ -7519,7 +7879,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         This setting defaults to <literal>on</literal> on most platforms, but it
         defaults to <literal>off</literal> on Windows due to that platform's larger
         overhead for updating the process title.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7530,15 +7891,15 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
    <sect1 id="runtime-config-statistics">
     <title>Run-time Statistics</title>
 
-    <sect2 id="runtime-config-statistics-collector">
-     <title>Query and Index Statistics Collector</title>
+    <sect2 id="runtime-config-cumulative-statistics">
+     <title>Cumulative Query and Index Statistics</title>
 
      <para>
-      These parameters control server-wide statistics collection features.
-      When statistics collection is enabled, the data that is produced can be
-      accessed via the <structname>pg_stat</structname> and
-      <structname>pg_statio</structname> family of system views.
-      Refer to <xref linkend="monitoring"/> for more information.
+      These parameters control the server-wide cumulative statistics system.
+      When enabled, the data that is collected can be accessed via the
+      <structname>pg_stat</structname> and <structname>pg_statio</structname>
+      family of system views.  Refer to <xref linkend="monitoring"/> for more
+      information.
      </para>
 
      <variablelist>
@@ -7558,7 +7919,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         visible to all users, only to superusers and the user owning
         the session being reported on, so it should not represent a
         security risk.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7592,7 +7954,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Enables collection of statistics on database activity.
         This parameter is on by default, because the autovacuum
         daemon needs the collected information.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7614,10 +7977,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         displayed in <link linkend="monitoring-pg-stat-database-view">
         <structname>pg_stat_database</structname></link>, in the output of
         <xref linkend="sql-explain"/> when the <literal>BUFFERS</literal> option
-        is used, by autovacuum for auto-vacuums and auto-analyzes, when
-        <xref linkend="guc-log-autovacuum-min-duration"/> is set and by
-        <xref linkend="pgstatstatements"/>.  Only superusers can change this
-        setting.
+        is used, in the output of <xref linkend="sql-vacuum"/> when
+        the <literal>VERBOSE</literal> option is used, by autovacuum
+        for auto-vacuums and auto-analyzes, when <xref
+        linkend="guc-log-autovacuum-min-duration"/> is set and by
+        <xref linkend="pgstatstatements"/>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7637,8 +8003,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         measure the overhead of timing on your system.
         I/O timing information is
         displayed in <link linkend="monitoring-pg-stat-wal-view">
-        <structname>pg_stat_wal</structname></link>.  Only superusers can
-        change this setting.
+        <structname>pg_stat_wal</structname></link>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -7655,7 +8022,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         <literal>pl</literal> to track only procedural-language functions,
         <literal>all</literal> to also track SQL and C language functions.
         The default is <literal>none</literal>, which disables function
-        statistics tracking.  Only superusers can change this setting.
+        statistics tracking.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <note>
@@ -7668,22 +8037,37 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-stats-temp-directory" xreflabel="stats_temp_directory">
-      <term><varname>stats_temp_directory</varname> (<type>string</type>)
+     <varlistentry id="guc-stats-fetch-consistency" xreflabel="stats_fetch_consistency">
+      <term><varname>stats_fetch_consistency</varname> (<type>enum</type>)
       <indexterm>
-       <primary><varname>stats_temp_directory</varname> configuration parameter</primary>
+       <primary><varname>stats_fetch_consistency</varname> configuration parameter</primary>
       </indexterm>
       </term>
       <listitem>
        <para>
-        Sets the directory to store temporary statistics data in. This can be
-        a path relative to the data directory or an absolute path. The default
-        is <filename>pg_stat_tmp</filename>. Pointing this at a RAM-based
-        file system will decrease physical I/O requirements and can lead to
-        improved performance.
-        This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.
+        Determines the behavior when cumulative statistics are accessed
+        multiple times within a transaction. When set to
+        <literal>none</literal>, each access re-fetches counters from shared
+        memory. When set to <literal>cache</literal>, the first access to
+        statistics for an object caches those statistics until the end of the
+        transaction unless <function>pg_stat_clear_snapshot()</function> is
+        called. When set to <literal>snapshot</literal>, the first statistics
+        access caches all statistics accessible in the current database, until
+        the end of the transaction unless
+        <function>pg_stat_clear_snapshot()</function> is called. The default
+        is <literal>cache</literal>.
        </para>
+       <note>
+        <para>
+         <literal>none</literal> is most suitable for monitoring systems. If
+         values are only accessed once, it is the most
+         efficient. <literal>cache</literal> ensures repeat accesses yield the
+         same values, which is important for queries involving
+         e.g. self-joins. <literal>snapshot</literal> can be useful when
+         interactively inspecting statistics, but has higher overhead,
+         particularly if many database objects exist.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
@@ -7713,9 +8097,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         method is not acceptable.  In this case, in-core computation
         must be always disabled.
         Valid values are <literal>off</literal> (always disabled),
-        <literal>on</literal> (always enabled) and <literal>auto</literal>,
+        <literal>on</literal> (always enabled), <literal>auto</literal>,
         which lets modules such as <xref linkend="pgstatstatements"/>
-        automatically enable it.
+        automatically enable it, and <literal>regress</literal> which
+        has the same effect as <literal>auto</literal>, except that the
+        query identifier is not shown in the <literal>EXPLAIN</literal> output
+        in order to facilitate automated regression testing.
         The default is <literal>auto</literal>.
        </para>
        <note>
@@ -7758,7 +8145,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         statement statistics, while the others report per-module statistics.
         <varname>log_statement_stats</varname> cannot be enabled together with
         any of the per-module options.  All of these options are disabled by
-        default.   Only superusers can change these settings.
+        default.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change these settings.
        </para>
       </listitem>
      </varlistentry>
@@ -8241,8 +8630,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         This parameter specifies the default table access method to use when
         creating tables or materialized views if the <command>CREATE</command>
         command does not explicitly specify an access method, or when
-        <command>SELECT ... INTO</command> is used, which does not allow to
-        specify a table access method. The default is <literal>heap</literal>.
+        <command>SELECT ... INTO</command> is used, which does not allow
+        specifying a table access method. The default is <literal>heap</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -8544,10 +8933,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Controls firing of replication-related triggers and rules for the
-        current session.  Setting this variable requires
-        superuser privilege and results in discarding any previously cached
-        query plans.  Possible values are <literal>origin</literal> (the default),
+        current session.
+        Possible values are <literal>origin</literal> (the default),
         <literal>replica</literal> and <literal>local</literal>.
+        Setting this parameter results in discarding any previously cached
+        query plans.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -9162,10 +9554,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
        </para>
 
        <para>
-        Only superusers can change this setting, because it affects the
-        messages sent to the server log as well as to the client, and
-        an improper value might obscure the readability of the server
-        logs.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -9360,7 +9750,8 @@ SET XML OPTION { DOCUMENT | CONTENT };
         The parameter value only takes effect at the start of the connection.
         Subsequent changes have no effect.  If a specified library is not
         found, the connection attempt will fail.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -9510,7 +9901,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        This parameter can be changed at run time by superusers, but a
+        This parameter can be changed at run time by superusers and users
+        with the appropriate <literal>SET</literal> privilege, but a
         setting done that way will only persist until the end of the
         client connection, so this method should be reserved for
         development purposes. The recommended way to set this parameter
@@ -9574,8 +9966,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
         so as to improve the odds that a lock will be released before
-        the waiter decides to check for deadlock.  Only superusers can change
-        this setting.
+        the waiter decides to check for deadlock.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
 
        <para>
@@ -9794,7 +10187,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         and writable by all users.  Setting this variable to <literal>on</literal>
         disables the new privilege checks, for compatibility with prior
         releases.  The default is <literal>off</literal>.
-        Only superusers can change this setting.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
        <para>
         Setting this variable does not disable all security checks related to
@@ -10433,6 +10827,27 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     </para>
 
     <variablelist>
+     <varlistentry id="guc-allow-in-place-tablespaces" xreflabel="allow_in_place_tablespaces">
+      <term><varname>allow_in_place_tablespaces</varname> (<type>boolean</type>)
+      <indexterm>
+        <primary><varname>allow_in_place_tablespaces</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows tablespaces to be created as directories inside
+        <filename>pg_tblspc</filename>, when an empty location string
+        is provided to the <command>CREATE TABLESPACE</command> command.  This
+        is intended to allow testing replication scenarios where primary and
+        standby servers are running on the same machine.  Such directories
+        are likely to confuse backup tools that expect to find only symbolic
+        links in that location.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-allow-system-table-mods" xreflabel="allow_system_table_mods">
       <term><varname>allow_system_table_mods</varname> (<type>boolean</type>)
       <indexterm>
@@ -10445,7 +10860,9 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         certain other risky actions on system tables.  This is otherwise not
         allowed even for superusers.  Ill-advised use of this setting can
         cause irretrievable data loss or seriously corrupt the database
-        system.  Only superusers can change this setting.
+        system.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10471,7 +10888,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        This parameter can only be set by superusers.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10644,7 +11062,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Enables logging of recovery-related debugging output that otherwise
         would not be logged. This parameter allows the user to override the
         normal setting of <xref linkend="guc-log-min-messages"/>, but only for
-        specific messages. This is intended for use in debugging Hot Standby.
+        specific messages. This is intended for use in debugging hot standby.
         Valid values are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
         <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, <literal>DEBUG1</literal>, and
         <literal>LOG</literal>.  The default, <literal>LOG</literal>, does not affect
@@ -10856,8 +11274,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         the supported resource managers are <literal>heap</literal>,
         <literal>heap2</literal>, <literal>btree</literal>, <literal>hash</literal>,
         <literal>gin</literal>, <literal>gist</literal>, <literal>sequence</literal>,
-        <literal>spgist</literal>, <literal>brin</literal>, and <literal>generic</literal>. Only
-        superusers can change this setting.
+        <literal>spgist</literal>, <literal>brin</literal>, and <literal>generic</literal>.
+        Extensions may define additional resource managers. Only superusers and users with
+        the appropriate <literal>SET</literal> privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10898,7 +11317,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         you to get past the error and retrieve undamaged tuples that might still be
         present in the table if the block header is still sane. If the header is
         corrupt an error will be reported even if this option is enabled. The
-        default setting is <literal>off</literal>, and it can only be changed by a superuser.
+        default setting is <literal>off</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10924,8 +11345,9 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         data from the damaged pages of a table.  Zeroed-out pages are not
         forced to disk so it is recommended to recreate the table or
         the index before turning this parameter off again.  The
-        default setting is <literal>off</literal>, and it can only be changed
-        by a superuser.
+        default setting is <literal>off</literal>.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>
@@ -10983,7 +11405,8 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
         file system, inside <xref linkend="guc-data-directory"/>. This is only
         useful for working on the internals of the JIT implementation.
         The default setting is <literal>off</literal>.
-        This parameter can only be changed by a superuser.
+        Only superusers and users with the appropriate <literal>SET</literal>
+        privilege can change this setting.
        </para>
       </listitem>
      </varlistentry>

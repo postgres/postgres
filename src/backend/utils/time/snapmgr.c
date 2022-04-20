@@ -35,7 +35,7 @@
  * stack is empty.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -536,12 +536,14 @@ SetTransactionSnapshot(Snapshot sourcesnap, VirtualTransactionId *sourcevxid,
 	CurrentSnapshot->xmax = sourcesnap->xmax;
 	CurrentSnapshot->xcnt = sourcesnap->xcnt;
 	Assert(sourcesnap->xcnt <= GetMaxSnapshotXidCount());
-	memcpy(CurrentSnapshot->xip, sourcesnap->xip,
-		   sourcesnap->xcnt * sizeof(TransactionId));
+	if (sourcesnap->xcnt > 0)
+		memcpy(CurrentSnapshot->xip, sourcesnap->xip,
+			   sourcesnap->xcnt * sizeof(TransactionId));
 	CurrentSnapshot->subxcnt = sourcesnap->subxcnt;
 	Assert(sourcesnap->subxcnt <= GetMaxSnapshotSubxidCount());
-	memcpy(CurrentSnapshot->subxip, sourcesnap->subxip,
-		   sourcesnap->subxcnt * sizeof(TransactionId));
+	if (sourcesnap->subxcnt > 0)
+		memcpy(CurrentSnapshot->subxip, sourcesnap->subxip,
+			   sourcesnap->subxcnt * sizeof(TransactionId));
 	CurrentSnapshot->suboverflowed = sourcesnap->suboverflowed;
 	CurrentSnapshot->takenDuringRecovery = sourcesnap->takenDuringRecovery;
 	/* NB: curcid should NOT be copied, it's a local matter */
@@ -1623,6 +1625,32 @@ ThereAreNoPriorRegisteredSnapshots(void)
 		return true;
 
 	return false;
+}
+
+/*
+ * HaveRegisteredOrActiveSnapshots
+ *		Is there any registered or active snapshot?
+ *
+ * NB: Unless pushed or active, the cached catalog snapshot will not cause
+ * this function to return true. That allows this function to be used in
+ * checks enforcing a longer-lived snapshot.
+ */
+bool
+HaveRegisteredOrActiveSnapshot(void)
+{
+	if (ActiveSnapshot != NULL)
+		return true;
+
+	/*
+	 * The catalog snapshot is in RegisteredSnapshots when valid, but can be
+	 * removed at any time due to invalidation processing. If explicitly
+	 * registered more than one snapshot has to be in RegisteredSnapshots.
+	 */
+	if (CatalogSnapshot != NULL &&
+		pairingheap_is_singular(&RegisteredSnapshots))
+		return false;
+
+	return !pairingheap_is_empty(&RegisteredSnapshots);
 }
 
 

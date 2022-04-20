@@ -107,7 +107,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
   <para>
    In contrast to <command>CREATE TABLE AS</command>, <command>SELECT
-   INTO</command> does not allow to specify properties like a table's access
+   INTO</command> does not allow specifying properties like a table's access
    method with <xref linkend="sql-createtable-method" /> or the table's
    tablespace with <xref linkend="sql-createtable-tablespace" />. Use
    <command>CREATE TABLE AS</command> if necessary.  Therefore, the default table

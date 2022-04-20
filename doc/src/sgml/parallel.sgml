@@ -33,7 +33,7 @@
 
 <screen>
 EXPLAIN SELECT * FROM pgbench_accounts WHERE filler LIKE '%x%';
-                                     QUERY PLAN                                      
+                                     QUERY PLAN
 -------------------------------------------------------------------&zwsp;------------------
  Gather  (cost=1000.00..217018.43 rows=1 width=97)
    Workers Planned: 2

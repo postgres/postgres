@@ -1,7 +1,7 @@
-CREATE EXTENSION ltree_plpython2u CASCADE;
-NOTICE:  installing required extension "plpython2u"
+CREATE EXTENSION ltree_plpython3u CASCADE;
+NOTICE:  installing required extension "plpython3u"
 CREATE FUNCTION test1(val ltree) RETURNS int
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE ltree
 AS $$
 plpy.info(repr(val))
@@ -15,7 +15,7 @@ INFO:  ['aa', 'bb', 'cc']
 (1 row)
 
 CREATE FUNCTION test1n(val ltree) RETURNS int
-LANGUAGE plpython2u
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE ltree
 AS $$
 plpy.info(repr(val))
@@ -29,7 +29,7 @@ INFO:  ['aa', 'bb', 'cc']
 (1 row)
 
 CREATE FUNCTION test2() RETURNS ltree
-LANGUAGE plpythonu
+LANGUAGE plpython3u
 TRANSFORM FOR TYPE ltree
 AS $$
 return ['foo', 'bar', 'baz']

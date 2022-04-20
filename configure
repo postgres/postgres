@@ -11,7 +11,7 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-# Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Copyright (c) 1996-2022, PostgreSQL Global Development Group
 ## -------------------- ##
 ## M4sh Initialization. ##
 ## -------------------- ##
@@ -650,6 +650,8 @@ CFLAGS_ARMV8_CRC32C
 CFLAGS_SSE42
 have_win32_dbghelp
 LIBOBJS
+ZSTD
+LZ4
 UUID_LIBS
 LDAP_LIBS_BE
 LDAP_LIBS_FE
@@ -699,6 +701,9 @@ with_gnu_ld
 LD
 LDFLAGS_SL
 LDFLAGS_EX
+ZSTD_LIBS
+ZSTD_CFLAGS
+with_zstd
 LZ4_LIBS
 LZ4_CFLAGS
 with_lz4
@@ -729,6 +734,7 @@ autodepend
 PKG_CONFIG_LIBDIR
 PKG_CONFIG_PATH
 PKG_CONFIG
+DLSUFFIX
 TAS
 GCC
 CPP
@@ -868,6 +874,7 @@ with_libxslt
 with_system_tzdata
 with_zlib
 with_lz4
+with_zstd
 with_gnu_ld
 with_ssl
 with_openssl
@@ -897,6 +904,8 @@ XML2_CFLAGS
 XML2_LIBS
 LZ4_CFLAGS
 LZ4_LIBS
+ZSTD_CFLAGS
+ZSTD_LIBS
 LDFLAGS_EX
 LDFLAGS_SL
 PERL
@@ -1576,6 +1585,7 @@ Optional Packages:
                           use system time zone data in DIR
   --without-zlib          do not use Zlib
   --with-lz4              build with LZ4 support
+  --with-zstd             build with ZSTD support
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-ssl=LIB          use LIB for SSL/TLS support (openssl)
   --with-openssl          obsolete spelling of --with-ssl=openssl
@@ -1605,6 +1615,8 @@ Some influential environment variables:
   XML2_LIBS   linker flags for XML2, overriding pkg-config
   LZ4_CFLAGS  C compiler flags for LZ4, overriding pkg-config
   LZ4_LIBS    linker flags for LZ4, overriding pkg-config
+  ZSTD_CFLAGS C compiler flags for ZSTD, overriding pkg-config
+  ZSTD_LIBS   linker flags for ZSTD, overriding pkg-config
   LDFLAGS_EX  extra linker flags for linking executables only
   LDFLAGS_SL  extra linker flags for linking shared libraries only
   PERL        Perl program
@@ -1686,7 +1698,7 @@ Copyright (C) 2012 Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-Copyright (c) 1996-2021, PostgreSQL Global Development Group
+Copyright (c) 1996-2022, PostgreSQL Global Development Group
 _ACEOF
   exit
 fi
@@ -3021,6 +3033,9 @@ PORTNAME=$template
 # when it's executed.
 need_tas=no
 tas_file=dummy.s
+
+# Default, works for most platforms, override in template file if needed
+DLSUFFIX=".so"
 
 
 
@@ -7677,6 +7692,12 @@ else
 fi
 
 
+
+cat >>confdefs.h <<_ACEOF
+#define DLSUFFIX "$DLSUFFIX"
+_ACEOF
+
+
 #
 # Set up pkg_config in case we need it below
 #
@@ -9034,6 +9055,146 @@ fi
 fi
 
 #
+# ZSTD
+#
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to build with ZSTD support" >&5
+$as_echo_n "checking whether to build with ZSTD support... " >&6; }
+
+
+
+# Check whether --with-zstd was given.
+if test "${with_zstd+set}" = set; then :
+  withval=$with_zstd;
+  case $withval in
+    yes)
+
+$as_echo "#define USE_ZSTD 1" >>confdefs.h
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      as_fn_error $? "no argument expected for --with-zstd option" "$LINENO" 5
+      ;;
+  esac
+
+else
+  with_zstd=no
+
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $with_zstd" >&5
+$as_echo "$with_zstd" >&6; }
+
+
+if test "$with_zstd" = yes; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libzstd >= 1.4.0" >&5
+$as_echo_n "checking for libzstd >= 1.4.0... " >&6; }
+
+if test -n "$ZSTD_CFLAGS"; then
+    pkg_cv_ZSTD_CFLAGS="$ZSTD_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libzstd >= 1.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libzstd >= 1.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ZSTD_CFLAGS=`$PKG_CONFIG --cflags "libzstd >= 1.4.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$ZSTD_LIBS"; then
+    pkg_cv_ZSTD_LIBS="$ZSTD_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libzstd >= 1.4.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libzstd >= 1.4.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_ZSTD_LIBS=`$PKG_CONFIG --libs "libzstd >= 1.4.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        ZSTD_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libzstd >= 1.4.0" 2>&1`
+        else
+	        ZSTD_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libzstd >= 1.4.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$ZSTD_PKG_ERRORS" >&5
+
+	as_fn_error $? "Package requirements (libzstd >= 1.4.0) were not met:
+
+$ZSTD_PKG_ERRORS
+
+Consider adjusting the PKG_CONFIG_PATH environment variable if you
+installed software in a non-standard prefix.
+
+Alternatively, you may set the environment variables ZSTD_CFLAGS
+and ZSTD_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details." "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "The pkg-config script could not be found or is too old.  Make sure it
+is in your PATH or set the PKG_CONFIG environment variable to the full
+path to pkg-config.
+
+Alternatively, you may set the environment variables ZSTD_CFLAGS
+and ZSTD_LIBS to avoid the need to call pkg-config.
+See the pkg-config man page for more details.
+
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.
+See \`config.log' for more details" "$LINENO" 5; }
+else
+	ZSTD_CFLAGS=$pkg_cv_ZSTD_CFLAGS
+	ZSTD_LIBS=$pkg_cv_ZSTD_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+fi
+  # We only care about -I, -D, and -L switches;
+  # note that -lzstd will be added by AC_CHECK_LIB below.
+  for pgac_option in $ZSTD_CFLAGS; do
+    case $pgac_option in
+      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+    esac
+  done
+  for pgac_option in $ZSTD_LIBS; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
+fi
+#
 # Assignments
 #
 
@@ -10279,7 +10440,7 @@ fi
 
 if test "$with_python" = yes; then
   if test -z "$PYTHON"; then
-  for ac_prog in python python3 python2
+  for ac_prog in python3 python
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -10345,38 +10506,31 @@ python_majorversion=`echo "$python_fullversion" | sed 's/^\([0-9]*\).*/\1/'`
 python_minorversion=`echo "$python_fullversion" | sed 's/^[0-9]*\.\([0-9]*\).*/\1/'`
 python_version=`echo "$python_fullversion" | sed 's/^\([0-9]*\.[0-9]*\).*/\1/'`
 # Reject unsupported Python versions as soon as practical.
-if test "$python_majorversion" -lt 3 -a "$python_minorversion" -lt 6; then
-  as_fn_error $? "Python version $python_version is too old (version 2.6 or later is required)" "$LINENO" 5
+if test "$python_majorversion" -lt 3; then
+  as_fn_error $? "Python version $python_version is too old (version 3 or later is required)" "$LINENO" 5
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python distutils module" >&5
-$as_echo_n "checking for Python distutils module... " >&6; }
-if "${PYTHON}" -c 'import distutils' 2>&5
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python sysconfig module" >&5
+$as_echo_n "checking for Python sysconfig module... " >&6; }
+if "${PYTHON}" -c 'import sysconfig' 2>&5
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-    as_fn_error $? "distutils module not found" "$LINENO" 5
+    as_fn_error $? "sysconfig module not found" "$LINENO" 5
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking Python configuration directory" >&5
 $as_echo_n "checking Python configuration directory... " >&6; }
-python_configdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBPL'))))"`
+python_configdir=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBPL'))))"`
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $python_configdir" >&5
 $as_echo "$python_configdir" >&6; }
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Python include directories" >&5
-$as_echo_n "checking Python include directories... " >&6; }
-python_includespec=`${PYTHON} -c "
-import distutils.sysconfig
-a = '-I' + distutils.sysconfig.get_python_inc(False)
-b = '-I' + distutils.sysconfig.get_python_inc(True)
-if a == b:
-    print(a)
-else:
-    print(a + ' ' + b)"`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Python include directory" >&5
+$as_echo_n "checking Python include directory... " >&6; }
+python_includespec=`${PYTHON} -c "import sysconfig; print('-I' + sysconfig.get_config_var('INCLUDEPY'))"`
 if test "$PORTNAME" = win32 ; then
     python_includespec=`echo $python_includespec | sed 's,[\],/,g'`
 fi
@@ -10388,8 +10542,8 @@ $as_echo "$python_includespec" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking how to link an embedded Python application" >&5
 $as_echo_n "checking how to link an embedded Python application... " >&6; }
 
-python_libdir=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBDIR'))))"`
-python_ldlibrary=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDLIBRARY'))))"`
+python_libdir=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBDIR'))))"`
+python_ldlibrary=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LDLIBRARY'))))"`
 
 # If LDLIBRARY exists and has a shlib extension, use it verbatim.
 ldlibrary=`echo "${python_ldlibrary}" | sed -e 's/\.so$//' -e 's/\.dll$//' -e 's/\.dylib$//' -e 's/\.sl$//'`
@@ -10401,11 +10555,11 @@ else
 	# Otherwise, guess the base name of the shlib.
 	# LDVERSION was added in Python 3.2, before that use VERSION,
 	# or failing that, $python_version from _PGAC_CHECK_PYTHON_DIRS.
-	python_ldversion=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LDVERSION'))))"`
+	python_ldversion=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LDVERSION'))))"`
 	if test x"${python_ldversion}" != x""; then
 		ldlibrary="python${python_ldversion}"
 	else
-		python_version_var=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('VERSION'))))"`
+		python_version_var=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('VERSION'))))"`
 		if test x"${python_version_var}" != x""; then
 			ldlibrary="python${python_version_var}"
 		else
@@ -10416,7 +10570,9 @@ else
 	found_shlib=0
 	for d in "${python_libdir}" "${python_configdir}" /usr/lib64 /usr/lib
 	do
-		# We don't know the platform DLSUFFIX here, so check 'em all.
+		# Note: DLSUFFIX is for loadable modules, not shared
+		# libraries, so cannot be used here portably.  Just
+		# check all known possibilities.
 		for e in .so .dll .dylib .sl; do
 			if test -e "$d/lib${ldlibrary}$e"; then
 				python_libdir="$d"
@@ -10465,7 +10621,7 @@ PL/Python." "$LINENO" 5
 fi
 python_libspec="-L${python_libdir} -l${ldlibrary}"
 
-python_additional_libs=`${PYTHON} -c "import distutils.sysconfig; print(' '.join(filter(None,distutils.sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
+python_additional_libs=`${PYTHON} -c "import sysconfig; print(' '.join(filter(None,sysconfig.get_config_vars('LIBS','LIBC','LIBM','BASEMODLIBS'))))"`
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${python_libspec} ${python_additional_libs}" >&5
 $as_echo "${python_libspec} ${python_additional_libs}" >&6; }
@@ -11712,9 +11868,12 @@ if test "$ac_res" != no; then :
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
-$as_echo_n "checking for library containing dlopen... " >&6; }
-if ${ac_cv_search_dlopen+:} false; then :
+# gcc/clang's sanitizer helper library provides dlopen but not dlsym, thus
+# when enabling asan the dlopen check doesn't notice that -ldl is actually
+# required. Just checking for dlsym() ought to suffice.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dlsym" >&5
+$as_echo_n "checking for library containing dlsym... " >&6; }
+if ${ac_cv_search_dlsym+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_func_search_save_LIBS=$LIBS
@@ -11727,11 +11886,11 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char dlopen ();
+char dlsym ();
 int
 main ()
 {
-return dlopen ();
+return dlsym ();
   ;
   return 0;
 }
@@ -11744,25 +11903,25 @@ for ac_lib in '' dl; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
   fi
   if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_dlopen=$ac_res
+  ac_cv_search_dlsym=$ac_res
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext
-  if ${ac_cv_search_dlopen+:} false; then :
+  if ${ac_cv_search_dlsym+:} false; then :
   break
 fi
 done
-if ${ac_cv_search_dlopen+:} false; then :
+if ${ac_cv_search_dlsym+:} false; then :
 
 else
-  ac_cv_search_dlopen=no
+  ac_cv_search_dlsym=no
 fi
 rm conftest.$ac_ext
 LIBS=$ac_func_search_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
-$as_echo "$ac_cv_search_dlopen" >&6; }
-ac_res=$ac_cv_search_dlopen
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlsym" >&5
+$as_echo "$ac_cv_search_dlsym" >&6; }
+ac_res=$ac_cv_search_dlsym
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
@@ -13136,6 +13295,56 @@ fi
 
 fi
 
+if test "$with_zstd" = yes ; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD_compress in -lzstd" >&5
+$as_echo_n "checking for ZSTD_compress in -lzstd... " >&6; }
+if ${ac_cv_lib_zstd_ZSTD_compress+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzstd  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char ZSTD_compress ();
+int
+main ()
+{
+return ZSTD_compress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_zstd_ZSTD_compress=yes
+else
+  ac_cv_lib_zstd_ZSTD_compress=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zstd_ZSTD_compress" >&5
+$as_echo "$ac_cv_lib_zstd_ZSTD_compress" >&6; }
+if test "x$ac_cv_lib_zstd_ZSTD_compress" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBZSTD 1
+_ACEOF
+
+  LIBS="-lzstd $LIBS"
+
+else
+  as_fn_error $? "library 'zstd' is required for ZSTD support" "$LINENO" 5
+fi
+
+fi
+
 # Note: We can test for libldap_r only after we know PTHREAD_LIBS;
 # also, on AIX, we may need to have openssl in LIBS for this step.
 if test "$with_ldap" = yes ; then
@@ -13603,7 +13812,7 @@ $as_echo "#define HAVE_STDBOOL_H 1" >>confdefs.h
 fi
 
 
-for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/event.h sys/ipc.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/sockio.h sys/tas.h sys/uio.h sys/un.h termios.h ucred.h wctype.h
+for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h poll.h sys/epoll.h sys/event.h sys/ipc.h sys/personality.h sys/prctl.h sys/procctl.h sys/pstat.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/signalfd.h sys/sockio.h sys/tas.h sys/uio.h sys/un.h termios.h ucred.h wctype.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -13839,6 +14048,60 @@ fi
 
 fi
 
+if test -z "$LZ4"; then
+  for ac_prog in lz4
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_LZ4+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $LZ4 in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LZ4="$LZ4" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_LZ4="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+LZ4=$ac_cv_path_LZ4
+if test -n "$LZ4"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LZ4" >&5
+$as_echo "$LZ4" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$LZ4" && break
+done
+
+else
+  # Report the value of LZ4 in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for LZ4" >&5
+$as_echo_n "checking for LZ4... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LZ4" >&5
+$as_echo "$LZ4" >&6; }
+fi
+
 if test "$with_lz4" = yes; then
   for ac_header in lz4.h
 do :
@@ -13853,6 +14116,71 @@ else
 fi
 
 done
+
+fi
+
+if test -z "$ZSTD"; then
+  for ac_prog in zstd
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_ZSTD+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $ZSTD in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ZSTD="$ZSTD" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_ZSTD="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+ZSTD=$ac_cv_path_ZSTD
+if test -n "$ZSTD"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ZSTD" >&5
+$as_echo "$ZSTD" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$ZSTD" && break
+done
+
+else
+  # Report the value of ZSTD in configure's output in all cases.
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ZSTD" >&5
+$as_echo_n "checking for ZSTD... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ZSTD" >&5
+$as_echo "$ZSTD" >&6; }
+fi
+
+if test "$with_zstd" = yes; then
+  ac_fn_c_check_header_mongrel "$LINENO" "zstd.h" "ac_cv_header_zstd_h" "$ac_includes_default"
+if test "x$ac_cv_header_zstd_h" = xyes; then :
+
+else
+  as_fn_error $? "zstd.h header file is required for ZSTD" "$LINENO" 5
+fi
+
 
 fi
 
@@ -15654,7 +15982,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink readv setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink syncfs sync_file_range uselocale wcstombs_l writev
+for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred getrlimit inet_pton kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pstat pthread_is_threaded_np readlink readv setproctitle setproctitle_fast setsid shm_open strchrnul strsignal symlink syncfs sync_file_range uselocale wcstombs_l writev
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -15894,6 +16222,46 @@ if test x"${pgac_cv__builtin_popcount}" = xyes ; then
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE__BUILTIN_POPCOUNT 1
+_ACEOF
+
+fi
+# __builtin_frame_address may draw a diagnostic for non-constant argument,
+# so it needs a different test function.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for __builtin_frame_address" >&5
+$as_echo_n "checking for __builtin_frame_address... " >&6; }
+if ${pgac_cv__builtin_frame_address+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+void *
+call__builtin_frame_address(void)
+{
+    return __builtin_frame_address(0);
+}
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pgac_cv__builtin_frame_address=yes
+else
+  pgac_cv__builtin_frame_address=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv__builtin_frame_address" >&5
+$as_echo "$pgac_cv__builtin_frame_address" >&6; }
+if test x"${pgac_cv__builtin_frame_address}" = xyes ; then
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE__BUILTIN_FRAME_ADDRESS 1
 _ACEOF
 
 fi
@@ -17013,46 +17381,7 @@ fi
 LIBS="$LIBS_including_readline"
 
 if test "$with_readline" = yes; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl_completion_append_character" >&5
-$as_echo_n "checking for rl_completion_append_character... " >&6; }
-if ${pgac_cv_var_rl_completion_append_character+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdio.h>
-#if defined(HAVE_READLINE_READLINE_H)
-#include <readline/readline.h>
-#elif defined(HAVE_EDITLINE_READLINE_H)
-#include <editline/readline.h>
-#elif defined(HAVE_READLINE_H)
-#include <readline.h>
-#endif
-
-int
-main ()
-{
-rl_completion_append_character = 'x';
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  pgac_cv_var_rl_completion_append_character=yes
-else
-  pgac_cv_var_rl_completion_append_character=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_var_rl_completion_append_character" >&5
-$as_echo "$pgac_cv_var_rl_completion_append_character" >&6; }
-if test x"$pgac_cv_var_rl_completion_append_character" = x"yes"; then
-
-$as_echo "#define HAVE_RL_COMPLETION_APPEND_CHARACTER 1" >>confdefs.h
-
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl_completion_suppress_quote" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for rl_completion_suppress_quote" >&5
 $as_echo_n "checking for rl_completion_suppress_quote... " >&6; }
 if ${pgac_cv_var_rl_completion_suppress_quote+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -19444,6 +19773,7 @@ fi
   # installation than perl, eg on MSys, so we have to check using prove.
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Perl modules required for TAP tests" >&5
 $as_echo_n "checking for Perl modules required for TAP tests... " >&6; }
+  __CONFIG_HOST_OS__=$host_os; export __CONFIG_HOST_OS__
   modulestderr=`"$PROVE" "$srcdir/config/check_modules.pl" 2>&1 >/dev/null`
   if test $? -eq 0; then
     # log the module version details, but don't show them interactively

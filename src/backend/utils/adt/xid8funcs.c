@@ -15,7 +15,7 @@
  * users.  The txid_XXX variants should eventually be dropped.
  *
  *
- *	Copyright (c) 2003-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2003-2022, PostgreSQL Global Development Group
  *	Author: Jan Wieck, Afilias USA INC.
  *	64-bit txids: Marko Kreen, Skype Technologies
  *
@@ -113,9 +113,8 @@ TransactionIdInRecentPast(FullTransactionId fxid, TransactionId *extracted_xid)
 	if (!FullTransactionIdPrecedes(fxid, now_fullxid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("transaction ID %s is in the future",
-						psprintf(UINT64_FORMAT,
-								 U64FromFullTransactionId(fxid)))));
+				 errmsg("transaction ID %llu is in the future",
+						(unsigned long long) U64FromFullTransactionId(fxid))));
 
 	/*
 	 * ShmemVariableCache->oldestClogXid is protected by XactTruncationLock,

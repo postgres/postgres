@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 10;
+use Test::More;
 
 program_help_ok('pg_isready');
 program_version_ok('pg_isready');
@@ -18,6 +18,8 @@ my $node = PostgreSQL::Test::Cluster->new('main');
 $node->init;
 $node->start;
 
-# use a long timeout for the benefit of very slow buildfarm machines
-$node->command_ok([qw(pg_isready --timeout=60)],
+$node->command_ok(
+	[ 'pg_isready', "--timeout=$PostgreSQL::Test::Utils::timeout_default" ],
 	'succeeds with server running');
+
+done_testing();

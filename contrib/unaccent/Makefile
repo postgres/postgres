@@ -27,12 +27,12 @@ include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
 
-update-unicode: unaccent.rules
+update-unicode: $(srcdir)/unaccent.rules
 
 # Allow running this even without --with-python
 PYTHON ?= python
 
-unaccent.rules: generate_unaccent_rules.py ../../src/common/unicode/UnicodeData.txt Latin-ASCII.xml
+$(srcdir)/unaccent.rules: generate_unaccent_rules.py ../../src/common/unicode/UnicodeData.txt Latin-ASCII.xml
 	$(PYTHON) $< --unicode-data-file $(word 2,$^) --latin-ascii-file $(word 3,$^) >$@
 
 # Only download it once; dependencies must match src/common/unicode/

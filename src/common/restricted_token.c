@@ -4,7 +4,7 @@
  *		helper routine to ensure restricted token on Windows
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -190,10 +190,7 @@ get_restricted_token(void)
 			WaitForSingleObject(pi.hProcess, INFINITE);
 
 			if (!GetExitCodeProcess(pi.hProcess, &x))
-			{
-				pg_log_error("could not get exit code from subprocess: error code %lu", GetLastError());
-				exit(1);
-			}
+				pg_fatal("could not get exit code from subprocess: error code %lu", GetLastError());
 			exit(x);
 		}
 		pg_free(cmdline);

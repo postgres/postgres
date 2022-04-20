@@ -3,7 +3,7 @@
  * parse_relation.c
  *	  parser support routines dealing with relations
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -698,6 +698,17 @@ scanNSItemForColumn(ParseState *pstate, ParseNamespaceItem *nsitem,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("cannot use system column \"%s\" in column generation expression",
+						colname),
+				 parser_errposition(pstate, location)));
+
+	/*
+	 * In a MERGE WHEN condition, no system column is allowed except tableOid
+	 */
+	if (pstate->p_expr_kind == EXPR_KIND_MERGE_WHEN &&
+		attnum < InvalidAttrNumber && attnum != TableOidAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use system column \"%s\" in MERGE WHEN condition",
 						colname),
 				 parser_errposition(pstate, location)));
 
@@ -1978,7 +1989,8 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 							   bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias ? alias->aliasname : pstrdup("xmltable");
+	char	   *refname = alias ? alias->aliasname :
+		pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
 	Alias	   *eref;
 	int			numaliases;
 
@@ -3095,11 +3107,12 @@ expandNSItemVars(ParseNamespaceItem *nsitem,
  *	  for the attributes of the nsitem
  *
  * pstate->p_next_resno determines the resnos assigned to the TLEs.
- * The referenced columns are marked as requiring SELECT access.
+ * The referenced columns are marked as requiring SELECT access, if
+ * caller requests that.
  */
 List *
 expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
-				  int sublevels_up, int location)
+				  int sublevels_up, bool require_col_privs, int location)
 {
 	RangeTblEntry *rte = nsitem->p_rte;
 	List	   *names,
@@ -3133,8 +3146,11 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
 							 false);
 		te_list = lappend(te_list, te);
 
-		/* Require read access to each column */
-		markVarForSelectPriv(pstate, varnode);
+		if (require_col_privs)
+		{
+			/* Require read access to each column */
+			markVarForSelectPriv(pstate, varnode);
+		}
 	}
 
 	Assert(name == NULL && var == NULL);	/* lists not the same length? */

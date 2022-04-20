@@ -3,7 +3,7 @@
  * buffile.c
  *	  Management of large buffered temporary files.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -429,6 +429,8 @@ static void
 BufFileLoadBuffer(BufFile *file)
 {
 	File		thisfile;
+	instr_time	io_start;
+	instr_time	io_time;
 
 	/*
 	 * Advance to next component file if necessary and possible.
@@ -440,10 +442,14 @@ BufFileLoadBuffer(BufFile *file)
 		file->curOffset = 0L;
 	}
 
+	thisfile = file->files[file->curFile];
+
+	if (track_io_timing)
+		INSTR_TIME_SET_CURRENT(io_start);
+
 	/*
 	 * Read whatever we can get, up to a full bufferload.
 	 */
-	thisfile = file->files[file->curFile];
 	file->nbytes = FileRead(thisfile,
 							file->buffer.data,
 							sizeof(file->buffer),
@@ -456,6 +462,13 @@ BufFileLoadBuffer(BufFile *file)
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m",
 						FilePathName(thisfile))));
+	}
+
+	if (track_io_timing)
+	{
+		INSTR_TIME_SET_CURRENT(io_time);
+		INSTR_TIME_SUBTRACT(io_time, io_start);
+		INSTR_TIME_ADD(pgBufferUsage.temp_blk_read_time, io_time);
 	}
 
 	/* we choose not to advance curOffset here */
@@ -485,6 +498,8 @@ BufFileDumpBuffer(BufFile *file)
 	while (wpos < file->nbytes)
 	{
 		off_t		availbytes;
+		instr_time	io_start;
+		instr_time	io_time;
 
 		/*
 		 * Advance to next component file if necessary and possible.
@@ -507,6 +522,10 @@ BufFileDumpBuffer(BufFile *file)
 			bytestowrite = (int) availbytes;
 
 		thisfile = file->files[file->curFile];
+
+		if (track_io_timing)
+			INSTR_TIME_SET_CURRENT(io_start);
+
 		bytestowrite = FileWrite(thisfile,
 								 file->buffer.data + wpos,
 								 bytestowrite,
@@ -517,6 +536,14 @@ BufFileDumpBuffer(BufFile *file)
 					(errcode_for_file_access(),
 					 errmsg("could not write to file \"%s\": %m",
 							FilePathName(thisfile))));
+
+		if (track_io_timing)
+		{
+			INSTR_TIME_SET_CURRENT(io_time);
+			INSTR_TIME_SUBTRACT(io_time, io_start);
+			INSTR_TIME_ADD(pgBufferUsage.temp_blk_write_time, io_time);
+		}
+
 		file->curOffset += bytestowrite;
 		wpos += bytestowrite;
 

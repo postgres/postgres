@@ -3,11 +3,11 @@
  * pg_publication.c
  *		publication C API manipulation
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		pg_publication.c
+ *		src/backend/catalog/pg_publication.c
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,9 @@
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+
+static void publication_translate_columns(Relation targetrel, List *columns,
+										  int *natts, AttrNumber **attrs);
 
 /*
  * Check if relation can be in given publication and throws appropriate
@@ -276,19 +279,77 @@ GetPubPartitionOptionRelations(List *result, PublicationPartOpt pub_partopt,
 }
 
 /*
+ * Returns the relid of the topmost ancestor that is published via this
+ * publication if any and set its ancestor level to ancestor_level,
+ * otherwise returns InvalidOid.
+ *
+ * The ancestor_level value allows us to compare the results for multiple
+ * publications, and decide which value is higher up.
+ *
+ * Note that the list of ancestors should be ordered such that the topmost
+ * ancestor is at the end of the list.
+ */
+Oid
+GetTopMostAncestorInPublication(Oid puboid, List *ancestors, int *ancestor_level)
+{
+	ListCell   *lc;
+	Oid			topmost_relid = InvalidOid;
+	int			level = 0;
+
+	/*
+	 * Find the "topmost" ancestor that is in this publication.
+	 */
+	foreach(lc, ancestors)
+	{
+		Oid			ancestor = lfirst_oid(lc);
+		List	   *apubids = GetRelationPublications(ancestor);
+		List	   *aschemaPubids = NIL;
+
+		level++;
+
+		if (list_member_oid(apubids, puboid))
+		{
+			topmost_relid = ancestor;
+
+			if (ancestor_level)
+				*ancestor_level = level;
+		}
+		else
+		{
+			aschemaPubids = GetSchemaPublications(get_rel_namespace(ancestor));
+			if (list_member_oid(aschemaPubids, puboid))
+			{
+				topmost_relid = ancestor;
+
+				if (ancestor_level)
+					*ancestor_level = level;
+			}
+		}
+
+		list_free(apubids);
+		list_free(aschemaPubids);
+	}
+
+	return topmost_relid;
+}
+
+/*
  * Insert new publication / relation mapping.
  */
 ObjectAddress
-publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
+publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 						 bool if_not_exists)
 {
 	Relation	rel;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_publication_rel];
 	bool		nulls[Natts_pg_publication_rel];
-	Oid			relid = RelationGetRelid(targetrel->relation);
-	Oid			prrelid;
+	Relation	targetrel = pri->relation;
+	Oid			relid = RelationGetRelid(targetrel);
+	Oid			pubreloid;
 	Publication *pub = GetPublication(pubid);
+	AttrNumber *attarray = NULL;
+	int			natts = 0;
 	ObjectAddress myself,
 				referenced;
 	List	   *relids = NIL;
@@ -311,22 +372,42 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
 				 errmsg("relation \"%s\" is already member of publication \"%s\"",
-						RelationGetRelationName(targetrel->relation), pub->name)));
+						RelationGetRelationName(targetrel), pub->name)));
 	}
 
-	check_publication_add_relation(targetrel->relation);
+	check_publication_add_relation(targetrel);
+
+	/*
+	 * Translate column names to attnums and make sure the column list contains
+	 * only allowed elements (no system or generated columns etc.). Also build
+	 * an array of attnums, for storing in the catalog.
+	 */
+	publication_translate_columns(pri->relation, pri->columns,
+								  &natts, &attarray);
 
 	/* Form a tuple. */
 	memset(values, 0, sizeof(values));
 	memset(nulls, false, sizeof(nulls));
 
-	prrelid = GetNewOidWithIndex(rel, PublicationRelObjectIndexId,
-								 Anum_pg_publication_rel_oid);
-	values[Anum_pg_publication_rel_oid - 1] = ObjectIdGetDatum(prrelid);
+	pubreloid = GetNewOidWithIndex(rel, PublicationRelObjectIndexId,
+								   Anum_pg_publication_rel_oid);
+	values[Anum_pg_publication_rel_oid - 1] = ObjectIdGetDatum(pubreloid);
 	values[Anum_pg_publication_rel_prpubid - 1] =
 		ObjectIdGetDatum(pubid);
 	values[Anum_pg_publication_rel_prrelid - 1] =
 		ObjectIdGetDatum(relid);
+
+	/* Add qualifications, if available */
+	if (pri->whereClause != NULL)
+		values[Anum_pg_publication_rel_prqual - 1] = CStringGetTextDatum(nodeToString(pri->whereClause));
+	else
+		nulls[Anum_pg_publication_rel_prqual - 1] = true;
+
+	/* Add column list, if available */
+	if (pri->columns)
+		values[Anum_pg_publication_rel_prattrs - 1] = PointerGetDatum(buildint2vector(attarray, natts));
+	else
+		nulls[Anum_pg_publication_rel_prattrs - 1] = true;
 
 	tup = heap_form_tuple(RelationGetDescr(rel), values, nulls);
 
@@ -334,7 +415,8 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	CatalogTupleInsert(rel, tup);
 	heap_freetuple(tup);
 
-	ObjectAddressSet(myself, PublicationRelRelationId, prrelid);
+	/* Register dependencies as needed */
+	ObjectAddressSet(myself, PublicationRelRelationId, pubreloid);
 
 	/* Add dependency on the publication */
 	ObjectAddressSet(referenced, PublicationRelationId, pubid);
@@ -343,6 +425,19 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	/* Add dependency on the relation */
 	ObjectAddressSet(referenced, RelationRelationId, relid);
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+
+	/* Add dependency on the objects mentioned in the qualifications */
+	if (pri->whereClause)
+		recordDependencyOnSingleRelExpr(&myself, pri->whereClause, relid,
+										DEPENDENCY_NORMAL, DEPENDENCY_NORMAL,
+										false);
+
+	/* Add dependency on the columns, if any are listed */
+	for (int i = 0; i < natts; i++)
+	{
+		ObjectAddressSubSet(referenced, RelationRelationId, relid, attarray[i]);
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/* Close the table. */
 	table_close(rel, RowExclusiveLock);
@@ -361,6 +456,129 @@ publication_add_relation(Oid pubid, PublicationRelInfo *targetrel,
 	InvalidatePublicationRels(relids);
 
 	return myself;
+}
+
+/* qsort comparator for attnums */
+static int
+compare_int16(const void *a, const void *b)
+{
+	int			av = *(const int16 *) a;
+	int			bv = *(const int16 *) b;
+
+	/* this can't overflow if int is wider than int16 */
+	return (av - bv);
+}
+
+/*
+ * Translate a list of column names to an array of attribute numbers
+ * and a Bitmapset with them; verify that each attribute is appropriate
+ * to have in a publication column list (no system or generated attributes,
+ * no duplicates).  Additional checks with replica identity are done later;
+ * see check_publication_columns.
+ *
+ * Note that the attribute numbers are *not* offset by
+ * FirstLowInvalidHeapAttributeNumber; system columns are forbidden so this
+ * is okay.
+ */
+static void
+publication_translate_columns(Relation targetrel, List *columns,
+							  int *natts, AttrNumber **attrs)
+{
+	AttrNumber *attarray = NULL;
+	Bitmapset  *set = NULL;
+	ListCell   *lc;
+	int			n = 0;
+	TupleDesc	tupdesc = RelationGetDescr(targetrel);
+
+	/* Bail out when no column list defined. */
+	if (!columns)
+		return;
+
+	/*
+	 * Translate list of columns to attnums. We prohibit system attributes and
+	 * make sure there are no duplicate columns.
+	 */
+	attarray = palloc(sizeof(AttrNumber) * list_length(columns));
+	foreach(lc, columns)
+	{
+		char	   *colname = strVal(lfirst(lc));
+		AttrNumber	attnum = get_attnum(RelationGetRelid(targetrel), colname);
+
+		if (attnum == InvalidAttrNumber)
+			ereport(ERROR,
+					errcode(ERRCODE_UNDEFINED_COLUMN),
+					errmsg("column \"%s\" of relation \"%s\" does not exist",
+						   colname, RelationGetRelationName(targetrel)));
+
+		if (!AttrNumberIsForUserDefinedAttr(attnum))
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("cannot reference system column \"%s\" in publication column list",
+						   colname));
+
+		if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					errmsg("cannot reference generated column \"%s\" in publication column list",
+						   colname));
+
+		if (bms_is_member(attnum, set))
+			ereport(ERROR,
+					errcode(ERRCODE_DUPLICATE_OBJECT),
+					errmsg("duplicate column \"%s\" in publication column list",
+						   colname));
+
+		set = bms_add_member(set, attnum);
+		attarray[n++] = attnum;
+	}
+
+	/* Be tidy, so that the catalog representation is always sorted */
+	qsort(attarray, n, sizeof(AttrNumber), compare_int16);
+
+	*natts = n;
+	*attrs = attarray;
+
+	bms_free(set);
+}
+
+/*
+ * Transform a column list (represented by an array Datum) to a bitmapset.
+ *
+ * If columns isn't NULL, add the column numbers to that set.
+ *
+ * If mcxt isn't NULL, build the bitmapset in that context.
+ */
+Bitmapset *
+pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
+{
+	Bitmapset  *result = NULL;
+	ArrayType  *arr;
+	int			nelems;
+	int16	   *elems;
+	MemoryContext	oldcxt = NULL;
+
+	/*
+	 * If an existing bitmap was provided, use it. Otherwise just use NULL
+	 * and build a new bitmap.
+	 */
+	if (columns)
+		result = columns;
+
+	arr = DatumGetArrayTypeP(pubcols);
+	nelems = ARR_DIMS(arr)[0];
+	elems = (int16 *) ARR_DATA_PTR(arr);
+
+	/* If a memory context was specified, switch to it. */
+	if (mcxt)
+		oldcxt = MemoryContextSwitchTo(mcxt);
+
+	for (int i = 0; i < nelems; i++)
+		result = bms_add_member(result, elems[i]);
+
+	if (mcxt)
+		MemoryContextSwitchTo(oldcxt);
+
+	return result;
 }
 
 /*
@@ -493,7 +711,7 @@ GetPublicationRelations(Oid pubid, PublicationPartOpt pub_partopt)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(pubid));
 
-	scan = systable_beginscan(pubrelsrel, PublicationRelPrrelidPrpubidIndexId,
+	scan = systable_beginscan(pubrelsrel, PublicationRelPrpubidIndexId,
 							  true, NULL, 1, &scankey);
 
 	result = NIL;

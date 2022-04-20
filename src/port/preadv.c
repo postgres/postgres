@@ -3,7 +3,7 @@
  * preadv.c
  *	  Implementation of preadv(2) for platforms that lack one.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/port/preadv.c

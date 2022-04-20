@@ -2,7 +2,7 @@
  * gin.h
  *	  Public header file for Generalized Inverted Index access method.
  *
- *	Copyright (c) 2006-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2006-2022, PostgreSQL Global Development Group
  *
  *	src/include/access/gin.h
  *--------------------------------------------------------------------------
@@ -68,7 +68,7 @@ typedef char GinTernaryValue;
 
 /* GUC parameters */
 extern PGDLLIMPORT int GinFuzzySearchLimit;
-extern int	gin_pending_list_limit;
+extern PGDLLIMPORT int gin_pending_list_limit;
 
 /* ginutil.c */
 extern void ginGetStats(Relation index, GinStatsData *stats);

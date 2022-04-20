@@ -6,7 +6,7 @@
  * This is the set of in-core functions used when there are no other
  * alternative options like OpenSSL.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -40,10 +40,18 @@
 #define FREE(ptr) free(ptr)
 #endif
 
+/* Set of error states */
+typedef enum pg_cryptohash_errno
+{
+	PG_CRYPTOHASH_ERROR_NONE = 0,
+	PG_CRYPTOHASH_ERROR_DEST_LEN
+} pg_cryptohash_errno;
+
 /* Internal pg_cryptohash_ctx structure */
 struct pg_cryptohash_ctx
 {
 	pg_cryptohash_type type;
+	pg_cryptohash_errno error;
 
 	union
 	{
@@ -76,9 +84,10 @@ pg_cryptohash_create(pg_cryptohash_type type)
 	ctx = ALLOC(sizeof(pg_cryptohash_ctx));
 	if (ctx == NULL)
 		return NULL;
+
 	memset(ctx, 0, sizeof(pg_cryptohash_ctx));
 	ctx->type = type;
-
+	ctx->error = PG_CRYPTOHASH_ERROR_NONE;
 	return ctx;
 }
 
@@ -174,32 +183,50 @@ pg_cryptohash_final(pg_cryptohash_ctx *ctx, uint8 *dest, size_t len)
 	{
 		case PG_MD5:
 			if (len < MD5_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_md5_final(&ctx->data.md5, dest);
 			break;
 		case PG_SHA1:
 			if (len < SHA1_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_sha1_final(&ctx->data.sha1, dest);
 			break;
 		case PG_SHA224:
 			if (len < PG_SHA224_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_sha224_final(&ctx->data.sha224, dest);
 			break;
 		case PG_SHA256:
 			if (len < PG_SHA256_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_sha256_final(&ctx->data.sha256, dest);
 			break;
 		case PG_SHA384:
 			if (len < PG_SHA384_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_sha384_final(&ctx->data.sha384, dest);
 			break;
 		case PG_SHA512:
 			if (len < PG_SHA512_DIGEST_LENGTH)
+			{
+				ctx->error = PG_CRYPTOHASH_ERROR_DEST_LEN;
 				return -1;
+			}
 			pg_sha512_final(&ctx->data.sha512, dest);
 			break;
 	}
@@ -220,4 +247,32 @@ pg_cryptohash_free(pg_cryptohash_ctx *ctx)
 
 	explicit_bzero(ctx, sizeof(pg_cryptohash_ctx));
 	FREE(ctx);
+}
+
+/*
+ * pg_cryptohash_error
+ *
+ * Returns a static string providing details about an error that
+ * happened during a computation.
+ */
+const char *
+pg_cryptohash_error(pg_cryptohash_ctx *ctx)
+{
+	/*
+	 * This implementation would never fail because of an out-of-memory error,
+	 * except when creating the context.
+	 */
+	if (ctx == NULL)
+		return _("out of memory");
+
+	switch (ctx->error)
+	{
+		case PG_CRYPTOHASH_ERROR_NONE:
+			return _("success");
+		case PG_CRYPTOHASH_ERROR_DEST_LEN:
+			return _("destination buffer too small");
+	}
+
+	Assert(false);
+	return _("success");
 }

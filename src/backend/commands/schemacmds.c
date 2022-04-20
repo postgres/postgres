@@ -3,7 +3,7 @@
  * schemacmds.c
  *	  schema creation/manipulation commands
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -172,7 +172,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString,
 	/*
 	 * Execute each command contained in the CREATE SCHEMA.  Since the grammar
 	 * allows only utility commands in CREATE SCHEMA, there is no need to pass
-	 * them through parse_analyze() or the rewriter; we can just hand them
+	 * them through parse_analyze_*() or the rewriter; we can just hand them
 	 * straight to ProcessUtility.
 	 */
 	foreach(parsetree_item, parsetree_list)

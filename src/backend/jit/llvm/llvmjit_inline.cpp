@@ -11,7 +11,7 @@
  * so for all external functions, all the referenced functions (and
  * prerequisites) will be imported.
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/lib/llvmjit/llvmjit_inline.cpp
@@ -62,6 +62,7 @@ extern "C"
 #include <llvm/IR/ModuleSummaryIndex.h>
 #include <llvm/Linker/IRMover.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/MemoryBuffer.h>
 
 
 /*

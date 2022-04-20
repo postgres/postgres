@@ -1810,7 +1810,7 @@ Replication commands are logged in the server log when
 <para>
 The commands accepted in replication mode are:
 <variablelist>
-  <varlistentry>
+  <varlistentry id="protocol-replication-identify-system">
     <term><literal>IDENTIFY_SYSTEM</literal>
      <indexterm><primary>IDENTIFY_SYSTEM</primary></indexterm>
     </term>
@@ -1875,7 +1875,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-show">
     <term><literal>SHOW</literal> <replaceable class="parameter">name</replaceable>
      <indexterm><primary>SHOW</primary></indexterm>
     </term>
@@ -1899,7 +1899,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-timeline-history">
     <term><literal>TIMELINE_HISTORY</literal> <replaceable class="parameter">tli</replaceable>
      <indexterm><primary>TIMELINE_HISTORY</primary></indexterm>
     </term>
@@ -1941,7 +1941,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry id="protocol-replication-create-slot" xreflabel="CREATE_REPLICATION_SLOT">
+  <varlistentry id="protocol-replication-create-replication-slot" xreflabel="CREATE_REPLICATION_SLOT">
    <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
      <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
     </term>
@@ -2084,7 +2084,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-create-replication-slot-legacy">
     <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> [ <literal>RESERVE_WAL</literal> ] | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> [ <literal>EXPORT_SNAPSHOT</literal> | <literal>NOEXPORT_SNAPSHOT</literal> | <literal>USE_SNAPSHOT</literal> | <literal>TWO_PHASE</literal> ] }
     </term>
     <listitem>
@@ -2095,13 +2095,13 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-read-replication-slot">
     <term><literal>READ_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable>
       <indexterm><primary>READ_REPLICATION_SLOT</primary></indexterm>
     </term>
     <listitem>
      <para>
-      Read some information associated to a replication slot. Returns a tuple
+      Read some information associated with a replication slot. Returns a tuple
       with <literal>NULL</literal> values if the replication slot does not
       exist. This command is currently only supported for physical replication
       slots.
@@ -2133,7 +2133,7 @@ The commands accepted in replication mode are:
         <term><literal>restart_tli</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
-          The timeline ID associated to <literal>restart_lsn</literal>,
+          The timeline ID associated with <literal>restart_lsn</literal>,
           following the current timeline history.
          </para>
         </listitem>
@@ -2143,7 +2143,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-start-replication">
     <term><literal>START_REPLICATION</literal> [ <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable> ] [ <literal>PHYSICAL</literal> ] <replaceable class="parameter">XXX/XXX</replaceable> [ <literal>TIMELINE</literal> <replaceable class="parameter">tli</replaceable> ]
      <indexterm><primary>START_REPLICATION</primary></indexterm>
     </term>
@@ -2155,7 +2155,7 @@ The commands accepted in replication mode are:
       streaming starts on timeline <replaceable class="parameter">tli</replaceable>;
       otherwise, the server's current timeline is selected. The server can
       reply with an error, for example if the requested section of WAL has already
-      been recycled. On success, server responds with a CopyBothResponse
+      been recycled. On success, the server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 
@@ -2201,7 +2201,7 @@ The commands accepted in replication mode are:
 
      <para>
       <variablelist>
-      <varlistentry>
+      <varlistentry id="protocol-replication-xlogdata">
       <term>
           XLogData (B)
       </term>
@@ -2270,7 +2270,7 @@ The commands accepted in replication mode are:
       </para>
       </listitem>
       </varlistentry>
-      <varlistentry>
+      <varlistentry id="protocol-replication-primary-keepalive-message">
       <term>
           Primary keepalive message (B)
       </term>
@@ -2334,7 +2334,7 @@ The commands accepted in replication mode are:
 
      <para>
       <variablelist>
-      <varlistentry>
+      <varlistentry id="protocol-replication-standby-status-update">
       <term>
           Standby status update (F)
       </term>
@@ -2415,9 +2415,9 @@ The commands accepted in replication mode are:
 
      <para>
       <variablelist>
-      <varlistentry>
+      <varlistentry id="protocol-replication-hot-standby-feedback-message">
       <term>
-          Hot Standby feedback message (F)
+          Hot standby feedback message (F)
       </term>
       <listitem>
       <para>
@@ -2428,7 +2428,7 @@ The commands accepted in replication mode are:
       </term>
       <listitem>
       <para>
-          Identifies the message as a Hot Standby feedback message.
+          Identifies the message as a hot standby feedback message.
       </para>
       </listitem>
       </varlistentry>
@@ -2451,7 +2451,7 @@ The commands accepted in replication mode are:
       <para>
           The standby's current global xmin, excluding the catalog_xmin from any
           replication slots. If both this value and the following
-          catalog_xmin are 0 this is treated as a notification that Hot Standby
+          catalog_xmin are 0 this is treated as a notification that hot standby
           feedback will no longer be sent on this connection. Later non-zero
           messages may reinitiate the feedback mechanism.
       </para>
@@ -2497,7 +2497,7 @@ The commands accepted in replication mode are:
      </para>
     </listitem>
   </varlistentry>
-  <varlistentry>
+  <varlistentry id="protocol-replication-start-replication-slot-logical">
     <term><literal>START_REPLICATION</literal> <literal>SLOT</literal> <replaceable class="parameter">slot_name</replaceable> <literal>LOGICAL</literal> <replaceable class="parameter">XXX/XXX</replaceable> [ ( <replaceable>option_name</replaceable> [ <replaceable>option_value</replaceable> ] [, ...] ) ]</term>
     <listitem>
      <para>
@@ -2516,7 +2516,7 @@ The commands accepted in replication mode are:
 
      <para>
       The server can reply with an error, for example if the
-      slot does not exist. On success, server responds with a CopyBothResponse
+      slot does not exist. On success, the server responds with a CopyBothResponse
       message, and then starts to stream WAL to the frontend.
      </para>
 
@@ -2572,7 +2572,7 @@ The commands accepted in replication mode are:
     </listitem>
   </varlistentry>
 
-  <varlistentry>
+  <varlistentry id="protocol-replication-drop-replication-slot">
     <term>
      <literal>DROP_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> <optional> <literal>WAIT</literal> </optional>
      <indexterm><primary>DROP_REPLICATION_SLOT</primary></indexterm>
@@ -2631,6 +2631,41 @@ The commands accepted in replication mode are:
        </varlistentry>
 
        <varlistentry>
+        <term><literal>TARGET</literal> <replaceable>'target'</replaceable></term>
+        <listitem>
+         <para>
+          Tells the server where to send the backup.  If the target is
+          <literal>client</literal>, which is the default, the backup data is
+          sent to the client. If it is <literal>server</literal>, the backup
+          data is written to the server at the pathname specified by the
+          <literal>TARGET_DETAIL</literal> option. If it is
+          <literal>blackhole</literal>, the backup data is not sent
+          anywhere; it is simply discarded.
+         </para>
+
+         <para>
+          The <literal>server</literal> target requires superuser privilege or
+          being granted the <literal>pg_write_server_files</literal> role.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>TARGET_DETAIL</literal> <replaceable>'detail'</replaceable></term>
+        <listitem>
+         <para>
+          Provides additional information about the backup target.
+         </para>
+
+         <para>
+          Currently, this option can only be used when the backup target is
+          <literal>server</literal>. It specifies the server directory
+          to which the backup should be written.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>PROGRESS [ <replaceable class="parameter">boolean</replaceable> ]</literal></term>
         <listitem>
          <para>
@@ -2680,6 +2715,46 @@ The commands accepted in replication mode are:
           not enabled. If false, the backup will neither wait nor warn,
           leaving the client responsible for ensuring the required log is
           available. The default is true.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>COMPRESSION</literal> <replaceable>'method'</replaceable></term>
+        <listitem>
+         <para>
+          Instructs the server to compress the backup using the specified
+          method. Currently, the supported methods are <literal>gzip</literal>,
+          <literal>lz4</literal>, and <literal>zstd</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>COMPRESSION_DETAIL</literal> <replaceable>detail</replaceable></term>
+        <listitem>
+         <para>
+          Specifies details for the chosen compression method. This should only
+          be used in conjunction with the <literal>COMPRESSION</literal>
+          option.  If the value is an integer, it specifies the compression
+          level.  Otherwise, it should be a comma-separated list of items,
+          each of the form <literal>keyword</literal> or
+          <literal>keyword=value</literal>. Currently, the supported keywords
+          are <literal>level</literal> and <literal>workers</literal>.
+        </para>
+
+        <para>
+          The <literal>level</literal> keyword sets the compression level.
+          For <literal>gzip</literal> the compression level should be an
+          integer between 1 and 9, for <literal>lz4</literal> an integer
+          between 1 and 12, and for <literal>zstd</literal> an integer
+          between 1 and 22.
+         </para>
+
+        <para>
+          The <literal>workers</literal> keyword sets the number of threads
+          that should be used for parallel compression. Parallel compression
+          is supported only for <literal>zstd</literal>.
          </para>
         </listitem>
        </varlistentry>
@@ -2804,20 +2879,101 @@ The commands accepted in replication mode are:
      </para>
 
      <para>
-      After the second regular result set, one or more CopyOutResponse results
-      will be sent, one for the main data directory and one for each additional tablespace other
-      than <literal>pg_default</literal> and <literal>pg_global</literal>. The data in
-      the CopyOutResponse results will be a tar format (following the
-      <quote>ustar interchange format</quote> specified in the POSIX 1003.1-2008
-      standard) dump of the tablespace contents. Prior to
-      <literal>PostgreSQL</literal> 15, the server omitted the two trailing
-      blocks of zeroes specified in the standard, but this is no longer the
-      case.
-      After the tar data is complete, and if a backup manifest was requested,
-      another CopyOutResponse result is sent, containing the manifest data for the
-      current base backup. In any case, a final ordinary result set will be
-      sent, containing the WAL end position of the backup, in the same format as
-      the start position.
+      After the second regular result set, a CopyOutResponse will be sent.
+      The payload of each CopyData message will contain a message in one of
+      the following formats:
+     </para>
+
+     <para>
+      <variablelist>
+
+      <varlistentry>
+        <term>new archive (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('n')</term>
+            <listitem><para>
+              Identifes the messaage as indicating the start of a new archive.
+              There will be one archive for the main data directory and one
+              for each additional tablespace; each will use tar format
+              (following the <quote>ustar interchange format</quote> specified
+              in the POSIX 1003.1-2008 standard).
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>String</term>
+            <listitem><para>
+              The file name for this archive.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>String</term>
+            <listitem><para>
+              For the main data directory, an empty string. For other
+              tablespaces, the full path to the directory from which this
+              archive was created.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>manifest (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('m')</term>
+            <listitem><para>
+              Identifes the message as indicating the start of the backup
+              manifest.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>archive or manifest data (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('d')</term>
+            <listitem><para>
+              Identifes the message as containing archive or manifest data.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Byte<replaceable>n</replaceable></term>
+            <listitem><para>
+              Data bytes.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>progress report (B)</term>
+        <listitem><para><variablelist>
+          <varlistentry>
+            <term>Byte1('p')</term>
+            <listitem><para>
+              Identifes the message as a progress report.
+            </para></listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Int64</term>
+            <listitem><para>
+              The number of bytes from the current tablespace for which
+              processing has been completed.
+            </para></listitem>
+          </varlistentry>
+        </variablelist></para></listitem>
+      </varlistentry>
+
+      </variablelist>
+     </para>
+
+     <para>
+      After the CopyOutResponse, or all such responses, have been sent, a
+      final ordinary result set will be sent, containing the WAL end position
+      of the backup, in the same format as the start position.
      </para>
 
      <para>
@@ -2882,17 +3038,6 @@ The commands accepted in replication mode are:
       </itemizedlist>
       Owner, group, and file mode are set if the underlying file system on
       the server supports it.
-     </para>
-    </listitem>
-  </varlistentry>
-
-  <varlistentry>
-    <term><literal>BASE_BACKUP</literal> [ <literal>LABEL</literal> <replaceable>'label'</replaceable> ] [ <literal>PROGRESS</literal> ] [ <literal>FAST</literal> ] [ <literal>WAL</literal> ] [ <literal>NOWAIT</literal> ] [ <literal>MAX_RATE</literal> <replaceable>rate</replaceable> ] [ <literal>TABLESPACE_MAP</literal> ] [ <literal>NOVERIFY_CHECKSUMS</literal> ] [ <literal>MANIFEST</literal> <replaceable>manifest_option</replaceable> ] [ <literal>MANIFEST_CHECKSUMS</literal> <replaceable>checksum_algorithm</replaceable> ]
-    </term>
-    <listitem>
-     <para>
-      For compatibility with older releases, this alternative syntax for
-      the <literal>BASE_BACKUP</literal> command is still supported.
      </para>
     </listitem>
   </varlistentry>
@@ -3138,7 +3283,7 @@ of any individual CopyData message cannot be interpretable on their own.)
 <variablelist>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationOk">
 <term>
 AuthenticationOk (B)
 </term>
@@ -3183,7 +3328,7 @@ AuthenticationOk (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationKerberosV5">
 <term>
 AuthenticationKerberosV5 (B)
 </term>
@@ -3227,7 +3372,7 @@ AuthenticationKerberosV5 (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationCleartextPassword">
 <term>
 AuthenticationCleartextPassword (B)
 </term>
@@ -3271,7 +3416,7 @@ AuthenticationCleartextPassword (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationMD5Password">
 <term>
 AuthenticationMD5Password (B)
 </term>
@@ -3326,7 +3471,7 @@ AuthenticationMD5Password (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationSCMCredential">
 <term>
 AuthenticationSCMCredential (B)
 </term>
@@ -3371,7 +3516,7 @@ AuthenticationSCMCredential (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationGSS">
 <term>
 AuthenticationGSS (B)
 </term>
@@ -3416,7 +3561,7 @@ AuthenticationGSS (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationGSSContinue">
 <term>
 AuthenticationGSSContinue (B)
 </term>
@@ -3471,7 +3616,7 @@ AuthenticationGSSContinue (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationSSPI">
 <term>
 AuthenticationSSPI (B)
 </term>
@@ -3516,7 +3661,7 @@ AuthenticationSSPI (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationSASL">
 <term>
 AuthenticationSASL (B)
 </term>
@@ -3577,7 +3722,7 @@ following:
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationSASLContinue">
 <term>
 AuthenticationSASLContinue (B)
 </term>
@@ -3632,7 +3777,7 @@ AuthenticationSASLContinue (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-AuthenticationSASLFinal">
 <term>
 AuthenticationSASLFinal (B)
 </term>
@@ -3688,7 +3833,7 @@ AuthenticationSASLFinal (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-BackendKeyData">
 <term>
 BackendKeyData (B)
 </term>
@@ -3745,7 +3890,7 @@ BackendKeyData (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Bind">
 <term>
 Bind (F)
 </term>
@@ -3898,7 +4043,7 @@ Bind (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-BindComplete">
 <term>
 BindComplete (B)
 </term>
@@ -3933,7 +4078,7 @@ BindComplete (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CancelRequest">
 <term>
 CancelRequest (F)
 </term>
@@ -3991,7 +4136,7 @@ CancelRequest (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Close">
 <term>
 Close (F)
 </term>
@@ -4048,7 +4193,7 @@ Close (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CloseComplete">
 <term>
 CloseComplete (B)
 </term>
@@ -4083,7 +4228,7 @@ CloseComplete (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CommandComplete">
 <term>
 CommandComplete (B)
 </term>
@@ -4182,7 +4327,7 @@ CommandComplete (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyData">
 <term>
 CopyData (F &amp; B)
 </term>
@@ -4228,7 +4373,7 @@ CopyData (F &amp; B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyDone">
 <term>
 CopyDone (F &amp; B)
 </term>
@@ -4263,7 +4408,7 @@ CopyDone (F &amp; B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyFail">
 <term>
 CopyFail (F)
 </term>
@@ -4308,7 +4453,7 @@ CopyFail (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyInResponse">
 <term>
 CopyInResponse (B)
 </term>
@@ -4384,7 +4529,7 @@ CopyInResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyOutResponse">
 <term>
 CopyOutResponse (B)
 </term>
@@ -4457,7 +4602,7 @@ CopyOutResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-CopyBothResponse">
 <term>
 CopyBothResponse (B)
 </term>
@@ -4530,7 +4675,7 @@ CopyBothResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-DataRow">
 <term>
 DataRow (B)
 </term>
@@ -4602,7 +4747,7 @@ DataRow (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Describe">
 <term>
 Describe (F)
 </term>
@@ -4659,7 +4804,7 @@ Describe (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-EmptyQueryResponse">
 <term>
 EmptyQueryResponse (B)
 </term>
@@ -4695,7 +4840,7 @@ EmptyQueryResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-ErrorResponse">
 <term>
 ErrorResponse (B)
 </term>
@@ -4761,7 +4906,7 @@ ErrorResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Execute">
 <term>
 Execute (F)
 </term>
@@ -4818,7 +4963,7 @@ Execute (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Flush">
 <term>
 Flush (F)
 </term>
@@ -4853,7 +4998,7 @@ Flush (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-FunctionCall">
 <term>
 FunctionCall (F)
 </term>
@@ -4978,7 +5123,7 @@ FunctionCall (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-FunctionCallResponse">
 <term>
 FunctionCallResponse (B)
 </term>
@@ -5038,7 +5183,7 @@ FunctionCallResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-GSSENCRequest">
 <term>
 GSSENCRequest (F)
 </term>
@@ -5076,7 +5221,7 @@ GSSENCRequest (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-GSSResponse">
 <term>
 GSSResponse (F)
 </term>
@@ -5121,7 +5266,7 @@ GSSResponse (F)
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-NegotiateProtocolVersion">
 <term>
 NegotiateProtocolVersion (B)
 </term>
@@ -5190,7 +5335,7 @@ NegotiateProtocolVersion (B)
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-NoData">
 <term>
 NoData (B)
 </term>
@@ -5225,7 +5370,7 @@ NoData (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-NoticeResponse">
 <term>
 NoticeResponse (B)
 </term>
@@ -5291,7 +5436,7 @@ NoticeResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-NotificationResponse">
 <term>
 NotificationResponse (B)
 </term>
@@ -5356,7 +5501,7 @@ NotificationResponse (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-ParameterDescription">
 <term>
 ParameterDescription (B)
 </term>
@@ -5414,7 +5559,7 @@ ParameterDescription (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-ParameterStatus">
 <term>
 ParameterStatus (B)
 </term>
@@ -5468,7 +5613,7 @@ ParameterStatus (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Parse">
 <term>
 Parse (F)
 </term>
@@ -5552,7 +5697,7 @@ Parse (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-ParseComplete">
 <term>
 ParseComplete (B)
 </term>
@@ -5587,7 +5732,7 @@ ParseComplete (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-PasswordMessage">
 <term>
 PasswordMessage (F)
 </term>
@@ -5633,7 +5778,7 @@ PasswordMessage (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-PortalSuspended">
 <term>
 PortalSuspended (B)
 </term>
@@ -5670,7 +5815,7 @@ PortalSuspended (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Query">
 <term>
 Query (F)
 </term>
@@ -5715,7 +5860,7 @@ Query (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-ReadyForQuery">
 <term>
 ReadyForQuery (B)
 </term>
@@ -5765,7 +5910,7 @@ ReadyForQuery (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-RowDescription">
 <term>
 RowDescription (B)
 </term>
@@ -5890,7 +6035,7 @@ RowDescription (B)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-SASLInitialResponse">
 <term>
 SASLInitialResponse (F)
 </term>
@@ -5958,7 +6103,7 @@ SASLInitialResponse (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-SASLResponse">
 <term>
 SASLResponse (F)
 </term>
@@ -6004,7 +6149,7 @@ SASLResponse (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-SSLRequest">
 <term>
 SSLRequest (F)
 </term>
@@ -6042,7 +6187,7 @@ SSLRequest (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-StartupMessage">
 <term>
 StartupMessage (F)
 </term>
@@ -6171,7 +6316,7 @@ StartupMessage (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Sync">
 <term>
 Sync (F)
 </term>
@@ -6206,7 +6351,7 @@ Sync (F)
 </varlistentry>
 
 
-<varlistentry>
+<varlistentry id="protocol-message-formats-Terminate">
 <term>
 Terminate (F)
 </term>
@@ -6529,7 +6674,7 @@ not line breaks.
 <para>
 This section describes the detailed format of each logical replication
 message.  These messages are either returned by the replication slot SQL
-interface or are sent by a walsender.  In the case of a walsender they are
+interface or are sent by a walsender.  In the case of a walsender, they are
 encapsulated inside replication protocol WAL messages as described in
 <xref linkend="protocol-replication"/>, and generally obey the same message
 flow as physical replication.
@@ -6537,7 +6682,7 @@ flow as physical replication.
 
 <variablelist>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Begin">
 <term>
 Begin
 </term>
@@ -6592,7 +6737,7 @@ Begin
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Message">
 <term>
 Message
 </term>
@@ -6680,7 +6825,7 @@ Message
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Commit">
 <term>
 Commit
 </term>
@@ -6745,7 +6890,7 @@ Commit
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Origin">
 <term>
 Origin
 </term>
@@ -6794,7 +6939,7 @@ Origin
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Relation">
 <term>
 Relation
 </term>
@@ -6877,7 +7022,8 @@ Relation
 </listitem>
 </varlistentry>
 </variablelist>
-        Next, the following message part appears for each column (except generated columns):
+        Next, the following message part appears for each column included in
+        the publication (except generated columns):
 <variablelist>
 <varlistentry>
 <term>
@@ -6926,7 +7072,7 @@ Relation
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Type">
 <term>
 Type
 </term>
@@ -6991,7 +7137,7 @@ Type
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Insert">
 <term>
 Insert
 </term>
@@ -7058,7 +7204,7 @@ Insert
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Update">
 <term>
 Update
 </term>
@@ -7172,7 +7318,7 @@ Update
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Delete">
 <term>
 Delete
 </term>
@@ -7261,7 +7407,7 @@ Delete
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Truncate">
 <term>
 Truncate
 </term>
@@ -7339,7 +7485,7 @@ Stream Abort) are available since protocol version 2.
 
 <variablelist>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Stream-Start">
 <term>
 Stream Start
 </term>
@@ -7384,7 +7530,7 @@ Stream Start
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Stream-Stop">
 <term>
 Stream Stop
 </term>
@@ -7408,7 +7554,7 @@ Stream Stop
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Stream-Commit">
 <term>
 Stream Commit
 </term>
@@ -7483,7 +7629,7 @@ Stream Commit
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Stream-Abort">
 <term>
 Stream Abort
 </term>
@@ -7537,7 +7683,7 @@ are available since protocol version 3.
 
 <variablelist>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Begin-Prepare">
 
 <term>Begin Prepare</term>
 <listitem>
@@ -7602,7 +7748,7 @@ are available since protocol version 3.
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Prepare">
 
 <term>Prepare</term>
 <listitem>
@@ -7676,7 +7822,7 @@ are available since protocol version 3.
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Commit-Prepared">
 
 <term>Commit Prepared</term>
 <listitem>
@@ -7750,7 +7896,7 @@ are available since protocol version 3.
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Rollback-Prepared">
 
 <term>Rollback Prepared</term>
 <listitem>
@@ -7834,7 +7980,7 @@ are available since protocol version 3.
 </listitem>
 </varlistentry>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-Stream-Prepare">
 
 <term>Stream Prepare</term>
 <listitem>
@@ -7918,7 +8064,7 @@ The following message parts are shared by the above messages.
 
 <variablelist>
 
-<varlistentry>
+<varlistentry id="protocol-logicalrep-message-formats-TupleData">
 <term>
 TupleData
 </term>

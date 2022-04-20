@@ -4,7 +4,7 @@
  *	  POSTGRES table access method definitions.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/access/tableam.h
@@ -28,8 +28,8 @@
 #define DEFAULT_TABLE_ACCESS_METHOD	"heap"
 
 /* GUCs */
-extern char *default_table_access_method;
-extern bool synchronize_seqscans;
+extern PGDLLIMPORT char *default_table_access_method;
+extern PGDLLIMPORT bool synchronize_seqscans;
 
 
 struct BulkInsertStateData;

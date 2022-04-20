@@ -23,7 +23,7 @@ m4_if(m4_defn([m4_PACKAGE_VERSION]), [2.69], [], [m4_fatal([Autoconf version 2.6
 Untested combinations of 'autoconf' and PostgreSQL versions are not
 recommended.  You can remove the check from 'configure.ac' but it is then
 your responsibility whether the result works or not.])])
-AC_COPYRIGHT([Copyright (c) 1996-2021, PostgreSQL Global Development Group])
+AC_COPYRIGHT([Copyright (c) 1996-2022, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
@@ -102,6 +102,9 @@ AC_SUBST(PORTNAME)
 # when it's executed.
 need_tas=no
 tas_file=dummy.s
+
+# Default, works for most platforms, override in template file if needed
+DLSUFFIX=".so"
 
 
 
@@ -721,6 +724,10 @@ else
 fi
 AC_SUBST(TAS)
 
+AC_SUBST(DLSUFFIX)dnl
+AC_DEFINE_UNQUOTED([DLSUFFIX], ["$DLSUFFIX"],
+                   [Define to the file name extension of dynamically-loadable modules.])
+
 #
 # Set up pkg_config in case we need it below
 #
@@ -1057,6 +1064,30 @@ if test "$with_lz4" = yes; then
 fi
 
 #
+# ZSTD
+#
+AC_MSG_CHECKING([whether to build with ZSTD support])
+PGAC_ARG_BOOL(with, zstd, no, [build with ZSTD support],
+              [AC_DEFINE([USE_ZSTD], 1, [Define to 1 to build with ZSTD support. (--with-zstd)])])
+AC_MSG_RESULT([$with_zstd])
+AC_SUBST(with_zstd)
+
+if test "$with_zstd" = yes; then
+  PKG_CHECK_MODULES(ZSTD, libzstd >= 1.4.0)
+  # We only care about -I, -D, and -L switches;
+  # note that -lzstd will be added by AC_CHECK_LIB below.
+  for pgac_option in $ZSTD_CFLAGS; do
+    case $pgac_option in
+      -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+    esac
+  done
+  for pgac_option in $ZSTD_LIBS; do
+    case $pgac_option in
+      -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+    esac
+  done
+fi
+#
 # Assignments
 #
 
@@ -1205,7 +1236,10 @@ AC_SUBST(PTHREAD_LIBS)
 
 AC_CHECK_LIB(m, main)
 AC_SEARCH_LIBS(setproctitle, util)
-AC_SEARCH_LIBS(dlopen, dl)
+# gcc/clang's sanitizer helper library provides dlopen but not dlsym, thus
+# when enabling asan the dlopen check doesn't notice that -ldl is actually
+# required. Just checking for dlsym() ought to suffice.
+AC_SEARCH_LIBS(dlsym, dl)
 AC_SEARCH_LIBS(socket, [socket ws2_32])
 AC_SEARCH_LIBS(shl_load, dld)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
@@ -1325,6 +1359,10 @@ if test "$with_lz4" = yes ; then
   AC_CHECK_LIB(lz4, LZ4_compress_default, [], [AC_MSG_ERROR([library 'lz4' is required for LZ4 support])])
 fi
 
+if test "$with_zstd" = yes ; then
+  AC_CHECK_LIB(zstd, ZSTD_compress, [], [AC_MSG_ERROR([library 'zstd' is required for ZSTD support])])
+fi
+
 # Note: We can test for libldap_r only after we know PTHREAD_LIBS;
 # also, on AIX, we may need to have openssl in LIBS for this step.
 if test "$with_ldap" = yes ; then
@@ -1404,6 +1442,7 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/epoll.h
 	sys/event.h
 	sys/ipc.h
+	sys/personality.h
 	sys/prctl.h
 	sys/procctl.h
 	sys/pstat.h
@@ -1411,6 +1450,7 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/select.h
 	sys/sem.h
 	sys/shm.h
+	sys/signalfd.h
 	sys/sockio.h
 	sys/tas.h
 	sys/uio.h
@@ -1483,8 +1523,14 @@ failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
 fi
 
+PGAC_PATH_PROGS(LZ4, lz4)
 if test "$with_lz4" = yes; then
   AC_CHECK_HEADERS(lz4.h, [], [AC_MSG_ERROR([lz4.h header file is required for LZ4])])
+fi
+
+PGAC_PATH_PROGS(ZSTD, zstd)
+if test "$with_zstd" = yes; then
+  AC_CHECK_HEADER(zstd.h, [], [AC_MSG_ERROR([zstd.h header file is required for ZSTD])])
 fi
 
 if test "$with_gssapi" = yes ; then
@@ -1741,6 +1787,7 @@ AC_CHECK_FUNCS(m4_normalize([
 	getifaddrs
 	getpeerucred
 	getrlimit
+	inet_pton
 	kqueue
 	mbstowcs_l
 	memset_s
@@ -1773,6 +1820,9 @@ PGAC_CHECK_BUILTIN_FUNC([__builtin_bswap64], [long int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_clz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_ctz], [unsigned int x])
 PGAC_CHECK_BUILTIN_FUNC([__builtin_popcount], [unsigned int x])
+# __builtin_frame_address may draw a diagnostic for non-constant argument,
+# so it needs a different test function.
+PGAC_CHECK_BUILTIN_FUNC_PTR([__builtin_frame_address], [0])
 
 # We require 64-bit fseeko() to be available, but run this check anyway
 # in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
@@ -2393,6 +2443,7 @@ if test "$enable_tap_tests" = yes; then
   # AX_PROG_PERL_MODULES here, but prove might be part of a different Perl
   # installation than perl, eg on MSys, so we have to check using prove.
   AC_MSG_CHECKING(for Perl modules required for TAP tests)
+  __CONFIG_HOST_OS__=$host_os; export __CONFIG_HOST_OS__
   [modulestderr=`"$PROVE" "$srcdir/config/check_modules.pl" 2>&1 >/dev/null`]
   if test $? -eq 0; then
     # log the module version details, but don't show them interactively

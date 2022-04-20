@@ -9,7 +9,7 @@
  * See utils/resowner/README for more info.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -896,7 +896,6 @@ CreateAuxProcessResourceOwner(void)
 	 * owner.  (This needs to run after, e.g., ShutdownXLOG.)
 	 */
 	on_shmem_exit(ReleaseAuxProcessResourcesCallback, 0);
-
 }
 
 /*

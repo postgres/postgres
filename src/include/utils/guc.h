@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * src/include/utils/guc.h
@@ -239,53 +239,53 @@ typedef enum
 
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
-extern bool Debug_print_plan;
-extern bool Debug_print_parse;
-extern bool Debug_print_rewritten;
-extern bool Debug_pretty_print;
+extern PGDLLIMPORT bool Debug_print_plan;
+extern PGDLLIMPORT bool Debug_print_parse;
+extern PGDLLIMPORT bool Debug_print_rewritten;
+extern PGDLLIMPORT bool Debug_pretty_print;
 
-extern bool log_parser_stats;
-extern bool log_planner_stats;
-extern bool log_executor_stats;
-extern bool log_statement_stats;
-extern bool log_btree_build_stats;
+extern PGDLLIMPORT bool log_parser_stats;
+extern PGDLLIMPORT bool log_planner_stats;
+extern PGDLLIMPORT bool log_executor_stats;
+extern PGDLLIMPORT bool log_statement_stats;
+extern PGDLLIMPORT bool log_btree_build_stats;
 
 extern PGDLLIMPORT bool check_function_bodies;
-extern bool session_auth_is_superuser;
+extern PGDLLIMPORT bool session_auth_is_superuser;
 
-extern bool log_duration;
-extern int	log_parameter_max_length;
-extern int	log_parameter_max_length_on_error;
-extern int	log_min_error_statement;
+extern PGDLLIMPORT bool log_duration;
+extern PGDLLIMPORT int log_parameter_max_length;
+extern PGDLLIMPORT int log_parameter_max_length_on_error;
+extern PGDLLIMPORT int log_min_error_statement;
 extern PGDLLIMPORT int log_min_messages;
 extern PGDLLIMPORT int client_min_messages;
-extern int	log_min_duration_sample;
-extern int	log_min_duration_statement;
-extern int	log_temp_files;
-extern double log_statement_sample_rate;
-extern double log_xact_sample_rate;
-extern char *backtrace_functions;
-extern char *backtrace_symbol_list;
+extern PGDLLIMPORT int log_min_duration_sample;
+extern PGDLLIMPORT int log_min_duration_statement;
+extern PGDLLIMPORT int log_temp_files;
+extern PGDLLIMPORT double log_statement_sample_rate;
+extern PGDLLIMPORT double log_xact_sample_rate;
+extern PGDLLIMPORT char *backtrace_functions;
+extern PGDLLIMPORT char *backtrace_symbol_list;
 
-extern int	temp_file_limit;
+extern PGDLLIMPORT int temp_file_limit;
 
-extern int	num_temp_buffers;
+extern PGDLLIMPORT int num_temp_buffers;
 
-extern char *cluster_name;
+extern PGDLLIMPORT char *cluster_name;
 extern PGDLLIMPORT char *ConfigFileName;
-extern char *HbaFileName;
-extern char *IdentFileName;
-extern char *external_pid_file;
+extern PGDLLIMPORT char *HbaFileName;
+extern PGDLLIMPORT char *IdentFileName;
+extern PGDLLIMPORT char *external_pid_file;
 
 extern PGDLLIMPORT char *application_name;
 
-extern int	tcp_keepalives_idle;
-extern int	tcp_keepalives_interval;
-extern int	tcp_keepalives_count;
-extern int	tcp_user_timeout;
+extern PGDLLIMPORT int tcp_keepalives_idle;
+extern PGDLLIMPORT int tcp_keepalives_interval;
+extern PGDLLIMPORT int tcp_keepalives_count;
+extern PGDLLIMPORT int tcp_user_timeout;
 
 #ifdef TRACE_SORT
-extern bool trace_sort;
+extern PGDLLIMPORT bool trace_sort;
 #endif
 
 /*
@@ -354,14 +354,20 @@ extern void DefineCustomEnumVariable(const char *name,
 									 GucEnumAssignHook assign_hook,
 									 GucShowHook show_hook);
 
-extern void EmitWarningsOnPlaceholders(const char *className);
+extern void MarkGUCPrefixReserved(const char *className);
+
+/* old name for MarkGUCPrefixReserved, for backwards compatibility: */
+#define EmitWarningsOnPlaceholders(className) MarkGUCPrefixReserved(className)
 
 extern const char *GetConfigOption(const char *name, bool missing_ok,
 								   bool restrict_privileged);
 extern const char *GetConfigOptionResetString(const char *name);
 extern int	GetConfigOptionFlags(const char *name, bool missing_ok);
 extern void ProcessConfigFile(GucContext context);
+extern char *convert_GUC_name_for_parameter_acl(const char *name);
+extern bool check_GUC_name_for_parameter_acl(const char *name);
 extern void InitializeGUCOptions(void);
+extern void InitializeWalConsistencyChecking(void);
 extern bool SelectConfigFiles(const char *userDoption, const char *progname);
 extern void ResetAllOptions(void);
 extern void AtStart_GUC(void);
@@ -446,5 +452,9 @@ extern void assign_search_path(const char *newval, void *extra);
 /* in access/transam/xlog.c */
 extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
 extern void assign_xlog_sync_method(int new_sync_method, void *extra);
+
+/* in access/transam/xlogprefetcher.c */
+extern bool check_recovery_prefetch(int *new_value, void **extra, GucSource source);
+extern void assign_recovery_prefetch(int new_value, void *extra);
 
 #endif							/* GUC_H */

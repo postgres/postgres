@@ -4,7 +4,7 @@
  *		Internal definitions for parser
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_node.h
@@ -55,6 +55,7 @@ typedef enum ParseExprKind
 	EXPR_KIND_INSERT_TARGET,	/* INSERT target list item */
 	EXPR_KIND_UPDATE_SOURCE,	/* UPDATE assignment source item */
 	EXPR_KIND_UPDATE_TARGET,	/* UPDATE assignment target item */
+	EXPR_KIND_MERGE_WHEN,		/* MERGE WHEN [NOT] MATCHED condition */
 	EXPR_KIND_GROUP_BY,			/* GROUP BY */
 	EXPR_KIND_ORDER_BY,			/* ORDER BY */
 	EXPR_KIND_DISTINCT_ON,		/* DISTINCT ON */
@@ -135,7 +136,7 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * p_parent_cte: CommonTableExpr that immediately contains the current query,
  * if any.
  *
- * p_target_relation: target relation, if query is INSERT, UPDATE, or DELETE.
+ * p_target_relation: target relation, if query is INSERT/UPDATE/DELETE/MERGE
  *
  * p_target_nsitem: target relation's ParseNamespaceItem.
  *
@@ -189,7 +190,7 @@ struct ParseState
 	List	   *p_ctenamespace; /* current namespace for common table exprs */
 	List	   *p_future_ctes;	/* common table exprs not yet in namespace */
 	CommonTableExpr *p_parent_cte;	/* this query's containing CTE */
-	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE target rel */
+	Relation	p_target_relation;	/* INSERT/UPDATE/DELETE/MERGE target rel */
 	ParseNamespaceItem *p_target_nsitem;	/* target rel's NSItem, or NULL */
 	bool		p_is_insert;	/* process assignment like INSERT not UPDATE */
 	List	   *p_windowdefs;	/* raw representations of window clauses */

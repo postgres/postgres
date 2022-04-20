@@ -51,10 +51,13 @@ begin
 end;
 $$;
 
--- Also, disable JIT, or we'll get different output on machines
--- where that's been forced on
+-- Disable JIT, or we'll get different output on machines where that's been
+-- forced on
 set jit = off;
 
+-- Similarly, disable track_io_timing, to avoid output differences when
+-- enabled.
+set track_io_timing = off;
 
 -- Simple cases
 
@@ -62,11 +65,16 @@ select explain_filter('explain select * from int8_tbl i8');
 select explain_filter('explain (analyze) select * from int8_tbl i8');
 select explain_filter('explain (analyze, verbose) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format text) select * from int8_tbl i8');
-select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
 select explain_filter('explain (analyze, buffers, format yaml) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format text) select * from int8_tbl i8');
 select explain_filter('explain (buffers, format json) select * from int8_tbl i8');
+
+-- Check output including I/O timings.  These fields are conditional
+-- but always set in JSON format, so check them only in this case.
+set track_io_timing = on;
+select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
+set track_io_timing = off;
 
 -- SETTINGS option
 -- We have to ignore other settings that might be imposed by the environment,

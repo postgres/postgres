@@ -4,6 +4,21 @@
 --
 
 --
+-- Trailing junk in numeric literals
+--
+
+SELECT 123abc;
+SELECT 0x0o;
+SELECT 1_2_3;
+SELECT 0.a;
+SELECT 0.0a;
+SELECT .0a;
+SELECT 0.0e1a;
+SELECT 0.0e;
+SELECT 0.0e+a;
+PREPARE p1 AS SELECT $1a;
+
+--
 -- Test implicit type conversions
 -- This fails for Postgres v6.1 (and earlier?)
 --  so let's try explicit conversions for now - tgl 97/05/07

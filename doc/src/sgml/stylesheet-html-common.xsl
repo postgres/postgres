@@ -4,7 +4,8 @@
 %common.entities;
 ]>
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                version="1.0">
+                version="1.0"
+                xmlns="http://www.w3.org/1999/xhtml">
 
 <!--
   This file contains XSLT stylesheet customizations that are common to
@@ -126,8 +127,11 @@ set       toc,title
                                                  &uppercase;),
                                              substring(&primary;, 1, 1)))]"/>
 
-  <div class="index">
-    <!-- pgsql-docs: begin added stuff -->
+  <!-- pgsql-docs: added xmlns:xlink, autoidx.xsl doesn't include xlink in
+       exclude-result-prefixes. Without our customization that just leads to a
+       single xmlns:xlink in this div, but because we emit it it otherwise
+       gets pushed down to the elements output by autoidx.xsl -->
+  <div class="index" xmlns:xlink="http://www.w3.org/1999/xlink">
     <p class="indexdiv-quicklinks">
       <a href="#indexdiv-Symbols">
         <xsl:call-template name="gentext">

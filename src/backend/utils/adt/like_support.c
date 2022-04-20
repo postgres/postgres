@@ -23,7 +23,7 @@
  * from LIKE to indexscan limits rather harder than one might think ...
  * but that's the basic idea.)
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -1012,24 +1012,23 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive, Oid collation,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("case insensitive matching not supported on type bytea")));
 
+		if (!OidIsValid(collation))
+		{
+			/*
+			 * This typically means that the parser could not resolve a
+			 * conflict of implicit collations, so report it that way.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_COLLATION),
+					 errmsg("could not determine which collation to use for ILIKE"),
+					 errhint("Use the COLLATE clause to set the collation explicitly.")));
+		}
+
 		/* If case-insensitive, we need locale info */
 		if (lc_ctype_is_c(collation))
 			locale_is_c = true;
-		else if (collation != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collation))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for ILIKE"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
+		else
 			locale = pg_newlocale_from_collation(collation);
-		}
 	}
 
 	if (typeid != BYTEAOID)

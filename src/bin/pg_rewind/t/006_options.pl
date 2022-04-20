@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Test checking options of pg_rewind.
@@ -7,7 +7,7 @@
 use strict;
 use warnings;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 program_help_ok('pg_rewind');
 program_version_ok('pg_rewind');
@@ -41,3 +41,5 @@ command_fails(
 		'--write-recovery-conf'
 	],
 	'no local source with --write-recovery-conf');
+
+done_testing();

@@ -92,8 +92,8 @@ ERROR:  relation "nonesuch" does not exist
 alter table nonesuch rename to stud_emp;
 ERROR:  relation "nonesuch" does not exist
 -- conflict
-alter table stud_emp rename to aggtest;
-ERROR:  relation "aggtest" already exists
+alter table stud_emp rename to student;
+ERROR:  relation "student" already exists
 -- self-conflict
 alter table stud_emp rename to stud_emp;
 ERROR:  relation "stud_emp" already exists

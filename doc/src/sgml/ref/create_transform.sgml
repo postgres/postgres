@@ -156,11 +156,11 @@ CREATE [ OR REPLACE ] TRANSFORM FOR <replaceable>type_name</replaceable> LANGUAG
 
   <para>
    To create a transform for type <type>hstore</type> and language
-   <literal>plpythonu</literal>, first set up the type and the language:
+   <literal>plpython3u</literal>, first set up the type and the language:
 <programlisting>
 CREATE TYPE hstore ...;
 
-CREATE EXTENSION plpythonu;
+CREATE EXTENSION plpython3u;
 </programlisting>
    Then create the necessary functions:
 <programlisting>
@@ -174,7 +174,7 @@ AS ...;
 </programlisting>
    And finally create the transform to connect them all together:
 <programlisting>
-CREATE TRANSFORM FOR hstore LANGUAGE plpythonu (
+CREATE TRANSFORM FOR hstore LANGUAGE plpython3u (
     FROM SQL WITH FUNCTION hstore_to_plpython(internal),
     TO SQL WITH FUNCTION plpython_to_hstore(internal)
 );

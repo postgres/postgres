@@ -9,7 +9,7 @@ CREATE FUNCTION global_test_one() returns text
 if "global_test" not in GD:
 	GD["global_test"] = "set by global_test_one"
 return "SD: " + SD["global_test"] + ", GD: " + GD["global_test"]'
-    LANGUAGE plpythonu;
+    LANGUAGE plpython3u;
 
 CREATE FUNCTION global_test_two() returns text
     AS
@@ -18,7 +18,7 @@ CREATE FUNCTION global_test_two() returns text
 if "global_test" not in GD:
 	GD["global_test"] = "set by global_test_two"
 return "SD: " + SD["global_test"] + ", GD: " + GD["global_test"]'
-    LANGUAGE plpythonu;
+    LANGUAGE plpython3u;
 
 
 CREATE FUNCTION static_test() returns int4
@@ -29,7 +29,7 @@ else:
 	SD["call"] = 1
 return SD["call"]
 '
-    LANGUAGE plpythonu;
+    LANGUAGE plpython3u;
 
 
 SELECT static_test();

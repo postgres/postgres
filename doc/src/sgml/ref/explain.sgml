@@ -174,14 +174,15 @@ ROLLBACK;
       Include information on buffer usage. Specifically, include the number of
       shared blocks hit, read, dirtied, and written, the number of local blocks
       hit, read, dirtied, and written, the number of temp blocks read and
-      written, and the time spent reading and writing data file blocks
-      (in milliseconds) if <xref linkend="guc-track-io-timing"/> is enabled.
-      A <emphasis>hit</emphasis> means that a read was avoided because the block was
-      found already in cache when needed.
+      written, and the time spent reading and writing data file blocks and
+      temporary file blocks (in milliseconds) if
+      <xref linkend="guc-track-io-timing"/> is enabled.  A
+      <emphasis>hit</emphasis> means that a read was avoided because the block
+      was found already in cache when needed.
       Shared blocks contain data from regular tables and indexes;
       local blocks contain data from temporary tables and indexes;
-      while temp blocks contain short-term working data used in sorts, hashes,
-      Materialize plan nodes, and similar cases.
+      while temporary blocks contain short-term working data used in sorts,
+      hashes, Materialize plan nodes, and similar cases.
       The number of blocks <emphasis>dirtied</emphasis> indicates the number of
       previously unmodified blocks that were changed by this query; while the
       number of blocks <emphasis>written</emphasis> indicates the number of
@@ -394,7 +395,7 @@ EXPLAIN (FORMAT YAML) SELECT * FROM foo WHERE i='4';
      Total Cost: 5.98         +
      Plan Rows: 1             +
      Plan Width: 4            +
-     Index Cond: "(i = 4)"    
+     Index Cond: "(i = 4)"
 (1 row)
 </programlisting>
 
@@ -441,7 +442,7 @@ PREPARE query(int, int) AS SELECT sum(bar) FROM test
 
 EXPLAIN ANALYZE EXECUTE query(100, 200);
 
-                                                       QUERY PLAN                                                       
+                                                       QUERY PLAN
 -------------------------------------------------------------------&zwsp;-----------------------------------------------------
  HashAggregate  (cost=9.54..9.54 rows=1 width=8) (actual time=0.156..0.161 rows=11 loops=1)
    Group Key: foo

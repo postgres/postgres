@@ -4,7 +4,7 @@
  *	  POSTGRES shared cache invalidation communication definitions.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/sinval.h
@@ -123,9 +123,9 @@ typedef union
 
 
 /* Counter of messages processed; don't worry about overflow. */
-extern uint64 SharedInvalidMessageCounter;
+extern PGDLLIMPORT uint64 SharedInvalidMessageCounter;
 
-extern volatile sig_atomic_t catchupInterruptPending;
+extern PGDLLIMPORT volatile sig_atomic_t catchupInterruptPending;
 
 extern void SendSharedInvalidMessages(const SharedInvalidationMessage *msgs,
 									  int n);

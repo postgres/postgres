@@ -3,7 +3,7 @@
  * date.c
  *	  implements DATE and TIME data types specified in SQL standard
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  *
@@ -22,6 +22,7 @@
 #include <time.h>
 
 #include "access/xact.h"
+#include "catalog/pg_type.h"
 #include "common/hashfn.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -438,25 +439,12 @@ date_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static int
-date_fastcmp(Datum x, Datum y, SortSupport ssup)
-{
-	DateADT		a = DatumGetDateADT(x);
-	DateADT		b = DatumGetDateADT(y);
-
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	return 0;
-}
-
 Datum
 date_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-	ssup->comparator = date_fastcmp;
+	ssup->comparator = ssup_datum_int32_cmp;
 	PG_RETURN_VOID();
 }
 
@@ -1124,8 +1112,8 @@ extract_date(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("date units \"%s\" not supported",
-								lowunits)));
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(DATEOID))));
 		}
 	}
 	else if (type == UNITS)
@@ -1207,8 +1195,8 @@ extract_date(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("date units \"%s\" not supported",
-								lowunits)));
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(DATEOID))));
 				intresult = 0;
 		}
 	}
@@ -1223,8 +1211,8 @@ extract_date(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("date units \"%s\" not supported",
-								lowunits)));
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(DATEOID))));
 				intresult = 0;
 		}
 	}
@@ -1232,7 +1220,8 @@ extract_date(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("date units \"%s\" not recognized", lowunits)));
+				 errmsg("unit \"%s\" not recognized for type %s",
+						lowunits, format_type_be(DATEOID))));
 		intresult = 0;
 	}
 
@@ -2202,9 +2191,9 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			case DTK_ISOYEAR:
 			default:
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("\"time\" units \"%s\" not recognized",
-								lowunits)));
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(TIMEOID))));
 				intresult = 0;
 		}
 	}
@@ -2219,8 +2208,8 @@ time_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"time\" units \"%s\" not recognized",
-						lowunits)));
+				 errmsg("unit \"%s\" not recognized for type %s",
+						lowunits, format_type_be(TIMEOID))));
 		intresult = 0;
 	}
 
@@ -2980,9 +2969,9 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 			case DTK_MILLENNIUM:
 			default:
 				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("\"time with time zone\" units \"%s\" not recognized",
-								lowunits)));
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(TIMETZOID))));
 				intresult = 0;
 		}
 	}
@@ -3001,8 +2990,8 @@ timetz_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"time with time zone\" units \"%s\" not recognized",
-						lowunits)));
+				 errmsg("unit \"%s\" not recognized for type %s",
+						lowunits, format_type_be(TIMETZOID))));
 		intresult = 0;
 	}
 

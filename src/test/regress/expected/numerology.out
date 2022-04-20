@@ -3,6 +3,49 @@
 -- Test various combinations of numeric types and functions.
 --
 --
+-- Trailing junk in numeric literals
+--
+SELECT 123abc;
+ERROR:  trailing junk after numeric literal at or near "123a"
+LINE 1: SELECT 123abc;
+               ^
+SELECT 0x0o;
+ERROR:  trailing junk after numeric literal at or near "0x"
+LINE 1: SELECT 0x0o;
+               ^
+SELECT 1_2_3;
+ERROR:  trailing junk after numeric literal at or near "1_"
+LINE 1: SELECT 1_2_3;
+               ^
+SELECT 0.a;
+ERROR:  trailing junk after numeric literal at or near "0.a"
+LINE 1: SELECT 0.a;
+               ^
+SELECT 0.0a;
+ERROR:  trailing junk after numeric literal at or near "0.0a"
+LINE 1: SELECT 0.0a;
+               ^
+SELECT .0a;
+ERROR:  trailing junk after numeric literal at or near ".0a"
+LINE 1: SELECT .0a;
+               ^
+SELECT 0.0e1a;
+ERROR:  trailing junk after numeric literal at or near "0.0e1a"
+LINE 1: SELECT 0.0e1a;
+               ^
+SELECT 0.0e;
+ERROR:  trailing junk after numeric literal at or near "0.0e"
+LINE 1: SELECT 0.0e;
+               ^
+SELECT 0.0e+a;
+ERROR:  trailing junk after numeric literal at or near "0.0e+"
+LINE 1: SELECT 0.0e+a;
+               ^
+PREPARE p1 AS SELECT $1a;
+ERROR:  trailing junk after parameter at or near "$1a"
+LINE 1: PREPARE p1 AS SELECT $1a;
+                             ^
+--
 -- Test implicit type conversions
 -- This fails for Postgres v6.1 (and earlier?)
 --  so let's try explicit conversions for now - tgl 97/05/07

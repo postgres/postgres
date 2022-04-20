@@ -3,7 +3,7 @@
  * path.c
  *	  portable path handling routines
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -46,8 +46,9 @@
 
 static void make_relative_path(char *ret_path, const char *target_path,
 							   const char *bin_path, const char *my_exec_path);
-static void trim_directory(char *path);
+static char *trim_directory(char *path);
 static void trim_trailing_separator(char *path);
+static char *append_subdir_to_path(char *path, char *subdir);
 
 
 /*
@@ -222,13 +223,9 @@ join_path_components(char *ret_path,
 		strlcpy(ret_path, head, MAXPGPATH);
 
 	/*
-	 * Remove any leading "." in the tail component.
-	 *
-	 * Note: we used to try to remove ".." as well, but that's tricky to get
-	 * right; now we just leave it to be done by canonicalize_path() later.
+	 * We used to try to simplify some cases involving "." and "..", but now
+	 * we just leave that to be done by canonicalize_path() later.
 	 */
-	while (tail[0] == '.' && IS_DIR_SEP(tail[1]))
-		tail += 2;
 
 	if (*tail)
 	{
@@ -241,14 +238,27 @@ join_path_components(char *ret_path,
 }
 
 
+/* State-machine states for canonicalize_path */
+typedef enum
+{
+	ABSOLUTE_PATH_INIT,			/* Just past the leading '/' (and Windows
+								 * drive name if any) of an absolute path */
+	ABSOLUTE_WITH_N_DEPTH,		/* We collected 'pathdepth' directories in an
+								 * absolute path */
+	RELATIVE_PATH_INIT,			/* At start of a relative path */
+	RELATIVE_WITH_N_DEPTH,		/* We collected 'pathdepth' directories in a
+								 * relative path */
+	RELATIVE_WITH_PARENT_REF	/* Relative path containing only double-dots */
+} canonicalize_state;
+
 /*
  *	Clean up path by:
  *		o  make Win32 path use Unix slashes
  *		o  remove trailing quote on Win32
  *		o  remove trailing slash
- *		o  remove duplicate adjacent separators
- *		o  remove trailing '.'
- *		o  process trailing '..' ourselves
+ *		o  remove duplicate (adjacent) separators
+ *		o  remove '.' (unless path reduces to only '.')
+ *		o  process '..' ourselves, removing it if possible
  */
 void
 canonicalize_path(char *path)
@@ -256,8 +266,11 @@ canonicalize_path(char *path)
 	char	   *p,
 			   *to_p;
 	char	   *spath;
+	char	   *parsed;
+	char	   *unparse;
 	bool		was_sep = false;
-	int			pending_strips;
+	canonicalize_state state;
+	int			pathdepth = 0;	/* counts collected regular directory names */
 
 #ifdef WIN32
 
@@ -308,87 +321,194 @@ canonicalize_path(char *path)
 	*to_p = '\0';
 
 	/*
-	 * Remove any trailing uses of "." and process ".." ourselves
+	 * Remove any uses of "." and process ".." ourselves
 	 *
 	 * Note that "/../.." should reduce to just "/", while "../.." has to be
-	 * kept as-is.  In the latter case we put back mistakenly trimmed ".."
-	 * components below.  Also note that we want a Windows drive spec to be
-	 * visible to trim_directory(), but it's not part of the logic that's
-	 * looking at the name components; hence distinction between path and
-	 * spath.
+	 * kept as-is.  Also note that we want a Windows drive spec to be visible
+	 * to trim_directory(), but it's not part of the logic that's looking at
+	 * the name components; hence distinction between path and spath.
+	 *
+	 * This loop overwrites the path in-place.  This is safe since we'll never
+	 * make the path longer.  "unparse" points to where we are reading the
+	 * path, "parse" to where we are writing.
 	 */
 	spath = skip_drive(path);
-	pending_strips = 0;
-	for (;;)
-	{
-		int			len = strlen(spath);
+	if (*spath == '\0')
+		return;					/* empty path is returned as-is */
 
-		if (len >= 2 && strcmp(spath + len - 2, "/.") == 0)
-			trim_directory(path);
-		else if (strcmp(spath, ".") == 0)
+	if (*spath == '/')
+	{
+		state = ABSOLUTE_PATH_INIT;
+		/* Skip the leading slash for absolute path */
+		parsed = unparse = (spath + 1);
+	}
+	else
+	{
+		state = RELATIVE_PATH_INIT;
+		parsed = unparse = spath;
+	}
+
+	while (*unparse != '\0')
+	{
+		char	   *unparse_next;
+		bool		is_double_dot;
+
+		/* Split off this dir name, and set unparse_next to the next one */
+		unparse_next = unparse;
+		while (*unparse_next && *unparse_next != '/')
+			unparse_next++;
+		if (*unparse_next != '\0')
+			*unparse_next++ = '\0';
+
+		/* Identify type of this dir name */
+		if (strcmp(unparse, ".") == 0)
 		{
-			/* Want to leave "." alone, but "./.." has to become ".." */
-			if (pending_strips > 0)
-				*spath = '\0';
-			break;
+			/* We can ignore "." components in all cases */
+			unparse = unparse_next;
+			continue;
 		}
-		else if ((len >= 3 && strcmp(spath + len - 3, "/..") == 0) ||
-				 strcmp(spath, "..") == 0)
-		{
-			trim_directory(path);
-			pending_strips++;
-		}
-		else if (pending_strips > 0 && *spath != '\0')
-		{
-			/* trim a regular directory name canceled by ".." */
-			trim_directory(path);
-			pending_strips--;
-			/* foo/.. should become ".", not empty */
-			if (*spath == '\0')
-				strcpy(spath, ".");
-		}
+
+		if (strcmp(unparse, "..") == 0)
+			is_double_dot = true;
 		else
-			break;
+		{
+			/* adjacent separators were eliminated above */
+			Assert(*unparse != '\0');
+			is_double_dot = false;
+		}
+
+		switch (state)
+		{
+			case ABSOLUTE_PATH_INIT:
+				/* We can ignore ".." immediately after / */
+				if (!is_double_dot)
+				{
+					/* Append first dir name (we already have leading slash) */
+					parsed = append_subdir_to_path(parsed, unparse);
+					state = ABSOLUTE_WITH_N_DEPTH;
+					pathdepth++;
+				}
+				break;
+			case ABSOLUTE_WITH_N_DEPTH:
+				if (is_double_dot)
+				{
+					/* Remove last parsed dir */
+					/* (trim_directory won't remove the leading slash) */
+					*parsed = '\0';
+					parsed = trim_directory(path);
+					if (--pathdepth == 0)
+						state = ABSOLUTE_PATH_INIT;
+				}
+				else
+				{
+					/* Append normal dir */
+					*parsed++ = '/';
+					parsed = append_subdir_to_path(parsed, unparse);
+					pathdepth++;
+				}
+				break;
+			case RELATIVE_PATH_INIT:
+				if (is_double_dot)
+				{
+					/* Append irreducible double-dot (..) */
+					parsed = append_subdir_to_path(parsed, unparse);
+					state = RELATIVE_WITH_PARENT_REF;
+				}
+				else
+				{
+					/* Append normal dir */
+					parsed = append_subdir_to_path(parsed, unparse);
+					state = RELATIVE_WITH_N_DEPTH;
+					pathdepth++;
+				}
+				break;
+			case RELATIVE_WITH_N_DEPTH:
+				if (is_double_dot)
+				{
+					/* Remove last parsed dir */
+					*parsed = '\0';
+					parsed = trim_directory(path);
+					if (--pathdepth == 0)
+					{
+						/*
+						 * If the output path is now empty, we're back to the
+						 * INIT state.  However, we could have processed a
+						 * path like "../dir/.." and now be down to "..", in
+						 * which case enter the correct state for that.
+						 */
+						if (parsed == spath)
+							state = RELATIVE_PATH_INIT;
+						else
+							state = RELATIVE_WITH_PARENT_REF;
+					}
+				}
+				else
+				{
+					/* Append normal dir */
+					*parsed++ = '/';
+					parsed = append_subdir_to_path(parsed, unparse);
+					pathdepth++;
+				}
+				break;
+			case RELATIVE_WITH_PARENT_REF:
+				if (is_double_dot)
+				{
+					/* Append next irreducible double-dot (..) */
+					*parsed++ = '/';
+					parsed = append_subdir_to_path(parsed, unparse);
+				}
+				else
+				{
+					/* Append normal dir */
+					*parsed++ = '/';
+					parsed = append_subdir_to_path(parsed, unparse);
+
+					/*
+					 * We can now start counting normal dirs.  But if later
+					 * double-dots make us remove this dir again, we'd better
+					 * revert to RELATIVE_WITH_PARENT_REF not INIT state.
+					 */
+					state = RELATIVE_WITH_N_DEPTH;
+					pathdepth = 1;
+				}
+				break;
+		}
+
+		unparse = unparse_next;
 	}
 
-	if (pending_strips > 0)
-	{
-		/*
-		 * We could only get here if path is now totally empty (other than a
-		 * possible drive specifier on Windows). We have to put back one or
-		 * more ".."'s that we took off.
-		 */
-		while (--pending_strips > 0)
-			strcat(path, "../");
-		strcat(path, "..");
-	}
+	/*
+	 * If our output path is empty at this point, insert ".".  We don't want
+	 * to do this any earlier because it'd result in an extra dot in corner
+	 * cases such as "../dir/..".  Since we rejected the wholly-empty-path
+	 * case above, there is certainly room.
+	 */
+	if (parsed == spath)
+		*parsed++ = '.';
+
+	/* And finally, ensure the output path is nul-terminated. */
+	*parsed = '\0';
 }
 
 /*
  * Detect whether a path contains any parent-directory references ("..")
  *
  * The input *must* have been put through canonicalize_path previously.
- *
- * This is a bit tricky because we mustn't be fooled by "..a.." (legal)
- * nor "C:.." (legal on Unix but not Windows).
  */
 bool
 path_contains_parent_reference(const char *path)
 {
-	int			path_len;
-
+	/*
+	 * Once canonicalized, an absolute path cannot contain any ".." at all,
+	 * while a relative path could contain ".."(s) only at the start.  So it
+	 * is sufficient to check the start of the path, after skipping any
+	 * Windows drive/network specifier.
+	 */
 	path = skip_drive(path);	/* C: shouldn't affect our conclusion */
 
-	path_len = strlen(path);
-
-	/*
-	 * ".." could be the whole path; otherwise, if it's present it must be at
-	 * the beginning, in the middle, or at the end.
-	 */
-	if (strcmp(path, "..") == 0 ||
-		strncmp(path, "../", 3) == 0 ||
-		strstr(path, "/../") != NULL ||
-		(path_len >= 3 && strcmp(path + path_len - 3, "/..") == 0))
+	if (path[0] == '.' &&
+		path[1] == '.' &&
+		(path[2] == '\0' || path[2] == '/'))
 		return true;
 
 	return false;
@@ -396,10 +516,11 @@ path_contains_parent_reference(const char *path)
 
 /*
  * Detect whether a path is only in or below the current working directory.
+ *
+ * The input *must* have been put through canonicalize_path previously.
+ *
  * An absolute path that matches the current working directory should
- * return false (we only want relative to the cwd).  We don't allow
- * "/../" even if that would keep us under the cwd (it is too hard to
- * track that).
+ * return false (we only want relative to the cwd).
  */
 bool
 path_is_relative_and_below_cwd(const char *path)
@@ -807,14 +928,16 @@ bool
 get_home_path(char *ret_path)
 {
 #ifndef WIN32
-	char		pwdbuf[BUFSIZ];
-	struct passwd pwdstr;
-	struct passwd *pwd = NULL;
+	/*
+	 * We first consult $HOME.  If that's unset, try to get the info from
+	 * <pwd.h>.
+	 */
+	const char *home;
 
-	(void) pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd);
-	if (pwd == NULL)
-		return false;
-	strlcpy(ret_path, pwd->pw_dir, MAXPGPATH);
+	home = getenv("HOME");
+	if (home == NULL || home[0] == '\0')
+		return pg_get_user_home_dir(geteuid(), ret_path, MAXPGPATH);
+	strlcpy(ret_path, home, MAXPGPATH);
 	return true;
 #else
 	char	   *tmppath;
@@ -863,8 +986,11 @@ get_parent_directory(char *path)
  *	Trim trailing directory from path, that is, remove any trailing slashes,
  *	the last pathname component, and the slash just ahead of it --- but never
  *	remove a leading slash.
+ *
+ * For the convenience of canonicalize_path, the path's new end location
+ * is returned.
  */
-static void
+static char *
 trim_directory(char *path)
 {
 	char	   *p;
@@ -872,7 +998,7 @@ trim_directory(char *path)
 	path = skip_drive(path);
 
 	if (path[0] == '\0')
-		return;
+		return path;
 
 	/* back up over trailing slash(es) */
 	for (p = path + strlen(path) - 1; IS_DIR_SEP(*p) && p > path; p--)
@@ -887,6 +1013,7 @@ trim_directory(char *path)
 	if (p == path && IS_DIR_SEP(*p))
 		p++;
 	*p = '\0';
+	return p;
 }
 
 
@@ -905,4 +1032,26 @@ trim_trailing_separator(char *path)
 	if (p > path)
 		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';
+}
+
+/*
+ *	append_subdir_to_path
+ *
+ * Append the currently-considered subdirectory name to the output
+ * path in canonicalize_path.  Return the new end location of the
+ * output path.
+ *
+ * Since canonicalize_path updates the path in-place, we must use
+ * memmove not memcpy, and we don't yet terminate the path with '\0'.
+ */
+static char *
+append_subdir_to_path(char *path, char *subdir)
+{
+	size_t		len = strlen(subdir);
+
+	/* No need to copy data if path and subdir are the same. */
+	if (path != subdir)
+		memmove(path, subdir, len);
+
+	return path + len;
 }

@@ -3,7 +3,7 @@
  * auto_explain.c
  *
  *
- * Copyright (c) 2008-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2008-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  contrib/auto_explain/auto_explain.c
@@ -231,7 +231,7 @@ _PG_init(void)
 							 NULL,
 							 NULL);
 
-	EmitWarningsOnPlaceholders("auto_explain");
+	MarkGUCPrefixReserved("auto_explain");
 
 	/* Install hooks. */
 	prev_ExecutorStart = ExecutorStart_hook;

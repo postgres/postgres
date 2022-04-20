@@ -3,7 +3,7 @@
  * misc.c
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
@@ -203,39 +204,11 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 {
 	Oid			tablespaceOid = PG_GETARG_OID(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	bool		randomAccess;
-	TupleDesc	tupdesc;
-	Tuplestorestate *tupstore;
 	char	   *location;
 	DIR		   *dirdesc;
 	struct dirent *de;
-	MemoryContext oldcontext;
 
-	/* check to see if caller supports us returning a tuplestore */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("materialize mode required, but it is not allowed in this context")));
-
-	/* The tupdesc and tuplestore must be created in ecxt_per_query_memory */
-	oldcontext = MemoryContextSwitchTo(rsinfo->econtext->ecxt_per_query_memory);
-
-	tupdesc = CreateTemplateTupleDesc(1);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_tablespace_databases",
-					   OIDOID, -1, 0);
-
-	randomAccess = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
-	tupstore = tuplestore_begin_heap(randomAccess, false, work_mem);
-
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setResult = tupstore;
-	rsinfo->setDesc = tupdesc;
-
-	MemoryContextSwitchTo(oldcontext);
+	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
 
 	if (tablespaceOid == GLOBALTABLESPACE_OID)
 	{
@@ -291,7 +264,8 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		values[0] = ObjectIdGetDatum(datOid);
 		nulls[0] = false;
 
-		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
 	}
 
 	FreeDir(dirdesc);
@@ -309,6 +283,9 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	char		sourcepath[MAXPGPATH];
 	char		targetpath[MAXPGPATH];
 	int			rllen;
+#ifndef WIN32
+	struct stat st;
+#endif
 
 	/*
 	 * It's useful to apply this function to pg_class.reltablespace, wherein
@@ -333,6 +310,31 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	 */
 	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
 
+	/*
+	 * Before reading the link, check if the source path is a link or a
+	 * junction point.  Note that a directory is possible for a tablespace
+	 * created with allow_in_place_tablespaces enabled.  If a directory is
+	 * found, a relative path to the data directory is returned.
+	 */
+#ifdef WIN32
+	if (!pgwin32_is_junction(sourcepath))
+		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
+#else
+	if (lstat(sourcepath, &st) < 0)
+	{
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m",
+						sourcepath)));
+	}
+
+	if (!S_ISLNK(st.st_mode))
+		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
+#endif
+
+	/*
+	 * In presence of a link or a junction point, return the path pointing to.
+	 */
 	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
 	if (rllen < 0)
 		ereport(ERROR,
@@ -843,11 +845,13 @@ pg_current_logfile(PG_FUNCTION_ARGS)
 	{
 		logfmt = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-		if (strcmp(logfmt, "stderr") != 0 && strcmp(logfmt, "csvlog") != 0)
+		if (strcmp(logfmt, "stderr") != 0 &&
+			strcmp(logfmt, "csvlog") != 0 &&
+			strcmp(logfmt, "jsonlog") != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("log format \"%s\" is not supported", logfmt),
-					 errhint("The supported log formats are \"stderr\" and \"csvlog\".")));
+					 errhint("The supported log formats are \"stderr\", \"csvlog\", and \"jsonlog\".")));
 	}
 
 	fd = AllocateFile(LOG_METAINFO_DATAFILE, "r");

@@ -78,5 +78,31 @@ SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 3));
 SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 4));
 SELECT * FROM hash_page_items(get_raw_page('test_hash_a_idx', 5));
 
+-- Failure with non-hash index
+CREATE INDEX test_hash_a_btree ON test_hash USING btree (a);
+SELECT hash_bitmap_info('test_hash_a_btree', 0);
+
+-- Failure with various modes.
+-- Suppress the DETAIL message, to allow the tests to work across various
+-- page sizes and architectures.
+\set VERBOSITY terse
+-- invalid page size
+SELECT hash_metapage_info('aaa'::bytea);
+SELECT hash_page_items('bbb'::bytea);
+SELECT hash_page_stats('ccc'::bytea);
+SELECT hash_page_type('ddd'::bytea);
+-- invalid special area size
+SELECT hash_metapage_info(get_raw_page('test_hash', 0));
+SELECT hash_page_items(get_raw_page('test_hash', 0));
+SELECT hash_page_stats(get_raw_page('test_hash', 0));
+SELECT hash_page_type(get_raw_page('test_hash', 0));
+\set VERBOSITY default
+
+-- Tests with all-zero pages.
+SHOW block_size \gset
+SELECT hash_metapage_info(decode(repeat('00', :block_size), 'hex'));
+SELECT hash_page_items(decode(repeat('00', :block_size), 'hex'));
+SELECT hash_page_stats(decode(repeat('00', :block_size), 'hex'));
+SELECT hash_page_type(decode(repeat('00', :block_size), 'hex'));
 
 DROP TABLE test_hash;

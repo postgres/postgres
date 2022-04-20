@@ -1,10 +1,18 @@
--- directory paths are passed to us in environment variables
-\getenv abs_builddir PG_ABS_BUILDDIR
-\set testtablespace :abs_builddir '/testtablespace'
+-- relative tablespace locations are not allowed
+CREATE TABLESPACE regress_tblspace LOCATION 'relative'; -- fail
+ERROR:  tablespace location must be an absolute path
+-- empty tablespace locations are not usually allowed
+CREATE TABLESPACE regress_tblspace LOCATION ''; -- fail
+ERROR:  tablespace location must be an absolute path
+-- as a special developer-only option to allow us to use tablespaces
+-- with streaming replication on the same server, an empty location
+-- can be allowed as a way to say that the tablespace should be created
+-- as a directory in pg_tblspc, rather than being a symlink
+SET allow_in_place_tablespaces = true;
 -- create a tablespace using WITH clause
-CREATE TABLESPACE regress_tblspacewith LOCATION :'testtablespace' WITH (some_nonexistent_parameter = true); -- fail
+CREATE TABLESPACE regress_tblspacewith LOCATION '' WITH (some_nonexistent_parameter = true); -- fail
 ERROR:  unrecognized parameter "some_nonexistent_parameter"
-CREATE TABLESPACE regress_tblspacewith LOCATION :'testtablespace' WITH (random_page_cost = 3.0); -- ok
+CREATE TABLESPACE regress_tblspacewith LOCATION '' WITH (random_page_cost = 3.0); -- ok
 -- check to see the parameter was used
 SELECT spcoptions FROM pg_tablespace WHERE spcname = 'regress_tblspacewith';
        spcoptions       
@@ -15,7 +23,16 @@ SELECT spcoptions FROM pg_tablespace WHERE spcname = 'regress_tblspacewith';
 -- drop the tablespace so we can re-use the location
 DROP TABLESPACE regress_tblspacewith;
 -- create a tablespace we can use
-CREATE TABLESPACE regress_tblspace LOCATION :'testtablespace';
+CREATE TABLESPACE regress_tblspace LOCATION '';
+-- This returns a relative path as of an effect of allow_in_place_tablespaces,
+-- masking the tablespace OID used in the path name.
+SELECT regexp_replace(pg_tablespace_location(oid), '(pg_tblspc)/(\d+)', '\1/NNN')
+  FROM pg_tablespace  WHERE spcname = 'regress_tblspace';
+ regexp_replace 
+----------------
+ pg_tblspc/NNN
+(1 row)
+
 -- try setting and resetting some properties for the new tablespace
 ALTER TABLESPACE regress_tblspace SET (random_page_cost = 1.0, seq_page_cost = 1.1);
 ALTER TABLESPACE regress_tblspace SET (some_nonexistent_parameter = true);  -- fail
@@ -888,6 +905,16 @@ SELECT COUNT(*) FROM testschema.atable;		-- checks heap
      3
 (1 row)
 
+-- let's try moving a materialized view from one place to another
+CREATE MATERIALIZED VIEW testschema.amv AS SELECT * FROM testschema.atable;
+ALTER MATERIALIZED VIEW testschema.amv SET TABLESPACE regress_tblspace;
+REFRESH MATERIALIZED VIEW testschema.amv;
+SELECT COUNT(*) FROM testschema.amv;
+ count 
+-------
+     3
+(1 row)
+
 -- Will fail with bad path
 CREATE TABLESPACE regress_badspace LOCATION '/no/such/location';
 ERROR:  directory "/no/such/location" does not exist
@@ -922,18 +949,22 @@ RESET ROLE;
 ALTER TABLESPACE regress_tblspace RENAME TO regress_tblspace_renamed;
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 ALTER INDEX ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 -- Should show notice that nothing was done
 ALTER TABLE ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
+NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
+ALTER MATERIALIZED VIEW ALL IN TABLESPACE regress_tblspace_renamed SET TABLESPACE pg_default;
 NOTICE:  no matching relations in tablespace "regress_tblspace_renamed" found
 -- Should succeed
 DROP TABLESPACE regress_tblspace_renamed;
 DROP SCHEMA testschema CASCADE;
-NOTICE:  drop cascades to 6 other objects
+NOTICE:  drop cascades to 7 other objects
 DETAIL:  drop cascades to table testschema.foo
 drop cascades to table testschema.asselect
 drop cascades to table testschema.asexecute
 drop cascades to table testschema.part
 drop cascades to table testschema.atable
+drop cascades to materialized view testschema.amv
 drop cascades to table testschema.tablespace_acl
 DROP ROLE regress_tablespace_user1;
 DROP ROLE regress_tablespace_user2;

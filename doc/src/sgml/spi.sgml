@@ -99,10 +99,9 @@ int SPI_connect_ext(int <parameter>options</parameter>)
      <listitem>
       <para>
        Sets the SPI connection to be <firstterm>nonatomic</firstterm>, which
-       means that transaction control calls <function>SPI_commit</function>,
-       <function>SPI_rollback</function>, and
-       <function>SPI_start_transaction</function> are allowed.  Otherwise,
-       calling these functions will result in an immediate error.
+       means that transaction control calls (<function>SPI_commit</function>,
+       <function>SPI_rollback</function>) are allowed.  Otherwise,
+       calling those functions will result in an immediate error.
       </para>
      </listitem>
     </varlistentry>
@@ -5040,15 +5039,17 @@ void SPI_commit_and_chain(void)
   <para>
    <function>SPI_commit</function> commits the current transaction.  It is
    approximately equivalent to running the SQL
-   command <command>COMMIT</command>.  After a transaction is committed, a new
-   transaction has to be started
-   using <function>SPI_start_transaction</function> before further database
-   actions can be executed.
+   command <command>COMMIT</command>.  After the transaction is committed, a
+   new transaction is automatically started using default transaction
+   characteristics, so that the caller can continue using SPI facilities.
+   If there is a failure during commit, the current transaction is instead
+   rolled back and a new transaction is started, after which the error is
+   thrown in the usual way.
   </para>
 
   <para>
-   <function>SPI_commit_and_chain</function> is the same, but a new
-   transaction is immediately started with the same transaction
+   <function>SPI_commit_and_chain</function> is the same, but the new
+   transaction is started with the same transaction
    characteristics as the just finished one, like with the SQL command
    <command>COMMIT AND CHAIN</command>.
   </para>
@@ -5093,14 +5094,13 @@ void SPI_rollback_and_chain(void)
   <para>
    <function>SPI_rollback</function> rolls back the current transaction.  It
    is approximately equivalent to running the SQL
-   command <command>ROLLBACK</command>.  After a transaction is rolled back, a
-   new transaction has to be started
-   using <function>SPI_start_transaction</function> before further database
-   actions can be executed.
+   command <command>ROLLBACK</command>.  After the transaction is rolled back,
+   a new transaction is automatically started using default transaction
+   characteristics, so that the caller can continue using SPI facilities.
   </para>
   <para>
-   <function>SPI_rollback_and_chain</function> is the same, but a new
-   transaction is immediately started with the same transaction
+   <function>SPI_rollback_and_chain</function> is the same, but the new
+   transaction is started with the same transaction
    characteristics as the just finished one, like with the SQL command
    <command>ROLLBACK AND CHAIN</command>.
   </para>
@@ -5124,7 +5124,7 @@ void SPI_rollback_and_chain(void)
 
  <refnamediv>
   <refname>SPI_start_transaction</refname>
-  <refpurpose>start a new transaction</refpurpose>
+  <refpurpose>obsolete function</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -5137,17 +5137,12 @@ void SPI_start_transaction(void)
   <title>Description</title>
 
   <para>
-   <function>SPI_start_transaction</function> starts a new transaction.  It
-   can only be called after <function>SPI_commit</function>
-   or <function>SPI_rollback</function>, as there is no transaction active at
-   that point.  Normally, when an SPI-using procedure is called, there is already a
-   transaction active, so attempting to start another one before closing out
-   the current one will result in an error.
-  </para>
-
-  <para>
-   This function can only be executed if the SPI connection has been set as
-   nonatomic in the call to <function>SPI_connect_ext</function>.
+   <function>SPI_start_transaction</function> does nothing, and exists
+   only for code compatibility with
+   earlier <productname>PostgreSQL</productname> releases.  It used to
+   be required after calling <function>SPI_commit</function>
+   or <function>SPI_rollback</function>, but now those functions start
+   a new transaction automatically.
   </para>
  </refsect1>
 </refentry>

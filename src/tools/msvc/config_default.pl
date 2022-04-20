@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Configuration arguments for vcbuild.
 use strict;
@@ -15,6 +15,7 @@ our $config = {
 	gss       => undef,    # --with-gssapi=<path>
 	icu       => undef,    # --with-icu=<path>
 	lz4       => undef,    # --with-lz4=<path>
+	zstd      => undef,    # --with-zstd=<path>
 	nls       => undef,    # --enable-nls=<path>
 	tap_tests => undef,    # --enable-tap-tests
 	tcl       => undef,    # --with-tcl=<path>

@@ -2,7 +2,7 @@
  *
  * Facilities for frontend code to connect to and disconnect from databases.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/fe_utils/connect_utils.h

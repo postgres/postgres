@@ -136,9 +136,9 @@
      The auxiliary processes consist of <!-- in alphabetical order -->
      <!-- NB: In the code, the autovac launcher doesn't use the auxiliary
           process scaffolding; however it does behave as one so we list it
-          here anyway. In addition, logger and stats collector aren't
-          connected to shared memory so most code outside postmaster.c
-          doesn't even consider them "procs" in the first place.
+          here anyway. In addition, logger isn't connected to shared memory so
+          most code outside postmaster.c doesn't even consider it a "proc" in
+          the first place.
           -->
      the <glossterm linkend="glossary-autovacuum">autovacuum launcher</glossterm>
      (but not the autovacuum workers),
@@ -146,7 +146,6 @@
      the <glossterm linkend="glossary-checkpointer">checkpointer</glossterm>,
      the <glossterm linkend="glossary-logger">logger</glossterm>,
      the <glossterm linkend="glossary-startup-process">startup process</glossterm>,
-     the <glossterm linkend="glossary-stats-collector">statistics collector</glossterm>,
      the <glossterm linkend="glossary-wal-archiver">WAL archiver</glossterm>,
      the <glossterm linkend="glossary-wal-receiver">WAL receiver</glossterm>
      (but not the <glossterm linkend="glossary-wal-sender">WAL senders</glossterm>),
@@ -430,6 +429,21 @@
     <para>
      For more information, see
      <xref linkend="ddl-constraints"/>.
+    </para>
+   </glossdef>
+  </glossentry>
+
+  <glossentry id="glossary-cumulative-statistics">
+   <glossterm>Cumulative Statistics System</glossterm>
+   <glossdef>
+    <para>
+     A system which, if enabled, accumulates statistical information
+     about the <glossterm linkend="glossary-instance">instance</glossterm>'s
+     activities.
+    </para>
+    <para>
+      For more information, see
+      <xref linkend="monitoring-stats"/>.
     </para>
    </glossdef>
   </glossentry>
@@ -1489,22 +1503,6 @@
    </glossdef>
   </glossentry>
 
-  <glossentry id="glossary-startup-process">
-   <glossterm>Startup process</glossterm>
-   <glossdef>
-    <para>
-     An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
-     that replays WAL during crash recovery and in a
-     <glossterm linkend="glossary-replication">physical replica</glossterm>.
-    </para>
-    <para>
-     (The name is historical: the startup process was named before
-     replication was implemented; the name refers to its task as it
-     relates to the server startup following a crash.)
-    </para>
-   </glossdef>
-  </glossentry>
-
   <glossentry id="glossary-sql-object">
    <glossterm>SQL object</glossterm>
     <glossdef>
@@ -1563,18 +1561,18 @@
    <glosssee otherterm="glossary-replica" />
   </glossentry>
 
-  <glossentry id="glossary-stats-collector">
-   <glossterm>Stats collector (process)</glossterm>
+  <glossentry id="glossary-startup-process">
+   <glossterm>Startup process</glossterm>
    <glossdef>
     <para>
      An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>
-     which, if enabled, receives statistical information
-     about the <glossterm linkend="glossary-instance">instance</glossterm>'s
-     activities.
+     that replays WAL during crash recovery and in a
+     <glossterm linkend="glossary-replication">physical replica</glossterm>.
     </para>
     <para>
-      For more information, see
-      <xref linkend="monitoring-stats"/>.
+     (The name is historical: the startup process was named before
+     replication was implemented; the name refers to its task as it
+     relates to the server startup following a crash.)
     </para>
    </glossdef>
   </glossentry>
@@ -1972,7 +1970,7 @@
   </glossentry>
 
   <glossentry id="glossary-wal-receiver">
-   <glossterm>WAL receiver</glossterm>
+   <glossterm>WAL receiver (process)</glossterm>
    <glossdef>
     <para>
      An <glossterm linkend="glossary-auxiliary-proc">auxiliary process</glossterm>

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Demonstrate that logical can follow timeline switches.
 #
@@ -26,7 +26,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 13;
+use Test::More;
 use File::Copy;
 use IPC::Run ();
 use Scalar::Util qw(blessed);
@@ -69,7 +69,9 @@ $node_primary->safe_psql('dropme',
 $node_primary->safe_psql('postgres', 'CHECKPOINT;');
 
 my $backup_name = 'b1';
-$node_primary->backup_fs_hot($backup_name);
+$node_primary->stop();
+$node_primary->backup_fs_cold($backup_name);
+$node_primary->start();
 
 $node_primary->safe_psql('postgres',
 	q[SELECT pg_create_physical_replication_slot('phys_slot');]);
@@ -88,8 +90,7 @@ $node_replica->start;
 # db and associated slot.
 is($node_primary->psql('postgres', 'DROP DATABASE dropme'),
 	0, 'dropped DB with logical slot OK on primary');
-$node_primary->wait_for_catchup($node_replica, 'replay',
-	$node_primary->lsn('insert'));
+$node_primary->wait_for_catchup($node_replica);
 is( $node_replica->safe_psql(
 		'postgres', q[SELECT 1 FROM pg_database WHERE datname = 'dropme']),
 	'',
@@ -158,7 +159,7 @@ like(
 ($ret, $stdout, $stderr) = $node_replica->psql(
 	'postgres',
 	"SELECT data FROM pg_logical_slot_peek_changes('before_basebackup', NULL, NULL, 'include-xids', '0', 'skip-empty-xacts', '1');",
-	timeout => 180);
+	timeout => $PostgreSQL::Test::Utils::timeout_default);
 is($ret, 0, 'replay from slot before_basebackup succeeds');
 
 my $final_expected_output_bb = q(BEGIN
@@ -187,7 +188,7 @@ my $endpos = $node_replica->safe_psql('postgres',
 
 $stdout = $node_replica->pg_recvlogical_upto(
 	'postgres', 'before_basebackup',
-	$endpos,    180,
+	$endpos,    $PostgreSQL::Test::Utils::timeout_default,
 	'include-xids'     => '0',
 	'skip-empty-xacts' => '1');
 
@@ -197,3 +198,5 @@ is($stdout, $final_expected_output_bb,
 	'got same output from walsender via pg_recvlogical on before_basebackup');
 
 $node_replica->teardown_node();
+
+done_testing();

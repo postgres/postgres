@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test replication statistics data in pg_stat_replication_slots is sane after
 # drop replication slot and restart.
@@ -8,7 +8,7 @@ use warnings;
 use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 
 # Test set-up
 my $node = PostgreSQL::Test::Cluster->new('test');
@@ -88,8 +88,7 @@ regression_slot3|t|t),
 # Test to remove one of the replication slots and adjust
 # max_replication_slots accordingly to the number of slots. This leads
 # to a mismatch between the number of slots present in the stats file and the
-# number of stats present in the shared memory, simulating the scenario for
-# drop slot message lost by the statistics collector process. We verify
+# number of stats present in shared memory. We verify
 # replication statistics data is fine after restart.
 
 $node->stop;
@@ -118,3 +117,5 @@ $node->safe_psql('postgres',
 
 # shutdown
 $node->stop;
+
+done_testing();

@@ -1,12 +1,11 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
-use Config;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 12;
+use Test::More;
 
 #########################################
 # Basic checks
@@ -26,3 +25,5 @@ command_fails_like(
 	[ 'pg_test_timing', '--duration', '0' ],
 	qr/\Qpg_test_timing: --duration must be in range 1..4294967295\E/,
 	'pg_test_timing: --duration must be in range');
+
+done_testing();

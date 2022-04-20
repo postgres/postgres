@@ -3,7 +3,7 @@
  * ts_type.h
  *	  Definitions for the tsvector and tsquery types
  *
- * Copyright (c) 1998-2021, PostgreSQL Global Development Group
+ * Copyright (c) 1998-2022, PostgreSQL Global Development Group
  *
  * src/include/tsearch/ts_type.h
  *
@@ -169,9 +169,9 @@ typedef struct
 #define OP_PHRASE		4		/* highest code, tsquery_cleanup.c */
 #define OP_COUNT		4
 
-extern const int tsearch_op_priority[OP_COUNT];
+extern PGDLLIMPORT const int tsearch_op_priority[OP_COUNT];
 
-/* get operation priority  by its code*/
+/* get operation priority by its code */
 #define OP_PRIORITY(x)	( tsearch_op_priority[(x) - 1] )
 /* get QueryOperator priority */
 #define QO_PRIORITY(x)	OP_PRIORITY(((QueryOperator *) (x))->oper)

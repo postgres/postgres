@@ -3,7 +3,7 @@
 # GNUmakefile--
 #    Makefile for src/test/regress (the regression tests)
 #
-# Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # src/test/regress/GNUmakefile
@@ -25,8 +25,7 @@ endif
 
 # stuff to pass into build of pg_regress
 EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
-	'-DSHELLPROG="$(SHELL)"' \
-	'-DDLSUFFIX="$(DLSUFFIX)"'
+	'-DSHELLPROG="$(SHELL)"'
 
 ##
 ## Prepare for tests
@@ -112,7 +111,7 @@ submake-contrib-spi: | submake-libpgport submake-generated-headers
 ## Run tests
 ##
 
-REGRESS_OPTS = --dlpath=. --max-concurrent-tests=20 --make-testtablespace-dir \
+REGRESS_OPTS = --dlpath=. --max-concurrent-tests=20 \
 	$(EXTRA_REGRESS_OPTS)
 
 check: all
@@ -129,9 +128,6 @@ installcheck-parallel: all
 
 installcheck-tests: all
 	$(pg_regress_installcheck) $(REGRESS_OPTS) $(TESTS) $(EXTRA_TESTS)
-
-standbycheck: all
-	$(pg_regress_installcheck) $(REGRESS_OPTS) --schedule=$(srcdir)/standby_schedule --use-existing
 
 # old interfaces follow...
 
@@ -155,5 +151,4 @@ clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 	rm -f pg_regress_main.o pg_regress.o pg_regress$(X)
 # things created by various check targets
-	rm -rf testtablespace
 	rm -rf $(pg_regress_clean_files)

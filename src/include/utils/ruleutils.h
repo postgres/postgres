@@ -3,7 +3,7 @@
  * ruleutils.h
  *		Declarations for ruleutils.c
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/ruleutils.h
@@ -23,6 +23,7 @@ struct PlannedStmt;
 
 extern char *pg_get_indexdef_string(Oid indexrelid);
 extern char *pg_get_indexdef_columns(Oid indexrelid, bool pretty);
+extern char *pg_get_querydef(Query *query, bool pretty);
 
 extern char *pg_get_partkeydef_columns(Oid relid, bool pretty);
 extern char *pg_get_partconstrdef_string(Oid partitionId, char *aliasname);

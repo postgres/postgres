@@ -86,7 +86,7 @@
  *	when using the SysV semaphore code.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	  src/include/storage/s_lock.h
@@ -337,6 +337,23 @@ tas(volatile slock_t *lock)
 
 #define S_UNLOCK(lock) __sync_lock_release(lock)
 
+/*
+ * Using an ISB instruction to delay in spinlock loops appears beneficial on
+ * high-core-count ARM64 processors.  It seems mostly a wash for smaller gear,
+ * and ISB doesn't exist at all on pre-v7 ARM chips.
+ */
+#if defined(__aarch64__) || defined(__aarch64)
+
+#define SPIN_DELAY() spin_delay()
+
+static __inline__ void
+spin_delay(void)
+{
+	__asm__ __volatile__(
+		" isb;				\n");
+}
+
+#endif	 /* __aarch64__ || __aarch64 */
 #endif	 /* HAVE_GCC__SYNC_INT32_TAS */
 #endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
 
@@ -1025,7 +1042,7 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 #define TAS_SPIN(lock)	TAS(lock)
 #endif	 /* TAS_SPIN */
 
-extern slock_t dummy_spinlock;
+extern PGDLLIMPORT slock_t dummy_spinlock;
 
 /*
  * Platform-independent out-of-line support routines

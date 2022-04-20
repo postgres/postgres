@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -11,10 +11,6 @@ use Test::More;
 if ($PostgreSQL::Test::Utils::is_msys2)
 {
 	plan skip_all => 'High bit name tests fail on Msys2';
-}
-else
-{
-	plan tests => 14;
 }
 
 # We're going to use byte sequences that aren't valid UTF-8 strings.  Use
@@ -229,3 +225,5 @@ $cmdline_node->run_log(
 ok($result,
 	'restore full dump with command-line options for connection parameters');
 is($stderr, '', 'no dump errors');
+
+done_testing();

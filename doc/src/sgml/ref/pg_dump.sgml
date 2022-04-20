@@ -932,6 +932,23 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--no-table-access-method</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select table access methods.
+        With this option, all objects will be created with whichever
+        table access method is the default during restore.
+       </para>
+
+       <para>
+        This option is ignored when emitting an archive (non-text) output
+        file.  For the archive formats, you can specify the option when you
+        call <command>pg_restore</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-tablespaces</option></term>
       <listitem>
        <para>
@@ -964,9 +981,10 @@ PostgreSQL documentation
       <term><option>--no-unlogged-table-data</option></term>
       <listitem>
        <para>
-        Do not dump the contents of unlogged tables.  This option has no
-        effect on whether or not the table definitions (schema) are dumped;
-        it only suppresses dumping the table data. Data in unlogged tables
+        Do not dump the contents of unlogged tables and sequences.  This
+        option has no effect on whether or not the table and sequence
+        definitions (schema) are dumped; it only suppresses dumping the table
+        and sequence data. Data in unlogged tables and sequences
         is always excluded when dumping from a standby server.
        </para>
       </listitem>
@@ -1311,7 +1329,7 @@ PostgreSQL documentation
 
   <para>
    The database activity of <application>pg_dump</application> is
-   normally collected by the statistics collector.  If this is
+   normally collected by the cumulative statistics system.  If this is
    undesirable, you can set parameter <varname>track_counts</varname>
    to false via <envar>PGOPTIONS</envar> or the <literal>ALTER
    USER</literal> command.

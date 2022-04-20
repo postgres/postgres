@@ -1,0 +1,114 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_b s1_xid s2_init s1_view_slot s1_cancel_s2 s1_view_slot s1_c
+step s1_b: BEGIN;
+step s1_xid: SELECT 'xid' FROM txid_current();
+?column?
+--------
+xid     
+(1 row)
+
+step s2_init: 
+    SELECT 'init' FROM pg_create_logical_replication_slot('slot_creation_error', 'test_decoding');
+ <waiting ...>
+step s1_view_slot: 
+    SELECT slot_name, slot_type, active FROM pg_replication_slots WHERE slot_name = 'slot_creation_error'
+
+slot_name          |slot_type|active
+-------------------+---------+------
+slot_creation_error|logical  |t     
+(1 row)
+
+step s1_cancel_s2: 
+    SELECT pg_cancel_backend(pid)
+    FROM pg_stat_activity
+    WHERE application_name = 'isolation/slot_creation_error/s2';
+ <waiting ...>
+step s2_init: <... completed>
+ERROR:  canceling statement due to user request
+step s1_cancel_s2: <... completed>
+pg_cancel_backend
+-----------------
+t                
+(1 row)
+
+step s1_view_slot: 
+    SELECT slot_name, slot_type, active FROM pg_replication_slots WHERE slot_name = 'slot_creation_error'
+
+slot_name|slot_type|active
+---------+---------+------
+(0 rows)
+
+step s1_c: COMMIT;
+
+starting permutation: s1_b s1_xid s2_init s1_c s1_view_slot s1_drop_slot
+step s1_b: BEGIN;
+step s1_xid: SELECT 'xid' FROM txid_current();
+?column?
+--------
+xid     
+(1 row)
+
+step s2_init: 
+    SELECT 'init' FROM pg_create_logical_replication_slot('slot_creation_error', 'test_decoding');
+ <waiting ...>
+step s1_c: COMMIT;
+step s2_init: <... completed>
+?column?
+--------
+init    
+(1 row)
+
+step s1_view_slot: 
+    SELECT slot_name, slot_type, active FROM pg_replication_slots WHERE slot_name = 'slot_creation_error'
+
+slot_name          |slot_type|active
+-------------------+---------+------
+slot_creation_error|logical  |f     
+(1 row)
+
+step s1_drop_slot: 
+    SELECT pg_drop_replication_slot('slot_creation_error');
+
+pg_drop_replication_slot
+------------------------
+                        
+(1 row)
+
+
+starting permutation: s1_b s1_xid s2_init s1_terminate_s2 s1_c s1_view_slot
+step s1_b: BEGIN;
+step s1_xid: SELECT 'xid' FROM txid_current();
+?column?
+--------
+xid     
+(1 row)
+
+step s2_init: 
+    SELECT 'init' FROM pg_create_logical_replication_slot('slot_creation_error', 'test_decoding');
+ <waiting ...>
+step s1_terminate_s2: 
+    SELECT pg_terminate_backend(pid)
+    FROM pg_stat_activity
+    WHERE application_name = 'isolation/slot_creation_error/s2';
+ <waiting ...>
+step s2_init: <... completed>
+FATAL:  terminating connection due to administrator command
+server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+step s1_terminate_s2: <... completed>
+pg_terminate_backend
+--------------------
+t                   
+(1 row)
+
+step s1_c: COMMIT;
+step s1_view_slot: 
+    SELECT slot_name, slot_type, active FROM pg_replication_slots WHERE slot_name = 'slot_creation_error'
+
+slot_name|slot_type|active
+---------+---------+------
+(0 rows)
+

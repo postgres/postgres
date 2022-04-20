@@ -2,7 +2,7 @@
  * logical.c
  *	   PostgreSQL logical decoding coordination
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/logical.c
@@ -672,12 +672,14 @@ OutputPluginWrite(struct LogicalDecodingContext *ctx, bool last_write)
  * Update progress tracking (if supported).
  */
 void
-OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx)
+OutputPluginUpdateProgress(struct LogicalDecodingContext *ctx,
+						   bool skipped_xact)
 {
 	if (!ctx->update_progress)
 		return;
 
-	ctx->update_progress(ctx, ctx->write_location, ctx->write_xid);
+	ctx->update_progress(ctx, ctx->write_location, ctx->write_xid,
+						 skipped_xact);
 }
 
 /*
@@ -1821,7 +1823,6 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 		 (long long) rb->totalTxns,
 		 (long long) rb->totalBytes);
 
-	namestrcpy(&repSlotStat.slotname, NameStr(ctx->slot->data.name));
 	repSlotStat.spill_txns = rb->spillTxns;
 	repSlotStat.spill_count = rb->spillCount;
 	repSlotStat.spill_bytes = rb->spillBytes;
@@ -1831,7 +1832,7 @@ UpdateDecodingStats(LogicalDecodingContext *ctx)
 	repSlotStat.total_txns = rb->totalTxns;
 	repSlotStat.total_bytes = rb->totalBytes;
 
-	pgstat_report_replslot(&repSlotStat);
+	pgstat_report_replslot(ctx->slot, &repSlotStat);
 
 	rb->spillTxns = 0;
 	rb->spillCount = 0;

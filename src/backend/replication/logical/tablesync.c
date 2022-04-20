@@ -2,7 +2,7 @@
  * tablesync.c
  *	  PostgreSQL logical replication: initial table data synchronization
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/replication/logical/tablesync.c
@@ -111,9 +111,12 @@
 #include "replication/origin.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
+#include "utils/acl.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/rls.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 
@@ -137,7 +140,7 @@ finish_sync_worker(void)
 	if (IsTransactionState())
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 
 	/* And flush all writes. */
@@ -576,7 +579,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	if (started_tx)
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 }
 
@@ -688,19 +691,24 @@ copy_read_data(void *outbuf, int minread, int maxread)
 
 /*
  * Get information about remote relation in similar fashion the RELATION
- * message provides during replication.
+ * message provides during replication. This function also returns the relation
+ * qualifications to be used in the COPY command.
  */
 static void
 fetch_remote_table_info(char *nspname, char *relname,
-						LogicalRepRelation *lrel)
+						LogicalRepRelation *lrel, List **qual)
 {
 	WalRcvExecResult *res;
 	StringInfoData cmd;
 	TupleTableSlot *slot;
 	Oid			tableRow[] = {OIDOID, CHAROID, CHAROID};
-	Oid			attrRow[] = {TEXTOID, OIDOID, BOOLOID};
+	Oid			attrRow[] = {INT2OID, TEXTOID, OIDOID, BOOLOID};
+	Oid			qualRow[] = {TEXTOID};
 	bool		isnull;
 	int			natt;
+	ListCell   *lc;
+	bool		first;
+	Bitmapset  *included_cols = NULL;
 
 	lrel->nspname = nspname;
 	lrel->relname = relname;
@@ -741,10 +749,110 @@ fetch_remote_table_info(char *nspname, char *relname,
 	ExecDropSingleTupleTableSlot(slot);
 	walrcv_clear_result(res);
 
-	/* Now fetch columns. */
+
+	/*
+	 * Get column lists for each relation.
+	 *
+	 * For initial synchronization, column lists can be ignored in following
+	 * cases:
+	 *
+	 * 1) one of the subscribed publications for the table hasn't specified
+	 * any column list
+	 *
+	 * 2) one of the subscribed publications has puballtables set to true
+	 *
+	 * 3) one of the subscribed publications is declared as ALL TABLES IN
+	 * SCHEMA that includes this relation
+	 *
+	 * We need to do this before fetching info about column names and types,
+	 * so that we can skip columns that should not be replicated.
+	 */
+	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
+	{
+		WalRcvExecResult *pubres;
+		TupleTableSlot *slot;
+		Oid			attrsRow[] = {INT2OID};
+		StringInfoData pub_names;
+		bool		first = true;
+
+		initStringInfo(&pub_names);
+		foreach(lc, MySubscription->publications)
+		{
+			if (!first)
+				appendStringInfo(&pub_names, ", ");
+			appendStringInfoString(&pub_names, quote_literal_cstr(strVal(lfirst(lc))));
+			first = false;
+		}
+
+		/*
+		 * Fetch info about column lists for the relation (from all the
+		 * publications). We unnest the int2vector values, because that
+		 * makes it easier to combine lists by simply adding the attnums
+		 * to a new bitmap (without having to parse the int2vector data).
+		 * This preserves NULL values, so that if one of the publications
+		 * has no column list, we'll know that.
+		 */
+		resetStringInfo(&cmd);
+		appendStringInfo(&cmd,
+						 "SELECT DISTINCT unnest"
+						 "  FROM pg_publication p"
+						 "  LEFT OUTER JOIN pg_publication_rel pr"
+						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u)"
+						 "  LEFT OUTER JOIN unnest(pr.prattrs) ON TRUE,"
+						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
+						 " WHERE gpt.relid = %u"
+						 "   AND p.pubname IN ( %s )",
+						 lrel->remoteid,
+						 lrel->remoteid,
+						 pub_names.data);
+
+		pubres = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data,
+							 lengthof(attrsRow), attrsRow);
+
+		if (pubres->status != WALRCV_OK_TUPLES)
+			ereport(ERROR,
+					(errcode(ERRCODE_CONNECTION_FAILURE),
+					 errmsg("could not fetch column list info for table \"%s.%s\" from publisher: %s",
+							nspname, relname, pubres->err)));
+
+		/*
+		 * Merge the column lists (from different publications) by creating
+		 * a single bitmap with all the attnums. If we find a NULL value,
+		 * that means one of the publications has no column list for the
+		 * table we're syncing.
+		 */
+		slot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
+		while (tuplestore_gettupleslot(pubres->tuplestore, true, false, slot))
+		{
+			Datum	cfval = slot_getattr(slot, 1, &isnull);
+
+			/* NULL means empty column list, so we're done. */
+			if (isnull)
+			{
+				bms_free(included_cols);
+				included_cols = NULL;
+				break;
+			}
+
+			included_cols = bms_add_member(included_cols,
+										DatumGetInt16(cfval));
+
+			ExecClearTuple(slot);
+		}
+		ExecDropSingleTupleTableSlot(slot);
+
+		walrcv_clear_result(pubres);
+
+		pfree(pub_names.data);
+	}
+
+	/*
+	 * Now fetch column names and types.
+	 */
 	resetStringInfo(&cmd);
 	appendStringInfo(&cmd,
-					 "SELECT a.attname,"
+					 "SELECT a.attnum,"
+					 "       a.attname,"
 					 "       a.atttypid,"
 					 "       a.attnum = ANY(i.indkey)"
 					 "  FROM pg_catalog.pg_attribute a"
@@ -772,16 +880,35 @@ fetch_remote_table_info(char *nspname, char *relname,
 	lrel->atttyps = palloc0(MaxTupleAttributeNumber * sizeof(Oid));
 	lrel->attkeys = NULL;
 
+	/*
+	 * Store the columns as a list of names.  Ignore those that are not
+	 * present in the column list, if there is one.
+	 */
 	natt = 0;
 	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
 	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
 	{
-		lrel->attnames[natt] =
-			TextDatumGetCString(slot_getattr(slot, 1, &isnull));
+		char	   *rel_colname;
+		AttrNumber	attnum;
+
+		attnum = DatumGetInt16(slot_getattr(slot, 1, &isnull));
 		Assert(!isnull);
-		lrel->atttyps[natt] = DatumGetObjectId(slot_getattr(slot, 2, &isnull));
+
+		/* If the column is not in the column list, skip it. */
+		if (included_cols != NULL && !bms_is_member(attnum, included_cols))
+		{
+			ExecClearTuple(slot);
+			continue;
+		}
+
+		rel_colname = TextDatumGetCString(slot_getattr(slot, 2, &isnull));
 		Assert(!isnull);
-		if (DatumGetBool(slot_getattr(slot, 3, &isnull)))
+
+		lrel->attnames[natt] = rel_colname;
+		lrel->atttyps[natt] = DatumGetObjectId(slot_getattr(slot, 3, &isnull));
+		Assert(!isnull);
+
+		if (DatumGetBool(slot_getattr(slot, 4, &isnull)))
 			lrel->attkeys = bms_add_member(lrel->attkeys, natt);
 
 		/* Should never happen. */
@@ -796,6 +923,98 @@ fetch_remote_table_info(char *nspname, char *relname,
 	lrel->natts = natt;
 
 	walrcv_clear_result(res);
+
+	/*
+	 * Get relation's row filter expressions. DISTINCT avoids the same
+	 * expression of a table in multiple publications from being included
+	 * multiple times in the final expression.
+	 *
+	 * We need to copy the row even if it matches just one of the
+	 * publications, so we later combine all the quals with OR.
+	 *
+	 * For initial synchronization, row filtering can be ignored in following
+	 * cases:
+	 *
+	 * 1) one of the subscribed publications for the table hasn't specified
+	 * any row filter
+	 *
+	 * 2) one of the subscribed publications has puballtables set to true
+	 *
+	 * 3) one of the subscribed publications is declared as ALL TABLES IN
+	 * SCHEMA that includes this relation
+	 */
+	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
+	{
+		StringInfoData pub_names;
+
+		/* Build the pubname list. */
+		initStringInfo(&pub_names);
+		first = true;
+		foreach(lc, MySubscription->publications)
+		{
+			char	   *pubname = strVal(lfirst(lc));
+
+			if (first)
+				first = false;
+			else
+				appendStringInfoString(&pub_names, ", ");
+
+			appendStringInfoString(&pub_names, quote_literal_cstr(pubname));
+		}
+
+		/* Check for row filters. */
+		resetStringInfo(&cmd);
+		appendStringInfo(&cmd,
+						 "SELECT DISTINCT pg_get_expr(pr.prqual, pr.prrelid)"
+						 "  FROM pg_publication p"
+						 "  LEFT OUTER JOIN pg_publication_rel pr"
+						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u),"
+						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
+						 " WHERE gpt.relid = %u"
+						 "   AND p.pubname IN ( %s )",
+						 lrel->remoteid,
+						 lrel->remoteid,
+						 pub_names.data);
+
+		res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data, 1, qualRow);
+
+		if (res->status != WALRCV_OK_TUPLES)
+			ereport(ERROR,
+					(errmsg("could not fetch table WHERE clause info for table \"%s.%s\" from publisher: %s",
+							nspname, relname, res->err)));
+
+		/*
+		 * Multiple row filter expressions for the same table will be combined
+		 * by COPY using OR. If any of the filter expressions for this table
+		 * are null, it means the whole table will be copied. In this case it
+		 * is not necessary to construct a unified row filter expression at
+		 * all.
+		 */
+		slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
+		while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
+		{
+			Datum		rf = slot_getattr(slot, 1, &isnull);
+
+			if (!isnull)
+				*qual = lappend(*qual, makeString(TextDatumGetCString(rf)));
+			else
+			{
+				/* Ignore filters and cleanup as necessary. */
+				if (*qual)
+				{
+					list_free_deep(*qual);
+					*qual = NIL;
+				}
+				break;
+			}
+
+			ExecClearTuple(slot);
+		}
+		ExecDropSingleTupleTableSlot(slot);
+
+		walrcv_clear_result(res);
+	}
+
 	pfree(cmd.data);
 }
 
@@ -809,6 +1028,7 @@ copy_table(Relation rel)
 {
 	LogicalRepRelMapEntry *relmapentry;
 	LogicalRepRelation lrel;
+	List	   *qual = NIL;
 	WalRcvExecResult *res;
 	StringInfoData cmd;
 	CopyFromState cstate;
@@ -817,7 +1037,7 @@ copy_table(Relation rel)
 
 	/* Get the publisher relation info. */
 	fetch_remote_table_info(get_namespace_name(RelationGetNamespace(rel)),
-							RelationGetRelationName(rel), &lrel);
+							RelationGetRelationName(rel), &lrel, &qual);
 
 	/* Put the relation into relmap. */
 	logicalrep_relmap_update(&lrel);
@@ -828,14 +1048,34 @@ copy_table(Relation rel)
 
 	/* Start copy on the publisher. */
 	initStringInfo(&cmd);
-	if (lrel.relkind == RELKIND_RELATION)
-		appendStringInfo(&cmd, "COPY %s TO STDOUT",
+
+	/* Regular table with no row filter */
+	if (lrel.relkind == RELKIND_RELATION && qual == NIL)
+	{
+		appendStringInfo(&cmd, "COPY %s (",
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
+
+		/*
+		 * XXX Do we need to list the columns in all cases? Maybe we're replicating
+		 * all columns?
+		 */
+		for (int i = 0; i < lrel.natts; i++)
+		{
+			if (i > 0)
+				appendStringInfoString(&cmd, ", ");
+
+			appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));
+		}
+
+		appendStringInfo(&cmd, ") TO STDOUT");
+	}
 	else
 	{
 		/*
-		 * For non-tables, we need to do COPY (SELECT ...), but we can't just
-		 * do SELECT * because we need to not copy generated columns.
+		 * For non-tables and tables with row filters, we need to do COPY
+		 * (SELECT ...), but we can't just do SELECT * because we need to not
+		 * copy generated columns. For tables with any row filters, build a
+		 * SELECT query with OR'ed row filters for COPY.
 		 */
 		appendStringInfoString(&cmd, "COPY (SELECT ");
 		for (int i = 0; i < lrel.natts; i++)
@@ -844,8 +1084,33 @@ copy_table(Relation rel)
 			if (i < lrel.natts - 1)
 				appendStringInfoString(&cmd, ", ");
 		}
-		appendStringInfo(&cmd, " FROM %s) TO STDOUT",
-						 quote_qualified_identifier(lrel.nspname, lrel.relname));
+
+		appendStringInfoString(&cmd, " FROM ");
+
+		/*
+		 * For regular tables, make sure we don't copy data from a child that
+		 * inherits the named table as those will be copied separately.
+		 */
+		if (lrel.relkind == RELKIND_RELATION)
+			appendStringInfoString(&cmd, "ONLY ");
+
+		appendStringInfoString(&cmd, quote_qualified_identifier(lrel.nspname, lrel.relname));
+		/* list of OR'ed filters */
+		if (qual != NIL)
+		{
+			ListCell   *lc;
+			char	   *q = strVal(linitial(qual));
+
+			appendStringInfo(&cmd, " WHERE %s", q);
+			for_each_from(lc, qual, 1)
+			{
+				q = strVal(lfirst(lc));
+				appendStringInfo(&cmd, " OR %s", q);
+			}
+			list_free_deep(qual);
+		}
+
+		appendStringInfoString(&cmd, ") TO STDOUT");
 	}
 	res = walrcv_exec(LogRepWorkerWalRcvConn, cmd.data, 0, NULL);
 	pfree(cmd.data);
@@ -924,6 +1189,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	char		relstate;
 	XLogRecPtr	relstate_lsn;
 	Relation	rel;
+	AclResult	aclresult;
 	WalRcvExecResult *res;
 	char		originname[NAMEDATALEN];
 	RepOriginId originid;
@@ -1030,7 +1296,7 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 							   MyLogicalRepWorker->relstate,
 							   MyLogicalRepWorker->relstate_lsn);
 	CommitTransactionCommand();
-	pgstat_report_stat(false);
+	pgstat_report_stat(true);
 
 	StartTransactionCommand();
 
@@ -1041,6 +1307,31 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 	 * RowExclusiveLock when remapping remote relation id to local one.
 	 */
 	rel = table_open(MyLogicalRepWorker->relid, RowExclusiveLock);
+
+	/*
+	 * Check that our table sync worker has permission to insert into the
+	 * target table.
+	 */
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  ACL_INSERT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult,
+					   get_relkind_objtype(rel->rd_rel->relkind),
+					   RelationGetRelationName(rel));
+
+	/*
+	 * COPY FROM does not honor RLS policies.  That is not a problem for
+	 * subscriptions owned by roles with BYPASSRLS privilege (or superuser, who
+	 * has it implicitly), but other roles should not be able to circumvent
+	 * RLS.  Disallow logical replication into RLS enabled relations for such
+	 * roles.
+	 */
+	if (check_enable_rls(RelationGetRelid(rel), InvalidOid, false) == RLS_ENABLED)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("\"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
+						GetUserNameFromId(GetUserId(), true),
+						RelationGetRelationName(rel))));
 
 	/*
 	 * Start a transaction in the remote node in REPEATABLE READ mode.  This
@@ -1238,7 +1529,7 @@ AllTablesyncsReady(void)
 	if (started_tx)
 	{
 		CommitTransactionCommand();
-		pgstat_report_stat(false);
+		pgstat_report_stat(true);
 	}
 
 	/*

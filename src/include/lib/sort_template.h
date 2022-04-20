@@ -5,7 +5,7 @@
  *	  A template for a sort algorithm that supports varying degrees of
  *	  specialization.
  *
- * Copyright (c) 2021, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1992-1994, Regents of the University of California
  *
  * Usage notes:
@@ -407,6 +407,7 @@ loop:
 #undef DO_SORT
 #undef DO_SWAP
 #undef DO_SWAPN
+#undef ST_CHECK_FOR_INTERRUPTS
 #undef ST_COMPARATOR_TYPE_NAME
 #undef ST_COMPARE
 #undef ST_COMPARE_ARG_TYPE

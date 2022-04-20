@@ -3,7 +3,7 @@
  * objectaddress.c
  *	  functions for working with ObjectAddresses
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -45,6 +45,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
+#include "catalog/pg_parameter_acl.h"
 #include "catalog/pg_policy.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_publication.h"
@@ -818,6 +819,10 @@ static const struct object_type_map
 	{
 		"event trigger", OBJECT_EVENT_TRIGGER
 	},
+	/* OCLASS_PARAMETER_ACL */
+	{
+		"parameter ACL", OBJECT_PARAMETER_ACL
+	},
 	/* OCLASS_POLICY */
 	{
 		"policy", OBJECT_POLICY
@@ -1002,7 +1007,6 @@ get_object_address(ObjectType objtype, Node *object,
 					address.objectId = get_domain_constraint_oid(domaddr.objectId,
 																 constrname, missing_ok);
 					address.objectSubId = 0;
-
 				}
 				break;
 			case OBJECT_DATABASE:
@@ -1014,6 +1018,7 @@ get_object_address(ObjectType objtype, Node *object,
 			case OBJECT_FDW:
 			case OBJECT_FOREIGN_SERVER:
 			case OBJECT_EVENT_TRIGGER:
+			case OBJECT_PARAMETER_ACL:
 			case OBJECT_ACCESS_METHOD:
 			case OBJECT_PUBLICATION:
 			case OBJECT_SUBSCRIPTION:
@@ -1315,6 +1320,11 @@ get_object_address_unqualified(ObjectType objtype,
 			address.objectId = get_event_trigger_oid(name, missing_ok);
 			address.objectSubId = 0;
 			break;
+		case OBJECT_PARAMETER_ACL:
+			address.classId = ParameterAclRelationId;
+			address.objectId = ParameterAclLookup(name, missing_ok);
+			address.objectSubId = 0;
+			break;
 		case OBJECT_PUBLICATION:
 			address.classId = PublicationRelationId;
 			address.objectId = get_publication_oid(name, missing_ok);
@@ -1578,39 +1588,11 @@ get_object_address_attrdef(ObjectType objtype, List *object,
 
 	tupdesc = RelationGetDescr(relation);
 
-	/* Look up attribute number and scan pg_attrdef to find its tuple */
+	/* Look up attribute number and fetch the pg_attrdef OID */
 	attnum = get_attnum(reloid, attname);
 	defoid = InvalidOid;
 	if (attnum != InvalidAttrNumber && tupdesc->constr != NULL)
-	{
-		Relation	attrdef;
-		ScanKeyData keys[2];
-		SysScanDesc scan;
-		HeapTuple	tup;
-
-		attrdef = relation_open(AttrDefaultRelationId, AccessShareLock);
-		ScanKeyInit(&keys[0],
-					Anum_pg_attrdef_adrelid,
-					BTEqualStrategyNumber,
-					F_OIDEQ,
-					ObjectIdGetDatum(reloid));
-		ScanKeyInit(&keys[1],
-					Anum_pg_attrdef_adnum,
-					BTEqualStrategyNumber,
-					F_INT2EQ,
-					Int16GetDatum(attnum));
-		scan = systable_beginscan(attrdef, AttrDefaultIndexId, true,
-								  NULL, 2, keys);
-		if (HeapTupleIsValid(tup = systable_getnext(scan)))
-		{
-			Form_pg_attrdef atdform = (Form_pg_attrdef) GETSTRUCT(tup);
-
-			defoid = atdform->oid;
-		}
-
-		systable_endscan(scan);
-		relation_close(attrdef, AccessShareLock);
-	}
+		defoid = GetAttrDefaultOid(reloid, attnum);
 	if (!OidIsValid(defoid))
 	{
 		if (!missing_ok)
@@ -2331,6 +2313,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		case OBJECT_FDW:
 		case OBJECT_FOREIGN_SERVER:
 		case OBJECT_LANGUAGE:
+		case OBJECT_PARAMETER_ACL:
 		case OBJECT_PUBLICATION:
 		case OBJECT_ROLE:
 		case OBJECT_SCHEMA:
@@ -2619,6 +2602,7 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 		case OBJECT_TSPARSER:
 		case OBJECT_TSTEMPLATE:
 		case OBJECT_ACCESS_METHOD:
+		case OBJECT_PARAMETER_ACL:
 			/* We treat these object types as being owned by superusers */
 			if (!superuser_arg(roleid))
 				ereport(ERROR,
@@ -3161,48 +3145,21 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 
 		case OCLASS_DEFAULT:
 			{
-				Relation	attrdefDesc;
-				ScanKeyData skey[1];
-				SysScanDesc adscan;
-				HeapTuple	tup;
-				Form_pg_attrdef attrdef;
 				ObjectAddress colobject;
 
-				attrdefDesc = table_open(AttrDefaultRelationId, AccessShareLock);
+				colobject = GetAttrDefaultColumnAddress(object->objectId);
 
-				ScanKeyInit(&skey[0],
-							Anum_pg_attrdef_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, NULL, 1, skey);
-
-				tup = systable_getnext(adscan);
-
-				if (!HeapTupleIsValid(tup))
+				if (!OidIsValid(colobject.objectId))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for attrdef %u",
 							 object->objectId);
-
-					systable_endscan(adscan);
-					table_close(attrdefDesc, AccessShareLock);
 					break;
 				}
-
-				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
-
-				colobject.classId = RelationRelationId;
-				colobject.objectId = attrdef->adrelid;
-				colobject.objectSubId = attrdef->adnum;
 
 				/* translator: %s is typically "column %s of table %s" */
 				appendStringInfo(&buffer, _("default value for %s"),
 								 getObjectDescription(&colobject, false));
-
-				systable_endscan(adscan);
-				table_close(attrdefDesc, AccessShareLock);
 				break;
 			}
 
@@ -3921,6 +3878,32 @@ getObjectDescription(const ObjectAddress *object, bool missing_ok)
 				break;
 			}
 
+		case OCLASS_PARAMETER_ACL:
+			{
+				HeapTuple	tup;
+				Datum		nameDatum;
+				bool		isNull;
+				char	   *parname;
+
+				tup = SearchSysCache1(PARAMETERACLOID,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for parameter ACL %u",
+							 object->objectId);
+					break;
+				}
+				nameDatum = SysCacheGetAttr(PARAMETERACLOID, tup,
+											Anum_pg_parameter_acl_parname,
+											&isNull);
+				Assert(!isNull);
+				parname = TextDatumGetCString(nameDatum);
+				appendStringInfo(&buffer, _("parameter %s"), parname);
+				ReleaseSysCache(tup);
+				break;
+			}
+
 		case OCLASS_POLICY:
 			{
 				Relation	policy_rel;
@@ -4586,6 +4569,10 @@ getObjectTypeDescription(const ObjectAddress *object, bool missing_ok)
 			appendStringInfoString(&buffer, "event trigger");
 			break;
 
+		case OCLASS_PARAMETER_ACL:
+			appendStringInfoString(&buffer, "parameter ACL");
+			break;
+
 		case OCLASS_POLICY:
 			appendStringInfoString(&buffer, "policy");
 			break;
@@ -5006,50 +4993,22 @@ getObjectIdentityParts(const ObjectAddress *object,
 
 		case OCLASS_DEFAULT:
 			{
-				Relation	attrdefDesc;
-				ScanKeyData skey[1];
-				SysScanDesc adscan;
-
-				HeapTuple	tup;
-				Form_pg_attrdef attrdef;
 				ObjectAddress colobject;
 
-				attrdefDesc = table_open(AttrDefaultRelationId, AccessShareLock);
+				colobject = GetAttrDefaultColumnAddress(object->objectId);
 
-				ScanKeyInit(&skey[0],
-							Anum_pg_attrdef_oid,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
-											true, NULL, 1, skey);
-
-				tup = systable_getnext(adscan);
-
-				if (!HeapTupleIsValid(tup))
+				if (!OidIsValid(colobject.objectId))
 				{
 					if (!missing_ok)
 						elog(ERROR, "could not find tuple for attrdef %u",
 							 object->objectId);
-
-					systable_endscan(adscan);
-					table_close(attrdefDesc, AccessShareLock);
 					break;
 				}
-
-				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
-
-				colobject.classId = RelationRelationId;
-				colobject.objectId = attrdef->adrelid;
-				colobject.objectSubId = attrdef->adnum;
 
 				appendStringInfo(&buffer, "for %s",
 								 getObjectIdentityParts(&colobject,
 														objname, objargs,
 														false));
-
-				systable_endscan(adscan);
-				table_close(attrdefDesc, AccessShareLock);
 				break;
 			}
 
@@ -5661,7 +5620,6 @@ getObjectIdentityParts(const ObjectAddress *object,
 					systable_endscan(rcscan);
 					table_close(defaclrel, AccessShareLock);
 					break;
-
 				}
 
 				defacl = (Form_pg_default_acl) GETSTRUCT(tup);
@@ -5756,6 +5714,34 @@ getObjectIdentityParts(const ObjectAddress *object,
 				appendStringInfoString(&buffer, quote_identifier(evtname));
 				if (objname)
 					*objname = list_make1(evtname);
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_PARAMETER_ACL:
+			{
+				HeapTuple	tup;
+				Datum		nameDatum;
+				bool		isNull;
+				char	   *parname;
+
+				tup = SearchSysCache1(PARAMETERACLOID,
+									  ObjectIdGetDatum(object->objectId));
+				if (!HeapTupleIsValid(tup))
+				{
+					if (!missing_ok)
+						elog(ERROR, "cache lookup failed for parameter ACL %u",
+							 object->objectId);
+					break;
+				}
+				nameDatum = SysCacheGetAttr(PARAMETERACLOID, tup,
+											Anum_pg_parameter_acl_parname,
+											&isNull);
+				Assert(!isNull);
+				parname = TextDatumGetCString(nameDatum);
+				appendStringInfoString(&buffer, parname);
+				if (objname)
+					*objname = list_make1(parname);
 				ReleaseSysCache(tup);
 				break;
 			}

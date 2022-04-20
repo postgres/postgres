@@ -3,7 +3,7 @@
  * indexcmds.c
  *	  POSTGRES define and remove index code.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -129,7 +129,7 @@ typedef struct ReindexErrorInfo
  *		prospective index definition, such that the existing index storage
  *		could become the storage of the new index, avoiding a rebuild.
  *
- * 'heapRelation': the relation the index would apply to.
+ * 'oldId': the OID of the existing index
  * 'accessMethodName': name of the AM to use.
  * 'attributeList': a list of IndexElem specifying columns and expressions
  *		to index on.
@@ -226,7 +226,7 @@ CheckIndexCompatible(Oid oldId,
 	 * ii_NumIndexKeyAttrs with same value.
 	 */
 	indexInfo = makeIndexInfo(numberOfAttributes, numberOfAttributes,
-							  accessMethodId, NIL, NIL, false, false, false);
+							  accessMethodId, NIL, NIL, false, false, false, false);
 	typeObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	collationObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
@@ -867,6 +867,7 @@ DefineIndex(Oid relationId,
 							  NIL,	/* expressions, NIL for now */
 							  make_ands_implicit((Expr *) stmt->whereClause),
 							  stmt->unique,
+							  stmt->nulls_not_distinct,
 							  !concurrent,
 							  concurrent);
 
@@ -2219,7 +2220,7 @@ makeObjectName(const char *name1, const char *name2, const char *label)
 	Assert(availchars > 0);		/* else caller chose a bad label */
 
 	/*
-	 * If we must truncate,  preferentially truncate the longer name. This
+	 * If we must truncate, preferentially truncate the longer name. This
 	 * logic could be expressed without a loop, but it's simple and obvious as
 	 * a loop.
 	 */

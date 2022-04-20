@@ -589,6 +589,13 @@ INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</repl
    is a partition, an error will occur if one of the input rows violates
    the partition constraint.
   </para>
+
+  <para>
+   You may also wish to consider using <command>MERGE</command>, since that
+   allows mixing <command>INSERT</command>, <command>UPDATE</command>, and
+   <command>DELETE</command> within a single statement.
+   See <xref linkend="sql-merge"/>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -759,7 +766,9 @@ INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
    Also, the case in
    which a column name list is omitted, but not all the columns are
    filled from the <literal>VALUES</literal> clause or <replaceable>query</replaceable>,
-   is disallowed by the standard.
+   is disallowed by the standard. If you prefer a more SQL standard
+   conforming statement than <literal>ON CONFLICT</literal>, see
+   <xref linkend="sql-merge"/>.
   </para>
 
   <para>

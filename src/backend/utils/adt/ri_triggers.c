@@ -14,7 +14,7 @@
  *	plan --- consider improving this someday.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * src/backend/utils/adt/ri_triggers.c
  *
@@ -1260,6 +1260,12 @@ RI_FKey_fk_upd_check_required(Trigger *trigger, Relation fk_rel,
 	Datum		xminDatum;
 	TransactionId xmin;
 	bool		isnull;
+
+	/*
+	 * AfterTriggerSaveEvent() handles things such that this function is never
+	 * called for partitioned tables.
+	 */
+	Assert(fk_rel->rd_rel->relkind != RELKIND_PARTITIONED_TABLE);
 
 	riinfo = ri_FetchConstraintInfo(trigger, fk_rel, false);
 

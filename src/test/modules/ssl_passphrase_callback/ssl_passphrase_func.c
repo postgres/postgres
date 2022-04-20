@@ -49,7 +49,7 @@ _PG_init(void)
 							   NULL,
 							   NULL);
 
-	EmitWarningsOnPlaceholders("ssl_passphrase");
+	MarkGUCPrefixReserved("ssl_passphrase");
 
 	if (ssl_passphrase)
 		openssl_tls_init_hook = set_rot13;
@@ -89,5 +89,4 @@ rot13_passphrase(char *buf, int size, int rwflag, void *userdata)
 	}
 
 	return strlen(buf);
-
 }

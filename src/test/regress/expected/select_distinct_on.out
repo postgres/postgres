@@ -2,7 +2,7 @@
 -- SELECT_DISTINCT_ON
 --
 SELECT DISTINCT ON (string4) string4, two, ten
-   FROM tmp
+   FROM onek
    ORDER BY string4 using <, two using >, ten using <;
  string4 | two | ten 
 ---------+-----+-----
@@ -14,13 +14,13 @@ SELECT DISTINCT ON (string4) string4, two, ten
 
 -- this will fail due to conflict of ordering requirements
 SELECT DISTINCT ON (string4, ten) string4, two, ten
-   FROM tmp
+   FROM onek
    ORDER BY string4 using <, two using <, ten using <;
 ERROR:  SELECT DISTINCT ON expressions must match initial ORDER BY expressions
 LINE 1: SELECT DISTINCT ON (string4, ten) string4, two, ten
                                      ^
 SELECT DISTINCT ON (string4, ten) string4, ten, two
-   FROM tmp
+   FROM onek
    ORDER BY string4 using <, ten using >, two using <;
  string4 | ten | two 
 ---------+-----+-----

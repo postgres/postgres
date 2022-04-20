@@ -3,7 +3,7 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_dump.h
@@ -171,8 +171,8 @@ typedef struct _namespaceInfo
 	DumpableObject dobj;
 	DumpableAcl dacl;
 	bool		create;			/* CREATE SCHEMA, or just set owner? */
-	Oid			nspowner;
-	char	   *rolname;		/* name of owner, or empty string */
+	Oid			nspowner;		/* OID of owner */
+	const char *rolname;		/* name of owner */
 } NamespaceInfo;
 
 typedef struct _extensionInfo
@@ -196,7 +196,7 @@ typedef struct _typeInfo
 	 * schema-qualified too.
 	 */
 	char	   *ftypname;
-	char	   *rolname;		/* name of owner, or empty string */
+	const char *rolname;
 	Oid			typelem;
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
@@ -222,7 +222,7 @@ typedef struct _funcInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *rolname;		/* name of owner, or empty string */
+	const char *rolname;
 	Oid			lang;
 	int			nargs;
 	Oid		   *argtypes;
@@ -239,7 +239,7 @@ typedef struct _aggInfo
 typedef struct _oprInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 	char		oprkind;
 	Oid			oprcode;
 } OprInfo;
@@ -254,25 +254,25 @@ typedef struct _accessMethodInfo
 typedef struct _opclassInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 } OpclassInfo;
 
 typedef struct _opfamilyInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 } OpfamilyInfo;
 
 typedef struct _collInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 } CollInfo;
 
 typedef struct _convInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 } ConvInfo;
 
 typedef struct _tableInfo
@@ -282,7 +282,7 @@ typedef struct _tableInfo
 	 */
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *rolname;		/* name of owner, or empty string */
+	const char *rolname;
 	char		relkind;
 	char		relpersistence; /* relation persistence */
 	bool		relispopulated; /* relation is populated */
@@ -398,6 +398,7 @@ typedef struct _indxInfo
 								 * contains both key and nonkey attributes */
 	bool		indisclustered;
 	bool		indisreplident;
+	bool		indnullsnotdistinct;
 	Oid			parentidx;		/* if a partition, parent index OID */
 	SimplePtrList partattaches; /* if partitioned, partition attach objects */
 
@@ -415,7 +416,7 @@ typedef struct _indexAttachInfo
 typedef struct _statsExtInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;		/* name of owner, or empty string */
+	const char *rolname;
 	int			stattarget;		/* statistics target */
 } StatsExtInfo;
 
@@ -443,7 +444,7 @@ typedef struct _triggerInfo
 	Oid			tgconstrrelid;
 	char	   *tgconstrrelname;
 	char		tgenabled;
-	bool		tgisinternal;
+	bool		tgispartition;
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	char	   *tgdef;
@@ -454,7 +455,7 @@ typedef struct _evttriggerInfo
 	DumpableObject dobj;
 	char	   *evtname;
 	char	   *evtevent;
-	char	   *evtowner;
+	const char *evtowner;
 	char	   *evttags;
 	char	   *evtfname;
 	char		evtenabled;
@@ -491,7 +492,7 @@ typedef struct _procLangInfo
 	Oid			lanplcallfoid;
 	Oid			laninline;
 	Oid			lanvalidator;
-	char	   *lanowner;		/* name of owner, or empty string */
+	const char *lanowner;
 } ProcLangInfo;
 
 typedef struct _castInfo
@@ -533,7 +534,7 @@ typedef struct _prsInfo
 typedef struct _dictInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 	Oid			dicttemplate;
 	char	   *dictinitoption;
 } TSDictInfo;
@@ -548,7 +549,7 @@ typedef struct _tmplInfo
 typedef struct _cfgInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 	Oid			cfgparser;
 } TSConfigInfo;
 
@@ -556,7 +557,7 @@ typedef struct _fdwInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *rolname;
+	const char *rolname;
 	char	   *fdwhandler;
 	char	   *fdwvalidator;
 	char	   *fdwoptions;
@@ -566,7 +567,7 @@ typedef struct _foreignServerInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *rolname;
+	const char *rolname;
 	Oid			srvfdw;
 	char	   *srvtype;
 	char	   *srvversion;
@@ -577,7 +578,7 @@ typedef struct _defaultACLInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *defaclrole;
+	const char *defaclrole;
 	char		defaclobjtype;
 } DefaultACLInfo;
 
@@ -585,7 +586,7 @@ typedef struct _blobInfo
 {
 	DumpableObject dobj;
 	DumpableAcl dacl;
-	char	   *rolname;
+	const char *rolname;
 } BlobInfo;
 
 /*
@@ -612,7 +613,7 @@ typedef struct _policyInfo
 typedef struct _PublicationInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 	bool		puballtables;
 	bool		pubinsert;
 	bool		pubupdate;
@@ -630,6 +631,8 @@ typedef struct _PublicationRelInfo
 	DumpableObject dobj;
 	PublicationInfo *publication;
 	TableInfo  *pubtable;
+	char	   *pubrelqual;
+	char	   *pubrattrs;
 } PublicationRelInfo;
 
 /*
@@ -649,12 +652,13 @@ typedef struct _PublicationSchemaInfo
 typedef struct _SubscriptionInfo
 {
 	DumpableObject dobj;
-	char	   *rolname;
+	const char *rolname;
 	char	   *subconninfo;
 	char	   *subslotname;
 	char	   *subbinary;
 	char	   *substream;
 	char	   *subtwophasestate;
+	char	   *subdisableonerr;
 	char	   *subsynccommit;
 	char	   *subpublications;
 } SubscriptionInfo;

@@ -3,7 +3,7 @@
  * tsquery.c
  *	  I/O functions for tsquery
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -261,7 +261,7 @@ parse_or_operator(TSQueryParserState pstate)
 		/*
 		 * Suppose, we found an operand, but could be a not correct operand.
 		 * So we still treat OR literal as operation with possibly incorrect
-		 * operand and  will not search it as lexeme
+		 * operand and will not search it as lexeme
 		 */
 		if (!t_isspace(ptr))
 			break;

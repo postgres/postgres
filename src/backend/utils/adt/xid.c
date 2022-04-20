@@ -3,7 +3,7 @@
  * xid.c
  *	  POSTGRES transaction identifier and command identifier datatypes.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -145,6 +145,32 @@ xidComparator(const void *arg1, const void *arg2)
 	return 0;
 }
 
+/*
+ * xidLogicalComparator
+ *		qsort comparison function for XIDs
+ *
+ * This is used to compare only XIDs from the same epoch (e.g. for backends
+ * running at the same time). So there must be only normal XIDs, so there's
+ * no issue with triangle inequality.
+ */
+int
+xidLogicalComparator(const void *arg1, const void *arg2)
+{
+	TransactionId xid1 = *(const TransactionId *) arg1;
+	TransactionId xid2 = *(const TransactionId *) arg2;
+
+	Assert(TransactionIdIsNormal(xid1));
+	Assert(TransactionIdIsNormal(xid2));
+
+	if (TransactionIdPrecedes(xid1, xid2))
+		return -1;
+
+	if (TransactionIdPrecedes(xid2, xid1))
+		return 1;
+
+	return 0;
+}
+
 Datum
 xid8toxid(PG_FUNCTION_ARGS)
 {
@@ -258,6 +284,30 @@ xid8cmp(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(0);
 	else
 		PG_RETURN_INT32(-1);
+}
+
+Datum
+xid8_larger(PG_FUNCTION_ARGS)
+{
+	FullTransactionId fxid1 = PG_GETARG_FULLTRANSACTIONID(0);
+	FullTransactionId fxid2 = PG_GETARG_FULLTRANSACTIONID(1);
+
+	if (FullTransactionIdFollows(fxid1, fxid2))
+		PG_RETURN_FULLTRANSACTIONID(fxid1);
+	else
+		PG_RETURN_FULLTRANSACTIONID(fxid2);
+}
+
+Datum
+xid8_smaller(PG_FUNCTION_ARGS)
+{
+	FullTransactionId fxid1 = PG_GETARG_FULLTRANSACTIONID(0);
+	FullTransactionId fxid2 = PG_GETARG_FULLTRANSACTIONID(1);
+
+	if (FullTransactionIdPrecedes(fxid1, fxid2))
+		PG_RETURN_FULLTRANSACTIONID(fxid1);
+	else
+		PG_RETURN_FULLTRANSACTIONID(fxid2);
 }
 
 /*****************************************************************************

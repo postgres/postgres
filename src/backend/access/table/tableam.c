@@ -3,7 +3,7 @@
  * tableam.c
  *		Table access method routines too big to be inline functions.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -381,7 +381,6 @@ simple_table_tuple_update(Relation rel, ItemPointer otid,
 			elog(ERROR, "unrecognized table_tuple_update status: %u", result);
 			break;
 	}
-
 }
 
 

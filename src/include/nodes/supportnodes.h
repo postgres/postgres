@@ -23,7 +23,7 @@
  * allows for future extensions of the set of request cases.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/nodes/supportnodes.h
@@ -33,12 +33,12 @@
 #ifndef SUPPORTNODES_H
 #define SUPPORTNODES_H
 
-#include "nodes/primnodes.h"
+#include "nodes/plannodes.h"
 
 struct PlannerInfo;				/* avoid including pathnodes.h here */
 struct IndexOptInfo;
 struct SpecialJoinInfo;
-
+struct WindowClause;
 
 /*
  * The Simplify request allows the support function to perform plan-time
@@ -238,5 +238,65 @@ typedef struct SupportRequestIndexCondition
 	bool		lossy;			/* set to false if index condition is an exact
 								 * equivalent of the function call */
 } SupportRequestIndexCondition;
+
+/* ----------
+ * To support more efficient query execution of any monotonically increasing
+ * and/or monotonically decreasing window functions, we support calling the
+ * window function's prosupport function passing along this struct whenever
+ * the planner sees an OpExpr qual directly reference a window function in a
+ * subquery.  When the planner encounters this, we populate this struct and
+ * pass it along to the window function's prosupport function so that it can
+ * evaluate if the given WindowFunc is;
+ *
+ * a) monotonically increasing, or
+ * b) monotonically decreasing, or
+ * c) both monotonically increasing and decreasing, or
+ * d) none of the above.
+ *
+ * A function that is monotonically increasing can never return a value that
+ * is lower than a value returned in a "previous call".  A monotonically
+ * decreasing function can never return a value higher than a value returned
+ * in a previous call.  A function that is both must return the same value
+ * each time.
+ *
+ * We define "previous call" to mean a previous call to the same WindowFunc
+ * struct in the same window partition.
+ *
+ * row_number() is an example of a monotonically increasing function.  The
+ * return value will be reset back to 1 in each new partition.  An example of
+ * a monotonically increasing and decreasing function is COUNT(*) OVER ().
+ * Since there is no ORDER BY clause in this example, all rows in the
+ * partition are peers and all rows within the partition will be within the
+ * frame bound.  Likewise for COUNT(*) OVER(ORDER BY a ROWS BETWEEN UNBOUNDED
+ * PRECEDING AND UNBOUNDED FOLLOWING).
+ *
+ * COUNT(*) OVER (ORDER BY a ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING)
+ * is an example of a monotonically decreasing function.
+ *
+ * Implementations must only concern themselves with the given WindowFunc
+ * being monotonic in a single partition.
+ *
+ * Inputs:
+ *	'window_func' is the pointer to the window function being called.
+ *
+ *	'window_clause' pointer to the WindowClause data.  Support functions can
+ *	use this to check frame bounds, etc.
+ *
+ * Outputs:
+ *	'monotonic' the resulting MonotonicFunction value for the given input
+ *	window function and window clause.
+ * ----------
+ */
+typedef struct SupportRequestWFuncMonotonic
+{
+	NodeTag		type;
+
+	/* Input fields: */
+	WindowFunc *window_func;	/* Pointer to the window function data */
+	struct WindowClause *window_clause; /* Pointer to the window clause data */
+
+	/* Output fields: */
+	MonotonicFunction monotonic;
+} SupportRequestWFuncMonotonic;
 
 #endif							/* SUPPORTNODES_H */

@@ -1308,7 +1308,6 @@ PGTYPESnumeric_cmp(numeric *var1, numeric *var2)
 
 	errno = PGTYPES_NUM_BAD_NUMERIC;
 	return INT_MAX;
-
 }
 
 int

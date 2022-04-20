@@ -2,13 +2,14 @@
  *
  * walmethods.h
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		  src/bin/pg_basebackup/walmethods.h
  *-------------------------------------------------------------------------
  */
 
+#include "common/compression.h"
 
 typedef void *Walfile;
 
@@ -18,14 +19,6 @@ typedef enum
 	CLOSE_UNLINK,
 	CLOSE_NO_RENAME
 } WalCloseMethod;
-
-/* Types of compression supported */
-typedef enum
-{
-	COMPRESSION_GZIP,
-	COMPRESSION_LZ4,
-	COMPRESSION_NONE
-} WalCompressionMethod;
 
 /*
  * A WalWriteMethod structure represents the different methods used
@@ -67,7 +60,7 @@ struct WalWriteMethod
 	char	   *(*get_file_name) (const char *pathname, const char *temp_suffix);
 
 	/* Returns the compression method */
-	WalCompressionMethod (*compression_method) (void);
+	pg_compress_algorithm (*compression_algorithm) (void);
 
 	/*
 	 * Write count number of bytes to the file, and return the number of bytes
@@ -103,10 +96,10 @@ struct WalWriteMethod
  *						   not all those required for pg_receivewal)
  */
 WalWriteMethod *CreateWalDirectoryMethod(const char *basedir,
-										 WalCompressionMethod compression_method,
+										 pg_compress_algorithm compression_algo,
 										 int compression, bool sync);
 WalWriteMethod *CreateWalTarMethod(const char *tarbase,
-								   WalCompressionMethod compression_method,
+								   pg_compress_algorithm compression_algo,
 								   int compression, bool sync);
 
 /* Cleanup routines for previously-created methods */

@@ -3,7 +3,7 @@
  * ipci.c
  *	  POSTGRES inter-process communication initialization code.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -22,6 +22,8 @@
 #include "access/subtrans.h"
 #include "access/syncscan.h"
 #include "access/twophase.h"
+#include "access/xlogprefetcher.h"
+#include "access/xlogrecovery.h"
 #include "commands/async.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -118,7 +120,9 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, LockShmemSize());
 	size = add_size(size, PredicateLockShmemSize());
 	size = add_size(size, ProcGlobalShmemSize());
+	size = add_size(size, XLogPrefetchShmemSize());
 	size = add_size(size, XLOGShmemSize());
+	size = add_size(size, XLogRecoveryShmemSize());
 	size = add_size(size, CLOGShmemSize());
 	size = add_size(size, CommitTsShmemSize());
 	size = add_size(size, SUBTRANSShmemSize());
@@ -143,6 +147,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, BTreeShmemSize());
 	size = add_size(size, SyncScanShmemSize());
 	size = add_size(size, AsyncShmemSize());
+	size = add_size(size, StatsShmemSize());
 #ifdef EXEC_BACKEND
 	size = add_size(size, ShmemBackendArraySize());
 #endif
@@ -241,6 +246,8 @@ CreateSharedMemoryAndSemaphores(void)
 	 * Set up xlog, clog, and buffers
 	 */
 	XLOGShmemInit();
+	XLogPrefetchShmemInit();
+	XLogRecoveryShmemInit();
 	CLOGShmemInit();
 	CommitTsShmemInit();
 	SUBTRANSShmemInit();
@@ -293,6 +300,7 @@ CreateSharedMemoryAndSemaphores(void)
 	BTreeShmemInit();
 	SyncScanShmemInit();
 	AsyncShmemInit();
+	StatsShmemInit();
 
 #ifdef EXEC_BACKEND
 

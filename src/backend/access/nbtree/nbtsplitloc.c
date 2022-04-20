@@ -3,7 +3,7 @@
  * nbtsplitloc.c
  *	  Choose split point code for Postgres btree implementation.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -35,7 +35,6 @@ typedef struct
 	/* split point identifying fields (returned by _bt_findsplitloc) */
 	OffsetNumber firstrightoff; /* first origpage item on rightpage */
 	bool		newitemonleft;	/* new item goes on left, or right? */
-
 } SplitPoint;
 
 typedef struct
@@ -152,7 +151,7 @@ _bt_findsplitloc(Relation rel,
 	SplitPoint	leftpage,
 				rightpage;
 
-	opaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
+	opaque = BTPageGetOpaque(origpage);
 	maxoff = PageGetMaxOffsetNumber(origpage);
 
 	/* Total free space available on a btree page, after fixed overhead */

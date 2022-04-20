@@ -3,7 +3,7 @@
  * adminpack.c
  *
  *
- * Copyright (c) 2002-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2022, PostgreSQL Global Development Group
  *
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
@@ -79,7 +79,7 @@ convert_and_check_filename(text *arg)
 	 * files on the server as the PG user, so no need to do any further checks
 	 * here.
 	 */
-	if (is_member_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
+	if (has_privs_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
 		return filename;
 
 	/*
@@ -88,12 +88,6 @@ convert_and_check_filename(text *arg)
 	 */
 	if (is_absolute_path(filename))
 	{
-		/* Disallow '/a/b/data/..' */
-		if (path_contains_parent_reference(filename))
-			ereport(ERROR,
-					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					 errmsg("reference to parent directory (\"..\") not allowed")));
-
 		/* Allow absolute paths if within DataDir */
 		if (!path_is_prefix_of_path(DataDir, filename))
 			ereport(ERROR,

@@ -4,7 +4,7 @@
  *	  solution to the query optimization problem
  *	  by means of a Genetic Algorithm (GA)
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/optimizer/geqo/geqo_main.c
@@ -227,12 +227,17 @@ geqo(PlannerInfo *root, int number_of_rels, List *initial_rels)
 	}
 
 
-#if defined(ERX) && defined(GEQO_DEBUG)
+#if defined(ERX)
+#if defined(GEQO_DEBUG)
 	if (edge_failures != 0)
 		elog(LOG, "[GEQO] failures: %d, average: %d",
 			 edge_failures, (int) number_generations / edge_failures);
 	else
 		elog(LOG, "[GEQO] no edge failures detected");
+#else
+	/* suppress variable-set-but-not-used warnings from some compilers */
+	(void) edge_failures;
+#endif
 #endif
 
 #if defined(CX) && defined(GEQO_DEBUG)

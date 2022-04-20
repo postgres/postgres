@@ -3,7 +3,7 @@
  * pl_exec.c		- Executor for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -629,11 +629,16 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo,
 		ReturnSetInfo *rsi = estate.rsi;
 
 		/* Check caller can handle a set result */
-		if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-			(rsi->allowedModes & SFRM_Materialize) == 0)
+		if (!rsi || !IsA(rsi, ReturnSetInfo))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("set-valued function called in context that cannot accept a set")));
+
+		if (!(rsi->allowedModes & SFRM_Materialize))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("materialize mode required, but it is not allowed in this context")));
+
 		rsi->returnMode = SFRM_Materialize;
 
 		/* If we produced any tuples, send back the result */
@@ -3645,12 +3650,16 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	/*
 	 * Check caller can handle a set result in the way we want
 	 */
-	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0 ||
-		rsi->expectedDesc == NULL)
+	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsi->allowedModes & SFRM_Materialize) ||
+		rsi->expectedDesc == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
 
 	/*
 	 * Switch to the right memory context and resource owner for storing the
@@ -4068,15 +4077,18 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	plpgsql_create_econtext(estate);
 
 	/*
-	 * Let the plugin see this function before we initialize any local
-	 * PL/pgSQL variables - note that we also give the plugin a few function
-	 * pointers so it can call back into PL/pgSQL for doing things like
-	 * variable assignments and stack traces
+	 * Let the plugin, if any, see this function before we initialize local
+	 * PL/pgSQL variables.  Note that we also give the plugin a few function
+	 * pointers, so it can call back into PL/pgSQL for doing things like
+	 * variable assignments and stack traces.
 	 */
 	if (*plpgsql_plugin_ptr)
 	{
 		(*plpgsql_plugin_ptr)->error_callback = plpgsql_exec_error_callback;
 		(*plpgsql_plugin_ptr)->assign_expr = exec_assign_expr;
+		(*plpgsql_plugin_ptr)->assign_value = exec_assign_value;
+		(*plpgsql_plugin_ptr)->eval_datum = exec_eval_datum;
+		(*plpgsql_plugin_ptr)->cast_value = exec_cast_value;
 
 		if ((*plpgsql_plugin_ptr)->func_setup)
 			((*plpgsql_plugin_ptr)->func_setup) (estate, func);
@@ -4185,7 +4197,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 
 	/*
 	 * On the first call for this statement generate the plan, and detect
-	 * whether the statement is INSERT/UPDATE/DELETE
+	 * whether the statement is INSERT/UPDATE/DELETE/MERGE
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK);
@@ -4207,7 +4219,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 			 */
 			if (plansource->commandTag == CMDTAG_INSERT ||
 				plansource->commandTag == CMDTAG_UPDATE ||
-				plansource->commandTag == CMDTAG_DELETE)
+				plansource->commandTag == CMDTAG_DELETE ||
+				plansource->commandTag == CMDTAG_MERGE)
 			{
 				stmt->mod_stmt = true;
 				break;
@@ -4267,6 +4280,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
+		case SPI_OK_MERGE:
 			Assert(stmt->mod_stmt);
 			exec_set_found(estate, (SPI_processed != 0));
 			break;
@@ -4448,6 +4462,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 		case SPI_OK_INSERT_RETURNING:
 		case SPI_OK_UPDATE_RETURNING:
 		case SPI_OK_DELETE_RETURNING:
+		case SPI_OK_MERGE:
 		case SPI_OK_UTILITY:
 		case SPI_OK_REWRITTEN:
 			break;
@@ -4907,10 +4922,7 @@ exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 	if (stmt->chain)
 		SPI_commit_and_chain();
 	else
-	{
 		SPI_commit();
-		SPI_start_transaction();
-	}
 
 	/*
 	 * We need to build new simple-expression infrastructure, since the old
@@ -4934,10 +4946,7 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 	if (stmt->chain)
 		SPI_rollback_and_chain();
 	else
-	{
 		SPI_rollback();
-		SPI_start_transaction();
-	}
 
 	/*
 	 * We need to build new simple-expression infrastructure, since the old

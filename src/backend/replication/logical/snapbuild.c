@@ -107,10 +107,10 @@
  * is a convenient point to initialize replication from, which is why we
  * export a snapshot at that point, which *can* be used to read normal data.
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/snapbuild.c
+ *	  src/backend/replication/logical/snapbuild.c
  *
  *-------------------------------------------------------------------------
  */
@@ -1380,7 +1380,6 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 * records so incremental cleanup can be performed.
 	 */
 	return true;
-
 }
 
 /* ---

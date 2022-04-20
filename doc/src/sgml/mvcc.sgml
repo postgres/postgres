@@ -423,6 +423,37 @@ COMMIT;
    </para>
 
    <para>
+    <command>MERGE</command> allows the user to specify various
+    combinations of <command>INSERT</command>, <command>UPDATE</command>
+    or <command>DELETE</command> subcommands. A <command>MERGE</command>
+    command with both <command>INSERT</command> and <command>UPDATE</command>
+    subcommands looks similar to <command>INSERT</command> with an
+    <literal>ON CONFLICT DO UPDATE</literal> clause but does not
+    guarantee that either <command>INSERT</command> or
+    <command>UPDATE</command> will occur.
+    If MERGE attempts an <command>UPDATE</command> or
+    <command>DELETE</command> and the row is concurrently updated but
+    the join condition still passes for the current target and the
+    current source tuple, then <command>MERGE</command> will behave
+    the same as the <command>UPDATE</command> or
+    <command>DELETE</command> commands and perform its action on the
+    updated version of the row.  However, because <command>MERGE</command>
+    can specify several actions and they can be conditional, the
+    conditions for each action are re-evaluated on the updated version of
+    the row, starting from the first action, even if the action that had
+    originally matched appears later in the list of actions.
+    On the other hand, if the row is concurrently updated or deleted so
+    that the join condition fails, then <command>MERGE</command> will
+    evaluate the condition's <literal>NOT MATCHED</literal> actions next,
+    and execute the first one that succeeds.
+    If <command>MERGE</command> attempts an <command>INSERT</command>
+    and a unique index is present and a duplicate row is concurrently
+    inserted, then a uniqueness violation is raised.
+    <command>MERGE</command> does not attempt to avoid the
+    error by executing an <command>UPDATE</command>.
+   </para>
+
+   <para>
     Because Read Committed mode starts each command with a new snapshot
     that includes all transactions committed up to that instant,
     subsequent commands in the same transaction will see the effects
@@ -588,7 +619,7 @@ ERROR:  could not serialize access due to concurrent update
     applications using this level must
     be prepared to retry transactions due to serialization failures.
     In fact, this isolation level works exactly the same as Repeatable
-    Read except that it monitors for conditions which could make
+    Read except that it also monitors for conditions which could make
     execution of a concurrent set of serializable transactions behave
     in a manner inconsistent with all possible serial (one at a time)
     executions of those transactions.  This monitoring does not
@@ -901,12 +932,14 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         </para>
 
         <para>
-         The <command>SELECT FOR UPDATE</command> and
-         <command>SELECT FOR SHARE</command> commands acquire a
-         lock of this mode on the target table(s) (in addition to
-         <literal>ACCESS SHARE</literal> locks on any other tables
-         that are referenced but not selected
-         <option>FOR UPDATE/FOR SHARE</option>).
+         The <command>SELECT</command> command acquires a lock of this mode
+         on all tables on which one of the <option>FOR UPDATE</option>,
+         <option>FOR NO KEY UPDATE</option>,
+         <option>FOR SHARE</option>, or
+         <option>FOR KEY SHARE</option> options is specified
+         (in addition to <literal>ACCESS SHARE</literal> locks on any other
+         tables that are referenced without any explicit
+         <option>FOR ...</option> locking option).
         </para>
        </listitem>
       </varlistentry>
@@ -924,7 +957,8 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
         <para>
          The commands <command>UPDATE</command>,
-         <command>DELETE</command>, and <command>INSERT</command>
+         <command>DELETE</command>, <command>INSERT</command>, and
+         <command>MERGE</command>
          acquire this lock mode on the target table (in addition to
          <literal>ACCESS SHARE</literal> locks on any other referenced
          tables).  In general, this lock mode will be acquired by any
@@ -950,10 +984,11 @@ ERROR:  could not serialize access due to read/write dependencies among transact
         <para>
          Acquired by <command>VACUUM</command> (without <option>FULL</option>),
          <command>ANALYZE</command>, <command>CREATE INDEX CONCURRENTLY</command>,
+         <command>CREATE STATISTICS</command>, <command>COMMENT ON</command>,
          <command>REINDEX CONCURRENTLY</command>,
-         <command>CREATE STATISTICS</command>, and certain <link linkend="sql-alterindex"><command>ALTER
-         INDEX</command></link> and <link linkend="sql-altertable"><command>ALTER TABLE</command></link> variants (for full
-         details see the documentation of these commands).
+         and certain <link linkend="sql-alterindex"><command>ALTER INDEX</command></link>
+         and <link linkend="sql-altertable"><command>ALTER TABLE</command></link> variants
+         (for full details see the documentation of these commands).
         </para>
        </listitem>
       </varlistentry>
@@ -1719,6 +1754,72 @@ SELECT pg_advisory_lock(q.id) FROM
    </sect2>
   </sect1>
 
+  <sect1 id="mvcc-serialization-failure-handling">
+   <title>Serialization Failure Handling</title>
+
+   <indexterm>
+    <primary>serialization failure</primary>
+   </indexterm>
+   <indexterm>
+    <primary>retryable error</primary>
+   </indexterm>
+
+   <para>
+    Both Repeatable Read and Serializable isolation levels can produce
+    errors that are designed to prevent serialization anomalies.  As
+    previously stated, applications using these levels must be prepared to
+    retry transactions that fail due to serialization errors.  Such an
+    error's message text will vary according to the precise circumstances,
+    but it will always have the SQLSTATE code <literal>40001</literal>
+    (<literal>serialization_failure</literal>).
+   </para>
+
+   <para>
+    It may also be advisable to retry deadlock failures.
+    These have the SQLSTATE code <literal>40P01</literal>
+    (<literal>deadlock_detected</literal>).
+   </para>
+
+   <para>
+    In some cases it is also appropriate to retry unique-key failures,
+    which have SQLSTATE code <literal>23505</literal>
+    (<literal>unique_violation</literal>), and exclusion constraint
+    failures, which have SQLSTATE code <literal>23P01</literal>
+    (<literal>exclusion_violation</literal>).  For example, if the
+    application selects a new value for a primary key column after
+    inspecting the currently stored keys, it could get a unique-key
+    failure because another application instance selected the same new key
+    concurrently.  This is effectively a serialization failure, but the
+    server will not detect it as such because it cannot <quote>see</quote>
+    the connection between the inserted value and the previous reads.
+    There are also some corner cases in which the server will issue a
+    unique-key or exclusion constraint error even though in principle it
+    has enough information to determine that a serialization problem
+    is the underlying cause.  While it's recommendable to just
+    retry <literal>serialization_failure</literal> errors unconditionally,
+    more care is needed when retrying these other error codes, since they
+    might represent persistent error conditions rather than transient
+    failures.
+   </para>
+
+   <para>
+    It is important to retry the complete transaction, including all logic
+    that decides which SQL to issue and/or which values to use.
+    Therefore, <productname>PostgreSQL</productname> does not offer an
+    automatic retry facility, since it cannot do so with any guarantee of
+    correctness.
+   </para>
+
+   <para>
+    Transaction retry does not guarantee that the retried transaction will
+    complete; multiple retries may be needed.  In cases with very high
+    contention, it is possible that completion of a transaction may take
+    many attempts.  In cases involving a conflicting prepared transaction,
+    it may not be possible to make progress until the prepared transaction
+    commits or rolls back.
+   </para>
+  </sect1>
+
   <sect1 id="mvcc-caveats">
    <title>Caveats</title>
 
@@ -1740,7 +1841,7 @@ SELECT pg_advisory_lock(q.id) FROM
 
    <para>
     Support for the Serializable transaction isolation level has not yet
-    been added to Hot Standby replication targets (described in
+    been added to hot standby replication targets (described in
     <xref linkend="hot-standby"/>).  The strictest isolation level currently
     supported in hot standby mode is Repeatable Read.  While performing all
     permanent database writes within Serializable transactions on the

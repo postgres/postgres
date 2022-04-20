@@ -31,7 +31,7 @@
  * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -257,8 +257,8 @@ WalWriterMain(void)
 		else if (left_till_hibernate > 0)
 			left_till_hibernate--;
 
-		/* Send WAL statistics to the stats collector */
-		pgstat_send_wal(false);
+		/* report pending statistics to the cumulative stats system */
+		pgstat_report_wal(false);
 
 		/*
 		 * Sleep until we are signaled or WalWriterDelay has elapsed.  If we
@@ -295,15 +295,18 @@ HandleWalWriterInterrupts(void)
 	if (ShutdownRequestPending)
 	{
 		/*
-		 * Force to send remaining WAL statistics to the stats collector at
-		 * process exit.
+		 * Force reporting remaining WAL statistics at process exit.
 		 *
-		 * Since pgstat_send_wal is invoked with 'force' is false in main loop
-		 * to avoid overloading to the stats collector, there may exist unsent
-		 * stats counters for the WAL writer.
+		 * Since pgstat_report_wal is invoked with 'force' is false in main loop
+		 * to avoid overloading the cumulative stats system, there may exist
+		 * unreported stats counters for the WAL writer.
 		 */
-		pgstat_send_wal(true);
+		pgstat_report_wal(true);
 
 		proc_exit(0);
 	}
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }

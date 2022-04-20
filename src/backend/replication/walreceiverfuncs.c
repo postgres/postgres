@@ -6,7 +6,7 @@
  * with the walreceiver process. Functions implementing walreceiver itself
  * are in walreceiver.c.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -23,6 +23,7 @@
 #include <signal.h>
 
 #include "access/xlog_internal.h"
+#include "access/xlogrecovery.h"
 #include "pgstat.h"
 #include "postmaster/startup.h"
 #include "replication/walreceiver.h"

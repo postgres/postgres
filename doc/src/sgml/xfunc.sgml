@@ -445,7 +445,7 @@ $$ LANGUAGE SQL;
 
     <para>
      If the final <literal>SELECT</literal> or <literal>RETURNING</literal>
-     clause in a <acronym>SQL</acronym> function does not return exactly
+     clause in an <acronym>SQL</acronym> function does not return exactly
      the function's declared result
      type, <productname>PostgreSQL</productname> will automatically cast
      the value to the required type, if that is possible with an implicit
@@ -836,7 +836,7 @@ CREATE FUNCTION mleast(VARIADIC arr numeric[]) RETURNS numeric AS $$
 $$ LANGUAGE SQL;
 
 SELECT mleast(10, -1, 5, 4.4);
- mleast 
+ mleast
 --------
      -1
 (1 row)
@@ -942,19 +942,19 @@ AS $$
 $$;
 
 SELECT foo(10, 20, 30);
- foo 
+ foo
 -----
   60
 (1 row)
 
 SELECT foo(10, 20);
- foo 
+ foo
 -----
   33
 (1 row)
 
 SELECT foo(10);
- foo 
+ foo
 -----
   15
 (1 row)
@@ -1387,7 +1387,7 @@ SELECT make_array2(1, 2.5) AS numericarray;
      also works:
 <screen>
 SELECT make_array2('a', 'b') AS textarray;
- textarray 
+ textarray
 -----------
  {a,b}
 (1 row)
@@ -1440,13 +1440,13 @@ CREATE FUNCTION anyleast (VARIADIC anyarray) RETURNS anyelement AS $$
 $$ LANGUAGE SQL;
 
 SELECT anyleast(10, -1, 5, 4);
- anyleast 
+ anyleast
 ----------
        -1
 (1 row)
 
 SELECT anyleast('abc'::text, 'def');
- anyleast 
+ anyleast
 ----------
  abc
 (1 row)
@@ -1456,7 +1456,7 @@ CREATE FUNCTION concat_values(text, VARIADIC anyarray) RETURNS text AS $$
 $$ LANGUAGE SQL;
 
 SELECT concat_values('|', 1, 4, 2);
- concat_values 
+ concat_values
 ---------------
  1|4|2
 (1 row)

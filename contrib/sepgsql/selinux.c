@@ -5,7 +5,7 @@
  * Interactions between userspace and selinux in kernelspace,
  * using libselinux api.
  *
- * Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -676,6 +676,7 @@ sepgsql_getenforce(void)
  */
 void
 sepgsql_audit_log(bool denied,
+				  bool enforcing,
 				  const char *scontext,
 				  const char *tcontext,
 				  uint16 tclass,
@@ -712,6 +713,11 @@ sepgsql_audit_log(bool denied,
 					 scontext, tcontext, class_name);
 	if (audit_name)
 		appendStringInfo(&buf, " name=\"%s\"", audit_name);
+
+	if (enforcing)
+		appendStringInfoString(&buf, " permissive=0");
+	else
+		appendStringInfoString(&buf, " permissive=1");
 
 	ereport(LOG, (errmsg("SELinux: %s", buf.data)));
 }
@@ -907,6 +913,7 @@ sepgsql_check_perms(const char *scontext,
 	uint32		denied;
 	uint32		audited;
 	bool		result = true;
+	bool		enforcing;
 
 	sepgsql_compute_avd(scontext, tcontext, tclass, &avd);
 
@@ -918,9 +925,10 @@ sepgsql_check_perms(const char *scontext,
 		audited = (denied ? (denied & avd.auditdeny)
 				   : (required & avd.auditallow));
 
-	if (denied &&
-		sepgsql_getenforce() > 0 &&
-		(avd.flags & SELINUX_AVD_FLAGS_PERMISSIVE) == 0)
+	enforcing = sepgsql_getenforce() > 0 &&
+		(avd.flags & SELINUX_AVD_FLAGS_PERMISSIVE) == 0;
+
+	if (denied && enforcing)
 		result = false;
 
 	/*
@@ -930,6 +938,7 @@ sepgsql_check_perms(const char *scontext,
 	if (audited && sepgsql_mode != SEPGSQL_MODE_INTERNAL)
 	{
 		sepgsql_audit_log(denied,
+						  enforcing,
 						  scontext,
 						  tcontext,
 						  tclass,

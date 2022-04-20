@@ -2148,6 +2148,77 @@ SELECT '2020-10-05'::timestamptz >= '4714-11-24 BC'::timestamp as t;
 
 RESET TimeZone;
 --
+-- Tests for BETWEEN
+--
+explain (costs off)
+select count(*) from date_tbl
+  where f1 between '1997-01-01' and '1998-01-01';
+                                 QUERY PLAN                                  
+-----------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: ((f1 >= '01-01-1997'::date) AND (f1 <= '01-01-1998'::date))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 between '1997-01-01' and '1998-01-01';
+ count 
+-------
+     3
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 not between '1997-01-01' and '1998-01-01';
+                                QUERY PLAN                                
+--------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: ((f1 < '01-01-1997'::date) OR (f1 > '01-01-1998'::date))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 not between '1997-01-01' and '1998-01-01';
+ count 
+-------
+    13
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 between symmetric '1997-01-01' and '1998-01-01';
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: (((f1 >= '01-01-1997'::date) AND (f1 <= '01-01-1998'::date)) OR ((f1 >= '01-01-1998'::date) AND (f1 <= '01-01-1997'::date)))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 between symmetric '1997-01-01' and '1998-01-01';
+ count 
+-------
+     3
+(1 row)
+
+explain (costs off)
+select count(*) from date_tbl
+  where f1 not between symmetric '1997-01-01' and '1998-01-01';
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Seq Scan on date_tbl
+         Filter: (((f1 < '01-01-1997'::date) OR (f1 > '01-01-1998'::date)) AND ((f1 < '01-01-1998'::date) OR (f1 > '01-01-1997'::date)))
+(3 rows)
+
+select count(*) from date_tbl
+  where f1 not between symmetric '1997-01-01' and '1998-01-01';
+ count 
+-------
+    13
+(1 row)
+
+--
 -- Formats
 --
 SET DateStyle TO 'US,Postgres';

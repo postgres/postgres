@@ -3,7 +3,7 @@
  * wchar.c
  *	  Functions for working with multibyte characters in various encodings.
  *
- * Portions Copyright (c) 1998-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1998-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/common/wchar.c
@@ -1807,12 +1807,11 @@ pg_utf8_verifychar(const unsigned char *s, int len)
 #define	CS1 16
 #define	CS2  1
 #define	CS3  5
-/* Leading byte was E0/ED, expect 1 more continuation byte */
-#define	P3A  6
-#define	P3B 20
-/* Leading byte was F0/F4, expect 2 more continuation bytes */
-#define	P4A 25
-#define	P4B 30
+/* Partial states, where the first continuation byte has a restricted range */
+#define	P3A  6					/* Lead was E0, check for 3-byte overlong */
+#define	P3B 20					/* Lead was ED, check for surrogate */
+#define	P4A 25					/* Lead was F0, check for 4-byte overlong */
+#define	P4B 30					/* Lead was F4, check for too-large */
 /* Begin and End are the same state */
 #define	END BGN
 
@@ -1941,31 +1940,32 @@ pg_utf8_verifystr(const unsigned char *s, int len)
 			len -= STRIDE_LENGTH;
 		}
 
-		/*
-		 * The error state persists, so we only need to check for it here. In
-		 * case of error we start over from the beginning with the slow path
-		 * so we can count the valid bytes.
-		 */
+		/* The error state persists, so we only need to check for it here. */
 		if (state == ERR)
 		{
+			/*
+			 * Start over from the beginning with the slow path so we can
+			 * count the valid bytes.
+			 */
 			len = orig_len;
 			s = start;
 		}
-
-		/*
-		 * We treat all other states as success, but it's possible the fast
-		 * path exited in the middle of a multibyte sequence, since that
-		 * wouldn't have caused an error. Before checking the remaining bytes,
-		 * walk backwards to find the last byte that could have been the start
-		 * of a valid sequence.
-		 */
-		while (s > start)
+		else if (state != END)
 		{
-			s--;
-			len++;
-
-			if (!IS_HIGHBIT_SET(*s) || pg_utf_mblen(s) > 1)
-				break;
+			/*
+			 * The fast path exited in the middle of a multibyte sequence.
+			 * Walk backwards to find the leading byte so that the slow path
+			 * can resume checking from there. We must always backtrack at
+			 * least one byte, since the current byte could be e.g. an ASCII
+			 * byte after a 2-byte lead, which is invalid.
+			 */
+			do
+			{
+				Assert(s > start);
+				s--;
+				len++;
+				Assert(IS_HIGHBIT_SET(*s));
+			} while (pg_utf_mblen(s) <= 1);
 		}
 	}
 

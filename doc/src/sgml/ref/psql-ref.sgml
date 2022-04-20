@@ -127,18 +127,11 @@ echo '\x \\ SELECT * FROM foo;' | psql
        commands included in the string to divide it into multiple
        transactions.  (See <xref linkend="protocol-flow-multi-statement"/>
        for more details about how the server handles multi-query strings.)
-       Also, <application>psql</application> only prints the
-       result of the last <acronym>SQL</acronym> command in the string.
-       This is different from the behavior when the same string is read from
-       a file or fed to <application>psql</application>'s standard input,
-       because then <application>psql</application> sends
-       each <acronym>SQL</acronym> command separately.
       </para>
       <para>
-       Because of this behavior, putting more than one SQL command in a
-       single <option>-c</option> string often has unexpected results.
-       It's better to use repeated <option>-c</option> commands or feed
-       multiple commands to <application>psql</application>'s standard input,
+       If having several commands executed in one transaction is not desired,
+       use repeated <option>-c</option> commands or feed multiple commands to
+       <application>psql</application>'s standard input,
        either using <application>echo</application> as illustrated above, or
        via a shell here-document, for example:
 <programlisting>
@@ -318,9 +311,9 @@ EOF
       <term><option>--no-readline</option></term>
       <listitem>
       <para>
-       Do not use <application>Readline</application> for line editing and do
-       not use the command history.
-       This can be useful to turn off tab expansion when cutting and pasting.
+       Do not use <application>Readline</application> for line editing and
+       do not use the command history (see
+       <xref linkend="app-psql-readline"/> below).
       </para>
       </listitem>
     </varlistentry>
@@ -1388,6 +1381,25 @@ testdb=&gt;
 
 
       <varlistentry>
+        <term><literal>\dconfig[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
+        <listitem>
+        <para>
+        Lists server configuration parameters and their values.
+        If <replaceable class="parameter">pattern</replaceable> is specified,
+        only parameters whose names match the pattern are listed.  Without
+        a <replaceable class="parameter">pattern</replaceable>, only
+        parameters that are set to non-default values are listed.
+        (Use <literal>\dconfig *</literal> to see all parameters.)
+        If <literal>+</literal> is appended to the command name, each
+        parameter is listed with its data type, context in which the
+        parameter can be set, and access privileges (if non-default access
+        privileges have been granted).
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
         <term><literal>\dC[+] [ <link linkend="app-psql-patterns"><replaceable class="parameter">pattern</replaceable></link> ]</literal></term>
         <listitem>
         <para>
@@ -1681,11 +1693,14 @@ testdb=&gt;
 
 
       <varlistentry>
-        <term><literal>\dl</literal></term>
+        <term><literal>\dl[+]</literal></term>
         <listitem>
         <para>
         This is an alias for <command>\lo_list</command>, which shows a
         list of large objects.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>
@@ -2610,12 +2625,15 @@ lo_import 152801
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\lo_list</literal></term>
+        <term><literal>\lo_list[+]</literal></term>
         <listitem>
         <para>
         Shows a list of all <productname>PostgreSQL</productname>
         large objects currently stored in the database,
         along with any comments provided for them.
+        If <literal>+</literal> is appended to the command name,
+        each large object is listed with its associated permissions,
+        if any.
         </para>
         </listitem>
       </varlistentry>
@@ -3564,10 +3582,6 @@ select 1\; select 2\; select 3;
         commands included in the string to divide it into multiple
         transactions.  (See <xref linkend="protocol-flow-multi-statement"/>
         for more details about how the server handles multi-query strings.)
-        <application>psql</application> prints only the last query result
-        it receives for each request; in this example, although all
-        three <command>SELECT</command>s are indeed executed, <application>psql</application>
-        only prints the <literal>3</literal>.
         </para>
         </listitem>
       </varlistentry>
@@ -3627,14 +3641,27 @@ select 1\; select 2\; select 3;
   </para>
 
   <para>
-   A pattern that contains a dot (<literal>.</literal>) is interpreted as a schema
+   A relation pattern that contains a dot (<literal>.</literal>) is interpreted as a schema
    name pattern followed by an object name pattern.  For example,
    <literal>\dt foo*.*bar*</literal> displays all tables whose table name
    includes <literal>bar</literal> that are in schemas whose schema name
    starts with <literal>foo</literal>.  When no dot appears, then the pattern
    matches only objects that are visible in the current schema search path.
    Again, a dot within double quotes loses its special meaning and is matched
-   literally.
+   literally.  A relation pattern that contains two dots (<literal>.</literal>)
+   is interpreted as a database name followed by a schema name pattern followed
+   by an object name pattern.  The database name portion will not be treated as
+   a pattern and must match the name of the currently connected database, else
+   an error will be raised.
+  </para>
+
+  <para>
+   A schema pattern that contains a dot (<literal>.</literal>) is interpreted
+   as a database name followed by a schema name pattern.  For example,
+   <literal>\dn mydb.*foo*</literal> displays all schemas whose schema name
+   includes <literal>foo</literal>.  The database name portion will not be
+   treated as a pattern and must match the name of the currently connected
+   database, else an error will be raised.
   </para>
 
   <para>
@@ -4154,6 +4181,18 @@ bar
       </varlistentry>
 
       <varlistentry>
+        <term><varname>SHOW_ALL_RESULTS</varname></term>
+        <listitem>
+        <para>
+        When this variable is set to <literal>off</literal>, only the last
+        result of a combined query (<literal>\;</literal>) is shown instead of
+        all of them.  The default is <literal>on</literal>.  The off behavior
+        is for compatibility with older versions of psql.
+        </para>
+        </listitem>
+      </varlistentry>
+
+       <varlistentry>
         <term><varname>SHOW_CONTEXT</varname></term>
         <listitem>
         <para>
@@ -4556,21 +4595,47 @@ testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
 
    </refsect3>
 
-   <refsect3>
+   <refsect3 id="app-psql-readline">
     <title>Command-Line Editing</title>
 
+   <indexterm>
+    <primary>Readline</primary>
+    <secondary>in psql</secondary>
+   </indexterm>
+   <indexterm>
+    <primary>libedit</primary>
+    <secondary>in psql</secondary>
+   </indexterm>
+
     <para>
-    <application>psql</application> supports the <application>Readline</application>
-    library for convenient line editing and retrieval. The command
-    history is automatically saved when <application>psql</application>
-    exits and is reloaded when
-    <application>psql</application> starts up. Tab-completion is also
-    supported, although the completion logic makes no claim to be an
-    <acronym>SQL</acronym> parser.  The queries generated by tab-completion
-    can also interfere with other SQL commands, e.g., <literal>SET
-    TRANSACTION ISOLATION LEVEL</literal>.
-    If for some reason you do not like the tab completion, you
-    can turn it off by putting this in a file named
+    <application>psql</application> uses
+    the <application>Readline</application>
+    or <application>libedit</application> library, if available, for
+    convenient line editing and retrieval.  The command history is
+    automatically saved when <application>psql</application> exits and is
+    reloaded when <application>psql</application> starts up.  Type
+    up-arrow or control-P to retrieve previous lines.
+    </para>
+
+    <para>
+    You can also use tab completion to fill in partially-typed keywords
+    and SQL object names in many (by no means all) contexts.  For example,
+    at the start of a command, typing <literal>ins</literal> and pressing
+    TAB will fill in <literal>insert into </literal>.  Then, typing a few
+    characters of a table or schema name and pressing TAB will fill in the
+    unfinished name, or offer a menu of possible completions when there's
+    more than one.  (Depending on the library in use, you may need to
+    press TAB more than once to get a menu.)
+    </para>
+
+    <para>
+    Tab completion for SQL object names requires sending queries to the
+    server to find possible matches.  In some contexts this can interfere
+    with other operations.  For example, after <command>BEGIN</command>
+    it will be too late to issue <command>SET TRANSACTION ISOLATION
+    LEVEL</command> if a tab-completion query is issued in between.
+    If you do not want tab completion at all, you
+    can turn it off permanently by putting this in a file named
     <filename>.inputrc</filename> in your home directory:
 <programlisting>
 $if psql
@@ -4580,6 +4645,16 @@ $endif
     (This is not a <application>psql</application> but a
     <application>Readline</application> feature. Read its documentation
     for further details.)
+    </para>
+
+    <para>
+     The <option>-n</option> (<option>--no-readline</option>) command line
+     option can also be useful to disable use
+     of <application>Readline</application> for a single run
+     of <application>psql</application>.  This prevents tab completion,
+     use or recording of command line history, and editing of multi-line
+     commands.  It is particularly useful when you need to copy-and-paste
+     text that contains TAB characters.
     </para>
    </refsect3>
   </refsect2>
@@ -4930,7 +5005,7 @@ testdb=&gt; <userinput>\d my_table</userinput>
  Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
  first  | integer |           | not null | 0
- second | text    |           |          | 
+ second | text    |           |          |
 </programlisting>
   Now we change the prompt to something more interesting:
 <programlisting>
@@ -5061,7 +5136,7 @@ testdb=&gt; <userinput>\df int*pl * bigint</userinput>
   with the <command>\crosstabview</command> command:
 <programlisting>
 testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;</userinput>
- first | second | gt2 
+ first | second | gt2
 -------+--------+-----
      1 | one    | f
      2 | two    | f
@@ -5070,11 +5145,11 @@ testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;<
 (4 rows)
 
 testdb=&gt; <userinput>\crosstabview first second</userinput>
- first | one | two | three | four 
+ first | one | two | three | four
 -------+-----+-----+-------+------
-     1 | f   |     |       | 
-     2 |     | f   |       | 
-     3 |     |     | t     | 
+     1 | f   |     |       |
+     2 |     | f   |       |
+     3 |     |     | t     |
      4 |     |     |       | t
 (4 rows)
 </programlisting>
@@ -5086,7 +5161,7 @@ testdb=&gt; <userinput>SELECT t1.first as "A", t2.first+100 AS "B", t1.first*(t2
 testdb(&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
 testdb(&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
 testdb(&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
- A | 101 | 102 | 103 | 104 
+ A | 101 | 102 | 103 | 104
 ---+-----+-----+-----+-----
  4 | 404 | 408 | 412 | 416
  3 | 303 | 306 | 309 | 312

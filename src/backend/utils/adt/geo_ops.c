@@ -13,7 +13,7 @@
  * - circle
  * - polygon
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -3878,7 +3878,7 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 		Point		p;
 
 		/*
-		 * if X-intersection wasn't found  then check central point of tested
+		 * if X-intersection wasn't found, then check central point of tested
 		 * segment. In opposite case we already check all subsegments
 		 */
 		p.x = float8_div(float8_pl(t.p[0].x, t.p[1].x), 2.0);

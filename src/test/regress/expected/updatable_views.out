@@ -979,6 +979,7 @@ drop cascades to function rw_view1_aa(rw_view1)
 -- permissions checks
 CREATE USER regress_view_user1;
 CREATE USER regress_view_user2;
+CREATE USER regress_view_user3;
 SET SESSION AUTHORIZATION regress_view_user1;
 CREATE TABLE base_tbl(a int, b text, c float);
 INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
@@ -1205,8 +1206,244 @@ DROP TABLE base_tbl CASCADE;
 NOTICE:  drop cascades to 2 other objects
 DETAIL:  drop cascades to view rw_view1
 drop cascades to view rw_view2
+-- security invoker view permissions
+SET SESSION AUTHORIZATION regress_view_user1;
+CREATE TABLE base_tbl(a int, b text, c float);
+INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
+CREATE VIEW rw_view1 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
+ALTER VIEW rw_view1 SET (security_invoker = true);
+INSERT INTO rw_view1 VALUES ('Row 2', 2.0, 2);
+GRANT SELECT ON rw_view1 TO regress_view_user2;
+GRANT UPDATE (bb,cc) ON rw_view1 TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM base_tbl; -- not allowed
+ERROR:  permission denied for table base_tbl
+SELECT * FROM rw_view1; -- not allowed
+ERROR:  permission denied for table base_tbl
+INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- not allowed
+ERROR:  permission denied for table base_tbl
+INSERT INTO rw_view1 VALUES ('Row 3', 3.0, 3); -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE base_tbl SET a=a; -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view1 SET bb=bb, cc=cc; -- not allowed
+ERROR:  permission denied for table base_tbl
+DELETE FROM base_tbl; -- not allowed
+ERROR:  permission denied for table base_tbl
+DELETE FROM rw_view1; -- not allowed
+ERROR:  permission denied for view rw_view1
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT SELECT ON base_tbl TO regress_view_user2;
+GRANT UPDATE (a,c) ON base_tbl TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM base_tbl; -- ok
+ a |   b   | c 
+---+-------+---
+ 1 | Row 1 | 1
+ 2 | Row 2 | 2
+(2 rows)
+
+SELECT * FROM rw_view1; -- ok
+  bb   | cc | aa 
+-------+----+----
+ Row 1 |  1 |  1
+ Row 2 |  2 |  2
+(2 rows)
+
+UPDATE base_tbl SET a=a, c=c; -- ok
+UPDATE base_tbl SET b=b; -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view1 SET cc=cc; -- ok
+UPDATE rw_view1 SET aa=aa; -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view1 SET bb=bb; -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO base_tbl VALUES (3, 'Row 3', 3.0); -- ok
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
+ERROR:  permission denied for view rw_view1
+DELETE FROM base_tbl WHERE a=1; -- ok
+DELETE FROM rw_view1 WHERE aa=2; -- not allowed
+ERROR:  permission denied for view rw_view1
+SET SESSION AUTHORIZATION regress_view_user1;
+REVOKE INSERT, DELETE ON base_tbl FROM regress_view_user2;
+GRANT INSERT, DELETE ON rw_view1 TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- not allowed
+ERROR:  permission denied for table base_tbl
+DELETE FROM rw_view1 WHERE aa=2; -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT INSERT, DELETE ON base_tbl TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+INSERT INTO rw_view1 VALUES ('Row 4', 4.0, 4); -- ok
+DELETE FROM rw_view1 WHERE aa=2; -- ok
+SELECT * FROM base_tbl; -- ok
+ a |   b   | c 
+---+-------+---
+ 3 | Row 3 | 3
+ 4 | Row 4 | 4
+(2 rows)
+
+RESET SESSION AUTHORIZATION;
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to view rw_view1
+-- ordinary view on top of security invoker view permissions
+CREATE TABLE base_tbl(a int, b text, c float);
+INSERT INTO base_tbl VALUES (1, 'Row 1', 1.0);
+SET SESSION AUTHORIZATION regress_view_user1;
+CREATE VIEW rw_view1 AS SELECT b AS bb, c AS cc, a AS aa FROM base_tbl;
+ALTER VIEW rw_view1 SET (security_invoker = true);
+SELECT * FROM rw_view1;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view1 SET aa=aa;  -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user2;
+CREATE VIEW rw_view2 AS SELECT cc AS ccc, aa AS aaa, bb AS bbb FROM rw_view1;
+GRANT SELECT, UPDATE ON rw_view2 TO regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+RESET SESSION AUTHORIZATION;
+GRANT SELECT ON base_tbl TO regress_view_user1;
+GRANT UPDATE (a, b) ON base_tbl TO regress_view_user1;
+SET SESSION AUTHORIZATION regress_view_user1;
+SELECT * FROM rw_view1; -- ok
+  bb   | cc | aa 
+-------+----+----
+ Row 1 |  1 |  1
+(1 row)
+
+UPDATE rw_view1 SET aa=aa, bb=bb;  -- ok
+UPDATE rw_view1 SET cc=cc;  -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+SET SESSION AUTHORIZATION regress_view_user1;
+GRANT SELECT ON rw_view1 TO regress_view_user2;
+GRANT UPDATE (bb, cc) ON rw_view1 TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+RESET SESSION AUTHORIZATION;
+GRANT SELECT ON base_tbl TO regress_view_user2;
+GRANT UPDATE (a, c) ON base_tbl TO regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- ok
+ ccc | aaa |  bbb  
+-----+-----+-------
+   1 |   1 | Row 1
+(1 row)
+
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- not allowed
+ERROR:  permission denied for table base_tbl
+RESET SESSION AUTHORIZATION;
+GRANT SELECT ON base_tbl TO regress_view_user3;
+GRANT UPDATE (a, c) ON base_tbl TO regress_view_user3;
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+ ccc | aaa |  bbb  
+-----+-----+-------
+   1 |   1 | Row 1
+(1 row)
+
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+RESET SESSION AUTHORIZATION;
+REVOKE SELECT, UPDATE ON base_tbl FROM regress_view_user1;
+SET SESSION AUTHORIZATION regress_view_user1;
+SELECT * FROM rw_view1;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view1 SET aa=aa;  -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- ok
+ ccc | aaa |  bbb  
+-----+-----+-------
+   1 |   1 | Row 1
+(1 row)
+
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+ ccc | aaa |  bbb  
+-----+-----+-------
+   1 |   1 | Row 1
+(1 row)
+
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+RESET SESSION AUTHORIZATION;
+REVOKE SELECT, UPDATE ON base_tbl FROM regress_view_user2;
+SET SESSION AUTHORIZATION regress_view_user2;
+SELECT * FROM rw_view2;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- not allowed
+ERROR:  permission denied for table base_tbl
+SET SESSION AUTHORIZATION regress_view_user3;
+SELECT * FROM rw_view2;  -- ok
+ ccc | aaa |  bbb  
+-----+-----+-------
+   1 |   1 | Row 1
+(1 row)
+
+UPDATE rw_view2 SET aaa=aaa;  -- not allowed
+ERROR:  permission denied for view rw_view1
+UPDATE rw_view2 SET bbb=bbb;  -- not allowed
+ERROR:  permission denied for table base_tbl
+UPDATE rw_view2 SET ccc=ccc;  -- ok
+RESET SESSION AUTHORIZATION;
+DROP TABLE base_tbl CASCADE;
+NOTICE:  drop cascades to 2 other objects
+DETAIL:  drop cascades to view rw_view1
+drop cascades to view rw_view2
 DROP USER regress_view_user1;
 DROP USER regress_view_user2;
+DROP USER regress_view_user3;
 -- column defaults
 CREATE TABLE base_tbl (a int PRIMARY KEY, b text DEFAULT 'Unspecified', c serial);
 INSERT INTO base_tbl VALUES (1, 'Row 1');

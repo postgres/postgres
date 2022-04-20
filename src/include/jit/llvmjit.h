@@ -2,7 +2,7 @@
  * llvmjit.h
  *	  LLVM JIT provider.
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * src/include/jit/llvmjit.h
  *
@@ -56,30 +56,30 @@ typedef struct LLVMJitContext
 } LLVMJitContext;
 
 /* llvm module containing information about types */
-extern LLVMModuleRef llvm_types_module;
+extern PGDLLIMPORT LLVMModuleRef llvm_types_module;
 
 /* type and struct definitions */
-extern LLVMTypeRef TypeParamBool;
-extern LLVMTypeRef TypePGFunction;
-extern LLVMTypeRef TypeSizeT;
-extern LLVMTypeRef TypeStorageBool;
+extern PGDLLIMPORT LLVMTypeRef TypeParamBool;
+extern PGDLLIMPORT LLVMTypeRef TypePGFunction;
+extern PGDLLIMPORT LLVMTypeRef TypeSizeT;
+extern PGDLLIMPORT LLVMTypeRef TypeStorageBool;
 
-extern LLVMTypeRef StructNullableDatum;
-extern LLVMTypeRef StructTupleDescData;
-extern LLVMTypeRef StructHeapTupleData;
-extern LLVMTypeRef StructTupleTableSlot;
-extern LLVMTypeRef StructHeapTupleTableSlot;
-extern LLVMTypeRef StructMinimalTupleTableSlot;
-extern LLVMTypeRef StructMemoryContextData;
-extern LLVMTypeRef StructFunctionCallInfoData;
-extern LLVMTypeRef StructExprContext;
-extern LLVMTypeRef StructExprEvalStep;
-extern LLVMTypeRef StructExprState;
-extern LLVMTypeRef StructAggState;
-extern LLVMTypeRef StructAggStatePerTransData;
-extern LLVMTypeRef StructAggStatePerGroupData;
+extern PGDLLIMPORT LLVMTypeRef StructNullableDatum;
+extern PGDLLIMPORT LLVMTypeRef StructTupleDescData;
+extern PGDLLIMPORT LLVMTypeRef StructHeapTupleData;
+extern PGDLLIMPORT LLVMTypeRef StructTupleTableSlot;
+extern PGDLLIMPORT LLVMTypeRef StructHeapTupleTableSlot;
+extern PGDLLIMPORT LLVMTypeRef StructMinimalTupleTableSlot;
+extern PGDLLIMPORT LLVMTypeRef StructMemoryContextData;
+extern PGDLLIMPORT LLVMTypeRef StructFunctionCallInfoData;
+extern PGDLLIMPORT LLVMTypeRef StructExprContext;
+extern PGDLLIMPORT LLVMTypeRef StructExprEvalStep;
+extern PGDLLIMPORT LLVMTypeRef StructExprState;
+extern PGDLLIMPORT LLVMTypeRef StructAggState;
+extern PGDLLIMPORT LLVMTypeRef StructAggStatePerTransData;
+extern PGDLLIMPORT LLVMTypeRef StructAggStatePerGroupData;
 
-extern LLVMValueRef AttributeTemplate;
+extern PGDLLIMPORT LLVMValueRef AttributeTemplate;
 
 
 extern void llvm_enter_fatal_on_oom(void);

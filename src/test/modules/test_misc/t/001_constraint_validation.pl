@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Verify that ALTER TABLE optimizes certain operations as expected
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 42;
+use Test::More;
 
 # Initialize a test cluster
 my $node = PostgreSQL::Test::Cluster->new('primary');
@@ -311,3 +311,5 @@ ok( $output =~
 run_sql_command('DROP TABLE quuux;');
 
 $node->stop('fast');
+
+done_testing();

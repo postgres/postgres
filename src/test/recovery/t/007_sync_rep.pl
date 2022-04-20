@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Minimal test testing synchronous replication sync_state transition
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 11;
+use Test::More;
 
 # Query checking sync_priority and sync_state of each standby
 my $check_sql =
@@ -217,3 +217,5 @@ standby3|1|quorum
 standby4|1|quorum),
 	'all standbys are considered as candidates for quorum sync standbys',
 	'ANY 2(*)');
+
+done_testing();

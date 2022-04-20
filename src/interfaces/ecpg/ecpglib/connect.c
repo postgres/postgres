@@ -315,7 +315,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			ecpg_free(dbname);
 			dbname = ecpg_strdup(envname, lineno);
 		}
-
 	}
 
 	if (dbname == NULL && connection_name == NULL)

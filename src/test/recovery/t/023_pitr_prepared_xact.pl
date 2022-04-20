@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for point-in-time-recovery (PITR) with prepared transactions
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 use File::Compare;
 
 # Initialize and start primary node with WAL archiving
@@ -87,3 +87,5 @@ CHECKPOINT;
 # still be found.
 $node_pitr->stop('immediate');
 $node_pitr->start;
+
+done_testing();

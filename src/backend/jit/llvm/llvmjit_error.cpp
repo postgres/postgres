@@ -6,7 +6,7 @@
  * Unfortunately neither (re)setting the C++ new handler, nor the LLVM OOM
  * handler are exposed to C. Therefore this file wraps the necessary code.
  *
- * Copyright (c) 2016-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2016-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/backend/jit/llvm/llvmjit_error.cpp
@@ -23,15 +23,22 @@ extern "C"
 
 #include "jit/llvmjit.h"
 
+#include <new>
 
 static int fatal_new_handler_depth = 0;
 static std::new_handler old_new_handler = NULL;
 
 static void fatal_system_new_handler(void);
 #if LLVM_VERSION_MAJOR > 4
+static void fatal_llvm_new_handler(void *user_data, const char *reason, bool gen_crash_diag);
+#if LLVM_VERSION_MAJOR < 14
 static void fatal_llvm_new_handler(void *user_data, const std::string& reason, bool gen_crash_diag);
 #endif
+#endif
+static void fatal_llvm_error_handler(void *user_data, const char *reason, bool gen_crash_diag);
+#if LLVM_VERSION_MAJOR < 14
 static void fatal_llvm_error_handler(void *user_data, const std::string& reason, bool gen_crash_diag);
+#endif
 
 
 /*
@@ -129,23 +136,41 @@ fatal_system_new_handler(void)
 #if LLVM_VERSION_MAJOR > 4
 static void
 fatal_llvm_new_handler(void *user_data,
-					   const std::string& reason,
+					   const char *reason,
 					   bool gen_crash_diag)
 {
 	ereport(FATAL,
 			(errcode(ERRCODE_OUT_OF_MEMORY),
 			 errmsg("out of memory"),
-			 errdetail("While in LLVM: %s", reason.c_str())));
+			 errdetail("While in LLVM: %s", reason)));
+}
+#if LLVM_VERSION_MAJOR < 14
+static void
+fatal_llvm_new_handler(void *user_data,
+					   const std::string& reason,
+					   bool gen_crash_diag)
+{
+	fatal_llvm_new_handler(user_data, reason.c_str(), gen_crash_diag);
 }
 #endif
+#endif
 
+static void
+fatal_llvm_error_handler(void *user_data,
+						 const char *reason,
+						 bool gen_crash_diag)
+{
+	ereport(FATAL,
+			(errcode(ERRCODE_OUT_OF_MEMORY),
+			 errmsg("fatal llvm error: %s", reason)));
+}
+
+#if LLVM_VERSION_MAJOR < 14
 static void
 fatal_llvm_error_handler(void *user_data,
 						 const std::string& reason,
 						 bool gen_crash_diag)
 {
-	ereport(FATAL,
-			(errcode(ERRCODE_OUT_OF_MEMORY),
-			 errmsg("fatal llvm error: %s",
-					reason.c_str())));
+	fatal_llvm_error_handler(user_data, reason.c_str(), gen_crash_diag);
 }
+#endif

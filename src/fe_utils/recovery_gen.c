@@ -3,7 +3,7 @@
  * recovery_gen.c
  *		Generator for recovery configuration
  *
- * Portions Copyright (c) 2011-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2011-2022, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 
 	contents = createPQExpBuffer();
 	if (!contents)
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
+		pg_fatal("out of memory");
 
 	/*
 	 * In PostgreSQL 12 and newer versions, standby_mode is gone, replaced by
@@ -45,10 +42,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 
 	connOptions = PQconninfo(pgconn);
 	if (connOptions == NULL)
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
+		pg_fatal("out of memory");
 
 	initPQExpBuffer(&conninfo_buf);
 	for (PQconninfoOption *opt = connOptions; opt && opt->keyword; opt++)
@@ -73,10 +67,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 		appendConnStrVal(&conninfo_buf, opt->val);
 	}
 	if (PQExpBufferDataBroken(conninfo_buf))
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
+		pg_fatal("out of memory");
 
 	/*
 	 * Escape the connection string, so that it can be put in the config file.
@@ -96,10 +87,7 @@ GenerateRecoveryConfig(PGconn *pgconn, char *replication_slot)
 	}
 
 	if (PQExpBufferBroken(contents))
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
+		pg_fatal("out of memory");
 
 	PQconninfoFree(connOptions);
 
@@ -130,16 +118,10 @@ WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
 
 	cf = fopen(filename, use_recovery_conf ? "w" : "a");
 	if (cf == NULL)
-	{
-		pg_log_error("could not open file \"%s\": %m", filename);
-		exit(1);
-	}
+		pg_fatal("could not open file \"%s\": %m", filename);
 
 	if (fwrite(contents->data, contents->len, 1, cf) != 1)
-	{
-		pg_log_error("could not write to file \"%s\": %m", filename);
-		exit(1);
-	}
+		pg_fatal("could not write to file \"%s\": %m", filename);
 
 	fclose(cf);
 
@@ -148,10 +130,7 @@ WriteRecoveryConfig(PGconn *pgconn, char *target_dir, PQExpBuffer contents)
 		snprintf(filename, MAXPGPATH, "%s/%s", target_dir, "standby.signal");
 		cf = fopen(filename, "w");
 		if (cf == NULL)
-		{
-			pg_log_error("could not create file \"%s\": %m", filename);
-			exit(1);
-		}
+			pg_fatal("could not create file \"%s\": %m", filename);
 
 		fclose(cf);
 	}
@@ -167,9 +146,6 @@ escape_quotes(const char *src)
 	char	   *result = escape_single_quotes_ascii(src);
 
 	if (!result)
-	{
-		pg_log_error("out of memory");
-		exit(1);
-	}
+		pg_fatal("out of memory");
 	return result;
 }

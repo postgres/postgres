@@ -3,7 +3,7 @@
  * timeout.c
  *	  Routines to multiplex SIGALRM interrupts for multiple timeout reasons.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -71,11 +71,12 @@ static volatile sig_atomic_t alarm_enabled = false;
 
 /*
  * State recording if and when we next expect the interrupt to fire.
+ * (signal_due_at is valid only when signal_pending is true.)
  * Note that the signal handler will unconditionally reset signal_pending to
  * false, so that can change asynchronously even when alarm_enabled is false.
  */
 static volatile sig_atomic_t signal_pending = false;
-static TimestampTz signal_due_at = 0;	/* valid only when signal_pending */
+static volatile TimestampTz signal_due_at = 0;
 
 
 /*****************************************************************************
@@ -218,9 +219,21 @@ schedule_alarm(TimestampTz now)
 		MemSet(&timeval, 0, sizeof(struct itimerval));
 
 		/*
+		 * If we think there's a signal pending, but current time is more than
+		 * 10ms past when the signal was due, then assume that the timeout
+		 * request got lost somehow; clear signal_pending so that we'll reset
+		 * the interrupt request below.  (10ms corresponds to the worst-case
+		 * timeout granularity on modern systems.)  It won't hurt us if the
+		 * interrupt does manage to fire between now and when we reach the
+		 * setitimer() call.
+		 */
+		if (signal_pending && now > signal_due_at + 10 * 1000)
+			signal_pending = false;
+
+		/*
 		 * Get the time remaining till the nearest pending timeout.  If it is
-		 * negative, assume that we somehow missed an interrupt, and force
-		 * signal_pending off.  This gives us a chance to recover if the
+		 * negative, assume that we somehow missed an interrupt, and clear
+		 * signal_pending.  This gives us another chance to recover if the
 		 * kernel drops a timeout request for some reason.
 		 */
 		nearest_timeout = active_timeouts[0]->fin_time;

@@ -14,7 +14,7 @@
  *		remove_useless_result_rtes
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -131,6 +131,86 @@ static void fix_append_rel_relids(List *append_rel_list, int varno,
 								  Relids subrelids);
 static Node *find_jointree_node_for_rel(Node *jtnode, int relid);
 
+
+/*
+ * transform_MERGE_to_join
+ *		Replace a MERGE's jointree to also include the target relation.
+ */
+void
+transform_MERGE_to_join(Query *parse)
+{
+	RangeTblEntry *joinrte;
+	JoinExpr   *joinexpr;
+	JoinType	jointype;
+	int			joinrti;
+	List	   *vars;
+
+	if (parse->commandType != CMD_MERGE)
+		return;
+
+	/* XXX probably bogus */
+	vars = NIL;
+
+	/*
+	 * When any WHEN NOT MATCHED THEN INSERT clauses exist, we need to use an
+	 * outer join so that we process all unmatched tuples from the source
+	 * relation.  If none exist, we can use an inner join.
+	 */
+	if (parse->mergeUseOuterJoin)
+		jointype = JOIN_RIGHT;
+	else
+		jointype = JOIN_INNER;
+
+	/* Manufacture a join RTE to use. */
+	joinrte = makeNode(RangeTblEntry);
+	joinrte->rtekind = RTE_JOIN;
+	joinrte->jointype = jointype;
+	joinrte->joinmergedcols = 0;
+	joinrte->joinaliasvars = vars;
+	joinrte->joinleftcols = NIL;	/* MERGE does not allow JOIN USING */
+	joinrte->joinrightcols = NIL;	/* ditto */
+	joinrte->join_using_alias = NULL;
+
+	joinrte->alias = NULL;
+	joinrte->eref = makeAlias("*MERGE*", NIL);
+	joinrte->lateral = false;
+	joinrte->inh = false;
+	joinrte->inFromCl = true;
+	joinrte->requiredPerms = 0;
+	joinrte->checkAsUser = InvalidOid;
+	joinrte->selectedCols = NULL;
+	joinrte->insertedCols = NULL;
+	joinrte->updatedCols = NULL;
+	joinrte->extraUpdatedCols = NULL;
+	joinrte->securityQuals = NIL;
+
+	/*
+	 * Add completed RTE to pstate's range table list, so that we know its
+	 * index.
+	 */
+	parse->rtable = lappend(parse->rtable, joinrte);
+	joinrti = list_length(parse->rtable);
+
+	/*
+	 * Create a JOIN between the target and the source relation.
+	 */
+	joinexpr = makeNode(JoinExpr);
+	joinexpr->jointype = jointype;
+	joinexpr->isNatural = false;
+	joinexpr->larg = (Node *) makeNode(RangeTblRef);
+	((RangeTblRef *) joinexpr->larg)->rtindex = parse->resultRelation;
+	joinexpr->rarg = linitial(parse->jointree->fromlist);	/* original join */
+	joinexpr->usingClause = NIL;
+	joinexpr->join_using_alias = NULL;
+	/* The quals are removed from the jointree and into this specific join */
+	joinexpr->quals = parse->jointree->quals;
+	joinexpr->alias = NULL;
+	joinexpr->rtindex = joinrti;
+
+	/* Make the new join be the sole entry in the query's jointree */
+	parse->jointree->fromlist = list_make1(joinexpr);
+	parse->jointree->quals = NULL;
+}
 
 /*
  * replace_empty_jointree
@@ -2058,6 +2138,17 @@ perform_pullup_replace_vars(PlannerInfo *root,
 		 * can't contain any references to a subquery.
 		 */
 	}
+	if (parse->mergeActionList)
+	{
+		foreach(lc, parse->mergeActionList)
+		{
+			MergeAction *action = lfirst(lc);
+
+			action->qual = pullup_replace_vars(action->qual, rvcontext);
+			action->targetList = (List *)
+				pullup_replace_vars((Node *) action->targetList, rvcontext);
+		}
+	}
 	replace_vars_in_jointree((Node *) parse->jointree, rvcontext,
 							 lowest_nulling_outer_join);
 	Assert(parse->setOperations == NULL);
@@ -2279,8 +2370,8 @@ pullup_replace_vars_callback(Var *var,
 		 * If generating an expansion for a var of a named rowtype (ie, this
 		 * is a plain relation RTE), then we must include dummy items for
 		 * dropped columns.  If the var is RECORD (ie, this is a JOIN), then
-		 * omit dropped columns. Either way, attach column names to the
-		 * RowExpr for use of ruleutils.c.
+		 * omit dropped columns.  In the latter case, attach column names to
+		 * the RowExpr for use of the executor and ruleutils.c.
 		 *
 		 * In order to be able to cache the results, we always generate the
 		 * expansion with varlevelsup = 0, and then adjust if needed.
@@ -2301,7 +2392,7 @@ pullup_replace_vars_callback(Var *var,
 		rowexpr->args = fields;
 		rowexpr->row_typeid = var->vartype;
 		rowexpr->row_format = COERCE_IMPLICIT_CAST;
-		rowexpr->colnames = colnames;
+		rowexpr->colnames = (var->vartype == RECORDOID) ? colnames : NIL;
 		rowexpr->location = var->location;
 		newnode = (Node *) rowexpr;
 

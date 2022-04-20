@@ -3,7 +3,7 @@
  * execReplication.c
  *	  miscellaneous executor routines for logical replication
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -486,7 +486,7 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 		resultRelInfo->ri_TrigDesc->trig_update_before_row)
 	{
 		if (!ExecBRUpdateTriggers(estate, epqstate, resultRelInfo,
-								  tid, NULL, slot))
+								  tid, NULL, slot, NULL))
 			skip_tuple = true;	/* "do nothing" */
 	}
 
@@ -517,8 +517,9 @@ ExecSimpleRelationUpdate(ResultRelInfo *resultRelInfo,
 
 		/* AFTER ROW UPDATE Triggers */
 		ExecARUpdateTriggers(estate, resultRelInfo,
+							 NULL, NULL,
 							 tid, NULL, slot,
-							 recheckIndexes, NULL);
+							 recheckIndexes, NULL, false);
 
 		list_free(recheckIndexes);
 	}
@@ -547,7 +548,6 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 	{
 		skip_tuple = !ExecBRDeleteTriggers(estate, epqstate, resultRelInfo,
 										   tid, NULL, NULL);
-
 	}
 
 	if (!skip_tuple)
@@ -557,7 +557,7 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 
 		/* AFTER ROW DELETE Triggers */
 		ExecARDeleteTriggers(estate, resultRelInfo,
-							 tid, NULL, NULL);
+							 tid, NULL, NULL, false);
 	}
 }
 
@@ -567,30 +567,70 @@ ExecSimpleRelationDelete(ResultRelInfo *resultRelInfo,
 void
 CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 {
-	PublicationActions *pubactions;
+	PublicationDesc pubdesc;
 
 	/* We only need to do checks for UPDATE and DELETE. */
 	if (cmd != CMD_UPDATE && cmd != CMD_DELETE)
 		return;
 
+	/*
+	 * It is only safe to execute UPDATE/DELETE when all columns, referenced
+	 * in the row filters from publications which the relation is in, are
+	 * valid - i.e. when all referenced columns are part of REPLICA IDENTITY
+	 * or the table does not publish UPDATEs or DELETEs.
+	 *
+	 * XXX We could optimize it by first checking whether any of the
+	 * publications have a row filter for this relation. If not and relation
+	 * has replica identity then we can avoid building the descriptor but as
+	 * this happens only one time it doesn't seem worth the additional
+	 * complexity.
+	 */
+	RelationBuildPublicationDesc(rel, &pubdesc);
+	if (cmd == CMD_UPDATE && !pubdesc.rf_valid_for_update)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot update table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Column used in the publication WHERE expression is not part of the replica identity.")));
+	else if (cmd == CMD_UPDATE && !pubdesc.cols_valid_for_update)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot update table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Column list used by the publication does not cover the replica identity.")));
+	else if (cmd == CMD_DELETE && !pubdesc.rf_valid_for_delete)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot delete from table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Column used in the publication WHERE expression is not part of the replica identity.")));
+	else if (cmd == CMD_DELETE && !pubdesc.cols_valid_for_delete)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot delete from table \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail("Column list used by the publication does not cover the replica identity.")));
+
 	/* If relation has replica identity we are always good. */
-	if (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
-		OidIsValid(RelationGetReplicaIndex(rel)))
+	if (OidIsValid(RelationGetReplicaIndex(rel)))
+		return;
+
+	/* REPLICA IDENTITY FULL is also good for UPDATE/DELETE. */
+	if (rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL)
 		return;
 
 	/*
-	 * This is either UPDATE OR DELETE and there is no replica identity.
+	 * This is UPDATE/DELETE and there is no replica identity.
 	 *
 	 * Check if the table publishes UPDATES or DELETES.
 	 */
-	pubactions = GetRelationPublicationActions(rel);
-	if (cmd == CMD_UPDATE && pubactions->pubupdate)
+	if (cmd == CMD_UPDATE && pubdesc.pubactions.pubupdate)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot update table \"%s\" because it does not have a replica identity and publishes updates",
 						RelationGetRelationName(rel)),
 				 errhint("To enable updating the table, set REPLICA IDENTITY using ALTER TABLE.")));
-	else if (cmd == CMD_DELETE && pubactions->pubdelete)
+	else if (cmd == CMD_DELETE && pubdesc.pubactions.pubdelete)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("cannot delete from table \"%s\" because it does not have a replica identity and publishes deletes",

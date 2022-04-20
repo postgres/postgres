@@ -21,7 +21,7 @@
  * tree(s) generated from the query.  The executor can then use this value
  * to blame query costs on the proper queryId.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -737,6 +737,75 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) conf->exclRelTlist);
 			}
 			break;
+		case T_JsonFormat:
+			{
+				JsonFormat *format = (JsonFormat *) node;
+
+				APP_JUMB(format->type);
+				APP_JUMB(format->encoding);
+			}
+			break;
+		case T_JsonReturning:
+			{
+				JsonReturning *returning = (JsonReturning *) node;
+
+				JumbleExpr(jstate, (Node *) returning->format);
+				APP_JUMB(returning->typid);
+				APP_JUMB(returning->typmod);
+			}
+			break;
+		case T_JsonValueExpr:
+			{
+				JsonValueExpr *expr = (JsonValueExpr *) node;
+
+				JumbleExpr(jstate, (Node *) expr->raw_expr);
+				JumbleExpr(jstate, (Node *) expr->formatted_expr);
+				JumbleExpr(jstate, (Node *) expr->format);
+			}
+			break;
+		case T_JsonConstructorExpr:
+			{
+				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
+
+				JumbleExpr(jstate, (Node *) ctor->func);
+				JumbleExpr(jstate, (Node *) ctor->coercion);
+				JumbleExpr(jstate, (Node *) ctor->returning);
+				APP_JUMB(ctor->type);
+				APP_JUMB(ctor->unique);
+				APP_JUMB(ctor->absent_on_null);
+			}
+			break;
+		case T_JsonIsPredicate:
+			{
+				JsonIsPredicate *pred = (JsonIsPredicate *) node;
+
+				JumbleExpr(jstate, (Node *) pred->expr);
+				JumbleExpr(jstate, (Node *) pred->format);
+				APP_JUMB(pred->unique_keys);
+				APP_JUMB(pred->value_type);
+			}
+			break;
+		case T_JsonExpr:
+			{
+				JsonExpr    *jexpr = (JsonExpr *) node;
+
+				APP_JUMB(jexpr->op);
+				JumbleExpr(jstate, jexpr->formatted_expr);
+				JumbleExpr(jstate, jexpr->path_spec);
+				foreach(temp, jexpr->passing_names)
+				{
+					APP_JUMB_STRING(lfirst_node(String, temp)->sval);
+				}
+				JumbleExpr(jstate, (Node *) jexpr->passing_values);
+				if (jexpr->on_empty)
+				{
+					APP_JUMB(jexpr->on_empty->btype);
+					JumbleExpr(jstate, jexpr->on_empty->default_expr);
+				}
+				APP_JUMB(jexpr->on_error->btype);
+				JumbleExpr(jstate, jexpr->on_error->default_expr);
+			}
+			break;
 		case T_List:
 			foreach(temp, (List *) node)
 			{
@@ -809,9 +878,11 @@ JumbleExpr(JumbleState *jstate, Node *node)
 			{
 				TableFunc  *tablefunc = (TableFunc *) node;
 
+				APP_JUMB(tablefunc->functype);
 				JumbleExpr(jstate, tablefunc->docexpr);
 				JumbleExpr(jstate, tablefunc->rowexpr);
 				JumbleExpr(jstate, (Node *) tablefunc->colexprs);
+				JumbleExpr(jstate, (Node *) tablefunc->colvalexprs);
 			}
 			break;
 		case T_TableSampleClause:

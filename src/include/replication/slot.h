@@ -2,7 +2,7 @@
  * slot.h
  *	   Replication slot management.
  *
- * Copyright (c) 2012-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  *-------------------------------------------------------------------------
  */
@@ -206,6 +206,7 @@ extern void ReplicationSlotSave(void);
 extern void ReplicationSlotMarkDirty(void);
 
 /* misc stuff */
+extern void ReplicationSlotInitialize(void);
 extern bool ReplicationSlotValidateName(const char *name, int elevel);
 extern void ReplicationSlotReserveWal(void);
 extern void ReplicationSlotsComputeRequiredXmin(bool already_locked);
@@ -215,6 +216,7 @@ extern bool ReplicationSlotsCountDBSlots(Oid dboid, int *nslots, int *nactive);
 extern void ReplicationSlotsDropDBSlots(Oid dboid);
 extern bool InvalidateObsoleteReplicationSlots(XLogSegNo oldestSegno);
 extern ReplicationSlot *SearchNamedReplicationSlot(const char *name, bool need_lock);
+extern int ReplicationSlotIndex(ReplicationSlot *slot);
 extern void ReplicationSlotNameForTablesync(Oid suboid, Oid relid, char *syncslotname, int szslot);
 extern void ReplicationSlotDropAtPubNode(WalReceiverConn *wrconn, char *slotname, bool missing_ok);
 

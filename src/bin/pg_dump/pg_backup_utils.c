@@ -4,7 +4,7 @@
  *	Utility routines shared by pg_dump and pg_restore
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/bin/pg_dump/pg_backup_utils.c
@@ -52,8 +52,7 @@ set_dump_section(const char *arg, int *dumpSections)
 	else
 	{
 		pg_log_error("unrecognized section name: \"%s\"", arg);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit_nicely(1);
 	}
 }
@@ -64,10 +63,7 @@ void
 on_exit_nicely(on_exit_nicely_callback function, void *arg)
 {
 	if (on_exit_nicely_index >= MAX_ON_EXIT_NICELY)
-	{
-		pg_log_fatal("out of on_exit_nicely slots");
-		exit_nicely(1);
-	}
+		pg_fatal("out of on_exit_nicely slots");
 	on_exit_nicely_list[on_exit_nicely_index].function = function;
 	on_exit_nicely_list[on_exit_nicely_index].arg = arg;
 	on_exit_nicely_index++;

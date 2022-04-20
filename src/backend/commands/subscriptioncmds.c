@@ -3,11 +3,11 @@
  * subscriptioncmds.c
  *		subscription catalog manipulation functions
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		subscriptioncmds.c
+ *		src/backend/commands/subscriptioncmds.c
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_lsn.h"
 #include "utils/syscache.h"
 
 /*
@@ -61,6 +62,8 @@
 #define SUBOPT_BINARY				0x00000080
 #define SUBOPT_STREAMING			0x00000100
 #define SUBOPT_TWOPHASE_COMMIT		0x00000200
+#define SUBOPT_DISABLE_ON_ERR		0x00000400
+#define SUBOPT_LSN					0x00000800
 
 /* check if the 'val' has 'bits' set */
 #define IsSet(val, bits)  (((val) & (bits)) == (bits))
@@ -82,6 +85,8 @@ typedef struct SubOpts
 	bool		binary;
 	bool		streaming;
 	bool		twophase;
+	bool		disableonerr;
+	XLogRecPtr	lsn;
 } SubOpts;
 
 static List *fetch_table_list(WalReceiverConn *wrconn, List *publications);
@@ -130,6 +135,8 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 		opts->streaming = false;
 	if (IsSet(supported_opts, SUBOPT_TWOPHASE_COMMIT))
 		opts->twophase = false;
+	if (IsSet(supported_opts, SUBOPT_DISABLE_ON_ERR))
+		opts->disableonerr = false;
 
 	/* Parse options */
 	foreach(lc, stmt_options)
@@ -249,6 +256,42 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 			opts->specified_opts |= SUBOPT_TWOPHASE_COMMIT;
 			opts->twophase = defGetBoolean(defel);
 		}
+		else if (IsSet(supported_opts, SUBOPT_DISABLE_ON_ERR) &&
+				 strcmp(defel->defname, "disable_on_error") == 0)
+		{
+			if (IsSet(opts->specified_opts, SUBOPT_DISABLE_ON_ERR))
+				errorConflictingDefElem(defel, pstate);
+
+			opts->specified_opts |= SUBOPT_DISABLE_ON_ERR;
+			opts->disableonerr = defGetBoolean(defel);
+		}
+		else if (IsSet(supported_opts, SUBOPT_LSN) &&
+				 strcmp(defel->defname, "lsn") == 0)
+		{
+			char	   *lsn_str = defGetString(defel);
+			XLogRecPtr	lsn;
+
+			if (IsSet(opts->specified_opts, SUBOPT_LSN))
+				errorConflictingDefElem(defel, pstate);
+
+			/* Setting lsn = NONE is treated as resetting LSN */
+			if (strcmp(lsn_str, "none") == 0)
+				lsn = InvalidXLogRecPtr;
+			else
+			{
+				/* Parse the argument as LSN */
+				lsn = DatumGetLSN(DirectFunctionCall1(pg_lsn_in,
+													  CStringGetDatum(lsn_str)));
+
+				if (XLogRecPtrIsInvalid(lsn))
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("invalid WAL location (LSN): %s", lsn_str)));
+			}
+
+			opts->specified_opts |= SUBOPT_LSN;
+			opts->lsn = lsn;
+		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -332,6 +375,103 @@ parse_subscription_options(ParseState *pstate, List *stmt_options,
 }
 
 /*
+ * Add publication names from the list to a string.
+ */
+static void
+get_publications_str(List *publications, StringInfo dest, bool quote_literal)
+{
+	ListCell   *lc;
+	bool		first = true;
+
+	Assert(list_length(publications) > 0);
+
+	foreach(lc, publications)
+	{
+		char	   *pubname = strVal(lfirst(lc));
+
+		if (first)
+			first = false;
+		else
+			appendStringInfoString(dest, ", ");
+
+		if (quote_literal)
+			appendStringInfoString(dest, quote_literal_cstr(pubname));
+		else
+		{
+			appendStringInfoChar(dest, '"');
+			appendStringInfoString(dest, pubname);
+			appendStringInfoChar(dest, '"');
+		}
+	}
+}
+
+/*
+ * Check the specified publication(s) is(are) present in the publisher.
+ */
+static void
+check_publications(WalReceiverConn *wrconn, List *publications)
+{
+	WalRcvExecResult *res;
+	StringInfo	cmd;
+	TupleTableSlot *slot;
+	List	   *publicationsCopy = NIL;
+	Oid			tableRow[1] = {TEXTOID};
+
+	cmd = makeStringInfo();
+	appendStringInfoString(cmd, "SELECT t.pubname FROM\n"
+						   " pg_catalog.pg_publication t WHERE\n"
+						   " t.pubname IN (");
+	get_publications_str(publications, cmd, true);
+	appendStringInfoChar(cmd, ')');
+
+	res = walrcv_exec(wrconn, cmd->data, 1, tableRow);
+	pfree(cmd->data);
+	pfree(cmd);
+
+	if (res->status != WALRCV_OK_TUPLES)
+		ereport(ERROR,
+				errmsg_plural("could not receive publication from the publisher: %s",
+							  "could not receive list of publications from the publisher: %s",
+							  list_length(publications),
+							  res->err));
+
+	publicationsCopy = list_copy(publications);
+
+	/* Process publication(s). */
+	slot = MakeSingleTupleTableSlot(res->tupledesc, &TTSOpsMinimalTuple);
+	while (tuplestore_gettupleslot(res->tuplestore, true, false, slot))
+	{
+		char	   *pubname;
+		bool		isnull;
+
+		pubname = TextDatumGetCString(slot_getattr(slot, 1, &isnull));
+		Assert(!isnull);
+
+		/* Delete the publication present in publisher from the list. */
+		publicationsCopy = list_delete(publicationsCopy, makeString(pubname));
+		ExecClearTuple(slot);
+	}
+
+	ExecDropSingleTupleTableSlot(slot);
+
+	walrcv_clear_result(res);
+
+	if (list_length(publicationsCopy))
+	{
+		/* Prepare the list of non-existent publication(s) for error message. */
+		StringInfo	pubnames = makeStringInfo();
+
+		get_publications_str(publicationsCopy, pubnames, false);
+		ereport(WARNING,
+				errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg_plural("publication %s does not exist in the publisher",
+							  "publications %s do not exist in the publisher",
+							  list_length(publicationsCopy),
+							  pubnames->data));
+	}
+}
+
+/*
  * Auxiliary function to build a text array out of a list of String nodes.
  */
 static Datum
@@ -390,7 +530,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	supported_opts = (SUBOPT_CONNECT | SUBOPT_ENABLED | SUBOPT_CREATE_SLOT |
 					  SUBOPT_SLOT_NAME | SUBOPT_COPY_DATA |
 					  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
-					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT);
+					  SUBOPT_STREAMING | SUBOPT_TWOPHASE_COMMIT |
+					  SUBOPT_DISABLE_ON_ERR);
 	parse_subscription_options(pstate, stmt->options, supported_opts, &opts);
 
 	/*
@@ -454,6 +595,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 							   Anum_pg_subscription_oid);
 	values[Anum_pg_subscription_oid - 1] = ObjectIdGetDatum(subid);
 	values[Anum_pg_subscription_subdbid - 1] = ObjectIdGetDatum(MyDatabaseId);
+	values[Anum_pg_subscription_subskiplsn - 1] = LSNGetDatum(InvalidXLogRecPtr);
 	values[Anum_pg_subscription_subname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->subname));
 	values[Anum_pg_subscription_subowner - 1] = ObjectIdGetDatum(owner);
@@ -464,6 +606,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 		CharGetDatum(opts.twophase ?
 					 LOGICALREP_TWOPHASE_STATE_PENDING :
 					 LOGICALREP_TWOPHASE_STATE_DISABLED);
+	values[Anum_pg_subscription_subdisableonerr - 1] = BoolGetDatum(opts.disableonerr);
 	values[Anum_pg_subscription_subconninfo - 1] =
 		CStringGetTextDatum(conninfo);
 	if (opts.slot_name)
@@ -508,6 +651,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 		PG_TRY();
 		{
+			check_publications(wrconn, publications);
+
 			/*
 			 * Set sync state based on if we were asked to do data copy or
 			 * not.
@@ -589,6 +734,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 	table_close(rel, RowExclusiveLock);
 
+	pgstat_create_subscription(subid);
+
 	if (opts.enabled)
 		ApplyLauncherWakeupAtCommit();
 
@@ -600,7 +747,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 }
 
 static void
-AlterSubscription_refresh(Subscription *sub, bool copy_data)
+AlterSubscription_refresh(Subscription *sub, bool copy_data,
+						  List *validate_publications)
 {
 	char	   *err;
 	List	   *pubrel_names;
@@ -631,6 +779,9 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data)
 
 	PG_TRY();
 	{
+		if (validate_publications)
+			check_publications(wrconn, validate_publications);
+
 		/* Get the table list from publisher. */
 		pubrel_names = fetch_table_list(wrconn, sub->publications);
 
@@ -864,7 +1015,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 			{
 				supported_opts = (SUBOPT_SLOT_NAME |
 								  SUBOPT_SYNCHRONOUS_COMMIT | SUBOPT_BINARY |
-								  SUBOPT_STREAMING);
+								  SUBOPT_STREAMING | SUBOPT_DISABLE_ON_ERR);
 
 				parse_subscription_options(pstate, stmt->options,
 										   supported_opts, &opts);
@@ -911,6 +1062,14 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					values[Anum_pg_subscription_substream - 1] =
 						BoolGetDatum(opts.streaming);
 					replaces[Anum_pg_subscription_substream - 1] = true;
+				}
+
+				if (IsSet(opts.specified_opts, SUBOPT_DISABLE_ON_ERR))
+				{
+					values[Anum_pg_subscription_subdisableonerr - 1]
+						= BoolGetDatum(opts.disableonerr);
+					replaces[Anum_pg_subscription_subdisableonerr - 1]
+						= true;
 				}
 
 				update_tuple = true;
@@ -988,7 +1147,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					/* Make sure refresh sees the new list of publications. */
 					sub->publications = stmt->publication;
 
-					AlterSubscription_refresh(sub, opts.copy_data);
+					AlterSubscription_refresh(sub, opts.copy_data,
+											  stmt->publication);
 				}
 
 				break;
@@ -1014,6 +1174,9 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 				/* Refresh if user asked us to. */
 				if (opts.refresh)
 				{
+					/* We only need to validate user specified publications. */
+					List	   *validate_publications = (isadd) ? stmt->publication : NULL;
+
 					if (!sub->enabled)
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
@@ -1036,7 +1199,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					/* Refresh the new list of publications. */
 					sub->publications = publist;
 
-					AlterSubscription_refresh(sub, opts.copy_data);
+					AlterSubscription_refresh(sub, opts.copy_data,
+											  validate_publications);
 				}
 
 				break;
@@ -1078,8 +1242,50 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 
 				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH");
 
-				AlterSubscription_refresh(sub, opts.copy_data);
+				AlterSubscription_refresh(sub, opts.copy_data, NULL);
 
+				break;
+			}
+
+		case ALTER_SUBSCRIPTION_SKIP:
+			{
+				parse_subscription_options(pstate, stmt->options, SUBOPT_LSN, &opts);
+
+				/* ALTER SUBSCRIPTION ... SKIP supports only LSN option */
+				Assert(IsSet(opts.specified_opts, SUBOPT_LSN));
+
+				if (!superuser())
+					ereport(ERROR,
+							(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+							 errmsg("must be superuser to skip transaction")));
+
+				/*
+				 * If the user sets subskiplsn, we do a sanity check to make
+				 * sure that the specified LSN is a probable value.
+				 */
+				if (!XLogRecPtrIsInvalid(opts.lsn))
+				{
+					RepOriginId originid;
+					char		originname[NAMEDATALEN];
+					XLogRecPtr	remote_lsn;
+
+					snprintf(originname, sizeof(originname), "pg_%u", subid);
+					originid = replorigin_by_name(originname, false);
+					remote_lsn = replorigin_get_progress(originid, false);
+
+					/* Check the given LSN is at least a future LSN */
+					if (!XLogRecPtrIsInvalid(remote_lsn) && opts.lsn < remote_lsn)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+								 errmsg("skip WAL location (LSN %X/%X) must be greater than origin LSN %X/%X",
+										LSN_FORMAT_ARGS(opts.lsn),
+										LSN_FORMAT_ARGS(remote_lsn))));
+				}
+
+				values[Anum_pg_subscription_subskiplsn - 1] = LSNGetDatum(opts.lsn);
+				replaces[Anum_pg_subscription_subskiplsn - 1] = true;
+
+				update_tuple = true;
 				break;
 			}
 
@@ -1199,7 +1405,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * slot stays dropped even if the transaction rolls back.  So we cannot
 	 * run DROP SUBSCRIPTION inside a transaction block if dropping the
 	 * replication slot.  Also, in this case, we report a message for dropping
-	 * the subscription to the stats collector.
+	 * the subscription to the cumulative stats system.
 	 *
 	 * XXX The command name should really be something like "DROP SUBSCRIPTION
 	 * of a subscription that is associated with a replication slot", but we
@@ -1364,7 +1570,6 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 */
 		if (slotname)
 			ReplicationSlotDropAtPubNode(wrconn, slotname, false);
-
 	}
 	PG_FINALLY();
 	{
@@ -1373,7 +1578,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	PG_END_TRY();
 
 	/*
-	 * Send a message for dropping this subscription to the stats collector.
+	 * Tell the cumulative stats system that the subscription is getting dropped.
 	 * We can safely report dropping the subscription statistics here if the
 	 * subscription is associated with a replication slot since we cannot run
 	 * DROP SUBSCRIPTION inside a transaction block.  Subscription statistics
@@ -1382,7 +1587,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	 * gets lost.
 	 */
 	if (slotname)
-		pgstat_report_subscription_drop(subid);
+		pgstat_drop_subscription(subid);
 
 	table_close(rel, NoLock);
 }
@@ -1481,6 +1686,8 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 
 	InvokeObjectPostAlterHook(SubscriptionRelationId,
 							  form->oid, 0);
+
+	ApplyLauncherWakeupAtCommit();
 }
 
 /*
@@ -1555,28 +1762,13 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 	StringInfoData cmd;
 	TupleTableSlot *slot;
 	Oid			tableRow[2] = {TEXTOID, TEXTOID};
-	ListCell   *lc;
-	bool		first;
 	List	   *tablelist = NIL;
-
-	Assert(list_length(publications) > 0);
 
 	initStringInfo(&cmd);
 	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
 						   "  FROM pg_catalog.pg_publication_tables t\n"
 						   " WHERE t.pubname IN (");
-	first = true;
-	foreach(lc, publications)
-	{
-		char	   *pubname = strVal(lfirst(lc));
-
-		if (first)
-			first = false;
-		else
-			appendStringInfoString(&cmd, ", ");
-
-		appendStringInfoString(&cmd, quote_literal_cstr(pubname));
-	}
+	get_publications_str(publications, &cmd, true);
 	appendStringInfoChar(&cmd, ')');
 
 	res = walrcv_exec(wrconn, cmd.data, 2, tableRow);

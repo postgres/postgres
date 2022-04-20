@@ -77,7 +77,7 @@ alter table nonesuch rename to newnonesuch;
 alter table nonesuch rename to stud_emp;
 
 -- conflict
-alter table stud_emp rename to aggtest;
+alter table stud_emp rename to student;
 
 -- self-conflict
 alter table stud_emp rename to stud_emp;

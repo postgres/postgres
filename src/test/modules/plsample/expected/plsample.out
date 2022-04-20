@@ -34,3 +34,84 @@ NOTICE:  argument: 0; name: a1; value: {foo,bar,hoge}
  
 (1 row)
 
+CREATE FUNCTION my_trigger_func() RETURNS trigger AS $$
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+$$ language plsample;
+CREATE TABLE my_table (num integer, description text);
+CREATE TRIGGER my_trigger_func BEFORE INSERT OR UPDATE ON my_table
+       FOR EACH ROW EXECUTE FUNCTION my_trigger_func();
+CREATE TRIGGER my_trigger_func2 AFTER INSERT OR UPDATE ON my_table
+       FOR EACH ROW EXECUTE FUNCTION my_trigger_func(8);
+INSERT INTO my_table (num, description)
+VALUES (1, 'first');
+NOTICE:  source text of function "my_trigger_func": 
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+
+NOTICE:  trigger name: my_trigger_func
+NOTICE:  trigger relation: my_table
+NOTICE:  trigger relation schema: public
+NOTICE:  triggered by INSERT
+NOTICE:  triggered BEFORE
+NOTICE:  triggered per row
+NOTICE:  source text of function "my_trigger_func": 
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+
+NOTICE:  trigger name: my_trigger_func2
+NOTICE:  trigger relation: my_table
+NOTICE:  trigger relation schema: public
+NOTICE:  triggered by INSERT
+NOTICE:  triggered AFTER
+NOTICE:  triggered per row
+NOTICE:  trigger arg[0]: 8
+UPDATE my_table
+SET description = 'first, modified once'
+WHERE num = 1;
+NOTICE:  source text of function "my_trigger_func": 
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+
+NOTICE:  trigger name: my_trigger_func
+NOTICE:  trigger relation: my_table
+NOTICE:  trigger relation schema: public
+NOTICE:  triggered by UPDATE
+NOTICE:  triggered BEFORE
+NOTICE:  triggered per row
+NOTICE:  source text of function "my_trigger_func": 
+if TD_event == "INSERT"
+    return TD_NEW
+elseif TD_event == "UPDATE"
+    return TD_NEW
+else
+    return "OK"
+end
+
+NOTICE:  trigger name: my_trigger_func2
+NOTICE:  trigger relation: my_table
+NOTICE:  trigger relation schema: public
+NOTICE:  triggered by UPDATE
+NOTICE:  triggered AFTER
+NOTICE:  triggered per row
+NOTICE:  trigger arg[0]: 8

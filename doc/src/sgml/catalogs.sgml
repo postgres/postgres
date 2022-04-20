@@ -221,6 +221,11 @@
      </row>
 
      <row>
+      <entry><link linkend="catalog-pg-parameter-acl"><structname>pg_parameter_acl</structname></link></entry>
+      <entry>configuration parameters for which privileges have been granted</entry>
+     </row>
+
+     <row>
       <entry><link linkend="catalog-pg-partitioned-table"><structname>pg_partitioned_table</structname></link></entry>
       <entry>information about partition key of tables</entry>
      </row>
@@ -2060,8 +2065,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <structfield>relpersistence</structfield> <type>char</type>
       </para>
       <para>
-       <literal>p</literal> = permanent table, <literal>u</literal> = unlogged table,
-       <literal>t</literal> = temporary table
+       <literal>p</literal> = permanent table/sequence, <literal>u</literal> = unlogged table/sequence,
+       <literal>t</literal> = temporary table/sequence
       </para></entry>
      </row>
 
@@ -2368,7 +2373,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>collcollate</structfield> <type>name</type>
+       <structfield>collcollate</structfield> <type>text</type>
       </para>
       <para>
        <symbol>LC_COLLATE</symbol> for this collation object
@@ -2377,10 +2382,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>collctype</structfield> <type>name</type>
+       <structfield>collctype</structfield> <type>text</type>
       </para>
       <para>
        <symbol>LC_CTYPE</symbol> for this collation object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>colliculocale</structfield> <type>text</type>
+      </para>
+      <para>
+       ICU locale ID for this collation object
       </para></entry>
      </row>
 
@@ -2953,24 +2967,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datcollate</structfield> <type>name</type>
-      </para>
-      <para>
-       LC_COLLATE for this database
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datctype</structfield> <type>name</type>
-      </para>
-      <para>
-       LC_CTYPE for this database
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>datistemplate</structfield> <type>bool</type>
       </para>
       <para>
@@ -2998,16 +2994,6 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        Sets maximum number of concurrent connections that can be made
        to this database.  -1 means no limit.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datlastsysoid</structfield> <type>oid</type>
-      </para>
-      <para>
-       Last system OID in the database; useful
-       particularly to <application>pg_dump</application>
       </para></entry>
      </row>
 
@@ -3050,6 +3036,44 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>reltablespace</structfield> is zero
        will be stored in this tablespace; in particular, all the non-shared
        system catalogs will be there.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datcollate</structfield> <type>text</type>
+      </para>
+      <para>
+       LC_COLLATE for this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datctype</structfield> <type>text</type>
+      </para>
+      <para>
+       LC_CTYPE for this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>daticulocale</structfield> <type>text</type>
+      </para>
+      <para>
+       ICU locale ID for this database
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datcollversion</structfield> <type>text</type>
+      </para>
+      <para>
+       Provider-specific version of the collation.  This is recorded when the
+       database is created and then checked when it is used, to detect
+       changes in the collation definition that could lead to data corruption.
       </para></entry>
      </row>
 
@@ -4277,6 +4301,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>indnullsnotdistinct</structfield> <type>bool</type>
+      </para>
+      <para>
+       This value is only used for unique indexes.  If false, this unique
+       index will consider null values distinct (so the index can contain
+       multiple null values in a column, the default PostgreSQL behavior).  If
+       it is true, it will consider null values to be equal (so the index can
+       only contain one null value in a column).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>indisprimary</structfield> <type>bool</type>
       </para>
       <para>
@@ -4378,7 +4415,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        This is an array of <structfield>indnatts</structfield> values that
-       indicate which table columns this index indexes.  For example a value
+       indicate which table columns this index indexes.  For example, a value
        of <literal>1 3</literal> would mean that the first and the third table
        columns make up the index entries.  Key columns come before non-key
        (included) columns.  A zero in this array indicates that the
@@ -5418,6 +5455,74 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
  </sect1>
 
 
+ <sect1 id="catalog-pg-parameter-acl">
+  <title><structname>pg_parameter_acl</structname></title>
+
+  <indexterm zone="catalog-pg-parameter-acl">
+   <primary>pg_parameter_acl</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_parameter_acl</structname> records configuration
+   parameters for which privileges have been granted to one or more roles.
+   No entry is made for parameters that have default privileges.
+  </para>
+
+  <para>
+   Unlike most system catalogs, <structname>pg_parameter_acl</structname>
+   is shared across all databases of a cluster: there is only one
+   copy of <structname>pg_parameter_acl</structname> per cluster, not
+   one per database.
+  </para>
+
+  <table>
+   <title><structname>pg_parameter_acl</structname> Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>oid</structfield> <type>oid</type>
+      </para>
+      <para>
+       Row identifier
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>parname</structfield> <type>text</type>
+      </para>
+      <para>
+       The name of a configuration parameter for which privileges are granted
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>paracl</structfield> <type>aclitem[]</type>
+      </para>
+      <para>
+       Access privileges; see <xref linkend="ddl-priv"/> for details
+      </para></entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
  <sect1 id="catalog-pg-partitioned-table">
   <title><structname>pg_partitioned_table</structname></title>
 
@@ -6309,6 +6414,28 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Reference to relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+      <structfield>prqual</structfield> <type>pg_node_tree</type>
+      </para>
+      <para>Expression tree (in <function>nodeToString()</function>
+      representation) for the relation's publication qualifying condition. Null
+      if there is no publication qualifying condition.</para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>prattrs</structfield> <type>int2vector</type>
+       (references <link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.<structfield>attnum</structfield>)
+      </para>
+      <para>
+       This is an array of values that indicates which table columns are
+       part of the publication.  For example, a value of <literal>1 3</literal>
+       would mean that the first and the third table columns are published.
+       A null value indicates that all columns are published.
       </para></entry>
      </row>
     </tbody>
@@ -7522,6 +7649,19 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   </para>
 
   <para>
+   Normally there is one entry, with <structfield>stxdinherit</structfield> =
+   <literal>false</literal>, for each statistics object that has been analyzed.
+   If the table has inheritance children, a second entry with
+   <structfield>stxdinherit</structfield> = <literal>true</literal> is also created.
+   This row represents the statistics object over the inheritance tree, i.e.,
+   statistics for the data you'd see with
+   <literal>SELECT * FROM <replaceable>table</replaceable>*</literal>,
+   whereas the <structfield>stxdinherit</structfield> = <literal>false</literal> row
+   represents the results of
+   <literal>SELECT * FROM ONLY <replaceable>table</replaceable></literal>.
+  </para>
+
+  <para>
    Like <link linkend="catalog-pg-statistic"><structname>pg_statistic</structname></link>,
    <structname>pg_statistic_ext_data</structname> should not be
    readable by the public, since the contents might be considered sensitive.
@@ -7557,6 +7697,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        Extended statistics object containing the definition for this data
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>stxdinherit</structfield> <type>bool</type>
+      </para>
+      <para>
+       If true, the stats include inheritance child columns, not just the
+       values in the specified relation
       </para></entry>
      </row>
 
@@ -7665,6 +7815,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subskiplsn</structfield> <type>pg_lsn</type>
+      </para>
+      <para>
+       Finish LSN of the transaction whose changes are to be skipped, if a valid
+       LSN; otherwise <literal>0/0</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>subname</structfield> <type>name</type>
       </para>
       <para>
@@ -7720,6 +7880,16 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
        <literal>d</literal> = disabled,
        <literal>p</literal> = pending enablement,
        <literal>e</literal> = enabled
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>subdisableonerr</structfield> <type>bool</type>
+      </para>
+      <para>
+       If true, the subscription will be disabled if one of its workers
+       detects an error
       </para></entry>
      </row>
 
@@ -9423,9 +9593,9 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
   <para>
    <xref linkend="view-table"/> lists the system views described here.
    More detailed documentation of each view follows below.
-   There are some additional views that provide access to the results of
-   the statistics collector; they are described in <xref
-   linkend="monitoring-stats-views-table"/>.
+   There are some additional views that provide access to accumulated
+   statistics; they are described in
+   <xref linkend="monitoring-stats-views-table"/>.
   </para>
 
   <para>
@@ -9482,6 +9652,11 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
      <row>
       <entry><link linkend="view-pg-hba-file-rules"><structname>pg_hba_file_rules</structname></link></entry>
       <entry>summary of client authentication configuration file contents</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="view-pg-ident-file-mappings"><structname>pg_ident_file_mappings</structname></link></entry>
+      <entry>summary of client user name mapping configuration file contents</entry>
      </row>
 
      <row>
@@ -9932,8 +10107,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
 
   <para>
    By default, the <structname>pg_backend_memory_contexts</structname> view can be
-   read only by superusers or members of the <literal>pg_read_all_stats</literal>
-   role.
+   read only by superusers or roles with the privileges of the
+   <literal>pg_read_all_stats</literal> role.
   </para>
  </sect1>
 
@@ -10459,6 +10634,108 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       </para>
       <para>
        If not null, an error message indicating why this
+       line could not be processed
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   Usually, a row reflecting an incorrect entry will have values for only
+   the <structfield>line_number</structfield> and <structfield>error</structfield> fields.
+  </para>
+
+  <para>
+   See <xref linkend="client-authentication"/> for more information about
+   client authentication configuration.
+  </para>
+ </sect1>
+
+ <sect1 id="view-pg-ident-file-mappings">
+  <title><structname>pg_ident_file_mappings</structname></title>
+
+  <indexterm zone="view-pg-ident-file-mappings">
+   <primary>pg_ident_file_mappings</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_ident_file_mappings</structname> provides a summary
+   of the contents of the client user name mapping configuration file,
+   <link linkend="auth-username-maps"><filename>pg_ident.conf</filename></link>.
+   A row appears in this view for each non-empty, non-comment line in the file,
+   with annotations indicating whether the rule could be applied successfully.
+  </para>
+
+  <para>
+   This view can be helpful for checking whether planned changes in the
+   authentication configuration file will work, or for diagnosing a previous
+   failure.  Note that this view reports on the <emphasis>current</emphasis>
+   contents of the file, not on what was last loaded by the server.
+  </para>
+
+  <para>
+   By default, the <structname>pg_ident_file_mappings</structname> view can be
+   read only by superusers.
+  </para>
+
+  <table>
+   <title><structname>pg_ident_file_mappings</structname> Columns</title> <tgroup
+   cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>line_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Line number of this rule in <filename>pg_ident.conf</filename>
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>map_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the map
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>sys_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Detected user name of the client
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pg_username</structfield> <type>text</type>
+      </para>
+      <para>
+       Requested PostgreSQL user name
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>error</structfield> <type>text</type>
+      </para>
+      <para>
+       If not <literal>NULL</literal>, an error message indicating why this
        line could not be processed
       </para></entry>
      </row>
@@ -12374,7 +12651,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        Configuration file the current value was set in (null for
        values set from sources other than configuration files, or when
-       examined by a user who is neither a superuser or a member of
+       examined by a user who neither is a superuser nor has privileges of
        <literal>pg_read_all_settings</literal>); helpful when using
        <literal>include</literal> directives in configuration files
       </para></entry>
@@ -12387,7 +12664,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <para>
        Line number within the configuration file the current value was
        set at (null for values set from sources other than configuration files,
-       or when examined by a user who is neither a superuser or a member of
+       or when examined by a user who neither is a superuser nor has privileges of
        <literal>pg_read_all_settings</literal>).
       </para></entry>
      </row>
@@ -12462,7 +12739,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       <filename>postgresql.conf</filename> without restarting the server.
       They can also be set for a particular session in the connection request
       packet (for example, via <application>libpq</application>'s <literal>PGOPTIONS</literal>
-      environment variable), but only if the connecting user is a superuser.
+      environment variable), but only if the connecting user is a superuser
+      or has been granted the appropriate <literal>SET</literal> privilege.
       However, these settings never change in a session after it is started.
       If you change them in <filename>postgresql.conf</filename>, send a
       <systemitem>SIGHUP</systemitem> signal to the postmaster to cause it to
@@ -12496,6 +12774,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
      <para>
       These settings can be set from <filename>postgresql.conf</filename>,
       or within a session via the <command>SET</command> command; but only superusers
+      and users with the appropriate <literal>SET</literal> privilege
       can change them via <command>SET</command>.  Changes in
       <filename>postgresql.conf</filename> will affect existing sessions
       only if no session-local value has been established with <command>SET</command>.
@@ -12683,7 +12962,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   <para>
    The <structname>pg_shmem_allocations</structname> view shows allocations
    made from the server's main shared memory segment.  This includes both
-   memory allocated by <productname>postgres</productname> itself and memory
+   memory allocated by <productname>PostgreSQL</productname> itself and memory
    allocated by extensions using the mechanisms detailed in
    <xref linkend="xfunc-shared-addin" />.
   </para>
@@ -12763,8 +13042,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
   <para>
    By default, the <structname>pg_shmem_allocations</structname> view can be
-   read only by superusers or members of the <literal>pg_read_all_stats</literal>
-   role.
+   read only by superusers or roles with privileges of the
+   <literal>pg_read_all_stats</literal> role.
   </para>
  </sect1>
 

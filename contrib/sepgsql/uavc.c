@@ -6,7 +6,7 @@
  * access control decisions recently used, and reduce number of kernel
  * invocations to avoid unnecessary performance hit.
  *
- * Copyright (c) 2011-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2011-2022, PostgreSQL Global Development Group
  *
  * -------------------------------------------------------------------------
  */
@@ -399,6 +399,7 @@ sepgsql_avc_check_perms_label(const char *tcontext,
 		sepgsql_get_mode() != SEPGSQL_MODE_INTERNAL)
 	{
 		sepgsql_audit_log(denied != 0,
+						  (sepgsql_getenforce() && !cache->permissive),
 						  cache->scontext,
 						  cache->tcontext_is_valid ?
 						  cache->tcontext : sepgsql_avc_unlabeled(),

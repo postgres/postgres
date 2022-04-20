@@ -21,7 +21,7 @@
  * should be killed by SIGQUIT and then a recovery cycle started.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -240,10 +240,8 @@ BackgroundWriterMain(void)
 		 */
 		can_hibernate = BgBufferSync(&wb_context);
 
-		/*
-		 * Send off activity statistics to the stats collector
-		 */
-		pgstat_send_bgwriter();
+		/* Report pending statistics to the cumulative stats system */
+		pgstat_report_bgwriter();
 
 		if (FirstCallSinceLastCheckpoint())
 		{

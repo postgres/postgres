@@ -2,22 +2,10 @@
 -- INT2
 --
 
-CREATE TABLE INT2_TBL(f1 int2);
-
-INSERT INTO INT2_TBL(f1) VALUES ('0   ');
-
-INSERT INTO INT2_TBL(f1) VALUES ('  1234 ');
-
-INSERT INTO INT2_TBL(f1) VALUES ('    -1234');
+-- int2_tbl was already created and filled in test_setup.sql.
+-- Here we just try to insert bad values.
 
 INSERT INTO INT2_TBL(f1) VALUES ('34.5');
-
--- largest and smallest values
-INSERT INTO INT2_TBL(f1) VALUES ('32767');
-
-INSERT INTO INT2_TBL(f1) VALUES ('-32767');
-
--- bad input values -- should give errors
 INSERT INTO INT2_TBL(f1) VALUES ('100000');
 INSERT INTO INT2_TBL(f1) VALUES ('asdf');
 INSERT INTO INT2_TBL(f1) VALUES ('    ');

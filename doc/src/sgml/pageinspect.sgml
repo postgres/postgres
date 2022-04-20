@@ -31,9 +31,11 @@
       relation and returns a copy as a <type>bytea</type> value.  This allows a
       single time-consistent copy of the block to be obtained.
       <replaceable>fork</replaceable> should be <literal>'main'</literal> for
-      the main data fork, <literal>'fsm'</literal> for the free space map,
-      <literal>'vm'</literal> for the visibility map, or <literal>'init'</literal>
-      for the initialization fork.
+      the main data fork, <literal>'fsm'</literal> for the
+      <link linkend="storage-fsm">free space map</link>,
+      <literal>'vm'</literal> for the
+      <link linkend="storage-vm">visibility map</link>, or
+      <literal>'init'</literal> for the initialization fork.
      </para>
     </listitem>
    </varlistentry>
@@ -136,7 +138,7 @@ test=# SELECT page_checksum(get_raw_page('pg_class', 0), 0);
     <listitem>
      <para>
       <function>fsm_page_contents</function> shows the internal node structure
-      of an FSM page.  For example:
+      of an <acronym>FSM</acronym> page.  For example:
 <screen>
 test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
 </screen>
@@ -147,7 +149,7 @@ test=# SELECT fsm_page_contents(get_raw_page('pg_class', 'fsm', 0));
      </para>
      <para>
       See <filename>src/backend/storage/freespace/README</filename> for more
-      information on the structure of an FSM page.
+      information on the structure of an <acronym>FSM</acronym> page.
      </para>
     </listitem>
    </varlistentry>
@@ -490,7 +492,7 @@ test=# SELECT itemoffset, ctid, itemlen, nulls, vars, data, dead, htid, tids[0:2
       not a valid <acronym>BRIN</acronym> page.  For example:
 <screen>
 test=# SELECT brin_page_type(get_raw_page('brinidx', 0));
- brin_page_type 
+ brin_page_type
 ----------------
  meta
 </screen>
@@ -512,7 +514,7 @@ test=# SELECT brin_page_type(get_raw_page('brinidx', 0));
       about a <acronym>BRIN</acronym> index metapage.  For example:
 <screen>
 test=# SELECT * FROM brin_metapage_info(get_raw_page('brinidx', 0));
-   magic    | version | pagesperrange | lastrevmappage 
+   magic    | version | pagesperrange | lastrevmappage
 ------------+---------+---------------+----------------
  0xA8109CFA |       1 |             4 |              2
 </screen>
@@ -535,7 +537,7 @@ test=# SELECT * FROM brin_metapage_info(get_raw_page('brinidx', 0));
       For example:
 <screen>
 test=# SELECT * FROM brin_revmap_data(get_raw_page('brinidx', 2)) LIMIT 5;
-  pages  
+  pages
 ---------
  (6,137)
  (6,138)
@@ -563,13 +565,13 @@ test=# SELECT * FROM brin_revmap_data(get_raw_page('brinidx', 2)) LIMIT 5;
 test=# SELECT * FROM brin_page_items(get_raw_page('brinidx', 5),
                                      'brinidx')
        ORDER BY blknum, attnum LIMIT 6;
- itemoffset | blknum | attnum | allnulls | hasnulls | placeholder |    value     
+ itemoffset | blknum | attnum | allnulls | hasnulls | placeholder |    value
 ------------+--------+--------+----------+----------+-------------+--------------
-        137 |      0 |      1 | t        | f        | f           | 
+        137 |      0 |      1 | t        | f        | f           |
         137 |      0 |      2 | f        | f        | f           | {1 .. 88}
-        138 |      4 |      1 | t        | f        | f           | 
+        138 |      4 |      1 | t        | f        | f           |
         138 |      4 |      2 | f        | f        | f           | {89 .. 176}
-        139 |      8 |      1 | t        | f        | f           | 
+        139 |      8 |      1 | t        | f        | f           |
         139 |      8 |      2 | f        | f        | f           | {177 .. 264}
 </screen>
       The returned columns correspond to the fields in the
@@ -691,7 +693,7 @@ test=# SELECT first_tid, nbytes, tids[0:5] AS some_tids
       For example:
 <screen>
 test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
- lsn | nsn | rightlink | flags  
+ lsn | nsn | rightlink | flags
 -----+-----+-----------+--------
  0/1 | 0/0 |         1 | {leaf}
 (1 row)
@@ -714,7 +716,7 @@ test=# SELECT * FROM gist_page_opaque_info(get_raw_page('test_gist_idx', 2));
       the data stored in a page of a <acronym>GiST</acronym> index.  For example:
 <screen>
 test=# SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gist_idx');
- itemoffset |   ctid    | itemlen | dead |       keys        
+ itemoffset |   ctid    | itemlen | dead |       keys
 ------------+-----------+---------+------+-------------------
           1 | (1,65535) |      40 | f    | (p)=((166,166))
           2 | (2,65535) |      40 | f    | (p)=((332,332))
@@ -745,7 +747,7 @@ test=# SELECT * FROM gist_page_items(get_raw_page('test_gist_idx', 0), 'test_gis
       example:
 <screen>
 test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
- itemoffset |   ctid    | itemlen | dead |                                      key_data                                      
+ itemoffset |   ctid    | itemlen | dead |                                      key_data
 ------------+-----------+---------+------+-----------------------------------------&zwsp;-------------------------------------------
           1 | (1,65535) |      40 | f    | \x00000100ffff28000000000000c0644000000000&zwsp;00c06440000000000000f03f000000000000f03f
           2 | (2,65535) |      40 | f    | \x00000200ffff28000000000000c0744000000000&zwsp;00c074400000000000e064400000000000e06440
@@ -780,7 +782,7 @@ test=# SELECT * FROM gist_page_items_bytea(get_raw_page('test_gist_idx', 0));
       the given <acronym>HASH</acronym> index page.  For example:
 <screen>
 test=# SELECT hash_page_type(get_raw_page('con_hash_index', 0));
- hash_page_type 
+ hash_page_type
 ----------------
  metapage
 </screen>
@@ -833,7 +835,7 @@ hasho_page_id   | 65408
       index page.  For example:
 <screen>
 test=# SELECT * FROM hash_page_items(get_raw_page('con_hash_index', 1)) LIMIT 5;
- itemoffset |   ctid    |    data    
+ itemoffset |   ctid    |    data
 ------------+-----------+------------
           1 | (899,77)  | 1053474816
           2 | (897,29)  | 1053474816
@@ -860,7 +862,7 @@ test=# SELECT * FROM hash_page_items(get_raw_page('con_hash_index', 1)) LIMIT 5;
       index. For example:
 <screen>
 test=# SELECT * FROM hash_bitmap_info('con_hash_index', 2052);
- bitmapblkno | bitmapbit | bitstatus 
+ bitmapblkno | bitmapbit | bitstatus
 -------------+-----------+-----------
           65 |         3 | t
 </screen>

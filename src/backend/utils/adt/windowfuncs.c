@@ -3,7 +3,7 @@
  * windowfuncs.c
  *	  Standard window functions defined in SQL spec.
  *
- * Portions Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -13,6 +13,7 @@
  */
 #include "postgres.h"
 
+#include "nodes/supportnodes.h"
 #include "utils/builtins.h"
 #include "windowapi.h"
 
@@ -88,6 +89,26 @@ window_row_number(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(curpos + 1);
 }
 
+/*
+ * window_row_number_support
+ *		prosupport function for window_row_number()
+ */
+Datum
+window_row_number_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/* row_number() is monotonically increasing */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
+
+	PG_RETURN_POINTER(NULL);
+}
 
 /*
  * rank
@@ -111,6 +132,27 @@ window_rank(PG_FUNCTION_ARGS)
 }
 
 /*
+ * window_rank_support
+ *		prosupport function for window_rank()
+ */
+Datum
+window_rank_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/* rank() is monotonically increasing */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
+
+	PG_RETURN_POINTER(NULL);
+}
+
+/*
  * dense_rank
  * Rank increases by 1 when key columns change.
  */
@@ -128,6 +170,27 @@ window_dense_rank(PG_FUNCTION_ARGS)
 		context->rank++;
 
 	PG_RETURN_INT64(context->rank);
+}
+
+/*
+ * window_dense_rank_support
+ *		prosupport function for window_dense_rank()
+ */
+Datum
+window_dense_rank_support(PG_FUNCTION_ARGS)
+{
+	Node	   *rawreq = (Node *) PG_GETARG_POINTER(0);
+
+	if (IsA(rawreq, SupportRequestWFuncMonotonic))
+	{
+		SupportRequestWFuncMonotonic *req = (SupportRequestWFuncMonotonic *) rawreq;
+
+		/* dense_rank() is monotonically increasing */
+		req->monotonic = MONOTONICFUNC_INCREASING;
+		PG_RETURN_POINTER(req);
+	}
+
+	PG_RETURN_POINTER(NULL);
 }
 
 /*

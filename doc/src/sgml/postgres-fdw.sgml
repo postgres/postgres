@@ -64,7 +64,8 @@
   Now you need only <command>SELECT</command> from a foreign table to access
   the data stored in its underlying remote table.  You can also modify
   the remote table using <command>INSERT</command>, <command>UPDATE</command>,
-  <command>DELETE</command>, or <command>TRUNCATE</command>.
+  <command>DELETE</command>, <command>COPY</command>, or
+  <command>TRUNCATE</command>.
   (Of course, the remote user you have specified in your user mapping must
   have privileges to do these things.)
  </para>
@@ -456,6 +457,52 @@ OPTIONS (ADD password_required 'false');
   </sect3>
 
   <sect3>
+   <title>Transaction Management Options</title>
+
+   <para>
+    When multiple remote (sub)transactions are involved in a local
+    (sub)transaction, by default <filename>postgres_fdw</filename> commits
+    those remote (sub)transactions one by one when the local (sub)transaction
+    commits.
+    Performance can be improved with the following option:
+   </para>
+
+   <variablelist>
+
+    <varlistentry>
+     <term><literal>parallel_commit</literal> (<type>boolean</type>)</term>
+     <listitem>
+      <para>
+       This option controls whether <filename>postgres_fdw</filename> commits
+       remote (sub)transactions opened on a foreign server in a local
+       (sub)transaction in parallel when the local (sub)transaction commits.
+       This option can only be specified for foreign servers, not per-table.
+       The default is <literal>false</literal>.
+      </para>
+
+      <para>
+       If multiple foreign servers with this option enabled are involved in
+       a local (sub)transaction, multiple remote (sub)transactions opened on
+       those foreign servers in the local (sub)transaction are committed in
+       parallel across those foreign servers when the local (sub)transaction
+       commits.
+      </para>
+
+      <para>
+       For a foreign server with this option enabled, if many remote
+       (sub)transactions are opened on the foreign server in a local
+       (sub)transaction, this option might increase the remote server's load
+       when the local (sub)transaction commits, so be careful when using this
+       option.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   </variablelist>
+
+  </sect3>
+
+  <sect3>
    <title>Updatability Options</title>
 
    <para>
@@ -682,7 +729,7 @@ OPTIONS (ADD password_required 'false');
       Example usage of the function:
 <screen>
 postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
- server_name | valid 
+ server_name | valid
 -------------+-------
  loopback1   | t
  loopback2   | f
@@ -707,7 +754,7 @@ postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
       Example usage of the function:
 <screen>
 postgres=# SELECT postgres_fdw_disconnect('loopback1');
- postgres_fdw_disconnect 
+ postgres_fdw_disconnect
 -------------------------
  t
 </screen>
@@ -728,7 +775,7 @@ postgres=# SELECT postgres_fdw_disconnect('loopback1');
       Example usage of the function:
 <screen>
 postgres=# SELECT postgres_fdw_disconnect_all();
- postgres_fdw_disconnect_all 
+ postgres_fdw_disconnect_all
 -----------------------------
  t
 </screen>
@@ -955,8 +1002,8 @@ postgres=# SELECT postgres_fdw_disconnect_all();
       of any length and contain even non-ASCII characters.  However when
       it's passed to and used as <varname>application_name</varname>
       in a foreign server, note that it will be truncated to less than
-      <symbol>NAMEDATALEN</symbol> characters and any characters other
-      than printable ASCII ones in it will be replaced with question
+      <symbol>NAMEDATALEN</symbol> characters and anything other than
+      printable ASCII characters will be replaced with question
       marks (<literal>?</literal>).
       See <xref linkend="guc-application-name"/> for details.
      </para>
@@ -981,19 +1028,33 @@ postgres=# SELECT postgres_fdw_disconnect_all();
        <tbody>
         <row>
          <entry><literal>%a</literal></entry>
-         <entry>Application name in local server</entry>
+         <entry>Application name on local server</entry>
+        </row>
+        <row>
+         <entry><literal>%c</literal></entry>
+         <entry>
+          Session ID on local server
+          (see <xref linkend="guc-log-line-prefix"/> for details)
+         </entry>
+        </row>
+        <row>
+         <entry><literal>%C</literal></entry>
+         <entry>
+          Cluster name on local server
+          (see <xref linkend="guc-cluster-name"/> for details)
+         </entry>
         </row>
         <row>
          <entry><literal>%u</literal></entry>
-         <entry>User name in local server</entry>
+         <entry>User name on local server</entry>
         </row>
         <row>
          <entry><literal>%d</literal></entry>
-         <entry>Database name in local server</entry>
+         <entry>Database name on local server</entry>
         </row>
         <row>
          <entry><literal>%p</literal></entry>
-         <entry>Process ID of backend in local server</entry>
+         <entry>Process ID of backend on local server</entry>
         </row>
         <row>
          <entry><literal>%%</literal></entry>

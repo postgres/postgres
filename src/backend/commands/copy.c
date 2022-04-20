@@ -3,7 +3,7 @@
  * copy.c
  *		Implements the COPY utility command
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -80,26 +80,26 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 		if (stmt->is_program)
 		{
-			if (!is_member_of_role(GetUserId(), ROLE_PG_EXECUTE_SERVER_PROGRAM))
+			if (!has_privs_of_role(GetUserId(), ROLE_PG_EXECUTE_SERVER_PROGRAM))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be superuser or a member of the pg_execute_server_program role to COPY to or from an external program"),
+						 errmsg("must be superuser or have privileges of the pg_execute_server_program role to COPY to or from an external program"),
 						 errhint("Anyone can COPY to stdout or from stdin. "
 								 "psql's \\copy command also works for anyone.")));
 		}
 		else
 		{
-			if (is_from && !is_member_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
+			if (is_from && !has_privs_of_role(GetUserId(), ROLE_PG_READ_SERVER_FILES))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be superuser or a member of the pg_read_server_files role to COPY from a file"),
+						 errmsg("must be superuser or have privileges of the pg_read_server_files role to COPY from a file"),
 						 errhint("Anyone can COPY to stdout or from stdin. "
 								 "psql's \\copy command also works for anyone.")));
 
-			if (!is_from && !is_member_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
+			if (!is_from && !has_privs_of_role(GetUserId(), ROLE_PG_WRITE_SERVER_FILES))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be superuser or a member of the pg_write_server_files role to COPY to a file"),
+						 errmsg("must be superuser or have privileges of the pg_write_server_files role to COPY to a file"),
 						 errhint("Anyone can COPY to stdout or from stdin. "
 								 "psql's \\copy command also works for anyone.")));
 		}
@@ -314,6 +314,64 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 }
 
 /*
+ * Extract a CopyHeaderChoice value from a DefElem.  This is like
+ * defGetBoolean() but also accepts the special value "match".
+ */
+static CopyHeaderChoice
+defGetCopyHeaderChoice(DefElem *def)
+{
+	/*
+	 * If no parameter given, assume "true" is meant.
+	 */
+	if (def->arg == NULL)
+		return COPY_HEADER_TRUE;
+
+	/*
+	 * Allow 0, 1, "true", "false", "on", "off", or "match".
+	 */
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			switch (intVal(def->arg))
+			{
+				case 0:
+					return COPY_HEADER_FALSE;
+				case 1:
+					return COPY_HEADER_TRUE;
+				default:
+					/* otherwise, error out below */
+					break;
+			}
+			break;
+		default:
+			{
+				char	*sval = defGetString(def);
+
+				/*
+				 * The set of strings accepted here should match up with the
+				 * grammar's opt_boolean_or_string production.
+				 */
+				if (pg_strcasecmp(sval, "true") == 0)
+					return COPY_HEADER_TRUE;
+				if (pg_strcasecmp(sval, "false") == 0)
+					return COPY_HEADER_FALSE;
+				if (pg_strcasecmp(sval, "on") == 0)
+					return COPY_HEADER_TRUE;
+				if (pg_strcasecmp(sval, "off") == 0)
+					return COPY_HEADER_FALSE;
+				if (pg_strcasecmp(sval, "match") == 0)
+					return COPY_HEADER_MATCH;
+			}
+			break;
+	}
+	ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("%s requires a Boolean value or \"match\"",
+					def->defname)));
+	return COPY_HEADER_FALSE;	/* keep compiler quiet */
+}
+
+/*
  * Process the statement option list for COPY.
  *
  * Scan the options list (a list of DefElem) and transpose the information
@@ -394,7 +452,7 @@ ProcessCopyOptions(ParseState *pstate,
 			if (header_specified)
 				errorConflictingDefElem(defel, pstate);
 			header_specified = true;
-			opts_out->header_line = defGetBoolean(defel);
+			opts_out->header_line = defGetCopyHeaderChoice(defel);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
@@ -555,10 +613,10 @@ ProcessCopyOptions(ParseState *pstate,
 				 errmsg("COPY delimiter cannot be \"%s\"", opts_out->delim)));
 
 	/* Check header */
-	if (!opts_out->csv_mode && opts_out->header_line)
+	if (opts_out->binary && opts_out->header_line)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY HEADER available only in CSV mode")));
+				 errmsg("cannot specify HEADER in BINARY mode")));
 
 	/* Check quote */
 	if (!opts_out->csv_mode && opts_out->quote != NULL)

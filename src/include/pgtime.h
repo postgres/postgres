@@ -3,7 +3,7 @@
  * pgtime.h
  *	  PostgreSQL internal timezone library
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/include/pgtime.h
@@ -23,6 +23,8 @@
 typedef int64 pg_time_t;
 
 /*
+ * Data structure representing a broken-down timestamp.
+ *
  * CAUTION: the IANA timezone library (src/timezone/) follows the POSIX
  * convention that tm_mon counts from 0 and tm_year is relative to 1900.
  * However, Postgres' datetime functions generally treat tm_mon as counting
@@ -44,6 +46,7 @@ struct pg_tm
 	const char *tm_zone;
 };
 
+/* These structs are opaque outside the timezone library */
 typedef struct pg_tz pg_tz;
 typedef struct pg_tzenum pg_tzenum;
 
@@ -78,7 +81,7 @@ extern size_t pg_strftime(char *s, size_t max, const char *format,
 /* these functions and variables are in pgtz.c */
 
 extern PGDLLIMPORT pg_tz *session_timezone;
-extern pg_tz *log_timezone;
+extern PGDLLIMPORT pg_tz *log_timezone;
 
 extern void pg_timezone_initialize(void);
 extern pg_tz *pg_tzset(const char *tzname);

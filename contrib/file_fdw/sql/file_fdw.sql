@@ -56,7 +56,6 @@ CREATE USER MAPPING FOR regress_no_priv_user SERVER file_server;
 
 -- validator tests
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'xml');  -- ERROR
-CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', header 'true');      -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', quote ':');          -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'text', escape ':');         -- ERROR
 CREATE FOREIGN TABLE tbl () SERVER file_server OPTIONS (format 'binary', header 'true');    -- ERROR
@@ -103,6 +102,15 @@ CREATE FOREIGN TABLE agg_bad (
 ) SERVER file_server
 OPTIONS (format 'csv', filename :'filename', header 'true', delimiter ';', quote '@', escape '"', null '');
 ALTER FOREIGN TABLE agg_bad ADD CHECK (a >= 0);
+
+-- test header matching
+\set filename :abs_srcdir '/data/list1.csv'
+CREATE FOREIGN TABLE header_match ("1" int, foo text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', delimiter ',', header 'match');
+SELECT * FROM header_match;
+CREATE FOREIGN TABLE header_doesnt_match (a int, foo text) SERVER file_server
+OPTIONS (format 'csv', filename :'filename', delimiter ',', header 'match');
+SELECT * FROM header_doesnt_match; -- ERROR
 
 -- per-column options tests
 \set filename :abs_srcdir '/data/text.csv'

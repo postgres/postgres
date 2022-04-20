@@ -1,0 +1,5 @@
+# pg_walinspect extension
+comment = 'functions to inspect contents of PostgreSQL Write-Ahead Log'
+default_version = '1.0'
+module_pathname = '$libdir/pg_walinspect'
+relocatable = true

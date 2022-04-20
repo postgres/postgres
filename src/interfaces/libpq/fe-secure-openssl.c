@@ -4,7 +4,7 @@
  *	  OpenSSL support
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -72,6 +72,9 @@ static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static int	openssl_verify_peer_name_matches_certificate_name(PGconn *conn,
 															  ASN1_STRING *name,
 															  char **store_name);
+static int	openssl_verify_peer_name_matches_certificate_ip(PGconn *conn,
+															ASN1_OCTET_STRING *addr_entry,
+															char **store_name);
 static void destroy_ssl_system(void);
 static int	initialize_SSL(PGconn *conn);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
@@ -510,6 +513,56 @@ openssl_verify_peer_name_matches_certificate_name(PGconn *conn, ASN1_STRING *nam
 }
 
 /*
+ * OpenSSL-specific wrapper around
+ * pq_verify_peer_name_matches_certificate_ip(), converting the
+ * ASN1_OCTET_STRING into a plain C string.
+ */
+static int
+openssl_verify_peer_name_matches_certificate_ip(PGconn *conn,
+												ASN1_OCTET_STRING *addr_entry,
+												char **store_name)
+{
+	int			len;
+	const unsigned char *addrdata;
+
+	/* Should not happen... */
+	if (addr_entry == NULL)
+	{
+		appendPQExpBufferStr(&conn->errorMessage,
+							 libpq_gettext("SSL certificate's address entry is missing\n"));
+		return -1;
+	}
+
+	/*
+	 * GEN_IPADD is an OCTET STRING containing an IP address in network byte
+	 * order.
+	 */
+#ifdef HAVE_ASN1_STRING_GET0_DATA
+	addrdata = ASN1_STRING_get0_data(addr_entry);
+#else
+	addrdata = ASN1_STRING_data(addr_entry);
+#endif
+	len = ASN1_STRING_length(addr_entry);
+
+	return pq_verify_peer_name_matches_certificate_ip(conn, addrdata, len, store_name);
+}
+
+static bool
+is_ip_address(const char *host)
+{
+	struct in_addr dummy4;
+#ifdef HAVE_INET_PTON
+	struct in6_addr dummy6;
+#endif
+
+	return inet_aton(host, &dummy4)
+#ifdef HAVE_INET_PTON
+		|| (inet_pton(AF_INET6, host, &dummy6) == 1)
+#endif
+		;
+}
+
+/*
  *	Verify that the server certificate matches the hostname we connected to.
  *
  * The certificate's Common Name and Subject Alternative Names are considered.
@@ -522,6 +575,36 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 	STACK_OF(GENERAL_NAME) * peer_san;
 	int			i;
 	int			rc = 0;
+	char	   *host = conn->connhost[conn->whichhost].host;
+	int			host_type;
+	bool		check_cn = true;
+
+	Assert(host && host[0]);	/* should be guaranteed by caller */
+
+	/*
+	 * We try to match the NSS behavior here, which is a slight departure from
+	 * the spec but seems to make more intuitive sense:
+	 *
+	 * If connhost contains a DNS name, and the certificate's SANs contain any
+	 * dNSName entries, then we'll ignore the Subject Common Name entirely;
+	 * otherwise, we fall back to checking the CN. (This behavior matches the
+	 * RFC.)
+	 *
+	 * If connhost contains an IP address, and the SANs contain iPAddress
+	 * entries, we again ignore the CN. Otherwise, we allow the CN to match,
+	 * EVEN IF there is a dNSName in the SANs. (RFC 6125 prohibits this: "A
+	 * client MUST NOT seek a match for a reference identifier of CN-ID if the
+	 * presented identifiers include a DNS-ID, SRV-ID, URI-ID, or any
+	 * application-specific identifier types supported by the client.")
+	 *
+	 * NOTE: Prior versions of libpq did not consider iPAddress entries at
+	 * all, so this new behavior might break a certificate that has different
+	 * IP addresses in the Subject CN and the SANs.
+	 */
+	if (is_ip_address(host))
+		host_type = GEN_IPADD;
+	else
+		host_type = GEN_DNS;
 
 	/*
 	 * First, get the Subject Alternative Names (SANs) from the certificate,
@@ -537,38 +620,62 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 		for (i = 0; i < san_len; i++)
 		{
 			const GENERAL_NAME *name = sk_GENERAL_NAME_value(peer_san, i);
+			char	   *alt_name = NULL;
+
+			if (name->type == host_type)
+			{
+				/*
+				 * This SAN is of the same type (IP or DNS) as our host name,
+				 * so don't allow a fallback check of the CN.
+				 */
+				check_cn = false;
+			}
 
 			if (name->type == GEN_DNS)
 			{
-				char	   *alt_name;
-
 				(*names_examined)++;
 				rc = openssl_verify_peer_name_matches_certificate_name(conn,
 																	   name->d.dNSName,
 																	   &alt_name);
-
-				if (alt_name)
-				{
-					if (!*first_name)
-						*first_name = alt_name;
-					else
-						free(alt_name);
-				}
 			}
+			else if (name->type == GEN_IPADD)
+			{
+				(*names_examined)++;
+				rc = openssl_verify_peer_name_matches_certificate_ip(conn,
+																	 name->d.iPAddress,
+																	 &alt_name);
+			}
+
+			if (alt_name)
+			{
+				if (!*first_name)
+					*first_name = alt_name;
+				else
+					free(alt_name);
+			}
+
 			if (rc != 0)
+			{
+				/*
+				 * Either we hit an error or a match, and either way we should
+				 * not fall back to the CN.
+				 */
+				check_cn = false;
 				break;
+			}
 		}
 		sk_GENERAL_NAME_pop_free(peer_san, GENERAL_NAME_free);
 	}
 
 	/*
-	 * If there is no subjectAltName extension of type dNSName, check the
+	 * If there is no subjectAltName extension of the matching type, check the
 	 * Common Name.
 	 *
 	 * (Per RFC 2818 and RFC 6125, if the subjectAltName extension of type
-	 * dNSName is present, the CN must be ignored.)
+	 * dNSName is present, the CN must be ignored. We break this rule if host
+	 * is an IP address; see the comment above.)
 	 */
-	if (*names_examined == 0)
+	if (check_cn)
 	{
 		X509_NAME  *subject_name;
 
@@ -581,10 +688,20 @@ pgtls_verify_peer_name_matches_certificate_guts(PGconn *conn,
 												  NID_commonName, -1);
 			if (cn_index >= 0)
 			{
+				char	   *common_name = NULL;
+
 				(*names_examined)++;
 				rc = openssl_verify_peer_name_matches_certificate_name(conn,
 																	   X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subject_name, cn_index)),
-																	   first_name);
+																	   &common_name);
+
+				if (common_name)
+				{
+					if (!*first_name)
+						*first_name = common_name;
+					else
+						free(common_name);
+				}
 			}
 		}
 	}
@@ -1245,11 +1362,45 @@ initialize_SSL(PGconn *conn)
 								  fnbuf);
 			return -1;
 		}
-#ifndef WIN32
-		if (!S_ISREG(buf.st_mode) || buf.st_mode & (S_IRWXG | S_IRWXO))
+
+		/* Key file must be a regular file */
+		if (!S_ISREG(buf.st_mode))
 		{
 			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"),
+							  libpq_gettext("private key file \"%s\" is not a regular file\n"),
+							  fnbuf);
+			return -1;
+		}
+
+		/*
+		 * Refuse to load key files owned by users other than us or root, and
+		 * require no public access to the key file.  If the file is owned by
+		 * us, require mode 0600 or less.  If owned by root, require 0640 or
+		 * less to allow read access through either our gid or a supplementary
+		 * gid that allows us to read system-wide certificates.
+		 *
+		 * Note that similar checks are performed in
+		 * src/backend/libpq/be-secure-common.c so any changes here may need
+		 * to be made there as well.
+		 *
+		 * Ideally we would do similar permissions checks on Windows, but it
+		 * is not clear how that would work since Unix-style permissions may
+		 * not be available.
+		 */
+#if !defined(WIN32) && !defined(__CYGWIN__)
+		if (buf.st_uid != geteuid() && buf.st_uid != 0)
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" must be owned by the current user or root\n"),
+							  fnbuf);
+			return -1;
+		}
+
+		if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
+			(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+		{
+			appendPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"),
 							  fnbuf);
 			return -1;
 		}
@@ -1281,7 +1432,6 @@ initialize_SSL(PGconn *conn)
 			}
 
 			SSLerrfree(err);
-
 		}
 	}
 
@@ -1597,13 +1747,13 @@ PQsslAttributeNames(PGconn *conn)
 const char *
 PQsslAttribute(PGconn *conn, const char *attribute_name)
 {
+	if (strcmp(attribute_name, "library") == 0)
+		return "OpenSSL";
+
 	if (!conn)
 		return NULL;
 	if (conn->ssl == NULL)
 		return NULL;
-
-	if (strcmp(attribute_name, "library") == 0)
-		return "OpenSSL";
 
 	if (strcmp(attribute_name, "key_bits") == 0)
 	{
@@ -1682,7 +1832,7 @@ my_sock_write(BIO *h, const char *buf, int size)
 
 	res = pqsecure_raw_write((PGconn *) BIO_get_data(h), buf, size);
 	BIO_clear_retry_flags(h);
-	if (res <= 0)
+	if (res < 0)
 	{
 		/* If we were interrupted, tell caller to retry */
 		switch (SOCK_ERRNO)

@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 # Tests to check connection string handling in utilities
 
@@ -40,3 +40,5 @@ $node->command_ok([qw(reindexdb --all --echo)],
 $node->command_ok(
 	[qw(clusterdb --all --echo --verbose)],
 	'clusterdb --all with unusual database names');
+
+done_testing();

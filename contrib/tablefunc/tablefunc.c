@@ -10,7 +10,7 @@
  * And contributors:
  * Nabil Sayegh <postgresql@e-trolley.de>
  *
- * Copyright (c) 2002-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2022, PostgreSQL Global Development Group
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose, without fee, and without a written agreement
@@ -942,8 +942,6 @@ get_crosstab_tuplestore(char *sql,
 	if (SPI_finish() != SPI_OK_FINISH)
 		/* internal error */
 		elog(ERROR, "get_crosstab_tuplestore: SPI_finish() failed");
-
-	tuplestore_donestoring(tupstore);
 
 	return tupstore;
 }

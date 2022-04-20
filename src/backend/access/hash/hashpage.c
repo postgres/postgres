@@ -3,7 +3,7 @@
  * hashpage.c
  *	  Hash table page management code for the Postgres hash access method
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -30,6 +30,7 @@
 
 #include "access/hash.h"
 #include "access/hash_xlog.h"
+#include "access/xloginsert.h"
 #include "miscadmin.h"
 #include "port/pg_bitutils.h"
 #include "storage/lmgr.h"
@@ -165,7 +166,7 @@ _hash_initbuf(Buffer buf, uint32 max_bucket, uint32 num_bucket, uint32 flag,
 	if (initpage)
 		_hash_pageinit(page, BufferGetPageSize(buf));
 
-	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	pageopaque = HashPageGetOpaque(page);
 
 	/*
 	 * Set hasho_prevblkno with current hashm_maxbucket. This value will be
@@ -528,7 +529,7 @@ _hash_init_metabuffer(Buffer buf, double num_tuples, RegProcedure procid,
 	if (initpage)
 		_hash_pageinit(page, BufferGetPageSize(buf));
 
-	pageopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	pageopaque = HashPageGetOpaque(page);
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
 	pageopaque->hasho_bucket = InvalidBucket;
@@ -692,7 +693,7 @@ restart_expand:
 		goto fail;
 
 	opage = BufferGetPage(buf_oblkno);
-	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+	oopaque = HashPageGetOpaque(opage);
 
 	/*
 	 * We want to finish the split from a bucket as there is no apparent
@@ -863,7 +864,7 @@ restart_expand:
 	lowmask = metap->hashm_lowmask;
 
 	opage = BufferGetPage(buf_oblkno);
-	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+	oopaque = HashPageGetOpaque(opage);
 
 	/*
 	 * Mark the old bucket to indicate that split is in progress.  (At
@@ -882,7 +883,7 @@ restart_expand:
 	 * initialize the new bucket's primary page and mark it to indicate that
 	 * split is in progress.
 	 */
-	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+	nopaque = HashPageGetOpaque(npage);
 	nopaque->hasho_prevblkno = maxbucket;
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
 	nopaque->hasho_bucket = new_bucket;
@@ -1009,7 +1010,7 @@ _hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 	 */
 	_hash_pageinit(page, BLCKSZ);
 
-	ovflopaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	ovflopaque = HashPageGetOpaque(page);
 
 	ovflopaque->hasho_prevblkno = InvalidBlockNumber;
 	ovflopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -1090,11 +1091,11 @@ _hash_splitbucket(Relation rel,
 
 	bucket_obuf = obuf;
 	opage = BufferGetPage(obuf);
-	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+	oopaque = HashPageGetOpaque(opage);
 
 	bucket_nbuf = nbuf;
 	npage = BufferGetPage(nbuf);
-	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+	nopaque = HashPageGetOpaque(npage);
 
 	/* Copy the predicate locks from old bucket to new bucket. */
 	PredicateLockPageSplit(rel,
@@ -1197,7 +1198,7 @@ _hash_splitbucket(Relation rel,
 					/* chain to a new overflow page */
 					nbuf = _hash_addovflpage(rel, metabuf, nbuf, (nbuf == bucket_nbuf));
 					npage = BufferGetPage(nbuf);
-					nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+					nopaque = HashPageGetOpaque(npage);
 				}
 
 				itups[nitups++] = new_itup;
@@ -1250,7 +1251,7 @@ _hash_splitbucket(Relation rel,
 		/* Else, advance to next old page */
 		obuf = _hash_getbuf(rel, oblkno, HASH_READ, LH_OVERFLOW_PAGE);
 		opage = BufferGetPage(obuf);
-		oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+		oopaque = HashPageGetOpaque(opage);
 	}
 
 	/*
@@ -1263,11 +1264,11 @@ _hash_splitbucket(Relation rel,
 	 */
 	LockBuffer(bucket_obuf, BUFFER_LOCK_EXCLUSIVE);
 	opage = BufferGetPage(bucket_obuf);
-	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
+	oopaque = HashPageGetOpaque(opage);
 
 	LockBuffer(bucket_nbuf, BUFFER_LOCK_EXCLUSIVE);
 	npage = BufferGetPage(bucket_nbuf);
-	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+	nopaque = HashPageGetOpaque(npage);
 
 	START_CRIT_SECTION();
 
@@ -1391,7 +1392,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 			bucket_nbuf = nbuf;
 
 		npage = BufferGetPage(nbuf);
-		npageopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+		npageopaque = HashPageGetOpaque(npage);
 
 		/* Scan each tuple in new page */
 		nmaxoffnum = PageGetMaxOffsetNumber(npage);
@@ -1445,7 +1446,7 @@ _hash_finish_split(Relation rel, Buffer metabuf, Buffer obuf, Bucket obucket,
 	}
 
 	npage = BufferGetPage(bucket_nbuf);
-	npageopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
+	npageopaque = HashPageGetOpaque(npage);
 	nbucket = npageopaque->hasho_bucket;
 
 	_hash_splitbucket(rel, metabuf, obucket,
@@ -1586,7 +1587,7 @@ _hash_getbucketbuf_from_hashkey(Relation rel, uint32 hashkey, int access,
 		/* Fetch the primary bucket page for the bucket */
 		buf = _hash_getbuf(rel, blkno, access, LH_BUCKET_PAGE);
 		page = BufferGetPage(buf);
-		opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+		opaque = HashPageGetOpaque(page);
 		Assert(opaque->hasho_bucket == bucket);
 		Assert(opaque->hasho_prevblkno != InvalidBlockNumber);
 

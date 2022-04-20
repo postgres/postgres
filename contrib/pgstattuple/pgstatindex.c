@@ -281,7 +281,7 @@ pgstatindex_impl(Relation rel, FunctionCallInfo fcinfo)
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 		page = BufferGetPage(buffer);
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		opaque = BTPageGetOpaque(page);
 
 		/*
 		 * Determine page type, and update totals.
@@ -641,7 +641,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 			HashPageOpaque opaque;
 			int			pagetype;
 
-			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+			opaque = HashPageGetOpaque(page);
 			pagetype = opaque->hasho_flag & LH_PAGE_TYPE;
 
 			if (pagetype == LH_BUCKET_PAGE)

@@ -23,6 +23,12 @@ tmp_check/log/ to get more info.  Files named 'regress_log_XXX' are log
 output from the perl test scripts themselves, and should be examined first.
 Other files are postmaster logs, and may be helpful as additional data.
 
+The tests default to a timeout of 180 seconds for many individual operations.
+Slow hosts may avoid load-induced, spurious failures by setting environment
+variable PG_TEST_TIMEOUT_DEFAULT to some number of seconds greater than 180.
+Developers may see faster failures by setting that environment variable to
+some lesser number of seconds.
+
 Data directories will also be left behind for analysis when a test fails;
 they are named according to the test filename.  But if the environment
 variable PG_TEST_NOCLEAN is set, data directories will be retained
@@ -54,8 +60,7 @@ Each test script should begin with:
     use warnings;
     use PostgreSQL::Test::Cluster;
     use PostgreSQL::Test::Utils;
-    # Replace with the number of tests to execute:
-    use Test::More tests => 1;
+    use Test::More;
 
 then it will generally need to set up one or more nodes, run commands
 against them and evaluate the results. For example:
@@ -68,6 +73,10 @@ against them and evaluate the results. For example:
     is($ret, '1', 'SELECT 1 returns 1');
 
     $node->stop('fast');
+
+Each test script should end with:
+
+	done_testing();
 
 Test::More::like entails use of the qr// operator.  Avoid Perl 5.8.8 bug
 #39185 by not using the "$" regular expression metacharacter in qr// when also

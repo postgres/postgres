@@ -1,7 +1,7 @@
 -- Tests for range data types.
-create type textrange as range (subtype=text, collation="C");
 --
 -- test input parser
+-- (type textrange was already made in test_setup.sql)
 --
 -- negative tests; should fail
 select ''::textrange;
@@ -1482,12 +1482,11 @@ LINE 1: select '[2010-01-01 01:00:00 -08, 2010-01-01 02:00:00 -05)':...
 set timezone to default;
 --
 -- Test user-defined range of floats
+-- (type float8range was already made in test_setup.sql)
 --
 --should fail
-create type float8range as range (subtype=float8, subtype_diff=float4mi);
+create type bogus_float8range as range (subtype=float8, subtype_diff=float4mi);
 ERROR:  function float4mi(double precision, double precision) does not exist
---should succeed
-create type float8range as range (subtype=float8, subtype_diff=float8mi);
 select '[123.001, 5.e9)'::float8range @> 888.882::float8;
  ?column? 
 ----------

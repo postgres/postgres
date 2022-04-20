@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test simple scenario involving a standby
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 use PostgreSQL::Test::Utils;
-use Test::More tests => 4;
+use Test::More;
 use PostgreSQL::Test::Cluster;
 
 my $bkplabel = 'backup';
@@ -64,3 +64,5 @@ like(
 	$standby_ts_stderr,
 	qr/could not get commit timestamp data/,
 	'expected error when primary turned feature off');
+
+done_testing();

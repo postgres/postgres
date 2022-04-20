@@ -4,7 +4,7 @@
  * src/backend/utils/adt/formatting.c
  *
  *
- *	 Portions Copyright (c) 1999-2021, PostgreSQL Global Development Group
+ *	 Portions Copyright (c) 1999-2022, PostgreSQL Global Development Group
  *
  *
  *	 TO_CHAR(); TO_TIMESTAMP(); TO_DATE(); TO_NUMBER();
@@ -491,11 +491,28 @@ typedef struct
 
 /* ----------
  * Datetime to char conversion
+ *
+ * To support intervals as well as timestamps, we use a custom "tm" struct
+ * that is almost like struct pg_tm, but has a 64-bit tm_hour field.
+ * We omit the tm_isdst and tm_zone fields, which are not used here.
  * ----------
  */
+struct fmt_tm
+{
+	int			tm_sec;
+	int			tm_min;
+	int64		tm_hour;
+	int			tm_mday;
+	int			tm_mon;
+	int			tm_year;
+	int			tm_wday;
+	int			tm_yday;
+	long int	tm_gmtoff;
+};
+
 typedef struct TmToChar
 {
-	struct pg_tm tm;			/* classic 'tm' struct */
+	struct fmt_tm tm;			/* almost the classic 'tm' struct */
 	fsec_t		fsec;			/* fractional seconds */
 	const char *tzn;			/* timezone */
 } TmToChar;
@@ -504,12 +521,25 @@ typedef struct TmToChar
 #define tmtcTzn(_X) ((_X)->tzn)
 #define tmtcFsec(_X)	((_X)->fsec)
 
+/* Note: this is used to copy pg_tm to fmt_tm, so not quite a bitwise copy */
+#define COPY_tm(_DST, _SRC) \
+do {	\
+	(_DST)->tm_sec = (_SRC)->tm_sec; \
+	(_DST)->tm_min = (_SRC)->tm_min; \
+	(_DST)->tm_hour = (_SRC)->tm_hour; \
+	(_DST)->tm_mday = (_SRC)->tm_mday; \
+	(_DST)->tm_mon = (_SRC)->tm_mon; \
+	(_DST)->tm_year = (_SRC)->tm_year; \
+	(_DST)->tm_wday = (_SRC)->tm_wday; \
+	(_DST)->tm_yday = (_SRC)->tm_yday; \
+	(_DST)->tm_gmtoff = (_SRC)->tm_gmtoff; \
+} while(0)
+
+/* Caution: this is used to zero both pg_tm and fmt_tm structs */
 #define ZERO_tm(_X) \
 do {	\
-	(_X)->tm_sec  = (_X)->tm_year = (_X)->tm_min = (_X)->tm_wday = \
-	(_X)->tm_hour = (_X)->tm_yday = (_X)->tm_isdst = 0; \
-	(_X)->tm_mday = (_X)->tm_mon  = 1; \
-	(_X)->tm_zone = NULL; \
+	memset(_X, 0, sizeof(*(_X))); \
+	(_X)->tm_mday = (_X)->tm_mon = 1; \
 } while(0)
 
 #define ZERO_tmtc(_X) \
@@ -702,6 +732,7 @@ typedef enum
 	DCH_month,
 	DCH_mon,
 	DCH_ms,
+	DCH_of,
 	DCH_p_m,
 	DCH_pm,
 	DCH_q,
@@ -709,6 +740,8 @@ typedef enum
 	DCH_sssss,
 	DCH_ssss,
 	DCH_ss,
+	DCH_tzh,
+	DCH_tzm,
 	DCH_tz,
 	DCH_us,
 	DCH_ww,
@@ -865,6 +898,7 @@ static const KeyWord DCH_keywords[] = {
 	{"month", 5, DCH_month, false, FROM_CHAR_DATE_GREGORIAN},
 	{"mon", 3, DCH_mon, false, FROM_CHAR_DATE_GREGORIAN},
 	{"ms", 2, DCH_MS, true, FROM_CHAR_DATE_NONE},
+	{"of", 2, DCH_OF, false, FROM_CHAR_DATE_NONE},  /* o */
 	{"p.m.", 4, DCH_p_m, false, FROM_CHAR_DATE_NONE},	/* p */
 	{"pm", 2, DCH_pm, false, FROM_CHAR_DATE_NONE},
 	{"q", 1, DCH_Q, true, FROM_CHAR_DATE_NONE}, /* q */
@@ -872,7 +906,9 @@ static const KeyWord DCH_keywords[] = {
 	{"sssss", 5, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* s */
 	{"ssss", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},
 	{"ss", 2, DCH_SS, true, FROM_CHAR_DATE_NONE},
-	{"tz", 2, DCH_tz, false, FROM_CHAR_DATE_NONE},	/* t */
+	{"tzh", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},    /* t */
+	{"tzm", 3, DCH_TZM, true, FROM_CHAR_DATE_NONE},
+	{"tz", 2, DCH_tz, false, FROM_CHAR_DATE_NONE},
 	{"us", 2, DCH_US, true, FROM_CHAR_DATE_NONE},	/* u */
 	{"ww", 2, DCH_WW, true, FROM_CHAR_DATE_GREGORIAN},	/* w */
 	{"w", 1, DCH_W, true, FROM_CHAR_DATE_GREGORIAN},
@@ -954,7 +990,7 @@ static const int DCH_index[KeyWord_INDEX_SIZE] = {
 	DCH_P_M, DCH_Q, DCH_RM, DCH_SSSSS, DCH_TZH, DCH_US, -1, DCH_WW, -1, DCH_Y_YYY,
 	-1, -1, -1, -1, -1, -1, -1, DCH_a_d, DCH_b_c, DCH_cc,
 	DCH_day, -1, DCH_ff1, -1, DCH_hh24, DCH_iddd, DCH_j, -1, -1, DCH_mi,
-	-1, -1, DCH_p_m, DCH_q, DCH_rm, DCH_sssss, DCH_tz, DCH_us, -1, DCH_ww,
+	-1, DCH_of, DCH_p_m, DCH_q, DCH_rm, DCH_sssss, DCH_tzh, DCH_us, -1, DCH_ww,
 	-1, DCH_y_yyy, -1, -1, -1, -1
 
 	/*---- chars over 126 are skipped ----*/
@@ -1016,11 +1052,6 @@ typedef struct NUMProc
 			   *L_thousands_sep,
 			   *L_currency_symbol;
 } NUMProc;
-
-/* Return flags for DCH_from_char() */
-#define DCH_DATED	0x01
-#define DCH_TIMED	0x02
-#define DCH_ZONED	0x04
 
 /* ----------
  * Functions
@@ -1641,6 +1672,19 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	if (!buff)
 		return NULL;
 
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a
+		 * conflict of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for %s function",
+						"lower()"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
@@ -1648,24 +1692,9 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-		pg_locale_t mylocale = 0;
+		pg_locale_t mylocale;
 
-		if (collid != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collid))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for %s function",
-								"lower()"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			mylocale = pg_newlocale_from_collation(collid);
-		}
+		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
 		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
@@ -1765,6 +1794,19 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	if (!buff)
 		return NULL;
 
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a
+		 * conflict of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for %s function",
+						"upper()"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
@@ -1772,24 +1814,9 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-		pg_locale_t mylocale = 0;
+		pg_locale_t mylocale;
 
-		if (collid != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collid))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for %s function",
-								"upper()"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			mylocale = pg_newlocale_from_collation(collid);
-		}
+		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
 		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
@@ -1890,6 +1917,19 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	if (!buff)
 		return NULL;
 
+	if (!OidIsValid(collid))
+	{
+		/*
+		 * This typically means that the parser could not resolve a
+		 * conflict of implicit collations, so report it that way.
+		 */
+		ereport(ERROR,
+				(errcode(ERRCODE_INDETERMINATE_COLLATION),
+				 errmsg("could not determine which collation to use for %s function",
+						"initcap()"),
+				 errhint("Use the COLLATE clause to set the collation explicitly.")));
+	}
+
 	/* C/POSIX collations use this path regardless of database encoding */
 	if (lc_ctype_is_c(collid))
 	{
@@ -1897,24 +1937,9 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	}
 	else
 	{
-		pg_locale_t mylocale = 0;
+		pg_locale_t mylocale;
 
-		if (collid != DEFAULT_COLLATION_OID)
-		{
-			if (!OidIsValid(collid))
-			{
-				/*
-				 * This typically means that the parser could not resolve a
-				 * conflict of implicit collations, so report it that way.
-				 */
-				ereport(ERROR,
-						(errcode(ERRCODE_INDETERMINATE_COLLATION),
-						 errmsg("could not determine which collation to use for %s function",
-								"initcap()"),
-						 errhint("Use the COLLATE clause to set the collation explicitly.")));
-			}
-			mylocale = pg_newlocale_from_collation(collid);
-		}
+		mylocale = pg_newlocale_from_collation(collid);
 
 #ifdef USE_ICU
 		if (mylocale && mylocale->provider == COLLPROVIDER_ICU)
@@ -2654,7 +2679,7 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 {
 	FormatNode *n;
 	char	   *s;
-	struct pg_tm *tm = &in->tm;
+	struct fmt_tm *tm = &in->tm;
 	int			i;
 
 	/* cache localized days and months */
@@ -2703,16 +2728,17 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				 * display time as shown on a 12-hour clock, even for
 				 * intervals
 				 */
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ? HOURS_PER_DAY / 2 :
-						tm->tm_hour % (HOURS_PER_DAY / 2));
+				sprintf(s, "%0*lld", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						tm->tm_hour % (HOURS_PER_DAY / 2) == 0 ?
+						(long long) (HOURS_PER_DAY / 2) :
+						(long long) (tm->tm_hour % (HOURS_PER_DAY / 2)));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
 				break;
 			case DCH_HH24:
-				sprintf(s, "%0*d", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
-						tm->tm_hour);
+				sprintf(s, "%0*lld", S_FM(n->suffix) ? 0 : (tm->tm_hour >= 0) ? 2 : 3,
+						(long long) tm->tm_hour);
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -2760,9 +2786,10 @@ DCH_to_char(FormatNode *node, bool is_interval, TmToChar *in, char *out, Oid col
 				break;
 #undef DCH_to_char_fsec
 			case DCH_SSSS:
-				sprintf(s, "%d", tm->tm_hour * SECS_PER_HOUR +
-						tm->tm_min * SECS_PER_MINUTE +
-						tm->tm_sec);
+				sprintf(s, "%lld",
+						(long long) (tm->tm_hour * SECS_PER_HOUR +
+									 tm->tm_min * SECS_PER_MINUTE +
+									 tm->tm_sec));
 				if (S_THth(n->suffix))
 					str_numth(s, s, S_TH_TYPE(n->suffix));
 				s += strlen(s);
@@ -4093,7 +4120,8 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
+	struct pg_tm tt;
+	struct fmt_tm *tm;
 	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
@@ -4102,14 +4130,17 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, NULL, tm, &tmtcFsec(&tmtc), NULL, NULL) != 0)
+	if (timestamp2tm(dt, NULL, &tt, &tmtcFsec(&tmtc), NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-	tm->tm_wday = (thisdate + 1) % 7;
-	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
+	/* calculate wday and yday, because timestamp2tm doesn't */
+	thisdate = date2j(tt.tm_year, tt.tm_mon, tt.tm_mday);
+	tt.tm_wday = (thisdate + 1) % 7;
+	tt.tm_yday = thisdate - date2j(tt.tm_year, 1, 1) + 1;
+
+	COPY_tm(tm, &tt);
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
@@ -4125,7 +4156,8 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 			   *res;
 	TmToChar	tmtc;
 	int			tz;
-	struct pg_tm *tm;
+	struct pg_tm tt;
+	struct fmt_tm *tm;
 	int			thisdate;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0 || TIMESTAMP_NOT_FINITE(dt))
@@ -4134,14 +4166,17 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (timestamp2tm(dt, &tz, tm, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
+	if (timestamp2tm(dt, &tz, &tt, &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
 
-	thisdate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-	tm->tm_wday = (thisdate + 1) % 7;
-	tm->tm_yday = thisdate - date2j(tm->tm_year, 1, 1) + 1;
+	/* calculate wday and yday, because timestamp2tm doesn't */
+	thisdate = date2j(tt.tm_year, tt.tm_mon, tt.tm_mday);
+	tt.tm_wday = (thisdate + 1) % 7;
+	tt.tm_yday = thisdate - date2j(tt.tm_year, 1, 1) + 1;
+
+	COPY_tm(tm, &tt);
 
 	if (!(res = datetime_to_char_body(&tmtc, fmt, false, PG_GET_COLLATION())))
 		PG_RETURN_NULL();
@@ -4161,7 +4196,9 @@ interval_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_PP(1),
 			   *res;
 	TmToChar	tmtc;
-	struct pg_tm *tm;
+	struct fmt_tm *tm;
+	struct pg_itm tt,
+			   *itm = &tt;
 
 	if (VARSIZE_ANY_EXHDR(fmt) <= 0)
 		PG_RETURN_NULL();
@@ -4169,8 +4206,14 @@ interval_to_char(PG_FUNCTION_ARGS)
 	ZERO_tmtc(&tmtc);
 	tm = tmtcTm(&tmtc);
 
-	if (interval2tm(*it, tm, &tmtcFsec(&tmtc)) != 0)
-		PG_RETURN_NULL();
+	interval2itm(*it, itm);
+	tmtc.fsec = itm->tm_usec;
+	tm->tm_sec = itm->tm_sec;
+	tm->tm_min = itm->tm_min;
+	tm->tm_hour = itm->tm_hour;
+	tm->tm_mday = itm->tm_mday;
+	tm->tm_mon = itm->tm_mon;
+	tm->tm_year = itm->tm_year;
 
 	/* wday is meaningless, yday approximates the total span in days */
 	tm->tm_yday = (tm->tm_year * MONTHS_PER_YEAR + tm->tm_mon) * DAYS_PER_MONTH + tm->tm_mday;
@@ -6671,4 +6714,44 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_finish;
 	PG_RETURN_TEXT_P(result);
+}
+
+int
+datetime_format_flags(const char *fmt_str, bool *have_error)
+{
+	bool		incache;
+	int			fmt_len = strlen(fmt_str);
+	int			result;
+	FormatNode *format;
+
+	if (fmt_len > DCH_CACHE_SIZE)
+	{
+		/*
+		 * Allocate new memory if format picture is bigger than static cache
+		 * and do not use cache (call parser always)
+		 */
+		incache = false;
+
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
+
+		parse_format(format, fmt_str, DCH_keywords,
+					 DCH_suff, DCH_index, DCH_FLAG, NULL);
+	}
+	else
+	{
+		/*
+		 * Use cache buffers
+		 */
+		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, false);
+
+		incache = true;
+		format = ent->format;
+	}
+
+	result = DCH_datetime_type(format, have_error);
+
+	if (!incache)
+		pfree(format);
+
+	return result;
 }

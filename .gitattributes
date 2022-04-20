@@ -1,8 +1,9 @@
 *		whitespace=space-before-tab,trailing-space
 *.[chly]	whitespace=space-before-tab,trailing-space,indent-with-non-tab,tabwidth=4
 *.pl		whitespace=space-before-tab,trailing-space,tabwidth=4
+*.pm		whitespace=space-before-tab,trailing-space,tabwidth=4
 *.po		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eof
-*.sgml		whitespace=space-before-tab,trailing-space,tab-in-indent,-blank-at-eol
+*.sgml		whitespace=space-before-tab,trailing-space,tab-in-indent
 *.x[ms]l	whitespace=space-before-tab,trailing-space,tab-in-indent
 
 # Avoid confusing ASCII underlines with leftover merge conflict markers
@@ -17,9 +18,6 @@ src/backend/utils/Gen_dummy_probes.pl.prolog	whitespace=-blank-at-eof
 
 # Test output files that contain extra whitespace
 *.out					-whitespace
-contrib/*/output/*.source		-whitespace
-src/pl/plpgsql/src/output/*.source	-whitespace
-src/test/regress/output/*.source	-whitespace
 src/interfaces/ecpg/test/expected/*	-whitespace
 src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
 
@@ -27,7 +25,6 @@ src/interfaces/libpq/test/expected.out	whitespace=-blank-at-eof
 configure				-whitespace
 ppport.h				-whitespace
 src/backend/regex/COPYRIGHT		-whitespace
-src/backend/regex/re_syntax.n		-whitespace
 src/backend/snowball/libstemmer/*.c	-whitespace
 src/backend/utils/mb/Unicode/*-std.txt	-whitespace
 src/include/snowball/libstemmer/*	-whitespace

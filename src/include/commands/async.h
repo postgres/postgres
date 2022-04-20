@@ -3,7 +3,7 @@
  * async.h
  *	  Asynchronous notification: NOTIFY, LISTEN, UNLISTEN
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/commands/async.h
@@ -20,8 +20,8 @@
  */
 #define NUM_NOTIFY_BUFFERS	8
 
-extern bool Trace_notify;
-extern volatile sig_atomic_t notifyInterruptPending;
+extern PGDLLIMPORT bool Trace_notify;
+extern PGDLLIMPORT volatile sig_atomic_t notifyInterruptPending;
 
 extern Size AsyncShmemSize(void);
 extern void AsyncShmemInit(void);

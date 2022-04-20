@@ -25,12 +25,6 @@ INSTALL_SHLIB_OPTS = -m 555
 
 AROPT = crs
 
-ifeq ($(host_cpu), ia64)
-   DLSUFFIX = .so
-else
-   DLSUFFIX = .sl
-endif
-
 # env var name to use in place of LD_LIBRARY_PATH
 ld_library_path_var = SHLIB_PATH
 

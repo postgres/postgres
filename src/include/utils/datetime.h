@@ -6,7 +6,7 @@
  *	   including date, and time.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/utils/datetime.h
@@ -257,9 +257,10 @@ do { \
  * Include check for leap year.
  */
 
-extern const char *const months[];	/* months (3-char abbreviations) */
-extern const char *const days[];	/* days (full names) */
-extern const int day_tab[2][13];
+extern PGDLLIMPORT const char *const months[];	/* months (3-char
+												 * abbreviations) */
+extern PGDLLIMPORT const char *const days[];	/* days (full names) */
+extern PGDLLIMPORT const int day_tab[2][13];
 
 /*
  * These are the rules for the Gregorian calendar, which was adopted in 1582.
@@ -300,9 +301,9 @@ extern int	DecodeTimeOnly(char **field, int *ftype,
 						   int nf, int *dtype,
 						   struct pg_tm *tm, fsec_t *fsec, int *tzp);
 extern int	DecodeInterval(char **field, int *ftype, int nf, int range,
-						   int *dtype, struct pg_tm *tm, fsec_t *fsec);
+						   int *dtype, struct pg_itm_in *itm_in);
 extern int	DecodeISO8601Interval(char *str,
-								  int *dtype, struct pg_tm *tm, fsec_t *fsec);
+								  int *dtype, struct pg_itm_in *itm_in);
 
 extern void DateTimeParseError(int dterr, const char *str,
 							   const char *datatype) pg_attribute_noreturn();
@@ -315,7 +316,7 @@ extern int	DetermineTimeZoneAbbrevOffsetTS(TimestampTz ts, const char *abbr,
 extern void EncodeDateOnly(struct pg_tm *tm, int style, char *str);
 extern void EncodeTimeOnly(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, int style, char *str);
 extern void EncodeDateTime(struct pg_tm *tm, fsec_t fsec, bool print_tz, int tz, const char *tzn, int style, char *str);
-extern void EncodeInterval(struct pg_tm *tm, fsec_t fsec, int style, char *str);
+extern void EncodeInterval(struct pg_itm *itm, int style, char *str);
 extern void EncodeSpecialTimestamp(Timestamp dt, char *str);
 
 extern int	ValidateDate(int fmask, bool isjulian, bool is2digits, bool bc,

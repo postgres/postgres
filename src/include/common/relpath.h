@@ -3,7 +3,7 @@
  * relpath.h
  *		Declarations for GetRelationPath() and friends
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/common/relpath.h
@@ -56,7 +56,7 @@ typedef enum ForkNumber
 
 #define FORKNAMECHARS	4		/* max chars for a fork name */
 
-extern const char *const forkNames[];
+extern PGDLLIMPORT const char *const forkNames[];
 
 extern ForkNumber forkname_to_number(const char *forkName);
 extern int	forkname_chars(const char *str, ForkNumber *fork);

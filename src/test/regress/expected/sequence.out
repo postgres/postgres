@@ -2,8 +2,6 @@
 -- CREATE SEQUENCE
 --
 -- various error cases
-CREATE UNLOGGED SEQUENCE sequence_testx;
-ERROR:  unlogged sequences are not supported
 CREATE SEQUENCE sequence_testx INCREMENT BY 0;
 ERROR:  INCREMENT must not be zero
 CREATE SEQUENCE sequence_testx INCREMENT BY -1 MINVALUE 20;
@@ -600,6 +598,24 @@ DROP SEQUENCE seq2;
 -- should fail
 SELECT lastval();
 ERROR:  lastval is not yet defined in this session
+-- unlogged sequences
+-- (more tests in src/test/recovery/)
+CREATE UNLOGGED SEQUENCE sequence_test_unlogged;
+ALTER SEQUENCE sequence_test_unlogged SET LOGGED;
+\d sequence_test_unlogged
+                   Sequence "public.sequence_test_unlogged"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
+
+ALTER SEQUENCE sequence_test_unlogged SET UNLOGGED;
+\d sequence_test_unlogged
+              Unlogged sequence "public.sequence_test_unlogged"
+  Type  | Start | Minimum |       Maximum       | Increment | Cycles? | Cache 
+--------+-------+---------+---------------------+-----------+---------+-------
+ bigint |     1 |       1 | 9223372036854775807 |         1 | no      |     1
+
+DROP SEQUENCE sequence_test_unlogged;
 -- Test sequences in read-only transactions
 CREATE TEMPORARY SEQUENCE sequence_test_temp1;
 START TRANSACTION READ ONLY;

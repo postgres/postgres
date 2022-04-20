@@ -39,7 +39,7 @@ columns, combine the values into a new row, and apply the update.  (For a
 heap table, the row-identity junk column is a CTID, but other things may
 be used for other table types.)  For DELETE, the plan tree need only deliver
 junk row-identity column(s), and the ModifyTable node visits each of those
-rows and marks the row deleted.
+rows and marks the row deleted.  MERGE is described below.
 
 XXX a great deal more documentation needs to be written here...
 
@@ -221,6 +221,45 @@ EEOP_ASSIGN_TMP step to move the result into the appropriate tts_values[]
 and tts_isnull[] array elements of the result slot.  There are special
 fast-path step types (EEOP_ASSIGN_*_VAR) to handle targetlist entries that
 are simple Vars using only one step instead of two.
+
+
+MERGE
+-----
+
+MERGE is a multiple-table, multiple-action command: It specifies a target
+table and a source relation, and can contain multiple WHEN MATCHED and
+WHEN NOT MATCHED clauses, each of which specifies one UPDATE, INSERT,
+UPDATE, or DO NOTHING actions.  The target table is modified by MERGE,
+and the source relation supplies additional data for the actions.  Each action
+optionally specifies a qualifying expression that is evaluated for each tuple.
+
+In the planner, transform_MERGE_to_join constructs a join between the target
+table and the source relation, with row-identifying junk columns from the target
+table.  This join is an outer join if the MERGE command contains any WHEN NOT
+MATCHED clauses; the ModifyTable node fetches tuples from the plan tree of that
+join.  If the row-identifying columns in the fetched tuple are NULL, then the
+source relation contains a tuple that is not matched by any tuples in the
+target table, so the qualifying expression for each WHEN NOT MATCHED clause is
+evaluated given that tuple as returned by the plan.  If the expression returns
+true, the action indicated by the clause is executed, and no further clauses
+are evaluated.  On the other hand, if the row-identifying columns are not
+NULL, then the matching tuple from the target table can be fetched; qualifying
+expression of each WHEN MATCHED clause is evaluated given both the fetched
+tuple and the tuple returned by the plan.
+
+If no WHEN NOT MATCHED clauses are present, then the join constructed by
+the planner is an inner join, and the row-identifying junk columns are
+always non NULL.
+
+If WHEN MATCHED ends up processing a row that is concurrently updated or deleted,
+EvalPlanQual (see below) is used to find the latest version of the row, and
+that is re-fetched; if it exists, the search for a matching WHEN MATCHED clause
+to use starts at the top.
+
+MERGE does not allow its own type of triggers, but instead fires UPDATE, DELETE,
+and INSERT triggers: row triggers are fired for each row when an action is
+executed for that row.  Statement triggers are fired always, regardless of
+whether any rows match the corresponding clauses.
 
 
 Memory Management

@@ -1,12 +1,11 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Tests of pg_shmem.h functions
 #
 use strict;
 use warnings;
-use Config;
 use File::stat qw(stat);
 use IPC::Run 'run';
 use PostgreSQL::Test::Cluster;
@@ -24,10 +23,6 @@ eval {
 if ($@ || $windows_os)
 {
 	plan skip_all => 'SysV shared memory not supported by this platform';
-}
-else
-{
-	plan tests => 4;
 }
 
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
@@ -116,7 +111,7 @@ log_ipcs();
 $gnat->start;
 log_ipcs();
 
-my $regress_shlib = PostgreSQL::Test::Utils::perl2host($ENV{REGRESS_SHLIB});
+my $regress_shlib = $ENV{REGRESS_SHLIB};
 $gnat->safe_psql('postgres', <<EOSQL);
 CREATE FUNCTION wait_pid(int)
    RETURNS void
@@ -136,7 +131,7 @@ my $slow_client = IPC::Run::start(
 	\$stdout,
 	'2>',
 	\$stderr,
-	IPC::Run::timeout(900));    # five times the poll_query_until timeout
+	IPC::Run::timeout(5 * $PostgreSQL::Test::Utils::timeout_default));
 ok( $gnat->poll_query_until(
 		'postgres',
 		"SELECT 1 FROM pg_stat_activity WHERE query = '$slow_query'", '1'),
@@ -147,10 +142,11 @@ $gnat->kill9;
 unlink($gnat->data_dir . '/postmaster.pid');
 $gnat->rotate_logfile;    # on Windows, can't open old log for writing
 log_ipcs();
-# Reject ordinary startup.  Retry for the same reasons poll_start() does.
+# Reject ordinary startup.  Retry for the same reasons poll_start() does,
+# every 0.1s for at least $PostgreSQL::Test::Utils::timeout_default seconds.
 my $pre_existing_msg = qr/pre-existing shared memory block/;
 {
-	my $max_attempts = 180 * 10;    # Retry every 0.1s for at least 180s.
+	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
 	my $attempts     = 0;
 	while ($attempts < $max_attempts)
 	{
@@ -197,7 +193,7 @@ sub poll_start
 {
 	my ($node) = @_;
 
-	my $max_attempts = 180 * 10;
+	my $max_attempts = 10 * $PostgreSQL::Test::Utils::timeout_default;
 	my $attempts     = 0;
 
 	while ($attempts < $max_attempts)
@@ -207,11 +203,16 @@ sub poll_start
 		# Wait 0.1 second before retrying.
 		usleep(100_000);
 
+		# Clean up in case the start attempt just timed out or some such.
+		$node->stop('fast', fail_ok => 1);
+
 		$attempts++;
 	}
 
-	# No success within 180 seconds.  Try one last time without fail_ok, which
-	# will BAIL_OUT unless it succeeds.
+	# Try one last time without fail_ok, which will BAIL_OUT unless it
+	# succeeds.
 	$node->start && return 1;
 	return 0;
 }
+
+done_testing();

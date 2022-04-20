@@ -1,10 +1,9 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
 
-use Config;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
@@ -21,11 +20,21 @@ my $tempdir       = PostgreSQL::Test::Utils::tempdir;
 # test_key indicates that a given run should simply use the same
 # set of like/unlike tests as another run, and which run that is.
 #
+# compile_option indicates if the commands run depend on a compilation
+# option, if any.  This can be used to control if tests should be
+# skipped when a build dependency is not satisfied.
+#
 # dump_cmd is the pg_dump command to run, which is an array of
 # the full command and arguments to run.  Note that this is run
 # using $node->command_ok(), so the port does not need to be
 # specified and is pulled from $PGPORT, which is set by the
 # PostgreSQL::Test::Cluster system.
+#
+# compress_cmd is the utility command for (de)compression, if any.
+# Note that this should generally be used on pg_dump's output
+# either to generate a text file to run the through the tests, or
+# to test pg_restore's ability to parse manually compressed files
+# that otherwise pg_dump does not compress on its own (e.g. *.toc).
 #
 # restore_cmd is the pg_restore command to run, if any.  Note
 # that this should generally be used when the pg_dump goes to
@@ -54,6 +63,58 @@ my %pgdump_runs = (
 			"--file=$tempdir/binary_upgrade.sql",
 			"$tempdir/binary_upgrade.dump",
 		],
+	},
+
+	# Do not use --no-sync to give test coverage for data sync.
+	compression_gzip_custom => {
+		test_key       => 'compression',
+		compile_option => 'gzip',
+		dump_cmd       => [
+			'pg_dump',      '--format=custom',
+			'--compress=1', "--file=$tempdir/compression_gzip_custom.dump",
+			'postgres',
+		],
+		restore_cmd => [
+			'pg_restore',
+			"--file=$tempdir/compression_gzip_custom.sql",
+			"$tempdir/compression_gzip_custom.dump",
+		],
+	},
+
+	# Do not use --no-sync to give test coverage for data sync.
+	compression_gzip_dir => {
+		test_key       => 'compression',
+		compile_option => 'gzip',
+		dump_cmd       => [
+			'pg_dump',                              '--jobs=2',
+			'--format=directory',                   '--compress=1',
+			"--file=$tempdir/compression_gzip_dir", 'postgres',
+		],
+		# Give coverage for manually compressed blob.toc files during
+		# restore.
+		compress_cmd => {
+			program => $ENV{'GZIP_PROGRAM'},
+			args    => [ '-f', "$tempdir/compression_gzip_dir/blobs.toc", ],
+		},
+		restore_cmd => [
+			'pg_restore', '--jobs=2',
+			"--file=$tempdir/compression_gzip_dir.sql",
+			"$tempdir/compression_gzip_dir",
+		],
+	},
+
+	compression_gzip_plain => {
+		test_key       => 'compression',
+		compile_option => 'gzip',
+		dump_cmd       => [
+			'pg_dump', '--format=plain', '-Z1',
+			"--file=$tempdir/compression_gzip_plain.sql.gz", 'postgres',
+		],
+		# Decompress the generated file to run through the tests.
+		compress_cmd => {
+			program => $ENV{'GZIP_PROGRAM'},
+			args    => [ '-d', "$tempdir/compression_gzip_plain.sql.gz", ],
+		},
 	},
 	clean => {
 		dump_cmd => [
@@ -275,6 +336,13 @@ my %pgdump_runs = (
 			'postgres',
 		],
 	},
+	no_table_access_method => {
+		dump_cmd => [
+			'pg_dump', '--no-sync',
+			"--file=$tempdir/no_table_access_method.sql",
+			'--no-table-access-method', 'postgres',
+		],
+	},
 	only_dump_test_schema => {
 		dump_cmd => [
 			'pg_dump', '--no-sync',
@@ -288,7 +356,8 @@ my %pgdump_runs = (
 			'--no-sync',
 			"--file=$tempdir/only_dump_test_table.sql",
 			'--table=dump_test.test_table',
-			'--lock-wait-timeout=1000000',
+			'--lock-wait-timeout='
+			  . (1000 * $PostgreSQL::Test::Utils::timeout_default),
 			'postgres',
 		],
 	},
@@ -417,6 +486,7 @@ my %full_runs = (
 	binary_upgrade           => 1,
 	clean                    => 1,
 	clean_if_exists          => 1,
+	compression              => 1,
 	createdb                 => 1,
 	defaults                 => 1,
 	exclude_dump_test_schema => 1,
@@ -426,6 +496,7 @@ my %full_runs = (
 	no_blobs                 => 1,
 	no_owner                 => 1,
 	no_privs                 => 1,
+	no_table_access_method   => 1,
 	pg_dumpall_dbprivs       => 1,
 	pg_dumpall_exclude       => 1,
 	schema_only              => 1,);
@@ -2374,6 +2445,15 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'CREATE PUBLICATION pub4' => {
+		create_order => 50,
+		create_sql   => 'CREATE PUBLICATION pub4;',
+		regexp => qr/^
+			\QCREATE PUBLICATION pub4 WITH (publish = 'insert, update, delete, truncate');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
 	'CREATE SUBSCRIPTION sub1' => {
 		create_order => 50,
 		create_sql   => 'CREATE SUBSCRIPTION sub1
@@ -2410,6 +2490,28 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'ALTER PUBLICATION pub1 ADD TABLE test_sixth_table (col3, col2)' => {
+		create_order => 52,
+		create_sql =>
+		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_sixth_table (col3, col2);',
+		regexp => qr/^
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY dump_test.test_sixth_table (col2, col3);\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
+	'ALTER PUBLICATION pub1 ADD TABLE test_seventh_table (col3, col2) WHERE (col1 = 1)' => {
+		create_order => 52,
+		create_sql =>
+		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_seventh_table (col3, col2) WHERE (col1 = 1);',
+		regexp => qr/^
+			\QALTER PUBLICATION pub1 ADD TABLE ONLY dump_test.test_seventh_table (col2, col3) WHERE ((col1 = 1));\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'ALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA dump_test' => {
 		create_order => 51,
 		create_sql =>
@@ -2429,6 +2531,31 @@ my %tests = (
 			\QALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA public;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'ALTER PUBLICATION pub4 ADD TABLE test_table WHERE (col1 > 0);' => {
+		create_order => 51,
+		create_sql =>
+		  'ALTER PUBLICATION pub4 ADD TABLE dump_test.test_table WHERE (col1 > 0);',
+		regexp => qr/^
+			\QALTER PUBLICATION pub4 ADD TABLE ONLY dump_test.test_table WHERE ((col1 > 0));\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+		},
+	},
+
+	'ALTER PUBLICATION pub4 ADD TABLE test_second_table WHERE (col2 = \'test\');' => {
+		create_order => 52,
+		create_sql =>
+		  'ALTER PUBLICATION pub4 ADD TABLE dump_test.test_second_table WHERE (col2 = \'test\');',
+		regexp => qr/^
+			\QALTER PUBLICATION pub4 ADD TABLE ONLY dump_test.test_second_table WHERE ((col2 = 'test'::text));\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
 	},
 
 	'CREATE SCHEMA public' => {
@@ -2735,6 +2862,44 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
+	'CREATE TABLE test_sixth_table' => {
+		create_order => 6,
+		create_sql   => 'CREATE TABLE dump_test.test_sixth_table (
+						   col1 int,
+						   col2 text,
+						   col3 bytea
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_sixth_table (\E
+			\n\s+\Qcol1 integer,\E
+			\n\s+\Qcol2 text,\E
+			\n\s+\Qcol3 bytea\E
+			\n\);
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
+	'CREATE TABLE test_seventh_table' => {
+		create_order => 6,
+		create_sql   => 'CREATE TABLE dump_test.test_seventh_table (
+						   col1 int,
+						   col2 text,
+						   col3 bytea
+					   );',
+		regexp => qr/^
+			\QCREATE TABLE dump_test.test_seventh_table (\E
+			\n\s+\Qcol1 integer,\E
+			\n\s+\Qcol2 text,\E
+			\n\s+\Qcol3 bytea\E
+			\n\);
+			/xm,
+		like =>
+		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
+		unlike => { exclude_dump_test_schema => 1, },
+	},
+
 	'CREATE TABLE test_table_identity' => {
 		create_order => 3,
 		create_sql   => 'CREATE TABLE dump_test.test_table_identity (
@@ -2964,6 +3129,7 @@ my %tests = (
 			binary_upgrade          => 1,
 			clean                   => 1,
 			clean_if_exists         => 1,
+			compression             => 1,
 			createdb                => 1,
 			defaults                => 1,
 			exclude_test_table      => 1,
@@ -2972,6 +3138,7 @@ my %tests = (
 			no_blobs                => 1,
 			no_privs                => 1,
 			no_owner                => 1,
+			no_table_access_method  => 1,
 			only_dump_test_schema   => 1,
 			pg_dumpall_dbprivs      => 1,
 			pg_dumpall_exclude      => 1,
@@ -3036,6 +3203,7 @@ my %tests = (
 			binary_upgrade           => 1,
 			clean                    => 1,
 			clean_if_exists          => 1,
+			compression              => 1,
 			createdb                 => 1,
 			defaults                 => 1,
 			exclude_dump_test_schema => 1,
@@ -3045,6 +3213,7 @@ my %tests = (
 			no_blobs                 => 1,
 			no_privs                 => 1,
 			no_owner                 => 1,
+			no_table_access_method   => 1,
 			pg_dumpall_dbprivs       => 1,
 			pg_dumpall_exclude       => 1,
 			role                     => 1,
@@ -3648,7 +3817,8 @@ my %tests = (
 		like => {
 			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
-		unlike => { exclude_dump_test_schema => 1 },
+		unlike =>
+		  { exclude_dump_test_schema => 1, no_table_access_method => 1 },
 	},
 
 	'CREATE MATERIALIZED VIEW regress_pg_dump_matview_am' => {
@@ -3668,7 +3838,8 @@ my %tests = (
 		like => {
 			%full_runs, %dump_test_schema_runs, section_pre_data => 1,
 		},
-		unlike => { exclude_dump_test_schema => 1 },
+		unlike =>
+		  { exclude_dump_test_schema => 1, no_table_access_method => 1 },
 	});
 
 #########################################
@@ -3695,88 +3866,13 @@ if ($collation_check_stderr !~ /ERROR: /)
 	$collation_support = 1;
 }
 
-# Determine whether build supports LZ4.
-my $supports_lz4 = check_pg_config("#define HAVE_LIBLZ4 1");
+# Determine whether build supports LZ4 and gzip.
+my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
+my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
 
 # Create additional databases for mutations of schema public
 $node->psql('postgres', 'create database regress_pg_dump_test;');
 $node->psql('postgres', 'create database regress_public_owner;');
-
-# Start with number of command_fails_like()*2 tests below (each
-# command_fails_like is actually 2 tests)
-my $num_tests = 12;
-
-foreach my $run (sort keys %pgdump_runs)
-{
-	my $test_key = $run;
-	my $run_db   = 'postgres';
-
-	if (defined($pgdump_runs{$run}->{database}))
-	{
-		$run_db = $pgdump_runs{$run}->{database};
-	}
-
-	# Each run of pg_dump is a test itself
-	$num_tests++;
-
-	# If there is a restore cmd, that's another test
-	if ($pgdump_runs{$run}->{restore_cmd})
-	{
-		$num_tests++;
-	}
-
-	if ($pgdump_runs{$run}->{test_key})
-	{
-		$test_key = $pgdump_runs{$run}->{test_key};
-	}
-
-	# Then count all the tests run against each run
-	foreach my $test (sort keys %tests)
-	{
-
-		# postgres is the default database, if it isn't overridden
-		my $test_db = 'postgres';
-
-		# Specific tests can override the database to use
-		if (defined($tests{$test}->{database}))
-		{
-			$test_db = $tests{$test}->{database};
-		}
-
-		# The database to test against needs to match the database the run is
-		# for, so skip combinations where they don't match up.
-		if ($run_db ne $test_db)
-		{
-			next;
-		}
-
-		# Skip any collation-related commands if there is no collation support
-		if (!$collation_support && defined($tests{$test}->{collation}))
-		{
-			next;
-		}
-
-		# Skip tests specific to LZ4 if this build does not support
-		# this option.
-		if (!$supports_lz4 && defined($tests{$test}->{lz4}))
-		{
-			next;
-		}
-
-		# If there is a like entry, but no unlike entry, then we will test the like case
-		if ($tests{$test}->{like}->{$test_key}
-			&& !defined($tests{$test}->{unlike}->{$test_key}))
-		{
-			$num_tests++;
-		}
-		else
-		{
-			# We will test everything that isn't a 'like'
-			$num_tests++;
-		}
-	}
-}
-plan tests => $num_tests;
 
 #########################################
 # Set up schemas, tables, etc, to be dumped.
@@ -3878,6 +3974,113 @@ command_fails_like(
 	'no matching tables');
 
 #########################################
+# Test invalid multipart database names
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '.' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \./,
+	'pg_dumpall: option --exclude-database rejects multipart pattern "."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '.*' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \.\*/,
+	'pg_dumpall: option --exclude-database rejects multipart pattern ".*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '*.*' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \*\.\*/,
+	'pg_dumpall: option --exclude-database rejects multipart pattern "*.*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', 'myhost.mydb' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
+	'pg_dumpall: option --exclude-database rejects multipart database names'
+);
+
+#########################################
+# Test valid database exclusion patterns
+
+$node->command_ok(
+	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '"myhost.mydb"' ],
+	'pg_dumpall: option --exclude-database handles database names with embedded dots'
+);
+
+$node->command_ok(
+	[ 'pg_dumpall', '--exclude-database', '??*' ],
+	'pg_dumpall: option --exclude-database handles database name patterns'
+);
+
+
+#########################################
+# Test invalid multipart schema names
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', 'myhost.mydb.myschema' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): myhost\.mydb\.myschema/,
+	'pg_dump: option --schema rejects three-part schema names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', 'otherdb.myschema' ],
+	qr/pg_dump: error: cross-database references are not implemented: otherdb\.myschema/,
+	'pg_dump: option --schema rejects cross-database multipart schema names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.' ],
+	qr/pg_dump: error: cross-database references are not implemented: \./,
+	'pg_dump: option --schema rejects degenerate two-part schema name: "."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '"some.other.db".myschema' ],
+	qr/pg_dump: error: cross-database references are not implemented: "some\.other\.db"\.myschema/,
+	'pg_dump: option --schema rejects cross-database multipart schema names with embedded dots'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.*' ],
+	qr/pg_dump: error: cross-database references are not implemented: \.\*/,
+	'pg_dump: option --schema rejects degenerate two-part schema name: ".*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '..' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\./,
+	'pg_dump: option --schema rejects degenerate three-part schema name: ".."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.*.*' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\*\.\*/,
+	'pg_dump: option --schema rejects degenerate three-part schema pattern: ".*.*"'
+);
+
+#########################################
+# Test invalid multipart relation names
+
+$node->command_fails_like(
+	[ 'pg_dump', '--table', 'myhost.mydb.myschema.mytable' ],
+	qr/pg_dump: error: improper relation name \(too many dotted names\): myhost\.mydb\.myschema\.mytable/,
+	'pg_dump: option --table rejects four-part table names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--table', 'otherdb.pg_catalog.pg_class' ],
+	qr/pg_dump: error: cross-database references are not implemented: otherdb\.pg_catalog\.pg_class/,
+	'pg_dump: option --table rejects cross-database three part table names'
+);
+
+command_fails_like(
+	[ 'pg_dump', '-p', "$port", '--table', '"some.other.db".pg_catalog.pg_class' ],
+	qr/pg_dump: error: cross-database references are not implemented: "some\.other\.db"\.pg_catalog\.pg_class/,
+	'pg_dump: option --table rejects cross-database three part table names with embedded dots'
+);
+
+#########################################
 # Run all runs
 
 foreach my $run (sort keys %pgdump_runs)
@@ -3885,8 +4088,31 @@ foreach my $run (sort keys %pgdump_runs)
 	my $test_key = $run;
 	my $run_db   = 'postgres';
 
+	# Skip command-level tests for gzip if there is no support for it.
+	if (   defined($pgdump_runs{$run}->{compile_option})
+		&& $pgdump_runs{$run}->{compile_option} eq 'gzip'
+		&& !$supports_gzip)
+	{
+		note "$run: skipped due to no gzip support";
+		next;
+	}
+
 	$node->command_ok(\@{ $pgdump_runs{$run}->{dump_cmd} },
 		"$run: pg_dump runs");
+
+	if ($pgdump_runs{$run}->{compress_cmd})
+	{
+		my ($compress_cmd) = $pgdump_runs{$run}->{compress_cmd};
+		my $compress_program = $compress_cmd->{program};
+
+		# Skip the rest of the test if the compression program is
+		# not defined.
+		next if (!defined($compress_program) || $compress_program eq '');
+
+		my @full_compress_cmd =
+		  ($compress_cmd->{program}, @{ $compress_cmd->{args} });
+		command_ok(\@full_compress_cmd, "$run: compression commands");
+	}
 
 	if ($pgdump_runs{$run}->{restore_cmd})
 	{
@@ -3963,3 +4189,5 @@ foreach my $run (sort keys %pgdump_runs)
 # Stop the database instance, which will be removed at the end of the tests.
 
 $node->stop('fast');
+
+done_testing();

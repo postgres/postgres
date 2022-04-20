@@ -3,7 +3,7 @@
  * tsrank.c
  *		rank tsvector by tsquery
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -337,7 +337,7 @@ calc_rank_or(const float *w, TSVector t, TSQuery q)
 			}
 /*
 			limit (sum(1/i^2),i=1,inf) = pi^2/6
-			resj = sum(wi/i^2),i=1,noccurence,
+			resj = sum(wi/i^2),i=1,noccurrence,
 			wi - should be sorted desc,
 			don't sort for now, just choose maximum weight. This should be corrected
 			Oleg Bartunov

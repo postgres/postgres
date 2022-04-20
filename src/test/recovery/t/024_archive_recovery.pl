@@ -1,12 +1,12 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test for archive recovery of WAL generated with wal_level=minimal
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 2;
+use Test::More;
 use Time::HiRes qw(usleep);
 
 # Initialize and start node with wal_level = replica and WAL archiving
@@ -81,8 +81,8 @@ sub test_recovery_wal_level_minimal
 			$recovery_node->logfile,  'start'
 		]);
 
-	# Wait up to 180s for postgres to terminate
-	foreach my $i (0 .. 1800)
+	# wait for postgres to terminate
+	foreach my $i (0 .. 10 * $PostgreSQL::Test::Utils::timeout_default)
 	{
 		last if !-f $recovery_node->data_dir . '/postmaster.pid';
 		usleep(100_000);
@@ -101,3 +101,5 @@ test_recovery_wal_level_minimal('archive_recovery', 'archive recovery', 0);
 
 # Test for standby server
 test_recovery_wal_level_minimal('standby', 'standby', 1);
+
+done_testing();

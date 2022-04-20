@@ -136,7 +136,7 @@
   to specify the location of your <productname>Python</productname> installation,
   put the following in <filename>config.pl</filename>:
 <programlisting>
-$config->{python} = 'c:\python26';
+$config->{python} = 'c:\python310';
 </programlisting>
   You only need to specify those parameters that are different from what's in
   <filename>config_default.pl</filename>.
@@ -300,10 +300,18 @@ $ENV{MSBFLAGS}="/m";
     <varlistentry>
      <term><productname>LZ4</productname></term>
      <listitem><para>
-      Required for supporting <productname>LZ4</productname> compression
-      method for compressing table or WAL data. Binaries and source can be
-      downloaded from
+      Required for supporting <productname>LZ4</productname> compression.
+      Binaries and source can be downloaded from
       <ulink url="https://github.com/lz4/lz4/releases"></ulink>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><productname>ZSTD</productname></term>
+     <listitem><para>
+      Required for supporting <productname>ZSTD</productname> compression
+      method. Binaries and source can be downloaded from
+      <ulink url="https://github.com/facebook/zstd/releases"></ulink>.
      </para></listitem>
     </varlistentry>
 
@@ -362,7 +370,7 @@ $ENV{MSBFLAGS}="/m";
   </para>
 
   <para>
-   To use a server-side third party library such as <productname>python</productname> or
+   To use a server-side third party library such as <productname>Python</productname> or
    <productname>OpenSSL</productname>, this library <emphasis>must</emphasis> also be
    64-bit. There is no support for loading a 32-bit library in a 64-bit
    server. Several of the third party libraries that PostgreSQL supports may
@@ -462,7 +470,6 @@ $ENV{CONFIG}="Debug";
 <userinput>vcregress isolationcheck</userinput>
 <userinput>vcregress bincheck</userinput>
 <userinput>vcregress recoverycheck</userinput>
-<userinput>vcregress upgradecheck</userinput>
 </screen>
 
    To change the schedule used (default is parallel), append it to the
@@ -526,9 +533,9 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
     <varlistentry>
      <term><varname>GZIP_PROGRAM</varname></term>
      <listitem><para>
-       Path to a <application>gzip</application> command. The default is
-       <literal>gzip</literal>, that would be the command found in
-      <varname>PATH</varname>.
+      Path to a <application>gzip</application> command. The default is
+      <literal>gzip</literal>, which will search for a command by that
+      name in the configured <envar>PATH</envar>.
      </para></listitem>
     </varlistentry>
 
@@ -536,8 +543,8 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
      <term><varname>LZ4</varname></term>
      <listitem><para>
       Path to a <application>lz4</application> command. The default is
-      <literal>lz4</literal>, that would be the command found in
-      <varname>PATH</varname>.
+      <literal>lz4</literal>, which will search for a command by that
+      name in the configured <envar>PATH</envar>.
      </para></listitem>
     </varlistentry>
 
@@ -545,8 +552,17 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
      <term><varname>TAR</varname></term>
      <listitem><para>
       Path to a <application>tar</application> command. The default is
-      <literal>tar</literal>, that would be the command found in
-      <varname>PATH</varname>.
+      <literal>tar</literal>, which will search for a command by that
+      name in the configured <envar>PATH</envar>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>ZSTD</varname></term>
+     <listitem><para>
+      Path to a <application>zstd</application> command. The default is
+      <literal>zstd</literal>, which will search for a command by that
+      name in the configured <envar>PATH</envar>.
      </para></listitem>
     </varlistentry>
    </variablelist>

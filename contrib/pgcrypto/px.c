@@ -44,18 +44,15 @@ static const struct error_desc px_err_list[] = {
 	{PXE_ERR_GENERIC, "Some PX error (not specified)"},
 	{PXE_NO_HASH, "No such hash algorithm"},
 	{PXE_NO_CIPHER, "No such cipher algorithm"},
-	{PXE_NOTBLOCKSIZE, "Data not a multiple of block size"},
 	{PXE_BAD_OPTION, "Unknown option"},
 	{PXE_BAD_FORMAT, "Badly formatted type"},
 	{PXE_KEY_TOO_BIG, "Key was too big"},
 	{PXE_CIPHER_INIT, "Cipher cannot be initialized ?"},
 	{PXE_HASH_UNUSABLE_FOR_HMAC, "This hash algorithm is unusable for HMAC"},
-	{PXE_DEV_READ_ERROR, "Error reading from random device"},
 	{PXE_BUG, "pgcrypto bug"},
 	{PXE_ARGUMENT_ERROR, "Illegal argument to function"},
 	{PXE_UNKNOWN_SALT_ALGO, "Unknown salt algorithm"},
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
-	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
 	{PXE_NO_RANDOM, "Failed to generate strong random bits"},
 	{PXE_DECRYPT_FAILED, "Decryption failed"},
 	{PXE_ENCRYPT_FAILED, "Encryption failed"},
@@ -200,7 +197,7 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 		ivbuf = palloc0(ivs);
 		if (ivlen > ivs)
 			memcpy(ivbuf, iv, ivs);
-		else
+		else if (ivlen > 0)
 			memcpy(ivbuf, iv, ivlen);
 	}
 
@@ -223,129 +220,14 @@ static int
 combo_encrypt(PX_Combo *cx, const uint8 *data, unsigned dlen,
 			  uint8 *res, unsigned *rlen)
 {
-	int			err = 0;
-	uint8	   *bbuf;
-	unsigned	bs,
-				bpos,
-				i,
-				pad;
-
-	PX_Cipher  *c = cx->cipher;
-
-	bbuf = NULL;
-	bs = px_cipher_block_size(c);
-
-	/* encrypt */
-	if (bs > 1)
-	{
-		bbuf = palloc(bs * 4);
-		bpos = dlen % bs;
-		*rlen = dlen - bpos;
-		memcpy(bbuf, data + *rlen, bpos);
-
-		/* encrypt full-block data */
-		if (*rlen)
-		{
-			err = px_cipher_encrypt(c, data, *rlen, res);
-			if (err)
-				goto out;
-		}
-
-		/* bbuf has now bpos bytes of stuff */
-		if (cx->padding)
-		{
-			pad = bs - (bpos % bs);
-			for (i = 0; i < pad; i++)
-				bbuf[bpos++] = pad;
-		}
-		else if (bpos % bs)
-		{
-			/* ERROR? */
-			pad = bs - (bpos % bs);
-			for (i = 0; i < pad; i++)
-				bbuf[bpos++] = 0;
-		}
-
-		/* encrypt the rest - pad */
-		if (bpos)
-		{
-			err = px_cipher_encrypt(c, bbuf, bpos, res + *rlen);
-			*rlen += bpos;
-		}
-	}
-	else
-	{
-		/* stream cipher/mode - no pad needed */
-		err = px_cipher_encrypt(c, data, dlen, res);
-		if (err)
-			goto out;
-		*rlen = dlen;
-	}
-out:
-	if (bbuf)
-		pfree(bbuf);
-
-	return err;
+	return px_cipher_encrypt(cx->cipher, cx->padding, data, dlen, res, rlen);
 }
 
 static int
 combo_decrypt(PX_Combo *cx, const uint8 *data, unsigned dlen,
 			  uint8 *res, unsigned *rlen)
 {
-	int			err = 0;
-	unsigned	bs,
-				i,
-				pad;
-	unsigned	pad_ok;
-
-	PX_Cipher  *c = cx->cipher;
-
-	/* decide whether zero-length input is allowed */
-	if (dlen == 0)
-	{
-		/* with padding, empty ciphertext is not allowed */
-		if (cx->padding)
-			return PXE_DECRYPT_FAILED;
-
-		/* without padding, report empty result */
-		*rlen = 0;
-		return 0;
-	}
-
-	bs = px_cipher_block_size(c);
-	if (bs > 1 && (dlen % bs) != 0)
-		goto block_error;
-
-	/* decrypt */
-	*rlen = dlen;
-	err = px_cipher_decrypt(c, data, dlen, res);
-	if (err)
-		return err;
-
-	/* unpad */
-	if (bs > 1 && cx->padding)
-	{
-		pad = res[*rlen - 1];
-		pad_ok = 0;
-		if (pad > 0 && pad <= bs && pad <= *rlen)
-		{
-			pad_ok = 1;
-			for (i = *rlen - pad; i < *rlen; i++)
-				if (res[i] != pad)
-				{
-					pad_ok = 0;
-					break;
-				}
-		}
-
-		if (pad_ok)
-			*rlen -= pad;
-	}
-
-	return 0;
-
-block_error:
-	return PXE_NOTBLOCKSIZE;
+	return px_cipher_decrypt(cx->cipher, cx->padding, data, dlen, res, rlen);
 }
 
 static void

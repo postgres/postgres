@@ -3,7 +3,7 @@
  * pg_subscription.h
  *	  definition of the "subscription" system catalog (pg_subscription)
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/pg_subscription.h
@@ -17,6 +17,7 @@
 #ifndef PG_SUBSCRIPTION_H
 #define PG_SUBSCRIPTION_H
 
+#include "access/xlogdefs.h"
 #include "catalog/genbki.h"
 #include "catalog/pg_subscription_d.h"
 
@@ -53,6 +54,10 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	Oid			subdbid BKI_LOOKUP(pg_database);	/* Database the
 													 * subscription is in. */
+
+	XLogRecPtr	subskiplsn;		/* All changes finished at this LSN are
+								 * skipped */
+
 	NameData	subname;		/* Name of the subscription */
 
 	Oid			subowner BKI_LOOKUP(pg_authid); /* Owner of the subscription */
@@ -66,6 +71,9 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 	bool		substream;		/* Stream in-progress transactions. */
 
 	char		subtwophasestate;	/* Stream two-phase transactions */
+
+	bool		subdisableonerr;	/* True if a worker error should cause the
+									 * subscription to be disabled */
 
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	/* Connection string to the publisher */
@@ -96,6 +104,8 @@ typedef struct Subscription
 	Oid			oid;			/* Oid of the subscription */
 	Oid			dbid;			/* Oid of the database which subscription is
 								 * in */
+	XLogRecPtr	skiplsn;		/* All changes finished at this LSN are
+								 * skipped */
 	char	   *name;			/* Name of the subscription */
 	Oid			owner;			/* Oid of the subscription owner */
 	bool		enabled;		/* Indicates if the subscription is enabled */
@@ -103,6 +113,9 @@ typedef struct Subscription
 								 * binary format */
 	bool		stream;			/* Allow streaming in-progress transactions. */
 	char		twophasestate;	/* Allow streaming two-phase transactions */
+	bool		disableonerr;	/* Indicates if the subscription should be
+								 * automatically disabled if a worker error
+								 * occurs */
 	char	   *conninfo;		/* Connection string to the publisher */
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
@@ -111,6 +124,7 @@ typedef struct Subscription
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);
+extern void DisableSubscription(Oid subid);
 extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
 extern char *get_subscription_name(Oid subid, bool missing_ok);
 

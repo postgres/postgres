@@ -47,9 +47,12 @@ begin
     return data::jsonb;
 end;
 $$;
--- Also, disable JIT, or we'll get different output on machines
--- where that's been forced on
+-- Disable JIT, or we'll get different output on machines where that's been
+-- forced on
 set jit = off;
+-- Similarly, disable track_io_timing, to avoid output differences when
+-- enabled.
+set track_io_timing = off;
 -- Simple cases
 select explain_filter('explain select * from int8_tbl i8');
                      explain_filter                      
@@ -81,56 +84,6 @@ select explain_filter('explain (analyze, buffers, format text) select * from int
  Planning Time: N.N ms
  Execution Time: N.N ms
 (3 rows)
-
-select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
-           explain_filter           
-------------------------------------
- [                                 +
-   {                               +
-     "Plan": {                     +
-       "Node Type": "Seq Scan",    +
-       "Parallel Aware": false,    +
-       "Async Capable": false,     +
-       "Relation Name": "int8_tbl",+
-       "Alias": "i8",              +
-       "Startup Cost": N.N,        +
-       "Total Cost": N.N,          +
-       "Plan Rows": N,             +
-       "Plan Width": N,            +
-       "Actual Startup Time": N.N, +
-       "Actual Total Time": N.N,   +
-       "Actual Rows": N,           +
-       "Actual Loops": N,          +
-       "Shared Hit Blocks": N,     +
-       "Shared Read Blocks": N,    +
-       "Shared Dirtied Blocks": N, +
-       "Shared Written Blocks": N, +
-       "Local Hit Blocks": N,      +
-       "Local Read Blocks": N,     +
-       "Local Dirtied Blocks": N,  +
-       "Local Written Blocks": N,  +
-       "Temp Read Blocks": N,      +
-       "Temp Written Blocks": N    +
-     },                            +
-     "Planning": {                 +
-       "Shared Hit Blocks": N,     +
-       "Shared Read Blocks": N,    +
-       "Shared Dirtied Blocks": N, +
-       "Shared Written Blocks": N, +
-       "Local Hit Blocks": N,      +
-       "Local Read Blocks": N,     +
-       "Local Dirtied Blocks": N,  +
-       "Local Written Blocks": N,  +
-       "Temp Read Blocks": N,      +
-       "Temp Written Blocks": N    +
-     },                            +
-     "Planning Time": N.N,         +
-     "Triggers": [                 +
-     ],                            +
-     "Execution Time": N.N         +
-   }                               +
- ]
-(1 row)
 
 select explain_filter('explain (analyze, buffers, format xml) select * from int8_tbl i8');
                      explain_filter                     
@@ -273,6 +226,68 @@ select explain_filter('explain (buffers, format json) select * from int8_tbl i8'
  ]
 (1 row)
 
+-- Check output including I/O timings.  These fields are conditional
+-- but always set in JSON format, so check them only in this case.
+set track_io_timing = on;
+select explain_filter('explain (analyze, buffers, format json) select * from int8_tbl i8');
+           explain_filter           
+------------------------------------
+ [                                 +
+   {                               +
+     "Plan": {                     +
+       "Node Type": "Seq Scan",    +
+       "Parallel Aware": false,    +
+       "Async Capable": false,     +
+       "Relation Name": "int8_tbl",+
+       "Alias": "i8",              +
+       "Startup Cost": N.N,        +
+       "Total Cost": N.N,          +
+       "Plan Rows": N,             +
+       "Plan Width": N,            +
+       "Actual Startup Time": N.N, +
+       "Actual Total Time": N.N,   +
+       "Actual Rows": N,           +
+       "Actual Loops": N,          +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N,   +
+       "I/O Read Time": N.N,       +
+       "I/O Write Time": N.N,      +
+       "Temp I/O Read Time": N.N,  +
+       "Temp I/O Write Time": N.N  +
+     },                            +
+     "Planning": {                 +
+       "Shared Hit Blocks": N,     +
+       "Shared Read Blocks": N,    +
+       "Shared Dirtied Blocks": N, +
+       "Shared Written Blocks": N, +
+       "Local Hit Blocks": N,      +
+       "Local Read Blocks": N,     +
+       "Local Dirtied Blocks": N,  +
+       "Local Written Blocks": N,  +
+       "Temp Read Blocks": N,      +
+       "Temp Written Blocks": N,   +
+       "I/O Read Time": N.N,       +
+       "I/O Write Time": N.N,      +
+       "Temp I/O Read Time": N.N,  +
+       "Temp I/O Write Time": N.N  +
+     },                            +
+     "Planning Time": N.N,         +
+     "Triggers": [                 +
+     ],                            +
+     "Execution Time": N.N         +
+   }                               +
+ ]
+(1 row)
+
+set track_io_timing = off;
 -- SETTINGS option
 -- We have to ignore other settings that might be imposed by the environment,
 -- so printing the whole Settings field unfortunately won't do.

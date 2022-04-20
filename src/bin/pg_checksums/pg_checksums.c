@@ -4,7 +4,7 @@
  *	  Checks, enables or disables page level checksums for an offline
  *	  cluster
  *
- * Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *	  src/bin/pg_checksums/pg_checksums.c
@@ -132,8 +132,6 @@ static void
 progress_report(bool finished)
 {
 	int			percent;
-	char		total_size_str[32];
-	char		current_size_str[32];
 	pg_time_t	now;
 
 	Assert(showprogress);
@@ -152,18 +150,9 @@ progress_report(bool finished)
 	/* Calculate current percentage of size done */
 	percent = total_size ? (int) ((current_size) * 100 / total_size) : 0;
 
-	/*
-	 * Separate step to keep platform-dependent format code out of
-	 * translatable strings.  And we only test for INT64_FORMAT availability
-	 * in snprintf, not fprintf.
-	 */
-	snprintf(total_size_str, sizeof(total_size_str), INT64_FORMAT,
-			 total_size / (1024 * 1024));
-	snprintf(current_size_str, sizeof(current_size_str), INT64_FORMAT,
-			 current_size / (1024 * 1024));
-
-	fprintf(stderr, _("%*s/%s MB (%d%%) computed"),
-			(int) strlen(current_size_str), current_size_str, total_size_str,
+	fprintf(stderr, _("%lld/%lld MB (%d%%) computed"),
+			(long long) (current_size / (1024 * 1024)),
+			(long long) (total_size / (1024 * 1024)),
 			percent);
 
 	/*
@@ -208,10 +197,7 @@ scan_file(const char *fn, int segmentno)
 	f = open(fn, PG_BINARY | flags, 0);
 
 	if (f < 0)
-	{
-		pg_log_error("could not open file \"%s\": %m", fn);
-		exit(1);
-	}
+		pg_fatal("could not open file \"%s\": %m", fn);
 
 	files_scanned++;
 
@@ -225,12 +211,11 @@ scan_file(const char *fn, int segmentno)
 		if (r != BLCKSZ)
 		{
 			if (r < 0)
-				pg_log_error("could not read block %u in file \"%s\": %m",
-							 blockno, fn);
+				pg_fatal("could not read block %u in file \"%s\": %m",
+						 blockno, fn);
 			else
-				pg_log_error("could not read block %u in file \"%s\": read %d of %d",
-							 blockno, fn, r, BLCKSZ);
-			exit(1);
+				pg_fatal("could not read block %u in file \"%s\": read %d of %d",
+						 blockno, fn, r, BLCKSZ);
 		}
 		blocks_scanned++;
 
@@ -275,22 +260,18 @@ scan_file(const char *fn, int segmentno)
 
 			/* Seek back to beginning of block */
 			if (lseek(f, -BLCKSZ, SEEK_CUR) < 0)
-			{
-				pg_log_error("seek failed for block %u in file \"%s\": %m", blockno, fn);
-				exit(1);
-			}
+				pg_fatal("seek failed for block %u in file \"%s\": %m", blockno, fn);
 
 			/* Write block with checksum */
 			w = write(f, buf.data, BLCKSZ);
 			if (w != BLCKSZ)
 			{
 				if (w < 0)
-					pg_log_error("could not write block %u in file \"%s\": %m",
-								 blockno, fn);
+					pg_fatal("could not write block %u in file \"%s\": %m",
+							 blockno, fn);
 				else
-					pg_log_error("could not write block %u in file \"%s\": wrote %d of %d",
-								 blockno, fn, w, BLCKSZ);
-				exit(1);
+					pg_fatal("could not write block %u in file \"%s\": wrote %d of %d",
+							 blockno, fn, w, BLCKSZ);
 			}
 		}
 
@@ -334,10 +315,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 	snprintf(path, sizeof(path), "%s/%s", basedir, subdir);
 	dir = opendir(path);
 	if (!dir)
-	{
-		pg_log_error("could not open directory \"%s\": %m", path);
-		exit(1);
-	}
+		pg_fatal("could not open directory \"%s\": %m", path);
 	while ((de = readdir(dir)) != NULL)
 	{
 		char		fn[MAXPGPATH];
@@ -361,10 +339,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 
 		snprintf(fn, sizeof(fn), "%s/%s", path, de->d_name);
 		if (lstat(fn, &st) < 0)
-		{
-			pg_log_error("could not stat file \"%s\": %m", fn);
-			exit(1);
-		}
+			pg_fatal("could not stat file \"%s\": %m", fn);
 		if (S_ISREG(st.st_mode))
 		{
 			char		fnonly[MAXPGPATH];
@@ -388,11 +363,8 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 				*segmentpath++ = '\0';
 				segmentno = atoi(segmentpath);
 				if (segmentno == 0)
-				{
-					pg_log_error("invalid segment number %d in file name \"%s\"",
-								 segmentno, fn);
-					exit(1);
-				}
+					pg_fatal("invalid segment number %d in file name \"%s\"",
+							 segmentno, fn);
 			}
 
 			forkpath = strchr(fnonly, '_');
@@ -440,11 +412,8 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 						 path, de->d_name, TABLESPACE_VERSION_DIRECTORY);
 
 				if (lstat(tblspc_path, &tblspc_st) < 0)
-				{
-					pg_log_error("could not stat file \"%s\": %m",
-								 tblspc_path);
-					exit(1);
-				}
+					pg_fatal("could not stat file \"%s\": %m",
+							 tblspc_path);
 
 				/*
 				 * Move backwards once as the scan needs to happen for the
@@ -539,7 +508,8 @@ main(int argc, char *argv[])
 				showprogress = true;
 				break;
 			default:
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+				/* getopt_long already emitted a complaint */
+				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 				exit(1);
 		}
 	}
@@ -555,7 +525,7 @@ main(int argc, char *argv[])
 		if (DataDir == NULL)
 		{
 			pg_log_error("no data directory specified");
-			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+			pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 			exit(1);
 		}
 	}
@@ -565,8 +535,7 @@ main(int argc, char *argv[])
 	{
 		pg_log_error("too many command-line arguments (first is \"%s\")",
 					 argv[optind]);
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
@@ -574,30 +543,23 @@ main(int argc, char *argv[])
 	if (mode != PG_MODE_CHECK && only_filenode)
 	{
 		pg_log_error("option -f/--filenode can only be used with --check");
-		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
-				progname);
+		pg_log_error_hint("Try \"%s --help\" for more information.", progname);
 		exit(1);
 	}
 
 	/* Read the control file and check compatibility */
 	ControlFile = get_controlfile(DataDir, &crc_ok);
 	if (!crc_ok)
-	{
-		pg_log_error("pg_control CRC value is incorrect");
-		exit(1);
-	}
+		pg_fatal("pg_control CRC value is incorrect");
 
 	if (ControlFile->pg_control_version != PG_CONTROL_VERSION)
-	{
-		pg_log_error("cluster is not compatible with this version of pg_checksums");
-		exit(1);
-	}
+		pg_fatal("cluster is not compatible with this version of pg_checksums");
 
 	if (ControlFile->blcksz != BLCKSZ)
 	{
 		pg_log_error("database cluster is not compatible");
-		fprintf(stderr, _("The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.\n"),
-				ControlFile->blcksz, BLCKSZ);
+		pg_log_error_detail("The database cluster was initialized with block size %u, but pg_checksums was compiled with block size %u.",
+							ControlFile->blcksz, BLCKSZ);
 		exit(1);
 	}
 
@@ -608,31 +570,19 @@ main(int argc, char *argv[])
 	 */
 	if (ControlFile->state != DB_SHUTDOWNED &&
 		ControlFile->state != DB_SHUTDOWNED_IN_RECOVERY)
-	{
-		pg_log_error("cluster must be shut down");
-		exit(1);
-	}
+		pg_fatal("cluster must be shut down");
 
 	if (ControlFile->data_checksum_version == 0 &&
 		mode == PG_MODE_CHECK)
-	{
-		pg_log_error("data checksums are not enabled in cluster");
-		exit(1);
-	}
+		pg_fatal("data checksums are not enabled in cluster");
 
 	if (ControlFile->data_checksum_version == 0 &&
 		mode == PG_MODE_DISABLE)
-	{
-		pg_log_error("data checksums are already disabled in cluster");
-		exit(1);
-	}
+		pg_fatal("data checksums are already disabled in cluster");
 
 	if (ControlFile->data_checksum_version > 0 &&
 		mode == PG_MODE_ENABLE)
-	{
-		pg_log_error("data checksums are already enabled in cluster");
-		exit(1);
-	}
+		pg_fatal("data checksums are already enabled in cluster");
 
 	/* Operate on all files if checking or enabling checksums */
 	if (mode == PG_MODE_CHECK || mode == PG_MODE_ENABLE)
@@ -657,11 +607,11 @@ main(int argc, char *argv[])
 			progress_report(true);
 
 		printf(_("Checksum operation completed\n"));
-		printf(_("Files scanned:   %s\n"), psprintf(INT64_FORMAT, files_scanned));
-		printf(_("Blocks scanned:  %s\n"), psprintf(INT64_FORMAT, blocks_scanned));
+		printf(_("Files scanned:   %lld\n"), (long long) files_scanned);
+		printf(_("Blocks scanned:  %lld\n"), (long long) blocks_scanned);
 		if (mode == PG_MODE_CHECK)
 		{
-			printf(_("Bad checksums:  %s\n"), psprintf(INT64_FORMAT, badblocks));
+			printf(_("Bad checksums:  %lld\n"), (long long) badblocks);
 			printf(_("Data checksum version: %u\n"), ControlFile->data_checksum_version);
 
 			if (badblocks > 0)
@@ -669,8 +619,8 @@ main(int argc, char *argv[])
 		}
 		else if (mode == PG_MODE_ENABLE)
 		{
-			printf(_("Files written:  %s\n"), psprintf(INT64_FORMAT, files_written));
-			printf(_("Blocks written: %s\n"), psprintf(INT64_FORMAT, blocks_written));
+			printf(_("Files written:  %lld\n"), (long long) files_written);
+			printf(_("Blocks written: %lld\n"), (long long) blocks_written);
 		}
 	}
 

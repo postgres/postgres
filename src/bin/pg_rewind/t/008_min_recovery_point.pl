@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 #
 # Test situation where a target data directory contains
@@ -34,7 +34,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 3;
+use Test::More;
 
 use File::Copy;
 
@@ -69,8 +69,7 @@ $node_3->init_from_backup($node_1, $backup_name, has_streaming => 1);
 $node_3->start;
 
 # Wait until node 3 has connected and caught up
-my $lsn = $node_1->lsn('insert');
-$node_1->wait_for_catchup('node_3', 'replay', $lsn);
+$node_1->wait_for_catchup('node_3');
 
 #
 # Swap the roles of node_1 and node_3, so that node_1 follows node_3.
@@ -106,8 +105,7 @@ $node_2->restart();
 #
 
 # make sure node_1 is full caught up with node_3 first
-$lsn = $node_3->lsn('insert');
-$node_3->wait_for_catchup('node_1', 'replay', $lsn);
+$node_3->wait_for_catchup('node_1');
 
 $node_1->promote;
 # Force a checkpoint after promotion, like earlier.
@@ -175,3 +173,5 @@ and this too), 'table foo after rewind');
 
 $result = $node_2->safe_psql('postgres', 'SELECT * FROM public.bar');
 is($result, qq(in both), 'table bar after rewind');
+
+done_testing();

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Binary mode logical replication test
 
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 5;
+use Test::More;
 
 # Create and initialize a publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -135,3 +135,5 @@ is( $result, '{1,2,3}|{42,1.2,1.3}|
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

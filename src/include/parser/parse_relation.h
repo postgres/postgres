@@ -4,7 +4,7 @@
  *	  prototypes for parse_relation.c.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parse_relation.h
@@ -113,7 +113,8 @@ extern List *expandNSItemVars(ParseNamespaceItem *nsitem,
 							  int sublevels_up, int location,
 							  List **colnames);
 extern List *expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
-							   int sublevels_up, int location);
+							   int sublevels_up, bool require_col_privs,
+							   int location);
 extern int	attnameAttNum(Relation rd, const char *attname, bool sysColOK);
 extern const NameData *attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

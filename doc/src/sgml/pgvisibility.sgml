@@ -140,8 +140,8 @@
   </variablelist>
 
   <para>
-   By default, these functions are executable only by superusers and members of the
-   <literal>pg_stat_scan_tables</literal> role, with the exception of
+   By default, these functions are executable only by superusers and roles with privileges
+   of the <literal>pg_stat_scan_tables</literal> role, with the exception of
    <function>pg_truncate_visibility_map(relation regclass)</function> which can only
    be executed by superusers.
   </para>

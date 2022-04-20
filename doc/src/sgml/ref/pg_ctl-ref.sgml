@@ -186,11 +186,11 @@ PostgreSQL documentation
    the specified data directory.  Three different
    shutdown methods can be selected with the <option>-m</option>
    option.  <quote>Smart</quote> mode disallows new connections, then waits
-   for all existing clients to disconnect and any online backup to finish.
+   for all existing clients to disconnect.
    If the server is in hot standby, recovery and streaming replication
    will be terminated once all clients have disconnected.
-   <quote>Fast</quote> mode (the default) does not wait for clients to disconnect and
-   will terminate an online backup in progress.  All active transactions are
+   <quote>Fast</quote> mode (the default) does not wait for clients to disconnect.
+   All active transactions are
    rolled back and clients are forcibly disconnected, then the
    server is shut down.  <quote>Immediate</quote> mode will abort
    all server processes immediately, without a clean shutdown.  This choice

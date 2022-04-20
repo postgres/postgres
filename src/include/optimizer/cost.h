@@ -4,7 +4,7 @@
  *	  prototypes for costsize.c and clausesel.c.
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/optimizer/cost.h
@@ -29,6 +29,8 @@
 #define DEFAULT_PARALLEL_TUPLE_COST 0.1
 #define DEFAULT_PARALLEL_SETUP_COST  1000.0
 
+/* defaults for non-Cost parameters */
+#define DEFAULT_RECURSIVE_WORKTABLE_FACTOR  10.0
 #define DEFAULT_EFFECTIVE_CACHE_SIZE  524288	/* measured in pages */
 
 typedef enum
@@ -112,7 +114,9 @@ extern void cost_incremental_sort(Path *path,
 								  Cost input_startup_cost, Cost input_total_cost,
 								  double input_tuples, int width, Cost comparison_cost, int sort_mem,
 								  double limit_tuples);
-extern void cost_append(AppendPath *path);
+extern Cost cost_sort_estimate(PlannerInfo *root, List *pathkeys,
+							   int nPresortedKeys, double tuples);
+extern void cost_append(AppendPath *path, PlannerInfo *root);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,

@@ -3,7 +3,7 @@
  * parsexlog.c
  *	  Functions for reading Write-Ahead-Log
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *-------------------------------------------------------------------------
@@ -25,20 +25,23 @@
 #include "pg_rewind.h"
 
 /*
- * RmgrNames is an array of resource manager names, to make error messages
- * a bit nicer.
+ * RmgrNames is an array of the built-in resource manager names, to make error
+ * messages a bit nicer.
  */
-#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask) \
+#define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask,decode) \
   name,
 
 static const char *RmgrNames[RM_MAX_ID + 1] = {
 #include "access/rmgrlist.h"
 };
 
+#define RmgrName(rmid) (((rmid) <= RM_MAX_BUILTIN_ID) ? \
+						RmgrNames[rmid] : "custom")
+
 static void extractPageInfo(XLogReaderState *record);
 
 static int	xlogreadfd = -1;
-static XLogSegNo xlogreadsegno = -1;
+static XLogSegNo xlogreadsegno = 0;
 static char xlogfpath[MAXPGPATH];
 
 typedef struct XLogPageReadPrivate
@@ -95,14 +98,15 @@ extractPageMap(const char *datadir, XLogRecPtr startpoint, int tliIndex,
 		}
 
 		extractPageInfo(xlogreader);
-
 	} while (xlogreader->EndRecPtr < endpoint);
 
 	/*
 	 * If 'endpoint' didn't point exactly at a record boundary, the caller
 	 * messed up.
 	 */
-	Assert(xlogreader->EndRecPtr == endpoint);
+	if (xlogreader->EndRecPtr != endpoint)
+		pg_fatal("end pointer %X/%X is not a valid end point; expected %X/%X",
+				 LSN_FORMAT_ARGS(endpoint), LSN_FORMAT_ARGS(xlogreader->EndRecPtr));
 
 	XLogReaderFree(xlogreader);
 	if (xlogreadfd != -1)
@@ -370,7 +374,7 @@ extractPageInfo(XLogReaderState *record)
 
 	/* Is this a special record type that I recognize? */
 
-	if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_CREATE)
+	if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_CREATE_FILE_COPY)
 	{
 		/*
 		 * New databases can be safely ignored. It won't be present in the
@@ -380,6 +384,13 @@ extractPageInfo(XLogReaderState *record)
 		 * That's OK, though; WAL replay of creating the new database, from
 		 * the source systems's WAL, will re-copy the new database,
 		 * overwriting the database created in the target system.
+		 */
+	}
+	else if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_CREATE_WAL_LOG)
+	{
+		/*
+		 * New databases can be safely ignored. It won't be present in the
+		 * source system, so it will be deleted.
 		 */
 	}
 	else if (rmid == RM_DBASE_ID && rminfo == XLOG_DBASE_DROP)
@@ -427,18 +438,19 @@ extractPageInfo(XLogReaderState *record)
 		 * track that change.
 		 */
 		pg_fatal("WAL record modifies a relation, but record type is not recognized: "
-				 "lsn: %X/%X, rmgr: %s, info: %02X",
+				 "lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X",
 				 LSN_FORMAT_ARGS(record->ReadRecPtr),
-				 RmgrNames[rmid], info);
+				 rmid, RmgrName(rmid), info);
 	}
 
-	for (block_id = 0; block_id <= record->max_block_id; block_id++)
+	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
 		RelFileNode rnode;
 		ForkNumber	forknum;
 		BlockNumber blkno;
 
-		if (!XLogRecGetBlockTag(record, block_id, &rnode, &forknum, &blkno))
+		if (!XLogRecGetBlockTagExtended(record, block_id,
+										&rnode, &forknum, &blkno, NULL))
 			continue;
 
 		/* We only care about the main fork; others are copied in toto */

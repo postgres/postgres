@@ -548,8 +548,8 @@ protocol to make nodes agree on a serializable transactional order.
    rollforward will take considerably longer, so that technique only
    offers a solution for disaster recovery, not high availability.
    A standby server can also be used for read-only queries, in which case
-   it is called a Hot Standby server. See <xref linkend="hot-standby"/> for
-   more information.
+   it is called a <firstterm>hot standby</firstterm> server. See
+   <xref linkend="hot-standby"/> for more information.
   </para>
 
   <indexterm zone="high-availability">
@@ -935,7 +935,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     In lieu of using replication slots, it is possible to prevent the removal
     of old WAL segments using <xref linkend="guc-wal-keep-size"/>, or by
     storing the segments in an archive using
-    <xref linkend="guc-archive-command"/>.
+    <xref linkend="guc-archive-library"/>.
     However, these methods often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
     known to be needed.  On the other hand, replication slots can retain so
@@ -980,7 +980,7 @@ postgres=# SELECT * FROM pg_create_physical_replication_slot('node_a_slot');
  node_a_slot |
 
 postgres=# SELECT slot_name, slot_type, active FROM pg_replication_slots;
-  slot_name  | slot_type | active 
+  slot_name  | slot_type | active
 -------------+-----------+--------
  node_a_slot | physical  | f
 (1 row)
@@ -1032,7 +1032,7 @@ primary_slot_name = 'node_a_slot'
    </para>
 
    <para>
-    Hot Standby feedback propagates upstream, whatever the cascaded arrangement.
+    Hot standby feedback propagates upstream, whatever the cascaded arrangement.
    </para>
 
    <para>
@@ -1089,7 +1089,7 @@ primary_slot_name = 'node_a_slot'
     servers.  Waiting for confirmation increases the user's confidence that the
     changes will not be lost in the event of server crashes but it also
     necessarily increases the response time for the requesting transaction.
-    The minimum wait time is the round-trip time between primary to standby.
+    The minimum wait time is the round-trip time between primary and standby.
    </para>
 
    <para>
@@ -1361,8 +1361,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
 
    <para>
     If you need to re-create a standby server while transactions are
-    waiting, make sure that the commands pg_start_backup() and
-    pg_stop_backup() are run in a session with
+    waiting, make sure that the commands pg_backup_start() and
+    pg_backup_stop() are run in a session with
     <varname>synchronous_commit</varname> = <literal>off</literal>, otherwise those
     requests will wait forever for the standby to appear.
    </para>
@@ -1386,10 +1386,10 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
      to <literal>always</literal>, and the standby will call the archive
      command for every WAL segment it receives, whether it's by restoring
      from the archive or by streaming replication. The shared archive can
-     be handled similarly, but the <varname>archive_command</varname> must
+     be handled similarly, but the <varname>archive_library</varname> must
      test if the file being archived exists already, and if the existing file
      has identical contents. This requires more care in the
-     <varname>archive_command</varname>, as it must
+     <varname>archive_library</varname>, as it must
      be careful to not overwrite an existing file with different contents,
      but return success if the exactly same file is archived twice. And
      all that must be done free of race conditions, if two servers attempt
@@ -1499,16 +1499,16 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
   <title>Hot Standby</title>
 
   <indexterm zone="high-availability">
-   <primary>Hot Standby</primary>
+   <primary>hot standby</primary>
   </indexterm>
 
    <para>
-    Hot Standby is the term used to describe the ability to connect to
+    Hot standby is the term used to describe the ability to connect to
     the server and run read-only queries while the server is in archive
     recovery or standby mode. This
     is useful both for replication purposes and for restoring a backup
     to a desired state with great precision.
-    The term Hot Standby also refers to the ability of the server to move
+    The term hot standby also refers to the ability of the server to move
     from recovery through to normal operation while users continue running
     queries and/or keep their connections open.
    </para>
@@ -1623,7 +1623,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
        being executed during recovery.  This restriction applies even to
        temporary tables, because table rows cannot be read or written without
        assigning a transaction ID, which is currently not possible in a
-       Hot Standby environment.
+       hot standby environment.
       </para>
      </listitem>
      <listitem>
@@ -1703,7 +1703,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    <para>
     In normal operation, <quote>read-only</quote> transactions are allowed to
     use <command>LISTEN</command> and <command>NOTIFY</command>,
-    so Hot Standby sessions operate under slightly tighter
+    so hot standby sessions operate under slightly tighter
     restrictions than ordinary read-only sessions.  It is possible that some
     of these restrictions might be loosened in a future release.
    </para>
@@ -1746,7 +1746,7 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
    </para>
 
    <para>
-    There are also additional types of conflict that can occur with Hot Standby.
+    There are also additional types of conflict that can occur with hot standby.
     These conflicts are <emphasis>hard conflicts</emphasis> in the sense that queries
     might need to be canceled and, in some cases, sessions disconnected to resolve them.
     The user is provided with several ways to handle these
@@ -1947,8 +1947,8 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
     If <varname>hot_standby</varname> is <literal>on</literal> in <filename>postgresql.conf</filename>
     (the default value) and there is a
     <link linkend="file-standby-signal"><filename>standby.signal</filename></link><indexterm><primary>standby.signal</primary><secondary>for hot standby</secondary></indexterm>
-    file present, the server will run in Hot Standby mode.
-    However, it may take some time for Hot Standby connections to be allowed,
+    file present, the server will run in hot standby mode.
+    However, it may take some time for hot standby connections to be allowed,
     because the server will not accept connections until it has completed
     sufficient recovery to provide a consistent state against which queries
     can run.  During this period,
@@ -2127,7 +2127,7 @@ HINT:  You can then restart the server after making the necessary configuration 
    <para>
     <function>pg_cancel_backend()</function>
     and <function>pg_terminate_backend()</function> will work on user backends,
-    but not the Startup process, which performs
+    but not the startup process, which performs
     recovery. <structname>pg_stat_activity</structname> does not show
     recovering transactions as active. As a result,
     <structname>pg_prepared_xacts</structname> is always empty during
@@ -2139,9 +2139,9 @@ HINT:  You can then restart the server after making the necessary configuration 
    <para>
     <structname>pg_locks</structname> will show locks held by backends,
     as normal. <structname>pg_locks</structname> also shows
-    a virtual transaction managed by the Startup process that owns all
+    a virtual transaction managed by the startup process that owns all
     <literal>AccessExclusiveLocks</literal> held by transactions being replayed by recovery.
-    Note that the Startup process does not acquire locks to
+    Note that the startup process does not acquire locks to
     make database changes, and thus locks other than <literal>AccessExclusiveLocks</literal>
     do not show in <structname>pg_locks</structname> for the Startup
     process; they are just presumed to exist.
@@ -2159,7 +2159,7 @@ HINT:  You can then restart the server after making the necessary configuration 
 
    <para>
     WAL file control commands will not work during recovery,
-    e.g., <function>pg_start_backup</function>, <function>pg_switch_wal</function> etc.
+    e.g., <function>pg_backup_start</function>, <function>pg_switch_wal</function> etc.
    </para>
 
    <para>
@@ -2227,12 +2227,13 @@ HINT:  You can then restart the server after making the necessary configuration 
    </para>
 
    <para>
-    The statistics collector is active during recovery. All scans, reads, blocks,
-    index usage, etc., will be recorded normally on the standby. Replayed
-    actions will not duplicate their effects on primary, so replaying an
-    insert will not increment the Inserts column of pg_stat_user_tables.
-    The stats file is deleted at the start of recovery, so stats from primary
-    and standby will differ; this is considered a feature, not a bug.
+    The cumulative statistics system is active during recovery. All scans,
+    reads, blocks, index usage, etc., will be recorded normally on the
+    standby. However, WAL replay will not increment relation and database
+    specific counters. I.e. replay will not increment pg_stat_all_tables
+    columns (like n_tup_ins), nor will reads or writes performed by the
+    startup process be tracked in the pg_statio views, nor will associated
+    pg_stat_database columns be incremented.
    </para>
 
    <para>
@@ -2282,7 +2283,7 @@ HINT:  You can then restart the server after making the necessary configuration 
    <title>Caveats</title>
 
    <para>
-    There are several limitations of Hot Standby.
+    There are several limitations of hot standby.
     These can and probably will be fixed in future releases:
 
   <itemizedlist>
@@ -2299,7 +2300,7 @@ HINT:  You can then restart the server after making the necessary configuration 
     <para>
      Valid starting points for standby queries are generated at each
      checkpoint on the primary. If the standby is shut down while the primary
-     is in a shutdown state, it might not be possible to re-enter Hot Standby
+     is in a shutdown state, it might not be possible to re-enter hot standby
      until the primary is started up, so that it generates further starting
      points in the WAL logs.  This situation isn't a problem in the most
      common situations where it might happen. Generally, if the primary is

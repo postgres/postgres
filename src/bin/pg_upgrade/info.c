@@ -3,7 +3,7 @@
  *
  *	information support functions
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/info.c
  */
 
@@ -190,17 +190,9 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		map->new_tablespace_suffix = new_cluster.tablespace_suffix;
 	}
 
-	map->old_db_oid = old_db->db_oid;
-	map->new_db_oid = new_db->db_oid;
-
-	/*
-	 * old_relfilenode might differ from pg_class.oid (and hence
-	 * new_relfilenode) because of CLUSTER, REINDEX, or VACUUM FULL.
-	 */
-	map->old_relfilenode = old_rel->relfilenode;
-
-	/* new_relfilenode will match old and new pg_class.oid */
-	map->new_relfilenode = new_rel->relfilenode;
+	/* DB oid and relfilenodes are preserved between old and new cluster */
+	map->db_oid = old_db->db_oid;
+	map->relfilenode = old_rel->relfilenode;
 
 	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;
@@ -272,27 +264,6 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 			   reloid, db->db_name, reldesc);
 }
 
-
-void
-print_maps(FileNameMap *maps, int n_maps, const char *db_name)
-{
-	if (log_opts.verbose)
-	{
-		int			mapnum;
-
-		pg_log(PG_VERBOSE, "mappings for database \"%s\":\n", db_name);
-
-		for (mapnum = 0; mapnum < n_maps; mapnum++)
-			pg_log(PG_VERBOSE, "%s.%s: %u to %u\n",
-				   maps[mapnum].nspname, maps[mapnum].relname,
-				   maps[mapnum].old_relfilenode,
-				   maps[mapnum].new_relfilenode);
-
-		pg_log(PG_VERBOSE, "\n\n");
-	}
-}
-
-
 /*
  * get_db_and_rel_infos()
  *
@@ -341,18 +312,26 @@ get_db_infos(ClusterInfo *cluster)
 				i_encoding,
 				i_datcollate,
 				i_datctype,
+				i_datlocprovider,
+				i_daticulocale,
 				i_spclocation;
 	char		query[QUERY_ALLOC];
 
 	snprintf(query, sizeof(query),
-			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, "
+			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, ");
+	if (GET_MAJOR_VERSION(old_cluster.major_version) <= 1500)
+		snprintf(query + strlen(query), sizeof(query) - strlen(query),
+				 "'c' AS datlocprovider, NULL AS daticulocale, ");
+	else
+		snprintf(query + strlen(query), sizeof(query) - strlen(query),
+				 "datlocprovider, daticulocale, ");
+	snprintf(query + strlen(query), sizeof(query) - strlen(query),
 			 "pg_catalog.pg_tablespace_location(t.oid) AS spclocation "
 			 "FROM pg_catalog.pg_database d "
 			 " LEFT OUTER JOIN pg_catalog.pg_tablespace t "
 			 " ON d.dattablespace = t.oid "
 			 "WHERE d.datallowconn = true "
-	/* we don't preserve pg_database.oid so we sort by name */
-			 "ORDER BY 2");
+			 "ORDER BY 1");
 
 	res = executeQueryOrDie(conn, "%s", query);
 
@@ -361,6 +340,8 @@ get_db_infos(ClusterInfo *cluster)
 	i_encoding = PQfnumber(res, "encoding");
 	i_datcollate = PQfnumber(res, "datcollate");
 	i_datctype = PQfnumber(res, "datctype");
+	i_datlocprovider = PQfnumber(res, "datlocprovider");
+	i_daticulocale = PQfnumber(res, "daticulocale");
 	i_spclocation = PQfnumber(res, "spclocation");
 
 	ntups = PQntuples(res);
@@ -373,6 +354,11 @@ get_db_infos(ClusterInfo *cluster)
 		dbinfos[tupnum].db_encoding = atoi(PQgetvalue(res, tupnum, i_encoding));
 		dbinfos[tupnum].db_collate = pg_strdup(PQgetvalue(res, tupnum, i_datcollate));
 		dbinfos[tupnum].db_ctype = pg_strdup(PQgetvalue(res, tupnum, i_datctype));
+		dbinfos[tupnum].db_collprovider = PQgetvalue(res, tupnum, i_datlocprovider)[0];
+		if (PQgetisnull(res, tupnum, i_daticulocale))
+			dbinfos[tupnum].db_iculocale = NULL;
+		else
+			dbinfos[tupnum].db_iculocale = pg_strdup(PQgetvalue(res, tupnum, i_daticulocale));
 		snprintf(dbinfos[tupnum].db_tablespace, sizeof(dbinfos[tupnum].db_tablespace), "%s",
 				 PQgetvalue(res, tupnum, i_spclocation));
 	}

@@ -4,7 +4,7 @@
  *	  routines for signaling between the postmaster and its child processes
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/storage/pmsignal.h
@@ -89,7 +89,7 @@ extern void PostmasterDeathSignalInit(void);
 #endif
 
 #ifdef USE_POSTMASTER_DEATH_SIGNAL
-extern volatile sig_atomic_t postmaster_possibly_dead;
+extern PGDLLIMPORT volatile sig_atomic_t postmaster_possibly_dead;
 
 static inline bool
 PostmasterIsAlive(void)

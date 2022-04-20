@@ -3,7 +3,7 @@
  *
  *	server-side function support
  *
- *	Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *	src/bin/pg_upgrade/function.c
  */
 
@@ -128,7 +128,8 @@ check_loadable_libraries(void)
 
 	prep_status("Checking for presence of required libraries");
 
-	snprintf(output_path, sizeof(output_path), "loadable_libraries.txt");
+	snprintf(output_path, sizeof(output_path), "%s/%s",
+			 log_opts.basedir, "loadable_libraries.txt");
 
 	/*
 	 * Now we want to sort the library names into order.  This avoids multiple

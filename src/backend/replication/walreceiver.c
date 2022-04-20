@@ -39,7 +39,7 @@
  * specific parts are in the libpqwalreceiver module. It's loaded
  * dynamically to avoid linking the server with libpq.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -56,6 +56,7 @@
 #include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "access/xlogarchive.h"
+#include "access/xlogrecovery.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_type.h"
 #include "common/ip.h"
@@ -1402,12 +1403,12 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 	/* Fetch values */
 	values[0] = Int32GetDatum(pid);
 
-	if (!is_member_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
+	if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
 		/*
-		 * Only superusers and members of pg_read_all_stats can see details.
-		 * Other users only get the pid value to know whether it is a WAL
-		 * receiver, but no details.
+		 * Only superusers and roles with privileges of pg_read_all_stats
+		 * can see details. Other users only get the pid value to know whether
+		 * it is a WAL receiver, but no details.
 		 */
 		MemSet(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
 	}

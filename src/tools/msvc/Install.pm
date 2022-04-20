@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 package Install;
 
@@ -441,6 +441,7 @@ sub CopyContribFiles
 			# These configuration-based exclusions must match vcregress.pl
 			next if ($d eq "uuid-ossp"  && !defined($config->{uuid}));
 			next if ($d eq "sslinfo"    && !defined($config->{openssl}));
+			next if ($d eq "pgcrypto"   && !defined($config->{openssl}));
 			next if ($d eq "xml2"       && !defined($config->{xml}));
 			next if ($d =~ /_plperl$/   && !defined($config->{perl}));
 			next if ($d =~ /_plpython$/ && !defined($config->{python}));

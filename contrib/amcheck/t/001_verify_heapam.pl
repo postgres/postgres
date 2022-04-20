@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 use strict;
 use warnings;
@@ -7,8 +7,7 @@ use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 
-use Fcntl qw(:seek);
-use Test::More tests => 272;
+use Test::More;
 
 my ($node, $result);
 
@@ -193,8 +192,8 @@ sub corrupt_first_page
 	# Corrupt some line pointers.  The values are chosen to hit the
 	# various line-pointer-corruption checks in verify_heapam.c
 	# on both little-endian and big-endian architectures.
-	seek($fh, 32, SEEK_SET)
-	  or BAIL_OUT("seek failed: $!");
+	sysseek($fh, 32, 0)
+	  or BAIL_OUT("sysseek failed: $!");
 	syswrite(
 		$fh,
 		pack("L*",
@@ -283,3 +282,5 @@ sub check_all_options_uncorrupted
 		}
 	}
 }
+
+done_testing();

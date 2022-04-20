@@ -210,8 +210,8 @@ PostgreSQL documentation
         to be written safely to disk.  This option causes
         <command>pg_rewind</command> to return without waiting, which is
         faster, but means that a subsequent operating system crash can leave
-        the synchronized data directory corrupt.  Generally, this option is
-        useful for testing but should not be used on a production
+        the data directory corrupt.  Generally, this option is useful for
+        testing but should not be used on a production
         installation.
        </para>
       </listitem>
@@ -237,6 +237,21 @@ PostgreSQL documentation
         configuration to retrieve WAL files from the WAL archive if these
         files are no longer available in the <filename>pg_wal</filename>
         directory.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--config-file=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Use the specified main server configuration file for the target
+        cluster. This affects <application>pg_rewind</application> when
+        it uses internally the <application>postgres</application> command
+        for the rewind operation on this cluster (when retrieving
+        <varname>restore_command</varname> with the option
+        <option>-c/--restore-target-wal</option> and when forcing a
+        completion of crash recovery).
        </para>
       </listitem>
      </varlistentry>

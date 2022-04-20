@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # This tests that more complex datatypes are replicated correctly
 # by logical replication
@@ -7,7 +7,7 @@ use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 4;
+use Test::More;
 
 # Initialize publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
@@ -566,3 +566,5 @@ is($result, '21', 'sql-function constraint on domain');
 
 $node_subscriber->stop('fast');
 $node_publisher->stop('fast');
+
+done_testing();

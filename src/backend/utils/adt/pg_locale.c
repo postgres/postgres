@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * Portions Copyright (c) 2002-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2002-2022, PostgreSQL Global Development Group
  *
  * src/backend/utils/adt/pg_locale.c
  *
@@ -179,7 +179,7 @@ pg_perm_setlocale(int category, const char *locale)
 	 */
 	if (category == LC_CTYPE)
 	{
-		static char save_lc_ctype[NAMEDATALEN + 20];
+		static char save_lc_ctype[LOCALE_NAME_BUFLEN];
 
 		/* copy setlocale() return value before callee invokes it again */
 		strlcpy(save_lc_ctype, result, sizeof(save_lc_ctype));
@@ -991,7 +991,7 @@ search_locale_enum(LPWSTR pStr, DWORD dwFlags, LPARAM lparam)
 						test_locale, LOCALE_NAME_MAX_LENGTH))
 	{
 		/*
-		 * If the enumerated locale does not have a hyphen ("en") OR  the
+		 * If the enumerated locale does not have a hyphen ("en") OR the
 		 * lc_message input does not have an underscore ("English"), we only
 		 * need to compare the <Language> tags.
 		 */
@@ -1289,21 +1289,36 @@ lookup_collation_cache(Oid collation, bool set_flags)
 		/* Attempt to set the flags */
 		HeapTuple	tp;
 		Form_pg_collation collform;
-		const char *collcollate;
-		const char *collctype;
 
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collation));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collation);
 		collform = (Form_pg_collation) GETSTRUCT(tp);
 
-		collcollate = NameStr(collform->collcollate);
-		collctype = NameStr(collform->collctype);
+		if (collform->collprovider == COLLPROVIDER_LIBC)
+		{
+			Datum		datum;
+			bool		isnull;
+			const char *collcollate;
+			const char *collctype;
 
-		cache_entry->collate_is_c = ((strcmp(collcollate, "C") == 0) ||
-									 (strcmp(collcollate, "POSIX") == 0));
-		cache_entry->ctype_is_c = ((strcmp(collctype, "C") == 0) ||
-								   (strcmp(collctype, "POSIX") == 0));
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+			Assert(!isnull);
+			collcollate = TextDatumGetCString(datum);
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
+			Assert(!isnull);
+			collctype = TextDatumGetCString(datum);
+
+			cache_entry->collate_is_c = ((strcmp(collcollate, "C") == 0) ||
+										 (strcmp(collcollate, "POSIX") == 0));
+			cache_entry->ctype_is_c = ((strcmp(collctype, "C") == 0) ||
+									   (strcmp(collctype, "POSIX") == 0));
+		}
+		else
+		{
+			cache_entry->collate_is_c = false;
+			cache_entry->ctype_is_c = false;
+		}
 
 		cache_entry->flags_valid = true;
 
@@ -1335,6 +1350,9 @@ lc_collate_is_c(Oid collation)
 	{
 		static int	result = -1;
 		char	   *localeptr;
+
+		if (default_locale.provider == COLLPROVIDER_ICU)
+			return false;
 
 		if (result >= 0)
 			return (bool) result;
@@ -1386,6 +1404,9 @@ lc_ctype_is_c(Oid collation)
 		static int	result = -1;
 		char	   *localeptr;
 
+		if (default_locale.provider == COLLPROVIDER_ICU)
+			return false;
+
 		if (result >= 0)
 			return (bool) result;
 		localeptr = setlocale(LC_CTYPE, NULL);
@@ -1412,6 +1433,37 @@ lc_ctype_is_c(Oid collation)
 	 * Otherwise, we have to consult pg_collation, but we cache that.
 	 */
 	return (lookup_collation_cache(collation, true))->ctype_is_c;
+}
+
+struct pg_locale_struct default_locale;
+
+void
+make_icu_collator(const char *iculocstr,
+				  struct pg_locale_struct *resultp)
+{
+#ifdef USE_ICU
+	UCollator  *collator;
+	UErrorCode	status;
+
+	status = U_ZERO_ERROR;
+	collator = ucol_open(iculocstr, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("could not open collator for locale \"%s\": %s",
+						iculocstr, u_errorName(status))));
+
+	if (U_ICU_VERSION_MAJOR_NUM < 54)
+		icu_set_collation_attributes(collator, iculocstr);
+
+	/* We will leak this string if the caller errors later :-( */
+	resultp->info.icu.locale = MemoryContextStrdup(TopMemoryContext, iculocstr);
+	resultp->info.icu.ucol = collator;
+#else							/* not USE_ICU */
+	/* could get here if a collation was created by a build with ICU */
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ICU is not supported in this build")));
+#endif							/* not USE_ICU */
 }
 
 
@@ -1454,8 +1506,6 @@ report_newlocale_failure(const char *localename)
  *
  * As a special optimization, the default/database collation returns 0.
  * Callers should then revert to the non-locale_t-enabled code path.
- * In fact, they shouldn't call this function at all when they are dealing
- * with the default locale.  That can save quite a bit in hotspots.
  * Also, callers should avoid calling this before going down a C/POSIX
  * fastpath, because such a fastpath should work even on platforms without
  * locale_t support in the C library.
@@ -1472,9 +1522,13 @@ pg_newlocale_from_collation(Oid collid)
 	/* Callers must pass a valid OID */
 	Assert(OidIsValid(collid));
 
-	/* Return 0 for "default" collation, just in case caller forgets */
 	if (collid == DEFAULT_COLLATION_OID)
-		return (pg_locale_t) 0;
+	{
+		if (default_locale.provider == COLLPROVIDER_ICU)
+			return &default_locale;
+		else
+			return (pg_locale_t) 0;
+	}
 
 	cache_entry = lookup_collation_cache(collid, false);
 
@@ -1483,20 +1537,15 @@ pg_newlocale_from_collation(Oid collid)
 		/* We haven't computed this yet in this session, so do it */
 		HeapTuple	tp;
 		Form_pg_collation collform;
-		const char *collcollate;
-		const char *collctype pg_attribute_unused();
 		struct pg_locale_struct result;
 		pg_locale_t resultp;
-		Datum		collversion;
+		Datum		datum;
 		bool		isnull;
 
 		tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
 		if (!HeapTupleIsValid(tp))
 			elog(ERROR, "cache lookup failed for collation %u", collid);
 		collform = (Form_pg_collation) GETSTRUCT(tp);
-
-		collcollate = NameStr(collform->collcollate);
-		collctype = NameStr(collform->collctype);
 
 		/* We'll fill in the result struct locally before allocating memory */
 		memset(&result, 0, sizeof(result));
@@ -1506,7 +1555,16 @@ pg_newlocale_from_collation(Oid collid)
 		if (collform->collprovider == COLLPROVIDER_LIBC)
 		{
 #ifdef HAVE_LOCALE_T
+			const char *collcollate;
+			const char *collctype pg_attribute_unused();
 			locale_t	loc;
+
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collcollate, &isnull);
+			Assert(!isnull);
+			collcollate = TextDatumGetCString(datum);
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collctype, &isnull);
+			Assert(!isnull);
+			collctype = TextDatumGetCString(datum);
 
 			if (strcmp(collcollate, collctype) == 0)
 			{
@@ -1558,58 +1616,39 @@ pg_newlocale_from_collation(Oid collid)
 		}
 		else if (collform->collprovider == COLLPROVIDER_ICU)
 		{
-#ifdef USE_ICU
-			UCollator  *collator;
-			UErrorCode	status;
+			const char *iculocstr;
 
-			if (strcmp(collcollate, collctype) != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("collations with different collate and ctype values are not supported by ICU")));
-
-			status = U_ZERO_ERROR;
-			collator = ucol_open(collcollate, &status);
-			if (U_FAILURE(status))
-				ereport(ERROR,
-						(errmsg("could not open collator for locale \"%s\": %s",
-								collcollate, u_errorName(status))));
-
-			if (U_ICU_VERSION_MAJOR_NUM < 54)
-				icu_set_collation_attributes(collator, collcollate);
-
-			/* We will leak this string if we get an error below :-( */
-			result.info.icu.locale = MemoryContextStrdup(TopMemoryContext,
-														 collcollate);
-			result.info.icu.ucol = collator;
-#else							/* not USE_ICU */
-			/* could get here if a collation was created by a build with ICU */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("ICU is not supported in this build"), \
-					 errhint("You need to rebuild PostgreSQL using %s.", "--with-icu")));
-#endif							/* not USE_ICU */
+			datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_colliculocale, &isnull);
+			Assert(!isnull);
+			iculocstr = TextDatumGetCString(datum);
+			make_icu_collator(iculocstr, &result);
 		}
 
-		collversion = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
+		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
 									  &isnull);
 		if (!isnull)
 		{
 			char	   *actual_versionstr;
 			char	   *collversionstr;
 
-			actual_versionstr = get_collation_actual_version(collform->collprovider, collcollate);
+			collversionstr = TextDatumGetCString(datum);
+
+			datum = SysCacheGetAttr(COLLOID, tp, collform->collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate, &isnull);
+			Assert(!isnull);
+
+			actual_versionstr = get_collation_actual_version(collform->collprovider,
+															 TextDatumGetCString(datum));
 			if (!actual_versionstr)
 			{
 				/*
 				 * This could happen when specifying a version in CREATE
-				 * COLLATION for a libc locale, or manually creating a mess in
-				 * the catalogs.
+				 * COLLATION but the provider does not support versioning, or
+				 * manually creating a mess in the catalogs.
 				 */
 				ereport(ERROR,
-						(errmsg("collation \"%s\" has no actual version, but a version was specified",
+						(errmsg("collation \"%s\" has no actual version, but a version was recorded",
 								NameStr(collform->collname))));
 			}
-			collversionstr = TextDatumGetCString(collversion);
 
 			if (strcmp(actual_versionstr, collversionstr) != 0)
 				ereport(WARNING,
@@ -1944,6 +1983,33 @@ icu_set_collation_attributes(UCollator *collator, const char *loc)
 }
 
 #endif							/* USE_ICU */
+
+/*
+ * Check if the given locale ID is valid, and ereport(ERROR) if it isn't.
+ */
+void
+check_icu_locale(const char *icu_locale)
+{
+#ifdef USE_ICU
+	UCollator  *collator;
+	UErrorCode  status;
+
+	status = U_ZERO_ERROR;
+	collator = ucol_open(icu_locale, &status);
+	if (U_FAILURE(status))
+		ereport(ERROR,
+				(errmsg("could not open collator for locale \"%s\": %s",
+						icu_locale, u_errorName(status))));
+
+	if (U_ICU_VERSION_MAJOR_NUM < 54)
+		icu_set_collation_attributes(collator, icu_locale);
+	ucol_close(collator);
+#else
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("ICU is not supported in this build")));
+#endif
+}
 
 /*
  * These functions convert from/to libc's wchar_t, *not* pg_wchar_t.

@@ -3,7 +3,7 @@
  * jsonapi.c
  *		JSON parser and lexer interfaces
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
@@ -658,7 +658,6 @@ json_lex(JsonLexContext *lex)
 						lex->token_type = JSON_TOKEN_FALSE;
 					else
 						return JSON_INVALID_TOKEN;
-
 				}
 		}						/* end of switch */
 	}
@@ -856,7 +855,6 @@ json_lex_string(JsonLexContext *lex)
 				lex->token_terminator = s + pg_encoding_mblen_bounded(lex->input_encoding, s);
 				return JSON_ESCAPING_INVALID;
 			}
-
 		}
 		else if (lex->strval != NULL)
 		{
@@ -865,7 +863,6 @@ json_lex_string(JsonLexContext *lex)
 
 			appendStringInfoChar(lex->strval, *s);
 		}
-
 	}
 
 	if (hi_surrogate != -1)

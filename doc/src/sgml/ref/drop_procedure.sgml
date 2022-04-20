@@ -194,8 +194,7 @@ DROP PROCEDURE do_db_maintenance(text, text);  -- potentially ambiguous
    However, the last example would be ambiguous if there is also, say,
 <programlisting>
 CREATE PROCEDURE do_db_maintenance(IN target_schema text, IN options text) ...
-</programlisting>
-  </para>
+</programlisting></para>
  </refsect1>
 
  <refsect1 id="sql-dropprocedure-compatibility">

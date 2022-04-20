@@ -148,12 +148,42 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--icu-locale=<replaceable class="parameter">locale</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the ICU locale ID to be used in this database, if the
+        ICU locale provider is selected.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--locale-provider={<literal>libc</literal>|<literal>icu</literal>}</option></term>
+      <listitem>
+       <para>
+        Specifies the locale provider for the database's default collation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-O <replaceable class="parameter">owner</replaceable></option></term>
       <term><option>--owner=<replaceable class="parameter">owner</replaceable></option></term>
       <listitem>
        <para>
         Specifies the database user who will own the new database.
         (This name is processed as a double-quoted identifier.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable class="parameter">template</replaceable></option></term>
+      <term><option>--strategy=<replaceable class="parameter">strategy</replaceable></option></term>
+      <listitem>
+       <para>
+        Specifies the database creation strategy.  See
+        <xref linkend="create-database-strategy" /> for more details.
        </para>
       </listitem>
      </varlistentry>

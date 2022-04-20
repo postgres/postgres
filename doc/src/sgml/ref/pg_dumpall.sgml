@@ -38,7 +38,8 @@ PostgreSQL documentation
    linkend="app-psql"/> to restore the databases.  It does this by
    calling <xref linkend="app-pgdump"/> for each database in the cluster.
    <application>pg_dumpall</application> also dumps global objects
-   that are common to all databases, that is, database roles and tablespaces.
+   that are common to all databases, namely database roles, tablespaces,
+   and privilege grants for configuration parameters.
    (<application>pg_dump</application> does not save these objects.)
   </para>
 
@@ -442,6 +443,17 @@ PostgreSQL documentation
         faster, but means that a subsequent operating system crash can leave
         the dump corrupt.  Generally, this option is useful for testing
         but should not be used when dumping data from production installation.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-table-access-method</option></term>
+      <listitem>
+       <para>
+        Do not output commands to select table access methods.
+        With this option, all objects will be created with whichever
+        table access method is the default during restore.
        </para>
       </listitem>
      </varlistentry>

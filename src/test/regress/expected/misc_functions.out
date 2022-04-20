@@ -1,3 +1,7 @@
+-- directory paths and dlsuffix are passed to us in environment variables
+\getenv libdir PG_LIBDIR
+\getenv dlsuffix PG_DLSUFFIX
+\set regresslib :libdir '/regress' :dlsuffix
 --
 -- num_nulls()
 --
@@ -134,6 +138,145 @@ LINE 1: SELECT num_nulls();
                ^
 HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
 --
+-- canonicalize_path()
+--
+CREATE FUNCTION test_canonicalize_path(text)
+   RETURNS text
+   AS :'regresslib'
+   LANGUAGE C STRICT IMMUTABLE;
+SELECT test_canonicalize_path('/');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/./abc/def/');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/./../abc/def');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/./../../abc/def/');
+ test_canonicalize_path 
+------------------------
+ /abc/def
+(1 row)
+
+SELECT test_canonicalize_path('/abc/.././def/ghi');
+ test_canonicalize_path 
+------------------------
+ /def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('/abc/./../def/ghi//');
+ test_canonicalize_path 
+------------------------
+ /def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../..');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../../..');
+ test_canonicalize_path 
+------------------------
+ /
+(1 row)
+
+SELECT test_canonicalize_path('/abc/def/../../../../ghi/jkl');
+ test_canonicalize_path 
+------------------------
+ /ghi/jkl
+(1 row)
+
+SELECT test_canonicalize_path('.');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('./');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('./abc/..');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('abc/../');
+ test_canonicalize_path 
+------------------------
+ .
+(1 row)
+
+SELECT test_canonicalize_path('abc/../def');
+ test_canonicalize_path 
+------------------------
+ def
+(1 row)
+
+SELECT test_canonicalize_path('..');
+ test_canonicalize_path 
+------------------------
+ ..
+(1 row)
+
+SELECT test_canonicalize_path('../abc/def');
+ test_canonicalize_path 
+------------------------
+ ../abc/def
+(1 row)
+
+SELECT test_canonicalize_path('../abc/..');
+ test_canonicalize_path 
+------------------------
+ ..
+(1 row)
+
+SELECT test_canonicalize_path('../abc/../def');
+ test_canonicalize_path 
+------------------------
+ ../def
+(1 row)
+
+SELECT test_canonicalize_path('../abc/../../def/ghi');
+ test_canonicalize_path 
+------------------------
+ ../../def/ghi
+(1 row)
+
+SELECT test_canonicalize_path('./abc/./def/.');
+ test_canonicalize_path 
+------------------------
+ abc/def
+(1 row)
+
+SELECT test_canonicalize_path('./abc/././def/.');
+ test_canonicalize_path 
+------------------------
+ abc/def
+(1 row)
+
+SELECT test_canonicalize_path('./abc/./def/.././ghi/../../../jkl/mno');
+ test_canonicalize_path 
+------------------------
+ ../jkl/mno
+(1 row)
+
+--
 -- pg_log_backend_memory_contexts()
 --
 -- Memory contexts are logged and they are not returned to the function.
@@ -142,6 +285,13 @@ HINT:  No function matches the given name and argument types. You might need to 
 -- permissions are set properly.
 --
 SELECT pg_log_backend_memory_contexts(pg_backend_pid());
+ pg_log_backend_memory_contexts 
+--------------------------------
+ t
+(1 row)
+
+SELECT pg_log_backend_memory_contexts(pid) FROM pg_stat_activity
+  WHERE backend_type = 'checkpointer';
  pg_log_backend_memory_contexts 
 --------------------------------
  t
@@ -226,6 +376,29 @@ select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;
   a   
 ------
  base
+(1 row)
+
+-- Test missing_ok (second argument)
+select pg_ls_dir('does not exist', false, false); -- error
+ERROR:  could not open directory "does not exist": No such file or directory
+select pg_ls_dir('does not exist', true, false); -- ok
+ pg_ls_dir 
+-----------
+(0 rows)
+
+-- Test include_dot_dirs (third argument)
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, true) as ls where ls = '.';
+ dot_found 
+-----------
+ t
+(1 row)
+
+select count(*) = 1 as dot_found
+  from pg_ls_dir('.', false, false) as ls where ls = '.';
+ dot_found 
+-----------
+ f
 (1 row)
 
 select * from (select (pg_timezone_names()).name) ptn where name='UTC' limit 1;
@@ -314,6 +487,10 @@ WHERE my_int_eq(a.unique2, 42);
 (6 rows)
 
 -- With support function that knows it's int4eq, we get a different plan
+CREATE FUNCTION test_support_func(internal)
+    RETURNS internal
+    AS :'regresslib', 'test_support_func'
+    LANGUAGE C STRICT;
 ALTER FUNCTION my_int_eq(int, int) SUPPORT test_support_func;
 EXPLAIN (COSTS OFF)
 SELECT * FROM tenk1 a JOIN tenk1 b ON a.unique1 = b.unique1

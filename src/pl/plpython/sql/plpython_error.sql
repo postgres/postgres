@@ -7,7 +7,7 @@
 CREATE FUNCTION python_syntax_error() RETURNS text
         AS
 '.syntaxerror'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 
 /* With check_function_bodies = false the function should get defined
  * and the error reported when called
@@ -17,7 +17,7 @@ SET check_function_bodies = false;
 CREATE FUNCTION python_syntax_error() RETURNS text
         AS
 '.syntaxerror'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 
 SELECT python_syntax_error();
 /* Run the function twice to check if the hashtable entry gets cleaned up */
@@ -30,7 +30,7 @@ RESET check_function_bodies;
 CREATE FUNCTION sql_syntax_error() RETURNS text
         AS
 'plpy.execute("syntax error")'
-        LANGUAGE plpythonu;
+        LANGUAGE plpython3u;
 
 SELECT sql_syntax_error();
 
@@ -40,7 +40,7 @@ SELECT sql_syntax_error();
 CREATE FUNCTION exception_index_invalid(text) RETURNS text
 	AS
 'return args[1]'
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT exception_index_invalid('test');
 
@@ -51,7 +51,7 @@ CREATE FUNCTION exception_index_invalid_nested() RETURNS text
 	AS
 'rv = plpy.execute("SELECT test5(''foo'')")
 return rv[0]'
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT exception_index_invalid_nested();
 
@@ -68,7 +68,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT invalid_type_uncaught('rick');
 
@@ -90,7 +90,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT invalid_type_caught('rick');
 
@@ -111,7 +111,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT invalid_type_reraised('rick');
 
@@ -127,7 +127,7 @@ if len(rv):
 	return rv[0]["fname"]
 return None
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT valid_type('rick');
 
@@ -147,7 +147,7 @@ def fun3():
 fun3()
 return "not reached"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT nested_error();
 
@@ -167,7 +167,7 @@ def fun3():
 fun3()
 return "not reached"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT nested_error_raise();
 
@@ -187,7 +187,7 @@ def fun3():
 fun3()
 return "you''ve been warned"
 '
-	LANGUAGE plpythonu;
+	LANGUAGE plpython3u;
 
 SELECT nested_warning();
 
@@ -196,7 +196,7 @@ SELECT nested_warning();
 CREATE FUNCTION toplevel_attribute_error() RETURNS void AS
 $$
 plpy.nonexistent
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT toplevel_attribute_error();
 
@@ -213,7 +213,7 @@ def third():
   plpy.execute("select sql_error()")
 
 first()
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE OR REPLACE FUNCTION sql_error() RETURNS void AS $$
 begin
@@ -229,7 +229,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sql_from_python_error() RETURNS void AS $$
 plpy.execute("select sql_error()")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT python_traceback();
 SELECT sql_error();
@@ -251,7 +251,7 @@ except spiexceptions.NotNullViolation as e:
     plpy.notice("Violated the NOT NULL constraint, sqlstate %s" % e.sqlstate)
 except spiexceptions.UniqueViolation as e:
     plpy.notice("Violated the UNIQUE constraint, sqlstate %s" % e.sqlstate)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT specific_exception(2);
 SELECT specific_exception(NULL);
@@ -262,7 +262,7 @@ SELECT specific_exception(2);
 CREATE FUNCTION python_unique_violation() RETURNS void AS $$
 plpy.execute("insert into specific values (1)")
 plpy.execute("insert into specific values (1)")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION catch_python_unique_violation() RETURNS text AS $$
 begin
@@ -283,7 +283,7 @@ CREATE FUNCTION manual_subxact() RETURNS void AS $$
 plpy.execute("savepoint save")
 plpy.execute("create table foo(x integer)")
 plpy.execute("rollback to save")
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT manual_subxact();
 
@@ -295,7 +295,7 @@ rollback = plpy.prepare("rollback to save")
 plpy.execute(save)
 plpy.execute("create table foo(x integer)")
 plpy.execute(rollback)
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 SELECT manual_subxact_prepared();
 
@@ -303,7 +303,7 @@ SELECT manual_subxact_prepared();
  */
 CREATE FUNCTION plpy_raise_spiexception() RETURNS void AS $$
 raise plpy.spiexceptions.DivisionByZero()
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 DO $$
 BEGIN
@@ -319,7 +319,7 @@ CREATE FUNCTION plpy_raise_spiexception_override() RETURNS void AS $$
 exc = plpy.spiexceptions.DivisionByZero()
 exc.sqlstate = 'SILLY'
 raise exc
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 DO $$
 BEGIN
@@ -332,14 +332,14 @@ $$ LANGUAGE plpgsql;
 /* test the context stack trace for nested execution levels
  */
 CREATE FUNCTION notice_innerfunc() RETURNS int AS $$
-plpy.execute("DO LANGUAGE plpythonu $x$ plpy.notice('inside DO') $x$")
+plpy.execute("DO LANGUAGE plpython3u $x$ plpy.notice('inside DO') $x$")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 CREATE FUNCTION notice_outerfunc() RETURNS int AS $$
 plpy.execute("SELECT notice_innerfunc()")
 return 1
-$$ LANGUAGE plpythonu;
+$$ LANGUAGE plpython3u;
 
 \set SHOW_CONTEXT always
 

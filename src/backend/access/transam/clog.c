@@ -23,7 +23,7 @@
  * for aborts (whether sync or async), since the post-crash assumption would
  * be that such transactions failed anyway.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/backend/access/transam/clog.c
@@ -297,8 +297,9 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 	if (all_xact_same_page && xid == MyProc->xid &&
 		nsubxids <= THRESHOLD_SUBTRANS_CLOG_OPT &&
 		nsubxids == MyProc->subxidStatus.count &&
-		memcmp(subxids, MyProc->subxids.xids,
-			   nsubxids * sizeof(TransactionId)) == 0)
+		(nsubxids == 0 ||
+		 memcmp(subxids, MyProc->subxids.xids,
+				nsubxids * sizeof(TransactionId)) == 0))
 	{
 		/*
 		 * If we can immediately acquire XactSLRULock, we update the status of

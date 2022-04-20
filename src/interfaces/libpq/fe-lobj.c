@@ -3,7 +3,7 @@
  * fe-lobj.c
  *	  Front-end large object interface
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -665,8 +665,8 @@ lo_import_internal(PGconn *conn, const char *filename, Oid oid)
 	if (conn == NULL)
 		return InvalidOid;
 
-	/* Since this is the beginning of a query cycle, reset the error buffer */
-	resetPQExpBuffer(&conn->errorMessage);
+	/* Since this is the beginning of a query cycle, reset the error state */
+	pqClearConnErrorState(conn);
 
 	/*
 	 * open the file to be read in
@@ -730,7 +730,8 @@ lo_import_internal(PGconn *conn, const char *filename, Oid oid)
 		(void) lo_close(conn, lobj);
 		(void) close(fd);
 		/* deliberately overwrite any error from lo_close */
-		printfPQExpBuffer(&conn->errorMessage,
+		pqClearConnErrorState(conn);
+		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not read from file \"%s\": %s\n"),
 						  filename,
 						  strerror_r(save_errno, sebuf, sizeof(sebuf)));
@@ -785,7 +786,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 
 		(void) lo_close(conn, lobj);
 		/* deliberately overwrite any error from lo_close */
-		printfPQExpBuffer(&conn->errorMessage,
+		pqClearConnErrorState(conn);
+		appendPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
 						  filename,
 						  strerror_r(save_errno, sebuf, sizeof(sebuf)));
@@ -806,7 +808,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 			(void) lo_close(conn, lobj);
 			(void) close(fd);
 			/* deliberately overwrite any error from lo_close */
-			printfPQExpBuffer(&conn->errorMessage,
+			pqClearConnErrorState(conn);
+			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not write to file \"%s\": %s\n"),
 							  filename,
 							  strerror_r(save_errno, sebuf, sizeof(sebuf)));
@@ -863,8 +866,8 @@ lo_initialize(PGconn *conn)
 	if (conn == NULL)
 		return -1;
 
-	/* Since this is the beginning of a query cycle, reset the error buffer */
-	resetPQExpBuffer(&conn->errorMessage);
+	/* Since this is the beginning of a query cycle, reset the error state */
+	pqClearConnErrorState(conn);
 
 	/* Nothing else to do if we already collected info */
 	if (conn->lobjfuncs != NULL)

@@ -3,7 +3,7 @@
  * objectaddress.h
  *	  functions for working with object addresses
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/catalog/objectaddress.h
@@ -28,7 +28,7 @@ typedef struct ObjectAddress
 	int32		objectSubId;	/* Subitem within object (eg column), or 0 */
 } ObjectAddress;
 
-extern const ObjectAddress InvalidObjectAddress;
+extern PGDLLIMPORT const ObjectAddress InvalidObjectAddress;
 
 #define ObjectAddressSubSet(addr, class_id, object_id, object_sub_id) \
 	do { \

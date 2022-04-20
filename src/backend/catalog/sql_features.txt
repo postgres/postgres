@@ -228,6 +228,7 @@ F263	Comma-separated predicates in simple CASE expression			NO
 F271	Compound character literals			YES	
 F281	LIKE enhancements			YES	
 F291	UNIQUE predicate			NO	
+F292	UNIQUE null treatment			YES	SQL:202x draft
 F301	CORRESPONDING in query expressions			NO	
 F302	INTERSECT table operator			YES	
 F302	INTERSECT table operator	01	INTERSECT DISTINCT table operator	YES	
@@ -239,9 +240,9 @@ F311	Schema definition statement	02	CREATE TABLE for persistent base tables	YES
 F311	Schema definition statement	03	CREATE VIEW	YES	
 F311	Schema definition statement	04	CREATE VIEW: WITH CHECK OPTION	YES	
 F311	Schema definition statement	05	GRANT statement	YES	
-F312	MERGE statement			NO	consider INSERT ... ON CONFLICT DO UPDATE
-F313	Enhanced MERGE statement			NO	
-F314	MERGE statement with DELETE branch			NO	
+F312	MERGE statement			YES	
+F313	Enhanced MERGE statement			YES	
+F314	MERGE statement with DELETE branch			YES	
 F321	User authorization			YES	
 F341	Usage tables			YES	
 F361	Subprogram support			YES	

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test WAL replay of FSM changes.
 #
@@ -10,14 +10,13 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 1;
+use Test::More;
 
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
 
 $node_primary->append_conf(
 	'postgresql.conf', qq{
-fsync = on
 wal_log_hints = on
 max_prepared_transactions = 5
 autovacuum = off
@@ -97,3 +96,5 @@ is( $node_standby->psql(
 		qq{insert into testtab select generate_series(1,1000), 'foo';}),
 	0,
 	'INSERT succeeds with truncated relation FSM');
+
+done_testing();

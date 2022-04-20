@@ -5,7 +5,7 @@
  *
  * This is the external API for the raw lexing/parsing functions.
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * src/include/parser/parser.h
@@ -53,8 +53,8 @@ typedef enum
 }			BackslashQuoteType;
 
 /* GUC variables in scan.l (every one of these is a bad idea :-() */
-extern int	backslash_quote;
-extern bool escape_string_warning;
+extern PGDLLIMPORT int backslash_quote;
+extern PGDLLIMPORT bool escape_string_warning;
 extern PGDLLIMPORT bool standard_conforming_strings;
 
 

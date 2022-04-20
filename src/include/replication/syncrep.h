@@ -3,7 +3,7 @@
  * syncrep.h
  *	  Exports from replication/syncrep.c.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
  *		src/include/replication/syncrep.h
@@ -72,14 +72,14 @@ typedef struct SyncRepConfigData
 	char		member_names[FLEXIBLE_ARRAY_MEMBER];
 } SyncRepConfigData;
 
-extern SyncRepConfigData *SyncRepConfig;
+extern PGDLLIMPORT SyncRepConfigData *SyncRepConfig;
 
 /* communication variables for parsing synchronous_standby_names GUC */
-extern SyncRepConfigData *syncrep_parse_result;
-extern char *syncrep_parse_error_msg;
+extern PGDLLIMPORT SyncRepConfigData *syncrep_parse_result;
+extern PGDLLIMPORT char *syncrep_parse_error_msg;
 
 /* user-settable parameters for synchronous replication */
-extern char *SyncRepStandbyNames;
+extern PGDLLIMPORT char *SyncRepStandbyNames;
 
 /* called by user backend */
 extern void SyncRepWaitForLSN(XLogRecPtr lsn, bool commit);

@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Set of tests for authentication and pg_hba.conf. The following password
 # methods are checked through this test:
@@ -18,11 +18,6 @@ if (!$use_unix_sockets)
 	plan skip_all =>
 	  "authentication tests cannot run without Unix-domain sockets";
 }
-else
-{
-	plan tests => 23;
-}
-
 
 # Delete pg_hba.conf from the given node, add a new entry to it
 # and then execute a reload to refresh it.
@@ -160,3 +155,5 @@ append_to_file(
 !);
 
 test_role($node, 'md5_role', 'password from pgpass', 0);
+
+done_testing();

@@ -1,7 +1,7 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  *
  * src/bin/psql/variables.c
  */
@@ -45,7 +45,7 @@ valid_variable_name(const char *name)
  * that serves as list header.
  *
  * The list entries are kept in name order (according to strcmp).  This
- * is mainly to make the results of PrintVariables() more pleasing.
+ * is mainly to make the output of PrintVariables() more pleasing.
  */
 VariableSpace
 CreateVariableSpace(void)

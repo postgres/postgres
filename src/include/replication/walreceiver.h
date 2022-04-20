@@ -3,7 +3,7 @@
  * walreceiver.h
  *	  Exports from replication/walreceiverfuncs.c.
  *
- * Portions Copyright (c) 2010-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * src/include/replication/walreceiver.h
  *
@@ -25,9 +25,9 @@
 #include "utils/tuplestore.h"
 
 /* user-settable parameters */
-extern int	wal_receiver_status_interval;
-extern int	wal_receiver_timeout;
-extern bool hot_standby_feedback;
+extern PGDLLIMPORT int wal_receiver_status_interval;
+extern PGDLLIMPORT int wal_receiver_timeout;
+extern PGDLLIMPORT bool hot_standby_feedback;
 
 /*
  * MAXCONNINFO: maximum size of a connection string.
@@ -160,7 +160,7 @@ typedef struct
 	sig_atomic_t force_reply;	/* used as a bool */
 } WalRcvData;
 
-extern WalRcvData *WalRcv;
+extern PGDLLIMPORT WalRcvData *WalRcv;
 
 typedef struct
 {

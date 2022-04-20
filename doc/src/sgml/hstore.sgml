@@ -817,7 +817,7 @@ CREATE TABLE test (col1 integer, col2 text, col3 text);
 INSERT INTO test VALUES (123, 'foo', 'bar');
 
 SELECT hstore(t) FROM test AS t;
-                   hstore                    
+                   hstore
 ---------------------------------------------
  "col1"=&gt;"123", "col2"=&gt;"foo", "col3"=&gt;"bar"
 (1 row)
@@ -831,9 +831,9 @@ CREATE TABLE test (col1 integer, col2 text, col3 text);
 
 SELECT * FROM populate_record(null::test,
                               '"col1"=&gt;"456", "col2"=&gt;"zzz"');
- col1 | col2 | col3 
+ col1 | col2 | col3
 ------+------+------
-  456 | zzz  | 
+  456 | zzz  |
 (1 row)
 </programlisting>
   </para>
@@ -845,7 +845,7 @@ CREATE TABLE test (col1 integer, col2 text, col3 text);
 INSERT INTO test VALUES (123, 'foo', 'bar');
 
 SELECT (r).* FROM (SELECT t #= '"col3"=&gt;"baz"' AS r FROM test t) s;
- col1 | col2 | col3 
+ col1 | col2 | col3
 ------+------+------
   123 | foo  | baz
 (1 row)
@@ -943,12 +943,8 @@ ALTER TABLE tablename ALTER hstorecol TYPE hstore USING hstorecol || '';
    and <literal>hstore_plperlu</literal>, for trusted and untrusted PL/Perl.
    If you install these transforms and specify them when creating a
    function, <type>hstore</type> values are mapped to Perl hashes.  The
-   extensions for PL/Python are
-   called <literal>hstore_plpythonu</literal>, <literal>hstore_plpython2u</literal>,
-   and <literal>hstore_plpython3u</literal>
-   (see <xref linkend="plpython-python23"/> for the PL/Python naming
-   convention).  If you use them, <type>hstore</type> values are mapped to
-   Python dictionaries.
+   extension for PL/Python is called <literal>hstore_plpython3u</literal>.
+   If you use it, <type>hstore</type> values are mapped to Python dictionaries.
   </para>
 
   <caution>

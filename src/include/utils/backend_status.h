@@ -2,7 +2,7 @@
  * backend_status.h
  *	  Definitions related to backend status reporting
  *
- * Copyright (c) 2001-2021, PostgreSQL Global Development Group
+ * Copyright (c) 2001-2022, PostgreSQL Global Development Group
  *
  * src/include/utils/backend_status.h
  * ----------
@@ -85,8 +85,8 @@ typedef struct PgBackendGSSStatus
  *
  * Each live backend maintains a PgBackendStatus struct in shared memory
  * showing its current activity.  (The structs are allocated according to
- * BackendId, but that is not critical.)  Note that the collector process
- * has no involvement in, or even access to, these structs.
+ * BackendId, but that is not critical.)  Note that this is unrelated to the
+ * cumulative stats system (i.e. pgstat.c et al).
  *
  * Each auxiliary process also maintains a PgBackendStatus struct in shared
  * memory.

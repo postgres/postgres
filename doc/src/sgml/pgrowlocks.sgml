@@ -13,7 +13,7 @@
  </para>
 
  <para>
-  By default use is restricted to superusers, members of the
+  By default use is restricted to superusers, roles with privileges of the
   <literal>pg_stat_scan_tables</literal> role, and users with
   <literal>SELECT</literal> permissions on the table.
  </para>

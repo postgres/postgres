@@ -3,7 +3,7 @@
  * parse_func.c
  *		handle function calls in parser
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
@@ -2610,6 +2610,9 @@ check_srf_call_placement(ParseState *pstate, Node *last_srf, int location)
 		case EXPR_KIND_VALUES_SINGLE:
 			/* okay, since we process this like a SELECT tlist */
 			pstate->p_hasTargetSRFs = true;
+			break;
+		case EXPR_KIND_MERGE_WHEN:
+			err = _("set-returning functions are not allowed in MERGE WHEN conditions");
 			break;
 		case EXPR_KIND_CHECK_CONSTRAINT:
 		case EXPR_KIND_DOMAIN_CHECK:

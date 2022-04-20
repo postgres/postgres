@@ -81,51 +81,6 @@ pgxml_parser_init(PgXmlStrictness strictness)
 }
 
 
-/*
- * Returns true if document is well-formed
- *
- * Note: this has been superseded by a core function.  We still have to
- * have it in the contrib module so that existing SQL-level references
- * to the function won't fail; but in normal usage with up-to-date SQL
- * definitions for the contrib module, this won't be called.
- */
-
-PG_FUNCTION_INFO_V1(xml_is_well_formed);
-
-Datum
-xml_is_well_formed(PG_FUNCTION_ARGS)
-{
-	text	   *t = PG_GETARG_TEXT_PP(0);	/* document buffer */
-	bool		result = false;
-	int32		docsize = VARSIZE_ANY_EXHDR(t);
-	xmlDocPtr	doctree;
-	PgXmlErrorContext *xmlerrcxt;
-
-	xmlerrcxt = pgxml_parser_init(PG_XML_STRICTNESS_LEGACY);
-
-	PG_TRY();
-	{
-		doctree = xmlParseMemory((char *) VARDATA_ANY(t), docsize);
-
-		result = (doctree != NULL);
-
-		if (doctree != NULL)
-			xmlFreeDoc(doctree);
-	}
-	PG_CATCH();
-	{
-		pg_xml_done(xmlerrcxt, true);
-
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
-
-	pg_xml_done(xmlerrcxt, false);
-
-	PG_RETURN_BOOL(result);
-}
-
-
 /* Encodes special characters (<, >, &, " and \r) as XML entities */
 
 PG_FUNCTION_INFO_V1(xml_encode_special_chars);
@@ -536,15 +491,9 @@ xpath_table(PG_FUNCTION_ARGS)
 	HeapTuple	spi_tuple;
 	TupleDesc	spi_tupdesc;
 
-	/* Output tuple (tuplestore) support */
-	Tuplestorestate *tupstore = NULL;
-	TupleDesc	ret_tupdesc;
-	HeapTuple	ret_tuple;
 
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 	AttInMetadata *attinmeta;
-	MemoryContext per_query_ctx;
-	MemoryContext oldcontext;
 
 	char	  **values;
 	xmlChar   **xpaths;
@@ -562,48 +511,10 @@ xpath_table(PG_FUNCTION_ARGS)
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlDocPtr doctree = NULL;
 
-	/* We only have a valid tuple description in table function mode */
-	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that cannot accept a set")));
-	if (rsinfo->expectedDesc == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("xpath_table must be called as a table function")));
-
-	/*
-	 * We want to materialise because it means that we don't have to carry
-	 * libxml2 parser state between invocations of this function
-	 */
-	if (!(rsinfo->allowedModes & SFRM_Materialize))
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("xpath_table requires Materialize mode, but it is not "
-						"allowed in this context")));
-
-	/*
-	 * The tuplestore must exist in a higher context than this function call
-	 * (per_query_ctx is used)
-	 */
-	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-	/*
-	 * Create the tuplestore - work_mem is the max in-memory size before a
-	 * file is created on disk to hold it.
-	 */
-	tupstore =
-		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-							  false, work_mem);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/* get the requested return tuple description */
-	ret_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
 
 	/* must have at least one output column (for the pkey) */
-	if (ret_tupdesc->natts < 1)
+	if (rsinfo->setDesc->natts < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("xpath_table must have at least one output column")));
@@ -616,14 +527,10 @@ xpath_table(PG_FUNCTION_ARGS)
 	 * representation.
 	 */
 
-	attinmeta = TupleDescGetAttInMetadata(ret_tupdesc);
+	attinmeta = TupleDescGetAttInMetadata(rsinfo->setDesc);
 
-	/* Set return mode and allocate value space. */
-	rsinfo->returnMode = SFRM_Materialize;
-	rsinfo->setDesc = ret_tupdesc;
-
-	values = (char **) palloc(ret_tupdesc->natts * sizeof(char *));
-	xpaths = (xmlChar **) palloc(ret_tupdesc->natts * sizeof(xmlChar *));
+	values = (char **) palloc(rsinfo->setDesc->natts * sizeof(char *));
+	xpaths = (xmlChar **) palloc(rsinfo->setDesc->natts * sizeof(xmlChar *));
 
 	/*
 	 * Split XPaths. xpathset is a writable CString.
@@ -632,7 +539,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	 */
 	numpaths = 0;
 	pos = xpathset;
-	while (numpaths < (ret_tupdesc->natts - 1))
+	while (numpaths < (rsinfo->setDesc->natts - 1))
 	{
 		xpaths[numpaths++] = (xmlChar *) pos;
 		pos = strstr(pos, pathsep);
@@ -666,9 +573,6 @@ xpath_table(PG_FUNCTION_ARGS)
 	tuptable = SPI_tuptable;
 	spi_tupdesc = tuptable->tupdesc;
 
-	/* Switch out of SPI context */
-	MemoryContextSwitchTo(oldcontext);
-
 	/*
 	 * Check that SPI returned correct result. If you put a comma into one of
 	 * the function parameters, this will catch it when the SPI query returns
@@ -700,6 +604,7 @@ xpath_table(PG_FUNCTION_ARGS)
 			xmlXPathObjectPtr res;
 			xmlChar    *resstr;
 			xmlXPathCompExprPtr comppath;
+			HeapTuple	ret_tuple;
 
 			/* Extract the row data as C Strings */
 			spi_tuple = tuptable->vals[i];
@@ -711,7 +616,7 @@ xpath_table(PG_FUNCTION_ARGS)
 			 * return NULL in all columns.  Note that this also means that
 			 * spare columns will be NULL.
 			 */
-			for (j = 0; j < ret_tupdesc->natts; j++)
+			for (j = 0; j < rsinfo->setDesc->natts; j++)
 				values[j] = NULL;
 
 			/* Insert primary key */
@@ -727,7 +632,7 @@ xpath_table(PG_FUNCTION_ARGS)
 			{
 				/* not well-formed, so output all-NULL tuple */
 				ret_tuple = BuildTupleFromCStrings(attinmeta, values);
-				tuplestore_puttuple(tupstore, ret_tuple);
+				tuplestore_puttuple(rsinfo->setResult, ret_tuple);
 				heap_freetuple(ret_tuple);
 			}
 			else
@@ -794,7 +699,7 @@ xpath_table(PG_FUNCTION_ARGS)
 					if (had_values)
 					{
 						ret_tuple = BuildTupleFromCStrings(attinmeta, values);
-						tuplestore_puttuple(tupstore, ret_tuple);
+						tuplestore_puttuple(rsinfo->setResult, ret_tuple);
 						heap_freetuple(ret_tuple);
 					}
 
@@ -828,11 +733,7 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	pg_xml_done(xmlerrcxt, false);
 
-	tuplestore_donestoring(tupstore);
-
 	SPI_finish();
-
-	rsinfo->setResult = tupstore;
 
 	/*
 	 * SFRM_Materialize mode expects us to return a NULL Datum. The actual

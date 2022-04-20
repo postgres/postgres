@@ -104,9 +104,9 @@ ALTER COLLATION <replaceable>name</replaceable> SET SCHEMA <replaceable>new_sche
   <title>Notes</title>
 
   <para>
-   When using collations provided by the ICU library, the ICU-specific version
-   of the collator is recorded in the system catalog when the collation object
-   is created.  When the collation is used, the current version is
+   When a collation object is created, the provider-specific version of the
+   collation is recorded in the system catalog.  When the collation is used,
+   the current version is
    checked against the recorded version, and a warning is issued when there is
    a mismatch, for example:
 <screen>
@@ -117,21 +117,24 @@ HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg
    A change in collation definitions can lead to corrupt indexes and other
    problems because the database system relies on stored objects having a
    certain sort order.  Generally, this should be avoided, but it can happen
-   in legitimate circumstances, such as when
+   in legitimate circumstances, such as when upgrading the operating system
+   to a new major version or when
    using <command>pg_upgrade</command> to upgrade to server binaries linked
    with a newer version of ICU.  When this happens, all objects depending on
    the collation should be rebuilt, for example,
    using <command>REINDEX</command>.  When that is done, the collation version
    can be refreshed using the command <literal>ALTER COLLATION ... REFRESH
    VERSION</literal>.  This will update the system catalog to record the
-   current collator version and will make the warning go away.  Note that this
+   current collation version and will make the warning go away.  Note that this
    does not actually check whether all affected objects have been rebuilt
    correctly.
   </para>
   <para>
    When using collations provided by <literal>libc</literal>, version
    information is recorded on systems using the GNU C library (most Linux
-   systems), FreeBSD and Windows.
+   systems), FreeBSD and Windows.  When using collations provided by ICU, the
+   version information is provided by the ICU library and is available on all
+   platforms.
   </para>
   <note>
    <para>
@@ -144,11 +147,12 @@ HINT:  Rebuild all objects affected by this collation and run ALTER COLLATION pg
    <para>
     When using Windows for collations, version information is only available
     for collations defined with BCP 47 language tags such as
-    <literal>en-US</literal>. 
+    <literal>en-US</literal>.
    </para>
   </note>
   <para>
-   Currently, there is no version tracking for the database default collation.
+   For the database default collation, there is an analogous command
+   <literal>ALTER DATABASE ... REFRESH COLLATION VERSION</literal>.
   </para>
 
   <para>

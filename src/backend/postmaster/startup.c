@@ -9,7 +9,7 @@
  * though.)
  *
  *
- * Portions Copyright (c) 1996-2021, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -20,6 +20,7 @@
 #include "postgres.h"
 
 #include "access/xlog.h"
+#include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
@@ -32,6 +33,7 @@
 #include "storage/procsignal.h"
 #include "storage/standby.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 #include "utils/timeout.h"
 
 
@@ -200,6 +202,10 @@ HandleStartupProcInterrupts(void)
 	/* Process barrier events */
 	if (ProcSignalBarrierPending)
 		ProcessProcSignalBarrier();
+
+	/* Perform logging of memory contexts of this process */
+	if (LogMemoryContextPending)
+		ProcessLogMemoryContextInterrupt();
 }
 
 

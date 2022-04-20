@@ -26,12 +26,12 @@ static PyObject *PLyBool_FromBool(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyFloat_FromFloat4(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyFloat_FromFloat8(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyDecimal_FromNumeric(PLyDatumToOb *arg, Datum d);
-static PyObject *PLyInt_FromInt16(PLyDatumToOb *arg, Datum d);
-static PyObject *PLyInt_FromInt32(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyLong_FromInt16(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyLong_FromInt32(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyLong_FromInt64(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyLong_FromOid(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d);
-static PyObject *PLyString_FromScalar(PLyDatumToOb *arg, Datum d);
+static PyObject *PLyUnicode_FromScalar(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyObject_FromTransform(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray(PLyDatumToOb *arg, Datum d);
 static PyObject *PLyList_FromArray_recurse(PLyDatumToOb *elm, int *dims, int ndim, int dim,
@@ -59,7 +59,7 @@ static void PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
 										Datum *elems, bool *nulls, int *currelem);
 
 /* conversion from Python objects to composite Datums */
-static Datum PLyString_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray);
+static Datum PLyUnicode_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray);
 static Datum PLyMapping_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *mapping);
 static Datum PLySequence_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *sequence);
 static Datum PLyGenericObject_ToComposite(PLyObToDatum *arg, TupleDesc desc, PyObject *object, bool inarray);
@@ -517,10 +517,10 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 				arg->func = PLyDecimal_FromNumeric;
 				break;
 			case INT2OID:
-				arg->func = PLyInt_FromInt16;
+				arg->func = PLyLong_FromInt16;
 				break;
 			case INT4OID:
-				arg->func = PLyInt_FromInt32;
+				arg->func = PLyLong_FromInt32;
 				break;
 			case INT8OID:
 				arg->func = PLyLong_FromInt64;
@@ -532,7 +532,7 @@ PLy_input_setup_func(PLyDatumToOb *arg, MemoryContext arg_mcxt,
 				arg->func = PLyBytes_FromBytea;
 				break;
 			default:
-				arg->func = PLyString_FromScalar;
+				arg->func = PLyUnicode_FromScalar;
 				getTypeOutputInfo(typeOid, &typoutput, &typisvarlena);
 				fmgr_info_cxt(typoutput, &arg->u.scalar.typfunc, arg_mcxt);
 				break;
@@ -600,15 +600,15 @@ PLyDecimal_FromNumeric(PLyDatumToOb *arg, Datum d)
 }
 
 static PyObject *
-PLyInt_FromInt16(PLyDatumToOb *arg, Datum d)
+PLyLong_FromInt16(PLyDatumToOb *arg, Datum d)
 {
-	return PyInt_FromLong(DatumGetInt16(d));
+	return PyLong_FromLong(DatumGetInt16(d));
 }
 
 static PyObject *
-PLyInt_FromInt32(PLyDatumToOb *arg, Datum d)
+PLyLong_FromInt32(PLyDatumToOb *arg, Datum d)
 {
-	return PyInt_FromLong(DatumGetInt32(d));
+	return PyLong_FromLong(DatumGetInt32(d));
 }
 
 static PyObject *
@@ -638,10 +638,10 @@ PLyBytes_FromBytea(PLyDatumToOb *arg, Datum d)
  * Generic input conversion using a SQL type's output function.
  */
 static PyObject *
-PLyString_FromScalar(PLyDatumToOb *arg, Datum d)
+PLyUnicode_FromScalar(PLyDatumToOb *arg, Datum d)
 {
 	char	   *x = OutputFunctionCall(&arg->u.scalar.typfunc, d);
-	PyObject   *r = PyString_FromString(x);
+	PyObject   *r = PLyUnicode_FromString(x);
 
 	pfree(x);
 	return r;
@@ -954,8 +954,8 @@ PLyObject_ToComposite(PLyObToDatum *arg, PyObject *plrv,
 	 * The string conversion case doesn't require a tupdesc, nor per-field
 	 * conversion data, so just go for it if that's the case to use.
 	 */
-	if (PyString_Check(plrv) || PyUnicode_Check(plrv))
-		return PLyString_ToComposite(arg, plrv, inarray);
+	if (PyUnicode_Check(plrv))
+		return PLyUnicode_ToComposite(arg, plrv, inarray);
 
 	/*
 	 * If we're dealing with a named composite type, we must look up the
@@ -1032,25 +1032,17 @@ PLyObject_AsString(PyObject *plrv)
 	else if (PyFloat_Check(plrv))
 	{
 		/* use repr() for floats, str() is lossy */
-#if PY_MAJOR_VERSION >= 3
 		PyObject   *s = PyObject_Repr(plrv);
 
 		plrv_bo = PLyUnicode_Bytes(s);
 		Py_XDECREF(s);
-#else
-		plrv_bo = PyObject_Repr(plrv);
-#endif
 	}
 	else
 	{
-#if PY_MAJOR_VERSION >= 3
 		PyObject   *s = PyObject_Str(plrv);
 
 		plrv_bo = PLyUnicode_Bytes(s);
 		Py_XDECREF(s);
-#else
-		plrv_bo = PyObject_Str(plrv);
-#endif
 	}
 	if (!plrv_bo)
 		PLy_elog(ERROR, "could not create string representation of Python object");
@@ -1299,7 +1291,7 @@ PLySequence_ToArray_recurse(PLyObToDatum *elm, PyObject *list,
  * Convert a Python string to composite, using record_in.
  */
 static Datum
-PLyString_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray)
+PLyUnicode_ToComposite(PLyObToDatum *arg, PyObject *string, bool inarray)
 {
 	char	   *str;
 

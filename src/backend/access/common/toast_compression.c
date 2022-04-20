@@ -3,7 +3,7 @@
  * toast_compression.c
  *	  Functions for toast compression.
  *
- * Copyright (c) 2021, PostgreSQL Global Development Group
+ * Copyright (c) 2021-2022, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
@@ -30,8 +30,7 @@ int			default_toast_compression = TOAST_PGLZ_COMPRESSION;
 	ereport(ERROR, \
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("compression method lz4 not supported"), \
-			 errdetail("This functionality requires the server to be built with lz4 support."), \
-			 errhint("You need to rebuild PostgreSQL using %s.", "--with-lz4")))
+			 errdetail("This functionality requires the server to be built with lz4 support.")))
 
 /*
  * Compress a varlena using PGLZ.

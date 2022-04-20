@@ -1,5 +1,5 @@
 
-# Copyright (c) 2021, PostgreSQL Global Development Group
+# Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
 # Test WAL replay when some operation has skipped WAL.
 #
@@ -14,7 +14,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 38;
+use Test::More;
 
 sub check_orphan_relfilenodes
 {
@@ -60,7 +60,6 @@ wal_skip_threshold = 0
 	# Setup
 	my $tablespace_dir = $node->basedir . '/tablespace_other';
 	mkdir($tablespace_dir);
-	$tablespace_dir = PostgreSQL::Test::Utils::perl2host($tablespace_dir);
 	my $result;
 
 	# Test redo of CREATE TABLESPACE.
@@ -152,7 +151,6 @@ wal_skip_threshold = 0
 		$copy_file, qq(20000,30000
 20001,30001
 20002,30002));
-	$copy_file = PostgreSQL::Test::Utils::perl2host($copy_file);
 
 	# Test truncation with inserted tuples using both INSERT and COPY.  Tuples
 	# inserted after the truncation should be seen.
@@ -399,3 +397,5 @@ wal_skip_threshold = 0
 # Run same test suite for multiple wal_level values.
 run_wal_optimize("minimal");
 run_wal_optimize("replica");
+
+done_testing();
