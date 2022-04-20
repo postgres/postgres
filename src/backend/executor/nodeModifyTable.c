@@ -116,12 +116,6 @@ typedef struct ModifyTableContext
 	 * cross-partition UPDATE
 	 */
 	TupleTableSlot *cpUpdateReturningSlot;
-
-	/*
-	 * Lock mode to acquire on the latest tuple version before performing
-	 * EvalPlanQual on it
-	 */
-	LockTupleMode lockmode;
 } ModifyTableContext;
 
 /*
@@ -132,6 +126,12 @@ typedef struct UpdateContext
 	bool		updated;		/* did UPDATE actually occur? */
 	bool		updateIndexes;	/* index update required? */
 	bool		crossPartUpdate;	/* was it a cross-partition update? */
+
+	/*
+	 * Lock mode to acquire on the latest tuple version before performing
+	 * EvalPlanQual on it
+	 */
+	LockTupleMode lockmode;
 } UpdateContext;
 
 
@@ -1971,7 +1971,7 @@ lreplace:;
 								estate->es_snapshot,
 								estate->es_crosscheck_snapshot,
 								true /* wait for commit */ ,
-								&context->tmfd, &context->lockmode,
+								&context->tmfd, &updateCxt->lockmode,
 								&updateCxt->updateIndexes);
 	if (result == TM_Ok)
 		updateCxt->updated = true;
@@ -2251,7 +2251,7 @@ redo_act:
 					result = table_tuple_lock(resultRelationDesc, tupleid,
 											  estate->es_snapshot,
 											  inputslot, estate->es_output_cid,
-											  context->lockmode, LockWaitBlock,
+											  updateCxt.lockmode, LockWaitBlock,
 											  TUPLE_LOCK_FLAG_FIND_LAST_VERSION,
 											  &context->tmfd);
 
@@ -3557,8 +3557,6 @@ ExecModifyTable(PlanState *pstate)
 				{
 					EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-					context.lockmode = 0;
-
 					ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
 					continue;	/* no RETURNING support yet */
 				}
@@ -3637,8 +3635,6 @@ ExecModifyTable(PlanState *pstate)
 					{
 						EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-						context.lockmode = 0;
-
 						ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
 						continue;	/* no RETURNING support yet */
 					}
@@ -3693,9 +3689,6 @@ ExecModifyTable(PlanState *pstate)
 				Assert(relkind == RELKIND_FOREIGN_TABLE);
 			}
 		}
-
-		/* complete context setup */
-		context.lockmode = 0;
 
 		switch (operation)
 		{
