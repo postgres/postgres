@@ -1352,6 +1352,8 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 
 		procForm->prosupport = newsupport;
 	}
+	if (parallel_item)
+		procForm->proparallel = interpret_func_parallel(parallel_item);
 	if (set_items)
 	{
 		Datum		datum;
@@ -1386,8 +1388,7 @@ AlterFunction(ParseState *pstate, AlterFunctionStmt *stmt)
 		tup = heap_modify_tuple(tup, RelationGetDescr(rel),
 								repl_val, repl_null, repl_repl);
 	}
-	if (parallel_item)
-		procForm->proparallel = interpret_func_parallel(parallel_item);
+	/* DO NOT put more touches of procForm below here; it's now dangling. */
 
 	/* Do the update */
 	CatalogTupleUpdate(rel, &tup->t_self, tup);
