@@ -3515,11 +3515,11 @@ printVerboseErrorMessages(CState *st, pg_time_usec_t *now, bool is_retry)
 					  (is_retry ?
 						"repeats the transaction after the error" :
 						"ends the failed transaction"));
-	appendPQExpBuffer(buf, " (try %d", st->tries);
+	appendPQExpBuffer(buf, " (try %u", st->tries);
 
 	/* Print max_tries if it is not unlimitted. */
 	if (max_tries)
-		appendPQExpBuffer(buf, "/%d", max_tries);
+		appendPQExpBuffer(buf, "/%u", max_tries);
 
 	/*
 	 * If the latency limit is used, print a percentage of the current transaction
@@ -4569,7 +4569,7 @@ doLog(TState *thread, CState *st,
 		if (throttle_delay)
 			fprintf(logfile, " %.0f", lag);
 		if (max_tries != 1)
-			fprintf(logfile, " %d", st->tries - 1);
+			fprintf(logfile, " %u", st->tries - 1);
 		fputc('\n', logfile);
 	}
 }
@@ -6262,7 +6262,7 @@ printResults(StatsData *total,
 	printf("number of threads: %d\n", nthreads);
 
 	if (max_tries)
-		printf("maximum number of tries: %d\n", max_tries);
+		printf("maximum number of tries: %u\n", max_tries);
 
 	if (duration <= 0)
 	{
