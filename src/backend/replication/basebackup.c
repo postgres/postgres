@@ -180,7 +180,7 @@ static const struct exclude_list_item excludeFiles[] =
 	{RELCACHE_INIT_FILENAME, true},
 
 	/*
-	 * backup_label and tablespace_map should not exist in in a running cluster
+	 * backup_label and tablespace_map should not exist in a running cluster
 	 * capable of doing an online backup, but exclude them just in case.
 	 */
 	{BACKUP_LABEL_FILE, false},
