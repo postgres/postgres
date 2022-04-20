@@ -3641,14 +3641,27 @@ select 1\; select 2\; select 3;
   </para>
 
   <para>
-   A pattern that contains a dot (<literal>.</literal>) is interpreted as a schema
+   A relation pattern that contains a dot (<literal>.</literal>) is interpreted as a schema
    name pattern followed by an object name pattern.  For example,
    <literal>\dt foo*.*bar*</literal> displays all tables whose table name
    includes <literal>bar</literal> that are in schemas whose schema name
    starts with <literal>foo</literal>.  When no dot appears, then the pattern
    matches only objects that are visible in the current schema search path.
    Again, a dot within double quotes loses its special meaning and is matched
-   literally.
+   literally.  A relation pattern that contains two dots (<literal>.</literal>)
+   is interpreted as a database name followed by a schema name pattern followed
+   by an object name pattern.  The database name portion will not be treated as
+   a pattern and must match the name of the currently connected database, else
+   an error will be raised.
+  </para>
+
+  <para>
+   A schema pattern that contains a dot (<literal>.</literal>) is interpreted
+   as a database name followed by a schema name pattern.  For example,
+   <literal>\dn mydb.*foo*</literal> displays all schemas whose schema name
+   includes <literal>foo</literal>.  The database name portion will not be
+   treated as a pattern and must match the name of the currently connected
+   database, else an error will be raised.
   </para>
 
   <para>

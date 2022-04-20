@@ -1308,10 +1308,17 @@ static void
 append_database_pattern(PatternInfoArray *pia, const char *pattern, int encoding)
 {
 	PQExpBufferData buf;
+	int			dotcnt;
 	PatternInfo *info = extend_pattern_info_array(pia);
 
 	initPQExpBuffer(&buf);
-	patternToSQLRegex(encoding, NULL, NULL, &buf, pattern, false);
+	patternToSQLRegex(encoding, NULL, NULL, &buf, pattern, false, false,
+					  &dotcnt);
+	if (dotcnt > 0)
+	{
+		pg_log_error("improper qualified name (too many dotted names): %s", pattern);
+		exit(2);
+	}
 	info->pattern = pattern;
 	info->db_regex = pstrdup(buf.data);
 
@@ -1332,12 +1339,19 @@ append_schema_pattern(PatternInfoArray *pia, const char *pattern, int encoding)
 {
 	PQExpBufferData dbbuf;
 	PQExpBufferData nspbuf;
+	int			dotcnt;
 	PatternInfo *info = extend_pattern_info_array(pia);
 
 	initPQExpBuffer(&dbbuf);
 	initPQExpBuffer(&nspbuf);
 
-	patternToSQLRegex(encoding, NULL, &dbbuf, &nspbuf, pattern, false);
+	patternToSQLRegex(encoding, NULL, &dbbuf, &nspbuf, pattern, false, false,
+					  &dotcnt);
+	if (dotcnt > 1)
+	{
+		pg_log_error("improper qualified name (too many dotted names): %s", pattern);
+		exit(2);
+	}
 	info->pattern = pattern;
 	if (dbbuf.data[0])
 	{
@@ -1369,13 +1383,20 @@ append_relation_pattern_helper(PatternInfoArray *pia, const char *pattern,
 	PQExpBufferData dbbuf;
 	PQExpBufferData nspbuf;
 	PQExpBufferData relbuf;
+	int			dotcnt;
 	PatternInfo *info = extend_pattern_info_array(pia);
 
 	initPQExpBuffer(&dbbuf);
 	initPQExpBuffer(&nspbuf);
 	initPQExpBuffer(&relbuf);
 
-	patternToSQLRegex(encoding, &dbbuf, &nspbuf, &relbuf, pattern, false);
+	patternToSQLRegex(encoding, &dbbuf, &nspbuf, &relbuf, pattern, false,
+					  false, &dotcnt);
+	if (dotcnt > 2)
+	{
+		pg_log_error("improper relation name (too many dotted names): %s", pattern);
+		exit(2);
+	}
 	info->pattern = pattern;
 	if (dbbuf.data[0])
 	{

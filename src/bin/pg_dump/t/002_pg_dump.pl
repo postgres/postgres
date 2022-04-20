@@ -3974,6 +3974,113 @@ command_fails_like(
 	'no matching tables');
 
 #########################################
+# Test invalid multipart database names
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '.' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \./,
+	'pg_dumpall: option --exclude-database rejects multipart pattern "."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '.*' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \.\*/,
+	'pg_dumpall: option --exclude-database rejects multipart pattern ".*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', '*.*' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \*\.\*/,
+	'pg_dumpall: option --exclude-database rejects multipart pattern "*.*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dumpall', '--exclude-database', 'myhost.mydb' ],
+	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
+	'pg_dumpall: option --exclude-database rejects multipart database names'
+);
+
+#########################################
+# Test valid database exclusion patterns
+
+$node->command_ok(
+	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '"myhost.mydb"' ],
+	'pg_dumpall: option --exclude-database handles database names with embedded dots'
+);
+
+$node->command_ok(
+	[ 'pg_dumpall', '--exclude-database', '??*' ],
+	'pg_dumpall: option --exclude-database handles database name patterns'
+);
+
+
+#########################################
+# Test invalid multipart schema names
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', 'myhost.mydb.myschema' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): myhost\.mydb\.myschema/,
+	'pg_dump: option --schema rejects three-part schema names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', 'otherdb.myschema' ],
+	qr/pg_dump: error: cross-database references are not implemented: otherdb\.myschema/,
+	'pg_dump: option --schema rejects cross-database multipart schema names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.' ],
+	qr/pg_dump: error: cross-database references are not implemented: \./,
+	'pg_dump: option --schema rejects degenerate two-part schema name: "."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '"some.other.db".myschema' ],
+	qr/pg_dump: error: cross-database references are not implemented: "some\.other\.db"\.myschema/,
+	'pg_dump: option --schema rejects cross-database multipart schema names with embedded dots'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.*' ],
+	qr/pg_dump: error: cross-database references are not implemented: \.\*/,
+	'pg_dump: option --schema rejects degenerate two-part schema name: ".*"'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '..' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\./,
+	'pg_dump: option --schema rejects degenerate three-part schema name: ".."'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--schema', '.*.*' ],
+	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\*\.\*/,
+	'pg_dump: option --schema rejects degenerate three-part schema pattern: ".*.*"'
+);
+
+#########################################
+# Test invalid multipart relation names
+
+$node->command_fails_like(
+	[ 'pg_dump', '--table', 'myhost.mydb.myschema.mytable' ],
+	qr/pg_dump: error: improper relation name \(too many dotted names\): myhost\.mydb\.myschema\.mytable/,
+	'pg_dump: option --table rejects four-part table names'
+);
+
+$node->command_fails_like(
+	[ 'pg_dump', '--table', 'otherdb.pg_catalog.pg_class' ],
+	qr/pg_dump: error: cross-database references are not implemented: otherdb\.pg_catalog\.pg_class/,
+	'pg_dump: option --table rejects cross-database three part table names'
+);
+
+command_fails_like(
+	[ 'pg_dump', '-p', "$port", '--table', '"some.other.db".pg_catalog.pg_class' ],
+	qr/pg_dump: error: cross-database references are not implemented: "some\.other\.db"\.pg_catalog\.pg_class/,
+	'pg_dump: option --table rejects cross-database three part table names with embedded dots'
+);
+
+#########################################
 # Run all runs
 
 foreach my $run (sort keys %pgdump_runs)
