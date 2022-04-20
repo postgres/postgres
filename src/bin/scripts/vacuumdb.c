@@ -362,11 +362,6 @@ main(int argc, char *argv[])
 
 	if (alldb)
 	{
-		if (dbname)
-			pg_fatal("cannot vacuum all databases and a specific one at the same time");
-		if (tables.head != NULL)
-			pg_fatal("cannot vacuum specific table(s) in all databases");
-
 		cparams.dbname = maintenance_db;
 
 		vacuum_all_databases(&cparams, &vacopts,
