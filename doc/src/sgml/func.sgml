@@ -6011,44 +6011,44 @@ regexp_replace('A PostgreSQL function', 'a|e|i|o|u', 'X', 1, 3, 'i')
     Some examples:
 <programlisting>
 SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', '\s+') AS foo;
-  foo   
+  foo
 -------
- the    
- quick  
- brown  
- fox    
- jumps 
- over   
- the    
- lazy   
- dog    
+ the
+ quick
+ brown
+ fox
+ jumps
+ over
+ the
+ lazy
+ dog
 (9 rows)
 
 SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', '\s+');
-              regexp_split_to_array             
+              regexp_split_to_array
 -----------------------------------------------
  {the,quick,brown,fox,jumps,over,the,lazy,dog}
 (1 row)
 
 SELECT foo FROM regexp_split_to_table('the quick brown fox', '\s*') AS foo;
- foo 
+ foo
 -----
- t         
- h         
- e         
- q         
- u         
- i         
- c         
- k         
- b         
- r         
- o         
- w         
- n         
- f         
- o         
- x         
+ t
+ h
+ e
+ q
+ u
+ i
+ c
+ k
+ b
+ r
+ o
+ w
+ n
+ f
+ o
+ x
 (16 rows)
 </programlisting>
    </para>
@@ -14400,32 +14400,32 @@ SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY VALUE '<towns><town>T
 <screen><![CDATA[
 SET xmloption TO DOCUMENT;
 SELECT xml_is_well_formed('<>');
- xml_is_well_formed 
+ xml_is_well_formed
 --------------------
  f
 (1 row)
 
 SELECT xml_is_well_formed('<abc/>');
- xml_is_well_formed 
+ xml_is_well_formed
 --------------------
  t
 (1 row)
 
 SET xmloption TO CONTENT;
 SELECT xml_is_well_formed('abc');
- xml_is_well_formed 
+ xml_is_well_formed
 --------------------
  t
 (1 row)
 
 SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</pg:foo>');
- xml_is_well_formed_document 
+ xml_is_well_formed_document
 -----------------------------
  t
 (1 row)
 
 SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuff">bar</my:foo>');
- xml_is_well_formed_document 
+ xml_is_well_formed_document
 -----------------------------
  f
 (1 row)
@@ -14492,7 +14492,7 @@ SELECT xml_is_well_formed_document('<pg:foo xmlns:pg="http://postgresql.org/stuf
 SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
              ARRAY[ARRAY['my', 'http://example.com']]);
 
- xpath  
+ xpath
 --------
  {test}
 (1 row)
@@ -14540,7 +14540,7 @@ SELECT xpath('//mydefns:b/text()', '<a xmlns="http://example.com"><b>test</b></a
 SELECT xpath_exists('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>',
                      ARRAY[ARRAY['my', 'http://example.com']]);
 
- xpath_exists  
+ xpath_exists
 --------------
  t
 (1 row)
@@ -14773,7 +14773,7 @@ SELECT xmltable.*
                              'concat(SIZE[@unit!="sq_km"], " ", SIZE[@unit!="sq_km"]/@unit)',
                         premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified');
 
- id | ordinality | COUNTRY_NAME | country_id | size_sq_km |  size_other  | premier_name  
+ id | ordinality | COUNTRY_NAME | country_id | size_sq_km |  size_other  | premier_name
 ----+------------+--------------+------------+------------+--------------+---------------
   1 |          1 | Australia    | AU         |            |              | not specified
   5 |          2 | Japan        | JP         |            | 145935 sq_mi | Shinzo Abe
@@ -14794,9 +14794,9 @@ $$ AS data;
 
 SELECT xmltable.*
   FROM xmlelements, XMLTABLE('/root' PASSING data COLUMNS element text);
-         element         
+         element
 -------------------------
-   Hello2a2   bbbxxxCC  
+   Hello2a2   bbbxxxCC
 ]]></screen>
     </para>
 
@@ -17769,14 +17769,14 @@ $.* ? (@ like_regex "^\\d+$")
      </para>
 <screen>
 SELECT JSON('{ "a" : 123, "b": [ true, "foo" ], "a" : "bar" }');
-                       json                       
+                       json
 --------------------------------------------------
  { "a" : 123, "b": [ true, "foo" ], "a" : "bar" }
 (1 row)
 
 
 SELECT JSON('{"a": 123, "b": [true, "foo"], "a": "bar"}' RETURNING jsonb);
-               json               
+               json
 ----------------------------------
  {"a": "bar", "b": [true, "foo"]}
 (1 row)
@@ -18097,7 +18097,7 @@ WHERE f.did = 103;
    <sect4 id="functions-jsonobjectagg">
    <title><literal>JSON_OBJECTAGG</literal></title>
    <indexterm><primary>json_objectagg</primary></indexterm>
-   
+
 <synopsis>
 <function>JSON_OBJECTAGG</function> (
   <optional> { <parameter>key_expression</parameter> { VALUE | ':' } <parameter>value_expression</parameter> } </optional>
@@ -18906,7 +18906,7 @@ SELECT JSON_VALUE('123.45', '$' RETURNING int ERROR ON ERROR);
 (1 row)
 
 SELECT JSON_VALUE('"03:04 2015-02-01"', '$.datetime("HH24:MI YYYY-MM-DD")' RETURNING date);
- json_value 
+ json_value
 ------------
  2015-02-01
 (1 row)
@@ -19222,7 +19222,7 @@ SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING text OMIT QUOTES);
     </para>
   </listitem>
    </varlistentry>
-   
+
    <varlistentry>
     <term>
      <literal>VALUE | SCALAR | ARRAY | OBJECT</literal>
@@ -19875,7 +19875,7 @@ JSON_SERIALIZE (
      </para>
 <screen>
 SELECT JSON_SERIALIZE(JSON_SCALAR('foo'));
- json_serialize 
+ json_serialize
 ----------------
  "foo"
 (1 row)
@@ -19890,7 +19890,7 @@ SELECT JSON_SERIALIZE('{"foo": "bar", "baz": [1, 2]}' RETURNING bytea);
    </sect4>
 
   </sect3>
- 
+
   <sect3 id="sqljson-common-clauses">
    <title>SQL/JSON Common Clauses</title>
 
@@ -28114,7 +28114,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
     to log the memory contexts of a backend process. For example:
 <programlisting>
 postgres=# SELECT pg_log_backend_memory_contexts(pg_backend_pid());
- pg_log_backend_memory_contexts 
+ pg_log_backend_memory_contexts
 --------------------------------
  t
 (1 row)

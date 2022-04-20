@@ -948,7 +948,7 @@ query           | SELECT pg_stat_statements_reset(0,0,0)
 calls           | 1
 total_exec_time | 0.189497
 rows            | 1
-hit_percent     | 
+hit_percent     |
 -[ RECORD 2 ]---+--------------------------------------------------&zwsp;---------------------------
 query           | SELECT query, calls, total_exec_time, rows, $1 * shared_blks_hit /          +
                 |                nullif(shared_blks_hit + shared_blks_read, $2) AS hit_percent+
@@ -956,7 +956,7 @@ query           | SELECT query, calls, total_exec_time, rows, $1 * shared_blks_h
 calls           | 0
 total_exec_time | 0
 rows            | 0
-hit_percent     | 
+hit_percent     |
 
 </screen>
  </sect2>

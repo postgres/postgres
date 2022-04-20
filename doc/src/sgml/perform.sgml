@@ -1221,7 +1221,7 @@ ANALYZE zipcodes;
 SELECT stxname, stxkeys, stxddependencies
   FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid)
   WHERE stxname = 'stts';
- stxname | stxkeys |             stxddependencies             
+ stxname | stxkeys |             stxddependencies
 ---------+---------+------------------------------------------
  stts    | 1 5     | {"1 => 5": 1.000000, "5 => 1": 0.423130}
 (1 row)
@@ -1367,7 +1367,7 @@ ANALYZE zipcodes;
 SELECT m.* FROM pg_statistic_ext join pg_statistic_ext_data on (oid = stxoid),
                 pg_mcv_list_items(stxdmcv) m WHERE stxname = 'stts3';
 
- index |         values         | nulls | frequency | base_frequency 
+ index |         values         | nulls | frequency | base_frequency
 -------+------------------------+-------+-----------+----------------
      0 | {Washington, DC}       | {f,f} |  0.003467 |        2.7e-05
      1 | {Apo, AE}              | {f,f} |  0.003067 |        1.9e-05

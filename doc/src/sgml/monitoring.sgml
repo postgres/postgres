@@ -2302,7 +2302,7 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
 
 <programlisting>
 SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event is NOT NULL;
- pid  | wait_event_type | wait_event 
+ pid  | wait_event_type | wait_event
 ------+-----------------+------------
  2540 | Lock            | relation
  6644 | LWLock          | ProcArray

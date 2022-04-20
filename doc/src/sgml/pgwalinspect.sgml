@@ -108,7 +108,7 @@
       follows:
 <screen>
 postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_type, record_length, main_data_length, fpi_length, description from pg_get_wal_records_info('0/14F9A30', '0/15011D7');
- start_lsn |  end_lsn  | prev_lsn  | xid | resource_manager | record_type  | record_length | main_data_length | fpi_length |     description     
+ start_lsn |  end_lsn  | prev_lsn  | xid | resource_manager | record_type  | record_length | main_data_length | fpi_length |     description
 -----------+-----------+-----------+-----+------------------+--------------+---------------+------------------+------------+---------------------
  0/14FA118 | 0/14FB4B0 | 0/14F9958 | 725 | Btree            | INSERT_LEAF  |          5013 |                2 |       4960 | off 246
  0/14FB4B0 | 0/14FD050 | 0/14FA118 | 725 | Btree            | INSERT_LEAF  |          7045 |                2 |       6992 | off 130
@@ -189,7 +189,7 @@ postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_ty
       follows:
 <screen>
 postgres=# select * from pg_get_wal_stats('0/12FBA30', '0/15011D7') where count > 0;
- resource_manager/record_type | count | count_percentage | record_size | record_size_percentage | fpi_size | fpi_size_percentage | combined_size | combined_size_percentage 
+ resource_manager/record_type | count | count_percentage | record_size | record_size_percentage | fpi_size | fpi_size_percentage | combined_size | combined_size_percentage
 ------------------------------+-------+------------------+-------------+------------------------+----------+---------------------+---------------+--------------------------
  XLOG                         |    10 |       0.10871929 |         796 |            0.052369177 |      352 |         0.061031006 |          1148 |              0.054751817
  Transaction                  |   187 |        2.0330508 |       62773 |              4.1298623 |        0 |                   0 |         62773 |                2.9938467
@@ -206,7 +206,7 @@ With <replaceable>per_record</replaceable> passed as <literal>true</literal>:
 
 <screen>
 postgres=# select * from pg_get_wal_stats('0/14AFC30', '0/15011D7', true) where count > 0;
- resource_manager/record_type | count | count_percentage | record_size | record_size_percentage | fpi_size | fpi_size_percentage | combined_size | combined_size_percentage 
+ resource_manager/record_type | count | count_percentage | record_size | record_size_percentage | fpi_size | fpi_size_percentage | combined_size | combined_size_percentage
 ------------------------------+-------+------------------+-------------+------------------------+----------+---------------------+---------------+--------------------------
  XLOG/CHECKPOINT_SHUTDOWN     |     1 |       0.32894737 |         114 |             0.22891566 |        0 |                   0 |           114 |               0.03534489
  XLOG/CHECKPOINT_ONLINE       |     4 |        1.3157895 |         456 |             0.91566265 |        0 |                   0 |           456 |               0.14137957

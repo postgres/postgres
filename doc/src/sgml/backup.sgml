@@ -929,7 +929,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      <filename>backup_label</filename> in the root directory of the backup. The
      third field should be written to a file named
      <filename>tablespace_map</filename> unless the field is empty. These files are
-     vital to the backup working and must be written byte for byte without 
+     vital to the backup working and must be written byte for byte without
      modification, which may require opening the file in binary mode.
     </para>
    </listitem>

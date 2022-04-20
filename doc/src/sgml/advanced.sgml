@@ -344,7 +344,7 @@ SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM emps
 </programlisting>
 
 <screen>
-  depname  | empno | salary |          avg          
+  depname  | empno | salary |          avg
 -----------+-------+--------+-----------------------
  develop   |    11 |   5200 | 5020.0000000000000000
  develop   |     7 |   4200 | 5020.0000000000000000
@@ -394,7 +394,7 @@ FROM empsalary;
 </programlisting>
 
 <screen>
-  depname  | empno | salary | rank 
+  depname  | empno | salary | rank
 -----------+-------+--------+------
  develop   |     8 |   6000 |    1
  develop   |    10 |   5200 |    2
@@ -458,7 +458,7 @@ SELECT salary, sum(salary) OVER () FROM empsalary;
 </programlisting>
 
 <screen>
- salary |  sum  
+ salary |  sum
 --------+-------
    5200 | 47100
    5000 | 47100
@@ -487,7 +487,7 @@ SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;
 </programlisting>
 
 <screen>
- salary |  sum  
+ salary |  sum
 --------+-------
    3500 |  3500
    3900 |  7400

@@ -116,7 +116,7 @@ SELECT 10000000
    A sequential scan over this large table takes a long time:
 <programlisting>
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                              QUERY PLAN                                              
+                                              QUERY PLAN
 -------------------------------------------------------------------&zwsp;-----------------------------------
  Seq Scan on tbloom  (cost=0.00..2137.14 rows=3 width=24) (actual time=16.971..16.971 rows=0 loops=1)
    Filter: ((i2 = 898732) AND (i5 = 123451))
@@ -139,7 +139,7 @@ CREATE INDEX
  3976 kB
 (1 row)
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                              QUERY PLAN                                              
+                                              QUERY PLAN
 -------------------------------------------------------------------&zwsp;-----------------------------------
  Seq Scan on tbloom  (cost=0.00..2137.00 rows=2 width=24) (actual time=12.805..12.805 rows=0 loops=1)
    Filter: ((i2 = 898732) AND (i5 = 123451))
@@ -162,7 +162,7 @@ CREATE INDEX
  1584 kB
 (1 row)
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                     QUERY PLAN                                                      
+                                                     QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------------------------------------------------
  Bitmap Heap Scan on tbloom  (cost=1792.00..1799.69 rows=2 width=24) (actual time=0.388..0.388 rows=0 loops=1)
    Recheck Cond: ((i2 = 898732) AND (i5 = 123451))
@@ -195,7 +195,7 @@ CREATE INDEX
 =# CREATE INDEX btreeidx6 ON tbloom (i6);
 CREATE INDEX
 =# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
-                                                        QUERY PLAN                                                         
+                                                        QUERY PLAN
 -------------------------------------------------------------------&zwsp;--------------------------------------------------------
  Bitmap Heap Scan on tbloom  (cost=24.34..32.03 rows=2 width=24) (actual time=0.028..0.029 rows=0 loops=1)
    Recheck Cond: ((i5 = 123451) AND (i2 = 898732))

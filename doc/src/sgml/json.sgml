@@ -200,13 +200,13 @@ SELECT '{"foo": [true, "bar"], "tags": {"a": 1, "b": null}}'::json;
    details such as whitespace.  For example, note the differences here:
 <programlisting>
 SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::json;
-                      json                       
+                      json
 -------------------------------------------------
  {"bar": "baz", "balance": 7.77, "active":false}
 (1 row)
 
 SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;
-                      jsonb                       
+                      jsonb
 --------------------------------------------------
  {"bar": "baz", "active": false, "balance": 7.77}
 (1 row)
@@ -218,7 +218,7 @@ SELECT '{"bar": "baz", "balance": 7.77, "active":false}'::jsonb;
    example:
 <programlisting>
 SELECT '{"reading": 1.230e-5}'::json, '{"reading": 1.230e-5}'::jsonb;
-         json          |          jsonb          
+         json          |          jsonb
 -----------------------+-------------------------
  {"reading": 1.230e-5} | {"reading": 0.00001230}
 (1 row)

@@ -4992,7 +4992,7 @@ testdb=&gt; <userinput>\d my_table</userinput>
  Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
  first  | integer |           | not null | 0
- second | text    |           |          | 
+ second | text    |           |          |
 </programlisting>
   Now we change the prompt to something more interesting:
 <programlisting>
@@ -5123,7 +5123,7 @@ testdb=&gt; <userinput>\df int*pl * bigint</userinput>
   with the <command>\crosstabview</command> command:
 <programlisting>
 testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;</userinput>
- first | second | gt2 
+ first | second | gt2
 -------+--------+-----
      1 | one    | f
      2 | two    | f
@@ -5132,11 +5132,11 @@ testdb=&gt; <userinput>SELECT first, second, first &gt; 2 AS gt2 FROM my_table;<
 (4 rows)
 
 testdb=&gt; <userinput>\crosstabview first second</userinput>
- first | one | two | three | four 
+ first | one | two | three | four
 -------+-----+-----+-------+------
-     1 | f   |     |       | 
-     2 |     | f   |       | 
-     3 |     |     | t     | 
+     1 | f   |     |       |
+     2 |     | f   |       |
+     3 |     |     | t     |
      4 |     |     |       | t
 (4 rows)
 </programlisting>
@@ -5148,7 +5148,7 @@ testdb=&gt; <userinput>SELECT t1.first as "A", t2.first+100 AS "B", t1.first*(t2
 testdb(&gt; <userinput>row_number() over(order by t2.first) AS ord</userinput>
 testdb(&gt; <userinput>FROM my_table t1 CROSS JOIN my_table t2 ORDER BY 1 DESC</userinput>
 testdb(&gt; <userinput>\crosstabview "A" "B" "AxB" ord</userinput>
- A | 101 | 102 | 103 | 104 
+ A | 101 | 102 | 103 | 104
 ---+-----+-----+-----+-----
  4 | 404 | 408 | 412 | 416
  3 | 303 | 306 | 309 | 312

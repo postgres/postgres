@@ -1010,7 +1010,7 @@ VACUUM ANALYZE wrd;
 <programlisting>
 SELECT count(*) FROM words WHERE word = 'caterpiler';
 
- count 
+ count
 -------
      0
 (1 row)
@@ -1047,7 +1047,7 @@ SELECT count(*) FROM words WHERE word = 'caterpiler';
 <programlisting>
 SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
 
-     word     
+     word
 ---------------
  cater
  caterpillar
@@ -1337,7 +1337,7 @@ UPDATE shoelace_data SET sl_avail = 6 WHERE sl_name = 'sl7';
 <programlisting>
 SELECT * FROM shoelace_log;
 
- sl_name | sl_avail | log_who | log_when                        
+ sl_name | sl_avail | log_who | log_when
 ---------+----------+---------+----------------------------------
  sl7     |        6 | Al      | Tue Oct 20 16:14:45 1998 MET DST
 (1 row)
@@ -1718,7 +1718,7 @@ SELECT * FROM shoelace ORDER BY sl_name;
 
 SELECT * FROM shoelace_log;
 
- sl_name | sl_avail | log_who| log_when                        
+ sl_name | sl_avail | log_who| log_when
 ---------+----------+--------+----------------------------------
  sl7     |        6 | Al     | Tue Oct 20 19:14:45 1998 MET DST
  sl3     |       10 | Al     | Tue Oct 20 19:25:16 1998 MET DST

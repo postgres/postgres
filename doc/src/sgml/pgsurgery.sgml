@@ -39,9 +39,9 @@ ERROR:  could not access status of transaction 4007513275
 DETAIL:  Could not open file "pg_xact/0EED": No such file or directory.
 
 test=# select heap_force_kill('t1'::regclass, ARRAY['(0, 1)']::tid[]);
- heap_force_kill 
+ heap_force_kill
 -----------------
- 
+
 (1 row)
 
 test=# select * from t1 where ctid = '(0, 1)';
@@ -71,15 +71,15 @@ ERROR:  found xmin 507 from before relfrozenxid 515
 CONTEXT:  while scanning block 0 of relation "public.t1"
 
 test=# select ctid from t1 where xmin = 507;
- ctid  
+ ctid
 -------
  (0,3)
 (1 row)
 
 test=# select heap_force_freeze('t1'::regclass, ARRAY['(0, 3)']::tid[]);
- heap_force_freeze 
+ heap_force_freeze
 -------------------
- 
+
 (1 row)
 
 test=# select ctid from t1 where xmin = 2;

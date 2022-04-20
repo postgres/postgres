@@ -1089,7 +1089,7 @@ ExecForeignTruncate(List *rels,
      requested in the original <command>TRUNCATE</command> command,
      respectively.
     </para>
-    
+
     <para>
      If <literal>restart_seqs</literal> is <literal>true</literal>,
      the original <command>TRUNCATE</command> command requested the

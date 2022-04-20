@@ -309,7 +309,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    reindexed in a separate transaction. Those commands cannot be used inside
    a transaction block when working on a partitioned table or index.
   </para>
-  
+
   <para>
    When using the <literal>TABLESPACE</literal> clause with
    <command>REINDEX</command> on a partitioned index or table, only the
@@ -329,7 +329,7 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
    will be generated. Indexes on TOAST tables are rebuilt, but not moved
    to the new tablespace.
   </para>
-   
+
   <refsect2 id="sql-reindex-concurrently" xreflabel="Rebuilding Indexes Concurrently">
    <title>Rebuilding Indexes Concurrently</title>
 

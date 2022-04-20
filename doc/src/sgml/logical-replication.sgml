@@ -118,7 +118,7 @@
    any combination of <command>INSERT</command>, <command>UPDATE</command>,
    <command>DELETE</command>, and <command>TRUNCATE</command>, similar to how triggers are fired by
    particular event types.  By default, all operation types are replicated.
-   (Row filters have no effect for <command>TRUNCATE</command>. See 
+   (Row filters have no effect for <command>TRUNCATE</command>. See
    <xref linkend="logical-replication-row-filter"/>).
   </para>
 
@@ -324,7 +324,7 @@
 
   <para>
    By default, all data from all published tables will be replicated to the
-   appropriate subscribers. The replicated data can be reduced by using a 
+   appropriate subscribers. The replicated data can be reduced by using a
    <firstterm>row filter</firstterm>. A user might choose to use row filters
    for behavioral, security or performance reasons. If a published table sets a
    row filter, a row is replicated only if its data satisfies the row filter
@@ -533,14 +533,14 @@ CREATE PUBLICATION
 <programlisting>
 test_pub=# \dRp+
                                Publication p1
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
 ----------+------------+---------+---------+---------+-----------+----------
  postgres | f          | t       | t       | t       | t         | f
 Tables:
     "public.t1" WHERE ((a > 5) AND (c = 'NSW'::text))
 
                                Publication p2
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
 ----------+------------+---------+---------+---------+-----------+----------
  postgres | f          | t       | t       | t       | t         | f
 Tables:
@@ -548,7 +548,7 @@ Tables:
     "public.t2" WHERE (e = 99)
 
                                Publication p3
-  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root 
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
 ----------+------------+---------+---------+---------+-----------+----------
  postgres | f          | t       | t       | t       | t         | f
 Tables:
@@ -565,11 +565,11 @@ Tables:
 <programlisting>
 test_pub=# \d t1
                  Table "public.t1"
- Column |  Type   | Collation | Nullable | Default 
+ Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
- a      | integer |           | not null | 
- b      | integer |           |          | 
- c      | text    |           | not null | 
+ a      | integer |           | not null |
+ b      | integer |           |          |
+ c      | text    |           | not null |
 Indexes:
     "t1_pkey" PRIMARY KEY, btree (a, c)
 Publications:
@@ -578,11 +578,11 @@ Publications:
 
 test_pub=# \d t2
                  Table "public.t2"
- Column |  Type   | Collation | Nullable | Default 
+ Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
- d      | integer |           | not null | 
- e      | integer |           |          | 
- f      | integer |           |          | 
+ d      | integer |           | not null |
+ e      | integer |           |          |
+ f      | integer |           |          |
 Indexes:
     "t2_pkey" PRIMARY KEY, btree (d)
 Publications:
@@ -591,11 +591,11 @@ Publications:
 
 test_pub=# \d t3
                  Table "public.t3"
- Column |  Type   | Collation | Nullable | Default 
+ Column |  Type   | Collation | Nullable | Default
 --------+---------+-----------+----------+---------
- g      | integer |           | not null | 
- h      | integer |           |          | 
- i      | integer |           |          | 
+ g      | integer |           | not null |
+ h      | integer |           |          |
+ i      | integer |           |          |
 Indexes:
     "t3_pkey" PRIMARY KEY, btree (g)
 Publications:
@@ -636,7 +636,7 @@ INSERT 0 1
 test_pub=# INSERT INTO t1 VALUES (9, 109, 'NSW');
 INSERT 0 1
 
-test_pub=# SELECT * FROM t1; 
+test_pub=# SELECT * FROM t1;
  a |  b  |  c
 ---+-----+-----
  2 | 102 | NSW
@@ -651,7 +651,7 @@ test_pub=# SELECT * FROM t1;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM t1;
- a |  b  |  c  
+ a |  b  |  c
 ---+-----+-----
  6 | 106 | NSW
  9 | 109 | NSW
@@ -668,7 +668,7 @@ test_pub=# UPDATE t1 SET b = 999 WHERE a = 6;
 UPDATE 1
 
 test_pub=# SELECT * FROM t1;
- a |  b  |  c  
+ a |  b  |  c
 ---+-----+-----
  2 | 102 | NSW
  3 | 103 | QLD
@@ -682,7 +682,7 @@ test_pub=# SELECT * FROM t1;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM t1;
- a |  b  |  c  
+ a |  b  |  c
 ---+-----+-----
  9 | 109 | NSW
  6 | 999 | NSW
@@ -700,7 +700,7 @@ test_pub=# UPDATE t1 SET a = 555 WHERE a = 2;
 UPDATE 1
 
 test_pub=# SELECT * FROM t1;
-  a  |  b  |  c  
+  a  |  b  |  c
 -----+-----+-----
    3 | 103 | QLD
    4 | 104 | VIC
@@ -714,7 +714,7 @@ test_pub=# SELECT * FROM t1;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM t1;
-  a  |  b  |  c  
+  a  |  b  |  c
 -----+-----+-----
    9 | 109 | NSW
    6 | 999 | NSW
@@ -733,7 +733,7 @@ test_pub=# UPDATE t1 SET c = 'VIC' WHERE a = 9;
 UPDATE 1
 
 test_pub=# SELECT * FROM t1;
-  a  |  b  |  c  
+  a  |  b  |  c
 -----+-----+-----
    3 | 103 | QLD
    4 | 104 | VIC
@@ -747,7 +747,7 @@ test_pub=# SELECT * FROM t1;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM t1;
-  a  |  b  |  c  
+  a  |  b  |  c
 -----+-----+-----
    6 | 999 | NSW
  555 | 102 | NSW
@@ -806,7 +806,7 @@ test_pub=# INSERT INTO child VALUES (3), (5), (7);
 INSERT 0 3
 
 test_pub=# SELECT * FROM parent ORDER BY a;
- a 
+ a
 ---
  2
  3
@@ -818,7 +818,7 @@ test_pub=# SELECT * FROM parent ORDER BY a;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM parent ORDER BY a;
- a 
+ a
 ---
  2
  3
@@ -855,7 +855,7 @@ test_pub=# INSERT INTO child VALUES (3), (5), (7);
 INSERT 0 3
 
 test_pub=# SELECT * FROM parent ORDER BY a;
- a 
+ a
 ---
  2
  3
@@ -867,7 +867,7 @@ test_pub=# SELECT * FROM parent ORDER BY a;
 </programlisting>
 <programlisting>
 test_sub=# SELECT * FROM child ORDER BY a;
- a 
+ a
 ---
  5
  6

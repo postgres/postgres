@@ -729,7 +729,7 @@ OPTIONS (ADD password_required 'false');
       Example usage of the function:
 <screen>
 postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
- server_name | valid 
+ server_name | valid
 -------------+-------
  loopback1   | t
  loopback2   | f
@@ -754,7 +754,7 @@ postgres=# SELECT * FROM postgres_fdw_get_connections() ORDER BY 1;
       Example usage of the function:
 <screen>
 postgres=# SELECT postgres_fdw_disconnect('loopback1');
- postgres_fdw_disconnect 
+ postgres_fdw_disconnect
 -------------------------
  t
 </screen>
@@ -775,7 +775,7 @@ postgres=# SELECT postgres_fdw_disconnect('loopback1');
       Example usage of the function:
 <screen>
 postgres=# SELECT postgres_fdw_disconnect_all();
- postgres_fdw_disconnect_all 
+ postgres_fdw_disconnect_all
 -----------------------------
  t
 </screen>

@@ -160,8 +160,7 @@ pg_archivecleanup:  removing file "archive/00000001000000370000000E"
    <literal>never</literal>.
   </para>
  </refsect1>
- 
- 
+
  <refsect1>
   <title>Notes</title>
 
