@@ -4996,7 +4996,7 @@ set_deparse_plan(deparse_namespace *dpns, Plan *plan)
 	if (IsA(plan, ModifyTable))
 	{
 		if (((ModifyTable *) plan)->operation == CMD_MERGE)
-			dpns->inner_tlist = dpns->outer_plan->targetlist;
+			dpns->inner_tlist = dpns->outer_tlist;
 		else
 			dpns->inner_tlist = ((ModifyTable *) plan)->exclRelTlist;
 	}
