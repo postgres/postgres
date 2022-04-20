@@ -46,11 +46,32 @@ typedef struct vacuumingOptions
 	bool		process_toast;
 } vacuumingOptions;
 
+/*
+ * The kind of object use in the command line filter.
+ *   OBJFILTER_NONE: no filter used
+ *   OBJFILTER_TABLE: -t | --table
+ *   OBJFILTER_SCHEMA: -n | --schema
+ *   OBJFILTER_SCHEMA_EXCLUDE: -N | --exclude-schema
+ *   OBJFILTER_DATABASE: -d | --dbname
+ *   OBJFILTER_ALL: -a | --all
+ */
+typedef enum
+{
+	OBJFILTER_NONE,
+	OBJFILTER_ALL,
+	OBJFILTER_DATABASE,
+	OBJFILTER_TABLE,
+	OBJFILTER_SCHEMA,
+	OBJFILTER_SCHEMA_EXCLUDE
+} VacObjectFilter;
+
+VacObjectFilter objfilter = OBJFILTER_NONE;
+
 
 static void vacuum_one_database(ConnParams *cparams,
 								vacuumingOptions *vacopts,
 								int stage,
-								SimpleStringList *tables,
+								SimpleStringList *objects,
 								int concurrentCons,
 								const char *progname, bool echo, bool quiet);
 
@@ -68,10 +89,11 @@ static void run_vacuum_command(PGconn *conn, const char *sql, bool echo,
 
 static void help(const char *progname);
 
+void check_objfilter(VacObjectFilter curr_objfilter, VacObjectFilter curr_option);
+
 /* For analyze-in-stages mode */
 #define ANALYZE_NO_STAGE	-1
 #define ANALYZE_NUM_STAGES	3
-
 
 int
 main(int argc, char *argv[])
@@ -94,6 +116,8 @@ main(int argc, char *argv[])
 		{"verbose", no_argument, NULL, 'v'},
 		{"jobs", required_argument, NULL, 'j'},
 		{"parallel", required_argument, NULL, 'P'},
+		{"schema", required_argument, NULL, 'n'},
+		{"exclude-schema", required_argument, NULL, 'N'},
 		{"maintenance-db", required_argument, NULL, 2},
 		{"analyze-in-stages", no_argument, NULL, 3},
 		{"disable-page-skipping", no_argument, NULL, 4},
@@ -122,7 +146,7 @@ main(int argc, char *argv[])
 	vacuumingOptions vacopts;
 	bool		analyze_in_stages = false;
 	bool		alldb = false;
-	SimpleStringList tables = {NULL, NULL};
+	SimpleStringList objects = {NULL, NULL};
 	int			concurrentCons = 1;
 	int			tbl_count = 0;
 
@@ -140,7 +164,7 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "vacuumdb", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zZFat:fvj:P:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "h:p:U:wWeqd:zZFat:fvj:P:n:N:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -166,6 +190,8 @@ main(int argc, char *argv[])
 				quiet = true;
 				break;
 			case 'd':
+				check_objfilter(objfilter, OBJFILTER_DATABASE);
+				objfilter = OBJFILTER_DATABASE;
 				dbname = pg_strdup(optarg);
 				break;
 			case 'z':
@@ -178,11 +204,15 @@ main(int argc, char *argv[])
 				vacopts.freeze = true;
 				break;
 			case 'a':
+				check_objfilter(objfilter, OBJFILTER_ALL);
+				objfilter = OBJFILTER_ALL;
 				alldb = true;
 				break;
 			case 't':
 				{
-					simple_string_list_append(&tables, optarg);
+					check_objfilter(objfilter, OBJFILTER_TABLE);
+					simple_string_list_append(&objects, optarg);
+					objfilter = OBJFILTER_TABLE;
 					tbl_count++;
 					break;
 				}
@@ -202,6 +232,20 @@ main(int argc, char *argv[])
 									  &vacopts.parallel_workers))
 					exit(1);
 				break;
+			case 'n':			/* include schema(s) */
+				{
+					check_objfilter(objfilter, OBJFILTER_SCHEMA);
+					simple_string_list_append(&objects, optarg);
+					objfilter = OBJFILTER_SCHEMA;
+					break;
+				}
+			case 'N':			/* exclude schema(s) */
+				{
+					check_objfilter(objfilter, OBJFILTER_SCHEMA_EXCLUDE);
+					simple_string_list_append(&objects, optarg);
+					objfilter = OBJFILTER_SCHEMA_EXCLUDE;
+					break;
+				}
 			case 2:
 				maintenance_db = pg_strdup(optarg);
 				break;
@@ -347,17 +391,6 @@ main(int argc, char *argv[])
 
 	if (alldb)
 	{
-		if (dbname)
-		{
-			pg_log_error("cannot vacuum all databases and a specific one at the same time");
-			exit(1);
-		}
-		if (tables.head != NULL)
-		{
-			pg_log_error("cannot vacuum specific table(s) in all databases");
-			exit(1);
-		}
-
 		cparams.dbname = maintenance_db;
 
 		vacuum_all_databases(&cparams, &vacopts,
@@ -387,7 +420,7 @@ main(int argc, char *argv[])
 			{
 				vacuum_one_database(&cparams, &vacopts,
 									stage,
-									&tables,
+									&objects,
 									concurrentCons,
 									progname, echo, quiet);
 			}
@@ -395,12 +428,71 @@ main(int argc, char *argv[])
 		else
 			vacuum_one_database(&cparams, &vacopts,
 								ANALYZE_NO_STAGE,
-								&tables,
+								&objects,
 								concurrentCons,
 								progname, echo, quiet);
 	}
 
 	exit(0);
+}
+
+/*
+ * Verify that the filters used at command line are compatible
+ */
+void
+check_objfilter(VacObjectFilter curr_objfilter, VacObjectFilter curr_option)
+{
+	switch (curr_option)
+	{
+		case OBJFILTER_NONE:
+			break;
+		case OBJFILTER_DATABASE:
+			/* When filtering on database name, vacuum on all database is not allowed. */
+			if (curr_objfilter == OBJFILTER_ALL)
+				pg_fatal("cannot vacuum all databases and a specific one at the same time");
+			break;
+		case OBJFILTER_ALL:
+			/* When vacuuming all database, filter on database name is not allowed. */
+			if (curr_objfilter == OBJFILTER_DATABASE)
+				pg_fatal("cannot vacuum all databases and a specific one at the same time");
+			/* When vacuuming all database, filter on schema name is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA)
+				pg_fatal("cannot vacuum specific schema(s) in all databases");
+			/* When vacuuming all database, schema exclusion is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA_EXCLUDE)
+				pg_fatal("cannot exclude from vacuum specific schema(s) in all databases");
+			/* When vacuuming all database, filter on table name is not allowed. */
+			if (curr_objfilter == OBJFILTER_TABLE)
+				pg_fatal("cannot vacuum specific table(s) in all databases");
+			break;
+		case OBJFILTER_TABLE:
+			/* When filtering on table name, filter by schema is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA)
+				pg_fatal("cannot vacuum all tables in schema(s) and specific table(s) at the same time");
+			/* When filtering on table name, schema exclusion is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA_EXCLUDE)
+				pg_fatal("cannot vacuum specific table(s) and exclude specific schema(s) at the same time");
+			break;
+		case OBJFILTER_SCHEMA:
+			/* When filtering on schema name, filter by table is not allowed. */
+			if (curr_objfilter == OBJFILTER_TABLE)
+				pg_fatal("cannot vacuum all tables in schema(s) and specific table(s) at the same time");
+			/* When filtering on schema name, schema exclusion is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA_EXCLUDE)
+				pg_fatal("cannot vacuum all tables in schema(s) and exclude specific schema(s) at the same time");
+			/* filtering on schema name can not be use on all database. */
+			if (curr_objfilter == OBJFILTER_ALL)
+				pg_fatal("cannot vacuum specific schema(s) in all databases");
+			break;
+		case OBJFILTER_SCHEMA_EXCLUDE:
+			/* When filtering on schema exclusion, filter by table is not allowed. */
+			if (curr_objfilter == OBJFILTER_TABLE)
+				pg_fatal("cannot vacuum all tables in schema(s) and specific table(s) at the same time");
+			/* When filetring on schema exclusion, filter by schema is not allowed. */
+			if (curr_objfilter == OBJFILTER_SCHEMA)
+				pg_fatal("cannot vacuum all tables in schema(s) and exclude specific schema(s) at the same time");
+			break;
+	}
 }
 
 /*
@@ -420,7 +512,7 @@ static void
 vacuum_one_database(ConnParams *cparams,
 					vacuumingOptions *vacopts,
 					int stage,
-					SimpleStringList *tables,
+					SimpleStringList *objects,
 					int concurrentCons,
 					const char *progname, bool echo, bool quiet)
 {
@@ -435,7 +527,7 @@ vacuum_one_database(ConnParams *cparams,
 	int			i;
 	int			ntups;
 	bool		failed = false;
-	bool		tables_listed = false;
+	bool		objects_listed = false;
 	bool		has_where = false;
 	const char *initcmd;
 	const char *stage_commands[] = {
@@ -549,31 +641,41 @@ vacuum_one_database(ConnParams *cparams,
 	 * catalog query will fail.
 	 */
 	initPQExpBuffer(&catalog_query);
-	for (cell = tables ? tables->head : NULL; cell; cell = cell->next)
+	for (cell = objects ? objects->head : NULL; cell; cell = cell->next)
 	{
-		char	   *just_table;
-		const char *just_columns;
+		char	   *just_table = NULL;
+		const char *just_columns = NULL;
 
-		/*
-		 * Split relation and column names given by the user, this is used to
-		 * feed the CTE with values on which are performed pre-run validity
-		 * checks as well.  For now these happen only on the relation name.
-		 */
-		splitTableColumnsSpec(cell->val, PQclientEncoding(conn),
-							  &just_table, &just_columns);
-
-		if (!tables_listed)
+		if (!objects_listed)
 		{
 			appendPQExpBufferStr(&catalog_query,
-								 "WITH listed_tables (table_oid, column_list) "
+								 "WITH listed_objects (object_oid, column_list) "
 								 "AS (\n  VALUES (");
-			tables_listed = true;
+			objects_listed = true;
 		}
 		else
 			appendPQExpBufferStr(&catalog_query, ",\n  (");
 
-		appendStringLiteralConn(&catalog_query, just_table, conn);
-		appendPQExpBufferStr(&catalog_query, "::pg_catalog.regclass, ");
+
+		if (objfilter == OBJFILTER_SCHEMA || objfilter == OBJFILTER_SCHEMA_EXCLUDE)
+		{
+			appendStringLiteralConn(&catalog_query, cell->val, conn);
+			appendPQExpBufferStr(&catalog_query, "::pg_catalog.regnamespace::pg_catalog.oid, ");
+		}
+
+		if (objfilter == OBJFILTER_TABLE)
+		{
+			/*
+			 * Split relation and column names given by the user, this is used to
+			 * feed the CTE with values on which are performed pre-run validity
+			 * checks as well.  For now these happen only on the relation name.
+			 */
+			splitTableColumnsSpec(cell->val, PQclientEncoding(conn),
+								  &just_table, &just_columns);
+
+			appendStringLiteralConn(&catalog_query, just_table, conn);
+			appendPQExpBufferStr(&catalog_query, "::pg_catalog.regclass, ");
+		}
 
 		if (just_columns && just_columns[0] != '\0')
 			appendStringLiteralConn(&catalog_query, just_columns, conn);
@@ -586,13 +688,13 @@ vacuum_one_database(ConnParams *cparams,
 	}
 
 	/* Finish formatting the CTE */
-	if (tables_listed)
+	if (objects_listed)
 		appendPQExpBufferStr(&catalog_query, "\n)\n");
 
 	appendPQExpBufferStr(&catalog_query, "SELECT c.relname, ns.nspname");
 
-	if (tables_listed)
-		appendPQExpBufferStr(&catalog_query, ", listed_tables.column_list");
+	if (objects_listed)
+		appendPQExpBufferStr(&catalog_query, ", listed_objects.column_list");
 
 	appendPQExpBufferStr(&catalog_query,
 						 " FROM pg_catalog.pg_class c\n"
@@ -601,18 +703,24 @@ vacuum_one_database(ConnParams *cparams,
 						 " LEFT JOIN pg_catalog.pg_class t"
 						 " ON c.reltoastrelid OPERATOR(pg_catalog.=) t.oid\n");
 
-	/* Used to match the tables listed by the user */
-	if (tables_listed)
-		appendPQExpBufferStr(&catalog_query, " JOIN listed_tables"
-							 " ON listed_tables.table_oid OPERATOR(pg_catalog.=) c.oid\n");
+	/* Used to match the tables or schemas listed by the user */
+	if (objects_listed)
+	{
+		appendPQExpBufferStr(&catalog_query, " JOIN listed_objects"
+				 " ON listed_objects.object_oid OPERATOR(pg_catalog.=) ");
+		if (objfilter == OBJFILTER_TABLE)
+			appendPQExpBufferStr(&catalog_query, "c.oid\n");
+		if (objfilter == OBJFILTER_SCHEMA || objfilter == OBJFILTER_SCHEMA_EXCLUDE)
+			appendPQExpBufferStr(&catalog_query, "ns.oid\n");
+	}
 
 	/*
-	 * If no tables were listed, filter for the relevant relation types.  If
-	 * tables were given via --table, don't bother filtering by relation type.
-	 * Instead, let the server decide whether a given relation can be
-	 * processed in which case the user will know about it.
+	 * If no tables were listed, filter for the relevant relation types.
+	 * If tables were given via --table, don't bother filtering by relation
+	 * type.  Instead, let the server decide whether a given relation can
+	 * be processed in which case the user will know about it.
 	 */
-	if (!tables_listed)
+	if (!objects_listed || objfilter == OBJFILTER_SCHEMA)
 	{
 		appendPQExpBufferStr(&catalog_query, " WHERE c.relkind OPERATOR(pg_catalog.=) ANY (array["
 							 CppAsString2(RELKIND_RELATION) ", "
@@ -683,7 +791,7 @@ vacuum_one_database(ConnParams *cparams,
 							 fmtQualifiedId(PQgetvalue(res, i, 1),
 											PQgetvalue(res, i, 0)));
 
-		if (tables_listed && !PQgetisnull(res, i, 2))
+		if (objects_listed && !PQgetisnull(res, i, 2))
 			appendPQExpBufferStr(&buf, PQgetvalue(res, i, 2));
 
 		simple_string_list_append(&dbtables, buf.data);
@@ -1027,6 +1135,8 @@ help(const char *progname)
 	printf(_("      --no-index-cleanup          don't remove index entries that point to dead tuples\n"));
 	printf(_("      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"));
 	printf(_("      --no-truncate               don't truncate empty pages at the end of the table\n"));
+	printf(_("  -n, --schema=PATTERN            vacuum tables in the specified schema(s) only\n"));
+	printf(_("  -N, --exclude-schema=PATTERN    do NOT vacuum tables in the specified schema(s)\n"));
 	printf(_("  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"));
 	printf(_("  -q, --quiet                     don't write any messages\n"));
 	printf(_("      --skip-locked               skip relations that cannot be immediately locked\n"));

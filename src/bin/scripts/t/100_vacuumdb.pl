@@ -103,6 +103,8 @@ $node->safe_psql(
   CREATE TABLE funcidx (x int);
   INSERT INTO funcidx VALUES (0),(1),(2),(3);
   CREATE INDEX i0 ON funcidx ((f1(x)));
+  CREATE SCHEMA "Foo";
+  CREATE TABLE "Foo".bar(id int);
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
@@ -146,5 +148,15 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
 	qr/GREATEST.*relfrozenxid.*2147483001/,
 	'vacuumdb --table --min-xid-age');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--schema', '"Foo"', 'postgres' ],
+	qr/VACUUM "Foo".bar/,
+	'vacuumdb --schema schema only');
+$node->command_fails(
+	[ 'vacuumdb',   '-n', 'pg_catalog', '-t', 'pg_class', 'postgres' ],
+	'cannot vacuum all tables in schema(s) and specific table(s) at the same time');
+$node->command_fails(
+	[ 'vacuumdb',   '-n', 'pg_catalog', '-N',  '"Foo"', 'postgres' ],
+	'cannot use option -n | --schema and -N | --exclude-schema at the same time');
 
 done_testing();
