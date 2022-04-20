@@ -5757,6 +5757,20 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		MemoryContext oldcontext;
 		Interval	interval_zero;
 
+		/* Reject infinities in start and stop values */
+		if (TIMESTAMP_IS_NOBEGIN(start) ||
+			TIMESTAMP_IS_NOEND(start))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("start value cannot be infinity")));
+		if (TIMESTAMP_IS_NOBEGIN(finish) ||
+			TIMESTAMP_IS_NOEND(finish))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("stop value cannot be infinity")));
+
+		/* Interval doesn't (currently) have infinity, so nothing to check */
+
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
@@ -5836,6 +5850,20 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
 		Interval	interval_zero;
+
+		/* Reject infinities in start and stop values */
+		if (TIMESTAMP_IS_NOBEGIN(start) ||
+			TIMESTAMP_IS_NOEND(start))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("start value cannot be infinity")));
+		if (TIMESTAMP_IS_NOBEGIN(finish) ||
+			TIMESTAMP_IS_NOEND(finish))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("stop value cannot be infinity")));
+
+		/* Interval doesn't (currently) have infinity, so nothing to check */
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
