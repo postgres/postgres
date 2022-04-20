@@ -3452,7 +3452,6 @@ ExecModifyTable(PlanState *pstate)
 	ResultRelInfo *resultRelInfo;
 	PlanState  *subplanstate;
 	TupleTableSlot *slot;
-	TupleTableSlot *planSlot;
 	TupleTableSlot *oldSlot;
 	ItemPointerData tuple_ctid;
 	HeapTupleData oldtupdata;
@@ -3525,10 +3524,10 @@ ExecModifyTable(PlanState *pstate)
 		if (pstate->ps_ExprContext)
 			ResetExprContext(pstate->ps_ExprContext);
 
-		planSlot = ExecProcNode(subplanstate);
+		context.planSlot = ExecProcNode(subplanstate);
 
 		/* No more tuples to process? */
-		if (TupIsNull(planSlot))
+		if (TupIsNull(context.planSlot))
 			break;
 
 		/*
@@ -3542,7 +3541,7 @@ ExecModifyTable(PlanState *pstate)
 			bool		isNull;
 			Oid			resultoid;
 
-			datum = ExecGetJunkAttribute(planSlot, node->mt_resultOidAttno,
+			datum = ExecGetJunkAttribute(context.planSlot, node->mt_resultOidAttno,
 										 &isNull);
 			if (isNull)
 			{
@@ -3556,9 +3555,8 @@ ExecModifyTable(PlanState *pstate)
 				 */
 				if (operation == CMD_MERGE)
 				{
-					EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
+					EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-					context.planSlot = planSlot;
 					context.lockmode = 0;
 
 					ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
@@ -3589,13 +3587,13 @@ ExecModifyTable(PlanState *pstate)
 			 * ExecProcessReturning by IterateDirectModify, so no need to
 			 * provide it here.
 			 */
-			slot = ExecProcessReturning(resultRelInfo, NULL, planSlot);
+			slot = ExecProcessReturning(resultRelInfo, NULL, context.planSlot);
 
 			return slot;
 		}
 
-		EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
-		slot = planSlot;
+		EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
+		slot = context.planSlot;
 
 		tupleid = NULL;
 		oldtuple = NULL;
@@ -3637,9 +3635,8 @@ ExecModifyTable(PlanState *pstate)
 				{
 					if (operation == CMD_MERGE)
 					{
-						EvalPlanQualSetSlot(&node->mt_epqstate, planSlot);
+						EvalPlanQualSetSlot(&node->mt_epqstate, context.planSlot);
 
-						context.planSlot = planSlot;
 						context.lockmode = 0;
 
 						ExecMerge(&context, node->resultRelInfo, NULL, node->canSetTag);
@@ -3698,7 +3695,6 @@ ExecModifyTable(PlanState *pstate)
 		}
 
 		/* complete context setup */
-		context.planSlot = planSlot;
 		context.lockmode = 0;
 
 		switch (operation)
@@ -3707,7 +3703,7 @@ ExecModifyTable(PlanState *pstate)
 				/* Initialize projection info if first time for this table */
 				if (unlikely(!resultRelInfo->ri_projectNewInfoValid))
 					ExecInitInsertProjection(node, resultRelInfo);
-				slot = ExecGetInsertNewTuple(resultRelInfo, planSlot);
+				slot = ExecGetInsertNewTuple(resultRelInfo, context.planSlot);
 				slot = ExecInsert(&context, resultRelInfo, slot,
 								  node->canSetTag, NULL, NULL);
 				break;
@@ -3737,7 +3733,7 @@ ExecModifyTable(PlanState *pstate)
 													   oldSlot))
 						elog(ERROR, "failed to fetch tuple being updated");
 				}
-				slot = internalGetUpdateNewTuple(resultRelInfo, planSlot,
+				slot = internalGetUpdateNewTuple(resultRelInfo, context.planSlot,
 												 oldSlot, NULL);
 				context.GetUpdateNewTuple = internalGetUpdateNewTuple;
 				context.relaction = NULL;
