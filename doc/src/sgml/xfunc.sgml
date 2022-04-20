@@ -445,7 +445,7 @@ $$ LANGUAGE SQL;
 
     <para>
      If the final <literal>SELECT</literal> or <literal>RETURNING</literal>
-     clause in a <acronym>SQL</acronym> function does not return exactly
+     clause in an <acronym>SQL</acronym> function does not return exactly
      the function's declared result
      type, <productname>PostgreSQL</productname> will automatically cast
      the value to the required type, if that is possible with an implicit

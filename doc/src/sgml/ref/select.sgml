@@ -1715,7 +1715,7 @@ SELECT * FROM (SELECT * FROM mytable FOR UPDATE) ss ORDER BY column1;
    <para>
     At the <literal>REPEATABLE READ</literal> or <literal>SERIALIZABLE</literal>
     transaction isolation level this would cause a serialization failure (with
-    a <literal>SQLSTATE</literal> of <literal>'40001'</literal>), so there is
+    an <literal>SQLSTATE</literal> of <literal>'40001'</literal>), so there is
     no possibility of receiving rows out of order under these isolation levels.
    </para>
   </caution>

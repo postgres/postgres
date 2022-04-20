@@ -19007,7 +19007,7 @@ SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 1 ON ERROR);
     <listitem>
      <para>
        Defines whether to wrap a returned sequence of <acronym>SQL/JSON</acronym>
-       items into a <acronym>SQL/JSON</acronym> array.
+       items into an <acronym>SQL/JSON</acronym> array.
      </para>
        <variablelist>
         <varlistentry>
@@ -19819,7 +19819,7 @@ JSON_SERIALIZE (
      <title>Description</title>
 
      <para>
-      The <function>JSON_SERIALIZE</function> function transforms a SQL/JSON value
+      The <function>JSON_SERIALIZE</function> function transforms an SQL/JSON value
       into a character or binary string.
      </para>
     </sect5>
