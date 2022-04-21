@@ -2381,4 +2381,18 @@ sub corrupt_page_checksum
 
 =cut
 
+# support release 15+ perl module namespace
+
+package PostgreSQL::Test::Cluster; ## no critic (ProhibitMultiplePackages)
+
+sub new
+{
+	shift; # remove class param from args
+	return PostgresNode->get_new_node(@_);
+}
+
+no warnings 'once';
+
+*get_free_port = *PostgresNode::get_free_port;
+
 1;
