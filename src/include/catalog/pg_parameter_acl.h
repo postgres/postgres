@@ -48,9 +48,7 @@ CATALOG(pg_parameter_acl,8924,ParameterAclRelationId) BKI_SHARED_RELATION
  */
 typedef FormData_pg_parameter_acl *Form_pg_parameter_acl;
 
-DECLARE_TOAST(pg_parameter_acl, 8925, 8926);
-#define PgParameterAclToastTable 8925
-#define PgParameterAclToastIndex 8926
+DECLARE_TOAST_WITH_MACRO(pg_parameter_acl, 8925, 8926, PgParameterAclToastTable, PgParameterAclToastIndex);
 
 DECLARE_UNIQUE_INDEX(pg_parameter_acl_parname_index, 8927, ParameterAclParnameIndexId, on pg_parameter_acl using btree(parname text_ops));
 DECLARE_UNIQUE_INDEX_PKEY(pg_parameter_acl_oid_index, 8928, ParameterAclOidIndexId, on pg_parameter_acl using btree(oid oid_ops));

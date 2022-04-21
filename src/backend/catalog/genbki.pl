@@ -472,6 +472,16 @@ EOM
 	  $catalog->{rowtype_oid_macro}, $catalog->{rowtype_oid}
 	  if $catalog->{rowtype_oid_macro};
 
+	# Likewise for macros for toast and index OIDs
+	foreach my $toast (@{ $catalog->{toasting} })
+	{
+		printf $def "#define %s %s\n",
+		  $toast->{toast_oid_macro}, $toast->{toast_oid}
+		  if $toast->{toast_oid_macro};
+		printf $def "#define %s %s\n",
+		  $toast->{toast_index_oid_macro}, $toast->{toast_index_oid}
+		  if $toast->{toast_index_oid_macro};
+	}
 	foreach my $index (@{ $catalog->{indexing} })
 	{
 		printf $def "#define %s %s\n",
