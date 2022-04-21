@@ -2901,10 +2901,11 @@ dumpDatabase(Archive *fout)
 	qdatname = pg_strdup(fmtId(datname));
 
 	/*
-	 * Prepare the CREATE DATABASE command.  We must specify encoding, locale,
-	 * and tablespace since those can't be altered later.  Other DB properties
-	 * are left to the DATABASE PROPERTIES entry, so that they can be applied
-	 * after reconnecting to the target DB.
+	 * Prepare the CREATE DATABASE command.  We must specify OID (if we want
+	 * to preserve that), as well as the encoding, locale, and tablespace
+	 * since those can't be altered later.  Other DB properties are left to
+	 * the DATABASE PROPERTIES entry, so that they can be applied after
+	 * reconnecting to the target DB.
 	 */
 	if (dopt->binary_upgrade)
 	{

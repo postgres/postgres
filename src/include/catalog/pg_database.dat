@@ -12,7 +12,7 @@
 
 [
 
-{ oid => '1', oid_symbol => 'TemplateDbOid',
+{ oid => '1', oid_symbol => 'Template1DbOid',
   descr => 'default template for new databases',
   datname => 'template1', encoding => 'ENCODING', datlocprovider => 'LOCALE_PROVIDER', datistemplate => 't',
   datallowconn => 't', datconnlimit => '-1', datfrozenxid => '0',

@@ -59,11 +59,11 @@
 #include "sys/mman.h"
 #endif
 
-#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h" /* pgrminclude ignore */
 #include "catalog/pg_collation_d.h"
+#include "catalog/pg_database_d.h"	/* pgrminclude ignore */
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
@@ -1812,8 +1812,8 @@ make_template0(FILE *cmdfd)
 	 * be a little bit slower and make the new cluster a little bit bigger.
 	 */
 	static const char *const template0_setup[] = {
-		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false OID = "
-		CppAsString2(Template0ObjectId)
+		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false"
+		" OID = " CppAsString2(Template0DbOid)
 		" STRATEGY = file_copy;\n\n",
 
 		/*
@@ -1862,7 +1862,8 @@ make_postgres(FILE *cmdfd)
 	 * OID to postgres and select the file_copy strategy.
 	 */
 	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres OID = " CppAsString2(PostgresObjectId) " STRATEGY = file_copy;\n\n",
+		"CREATE DATABASE postgres OID = " CppAsString2(PostgresDbOid)
+		" STRATEGY = file_copy;\n\n",
 		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		NULL
 	};

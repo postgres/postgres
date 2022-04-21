@@ -4540,9 +4540,9 @@ BootStrapXLOG(void)
 	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.nextMultiOffset = 0;
 	checkPoint.oldestXid = FirstNormalTransactionId;
-	checkPoint.oldestXidDB = TemplateDbOid;
+	checkPoint.oldestXidDB = Template1DbOid;
 	checkPoint.oldestMulti = FirstMultiXactId;
-	checkPoint.oldestMultiDB = TemplateDbOid;
+	checkPoint.oldestMultiDB = Template1DbOid;
 	checkPoint.oldestCommitTsXid = InvalidTransactionId;
 	checkPoint.newestCommitTsXid = InvalidTransactionId;
 	checkPoint.time = (pg_time_t) time(NULL);

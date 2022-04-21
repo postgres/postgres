@@ -339,14 +339,18 @@ IsPinnedObject(Oid classId, Oid objectId)
 	 * robustness.
 	 */
 
-	/* template1 is not pinned */
-	if (classId == DatabaseRelationId &&
-		objectId == TemplateDbOid)
-		return false;
-
 	/* the public namespace is not pinned */
 	if (classId == NamespaceRelationId &&
 		objectId == PG_PUBLIC_NAMESPACE)
+		return false;
+
+	/*
+	 * Databases are never pinned.  It might seem that it'd be prudent to pin
+	 * at least template0; but we do this intentionally so that template0 and
+	 * template1 can be rebuilt from each other, thus letting them serve as
+	 * mutual backups (as long as you've not modified template1, anyway).
+	 */
+	if (classId == DatabaseRelationId)
 		return false;
 
 	/*

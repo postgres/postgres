@@ -170,6 +170,16 @@ foreach my $input_file (@header_files)
 				$changed = 1;
 			}
 		}
+		elsif (/^(DECLARE_OID_DEFINING_MACRO\(\s*\w+,\s*)(\d+)\)/)
+		{
+			if (exists $maphash{$2})
+			{
+				my $repl = $1 . $maphash{$2} . ")";
+				$line =~
+				  s/^DECLARE_OID_DEFINING_MACRO\(\s*\w+,\s*\d+\)/$repl/;
+				$changed = 1;
+			}
+		}
 		elsif ($line =~ m/^CATALOG\((\w+),(\d+),(\w+)\)/)
 		{
 			if (exists $maphash{$2})
