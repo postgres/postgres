@@ -209,7 +209,7 @@ pqParseInput3(PGconn *conn)
 				case 'C':		/* command complete */
 					if (pqGets(&conn->workBuffer, conn))
 						return;
-					if (conn->result == NULL)
+					if (!pgHavePendingResult(conn))
 					{
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_COMMAND_OK);
@@ -263,7 +263,7 @@ pqParseInput3(PGconn *conn)
 					}
 					break;
 				case 'I':		/* empty query */
-					if (conn->result == NULL)
+					if (!pgHavePendingResult(conn))
 					{
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_EMPTY_QUERY);
@@ -281,7 +281,7 @@ pqParseInput3(PGconn *conn)
 					if (conn->cmd_queue_head &&
 						conn->cmd_queue_head->queryclass == PGQUERY_PREPARE)
 					{
-						if (conn->result == NULL)
+						if (!pgHavePendingResult(conn))
 						{
 							conn->result = PQmakeEmptyPGresult(conn,
 															   PGRES_COMMAND_OK);
@@ -362,7 +362,7 @@ pqParseInput3(PGconn *conn)
 					if (conn->cmd_queue_head &&
 						conn->cmd_queue_head->queryclass == PGQUERY_DESCRIBE)
 					{
-						if (conn->result == NULL)
+						if (!pgHavePendingResult(conn))
 						{
 							conn->result = PQmakeEmptyPGresult(conn,
 															   PGRES_COMMAND_OK);
@@ -2133,7 +2133,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 				 * report COMMAND_OK.  Otherwise, the backend violated the
 				 * protocol, so complain.
 				 */
-				if (!(conn->result || conn->error_result))
+				if (!pgHavePendingResult(conn))
 				{
 					if (status == PGRES_COMMAND_OK)
 					{

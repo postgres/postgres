@@ -1196,6 +1196,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
  *	  Returns 1 if OK, 0 if error occurred.
  *
  * On error, *errmsgp can be set to an error string to be returned.
+ * (Such a string should already be translated via libpq_gettext().)
  * If it is left NULL, the error is presumed to be "out of memory".
  *
  * In single-row mode, we create a new result holding just the current row,
@@ -1986,7 +1987,7 @@ PQsetSingleRowMode(PGconn *conn)
 		(conn->cmd_queue_head->queryclass != PGQUERY_SIMPLE &&
 		 conn->cmd_queue_head->queryclass != PGQUERY_EXTENDED))
 		return 0;
-	if (conn->result || conn->error_result)
+	if (pgHavePendingResult(conn))
 		return 0;
 
 	/* OK, set flag */
@@ -2941,7 +2942,7 @@ PQfn(PGconn *conn,
 	}
 
 	if (conn->sock == PGINVALID_SOCKET || conn->asyncStatus != PGASYNC_IDLE ||
-		conn->result || conn->error_result)
+		pgHavePendingResult(conn))
 	{
 		appendPQExpBufferStr(&conn->errorMessage,
 							 libpq_gettext("connection in wrong state\n"));

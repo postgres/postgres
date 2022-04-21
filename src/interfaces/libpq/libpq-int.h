@@ -853,6 +853,14 @@ extern void pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message);
 	 (conn)->errorReported = 0)
 
 /*
+ * Check whether we have a PGresult pending to be returned --- either a
+ * constructed one in conn->result, or a "virtual" error result that we
+ * don't intend to materialize until the end of the query cycle.
+ */
+#define pgHavePendingResult(conn) \
+	((conn)->result != NULL || (conn)->error_result)
+
+/*
  * this is so that we can check if a connection is non-blocking internally
  * without the overhead of a function call
  */
