@@ -307,10 +307,10 @@ $ENV{MSBFLAGS}="/m";
     </varlistentry>
 
     <varlistentry>
-     <term><productname>ZSTD</productname></term>
+     <term><productname>Zstandard</productname></term>
      <listitem><para>
-      Required for supporting <productname>ZSTD</productname> compression
-      method. Binaries and source can be downloaded from
+      Required for supporting <productname>Zstandard</productname> compression.
+      Binaries and source can be downloaded from
       <ulink url="https://github.com/facebook/zstd/releases"></ulink>.
      </para></listitem>
     </varlistentry>

@@ -273,7 +273,7 @@ su - postgres
 
     <listitem>
      <para>
-      You need <productname>zstd</productname>, if you want to support
+      You need <productname>Zstandard</productname>, if you want to support
       compression of data with that method; see
       <xref linkend="guc-wal-compression"/>.
       The minimum required version is 1.4.0.
@@ -996,7 +996,7 @@ build-postgresql:
        <term><option>--with-zstd</option></term>
        <listitem>
         <para>
-         Build with <productname>ZSTD</productname> compression support.
+         Build with <productname>Zstandard</productname> compression support.
         </para>
        </listitem>
       </varlistentry>
