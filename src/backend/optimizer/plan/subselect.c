@@ -61,7 +61,6 @@ typedef struct inline_cte_walker_context
 {
 	const char *ctename;		/* name and relative level of target CTE */
 	int			levelsup;
-	int			refcount;		/* number of remaining references */
 	Query	   *ctequery;		/* query to substitute */
 } inline_cte_walker_context;
 
@@ -1157,13 +1156,9 @@ inline_cte(PlannerInfo *root, CommonTableExpr *cte)
 	context.ctename = cte->ctename;
 	/* Start at levelsup = -1 because we'll immediately increment it */
 	context.levelsup = -1;
-	context.refcount = cte->cterefcount;
 	context.ctequery = castNode(Query, cte->ctequery);
 
 	(void) inline_cte_walker((Node *) root->parse, &context);
-
-	/* Assert we replaced all references */
-	Assert(context.refcount == 0);
 }
 
 static bool
@@ -1226,9 +1221,6 @@ inline_cte_walker(Node *node, inline_cte_walker_context *context)
 			rte->coltypes = NIL;
 			rte->coltypmods = NIL;
 			rte->colcollations = NIL;
-
-			/* Count the number of replacements we've done */
-			context->refcount--;
 		}
 
 		return false;
