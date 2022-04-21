@@ -1051,7 +1051,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 		sortKey->ssup_nulls_first = nullsFirstFlags[i];
 		sortKey->ssup_attno = attNums[i];
 		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
+		sortKey->abbreviate = (i == 0 && state->haveDatum1);
 
 		PrepareSortSupportFromOrderingOp(sortOperators[i], sortKey);
 	}
@@ -1157,7 +1157,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 			(scanKey->sk_flags & SK_BT_NULLS_FIRST) != 0;
 		sortKey->ssup_attno = scanKey->sk_attno;
 		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
+		sortKey->abbreviate = (i == 0 && state->haveDatum1);
 
 		AssertState(sortKey->ssup_attno != 0);
 
@@ -1238,7 +1238,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 			(scanKey->sk_flags & SK_BT_NULLS_FIRST) != 0;
 		sortKey->ssup_attno = scanKey->sk_attno;
 		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
+		sortKey->abbreviate = (i == 0 && state->haveDatum1);
 
 		AssertState(sortKey->ssup_attno != 0);
 
@@ -1348,7 +1348,7 @@ tuplesort_begin_index_gist(Relation heapRel,
 		sortKey->ssup_nulls_first = false;
 		sortKey->ssup_attno = i + 1;
 		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
+		sortKey->abbreviate = (i == 0 && state->haveDatum1);
 
 		AssertState(sortKey->ssup_attno != 0);
 
