@@ -798,6 +798,37 @@ COMMIT;
 
 SELECT * FROM bug6051_3;
 
+-- check case where CTE reference is removed due to optimization
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+
 -- a truly recursive CTE in the same list
 WITH RECURSIVE t(a) AS (
 	SELECT 0

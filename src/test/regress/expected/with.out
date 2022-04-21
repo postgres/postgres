@@ -1707,6 +1707,70 @@ SELECT * FROM bug6051_3;
 ---
 (0 rows)
 
+-- check case where CTE reference is removed due to optimization
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+              QUERY PLAN              
+--------------------------------------
+ Subquery Scan on ss
+   Output: ss.q1
+   ->  Seq Scan on public.int8_tbl i8
+         Output: i8.q1, NULL::bigint
+(4 rows)
+
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+        q1        
+------------------
+              123
+              123
+ 4567890123456789
+ 4567890123456789
+ 4567890123456789
+(5 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+                 QUERY PLAN                  
+---------------------------------------------
+ Subquery Scan on ss
+   Output: ss.q1
+   ->  Seq Scan on public.int8_tbl i8
+         Output: i8.q1, NULL::bigint
+         CTE t_cte
+           ->  Seq Scan on public.int8_tbl t
+                 Output: t.q1, t.q2
+(7 rows)
+
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+        q1        
+------------------
+              123
+              123
+ 4567890123456789
+ 4567890123456789
+ 4567890123456789
+(5 rows)
+
 -- a truly recursive CTE in the same list
 WITH RECURSIVE t(a) AS (
 	SELECT 0

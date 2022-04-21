@@ -258,7 +258,8 @@ struct PlannerInfo
 
 	List	   *init_plans;		/* init SubPlans for query */
 
-	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs */
+	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs (or -1 if
+								 * no subplan was made for that CTE) */
 
 	List	   *multiexpr_params;	/* List of Lists of Params for MULTIEXPR
 									 * subquery outputs */
