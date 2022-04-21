@@ -79,7 +79,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
-      If the optional <literal>WHERE</literal> clause is specified, rows for
+      If the optional <literal>WHERE</literal> clause is specified, it defines a
+      <firstterm>row filter</firstterm> expression. Rows for
       which the <replaceable class="parameter">expression</replaceable>
       evaluates to false or null will not be published. Note that parentheses
       are required around the expression. It has no effect on
@@ -193,6 +194,11 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
          </para>
 
          <para>
+          This parameter also affects how row filters and column lists are
+          chosen for partitions; see below for details.
+         </para>
+
+         <para>
           If this is enabled, <literal>TRUNCATE</literal> operations performed
           directly on partitions are not replicated.
          </para>
@@ -241,21 +247,28 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   </para>
 
   <para>
-   A <literal>WHERE</literal> (i.e. row filter) expression must contain only
+   A row filter expression (i.e., the <literal>WHERE</literal> clause) must contain only
    columns that are covered by the <literal>REPLICA IDENTITY</literal>, in
    order for <command>UPDATE</command> and <command>DELETE</command> operations
    to be published. For publication of <command>INSERT</command> operations,
    any column may be used in the <literal>WHERE</literal> expression. The
-   <literal>WHERE</literal> clause allows simple expressions that don't have
+   row filter allows simple expressions that don't have
    user-defined functions, user-defined operators, user-defined types,
    user-defined collations, non-immutable built-in functions, or references to
    system columns.
-   If your publication contains a partitioned table, the publication parameter
-   <literal>publish_via_partition_root</literal> determines if it uses the
-   partition's row filter (if the parameter is false, the default) or the root
-   partitioned table's row filter.
+  </para>
+
+  <para>
+   For published partitioned tables, the row filter for each
+   partition is taken from the published partitioned table if the
+   publication parameter <literal>publish_via_partition_root</literal> is true,
+   or from the partition itself if it is false (the default).
    See <xref linkend="logical-replication-row-filter"/> for details about row
    filters.
+   Similarly, for published partitioned tables, the column list for each
+   partition is taken from the published partitioned table if the
+   publication parameter <literal>publish_via_partition_root</literal> is true,
+   or from the partition itself if it is false.
   </para>
 
   <para>
