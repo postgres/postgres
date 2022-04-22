@@ -399,7 +399,12 @@
     So the <command>UPDATE</command> is transformed into an <command>INSERT</command>.
    </para>
 
-   <table>
+   <para>
+    <xref linkend="logical-replication-row-filter-transformations-summary"/>
+    summarizes the applied transformations.
+   </para>
+
+   <table id="logical-replication-row-filter-transformations-summary">
     <title><command>UPDATE</command> Transformation Summary</title>
     <tgroup cols="3">
     <thead>

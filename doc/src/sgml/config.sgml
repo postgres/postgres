@@ -7663,11 +7663,12 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </para>
 
      <para>
-      Each log line is serialized as a JSON object with the following
-      set of keys and their associated values.
+      Each log line is serialized as a JSON object with the set of keys and
+      their associated values shown in <xref
+      linkend="runtime-config-logging-jsonlog-keys-values"/>.
      </para>
 
-     <table>
+     <table id="runtime-config-logging-jsonlog-keys-values">
       <title>Keys and values of JSON log entries</title>
       <tgroup cols="3">
        <thead>
