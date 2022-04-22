@@ -436,7 +436,11 @@ struct Tuplesortstate
 
 	/*
 	 * This variable is shared by the single-key MinimalTuple case and the
-	 * Datum case (which both use qsort_ssup()).  Otherwise it's NULL.
+	 * Datum case (which both use qsort_ssup()).  Otherwise, it's NULL.  The
+	 * presence of a value in this field is also checked by various sort
+	 * specialization functions as an optimization when comparing the leading
+	 * key in a tiebreak situation to determine if there are any subsequent
+	 * keys to sort on.
 	 */
 	SortSupport onlyKey;
 
@@ -701,6 +705,13 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	if (compare != 0)
 		return compare;
 
+	/*
+	 * No need to waste effort calling the tiebreak function when there are
+	 * no other keys to sort on.
+	 */
+	if (state->onlyKey != NULL)
+		return 0;
+
 	return state->comparetup(a, b, state);
 }
 
@@ -713,8 +724,16 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	compare = ApplySignedSortComparator(a->datum1, a->isnull1,
 										b->datum1, b->isnull1,
 										&state->sortKeys[0]);
+
 	if (compare != 0)
 		return compare;
+
+	/*
+	 * No need to waste effort calling the tiebreak function when there are
+	 * no other keys to sort on.
+	 */
+	if (state->onlyKey != NULL)
+		return 0;
 
 	return state->comparetup(a, b, state);
 }
@@ -728,8 +747,16 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	compare = ApplyInt32SortComparator(a->datum1, a->isnull1,
 										b->datum1, b->isnull1,
 										&state->sortKeys[0]);
+
 	if (compare != 0)
 		return compare;
+
+	/*
+	 * No need to waste effort calling the tiebreak function when there are
+	 * no other keys to sort on.
+	 */
+	if (state->onlyKey != NULL)
+		return 0;
 
 	return state->comparetup(a, b, state);
 }
