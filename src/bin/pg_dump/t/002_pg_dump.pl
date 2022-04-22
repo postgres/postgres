@@ -3983,18 +3983,6 @@ $node->command_fails_like(
 );
 
 $node->command_fails_like(
-	[ 'pg_dumpall', '--exclude-database', '.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern ".*"'
-);
-
-$node->command_fails_like(
-	[ 'pg_dumpall', '--exclude-database', '*.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \*\.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern "*.*"'
-);
-
-$node->command_fails_like(
 	[ 'pg_dumpall', '--exclude-database', 'myhost.mydb' ],
 	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
 	'pg_dumpall: option --exclude-database rejects multipart database names'
@@ -4007,12 +3995,6 @@ $node->command_ok(
 	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '"myhost.mydb"' ],
 	'pg_dumpall: option --exclude-database handles database names with embedded dots'
 );
-
-$node->command_ok(
-	[ 'pg_dumpall', '--exclude-database', '??*' ],
-	'pg_dumpall: option --exclude-database handles database name patterns'
-);
-
 
 #########################################
 # Test invalid multipart schema names
@@ -4042,21 +4024,9 @@ $node->command_fails_like(
 );
 
 $node->command_fails_like(
-	[ 'pg_dump', '--schema', '.*' ],
-	qr/pg_dump: error: cross-database references are not implemented: \.\*/,
-	'pg_dump: option --schema rejects degenerate two-part schema name: ".*"'
-);
-
-$node->command_fails_like(
 	[ 'pg_dump', '--schema', '..' ],
 	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\./,
 	'pg_dump: option --schema rejects degenerate three-part schema name: ".."'
-);
-
-$node->command_fails_like(
-	[ 'pg_dump', '--schema', '.*.*' ],
-	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\*\.\*/,
-	'pg_dump: option --schema rejects degenerate three-part schema pattern: ".*.*"'
 );
 
 #########################################
