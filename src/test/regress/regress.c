@@ -1219,12 +1219,12 @@ binary_coercible(PG_FUNCTION_ARGS)
 }
 
 /*
- * Return the column offset of the last data in the given array of
- * data types.  The input data types must be fixed-length data types.
+ * Return the length of the portion of a tuple consisting of the given array
+ * of data types.  The input data types must be fixed-length data types.
  */
-PG_FUNCTION_INFO_V1(get_column_offset);
+PG_FUNCTION_INFO_V1(get_columns_length);
 Datum
-get_column_offset(PG_FUNCTION_ARGS)
+get_columns_length(PG_FUNCTION_ARGS)
 {
 	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
 	Oid			*type_oids;
@@ -1249,14 +1249,10 @@ get_column_offset(PG_FUNCTION_ARGS)
 		get_typlenbyvalalign(typeoid, &typlen, &typbyval, &typalign);
 
 		/* the data type must be fixed-length */
-		if (!(typbyval || (typlen > 0)))
+		if (typlen < 0)
 			elog(ERROR, "type %u is not fixed-length data type", typeoid);
 
-		column_offset = att_align_nominal(column_offset, typalign);
-
-		/* not include the last type size */
-		if (i != (ntypes - 1))
-			column_offset += typlen;
+		column_offset = att_align_nominal(column_offset + typlen, typalign);
 	}
 
 	PG_RETURN_INT32(column_offset);
