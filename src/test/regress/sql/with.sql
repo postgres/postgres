@@ -464,6 +464,16 @@ with recursive search_graph(f, t, label) as (
 ) search depth first by f, t set seq
 select * from search_graph order by seq;
 
+-- check that we distinguish same CTE name used at different levels
+-- (this case could be supported, perhaps, but it isn't today)
+with recursive x(col) as (
+	select 1
+	union
+	(with x as (select * from x)
+	 select * from x)
+) search depth first by col set seq
+select * from x;
+
 -- test ruleutils and view expansion
 create temp view v_search as
 with recursive search_graph(f, t, label) as (
