@@ -383,19 +383,32 @@ rewriteSearchAndCycle(CommonTableExpr *cte)
 	newrte->eref = newrte->alias;
 
 	/*
-	 * Find the reference to our CTE in the range table
+	 * Find the reference to the recursive CTE in the right UNION subquery's
+	 * range table.  We expect it to be two levels up from the UNION subquery
+	 * (and must check that to avoid being fooled by sub-WITHs with the same
+	 * CTE name).  There will not be more than one such reference, because the
+	 * parser would have rejected that (see checkWellFormedRecursion() in
+	 * parse_cte.c).  However, the parser doesn't insist that the reference
+	 * appear in the UNION subquery's topmost range table, so we might fail to
+	 * find it at all.  That's an unimplemented case for the moment.
 	 */
 	for (int rti = 1; rti <= list_length(rte2->subquery->rtable); rti++)
 	{
 		RangeTblEntry *e = rt_fetch(rti, rte2->subquery->rtable);
 
-		if (e->rtekind == RTE_CTE && strcmp(cte->ctename, e->ctename) == 0)
+		if (e->rtekind == RTE_CTE &&
+			strcmp(cte->ctename, e->ctename) == 0 &&
+			e->ctelevelsup == 2)
 		{
 			cte_rtindex = rti;
 			break;
 		}
 	}
-	Assert(cte_rtindex > 0);
+	if (cte_rtindex <= 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("with a SEARCH or CYCLE clause, the recursive reference to WITH query \"%s\" must be at the top level of its right-hand SELECT",
+						cte->ctename)));
 
 	newsubquery = copyObject(rte2->subquery);
 	IncrementVarSublevelsUp((Node *) newsubquery, 1, 1);
