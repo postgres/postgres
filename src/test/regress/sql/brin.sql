@@ -449,7 +449,7 @@ SELECT brin_summarize_range('brin_summarize_idx', -1);
 SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
 
 -- test value merging in add_value
-CREATE TABLE brintest_2 (n numrange);
+CREATE UNLOGGED TABLE brintest_2 (n numrange);
 CREATE INDEX brinidx_2 ON brintest_2 USING brin (n);
 INSERT INTO brintest_2 VALUES ('empty');
 INSERT INTO brintest_2 VALUES (numrange(0, 2^1000::numeric));

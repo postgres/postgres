@@ -41,7 +41,7 @@ reindex index gist_pointidx;
 -- Test Index-only plans on GiST indexes
 --
 
-create table gist_tbl (b box, p point, c circle);
+create unlogged table gist_tbl (b box, p point, c circle);
 
 insert into gist_tbl
 select box(point(0.05*i, 0.05*i), point(0.05*i, 0.05*i)),

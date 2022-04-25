@@ -34,7 +34,7 @@ vacuum spgist_point_tbl;
 -- use box and && rather than point, so that rescan happens when the
 -- traverse stack is non-empty
 
-create table spgist_box_tbl(id serial, b box);
+create unlogged table spgist_box_tbl(id serial, b box);
 insert into spgist_box_tbl(b)
 select box(point(i,j),point(i+s,j+s))
   from generate_series(1,100,5) i,

@@ -74,7 +74,7 @@ select count(*) > 0 as ok from gin_test_tbl where i @> array[1];
 
 reset gin_fuzzy_search_limit;
 -- Test optimization of empty queries
-create temp table t_gin_test_tbl(i int4[], j int4[]);
+create unlogged table t_gin_test_tbl(i int4[], j int4[]);
 create index on t_gin_test_tbl using gin (i, j);
 insert into t_gin_test_tbl
 values
