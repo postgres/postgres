@@ -41,6 +41,7 @@ select count(*)
      3
 (1 row)
 
+drop table spgist_box_tbl;
 -- The point opclass's choose method only uses the spgMatchNode action,
 -- so the other actions are not tested by the above. Create an index using
 -- text opclass, which uses the others actions.
