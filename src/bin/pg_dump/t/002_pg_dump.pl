@@ -3601,8 +3601,8 @@ my $supports_lz4 = check_pg_config("#define HAVE_LIBLZ4 1");
 $node->psql('postgres', 'create database regress_pg_dump_test;');
 
 # Start with number of command_fails_like()*2 tests below (each
-# command_fails_like is actually 2 tests)
-my $num_tests = 42;
+# command_fails_like is actually 2 tests) + number of command_ok()*3
+my $num_tests = 33;
 
 foreach my $run (sort keys %pgdump_runs)
 {
@@ -3785,18 +3785,6 @@ command_fails_like(
 );
 
 command_fails_like(
-	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern ".*"'
-);
-
-command_fails_like(
-	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '*.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \*\.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern "*.*"'
-);
-
-command_fails_like(
 	[ 'pg_dumpall', '-p', "$port", '--exclude-database', 'myhost.mydb' ],
 	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
 	'pg_dumpall: option --exclude-database rejects multipart database names'
@@ -3809,12 +3797,6 @@ $node->command_ok(
 	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '"myhost.mydb"' ],
 	'pg_dumpall: option --exclude-database handles database names with embedded dots'
 );
-
-$node->command_ok(
-	[ 'pg_dumpall', '-p', "$port", '--exclude-database', '??*' ],
-	'pg_dumpall: option --exclude-database handles database name patterns'
-);
-
 
 #########################################
 # Test invalid multipart schema names
@@ -3844,21 +3826,9 @@ command_fails_like(
 );
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '--schema', '.*' ],
-	qr/pg_dump: error: cross-database references are not implemented: \.\*/,
-	'pg_dump: option --schema rejects degenerate two-part schema name: ".*"'
-);
-
-command_fails_like(
 	[ 'pg_dump', '-p', "$port", '--schema', '..' ],
 	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\./,
 	'pg_dump: option --schema rejects degenerate three-part schema name: ".."'
-);
-
-command_fails_like(
-	[ 'pg_dump', '-p', "$port", '--schema', '.*.*' ],
-	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\*\.\*/,
-	'pg_dump: option --schema rejects degenerate three-part schema pattern: ".*.*"'
 );
 
 #########################################
