@@ -25,6 +25,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+/* Inhibit mingw CRT's auto-globbing of command line arguments */
+#if defined(WIN32) && !defined(_MSC_VER)
+extern int _CRT_glob = 0; /* 0 turns off globbing; 1 turns it on */
+#endif
+
 #ifndef FRONTEND
 /* We use only 3- and 4-parameter elog calls in this file, for simplicity */
 /* NOTE: caller must provide gettext call around str! */
