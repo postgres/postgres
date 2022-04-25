@@ -1057,6 +1057,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	SetDatabasePath(fullpath);
+	pfree(fullpath);
 
 	/*
 	 * It's now possible to do real access to the system catalogs.

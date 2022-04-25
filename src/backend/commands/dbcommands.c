@@ -217,6 +217,8 @@ CreateDatabaseUsingWalLog(Oid src_dboid, Oid dst_dboid,
 		UnlockRelationId(&dstrelid, AccessShareLock);
 	}
 
+	pfree(srcpath);
+	pfree(dstpath);
 	list_free_deep(rnodelist);
 }
 
@@ -628,6 +630,8 @@ CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 			(void) XLogInsert(RM_DBASE_ID,
 							  XLOG_DBASE_CREATE_FILE_COPY | XLR_SPECIAL_REL_UPDATE);
 		}
+		pfree(srcpath);
+		pfree(dstpath);
 	}
 	table_endscan(scan);
 	table_close(rel, AccessShareLock);
@@ -2128,6 +2132,9 @@ movedb(const char *dbname, const char *tblspcname)
 	/* Now it's safe to release the database lock */
 	UnlockSharedObjectForSession(DatabaseRelationId, db_id, 0,
 								 AccessExclusiveLock);
+
+	pfree(src_dbpath);
+	pfree(dst_dbpath);
 }
 
 /* Error cleanup callback for movedb */
@@ -2141,6 +2148,8 @@ movedb_failure_callback(int code, Datum arg)
 	dstpath = GetDatabasePath(fparms->dest_dboid, fparms->dest_tsoid);
 
 	(void) rmtree(dstpath, true);
+
+	pfree(dstpath);
 }
 
 /*
@@ -3051,6 +3060,9 @@ dbase_redo(XLogReaderState *record)
 		 * We don't need to copy subdirectories
 		 */
 		copydir(src_path, dst_path, false);
+
+		pfree(src_path);
+		pfree(dst_path);
 	}
 	else if (info == XLOG_DBASE_CREATE_WAL_LOG)
 	{
@@ -3063,6 +3075,7 @@ dbase_redo(XLogReaderState *record)
 		/* Create the database directory with the version file. */
 		CreateDirAndVersionFile(dbpath, xlrec->db_id, xlrec->tablespace_id,
 								true);
+		pfree(dbpath);
 	}
 	else if (info == XLOG_DBASE_DROP)
 	{
