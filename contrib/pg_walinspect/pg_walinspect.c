@@ -91,7 +91,7 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 	XLogReaderState *xlogreader;
 
 	/*
-	 * Reading WAL below the first page of the first sgements isn't allowed.
+	 * Reading WAL below the first page of the first segments isn't allowed.
 	 * This is a bootstrap WAL page and the page_read callback fails to read
 	 * it.
 	 */
