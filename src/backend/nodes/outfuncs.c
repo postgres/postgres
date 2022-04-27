@@ -124,11 +124,18 @@ static void outChar(StringInfo str, char c);
 			appendStringInfo(str, " %u", node->fldname[i]); \
 	} while(0)
 
+/*
+ * This macro supports the case that the field is NULL.  For the other array
+ * macros, that is currently not needed.
+ */
 #define WRITE_INDEX_ARRAY(fldname, len) \
 	do { \
 		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		for (int i = 0; i < len; i++) \
-			appendStringInfo(str, " %u", node->fldname[i]); \
+		if (node->fldname) \
+			for (int i = 0; i < len; i++) \
+				appendStringInfo(str, " %u", node->fldname[i]); \
+		else \
+			appendStringInfoString(str, "<>"); \
 	} while(0)
 
 #define WRITE_INT_ARRAY(fldname, len) \
