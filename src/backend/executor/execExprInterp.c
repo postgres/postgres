@@ -4786,7 +4786,7 @@ ExecPrepareJsonItemCoercion(JsonbValue *item,
 					coercion = &coercions->timestamptz;
 					break;
 				default:
-					elog(ERROR, "unexpected jsonb datetime type oid %d",
+					elog(ERROR, "unexpected jsonb datetime type oid %u",
 						 item->val.datetime.typid);
 					return (Datum) 0;
 			}
