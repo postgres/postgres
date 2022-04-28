@@ -1112,9 +1112,9 @@ create_join_plan(PlannerInfo *root, JoinPath *best_path)
 
 /*
  * mark_async_capable_plan
- *		Check whether a given Path node is async-capable, and if so, mark the
- *		Plan node created from it as such and return true, otherwise return
- *		false.
+ *		Check whether the Plan node created from a Path node is async-capable,
+ *		and if so, mark the Plan node as such and return true, otherwise
+ *		return false.
  */
 static bool
 mark_async_capable_plan(Plan *plan, Path *path)
@@ -1124,6 +1124,13 @@ mark_async_capable_plan(Plan *plan, Path *path)
 		case T_SubqueryScanPath:
 			{
 				SubqueryScan *scan_plan = (SubqueryScan *) plan;
+
+				/*
+				 * If the generated plan node includes a gating Result node,
+				 * we can't execute it asynchronously.
+				 */
+				if (IsA(plan, Result))
+					return false;
 
 				/*
 				 * If a SubqueryScan node atop of an async-capable plan node
@@ -1139,6 +1146,13 @@ mark_async_capable_plan(Plan *plan, Path *path)
 			{
 				FdwRoutine *fdwroutine = path->parent->fdwroutine;
 
+				/*
+				 * If the generated plan node includes a gating Result node,
+				 * we can't execute it asynchronously.
+				 */
+				if (IsA(plan, Result))
+					return false;
+
 				Assert(fdwroutine != NULL);
 				if (fdwroutine->IsForeignPathAsyncCapable != NULL &&
 					fdwroutine->IsForeignPathAsyncCapable((ForeignPath *) path))
@@ -1148,11 +1162,17 @@ mark_async_capable_plan(Plan *plan, Path *path)
 		case T_ProjectionPath:
 
 			/*
-			 * If the generated plan node doesn't include a Result node,
-			 * consider it as async-capable if the subpath is async-capable.
+			 * If the generated plan node includes a Result node for
+			 * the projection, we can't execute it asynchronously.
 			 */
-			if (!IsA(plan, Result) &&
-				mark_async_capable_plan(plan,
+			if (IsA(plan, Result))
+				return false;
+
+			/*
+			 * create_projection_plan() would have pulled up the subplan, so
+			 * check the capability using the subpath.
+			 */
+			if (mark_async_capable_plan(plan,
 										((ProjectionPath *) path)->subpath))
 				return true;
 			return false;

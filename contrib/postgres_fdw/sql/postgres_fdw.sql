@@ -3410,6 +3410,19 @@ UNION ALL
 SELECT * FROM result_tbl ORDER BY a;
 DELETE FROM result_tbl;
 
+-- Disable async execution if we use gating Result nodes for pseudoconstant
+-- quals
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE CURRENT_USER = SESSION_USER;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+(SELECT * FROM async_p1 WHERE CURRENT_USER = SESSION_USER)
+UNION ALL
+(SELECT * FROM async_p2 WHERE CURRENT_USER = SESSION_USER);
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ((SELECT * FROM async_p1 WHERE b < 10) UNION ALL (SELECT * FROM async_p2 WHERE b < 10)) s WHERE CURRENT_USER = SESSION_USER;
+
 -- Test that pending requests are processed properly
 SET enable_mergejoin TO false;
 SET enable_hashjoin TO false;

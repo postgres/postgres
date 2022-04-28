@@ -10734,6 +10734,72 @@ SELECT * FROM result_tbl ORDER BY a;
 (12 rows)
 
 DELETE FROM result_tbl;
+-- Disable async execution if we use gating Result nodes for pseudoconstant
+-- quals
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM async_pt WHERE CURRENT_USER = SESSION_USER;
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Append
+   ->  Result
+         Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p1 async_pt_1
+               Output: async_pt_1.a, async_pt_1.b, async_pt_1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+   ->  Result
+         Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p2 async_pt_2
+               Output: async_pt_2.a, async_pt_2.b, async_pt_2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+   ->  Result
+         Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Seq Scan on public.async_p3 async_pt_3
+               Output: async_pt_3.a, async_pt_3.b, async_pt_3.c
+(18 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+(SELECT * FROM async_p1 WHERE CURRENT_USER = SESSION_USER)
+UNION ALL
+(SELECT * FROM async_p2 WHERE CURRENT_USER = SESSION_USER);
+                           QUERY PLAN                           
+----------------------------------------------------------------
+ Append
+   ->  Result
+         Output: async_p1.a, async_p1.b, async_p1.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p1
+               Output: async_p1.a, async_p1.b, async_p1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1
+   ->  Result
+         Output: async_p2.a, async_p2.b, async_p2.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p2
+               Output: async_p2.a, async_p2.b, async_p2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2
+(13 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM ((SELECT * FROM async_p1 WHERE b < 10) UNION ALL (SELECT * FROM async_p2 WHERE b < 10)) s WHERE CURRENT_USER = SESSION_USER;
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Append
+   ->  Result
+         Output: async_p1.a, async_p1.b, async_p1.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p1
+               Output: async_p1.a, async_p1.b, async_p1.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl1 WHERE ((b < 10))
+   ->  Result
+         Output: async_p2.a, async_p2.b, async_p2.c
+         One-Time Filter: (CURRENT_USER = SESSION_USER)
+         ->  Foreign Scan on public.async_p2
+               Output: async_p2.a, async_p2.b, async_p2.c
+               Remote SQL: SELECT a, b, c FROM public.base_tbl2 WHERE ((b < 10))
+(13 rows)
+
 -- Test that pending requests are processed properly
 SET enable_mergejoin TO false;
 SET enable_hashjoin TO false;
