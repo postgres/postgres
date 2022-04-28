@@ -93,7 +93,7 @@
  * ReorderBufferFinishPrepared.
  *
  * If the subscription has no tables then a two_phase tri-state PENDING is
- * left unchanged. This lets the user still do an ALTER TABLE REFRESH
+ * left unchanged. This lets the user still do an ALTER SUBSCRIPTION REFRESH
  * PUBLICATION which might otherwise be disallowed (see below).
  *
  * If ever a user needs to be aware of the tri-state value, they can fetch it
