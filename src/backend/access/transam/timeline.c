@@ -439,11 +439,14 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 
 	/*
 	 * Now move the completed history file into place with its final name.
-	 * The target file should not exist.
 	 */
 	TLHistoryFilePath(path, newTLI);
-	Assert(access(path, F_OK) != 0 && errno == ENOENT);
-	durable_rename(tmppath, path, ERROR);
+
+	/*
+	 * Perform the rename using link if available, paranoidly trying to avoid
+	 * overwriting an existing file (there shouldn't be one).
+	 */
+	durable_rename_excl(tmppath, path, ERROR);
 
 	/* The history file can be archived immediately. */
 	if (XLogArchivingActive())
@@ -514,11 +517,14 @@ writeTimeLineHistoryFile(TimeLineID tli, char *content, int size)
 
 	/*
 	 * Now move the completed history file into place with its final name.
-	 * The target file should not exist.
 	 */
 	TLHistoryFilePath(path, tli);
-	Assert(access(path, F_OK) != 0 && errno == ENOENT);
-	durable_rename(tmppath, path, ERROR);
+
+	/*
+	 * Perform the rename using link if available, paranoidly trying to avoid
+	 * overwriting an existing file (there shouldn't be one).
+	 */
+	durable_rename_excl(tmppath, path, ERROR);
 }
 
 /*
