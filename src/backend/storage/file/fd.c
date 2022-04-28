@@ -808,69 +808,6 @@ durable_unlink(const char *fname, int elevel)
 }
 
 /*
- * durable_rename_excl -- rename a file in a durable manner.
- *
- * Similar to durable_rename(), except that this routine tries (but does not
- * guarantee) not to overwrite the target file.
- *
- * Note that a crash in an unfortunate moment can leave you with two links to
- * the target file.
- *
- * Log errors with the caller specified severity.
- *
- * On Windows, using a hard link followed by unlink() causes concurrency
- * issues, while a simple rename() does not cause that, so be careful when
- * changing the logic of this routine.
- *
- * Returns 0 if the operation succeeded, -1 otherwise. Note that errno is not
- * valid upon return.
- */
-int
-durable_rename_excl(const char *oldfile, const char *newfile, int elevel)
-{
-	/*
-	 * Ensure that, if we crash directly after the rename/link, a file with
-	 * valid contents is moved into place.
-	 */
-	if (fsync_fname_ext(oldfile, false, false, elevel) != 0)
-		return -1;
-
-#ifdef HAVE_WORKING_LINK
-	if (link(oldfile, newfile) < 0)
-	{
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not link file \"%s\" to \"%s\": %m",
-						oldfile, newfile)));
-		return -1;
-	}
-	unlink(oldfile);
-#else
-	if (rename(oldfile, newfile) < 0)
-	{
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not rename file \"%s\" to \"%s\": %m",
-						oldfile, newfile)));
-		return -1;
-	}
-#endif
-
-	/*
-	 * Make change persistent in case of an OS crash, both the new entry and
-	 * its parent directory need to be flushed.
-	 */
-	if (fsync_fname_ext(newfile, false, false, elevel) != 0)
-		return -1;
-
-	/* Same for parent directory */
-	if (fsync_parent_path(newfile, elevel) != 0)
-		return -1;
-
-	return 0;
-}
-
-/*
  * InitFileAccess --- initialize this module during backend startup
  *
  * This is called during either normal or standalone backend start.
