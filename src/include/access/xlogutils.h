@@ -75,6 +75,12 @@ typedef enum
 								 * need to be replayed) */
 } XLogRedoAction;
 
+/* Private data of the read_local_xlog_page_no_wait callback. */
+typedef struct ReadLocalXLogPageNoWaitPrivate
+{
+	bool end_of_wal;	/* true, when end of WAL is reached */
+} ReadLocalXLogPageNoWaitPrivate;
+
 extern XLogRedoAction XLogReadBufferForRedo(XLogReaderState *record,
 											uint8 buffer_id, Buffer *buf);
 extern Buffer XLogInitBufferForRedo(XLogReaderState *record, uint8 block_id);

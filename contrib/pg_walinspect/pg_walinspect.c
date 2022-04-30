@@ -89,6 +89,7 @@ static XLogReaderState *
 InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 {
 	XLogReaderState *xlogreader;
+	ReadLocalXLogPageNoWaitPrivate *private_data;
 
 	/*
 	 * Reading WAL below the first page of the first segments isn't allowed.
@@ -100,11 +101,14 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 				(errmsg("could not read WAL at LSN %X/%X",
 						LSN_FORMAT_ARGS(lsn))));
 
+	private_data = (ReadLocalXLogPageNoWaitPrivate *)
+						palloc0(sizeof(ReadLocalXLogPageNoWaitPrivate));
+
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page_no_wait,
 											   .segment_open = &wal_segment_open,
 											   .segment_close = &wal_segment_close),
-									NULL);
+									private_data);
 
 	if (xlogreader == NULL)
 		ereport(ERROR,
@@ -132,7 +136,8 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
  *
  * We guard against ordinary errors trying to read WAL that hasn't been
  * written yet by limiting end_lsn to the flushed WAL, but that can also
- * encounter errors if the flush pointer falls in the middle of a record.
+ * encounter errors if the flush pointer falls in the middle of a record. In
+ * that case we'll return NULL.
  */
 static XLogRecord *
 ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
@@ -144,6 +149,15 @@ ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
 
 	if (record == NULL)
 	{
+		ReadLocalXLogPageNoWaitPrivate *private_data;
+
+		/* return NULL, if end of WAL is reached */
+		private_data = (ReadLocalXLogPageNoWaitPrivate *)
+							xlogreader->private_data;
+
+		if (private_data->end_of_wal)
+			return NULL;
+
 		if (errormsg)
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -246,7 +260,11 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 
 	xlogreader = InitXLogReaderState(lsn, &first_record);
 
-	(void) ReadNextXLogRecord(xlogreader, first_record);
+	if (!ReadNextXLogRecord(xlogreader, first_record))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not read WAL at %X/%X",
+						LSN_FORMAT_ARGS(first_record))));
 
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
@@ -254,6 +272,7 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 	GetWALRecordInfo(xlogreader, first_record, values, nulls,
 					 PG_GET_WAL_RECORD_INFO_COLS);
 
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
 	tuple = heap_form_tuple(tupdesc, values, nulls);
@@ -327,26 +346,19 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	MemSet(values, 0, sizeof(values));
 	MemSet(nulls, 0, sizeof(nulls));
 
-	for (;;)
+	while (ReadNextXLogRecord(xlogreader, first_record) &&
+		   xlogreader->EndRecPtr <= end_lsn)
 	{
-		(void) ReadNextXLogRecord(xlogreader, first_record);
+		GetWALRecordInfo(xlogreader, xlogreader->currRecPtr, values, nulls,
+						 PG_GET_WAL_RECORDS_INFO_COLS);
 
-		if (xlogreader->EndRecPtr <= end_lsn)
-		{
-			GetWALRecordInfo(xlogreader, xlogreader->currRecPtr, values, nulls,
-							 PG_GET_WAL_RECORDS_INFO_COLS);
-
-			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
-								 values, nulls);
-		}
-
-		/* if we read up to end_lsn, we're done */
-		if (xlogreader->EndRecPtr >= end_lsn)
-			break;
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
 
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
 #undef PG_GET_WAL_RECORDS_INFO_COLS
@@ -555,20 +567,15 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 
 	MemSet(&stats, 0, sizeof(stats));
 
-	for (;;)
+	while (ReadNextXLogRecord(xlogreader, first_record) &&
+		   xlogreader->EndRecPtr <= end_lsn)
 	{
-		(void) ReadNextXLogRecord(xlogreader, first_record);
-
-		if (xlogreader->EndRecPtr <= end_lsn)
-			XLogRecStoreStats(&stats, xlogreader);
-
-		/* if we read up to end_lsn, we're done */
-		if (xlogreader->EndRecPtr >= end_lsn)
-			break;
+		XLogRecStoreStats(&stats, xlogreader);
 
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
 	MemSet(values, 0, sizeof(values));

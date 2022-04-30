@@ -957,7 +957,18 @@ read_local_xlog_page_guts(XLogReaderState *state, XLogRecPtr targetPagePtr,
 
 			/* If asked, let's not wait for future WAL. */
 			if (!wait_for_wal)
+			{
+				ReadLocalXLogPageNoWaitPrivate *private_data;
+
+				/*
+				 * Inform the caller of read_local_xlog_page_no_wait that the
+				 * end of WAL has been reached.
+				 */
+				private_data = (ReadLocalXLogPageNoWaitPrivate *)
+										state->private_data;
+				private_data->end_of_wal = true;
 				break;
+			}
 
 			CHECK_FOR_INTERRUPTS();
 			pg_usleep(1000L);
