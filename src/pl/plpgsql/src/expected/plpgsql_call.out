@@ -123,6 +123,18 @@ DO
 LANGUAGE plpgsql
 $$
 DECLARE
+    x constant int := 3;
+    y int := 4;
+BEGIN
+    CALL test_proc6(2, x, y);  -- error because x is constant
+END;
+$$;
+ERROR:  variable "x" is declared CONSTANT
+CONTEXT:  PL/pgSQL function inline_code_block line 6 at CALL
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
     x int := 3;
     y int := 4;
 BEGIN

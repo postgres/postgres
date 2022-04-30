@@ -331,6 +331,7 @@ static void exec_prepare_plan(PLpgSQL_execstate *estate,
 static void exec_simple_check_plan(PLpgSQL_execstate *estate, PLpgSQL_expr *expr);
 static void exec_save_simple_expr(PLpgSQL_expr *expr, CachedPlan *cplan);
 static void exec_check_rw_parameter(PLpgSQL_expr *expr);
+static void exec_check_assignable(PLpgSQL_execstate *estate, int dno);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 								  PLpgSQL_expr *expr,
 								  Datum *result,
@@ -2342,9 +2343,13 @@ make_callstmt_target(PLpgSQL_execstate *estate, PLpgSQL_expr *expr)
 			if (IsA(n, Param))
 			{
 				Param	   *param = (Param *) n;
+				int			dno;
 
 				/* paramid is offset by 1 (see make_datum_param()) */
-				row->varnos[nfields++] = param->paramid - 1;
+				dno = param->paramid - 1;
+				/* must check assignability now, because grammar can't */
+				exec_check_assignable(estate, dno);
+				row->varnos[nfields++] = dno;
 			}
 			else
 			{
@@ -2926,10 +2931,14 @@ exec_stmt_forc(PLpgSQL_execstate *estate, PLpgSQL_stmt_forc *stmt)
 			 SPI_result_code_string(SPI_result));
 
 	/*
-	 * If cursor variable was NULL, store the generated portal name in it
+	 * If cursor variable was NULL, store the generated portal name in it,
+	 * after verifying it's okay to assign to.
 	 */
 	if (curname == NULL)
+	{
+		exec_check_assignable(estate, stmt->curvar);
 		assign_text_var(estate, curvar, portal->name);
+	}
 
 	/*
 	 * Clean up before entering exec_for_query
@@ -4688,13 +4697,18 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 										   stmt->cursor_options);
 
 		/*
-		 * If cursor variable was NULL, store the generated portal name in it.
+		 * If cursor variable was NULL, store the generated portal name in it,
+		 * after verifying it's okay to assign to.
+		 *
 		 * Note: exec_dynquery_with_params already reset the stmt_mcontext, so
 		 * curname is a dangling pointer here; but testing it for nullness is
 		 * OK.
 		 */
 		if (curname == NULL)
+		{
+			exec_check_assignable(estate, stmt->curvar);
 			assign_text_var(estate, curvar, portal->name);
+		}
 
 		return PLPGSQL_RC_OK;
 	}
@@ -4763,10 +4777,14 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 			 SPI_result_code_string(SPI_result));
 
 	/*
-	 * If cursor variable was NULL, store the generated portal name in it
+	 * If cursor variable was NULL, store the generated portal name in it,
+	 * after verifying it's okay to assign to.
 	 */
 	if (curname == NULL)
+	{
+		exec_check_assignable(estate, stmt->curvar);
 		assign_text_var(estate, curvar, portal->name);
+	}
 
 	/* If we had any transient data, clean it up */
 	exec_eval_cleanup(estate);
@@ -8239,6 +8257,43 @@ exec_check_rw_parameter(PLpgSQL_expr *expr)
 				return;
 			}
 		}
+	}
+}
+
+/*
+ * exec_check_assignable --- is it OK to assign to the indicated datum?
+ *
+ * This should match pl_gram.y's check_assignable().
+ */
+static void
+exec_check_assignable(PLpgSQL_execstate *estate, int dno)
+{
+	PLpgSQL_datum *datum;
+
+	Assert(dno >= 0 && dno < estate->ndatums);
+	datum = estate->datums[dno];
+	switch (datum->dtype)
+	{
+		case PLPGSQL_DTYPE_VAR:
+		case PLPGSQL_DTYPE_PROMISE:
+		case PLPGSQL_DTYPE_REC:
+			if (((PLpgSQL_variable *) datum)->isconst)
+				ereport(ERROR,
+						(errcode(ERRCODE_ERROR_IN_ASSIGNMENT),
+						 errmsg("variable \"%s\" is declared CONSTANT",
+								((PLpgSQL_variable *) datum)->refname)));
+			break;
+		case PLPGSQL_DTYPE_ROW:
+			/* always assignable; member vars were checked at compile time */
+			break;
+		case PLPGSQL_DTYPE_RECFIELD:
+			/* assignable if parent record is */
+			exec_check_assignable(estate,
+								  ((PLpgSQL_recfield *) datum)->recparentno);
+			break;
+		default:
+			elog(ERROR, "unrecognized dtype: %d", datum->dtype);
+			break;
 	}
 }
 
