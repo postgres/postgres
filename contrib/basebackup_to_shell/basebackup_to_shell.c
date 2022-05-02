@@ -86,6 +86,8 @@ _PG_init(void)
 							   0,
 							   NULL, NULL, NULL);
 
+	MarkGUCPrefixReserved("basebackup_to_shell");
+
 	BaseBackupAddTarget("shell", shell_check_detail, shell_get_sink);
 }
 
