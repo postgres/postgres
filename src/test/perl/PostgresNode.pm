@@ -2184,6 +2184,41 @@ sub wait_for_slot_catchup
 
 =pod
 
+=item $node->wait_for_log(regexp, offset)
+
+Waits for the contents of the server log file, starting at the given offset, to
+match the supplied regular expression.  Checks the entire log if no offset is
+given.  Times out after $TestLib::timeout_default seconds.
+
+If successful, returns the length of the entire log file, in bytes.
+
+=cut
+
+sub wait_for_log
+{
+	my ($self, $regexp, $offset) = @_;
+	$offset = 0 unless defined $offset;
+
+	my $max_attempts = 10 * $TestLib::timeout_default;
+	my $attempts     = 0;
+
+	while ($attempts < $max_attempts)
+	{
+		my $log = TestLib::slurp_file($self->logfile, $offset);
+
+		return $offset+length($log) if ($log =~ m/$regexp/);
+
+		# Wait 0.1 second before retrying.
+		usleep(100_000);
+
+		$attempts++;
+	}
+
+	croak "timed out waiting for match: $regexp";
+}
+
+=pod
+
 =item $node->query_hash($dbname, $query, @columns)
 
 Execute $query on $dbname, replacing any appearance of the string __COLUMNS__
