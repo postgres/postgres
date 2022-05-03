@@ -31,6 +31,7 @@ our @EXPORT = qw(
   system_or_bail
   system_log
   run_log
+  pump_until
 
   command_ok
   command_fails
@@ -230,6 +231,36 @@ sub run_log
 {
 	print("# Running: " . join(" ", @{ $_[0] }) . "\n");
 	return IPC::Run::run(@_);
+}
+
+=pod
+
+=item pump_until(proc, timeout, stream, until)
+
+Pump until string is matched on the specified stream, or timeout occurs.
+
+=cut
+
+sub pump_until
+{
+	my ($proc, $timeout, $stream, $until) = @_;
+	$proc->pump_nb();
+	while (1)
+	{
+		last if $$stream =~ /$until/;
+		if ($timeout->is_expired)
+		{
+			diag("pump_until: timeout expired when searching for \"$until\" with stream: \"$$stream\"");
+			return 0;
+		}
+		if (not $proc->pumpable())
+		{
+			diag("pump_until: process terminated unexpectedly when searching for \"$until\" with stream: \"$$stream\"");
+			return 0;
+		}
+		$proc->pump();
+	}
+	return 1;
 }
 
 # Generate a string made of the given range of ASCII characters
