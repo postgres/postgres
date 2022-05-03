@@ -26,6 +26,7 @@ our @EXPORT = qw(
   system_log
   run_log
   run_command
+  pump_until
 
   command_ok
   command_fails
