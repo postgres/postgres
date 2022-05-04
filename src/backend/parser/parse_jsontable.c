@@ -73,7 +73,7 @@ transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
 	JsonFuncExpr *jfexpr = makeNode(JsonFuncExpr);
 	JsonCommon *common = makeNode(JsonCommon);
 	JsonOutput *output = makeNode(JsonOutput);
-	JsonPathSpec pathspec;
+	char	   *pathspec;
 	JsonFormat *default_format;
 
 	jfexpr->op =

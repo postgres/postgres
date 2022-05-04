@@ -1620,12 +1620,6 @@ typedef enum JsonTableColumnType
 } JsonTableColumnType;
 
 /*
- * JsonPathSpec -
- *		representation of JSON path constant
- */
-typedef char *JsonPathSpec;
-
-/*
  * JsonOutput -
  *		representation of JSON output clause (RETURNING type [FORMAT format])
  */
@@ -1688,7 +1682,7 @@ typedef struct JsonTableColumn
 	JsonTableColumnType coltype;	/* column type */
 	char	   *name;				/* column name */
 	TypeName   *typeName;			/* column type name */
-	JsonPathSpec pathspec;			/* path specification, if any */
+	char	   *pathspec;			/* path specification, if any */
 	char	   *pathname;			/* path name, if any */
 	JsonFormat *format;				/* JSON format clause, if specified */
 	JsonWrapper	wrapper;			/* WRAPPER behavior for formatted columns */
