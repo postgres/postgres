@@ -14103,19 +14103,13 @@ $as_echo "$LZ4" >&6; }
 fi
 
 if test "$with_lz4" = yes; then
-  for ac_header in lz4.h
-do :
   ac_fn_c_check_header_mongrel "$LINENO" "lz4.h" "ac_cv_header_lz4_h" "$ac_includes_default"
 if test "x$ac_cv_header_lz4_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LZ4_H 1
-_ACEOF
 
 else
   as_fn_error $? "lz4.h header file is required for LZ4" "$LINENO" 5
 fi
 
-done
 
 fi
 
