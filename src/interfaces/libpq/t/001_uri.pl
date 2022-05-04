@@ -72,7 +72,7 @@ my @tests = (
 	],
 	[
 		q{postgresql://host/db?u%7aer=someotheruser&port=12345}, q{},
-		q{uri-regress: invalid URI query parameter: "uzer"},
+		q{libpq_uri_regress: invalid URI query parameter: "uzer"},
 	],
 	[
 		q{postgresql://host:12345?user=uri-user},
@@ -114,63 +114,63 @@ my @tests = (
 	],
 	[
 		q{postgresql://host?uzer=}, q{},
-		q{uri-regress: invalid URI query parameter: "uzer"},
+		q{libpq_uri_regress: invalid URI query parameter: "uzer"},
 	],
 	[
 		q{postgre://},
 		q{},
-		q{uri-regress: missing "=" after "postgre://" in connection info string},
+		q{libpq_uri_regress: missing "=" after "postgre://" in connection info string},
 	],
 	[
 		q{postgres://[::1},
 		q{},
-		q{uri-regress: end of string reached when looking for matching "]" in IPv6 host address in URI: "postgres://[::1"},
+		q{libpq_uri_regress: end of string reached when looking for matching "]" in IPv6 host address in URI: "postgres://[::1"},
 	],
 	[
 		q{postgres://[]},
 		q{},
-		q{uri-regress: IPv6 host address may not be empty in URI: "postgres://[]"},
+		q{libpq_uri_regress: IPv6 host address may not be empty in URI: "postgres://[]"},
 	],
 	[
 		q{postgres://[::1]z},
 		q{},
-		q{uri-regress: unexpected character "z" at position 17 in URI (expected ":" or "/"): "postgres://[::1]z"},
+		q{libpq_uri_regress: unexpected character "z" at position 17 in URI (expected ":" or "/"): "postgres://[::1]z"},
 	],
 	[
 		q{postgresql://host?zzz},
 		q{},
-		q{uri-regress: missing key/value separator "=" in URI query parameter: "zzz"},
+		q{libpq_uri_regress: missing key/value separator "=" in URI query parameter: "zzz"},
 	],
 	[
 		q{postgresql://host?value1&value2},
 		q{},
-		q{uri-regress: missing key/value separator "=" in URI query parameter: "value1"},
+		q{libpq_uri_regress: missing key/value separator "=" in URI query parameter: "value1"},
 	],
 	[
 		q{postgresql://host?key=key=value},
 		q{},
-		q{uri-regress: extra key/value separator "=" in URI query parameter: "key"},
+		q{libpq_uri_regress: extra key/value separator "=" in URI query parameter: "key"},
 	],
 	[
 		q{postgres://host?dbname=%XXfoo}, q{},
-		q{uri-regress: invalid percent-encoded token: "%XXfoo"},
+		q{libpq_uri_regress: invalid percent-encoded token: "%XXfoo"},
 	],
 	[
 		q{postgresql://a%00b},
 		q{},
-		q{uri-regress: forbidden value %00 in percent-encoded value: "a%00b"},
+		q{libpq_uri_regress: forbidden value %00 in percent-encoded value: "a%00b"},
 	],
 	[
 		q{postgresql://%zz}, q{},
-		q{uri-regress: invalid percent-encoded token: "%zz"},
+		q{libpq_uri_regress: invalid percent-encoded token: "%zz"},
 	],
 	[
 		q{postgresql://%1}, q{},
-		q{uri-regress: invalid percent-encoded token: "%1"},
+		q{libpq_uri_regress: invalid percent-encoded token: "%1"},
 	],
 	[
 		q{postgresql://%}, q{},
-		q{uri-regress: invalid percent-encoded token: "%"},
+		q{libpq_uri_regress: invalid percent-encoded token: "%"},
 	],
 	[ q{postgres://@host},   q{host='host' (inet)},   q{}, ],
 	[ q{postgres://host:/},  q{host='host' (inet)},   q{}, ],
@@ -224,7 +224,7 @@ sub test_uri
 
 	$expect{'exit'} = $expect{stderr} eq '';
 
-	my $cmd = [ 'uri-regress', $uri ];
+	my $cmd = [ 'libpq_uri_regress', $uri ];
 	$result{exit} = IPC::Run::run $cmd, '>', \$result{stdout}, '2>',
 	  \$result{stderr};
 

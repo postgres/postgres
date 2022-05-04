@@ -285,17 +285,17 @@ sub mkvcbuild
 	$libpqwalreceiver->AddReference($postgres, $libpq);
 
 	my $libpq_testclient =
-	  $solution->AddProject('testclient', 'exe', 'misc',
+	  $solution->AddProject('libpq_testclient', 'exe', 'misc',
 							'src/interfaces/libpq/test');
-	$libpq_testclient->AddFile('src/interfaces/libpq/test/testclient.c');
+	$libpq_testclient->AddFile('src/interfaces/libpq/test/libpq_testclient.c');
 	$libpq_testclient->AddIncludeDir('src/interfaces/libpq');
 	$libpq_testclient->AddReference($libpgport, $libpq);
 	$libpq_testclient->AddLibrary('ws2_32.lib');
 
 	my $libpq_uri_regress =
-	  $solution->AddProject('uri-regress', 'exe', 'misc',
+	  $solution->AddProject('libpq_uri_regress', 'exe', 'misc',
 							'src/interfaces/libpq/test');
-	$libpq_uri_regress->AddFile('src/interfaces/libpq/test/uri-regress.c');
+	$libpq_uri_regress->AddFile('src/interfaces/libpq/test/libpq_uri_regress.c');
 	$libpq_uri_regress->AddIncludeDir('src/interfaces/libpq');
 	$libpq_uri_regress->AddReference($libpgport, $libpq);
 	$libpq_uri_regress->AddLibrary('ws2_32.lib');

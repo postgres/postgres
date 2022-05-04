@@ -1,11 +1,11 @@
 /*
- * testclient.c
+ * libpq_testclient.c
  *		A test program for the libpq public API
  *
  * Copyright (c) 2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		src/interfaces/libpq/test/testclient.c
+ *		src/interfaces/libpq/test/libpq_testclient.c
  */
 
 #include "postgres_fe.h"

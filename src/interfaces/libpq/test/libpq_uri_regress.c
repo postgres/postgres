@@ -1,5 +1,5 @@
 /*
- * uri-regress.c
+ * libpq_uri_regress.c
  *		A test program for libpq URI format
  *
  * This is a helper for libpq conninfo regression testing.  It takes a single
@@ -10,7 +10,7 @@
  * Portions Copyright (c) 2012-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		src/interfaces/libpq/test/uri-regress.c
+ *		src/interfaces/libpq/test/libpq_uri_regress.c
  */
 
 #include "postgres_fe.h"
@@ -33,14 +33,14 @@ main(int argc, char *argv[])
 	opts = PQconninfoParse(argv[1], &errmsg);
 	if (opts == NULL)
 	{
-		fprintf(stderr, "uri-regress: %s", errmsg);
+		fprintf(stderr, "libpq_uri_regress: %s", errmsg);
 		return 1;
 	}
 
 	defs = PQconndefaults();
 	if (defs == NULL)
 	{
-		fprintf(stderr, "uri-regress: cannot fetch default options\n");
+		fprintf(stderr, "libpq_uri_regress: cannot fetch default options\n");
 		return 1;
 	}
 

@@ -6,7 +6,7 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 
 # Test PQsslAttribute(NULL, "library")
-my ($out, $err) = run_command(['testclient', '--ssl']);
+my ($out, $err) = run_command(['libpq_testclient', '--ssl']);
 
 if ($ENV{with_ssl} eq 'openssl')
 {

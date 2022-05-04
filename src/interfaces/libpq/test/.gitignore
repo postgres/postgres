@@ -1,2 +1,2 @@
-/testclient
-/uri-regress
+/libpq_testclient
+/libpq_uri_regress
