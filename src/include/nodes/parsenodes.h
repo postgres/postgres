@@ -1610,7 +1610,7 @@ typedef enum JsonQuotes
  * JsonTableColumnType -
  *		enumeration of JSON_TABLE column types
  */
-typedef enum
+typedef enum JsonTableColumnType
 {
 	JTC_FOR_ORDINALITY,
 	JTC_REGULAR,
