@@ -1,4 +1,4 @@
-# version 2021e
+# version 2022a
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -1111,9 +1111,10 @@ R P 2016 2018 - Mar Sa>=24 1 1 S
 R P 2016 2018 - O Sa>=24 1 0 -
 R P 2019 o - Mar 29 0 1 S
 R P 2019 o - O Sa>=24 0 0 -
-R P 2020 ma - Mar Sa>=24 0 1 S
+R P 2020 2021 - Mar Sa>=24 0 1 S
 R P 2020 o - O 24 1 0 -
-R P 2021 ma - O lastF 1 0 -
+R P 2021 ma - O F>=23 1 0 -
+R P 2022 ma - Mar Su>=25 0 1 S
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
 2 K EE%sT 1967 Jun 5
@@ -2431,8 +2432,8 @@ Z Europe/Simferopol 2:16:24 - LMT 1880
 1 c CE%sT 1944 Ap 13
 3 R MSK/MSD 1990
 3 - MSK 1990 Jul 1 2
-2 - EET 1992
-2 e EE%sT 1994 May
+2 - EET 1992 Mar 20
+2 c EE%sT 1994 May
 3 e MSK/MSD 1996 Mar 31 0s
 3 1 MSD 1996 O 27 3s
 3 R MSK/MSD 1997
@@ -2787,7 +2788,7 @@ Z Europe/Kiev 2:2:4 - LMT 1880
 1 c CE%sT 1943 N 6
 3 R MSK/MSD 1990 Jul 1 2
 2 1 EEST 1991 S 29 3
-2 e EE%sT 1995
+2 c EE%sT 1996 May 13
 2 E EE%sT
 Z Europe/Uzhgorod 1:29:12 - LMT 1890 O
 1 - CET 1940
@@ -2797,8 +2798,8 @@ Z Europe/Uzhgorod 1:29:12 - LMT 1890 O
 3 R MSK/MSD 1990
 3 - MSK 1990 Jul 1 2
 1 - CET 1991 Mar 31 3
-2 - EET 1992
-2 e EE%sT 1995
+2 - EET 1992 Mar 20
+2 c EE%sT 1996 May 13
 2 E EE%sT
 Z Europe/Zaporozhye 2:20:40 - LMT 1880
 2:20 - +0220 1924 May 2
@@ -2806,7 +2807,8 @@ Z Europe/Zaporozhye 2:20:40 - LMT 1880
 3 - MSK 1941 Au 25
 1 c CE%sT 1943 O 25
 3 R MSK/MSD 1991 Mar 31 2
-2 e EE%sT 1995
+2 e EE%sT 1992 Mar 20
+2 c EE%sT 1996 May 13
 2 E EE%sT
 R u 1918 1919 - Mar lastSu 2 1 D
 R u 1918 1919 - O lastSu 2 0 S
@@ -4088,12 +4090,12 @@ R x 2016 2018 - May Su>=9 3u 0 -
 R x 2016 2018 - Au Su>=9 4u 1 -
 R x 2019 ma - Ap Su>=2 3u 0 -
 R x 2019 ma - S Su>=2 4u 1 -
-Z America/Santiago -4:42:46 - LMT 1890
--4:42:46 - SMT 1910 Ja 10
+Z America/Santiago -4:42:45 - LMT 1890
+-4:42:45 - SMT 1910 Ja 10
 -5 - -05 1916 Jul
--4:42:46 - SMT 1918 S 10
+-4:42:45 - SMT 1918 S 10
 -4 - -04 1919 Jul
--4:42:46 - SMT 1927 S
+-4:42:45 - SMT 1927 S
 -5 x -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
@@ -4103,11 +4105,11 @@ Z America/Santiago -4:42:46 - LMT 1890
 -5 - -05 1947 May 21 23
 -4 x -04/-03
 Z America/Punta_Arenas -4:43:40 - LMT 1890
--4:42:46 - SMT 1910 Ja 10
+-4:42:45 - SMT 1910 Ja 10
 -5 - -05 1916 Jul
--4:42:46 - SMT 1918 S 10
+-4:42:45 - SMT 1918 S 10
 -4 - -04 1919 Jul
--4:42:46 - SMT 1927 S
+-4:42:45 - SMT 1927 S
 -5 x -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
