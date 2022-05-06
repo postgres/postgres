@@ -1059,7 +1059,7 @@ ReplicationOriginExitCleanup(int code, Datum arg)
 
 /*
  * Setup a replication origin in the shared memory struct if it doesn't
- * already exists and cache access to the specific ReplicationSlot so the
+ * already exist and cache access to the specific ReplicationSlot so the
  * array doesn't have to be searched when calling
  * replorigin_session_advance().
  *
