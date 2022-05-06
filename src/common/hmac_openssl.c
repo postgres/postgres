@@ -106,9 +106,13 @@ pg_hmac_create(pg_cryptohash_type type)
 	ctx->error = PG_HMAC_ERROR_NONE;
 	ctx->errreason = NULL;
 
+
 	/*
 	 * Initialization takes care of assigning the correct type for OpenSSL.
+	 * Also ensure that there aren't any unconsumed errors in the queue from
+	 * previous runs.
 	 */
+	ERR_clear_error();
 #ifdef HAVE_HMAC_CTX_NEW
 #ifndef FRONTEND
 	ResourceOwnerEnlargeHMAC(CurrentResourceOwner);
