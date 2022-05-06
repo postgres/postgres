@@ -46,7 +46,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_BAD_OPTION, "Unknown option"},
 	{PXE_BAD_FORMAT, "Badly formatted type"},
 	{PXE_KEY_TOO_BIG, "Key was too big"},
-	{PXE_CIPHER_INIT, "Cipher cannot be initialized ?"},
+	{PXE_CIPHER_INIT, "Cipher cannot be initialized"},
 	{PXE_HASH_UNUSABLE_FOR_HMAC, "This hash algorithm is unusable for HMAC"},
 	{PXE_BUG, "pgcrypto bug"},
 	{PXE_ARGUMENT_ERROR, "Illegal argument to function"},

@@ -4,30 +4,30 @@
 -- test vectors from RFC2144
 -- 128 bit key
 SELECT encrypt('\x0123456789ABCDEF', '\x0123456712345678234567893456789A', 'cast5-ecb/pad:none');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- 80 bit key
 SELECT encrypt('\x0123456789ABCDEF', '\x01234567123456782345', 'cast5-ecb/pad:none');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- 40 bit key
 SELECT encrypt('\x0123456789ABCDEF', '\x0123456712', 'cast5-ecb/pad:none');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- cbc
 -- empty data
 select encrypt('', 'foo', 'cast5');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- 10 bytes key
 select encrypt('foo', '0123456789', 'cast5');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- decrypt
 select encode(decrypt(encrypt('foo', '0123456', 'cast5'), '0123456', 'cast5'), 'escape');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- iv
 select encrypt_iv('foo', '0123456', 'abcd', 'cast5');
-ERROR:  encrypt_iv error: Cipher cannot be initialized ?
+ERROR:  encrypt_iv error: Cipher cannot be initialized
 select encode(decrypt_iv('\x384a970695ce016a', '0123456', 'abcd', 'cast5'), 'escape');
-ERROR:  decrypt_iv error: Cipher cannot be initialized ?
+ERROR:  decrypt_iv error: Cipher cannot be initialized
 -- long message
 select encrypt('Lets try a longer message.', '0123456789', 'cast5');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 select encode(decrypt(encrypt('Lets try a longer message.', '0123456789', 'cast5'), '0123456789', 'cast5'), 'escape');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
