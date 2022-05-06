@@ -228,6 +228,10 @@ check_conflict_stat("lock");
 
 
 ## RECOVERY CONFLICT 5: Deadlock
+SKIP:
+{
+	skip "disabled until after minor releases, due to instability";
+
 $sect = "startup deadlock";
 $expected_conflicts++;
 
@@ -286,6 +290,7 @@ check_conflict_stat("deadlock");
 
 # clean up for next tests
 $node_primary->safe_psql($test_db, qq[ROLLBACK PREPARED 'lock';]);
+}
 
 
 # Check that expected number of conflicts show in pg_stat_database. Needs to
