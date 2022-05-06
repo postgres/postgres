@@ -7418,22 +7418,22 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
 
        <row>
-        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable></literal></entry>
+        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable>)</literal></entry>
         <entry><literal>regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>)</literal></entry>
        </row>
       </tbody>
