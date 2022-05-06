@@ -28,7 +28,7 @@ B124	Routine language Fortran			NO
 B125	Routine language MUMPS			NO	
 B126	Routine language Pascal			NO	
 B127	Routine language PL/I			NO	
-B128	Routine language SQL			NO	
+B128	Routine language SQL			YES	
 B200	Polymorphic table functions			NO	
 B201	More than one PTF generic table parameter			NO	
 B202	PTF Copartitioning			NO	
@@ -364,9 +364,9 @@ S051	Create table of type			NO	partially supported
 S071	SQL paths in function and type name resolution			YES	
 S081	Subtables			NO	
 S091	Basic array support			NO	partially supported
-S091	Basic array support	01	Arrays of built-in data types	NO	
+S091	Basic array support	01	Arrays of built-in data types	YES	
 S091	Basic array support	02	Arrays of distinct types	NO	
-S091	Basic array support	03	Array expressions	NO	
+S091	Basic array support	03	Array expressions	YES	
 S092	Arrays of user-defined types			YES	
 S094	Arrays of reference types			NO	
 S095	Array constructors by query			YES	
@@ -463,12 +463,12 @@ T281	SELECT privilege with column granularity			YES
 T285	Enhanced derived column names			YES	
 T301	Functional dependencies			NO	partially supported
 T312	OVERLAY function			YES	
-T321	Basic SQL-invoked routines			NO	
+T321	Basic SQL-invoked routines			NO	partially supported
 T321	Basic SQL-invoked routines	01	User-defined functions with no overloading	YES	
 T321	Basic SQL-invoked routines	02	User-defined stored procedures with no overloading	YES	
 T321	Basic SQL-invoked routines	03	Function invocation	YES	
 T321	Basic SQL-invoked routines	04	CALL statement	YES	
-T321	Basic SQL-invoked routines	05	RETURN statement	NO	
+T321	Basic SQL-invoked routines	05	RETURN statement	YES	
 T321	Basic SQL-invoked routines	06	ROUTINES view	YES	
 T321	Basic SQL-invoked routines	07	PARAMETERS view	YES	
 T322	Declared data type attributes			NO	
