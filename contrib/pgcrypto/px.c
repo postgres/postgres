@@ -41,7 +41,6 @@ struct error_desc
 
 static const struct error_desc px_err_list[] = {
 	{PXE_OK, "Everything ok"},
-	{PXE_ERR_GENERIC, "Some PX error (not specified)"},
 	{PXE_NO_HASH, "No such hash algorithm"},
 	{PXE_NO_CIPHER, "No such cipher algorithm"},
 	{PXE_BAD_OPTION, "Unknown option"},

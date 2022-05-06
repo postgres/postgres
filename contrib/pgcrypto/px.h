@@ -44,7 +44,7 @@
  * PX error codes
  */
 #define PXE_OK						0
-#define PXE_ERR_GENERIC				-1
+/* -1 is unused */
 #define PXE_NO_HASH					-2
 #define PXE_NO_CIPHER				-3
 /* -4 is unused */
