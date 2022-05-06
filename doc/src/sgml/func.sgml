@@ -18797,7 +18797,7 @@ SELECT JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]');
   <optional> { ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY </optional>
   <optional> { ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR </optional>
 )
-  </synopsis>
+</synopsis>
 
     <sect5>
      <title>Description</title>
@@ -18956,7 +18956,7 @@ SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 1 ON ERROR);
   <optional> { ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY </optional>
   <optional> { ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR </optional>
 )
-  </synopsis>
+</synopsis>
 
     <sect5>
      <title>Description</title>
