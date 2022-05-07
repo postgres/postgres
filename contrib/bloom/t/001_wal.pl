@@ -6,13 +6,17 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 31;
+use Test::More;
 
 if (TestLib::has_wal_read_bug)
 {
 	# We'd prefer to use Test::More->builder->todo_start, but the bug causes
 	# this test file to die(), not merely to fail.
 	plan skip_all => 'filesystem bug';
+}
+else
+{
+	plan tests => 31;
 }
 
 my $node_primary;
