@@ -548,11 +548,10 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 		 * use a global barrier to ask all backends to close all files, and
 		 * wait until they're finished.
 		 */
-#if defined(USE_BARRIER_SMGRRELEASE)
 		LWLockRelease(TablespaceCreateLock);
 		WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
 		LWLockAcquire(TablespaceCreateLock, LW_EXCLUSIVE);
-#endif
+
 		/* And now try again. */
 		if (!destroy_tablespace_directories(tablespaceoid, false))
 		{
@@ -1574,6 +1573,9 @@ tblspc_redo(XLogReaderState *record)
 	{
 		xl_tblspc_drop_rec *xlrec = (xl_tblspc_drop_rec *) XLogRecGetData(record);
 
+		/* Close all smgr fds in all backends. */
+		WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
+
 		/*
 		 * If we issued a WAL record for a drop tablespace it implies that
 		 * there were no files in it at all when the DROP was done. That means
@@ -1591,11 +1593,6 @@ tblspc_redo(XLogReaderState *record)
 		 */
 		if (!destroy_tablespace_directories(xlrec->ts_id, true))
 		{
-#if defined(USE_BARRIER_SMGRRELEASE)
-			/* Close all smgr fds in all backends. */
-			WaitForProcSignalBarrier(EmitProcSignalBarrier(PROCSIGNAL_BARRIER_SMGRRELEASE));
-#endif
-
 			ResolveRecoveryConflictWithTablespace(xlrec->ts_id);
 
 			/*
