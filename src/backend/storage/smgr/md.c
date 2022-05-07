@@ -116,6 +116,8 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
  * mdnblocks().
  */
 #define EXTENSION_DONT_CHECK_SIZE	(1 << 4)
+/* don't try to open a segment, if not already open */
+#define EXTENSION_DONT_OPEN			(1 << 5)
 
 
 /* local routines */
@@ -551,12 +553,6 @@ mdclose(SMgrRelation reln, ForkNumber forknum)
 	}
 }
 
-void
-mdrelease(void)
-{
-	closeAllVfds();
-}
-
 /*
  *	mdprefetch() -- Initiate asynchronous read of the specified block of a relation
  */
@@ -605,11 +601,14 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 					segnum_end;
 
 		v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ ,
-						 EXTENSION_RETURN_NULL);
+						 EXTENSION_DONT_OPEN);
 
 		/*
 		 * We might be flushing buffers of already removed relations, that's
-		 * ok, just ignore that case.
+		 * ok, just ignore that case.  If the segment file wasn't open already
+		 * (ie from a recent mdwrite()), then we don't want to re-open it, to
+		 * avoid a race with PROCSIGNAL_BARRIER_SMGRRELEASE that might leave
+		 * us with a descriptor to a file that is about to be unlinked.
 		 */
 		if (!v)
 			return;
@@ -1202,7 +1201,8 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 
 	/* some way to handle non-existent segments needs to be specified */
 	Assert(behavior &
-		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
+		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL |
+			EXTENSION_DONT_OPEN));
 
 	targetseg = blkno / ((BlockNumber) RELSEG_SIZE);
 
@@ -1212,6 +1212,10 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		v = &reln->md_seg_fds[forknum][targetseg];
 		return v;
 	}
+
+	/* The caller only wants the segment if we already had it open. */
+	if (behavior & EXTENSION_DONT_OPEN)
+		return NULL;
 
 	/*
 	 * The target segment is not yet open. Iterate over all the segments

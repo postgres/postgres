@@ -41,7 +41,6 @@ typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
 	void		(*smgr_shutdown) (void);	/* may be NULL */
-	void		(*smgr_release) (void); /* may be NULL */
 	void		(*smgr_open) (SMgrRelation reln);
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
@@ -70,7 +69,6 @@ static const f_smgr smgrsw[] = {
 	{
 		.smgr_init = mdinit,
 		.smgr_shutdown = NULL,
-		.smgr_release = mdrelease,
 		.smgr_open = mdopen,
 		.smgr_close = mdclose,
 		.smgr_create = mdcreate,
@@ -279,6 +277,42 @@ smgrclose(SMgrRelation reln)
 	 */
 	if (owner)
 		*owner = NULL;
+}
+
+/*
+ *	smgrrelease() -- Release all resources used by this object.
+ *
+ *	The object remains valid.
+ */
+void
+smgrrelease(SMgrRelation reln)
+{
+	for (ForkNumber forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+	{
+		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
+		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
+	}
+}
+
+/*
+ *	smgrreleaseall() -- Release resources used by all objects.
+ *
+ *	This is called for PROCSIGNAL_BARRIER_SMGRRELEASE.
+ */
+void
+smgrreleaseall(void)
+{
+	HASH_SEQ_STATUS status;
+	SMgrRelation reln;
+
+	/* Nothing to do if hashtable not set up */
+	if (SMgrRelationHash == NULL)
+		return;
+
+	hash_seq_init(&status, SMgrRelationHash);
+
+	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
+		smgrrelease(reln);
 }
 
 /*
@@ -698,11 +732,6 @@ AtEOXact_SMgr(void)
 bool
 ProcessBarrierSmgrRelease(void)
 {
-	for (int i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_release)
-			smgrsw[i].smgr_release();
-	}
-
+	smgrreleaseall();
 	return true;
 }
