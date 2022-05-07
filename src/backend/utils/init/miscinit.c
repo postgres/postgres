@@ -373,7 +373,7 @@ checkDataDir(void)
 	 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
 	if (stat_buf.st_mode & PG_MODE_MASK_GROUP)
-		ereport(FATAL,
+		ereport(WARNING,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("data directory \"%s\" has invalid permissions",
 						DataDir),
