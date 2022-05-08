@@ -259,7 +259,7 @@ Branch: REL_10_STABLE [b6f869bee] 2022-02-11 15:23:52 -0500
      <para>
       The previous coding could try to read non-returnable columns
       in addition to the returnable ones.  This was fairly harmless
-      because it didn't actually do anything with the bogus values;
+      because it didn't actually do anything with the bogus values,
       but it fell foul of a recently-added error check that rejected
       such a plan.
      </para>
@@ -691,26 +691,6 @@ Branch: REL_10_STABLE [b5e060473] 2022-02-14 08:45:54 +0530
      <para>
       Otherwise subscribers cannot see the values and will fail to
       replicate the update.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: REL_12_STABLE [e16db75dd] 2022-02-15 12:21:28 -0500
-Branch: REL_11_STABLE [efae4401c] 2022-02-15 12:21:28 -0500
-Branch: REL_10_STABLE [17a8c4c3a] 2022-02-15 12:21:28 -0500
--->
-     <para>
-      Improve logical replication subscriber's error message for an
-      unsupported relation kind (Tom Lane)
-     </para>
-
-     <para>
-      v13 and later servers support publishing partitioned tables.  Older
-      server versions cannot handle subscribing to such a table, and they
-      gave a very misleading error message: <quote>table XYZ not found on
-      publisher</quote>.  Arrange to deliver a more on-point message.
      </para>
     </listitem>
 
