@@ -72,6 +72,8 @@ $node_primary->safe_psql('postgres', q[
     CREATE TABLE replace_sb(data text);
     INSERT INTO replace_sb(data) SELECT random()::text FROM generate_series(1, 15000);]);
 
+$node_primary->wait_for_catchup($node_standby);
+
 # Use longrunning transactions, so that AtEOXact_SMgr doesn't close files
 send_query_and_wait(
 	\%psql_primary,
@@ -101,9 +103,9 @@ verify($node_primary, $node_standby, 1,
 # value so we can check everything is OK
 $node_primary->safe_psql('conflict_db', "UPDATE large SET datab = 2;");
 
-# Again cause a lot of IO. That'll again write back dirty data, but uses (XXX
-# adjust after bugfix) the already opened file descriptor.
-# FIXME
+# Again cause a lot of IO. That'll again write back dirty data, but uses newly
+# opened file descriptors, so we don't confuse old files with new files despite
+# recycling relfilenodes.
 cause_eviction(\%psql_primary, \%psql_standby);
 
 verify($node_primary, $node_standby, 2,
