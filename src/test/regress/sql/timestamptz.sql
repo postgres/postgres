@@ -414,13 +414,12 @@ RESET TimeZone;
 select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '1 hour'::interval);
+-- the LIMIT should allow this to terminate in a reasonable amount of time
+-- (but that unfortunately doesn't work yet for SELECT * FROM ...)
+select generate_series('2022-01-01 00:00'::timestamptz,
+                       'infinity'::timestamptz,
+                       '1 month'::interval) limit 10;
 -- errors
-select * from generate_series('-infinity'::timestamptz,
-                              '2020-01-02 03:00'::timestamptz,
-                              '1 hour'::interval);
-select * from generate_series('2020-01-01 00:00'::timestamptz,
-                              'infinity'::timestamptz,
-                              '1 hour'::interval);
 select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
