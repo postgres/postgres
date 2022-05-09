@@ -44,6 +44,7 @@
 #include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -260,6 +261,9 @@ void
 cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 {
 	Relation	OldHeap;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	/* Check for user-requested abort. */
 	CHECK_FOR_INTERRUPTS();
@@ -277,6 +281,16 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		return;
 
 	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(OldHeap->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
+	/*
 	 * Since we may open a new transaction for each relation, we have to check
 	 * that the relation still is what we think it is.
 	 *
@@ -290,10 +304,10 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		Form_pg_index indexForm;
 
 		/* Check that the user still owns the relation */
-		if (!pg_class_ownercheck(tableOid, GetUserId()))
+		if (!pg_class_ownercheck(tableOid, save_userid))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-			return;
+			goto out;
 		}
 
 		/*
@@ -307,7 +321,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		if (RELATION_IS_OTHER_TEMP(OldHeap))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
-			return;
+			goto out;
 		}
 
 		if (OidIsValid(indexOid))
@@ -318,7 +332,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 			if (!SearchSysCacheExists1(RELOID, ObjectIdGetDatum(indexOid)))
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-				return;
+				goto out;
 			}
 
 			/*
@@ -328,14 +342,14 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 			if (!HeapTupleIsValid(tuple))	/* probably can't happen */
 			{
 				relation_close(OldHeap, AccessExclusiveLock);
-				return;
+				goto out;
 			}
 			indexForm = (Form_pg_index) GETSTRUCT(tuple);
 			if (!indexForm->indisclustered)
 			{
 				ReleaseSysCache(tuple);
 				relation_close(OldHeap, AccessExclusiveLock);
-				return;
+				goto out;
 			}
 			ReleaseSysCache(tuple);
 		}
@@ -389,7 +403,7 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 		!RelationIsPopulated(OldHeap))
 	{
 		relation_close(OldHeap, AccessExclusiveLock);
-		return;
+		goto out;
 	}
 
 	/*
@@ -404,6 +418,13 @@ cluster_rel(Oid tableOid, Oid indexOid, bool recheck, bool verbose)
 	rebuild_relation(OldHeap, indexOid, verbose);
 
 	/* NB: rebuild_relation does heap_close() on OldHeap */
+
+out:
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 }
 
 /*

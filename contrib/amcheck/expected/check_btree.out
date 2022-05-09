@@ -85,8 +85,31 @@ WHERE relation = ANY(ARRAY['bttest_a', 'bttest_a_idx', 'bttest_b', 'bttest_b_idx
 (0 rows)
 
 COMMIT;
+--
+-- Check that index expressions and predicates are run as the table's owner
+--
+TRUNCATE bttest_a;
+INSERT INTO bttest_a SELECT * FROM generate_series(1, 1000);
+ALTER TABLE bttest_a OWNER TO regress_bttest_role;
+-- A dummy index function checking current_user
+CREATE FUNCTION ifun(int8) RETURNS int8 AS $$
+BEGIN
+	ASSERT current_user = 'regress_bttest_role',
+		format('ifun(%s) called by %s', $1, current_user);
+	RETURN $1;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+CREATE INDEX bttest_a_expr_idx ON bttest_a ((ifun(id) + ifun(0)))
+	WHERE ifun(id + 10) > ifun(10);
+SELECT bt_index_check('bttest_a_expr_idx');
+ bt_index_check 
+----------------
+ 
+(1 row)
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
+DROP FUNCTION ifun(int8);
 DROP OWNED BY regress_bttest_role; -- permissions
 DROP ROLE regress_bttest_role;
