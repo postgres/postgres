@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-04-12 06:57+0300\n"
+"POT-Creation-Date: 2022-03-11 08:15+0300\n"
 "PO-Revision-Date: 2019-08-29 15:47+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -27,7 +27,7 @@ msgstr "%s: СБОЙ:  "
 msgid "could not open file \"%s\": %s"
 msgstr "не удалось открыть файл \"%s\": %s"
 
-#: pg_waldump.c:221
+#: pg_waldump.c:223
 #, c-format
 msgid ""
 "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
