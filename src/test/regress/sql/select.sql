@@ -148,6 +148,11 @@ SELECT 2+2, 57
 UNION ALL
 TABLE int8_tbl;
 
+-- corner case: VALUES with no columns
+CREATE TEMP TABLE nocols();
+INSERT INTO nocols DEFAULT VALUES;
+SELECT * FROM nocols n, LATERAL (VALUES(n.*)) v;
+
 --
 -- Test ORDER BY options
 --
