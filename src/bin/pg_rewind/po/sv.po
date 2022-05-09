@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 22:29+0000\n"
-"PO-Revision-Date: 2021-11-09 06:32+0100\n"
+"POT-Creation-Date: 2022-04-06 21:32+0000\n"
+"PO-Revision-Date: 2022-04-11 14:02+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -115,13 +115,13 @@ msgstr "kunde inte återställa fil \"%s\" från arkiv"
 
 #: ../../fe_utils/recovery_gen.c:35 ../../fe_utils/recovery_gen.c:49
 #: ../../fe_utils/recovery_gen.c:77 ../../fe_utils/recovery_gen.c:100
-#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:76 parsexlog.c:134
-#: parsexlog.c:194
+#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:76 parsexlog.c:138
+#: parsexlog.c:198
 #, c-format
 msgid "out of memory"
 msgstr "slut på minne"
 
-#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:307
+#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:311
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
@@ -176,7 +176,7 @@ msgstr "kunde inte öppna källfil \"%s\": %m"
 msgid "could not seek in source file: %m"
 msgstr "kunde inte söka i källfil: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:345
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:349
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
@@ -256,7 +256,7 @@ msgstr "kan inte ta bort symbolisk länk \"%s\": %m"
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: file_ops.c:314 parsexlog.c:347
+#: file_ops.c:314 parsexlog.c:351
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
@@ -416,32 +416,37 @@ msgstr "kunde inte skicka slut-på-COPY: %s"
 msgid "unexpected result while sending file list: %s"
 msgstr "oväntat resultat vid skickande av fillista: %s"
 
-#: parsexlog.c:88 parsexlog.c:141
+#: parsexlog.c:88 parsexlog.c:145
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "kunde inte läsa WAL-post vid %X/%X: %s"
 
-#: parsexlog.c:92 parsexlog.c:144
+#: parsexlog.c:92 parsexlog.c:148
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "kunde inte läsa WAL-post vid %X/%X"
 
-#: parsexlog.c:207
+#: parsexlog.c:105
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr "slutpekare %X/%X är inte en giltig slutposition; förväntade %X/%X"
+
+#: parsexlog.c:211
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "kunde inte hitta föregående WAL-post vid %X/%X: %s"
 
-#: parsexlog.c:211
+#: parsexlog.c:215
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "kunde inte hitta förgående WAL-post vid %X/%X"
 
-#: parsexlog.c:336
+#: parsexlog.c:340
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "kunde inte söka (seek) i fil \"%s\": %m"
 
-#: parsexlog.c:416
+#: parsexlog.c:420
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
 msgstr "WAL-post modifierar en relation, men posttypen känns inte igen: lsn: %X/%X, rmgr: %s, info: %02X"

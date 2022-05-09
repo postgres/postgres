@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 05:23+0300\n"
-"PO-Revision-Date: 2020-11-09 08:33+0300\n"
+"POT-Creation-Date: 2022-04-26 13:44+0300\n"
+"PO-Revision-Date: 2022-05-07 06:27+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -115,13 +115,13 @@ msgstr "восстановить файл \"%s\" из архива не удал
 
 #: ../../fe_utils/recovery_gen.c:35 ../../fe_utils/recovery_gen.c:49
 #: ../../fe_utils/recovery_gen.c:77 ../../fe_utils/recovery_gen.c:100
-#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:76 parsexlog.c:134
-#: parsexlog.c:194
+#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:76 parsexlog.c:138
+#: parsexlog.c:198
 #, c-format
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:307
+#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:311
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не удалось открыть файл \"%s\": %m"
@@ -180,7 +180,7 @@ msgstr "не удалось открыть исходный файл \"%s\": %m"
 msgid "could not seek in source file: %m"
 msgstr "не удалось переместиться в исходном файле: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:345
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:349
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не удалось прочитать файл \"%s\": %m"
@@ -260,7 +260,7 @@ msgstr "ошибка при удалении символической ссыл
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не удалось открыть файл \"%s\" для чтения: %m"
 
-#: file_ops.c:314 parsexlog.c:347
+#: file_ops.c:314 parsexlog.c:351
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не удалось прочитать файл \"%s\" (прочитано байт: %d из %zu)"
@@ -425,32 +425,38 @@ msgstr "не удалось отправить сообщение о завер�
 msgid "unexpected result while sending file list: %s"
 msgstr "неожиданный результат при передаче списка: %s"
 
-#: parsexlog.c:88 parsexlog.c:141
+#: parsexlog.c:88 parsexlog.c:145
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X: %s"
 
-#: parsexlog.c:92 parsexlog.c:144
+#: parsexlog.c:92 parsexlog.c:148
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X"
 
-#: parsexlog.c:207
+#: parsexlog.c:105
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr ""
+"конечный указатель %X/%X неверно задаёт конечную точку; ожидается %X/%X"
+
+#: parsexlog.c:211
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X: %s"
 
-#: parsexlog.c:211
+#: parsexlog.c:215
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X"
 
-#: parsexlog.c:336
+#: parsexlog.c:340
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "не удалось переместиться в файле \"%s\": %m"
 
-#: parsexlog.c:416
+#: parsexlog.c:420
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized: lsn: %X/"
