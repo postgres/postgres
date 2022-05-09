@@ -10,6 +10,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
+plan skip_all => "disabled until after minor releases, due to instability";
 
 # Set up nodes
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
