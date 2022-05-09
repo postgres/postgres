@@ -2142,15 +2142,26 @@ select * from generate_series('2020-01-01 00:00'::timestamptz,
  Thu Jan 02 03:00:00 2020 PST
 (28 rows)
 
+-- the LIMIT should allow this to terminate in a reasonable amount of time
+-- (but that unfortunately doesn't work yet for SELECT * FROM ...)
+select generate_series('2022-01-01 00:00'::timestamptz,
+                       'infinity'::timestamptz,
+                       '1 month'::interval) limit 10;
+       generate_series        
+------------------------------
+ Sat Jan 01 00:00:00 2022 PST
+ Tue Feb 01 00:00:00 2022 PST
+ Tue Mar 01 00:00:00 2022 PST
+ Fri Apr 01 00:00:00 2022 PDT
+ Sun May 01 00:00:00 2022 PDT
+ Wed Jun 01 00:00:00 2022 PDT
+ Fri Jul 01 00:00:00 2022 PDT
+ Mon Aug 01 00:00:00 2022 PDT
+ Thu Sep 01 00:00:00 2022 PDT
+ Sat Oct 01 00:00:00 2022 PDT
+(10 rows)
+
 -- errors
-select * from generate_series('-infinity'::timestamptz,
-                              '2020-01-02 03:00'::timestamptz,
-                              '1 hour'::interval);
-ERROR:  start value cannot be infinity
-select * from generate_series('2020-01-01 00:00'::timestamptz,
-                              'infinity'::timestamptz,
-                              '1 hour'::interval);
-ERROR:  stop value cannot be infinity
 select * from generate_series('2020-01-01 00:00'::timestamptz,
                               '2020-01-02 03:00'::timestamptz,
                               '0 hour'::interval);
