@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 22:38+0000\n"
+"POT-Creation-Date: 2022-02-18 04:42+0000\n"
 "PO-Revision-Date: 2021-11-09 06:34+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
@@ -256,31 +256,31 @@ msgstr ""
 "\n"
 "Rapportera fel till <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: common.c:87 common.c:145
+#: common.c:100 common.c:158
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: common.c:132
+#: common.c:145
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "kunde inte ansluta till databas %s: slut på minne"
 
-#: common.c:159
+#: common.c:172
 #, c-format
 msgid "could not connect to database %s: %s"
 msgstr "kunde inte ansluta till databas %s: %s"
 
-#: common.c:215 common.c:241
+#: common.c:228 common.c:254
 #, c-format
 msgid "query failed: %s"
 msgstr "fråga misslyckades: %s"
 
-#: common.c:216 common.c:242
+#: common.c:229 common.c:255
 #, c-format
 msgid "query was: %s"
 msgstr "frågan var: %s"
 
-#: common.c:358
+#: common.c:371
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -288,36 +288,26 @@ msgstr[0] "fråga gav %d rad istället för en: %s"
 msgstr[1] "fråga gav %d rader istället för en: %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:383
+#: common.c:396
 msgid "y"
 msgstr "j"
 
 #. translator: abbreviation for "no"
-#: common.c:385
+#: common.c:398
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:395
+#: common.c:408
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:409
+#: common.c:422
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Var vänlig att svara \"%s\" eller \"%s\".\n"
-
-#: common.c:488 common.c:525
-#, c-format
-msgid "Cancel request sent\n"
-msgstr "Förfrågan om avbrytning skickad\n"
-
-#: common.c:491 common.c:529
-#, c-format
-msgid "Could not send cancel request: %s"
-msgstr "Kunde inte skicka avbrottsbegäran: %s"
 
 #: createdb.c:149
 #, c-format

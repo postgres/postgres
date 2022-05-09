@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-02-03 03:35+0000\n"
+"POT-Creation-Date: 2022-04-05 07:36+0000\n"
 "PO-Revision-Date: 2019-09-22 00:04+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
@@ -55,7 +55,7 @@ msgstr "konnte Nonce nicht erzeugen\n"
 #: fe-connect.c:4937 fe-connect.c:5191 fe-connect.c:5271 fe-connect.c:5370
 #: fe-connect.c:5626 fe-connect.c:5655 fe-connect.c:5727 fe-connect.c:5751
 #: fe-connect.c:5769 fe-connect.c:5870 fe-connect.c:5879 fe-connect.c:6235
-#: fe-connect.c:6385 fe-exec.c:2748 fe-exec.c:3495 fe-exec.c:3660
+#: fe-connect.c:6385 fe-exec.c:2752 fe-exec.c:3499 fe-exec.c:3664
 #: fe-gssapi-common.c:112 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
 #: fe-protocol3.c:1671 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:438 fe-secure-openssl.c:1025
@@ -592,7 +592,7 @@ msgstr "WARNUNG: Passwortdatei »%s« erlaubt Lesezugriff für Gruppe oder Ander
 msgid "password retrieved from file \"%s\"\n"
 msgstr "Passwort wurde aus Datei »%s« gelesen\n"
 
-#: fe-exec.c:445 fe-exec.c:2822
+#: fe-exec.c:445 fe-exec.c:2826
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
@@ -636,7 +636,7 @@ msgstr "Anzahl der Parameter muss zwischen 0 und 65535 sein\n"
 msgid "statement name is a null pointer\n"
 msgstr "Anweisungsname ist ein NULL-Zeiger\n"
 
-#: fe-exec.c:1362 fe-exec.c:1525 fe-exec.c:2234 fe-exec.c:2436
+#: fe-exec.c:1362 fe-exec.c:1525 fe-exec.c:2238 fe-exec.c:2440
 msgid "function requires at least protocol version 3.0\n"
 msgstr "Funktion erfordert mindestens Protokollversion 3.0\n"
 
@@ -652,65 +652,65 @@ msgstr "ein anderer Befehl ist bereits in Ausführung\n"
 msgid "length must be given for binary parameter\n"
 msgstr "für binäre Parameter muss eine Länge angegeben werden\n"
 
-#: fe-exec.c:1864
+#: fe-exec.c:1868
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "unerwarteter asyncStatus: %d\n"
 
-#: fe-exec.c:1884
+#: fe-exec.c:1888
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "PGEventProc »%s« während PGEVT_RESULTCREATE-Ereignis fehlgeschlagen\n"
 
-#: fe-exec.c:2044
+#: fe-exec.c:2048
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:2052
+#: fe-exec.c:2056
 msgid "COPY IN state must be terminated first\n"
 msgstr "COPY-IN-Zustand muss erst beendet werden\n"
 
-#: fe-exec.c:2072
+#: fe-exec.c:2076
 msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY-OUT-Zustand muss erst beendet werden\n"
 
-#: fe-exec.c:2080
+#: fe-exec.c:2084
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec ist während COPY BOTH nicht erlaubt\n"
 
-#: fe-exec.c:2326 fe-exec.c:2393 fe-exec.c:2483 fe-protocol2.c:1359
+#: fe-exec.c:2330 fe-exec.c:2397 fe-exec.c:2487 fe-protocol2.c:1359
 #: fe-protocol3.c:1810
 msgid "no COPY in progress\n"
 msgstr "keine COPY in Ausführung\n"
 
-#: fe-exec.c:2673
+#: fe-exec.c:2677
 msgid "connection in wrong state\n"
 msgstr "Verbindung im falschen Zustand\n"
 
-#: fe-exec.c:2704
+#: fe-exec.c:2708
 msgid "invalid ExecStatusType code"
 msgstr "ungültiger ExecStatusType-Kode"
 
-#: fe-exec.c:2731
+#: fe-exec.c:2735
 msgid "PGresult is not an error result\n"
 msgstr "PGresult ist kein Fehlerresultat\n"
 
-#: fe-exec.c:2806 fe-exec.c:2829
+#: fe-exec.c:2810 fe-exec.c:2833
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:2844
+#: fe-exec.c:2848
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3154
+#: fe-exec.c:3158
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:3393 fe-exec.c:3477
+#: fe-exec.c:3397 fe-exec.c:3481
 msgid "incomplete multibyte character\n"
 msgstr "unvollständiges Mehrbyte-Zeichen\n"
 
@@ -1051,16 +1051,16 @@ msgstr "GSSAPI-Fehler bei der Größenprüfung"
 msgid "GSSAPI context establishment error"
 msgstr "GSSAPI-Fehler beim Einrichten des Kontexts"
 
-#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1219
+#: fe-secure-openssl.c:211 fe-secure-openssl.c:319 fe-secure-openssl.c:1253
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL-SYSCALL-Fehler: %s\n"
 
-#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1223
+#: fe-secure-openssl.c:218 fe-secure-openssl.c:326 fe-secure-openssl.c:1257
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL-SYSCALL-Fehler: Dateiende entdeckt\n"
 
-#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1232
+#: fe-secure-openssl.c:229 fe-secure-openssl.c:337 fe-secure-openssl.c:1266
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL-Fehler: %s\n"
@@ -1069,7 +1069,7 @@ msgstr "SSL-Fehler: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-Verbindung wurde unerwartet geschlossen\n"
 
-#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1241
+#: fe-secure-openssl.c:250 fe-secure-openssl.c:358 fe-secure-openssl.c:1275
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "unbekannter SSL-Fehlercode: %d\n"
@@ -1163,32 +1163,42 @@ msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« laden: %s\
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "Zertifikat vorhanden, aber keine private Schlüsseldatei »%s«\n"
 
-#: fe-secure-openssl.c:1128
+#: fe-secure-openssl.c:1129
 #, c-format
-msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-msgstr "WARNUNG: private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Rechte sollten u=rw (0600) oder weniger sein\n"
+msgid "private key file \"%s\" is not a regular file\n"
+msgstr "private Schlüsseldatei »%s« ist keine normale Datei\n"
 
-#: fe-secure-openssl.c:1139
+#: fe-secure-openssl.c:1153
+#, c-format
+msgid "private key file \"%s\" must be owned by the current user or root\n"
+msgstr "private Schlüsseldatei »%s« muss als Eigentümer den aktuellen Benutzer oder »root« haben\n"
+
+#: fe-secure-openssl.c:1162
+#, c-format
+msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
+msgstr "private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Dateirechte müssen u=rw (0600) oder weniger sein, wenn der Eigentümer der aktuelle Benutzer ist, oder u=rw,g=r (0640) oder weniger, wenn der Eigentümer »root« ist\n"
+
+#: fe-secure-openssl.c:1173
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "konnte private Schlüsseldatei »%s« nicht laden: %s\n"
 
-#: fe-secure-openssl.c:1153
+#: fe-secure-openssl.c:1187
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "Zertifikat passt nicht zur privaten Schlüsseldatei »%s«: %s\n"
 
-#: fe-secure-openssl.c:1262
+#: fe-secure-openssl.c:1296
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
 
-#: fe-secure-openssl.c:1351
+#: fe-secure-openssl.c:1385
 #, c-format
 msgid "no SSL error reported"
 msgstr "kein SSL-Fehler berichtet"
 
-#: fe-secure-openssl.c:1360
+#: fe-secure-openssl.c:1394
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-Fehlercode %lu"
