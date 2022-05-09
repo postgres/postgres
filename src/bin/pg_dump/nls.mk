@@ -9,7 +9,8 @@ GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    pg_restore.c pg_dumpall.c \
                    parallel.c parallel.h pg_backup_utils.c pg_backup_utils.h \
                    ../../common/exec.c ../../common/fe_memutils.c \
-                   ../../common/wait_error.c
+                   ../../common/wait_error.c \
+                   ../../fe_utils/option_utils.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS) \
                    simple_prompt \
                    ExecuteSqlCommand:3 warn_or_exit_horribly:2
