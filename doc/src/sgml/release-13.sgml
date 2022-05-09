@@ -26,7 +26,7 @@
     However, if you have any GiST indexes on columns of type
     <type>ltree</type> (supplied by the <filename>contrib/ltree</filename>
     extension), you should re-index them after updating.
-    See the first changelog entry below.
+    See the second changelog entry below.
    </para>
 
    <para>
@@ -39,6 +39,49 @@
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [a117cebd6] 2022-05-09 08:35:08 -0700
+Branch: REL_14_STABLE [ab49ce7c3] 2022-05-09 08:35:12 -0700
+Branch: REL_13_STABLE [35edcc0ce] 2022-05-09 08:35:12 -0700
+Branch: REL_12_STABLE [7f098f7b5] 2022-05-09 08:35:12 -0700
+Branch: REL_11_STABLE [48ca2904c] 2022-05-09 08:35:13 -0700
+Branch: REL_10_STABLE [ef792f785] 2022-05-09 08:35:13 -0700
+Author: Noah Misch <noah@leadboat.com>
+Branch: master [0abc1a059] 2022-05-09 08:35:08 -0700
+Branch: REL_14_STABLE [677a49478] 2022-05-09 08:35:12 -0700
+Branch: REL_13_STABLE [88743d581] 2022-05-09 08:35:12 -0700
+Branch: REL_12_STABLE [880511cb0] 2022-05-09 08:35:12 -0700
+Branch: REL_11_STABLE [34ff15660] 2022-05-09 08:35:13 -0700
+Branch: REL_10_STABLE [f26d57028] 2022-05-09 08:35:13 -0700
+-->
+     <para>
+      Confine additional operations within <quote>security restricted
+      operation</quote> sandboxes (Sergey Shinderuk, Noah Misch)
+     </para>
+
+     <para>
+      Autovacuum, <command>CLUSTER</command>, <command>CREATE
+      INDEX</command>, <command>REINDEX</command>, <command>REFRESH
+      MATERIALIZED VIEW</command>,
+      and <application>pg_amcheck</application> activated
+      the <quote>security restricted operation</quote> protection
+      mechanism too late, or even not at all in some code paths.
+      A user having permission to create non-temporary objects within a
+      database could define an object that would execute arbitrary SQL
+      code with superuser permissions the next time that autovacuum
+      processed the object, or that some superuser ran one of the affected
+      commands against it.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Alexander Lakhin for reporting this problem.
+      (CVE-2022-1552)
+     </para>
+    </listitem>
 
     <listitem>
 <!--
@@ -109,28 +152,6 @@ Branch: REL_10_STABLE [205214c8b] 2022-03-17 18:18:05 -0400
     <listitem>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-Branch: master [eafdf9de0] 2022-04-20 18:08:23 -0400
-Branch: REL_14_STABLE [e34632947] 2022-04-20 18:08:24 -0400
-Branch: REL_13_STABLE [8275ba773] 2022-04-20 18:08:15 -0400
-Branch: REL_12_STABLE [33fe55c06] 2022-04-20 18:08:15 -0400
-Branch: REL_11_STABLE [e7adbd282] 2022-04-20 18:08:15 -0400
-Branch: REL_10_STABLE [a1e4782a0] 2022-04-20 18:08:15 -0400
--->
-     <para>
-      Disallow infinite endpoints in the timestamp variants
-      of <function>generate_series()</function> (Tom Lane)
-     </para>
-
-     <para>
-      Previously, such a call would run until canceled (or
-      out-of-disk-space).  The numeric variant already threw an error for
-      an infinite endpoint value, so do likewise for timestamps.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [068739fb4] 2022-03-18 16:01:42 -0400
 Branch: REL_14_STABLE [ae8ec7feb] 2022-03-18 16:01:42 -0400
 Branch: REL_13_STABLE [88ae77588] 2022-03-18 16:01:42 -0400
@@ -147,6 +168,22 @@ Branch: REL_10_STABLE [e6fd4a3da] 2022-03-18 16:01:42 -0400
      <para>
       The xmlschema output for these types included a malformed regular
       expression.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [fe20afaee] 2022-05-09 14:15:37 -0400
+Branch: REL_14_STABLE [ab2f78392] 2022-05-09 14:15:37 -0400
+Branch: REL_13_STABLE [91a3a74c6] 2022-05-09 14:15:37 -0400
+Branch: REL_12_STABLE [90e52884e] 2022-05-09 14:15:37 -0400
+Branch: REL_11_STABLE [539f8c563] 2022-05-09 14:15:37 -0400
+Branch: REL_10_STABLE [4eabaffca] 2022-05-09 14:15:37 -0400
+-->
+     <para>
+      Avoid core dump in parser for a <literal>VALUES</literal> clause with
+      zero columns (Tom Lane)
      </para>
     </listitem>
 
