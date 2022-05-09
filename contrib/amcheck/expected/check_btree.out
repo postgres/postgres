@@ -168,11 +168,34 @@ SELECT bt_index_check('toasty', true);
  
 (1 row)
 
+--
+-- Check that index expressions and predicates are run as the table's owner
+--
+TRUNCATE bttest_a;
+INSERT INTO bttest_a SELECT * FROM generate_series(1, 1000);
+ALTER TABLE bttest_a OWNER TO regress_bttest_role;
+-- A dummy index function checking current_user
+CREATE FUNCTION ifun(int8) RETURNS int8 AS $$
+BEGIN
+	ASSERT current_user = 'regress_bttest_role',
+		format('ifun(%s) called by %s', $1, current_user);
+	RETURN $1;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+CREATE INDEX bttest_a_expr_idx ON bttest_a ((ifun(id) + ifun(0)))
+	WHERE ifun(id + 10) > ifun(10);
+SELECT bt_index_check('bttest_a_expr_idx', true);
+ bt_index_check 
+----------------
+ 
+(1 row)
+
 -- cleanup
 DROP TABLE bttest_a;
 DROP TABLE bttest_b;
 DROP TABLE bttest_multi;
 DROP TABLE delete_test_table;
 DROP TABLE toast_bug;
+DROP FUNCTION ifun(int8);
 DROP OWNED BY regress_bttest_role; -- permissions
 DROP ROLE regress_bttest_role;

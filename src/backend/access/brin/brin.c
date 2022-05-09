@@ -873,6 +873,9 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	Oid			heapoid;
 	Relation	indexRel;
 	Relation	heapRel;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	double		numSummarized = 0;
 
 	if (RecoveryInProgress())
@@ -899,7 +902,22 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
+	{
 		heapRel = table_open(heapoid, ShareUpdateExclusiveLock);
+
+		/*
+		 * Autovacuum calls us.  For its benefit, switch to the table owner's
+		 * userid, so that any index functions are run as that user.  Also
+		 * lock down security-restricted operations and arrange to make GUC
+		 * variable changes local to this command.  This is harmless, albeit
+		 * unnecessary, when called from SQL, because we fail shortly if the
+		 * user does not own the index.
+		 */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(heapRel->rd_rel->relowner,
+							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+		save_nestlevel = NewGUCNestLevel();
+	}
 	else
 		heapRel = NULL;
 
@@ -914,7 +932,7 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 						RelationGetRelationName(indexRel))));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
-	if (!pg_class_ownercheck(indexoid, GetUserId()))
+	if (heapRel != NULL && !pg_class_ownercheck(indexoid, save_userid))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
 					   RelationGetRelationName(indexRel));
 
@@ -931,6 +949,12 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 
 	/* OK, do it */
 	brinsummarize(indexRel, heapRel, heapBlk, true, &numSummarized, NULL);
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	relation_close(indexRel, ShareUpdateExclusiveLock);
 	relation_close(heapRel, ShareUpdateExclusiveLock);
@@ -973,6 +997,9 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	 * passed indexoid isn't an index then IndexGetRelation() will fail.
 	 * Rather than emitting a not-very-helpful error message, postpone
 	 * complaining, expecting that the is-it-an-index test below will fail.
+	 *
+	 * Unlike brin_summarize_range(), autovacuum never calls this.  Hence, we
+	 * don't switch userid.
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
