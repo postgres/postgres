@@ -4,14 +4,14 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2001-2004.
 # Oleg Bartunov <oleg@sai.msu.su>, 2005.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022.
 # Maxim Yablokov <m.yablokov@postgrespro.ru>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-02-07 11:25+0300\n"
-"PO-Revision-Date: 2021-11-25 12:45+0300\n"
+"POT-Creation-Date: 2022-04-26 13:47+0300\n"
+"PO-Revision-Date: 2022-05-07 06:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -997,16 +997,16 @@ msgstr "СТРОКА %d: "
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline можно вызывать только во время COPY OUT с текстом\n"
 
-#: fe-secure-openssl.c:234 fe-secure-openssl.c:343 fe-secure-openssl.c:1330
+#: fe-secure-openssl.c:234 fe-secure-openssl.c:343 fe-secure-openssl.c:1364
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "ошибка SSL SYSCALL: %s\n"
 
-#: fe-secure-openssl.c:241 fe-secure-openssl.c:350 fe-secure-openssl.c:1334
+#: fe-secure-openssl.c:241 fe-secure-openssl.c:350 fe-secure-openssl.c:1368
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "ошибка SSL SYSCALL: конец файла (EOF)\n"
 
-#: fe-secure-openssl.c:252 fe-secure-openssl.c:361 fe-secure-openssl.c:1343
+#: fe-secure-openssl.c:252 fe-secure-openssl.c:361 fe-secure-openssl.c:1377
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "ошибка SSL: %s\n"
@@ -1015,7 +1015,7 @@ msgstr "ошибка SSL: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-соединение было неожиданно закрыто\n"
 
-#: fe-secure-openssl.c:273 fe-secure-openssl.c:382 fe-secure-openssl.c:1352
+#: fe-secure-openssl.c:273 fe-secure-openssl.c:382 fe-secure-openssl.c:1386
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "нераспознанный код ошибки SSL: %d\n"
@@ -1118,36 +1118,51 @@ msgstr "не удалось загрузить закрытый ключ SSL \"%
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "сертификат присутствует, но файла закрытого ключа \"%s\" нет\n"
 
-#: fe-secure-openssl.c:1248
+#: fe-secure-openssl.c:1249
+#, c-format
+msgid "private key file \"%s\" is not a regular file\n"
+msgstr "файл закрытого ключа \"%s\" - не обычный файл\n"
+
+#: fe-secure-openssl.c:1273
+#, c-format
+msgid "private key file \"%s\" must be owned by the current user or root\n"
+msgstr ""
+"файл закрытого ключа \"%s\" должен принадлежать root или текущему "
+"пользователю\n"
+
+#: fe-secure-openssl.c:1282
 #, c-format
 msgid ""
-"private key file \"%s\" has group or world access; permissions should be "
-"u=rw (0600) or less\n"
+"private key file \"%s\" has group or world access; file must have "
+"permissions u=rw (0600) or less if owned by the current user, or permissions "
+"u=rw,g=r (0640) or less if owned by root\n"
 msgstr ""
-"к файлу закрытого ключа \"%s\" имеют доступ все или группа; права должны "
-"быть u=rw (0600) или более ограниченные\n"
+"к файлу закрытого ключа \"%s\" имеют доступ все или группа; для него должны "
+"быть заданы разрешения u=rw (0600) или более строгие, если он принадлежит "
+"текущему пользователю, либо u=rw,g=r (0640) или более строгие, если он "
+"принадлежит root\n"
 
-#: fe-secure-openssl.c:1259
+#: fe-secure-openssl.c:1293
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "не удалось загрузить файл закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1273
+#: fe-secure-openssl.c:1307
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "сертификат не соответствует файлу закрытого ключа \"%s\": %s\n"
 
-#: fe-secure-openssl.c:1373
+#: fe-secure-openssl.c:1407
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "не удалось получить сертификат: %s\n"
 
-#: fe-secure-openssl.c:1465
+#: fe-secure-openssl.c:1499
 #, c-format
 msgid "no SSL error reported"
 msgstr "нет сообщения об ошибке SSL"
 
-#: fe-secure-openssl.c:1474
+#: fe-secure-openssl.c:1508
 #, c-format
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"

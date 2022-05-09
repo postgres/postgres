@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-02-03 03:56+0000\n"
+"POT-Creation-Date: 2022-04-05 06:50+0000\n"
 "PO-Revision-Date: 2018-02-03 11:37-0500\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
@@ -950,16 +950,16 @@ msgstr "ZEILE %d: "
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 
-#: fe-secure-openssl.c:234 fe-secure-openssl.c:343 fe-secure-openssl.c:1330
+#: fe-secure-openssl.c:234 fe-secure-openssl.c:343 fe-secure-openssl.c:1364
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL-SYSCALL-Fehler: %s\n"
 
-#: fe-secure-openssl.c:241 fe-secure-openssl.c:350 fe-secure-openssl.c:1334
+#: fe-secure-openssl.c:241 fe-secure-openssl.c:350 fe-secure-openssl.c:1368
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL-SYSCALL-Fehler: Dateiende entdeckt\n"
 
-#: fe-secure-openssl.c:252 fe-secure-openssl.c:361 fe-secure-openssl.c:1343
+#: fe-secure-openssl.c:252 fe-secure-openssl.c:361 fe-secure-openssl.c:1377
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL-Fehler: %s\n"
@@ -968,7 +968,7 @@ msgstr "SSL-Fehler: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL-Verbindung wurde unerwartet geschlossen\n"
 
-#: fe-secure-openssl.c:273 fe-secure-openssl.c:382 fe-secure-openssl.c:1352
+#: fe-secure-openssl.c:273 fe-secure-openssl.c:382 fe-secure-openssl.c:1386
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "unbekannter SSL-Fehlercode: %d\n"
@@ -1066,32 +1066,42 @@ msgstr "konnte privaten SSL-Schlüssel »%s« nicht von Engine »%s« laden: %s\
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "Zertifikat vorhanden, aber keine private Schlüsseldatei »%s«\n"
 
-#: fe-secure-openssl.c:1248
+#: fe-secure-openssl.c:1249
 #, c-format
-msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-msgstr "WARNUNG: private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Rechte sollten u=rw (0600) oder weniger sein\n"
+msgid "private key file \"%s\" is not a regular file\n"
+msgstr "private Schlüsseldatei »%s« ist keine normale Datei\n"
 
-#: fe-secure-openssl.c:1259
+#: fe-secure-openssl.c:1273
+#, c-format
+msgid "private key file \"%s\" must be owned by the current user or root\n"
+msgstr "private Schlüsseldatei »%s« muss als Eigentümer den aktuellen Benutzer oder »root« haben\n"
+
+#: fe-secure-openssl.c:1282
+#, c-format
+msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
+msgstr "private Schlüsseldatei »%s« erlaubt Lesezugriff für Gruppe oder Andere; Dateirechte müssen u=rw (0600) oder weniger sein, wenn der Eigentümer der aktuelle Benutzer ist, oder u=rw,g=r (0640) oder weniger, wenn der Eigentümer »root« ist\n"
+
+#: fe-secure-openssl.c:1293
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "konnte private Schlüsseldatei »%s« nicht laden: %s\n"
 
-#: fe-secure-openssl.c:1273
+#: fe-secure-openssl.c:1307
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "Zertifikat passt nicht zur privaten Schlüsseldatei »%s«: %s\n"
 
-#: fe-secure-openssl.c:1373
+#: fe-secure-openssl.c:1407
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "Zertifikat konnte nicht ermittelt werden: %s\n"
 
-#: fe-secure-openssl.c:1465
+#: fe-secure-openssl.c:1499
 #, c-format
 msgid "no SSL error reported"
 msgstr "kein SSL-Fehler berichtet"
 
-#: fe-secure-openssl.c:1474
+#: fe-secure-openssl.c:1508
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSL-Fehlercode %lu"

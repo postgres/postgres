@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2022-02-07 11:25+0300\n"
+"POT-Creation-Date: 2022-03-11 08:16+0300\n"
 "PO-Revision-Date: 2021-11-08 05:30+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -52,24 +52,24 @@ msgstr[0] "(%lu строка)"
 msgstr[1] "(%lu строки)"
 msgstr[2] "(%lu строк)"
 
-#: ../../fe_utils/print.c:2937
+#: ../../fe_utils/print.c:2938
 #, c-format
 msgid "Interrupted\n"
 msgstr "Прервано\n"
 
-#: ../../fe_utils/print.c:3001
+#: ../../fe_utils/print.c:3002
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления заголовка таблицы: превышен предел числа столбцов (%d).\n"
 
-#: ../../fe_utils/print.c:3041
+#: ../../fe_utils/print.c:3042
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr ""
 "Ошибка добавления ячейки в таблицу: превышен предел числа ячеек (%d).\n"
 
-#: ../../fe_utils/print.c:3290
+#: ../../fe_utils/print.c:3291
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "неверный формат вывода (внутренняя ошибка): %d"

@@ -1,13 +1,13 @@
 # Russian message translation file for pg_rewind
 # Copyright (C) 2015-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2015-2017, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 05:26+0300\n"
-"PO-Revision-Date: 2021-08-14 07:50+0300\n"
+"POT-Creation-Date: 2022-04-26 13:47+0300\n"
+"PO-Revision-Date: 2022-05-07 06:27+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:77 parsexlog.c:135 parsexlog.c:187
+#: ../../common/fe_memutils.c:98 parsexlog.c:77 parsexlog.c:139 parsexlog.c:191
 #, c-format
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -391,42 +391,48 @@ msgstr "Ошибка, выполняется выход\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s КБ (%d%%) скопировано"
 
-#: parsexlog.c:90 parsexlog.c:141
+#: parsexlog.c:90 parsexlog.c:145
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:94 parsexlog.c:144
+#: parsexlog.c:94 parsexlog.c:148
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "не удалось прочитать запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:199
+#: parsexlog.c:109
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr ""
+"конечный указатель %X/%X неверно задаёт конечную точку; ожидается %X/%X"
+
+#: parsexlog.c:203
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X: %s\n"
 
-#: parsexlog.c:203
+#: parsexlog.c:207
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "не удалось найти предыдущую запись WAL в позиции %X/%X\n"
 
-#: parsexlog.c:291
+#: parsexlog.c:295
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
 
-#: parsexlog.c:305
+#: parsexlog.c:309
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "не удалось переместиться в файле \"%s\": %s\n"
 
-#: parsexlog.c:312
+#: parsexlog.c:316
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "не удалось прочитать файл \"%s\": %s\n"
 
-#: parsexlog.c:380
+#: parsexlog.c:384
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"

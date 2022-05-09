@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_dump
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2009, 2010.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 22:57+0000\n"
-"PO-Revision-Date: 2021-11-09 06:32+0100\n"
+"POT-Creation-Date: 2022-02-15 18:07+0000\n"
+"PO-Revision-Date: 2022-02-18 15:33+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -2163,44 +2163,44 @@ msgstr "VARNING: kunde inte parsa arrayen reloptions\n"
 msgid "sorter"
 msgstr "sorterare"
 
-#: pg_dump_sort.c:451
+#: pg_dump_sort.c:460
 #, c-format
 msgid "invalid dumpId %d\n"
 msgstr "ogiltigt dumpId %d\n"
 
-#: pg_dump_sort.c:457
+#: pg_dump_sort.c:466
 #, c-format
 msgid "invalid dependency %d\n"
 msgstr "ogiltigt beroende %d\n"
 
-#: pg_dump_sort.c:690
+#: pg_dump_sort.c:699
 #, c-format
 msgid "could not identify dependency loop\n"
 msgstr "kunde inte fastställa beroendeloop\n"
 
-#: pg_dump_sort.c:1237
+#: pg_dump_sort.c:1246
 #, c-format
 msgid "NOTICE: there are circular foreign-key constraints on this table:\n"
 msgid_plural "NOTICE: there are circular foreign-key constraints among these tables:\n"
 msgstr[0] "NOTIS: det finns cirkulära främmande nyckelberoenden för denna tabell:\n"
 msgstr[1] "NOTIS: det finns cirkulära främmande nyckelberoenden för dessa tabeller:\n"
 
-#: pg_dump_sort.c:1241 pg_dump_sort.c:1261
+#: pg_dump_sort.c:1250 pg_dump_sort.c:1270
 #, c-format
 msgid "  %s\n"
 msgstr "  %s\n"
 
-#: pg_dump_sort.c:1242
+#: pg_dump_sort.c:1251
 #, c-format
 msgid "You might not be able to restore the dump without using --disable-triggers or temporarily dropping the constraints.\n"
 msgstr "Du kan eventiellt inte återställa dumpen utan att använda --disable-triggers eller temporärt droppa vilkoren.\n"
 
-#: pg_dump_sort.c:1243
+#: pg_dump_sort.c:1252
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem.\n"
 msgstr "Överväg att göra en full dump istället för --data-only för att undvika detta problem.\n"
 
-#: pg_dump_sort.c:1255
+#: pg_dump_sort.c:1264
 #, c-format
 msgid "WARNING: could not resolve dependency loop among these items:\n"
 msgstr "VARNING: kunde inte räta ut beroendeloopen för dessa saker:\n"

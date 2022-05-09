@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_rewind
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021.
+# Dennis Björklund <db@zigo.dhs.org>, 2017, 2018, 2019, 2020, 2021, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 22:58+0000\n"
-"PO-Revision-Date: 2021-11-09 06:32+0100\n"
+"POT-Creation-Date: 2022-04-07 11:26+0000\n"
+"PO-Revision-Date: 2022-04-11 14:02+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
-#: ../../common/fe_memutils.c:98 parsexlog.c:77 parsexlog.c:135 parsexlog.c:187
+#: ../../common/fe_memutils.c:98 parsexlog.c:77 parsexlog.c:139 parsexlog.c:191
 #, c-format
 msgid "out of memory\n"
 msgstr "slut på minne\n"
@@ -378,42 +378,47 @@ msgstr "Misslyckades, avslutar\n"
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "%*s/%s kB (%d%%) kopierad"
 
-#: parsexlog.c:90 parsexlog.c:141
+#: parsexlog.c:90 parsexlog.c:145
 #, c-format
 msgid "could not read WAL record at %X/%X: %s\n"
 msgstr "kunde inte läsa WAL-post vid %X/%X: %s\n"
 
-#: parsexlog.c:94 parsexlog.c:144
+#: parsexlog.c:94 parsexlog.c:148
 #, c-format
 msgid "could not read WAL record at %X/%X\n"
 msgstr "kunde inte läsa WAL-post vid %X/%X\n"
 
-#: parsexlog.c:199
+#: parsexlog.c:109
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr "slutpekare %X/%X är inte en giltig slutposition; förväntade %X/%X"
+
+#: parsexlog.c:203
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s\n"
 msgstr "kunde inte hitta föregående WAL-post vid %X/%X: %s\n"
 
-#: parsexlog.c:203
+#: parsexlog.c:207
 #, c-format
 msgid "could not find previous WAL record at %X/%X\n"
 msgstr "kunde inte hitta förgående WAL-post vid %X/%X\n"
 
-#: parsexlog.c:291
+#: parsexlog.c:295
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "kan inte öppna fil \"%s\": %s\n"
 
-#: parsexlog.c:305
+#: parsexlog.c:309
 #, c-format
 msgid "could not seek in file \"%s\": %s\n"
 msgstr "kunde inte söka i fil \"%s\": %s\n"
 
-#: parsexlog.c:312
+#: parsexlog.c:316
 #, c-format
 msgid "could not read from file \"%s\": %s\n"
 msgstr "kunde inte läsa från fil \"%s\": %s\n"
 
-#: parsexlog.c:380
+#: parsexlog.c:384
 #, c-format
 msgid ""
 "WAL record modifies a relation, but record type is not recognized\n"
