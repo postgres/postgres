@@ -63,7 +63,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-01-19 16:40+0000\n"
-"PO-Revision-Date: 2022-01-19 13:46-0500\n"
+"PO-Revision-Date: 2022-03-31 16:45+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -15704,7 +15704,7 @@ msgstr "las llamadas a funciones de agregación no pueden contener llamadas a fu
 #: parser/parse_func.c:883
 #, c-format
 msgid "You might be able to move the set-returning function into a LATERAL FROM item."
-msgstr "Puede intentar mover la funci[on que retorna conjuntos a un elemento LATERAL FROM."
+msgstr "Puede intentar mover la función que retorna conjuntos a un elemento LATERAL FROM."
 
 #: parser/parse_agg.c:767
 #, c-format

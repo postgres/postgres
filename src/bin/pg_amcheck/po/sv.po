@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-06 21:17+0000\n"
+"POT-Creation-Date: 2022-04-21 22:34+0000\n"
 "PO-Revision-Date: 2021-11-07 06:41+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
@@ -31,11 +31,11 @@ msgstr "fel: "
 msgid "warning: "
 msgstr "varning: "
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "Förfrågan om avbrytning skickad\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "Kunde inte skicka förfrågan om avbrytning: "
 
@@ -50,13 +50,13 @@ msgid "%s"
 msgstr "%s"
 
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1657 pg_amcheck.c:2105
+#: pg_amcheck.c:1678 pg_amcheck.c:2126
 #, c-format
 msgid "query failed: %s"
 msgstr "fråga misslyckades: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1658 pg_amcheck.c:2106
+#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1679 pg_amcheck.c:2127
 #, c-format
 msgid "query was: %s"
 msgstr "frågan var: %s"
@@ -226,7 +226,9 @@ msgstr "btree-index \"%s.%s.%s\":\n"
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
 "\n"
-msgstr "%s kontrollerar objekt i en PostgreSQL-database för att hitta korruption.\n\n"
+msgstr ""
+"%s kontrollerar objekt i en PostgreSQL-database för att hitta korruption.\n"
+"\n"
 
 #: pg_amcheck.c:1165
 #, c-format
@@ -243,7 +245,9 @@ msgstr "  %s [FLAGGA]... [DBNAMN]\n"
 msgid ""
 "\n"
 "Target options:\n"
-msgstr "\nFlaggor för destinationen:\n"
+msgstr ""
+"\n"
+"Flaggor för destinationen:\n"
 
 #: pg_amcheck.c:1168
 #, c-format
@@ -320,7 +324,9 @@ msgstr "      --no-strict-names           kräv INTE mallar för matcha objekt\n
 msgid ""
 "\n"
 "Table checking options:\n"
-msgstr "\nFlaggor för kontroll av tabeller:\n"
+msgstr ""
+"\n"
+"Flaggor för kontroll av tabeller:\n"
 
 #: pg_amcheck.c:1183
 #, c-format
@@ -352,7 +358,9 @@ msgstr "      --endblock=BLOCK            kontrollera tabell(er) fram till angiv
 msgid ""
 "\n"
 "B-tree index checking options:\n"
-msgstr "\nFlaggor för kontroll av B-tree-index:\n"
+msgstr ""
+"\n"
+"Flaggor för kontroll av B-tree-index:\n"
 
 #: pg_amcheck.c:1189
 #, c-format
@@ -374,7 +382,9 @@ msgstr "      --rootdescend               sök från root-sidan för att återfi
 msgid ""
 "\n"
 "Connection options:\n"
-msgstr "\nFlaggor för anslutning:\n"
+msgstr ""
+"\n"
+"Flaggor för anslutning:\n"
 
 #: pg_amcheck.c:1193
 #, c-format
@@ -479,22 +489,32 @@ msgstr "%*s/%s relationer (%d%%), %*s/%s sidor (%d%%) (%s%-*.*s)"
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "%*s/%s relationer (%d%%), %*s/%s sidor (%d%%)"
 
-#: pg_amcheck.c:1562 pg_amcheck.c:1704
+#: pg_amcheck.c:1352 pg_amcheck.c:1385
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "ej korrekt kvalificerat namn (för många namn med punkt): %s"
+
+#: pg_amcheck.c:1430
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "ej korrekt relationsnamn (för många namn med punkt): %s"
+
+#: pg_amcheck.c:1583 pg_amcheck.c:1725
 #, c-format
 msgid "including database \"%s\""
 msgstr "inkludera databas \"%s\""
 
-#: pg_amcheck.c:1684
+#: pg_amcheck.c:1705
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "internt fel: tog emot oväntat pattern_id %d för databas"
 
-#: pg_amcheck.c:1688
+#: pg_amcheck.c:1709
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr "finns inga anslutningsbara databaser att kontrollera som matchar \"%s\""
 
-#: pg_amcheck.c:2147
+#: pg_amcheck.c:2168
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "internt fel: tog emot oväntat pattern_id %d för relation"

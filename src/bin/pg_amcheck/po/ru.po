@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-02-07 11:21+0300\n"
-"PO-Revision-Date: 2021-09-06 10:51+0300\n"
+"POT-Creation-Date: 2022-05-07 06:06+0300\n"
+"PO-Revision-Date: 2022-05-07 06:16+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -46,13 +46,13 @@ msgid "%s"
 msgstr "%s"
 
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1657 pg_amcheck.c:2105
+#: pg_amcheck.c:1678 pg_amcheck.c:2126
 #, c-format
 msgid "query failed: %s"
 msgstr "ошибка при выполнении запроса: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1658 pg_amcheck.c:2106
+#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1679 pg_amcheck.c:2127
 #, c-format
 msgid "query was: %s"
 msgstr "запрос: %s"
@@ -558,23 +558,33 @@ msgstr "отношений: %*s/%s (%d%%), страниц: %*s/%s (%d%%) (%s%-*.
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "отношений: %*s/%s (%d%%), страниц: %*s/%s (%d%%)"
 
-#: pg_amcheck.c:1562 pg_amcheck.c:1704
+#: pg_amcheck.c:1352 pg_amcheck.c:1385
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "неверное полное имя (слишком много компонентов): %s"
+
+#: pg_amcheck.c:1430
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "неверное имя отношения (слишком много компонентов): %s"
+
+#: pg_amcheck.c:1583 pg_amcheck.c:1725
 #, c-format
 msgid "including database \"%s\""
 msgstr "выбирается база \"%s\""
 
-#: pg_amcheck.c:1684
+#: pg_amcheck.c:1705
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "внутренняя ошибка: получен неожиданный идентификатор шаблона базы %d"
 
-#: pg_amcheck.c:1688
+#: pg_amcheck.c:1709
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr ""
 "не найдены подлежащие проверке доступные базы, соответствующие шаблону \"%s\""
 
-#: pg_amcheck.c:2147
+#: pg_amcheck.c:2168
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr ""
