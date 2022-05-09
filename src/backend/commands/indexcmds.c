@@ -55,6 +55,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -371,7 +372,12 @@ DefineIndex(Oid relationId,
 	LOCKTAG		heaplocktag;
 	LOCKMODE	lockmode;
 	Snapshot	snapshot;
+	Oid			root_save_userid;
+	int			root_save_sec_context;
+	int			root_save_nestlevel;
 	int			i;
+
+	root_save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Force non-concurrent build on temporary relations, even if CONCURRENTLY
@@ -429,6 +435,15 @@ DefineIndex(Oid relationId,
 	 */
 	lockmode = concurrent ? ShareUpdateExclusiveLock : ShareLock;
 	rel = heap_open(relationId, lockmode);
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations.  We
+	 * already arranged to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&root_save_userid, &root_save_sec_context);
+	SetUserIdAndSecContext(rel->rd_rel->relowner,
+						   root_save_sec_context | SECURITY_RESTRICTED_OPERATION);
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
@@ -516,7 +531,7 @@ DefineIndex(Oid relationId,
 	{
 		AclResult	aclresult;
 
-		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+		aclresult = pg_namespace_aclcheck(namespaceId, root_save_userid,
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
@@ -543,7 +558,7 @@ DefineIndex(Oid relationId,
 	{
 		AclResult	aclresult;
 
-		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
+		aclresult = pg_tablespace_aclcheck(tablespaceId, root_save_userid,
 										   ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
@@ -939,9 +954,24 @@ DefineIndex(Oid relationId,
 
 	if (!OidIsValid(indexRelationId))
 	{
+		/* Roll back any GUC changes executed by index functions. */
+		AtEOXact_GUC(false, root_save_nestlevel);
+
+		/* Restore userid and security context */
+		SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
+
 		heap_close(rel, NoLock);
 		return address;
 	}
+
+	/*
+	 * Roll back any GUC changes executed by index functions, and keep
+	 * subsequent changes local to this command.  It's barely possible that
+	 * some index function changed a behavior-affecting GUC, e.g. xmloption,
+	 * that affects subsequent steps.
+	 */
+	AtEOXact_GUC(false, root_save_nestlevel);
+	root_save_nestlevel = NewGUCNestLevel();
 
 	/* Add any requested comment */
 	if (stmt->idxcomment != NULL)
@@ -986,6 +1016,9 @@ DefineIndex(Oid relationId,
 			{
 				Oid			childRelid = part_oids[i];
 				Relation	childrel;
+				Oid			child_save_userid;
+				int			child_save_sec_context;
+				int			child_save_nestlevel;
 				List	   *childidxs;
 				ListCell   *cell;
 				AttrNumber *attmap;
@@ -993,6 +1026,12 @@ DefineIndex(Oid relationId,
 				int			maplen;
 
 				childrel = heap_open(childRelid, lockmode);
+
+				GetUserIdAndSecContext(&child_save_userid,
+									   &child_save_sec_context);
+				SetUserIdAndSecContext(childrel->rd_rel->relowner,
+									   child_save_sec_context | SECURITY_RESTRICTED_OPERATION);
+				child_save_nestlevel = NewGUCNestLevel();
 
 				/*
 				 * Don't try to create indexes on foreign tables, though.
@@ -1009,6 +1048,9 @@ DefineIndex(Oid relationId,
 								 errdetail("Table \"%s\" contains partitions that are foreign tables.",
 										RelationGetRelationName(rel))));
 
+					AtEOXact_GUC(false, child_save_nestlevel);
+					SetUserIdAndSecContext(child_save_userid,
+										   child_save_sec_context);
 					heap_close(childrel, lockmode);
 					continue;
 				}
@@ -1081,6 +1123,9 @@ DefineIndex(Oid relationId,
 				}
 
 				list_free(childidxs);
+				AtEOXact_GUC(false, child_save_nestlevel);
+				SetUserIdAndSecContext(child_save_userid,
+									   child_save_sec_context);
 				heap_close(childrel, NoLock);
 
 				/*
@@ -1136,12 +1181,21 @@ DefineIndex(Oid relationId,
 					if (found_whole_row)
 						elog(ERROR, "cannot convert whole-row table reference");
 
+					/*
+					 * Recurse as the starting user ID.  Callee will use that
+					 * for permission checks, then switch again.
+					 */
+					Assert(GetUserId() == child_save_userid);
+					SetUserIdAndSecContext(root_save_userid,
+										   root_save_sec_context);
 					DefineIndex(childRelid, childStmt,
 								InvalidOid, /* no predefined OID */
 								indexRelationId,	/* this is our child */
 								createdConstraintId,
 								is_alter_table, check_rights, check_not_in_use,
 								skip_build, quiet);
+					SetUserIdAndSecContext(child_save_userid,
+										   child_save_sec_context);
 				}
 
 				pfree(attmap);
@@ -1176,9 +1230,14 @@ DefineIndex(Oid relationId,
 		 * Indexes on partitioned tables are not themselves built, so we're
 		 * done here.
 		 */
+		AtEOXact_GUC(false, root_save_nestlevel);
+		SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 		heap_close(rel, NoLock);
 		return address;
 	}
+
+	AtEOXact_GUC(false, root_save_nestlevel);
+	SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 
 	if (!concurrent)
 	{
@@ -1258,6 +1317,16 @@ DefineIndex(Oid relationId,
 	/* Open and lock the parent heap relation */
 	rel = heap_openrv(stmt->relation, ShareUpdateExclusiveLock);
 
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&root_save_userid, &root_save_sec_context);
+	SetUserIdAndSecContext(rel->rd_rel->relowner,
+						   root_save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	root_save_nestlevel = NewGUCNestLevel();
+
 	/* And the target index relation */
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
 
@@ -1272,6 +1341,12 @@ DefineIndex(Oid relationId,
 
 	/* Now build the index */
 	index_build(rel, indexRelation, indexInfo, stmt->primary, false, true);
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, root_save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(root_save_userid, root_save_sec_context);
 
 	/* Close both the relations, but keep the locks */
 	heap_close(rel, NoLock);

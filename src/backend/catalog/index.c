@@ -3271,7 +3271,17 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* Open and lock the parent heap relation */
 	heapRelation = heap_open(heapId, ShareUpdateExclusiveLock);
-	/* And the target index relation */
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
 	indexRelation = index_open(indexId, RowExclusiveLock);
 
 	/*
@@ -3283,16 +3293,6 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* mark build is concurrent just for consistency */
 	indexInfo->ii_Concurrent = true;
-
-	/*
-	 * Switch to the table owner's userid, so that any index functions are run
-	 * as that user.  Also lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Scan the index and gather up all the TIDs into a tuplesort object.
@@ -3756,6 +3756,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	Relation	iRel,
 				heapRelation;
 	Oid			heapId;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	IndexInfo  *indexInfo;
 	volatile bool skipped_constraint = false;
 	PGRUsage	ru0;
@@ -3768,6 +3771,16 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	 */
 	heapId = IndexGetRelation(indexId, false);
 	heapRelation = heap_open(heapId, ShareLock);
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Open the target index relation and get an exclusive lock on it, to
@@ -3917,6 +3930,12 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 						get_rel_name(indexId)),
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
