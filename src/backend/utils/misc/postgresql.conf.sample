@@ -449,7 +449,7 @@
 					# logging_collector to be on.
 
 # This is used when logging to stderr:
-#logging_collector = off		# Enable capturing of stderr, jsonlog
+#logging_collector = off		# Enable capturing of stderr, jsonlog,
 					# and csvlog into log files. Required
 					# to be on for csvlogs and jsonlogs.
 					# (change requires restart)
@@ -536,9 +536,9 @@
 					# statements from all transactions, 0.0 never logs
 
 #log_startup_progress_interval = 10s	# Time between progress updates for
-										# long-running startup operations.
-										# 0 disables the feature, > 0 indicates
-										# the interval in milliseconds.
+					# long-running startup operations.
+					# 0 disables the feature, > 0 indicates
+					# the interval in milliseconds.
 
 # - What to Log -
 
