@@ -2176,7 +2176,7 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
-#ifndef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM < 8
 /* note: this is used for timestamptz also */
 static int
 timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
@@ -2193,7 +2193,7 @@ timestamp_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-#ifdef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM >= 8
 	/*
 	 * If this build has pass-by-value timestamps, then we can use a standard
 	 * comparator function.
