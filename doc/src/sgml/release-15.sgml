@@ -88,7 +88,7 @@ Remove exclusive backup mode (David Steele, Nathan Bossart)
 </para>
 
 <para>
-This mode could cause server startup failure if the database server stopped abruptly while in this mode.  The non-exclusive backup mode requires a continuous database connection during the backup.
+If the database server stops abruptly while in this mode, the server could fail to start.  The non-exclusive backup mode requires a continuous database connection during the backup.
 </para>
 </listitem>
 
@@ -130,21 +130,6 @@ Mark the interval output function as stable, not immutable, since it depends on 
 
 <para>
 This will cause the creation of indexes relying on the text output of interval values to fail.
-</para>
-</listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-11-06 [cbe25dcff] Disallow making an empty lexeme via array_to_tsvector().
--->
-
-<listitem>
-<para>
-Allow tsvector_delete_arr() and tsvector_setweight_by_filter() accept empty array elements (Jean-Christophe Arnu)
-</para>
-
-<para>
-These lexemes are not stored so the acceptance of empty array elements is not a problem.
 </para>
 </listitem>
 
@@ -249,7 +234,7 @@ Adjust JSON numeric literal processing to match the SQL/JSON-standard (Peter Eis
 </para>
 
 <para>
-This accepts numeric formats like ".1" and "1.", and disallow trailing junk after numeric literals, like "1.type()".
+This accepts numeric formats like ".1" and "1.", and disallows trailing junk after numeric literals, like "1.type()".
 </para>
 </listitem>
 
@@ -309,7 +294,7 @@ Prevent logical replication into tables where the subscription owner is subject 
 </para>
 
 <para>
-This effectively means that only super users, roles with bypassrls, and table owners can replicate into tables with row-level security policies.  (The actual row-level security policies are not checked,
+This effectively means that only superusers, roles with bypassrls, and table owners can replicate into tables with row-level security policies.  (The actual row-level security policies are not checked,
 only whether row-level security policies are enforced for subscribing users.)
 </para>
 </listitem>
@@ -402,7 +387,7 @@ Improve the algorithm used to compute random() (Fabien Coelho)
 </para>
 
 <para>
-This will cause setseed() followed by random() to return a different value on older servers.
+This will cause setseed() followed by random() to return a different value than on older servers.
 </para>
 </listitem>
 
@@ -678,7 +663,7 @@ Allow unique constraints and indexes to treat NULL values as not distinct (Peter
 </para>
 
 <para>
-The Postgres default has always been to treat NULL indexed values as distinct, but this can now be changed by creating constraints and indexes using UNIQUE NULLS NOT DISTINCT.
+Previously NULL values were always indexed as distinct values, but this can now be changed by creating constraints and indexes using UNIQUE NULLS NOT DISTINCT.
 </para>
 </listitem>
 
@@ -713,11 +698,11 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <listitem>
 <para>
-Have extended statistics track statistics for a table's children separately (Tomas Vondra, Justin Pryzby)
+Allow extended statistics to record statistics for a parent with all it children (Tomas Vondra, Justin Pryzby)
 </para>
 
 <para>
-Regular statistics already tracked child and non-child statistics separately.
+Regular statistics already tracked parent and parent/all-children statistics separately.
 </para>
 </listitem>
 
@@ -799,7 +784,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Allow WAL full page writes to use LZ4 and ZSTD compression (Andrey Borodin, Justin Pryzby)
+Allow WAL full page writes to use LZ4 and Zstandard compression (Andrey Borodin, Justin Pryzby)
 </para>
 
 <para>
@@ -1016,7 +1001,7 @@ Allow members of the pg_write_server_files predefined role to perform server-sid
 </para>
 
 <para>
-Previously only the super users could perform such backups.
+Previously only the superusers could perform such backups.
 </para>
 </listitem>
 
@@ -1046,7 +1031,7 @@ Allow members of the pg_checkpointer predefined role to run the CHECKPOINT comma
 </para>
 
 <para>
-Previously these views could only be run by super users.
+Previously checkpoints could only be run by superusers.
 </para>
 </listitem>
 
@@ -1061,7 +1046,7 @@ Allow members of the pg_read_all_stats predefined role to access the views pg_ba
 </para>
 
 <para>
-Previously these views could only be run by super users.
+Previously these views could only be accessed by superusers.
 </para>
 </listitem>
 
@@ -1076,7 +1061,7 @@ Allow GRANT to assign permissions on pg_log_backend_memory_contexts() (Jeff Davi
 </para>
 
 <para>
-Previously this function could only be run by super users.
+Previously this function could only be run by superusers.
 </para>
 </listitem>
 
@@ -1130,7 +1115,7 @@ Allow "postgres -C" to properly report runtime-computed values (Nathan Bossart)
 </para>
 
 <para>
-Previously runtime-computed values data_checksums, wal_segment_size, and data_directory_mode would report values that would not be accurate on the running server.  They also can only be
+Previously runtime-computed values data_checksums, wal_segment_size, and data_directory_mode would report values that would not be accurate on the running server.
 </para>
 </listitem>
 
@@ -1142,17 +1127,6 @@ Author: Michael Paquier <michael@paquier.xyz>
 <listitem>
 <para>
 Add function pg_settings_get_flags() to get the flags of server-side variables (Justin Pryzby)
-</para>
-</listitem>
-
-<!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2022-01-15 [7170f2159] Allow "in place" tablespaces.
--->
-
-<listitem>
-<para>
-Add server variable allow_in_place_tablespaces for tablespace testing (Thomas Munro)
 </para>
 </listitem>
 
@@ -1178,7 +1152,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add support for LZ4 and ZSTD compression of server-side base backups (Jeevan Ladhe, Robert Haas)
+Add support for LZ4 and Zstandard compression of server-side base backups (Jeevan Ladhe, Robert Haas)
 </para>
 </listitem>
 
@@ -1456,7 +1430,7 @@ Add support for HEADER option in COPY text format (Rémi Lapeyre)
 </para>
 
 <para>
-The new options causes the column names to be output, and optionally verified on input.
+The new option causes the column names to be output, and optionally verified on input.
 </para>
 </listitem>
 
@@ -1508,7 +1482,7 @@ Allow foreign key ON DELETE SET actions to affect only specified columns (Paul M
 </para>
 
 <para>
-Previously, all of the columns in the foreign key were always effected.
+Previously, all of the columns in the foreign key were always affected.
 </para>
 </listitem>
 
@@ -1523,7 +1497,7 @@ When EXPLAIN references the temporary object schema, refer to it as "pg_temp" (A
 </para>
 
 <para>
-Previous the actual schema name was used.
+Previously the actual schema name was used.
 </para>
 </listitem>
 
@@ -1705,6 +1679,21 @@ Improve the optimization of timetz_zone() by stabilizing its value at transactio
 </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-11-06 [cbe25dcff] Disallow making an empty lexeme via array_to_tsvector().
+-->
+
+<listitem>
+<para>
+Allow tsvector_delete_arr() and tsvector_setweight_by_filter() to accept empty array elements (Jean-Christophe Arnu)
+</para>
+
+<para>
+These lexemes are not stored so the acceptance of empty array elements is not a problem.
+</para>
+</listitem>
+
+<!--
 Author: David Rowley <drowley@postgresql.org>
 2021-07-09 [ca2e4472b] Teach pg_size_pretty and pg_size_bytes about petabytes
 -->
@@ -1817,7 +1806,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Fix inforcement of PL/pgSQL variable CONSTANT markings (Tom Lane)
+Fix enforcement of PL/pgSQL variable CONSTANT markings (Tom Lane)
 </para>
 
 <para>
@@ -1841,7 +1830,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Allow IP address matching against a server's certificate Subject Alternative Name (Jacob Champion)
+Allow IP address matching against a server certificate's Subject Alternative Name (Jacob Champion)
 </para>
 </listitem>
 
@@ -1852,7 +1841,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
 <listitem>
 <para>
-Allow libpq's SSL private to be owned by the root user (David Steele)
+Allow libpq's SSL private key file to be owned by the root user (David Steele)
 </para>
 </listitem>
 
@@ -2028,11 +2017,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Have psql output all output if multiple queries are passed to the server at once (Fabien Coelho)
+Have psql output all results if multiple queries are passed to the server at once (Fabien Coelho)
 </para>
 
 <para>
-This can be disabled setting SHOW_ALL_RESULTS.
+This can be disabled by setting SHOW_ALL_RESULTS.
 </para>
 </listitem>
 
@@ -2131,7 +2120,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow pg_basebackup to decompress LZ4 and ZSTD compressed server-side base backups, and LZ4 and ZSTD compress output files (Dipesh Pandit, Jeevan Ladhe)
+Allow pg_basebackup to decompress LZ4 and Zstandard compressed server-side base backups, and LZ4 and Zstandard compress output files (Dipesh Pandit, Jeevan Ladhe)
 </para>
 </listitem>
 
@@ -2146,7 +2135,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow pg_basebackup's --compress option to control the compression method (Michael Paquier, Robert Haas)
+Allow pg_basebackup's --compress option to control the compression method and options (Michael Paquier, Robert Haas)
 </para>
 
 <para>
@@ -2161,7 +2150,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow pg_basebackup to compress on the server slide and decompress on the client side before storage (Dipesh Pandit)
+Allow pg_basebackup to compress on the server side and decompress on the client side before storage (Dipesh Pandit)
 </para>
 
 <para>
@@ -2182,7 +2171,7 @@ Add the LZ4 compression method to pg_receivewal (Georgios Kokolatos)
 </para>
 
 <para>
-This is enabled via --compression-method=lz4 and requires binaries to be built using --with-lz4.
+This is enabled via --compression=lz4 and requires binaries to be built using --with-lz4.
 </para>
 </listitem>
 
@@ -2197,7 +2186,7 @@ Redesign pg_receivewal's compression options (Georgios Kokolatos)
 </para>
 
 <para>
-The new --compression-method option controls the type of compression, rather than just relying on --compress.
+The new --compression option controls the type of compression, rather than just relying on --compress.
 </para>
 </listitem>
 
@@ -2213,7 +2202,7 @@ Improve pg_receivewal's ability to restart at the proper WAL location (Ronan Dun
 
 <para>
 Previously, pg_receivewal would start based on the WAL file stored in the local archive directory, or at the sending server's current WAL flush location.  With this change, if the sending server is running
-Postgres 15 or later, the local archive directory is empty, and a replication slot is specified, the replication slots restart point will be used.
+Postgres 15 or later, the local archive directory is empty, and a replication slot is specified, the replication slot's restart point will be used.
 </para>
 </listitem>
 
@@ -2279,11 +2268,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Add dump/restore option --no-table-access-method to force restore to use only the default table access method (Justin Pryzby)
-</para>
-
-<para>
-This is for portability in restoring from systems using non-default table access methods.
+Add dump/restore option --no-table-access-method to force restore to only use the default table access method (Justin Pryzby)
 </para>
 </listitem>
 
@@ -2334,7 +2319,7 @@ Have pg_upgrade report all databases with invalid connection settings (Jeevan La
 </para>
 
 <para>
-Previously only the first invalid connection setting database was reported.
+Previously only the first database with an invalid connection setting was reported.
 </para>
 </listitem>
 
@@ -2540,7 +2525,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add configure option --with-zstd to enable ZSTD build (Jeevan Ladhe, Robert Haas, Michael Paquier)
+Add configure option --with-zstd to enable Zstandard builds (Jeevan Ladhe, Robert Haas, Michael Paquier)
 </para>
 </listitem>
 
@@ -2581,7 +2566,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add new protocol message TARGET to specific a new COPY method to be for base backups (Robert Haas)
+Add new protocol message TARGET to specify a new COPY method to be for base backups (Robert Haas)
 </para>
 
 <para>
@@ -2633,7 +2618,18 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Add extensions to define their own WAL resource managers (Jeff Davis)
+Allow extensions to define their own WAL resource managers (Jeff Davis)
+</para>
+</listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2022-01-15 [7170f2159] Allow "in place" tablespaces.
+-->
+
+<listitem>
+<para>
+Add server variable allow_in_place_tablespaces for tablespace testing (Thomas Munro)
 </para>
 </listitem>
 
@@ -2644,7 +2640,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Automatically export server variables using PGDLLIMPORT on Windows (Robert Haas)
+Export all server variables using PGDLLIMPORT on Windows (Robert Haas)
 </para>
 
 <para>
@@ -2891,7 +2887,7 @@ Allow parallel commit on postgres_fdw servers (Etsuro Fujita)
 </para>
 
 <para>
-This is enabled with the "parallel_commit" postgres_fdw option.
+This is enabled with the CREATE SERVER option "parallel_commit" when using postgres_fdw.
 </para>
 </listitem>
 
