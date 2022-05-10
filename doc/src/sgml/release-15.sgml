@@ -254,6 +254,21 @@ Some platforms disallowed trailing periods.
 </listitem>
 
 <!--
+Author: Bruce Momjian <bruce@momjian.us>
+2021-08-03 [95ab1e0a9] interval:  round values when spilling to months
+-->
+
+<listitem>
+<para>
+When specifying fractional interval values in units greater than months, round to the nearest month (Bruce Momjian)
+</para>
+
+<para>
+For example, report '1.99 years' as '2 years', not '1 year 11 months'.
+</para>
+</listitem>
+
+<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-02-28 [54bd1e43c] Handle integer overflow in interval justification functi
 -->
@@ -311,6 +326,21 @@ Prevent UPDATE and DELETE logical replication operations on tables where the sub
 
 <para>
 UPDATE and DELETE perform SELECT, so require the subscription owner to have table SELECT permission.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-07-27 [48c5c9068] Use the "pg_temp" schema alias in EXPLAIN and related ou
+-->
+
+<listitem>
+<para>
+When EXPLAIN references the temporary object schema, refer to it as "pg_temp" (Amul Sul)
+</para>
+
+<para>
+Previously the actual schema name was used.
 </para>
 </listitem>
 
@@ -698,7 +728,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <listitem>
 <para>
-Allow extended statistics to record statistics for a parent with all it children (Tomas Vondra, Justin Pryzby)
+Allow extended statistics to record statistics for a parent with all its children (Tomas Vondra, Justin Pryzby)
 </para>
 
 <para>
@@ -1130,17 +1160,6 @@ Previously runtime-computed values data_checksums, wal_segment_size, and data_di
 </para>
 </listitem>
 
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-01-31 [d10e41d42] Introduce pg_settings_get_flags() to find flags associat
--->
-
-<listitem>
-<para>
-Add function pg_settings_get_flags() to get the flags of server-side variables (Justin Pryzby)
-</para>
-</listitem>
-
      </itemizedlist>
 
     </sect4>
@@ -1479,21 +1498,6 @@ Previously, all of the columns in the foreign key were always affected.
 </listitem>
 
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-07-27 [48c5c9068] Use the "pg_temp" schema alias in EXPLAIN and related ou
--->
-
-<listitem>
-<para>
-When EXPLAIN references the temporary object schema, refer to it as "pg_temp" (Amul Sul)
-</para>
-
-<para>
-Previously the actual schema name was used.
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2021-07-28 [b0483263d] Add support for SET ACCESS METHOD in ALTER TABLE
 -->
@@ -1536,21 +1540,6 @@ Allow numeric scale to be negative or greater than precision (Dean Rasheed, Tom 
 
 <para>
 This allows rounding of values to the left of the decimal point, e.g., '1234'::numeric(4, -2) returns 1200.
-</para>
-</listitem>
-
-<!--
-Author: Bruce Momjian <bruce@momjian.us>
-2021-08-03 [95ab1e0a9] interval:  round values when spilling to months
--->
-
-<listitem>
-<para>
-When specifying fractional interval values in units greater than months, round to the nearest month (Bruce Momjian)
-</para>
-
-<para>
-For example, report '1.99 years' as '2 years', not '1 year 11 months'.
 </para>
 </listitem>
 
@@ -2198,6 +2187,17 @@ Postgres 15 or later, the local archive directory is empty, and a replication sl
 </para>
 </listitem>
 
+<!--
+Author: Tatsuo Ishii <ishii@postgresql.org>
+2022-03-23 [4a39f87ac] Allow pgbench to retry in some cases.
+-->
+
+<listitem>
+<para>
+Allow pgbench to retry after serialization and deadlock failures (Yugo Nagata, Marina Polyakova)
+</para>
+</listitem>
+
     </itemizedlist>
 
     <sect4>
@@ -2615,6 +2615,17 @@ Allow extensions to define their own WAL resource managers (Jeff Davis)
 </listitem>
 
 <!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-01-31 [d10e41d42] Introduce pg_settings_get_flags() to find flags associat
+-->
+
+<listitem>
+<para>
+Add function pg_settings_get_flags() to get the flags of server-side variables (Justin Pryzby)
+</para>
+</listitem>
+
+<!--
 Author: Thomas Munro <tmunro@postgresql.org>
 2022-01-15 [7170f2159] Allow "in place" tablespaces.
 -->
@@ -2632,7 +2643,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Export all server variables using PGDLLIMPORT on Windows (Robert Haas)
+Export all server variables on Windows using PGDLLIMPORT (Robert Haas)
 </para>
 
 <para>
@@ -2797,17 +2808,6 @@ Indicate the permissive/enforcing state in sepgsql log messages (Dave Page)
 </listitem>
 
 <!--
-Author: Tatsuo Ishii <ishii@postgresql.org>
-2022-03-23 [4a39f87ac] Allow pgbench to retry in some cases.
--->
-
-<listitem>
-<para>
-Allow pgbench to retry after serialization and deadlock failures (Yugo Nagata, Marina Polyakova)
-</para>
-</listitem>
-
-<!--
 Author: Michael Paquier <michael@paquier.xyz>
 2021-07-12 [127404fbe] pageinspect: Improve page_header() for pages of 32kB
 -->
@@ -2843,19 +2843,6 @@ Allow postgres_fdw to push down CASE expressions (Alexander Pyhalov)
 <!--
 Author: Fujii Masao <fujii@postgresql.org>
 2021-09-07 [449ab6350] postgres_fdw: Allow application_name of remote connectio
--->
-
-<listitem>
-<para>
-Add server variable postgres_fdw.application_name to control the application name of postgres_fdw connections (Hayato Kuroda)
-</para>
-
-<para>
-Previously the remote application_name could only be set on the remote server or the postgres_fdw connection specification.
-</para>
-</listitem>
-
-<!--
 Author: Fujii Masao <fujii@postgresql.org>
 2021-12-24 [6e0cb3dec] postgres_fdw: Allow postgres_fdw.application_name to inc
 Author: Fujii Masao <fujii@postgresql.org>
@@ -2864,7 +2851,11 @@ Author: Fujii Masao <fujii@postgresql.org>
 
 <listitem>
 <para>
-Allow informational escape sequences to be used in postgres_fdw's application name (Hayato Kuroda, Fujii Masao)
+Add server variable postgres_fdw.application_name to control the application name of postgres_fdw connections (Hayato Kuroda)
+</para>
+
+<para>
+Previously the remote application_name could only be set on the remote server or via postgres_fdw connection specification.  postgres_fdw.application_name also supports escape sequences for customization.
 </para>
 </listitem>
 
