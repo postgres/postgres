@@ -21,9 +21,11 @@ sub generate_db
 		next if $i == 7 || $i == 10 || $i == 13;    # skip BEL, LF, and CR
 		$dbname = $dbname . sprintf('%c', $i);
 	}
-	$node->run_log(
-		[ 'createdb', '--host', $node->host, '--port', $node->port, $dbname ]
-	);
+
+	# Exercise backslashes adjacent to double quotes, a Windows special
+	# case.
+	$dbname = '\\"\\' . $dbname . '\\\\"\\\\\\';
+	$node->command_ok([ 'createdb', $dbname ]);
 }
 
 # The test of pg_upgrade requires two clusters, an old one and a new one
@@ -70,12 +72,7 @@ if (defined($ENV{olddump}))
 
 	# Load the dump using the "postgres" database as "regression" does
 	# not exist yet, and we are done here.
-	$oldnode->command_ok(
-		[
-			'psql',   '-X',           '-f',     $olddumpfile,
-			'--port', $oldnode->port, '--host', $oldnode->host,
-			'postgres'
-		]);
+	$oldnode->command_ok([ 'psql', '-X', '-f', $olddumpfile, 'postgres' ]);
 }
 else
 {
@@ -87,8 +84,7 @@ else
 	generate_db($oldnode, 91, 127);
 
 	# Grab any regression options that may be passed down by caller.
-	my $extra_opts_val = $ENV{EXTRA_REGRESS_OPT} || "";
-	my @extra_opts     = split(/\s+/, $extra_opts_val);
+	my $extra_opts = $ENV{EXTRA_REGRESS_OPTS} || "";
 
 	# --dlpath is needed to be able to find the location of regress.so
 	# and any libraries the regression tests require.
@@ -100,19 +96,19 @@ else
 	# --inputdir points to the path of the input files.
 	my $inputdir = "$srcdir/src/test/regress";
 
-	my @regress_command = [
-		$ENV{PG_REGRESS},                             @extra_opts,
-		'--dlpath',                                   $dlpath,
-		'--max-concurrent-tests',                     '20',
-		'--bindir=',                                  '--host',
-		$oldnode->host,                               '--port',
-		$oldnode->port,                               '--schedule',
-		"$srcdir/src/test/regress/parallel_schedule", '--outputdir',
-		$outputdir,                                   '--inputdir',
-		$inputdir
-	];
-
-	my $rc = run_log(@regress_command);
+	my $rc =
+	  system($ENV{PG_REGRESS}
+		  . "$extra_opts "
+		  . "--dlpath=\"$dlpath\" "
+		  . "--bindir= "
+		  . "--host="
+		  . $oldnode->host . " "
+		  . "--port="
+		  . $oldnode->port . " "
+		  . "--schedule=$srcdir/src/test/regress/parallel_schedule "
+		  . "--max-concurrent-tests=20 "
+		  . "--inputdir=\"$inputdir\" "
+		  . "--outputdir=\"$outputdir\"");
 	if ($rc != 0)
 	{
 		# Dump out the regression diffs file, if there is one
@@ -133,12 +129,10 @@ if (defined($ENV{oldinstall}))
 {
 	# Note that upgrade_adapt.sql from the new version is used, to
 	# cope with an upgrade to this version.
-	$oldnode->run_log(
+	$oldnode->command_ok(
 		[
-			'psql',   '-X',
-			'-f',     "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
-			'--port', $oldnode->port,
-			'--host', $oldnode->host,
+			'psql', '-X',
+			'-f',   "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
 			'regression'
 		]);
 }
@@ -232,7 +226,7 @@ if (-d $log_path)
 }
 
 # Second dump from the upgraded instance.
-$newnode->run_log(
+$newnode->command_ok(
 	[
 		'pg_dumpall', '--no-sync',
 		'-d',         $newnode->connstr('postgres'),
