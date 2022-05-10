@@ -840,6 +840,17 @@ Improve the performance of window functions that use row_number(), rank(), and c
 </para>
 </listitem>
 
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-04-06 [a82a5eee3] Use ISB as a spin-delay instruction on ARM64.
+-->
+
+<listitem>
+<para>
+Improve the performance of spinlocks on high-core-count ARM64 systems (Geoffrey Blake)
+</para>
+</listitem>
+
      </itemizedlist>
 
     </sect4>
