@@ -1115,7 +1115,7 @@ Allow "postgres -C" to properly report runtime-computed values (Nathan Bossart)
 </para>
 
 <para>
-Previously runtime-computed values data_checksums, wal_segment_size, and data_directory_mode would report values that would not be accurate on the running server.
+Previously runtime-computed values data_checksums, wal_segment_size, and data_directory_mode would report values that would not be accurate on the running server.  However, this does not work on a running server.
 </para>
 </listitem>
 
@@ -1271,21 +1271,6 @@ Allow publications to be restricted to specific columns (Tomas Vondra, Álvaro H
 </listitem>
 
 <!--
-Author: Tomas Vondra <tomas.vondra@postgresql.org>
-2022-03-24 [75b1521da] Add decoding of sequences to built-in replication
--->
-
-<listitem>
-<para>
-Allow logical replication to transfer sequence changes (Tomas Vondra, Cary Huang)
-</para>
-
-<para>
-The sequence option must be specified in the publication.  A new system view pg_publication_sequences shows published sequences.
-</para>
-</listitem>
-
-<!--
 Author: Peter Eisentraut <peter@eisentraut.org>
 2022-04-07 [344d62fb9] Unlogged sequences
 -->
@@ -1293,10 +1278,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 <listitem>
 <para>
 Create unlogged sequences and allow them to be skipped in logical replication (Peter Eisentraut)
-</para>
-
-<para>
-Individual sequence changes are not WAL logged so there is no performance benefit on the primary.
 </para>
 </listitem>
 
