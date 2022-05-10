@@ -230,7 +230,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Prevent numeric literals from having non-numeric training characters (Peter Eisentraut)
+Prevent numeric literals from having non-numeric trailing characters (Peter Eisentraut)
 </para>
 
 <para>
