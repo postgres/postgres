@@ -1334,7 +1334,14 @@ if test "$with_ldap" = yes ; then
     LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
     # This test is carried out against libldap.
     AC_CHECK_FUNCS([ldap_initialize])
-    if test "$enable_thread_safety" = yes; then
+    # The separate ldap_r library only exists in OpenLDAP < 2.5, and if we
+    # have 2.5 or later, we shouldn't even probe for ldap_r (we might find a
+    # library from a separate OpenLDAP installation).  The most reliable
+    # way to check that is to check for a function introduced in 2.5.
+    AC_CHECK_FUNC([ldap_verify_credentials],
+		  [thread_safe_libldap=yes],
+		  [thread_safe_libldap=no])
+    if test "$enable_thread_safety" = yes -a "$thread_safe_libldap" = no; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # On some platforms ldap_r fails to link without PTHREAD_LIBS.
       LIBS="$_LIBS"

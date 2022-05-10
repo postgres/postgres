@@ -13192,7 +13192,18 @@ _ACEOF
 fi
 done
 
-    if test "$enable_thread_safety" = yes; then
+    # The separate ldap_r library only exists in OpenLDAP < 2.5, and if we
+    # have 2.5 or later, we shouldn't even probe for ldap_r (we might find a
+    # library from a separate OpenLDAP installation).  The most reliable
+    # way to check that is to check for a function introduced in 2.5.
+    ac_fn_c_check_func "$LINENO" "ldap_verify_credentials" "ac_cv_func_ldap_verify_credentials"
+if test "x$ac_cv_func_ldap_verify_credentials" = xyes; then :
+  thread_safe_libldap=yes
+else
+  thread_safe_libldap=no
+fi
+
+    if test "$enable_thread_safety" = yes -a "$thread_safe_libldap" = no; then
       # Use ldap_r for FE if available, else assume ldap is thread-safe.
       # On some platforms ldap_r fails to link without PTHREAD_LIBS.
       LIBS="$_LIBS"
