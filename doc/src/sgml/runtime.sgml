@@ -1448,7 +1448,7 @@ export PG_OOM_ADJUST_VALUE=0
     server must be shut down to view this runtime-computed parameter.
     This might look like:
 <programlisting>
-$ <userinput>postgres -D $PGDATA -C shared_memory_size_in_huge_pages 2> /dev/null</userinput>
+$ <userinput>postgres -D $PGDATA -C shared_memory_size_in_huge_pages</userinput>
 3170
 $ <userinput>grep ^Hugepagesize /proc/meminfo</userinput>
 Hugepagesize:       2048 kB
