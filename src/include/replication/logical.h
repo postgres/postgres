@@ -52,6 +52,9 @@ typedef struct LogicalDecodingContext
 	 */
 	bool		fast_forward;
 
+	/* Are we processing the end LSN of a transaction? */
+	bool		end_xact;
+
 	OutputPluginCallbacks callbacks;
 	OutputPluginOptions options;
 
