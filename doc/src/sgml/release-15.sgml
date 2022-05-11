@@ -305,7 +305,7 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Allow logical replication to run as the owner of the publication (Mark Dilger)
+Allow logical replication to run as the owner of the subscription (Mark Dilger)
 </para>
 
 <para>
