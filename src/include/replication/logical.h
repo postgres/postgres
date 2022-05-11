@@ -107,6 +107,8 @@ typedef struct LogicalDecodingContext
 	bool		prepared_write;
 	XLogRecPtr	write_location;
 	TransactionId write_xid;
+	/* Are we processing the end LSN of a transaction? */
+	bool		end_xact;
 } LogicalDecodingContext;
 
 
