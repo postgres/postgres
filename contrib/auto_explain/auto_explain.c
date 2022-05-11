@@ -77,7 +77,6 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 
 void		_PG_init(void);
-void		_PG_fini(void);
 
 static void explain_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void explain_ExecutorRun(QueryDesc *queryDesc,
@@ -242,19 +241,6 @@ _PG_init(void)
 	ExecutorFinish_hook = explain_ExecutorFinish;
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = explain_ExecutorEnd;
-}
-
-/*
- * Module unload callback
- */
-void
-_PG_fini(void)
-{
-	/* Uninstall hooks. */
-	ExecutorStart_hook = prev_ExecutorStart;
-	ExecutorRun_hook = prev_ExecutorRun;
-	ExecutorFinish_hook = prev_ExecutorFinish;
-	ExecutorEnd_hook = prev_ExecutorEnd;
 }
 
 /*

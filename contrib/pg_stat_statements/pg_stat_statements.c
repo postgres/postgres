@@ -305,7 +305,6 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 /*---- Function declarations ----*/
 
 void		_PG_init(void);
-void		_PG_fini(void);
 
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset_1_7);
@@ -479,23 +478,6 @@ _PG_init(void)
 	ExecutorEnd_hook = pgss_ExecutorEnd;
 	prev_ProcessUtility = ProcessUtility_hook;
 	ProcessUtility_hook = pgss_ProcessUtility;
-}
-
-/*
- * Module unload callback
- */
-void
-_PG_fini(void)
-{
-	/* Uninstall hooks. */
-	shmem_startup_hook = prev_shmem_startup_hook;
-	post_parse_analyze_hook = prev_post_parse_analyze_hook;
-	planner_hook = prev_planner_hook;
-	ExecutorStart_hook = prev_ExecutorStart;
-	ExecutorRun_hook = prev_ExecutorRun;
-	ExecutorFinish_hook = prev_ExecutorFinish;
-	ExecutorEnd_hook = prev_ExecutorEnd;
-	ProcessUtility_hook = prev_ProcessUtility;
 }
 
 /*

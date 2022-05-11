@@ -582,20 +582,6 @@ record_C_func(HeapTuple procedureTuple,
 	entry->inforec = inforec;
 }
 
-/*
- * clear_external_function_hash: remove entries for a library being closed
- *
- * Presently we just zap the entire hash table, but later it might be worth
- * the effort to remove only the entries associated with the given handle.
- */
-void
-clear_external_function_hash(void *filehandle)
-{
-	if (CFuncHash)
-		hash_destroy(CFuncHash);
-	CFuncHash = NULL;
-}
-
 
 /*
  * Copy an FmgrInfo struct

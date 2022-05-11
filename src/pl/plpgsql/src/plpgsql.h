@@ -1100,8 +1100,6 @@ typedef struct PLpgSQL_execstate
  * variable "PLpgSQL_plugin" and set it to point to a PLpgSQL_plugin struct.
  * Typically the struct could just be static data in the plugin library.
  * We expect that a plugin would do this at library load time (_PG_init()).
- * It must also be careful to set the rendezvous variable back to NULL
- * if it is unloaded (_PG_fini()).
  *
  * This structure is basically a collection of function pointers --- at
  * various interesting points in pl_exec.c, we call these functions

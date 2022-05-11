@@ -33,7 +33,6 @@ static check_password_hook_type prev_check_password_hook = NULL;
 #define MIN_PWD_LENGTH 8
 
 extern void _PG_init(void);
-extern void _PG_fini(void);
 
 /*
  * check_password
@@ -148,14 +147,4 @@ _PG_init(void)
 	/* activate password checks when the module is loaded */
 	prev_check_password_hook = check_password_hook;
 	check_password_hook = check_password;
-}
-
-/*
- * Module unload function
- */
-void
-_PG_fini(void)
-{
-	/* uninstall hook */
-	check_password_hook = prev_check_password_hook;
 }

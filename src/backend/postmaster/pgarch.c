@@ -802,7 +802,7 @@ HandlePgArchInterrupts(void)
 			 * Ideally, we would simply unload the previous archive module and
 			 * load the new one, but there is presently no mechanism for
 			 * unloading a library (see the comment above
-			 * internal_unload_library()).  To deal with this, we simply restart
+			 * internal_load_library()).  To deal with this, we simply restart
 			 * the archiver.  The new archive module will be loaded when the new
 			 * archiver process starts up.
 			 */

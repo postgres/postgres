@@ -1979,27 +1979,15 @@ PG_MODULE_MAGIC;
     <primary>_PG_init</primary>
    </indexterm>
    <indexterm zone="xfunc-c-dynload">
-    <primary>_PG_fini</primary>
-   </indexterm>
-   <indexterm zone="xfunc-c-dynload">
     <primary>library initialization function</primary>
-   </indexterm>
-   <indexterm zone="xfunc-c-dynload">
-    <primary>library finalization function</primary>
    </indexterm>
 
    <para>
-    Optionally, a dynamically loaded file can contain initialization and
-    finalization functions.  If the file includes a function named
+    Optionally, a dynamically loaded file can contain an initialization
+    function.  If the file includes a function named
     <function>_PG_init</function>, that function will be called immediately after
     loading the file.  The function receives no parameters and should
-    return void.  If the file includes a function named
-    <function>_PG_fini</function>, that function will be called immediately before
-    unloading the file.  Likewise, the function receives no parameters and
-    should return void.  Note that <function>_PG_fini</function> will only be called
-    during an unload of the file, not during process termination.
-    (Presently, unloads are disabled and will never occur, but this may
-    change in the future.)
+    return void.  There is presently no way to unload a dynamically loaded file.
    </para>
 
   </sect2>

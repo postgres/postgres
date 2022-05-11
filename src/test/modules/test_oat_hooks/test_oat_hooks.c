@@ -43,7 +43,7 @@ static bool REGRESS_userset_variable2 = false;
 static bool REGRESS_suset_variable1 = false;
 static bool REGRESS_suset_variable2 = false;
 
-/* Saved hook values in case of unload */
+/* Saved hook values */
 static object_access_hook_type next_object_access_hook = NULL;
 static object_access_hook_type_str next_object_access_hook_str = NULL;
 static ExecutorCheckPerms_hook_type next_exec_check_perms_hook = NULL;
@@ -70,10 +70,9 @@ static char *accesstype_arg_to_string(ObjectAccessType access, void *arg);
 
 
 void		_PG_init(void);
-void		_PG_fini(void);
 
 /*
- * Module load/unload callback
+ * Module load callback
  */
 void
 _PG_init(void)
@@ -229,23 +228,6 @@ _PG_init(void)
 	/* ProcessUtility hook */
 	next_ProcessUtility_hook = ProcessUtility_hook;
 	ProcessUtility_hook = REGRESS_utility_command;
-}
-
-void
-_PG_fini(void)
-{
-	/* Unload hooks */
-	if (object_access_hook == REGRESS_object_access_hook)
-		object_access_hook = next_object_access_hook;
-
-	if (object_access_hook_str == REGRESS_object_access_hook_str)
-		object_access_hook_str = next_object_access_hook_str;
-
-	if (ExecutorCheckPerms_hook == REGRESS_exec_check_perms)
-		ExecutorCheckPerms_hook = next_exec_check_perms_hook;
-
-	if (ProcessUtility_hook == REGRESS_utility_command)
-		ProcessUtility_hook = next_ProcessUtility_hook;
 }
 
 static void

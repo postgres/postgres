@@ -29,32 +29,15 @@
 
 PG_MODULE_MAGIC;
 
-/* Saved hook values in case of unload */
-static row_security_policy_hook_type prev_row_security_policy_hook_permissive = NULL;
-static row_security_policy_hook_type prev_row_security_policy_hook_restrictive = NULL;
-
 void		_PG_init(void);
-void		_PG_fini(void);
 
 /* Install hooks */
 void
 _PG_init(void)
 {
-	/* Save values for unload  */
-	prev_row_security_policy_hook_permissive = row_security_policy_hook_permissive;
-	prev_row_security_policy_hook_restrictive = row_security_policy_hook_restrictive;
-
 	/* Set our hooks */
 	row_security_policy_hook_permissive = test_rls_hooks_permissive;
 	row_security_policy_hook_restrictive = test_rls_hooks_restrictive;
-}
-
-/* Uninstall hooks */
-void
-_PG_fini(void)
-{
-	row_security_policy_hook_permissive = prev_row_security_policy_hook_permissive;
-	row_security_policy_hook_restrictive = prev_row_security_policy_hook_restrictive;
 }
 
 /*
