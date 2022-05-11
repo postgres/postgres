@@ -26,11 +26,13 @@ my $tmp_installdir = "$topdir/tmp_install";
 do './src/tools/msvc/config_default.pl';
 do './src/tools/msvc/config.pl' if (-f 'src/tools/msvc/config.pl');
 
+my $devnull = File::Spec->devnull;
+
 # These values are defaults that can be overridden by the calling environment
-# (see buildenv.pl processing below).
+# (see buildenv.pl processing below).  We assume that the ones listed here
+# always exist by default.  Other values may optionally be set for bincheck
+# or taptest, see set_command_env() below.
 # c.f. src/Makefile.global.in and configure.ac
-$ENV{GZIP_PROGRAM} ||= 'gzip';
-$ENV{LZ4} ||= 'lz4';
 $ENV{TAR} ||= 'tar';
 
 # buildenv.pl is for specifying the build environment settings
@@ -113,6 +115,32 @@ exit 3 unless $proc;
 exit 0;
 
 ########################################################################
+
+# Helper function for set_command_env, to set one environment command.
+sub set_single_env
+{
+	my $envname    = shift;
+	my $envdefault = shift;
+
+	# If a command is defined by the environment, just use it.
+	return if (defined($ENV{$envname}));
+
+	# Nothing is defined, so attempt to assign a default.  The command
+	# may not be in the current environment, hence check if it can be
+	# executed.
+	my $rc = system("$envdefault --version >$devnull 2>&1");
+
+	# Set the environment to the default if it exists, else leave it.
+	$ENV{$envname} = $envdefault if $rc == 0;
+	return;
+}
+
+# Set environment values for various command types.  These can be used
+# in the TAP tests.
+sub set_command_env
+{
+	set_single_env('GZIP_PROGRAM', 'gzip');
+}
 
 sub installcheck_internal
 {
@@ -242,6 +270,8 @@ sub bincheck
 {
 	InstallTemp();
 
+	set_command_env();
+
 	my $mstat = 0;
 
 	# Find out all the existing TAP tests by looking for t/ directories
@@ -275,6 +305,9 @@ sub taptest
 	push(@args, "$topdir/$dir");
 
 	InstallTemp();
+
+	set_command_env();
+
 	my $status = tap_check(@args);
 	exit $status if $status;
 	return;
