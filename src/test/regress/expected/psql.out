@@ -5481,7 +5481,7 @@ INSERT INTO bla VALUES ('Susie');         -- succeeds
 INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
 SELECT 'before error' AS show \;          -- will show nevertheless!
   SELECT psql_error('boum!') \;           -- failure
-  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+  SELECT 'after error' AS noshow;         -- hidden by preceding error
      show     
 --------------
  before error

@@ -141,7 +141,7 @@ move(
 # Restart the node.
 $node_c->start;
 
-# set RewindTest::node_primary to point to the rewinded node, so that we can
+# set RewindTest::node_primary to point to the rewound node, so that we can
 # use check_query()
 $node_primary = $node_c;
 

@@ -135,7 +135,7 @@ sub get_sslkey
 =item $backend->set_server_cert(params)
 
 Change the configuration to use given server cert, key and crl file(s). The
-following paramters are supported:
+following parameters are supported:
 
 =over
 

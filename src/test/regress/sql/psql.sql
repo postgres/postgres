@@ -1432,7 +1432,7 @@ INSERT INTO bla VALUES ('Susie');         -- succeeds
 INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
 SELECT 'before error' AS show \;          -- will show nevertheless!
   SELECT psql_error('boum!') \;           -- failure
-  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+  SELECT 'after error' AS noshow;         -- hidden by preceding error
 INSERT INTO bla(s) VALUES ('Moe') \;      -- will rollback
   SELECT psql_error('bam!');
 INSERT INTO bla VALUES ('Miss Wormwood'); -- succeeds

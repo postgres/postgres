@@ -4536,7 +4536,7 @@ transformJsonParseExpr(ParseState *pstate, JsonParseExpr *jsexpr)
 	else
 	{
 		/*
-		 * Coerce argument to target type using CAST for compatibilty with PG
+		 * Coerce argument to target type using CAST for compatibility with PG
 		 * function-like CASTs.
 		 */
 		arg = transformJsonValueExprExt(pstate, jsexpr->expr, JS_FORMAT_JSON,

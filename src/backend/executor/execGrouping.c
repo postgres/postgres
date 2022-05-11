@@ -246,7 +246,7 @@ BuildTupleHashTableExt(PlanState *parent,
 }
 
 /*
- * BuildTupleHashTable is a backwards-compatibilty wrapper for
+ * BuildTupleHashTable is a backwards-compatibility wrapper for
  * BuildTupleHashTableExt(), that allocates the hashtable's metadata in
  * tablecxt. Note that hashtables created this way cannot be reset leak-free
  * with ResetTupleHashTable().

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * basebackup_target.c
- *	  Base backups can be "targetted," which means that they can be sent
+ *	  Base backups can be "targeted", which means that they can be sent
  *	  somewhere other than to the client which requested the backup.
  *	  Furthermore, new targets can be defined by extensions. This file
  *	  contains code to support that functionality.
