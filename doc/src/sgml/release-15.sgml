@@ -586,7 +586,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
 <listitem>
 <para>
-Remove incorrect duplicate partition tables in system view pg_publication_tables (Hou Zhijie)
+Remove incorrect duplicate partitions in system view pg_publication_tables (Hou Zhijie)
 </para>
 </listitem>
 
@@ -634,7 +634,7 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
 <listitem>
 <para>
-Allow system and TOAST B-tree indexes to efficiently store duplicates (Peter Geoghegan)
+Enable system and TOAST B-tree indexes to efficiently store duplicates (Peter Geoghegan)
 </para>
 
 <para>
@@ -677,7 +677,7 @@ Author: Tomas Vondra <tomas.vondra@postgresql.org>
 
 <listitem>
 <para>
-Prevent changes to columns only indexed by BRIN indexes from preventing HOT updates (Josef Simanek)
+Prevent changes to columns only indexed by BRIN indexes from disabling HOT updates (Josef Simanek)
 </para>
 </listitem>
 
@@ -832,7 +832,7 @@ Add direct I/O support to macOS (Thomas Munro)
 </para>
 
 <para>
-This only works if max_wal_senders=0 and wal_level=minimal.
+This only works if max_wal_senders=0 and wal_level=minimal, and only for WAL.
 </para>
 </listitem>
 
@@ -1022,7 +1022,7 @@ Author: Dean Rasheed <dean.a.rasheed@gmail.com>
 
 <listitem>
 <para>
-Allows view access to be controlled by privileges of the view user (Christoph Heiss)
+Allow view access to be controlled by privileges of the view user (Christoph Heiss)
 </para>
 
 <para>
@@ -2089,7 +2089,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Allow pg_basebackup to decompress LZ4 and Zstandard compressed server-side base backups, and LZ4 and Zstandard compress output files (Dipesh Pandit, Jeevan Ladhe)
+Allow pg_basebackup to decompress LZ4 and Zstandard compressed server-side base backups, and compress output files with LZ4 and Zstandard (Dipesh Pandit, Jeevan Ladhe)
 </para>
 </listitem>
 
@@ -2276,7 +2276,7 @@ Author: Andres Freund <andres@anarazel.de>
 
 <listitem>
 <para>
-Remove status reporting during pg_upgrade operation if the output is not a terminal (Andres Freund)
+Disable default status reporting during pg_upgrade operation if the output is not a terminal (Andres Freund)
 </para>
 
 <para>
@@ -2559,7 +2559,7 @@ Author: Robert Haas <rhaas@postgresql.org>
 
 <listitem>
 <para>
-Add new protocol message COMPRESSION and COMPRESSION_DETAIL to specify the compression method and level (Robert Haas)
+Add new protocol message COMPRESSION and COMPRESSION_DETAIL to specify the compression method and options (Robert Haas)
 </para>
 </listitem>
 
