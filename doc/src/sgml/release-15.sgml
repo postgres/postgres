@@ -570,12 +570,11 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 
 <listitem>
 <para>
-Improve the trigger behavior of updates on partitioned tables that move rows between partitions (Amit Langote)
+Improve foreign key behavior of updates on partitioned tables that move rows between partitions (Amit Langote)
 </para>
 
 <para>
-Previously, such updates fired delete triggers on the source partition and fired insert triggers on the target partition.  PostgreSQL will now fire an update trigger on the partition root.  This makes
-foreign key behavior more consistent.  ALL TRIGGERS?
+Previously, such updates ran delete actions on the source partition and insert actions on the target partition.  PostgreSQL will now run update actions on the partition root.
 </para>
 </listitem>
 
@@ -801,6 +800,21 @@ Improve validation of ASCII and UTF-8 text by processing 16 bytes at a time (Joh
 
 <para>
 This will improve text-heavy operations like COPY FROM.
+</para>
+</listitem>
+
+<!--
+Author: David Rowley <drowley@postgresql.org>
+2021-07-22 [91e9e89dc] Make nodeSort.c use Datum sorts for single column sorts
+Author: David Rowley <drowley@postgresql.org>
+2022-04-04 [40af10b57] Use Generation memory contexts to store tuples in sorts
+Author: John Naylor <john.naylor@postgresql.org>
+2022-04-02 [697492434] Specialize tuplesort routines for different kinds of abb
+-->
+
+<listitem>
+<para>
+Improve performance and reduce memory consumption of in-memory sorts (Ronan Dunklau, David Rowley, Thomas Munro)
 </para>
 </listitem>
 
