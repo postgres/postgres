@@ -513,15 +513,6 @@ $ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';
     </varlistentry>
 
     <varlistentry>
-     <term><varname>LZ4</varname></term>
-     <listitem><para>
-      Path to a <application>lz4</application> command. The default is
-      <literal>lz4</literal>, that would be the command found in
-      <varname>PATH</varname>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><varname>TAR</varname></term>
      <listitem><para>
       Path to a <application>tar</application> command. The default is
