@@ -305,12 +305,11 @@ Author: Jeff Davis <jdavis@postgresql.org>
 
 <listitem>
 <para>
-Prevent logical replication into tables where the subscription owner is subject to the table's row-level security policies (Mark Dilger)
+Allow logical replication to run as the owner of the publication (Mark Dilger)
 </para>
 
 <para>
-This effectively means that only superusers, roles with bypassrls, and table owners can replicate into tables with row-level security policies.  (The actual row-level security policies are not checked,
-only whether row-level security policies are enforced for subscribing users.)
+Because row-level security policies are not checked, only superusers, roles with bypassrls, and table owners can replicate into tables with row-level security policies.
 </para>
 </listitem>
 
@@ -1816,17 +1815,6 @@ Allow IP address matching against a server certificate's Subject Alternative Nam
 </listitem>
 
 <!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2022-02-28 [a59c79564] Allow root-owned SSL private keys in libpq, not only the
--->
-
-<listitem>
-<para>
-Allow libpq's SSL private key file to be owned by the root user (David Steele)
-</para>
-</listitem>
-
-<!--
 Author: Daniel Gustafsson <dgustafsson@postgresql.org>
 2022-03-29 [ebc8b7d44] Enable SSL library detection via PQsslAttribute()
 -->
@@ -2152,7 +2140,7 @@ Add the LZ4 compression method to pg_receivewal (Georgios Kokolatos)
 </para>
 
 <para>
-This is enabled via --compression=lz4 and requires binaries to be built using --with-lz4.
+This is enabled via --compress=lz4 and requires binaries to be built using --with-lz4.
 </para>
 </listitem>
 
@@ -2163,11 +2151,7 @@ Author: Michael Paquier <michael@paquier.xyz>
 
 <listitem>
 <para>
-Redesign pg_receivewal's compression options (Georgios Kokolatos)
-</para>
-
-<para>
-The new --compression option controls the type of compression, rather than just relying on --compress.
+Add additional capabilities to pg_receivewal's --compress option (Georgios Kokolatos)
 </para>
 </listitem>
 
