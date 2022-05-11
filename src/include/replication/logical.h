@@ -80,6 +80,7 @@ typedef struct LogicalDecodingContext
 	 */
 	bool		accept_writes;
 	bool		prepared_write;
+	bool		end_xact;
 	XLogRecPtr	write_location;
 	TransactionId write_xid;
 } LogicalDecodingContext;
