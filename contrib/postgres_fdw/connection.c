@@ -318,14 +318,15 @@ make_new_connection(ConnCacheEntry *entry, UserMapping *user)
 	 * open even after the transaction using it ends, so that the subsequent
 	 * transactions can re-use it.
 	 *
-	 * It's enough to determine this only when making new connection because
-	 * all the connections to the foreign server whose keep_connections option
-	 * is changed will be closed and re-made later.
-	 *
 	 * By default, all the connections to any foreign servers are kept open.
 	 *
 	 * Also determine whether to commit (sub)transactions opened on the remote
-	 * server in parallel at (sub)transaction end.
+	 * server in parallel at (sub)transaction end, which is disabled by
+	 * default.
+	 *
+	 * Note: it's enough to determine these only when making a new connection
+	 * because these settings for it are changed, it will be closed and
+	 * re-made later.
 	 */
 	entry->keep_connections = true;
 	entry->parallel_commit = false;
