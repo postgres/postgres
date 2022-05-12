@@ -466,6 +466,70 @@ where x = 1 and q1 = 123;
 ---+----+-----
 (0 rows)
 
+-- check handling of pulled-up SubPlan in GROUPING() argument (bug #17479)
+explain (verbose, costs off)
+select grouping(ss.x)
+from int8_tbl i1
+cross join lateral (select (select i1.q1) as x) ss
+group by ss.x;
+                   QUERY PLAN                   
+------------------------------------------------
+ GroupAggregate
+   Output: GROUPING((SubPlan 1)), ((SubPlan 2))
+   Group Key: ((SubPlan 2))
+   ->  Sort
+         Output: ((SubPlan 2)), i1.q1
+         Sort Key: ((SubPlan 2))
+         ->  Seq Scan on public.int8_tbl i1
+               Output: (SubPlan 2), i1.q1
+               SubPlan 2
+                 ->  Result
+                       Output: i1.q1
+(11 rows)
+
+select grouping(ss.x)
+from int8_tbl i1
+cross join lateral (select (select i1.q1) as x) ss
+group by ss.x;
+ grouping 
+----------
+        0
+        0
+(2 rows)
+
+explain (verbose, costs off)
+select (select grouping(ss.x))
+from int8_tbl i1
+cross join lateral (select (select i1.q1) as x) ss
+group by ss.x;
+                 QUERY PLAN                 
+--------------------------------------------
+ GroupAggregate
+   Output: (SubPlan 2), ((SubPlan 3))
+   Group Key: ((SubPlan 3))
+   ->  Sort
+         Output: ((SubPlan 3)), i1.q1
+         Sort Key: ((SubPlan 3))
+         ->  Seq Scan on public.int8_tbl i1
+               Output: (SubPlan 3), i1.q1
+               SubPlan 3
+                 ->  Result
+                       Output: i1.q1
+   SubPlan 2
+     ->  Result
+           Output: GROUPING((SubPlan 1))
+(14 rows)
+
+select (select grouping(ss.x))
+from int8_tbl i1
+cross join lateral (select (select i1.q1) as x) ss
+group by ss.x;
+ grouping 
+----------
+        0
+        0
+(2 rows)
+
 -- simple rescan tests
 select a, b, sum(v.x)
   from (values (1),(2)) v(x), gstest_data(v.x)
