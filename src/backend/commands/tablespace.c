@@ -58,6 +58,7 @@
 #include "access/xact.h"
 #include "access/xloginsert.h"
 #include "access/xlogutils.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
