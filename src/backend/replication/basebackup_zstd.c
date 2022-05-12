@@ -41,7 +41,7 @@ static void bbsink_zstd_cleanup(bbsink *sink);
 static void bbsink_zstd_end_backup(bbsink *sink, XLogRecPtr endptr,
 								   TimeLineID endtli);
 
-const bbsink_ops bbsink_zstd_ops = {
+static const bbsink_ops bbsink_zstd_ops = {
 	.begin_backup = bbsink_zstd_begin_backup,
 	.begin_archive = bbsink_zstd_begin_archive,
 	.archive_contents = bbsink_zstd_archive_contents,

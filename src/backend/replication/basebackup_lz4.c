@@ -42,7 +42,7 @@ static void bbsink_lz4_manifest_contents(bbsink *sink, size_t len);
 static void bbsink_lz4_end_archive(bbsink *sink);
 static void bbsink_lz4_cleanup(bbsink *sink);
 
-const bbsink_ops bbsink_lz4_ops = {
+static const bbsink_ops bbsink_lz4_ops = {
 	.begin_backup = bbsink_lz4_begin_backup,
 	.begin_archive = bbsink_lz4_begin_archive,
 	.archive_contents = bbsink_lz4_archive_contents,

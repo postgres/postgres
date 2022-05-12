@@ -32,8 +32,8 @@ struct BaseBackupTargetHandle
 };
 
 static void initialize_target_list(void);
-extern bbsink *blackhole_get_sink(bbsink *next_sink, void *detail_arg);
-extern bbsink *server_get_sink(bbsink *next_sink, void *detail_arg);
+static bbsink *blackhole_get_sink(bbsink *next_sink, void *detail_arg);
+static bbsink *server_get_sink(bbsink *next_sink, void *detail_arg);
 static void *reject_target_detail(char *target, char *target_detail);
 static void *server_check_detail(char *target, char *target_detail);
 
@@ -190,7 +190,7 @@ initialize_target_list(void)
  * but forward, but it's even cheaper to implement that by not adding a bbsink
  * at all.
  */
-bbsink *
+static bbsink *
 blackhole_get_sink(bbsink *next_sink, void *detail_arg)
 {
 	return next_sink;
@@ -199,7 +199,7 @@ blackhole_get_sink(bbsink *next_sink, void *detail_arg)
 /*
  * Create a bbsink implementing a server-side backup.
  */
-bbsink *
+static bbsink *
 server_get_sink(bbsink *next_sink, void *detail_arg)
 {
 	return bbsink_server_new(next_sink, detail_arg);
@@ -209,7 +209,7 @@ server_get_sink(bbsink *next_sink, void *detail_arg)
  * Implement target-detail checking for a target that does not accept a
  * detail.
  */
-void *
+static void *
 reject_target_detail(char *target, char *target_detail)
 {
 	if (target_detail != NULL)
@@ -228,7 +228,7 @@ reject_target_detail(char *target, char *target_detail)
  * should be written, but we don't check that here. Rather, that check,
  * as well as the necessary permissions checking, happens in bbsink_server_new.
  */
-void *
+static void *
 server_check_detail(char *target, char *target_detail)
 {
 	if (target_detail == NULL)

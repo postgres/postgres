@@ -43,7 +43,7 @@ static void bbsink_progress_begin_backup(bbsink *sink);
 static void bbsink_progress_archive_contents(bbsink *sink, size_t len);
 static void bbsink_progress_end_archive(bbsink *sink);
 
-const bbsink_ops bbsink_progress_ops = {
+static const bbsink_ops bbsink_progress_ops = {
 	.begin_backup = bbsink_progress_begin_backup,
 	.begin_archive = bbsink_forward_begin_archive,
 	.archive_contents = bbsink_progress_archive_contents,

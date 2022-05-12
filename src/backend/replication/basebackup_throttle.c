@@ -43,7 +43,7 @@ static void bbsink_throttle_archive_contents(bbsink *sink, size_t len);
 static void bbsink_throttle_manifest_contents(bbsink *sink, size_t len);
 static void throttle(bbsink_throttle *sink, size_t increment);
 
-const bbsink_ops bbsink_throttle_ops = {
+static const bbsink_ops bbsink_throttle_ops = {
 	.begin_backup = bbsink_throttle_begin_backup,
 	.begin_archive = bbsink_forward_begin_archive,
 	.archive_contents = bbsink_throttle_archive_contents,

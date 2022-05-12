@@ -43,7 +43,7 @@ static void bbsink_server_begin_manifest(bbsink *sink);
 static void bbsink_server_manifest_contents(bbsink *sink, size_t len);
 static void bbsink_server_end_manifest(bbsink *sink);
 
-const bbsink_ops bbsink_server_ops = {
+static const bbsink_ops bbsink_server_ops = {
 	.begin_backup = bbsink_forward_begin_backup,
 	.begin_archive = bbsink_server_begin_archive,
 	.archive_contents = bbsink_server_archive_contents,

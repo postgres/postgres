@@ -42,7 +42,7 @@ static void bbsink_gzip_end_archive(bbsink *sink);
 static void *gzip_palloc(void *opaque, unsigned items, unsigned size);
 static void gzip_pfree(void *opaque, void *address);
 
-const bbsink_ops bbsink_gzip_ops = {
+static const bbsink_ops bbsink_gzip_ops = {
 	.begin_backup = bbsink_gzip_begin_backup,
 	.begin_archive = bbsink_gzip_begin_archive,
 	.archive_contents = bbsink_gzip_archive_contents,

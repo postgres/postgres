@@ -86,7 +86,7 @@ static void SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli);
 static void SendTablespaceList(List *tablespaces);
 static void send_int8_string(StringInfoData *buf, int64 intval);
 
-const bbsink_ops bbsink_copystream_ops = {
+static const bbsink_ops bbsink_copystream_ops = {
 	.begin_backup = bbsink_copystream_begin_backup,
 	.begin_archive = bbsink_copystream_begin_archive,
 	.archive_contents = bbsink_copystream_archive_contents,
