@@ -564,7 +564,7 @@ Improve foreign key behavior of updates on partitioned tables that move rows bet
 </para>
 
 <para>
-Previously, such updates ran delete actions on the source partition and insert actions on the target partition.  PostgreSQL will now run update actions on the partition root.
+Previously, such updates ran delete actions on the source partition and insert actions on the target partition.  PostgreSQL will now run update actions on the referenced partition root.
 </para>
 </listitem>
 
@@ -1231,21 +1231,6 @@ Previously only shell commands could be called to perform archiving.
 </listitem>
 
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-2021-11-23 [1922d7c6e] Add SQL functions to monitor the directory contents of r
--->
-
-<listitem>
-<para>
-Add SQL functions to monitor the directory contents of replication slots (Bharath Rupireddy)
-</para>
-
-<para>
-Specifically, the functions are pg_ls_logicalsnapdir(), pg_ls_logicalmapdir(), and pg_ls_replslotdir().  They can be run by members of the predefined pg_monitor role.
-</para>
-</listitem>
-
-<!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2021-07-09 [8e7811e95] Eliminate replication protocol error related to IDENTIFY
 -->
@@ -1343,6 +1328,41 @@ Add two-phase information to the logical replication stream (Ajin Cherian)
 
 <para>
 The new CREATE_REPLICATION_SLOT option is called TWO_PHASE.  pg_recvlogical now supports a new --two-phase option during slot creation.
+</para>
+</listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2021-11-23 [1922d7c6e] Add SQL functions to monitor the directory contents of r
+-->
+
+<listitem>
+<para>
+Add SQL functions to monitor the directory contents of logical replication slots (Bharath Rupireddy)
+</para>
+
+<para>
+Specifically, the functions are pg_ls_logicalsnapdir(), pg_ls_logicalmapdir(), and pg_ls_replslotdir().  They can be run by members of the predefined pg_monitor role.
+</para>
+</listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-11-02 [f3d4019da] Ensure consistent logical replication of datetime and fl
+-->
+
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+2022-03-14 [705e20f85] Optionally disable subscriptions on error.
+-->
+
+<listitem>
+<para>
+Allow subscribers to stop logical replication application on error (Osumi Takamichi, Mark Dilger)
+</para>
+
+<para>
+This is enabled with the subscriber option "disable_on_error" and avoids possible infinite loops during stream application.
 </para>
 </listitem>
 
@@ -1557,7 +1577,7 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <listitem>
 <para>
-Create unlogged sequences and allow them to be skipped in logical replication (Peter Eisentraut)
+Allow the creation of unlogged sequences (Peter Eisentraut)
 </para>
 </listitem>
 
