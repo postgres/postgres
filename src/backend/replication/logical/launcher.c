@@ -65,7 +65,7 @@ typedef struct LogicalRepCtxStruct
 	LogicalRepWorker workers[FLEXIBLE_ARRAY_MEMBER];
 } LogicalRepCtxStruct;
 
-LogicalRepCtxStruct *LogicalRepCtx;
+static LogicalRepCtxStruct *LogicalRepCtx;
 
 static void ApplyLauncherWakeup(void);
 static void logicalrep_launcher_onexit(int code, Datum arg);

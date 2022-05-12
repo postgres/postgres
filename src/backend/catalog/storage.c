@@ -73,7 +73,7 @@ typedef struct PendingRelSync
 } PendingRelSync;
 
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
-HTAB	   *pendingSyncHash = NULL;
+static HTAB *pendingSyncHash = NULL;
 
 
 /*

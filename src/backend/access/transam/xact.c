@@ -121,9 +121,9 @@ bool		bsysscan = false;
  * The XIDs are stored sorted in numerical order (not logical order) to make
  * lookups as fast as possible.
  */
-FullTransactionId XactTopFullTransactionId = {InvalidTransactionId};
-int			nParallelCurrentXids = 0;
-TransactionId *ParallelCurrentXids;
+static FullTransactionId XactTopFullTransactionId = {InvalidTransactionId};
+static int nParallelCurrentXids = 0;
+static TransactionId *ParallelCurrentXids;
 
 /*
  * Miscellaneous flag bits to record events which occur on the top level

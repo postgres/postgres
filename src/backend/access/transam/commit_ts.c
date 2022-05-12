@@ -98,7 +98,7 @@ typedef struct CommitTimestampShared
 	bool		commitTsActive;
 } CommitTimestampShared;
 
-CommitTimestampShared *commitTsShared;
+static CommitTimestampShared *commitTsShared;
 
 
 /* GUC variable */

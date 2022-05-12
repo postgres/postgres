@@ -124,7 +124,7 @@ static bool table_states_valid = false;
 static List *table_states_not_ready = NIL;
 static bool FetchTableStates(bool *started_tx);
 
-StringInfo	copybuf = NULL;
+static StringInfo copybuf = NULL;
 
 /*
  * Exit routine for synchronization worker.
