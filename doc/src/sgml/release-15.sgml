@@ -84,7 +84,7 @@ Author: Stephen Frost <sfrost@snowman.net>
 
 <listitem>
 <para>
-Remove exclusive backup mode (David Steele, Nathan Bossart)
+Remove long-deprecated exclusive backup mode (David Steele, Nathan Bossart)
 </para>
 
 <para>
