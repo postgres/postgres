@@ -488,7 +488,7 @@ static inline void *pgstat_get_entry_data(PgStat_Kind kind, PgStatShared_Common 
  * Functions in pgstat.c
  */
 
-const PgStat_KindInfo *pgstat_get_kind_info(PgStat_Kind kind);
+extern const PgStat_KindInfo *pgstat_get_kind_info(PgStat_Kind kind);
 
 #ifdef USE_ASSERT_CHECKING
 extern void pgstat_assert_is_up(void);

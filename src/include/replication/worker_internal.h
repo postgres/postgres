@@ -99,8 +99,8 @@ extern char *LogicalRepSyncTableStart(XLogRecPtr *origin_startpos);
 extern bool AllTablesyncsReady(void);
 extern void UpdateTwoPhaseState(Oid suboid, char new_state);
 
-void		process_syncing_tables(XLogRecPtr current_lsn);
-void		invalidate_syncing_table_states(Datum arg, int cacheid,
+extern void process_syncing_tables(XLogRecPtr current_lsn);
+extern void invalidate_syncing_table_states(Datum arg, int cacheid,
 											uint32 hashvalue);
 
 static inline bool

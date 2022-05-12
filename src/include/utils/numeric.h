@@ -68,7 +68,7 @@ typedef struct NumericData *Numeric;
  */
 extern bool numeric_is_nan(Numeric num);
 extern bool numeric_is_inf(Numeric num);
-int32		numeric_maximum_size(int32 typmod);
+extern int32 numeric_maximum_size(int32 typmod);
 extern char *numeric_out_sci(Numeric num, int scale);
 extern char *numeric_normalize(Numeric num);
 

@@ -455,10 +455,10 @@ extern PGDLLIMPORT HANDLE pgwin32_initial_signal_pipe;
 #define UNBLOCKED_SIGNAL_QUEUE()	(pg_signal_queue & ~pg_signal_mask)
 #define PG_SIGNAL_COUNT 32
 
-void		pgwin32_signal_initialize(void);
-HANDLE		pgwin32_create_signal_listener(pid_t pid);
-void		pgwin32_dispatch_queued_signals(void);
-void		pg_queue_signal(int signum);
+extern void pgwin32_signal_initialize(void);
+extern HANDLE pgwin32_create_signal_listener(pid_t pid);
+extern void pgwin32_dispatch_queued_signals(void);
+extern void pg_queue_signal(int signum);
 
 /* In src/port/kill.c */
 #define kill(pid,sig)	pgkill(pid,sig)
@@ -475,15 +475,15 @@ extern int	pgkill(int pid, int sig);
 #define recv(s, buf, len, flags) pgwin32_recv(s, buf, len, flags)
 #define send(s, buf, len, flags) pgwin32_send(s, buf, len, flags)
 
-SOCKET		pgwin32_socket(int af, int type, int protocol);
-int			pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen);
-int			pgwin32_listen(SOCKET s, int backlog);
-SOCKET		pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen);
-int			pgwin32_connect(SOCKET s, const struct sockaddr *name, int namelen);
-int			pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
-int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
-int			pgwin32_send(SOCKET s, const void *buf, int len, int flags);
-int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
+extern SOCKET pgwin32_socket(int af, int type, int protocol);
+extern int	pgwin32_bind(SOCKET s, struct sockaddr *addr, int addrlen);
+extern int	pgwin32_listen(SOCKET s, int backlog);
+extern SOCKET pgwin32_accept(SOCKET s, struct sockaddr *addr, int *addrlen);
+extern int	pgwin32_connect(SOCKET s, const struct sockaddr *name, int namelen);
+extern int	pgwin32_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, const struct timeval *timeout);
+extern int	pgwin32_recv(SOCKET s, char *buf, int len, int flags);
+extern int	pgwin32_send(SOCKET s, const void *buf, int len, int flags);
+extern int	pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 
 extern PGDLLIMPORT int pgwin32_noblock;
 
