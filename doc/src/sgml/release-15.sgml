@@ -631,23 +631,6 @@ Previously de-duplication was disabled for these types of indexes.
 </listitem>
 
 <!--
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2021-10-18 [65014000b] Replace polyphase merge algorithm with a simple balanced
-Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
-2021-10-25 [166f94377] Clarify the logic in a few places in the new balanced me
--->
-
-<listitem>
-<para>
-Improve sorting performance (Heikki Linnakangas)
-</para>
-
-<para>
-Specifically, switch to a batch sorting algorithm that uses more output streams internally.
-</para>
-</listitem>
-
-<!--
 Author: Alexander Korotkov <akorotkov@postgresql.org>
 2022-02-07 [f1ea98a79] Reduce non-leaf keys overlap in GiST indexes produced by
 -->
@@ -789,6 +772,23 @@ Improve validation of ASCII and UTF-8 text by processing 16 bytes at a time (Joh
 
 <para>
 This will improve text-heavy operations like COPY FROM.
+</para>
+</listitem>
+
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2021-10-18 [65014000b] Replace polyphase merge algorithm with a simple balanced
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+2021-10-25 [166f94377] Clarify the logic in a few places in the new balanced me
+-->
+
+<listitem>
+<para>
+Improve performance for sorts that exceed work_mem (Heikki Linnakangas)
+</para>
+
+<para>
+Specifically, switch to a batch sorting algorithm that uses more output streams internally.
 </para>
 </listitem>
 
