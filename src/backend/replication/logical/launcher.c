@@ -42,6 +42,7 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
@@ -74,8 +75,6 @@ static void logicalrep_worker_detach(void);
 static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
 static bool on_commit_launcher_wakeup = false;
-
-Datum		pg_stat_get_subscription(PG_FUNCTION_ARGS);
 
 
 /*
