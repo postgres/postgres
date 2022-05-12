@@ -684,49 +684,49 @@ typedef struct ExprEvalStep
 			{
 				int			category;
 				Oid			outfuncid;
-			}		   *arg_type_cache;		/* cache for datum_to_json[b]() */
+			}		   *arg_type_cache; /* cache for datum_to_json[b]() */
 			int			nargs;
 		}			json_constructor;
 
 		/* for EEOP_IS_JSON */
 		struct
 		{
-					JsonIsPredicate *pred;	/* original expression node */
+			JsonIsPredicate *pred;	/* original expression node */
 		}			is_json;
 
 		/* for EEOP_JSONEXPR */
 		struct
 		{
-			JsonExpr   *jsexpr;			/* original expression node */
+			JsonExpr   *jsexpr; /* original expression node */
 
 			struct
 			{
-				FmgrInfo	func;		/* typinput function for output type */
+				FmgrInfo	func;	/* typinput function for output type */
 				Oid			typioparam;
-			} input;					/* I/O info for output type */
+			}			input;	/* I/O info for output type */
 
 			NullableDatum
-					   *formatted_expr,		/* formatted context item value */
-					   *res_expr,			/* result item */
-					   *coercion_expr,		/* input for JSON item coercion */
-					   *pathspec;			/* path specification value */
+					   *formatted_expr, /* formatted context item value */
+					   *res_expr,	/* result item */
+					   *coercion_expr,	/* input for JSON item coercion */
+					   *pathspec;	/* path specification value */
 
-			ExprState  *result_expr;		/* coerced to output type */
+			ExprState  *result_expr;	/* coerced to output type */
 			ExprState  *default_on_empty;	/* ON EMPTY DEFAULT expression */
 			ExprState  *default_on_error;	/* ON ERROR DEFAULT expression */
-			List	   *args;				/* passing arguments */
+			List	   *args;	/* passing arguments */
 
-			void	   *cache;				/* cache for json_populate_type() */
+			void	   *cache;	/* cache for json_populate_type() */
 
 			struct JsonCoercionsState
 			{
 				struct JsonCoercionState
 				{
-					JsonCoercion *coercion;		/* coercion expression */
-					ExprState  *estate;	/* coercion expression state */
-				} 			null,
+					JsonCoercion *coercion; /* coercion expression */
+					ExprState  *estate; /* coercion expression state */
+				}			null,
 							string,
-							numeric,
+				numeric    ,
 							boolean,
 							date,
 							time,

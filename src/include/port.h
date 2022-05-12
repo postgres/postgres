@@ -140,7 +140,7 @@ extern char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 #ifdef EXEC_BACKEND
 /* Disable ASLR before exec, for developer builds only (in exec.c) */
-extern int pg_disable_aslr(void);
+extern int	pg_disable_aslr(void);
 #endif
 
 

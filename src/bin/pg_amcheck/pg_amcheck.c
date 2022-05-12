@@ -1074,17 +1074,17 @@ verify_btree_slot_handler(PGresult *res, PGconn *conn, void *context)
 
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 	{
-		int                     ntups = PQntuples(res);
+		int			ntups = PQntuples(res);
 
 		if (ntups > 1)
 		{
 			/*
 			 * We expect the btree checking functions to return one void row
 			 * each, or zero rows if the check was skipped due to the object
-			 * being in the wrong state to be checked, so we should output some
-			 * sort of warning if we get anything more, not because it
-			 * indicates corruption, but because it suggests a mismatch between
-			 * amcheck and pg_amcheck versions.
+			 * being in the wrong state to be checked, so we should output
+			 * some sort of warning if we get anything more, not because it
+			 * indicates corruption, but because it suggests a mismatch
+			 * between amcheck and pg_amcheck versions.
 			 *
 			 * In conjunction with --progress, anything written to stderr at
 			 * this time would present strangely to the user without an extra

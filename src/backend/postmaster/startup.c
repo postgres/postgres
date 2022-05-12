@@ -75,7 +75,7 @@ static volatile sig_atomic_t startup_progress_timer_expired = false;
 /*
  * Time between progress updates for long-running startup operations.
  */
-int log_startup_progress_interval = 10000;	/* 10 sec */
+int			log_startup_progress_interval = 10000;	/* 10 sec */
 
 /* Signal handlers */
 static void StartupProcTriggerHandler(SIGNAL_ARGS);

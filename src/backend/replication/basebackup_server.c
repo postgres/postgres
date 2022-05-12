@@ -77,10 +77,11 @@ bbsink_server_new(bbsink *next, char *pathname)
 
 	/*
 	 * It's not a good idea to store your backups in the same directory that
-	 * you're backing up. If we allowed a relative path here, that could easily
-	 * happen accidentally, so we don't. The user could still accomplish the
-	 * same thing by including the absolute path to $PGDATA in the pathname,
-	 * but that's likely an intentional bad decision rather than an accident.
+	 * you're backing up. If we allowed a relative path here, that could
+	 * easily happen accidentally, so we don't. The user could still
+	 * accomplish the same thing by including the absolute path to $PGDATA in
+	 * the pathname, but that's likely an intentional bad decision rather than
+	 * an accident.
 	 */
 	if (!is_absolute_path(pathname))
 		ereport(ERROR,
@@ -90,14 +91,15 @@ bbsink_server_new(bbsink *next, char *pathname)
 	switch (pg_check_dir(pathname))
 	{
 		case 0:
+
 			/*
-			 * Does not exist, so create it using the same permissions we'd use
-			 * for a new subdirectory of the data directory itself.
+			 * Does not exist, so create it using the same permissions we'd
+			 * use for a new subdirectory of the data directory itself.
 			 */
 			if (MakePGDirectory(pathname) < 0)
 				ereport(ERROR,
-						 (errcode_for_file_access(),
-						  errmsg("could not create directory \"%s\": %m", pathname)));
+						(errcode_for_file_access(),
+						 errmsg("could not create directory \"%s\": %m", pathname)));
 			break;
 
 		case 1:

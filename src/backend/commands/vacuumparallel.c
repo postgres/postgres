@@ -112,7 +112,7 @@ typedef enum PVIndVacStatus
 	PARALLEL_INDVAC_STATUS_NEED_BULKDELETE,
 	PARALLEL_INDVAC_STATUS_NEED_CLEANUP,
 	PARALLEL_INDVAC_STATUS_COMPLETED
-}			PVIndVacStatus;
+} PVIndVacStatus;
 
 /*
  * Struct for index vacuum statistics of an index that is used for parallel vacuum.

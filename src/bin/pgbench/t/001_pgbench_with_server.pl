@@ -1202,17 +1202,21 @@ check_pgbench_logs($bdir, '001_pgbench_log_3', 1, 10, 10,
 
 # abortion of the client if the script contains an incomplete transaction block
 $node->pgbench(
-	'--no-vacuum', 2, [ qr{processed: 1/10} ],
-	[ qr{client 0 aborted: end of script reached without completing the last transaction} ],
+	'--no-vacuum',
+	2,
+	[qr{processed: 1/10}],
+	[
+		qr{client 0 aborted: end of script reached without completing the last transaction}
+	],
 	'incomplete transaction block',
 	{ '001_pgbench_incomplete_transaction_block' => q{BEGIN;SELECT 1;} });
 
 # Test the concurrent update in the table row and deadlocks.
 
 $node->safe_psql('postgres',
-	'CREATE UNLOGGED TABLE first_client_table (value integer); '
-  . 'CREATE UNLOGGED TABLE xy (x integer, y integer); '
-  . 'INSERT INTO xy VALUES (1, 2);');
+	    'CREATE UNLOGGED TABLE first_client_table (value integer); '
+	  . 'CREATE UNLOGGED TABLE xy (x integer, y integer); '
+	  . 'INSERT INTO xy VALUES (1, 2);');
 
 # Serialization error and retry
 
@@ -1221,7 +1225,7 @@ local $ENV{PGOPTIONS} = "-c default_transaction_isolation=repeatable\\ read";
 # Check that we have a serialization error and the same random value of the
 # delta variable in the next try
 my $err_pattern =
-	"(client (0|1) sending UPDATE xy SET y = y \\+ -?\\d+\\b).*"
+    "(client (0|1) sending UPDATE xy SET y = y \\+ -?\\d+\\b).*"
   . "client \\2 got an error in command 3 \\(SQL\\) of script 0; "
   . "ERROR:  could not serialize access due to concurrent update\\b.*"
   . "\\1";
@@ -1229,9 +1233,12 @@ my $err_pattern =
 $node->pgbench(
 	"-n -c 2 -t 1 -d --verbose-errors --max-tries 2",
 	0,
-	[ qr{processed: 2/2\b}, qr{number of transactions retried: 1\b},
-	  qr{total number of retries: 1\b} ],
-	[ qr/$err_pattern/s ],
+	[
+		qr{processed: 2/2\b},
+		qr{number of transactions retried: 1\b},
+		qr{total number of retries: 1\b}
+	],
+	[qr/$err_pattern/s],
 	'concurrent update with retrying',
 	{
 		'001_pgbench_serialization' => q{
@@ -1304,15 +1311,18 @@ local $ENV{PGOPTIONS} = "-c default_transaction_isolation=read\\ committed";
 
 # Check that we have a deadlock error
 $err_pattern =
-	"client (0|1) got an error in command (3|5) \\(SQL\\) of script 0; "
+    "client (0|1) got an error in command (3|5) \\(SQL\\) of script 0; "
   . "ERROR:  deadlock detected\\b";
 
 $node->pgbench(
 	"-n -c 2 -t 1 --max-tries 2 --verbose-errors",
 	0,
-	[ qr{processed: 2/2\b}, qr{number of transactions retried: 1\b},
-	  qr{total number of retries: 1\b} ],
-	[ qr{$err_pattern} ],
+	[
+		qr{processed: 2/2\b},
+		qr{number of transactions retried: 1\b},
+		qr{total number of retries: 1\b}
+	],
+	[qr{$err_pattern}],
 	'deadlock with retrying',
 	{
 		'001_pgbench_deadlock' => q{

@@ -76,11 +76,11 @@ sub AddFiles
 # name but a different file extension and add those files too.
 sub FindAndAddAdditionalFiles
 {
-	my $self = shift;
+	my $self  = shift;
 	my $fname = shift;
 	$fname =~ /(.*)(\.[^.]+)$/;
 	my $filenoext = $1;
-	my $fileext = $2;
+	my $fileext   = $2;
 
 	# For .c files, check if either a .l or .y file of the same name
 	# exists and add that too.
@@ -161,7 +161,7 @@ sub AddReference
 
 	while (my $ref = shift)
 	{
-		if (! grep { $_ eq $ref} @{ $self->{references} })
+		if (!grep { $_ eq $ref } @{ $self->{references} })
 		{
 			push @{ $self->{references} }, $ref;
 		}
@@ -181,7 +181,7 @@ sub AddLibrary
 		$lib = '&quot;' . $lib . "&quot;";
 	}
 
-	if (! grep { $_ eq $lib} @{ $self->{libraries} })
+	if (!grep { $_ eq $lib } @{ $self->{libraries} })
 	{
 		push @{ $self->{libraries} }, $lib;
 	}
@@ -199,7 +199,7 @@ sub AddIncludeDir
 
 	foreach my $inc (split(/;/, $incstr))
 	{
-		if (! grep { $_ eq $inc} @{ $self->{includes} })
+		if (!grep { $_ eq $inc } @{ $self->{includes} })
 		{
 			push @{ $self->{includes} }, $inc;
 		}

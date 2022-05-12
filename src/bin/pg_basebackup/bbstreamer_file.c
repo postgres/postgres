@@ -34,7 +34,7 @@ typedef struct bbstreamer_extractor
 	void		(*report_output_file) (const char *);
 	char		filename[MAXPGPATH];
 	FILE	   *file;
-}			bbstreamer_extractor;
+} bbstreamer_extractor;
 
 static void bbstreamer_plain_writer_content(bbstreamer *streamer,
 											bbstreamer_member *member,
@@ -356,7 +356,7 @@ static void
 bbstreamer_extractor_finalize(bbstreamer *streamer)
 {
 	bbstreamer_extractor *mystreamer PG_USED_FOR_ASSERTS_ONLY
-		= (bbstreamer_extractor *) streamer;
+	= (bbstreamer_extractor *) streamer;
 
 	Assert(mystreamer->file == NULL);
 }

@@ -22,7 +22,7 @@ void
 XLogRecGetLen(XLogReaderState *record, uint32 *rec_len,
 			  uint32 *fpi_len)
 {
-	int	block_id;
+	int			block_id;
 
 	/*
 	 * Calculate the amount of FPI data in the record.
@@ -53,10 +53,10 @@ XLogRecGetLen(XLogReaderState *record, uint32 *rec_len,
 void
 XLogRecStoreStats(XLogStats *stats, XLogReaderState *record)
 {
-	RmgrId	rmid;
-	uint8	recid;
-	uint32	rec_len;
-	uint32	fpi_len;
+	RmgrId		rmid;
+	uint8		recid;
+	uint32		rec_len;
+	uint32		fpi_len;
 
 	Assert(stats != NULL && record != NULL);
 

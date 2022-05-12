@@ -51,7 +51,8 @@ if (   (defined($ENV{olddump}) && !defined($ENV{oldinstall}))
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 # Initialize node to upgrade
-my $oldnode = PostgreSQL::Test::Cluster->new('old_node',
+my $oldnode =
+  PostgreSQL::Test::Cluster->new('old_node',
 	install_path => $ENV{oldinstall});
 
 # To increase coverage of non-standard segment size and group access without
@@ -132,7 +133,7 @@ if (defined($ENV{oldinstall}))
 	$oldnode->command_ok(
 		[
 			'psql', '-X',
-			'-f',   "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
+			'-f', "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
 			'regression'
 		]);
 }

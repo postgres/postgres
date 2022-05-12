@@ -212,10 +212,7 @@ check_completion(
 clear_line();
 
 # check case folding
-check_completion(
-	"select * from TAB\t",
-	qr/tab1 /,
-	"automatically fold case");
+check_completion("select * from TAB\t", qr/tab1 /, "automatically fold case");
 
 clear_query();
 
@@ -228,15 +225,10 @@ check_completion("\\DRD\t", qr/drds /, "complete \\DRD<tab> to \\drds");
 clear_line();
 
 # check completion of a schema-qualified name
-check_completion(
-	"select * from pub\t",
-	qr/public\./,
-	"complete schema when relevant");
+check_completion("select * from pub\t",
+	qr/public\./, "complete schema when relevant");
 
-check_completion(
-	"tab\t",
-	qr/tab1 /,
-	"complete schema-qualified name");
+check_completion("tab\t", qr/tab1 /, "complete schema-qualified name");
 
 clear_query();
 
@@ -339,15 +331,10 @@ check_completion(
 clear_line();
 
 # check timezone name completion
-check_completion(
-	"SET timezone TO am\t",
-	qr|'America/|,
-	"offer partial timezone name");
+check_completion("SET timezone TO am\t",
+	qr|'America/|, "offer partial timezone name");
 
-check_completion(
-	"new_\t",
-	qr|New_York|,
-	"complete partial timezone name");
+check_completion("new_\t", qr|New_York|, "complete partial timezone name");
 
 clear_line();
 

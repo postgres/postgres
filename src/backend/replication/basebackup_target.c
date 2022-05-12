@@ -80,9 +80,9 @@ BaseBackupAddTarget(char *name,
 			/*
 			 * We found one, so update it.
 			 *
-			 * It is probably not a great idea to call BaseBackupAddTarget
-			 * for the same name multiple times, but if it happens, this
-			 * seems like the sanest behavior.
+			 * It is probably not a great idea to call BaseBackupAddTarget for
+			 * the same name multiple times, but if it happens, this seems
+			 * like the sanest behavior.
 			 */
 			ttype->check_detail = check_detail;
 			ttype->get_sink = get_sink;
@@ -91,9 +91,9 @@ BaseBackupAddTarget(char *name,
 	}
 
 	/*
-	 * We use TopMemoryContext for allocations here to make sure that the
-	 * data we need doesn't vanish under us; that's also why we copy the
-	 * target name into a newly-allocated chunk of memory.
+	 * We use TopMemoryContext for allocations here to make sure that the data
+	 * we need doesn't vanish under us; that's also why we copy the target
+	 * name into a newly-allocated chunk of memory.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	ttype = palloc(sizeof(BaseBackupTargetType));

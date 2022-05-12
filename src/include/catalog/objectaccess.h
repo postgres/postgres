@@ -129,10 +129,10 @@ typedef void (*object_access_hook_type) (ObjectAccessType access,
 										 void *arg);
 
 typedef void (*object_access_hook_type_str) (ObjectAccessType access,
-										 Oid classId,
-										 const char *objectStr,
-										 int subId,
-										 void *arg);
+											 Oid classId,
+											 const char *objectStr,
+											 int subId,
+											 void *arg);
 
 /* Plugin sets this variable to a suitable hook function. */
 extern PGDLLIMPORT object_access_hook_type object_access_hook;
@@ -152,12 +152,12 @@ extern void RunFunctionExecuteHook(Oid objectId);
 
 /* String versions */
 extern void RunObjectPostCreateHookStr(Oid classId, const char *objectStr, int subId,
-									bool is_internal);
+									   bool is_internal);
 extern void RunObjectDropHookStr(Oid classId, const char *objectStr, int subId,
-							  int dropflags);
+								 int dropflags);
 extern void RunObjectTruncateHookStr(const char *objectStr);
 extern void RunObjectPostAlterHookStr(Oid classId, const char *objectStr, int subId,
-								   Oid auxiliaryId, bool is_internal);
+									  Oid auxiliaryId, bool is_internal);
 extern bool RunNamespaceSearchHookStr(const char *objectStr, bool ereport_on_violation);
 extern void RunFunctionExecuteHookStr(const char *objectStr);
 

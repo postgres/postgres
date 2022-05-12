@@ -1990,7 +1990,7 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	char	   *refname = alias ? alias->aliasname :
-		pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
+	pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
 	Alias	   *eref;
 	int			numaliases;
 

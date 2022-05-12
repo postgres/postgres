@@ -297,7 +297,7 @@ contain_invalid_rfcolumn_walker(Node *node, rf_context *context)
  */
 bool
 pub_rf_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
-						 bool pubviaroot)
+							   bool pubviaroot)
 {
 	HeapTuple	rftuple;
 	Oid			relid = RelationGetRelid(relation);
@@ -373,7 +373,7 @@ pub_rf_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
  */
 bool
 pub_collist_contains_invalid_column(Oid pubid, Relation relation, List *ancestors,
-						 bool pubviaroot)
+									bool pubviaroot)
 {
 	HeapTuple	tuple;
 	Oid			relid = RelationGetRelid(relation);
@@ -384,8 +384,8 @@ pub_collist_contains_invalid_column(Oid pubid, Relation relation, List *ancestor
 
 	/*
 	 * For a partition, if pubviaroot is true, find the topmost ancestor that
-	 * is published via this publication as we need to use its column list
-	 * for the changes.
+	 * is published via this publication as we need to use its column list for
+	 * the changes.
 	 *
 	 * Note that even though the column list used is for an ancestor, the
 	 * REPLICA IDENTITY used will be for the actual child table.
@@ -399,19 +399,19 @@ pub_collist_contains_invalid_column(Oid pubid, Relation relation, List *ancestor
 	}
 
 	tuple = SearchSysCache2(PUBLICATIONRELMAP,
-							  ObjectIdGetDatum(publish_as_relid),
-							  ObjectIdGetDatum(pubid));
+							ObjectIdGetDatum(publish_as_relid),
+							ObjectIdGetDatum(pubid));
 
 	if (!HeapTupleIsValid(tuple))
 		return false;
 
 	datum = SysCacheGetAttr(PUBLICATIONRELMAP, tuple,
-							  Anum_pg_publication_rel_prattrs,
-							  &isnull);
+							Anum_pg_publication_rel_prattrs,
+							&isnull);
 
 	if (!isnull)
 	{
-		int	x;
+		int			x;
 		Bitmapset  *idattrs;
 		Bitmapset  *columns = NULL;
 
@@ -429,8 +429,9 @@ pub_collist_contains_invalid_column(Oid pubid, Relation relation, List *ancestor
 		/*
 		 * Attnums in the bitmap returned by RelationGetIndexAttrBitmap are
 		 * offset (to handle system columns the usual way), while column list
-		 * does not use offset, so we can't do bms_is_subset(). Instead, we have
-		 * to loop over the idattrs and check all of them are in the list.
+		 * does not use offset, so we can't do bms_is_subset(). Instead, we
+		 * have to loop over the idattrs and check all of them are in the
+		 * list.
 		 */
 		x = -1;
 		while ((x = bms_next_member(idattrs, x)) >= 0)
@@ -440,14 +441,14 @@ pub_collist_contains_invalid_column(Oid pubid, Relation relation, List *ancestor
 			/*
 			 * If pubviaroot is true, we are validating the column list of the
 			 * parent table, but the bitmap contains the replica identity
-			 * information of the child table. The parent/child attnums may not
-			 * match, so translate them to the parent - get the attname from
-			 * the child, and look it up in the parent.
+			 * information of the child table. The parent/child attnums may
+			 * not match, so translate them to the parent - get the attname
+			 * from the child, and look it up in the parent.
 			 */
 			if (pubviaroot)
 			{
 				/* attribute name in the child table */
-				char   *colname = get_attname(relid, attnum, false);
+				char	   *colname = get_attname(relid, attnum, false);
 
 				/*
 				 * Determine the attnum for the attribute name in parent (we
@@ -720,7 +721,7 @@ TransformPubWhereClauses(List *tables, const char *queryString,
  */
 static void
 CheckPubRelationColumnList(List *tables, const char *queryString,
-					   bool pubviaroot)
+						   bool pubviaroot)
 {
 	ListCell   *lc;
 
@@ -864,7 +865,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 									 publish_via_partition_root);
 
 			CheckPubRelationColumnList(rels, pstate->p_sourcetext,
-								   publish_via_partition_root);
+									   publish_via_partition_root);
 
 			PublicationAddTables(puboid, rels, true, NULL);
 			CloseTableList(rels);
@@ -1198,8 +1199,8 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 
 				/* Transform the int2vector column list to a bitmap. */
 				columnListDatum = SysCacheGetAttr(PUBLICATIONRELMAP, rftuple,
-												   Anum_pg_publication_rel_prattrs,
-												   &isnull);
+												  Anum_pg_publication_rel_prattrs,
+												  &isnull);
 
 				if (!isnull)
 					oldcolumns = pub_collist_to_bitmapset(NULL, columnListDatum, NULL);
@@ -1210,15 +1211,15 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 			foreach(newlc, rels)
 			{
 				PublicationRelInfo *newpubrel;
-				Oid					newrelid;
-				Bitmapset		   *newcolumns = NULL;
+				Oid			newrelid;
+				Bitmapset  *newcolumns = NULL;
 
 				newpubrel = (PublicationRelInfo *) lfirst(newlc);
 				newrelid = RelationGetRelid(newpubrel->relation);
 
 				/*
-				 * If the new publication has column list, transform it to
-				 * a bitmap too.
+				 * If the new publication has column list, transform it to a
+				 * bitmap too.
 				 */
 				if (newpubrel->columns)
 				{

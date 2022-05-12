@@ -1243,9 +1243,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	if (best_path->fdw_private)
 	{
 		has_final_sort = boolVal(list_nth(best_path->fdw_private,
-										 FdwPathPrivateHasFinalSort));
+										  FdwPathPrivateHasFinalSort));
 		has_limit = boolVal(list_nth(best_path->fdw_private,
-									FdwPathPrivateHasLimit));
+									 FdwPathPrivateHasLimit));
 	}
 
 	if (IS_SIMPLE_REL(foreignrel))
@@ -1926,7 +1926,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	values_end_len = intVal(list_nth(fdw_private,
 									 FdwModifyPrivateLen));
 	has_returning = boolVal(list_nth(fdw_private,
-									FdwModifyPrivateHasReturning));
+									 FdwModifyPrivateHasReturning));
 	retrieved_attrs = (List *) list_nth(fdw_private,
 										FdwModifyPrivateRetrievedAttrs);
 
@@ -2686,11 +2686,11 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->query = strVal(list_nth(fsplan->fdw_private,
 									 FdwDirectModifyPrivateUpdateSql));
 	dmstate->has_returning = boolVal(list_nth(fsplan->fdw_private,
-											 FdwDirectModifyPrivateHasReturning));
+											  FdwDirectModifyPrivateHasReturning));
 	dmstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
 												 FdwDirectModifyPrivateRetrievedAttrs);
 	dmstate->set_processed = boolVal(list_nth(fsplan->fdw_private,
-											 FdwDirectModifyPrivateSetProcessed));
+											  FdwDirectModifyPrivateSetProcessed));
 
 	/* Create context for per-tuple temp workspace. */
 	dmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,

@@ -427,7 +427,9 @@ $node_subscriber->safe_psql('postgres',
 );
 $node_publisher->poll_query_until('postgres',
 	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
-) or die "Timed out while waiting for apply to restart after changing CONNECTION";
+  )
+  or die
+  "Timed out while waiting for apply to restart after changing CONNECTION";
 
 $oldpid = $node_publisher->safe_psql('postgres',
 	"SELECT pid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
@@ -437,7 +439,9 @@ $node_subscriber->safe_psql('postgres',
 );
 $node_publisher->poll_query_until('postgres',
 	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub' AND state = 'streaming';"
-) or die "Timed out while waiting for apply to restart after changing PUBLICATION";
+  )
+  or die
+  "Timed out while waiting for apply to restart after changing PUBLICATION";
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_ins SELECT generate_series(1001,1100)");
@@ -489,16 +493,14 @@ $node_publisher->safe_psql('postgres', "INSERT INTO tab_notrep VALUES (11)");
 $node_publisher->wait_for_catchup('tap_sub');
 
 $logfile = slurp_file($node_publisher->logfile, $log_location);
-ok( $logfile =~
-	  qr/skipped replication of an empty transaction with XID/,
+ok($logfile =~ qr/skipped replication of an empty transaction with XID/,
 	'empty transaction is skipped');
 
-$result = $node_subscriber->safe_psql('postgres',
-	"SELECT count(*) FROM tab_notrep");
+$result =
+  $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM tab_notrep");
 is($result, qq(0), 'check non-replicated table is empty on subscriber');
 
-$node_publisher->append_conf('postgresql.conf',
-	"log_min_messages = warning");
+$node_publisher->append_conf('postgresql.conf', "log_min_messages = warning");
 $node_publisher->reload;
 
 # note that data are different on provider and subscriber
@@ -519,7 +521,9 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub RENAME TO tap_sub_renamed");
 $node_publisher->poll_query_until('postgres',
 	"SELECT pid != $oldpid FROM pg_stat_replication WHERE application_name = 'tap_sub_renamed' AND state = 'streaming';"
-) or die "Timed out while waiting for apply to restart after renaming SUBSCRIPTION";
+  )
+  or die
+  "Timed out while waiting for apply to restart after renaming SUBSCRIPTION";
 
 # check all the cleanup
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub_renamed");

@@ -6250,7 +6250,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 			Assert(list_length(pathkey_orderings) > 0);
 
 			/* process all potentially interesting grouping reorderings */
-			foreach (lc2, pathkey_orderings)
+			foreach(lc2, pathkey_orderings)
 			{
 				bool		is_sorted;
 				int			presorted_keys = 0;
@@ -6283,8 +6283,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 					else if (parse->hasAggs)
 					{
 						/*
-						 * We have aggregation, possibly with plain GROUP BY. Make
-						 * an AggPath.
+						 * We have aggregation, possibly with plain GROUP BY.
+						 * Make an AggPath.
 						 */
 						add_path(grouped_rel, (Path *)
 								 create_agg_path(root,
@@ -6301,8 +6301,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 					else if (group_clauses)
 					{
 						/*
-						 * We have GROUP BY without aggregation or grouping sets.
-						 * Make a GroupPath.
+						 * We have GROUP BY without aggregation or grouping
+						 * sets. Make a GroupPath.
 						 */
 						add_path(grouped_rel, (Path *)
 								 create_group_path(root,
@@ -6321,8 +6321,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 
 				/*
 				 * Now we may consider incremental sort on this path, but only
-				 * when the path is not already sorted and when incremental sort
-				 * is enabled.
+				 * when the path is not already sorted and when incremental
+				 * sort is enabled.
 				 */
 				if (is_sorted || !enable_incremental_sort)
 					continue;
@@ -6335,8 +6335,9 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 					continue;
 
 				/*
-				 * We should have already excluded pathkeys of length 1 because
-				 * then presorted_keys > 0 would imply is_sorted was true.
+				 * We should have already excluded pathkeys of length 1
+				 * because then presorted_keys > 0 would imply is_sorted was
+				 * true.
 				 */
 				Assert(list_length(root->group_pathkeys) != 1);
 
@@ -6357,8 +6358,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				else if (parse->hasAggs)
 				{
 					/*
-					 * We have aggregation, possibly with plain GROUP BY. Make an
-					 * AggPath.
+					 * We have aggregation, possibly with plain GROUP BY. Make
+					 * an AggPath.
 					 */
 					add_path(grouped_rel, (Path *)
 							 create_agg_path(root,
@@ -6375,8 +6376,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				else if (parse->groupClause)
 				{
 					/*
-					 * We have GROUP BY without aggregation or grouping sets. Make
-					 * a GroupPath.
+					 * We have GROUP BY without aggregation or grouping sets.
+					 * Make a GroupPath.
 					 */
 					add_path(grouped_rel, (Path *)
 							 create_group_path(root,
@@ -6421,7 +6422,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				Assert(list_length(pathkey_orderings) > 0);
 
 				/* process all potentially interesting grouping reorderings */
-				foreach (lc2, pathkey_orderings)
+				foreach(lc2, pathkey_orderings)
 				{
 					bool		is_sorted;
 					int			presorted_keys = 0;
@@ -6435,8 +6436,8 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 															&presorted_keys);
 
 					/*
-					 * Insert a Sort node, if required.  But there's no point in
-					 * sorting anything but the cheapest path.
+					 * Insert a Sort node, if required.  But there's no point
+					 * in sorting anything but the cheapest path.
 					 */
 					if (!is_sorted)
 					{
@@ -6471,24 +6472,30 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 												   dNumGroups));
 
 					/*
-					 * Now we may consider incremental sort on this path, but only
-					 * when the path is not already sorted and when incremental
-					 * sort is enabled.
+					 * Now we may consider incremental sort on this path, but
+					 * only when the path is not already sorted and when
+					 * incremental sort is enabled.
 					 */
 					if (is_sorted || !enable_incremental_sort)
 						continue;
 
-					/* Restore the input path (we might have added Sort on top). */
+					/*
+					 * Restore the input path (we might have added Sort on
+					 * top).
+					 */
 					path = path_original;
 
-					/* no shared prefix, not point in building incremental sort */
+					/*
+					 * no shared prefix, not point in building incremental
+					 * sort
+					 */
 					if (presorted_keys == 0)
 						continue;
 
 					/*
 					 * We should have already excluded pathkeys of length 1
-					 * because then presorted_keys > 0 would imply is_sorted was
-					 * true.
+					 * because then presorted_keys > 0 would imply is_sorted
+					 * was true.
 					 */
 					Assert(list_length(root->group_pathkeys) != 1);
 
@@ -6741,7 +6748,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 			Assert(list_length(pathkey_orderings) > 0);
 
 			/* process all potentially interesting grouping reorderings */
-			foreach (lc2, pathkey_orderings)
+			foreach(lc2, pathkey_orderings)
 			{
 				bool		is_sorted;
 				int			presorted_keys = 0;
@@ -6874,7 +6881,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 			Assert(list_length(pathkey_orderings) > 0);
 
 			/* process all potentially interesting grouping reorderings */
-			foreach (lc2, pathkey_orderings)
+			foreach(lc2, pathkey_orderings)
 			{
 				bool		is_sorted;
 				int			presorted_keys = 0;
@@ -6924,8 +6931,8 @@ create_partial_grouping_paths(PlannerInfo *root,
 
 				/*
 				 * Now we may consider incremental sort on this path, but only
-				 * when the path is not already sorted and when incremental sort
-				 * is enabled.
+				 * when the path is not already sorted and when incremental
+				 * sort is enabled.
 				 */
 				if (is_sorted || !enable_incremental_sort)
 					continue;
@@ -6938,8 +6945,9 @@ create_partial_grouping_paths(PlannerInfo *root,
 					continue;
 
 				/*
-				 * We should have already excluded pathkeys of length 1 because
-				 * then presorted_keys > 0 would imply is_sorted was true.
+				 * We should have already excluded pathkeys of length 1
+				 * because then presorted_keys > 0 would imply is_sorted was
+				 * true.
 				 */
 				Assert(list_length(root->group_pathkeys) != 1);
 

@@ -46,7 +46,7 @@ CATALOG(pg_parameter_acl,8924,ParameterAclRelationId) BKI_SHARED_RELATION
  *		the format of pg_parameter_acl relation.
  * ----------------
  */
-typedef FormData_pg_parameter_acl *Form_pg_parameter_acl;
+typedef FormData_pg_parameter_acl * Form_pg_parameter_acl;
 
 DECLARE_TOAST_WITH_MACRO(pg_parameter_acl, 8925, 8926, PgParameterAclToastTable, PgParameterAclToastIndex);
 

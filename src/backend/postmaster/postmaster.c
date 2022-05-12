@@ -2859,8 +2859,8 @@ pmdie(SIGNAL_ARGS)
 
 			/*
 			 * If we reached normal running, we go straight to waiting for
-			 * client backends to exit.  If already in PM_STOP_BACKENDS or
-			 * a later state, do not change it.
+			 * client backends to exit.  If already in PM_STOP_BACKENDS or a
+			 * later state, do not change it.
 			 */
 			if (pmState == PM_RUN || pmState == PM_HOT_STANDBY)
 				connsAllowed = false;

@@ -340,13 +340,13 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * is in progress.
 	 *
 	 * The truncation operation might drop buffers that the checkpoint
-	 * otherwise would have flushed. If it does, then it's essential that
-	 * the files actually get truncated on disk before the checkpoint record
-	 * is written. Otherwise, if reply begins from that checkpoint, the
+	 * otherwise would have flushed. If it does, then it's essential that the
+	 * files actually get truncated on disk before the checkpoint record is
+	 * written. Otherwise, if reply begins from that checkpoint, the
 	 * to-be-truncated blocks might still exist on disk but have older
-	 * contents than expected, which can cause replay to fail. It's OK for
-	 * the blocks to not exist on disk at all, but not for them to have the
-	 * wrong contents.
+	 * contents than expected, which can cause replay to fail. It's OK for the
+	 * blocks to not exist on disk at all, but not for them to have the wrong
+	 * contents.
 	 */
 	Assert((MyProc->delayChkptFlags & DELAY_CHKPT_COMPLETE) == 0);
 	MyProc->delayChkptFlags |= DELAY_CHKPT_COMPLETE;

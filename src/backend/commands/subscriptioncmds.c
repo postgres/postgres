@@ -1578,13 +1578,13 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	PG_END_TRY();
 
 	/*
-	 * Tell the cumulative stats system that the subscription is getting dropped.
-	 * We can safely report dropping the subscription statistics here if the
-	 * subscription is associated with a replication slot since we cannot run
-	 * DROP SUBSCRIPTION inside a transaction block.  Subscription statistics
-	 * will be removed later by (auto)vacuum either if it's not associated
-	 * with a replication slot or if the message for dropping the subscription
-	 * gets lost.
+	 * Tell the cumulative stats system that the subscription is getting
+	 * dropped. We can safely report dropping the subscription statistics here
+	 * if the subscription is associated with a replication slot since we
+	 * cannot run DROP SUBSCRIPTION inside a transaction block.  Subscription
+	 * statistics will be removed later by (auto)vacuum either if it's not
+	 * associated with a replication slot or if the message for dropping the
+	 * subscription gets lost.
 	 */
 	if (slotname)
 		pgstat_drop_subscription(subid);

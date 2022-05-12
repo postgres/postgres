@@ -1505,9 +1505,9 @@ WalSndUpdateProgress(LogicalDecodingContext *ctx, XLogRecPtr lsn, TransactionId 
 	 * When skipping empty transactions in synchronous replication, we send a
 	 * keepalive message to avoid delaying such transactions.
 	 *
-	 * It is okay to check sync_standbys_defined flag without lock here as
-	 * in the worst case we will just send an extra keepalive message when it
-	 * is really not required.
+	 * It is okay to check sync_standbys_defined flag without lock here as in
+	 * the worst case we will just send an extra keepalive message when it is
+	 * really not required.
 	 */
 	if (skipped_xact &&
 		SyncRepRequested() &&

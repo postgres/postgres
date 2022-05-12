@@ -663,9 +663,9 @@ init_toast_snapshot(Snapshot toast_snapshot)
 	/*
 	 * Catalog snapshots can be returned by GetOldestSnapshot() even if not
 	 * registered or active. That easily hides bugs around not having a
-	 * snapshot set up - most of the time there is a valid catalog
-	 * snapshot. So additionally insist that the current snapshot is
-	 * registered or active.
+	 * snapshot set up - most of the time there is a valid catalog snapshot.
+	 * So additionally insist that the current snapshot is registered or
+	 * active.
 	 */
 	Assert(HaveRegisteredOrActiveSnapshot());
 

@@ -655,7 +655,7 @@ pg_analyze_and_rewrite_fixedparams(RawStmt *parsetree,
 		ResetUsage();
 
 	query = parse_analyze_fixedparams(parsetree, query_string, paramTypes, numParams,
-						  queryEnv);
+									  queryEnv);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -694,7 +694,7 @@ pg_analyze_and_rewrite_varparams(RawStmt *parsetree,
 		ResetUsage();
 
 	query = parse_analyze_varparams(parsetree, query_string, paramTypes, numParams,
-						  queryEnv);
+									queryEnv);
 
 	/*
 	 * Check all parameter types got determined.
@@ -1164,7 +1164,7 @@ exec_simple_query(const char *query_string)
 			oldcontext = MemoryContextSwitchTo(MessageContext);
 
 		querytree_list = pg_analyze_and_rewrite_fixedparams(parsetree, query_string,
-												NULL, 0, NULL);
+															NULL, 0, NULL);
 
 		plantree_list = pg_plan_queries(querytree_list, query_string,
 										CURSOR_OPT_PARALLEL_OK, NULL);
@@ -4377,11 +4377,12 @@ PostgresMain(const char *dbname, const char *username)
 		 * Note: this includes fflush()'ing the last of the prior output.
 		 *
 		 * This is also a good time to flush out collected statistics to the
-		 * cumulative stats system, and to update the PS stats display.  We avoid doing
-		 * those every time through the message loop because it'd slow down
-		 * processing of batched messages, and because we don't want to report
-		 * uncommitted updates (that confuses autovacuum).  The notification
-		 * processor wants a call too, if we are not in a transaction block.
+		 * cumulative stats system, and to update the PS stats display.  We
+		 * avoid doing those every time through the message loop because it'd
+		 * slow down processing of batched messages, and because we don't want
+		 * to report uncommitted updates (that confuses autovacuum).  The
+		 * notification processor wants a call too, if we are not in a
+		 * transaction block.
 		 *
 		 * Also, if an idle timeout is enabled, start the timer for that.
 		 */
@@ -4415,7 +4416,7 @@ PostgresMain(const char *dbname, const char *username)
 			}
 			else
 			{
-				long stats_timeout;
+				long		stats_timeout;
 
 				/*
 				 * Process incoming notifies (including self-notifies), if
@@ -4470,8 +4471,9 @@ PostgresMain(const char *dbname, const char *username)
 
 		/*
 		 * (4) turn off the idle-in-transaction, idle-session and
-		 * idle-stats-update timeouts if active.  We do this before step (5) so
-		 * that any last-moment timeout is certain to be detected in step (5).
+		 * idle-stats-update timeouts if active.  We do this before step (5)
+		 * so that any last-moment timeout is certain to be detected in step
+		 * (5).
 		 *
 		 * At most one of these timeouts will be active, so there's no need to
 		 * worry about combining the timeout.c calls into one.

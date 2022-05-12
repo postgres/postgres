@@ -68,7 +68,7 @@ bbsink_lz4_new(bbsink *next, pg_compress_specification *compress)
 	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_lz4 *sink;
-	int		compresslevel;
+	int			compresslevel;
 
 	Assert(next != NULL);
 

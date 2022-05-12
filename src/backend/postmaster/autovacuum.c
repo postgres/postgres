@@ -984,7 +984,8 @@ rebuild_database_list(Oid newdb)
 	hctl.keysize = sizeof(Oid);
 	hctl.entrysize = sizeof(avl_dbase);
 	hctl.hcxt = tmpcxt;
-	dbhash = hash_create("autovacuum db hash", 20, &hctl,	/* magic number here FIXME */
+	dbhash = hash_create("autovacuum db hash", 20, &hctl,	/* magic number here
+															 * FIXME */
 						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* start by inserting the new database */
@@ -1683,12 +1684,12 @@ AutoVacWorkerMain(int argc, char *argv[])
 		char		dbname[NAMEDATALEN];
 
 		/*
-		 * Report autovac startup to the cumulative stats system.  We deliberately do
-		 * this before InitPostgres, so that the last_autovac_time will get
-		 * updated even if the connection attempt fails.  This is to prevent
-		 * autovac from getting "stuck" repeatedly selecting an unopenable
-		 * database, rather than making any progress on stuff it can connect
-		 * to.
+		 * Report autovac startup to the cumulative stats system.  We
+		 * deliberately do this before InitPostgres, so that the
+		 * last_autovac_time will get updated even if the connection attempt
+		 * fails.  This is to prevent autovac from getting "stuck" repeatedly
+		 * selecting an unopenable database, rather than making any progress
+		 * on stuff it can connect to.
 		 */
 		pgstat_report_autovac(dbid);
 

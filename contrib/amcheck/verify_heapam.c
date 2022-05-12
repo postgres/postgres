@@ -1402,17 +1402,17 @@ check_tuple_attribute(HeapCheckContext *ctx)
 		cmid = TOAST_COMPRESS_METHOD(&toast_pointer);
 		switch (cmid)
 		{
-			/* List of all valid compression method IDs */
+				/* List of all valid compression method IDs */
 			case TOAST_PGLZ_COMPRESSION_ID:
 			case TOAST_LZ4_COMPRESSION_ID:
 				valid = true;
 				break;
 
-			/* Recognized but invalid compression method ID */
+				/* Recognized but invalid compression method ID */
 			case TOAST_INVALID_COMPRESSION_ID:
 				break;
 
-			/* Intentionally no default here */
+				/* Intentionally no default here */
 		}
 		if (!valid)
 			report_corruption(ctx,

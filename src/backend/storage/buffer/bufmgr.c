@@ -673,9 +673,8 @@ ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
 		{
 			/*
 			 * It's now safe to pin the buffer.  We can't pin first and ask
-			 * questions later, because it might confuse code paths
-			 * like InvalidateBuffer() if we pinned a random non-matching
-			 * buffer.
+			 * questions later, because it might confuse code paths like
+			 * InvalidateBuffer() if we pinned a random non-matching buffer.
 			 */
 			if (have_private_ref)
 				PinBuffer(bufHdr, NULL);	/* bump pin count */
@@ -2945,10 +2944,10 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	if (RELKIND_HAS_TABLE_AM(relation->rd_rel->relkind))
 	{
 		/*
-		 * Not every table AM uses BLCKSZ wide fixed size blocks.
-		 * Therefore tableam returns the size in bytes - but for the
-		 * purpose of this routine, we want the number of blocks.
-		 * Therefore divide, rounding up.
+		 * Not every table AM uses BLCKSZ wide fixed size blocks. Therefore
+		 * tableam returns the size in bytes - but for the purpose of this
+		 * routine, we want the number of blocks. Therefore divide, rounding
+		 * up.
 		 */
 		uint64		szbytes;
 
@@ -2958,7 +2957,7 @@ RelationGetNumberOfBlocksInFork(Relation relation, ForkNumber forkNum)
 	}
 	else if (RELKIND_HAS_STORAGE(relation->rd_rel->relkind))
 	{
-			return smgrnblocks(RelationGetSmgr(relation), forkNum);
+		return smgrnblocks(RelationGetSmgr(relation), forkNum);
 	}
 	else
 		Assert(false);
@@ -3707,9 +3706,9 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
 	BufferAccessStrategy bstrategy_dst;
 
 	/*
-	 * In general, we want to write WAL whenever wal_level > 'minimal', but
-	 * we can skip it when copying any fork of an unlogged relation other
-	 * than the init fork.
+	 * In general, we want to write WAL whenever wal_level > 'minimal', but we
+	 * can skip it when copying any fork of an unlogged relation other than
+	 * the init fork.
 	 */
 	use_wal = XLogIsNeeded() && (permanent || forkNum == INIT_FORKNUM);
 
@@ -3779,9 +3778,9 @@ void
 CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 						  bool permanent)
 {
-	Relation		src_rel;
-	Relation		dst_rel;
-	char			relpersistence;
+	Relation	src_rel;
+	Relation	dst_rel;
+	char		relpersistence;
 
 	/* Set the relpersistence. */
 	relpersistence = permanent ?
@@ -3789,9 +3788,9 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 
 	/*
 	 * We can't use a real relcache entry for a relation in some other
-	 * database, but since we're only going to access the fields related
-	 * to physical storage, a fake one is good enough. If we didn't do this
-	 * and used the smgr layer directly, we would have to worry about
+	 * database, but since we're only going to access the fields related to
+	 * physical storage, a fake one is good enough. If we didn't do this and
+	 * used the smgr layer directly, we would have to worry about
 	 * invalidations.
 	 */
 	src_rel = CreateFakeRelcacheEntry(src_rnode);

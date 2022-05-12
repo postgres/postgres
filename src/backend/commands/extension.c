@@ -758,10 +758,10 @@ execute_sql_string(const char *sql)
 		CommandCounterIncrement();
 
 		stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
-										   sql,
-										   NULL,
-										   0,
-										   NULL);
+													   sql,
+													   NULL,
+													   0,
+													   NULL);
 		stmt_list = pg_plan_queries(stmt_list, sql, CURSOR_OPT_PARALLEL_OK, NULL);
 
 		foreach(lc2, stmt_list)

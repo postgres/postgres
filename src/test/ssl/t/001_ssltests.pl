@@ -19,10 +19,12 @@ if ($ENV{with_ssl} ne 'openssl')
 }
 
 my $ssl_server = SSL::Server->new();
+
 sub sslkey
 {
 	return $ssl_server->sslkey(@_);
 }
+
 sub switch_server_cert
 {
 	$ssl_server->switch_server_cert(@_);
@@ -56,28 +58,30 @@ my $result = $node->safe_psql('postgres', "SHOW ssl_library");
 is($result, $ssl_server->ssl_library(), 'ssl_library parameter');
 
 $ssl_server->configure_test_server_for_ssl($node, $SERVERHOSTADDR,
-										   $SERVERHOSTCIDR,	'trust');
+	$SERVERHOSTCIDR, 'trust');
 
 note "testing password-protected keys";
 
-switch_server_cert($node,
-	certfile => 'server-cn-only',
-	cafile => 'root+client_ca',
-	keyfile => 'server-password',
+switch_server_cert(
+	$node,
+	certfile       => 'server-cn-only',
+	cafile         => 'root+client_ca',
+	keyfile        => 'server-password',
 	passphrase_cmd => 'echo wrongpassword',
-	restart => 'no' );
+	restart        => 'no');
 
 command_fails(
 	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
 	'restart fails with password-protected key file with wrong password');
 $node->_update_pid(0);
 
-switch_server_cert($node,
-	certfile => 'server-cn-only',
-	cafile => 'root+client_ca',
-	keyfile => 'server-password',
+switch_server_cert(
+	$node,
+	certfile       => 'server-cn-only',
+	cafile         => 'root+client_ca',
+	keyfile        => 'server-password',
 	passphrase_cmd => 'echo secret1',
-	restart => 'no');
+	restart        => 'no');
 
 command_ok(
 	[ 'pg_ctl', '-D', $node->data_dir, '-l', $node->logfile, 'restart' ],
@@ -115,7 +119,8 @@ switch_server_cert($node, certfile => 'server-cn-only');
 # Set of default settings for SSL parameters in connection string.  This
 # makes the tests protected against any defaults the environment may have
 # in ~/.postgresql/.
-my $default_ssl_connstr = "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
+my $default_ssl_connstr =
+  "sslkey=invalid sslcert=invalid sslrootcert=invalid sslcrl=invalid sslcrldir=invalid";
 
 $common_connstr =
   "$default_ssl_connstr user=ssltestuser dbname=trustdb hostaddr=$SERVERHOSTADDR host=common-name.pg-ssltest.test";
@@ -416,9 +421,11 @@ switch_server_cert($node, certfile => 'server-ip-cn-and-dns-alt-names');
 
 $node->connect_ok("$common_connstr host=192.0.2.1",
 	"certificate with both an IP CN and DNS SANs matches CN");
-$node->connect_ok("$common_connstr host=dns1.alt-name.pg-ssltest.test",
+$node->connect_ok(
+	"$common_connstr host=dns1.alt-name.pg-ssltest.test",
 	"certificate with both an IP CN and DNS SANs matches SAN 1");
-$node->connect_ok("$common_connstr host=dns2.alt-name.pg-ssltest.test",
+$node->connect_ok(
+	"$common_connstr host=dns2.alt-name.pg-ssltest.test",
 	"certificate with both an IP CN and DNS SANs matches SAN 2");
 
 # Finally, test a server certificate that has no CN or SANs. Of course, that's
@@ -506,42 +513,50 @@ $node->connect_fails(
 
 # correct client cert in unencrypted PEM
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client.key'),
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
 	"certificate authorization succeeds with correct client cert in PEM format"
 );
 
 # correct client cert in unencrypted DER
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-der.key'),
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client-der.key'),
 	"certificate authorization succeeds with correct client cert in DER format"
 );
 
 # correct client cert in encrypted PEM
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-encrypted-pem.key') . " sslpassword='dUmmyP^#+'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client-encrypted-pem.key')
+	  . " sslpassword='dUmmyP^#+'",
 	"certificate authorization succeeds with correct client cert in encrypted PEM format"
 );
 
 # correct client cert in encrypted DER
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-encrypted-der.key') . " sslpassword='dUmmyP^#+'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client-encrypted-der.key')
+	  . " sslpassword='dUmmyP^#+'",
 	"certificate authorization succeeds with correct client cert in encrypted DER format"
 );
 
 # correct client cert in encrypted PEM with wrong password
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-encrypted-pem.key') . " sslpassword='wrong'",
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client-encrypted-pem.key')
+	  . " sslpassword='wrong'",
 	"certificate authorization fails with correct client cert and wrong password in encrypted PEM format",
 	expected_stderr =>
-	  qr!private key file \".*client-encrypted-pem\.key\": bad decrypt!,
-);
+	  qr!private key file \".*client-encrypted-pem\.key\": bad decrypt!,);
 
 
 # correct client cert using whole DN
 my $dn_connstr = "$common_connstr dbname=certdb_dn";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt " . sslkey('client-dn.key'),
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt "
+	  . sslkey('client-dn.key'),
 	"certificate authorization succeeds with DN mapping",
 	log_like => [
 		qr/connection authenticated: identity="CN=ssltestuser-dn,OU=Testing,OU=Engineering,O=PGDG" method=cert/
@@ -551,14 +566,16 @@ $node->connect_ok(
 $dn_connstr = "$common_connstr dbname=certdb_dn_re";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt " . sslkey('client-dn.key'),
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt "
+	  . sslkey('client-dn.key'),
 	"certificate authorization succeeds with DN regex mapping");
 
 # same thing but using explicit CN
 $dn_connstr = "$common_connstr dbname=certdb_cn";
 
 $node->connect_ok(
-	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt " . sslkey('client-dn.key'),
+	"$dn_connstr user=ssltestuser sslcert=ssl/client-dn.crt "
+	  . sslkey('client-dn.key'),
 	"certificate authorization succeeds with CN mapping",
 	# the full DN should still be used as the authenticated identity
 	log_like => [
@@ -576,7 +593,9 @@ TODO:
 
 	# correct client cert in encrypted PEM with empty password
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-encrypted-pem.key') . " sslpassword=''",
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+		  . sslkey('client-encrypted-pem.key')
+		  . " sslpassword=''",
 		"certificate authorization fails with correct client cert and empty password in encrypted PEM format",
 		expected_stderr =>
 		  qr!private key file \".*client-encrypted-pem\.key\": processing error!
@@ -584,7 +603,8 @@ TODO:
 
 	# correct client cert in encrypted PEM with no password
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client-encrypted-pem.key'),
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+		  . sslkey('client-encrypted-pem.key'),
 		"certificate authorization fails with correct client cert and no password in encrypted PEM format",
 		expected_stderr =>
 		  qr!private key file \".*client-encrypted-pem\.key\": processing error!
@@ -630,7 +650,8 @@ command_like(
 		'-P',
 		'null=_null_',
 		'-d',
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client.key'),
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+		  . sslkey('client.key'),
 		'-c',
 		"SELECT * FROM pg_stat_ssl WHERE pid = pg_backend_pid()"
 	],
@@ -644,7 +665,8 @@ SKIP:
 	skip "Permissions check not enforced on Windows", 2 if ($windows_os);
 
 	$node->connect_fails(
-		"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client_wrongperms.key'),
+		"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+		  . sslkey('client_wrongperms.key'),
 		"certificate authorization fails because of file permissions",
 		expected_stderr =>
 		  qr!private key file \".*client_wrongperms\.key\" has group or world access!
@@ -653,7 +675,8 @@ SKIP:
 
 # client cert belonging to another user
 $node->connect_fails(
-	"$common_connstr user=anotheruser sslcert=ssl/client.crt " . sslkey('client.key'),
+	"$common_connstr user=anotheruser sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
 	"certificate authorization fails with client cert belonging to another user",
 	expected_stderr =>
 	  qr/certificate authentication failed for user "anotheruser"/,
@@ -663,7 +686,8 @@ $node->connect_fails(
 
 # revoked client cert
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt " . sslkey('client-revoked.key'),
+	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
+	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
 	# revoked certificates should not authenticate the user
@@ -676,13 +700,15 @@ $common_connstr =
   "$default_ssl_connstr sslrootcert=ssl/root+server_ca.crt sslmode=require dbname=verifydb hostaddr=$SERVERHOSTADDR host=localhost";
 
 $node->connect_ok(
-	"$common_connstr user=ssltestuser sslcert=ssl/client.crt " . sslkey('client.key'),
+	"$common_connstr user=ssltestuser sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
 	"auth_option clientcert=verify-full succeeds with matching username and Common Name",
 	# verify-full does not provide authentication
 	log_unlike => [qr/connection authenticated:/],);
 
 $node->connect_fails(
-	"$common_connstr user=anotheruser sslcert=ssl/client.crt " . sslkey('client.key'),
+	"$common_connstr user=anotheruser sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
 	"auth_option clientcert=verify-full fails with mismatching username and Common Name",
 	expected_stderr =>
 	  qr/FATAL: .* "trust" authentication failed for user "anotheruser"/,
@@ -692,7 +718,8 @@ $node->connect_fails(
 # Check that connecting with auth-option verify-ca in pg_hba :
 # works, when username doesn't match Common Name
 $node->connect_ok(
-	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt " . sslkey('client.key'),
+	"$common_connstr user=yetanotheruser sslcert=ssl/client.crt "
+	  . sslkey('client.key'),
 	"auth_option clientcert=verify-ca succeeds with mismatching username and Common Name",
 	# verify-full does not provide authentication
 	log_unlike => [qr/connection authenticated:/],);
@@ -700,7 +727,9 @@ $node->connect_ok(
 # intermediate client_ca.crt is provided by client, and isn't in server's ssl_ca_file
 switch_server_cert($node, certfile => 'server-cn-only', cafile => 'root_ca');
 $common_connstr =
-  "$default_ssl_connstr user=ssltestuser dbname=certdb " . sslkey('client.key') . " sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR host=localhost";
+    "$default_ssl_connstr user=ssltestuser dbname=certdb "
+  . sslkey('client.key')
+  . " sslrootcert=ssl/root+server_ca.crt hostaddr=$SERVERHOSTADDR host=localhost";
 
 $node->connect_ok(
 	"$common_connstr sslmode=require sslcert=ssl/client+client_ca.crt",
@@ -711,11 +740,15 @@ $node->connect_fails(
 	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/);
 
 # test server-side CRL directory
-switch_server_cert($node, certfile => 'server-cn-only', crldir => 'root+client-crldir');
+switch_server_cert(
+	$node,
+	certfile => 'server-cn-only',
+	crldir   => 'root+client-crldir');
 
 # revoked client cert
 $node->connect_fails(
-	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt " . sslkey('client-revoked.key'),
+	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
+	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
 

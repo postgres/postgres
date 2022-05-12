@@ -534,9 +534,9 @@ shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov, int iovcnt, bool nowait,
 	}
 
 	/*
-	 * If the caller has requested force flush or we have written more than 1/4
-	 * of the ring size, mark it as written in shared memory and notify the
-	 * receiver.
+	 * If the caller has requested force flush or we have written more than
+	 * 1/4 of the ring size, mark it as written in shared memory and notify
+	 * the receiver.
 	 */
 	if (force_flush || mqh->mqh_send_pending > (mq->mq_ring_size >> 2))
 	{

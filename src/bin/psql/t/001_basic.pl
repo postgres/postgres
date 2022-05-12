@@ -36,9 +36,8 @@ sub psql_fails_like
 	my ($node, $sql, $expected_stderr, $test_name) = @_;
 
 	# Use the context of a WAL sender, some of the tests rely on that.
-	my ($ret, $stdout, $stderr) = $node->psql(
-		'postgres', $sql,
-		replication  => 'database');
+	my ($ret, $stdout, $stderr) =
+	  $node->psql('postgres', $sql, replication => 'database');
 
 	isnt($ret, 0, "$test_name: exit code not 0");
 	like($stderr, $expected_stderr, "$test_name: matches");
@@ -69,9 +68,9 @@ max_wal_senders = 4
 });
 $node->start;
 
-psql_like($node, '\copyright', qr/Copyright/, '\copyright');
-psql_like($node, '\help', qr/ALTER/, '\help without arguments');
-psql_like($node, '\help SELECT', qr/SELECT/, '\help with argument');
+psql_like($node, '\copyright',   qr/Copyright/, '\copyright');
+psql_like($node, '\help',        qr/ALTER/,     '\help without arguments');
+psql_like($node, '\help SELECT', qr/SELECT/,    '\help with argument');
 
 # Test clean handling of unsupported replication command responses
 psql_fails_like(
@@ -116,16 +115,16 @@ NOTIFY foo, 'bar';",
 	'notification with payload');
 
 # test behavior and output on server crash
-my ($ret, $out, $err) = $node->psql(
-	'postgres',
-	"SELECT 'before' AS running;\n" .
-	"SELECT pg_terminate_backend(pg_backend_pid());\n" .
-	"SELECT 'AFTER' AS not_running;\n");
+my ($ret, $out, $err) = $node->psql('postgres',
+	    "SELECT 'before' AS running;\n"
+	  . "SELECT pg_terminate_backend(pg_backend_pid());\n"
+	  . "SELECT 'AFTER' AS not_running;\n");
 
 is($ret, 2, 'server crash: psql exit code');
 like($out, qr/before/, 'server crash: output before crash');
 ok($out !~ qr/AFTER/, 'server crash: no output after crash');
-is($err, 'psql:<stdin>:2: FATAL:  terminating connection due to administrator command
+is( $err,
+	'psql:<stdin>:2: FATAL:  terminating connection due to administrator command
 psql:<stdin>:2: server closed the connection unexpectedly
 	This probably means the server terminated abnormally
 	before or while processing the request.
@@ -149,34 +148,46 @@ psql_like(
 # \errverbose: The normal way, using a cursor by setting FETCH_COUNT,
 # and using \gdesc.  Test them all.
 
-like(($node->psql('postgres', "SELECT error;\n\\errverbose", on_error_stop => 0))[2],
-  qr/\A^psql:<stdin>:1: ERROR:  .*$
+like(
+	(   $node->psql(
+			'postgres',
+			"SELECT error;\n\\errverbose",
+			on_error_stop => 0))[2],
+	qr/\A^psql:<stdin>:1: ERROR:  .*$
 ^LINE 1: SELECT error;$
 ^ *^.*$
 ^psql:<stdin>:2: error: ERROR:  [0-9A-Z]{5}: .*$
 ^LINE 1: SELECT error;$
 ^ *^.*$
 ^LOCATION: .*$/m,
-  '\errverbose after normal query with error');
+	'\errverbose after normal query with error');
 
-like(($node->psql('postgres', "\\set FETCH_COUNT 1\nSELECT error;\n\\errverbose", on_error_stop => 0))[2],
-  qr/\A^psql:<stdin>:2: ERROR:  .*$
+like(
+	(   $node->psql(
+			'postgres',
+			"\\set FETCH_COUNT 1\nSELECT error;\n\\errverbose",
+			on_error_stop => 0))[2],
+	qr/\A^psql:<stdin>:2: ERROR:  .*$
 ^LINE 2: SELECT error;$
 ^ *^.*$
 ^psql:<stdin>:3: error: ERROR:  [0-9A-Z]{5}: .*$
 ^LINE 2: SELECT error;$
 ^ *^.*$
 ^LOCATION: .*$/m,
-  '\errverbose after FETCH_COUNT query with error');
+	'\errverbose after FETCH_COUNT query with error');
 
-like(($node->psql('postgres', "SELECT error\\gdesc\n\\errverbose", on_error_stop => 0))[2],
-  qr/\A^psql:<stdin>:1: ERROR:  .*$
+like(
+	(   $node->psql(
+			'postgres',
+			"SELECT error\\gdesc\n\\errverbose",
+			on_error_stop => 0))[2],
+	qr/\A^psql:<stdin>:1: ERROR:  .*$
 ^LINE 1: SELECT error$
 ^ *^.*$
 ^psql:<stdin>:2: error: ERROR:  [0-9A-Z]{5}: .*$
 ^LINE 1: SELECT error$
 ^ *^.*$
 ^LOCATION: .*$/m,
-  '\errverbose after \gdesc with error');
+	'\errverbose after \gdesc with error');
 
 done_testing();

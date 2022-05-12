@@ -181,6 +181,6 @@ extern int	WaitLatchOrSocket(Latch *latch, int wakeEvents,
 							  pgsocket sock, long timeout, uint32 wait_event_info);
 extern void InitializeLatchWaitSet(void);
 extern int	GetNumRegisteredWaitEvents(WaitEventSet *set);
-extern bool	WaitEventSetCanReportClosed(void);
+extern bool WaitEventSetCanReportClosed(void);
 
 #endif							/* LATCH_H */

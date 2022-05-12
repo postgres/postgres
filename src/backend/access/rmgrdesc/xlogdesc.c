@@ -210,7 +210,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 					   bool detailed_format, StringInfo buf,
 					   uint32 *fpi_len)
 {
-	int	block_id;
+	int			block_id;
 
 	Assert(record != NULL);
 

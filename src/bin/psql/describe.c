@@ -109,9 +109,9 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 							 "      AND n.nspname <> 'information_schema'\n");
 
 	if (!validateSQLNamePattern(&buf, pattern, true, false,
-							  "n.nspname", "p.proname", NULL,
-							  "pg_catalog.pg_function_is_visible(p.oid)",
-							  NULL, 3))
+								"n.nspname", "p.proname", NULL,
+								"pg_catalog.pg_function_is_visible(p.oid)",
+								NULL, 3))
 		return false;
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
@@ -6002,7 +6002,7 @@ validateSQLNamePattern(PQExpBuffer buf, const char *pattern, bool have_where,
 					   const char *visibilityrule, bool *added_clause,
 					   int maxparts)
 {
-	PQExpBufferData	dbbuf;
+	PQExpBufferData dbbuf;
 	int			dotcnt;
 	bool		added;
 
@@ -6021,7 +6021,7 @@ validateSQLNamePattern(PQExpBuffer buf, const char *pattern, bool have_where,
 		return false;
 	}
 
-	if (maxparts > 1 && dotcnt == maxparts-1)
+	if (maxparts > 1 && dotcnt == maxparts - 1)
 	{
 		if (PQdb(pset.db) == NULL)
 		{

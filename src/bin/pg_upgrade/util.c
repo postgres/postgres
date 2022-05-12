@@ -143,6 +143,7 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 			break;
 
 		case PG_STATUS:
+
 			/*
 			 * For output to a display, do leading truncation. Append \r so
 			 * that the next message is output at the start of the line.

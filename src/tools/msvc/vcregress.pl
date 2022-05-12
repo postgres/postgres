@@ -70,10 +70,10 @@ copy("$Config/regress/regress.dll",               "src/test/regress");
 copy("$Config/dummy_seclabel/dummy_seclabel.dll", "src/test/regress");
 
 # Configuration settings used by TAP tests
-$ENV{with_ssl} = $config->{openssl} ? 'openssl' : 'no';
-$ENV{with_ldap} = $config->{ldap} ? 'yes' : 'no';
-$ENV{with_icu} = $config->{icu} ? 'yes' : 'no';
-$ENV{with_gssapi} = $config->{gss} ? 'yes' : 'no';
+$ENV{with_ssl}    = $config->{openssl} ? 'openssl' : 'no';
+$ENV{with_ldap}   = $config->{ldap}    ? 'yes'     : 'no';
+$ENV{with_icu}    = $config->{icu}     ? 'yes'     : 'no';
+$ENV{with_gssapi} = $config->{gss}     ? 'yes'     : 'no';
 $ENV{with_krb_srvnam} = $config->{krb_srvnam} || 'postgres';
 $ENV{with_readline} = 'no';
 

@@ -46,7 +46,8 @@ elsif ($^O eq 'openbsd')
 }
 else
 {
-	plan skip_all => "ldap tests not supported on $^O or dependencies not installed";
+	plan skip_all =>
+	  "ldap tests not supported on $^O or dependencies not installed";
 }
 
 # make your own edits here

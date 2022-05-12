@@ -229,8 +229,10 @@ $expected_conflicts++;
 # Want to test recovery deadlock conflicts, not buffer pin conflicts. Without
 # changing max_standby_streaming_delay it'd be timing dependent what we hit
 # first
-$node_standby->adjust_conf('postgresql.conf', 'max_standby_streaming_delay',
-						   "${PostgreSQL::Test::Utils::timeout_default}s");
+$node_standby->adjust_conf(
+	'postgresql.conf',
+	'max_standby_streaming_delay',
+	"${PostgreSQL::Test::Utils::timeout_default}s");
 $node_standby->restart();
 reconnect_and_clear();
 
@@ -289,7 +291,8 @@ check_conflict_stat("deadlock");
 
 # clean up for next tests
 $node_primary->safe_psql($test_db, qq[ROLLBACK PREPARED 'lock';]);
-$node_standby->adjust_conf('postgresql.conf', 'max_standby_streaming_delay', '50ms');
+$node_standby->adjust_conf('postgresql.conf', 'max_standby_streaming_delay',
+	'50ms');
 $node_standby->restart();
 reconnect_and_clear();
 

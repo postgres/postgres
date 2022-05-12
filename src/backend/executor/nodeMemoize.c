@@ -375,7 +375,7 @@ static void
 cache_purge_all(MemoizeState *mstate)
 {
 	uint64		evictions = mstate->hashtable->members;
-	PlanState *pstate = (PlanState *) mstate;
+	PlanState  *pstate = (PlanState *) mstate;
 
 	/*
 	 * Likely the most efficient way to remove all items is to just reset the

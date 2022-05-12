@@ -108,9 +108,9 @@ bbsink_zstd_begin_backup(bbsink *sink)
 	if ((compress->options & PG_COMPRESSION_OPTION_WORKERS) != 0)
 	{
 		/*
-		 * On older versions of libzstd, this option does not exist, and trying
-		 * to set it will fail. Similarly for newer versions if they are
-		 * compiled without threading support.
+		 * On older versions of libzstd, this option does not exist, and
+		 * trying to set it will fail. Similarly for newer versions if they
+		 * are compiled without threading support.
 		 */
 		ret = ZSTD_CCtx_setParameter(mysink->cctx, ZSTD_c_nbWorkers,
 									 compress->workers);

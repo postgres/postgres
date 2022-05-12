@@ -156,7 +156,7 @@ RunFunctionExecuteHook(Oid objectId)
  */
 void
 RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
-						bool is_internal)
+						   bool is_internal)
 {
 	ObjectAccessPostCreate pc_arg;
 
@@ -167,8 +167,8 @@ RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
 	pc_arg.is_internal = is_internal;
 
 	(*object_access_hook_str) (OAT_POST_CREATE,
-						   classId, objectName, subId,
-						   (void *) &pc_arg);
+							   classId, objectName, subId,
+							   (void *) &pc_arg);
 }
 
 /*
@@ -178,7 +178,7 @@ RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
  */
 void
 RunObjectDropHookStr(Oid classId, const char *objectName, int subId,
-				  int dropflags)
+					 int dropflags)
 {
 	ObjectAccessDrop drop_arg;
 
@@ -189,8 +189,8 @@ RunObjectDropHookStr(Oid classId, const char *objectName, int subId,
 	drop_arg.dropflags = dropflags;
 
 	(*object_access_hook_str) (OAT_DROP,
-						   classId, objectName, subId,
-						   (void *) &drop_arg);
+							   classId, objectName, subId,
+							   (void *) &drop_arg);
 }
 
 /*
@@ -205,8 +205,8 @@ RunObjectTruncateHookStr(const char *objectName)
 	Assert(object_access_hook_str != NULL);
 
 	(*object_access_hook_str) (OAT_TRUNCATE,
-						   RelationRelationId, objectName, 0,
-						   NULL);
+							   RelationRelationId, objectName, 0,
+							   NULL);
 }
 
 /*
@@ -216,7 +216,7 @@ RunObjectTruncateHookStr(const char *objectName)
  */
 void
 RunObjectPostAlterHookStr(Oid classId, const char *objectName, int subId,
-					   Oid auxiliaryId, bool is_internal)
+						  Oid auxiliaryId, bool is_internal)
 {
 	ObjectAccessPostAlter pa_arg;
 
@@ -228,8 +228,8 @@ RunObjectPostAlterHookStr(Oid classId, const char *objectName, int subId,
 	pa_arg.is_internal = is_internal;
 
 	(*object_access_hook_str) (OAT_POST_ALTER,
-						   classId, objectName, subId,
-						   (void *) &pa_arg);
+							   classId, objectName, subId,
+							   (void *) &pa_arg);
 }
 
 /*
@@ -250,8 +250,8 @@ RunNamespaceSearchHookStr(const char *objectName, bool ereport_on_violation)
 	ns_arg.result = true;
 
 	(*object_access_hook_str) (OAT_NAMESPACE_SEARCH,
-						   NamespaceRelationId, objectName, 0,
-						   (void *) &ns_arg);
+							   NamespaceRelationId, objectName, 0,
+							   (void *) &ns_arg);
 
 	return ns_arg.result;
 }
@@ -268,6 +268,6 @@ RunFunctionExecuteHookStr(const char *objectName)
 	Assert(object_access_hook_str != NULL);
 
 	(*object_access_hook_str) (OAT_FUNCTION_EXECUTE,
-						   ProcedureRelationId, objectName, 0,
-						   NULL);
+							   ProcedureRelationId, objectName, 0,
+							   NULL);
 }

@@ -3613,8 +3613,8 @@ static void
 _outFloat(StringInfo str, const Float *node)
 {
 	/*
-	 * We assume the value is a valid numeric literal and so does not
-	 * need quoting.
+	 * We assume the value is a valid numeric literal and so does not need
+	 * quoting.
 	 */
 	appendStringInfoString(str, node->fval);
 }
@@ -3629,8 +3629,8 @@ static void
 _outString(StringInfo str, const String *node)
 {
 	/*
-	 * We use outToken to provide escaping of the string's content,
-	 * but we don't want it to do anything with an empty string.
+	 * We use outToken to provide escaping of the string's content, but we
+	 * don't want it to do anything with an empty string.
 	 */
 	appendStringInfoChar(str, '"');
 	if (node->sval[0] != '\0')

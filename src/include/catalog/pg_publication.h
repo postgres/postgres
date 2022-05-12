@@ -87,8 +87,8 @@ typedef struct PublicationDesc
 	bool		rf_valid_for_delete;
 
 	/*
-	 * true if the columns are part of the replica identity or the publication actions
-	 * do not include UPDATE or DELETE.
+	 * true if the columns are part of the replica identity or the publication
+	 * actions do not include UPDATE or DELETE.
 	 */
 	bool		cols_valid_for_update;
 	bool		cols_valid_for_delete;

@@ -62,21 +62,21 @@ $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
 # Specifying non-existent publication along with add publication.
-($ret, $stdout, $stderr) = $node_subscriber->psql(
-	'postgres',
+($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
 	"ALTER SUBSCRIPTION mysub1 ADD PUBLICATION non_existent_pub1, non_existent_pub2"
 );
 ok( $stderr =~
 	  m/WARNING:  publications "non_existent_pub1", "non_existent_pub2" do not exist in the publisher/,
-	"Alter subscription add publication throws warning for non-existent publications");
+	"Alter subscription add publication throws warning for non-existent publications"
+);
 
 # Specifying non-existent publication along with set publication.
 ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
-	"ALTER SUBSCRIPTION mysub1 SET PUBLICATION non_existent_pub"
-);
+	"ALTER SUBSCRIPTION mysub1 SET PUBLICATION non_existent_pub");
 ok( $stderr =~
 	  m/WARNING:  publication "non_existent_pub" does not exist in the publisher/,
-	"Alter subscription set publication throws warning for non-existent publication");
+	"Alter subscription set publication throws warning for non-existent publication"
+);
 
 $node_subscriber->stop;
 $node_publisher->stop;

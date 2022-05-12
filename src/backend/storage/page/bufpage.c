@@ -795,7 +795,7 @@ PageRepairFragmentation(Page page)
 	if (finalusedlp != nline)
 	{
 		/* The last line pointer is not the last used line pointer */
-		int		nunusedend = nline - finalusedlp;
+		int			nunusedend = nline - finalusedlp;
 
 		Assert(nunused >= nunusedend && nunusedend > 0);
 

@@ -33,31 +33,31 @@
 /* Context for JSON_TABLE transformation */
 typedef struct JsonTableContext
 {
-	ParseState *pstate;				/* parsing state */
-	JsonTable  *table;				/* untransformed node */
-	TableFunc  *tablefunc;			/* transformed node	*/
-	List	   *pathNames;			/* list of all path and columns names */
-	int			pathNameId;			/* path name id counter */
+	ParseState *pstate;			/* parsing state */
+	JsonTable  *table;			/* untransformed node */
+	TableFunc  *tablefunc;		/* transformed node	*/
+	List	   *pathNames;		/* list of all path and columns names */
+	int			pathNameId;		/* path name id counter */
 	Oid			contextItemTypid;	/* type oid of context item (json/jsonb) */
 } JsonTableContext;
 
-static JsonTableParent * transformJsonTableColumns(JsonTableContext *cxt,
-												   JsonTablePlan *plan,
-												   List *columns,
-												   char *pathSpec,
-												   char **pathName,
-												   int location);
+static JsonTableParent *transformJsonTableColumns(JsonTableContext *cxt,
+												  JsonTablePlan *plan,
+												  List *columns,
+												  char *pathSpec,
+												  char **pathName,
+												  int location);
 
 static Node *
 makeStringConst(char *str, int location)
 {
-	A_Const *n = makeNode(A_Const);
+	A_Const    *n = makeNode(A_Const);
 
 	n->val.node.type = T_String;
 	n->val.sval.sval = str;
 	n->location = location;
 
-	return (Node *)n;
+	return (Node *) n;
 }
 
 /*
@@ -122,7 +122,7 @@ transformJsonTableColumn(JsonTableColumn *jtc, Node *contextItemExpr,
 static bool
 isJsonTablePathNameDuplicate(JsonTableContext *cxt, const char *pathname)
 {
-	ListCell *lc;
+	ListCell   *lc;
 
 	foreach(lc, cxt->pathNames)
 	{
@@ -342,7 +342,7 @@ transformJsonTableChildPlan(JsonTableContext *cxt, JsonTablePlan *plan,
 		foreach(lc, columns)
 		{
 			JsonTableColumn *jtc = castNode(JsonTableColumn, lfirst(lc));
-			Node *node;
+			Node	   *node;
 
 			if (jtc->coltype != JTC_NESTED)
 				continue;
@@ -369,10 +369,10 @@ transformJsonTableChildPlan(JsonTableContext *cxt, JsonTablePlan *plan,
 		}
 		else
 		{
-			Node	   *node1 =
-				transformJsonTableChildPlan(cxt, plan->plan1, columns);
-			Node	   *node2 =
-				transformJsonTableChildPlan(cxt, plan->plan2, columns);
+			Node	   *node1 = transformJsonTableChildPlan(cxt, plan->plan1,
+															columns);
+			Node	   *node2 = transformJsonTableChildPlan(cxt, plan->plan2,
+															columns);
 
 			return makeJsonTableSiblingJoin(plan->join_type == JSTPJ_CROSS,
 											node1, node2);
@@ -396,7 +396,7 @@ transformJsonTableChildPlan(JsonTableContext *cxt, JsonTablePlan *plan,
 static bool
 typeIsComposite(Oid typid)
 {
-	char typtype;
+	char		typtype;
 
 	if (typid == JSONOID ||
 		typid == JSONBOID ||
@@ -406,7 +406,7 @@ typeIsComposite(Oid typid)
 
 	typtype = get_typtype(typid);
 
-	if (typtype ==	TYPTYPE_COMPOSITE)
+	if (typtype == TYPTYPE_COMPOSITE)
 		return true;
 
 	if (typtype == TYPTYPE_DOMAIN)
@@ -424,7 +424,7 @@ appendJsonTableColumns(JsonTableContext *cxt, List *columns)
 	JsonTable  *jt = cxt->table;
 	TableFunc  *tf = cxt->tablefunc;
 	bool		errorOnError = jt->on_error &&
-							   jt->on_error->btype == JSON_BEHAVIOR_ERROR;
+	jt->on_error->btype == JSON_BEHAVIOR_ERROR;
 
 	foreach(col, columns)
 	{
@@ -436,24 +436,23 @@ appendJsonTableColumns(JsonTableContext *cxt, List *columns)
 		if (rawc->name)
 		{
 			/* make sure column names are unique */
-			ListCell *colname;
+			ListCell   *colname;
 
 			foreach(colname, tf->colnames)
 				if (!strcmp((const char *) colname, rawc->name))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("column name \"%s\" is not unique",
-									rawc->name),
-							 parser_errposition(pstate, rawc->location)));
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("column name \"%s\" is not unique",
+								rawc->name),
+						 parser_errposition(pstate, rawc->location)));
 
 			tf->colnames = lappend(tf->colnames,
 								   makeString(pstrdup(rawc->name)));
 		}
 
 		/*
-		 * Determine the type and typmod for the new column. FOR
-		 * ORDINALITY columns are INTEGER by standard; the others are
-		 * user-specified.
+		 * Determine the type and typmod for the new column. FOR ORDINALITY
+		 * columns are INTEGER by standard; the others are user-specified.
 		 */
 		switch (rawc->coltype)
 		{
@@ -517,8 +516,8 @@ appendJsonTableColumns(JsonTableContext *cxt, List *columns)
 		tf->coltypmods = lappend_int(tf->coltypmods, typmod);
 		tf->colcollations = lappend_oid(tf->colcollations,
 										type_is_collatable(typid)
-											? DEFAULT_COLLATION_OID
-											: InvalidOid);
+										? DEFAULT_COLLATION_OID
+										: InvalidOid);
 		tf->colvalexprs = lappend(tf->colvalexprs, colexpr);
 	}
 }
@@ -571,7 +570,7 @@ transformJsonTableColumns(JsonTableContext *cxt, JsonTablePlan *plan,
 					 errdetail("JSON_TABLE columns must contain "
 							   "explicit AS pathname specification if "
 							   "explicit PLAN clause is used"),
-					parser_errposition(cxt->pstate, location)));
+					 parser_errposition(cxt->pstate, location)));
 
 		*pathName = generateJsonTablePathName(cxt);
 	}
@@ -662,14 +661,15 @@ transformJsonTable(ParseState *pstate, JsonTable *jt)
 
 	registerAllJsonTableColumns(&cxt, jt->columns);
 
-#if 0 /* XXX it' unclear from the standard whether root path name is mandatory or not */
+#if 0							/* XXX it' unclear from the standard whether
+								 * root path name is mandatory or not */
 	if (plan && plan->plan_type != JSTP_DEFAULT && !rootPathName)
 	{
 		/* Assign root path name and create corresponding plan node */
 		JsonTablePlan *rootNode = makeNode(JsonTablePlan);
 		JsonTablePlan *rootPlan = (JsonTablePlan *)
-				makeJsonTableJoinedPlan(JSTPJ_OUTER, (Node *) rootNode,
-										(Node *) plan, jt->location);
+		makeJsonTableJoinedPlan(JSTPJ_OUTER, (Node *) rootNode,
+								(Node *) plan, jt->location);
 
 		rootPathName = generateJsonTablePathName(&cxt);
 

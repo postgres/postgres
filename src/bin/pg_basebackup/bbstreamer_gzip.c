@@ -28,7 +28,7 @@ typedef struct bbstreamer_gzip_writer
 	bbstreamer	base;
 	char	   *pathname;
 	gzFile		gzfile;
-}			bbstreamer_gzip_writer;
+} bbstreamer_gzip_writer;
 
 typedef struct bbstreamer_gzip_decompressor
 {
@@ -52,9 +52,9 @@ const bbstreamer_ops bbstreamer_gzip_writer_ops = {
 };
 
 static void bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
-											  bbstreamer_member *member,
-											  const char *data, int len,
-											  bbstreamer_archive_context context);
+												 bbstreamer_member *member,
+												 const char *data, int len,
+												 bbstreamer_archive_context context);
 static void bbstreamer_gzip_decompressor_finalize(bbstreamer *streamer);
 static void bbstreamer_gzip_decompressor_free(bbstreamer *streamer);
 static void *gzip_palloc(void *opaque, unsigned items, unsigned size);
@@ -214,8 +214,8 @@ bbstreamer *
 bbstreamer_gzip_decompressor_new(bbstreamer *next)
 {
 #ifdef HAVE_LIBZ
-	bbstreamer_gzip_decompressor	*streamer;
-	z_stream *zs;
+	bbstreamer_gzip_decompressor *streamer;
+	z_stream   *zs;
 
 	Assert(next != NULL);
 
@@ -261,12 +261,12 @@ bbstreamer_gzip_decompressor_new(bbstreamer *next)
  */
 static void
 bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
-								  bbstreamer_member *member,
-								  const char *data, int len,
-								  bbstreamer_archive_context context)
+									 bbstreamer_member *member,
+									 const char *data, int len,
+									 bbstreamer_archive_context context)
 {
 	bbstreamer_gzip_decompressor *mystreamer;
-	z_stream *zs;
+	z_stream   *zs;
 
 	mystreamer = (bbstreamer_gzip_decompressor *) streamer;
 
@@ -277,7 +277,7 @@ bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
 	/* Process the current chunk */
 	while (zs->avail_in > 0)
 	{
-		int res;
+		int			res;
 
 		Assert(mystreamer->bytes_written < mystreamer->base.bbs_buffer.maxlen);
 
@@ -288,8 +288,9 @@ bbstreamer_gzip_decompressor_content(bbstreamer *streamer,
 
 		/*
 		 * This call decompresses data starting at zs->next_in and updates
-		 * zs->next_in * and zs->avail_in. It generates output data starting at
-		 * zs->next_out and updates zs->next_out and zs->avail_out accordingly.
+		 * zs->next_in * and zs->avail_in. It generates output data starting
+		 * at zs->next_out and updates zs->next_out and zs->avail_out
+		 * accordingly.
 		 */
 		res = inflate(zs, Z_NO_FLUSH);
 

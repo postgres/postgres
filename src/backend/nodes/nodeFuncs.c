@@ -1003,7 +1003,7 @@ exprCollation(const Node *expr)
 			break;
 		case T_JsonExpr:
 			{
-				JsonExpr *jexpr = (JsonExpr *) expr;
+				JsonExpr   *jexpr = (JsonExpr *) expr;
 				JsonCoercion *coercion = jexpr->result_coercion;
 
 				if (!coercion)
@@ -1239,7 +1239,8 @@ exprSetCollation(Node *expr, Oid collation)
 				if (ctor->coercion)
 					exprSetCollation((Node *) ctor->coercion, collation);
 				else
-					Assert(!OidIsValid(collation)); /* result is always a json[b] type */
+					Assert(!OidIsValid(collation)); /* result is always a
+													 * json[b] type */
 			}
 			break;
 		case T_JsonIsPredicate:
@@ -1247,7 +1248,7 @@ exprSetCollation(Node *expr, Oid collation)
 			break;
 		case T_JsonExpr:
 			{
-				JsonExpr *jexpr = (JsonExpr *) expr;
+				JsonExpr   *jexpr = (JsonExpr *) expr;
 				JsonCoercion *coercion = jexpr->result_coercion;
 
 				if (!coercion)
@@ -2496,7 +2497,7 @@ expression_tree_walker(Node *node,
 			return walker(((JsonIsPredicate *) node)->expr, context);
 		case T_JsonExpr:
 			{
-				JsonExpr    *jexpr = (JsonExpr *) node;
+				JsonExpr   *jexpr = (JsonExpr *) node;
 
 				if (walker(jexpr->formatted_expr, context))
 					return true;
@@ -3568,8 +3569,8 @@ expression_tree_mutator(Node *node,
 			break;
 		case T_JsonExpr:
 			{
-				JsonExpr    *jexpr = (JsonExpr *) node;
-				JsonExpr    *newnode;
+				JsonExpr   *jexpr = (JsonExpr *) node;
+				JsonExpr   *newnode;
 
 				FLATCOPY(newnode, jexpr, JsonExpr);
 				MUTATE(newnode->path_spec, jexpr->path_spec, Node *);
@@ -4545,7 +4546,7 @@ raw_expression_tree_walker(Node *node,
 			break;
 		case T_JsonTableColumn:
 			{
-				JsonTableColumn  *jtc = (JsonTableColumn *) node;
+				JsonTableColumn *jtc = (JsonTableColumn *) node;
 
 				if (walker(jtc->typeName, context))
 					return true;

@@ -30,8 +30,10 @@ my $dbname1 =
   . generate_ascii_string(1,  9)
   . generate_ascii_string(11, 12)
   . generate_ascii_string(14, 33)
-  . ($PostgreSQL::Test::Utils::windows_os ? '' : '"x"')   # IPC::Run mishandles '"' on Windows
-  . generate_ascii_string(35, 43)         # skip ','
+  . ($PostgreSQL::Test::Utils::windows_os
+	? ''
+	: '"x"')    # IPC::Run mishandles '"' on Windows
+  . generate_ascii_string(35, 43)    # skip ','
   . generate_ascii_string(45, 54);
 my $dbname2 = 'regression' . generate_ascii_string(55, 65)    # skip 'B'-'W'
   . generate_ascii_string(88,  99)                            # skip 'd'-'w'
@@ -171,7 +173,8 @@ system_log('cat', $plain);
 my ($stderr, $result);
 my $restore_super = qq{regress_a'b\\c=d\\ne"f};
 $restore_super =~ s/"//g
-  if $PostgreSQL::Test::Utils::windows_os;    # IPC::Run mishandles '"' on Windows
+  if
+  $PostgreSQL::Test::Utils::windows_os;   # IPC::Run mishandles '"' on Windows
 
 
 # Restore full dump through psql using environment variables for

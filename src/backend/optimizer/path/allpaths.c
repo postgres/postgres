@@ -1777,17 +1777,18 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			}
 
 			/*
-			 * When building a fractional path, determine a cheapest fractional
-			 * path for each child relation too. Looking at startup and total
-			 * costs is not enough, because the cheapest fractional path may be
-			 * dominated by two separate paths (one for startup, one for total).
+			 * When building a fractional path, determine a cheapest
+			 * fractional path for each child relation too. Looking at startup
+			 * and total costs is not enough, because the cheapest fractional
+			 * path may be dominated by two separate paths (one for startup,
+			 * one for total).
 			 *
 			 * When needed (building fractional path), determine the cheapest
 			 * fractional path too.
 			 */
 			if (root->tuple_fraction > 0)
 			{
-				double	path_fraction = (1.0 / root->tuple_fraction);
+				double		path_fraction = (1.0 / root->tuple_fraction);
 
 				cheapest_fractional =
 					get_cheapest_fractional_path_for_pathkeys(childrel->pathlist,
@@ -1796,8 +1797,8 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 															  path_fraction);
 
 				/*
-				 * If we found no path with matching pathkeys, use the cheapest
-				 * total path instead.
+				 * If we found no path with matching pathkeys, use the
+				 * cheapest total path instead.
 				 *
 				 * XXX We might consider partially sorted paths too (with an
 				 * incremental sort on top). But we'd have to build all the

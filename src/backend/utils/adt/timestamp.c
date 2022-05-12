@@ -2194,6 +2194,7 @@ timestamp_sortsupport(PG_FUNCTION_ARGS)
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
 #if SIZEOF_DATUM >= 8
+
 	/*
 	 * If this build has pass-by-value timestamps, then we can use a standard
 	 * comparator function.
@@ -4349,59 +4350,59 @@ interval_trunc(PG_FUNCTION_ARGS)
 	if (type == UNITS)
 	{
 		interval2itm(*interval, tm);
-			switch (val)
-			{
-				case DTK_MILLENNIUM:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 1000) * 1000;
-					/* FALL THRU */
-				case DTK_CENTURY:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 100) * 100;
-					/* FALL THRU */
-				case DTK_DECADE:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 10) * 10;
-					/* FALL THRU */
-				case DTK_YEAR:
-					tm->tm_mon = 0;
-					/* FALL THRU */
-				case DTK_QUARTER:
-					tm->tm_mon = 3 * (tm->tm_mon / 3);
-					/* FALL THRU */
-				case DTK_MONTH:
-					tm->tm_mday = 0;
-					/* FALL THRU */
-				case DTK_DAY:
-					tm->tm_hour = 0;
-					/* FALL THRU */
-				case DTK_HOUR:
-					tm->tm_min = 0;
-					/* FALL THRU */
-				case DTK_MINUTE:
-					tm->tm_sec = 0;
-					/* FALL THRU */
-				case DTK_SECOND:
-					tm->tm_usec = 0;
-					break;
-				case DTK_MILLISEC:
-					tm->tm_usec = (tm->tm_usec / 1000) * 1000;
-					break;
-				case DTK_MICROSEC:
-					break;
+		switch (val)
+		{
+			case DTK_MILLENNIUM:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 1000) * 1000;
+				/* FALL THRU */
+			case DTK_CENTURY:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 100) * 100;
+				/* FALL THRU */
+			case DTK_DECADE:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 10) * 10;
+				/* FALL THRU */
+			case DTK_YEAR:
+				tm->tm_mon = 0;
+				/* FALL THRU */
+			case DTK_QUARTER:
+				tm->tm_mon = 3 * (tm->tm_mon / 3);
+				/* FALL THRU */
+			case DTK_MONTH:
+				tm->tm_mday = 0;
+				/* FALL THRU */
+			case DTK_DAY:
+				tm->tm_hour = 0;
+				/* FALL THRU */
+			case DTK_HOUR:
+				tm->tm_min = 0;
+				/* FALL THRU */
+			case DTK_MINUTE:
+				tm->tm_sec = 0;
+				/* FALL THRU */
+			case DTK_SECOND:
+				tm->tm_usec = 0;
+				break;
+			case DTK_MILLISEC:
+				tm->tm_usec = (tm->tm_usec / 1000) * 1000;
+				break;
+			case DTK_MICROSEC:
+				break;
 
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("unit \"%s\" not supported for type %s",
-									lowunits, format_type_be(INTERVALOID)),
-							 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
-			}
-
-			if (itm2interval(tm, result) != 0)
+			default:
 				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("interval out of range")));
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(INTERVALOID)),
+						 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
+		}
+
+		if (itm2interval(tm, result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("interval out of range")));
 	}
 	else
 	{
@@ -5225,80 +5226,80 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	if (type == UNITS)
 	{
 		interval2itm(*interval, tm);
-			switch (val)
-			{
-				case DTK_MICROSEC:
-					intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
-					break;
+		switch (val)
+		{
+			case DTK_MICROSEC:
+				intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
+				break;
 
-				case DTK_MILLISEC:
-					if (retnumeric)
-						/*---
-						 * tm->tm_sec * 1000 + fsec / 1000
-						 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
-						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
-					else
-						PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
-					break;
+			case DTK_MILLISEC:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec * 1000 + fsec / 1000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
+				break;
 
-				case DTK_SECOND:
-					if (retnumeric)
-						/*---
-						 * tm->tm_sec + fsec / 1'000'000
-						 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
-						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
-					else
-						PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
-					break;
+			case DTK_SECOND:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec + fsec / 1'000'000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
+				break;
 
-				case DTK_MINUTE:
-					intresult = tm->tm_min;
-					break;
+			case DTK_MINUTE:
+				intresult = tm->tm_min;
+				break;
 
-				case DTK_HOUR:
-					intresult = tm->tm_hour;
-					break;
+			case DTK_HOUR:
+				intresult = tm->tm_hour;
+				break;
 
-				case DTK_DAY:
-					intresult = tm->tm_mday;
-					break;
+			case DTK_DAY:
+				intresult = tm->tm_mday;
+				break;
 
-				case DTK_MONTH:
-					intresult = tm->tm_mon;
-					break;
+			case DTK_MONTH:
+				intresult = tm->tm_mon;
+				break;
 
-				case DTK_QUARTER:
-					intresult = (tm->tm_mon / 3) + 1;
-					break;
+			case DTK_QUARTER:
+				intresult = (tm->tm_mon / 3) + 1;
+				break;
 
-				case DTK_YEAR:
-					intresult = tm->tm_year;
-					break;
+			case DTK_YEAR:
+				intresult = tm->tm_year;
+				break;
 
-				case DTK_DECADE:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 10;
-					break;
+			case DTK_DECADE:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 10;
+				break;
 
-				case DTK_CENTURY:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 100;
-					break;
+			case DTK_CENTURY:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 100;
+				break;
 
-				case DTK_MILLENNIUM:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 1000;
-					break;
+			case DTK_MILLENNIUM:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 1000;
+				break;
 
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("unit \"%s\" not supported for type %s",
-									lowunits, format_type_be(INTERVALOID))));
-					intresult = 0;
-			}
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(INTERVALOID))));
+				intresult = 0;
+		}
 	}
 	else if (type == RESERV && val == DTK_EPOCH)
 	{

@@ -44,9 +44,9 @@ typedef struct JsonUniqueHashEntry
 /* Context for key uniqueness check in builder functions */
 typedef struct JsonUniqueBuilderState
 {
-	JsonUniqueCheckState check;	/* unique check */
+	JsonUniqueCheckState check; /* unique check */
 	StringInfoData skipped_keys;	/* skipped keys with NULL values */
-	MemoryContext mcxt;				/* context for saving skipped keys */
+	MemoryContext mcxt;			/* context for saving skipped keys */
 } JsonUniqueBuilderState;
 
 /* Element of object stack for key uniqueness check during json parsing */
@@ -774,10 +774,10 @@ to_json_is_immutable(Oid typoid)
 			return false;
 
 		case JSONTYPE_ARRAY:
-			return false;	/* TODO recurse into elements */
+			return false;		/* TODO recurse into elements */
 
 		case JSONTYPE_COMPOSITE:
-			return false;	/* TODO recurse into fields */
+			return false;		/* TODO recurse into fields */
 
 		case JSONTYPE_NUMERIC:
 		case JSONTYPE_CAST:
@@ -938,7 +938,7 @@ static uint32
 json_unique_hash(const void *key, Size keysize)
 {
 	const JsonUniqueHashEntry *entry = (JsonUniqueHashEntry *) key;
-	uint32		hash =  hash_bytes_uint32(entry->object_id);
+	uint32		hash = hash_bytes_uint32(entry->object_id);
 
 	hash ^= hash_bytes((const unsigned char *) entry->key, entry->key_len);
 
@@ -1011,6 +1011,7 @@ json_unique_builder_get_skipped_keys(JsonUniqueBuilderState *cxt)
 	if (!out->data)
 	{
 		MemoryContext oldcxt = MemoryContextSwitchTo(cxt->mcxt);
+
 		initStringInfo(out);
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -1116,8 +1117,8 @@ json_object_agg_transfn_worker(FunctionCallInfo fcinfo,
 		out = state->str;
 
 		/*
-		 * Append comma delimiter only if we have already outputted some fields
-		 * after the initial string "{ ".
+		 * Append comma delimiter only if we have already outputted some
+		 * fields after the initial string "{ ".
 		 */
 		if (out->len > 2)
 			appendStringInfoString(out, ", ");
@@ -1285,7 +1286,7 @@ json_build_object_worker(int nargs, Datum *args, bool *nulls, Oid *types,
 		if (nulls[i])
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("argument %d cannot be null",  i + 1),
+					 errmsg("argument %d cannot be null", i + 1),
 					 errhint("Object keys should be text.")));
 
 		/* save key offset before key appending */
@@ -1327,6 +1328,7 @@ json_build_object(PG_FUNCTION_ARGS)
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
+
 	/* build argument values to build the object */
 	int			nargs = extract_variadic_args(fcinfo, 0, true,
 											  &args, &types, &nulls);
@@ -1382,6 +1384,7 @@ json_build_array(PG_FUNCTION_ARGS)
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
+
 	/* build argument values to build the object */
 	int			nargs = extract_variadic_args(fcinfo, 0, true,
 											  &args, &types, &nulls);
@@ -1706,7 +1709,7 @@ json_validate(text *json, bool check_unique_keys, bool throw_error)
 		if (throw_error)
 			json_ereport_error(result, lex);
 
-		return false;	/* invalid json */
+		return false;			/* invalid json */
 	}
 
 	if (check_unique_keys && !state.unique)
@@ -1716,10 +1719,10 @@ json_validate(text *json, bool check_unique_keys, bool throw_error)
 					(errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
 					 errmsg("duplicate JSON object key value")));
 
-		return false;	/* not unique keys */
+		return false;			/* not unique keys */
 	}
 
-	return true;	/* ok */
+	return true;				/* ok */
 }
 
 /*

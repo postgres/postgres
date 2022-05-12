@@ -1409,7 +1409,7 @@ vac_update_relstats(Relation relation,
 		*frozenxid_updated = false;
 	if (TransactionIdIsNormal(frozenxid) && oldfrozenxid != frozenxid)
 	{
-		bool	update = false;
+		bool		update = false;
 
 		if (TransactionIdPrecedes(oldfrozenxid, frozenxid))
 			update = true;
@@ -1432,7 +1432,7 @@ vac_update_relstats(Relation relation,
 		*minmulti_updated = false;
 	if (MultiXactIdIsValid(minmulti) && oldminmulti != minmulti)
 	{
-		bool	update = false;
+		bool		update = false;
 
 		if (MultiXactIdPrecedes(oldminmulti, minmulti))
 			update = true;

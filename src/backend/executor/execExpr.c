@@ -2504,7 +2504,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					if (ctor->type == JSCTOR_JSON_SCALAR)
 					{
 						bool		is_jsonb =
-							ctor->returning->format->format_type == JS_FORMAT_JSONB;
+						ctor->returning->format->format_type == JS_FORMAT_JSONB;
 
 						scratch.d.json_constructor.arg_type_cache =
 							palloc(sizeof(*scratch.d.json_constructor.arg_type_cache) * nargs);
@@ -2666,7 +2666,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					{
 						cstate->coercion = *coercion;
 						cstate->estate = *coercion ?
-							ExecInitExprWithCaseValue((Expr *)(*coercion)->expr,
+							ExecInitExprWithCaseValue((Expr *) (*coercion)->expr,
 													  state->parent,
 													  caseval, casenull) : NULL;
 					}

@@ -429,6 +429,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 		iculocale = NULL;
 
 	default_locale.provider = dbform->datlocprovider;
+
 	/*
 	 * Default locale is currently always deterministic.  Nondeterministic
 	 * locales currently don't support pattern matching, which would break a
@@ -604,8 +605,8 @@ BaseInit(void)
 	InitTemporaryFileAccess();
 
 	/*
-	 * Initialize local buffers for WAL record construction, in case we
-	 * ever try to insert XLOG.
+	 * Initialize local buffers for WAL record construction, in case we ever
+	 * try to insert XLOG.
 	 */
 	InitXLogInsert();
 
@@ -693,10 +694,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If this is either a bootstrap process or a standalone backend, start
-	 * up the XLOG machinery, and register to have it closed down at exit.
-	 * In other cases, the startup process is responsible for starting up
-	 * the XLOG machinery, and the checkpointer for closing it down.
+	 * If this is either a bootstrap process or a standalone backend, start up
+	 * the XLOG machinery, and register to have it closed down at exit. In
+	 * other cases, the startup process is responsible for starting up the
+	 * XLOG machinery, and the checkpointer for closing it down.
 	 */
 	if (!IsUnderPostmaster)
 	{
@@ -1241,7 +1242,8 @@ ShutdownPostgres(int code, Datum arg)
 	 */
 #ifdef USE_ASSERT_CHECKING
 	{
-		int held_lwlocks = LWLockHeldCount();
+		int			held_lwlocks = LWLockHeldCount();
+
 		if (held_lwlocks)
 			elog(WARNING, "holding %d lwlocks at the end of ShutdownPostgres()",
 				 held_lwlocks);

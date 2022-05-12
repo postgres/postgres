@@ -1959,7 +1959,8 @@ uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
 
 	if (hasNonUniq || skip_nulls)
 	{
-		JsonbPair  *ptr, *res;
+		JsonbPair  *ptr,
+				   *res;
 
 		while (skip_nulls && object->val.object.nPairs > 0 &&
 			   object->val.object.pairs->value.type == jbvNull)

@@ -1119,7 +1119,7 @@ StartPrepare(GlobalTransaction gxact)
 	if (hdr.nabortstats > 0)
 	{
 		save_state_data(abortstats,
-						hdr.nabortstats	* sizeof(xl_xact_stats_item));
+						hdr.nabortstats * sizeof(xl_xact_stats_item));
 		pfree(abortstats);
 	}
 	if (hdr.ninvalmsgs > 0)
@@ -1529,9 +1529,9 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	bufptr += MAXALIGN(hdr->ncommitrels * sizeof(RelFileNode));
 	abortrels = (RelFileNode *) bufptr;
 	bufptr += MAXALIGN(hdr->nabortrels * sizeof(RelFileNode));
-	commitstats = (xl_xact_stats_item*) bufptr;
+	commitstats = (xl_xact_stats_item *) bufptr;
 	bufptr += MAXALIGN(hdr->ncommitstats * sizeof(xl_xact_stats_item));
-	abortstats = (xl_xact_stats_item*) bufptr;
+	abortstats = (xl_xact_stats_item *) bufptr;
 	bufptr += MAXALIGN(hdr->nabortstats * sizeof(xl_xact_stats_item));
 	invalmsgs = (SharedInvalidationMessage *) bufptr;
 	bufptr += MAXALIGN(hdr->ninvalmsgs * sizeof(SharedInvalidationMessage));

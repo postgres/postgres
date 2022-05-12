@@ -374,7 +374,8 @@ sub replay_check
 	);
 	my $primary_lsn = $node_primary->lsn('write');
 	$node_primary->wait_for_catchup($node_standby_1, 'replay', $primary_lsn);
-	$node_standby_1->wait_for_catchup($node_standby_2, 'replay', $primary_lsn);
+	$node_standby_1->wait_for_catchup($node_standby_2, 'replay',
+		$primary_lsn);
 
 	$node_standby_1->safe_psql('postgres',
 		qq[SELECT 1 FROM replayed WHERE val = $newval])

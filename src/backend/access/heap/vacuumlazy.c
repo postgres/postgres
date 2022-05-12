@@ -326,7 +326,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	PGRUsage	ru0;
 	TimestampTz starttime = 0;
 	PgStat_Counter startreadtime = 0,
-				   startwritetime = 0;
+				startwritetime = 0;
 	WalUsage	startwalusage = pgWalUsage;
 	int64		StartPageHit = VacuumPageHit,
 				StartPageMiss = VacuumPageMiss,
@@ -2232,12 +2232,12 @@ lazy_vacuum(LVRelState *vacrel)
 		 * dead_items space is not CPU cache resident.
 		 *
 		 * We don't take any special steps to remember the LP_DEAD items (such
-		 * as counting them in our final update to the stats system) when
-		 * the optimization is applied.  Though the accounting used in
-		 * analyze.c's acquire_sample_rows() will recognize the same LP_DEAD
-		 * items as dead rows in its own stats report, that's okay.
-		 * The discrepancy should be negligible.  If this optimization is ever
-		 * expanded to cover more cases then this may need to be reconsidered.
+		 * as counting them in our final update to the stats system) when the
+		 * optimization is applied.  Though the accounting used in analyze.c's
+		 * acquire_sample_rows() will recognize the same LP_DEAD items as dead
+		 * rows in its own stats report, that's okay. The discrepancy should
+		 * be negligible.  If this optimization is ever expanded to cover more
+		 * cases then this may need to be reconsidered.
 		 */
 		threshold = (double) vacrel->rel_pages * BYPASS_THRESHOLD_PAGES;
 		bypass = (vacrel->lpdead_item_pages < threshold &&

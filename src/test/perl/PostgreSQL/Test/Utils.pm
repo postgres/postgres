@@ -142,14 +142,15 @@ BEGIN
 	# Must be set early
 	$windows_os = $Config{osname} eq 'MSWin32' || $Config{osname} eq 'msys';
 	# Check if this environment is MSYS2.
-	$is_msys2 = $windows_os && -x '/usr/bin/uname'  &&
-	  `uname -or` =~ /^[2-9].*Msys/;
+	$is_msys2 =
+	     $windows_os
+	  && -x '/usr/bin/uname'
+	  && `uname -or` =~ /^[2-9].*Msys/;
 
 	if ($windows_os)
 	{
 		require Win32API::File;
-		Win32API::File->import(
-			qw(createFile OsFHandleOpen CloseHandle));
+		Win32API::File->import(qw(createFile OsFHandleOpen CloseHandle));
 	}
 
 	# Specifies whether to use Unix sockets for test setups.  On
@@ -428,12 +429,16 @@ sub pump_until
 		last if $$stream =~ /$until/;
 		if ($timeout->is_expired)
 		{
-			diag("pump_until: timeout expired when searching for \"$until\" with stream: \"$$stream\"");
+			diag(
+				"pump_until: timeout expired when searching for \"$until\" with stream: \"$$stream\""
+			);
 			return 0;
 		}
 		if (not $proc->pumpable())
 		{
-			diag("pump_until: process terminated unexpectedly when searching for \"$until\" with stream: \"$$stream\"");
+			diag(
+				"pump_until: process terminated unexpectedly when searching for \"$until\" with stream: \"$$stream\""
+			);
 			return 0;
 		}
 		$proc->pump();

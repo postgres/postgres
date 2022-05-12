@@ -898,7 +898,7 @@ static const KeyWord DCH_keywords[] = {
 	{"month", 5, DCH_month, false, FROM_CHAR_DATE_GREGORIAN},
 	{"mon", 3, DCH_mon, false, FROM_CHAR_DATE_GREGORIAN},
 	{"ms", 2, DCH_MS, true, FROM_CHAR_DATE_NONE},
-	{"of", 2, DCH_OF, false, FROM_CHAR_DATE_NONE},  /* o */
+	{"of", 2, DCH_OF, false, FROM_CHAR_DATE_NONE},	/* o */
 	{"p.m.", 4, DCH_p_m, false, FROM_CHAR_DATE_NONE},	/* p */
 	{"pm", 2, DCH_pm, false, FROM_CHAR_DATE_NONE},
 	{"q", 1, DCH_Q, true, FROM_CHAR_DATE_NONE}, /* q */
@@ -906,7 +906,7 @@ static const KeyWord DCH_keywords[] = {
 	{"sssss", 5, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* s */
 	{"ssss", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},
 	{"ss", 2, DCH_SS, true, FROM_CHAR_DATE_NONE},
-	{"tzh", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},    /* t */
+	{"tzh", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},	/* t */
 	{"tzm", 3, DCH_TZM, true, FROM_CHAR_DATE_NONE},
 	{"tz", 2, DCH_tz, false, FROM_CHAR_DATE_NONE},
 	{"us", 2, DCH_US, true, FROM_CHAR_DATE_NONE},	/* u */
@@ -1675,8 +1675,8 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -1797,8 +1797,8 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -1920,8 +1920,8 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),

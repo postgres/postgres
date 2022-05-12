@@ -273,7 +273,8 @@ $sect = "post immediate restart";
 my $wal_restart_immediate = wal_stats();
 
 cmp_ok(
-	$wal_reset_restart->{reset}, 'lt',
+	$wal_reset_restart->{reset},
+	'lt',
 	$wal_restart_immediate->{reset},
 	"$sect: reset timestamp is new");
 

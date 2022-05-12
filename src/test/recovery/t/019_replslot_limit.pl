@@ -347,16 +347,18 @@ while (1)
 	my ($stdout, $stderr);
 
 	$senderpid = $node_primary3->safe_psql('postgres',
-	    "SELECT pid FROM pg_stat_activity WHERE backend_type = 'walsender'");
+		"SELECT pid FROM pg_stat_activity WHERE backend_type = 'walsender'");
 
 	last if $senderpid =~ qr/^[0-9]+$/;
 
 	diag "multiple walsenders active in iteration $i";
 
 	# show information about all active connections
-	$node_primary3->psql('postgres',
-						 "\\a\\t\nSELECT * FROM pg_stat_activity",
-						 stdout => \$stdout, stderr => \$stderr);
+	$node_primary3->psql(
+		'postgres',
+		"\\a\\t\nSELECT * FROM pg_stat_activity",
+		stdout => \$stdout,
+		stderr => \$stderr);
 	diag $stdout, $stderr;
 
 	# unlikely that the problem would resolve after 15s, so give up at point

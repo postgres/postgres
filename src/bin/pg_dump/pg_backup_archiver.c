@@ -2580,12 +2580,12 @@ ReadToc(ArchiveHandle *AH)
 			is_supported = false;
 		else
 		{
-				tmp = ReadStr(AH);
+			tmp = ReadStr(AH);
 
-				if (strcmp(tmp, "true") == 0)
-					is_supported = false;
+			if (strcmp(tmp, "true") == 0)
+				is_supported = false;
 
-				free(tmp);
+			free(tmp);
 		}
 
 		if (!is_supported)

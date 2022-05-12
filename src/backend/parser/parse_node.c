@@ -382,55 +382,56 @@ make_const(ParseState *pstate, A_Const *aconst)
 			break;
 
 		case T_Float:
-		{
-			/* could be an oversize integer as well as a float ... */
-
-			int64		val64;
-			char	   *endptr;
-
-			errno = 0;
-			val64 = strtoi64(aconst->val.fval.fval, &endptr, 10);
-			if (errno == 0 && *endptr == '\0')
 			{
-				/*
-				 * It might actually fit in int32. Probably only INT_MIN can
-				 * occur, but we'll code the test generally just to be sure.
-				 */
-				int32		val32 = (int32) val64;
+				/* could be an oversize integer as well as a float ... */
 
-				if (val64 == (int64) val32)
+				int64		val64;
+				char	   *endptr;
+
+				errno = 0;
+				val64 = strtoi64(aconst->val.fval.fval, &endptr, 10);
+				if (errno == 0 && *endptr == '\0')
 				{
-					val = Int32GetDatum(val32);
+					/*
+					 * It might actually fit in int32. Probably only INT_MIN
+					 * can occur, but we'll code the test generally just to be
+					 * sure.
+					 */
+					int32		val32 = (int32) val64;
 
-					typeid = INT4OID;
-					typelen = sizeof(int32);
-					typebyval = true;
+					if (val64 == (int64) val32)
+					{
+						val = Int32GetDatum(val32);
+
+						typeid = INT4OID;
+						typelen = sizeof(int32);
+						typebyval = true;
+					}
+					else
+					{
+						val = Int64GetDatum(val64);
+
+						typeid = INT8OID;
+						typelen = sizeof(int64);
+						typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
+					}
 				}
 				else
 				{
-					val = Int64GetDatum(val64);
+					/* arrange to report location if numeric_in() fails */
+					setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
+					val = DirectFunctionCall3(numeric_in,
+											  CStringGetDatum(aconst->val.fval.fval),
+											  ObjectIdGetDatum(InvalidOid),
+											  Int32GetDatum(-1));
+					cancel_parser_errposition_callback(&pcbstate);
 
-					typeid = INT8OID;
-					typelen = sizeof(int64);
-					typebyval = FLOAT8PASSBYVAL;	/* int8 and float8 alike */
+					typeid = NUMERICOID;
+					typelen = -1;	/* variable len */
+					typebyval = false;
 				}
+				break;
 			}
-			else
-			{
-				/* arrange to report location if numeric_in() fails */
-				setup_parser_errposition_callback(&pcbstate, pstate, aconst->location);
-				val = DirectFunctionCall3(numeric_in,
-										  CStringGetDatum(aconst->val.fval.fval),
-										  ObjectIdGetDatum(InvalidOid),
-										  Int32GetDatum(-1));
-				cancel_parser_errposition_callback(&pcbstate);
-
-				typeid = NUMERICOID;
-				typelen = -1;	/* variable len */
-				typebyval = false;
-			}
-			break;
-		}
 
 		case T_Boolean:
 			val = BoolGetDatum(boolVal(&aconst->val));

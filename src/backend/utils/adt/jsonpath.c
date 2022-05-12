@@ -1094,7 +1094,7 @@ typedef struct JsonPathMutableContext
 {
 	List	   *varnames;		/* list of variable names */
 	List	   *varexprs;		/* list of variable expressions */
-	JsonPathDatatypeStatus current;	/* status of @ item */
+	JsonPathDatatypeStatus current; /* status of @ item */
 	bool		lax;			/* jsonpath is lax or strict */
 	bool		mutable;		/* resulting mutability status */
 } JsonPathMutableContext;
@@ -1282,18 +1282,18 @@ jspIsMutableWalker(JsonPathItem *jpi, JsonPathMutableContext *cxt)
 				jspIsMutableWalker(&arg, cxt);
 				break;
 
-			/* literals */
+				/* literals */
 			case jpiNull:
 			case jpiString:
 			case jpiNumeric:
 			case jpiBool:
-			/* accessors */
+				/* accessors */
 			case jpiKey:
 			case jpiAnyKey:
-			/* special items */
+				/* special items */
 			case jpiSubscript:
 			case jpiLast:
-			/* item methods */
+				/* item methods */
 			case jpiType:
 			case jpiSize:
 			case jpiAbs:

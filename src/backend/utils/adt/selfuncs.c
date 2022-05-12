@@ -3380,9 +3380,9 @@ estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
  */
 double
 estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
-					double input_rows,
-					List **pgset, EstimationInfo *estinfo,
-					List **cache_varinfos, int prevNExprs)
+								double input_rows,
+								List **pgset, EstimationInfo *estinfo,
+								List **cache_varinfos, int prevNExprs)
 {
 	List	   *varinfos = (cache_varinfos) ? *cache_varinfos : NIL;
 	double		srf_multiplier = 1.0;
@@ -3433,7 +3433,7 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 		if (cache_varinfos && j++ < prevNExprs)
 		{
 			if (pgset)
-				i++; /* to keep in sync with lines below */
+				i++;			/* to keep in sync with lines below */
 			continue;
 		}
 
@@ -3944,7 +3944,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	Oid			statOid = InvalidOid;
 	MVNDistinct *stats;
 	StatisticExtInfo *matched_info = NULL;
-	RangeTblEntry		*rte;
+	RangeTblEntry *rte;
 
 	/* bail out immediately if the table has no extended statistics */
 	if (!rel->statlist)
@@ -5255,7 +5255,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		foreach(slist, onerel->statlist)
 		{
 			StatisticExtInfo *info = (StatisticExtInfo *) lfirst(slist);
-			RangeTblEntry	 *rte = planner_rt_fetch(onerel->relid, root);
+			RangeTblEntry *rte = planner_rt_fetch(onerel->relid, root);
 			ListCell   *expr_item;
 			int			pos;
 

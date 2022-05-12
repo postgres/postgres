@@ -2802,8 +2802,7 @@ static bool
 _equalA_Const(const A_Const *a, const A_Const *b)
 {
 	/*
-	 * Hack for in-line val field.  Also val is not valid is isnull is
-	 * true.
+	 * Hack for in-line val field.  Also val is not valid is isnull is true.
 	 */
 	if (!a->isnull && !b->isnull &&
 		!equal(&a->val, &b->val))

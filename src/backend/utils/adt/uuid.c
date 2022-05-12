@@ -377,8 +377,8 @@ uuid_abbrev_convert(Datum original, SortSupport ssup)
 	 *
 	 * This is needed so that ssup_datum_unsigned_cmp() (an unsigned integer
 	 * 3-way comparator) works correctly on all platforms.  If we didn't do
-	 * this, the comparator would have to call memcmp() with a pair of pointers
-	 * to the first byte of each abbreviated key, which is slower.
+	 * this, the comparator would have to call memcmp() with a pair of
+	 * pointers to the first byte of each abbreviated key, which is slower.
 	 */
 	res = DatumBigEndianToNative(res);
 

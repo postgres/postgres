@@ -68,7 +68,7 @@ bbsink_gzip_new(bbsink *next, pg_compress_specification *compress)
 	return NULL;				/* keep compiler quiet */
 #else
 	bbsink_gzip *sink;
-	int		compresslevel;
+	int			compresslevel;
 
 	Assert(next != NULL);
 
@@ -118,8 +118,8 @@ static void
 bbsink_gzip_begin_archive(bbsink *sink, const char *archive_name)
 {
 	bbsink_gzip *mysink = (bbsink_gzip *) sink;
-	char *gz_archive_name;
-	z_stream *zs = &mysink->zstream;
+	char	   *gz_archive_name;
+	z_stream   *zs = &mysink->zstream;
 
 	/* Initialize compressor object. */
 	memset(zs, 0, sizeof(z_stream));
@@ -129,10 +129,10 @@ bbsink_gzip_begin_archive(bbsink *sink, const char *archive_name)
 	zs->avail_out = sink->bbs_next->bbs_buffer_length;
 
 	/*
-	 * We need to use deflateInit2() rather than deflateInit() here so that
-	 * we can request a gzip header rather than a zlib header. Otherwise, we
-	 * want to supply the same values that would have been used by default
-	 * if we had just called deflateInit().
+	 * We need to use deflateInit2() rather than deflateInit() here so that we
+	 * can request a gzip header rather than a zlib header. Otherwise, we want
+	 * to supply the same values that would have been used by default if we
+	 * had just called deflateInit().
 	 *
 	 * Per the documentation for deflateInit2, the third argument must be
 	 * Z_DEFLATED; the fourth argument is the number of "window bits", by
@@ -147,9 +147,8 @@ bbsink_gzip_begin_archive(bbsink *sink, const char *archive_name)
 				errmsg("could not initialize compression library"));
 
 	/*
-	 * Add ".gz" to the archive name. Note that the pg_basebackup -z
-	 * produces archives named ".tar.gz" rather than ".tgz", so we match
-	 * that here.
+	 * Add ".gz" to the archive name. Note that the pg_basebackup -z produces
+	 * archives named ".tar.gz" rather than ".tgz", so we match that here.
 	 */
 	gz_archive_name = psprintf("%s.gz", archive_name);
 	Assert(sink->bbs_next != NULL);
@@ -172,7 +171,7 @@ static void
 bbsink_gzip_archive_contents(bbsink *sink, size_t len)
 {
 	bbsink_gzip *mysink = (bbsink_gzip *) sink;
-	z_stream *zs = &mysink->zstream;
+	z_stream   *zs = &mysink->zstream;
 
 	/* Compress data from input buffer. */
 	zs->next_in = (uint8 *) mysink->base.bbs_buffer;
@@ -180,7 +179,7 @@ bbsink_gzip_archive_contents(bbsink *sink, size_t len)
 
 	while (zs->avail_in > 0)
 	{
-		int		res;
+		int			res;
 
 		/* Write output data into unused portion of output buffer. */
 		Assert(mysink->bytes_written < mysink->base.bbs_next->bbs_buffer_length);
@@ -230,7 +229,7 @@ static void
 bbsink_gzip_end_archive(bbsink *sink)
 {
 	bbsink_gzip *mysink = (bbsink_gzip *) sink;
-	z_stream *zs = &mysink->zstream;
+	z_stream   *zs = &mysink->zstream;
 
 	/* There is no more data available. */
 	zs->next_in = (uint8 *) mysink->base.bbs_buffer;
@@ -238,7 +237,7 @@ bbsink_gzip_end_archive(bbsink *sink)
 
 	while (1)
 	{
-		int		res;
+		int			res;
 
 		/* Write output data into unused portion of output buffer. */
 		Assert(mysink->bytes_written < mysink->base.bbs_next->bbs_buffer_length);
@@ -248,8 +247,8 @@ bbsink_gzip_end_archive(bbsink *sink)
 			mysink->base.bbs_next->bbs_buffer_length - mysink->bytes_written;
 
 		/*
-		 * As bbsink_gzip_archive_contents, but pass Z_FINISH since there
-		 * is no more input.
+		 * As bbsink_gzip_archive_contents, but pass Z_FINISH since there is
+		 * no more input.
 		 */
 		res = deflate(zs, Z_FINISH);
 		if (res == Z_STREAM_ERROR)
@@ -260,8 +259,8 @@ bbsink_gzip_end_archive(bbsink *sink)
 			mysink->base.bbs_next->bbs_buffer_length - zs->avail_out;
 
 		/*
-		 * Apparently we had no data in the output buffer and deflate()
-		 * was not able to add any. We must be done.
+		 * Apparently we had no data in the output buffer and deflate() was
+		 * not able to add any. We must be done.
 		 */
 		if (mysink->bytes_written == 0)
 			break;

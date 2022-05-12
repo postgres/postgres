@@ -1750,7 +1750,7 @@ typedef BOOL (WINAPI * __QueryInformationJobObject) (HANDLE, JOBOBJECTINFOCLASS,
  * achieves the goal of postmaster running in a similar environment as pg_ctl.
  */
 static void
-InheritStdHandles(STARTUPINFO* si)
+InheritStdHandles(STARTUPINFO *si)
 {
 	si->dwFlags |= STARTF_USESTDHANDLES;
 	si->hStdInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -1802,8 +1802,8 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 	si.cb = sizeof(si);
 
 	/*
-	 * Set stdin/stdout/stderr handles to be inherited in the child
-	 * process. That allows postmaster and the processes it starts to perform
+	 * Set stdin/stdout/stderr handles to be inherited in the child process.
+	 * That allows postmaster and the processes it starts to perform
 	 * additional checks to see if running in a service (otherwise they get
 	 * the default console handles - which point to "somewhere").
 	 */

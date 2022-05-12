@@ -32,8 +32,8 @@ extern ObjectAddress AlterPublicationOwner(const char *name, Oid newOwnerId);
 extern void AlterPublicationOwner_oid(Oid pubid, Oid newOwnerId);
 extern void InvalidatePublicationRels(List *relids);
 extern bool pub_rf_contains_invalid_column(Oid pubid, Relation relation,
-									 List *ancestors, bool pubviaroot);
+										   List *ancestors, bool pubviaroot);
 extern bool pub_collist_contains_invalid_column(Oid pubid, Relation relation,
-									 List *ancestors, bool pubviaroot);
+												List *ancestors, bool pubviaroot);
 
 #endif							/* PUBLICATIONCMDS_H */

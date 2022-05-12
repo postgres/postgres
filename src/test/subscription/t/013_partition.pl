@@ -413,7 +413,8 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab4 (a int PRIMARY KEY) PARTITION BY LIST (a)");
 $node_publisher->safe_psql('postgres',
-	"CREATE TABLE tab4_1 PARTITION OF tab4 FOR VALUES IN (0, 1) PARTITION BY LIST (a)");
+	"CREATE TABLE tab4_1 PARTITION OF tab4 FOR VALUES IN (0, 1) PARTITION BY LIST (a)"
+);
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab4_1_1 PARTITION OF tab4_1 FOR VALUES IN (0, 1)");
 
@@ -479,11 +480,9 @@ $node_subscriber2->safe_psql('postgres',
 # Note: We create two separate tables, not a partitioned one, so that we can
 # easily identity through which relation were the changes replicated.
 $node_subscriber2->safe_psql('postgres',
-	"CREATE TABLE tab4 (a int PRIMARY KEY)"
-);
+	"CREATE TABLE tab4 (a int PRIMARY KEY)");
 $node_subscriber2->safe_psql('postgres',
-	"CREATE TABLE tab4_1 (a int PRIMARY KEY)"
-);
+	"CREATE TABLE tab4_1 (a int PRIMARY KEY)");
 # Publication that sub2 points to now publishes via root, so must update
 # subscription target relations. We set the list of publications so that
 # the FOR ALL TABLES publication is second (the list order matters).
@@ -497,9 +496,8 @@ $node_subscriber2->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
 # check that data is synced correctly
-$result = $node_subscriber1->safe_psql('postgres',
-	"SELECT c, a FROM tab2");
-is( $result, qq(sub1_tab2|1), 'initial data synced for pub_viaroot');
+$result = $node_subscriber1->safe_psql('postgres', "SELECT c, a FROM tab2");
+is($result, qq(sub1_tab2|1), 'initial data synced for pub_viaroot');
 
 # insert
 $node_publisher->safe_psql('postgres', "INSERT INTO tab1 VALUES (1), (0)");
@@ -512,8 +510,7 @@ $node_publisher->safe_psql('postgres',
 
 # Insert a row into the leaf partition, should be replicated through the
 # partition root (thanks to the FOR ALL TABLES partition).
-$node_publisher->safe_psql('postgres',
-	"INSERT INTO tab4 VALUES (0)");
+$node_publisher->safe_psql('postgres', "INSERT INTO tab4 VALUES (0)");
 
 $node_publisher->wait_for_catchup('sub_viaroot');
 $node_publisher->wait_for_catchup('sub2');
@@ -555,13 +552,13 @@ sub2_tab3|5), 'inserts into tab3 replicated');
 
 # tab4 change should be replicated through the root partition, which
 # maps to the tab4 relation on subscriber.
-$result = $node_subscriber2->safe_psql('postgres',
-	"SELECT a FROM tab4 ORDER BY 1");
-is( $result, qq(0), 'inserts into tab4 replicated');
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4 ORDER BY 1");
+is($result, qq(0), 'inserts into tab4 replicated');
 
-$result = $node_subscriber2->safe_psql('postgres',
-	"SELECT a FROM tab4_1 ORDER BY 1");
-is( $result, qq(), 'inserts into tab4_1 replicated');
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4_1 ORDER BY 1");
+is($result, qq(), 'inserts into tab4_1 replicated');
 
 
 # now switch the order of publications in the list, try again, the result
@@ -576,21 +573,20 @@ $node_subscriber2->poll_query_until('postgres', $synced_query)
 
 # Insert a change into the leaf partition, should be replicated through
 # the partition root (thanks to the FOR ALL TABLES partition).
-$node_publisher->safe_psql('postgres',
-	"INSERT INTO tab4 VALUES (1)");
+$node_publisher->safe_psql('postgres', "INSERT INTO tab4 VALUES (1)");
 
 $node_publisher->wait_for_catchup('sub2');
 
 # tab4 change should be replicated through the root partition, which
 # maps to the tab4 relation on subscriber.
-$result = $node_subscriber2->safe_psql('postgres',
-	"SELECT a FROM tab4 ORDER BY 1");
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4 ORDER BY 1");
 is( $result, qq(0
 1), 'inserts into tab4 replicated');
 
-$result = $node_subscriber2->safe_psql('postgres',
-	"SELECT a FROM tab4_1 ORDER BY 1");
-is( $result, qq(), 'inserts into tab4_1 replicated');
+$result =
+  $node_subscriber2->safe_psql('postgres', "SELECT a FROM tab4_1 ORDER BY 1");
+is($result, qq(), 'inserts into tab4_1 replicated');
 
 
 # update (replicated as update)

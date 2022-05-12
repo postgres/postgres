@@ -1439,7 +1439,8 @@ multirange_agg_transfn(PG_FUNCTION_ARGS)
 		if (range_count == 0)
 		{
 			/*
-			 * Add an empty range so we get an empty result (not a null result).
+			 * Add an empty range so we get an empty result (not a null
+			 * result).
 			 */
 			accumArrayResult(state,
 							 RangeTypePGetDatum(make_empty_range(rngtypcache)),

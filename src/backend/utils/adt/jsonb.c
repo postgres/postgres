@@ -1148,10 +1148,10 @@ to_jsonb_is_immutable(Oid typoid)
 			return false;
 
 		case JSONBTYPE_ARRAY:
-			return false;	/* TODO recurse into elements */
+			return false;		/* TODO recurse into elements */
 
 		case JSONBTYPE_COMPOSITE:
-			return false;	/* TODO recurse into fields */
+			return false;		/* TODO recurse into fields */
 
 		case JSONBTYPE_NUMERIC:
 		case JSONBTYPE_JSONCAST:
@@ -1240,6 +1240,7 @@ jsonb_build_object(PG_FUNCTION_ARGS)
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
+
 	/* build argument values to build the object */
 	int			nargs = extract_variadic_args(fcinfo, 0, true,
 											  &args, &types, &nulls);
@@ -1299,6 +1300,7 @@ jsonb_build_array(PG_FUNCTION_ARGS)
 	Datum	   *args;
 	bool	   *nulls;
 	Oid		   *types;
+
 	/* build argument values to build the object */
 	int			nargs = extract_variadic_args(fcinfo, 0, true,
 											  &args, &types, &nulls);
@@ -2229,7 +2231,7 @@ jsonb_float8(PG_FUNCTION_ARGS)
 Jsonb *
 JsonbMakeEmptyArray(void)
 {
-	JsonbValue jbv;
+	JsonbValue	jbv;
 
 	jbv.type = jbvArray;
 	jbv.val.array.elems = NULL;
@@ -2245,7 +2247,7 @@ JsonbMakeEmptyArray(void)
 Jsonb *
 JsonbMakeEmptyObject(void)
 {
-	JsonbValue jbv;
+	JsonbValue	jbv;
 
 	jbv.type = jbvObject;
 	jbv.val.object.pairs = NULL;
@@ -2272,7 +2274,7 @@ JsonbUnquote(Jsonb *jb)
 			return pstrdup(v.val.boolean ? "true" : "false");
 		else if (v.type == jbvNumeric)
 			return DatumGetCString(DirectFunctionCall1(numeric_out,
-									   PointerGetDatum(v.val.numeric)));
+													   PointerGetDatum(v.val.numeric)));
 		else if (v.type == jbvNull)
 			return pstrdup("null");
 		else

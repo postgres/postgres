@@ -203,6 +203,7 @@ pq_verify_peer_name_matches_certificate_ip(PGconn *conn,
 				match = 1;
 		}
 	}
+
 	/*
 	 * If they don't have inet_pton(), skip this.  Then, an IPv6 address in a
 	 * certificate will cause an error.

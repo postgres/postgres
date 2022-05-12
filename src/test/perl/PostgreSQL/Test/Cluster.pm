@@ -135,8 +135,8 @@ INIT
 		$test_pghost = PostgreSQL::Test::Utils::tempdir_short;
 		$test_pghost =~ s!\\!/!g if $PostgreSQL::Test::Utils::windows_os;
 	}
-	$ENV{PGHOST}        = $test_pghost;
-	$ENV{PGDATABASE}    = 'postgres';
+	$ENV{PGHOST}     = $test_pghost;
+	$ENV{PGDATABASE} = 'postgres';
 
 	# Tracking of last port value assigned to accelerate free port lookup.
 	$last_port_assigned = int(rand() * 16384) + 49152;
@@ -409,8 +409,10 @@ sub set_replication_conf
 	  or croak "set_replication_conf only works with the default host";
 
 	open my $hba, '>>', "$pgdata/pg_hba.conf";
-	print $hba "\n# Allow replication (set up by PostgreSQL::Test::Cluster.pm)\n";
-	if ($PostgreSQL::Test::Utils::windows_os && !$PostgreSQL::Test::Utils::use_unix_sockets)
+	print $hba
+	  "\n# Allow replication (set up by PostgreSQL::Test::Cluster.pm)\n";
+	if ($PostgreSQL::Test::Utils::windows_os
+		&& !$PostgreSQL::Test::Utils::use_unix_sockets)
 	{
 		print $hba
 		  "host replication all $test_localhost/32 sspi include_realm=1 map=regress\n";
@@ -459,10 +461,10 @@ sub init
 	mkdir $self->backup_dir;
 	mkdir $self->archive_dir;
 
-	PostgreSQL::Test::Utils::system_or_bail('initdb', '-D', $pgdata, '-A', 'trust', '-N',
-		@{ $params{extra} });
-	PostgreSQL::Test::Utils::system_or_bail($ENV{PG_REGRESS}, '--config-auth', $pgdata,
-		@{ $params{auth_extra} });
+	PostgreSQL::Test::Utils::system_or_bail('initdb', '-D', $pgdata, '-A',
+		'trust', '-N', @{ $params{extra} });
+	PostgreSQL::Test::Utils::system_or_bail($ENV{PG_REGRESS},
+		'--config-auth', $pgdata, @{ $params{auth_extra} });
 
 	open my $conf, '>>', "$pgdata/postgresql.conf";
 	print $conf "\n# Added by PostgreSQL::Test::Cluster.pm\n";
@@ -575,7 +577,7 @@ sub adjust_conf
 	my $conffile = $self->data_dir . '/' . $filename;
 
 	my $contents = PostgreSQL::Test::Utils::slurp_file($conffile);
-	my @lines    = split(/\n/, $contents);
+	my @lines = split(/\n/, $contents);
 	my @result;
 	my $eq = $skip_equals ? '' : '= ';
 	foreach my $line (@lines)
@@ -809,8 +811,10 @@ sub start
 	# sub init) so that it does not get copied to standbys.
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	$ret = PostgreSQL::Test::Utils::system_log('pg_ctl', '-w', '-D', $self->data_dir, '-l',
-		$self->logfile, '-o', "--cluster-name=$name", 'start');
+	$ret = PostgreSQL::Test::Utils::system_log(
+		'pg_ctl', '-w',           '-D', $self->data_dir,
+		'-l',     $self->logfile, '-o', "--cluster-name=$name",
+		'start');
 
 	if ($ret != 0)
 	{
@@ -919,7 +923,8 @@ sub reload
 	local %ENV = $self->_get_env();
 
 	print "### Reloading node \"$name\"\n";
-	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, 'reload');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata,
+		'reload');
 	return;
 }
 
@@ -945,8 +950,8 @@ sub restart
 
 	# -w is now the default but having it here does no harm and helps
 	# compatibility with older versions.
-	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-w', '-D', $pgdata, '-l', $logfile,
-		'restart');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-w', '-D', $pgdata,
+		'-l', $logfile, 'restart');
 
 	$self->_update_pid(1);
 	return;
@@ -971,8 +976,8 @@ sub promote
 	local %ENV = $self->_get_env();
 
 	print "### Promoting node \"$name\"\n";
-	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
-		'promote');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l',
+		$logfile, 'promote');
 	return;
 }
 
@@ -995,8 +1000,8 @@ sub logrotate
 	local %ENV = $self->_get_env();
 
 	print "### Rotating log in node \"$name\"\n";
-	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l', $logfile,
-		'logrotate');
+	PostgreSQL::Test::Utils::system_or_bail('pg_ctl', '-D', $pgdata, '-l',
+		$logfile, 'logrotate');
 	return;
 }
 
@@ -1232,13 +1237,16 @@ sub new
 	my $testname = basename($0);
 	$testname =~ s/\.[^.]+$//;
 	my $node = {
-		_port    => $port,
-		_host    => $host,
-		_basedir => "$PostgreSQL::Test::Utils::tmp_check/t_${testname}_${name}_data",
-		_name    => $name,
+		_port => $port,
+		_host => $host,
+		_basedir =>
+		  "$PostgreSQL::Test::Utils::tmp_check/t_${testname}_${name}_data",
+		_name               => $name,
 		_logfile_generation => 0,
-		_logfile_base       => "$PostgreSQL::Test::Utils::log_path/${testname}_${name}",
-		_logfile            => "$PostgreSQL::Test::Utils::log_path/${testname}_${name}.log"
+		_logfile_base =>
+		  "$PostgreSQL::Test::Utils::log_path/${testname}_${name}",
+		_logfile =>
+		  "$PostgreSQL::Test::Utils::log_path/${testname}_${name}.log"
 	};
 
 	if ($params{install_path})
@@ -1261,8 +1269,8 @@ sub new
 	# isn't fully compatible. Warn if the version is too old and thus we don't
 	# have a subclass of this class.
 	if (ref $ver && $ver < $min_compat)
-    {
-		my $maj      = $ver->major(separator => '_');
+	{
+		my $maj = $ver->major(separator => '_');
 		my $subclass = $class . "::V_$maj";
 		if ($subclass->isa($class))
 		{
@@ -1270,9 +1278,10 @@ sub new
 		}
 		else
 		{
-			carp "PostgreSQL::Test::Cluster isn't fully compatible with version $ver";
+			carp
+			  "PostgreSQL::Test::Cluster isn't fully compatible with version $ver";
 		}
-    }
+	}
 
 	# Add node to list of nodes
 	push(@all_nodes, $node);
@@ -1528,7 +1537,8 @@ END
 		next if defined $ENV{'PG_TEST_NOCLEAN'};
 
 		# clean basedir on clean test invocation
-		$node->clean_node if $exit_code == 0 && PostgreSQL::Test::Utils::all_tests_passing();
+		$node->clean_node
+		  if $exit_code == 0 && PostgreSQL::Test::Utils::all_tests_passing();
 	}
 
 	$? = $exit_code;
@@ -2178,7 +2188,8 @@ sub connect_ok
 
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
+		my $log_contents =
+		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2248,7 +2259,8 @@ sub connect_fails
 
 	if (@log_like or @log_unlike)
 	{
-		my $log_contents = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
+		my $log_contents =
+		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 
 		while (my $regex = shift @log_like)
 		{
@@ -2444,7 +2456,8 @@ sub issues_sql_like
 
 	my $result = PostgreSQL::Test::Utils::run_log($cmd);
 	ok($result, "@$cmd exit code 0");
-	my $log = PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
+	my $log =
+	  PostgreSQL::Test::Utils::slurp_file($self->logfile, $log_location);
 	like($log, $expected_sql, "$test_name: SQL found in server log");
 	return;
 }
@@ -2550,7 +2563,8 @@ sub wait_for_catchup
 	  unless exists($valid_modes{$mode});
 
 	# Allow passing of a PostgreSQL::Test::Cluster instance as shorthand
-	if (blessed($standby_name) && $standby_name->isa("PostgreSQL::Test::Cluster"))
+	if (blessed($standby_name)
+		&& $standby_name->isa("PostgreSQL::Test::Cluster"))
 	{
 		$standby_name = $standby_name->name;
 	}
@@ -2566,8 +2580,7 @@ sub wait_for_catchup
 	  . $self->name . "\n";
 	# Before release 12 walreceiver just set the application name to
 	# "walreceiver"
-	my $query =
-	  qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming'
+	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming'
          FROM pg_catalog.pg_stat_replication
          WHERE application_name IN ('$standby_name', 'walreceiver')];
 	$self->poll_query_until('postgres', $query)
@@ -2641,9 +2654,10 @@ sub wait_for_log
 
 	while ($attempts < $max_attempts)
 	{
-		my $log = PostgreSQL::Test::Utils::slurp_file($self->logfile, $offset);
+		my $log =
+		  PostgreSQL::Test::Utils::slurp_file($self->logfile, $offset);
 
-		return $offset+length($log) if ($log =~ m/$regexp/);
+		return $offset + length($log) if ($log =~ m/$regexp/);
 
 		# Wait 0.1 second before retrying.
 		usleep(100_000);
@@ -2858,7 +2872,8 @@ sub corrupt_page_checksum
 
 ##########################################################################
 
-package PostgreSQL::Test::Cluster::V_11; ## no critic (ProhibitMultiplePackages)
+package PostgreSQL::Test::Cluster::V_11
+  ;    ## no critic (ProhibitMultiplePackages)
 
 # parent.pm is not present in all perl versions before 5.10.1, so instead
 # do directly what it would do for this:
@@ -2874,21 +2889,22 @@ sub _recovery_file { return "recovery.conf"; }
 
 sub set_standby_mode
 {
-    my $self = shift;
-    $self->append_conf("recovery.conf", "standby_mode = on\n");
+	my $self = shift;
+	$self->append_conf("recovery.conf", "standby_mode = on\n");
 }
 
 sub init
 {
-    my ($self, %params) = @_;
-    $self->SUPER::init(%params);
-    $self->adjust_conf('postgresql.conf', 'max_wal_senders',
-                      $params{allows_streaming} ? 5 : 0);
+	my ($self, %params) = @_;
+	$self->SUPER::init(%params);
+	$self->adjust_conf('postgresql.conf', 'max_wal_senders',
+		$params{allows_streaming} ? 5 : 0);
 }
 
 ##########################################################################
 
-package PostgreSQL::Test::Cluster::V_10; ## no critic (ProhibitMultiplePackages)
+package PostgreSQL::Test::Cluster::V_10
+  ;    ## no critic (ProhibitMultiplePackages)
 
 # use parent -norequire, qw(PostgreSQL::Test::Cluster::V_11);
 push @PostgreSQL::Test::Cluster::V_10::ISA, 'PostgreSQL::Test::Cluster::V_11';

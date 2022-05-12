@@ -814,7 +814,7 @@ Catalog::RenameTempFile($schemafile,       $tmpext);
 Catalog::RenameTempFile($fk_info_file,     $tmpext);
 Catalog::RenameTempFile($constraints_file, $tmpext);
 
-exit ($num_errors != 0 ? 1 : 0);
+exit($num_errors != 0 ? 1 : 0);
 
 #################### Subroutines ########################
 
@@ -916,11 +916,11 @@ sub morph_row_for_pgattr
 	# Copy the type data from pg_type, and add some type-dependent items
 	my $type = $types{$atttype};
 
-	$row->{atttypid}       = $type->{oid};
-	$row->{attlen}         = $type->{typlen};
-	$row->{attbyval}       = $type->{typbyval};
-	$row->{attalign}       = $type->{typalign};
-	$row->{attstorage}     = $type->{typstorage};
+	$row->{atttypid}   = $type->{oid};
+	$row->{attlen}     = $type->{typlen};
+	$row->{attbyval}   = $type->{typbyval};
+	$row->{attalign}   = $type->{typalign};
+	$row->{attstorage} = $type->{typstorage};
 
 	# set attndims if it's an array type
 	$row->{attndims} = $type->{typcategory} eq 'A' ? '1' : '0';

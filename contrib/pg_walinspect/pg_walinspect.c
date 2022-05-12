@@ -47,7 +47,7 @@ static XLogRecPtr ValidateInputLSNs(bool till_end_of_wal,
 									XLogRecPtr start_lsn, XLogRecPtr end_lsn);
 static void GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 							  XLogRecPtr end_lsn);
-static void GetXLogSummaryStats(XLogStats * stats, ReturnSetInfo *rsinfo,
+static void GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 								Datum *values, bool *nulls, uint32 ncols,
 								bool stats_per_record);
 static void FillXLogStatsRow(const char *name, uint64 n, uint64 total_count,
@@ -102,7 +102,7 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 						LSN_FORMAT_ARGS(lsn))));
 
 	private_data = (ReadLocalXLogPageNoWaitPrivate *)
-						palloc0(sizeof(ReadLocalXLogPageNoWaitPrivate));
+		palloc0(sizeof(ReadLocalXLogPageNoWaitPrivate));
 
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page_no_wait,
@@ -143,7 +143,7 @@ static XLogRecord *
 ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
 {
 	XLogRecord *record;
-	char	*errormsg;
+	char	   *errormsg;
 
 	record = XLogReadRecord(xlogreader, &errormsg);
 
@@ -153,7 +153,7 @@ ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
 
 		/* return NULL, if end of WAL is reached */
 		private_data = (ReadLocalXLogPageNoWaitPrivate *)
-							xlogreader->private_data;
+			xlogreader->private_data;
 
 		if (private_data->end_of_wal)
 			return NULL;
@@ -181,12 +181,12 @@ GetWALRecordInfo(XLogReaderState *record, XLogRecPtr lsn,
 				 Datum *values, bool *nulls, uint32 ncols)
 {
 	const char *id;
-	RmgrData desc;
-	uint32	fpi_len = 0;
+	RmgrData	desc;
+	uint32		fpi_len = 0;
 	StringInfoData rec_desc;
 	StringInfoData rec_blk_ref;
-	uint32	main_data_len;
-	int	i = 0;
+	uint32		main_data_len;
+	int			i = 0;
 
 	desc = GetRmgr(XLogRecGetRmid(record));
 	id = desc.rm_identify(XLogRecGetInfo(record));
@@ -228,9 +228,9 @@ Datum
 pg_get_wal_record_info(PG_FUNCTION_ARGS)
 {
 #define PG_GET_WAL_RECORD_INFO_COLS 11
-	Datum	result;
-	Datum	values[PG_GET_WAL_RECORD_INFO_COLS];
-	bool	nulls[PG_GET_WAL_RECORD_INFO_COLS];
+	Datum		result;
+	Datum		values[PG_GET_WAL_RECORD_INFO_COLS];
+	bool		nulls[PG_GET_WAL_RECORD_INFO_COLS];
 	XLogRecPtr	lsn;
 	XLogRecPtr	curr_lsn;
 	XLogRecPtr	first_record;
@@ -334,8 +334,8 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum	values[PG_GET_WAL_RECORDS_INFO_COLS];
-	bool	nulls[PG_GET_WAL_RECORDS_INFO_COLS];
+	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS];
+	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS];
 
 	SetSingleFuncCall(fcinfo, 0);
 
@@ -418,11 +418,11 @@ FillXLogStatsRow(const char *name,
 				 uint64 tot_len, uint64 total_len,
 				 Datum *values, bool *nulls, uint32 ncols)
 {
-	double	n_pct,
-			rec_len_pct,
-			fpi_len_pct,
-			tot_len_pct;
-	int	i = 0;
+	double		n_pct,
+				rec_len_pct,
+				fpi_len_pct,
+				tot_len_pct;
+	int			i = 0;
 
 	n_pct = 0;
 	if (total_count != 0)
@@ -461,11 +461,11 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 					Datum *values, bool *nulls, uint32 ncols,
 					bool stats_per_record)
 {
-	uint64	total_count = 0;
-	uint64	total_rec_len = 0;
-	uint64	total_fpi_len = 0;
-	uint64	total_len = 0;
-	int	ri;
+	uint64		total_count = 0;
+	uint64		total_rec_len = 0;
+	uint64		total_fpi_len = 0;
+	uint64		total_len = 0;
+	int			ri;
 
 	/*
 	 * Each row shows its percentages of the total, so make a first pass to
@@ -488,7 +488,7 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 		uint64		rec_len;
 		uint64		fpi_len;
 		uint64		tot_len;
-		RmgrData 	desc;
+		RmgrData	desc;
 
 		if (!RmgrIdIsValid(ri))
 			continue;
@@ -500,7 +500,7 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 
 		if (stats_per_record)
 		{
-			int rj;
+			int			rj;
 
 			for (rj = 0; rj < MAX_XLINFO_TYPES; rj++)
 			{
@@ -556,10 +556,10 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 #define PG_GET_WAL_STATS_COLS 9
 	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
-	XLogStats stats;
+	XLogStats	stats;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum	values[PG_GET_WAL_STATS_COLS];
-	bool	nulls[PG_GET_WAL_STATS_COLS];
+	Datum		values[PG_GET_WAL_STATS_COLS];
+	bool		nulls[PG_GET_WAL_STATS_COLS];
 
 	SetSingleFuncCall(fcinfo, 0);
 
@@ -599,7 +599,7 @@ pg_get_wal_stats(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn;
-	bool	stats_per_record;
+	bool		stats_per_record;
 
 	start_lsn = PG_GETARG_LSN(0);
 	end_lsn = PG_GETARG_LSN(1);
@@ -623,7 +623,7 @@ pg_get_wal_stats_till_end_of_wal(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn = InvalidXLogRecPtr;
-	bool	stats_per_record;
+	bool		stats_per_record;
 
 	start_lsn = PG_GETARG_LSN(0);
 	stats_per_record = PG_GETARG_BOOL(1);

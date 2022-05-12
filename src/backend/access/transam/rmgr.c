@@ -38,7 +38,7 @@
 #define PG_RMGR(symname,name,redo,desc,identify,startup,cleanup,mask,decode) \
 	{ name, redo, desc, identify, startup, cleanup, mask, decode },
 
-RmgrData RmgrTable[RM_MAX_ID + 1] = {
+RmgrData	RmgrTable[RM_MAX_ID + 1] = {
 #include "access/rmgrlist.h"
 };
 
@@ -125,8 +125,8 @@ RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr)
 
 		if (!pg_strcasecmp(RmgrTable[existing_rmid].rm_name, rmgr->rm_name))
 			ereport(ERROR,
-				(errmsg("failed to register custom resource manager \"%s\" with ID %d", rmgr->rm_name, rmid),
-				 errdetail("Existing resource manager with ID %d has the same name.", existing_rmid)));
+					(errmsg("failed to register custom resource manager \"%s\" with ID %d", rmgr->rm_name, rmid),
+					 errdetail("Existing resource manager with ID %d has the same name.", existing_rmid)));
 	}
 
 	/* register it */

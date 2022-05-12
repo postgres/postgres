@@ -1269,7 +1269,7 @@ expand_dbname_patterns(PGconn *conn,
 
 	for (SimpleStringListCell *cell = patterns->head; cell; cell = cell->next)
 	{
-		int		dotcnt;
+		int			dotcnt;
 
 		appendPQExpBufferStr(query,
 							 "SELECT datname FROM pg_catalog.pg_database n\n");

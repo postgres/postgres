@@ -1808,8 +1808,8 @@ make_template0(FILE *cmdfd)
 	 * the new cluster should be the result of a fresh initdb.)
 	 *
 	 * We use "STRATEGY = file_copy" here because checkpoints during initdb
-	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would
-	 * be a little bit slower and make the new cluster a little bit bigger.
+	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would be
+	 * a little bit slower and make the new cluster a little bit bigger.
 	 */
 	static const char *const template0_setup[] = {
 		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false"

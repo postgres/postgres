@@ -27,9 +27,9 @@ typedef struct bbstreamer_lz4_frame
 {
 	bbstreamer	base;
 
-	LZ4F_compressionContext_t	cctx;
-	LZ4F_decompressionContext_t	dctx;
-	LZ4F_preferences_t			prefs;
+	LZ4F_compressionContext_t cctx;
+	LZ4F_decompressionContext_t dctx;
+	LZ4F_preferences_t prefs;
 
 	size_t		bytes_written;
 	bool		header_written;
@@ -70,9 +70,9 @@ bbstreamer *
 bbstreamer_lz4_compressor_new(bbstreamer *next, pg_compress_specification *compress)
 {
 #ifdef USE_LZ4
-	bbstreamer_lz4_frame   *streamer;
-	LZ4F_errorCode_t		ctxError;
-	LZ4F_preferences_t	   *prefs;
+	bbstreamer_lz4_frame *streamer;
+	LZ4F_errorCode_t ctxError;
+	LZ4F_preferences_t *prefs;
 
 	Assert(next != NULL);
 
@@ -119,12 +119,12 @@ bbstreamer_lz4_compressor_content(bbstreamer *streamer,
 								  const char *data, int len,
 								  bbstreamer_archive_context context)
 {
-	bbstreamer_lz4_frame   *mystreamer;
-	uint8				   *next_in,
-						   *next_out;
-	size_t					out_bound,
-							compressed_size,
-							avail_out;
+	bbstreamer_lz4_frame *mystreamer;
+	uint8	   *next_in,
+			   *next_out;
+	size_t		out_bound,
+				compressed_size,
+				avail_out;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 	next_in = (uint8 *) data;
@@ -146,8 +146,8 @@ bbstreamer_lz4_compressor_content(bbstreamer *streamer,
 	}
 
 	/*
-	 * Update the offset and capacity of output buffer based on number of bytes
-	 * written to output buffer.
+	 * Update the offset and capacity of output buffer based on number of
+	 * bytes written to output buffer.
 	 */
 	next_out = (uint8 *) mystreamer->base.bbs_buffer.data + mystreamer->bytes_written;
 	avail_out = mystreamer->base.bbs_buffer.maxlen - mystreamer->bytes_written;
@@ -160,18 +160,18 @@ bbstreamer_lz4_compressor_content(bbstreamer *streamer,
 	out_bound = LZ4F_compressBound(len, &mystreamer->prefs);
 	if (avail_out < out_bound)
 	{
-			bbstreamer_content(mystreamer->base.bbs_next, member,
-							   mystreamer->base.bbs_buffer.data,
-							   mystreamer->bytes_written,
-							   context);
+		bbstreamer_content(mystreamer->base.bbs_next, member,
+						   mystreamer->base.bbs_buffer.data,
+						   mystreamer->bytes_written,
+						   context);
 
-			/* Enlarge buffer if it falls short of out bound. */
-			if (mystreamer->base.bbs_buffer.maxlen < out_bound)
-				enlargeStringInfo(&mystreamer->base.bbs_buffer, out_bound);
+		/* Enlarge buffer if it falls short of out bound. */
+		if (mystreamer->base.bbs_buffer.maxlen < out_bound)
+			enlargeStringInfo(&mystreamer->base.bbs_buffer, out_bound);
 
-			avail_out = mystreamer->base.bbs_buffer.maxlen;
-			mystreamer->bytes_written = 0;
-			next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
+		avail_out = mystreamer->base.bbs_buffer.maxlen;
+		mystreamer->bytes_written = 0;
+		next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
 	}
 
 	/*
@@ -199,11 +199,11 @@ bbstreamer_lz4_compressor_content(bbstreamer *streamer,
 static void
 bbstreamer_lz4_compressor_finalize(bbstreamer *streamer)
 {
-	bbstreamer_lz4_frame   *mystreamer;
-	uint8				   *next_out;
-	size_t					footer_bound,
-							compressed_size,
-							avail_out;
+	bbstreamer_lz4_frame *mystreamer;
+	uint8	   *next_out;
+	size_t		footer_bound,
+				compressed_size,
+				avail_out;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 
@@ -212,18 +212,18 @@ bbstreamer_lz4_compressor_finalize(bbstreamer *streamer)
 	if ((mystreamer->base.bbs_buffer.maxlen - mystreamer->bytes_written) <
 		footer_bound)
 	{
-			bbstreamer_content(mystreamer->base.bbs_next, NULL,
-							   mystreamer->base.bbs_buffer.data,
-							   mystreamer->bytes_written,
-							   BBSTREAMER_UNKNOWN);
+		bbstreamer_content(mystreamer->base.bbs_next, NULL,
+						   mystreamer->base.bbs_buffer.data,
+						   mystreamer->bytes_written,
+						   BBSTREAMER_UNKNOWN);
 
-			/* Enlarge buffer if it falls short of footer bound. */
-			if (mystreamer->base.bbs_buffer.maxlen < footer_bound)
-				enlargeStringInfo(&mystreamer->base.bbs_buffer, footer_bound);
+		/* Enlarge buffer if it falls short of footer bound. */
+		if (mystreamer->base.bbs_buffer.maxlen < footer_bound)
+			enlargeStringInfo(&mystreamer->base.bbs_buffer, footer_bound);
 
-			avail_out = mystreamer->base.bbs_buffer.maxlen;
-			mystreamer->bytes_written = 0;
-			next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
+		avail_out = mystreamer->base.bbs_buffer.maxlen;
+		mystreamer->bytes_written = 0;
+		next_out = (uint8 *) mystreamer->base.bbs_buffer.data;
 	}
 	else
 	{
@@ -258,7 +258,7 @@ bbstreamer_lz4_compressor_finalize(bbstreamer *streamer)
 static void
 bbstreamer_lz4_compressor_free(bbstreamer *streamer)
 {
-	bbstreamer_lz4_frame	*mystreamer;
+	bbstreamer_lz4_frame *mystreamer;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 	bbstreamer_free(streamer->bbs_next);
@@ -276,8 +276,8 @@ bbstreamer *
 bbstreamer_lz4_decompressor_new(bbstreamer *next)
 {
 #ifdef USE_LZ4
-	bbstreamer_lz4_frame	*streamer;
-	LZ4F_errorCode_t		ctxError;
+	bbstreamer_lz4_frame *streamer;
+	LZ4F_errorCode_t ctxError;
 
 	Assert(next != NULL);
 
@@ -313,11 +313,11 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 									const char *data, int len,
 									bbstreamer_archive_context context)
 {
-	bbstreamer_lz4_frame   *mystreamer;
-	uint8				   *next_in,
-						   *next_out;
-	size_t					avail_in,
-							avail_out;
+	bbstreamer_lz4_frame *mystreamer;
+	uint8	   *next_in,
+			   *next_out;
+	size_t		avail_in,
+				avail_out;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 	next_in = (uint8 *) data;
@@ -327,9 +327,9 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 
 	while (avail_in > 0)
 	{
-		size_t	ret,
-				read_size,
-				out_size;
+		size_t		ret,
+					read_size,
+					out_size;
 
 		read_size = avail_in;
 		out_size = avail_out;
@@ -362,8 +362,8 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 		mystreamer->bytes_written += out_size;
 
 		/*
-		 * If output buffer is full then forward the content to next streamer and
-		 * update the output buffer.
+		 * If output buffer is full then forward the content to next streamer
+		 * and update the output buffer.
 		 */
 		if (mystreamer->bytes_written >= mystreamer->base.bbs_buffer.maxlen)
 		{
@@ -390,7 +390,7 @@ bbstreamer_lz4_decompressor_content(bbstreamer *streamer,
 static void
 bbstreamer_lz4_decompressor_finalize(bbstreamer *streamer)
 {
-	bbstreamer_lz4_frame	*mystreamer;
+	bbstreamer_lz4_frame *mystreamer;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 
@@ -412,7 +412,7 @@ bbstreamer_lz4_decompressor_finalize(bbstreamer *streamer)
 static void
 bbstreamer_lz4_decompressor_free(bbstreamer *streamer)
 {
-	bbstreamer_lz4_frame	*mystreamer;
+	bbstreamer_lz4_frame *mystreamer;
 
 	mystreamer = (bbstreamer_lz4_frame *) streamer;
 	bbstreamer_free(streamer->bbs_next);

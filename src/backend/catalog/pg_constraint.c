@@ -145,7 +145,7 @@ CreateConstraintEntry(const char *constraintName,
 			for (i = 0; i < numFkDeleteSetCols; i++)
 				fkdatums[i] = Int16GetDatum(fkDeleteSetCols[i]);
 			confdelsetcolsArray = construct_array(fkdatums, numFkDeleteSetCols,
-										   INT2OID, 2, true, TYPALIGN_SHORT);
+												  INT2OID, 2, true, TYPALIGN_SHORT);
 		}
 		else
 			confdelsetcolsArray = NULL;
@@ -1291,7 +1291,7 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 		}
 		else
 		{
-			int num_delete_cols;
+			int			num_delete_cols;
 
 			arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 			if (ARR_NDIM(arr) != 1 ||
@@ -1301,7 +1301,7 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 			num_delete_cols = ARR_DIMS(arr)[0];
 			memcpy(fk_del_set_cols, ARR_DATA_PTR(arr), num_delete_cols * sizeof(int16));
 			if ((Pointer) arr != DatumGetPointer(adatum))
-				pfree(arr);				/* free de-toasted copy, if any */
+				pfree(arr);		/* free de-toasted copy, if any */
 
 			*num_fk_del_set_cols = num_delete_cols;
 		}

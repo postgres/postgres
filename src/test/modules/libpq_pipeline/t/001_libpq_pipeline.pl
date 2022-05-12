@@ -28,7 +28,8 @@ for my $testname (@tests)
 		  pipeline_abort transaction disallowed_in_pipeline)) > 0;
 
 	# For a bunch of tests, generate a libpq trace file too.
-	my $traceout = "$PostgreSQL::Test::Utils::tmp_check/traces/$testname.trace";
+	my $traceout =
+	  "$PostgreSQL::Test::Utils::tmp_check/traces/$testname.trace";
 	if ($cmptrace)
 	{
 		push @extraargs, "-t", $traceout;

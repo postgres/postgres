@@ -345,7 +345,7 @@ defGetCopyHeaderChoice(DefElem *def)
 			break;
 		default:
 			{
-				char	*sval = defGetString(def);
+				char	   *sval = defGetString(def);
 
 				/*
 				 * The set of strings accepted here should match up with the
@@ -365,8 +365,8 @@ defGetCopyHeaderChoice(DefElem *def)
 			break;
 	}
 	ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("%s requires a Boolean value or \"match\"",
+			(errcode(ERRCODE_SYNTAX_ERROR),
+			 errmsg("%s requires a Boolean value or \"match\"",
 					def->defname)));
 	return COPY_HEADER_FALSE;	/* keep compiler quiet */
 }

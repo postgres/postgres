@@ -354,7 +354,7 @@ statext_dependencies_build(StatsBuildData *data)
 
 	/* result */
 	MVDependencies *dependencies = NULL;
-	MemoryContext	cxt;
+	MemoryContext cxt;
 
 	Assert(data->nattnums >= 2);
 

@@ -312,7 +312,7 @@ AddWALInfoToBackupManifest(backup_manifest_info *manifest, XLogRecPtr startptr,
  * Finalize the backup manifest, and send it to the client.
  */
 void
-SendBackupManifest(backup_manifest_info *manifest, bbsink * sink)
+SendBackupManifest(backup_manifest_info *manifest, bbsink *sink)
 {
 	uint8		checksumbuf[PG_SHA256_DIGEST_LENGTH];
 	char		checksumstringbuf[PG_SHA256_DIGEST_STRING_LENGTH];

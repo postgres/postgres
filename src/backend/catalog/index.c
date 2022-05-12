@@ -928,9 +928,9 @@ index_create(Relation heapRelation,
 			binary_upgrade_next_index_pg_class_relfilenode = InvalidOid;
 
 			/*
-			 * Note that we want create_storage = true for binary upgrade.
-			 * The storage we create here will be replaced later, but we need
-			 * to have something on disk in the meanwhile.
+			 * Note that we want create_storage = true for binary upgrade. The
+			 * storage we create here will be replaced later, but we need to
+			 * have something on disk in the meanwhile.
 			 */
 			Assert(create_storage);
 		}

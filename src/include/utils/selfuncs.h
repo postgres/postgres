@@ -215,9 +215,9 @@ extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 								  EstimationInfo *estinfo);
 
 extern double estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
-					double input_rows, List **pgset,
-					EstimationInfo *estinfo,
-					List **cache_varinfos, int prevNExprs);
+											  double input_rows, List **pgset,
+											  EstimationInfo *estinfo,
+											  List **cache_varinfos, int prevNExprs);
 
 extern void estimate_hash_bucket_stats(PlannerInfo *root,
 									   Node *hashkey, double nbuckets,

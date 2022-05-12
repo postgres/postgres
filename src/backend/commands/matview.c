@@ -332,8 +332,8 @@ ExecRefreshMatView(RefreshMatViewStmt *stmt, const char *queryString,
 		/*
 		 * Inform cumulative stats system about our activity: basically, we
 		 * truncated the matview and inserted some new data.  (The concurrent
-		 * code path above doesn't need to worry about this because the inserts
-		 * and deletes it issues get counted by lower-level code.)
+		 * code path above doesn't need to worry about this because the
+		 * inserts and deletes it issues get counted by lower-level code.)
 		 */
 		pgstat_count_truncate(matviewRel);
 		if (!stmt->skipData)

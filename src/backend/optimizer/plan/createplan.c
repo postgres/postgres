@@ -1162,8 +1162,8 @@ mark_async_capable_plan(Plan *plan, Path *path)
 		case T_ProjectionPath:
 
 			/*
-			 * If the generated plan node includes a Result node for
-			 * the projection, we can't execute it asynchronously.
+			 * If the generated plan node includes a Result node for the
+			 * projection, we can't execute it asynchronously.
 			 */
 			if (IsA(plan, Result))
 				return false;

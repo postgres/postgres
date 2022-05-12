@@ -74,8 +74,8 @@ pg_backup_start(PG_FUNCTION_ARGS)
 				 errmsg("a backup is already in progress in this session")));
 
 	/*
-	 * Label file and tablespace map file need to be long-lived, since
-	 * they are read in pg_backup_stop.
+	 * Label file and tablespace map file need to be long-lived, since they
+	 * are read in pg_backup_stop.
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 	label_file = makeStringInfo();
@@ -127,8 +127,8 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 				 errhint("Did you call pg_backup_start()?")));
 
 	/*
-	 * Stop the backup. Return a copy of the backup label and tablespace map so
-	 * they can be written to disk by the caller.
+	 * Stop the backup. Return a copy of the backup label and tablespace map
+	 * so they can be written to disk by the caller.
 	 */
 	stoppoint = do_pg_backup_stop(label_file->data, waitforarchive, NULL);
 

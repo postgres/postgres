@@ -608,8 +608,8 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 					/*
 					 * Non-empty range A contains non-empty range B if lower
 					 * bound of A is lower or equal to lower bound of range B
-					 * and upper bound of range A is greater than or equal to upper
-					 * bound of range A.
+					 * and upper bound of range A is greater than or equal to
+					 * upper bound of range A.
 					 *
 					 * All non-empty ranges contain an empty range.
 					 */

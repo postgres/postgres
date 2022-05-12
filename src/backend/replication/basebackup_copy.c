@@ -124,18 +124,18 @@ bbsink_copystream_begin_backup(bbsink *sink)
 {
 	bbsink_copystream *mysink = (bbsink_copystream *) sink;
 	bbsink_state *state = sink->bbs_state;
-	char *buf;
+	char	   *buf;
 
 	/*
 	 * Initialize buffer. We ultimately want to send the archive and manifest
 	 * data by means of CopyData messages where the payload portion of each
 	 * message begins with a type byte. However, basebackup.c expects the
 	 * buffer to be aligned, so we can't just allocate one extra byte for the
-	 * type byte. Instead, allocate enough extra bytes that the portion of
-	 * the buffer we reveal to our callers can be aligned, while leaving room
-	 * to slip the type byte in just beforehand.  That will allow us to ship
-	 * the data with a single call to pq_putmessage and without needing any
-	 * extra copying.
+	 * type byte. Instead, allocate enough extra bytes that the portion of the
+	 * buffer we reveal to our callers can be aligned, while leaving room to
+	 * slip the type byte in just beforehand.  That will allow us to ship the
+	 * data with a single call to pq_putmessage and without needing any extra
+	 * copying.
 	 */
 	buf = palloc(mysink->base.bbs_buffer_length + MAXIMUM_ALIGNOF);
 	mysink->msgbuffer = buf + (MAXIMUM_ALIGNOF - 1);

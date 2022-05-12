@@ -94,7 +94,7 @@ sub new
 	bless $self, $class;
 	if ($flavor =~ /\Aopenssl\z/i)
 	{
-		$self->{flavor} = 'openssl';
+		$self->{flavor}  = 'openssl';
 		$self->{backend} = SSL::Backend::OpenSSL->new();
 	}
 	else
@@ -115,7 +115,7 @@ string.
 
 sub sslkey
 {
-	my $self = shift;
+	my $self    = shift;
 	my $keyfile = shift;
 	my $backend = $self->{backend};
 
@@ -140,12 +140,14 @@ C<listen_addresses> and B<cidr> for configuring C<pg_hba.conf>.
 
 sub configure_test_server_for_ssl
 {
-	my $self=shift;
+	my $self = shift;
 	my ($node, $serverhost, $servercidr, $authmethod, %params) = @_;
 	my $backend = $self->{backend};
-	my $pgdata = $node->data_dir;
+	my $pgdata  = $node->data_dir;
 
-	my @databases = ( 'trustdb', 'certdb', 'certdb_dn', 'certdb_dn_re', 'certdb_cn', 'verifydb' );
+	my @databases = (
+		'trustdb',   'certdb', 'certdb_dn', 'certdb_dn_re',
+		'certdb_cn', 'verifydb');
 
 	# Create test users and databases
 	$node->psql('postgres', "CREATE USER ssltestuser");
@@ -162,7 +164,7 @@ sub configure_test_server_for_ssl
 	if (defined($params{password}))
 	{
 		die "Password encryption must be specified when password is set"
-			unless defined($params{password_enc});
+		  unless defined($params{password_enc});
 
 		$node->psql('postgres',
 			"SET password_encryption='$params{password_enc}'; ALTER USER ssltestuser PASSWORD '$params{password}';"
@@ -179,7 +181,7 @@ sub configure_test_server_for_ssl
 	# Create any extensions requested in the setup
 	if (defined($params{extensions}))
 	{
-		foreach my $extension (@{$params{extensions}})
+		foreach my $extension (@{ $params{extensions} })
 		{
 			foreach my $db (@databases)
 			{
@@ -227,7 +229,7 @@ Get the name of the currently used SSL backend.
 
 sub ssl_library
 {
-	my $self = shift;
+	my $self    = shift;
 	my $backend = $self->{backend};
 
 	return $backend->get_library();
@@ -282,16 +284,17 @@ returning.
 
 sub switch_server_cert
 {
-	my $self = shift;
-	my $node   = shift;
+	my $self    = shift;
+	my $node    = shift;
 	my $backend = $self->{backend};
-	my %params = @_;
-	my $pgdata = $node->data_dir;
+	my %params  = @_;
+	my $pgdata  = $node->data_dir;
 
 	open my $sslconf, '>', "$pgdata/sslconfig.conf";
 	print $sslconf "ssl=on\n";
 	print $sslconf $backend->set_server_cert(\%params);
-	print $sslconf "ssl_passphrase_command='" . $params{passphrase_cmd} . "'\n"
+	print $sslconf "ssl_passphrase_command='"
+	  . $params{passphrase_cmd} . "'\n"
 	  if defined $params{passphrase_cmd};
 	close $sslconf;
 

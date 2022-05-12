@@ -1625,7 +1625,7 @@ pg_newlocale_from_collation(Oid collid)
 		}
 
 		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
-									  &isnull);
+								&isnull);
 		if (!isnull)
 		{
 			char	   *actual_versionstr;
@@ -1992,7 +1992,7 @@ check_icu_locale(const char *icu_locale)
 {
 #ifdef USE_ICU
 	UCollator  *collator;
-	UErrorCode  status;
+	UErrorCode	status;
 
 	status = U_ZERO_ERROR;
 	collator = ucol_open(icu_locale, &status);

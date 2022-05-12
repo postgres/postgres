@@ -2267,10 +2267,10 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		else
 		{
 			stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
-											   src,
-											   plan->argtypes,
-											   plan->nargs,
-											   _SPI_current->queryEnv);
+														   src,
+														   plan->argtypes,
+														   plan->nargs,
+														   _SPI_current->queryEnv);
 		}
 
 		/* Finish filling in the CachedPlanSource */
@@ -2504,10 +2504,10 @@ _SPI_execute_plan(SPIPlanPtr plan, const SPIExecuteOptions *options,
 			else
 			{
 				stmt_list = pg_analyze_and_rewrite_fixedparams(parsetree,
-												   src,
-												   plan->argtypes,
-												   plan->nargs,
-												   _SPI_current->queryEnv);
+															   src,
+															   plan->argtypes,
+															   plan->nargs,
+															   _SPI_current->queryEnv);
 			}
 
 			/* Finish filling in the CachedPlanSource */

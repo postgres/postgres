@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir       = PostgreSQL::Test::Utils::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 command_exit_is([ 'pg_ctl', 'status', '-D', "$tempdir/nonexistent" ],
 	4, 'pg_ctl status with nonexistent directory');

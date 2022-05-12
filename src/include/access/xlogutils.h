@@ -78,7 +78,7 @@ typedef enum
 /* Private data of the read_local_xlog_page_no_wait callback. */
 typedef struct ReadLocalXLogPageNoWaitPrivate
 {
-	bool end_of_wal;	/* true, when end of WAL is reached */
+	bool		end_of_wal;		/* true, when end of WAL is reached */
 } ReadLocalXLogPageNoWaitPrivate;
 
 extern XLogRedoAction XLogReadBufferForRedo(XLogReaderState *record,

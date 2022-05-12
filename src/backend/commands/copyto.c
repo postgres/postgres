@@ -439,8 +439,8 @@ BeginCopyTo(ParseState *pstate,
 		 * locks on the source table(s).
 		 */
 		rewritten = pg_analyze_and_rewrite_fixedparams(raw_query,
-										   pstate->p_sourcetext, NULL, 0,
-										   NULL);
+													   pstate->p_sourcetext, NULL, 0,
+													   NULL);
 
 		/* check that we got back something we can work with */
 		if (rewritten == NIL)
@@ -862,7 +862,7 @@ DoCopyTo(CopyToState cstate)
 
 				if (cstate->opts.csv_mode)
 					CopyAttributeOutCSV(cstate, colname, false,
-									list_length(cstate->attnumlist) == 1);
+										list_length(cstate->attnumlist) == 1);
 				else
 					CopyAttributeOutText(cstate, colname);
 			}

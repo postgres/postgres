@@ -65,7 +65,7 @@ static bool query_contains_extern_params_walker(Node *node, void *context);
  */
 void
 setup_parse_fixed_parameters(ParseState *pstate,
-					   const Oid *paramTypes, int numParams)
+							 const Oid *paramTypes, int numParams)
 {
 	FixedParamState *parstate = palloc(sizeof(FixedParamState));
 
@@ -81,7 +81,7 @@ setup_parse_fixed_parameters(ParseState *pstate,
  */
 void
 setup_parse_variable_parameters(ParseState *pstate,
-						  Oid **paramTypes, int *numParams)
+								Oid **paramTypes, int *numParams)
 {
 	VarParamState *parstate = palloc(sizeof(VarParamState));
 

@@ -41,12 +41,12 @@ sub ParseHeader
 	my $is_varlen            = 0;
 	my $is_client_code       = 0;
 
-	$catalog{columns}     = [];
-	$catalog{toasting}    = [];
-	$catalog{indexing}    = [];
-	$catalog{other_oids}  = [];
+	$catalog{columns}      = [];
+	$catalog{toasting}     = [];
+	$catalog{indexing}     = [];
+	$catalog{other_oids}   = [];
 	$catalog{foreign_keys} = [];
-	$catalog{client_code} = [];
+	$catalog{client_code}  = [];
 
 	open(my $ifh, '<', $input_file) || die "$input_file: $!";
 
@@ -96,7 +96,9 @@ sub ParseHeader
 			push @{ $catalog{toasting} },
 			  { parent_table => $1, toast_oid => $2, toast_index_oid => $3 };
 		}
-		elsif (/^DECLARE_TOAST_WITH_MACRO\(\s*(\w+),\s*(\d+),\s*(\d+),\s*(\w+),\s*(\w+)\)/)
+		elsif (
+			/^DECLARE_TOAST_WITH_MACRO\(\s*(\w+),\s*(\d+),\s*(\d+),\s*(\w+),\s*(\w+)\)/
+		  )
 		{
 			push @{ $catalog{toasting} },
 			  {
@@ -108,16 +110,17 @@ sub ParseHeader
 			  };
 		}
 		elsif (
-			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(\w+),\s*(.+)\)/)
+			/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*(\w+),\s*(\d+),\s*(\w+),\s*(.+)\)/
+		  )
 		{
 			push @{ $catalog{indexing} },
 			  {
 				is_unique => $1 ? 1 : 0,
 				is_pkey   => $2 ? 1 : 0,
-				index_name => $3,
-				index_oid  => $4,
+				index_name      => $3,
+				index_oid       => $4,
 				index_oid_macro => $5,
-				index_decl => $6
+				index_decl      => $6
 			  };
 		}
 		elsif (/^DECLARE_OID_DEFINING_MACRO\(\s*(\w+),\s*(\d+)\)/)

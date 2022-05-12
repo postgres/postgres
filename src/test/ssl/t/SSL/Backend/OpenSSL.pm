@@ -84,7 +84,7 @@ sub init
 	# the tests. To get the full path for inclusion in connection strings, the
 	# %key hash can be interrogated.
 	my $cert_tempdir = PostgreSQL::Test::Utils::tempdir();
-	my @keys = (
+	my @keys         = (
 		"client.key",               "client-revoked.key",
 		"client-der.key",           "client-encrypted-pem.key",
 		"client-encrypted-der.key", "client-dn.key",
@@ -108,8 +108,10 @@ sub init
 	  or die
 	  "couldn't copy ssl/client_key to $cert_tempdir/client_wrongperms.key for permission change: $!";
 	chmod 0644, "$cert_tempdir/client_wrongperms.key"
-	  or die "failed to change permissions on $cert_tempdir/client_wrongperms.key: $!";
-	$self->{key}->{'client_wrongperms.key'} = "$cert_tempdir/client_wrongperms.key";
+	  or die
+	  "failed to change permissions on $cert_tempdir/client_wrongperms.key: $!";
+	$self->{key}->{'client_wrongperms.key'} =
+	  "$cert_tempdir/client_wrongperms.key";
 	$self->{key}->{'client_wrongperms.key'} =~ s!\\!/!g
 	  if $PostgreSQL::Test::Utils::windows_os;
 }
@@ -171,9 +173,10 @@ sub set_server_cert
 {
 	my ($self, $params) = @_;
 
-	$params->{cafile} = 'root+client_ca' unless defined $params->{cafile};
+	$params->{cafile}  = 'root+client_ca'  unless defined $params->{cafile};
 	$params->{crlfile} = 'root+client.crl' unless defined $params->{crlfile};
-	$params->{keyfile} = $params->{certfile} unless defined $params->{keyfile};
+	$params->{keyfile} = $params->{certfile}
+	  unless defined $params->{keyfile};
 
 	my $sslconf =
 	    "ssl_ca_file='$params->{cafile}.crt'\n"

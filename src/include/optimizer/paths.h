@@ -203,9 +203,9 @@ typedef enum
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern bool pathkeys_count_contained_in(List *keys1, List *keys2, int *n_common);
-extern int group_keys_reorder_by_pathkeys(List *pathkeys,
-										  List **group_pathkeys,
-										  List **group_clauses);
+extern int	group_keys_reorder_by_pathkeys(List *pathkeys,
+										   List **group_pathkeys,
+										   List **group_clauses);
 extern List *get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 											 List *path_pathkeys,
 											 List *pathkeys, List *clauses);

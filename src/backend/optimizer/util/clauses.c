@@ -391,7 +391,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 		const JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
 		ListCell   *lc;
 		bool		is_jsonb =
-			ctor->returning->format->format_type == JS_FORMAT_JSONB;
+		ctor->returning->format->format_type == JS_FORMAT_JSONB;
 
 		/* Check argument_type => json[b] conversions */
 		foreach(lc, ctor->args)
@@ -899,7 +899,7 @@ max_parallel_hazard_walker(Node *node, max_parallel_hazard_context *context)
 	/* JsonExpr is parallel-unsafe if subtransactions can be used. */
 	else if (IsA(node, JsonExpr))
 	{
-		JsonExpr  *jsexpr = (JsonExpr *) node;
+		JsonExpr   *jsexpr = (JsonExpr *) node;
 
 		if (ExecEvalJsonNeedsSubTransaction(jsexpr, NULL))
 		{
@@ -3581,7 +3581,7 @@ eval_const_expressions_mutator(Node *node,
 					context->case_val = raw;
 
 					formatted = eval_const_expressions_mutator((Node *) jve->formatted_expr,
-																context);
+															   context);
 
 					context->case_val = save_case_val;
 
@@ -5315,7 +5315,7 @@ pull_paramids_walker(Node *node, Bitmapset **context)
 		return false;
 	if (IsA(node, Param))
 	{
-		Param	   *param = (Param *)node;
+		Param	   *param = (Param *) node;
 
 		*context = bms_add_member(*context, param->paramid);
 		return false;

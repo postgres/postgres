@@ -1205,9 +1205,9 @@ read_backup_label(XLogRecPtr *checkPointLoc, TimeLineID *backupLabelTLI,
 	 * method was used) or if this label came from somewhere else (the only
 	 * other option today being from pg_rewind).  If this was a streamed
 	 * backup then we know that we need to play through until we get to the
-	 * end of the WAL which was generated during the backup (at which point
-	 * we will have reached consistency and backupEndRequired will be reset
-	 * to be false).
+	 * end of the WAL which was generated during the backup (at which point we
+	 * will have reached consistency and backupEndRequired will be reset to be
+	 * false).
 	 */
 	if (fscanf(lfp, "BACKUP METHOD: %19s\n", backuptype) == 1)
 	{
@@ -2055,10 +2055,9 @@ CheckRecoveryConsistency(void)
 
 	/*
 	 * Have we passed our safe starting point? Note that minRecoveryPoint is
-	 * known to be incorrectly set if recovering from a backup, until
-	 * the XLOG_BACKUP_END arrives to advise us of the correct
-	 * minRecoveryPoint. All we know prior to that is that we're not
-	 * consistent yet.
+	 * known to be incorrectly set if recovering from a backup, until the
+	 * XLOG_BACKUP_END arrives to advise us of the correct minRecoveryPoint.
+	 * All we know prior to that is that we're not consistent yet.
 	 */
 	if (!reachedConsistency && !backupEndRequired &&
 		minRecoveryPoint <= lastReplayedEndRecPtr)
@@ -3802,7 +3801,7 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 		HandleStartupProcInterrupts();
 	}
 
-	return XLREAD_FAIL;				/* not reached */
+	return XLREAD_FAIL;			/* not reached */
 }
 
 

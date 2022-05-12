@@ -1758,7 +1758,7 @@ texteq(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GET_COLLATION();
 	bool		locale_is_c = false;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	bool		result;
 
 	check_collation_set(collid);
@@ -1817,7 +1817,7 @@ textne(PG_FUNCTION_ARGS)
 {
 	Oid			collid = PG_GET_COLLATION();
 	bool		locale_is_c = false;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 	bool		result;
 
 	check_collation_set(collid);
@@ -2674,8 +2674,8 @@ done:
 	 *
 	 * This is needed so that ssup_datum_unsigned_cmp() (an unsigned integer
 	 * 3-way comparator) works correctly on all platforms.  If we didn't do
-	 * this, the comparator would have to call memcmp() with a pair of pointers
-	 * to the first byte of each abbreviated key, which is slower.
+	 * this, the comparator would have to call memcmp() with a pair of
+	 * pointers to the first byte of each abbreviated key, which is slower.
 	 */
 	res = DatumBigEndianToNative(res);
 

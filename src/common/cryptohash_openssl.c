@@ -185,6 +185,7 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 	{
 		ctx->errreason = SSLerrmessage(ERR_get_error());
 		ctx->error = PG_CRYPTOHASH_ERROR_OPENSSL;
+
 		/*
 		 * The OpenSSL error queue should normally be empty since we've
 		 * consumed an error, but cipher initialization can in FIPS-enabled

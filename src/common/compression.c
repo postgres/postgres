@@ -72,7 +72,7 @@ get_compress_algorithm_name(pg_compress_algorithm algorithm)
 			/* no default, to provoke compiler warnings if values are added */
 	}
 	Assert(false);
-	return "???";	/* placate compiler */
+	return "???";				/* placate compiler */
 }
 
 /*
@@ -93,7 +93,7 @@ get_compress_algorithm_name(pg_compress_algorithm algorithm)
  */
 void
 parse_compress_specification(pg_compress_algorithm algorithm, char *specification,
-					   pg_compress_specification *result)
+							 pg_compress_specification *result)
 {
 	int			bare_level;
 	char	   *bare_level_endp;

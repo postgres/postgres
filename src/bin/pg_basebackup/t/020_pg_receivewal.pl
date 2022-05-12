@@ -45,7 +45,7 @@ $primary->command_ok(
 	'creating a replication slot');
 my $slot = $primary->slot($slot_name);
 is($slot->{'slot_type'}, 'physical', 'physical replication slot was created');
-is($slot->{'restart_lsn'}, '',       'restart LSN of new slot is null');
+is($slot->{'restart_lsn'}, '', 'restart LSN of new slot is null');
 $primary->command_ok([ 'pg_receivewal', '--slot', $slot_name, '--drop-slot' ],
 	'dropping a replication slot');
 is($primary->slot($slot_name)->{'slot_type'},
@@ -281,7 +281,7 @@ $standby->psql(
 $primary->wait_for_catchup($standby);
 # Get a walfilename from before the promotion to make sure it is archived
 # after promotion
-my $standby_slot = $standby->slot($archive_slot);
+my $standby_slot         = $standby->slot($archive_slot);
 my $replication_slot_lsn = $standby_slot->{'restart_lsn'};
 
 # pg_walfile_name() is not supported while in recovery, so use the primary

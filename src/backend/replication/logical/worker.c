@@ -1608,8 +1608,8 @@ GetRelationIdentityOrPK(Relation rel)
 static void
 TargetPrivilegesCheck(Relation rel, AclMode mode)
 {
-	Oid				relid;
-	AclResult		aclresult;
+	Oid			relid;
+	AclResult	aclresult;
 
 	relid = RelationGetRelid(rel);
 	aclresult = pg_class_aclcheck(relid, GetUserId(), mode);

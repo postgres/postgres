@@ -174,8 +174,8 @@ typedef struct RelationSyncEntry
 	Bitmapset  *columns;
 
 	/*
-	 * Private context to store additional data for this entry - state for
-	 * the row filter expressions, column list, etc.
+	 * Private context to store additional data for this entry - state for the
+	 * row filter expressions, column list, etc.
 	 */
 	MemoryContext entry_cxt;
 } RelationSyncEntry;
@@ -206,9 +206,8 @@ typedef struct RelationSyncEntry
  */
 typedef struct PGOutputTxnData
 {
-	bool		sent_begin_txn;	/* flag indicating whether BEGIN has
-								 * been sent */
-}		PGOutputTxnData;
+	bool		sent_begin_txn; /* flag indicating whether BEGIN has been sent */
+} PGOutputTxnData;
 
 /* Map used to remember which relation schemas we sent. */
 static HTAB *RelationSyncCache = NULL;
@@ -511,9 +510,9 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
  * using bandwidth on something with little/no use for logical replication.
  */
 static void
-pgoutput_begin_txn(LogicalDecodingContext * ctx, ReorderBufferTXN * txn)
+pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 {
-	PGOutputTxnData	*txndata = MemoryContextAllocZero(ctx->context,
+	PGOutputTxnData *txndata = MemoryContextAllocZero(ctx->context,
 													  sizeof(PGOutputTxnData));
 
 	txn->output_plugin_private = txndata;
@@ -987,7 +986,8 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 	 *
 	 * All the given publication-table mappings must be checked.
 	 *
-	 * Multiple publications might have multiple column lists for this relation.
+	 * Multiple publications might have multiple column lists for this
+	 * relation.
 	 *
 	 * FOR ALL TABLES and FOR ALL TABLES IN SCHEMA implies "don't use column
 	 * list" so it takes precedence.
@@ -1005,8 +1005,9 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 		bool		pub_no_list = true;
 
 		/*
-		 * If the publication is FOR ALL TABLES then it is treated the same as if
-		 * there are no column lists (even if other publications have a list).
+		 * If the publication is FOR ALL TABLES then it is treated the same as
+		 * if there are no column lists (even if other publications have a
+		 * list).
 		 */
 		if (!pub->alltables)
 		{
@@ -1014,8 +1015,8 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 			 * Check for the presence of a column list in this publication.
 			 *
 			 * Note: If we find no pg_publication_rel row, it's a publication
-			 * defined for a whole schema, so it can't have a column list, just
-			 * like a FOR ALL TABLES publication.
+			 * defined for a whole schema, so it can't have a column list,
+			 * just like a FOR ALL TABLES publication.
 			 */
 			cftuple = SearchSysCache2(PUBLICATIONRELMAP,
 									  ObjectIdGetDatum(entry->publish_as_relid),
@@ -1221,9 +1222,9 @@ pgoutput_row_filter(Relation relation, TupleTableSlot *old_slot,
 	 * For updates, we can have only a new tuple when none of the replica
 	 * identity columns changed and none of those columns have external data
 	 * but we still need to evaluate the row filter for the new tuple as the
-	 * existing values of those columns might not match the filter. Also, users
-	 * can use constant expressions in the row filter, so we anyway need to
-	 * evaluate it for the new tuple.
+	 * existing values of those columns might not match the filter. Also,
+	 * users can use constant expressions in the row filter, so we anyway need
+	 * to evaluate it for the new tuple.
 	 *
 	 * For deletes, we only have the old tuple.
 	 */
@@ -1674,8 +1675,7 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		xid = txn->xid;
 
 	/*
-	 * Output BEGIN if we haven't yet. Avoid for non-transactional
-	 * messages.
+	 * Output BEGIN if we haven't yet. Avoid for non-transactional messages.
 	 */
 	if (transactional)
 	{
@@ -2079,15 +2079,15 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 			/*
 			 * Under what relid should we publish changes in this publication?
-			 * We'll use the top-most relid across all publications. Also track
-			 * the ancestor level for this publication.
+			 * We'll use the top-most relid across all publications. Also
+			 * track the ancestor level for this publication.
 			 */
-			Oid	pub_relid = relid;
-			int	ancestor_level = 0;
+			Oid			pub_relid = relid;
+			int			ancestor_level = 0;
 
 			/*
-			 * If this is a FOR ALL TABLES publication, pick the partition root
-			 * and set the ancestor level accordingly.
+			 * If this is a FOR ALL TABLES publication, pick the partition
+			 * root and set the ancestor level accordingly.
 			 */
 			if (pub->alltables)
 			{
@@ -2156,18 +2156,18 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 				/*
 				 * We want to publish the changes as the top-most ancestor
-				 * across all publications. So we need to check if the
-				 * already calculated level is higher than the new one. If
-				 * yes, we can ignore the new value (as it's a child).
-				 * Otherwise the new value is an ancestor, so we keep it.
+				 * across all publications. So we need to check if the already
+				 * calculated level is higher than the new one. If yes, we can
+				 * ignore the new value (as it's a child). Otherwise the new
+				 * value is an ancestor, so we keep it.
 				 */
 				if (publish_ancestor_level > ancestor_level)
 					continue;
 
 				/*
-				 * If we found an ancestor higher up in the tree, discard
-				 * the list of publications through which we replicate it,
-				 * and use the new ancestor.
+				 * If we found an ancestor higher up in the tree, discard the
+				 * list of publications through which we replicate it, and use
+				 * the new ancestor.
 				 */
 				if (publish_ancestor_level < ancestor_level)
 				{

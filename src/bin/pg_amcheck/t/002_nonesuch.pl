@@ -155,8 +155,7 @@ $node->command_checks_all(
 	[
 		qr/pg_amcheck: error: improper qualified name \(too many dotted names\): localhost\.postgres/
 	],
-	'multipart database patterns are rejected'
-);
+	'multipart database patterns are rejected');
 
 # Check that a three-part schema name is rejected
 $node->command_checks_all(
@@ -166,8 +165,7 @@ $node->command_checks_all(
 	[
 		qr/pg_amcheck: error: improper qualified name \(too many dotted names\): localhost\.postgres\.pg_catalog/
 	],
-	'three part schema patterns are rejected'
-);
+	'three part schema patterns are rejected');
 
 # Check that a four-part table name is rejected
 $node->command_checks_all(
@@ -177,39 +175,44 @@ $node->command_checks_all(
 	[
 		qr/pg_amcheck: error: improper relation name \(too many dotted names\): localhost\.postgres\.pg_catalog\.pg_class/
 	],
-	'four part table patterns are rejected'
-);
+	'four part table patterns are rejected');
 
 # Check that too many dotted names still draws an error under --no-strict-names
 # That flag means that it is ok for the object to be missing, not that it is ok
 # for the object name to be ungrammatical
 $node->command_checks_all(
-	[ 'pg_amcheck', '--no-strict-names', '-t', 'this.is.a.really.long.dotted.string' ],
+	[
+		'pg_amcheck', '--no-strict-names',
+		'-t',         'this.is.a.really.long.dotted.string'
+	],
 	2,
 	[qr/^$/],
 	[
 		qr/pg_amcheck: error: improper relation name \(too many dotted names\): this\.is\.a\.really\.long\.dotted\.string/
 	],
-	'ungrammatical table names still draw errors under --no-strict-names'
-);
+	'ungrammatical table names still draw errors under --no-strict-names');
 $node->command_checks_all(
-	[ 'pg_amcheck', '--no-strict-names', '-s', 'postgres.long.dotted.string' ],
+	[
+		'pg_amcheck', '--no-strict-names', '-s',
+		'postgres.long.dotted.string'
+	],
 	2,
 	[qr/^$/],
 	[
 		qr/pg_amcheck: error: improper qualified name \(too many dotted names\): postgres\.long\.dotted\.string/
 	],
-	'ungrammatical schema names still draw errors under --no-strict-names'
-);
+	'ungrammatical schema names still draw errors under --no-strict-names');
 $node->command_checks_all(
-	[ 'pg_amcheck', '--no-strict-names', '-d', 'postgres.long.dotted.string' ],
+	[
+		'pg_amcheck', '--no-strict-names', '-d',
+		'postgres.long.dotted.string'
+	],
 	2,
 	[qr/^$/],
 	[
 		qr/pg_amcheck: error: improper qualified name \(too many dotted names\): postgres\.long\.dotted\.string/
 	],
-	'ungrammatical database names still draw errors under --no-strict-names'
-);
+	'ungrammatical database names still draw errors under --no-strict-names');
 
 # Likewise for exclusion patterns
 $node->command_checks_all(
@@ -262,7 +265,7 @@ $node->command_checks_all(
 		'-r',         'postgres.none.none',
 		'-r',         'postgres.pg_catalog.none',
 		'-r',         'postgres.none.pg_class',
-		'-t',         'postgres.pg_catalog.pg_class',          # This exists
+		'-t',         'postgres.pg_catalog.pg_class',    # This exists
 	],
 	0,
 	[qr/^$/],

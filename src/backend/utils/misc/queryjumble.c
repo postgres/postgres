@@ -787,7 +787,7 @@ JumbleExpr(JumbleState *jstate, Node *node)
 			break;
 		case T_JsonExpr:
 			{
-				JsonExpr    *jexpr = (JsonExpr *) node;
+				JsonExpr   *jexpr = (JsonExpr *) node;
 
 				APP_JUMB(jexpr->op);
 				JumbleExpr(jstate, jexpr->formatted_expr);

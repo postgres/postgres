@@ -20,7 +20,8 @@ sub run_test
 {
 	my $test_mode = shift;
 
-	my $primary_xlogdir = "${PostgreSQL::Test::Utils::tmp_check}/xlog_primary";
+	my $primary_xlogdir =
+	  "${PostgreSQL::Test::Utils::tmp_check}/xlog_primary";
 
 	rmtree($primary_xlogdir);
 	RewindTest::setup_cluster($test_mode);

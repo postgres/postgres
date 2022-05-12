@@ -151,14 +151,14 @@ a dot unless the separator argument is given.
 
 sub major
 {
-    my ($self, %params) = @_;
-    my $result = $self->{num}->[0];
-    if ($result + 0 < 10)
-    {
-        my $sep = $params{separator} || '.';
-        $result .= "$sep$self->{num}->[1]";
-    }
-    return $result;
+	my ($self, %params) = @_;
+	my $result = $self->{num}->[0];
+	if ($result + 0 < 10)
+	{
+		my $sep = $params{separator} || '.';
+		$result .= "$sep$self->{num}->[1]";
+	}
+	return $result;
 }
 
 1;

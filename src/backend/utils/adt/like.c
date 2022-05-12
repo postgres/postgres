@@ -181,8 +181,8 @@ Generic_Text_IC_like(text *str, text *pat, Oid collation)
 	if (!OidIsValid(collation))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),

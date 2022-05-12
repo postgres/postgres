@@ -435,10 +435,10 @@ typedef struct XLogCtlInsert
 	bool		fullPageWrites;
 
 	/*
-	 * runningBackups is a counter indicating the number of backups currently in
-	 * progress. forcePageWrites is set to true when runningBackups is non-zero.
-	 * lastBackupStart is the latest checkpoint redo location used as a starting
-	 * point for an online backup.
+	 * runningBackups is a counter indicating the number of backups currently
+	 * in progress. forcePageWrites is set to true when runningBackups is
+	 * non-zero. lastBackupStart is the latest checkpoint redo location used
+	 * as a starting point for an online backup.
 	 */
 	int			runningBackups;
 	XLogRecPtr	lastBackupStart;
@@ -5307,14 +5307,14 @@ StartupXLOG(void)
 	 * When recovering from a backup (we are in recovery, and archive recovery
 	 * was requested), complain if we did not roll forward far enough to reach
 	 * the point where the database is consistent.  For regular online
-	 * backup-from-primary, that means reaching the end-of-backup WAL record (at
-	 * which point we reset backupStartPoint to be Invalid), for
+	 * backup-from-primary, that means reaching the end-of-backup WAL record
+	 * (at which point we reset backupStartPoint to be Invalid), for
 	 * backup-from-replica (which can't inject records into the WAL stream),
 	 * that point is when we reach the minRecoveryPoint in pg_control (which
-	 * we purposfully copy last when backing up from a replica).  For pg_rewind
-	 * (which creates a backup_label with a method of "pg_rewind") or
-	 * snapshot-style backups (which don't), backupEndRequired will be set to
-	 * false.
+	 * we purposefully copy last when backing up from a replica).  For
+	 * pg_rewind (which creates a backup_label with a method of "pg_rewind")
+	 * or snapshot-style backups (which don't), backupEndRequired will be set
+	 * to false.
 	 *
 	 * Note: it is indeed okay to look at the local variable
 	 * LocalMinRecoveryPoint here, even though ControlFile->minRecoveryPoint
@@ -5328,8 +5328,8 @@ StartupXLOG(void)
 		/*
 		 * Ran off end of WAL before reaching end-of-backup WAL record, or
 		 * minRecoveryPoint. That's a bad sign, indicating that you tried to
-		 * recover from an online backup but never called pg_backup_stop(),
-		 * or you didn't archive all the WAL needed.
+		 * recover from an online backup but never called pg_backup_stop(), or
+		 * you didn't archive all the WAL needed.
 		 */
 		if (ArchiveRecoveryRequested || ControlFile->backupEndRequired)
 		{
@@ -8481,8 +8481,8 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	WALInsertLockAcquireExclusive();
 
 	/*
-	 * It is expected that each do_pg_backup_start() call is matched by exactly
-	 * one do_pg_backup_stop() call.
+	 * It is expected that each do_pg_backup_start() call is matched by
+	 * exactly one do_pg_backup_stop() call.
 	 */
 	Assert(XLogCtl->Insert.runningBackups > 0);
 	XLogCtl->Insert.runningBackups--;

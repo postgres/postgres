@@ -20,20 +20,20 @@
 
 typedef struct XLogRecStats
 {
-	uint64	count;
-	uint64	rec_len;
-	uint64	fpi_len;
+	uint64		count;
+	uint64		rec_len;
+	uint64		fpi_len;
 } XLogRecStats;
 
 typedef struct XLogStats
 {
-	uint64	count;
+	uint64		count;
 #ifdef FRONTEND
 	XLogRecPtr	startptr;
 	XLogRecPtr	endptr;
 #endif
-	XLogRecStats    rmgr_stats[RM_MAX_ID + 1];
-	XLogRecStats    record_stats[RM_MAX_ID + 1][MAX_XLINFO_TYPES];
+	XLogRecStats rmgr_stats[RM_MAX_ID + 1];
+	XLogRecStats record_stats[RM_MAX_ID + 1][MAX_XLINFO_TYPES];
 } XLogStats;
 
 extern void XLogRecGetLen(XLogReaderState *record, uint32 *rec_len,

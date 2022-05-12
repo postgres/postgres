@@ -504,8 +504,8 @@ retry:
 	MyReplicationSlot = s;
 
 	/*
-	 * The call to pgstat_acquire_replslot() protects against stats for
-	 * a different slot, from before a restart or such, being present during
+	 * The call to pgstat_acquire_replslot() protects against stats for a
+	 * different slot, from before a restart or such, being present during
 	 * pgstat_report_replslot().
 	 */
 	if (SlotIsLogical(s))

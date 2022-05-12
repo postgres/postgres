@@ -30,8 +30,7 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_1 (a int)");
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_1 FOR TABLE tab_1");
-$node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_2");
+$node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub_2");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub_1, tap_pub_2"

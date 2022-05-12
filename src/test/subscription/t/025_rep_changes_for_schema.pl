@@ -27,11 +27,14 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE sch1.tab2 AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)");
+	"CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)"
+);
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)");
+	"CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)"
+);
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)");
+	"CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)"
+);
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO sch1.tab1_parent values (1),(4)");
@@ -41,11 +44,14 @@ $node_subscriber->safe_psql('postgres', "CREATE SCHEMA sch1");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE sch1.tab1 (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE sch1.tab2 (a int)");
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)");
+	"CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)"
+);
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)");
+	"CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)"
+);
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)");
+	"CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
@@ -75,7 +81,7 @@ is($result, qq(10|1|10), 'check rows on subscriber catchup');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT * FROM sch1.tab1_parent order by 1");
-is($result, qq(1|
+is( $result, qq(1|
 4|), 'check rows on subscriber catchup');
 
 # Insert some data into few tables and verify that inserted data is replicated
@@ -93,7 +99,7 @@ is($result, qq(20|1|20), 'check replicated inserts on subscriber');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT * FROM sch1.tab1_parent order by 1");
-is($result, qq(1|
+is( $result, qq(1|
 2|
 4|
 5|), 'check replicated inserts on subscriber');
@@ -189,7 +195,8 @@ is($result, qq(3),
 # Drop schema from publication, verify that the inserts are not published after
 # dropping the schema from publication. Here 2nd insert should not be
 # published.
-$node_publisher->safe_psql('postgres', "
+$node_publisher->safe_psql(
+	'postgres', "
 	INSERT INTO sch1.tab1 VALUES(21);
 	ALTER PUBLICATION tap_pub_schema DROP ALL TABLES IN SCHEMA sch1;
 	INSERT INTO sch1.tab1 values(22);"

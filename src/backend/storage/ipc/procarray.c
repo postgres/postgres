@@ -1172,8 +1172,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		 *
 		 * We have to sort them logically, because in KnownAssignedXidsAdd we
 		 * call TransactionIdFollowsOrEquals and so on. But we know these XIDs
-		 * come from RUNNING_XACTS, which means there are only normal XIDs from
-		 * the same epoch, so this is safe.
+		 * come from RUNNING_XACTS, which means there are only normal XIDs
+		 * from the same epoch, so this is safe.
 		 */
 		qsort(xids, nxids, sizeof(TransactionId), xidLogicalComparator);
 

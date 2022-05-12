@@ -60,21 +60,21 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected special size %d, got %d.",
-							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
-							   (int) PageGetSpecialSize(page))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected special size %d, got %d.",
+						   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+						   (int) PageGetSpecialSize(page))));
 
 	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected %08x, got %08x.",
-							   GIST_PAGE_ID,
-							   opaq->gist_page_id)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected %08x, got %08x.",
+						   GIST_PAGE_ID,
+						   opaq->gist_page_id)));
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -138,21 +138,21 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected special size %d, got %d.",
-							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
-							   (int) PageGetSpecialSize(page))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected special size %d, got %d.",
+						   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+						   (int) PageGetSpecialSize(page))));
 
 	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected %08x, got %08x.",
-							   GIST_PAGE_ID,
-							   opaq->gist_page_id)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected %08x, got %08x.",
+						   GIST_PAGE_ID,
+						   opaq->gist_page_id)));
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))

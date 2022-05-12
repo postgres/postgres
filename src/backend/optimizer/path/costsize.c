@@ -1794,7 +1794,7 @@ is_fake_var(Expr *expr)
 static double
 get_width_cost_multiplier(PlannerInfo *root, Expr *expr)
 {
-	double	width = -1.0; /* fake value */
+	double		width = -1.0;	/* fake value */
 
 	if (IsA(expr, RelabelType))
 		expr = (Expr *) ((RelabelType *) expr)->arg;
@@ -1802,17 +1802,17 @@ get_width_cost_multiplier(PlannerInfo *root, Expr *expr)
 	/* Try to find actual stat in corresponding relation */
 	if (IsA(expr, Var))
 	{
-		Var		*var = (Var *) expr;
+		Var		   *var = (Var *) expr;
 
 		if (var->varno > 0 && var->varno < root->simple_rel_array_size)
 		{
-			RelOptInfo	*rel = root->simple_rel_array[var->varno];
+			RelOptInfo *rel = root->simple_rel_array[var->varno];
 
 			if (rel != NULL &&
 				var->varattno >= rel->min_attr &&
 				var->varattno <= rel->max_attr)
 			{
-				int	ndx = var->varattno - rel->min_attr;
+				int			ndx = var->varattno - rel->min_attr;
 
 				if (rel->attr_widths[ndx] > 0)
 					width = rel->attr_widths[ndx];
@@ -1823,7 +1823,7 @@ get_width_cost_multiplier(PlannerInfo *root, Expr *expr)
 	/* Didn't find any actual stats, try using type width instead. */
 	if (width < 0.0)
 	{
-		Node	*node = (Node*) expr;
+		Node	   *node = (Node *) expr;
 
 		width = get_typavgwidth(exprType(node), exprTypmod(node));
 	}
@@ -1832,17 +1832,17 @@ get_width_cost_multiplier(PlannerInfo *root, Expr *expr)
 	 * Values are passed as Datum type, so comparisons can't be cheaper than
 	 * comparing a Datum value.
 	 *
-	 * FIXME I find this reasoning questionable. We may pass int2, and comparing
-	 * it is probably a bit cheaper than comparing a bigint.
+	 * FIXME I find this reasoning questionable. We may pass int2, and
+	 * comparing it is probably a bit cheaper than comparing a bigint.
 	 */
 	if (width <= sizeof(Datum))
 		return 1.0;
 
 	/*
 	 * We consider the cost of a comparison not to be directly proportional to
-	 * width of the argument, because widths of the arguments could be slightly
-	 * different (we only know the average width for the whole column). So we
-	 * use log16(width) as an estimate.
+	 * width of the argument, because widths of the arguments could be
+	 * slightly different (we only know the average width for the whole
+	 * column). So we use log16(width) as an estimate.
 	 */
 	return 1.0 + 0.125 * LOG2(width / sizeof(Datum));
 }
@@ -1902,23 +1902,23 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 					  bool heapSort)
 {
 	Cost		per_tuple_cost = 0.0;
-	ListCell	*lc;
-	List		*pathkeyExprs = NIL;
+	ListCell   *lc;
+	List	   *pathkeyExprs = NIL;
 	double		tuplesPerPrevGroup = tuples;
 	double		totalFuncCost = 1.0;
 	bool		has_fake_var = false;
 	int			i = 0;
 	Oid			prev_datatype = InvalidOid;
-	List		*cache_varinfos = NIL;
+	List	   *cache_varinfos = NIL;
 
 	/* fallback if pathkeys is unknown */
 	if (list_length(pathkeys) == 0)
 	{
 		/*
-		 * If we'll use a bounded heap-sort keeping just K tuples in memory, for
-		 * a total number of tuple comparisons of N log2 K; but the constant
-		 * factor is a bit higher than for quicksort. Tweak it so that the cost
-		 * curve is continuous at the crossover point.
+		 * If we'll use a bounded heap-sort keeping just K tuples in memory,
+		 * for a total number of tuple comparisons of N log2 K; but the
+		 * constant factor is a bit higher than for quicksort. Tweak it so
+		 * that the cost curve is continuous at the crossover point.
 		 */
 		output_tuples = (heapSort) ? 2.0 * output_tuples : tuples;
 		per_tuple_cost += 2.0 * cpu_operator_cost * LOG2(output_tuples);
@@ -1930,17 +1930,17 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 	}
 
 	/*
-	 * Computing total cost of sorting takes into account:
-	 * - per column comparison function cost
-	 * - we try to compute needed number of comparison per column
+	 * Computing total cost of sorting takes into account the per-column
+	 * comparison function cost.  We try to compute the needed number of
+	 * comparisons per column.
 	 */
 	foreach(lc, pathkeys)
 	{
-		PathKey			   *pathkey = (PathKey*) lfirst(lc);
-		EquivalenceMember  *em;
-		double				nGroups,
-							correctedNGroups;
-		Cost				funcCost = 1.0;
+		PathKey    *pathkey = (PathKey *) lfirst(lc);
+		EquivalenceMember *em;
+		double		nGroups,
+					correctedNGroups;
+		Cost		funcCost = 1.0;
 
 		/*
 		 * We believe that equivalence members aren't very different, so, to
@@ -1985,10 +1985,10 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 		pathkeyExprs = lappend(pathkeyExprs, em->em_expr);
 
 		/*
-		 * We need to calculate the number of comparisons for this column, which
-		 * requires knowing the group size. So we estimate the number of groups
-		 * by calling estimate_num_groups_incremental(), which estimates the
-		 * group size for "new" pathkeys.
+		 * We need to calculate the number of comparisons for this column,
+		 * which requires knowing the group size. So we estimate the number of
+		 * groups by calling estimate_num_groups_incremental(), which
+		 * estimates the group size for "new" pathkeys.
 		 *
 		 * Note: estimate_num_groups_incremental does not handle fake Vars, so
 		 * use a default estimate otherwise.
@@ -1999,26 +1999,30 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 													  &cache_varinfos,
 													  list_length(pathkeyExprs) - 1);
 		else if (tuples > 4.0)
+
 			/*
 			 * Use geometric mean as estimation if there are no stats.
 			 *
-			 * We don't use DEFAULT_NUM_DISTINCT here, because that’s used for
-			 * a single column, but here we’re dealing with multiple columns.
+			 * We don't use DEFAULT_NUM_DISTINCT here, because that's used for
+			 * a single column, but here we're dealing with multiple columns.
 			 */
 			nGroups = ceil(2.0 + sqrt(tuples) * (i + 1) / list_length(pathkeys));
 		else
 			nGroups = tuples;
 
 		/*
-		 * Presorted keys are not considered in the cost above, but we still do
-		 * have to compare them in the qsort comparator. So make sure to factor
-		 * in the cost in that case.
+		 * Presorted keys are not considered in the cost above, but we still
+		 * do have to compare them in the qsort comparator. So make sure to
+		 * factor in the cost in that case.
 		 */
 		if (i >= nPresortedKeys)
 		{
 			if (heapSort)
 			{
-				/* have to keep at least one group, and a multiple of group size */
+				/*
+				 * have to keep at least one group, and a multiple of group
+				 * size
+				 */
 				correctedNGroups = ceil(output_tuples / tuplesPerPrevGroup);
 			}
 			else
@@ -2033,19 +2037,20 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 		i++;
 
 		/*
-		 * Uniform distributions with all groups being of the same size are the
-		 * best case, with nice smooth behavior. Real-world distributions tend
-		 * not to be uniform, though, and we don’t have any reliable easy-to-use
-		 * information. As a basic defense against skewed distributions, we use
-		 * a 1.5 factor to make the expected group a bit larger, but we need to
-		 * be careful not to make the group larger than in the preceding step.
+		 * Uniform distributions with all groups being of the same size are
+		 * the best case, with nice smooth behavior. Real-world distributions
+		 * tend not to be uniform, though, and we don't have any reliable
+		 * easy-to-use information. As a basic defense against skewed
+		 * distributions, we use a 1.5 factor to make the expected group a bit
+		 * larger, but we need to be careful not to make the group larger than
+		 * in the preceding step.
 		 */
 		tuplesPerPrevGroup = Min(tuplesPerPrevGroup,
 								 ceil(1.5 * tuplesPerPrevGroup / nGroups));
 
 		/*
-		 * Once we get single-row group, it means tuples in the group are unique
-		 * and we can skip all remaining columns.
+		 * Once we get single-row group, it means tuples in the group are
+		 * unique and we can skip all remaining columns.
 		 */
 		if (tuplesPerPrevGroup <= 1.0)
 			break;
@@ -2057,15 +2062,15 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 	per_tuple_cost *= cpu_operator_cost;
 
 	/*
-	 * Accordingly to "Introduction to algorithms", Thomas H. Cormen, Charles E.
-	 * Leiserson, Ronald L. Rivest, ISBN 0-07-013143-0, quicksort estimation
-	 * formula has additional term proportional to number of tuples (See Chapter
-	 * 8.2 and Theorem 4.1). That affects  cases with a low number of tuples,
-	 * approximately less than 1e4. We could implement it as an additional
-	 * multiplier under the logarithm, but we use a bit more complex formula
-	 * which takes into account the number of unique tuples and it’s not clear
-	 * how to combine the multiplier with the number of groups. Estimate it as
-	 * 10 in cpu_operator_cost unit.
+	 * Accordingly to "Introduction to algorithms", Thomas H. Cormen, Charles
+	 * E. Leiserson, Ronald L. Rivest, ISBN 0-07-013143-0, quicksort
+	 * estimation formula has additional term proportional to number of tuples
+	 * (see Chapter 8.2 and Theorem 4.1). That affects cases with a low number
+	 * of tuples, approximately less than 1e4. We could implement it as an
+	 * additional multiplier under the logarithm, but we use a bit more
+	 * complex formula which takes into account the number of unique tuples
+	 * and it's not clear how to combine the multiplier with the number of
+	 * groups. Estimate it as 10 cpu_operator_cost units.
 	 */
 	per_tuple_cost += 10 * cpu_operator_cost;
 
@@ -2082,7 +2087,7 @@ cost_sort_estimate(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 				   double tuples)
 {
 	return compute_cpu_sort_cost(root, pathkeys, nPresortedKeys,
-								0, tuples, tuples, false);
+								 0, tuples, tuples, false);
 }
 
 /*

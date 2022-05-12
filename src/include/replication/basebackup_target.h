@@ -42,7 +42,7 @@ typedef struct BaseBackupTargetHandle BaseBackupTargetHandle;
  */
 extern void BaseBackupAddTarget(char *name,
 								void *(*check_detail) (char *, char *),
-								bbsink * (*get_sink) (bbsink *, void *));
+								bbsink *(*get_sink) (bbsink *, void *));
 
 /*
  * These functions are used by the core code to access base backup targets

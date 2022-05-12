@@ -8537,138 +8537,137 @@ div_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result,
 	alloc_var(result, res_ndigits);
 	res_digits = result->digits;
 
-		/*
-		 * The full multiple-place algorithm is taken from Knuth volume 2,
-		 * Algorithm 4.3.1D.
-		 *
-		 * We need the first divisor digit to be >= NBASE/2.  If it isn't,
-		 * make it so by scaling up both the divisor and dividend by the
-		 * factor "d".  (The reason for allocating dividend[0] above is to
-		 * leave room for possible carry here.)
-		 */
-		if (divisor[1] < HALF_NBASE)
-		{
-			int			d = NBASE / (divisor[1] + 1);
+	/*
+	 * The full multiple-place algorithm is taken from Knuth volume 2,
+	 * Algorithm 4.3.1D.
+	 *
+	 * We need the first divisor digit to be >= NBASE/2.  If it isn't, make it
+	 * so by scaling up both the divisor and dividend by the factor "d".  (The
+	 * reason for allocating dividend[0] above is to leave room for possible
+	 * carry here.)
+	 */
+	if (divisor[1] < HALF_NBASE)
+	{
+		int			d = NBASE / (divisor[1] + 1);
 
-			carry = 0;
-			for (i = var2ndigits; i > 0; i--)
-			{
-				carry += divisor[i] * d;
-				divisor[i] = carry % NBASE;
-				carry = carry / NBASE;
-			}
-			Assert(carry == 0);
-			carry = 0;
-			/* at this point only var1ndigits of dividend can be nonzero */
-			for (i = var1ndigits; i >= 0; i--)
-			{
-				carry += dividend[i] * d;
-				dividend[i] = carry % NBASE;
-				carry = carry / NBASE;
-			}
-			Assert(carry == 0);
-			Assert(divisor[1] >= HALF_NBASE);
+		carry = 0;
+		for (i = var2ndigits; i > 0; i--)
+		{
+			carry += divisor[i] * d;
+			divisor[i] = carry % NBASE;
+			carry = carry / NBASE;
 		}
-		/* First 2 divisor digits are used repeatedly in main loop */
-		divisor1 = divisor[1];
-		divisor2 = divisor[2];
+		Assert(carry == 0);
+		carry = 0;
+		/* at this point only var1ndigits of dividend can be nonzero */
+		for (i = var1ndigits; i >= 0; i--)
+		{
+			carry += dividend[i] * d;
+			dividend[i] = carry % NBASE;
+			carry = carry / NBASE;
+		}
+		Assert(carry == 0);
+		Assert(divisor[1] >= HALF_NBASE);
+	}
+	/* First 2 divisor digits are used repeatedly in main loop */
+	divisor1 = divisor[1];
+	divisor2 = divisor[2];
+
+	/*
+	 * Begin the main loop.  Each iteration of this loop produces the j'th
+	 * quotient digit by dividing dividend[j .. j + var2ndigits] by the
+	 * divisor; this is essentially the same as the common manual procedure
+	 * for long division.
+	 */
+	for (j = 0; j < res_ndigits; j++)
+	{
+		/* Estimate quotient digit from the first two dividend digits */
+		int			next2digits = dividend[j] * NBASE + dividend[j + 1];
+		int			qhat;
 
 		/*
-		 * Begin the main loop.  Each iteration of this loop produces the j'th
-		 * quotient digit by dividing dividend[j .. j + var2ndigits] by the
-		 * divisor; this is essentially the same as the common manual
-		 * procedure for long division.
+		 * If next2digits are 0, then quotient digit must be 0 and there's no
+		 * need to adjust the working dividend.  It's worth testing here to
+		 * fall out ASAP when processing trailing zeroes in a dividend.
 		 */
-		for (j = 0; j < res_ndigits; j++)
+		if (next2digits == 0)
 		{
-			/* Estimate quotient digit from the first two dividend digits */
-			int			next2digits = dividend[j] * NBASE + dividend[j + 1];
-			int			qhat;
+			res_digits[j] = 0;
+			continue;
+		}
+
+		if (dividend[j] == divisor1)
+			qhat = NBASE - 1;
+		else
+			qhat = next2digits / divisor1;
+
+		/*
+		 * Adjust quotient digit if it's too large.  Knuth proves that after
+		 * this step, the quotient digit will be either correct or just one
+		 * too large.  (Note: it's OK to use dividend[j+2] here because we
+		 * know the divisor length is at least 2.)
+		 */
+		while (divisor2 * qhat >
+			   (next2digits - qhat * divisor1) * NBASE + dividend[j + 2])
+			qhat--;
+
+		/* As above, need do nothing more when quotient digit is 0 */
+		if (qhat > 0)
+		{
+			NumericDigit *dividend_j = &dividend[j];
 
 			/*
-			 * If next2digits are 0, then quotient digit must be 0 and there's
-			 * no need to adjust the working dividend.  It's worth testing
-			 * here to fall out ASAP when processing trailing zeroes in a
-			 * dividend.
+			 * Multiply the divisor by qhat, and subtract that from the
+			 * working dividend.  The multiplication and subtraction are
+			 * folded together here, noting that qhat <= NBASE (since it might
+			 * be one too large), and so the intermediate result "tmp_result"
+			 * is in the range [-NBASE^2, NBASE - 1], and "borrow" is in the
+			 * range [0, NBASE].
 			 */
-			if (next2digits == 0)
+			borrow = 0;
+			for (i = var2ndigits; i >= 0; i--)
 			{
-				res_digits[j] = 0;
-				continue;
+				int			tmp_result;
+
+				tmp_result = dividend_j[i] - borrow - divisor[i] * qhat;
+				borrow = (NBASE - 1 - tmp_result) / NBASE;
+				dividend_j[i] = tmp_result + borrow * NBASE;
 			}
 
-			if (dividend[j] == divisor1)
-				qhat = NBASE - 1;
-			else
-				qhat = next2digits / divisor1;
-
 			/*
-			 * Adjust quotient digit if it's too large.  Knuth proves that
-			 * after this step, the quotient digit will be either correct or
-			 * just one too large.  (Note: it's OK to use dividend[j+2] here
-			 * because we know the divisor length is at least 2.)
+			 * If we got a borrow out of the top dividend digit, then indeed
+			 * qhat was one too large.  Fix it, and add back the divisor to
+			 * correct the working dividend.  (Knuth proves that this will
+			 * occur only about 3/NBASE of the time; hence, it's a good idea
+			 * to test this code with small NBASE to be sure this section gets
+			 * exercised.)
 			 */
-			while (divisor2 * qhat >
-				   (next2digits - qhat * divisor1) * NBASE + dividend[j + 2])
-				qhat--;
-
-			/* As above, need do nothing more when quotient digit is 0 */
-			if (qhat > 0)
+			if (borrow)
 			{
-				NumericDigit *dividend_j = &dividend[j];
-
-				/*
-				 * Multiply the divisor by qhat, and subtract that from the
-				 * working dividend.  The multiplication and subtraction are
-				 * folded together here, noting that qhat <= NBASE (since it
-				 * might be one too large), and so the intermediate result
-				 * "tmp_result" is in the range [-NBASE^2, NBASE - 1], and
-				 * "borrow" is in the range [0, NBASE].
-				 */
-				borrow = 0;
+				qhat--;
+				carry = 0;
 				for (i = var2ndigits; i >= 0; i--)
 				{
-					int			tmp_result;
-
-					tmp_result = dividend_j[i] - borrow - divisor[i] * qhat;
-					borrow = (NBASE - 1 - tmp_result) / NBASE;
-					dividend_j[i] = tmp_result + borrow * NBASE;
-				}
-
-				/*
-				 * If we got a borrow out of the top dividend digit, then
-				 * indeed qhat was one too large.  Fix it, and add back the
-				 * divisor to correct the working dividend.  (Knuth proves
-				 * that this will occur only about 3/NBASE of the time; hence,
-				 * it's a good idea to test this code with small NBASE to be
-				 * sure this section gets exercised.)
-				 */
-				if (borrow)
-				{
-					qhat--;
-					carry = 0;
-					for (i = var2ndigits; i >= 0; i--)
+					carry += dividend_j[i] + divisor[i];
+					if (carry >= NBASE)
 					{
-						carry += dividend_j[i] + divisor[i];
-						if (carry >= NBASE)
-						{
-							dividend_j[i] = carry - NBASE;
-							carry = 1;
-						}
-						else
-						{
-							dividend_j[i] = carry;
-							carry = 0;
-						}
+						dividend_j[i] = carry - NBASE;
+						carry = 1;
 					}
-					/* A carry should occur here to cancel the borrow above */
-					Assert(carry == 1);
+					else
+					{
+						dividend_j[i] = carry;
+						carry = 0;
+					}
 				}
+				/* A carry should occur here to cancel the borrow above */
+				Assert(carry == 1);
 			}
-
-			/* And we're done with this quotient digit */
-			res_digits[j] = qhat;
 		}
+
+		/* And we're done with this quotient digit */
+		res_digits[j] = qhat;
+	}
 
 	pfree(dividend);
 

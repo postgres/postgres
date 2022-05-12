@@ -3996,7 +3996,8 @@ hash_array(PG_FUNCTION_ARGS)
 
 			/*
 			 * Make fake type cache entry structure.  Note that we can't just
-			 * modify typentry, since that points directly into the type cache.
+			 * modify typentry, since that points directly into the type
+			 * cache.
 			 */
 			record_typentry = palloc0(sizeof(*record_typentry));
 			record_typentry->type_id = element_type;

@@ -469,7 +469,7 @@ struct Tuplesortstate
 
 	/* These are specific to the index_btree subcase: */
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
-	bool		uniqueNullsNotDistinct;	/* unique constraint null treatment */
+	bool		uniqueNullsNotDistinct; /* unique constraint null treatment */
 
 	/* These are specific to the index_hash subcase: */
 	uint32		high_mask;		/* masks for sortable part of hash code */
@@ -706,8 +706,8 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 		return compare;
 
 	/*
-	 * No need to waste effort calling the tiebreak function when there are
-	 * no other keys to sort on.
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
 	 */
 	if (state->onlyKey != NULL)
 		return 0;
@@ -730,8 +730,8 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 		return compare;
 
 	/*
-	 * No need to waste effort calling the tiebreak function when there are
-	 * no other keys to sort on.
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
 	 */
 	if (state->onlyKey != NULL)
 		return 0;
@@ -747,15 +747,15 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	int			compare;
 
 	compare = ApplyInt32SortComparator(a->datum1, a->isnull1,
-										b->datum1, b->isnull1,
-										&state->sortKeys[0]);
+									   b->datum1, b->isnull1,
+									   &state->sortKeys[0]);
 
 	if (compare != 0)
 		return compare;
 
 	/*
-	 * No need to waste effort calling the tiebreak function when there are
-	 * no other keys to sort on.
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
 	 */
 	if (state->onlyKey != NULL)
 		return 0;

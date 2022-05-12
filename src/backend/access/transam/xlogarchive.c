@@ -497,15 +497,15 @@ XLogArchiveNotify(const char *xlog)
 	}
 
 	/*
-	 * Timeline history files are given the highest archival priority to
-	 * lower the chance that a promoted standby will choose a timeline that
-	 * is already in use.  However, the archiver ordinarily tries to gather
+	 * Timeline history files are given the highest archival priority to lower
+	 * the chance that a promoted standby will choose a timeline that is
+	 * already in use.  However, the archiver ordinarily tries to gather
 	 * multiple files to archive from each scan of the archive_status
-	 * directory, which means that newly created timeline history files
-	 * could be left unarchived for a while.  To ensure that the archiver
-	 * picks up timeline history files as soon as possible, we force the
-	 * archiver to scan the archive_status directory the next time it looks
-	 * for a file to archive.
+	 * directory, which means that newly created timeline history files could
+	 * be left unarchived for a while.  To ensure that the archiver picks up
+	 * timeline history files as soon as possible, we force the archiver to
+	 * scan the archive_status directory the next time it looks for a file to
+	 * archive.
 	 */
 	if (IsTLHistoryFileName(xlog))
 		PgArchForceDirScan();

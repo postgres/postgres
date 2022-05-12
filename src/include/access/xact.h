@@ -231,9 +231,10 @@ typedef struct xl_xact_assignment
 typedef struct xl_xact_xinfo
 {
 	/*
-	 * Even though we right now only require two bytes of space in xinfo we use
-	 * four so following records don't have to care about alignment. Commit
-	 * records can be large, so copying large portions isn't attractive.
+	 * Even though we right now only require two bytes of space in xinfo we
+	 * use four so following records don't have to care about alignment.
+	 * Commit records can be large, so copying large portions isn't
+	 * attractive.
 	 */
 	uint32		xinfo;
 } xl_xact_xinfo;
@@ -274,7 +275,7 @@ typedef struct xl_xact_stats_item
 
 typedef struct xl_xact_stats_items
 {
-	int		nitems;
+	int			nitems;
 	xl_xact_stats_item items[FLEXIBLE_ARRAY_MEMBER];
 } xl_xact_stats_items;
 #define MinSizeOfXactStatsItems offsetof(xl_xact_stats_items, items)
@@ -378,7 +379,7 @@ typedef struct xl_xact_parsed_commit
 	char		twophase_gid[GIDSIZE];	/* only for 2PC */
 	int			nabortrels;		/* only for 2PC */
 	RelFileNode *abortnodes;	/* only for 2PC */
-	int			nabortstats;		/* only for 2PC */
+	int			nabortstats;	/* only for 2PC */
 	xl_xact_stats_item *abortstats; /* only for 2PC */
 
 	XLogRecPtr	origin_lsn;

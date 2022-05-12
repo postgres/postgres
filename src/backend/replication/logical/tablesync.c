@@ -786,11 +786,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 		/*
 		 * Fetch info about column lists for the relation (from all the
-		 * publications). We unnest the int2vector values, because that
-		 * makes it easier to combine lists by simply adding the attnums
-		 * to a new bitmap (without having to parse the int2vector data).
-		 * This preserves NULL values, so that if one of the publications
-		 * has no column list, we'll know that.
+		 * publications). We unnest the int2vector values, because that makes
+		 * it easier to combine lists by simply adding the attnums to a new
+		 * bitmap (without having to parse the int2vector data). This
+		 * preserves NULL values, so that if one of the publications has no
+		 * column list, we'll know that.
 		 */
 		resetStringInfo(&cmd);
 		appendStringInfo(&cmd,
@@ -816,15 +816,15 @@ fetch_remote_table_info(char *nspname, char *relname,
 							nspname, relname, pubres->err)));
 
 		/*
-		 * Merge the column lists (from different publications) by creating
-		 * a single bitmap with all the attnums. If we find a NULL value,
-		 * that means one of the publications has no column list for the
-		 * table we're syncing.
+		 * Merge the column lists (from different publications) by creating a
+		 * single bitmap with all the attnums. If we find a NULL value, that
+		 * means one of the publications has no column list for the table
+		 * we're syncing.
 		 */
 		slot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
 		while (tuplestore_gettupleslot(pubres->tuplestore, true, false, slot))
 		{
-			Datum	cfval = slot_getattr(slot, 1, &isnull);
+			Datum		cfval = slot_getattr(slot, 1, &isnull);
 
 			/* NULL means empty column list, so we're done. */
 			if (isnull)
@@ -835,7 +835,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 			}
 
 			included_cols = bms_add_member(included_cols,
-										DatumGetInt16(cfval));
+										   DatumGetInt16(cfval));
 
 			ExecClearTuple(slot);
 		}
@@ -1056,8 +1056,8 @@ copy_table(Relation rel)
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
 
 		/*
-		 * XXX Do we need to list the columns in all cases? Maybe we're replicating
-		 * all columns?
+		 * XXX Do we need to list the columns in all cases? Maybe we're
+		 * replicating all columns?
 		 */
 		for (int i = 0; i < lrel.natts; i++)
 		{
@@ -1321,10 +1321,10 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 
 	/*
 	 * COPY FROM does not honor RLS policies.  That is not a problem for
-	 * subscriptions owned by roles with BYPASSRLS privilege (or superuser, who
-	 * has it implicitly), but other roles should not be able to circumvent
-	 * RLS.  Disallow logical replication into RLS enabled relations for such
-	 * roles.
+	 * subscriptions owned by roles with BYPASSRLS privilege (or superuser,
+	 * who has it implicitly), but other roles should not be able to
+	 * circumvent RLS.  Disallow logical replication into RLS enabled
+	 * relations for such roles.
 	 */
 	if (check_enable_rls(RelationGetRelid(rel), InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,

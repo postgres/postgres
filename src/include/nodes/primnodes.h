@@ -1251,7 +1251,7 @@ typedef enum JsonExprOp
 	JSON_VALUE_OP,				/* JSON_VALUE() */
 	JSON_QUERY_OP,				/* JSON_QUERY() */
 	JSON_EXISTS_OP,				/* JSON_EXISTS() */
-	JSON_TABLE_OP               /* JSON_TABLE() */
+	JSON_TABLE_OP				/* JSON_TABLE() */
 } JsonExprOp;
 
 /*
@@ -1274,7 +1274,8 @@ typedef enum JsonFormatType
 {
 	JS_FORMAT_DEFAULT,			/* unspecified */
 	JS_FORMAT_JSON,				/* FORMAT JSON [ENCODING ...] */
-	JS_FORMAT_JSONB				/* implicit internal format for RETURNING jsonb */
+	JS_FORMAT_JSONB				/* implicit internal format for RETURNING
+								 * jsonb */
 } JsonFormatType;
 
 /*
@@ -1315,7 +1316,7 @@ typedef enum JsonWrapper
 typedef struct JsonFormat
 {
 	NodeTag		type;
-	JsonFormatType format_type;	/* format type */
+	JsonFormatType format_type; /* format type */
 	JsonEncoding encoding;		/* JSON encoding */
 	int			location;		/* token location, or -1 if unknown */
 } JsonFormat;
@@ -1340,7 +1341,7 @@ typedef struct JsonValueExpr
 {
 	NodeTag		type;
 	Expr	   *raw_expr;		/* raw expression */
-	Expr	   *formatted_expr;	/* formatted expression or NULL */
+	Expr	   *formatted_expr; /* formatted expression or NULL */
 	JsonFormat *format;			/* FORMAT clause, if specified */
 } JsonValueExpr;
 
@@ -1367,7 +1368,7 @@ typedef struct JsonConstructorExpr
 	Expr	   *func;			/* underlying json[b]_xxx() function call */
 	Expr	   *coercion;		/* coercion to RETURNING type */
 	JsonReturning *returning;	/* RETURNING clause */
-	bool		absent_on_null;	/* ABSENT ON NULL? */
+	bool		absent_on_null; /* ABSENT ON NULL? */
 	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
 	int			location;
 } JsonConstructorExpr;
@@ -1380,7 +1381,7 @@ typedef enum JsonValueType
 {
 	JS_TYPE_ANY,				/* IS JSON [VALUE] */
 	JS_TYPE_OBJECT,				/* IS JSON OBJECT */
-	JS_TYPE_ARRAY,				/* IS JSON ARRAY*/
+	JS_TYPE_ARRAY,				/* IS JSON ARRAY */
 	JS_TYPE_SCALAR				/* IS JSON SCALAR */
 } JsonValueType;
 
@@ -1450,17 +1451,17 @@ typedef struct JsonExpr
 {
 	Expr		xpr;
 	JsonExprOp	op;				/* json function ID */
-	Node	   *formatted_expr;	/* formatted context item expression */
+	Node	   *formatted_expr; /* formatted context item expression */
 	JsonCoercion *result_coercion;	/* resulting coercion to RETURNING type */
 	JsonFormat *format;			/* context item format (JSON/JSONB) */
 	Node	   *path_spec;		/* JSON path specification expression */
 	List	   *passing_names;	/* PASSING argument names */
-	List	   *passing_values;	/* PASSING argument values */
+	List	   *passing_values; /* PASSING argument values */
 	JsonReturning *returning;	/* RETURNING clause type/format info */
 	JsonBehavior *on_empty;		/* ON EMPTY behavior */
 	JsonBehavior *on_error;		/* ON ERROR behavior */
-	JsonItemCoercions *coercions; /* coercions for JSON_VALUE */
-	JsonWrapper	wrapper;		/* WRAPPER for JSON_QUERY */
+	JsonItemCoercions *coercions;	/* coercions for JSON_VALUE */
+	JsonWrapper wrapper;		/* WRAPPER for JSON_QUERY */
 	bool		omit_quotes;	/* KEEP/OMIT QUOTES for JSON_QUERY */
 	int			location;		/* token location, or -1 if unknown */
 } JsonExpr;
@@ -1472,13 +1473,15 @@ typedef struct JsonExpr
 typedef struct JsonTableParent
 {
 	NodeTag		type;
-	Const	   *path;		/* jsonpath constant */
-	char	   *name;		/* path name */
-	Node	   *child;		/* nested columns, if any */
-	bool		outerJoin;	/* outer or inner join for nested columns? */
-	int			colMin;		/* min column index in the resulting column list */
-	int			colMax;		/* max column index in the resulting column list */
-	bool		errorOnError; /* ERROR/EMPTY ON ERROR behavior */
+	Const	   *path;			/* jsonpath constant */
+	char	   *name;			/* path name */
+	Node	   *child;			/* nested columns, if any */
+	bool		outerJoin;		/* outer or inner join for nested columns? */
+	int			colMin;			/* min column index in the resulting column
+								 * list */
+	int			colMax;			/* max column index in the resulting column
+								 * list */
+	bool		errorOnError;	/* ERROR/EMPTY ON ERROR behavior */
 } JsonTableParent;
 
 /*
@@ -1488,9 +1491,9 @@ typedef struct JsonTableParent
 typedef struct JsonTableSibling
 {
 	NodeTag		type;
-	Node	   *larg;		/* left join node */
-	Node	   *rarg;		/* right join node */
-	bool		cross;		/* cross or union join? */
+	Node	   *larg;			/* left join node */
+	Node	   *rarg;			/* right join node */
+	bool		cross;			/* cross or union join? */
 } JsonTableSibling;
 
 /* ----------------

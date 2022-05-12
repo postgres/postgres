@@ -800,7 +800,8 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 							 errmsg("column name mismatch in header line field %d: got null value (\"%s\"), expected \"%s\"",
 									fldnum, cstate->opts.null_print, NameStr(attr->attname))));
 
-				if (namestrcmp(&attr->attname, colName) != 0) {
+				if (namestrcmp(&attr->attname, colName) != 0)
+				{
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("column name mismatch in header line field %d: got \"%s\", expected \"%s\"",

@@ -1967,8 +1967,8 @@ retry:
 			 * because no code should expect latches to survive across
 			 * CHECK_FOR_INTERRUPTS().
 			 */
-			 ResetLatch(MyLatch);
-			 goto retry;
+			ResetLatch(MyLatch);
+			goto retry;
 		}
 	}
 

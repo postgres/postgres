@@ -288,9 +288,9 @@ static void getJsonPathItem(JsonPathExecContext *cxt, JsonPathItem *item,
 							JsonbValue *value);
 static void getJsonPathVariable(JsonPathExecContext *cxt,
 								JsonPathItem *variable, JsonbValue *value);
-static int getJsonPathVariableFromJsonb(void *varsJsonb, char *varName,
-										int varNameLen, JsonbValue *val,
-										JsonbValue *baseObject);
+static int	getJsonPathVariableFromJsonb(void *varsJsonb, char *varName,
+										 int varNameLen, JsonbValue *val,
+										 JsonbValue *baseObject);
 static int	JsonbArraySize(JsonbValue *jb);
 static JsonPathBool executeComparison(JsonPathItem *cmp, JsonbValue *lv,
 									  JsonbValue *rv, void *p);
@@ -322,7 +322,7 @@ static int	compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 
 
 static JsonTableJoinState *JsonTableInitPlanState(JsonTableContext *cxt,
-									Node *plan, JsonTableScanState *parent);
+												  Node *plan, JsonTableScanState *parent);
 static bool JsonTableNextRow(JsonTableScanState *scan);
 
 
@@ -2743,7 +2743,7 @@ static int
 compareDatetime(Datum val1, Oid typid1, Datum val2, Oid typid2,
 				bool useTz, bool *cast_error)
 {
-	PGFunction cmpfunc;
+	PGFunction	cmpfunc;
 
 	*cast_error = false;
 
@@ -2987,8 +2987,8 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 JsonbValue *
 JsonPathValue(Datum jb, JsonPath *jp, bool *empty, bool *error, List *vars)
 {
-	JsonbValue   *res;
-	JsonValueList found = { 0 };
+	JsonbValue *res;
+	JsonValueList found = {0};
 	JsonPathExecResult jper PG_USED_FOR_ASSERTS_ONLY;
 	int			count;
 
@@ -3123,8 +3123,8 @@ JsonItemFromDatum(Datum val, Oid typid, int32 typmod, JsonbValue *res)
 				text	   *txt = DatumGetTextP(val);
 				char	   *str = text_to_cstring(txt);
 				Jsonb	   *jb =
-					DatumGetJsonbP(DirectFunctionCall1(jsonb_in,
-													   CStringGetDatum(str)));
+				DatumGetJsonbP(DirectFunctionCall1(jsonb_in,
+												   CStringGetDatum(str)));
 
 				pfree(str);
 
@@ -3221,7 +3221,7 @@ JsonTableInitOpaque(TableFuncScanState *state, int natts)
 {
 	JsonTableContext *cxt;
 	PlanState  *ps = &state->ss.ps;
-	TableFuncScan  *tfs = castNode(TableFuncScan, ps->plan);
+	TableFuncScan *tfs = castNode(TableFuncScan, ps->plan);
 	TableFunc  *tf = tfs->tablefunc;
 	JsonExpr   *ci = castNode(JsonExpr, tf->docexpr);
 	JsonTableParent *root = castNode(JsonTableParent, tf->plan);
@@ -3298,7 +3298,7 @@ JsonTableResetContextItem(JsonTableScanState *scan, Datum item)
 {
 	MemoryContext oldcxt;
 	JsonPathExecResult res;
-	Jsonb		*js = (Jsonb *) DatumGetJsonbP(item);
+	Jsonb	   *js = (Jsonb *) DatumGetJsonbP(item);
 
 	JsonValueListClear(&scan->found);
 
@@ -3307,7 +3307,7 @@ JsonTableResetContextItem(JsonTableScanState *scan, Datum item)
 	oldcxt = MemoryContextSwitchTo(scan->mcxt);
 
 	res = executeJsonPath(scan->path, scan->args, EvalJsonPathVar, js,
-						  scan->errorOnError, &scan->found, false /* FIXME */);
+						  scan->errorOnError, &scan->found, false /* FIXME */ );
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -3369,9 +3369,9 @@ JsonTableNextJoinRow(JsonTableJoinState *state)
 
 		/* inner rows are exhausted */
 		if (state->u.join.cross)
-			state->u.join.advanceRight = false;	/* next outer row */
+			state->u.join.advanceRight = false; /* next outer row */
 		else
-			return false;	/* end of scan */
+			return false;		/* end of scan */
 	}
 
 	while (!state->u.join.advanceRight)
@@ -3387,7 +3387,7 @@ JsonTableNextJoinRow(JsonTableJoinState *state)
 			JsonTableRescanRecursive(state->u.join.right);
 
 			if (!JsonTableNextJoinRow(state->u.join.right))
-				continue;	/* next outer row */
+				continue;		/* next outer row */
 
 			state->u.join.advanceRight = true;	/* next inner row */
 		}
@@ -3460,7 +3460,7 @@ JsonTableNextRow(JsonTableScanState *scan)
 		{
 			scan->current = PointerGetDatum(NULL);
 			scan->currentIsNull = true;
-			return false;	/* end of scan */
+			return false;		/* end of scan */
 		}
 
 		/* set current row item */
@@ -3518,12 +3518,12 @@ JsonTableGetValue(TableFuncScanState *state, int colnum,
 	JsonTableScanState *scan = cxt->colexprs[colnum].scan;
 	Datum		result;
 
-	if (scan->currentIsNull) /* NULL from outer/union join */
+	if (scan->currentIsNull)	/* NULL from outer/union join */
 	{
 		result = (Datum) 0;
 		*isnull = true;
 	}
-	else if (estate)	/* regular column */
+	else if (estate)			/* regular column */
 	{
 		result = ExecEvalExpr(estate, econtext, isnull);
 	}

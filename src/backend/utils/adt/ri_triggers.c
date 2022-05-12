@@ -113,8 +113,10 @@ typedef struct RI_ConstraintInfo
 	Oid			fk_relid;		/* referencing relation */
 	char		confupdtype;	/* foreign key's ON UPDATE action */
 	char		confdeltype;	/* foreign key's ON DELETE action */
-	int			ndelsetcols;	/* number of columns referenced in ON DELETE SET clause */
-	int16		confdelsetcols[RI_MAX_NUMKEYS]; /* attnums of cols to set on delete */
+	int			ndelsetcols;	/* number of columns referenced in ON DELETE
+								 * SET clause */
+	int16		confdelsetcols[RI_MAX_NUMKEYS]; /* attnums of cols to set on
+												 * delete */
 	char		confmatchtype;	/* foreign key's match type */
 	int			nkeys;			/* number of key columns */
 	int16		pk_attnums[RI_MAX_NUMKEYS]; /* attnums of referenced cols */
@@ -1059,7 +1061,8 @@ ri_set(TriggerData *trigdata, bool is_set_null, int tgkind)
 	/*
 	 * Fetch or prepare a saved plan for the trigger.
 	 */
-	switch (tgkind) {
+	switch (tgkind)
+	{
 		case RI_TRIGTYPE_UPDATE:
 			queryno = is_set_null
 				? RI_PLAN_SETNULL_ONUPDATE
@@ -1086,25 +1089,29 @@ ri_set(TriggerData *trigdata, bool is_set_null, int tgkind)
 		const char *qualsep;
 		Oid			queryoids[RI_MAX_NUMKEYS];
 		const char *fk_only;
-		int num_cols_to_set;
+		int			num_cols_to_set;
 		const int16 *set_cols;
 
-		switch (tgkind) {
+		switch (tgkind)
+		{
 			case RI_TRIGTYPE_UPDATE:
 				num_cols_to_set = riinfo->nkeys;
 				set_cols = riinfo->fk_attnums;
 				break;
 			case RI_TRIGTYPE_DELETE:
+
 				/*
-				 * If confdelsetcols are present, then we only update
-				 * the columns specified in that array, otherwise we
-				 * update all the referencing columns.
+				 * If confdelsetcols are present, then we only update the
+				 * columns specified in that array, otherwise we update all
+				 * the referencing columns.
 				 */
-				if (riinfo->ndelsetcols != 0) {
+				if (riinfo->ndelsetcols != 0)
+				{
 					num_cols_to_set = riinfo->ndelsetcols;
 					set_cols = riinfo->confdelsetcols;
 				}
-				else {
+				else
+				{
 					num_cols_to_set = riinfo->nkeys;
 					set_cols = riinfo->fk_attnums;
 				}

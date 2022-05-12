@@ -245,7 +245,7 @@ typedef struct IndexAmRoutine
 	/* does AM use maintenance_work_mem? */
 	bool		amusemaintenanceworkmem;
 	/* does AM block HOT update? */
-	bool        amhotblocking;
+	bool		amhotblocking;
 	/* OR of parallel vacuum flags.  See vacuum.h for flags. */
 	uint8		amparallelvacuumoptions;
 	/* type of data stored in index, or InvalidOid if variable */

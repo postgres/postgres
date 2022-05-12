@@ -411,8 +411,8 @@ xact_desc_prepare(StringInfo buf, uint8 info, xl_xact_prepare *xlrec, RepOriginI
 							   parsed.tsId, xlrec->initfileinval);
 
 	/*
-	 * Check if the replication origin has been set in this record in the
-	 * same way as PrepareRedoAdd().
+	 * Check if the replication origin has been set in this record in the same
+	 * way as PrepareRedoAdd().
 	 */
 	if (origin_id != InvalidRepOriginId)
 		appendStringInfo(buf, "; origin: node %u, lsn %X/%X, at %s",

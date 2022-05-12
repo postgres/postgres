@@ -619,7 +619,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
 			if (use_new_option_syntax)
 				AppendStringCommandOption(query, use_new_option_syntax,
-										   "SNAPSHOT", "nothing");
+										  "SNAPSHOT", "nothing");
 			else
 				AppendPlainCommandOption(query, use_new_option_syntax,
 										 "NOEXPORT_SNAPSHOT");

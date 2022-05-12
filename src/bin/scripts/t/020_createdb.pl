@@ -35,12 +35,19 @@ if ($ENV{with_icu} eq 'yes')
 		'create database with ICU fails without ICU locale specified');
 
 	$node->issues_sql_like(
-		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=en', 'foobar5' ],
+		[
+			'createdb',        '-T',
+			'template0',       '--locale-provider=icu',
+			'--icu-locale=en', 'foobar5'
+		],
 		qr/statement: CREATE DATABASE foobar5 .* LOCALE_PROVIDER icu ICU_LOCALE 'en'/,
 		'create database with ICU locale specified');
 
 	$node->command_fails(
-		[ 'createdb', '-T', 'template0', '--locale-provider=icu', '--icu-locale=@colNumeric=lower', 'foobarX' ],
+		[
+			'createdb', '-T', 'template0', '--locale-provider=icu',
+			'--icu-locale=@colNumeric=lower', 'foobarX'
+		],
 		'fails for invalid ICU locale');
 }
 else
@@ -53,7 +60,8 @@ else
 $node->command_fails([ 'createdb', 'foobar1' ],
 	'fails if database already exists');
 
-$node->command_fails([ 'createdb', '-T', 'template0', '--locale-provider=xyz', 'foobarX' ],
+$node->command_fails(
+	[ 'createdb', '-T', 'template0', '--locale-provider=xyz', 'foobarX' ],
 	'fails for invalid locale provider');
 
 # Check use of templates with shared dependencies copied from the template.

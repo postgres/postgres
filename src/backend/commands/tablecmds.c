@@ -495,8 +495,8 @@ static ObjectAddress addFkRecurseReferenced(List **wqueue, Constraint *fkconstra
 											bool old_check_ok,
 											Oid parentDelTrigger, Oid parentUpdTrigger);
 static void validateFkOnDeleteSetColumns(int numfks, const int16 *fkattnums,
-									   int numfksetcols, const int16 *fksetcolsattnums,
-									   List *fksetcols);
+										 int numfksetcols, const int16 *fksetcolsattnums,
+										 List *fksetcols);
 static void addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint,
 									Relation rel, Relation pkrel, Oid indexOid, Oid parentConstr,
 									int numfks, int16 *pkattnum, int16 *fkattnum,
@@ -5579,7 +5579,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 
 			foreach(lc, seqlist)
 			{
-				Oid         seq_relid = lfirst_oid(lc);
+				Oid			seq_relid = lfirst_oid(lc);
 
 				SequenceChangePersistence(seq_relid, tab->newrelpersistence);
 			}
@@ -9448,8 +9448,8 @@ validateFkOnDeleteSetColumns(int numfks, const int16 *fkattnums,
 {
 	for (int i = 0; i < numfksetcols; i++)
 	{
-		int16 setcol_attnum = fksetcolsattnums[i];
-		bool seen = false;
+		int16		setcol_attnum = fksetcolsattnums[i];
+		bool		seen = false;
 
 		for (int j = 0; j < numfks; j++)
 		{
@@ -9462,7 +9462,8 @@ validateFkOnDeleteSetColumns(int numfks, const int16 *fkattnums,
 
 		if (!seen)
 		{
-			char *col = strVal(list_nth(fksetcols, i));
+			char	   *col = strVal(list_nth(fksetcols, i));
+
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("column \"%s\" referenced in ON DELETE SET action must be part of foreign key", col)));
@@ -15890,6 +15891,7 @@ relation_mark_replica_identity(Relation rel, char ri_type, Oid indexOid,
 			CatalogTupleUpdate(pg_index, &pg_index_tuple->t_self, pg_index_tuple);
 			InvokeObjectPostAlterHookArg(IndexRelationId, thisIndexOid, 0,
 										 InvalidOid, is_internal);
+
 			/*
 			 * Invalidate the relcache for the table, so that after we commit
 			 * all sessions will refresh the table's replica identity index
@@ -17931,12 +17933,12 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 	/*
 	 * If the partition we just attached is partitioned itself, invalidate
 	 * relcache for all descendent partitions too to ensure that their
-	 * rd_partcheck expression trees are rebuilt; partitions already locked
-	 * at the beginning of this function.
+	 * rd_partcheck expression trees are rebuilt; partitions already locked at
+	 * the beginning of this function.
 	 */
 	if (attachrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		ListCell *l;
+		ListCell   *l;
 
 		foreach(l, attachrel_children)
 		{
@@ -18652,13 +18654,13 @@ DetachPartitionFinalize(Relation rel, Relation partRel, bool concurrent,
 	/*
 	 * If the partition we just detached is partitioned itself, invalidate
 	 * relcache for all descendent partitions too to ensure that their
-	 * rd_partcheck expression trees are rebuilt; must lock partitions
-	 * before doing so, using the same lockmode as what partRel has been
-	 * locked with by the caller.
+	 * rd_partcheck expression trees are rebuilt; must lock partitions before
+	 * doing so, using the same lockmode as what partRel has been locked with
+	 * by the caller.
 	 */
 	if (partRel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
 	{
-		List   *children;
+		List	   *children;
 
 		children = find_all_inheritors(RelationGetRelid(partRel),
 									   AccessExclusiveLock, NULL);

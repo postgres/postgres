@@ -58,7 +58,7 @@ typedef struct TablespaceList
 typedef struct ArchiveStreamState
 {
 	int			tablespacenum;
-	pg_compress_specification   *compress;
+	pg_compress_specification *compress;
 	bbstreamer *streamer;
 	bbstreamer *manifest_inject_streamer;
 	PQExpBuffer manifest_buffer;
@@ -173,6 +173,7 @@ static int	bgpipe[2] = {-1, -1};
 /* Handle to child process */
 static pid_t bgchild = -1;
 static bool in_log_streamer = false;
+
 /* Flag to indicate if child process exited unexpectedly */
 static volatile sig_atomic_t bgchild_exited = false;
 
@@ -567,8 +568,8 @@ LogStreamerMain(logstreamer_param *param)
 		 */
 #ifdef WIN32
 		/*
-		 * In order to signal the main thread of an ungraceful exit we
-		 * set the same flag that we use on Unix to signal SIGCHLD.
+		 * In order to signal the main thread of an ungraceful exit we set the
+		 * same flag that we use on Unix to signal SIGCHLD.
 		 */
 		bgchild_exited = true;
 #endif
@@ -1010,7 +1011,7 @@ parse_compress_options(char *option, char **algorithm, char **detail,
 	}
 	else
 	{
-		char   *alg;
+		char	   *alg;
 
 		alg = palloc((sep - option) + 1);
 		memcpy(alg, option, sep - option);
@@ -1133,11 +1134,11 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 
 	/*
 	 * We have to parse the archive if (1) we're suppose to extract it, or if
-	 * (2) we need to inject backup_manifest or recovery configuration into it.
-	 * However, we only know how to parse tar archives.
+	 * (2) we need to inject backup_manifest or recovery configuration into
+	 * it. However, we only know how to parse tar archives.
 	 */
 	must_parse_archive = (format == 'p' || inject_manifest ||
-		(spclocation == NULL && writerecoveryconf));
+						  (spclocation == NULL && writerecoveryconf));
 
 	/* At present, we only know how to parse tar archives. */
 	if (must_parse_archive && !is_tar && !is_compressed_tar)
@@ -1178,8 +1179,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		/*
 		 * In tar format, we just write the archive without extracting it.
 		 * Normally, we write it to the archive name provided by the caller,
-		 * but when the base directory is "-" that means we need to write
-		 * to standard output.
+		 * but when the base directory is "-" that means we need to write to
+		 * standard output.
 		 */
 		if (strcmp(basedir, "-") == 0)
 		{
@@ -1233,16 +1234,16 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	}
 
 	/*
-	 * If we're supposed to inject the backup manifest into the results,
-	 * it should be done here, so that the file content can be injected
-	 * directly, without worrying about the details of the tar format.
+	 * If we're supposed to inject the backup manifest into the results, it
+	 * should be done here, so that the file content can be injected directly,
+	 * without worrying about the details of the tar format.
 	 */
 	if (inject_manifest)
 		manifest_inject_streamer = streamer;
 
 	/*
-	 * If this is the main tablespace and we're supposed to write
-	 * recovery information, arrange to do that.
+	 * If this is the main tablespace and we're supposed to write recovery
+	 * information, arrange to do that.
 	 */
 	if (spclocation == NULL && writerecoveryconf)
 	{
@@ -1253,11 +1254,10 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	}
 
 	/*
-	 * If we're doing anything that involves understanding the contents of
-	 * the archive, we'll need to parse it. If not, we can skip parsing it,
-	 * but old versions of the server send improperly terminated tarfiles,
-	 * so if we're talking to such a server we'll need to add the terminator
-	 * here.
+	 * If we're doing anything that involves understanding the contents of the
+	 * archive, we'll need to parse it. If not, we can skip parsing it, but
+	 * old versions of the server send improperly terminated tarfiles, so if
+	 * we're talking to such a server we'll need to add the terminator here.
 	 */
 	if (must_parse_archive)
 		streamer = bbstreamer_tar_parser_new(streamer);
@@ -1265,8 +1265,8 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 		streamer = bbstreamer_tar_terminator_new(streamer);
 
 	/*
-	 * If the user has requested a server compressed archive along with archive
-	 * extraction at client then we need to decompress it.
+	 * If the user has requested a server compressed archive along with
+	 * archive extraction at client then we need to decompress it.
 	 */
 	if (format == 'p')
 	{
@@ -1848,17 +1848,17 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	}
 	if (maxrate > 0)
 		AppendIntegerCommandOption(&buf, use_new_option_syntax, "MAX_RATE",
-									  maxrate);
+								   maxrate);
 	if (format == 't')
 		AppendPlainCommandOption(&buf, use_new_option_syntax, "TABLESPACE_MAP");
 	if (!verify_checksums)
 	{
 		if (use_new_option_syntax)
 			AppendIntegerCommandOption(&buf, use_new_option_syntax,
-										  "VERIFY_CHECKSUMS", 0);
+									   "VERIFY_CHECKSUMS", 0);
 		else
 			AppendPlainCommandOption(&buf, use_new_option_syntax,
-										"NOVERIFY_CHECKSUMS");
+									 "NOVERIFY_CHECKSUMS");
 	}
 
 	if (manifest)
@@ -1992,8 +1992,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * we do anything anyway.
 		 *
 		 * Note that this is skipped for tar format backups and backups that
-		 * the server is storing to a target location, since in that case
-		 * we won't be storing anything into these directories and thus should
+		 * the server is storing to a target location, since in that case we
+		 * won't be storing anything into these directories and thus should
 		 * not create them.
 		 */
 		if (backup_target == NULL && format == 'p' && !PQgetisnull(res, i, 1))
@@ -2019,8 +2019,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 	 */
 	if (includewal == STREAM_WAL)
 	{
-		pg_compress_algorithm	wal_compress_algorithm;
-		int		wal_compress_level;
+		pg_compress_algorithm wal_compress_algorithm;
+		int			wal_compress_level;
 
 		if (verbose)
 			pg_log_info("starting background WAL receiver");
@@ -2315,8 +2315,8 @@ main(int argc, char **argv)
 	int			option_index;
 	char	   *compression_algorithm = "none";
 	char	   *compression_detail = NULL;
-	CompressionLocation	compressloc = COMPRESS_LOCATION_UNSPECIFIED;
-	pg_compress_specification	client_compress;
+	CompressionLocation compressloc = COMPRESS_LOCATION_UNSPECIFIED;
+	pg_compress_specification client_compress;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
@@ -2539,8 +2539,8 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user has not specified where to perform backup compression,
-	 * default to the client, unless the user specified --target, in which case
-	 * the server is the only choice.
+	 * default to the client, unless the user specified --target, in which
+	 * case the server is the only choice.
 	 */
 	if (compressloc == COMPRESS_LOCATION_UNSPECIFIED)
 	{
@@ -2551,14 +2551,14 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * If any compression that we're doing is happening on the client side,
-	 * we must try to parse the compression algorithm and detail, but if it's
-	 * all on the server side, then we're just going to pass through whatever
-	 * was requested and let the server decide what to do.
+	 * If any compression that we're doing is happening on the client side, we
+	 * must try to parse the compression algorithm and detail, but if it's all
+	 * on the server side, then we're just going to pass through whatever was
+	 * requested and let the server decide what to do.
 	 */
 	if (compressloc == COMPRESS_LOCATION_CLIENT)
 	{
-		pg_compress_algorithm	alg;
+		pg_compress_algorithm alg;
 		char	   *error_detail;
 
 		if (!parse_compress_algorithm(compression_algorithm, &alg))
@@ -2579,8 +2579,8 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Can't perform client-side compression if the backup is not being
-	 * sent to the client.
+	 * Can't perform client-side compression if the backup is not being sent
+	 * to the client.
 	 */
 	if (backup_target != NULL && compressloc == COMPRESS_LOCATION_CLIENT)
 	{
@@ -2724,13 +2724,14 @@ main(int argc, char **argv)
 	atexit(disconnect_atexit);
 
 #ifndef WIN32
+
 	/*
 	 * Trap SIGCHLD to be able to handle the WAL stream process exiting. There
-	 * is no SIGCHLD on Windows, there we rely on the background thread setting
-	 * the signal variable on unexpected but graceful exit. If the WAL stream
-	 * thread crashes on Windows it will bring down the entire process as it's
-	 * a thread, so there is nothing to catch should that happen. A crash on
-	 * UNIX will be caught by the signal handler.
+	 * is no SIGCHLD on Windows, there we rely on the background thread
+	 * setting the signal variable on unexpected but graceful exit. If the WAL
+	 * stream thread crashes on Windows it will bring down the entire process
+	 * as it's a thread, so there is nothing to catch should that happen. A
+	 * crash on UNIX will be caught by the signal handler.
 	 */
 	pqsignal(SIGCHLD, sigchld_handler);
 #endif

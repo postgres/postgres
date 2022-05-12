@@ -3139,7 +3139,7 @@ Datum
 json_populate_type(Datum json_val, Oid json_type, Oid typid, int32 typmod,
 				   void **cache, MemoryContext mcxt, bool *isnull)
 {
-	JsValue		jsv = { 0 };
+	JsValue		jsv = {0};
 	JsonbValue	jbv;
 
 	jsv.is_json = json_type == JSONOID;
@@ -3157,7 +3157,8 @@ json_populate_type(Datum json_val, Oid json_type, Oid typid, int32 typmod,
 
 		jsv.val.json.str = VARDATA_ANY(json);
 		jsv.val.json.len = VARSIZE_ANY_EXHDR(json);
-		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in populate_composite() */
+		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in
+												 * populate_composite() */
 	}
 	else
 	{
@@ -3174,7 +3175,7 @@ json_populate_type(Datum json_val, Oid json_type, Oid typid, int32 typmod,
 	if (!*cache)
 		*cache = MemoryContextAllocZero(mcxt, sizeof(ColumnIOData));
 
-	return populate_record_field(*cache , typid, typmod, NULL, mcxt,
+	return populate_record_field(*cache, typid, typmod, NULL, mcxt,
 								 PointerGetDatum(NULL), &jsv, isnull);
 }
 

@@ -15,7 +15,8 @@ use Test::More;
 # Initialize publisher node
 my $node_publisher = PostgreSQL::Test::Cluster->new('publisher');
 $node_publisher->init(allows_streaming => 'logical');
-$node_publisher->append_conf('postgresql.conf', qq(
+$node_publisher->append_conf(
+	'postgresql.conf', qq(
 max_prepared_transactions = 10
 logical_decoding_work_mem = 64kB
 ));
@@ -24,25 +25,31 @@ $node_publisher->start;
 # Create subscriber node
 my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
-$node_subscriber->append_conf('postgresql.conf', qq(
+$node_subscriber->append_conf(
+	'postgresql.conf', qq(
 max_prepared_transactions = 10
 ));
 $node_subscriber->start;
 
 # Create some pre-existing content on publisher
-$node_publisher->safe_psql('postgres', "CREATE TABLE test_tab (a int primary key, b varchar)");
-$node_publisher->safe_psql('postgres', "INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
+$node_publisher->safe_psql('postgres',
+	"CREATE TABLE test_tab (a int primary key, b varchar)");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO test_tab VALUES (1, 'foo'), (2, 'bar')");
 
 # Setup structure on subscriber (columns a and b are compatible with same table name on publisher)
 $node_subscriber->safe_psql('postgres',
-	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)");
+	"CREATE TABLE test_tab (a int primary key, b text, c timestamptz DEFAULT now(), d bigint DEFAULT 999)"
+);
 
 # Setup logical replication (streaming = on)
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-$node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub FOR TABLE test_tab");
+$node_publisher->safe_psql('postgres',
+	"CREATE PUBLICATION tap_pub FOR TABLE test_tab");
 
 my $appname = 'tap_sub';
-$node_subscriber->safe_psql('postgres', "
+$node_subscriber->safe_psql(
+	'postgres', "
 	CREATE SUBSCRIPTION tap_sub
 	CONNECTION '$publisher_connstr application_name=$appname'
 	PUBLICATION tap_pub
@@ -53,20 +60,21 @@ $node_publisher->wait_for_catchup($appname);
 
 # Also wait for initial table sync to finish
 my $synced_query =
-	"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
+  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
 $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
 # Also wait for two-phase to be enabled
 my $twophase_query =
-	"SELECT count(1) = 0 FROM pg_subscription WHERE subtwophasestate NOT IN ('e');";
+  "SELECT count(1) = 0 FROM pg_subscription WHERE subtwophasestate NOT IN ('e');";
 $node_subscriber->poll_query_until('postgres', $twophase_query)
   or die "Timed out while waiting for subscriber to enable twophase";
 
 ###############################
 # Check initial data was copied to subscriber
 ###############################
-my $result = $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
+my $result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
 is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 
 ###############################
@@ -79,7 +87,8 @@ is($result, qq(2|2|2), 'check initial data was copied to subscriber');
 
 # check that 2PC gets replicated to subscriber
 # Insert, update and delete enough rows to exceed the 64kB limit.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -89,18 +98,24 @@ $node_publisher->safe_psql('postgres', q{
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is in prepared state on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(1), 'transaction is prepared on subscriber');
 
 # 2PC transaction gets committed
-$node_publisher->safe_psql('postgres', "COMMIT PREPARED 'test_prepared_tab';");
+$node_publisher->safe_psql('postgres',
+	"COMMIT PREPARED 'test_prepared_tab';");
 
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is committed on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3334|3334|3334), 'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults');
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
+is($result, qq(3334|3334|3334),
+	'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults'
+);
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(0), 'transaction is committed on subscriber');
 
 ###############################
@@ -113,10 +128,11 @@ is($result, qq(0), 'transaction is committed on subscriber');
 ###############################
 
 # First, delete the data except for 2 rows (will be replicated)
-$node_publisher->safe_psql('postgres',  "DELETE FROM test_tab WHERE a > 2;");
+$node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
 # Then insert, update and delete enough rows to exceed the 64kB limit.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -126,19 +142,24 @@ $node_publisher->safe_psql('postgres', q{
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is in prepared state on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(1), 'transaction is prepared on subscriber');
 
 # 2PC transaction gets aborted
-$node_publisher->safe_psql('postgres', "ROLLBACK PREPARED 'test_prepared_tab';");
+$node_publisher->safe_psql('postgres',
+	"ROLLBACK PREPARED 'test_prepared_tab';");
 
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is aborted on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(2|2|2), 'Rows inserted by 2PC are rolled back, leaving only the original 2 rows');
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
+is($result, qq(2|2|2),
+	'Rows inserted by 2PC are rolled back, leaving only the original 2 rows');
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(0), 'transaction is aborted on subscriber');
 
 ###############################
@@ -151,7 +172,8 @@ is($result, qq(0), 'transaction is aborted on subscriber');
 # Note: both publisher and subscriber do crash/restart.
 ###############################
 
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -165,12 +187,16 @@ $node_publisher->start;
 $node_subscriber->start;
 
 # commit post the restart
-$node_publisher->safe_psql('postgres', "COMMIT PREPARED 'test_prepared_tab';");
+$node_publisher->safe_psql('postgres',
+	"COMMIT PREPARED 'test_prepared_tab';");
 $node_publisher->wait_for_catchup($appname);
 
 # check inserts are visible
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3334|3334|3334), 'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults');
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
+is($result, qq(3334|3334|3334),
+	'Rows inserted by 2PC have committed on subscriber, and extra columns contain local defaults'
+);
 
 ###############################
 # Do INSERT after the PREPARE but before ROLLBACK PREPARED.
@@ -187,7 +213,8 @@ is($result, qq(3334|3334|3334), 'Rows inserted by 2PC have committed on subscrib
 $node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
 # Then insert, update and delete enough rows to exceed the 64kB limit.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -197,24 +224,29 @@ $node_publisher->safe_psql('postgres', q{
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is in prepared state on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(1), 'transaction is prepared on subscriber');
 
 # Insert a different record (now we are outside of the 2PC transaction)
 # Note: the 2PC transaction still holds row locks so make sure this insert is for a separate primary key
-$node_publisher->safe_psql('postgres', "INSERT INTO test_tab VALUES (99999, 'foobar')");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO test_tab VALUES (99999, 'foobar')");
 
 # 2PC transaction gets aborted
-$node_publisher->safe_psql('postgres', "ROLLBACK PREPARED 'test_prepared_tab';");
+$node_publisher->safe_psql('postgres',
+	"ROLLBACK PREPARED 'test_prepared_tab';");
 
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is aborted on subscriber,
 # but the extra INSERT outside of the 2PC still was replicated
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*), count(c), count(d = 999) FROM test_tab");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
 is($result, qq(3|3|3), 'check the outside insert was copied to subscriber');
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(0), 'transaction is aborted on subscriber');
 
 ###############################
@@ -232,7 +264,8 @@ is($result, qq(0), 'transaction is aborted on subscriber');
 $node_publisher->safe_psql('postgres', "DELETE FROM test_tab WHERE a > 2;");
 
 # Then insert, update and delete enough rows to exceed the 64kB limit.
-$node_publisher->safe_psql('postgres', q{
+$node_publisher->safe_psql(
+	'postgres', q{
 	BEGIN;
 	INSERT INTO test_tab SELECT i, md5(i::text) FROM generate_series(3, 5000) s(i);
 	UPDATE test_tab SET b = md5(b) WHERE mod(a,2) = 0;
@@ -242,24 +275,30 @@ $node_publisher->safe_psql('postgres', q{
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is in prepared state on subscriber
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(1), 'transaction is prepared on subscriber');
 
 # Insert a different record (now we are outside of the 2PC transaction)
 # Note: the 2PC transaction still holds row locks so make sure this insert is for a separare primary key
-$node_publisher->safe_psql('postgres', "INSERT INTO test_tab VALUES (99999, 'foobar')");
+$node_publisher->safe_psql('postgres',
+	"INSERT INTO test_tab VALUES (99999, 'foobar')");
 
 # 2PC transaction gets committed
-$node_publisher->safe_psql('postgres', "COMMIT PREPARED 'test_prepared_tab';");
+$node_publisher->safe_psql('postgres',
+	"COMMIT PREPARED 'test_prepared_tab';");
 
 $node_publisher->wait_for_catchup($appname);
 
 # check that transaction is committed on subscriber
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*), count(c), count(d = 999) FROM test_tab");
-is($result, qq(3335|3335|3335), 'Rows inserted by 2PC (as well as outside insert) have committed on subscriber, and extra columns contain local defaults');
+is($result, qq(3335|3335|3335),
+	'Rows inserted by 2PC (as well as outside insert) have committed on subscriber, and extra columns contain local defaults'
+);
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_prepared_xacts;");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_prepared_xacts;");
 is($result, qq(0), 'transaction is committed on subscriber');
 
 ###############################
@@ -268,16 +307,21 @@ is($result, qq(0), 'transaction is committed on subscriber');
 
 $node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION tap_sub");
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_subscription");
 is($result, qq(0), 'check subscription was dropped on subscriber');
 
-$result = $node_publisher->safe_psql('postgres', "SELECT count(*) FROM pg_replication_slots");
+$result = $node_publisher->safe_psql('postgres',
+	"SELECT count(*) FROM pg_replication_slots");
 is($result, qq(0), 'check replication slot was dropped on publisher');
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_subscription_rel");
-is($result, qq(0), 'check subscription relation status was dropped on subscriber');
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_subscription_rel");
+is($result, qq(0),
+	'check subscription relation status was dropped on subscriber');
 
-$result = $node_subscriber->safe_psql('postgres', "SELECT count(*) FROM pg_replication_origin");
+$result = $node_subscriber->safe_psql('postgres',
+	"SELECT count(*) FROM pg_replication_origin");
 is($result, qq(0), 'check replication origin was dropped on subscriber');
 
 $node_subscriber->stop('fast');

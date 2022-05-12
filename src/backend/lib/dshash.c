@@ -634,9 +634,9 @@ dshash_seq_next(dshash_seq_status *status)
 
 	/*
 	 * Not yet holding any partition locks. Need to determine the size of the
-	 * hash table, it could have been resized since we were looking
-	 * last. Since we iterate in partition order, we can start by
-	 * unconditionally lock partition 0.
+	 * hash table, it could have been resized since we were looking last.
+	 * Since we iterate in partition order, we can start by unconditionally
+	 * lock partition 0.
 	 *
 	 * Once we hold the lock, no resizing can happen until the scan ends. So
 	 * we don't need to repeatedly call ensure_valid_bucket_pointers().

@@ -826,7 +826,7 @@ static const SchemaQuery Query_for_list_of_mergetargets = {
 	.selcondition =
 	"c.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
 	CppAsString2(RELKIND_PARTITIONED_TABLE) ") ",
-	.viscondition =	"pg_catalog.pg_table_is_visible(c.oid)",
+	.viscondition = "pg_catalog.pg_table_is_visible(c.oid)",
 	.namespace = "c.relnamespace",
 	.result = "c.relname",
 };
@@ -1827,6 +1827,7 @@ psql_completion(const char *text, int start, int end)
 			 (HeadMatches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") &&
 			  ends_with(prev_wd, ',')))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
+
 	/*
 	 * "ALTER PUBLICATION <name> SET TABLE <name> WHERE (" - complete with
 	 * table attributes

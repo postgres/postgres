@@ -349,7 +349,7 @@ sub GenerateFiles
 		HAVE_READLINE_READLINE_H    => undef,
 		HAVE_READLINK               => undef,
 		HAVE_READV                  => undef,
-		HAVE_RL_COMPLETION_MATCHES               => undef,
+		HAVE_RL_COMPLETION_MATCHES  => undef,
 		HAVE_RL_COMPLETION_SUPPRESS_QUOTE        => undef,
 		HAVE_RL_FILENAME_COMPLETION_FUNCTION     => undef,
 		HAVE_RL_FILENAME_QUOTE_CHARACTERS        => undef,

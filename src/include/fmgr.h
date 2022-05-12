@@ -473,7 +473,7 @@ typedef struct
 	FMGR_ABI_EXTRA, \
 }
 
-StaticAssertDecl(sizeof(FMGR_ABI_EXTRA) <= sizeof(((Pg_magic_struct*)0)->abi_extra),
+StaticAssertDecl(sizeof(FMGR_ABI_EXTRA) <= sizeof(((Pg_magic_struct *) 0)->abi_extra),
 				 "FMGR_ABI_EXTRA too long");
 
 /*

@@ -1318,8 +1318,8 @@ expand_schema_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		PQExpBufferData	dbbuf;
-		int		dotcnt;
+		PQExpBufferData dbbuf;
+		int			dotcnt;
 
 		appendPQExpBufferStr(query,
 							 "SELECT oid FROM pg_catalog.pg_namespace n\n");
@@ -1376,7 +1376,7 @@ expand_extension_name_patterns(Archive *fout,
 	 */
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		int		dotcnt;
+		int			dotcnt;
 
 		appendPQExpBufferStr(query,
 							 "SELECT oid FROM pg_catalog.pg_extension e\n");
@@ -1429,7 +1429,7 @@ expand_foreign_server_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		int		dotcnt;
+		int			dotcnt;
 
 		appendPQExpBufferStr(query,
 							 "SELECT oid FROM pg_catalog.pg_foreign_server s\n");
@@ -1481,8 +1481,8 @@ expand_table_name_patterns(Archive *fout,
 
 	for (cell = patterns->head; cell; cell = cell->next)
 	{
-		PQExpBufferData	dbbuf;
-		int		dotcnt;
+		PQExpBufferData dbbuf;
+		int			dotcnt;
 
 		/*
 		 * Query must remain ABSOLUTELY devoid of unqualified names.  This
@@ -4342,7 +4342,8 @@ dumpPublicationTable(Archive *fout, const PublicationRelInfo *pubrinfo)
 	{
 		/*
 		 * It's necessary to add parentheses around the expression because
-		 * pg_get_expr won't supply the parentheses for things like WHERE TRUE.
+		 * pg_get_expr won't supply the parentheses for things like WHERE
+		 * TRUE.
 		 */
 		appendPQExpBuffer(query, " WHERE (%s)", pubrinfo->pubrelqual);
 	}
@@ -4858,8 +4859,8 @@ binary_upgrade_set_pg_class_oids(Archive *fout,
 
 		/*
 		 * Not every relation has storage. Also, in a pre-v12 database,
-		 * partitioned tables have a relfilenode, which should not be preserved
-		 * when upgrading.
+		 * partitioned tables have a relfilenode, which should not be
+		 * preserved when upgrading.
 		 */
 		if (OidIsValid(relfilenode) && relkind != RELKIND_PARTITIONED_TABLE)
 			appendPQExpBuffer(upgrade_buffer,

@@ -3833,7 +3833,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			if (rte->tablefunc)
 				if (rte->tablefunc->functype == TFT_XMLTABLE)
 					objectname = "xmltable";
-				else /* Must be TFT_JSON_TABLE */
+				else			/* Must be TFT_JSON_TABLE */
 					objectname = "json_table";
 			else
 				objectname = NULL;

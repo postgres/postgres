@@ -32,8 +32,8 @@
 
 static bool DescribeQuery(const char *query, double *elapsed_msec);
 static bool ExecQueryUsingCursor(const char *query, double *elapsed_msec);
-static int ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_gone_p,
-									  bool is_watch, const printQueryOpt *opt, FILE *printQueryFout);
+static int	ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_gone_p,
+									   bool is_watch, const printQueryOpt *opt, FILE *printQueryFout);
 static bool command_no_begin(const char *query);
 static bool is_select_command(const char *query);
 
@@ -482,7 +482,7 @@ ClearOrSaveResult(PGresult *result)
 static void
 ClearOrSaveAllResults(void)
 {
-	PGresult	*result;
+	PGresult   *result;
 
 	while ((result = PQgetResult(pset.db)) != NULL)
 		ClearOrSaveResult(result);
@@ -697,7 +697,8 @@ PrintQueryTuples(const PGresult *result, const printQueryOpt *opt, FILE *printQu
 	}
 	else
 	{
-		FILE *fout = printQueryFout ? printQueryFout : pset.queryFout;
+		FILE	   *fout = printQueryFout ? printQueryFout : pset.queryFout;
+
 		printQuery(result, opt ? opt : &pset.popt, fout, false, pset.logfile);
 		if (ferror(fout))
 		{
@@ -907,9 +908,9 @@ HandleCopyResult(PGresult **resultp)
 			&& (copystream != NULL);
 
 		/*
-		 * Suppress status printing if the report would go to the same
-		 * place as the COPY data just went.  Note this doesn't
-		 * prevent error reporting, since handleCopyOut did that.
+		 * Suppress status printing if the report would go to the same place
+		 * as the COPY data just went.  Note this doesn't prevent error
+		 * reporting, since handleCopyOut did that.
 		 */
 		if (copystream == pset.queryFout)
 		{
@@ -943,8 +944,8 @@ HandleCopyResult(PGresult **resultp)
 	ResetCancelConn();
 
 	/*
-	 * Replace the PGRES_COPY_OUT/IN result with COPY command's exit
-	 * status, or with NULL if we want to suppress printing anything.
+	 * Replace the PGRES_COPY_OUT/IN result with COPY command's exit status,
+	 * or with NULL if we want to suppress printing anything.
 	 */
 	PQclear(*resultp);
 	*resultp = copy_result;
@@ -1069,7 +1070,7 @@ PrintQueryResult(PGresult *result, bool last, bool is_watch, const printQueryOpt
  */
 struct t_notice_messages
 {
-	PQExpBufferData	messages[2];
+	PQExpBufferData messages[2];
 	int			current;
 };
 
@@ -1080,6 +1081,7 @@ static void
 AppendNoticeMessage(void *arg, const char *msg)
 {
 	struct t_notice_messages *notices = arg;
+
 	appendPQExpBufferStr(&notices->messages[notices->current], msg);
 }
 
@@ -1089,7 +1091,8 @@ AppendNoticeMessage(void *arg, const char *msg)
 static void
 ShowNoticeMessage(struct t_notice_messages *notices)
 {
-	PQExpBufferData	*current = &notices->messages[notices->current];
+	PQExpBufferData *current = &notices->messages[notices->current];
+
 	if (*current->data != '\0')
 		pg_log_info("%s", current->data);
 	resetPQExpBuffer(current);
@@ -1234,6 +1237,7 @@ SendQuery(const char *query)
 				break;
 
 			case PQTRANS_INTRANS:
+
 				/*
 				 * Release our savepoint, but do nothing if they are messing
 				 * with savepoints themselves
@@ -1472,7 +1476,7 @@ DescribeQuery(const char *query, double *elapsed_msec)
  */
 static int
 ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_gone_p,
-	bool is_watch, const printQueryOpt *opt, FILE *printQueryFout)
+						   bool is_watch, const printQueryOpt *opt, FILE *printQueryFout)
 {
 	bool		timing = pset.timing;
 	bool		success;
@@ -1527,8 +1531,8 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		if (!AcceptResult(result, false))
 		{
 			/*
-			 * Some error occured, either a server-side failure or
-			 * a failure to submit the command string.  Record that.
+			 * Some error occured, either a server-side failure or a failure
+			 * to submit the command string.  Record that.
 			 */
 			const char *error = PQresultErrorMessage(result);
 
@@ -1551,10 +1555,12 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			if (result_status == PGRES_COPY_BOTH ||
 				result_status == PGRES_COPY_OUT ||
 				result_status == PGRES_COPY_IN)
+
 				/*
-				 * For some obscure reason PQgetResult does *not* return a NULL in copy
-				 * cases despite the result having been cleared, but keeps returning an
-				 * "empty" result that we have to ignore manually.
+				 * For some obscure reason PQgetResult does *not* return a
+				 * NULL in copy cases despite the result having been cleared,
+				 * but keeps returning an "empty" result that we have to
+				 * ignore manually.
 				 */
 				result = NULL;
 			else
@@ -1565,12 +1571,13 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		else if (svpt_gone_p && !*svpt_gone_p)
 		{
 			/*
-			 * Check if the user ran any command that would destroy our internal
-			 * savepoint: If the user did COMMIT AND CHAIN, RELEASE or ROLLBACK, our
-			 * savepoint is gone. If they issued a SAVEPOINT, releasing ours would
-			 * remove theirs.
+			 * Check if the user ran any command that would destroy our
+			 * internal savepoint: If the user did COMMIT AND CHAIN, RELEASE
+			 * or ROLLBACK, our savepoint is gone. If they issued a SAVEPOINT,
+			 * releasing ours would remove theirs.
 			 */
 			const char *cmd = PQcmdStatus(result);
+
 			*svpt_gone_p = (strcmp(cmd, "COMMIT") == 0 ||
 							strcmp(cmd, "SAVEPOINT") == 0 ||
 							strcmp(cmd, "RELEASE") == 0 ||
@@ -1614,11 +1621,11 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		/*
 		 * Get timing measure before printing the last result.
 		 *
-		 * It will include the display of previous results, if any.
-		 * This cannot be helped because the server goes on processing
-		 * further queries anyway while the previous ones are being displayed.
-		 * The parallel execution of the client display hides the server time
-		 * when it is shorter.
+		 * It will include the display of previous results, if any. This
+		 * cannot be helped because the server goes on processing further
+		 * queries anyway while the previous ones are being displayed. The
+		 * parallel execution of the client display hides the server time when
+		 * it is shorter.
 		 *
 		 * With combined queries, timing must be understood as an upper bound
 		 * of the time spent processing them.

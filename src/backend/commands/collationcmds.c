@@ -246,8 +246,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 		/*
 		 * Nondeterministic collations are currently only supported with ICU
-		 * because that's the only case where it can actually make a difference.
-		 * So we can save writing the code for the other providers.
+		 * because that's the only case where it can actually make a
+		 * difference. So we can save writing the code for the other
+		 * providers.
 		 */
 		if (!collisdeterministic && collprovider != COLLPROVIDER_ICU)
 			ereport(ERROR,

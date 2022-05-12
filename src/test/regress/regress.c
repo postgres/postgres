@@ -1226,8 +1226,8 @@ PG_FUNCTION_INFO_V1(get_columns_length);
 Datum
 get_columns_length(PG_FUNCTION_ARGS)
 {
-	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
-	Oid			*type_oids;
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
+	Oid		   *type_oids;
 	int			ntypes;
 	int			column_offset = 0;
 
@@ -1241,7 +1241,7 @@ get_columns_length(PG_FUNCTION_ARGS)
 	ntypes = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
 	for (int i = 0; i < ntypes; i++)
 	{
-		Oid typeoid = type_oids[i];
+		Oid			typeoid = type_oids[i];
 		int16		typlen;
 		bool		typbyval;
 		char		typalign;

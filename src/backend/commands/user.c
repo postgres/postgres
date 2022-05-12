@@ -798,11 +798,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	 */
 	if (drolemembers)
 	{
-		List	   *rolemembers	= (List *) drolemembers->arg;
+		List	   *rolemembers = (List *) drolemembers->arg;
 
 		CommandCounterIncrement();
 
-		if (stmt->action == +1)		/* add members to role */
+		if (stmt->action == +1) /* add members to role */
 			AddRoleMems(rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
 						GetUserId(), false);

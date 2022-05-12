@@ -287,7 +287,7 @@ RelationMapOidToFilenodeForDatabase(char *dbpath, Oid relationId)
 void
 RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath, char *dstdbpath)
 {
-	RelMapFile map;
+	RelMapFile	map;
 
 	/*
 	 * Read the relmap file from the source database.
@@ -302,8 +302,8 @@ RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath, char *dstdbpath)
 	 * RelationMappingLock.
 	 *
 	 * There's no point in trying to preserve files here. The new database
-	 * isn't usable yet anyway, and won't ever be if we can't install a
-	 * relmap file.
+	 * isn't usable yet anyway, and won't ever be if we can't install a relmap
+	 * file.
 	 */
 	write_relmap_file(&map, true, false, false, dbid, tsid, dstdbpath);
 }
@@ -1089,11 +1089,11 @@ relmap_redo(XLogReaderState *record)
 		 * There shouldn't be anyone else updating relmaps during WAL replay,
 		 * but grab the lock to interlock against load_relmap_file().
 		 *
-		 * Note that we use the same WAL record for updating the relmap of
-		 * an existing database as we do for creating a new database. In
-		 * the latter case, taking the relmap log and sending sinval messages
-		 * is unnecessary, but harmless. If we wanted to avoid it, we could
-		 * add a flag to the WAL record to indicate which operation is being
+		 * Note that we use the same WAL record for updating the relmap of an
+		 * existing database as we do for creating a new database. In the
+		 * latter case, taking the relmap log and sending sinval messages is
+		 * unnecessary, but harmless. If we wanted to avoid it, we could add a
+		 * flag to the WAL record to indicate which operation is being
 		 * performed.
 		 */
 		LWLockAcquire(RelationMappingLock, LW_EXCLUSIVE);

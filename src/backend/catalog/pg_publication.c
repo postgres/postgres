@@ -378,9 +378,9 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 	check_publication_add_relation(targetrel);
 
 	/*
-	 * Translate column names to attnums and make sure the column list contains
-	 * only allowed elements (no system or generated columns etc.). Also build
-	 * an array of attnums, for storing in the catalog.
+	 * Translate column names to attnums and make sure the column list
+	 * contains only allowed elements (no system or generated columns etc.).
+	 * Also build an array of attnums, for storing in the catalog.
 	 */
 	publication_translate_columns(pri->relation, pri->columns,
 								  &natts, &attarray);
@@ -555,11 +555,11 @@ pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
 	ArrayType  *arr;
 	int			nelems;
 	int16	   *elems;
-	MemoryContext	oldcxt = NULL;
+	MemoryContext oldcxt = NULL;
 
 	/*
-	 * If an existing bitmap was provided, use it. Otherwise just use NULL
-	 * and build a new bitmap.
+	 * If an existing bitmap was provided, use it. Otherwise just use NULL and
+	 * build a new bitmap.
 	 */
 	if (columns)
 		result = columns;

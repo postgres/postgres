@@ -263,8 +263,8 @@ typedef struct JsonPathVariableEvalContext
 	Oid			typid;
 	int32		typmod;
 	struct ExprContext *econtext;
-	struct ExprState  *estate;
-	MemoryContext mcxt;		/* memory context for cached value */
+	struct ExprState *estate;
+	MemoryContext mcxt;			/* memory context for cached value */
 	Datum		value;
 	bool		isnull;
 	bool		evaluated;
@@ -274,14 +274,14 @@ typedef struct JsonPathVariableEvalContext
 extern void JsonItemFromDatum(Datum val, Oid typid, int32 typmod,
 							  JsonbValue *res);
 
-extern bool  JsonPathExists(Datum jb, JsonPath *path, List *vars, bool *error);
+extern bool JsonPathExists(Datum jb, JsonPath *path, List *vars, bool *error);
 extern Datum JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper,
 						   bool *empty, bool *error, List *vars);
 extern JsonbValue *JsonPathValue(Datum jb, JsonPath *jp, bool *empty,
 								 bool *error, List *vars);
 
-extern int EvalJsonPathVar(void *vars, char *varName, int varNameLen,
-						   JsonbValue *val, JsonbValue *baseObject);
+extern int	EvalJsonPathVar(void *vars, char *varName, int varNameLen,
+							JsonbValue *val, JsonbValue *baseObject);
 
 extern PGDLLIMPORT const TableFuncRoutine JsonbTableRoutine;
 

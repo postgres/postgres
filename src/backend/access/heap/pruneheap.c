@@ -68,9 +68,9 @@ typedef struct
 
 	/*
 	 * Tuple visibility is only computed once for each tuple, for correctness
-	 * and efficiency reasons; see comment in heap_page_prune() for
-	 * details. This is of type int8[,] instead of HTSV_Result[], so we can use
-	 * -1 to indicate no visibility has been computed, e.g. for LP_DEAD items.
+	 * and efficiency reasons; see comment in heap_page_prune() for details.
+	 * This is of type int8[], instead of HTSV_Result[], so we can use -1 to
+	 * indicate no visibility has been computed, e.g. for LP_DEAD items.
 	 *
 	 * Same indexing as ->marked.
 	 */
@@ -203,8 +203,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer)
 		 */
 		if (PageIsFull(page) || PageGetHeapFreeSpace(page) < minfree)
 		{
-			int		ndeleted,
-					nnewlpdead;
+			int			ndeleted,
+						nnewlpdead;
 
 			ndeleted = heap_page_prune(relation, buffer, vistest, limited_xmin,
 									   limited_ts, &nnewlpdead, NULL);
@@ -267,7 +267,7 @@ heap_page_prune(Relation relation, Buffer buffer,
 				GlobalVisState *vistest,
 				TransactionId old_snap_xmin,
 				TimestampTz old_snap_ts,
-				int	*nnewlpdead,
+				int *nnewlpdead,
 				OffsetNumber *off_loc)
 {
 	int			ndeleted = 0;
