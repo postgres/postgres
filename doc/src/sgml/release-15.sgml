@@ -88,7 +88,8 @@ Remove exclusive backup mode (David Steele, Nathan Bossart)
 </para>
 
 <para>
-If the database server stops abruptly while in this mode, the server could fail to start.  The non-exclusive backup mode requires a continuous database connection during the backup.
+If the database server stops abruptly while in this mode, the server could fail to start.  The non-exclusive backup mode requires a continuous database connection during the
+backup.  Functions pg_start_backup()/pg_stop_backup() have been renamed to pg_backup_start()/pg_backup_stop(), and the functions pg_backup_start_time() and pg_is_in_backup() have been removed.
 </para>
 </listitem>
 
