@@ -51,7 +51,7 @@ enum pg_log_level
 /*
  * __pg_log_level is the minimum log level that will actually be shown.
  */
-extern enum pg_log_level __pg_log_level;
+extern PGDLLIMPORT enum pg_log_level __pg_log_level;
 
 /*
  * A log message can have several parts.  The primary message is required,

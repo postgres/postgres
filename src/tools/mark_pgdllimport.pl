@@ -12,7 +12,8 @@
 # smart and may not catch all cases.
 #
 # It's probably a good idea to run pgindent on any files that this
-# script modifies before committing.
+# script modifies before committing.  This script uses as arguments
+# a list of the header files to scan for the markings.
 #
 # Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California

@@ -30,9 +30,9 @@ extern int	pqsigsetmask(int mask);
 #define sigdelset(set, signum)	(*(set) &= ~(sigmask(signum)))
 #endif							/* WIN32 */
 
-extern sigset_t UnBlockSig,
-			BlockSig,
-			StartupBlockSig;
+extern PGDLLIMPORT sigset_t UnBlockSig;
+extern PGDLLIMPORT sigset_t BlockSig;
+extern PGDLLIMPORT sigset_t StartupBlockSig;
 
 extern void pqinitmask(void);
 
