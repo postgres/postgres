@@ -2883,9 +2883,14 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 			/*
 			 * Force reporting to ensure long idle periods don't lead to
-			 * arbitrarily delayed stats.
+			 * arbitrarily delayed stats. Stats can only be reported outside
+			 * of (implicit or explicit) transactions. That shouldn't lead to
+			 * stats being delayed for long, because transactions are either
+			 * sent as a whole on commit or streamed. Streamed transactions
+			 * are spilled to disk and applied on commit.
 			 */
-			pgstat_report_stat(true);
+			if (!IsTransactionState())
+				pgstat_report_stat(true);
 		}
 	}
 
