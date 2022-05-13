@@ -710,7 +710,7 @@ ProcedureCreate(const char *procedureName,
 			AtEOXact_GUC(true, save_nestlevel);
 	}
 
-	/* ensure that stats are dropped if transaction commits */
+	/* ensure that stats are dropped if transaction aborts */
 	if (!is_update)
 		pgstat_create_function(retval);
 
