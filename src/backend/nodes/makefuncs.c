@@ -927,14 +927,14 @@ makeJsonKeyValue(Node *key, Node *value)
  *	  creates a JsonIsPredicate node
  */
 Node *
-makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType value_type,
+makeJsonIsPredicate(Node *expr, JsonFormat *format, JsonValueType item_type,
 					bool unique_keys, int location)
 {
 	JsonIsPredicate *n = makeNode(JsonIsPredicate);
 
 	n->expr = expr;
 	n->format = format;
-	n->value_type = value_type;
+	n->item_type = item_type;
 	n->unique_keys = unique_keys;
 	n->location = location;
 

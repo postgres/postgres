@@ -2557,11 +2557,11 @@ _copyJsonExpr(const JsonExpr *from)
 	COPY_NODE_FIELD(result_coercion);
 	COPY_NODE_FIELD(format);
 	COPY_NODE_FIELD(path_spec);
-	COPY_NODE_FIELD(passing_values);
 	COPY_NODE_FIELD(passing_names);
+	COPY_NODE_FIELD(passing_values);
 	COPY_NODE_FIELD(returning);
-	COPY_NODE_FIELD(on_error);
 	COPY_NODE_FIELD(on_empty);
+	COPY_NODE_FIELD(on_error);
 	COPY_NODE_FIELD(coercions);
 	COPY_SCALAR_FIELD(wrapper);
 	COPY_SCALAR_FIELD(omit_quotes);
@@ -2637,8 +2637,8 @@ _copyJsonIsPredicate(const JsonIsPredicate *from)
 	JsonIsPredicate *newnode = makeNode(JsonIsPredicate);
 
 	COPY_NODE_FIELD(expr);
-	COPY_SCALAR_FIELD(format);
-	COPY_SCALAR_FIELD(value_type);
+	COPY_NODE_FIELD(format);
+	COPY_SCALAR_FIELD(item_type);
 	COPY_SCALAR_FIELD(unique_keys);
 	COPY_LOCATION_FIELD(location);
 
@@ -2764,6 +2764,7 @@ _copyJsonTableParent(const JsonTableParent *from)
 	COPY_SCALAR_FIELD(outerJoin);
 	COPY_SCALAR_FIELD(colMin);
 	COPY_SCALAR_FIELD(colMax);
+	COPY_SCALAR_FIELD(errorOnError);
 
 	return newnode;
 }

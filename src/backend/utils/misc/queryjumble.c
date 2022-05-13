@@ -741,7 +741,7 @@ JumbleExpr(JumbleState *jstate, Node *node)
 			{
 				JsonFormat *format = (JsonFormat *) node;
 
-				APP_JUMB(format->type);
+				APP_JUMB(format->format_type);
 				APP_JUMB(format->encoding);
 			}
 			break;
@@ -767,12 +767,13 @@ JumbleExpr(JumbleState *jstate, Node *node)
 			{
 				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
 
+				APP_JUMB(ctor->type);
+				JumbleExpr(jstate, (Node *) ctor->args);
 				JumbleExpr(jstate, (Node *) ctor->func);
 				JumbleExpr(jstate, (Node *) ctor->coercion);
 				JumbleExpr(jstate, (Node *) ctor->returning);
-				APP_JUMB(ctor->type);
-				APP_JUMB(ctor->unique);
 				APP_JUMB(ctor->absent_on_null);
+				APP_JUMB(ctor->unique);
 			}
 			break;
 		case T_JsonIsPredicate:
@@ -781,8 +782,8 @@ JumbleExpr(JumbleState *jstate, Node *node)
 
 				JumbleExpr(jstate, (Node *) pred->expr);
 				JumbleExpr(jstate, (Node *) pred->format);
+				APP_JUMB(pred->item_type);
 				APP_JUMB(pred->unique_keys);
-				APP_JUMB(pred->value_type);
 			}
 			break;
 		case T_JsonExpr:

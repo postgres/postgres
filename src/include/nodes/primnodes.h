@@ -1387,14 +1387,14 @@ typedef enum JsonValueType
 
 /*
  * JsonIsPredicate -
- *		untransformed representation of IS JSON predicate
+ *		representation of IS JSON predicate
  */
 typedef struct JsonIsPredicate
 {
 	NodeTag		type;
-	Node	   *expr;			/* untransformed expression */
+	Node	   *expr;			/* subject expression */
 	JsonFormat *format;			/* FORMAT clause, if specified */
-	JsonValueType value_type;	/* JSON item type */
+	JsonValueType item_type;	/* JSON item type */
 	bool		unique_keys;	/* check key uniqueness? */
 	int			location;		/* token location, or -1 if unknown */
 } JsonIsPredicate;

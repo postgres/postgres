@@ -9730,7 +9730,9 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				appendStringInfoString(context->buf, " IS JSON");
 
-				switch (pred->value_type)
+				/* TODO: handle FORMAT clause */
+
+				switch (pred->item_type)
 				{
 					case JS_TYPE_SCALAR:
 						appendStringInfoString(context->buf, " SCALAR");

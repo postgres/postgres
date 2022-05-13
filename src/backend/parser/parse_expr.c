@@ -4018,8 +4018,7 @@ transformJsonParseArg(ParseState *pstate, Node *jsexpr, JsonFormat *format,
 }
 
 /*
- * Transform IS JSON predicate into
- * json[b]_is_valid(json, value_type [, check_key_uniqueness]) call.
+ * Transform IS JSON predicate.
  */
 static Node *
 transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred)
@@ -4035,7 +4034,8 @@ transformJsonIsPredicate(ParseState *pstate, JsonIsPredicate *pred)
 				 errmsg("cannot use type %s in IS JSON predicate",
 						format_type_be(exprtype))));
 
-	return makeJsonIsPredicate(expr, NULL, pred->value_type,
+	/* This intentionally(?) drops the format clause. */
+	return makeJsonIsPredicate(expr, NULL, pred->item_type,
 							   pred->unique_keys, pred->location);
 }
 

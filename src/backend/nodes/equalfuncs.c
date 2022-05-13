@@ -186,6 +186,7 @@ _equalJsonTableParent(const JsonTableParent *a, const JsonTableParent *b)
 	COMPARE_SCALAR_FIELD(outerJoin);
 	COMPARE_SCALAR_FIELD(colMin);
 	COMPARE_SCALAR_FIELD(colMax);
+	COMPARE_SCALAR_FIELD(errorOnError);
 
 	return true;
 }
@@ -1104,7 +1105,8 @@ _equalJsonIsPredicate(const JsonIsPredicate *a,
 					  const JsonIsPredicate *b)
 {
 	COMPARE_NODE_FIELD(expr);
-	COMPARE_SCALAR_FIELD(value_type);
+	COMPARE_NODE_FIELD(format);
+	COMPARE_SCALAR_FIELD(item_type);
 	COMPARE_SCALAR_FIELD(unique_keys);
 	COMPARE_LOCATION_FIELD(location);
 
@@ -1134,11 +1136,11 @@ _equalJsonExpr(const JsonExpr *a, const JsonExpr *b)
 	COMPARE_NODE_FIELD(result_coercion);
 	COMPARE_NODE_FIELD(format);
 	COMPARE_NODE_FIELD(path_spec);
-	COMPARE_NODE_FIELD(passing_values);
 	COMPARE_NODE_FIELD(passing_names);
+	COMPARE_NODE_FIELD(passing_values);
 	COMPARE_NODE_FIELD(returning);
-	COMPARE_NODE_FIELD(on_error);
 	COMPARE_NODE_FIELD(on_empty);
+	COMPARE_NODE_FIELD(on_error);
 	COMPARE_NODE_FIELD(coercions);
 	COMPARE_SCALAR_FIELD(wrapper);
 	COMPARE_SCALAR_FIELD(omit_quotes);

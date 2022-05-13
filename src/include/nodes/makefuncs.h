@@ -114,7 +114,7 @@ extern Node *makeJsonTableJoinedPlan(JsonTablePlanJoinType type,
 									 Node *plan1, Node *plan2, int location);
 extern Node *makeJsonKeyValue(Node *key, Node *value);
 extern Node *makeJsonIsPredicate(Node *expr, JsonFormat *format,
-								 JsonValueType vtype, bool unique_keys,
+								 JsonValueType item_type, bool unique_keys,
 								 int location);
 extern JsonEncoding makeJsonEncoding(char *name);
 

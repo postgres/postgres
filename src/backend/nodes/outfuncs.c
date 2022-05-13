@@ -1801,13 +1801,13 @@ _outJsonConstructorExpr(StringInfo str, const JsonConstructorExpr *node)
 {
 	WRITE_NODE_TYPE("JSONCONSTRUCTOREXPR");
 
+	WRITE_ENUM_FIELD(type, JsonConstructorType);
 	WRITE_NODE_FIELD(args);
 	WRITE_NODE_FIELD(func);
 	WRITE_NODE_FIELD(coercion);
-	WRITE_ENUM_FIELD(type, JsonConstructorType);
 	WRITE_NODE_FIELD(returning);
-	WRITE_BOOL_FIELD(unique);
 	WRITE_BOOL_FIELD(absent_on_null);
+	WRITE_BOOL_FIELD(unique);
 	WRITE_LOCATION_FIELD(location);
 }
 
@@ -1817,7 +1817,8 @@ _outJsonIsPredicate(StringInfo str, const JsonIsPredicate *node)
 	WRITE_NODE_TYPE("JSONISPREDICATE");
 
 	WRITE_NODE_FIELD(expr);
-	WRITE_ENUM_FIELD(value_type, JsonValueType);
+	WRITE_NODE_FIELD(format);
+	WRITE_ENUM_FIELD(item_type, JsonValueType);
 	WRITE_BOOL_FIELD(unique_keys);
 	WRITE_LOCATION_FIELD(location);
 }
@@ -1841,11 +1842,11 @@ _outJsonExpr(StringInfo str, const JsonExpr *node)
 	WRITE_NODE_FIELD(result_coercion);
 	WRITE_NODE_FIELD(format);
 	WRITE_NODE_FIELD(path_spec);
-	WRITE_NODE_FIELD(passing_values);
 	WRITE_NODE_FIELD(passing_names);
+	WRITE_NODE_FIELD(passing_values);
 	WRITE_NODE_FIELD(returning);
-	WRITE_NODE_FIELD(on_error);
 	WRITE_NODE_FIELD(on_empty);
+	WRITE_NODE_FIELD(on_error);
 	WRITE_NODE_FIELD(coercions);
 	WRITE_ENUM_FIELD(wrapper, JsonWrapper);
 	WRITE_BOOL_FIELD(omit_quotes);
@@ -1883,7 +1884,7 @@ _outJsonItemCoercions(StringInfo str, const JsonItemCoercions *node)
 static void
 _outJsonTableParent(StringInfo str, const JsonTableParent *node)
 {
-	WRITE_NODE_TYPE("JSONTABPNODE");
+	WRITE_NODE_TYPE("JSONTABLEPARENT");
 
 	WRITE_NODE_FIELD(path);
 	WRITE_STRING_FIELD(name);
@@ -1891,12 +1892,13 @@ _outJsonTableParent(StringInfo str, const JsonTableParent *node)
 	WRITE_BOOL_FIELD(outerJoin);
 	WRITE_INT_FIELD(colMin);
 	WRITE_INT_FIELD(colMax);
+	WRITE_BOOL_FIELD(errorOnError);
 }
 
 static void
 _outJsonTableSibling(StringInfo str, const JsonTableSibling *node)
 {
-	WRITE_NODE_TYPE("JSONTABSNODE");
+	WRITE_NODE_TYPE("JSONTABLESIBLING");
 
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);

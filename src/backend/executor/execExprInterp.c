@@ -3952,24 +3952,24 @@ ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op)
 	{
 		text	   *json = DatumGetTextP(js);
 
-		if (pred->value_type == JS_TYPE_ANY)
+		if (pred->item_type == JS_TYPE_ANY)
 			res = true;
 		else
 		{
 			switch (json_get_first_token(json, false))
 			{
 				case JSON_TOKEN_OBJECT_START:
-					res = pred->value_type == JS_TYPE_OBJECT;
+					res = pred->item_type == JS_TYPE_OBJECT;
 					break;
 				case JSON_TOKEN_ARRAY_START:
-					res = pred->value_type == JS_TYPE_ARRAY;
+					res = pred->item_type == JS_TYPE_ARRAY;
 					break;
 				case JSON_TOKEN_STRING:
 				case JSON_TOKEN_NUMBER:
 				case JSON_TOKEN_TRUE:
 				case JSON_TOKEN_FALSE:
 				case JSON_TOKEN_NULL:
-					res = pred->value_type == JS_TYPE_SCALAR;
+					res = pred->item_type == JS_TYPE_SCALAR;
 					break;
 				default:
 					res = false;
@@ -3986,13 +3986,13 @@ ExecEvalJsonIsPredicate(ExprState *state, ExprEvalStep *op)
 	}
 	else if (exprtype == JSONBOID)
 	{
-		if (pred->value_type == JS_TYPE_ANY)
+		if (pred->item_type == JS_TYPE_ANY)
 			res = true;
 		else
 		{
 			Jsonb	   *jb = DatumGetJsonbP(js);
 
-			switch (pred->value_type)
+			switch (pred->item_type)
 			{
 				case JS_TYPE_OBJECT:
 					res = JB_ROOT_IS_OBJECT(jb);
