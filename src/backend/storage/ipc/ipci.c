@@ -55,25 +55,21 @@ int			shared_memory_type = DEFAULT_SHARED_MEMORY_TYPE;
 shmem_startup_hook_type shmem_startup_hook = NULL;
 
 static Size total_addin_request = 0;
-static bool addin_request_allowed = true;
-
 
 /*
  * RequestAddinShmemSpace
  *		Request that extra shmem space be allocated for use by
  *		a loadable module.
  *
- * This is only useful if called from the _PG_init hook of a library that
- * is loaded into the postmaster via shared_preload_libraries.  Once
- * shared memory has been allocated, calls will be ignored.  (We could
- * raise an error, but it seems better to make it a no-op, so that
- * libraries containing such calls can be reloaded if needed.)
+ * This may only be called via the shmem_request_hook of a library that is
+ * loaded into the postmaster via shared_preload_libraries.  Calls from
+ * elsewhere will fail.
  */
 void
 RequestAddinShmemSpace(Size size)
 {
-	if (IsUnderPostmaster || !addin_request_allowed)
-		return;					/* too late */
+	if (!process_shmem_requests_in_progress)
+		elog(FATAL, "cannot request additional shared memory outside shmem_request_hook");
 	total_addin_request = add_size(total_addin_request, size);
 }
 
@@ -83,9 +79,6 @@ RequestAddinShmemSpace(Size size)
  *
  * If num_semaphores is not NULL, it will be set to the number of semaphores
  * required.
- *
- * Note that this function freezes the additional shared memory request size
- * from loadable modules.
  */
 Size
 CalculateShmemSize(int *num_semaphores)
@@ -152,8 +145,7 @@ CalculateShmemSize(int *num_semaphores)
 	size = add_size(size, ShmemBackendArraySize());
 #endif
 
-	/* freeze the addin request size and include it */
-	addin_request_allowed = false;
+	/* include additional requested shmem from preload libraries */
 	size = add_size(size, total_addin_request);
 
 	/* might as well round it off to a multiple of a typical page size */

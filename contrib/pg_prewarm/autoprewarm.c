@@ -96,6 +96,8 @@ static void apw_start_database_worker(void);
 static bool apw_init_shmem(void);
 static void apw_detach_shmem(int code, Datum arg);
 static int	apw_compare_blockinfo(const void *p, const void *q);
+static void autoprewarm_shmem_request(void);
+static shmem_request_hook_type prev_shmem_request_hook = NULL;
 
 /* Pointer to shared-memory state. */
 static AutoPrewarmSharedState *apw_state = NULL;
@@ -139,11 +141,24 @@ _PG_init(void)
 
 	MarkGUCPrefixReserved("pg_prewarm");
 
-	RequestAddinShmemSpace(MAXALIGN(sizeof(AutoPrewarmSharedState)));
+	prev_shmem_request_hook = shmem_request_hook;
+	shmem_request_hook = autoprewarm_shmem_request;
 
 	/* Register autoprewarm worker, if enabled. */
 	if (autoprewarm)
 		apw_start_leader_worker();
+}
+
+/*
+ * Requests any additional shared memory required for autoprewarm.
+ */
+static void
+autoprewarm_shmem_request(void)
+{
+	if (prev_shmem_request_hook)
+		prev_shmem_request_hook();
+
+	RequestAddinShmemSpace(MAXALIGN(sizeof(AutoPrewarmSharedState)));
 }
 
 /*

@@ -3651,6 +3651,7 @@ shm_mq_result
 shm_toc
 shm_toc_entry
 shm_toc_estimator
+shmem_request_hook_type
 shmem_startup_hook_type
 sig_atomic_t
 sigjmp_buf
