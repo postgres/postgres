@@ -42,15 +42,15 @@ Node *replication_parse_result;
 %expect 0
 %name-prefix="replication_yy"
 
-%union {
-		char					*str;
-		bool					boolval;
-		uint32					uintval;
-
-		XLogRecPtr				recptr;
-		Node					*node;
-		List					*list;
-		DefElem					*defelt;
+%union
+{
+	char	   *str;
+	bool		boolval;
+	uint32		uintval;
+	XLogRecPtr	recptr;
+	Node	   *node;
+	List	   *list;
+	DefElem	   *defelt;
 }
 
 /* Non-keyword tokens */
@@ -215,27 +215,27 @@ create_slot_legacy_opt:
 			K_EXPORT_SNAPSHOT
 				{
 				  $$ = makeDefElem("snapshot",
-								   (Node *)makeString("export"), -1);
+								   (Node *) makeString("export"), -1);
 				}
 			| K_NOEXPORT_SNAPSHOT
 				{
 				  $$ = makeDefElem("snapshot",
-								   (Node *)makeString("nothing"), -1);
+								   (Node *) makeString("nothing"), -1);
 				}
 			| K_USE_SNAPSHOT
 				{
 				  $$ = makeDefElem("snapshot",
-								   (Node *)makeString("use"), -1);
+								   (Node *) makeString("use"), -1);
 				}
 			| K_RESERVE_WAL
 				{
 				  $$ = makeDefElem("reserve_wal",
-								   (Node *)makeBoolean(true), -1);
+								   (Node *) makeBoolean(true), -1);
 				}
 			| K_TWO_PHASE
 				{
 				  $$ = makeDefElem("two_phase",
-								   (Node *)makeBoolean(true), -1);
+								   (Node *) makeBoolean(true), -1);
 				}
 			;
 

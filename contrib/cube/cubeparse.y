@@ -45,7 +45,7 @@ static NDBOX *write_point_as_box(int dim, char *str);
 
 box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($2, ',');
 		if (item_count($4, ',') != dim)
@@ -72,7 +72,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| paren_list COMMA paren_list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (item_count($3, ',') != dim)
@@ -99,7 +99,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| paren_list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (dim > CUBE_MAX_DIM)
@@ -117,7 +117,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (dim > CUBE_MAX_DIM)

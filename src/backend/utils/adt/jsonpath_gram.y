@@ -77,7 +77,8 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 %error-verbose
 %parse-param {JsonPathParseResult **result}
 
-%union {
+%union
+{
 	JsonPathString		str;
 	List			   *elems;	/* list of JsonPathParseItem */
 	List			   *indexs;	/* list of integers */
@@ -313,7 +314,7 @@ method:
 static JsonPathParseItem *
 makeItemType(JsonPathItemType type)
 {
-	JsonPathParseItem  *v = palloc(sizeof(*v));
+	JsonPathParseItem *v = palloc(sizeof(*v));
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -326,7 +327,7 @@ makeItemType(JsonPathItemType type)
 static JsonPathParseItem *
 makeItemString(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	if (s == NULL)
 	{
@@ -345,7 +346,7 @@ makeItemString(JsonPathString *s)
 static JsonPathParseItem *
 makeItemVariable(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemType(jpiVariable);
 	v->value.string.val = s->val;
@@ -357,7 +358,7 @@ makeItemVariable(JsonPathString *s)
 static JsonPathParseItem *
 makeItemKey(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemString(s);
 	v->type = jpiKey;
@@ -368,7 +369,7 @@ makeItemKey(JsonPathString *s)
 static JsonPathParseItem *
 makeItemNumeric(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemType(jpiNumeric);
 	v->value.numeric =
@@ -383,7 +384,7 @@ makeItemNumeric(JsonPathString *s)
 static JsonPathParseItem *
 makeItemBool(bool val)
 {
-	JsonPathParseItem  *v = makeItemType(jpiBool);
+	JsonPathParseItem *v = makeItemType(jpiBool);
 
 	v->value.boolean = val;
 
@@ -393,7 +394,7 @@ makeItemBool(bool val)
 static JsonPathParseItem *
 makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *ra)
 {
-	JsonPathParseItem  *v = makeItemType(type);
+	JsonPathParseItem *v = makeItemType(type);
 
 	v->value.args.left = la;
 	v->value.args.right = ra;
@@ -404,7 +405,7 @@ makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *
 static JsonPathParseItem *
 makeItemUnary(JsonPathItemType type, JsonPathParseItem *a)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	if (type == jpiPlus && a->type == jpiNumeric && !a->next)
 		return a;
@@ -428,9 +429,9 @@ makeItemUnary(JsonPathItemType type, JsonPathParseItem *a)
 static JsonPathParseItem *
 makeItemList(List *list)
 {
-	JsonPathParseItem  *head,
-					   *end;
-	ListCell		   *cell;
+	JsonPathParseItem *head,
+			   *end;
+	ListCell   *cell;
 
 	head = end = (JsonPathParseItem *) linitial(list);
 
@@ -455,9 +456,9 @@ makeItemList(List *list)
 static JsonPathParseItem *
 makeIndexArray(List *list)
 {
-	JsonPathParseItem  *v = makeItemType(jpiIndexArray);
-	ListCell		   *cell;
-	int					i = 0;
+	JsonPathParseItem *v = makeItemType(jpiIndexArray);
+	ListCell   *cell;
+	int			i = 0;
 
 	Assert(list_length(list) > 0);
 	v->value.array.nelems = list_length(list);
@@ -467,7 +468,7 @@ makeIndexArray(List *list)
 
 	foreach(cell, list)
 	{
-		JsonPathParseItem  *jpi = lfirst(cell);
+		JsonPathParseItem *jpi = lfirst(cell);
 
 		Assert(jpi->type == jpiSubscript);
 
@@ -481,7 +482,7 @@ makeIndexArray(List *list)
 static JsonPathParseItem *
 makeAny(int first, int last)
 {
-	JsonPathParseItem  *v = makeItemType(jpiAny);
+	JsonPathParseItem *v = makeItemType(jpiAny);
 
 	v->value.anybounds.first = (first >= 0) ? first : PG_UINT32_MAX;
 	v->value.anybounds.last = (last >= 0) ? last : PG_UINT32_MAX;
@@ -493,9 +494,9 @@ static JsonPathParseItem *
 makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				  JsonPathString *flags)
 {
-	JsonPathParseItem  *v = makeItemType(jpiLikeRegex);
-	int					i;
-	int					cflags;
+	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
+	int			i;
+	int			cflags;
 
 	v->value.like_regex.expr = expr;
 	v->value.like_regex.pattern = pattern->val;

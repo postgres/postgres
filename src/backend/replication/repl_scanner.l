@@ -169,7 +169,8 @@ WAIT				{ return K_WAIT; }
 				}
 
 <xd>{xdstop}	{
-					int len;
+					int			len;
+
 					yyless(1);
 					BEGIN(INITIAL);
 					yylval.str = litbufdup();
@@ -183,7 +184,7 @@ WAIT				{ return K_WAIT; }
 				}
 
 {identifier}	{
-					int len = strlen(yytext);
+					int			len = strlen(yytext);
 
 					yylval.str = downcase_truncate_identifier(yytext, len, true);
 					return IDENT;

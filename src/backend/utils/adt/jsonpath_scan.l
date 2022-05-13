@@ -332,8 +332,8 @@ static const JsonPathKeyword keywords[] = {
 static enum yytokentype
 checkKeyword()
 {
-	int						res = IDENT_P;
-	int						diff;
+	int			res = IDENT_P;
+	int			diff;
 	const JsonPathKeyword  *StopLow = keywords,
 						   *StopHigh = keywords + lengthof(keywords),
 						   *StopMiddle;

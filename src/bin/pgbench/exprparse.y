@@ -30,7 +30,7 @@ static PgBenchExpr *make_integer_constant(int64 ival);
 static PgBenchExpr *make_double_constant(double dval);
 static PgBenchExpr *make_variable(char *varname);
 static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
-		PgBenchExpr *lexpr, PgBenchExpr *rexpr);
+							PgBenchExpr *lexpr, PgBenchExpr *rexpr);
 static PgBenchExpr *make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr);
 static int	find_func(yyscan_t yyscanner, const char *fname);
 static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args);
@@ -240,7 +240,7 @@ make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr)
  *			  meaning #args >= 1;
  *			- PGBENCH_NARGS_CASE is for the "CASE WHEN ..." function, which
  *			  has #args >= 3 and odd;
- * 			- PGBENCH_NARGS_HASH is for hash functions, which have one required
+ *			- PGBENCH_NARGS_HASH is for hash functions, which have one required
  *			  and one optional argument;
  * - tag: function identifier from PgBenchFunction enum
  */

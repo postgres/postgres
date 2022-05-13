@@ -49,10 +49,10 @@ static sigjmp_buf *GUC_flex_fatal_jmp;
 static void FreeConfigVariable(ConfigVariable *item);
 
 static void record_config_file_error(const char *errmsg,
-						 const char *config_file,
-						 int lineno,
-						 ConfigVariable **head_p,
-						 ConfigVariable **tail_p);
+									 const char *config_file,
+									 int lineno,
+									 ConfigVariable **head_p,
+									 ConfigVariable **tail_p);
 
 static int	GUC_flex_fatal(const char *msg);
 
