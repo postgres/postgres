@@ -460,10 +460,16 @@ OPTIONS (ADD password_required 'false');
    <title>Transaction Management Options</title>
 
    <para>
-    When multiple remote (sub)transactions are involved in a local
-    (sub)transaction, by default <filename>postgres_fdw</filename> commits
-    those remote (sub)transactions one by one when the local (sub)transaction
-    commits.
+    As described in the Transaction Management section, in
+    <filename>postgres_fdw</filename> transactions are managed by creating
+    corresponding remote transactions, and subtransactions are managed by
+    creating corresponding remote subtransactions. When multiple remote
+    transactions are involved in the current local transaction, by default
+    <filename>postgres_fdw</filename> commits those remote transactions
+    serially when the local transaction is committed. When multiple remote
+    subtransactions are involved in the current local subtransaction, by
+    default <filename>postgres_fdw</filename> commits those remote
+    subtransactions serially when the local subtransaction is committed.
     Performance can be improved with the following option:
    </para>
 
@@ -474,26 +480,24 @@ OPTIONS (ADD password_required 'false');
      <listitem>
       <para>
        This option controls whether <filename>postgres_fdw</filename> commits
-       remote (sub)transactions opened on a foreign server in a local
-       (sub)transaction in parallel when the local (sub)transaction commits.
-       This option can only be specified for foreign servers, not per-table.
-       The default is <literal>false</literal>.
+       in parallel remote transactions opened on a foreign server in a local
+       transaction when the local transaction is committed. This setting also
+       applies to remote and local subtransactions. This option can only be
+       specified for foreign servers, not per-table. The default is
+       <literal>false</literal>.
       </para>
 
       <para>
-       If multiple foreign servers with this option enabled are involved in
-       a local (sub)transaction, multiple remote (sub)transactions opened on
-       those foreign servers in the local (sub)transaction are committed in
-       parallel across those foreign servers when the local (sub)transaction
-       commits.
+       If multiple foreign servers with this option enabled are involved in a
+       local transaction, multiple remote transactions on those foreign
+       servers are committed in parallel across those foreign servers when
+       the local transaction is committed.
       </para>
 
       <para>
-       For a foreign server with this option enabled, if many remote
-       (sub)transactions are opened on the foreign server in a local
-       (sub)transaction, this option might increase the remote server's load
-       when the local (sub)transaction commits, so be careful when using this
-       option.
+       When this option is enabled, a foreign server with many remote
+       transactions may see a negative performance impact when the local
+       transaction is committed.
       </para>
      </listitem>
     </varlistentry>
