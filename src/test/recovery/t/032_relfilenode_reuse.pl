@@ -15,7 +15,6 @@ log_connections=on
 # to avoid "repairing" corruption
 full_page_writes=off
 log_min_messages=debug2
-autovacuum_naptime=1s
 shared_buffers=1MB
 ]);
 $node_primary->start;
@@ -29,11 +28,8 @@ $node_standby->init_from_backup($node_primary, $backup_name,
 	has_streaming => 1);
 $node_standby->start;
 
-# To avoid hanging while expecting some specific input from a psql
-# instance being driven by us, add a timeout high enough that it
-# should never trigger even on very slow machines, unless something
-# is really wrong.
-my $psql_timeout = IPC::Run::timer(300);
+# We'll reset this timeout for each individual query we run.
+my $psql_timeout = IPC::Run::timer($PostgreSQL::Test::Utils::timeout_default);
 
 my %psql_primary = (stdin => '', stdout => '', stderr => '');
 $psql_primary{run} = IPC::Run::start(
@@ -207,6 +203,12 @@ sub send_query_and_wait
 {
 	my ($psql, $query, $untl) = @_;
 	my $ret;
+
+	# For each query we run, we'll restart the timeout.  Otherwise the timeout
+	# would apply to the whole test script, and would need to be set very high
+	# to survive when running under Valgrind.
+	$psql_timeout->reset();
+	$psql_timeout->start();
 
 	# send query
 	$$psql{stdin} .= $query;
