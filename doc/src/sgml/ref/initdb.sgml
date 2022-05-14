@@ -146,7 +146,12 @@ PostgreSQL documentation
        <para>
         This option specifies the default authentication method for local
         users used in <filename>pg_hba.conf</filename> (<literal>host</literal>
-        and <literal>local</literal> lines).  <command>initdb</command> will
+        and <literal>local</literal> lines).  See <xref linkend="auth-pg-hba-conf"/>
+        for an overview of valid values.
+       </para>
+
+       <para>
+        <command>initdb</command> will
         prepopulate <filename>pg_hba.conf</filename> entries using the
         specified authentication method for non-replication as well as
         replication connections.
@@ -575,6 +580,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-pg-ctl"/></member>
    <member><xref linkend="app-postgres"/></member>
+   <member><xref linkend="auth-pg-hba-conf"/></member>
   </simplelist>
  </refsect1>
 
