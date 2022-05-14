@@ -68,7 +68,7 @@
    cluster's data directory.
    (<acronym>HBA</acronym> stands for host-based authentication.) A default
    <filename>pg_hba.conf</filename> file is installed when the data
-   directory is initialized by <command>initdb</command>.  It is
+   directory is initialized by <xref linkend="app-initdb"/>.  It is
    possible to place the authentication configuration file elsewhere,
    however; see the <xref linkend="guc-hba-file"/> configuration parameter.
   </para>
