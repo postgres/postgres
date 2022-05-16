@@ -757,7 +757,7 @@ Author: John Naylor <john.naylor@postgresql.org>
 
 <listitem>
 <para>
-Improve validation of ASCII and UTF-8 text by processing 16 bytes at a time (John Naylor)
+Improve validation of UTF-8 text (even ASCII-only) by processing 16 bytes at a time (John Naylor)
 </para>
 
 <para>
