@@ -9,4 +9,5 @@ GETTEXT_FLAGS    = \
     pg_fatal:1:c-format \
     pg_log:2:c-format \
     prep_status:1:c-format \
+    prep_status_progress:1:c-format \
     report_status:2:c-format
