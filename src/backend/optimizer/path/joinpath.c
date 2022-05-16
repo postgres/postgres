@@ -610,7 +610,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 											hash_operators,
 											extra->inner_unique,
 											binary_mode,
-											outer_path->parent->rows);
+											outer_path->rows);
 	}
 
 	return NULL;
