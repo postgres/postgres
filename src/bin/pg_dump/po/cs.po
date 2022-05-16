@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_dump-cs (PostgreSQL 9.3)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:16+0000\n"
-"PO-Revision-Date: 2020-11-01 01:00+0100\n"
+"PO-Revision-Date: 2021-09-16 09:14+0200\n"
 "Last-Translator: Tomas Vondra <tv@fuzzy.cz>\n"
 "Language-Team: Czech <info@cspug.cx>\n"
 "Language: cs\n"
@@ -1464,9 +1464,7 @@ msgstr ""
 #: pg_dump.c:1014
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
-msgstr ""
-"  -N, --exclude-schema=PATTERN  nedumpuj uvedená schéma(ta)\n"
-"\n"
+msgstr "  -N, --exclude-schema=PATTERN nedumpuj uvedená schéma(ta)\n\n"
 
 #: pg_dump.c:1015
 #, c-format
@@ -1542,9 +1540,7 @@ msgstr ""
 #: pg_dump.c:1028
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
-msgstr ""
-"  --exclude-table-data=VZOR   nedumpuj data pro zadané tabulky\n"
-"\n"
+msgstr "  --exclude-table-data=VZOR    nedumpuj data pro zadané tabulky\n\n"
 
 #: pg_dump.c:1029 pg_dumpall.c:642
 #, c-format
@@ -2317,12 +2313,12 @@ msgstr "  %s [VOLBA]...\n"
 #: pg_dumpall.c:621
 #, c-format
 msgid "  -f, --file=FILENAME          output file name\n"
-msgstr "  -f, --file=SOUBOR        výstupní soubor\n"
+msgstr "  -f, --file=SOUBOR            výstupní soubor\n"
 
 #: pg_dumpall.c:628
 #, c-format
 msgid "  -c, --clean                  clean (drop) databases before recreating\n"
-msgstr "  -c, --clean              odstranit (drop) databázi před jejím vytvořením\n"
+msgstr "  -c, --clean                  odstranit (drop) databázi před jejím vytvořením\n"
 
 #: pg_dumpall.c:630
 #, c-format
@@ -2332,7 +2328,7 @@ msgstr "  -g, --globals-only       dump pouze globálních objektů, ne databáz
 #: pg_dumpall.c:631 pg_restore.c:485
 #, c-format
 msgid "  -O, --no-owner               skip restoration of object ownership\n"
-msgstr "  -O, --no-owner           nevypisuje příkazy k nastavení vlastníka objektů\n"
+msgstr "  -O, --no-owner               nevypisuje příkazy k nastavení vlastníka objektů\n"
 
 #: pg_dumpall.c:632
 #, c-format
@@ -2342,7 +2338,7 @@ msgstr "  -r, --roles-only            dump pouze rolí, ne databází nebo table
 #: pg_dumpall.c:634
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
-msgstr "  -S, --superuser=JMÉNO    uživatelské jméno superuživatele použité při dumpu\n"
+msgstr "  -S, --superuser=JMÉNO        uživatelské jméno superuživatele použité při dumpu\n"
 
 #: pg_dumpall.c:635
 #, c-format
@@ -2489,7 +2485,7 @@ msgstr "  %s [PŘEPÍNAČ]... [SOUBOR]\n"
 #: pg_restore.c:466
 #, c-format
 msgid "  -d, --dbname=NAME        connect to database name\n"
-msgstr "  -d, --dbname=JMÉNO        jméno cílové databáze\n"
+msgstr "  -d, --dbname=JMÉNO       jméno cílové databáze\n"
 
 #: pg_restore.c:467
 #, c-format
@@ -2499,7 +2495,7 @@ msgstr "  -f, --file=SOUBOR        výstupní soubor (- pro stdout)\n"
 #: pg_restore.c:468
 #, c-format
 msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
-msgstr "  -F, --format=c|d|t         formát záložního souboru (měl by být automatický)\n"
+msgstr "  -F, --format=c|d|t       formát záložního souboru (měl by být automatický)\n"
 
 #: pg_restore.c:469
 #, c-format

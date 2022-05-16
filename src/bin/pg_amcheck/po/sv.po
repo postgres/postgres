@@ -1,0 +1,546 @@
+# SWEDISH message translation file for pg_amcheck
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
+# Dennis Björklund <db@zigo.dhs.org>, 2021, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-05-09 18:50+0000\n"
+"PO-Revision-Date: 2022-05-09 21:45+0200\n"
+"Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
+"Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../../../src/common/logging.c:277
+#, c-format
+msgid "error: "
+msgstr "fel: "
+
+#: ../../../src/common/logging.c:284
+#, c-format
+msgid "warning: "
+msgstr "varning: "
+
+#: ../../../src/common/logging.c:295
+#, c-format
+msgid "detail: "
+msgstr "detalj: "
+
+#: ../../../src/common/logging.c:302
+#, c-format
+msgid "hint: "
+msgstr "tips: "
+
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
+msgid "Cancel request sent\n"
+msgstr "Förfrågan om avbrytning skickad\n"
+
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
+msgid "Could not send cancel request: "
+msgstr "Kunde inte skicka förfrågan om avbrytning: "
+
+#: ../../fe_utils/connect_utils.c:91
+#, c-format
+msgid "could not connect to database %s: out of memory"
+msgstr "kunde inte ansluta till databas %s: slut på minne"
+
+#: ../../fe_utils/connect_utils.c:117
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "ogiltigt värde \"%s\" för flaggan \"%s\""
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s måste vara i intervallet %d..%d"
+
+#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
+#: pg_amcheck.c:1645 pg_amcheck.c:2090
+#, c-format
+msgid "query failed: %s"
+msgstr "fråga misslyckades: %s"
+
+#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
+#: pg_amcheck.c:571 pg_amcheck.c:1100 pg_amcheck.c:1646 pg_amcheck.c:2091
+#, c-format
+msgid "Query was: %s"
+msgstr "Frågan var: %s"
+
+#: pg_amcheck.c:399
+#, c-format
+msgid "invalid argument for option %s"
+msgstr "ogiltigt argument för flaggan %s"
+
+#: pg_amcheck.c:405
+#, c-format
+msgid "invalid start block"
+msgstr "ogiltigt startblock"
+
+#: pg_amcheck.c:407
+#, c-format
+msgid "start block out of bounds"
+msgstr "startblocket utanför giltig gräns"
+
+#: pg_amcheck.c:414
+#, c-format
+msgid "invalid end block"
+msgstr "ogiltigt slutblock"
+
+#: pg_amcheck.c:416
+#, c-format
+msgid "end block out of bounds"
+msgstr "slutblocket utanför giltig gräns"
+
+#: pg_amcheck.c:439 pg_amcheck.c:461
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Försök med \"%s --help\" för mer information."
+
+#: pg_amcheck.c:445
+#, c-format
+msgid "end block precedes start block"
+msgstr "slutblocket kommer före startblocket"
+
+#: pg_amcheck.c:459
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "för många kommandoradsargument (första är \"%s\")"
+
+#: pg_amcheck.c:479
+#, c-format
+msgid "cannot specify a database name with --all"
+msgstr "kan inte ange databasnamn tillsammans med --all"
+
+#: pg_amcheck.c:485
+#, c-format
+msgid "cannot specify both a database name and database patterns"
+msgstr "kan inte ange både ett databasnamn och ett databasmönster"
+
+#: pg_amcheck.c:513
+#, c-format
+msgid "no databases to check"
+msgstr "inga databaser att kontrollera"
+
+#: pg_amcheck.c:569
+#, c-format
+msgid "database \"%s\": %s"
+msgstr "databas \"%s\": %s"
+
+#: pg_amcheck.c:580
+#, c-format
+msgid "skipping database \"%s\": amcheck is not installed"
+msgstr "hoppar över databas \"%s\": amcheck är inte installerad"
+
+#: pg_amcheck.c:588
+#, c-format
+msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
+msgstr "i databas \"%s\": använder amcheck version \"%s\" i schema \"%s\""
+
+#: pg_amcheck.c:610
+#, c-format
+msgid "no heap tables to check matching \"%s\""
+msgstr "finns inga heap-tabeller för att kontrollera matchning \"%s\""
+
+#: pg_amcheck.c:613
+#, c-format
+msgid "no btree indexes to check matching \"%s\""
+msgstr "finns inga btree-index för att kontrollera matching \"%s\""
+
+#: pg_amcheck.c:616
+#, c-format
+msgid "no relations to check in schemas matching \"%s\""
+msgstr "finns inga relationer att kontrollera i schemamatchning \"%s\""
+
+#: pg_amcheck.c:619
+#, c-format
+msgid "no relations to check matching \"%s\""
+msgstr "finns inga relations för att kontrollera matching \"%s\""
+
+#: pg_amcheck.c:647
+#, c-format
+msgid "no relations to check"
+msgstr "finns inga relationer att kontrollera"
+
+#: pg_amcheck.c:730
+#, c-format
+msgid "checking heap table \"%s.%s.%s\""
+msgstr "kontrollerar heap-tabell \"%s.%s.%s\""
+
+#: pg_amcheck.c:746
+#, c-format
+msgid "checking btree index \"%s.%s.%s\""
+msgstr "kontrollerar btree-index \"%s.%s.%s\""
+
+#: pg_amcheck.c:893
+#, c-format
+msgid "error sending command to database \"%s\": %s"
+msgstr "fel vid skickande av kommando till databas \"%s\": %s"
+
+#: pg_amcheck.c:896
+#, c-format
+msgid "Command was: %s"
+msgstr "Kommandot var: %s"
+
+#: pg_amcheck.c:1013
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
+msgstr "heap-tabell \"%s.%s.%s\", block %s, offset %s, attribut %s:\n"
+
+#: pg_amcheck.c:1020
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
+msgstr "heap-tabell \"%s.%s.%s\", block %s, offset %s:\n"
+
+#: pg_amcheck.c:1026
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s:\n"
+msgstr "heap-tabell \"%s.%s.%s\", block %s:\n"
+
+#: pg_amcheck.c:1031 pg_amcheck.c:1042
+#, c-format
+msgid "heap table \"%s.%s.%s\":\n"
+msgstr "heap-tabell \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1046 pg_amcheck.c:1115
+#, c-format
+msgid "query was: %s\n"
+msgstr "frågan var: %s\n"
+
+#: pg_amcheck.c:1097
+#, c-format
+msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
+msgstr "btree-index \"%s.%s.%s\": kontrollfunktion för btree returnerade oväntat antal rader: %d"
+
+#: pg_amcheck.c:1101
+#, c-format
+msgid "Are %s's and amcheck's versions compatible?"
+msgstr "Är versionerna på %s och amcheck kompatibla?"
+
+#: pg_amcheck.c:1111
+#, c-format
+msgid "btree index \"%s.%s.%s\":\n"
+msgstr "btree-index \"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1136
+#, c-format
+msgid ""
+"%s checks objects in a PostgreSQL database for corruption.\n"
+"\n"
+msgstr ""
+"%s kontrollerar objekt i en PostgreSQL-database för att hitta korruption.\n"
+"\n"
+
+#: pg_amcheck.c:1137
+#, c-format
+msgid "Usage:\n"
+msgstr "Användning:\n"
+
+#: pg_amcheck.c:1138
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [FLAGGA]... [DBNAMN]\n"
+
+#: pg_amcheck.c:1139
+#, c-format
+msgid ""
+"\n"
+"Target options:\n"
+msgstr ""
+"\n"
+"Flaggor för destinationen:\n"
+
+#: pg_amcheck.c:1140
+#, c-format
+msgid "  -a, --all                       check all databases\n"
+msgstr "  -a, --all                       kontrollera alla databaser\n"
+
+#: pg_amcheck.c:1141
+#, c-format
+msgid "  -d, --database=PATTERN          check matching database(s)\n"
+msgstr "  -d, --database=MALL             kontrollera matchande databas(er)\n"
+
+#: pg_amcheck.c:1142
+#, c-format
+msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
+msgstr "  -D, --exclude-database=MALL     kontrollera INTE matchande databas(er)\n"
+
+#: pg_amcheck.c:1143
+#, c-format
+msgid "  -i, --index=PATTERN             check matching index(es)\n"
+msgstr "  -i, --index=MALL                kontrollera matchande index\n"
+
+#: pg_amcheck.c:1144
+#, c-format
+msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
+msgstr "  -I, --exclude-index=MALL        kontrollera INTE matchande index\n"
+
+#: pg_amcheck.c:1145
+#, c-format
+msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
+msgstr "  -r, --relation=MALL             kontrollera matchande relation(er)\n"
+
+#: pg_amcheck.c:1146
+#, c-format
+msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
+msgstr "  -R, --exclude-relation=MALL     kontrollera INTE matchande relation(er)\n"
+
+#: pg_amcheck.c:1147
+#, c-format
+msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
+msgstr "  -s, --schema=MALL               kontrollera matchande schema(n)\n"
+
+#: pg_amcheck.c:1148
+#, c-format
+msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
+msgstr "  -S, --exclude-schema=MALL       kontrollera INTE matchande schema(n)\n"
+
+#: pg_amcheck.c:1149
+#, c-format
+msgid "  -t, --table=PATTERN             check matching table(s)\n"
+msgstr "  -t, --table=MALL                kontollera matchande tabell(er)\n"
+
+#: pg_amcheck.c:1150
+#, c-format
+msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
+msgstr "  -T, --exclude-table=MALL        kontollera INTE matchande tabell(er)\n"
+
+#: pg_amcheck.c:1151
+#, c-format
+msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
+msgstr "      --no-dependent-indexes      expandera INTE listan med relationer för att inkludera index\n"
+
+#: pg_amcheck.c:1152
+#, c-format
+msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
+msgstr "      --no-dependent-toast        expandera inte listan av relationer för att inkludera TOAST-tabeller\n"
+
+#: pg_amcheck.c:1153
+#, c-format
+msgid "      --no-strict-names           do NOT require patterns to match objects\n"
+msgstr "      --no-strict-names           kräv INTE mallar för matcha objekt\n"
+
+#: pg_amcheck.c:1154
+#, c-format
+msgid ""
+"\n"
+"Table checking options:\n"
+msgstr ""
+"\n"
+"Flaggor för kontroll av tabeller:\n"
+
+#: pg_amcheck.c:1155
+#, c-format
+msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
+msgstr "      --exclude-toast-pointers    följ INTE relationers TOAST-pekare\n"
+
+#: pg_amcheck.c:1156
+#, c-format
+msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
+msgstr "      --on-error-stop             sluta kontrollera efter första korrupta sidan\n"
+
+#: pg_amcheck.c:1157
+#, c-format
+msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
+msgstr "      --skip=FLAGGA               kontrollera INTE block som är \"all-frozen\" eller \"all-visible\"\n"
+
+#: pg_amcheck.c:1158
+#, c-format
+msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
+msgstr "      --startblock=BLOCK          börja kontollera tabell(er) vid angivet blocknummer\n"
+
+#: pg_amcheck.c:1159
+#, c-format
+msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
+msgstr "      --endblock=BLOCK            kontrollera tabell(er) fram till angivet blocknummer\n"
+
+#: pg_amcheck.c:1160
+#, c-format
+msgid ""
+"\n"
+"B-tree index checking options:\n"
+msgstr ""
+"\n"
+"Flaggor för kontroll av B-tree-index:\n"
+
+#: pg_amcheck.c:1161
+#, c-format
+msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
+msgstr "      --heapallindexed            kontrollera att alla heap-tupler hittas i index\n"
+
+#: pg_amcheck.c:1162
+#, c-format
+msgid "      --parent-check              check index parent/child relationships\n"
+msgstr "      --parent-check              kontrollera förhållandet mellan barn/förälder i index\n"
+
+#: pg_amcheck.c:1163
+#, c-format
+msgid "      --rootdescend               search from root page to refind tuples\n"
+msgstr "      --rootdescend               sök från root-sidan för att återfinna tupler\n"
+
+#: pg_amcheck.c:1164
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Flaggor för anslutning:\n"
+
+#: pg_amcheck.c:1165
+#, c-format
+msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
+msgstr "  -h, --host=VÄRDNAMN             databasens värdnamn eller socketkatalog\n"
+
+#: pg_amcheck.c:1166
+#, c-format
+msgid "  -p, --port=PORT                 database server port\n"
+msgstr "  -p, --port=PORT                 databasserverns port\n"
+
+#: pg_amcheck.c:1167
+#, c-format
+msgid "  -U, --username=USERNAME         user name to connect as\n"
+msgstr "  -U, --username=ANVÄNDARE         användarnamn att ansluta som\n"
+
+#: pg_amcheck.c:1168
+#, c-format
+msgid "  -w, --no-password               never prompt for password\n"
+msgstr "  -w, --no-password               fråga ej efter lösenord\n"
+
+#: pg_amcheck.c:1169
+#, c-format
+msgid "  -W, --password                  force password prompt\n"
+msgstr "  -W, --password                  tvinga fram lösenordsfråga\n"
+
+#: pg_amcheck.c:1170
+#, c-format
+msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
+msgstr "      --maintenance-db=DBNAMN     val av underhållsdatabas\n"
+
+#: pg_amcheck.c:1171
+#, c-format
+msgid ""
+"\n"
+"Other options:\n"
+msgstr ""
+"\n"
+"Andra flaggor:\n"
+
+#: pg_amcheck.c:1172
+#, c-format
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      visa kommandon som skickas till servern\n"
+
+#: pg_amcheck.c:1173
+#, c-format
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
+msgstr "  -j, --jobs=NUM                  antal samtidiga anslutningar till servern\n"
+
+#: pg_amcheck.c:1174
+#, c-format
+msgid "  -P, --progress                  show progress information\n"
+msgstr "  -P, --progress                  visa förloppsinformation\n"
+
+#: pg_amcheck.c:1175
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   skriv massor med utdata\n"
+
+#: pg_amcheck.c:1176
+#, c-format
+msgid "  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   visa versionsinformation, avsluta sedan\n"
+
+#: pg_amcheck.c:1177
+#, c-format
+msgid "      --install-missing           install missing extensions\n"
+msgstr "      --install-missing           installera utökningar som saknas\n"
+
+#: pg_amcheck.c:1178
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                      visa denna hjälp, avsluta sedan\n"
+
+#: pg_amcheck.c:1180
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Rapportera fel till <%s>.\n"
+
+#: pg_amcheck.c:1181
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "hemsida för %s: <%s>\n"
+
+#: pg_amcheck.c:1234
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
+msgstr "%*s/%s relationer (%d%%), %*s/%s sidor (%d%%) %*s"
+
+#: pg_amcheck.c:1245
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
+msgstr "%*s/%s relationer (%d%%), %*s/%s sidor (%d%%) (%s%-*.*s)"
+
+#: pg_amcheck.c:1260
+#, c-format
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
+msgstr "%*s/%s relationer (%d%%), %*s/%s sidor (%d%%)"
+
+#: pg_amcheck.c:1319 pg_amcheck.c:1352
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "ej korrekt kvalificerat namn (för många namn med punkt): %s"
+
+#: pg_amcheck.c:1397
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "ej korrekt relationsnamn (för många namn med punkt): %s"
+
+#: pg_amcheck.c:1550 pg_amcheck.c:1689
+#, c-format
+msgid "including database \"%s\""
+msgstr "inkludera databas \"%s\""
+
+#: pg_amcheck.c:1671
+#, c-format
+msgid "internal error: received unexpected database pattern_id %d"
+msgstr "internt fel: tog emot oväntat pattern_id %d för databas"
+
+#: pg_amcheck.c:1673
+#, c-format
+msgid "no connectable databases to check matching \"%s\""
+msgstr "finns inga anslutningsbara databaser att kontrollera som matchar \"%s\""
+
+#: pg_amcheck.c:2131
+#, c-format
+msgid "internal error: received unexpected relation pattern_id %d"
+msgstr "internt fel: tog emot oväntat pattern_id %d för relation"
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#, c-format
+#~ msgid "command was: %s"
+#~ msgstr "kommandot var: %s"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "fatalt: "
+
+#, c-format
+#~ msgid "number of parallel jobs must be at least 1"
+#~ msgstr "antalet parallella jobb måste vara minst 1"

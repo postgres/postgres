@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-09 21:19+0000\n"
-"PO-Revision-Date: 2021-06-09 10:00+0800\n"
+"POT-Creation-Date: 2021-08-14 05:48+0000\n"
+"PO-Revision-Date: 2021-08-15 10:00+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
 "Language: zh_CN\n"
@@ -37,7 +37,7 @@ msgstr "警告: "
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
 #, c-format
 msgid "out of memory\n"
-msgstr "内存溢出\n"
+msgstr "内存不足\n"
 
 #: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
 #, c-format
@@ -45,10 +45,12 @@ msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "无法复制空指针 (内部错误)\n"
 
 #: ../../common/restricted_token.c:64
+#, c-format
 msgid "could not load library \"%s\": error code %lu"
 msgstr "无法加载库 \"%s\": 错误码 %lu"
 
 #: ../../common/restricted_token.c:73
+#, c-format
 msgid "cannot create restricted tokens on this platform: error code %lu"
 msgstr "无法为该平台创建受限制的令牌:错误码 %lu"
 
@@ -88,10 +90,12 @@ msgid "cannot use restore_command with %%r placeholder"
 msgstr "无法对%%r占位符使用restore_command"
 
 #: ../../fe_utils/archive.c:74
+#, c-format
 msgid "unexpected file size for \"%s\": %lld instead of %lld"
 msgstr "\"%s\"的意外文件大小：%lld而不是%lld"
 
 #: ../../fe_utils/archive.c:85
+#, c-format
 msgid "could not open file \"%s\" restored from archive: %m"
 msgstr "无法打开从存档还原的文件\"%s\"： %m"
 
@@ -101,10 +105,12 @@ msgid "could not stat file \"%s\": %m"
 msgstr "无法取文件 \"%s\" 的状态: %m"
 
 #: ../../fe_utils/archive.c:112
+#, c-format
 msgid "restore_command failed: %s"
 msgstr "restore_command失败: %s"
 
 #: ../../fe_utils/archive.c:121
+#, c-format
 msgid "could not restore file \"%s\" from archive"
 msgstr "无法从存档还原文件\"%s\""
 
@@ -114,7 +120,7 @@ msgstr "无法从存档还原文件\"%s\""
 #: parsexlog.c:195
 #, c-format
 msgid "out of memory"
-msgstr "内存用尽"
+msgstr "内存不足"
 
 #: ../../fe_utils/recovery_gen.c:134 parsexlog.c:308
 #, c-format
@@ -152,6 +158,7 @@ msgid "could not write file \"%s\": %m"
 msgstr "无法写入文件 \"%s\": %m"
 
 #: file_ops.c:150 file_ops.c:177
+#, c-format
 msgid "undefined file type for \"%s\""
 msgstr "不可识别的文件格式 \"%s\""
 
@@ -246,22 +253,27 @@ msgid "data file \"%s\" in source is not a regular file"
 msgstr "源头的数据文件\"%s\"不是一个常规文件"
 
 #: filemap.c:242 filemap.c:275
+#, c-format
 msgid "duplicate source file \"%s\""
 msgstr "复制源文件\"%s\""
 
 #: filemap.c:330
+#, c-format
 msgid "unexpected page modification for non-regular file \"%s\""
 msgstr "非常规文件\"%s\"的意外页面修改"
 
 #: filemap.c:680 filemap.c:774
+#, c-format
 msgid "unknown file type for \"%s\""
 msgstr "\"%s\"的未知文件类型"
 
 #: filemap.c:707
+#, c-format
 msgid "file \"%s\" is of different type in source and target"
 msgstr "文件 \"%s\"在源和目标中的类型不同"
 
 #: filemap.c:779
+#, c-format
 msgid "could not decide what to do with file \"%s\""
 msgstr "无法决定如何处理文件\"%s\""
 
@@ -276,10 +288,12 @@ msgid "full_page_writes must be enabled in the source server"
 msgstr "源服务器中的full_page_writes必须被启用"
 
 #: libpq_source.c:150
+#, c-format
 msgid "could not prepare statement to fetch file contents: %s"
 msgstr "无法准备语句以获取文件内容: %s"
 
 #: libpq_source.c:169
+#, c-format
 msgid "error running query (%s) on source server: %s"
 msgstr "源服务器中有错误运行的查询（%s）：%s"
 
@@ -324,6 +338,7 @@ msgid "unexpected result while fetching remote files: %s"
 msgstr "在取得远程文件时得到意料之外的结果：%s"
 
 #: libpq_source.c:473
+#, c-format
 msgid "received more data chunks than requested"
 msgstr "收到的数据块比请求的多"
 
@@ -363,10 +378,12 @@ msgid "received data at offset %lld of file \"%s\", when requested for offset %l
 msgstr "当请求偏移量%3$lld时，在文件\"%2$s\"的偏移量%1$lld处接收到数据"
 
 #: libpq_source.c:550
+#, c-format
 msgid "received more than requested for file \"%s\""
 msgstr "收到的文件\"%s\"比要求的多"
 
 #: libpq_source.c:563
+#, c-format
 msgid "unexpected number of data chunks received"
 msgstr "接收到意外的数据块数"
 
@@ -499,6 +516,7 @@ msgid "  -P, --progress                 write progress messages\n"
 msgstr "  -P, --progress                 写出进度消息\n"
 
 #: pg_rewind.c:96
+#, c-format
 msgid ""
 "  -R, --write-recovery-conf      write configuration for replication\n"
 "                                 (requires --source-server)\n"
@@ -647,6 +665,7 @@ msgid "Done!"
 msgstr "完成！"
 
 #: pg_rewind.c:564
+#, c-format
 msgid "no action decided for file \"%s\""
 msgstr "未决定对文件\"%s\"执行任何操作"
 
@@ -696,6 +715,7 @@ msgid "%*s/%s kB (%d%%) copied"
 msgstr "已复制%*s/%s kB (%d%%)"
 
 #: pg_rewind.c:835
+#, c-format
 msgid "invalid control file"
 msgstr "无效的控制文件"
 
@@ -749,6 +769,7 @@ msgstr ""
 "检查您的安装."
 
 #: pg_rewind.c:1069
+#, c-format
 msgid "restore_command is not set in the target cluster"
 msgstr "目标群集中未设置restore_command"
 
@@ -763,6 +784,7 @@ msgid "postgres single-user mode in target cluster failed"
 msgstr "目标群集中的postgres单用户模式失败"
 
 #: pg_rewind.c:1133
+#, c-format
 msgid "Command was: %s"
 msgstr "命令是: %s"
 
@@ -809,7 +831,7 @@ msgstr "%X/%X处有无效的记录偏移量"
 #: xlogreader.c:357
 #, c-format
 msgid "contrecord is requested by %X/%X"
-msgstr "%X/%X请求继续记录（contrecord）"
+msgstr "%X/%X位置处要求继续记录"
 
 #: xlogreader.c:398 xlogreader.c:695
 #, c-format
@@ -819,14 +841,15 @@ msgstr "%X/%X处有无效记录长度: 应该是%u, 但实际是%u"
 #: xlogreader.c:422
 #, c-format
 msgid "record length %u at %X/%X too long"
-msgstr "%2$X/%3$X处有的记录长度%1$u过长"
+msgstr "%2$X/%3$X处的记录长度%1$u太长"
 
 #: xlogreader.c:453
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
-msgstr "%X/%X处没有继续记录标志"
+msgstr "在%X/%X处没有继续记录标志"
 
 #: xlogreader.c:466
+#, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "%3$X/%4$X处有无效的继续记录长度%1$u(应为 %2$lld)"
 
@@ -838,12 +861,12 @@ msgstr "%2$X/%3$X处有无效的资源管理器 ID %1$u"
 #: xlogreader.c:716 xlogreader.c:732
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
-msgstr "%3$X/%4$X处的记录有不正确的prev-link %1$X/%2$X"
+msgstr "具有不正确向前链接%X/%X的记录出现在%X/%X"
 
 #: xlogreader.c:768
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "%X/%X处的记录中有不正确的资源管理器数据校验和"
+msgstr "在%X/%X处的记录中的资源管理器数据校验和不正确"
 
 #: xlogreader.c:805
 #, c-format
@@ -856,6 +879,7 @@ msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "在日志段%2$s的偏移量%3$u处有无效的info位%1$04X"
 
 #: xlogreader.c:834
+#, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WAL文件来自于不同的数据库系统：WAL文件数据库系统标识符是%llu，pg_control数据库系统标识符是%llu"
 
@@ -917,17 +941,17 @@ msgstr "BKPIMAGE_HAS_HOLE和BKPIMAGE_IS_COMPRESSED都没有被设置，但是%2$
 #: xlogreader.c:1376
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL已被设置，但是在%X/%X没有前一个关系"
+msgstr "设置了BKPBLOCK_SAME_REL，但是在%X/%X位置没有记录先前的关系"
 
 #: xlogreader.c:1388
 #, c-format
 msgid "invalid block_id %u at %X/%X"
-msgstr "%2$X/%3$X处有无效block_id %1$u"
+msgstr "%2$X/%3$X处的block_id %1$u无效"
 
 #: xlogreader.c:1475
 #, c-format
 msgid "record with invalid length at %X/%X"
-msgstr "%X/%X处的记录的长度无效"
+msgstr "在%X/%X处的记录的长度无效"
 
 #: xlogreader.c:1564
 #, c-format

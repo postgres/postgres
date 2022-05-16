@@ -3,12 +3,14 @@
 # This file is distributed under the same license as the pg_dump (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+#
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_dump (PostgreSQL) 13\n"
+"Project-Id-Version: pg_dump (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:48+0000\n"
-"PO-Revision-Date: 2021-04-26 09:13+0200\n"
+"POT-Creation-Date: 2021-11-08 10:17+0000\n"
+"PO-Revision-Date: 2021-11-08 11:55+0100\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -16,22 +18,22 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: ../../../src/common/logging.c:259
 #, c-format
 msgid "fatal: "
-msgstr "κρίσιμο:"
+msgstr "κρίσιμο: "
 
 #: ../../../src/common/logging.c:266
 #, c-format
 msgid "error: "
-msgstr "σφάλμα:"
+msgstr "σφάλμα: "
 
 #: ../../../src/common/logging.c:273
 #, c-format
 msgid "warning: "
-msgstr "προειδοποίηση:"
+msgstr "προειδοποίηση: "
 
 #: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
@@ -41,32 +43,32 @@ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχον
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου  “%s”"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
 
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "δεν βρέθηκε το αρχείο “%s”  για να εκτελεστεί"
+msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
 #: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: ../../common/exec.c:409 parallel.c:1614
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s () απέτυχε: %m"
+msgstr "%s() απέτυχε: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
@@ -311,22 +313,22 @@ msgstr "ανάγνωση συνδρομών"
 #: common.c:338
 #, c-format
 msgid "invalid number of parents %d for table \"%s\""
-msgstr "μη έγκυρος αριθμός γονέων %d για τον πίνακα \"%s\""
+msgstr "μη έγκυρος αριθμός γονέων %d για τον πίνακα «%s»"
 
 #: common.c:1100
 #, c-format
 msgid "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found"
-msgstr "απέτυχε ο έλεγχος ακεραιότητας, το γονικό OID %u του πίνακα \"%s\" (OID %u) δεν βρέθηκε"
+msgstr "απέτυχε ο έλεγχος ακεραιότητας, το γονικό OID %u του πίνακα «%s» (OID %u) δεν βρέθηκε"
 
 #: common.c:1142
 #, c-format
 msgid "could not parse numeric array \"%s\": too many numbers"
-msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστυχίας \"%s\": πάρα πολλοί αριθμοί"
+msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας «%s»: πάρα πολλοί αριθμοί"
 
 #: common.c:1157
 #, c-format
 msgid "could not parse numeric array \"%s\": invalid character in number"
-msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστυχίας \"%s\": μη έγκυρος χαρακτήρας σε αριθμό"
+msgstr "δεν ήταν δυνατή η ανάλυση της αριθμητικής συστοιχίας «%s»: μη έγκυρος χαρακτήρας σε αριθμό"
 
 #: compress_io.c:111
 #, c-format
@@ -376,10 +378,9 @@ msgid "could not read from input file: end of file"
 msgstr "δεν ήταν δυνατή η ανάγνωση από το αρχείο εισόδου: τέλος αρχείου"
 
 #: parallel.c:254
-#, fuzzy, c-format
-#| msgid "pgpipe: getsockname() failed: error code %d"
+#, c-format
 msgid "%s() failed: error code %d"
-msgstr "pgpipe: getsockname() απέτυχε: κωδικός σφάλματος %d"
+msgstr "%s() απέτυχε: κωδικός σφάλματος %d"
 
 #: parallel.c:964
 #, c-format
@@ -392,15 +393,14 @@ msgid "could not create worker process: %m"
 msgstr "δεν ήταν δυνατή η δημιουργία διεργασίας εργάτη: %m"
 
 #: parallel.c:1151
-#, fuzzy, c-format
-#| msgid "unrecognized command received from master: \"%s\""
+#, c-format
 msgid "unrecognized command received from leader: \"%s\""
-msgstr "μη αναγνωρίσιμη εντολή που ελήφθη από τον μάστερ: “%s”"
+msgstr "μη αναγνωρίσιμη εντολή που ελήφθη από τον αρχηγό: «%s»"
 
 #: parallel.c:1194 parallel.c:1432
 #, c-format
 msgid "invalid message received from worker: \"%s\""
-msgstr "άκυρο μήνυμα που ελήφθη από εργάτη: “%s”"
+msgstr "άκυρο μήνυμα που ελήφθη από εργάτη: «%s»"
 
 #: parallel.c:1326
 #, c-format
@@ -437,10 +437,9 @@ msgid "pgpipe: could not listen: error code %d"
 msgstr "pgpipe: δεν ήταν δυνατή η ακρόαση: κωδικός σφάλματος %d"
 
 #: parallel.c:1764
-#, fuzzy, c-format
-#| msgid "pgpipe: getsockname() failed: error code %d"
+#, c-format
 msgid "pgpipe: %s() failed: error code %d"
-msgstr "pgpipe: getsockname() απέτυχε: κωδικός σφάλματος %d"
+msgstr "%s() απέτυχε: κωδικός σφάλματος %d"
 
 #: parallel.c:1775
 #, c-format
@@ -457,442 +456,433 @@ msgstr "pgpipe: δεν ήταν δυνατή η σύνδεση της υποδο
 msgid "pgpipe: could not accept connection: error code %d"
 msgstr "pgpipe: δεν ήταν δυνατή η αποδοχή σύνδεσης: κωδικός σφάλματος %d"
 
-#: pg_backup_archiver.c:278 pg_backup_archiver.c:1577
+#: pg_backup_archiver.c:277 pg_backup_archiver.c:1576
 #, c-format
 msgid "could not close output file: %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου εξόδου: %m"
 
-#: pg_backup_archiver.c:322 pg_backup_archiver.c:326
+#: pg_backup_archiver.c:321 pg_backup_archiver.c:325
 #, c-format
 msgid "archive items not in correct section order"
 msgstr "αρχειοθέτηση στοιχείων που δεν βρίσκονται σε σωστή σειρά ενότητας"
 
-#: pg_backup_archiver.c:332
+#: pg_backup_archiver.c:331
 #, c-format
 msgid "unexpected section code %d"
 msgstr "μη αναμενόμενος κώδικας ενότητας %d"
 
-#: pg_backup_archiver.c:369
+#: pg_backup_archiver.c:368
 #, c-format
 msgid "parallel restore is not supported with this archive file format"
 msgstr "η παράλληλη επαναφορά δεν υποστηρίζεται από αυτήν τη μορφή αρχείου αρχειοθέτησης"
 
-#: pg_backup_archiver.c:373
+#: pg_backup_archiver.c:372
 #, c-format
 msgid "parallel restore is not supported with archives made by pre-8.0 pg_dump"
 msgstr "η παράλληλη επαναφορά δεν υποστηρίζεται με αρχεία που έγιναν από pg_dump προ έκδοσης 8.0"
 
-#: pg_backup_archiver.c:391
+#: pg_backup_archiver.c:390
 #, c-format
 msgid "cannot restore from compressed archive (compression not supported in this installation)"
 msgstr "δεν είναι δυνατή η επαναφορά από συμπιεσμένη αρχειοθήκη (η συμπίεση δεν υποστηρίζεται σε αυτήν την εγκατάσταση)"
 
-#: pg_backup_archiver.c:408
+#: pg_backup_archiver.c:407
 #, c-format
 msgid "connecting to database for restore"
 msgstr "σύνδεση με βάση δεδομένων για επαναφορά"
 
-#: pg_backup_archiver.c:410
+#: pg_backup_archiver.c:409
 #, c-format
 msgid "direct database connections are not supported in pre-1.3 archives"
 msgstr "οι απευθείας συνδέσεις βάσεων δεδομένων δεν υποστηρίζονται σε προ-1.3 αρχεία"
 
-#: pg_backup_archiver.c:453
+#: pg_backup_archiver.c:452
 #, c-format
 msgid "implied data-only restore"
 msgstr "υποδηλούμενη επαναφορά μόνο δεδομένων"
 
-#: pg_backup_archiver.c:519
+#: pg_backup_archiver.c:518
 #, c-format
 msgid "dropping %s %s"
 msgstr "εγκαταλείπει %s: %s"
 
-#: pg_backup_archiver.c:614
+#: pg_backup_archiver.c:613
 #, c-format
 msgid "could not find where to insert IF EXISTS in statement \"%s\""
-msgstr "δεν ήταν δυνατή η εύρεση του σημείου εισαγωγής IF EXISTS στη δήλωση \"%s\""
+msgstr "δεν ήταν δυνατή η εύρεση του σημείου εισαγωγής IF EXISTS στη δήλωση «%s»"
 
-#: pg_backup_archiver.c:770 pg_backup_archiver.c:772
+#: pg_backup_archiver.c:769 pg_backup_archiver.c:771
 #, c-format
 msgid "warning from original dump file: %s"
 msgstr "προειδοποίηση από το αρχικό αρχείο απόθεσης: %s"
 
-#: pg_backup_archiver.c:787
+#: pg_backup_archiver.c:786
 #, c-format
 msgid "creating %s \"%s.%s\""
-msgstr "δημιουργία %s “%s.%s”"
+msgstr "δημιουργία %s «%s.%s»"
 
-#: pg_backup_archiver.c:790
+#: pg_backup_archiver.c:789
 #, c-format
 msgid "creating %s \"%s\""
-msgstr "δημιουργία %s “%s”"
+msgstr "δημιουργία %s «%s»"
 
-#: pg_backup_archiver.c:840
+#: pg_backup_archiver.c:839
 #, c-format
 msgid "connecting to new database \"%s\""
-msgstr "σύνδεση με νέα βάση δεδομένων \"%s\""
+msgstr "σύνδεση με νέα βάση δεδομένων «%s»"
 
-#: pg_backup_archiver.c:867
+#: pg_backup_archiver.c:866
 #, c-format
 msgid "processing %s"
 msgstr "επεξεργασία %s"
 
-#: pg_backup_archiver.c:887
+#: pg_backup_archiver.c:886
 #, c-format
 msgid "processing data for table \"%s.%s\""
-msgstr "επεξεργασία δεδομένων για τον πίνακα “%s.%s”"
+msgstr "επεξεργασία δεδομένων για τον πίνακα «%s.%s»"
 
-#: pg_backup_archiver.c:949
+#: pg_backup_archiver.c:948
 #, c-format
 msgid "executing %s %s"
 msgstr "εκτέλεση %s %s"
 
-#: pg_backup_archiver.c:988
+#: pg_backup_archiver.c:987
 #, c-format
 msgid "disabling triggers for %s"
 msgstr "απενεργοποίηση ενεργοποιήσεων για %s"
 
-#: pg_backup_archiver.c:1014
+#: pg_backup_archiver.c:1013
 #, c-format
 msgid "enabling triggers for %s"
 msgstr "ενεργοποίηση ενεργοποιήσεων για %s"
 
-#: pg_backup_archiver.c:1042
+#: pg_backup_archiver.c:1041
 #, c-format
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine"
 msgstr "εσωτερικό σφάλμα -- Δεν είναι δυνατή η κλήση του WriteData εκτός του περιβάλλοντος μιας ρουτίνας DataDumper"
 
-#: pg_backup_archiver.c:1225
+#: pg_backup_archiver.c:1224
 #, c-format
 msgid "large-object output not supported in chosen format"
 msgstr "η έξοδος μεγάλου αντικειμένου δεν υποστηρίζεται στην επιλεγμένη μορφή"
 
-#: pg_backup_archiver.c:1283
+#: pg_backup_archiver.c:1282
 #, c-format
 msgid "restored %d large object"
 msgid_plural "restored %d large objects"
 msgstr[0] "επανέφερε %d μεγάλο αντικείμενο"
 msgstr[1] "επανέφερε %d μεγάλα αντικείμενα"
 
-#: pg_backup_archiver.c:1304 pg_backup_tar.c:730
+#: pg_backup_archiver.c:1303 pg_backup_tar.c:730
 #, c-format
 msgid "restoring large object with OID %u"
 msgstr "επαναφορά μεγάλου αντικειμένου με OID %u"
 
-#: pg_backup_archiver.c:1316
+#: pg_backup_archiver.c:1315
 #, c-format
 msgid "could not create large object %u: %s"
 msgstr "δεν ήταν δυνατή η δημιουργία μεγάλου αντικειμένου %u: %s"
 
-#: pg_backup_archiver.c:1321 pg_dump.c:3693
+#: pg_backup_archiver.c:1320 pg_dump.c:3638
 #, c-format
 msgid "could not open large object %u: %s"
 msgstr "δεν ήταν δυνατό το άνοιγμα μεγάλου αντικειμένου %u: %s"
 
-#: pg_backup_archiver.c:1377
+#: pg_backup_archiver.c:1376
 #, c-format
 msgid "could not open TOC file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s»: %m"
 
-#: pg_backup_archiver.c:1405
+#: pg_backup_archiver.c:1404
 #, c-format
 msgid "line ignored: %s"
 msgstr "παραβλέπεται γραμμή: %s"
 
-#: pg_backup_archiver.c:1412
+#: pg_backup_archiver.c:1411
 #, c-format
 msgid "could not find entry for ID %d"
 msgstr "δεν ήταν δυνατή η εύρεση καταχώρησης για ID %d"
 
-#: pg_backup_archiver.c:1435 pg_backup_directory.c:222
+#: pg_backup_archiver.c:1434 pg_backup_directory.c:222
 #: pg_backup_directory.c:598
 #, c-format
 msgid "could not close TOC file: %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου TOC %m"
 
-#: pg_backup_archiver.c:1549 pg_backup_custom.c:156 pg_backup_directory.c:332
+#: pg_backup_archiver.c:1548 pg_backup_custom.c:156 pg_backup_directory.c:332
 #: pg_backup_directory.c:585 pg_backup_directory.c:648
 #: pg_backup_directory.c:667 pg_dumpall.c:489
 #, c-format
 msgid "could not open output file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εξόδου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εξόδου «%s»: %m"
 
-#: pg_backup_archiver.c:1551 pg_backup_custom.c:162
+#: pg_backup_archiver.c:1550 pg_backup_custom.c:162
 #, c-format
 msgid "could not open output file: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου εξόδου %m"
 
-#: pg_backup_archiver.c:1644
-#, fuzzy, c-format
-#| msgid "wrote %lu byte of large object data (result = %lu)"
-#| msgid_plural "wrote %lu bytes of large object data (result = %lu)"
+#: pg_backup_archiver.c:1643
+#, c-format
 msgid "wrote %zu byte of large object data (result = %d)"
 msgid_plural "wrote %zu bytes of large object data (result = %d)"
-msgstr[0] "έγραψε %lu byte δεδομένων μεγάλου αντικειμένου (αποτέλεσμα = %lu)"
-msgstr[1] "έγραψε %lu bytes δεδομένων μεγάλου αντικειμένου (αποτέλεσμα = %lu)"
+msgstr[0] "έγραψε %zu byte δεδομένων μεγάλου αντικειμένου (αποτέλεσμα = %d)"
+msgstr[1] "έγραψε %zu bytes δεδομένων μεγάλου αντικειμένου (αποτέλεσμα = %d)"
 
-#: pg_backup_archiver.c:1650
-#, fuzzy, c-format
-#| msgid "could not create large object %u: %s"
+#: pg_backup_archiver.c:1649
+#, c-format
 msgid "could not write to large object: %s"
-msgstr "δεν ήταν δυνατή η δημιουργία μεγάλου αντικειμένου %u: %s"
+msgstr "δεν ήταν δυνατή η εγγραφή σε μεγάλο αντικείμενο: %s"
 
-#: pg_backup_archiver.c:1740
+#: pg_backup_archiver.c:1739
 #, c-format
 msgid "while INITIALIZING:"
 msgstr "ενόσω INITIALIZING:"
 
-#: pg_backup_archiver.c:1745
+#: pg_backup_archiver.c:1744
 #, c-format
 msgid "while PROCESSING TOC:"
 msgstr "ενόσω PROCESSING TOC:"
 
-#: pg_backup_archiver.c:1750
+#: pg_backup_archiver.c:1749
 #, c-format
 msgid "while FINALIZING:"
 msgstr "ενόσω FINALIZING:"
 
-#: pg_backup_archiver.c:1755
+#: pg_backup_archiver.c:1754
 #, c-format
 msgid "from TOC entry %d; %u %u %s %s %s"
 msgstr "από καταχώρηση TOC %d; %u %u %s %s %s"
 
-#: pg_backup_archiver.c:1831
+#: pg_backup_archiver.c:1830
 #, c-format
 msgid "bad dumpId"
 msgstr "εσφαλμένο dumpId"
 
-#: pg_backup_archiver.c:1852
+#: pg_backup_archiver.c:1851
 #, c-format
 msgid "bad table dumpId for TABLE DATA item"
 msgstr "εσφαλμένος πίνακας dumpId για στοιχείο TABLE DATA"
 
-#: pg_backup_archiver.c:1944
+#: pg_backup_archiver.c:1943
 #, c-format
 msgid "unexpected data offset flag %d"
 msgstr "μη αναμενόμενη σημαία όφσετ δεδομένων %d"
 
-#: pg_backup_archiver.c:1957
+#: pg_backup_archiver.c:1956
 #, c-format
 msgid "file offset in dump file is too large"
 msgstr "το όφσετ αρχείου στο αρχείο απόθεσης είναι πολύ μεγάλο"
 
-#: pg_backup_archiver.c:2095 pg_backup_archiver.c:2105
+#: pg_backup_archiver.c:2094 pg_backup_archiver.c:2104
 #, c-format
 msgid "directory name too long: \"%s\""
-msgstr "πολύ μακρύ όνομα καταλόγου: “%s”"
+msgstr "πολύ μακρύ όνομα καταλόγου: «%s»"
 
-#: pg_backup_archiver.c:2113
+#: pg_backup_archiver.c:2112
 #, c-format
 msgid "directory \"%s\" does not appear to be a valid archive (\"toc.dat\" does not exist)"
-msgstr "ο κατάλογος \"%s\" δεν φαίνεται να είναι έγκυρη αρχειοθήκη (το \"toc.dat\" δεν υπάρχει)"
+msgstr "ο κατάλογος «%s» δεν φαίνεται να είναι έγκυρη αρχειοθήκη (το «toc.dat» δεν υπάρχει)"
 
-#: pg_backup_archiver.c:2121 pg_backup_custom.c:173 pg_backup_custom.c:807
+#: pg_backup_archiver.c:2120 pg_backup_custom.c:173 pg_backup_custom.c:807
 #: pg_backup_directory.c:207 pg_backup_directory.c:394
 #, c-format
 msgid "could not open input file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εισόδου “%s”: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου εισόδου «%s»: %m"
 
-#: pg_backup_archiver.c:2128 pg_backup_custom.c:179
+#: pg_backup_archiver.c:2127 pg_backup_custom.c:179
 #, c-format
 msgid "could not open input file: %m"
 msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου εισόδου %m"
 
-#: pg_backup_archiver.c:2134
+#: pg_backup_archiver.c:2133
 #, c-format
 msgid "could not read input file: %m"
 msgstr "δεν ήταν δυνατή η ανάγνωση αρχείου εισόδου: %m"
 
-#: pg_backup_archiver.c:2136
+#: pg_backup_archiver.c:2135
 #, c-format
 msgid "input file is too short (read %lu, expected 5)"
 msgstr "το αρχείο εισόδου είναι πολύ σύντομο (διάβασε %lu, ανάμενε 5)"
 
-#: pg_backup_archiver.c:2168
+#: pg_backup_archiver.c:2167
 #, c-format
 msgid "input file appears to be a text format dump. Please use psql."
 msgstr "το αρχείο εισαγωγής φαίνεται να είναι απόθεση μορφής κειμένου. Παρακαλώ χρησιμοποιήστε το psql."
 
-#: pg_backup_archiver.c:2174
+#: pg_backup_archiver.c:2173
 #, c-format
 msgid "input file does not appear to be a valid archive (too short?)"
 msgstr "το αρχείο εισόδου δεν φαίνεται να είναι έγκυρη αρχειοθήκη (πολύ σύντομο;)"
 
-#: pg_backup_archiver.c:2180
+#: pg_backup_archiver.c:2179
 #, c-format
 msgid "input file does not appear to be a valid archive"
 msgstr "το αρχείο εισόδου δεν φαίνεται να είναι έγκυρη αρχειοθήκη"
 
-#: pg_backup_archiver.c:2189
+#: pg_backup_archiver.c:2188
 #, c-format
 msgid "could not close input file: %m"
 msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου εισόδου: %m"
 
-#: pg_backup_archiver.c:2306
+#: pg_backup_archiver.c:2305
 #, c-format
 msgid "unrecognized file format \"%d\""
-msgstr "μη αναγνωρίσιμη μορφή αρχείου \"%d\""
+msgstr "μη αναγνωρίσιμη μορφή αρχείου «%d»"
 
-#: pg_backup_archiver.c:2388 pg_backup_archiver.c:4422
+#: pg_backup_archiver.c:2387 pg_backup_archiver.c:4411
 #, c-format
 msgid "finished item %d %s %s"
 msgstr "τερματισμός στοιχείου %d %s %s"
 
-#: pg_backup_archiver.c:2392 pg_backup_archiver.c:4435
+#: pg_backup_archiver.c:2391 pg_backup_archiver.c:4424
 #, c-format
 msgid "worker process failed: exit code %d"
 msgstr "διεργασία εργάτη απέτυχε: κωδικός εξόδου %d"
 
-#: pg_backup_archiver.c:2512
+#: pg_backup_archiver.c:2511
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC"
-msgstr "καταχώρηση με ID %d εκτός εύρους τιμών — ίσως αλλοιωμένο TOC"
+msgstr "καταχώρηση με ID %d εκτός εύρους τιμών -- ίσως αλλοιωμένο TOC"
 
-#: pg_backup_archiver.c:2579
+#: pg_backup_archiver.c:2578
 #, c-format
 msgid "restoring tables WITH OIDS is not supported anymore"
 msgstr "η επαναφορά πινάκων WITH OIDS δεν υποστηρίζεται πλέον"
 
-#: pg_backup_archiver.c:2663
+#: pg_backup_archiver.c:2660
 #, c-format
 msgid "unrecognized encoding \"%s\""
-msgstr "μη αναγνωρίσιμη κωδικοποίηση “%s”"
+msgstr "μη αναγνωρίσιμη κωδικοποίηση «%s»"
 
-#: pg_backup_archiver.c:2668
+#: pg_backup_archiver.c:2665
 #, c-format
 msgid "invalid ENCODING item: %s"
 msgstr "μη έγκυρο στοιχείο ENCODING: %s"
 
-#: pg_backup_archiver.c:2686
+#: pg_backup_archiver.c:2683
 #, c-format
 msgid "invalid STDSTRINGS item: %s"
 msgstr "μη έγκυρο στοιχείο STDSTRINGS: %s"
 
-#: pg_backup_archiver.c:2717
-#, fuzzy, c-format
-#| msgid "invalid STDSTRINGS item: %s"
-msgid "invalid TOASTCOMPRESSION item: %s"
-msgstr "μη έγκυρο στοιχείο STDSTRINGS: %s"
-
-#: pg_backup_archiver.c:2734
+#: pg_backup_archiver.c:2708
 #, c-format
 msgid "schema \"%s\" not found"
-msgstr "το σχήμα \"%s\" δεν βρέθηκε"
+msgstr "το σχήμα «%s» δεν βρέθηκε"
 
-#: pg_backup_archiver.c:2741
+#: pg_backup_archiver.c:2715
 #, c-format
 msgid "table \"%s\" not found"
-msgstr "ο πίνακας “%s” δεν βρέθηκε"
+msgstr "ο πίνακας «%s» δεν βρέθηκε"
 
-#: pg_backup_archiver.c:2748
+#: pg_backup_archiver.c:2722
 #, c-format
 msgid "index \"%s\" not found"
-msgstr "το ευρετήριο “%s” δεν βρέθηκε"
+msgstr "το ευρετήριο «%s» δεν βρέθηκε"
 
-#: pg_backup_archiver.c:2755
+#: pg_backup_archiver.c:2729
 #, c-format
 msgid "function \"%s\" not found"
-msgstr "η συνάρτηση “%s” δεν βρέθηκε"
+msgstr "η συνάρτηση «%s» δεν βρέθηκε"
 
-#: pg_backup_archiver.c:2762
+#: pg_backup_archiver.c:2736
 #, c-format
 msgid "trigger \"%s\" not found"
-msgstr "η ενεργοποίηση \"%s\" δεν βρέθηκε"
+msgstr "η ενεργοποίηση «%s» δεν βρέθηκε"
 
-#: pg_backup_archiver.c:3160
+#: pg_backup_archiver.c:3128
 #, c-format
 msgid "could not set session user to \"%s\": %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του χρήστη συνεδρίας σε \"%s\": %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του χρήστη συνεδρίας σε «%s»: %s"
 
-#: pg_backup_archiver.c:3292
+#: pg_backup_archiver.c:3260
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του search_path σε “%s”: %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του search_path σε «%s»: %s"
 
-#: pg_backup_archiver.c:3354
+#: pg_backup_archiver.c:3322
 #, c-format
 msgid "could not set default_tablespace to %s: %s"
-msgstr "δεν ήταν δυνατός ο ορισμός του default_tablespace σε “%s”: %s"
+msgstr "δεν ήταν δυνατός ο ορισμός του default_tablespace σε «%s»: %s"
 
-#: pg_backup_archiver.c:3399
+#: pg_backup_archiver.c:3367
 #, c-format
 msgid "could not set default_table_access_method: %s"
 msgstr "δεν ήταν δυνατός ο ορισμός του default_table_access_method: %s"
 
-#: pg_backup_archiver.c:3491 pg_backup_archiver.c:3649
+#: pg_backup_archiver.c:3459 pg_backup_archiver.c:3617
 #, c-format
 msgid "don't know how to set owner for object type \"%s\""
-msgstr "δεν γνωρίζω πώς να οριστεί κάτοχος για τύπο αντικειμένου \"%s\""
+msgstr "δεν γνωρίζω πώς να οριστεί κάτοχος για τύπο αντικειμένου «%s»"
 
-#: pg_backup_archiver.c:3753
+#: pg_backup_archiver.c:3720
 #, c-format
 msgid "did not find magic string in file header"
 msgstr "δεν βρέθηκε μαγική συμβολοσειρά στην κεφαλίδα αρχείου"
 
-#: pg_backup_archiver.c:3767
+#: pg_backup_archiver.c:3734
 #, c-format
 msgid "unsupported version (%d.%d) in file header"
 msgstr "μη υποστηριζόμενη έκδοση (%d.%d) στην κεφαλίδα αρχείου"
 
-#: pg_backup_archiver.c:3772
+#: pg_backup_archiver.c:3739
 #, c-format
 msgid "sanity check on integer size (%lu) failed"
 msgstr "απέτυχε έλεγχος ακεραιότητας για μέγεθος ακεραίου (%lu)"
 
-#: pg_backup_archiver.c:3776
+#: pg_backup_archiver.c:3743
 #, c-format
 msgid "archive was made on a machine with larger integers, some operations might fail"
 msgstr "το αρχείο δημιουργήθηκε σε έναν υπολογιστή με μεγαλύτερους ακέραιους, ορισμένες λειτουργίες ενδέχεται να αποτύχουν"
 
-#: pg_backup_archiver.c:3786
+#: pg_backup_archiver.c:3753
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)"
 msgstr "η αναμενόμενη μορφή (%d) διαφέρει από τη μορφή που βρίσκεται στο αρχείο (%d)"
 
-#: pg_backup_archiver.c:3801
+#: pg_backup_archiver.c:3768
 #, c-format
 msgid "archive is compressed, but this installation does not support compression -- no data will be available"
 msgstr "το αρχείο είναι συμπιεσμένο, αλλά αυτή η εγκατάσταση δεν υποστηρίζει συμπίεση -- δεν θα υπάρχουν διαθέσιμα δεδομένα"
 
-#: pg_backup_archiver.c:3819
+#: pg_backup_archiver.c:3802
 #, c-format
 msgid "invalid creation date in header"
 msgstr "μη έγκυρη ημερομηνία δημιουργίας στην κεφαλίδα"
 
-#: pg_backup_archiver.c:3947
+#: pg_backup_archiver.c:3936
 #, c-format
 msgid "processing item %d %s %s"
 msgstr "επεξεργασία στοιχείου %d %s %s"
 
-#: pg_backup_archiver.c:4026
+#: pg_backup_archiver.c:4015
 #, c-format
 msgid "entering main parallel loop"
 msgstr "εισέρχεται στο κύριο παράλληλο βρόχο"
 
-#: pg_backup_archiver.c:4037
+#: pg_backup_archiver.c:4026
 #, c-format
 msgid "skipping item %d %s %s"
 msgstr "παράβλεψη στοιχείου %d %s %s"
 
-#: pg_backup_archiver.c:4046
+#: pg_backup_archiver.c:4035
 #, c-format
 msgid "launching item %d %s %s"
 msgstr "εκκίνηση στοιχείου %d %s %s"
 
-#: pg_backup_archiver.c:4100
+#: pg_backup_archiver.c:4089
 #, c-format
 msgid "finished main parallel loop"
 msgstr "εξέρχεται από το κύριο παράλληλο βρόχο"
 
-#: pg_backup_archiver.c:4136
+#: pg_backup_archiver.c:4125
 #, c-format
 msgid "processing missed item %d %s %s"
 msgstr "επεξεργασία παραβλεπόμενου στοιχείου %d %s %s"
 
-#: pg_backup_archiver.c:4741
+#: pg_backup_archiver.c:4730
 #, c-format
 msgid "table \"%s\" could not be created, will not restore its data"
-msgstr "δεν ήταν δυνατή η δημιουργία του πίνακα \"%s\", δεν θα επαναφερθούν τα δεδομένα του"
+msgstr "δεν ήταν δυνατή η δημιουργία του πίνακα «%s», δεν θα επαναφερθούν τα δεδομένα του"
 
 #: pg_backup_custom.c:376 pg_backup_null.c:147
 #, c-format
@@ -1006,10 +996,9 @@ msgid "could not connect to database"
 msgstr "δεν ήταν δυνατή η σύνδεση σε βάση δεδομένων"
 
 #: pg_backup_db.c:191
-#, fuzzy, c-format
-#| msgid "reconnection to database \"%s\" failed: %s"
+#, c-format
 msgid "reconnection failed: %s"
-msgstr "επανασύνδεση στη βάση δεδομένων “%s” απέτυχε: %s"
+msgstr "επανασύνδεση απέτυχε: %s"
 
 #: pg_backup_db.c:194 pg_backup_db.c:269 pg_dumpall.c:1686 pg_dumpall.c:1776
 #, c-format
@@ -1055,12 +1044,12 @@ msgstr "επιστράφηκε σφάλμα από PQputCopyEnd: %s"
 #: pg_backup_db.c:519
 #, c-format
 msgid "COPY failed for table \"%s\": %s"
-msgstr "COPY απέτυχε για πίνακα “%s”: %s"
+msgstr "COPY απέτυχε για πίνακα «%s»: %s"
 
-#: pg_backup_db.c:525 pg_dump.c:2077
+#: pg_backup_db.c:525 pg_dump.c:2074
 #, c-format
 msgid "unexpected extra results during COPY of table \"%s\""
-msgstr "μη αναμενόμενα αποτελέσματα κατά τη διάρκεια COPY του πίνακα “%s”"
+msgstr "μη αναμενόμενα αποτελέσματα κατά τη διάρκεια COPY του πίνακα «%s»"
 
 #: pg_backup_db.c:537
 msgid "could not start database transaction"
@@ -1078,17 +1067,17 @@ msgstr "δεν ορίστηκε κατάλογος δεδομένων εξόδο
 #: pg_backup_directory.c:185
 #, c-format
 msgid "could not read directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:189
 #, c-format
 msgid "could not close directory \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:195
 #, c-format
 msgid "could not create directory \"%s\": %m"
-msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου “%s”: %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
 
 #: pg_backup_directory.c:355 pg_backup_directory.c:496
 #: pg_backup_directory.c:532
@@ -1099,27 +1088,27 @@ msgstr "δεν ήταν δυνατή η εγγραφή εξόδου στο αρ�
 #: pg_backup_directory.c:406
 #, c-format
 msgid "could not close data file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου δεδομένων “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου δεδομένων «%s»: %m"
 
 #: pg_backup_directory.c:446
 #, c-format
 msgid "could not open large object TOC file \"%s\" for input: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC μεγάλου αντικειμένου \"%s\" για είσοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC μεγάλου αντικειμένου «%s» για είσοδο: %m"
 
 #: pg_backup_directory.c:457
 #, c-format
 msgid "invalid line in large object TOC file \"%s\": \"%s\""
-msgstr "μη έγκυρη γραμμή σε αρχείο TOC μεγάλου αντικειμένου “%s”: “%s”"
+msgstr "μη έγκυρη γραμμή σε αρχείο TOC μεγάλου αντικειμένου «%s»: «%s»"
 
 #: pg_backup_directory.c:466
 #, c-format
 msgid "error reading large object TOC file \"%s\""
-msgstr "σφάλμα κατά την ανάγνωση αρχείου TOC μεγάλου αντικειμένου “%s”"
+msgstr "σφάλμα κατά την ανάγνωση αρχείου TOC μεγάλου αντικειμένου «%s»"
 
 #: pg_backup_directory.c:470
 #, c-format
 msgid "could not close large object TOC file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου TOC μεγάλου αντικειμένου “%s”: %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο αρχείου TOC μεγάλου αντικειμένου «%s»: %m"
 
 #: pg_backup_directory.c:689
 #, c-format
@@ -1129,7 +1118,7 @@ msgstr "δεν ήταν δυνατή η εγγραφή σε αρχείο TOC blo
 #: pg_backup_directory.c:721
 #, c-format
 msgid "file name too long: \"%s\""
-msgstr "πολύ μακρύ όνομα αρχείου: \"%s\""
+msgstr "πολύ μακρύ όνομα αρχείου: «%s»"
 
 #: pg_backup_null.c:74
 #, c-format
@@ -1139,7 +1128,7 @@ msgstr "δεν είναι δυνατή η ανάγνωση αυτής της μ�
 #: pg_backup_tar.c:177
 #, c-format
 msgid "could not open TOC file \"%s\" for output: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s” για έξοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s» για έξοδο: %m"
 
 #: pg_backup_tar.c:184
 #, c-format
@@ -1154,7 +1143,7 @@ msgstr "δεν υποστηρίζεται συμπίεση από τη μορφ�
 #: pg_backup_tar.c:211
 #, c-format
 msgid "could not open TOC file \"%s\" for input: %m"
-msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC “%s” για είσοδο: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC «%s» για είσοδο: %m"
 
 #: pg_backup_tar.c:218
 #, c-format
@@ -1164,7 +1153,7 @@ msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου TOC γι
 #: pg_backup_tar.c:338
 #, c-format
 msgid "could not find file \"%s\" in archive"
-msgstr "δεν ήταν δυνατή η εύρεση του αρχείου \"%s\" στην αρχειοθήκη"
+msgstr "δεν ήταν δυνατή η εύρεση του αρχείου «%s» στην αρχειοθήκη"
 
 #: pg_backup_tar.c:404
 #, c-format
@@ -1184,7 +1173,7 @@ msgstr "δεν ήταν δυνατό το κλείσιμο μέλους tar"
 #: pg_backup_tar.c:685
 #, c-format
 msgid "unexpected COPY statement syntax: \"%s\""
-msgstr "μη αναμενόμενη σύνταξη πρότασης COPY: \"%s\""
+msgstr "μη αναμενόμενη σύνταξη πρότασης COPY: «%s»"
 
 #: pg_backup_tar.c:952
 #, c-format
@@ -1204,12 +1193,12 @@ msgstr "πραγματικό μήκος αρχείου (%s) δεν συμφων�
 #: pg_backup_tar.c:1165 pg_backup_tar.c:1196
 #, c-format
 msgid "could not find header for file \"%s\" in tar archive"
-msgstr "δεν ήταν δυνατή η εύρεση κεφαλίδας για το αρχείο \"%s\" στο αρχείο tar"
+msgstr "δεν ήταν δυνατή η εύρεση κεφαλίδας για το αρχείο «%s» στο αρχείο tar"
 
 #: pg_backup_tar.c:1183
 #, c-format
 msgid "restoring data out of order is not supported in this archive format: \"%s\" is required, but comes before \"%s\" in the archive file."
-msgstr "η επαναφορά δεδομένων εκτός σειράς δεν υποστηρίζεται σε αυτήν τη μορφή αρχειοθέτησης: απαιτείται \"%s\", αλλά προηγείται της \"%s\" στο αρχείο αρχειοθέτησης."
+msgstr "η επαναφορά δεδομένων εκτός σειράς δεν υποστηρίζεται σε αυτήν τη μορφή αρχειοθέτησης: απαιτείται «%s», αλλά προηγείται της «%s» στο αρχείο αρχειοθέτησης."
 
 #: pg_backup_tar.c:1230
 #, c-format
@@ -1226,87 +1215,87 @@ msgstr "αλλοιωμένη κεφαλίδα tar βρέθηκε σε %s (ανα
 #: pg_backup_utils.c:54
 #, c-format
 msgid "unrecognized section name: \"%s\""
-msgstr "μη αναγνωρισμένο όνομα τμήματος: \"%s\""
+msgstr "μη αναγνωρισμένο όνομα τμήματος: «%s»"
 
-#: pg_backup_utils.c:55 pg_dump.c:623 pg_dump.c:640 pg_dumpall.c:341
+#: pg_backup_utils.c:55 pg_dump.c:622 pg_dump.c:639 pg_dumpall.c:341
 #: pg_dumpall.c:351 pg_dumpall.c:360 pg_dumpall.c:369 pg_dumpall.c:377
 #: pg_dumpall.c:391 pg_dumpall.c:469 pg_restore.c:284 pg_restore.c:300
 #: pg_restore.c:318
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_backup_utils.c:68
 #, c-format
 msgid "out of on_exit_nicely slots"
 msgstr "έλλειψη υποδοχών on_exit_nicely"
 
-#: pg_dump.c:549
+#: pg_dump.c:548
 #, c-format
 msgid "compression level must be in range 0..9"
 msgstr "το επίπεδο συμπίεσης πρέπει να βρίσκεται στο εύρος 0..9"
 
-#: pg_dump.c:587
+#: pg_dump.c:586
 #, c-format
 msgid "extra_float_digits must be in range -15..3"
 msgstr "extra_float_digits πρέπει να βρίσκονται στο εύρος -15..3"
 
-#: pg_dump.c:610
+#: pg_dump.c:609
 #, c-format
 msgid "rows-per-insert must be in range %d..%d"
 msgstr "rows-per-insert πρέπει να βρίσκονται στο εύρος %d..%d"
 
-#: pg_dump.c:638 pg_dumpall.c:349 pg_restore.c:298
+#: pg_dump.c:637 pg_dumpall.c:349 pg_restore.c:298
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
-msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (η πρώτη είναι η “%s”)"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
 
-#: pg_dump.c:659 pg_restore.c:327
+#: pg_dump.c:658 pg_restore.c:327
 #, c-format
 msgid "options -s/--schema-only and -a/--data-only cannot be used together"
-msgstr "οι επιλογές -s/—schema-only και -a/--data-only δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -s/--schema-only και -a/--data-only δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
 
-#: pg_dump.c:664
+#: pg_dump.c:663
 #, c-format
 msgid "options -s/--schema-only and --include-foreign-data cannot be used together"
-msgstr "οι επιλογές -s/—schema-only και —include-foreign-data δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -s/--schema-only και --include-foreign-data δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
 
-#: pg_dump.c:667
+#: pg_dump.c:666
 #, c-format
 msgid "option --include-foreign-data is not supported with parallel backup"
-msgstr "η επιλογή —include-foreign-data δεν υποστηρίζεται με παράλληλη δημιουργία αντιγράφων ασφαλείας"
+msgstr "η επιλογή --include-foreign-data δεν υποστηρίζεται με παράλληλη δημιουργία αντιγράφων ασφαλείας"
 
-#: pg_dump.c:671 pg_restore.c:333
+#: pg_dump.c:670 pg_restore.c:333
 #, c-format
 msgid "options -c/--clean and -a/--data-only cannot be used together"
-msgstr "οι επιλογές -c/—clean και -a/—data-only δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -c/--clean και -a/--data-only δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
 
-#: pg_dump.c:676 pg_dumpall.c:384 pg_restore.c:382
+#: pg_dump.c:675 pg_dumpall.c:384 pg_restore.c:382
 #, c-format
 msgid "option --if-exists requires option -c/--clean"
-msgstr "η επιλογή —if-exists απαιτεί την επιλογή -c/—clean"
+msgstr "η επιλογή --if-exists απαιτεί την επιλογή -c/--clean"
 
-#: pg_dump.c:683
+#: pg_dump.c:682
 #, c-format
 msgid "option --on-conflict-do-nothing requires option --inserts, --rows-per-insert, or --column-inserts"
-msgstr "η επιλογή —on-conflict-do-nothing απαιτεί την επιλογή —inserts, —rows-per-insert, ή —column-inserts"
+msgstr "η επιλογή --on-conflict-do-nothing απαιτεί την επιλογή --inserts, --rows-per-insert, ή --column-inserts"
 
-#: pg_dump.c:705
+#: pg_dump.c:704
 #, c-format
 msgid "requested compression not available in this installation -- archive will be uncompressed"
 msgstr "η συμπίεση που ζητήθηκε δεν είναι διαθέσιμη σε αυτήν την εγκατάσταση -- η αρχειοθήκη θα είναι ασυμπίεστη"
 
-#: pg_dump.c:726 pg_restore.c:349
+#: pg_dump.c:725 pg_restore.c:349
 #, c-format
 msgid "invalid number of parallel jobs"
 msgstr "μη έγκυρος αριθμός παράλληλων εργασιών"
 
-#: pg_dump.c:730
+#: pg_dump.c:729
 #, c-format
 msgid "parallel backup only supported by the directory format"
 msgstr "παράλληλο αντίγραφο ασφαλείας υποστηρίζεται μόνο από μορφή καταλόγου"
 
-#: pg_dump.c:785
+#: pg_dump.c:784
 #, c-format
 msgid ""
 "Synchronized snapshots are not supported by this server version.\n"
@@ -1314,36 +1303,35 @@ msgid ""
 "synchronized snapshots."
 msgstr ""
 "Τα συγχρονισμένα στιγμιότυπα δεν υποστηρίζονται από αυτήν την έκδοση διακομιστή.\n"
-"Εκτελέστε με —no-synchronized-snapshots, εάν δεν χρειάζεστε\n"
+"Εκτελέστε με --no-synchronized-snapshots, εάν δεν χρειάζεστε\n"
 "συγχρονισμένα στιγμιότυπα."
 
-#: pg_dump.c:791
+#: pg_dump.c:790
 #, c-format
 msgid "Exported snapshots are not supported by this server version."
 msgstr "Τα εξαγόμενα στιγμιότυπα δεν υποστηρίζονται από αυτήν την έκδοση διακομιστή."
 
-#: pg_dump.c:803
+#: pg_dump.c:802
 #, c-format
 msgid "last built-in OID is %u"
 msgstr "το τελευταίο ενσωματωμένο OID είναι %u"
 
-#: pg_dump.c:812
+#: pg_dump.c:811
 #, c-format
 msgid "no matching schemas were found"
 msgstr "δεν βρέθηκαν σχήματα που να ταιριάζουν"
 
-#: pg_dump.c:826
+#: pg_dump.c:825
 #, c-format
 msgid "no matching tables were found"
 msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν"
 
-#: pg_dump.c:848
-#, fuzzy, c-format
-#| msgid "no matching tables were found"
+#: pg_dump.c:847
+#, c-format
 msgid "no matching extensions were found"
-msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν"
+msgstr "δεν βρέθηκαν επεκτάσεις που να ταιριάζουν"
 
-#: pg_dump.c:1020
+#: pg_dump.c:1017
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -1352,17 +1340,17 @@ msgstr ""
 "%s αποθέτει μια βάση δεδομένων ως αρχείο κειμένου ή σε άλλες μορφές.\n"
 "\n"
 
-#: pg_dump.c:1021 pg_dumpall.c:622 pg_restore.c:462
+#: pg_dump.c:1018 pg_dumpall.c:622 pg_restore.c:462
 #, c-format
 msgid "Usage:\n"
 msgstr "Χρήση:\n"
 
-#: pg_dump.c:1022
+#: pg_dump.c:1019
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
-msgstr "  %s [OPTION]… [DBNAME]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [DBNAME]\n"
 
-#: pg_dump.c:1024 pg_dumpall.c:625 pg_restore.c:465
+#: pg_dump.c:1021 pg_dumpall.c:625 pg_restore.c:465
 #, c-format
 msgid ""
 "\n"
@@ -1371,56 +1359,56 @@ msgstr ""
 "\n"
 "Γενικές επιλογές:\n"
 
-#: pg_dump.c:1025
+#: pg_dump.c:1022
 #, c-format
 msgid "  -f, --file=FILENAME          output file or directory name\n"
-msgstr "  -f, —file=FILENAME          αρχείο εξόδου ή όνομα καταλόγου\n"
+msgstr "  -f, --file=FILENAME          αρχείο εξόδου ή όνομα καταλόγου\n"
 
-#: pg_dump.c:1026
+#: pg_dump.c:1023
 #, c-format
 msgid ""
 "  -F, --format=c|d|t|p         output file format (custom, directory, tar,\n"
 "                               plain text (default))\n"
 msgstr ""
-"  -F, —format=c|d|t|p         μορφή αρχείου εξόδου (προσαρμοσμένη, κατάλογος, tar,\n"
+"  -F, --format=c|d|t|p         μορφή αρχείου εξόδου (προσαρμοσμένη, κατάλογος, tar,\n"
 "                               απλό κείμενο (προεπιλογή))\n"
+
+#: pg_dump.c:1025
+#, c-format
+msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
+msgstr "  -j, --jobs=NUM               χρησιμοποιήστε τόσες πολλές παράλληλες εργασίες για απόθεση\n"
+
+#: pg_dump.c:1026 pg_dumpall.c:627
+#, c-format
+msgid "  -v, --verbose                verbose mode\n"
+msgstr "  -v, --verbose                περιφραστική λειτουργία\n"
+
+#: pg_dump.c:1027 pg_dumpall.c:628
+#, c-format
+msgid "  -V, --version                output version information, then exit\n"
+msgstr "  -V, --version                εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
 
 #: pg_dump.c:1028
 #, c-format
-msgid "  -j, --jobs=NUM               use this many parallel jobs to dump\n"
-msgstr "  -j, —jobs=NUM               χρησιμοποιήστε τόσες πολλές παράλληλες εργασίες για απόθεση\n"
-
-#: pg_dump.c:1029 pg_dumpall.c:627
-#, c-format
-msgid "  -v, --verbose                verbose mode\n"
-msgstr "  -v, —verbose                περιφραστική λειτουργία\n"
-
-#: pg_dump.c:1030 pg_dumpall.c:628
-#, c-format
-msgid "  -V, --version                output version information, then exit\n"
-msgstr "  -V, —version             εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
-
-#: pg_dump.c:1031
-#, c-format
 msgid "  -Z, --compress=0-9           compression level for compressed formats\n"
-msgstr "  -Z, —compress=0-9           επίπεδο συμπίεσης για συμπιεσμένες μορφές\n"
+msgstr "  -Z, --compress=0-9           επίπεδο συμπίεσης για συμπιεσμένες μορφές\n"
 
-#: pg_dump.c:1032 pg_dumpall.c:629
+#: pg_dump.c:1029 pg_dumpall.c:629
 #, c-format
 msgid "  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"
-msgstr "  —lock-wait-timeout=TIMEOUT  αποτυγχάνει μετά την αναμονή TIMEOUT για το κλείδωμα πίνακα\n"
+msgstr "  --lock-wait-timeout=TIMEOUT  αποτυγχάνει μετά την αναμονή TIMEOUT για το κλείδωμα πίνακα\n"
 
-#: pg_dump.c:1033 pg_dumpall.c:656
+#: pg_dump.c:1030 pg_dumpall.c:656
 #, c-format
 msgid "  --no-sync                    do not wait for changes to be written safely to disk\n"
-msgstr "  —no-sync                    να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
+msgstr "  --no-sync                    να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
 
-#: pg_dump.c:1034 pg_dumpall.c:630
+#: pg_dump.c:1031 pg_dumpall.c:630
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
-msgstr "  -?, —help                εμφάνισε αυτό το μήνυμα βοήθειας, και μετά έξοδος\n"
+msgstr "  -?, --help                   εμφάνισε αυτό το μήνυμα βοήθειας, και μετά έξοδος\n"
 
-#: pg_dump.c:1036 pg_dumpall.c:631
+#: pg_dump.c:1033 pg_dumpall.c:631
 #, c-format
 msgid ""
 "\n"
@@ -1429,243 +1417,241 @@ msgstr ""
 "\n"
 "Επιλογές που ελέγχουν το περιεχόμενο εξόδου:\n"
 
-#: pg_dump.c:1037 pg_dumpall.c:632
+#: pg_dump.c:1034 pg_dumpall.c:632
 #, c-format
 msgid "  -a, --data-only              dump only the data, not the schema\n"
-msgstr "  -a, —data-only              αποθέτει μόνο τα δεδομένα, όχι το σχήμα\n"
+msgstr "  -a, --data-only              αποθέτει μόνο τα δεδομένα, όχι το σχήμα\n"
+
+#: pg_dump.c:1035
+#, c-format
+msgid "  -b, --blobs                  include large objects in dump\n"
+msgstr "  -b, --blobs                  περιέλαβε μεγάλα αντικείμενα στην απόθεση\n"
+
+#: pg_dump.c:1036
+#, c-format
+msgid "  -B, --no-blobs               exclude large objects in dump\n"
+msgstr "  -B, --no-blobs               εξαίρεσε μεγάλα αντικείμενα στην απόθεση\n"
+
+#: pg_dump.c:1037 pg_restore.c:476
+#, c-format
+msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
+msgstr "  -c, --clean                  καθάρισε (εγκατάληψε) αντικείμενα βάσης δεδομένων πριν από την αναδημιουργία\n"
 
 #: pg_dump.c:1038
 #, c-format
-msgid "  -b, --blobs                  include large objects in dump\n"
-msgstr "  -b, —blobs                  περιέλαβε μεγάλα αντικείμενα στην απόθεση\n"
+msgid "  -C, --create                 include commands to create database in dump\n"
+msgstr "  -C, --create                 συμπεριέλαβε εντολές για τη δημιουργία βάσης δεδομένων στην απόθεση\n"
 
 #: pg_dump.c:1039
 #, c-format
-msgid "  -B, --no-blobs               exclude large objects in dump\n"
-msgstr "  -B, —no-blobs               εξαίρεσε μεγάλα αντικείμενα στην απόθεση\n"
+msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
+msgstr "  -e, --extension=PATTERN      απόριψε μόνο τις καθορισμένες επεκτάσεις\n"
 
-#: pg_dump.c:1040 pg_restore.c:476
+#: pg_dump.c:1040 pg_dumpall.c:634
 #, c-format
-msgid "  -c, --clean                  clean (drop) database objects before recreating\n"
-msgstr "  -c, —clean                  καθάρισε (εγκατάληψε) αντικείμενα βάσης δεδομένων πριν από την αναδημιουργία\n"
+msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
+msgstr "  -E, --encoding=ENCODING      απόθεσε τα δεδομένα στην κωδικοποίηση ENCODING\n"
 
 #: pg_dump.c:1041
 #, c-format
-msgid "  -C, --create                 include commands to create database in dump\n"
-msgstr "  -C, —create                 συμπεριέλαβε εντολές για τη δημιουργία βάσης δεδομένων στην απόθεση\n"
+msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
+msgstr "  -n, --schema=PATTERN         απόθεση μόνο για τα καθορισμένα σχήματα\n"
 
 #: pg_dump.c:1042
-#, fuzzy, c-format
-#| msgid "  -t, --table=PATTERN          dump the specified table(s) only\n"
-msgid "  -e, --extension=PATTERN      dump the specified extension(s) only\n"
-msgstr "  -t, —table=PATTERN          απόθεση μόνο των καθορισμένων πινάκων\n"
-
-#: pg_dump.c:1043 pg_dumpall.c:634
-#, c-format
-msgid "  -E, --encoding=ENCODING      dump the data in encoding ENCODING\n"
-msgstr "  -E, —encoding=ENCODING      απόθεσε τα δεδομένα στην κωδικοποίηση ENCODING\n"
-
-#: pg_dump.c:1044
-#, c-format
-msgid "  -n, --schema=PATTERN         dump the specified schema(s) only\n"
-msgstr "  -n, —schema=PATTERN         απόθεση μόνο για τα καθορισμένα σχήματα\n"
-
-#: pg_dump.c:1045
 #, c-format
 msgid "  -N, --exclude-schema=PATTERN do NOT dump the specified schema(s)\n"
-msgstr "  -N, —exclude-schema=PATTERN να ΜΗΝ αποθέσει τα καθορισμένα σχήματα\n"
+msgstr "  -N, --exclude-schema=PATTERN να ΜΗΝ αποθέσει τα καθορισμένα σχήματα\n"
 
-#: pg_dump.c:1046
+#: pg_dump.c:1043
 #, c-format
 msgid ""
 "  -O, --no-owner               skip restoration of object ownership in\n"
 "                               plain-text format\n"
 msgstr ""
-"  -O, —no-owner               παράλειπε την αποκατάσταση της κυριότητας των αντικειμένων στη\n"
+"  -O, --no-owner               παράλειπε την αποκατάσταση της κυριότητας των αντικειμένων στη\n"
 "                               μορφή απλού κειμένου\n"
 
-#: pg_dump.c:1048 pg_dumpall.c:638
+#: pg_dump.c:1045 pg_dumpall.c:638
 #, c-format
 msgid "  -s, --schema-only            dump only the schema, no data\n"
-msgstr "  -s, —schema-only            απόθεση μόνο το σχήμα, χωρίς δεδομένα\n"
+msgstr "  -s, --schema-only            απόθεση μόνο το σχήμα, χωρίς δεδομένα\n"
 
-#: pg_dump.c:1049
+#: pg_dump.c:1046
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in plain-text format\n"
-msgstr "  -S, —superuser=NAME         όνομα χρήστη υπερ-χρήστη που θα χρησιμοποιηθεί σε μορφή απλού κειμένου\n"
+msgstr "  -S, --superuser=NAME         όνομα χρήστη υπερ-χρήστη που θα χρησιμοποιηθεί σε μορφή απλού κειμένου\n"
 
-#: pg_dump.c:1050
+#: pg_dump.c:1047
 #, c-format
 msgid "  -t, --table=PATTERN          dump the specified table(s) only\n"
-msgstr "  -t, —table=PATTERN          απόθεση μόνο των καθορισμένων πινάκων\n"
+msgstr "  -t, --table=PATTERN          απόθεση μόνο των καθορισμένων πινάκων\n"
 
-#: pg_dump.c:1051
+#: pg_dump.c:1048
 #, c-format
 msgid "  -T, --exclude-table=PATTERN  do NOT dump the specified table(s)\n"
-msgstr "  -T, —exclude-table=PATTERN  να ΜΗΝ αποθέτει τους καθορισμένους πίνακες\n"
+msgstr "  -T, --exclude-table=PATTERN  να ΜΗΝ αποθέτει τους καθορισμένους πίνακες\n"
 
-#: pg_dump.c:1052 pg_dumpall.c:641
+#: pg_dump.c:1049 pg_dumpall.c:641
 #, c-format
 msgid "  -x, --no-privileges          do not dump privileges (grant/revoke)\n"
-msgstr "  -x, —no-privileges          να ΜΗΝ αποθέτει δικαιώματα (εκχώρηση/ανάκληση)\n"
+msgstr "  -x, --no-privileges          να ΜΗΝ αποθέτει δικαιώματα (εκχώρηση/ανάκληση)\n"
 
-#: pg_dump.c:1053 pg_dumpall.c:642
+#: pg_dump.c:1050 pg_dumpall.c:642
 #, c-format
 msgid "  --binary-upgrade             for use by upgrade utilities only\n"
-msgstr "  —binary-upgrade             μόνο για χρήση μόνο από βοηθητικά προγράμματα αναβάθμισης\n"
+msgstr "  --binary-upgrade             μόνο για χρήση μόνο από βοηθητικά προγράμματα αναβάθμισης\n"
 
-#: pg_dump.c:1054 pg_dumpall.c:643
+#: pg_dump.c:1051 pg_dumpall.c:643
 #, c-format
 msgid "  --column-inserts             dump data as INSERT commands with column names\n"
-msgstr "  —column-inserts             αποθέτει δεδομένα ως εντολές INSERT με ονόματα στηλών\n"
+msgstr "  --column-inserts             αποθέτει δεδομένα ως εντολές INSERT με ονόματα στηλών\n"
 
-#: pg_dump.c:1055 pg_dumpall.c:644
+#: pg_dump.c:1052 pg_dumpall.c:644
 #, c-format
 msgid "  --disable-dollar-quoting     disable dollar quoting, use SQL standard quoting\n"
-msgstr "  —disable-dollar-quoting     απενεργοποίησε την παράθεση δολαρίου, χρήση τυποποιημένης παράθεσης SQL\n"
+msgstr "  --disable-dollar-quoting     απενεργοποίησε την παράθεση δολαρίου, χρήση τυποποιημένης παράθεσης SQL\n"
 
-#: pg_dump.c:1056 pg_dumpall.c:645 pg_restore.c:493
+#: pg_dump.c:1053 pg_dumpall.c:645 pg_restore.c:493
 #, c-format
 msgid "  --disable-triggers           disable triggers during data-only restore\n"
-msgstr "  —disable-triggers           απενεργοποίησε τα εναύσματα κατά την επαναφορά δεδομένων-μόνο\n"
+msgstr "  --disable-triggers           απενεργοποίησε τα εναύσματα κατά την επαναφορά δεδομένων-μόνο\n"
 
-#: pg_dump.c:1057
+#: pg_dump.c:1054
 #, c-format
 msgid ""
 "  --enable-row-security        enable row security (dump only content user has\n"
 "                               access to)\n"
 msgstr ""
-"  —enable-row-security        ενεργοποιήστε την ασφάλεια σειρών (απόθεση μόνο του περιεχομένου που ο χρήστης έχει\n"
+"  --enable-row-security        ενεργοποιήστε την ασφάλεια σειρών (απόθεση μόνο του περιεχομένου που ο χρήστης έχει\n"
 "                               πρόσβαση)\n"
 
-#: pg_dump.c:1059
+#: pg_dump.c:1056
 #, c-format
 msgid "  --exclude-table-data=PATTERN do NOT dump data for the specified table(s)\n"
-msgstr "  —exclude-table-data=PATTERN να ΜΗΝ αποθέσει δεδομένα για τους καθορισμένους πίνακες\n"
+msgstr "  --exclude-table-data=PATTERN να ΜΗΝ αποθέσει δεδομένα για τους καθορισμένους πίνακες\n"
 
-#: pg_dump.c:1060 pg_dumpall.c:647
+#: pg_dump.c:1057 pg_dumpall.c:647
 #, c-format
 msgid "  --extra-float-digits=NUM     override default setting for extra_float_digits\n"
 msgstr "  --extra-float-digits=NUM     παράκαμψε την προεπιλεγμένη ρύθμιση για extra_float_digits\n"
 
-#: pg_dump.c:1061 pg_dumpall.c:648 pg_restore.c:495
+#: pg_dump.c:1058 pg_dumpall.c:648 pg_restore.c:495
 #, c-format
 msgid "  --if-exists                  use IF EXISTS when dropping objects\n"
-msgstr "  —if-exists                  χρησιμοποίησε το IF EXISTS κατά την εγκαταλήψη αντικειμένων\n"
+msgstr "  --if-exists                  χρησιμοποίησε το IF EXISTS κατά την εγκαταλήψη αντικειμένων\n"
 
-#: pg_dump.c:1062
+#: pg_dump.c:1059
 #, c-format
 msgid ""
 "  --include-foreign-data=PATTERN\n"
 "                               include data of foreign tables on foreign\n"
 "                               servers matching PATTERN\n"
 msgstr ""
-"  —include-foreign-data=PATTERN\n"
+"  --include-foreign-data=PATTERN\n"
 "                               περιέλαβε δεδομένα ξένων πινάκων για\n"
 "                               διακομιστές που ταιριάζουν με PATTERN\n"
 
-#: pg_dump.c:1065 pg_dumpall.c:649
+#: pg_dump.c:1062 pg_dumpall.c:649
 #, c-format
 msgid "  --inserts                    dump data as INSERT commands, rather than COPY\n"
-msgstr "  —inserts                    απόθεσε δεδομένα ως εντολές INSERT, αντί για COPY\n"
+msgstr "  --inserts                    απόθεσε δεδομένα ως εντολές INSERT, αντί για COPY\n"
 
-#: pg_dump.c:1066 pg_dumpall.c:650
+#: pg_dump.c:1063 pg_dumpall.c:650
 #, c-format
 msgid "  --load-via-partition-root    load partitions via the root table\n"
-msgstr "  —load-via-partition-root    φόρτωσε διαχωρίσματα μέσω του βασικού πίνακα\n"
+msgstr "  --load-via-partition-root    φόρτωσε διαχωρίσματα μέσω του βασικού πίνακα\n"
 
-#: pg_dump.c:1067 pg_dumpall.c:651
+#: pg_dump.c:1064 pg_dumpall.c:651
 #, c-format
 msgid "  --no-comments                do not dump comments\n"
-msgstr "  —no-comments                να μην αποθέσεις σχόλια\n"
+msgstr "  --no-comments                να μην αποθέσεις σχόλια\n"
 
-#: pg_dump.c:1068 pg_dumpall.c:652
+#: pg_dump.c:1065 pg_dumpall.c:652
 #, c-format
 msgid "  --no-publications            do not dump publications\n"
-msgstr "  —no-publications            να μην αποθέσεις δημοσιεύσεις\n"
+msgstr "  --no-publications            να μην αποθέσεις δημοσιεύσεις\n"
 
-#: pg_dump.c:1069 pg_dumpall.c:654
+#: pg_dump.c:1066 pg_dumpall.c:654
 #, c-format
 msgid "  --no-security-labels         do not dump security label assignments\n"
-msgstr "  —no-security-labels         να μην αποθέσεις αντιστοιχίσεις ετικετών ασφαλείας\n"
+msgstr "  --no-security-labels         να μην αποθέσεις αντιστοιχίσεις ετικετών ασφαλείας\n"
 
-#: pg_dump.c:1070 pg_dumpall.c:655
+#: pg_dump.c:1067 pg_dumpall.c:655
 #, c-format
 msgid "  --no-subscriptions           do not dump subscriptions\n"
-msgstr "  —no-publications            να μην αποθέσεις συνδρομές\n"
+msgstr "  --no-publications            να μην αποθέσεις συνδρομές\n"
 
-#: pg_dump.c:1071
+#: pg_dump.c:1068
 #, c-format
 msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
-msgstr "  —no-synchronized-snapshots  να μην χρησιμοποιήσει συγχρονισμένα στιγμιότυπα σε παράλληλες εργασίες\n"
+msgstr "  --no-synchronized-snapshots  να μην χρησιμοποιήσει συγχρονισμένα στιγμιότυπα σε παράλληλες εργασίες\n"
 
-#: pg_dump.c:1072 pg_dumpall.c:657
+#: pg_dump.c:1069 pg_dumpall.c:657
 #, c-format
 msgid "  --no-tablespaces             do not dump tablespace assignments\n"
-msgstr "  —no-tablespaces             να μην αποθέσει αναθέσεις πινακοχώρος\n"
+msgstr "  --no-tablespaces             να μην αποθέσει αναθέσεις πινακοχώρος\n"
 
-#: pg_dump.c:1073 pg_dumpall.c:658
-#, fuzzy, c-format
-#| msgid "  --no-comments                do not dump comments\n"
+#: pg_dump.c:1070 pg_dumpall.c:658
+#, c-format
 msgid "  --no-toast-compression       do not dump TOAST compression methods\n"
-msgstr "  —no-comments                να μην αποθέσεις σχόλια\n"
+msgstr "  --no-toast-compression       να μην αποθέσει τις μεθόδους συμπίεσης TOAST\n"
 
-#: pg_dump.c:1074 pg_dumpall.c:659
+#: pg_dump.c:1071 pg_dumpall.c:659
 #, c-format
 msgid "  --no-unlogged-table-data     do not dump unlogged table data\n"
-msgstr "  —no-unlogged-table-data     να μην αποθέσει μη δεδομένα μη-καταγραμένου πίνακα\n"
+msgstr "  --no-unlogged-table-data     να μην αποθέσει μη δεδομένα μη-καταγραμένου πίνακα\n"
 
-#: pg_dump.c:1075 pg_dumpall.c:660
+#: pg_dump.c:1072 pg_dumpall.c:660
 #, c-format
 msgid "  --on-conflict-do-nothing     add ON CONFLICT DO NOTHING to INSERT commands\n"
-msgstr "  —on-conflict-do-nothing     προσθέστε ON CONFLICT DO NOTHING στις εντολές INSERT\n"
+msgstr "  --on-conflict-do-nothing     προσθέστε ON CONFLICT DO NOTHING στις εντολές INSERT\n"
 
-#: pg_dump.c:1076 pg_dumpall.c:661
+#: pg_dump.c:1073 pg_dumpall.c:661
 #, c-format
 msgid "  --quote-all-identifiers      quote all identifiers, even if not key words\n"
-msgstr "  —quote-all-identifiers      παράθεσε όλα τα αναγνωριστικά, ακόμα και αν δεν είναι λέξεις κλειδιά\n"
+msgstr "  --quote-all-identifiers      παράθεσε όλα τα αναγνωριστικά, ακόμα και αν δεν είναι λέξεις κλειδιά\n"
 
-#: pg_dump.c:1077 pg_dumpall.c:662
+#: pg_dump.c:1074 pg_dumpall.c:662
 #, c-format
 msgid "  --rows-per-insert=NROWS      number of rows per INSERT; implies --inserts\n"
-msgstr "  —rows-per-insert=NROWS      αριθμός γραμμών ανά INSERT; υπονοεί —inserts\n"
+msgstr "  --rows-per-insert=NROWS      αριθμός γραμμών ανά INSERT; υπονοεί --inserts\n"
 
-#: pg_dump.c:1078
+#: pg_dump.c:1075
 #, c-format
 msgid "  --section=SECTION            dump named section (pre-data, data, or post-data)\n"
-msgstr "  —section=SECTION            απόθεσε ονομασμένες ενότητες (προ-δεδομένα, δεδομένα, ή μετα-δεδομένα)\n"
+msgstr "  --section=SECTION            απόθεσε ονομασμένες ενότητες (προ-δεδομένα, δεδομένα, ή μετα-δεδομένα)\n"
 
-#: pg_dump.c:1079
+#: pg_dump.c:1076
 #, c-format
 msgid "  --serializable-deferrable    wait until the dump can run without anomalies\n"
-msgstr "  —serializable-deferrable    ανάμενε έως ότου η απόθεση να μπορεί να τρέξει χωρίς ανωμαλίες\n"
+msgstr "  --serializable-deferrable    ανάμενε έως ότου η απόθεση να μπορεί να τρέξει χωρίς ανωμαλίες\n"
 
-#: pg_dump.c:1080
+#: pg_dump.c:1077
 #, c-format
 msgid "  --snapshot=SNAPSHOT          use given snapshot for the dump\n"
-msgstr "  —snapshot=SNAPSHOT          χρησιμοποίησε το δοσμένο στιγμιότυπο για την απόθεση\n"
+msgstr "  --snapshot=SNAPSHOT          χρησιμοποίησε το δοσμένο στιγμιότυπο για την απόθεση\n"
 
-#: pg_dump.c:1081 pg_restore.c:504
+#: pg_dump.c:1078 pg_restore.c:504
 #, c-format
 msgid ""
 "  --strict-names               require table and/or schema include patterns to\n"
 "                               match at least one entity each\n"
 msgstr ""
-"  —strict-names               απαίτησε τα μοτίβα περίληψης πίνακα ή/και σχήματος να\n"
+"  --strict-names               απαίτησε τα μοτίβα περίληψης πίνακα ή/και σχήματος να\n"
 "                               αντιστοιχήσουν τουλάχιστον μία οντότητα το καθένα\n"
 
-#: pg_dump.c:1083 pg_dumpall.c:663 pg_restore.c:506
+#: pg_dump.c:1080 pg_dumpall.c:663 pg_restore.c:506
 #, c-format
 msgid ""
 "  --use-set-session-authorization\n"
 "                               use SET SESSION AUTHORIZATION commands instead of\n"
 "                               ALTER OWNER commands to set ownership\n"
 msgstr ""
-"  —use-set-session-authorization\n"
+"  --use-set-session-authorization\n"
 "                               χρησιμοποιήσε τις εντολές SET SESSION AUTHORIZATION αντί των\n"
 "                               ALTER OWNER για τον ορισμό ιδιοκτησίας\n"
 
-#: pg_dump.c:1087 pg_dumpall.c:667 pg_restore.c:510
+#: pg_dump.c:1084 pg_dumpall.c:667 pg_restore.c:510
 #, c-format
 msgid ""
 "\n"
@@ -1674,42 +1660,42 @@ msgstr ""
 "\n"
 "Επιλογές σύνδεσης:\n"
 
-#: pg_dump.c:1088
+#: pg_dump.c:1085
 #, c-format
 msgid "  -d, --dbname=DBNAME      database to dump\n"
-msgstr "  -d, —dbname=DBNAME      βάση δεδομένων για απόθεση\n"
+msgstr "  -d, --dbname=DBNAME      βάση δεδομένων για απόθεση\n"
 
-#: pg_dump.c:1089 pg_dumpall.c:669 pg_restore.c:511
+#: pg_dump.c:1086 pg_dumpall.c:669 pg_restore.c:511
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr "  -h, —host=HOSTNAME      διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
+msgstr "  -h, --host=HOSTNAME      διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
 
-#: pg_dump.c:1090 pg_dumpall.c:671 pg_restore.c:512
+#: pg_dump.c:1087 pg_dumpall.c:671 pg_restore.c:512
 #, c-format
 msgid "  -p, --port=PORT          database server port number\n"
-msgstr "  -p, —port=PORT          θύρα διακομιστή βάσης δεδομένων\n"
+msgstr "  -p, --port=PORT          θύρα διακομιστή βάσης δεδομένων\n"
 
-#: pg_dump.c:1091 pg_dumpall.c:672 pg_restore.c:513
+#: pg_dump.c:1088 pg_dumpall.c:672 pg_restore.c:513
 #, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
-msgstr "  -U, —username=USERNAME  σύνδεση ως ο ορισμένος χρήστης βάσης δεδομένων\n"
+msgstr "  -U, --username=USERNAME  σύνδεση ως ο ορισμένος χρήστης βάσης δεδομένων\n"
 
-#: pg_dump.c:1092 pg_dumpall.c:673 pg_restore.c:514
+#: pg_dump.c:1089 pg_dumpall.c:673 pg_restore.c:514
 #, c-format
 msgid "  -w, --no-password        never prompt for password\n"
-msgstr "  -w, —no-password        να μην ζητείται ποτέ κωδικός πρόσβασης\n"
+msgstr "  -w, --no-password        να μην ζητείται ποτέ κωδικός πρόσβασης\n"
 
-#: pg_dump.c:1093 pg_dumpall.c:674 pg_restore.c:515
+#: pg_dump.c:1090 pg_dumpall.c:674 pg_restore.c:515
 #, c-format
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
-msgstr "  -W, —password           αναγκαστική προτροπή κωδικού πρόσβασης (πρέπει να συμβεί αυτόματα)\n"
+msgstr "  -W, --password           αναγκαστική προτροπή κωδικού πρόσβασης (πρέπει να συμβεί αυτόματα)\n"
 
-#: pg_dump.c:1094 pg_dumpall.c:675
+#: pg_dump.c:1091 pg_dumpall.c:675
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before dump\n"
-msgstr "  —role=ROLENAME          κάνε SET ROLE πριν την απόθεση\n"
+msgstr "  --role=ROLENAME          κάνε SET ROLE πριν την απόθεση\n"
 
-#: pg_dump.c:1096
+#: pg_dump.c:1093
 #, c-format
 msgid ""
 "\n"
@@ -1719,25 +1705,25 @@ msgid ""
 msgstr ""
 "\n"
 "Εάν δεν παρέχεται όνομα βάσης δεδομένων, τότε χρησιμοποιείται η μεταβλητή\n"
-"περιβάλλοντος PGDATABASE .\n"
+"περιβάλλοντος PGDATABASE.\n"
 "\n"
 
-#: pg_dump.c:1098 pg_dumpall.c:679 pg_restore.c:522
+#: pg_dump.c:1095 pg_dumpall.c:679 pg_restore.c:522
 #, c-format
 msgid "Report bugs to <%s>.\n"
 msgstr "Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
 
-#: pg_dump.c:1099 pg_dumpall.c:680 pg_restore.c:523
+#: pg_dump.c:1096 pg_dumpall.c:680 pg_restore.c:523
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s αρχική σελίδα: <%s>\n"
 
-#: pg_dump.c:1118 pg_dumpall.c:504
+#: pg_dump.c:1115 pg_dumpall.c:504
 #, c-format
 msgid "invalid client encoding \"%s\" specified"
-msgstr "καθορίστηκε μη έγκυρη κωδικοποίηση προγράμματος-πελάτη \"%s\""
+msgstr "καθορίστηκε μη έγκυρη κωδικοποίηση προγράμματος-πελάτη «%s»"
 
-#: pg_dump.c:1264
+#: pg_dump.c:1261
 #, c-format
 msgid ""
 "Synchronized snapshots on standby servers are not supported by this server version.\n"
@@ -1745,498 +1731,482 @@ msgid ""
 "synchronized snapshots."
 msgstr ""
 "Τα συγχρονισμένα στιγμιότυπα σε διακομιστές αναμονής δεν υποστηρίζονται από αυτήν την έκδοση διακομιστή.\n"
-"Εκτελέστε με —no-synchronized-snapshots, εάν δεν χρειάζεστε\n"
+"Εκτελέστε με --no-synchronized-snapshots, εάν δεν χρειάζεστε\n"
 "συγχρονισμένα στιγμιότυπα."
 
-#: pg_dump.c:1333
+#: pg_dump.c:1330
 #, c-format
 msgid "invalid output format \"%s\" specified"
-msgstr "ορίστηκε μη έγκυρη μορφή εξόδου “%s”"
+msgstr "ορίστηκε μη έγκυρη μορφή εξόδου «%s»"
 
-#: pg_dump.c:1371
+#: pg_dump.c:1368
 #, c-format
 msgid "no matching schemas were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν σχήματα που να ταιριάζουν με το μοτίβο \"%s\""
+msgstr "δεν βρέθηκαν σχήματα που να ταιριάζουν με το μοτίβο «%s»"
 
-#: pg_dump.c:1418
-#, fuzzy, c-format
-#| msgid "no matching tables were found for pattern \"%s\""
+#: pg_dump.c:1415
+#, c-format
 msgid "no matching extensions were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν για το μοτίβο \"%s\""
+msgstr "δεν βρέθηκαν επεκτάσεις που ταιριάζουν με το μοτίβο «%s»"
 
-#: pg_dump.c:1465
+#: pg_dump.c:1462
 #, c-format
 msgid "no matching foreign servers were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν ξένοι διακομιστές που να ταιριάζουν με το μοτίβο \"%s\""
+msgstr "δεν βρέθηκαν ξένοι διακομιστές που να ταιριάζουν με το μοτίβο «%s»"
 
-#: pg_dump.c:1528
+#: pg_dump.c:1525
 #, c-format
 msgid "no matching tables were found for pattern \"%s\""
-msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν για το μοτίβο \"%s\""
+msgstr "δεν βρέθηκαν πίνακες που να ταιριάζουν για το μοτίβο «%s»"
 
-#: pg_dump.c:1951
+#: pg_dump.c:1948
 #, c-format
 msgid "dumping contents of table \"%s.%s\""
-msgstr "αποθέτει τα δεδομένα του πίνακα “%s.%s”"
+msgstr "αποθέτει τα δεδομένα του πίνακα «%s.%s»"
 
-#: pg_dump.c:2058
+#: pg_dump.c:2055
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetCopyData() failed."
-msgstr "Η απόθεση των περιεχομένων του πίνακα \"%s\" απέτυχε: PQgetCopyData() απέτυχε."
+msgstr "Η απόθεση των περιεχομένων του πίνακα «%s» απέτυχε: PQgetCopyData() απέτυχε."
 
-#: pg_dump.c:2059 pg_dump.c:2069
+#: pg_dump.c:2056 pg_dump.c:2066
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Μήνυμα σφάλματος από διακομιστή: %s"
 
-#: pg_dump.c:2060 pg_dump.c:2070
+#: pg_dump.c:2057 pg_dump.c:2067
 #, c-format
 msgid "The command was: %s"
 msgstr "Η εντολή ήταν: %s"
 
-#: pg_dump.c:2068
+#: pg_dump.c:2065
 #, c-format
 msgid "Dumping the contents of table \"%s\" failed: PQgetResult() failed."
-msgstr "Η απόθεση των περιεχομένων του πίνακα \"%s\" απέτυχε: PQgetResult() απέτυχε."
+msgstr "Η απόθεση των περιεχομένων του πίνακα «%s» απέτυχε: PQgetResult() απέτυχε."
 
-#: pg_dump.c:2828
+#: pg_dump.c:2825
 #, c-format
 msgid "saving database definition"
 msgstr "αποθήκευση ορισμού βάσης δεδομένων"
 
-#: pg_dump.c:3300
+#: pg_dump.c:3297
 #, c-format
 msgid "saving encoding = %s"
 msgstr "αποθηκεύει encoding = %s"
 
-#: pg_dump.c:3325
+#: pg_dump.c:3322
 #, c-format
 msgid "saving standard_conforming_strings = %s"
 msgstr "αποθηκεύει standard_conforming_strings = %s"
 
-#: pg_dump.c:3364
+#: pg_dump.c:3361
 #, c-format
 msgid "could not parse result of current_schemas()"
 msgstr "δεν ήταν δυνατή η ανάλυση του αποτελέσματος της current_schemas()"
 
-#: pg_dump.c:3383
+#: pg_dump.c:3380
 #, c-format
 msgid "saving search_path = %s"
 msgstr "αποθηκεύει search_path = %s"
 
-#: pg_dump.c:3436
-#, c-format
-msgid "saving default_toast_compression = %s"
-msgstr ""
-
-#: pg_dump.c:3475
+#: pg_dump.c:3420
 #, c-format
 msgid "reading large objects"
 msgstr "ανάγνωση μεγάλων αντικειμένων"
 
-#: pg_dump.c:3657
+#: pg_dump.c:3602
 #, c-format
 msgid "saving large objects"
 msgstr "αποθηκεύει μεγάλων αντικειμένων"
 
-#: pg_dump.c:3703
+#: pg_dump.c:3648
 #, c-format
 msgid "error reading large object %u: %s"
 msgstr "σφάλμα κατά την ανάγνωση %u μεγάλου αντικειμένου: %s"
 
-#: pg_dump.c:3755
+#: pg_dump.c:3732
 #, c-format
-msgid "reading row security enabled for table \"%s.%s\""
-msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα \"%s.%s\""
+msgid "reading row-level security policies"
+msgstr "διαβάζει πολιτικές ασφαλείας επιπέδου σειράς"
 
-#: pg_dump.c:3786
-#, c-format
-msgid "reading policies for table \"%s.%s\""
-msgstr "ανάγνωση πολιτικών για τον πίνακα \"%s.%s\""
-
-#: pg_dump.c:3938
+#: pg_dump.c:3875
 #, c-format
 msgid "unexpected policy command type: %c"
 msgstr "μη αναμενόμενος τύπος εντολής πολιτικής: %c"
 
-#: pg_dump.c:4092
+#: pg_dump.c:4029
 #, c-format
 msgid "owner of publication \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της δημοσίευσης \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της δημοσίευσης «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:4384
+#: pg_dump.c:4321
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "οι συνδρομές δεν απορρίπτονται, επειδή ο τρέχων χρήστης δεν είναι υπερχρήστης"
 
-#: pg_dump.c:4455
+#: pg_dump.c:4392
 #, c-format
 msgid "owner of subscription \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνδρομής \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνδρομής «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:4498
+#: pg_dump.c:4435
 #, c-format
 msgid "could not parse subpublications array"
-msgstr "δεν ήταν δυνατή η ανάλυση της συστυχίας υποδημοσιεύσεων"
+msgstr "δεν ήταν δυνατή η ανάλυση της συστοιχίας υποδημοσιεύσεων"
 
-#: pg_dump.c:4856
+#: pg_dump.c:4793
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "δεν ήταν δυνατή η εύρεση γονικής επέκτασης για %s %s"
 
-#: pg_dump.c:4988
+#: pg_dump.c:4925
 #, c-format
 msgid "owner of schema \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του σχήματος \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του σχήματος «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5011
+#: pg_dump.c:4948
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "το σχήμα με %u OID δεν υπάρχει"
 
-#: pg_dump.c:5340
+#: pg_dump.c:5278
 #, c-format
 msgid "owner of data type \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του τύπου δεδομένων \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5424
+#: pg_dump.c:5362
 #, c-format
 msgid "owner of operator \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του χειριστή “%s” φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5723
+#: pg_dump.c:5661
 #, c-format
 msgid "owner of operator class \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της κλάσης χειριστή \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της κλάσης χειριστή «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5806
+#: pg_dump.c:5744
 #, c-format
 msgid "owner of operator family \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της οικογένειας χειριστών \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της οικογένειας χειριστών «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:5974
+#: pg_dump.c:5912
 #, c-format
 msgid "owner of aggregate function \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνάρτησης συγκεντρωτικών αποτελεσμάτων \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνάρτησης συγκεντρωτικών αποτελεσμάτων «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:6233
+#: pg_dump.c:6171
 #, c-format
 msgid "owner of function \"%s\" appears to be invalid"
-msgstr "ο κάτοχος της συνάρτησης \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος της συνάρτησης «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:7060
+#: pg_dump.c:6998
 #, c-format
 msgid "owner of table \"%s\" appears to be invalid"
-msgstr "ο κάτοχος του πίνακα \"%s\" φαίνεται να μην είναι έγκυρος"
+msgstr "ο κάτοχος του πίνακα «%s» φαίνεται να μην είναι έγκυρος"
 
-#: pg_dump.c:7102 pg_dump.c:17493
+#: pg_dump.c:7040 pg_dump.c:17473
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικός πίνακας με OID %u της ακολουθίας με OID %u δεν βρέθηκε"
 
-#: pg_dump.c:7241
+#: pg_dump.c:7179
 #, c-format
 msgid "reading indexes for table \"%s.%s\""
-msgstr "ανάγνωση ευρετηρίων για τον πίνακα \"%s.%s\""
+msgstr "ανάγνωση ευρετηρίων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:7655
+#: pg_dump.c:7593
 #, c-format
 msgid "reading foreign key constraints for table \"%s.%s\""
-msgstr "ανάγνωση περιορισμών ξένου κλειδιού για τον πίνακα \"%s.%s\""
+msgstr "ανάγνωση περιορισμών ξένου κλειδιού για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:7934
+#: pg_dump.c:7872
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "απέτυχε ο έλεγχος ακεραιότητας, ο γονικός πίνακας με OID %u της καταχώρησης pg_rewrite με OID %u δεν βρέθηκε"
 
-#: pg_dump.c:8017
+#: pg_dump.c:7956
 #, c-format
 msgid "reading triggers for table \"%s.%s\""
-msgstr "ανάγνωση εναυσμάτων για τον πίνακα “%s.%s”"
+msgstr "ανάγνωση εναυσμάτων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:8150
+#: pg_dump.c:8138
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
-msgstr "το ερώτημα παρήγαγε null πίνακα αναφοράς για το έναυσμα ξένου κλειδιού \"%s\" στον πίνακα \"%s\" (OID του πίνακα: %u)"
+msgstr "το ερώτημα παρήγαγε null πίνακα αναφοράς για το έναυσμα ξένου κλειδιού «%s» στον πίνακα «%s» (OID του πίνακα: %u)"
 
-#: pg_dump.c:8700
+#: pg_dump.c:8688
 #, c-format
 msgid "finding the columns and types of table \"%s.%s\""
-msgstr "εύρεση των στηλών και των τύπων του πίνακα “%s.%s”"
+msgstr "εύρεση των στηλών και των τύπων του πίνακα «%s.%s»"
 
-#: pg_dump.c:8824
+#: pg_dump.c:8812
 #, c-format
 msgid "invalid column numbering in table \"%s\""
-msgstr "μη έγκυρη αρίθμηση στηλών στον πίνακα \"%s\""
+msgstr "μη έγκυρη αρίθμηση στηλών στον πίνακα «%s»"
 
-#: pg_dump.c:8863
+#: pg_dump.c:8851
 #, c-format
 msgid "finding default expressions of table \"%s.%s\""
-msgstr "εύρεση προεπιλεγμένων εκφράσεων για τον πίνακα \"%s.%s\""
+msgstr "εύρεση προεπιλεγμένων εκφράσεων για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:8885
+#: pg_dump.c:8873
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
-msgstr "μη έγκυρη τιμή adnum %d για τον πίνακα \"%s\""
+msgstr "μη έγκυρη τιμή adnum %d για τον πίνακα «%s»"
 
-#: pg_dump.c:8978
+#: pg_dump.c:8966
 #, c-format
 msgid "finding check constraints for table \"%s.%s\""
-msgstr "εύρεση περιορισμών ελέγχου για τον πίνακα \"%s.%s\""
+msgstr "εύρεση περιορισμών ελέγχου για τον πίνακα «%s.%s»"
 
-#: pg_dump.c:9027
+#: pg_dump.c:9015
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
-msgstr[0] "αναμενόμενος %d περιορισμός ελέγχου στον πίνακα \"%s\", αλλά βρήκε %d"
-msgstr[1] "αναμενόμενοι %d περιορισμοί ελέγχου στον πίνακα “%s”, αλλά βρήκε %d"
+msgstr[0] "αναμενόμενος %d περιορισμός ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
+msgstr[1] "αναμενόμενοι %d περιορισμοί ελέγχου στον πίνακα «%s», αλλά βρήκε %d"
 
-#: pg_dump.c:9031
+#: pg_dump.c:9019
 #, c-format
 msgid "(The system catalogs might be corrupted.)"
 msgstr "(Οι κατάλογοι συστήματος ενδέχεται να είναι αλλοιωμένοι.)"
 
-#: pg_dump.c:10616
+#: pg_dump.c:10621
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
-msgstr "typtype του τύπου δεδομένων \"%s\" φαίνεται να μην είναι έγκυρο"
+msgstr "typtype του τύπου δεδομένων «%s» φαίνεται να μην είναι έγκυρο"
 
-#: pg_dump.c:11968
+#: pg_dump.c:11969
 #, c-format
 msgid "bogus value in proargmodes array"
-msgstr "πλαστή τιμή στη συστυχία proargmodes"
+msgstr "πλαστή τιμή στη συστοιχία proargmodes"
 
-#: pg_dump.c:12275
+#: pg_dump.c:12271
 #, c-format
 msgid "could not parse proallargtypes array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας proallargtypes"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proallargtypes"
 
-#: pg_dump.c:12291
+#: pg_dump.c:12287
 #, c-format
 msgid "could not parse proargmodes array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας proargmodes"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proargmodes"
 
-#: pg_dump.c:12305
+#: pg_dump.c:12301
 #, c-format
 msgid "could not parse proargnames array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας proargnames"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proargnames"
 
-#: pg_dump.c:12315
+#: pg_dump.c:12311
 #, c-format
 msgid "could not parse proconfig array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας proconfig"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας proconfig"
 
-#: pg_dump.c:12395
+#: pg_dump.c:12387
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή provolatile για τη συνάρτηση \"%s\""
+msgstr "μη αναγνωρίσιμη τιμή provolatile για τη συνάρτηση «%s»"
 
-#: pg_dump.c:12445 pg_dump.c:14396
+#: pg_dump.c:12437 pg_dump.c:14378
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή proparallel για τη συνάρτηση “%s”"
+msgstr "μη αναγνωρίσιμη τιμή proparallel για τη συνάρτηση «%s»"
 
-#: pg_dump.c:12584 pg_dump.c:12693 pg_dump.c:12700
+#: pg_dump.c:12576 pg_dump.c:12682 pg_dump.c:12689
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "δεν ήταν δυνατή η εύρεση ορισμού συνάντησης για την συνάρτηση με OID %u"
 
-#: pg_dump.c:12623
+#: pg_dump.c:12615
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "πλαστή τιμή στο πεδίο pg_cast.castfunc ή pg_cast.castmethod"
 
-#: pg_dump.c:12626
+#: pg_dump.c:12618
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "πλαστή τιμή στο πεδίο pg_cast.castmethod"
 
-#: pg_dump.c:12719
+#: pg_dump.c:12708
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "πλαστός ορισμός μετασχηματισμού, τουλάχιστον μία από trffromsql και trftosql θα πρέπει να είναι μη μηδενική"
 
-#: pg_dump.c:12736
+#: pg_dump.c:12725
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "πλαστή τιμή στο πεδίο pg_transform.trffromsql"
 
-#: pg_dump.c:12757
+#: pg_dump.c:12746
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "πλαστή τιμή στο πεδίοpg_transform.trftosql"
 
-#: pg_dump.c:12909
-#, fuzzy, c-format
-#| msgid "WITH OIDS is not supported anymore (table \"%s\")"
+#: pg_dump.c:12897
+#, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
-msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας \"%s\")"
+msgstr "χειριστές postfix δεν υποστηρίζεται πλέον (χειριστής «%s»)"
 
-#: pg_dump.c:13079
+#: pg_dump.c:13067
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "δεν ήταν δυνατή η εύρεση χειριστή με OID %s"
 
-#: pg_dump.c:13147
+#: pg_dump.c:13135
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
-msgstr "μη έγκυρος τύπος \"%c\" για την μεθόδο πρόσβασης \"%s\""
+msgstr "μη έγκυρος τύπος «%c» για την μεθόδο πρόσβασης «%s»"
 
-#: pg_dump.c:13901
+#: pg_dump.c:13889
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "μη αναγνωρίσιμος πάροχος συρραφής: %s"
 
-#: pg_dump.c:14315
+#: pg_dump.c:14297
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή aggfinalmodify για το συγκεντρωτικό \"%s\""
+msgstr "μη αναγνωρίσιμη τιμή aggfinalmodify για το συγκεντρωτικό «%s»"
 
-#: pg_dump.c:14371
+#: pg_dump.c:14353
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
-msgstr "μη αναγνωρίσιμη τιμή aggmfinalmodify για το συγκεντρωτικό “%s”"
+msgstr "μη αναγνωρίσιμη τιμή aggmfinalmodify για το συγκεντρωτικό «%s»"
 
-#: pg_dump.c:15093
+#: pg_dump.c:15075
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "μη αναγνωρίσιμος τύπος αντικειμένου σε προεπιλεγμένα δικαιώματα: %d"
 
-#: pg_dump.c:15111
+#: pg_dump.c:15093
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "δεν ήταν δυνατή η ανάλυση της προεπιλεγμένης λίστας ACL (%s)"
 
-#: pg_dump.c:15196
+#: pg_dump.c:15178
 #, c-format
 msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)"
-msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής λίστας ACL GRANT (%s) ή της αρχικής λίστας REVOKE ACL (%s) για το αντικείμενο \"%s\" (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση της αρχικής λίστας ACL GRANT (%s) ή της αρχικής λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
-#: pg_dump.c:15204
+#: pg_dump.c:15186
 #, c-format
 msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)"
-msgstr "δεν ήταν δυνατή η ανάλυση της λίστας GRANT ACL (%s) ή της λίστας REVOKE ACL (%s) για το αντικείμενο \"%s\" (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση της λίστας GRANT ACL (%s) ή της λίστας REVOKE ACL (%s) για το αντικείμενο «%s» (%s)"
 
-#: pg_dump.c:15719
+#: pg_dump.c:15701
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
-msgstr "το ερώτημα για τη λήψη ορισμού της όψης \"%s\" δεν επέστρεψε δεδομένα"
+msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» δεν επέστρεψε δεδομένα"
 
-#: pg_dump.c:15722
+#: pg_dump.c:15704
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
-msgstr "το ερώτημα για τη λήψη ορισμού της όψης \"%s\" επέστρεψε περισσότερους από έναν ορισμούς"
+msgstr "το ερώτημα για τη λήψη ορισμού της όψης «%s» επέστρεψε περισσότερους από έναν ορισμούς"
 
-#: pg_dump.c:15729
+#: pg_dump.c:15711
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
-msgstr "ο ορισμός της όψης \"%s\" φαίνεται να είναι κενός (μηδενικό μήκος)"
+msgstr "ο ορισμός της όψης «%s» φαίνεται να είναι κενός (μηδενικό μήκος)"
 
-#: pg_dump.c:15813
+#: pg_dump.c:15795
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
-msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας \"%s\")"
+msgstr "WITH OIDS δεν υποστηρίζεται πλέον (πίνακας «%s»)"
 
-#: pg_dump.c:16680
+#: pg_dump.c:16660
 #, c-format
 msgid "invalid column number %d for table \"%s\""
-msgstr "μη έγκυρος αριθμός στήλης %d για τον πίνακα \"%s\""
+msgstr "μη έγκυρος αριθμός στήλης %d για τον πίνακα «%s»"
 
-#: pg_dump.c:16757
-#, fuzzy, c-format
-#| msgid "could not parse default ACL list (%s)"
+#: pg_dump.c:16737
+#, c-format
 msgid "could not parse index statistic columns"
-msgstr "δεν ήταν δυνατή η ανάλυση της προεπιλεγμένης λίστας ACL (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση στηλών στατιστικής ευρετηρίου"
 
-#: pg_dump.c:16759
-#, fuzzy, c-format
-#| msgid "could not parse default ACL list (%s)"
+#: pg_dump.c:16739
+#, c-format
 msgid "could not parse index statistic values"
-msgstr "δεν ήταν δυνατή η ανάλυση της προεπιλεγμένης λίστας ACL (%s)"
+msgstr "δεν ήταν δυνατή η ανάλυση ευρετηρίου στατιστικών τιμών"
 
-#: pg_dump.c:16761
+#: pg_dump.c:16741
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
-msgstr ""
+msgstr "ασυμφωνία αριθμού στηλών και τιμών για στατιστικά στοιχεία ευρετηρίου"
 
-#: pg_dump.c:16978
+#: pg_dump.c:16958
 #, c-format
 msgid "missing index for constraint \"%s\""
-msgstr "λείπει ευρετήριο για τον περιορισμό \"%s\""
+msgstr "λείπει ευρετήριο για τον περιορισμό «%s»"
 
-#: pg_dump.c:17203
+#: pg_dump.c:17183
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "μη αναγνωρίσιμος τύπος περιορισμού: %c"
 
-#: pg_dump.c:17335 pg_dump.c:17558
+#: pg_dump.c:17315 pg_dump.c:17538
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
-msgstr[0] "ερώτημα για τη λήψη δεδομένων ακολουθίας \"%s\" επέστρεψε %d γραμμή (αναμένεται 1)"
-msgstr[1] "ερώτημα για τη λήψη δεδομένων ακολουθίας “%s” επέστρεψε %d γραμμές (αναμένεται 1)"
+msgstr[0] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμή (αναμένεται 1)"
+msgstr[1] "ερώτημα για τη λήψη δεδομένων ακολουθίας «%s» επέστρεψε %d γραμμές (αναμένεται 1)"
 
-#: pg_dump.c:17369
+#: pg_dump.c:17349
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "μη αναγνωρίσιμος τύπος ακολουθίας: %s"
 
-#: pg_dump.c:17656
+#: pg_dump.c:17636
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "μη αναγνωρίσιμος τύπος tgtype: %d"
 
-#: pg_dump.c:17730
+#: pg_dump.c:17710
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
-msgstr "μη έγκυρη συμβολοσειρά παραμέτρου (%s) για το έναυσμα \"%s\" στον πίνακα \"%s\""
+msgstr "μη έγκυρη συμβολοσειρά παραμέτρου (%s) για το έναυσμα «%s» στον πίνακα «%s»"
 
-#: pg_dump.c:17966
+#: pg_dump.c:17979
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
-msgstr "ερώτημα για τη λήψη κανόνα \"%s\" για τον πίνακα \"%s\" απέτυχε: επιστράφηκε εσφαλμένος αριθμός γραμμών"
+msgstr "ερώτημα για τη λήψη κανόνα «%s» για τον πίνακα «%s» απέτυχε: επιστράφηκε εσφαλμένος αριθμός γραμμών"
 
-#: pg_dump.c:18128
+#: pg_dump.c:18141
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "δεν ήταν δυνατή η εύρεση της αναφερόμενης επέκτασης %u"
 
-#: pg_dump.c:18219
-#, fuzzy, c-format
-#| msgid "could not parse proconfig array"
+#: pg_dump.c:18232
+#, c-format
 msgid "could not parse extension configuration array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας proconfig"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας ρύθμισεων επέκτασης"
 
-#: pg_dump.c:18221
-#, fuzzy, c-format
-#| msgid "could not parse reloptions array"
+#: pg_dump.c:18234
+#, c-format
 msgid "could not parse extension condition array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας reloptions"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας προϋποθέσεων επέκτασης"
 
-#: pg_dump.c:18223
+#: pg_dump.c:18236
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
-msgstr ""
+msgstr "ασυμφωνία αριθμού διαμορφώσεων και συνθηκών για επέκταση"
 
-#: pg_dump.c:18355
+#: pg_dump.c:18368
 #, c-format
 msgid "reading dependency data"
 msgstr "ανάγνωση δεδομένων εξάρτησης"
 
-#: pg_dump.c:18448
+#: pg_dump.c:18461
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "δεν αναφέρεται αντικείμενο %u %u"
 
-#: pg_dump.c:18459
+#: pg_dump.c:18472
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "μη αναφερόμενο αντικείμενο %u %u"
 
-#: pg_dump.c:18833
+#: pg_dump.c:18861
 #, c-format
 msgid "could not parse reloptions array"
-msgstr "δεν ήταν δυνατή η ανάλυση συστυχίας reloptions"
+msgstr "δεν ήταν δυνατή η ανάλυση συστοιχίας reloptions"
 
 #: pg_dump_sort.c:411
 #, c-format
@@ -2273,7 +2243,7 @@ msgstr "Ενδέχεται να μην μπορείτε να επαναφέρε�
 #: pg_dump_sort.c:1227
 #, c-format
 msgid "Consider using a full dump instead of a --data-only dump to avoid this problem."
-msgstr "Εξετάστε το ενδεχόμενο να χρησιμοποιήσετε μια πλήρη απόθεση αντί για μια —data-only απόθεση για να αποφύγετε αυτό το πρόβλημα."
+msgstr "Εξετάστε το ενδεχόμενο να χρησιμοποιήσετε μια πλήρη απόθεση αντί για μια --data-only απόθεση για να αποφύγετε αυτό το πρόβλημα."
 
 #: pg_dump_sort.c:1239
 #, c-format
@@ -2287,8 +2257,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" απαιτείται από %s αλλά δεν βρέθηκε στο\n"
-"ίδιος κατάλογος με το \"%s\".\n"
+"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
+"ίδιο κατάλογο με το «%s».\n"
 "Ελέγξτε την εγκατάστασή σας."
 
 #: pg_dumpall.c:207
@@ -2298,34 +2268,34 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation."
 msgstr ""
-"Το πρόγραμμα \"%s\" βρέθηκε από το \"%s\"\n"
+"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
 "αλλά δεν ήταν η ίδια εκδοχή με %s.\n"
 "Ελέγξτε την εγκατάστασή σας."
 
 #: pg_dumpall.c:359
 #, c-format
 msgid "option --exclude-database cannot be used together with -g/--globals-only, -r/--roles-only, or -t/--tablespaces-only"
-msgstr "επιλογή —exclude-database δεν μπορεί να χρησιμοποιηθεί μαζί με -g/—globals-only, -r/—roles-only, ή -t/—tablespaces-only"
+msgstr "επιλογή --exclude-database δεν μπορεί να χρησιμοποιηθεί μαζί με -g/--globals-only, -r/--roles-only, ή -t/--tablespaces-only"
 
 #: pg_dumpall.c:368
 #, c-format
 msgid "options -g/--globals-only and -r/--roles-only cannot be used together"
-msgstr "οι επιλογές -g/—globals-only και -r/—roles-only δεν μπορούν να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -g/--globals-only και -r/--roles-only δεν μπορούν να χρησιμοποιηθούν μαζί"
 
 #: pg_dumpall.c:376
 #, c-format
 msgid "options -g/--globals-only and -t/--tablespaces-only cannot be used together"
-msgstr "Οι επιλογές -g/--καθολικές μόνο και -t/--επιτραπέζιοι χώροι δεν μπορούν να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -g/--globals-only μόνο και -t/--tablespaces-only δεν είναι δυνατό να χρησιμοποιηθούν μαζί"
 
 #: pg_dumpall.c:390
 #, c-format
 msgid "options -r/--roles-only and -t/--tablespaces-only cannot be used together"
-msgstr "οι επιλογές -r/—roles-only και -t/—tablespaces-only δεν μπορούν να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -r/--roles-only και -t/--tablespaces-only δεν μπορούν να χρησιμοποιηθούν μαζί"
 
 #: pg_dumpall.c:453 pg_dumpall.c:1756
 #, c-format
 msgid "could not connect to database \"%s\""
-msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων “%s”"
+msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:467
 #, c-format
@@ -2348,63 +2318,63 @@ msgstr ""
 #: pg_dumpall.c:623
 #, c-format
 msgid "  %s [OPTION]...\n"
-msgstr "  %s [ΕΠΙΛΟΓΗ]…\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]...\n"
 
 #: pg_dumpall.c:626
 #, c-format
 msgid "  -f, --file=FILENAME          output file name\n"
-msgstr "  -f, —file=FILENAME          όνομα αρχείου εξόδου\n"
+msgstr "  -f, --file=FILENAME          όνομα αρχείου εξόδου\n"
 
 #: pg_dumpall.c:633
 #, c-format
 msgid "  -c, --clean                  clean (drop) databases before recreating\n"
-msgstr "  -c, —clean                  καθάρισε (εγκατάληψε) βάσεις δεδομένων πριν από την αναδημιουργία\n"
+msgstr "  -c, --clean                  καθάρισε (εγκατάληψε) βάσεις δεδομένων πριν από την αναδημιουργία\n"
 
 #: pg_dumpall.c:635
 #, c-format
 msgid "  -g, --globals-only           dump only global objects, no databases\n"
-msgstr "  -g, —globals-only           απόθεσε μόνο καθολικά αντικείμενα, όχι βάσεις δεδομένων\n"
+msgstr "  -g, --globals-only           απόθεσε μόνο καθολικά αντικείμενα, όχι βάσεις δεδομένων\n"
 
 #: pg_dumpall.c:636 pg_restore.c:485
 #, c-format
 msgid "  -O, --no-owner               skip restoration of object ownership\n"
-msgstr "  -O, —no-owner               παράλειψε την αποκατάσταση της κυριότητας αντικειμένων\n"
+msgstr "  -O, --no-owner               παράλειψε την αποκατάσταση της κυριότητας αντικειμένων\n"
 
 #: pg_dumpall.c:637
 #, c-format
 msgid "  -r, --roles-only             dump only roles, no databases or tablespaces\n"
-msgstr "  -r, —roles-only             απόθεσε μόνο ρόλους, όχι βάσεις δεδομένων ή πινακοχώρους\n"
+msgstr "  -r, --roles-only             απόθεσε μόνο ρόλους, όχι βάσεις δεδομένων ή πινακοχώρους\n"
 
 #: pg_dumpall.c:639
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use in the dump\n"
-msgstr "  -S, —superuser=NAME         όνομα υπερχρήστη για να χρησιμοποιηθεί στην απόθεση\n"
+msgstr "  -S, --superuser=NAME         όνομα υπερχρήστη για να χρησιμοποιηθεί στην απόθεση\n"
 
 #: pg_dumpall.c:640
 #, c-format
 msgid "  -t, --tablespaces-only       dump only tablespaces, no databases or roles\n"
-msgstr "  -t, —tablespaces-only       απόθεσε μόνο πινακοχώρους, όχι βάσεις δεδομένων ή ρόλους\n"
+msgstr "  -t, --tablespaces-only       απόθεσε μόνο πινακοχώρους, όχι βάσεις δεδομένων ή ρόλους\n"
 
 #: pg_dumpall.c:646
 #, c-format
 msgid "  --exclude-database=PATTERN   exclude databases whose name matches PATTERN\n"
-msgstr "  —exclude-database=PATTERN   εξαίρεσε βάσεις δεδομένων των οποίων το όνομα ταιριάζει με PATTERN\n"
+msgstr "  --exclude-database=PATTERN   εξαίρεσε βάσεις δεδομένων των οποίων το όνομα ταιριάζει με PATTERN\n"
 
 #: pg_dumpall.c:653
 #, c-format
 msgid "  --no-role-passwords          do not dump passwords for roles\n"
-msgstr "  —no-role-passwords          να μην αποθέσει κωδικούς πρόσβασης για ρόλους\n"
+msgstr "  --no-role-passwords          να μην αποθέσει κωδικούς πρόσβασης για ρόλους\n"
 
 #: pg_dumpall.c:668
 #, c-format
 msgid "  -d, --dbname=CONNSTR     connect using connection string\n"
-msgstr "  -d, —dbname=CONNSTR     σύνδεση με χρήση συμβολοσειράς σύνδεσης\n"
+msgstr "  -d, --dbname=CONNSTR     σύνδεση με χρήση συμβολοσειράς σύνδεσης\n"
 
 #: pg_dumpall.c:670
 #, c-format
 msgid "  -l, --database=DBNAME    alternative default database\n"
 msgstr ""
-"  -l, —database=DBNAME    εναλλακτική προεπιλεγμένη βάση δεδομένων\n"
+"  -l, --database=DBNAME    εναλλακτική προεπιλεγμένη βάση δεδομένων\n"
 "\n"
 
 #: pg_dumpall.c:677
@@ -2416,44 +2386,44 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Εάν δεν χρησιμοποιηθεί -f/—file , τότε η δέσμη ενεργειών SQL θα εγγραφεί στη τυπική\n"
+"Εάν δεν χρησιμοποιηθεί -f/--file , τότε η δέσμη ενεργειών SQL θα εγγραφεί στη τυπική\n"
 "έξοδο.\n"
 "\n"
 
 #: pg_dumpall.c:883
 #, c-format
 msgid "role name starting with \"pg_\" skipped (%s)"
-msgstr "όνομα ρόλου που αρχίζει \"pg_\" παραλείπεται (%s)"
+msgstr "όνομα ρόλου που αρχίζει «pg_» παραλείπεται (%s)"
 
 #: pg_dumpall.c:1284
 #, c-format
 msgid "could not parse ACL list (%s) for tablespace \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση της λίστας ACL (%s) για τον πινακοχώρο \"%s\""
+msgstr "δεν ήταν δυνατή η ανάλυση της λίστας ACL (%s) για τον πινακοχώρο «%s»"
 
 #: pg_dumpall.c:1501
 #, c-format
 msgid "excluding database \"%s\""
-msgstr "εξαιρεί τη βάση δεδομένων \"%s\""
+msgstr "εξαιρεί τη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:1505
 #, c-format
 msgid "dumping database \"%s\""
-msgstr "αποθέτει τη βάση δεδομένων “%s”"
+msgstr "αποθέτει τη βάση δεδομένων «%s»"
 
 #: pg_dumpall.c:1537
 #, c-format
 msgid "pg_dump failed on database \"%s\", exiting"
-msgstr "pg_dump απέτυχε στη βάση δεδομένων \"%s\", εξέρχεται"
+msgstr "pg_dump απέτυχε στη βάση δεδομένων «%s», εξέρχεται"
 
 #: pg_dumpall.c:1546
 #, c-format
 msgid "could not re-open the output file \"%s\": %m"
-msgstr "δεν ήταν δυνατό το εκ νέου άνοιγμα του αρχείου εξόδου \"%s\": %m"
+msgstr "δεν ήταν δυνατό το εκ νέου άνοιγμα του αρχείου εξόδου «%s»: %m"
 
 #: pg_dumpall.c:1590
 #, c-format
 msgid "running \"%s\""
-msgstr "εκτελείται “%s”"
+msgstr "εκτελείται «%s»"
 
 #: pg_dumpall.c:1805
 #, c-format
@@ -2463,7 +2433,7 @@ msgstr "δεν ήταν δυνατή η απόκτηση έκδοσης διακ
 #: pg_dumpall.c:1811
 #, c-format
 msgid "could not parse server version \"%s\""
-msgstr "δεν ήταν δυνατή η ανάλυση έκδοσης διακομιστή “%s”"
+msgstr "δεν ήταν δυνατή η ανάλυση έκδοσης διακομιστή «%s»"
 
 #: pg_dumpall.c:1883 pg_dumpall.c:1906
 #, c-format
@@ -2478,7 +2448,7 @@ msgstr "ένα από τα -d/--dbname και -f/--file πρέπει να καθ
 #: pg_restore.c:317
 #, c-format
 msgid "options -d/--dbname and -f/--file cannot be used together"
-msgstr "οι επιλογές -d/—dbname και -f/—file δεν μπορούν να χρησιμοποιηθούν μαζί"
+msgstr "οι επιλογές -d/--dbname και -f/--file δεν μπορούν να χρησιμοποιηθούν μαζί"
 
 #: pg_restore.c:343
 #, c-format
@@ -2493,12 +2463,12 @@ msgstr "ο μέγιστος αριθμός παράλληλων εργασιών
 #: pg_restore.c:366
 #, c-format
 msgid "cannot specify both --single-transaction and multiple jobs"
-msgstr "δεν είναι δυνατό να οριστούν —single-transaction και multiple jobs και τα δύο μαζί "
+msgstr "δεν είναι δυνατό να οριστούν μαζί --single-transaction και multiple jobs"
 
 #: pg_restore.c:408
 #, c-format
 msgid "unrecognized archive format \"%s\"; please specify \"c\", \"d\", or \"t\""
-msgstr "μη αναγνωρισμένη μορφή αρχειοθέτησης “%s”· παρακαλώ καθορίστε \"c\", \"d\" ή \"t\""
+msgstr "μη αναγνωρισμένη μορφή αρχειοθέτησης «%s»· παρακαλώ καθορίστε «c», «d» ή «t»"
 
 #: pg_restore.c:448
 #, c-format
@@ -2517,42 +2487,42 @@ msgstr ""
 #: pg_restore.c:463
 #, c-format
 msgid "  %s [OPTION]... [FILE]\n"
-msgstr "  %s [OPTION]… [FILE]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [ΑΡΧΕΙΟ]\n"
 
 #: pg_restore.c:466
 #, c-format
 msgid "  -d, --dbname=NAME        connect to database name\n"
-msgstr "  -d, —dbname=NAME        σύνδεση με τη βάσης δεδομένων με όνομα\n"
+msgstr "  -d, --dbname=NAME        σύνδεση με τη βάσης δεδομένων με όνομα\n"
 
 #: pg_restore.c:467
 #, c-format
 msgid "  -f, --file=FILENAME      output file name (- for stdout)\n"
-msgstr "  -f, —file=FILENAME      όνομα αρχείου εξόδου (- για stdout)\n"
+msgstr "  -f, --file=FILENAME      όνομα αρχείου εξόδου (- για stdout)\n"
 
 #: pg_restore.c:468
 #, c-format
 msgid "  -F, --format=c|d|t       backup file format (should be automatic)\n"
-msgstr "  -F, —format=c|d|t       μορφή αρχείου αντιγράφου ασφαλείας (θα πρέπει να είναι αυτόματη)\n"
+msgstr "  -F, --format=c|d|t       μορφή αρχείου αντιγράφου ασφαλείας (θα πρέπει να είναι αυτόματη)\n"
 
 #: pg_restore.c:469
 #, c-format
 msgid "  -l, --list               print summarized TOC of the archive\n"
-msgstr "  -l, —list               εκτύπωσε συνοπτικό TOC της αρχειοθήκης\n"
+msgstr "  -l, --list               εκτύπωσε συνοπτικό TOC της αρχειοθήκης\n"
 
 #: pg_restore.c:470
 #, c-format
 msgid "  -v, --verbose            verbose mode\n"
-msgstr "  -v, —verbose            περιφραστική λειτουργία\n"
+msgstr "  -v, --verbose            περιφραστική λειτουργία\n"
 
 #: pg_restore.c:471
 #, c-format
 msgid "  -V, --version            output version information, then exit\n"
-msgstr "  -V, —version             εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
+msgstr "  -V, --version              εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
 
 #: pg_restore.c:472
 #, c-format
 msgid "  -?, --help               show this help, then exit\n"
-msgstr "  -?, —help                εμφάνισε αυτό το μήνυμα βοήθειας, και μετά έξοδος\n"
+msgstr "  -?, --help                 εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
 #: pg_restore.c:474
 #, c-format
@@ -2566,27 +2536,27 @@ msgstr ""
 #: pg_restore.c:475
 #, c-format
 msgid "  -a, --data-only              restore only the data, no schema\n"
-msgstr "  -a, —data-only              επαναφέρε μόνο τα δεδομένα, όχι το σχήμα\n"
+msgstr "  -a, --data-only              επαναφέρε μόνο τα δεδομένα, όχι το σχήμα\n"
 
 #: pg_restore.c:477
 #, c-format
 msgid "  -C, --create                 create the target database\n"
-msgstr "  -C, —create                 δημιούργησε τη βάσης δεδομένων προορισμού\n"
+msgstr "  -C, --create                 δημιούργησε τη βάσης δεδομένων προορισμού\n"
 
 #: pg_restore.c:478
 #, c-format
 msgid "  -e, --exit-on-error          exit on error, default is to continue\n"
-msgstr "  -e, —exit-on-error          να εξέλθει σε σφάλμα, η προεπιλογή είναι να συνεχίσει\n"
+msgstr "  -e, --exit-on-error          να εξέλθει σε σφάλμα, η προεπιλογή είναι να συνεχίσει\n"
 
 #: pg_restore.c:479
 #, c-format
 msgid "  -I, --index=NAME             restore named index\n"
-msgstr "  -I, —index=NAME             επανάφερε το ευρετήριο με όνομα\n"
+msgstr "  -I, --index=NAME             επανάφερε το ευρετήριο με όνομα\n"
 
 #: pg_restore.c:480
 #, c-format
 msgid "  -j, --jobs=NUM               use this many parallel jobs to restore\n"
-msgstr "  -j, —jobs=NUM               χρησιμοποίησε τόσες πολλές παράλληλες εργασίες για την επαναφορά\n"
+msgstr "  -j, --jobs=NUM               χρησιμοποίησε τόσες πολλές παράλληλες εργασίες για την επαναφορά\n"
 
 #: pg_restore.c:481
 #, c-format
@@ -2594,65 +2564,65 @@ msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
 "                               selecting/ordering output\n"
 msgstr ""
-"  -L, —use-list=FILENAME      χρησιμοποίησε τον πίνακα περιεχομένων από αυτό το αρχείο για\n"
+"  -L, --use-list=FILENAME      χρησιμοποίησε τον πίνακα περιεχομένων από αυτό το αρχείο για\n"
 "                               επιλογή/ταξινόμηση εξόδου\n"
 
 #: pg_restore.c:483
 #, c-format
 msgid "  -n, --schema=NAME            restore only objects in this schema\n"
-msgstr "  -n, —schema=NAME            επανάφερε μόνο αντικείμενα σε αυτό το σχήμα\n"
+msgstr "  -n, --schema=NAME            επανάφερε μόνο αντικείμενα σε αυτό το σχήμα\n"
 
 #: pg_restore.c:484
 #, c-format
 msgid "  -N, --exclude-schema=NAME    do not restore objects in this schema\n"
-msgstr "  -N, —exclude-schema=NAME    να μην επαναφέρει αντικείμενα από αυτό το σχήμα\n"
+msgstr "  -N, --exclude-schema=NAME    να μην επαναφέρει αντικείμενα από αυτό το σχήμα\n"
 
 #: pg_restore.c:486
 #, c-format
 msgid "  -P, --function=NAME(args)    restore named function\n"
-msgstr "P, —function=NAME(args)    επανάφερε την καθορισμένη συνάρτηση\n"
+msgstr "  -P, --function=NAME(args)    επανάφερε την καθορισμένη συνάρτηση\n"
 
 #: pg_restore.c:487
 #, c-format
 msgid "  -s, --schema-only            restore only the schema, no data\n"
-msgstr "  -s, —schema-only            επανάφερε μόνο το σχήμα, χωρίς δεδομένα\n"
+msgstr "  -s, --schema-only            επανάφερε μόνο το σχήμα, χωρίς δεδομένα\n"
 
 #: pg_restore.c:488
 #, c-format
 msgid "  -S, --superuser=NAME         superuser user name to use for disabling triggers\n"
-msgstr "  -S, —superuser=NAME         όνομα υπερχρήστη για χρήση κατά την απενεργοποίηση εναυσμάτων\n"
+msgstr "  -S, --superuser=NAME         όνομα υπερχρήστη για χρήση κατά την απενεργοποίηση εναυσμάτων\n"
 
 #: pg_restore.c:489
 #, c-format
 msgid "  -t, --table=NAME             restore named relation (table, view, etc.)\n"
-msgstr "  -t, —table=NAME             επανάφερε την καθορισμένη σχέση (πίνακας, προβολή κ.λπ.)\n"
+msgstr "  -t, --table=NAME             επανάφερε την καθορισμένη σχέση (πίνακας, προβολή κ.λπ.)\n"
 
 #: pg_restore.c:490
 #, c-format
 msgid "  -T, --trigger=NAME           restore named trigger\n"
 msgstr ""
-"  -T, —trigger=NAME           επανάφερε το καθορισμένο έναυσμα\n"
+"  -T, --trigger=NAME           επανάφερε το καθορισμένο έναυσμα\n"
 "\n"
 
 #: pg_restore.c:491
 #, c-format
 msgid "  -x, --no-privileges          skip restoration of access privileges (grant/revoke)\n"
-msgstr "  -x, —no-privileges          παράλειπε την επαναφορά των δικαιωμάτων πρόσβασης (εκχώρηση/ανάκληση)\n"
+msgstr "  -x, --no-privileges          παράλειπε την επαναφορά των δικαιωμάτων πρόσβασης (εκχώρηση/ανάκληση)\n"
 
 #: pg_restore.c:492
 #, c-format
 msgid "  -1, --single-transaction     restore as a single transaction\n"
-msgstr "  -1, —single-transaction     επανάφερε ως μεμονωμένη συναλλαγή\n"
+msgstr "  -1, --single-transaction     επανάφερε ως μεμονωμένη συναλλαγή\n"
 
 #: pg_restore.c:494
 #, c-format
 msgid "  --enable-row-security        enable row security\n"
-msgstr "  —enable-row-security        ενεργοποίησε ασφαλεία σειράς\n"
+msgstr "  --enable-row-security        ενεργοποίησε ασφαλεία σειράς\n"
 
 #: pg_restore.c:496
 #, c-format
 msgid "  --no-comments                do not restore comments\n"
-msgstr "  —no-comments                να μην επαναφέρεις σχόλια\n"
+msgstr "  --no-comments                να μην επαναφέρεις σχόλια\n"
 
 #: pg_restore.c:497
 #, c-format
@@ -2660,38 +2630,38 @@ msgid ""
 "  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
 "                               created\n"
 msgstr ""
-"  —no-data-for-failed-tables  να μην επαναφέρεις δεδομένα πινάκων που δεν ήταν\n"
+"  --no-data-for-failed-tables  να μην επαναφέρεις δεδομένα πινάκων που δεν ήταν\n"
 "                               δυνατό να δημιουργήθουν\n"
 
 #: pg_restore.c:499
 #, c-format
 msgid "  --no-publications            do not restore publications\n"
-msgstr "  —no-publications            να μην επαναφέρεις δημοσιεύσεις\n"
+msgstr "  --no-publications            να μην επαναφέρεις δημοσιεύσεις\n"
 
 #: pg_restore.c:500
 #, c-format
 msgid "  --no-security-labels         do not restore security labels\n"
-msgstr "  —no-security-labels         να μην επαναφέρεις ετικέτες ασφαλείας\n"
+msgstr "  --no-security-labels         να μην επαναφέρεις ετικέτες ασφαλείας\n"
 
 #: pg_restore.c:501
 #, c-format
 msgid "  --no-subscriptions           do not restore subscriptions\n"
-msgstr "  —no-publications            να μην επαναφέρεις συνδρομές\n"
+msgstr "  --no-publications            να μην επαναφέρεις συνδρομές\n"
 
 #: pg_restore.c:502
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
-msgstr "  —no-tablespaces             να μην επαναφέρεις αναθέσεις πινακοχώρων\n"
+msgstr "  --no-tablespaces             να μην επαναφέρεις αναθέσεις πινακοχώρων\n"
 
 #: pg_restore.c:503
 #, c-format
 msgid "  --section=SECTION            restore named section (pre-data, data, or post-data)\n"
-msgstr "  —section=SECTION            επανάφερε ονομασμένες ενότητες (προ-δεδομένα, δεδομένα, ή μετα-δεδομένα)\n"
+msgstr "  --section=SECTION            επανάφερε ονομασμένες ενότητες (προ-δεδομένα, δεδομένα, ή μετα-δεδομένα)\n"
 
 #: pg_restore.c:516
 #, c-format
 msgid "  --role=ROLENAME          do SET ROLE before restore\n"
-msgstr "  —role=ROLENAME          κάνε SET ROLE πριν την επαναφορά\n"
+msgstr "  --role=ROLENAME          κάνε SET ROLE πριν την επαναφορά\n"
 
 #: pg_restore.c:518
 #, c-format
@@ -2701,7 +2671,7 @@ msgid ""
 "multiple times to select multiple objects.\n"
 msgstr ""
 "\n"
-"Οι επιλογές -I, -n, -N, -P, -t, -T και —section μπορούν να συνδυαστούν και να καθοριστούν\n"
+"Οι επιλογές -I, -n, -N, -P, -t, -T και --section μπορούν να συνδυαστούν και να καθοριστούν\n"
 "πολλές φορές για την επιλογή πολλών αντικειμένων.\n"
 
 #: pg_restore.c:521
@@ -2716,13 +2686,13 @@ msgstr ""
 "\n"
 
 #~ msgid "could not connect to database \"%s\": %s"
-#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων “%s”: %s"
+#~ msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s»: %s"
 
 #~ msgid "aggregate function %s could not be dumped correctly for this database version; ignored"
 #~ msgstr "δεν ήταν δυνατή η σωστή απόθεση της συνάρτησης συγκεντρωτικών αποτελεσμάτων %s για αυτήν την έκδοση της βάσης δεδομένων· παραβλέπεται"
 
 #~ msgid "connection to database \"%s\" failed: %s"
-#~ msgstr "σύνδεση στη βάση δεδομένων “%s” απέτυχε: %s"
+#~ msgstr "σύνδεση στη βάση δεδομένων «%s» απέτυχε: %s"
 
 #~ msgid "could not write to large object (result: %lu, expected: %lu)"
 #~ msgstr "δεν ήταν δυνατή η εγγραφή σε μεγάλο αντικείμενο (αποτέλεσμα: %lu, αναμένεται: %lu)"
@@ -2735,3 +2705,9 @@ msgstr ""
 
 #~ msgid "pclose failed: %m"
 #~ msgstr "απέτυχε η εντολή pclose:  %m"
+
+#~ msgid "reading policies for table \"%s.%s\""
+#~ msgstr "ανάγνωση πολιτικών για τον πίνακα «%s.%s»"
+
+#~ msgid "reading row security enabled for table \"%s.%s\""
+#~ msgstr "ανάγνωση ενεργοποιημένης ασφάλειας γραμμής για τον πίνακα «%s.%s»"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 11\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-10-31 16:15+0000\n"
-"PO-Revision-Date: 2020-10-31 21:14+0100\n"
+"PO-Revision-Date: 2021-09-16 09:14+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: cs\n"
@@ -1117,7 +1117,7 @@ msgstr "  -D, --new-datadir=DATADIR     datový adresář nového clusteru\n"
 #: option.c:298
 #, c-format
 msgid "  -j, --jobs=NUM                number of simultaneous processes or threads to use\n"
-msgstr "  -j, --jobs=NUM                    počet paralelních procesů nebo threadů\n"
+msgstr "  -j, --jobs=NUM                počet paralelních procesů nebo threadů\n"
 
 #: option.c:299
 #, c-format

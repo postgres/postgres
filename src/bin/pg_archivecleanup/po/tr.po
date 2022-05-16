@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-04-26 13:48+0000\n"
-"PO-Revision-Date: 2019-05-28 10:30+0300\n"
+"PO-Revision-Date: 2021-09-16 09:39+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: tr\n"
@@ -112,7 +112,7 @@ msgstr "  -V, --version  sürüm bilgisini göster, sonra çık\n"
 #: pg_archivecleanup.c:262
 #, c-format
 msgid "  -x EXT         clean up files if they have this extension\n"
-msgstr "  -x EXT             bu uzantıya sahip dosyaları temizle\n"
+msgstr "  -x EXT         bu uzantıya sahip dosyaları temizle\n"
 
 #: pg_archivecleanup.c:263
 #, c-format

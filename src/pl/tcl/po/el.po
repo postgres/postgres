@@ -3,19 +3,21 @@
 # This file is distributed under the same license as the pltcl (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pltcl (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:38+0000\n"
-"PO-Revision-Date: 2021-05-04 13:48+0200\n"
+"POT-Creation-Date: 2021-07-21 05:08+0000\n"
+"PO-Revision-Date: 2021-07-21 09:41+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 
 #: pltcl.c:463
 msgid "PL/Tcl function to call once when pltcl is first used."
@@ -28,12 +30,12 @@ msgstr "Συνάρτηση PL/Tcl για να καλέσει μία μόνο φ�
 #: pltcl.c:634
 #, c-format
 msgid "function \"%s\" is in the wrong language"
-msgstr "η συνάρτηση \"%s\" βρίσκεται σε λάθος γλώσσα"
+msgstr "η συνάρτηση «%s» βρίσκεται σε λάθος γλώσσα"
 
 #: pltcl.c:645
 #, c-format
 msgid "function \"%s\" must not be SECURITY DEFINER"
-msgstr "η συνάρτηση \"%s\" δεν πρέπει να είναι SECURITY DEFINER"
+msgstr "η συνάρτηση «%s» δεν πρέπει να είναι SECURITY DEFINER"
 
 #. translator: %s is "pltcl.start_proc" or "pltclu.start_proc"
 #: pltcl.c:679
@@ -88,7 +90,7 @@ msgstr "συναρτήσεις PL/Tcl δεν είναι δυνατό να δεχ
 #: pltcl.c:1693
 #, c-format
 msgid "could not create internal procedure \"%s\": %s"
-msgstr "δεν ήταν δυνατή η δημιουργία εσωτερικής διαδικασίας \"%s\": %s"
+msgstr "δεν ήταν δυνατή η δημιουργία εσωτερικής διαδικασίας «%s»: %s"
 
 #: pltcl.c:3197
 #, c-format
@@ -98,14 +100,14 @@ msgstr "λίστα ονόματος/τιμής στήλης πρέπει να έ
 #: pltcl.c:3215
 #, c-format
 msgid "column name/value list contains nonexistent column name \"%s\""
-msgstr "λίστα ονόματος/τιμής στήλης περιέχει ανύπαρκτο όνομα στήλης \"%s\""
+msgstr "λίστα ονόματος/τιμής στήλης περιέχει ανύπαρκτο όνομα στήλης «%s»"
 
 #: pltcl.c:3222
 #, c-format
 msgid "cannot set system attribute \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός του χαρακτηριστικού συστήματος «%s»"
 
 #: pltcl.c:3228
 #, c-format
 msgid "cannot set generated column \"%s\""
-msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης \"%s\""
+msgstr "δεν είναι δυνατός ο ορισμός δημιουργημένης στήλης «%s»"

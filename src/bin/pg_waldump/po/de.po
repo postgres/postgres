@@ -1,14 +1,14 @@
 # German message translation file for pg_waldump
-# Copyright (C) 2020 PostgreSQL Global Development Group
+# Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Peter Eisentraut <peter@eisentraut.org>, 2020.
+# Peter Eisentraut <peter@eisentraut.org>, 2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 13\n"
+"Project-Id-Version: pg_waldump (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-21 05:14+0000\n"
-"PO-Revision-Date: 2020-04-21 19:02+0200\n"
+"POT-Creation-Date: 2022-05-11 15:47+0000\n"
+"PO-Revision-Date: 2022-05-11 22:35+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -17,69 +17,74 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "Fatal: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:277
 #, c-format
 msgid "error: "
 msgstr "Fehler: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:284
 #, c-format
 msgid "warning: "
 msgstr "Warnung: "
 
-#: pg_waldump.c:146
+#: ../../../src/common/logging.c:295
+#, c-format
+msgid "detail: "
+msgstr "Detail: "
+
+#: ../../../src/common/logging.c:302
+#, c-format
+msgid "hint: "
+msgstr "Tipp: "
+
+#: pg_waldump.c:160
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht öffnen: %m"
 
-#: pg_waldump.c:202
+#: pg_waldump.c:216
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
 msgstr[0] "WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB sein, aber der Kopf der WAL-Datei »%s« gibt %d Byte an"
 msgstr[1] "WAL-Segmentgröße muss eine Zweierpotenz zwischen 1 MB und 1 GB sein, aber der Kopf der WAL-Datei »%s« gibt %d Bytes an"
 
-#: pg_waldump.c:210
+#: pg_waldump.c:222
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht lesen: %m"
 
-#: pg_waldump.c:213
+#: pg_waldump.c:225
 #, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "konnte Datei »%s« nicht lesen: %d von %zu gelesen"
+msgid "could not read file \"%s\": read %d of %d"
+msgstr "konnte Datei »%s« nicht lesen: %d von %d gelesen"
 
-#: pg_waldump.c:275
+#: pg_waldump.c:286
 #, c-format
 msgid "could not locate WAL file \"%s\""
 msgstr "konnte WAL-Datei »%s« nicht finden"
 
-#: pg_waldump.c:277
+#: pg_waldump.c:288
 #, c-format
 msgid "could not find any WAL file"
 msgstr "konnte keine WAL-Datei finden"
 
-#: pg_waldump.c:319
+#: pg_waldump.c:329
 #, c-format
 msgid "could not find file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht finden: %m"
 
-#: pg_waldump.c:359
+#: pg_waldump.c:378
 #, c-format
-msgid "could not read from file %s, offset %u: %m"
-msgstr "konnte nicht aus Datei %s, Position %u lesen: %m"
+msgid "could not read from file %s, offset %d: %m"
+msgstr "konnte nicht aus Datei %s, Position %d lesen: %m"
 
-#: pg_waldump.c:363
+#: pg_waldump.c:382
 #, c-format
-msgid "could not read from file %s, offset %u: read %d of %zu"
-msgstr "konnte nicht aus Datei %s, Position %u lesen: %d von %zu gelesen"
+msgid "could not read from file %s, offset %d: read %d of %d"
+msgstr "konnte nicht aus Datei %s, Position %d lesen: %d von %d gelesen"
 
-#: pg_waldump.c:712
+#: pg_waldump.c:658
 #, c-format
 msgid ""
 "%s decodes and displays PostgreSQL write-ahead logs for debugging.\n"
@@ -88,17 +93,17 @@ msgstr ""
 "%s dekodiert und zeigt PostgreSQL-Write-Ahead-Logs zum Debuggen.\n"
 "\n"
 
-#: pg_waldump.c:714
+#: pg_waldump.c:660
 #, c-format
 msgid "Usage:\n"
 msgstr "Aufruf:\n"
 
-#: pg_waldump.c:715
+#: pg_waldump.c:661
 #, c-format
 msgid "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 msgstr "  %s [OPTION]... [STARTSEG [ENDSEG]]\n"
 
-#: pg_waldump.c:716
+#: pg_waldump.c:662
 #, c-format
 msgid ""
 "\n"
@@ -107,27 +112,43 @@ msgstr ""
 "\n"
 "Optionen:\n"
 
-#: pg_waldump.c:717
+#: pg_waldump.c:663
 #, c-format
 msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
 msgstr "  -b, --bkp-details      detaillierte Informationen über Backup-Blöcke ausgeben\n"
 
-#: pg_waldump.c:718
+#: pg_waldump.c:664
+#, c-format
+msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
+msgstr ""
+"  -B, --block=N          mit --relation, nur Datensätze zeigen, die Block N\n"
+"                         modifizieren\n"
+
+#: pg_waldump.c:665
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
 msgstr "  -e, --end=RECPTR       bei WAL-Position RECPTR zu lesen aufhören\n"
 
-#: pg_waldump.c:719
+#: pg_waldump.c:666
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
 msgstr "  -f, --follow           am Ende des WAL weiter versuchen\n"
 
-#: pg_waldump.c:720
+#: pg_waldump.c:667
+#, c-format
+msgid ""
+"  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
+"                         valid names are main, fsm, vm, init\n"
+msgstr ""
+"  -F, --fork=FORK        nur Datensätze zeigen, die Blöcke in Fork FORK\n"
+"                         modifizieren; gültige Werte sind main, fsm, vm, init\n"
+
+#: pg_waldump.c:669
 #, c-format
 msgid "  -n, --limit=N          number of records to display\n"
 msgstr "  -n, --limit=N          Anzahl der anzuzeigenden Datensätze\n"
 
-#: pg_waldump.c:721
+#: pg_waldump.c:670
 #, c-format
 msgid ""
 "  -p, --path=PATH        directory in which to find log segment files or a\n"
@@ -138,12 +159,12 @@ msgstr ""
 "                         mit ./pg_wal mit solchen Dateien (Vorgabe: aktuelles\n"
 "                         Verzeichnis, ./pg_wal, $PGDATA/pg_wal)\n"
 
-#: pg_waldump.c:724
+#: pg_waldump.c:673
 #, c-format
 msgid "  -q, --quiet            do not print any output, except for errors\n"
 msgstr "  -q, --quiet            keine Ausgabe, außer Fehler\n"
 
-#: pg_waldump.c:725
+#: pg_waldump.c:674
 #, c-format
 msgid ""
 "  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
@@ -152,12 +173,19 @@ msgstr ""
 "  -r, --rmgr=RMGR        nur Datensätze erzeugt von Resource-Manager RMGR zeigen;\n"
 "                         --rmgr=list zeigt gültige Resource-Manager-Namen\n"
 
-#: pg_waldump.c:727
+#: pg_waldump.c:676
+#, c-format
+msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
+msgstr ""
+"  -R, --relation=T/D/R   nur Datensätze zeigen, die Blöcke in Relation T/D/R\n"
+"                         modifizieren\n"
+
+#: pg_waldump.c:677
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
 msgstr "  -s, --start=RECPTR     bei WAL-Position RECPTR zu lesen anfangen\n"
 
-#: pg_waldump.c:728
+#: pg_waldump.c:678
 #, c-format
 msgid ""
 "  -t, --timeline=TLI     timeline from which to read log records\n"
@@ -166,17 +194,22 @@ msgstr ""
 "  -t, --timeline=ZAHL    Zeitleiste aus der Datensätze gelesen werden sollen\n"
 "                         (Vorgabe: 1 oder der in STARTSEG verwendete Wert)\n"
 
-#: pg_waldump.c:730
+#: pg_waldump.c:680
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          Versionsinformationen anzeigen, dann beenden\n"
 
-#: pg_waldump.c:731
+#: pg_waldump.c:681
+#, c-format
+msgid "  -w, --fullpage         only show records with a full page write\n"
+msgstr "  -w, --fullpage         nur Datensätze mit einem Full-Page-Write zeigen\n"
+
+#: pg_waldump.c:682
 #, c-format
 msgid "  -x, --xid=XID          only show records with transaction ID XID\n"
 msgstr "  -x, --xid=XID          nur Datensätze mit Transaktions-ID XID zeigen\n"
 
-#: pg_waldump.c:732
+#: pg_waldump.c:683
 #, c-format
 msgid ""
 "  -z, --stats[=record]   show statistics instead of records\n"
@@ -185,12 +218,12 @@ msgstr ""
 "  -z, --stats[=record]   Statistiken statt Datensätzen anzeigen\n"
 "                         (optional Statistiken pro Datensatz zeigen)\n"
 
-#: pg_waldump.c:734
+#: pg_waldump.c:685
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             diese Hilfe anzeigen, dann beenden\n"
 
-#: pg_waldump.c:735
+#: pg_waldump.c:686
 #, c-format
 msgid ""
 "\n"
@@ -199,109 +232,136 @@ msgstr ""
 "\n"
 "Berichten Sie Fehler an <%s>.\n"
 
-#: pg_waldump.c:736
+#: pg_waldump.c:687
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s Homepage: <%s>\n"
 
-#: pg_waldump.c:813
+#: pg_waldump.c:781
 #, c-format
 msgid "no arguments specified"
 msgstr "keine Argumente angegeben"
 
-#: pg_waldump.c:828
+#: pg_waldump.c:797
+#, fuzzy, c-format
+#| msgid "could not parse file name \"%s\""
+msgid "could not parse valid block number \"%s\""
+msgstr "konnte Dateinamen »%s« nicht parsen"
+
+#: pg_waldump.c:806
 #, c-format
 msgid "could not parse end WAL location \"%s\""
 msgstr "konnte WAL-Endposition »%s« nicht parsen"
 
-#: pg_waldump.c:840
+#: pg_waldump.c:819
+#, fuzzy, c-format
+#| msgid "could not parse limit \"%s\""
+msgid "could not parse fork \"%s\""
+msgstr "konnte Limit »%s« nicht parsen"
+
+#: pg_waldump.c:827
 #, c-format
 msgid "could not parse limit \"%s\""
 msgstr "konnte Limit »%s« nicht parsen"
 
-#: pg_waldump.c:871
+#: pg_waldump.c:858
+#, c-format
+msgid "custom resource manager \"%s\" does not exist"
+msgstr "Custom-Resouce-Manager »%s« existiert nicht"
+
+#: pg_waldump.c:879
 #, c-format
 msgid "resource manager \"%s\" does not exist"
 msgstr "Resouce-Manager »%s« existiert nicht"
 
-#: pg_waldump.c:880
+#: pg_waldump.c:894
+#, c-format
+msgid "could not parse valid relation from \"%s\" (expecting \"tablespace OID/database OID/relation filenode\")"
+msgstr ""
+
+#: pg_waldump.c:905
 #, c-format
 msgid "could not parse start WAL location \"%s\""
 msgstr "konnte WAL-Startposition »%s« nicht parsen"
 
-#: pg_waldump.c:890
+#: pg_waldump.c:915
 #, c-format
 msgid "could not parse timeline \"%s\""
 msgstr "konnte Zeitleiste »%s« nicht parsen"
 
-#: pg_waldump.c:897
+#: pg_waldump.c:925
 #, c-format
 msgid "could not parse \"%s\" as a transaction ID"
 msgstr "konnte »%s« nicht als gültige Transaktions-ID parsen"
 
-#: pg_waldump.c:912
+#: pg_waldump.c:940
 #, c-format
 msgid "unrecognized argument to --stats: %s"
 msgstr "unbekanntes Argument für --stats: %s"
 
-#: pg_waldump.c:925
+#: pg_waldump.c:954
+#, c-format
+msgid "--block option requires --relation option to be specified"
+msgstr ""
+
+#: pg_waldump.c:960
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
 
-#: pg_waldump.c:935 pg_waldump.c:955
+#: pg_waldump.c:970 pg_waldump.c:990
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "konnte Verzeichnis »%s« nicht öffnen: %m"
 
-#: pg_waldump.c:961 pg_waldump.c:992
+#: pg_waldump.c:996 pg_waldump.c:1026
 #, c-format
 msgid "could not open file \"%s\""
 msgstr "konnte Datei »%s« nicht öffnen"
 
-#: pg_waldump.c:971
+#: pg_waldump.c:1006
 #, c-format
 msgid "start WAL location %X/%X is not inside file \"%s\""
 msgstr "WAL-Startposition %X/%X ist nicht innerhalb der Datei »%s«"
 
-#: pg_waldump.c:999
+#: pg_waldump.c:1033
 #, c-format
 msgid "ENDSEG %s is before STARTSEG %s"
 msgstr "ENDSEG %s kommt vor STARTSEG %s"
 
-#: pg_waldump.c:1014
+#: pg_waldump.c:1048
 #, c-format
 msgid "end WAL location %X/%X is not inside file \"%s\""
 msgstr "WAL-Endposition %X/%X ist nicht innerhalb der Datei »%s«"
 
-#: pg_waldump.c:1027
+#: pg_waldump.c:1060
 #, c-format
 msgid "no start WAL location given"
 msgstr "keine WAL-Startposition angegeben"
 
-#: pg_waldump.c:1037
+#: pg_waldump.c:1074
 #, c-format
-msgid "out of memory"
-msgstr "Speicher aufgebraucht"
+msgid "out of memory while allocating a WAL reading processor"
+msgstr "Speicher aufgebraucht beim Anlegen eines WAL-Leseprozessors"
 
-#: pg_waldump.c:1043
+#: pg_waldump.c:1080
 #, c-format
 msgid "could not find a valid record after %X/%X"
 msgstr "konnte keinen gültigen Datensatz nach %X/%X finden"
 
-#: pg_waldump.c:1054
+#: pg_waldump.c:1090
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
 msgstr[0] "erster Datensatz kommt nach %X/%X, bei %X/%X, %u Byte wurde übersprungen\n"
 msgstr[1] "erster Datensatz kommt nach %X/%X, bei %X/%X, %u Bytes wurden übersprungen\n"
 
-#: pg_waldump.c:1105
+#: pg_waldump.c:1171
 #, c-format
 msgid "error in WAL record at %X/%X: %s"
 msgstr "Fehler in WAL-Eintrag bei %X/%X: %s"
 
-#: pg_waldump.c:1115
+#: pg_waldump.c:1180
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Versuchen Sie »%s --help« für weitere Informationen.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Versuchen Sie »%s --help« für weitere Informationen."
