@@ -31,18 +31,26 @@ typedef struct LogicalRepRelMapEntry
 	Relation	localrel;		/* relcache entry (NULL when closed) */
 	AttrMap    *attrmap;		/* map of local attributes to remote ones */
 	bool		updatable;		/* Can apply updates/deletes? */
+	Oid		    usableIndexOid;	/* which index to use? (Invalid when no index used) */
 
 	/* Sync state. */
 	char		state;
 	XLogRecPtr	statelsn;
 } LogicalRepRelMapEntry;
 
+typedef struct LogicalRepPartMapEntry
+{
+	Oid			partoid;		/* LogicalRepPartMap's key */
+	LogicalRepRelMapEntry relmapentry;
+	Oid			usableIndexOid;	/* which index to use? (Invalid when no index used) */
+} LogicalRepPartMapEntry;
+
 extern void logicalrep_relmap_update(LogicalRepRelation *remoterel);
 extern void logicalrep_partmap_reset_relmap(LogicalRepRelation *remoterel);
 
 extern LogicalRepRelMapEntry *logicalrep_rel_open(LogicalRepRelId remoteid,
 												  LOCKMODE lockmode);
-extern LogicalRepRelMapEntry *logicalrep_partition_open(LogicalRepRelMapEntry *root,
+extern LogicalRepPartMapEntry *logicalrep_partition_open(LogicalRepRelMapEntry *root,
 														Relation partrel, AttrMap *map);
 extern void logicalrep_rel_close(LogicalRepRelMapEntry *rel,
 								 LOCKMODE lockmode);

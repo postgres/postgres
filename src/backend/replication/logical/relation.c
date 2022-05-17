@@ -19,12 +19,22 @@
 
 #include "access/table.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_am_d.h"
 #include "catalog/pg_subscription_rel.h"
+#include "catalog/pg_operator.h"
+#include "commands/defrem.h"
 #include "executor/executor.h"
 #include "nodes/makefuncs.h"
 #include "replication/logicalrelation.h"
 #include "replication/worker_internal.h"
+#include "optimizer/cost.h"
+#include "optimizer/paramassign.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
+#include "optimizer/plancat.h"
+#include "optimizer/restrictinfo.h"
 #include "utils/inval.h"
+#include "utils/typcache.h"
 
 
 static MemoryContext LogicalRepRelMapContext = NULL;
@@ -44,11 +54,9 @@ static HTAB *LogicalRepRelMap = NULL;
  */
 static MemoryContext LogicalRepPartMapContext = NULL;
 static HTAB *LogicalRepPartMap = NULL;
-typedef struct LogicalRepPartMapEntry
-{
-	Oid			partoid;		/* LogicalRepPartMap's key */
-	LogicalRepRelMapEntry relmapentry;
-} LogicalRepPartMapEntry;
+
+static Oid LogicalRepUsableIndex(Relation localrel,
+								 LogicalRepRelation *remoterel);
 
 /*
  * Relcache invalidation callback for our relation map cache.
@@ -415,6 +423,7 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 			}
 		}
 
+		entry->usableIndexOid = LogicalRepUsableIndex(entry->localrel, remoterel);
 		entry->localrelvalid = true;
 	}
 
@@ -558,13 +567,14 @@ logicalrep_partmap_init(void)
  * Note there's no logicalrep_partition_close, because the caller closes the
  * component relation.
  */
-LogicalRepRelMapEntry *
+LogicalRepPartMapEntry *
 logicalrep_partition_open(LogicalRepRelMapEntry *root,
 						  Relation partrel, AttrMap *map)
 {
 	LogicalRepRelMapEntry *entry;
 	LogicalRepPartMapEntry *part_entry;
 	LogicalRepRelation *remoterel = &root->remoterel;
+
 	Oid			partOid = RelationGetRelid(partrel);
 	AttrMap    *attrmap = root->attrmap;
 	bool		found;
@@ -581,7 +591,7 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	entry = &part_entry->relmapentry;
 
 	if (found && entry->localrelvalid)
-		return entry;
+		return part_entry;
 
 	/* Switch to longer-lived context. */
 	oldctx = MemoryContextSwitchTo(LogicalRepPartMapContext);
@@ -592,12 +602,13 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 		part_entry->partoid = partOid;
 	}
 
+	part_entry->usableIndexOid = LogicalRepUsableIndex(partrel, remoterel);
+
 	if (!entry->remoterel.remoteid)
 	{
 		int			i;
 
 		/* Remote relation is copied as-is from the root entry. */
-		entry = &part_entry->relmapentry;
 		entry->remoterel.remoteid = remoterel->remoteid;
 		entry->remoterel.nspname = pstrdup(remoterel->nspname);
 		entry->remoterel.relname = pstrdup(remoterel->relname);
@@ -658,5 +669,281 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	/* state and statelsn are left set to 0. */
 	MemoryContextSwitchTo(oldctx);
 
-	return entry;
+	return part_entry;
+}
+
+/*
+ * PickCheapestIndexPathIfExists iterates over the pathlist and returns
+ * a valid index oid if exists. Otherwise, return invalid oid.
+ */
+static
+Oid PickCheapestIndexPathIfExists(List *pathlist)
+{
+	/* Set up mostly-dummy planner state */
+	Path	   *cheapestPath;
+	ListCell *lc = NULL;
+
+	cheapestPath = NULL;
+	foreach(lc, pathlist)
+	{
+		Path	   *path = (Path *) lfirst(lc);
+
+		if (cheapestPath == NULL)
+		{
+			cheapestPath = path;
+			continue;
+		}
+
+		if (compare_path_costs(path, cheapestPath, TOTAL_COST) < 0)
+			cheapestPath = path;
+	}
+
+	if (cheapestPath == NULL)
+		return InvalidOid;
+
+	switch (cheapestPath->pathtype)
+	{
+		case T_IndexScan:
+		case T_IndexOnlyScan:
+		{
+			IndexPath *index_sc = (IndexPath *) cheapestPath;
+			return index_sc->indexinfo->indexoid;
+		}
+
+		case T_BitmapHeapScan:
+		{
+			BitmapHeapPath *index_sc = (BitmapHeapPath *) cheapestPath;
+
+			/*
+			 * Accept only a simple bitmap scan with a single IndexPath,
+			 * not AND/OR cases with multiple indexes.
+			 */
+			Path	   *bmqual = ((BitmapHeapPath *) index_sc)->bitmapqual;
+			if (IsA(bmqual, IndexPath))
+			{
+				IndexPath *index_sc = (IndexPath *) bmqual;
+
+				return index_sc->indexinfo->indexoid;
+			}
+
+			return InvalidOid;
+		}
+
+		default:
+			return InvalidOid;
+	}
+
+	/* not paths with usable index */
+	return InvalidOid;
+}
+
+
+/*
+ * CreateReplicaIdentityFullPaths generates the sequential scan and
+ * index scan paths for the given relation.
+ *
+ * The function assumes that all the columns will be provided during
+ * the execution phase, given that REPLICA IDENTITY FULL gurantees
+ * that.
+ */
+static List *
+CreateReplicaIdentityFullPaths(Relation localrel)
+{
+	PlannerInfo *root;
+	Query	   *query;
+	PlannerGlobal *glob;
+	RangeTblEntry *rte;
+	RelOptInfo *rel;
+	Path	   *seqScanPath;
+	int				attno;
+
+	/* Set up mostly-dummy planner state */
+	query = makeNode(Query);
+	query->commandType = CMD_SELECT;
+
+	glob = makeNode(PlannerGlobal);
+
+	root = makeNode(PlannerInfo);
+	root->parse = query;
+	root->glob = glob;
+	root->query_level = 1;
+	root->planner_cxt = CurrentMemoryContext;
+	root->wt_param_id = -1;
+
+	/* Build a minimal RTE for the rel */
+	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
+	rte->relid = localrel->rd_id;
+	rte->relkind = RELKIND_RELATION;	/* Don't be too picky. */
+	rte->rellockmode = AccessShareLock;
+	rte->lateral = false;
+	rte->inh = false;
+	rte->inFromCl = true;
+	query->rtable = list_make1(rte);
+
+	/* Set up RTE/RelOptInfo arrays */
+	setup_simple_rel_arrays(root);
+
+	/* Build RelOptInfo */
+	rel = build_simple_rel(root, 1, NULL);
+
+	/*
+	 * Rather than doing all the pushups that would be needed to use
+	 * set_baserel_size_estimates, just do a quick hack for rows and width.
+	 */
+	rel->rows = rel->tuples;
+	rel->reltarget->width = get_relation_data_width(localrel->rd_id, NULL);
+
+	root->total_table_pages = rel->pages;
+
+	for (attno = 0; attno < RelationGetNumberOfAttributes(localrel); attno++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(localrel->rd_att, attno);
+
+		if (attr->attisdropped)
+		{
+			continue;
+		}
+		else
+		{
+
+			/*
+			 * Generate restrictions for all columns in the form of
+			 * 	col_1 = $1 AND col_2 = $2 ...
+			 */
+			Expr *eq_op;
+			TypeCacheEntry *typentry;
+			RestrictInfo *restrict_info;
+			Var *leftarg;
+			Param *rightarg;
+			int varno = 1;
+
+			typentry = lookup_type_cache(attr->atttypid,
+										 TYPECACHE_EQ_OPR_FINFO);
+
+			if (!OidIsValid(typentry->eq_opr))
+				continue; /* no equality operator skip this column */
+
+			leftarg =
+				makeVar(varno, attr->attnum, attr->atttypid, attr->atttypmod,
+						attr->attcollation, 0);
+
+			rightarg = makeNode(Param);
+			rightarg->paramkind = PARAM_EXTERN;
+			rightarg->paramid = list_length(rel->baserestrictinfo) + 1;
+			rightarg->paramtype = attr->atttypid;
+			rightarg->paramtypmod = attr->atttypmod;
+			rightarg->paramcollid = attr->attcollation;
+			rightarg->location = -1;
+
+			eq_op =  make_opclause(typentry->eq_opr, BOOLOID, false,
+								   (Expr *) leftarg, (Expr *) rightarg,
+								   InvalidOid, attr->attcollation);
+
+			restrict_info = make_simple_restrictinfo(root, eq_op);
+
+			rel->baserestrictinfo = lappend(rel->baserestrictinfo, restrict_info);
+		}
+	}
+
+	/* let the planner create the index paths */
+	check_index_predicates(root, rel);
+	create_index_paths(root, rel);
+
+	/* Estimate the cost of seq scan as well */
+	seqScanPath = create_seqscan_path(root, rel, NULL, 0);
+	add_path(rel, seqScanPath);
+
+	return rel->pathlist;
+}
+
+
+/*
+ * FindUsableIndexForReplicaIdentityFull returns an index oid if
+ * the planner submodules picks index scans over sequential scan.
+ *
+ * Note that this is not a generic function, it expects REPLICA IDENTITY
+ * FULL for the remote relation.
+ */
+static Oid
+FindUsableIndexForReplicaIdentityFull(Relation localrel)
+{
+	MemoryContext pickIndexContext;
+	MemoryContext oldctx;
+	List *pathList;
+	Oid indexOid;
+
+	pickIndexContext = AllocSetContextCreate(CurrentMemoryContext,
+											 "PickIndexContext",
+											 ALLOCSET_DEFAULT_SIZES);
+	oldctx = MemoryContextSwitchTo(pickIndexContext);
+
+	pathList = CreateReplicaIdentityFullPaths(localrel);
+
+	indexOid = PickCheapestIndexPathIfExists(pathList);
+
+	MemoryContextSwitchTo(oldctx);
+
+	MemoryContextDelete(pickIndexContext);
+
+	return indexOid;
+}
+
+/*
+ * Get replica identity index or if it is not defined a primary key.
+ *
+ * If neither is defined, returns InvalidOid
+ */
+static Oid
+GetRelationIdentityOrPK(Relation rel)
+{
+	Oid			idxoid;
+
+	idxoid = RelationGetReplicaIndex(rel);
+
+	if (!OidIsValid(idxoid))
+		idxoid = RelationGetPrimaryKeyIndex(rel);
+
+	return idxoid;
+}
+
+/*
+ * LogicalRepUsableIndex returns an index oid if we can use an index
+ * for the apply side.
+ */
+static Oid
+LogicalRepUsableIndex(Relation localrel, LogicalRepRelation *remoterel)
+{
+	Oid		idxoid;
+
+	/* simple case, we already have an identity or pkey */
+	idxoid = GetRelationIdentityOrPK(localrel);
+	if (OidIsValid(idxoid))
+		return idxoid;
+
+	/* indexscans are disabled, use seq. scan */
+	if (!enable_indexscan)
+		return InvalidOid;
+
+	if (remoterel->replident == REPLICA_IDENTITY_FULL &&
+		RelationGetIndexList(localrel) != NIL)
+	{
+		/*
+		 * If we had a primary key or relation identity with a unique index,
+		 * we would have already found a valid oid. At this point, the remote
+		 * relation has replica identity full and we have at least one local
+		 * index defined.
+		 *
+		 * We are looking for one more opportunity for using an index. If there
+		 * are any indexes defined on the local relation, try to pick the
+		 * cheapest index.
+		 *
+		 * The index selection safely assumes that all the columns are going to
+		 * be available for the index scan given that remote relation has
+		 * replica identity full.
+		 */
+		return FindUsableIndexForReplicaIdentityFull(localrel);
+	}
+
+	return InvalidOid;
 }
