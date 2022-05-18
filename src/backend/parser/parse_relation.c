@@ -1989,10 +1989,12 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 							   bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias ? alias->aliasname :
-	pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
+	char	   *refname;
 	Alias	   *eref;
 	int			numaliases;
+
+	refname = alias ? alias->aliasname :
+		pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
 
 	Assert(pstate != NULL);
 
@@ -2012,6 +2014,13 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 	if (numaliases < list_length(tf->colnames))
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(tf->colnames, numaliases));
+
+	if (numaliases > list_length(tf->colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("%s function has %d columns available but %d columns specified",
+						tf->functype == TFT_XMLTABLE ? "XMLTABLE" : "JSON_TABLE",
+						list_length(tf->colnames), numaliases)));
 
 	rte->eref = eref;
 
@@ -2191,6 +2200,12 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	if (numaliases < list_length(colnames))
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(colnames, numaliases));
+
+	if (numaliases > list_length(colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("join expression \"%s\" has %d columns available but %d columns specified",
+						eref->aliasname, list_length(colnames), numaliases)));
 
 	rte->eref = eref;
 

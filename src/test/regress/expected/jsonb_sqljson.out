@@ -1031,6 +1031,8 @@ SELECT * FROM JSON_TABLE(NULL, '$' COLUMNS ());
 ERROR:  syntax error at or near ")"
 LINE 1: SELECT * FROM JSON_TABLE(NULL, '$' COLUMNS ());
                                                     ^
+SELECT * FROM JSON_TABLE (NULL::jsonb, '$' COLUMNS (v1 timestamp)) AS f (v1, v2);
+ERROR:  JSON_TABLE function has 1 columns available but 2 columns specified
 -- NULL => empty table
 SELECT * FROM JSON_TABLE(NULL::jsonb, '$' COLUMNS (foo int)) bar;
  foo 

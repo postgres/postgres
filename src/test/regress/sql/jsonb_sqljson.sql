@@ -328,6 +328,8 @@ SELECT JSON_TABLE('[]', '$');
 -- Should fail (no columns)
 SELECT * FROM JSON_TABLE(NULL, '$' COLUMNS ());
 
+SELECT * FROM JSON_TABLE (NULL::jsonb, '$' COLUMNS (v1 timestamp)) AS f (v1, v2);
+
 -- NULL => empty table
 SELECT * FROM JSON_TABLE(NULL::jsonb, '$' COLUMNS (foo int)) bar;
 
