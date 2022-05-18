@@ -956,6 +956,11 @@ DROP TABLE y;
 --
 -- error cases
 --
+WITH x(n, b) AS (SELECT 1)
+SELECT * FROM x;
+ERROR:  WITH query "x" has 1 columns available but 2 columns specified
+LINE 1: WITH x(n, b) AS (SELECT 1)
+             ^
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
 	SELECT * FROM x;
