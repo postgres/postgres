@@ -681,7 +681,7 @@ WalRcvWaitForStartPosition(XLogRecPtr *startpoint, TimeLineID *startpointTLI)
 		{
 			/*
 			 * No need to handle changes in primary_conninfo or
-			 * primary_slotname here. Startup process will signal us to
+			 * primary_slot_name here. Startup process will signal us to
 			 * terminate in case those change.
 			 */
 			*startpoint = walrcv->receiveStart;
