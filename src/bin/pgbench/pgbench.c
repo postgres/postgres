@@ -6865,7 +6865,7 @@ main(int argc, char **argv)
 				break;
 			case 11:			/* partitions */
 				initialization_option_set = true;
-				if (!option_parse_int(optarg, "--partitions", 1, INT_MAX,
+				if (!option_parse_int(optarg, "--partitions", 0, INT_MAX,
 									  &partitions))
 					exit(1);
 				break;
