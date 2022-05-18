@@ -1329,10 +1329,7 @@ WHEN MATCHED THEN
                             explain_merge                             
 ----------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   Tuples Inserted: 0
-   Tuples Updated: 50
-   Tuples Deleted: 0
-   Tuples Skipped: 0
+   Tuples: updated=50
    ->  Merge Join (actual rows=50 loops=1)
          Merge Cond: (t.a = s.a)
          ->  Sort (actual rows=50 loops=1)
@@ -1343,7 +1340,7 @@ WHEN MATCHED THEN
                Sort Key: s.a
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_msource s (actual rows=100 loops=1)
-(15 rows)
+(12 rows)
 
 -- only updates to selected tuples
 SELECT explain_merge('
@@ -1353,10 +1350,7 @@ WHEN MATCHED AND t.a < 10 THEN
                             explain_merge                             
 ----------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   Tuples Inserted: 0
-   Tuples Updated: 5
-   Tuples Deleted: 0
-   Tuples Skipped: 45
+   Tuples: updated=5 skipped=45
    ->  Merge Join (actual rows=50 loops=1)
          Merge Cond: (t.a = s.a)
          ->  Sort (actual rows=50 loops=1)
@@ -1367,7 +1361,7 @@ WHEN MATCHED AND t.a < 10 THEN
                Sort Key: s.a
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_msource s (actual rows=100 loops=1)
-(15 rows)
+(12 rows)
 
 -- updates + deletes
 SELECT explain_merge('
@@ -1379,10 +1373,7 @@ WHEN MATCHED AND t.a >= 10 AND t.a <= 20 THEN
                             explain_merge                             
 ----------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   Tuples Inserted: 0
-   Tuples Updated: 5
-   Tuples Deleted: 5
-   Tuples Skipped: 40
+   Tuples: updated=5 deleted=5 skipped=40
    ->  Merge Join (actual rows=50 loops=1)
          Merge Cond: (t.a = s.a)
          ->  Sort (actual rows=50 loops=1)
@@ -1393,7 +1384,7 @@ WHEN MATCHED AND t.a >= 10 AND t.a <= 20 THEN
                Sort Key: s.a
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_msource s (actual rows=100 loops=1)
-(15 rows)
+(12 rows)
 
 -- only inserts
 SELECT explain_merge('
@@ -1403,10 +1394,7 @@ WHEN NOT MATCHED AND s.a < 10 THEN
                             explain_merge                             
 ----------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   Tuples Inserted: 4
-   Tuples Updated: 0
-   Tuples Deleted: 0
-   Tuples Skipped: 96
+   Tuples: inserted=4 skipped=96
    ->  Merge Left Join (actual rows=100 loops=1)
          Merge Cond: (s.a = t.a)
          ->  Sort (actual rows=100 loops=1)
@@ -1417,7 +1405,7 @@ WHEN NOT MATCHED AND s.a < 10 THEN
                Sort Key: t.a
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_mtarget t (actual rows=45 loops=1)
-(15 rows)
+(12 rows)
 
 -- all three
 SELECT explain_merge('
@@ -1431,10 +1419,7 @@ WHEN NOT MATCHED AND s.a < 20 THEN
                             explain_merge                             
 ----------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   Tuples Inserted: 10
-   Tuples Updated: 9
-   Tuples Deleted: 5
-   Tuples Skipped: 76
+   Tuples: inserted=10 updated=9 deleted=5 skipped=76
    ->  Merge Left Join (actual rows=100 loops=1)
          Merge Cond: (s.a = t.a)
          ->  Sort (actual rows=100 loops=1)
@@ -1445,7 +1430,7 @@ WHEN NOT MATCHED AND s.a < 20 THEN
                Sort Key: t.a
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_mtarget t (actual rows=49 loops=1)
-(15 rows)
+(12 rows)
 
 DROP TABLE ex_msource, ex_mtarget;
 DROP FUNCTION explain_merge(text);
