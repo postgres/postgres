@@ -4068,19 +4068,22 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 			skipped_path = total - insert_path - update_path - delete_path;
 			Assert(skipped_path >= 0);
 
-			if (es->format == EXPLAIN_FORMAT_TEXT && total > 0)
+			if (es->format == EXPLAIN_FORMAT_TEXT)
 			{
-				ExplainIndentText(es);
-				appendStringInfoString(es->str, "Tuples:");
-				if (insert_path > 0)
-					appendStringInfo(es->str, " inserted=%.0f", insert_path);
-				if (update_path > 0)
-					appendStringInfo(es->str, " updated=%.0f", update_path);
-				if (delete_path > 0)
-					appendStringInfo(es->str, " deleted=%.0f", delete_path);
-				if (skipped_path > 0)
-					appendStringInfo(es->str, " skipped=%.0f", skipped_path);
-				appendStringInfoChar(es->str, '\n');
+				if (total > 0)
+				{
+					ExplainIndentText(es);
+					appendStringInfoString(es->str, "Tuples:");
+					if (insert_path > 0)
+						appendStringInfo(es->str, " inserted=%.0f", insert_path);
+					if (update_path > 0)
+						appendStringInfo(es->str, " updated=%.0f", update_path);
+					if (delete_path > 0)
+						appendStringInfo(es->str, " deleted=%.0f", delete_path);
+					if (skipped_path > 0)
+						appendStringInfo(es->str, " skipped=%.0f", skipped_path);
+					appendStringInfoChar(es->str, '\n');
+				}
 			}
 			else
 			{

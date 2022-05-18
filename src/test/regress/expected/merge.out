@@ -1316,7 +1316,7 @@ BEGIN
         EXECUTE 'explain (analyze, timing off, summary off, costs off) ' ||
 		  query
     LOOP
-        ln := regexp_replace(ln, 'Memory: \S*',  'Memory: xxx');
+        ln := regexp_replace(ln, '(Memory( Usage)?|Buckets|Batches): \S*',  '\1: xxx', 'g');
         RETURN NEXT ln;
     END LOOP;
 END;
@@ -1431,6 +1431,24 @@ WHEN NOT MATCHED AND s.a < 20 THEN
                Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_mtarget t (actual rows=49 loops=1)
 (12 rows)
+
+-- nothing
+SELECT explain_merge('
+MERGE INTO ex_mtarget t USING ex_msource s ON t.a = s.a AND t.a < -1000
+WHEN MATCHED AND t.a < 10 THEN
+	DO NOTHING');
+                           explain_merge                            
+--------------------------------------------------------------------
+ Merge on ex_mtarget t (actual rows=0 loops=1)
+   ->  Hash Join (actual rows=0 loops=1)
+         Hash Cond: (s.a = t.a)
+         ->  Seq Scan on ex_msource s (actual rows=1 loops=1)
+         ->  Hash (actual rows=0 loops=1)
+               Buckets: xxx  Batches: xxx  Memory Usage: xxx
+               ->  Seq Scan on ex_mtarget t (actual rows=0 loops=1)
+                     Filter: (a < '-1000'::integer)
+                     Rows Removed by Filter: 54
+(9 rows)
 
 DROP TABLE ex_msource, ex_mtarget;
 DROP FUNCTION explain_merge(text);
