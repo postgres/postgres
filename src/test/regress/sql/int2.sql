@@ -29,6 +29,10 @@ INSERT INTO INT2_TBL(f1) VALUES ('');
 
 SELECT '' AS five, * FROM INT2_TBL;
 
+SELECT * FROM INT2_TBL AS f(a, b);
+
+SELECT * FROM (TABLE int2_tbl) AS s (a, b);
+
 SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int2 '0';
 
 SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int4 '0';
