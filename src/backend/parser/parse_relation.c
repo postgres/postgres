@@ -2001,6 +2001,12 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(tf->colnames, numaliases));
 
+	if (numaliases > list_length(tf->colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("%s function has %d columns available but %d columns specified",
+						"XMLTABLE", list_length(tf->colnames), numaliases)));
+
 	rte->eref = eref;
 
 	/*
@@ -2179,6 +2185,12 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	if (numaliases < list_length(colnames))
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(colnames, numaliases));
+
+	if (numaliases > list_length(colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("join expression \"%s\" has %d columns available but %d columns specified",
+						eref->aliasname, list_length(colnames), numaliases)));
 
 	rte->eref = eref;
 
