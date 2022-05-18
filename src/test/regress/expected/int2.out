@@ -51,6 +51,10 @@ SELECT '' AS five, * FROM INT2_TBL;
       | -32767
 (5 rows)
 
+SELECT * FROM INT2_TBL AS f(a, b);
+ERROR:  table "f" has 1 columns available but 2 columns specified
+SELECT * FROM (TABLE int2_tbl) AS s (a, b);
+ERROR:  table "s" has 1 columns available but 2 columns specified
 SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int2 '0';
  four |   f1   
 ------+--------

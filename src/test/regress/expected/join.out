@@ -5788,6 +5788,9 @@ select * from
  3 | 3
 (6 rows)
 
+-- check the number of columns specified
+SELECT * FROM (int8_tbl i cross join int4_tbl j) ss(a,b,c,d);
+ERROR:  join expression "ss" has 3 columns available but 4 columns specified
 -- check we don't try to do a unique-ified semijoin with LATERAL
 explain (verbose, costs off)
 select * from
