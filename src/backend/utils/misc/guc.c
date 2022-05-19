@@ -9239,6 +9239,10 @@ init_custom_variable(const char *name,
 {
 	struct config_generic *gen;
 
+	/* Ensure at least the name and short description are present */
+	Assert(name != NULL);
+	Assert(short_desc != NULL);
+
 	/*
 	 * Only allow custom PGC_POSTMASTER variables to be created during shared
 	 * library preload; any later than that, we can't ensure that the value
