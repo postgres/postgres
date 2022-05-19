@@ -2685,17 +2685,14 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 		TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedesOrEquals(xid, xmin))
 	{
-		/* Install xmin */
+		/*
+		 * Install xmin and propagate the statusFlags that affect how the
+		 * value is interpreted by vacuum.
+		 */
 		MyProc->xmin = TransactionXmin = xmin;
-
-		/* walsender cheats by passing proc == MyProc, don't check its flags */
-		if (proc != MyProc)
-		{
-			/* Flags being copied must be valid copy-able flags. */
-			Assert((proc->statusFlags & (~PROC_COPYABLE_FLAGS)) == 0);
-			MyProc->statusFlags = proc->statusFlags;
-			ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
-		}
+		MyProc->statusFlags = (MyProc->statusFlags & ~PROC_XMIN_FLAGS) |
+			(proc->statusFlags & PROC_XMIN_FLAGS);
+		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 
 		result = true;
 	}
