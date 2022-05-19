@@ -825,7 +825,7 @@ RETURNS anycompatible AS ...
     <para>
      An extension's <acronym>SQL</acronym> script files can contain any SQL commands,
      except for transaction control commands (<command>BEGIN</command>,
-     <command>COMMIT</command>, etc) and commands that cannot be executed inside a
+     <command>COMMIT</command>, etc.) and commands that cannot be executed inside a
      transaction block (such as <command>VACUUM</command>).  This is because the
      script files are implicitly executed within a transaction block.
     </para>

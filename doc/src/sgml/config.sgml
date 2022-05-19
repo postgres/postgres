@@ -6374,7 +6374,7 @@ local0.*    /var/log/postgresql
        <para>
         Example:  To keep 7 days of logs, one log file per day named
         <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>,
-        etc, and automatically overwrite last week's log with this week's log,
+        etc., and automatically overwrite last week's log with this week's log,
         set <varname>log_filename</varname> to <literal>server_log.%a</literal>,
         <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, and
         <varname>log_rotation_age</varname> to <literal>1440</literal>.
@@ -8552,7 +8552,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         alias <literal>pg_temp</literal><indexterm><primary>pg_temp</primary></indexterm>.  If it is not listed in the path then
         it is searched first (even before <literal>pg_catalog</literal>).  However,
         the temporary schema is only searched for relation (table, view,
-        sequence, etc) and data type names.  It is never searched for
+        sequence, etc.) and data type names.  It is never searched for
         function or operator names.
        </para>
 

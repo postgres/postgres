@@ -836,11 +836,11 @@ $ perl  rewrite_dat_with_prokind.pl  pg_proc.dat
       When <literal>bootstrap</literal> is specified,
       the table will only be created on disk; nothing is entered into
       <structname>pg_class</structname>,
-      <structname>pg_attribute</structname>, etc, for it.  Thus the
+      <structname>pg_attribute</structname>, etc., for it.  Thus the
       table will not be accessible by ordinary SQL operations until
       such entries are made the hard way (with <literal>insert</literal>
       commands).  This option is used for creating
-      <structname>pg_class</structname> etc themselves.
+      <structname>pg_class</structname> etc. themselves.
      </para>
 
      <para>

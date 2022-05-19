@@ -632,7 +632,7 @@ SELECT * from lotsa_md5(500);
     <para>
     <literal>spi_prepare</literal>, <literal>spi_query_prepared</literal>, <literal>spi_exec_prepared</literal>,
     and <literal>spi_freeplan</literal> implement the same functionality but for prepared queries.
-    <literal>spi_prepare</literal> accepts a query string with numbered argument placeholders ($1, $2, etc)
+    <literal>spi_prepare</literal> accepts a query string with numbered argument placeholders ($1, $2, etc.)
     and a string list of argument types:
 <programlisting>
 $plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
@@ -677,7 +677,7 @@ SELECT done();
  2005-12-10 | 2005-12-11 | 2005-12-12
 </programlisting>
     Note that the parameter subscript in <literal>spi_prepare</literal> is defined via
-    $1, $2, $3, etc, so avoid declaring query strings in double quotes that might easily
+    $1, $2, $3, etc., so avoid declaring query strings in double quotes that might easily
     lead to hard-to-catch bugs.
     </para>
 
@@ -1051,7 +1051,7 @@ $$ LANGUAGE plperl;
    PL/Perl functions will share the same value of <varname>%_SHARED</varname>
    if and only if they are executed by the same SQL role.  In an application
    wherein a single session executes code under multiple SQL roles (via
-   <literal>SECURITY DEFINER</literal> functions, use of <command>SET ROLE</command>, etc)
+   <literal>SECURITY DEFINER</literal> functions, use of <command>SET ROLE</command>, etc.)
    you may need to take explicit steps to ensure that PL/Perl functions can
    share data via <varname>%_SHARED</varname>.  To do that, make sure that
    functions that should communicate are owned by the same user, and mark

@@ -6156,7 +6156,7 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
    <para>
     A branch is zero or more <firstterm>quantified atoms</firstterm> or
     <firstterm>constraints</firstterm>, concatenated.
-    It matches a match for the first, followed by a match for the second, etc;
+    It matches a match for the first, followed by a match for the second, etc.;
     an empty branch matches the empty string.
    </para>
 

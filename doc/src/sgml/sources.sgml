@@ -13,9 +13,9 @@
    </para>
 
    <para>
-    Layout rules (brace positioning, etc) follow BSD conventions.  In
+    Layout rules (brace positioning, etc.) follow BSD conventions.  In
     particular, curly braces for the controlled blocks of <literal>if</literal>,
-    <literal>while</literal>, <literal>switch</literal>, etc go on their own lines.
+    <literal>while</literal>, <literal>switch</literal>, etc. go on their own lines.
    </para>
 
    <para>

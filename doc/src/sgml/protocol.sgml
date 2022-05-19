@@ -148,7 +148,7 @@
     <firstterm>bind</firstterm> step, which creates a portal given a prepared
     statement and values for any needed parameters; and an
     <firstterm>execute</firstterm> step that runs a portal's query.  In the case of
-    a query that returns rows (<command>SELECT</command>, <command>SHOW</command>, etc),
+    a query that returns rows (<command>SELECT</command>, <command>SHOW</command>, etc.),
     the execute step can be told to fetch only
     a limited number of rows, so that multiple execute steps might be needed
     to complete the operation.
@@ -584,7 +584,7 @@
       <listitem>
        <para>
         Indicates that rows are about to be returned in response to
-        a <command>SELECT</command>, <command>FETCH</command>, etc query.
+        a <command>SELECT</command>, <command>FETCH</command>, etc. query.
         The contents of this message describe the column layout of the rows.
         This will be followed by a DataRow message for each row being returned
         to the frontend.
@@ -597,7 +597,7 @@
       <listitem>
        <para>
         One of the set of rows returned by
-        a <command>SELECT</command>, <command>FETCH</command>, etc query.
+        a <command>SELECT</command>, <command>FETCH</command>, etc. query.
        </para>
       </listitem>
      </varlistentry>
@@ -4203,7 +4203,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <para>
          0 indicates the overall <command>COPY</command> format is textual (rows
          separated by newlines, columns separated by separator
-         characters, etc).
+         characters, etc.).
          1 indicates the overall copy format is binary (similar
          to DataRow format).
          See <xref linkend="sql-copy"/>
@@ -4265,7 +4265,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <para>
          0 indicates the overall <command>COPY</command> format
          is textual (rows separated by newlines, columns
-         separated by separator characters, etc). 1 indicates
+         separated by separator characters, etc.). 1 indicates
          the overall copy format is binary (similar to DataRow
          format). See <xref linkend="sql-copy"/> for more information.
         </para>
@@ -4325,7 +4325,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <para>
          0 indicates the overall <command>COPY</command> format
          is textual (rows separated by newlines, columns
-         separated by separator characters, etc). 1 indicates
+         separated by separator characters, etc.). 1 indicates
          the overall copy format is binary (similar to DataRow
          format). See <xref linkend="sql-copy"/> for more information.
         </para>

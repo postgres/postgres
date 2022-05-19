@@ -203,7 +203,7 @@ UPDATE employees SET salary = salary * v.increase
    <command>SELECT</command>.  It is not required that the <literal>AS</literal> clause
    specify names for all the columns, but it's good practice to do so.
    (The default column names for <command>VALUES</command> are <literal>column1</literal>,
-   <literal>column2</literal>, etc in <productname>PostgreSQL</productname>, but
+   <literal>column2</literal>, etc. in <productname>PostgreSQL</productname>, but
    these names might be different in other database systems.)
   </para>
 

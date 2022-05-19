@@ -1062,7 +1062,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
        <entry><token>IS</token> <token>ISNULL</token> <token>NOTNULL</token></entry>
        <entry></entry>
        <entry><literal>IS TRUE</literal>, <literal>IS FALSE</literal>, <literal>IS
-       NULL</literal>, <literal>IS DISTINCT FROM</literal>, etc</entry>
+       NULL</literal>, <literal>IS DISTINCT FROM</literal>, etc.</entry>
       </row>
 
       <row>

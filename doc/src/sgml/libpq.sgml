@@ -3049,7 +3049,7 @@ PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);
         <structname>PGresult</structname> to obtain information about the parameters
         of the prepared statement, and the functions
         <xref linkend="libpq-PQnfields"/>, <xref linkend="libpq-PQfname"/>,
-        <xref linkend="libpq-PQftype"/>, etc provide information about the
+        <xref linkend="libpq-PQftype"/>, etc. provide information about the
         result columns (if any) of the statement.
        </para>
       </listitem>
@@ -3081,7 +3081,7 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
         portal.  On success, a <structname>PGresult</structname> with status
         <literal>PGRES_COMMAND_OK</literal> is returned.  The functions
         <xref linkend="libpq-PQnfields"/>, <xref linkend="libpq-PQfname"/>,
-        <xref linkend="libpq-PQftype"/>, etc can be applied to the
+        <xref linkend="libpq-PQftype"/>, etc. can be applied to the
         <structname>PGresult</structname> to obtain information about the result
         columns (if any) of the portal.
        </para>
@@ -5544,7 +5544,7 @@ UPDATE mytable SET x = x + 1 WHERE id = 42;
    more rows will arrive.  (But note that it is still necessary to continue
    calling <xref linkend="libpq-PQgetResult"/> until it returns null.)  All of
    these <structname>PGresult</structname> objects will contain the same row
-   description data (column names, types, etc) that an ordinary
+   description data (column names, types, etc.) that an ordinary
    <structname>PGresult</structname> object for the query would have.
    Each object should be freed with <xref linkend="libpq-PQclear"/> as usual.
   </para>
@@ -6010,7 +6010,7 @@ typedef struct pgNotify
      <listitem>
       <para>
        0 indicates the overall copy format is textual (rows separated by
-       newlines, columns separated by separator characters, etc).  1
+       newlines, columns separated by separator characters, etc.).  1
        indicates the overall copy format is binary.  See <xref
        linkend="sql-copy"/> for more information.
       </para>

@@ -1389,7 +1389,7 @@
     <para>
      More generically, the term <firstterm>schema</firstterm> is used to mean
      all data descriptions (<glossterm linkend="glossary-table">table</glossterm> definitions,
-     <glossterm linkend="glossary-constraint">constraints</glossterm>, comments, etc)
+     <glossterm linkend="glossary-constraint">constraints</glossterm>, comments, etc.)
      for a given <glossterm linkend="glossary-database">database</glossterm> or
      subset thereof.
     </para>
