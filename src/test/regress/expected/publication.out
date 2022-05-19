@@ -1585,52 +1585,52 @@ CREATE TABLE sch2.tbl1_part1 PARTITION OF sch1.tbl1 FOR VALUES FROM (1) to (10);
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename  
----------+------------+------------
- pub     | sch2       | tbl1_part1
+ pubname | schemaname | tablename  | attnames | rowfilter 
+---------+------------+------------+----------+-----------
+ pub     | sch2       | tbl1_part1 | {a}      | 
 (1 row)
 
 DROP PUBLICATION pub;
 -- Table publication that does not include the parent table
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename  
----------+------------+------------
- pub     | sch2       | tbl1_part1
+ pubname | schemaname | tablename  | attnames | rowfilter 
+---------+------------+------------+----------+-----------
+ pub     | sch2       | tbl1_part1 | {a}      | 
 (1 row)
 
 -- Table publication that includes both the parent table and the child table
 ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename 
----------+------------+-----------
- pub     | sch1       | tbl1
+ pubname | schemaname | tablename | attnames | rowfilter 
+---------+------------+-----------+----------+-----------
+ pub     | sch1       | tbl1      | {a}      | 
 (1 row)
 
 DROP PUBLICATION pub;
 -- Schema publication that does not include the schema that has the parent table
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch2 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename  
----------+------------+------------
- pub     | sch2       | tbl1_part1
+ pubname | schemaname | tablename  | attnames | rowfilter 
+---------+------------+------------+----------+-----------
+ pub     | sch2       | tbl1_part1 | {a}      | 
 (1 row)
 
 DROP PUBLICATION pub;
 -- Table publication that does not include the parent table
 CREATE PUBLICATION pub FOR TABLE sch2.tbl1_part1 WITH (PUBLISH_VIA_PARTITION_ROOT=0);
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename  
----------+------------+------------
- pub     | sch2       | tbl1_part1
+ pubname | schemaname | tablename  | attnames | rowfilter 
+---------+------------+------------+----------+-----------
+ pub     | sch2       | tbl1_part1 | {a}      | 
 (1 row)
 
 -- Table publication that includes both the parent table and the child table
 ALTER PUBLICATION pub ADD TABLE sch1.tbl1;
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename  
----------+------------+------------
- pub     | sch2       | tbl1_part1
+ pubname | schemaname | tablename  | attnames | rowfilter 
+---------+------------+------------+----------+-----------
+ pub     | sch2       | tbl1_part1 | {a}      | 
 (1 row)
 
 DROP PUBLICATION pub;
@@ -1643,9 +1643,9 @@ CREATE TABLE sch1.tbl1_part3 (a int) PARTITION BY RANGE(a);
 ALTER TABLE sch1.tbl1 ATTACH PARTITION sch1.tbl1_part3 FOR VALUES FROM (20) to (30);
 CREATE PUBLICATION pub FOR ALL TABLES IN SCHEMA sch1 WITH (PUBLISH_VIA_PARTITION_ROOT=1);
 SELECT * FROM pg_publication_tables;
- pubname | schemaname | tablename 
----------+------------+-----------
- pub     | sch1       | tbl1
+ pubname | schemaname | tablename | attnames | rowfilter 
+---------+------------+-----------+----------+-----------
+ pub     | sch1       | tbl1      | {a}      | 
 (1 row)
 
 RESET client_min_messages;

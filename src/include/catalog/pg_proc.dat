@@ -11673,11 +11673,11 @@
   prosrc => 'pg_show_replication_origin_status' },
 
 # publications
-{ oid => '6119', descr => 'get OIDs of tables in a publication',
+{ oid => '6119', descr => 'get information of tables in a publication',
   proname => 'pg_get_publication_tables', prorows => '1000', proretset => 't',
-  provolatile => 's', prorettype => 'oid', proargtypes => 'text',
-  proallargtypes => '{text,oid}', proargmodes => '{i,o}',
-  proargnames => '{pubname,relid}', prosrc => 'pg_get_publication_tables' },
+  provolatile => 's', prorettype => 'record', proargtypes => 'text',
+  proallargtypes => '{text,oid,int2vector,pg_node_tree}', proargmodes => '{i,o,o,o}',
+  proargnames => '{pubname,relid,attrs,qual}', prosrc => 'pg_get_publication_tables' },
 { oid => '6121',
   descr => 'returns whether a relation can be part of a publication',
   proname => 'pg_relation_is_publishable', provolatile => 's',

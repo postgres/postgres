@@ -795,14 +795,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 		resetStringInfo(&cmd);
 		appendStringInfo(&cmd,
 						 "SELECT DISTINCT unnest"
-						 "  FROM pg_publication p"
-						 "  LEFT OUTER JOIN pg_publication_rel pr"
-						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u)"
-						 "  LEFT OUTER JOIN unnest(pr.prattrs) ON TRUE,"
+						 "  FROM pg_publication p,"
 						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
+						 "  LEFT OUTER JOIN unnest(gpt.attrs) ON TRUE"
 						 " WHERE gpt.relid = %u"
 						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
 						 lrel->remoteid,
 						 pub_names.data);
 
@@ -965,14 +962,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 		/* Check for row filters. */
 		resetStringInfo(&cmd);
 		appendStringInfo(&cmd,
-						 "SELECT DISTINCT pg_get_expr(pr.prqual, pr.prrelid)"
-						 "  FROM pg_publication p"
-						 "  LEFT OUTER JOIN pg_publication_rel pr"
-						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u),"
+						 "SELECT DISTINCT pg_get_expr(gpt.qual, gpt.relid)"
+						 "  FROM pg_publication p,"
 						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
 						 " WHERE gpt.relid = %u"
 						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
 						 lrel->remoteid,
 						 pub_names.data);
 
