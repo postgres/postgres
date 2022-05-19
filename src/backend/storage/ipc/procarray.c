@@ -1916,12 +1916,13 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 		TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedesOrEquals(xid, xmin))
 	{
-		/* Install xmin */
+		/*
+		 * Install xmin and propagate the vacuumFlags that affect how the
+		 * value is interpreted by vacuum.
+		 */
 		MyPgXact->xmin = TransactionXmin = xmin;
-
-		/* Flags being copied must be valid copy-able flags. */
-		Assert((pgxact->vacuumFlags & (~PROC_COPYABLE_FLAGS)) == 0);
-		MyPgXact->vacuumFlags = pgxact->vacuumFlags;
+		MyPgXact->vacuumFlags = (MyPgXact->vacuumFlags & ~PROC_XMIN_FLAGS) |
+			(pgxact->vacuumFlags & PROC_XMIN_FLAGS);
 
 		result = true;
 	}

@@ -63,11 +63,10 @@ struct XidCache
 	(PROC_IN_VACUUM | PROC_IN_ANALYZE | PROC_VACUUM_FOR_WRAPAROUND)
 
 /*
- * Flags that are valid to copy from another proc, the parallel leader
- * process in practice.  Currently, a flag that is set during parallel
- * vacuum is allowed.
+ * Xmin-related flags. Make sure any flags that affect how the process' Xmin
+ * value is interpreted by VACUUM are included here.
  */
-#define		PROC_COPYABLE_FLAGS (PROC_IN_VACUUM)
+#define		PROC_XMIN_FLAGS (PROC_IN_VACUUM)
 
 /*
  * We allow a small number of "weak" relation locks (AccessShareLock,
