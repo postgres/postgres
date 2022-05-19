@@ -7775,9 +7775,11 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
        <primary><envar>PGSERVICEFILE</envar></primary>
       </indexterm>
       <envar>PGSERVICEFILE</envar> specifies the name of the per-user
-      connection service file.  If not set, it defaults
-      to <filename>~/.pg_service.conf</filename>
+      connection service file
       (see <xref linkend="libpq-pgservice"/>).
+      Defaults to <filename>~/.pg_service.conf</filename>, or
+      <filename>%APPDATA%\postgresql\.pg_service.conf</filename> on
+      Microsoft Windows.
      </para>
     </listitem>
 
@@ -8077,11 +8079,11 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    The file <filename>.pgpass</filename> in a user's home directory can
    contain passwords to
    be used if the connection requires a password (and no password has been
-   specified  otherwise). On Microsoft Windows the file is named
+   specified otherwise). On Microsoft Windows the file is named
    <filename>%APPDATA%\postgresql\pgpass.conf</filename> (where
    <filename>%APPDATA%</filename> refers to the Application Data subdirectory in
    the user's profile).
-   Alternatively, a password file can be specified
+   Alternatively, the password file to use can be specified
    using the connection parameter <xref linkend="libpq-connect-passfile"/>
    or the environment variable <envar>PGPASSFILE</envar>.
   </para>
@@ -8150,8 +8152,12 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
    Service names can be defined in either a per-user service file or a
    system-wide file.  If the same service name exists in both the user
    and the system file, the user file takes precedence.
-   By default, the per-user service file is located
-   at <filename>~/.pg_service.conf</filename>; this can be overridden by
+   By default, the per-user service file is named
+   <filename>~/.pg_service.conf</filename>.
+   On Microsoft Windows, it is named
+   <filename>%APPDATA%\postgresql\.pg_service.conf</filename> (where
+   <filename>%APPDATA%</filename> refers to the Application Data subdirectory
+   in the user's profile).  A different file name can be specified by
    setting the environment variable <envar>PGSERVICEFILE</envar>.
    The system-wide file is named <filename>pg_service.conf</filename>.
    By default it is sought in the <filename>etc</filename> directory
