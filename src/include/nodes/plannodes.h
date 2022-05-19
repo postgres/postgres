@@ -824,8 +824,9 @@ typedef struct Memoize
 	int			numKeys;		/* size of the two arrays below */
 
 	Oid		   *hashOperators;	/* hash operators for each key */
-	Oid		   *collations;		/* cache keys */
-	List	   *param_exprs;	/* exprs containing parameters */
+	Oid		   *collations;		/* collations for each key */
+	List	   *param_exprs;	/* cache keys in the form of exprs containing
+								 * parameters */
 	bool		singlerow;		/* true if the cache entry should be marked as
 								 * complete after we store the first tuple in
 								 * it. */
