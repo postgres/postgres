@@ -176,9 +176,9 @@ SET autovacuum_work_mem = 50;  -- cannot be changed now
 ALTER SYSTEM RESET temp_file_limit;  -- ok
 SET TimeZone = 'Europe/Helsinki';  -- ok
 RESET TimeZone;  -- ok
-SET max_stack_depth = 2048;  -- ok, privileges have been granted
+SET max_stack_depth = '100kB';  -- ok, privileges have been granted
 RESET max_stack_depth;  -- ok, privileges have been granted
-ALTER SYSTEM SET max_stack_depth = 2048;  -- ok, privileges have been granted
+ALTER SYSTEM SET max_stack_depth = '100kB';  -- ok, privileges have been granted
 ALTER SYSTEM RESET max_stack_depth;  -- ok, privileges have been granted
 SET lc_messages = 'C';  -- fail, insufficient privileges
 RESET lc_messages;  -- fail, insufficient privileges
