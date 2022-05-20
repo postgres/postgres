@@ -64,4 +64,5 @@ NOTICE:  DDL test: type simple, tag CREATE OPERATOR
 create operator class ctype_hash_ops
   default for type ctype using hash as
   operator 1 =(ctype, ctype);
+NOTICE:  DDL test: type simple, tag CREATE OPERATOR FAMILY
 NOTICE:  DDL test: type create operator class, tag CREATE OPERATOR CLASS
