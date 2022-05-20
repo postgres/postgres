@@ -331,6 +331,20 @@ sub install_path
 
 =pod
 
+=item $node->pg_version()
+
+The version number for the node, from PostgreSQL::Version.
+
+=cut
+
+sub pg_version
+{
+	my ($self) = @_;
+	return $self->{_pg_version};
+}
+
+=pod
+
 =item $node->config_data($option)
 
 Return a string holding configuration data from pg_config, with $option
