@@ -794,7 +794,7 @@ main(int argc, char **argv)
 				if (sscanf(optarg, "%u", &config.filter_by_relation_block) != 1 ||
 					!BlockNumberIsValid(config.filter_by_relation_block))
 				{
-					pg_log_error("could not parse valid block number \"%s\"", optarg);
+					pg_log_error("invalid block number: \"%s\"", optarg);
 					goto bad_argument;
 				}
 				config.filter_by_relation_block_enabled = true;
@@ -803,7 +803,7 @@ main(int argc, char **argv)
 			case 'e':
 				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
 				{
-					pg_log_error("could not parse end WAL location \"%s\"",
+					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
 					goto bad_argument;
 				}
@@ -816,7 +816,7 @@ main(int argc, char **argv)
 				config.filter_by_relation_forknum = forkname_to_number(optarg);
 				if (config.filter_by_relation_forknum == InvalidForkNumber)
 				{
-					pg_log_error("could not parse fork \"%s\"", optarg);
+					pg_log_error("invalid fork name: \"%s\"", optarg);
 					goto bad_argument;
 				}
 				config.filter_by_extended = true;
@@ -824,7 +824,7 @@ main(int argc, char **argv)
 			case 'n':
 				if (sscanf(optarg, "%d", &config.stop_after_records) != 1)
 				{
-					pg_log_error("could not parse limit \"%s\"", optarg);
+					pg_log_error("invalid value \"%s\" for option %s", optarg, "-n/--limit");
 					goto bad_argument;
 				}
 				break;
@@ -891,9 +891,8 @@ main(int argc, char **argv)
 					!OidIsValid(config.filter_by_relation.spcNode) ||
 					!OidIsValid(config.filter_by_relation.relNode))
 				{
-					pg_log_error("could not parse valid relation from \"%s\""
-								 " (expecting \"tablespace OID/database OID/"
-								 "relation filenode\")", optarg);
+					pg_log_error("invalid relation specification: \"%s\"", optarg);
+					pg_log_error_detail("Expecting \"tablespace OID/database OID/relation filenode\".");
 					goto bad_argument;
 				}
 				config.filter_by_relation_enabled = true;
@@ -902,7 +901,7 @@ main(int argc, char **argv)
 			case 's':
 				if (sscanf(optarg, "%X/%X", &xlogid, &xrecoff) != 2)
 				{
-					pg_log_error("could not parse start WAL location \"%s\"",
+					pg_log_error("invalid WAL location: \"%s\"",
 								 optarg);
 					goto bad_argument;
 				}
@@ -912,7 +911,7 @@ main(int argc, char **argv)
 			case 't':
 				if (sscanf(optarg, "%u", &private.timeline) != 1)
 				{
-					pg_log_error("could not parse timeline \"%s\"", optarg);
+					pg_log_error("invalid timeline specification: \"%s\"", optarg);
 					goto bad_argument;
 				}
 				break;
@@ -922,7 +921,7 @@ main(int argc, char **argv)
 			case 'x':
 				if (sscanf(optarg, "%u", &config.filter_by_xid) != 1)
 				{
-					pg_log_error("could not parse \"%s\" as a transaction ID",
+					pg_log_error("invalid transaction ID specification: \"%s\"",
 								 optarg);
 					goto bad_argument;
 				}
@@ -937,8 +936,8 @@ main(int argc, char **argv)
 						config.stats_per_record = true;
 					else if (strcmp(optarg, "rmgr") != 0)
 					{
-						pg_log_error("unrecognized argument to --stats: %s",
-									 optarg);
+						pg_log_error("unrecognized value for option %s: %s",
+									 "--stats", optarg);
 						goto bad_argument;
 					}
 				}
@@ -951,7 +950,8 @@ main(int argc, char **argv)
 	if (config.filter_by_relation_block_enabled &&
 		!config.filter_by_relation_enabled)
 	{
-		pg_log_error("--block option requires --relation option to be specified");
+		pg_log_error("option %s requires option %s to be specified",
+					 "-B/--block", "-R/--relation");
 		goto bad_argument;
 	}
 
