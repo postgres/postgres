@@ -7296,7 +7296,8 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         executing command of each session, along with the time when
         that command began execution. This parameter is on by
         default. Note that even when enabled, this information is not
-        visible to all users, only to superusers and the user owning
+        visible to all users, only to superusers, members of the
+        <literal>pg_read_all_stats</literal> role and the user owning
         the session being reported on, so it should not represent a
         security risk.
         Only superusers can change this setting.
