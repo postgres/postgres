@@ -413,7 +413,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_generation_time</structfield> <type>bigint</type>
+       <structfield>jit_generation_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on generating JIT code, in milliseconds
@@ -431,7 +431,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_inlining_time</structfield> <type>bigint</type>
+       <structfield>jit_inlining_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on inlining functions, in milliseconds
@@ -449,7 +449,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_optimization_time</structfield> <type>bigint</type>
+       <structfield>jit_optimization_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on optimizing, in milliseconds
@@ -467,7 +467,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_emission_time</structfield> <type>bigint</type>
+       <structfield>jit_emission_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on emitting code, in milliseconds
