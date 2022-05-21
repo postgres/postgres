@@ -347,7 +347,7 @@ CREATE VIEW mvtest_vt2 AS SELECT moo, 2*moo FROM mvtest_vt1 UNION ALL SELECT moo
  ?column? | integer |           |          |         | plain   | 
 View definition:
  SELECT mvtest_vt1.moo,
-    2 * mvtest_vt1.moo
+    2 * mvtest_vt1.moo AS "?column?"
    FROM mvtest_vt1
 UNION ALL
  SELECT mvtest_vt1.moo,
@@ -363,7 +363,7 @@ CREATE MATERIALIZED VIEW mv_test2 AS SELECT moo, 2*moo FROM mvtest_vt2 UNION ALL
  ?column? | integer |           |          |         | plain   |              | 
 View definition:
  SELECT mvtest_vt2.moo,
-    2 * mvtest_vt2.moo
+    2 * mvtest_vt2.moo AS "?column?"
    FROM mvtest_vt2
 UNION ALL
  SELECT mvtest_vt2.moo,
