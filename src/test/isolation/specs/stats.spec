@@ -562,8 +562,9 @@ permutation
   s1_table_insert_k1 # should be counted
   s1_table_update_k1 # dito
   s1_prepare_a
+  s1_ff # flush out non-transactional stats, might happen anyway
   s2_commit_prepared_a
-  s1_ff s2_ff
+  s2_ff
   s1_table_stats
 
 # S1 prepares, S1 aborts prepared
