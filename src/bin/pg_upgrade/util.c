@@ -47,7 +47,10 @@ end_progress_output(void)
 	 * nicely.
 	 */
 	if (log_opts.isatty)
-		pg_log(PG_REPORT, "\r%-*s", MESSAGE_WIDTH, "");
+	{
+		printf("\r");
+		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, "");
+	}
 	else if (log_opts.verbose)
 		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, "");
 }
