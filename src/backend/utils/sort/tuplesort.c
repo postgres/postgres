@@ -3664,7 +3664,6 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		{
 			if (state->sortKeys[0].comparator == ssup_datum_unsigned_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_unsigned");
 				qsort_tuple_unsigned(state->memtuples,
 									 state->memtupcount,
 									 state);
@@ -3673,7 +3672,6 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 #if SIZEOF_DATUM >= 8
 			else if (state->sortKeys[0].comparator == ssup_datum_signed_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_signed");
 				qsort_tuple_signed(state->memtuples,
 								   state->memtupcount,
 								   state);
@@ -3682,7 +3680,6 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 #endif
 			else if (state->sortKeys[0].comparator == ssup_datum_int32_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_int32");
 				qsort_tuple_int32(state->memtuples,
 								  state->memtupcount,
 								  state);
@@ -3693,13 +3690,11 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		/* Can we use the single-key sort function? */
 		if (state->onlyKey != NULL)
 		{
-			elog(DEBUG1, "qsort_ssup");
 			qsort_ssup(state->memtuples, state->memtupcount,
 					   state->onlyKey);
 		}
 		else
 		{
-			elog(DEBUG1, "qsort_tuple");
 			qsort_tuple(state->memtuples,
 						state->memtupcount,
 						state->comparetup,
