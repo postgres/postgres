@@ -1566,6 +1566,16 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			else
 				result = PQgetResult(pset.db);
 
+			/*
+			 * Get current timing measure in case an error occurs
+			 */
+			if (timing)
+			{
+				INSTR_TIME_SET_CURRENT(after);
+				INSTR_TIME_SUBTRACT(after, before);
+				*elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
+			}
+
 			continue;
 		}
 		else if (svpt_gone_p && !*svpt_gone_p)
@@ -1619,7 +1629,7 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		last = (next_result == NULL);
 
 		/*
-		 * Get timing measure before printing the last result.
+		 * Update current timing measure.
 		 *
 		 * It will include the display of previous results, if any. This
 		 * cannot be helped because the server goes on processing further
@@ -1630,7 +1640,7 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		 * With combined queries, timing must be understood as an upper bound
 		 * of the time spent processing them.
 		 */
-		if (last && timing)
+		if (timing)
 		{
 			INSTR_TIME_SET_CURRENT(after);
 			INSTR_TIME_SUBTRACT(after, before);

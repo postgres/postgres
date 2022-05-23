@@ -85,8 +85,16 @@ psql_like(
 	'\timing on
 SELECT 1',
 	qr/^1$
-^Time: \d+.\d\d\d ms/m,
-	'\timing');
+^Time: \d+\.\d\d\d ms/m,
+	'\timing with successful query');
+
+# test \timing with query that fails
+{
+	my ($ret, $stdout, $stderr) = $node->psql('postgres', "\\timing on\nSELECT error");
+	isnt($ret, 0, '\timing with query error: query failed');
+	like($stdout, qr/^Time: \d+\.\d\d\d ms/m, '\timing with query error: timing output appears');
+	unlike($stdout, qr/^Time: 0\.000 ms/m, '\timing with query error: timing was updated');
+}
 
 # test that ENCODING variable is set and that it is updated when
 # client encoding is changed
