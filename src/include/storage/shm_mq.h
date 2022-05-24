@@ -76,7 +76,6 @@ extern shm_mq_result shm_mq_sendv(shm_mq_handle *mqh, shm_mq_iovec *iov,
 								  int iovcnt, bool nowait, bool force_flush);
 extern shm_mq_result shm_mq_receive(shm_mq_handle *mqh,
 									Size *nbytesp, void **datap, bool nowait);
-extern void shm_mq_flush(shm_mq_handle *mqh);
 
 /* Wait for our counterparty to attach to the queue. */
 extern shm_mq_result shm_mq_wait_for_attach(shm_mq_handle *mqh);
