@@ -296,9 +296,9 @@ static const char *const slru_names[] = {
  * values in a copy of the stats data, which is protected by ->lock. See
  * pgstat_fetch_stat_(archiver|bgwriter|checkpointer) for the reader side.
  *
- * The only exception to that is the the stat_reset_timestamp in these
- * structs, which is protected by ->lock, because it has to be written by
- * another backend while resetting
+ * The only exception to that is the stat_reset_timestamp in these structs,
+ * which is protected by ->lock, because it has to be written by another
+ * backend while resetting.
  * ----------
  */
 
