@@ -1121,6 +1121,16 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE rn < 3;
 
+-- ensure that "unused" subquery columns are not removed when the column only
+-- exists in the run condition
+EXPLAIN (COSTS OFF)
+SELECT empno, depname FROM
+  (SELECT empno,
+          depname,
+          row_number() OVER (PARTITION BY depname ORDER BY empno) rn
+   FROM empsalary) emp
+WHERE rn < 3;
+
 -- likewise with count(empno) instead of row_number()
 EXPLAIN (COSTS OFF)
 SELECT * FROM

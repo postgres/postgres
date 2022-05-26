@@ -142,7 +142,8 @@ static void subquery_push_qual(Query *subquery,
 							   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 							  RangeTblEntry *rte, Index rti, Node *qual);
-static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
+static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel,
+										   Bitmapset *extra_used_attrs);
 
 
 /*
@@ -2177,14 +2178,16 @@ has_multiple_baserels(PlannerInfo *root)
  * the run condition will handle all of the required filtering.
  *
  * Returns true if 'opexpr' was found to be useful and was added to the
- * WindowClauses runCondition. We also set *keep_original accordingly.
+ * WindowClauses runCondition.  We also set *keep_original accordingly and add
+ * 'attno' to *run_cond_attrs offset by FirstLowInvalidHeapAttributeNumber.
  * If the 'opexpr' cannot be used then we set *keep_original to true and
  * return false.
  */
 static bool
 find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 						   AttrNumber attno, WindowFunc *wfunc, OpExpr *opexpr,
-						   bool wfunc_left, bool *keep_original)
+						   bool wfunc_left, bool *keep_original,
+						   Bitmapset **run_cond_attrs)
 {
 	Oid			prosupport;
 	Expr	   *otherexpr;
@@ -2356,6 +2359,9 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 
 		wclause->runCondition = lappend(wclause->runCondition, newexpr);
 
+		/* record that this attno was used in a run condition */
+		*run_cond_attrs = bms_add_member(*run_cond_attrs,
+										 attno - FirstLowInvalidHeapAttributeNumber);
 		return true;
 	}
 
@@ -2369,13 +2375,17 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
  *		WindowClause as a 'runCondition' qual.  These, when present, allow
  *		some unnecessary work to be skipped during execution.
  *
+ * 'run_cond_attrs' will be populated with all targetlist resnos of subquery
+ * targets (offset by FirstLowInvalidHeapAttributeNumber) that we pushed
+ * window quals for.
+ *
  * Returns true if the caller still must keep the original qual or false if
  * the caller can safely ignore the original qual because the WindowAgg node
  * will use the runCondition to stop returning tuples.
  */
 static bool
 check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
-							Node *clause)
+							Node *clause, Bitmapset **run_cond_attrs)
 {
 	OpExpr	   *opexpr = (OpExpr *) clause;
 	bool		keep_original = true;
@@ -2403,7 +2413,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
 		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
-									   opexpr, true, &keep_original))
+									   opexpr, true, &keep_original,
+									   run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2415,7 +2426,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
 		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
-									   opexpr, false, &keep_original))
+									   opexpr, false, &keep_original,
+									   run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2444,6 +2456,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	pushdown_safety_info safetyInfo;
 	double		tuple_fraction;
 	RelOptInfo *sub_final_rel;
+	Bitmapset  *run_cond_attrs = NULL;
 	ListCell   *lc;
 
 	/*
@@ -2526,7 +2539,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 * it might be useful to use for the WindowAgg's runCondition.
 				 */
 				if (!subquery->hasWindowFuncs ||
-					check_and_push_window_quals(subquery, rte, rti, clause))
+					check_and_push_window_quals(subquery, rte, rti, clause,
+												&run_cond_attrs))
 				{
 					/*
 					 * subquery has no window funcs or the clause is not a
@@ -2545,9 +2559,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * The upper query might not use all the subquery's output columns; if
-	 * not, we can simplify.
+	 * not, we can simplify.  Pass the attributes that were pushed down into
+	 * WindowAgg run conditions to ensure we don't accidentally think those
+	 * are unused.
 	 */
-	remove_unused_subquery_outputs(subquery, rel);
+	remove_unused_subquery_outputs(subquery, rel, run_cond_attrs);
 
 	/*
 	 * We can safely pass the outer tuple_fraction down to the subquery if the
@@ -3945,15 +3961,27 @@ recurse_push_qual(Node *setOp, Query *topquery,
  * compute expressions, but because deletion of output columns might allow
  * optimizations such as join removal to occur within the subquery.
  *
+ * extra_used_attrs can be passed as non-NULL to mark any columns (offset by
+ * FirstLowInvalidHeapAttributeNumber) that we should not remove.  This
+ * parameter is modifed by the function, so callers must make a copy if they
+ * need to use the passed in Bitmapset after calling this function.
+ *
  * To avoid affecting column numbering in the targetlist, we don't physically
  * remove unused tlist entries, but rather replace their expressions with NULL
  * constants.  This is implemented by modifying subquery->targetList.
  */
 static void
-remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
+remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel,
+							   Bitmapset *extra_used_attrs)
 {
-	Bitmapset  *attrs_used = NULL;
+	Bitmapset  *attrs_used;
 	ListCell   *lc;
+
+	/*
+	 * Just point directly to extra_used_attrs. No need to bms_copy as none of
+	 * the current callers use the Bitmapset after calling this function.
+	 */
+	attrs_used = extra_used_attrs;
 
 	/*
 	 * Do nothing if subquery has UNION/INTERSECT/EXCEPT: in principle we

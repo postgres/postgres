@@ -3589,6 +3589,25 @@ WHERE rn < 3;
      3 | sales     |  2
 (6 rows)
 
+-- ensure that "unused" subquery columns are not removed when the column only
+-- exists in the run condition
+EXPLAIN (COSTS OFF)
+SELECT empno, depname FROM
+  (SELECT empno,
+          depname,
+          row_number() OVER (PARTITION BY depname ORDER BY empno) rn
+   FROM empsalary) emp
+WHERE rn < 3;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Subquery Scan on emp
+   ->  WindowAgg
+         Run Condition: (row_number() OVER (?) < 3)
+         ->  Sort
+               Sort Key: empsalary.depname, empsalary.empno
+               ->  Seq Scan on empsalary
+(6 rows)
+
 -- likewise with count(empno) instead of row_number()
 EXPLAIN (COSTS OFF)
 SELECT * FROM
