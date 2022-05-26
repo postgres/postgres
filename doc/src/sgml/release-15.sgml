@@ -548,8 +548,7 @@ Allow ordered scans of partitions to avoid sorting in more cases (David Rowley)
 </para>
 
 <para>
-Previously, a partitioned table with any LIST partition containing multiple values could not be used for ordered partition scans.  Now only non-pruned LIST partitions are checked.  This also helps with
-partitioned tables with DEFAULT partitions.
+Previously, a partitioned table with a DEFAULT partition or a LIST partition containing multiple values could not be used for ordered partition scans.  Now they can be used if these partitions are pruned.
 </para>
 </listitem>
 
