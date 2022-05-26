@@ -35,7 +35,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
   { <replaceable class="PARAMETER">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
-) ] <replaceable class="PARAMETER">partition_bound_spec</replaceable>
+) ]
+  FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable>
   SERVER <replaceable class="parameter">server_name</replaceable>
 [ OPTIONS ( <replaceable class="PARAMETER">option</replaceable> '<replaceable class="PARAMETER">value</replaceable>' [, ... ] ) ]
 
@@ -51,6 +52,12 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="PARAMETER">table_name
 
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
 CHECK ( <replaceable class="PARAMETER">expression</replaceable> ) [ NO INHERIT ]
+
+<phrase>and <replaceable class="PARAMETER">partition_bound_spec</replaceable> is:</phrase>
+
+IN ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | TRUE | FALSE | NULL } [, ...] ) |
+FROM ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | TRUE | FALSE | MINVALUE | MAXVALUE } [, ...] )
+  TO ( { <replaceable class="PARAMETER">numeric_literal</replaceable> | <replaceable class="PARAMETER">string_literal</replaceable> | TRUE | FALSE | MINVALUE | MAXVALUE } [, ...] )
 </synopsis>
  </refsynopsisdiv>
 
