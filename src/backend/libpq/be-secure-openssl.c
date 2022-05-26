@@ -225,9 +225,10 @@ be_tls_init(bool isServerStart)
 	 * allow read access through either our gid or a supplementary gid that
 	 * allows us to read system-wide certificates.
 	 *
-	 * Note that similar checks are performed in
+	 * Note that roughly similar checks are performed in
 	 * src/interfaces/libpq/fe-secure-openssl.c so any changes here may need
-	 * to be made there as well.
+	 * to be made there as well.  The environment is different though; this
+	 * code can assume that we're not running as root.
 	 *
 	 * Ideally we would do similar permissions checks on Windows, but it is
 	 * not clear how that would work since Unix-style permissions may not be
