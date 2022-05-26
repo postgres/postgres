@@ -1373,31 +1373,31 @@ initialize_SSL(PGconn *conn)
 		}
 
 		/*
-		 * Refuse to load key files owned by users other than us or root, and
-		 * require no public access to the key file.  If the file is owned by
-		 * us, require mode 0600 or less.  If owned by root, require 0640 or
-		 * less to allow read access through either our gid or a supplementary
-		 * gid that allows us to read system-wide certificates.
+		 * Refuse to load world-readable key files.  We accept root-owned
+		 * files with mode 0640 or less, so that we can access system-wide
+		 * certificates if we have a supplementary group membership that
+		 * allows us to read 'em.  For files with non-root ownership, require
+		 * mode 0600 or less.  We need not check the file's ownership exactly;
+		 * if we're able to read it despite it having such restrictive
+		 * permissions, it must have the right ownership.
 		 *
-		 * Note that similar checks are performed in
+		 * Note: be very careful about tightening these rules.  Some people
+		 * expect, for example, that a client process running as root should
+		 * be able to use a non-root-owned key file.
+		 *
+		 * Note that roughly similar checks are performed in
 		 * src/backend/libpq/be-secure-common.c so any changes here may need
-		 * to be made there as well.
+		 * to be made there as well.  However, this code caters for the case
+		 * of current user == root, while that code does not.
 		 *
 		 * Ideally we would do similar permissions checks on Windows, but it
 		 * is not clear how that would work since Unix-style permissions may
 		 * not be available.
 		 */
 #if !defined(WIN32) && !defined(__CYGWIN__)
-		if (buf.st_uid != geteuid() && buf.st_uid != 0)
-		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("private key file \"%s\" must be owned by the current user or root\n"),
-							  fnbuf);
-			return -1;
-		}
-
-		if ((buf.st_uid == geteuid() && buf.st_mode & (S_IRWXG | S_IRWXO)) ||
-			(buf.st_uid == 0 && buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO)))
+		if (buf.st_uid == 0 ?
+			buf.st_mode & (S_IWGRP | S_IXGRP | S_IRWXO) :
+			buf.st_mode & (S_IRWXG | S_IRWXO))
 		{
 			appendPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"),
