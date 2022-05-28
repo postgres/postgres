@@ -183,7 +183,7 @@ static inline bool pgstat_is_kind_valid(int ikind);
  */
 
 bool		pgstat_track_counts = false;
-int			pgstat_fetch_consistency = PGSTAT_FETCH_CONSISTENCY_NONE;
+int			pgstat_fetch_consistency = PGSTAT_FETCH_CONSISTENCY_CACHE;
 
 
 /* ----------
