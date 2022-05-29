@@ -19611,6 +19611,11 @@ SELECT NULLIF(value, '(none)') ...
         </indexterm>
         <function>range_intersect_agg</function> ( <parameter>value</parameter>
          <type>anyrange</type> )
+        <returnvalue>anyrange</returnvalue>
+       </para>
+       <para role="func_signature">
+        <function>range_intersect_agg</function> ( <parameter>value</parameter>
+         <type>anymultirange</type> )
         <returnvalue>anymultirange</returnvalue>
        </para>
        <para>
