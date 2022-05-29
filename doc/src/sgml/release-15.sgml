@@ -2490,17 +2490,6 @@ Add documentation for pg_encoding_to_char() and pg_char_to_encoding() (Ian Lawre
 </listitem>
 
 <!--
-Author: Peter Eisentraut <peter@eisentraut.org>
-2022-03-30 [b21c4cf95] doc: Document range_intersect_agg(anymultirange)
--->
-
-<listitem>
-<para>
-Add documentation for range_intersect_agg(anymultirange) (Paul Jungwirth)
-</para>
-</listitem>
-
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2021-10-09 [2ae5d72f0] Doc: improve documentation for ^@ starts-with operator.
 -->
