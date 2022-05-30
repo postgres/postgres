@@ -402,6 +402,8 @@ InitSharedLatch(Latch *latch)
 void
 OwnLatch(Latch *latch)
 {
+	int			owner_pid;
+
 	/* Sanity checks */
 	Assert(latch->is_shared);
 
@@ -410,8 +412,9 @@ OwnLatch(Latch *latch)
 	Assert(selfpipe_readfd >= 0 && selfpipe_owner_pid == MyProcPid);
 #endif
 
-	if (latch->owner_pid != 0)
-		elog(ERROR, "latch already owned");
+	owner_pid = latch->owner_pid;
+	if (owner_pid != 0)
+		elog(PANIC, "latch already owned by PID %d", owner_pid);
 
 	latch->owner_pid = MyProcPid;
 }
