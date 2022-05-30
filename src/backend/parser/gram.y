@@ -17940,6 +17940,7 @@ unreserved_keyword:
 			| STORAGE
 			| STORED
 			| STRICT_P
+			| STRING
 			| STRIP_P
 			| SUBSCRIPTION
 			| SUPPORT
@@ -18098,7 +18099,6 @@ type_func_name_keyword:
 			| OVERLAPS
 			| RIGHT
 			| SIMILAR
-			| STRING
 			| TABLESAMPLE
 			| VERBOSE
 		;

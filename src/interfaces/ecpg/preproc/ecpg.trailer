@@ -467,7 +467,7 @@ type_declaration: S_TYPEDEF
 		/* an initializer specified */
 		initializer = 0;
 	}
-	var_type opt_pointer ECPGColLabelCommon opt_array_bounds ';'
+	var_type opt_pointer ECPGColLabel opt_array_bounds ';'
 	{
 		add_typedef($5, $6.index1, $6.index2, $3.type_enum, $3.type_dimension, $3.type_index, initializer, *$4 ? 1 : 0);
 
@@ -688,6 +688,43 @@ var_type:	simple_type
 			{
 				/* this is for typedef'ed types */
 				struct typedefs *this = get_typedef($1);
+
+				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
+					$$.type_sizeof = this->type->type_sizeof;
+				else
+					$$.type_sizeof = cat_str(3, mm_strdup("sizeof("), mm_strdup(this->name), mm_strdup(")"));
+
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			}
+		}
+		| STRING
+		{
+			/*
+			 * It's quite horrid that ECPGColLabelCommon excludes
+			 * unreserved_keyword, meaning that unreserved keywords can't be
+			 * used as type names in var_type.  However, this is hard to avoid
+			 * since what follows ecpgstart can be either a random SQL
+			 * statement or an ECPGVarDeclaration (beginning with var_type).
+			 * Pending a bright idea about how to fix that, we must
+			 * special-case STRING (and any other unreserved keywords that are
+			 * likely to be needed here).
+			 */
+			if (INFORMIX_MODE)
+			{
+				$$.type_enum = ECPGt_string;
+				$$.type_str = mm_strdup("char");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
+				$$.type_sizeof = NULL;
+			}
+			else
+			{
+				/* this is for typedef'ed types */
+				struct typedefs *this = get_typedef("string");
 
 				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
 				$$.type_enum = this->type->type_enum;
@@ -1342,7 +1379,7 @@ ECPGTypedef: TYPE_P
 			/* an initializer specified */
 			initializer = 0;
 		}
-		ECPGColLabelCommon IS var_type opt_array_bounds opt_reference
+		ECPGColLabel IS var_type opt_array_bounds opt_reference
 		{
 			add_typedef($3, $6.index1, $6.index2, $5.type_enum, $5.type_dimension, $5.type_index, initializer, *$7 ? 1 : 0);
 
