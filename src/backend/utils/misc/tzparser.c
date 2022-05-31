@@ -365,7 +365,8 @@ ParseTzFile(const char *filename, int depth,
 			{
 				GUC_check_errmsg("could not read time zone file \"%s\": %m",
 								 filename);
-				return -1;
+				n = -1;
+				break;
 			}
 			/* else we're at EOF after all */
 			break;
@@ -375,7 +376,8 @@ ParseTzFile(const char *filename, int depth,
 			/* the line is too long for tzbuf */
 			GUC_check_errmsg("line is too long in time zone file \"%s\", line %d",
 							 filename, lineno);
-			return -1;
+			n = -1;
+			break;
 		}
 
 		/* skip over whitespace */
@@ -398,12 +400,13 @@ ParseTzFile(const char *filename, int depth,
 			{
 				GUC_check_errmsg("@INCLUDE without file name in time zone file \"%s\", line %d",
 								 filename, lineno);
-				return -1;
+				n = -1;
+				break;
 			}
 			n = ParseTzFile(includeFile, depth + 1,
 							base, arraysize, n);
 			if (n < 0)
-				return -1;
+				break;
 			continue;
 		}
 
@@ -414,12 +417,18 @@ ParseTzFile(const char *filename, int depth,
 		}
 
 		if (!splitTzLine(filename, lineno, line, &tzentry))
-			return -1;
+		{
+			n = -1;
+			break;
+		}
 		if (!validateTzEntry(&tzentry))
-			return -1;
+		{
+			n = -1;
+			break;
+		}
 		n = addToArray(base, arraysize, n, &tzentry, override);
 		if (n < 0)
-			return -1;
+			break;
 	}
 
 	FreeFile(tzFile);
