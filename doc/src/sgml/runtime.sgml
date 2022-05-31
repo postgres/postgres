@@ -1762,7 +1762,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     version of
     <productname>PostgreSQL</productname>, to take advantage of enhancements
     that might have been made in these programs.  Current releases of the
-    dump programs can read data from any server version back to 7.0.
+    dump programs can read data from any server version back to 8.0.
    </para>
 
    <para>
