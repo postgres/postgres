@@ -199,8 +199,8 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
      <primary>password</primary>
      <secondary>of the superuser</secondary>
    </indexterm>
-   Also, specify <option>-A md5</option> or
-   <option>-A password</option> so that the default <literal>trust</literal> authentication
+   Also, specify <option>-A scram-sha-256</option>
+   so that the default <literal>trust</literal> authentication
    mode is not used; or modify the generated <filename>pg_hba.conf</filename>
    file after running <command>initdb</command>, but
    <emphasis>before</emphasis> you start the server for the first time. (Other
