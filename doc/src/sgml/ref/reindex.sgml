@@ -475,8 +475,6 @@ Indexes:
     Like any long-running transaction, <command>REINDEX</command> on a table
     can affect which tuples can be removed by concurrent
     <command>VACUUM</command> on any other table.
-    Excepted from this are operations with the <literal>CONCURRENTLY</literal>
-    option for indexes that are not partial and do not index any expressions.
    </para>
 
    <para>
