@@ -570,7 +570,7 @@ consistency after a crash.  To provide robustness, we write WAL for each of
 these operations.
 
 CREATE INDEX writes multiple WAL records.  First, we write a record to cover
-the initializatoin of the metapage, followed by one for each new bucket
+the initialization of the metapage, followed by one for each new bucket
 created, followed by one for the initial bitmap page.  It's not important for
 index creation to appear atomic, because the index isn't yet visible to any
 other transaction, and the creating transaction will roll back in the event of
