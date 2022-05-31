@@ -4914,7 +4914,7 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
        or an older major version.  Backslash commands are particularly likely
        to fail if the server is of a newer version than <application>psql</application>
        itself.  However, backslash commands of the <literal>\d</literal> family should
-       work with servers of versions back to 7.4, though not necessarily with
+       work with servers of versions back to 9.2, though not necessarily with
        servers newer than <application>psql</application> itself.  The general
        functionality of running SQL commands and displaying query results
        should also work with servers of a newer major version, but this cannot
