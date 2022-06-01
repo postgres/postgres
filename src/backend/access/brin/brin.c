@@ -919,7 +919,13 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 		save_nestlevel = NewGUCNestLevel();
 	}
 	else
+	{
 		heapRel = NULL;
+		/* Set these just to suppress "uninitialized variable" warnings */
+		save_userid = InvalidOid;
+		save_sec_context = -1;
+		save_nestlevel = -1;
+	}
 
 	indexRel = index_open(indexoid, ShareUpdateExclusiveLock);
 
