@@ -284,7 +284,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 	else
 	{
 		heaprel = NULL;
-		/* for "gcc -Og" https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78394 */
+		/* Set these just to suppress "uninitialized variable" warnings */
 		save_userid = InvalidOid;
 		save_sec_context = -1;
 		save_nestlevel = -1;
