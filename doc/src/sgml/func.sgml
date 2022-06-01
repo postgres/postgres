@@ -1046,7 +1046,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
         <literal>@ -5.0</literal>
-        <returnvalue>5</returnvalue>
+        <returnvalue>5.0</returnvalue>
        </para></entry>
       </row>
 
@@ -1463,7 +1463,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
        <literal>log(2.0, 64.0)</literal>
-       <returnvalue>6.0000000000</returnvalue>
+       <returnvalue>6.0000000000000000</returnvalue>
        </para></entry>
       </row>
 
@@ -18536,7 +18536,7 @@ SELECT NULLIF(value, '(none)') ...
         Is the element contained by the multirange?
        </para>
        <para>
-        <literal>42 &lt;@ '{[1,7)}'::int4multirange</literal>
+        <literal>4 &lt;@ '{[1,7)}'::int4multirange</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
