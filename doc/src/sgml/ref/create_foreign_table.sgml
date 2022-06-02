@@ -173,7 +173,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARTITION OF <replaceable>parent_table</replaceable> FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable></literal></term>
+    <term><literal>PARTITION OF <replaceable>parent_table</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
      <para>
       This form can be used to create the foreign table as partition of
