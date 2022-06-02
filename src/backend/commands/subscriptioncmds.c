@@ -1754,6 +1754,11 @@ AlterSubscriptionOwner_oid(Oid subid, Oid newOwnerId)
 /*
  * Get the list of tables which belong to specified publications on the
  * publisher connection.
+ *
+ * Note that we don't support the case where the column list is different for
+ * the same table in different publications to avoid sending unwanted column
+ * information for some of the rows. This can happen when both the column
+ * list and row filter are specified for different publications.
  */
 static List *
 fetch_table_list(WalReceiverConn *wrconn, List *publications)
@@ -1761,17 +1766,23 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 	WalRcvExecResult *res;
 	StringInfoData cmd;
 	TupleTableSlot *slot;
-	Oid			tableRow[2] = {TEXTOID, TEXTOID};
+	Oid			tableRow[3] = {TEXTOID, TEXTOID, NAMEARRAYOID};
 	List	   *tablelist = NIL;
+	bool		check_columnlist = (walrcv_server_version(wrconn) >= 150000);
 
 	initStringInfo(&cmd);
-	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename\n"
-						   "  FROM pg_catalog.pg_publication_tables t\n"
+	appendStringInfoString(&cmd, "SELECT DISTINCT t.schemaname, t.tablename \n");
+
+	/* Get column lists for each relation if the publisher supports it */
+	if (check_columnlist)
+		appendStringInfoString(&cmd, ", t.attnames\n");
+
+	appendStringInfoString(&cmd, "FROM pg_catalog.pg_publication_tables t\n"
 						   " WHERE t.pubname IN (");
 	get_publications_str(publications, &cmd, true);
 	appendStringInfoChar(&cmd, ')');
 
-	res = walrcv_exec(wrconn, cmd.data, 2, tableRow);
+	res = walrcv_exec(wrconn, cmd.data, check_columnlist ? 3 : 2, tableRow);
 	pfree(cmd.data);
 
 	if (res->status != WALRCV_OK_TUPLES)
@@ -1795,7 +1806,14 @@ fetch_table_list(WalReceiverConn *wrconn, List *publications)
 		Assert(!isnull);
 
 		rv = makeRangeVar(nspname, relname, -1);
-		tablelist = lappend(tablelist, rv);
+
+		if (check_columnlist && list_member(tablelist, rv))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot use different column lists for table \"%s.%s\" in different publications",
+						   nspname, relname));
+		else
+			tablelist = lappend(tablelist, rv);
 
 		ExecClearTuple(slot);
 	}

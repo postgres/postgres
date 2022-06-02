@@ -116,7 +116,17 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 
      <para>
       Optionally, a column list can be specified.  See <xref
-      linkend="sql-createpublication"/> for details.
+      linkend="sql-createpublication"/> for details. Note that a subscription
+      having several publications in which the same table has been published
+      with different column lists is not supported. So, changing the column
+      lists of the tables being subscribed could cause inconsistency of column
+      lists among publications, in which case <command>ALTER PUBLICATION</command>
+      will be successful but later the WalSender on the publisher or the
+      subscriber may throw an error. In this scenario, the user needs to
+      recreate the subscription after adjusting the column list or drop the
+      problematic publication using
+      <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> and then add
+      it back after adjusting the column list.
      </para>
 
      <para>

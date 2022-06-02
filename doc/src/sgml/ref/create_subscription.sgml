@@ -356,6 +356,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
   </para>
 
   <para>
+   Subscriptions having several publications in which the same table has been
+   published with different column lists are not supported.
+  </para>
+
+  <para>
    We allow non-existent publications to be specified so that users can add
    those later. This means
    <link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>
