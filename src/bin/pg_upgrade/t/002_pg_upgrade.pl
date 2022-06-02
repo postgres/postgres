@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-use Cwd qw(abs_path getcwd);
+use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use File::Compare;
 
@@ -23,7 +23,9 @@ sub generate_db
 	}
 
 	$dbname .= $suffix;
-	$node->command_ok([ 'createdb', $dbname ]);
+	$node->command_ok(
+		[ 'createdb', $dbname ],
+		"created database with ASCII characters from $from_char to $to_char");
 }
 
 # The test of pg_upgrade requires two clusters, an old one and a new one
@@ -71,7 +73,8 @@ if (defined($ENV{olddump}))
 
 	# Load the dump using the "postgres" database as "regression" does
 	# not exist yet, and we are done here.
-	$oldnode->command_ok([ 'psql', '-X', '-f', $olddumpfile, 'postgres' ]);
+	$oldnode->command_ok([ 'psql', '-X', '-f', $olddumpfile, 'postgres' ],
+		'loaded old dump file');
 }
 else
 {
@@ -136,7 +139,8 @@ if (defined($ENV{oldinstall}))
 			'psql', '-X',
 			'-f', "$srcdir/src/bin/pg_upgrade/upgrade_adapt.sql",
 			'regression'
-		]);
+		],
+		'ran adapt script');
 }
 
 # Initialize a new node for the upgrade.
@@ -233,7 +237,8 @@ $newnode->command_ok(
 		'pg_dumpall', '--no-sync',
 		'-d',         $newnode->connstr('postgres'),
 		'-f',         "$tempdir/dump2.sql"
-	]);
+	],
+	'dump before running pg_upgrade');
 
 # Compare the two dumps, there should be no differences.
 my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");
