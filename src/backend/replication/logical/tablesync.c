@@ -126,12 +126,8 @@ static bool FetchTableStates(bool *started_tx);
 
 static StringInfo copybuf = NULL;
 
-/*
- * Exit routine for synchronization worker.
- */
 static void
-pg_attribute_noreturn()
-finish_sync_worker(void)
+clean_sync_worker(void)
 {
 	/*
 	 * Commit any outstanding transaction. This is the usual case, unless
@@ -143,15 +139,25 @@ finish_sync_worker(void)
 		pgstat_report_stat(true);
 	}
 
-	/* And flush all writes. */
-	XLogFlush(GetXLogWriteRecPtr());
-
 	StartTransactionCommand();
 	ereport(LOG,
 			(errmsg("logical replication table synchronization worker for subscription \"%s\", table \"%s\" has finished",
 					MySubscription->name,
 					get_rel_name(MyLogicalRepWorker->relid))));
 	CommitTransactionCommand();
+}
+
+/*
+ * Exit routine for synchronization worker.
+ */
+static void
+pg_attribute_noreturn()
+finish_sync_worker(void)
+{
+	clean_sync_worker();
+	
+	/* And flush all writes. */
+	XLogFlush(GetXLogWriteRecPtr());
 
 	/* Find the main apply worker and signal it. */
 	logicalrep_worker_wakeup(MyLogicalRepWorker->subid, InvalidOid);
@@ -180,7 +186,7 @@ wait_for_relation_state_change(Oid relid, char expected_state)
 		LogicalRepWorker *worker;
 		XLogRecPtr	statelsn;
 
-		CHECK_FOR_INTERRUPTS();
+		CHECK_FOR_INTERRUPTS();		
 
 		InvalidateCatalogSnapshot();
 		state = GetSubscriptionRelState(MyLogicalRepWorker->subid,
@@ -284,6 +290,11 @@ invalidate_syncing_table_states(Datum arg, int cacheid, uint32 hashvalue)
 static void
 process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 {
+	List	   *rstates;
+	ListCell   *lc;
+	SubscriptionRelState *rstate;
+	bool	found = false;
+
 	SpinLockAcquire(&MyLogicalRepWorker->relmutex);
 
 	if (MyLogicalRepWorker->relstate == SUBREL_STATE_CATCHUP &&
@@ -334,7 +345,34 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 		 */
 		ReplicationSlotDropAtPubNode(LogRepWorkerWalRcvConn, syncslotname, false);
 
-		finish_sync_worker();
+		/* Check if any table whose relation state is still INIT. 
+		 * If a table in INIT state is found, the worker will not be finished,
+		 * it will be reused instead.
+		 */
+		rstates = GetSubscriptionNotReadyRelations(MySubscription->oid);
+		foreach(lc, rstates)
+		{			
+			rstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
+			memcpy(rstate, lfirst(lc), sizeof(SubscriptionRelState));
+
+			if(rstate->state == SUBREL_STATE_INIT)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			finish_sync_worker();
+		}
+		else{
+			MyLogicalRepWorker->relid = rstate->relid;
+			MyLogicalRepWorker->relstate = rstate->state;
+			MyLogicalRepWorker->relstate_lsn = rstate->lsn;
+			MyLogicalRepWorker->move_to_next_rel = true;
+			clean_sync_worker();
+		}
 	}
 	else
 		SpinLockRelease(&MyLogicalRepWorker->relmutex);

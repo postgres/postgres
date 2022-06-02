@@ -2796,6 +2796,10 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 
 			/* Process any table synchronization changes. */
 			process_syncing_tables(last_received);
+			if(MyLogicalRepWorker->move_to_next_rel)
+			{
+				endofstream = true;
+			}
 		}
 
 		/* Cleanup the memory. */
@@ -2897,8 +2901,16 @@ LogicalRepApplyLoop(XLogRecPtr last_received)
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
 
-	/* All done */
-	walrcv_endstreaming(LogRepWorkerWalRcvConn, &tli);
+	/* 
+	 * If it's moving to next relation, this is a sync worker.
+	 * Sync workers end the streaming during process_syncing_tables_for_sync.
+	 * Calling endstreaming twice causes "no COPY in progress" errors.
+	 */
+	if(!MyLogicalRepWorker->move_to_next_rel)
+	{
+		/* All done */
+		walrcv_endstreaming(LogRepWorkerWalRcvConn, &tli);
+	}
 }
 
 /*
@@ -3651,8 +3663,13 @@ ApplyWorkerMain(Datum main_arg)
 	elog(DEBUG1, "connecting to publisher using connection string \"%s\"",
 		 MySubscription->conninfo);
 
+start_worker:
+
 	if (am_tablesync_worker())
 	{
+		/* Set this to false for safety, in case we're already reusing the worker */
+		MyLogicalRepWorker->move_to_next_rel = false;
+
 		start_table_sync(&origin_startpos, &myslotname);
 
 		/*
@@ -3785,6 +3802,22 @@ ApplyWorkerMain(Datum main_arg)
 
 	/* Run the main loop. */
 	start_apply(origin_startpos);
+
+	if(MyLogicalRepWorker->move_to_next_rel)
+	{
+		/* Reset the currenct replication origin session.
+		* Since we'll use the same process for another relation, it needs to be reset 
+		* and will be created again later while syncing the new relation.
+		*/
+		replorigin_session_origin = InvalidRepOriginId;
+		replorigin_session_reset();
+
+		ereport(LOG,
+				(errmsg("logical replication table synchronization worker for subscription \"%s\" has moved to sync table \"%s\".",
+						MySubscription->name, get_rel_name(MyLogicalRepWorker->relid))));
+
+		goto start_worker;
+	}
 
 	proc_exit(0);
 }

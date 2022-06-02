@@ -51,6 +51,11 @@ typedef struct LogicalRepWorker
 	XLogRecPtr	relstate_lsn;
 	slock_t		relmutex;
 
+	/* 
+	 * Used to indicate whether sync worker will be reused for another relation
+	 */
+	bool		move_to_next_rel;
+	
 	/*
 	 * Used to create the changes and subxact files for the streaming
 	 * transactions.  Upon the arrival of the first streaming transaction, the
