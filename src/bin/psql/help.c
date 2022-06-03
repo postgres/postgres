@@ -163,7 +163,7 @@ slashUsage(unsigned short int pager)
 	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
 	 * the USE_READLINE line even in builds without that.
 	 */
-	output = PageOutput(138, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(139, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
@@ -272,6 +272,14 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
 	fprintf(output, "\n");
 
+	fprintf(output, _("Large Objects\n"));
+	fprintf(output, _("  \\lo_export LOBOID FILE write large object to file\n"));
+	fprintf(output, _("  \\lo_import FILE [COMMENT]\n"
+					  "                         read large object from file\n"));
+	fprintf(output, _("  \\lo_list[+]            list large objects\n"));
+	fprintf(output, _("  \\lo_unlink LOBOID      delete a large object\n"));
+	fprintf(output, "\n");
+
 	fprintf(output, _("Formatting\n"));
 	fprintf(output, _("  \\a                     toggle between unaligned and aligned output mode\n"));
 	fprintf(output, _("  \\C [STRING]            set table title, or unset if none\n"));
@@ -318,13 +326,6 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("  \\prompt [TEXT] NAME    prompt user to set internal variable\n"));
 	fprintf(output, _("  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"));
 	fprintf(output, _("  \\unset NAME            unset (delete) internal variable\n"));
-	fprintf(output, "\n");
-
-	fprintf(output, _("Large Objects\n"));
-	fprintf(output, _("  \\lo_export LOBOID FILE\n"
-					  "  \\lo_import FILE [COMMENT]\n"
-					  "  \\lo_list[+]\n"
-					  "  \\lo_unlink LOBOID      large object operations\n"));
 
 	ClosePager(output);
 }
@@ -346,7 +347,7 @@ helpVariables(unsigned short int pager)
 	 * Windows builds currently print one fewer line than non-Windows builds.
 	 * Using the larger number is fine.
 	 */
-	output = PageOutput(161, pager ? &(pset.popt.topt) : NULL);
+	output = PageOutput(163, pager ? &(pset.popt.topt) : NULL);
 
 	fprintf(output, _("List of specially treated variables\n\n"));
 
