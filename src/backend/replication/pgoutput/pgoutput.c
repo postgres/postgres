@@ -540,7 +540,9 @@ get_rel_sync_entry(PGOutputData *data, Oid relid)
 				if (sscanf(relname, "pg_temp_%u%n", &u, &n) == 1 &&
 					relname[n] == '\0')
 				{
-					if (get_rel_relkind(u) == RELKIND_RELATION)
+					char	relkind = get_rel_relkind(u);
+
+					if (relkind == RELKIND_RELATION || relkind == RELKIND_MATVIEW)
 						break;
 				}
 			}

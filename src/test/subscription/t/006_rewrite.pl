@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use PostgresNode;
 use TestLib;
-use Test::More tests => 2;
+use Test::More tests => 3;
 
 sub wait_for_caught_up
 {
@@ -25,6 +25,13 @@ $node_subscriber->start;
 my $ddl = "CREATE TABLE test1 (a int, b text);";
 $node_publisher->safe_psql('postgres', $ddl);
 $node_subscriber->safe_psql('postgres', $ddl);
+
+$ddl = "CREATE TABLE test2 (a int, b text);";
+$node_publisher->safe_psql('postgres', $ddl);
+$node_subscriber->safe_psql('postgres', $ddl);
+
+$node_publisher->safe_psql('postgres', q{INSERT INTO test2 (a, b) VALUES (10, 'ten'), (20, 'twenty');});
+$node_publisher->safe_psql('postgres', 'CREATE MATERIALIZED VIEW test3 AS SELECT a, b FROM test2;');
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 my $appname           = 'encoding_test';
@@ -68,6 +75,17 @@ is($node_subscriber->safe_psql('postgres', q{SELECT a, b, c FROM test1}),
 2|two|0
 3|three|33),
    'data replicated to subscriber');
+
+# Another DDL that causes a heap rewrite
+$node_publisher->safe_psql('postgres', 'REFRESH MATERIALIZED VIEW test3;');
+
+# an additional row to check if the REFRESH worked
+$node_publisher->safe_psql('postgres', q{INSERT INTO test2 (a, b) VALUES (30, 'thirty');});
+
+wait_for_caught_up($node_publisher, $appname);
+
+is($node_subscriber->safe_psql('postgres', q{SELECT COUNT(1) FROM test2}), 3,
+   'data replicated to subscriber after refresh');
 
 $node_subscriber->stop;
 $node_publisher->stop;
