@@ -206,6 +206,11 @@ if (defined($ENV{oldinstall}))
 	}
 }
 
+# In a VPATH build, we'll be started in the source directory, but we want
+# to run pg_upgrade in the build directory so that any files generated finish
+# in it, like delete_old_cluster.{sh,bat}.
+chdir ${PostgreSQL::Test::Utils::tmp_check};
+
 # Upgrade the instance.
 $oldnode->stop;
 command_ok(
@@ -238,7 +243,7 @@ $newnode->command_ok(
 		'-d',         $newnode->connstr('postgres'),
 		'-f',         "$tempdir/dump2.sql"
 	],
-	'dump before running pg_upgrade');
+	'dump after running pg_upgrade');
 
 # Compare the two dumps, there should be no differences.
 my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");

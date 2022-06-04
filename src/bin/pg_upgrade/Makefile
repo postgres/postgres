@@ -48,8 +48,7 @@ uninstall:
 
 clean distclean maintainer-clean:
 	rm -f pg_upgrade$(X) $(OBJS)
-	rm -rf delete_old_cluster.sh log/ tmp_check/ \
-	       reindex_hash.sql
+	rm -rf log/ tmp_check/
 
 check:
 	$(prove_check)
