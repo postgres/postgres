@@ -36,20 +36,25 @@
  * know how to do it, please find someone who can help you.
  */
 
+/* Some helper macros to make the code less verbose */
+#define HELP0(str) appendPQExpBufferStr(&buf, _(str))
+#define HELPN(str,...) appendPQExpBuffer(&buf, _(str), __VA_ARGS__)
+#define ON(var) ((var) ? _("on") : _("off"))
+
 
 /*
  * usage
  *
  * print out command line arguments
  */
-#define ON(var) (var ? _("on") : _("off"))
-
 void
 usage(unsigned short int pager)
 {
 	const char *env;
 	const char *user;
 	char	   *errstr;
+	PQExpBufferData buf;
+	int			nlcount;
 	FILE	   *output;
 
 	/* Find default user, in case we need it. */
@@ -62,86 +67,103 @@ usage(unsigned short int pager)
 	}
 
 	/*
-	 * Keep this line count in sync with the number of lines printed below!
-	 * Use "psql --help=options | wc" to count correctly.
+	 * To avoid counting the output lines manually, build the output in "buf"
+	 * and then count them.
 	 */
-	output = PageOutput(63, pager ? &(pset.popt.topt) : NULL);
+	initPQExpBuffer(&buf);
 
-	fprintf(output, _("psql is the PostgreSQL interactive terminal.\n\n"));
-	fprintf(output, _("Usage:\n"));
-	fprintf(output, _("  psql [OPTION]... [DBNAME [USERNAME]]\n\n"));
+	HELP0("psql is the PostgreSQL interactive terminal.\n\n");
+	HELP0("Usage:\n");
+	HELP0("  psql [OPTION]... [DBNAME [USERNAME]]\n\n");
 
-	fprintf(output, _("General options:\n"));
+	HELP0("General options:\n");
 	/* Display default database */
 	env = getenv("PGDATABASE");
 	if (!env)
 		env = user;
-	fprintf(output, _("  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n"));
-	fprintf(output, _("  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n"), env);
-	fprintf(output, _("  -f, --file=FILENAME      execute commands from file, then exit\n"));
-	fprintf(output, _("  -l, --list               list available databases, then exit\n"));
-	fprintf(output, _("  -v, --set=, --variable=NAME=VALUE\n"
-					  "                           set psql variable NAME to VALUE\n"
-					  "                           (e.g., -v ON_ERROR_STOP=1)\n"));
-	fprintf(output, _("  -V, --version            output version information, then exit\n"));
-	fprintf(output, _("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n"));
-	fprintf(output, _("  -1 (\"one\"), --single-transaction\n"
-					  "                           execute as a single transaction (if non-interactive)\n"));
-	fprintf(output, _("  -?, --help[=options]     show this help, then exit\n"));
-	fprintf(output, _("      --help=commands      list backslash commands, then exit\n"));
-	fprintf(output, _("      --help=variables     list special variables, then exit\n"));
+	HELP0("  -c, --command=COMMAND    run only single command (SQL or internal) and exit\n");
+	HELPN("  -d, --dbname=DBNAME      database name to connect to (default: \"%s\")\n",
+		  env);
+	HELP0("  -f, --file=FILENAME      execute commands from file, then exit\n");
+	HELP0("  -l, --list               list available databases, then exit\n");
+	HELP0("  -v, --set=, --variable=NAME=VALUE\n"
+		  "                           set psql variable NAME to VALUE\n"
+		  "                           (e.g., -v ON_ERROR_STOP=1)\n");
+	HELP0("  -V, --version            output version information, then exit\n");
+	HELP0("  -X, --no-psqlrc          do not read startup file (~/.psqlrc)\n");
+	HELP0("  -1 (\"one\"), --single-transaction\n"
+		  "                           execute as a single transaction (if non-interactive)\n");
+	HELP0("  -?, --help[=options]     show this help, then exit\n");
+	HELP0("      --help=commands      list backslash commands, then exit\n");
+	HELP0("      --help=variables     list special variables, then exit\n");
 
-	fprintf(output, _("\nInput and output options:\n"));
-	fprintf(output, _("  -a, --echo-all           echo all input from script\n"));
-	fprintf(output, _("  -b, --echo-errors        echo failed commands\n"));
-	fprintf(output, _("  -e, --echo-queries       echo commands sent to server\n"));
-	fprintf(output, _("  -E, --echo-hidden        display queries that internal commands generate\n"));
-	fprintf(output, _("  -L, --log-file=FILENAME  send session log to file\n"));
-	fprintf(output, _("  -n, --no-readline        disable enhanced command line editing (readline)\n"));
-	fprintf(output, _("  -o, --output=FILENAME    send query results to file (or |pipe)\n"));
-	fprintf(output, _("  -q, --quiet              run quietly (no messages, only query output)\n"));
-	fprintf(output, _("  -s, --single-step        single-step mode (confirm each query)\n"));
-	fprintf(output, _("  -S, --single-line        single-line mode (end of line terminates SQL command)\n"));
+	HELP0("\nInput and output options:\n");
+	HELP0("  -a, --echo-all           echo all input from script\n");
+	HELP0("  -b, --echo-errors        echo failed commands\n");
+	HELP0("  -e, --echo-queries       echo commands sent to server\n");
+	HELP0("  -E, --echo-hidden        display queries that internal commands generate\n");
+	HELP0("  -L, --log-file=FILENAME  send session log to file\n");
+	HELP0("  -n, --no-readline        disable enhanced command line editing (readline)\n");
+	HELP0("  -o, --output=FILENAME    send query results to file (or |pipe)\n");
+	HELP0("  -q, --quiet              run quietly (no messages, only query output)\n");
+	HELP0("  -s, --single-step        single-step mode (confirm each query)\n");
+	HELP0("  -S, --single-line        single-line mode (end of line terminates SQL command)\n");
 
-	fprintf(output, _("\nOutput format options:\n"));
-	fprintf(output, _("  -A, --no-align           unaligned table output mode\n"));
-	fprintf(output, _("      --csv                CSV (Comma-Separated Values) table output mode\n"));
-	fprintf(output, _("  -F, --field-separator=STRING\n"
-					  "                           field separator for unaligned output (default: \"%s\")\n"),
-			DEFAULT_FIELD_SEP);
-	fprintf(output, _("  -H, --html               HTML table output mode\n"));
-	fprintf(output, _("  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n"));
-	fprintf(output, _("  -R, --record-separator=STRING\n"
-					  "                           record separator for unaligned output (default: newline)\n"));
-	fprintf(output, _("  -t, --tuples-only        print rows only\n"));
-	fprintf(output, _("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n"));
-	fprintf(output, _("  -x, --expanded           turn on expanded table output\n"));
-	fprintf(output, _("  -z, --field-separator-zero\n"
-					  "                           set field separator for unaligned output to zero byte\n"));
-	fprintf(output, _("  -0, --record-separator-zero\n"
-					  "                           set record separator for unaligned output to zero byte\n"));
+	HELP0("\nOutput format options:\n");
+	HELP0("  -A, --no-align           unaligned table output mode\n");
+	HELP0("      --csv                CSV (Comma-Separated Values) table output mode\n");
+	HELPN("  -F, --field-separator=STRING\n"
+		  "                           field separator for unaligned output (default: \"%s\")\n",
+		  DEFAULT_FIELD_SEP);
+	HELP0("  -H, --html               HTML table output mode\n");
+	HELP0("  -P, --pset=VAR[=ARG]     set printing option VAR to ARG (see \\pset command)\n");
+	HELP0("  -R, --record-separator=STRING\n"
+		  "                           record separator for unaligned output (default: newline)\n");
+	HELP0("  -t, --tuples-only        print rows only\n");
+	HELP0("  -T, --table-attr=TEXT    set HTML table tag attributes (e.g., width, border)\n");
+	HELP0("  -x, --expanded           turn on expanded table output\n");
+	HELP0("  -z, --field-separator-zero\n"
+		  "                           set field separator for unaligned output to zero byte\n");
+	HELP0("  -0, --record-separator-zero\n"
+		  "                           set record separator for unaligned output to zero byte\n");
 
-	fprintf(output, _("\nConnection options:\n"));
+	HELP0("\nConnection options:\n");
 	/* Display default host */
 	env = getenv("PGHOST");
-	fprintf(output, _("  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n"),
-			env ? env : _("local socket"));
+	HELPN("  -h, --host=HOSTNAME      database server host or socket directory (default: \"%s\")\n",
+		  env ? env : _("local socket"));
 	/* Display default port */
 	env = getenv("PGPORT");
-	fprintf(output, _("  -p, --port=PORT          database server port (default: \"%s\")\n"),
-			env ? env : DEF_PGPORT_STR);
+	HELPN("  -p, --port=PORT          database server port (default: \"%s\")\n",
+		  env ? env : DEF_PGPORT_STR);
 	/* Display default user */
-	fprintf(output, _("  -U, --username=USERNAME  database user name (default: \"%s\")\n"), user);
-	fprintf(output, _("  -w, --no-password        never prompt for password\n"));
-	fprintf(output, _("  -W, --password           force password prompt (should happen automatically)\n"));
+	HELPN("  -U, --username=USERNAME  database user name (default: \"%s\")\n",
+		  user);
+	HELP0("  -w, --no-password        never prompt for password\n");
+	HELP0("  -W, --password           force password prompt (should happen automatically)\n");
 
-	fprintf(output, _("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
-					  "commands) from within psql, or consult the psql section in the PostgreSQL\n"
-					  "documentation.\n\n"));
-	fprintf(output, _("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
-	fprintf(output, _("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
+	HELP0("\nFor more information, type \"\\?\" (for internal commands) or \"\\help\" (for SQL\n"
+		  "commands) from within psql, or consult the psql section in the PostgreSQL\n"
+		  "documentation.\n\n");
+	HELPN("Report bugs to <%s>.\n", PACKAGE_BUGREPORT);
+	HELPN("%s home page: <%s>\n", PACKAGE_NAME, PACKAGE_URL);
+
+	/* Now we can count the lines. */
+	nlcount = 0;
+	for (const char *ptr = buf.data; *ptr; ptr++)
+	{
+		if (*ptr == '\n')
+			nlcount++;
+	}
+
+	/* And dump the output, with appropriate pagination. */
+	output = PageOutput(nlcount, pager ? &(pset.popt.topt) : NULL);
+
+	fputs(buf.data, output);
 
 	ClosePager(output);
+
+	termPQExpBuffer(&buf);
 }
 
 
@@ -153,181 +175,197 @@ usage(unsigned short int pager)
 void
 slashUsage(unsigned short int pager)
 {
+	PQExpBufferData buf;
+	int			nlcount;
 	FILE	   *output;
 	char	   *currdb;
 
 	currdb = PQdb(pset.db);
 
 	/*
-	 * Keep this line count in sync with the number of lines printed below!
-	 * Use "psql --help=commands | wc" to count correctly.  It's okay to count
-	 * the USE_READLINE line even in builds without that.
+	 * To avoid counting the output lines manually, build the output in "buf"
+	 * and then count them.
 	 */
-	output = PageOutput(139, pager ? &(pset.popt.topt) : NULL);
+	initPQExpBuffer(&buf);
 
-	fprintf(output, _("General\n"));
-	fprintf(output, _("  \\copyright             show PostgreSQL usage and distribution terms\n"));
-	fprintf(output, _("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n"));
-	fprintf(output, _("  \\errverbose            show most recent error message at maximum verbosity\n"));
-	fprintf(output, _("  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
-					  "                         \\g with no arguments is equivalent to a semicolon\n"));
-	fprintf(output, _("  \\gdesc                 describe result of query, without executing it\n"));
-	fprintf(output, _("  \\gexec                 execute query, then execute each value in its result\n"));
-	fprintf(output, _("  \\gset [PREFIX]         execute query and store result in psql variables\n"));
-	fprintf(output, _("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n"));
-	fprintf(output, _("  \\q                     quit psql\n"));
-	fprintf(output, _("  \\watch [SEC]           execute query every SEC seconds\n"));
-	fprintf(output, "\n");
+	HELP0("General\n");
+	HELP0("  \\copyright             show PostgreSQL usage and distribution terms\n");
+	HELP0("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n");
+	HELP0("  \\errverbose            show most recent error message at maximum verbosity\n");
+	HELP0("  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
+		  "                         \\g with no arguments is equivalent to a semicolon\n");
+	HELP0("  \\gdesc                 describe result of query, without executing it\n");
+	HELP0("  \\gexec                 execute query, then execute each value in its result\n");
+	HELP0("  \\gset [PREFIX]         execute query and store result in psql variables\n");
+	HELP0("  \\gx [(OPTIONS)] [FILE] as \\g, but forces expanded output mode\n");
+	HELP0("  \\q                     quit psql\n");
+	HELP0("  \\watch [SEC]           execute query every SEC seconds\n");
+	HELP0("\n");
 
-	fprintf(output, _("Help\n"));
+	HELP0("Help\n");
 
-	fprintf(output, _("  \\? [commands]          show help on backslash commands\n"));
-	fprintf(output, _("  \\? options             show help on psql command-line options\n"));
-	fprintf(output, _("  \\? variables           show help on special variables\n"));
-	fprintf(output, _("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n"));
-	fprintf(output, "\n");
+	HELP0("  \\? [commands]          show help on backslash commands\n");
+	HELP0("  \\? options             show help on psql command-line options\n");
+	HELP0("  \\? variables           show help on special variables\n");
+	HELP0("  \\h [NAME]              help on syntax of SQL commands, * for all commands\n");
+	HELP0("\n");
 
-	fprintf(output, _("Query Buffer\n"));
-	fprintf(output, _("  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n"));
-	fprintf(output, _("  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n"));
-	fprintf(output, _("  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n"));
-	fprintf(output, _("  \\p                     show the contents of the query buffer\n"));
-	fprintf(output, _("  \\r                     reset (clear) the query buffer\n"));
+	HELP0("Query Buffer\n");
+	HELP0("  \\e [FILE] [LINE]       edit the query buffer (or file) with external editor\n");
+	HELP0("  \\ef [FUNCNAME [LINE]]  edit function definition with external editor\n");
+	HELP0("  \\ev [VIEWNAME [LINE]]  edit view definition with external editor\n");
+	HELP0("  \\p                     show the contents of the query buffer\n");
+	HELP0("  \\r                     reset (clear) the query buffer\n");
 #ifdef USE_READLINE
-	fprintf(output, _("  \\s [FILE]              display history or save it to file\n"));
+	HELP0("  \\s [FILE]              display history or save it to file\n");
 #endif
-	fprintf(output, _("  \\w FILE                write query buffer to file\n"));
-	fprintf(output, "\n");
+	HELP0("  \\w FILE                write query buffer to file\n");
+	HELP0("\n");
 
-	fprintf(output, _("Input/Output\n"));
-	fprintf(output, _("  \\copy ...              perform SQL COPY with data stream to the client host\n"));
-	fprintf(output, _("  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n"));
-	fprintf(output, _("  \\i FILE                execute commands from file\n"));
-	fprintf(output, _("  \\ir FILE               as \\i, but relative to location of current script\n"));
-	fprintf(output, _("  \\o [FILE]              send all query results to file or |pipe\n"));
-	fprintf(output, _("  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n"));
-	fprintf(output, _("  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n"));
-	fprintf(output, "\n");
+	HELP0("Input/Output\n");
+	HELP0("  \\copy ...              perform SQL COPY with data stream to the client host\n");
+	HELP0("  \\echo [-n] [STRING]    write string to standard output (-n for no newline)\n");
+	HELP0("  \\i FILE                execute commands from file\n");
+	HELP0("  \\ir FILE               as \\i, but relative to location of current script\n");
+	HELP0("  \\o [FILE]              send all query results to file or |pipe\n");
+	HELP0("  \\qecho [-n] [STRING]   write string to \\o output stream (-n for no newline)\n");
+	HELP0("  \\warn [-n] [STRING]    write string to standard error (-n for no newline)\n");
+	HELP0("\n");
 
-	fprintf(output, _("Conditional\n"));
-	fprintf(output, _("  \\if EXPR               begin conditional block\n"));
-	fprintf(output, _("  \\elif EXPR             alternative within current conditional block\n"));
-	fprintf(output, _("  \\else                  final alternative within current conditional block\n"));
-	fprintf(output, _("  \\endif                 end conditional block\n"));
-	fprintf(output, "\n");
+	HELP0("Conditional\n");
+	HELP0("  \\if EXPR               begin conditional block\n");
+	HELP0("  \\elif EXPR             alternative within current conditional block\n");
+	HELP0("  \\else                  final alternative within current conditional block\n");
+	HELP0("  \\endif                 end conditional block\n");
+	HELP0("\n");
 
-	fprintf(output, _("Informational\n"));
-	fprintf(output, _("  (options: S = show system objects, + = additional detail)\n"));
-	fprintf(output, _("  \\d[S+]                 list tables, views, and sequences\n"));
-	fprintf(output, _("  \\d[S+]  NAME           describe table, view, sequence, or index\n"));
-	fprintf(output, _("  \\da[S]  [PATTERN]      list aggregates\n"));
-	fprintf(output, _("  \\dA[+]  [PATTERN]      list access methods\n"));
-	fprintf(output, _("  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n"));
-	fprintf(output, _("  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n"));
-	fprintf(output, _("  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n"));
-	fprintf(output, _("  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n"));
-	fprintf(output, _("  \\db[+]  [PATTERN]      list tablespaces\n"));
-	fprintf(output, _("  \\dc[S+] [PATTERN]      list conversions\n"));
-	fprintf(output, _("  \\dconfig[+] [PATTERN]  list configuration parameters\n"));
-	fprintf(output, _("  \\dC[+]  [PATTERN]      list casts\n"));
-	fprintf(output, _("  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n"));
-	fprintf(output, _("  \\dD[S+] [PATTERN]      list domains\n"));
-	fprintf(output, _("  \\ddp    [PATTERN]      list default privileges\n"));
-	fprintf(output, _("  \\dE[S+] [PATTERN]      list foreign tables\n"));
-	fprintf(output, _("  \\des[+] [PATTERN]      list foreign servers\n"));
-	fprintf(output, _("  \\det[+] [PATTERN]      list foreign tables\n"));
-	fprintf(output, _("  \\deu[+] [PATTERN]      list user mappings\n"));
-	fprintf(output, _("  \\dew[+] [PATTERN]      list foreign-data wrappers\n"));
-	fprintf(output, _("  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
-					  "                         list [only agg/normal/procedure/trigger/window] functions\n"));
-	fprintf(output, _("  \\dF[+]  [PATTERN]      list text search configurations\n"));
-	fprintf(output, _("  \\dFd[+] [PATTERN]      list text search dictionaries\n"));
-	fprintf(output, _("  \\dFp[+] [PATTERN]      list text search parsers\n"));
-	fprintf(output, _("  \\dFt[+] [PATTERN]      list text search templates\n"));
-	fprintf(output, _("  \\dg[S+] [PATTERN]      list roles\n"));
-	fprintf(output, _("  \\di[S+] [PATTERN]      list indexes\n"));
-	fprintf(output, _("  \\dl[+]                 list large objects, same as \\lo_list\n"));
-	fprintf(output, _("  \\dL[S+] [PATTERN]      list procedural languages\n"));
-	fprintf(output, _("  \\dm[S+] [PATTERN]      list materialized views\n"));
-	fprintf(output, _("  \\dn[S+] [PATTERN]      list schemas\n"));
-	fprintf(output, _("  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
-					  "                         list operators\n"));
-	fprintf(output, _("  \\dO[S+] [PATTERN]      list collations\n"));
-	fprintf(output, _("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n"));
-	fprintf(output, _("  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n"));
-	fprintf(output, _("  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n"));
-	fprintf(output, _("  \\dRp[+] [PATTERN]      list replication publications\n"));
-	fprintf(output, _("  \\dRs[+] [PATTERN]      list replication subscriptions\n"));
-	fprintf(output, _("  \\ds[S+] [PATTERN]      list sequences\n"));
-	fprintf(output, _("  \\dt[S+] [PATTERN]      list tables\n"));
-	fprintf(output, _("  \\dT[S+] [PATTERN]      list data types\n"));
-	fprintf(output, _("  \\du[S+] [PATTERN]      list roles\n"));
-	fprintf(output, _("  \\dv[S+] [PATTERN]      list views\n"));
-	fprintf(output, _("  \\dx[+]  [PATTERN]      list extensions\n"));
-	fprintf(output, _("  \\dX     [PATTERN]      list extended statistics\n"));
-	fprintf(output, _("  \\dy[+]  [PATTERN]      list event triggers\n"));
-	fprintf(output, _("  \\l[+]   [PATTERN]      list databases\n"));
-	fprintf(output, _("  \\sf[+]  FUNCNAME       show a function's definition\n"));
-	fprintf(output, _("  \\sv[+]  VIEWNAME       show a view's definition\n"));
-	fprintf(output, _("  \\z      [PATTERN]      same as \\dp\n"));
-	fprintf(output, "\n");
+	HELP0("Informational\n");
+	HELP0("  (options: S = show system objects, + = additional detail)\n");
+	HELP0("  \\d[S+]                 list tables, views, and sequences\n");
+	HELP0("  \\d[S+]  NAME           describe table, view, sequence, or index\n");
+	HELP0("  \\da[S]  [PATTERN]      list aggregates\n");
+	HELP0("  \\dA[+]  [PATTERN]      list access methods\n");
+	HELP0("  \\dAc[+] [AMPTRN [TYPEPTRN]]  list operator classes\n");
+	HELP0("  \\dAf[+] [AMPTRN [TYPEPTRN]]  list operator families\n");
+	HELP0("  \\dAo[+] [AMPTRN [OPFPTRN]]   list operators of operator families\n");
+	HELP0("  \\dAp[+] [AMPTRN [OPFPTRN]]   list support functions of operator families\n");
+	HELP0("  \\db[+]  [PATTERN]      list tablespaces\n");
+	HELP0("  \\dc[S+] [PATTERN]      list conversions\n");
+	HELP0("  \\dconfig[+] [PATTERN]  list configuration parameters\n");
+	HELP0("  \\dC[+]  [PATTERN]      list casts\n");
+	HELP0("  \\dd[S]  [PATTERN]      show object descriptions not displayed elsewhere\n");
+	HELP0("  \\dD[S+] [PATTERN]      list domains\n");
+	HELP0("  \\ddp    [PATTERN]      list default privileges\n");
+	HELP0("  \\dE[S+] [PATTERN]      list foreign tables\n");
+	HELP0("  \\des[+] [PATTERN]      list foreign servers\n");
+	HELP0("  \\det[+] [PATTERN]      list foreign tables\n");
+	HELP0("  \\deu[+] [PATTERN]      list user mappings\n");
+	HELP0("  \\dew[+] [PATTERN]      list foreign-data wrappers\n");
+	HELP0("  \\df[anptw][S+] [FUNCPTRN [TYPEPTRN ...]]\n"
+		  "                         list [only agg/normal/procedure/trigger/window] functions\n");
+	HELP0("  \\dF[+]  [PATTERN]      list text search configurations\n");
+	HELP0("  \\dFd[+] [PATTERN]      list text search dictionaries\n");
+	HELP0("  \\dFp[+] [PATTERN]      list text search parsers\n");
+	HELP0("  \\dFt[+] [PATTERN]      list text search templates\n");
+	HELP0("  \\dg[S+] [PATTERN]      list roles\n");
+	HELP0("  \\di[S+] [PATTERN]      list indexes\n");
+	HELP0("  \\dl[+]                 list large objects, same as \\lo_list\n");
+	HELP0("  \\dL[S+] [PATTERN]      list procedural languages\n");
+	HELP0("  \\dm[S+] [PATTERN]      list materialized views\n");
+	HELP0("  \\dn[S+] [PATTERN]      list schemas\n");
+	HELP0("  \\do[S+] [OPPTRN [TYPEPTRN [TYPEPTRN]]]\n"
+		  "                         list operators\n");
+	HELP0("  \\dO[S+] [PATTERN]      list collations\n");
+	HELP0("  \\dp     [PATTERN]      list table, view, and sequence access privileges\n");
+	HELP0("  \\dP[itn+] [PATTERN]    list [only index/table] partitioned relations [n=nested]\n");
+	HELP0("  \\drds [ROLEPTRN [DBPTRN]] list per-database role settings\n");
+	HELP0("  \\dRp[+] [PATTERN]      list replication publications\n");
+	HELP0("  \\dRs[+] [PATTERN]      list replication subscriptions\n");
+	HELP0("  \\ds[S+] [PATTERN]      list sequences\n");
+	HELP0("  \\dt[S+] [PATTERN]      list tables\n");
+	HELP0("  \\dT[S+] [PATTERN]      list data types\n");
+	HELP0("  \\du[S+] [PATTERN]      list roles\n");
+	HELP0("  \\dv[S+] [PATTERN]      list views\n");
+	HELP0("  \\dx[+]  [PATTERN]      list extensions\n");
+	HELP0("  \\dX     [PATTERN]      list extended statistics\n");
+	HELP0("  \\dy[+]  [PATTERN]      list event triggers\n");
+	HELP0("  \\l[+]   [PATTERN]      list databases\n");
+	HELP0("  \\sf[+]  FUNCNAME       show a function's definition\n");
+	HELP0("  \\sv[+]  VIEWNAME       show a view's definition\n");
+	HELP0("  \\z      [PATTERN]      same as \\dp\n");
+	HELP0("\n");
 
-	fprintf(output, _("Large Objects\n"));
-	fprintf(output, _("  \\lo_export LOBOID FILE write large object to file\n"));
-	fprintf(output, _("  \\lo_import FILE [COMMENT]\n"
-					  "                         read large object from file\n"));
-	fprintf(output, _("  \\lo_list[+]            list large objects\n"));
-	fprintf(output, _("  \\lo_unlink LOBOID      delete a large object\n"));
-	fprintf(output, "\n");
+	HELP0("Large Objects\n");
+	HELP0("  \\lo_export LOBOID FILE write large object to file\n");
+	HELP0("  \\lo_import FILE [COMMENT]\n"
+		  "                         read large object from file\n");
+	HELP0("  \\lo_list[+]            list large objects\n");
+	HELP0("  \\lo_unlink LOBOID      delete a large object\n");
+	HELP0("\n");
 
-	fprintf(output, _("Formatting\n"));
-	fprintf(output, _("  \\a                     toggle between unaligned and aligned output mode\n"));
-	fprintf(output, _("  \\C [STRING]            set table title, or unset if none\n"));
-	fprintf(output, _("  \\f [STRING]            show or set field separator for unaligned query output\n"));
-	fprintf(output, _("  \\H                     toggle HTML output mode (currently %s)\n"),
-			ON(pset.popt.topt.format == PRINT_HTML));
-	fprintf(output, _("  \\pset [NAME [VALUE]]   set table output option\n"
-					  "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
-					  "                         fieldsep_zero|footer|format|linestyle|null|\n"
-					  "                         numericlocale|pager|pager_min_lines|recordsep|\n"
-					  "                         recordsep_zero|tableattr|title|tuples_only|\n"
-					  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
-					  "                         unicode_header_linestyle)\n"));
-	fprintf(output, _("  \\t [on|off]            show only rows (currently %s)\n"),
-			ON(pset.popt.topt.tuples_only));
-	fprintf(output, _("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n"));
-	fprintf(output, _("  \\x [on|off|auto]       toggle expanded output (currently %s)\n"),
-			pset.popt.topt.expanded == 2 ? "auto" : ON(pset.popt.topt.expanded));
-	fprintf(output, "\n");
+	HELP0("Formatting\n");
+	HELP0("  \\a                     toggle between unaligned and aligned output mode\n");
+	HELP0("  \\C [STRING]            set table title, or unset if none\n");
+	HELP0("  \\f [STRING]            show or set field separator for unaligned query output\n");
+	HELPN("  \\H                     toggle HTML output mode (currently %s)\n",
+		  ON(pset.popt.topt.format == PRINT_HTML));
+	HELP0("  \\pset [NAME [VALUE]]   set table output option\n"
+		  "                         (border|columns|csv_fieldsep|expanded|fieldsep|\n"
+		  "                         fieldsep_zero|footer|format|linestyle|null|\n"
+		  "                         numericlocale|pager|pager_min_lines|recordsep|\n"
+		  "                         recordsep_zero|tableattr|title|tuples_only|\n"
+		  "                         unicode_border_linestyle|unicode_column_linestyle|\n"
+		  "                         unicode_header_linestyle)\n");
+	HELPN("  \\t [on|off]            show only rows (currently %s)\n",
+		  ON(pset.popt.topt.tuples_only));
+	HELP0("  \\T [STRING]            set HTML <table> tag attributes, or unset if none\n");
+	HELPN("  \\x [on|off|auto]       toggle expanded output (currently %s)\n",
+		  pset.popt.topt.expanded == 2 ? _("auto") : ON(pset.popt.topt.expanded));
+	HELP0("\n");
 
-	fprintf(output, _("Connection\n"));
+	HELP0("Connection\n");
 	if (currdb)
-		fprintf(output, _("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
-						  "                         connect to new database (currently \"%s\")\n"),
-				currdb);
+		HELPN("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+			  "                         connect to new database (currently \"%s\")\n",
+			  currdb);
 	else
-		fprintf(output, _("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
-						  "                         connect to new database (currently no connection)\n"));
-	fprintf(output, _("  \\conninfo              display information about current connection\n"));
-	fprintf(output, _("  \\encoding [ENCODING]   show or set client encoding\n"));
-	fprintf(output, _("  \\password [USERNAME]   securely change the password for a user\n"));
-	fprintf(output, "\n");
+		HELP0("  \\c[onnect] {[DBNAME|- USER|- HOST|- PORT|-] | conninfo}\n"
+			  "                         connect to new database (currently no connection)\n");
+	HELP0("  \\conninfo              display information about current connection\n");
+	HELP0("  \\encoding [ENCODING]   show or set client encoding\n");
+	HELP0("  \\password [USERNAME]   securely change the password for a user\n");
+	HELP0("\n");
 
-	fprintf(output, _("Operating System\n"));
-	fprintf(output, _("  \\cd [DIR]              change the current working directory\n"));
-	fprintf(output, _("  \\getenv PSQLVAR ENVVAR fetch environment variable\n"));
-	fprintf(output, _("  \\setenv NAME [VALUE]   set or unset environment variable\n"));
-	fprintf(output, _("  \\timing [on|off]       toggle timing of commands (currently %s)\n"),
-			ON(pset.timing));
-	fprintf(output, _("  \\! [COMMAND]           execute command in shell or start interactive shell\n"));
-	fprintf(output, "\n");
+	HELP0("Operating System\n");
+	HELP0("  \\cd [DIR]              change the current working directory\n");
+	HELP0("  \\getenv PSQLVAR ENVVAR fetch environment variable\n");
+	HELP0("  \\setenv NAME [VALUE]   set or unset environment variable\n");
+	HELPN("  \\timing [on|off]       toggle timing of commands (currently %s)\n",
+		  ON(pset.timing));
+	HELP0("  \\! [COMMAND]           execute command in shell or start interactive shell\n");
+	HELP0("\n");
 
-	fprintf(output, _("Variables\n"));
-	fprintf(output, _("  \\prompt [TEXT] NAME    prompt user to set internal variable\n"));
-	fprintf(output, _("  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n"));
-	fprintf(output, _("  \\unset NAME            unset (delete) internal variable\n"));
+	HELP0("Variables\n");
+	HELP0("  \\prompt [TEXT] NAME    prompt user to set internal variable\n");
+	HELP0("  \\set [NAME [VALUE]]    set internal variable, or list all if no parameters\n");
+	HELP0("  \\unset NAME            unset (delete) internal variable\n");
+
+	/* Now we can count the lines. */
+	nlcount = 0;
+	for (const char *ptr = buf.data; *ptr; ptr++)
+	{
+		if (*ptr == '\n')
+			nlcount++;
+	}
+
+	/* And dump the output, with appropriate pagination. */
+	output = PageOutput(nlcount, pager ? &(pset.popt.topt) : NULL);
+
+	fputs(buf.data, output);
 
 	ClosePager(output);
+
+	termPQExpBuffer(&buf);
 }
 
 
@@ -339,186 +377,201 @@ slashUsage(unsigned short int pager)
 void
 helpVariables(unsigned short int pager)
 {
+	PQExpBufferData buf;
+	int			nlcount;
 	FILE	   *output;
 
 	/*
-	 * Keep this line count in sync with the number of lines printed below!
-	 * Use "psql --help=variables | wc" to count correctly; but notice that
-	 * Windows builds currently print one fewer line than non-Windows builds.
-	 * Using the larger number is fine.
+	 * To avoid counting the output lines manually, build the output in "buf"
+	 * and then count them.
 	 */
-	output = PageOutput(163, pager ? &(pset.popt.topt) : NULL);
+	initPQExpBuffer(&buf);
 
-	fprintf(output, _("List of specially treated variables\n\n"));
+	HELP0("List of specially treated variables\n\n");
 
-	fprintf(output, _("psql variables:\n"));
-	fprintf(output, _("Usage:\n"));
-	fprintf(output, _("  psql --set=NAME=VALUE\n  or \\set NAME VALUE inside psql\n\n"));
+	HELP0("psql variables:\n");
+	HELP0("Usage:\n");
+	HELP0("  psql --set=NAME=VALUE\n  or \\set NAME VALUE inside psql\n\n");
 
-	fprintf(output, _("  AUTOCOMMIT\n"
-					  "    if set, successful SQL commands are automatically committed\n"));
-	fprintf(output, _("  COMP_KEYWORD_CASE\n"
-					  "    determines the case used to complete SQL key words\n"
-					  "    [lower, upper, preserve-lower, preserve-upper]\n"));
-	fprintf(output, _("  DBNAME\n"
-					  "    the currently connected database name\n"));
-	fprintf(output, _("  ECHO\n"
-					  "    controls what input is written to standard output\n"
-					  "    [all, errors, none, queries]\n"));
-	fprintf(output, _("  ECHO_HIDDEN\n"
-					  "    if set, display internal queries executed by backslash commands;\n"
-					  "    if set to \"noexec\", just show them without execution\n"));
-	fprintf(output, _("  ENCODING\n"
-					  "    current client character set encoding\n"));
-	fprintf(output, _("  ERROR\n"
-					  "    true if last query failed, else false\n"));
-	fprintf(output, _("  FETCH_COUNT\n"
-					  "    the number of result rows to fetch and display at a time (0 = unlimited)\n"));
-	fprintf(output, _("  HIDE_TABLEAM\n"
-					  "    if set, table access methods are not displayed\n"));
-	fprintf(output, _("  HIDE_TOAST_COMPRESSION\n"
-					  "    if set, compression methods are not displayed\n"));
-	fprintf(output, _("  HISTCONTROL\n"
-					  "    controls command history [ignorespace, ignoredups, ignoreboth]\n"));
-	fprintf(output, _("  HISTFILE\n"
-					  "    file name used to store the command history\n"));
-	fprintf(output, _("  HISTSIZE\n"
-					  "    maximum number of commands to store in the command history\n"));
-	fprintf(output, _("  HOST\n"
-					  "    the currently connected database server host\n"));
-	fprintf(output, _("  IGNOREEOF\n"
-					  "    number of EOFs needed to terminate an interactive session\n"));
-	fprintf(output, _("  LASTOID\n"
-					  "    value of the last affected OID\n"));
-	fprintf(output, _("  LAST_ERROR_MESSAGE\n"
-					  "  LAST_ERROR_SQLSTATE\n"
-					  "    message and SQLSTATE of last error, or empty string and \"00000\" if none\n"));
-	fprintf(output, _("  ON_ERROR_ROLLBACK\n"
-					  "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n"));
-	fprintf(output, _("  ON_ERROR_STOP\n"
-					  "    stop batch execution after error\n"));
-	fprintf(output, _("  PORT\n"
-					  "    server port of the current connection\n"));
-	fprintf(output, _("  PROMPT1\n"
-					  "    specifies the standard psql prompt\n"));
-	fprintf(output, _("  PROMPT2\n"
-					  "    specifies the prompt used when a statement continues from a previous line\n"));
-	fprintf(output, _("  PROMPT3\n"
-					  "    specifies the prompt used during COPY ... FROM STDIN\n"));
-	fprintf(output, _("  QUIET\n"
-					  "    run quietly (same as -q option)\n"));
-	fprintf(output, _("  ROW_COUNT\n"
-					  "    number of rows returned or affected by last query, or 0\n"));
-	fprintf(output, _("  SERVER_VERSION_NAME\n"
-					  "  SERVER_VERSION_NUM\n"
-					  "    server's version (in short string or numeric format)\n"));
-	fprintf(output, _("  SHOW_ALL_RESULTS\n"
-					  "    show all results of a combined query (\\;) instead of only the last\n"));
-	fprintf(output, _("  SHOW_CONTEXT\n"
-					  "    controls display of message context fields [never, errors, always]\n"));
-	fprintf(output, _("  SINGLELINE\n"
-					  "    if set, end of line terminates SQL commands (same as -S option)\n"));
-	fprintf(output, _("  SINGLESTEP\n"
-					  "    single-step mode (same as -s option)\n"));
-	fprintf(output, _("  SQLSTATE\n"
-					  "    SQLSTATE of last query, or \"00000\" if no error\n"));
-	fprintf(output, _("  USER\n"
-					  "    the currently connected database user\n"));
-	fprintf(output, _("  VERBOSITY\n"
-					  "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n"));
-	fprintf(output, _("  VERSION\n"
-					  "  VERSION_NAME\n"
-					  "  VERSION_NUM\n"
-					  "    psql's version (in verbose string, short string, or numeric format)\n"));
+	HELP0("  AUTOCOMMIT\n"
+		  "    if set, successful SQL commands are automatically committed\n");
+	HELP0("  COMP_KEYWORD_CASE\n"
+		  "    determines the case used to complete SQL key words\n"
+		  "    [lower, upper, preserve-lower, preserve-upper]\n");
+	HELP0("  DBNAME\n"
+		  "    the currently connected database name\n");
+	HELP0("  ECHO\n"
+		  "    controls what input is written to standard output\n"
+		  "    [all, errors, none, queries]\n");
+	HELP0("  ECHO_HIDDEN\n"
+		  "    if set, display internal queries executed by backslash commands;\n"
+		  "    if set to \"noexec\", just show them without execution\n");
+	HELP0("  ENCODING\n"
+		  "    current client character set encoding\n");
+	HELP0("  ERROR\n"
+		  "    true if last query failed, else false\n");
+	HELP0("  FETCH_COUNT\n"
+		  "    the number of result rows to fetch and display at a time (0 = unlimited)\n");
+	HELP0("  HIDE_TABLEAM\n"
+		  "    if set, table access methods are not displayed\n");
+	HELP0("  HIDE_TOAST_COMPRESSION\n"
+		  "    if set, compression methods are not displayed\n");
+	HELP0("  HISTCONTROL\n"
+		  "    controls command history [ignorespace, ignoredups, ignoreboth]\n");
+	HELP0("  HISTFILE\n"
+		  "    file name used to store the command history\n");
+	HELP0("  HISTSIZE\n"
+		  "    maximum number of commands to store in the command history\n");
+	HELP0("  HOST\n"
+		  "    the currently connected database server host\n");
+	HELP0("  IGNOREEOF\n"
+		  "    number of EOFs needed to terminate an interactive session\n");
+	HELP0("  LASTOID\n"
+		  "    value of the last affected OID\n");
+	HELP0("  LAST_ERROR_MESSAGE\n"
+		  "  LAST_ERROR_SQLSTATE\n"
+		  "    message and SQLSTATE of last error, or empty string and \"00000\" if none\n");
+	HELP0("  ON_ERROR_ROLLBACK\n"
+		  "    if set, an error doesn't stop a transaction (uses implicit savepoints)\n");
+	HELP0("  ON_ERROR_STOP\n"
+		  "    stop batch execution after error\n");
+	HELP0("  PORT\n"
+		  "    server port of the current connection\n");
+	HELP0("  PROMPT1\n"
+		  "    specifies the standard psql prompt\n");
+	HELP0("  PROMPT2\n"
+		  "    specifies the prompt used when a statement continues from a previous line\n");
+	HELP0("  PROMPT3\n"
+		  "    specifies the prompt used during COPY ... FROM STDIN\n");
+	HELP0("  QUIET\n"
+		  "    run quietly (same as -q option)\n");
+	HELP0("  ROW_COUNT\n"
+		  "    number of rows returned or affected by last query, or 0\n");
+	HELP0("  SERVER_VERSION_NAME\n"
+		  "  SERVER_VERSION_NUM\n"
+		  "    server's version (in short string or numeric format)\n");
+	HELP0("  SHOW_ALL_RESULTS\n"
+		  "    show all results of a combined query (\\;) instead of only the last\n");
+	HELP0("  SHOW_CONTEXT\n"
+		  "    controls display of message context fields [never, errors, always]\n");
+	HELP0("  SINGLELINE\n"
+		  "    if set, end of line terminates SQL commands (same as -S option)\n");
+	HELP0("  SINGLESTEP\n"
+		  "    single-step mode (same as -s option)\n");
+	HELP0("  SQLSTATE\n"
+		  "    SQLSTATE of last query, or \"00000\" if no error\n");
+	HELP0("  USER\n"
+		  "    the currently connected database user\n");
+	HELP0("  VERBOSITY\n"
+		  "    controls verbosity of error reports [default, verbose, terse, sqlstate]\n");
+	HELP0("  VERSION\n"
+		  "  VERSION_NAME\n"
+		  "  VERSION_NUM\n"
+		  "    psql's version (in verbose string, short string, or numeric format)\n");
 
-	fprintf(output, _("\nDisplay settings:\n"));
-	fprintf(output, _("Usage:\n"));
-	fprintf(output, _("  psql --pset=NAME[=VALUE]\n  or \\pset NAME [VALUE] inside psql\n\n"));
+	HELP0("\nDisplay settings:\n");
+	HELP0("Usage:\n");
+	HELP0("  psql --pset=NAME[=VALUE]\n  or \\pset NAME [VALUE] inside psql\n\n");
 
-	fprintf(output, _("  border\n"
-					  "    border style (number)\n"));
-	fprintf(output, _("  columns\n"
-					  "    target width for the wrapped format\n"));
-	fprintf(output, _("  expanded (or x)\n"
-					  "    expanded output [on, off, auto]\n"));
-	fprintf(output, _("  fieldsep\n"
-					  "    field separator for unaligned output (default \"%s\")\n"),
-			DEFAULT_FIELD_SEP);
-	fprintf(output, _("  fieldsep_zero\n"
-					  "    set field separator for unaligned output to a zero byte\n"));
-	fprintf(output, _("  footer\n"
-					  "    enable or disable display of the table footer [on, off]\n"));
-	fprintf(output, _("  format\n"
-					  "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n"));
-	fprintf(output, _("  linestyle\n"
-					  "    set the border line drawing style [ascii, old-ascii, unicode]\n"));
-	fprintf(output, _("  null\n"
-					  "    set the string to be printed in place of a null value\n"));
-	fprintf(output, _("  numericlocale\n"
-					  "    enable display of a locale-specific character to separate groups of digits\n"));
-	fprintf(output, _("  pager\n"
-					  "    control when an external pager is used [yes, no, always]\n"));
-	fprintf(output, _("  recordsep\n"
-					  "    record (line) separator for unaligned output\n"));
-	fprintf(output, _("  recordsep_zero\n"
-					  "    set record separator for unaligned output to a zero byte\n"));
-	fprintf(output, _("  tableattr (or T)\n"
-					  "    specify attributes for table tag in html format, or proportional\n"
-					  "    column widths for left-aligned data types in latex-longtable format\n"));
-	fprintf(output, _("  title\n"
-					  "    set the table title for subsequently printed tables\n"));
-	fprintf(output, _("  tuples_only\n"
-					  "    if set, only actual table data is shown\n"));
-	fprintf(output, _("  unicode_border_linestyle\n"
-					  "  unicode_column_linestyle\n"
-					  "  unicode_header_linestyle\n"
-					  "    set the style of Unicode line drawing [single, double]\n"));
+	HELP0("  border\n"
+		  "    border style (number)\n");
+	HELP0("  columns\n"
+		  "    target width for the wrapped format\n");
+	HELP0("  expanded (or x)\n"
+		  "    expanded output [on, off, auto]\n");
+	HELPN("  fieldsep\n"
+		  "    field separator for unaligned output (default \"%s\")\n",
+		  DEFAULT_FIELD_SEP);
+	HELP0("  fieldsep_zero\n"
+		  "    set field separator for unaligned output to a zero byte\n");
+	HELP0("  footer\n"
+		  "    enable or disable display of the table footer [on, off]\n");
+	HELP0("  format\n"
+		  "    set output format [unaligned, aligned, wrapped, html, asciidoc, ...]\n");
+	HELP0("  linestyle\n"
+		  "    set the border line drawing style [ascii, old-ascii, unicode]\n");
+	HELP0("  null\n"
+		  "    set the string to be printed in place of a null value\n");
+	HELP0("  numericlocale\n"
+		  "    enable display of a locale-specific character to separate groups of digits\n");
+	HELP0("  pager\n"
+		  "    control when an external pager is used [yes, no, always]\n");
+	HELP0("  recordsep\n"
+		  "    record (line) separator for unaligned output\n");
+	HELP0("  recordsep_zero\n"
+		  "    set record separator for unaligned output to a zero byte\n");
+	HELP0("  tableattr (or T)\n"
+		  "    specify attributes for table tag in html format, or proportional\n"
+		  "    column widths for left-aligned data types in latex-longtable format\n");
+	HELP0("  title\n"
+		  "    set the table title for subsequently printed tables\n");
+	HELP0("  tuples_only\n"
+		  "    if set, only actual table data is shown\n");
+	HELP0("  unicode_border_linestyle\n"
+		  "  unicode_column_linestyle\n"
+		  "  unicode_header_linestyle\n"
+		  "    set the style of Unicode line drawing [single, double]\n");
 
-	fprintf(output, _("\nEnvironment variables:\n"));
-	fprintf(output, _("Usage:\n"));
+	HELP0("\nEnvironment variables:\n");
+	HELP0("Usage:\n");
 
 #ifndef WIN32
-	fprintf(output, _("  NAME=VALUE [NAME=VALUE] psql ...\n  or \\setenv NAME [VALUE] inside psql\n\n"));
+	HELP0("  NAME=VALUE [NAME=VALUE] psql ...\n  or \\setenv NAME [VALUE] inside psql\n\n");
 #else
-	fprintf(output, _("  set NAME=VALUE\n  psql ...\n  or \\setenv NAME [VALUE] inside psql\n\n"));
+	HELP0("  set NAME=VALUE\n  psql ...\n  or \\setenv NAME [VALUE] inside psql\n\n");
 #endif
 
-	fprintf(output, _("  COLUMNS\n"
-					  "    number of columns for wrapped format\n"));
-	fprintf(output, _("  PGAPPNAME\n"
-					  "    same as the application_name connection parameter\n"));
-	fprintf(output, _("  PGDATABASE\n"
-					  "    same as the dbname connection parameter\n"));
-	fprintf(output, _("  PGHOST\n"
-					  "    same as the host connection parameter\n"));
-	fprintf(output, _("  PGPASSFILE\n"
-					  "    password file name\n"));
-	fprintf(output, _("  PGPASSWORD\n"
-					  "    connection password (not recommended)\n"));
-	fprintf(output, _("  PGPORT\n"
-					  "    same as the port connection parameter\n"));
-	fprintf(output, _("  PGUSER\n"
-					  "    same as the user connection parameter\n"));
-	fprintf(output, _("  PSQL_EDITOR, EDITOR, VISUAL\n"
-					  "    editor used by the \\e, \\ef, and \\ev commands\n"));
-	fprintf(output, _("  PSQL_EDITOR_LINENUMBER_ARG\n"
-					  "    how to specify a line number when invoking the editor\n"));
-	fprintf(output, _("  PSQL_HISTORY\n"
-					  "    alternative location for the command history file\n"));
-	fprintf(output, _("  PSQL_PAGER, PAGER\n"
-					  "    name of external pager program\n"));
+	HELP0("  COLUMNS\n"
+		  "    number of columns for wrapped format\n");
+	HELP0("  PGAPPNAME\n"
+		  "    same as the application_name connection parameter\n");
+	HELP0("  PGDATABASE\n"
+		  "    same as the dbname connection parameter\n");
+	HELP0("  PGHOST\n"
+		  "    same as the host connection parameter\n");
+	HELP0("  PGPASSFILE\n"
+		  "    password file name\n");
+	HELP0("  PGPASSWORD\n"
+		  "    connection password (not recommended)\n");
+	HELP0("  PGPORT\n"
+		  "    same as the port connection parameter\n");
+	HELP0("  PGUSER\n"
+		  "    same as the user connection parameter\n");
+	HELP0("  PSQL_EDITOR, EDITOR, VISUAL\n"
+		  "    editor used by the \\e, \\ef, and \\ev commands\n");
+	HELP0("  PSQL_EDITOR_LINENUMBER_ARG\n"
+		  "    how to specify a line number when invoking the editor\n");
+	HELP0("  PSQL_HISTORY\n"
+		  "    alternative location for the command history file\n");
+	HELP0("  PSQL_PAGER, PAGER\n"
+		  "    name of external pager program\n");
 #ifndef WIN32
-	fprintf(output, _("  PSQL_WATCH_PAGER\n"
-					  "    name of external pager program used for \\watch\n"));
+	HELP0("  PSQL_WATCH_PAGER\n"
+		  "    name of external pager program used for \\watch\n");
 #endif
-	fprintf(output, _("  PSQLRC\n"
-					  "    alternative location for the user's .psqlrc file\n"));
-	fprintf(output, _("  SHELL\n"
-					  "    shell used by the \\! command\n"));
-	fprintf(output, _("  TMPDIR\n"
-					  "    directory for temporary files\n"));
+	HELP0("  PSQLRC\n"
+		  "    alternative location for the user's .psqlrc file\n");
+	HELP0("  SHELL\n"
+		  "    shell used by the \\! command\n");
+	HELP0("  TMPDIR\n"
+		  "    directory for temporary files\n");
+
+	/* Now we can count the lines. */
+	nlcount = 0;
+	for (const char *ptr = buf.data; *ptr; ptr++)
+	{
+		if (*ptr == '\n')
+			nlcount++;
+	}
+
+	/* And dump the output, with appropriate pagination. */
+	output = PageOutput(nlcount, pager ? &(pset.popt.topt) : NULL);
+
+	fputs(buf.data, output);
 
 	ClosePager(output);
+
+	termPQExpBuffer(&buf);
 }
 
 
