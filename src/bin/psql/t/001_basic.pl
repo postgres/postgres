@@ -198,4 +198,68 @@ like(
 ^LOCATION: .*$/m,
 	'\errverbose after \gdesc with error');
 
+# Check behavior when using multiple -c and -f switches.
+# Note that we cannot test backend-side errors as tests are unstable in this
+# case: IPC::Run can complain about a SIGPIPE if psql quits before reading a
+# query result.
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
+$node->safe_psql('postgres', "CREATE TABLE tab_psql_single (a int);");
+$node->command_ok(
+	[
+		'psql',                                   '-X',
+		'--single-transaction',                   '-v',
+		'ON_ERROR_STOP=1',                        '-c',
+		'INSERT INTO tab_psql_single VALUES (1)', '-c',
+		'INSERT INTO tab_psql_single VALUES (2)'
+	],
+	'--single-transaction and multiple -c switches');
+my $row_count =
+  $node->safe_psql('postgres', 'SELECT count(*) FROM tab_psql_single');
+is($row_count, '2',
+	'--single-transaction commits transaction, multiple -c switches');
+
+$node->command_fails(
+	[
+		'psql',                                   '-X',
+		'--single-transaction',                   '-v',
+		'ON_ERROR_STOP=1',                        '-c',
+		'INSERT INTO tab_psql_single VALUES (3)', '-c',
+		"\\copy tab_psql_single FROM '$tempdir/nonexistent'"
+	],
+	'--single-transaction and multiple -c switches, error');
+$row_count =
+  $node->safe_psql('postgres', 'SELECT count(*) FROM tab_psql_single');
+is($row_count, '2',
+	'client-side error rolls back transaction, multiple -c switches');
+
+# Tests mixing files and commands.
+my $copy_sql_file   = "$tempdir/tab_copy.sql";
+my $insert_sql_file = "$tempdir/tab_insert.sql";
+append_to_file($copy_sql_file,
+	"\\copy tab_psql_single FROM '$tempdir/nonexistent';");
+append_to_file($insert_sql_file, 'INSERT INTO tab_psql_single VALUES (4);');
+$node->command_ok(
+	[
+		'psql',            '-X', '--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-f', $insert_sql_file,       '-f',
+		$insert_sql_file
+	],
+	'--single-transaction and multiple -f switches');
+$row_count =
+  $node->safe_psql('postgres', 'SELECT count(*) FROM tab_psql_single');
+is($row_count, '4',
+	'--single-transaction commits transaction, multiple -f switches');
+
+$node->command_fails(
+	[
+		'psql',            '-X', '--single-transaction', '-v',
+		'ON_ERROR_STOP=1', '-f', $insert_sql_file,       '-f',
+		$copy_sql_file
+	],
+	'--single-transaction and multiple -f switches, error');
+$row_count =
+  $node->safe_psql('postgres', 'SELECT count(*) FROM tab_psql_single');
+is($row_count, '4',
+	'client-side error rolls back transaction, multiple -f switches');
+
 done_testing();
