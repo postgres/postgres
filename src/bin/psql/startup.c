@@ -416,7 +416,9 @@ main(int argc, char *argv[])
 
 		if (options.single_txn)
 		{
-			if ((res = PSQLexec("COMMIT")) == NULL)
+			res = PSQLexec((successResult == EXIT_SUCCESS) ?
+						   "COMMIT" : "ROLLBACK");
+			if (res == NULL)
 			{
 				if (pset.on_error_stop)
 				{
