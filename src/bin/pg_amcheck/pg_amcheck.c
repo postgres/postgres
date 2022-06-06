@@ -930,6 +930,8 @@ should_processing_continue(PGresult *res)
 			/* This is expected but requires closer scrutiny */
 		case PGRES_FATAL_ERROR:
 			severity = PQresultErrorField(res, PG_DIAG_SEVERITY_NONLOCALIZED);
+			if (severity == NULL)
+				return false;	/* libpq failure, probably lost connection */
 			if (strcmp(severity, "FATAL") == 0)
 				return false;
 			if (strcmp(severity, "PANIC") == 0)
