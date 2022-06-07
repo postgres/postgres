@@ -1133,7 +1133,7 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 	/* Make sure we get consistent view of the workers. */
 	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 
-	for (i = 0; i <= max_logical_replication_workers; i++)
+	for (i = 0; i < max_logical_replication_workers; i++)
 	{
 		/* for each row */
 		Datum		values[PG_STAT_GET_SUBSCRIPTION_COLS];
