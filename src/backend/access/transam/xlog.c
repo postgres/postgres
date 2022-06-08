@@ -4167,7 +4167,7 @@ ReadControlFile(void)
 
 	snprintf(wal_segsz_str, sizeof(wal_segsz_str), "%d", wal_segment_size);
 	SetConfigOption("wal_segment_size", wal_segsz_str, PGC_INTERNAL,
-					PGC_S_OVERRIDE);
+					PGC_S_DYNAMIC_DEFAULT);
 
 	/* check and update variables dependent on wal_segment_size */
 	if (ConvertToXSegs(min_wal_size_mb, wal_segment_size) < 2)
@@ -4186,7 +4186,7 @@ ReadControlFile(void)
 
 	/* Make the initdb settings visible as GUC variables, too */
 	SetConfigOption("data_checksums", DataChecksumsEnabled() ? "yes" : "no",
-					PGC_INTERNAL, PGC_S_OVERRIDE);
+					PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 }
 
 /*
@@ -4343,13 +4343,22 @@ XLOGShmemSize(void)
 	 * This isn't an amazingly clean place to do this, but we must wait till
 	 * NBuffers has received its final value, and must do it before using the
 	 * value of XLOGbuffers to do anything important.
+	 *
+	 * We prefer to report this value's source as PGC_S_DYNAMIC_DEFAULT.
+	 * However, if the DBA explicitly set wal_buffers = -1 in the config file,
+	 * then PGC_S_DYNAMIC_DEFAULT will fail to override that and we must force
+	 * the matter with PGC_S_OVERRIDE.
 	 */
 	if (XLOGbuffers == -1)
 	{
 		char		buf[32];
 
 		snprintf(buf, sizeof(buf), "%d", XLOGChooseNumBuffers());
-		SetConfigOption("wal_buffers", buf, PGC_POSTMASTER, PGC_S_OVERRIDE);
+		SetConfigOption("wal_buffers", buf, PGC_POSTMASTER,
+						PGC_S_DYNAMIC_DEFAULT);
+		if (XLOGbuffers == -1)	/* failed to apply it? */
+			SetConfigOption("wal_buffers", buf, PGC_POSTMASTER,
+							PGC_S_OVERRIDE);
 	}
 	Assert(XLOGbuffers > 0);
 

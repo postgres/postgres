@@ -921,7 +921,7 @@ PostmasterMain(int argc, char *argv[])
 		 * useful to show, even if one would only expect at least PANIC.  LOG
 		 * entries are hidden.
 		 */
-		SetConfigOption("log_min_messages", "FATAL", PGC_INTERNAL,
+		SetConfigOption("log_min_messages", "FATAL", PGC_SUSET,
 						PGC_S_OVERRIDE);
 	}
 

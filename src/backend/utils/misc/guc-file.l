@@ -401,9 +401,8 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	 * be run only after initialization is complete.
 	 *
 	 * XXX this is an unmaintainable crock, because we have to know how to set
-	 * (or at least what to call to set) every variable that could potentially
-	 * have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source. However, there's no
-	 * time to redesign it for 9.1.
+	 * (or at least what to call to set) every non-PGC_INTERNAL variable that
+	 * could potentially have PGC_S_DYNAMIC_DEFAULT or PGC_S_ENV_VAR source.
 	 */
 	if (context == PGC_SIGHUP && applySettings)
 	{

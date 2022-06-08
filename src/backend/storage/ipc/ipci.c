@@ -334,7 +334,8 @@ InitializeShmemGUCs(void)
 	size_b = CalculateShmemSize(NULL);
 	size_mb = add_size(size_b, (1024 * 1024) - 1) / (1024 * 1024);
 	sprintf(buf, "%zu", size_mb);
-	SetConfigOption("shared_memory_size", buf, PGC_INTERNAL, PGC_S_OVERRIDE);
+	SetConfigOption("shared_memory_size", buf,
+					PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 
 	/*
 	 * Calculate the number of huge pages required.
@@ -346,6 +347,7 @@ InitializeShmemGUCs(void)
 
 		hp_required = add_size(size_b / hp_size, 1);
 		sprintf(buf, "%zu", hp_required);
-		SetConfigOption("shared_memory_size_in_huge_pages", buf, PGC_INTERNAL, PGC_S_OVERRIDE);
+		SetConfigOption("shared_memory_size_in_huge_pages", buf,
+						PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 	}
 }

@@ -5939,6 +5939,8 @@ InitializeGUCOptionsFromEnvironment(void)
 	 * rlimit isn't exactly an "environment variable", but it behaves about
 	 * the same.  If we can identify the platform stack depth rlimit, increase
 	 * default stack depth setting up to whatever is safe (but at most 2MB).
+	 * Report the value's source as PGC_S_DYNAMIC_DEFAULT if it's 2MB, or as
+	 * PGC_S_ENV_VAR if it's reflecting the rlimit limit.
 	 */
 	stack_rlimit = get_stack_depth_rlimit();
 	if (stack_rlimit > 0)
@@ -5947,12 +5949,19 @@ InitializeGUCOptionsFromEnvironment(void)
 
 		if (new_limit > 100)
 		{
+			GucSource	source;
 			char		limbuf[16];
 
-			new_limit = Min(new_limit, 2048);
-			sprintf(limbuf, "%ld", new_limit);
+			if (new_limit < 2048)
+				source = PGC_S_ENV_VAR;
+			else
+			{
+				new_limit = 2048;
+				source = PGC_S_DYNAMIC_DEFAULT;
+			}
+			snprintf(limbuf, sizeof(limbuf), "%ld", new_limit);
 			SetConfigOption("max_stack_depth", limbuf,
-							PGC_POSTMASTER, PGC_S_ENV_VAR);
+							PGC_POSTMASTER, source);
 		}
 	}
 }
@@ -6776,12 +6785,16 @@ BeginReportingGUCOptions(void)
 	reporting_enabled = true;
 
 	/*
-	 * Hack for in_hot_standby: initialize with the value we're about to send.
+	 * Hack for in_hot_standby: set the GUC value true if appropriate.  This
+	 * is kind of an ugly place to do it, but there's few better options.
+	 *
 	 * (This could be out of date by the time we actually send it, in which
 	 * case the next ReportChangedGUCOptions call will send a duplicate
 	 * report.)
 	 */
-	in_hot_standby = RecoveryInProgress();
+	if (RecoveryInProgress())
+		SetConfigOption("in_hot_standby", "true",
+						PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/* Transmit initial values of interesting variables */
 	for (i = 0; i < num_guc_variables; i++)
@@ -6822,15 +6835,8 @@ ReportChangedGUCOptions(void)
 	 * transition from false to true.
 	 */
 	if (in_hot_standby && !RecoveryInProgress())
-	{
-		struct config_generic *record;
-
-		record = find_option("in_hot_standby", false, false, ERROR);
-		Assert(record != NULL);
-		record->status |= GUC_NEEDS_REPORT;
-		report_needed = true;
-		in_hot_standby = false;
-	}
+		SetConfigOption("in_hot_standby", "false",
+						PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/* Quick exit if no values have been changed */
 	if (!report_needed)

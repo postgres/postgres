@@ -83,8 +83,7 @@ typedef enum
  * override the postmaster command line.)  Tracking the source allows us
  * to process sources in any convenient order without affecting results.
  * Sources <= PGC_S_OVERRIDE will set the default used by RESET, as well
- * as the current value.  Note that source == PGC_S_OVERRIDE should be
- * used when setting a PGC_INTERNAL option.
+ * as the current value.
  *
  * PGC_S_INTERACTIVE isn't actually a source value, but is the
  * dividing line between "interactive" and "non-interactive" sources for
@@ -98,6 +97,11 @@ typedef enum
  * In particular, references to nonexistent database objects generally
  * shouldn't throw hard errors in this case, at most NOTICEs, since the
  * objects might exist by the time the setting is used for real.
+ *
+ * When setting the value of a non-compile-time-constant PGC_INTERNAL option,
+ * source == PGC_S_DYNAMIC_DEFAULT should typically be used so that the value
+ * will show as "default" in pg_settings.  If there is a specific reason not
+ * to want that, use source == PGC_S_OVERRIDE.
  *
  * NB: see GucSource_Names in guc.c if you change this.
  */
