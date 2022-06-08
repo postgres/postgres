@@ -13,4 +13,3 @@ use warnings;
 use PostgresNode;
 
 1;
-
