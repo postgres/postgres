@@ -5,6 +5,8 @@ use warnings;
 use Cwd qw(abs_path);
 use File::Basename qw(dirname);
 use File::Compare;
+use File::Find qw(find);
+use File::Path qw(rmtree);
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
@@ -213,6 +215,39 @@ chdir ${PostgreSQL::Test::Utils::tmp_check};
 
 # Upgrade the instance.
 $oldnode->stop;
+
+# Cause a failure at the start of pg_upgrade, this should create the logging
+# directory pg_upgrade_output.d but leave it around.  Keep --check for an
+# early exit.
+command_fails(
+	[
+		'pg_upgrade', '--no-sync',
+		'-d',         $oldnode->data_dir,
+		'-D',         $newnode->data_dir,
+		'-b',         $oldbindir . '/does/not/exist/',
+		'-B',         $newbindir,
+		'-p',         $oldnode->port,
+		'-P',         $newnode->port,
+		'--check'
+	],
+	'run of pg_upgrade --check for new instance with incorrect binary path');
+ok(-d $newnode->data_dir . "/pg_upgrade_output.d",
+	"pg_upgrade_output.d/ not removed after pg_upgrade failure");
+rmtree($newnode->data_dir . "/pg_upgrade_output.d");
+
+# --check command works here, cleans up pg_upgrade_output.d.
+command_ok(
+	[
+		'pg_upgrade', '--no-sync',        '-d', $oldnode->data_dir,
+		'-D',         $newnode->data_dir, '-b', $oldbindir,
+		'-B',         $newbindir,         '-p', $oldnode->port,
+		'-P',         $newnode->port,     '--check'
+	],
+	'run of pg_upgrade --check for new instance');
+ok( !-d $newnode->data_dir . "/pg_upgrade_output.d",
+	"pg_upgrade_output.d/ not removed after pg_upgrade --check success");
+
+# Actual run, pg_upgrade_output.d is removed at the end.
 command_ok(
 	[
 		'pg_upgrade', '--no-sync',        '-d', $oldnode->data_dir,
@@ -221,14 +256,24 @@ command_ok(
 		'-P',         $newnode->port
 	],
 	'run of pg_upgrade for new instance');
+ok( !-d $newnode->data_dir . "/pg_upgrade_output.d",
+	"pg_upgrade_output.d/ removed after pg_upgrade success");
+
 $newnode->start;
 
 # Check if there are any logs coming from pg_upgrade, that would only be
 # retained on failure.
-my $log_path = $newnode->data_dir . "/pg_upgrade_output.d/log";
+my $log_path = $newnode->data_dir . "/pg_upgrade_output.d";
 if (-d $log_path)
 {
-	foreach my $log (glob("$log_path/*"))
+	my @log_files;
+	find(
+		sub {
+			push @log_files, $File::Find::name
+			  if $File::Find::name =~ m/.*\.log/;
+		},
+		$newnode->data_dir . "/pg_upgrade_output.d");
+	foreach my $log (@log_files)
 	{
 		note "=== contents of $log ===\n";
 		print slurp_file($log);

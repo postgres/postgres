@@ -768,7 +768,10 @@ psql --username=postgres --file=script.sql postgres
   <para>
    <application>pg_upgrade</application> creates various working files, such
    as schema dumps, stored within <literal>pg_upgrade_output.d</literal> in
-   the directory of the new cluster.
+   the directory of the new cluster. Each run creates a new subdirectory named
+   with a timestamp formatted as per ISO 8601
+   (<literal>%Y%m%dT%H%M%S</literal>), where all the generated files are
+   stored.
   </para>
 
   <para>

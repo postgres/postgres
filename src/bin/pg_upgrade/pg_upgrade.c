@@ -58,7 +58,6 @@ static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
 static void make_outputdirs(char *pgdata);
 static void setup(char *argv0, bool *live_check);
-static void cleanup(void);
 
 ClusterInfo old_cluster,
 			new_cluster;
@@ -204,7 +203,7 @@ main(int argc, char **argv)
 
 	pg_free(deletion_script_file_name);
 
-	cleanup();
+	cleanup_output_dirs();
 
 	return 0;
 }
@@ -221,19 +220,54 @@ make_outputdirs(char *pgdata)
 	char	  **filename;
 	time_t		run_time = time(NULL);
 	char		filename_path[MAXPGPATH];
+	char		timebuf[128];
+	struct timeval time;
+	time_t		tt;
+	int			len;
 
-	log_opts.basedir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
-	log_opts.dumpdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s", pgdata, DUMP_OUTPUTDIR);
-	log_opts.logdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.logdir, MAXPGPATH, "%s/%s", pgdata, LOG_OUTPUTDIR);
+	log_opts.rootdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.rootdir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("buffer for root directory too small");
 
-	if (mkdir(log_opts.basedir, pg_dir_create_mode))
+	/* BASE_OUTPUTDIR/$timestamp/ */
+	gettimeofday(&time, NULL);
+	tt = (time_t) time.tv_sec;
+	strftime(timebuf, sizeof(timebuf), "%Y%m%dT%H%M%S", localtime(&tt));
+	/* append milliseconds */
+	snprintf(timebuf + strlen(timebuf), sizeof(timebuf) - strlen(timebuf),
+			 ".%03d", (int) (time.tv_usec / 1000));
+	log_opts.basedir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", log_opts.rootdir,
+				   timebuf);
+	if (len >= MAXPGPATH)
+		pg_fatal("buffer for base directory too small");
+
+	/* BASE_OUTPUTDIR/$timestamp/dump/ */
+	log_opts.dumpdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s/%s", log_opts.rootdir,
+				   timebuf, DUMP_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("buffer for dump directory too small");
+
+	/* BASE_OUTPUTDIR/$timestamp/log/ */
+	log_opts.logdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.logdir, MAXPGPATH, "%s/%s/%s", log_opts.rootdir,
+				   timebuf, LOG_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("buffer for log directory too small");
+
+	/*
+	 * Ignore the error case where the root path exists, as it is kept the
+	 * same across runs.
+	 */
+	if (mkdir(log_opts.rootdir, pg_dir_create_mode) < 0 && errno != EEXIST)
+		pg_fatal("could not create directory \"%s\": %m\n", log_opts.rootdir);
+	if (mkdir(log_opts.basedir, pg_dir_create_mode) < 0)
 		pg_fatal("could not create directory \"%s\": %m\n", log_opts.basedir);
-	if (mkdir(log_opts.dumpdir, pg_dir_create_mode))
+	if (mkdir(log_opts.dumpdir, pg_dir_create_mode) < 0)
 		pg_fatal("could not create directory \"%s\": %m\n", log_opts.dumpdir);
-	if (mkdir(log_opts.logdir, pg_dir_create_mode))
+	if (mkdir(log_opts.logdir, pg_dir_create_mode) < 0)
 		pg_fatal("could not create directory \"%s\": %m\n", log_opts.logdir);
 
 	snprintf(filename_path, sizeof(filename_path), "%s/%s", log_opts.logdir,
@@ -744,15 +778,4 @@ set_frozenxids(bool minmxid_only)
 	PQfinish(conn_template1);
 
 	check_ok();
-}
-
-
-static void
-cleanup(void)
-{
-	fclose(log_opts.internal);
-
-	/* Remove dump and log files? */
-	if (!log_opts.retain)
-		(void) rmtree(log_opts.basedir, true);
 }

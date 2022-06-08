@@ -30,12 +30,14 @@
 #define DB_DUMP_FILE_MASK	"pg_upgrade_dump_%u.custom"
 
 /*
- * Base directories that include all the files generated internally,
- * from the root path of the new cluster.
+ * Base directories that include all the files generated internally, from the
+ * root path of the new cluster.  The paths are dynamically built as of
+ * BASE_OUTPUTDIR/$timestamp/{LOG_OUTPUTDIR,DUMP_OUTPUTDIR} to ensure their
+ * uniqueness in each run.
  */
 #define BASE_OUTPUTDIR		"pg_upgrade_output.d"
-#define LOG_OUTPUTDIR		BASE_OUTPUTDIR "/log"
-#define DUMP_OUTPUTDIR		BASE_OUTPUTDIR "/dump"
+#define LOG_OUTPUTDIR		 "log"
+#define DUMP_OUTPUTDIR		 "dump"
 
 #define DB_DUMP_LOG_FILE_MASK	"pg_upgrade_dump_%u.log"
 #define SERVER_LOG_FILE		"pg_upgrade_server.log"
@@ -276,7 +278,8 @@ typedef struct
 	bool		verbose;		/* true -> be verbose in messages */
 	bool		retain;			/* retain log files on success */
 	/* Set of internal directories for output files */
-	char	   *basedir;		/* Base output directory */
+	char	   *rootdir;		/* Root directory, aka pg_upgrade_output.d */
+	char	   *basedir;		/* Base output directory, with timestamp */
 	char	   *dumpdir;		/* Dumps */
 	char	   *logdir;			/* Log files */
 	bool		isatty;			/* is stdout a tty */
@@ -432,6 +435,7 @@ void		report_status(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3
 void		pg_log(eLogType type, const char *fmt,...) pg_attribute_printf(2, 3);
 void		pg_fatal(const char *fmt,...) pg_attribute_printf(1, 2) pg_attribute_noreturn();
 void		end_progress_output(void);
+void		cleanup_output_dirs(void);
 void		prep_status(const char *fmt,...) pg_attribute_printf(1, 2);
 void		prep_status_progress(const char *fmt,...) pg_attribute_printf(1, 2);
 unsigned int str2uint(const char *str);

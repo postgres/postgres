@@ -55,6 +55,48 @@ end_progress_output(void)
 		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, "");
 }
 
+/*
+ * Remove any logs generated internally.  To be used once when exiting.
+ */
+void
+cleanup_output_dirs(void)
+{
+	fclose(log_opts.internal);
+
+	/* Remove dump and log files? */
+	if (log_opts.retain)
+		return;
+
+	(void) rmtree(log_opts.basedir, true);
+
+	/* Remove pg_upgrade_output.d only if empty */
+	switch (pg_check_dir(log_opts.rootdir))
+	{
+		case 0:					/* non-existent */
+		case 3:					/* exists and contains a mount point */
+			Assert(false);
+			break;
+
+		case 1:					/* exists and empty */
+		case 2:					/* exists and contains only dot files */
+			(void) rmtree(log_opts.rootdir, true);
+			break;
+
+		case 4:					/* exists */
+
+			/*
+			 * Keep the root directory as this includes some past log
+			 * activity.
+			 */
+			break;
+
+		default:
+			/* different failure, just report it */
+			pg_log(PG_WARNING, "could not access directory \"%s\": %m",
+				   log_opts.rootdir);
+			break;
+	}
+}
 
 /*
  * prep_status
