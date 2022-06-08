@@ -446,9 +446,13 @@ cache_reduce_memory(MemoizeState *mstate, MemoizeKey *specialkey)
 		 */
 		entry = memoize_lookup(mstate->hashtable, NULL);
 
-		/* A good spot to check for corruption of the table and LRU list. */
-		Assert(entry != NULL);
-		Assert(entry->key == key);
+		/*
+		 * Sanity check that we found the entry belonging to the LRU list
+		 * item.  A misbehaving hash or equality function could cause the
+		 * entry not to be found or the wrong entry to be found.
+		 */
+		if (unlikely(entry == NULL || entry->key != key))
+			elog(ERROR, "could not find memoization table entry");
 
 		/*
 		 * If we're being called to free memory while the cache is being
