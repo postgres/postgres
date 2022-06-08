@@ -814,19 +814,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
-      <term><option>--verbose-errors</option></term>
-      <listitem>
-       <para>
-        Print messages about all errors and failures (errors without retrying)
-        including which limit for retries was exceeded and how far it was
-        exceeded for the serialization/deadlock failures. (Note that in this
-        case the output can be significantly increased.).
-        See <xref linkend="failures-and-retries"/> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--progress-timestamp</option></term>
       <listitem>
        <para>
@@ -900,6 +887,19 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Show the actual code of builtin script <replaceable>scriptname</replaceable>
         on stderr, and exit immediately.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--verbose-errors</option></term>
+      <listitem>
+       <para>
+        Print messages about all errors and failures (errors without retrying)
+        including which limit for retries was exceeded and how far it was
+        exceeded for the serialization/deadlock failures. (Note that in this
+        case the output can be significantly increased.).
+        See <xref linkend="failures-and-retries"/> for more information.
        </para>
       </listitem>
      </varlistentry>
