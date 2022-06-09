@@ -1062,44 +1062,6 @@ PrintQueryResult(PGresult *result, bool last, bool is_watch, const printQueryOpt
 }
 
 /*
- * Data structure and functions to record notices while they are
- * emitted, so that they can be shown later.
- *
- * We need to know which result is last, which requires to extract
- * one result in advance, hence two buffers are needed.
- */
-struct t_notice_messages
-{
-	PQExpBufferData messages[2];
-	int			current;
-};
-
-/*
- * Store notices in appropriate buffer, for later display.
- */
-static void
-AppendNoticeMessage(void *arg, const char *msg)
-{
-	struct t_notice_messages *notices = arg;
-
-	appendPQExpBufferStr(&notices->messages[notices->current], msg);
-}
-
-/*
- * Show notices stored in buffer, which is then reset.
- */
-static void
-ShowNoticeMessage(struct t_notice_messages *notices)
-{
-	PQExpBufferData *current = &notices->messages[notices->current];
-
-	if (*current->data != '\0')
-		pg_log_info("%s", current->data);
-	resetPQExpBuffer(current);
-}
-
-
-/*
  * SendQuery: send the query string to the backend
  * (and print out result)
  *
@@ -1483,7 +1445,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 	instr_time	before,
 				after;
 	PGresult   *result;
-	struct t_notice_messages notices;
 
 	if (timing)
 		INSTR_TIME_SET_CURRENT(before);
@@ -1513,12 +1474,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		return 0;
 	}
 
-	/* intercept notices */
-	notices.current = 0;
-	initPQExpBuffer(&notices.messages[0]);
-	initPQExpBuffer(&notices.messages[1]);
-	PQsetNoticeProcessor(pset.db, AppendNoticeMessage, &notices);
-
 	/* first result */
 	result = PQgetResult(pset.db);
 
@@ -1536,7 +1491,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			 */
 			const char *error = PQresultErrorMessage(result);
 
-			ShowNoticeMessage(&notices);
 			if (strlen(error))
 				pg_log_info("%s", error);
 
@@ -1601,8 +1555,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		if (result_status == PGRES_COPY_IN ||
 			result_status == PGRES_COPY_OUT)
 		{
-			ShowNoticeMessage(&notices);
-
 			if (is_watch)
 			{
 				ClearOrSaveAllResults();
@@ -1610,12 +1562,7 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 				return -1;
 			}
 
-			/* use normal notice processor during COPY */
-			PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-
 			success &= HandleCopyResult(&result);
-
-			PQsetNoticeProcessor(pset.db, AppendNoticeMessage, &notices);
 		}
 
 		/*
@@ -1623,9 +1570,7 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 		 * string, it will return NULL.  Otherwise, we'll have other results
 		 * to process.  We need to do that to check whether this is the last.
 		 */
-		notices.current ^= 1;
 		next_result = PQgetResult(pset.db);
-		notices.current ^= 1;
 		last = (next_result == NULL);
 
 		/*
@@ -1647,9 +1592,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			*elapsed_msec = INSTR_TIME_GET_MILLISEC(after);
 		}
 
-		/* notices already shown above for copy */
-		ShowNoticeMessage(&notices);
-
 		/* this may or may not print something depending on settings */
 		if (result != NULL)
 			success &= PrintQueryResult(result, last, false, opt, printQueryFout);
@@ -1659,7 +1601,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			SetResultVariables(result, true);
 
 		ClearOrSaveResult(result);
-		notices.current ^= 1;
 		result = next_result;
 
 		if (cancel_pressed)
@@ -1668,11 +1609,6 @@ ExecQueryAndProcessResults(const char *query, double *elapsed_msec, bool *svpt_g
 			break;
 		}
 	}
-
-	/* reset notice hook */
-	PQsetNoticeProcessor(pset.db, NoticeProcessor, NULL);
-	termPQExpBuffer(&notices.messages[0]);
-	termPQExpBuffer(&notices.messages[1]);
 
 	/* may need this to recover from conn loss during COPY */
 	if (!CheckConnection())
