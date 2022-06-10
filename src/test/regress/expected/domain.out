@@ -277,6 +277,29 @@ Rules:
     ON DELETE TO dcomptable DO INSTEAD  UPDATE dcomptable SET d1.r = (dcomptable.d1).r - 1::double precision, d1.i = (dcomptable.d1).i + 1::double precision
   WHERE (dcomptable.d1).i > 0::double precision
 
+create function makedcomp(r float8, i float8) returns dcomptype
+as 'select row(r, i)' language sql;
+select makedcomp(1,2);
+ makedcomp 
+-----------
+ (1,2)
+(1 row)
+
+select makedcomp(2,1);  -- fail
+ERROR:  value for domain dcomptype violates check constraint "c1"
+select * from makedcomp(1,2) m;
+ r | i 
+---+---
+ 1 | 2
+(1 row)
+
+select m, m is not null from makedcomp(1,2) m;
+   m   | ?column? 
+-------+----------
+ (1,2) | t
+(1 row)
+
+drop function makedcomp(float8, float8);
 drop table dcomptable;
 drop type comptype cascade;
 NOTICE:  drop cascades to type dcomptype
