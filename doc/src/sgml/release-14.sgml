@@ -388,35 +388,6 @@ Branch: REL_14_STABLE [32a85ee46] 2022-06-06 11:26:57 -0400
 
     <listitem>
 <!--
-Author: Michael Paquier <michael@paquier.xyz>
-Branch: master [157f8739a] 2022-06-06 11:05:59 +0900
-Branch: REL_14_STABLE [a04ccf6df] 2022-06-06 11:07:22 +0900
-Branch: REL_13_STABLE [b364cfdfa] 2022-06-06 11:07:27 +0900
-Branch: REL_12_STABLE [0a1e4f0ca] 2022-06-06 11:07:31 +0900
-Branch: REL_11_STABLE [b0bd9327d] 2022-06-06 11:07:35 +0900
-Branch: REL_10_STABLE [c3df4d53c] 2022-06-06 11:07:39 +0900
--->
-     <para>
-      Fix <application>psql</application>'s
-      <option>--single-transaction</option> option to consider client-side
-      errors as a reason to roll back the transaction (Kyotaro Horiguchi,
-      Michael Paquier)
-     </para>
-
-     <para>
-      Previously, <application>psql</application> blindly
-      issued <command>COMMIT</command> at the end of
-      a <option>--single-transaction</option> session.  Now it will
-      instead issue <command>ROLLBACK</command> if any errors were
-      detected.  This makes no difference for server-detected errors
-      (because the server would then convert <command>COMMIT</command>
-      to <command>ROLLBACK</command> anyway), but it prevents committing
-      after a client-side error.
-     </para>
-    </listitem>
-
-    <listitem>
-<!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 Branch: master [eb39610f8] 2022-06-01 16:15:47 -0400
 Branch: REL_14_STABLE [1072e4c45] 2022-06-01 16:15:47 -0400
