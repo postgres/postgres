@@ -1,6 +1,465 @@
 <!-- doc/src/sgml/release-14.sgml -->
 <!-- See header comment in release.sgml about typical markup -->
 
+ <sect1 id="release-14-4">
+  <title>Release 14.4</title>
+
+  <formalpara>
+  <title>Release date:</title>
+  <para>2022-06-16</para>
+  </formalpara>
+
+  <para>
+   This release contains a variety of fixes from 14.3.
+   For information about new features in major release 14, see
+   <xref linkend="release-14"/>.
+  </para>
+
+  <sect2>
+   <title>Migration to Version 14.4</title>
+
+   <para>
+    A dump/restore is not required for those running 14.X.
+   </para>
+
+   <para>
+    However, if you have any indexes that were created using
+    the <option>CONCURRENTLY</option> option under 14.X,
+    you should re-index them after updating.
+    See the first changelog entry below.
+   </para>
+
+   <para>
+    Also, if you are upgrading from a version earlier than 14.3,
+    see <xref linkend="release-14-3"/>.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Changes</title>
+
+   <itemizedlist>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [e28bb8851] 2022-05-31 21:24:59 +0200
+Branch: REL_14_STABLE [042b584c7] 2022-05-31 21:24:59 +0200
+-->
+     <para>
+      Prevent possible corruption of indexes created or rebuilt with
+      the <literal>CONCURRENTLY</literal> option (&Aacute;lvaro Herrera)
+     </para>
+
+     <para>
+      An optimization added in v14 caused <command>CREATE INDEX ...
+      CONCURRENTLY</command> and <command>REINDEX
+      ... CONCURRENTLY</command> to sometimes miss indexing rows that were
+      updated during the index build.  Revert that optimization.
+      It is recommended that any indexes made with
+      the <literal>CONCURRENTLY</literal> option be rebuilt after
+      installing this update.  (Alternatively, rebuild them
+      without <literal>CONCURRENTLY</literal>.)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [fa5185b26] 2022-06-08 12:39:09 +1200
+Branch: REL_14_STABLE [cbcea3b91] 2022-06-08 12:39:44 +1200
+-->
+     <para>
+      Harden Memoize plan node against non-deterministic equality
+      functions (David Rowley)
+     </para>
+
+     <para>
+      Memoize could crash if a data type's equality or hash functions gave
+      inconsistent results across different calls.  Throw a runtime error
+      instead.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: David Rowley <drowley@postgresql.org>
+Branch: master [1e731ed12] 2022-05-16 16:07:56 +1200
+Branch: REL_14_STABLE [23c2b76a8] 2022-05-16 16:08:37 +1200
+-->
+     <para>
+      Fix incorrect cost estimates for Memoize plans (David Rowley)
+     </para>
+
+     <para>
+      This mistake could lead to Memoize being used when it isn't really
+      the best plan, or to very long executor startup times due to
+      initializing an overly-large hash table for a Memoize node.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [1218780cc] 2022-06-10 10:35:57 -0400
+Branch: REL_14_STABLE [77c1d92cb] 2022-06-10 10:35:57 -0400
+Branch: REL_13_STABLE [254cd7f31] 2022-06-10 10:35:57 -0400
+Branch: REL_12_STABLE [d3ef5c3ef] 2022-06-10 10:35:57 -0400
+Branch: REL_11_STABLE [199aac8b2] 2022-06-10 10:35:57 -0400
+-->
+     <para>
+      Fix queries in which a <quote>whole-row variable</quote> references
+      the result of a function that returns a domain over composite type
+      (Tom Lane)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [79b58c6f6] 2022-05-12 11:31:46 -0400
+Branch: REL_14_STABLE [ac51c9fba] 2022-05-12 11:31:46 -0400
+Branch: REL_13_STABLE [b7579b25c] 2022-05-12 11:31:46 -0400
+Branch: REL_12_STABLE [301b91c56] 2022-05-12 11:31:46 -0400
+Branch: REL_11_STABLE [7f7f1750d] 2022-05-12 11:31:46 -0400
+Branch: REL_10_STABLE [b53442f6f] 2022-05-12 11:31:46 -0400
+-->
+     <para>
+      Fix <quote>variable not found in subplan target list</quote> planner
+      error when pulling up a sub-<literal>SELECT</literal> that's
+      referenced in a <literal>GROUPING</literal> function (Richard Guo)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [bf4717b09] 2022-06-07 15:34:30 -0400
+Branch: REL_14_STABLE [5c3b5f7db] 2022-06-07 15:34:30 -0400
+Branch: REL_13_STABLE [a36196972] 2022-06-07 15:34:30 -0400
+Branch: REL_12_STABLE [435251b85] 2022-06-07 15:34:30 -0400
+Branch: REL_11_STABLE [d628ce048] 2022-06-07 15:34:30 -0400
+Branch: REL_10_STABLE [fb646cbd5] 2022-06-07 15:34:30 -0400
+-->
+     <para>
+      Prevent <function>pg_stat_get_subscription()</function> from
+      possibly returning an extra row containing garbage values
+      (Kuntal Ghosh)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Heikki Linnakangas <heikki.linnakangas@iki.fi>
+Branch: master [fc36ac52e] 2022-05-29 23:54:25 +0300
+Branch: REL_14_STABLE [f82595ac9] 2022-05-29 23:57:16 +0300
+-->
+     <para>
+      Fix <command>COPY FROM</command>'s error checking in the case where
+      the database encoding is <literal>SQL_ASCII</literal> while the
+      client's encoding is a multi-byte encoding (Heikki Linnakangas)
+     </para>
+
+     <para>
+      This mistake could lead to false complaints of invalidly-encoded
+      input data.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [0fbf01120] 2022-05-18 20:28:31 +0200
+Branch: REL_14_STABLE [94edb85d2] 2022-05-18 20:28:31 +0200
+Branch: REL_13_STABLE [80656f00f] 2022-05-18 20:28:31 +0200
+Branch: REL_12_STABLE [ade17703d] 2022-05-18 20:28:31 +0200
+Branch: REL_11_STABLE [ba83de8ad] 2022-05-18 20:28:31 +0200
+Branch: REL_10_STABLE [16cb7db34] 2022-05-18 20:28:31 +0200
+Branch: master [62221ef18] 2022-05-18 23:19:53 +0200
+Branch: REL_14_STABLE [e8b93c6e2] 2022-05-18 23:19:53 +0200
+Branch: REL_13_STABLE [5139db556] 2022-05-18 23:19:53 +0200
+Branch: REL_12_STABLE [0ebd20e20] 2022-05-18 23:19:53 +0200
+Branch: REL_11_STABLE [50bf3157a] 2022-05-18 23:19:53 +0200
+Branch: REL_10_STABLE [29d111518] 2022-05-18 23:19:53 +0200
+-->
+     <para>
+      Avoid crashing if too many column aliases are attached to
+      an <literal>XMLTABLE</literal> or <literal>JSON_TABLE</literal>
+      construct (&Aacute;lvaro Herrera)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [c7461fc25] 2022-05-21 14:45:58 -0400
+Branch: REL_14_STABLE [6f7eec119] 2022-05-21 14:45:58 -0400
+Branch: REL_13_STABLE [fefd54631] 2022-05-21 14:45:58 -0400
+Branch: REL_12_STABLE [bb2c04676] 2022-05-21 14:45:58 -0400
+Branch: REL_11_STABLE [f3b8d7244] 2022-05-21 14:45:58 -0400
+Branch: REL_10_STABLE [7686403b4] 2022-05-21 14:45:58 -0400
+-->
+     <para>
+      When decompiling a view or rule, show a <command>SELECT</command>
+      output column's <literal>AS "?column?"</literal> alias clause
+      if it could be referenced elsewhere (Tom Lane)
+     </para>
+
+     <para>
+      Previously, this auto-generated alias was always hidden; but there
+      are corner cases where doing so results in a non-restorable view or
+      rule definition.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+Branch: master [602986191] 2022-05-20 18:52:55 +0200
+Branch: REL_14_STABLE [58b088a9b] 2022-05-20 18:52:55 +0200
+Branch: REL_13_STABLE [3753a169e] 2022-05-20 18:52:55 +0200
+Branch: REL_12_STABLE [4492e73a6] 2022-05-20 18:52:55 +0200
+Branch: REL_11_STABLE [6c6ea6ea8] 2022-05-20 18:52:55 +0200
+Branch: REL_10_STABLE [70f70d7d3] 2022-05-20 18:52:55 +0200
+Branch: REL_10_STABLE [8c47622bb] 2022-05-20 19:05:55 +0200
+-->
+     <para>
+      Report implicitly-created operator families to event triggers
+      (Masahiko Sawada)
+     </para>
+
+     <para>
+      If <command>CREATE OPERATOR CLASS</command> results in the implicit
+      creation of an operator family, that object was not reported to
+      event triggers that should capture such events.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: REL_14_STABLE [6dced63b4] 2022-05-16 11:26:22 +0900
+Branch: REL_13_STABLE [2e9559b30] 2022-05-16 11:26:26 +0900
+Branch: REL_12_STABLE [7e59b1219] 2022-05-16 11:26:30 +0900
+Branch: REL_11_STABLE [4525151d4] 2022-05-16 11:26:36 +0900
+Branch: REL_10_STABLE [60e956eb8] 2022-05-16 11:26:41 +0900
+-->
+     <para>
+      Fix control file updates made when a restartpoint is running during
+      promotion of a standby server (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      Previously, when the restartpoint completed it could incorrectly
+      update the last-checkpoint fields of the control file, potentially
+      leading to PANIC and failure to restart if the server crashes before
+      the next normal checkpoint completes.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Amit Kapila <akapila@postgresql.org>
+Branch: master [f95d53ede] 2022-05-11 11:11:44 +0530
+Branch: REL_14_STABLE [d6da71fa8] 2022-05-11 10:51:04 +0530
+Branch: REL_13_STABLE [55558df23] 2022-05-11 10:41:24 +0530
+Branch: REL_12_STABLE [f832b5007] 2022-05-11 10:25:56 +0530
+Branch: REL_11_STABLE [87c1dd246] 2022-05-11 10:12:23 +0530
+Branch: REL_10_STABLE [a4015ec03] 2022-05-11 10:01:35 +0530
+-->
+     <para>
+      Prevent triggering of
+      standby's <varname>wal_receiver_timeout</varname> during logical
+      replication of large transactions (Wang Wei, Amit Kapila)
+     </para>
+
+     <para>
+      If a large transaction on the primary server sends no data to the
+      standby (perhaps because no table it changes is published), it was
+      possible for the standby to timeout.  Fix that by ensuring we send
+      keepalive messages periodically in such situations.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [16c80e7d0] 2022-05-31 14:47:44 -0400
+Branch: REL_14_STABLE [c47a55852] 2022-05-31 14:47:44 -0400
+Branch: REL_13_STABLE [c73748b68] 2022-05-31 14:47:44 -0400
+Branch: REL_12_STABLE [a3faebd6a] 2022-05-31 14:47:44 -0400
+Branch: REL_11_STABLE [ae758e603] 2022-05-31 14:47:44 -0400
+Branch: REL_10_STABLE [2114910ca] 2022-05-31 14:47:44 -0400
+-->
+     <para>
+      Prevent open-file leak when reading an invalid timezone abbreviation
+      file (Kyotaro Horiguchi)
+     </para>
+
+     <para>
+      Such cases could result in harmless warning messages.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [f1431f3bf] 2022-05-28 12:12:40 +0900
+Branch: REL_14_STABLE [fe441a031] 2022-05-28 12:12:46 +0900
+Branch: REL_13_STABLE [1e6802990] 2022-05-28 12:12:51 +0900
+Branch: REL_12_STABLE [ae236bf66] 2022-05-28 12:12:55 +0900
+Branch: REL_11_STABLE [c3db8a2e2] 2022-05-28 12:12:58 +0900
+Branch: REL_10_STABLE [1b40ceea2] 2022-05-28 12:13:02 +0900
+-->
+     <para>
+      Allow custom server parameters to have short descriptions that are
+      NULL (Steve Chavez)
+     </para>
+
+     <para>
+      Previously, although extensions could choose to create such
+      settings, some code paths would crash while processing them.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [2b65de7fc] 2022-05-26 14:14:05 -0400
+Branch: REL_14_STABLE [b4be4a082] 2022-05-26 14:14:05 -0400
+Branch: REL_13_STABLE [9e3dbc6fd] 2022-05-26 14:14:05 -0400
+Branch: REL_12_STABLE [01ab9fb7d] 2022-05-26 14:14:05 -0400
+Branch: REL_11_STABLE [a44bc8b8f] 2022-05-26 14:14:05 -0400
+Branch: REL_10_STABLE [ef54a6576] 2022-05-26 14:14:05 -0400
+-->
+     <para>
+      Remove misguided SSL key file ownership check
+      in <application>libpq</application> (Tom Lane)
+     </para>
+
+     <para>
+      In the previous minor releases, we copied the server's permission
+      checking rules for SSL private key files into libpq.  But we should
+      not have also copied the server's file-ownership check.  While that
+      works in normal use-cases, it can result in an unexpected failure
+      for clients running as root, and perhaps in other cases.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [6d157e7cb] 2022-06-06 11:20:21 -0400
+Branch: REL_14_STABLE [a5dbca460] 2022-06-06 11:20:31 -0400
+Branch: REL_13_STABLE [16d68007c] 2022-06-06 11:20:36 -0400
+Branch: REL_12_STABLE [02026cadb] 2022-06-06 11:20:41 -0400
+Branch: REL_11_STABLE [d82ed5b2f] 2022-06-06 11:20:46 -0400
+Branch: REL_10_STABLE [89254606b] 2022-06-06 11:20:52 -0400
+-->
+     <para>
+      Ensure <application>ecpg</application> reports server connection loss
+      sanely (Tom Lane)
+     </para>
+
+     <para>
+      Misprocessing of a libpq-generated error result, such as a report of
+      lost connection, would lead to printing <quote>(null)</quote>
+      instead of a useful error message; or in older releases it would
+      lead to a crash.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [51da23159] 2022-06-06 11:26:57 -0400
+Branch: REL_14_STABLE [32a85ee46] 2022-06-06 11:26:57 -0400
+-->
+     <para>
+      Prevent crash after server connection loss
+      in <application>pg_amcheck</application> (Tom Lane)
+     </para>
+
+     <para>
+      Misprocessing of a libpq-generated error result, such as a report of
+      lost connection, would lead to a crash.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+Branch: master [157f8739a] 2022-06-06 11:05:59 +0900
+Branch: REL_14_STABLE [a04ccf6df] 2022-06-06 11:07:22 +0900
+Branch: REL_13_STABLE [b364cfdfa] 2022-06-06 11:07:27 +0900
+Branch: REL_12_STABLE [0a1e4f0ca] 2022-06-06 11:07:31 +0900
+Branch: REL_11_STABLE [b0bd9327d] 2022-06-06 11:07:35 +0900
+Branch: REL_10_STABLE [c3df4d53c] 2022-06-06 11:07:39 +0900
+-->
+     <para>
+      Fix <application>psql</application>'s
+      <option>--single-transaction</option> option to consider client-side
+      errors as a reason to roll back the transaction (Kyotaro Horiguchi,
+      Michael Paquier)
+     </para>
+
+     <para>
+      Previously, <application>psql</application> blindly
+      issued <command>COMMIT</command> at the end of
+      a <option>--single-transaction</option> session.  Now it will
+      instead issue <command>ROLLBACK</command> if any errors were
+      detected.  This makes no difference for server-detected errors
+      (because the server would then convert <command>COMMIT</command>
+      to <command>ROLLBACK</command> anyway), but it prevents committing
+      after a client-side error.
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [eb39610f8] 2022-06-01 16:15:47 -0400
+Branch: REL_14_STABLE [1072e4c45] 2022-06-01 16:15:47 -0400
+Branch: REL_13_STABLE [eeac7dd9f] 2022-06-01 16:15:47 -0400
+Branch: REL_12_STABLE [c08538734] 2022-06-01 16:15:47 -0400
+Branch: REL_11_STABLE [b5265196e] 2022-06-01 16:15:47 -0400
+Branch: REL_10_STABLE [d5e1d5ed9] 2022-06-01 16:15:47 -0400
+Branch: REL9_6_STABLE [d4c161842] 2022-06-01 16:15:47 -0400
+Branch: REL9_5_STABLE [9fdeae848] 2022-06-01 16:15:47 -0400
+Branch: REL9_4_STABLE [b53780e1b] 2022-06-01 16:15:47 -0400
+Branch: REL9_3_STABLE [a3b685fdd] 2022-06-01 16:15:47 -0400
+Branch: REL9_2_STABLE [6f9ea6cf3] 2022-06-01 16:15:47 -0400
+-->
+     <para>
+      Adjust PL/Perl test case so it will work under Perl 5.36
+      (Dagfinn Ilmari Mannsåker)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [aff45c879] 2022-05-10 18:42:02 -0400
+Branch: REL_14_STABLE [12736e7dc] 2022-05-10 18:42:02 -0400
+Branch: REL_13_STABLE [af9b96767] 2022-05-10 18:42:02 -0400
+Branch: REL_12_STABLE [8ed13fb93] 2022-05-10 18:42:02 -0400
+Branch: REL_11_STABLE [36d76da81] 2022-05-10 18:42:02 -0400
+Branch: REL_10_STABLE [c61f36d99] 2022-05-10 18:42:02 -0400
+-->
+     <para>
+      Avoid incorrectly using an
+      out-of-date <application>libldap_r</application> library when
+      multiple <productname>OpenLDAP</productname> installations are
+      present while building <productname>PostgreSQL</productname>
+      (Tom Lane)
+     </para>
+    </listitem>
+
+   </itemizedlist>
+
+  </sect2>
+ </sect1>
+
  <sect1 id="release-14-3">
   <title>Release 14.3</title>
 
