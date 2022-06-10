@@ -514,10 +514,7 @@ appendJsonTableColumns(JsonTableContext *cxt, List *columns)
 
 		tf->coltypes = lappend_oid(tf->coltypes, typid);
 		tf->coltypmods = lappend_int(tf->coltypmods, typmod);
-		tf->colcollations = lappend_oid(tf->colcollations,
-										type_is_collatable(typid)
-										? DEFAULT_COLLATION_OID
-										: InvalidOid);
+		tf->colcollations = lappend_oid(tf->colcollations, get_typcollation(typid));
 		tf->colvalexprs = lappend(tf->colvalexprs, colexpr);
 	}
 }
