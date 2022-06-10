@@ -591,10 +591,8 @@ EOF
         <application>psql</application> to issue a <command>BEGIN</command> command
         before the first such option and a <command>COMMIT</command> command after
         the last one, thereby wrapping all the commands into a single
-        transaction. If any of the commands fails, a
-        <command>ROLLBACK</command> command is sent instead. This ensures that
-        either all the commands complete successfully, or no changes are
-        applied.
+        transaction.  This ensures that either all the commands complete
+        successfully, or no changes are applied.
        </para>
 
        <para>
