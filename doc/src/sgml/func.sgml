@@ -18047,7 +18047,7 @@ FROM
 
  </sect2>
 
- <sect2>
+ <sect2 id="functions-sqljson-table">
   <title>JSON_TABLE</title>
   <indexterm>
    <primary>json_table</primary>
