@@ -1,11 +1,11 @@
 # LANGUAGE message translation file for pg_amcheck
-# Copyright (C) 2021 PostgreSQL Global Development Group
+# Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_amcheck (PostgreSQL) package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# Kyotaro Horiguchi <horikyota.ntt@gmail.com>, 2021.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
+"Project-Id-Version: pg_amcheck (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-25 17:21+0900\n"
 "PO-Revision-Date: 2021-08-25 11:19+0900\n"

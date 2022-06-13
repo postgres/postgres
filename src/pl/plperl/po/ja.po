@@ -1,11 +1,11 @@
 # Japanese message translation file for plperl
-# Copyright (C) 2019 PostgreSQL Global Development Group
+# Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
 # Honda Shigehiro <honda@postgresql.jp>, 2012
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: plperl (PostgreSQL 12 beta 1)\n"
+"Project-Id-Version: plperl (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-06-11 11:34+0900\n"
 "PO-Revision-Date: 2021-08-25 11:26+0900\n"

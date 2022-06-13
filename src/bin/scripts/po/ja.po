@@ -1,13 +1,16 @@
-# Japanese message translation file for scripts
-# Copyright (C) 2021 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# pgscripts.po
+#   Japanese message translation file for scripts
+#
+# Copyright (C) 2011-2022 PostgreSQL Global Development Group
+#
+# This file is distributed under the same license as the PostgreSQL package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: scripts (PostgreSQL 13)\n"
+"Project-Id-Version: scripts (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-20 15:41+0900\n"
-"PO-Revision-Date: 2021-08-25 11:23+0900\n"
+"POT-Creation-Date: 2022-05-12 14:05+0900\n"
+"PO-Revision-Date: 2022-05-12 14:50+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -57,11 +60,11 @@ msgstr "ユーザーが存在しません"
 msgid "user name lookup failure: error code %lu"
 msgstr "ユーザー名の参照に失敗: エラーコード %lu"
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "キャンセル要求を送信しました\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "キャンセル要求を送信できませんでした: "
 
@@ -96,22 +99,22 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu 行)"
 msgstr[1] "(%lu 行)"
 
-#: ../../fe_utils/print.c:3039
+#: ../../fe_utils/print.c:3040
 #, c-format
 msgid "Interrupted\n"
 msgstr "中断されました\n"
 
-#: ../../fe_utils/print.c:3103
+#: ../../fe_utils/print.c:3104
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "テーブルの内容に見出しを追加できませんでした: 列数%dが制限を超えています。\n"
 
-#: ../../fe_utils/print.c:3143
+#: ../../fe_utils/print.c:3144
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "テーブルの内容にセルを追加できませんでした: 全セル数%dが制限を超えています。\n"
 
-#: ../../fe_utils/print.c:3401
+#: ../../fe_utils/print.c:3402
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "出力フォーマットが無効(内部エラー): %d"
@@ -929,8 +932,8 @@ msgstr "  -q, --quiet                  メッセージを出力しない\n"
 
 #: reindexdb.c:802
 #, c-format
-msgid "  -s, --system                 reindex system catalogs\n"
-msgstr "  -s, --system                 システムカタログのインデックス再構築\n"
+msgid "  -s, --system                 reindex system catalogs only\n"
+msgstr "  -s, --system                 システムカタログのインデックスのみを再構築\n"
 
 #: reindexdb.c:803
 #, c-format

@@ -1,10 +1,13 @@
-# Japanese message translation file for pg_upgrade
-# Copyright (C) 2021 PostgreSQL Global Development Group
-# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# pg_upgrade.po
+#   Japanese message translation file for pg_upgrade
+#
+# Copyright (C) 2011-2022 PostgreSQL Global Development Group
+#
+# This file is distributed under the same license as the PostgreSQL package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_upgrade (PostgreSQL 13)\n"
+"Project-Id-Version: pg_upgrade (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-25 17:22+0900\n"
 "PO-Revision-Date: 2021-08-19 15:37+0900\n"
@@ -785,7 +788,7 @@ msgstr ""
 #: exec.c:205 option.c:226
 #, c-format
 msgid "could not write to log file \"%s\": %m\n"
-msgstr "ログファイル\"%s\"に書き込めませんでした。\n"
+msgstr "ログファイル\"%s\"に書き込めませんでした: %m\n"
 
 #: exec.c:231
 #, c-format

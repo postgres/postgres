@@ -171,17 +171,17 @@ msgstr "Attendait une fin de l'entrée, mais a trouvé « %s »."
 #: ../common/jsonapi.c:1075
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
-msgstr "Élément de tableau ou « ] » attendu, mais trouvé « %s »."
+msgstr "Élément de tableau ou « ] » attendu, mais « %s » trouvé."
 
 #: ../common/jsonapi.c:1078
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
-msgstr "« , » ou « ] » attendu, mais trouvé « %s »."
+msgstr "« , » ou « ] » attendu, mais « %s » trouvé."
 
 #: ../common/jsonapi.c:1081
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
-msgstr "« : » attendu, mais trouvé « %s »."
+msgstr "« : » attendu, mais « %s » trouvé."
 
 #: ../common/jsonapi.c:1084
 #, c-format
@@ -200,7 +200,7 @@ msgstr "Chaîne ou « } » attendu, mais « %s » trouvé."
 #: ../common/jsonapi.c:1092
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
-msgstr "« , » ou « } » attendu, mais trouvé « %s »."
+msgstr "« , » ou « } » attendu, mais « %s » trouvé."
 
 #: ../common/jsonapi.c:1095
 #, c-format
@@ -9019,7 +9019,7 @@ msgstr "ne peut pas créer une relation temporaire comme partition de la relatio
 #: commands/tablecmds.c:2463 commands/tablecmds.c:14252
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
-msgstr "ine peut pas hériter à partir d'une relation temporaire « %s »"
+msgstr "ne peut pas hériter à partir d'une relation temporaire « %s »"
 
 #: commands/tablecmds.c:2473 commands/tablecmds.c:14260
 #, c-format
@@ -9079,7 +9079,7 @@ msgstr "L'expression de génération de la colonne « %s » contient une référ
 #: commands/tablecmds.c:2740 parser/parse_utilcmd.c:1335
 #, c-format
 msgid "Constraint \"%s\" contains a whole-row reference to table \"%s\"."
-msgstr "La constrainte « %s » contient une référence de ligne complète vers la table « %s »."
+msgstr "La contrainte « %s » contient une référence de ligne complète vers la table « %s »."
 
 #: commands/tablecmds.c:2819
 #, c-format
@@ -9494,7 +9494,7 @@ msgstr "la colonne « %s » de la relation « %s » n'est pas une colonne géné
 #: commands/tablecmds.c:7884
 #, c-format
 msgid "cannot refer to non-index column by number"
-msgstr "impossible de référence une colonne non liée à une table par un nombre"
+msgstr "impossible de référencer une colonne non liée à une table par un nombre"
 
 #: commands/tablecmds.c:7927
 #, c-format
@@ -9514,7 +9514,7 @@ msgstr "ne peut modifier les statistiques sur la colonne « %s » de l'index « 
 #: commands/tablecmds.c:7953
 #, c-format
 msgid "Alter statistics on table column instead."
-msgstr "Modifie les statistiques sur la colonne de la table à la place."
+msgstr "Modifiez les statistiques sur la colonne de la table à la place."
 
 #: commands/tablecmds.c:8143
 #, c-format
@@ -12480,7 +12480,7 @@ msgstr "option de séquence « %s » non supportée ici"
 #: gram.y:2840
 #, c-format
 msgid "modulus for hash partition provided more than once"
-msgstr "le modulus pour la partition hash est spécifié plus d'une fois"
+msgstr "le modulo pour la partition hash est spécifié plus d'une fois"
 
 #: gram.y:2849
 #, c-format
@@ -12495,7 +12495,7 @@ msgstr "spécification de limite de partition hash non reconnue « %s »"
 #: gram.y:2864
 #, c-format
 msgid "modulus for hash partition must be specified"
-msgstr "le modulus pour les partition hash doit être spécifié"
+msgstr "le modulo pour les partitions hash doit être spécifié"
 
 #: gram.y:2868
 #, c-format
@@ -12987,12 +12987,12 @@ msgstr "Caractère « = » attendu pour l'attribut « %c »."
 #: libpq/auth-scram.c:815
 #, c-format
 msgid "Attribute expected, but found end of string."
-msgstr "Attribut attendu, mais a trouvé une fin de chaîne."
+msgstr "Attribut attendu, mais fin de chaîne trouvée."
 
 #: libpq/auth-scram.c:828
 #, c-format
 msgid "Attribute expected, but found invalid character \"%s\"."
-msgstr "Attribut attendu, mais a trouvé le caractère invalide « %s »."
+msgstr "Attribut attendu, mais caractère invalide « %s » trouvé."
 
 #: libpq/auth-scram.c:946 libpq/auth-scram.c:968
 #, c-format
@@ -16099,7 +16099,7 @@ msgstr ""
 #: parser/parse_cte.c:323
 #, c-format
 msgid "Cast the output of the non-recursive term to the correct type."
-msgstr "Convertit la sortie du terme non récursif dans le bon type."
+msgstr "Convertissez la sortie du terme non récursif dans le bon type."
 
 #: parser/parse_cte.c:328
 #, c-format
@@ -16129,7 +16129,7 @@ msgstr "avec une clause SEARCH ou CYCLE, le côté droit de l'UNION doit être u
 #: parser/parse_cte.c:401
 #, c-format
 msgid "search column \"%s\" not in WITH query column list"
-msgstr "colonne de recherche « %s » non présent dans la liste des colonnes de la requête WITH"
+msgstr "colonne de recherche « %s » non présente dans la liste des colonnes de la requête WITH"
 
 #: parser/parse_cte.c:408
 #, c-format
@@ -16256,7 +16256,7 @@ msgstr "notation d'attribut .%s appliqué au type %s, qui n'est pas un type comp
 #: parser/parse_expr.c:395 parser/parse_target.c:739
 #, c-format
 msgid "row expansion via \"*\" is not supported here"
-msgstr "l'expansion de ligne via « * » n'est pas supporté ici"
+msgstr "l'expansion de ligne via « * » n'est pas supportée ici"
 
 #: parser/parse_expr.c:516
 msgid "cannot use column reference in DEFAULT expression"
@@ -16274,12 +16274,12 @@ msgstr "la référence à la colonne « %s » est ambigüe"
 #: parser/parse_expr.c:844 parser/parse_param.c:110 parser/parse_param.c:142 parser/parse_param.c:208 parser/parse_param.c:307
 #, c-format
 msgid "there is no parameter $%d"
-msgstr "Il n'y a pas de paramètre $%d"
+msgstr "il n'y a pas de paramètre $%d"
 
 #: parser/parse_expr.c:1044
 #, c-format
 msgid "NULLIF requires = operator to yield boolean"
-msgstr "NULLIF requiert l'opérateur = pour comparer des booleéns"
+msgstr "NULLIF requiert que l'opérateur = retourne une valeur de type booléen"
 
 #. translator: %s is name of a SQL construct, eg NULLIF
 #: parser/parse_expr.c:1050 parser/parse_expr.c:2970
@@ -16301,7 +16301,7 @@ msgstr "la source d'un élément UPDATE multi-colonnes doit être un sous-SELECT
 #: parser/parse_expr.c:1676 parser/parse_expr.c:2149 parser/parse_func.c:2676
 #, c-format
 msgid "set-returning functions are not allowed in %s"
-msgstr "les fonctions renvoyant un ensemble ne sont pas autorisés dans %s"
+msgstr "les fonctions renvoyant un ensemble ne sont pas autorisées dans %s"
 
 #: parser/parse_expr.c:1738
 msgid "cannot use subquery in check constraint"
@@ -16447,7 +16447,7 @@ msgstr "Il existe de nombreus candidats également plausibles."
 #: parser/parse_expr.c:2964
 #, c-format
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
-msgstr "IS DISTINCT FROM requiert l'opérateur = pour comparer des booléens"
+msgstr "IS DISTINCT FROM requiert que l'opérateur = retourne une valeur de type booléen"
 
 #: parser/parse_func.c:194
 #, c-format
@@ -16711,7 +16711,7 @@ msgstr "le nom de la procédure « %s » n'est pas unique"
 #: parser/parse_func.c:2470
 #, c-format
 msgid "Specify the argument list to select the procedure unambiguously."
-msgstr "Définit la liste d'arguments pour sélectionner la procédure sans ambiguïté."
+msgstr "Indiquez la liste d'arguments pour sélectionner la procédure sans ambiguïté."
 
 #: parser/parse_func.c:2475
 #, c-format
@@ -16721,7 +16721,7 @@ msgstr "le nom d'agrégat « %s » n'est pas unique"
 #: parser/parse_func.c:2478
 #, c-format
 msgid "Specify the argument list to select the aggregate unambiguously."
-msgstr "Définit la liste d'arguments pour sélectionner l'agrégat sans ambiguïté."
+msgstr "Indiquez la liste d'arguments pour sélectionner l'agrégat sans ambiguïté."
 
 #: parser/parse_func.c:2483
 #, c-format
@@ -16731,7 +16731,7 @@ msgstr "le nom de la routine « %s » n'est pas unique"
 #: parser/parse_func.c:2486
 #, c-format
 msgid "Specify the argument list to select the routine unambiguously."
-msgstr "Définit la liste d'arguments pour sélectionner la routine sans ambiguïté."
+msgstr "Indiquez la liste d'arguments pour sélectionner la routine sans ambiguïté."
 
 #: parser/parse_func.c:2541
 msgid "set-returning functions are not allowed in JOIN conditions"
@@ -16876,12 +16876,12 @@ msgstr "types incohérents déduit pour le paramètre $%d"
 #: parser/parse_relation.c:201
 #, c-format
 msgid "table reference \"%s\" is ambiguous"
-msgstr "la référence à la table « %s » est ambigu"
+msgstr "la référence à la table « %s » est ambigüe"
 
 #: parser/parse_relation.c:245
 #, c-format
 msgid "table reference %u is ambiguous"
-msgstr "la référence à la table %u est ambigu"
+msgstr "la référence à la table %u est ambigüe"
 
 #: parser/parse_relation.c:445
 #, c-format
@@ -17352,7 +17352,7 @@ msgstr "« %s » n'est pas une table partitionnée"
 #: parser/parse_utilcmd.c:3970
 #, c-format
 msgid "table \"%s\" is not partitioned"
-msgstr "la table « %s » n'est pas partitionné"
+msgstr "la table « %s » n'est pas partitionnée"
 
 #: parser/parse_utilcmd.c:3977
 #, c-format
@@ -17362,22 +17362,22 @@ msgstr "l'index « %s » n'est pas partitionné"
 #: parser/parse_utilcmd.c:4017
 #, c-format
 msgid "a hash-partitioned table may not have a default partition"
-msgstr "une table partitionnées par hash ne peut pas avoir de partition par défaut"
+msgstr "une table partitionnée par hachage ne peut pas avoir de partition par défaut"
 
 #: parser/parse_utilcmd.c:4034
 #, c-format
 msgid "invalid bound specification for a hash partition"
-msgstr "spécification de limite invalide pour une partition par hash"
+msgstr "spécification de limite invalide pour une partition par hachage"
 
 #: parser/parse_utilcmd.c:4040 partitioning/partbounds.c:4711
 #, c-format
 msgid "modulus for hash partition must be an integer value greater than zero"
-msgstr "le modulus pour une partition par hash doit être un entier dont la valeur est supérieure à zéro"
+msgstr "le modulo pour une partition par hachage doit être un entier dont la valeur est supérieure à zéro"
 
 #: parser/parse_utilcmd.c:4047 partitioning/partbounds.c:4719
 #, c-format
 msgid "remainder for hash partition must be less than modulus"
-msgstr "le modulus pour une partition par hash doit être inférieur au modulus"
+msgstr "le reste pour une partition par hachage doit être inférieur au modulo"
 
 #: parser/parse_utilcmd.c:4060
 #, c-format
@@ -17465,12 +17465,12 @@ msgstr "chaque modulo de partition hash doit être un facteur du prochain plus g
 #: partitioning/partbounds.c:2874 partitioning/partbounds.c:2915
 #, c-format
 msgid "The new modulus %d is not a factor of %d, the modulus of existing partition \"%s\"."
-msgstr "Le nouveau ratio %d n'est pas un facteur de %d, le ratio de la partition existante « %s »."
+msgstr "Le nouveau modulo %d n'est pas un facteur de %d, le modulo de la partition existante « %s »."
 
 #: partitioning/partbounds.c:2893
 #, c-format
 msgid "The new modulus %d is not divisible by %d, the modulus of existing partition \"%s\"."
-msgstr "Le nouveau ratio %d n'est pas divisible par %d, le ratio de la partition existante « %s »."
+msgstr "Le nouveau modulo %d n'est pas divisible par %d, le modulo de la partition existante « %s »."
 
 #: partitioning/partbounds.c:3028
 #, c-format
@@ -17500,7 +17500,7 @@ msgstr "le reste pour une partition hash doit être un entier dont la valeur est
 #: partitioning/partbounds.c:4739
 #, c-format
 msgid "\"%s\" is not a hash partitioned table"
-msgstr "« %s » n'est pas une table partitionnée par hash"
+msgstr "« %s » n'est pas une table partitionnée par hachage"
 
 #: partitioning/partbounds.c:4750 partitioning/partbounds.c:4867
 #, c-format
@@ -17595,7 +17595,7 @@ msgstr ""
 #: port/pg_shmem.c:756 port/sysv_shmem.c:756 utils/init/miscinit.c:1168
 #, c-format
 msgid "Terminate any old server processes associated with data directory \"%s\"."
-msgstr "Termine les anciens processus serveurs associés avec le répertoire de données « %s »."
+msgstr "Terminez les anciens processus serveurs associés avec le répertoire de données « %s »."
 
 #: port/sysv_sema.c:124
 #, c-format
@@ -22551,7 +22551,7 @@ msgstr "chiffre hexadécimal invalide : « %.*s »"
 #: utils/adt/encode.c:216
 #, c-format
 msgid "invalid hexadecimal data: odd number of digits"
-msgstr "donnée hexadécimale invalide : nombre pair de chiffres"
+msgstr "donnée hexadécimale invalide : nombre impair de chiffres"
 
 #: utils/adt/encode.c:334
 #, c-format
@@ -27403,7 +27403,7 @@ msgstr "Initialise le format d'affichage des valeurs date et time."
 
 #: utils/misc/guc.c:3983
 msgid "Also controls interpretation of ambiguous date inputs."
-msgstr "Contrôle aussi l'interprétation des dates ambiguës en entrée."
+msgstr "Contrôle aussi l'interprétation des dates ambigües en entrée."
 
 #: utils/misc/guc.c:3994
 msgid "Sets the default table access method for new tables."

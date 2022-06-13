@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-04-21 22:31+0000\n"
-"PO-Revision-Date: 2021-11-12 23:29+0100\n"
+"PO-Revision-Date: 2022-05-14 07:31+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -2902,7 +2902,7 @@ msgstr "  \\endif                 avsluta villkorsblock\n"
 #: help.c:222
 #, c-format
 msgid "Informational\n"
-msgstr "Informationer\n"
+msgstr "Information\n"
 
 #: help.c:223
 #, c-format
