@@ -40,6 +40,8 @@ ecpg_get_connection_nr(const char *connection_name)
 	if ((connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0))
 	{
 #ifdef ENABLE_THREAD_SAFETY
+		ecpg_pthreads_init();	/* ensure actual_connection_key is valid */
+
 		ret = pthread_getspecific(actual_connection_key);
 
 		/*
@@ -47,8 +49,7 @@ ecpg_get_connection_nr(const char *connection_name)
 		 * connection and hope the user knows what they're doing (i.e. using
 		 * their own mutex to protect that connection from concurrent accesses
 		 */
-		/* if !ret then  we  got the connection from TSD */
-		if (NULL == ret)
+		if (ret == NULL)
 			/* no TSD connection, going for global */
 			ret = actual_connection;
 #else
@@ -78,6 +79,8 @@ ecpg_get_connection(const char *connection_name)
 	if ((connection_name == NULL) || (strcmp(connection_name, "CURRENT") == 0))
 	{
 #ifdef ENABLE_THREAD_SAFETY
+		ecpg_pthreads_init();	/* ensure actual_connection_key is valid */
+
 		ret = pthread_getspecific(actual_connection_key);
 
 		/*
@@ -85,8 +88,7 @@ ecpg_get_connection(const char *connection_name)
 		 * connection and hope the user knows what they're doing (i.e. using
 		 * their own mutex to protect that connection from concurrent accesses
 		 */
-		/* if !ret then  we  got the connection from TSD */
-		if (NULL == ret)
+		if (ret == NULL)
 			/* no TSD connection here either, using global */
 			ret = actual_connection;
 #else
