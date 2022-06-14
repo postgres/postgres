@@ -94,7 +94,8 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
       <listitem>
        <para>
         An optional collation for the domain.  If no collation is
-        specified, the underlying data type's default collation is used.
+        specified, the domain has the same collation behavior as its
+        underlying data type.
         The underlying type must be collatable if <literal>COLLATE</literal>
         is specified.
        </para>
