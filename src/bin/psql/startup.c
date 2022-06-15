@@ -426,8 +426,13 @@ main(int argc, char *argv[])
 
 		if (options.single_txn)
 		{
-			res = PSQLexec((successResult == EXIT_SUCCESS) ?
-						   "COMMIT" : "ROLLBACK");
+			/*
+			 * Rollback the contents of the single transaction if the caller
+			 * has set ON_ERROR_STOP and one of the steps has failed.  This
+			 * check needs to match the one done a couple of lines above.
+			 */
+			res = PSQLexec((successResult != EXIT_SUCCESS && pset.on_error_stop) ?
+						   "ROLLBACK" : "COMMIT");
 			if (res == NULL)
 			{
 				if (pset.on_error_stop)
