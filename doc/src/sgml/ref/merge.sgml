@@ -539,6 +539,10 @@ MERGE <replaceable class="parameter">total_count</replaceable>
   </para>
 
   <para>
+   When <command>MERGE</command> is run concurrently with other commands
+   that modify the target table, the usual transaction isolation rules
+   apply; see <xref linkend="transaction-iso"/> for an explanation
+   on the behavior at each isolation level.
    You may also wish to consider using <command>INSERT ... ON CONFLICT</command>
    as an alternative statement which offers the ability to run an
    <command>UPDATE</command> if a concurrent <command>INSERT</command>
