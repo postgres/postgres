@@ -418,7 +418,7 @@ logicalrep_rel_close(LogicalRepRelMapEntry *rel, LOCKMODE lockmode)
 static void
 logicalrep_partmap_invalidate_cb(Datum arg, Oid reloid)
 {
-	LogicalRepRelMapEntry *entry;
+	LogicalRepPartMapEntry *entry;
 
 	/* Just to be sure. */
 	if (LogicalRepPartMap == NULL)
@@ -431,11 +431,11 @@ logicalrep_partmap_invalidate_cb(Datum arg, Oid reloid)
 		hash_seq_init(&status, LogicalRepPartMap);
 
 		/* TODO, use inverse lookup hashtable? */
-		while ((entry = (LogicalRepRelMapEntry *) hash_seq_search(&status)) != NULL)
+		while ((entry = (LogicalRepPartMapEntry *) hash_seq_search(&status)) != NULL)
 		{
-			if (entry->localreloid == reloid)
+			if (entry->relmapentry.localreloid == reloid)
 			{
-				entry->localrelvalid = false;
+				entry->relmapentry.localrelvalid = false;
 				hash_seq_term(&status);
 				break;
 			}
@@ -448,8 +448,8 @@ logicalrep_partmap_invalidate_cb(Datum arg, Oid reloid)
 
 		hash_seq_init(&status, LogicalRepPartMap);
 
-		while ((entry = (LogicalRepRelMapEntry *) hash_seq_search(&status)) != NULL)
-			entry->localrelvalid = false;
+		while ((entry = (LogicalRepPartMapEntry *) hash_seq_search(&status)) != NULL)
+			entry->relmapentry.localrelvalid = false;
 	}
 }
 
@@ -502,7 +502,6 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	Oid			partOid = RelationGetRelid(partrel);
 	AttrMap    *attrmap = root->attrmap;
 	bool		found;
-	int			i;
 	MemoryContext oldctx;
 
 	if (LogicalRepPartMap == NULL)
@@ -513,31 +512,40 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 														(void *) &partOid,
 														HASH_ENTER, &found);
 
-	if (found)
-		return &part_entry->relmapentry;
+	entry = &part_entry->relmapentry;
 
-	memset(part_entry, 0, sizeof(LogicalRepPartMapEntry));
+	if (found && entry->localrelvalid)
+		return entry;
 
 	/* Switch to longer-lived context. */
 	oldctx = MemoryContextSwitchTo(LogicalRepPartMapContext);
 
-	part_entry->partoid = partOid;
-
-	/* Remote relation is copied as-is from the root entry. */
-	entry = &part_entry->relmapentry;
-	entry->remoterel.remoteid = remoterel->remoteid;
-	entry->remoterel.nspname = pstrdup(remoterel->nspname);
-	entry->remoterel.relname = pstrdup(remoterel->relname);
-	entry->remoterel.natts = remoterel->natts;
-	entry->remoterel.attnames = palloc(remoterel->natts * sizeof(char *));
-	entry->remoterel.atttyps = palloc(remoterel->natts * sizeof(Oid));
-	for (i = 0; i < remoterel->natts; i++)
+	if (!found)
 	{
-		entry->remoterel.attnames[i] = pstrdup(remoterel->attnames[i]);
-		entry->remoterel.atttyps[i] = remoterel->atttyps[i];
+		memset(part_entry, 0, sizeof(LogicalRepPartMapEntry));
+		part_entry->partoid = partOid;
 	}
-	entry->remoterel.replident = remoterel->replident;
-	entry->remoterel.attkeys = bms_copy(remoterel->attkeys);
+
+	if (!entry->remoterel.remoteid)
+	{
+		int			i;
+
+		/* Remote relation is copied as-is from the root entry. */
+		entry = &part_entry->relmapentry;
+		entry->remoterel.remoteid = remoterel->remoteid;
+		entry->remoterel.nspname = pstrdup(remoterel->nspname);
+		entry->remoterel.relname = pstrdup(remoterel->relname);
+		entry->remoterel.natts = remoterel->natts;
+		entry->remoterel.attnames = palloc(remoterel->natts * sizeof(char *));
+		entry->remoterel.atttyps = palloc(remoterel->natts * sizeof(Oid));
+		for (i = 0; i < remoterel->natts; i++)
+		{
+			entry->remoterel.attnames[i] = pstrdup(remoterel->attnames[i]);
+			entry->remoterel.atttyps[i] = remoterel->atttyps[i];
+		}
+		entry->remoterel.replident = remoterel->replident;
+		entry->remoterel.attkeys = bms_copy(remoterel->attkeys);
+	}
 
 	entry->localrel = partrel;
 	entry->localreloid = partOid;
@@ -562,7 +570,11 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 		{
 			AttrNumber	root_attno = map->attnums[attno];
 
-			entry->attrmap->attnums[attno] = attrmap->attnums[root_attno - 1];
+			/* 0 means it's a dropped attribute.  See comments atop AttrMap. */
+			if (root_attno == 0)
+				entry->attrmap->attnums[attno] = -1;
+			else
+				entry->attrmap->attnums[attno] = attrmap->attnums[root_attno - 1];
 		}
 	}
 	else
