@@ -34,8 +34,8 @@ BEGIN;
 
 -- lo_open(lobjId oid, mode integer) returns integer
 -- The mode parameter to lo_open uses two constants:
---   INV_READ  = 0x20000
---   INV_WRITE = 0x40000
+--   INV_WRITE = 0x20000
+--   INV_READ  = 0x40000
 -- The return value is a file descriptor-like value which remains valid for the
 -- transaction.
 UPDATE lotest_stash_values SET fd = lo_open(loid, CAST(x'20000' | x'40000' AS integer));
