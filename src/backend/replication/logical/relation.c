@@ -487,6 +487,40 @@ logicalrep_partmap_invalidate_cb(Datum arg, Oid reloid)
 }
 
 /*
+ * Reset the entries in the partition map that refer to remoterel.
+ *
+ * Called when new relation mapping is sent by the publisher to update our
+ * expected view of incoming data from said publisher.
+ *
+ * Note that we don't update the remoterel information in the entry here,
+ * we will update the information in logicalrep_partition_open to avoid
+ * unnecessary work.
+ */
+void
+logicalrep_partmap_reset_relmap(LogicalRepRelation *remoterel)
+{
+	HASH_SEQ_STATUS status;
+	LogicalRepPartMapEntry *part_entry;
+	LogicalRepRelMapEntry *entry;
+
+	if (LogicalRepPartMap == NULL)
+		return;
+
+	hash_seq_init(&status, LogicalRepPartMap);
+	while ((part_entry = (LogicalRepPartMapEntry *) hash_seq_search(&status)) != NULL)
+	{
+		entry = &part_entry->relmapentry;
+
+		if (entry->remoterel.remoteid != remoterel->remoteid)
+			continue;
+
+		logicalrep_relmap_free_entry(entry);
+
+		memset(entry, 0, sizeof(LogicalRepRelMapEntry));
+	}
+}
+
+/*
  * Initialize the partition map cache.
  */
 static void

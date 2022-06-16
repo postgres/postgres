@@ -1562,6 +1562,9 @@ apply_handle_relation(StringInfo s)
 
 	rel = logicalrep_read_rel(s);
 	logicalrep_relmap_update(rel);
+
+	/* Also reset all entries in the partition map that refer to remoterel. */
+	logicalrep_partmap_reset_relmap(rel);
 }
 
 /*
