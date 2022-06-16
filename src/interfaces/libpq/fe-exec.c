@@ -742,8 +742,7 @@ PQclear(PGresult *res)
 		free(res->events[i].name);
 	}
 
-	if (res->events)
-		free(res->events);
+	free(res->events);
 
 	/* Free all the subsidiary blocks */
 	while ((block = res->curBlock) != NULL)
@@ -753,8 +752,7 @@ PQclear(PGresult *res)
 	}
 
 	/* Free the top-level tuple pointer array */
-	if (res->tuples)
-		free(res->tuples);
+	free(res->tuples);
 
 	/* zero out the pointer fields to catch programming errors */
 	res->attDescs = NULL;

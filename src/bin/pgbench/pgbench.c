@@ -1852,8 +1852,7 @@ putVariable(Variables *variables, const char *context, char *name,
 	/* dup then free, in case value is pointing at this variable */
 	val = pg_strdup(value);
 
-	if (var->svalue)
-		free(var->svalue);
+	free(var->svalue);
 	var->svalue = val;
 	var->value.type = PGBT_NO_VALUE;
 
@@ -1872,8 +1871,7 @@ putVariableValue(Variables *variables, const char *context, char *name,
 	if (!var)
 		return false;
 
-	if (var->svalue)
-		free(var->svalue);
+	free(var->svalue);
 	var->svalue = NULL;
 	var->value = *value;
 

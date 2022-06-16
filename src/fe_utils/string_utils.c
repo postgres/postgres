@@ -810,8 +810,7 @@ appendReloptionsArray(PQExpBuffer buffer, const char *reloptions,
 
 	if (!parsePGArray(reloptions, &options, &noptions))
 	{
-		if (options)
-			free(options);
+		free(options);
 		return false;
 	}
 
@@ -854,8 +853,7 @@ appendReloptionsArray(PQExpBuffer buffer, const char *reloptions,
 			appendStringLiteral(buffer, value, encoding, std_strings);
 	}
 
-	if (options)
-		free(options);
+	free(options);
 
 	return true;
 }

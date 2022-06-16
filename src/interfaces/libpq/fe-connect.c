@@ -540,8 +540,7 @@ pqFreeCommandQueue(PGcmdQueueEntry *queue)
 		PGcmdQueueEntry *cur = queue;
 
 		queue = cur->next;
-		if (cur->query)
-			free(cur->query);
+		free(cur->query);
 		free(cur);
 	}
 }
@@ -593,8 +592,7 @@ pqDropServerData(PGconn *conn)
 	conn->sversion = 0;
 
 	/* Drop large-object lookup data */
-	if (conn->lobjfuncs)
-		free(conn->lobjfuncs);
+	free(conn->lobjfuncs);
 	conn->lobjfuncs = NULL;
 
 	/* Reset assorted other per-connection state */
@@ -602,8 +600,7 @@ pqDropServerData(PGconn *conn)
 	conn->auth_req_received = false;
 	conn->password_needed = false;
 	conn->write_failed = false;
-	if (conn->write_err_msg)
-		free(conn->write_err_msg);
+	free(conn->write_err_msg);
 	conn->write_err_msg = NULL;
 	conn->be_pid = 0;
 	conn->be_key = 0;
@@ -898,8 +895,7 @@ fillPGconn(PGconn *conn, PQconninfoOption *connOptions)
 			{
 				char	  **connmember = (char **) ((char *) conn + option->connofs);
 
-				if (*connmember)
-					free(*connmember);
+				free(*connmember);
 				*connmember = strdup(tmp);
 				if (*connmember == NULL)
 				{
@@ -1113,8 +1109,7 @@ connectOptions2(PGconn *conn)
 		}
 		else
 		{
-			if (ch->host)
-				free(ch->host);
+			free(ch->host);
 
 			/*
 			 * This bit selects the default host location.  If you change
@@ -1186,8 +1181,7 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->pguser == NULL || conn->pguser[0] == '\0')
 	{
-		if (conn->pguser)
-			free(conn->pguser);
+		free(conn->pguser);
 		conn->pguser = pg_fe_getauthname(&conn->errorMessage);
 		if (!conn->pguser)
 		{
@@ -1201,8 +1195,7 @@ connectOptions2(PGconn *conn)
 	 */
 	if (conn->dbName == NULL || conn->dbName[0] == '\0')
 	{
-		if (conn->dbName)
-			free(conn->dbName);
+		free(conn->dbName);
 		conn->dbName = strdup(conn->pguser);
 		if (!conn->dbName)
 			goto oom_error;
@@ -1221,8 +1214,7 @@ connectOptions2(PGconn *conn)
 
 			if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 			{
-				if (conn->pgpassfile)
-					free(conn->pgpassfile);
+				free(conn->pgpassfile);
 				conn->pgpassfile = malloc(MAXPGPATH);
 				if (!conn->pgpassfile)
 					goto oom_error;
@@ -1548,8 +1540,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		/* Insert dbName parameter value into struct */
 		if (dbName && dbName[0] != '\0')
 		{
-			if (conn->dbName)
-				free(conn->dbName);
+			free(conn->dbName);
 			conn->dbName = strdup(dbName);
 			if (!conn->dbName)
 				goto oom_error;
@@ -1562,8 +1553,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	 */
 	if (pghost && pghost[0] != '\0')
 	{
-		if (conn->pghost)
-			free(conn->pghost);
+		free(conn->pghost);
 		conn->pghost = strdup(pghost);
 		if (!conn->pghost)
 			goto oom_error;
@@ -1571,8 +1561,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	if (pgport && pgport[0] != '\0')
 	{
-		if (conn->pgport)
-			free(conn->pgport);
+		free(conn->pgport);
 		conn->pgport = strdup(pgport);
 		if (!conn->pgport)
 			goto oom_error;
@@ -1580,8 +1569,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	if (pgoptions && pgoptions[0] != '\0')
 	{
-		if (conn->pgoptions)
-			free(conn->pgoptions);
+		free(conn->pgoptions);
 		conn->pgoptions = strdup(pgoptions);
 		if (!conn->pgoptions)
 			goto oom_error;
@@ -1589,8 +1577,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	if (login && login[0] != '\0')
 	{
-		if (conn->pguser)
-			free(conn->pguser);
+		free(conn->pguser);
 		conn->pguser = strdup(login);
 		if (!conn->pguser)
 			goto oom_error;
@@ -1598,8 +1585,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	if (pwd && pwd[0] != '\0')
 	{
-		if (conn->pgpass)
-			free(conn->pgpass);
+		free(conn->pgpass);
 		conn->pgpass = strdup(pwd);
 		if (!conn->pgpass)
 			goto oom_error;
@@ -4044,10 +4030,8 @@ makeEmptyPGconn(void)
 static void
 freePGconn(PGconn *conn)
 {
-	int			i;
-
 	/* let any event procs clean up their state data */
-	for (i = 0; i < conn->nEvents; i++)
+	for (int i = 0; i < conn->nEvents; i++)
 	{
 		PGEventConnDestroy evt;
 
@@ -4058,114 +4042,69 @@ freePGconn(PGconn *conn)
 	}
 
 	/* clean up pg_conn_host structures */
-	if (conn->connhost != NULL)
+	for (int i = 0; i < conn->nconnhost; ++i)
 	{
-		for (i = 0; i < conn->nconnhost; ++i)
+		free(conn->connhost[i].host);
+		free(conn->connhost[i].hostaddr);
+		free(conn->connhost[i].port);
+		if (conn->connhost[i].password != NULL)
 		{
-			if (conn->connhost[i].host != NULL)
-				free(conn->connhost[i].host);
-			if (conn->connhost[i].hostaddr != NULL)
-				free(conn->connhost[i].hostaddr);
-			if (conn->connhost[i].port != NULL)
-				free(conn->connhost[i].port);
-			if (conn->connhost[i].password != NULL)
-			{
-				explicit_bzero(conn->connhost[i].password, strlen(conn->connhost[i].password));
-				free(conn->connhost[i].password);
-			}
+			explicit_bzero(conn->connhost[i].password, strlen(conn->connhost[i].password));
+			free(conn->connhost[i].password);
 		}
-		free(conn->connhost);
 	}
+	free(conn->connhost);
 
-	if (conn->client_encoding_initial)
-		free(conn->client_encoding_initial);
-	if (conn->events)
-		free(conn->events);
-	if (conn->pghost)
-		free(conn->pghost);
-	if (conn->pghostaddr)
-		free(conn->pghostaddr);
-	if (conn->pgport)
-		free(conn->pgport);
-	if (conn->connect_timeout)
-		free(conn->connect_timeout);
-	if (conn->pgtcp_user_timeout)
-		free(conn->pgtcp_user_timeout);
-	if (conn->pgoptions)
-		free(conn->pgoptions);
-	if (conn->appname)
-		free(conn->appname);
-	if (conn->fbappname)
-		free(conn->fbappname);
-	if (conn->dbName)
-		free(conn->dbName);
-	if (conn->replication)
-		free(conn->replication);
-	if (conn->pguser)
-		free(conn->pguser);
+	free(conn->client_encoding_initial);
+	free(conn->events);
+	free(conn->pghost);
+	free(conn->pghostaddr);
+	free(conn->pgport);
+	free(conn->connect_timeout);
+	free(conn->pgtcp_user_timeout);
+	free(conn->pgoptions);
+	free(conn->appname);
+	free(conn->fbappname);
+	free(conn->dbName);
+	free(conn->replication);
+	free(conn->pguser);
 	if (conn->pgpass)
 	{
 		explicit_bzero(conn->pgpass, strlen(conn->pgpass));
 		free(conn->pgpass);
 	}
-	if (conn->pgpassfile)
-		free(conn->pgpassfile);
-	if (conn->channel_binding)
-		free(conn->channel_binding);
-	if (conn->keepalives)
-		free(conn->keepalives);
-	if (conn->keepalives_idle)
-		free(conn->keepalives_idle);
-	if (conn->keepalives_interval)
-		free(conn->keepalives_interval);
-	if (conn->keepalives_count)
-		free(conn->keepalives_count);
-	if (conn->sslmode)
-		free(conn->sslmode);
-	if (conn->sslcert)
-		free(conn->sslcert);
-	if (conn->sslkey)
-		free(conn->sslkey);
+	free(conn->pgpassfile);
+	free(conn->channel_binding);
+	free(conn->keepalives);
+	free(conn->keepalives_idle);
+	free(conn->keepalives_interval);
+	free(conn->keepalives_count);
+	free(conn->sslmode);
+	free(conn->sslcert);
+	free(conn->sslkey);
 	if (conn->sslpassword)
 	{
 		explicit_bzero(conn->sslpassword, strlen(conn->sslpassword));
 		free(conn->sslpassword);
 	}
-	if (conn->sslrootcert)
-		free(conn->sslrootcert);
-	if (conn->sslcrl)
-		free(conn->sslcrl);
-	if (conn->sslcrldir)
-		free(conn->sslcrldir);
-	if (conn->sslcompression)
-		free(conn->sslcompression);
-	if (conn->sslsni)
-		free(conn->sslsni);
-	if (conn->requirepeer)
-		free(conn->requirepeer);
-	if (conn->ssl_min_protocol_version)
-		free(conn->ssl_min_protocol_version);
-	if (conn->ssl_max_protocol_version)
-		free(conn->ssl_max_protocol_version);
-	if (conn->gssencmode)
-		free(conn->gssencmode);
-	if (conn->krbsrvname)
-		free(conn->krbsrvname);
-	if (conn->gsslib)
-		free(conn->gsslib);
-	if (conn->connip)
-		free(conn->connip);
+	free(conn->sslrootcert);
+	free(conn->sslcrl);
+	free(conn->sslcrldir);
+	free(conn->sslcompression);
+	free(conn->sslsni);
+	free(conn->requirepeer);
+	free(conn->ssl_min_protocol_version);
+	free(conn->ssl_max_protocol_version);
+	free(conn->gssencmode);
+	free(conn->krbsrvname);
+	free(conn->gsslib);
+	free(conn->connip);
 	/* Note that conn->Pfdebug is not ours to close or free */
-	if (conn->write_err_msg)
-		free(conn->write_err_msg);
-	if (conn->inBuffer)
-		free(conn->inBuffer);
-	if (conn->outBuffer)
-		free(conn->outBuffer);
-	if (conn->rowBuf)
-		free(conn->rowBuf);
-	if (conn->target_session_attrs)
-		free(conn->target_session_attrs);
+	free(conn->write_err_msg);
+	free(conn->inBuffer);
+	free(conn->outBuffer);
+	free(conn->rowBuf);
+	free(conn->target_session_attrs);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);
 
@@ -4433,8 +4372,7 @@ fail:
 void
 PQfreeCancel(PGcancel *cancel)
 {
-	if (cancel)
-		free(cancel);
+	free(cancel);
 }
 
 
@@ -5883,8 +5821,7 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
 						{
 							if (strcmp(options[k].keyword, str_option->keyword) == 0)
 							{
-								if (options[k].val)
-									free(options[k].val);
+								free(options[k].val);
 								options[k].val = strdup(str_option->val);
 								if (!options[k].val)
 								{
@@ -5912,8 +5849,7 @@ conninfo_array_parse(const char *const *keywords, const char *const *values,
 				/*
 				 * Store the value, overriding previous settings
 				 */
-				if (option->val)
-					free(option->val);
+				free(option->val);
 				option->val = strdup(pvalue);
 				if (!option->val)
 				{
@@ -6344,8 +6280,7 @@ conninfo_uri_parse_options(PQconninfoOption *options, const char *uri,
 cleanup:
 	termPQExpBuffer(&hostbuf);
 	termPQExpBuffer(&portbuf);
-	if (buf)
-		free(buf);
+	free(buf);
 	return retval;
 }
 
@@ -6655,8 +6590,7 @@ conninfo_storeval(PQconninfoOption *connOptions,
 		}
 	}
 
-	if (option->val)
-		free(option->val);
+	free(option->val);
 	option->val = value_copy;
 
 	return option;
@@ -6735,16 +6669,11 @@ PQconninfo(PGconn *conn)
 void
 PQconninfoFree(PQconninfoOption *connOptions)
 {
-	PQconninfoOption *option;
-
 	if (connOptions == NULL)
 		return;
 
-	for (option = connOptions; option->keyword != NULL; option++)
-	{
-		if (option->val != NULL)
-			free(option->val);
-	}
+	for (PQconninfoOption *option = connOptions; option->keyword != NULL; option++)
+		free(option->val);
 	free(connOptions);
 }
 

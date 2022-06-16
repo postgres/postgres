@@ -303,26 +303,19 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 			fputs("</table>\n", fout);
 
 exit:
-		if (fieldMax)
-			free(fieldMax);
-		if (fieldNotNum)
-			free(fieldNotNum);
-		if (border)
-			free(border);
+		free(fieldMax);
+		free(fieldNotNum);
+		free(border);
 		if (fields)
 		{
 			/* if calloc succeeded, this shouldn't overflow size_t */
 			size_t		numfields = ((size_t) nTups + 1) * (size_t) nFields;
 
 			while (numfields-- > 0)
-			{
-				if (fields[numfields])
-					free(fields[numfields]);
-			}
+				free(fields[numfields]);
 			free(fields);
 		}
-		if (fieldNames)
-			free((void *) fieldNames);
+		free(fieldNames);
 		if (usePipe)
 		{
 #ifdef WIN32
@@ -679,8 +672,7 @@ PQdisplayTuples(const PGresult *res,
 
 	fflush(fp);
 
-	if (fLength)
-		free(fLength);
+	free(fLength);
 }
 
 
@@ -763,8 +755,7 @@ PQprintTuples(const PGresult *res,
 		}
 	}
 
-	if (tborder)
-		free(tborder);
+	free(tborder);
 }
 
 

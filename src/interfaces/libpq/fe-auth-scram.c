@@ -174,30 +174,21 @@ scram_free(void *opaq)
 {
 	fe_scram_state *state = (fe_scram_state *) opaq;
 
-	if (state->password)
-		free(state->password);
-	if (state->sasl_mechanism)
-		free(state->sasl_mechanism);
+	free(state->password);
+	free(state->sasl_mechanism);
 
 	/* client messages */
-	if (state->client_nonce)
-		free(state->client_nonce);
-	if (state->client_first_message_bare)
-		free(state->client_first_message_bare);
-	if (state->client_final_message_without_proof)
-		free(state->client_final_message_without_proof);
+	free(state->client_nonce);
+	free(state->client_first_message_bare);
+	free(state->client_final_message_without_proof);
 
 	/* first message from server */
-	if (state->server_first_message)
-		free(state->server_first_message);
-	if (state->salt)
-		free(state->salt);
-	if (state->nonce)
-		free(state->nonce);
+	free(state->server_first_message);
+	free(state->salt);
+	free(state->nonce);
 
 	/* final message from server */
-	if (state->server_final_message)
-		free(state->server_final_message);
+	free(state->server_final_message);
 
 	free(state);
 }
@@ -941,8 +932,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
 		*errstr = _("failed to generate random salt");
-		if (prep_password)
-			free(prep_password);
+		free(prep_password);
 		return NULL;
 	}
 
@@ -950,8 +940,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 								SCRAM_DEFAULT_ITERATIONS, password,
 								errstr);
 
-	if (prep_password)
-		free(prep_password);
+	free(prep_password);
 
 	return result;
 }

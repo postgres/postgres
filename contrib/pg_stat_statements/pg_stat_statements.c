@@ -809,8 +809,7 @@ error:
 			(errcode_for_file_access(),
 			 errmsg("could not write file \"%s\": %m",
 					PGSS_DUMP_FILE ".tmp")));
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 	if (file)
 		FreeFile(file);
 	unlink(PGSS_DUMP_FILE ".tmp");
@@ -1657,8 +1656,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			pgss->extent != extent ||
 			pgss->gc_count != gc_count)
 		{
-			if (qbuffer)
-				free(qbuffer);
+			free(qbuffer);
 			qbuffer = qtext_load_file(&qbuffer_size);
 		}
 	}
@@ -1842,8 +1840,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 	LWLockRelease(pgss->lock);
 
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 }
 
 /* Number of output arguments (columns) for pg_stat_statements_info */
@@ -2446,8 +2443,7 @@ gc_fail:
 	/* clean up resources */
 	if (qfile)
 		FreeFile(qfile);
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 
 	/*
 	 * Since the contents of the external file are now uncertain, mark all

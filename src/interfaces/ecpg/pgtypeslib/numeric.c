@@ -16,11 +16,7 @@
 #define init_var(v)				memset(v,0,sizeof(numeric))
 
 #define digitbuf_alloc(size) ((NumericDigit *) pgtypes_alloc(size))
-#define digitbuf_free(buf)		\
-	   do { \
-				 if ((buf) != NULL) \
-						  free(buf); \
-		  } while (0)
+#define digitbuf_free(buf) free(buf)
 
 
 /* ----------

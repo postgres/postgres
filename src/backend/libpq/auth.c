@@ -2020,10 +2020,7 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message **msg,
 fail:
 	/* free up whatever we allocated */
 	for (i = 0; i < num_msg; i++)
-	{
-		if (reply[i].resp != NULL)
-			free(reply[i].resp);
-	}
+		free(reply[i].resp);
 	free(reply);
 
 	return PAM_CONV_ERR;

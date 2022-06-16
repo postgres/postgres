@@ -309,8 +309,7 @@ pq_verify_peer_name_matches_certificate(PGconn *conn)
 	}
 
 	/* clean up */
-	if (first_name)
-		free(first_name);
+	free(first_name);
 
 	return (rc == 1);
 }

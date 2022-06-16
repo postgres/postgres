@@ -775,8 +775,7 @@ progress_update_filename(const char *filename)
 	/* We needn't maintain this variable if not doing verbose reports. */
 	if (showprogress && verbose)
 	{
-		if (progress_filename)
-			free(progress_filename);
+		free(progress_filename);
 		if (filename)
 			progress_filename = pg_strdup(filename);
 		else

@@ -632,8 +632,7 @@ _skipData(ArchiveHandle *AH)
 		{
 			if (blkLen > buflen)
 			{
-				if (buf)
-					free(buf);
+				free(buf);
 				buf = (char *) pg_malloc(blkLen);
 				buflen = blkLen;
 			}
@@ -649,8 +648,7 @@ _skipData(ArchiveHandle *AH)
 		blkLen = ReadInt(AH);
 	}
 
-	if (buf)
-		free(buf);
+	free(buf);
 }
 
 /*

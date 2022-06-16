@@ -930,10 +930,8 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	 * Failure, clean up
 	 */
 out_of_memory:
-	if (pcc->cv.chrs)
-		free(pcc->cv.chrs);
-	if (pcc->cv.ranges)
-		free(pcc->cv.ranges);
+	free(pcc->cv.chrs);
+	free(pcc->cv.ranges);
 	free(pcc);
 
 	return NULL;

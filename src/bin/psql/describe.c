@@ -1786,8 +1786,7 @@ describeOneTableDetails(const char *schemaname,
 
 		printQuery(res, &myopt, pset.queryFout, false, pset.logfile);
 
-		if (footers[0])
-			free(footers[0]);
+		free(footers[0]);
 
 		retval = true;
 		goto error_return;		/* not an error, just return early */
@@ -3491,8 +3490,7 @@ error_return:
 	termPQExpBuffer(&title);
 	termPQExpBuffer(&tmpbuf);
 
-	if (view_def)
-		free(view_def);
+	free(view_def);
 
 	if (res)
 		PQclear(res);

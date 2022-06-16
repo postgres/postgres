@@ -374,26 +374,16 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv *s)
 {
-	if (s->decimal_point)
-		free(s->decimal_point);
-	if (s->thousands_sep)
-		free(s->thousands_sep);
-	if (s->grouping)
-		free(s->grouping);
-	if (s->int_curr_symbol)
-		free(s->int_curr_symbol);
-	if (s->currency_symbol)
-		free(s->currency_symbol);
-	if (s->mon_decimal_point)
-		free(s->mon_decimal_point);
-	if (s->mon_thousands_sep)
-		free(s->mon_thousands_sep);
-	if (s->mon_grouping)
-		free(s->mon_grouping);
-	if (s->positive_sign)
-		free(s->positive_sign);
-	if (s->negative_sign)
-		free(s->negative_sign);
+	free(s->decimal_point);
+	free(s->thousands_sep);
+	free(s->grouping);
+	free(s->int_curr_symbol);
+	free(s->currency_symbol);
+	free(s->mon_decimal_point);
+	free(s->mon_thousands_sep);
+	free(s->mon_grouping);
+	free(s->positive_sign);
+	free(s->negative_sign);
 }
 
 /*

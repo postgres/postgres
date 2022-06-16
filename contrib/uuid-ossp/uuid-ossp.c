@@ -292,8 +292,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 						if (ptr && len <= 36)
 							strcpy(strbuf + (36 - len), ptr);
 					}
-					if (str)
-						free(str);
+					free(str);
 				}
 
 				if (status != uuid_s_ok)
@@ -366,8 +365,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 				if (status == uuid_s_ok)
 					strlcpy(strbuf, str, 37);
 
-				if (str)
-					free(str);
+				free(str);
 
 				if (status != uuid_s_ok)
 					ereport(ERROR,

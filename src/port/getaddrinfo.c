@@ -270,8 +270,7 @@ freeaddrinfo(struct addrinfo *res)
 		}
 #endif
 
-		if (res->ai_addr)
-			free(res->ai_addr);
+		free(res->ai_addr);
 		free(res);
 	}
 }

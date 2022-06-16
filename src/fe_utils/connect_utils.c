@@ -99,8 +99,7 @@ connectDatabase(const ConnParams *cparams, const char *progname,
 			cparams->prompt_password != TRI_NO)
 		{
 			PQfinish(conn);
-			if (password)
-				free(password);
+			free(password);
 			password = simple_prompt("Password: ", false);
 			new_pass = true;
 		}

@@ -4754,11 +4754,9 @@ psql_completion(const char *text, int start, int end)
 	free(previous_words);
 	free(words_buffer);
 	free(text_copy);
-	if (completion_ref_object)
-		free(completion_ref_object);
+	free(completion_ref_object);
 	completion_ref_object = NULL;
-	if (completion_ref_schema)
-		free(completion_ref_schema);
+	free(completion_ref_schema);
 	completion_ref_schema = NULL;
 
 	/* Return our Grand List O' Matches */
@@ -5160,12 +5158,9 @@ _complete_from_query(const char *simple_query,
 		/* Clean up */
 		termPQExpBuffer(&query_buffer);
 		free(e_object_like);
-		if (e_schemaname)
-			free(e_schemaname);
-		if (e_ref_object)
-			free(e_ref_object);
-		if (e_ref_schema)
-			free(e_ref_schema);
+		free(e_schemaname);
+		free(e_ref_object);
+		free(e_ref_schema);
 	}
 
 	/* Return the next result, if any, but not if the query failed */

@@ -107,8 +107,7 @@ pg_GSS_continue(PGconn *conn, int payloadlen)
 									NULL,
 									NULL);
 
-	if (ginbuf.value)
-		free(ginbuf.value);
+	free(ginbuf.value);
 
 	if (goutbuf.length != 0)
 	{
@@ -270,8 +269,7 @@ pg_SSPI_continue(PGconn *conn, int payloadlen)
 								  NULL);
 
 	/* we don't need the input anymore */
-	if (inputbuf)
-		free(inputbuf);
+	free(inputbuf);
 
 	if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
 	{
@@ -604,21 +602,18 @@ pg_SASL_init(PGconn *conn, int payloadlen)
 		goto error;
 
 	termPQExpBuffer(&mechanism_buf);
-	if (initialresponse)
-		free(initialresponse);
+	free(initialresponse);
 
 	return STATUS_OK;
 
 error:
 	termPQExpBuffer(&mechanism_buf);
-	if (initialresponse)
-		free(initialresponse);
+	free(initialresponse);
 	return STATUS_ERROR;
 
 oom_error:
 	termPQExpBuffer(&mechanism_buf);
-	if (initialresponse)
-		free(initialresponse);
+	free(initialresponse);
 	appendPQExpBufferStr(&conn->errorMessage,
 						 libpq_gettext("out of memory\n"));
 	return STATUS_ERROR;
@@ -831,8 +826,7 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 			return STATUS_ERROR;
 	}
 	ret = pqPacketSend(conn, 'p', pwd_to_send, strlen(pwd_to_send) + 1);
-	if (crypt_pwd)
-		free(crypt_pwd);
+	free(crypt_pwd);
 	return ret;
 }
 

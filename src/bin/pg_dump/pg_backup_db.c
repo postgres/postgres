@@ -204,8 +204,7 @@ ConnectDatabase(Archive *AHX,
 	 */
 	if (PQconnectionUsedPassword(AH->connection))
 	{
-		if (AH->savedPassword)
-			free(AH->savedPassword);
+		free(AH->savedPassword);
 		AH->savedPassword = pg_strdup(PQpass(AH->connection));
 	}
 

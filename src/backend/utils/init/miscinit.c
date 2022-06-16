@@ -417,8 +417,7 @@ SetDataDir(const char *dir)
 	/* If presented path is relative, convert to absolute */
 	new = make_absolute_path(dir);
 
-	if (DataDir)
-		free(DataDir);
+	free(DataDir);
 	DataDir = new;
 }
 

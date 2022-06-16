@@ -854,8 +854,7 @@ PostmasterMain(int argc, char *argv[])
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
 					free(name);
-					if (value)
-						free(value);
+					free(value);
 					break;
 				}
 

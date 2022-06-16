@@ -154,8 +154,7 @@ GetConnection(void)
 		/* Get a new password if appropriate */
 		if (need_password)
 		{
-			if (password)
-				free(password);
+			free(password);
 			password = simple_prompt("Password: ", false);
 			need_password = false;
 		}

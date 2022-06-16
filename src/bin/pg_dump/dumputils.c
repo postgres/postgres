@@ -98,18 +98,15 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	/* Parse the acls array */
 	if (!parsePGArray(acls, &aclitems, &naclitems))
 	{
-		if (aclitems)
-			free(aclitems);
+		free(aclitems);
 		return false;
 	}
 
 	/* Parse the baseacls too */
 	if (!parsePGArray(baseacls, &baseitems, &nbaseitems))
 	{
-		if (aclitems)
-			free(aclitems);
-		if (baseitems)
-			free(baseitems);
+		free(aclitems);
+		free(baseitems);
 		return false;
 	}
 
@@ -298,14 +295,10 @@ buildACLCommands(const char *name, const char *subname, const char *nspname,
 	destroyPQExpBuffer(firstsql);
 	destroyPQExpBuffer(secondsql);
 
-	if (aclitems)
-		free(aclitems);
-	if (baseitems)
-		free(baseitems);
-	if (grantitems)
-		free(grantitems);
-	if (revokeitems)
-		free(revokeitems);
+	free(aclitems);
+	free(baseitems);
+	free(grantitems);
+	free(revokeitems);
 
 	return ok;
 }

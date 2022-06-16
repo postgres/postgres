@@ -288,8 +288,7 @@ BootstrapModeMain(int argc, char *argv[], bool check_only)
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
 					free(name);
-					if (value)
-						free(value);
+					free(value);
 					break;
 				}
 			default:

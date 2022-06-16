@@ -389,8 +389,7 @@ do_copy(const char *args)
 
 					pg_log_error("%s: %s", options->file,
 								 reason ? reason : "");
-					if (reason)
-						free(reason);
+					free(reason);
 				}
 				success = false;
 			}

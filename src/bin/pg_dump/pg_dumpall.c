@@ -1500,10 +1500,8 @@ connectDatabase(const char *dbname, const char *connection_string,
 		char	   *err_msg = NULL;
 		int			i = 0;
 
-		if (keywords)
-			free(keywords);
-		if (values)
-			free(values);
+		free(keywords);
+		free(values);
 		if (conn_opts)
 			PQconninfoFree(conn_opts);
 

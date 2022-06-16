@@ -412,8 +412,7 @@ tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 	 * handle, and we don't use temp files.
 	 */
 
-	if (th->targetFile)
-		free(th->targetFile);
+	free(th->targetFile);
 
 	th->nFH = NULL;
 }
