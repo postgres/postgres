@@ -126,8 +126,6 @@ typedef struct IndexAmRoutine
     bool        amcaninclude;
     /* does AM use maintenance_work_mem? */
     bool        amusemaintenanceworkmem;
-    /* does AM block HOT update? */
-    bool        amhotblocking;
     /* OR of parallel vacuum flags */
     uint8       amparallelvacuumoptions;
     /* type of data stored in index, or InvalidOid if variable */
@@ -246,15 +244,6 @@ typedef struct IndexAmRoutine
    sensible: it means that there can only be one key column, but there can
    also be included column(s).  Also, included columns must be allowed to be
    null, independently of <structfield>amoptionalkey</structfield>.
-  </para>
-
-  <para>
-   The <structfield>amhotblocking</structfield> flag indicates whether the
-   access method blocks <acronym>HOT</acronym> when an indexed attribute is
-   updated. Access methods without pointers to individual tuples (like
-   <acronym>BRIN</acronym>) may allow <acronym>HOT</acronym> even in this
-   case. This does not apply to attributes referenced in index predicates;
-   an update of such attribute always disables <acronym>HOT</acronym>.
   </para>
 
  </sect1>
