@@ -2470,32 +2470,38 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				}
 				else
 				{
+					JsonConstructorExprState *jcstate;
+
+					jcstate = palloc0(sizeof(JsonConstructorExprState));
+
 					scratch.opcode = EEOP_JSON_CONSTRUCTOR;
-					scratch.d.json_constructor.constructor = ctor;
-					scratch.d.json_constructor.arg_values = palloc(sizeof(Datum) * nargs);
-					scratch.d.json_constructor.arg_nulls = palloc(sizeof(bool) * nargs);
-					scratch.d.json_constructor.arg_types = palloc(sizeof(Oid) * nargs);
-					scratch.d.json_constructor.nargs = nargs;
+					scratch.d.json_constructor.jcstate = jcstate;
+
+					jcstate->constructor = ctor;
+					jcstate->arg_values = palloc(sizeof(Datum) * nargs);
+					jcstate->arg_nulls = palloc(sizeof(bool) * nargs);
+					jcstate->arg_types = palloc(sizeof(Oid) * nargs);
+					jcstate->nargs = nargs;
 
 					foreach(lc, args)
 					{
 						Expr	   *arg = (Expr *) lfirst(lc);
 
-						scratch.d.json_constructor.arg_types[argno] = exprType((Node *) arg);
+						jcstate->arg_types[argno] = exprType((Node *) arg);
 
 						if (IsA(arg, Const))
 						{
 							/* Don't evaluate const arguments every round */
 							Const	   *con = (Const *) arg;
 
-							scratch.d.json_constructor.arg_values[argno] = con->constvalue;
-							scratch.d.json_constructor.arg_nulls[argno] = con->constisnull;
+							jcstate->arg_values[argno] = con->constvalue;
+							jcstate->arg_nulls[argno] = con->constisnull;
 						}
 						else
 						{
 							ExecInitExprRec(arg, state,
-											&scratch.d.json_constructor.arg_values[argno],
-											&scratch.d.json_constructor.arg_nulls[argno]);
+											&jcstate->arg_values[argno],
+											&jcstate->arg_nulls[argno]);
 						}
 						argno++;
 					}
@@ -2506,14 +2512,14 @@ ExecInitExprRec(Expr *node, ExprState *state,
 						bool		is_jsonb =
 						ctor->returning->format->format_type == JS_FORMAT_JSONB;
 
-						scratch.d.json_constructor.arg_type_cache =
-							palloc(sizeof(*scratch.d.json_constructor.arg_type_cache) * nargs);
+						jcstate->arg_type_cache =
+							palloc(sizeof(*jcstate->arg_type_cache) * nargs);
 
 						for (int i = 0; i < nargs; i++)
 						{
 							int			category;
 							Oid			outfuncid;
-							Oid			typid = scratch.d.json_constructor.arg_types[i];
+							Oid			typid = jcstate->arg_types[i];
 
 							if (is_jsonb)
 							{
@@ -2532,8 +2538,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 								category = (int) jscat;
 							}
 
-							scratch.d.json_constructor.arg_type_cache[i].outfuncid = outfuncid;
-							scratch.d.json_constructor.arg_type_cache[i].category = category;
+							jcstate->arg_type_cache[i].outfuncid = outfuncid;
+							jcstate->arg_type_cache[i].category = category;
 						}
 					}
 
@@ -2572,41 +2578,44 @@ ExecInitExprRec(Expr *node, ExprState *state,
 		case T_JsonExpr:
 			{
 				JsonExpr   *jexpr = castNode(JsonExpr, node);
+				JsonExprState *jsestate = palloc0(sizeof(JsonExprState));
 				ListCell   *argexprlc;
 				ListCell   *argnamelc;
 
 				scratch.opcode = EEOP_JSONEXPR;
-				scratch.d.jsonexpr.jsexpr = jexpr;
+				scratch.d.jsonexpr.jsestate = jsestate;
 
-				scratch.d.jsonexpr.formatted_expr =
-					palloc(sizeof(*scratch.d.jsonexpr.formatted_expr));
+				jsestate->jsexpr = jexpr;
+
+				jsestate->formatted_expr =
+					palloc(sizeof(*jsestate->formatted_expr));
 
 				ExecInitExprRec((Expr *) jexpr->formatted_expr, state,
-								&scratch.d.jsonexpr.formatted_expr->value,
-								&scratch.d.jsonexpr.formatted_expr->isnull);
+								&jsestate->formatted_expr->value,
+								&jsestate->formatted_expr->isnull);
 
-				scratch.d.jsonexpr.pathspec =
-					palloc(sizeof(*scratch.d.jsonexpr.pathspec));
+				jsestate->pathspec =
+					palloc(sizeof(*jsestate->pathspec));
 
 				ExecInitExprRec((Expr *) jexpr->path_spec, state,
-								&scratch.d.jsonexpr.pathspec->value,
-								&scratch.d.jsonexpr.pathspec->isnull);
+								&jsestate->pathspec->value,
+								&jsestate->pathspec->isnull);
 
-				scratch.d.jsonexpr.res_expr =
-					palloc(sizeof(*scratch.d.jsonexpr.res_expr));
+				jsestate->res_expr =
+					palloc(sizeof(*jsestate->res_expr));
 
-				scratch.d.jsonexpr.result_expr = jexpr->result_coercion
+				jsestate->result_expr = jexpr->result_coercion
 					? ExecInitExprWithCaseValue((Expr *) jexpr->result_coercion->expr,
 												state->parent,
-												&scratch.d.jsonexpr.res_expr->value,
-												&scratch.d.jsonexpr.res_expr->isnull)
+												&jsestate->res_expr->value,
+												&jsestate->res_expr->isnull)
 					: NULL;
 
-				scratch.d.jsonexpr.default_on_empty = !jexpr->on_empty ? NULL :
+				jsestate->default_on_empty = !jexpr->on_empty ? NULL :
 					ExecInitExpr((Expr *) jexpr->on_empty->default_expr,
 								 state->parent);
 
-				scratch.d.jsonexpr.default_on_error =
+				jsestate->default_on_error =
 					ExecInitExpr((Expr *) jexpr->on_error->default_expr,
 								 state->parent);
 
@@ -2617,11 +2626,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 					/* lookup the result type's input function */
 					getTypeInputInfo(jexpr->returning->typid, &typinput,
-									 &scratch.d.jsonexpr.input.typioparam);
-					fmgr_info(typinput, &scratch.d.jsonexpr.input.func);
+									 &jsestate->input.typioparam);
+					fmgr_info(typinput, &jsestate->input.func);
 				}
 
-				scratch.d.jsonexpr.args = NIL;
+				jsestate->args = NIL;
 
 				forboth(argexprlc, jexpr->passing_values,
 						argnamelc, jexpr->passing_names)
@@ -2640,11 +2649,11 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					var->value = (Datum) 0;
 					var->isnull = true;
 
-					scratch.d.jsonexpr.args =
-						lappend(scratch.d.jsonexpr.args, var);
+					jsestate->args =
+						lappend(jsestate->args, var);
 				}
 
-				scratch.d.jsonexpr.cache = NULL;
+				jsestate->cache = NULL;
 
 				if (jexpr->coercions)
 				{
@@ -2653,13 +2662,13 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					Datum	   *caseval;
 					bool	   *casenull;
 
-					scratch.d.jsonexpr.coercion_expr =
-						palloc(sizeof(*scratch.d.jsonexpr.coercion_expr));
+					jsestate->coercion_expr =
+						palloc(sizeof(*jsestate->coercion_expr));
 
-					caseval = &scratch.d.jsonexpr.coercion_expr->value;
-					casenull = &scratch.d.jsonexpr.coercion_expr->isnull;
+					caseval = &jsestate->coercion_expr->value;
+					casenull = &jsestate->coercion_expr->isnull;
 
-					for (cstate = &scratch.d.jsonexpr.coercions.null,
+					for (cstate = &jsestate->coercions.null,
 						 coercion = &jexpr->coercions->null;
 						 coercion <= &jexpr->coercions->composite;
 						 coercion++, cstate++)

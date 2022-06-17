@@ -22,6 +22,8 @@ struct ExprEvalStep;
 struct SubscriptingRefState;
 struct ScalarArrayOpExprHashTable;
 struct JsonbValue;
+struct JsonExprState;
+struct JsonConstructorExprState;
 
 /* Bits in ExprState->flags (see also execnodes.h for public flag bits): */
 /* expression's interpreter has been initialized */
@@ -676,16 +678,7 @@ typedef struct ExprEvalStep
 		/* for EEOP_JSON_CONSTRUCTOR */
 		struct
 		{
-			JsonConstructorExpr *constructor;
-			Datum	   *arg_values;
-			bool	   *arg_nulls;
-			Oid		   *arg_types;
-			struct
-			{
-				int			category;
-				Oid			outfuncid;
-			}		   *arg_type_cache; /* cache for datum_to_json[b]() */
-			int			nargs;
+			struct JsonConstructorExprState *jcstate;
 		}			json_constructor;
 
 		/* for EEOP_IS_JSON */
@@ -697,45 +690,7 @@ typedef struct ExprEvalStep
 		/* for EEOP_JSONEXPR */
 		struct
 		{
-			JsonExpr   *jsexpr; /* original expression node */
-
-			struct
-			{
-				FmgrInfo	func;	/* typinput function for output type */
-				Oid			typioparam;
-			}			input;	/* I/O info for output type */
-
-			NullableDatum
-					   *formatted_expr, /* formatted context item value */
-					   *res_expr,	/* result item */
-					   *coercion_expr,	/* input for JSON item coercion */
-					   *pathspec;	/* path specification value */
-
-			ExprState  *result_expr;	/* coerced to output type */
-			ExprState  *default_on_empty;	/* ON EMPTY DEFAULT expression */
-			ExprState  *default_on_error;	/* ON ERROR DEFAULT expression */
-			List	   *args;	/* passing arguments */
-
-			void	   *cache;	/* cache for json_populate_type() */
-
-			struct JsonCoercionsState
-			{
-				struct JsonCoercionState
-				{
-					JsonCoercion *coercion; /* coercion expression */
-					ExprState  *estate; /* coercion expression state */
-				}			null,
-							string,
-				numeric    ,
-							boolean,
-							date,
-							time,
-							timetz,
-							timestamp,
-							timestamptz,
-							composite;
-			}			coercions;	/* states for coercion from SQL/JSON item
-									 * types directly to the output type */
+			struct JsonExprState *jsestate;
 		}			jsonexpr;
 
 	}			d;
@@ -782,6 +737,64 @@ typedef struct SubscriptExecSteps
 	ExecEvalSubroutine sbs_fetch_old;	/* fetch old value for assignment */
 } SubscriptExecSteps;
 
+/* EEOP_JSON_CONSTRUCTOR state, too big to inline */
+typedef struct JsonConstructorExprState
+{
+	JsonConstructorExpr *constructor;
+	Datum	   *arg_values;
+	bool	   *arg_nulls;
+	Oid		   *arg_types;
+	struct
+	{
+		int			category;
+		Oid			outfuncid;
+	}		   *arg_type_cache; /* cache for datum_to_json[b]() */
+	int			nargs;
+} JsonConstructorExprState;
+
+/* EEOP_JSONEXPR state, too big to inline */
+typedef struct JsonExprState
+{
+	JsonExpr   *jsexpr;			/* original expression node */
+
+	struct
+	{
+		FmgrInfo	func;		/* typinput function for output type */
+		Oid			typioparam;
+	}			input;			/* I/O info for output type */
+
+	NullableDatum
+			   *formatted_expr, /* formatted context item value */
+			   *res_expr,		/* result item */
+			   *coercion_expr,	/* input for JSON item coercion */
+			   *pathspec;		/* path specification value */
+
+	ExprState  *result_expr;	/* coerced to output type */
+	ExprState  *default_on_empty;	/* ON EMPTY DEFAULT expression */
+	ExprState  *default_on_error;	/* ON ERROR DEFAULT expression */
+	List	   *args;			/* passing arguments */
+
+	void	   *cache;			/* cache for json_populate_type() */
+
+	struct JsonCoercionsState
+	{
+		struct JsonCoercionState
+		{
+			JsonCoercion *coercion; /* coercion expression */
+			ExprState  *estate; /* coercion expression state */
+		}			null,
+					string,
+		numeric    ,
+					boolean,
+					date,
+					time,
+					timetz,
+					timestamp,
+					timestamptz,
+					composite;
+	}			coercions;		/* states for coercion from SQL/JSON item
+								 * types directly to the output type */
+} JsonExprState;
 
 /* functions in execExpr.c */
 extern void ExprEvalPushStep(ExprState *es, const ExprEvalStep *s);
