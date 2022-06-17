@@ -500,8 +500,7 @@ dir_close(Walfile f, WalCloseMethod method)
 
 	pg_free(df->pathname);
 	pg_free(df->fullpath);
-	if (df->temp_suffix)
-		pg_free(df->temp_suffix);
+	pg_free(df->temp_suffix);
 	pg_free(df);
 
 	return r;

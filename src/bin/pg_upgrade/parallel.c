@@ -130,14 +130,11 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 		new_arg = exec_thread_args[parallel_jobs - 1];
 
 		/* Can only pass one pointer into the function, so use a struct */
-		if (new_arg->log_file)
-			pg_free(new_arg->log_file);
+		pg_free(new_arg->log_file);
 		new_arg->log_file = pg_strdup(log_file);
-		if (new_arg->opt_log_file)
-			pg_free(new_arg->opt_log_file);
+		pg_free(new_arg->opt_log_file);
 		new_arg->opt_log_file = opt_log_file ? pg_strdup(opt_log_file) : NULL;
-		if (new_arg->cmd)
-			pg_free(new_arg->cmd);
+		pg_free(new_arg->cmd);
 		new_arg->cmd = pg_strdup(cmd);
 
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_exec_prog,
@@ -243,14 +240,11 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		/* Can only pass one pointer into the function, so use a struct */
 		new_arg->old_db_arr = old_db_arr;
 		new_arg->new_db_arr = new_db_arr;
-		if (new_arg->old_pgdata)
-			pg_free(new_arg->old_pgdata);
+		pg_free(new_arg->old_pgdata);
 		new_arg->old_pgdata = pg_strdup(old_pgdata);
-		if (new_arg->new_pgdata)
-			pg_free(new_arg->new_pgdata);
+		pg_free(new_arg->new_pgdata);
 		new_arg->new_pgdata = pg_strdup(new_pgdata);
-		if (new_arg->old_tablespace)
-			pg_free(new_arg->old_tablespace);
+		pg_free(new_arg->old_tablespace);
 		new_arg->old_tablespace = old_tablespace ? pg_strdup(old_tablespace) : NULL;
 
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_transfer_all_new_dbs,

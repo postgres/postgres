@@ -5475,12 +5475,10 @@ static void
 free_command(Command *command)
 {
 	termPQExpBuffer(&command->lines);
-	if (command->first_line)
-		pg_free(command->first_line);
+	pg_free(command->first_line);
 	for (int i = 0; i < command->argc; i++)
 		pg_free(command->argv[i]);
-	if (command->varprefix)
-		pg_free(command->varprefix);
+	pg_free(command->varprefix);
 
 	/*
 	 * It should also free expr recursively, but this is currently not needed
@@ -6637,8 +6635,7 @@ main(int argc, char **argv)
 				is_init_mode = true;
 				break;
 			case 'I':
-				if (initialize_steps)
-					pg_free(initialize_steps);
+				pg_free(initialize_steps);
 				initialize_steps = pg_strdup(optarg);
 				checkInitSteps(initialize_steps);
 				initialization_option_set = true;
