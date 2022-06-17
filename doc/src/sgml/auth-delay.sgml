@@ -27,7 +27,7 @@
   <variablelist>
    <varlistentry>
     <term>
-     <varname>auth_delay.milliseconds</varname> (<type>int</type>)
+     <varname>auth_delay.milliseconds</varname> (<type>integer</type>)
      <indexterm>
       <primary><varname>auth_delay.milliseconds</varname> configuration parameter</primary>
      </indexterm>

@@ -4922,7 +4922,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      <variablelist>
 
      <varlistentry id="guc-max-logical-replication-workers" xreflabel="max_logical_replication_workers">
-      <term><varname>max_logical_replication_workers</varname> (<type>int</type>)
+      <term><varname>max_logical_replication_workers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_logical_replication_workers</varname> configuration parameter</primary>
       </indexterm>

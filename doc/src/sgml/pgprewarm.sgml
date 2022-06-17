@@ -107,7 +107,7 @@ autoprewarm_dump_now() RETURNS int8
   <variablelist>
    <varlistentry>
    <term>
-     <varname>pg_prewarm.autoprewarm_interval</varname> (<type>int</type>)
+     <varname>pg_prewarm.autoprewarm_interval</varname> (<type>integer</type>)
      <indexterm>
       <primary><varname>pg_prewarm.autoprewarm_interval</varname> configuration parameter</primary>
      </indexterm>
