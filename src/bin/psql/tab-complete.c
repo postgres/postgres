@@ -238,6 +238,11 @@ static bool completion_force_quote; /* true to force-quote filenames */
  *	  QUERY_PLUS forms combine such literal lists with a query result.
  * 4) The list of attributes of the given table (possibly schema-qualified).
  * 5) The list of arguments to the given function (possibly schema-qualified).
+ *
+ * The query is generally expected to return raw SQL identifiers; quoting
+ * is handled by the matching machinery.  If what is returned is not SQL
+ * identifiers, use one of the VERBATIM forms (and then, if quoting is
+ * needed, do it inside the query).
  */
 #define COMPLETE_WITH_QUERY(query) \
 	COMPLETE_WITH_QUERY_LIST(query, NULL)
@@ -992,7 +997,7 @@ static const SchemaQuery Query_for_trigger_of_table = {
 #define Query_for_list_of_encodings \
 " SELECT DISTINCT pg_catalog.pg_encoding_to_char(conforencoding) "\
 "   FROM pg_catalog.pg_conversion "\
-"  WHERE pg_catalog.pg_encoding_to_char(conforencoding) LIKE UPPER('%s')"
+"  WHERE pg_catalog.pg_encoding_to_char(conforencoding) LIKE pg_catalog.upper('%s')"
 
 #define Query_for_list_of_languages \
 "SELECT lanname "\
@@ -1076,18 +1081,18 @@ static const SchemaQuery Query_for_trigger_of_table = {
 "   FROM pg_catalog.pg_available_extensions "\
 "  WHERE name LIKE '%s' AND installed_version IS NULL"
 
-/* the result of this query is not an identifier, so use VERBATIM */
+/* the result of this query is not a raw identifier, so use VERBATIM */
 #define Query_for_list_of_available_extension_versions \
-" SELECT version "\
+" SELECT pg_catalog.quote_ident(version) "\
 "   FROM pg_catalog.pg_available_extension_versions "\
-"  WHERE version LIKE '%s'"\
+"  WHERE pg_catalog.quote_ident(version) LIKE '%s'"\
 "    AND name='%s'"
 
-/* the result of this query is not an identifier, so use VERBATIM */
+/* the result of this query is not a raw identifier, so use VERBATIM */
 #define Query_for_list_of_available_extension_versions_with_TO \
-" SELECT 'TO ' || version "\
+" SELECT 'TO ' || pg_catalog.quote_ident(version) "\
 "   FROM pg_catalog.pg_available_extension_versions "\
-"  WHERE ('TO ' || version) LIKE '%s'"\
+"  WHERE ('TO ' || pg_catalog.quote_ident(version)) LIKE '%s'"\
 "    AND name='%s'"
 
 #define Query_for_list_of_prepared_statements \
