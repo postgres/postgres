@@ -2511,9 +2511,9 @@ Author: Robert Haas <rhaas@postgresql.org>
 
      <listitem>
       <para>
-       Allow <application>pg_basebackup</application> to decompress LZ4
-       and Zstandard compressed server-side base backups, and compress
-       output files with LZ4 and Zstandard (Dipesh Pandit, Jeevan Ladhe)
+       Allow <application>pg_basebackup</application> to use LZ4 and
+       Zstandard compression on server-side base backup files (Dipesh
+       Pandit, Jeevan Ladhe)
       </para>
      </listitem>
 
