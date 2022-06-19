@@ -1980,7 +1980,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
         <listitem>
          <para>
           If true, this logical replication slot supports decoding of two-phase
-          transactions. With this option, two-phase commands like
+          commit. With this option, commands related to two-phase commit such as
           <literal>PREPARE TRANSACTION</literal>, <literal>COMMIT PREPARED</literal>
           and <literal>ROLLBACK PREPARED</literal> are decoded and transmitted.
           The transaction will be decoded and transmitted at
@@ -3046,7 +3046,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
       </para>
       <para>
        Version <literal>3</literal> is supported only for server version 15
-       and above, and it allows streaming of two-phase transactions.
+       and above, and it allows streaming of two-phase commits.
       </para>
      </listitem>
     </varlistentry>

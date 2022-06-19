@@ -6393,7 +6393,7 @@ describeSubscriptions(const char *pattern, bool verbose)
 			appendPQExpBuffer(&buf,
 							  ", subtwophasestate AS \"%s\"\n"
 							  ", subdisableonerr AS \"%s\"\n",
-							  gettext_noop("Two phase commit"),
+							  gettext_noop("Two-phase commit"),
 							  gettext_noop("Disable on error"));
 
 		appendPQExpBuffer(&buf,
