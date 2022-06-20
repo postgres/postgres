@@ -1,4 +1,4 @@
-<!-- doc/src/sgml/backupmanifest.sgml -->
+<!-- doc/src/sgml/backup-manifest.sgml -->
 
 <chapter id="backup-manifest-format">
  <title>Backup Manifest Format</title>

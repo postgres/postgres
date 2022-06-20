@@ -1,6 +1,6 @@
-<!-- doc/src/sgml/obsolete-pgresetxlog.sgml -->
+<!-- doc/src/sgml/appendix-obsolete-pgresetxlog.sgml -->
 <!--
-  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+  See doc/src/sgml/appendix-obsolete.sgml for why this file exists. Do not change the id attribute.
 -->
 
 <sect1 id="app-pgresetxlog" xreflabel="pg_resetxlog">
