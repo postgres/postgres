@@ -1,0 +1,35 @@
+--
+-- Test pg_prewarm extension
+--
+CREATE EXTENSION pg_prewarm;
+CREATE TABLE t1 (c1 integer);
+INSERT INTO t1 VALUES (1);
+INSERT INTO t1 VALUES (2);
+INSERT INTO t1 VALUES (3);
+--
+-- prefetch mode
+--
+SELECT pg_prewarm('t1', 'prefetch');
+ pg_prewarm 
+------------
+          1
+(1 row)
+
+--
+-- read mode
+--
+SELECT pg_prewarm('t1', 'read');
+ pg_prewarm 
+------------
+          1
+(1 row)
+
+--
+-- buffer_mode
+--
+SELECT pg_prewarm('t1', 'buffer');
+ pg_prewarm 
+------------
+          1
+(1 row)
+
