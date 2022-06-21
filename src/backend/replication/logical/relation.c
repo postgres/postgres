@@ -596,8 +596,20 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 
 	entry = &part_entry->relmapentry;
 
+	/*
+	 * We must always overwrite entry->localrel with the latest partition
+	 * Relation pointer, because the Relation pointed to by the old value may
+	 * have been cleared after the caller would have closed the partition
+	 * relation after the last use of this entry.  Note that localrelvalid is
+	 * only updated by the relcache invalidation callback, so it may still be
+	 * true irrespective of whether the Relation pointed to by localrel has
+	 * been cleared or not.
+	 */
 	if (found && entry->localrelvalid)
+	{
+		entry->localrel = partrel;
 		return entry;
+	}
 
 	/* Switch to longer-lived context. */
 	oldctx = MemoryContextSwitchTo(LogicalRepPartMapContext);
