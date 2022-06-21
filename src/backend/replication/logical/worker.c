@@ -730,6 +730,13 @@ apply_handle_insert_internal(ResultRelInfo *relinfo,
 static void
 check_relation_updatable(LogicalRepRelMapEntry *rel)
 {
+	/*
+	 * For partitioned tables, we only need to care if the target partition is
+	 * updatable (aka has PK or RI defined for it).
+	 */
+	if (rel->localrel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return;
+
 	/* Updatable, no error. */
 	if (rel->updatable)
 		return;
@@ -1064,6 +1071,8 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	PartitionRoutingInfo *partinfo;
 	TupleConversionMap *map;
 	MemoryContext oldctx;
+	LogicalRepRelMapEntry *part_entry = NULL;
+	AttrMap    *attrmap = NULL;
 
 	/* ModifyTableState is needed for ExecFindPartition(). */
 	edata->mtstate = mtstate = makeNode(ModifyTableState);
@@ -1097,14 +1106,25 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 		remoteslot_part = table_slot_create(partrel, &estate->es_tupleTable);
 	map = partinfo->pi_RootToPartitionMap;
 	if (map != NULL)
-		remoteslot_part = execute_attr_map_slot(map->attrMap, remoteslot,
+	{
+		attrmap = map->attrMap;
+		remoteslot_part = execute_attr_map_slot(attrmap, remoteslot,
 												remoteslot_part);
+	}
 	else
 	{
 		remoteslot_part = ExecCopySlot(remoteslot_part, remoteslot);
 		slot_getallattrs(remoteslot_part);
 	}
 	MemoryContextSwitchTo(oldctx);
+
+	/* Check if we can do the update or delete on the leaf partition. */
+	if (operation == CMD_UPDATE || operation == CMD_DELETE)
+	{
+		part_entry = logicalrep_partition_open(relmapentry, partrel,
+											   attrmap);
+		check_relation_updatable(part_entry);
+	}
 
 	estate->es_result_relation_info = partrelinfo;
 	switch (operation)
@@ -1129,14 +1149,9 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 			 * suitable partition.
 			 */
 			{
-				AttrMap    *attrmap = map ? map->attrMap : NULL;
-				LogicalRepRelMapEntry *part_entry;
 				TupleTableSlot *localslot;
 				ResultRelInfo *partrelinfo_new;
 				bool		found;
-
-				part_entry = logicalrep_partition_open(relmapentry, partrel,
-													   attrmap);
 
 				/* Get the matching local tuple from the partition. */
 				found = FindReplTupleInLocalRel(estate, partrel,
