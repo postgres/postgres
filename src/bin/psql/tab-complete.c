@@ -239,10 +239,12 @@ static bool completion_force_quote; /* true to force-quote filenames */
  * 4) The list of attributes of the given table (possibly schema-qualified).
  * 5) The list of arguments to the given function (possibly schema-qualified).
  *
- * The query is generally expected to return raw SQL identifiers; quoting
- * is handled by the matching machinery.  If what is returned is not SQL
- * identifiers, use one of the VERBATIM forms (and then, if quoting is
- * needed, do it inside the query).
+ * The query is generally expected to return raw SQL identifiers; matching
+ * to what the user typed is done in a quoting-aware fashion.  If what is
+ * returned is not SQL identifiers, use one of the VERBATIM forms, in which
+ * case the query results are matched to the user's text without double-quote
+ * processing (so if quoting is needed, you must provide it in the query
+ * results).
  */
 #define COMPLETE_WITH_QUERY(query) \
 	COMPLETE_WITH_QUERY_LIST(query, NULL)
@@ -1081,19 +1083,10 @@ static const SchemaQuery Query_for_trigger_of_table = {
 "   FROM pg_catalog.pg_available_extensions "\
 "  WHERE name LIKE '%s' AND installed_version IS NULL"
 
-/* the result of this query is not a raw identifier, so use VERBATIM */
 #define Query_for_list_of_available_extension_versions \
-" SELECT pg_catalog.quote_ident(version) "\
+" SELECT version "\
 "   FROM pg_catalog.pg_available_extension_versions "\
-"  WHERE pg_catalog.quote_ident(version) LIKE '%s'"\
-"    AND name='%s'"
-
-/* the result of this query is not a raw identifier, so use VERBATIM */
-#define Query_for_list_of_available_extension_versions_with_TO \
-" SELECT 'TO ' || pg_catalog.quote_ident(version) "\
-"   FROM pg_catalog.pg_available_extension_versions "\
-"  WHERE ('TO ' || pg_catalog.quote_ident(version)) LIKE '%s'"\
-"    AND name='%s'"
+"  WHERE version LIKE '%s' AND name='%s'"
 
 #define Query_for_list_of_prepared_statements \
 " SELECT name "\
@@ -1934,20 +1927,17 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER EXTENSION <name> */
 	else if (Matches("ALTER", "EXTENSION", MatchAny))
-		COMPLETE_WITH("ADD", "DROP", "UPDATE", "SET SCHEMA");
+		COMPLETE_WITH("ADD", "DROP", "UPDATE TO", "SET SCHEMA");
 
 	/* ALTER EXTENSION <name> UPDATE */
 	else if (Matches("ALTER", "EXTENSION", MatchAny, "UPDATE"))
-	{
-		set_completion_reference(prev2_wd);
-		COMPLETE_WITH_QUERY_VERBATIM(Query_for_list_of_available_extension_versions_with_TO);
-	}
+		COMPLETE_WITH("TO");
 
 	/* ALTER EXTENSION <name> UPDATE TO */
 	else if (Matches("ALTER", "EXTENSION", MatchAny, "UPDATE", "TO"))
 	{
 		set_completion_reference(prev3_wd);
-		COMPLETE_WITH_QUERY_VERBATIM(Query_for_list_of_available_extension_versions);
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extension_versions);
 	}
 
 	/* ALTER FOREIGN */
@@ -2824,7 +2814,7 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "EXTENSION", MatchAny, "VERSION"))
 	{
 		set_completion_reference(prev2_wd);
-		COMPLETE_WITH_QUERY_VERBATIM(Query_for_list_of_available_extension_versions);
+		COMPLETE_WITH_QUERY(Query_for_list_of_available_extension_versions);
 	}
 
 	/* CREATE FOREIGN */
