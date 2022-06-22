@@ -153,7 +153,8 @@ SPI_connect_ext(int options)
 	 * XXX It could be better to use PortalContext as the parent context in
 	 * all cases, but we may not be inside a portal (consider deferred-trigger
 	 * execution).  Perhaps CurTransactionContext could be an option?  For now
-	 * it doesn't matter because we clean up explicitly in AtEOSubXact_SPI().
+	 * it doesn't matter because we clean up explicitly in AtEOSubXact_SPI();
+	 * but see also AtEOXact_SPI().
 	 */
 	_SPI_current->procCxt = AllocSetContextCreate(_SPI_current->atomic ? TopTransactionContext : PortalContext,
 												  "SPI Proc",
@@ -213,13 +214,13 @@ SPI_finish(void)
 	return SPI_OK_FINISH;
 }
 
+/*
+ * SPI_start_transaction is a no-op, kept for backwards compatibility.
+ * SPI callers are *always* inside a transaction.
+ */
 void
 SPI_start_transaction(void)
 {
-	MemoryContext oldcontext = CurrentMemoryContext;
-
-	StartTransactionCommand();
-	MemoryContextSwitchTo(oldcontext);
 }
 
 void
@@ -227,6 +228,12 @@ SPI_commit(void)
 {
 	MemoryContext oldcontext = CurrentMemoryContext;
 
+	/*
+	 * Complain if we are in a context that doesn't permit transaction
+	 * termination.  (Note: here and SPI_rollback should be the only places
+	 * that throw ERRCODE_INVALID_TRANSACTION_TERMINATION, so that callers can
+	 * test for that with security that they know what happened.)
+	 */
 	if (_SPI_current->atomic)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
@@ -239,30 +246,66 @@ SPI_commit(void)
 	 * top-level transaction in such a block violates that idea.  A future PL
 	 * implementation might have different ideas about this, in which case
 	 * this restriction would have to be refined or the check possibly be
-	 * moved out of SPI into the PLs.
+	 * moved out of SPI into the PLs.  Note however that the code below relies
+	 * on not being within a subtransaction.
 	 */
 	if (IsSubTransaction())
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot commit while a subtransaction is active")));
 
-	/*
-	 * Hold any pinned portals that any PLs might be using.  We have to do
-	 * this before changing transaction state, since this will run
-	 * user-defined code that might throw an error.
-	 */
-	HoldPinnedPortals();
+	/* Catch any error occurring during the COMMIT */
+	PG_TRY();
+	{
+		/* Protect current SPI stack entry against deletion */
+		_SPI_current->internal_xact = true;
 
-	/* Start the actual commit */
-	_SPI_current->internal_xact = true;
+		/*
+		 * Hold any pinned portals that any PLs might be using.  We have to do
+		 * this before changing transaction state, since this will run
+		 * user-defined code that might throw an error.
+		 */
+		HoldPinnedPortals();
 
-	/* Release snapshots associated with portals */
-	ForgetPortalSnapshots();
+		/* Release snapshots associated with portals */
+		ForgetPortalSnapshots();
 
-	CommitTransactionCommand();
-	MemoryContextSwitchTo(oldcontext);
+		/* Do the deed */
+		CommitTransactionCommand();
 
-	_SPI_current->internal_xact = false;
+		/* Immediately start a new transaction */
+		StartTransactionCommand();
+
+		MemoryContextSwitchTo(oldcontext);
+
+		_SPI_current->internal_xact = false;
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info in caller's context */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/*
+		 * Abort the failed transaction.  If this fails too, we'll just
+		 * propagate the error out ... there's not that much we can do.
+		 */
+		AbortCurrentTransaction();
+
+		/* ... and start a new one */
+		StartTransactionCommand();
+
+		MemoryContextSwitchTo(oldcontext);
+
+		_SPI_current->internal_xact = false;
+
+		/* Now that we've cleaned up the transaction, re-throw the error */
+		ReThrowError(edata);
+	}
+	PG_END_TRY();
 }
 
 void
@@ -270,6 +313,7 @@ SPI_rollback(void)
 {
 	MemoryContext oldcontext = CurrentMemoryContext;
 
+	/* see under SPI_commit() */
 	if (_SPI_current->atomic)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
@@ -281,40 +325,60 @@ SPI_rollback(void)
 				(errcode(ERRCODE_INVALID_TRANSACTION_TERMINATION),
 				 errmsg("cannot roll back while a subtransaction is active")));
 
-	/*
-	 * Hold any pinned portals that any PLs might be using.  We have to do
-	 * this before changing transaction state, since this will run
-	 * user-defined code that might throw an error, and in any case couldn't
-	 * be run in an already-aborted transaction.
-	 */
-	HoldPinnedPortals();
+	/* Catch any error occurring during the ROLLBACK */
+	PG_TRY();
+	{
+		/* Protect current SPI stack entry against deletion */
+		_SPI_current->internal_xact = true;
 
-	/* Start the actual rollback */
-	_SPI_current->internal_xact = true;
+		/*
+		 * Hold any pinned portals that any PLs might be using.  We have to do
+		 * this before changing transaction state, since this will run
+		 * user-defined code that might throw an error, and in any case
+		 * couldn't be run in an already-aborted transaction.
+		 */
+		HoldPinnedPortals();
 
-	/* Release snapshots associated with portals */
-	ForgetPortalSnapshots();
+		/* Release snapshots associated with portals */
+		ForgetPortalSnapshots();
 
-	AbortCurrentTransaction();
-	MemoryContextSwitchTo(oldcontext);
+		/* Do the deed */
+		AbortCurrentTransaction();
 
-	_SPI_current->internal_xact = false;
-}
+		/* Immediately start a new transaction */
+		StartTransactionCommand();
 
-/*
- * Clean up SPI state.  Called on transaction end (of non-SPI-internal
- * transactions) and when returning to the main loop on error.
- */
-void
-SPICleanup(void)
-{
-	_SPI_current = NULL;
-	_SPI_connected = -1;
-	/* Reset API global variables, too */
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
-	SPI_result = 0;
+		MemoryContextSwitchTo(oldcontext);
+
+		_SPI_current->internal_xact = false;
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info in caller's context */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/*
+		 * Try again to abort the failed transaction.  If this fails too,
+		 * we'll just propagate the error out ... there's not that much we can
+		 * do.
+		 */
+		AbortCurrentTransaction();
+
+		/* ... and start a new one */
+		StartTransactionCommand();
+
+		MemoryContextSwitchTo(oldcontext);
+
+		_SPI_current->internal_xact = false;
+
+		/* Now that we've cleaned up the transaction, re-throw the error */
+		ReThrowError(edata);
+	}
+	PG_END_TRY();
 }
 
 /*
@@ -323,17 +387,49 @@ SPICleanup(void)
 void
 AtEOXact_SPI(bool isCommit)
 {
-	/* Do nothing if the transaction end was initiated by SPI. */
-	if (_SPI_current && _SPI_current->internal_xact)
-		return;
+	bool		found = false;
 
-	if (isCommit && _SPI_connected != -1)
+	/*
+	 * Pop stack entries, stopping if we find one marked internal_xact (that
+	 * one belongs to the caller of SPI_commit or SPI_abort).
+	 */
+	while (_SPI_connected >= 0)
+	{
+		_SPI_connection *connection = &(_SPI_stack[_SPI_connected]);
+
+		if (connection->internal_xact)
+			break;
+
+		found = true;
+
+		/*
+		 * We need not release the procedure's memory contexts explicitly, as
+		 * they'll go away automatically when their parent context does; see
+		 * notes in SPI_connect_ext.
+		 */
+
+		/*
+		 * Restore outer global variables and pop the stack entry.  Unlike
+		 * SPI_finish(), we don't risk switching to memory contexts that might
+		 * be already gone.
+		 */
+		SPI_processed = connection->outer_processed;
+		SPI_tuptable = connection->outer_tuptable;
+		SPI_result = connection->outer_result;
+
+		_SPI_connected--;
+		if (_SPI_connected < 0)
+			_SPI_current = NULL;
+		else
+			_SPI_current = &(_SPI_stack[_SPI_connected]);
+	}
+
+	/* We should only find entries to pop during an ABORT. */
+	if (found && isCommit)
 		ereport(WARNING,
 				(errcode(ERRCODE_WARNING),
 				 errmsg("transaction left non-empty SPI stack"),
 				 errhint("Check for missing \"SPI_finish\" calls.")));
-
-	SPICleanup();
 }
 
 /*

@@ -94,5 +94,42 @@ CALL transaction_test4b();
 SELECT * FROM test1;
 
 
+-- check handling of an error during COMMIT
+CREATE TABLE testpk (id int PRIMARY KEY);
+CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
+
+CREATE PROCEDURE transaction_testfk()
+LANGUAGE pltcl
+AS $$
+# this insert will fail during commit:
+spi_exec "INSERT INTO testfk VALUES (0)"
+commit
+elog WARNING "should not get here"
+$$;
+
+CALL transaction_testfk();
+
+SELECT * FROM testpk;
+SELECT * FROM testfk;
+
+CREATE OR REPLACE PROCEDURE transaction_testfk()
+LANGUAGE pltcl
+AS $$
+# this insert will fail during commit:
+spi_exec "INSERT INTO testfk VALUES (0)"
+if [catch {commit} msg] {
+    elog INFO $msg
+}
+# these inserts should work:
+spi_exec "INSERT INTO testpk VALUES (1)"
+spi_exec "INSERT INTO testfk VALUES (1)"
+$$;
+
+CALL transaction_testfk();
+
+SELECT * FROM testpk;
+SELECT * FROM testfk;
+
+
 DROP TABLE test1;
 DROP TABLE test2;
