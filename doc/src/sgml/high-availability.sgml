@@ -2194,7 +2194,7 @@ HINT:  You can then restart the server after making the necessary configuration 
     Currently, temporary table creation is not allowed during read-only
     transactions, so in some cases existing scripts will not run correctly.
     This restriction might be relaxed in a later release. This is
-    both an SQL Standard compliance issue and a technical issue.
+    both an SQL standard compliance issue and a technical issue.
    </para>
 
    <para>
