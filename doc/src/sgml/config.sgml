@@ -7669,7 +7669,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </para>
 
      <table id="runtime-config-logging-jsonlog-keys-values">
-      <title>Keys and values of JSON log entries</title>
+      <title>Keys and Values of JSON Log Entries</title>
       <tgroup cols="3">
        <thead>
         <row>

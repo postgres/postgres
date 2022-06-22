@@ -1023,8 +1023,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
  <refsect1>
   <title>Notes</title>
 
- <refsect2 id="transactions-and-scripts" xreflabel="What is the &quot;Transaction&quot; Actually Performed in pgbench?">
-  <title>What is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
+ <refsect2 id="transactions-and-scripts" xreflabel="What Is the &quot;Transaction&quot; Actually Performed in pgbench?">
+  <title>What Is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
    <application>pgbench</application> executes test scripts chosen randomly
