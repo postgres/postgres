@@ -73,6 +73,7 @@
  * - pgstat_database.c
  * - pgstat_function.c
  * - pgstat_relation.c
+ * - pgstat_replslot.c
  * - pgstat_slru.c
  * - pgstat_subscription.c
  * - pgstat_wal.c
