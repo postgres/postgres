@@ -2334,7 +2334,7 @@ LOG:  database system is ready to accept read only connections
     Currently, temporary table creation is not allowed during read only
     transactions, so in some cases existing scripts will not run correctly.
     This restriction might be relaxed in a later release. This is
-    both a SQL Standard compliance issue and a technical issue.
+    both a SQL standard compliance issue and a technical issue.
    </para>
 
    <para>

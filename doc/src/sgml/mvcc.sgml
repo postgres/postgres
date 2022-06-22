@@ -277,9 +277,10 @@
 
    <para>
     The table also shows that PostgreSQL's Repeatable Read implementation
-    does not allow phantom reads.  Stricter behavior is permitted by the
-    SQL standard: the four isolation levels only define which phenomena
-    must not happen, not which phenomena <emphasis>must</emphasis> happen.
+    does not allow phantom reads.  This is acceptable under the SQL
+    standard because the standard specifies which anomalies must
+    <emphasis>not</emphasis> occur at certain isolation levels;  higher
+    guarantees are acceptable.
     The behavior of the available isolation levels is detailed in the
     following subsections.
    </para>
