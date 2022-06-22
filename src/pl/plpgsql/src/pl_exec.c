@@ -4876,10 +4876,7 @@ exec_stmt_commit(PLpgSQL_execstate *estate, PLpgSQL_stmt_commit *stmt)
 	if (stmt->chain)
 		SPI_commit_and_chain();
 	else
-	{
 		SPI_commit();
-		SPI_start_transaction();
-	}
 
 	/*
 	 * We need to build new simple-expression infrastructure, since the old
@@ -4902,10 +4899,7 @@ exec_stmt_rollback(PLpgSQL_execstate *estate, PLpgSQL_stmt_rollback *stmt)
 	if (stmt->chain)
 		SPI_rollback_and_chain();
 	else
-	{
 		SPI_rollback();
-		SPI_start_transaction();
-	}
 
 	/*
 	 * We need to build new simple-expression infrastructure, since the old

@@ -44,8 +44,6 @@ static PyObject *PLy_fatal(PyObject *self, PyObject *args, PyObject *kw);
 static PyObject *PLy_quote_literal(PyObject *self, PyObject *args);
 static PyObject *PLy_quote_nullable(PyObject *self, PyObject *args);
 static PyObject *PLy_quote_ident(PyObject *self, PyObject *args);
-static PyObject *PLy_commit(PyObject *self, PyObject *args);
-static PyObject *PLy_rollback(PyObject *self, PyObject *args);
 
 
 /* A list of all known exceptions, generated from backend/utils/errcodes.txt */
@@ -580,33 +578,5 @@ PLy_output(volatile int level, PyObject *self, PyObject *args, PyObject *kw)
 	/*
 	 * return a legal object so the interpreter will continue on its merry way
 	 */
-	Py_RETURN_NONE;
-}
-
-static PyObject *
-PLy_commit(PyObject *self, PyObject *args)
-{
-	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-
-	SPI_commit();
-	SPI_start_transaction();
-
-	/* was cleared at transaction end, reset pointer */
-	exec_ctx->scratch_ctx = NULL;
-
-	Py_RETURN_NONE;
-}
-
-static PyObject *
-PLy_rollback(PyObject *self, PyObject *args)
-{
-	PLyExecutionContext *exec_ctx = PLy_current_execution_context();
-
-	SPI_rollback();
-	SPI_start_transaction();
-
-	/* was cleared at transaction end, reset pointer */
-	exec_ctx->scratch_ctx = NULL;
-
 	Py_RETURN_NONE;
 }

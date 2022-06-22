@@ -4010,7 +4010,6 @@ plperl_spi_commit(void)
 	PG_TRY();
 	{
 		SPI_commit();
-		SPI_start_transaction();
 	}
 	PG_CATCH();
 	{
@@ -4037,7 +4036,6 @@ plperl_spi_rollback(void)
 	PG_TRY();
 	{
 		SPI_rollback();
-		SPI_start_transaction();
 	}
 	PG_CATCH();
 	{

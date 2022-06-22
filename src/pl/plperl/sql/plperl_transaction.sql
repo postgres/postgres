@@ -159,5 +159,37 @@ SELECT * FROM test1;
 SELECT * FROM pg_cursors;
 
 
+-- check handling of an error during COMMIT
+CREATE TABLE testpk (id int PRIMARY KEY);
+CREATE TABLE testfk(f1 int REFERENCES testpk DEFERRABLE INITIALLY DEFERRED);
+
+DO LANGUAGE plperl $$
+# this insert will fail during commit:
+spi_exec_query("INSERT INTO testfk VALUES (0)");
+spi_commit();
+elog(WARNING, 'should not get here');
+$$;
+
+SELECT * FROM testpk;
+SELECT * FROM testfk;
+
+DO LANGUAGE plperl $$
+# this insert will fail during commit:
+spi_exec_query("INSERT INTO testfk VALUES (0)");
+eval {
+    spi_commit();
+};
+if ($@) {
+    elog(INFO, $@);
+}
+# these inserts should work:
+spi_exec_query("INSERT INTO testpk VALUES (1)");
+spi_exec_query("INSERT INTO testfk VALUES (1)");
+$$;
+
+SELECT * FROM testpk;
+SELECT * FROM testfk;
+
+
 DROP TABLE test1;
 DROP TABLE test2;

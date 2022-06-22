@@ -2939,7 +2939,6 @@ pltcl_commit(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		SPI_commit();
-		SPI_start_transaction();
 	}
 	PG_CATCH();
 	{
@@ -2979,7 +2978,6 @@ pltcl_rollback(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		SPI_rollback();
-		SPI_start_transaction();
 	}
 	PG_CATCH();
 	{
