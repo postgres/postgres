@@ -3778,7 +3778,7 @@ RAISE ;
 
    <para>
     After <replaceable class="parameter">level</replaceable> if any,
-    you can write a <replaceable class="parameter">format</replaceable>
+    you can specify a <replaceable class="parameter">format</replaceable> string
     (which must be a simple string literal, not an expression).  The
     format string specifies the error message text to be reported.
     The format string can be followed
