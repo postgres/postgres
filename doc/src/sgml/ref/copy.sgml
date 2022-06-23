@@ -282,6 +282,8 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       of the columns in the header line must match the actual column names of
       the table, otherwise an error is raised.
       This option is not allowed when using <literal>binary</literal> format.
+      The <literal>MATCH</literal> option is only valid for <command>COPY
+      FROM</command> commands.
      </para>
     </listitem>
    </varlistentry>

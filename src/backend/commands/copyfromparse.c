@@ -789,11 +789,12 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 			foreach(cur, cstate->attnumlist)
 			{
 				int			attnum = lfirst_int(cur);
-				char	   *colName = cstate->raw_fields[attnum - 1];
+				char	   *colName;
 				Form_pg_attribute attr = TupleDescAttr(tupDesc, attnum - 1);
 
-				fldnum++;
+				Assert(fldnum < cstate->max_fields);
 
+				colName = cstate->raw_fields[fldnum++];
 				if (colName == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),

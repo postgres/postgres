@@ -182,9 +182,21 @@ create table header_copytest (
 	b int,
 	c text
 );
+-- Make sure it works with with dropped columns
+alter table header_copytest drop column c;
+alter table header_copytest add column c text;
+copy header_copytest to stdout with (header match);
+ERROR:  cannot use "match" with HEADER in COPY TO
 copy header_copytest from stdin with (header wrong_choice);
 ERROR:  header requires a Boolean value or "match"
+-- works
 copy header_copytest from stdin with (header match);
+copy header_copytest (c, a, b) from stdin with (header match);
+copy header_copytest from stdin with (header match, format csv);
+-- errors
+copy header_copytest (c, b, a) from stdin with (header match);
+ERROR:  column name mismatch in header line field 1: got "a", expected "c"
+CONTEXT:  COPY header_copytest, line 1: "a	b	c"
 copy header_copytest from stdin with (header match);
 ERROR:  column name mismatch in header line field 3: got null value ("\N"), expected "c"
 CONTEXT:  COPY header_copytest, line 1: "a	b	\N"
@@ -197,5 +209,34 @@ CONTEXT:  COPY header_copytest, line 1: "a	b	c	d"
 copy header_copytest from stdin with (header match);
 ERROR:  column name mismatch in header line field 3: got "d", expected "c"
 CONTEXT:  COPY header_copytest, line 1: "a	b	d"
-copy header_copytest from stdin with (header match, format csv);
+SELECT * FROM header_copytest ORDER BY a;
+ a | b |  c  
+---+---+-----
+ 1 | 2 | foo
+ 3 | 4 | bar
+ 5 | 6 | baz
+(3 rows)
+
+-- Drop an extra column, in the middle of the existing set.
+alter table header_copytest drop column b;
+-- works
+copy header_copytest (c, a) from stdin with (header match);
+copy header_copytest (a, c) from stdin with (header match);
+-- errors
+copy header_copytest from stdin with (header match);
+ERROR:  wrong number of fields in header line: field count is 3, expected 2
+CONTEXT:  COPY header_copytest, line 1: "a	........pg.dropped.2........	c"
+copy header_copytest (a, c) from stdin with (header match);
+ERROR:  wrong number of fields in header line: field count is 3, expected 2
+CONTEXT:  COPY header_copytest, line 1: "a	c	b"
+SELECT * FROM header_copytest ORDER BY a;
+ a |  c  
+---+-----
+ 1 | foo
+ 3 | bar
+ 5 | baz
+ 7 | foo
+ 8 | foo
+(5 rows)
+
 drop table header_copytest;
