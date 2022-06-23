@@ -145,7 +145,7 @@ logicalrep_relmap_free_entry(LogicalRepRelMapEntry *entry)
 	bms_free(remoterel->attkeys);
 
 	if (entry->attrmap)
-		pfree(entry->attrmap);
+		free_attrmap(entry->attrmap);
 }
 
 /*
@@ -336,6 +336,13 @@ logicalrep_rel_open(LogicalRepRelId remoteid, LOCKMODE lockmode)
 		TupleDesc	desc;
 		MemoryContext oldctx;
 		int			i;
+
+		/* Release the no-longer-useful attrmap, if any. */
+		if (entry->attrmap)
+		{
+			free_attrmap(entry->attrmap);
+			entry->attrmap = NULL;
+		}
 
 		/* Try to find and lock the relation by name. */
 		relid = RangeVarGetRelid(makeRangeVar(remoterel->nspname,
@@ -586,6 +593,13 @@ logicalrep_partition_open(LogicalRepRelMapEntry *root,
 	{
 		memset(part_entry, 0, sizeof(LogicalRepPartMapEntry));
 		part_entry->partoid = partOid;
+	}
+
+	/* Release the no-longer-useful attrmap, if any. */
+	if (entry->attrmap)
+	{
+		free_attrmap(entry->attrmap);
+		entry->attrmap = NULL;
 	}
 
 	if (!entry->remoterel.remoteid)
