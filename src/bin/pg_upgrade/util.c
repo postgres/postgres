@@ -92,7 +92,7 @@ cleanup_output_dirs(void)
 
 		default:
 			/* different failure, just report it */
-			pg_log(PG_WARNING, "could not access directory \"%s\": %m",
+			pg_log(PG_WARNING, "could not access directory \"%s\": %m\n",
 				   log_opts.rootdir);
 			break;
 	}
