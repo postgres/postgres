@@ -15,7 +15,7 @@ override CPPFLAGS := -I. -I$(srcdir) $(TCL_INCLUDE_SPEC) $(CPPFLAGS)
 
 # On Windows, we don't link directly with the Tcl library; see below
 ifneq ($(PORTNAME), win32)
-SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
+SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS)
 endif
 
 PGFILEDESC = "PL/Tcl - procedural language"
