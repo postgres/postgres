@@ -1082,7 +1082,7 @@ get_publication_name(Oid pubid, bool missing_ok)
 Datum
 pg_get_publication_tables(PG_FUNCTION_ARGS)
 {
-#define NUM_PUBLICATOIN_TABLES_ELEM	3
+#define NUM_PUBLICATION_TABLES_ELEM	3
 	FuncCallContext *funcctx;
 	char	   *pubname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Publication *publication;
@@ -1139,7 +1139,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		}
 
 		/* Construct a tuple descriptor for the result rows. */
-		tupdesc = CreateTemplateTupleDesc(NUM_PUBLICATOIN_TABLES_ELEM);
+		tupdesc = CreateTemplateTupleDesc(NUM_PUBLICATION_TABLES_ELEM);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relid",
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "attrs",
@@ -1162,8 +1162,8 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		HeapTuple	pubtuple = NULL;
 		HeapTuple	rettuple;
 		Oid			relid = list_nth_oid(tables, funcctx->call_cntr);
-		Datum		values[NUM_PUBLICATOIN_TABLES_ELEM];
-		bool		nulls[NUM_PUBLICATOIN_TABLES_ELEM];
+		Datum		values[NUM_PUBLICATION_TABLES_ELEM];
+		bool		nulls[NUM_PUBLICATION_TABLES_ELEM];
 
 		/*
 		 * Form tuple with appropriate data.
