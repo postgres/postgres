@@ -333,13 +333,6 @@ SKIP:
 		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "192.0.2.2"\E/
 	);
 
-	$node->connect_fails(
-		"$common_connstr host=192.0.2.1/32",
-		"IPv4 host with CIDR mask does not match",
-		expected_stderr =>
-		  qr/\Qserver certificate for "192.0.2.1" (and 1 other name) does not match host name "192.0.2.1\/32"\E/
-	);
-
 	$node->connect_ok("$common_connstr host=2001:DB8::1",
 		"host matching an IPv6 address (Subject Alternative Name 2)");
 
