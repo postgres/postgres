@@ -117,9 +117,10 @@
    Publications can choose to limit the changes they produce to
    any combination of <command>INSERT</command>, <command>UPDATE</command>,
    <command>DELETE</command>, and <command>TRUNCATE</command>, similar to how triggers are fired by
-   particular event types.  By default, all operation types are replicated.
-   (Row filters have no effect for <command>TRUNCATE</command>. See
-   <xref linkend="logical-replication-row-filter"/>).
+   particular event types. By default, all operation types are replicated.
+   These publication specifications apply only for DML operations; they do not affect the initial
+   data synchronization copy. (Row filters have no effect for
+   <command>TRUNCATE</command>. See <xref linkend="logical-replication-row-filter"/>).
   </para>
 
   <para>
@@ -317,6 +318,200 @@
     </itemizedlist>
    </para>
   </sect2>
+
+  <sect2 id="logical-replication-subscription-examples">
+    <title>Examples</title>
+
+    <para>
+     Create some test tables on the publisher.
+<programlisting>
+test_pub=# CREATE TABLE t1(a int, b text, PRIMARY KEY(a));
+CREATE TABLE
+test_pub=# CREATE TABLE t2(c int, d text, PRIMARY KEY(c));
+CREATE TABLE
+test_pub=# CREATE TABLE t3(e int, f text, PRIMARY KEY(e));
+CREATE TABLE
+</programlisting></para>
+
+    <para>
+     Create the same tables on the subscriber.
+<programlisting>
+test_sub=# CREATE TABLE t1(a int, b text, PRIMARY KEY(a));
+CREATE TABLE
+test_sub=# CREATE TABLE t2(c int, d text, PRIMARY KEY(c));
+CREATE TABLE
+test_sub=# CREATE TABLE t3(e int, f text, PRIMARY KEY(e));
+CREATE TABLE
+</programlisting></para>
+
+    <para>
+     Insert data to the tables at the publisher side.
+<programlisting>
+test_pub=# INSERT INTO t1 VALUES (1, 'one'), (2, 'two'), (3, 'three');
+INSERT 0 3
+test_pub=# INSERT INTO t2 VALUES (1, 'A'), (2, 'B'), (3, 'C');
+INSERT 0 3
+test_pub=# INSERT INTO t3 VALUES (1, 'i'), (2, 'ii'), (3, 'iii');
+INSERT 0 3
+</programlisting></para>
+
+    <para>
+     Create publications for the tables. The publications <literal>pub2</literal>
+     and <literal>pub3a</literal> disallow some <literal>publish</literal>
+     operations. The publication <literal>pub3b</literal> has a row filter (see
+     <xref linkend="logical-replication-row-filter"/>).
+<programlisting>
+test_pub=# CREATE PUBLICATION pub1 FOR TABLE t1;
+CREATE PUBLICATION
+test_pub=# CREATE PUBLICATION pub2 FOR TABLE t2 WITH (publish = 'truncate');
+CREATE PUBLICATION
+test_pub=# CREATE PUBLICATION pub3a FOR TABLE t3 WITH (publish = 'truncate');
+CREATE PUBLICATION
+test_pub=# CREATE PUBLICATION pub3b FOR TABLE t3 WHERE (e > 5);
+CREATE PUBLICATION
+</programlisting></para>
+
+    <para>
+     Create subscriptions for the publications. The subscription
+     <literal>sub3</literal> subscribes to both <literal>pub3a</literal> and
+     <literal>pub3b</literal>. All subscriptions will copy initial data by default.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=sub1'
+test_sub-# PUBLICATION pub1;
+CREATE SUBSCRIPTION
+test_sub=# CREATE SUBSCRIPTION sub2
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=sub2'
+test_sub-# PUBLICATION pub2;
+CREATE SUBSCRIPTION
+test_sub=# CREATE SUBSCRIPTION sub3
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=sub3'
+test_sub-# PUBLICATION pub3a, pub3b;
+CREATE SUBSCRIPTION
+</programlisting></para>
+
+    <para>
+     Observe that initial table data is copied, regardless of the
+     <literal>publish</literal> operation of the publication.
+<programlisting>
+test_sub=# SELECT * FROM t1;
+ a |   b
+---+-------
+ 1 | one
+ 2 | two
+ 3 | three
+(3 rows)
+
+test_sub=# SELECT * FROM t2;
+ c | d
+---+---
+ 1 | A
+ 2 | B
+ 3 | C
+(3 rows)
+</programlisting></para>
+
+    <para>
+     Furthermore, because the initial data copy ignores the <literal>publish</literal>
+     operation, and because publication <literal>pub3a</literal> has no row filter,
+     it means the copied table <literal>t3</literal> contains all rows even when
+     they do not match the row filter of publication <literal>pub3b</literal>.
+<programlisting>
+test_sub=# SELECT * FROM t3;
+ e |  f
+---+-----
+ 1 | i
+ 2 | ii
+ 3 | iii
+(3 rows)
+</programlisting></para>
+
+   <para>
+    Insert more data to the tables at the publisher side.
+<programlisting>
+test_pub=# INSERT INTO t1 VALUES (4, 'four'), (5, 'five'), (6, 'six');
+INSERT 0 3
+test_pub=# INSERT INTO t2 VALUES (4, 'D'), (5, 'E'), (6, 'F');
+INSERT 0 3
+test_pub=# INSERT INTO t3 VALUES (4, 'iv'), (5, 'v'), (6, 'vi');
+INSERT 0 3
+</programlisting></para>
+
+   <para>
+    Now the publisher side data looks like:
+<programlisting>
+test_pub=# SELECT * FROM t1;
+ a |   b
+---+-------
+ 1 | one
+ 2 | two
+ 3 | three
+ 4 | four
+ 5 | five
+ 6 | six
+(6 rows)
+
+test_pub=# SELECT * FROM t2;
+ c | d
+---+---
+ 1 | A
+ 2 | B
+ 3 | C
+ 4 | D
+ 5 | E
+ 6 | F
+(6 rows)
+
+test_pub=# SELECT * FROM t3;
+ e |  f
+---+-----
+ 1 | i
+ 2 | ii
+ 3 | iii
+ 4 | iv
+ 5 | v
+ 6 | vi
+(6 rows)
+</programlisting></para>
+
+   <para>
+    Observe that during normal replication the appropriate
+    <literal>publish</literal> operations are used. This means publications
+    <literal>pub2</literal> and <literal>pub3a</literal> will not replicate the
+    <literal>INSERT</literal>. Also, publication <literal>pub3b</literal> will
+    only replicate data that matches the row filter of <literal>pub3b</literal>.
+    Now the subscriber side data looks like:
+<programlisting>
+test_sub=# SELECT * FROM t1;
+ a |   b
+---+-------
+ 1 | one
+ 2 | two
+ 3 | three
+ 4 | four
+ 5 | five
+ 6 | six
+(6 rows)
+
+test_sub=# SELECT * FROM t2;
+ c | d
+---+---
+ 1 | A
+ 2 | B
+ 3 | C
+(3 rows)
+
+test_sub=# SELECT * FROM t3;
+ e |  f
+---+-----
+ 1 | i
+ 2 | ii
+ 3 | iii
+ 6 | vi
+(4 rows)
+</programlisting></para>
+  </sect2>
+
  </sect1>
 
  <sect1 id="logical-replication-row-filter">
@@ -460,6 +655,16 @@
     <emphasis>any</emphasis> of the expressions will be copied. See
     <xref linkend="logical-replication-row-filter-combining"/> for details.
    </para>
+
+   <warning>
+    <para>
+     Because initial data synchronization does not take into account the
+     <literal>publish</literal> parameter when copying existing table data,
+     some rows may be copied that would not be replicated using DML. Refer to
+     <xref linkend="logical-replication-snapshot"/>, and see
+     <xref linkend="logical-replication-subscription-examples"/> for examples.
+    </para>
+   </warning>
 
    <note>
     <para>
@@ -1095,6 +1300,13 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
      replication of the table is given back to the main apply process where
      replication continues as normal.
     </para>
+    <note>
+     <para>
+      The publication <literal>publish</literal> parameter only affects what
+      DML operations will be replicated. The initial data synchronization does
+      not take this parameter into account when copying the existing table data.
+     </para>
+    </note>
   </sect2>
  </sect1>
 

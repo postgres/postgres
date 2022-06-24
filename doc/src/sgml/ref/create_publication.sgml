@@ -177,6 +177,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
           and so the default value for this option is
           <literal>'insert, update, delete, truncate'</literal>.
          </para>
+         <para>
+          This parameter only affects DML operations. In particular, the initial
+          data synchronization (see <xref linkend="logical-replication-snapshot"/>)
+          for logical replication does not take this parameter into account when
+          copying existing table data.
+         </para>
         </listitem>
        </varlistentry>
 

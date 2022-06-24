@@ -353,6 +353,10 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    15 then any row filtering is ignored during the initial data synchronization
    phase. For this case, the user might want to consider deleting any initially
    copied data that would be incompatible with subsequent filtering.
+   Because initial data synchronization does not take into account the publication
+   <literal>publish</literal> parameter when copying existing table data, some rows
+   may be copied that would not be replicated using DML. See
+   <xref linkend="logical-replication-subscription-examples"/> for examples.
   </para>
 
   <para>
