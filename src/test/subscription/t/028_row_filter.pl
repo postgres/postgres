@@ -620,6 +620,11 @@ $node_subscriber->safe_psql('postgres',
 	"TRUNCATE TABLE tab_rowfilter_partitioned");
 $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub REFRESH PUBLICATION WITH (copy_data = true)");
+
+# wait for table synchronization to finish
+$node_subscriber->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO tab_rowfilter_partitioned (a, b) VALUES(4000, 400),(4001, 401),(4002, 402)"
 );
