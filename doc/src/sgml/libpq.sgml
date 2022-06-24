@@ -1820,6 +1820,50 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
+     <varlistentry id="libpq-connect-sslcertmode" xreflabel="sslcertmode">
+      <term><literal>sslcertmode</literal></term>
+      <listitem>
+       <para>
+        This option determines whether a client certificate may be sent to the
+        server, and whether the server is required to request one. There are
+        three modes:
+
+        <variablelist>
+         <varlistentry>
+          <term><literal>disable</literal></term>
+          <listitem>
+           <para>
+            a client certificate is never sent, even if one is provided via
+            <xref linkend="libpq-connect-sslcert" />
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>allow</literal> (default)</term>
+          <listitem>
+           <para>
+            a certificate may be sent, if the server requests one and it has
+            been provided via <literal>sslcert</literal>
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>require</literal></term>
+          <listitem>
+           <para>
+            the server <emphasis>must</emphasis> request a certificate. The
+            connection will fail if the server authenticates the client despite
+            not requesting or receiving one.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="libpq-connect-sslrootcert" xreflabel="sslrootcert">
       <term><literal>sslrootcert</literal></term>
       <listitem>
@@ -7970,6 +8014,16 @@ myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
       </indexterm>
       <envar>PGSSLKEY</envar> behaves the same as the <xref
       linkend="libpq-connect-sslkey"/> connection parameter.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <indexterm>
+       <primary><envar>PGSSLCERTMODE</envar></primary>
+      </indexterm>
+      <envar>PGSSLCERTMODE</envar> behaves the same as the <xref
+      linkend="libpq-connect-sslcertmode"/> connection parameter.
      </para>
     </listitem>
 

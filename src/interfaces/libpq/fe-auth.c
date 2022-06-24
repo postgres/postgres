@@ -891,6 +891,27 @@ check_expected_areq(AuthRequest areq, PGconn *conn)
 	bool		result = true;
 	char	   *reason = NULL;
 
+	if (conn->sslcertmode[0] == 'r' /* require */
+		&& areq == AUTH_REQ_OK)
+	{
+		/*
+		 * Trade off a little bit of complexity to try to get these error
+		 * messages as precise as possible.
+		 */
+		if (!conn->ssl_cert_requested)
+		{
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("server did not request a certificate"));
+			return false;
+		}
+		else if (!conn->ssl_cert_sent)
+		{
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("server accepted connection without a valid certificate"));
+			return false;
+		}
+	}
+
 	/*
 	 * If the user required a specific auth method, or specified an allowed set,
 	 * then reject all others here, and make sure the server actually completes
