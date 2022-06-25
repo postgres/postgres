@@ -652,43 +652,4 @@ sub command_checks_all
 	return;
 }
 
-# support release 15+ perl module namespace
-
-package PostgreSQL::Test::Utils; ## no critic (ProhibitMultiplePackages)
-
-# we don't want to export anything here, but we want to support things called
-# via this package name explicitly.
-
-# use typeglobs to alias these functions and variables
-
-no warnings qw(once);
-
-*generate_ascii_string = *TestLib::generate_ascii_string;
-*slurp_dir = *TestLib::slurp_dir;
-*slurp_file = *TestLib::slurp_file;
-*append_to_file = *TestLib::append_to_file;
-*check_mode_recursive = *TestLib::check_mode_recursive;
-*chmod_recursive = *TestLib::chmod_recursive;
-*check_pg_config = *TestLib::check_pg_config;
-*system_or_bail = *TestLib::system_or_bail;
-*system_log = *TestLib::system_log;
-*run_log = *TestLib::run_log;
-*run_command = *TestLib::run_command;
-*command_ok = *TestLib::command_ok;
-*command_fails = *TestLib::command_fails;
-*command_exit_is = *TestLib::command_exit_is;
-*program_help_ok = *TestLib::program_help_ok;
-*program_version_ok = *TestLib::program_version_ok;
-*program_options_handling_ok = *TestLib::program_options_handling_ok;
-*command_like = *TestLib::command_like;
-*command_like_safe = *TestLib::command_like_safe;
-*command_fails_like = *TestLib::command_fails_like;
-*command_checks_all = *TestLib::command_checks_all;
-
-*windows_os = *TestLib::windows_os;
-*timeout_default = *TestLib::timeout_default;
-*tmp_check = *TestLib::tmp_check;
-*log_path = *TestLib::log_path;
-*test_logfile = *TestLib::test_log_file;
-
 1;
