@@ -100,7 +100,8 @@ $node_primary->wait_for_catchup($node_standby_1, 'replay',
 command_ok(
 	[
 		'pg_dumpall', '-f', $outputdir . '/primary.dump',
-		'--no-sync', '-p', $node_primary->port
+		'--no-sync',  '-p', $node_primary->port,
+		'--no-unlogged-table-data'    # if unlogged, standby has schema only
 	],
 	'dump primary server');
 command_ok(
