@@ -5,14 +5,9 @@
 # package the same symbol table as the older package.  See PostgresNode::new
 # for supporting heuristics.
 
-package PostgreSQL::Test::Cluster;
-
 use strict;
 use warnings;
-
-use PostgresNode;
 BEGIN { *PostgreSQL::Test::Cluster:: = \*PostgresNode::; }
-
-use Exporter 'import';
+use PostgresNode ();
 
 1;
