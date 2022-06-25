@@ -72,7 +72,7 @@
 #if defined(WAIT_USE_EPOLL) || defined(WAIT_USE_POLL) || \
 	defined(WAIT_USE_KQUEUE) || defined(WAIT_USE_WIN32)
 /* don't overwrite manual choice */
-#elif defined(HAVE_SYS_EPOLL_H) && defined(HAVE_SYS_SIGNALFD_H)
+#elif defined(HAVE_SYS_EPOLL_H)
 #define WAIT_USE_EPOLL
 #elif defined(HAVE_KQUEUE)
 #define WAIT_USE_KQUEUE
@@ -82,6 +82,22 @@
 #define WAIT_USE_WIN32
 #else
 #error "no wait set implementation available"
+#endif
+
+/*
+ * By default, we use a self-pipe with poll() and a signalfd with epoll(), if
+ * available.  We avoid signalfd on illumos for now based on problem reports.
+ * For testing the choice can also be manually specified.
+ */
+#if defined(WAIT_USE_POLL) || defined(WAIT_USE_EPOLL)
+#if defined(WAIT_USE_SELF_PIPE) || defined(WAIT_USE_SIGNALFD)
+/* don't overwrite manual choice */
+#elif defined(WAIT_USE_EPOLL) && defined(HAVE_SYS_SIGNALFD_H) && \
+	!defined(__illumos__)
+#define WAIT_USE_SIGNALFD
+#else
+#define WAIT_USE_SELF_PIPE
+#endif
 #endif
 
 /* typedef in latch.h */
@@ -146,12 +162,12 @@ static WaitEventSet *LatchWaitSet;
 static volatile sig_atomic_t waiting = false;
 #endif
 
-#ifdef WAIT_USE_EPOLL
+#ifdef WAIT_USE_SIGNALFD
 /* On Linux, we'll receive SIGURG via a signalfd file descriptor. */
 static int	signal_fd = -1;
 #endif
 
-#if defined(WAIT_USE_POLL)
+#ifdef WAIT_USE_SELF_PIPE
 /* Read and write ends of the self-pipe */
 static int	selfpipe_readfd = -1;
 static int	selfpipe_writefd = -1;
@@ -164,7 +180,7 @@ static void latch_sigurg_handler(SIGNAL_ARGS);
 static void sendSelfPipeByte(void);
 #endif
 
-#if defined(WAIT_USE_POLL) || defined(WAIT_USE_EPOLL)
+#if defined(WAIT_USE_SELF_PIPE) || defined(WAIT_USE_SIGNALFD)
 static void drain(void);
 #endif
 
@@ -190,7 +206,7 @@ static inline int WaitEventSetWaitBlock(WaitEventSet *set, int cur_timeout,
 void
 InitializeLatchSupport(void)
 {
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 	int			pipefd[2];
 
 	if (IsUnderPostmaster)
@@ -264,7 +280,7 @@ InitializeLatchSupport(void)
 	pqsignal(SIGURG, latch_sigurg_handler);
 #endif
 
-#ifdef WAIT_USE_EPOLL
+#ifdef WAIT_USE_SIGNALFD
 	sigset_t	signalfd_mask;
 
 	/* Block SIGURG, because we'll receive it through a signalfd. */
@@ -316,7 +332,7 @@ ShutdownLatchSupport(void)
 		LatchWaitSet = NULL;
 	}
 
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 	close(selfpipe_readfd);
 	close(selfpipe_writefd);
 	selfpipe_readfd = -1;
@@ -324,7 +340,7 @@ ShutdownLatchSupport(void)
 	selfpipe_owner_pid = InvalidPid;
 #endif
 
-#if defined(WAIT_USE_EPOLL)
+#if defined(WAIT_USE_SIGNALFD)
 	close(signal_fd);
 	signal_fd = -1;
 #endif
@@ -341,9 +357,12 @@ InitLatch(Latch *latch)
 	latch->owner_pid = MyProcPid;
 	latch->is_shared = false;
 
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 	/* Assert InitializeLatchSupport has been called in this process */
 	Assert(selfpipe_readfd >= 0 && selfpipe_owner_pid == MyProcPid);
+#elif defined(WAIT_USE_SIGNALFD)
+	/* Assert InitializeLatchSupport has been called in this process */
+	Assert(signal_fd >= 0);
 #elif defined(WAIT_USE_WIN32)
 	latch->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (latch->event == NULL)
@@ -405,9 +424,12 @@ OwnLatch(Latch *latch)
 	/* Sanity checks */
 	Assert(latch->is_shared);
 
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 	/* Assert InitializeLatchSupport has been called in this process */
 	Assert(selfpipe_readfd >= 0 && selfpipe_owner_pid == MyProcPid);
+#elif defined(WAIT_USE_SIGNALFD)
+	/* Assert InitializeLatchSupport has been called in this process */
+	Assert(signal_fd >= 0);
 #endif
 
 	if (latch->owner_pid != 0)
@@ -617,7 +639,7 @@ SetLatch(Latch *latch)
 		return;
 	else if (owner_pid == MyProcPid)
 	{
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 		if (waiting)
 			sendSelfPipeByte();
 #else
@@ -904,9 +926,9 @@ AddWaitEventToSet(WaitEventSet *set, uint32 events, pgsocket fd, Latch *latch,
 	{
 		set->latch = latch;
 		set->latch_pos = event->pos;
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 		event->fd = selfpipe_readfd;
-#elif defined(WAIT_USE_EPOLL)
+#elif defined(WAIT_USE_SIGNALFD)
 		event->fd = signal_fd;
 #else
 		event->fd = PGINVALID_SOCKET;
@@ -2023,7 +2045,7 @@ GetNumRegisteredWaitEvents(WaitEventSet *set)
 	return set->nevents;
 }
 
-#if defined(WAIT_USE_POLL)
+#if defined(WAIT_USE_SELF_PIPE)
 
 /*
  * SetLatch uses SIGURG to wake up the process waiting on the latch.
@@ -2074,7 +2096,7 @@ retry:
 
 #endif
 
-#if defined(WAIT_USE_POLL) || defined(WAIT_USE_EPOLL)
+#if defined(WAIT_USE_SELF_PIPE) || defined(WAIT_USE_SIGNALFD)
 
 /*
  * Read all available data from self-pipe or signalfd.
@@ -2090,7 +2112,7 @@ drain(void)
 	int			rc;
 	int			fd;
 
-#ifdef WAIT_USE_POLL
+#ifdef WAIT_USE_SELF_PIPE
 	fd = selfpipe_readfd;
 #else
 	fd = signal_fd;
@@ -2108,7 +2130,7 @@ drain(void)
 			else
 			{
 				waiting = false;
-#ifdef WAIT_USE_POLL
+#ifdef WAIT_USE_SELF_PIPE
 				elog(ERROR, "read() on self-pipe failed: %m");
 #else
 				elog(ERROR, "read() on signalfd failed: %m");
@@ -2118,7 +2140,7 @@ drain(void)
 		else if (rc == 0)
 		{
 			waiting = false;
-#ifdef WAIT_USE_POLL
+#ifdef WAIT_USE_SELF_PIPE
 			elog(ERROR, "unexpected EOF on self-pipe");
 #else
 			elog(ERROR, "unexpected EOF on signalfd");
