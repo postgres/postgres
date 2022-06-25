@@ -71,7 +71,10 @@ static void ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid relId,
 				  char *accessMethodName, Oid accessMethodId,
 				  bool amcanorder,
-				  bool isconstraint);
+				  bool isconstraint,
+				  Oid ddl_userid,
+				  int ddl_sec_context,
+				  int *ddl_save_nestlevel);
 static char *ChooseIndexName(const char *tabname, Oid namespaceId,
 				List *colnames, List *exclusionOpNames,
 				bool primary, bool isconstraint);
@@ -175,8 +178,7 @@ CheckIndexCompatible(Oid oldId,
 	 * Compute the operator classes, collations, and exclusion operators for
 	 * the new index, so we can test whether it's compatible with the existing
 	 * one.  Note that ComputeIndexAttrs might fail here, but that's OK:
-	 * DefineIndex would have called this function with the same arguments
-	 * later on, and it would have failed then anyway.
+	 * DefineIndex would have failed later.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_Expressions = NIL;
@@ -196,7 +198,7 @@ CheckIndexCompatible(Oid oldId,
 					  coloptions, attributeList,
 					  exclusionOpNames, relationId,
 					  accessMethodName, accessMethodId,
-					  amcanorder, isconstraint);
+					  amcanorder, isconstraint, InvalidOid, 0, NULL);
 
 
 	/* Get the soon-obsolete pg_index tuple. */
@@ -288,6 +290,19 @@ CheckIndexCompatible(Oid oldId,
 /*
  * DefineIndex
  *		Creates a new index.
+ *
+ * This function manages the current userid according to the needs of pg_dump.
+ * Recreating old-database catalog entries in new-database is fine, regardless
+ * of which users would have permission to recreate those entries now.  That's
+ * just preservation of state.  Running opaque expressions, like calling a
+ * function named in a catalog entry or evaluating a pg_node_tree in a catalog
+ * entry, as anyone other than the object owner, is not fine.  To adhere to
+ * those principles and to remain fail-safe, use the table owner userid for
+ * most ACL checks.  Use the original userid for ACL checks reached without
+ * traversing opaque expressions.  (pg_dump can predict such ACL checks from
+ * catalogs.)  Overall, this is a mess.  Future DDL development should
+ * consider offering one DDL command for catalog setup and a separate DDL
+ * command for steps that run opaque expressions.
  *
  * 'relationId': the OID of the heap relation on which the index is to be
  *		created
@@ -614,7 +629,8 @@ DefineIndex(Oid relationId,
 					  coloptions, stmt->indexParams,
 					  stmt->excludeOpNames, relationId,
 					  accessMethodName, accessMethodId,
-					  amcanorder, stmt->isconstraint);
+					  amcanorder, stmt->isconstraint, root_save_userid,
+					  root_save_sec_context, &root_save_nestlevel);
 
 	/*
 	 * Extra checks when creating a PRIMARY KEY index.
@@ -722,9 +738,8 @@ DefineIndex(Oid relationId,
 
 	/*
 	 * Roll back any GUC changes executed by index functions, and keep
-	 * subsequent changes local to this command.  It's barely possible that
-	 * some index function changed a behavior-affecting GUC, e.g. xmloption,
-	 * that affects subsequent steps.
+	 * subsequent changes local to this command.  This is essential if some
+	 * index function changed a behavior-affecting GUC, e.g. search_path.
 	 */
 	AtEOXact_GUC(false, root_save_nestlevel);
 	root_save_nestlevel = NewGUCNestLevel();
@@ -1079,6 +1094,10 @@ CheckPredicate(Expr *predicate)
 /*
  * Compute per-index-column information, including indexed column numbers
  * or index expressions, opclasses, and indoptions.
+ *
+ * If the caller switched to the table owner, ddl_userid is the role for ACL
+ * checks reached without traversing opaque expressions.  Otherwise, it's
+ * InvalidOid, and other ddl_* arguments are undefined.
  */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
@@ -1092,11 +1111,16 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  char *accessMethodName,
 				  Oid accessMethodId,
 				  bool amcanorder,
-				  bool isconstraint)
+				  bool isconstraint,
+				  Oid ddl_userid,
+				  int ddl_sec_context,
+				  int *ddl_save_nestlevel)
 {
 	ListCell   *nextExclOp;
 	ListCell   *lc;
 	int			attn;
+	Oid			save_userid;
+	int			save_sec_context;
 
 	/* Allocate space for exclusion operator info, if needed */
 	if (exclusionOpNames)
@@ -1111,6 +1135,9 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 	}
 	else
 		nextExclOp = NULL;
+
+	if (OidIsValid(ddl_userid))
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
 
 	/*
 	 * process attributeList
@@ -1206,10 +1233,24 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		typeOidP[attn] = atttype;
 
 		/*
-		 * Apply collation override if any
+		 * Apply collation override if any.  Use of ddl_userid is necessary
+		 * due to ACL checks therein, and it's safe because collations don't
+		 * contain opaque expressions (or non-opaque expressions).
 		 */
 		if (attribute->collation)
+		{
+			if (OidIsValid(ddl_userid))
+			{
+				AtEOXact_GUC(false, *ddl_save_nestlevel);
+				SetUserIdAndSecContext(ddl_userid, ddl_sec_context);
+			}
 			attcollation = get_collation_oid(attribute->collation, false);
+			if (OidIsValid(ddl_userid))
+			{
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+				*ddl_save_nestlevel = NewGUCNestLevel();
+			}
+		}
 
 		/*
 		 * Check we have a collation iff it's a collatable type.  The only
@@ -1237,12 +1278,25 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		collationOidP[attn] = attcollation;
 
 		/*
-		 * Identify the opclass to use.
+		 * Identify the opclass to use.  Use of ddl_userid is necessary due to
+		 * ACL checks therein.  This is safe despite opclasses containing
+		 * opaque expressions (specifically, functions), because only
+		 * superusers can define opclasses.
 		 */
+		if (OidIsValid(ddl_userid))
+		{
+			AtEOXact_GUC(false, *ddl_save_nestlevel);
+			SetUserIdAndSecContext(ddl_userid, ddl_sec_context);
+		}
 		classOidP[attn] = ResolveOpClass(attribute->opclass,
 										 atttype,
 										 accessMethodName,
 										 accessMethodId);
+		if (OidIsValid(ddl_userid))
+		{
+			SetUserIdAndSecContext(save_userid, save_sec_context);
+			*ddl_save_nestlevel = NewGUCNestLevel();
+		}
 
 		/*
 		 * Identify the exclusion operator, if any.
@@ -1256,9 +1310,23 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 
 			/*
 			 * Find the operator --- it must accept the column datatype
-			 * without runtime coercion (but binary compatibility is OK)
+			 * without runtime coercion (but binary compatibility is OK).
+			 * Operators contain opaque expressions (specifically, functions).
+			 * compatible_oper_opid() boils down to oper() and
+			 * IsBinaryCoercible().  PostgreSQL would have security problems
+			 * elsewhere if oper() started calling opaque expressions.
 			 */
+			if (OidIsValid(ddl_userid))
+			{
+				AtEOXact_GUC(false, *ddl_save_nestlevel);
+				SetUserIdAndSecContext(ddl_userid, ddl_sec_context);
+			}
 			opid = compatible_oper_opid(opname, atttype, atttype, false);
+			if (OidIsValid(ddl_userid))
+			{
+				SetUserIdAndSecContext(save_userid, save_sec_context);
+				*ddl_save_nestlevel = NewGUCNestLevel();
+			}
 
 			/*
 			 * Only allow commutative operators to be used in exclusion
