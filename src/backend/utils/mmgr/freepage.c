@@ -434,7 +434,7 @@ FreePageManagerDump(FreePageManager *fpm)
 
 	/* Dump general stuff. */
 	appendStringInfo(&buf, "metadata: self %zu max contiguous pages = %zu\n",
-					 fpm->self.relptr_off, fpm->contiguous_pages);
+					 relptr_offset(fpm->self), fpm->contiguous_pages);
 
 	/* Dump btree. */
 	if (fpm->btree_depth > 0)
@@ -1269,7 +1269,7 @@ FreePageManagerDumpBtree(FreePageManager *fpm, FreePageBtree *btp,
 		if (btp->hdr.magic == FREE_PAGE_INTERNAL_MAGIC)
 			appendStringInfo(buf, " %zu->%zu",
 							 btp->u.internal_key[index].first_page,
-							 btp->u.internal_key[index].child.relptr_off / FPM_PAGE_SIZE);
+							 relptr_offset(btp->u.internal_key[index].child) / FPM_PAGE_SIZE);
 		else
 			appendStringInfo(buf, " %zu(%zu)",
 							 btp->u.leaf_key[index].first_page,
@@ -1859,7 +1859,7 @@ FreePagePopSpanLeader(FreePageManager *fpm, Size pageno)
 	{
 		Size		f = Min(span->npages, FPM_NUM_FREELISTS) - 1;
 
-		Assert(fpm->freelist[f].relptr_off == pageno * FPM_PAGE_SIZE);
+		Assert(relptr_offset(fpm->freelist[f]) == pageno * FPM_PAGE_SIZE);
 		relptr_copy(fpm->freelist[f], span->next);
 	}
 }
