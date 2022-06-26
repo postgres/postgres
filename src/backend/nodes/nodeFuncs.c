@@ -2825,11 +2825,6 @@ expression_tree_mutator(Node *node,
 	( (newnode) = (nodetype *) palloc(sizeof(nodetype)), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
 
-#define CHECKFLATCOPY(newnode, node, nodetype)	\
-	( AssertMacro(IsA((node), nodetype)), \
-	  (newnode) = (nodetype *) palloc(sizeof(nodetype)), \
-	  memcpy((newnode), (node), sizeof(nodetype)) )
-
 #define MUTATE(newfield, oldfield, fieldtype)  \
 		( (newfield) = (fieldtype) mutator((Node *) (oldfield), context) )
 
@@ -3640,9 +3635,9 @@ expression_tree_mutator(Node *node,
  * which is the bitwise OR of flag values to suppress mutating of
  * indicated items.  (More flag bits may be added as needed.)
  *
- * Normally the Query node itself is copied, but some callers want it to be
- * modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.  All
- * modified substructure is safely copied in any case.
+ * Normally the top-level Query node itself is copied, but some callers want
+ * it to be modified in-place; they must pass QTW_DONT_COPY_QUERY in flags.
+ * All modified substructure is safely copied in any case.
  */
 Query *
 query_tree_mutator(Query *query,
@@ -3758,10 +3753,7 @@ range_table_mutator(List *rtable,
 				break;
 			case RTE_SUBQUERY:
 				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
-				{
-					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
-					MUTATE(newrte->subquery, newrte->subquery, Query *);
-				}
+					MUTATE(newrte->subquery, rte->subquery, Query *);
 				else
 				{
 					/* else, copy RT subqueries as-is */
