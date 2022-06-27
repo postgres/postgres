@@ -13410,6 +13410,17 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>inherited</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
+      </para>
+      <para>
+       If true, the stats include inheritance child columns, not just the
+       values in the specified relation
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>n_distinct</structfield> <type>pg_ndistinct</type>
       </para>
       <para>
@@ -13586,6 +13597,17 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        Expression included in the extended statistics object
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>inherited</structfield> <type>bool</type>
+       (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
+      </para>
+      <para>
+       If true, the stats include inheritance child columns, not just the
+       values in the specified relation
       </para></entry>
      </row>
 
