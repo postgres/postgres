@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:17+0900\n"
-"PO-Revision-Date: 2022-05-10 16:43+0900\n"
+"POT-Creation-Date: 2022-06-13 23:21+0900\n"
+"PO-Revision-Date: 2022-06-14 15:11+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -17,22 +17,22 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:277
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:284
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:295
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:302
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -119,7 +119,8 @@ msgstr "  -b, --bkp-details      バックアップブロックに関する詳�
 #: pg_waldump.c:664
 #, c-format
 msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
-msgstr "  -B, --block=N          --relationと共に指定することでこのブロックNを更新する\n"
+msgstr ""
+"  -B, --block=N          --relationと共に指定することでこのブロックNを更新する\n"
 "                         レコードのみを表示\n"
 
 #: pg_waldump.c:665
@@ -241,23 +242,23 @@ msgstr "引数が指定されていません"
 
 #: pg_waldump.c:797
 #, c-format
-msgid "could not parse valid block number \"%s\""
-msgstr "\"%s\"から妥当なブロック番号を読み取れませんでした"
+msgid "invalid block number: \"%s\""
+msgstr "不正なブロック番号: \"%s\""
 
-#: pg_waldump.c:806
+#: pg_waldump.c:806 pg_waldump.c:904
 #, c-format
-msgid "could not parse end WAL location \"%s\""
-msgstr "WALの終了位置\"%s\"を読み取れませんでした"
+msgid "invalid WAL location: \"%s\""
+msgstr "不正なWAL LSN: \"%s\""
 
 #: pg_waldump.c:819
 #, c-format
-msgid "could not parse fork \"%s\""
-msgstr "フォーク\"%s\"を読み取れませんでした"
+msgid "invalid fork name: \"%s\""
+msgstr "不正なフォーク名: \"%s\""
 
 #: pg_waldump.c:827
 #, c-format
-msgid "could not parse limit \"%s\""
-msgstr "表示レコード数の制限値\"%s\"を読み取れませんでした"
+msgid "invalid value \"%s\" for option %s"
+msgstr "オプション%2$sに対する不正な値\"%1$s\""
 
 #: pg_waldump.c:858
 #, c-format
@@ -271,33 +272,33 @@ msgstr "リソースマネージャー\"%s\"は存在しません"
 
 #: pg_waldump.c:894
 #, c-format
-msgid "could not parse valid relation from \"%s\" (expecting \"tablespace OID/database OID/relation filenode\")"
-msgstr "\"%s\"から妥当なリレーションを読み取れませんでした (\"テーブル空間OID/データベースOID/リレーション・ファイルノード”を期待しています)"
+msgid "invalid relation specification: \"%s\""
+msgstr "不正なリレーション指定: \"%s\""
 
-#: pg_waldump.c:905
+#: pg_waldump.c:895
 #, c-format
-msgid "could not parse start WAL location \"%s\""
-msgstr "WALの開始位置\"%s\"を読み取れませんでした"
+msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
+msgstr "\"テーブル空間OID/データベースOID/リレーション・ファイルノード”を期待しています。"
 
-#: pg_waldump.c:915
+#: pg_waldump.c:914
 #, c-format
-msgid "could not parse timeline \"%s\""
-msgstr "タイムライン\"%s\"を読み取れませんでした"
+msgid "invalid timeline specification: \"%s\""
+msgstr "不正なタイムライン指定: \"%s\""
 
-#: pg_waldump.c:925
+#: pg_waldump.c:924
 #, c-format
-msgid "could not parse \"%s\" as a transaction ID"
-msgstr "\"%s\"をトランザクションIDとして読み取れませんでした"
+msgid "invalid transaction ID specification: \"%s\""
+msgstr "不正なトランザクションID指定: \"%s\""
 
-#: pg_waldump.c:940
+#: pg_waldump.c:939
 #, c-format
-msgid "unrecognized argument to --stats: %s"
-msgstr "--statsの引数が認識できません: %s"
+msgid "unrecognized value for option %s: %s"
+msgstr "%sオプションに対する認識できない値: %s"
 
-#: pg_waldump.c:954
+#: pg_waldump.c:953
 #, c-format
-msgid "--block option requires --relation option to be specified"
-msgstr "--blockオプション指定時は--relationオプションも必要です"
+msgid "option %s requires option %s to be specified"
+msgstr "%sオプション指定時は%sオプションも必要です"
 
 #: pg_waldump.c:960
 #, c-format
@@ -359,30 +360,3 @@ msgstr "WALレコードの%X/%Xでエラー: %s"
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
-
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
-
-#~ msgid "could not read file \"%s\": read %d of %zu"
-#~ msgstr "ファイル\"%1$s\"を読み込めませんでした: %3$zuバイトのうち%2$dバイトを読み込みました"
-
-#~ msgid "out of memory"
-#~ msgstr "メモリ不足です"
-
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "\"%s --help\"で詳細を確認してください。\n"
-
-#~ msgid "%s: FATAL:  "
-#~ msgstr "%s: 致命的なエラー: "
-
-#~ msgid "could not open directory \"%s\": %s"
-#~ msgstr "ディレクトリ\"%s\"を開くことができませんでした: %s"
-
-#~ msgid "could not read from log file %s, offset %u, length %d: %s"
-#~ msgstr "ログファイル%sのオフセット%uから長さ%d分を読み取れませんでした: %s"
-
-#~ msgid "could not seek in log file %s to offset %u: %s"
-#~ msgstr "ログファイル%sでオフセット%uにシークできませんでした: %s"
-
-#~ msgid "could not open file \"%s\": %s"
-#~ msgstr "ファイル\"%s\"をオープンできませんでした: %s"

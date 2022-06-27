@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 15:47+0000\n"
-"PO-Revision-Date: 2022-05-11 22:35+0200\n"
+"POT-Creation-Date: 2022-05-20 08:17+0000\n"
+"PO-Revision-Date: 2022-05-20 10:51+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -243,26 +243,24 @@ msgid "no arguments specified"
 msgstr "keine Argumente angegeben"
 
 #: pg_waldump.c:797
-#, fuzzy, c-format
-#| msgid "could not parse file name \"%s\""
-msgid "could not parse valid block number \"%s\""
-msgstr "konnte Dateinamen »%s« nicht parsen"
-
-#: pg_waldump.c:806
 #, c-format
-msgid "could not parse end WAL location \"%s\""
-msgstr "konnte WAL-Endposition »%s« nicht parsen"
+msgid "invalid block number: \"%s\""
+msgstr "ungültige Blocknummer: »%s«"
+
+#: pg_waldump.c:806 pg_waldump.c:904
+#, c-format
+msgid "invalid WAL location: \"%s\""
+msgstr "ungültige WAL-Position: »%s«"
 
 #: pg_waldump.c:819
-#, fuzzy, c-format
-#| msgid "could not parse limit \"%s\""
-msgid "could not parse fork \"%s\""
-msgstr "konnte Limit »%s« nicht parsen"
+#, c-format
+msgid "invalid fork name: \"%s\""
+msgstr "ungültiger Fork-Name: »%s«"
 
 #: pg_waldump.c:827
 #, c-format
-msgid "could not parse limit \"%s\""
-msgstr "konnte Limit »%s« nicht parsen"
+msgid "invalid value \"%s\" for option %s"
+msgstr "ungültiger Wert »%s« für Option %s"
 
 #: pg_waldump.c:858
 #, c-format
@@ -276,33 +274,33 @@ msgstr "Resouce-Manager »%s« existiert nicht"
 
 #: pg_waldump.c:894
 #, c-format
-msgid "could not parse valid relation from \"%s\" (expecting \"tablespace OID/database OID/relation filenode\")"
-msgstr ""
+msgid "invalid relation specification: \"%s\""
+msgstr "ungültige Relationsangabe: »%s«"
 
-#: pg_waldump.c:905
+#: pg_waldump.c:895
 #, c-format
-msgid "could not parse start WAL location \"%s\""
-msgstr "konnte WAL-Startposition »%s« nicht parsen"
+msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
+msgstr "Erwartet wurde »Tablespace-OID/Datenbank-OID/Relation-Filenode«."
 
-#: pg_waldump.c:915
+#: pg_waldump.c:914
 #, c-format
-msgid "could not parse timeline \"%s\""
-msgstr "konnte Zeitleiste »%s« nicht parsen"
+msgid "invalid timeline specification: \"%s\""
+msgstr "ungültige Zeitleistenangabe: »%s«"
 
-#: pg_waldump.c:925
+#: pg_waldump.c:924
 #, c-format
-msgid "could not parse \"%s\" as a transaction ID"
-msgstr "konnte »%s« nicht als gültige Transaktions-ID parsen"
+msgid "invalid transaction ID specification: \"%s\""
+msgstr "ungültige Transaktions-ID-Angabe: »%s«"
 
-#: pg_waldump.c:940
+#: pg_waldump.c:939
 #, c-format
-msgid "unrecognized argument to --stats: %s"
-msgstr "unbekanntes Argument für --stats: %s"
+msgid "unrecognized value for option %s: %s"
+msgstr "unbekannter Wert für Option %s: %s"
 
-#: pg_waldump.c:954
+#: pg_waldump.c:953
 #, c-format
-msgid "--block option requires --relation option to be specified"
-msgstr ""
+msgid "option %s requires option %s to be specified"
+msgstr "Option %s erfordert, dass Option %s angegeben wird"
 
 #: pg_waldump.c:960
 #, c-format

@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-11 14:16+0900\n"
-"PO-Revision-Date: 2022-05-11 13:06+0900\n"
+"PO-Revision-Date: 2022-06-14 17:51+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -1045,7 +1045,7 @@ msgstr "受信したGSSAPIパケットは機密性を使用していませんで
 
 #: fe-secure-gssapi.c:642
 msgid "could not initiate GSSAPI security context"
-msgstr "GSSAPIセキュリティコンテキストを初期化できませんでした"
+msgstr "GSSAPIセキュリティコンテキストを開始できませんでした"
 
 #: fe-secure-gssapi.c:670
 msgid "GSSAPI size check error"

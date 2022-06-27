@@ -4,7 +4,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpg-preproc (PostgreSQL 15)\n"
+"Project-Id-Version: ecpg (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-11 14:16+0900\n"
 "PO-Revision-Date: 2022-05-11 14:50+0900\n"

@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-11 14:17+0900\n"
-"PO-Revision-Date: 2022-05-10 14:25+0900\n"
+"PO-Revision-Date: 2022-06-14 17:36+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2328,7 +2328,7 @@ msgstr "テーブル空間\"%2$s\"のACLリスト(%1$s)をパースできませ�
 #: pg_dumpall.c:1343
 #, c-format
 msgid "excluding database \"%s\""
-msgstr "データベース\"%s\"除外します"
+msgstr "データベース\"%s\"を除外します"
 
 #: pg_dumpall.c:1347
 #, c-format

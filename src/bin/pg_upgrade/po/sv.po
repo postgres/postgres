@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-11 19:48+0000\n"
-"PO-Revision-Date: 2022-04-11 22:24+0200\n"
+"POT-Creation-Date: 2022-05-19 03:18+0000\n"
+"PO-Revision-Date: 2022-05-19 05:34+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -745,6 +745,11 @@ msgstr ""
 msgid "Creating dump of global objects"
 msgstr "Skapar dump med globala objekt"
 
+#: dump.c:32
+#, c-format
+msgid "Creating dump of database schemas"
+msgstr "Skapar dump innehållande databasscheman"
+
 #: exec.c:45
 #, c-format
 msgid "could not get pg_ctl version data using %s: %s\n"
@@ -760,7 +765,7 @@ msgstr "kunde inte läsa versionutdata för pg_ctl från %s\n"
 msgid "command too long\n"
 msgstr "kommandot för långt\n"
 
-#: exec.c:114 util.c:37 util.c:264
+#: exec.c:114 util.c:37 util.c:265
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
@@ -1451,6 +1456,11 @@ msgstr "Fryser alla rader i nya klustret"
 msgid "Restoring global objects in the new cluster"
 msgstr "Återställer globala objekt i nya klustret"
 
+#: pg_upgrade.c:384
+#, c-format
+msgid "Restoring database schemas in the new cluster"
+msgstr "Återställer databasscheman i nya klustret"
+
 #: pg_upgrade.c:490
 #, c-format
 msgid "Deleting files from new %s"
@@ -1501,6 +1511,21 @@ msgstr "Sätter räknarna frozenxid och minmxid för nytt kluster"
 msgid "Setting minmxid counter in new cluster"
 msgstr "Sätter räknarenm minmxid för nytt kluster"
 
+#: relfilenode.c:35
+#, c-format
+msgid "Cloning user relation files"
+msgstr "Klonar användarens relationsfiler"
+
+#: relfilenode.c:38
+#, c-format
+msgid "Copying user relation files"
+msgstr "Kopierar användarens relationsfiler"
+
+#: relfilenode.c:41
+#, c-format
+msgid "Linking user relation files"
+msgstr "Länkar användarens relationsfiler"
+
 #: relfilenode.c:115
 #, c-format
 msgid "old database \"%s\" not found in the new cluster\n"
@@ -1531,7 +1556,7 @@ msgstr "kopierar \"%s\" till \"%s\"\n"
 msgid "linking \"%s\" to \"%s\"\n"
 msgstr "länkar \"%s\" till \"%s\"\n"
 
-#: server.c:39 server.c:143 util.c:174 util.c:204
+#: server.c:39 server.c:143 util.c:175 util.c:205
 #, c-format
 msgid "Failure, exiting\n"
 msgstr "Misslyckades, avslutar\n"
@@ -1643,7 +1668,7 @@ msgstr "%-*s"
 msgid "%-*s\n"
 msgstr "%-*s\n"
 
-#: util.c:213
+#: util.c:214
 #, c-format
 msgid "ok"
 msgstr "ok"
@@ -1797,4 +1822,3 @@ msgstr ""
 "    %s\n"
 "kan köras med psql av databasens superuser och kommer uppdatera\n"
 "dessa utökningar.\n"
-

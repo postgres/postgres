@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-14 15:47+0000\n"
-"PO-Revision-Date: 2022-05-15 15:14+0200\n"
+"POT-Creation-Date: 2022-05-26 23:18+0000\n"
+"PO-Revision-Date: 2022-05-27 13:49+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -40,42 +40,37 @@ msgstr "Tipp: "
 
 #: ../../common/compression.c:157
 msgid "found empty string where a compression option was expected"
-msgstr ""
+msgstr "leere Zeichenkette gefunden wo eine Komprimierungsoption erwartet wurde"
 
 #: ../../common/compression.c:187
-#, fuzzy, c-format
-#| msgid "invalid compression method \"%s\""
+#, c-format
 msgid "unknown compression option \"%s\""
-msgstr "ungültige Komprimierungsmethode »%s«"
+msgstr "unbekannte Komprimierungsoption »%s«"
 
 #: ../../common/compression.c:226
-#, fuzzy, c-format
-#| msgid "-c %s requires a value"
+#, c-format
 msgid "compression option \"%s\" requires a value"
-msgstr "-c %s benötigt einen Wert"
+msgstr "Komprimierungsoption »%s« benötigt einen Wert"
 
 #: ../../common/compression.c:235
-#, fuzzy, c-format
-#| msgid "btree comparison functions must return integer"
+#, c-format
 msgid "value for compression option \"%s\" must be an integer"
-msgstr "btree-Vergleichsfunktionen müssen Typ integer zurückgeben"
+msgstr "Wert für Komprimierungsoption »%s« muss eine ganze Zahl sein"
 
 #: ../../common/compression.c:273
-#, fuzzy, c-format
-#| msgid "relation \"%s\" does not have a composite type"
+#, c-format
 msgid "compression algorithm \"%s\" does not accept a compression level"
-msgstr "Relation »%s« hat keinen zusammengesetzten Typ"
+msgstr "Komprimierungsalgorithmus »%s« akzeptiert kein Komprimierungsniveau"
 
 #: ../../common/compression.c:277
 #, c-format
 msgid "compression algorithm \"%s\" expects a compression level between %d and %d"
-msgstr ""
+msgstr "Komprimierungsalgorithmus »%s« erwartet ein Komprimierungsniveau zwischen %d und %d"
 
 #: ../../common/compression.c:289
-#, fuzzy, c-format
-#| msgid "operator class \"%s\" does not accept data type %s"
+#, c-format
 msgid "compression algorithm \"%s\" does not accept a worker count"
-msgstr "Operatorklasse »%s« akzeptiert Datentyp %s nicht"
+msgstr "Komprimierungsalgorithmus »%s« akzeptiert keine Worker-Anzahl"
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -157,10 +152,9 @@ msgid "could not close file \"%s\": %m"
 msgstr "konnte Datei »%s« nicht schließen: %m"
 
 #: bbstreamer_file.c:275
-#, fuzzy, c-format
-#| msgid "unexpected result set while fetching file list"
+#, c-format
 msgid "unexpected state while extracting archive"
-msgstr "unerwartete Ergebnismenge beim Holen der Dateiliste"
+msgstr "unerwarteter Zustand beim Extrahieren des Archivs"
 
 #: bbstreamer_file.c:298 pg_basebackup.c:686 pg_basebackup.c:738
 #, c-format
@@ -228,16 +222,14 @@ msgid "could not decompress data: %s"
 msgstr "konnte Daten nicht dekomprimieren: %s"
 
 #: bbstreamer_inject.c:189
-#, fuzzy, c-format
-#| msgid "unexpected result format while fetching remote files"
+#, c-format
 msgid "unexpected state while injecting recovery settings"
-msgstr "unerwartetes Ergebnisformat beim Holen von fernen Dateien"
+msgstr "unerwarteter Zustand beim Einfügen der Recovery-Einstellungen"
 
 #: bbstreamer_lz4.c:96
-#, fuzzy, c-format
-#| msgid "could not create SSL context: %s"
+#, c-format
 msgid "could not create lz4 compression context: %s"
-msgstr "konnte SSL-Kontext nicht erzeugen: %s"
+msgstr "konnte lz4-Komprimierungskontext nicht erzeugen: %s"
 
 #: bbstreamer_lz4.c:101 bbstreamer_lz4.c:299
 #, c-format
@@ -245,10 +237,9 @@ msgid "this build does not support lz4 compression"
 msgstr "diese Installation unterstützt keine lz4-Komprimierung"
 
 #: bbstreamer_lz4.c:141
-#, fuzzy, c-format
-#| msgid "could not get backup header: %s"
+#, c-format
 msgid "could not write lz4 header: %s"
-msgstr "konnte Kopf der Sicherung nicht empfangen: %s"
+msgstr "konnte lz4-Header nicht schreiben: %s"
 
 #: bbstreamer_lz4.c:190 bbstreamer_zstd.c:171 bbstreamer_zstd.c:213
 #, c-format
@@ -256,10 +247,9 @@ msgid "could not compress data: %s"
 msgstr "konnte Daten nicht komprimieren: %s"
 
 #: bbstreamer_lz4.c:242
-#, fuzzy, c-format
-#| msgid "could not set compression level %d: %s"
+#, c-format
 msgid "could not end lz4 compression: %s"
-msgstr "konnte Komprimierungsniveau %d nicht setzen: %s"
+msgstr "konnte lz4-Komprimierung nicht beenden: %s"
 
 #: bbstreamer_lz4.c:294
 #, c-format
@@ -269,18 +259,17 @@ msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s"
 #: bbstreamer_tar.c:244
 #, c-format
 msgid "tar file trailer exceeds 2 blocks"
-msgstr ""
+msgstr "Tar-Datei-Trailer überschreitet 2 Blöcke"
 
 #: bbstreamer_tar.c:249
-#, fuzzy, c-format
-#| msgid "unrecognized data block type %d while restoring archive"
+#, c-format
 msgid "unexpected state while parsing tar archive"
-msgstr "unerkannter Datenblocktyp %d beim Wiederherstellen des Archivs gefunden"
+msgstr "unerwarteter Zustand beim Parsen des Tar-Archivs"
 
 #: bbstreamer_tar.c:296
 #, c-format
 msgid "tar member has empty name"
-msgstr ""
+msgstr "Tar-Mitglied hat leeren Namen"
 
 #: bbstreamer_tar.c:328
 #, c-format
@@ -288,22 +277,19 @@ msgid "COPY stream ended before last file was finished"
 msgstr "COPY-Strom endete vor dem Ende der letzten Datei"
 
 #: bbstreamer_zstd.c:85
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not create zstd compression context"
-msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
+msgstr "konnte zstd-Komprimierungskontext nicht erzeugen"
 
 #: bbstreamer_zstd.c:93
-#, fuzzy, c-format
-#| msgid "could not set compression level %d: %s"
+#, c-format
 msgid "could not set zstd compression level to %d: %s"
-msgstr "konnte Komprimierungsniveau %d nicht setzen: %s"
+msgstr "konnte zstd-Komprimierungsniveau nicht auf %d setzen: %s"
 
 #: bbstreamer_zstd.c:108
-#, fuzzy, c-format
-#| msgid "could not set compression level %d: %s"
+#, c-format
 msgid "could not set compression worker count to %d: %s"
-msgstr "konnte Komprimierungsniveau %d nicht setzen: %s"
+msgstr "konnte Komprimierungs-Worker-Anzahl nicht auf %d setzen: %s"
 
 #: bbstreamer_zstd.c:119 bbstreamer_zstd.c:274
 #, c-format
@@ -311,10 +297,9 @@ msgid "this build does not support zstd compression"
 msgstr "diese Installation unterstützt keine zstd-Komprimierung"
 
 #: bbstreamer_zstd.c:265
-#, fuzzy, c-format
-#| msgid "could not reset compression stream"
+#, c-format
 msgid "could not create zstd decompression context"
-msgstr "konnte Komprimierungsstrom nicht zurücksetzen"
+msgstr "konnte zstd-Dekomprimierungskontext nicht erzeugen"
 
 #: pg_basebackup.c:240
 #, c-format
@@ -458,6 +443,8 @@ msgid ""
 "  -t, --target=TARGET[:DETAIL]\n"
 "                         backup target (if other than client)\n"
 msgstr ""
+"  -t, --target=ZIEL[:DETAIL]\n"
+"                         Backup-Ziel (wenn nicht Client)\n"
 
 #: pg_basebackup.c:390
 #, c-format
@@ -488,22 +475,18 @@ msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip             Tar-Ausgabe komprimieren\n"
 
 #: pg_basebackup.c:396
-#, fuzzy, c-format
-#| msgid ""
-#| "  -s, --status-interval=INTERVAL\n"
-#| "                         time between status packets sent to server (in seconds)\n"
+#, c-format
 msgid ""
 "  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
 "                         compress on client or server as specified\n"
 msgstr ""
-"  -s, --status-interval=INTERVALL\n"
-"                         Zeit zwischen an Server gesendeten Statuspaketen (in Sekunden)\n"
+"  -Z, --compress=[{client|server}-]METHODE[:DETAIL]\n"
+"                         auf Client oder Server wie angegeben komprimieren\n"
 
 #: pg_basebackup.c:398
-#, fuzzy, c-format
-#| msgid "  -z, --gzip             compress tar output\n"
+#, c-format
 msgid "  -Z, --compress=none    do not compress tar output\n"
-msgstr "  -z, --gzip             Tar-Ausgabe komprimieren\n"
+msgstr "  -Z, --compress=none    Tar-Ausgabe nicht komprimieren\n"
 
 #: pg_basebackup.c:399
 #, c-format
@@ -793,77 +776,69 @@ msgid "could not read COPY data: %s"
 msgstr "konnte COPY-Daten nicht lesen: %s"
 
 #: pg_basebackup.c:1059
-#, fuzzy, c-format
-#| msgid "a worker process died unexpectedly"
+#, c-format
 msgid "background process terminated unexpectedly"
-msgstr "ein Arbeitsprozess endete unerwartet"
+msgstr "Hintergrundprozess beendete unerwartet"
 
 #: pg_basebackup.c:1130
-#, fuzzy, c-format
-#| msgid "cannot insert multiple commands into a prepared statement"
+#, c-format
 msgid "cannot inject manifest into a compressed tarfile"
-msgstr "kann nicht mehrere Befehle in vorbereitete Anweisung einfügen"
+msgstr "Manifest kann nicht in eine komprimierte Tar-Datei eingefügt werden"
 
 #: pg_basebackup.c:1131
 #, c-format
 msgid "use client-side compression, send the output to a directory rather than standard output, or use --no-manifest"
-msgstr ""
+msgstr "verwenden Sie clientseitige Komprimierung, senden Sie die Ausgabe in ein Verzeichnis statt auf die Standardausgabe, oder verwenden Sie --no-manifest"
 
 #: pg_basebackup.c:1146
-#, fuzzy, c-format
-#| msgid "could not parse backup manifest: %s"
+#, c-format
 msgid "unable to parse archive: %s"
-msgstr "konnte Backup-Manifest nicht parsen: %s"
+msgstr "konnte Archiv nicht parsen: %s"
 
 #: pg_basebackup.c:1147
-#, fuzzy, c-format
-#| msgid "only tar mode backups can be compressed"
+#, c-format
 msgid "Only tar archives can be parsed."
-msgstr "nur Sicherungen im Tar-Modus können komprimiert werden"
+msgstr "Nur Tar-Archive können geparst werden."
 
 #: pg_basebackup.c:1149
 #, c-format
 msgid "Plain format requires pg_basebackup to parse the archive."
-msgstr ""
+msgstr "Format »plain« benötigt pg_basebackup, um das Archiv zu parsen."
 
 #: pg_basebackup.c:1151
 #, c-format
 msgid "Using - as the output directory requires pg_basebackup to parse the archive."
-msgstr ""
+msgstr "Wenn - als Ausgabeverzeichnis verwendet wird, wird pg_basebackup benötigt, um das Archiv zu parsen."
 
 #: pg_basebackup.c:1153
 #, c-format
 msgid "The -R option requires pg_basebackup to parse the archive."
-msgstr ""
+msgstr "Die Option -R benötigt pg_basebackup, um das Archiv zu parsen."
 
 #: pg_basebackup.c:1364
 #, c-format
 msgid "archives should precede manifest"
-msgstr ""
+msgstr "Archive sollten vor dem Manifest kommen"
 
 #: pg_basebackup.c:1379
-#, fuzzy, c-format
-#| msgid "invalid variable name: \"%s\""
+#, c-format
 msgid "invalid archive name: \"%s\""
-msgstr "ungültiger Variablenname: »%s«"
+msgstr "ungültiger Archivname: »%s«"
 
 #: pg_basebackup.c:1451
-#, fuzzy, c-format
-#| msgid "unexpected array start"
+#, c-format
 msgid "unexpected payload data"
-msgstr "unerwarteter Array-Start"
+msgstr "unerwartete Payload-Daten"
 
 #: pg_basebackup.c:1594
-#, fuzzy, c-format
-#| msgid "empty message text"
+#, c-format
 msgid "empty COPY message"
-msgstr "leerer Nachrichtentext"
+msgstr "leere COPY-Nachricht"
 
 #: pg_basebackup.c:1596
-#, fuzzy, c-format
-#| msgid "malformed SCRAM message (length mismatch)\n"
+#, c-format
 msgid "malformed COPY message of type %d, length %zu"
-msgstr "fehlerhafte SCRAM-Nachricht (Länge stimmt nicht überein)\n"
+msgstr "fehlerhafte COPY-Nachricht vom Typ %d, Länge %zu"
 
 #: pg_basebackup.c:1794
 #, c-format
@@ -876,21 +851,19 @@ msgid "HINT: use -X none or -X fetch to disable log streaming"
 msgstr "TIPP: -X none oder -X fetch verwenden um Log-Streaming abzuschalten"
 
 #: pg_basebackup.c:1878
-#, fuzzy, c-format
-#| msgid "Exported snapshots are not supported by this server version."
+#, c-format
 msgid "backup targets are not supported by this server version"
-msgstr "Exportierte Snapshots werden in dieser Serverversion nicht unterstützt."
+msgstr "Backup-Ziele werden von dieser Serverversion nicht unterstützt"
 
 #: pg_basebackup.c:1881
 #, c-format
 msgid "recovery configuration cannot be written when a backup target is used"
-msgstr ""
+msgstr "Recovery-Konfiguration kann nicht geschrieben werden, wenn ein Backup-Ziel verwendet wird"
 
 #: pg_basebackup.c:1908
-#, fuzzy, c-format
-#| msgid "this build does not support compression"
+#, c-format
 msgid "server does not support server-side compression"
-msgstr "diese Installation unterstützt keine Komprimierung"
+msgstr "Server unterstützt keine serverseitige Komprimierung"
 
 #: pg_basebackup.c:1918
 #, c-format
@@ -1061,38 +1034,34 @@ msgid "too many command-line arguments (first is \"%s\")"
 msgstr "zu viele Kommandozeilenargumente (das erste ist »%s«)"
 
 #: pg_basebackup.c:2517
-#, fuzzy, c-format
-#| msgid "cannot specify both %s and %s"
+#, c-format
 msgid "cannot specify both format and backup target"
-msgstr "%s und %s können nicht beide angegeben werden"
+msgstr "Format und Backup-Ziel können nicht beide angegeben werden"
 
 #: pg_basebackup.c:2529
 #, c-format
 msgid "must specify output directory or backup target"
-msgstr ""
+msgstr "Ausgabeverzeichnis oder Backup-Ziel muss angegeben werden"
 
 #: pg_basebackup.c:2535
-#, fuzzy, c-format
-#| msgid "cannot specify both %s and %s"
+#, c-format
 msgid "cannot specify both output directory and backup target"
-msgstr "%s und %s können nicht beide angegeben werden"
+msgstr "Ausgabeverzeichnis und Backup-Ziel können nicht beide angegeben werden"
 
 #: pg_basebackup.c:2565 pg_receivewal.c:870
-#, fuzzy, c-format
-#| msgid "unrecognized checksum algorithm: \"%s\""
+#, c-format
 msgid "unrecognized compression algorithm \"%s\""
-msgstr "unbekannter Prüfsummenalgorithmus: »%s«"
+msgstr "unbekannter Komprimierungsalgorithmus »%s«"
 
 #: pg_basebackup.c:2571 pg_receivewal.c:877
-#, fuzzy, c-format
-#| msgid "invalid compression code: %d"
+#, c-format
 msgid "invalid compression specification: %s"
-msgstr "ungültiger Komprimierungscode: %d"
+msgstr "ungültige Komprimierungsangabe: %s"
 
 #: pg_basebackup.c:2587
 #, c-format
 msgid "client-side compression is not possible when a backup target is specified"
-msgstr ""
+msgstr "clientseitige Komprimierung ist nicht möglich, wenn ein Backup-Ziel angegeben ist"
 
 #: pg_basebackup.c:2598
 #, c-format
@@ -1102,7 +1071,7 @@ msgstr "nur Sicherungen im Tar-Modus können komprimiert werden"
 #: pg_basebackup.c:2608
 #, c-format
 msgid "WAL cannot be streamed when a backup target is specified"
-msgstr ""
+msgstr "WAL-Streaming ist nicht möglich, wenn ein Backup-Ziel angegeben ist"
 
 #: pg_basebackup.c:2614
 #, c-format
@@ -1132,10 +1101,9 @@ msgid "%s and %s are incompatible options"
 msgstr "%s und %s sind inkompatible Optionen"
 
 #: pg_basebackup.c:2666
-#, fuzzy, c-format
-#| msgid "WAL directory location can only be specified in plain mode"
+#, c-format
 msgid "WAL directory location cannot be specified along with a backup target"
-msgstr "WAL-Verzeichnis kann nur im »plain«-Modus angegeben werden"
+msgstr "WAL-Verzeichnis kann nicht zusammen mit einem Backup-Ziel angegeben werden"
 
 #: pg_basebackup.c:2672
 #, c-format
@@ -1222,6 +1190,8 @@ msgid ""
 "  -Z, --compress=METHOD[:DETAIL]\n"
 "                         compress as specified\n"
 msgstr ""
+"  -Z, --compress=METHODE[:DETAIL]\n"
+"                         wie angegeben komprimieren\n"
 
 #: pg_receivewal.c:105
 #, c-format
@@ -1298,10 +1268,9 @@ msgid "compressed segment file \"%s\" has incorrect uncompressed size %d, skippi
 msgstr "komprimierte Segmentdatei »%s« hat falsche unkomprimierte Größe %d, wird übersprungen"
 
 #: pg_receivewal.c:451
-#, fuzzy, c-format
-#| msgid "could not create SSL context: %s"
+#, c-format
 msgid "could not create LZ4 decompression context: %s"
-msgstr "konnte SSL-Kontext nicht erzeugen: %s"
+msgstr "konnte LZ4-Dekomprimierungskontext nicht erzeugen: %s"
 
 #: pg_receivewal.c:463
 #, c-format
@@ -1314,10 +1283,9 @@ msgid "could not decompress file \"%s\": %s"
 msgstr "konnte Datei »%s« nicht dekomprimieren: %s"
 
 #: pg_receivewal.c:504
-#, fuzzy, c-format
-#| msgid "could not close compression stream: %s"
+#, c-format
 msgid "could not free LZ4 decompression context: %s"
-msgstr "konnte Komprimierungsstrom nicht schließen: %s"
+msgstr "konnte LZ4-Dekomprimierungskontext nicht freigeben: %s"
 
 #: pg_receivewal.c:509
 #, c-format
@@ -1325,16 +1293,14 @@ msgid "compressed segment file \"%s\" has incorrect uncompressed size %zu, skipp
 msgstr "komprimierte Segmentdatei »%s« hat falsche unkomprimierte Größe %zu, wird übersprungen"
 
 #: pg_receivewal.c:514
-#, fuzzy, c-format
-#| msgid "could not close file \"%s\": %m"
+#, c-format
 msgid "could not check file \"%s\""
-msgstr "konnte Datei »%s« nicht schließen: %m"
+msgstr "konnte Datei »%s« nicht prüfen"
 
 #: pg_receivewal.c:516
-#, fuzzy, c-format
-#| msgid "this build does not support compression"
+#, c-format
 msgid "This build does not support compression with %s."
-msgstr "diese Installation unterstützt keine Komprimierung"
+msgstr "Diese Installation unterstützt keine Komprimierung mit %s."
 
 #: pg_receivewal.c:643
 #, c-format
@@ -1362,22 +1328,19 @@ msgid "no target directory specified"
 msgstr "kein Zielverzeichnis angegeben"
 
 #: pg_receivewal.c:893
-#, fuzzy, c-format
-#| msgid "multiple values specified for connection type"
+#, c-format
 msgid "no value specified for --compress, switching to default"
-msgstr "mehrere Werte angegeben für Verbindungstyp"
+msgstr "kein Wert für --compress angegeben, Voreinstellung wird verwendet"
 
 #: pg_receivewal.c:897 pg_receivewal.c:903
-#, fuzzy, c-format
-#| msgid "this build does not support compression"
+#, c-format
 msgid "this build does not support compression with %s"
-msgstr "diese Installation unterstützt keine Komprimierung"
+msgstr "diese Installation unterstützt keine Komprimierung mit %s"
 
 #: pg_receivewal.c:908
-#, fuzzy, c-format
-#| msgid "compression method lz4 not supported"
+#, c-format
 msgid "compression with %s is not yet supported"
-msgstr "Komprimierungsmethode lz4 nicht unterstützt"
+msgstr "Komprimierung mit %s wird noch nicht unterstützt"
 
 #: pg_receivewal.c:953
 #, c-format
@@ -1580,10 +1543,9 @@ msgid "--endpos may only be specified with --start"
 msgstr "--endpos kann nur zusammen mit --start angegeben werden"
 
 #: pg_recvlogical.c:907
-#, fuzzy, c-format
-#| msgid "--endpos may only be specified with --start"
+#, c-format
 msgid "--two-phase may only be specified with --create-slot"
-msgstr "--endpos kann nur zusammen mit --start angegeben werden"
+msgstr "--two-phase kann nur zusammen mit --create-slot angegeben werden"
 
 #: pg_recvlogical.c:939
 #, c-format
@@ -1799,28 +1761,24 @@ msgid "could not identify system: got %d rows and %d fields, expected %d rows an
 msgstr "Konnte System nicht identifizieren: %d Zeilen und %d Felder erhalten, %d Zeilen und %d oder mehr Felder erwartet"
 
 #: streamutil.c:513
-#, fuzzy, c-format
-#| msgid "could not create replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
+#, c-format
 msgid "could not read replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
-msgstr "konnte Replikations-Slot »%s« nicht erzeugen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet"
+msgstr "konnte Replikations-Slot »%s« nicht lesen: %d Zeilen und %d Felder erhalten, %d Zeilen und %d Felder erwartet"
 
 #: streamutil.c:525
-#, fuzzy, c-format
-#| msgid "could not copy replication slot \"%s\""
+#, c-format
 msgid "could not find replication slot \"%s\""
-msgstr "konnte Replikations-Slot »%s« nicht kopieren"
+msgstr "konnte Replikations-Slot »%s« nicht finden"
 
 #: streamutil.c:536
-#, fuzzy, c-format
-#| msgid "cannot read from logical replication slot \"%s\""
+#, c-format
 msgid "expected a physical replication slot, got type \"%s\" instead"
-msgstr "kann nicht aus logischem Replikations-Slot »%s« lesen"
+msgstr "physischer Replikations-Slot wurde erwartet, stattdessen wurde Typ »%s« erhalten"
 
 #: streamutil.c:550
-#, fuzzy, c-format
-#| msgid "could not parse start WAL location \"%s\""
+#, c-format
 msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
-msgstr "konnte WAL-Startposition »%s« nicht parsen"
+msgstr "konnte restart_lsn »%s« für Replikations-Slot »%s« nicht parsen"
 
 #: streamutil.c:667
 #, c-format
