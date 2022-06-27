@@ -226,10 +226,15 @@ TransactionIdDidAbort(TransactionId transactionId)
  *
  * This does NOT look into pg_xact but merely probes our local cache
  * (and so it's not named TransactionIdDidComplete, which would be the
- * appropriate name for a function that worked that way).  The intended
- * use is just to short-circuit TransactionIdIsInProgress calls when doing
- * repeated heapam_visibility.c checks for the same XID.  If this isn't
- * extremely fast then it will be counterproductive.
+ * appropriate name for a function that worked that way).
+ *
+ * NB: This is unused, and will be removed in v15. This was used to
+ * short-circuit TransactionIdIsInProgress, but that was wrong for a
+ * transaction that was known to be marked as committed in CLOG but not
+ * yet removed from the proc array. This is kept in backbranches just in
+ * case it is still used by extensions.  However, extensions doing
+ * something similar to tuple visibility checks should also be careful to
+ * check the proc array first!
  *
  * Note:
  *		Assumes transaction identifier is valid.
