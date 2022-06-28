@@ -63,13 +63,11 @@ Author: Noah Misch <noah@leadboat.com>
       permissions on the <literal>public</literal> schema has not
       been changed.  Databases restored from previous Postgres releases
       will be restored with their current permissions.  Users wishing
-      to have the old permissions on new objects will need to grant
+      to have the former permissions will need to grant
       <literal>CREATE</literal> permission for <literal>PUBLIC</literal>
       on the <literal>public</literal> schema; this change can be made
       on <literal>template1</literal> to cause all new databases
-      to have these permissions.  <literal>template1</literal>
-      permissions for <application>pg_dumpall</application> and
-      <application>pg_upgrade</application>?
+      to have these permissions.
      </para>
     </listitem>
 
@@ -85,7 +83,7 @@ Author: Noah Misch <noah@leadboat.com>
      </para>
 
      <para>
-      Previously it was the literal user name of the database owner.
+      Previously it was the literal user name of the bootstrap superuser.
       Databases restored from previous Postgres releases will be restored
       with their current owner specification.
      </para>
