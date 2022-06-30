@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd %n# %s" $PGINDENTGITHASH -1 --date=iso
 
+82d0ffae3219e4bc153a1306ce23013d168e04a2 # 2022-06-30 11:03:03 -0400
+# pgindent run prior to branching v15.
+
 23e7b38bfe396f919fdb66057174d29e17086418 # 2022-05-12 15:17:30 -0400
 # Pre-beta mechanical code beautification.
 
