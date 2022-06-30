@@ -753,7 +753,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_l))
-					MemSet((void *) GETSIGN(datum_l), 0xff, siglen);
+					memset((void *) GETSIGN(datum_l), 0xff, siglen);
 			}
 			else
 			{
@@ -769,7 +769,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_r))
-					MemSet((void *) GETSIGN(datum_r), 0xff, siglen);
+					memset((void *) GETSIGN(datum_r), 0xff, siglen);
 			}
 			else
 			{

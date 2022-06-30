@@ -420,7 +420,7 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_l))
-					MemSet((void *) union_l, 0xff, siglen);
+					memset((void *) union_l, 0xff, siglen);
 			}
 			else
 			{
@@ -436,7 +436,7 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_r))
-					MemSet((void *) union_r, 0xff, siglen);
+					memset((void *) union_r, 0xff, siglen);
 			}
 			else
 			{

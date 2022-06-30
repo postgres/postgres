@@ -1410,7 +1410,7 @@ pg_stat_get_wal_receiver(PG_FUNCTION_ARGS)
 		 * see details. Other users only get the pid value to know whether it
 		 * is a WAL receiver, but no details.
 		 */
-		MemSet(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
+		memset(&nulls[1], true, sizeof(bool) * (tupdesc->natts - 1));
 	}
 	else
 	{

@@ -345,7 +345,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			if (LTG_ISALLTRUE(datum_l) || LTG_ISALLTRUE(_j))
 			{
 				if (!LTG_ISALLTRUE(datum_l))
-					MemSet((void *) union_l, 0xff, siglen);
+					memset((void *) union_l, 0xff, siglen);
 			}
 			else
 			{
@@ -361,7 +361,7 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 			if (LTG_ISALLTRUE(datum_r) || LTG_ISALLTRUE(_j))
 			{
 				if (!LTG_ISALLTRUE(datum_r))
-					MemSet((void *) union_r, 0xff, siglen);
+					memset((void *) union_r, 0xff, siglen);
 			}
 			else
 			{

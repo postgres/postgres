@@ -424,7 +424,7 @@ sql_exec(PGconn *conn, const char *todo, bool quiet)
 		}
 		fprintf(stdout, "\n");
 		pad = (char *) pg_malloc(l + 1);
-		MemSet(pad, '-', l);
+		memset(pad, '-', l);
 		pad[l] = '\0';
 		fprintf(stdout, "%s\n", pad);
 		free(pad);
