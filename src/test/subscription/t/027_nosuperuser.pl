@@ -178,7 +178,10 @@ expect_replication("alice.unpartitioned", 2, 5, 7,
 revoke_superuser("regress_admin");
 publish_update("alice.unpartitioned", 5 => 9);
 expect_failure(
-	"alice.unpartitioned", 2, 5, 7,
+	"alice.unpartitioned",
+	2,
+	5,
+	7,
 	qr/ERROR: ( [A-Z0-9]+:)? permission denied for table unpartitioned/msi,
 	"non-superuser admin fails to replicate update");
 grant_superuser("regress_admin");

@@ -122,7 +122,7 @@ bool		bsysscan = false;
  * lookups as fast as possible.
  */
 static FullTransactionId XactTopFullTransactionId = {InvalidTransactionId};
-static int nParallelCurrentXids = 0;
+static int	nParallelCurrentXids = 0;
 static TransactionId *ParallelCurrentXids;
 
 /*

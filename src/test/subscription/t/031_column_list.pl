@@ -20,7 +20,7 @@ $node_subscriber->append_conf('postgresql.conf',
 $node_subscriber->start;
 
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
-my $offset = 0;
+my $offset            = 0;
 
 sub wait_for_subscription_sync
 {
@@ -1169,13 +1169,15 @@ is( $node_subscriber->safe_psql(
 # TEST: With a table included in multiple publications with different column
 # lists, we should catch the error when creating the subscription.
 
-$node_publisher->safe_psql('postgres', qq(
+$node_publisher->safe_psql(
+	'postgres', qq(
 	CREATE TABLE test_mix_1 (a int PRIMARY KEY, b int, c int);
 	CREATE PUBLICATION pub_mix_1 FOR TABLE test_mix_1 (a, b);
 	CREATE PUBLICATION pub_mix_2 FOR TABLE test_mix_1 (a, c);
 ));
 
-$node_subscriber->safe_psql('postgres', qq(
+$node_subscriber->safe_psql(
+	'postgres', qq(
 	DROP SUBSCRIPTION sub1;
 	CREATE TABLE test_mix_1 (a int PRIMARY KEY, b int, c int);
 ));
@@ -1192,17 +1194,20 @@ ok( $stderr =~
 # TEST: If the column list is changed after creating the subscription, we
 # should catch the error reported by walsender.
 
-$node_publisher->safe_psql('postgres', qq(
+$node_publisher->safe_psql(
+	'postgres', qq(
 	ALTER PUBLICATION pub_mix_1 SET TABLE test_mix_1 (a, c);
 ));
 
-$node_subscriber->safe_psql('postgres', qq(
+$node_subscriber->safe_psql(
+	'postgres', qq(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub_mix_1, pub_mix_2;
 ));
 
 $node_publisher->wait_for_catchup('sub1');
 
-$node_publisher->safe_psql('postgres', qq(
+$node_publisher->safe_psql(
+	'postgres', qq(
 	ALTER PUBLICATION pub_mix_1 SET TABLE test_mix_1 (a, b);
 	INSERT INTO test_mix_1 VALUES(1, 1, 1);
 ));

@@ -851,7 +851,9 @@ $node_publisher->wait_for_catchup('sub2');
 
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT a, b, c FROM tab5 ORDER BY 1");
-is($result, qq(3|1|), 'updates of tab5 replicated correctly after altering table on subscriber');
+is($result, qq(3|1|),
+	'updates of tab5 replicated correctly after altering table on subscriber'
+);
 
 # Test that replication into the partitioned target table continues to
 # work correctly when the published table is altered.
@@ -866,7 +868,8 @@ $node_publisher->wait_for_catchup('sub2');
 
 $result = $node_subscriber2->safe_psql('postgres',
 	"SELECT a, b, c FROM tab5 ORDER BY 1");
-is($result, qq(3||1), 'updates of tab5 replicated correctly after altering table on publisher');
+is($result, qq(3||1),
+	'updates of tab5 replicated correctly after altering table on publisher');
 
 # Test that replication works correctly as long as the leaf partition
 # has the necessary REPLICA IDENTITY, even though the actual target
