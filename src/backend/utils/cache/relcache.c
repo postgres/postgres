@@ -6258,7 +6258,7 @@ load_relcache_init_file(bool shared)
 		rel->rd_firstRelfilenodeSubid = InvalidSubTransactionId;
 		rel->rd_droppedSubid = InvalidSubTransactionId;
 		rel->rd_amcache = NULL;
-		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
+		rel->pgstat_info = NULL;
 
 		/*
 		 * Recompute lock and physical addressing info.  This is needed in
