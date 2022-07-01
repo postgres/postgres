@@ -4,6 +4,9 @@ PostgreSQL documentation
 -->
 
 <refentry id="sql-merge">
+ <indexterm zone="sql-merge">
+  <primary>MERGE</primary>
+ </indexterm>
 
  <refmeta>
   <refentrytitle>MERGE</refentrytitle>
