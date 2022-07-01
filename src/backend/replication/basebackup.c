@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "access/xlog_internal.h"	/* for pg_start/stop_backup */
+#include "access/xlog_internal.h"	/* for pg_backup_start/stop */
 #include "common/compression.h"
 #include "common/file_perm.h"
 #include "commands/defrem.h"
