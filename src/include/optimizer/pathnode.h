@@ -233,8 +233,7 @@ extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 												  List *having_qual,
 												  AggStrategy aggstrategy,
 												  List *rollups,
-												  const AggClauseCosts *agg_costs,
-												  double numGroups);
+												  const AggClauseCosts *agg_costs);
 extern MinMaxAggPath *create_minmaxagg_path(PlannerInfo *root,
 											RelOptInfo *rel,
 											PathTarget *target,
