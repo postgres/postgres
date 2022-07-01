@@ -289,7 +289,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = shm_open(name, flags, PG_FILE_MODE_OWNER)) == -1)
 	{
-		if (errno != EEXIST)
+		if (op == DSM_OP_ATTACH || errno != EEXIST)
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
 					 errmsg("could not open shared memory segment \"%s\": %m",
@@ -565,7 +565,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 
 		if ((ident = shmget(key, segsize, flags)) == -1)
 		{
-			if (errno != EEXIST)
+			if (op == DSM_OP_ATTACH || errno != EEXIST)
 			{
 				int			save_errno = errno;
 
@@ -898,7 +898,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = OpenTransientFile(name, flags)) == -1)
 	{
-		if (errno != EEXIST)
+		if (op == DSM_OP_ATTACH || errno != EEXIST)
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
 					 errmsg("could not open shared memory segment \"%s\": %m",
