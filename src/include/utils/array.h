@@ -387,6 +387,7 @@ extern void array_bitmap_copy(bits8 *destbitmap, int destoffset,
 extern ArrayType *construct_array(Datum *elems, int nelems,
 								  Oid elmtype,
 								  int elmlen, bool elmbyval, char elmalign);
+extern ArrayType *construct_array_builtin(Datum *elems, int nelems, Oid elmtype);
 extern ArrayType *construct_md_array(Datum *elems,
 									 bool *nulls,
 									 int ndims,
@@ -401,6 +402,9 @@ extern void deconstruct_array(ArrayType *array,
 							  Oid elmtype,
 							  int elmlen, bool elmbyval, char elmalign,
 							  Datum **elemsp, bool **nullsp, int *nelemsp);
+extern void deconstruct_array_builtin(ArrayType *array,
+									  Oid elmtype,
+									  Datum **elemsp, bool **nullsp, int *nelemsp);
 extern bool array_contains_nulls(ArrayType *array);
 
 extern ArrayBuildState *initArrayResult(Oid element_type,

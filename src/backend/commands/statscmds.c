@@ -467,7 +467,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	if (build_expressions)
 		types[ntypes++] = CharGetDatum(STATS_EXT_EXPRESSIONS);
 	Assert(ntypes > 0 && ntypes <= lengthof(types));
-	stxkind = construct_array(types, ntypes, CHAROID, 1, true, TYPALIGN_CHAR);
+	stxkind = construct_array_builtin(types, ntypes, CHAROID);
 
 	/* convert the expressions (if any) to a text datum */
 	if (stxexprs != NIL)

@@ -166,9 +166,7 @@ gin_page_opaque_info(PG_FUNCTION_ARGS)
 
 	values[0] = Int64GetDatum(opaq->rightlink);
 	values[1] = Int32GetDatum(opaq->maxoff);
-	values[2] = PointerGetDatum(construct_array(flags, nflags,
-												TEXTOID,
-												-1, false, TYPALIGN_INT));
+	values[2] = PointerGetDatum(construct_array_builtin(flags, nflags, TEXTOID));
 
 	/* Build and return the result tuple. */
 	resultTuple = heap_form_tuple(tupdesc, values, nulls);
@@ -273,11 +271,7 @@ gin_leafpage_items(PG_FUNCTION_ARGS)
 		tids_datum = (Datum *) palloc(ndecoded * sizeof(Datum));
 		for (i = 0; i < ndecoded; i++)
 			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
-		values[2] = PointerGetDatum(construct_array(tids_datum,
-													ndecoded,
-													TIDOID,
-													sizeof(ItemPointerData),
-													false, TYPALIGN_SHORT));
+		values[2] = PointerGetDatum(construct_array_builtin(tids_datum, ndecoded, TIDOID));
 		pfree(tids_datum);
 		pfree(tids);
 

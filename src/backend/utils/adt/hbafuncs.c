@@ -151,7 +151,7 @@ get_hba_options(HbaLine *hba)
 	Assert(noptions <= MAX_HBA_OPTIONS);
 
 	if (noptions > 0)
-		return construct_array(options, noptions, TEXTOID, -1, false, TYPALIGN_INT);
+		return construct_array_builtin(options, noptions, TEXTOID);
 	else
 		return NULL;
 }

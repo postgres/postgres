@@ -260,9 +260,7 @@ textarray_to_stringlist(ArrayType *textarray)
 				i;
 	List	   *res = NIL;
 
-	deconstruct_array(textarray,
-					  TEXTOID, -1, false, TYPALIGN_INT,
-					  &elems, NULL, &nelems);
+	deconstruct_array_builtin(textarray, TEXTOID, &elems, NULL, &nelems);
 
 	if (nelems == 0)
 		return NIL;

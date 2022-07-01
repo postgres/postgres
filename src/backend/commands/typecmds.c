@@ -1893,12 +1893,9 @@ makeMultirangeConstructors(const char *name, Oid namespace,
 	/* n-arg constructor - vararg */
 	argtypes = buildoidvector(&rangeArrayOid, 1);
 	allParamTypes = ObjectIdGetDatum(rangeArrayOid);
-	allParameterTypes = construct_array(&allParamTypes,
-										1, OIDOID,
-										sizeof(Oid), true, TYPALIGN_INT);
+	allParameterTypes = construct_array_builtin(&allParamTypes, 1, OIDOID);
 	paramModes = CharGetDatum(FUNC_PARAM_VARIADIC);
-	parameterModes = construct_array(&paramModes, 1, CHAROID,
-									 1, true, TYPALIGN_CHAR);
+	parameterModes = construct_array_builtin(&paramModes, 1, CHAROID);
 	myself = ProcedureCreate(name,	/* name: same as multirange type */
 							 namespace,
 							 false, /* replace */

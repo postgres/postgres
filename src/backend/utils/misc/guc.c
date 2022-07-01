@@ -9974,7 +9974,7 @@ pg_settings_get_flags(PG_FUNCTION_ARGS)
 	Assert(cnt <= MAX_GUC_FLAGS);
 
 	/* Returns the record as Datum */
-	a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
+	a = construct_array_builtin(flags, cnt, TEXTOID);
 	PG_RETURN_ARRAYTYPE_P(a);
 }
 
@@ -11507,9 +11507,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 					  TYPALIGN_INT /* TEXT's typalign */ );
 	}
 	else
-		a = construct_array(&datum, 1,
-							TEXTOID,
-							-1, false, TYPALIGN_INT);
+		a = construct_array_builtin(&datum, 1, TEXTOID);
 
 	return a;
 }
@@ -11576,9 +11574,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 								 false /* TEXT's typbyval */ ,
 								 TYPALIGN_INT /* TEXT's typalign */ );
 		else
-			newarray = construct_array(&d, 1,
-									   TEXTOID,
-									   -1, false, TYPALIGN_INT);
+			newarray = construct_array_builtin(&d, 1, TEXTOID);
 
 		index++;
 	}
@@ -11644,9 +11640,7 @@ GUCArrayReset(ArrayType *array)
 								 false /* TEXT's typbyval */ ,
 								 TYPALIGN_INT /* TEXT's typalign */ );
 		else
-			newarray = construct_array(&d, 1,
-									   TEXTOID,
-									   -1, false, TYPALIGN_INT);
+			newarray = construct_array_builtin(&d, 1, TEXTOID);
 
 		index++;
 		pfree(val);

@@ -214,9 +214,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 		int			ndatums;
 		int			i;
 
-		deconstruct_array(textArray,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &textDatums, NULL, &ndatums);
+		deconstruct_array_builtin(textArray, TEXTOID, &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
 			char	   *extName = TextDatumGetCString(textDatums[i]);

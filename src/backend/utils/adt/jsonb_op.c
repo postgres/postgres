@@ -53,8 +53,7 @@ jsonb_exists_any(PG_FUNCTION_ARGS)
 	bool	   *key_nulls;
 	int			elem_count;
 
-	deconstruct_array(keys, TEXTOID, -1, false, TYPALIGN_INT,
-					  &key_datums, &key_nulls, &elem_count);
+	deconstruct_array_builtin(keys, TEXTOID, &key_datums, &key_nulls, &elem_count);
 
 	for (i = 0; i < elem_count; i++)
 	{
@@ -86,8 +85,7 @@ jsonb_exists_all(PG_FUNCTION_ARGS)
 	bool	   *key_nulls;
 	int			elem_count;
 
-	deconstruct_array(keys, TEXTOID, -1, false, TYPALIGN_INT,
-					  &key_datums, &key_nulls, &elem_count);
+	deconstruct_array_builtin(keys, TEXTOID, &key_datums, &key_nulls, &elem_count);
 
 	for (i = 0; i < elem_count; i++)
 	{

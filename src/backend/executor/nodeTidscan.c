@@ -206,9 +206,7 @@ TidListEval(TidScanState *tidstate)
 			if (isNull)
 				continue;
 			itemarray = DatumGetArrayTypeP(arraydatum);
-			deconstruct_array(itemarray,
-							  TIDOID, sizeof(ItemPointerData), false, TYPALIGN_SHORT,
-							  &ipdatums, &ipnulls, &ndatums);
+			deconstruct_array_builtin(itemarray, TIDOID, &ipdatums, &ipnulls, &ndatums);
 			if (numTids + ndatums > numAllocTids)
 			{
 				numAllocTids = numTids + ndatums;

@@ -314,11 +314,7 @@ current_schemas(PG_FUNCTION_ARGS)
 	}
 	list_free(search_path);
 
-	array = construct_array(names, i,
-							NAMEOID,
-							NAMEDATALEN,	/* sizeof(Name) */
-							false,	/* Name is not by-val */
-							TYPALIGN_CHAR); /* alignment of Name */
+	array = construct_array_builtin(names, i, NAMEOID);
 
 	PG_RETURN_POINTER(array);
 }

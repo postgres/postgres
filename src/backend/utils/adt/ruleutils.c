@@ -2406,9 +2406,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					if (isnull)
 						elog(ERROR, "null indkey for index %u", indexId);
 
-					deconstruct_array(DatumGetArrayTypeP(cols),
-									  INT2OID, 2, true, TYPALIGN_SHORT,
-									  &keys, NULL, &nKeys);
+					deconstruct_array_builtin(DatumGetArrayTypeP(cols), INT2OID,
+											  &keys, NULL, &nKeys);
 
 					for (j = keyatts; j < nKeys; j++)
 					{
@@ -2531,9 +2530,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					elog(ERROR, "null conexclop for constraint %u",
 						 constraintId);
 
-				deconstruct_array(DatumGetArrayTypeP(val),
-								  OIDOID, sizeof(Oid), true, TYPALIGN_INT,
-								  &elems, NULL, &nElems);
+				deconstruct_array_builtin(DatumGetArrayTypeP(val), OIDOID,
+										  &elems, NULL, &nElems);
 
 				operators = (Oid *) palloc(nElems * sizeof(Oid));
 				for (i = 0; i < nElems; i++)
@@ -2587,9 +2585,8 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 	int			j;
 
 	/* Extract data from array of int16 */
-	deconstruct_array(DatumGetArrayTypeP(column_index_array),
-					  INT2OID, 2, true, TYPALIGN_SHORT,
-					  &keys, NULL, &nKeys);
+	deconstruct_array_builtin(DatumGetArrayTypeP(column_index_array), INT2OID,
+							  &keys, NULL, &nKeys);
 
 	for (j = 0; j < nKeys; j++)
 	{
@@ -12752,9 +12749,8 @@ get_reloptions(StringInfo buf, Datum reloptions)
 	int			noptions;
 	int			i;
 
-	deconstruct_array(DatumGetArrayTypeP(reloptions),
-					  TEXTOID, -1, false, TYPALIGN_INT,
-					  &options, NULL, &noptions);
+	deconstruct_array_builtin(DatumGetArrayTypeP(reloptions), TEXTOID,
+							  &options, NULL, &noptions);
 
 	for (i = 0; i < noptions; i++)
 	{

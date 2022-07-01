@@ -722,8 +722,6 @@ build_regtype_array(Oid *param_types, int num_params)
 	for (i = 0; i < num_params; i++)
 		tmp_ary[i] = ObjectIdGetDatum(param_types[i]);
 
-	/* XXX: this hardcodes assumptions about the regtype type */
-	result = construct_array(tmp_ary, num_params, REGTYPEOID,
-							 4, true, TYPALIGN_INT);
+	result = construct_array_builtin(tmp_ary, num_params, REGTYPEOID);
 	return PointerGetDatum(result);
 }

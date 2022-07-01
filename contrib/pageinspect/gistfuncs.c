@@ -104,9 +104,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 	values[0] = LSNGetDatum(PageGetLSN(page));
 	values[1] = LSNGetDatum(GistPageGetNSN(page));
 	values[2] = Int64GetDatum(opaq->rightlink);
-	values[3] = PointerGetDatum(construct_array(flags, nflags,
-												TEXTOID,
-												-1, false, TYPALIGN_INT));
+	values[3] = PointerGetDatum(construct_array_builtin(flags, nflags, TEXTOID));
 
 	/* Build and return the result tuple. */
 	resultTuple = heap_form_tuple(tupdesc, values, nulls);

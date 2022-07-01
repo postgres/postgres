@@ -411,9 +411,7 @@ typenameTypeMod(ParseState *pstate, const TypeName *typeName, Type typ)
 		datums[n++] = CStringGetDatum(cstr);
 	}
 
-	/* hardwired knowledge about cstring's representation details here */
-	arrtypmod = construct_array(datums, n, CSTRINGOID,
-								-2, false, TYPALIGN_CHAR);
+	arrtypmod = construct_array_builtin(datums, n, CSTRINGOID);
 
 	/* arrange to report location if type's typmodin function fails */
 	setup_parser_errposition_callback(&pcbstate, pstate, typeName->location);

@@ -172,8 +172,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 
 		Assert(ARR_ELEMTYPE(arr) == TEXTOID);
 
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &datum_opts, NULL, &nelems);
+		deconstruct_array_builtin(arr, TEXTOID, &datum_opts, NULL, &nelems);
 
 		if (nelems % 2 != 0)
 			ereport(ERROR,

@@ -567,9 +567,7 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 				 errmsg("wrong number of array subscripts")));
 
-	deconstruct_array(key_array,
-					  TEXTOID, -1, false, TYPALIGN_INT,
-					  &key_datums, &key_nulls, &key_count);
+	deconstruct_array_builtin(key_array, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 	/* see discussion in hstoreArrayToPairs() */
 	if (key_count > MaxAllocSize / sizeof(Pairs))
@@ -606,9 +604,7 @@ hstore_from_arrays(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
 					 errmsg("arrays must have same bounds")));
 
-		deconstruct_array(value_array,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &value_datums, &value_nulls, &value_count);
+		deconstruct_array_builtin(value_array, TEXTOID, &value_datums, &value_nulls, &value_count);
 
 		Assert(key_count == value_count);
 	}
@@ -696,9 +692,7 @@ hstore_from_array(PG_FUNCTION_ARGS)
 					 errmsg("wrong number of array subscripts")));
 	}
 
-	deconstruct_array(in_array,
-					  TEXTOID, -1, false, TYPALIGN_INT,
-					  &in_datums, &in_nulls, &in_count);
+	deconstruct_array_builtin(in_array, TEXTOID, &in_datums, &in_nulls, &in_count);
 
 	count = in_count / 2;
 

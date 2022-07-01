@@ -759,12 +759,10 @@ percentile_disc_multi_final(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	param = PG_GETARG_ARRAYTYPE_P(1);
 
-	deconstruct_array(param, FLOAT8OID,
-	/* hard-wired info on type float8 */
-					  sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE,
-					  &percentiles_datum,
-					  &percentiles_null,
-					  &num_percentiles);
+	deconstruct_array_builtin(param, FLOAT8OID,
+							  &percentiles_datum,
+							  &percentiles_null,
+							  &num_percentiles);
 
 	if (num_percentiles == 0)
 		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));
@@ -883,12 +881,10 @@ percentile_cont_multi_final_common(FunctionCallInfo fcinfo,
 		PG_RETURN_NULL();
 	param = PG_GETARG_ARRAYTYPE_P(1);
 
-	deconstruct_array(param, FLOAT8OID,
-	/* hard-wired info on type float8 */
-					  sizeof(float8), FLOAT8PASSBYVAL, TYPALIGN_DOUBLE,
-					  &percentiles_datum,
-					  &percentiles_null,
-					  &num_percentiles);
+	deconstruct_array_builtin(param, FLOAT8OID,
+							  &percentiles_datum,
+							  &percentiles_null,
+							  &num_percentiles);
 
 	if (num_percentiles == 0)
 		PG_RETURN_POINTER(construct_empty_array(osastate->qstate->sortColType));

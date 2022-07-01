@@ -1642,9 +1642,7 @@ generateClonedIndexStmt(RangeVar *heapRel, Relation source_idx,
 					elog(ERROR, "null conexclop for constraint %u",
 						 constraintId);
 
-				deconstruct_array(DatumGetArrayTypeP(datum),
-								  OIDOID, sizeof(Oid), true, TYPALIGN_INT,
-								  &elems, NULL, &nElems);
+				deconstruct_array_builtin(DatumGetArrayTypeP(datum), OIDOID, &elems, NULL, &nElems);
 
 				for (i = 0; i < nElems; i++)
 				{

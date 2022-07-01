@@ -564,21 +564,11 @@ hash_metapage_info(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < HASH_MAX_SPLITPOINTS; i++)
 		spares[i] = Int64GetDatum((int64) metad->hashm_spares[i]);
-	values[j++] = PointerGetDatum(construct_array(spares,
-												  HASH_MAX_SPLITPOINTS,
-												  INT8OID,
-												  sizeof(int64),
-												  FLOAT8PASSBYVAL,
-												  TYPALIGN_DOUBLE));
+	values[j++] = PointerGetDatum(construct_array_builtin(spares, HASH_MAX_SPLITPOINTS, INT8OID));
 
 	for (i = 0; i < HASH_MAX_BITMAPS; i++)
 		mapp[i] = Int64GetDatum((int64) metad->hashm_mapp[i]);
-	values[j++] = PointerGetDatum(construct_array(mapp,
-												  HASH_MAX_BITMAPS,
-												  INT8OID,
-												  sizeof(int64),
-												  FLOAT8PASSBYVAL,
-												  TYPALIGN_DOUBLE));
+	values[j++] = PointerGetDatum(construct_array_builtin(mapp, HASH_MAX_BITMAPS, INT8OID));
 
 	tuple = heap_form_tuple(tupleDesc, values, nulls);
 

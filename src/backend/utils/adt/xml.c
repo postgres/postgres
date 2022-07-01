@@ -4017,9 +4017,9 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 		Assert(ARR_ELEMTYPE(namespaces) == TEXTOID);
 
-		deconstruct_array(namespaces, TEXTOID, -1, false, TYPALIGN_INT,
-						  &ns_names_uris, &ns_names_uris_nulls,
-						  &ns_count);
+		deconstruct_array_builtin(namespaces, TEXTOID,
+								  &ns_names_uris, &ns_names_uris_nulls,
+								  &ns_count);
 
 		Assert((ns_count % 2) == 0);	/* checked above */
 		ns_count /= 2;			/* count pairs only */

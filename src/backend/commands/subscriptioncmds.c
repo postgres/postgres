@@ -494,8 +494,7 @@ publicationListToArray(List *publist)
 
 	MemoryContextSwitchTo(oldcxt);
 
-	arr = construct_array(datums, list_length(publist),
-						  TEXTOID, -1, false, TYPALIGN_INT);
+	arr = construct_array_builtin(datums, list_length(publist), TEXTOID);
 
 	MemoryContextDelete(memcxt);
 

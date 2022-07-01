@@ -2099,8 +2099,7 @@ textarray_to_strvaluelist(ArrayType *arr)
 	List	   *list = NIL;
 	int			i;
 
-	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-					  &elems, &nulls, &nelems);
+	deconstruct_array_builtin(arr, TEXTOID, &elems, &nulls, &nelems);
 
 	for (i = 0; i < nelems; i++)
 	{
@@ -2156,8 +2155,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		bool	   *nulls;
 		int			nelems;
 
-		deconstruct_array(namearr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &elems, &nulls, &nelems);
+		deconstruct_array_builtin(namearr, TEXTOID, &elems, &nulls, &nelems);
 		if (nelems != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2174,8 +2172,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		bool	   *nulls;
 		int			nelems;
 
-		deconstruct_array(namearr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &elems, &nulls, &nelems);
+		deconstruct_array_builtin(namearr, TEXTOID, &elems, &nulls, &nelems);
 		if (nelems != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2213,8 +2210,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 		int			nelems;
 		int			i;
 
-		deconstruct_array(argsarr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &elems, &nulls, &nelems);
+		deconstruct_array_builtin(argsarr, TEXTOID, &elems, &nulls, &nelems);
 
 		args = NIL;
 		for (i = 0; i < nelems; i++)
