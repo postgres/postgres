@@ -372,8 +372,8 @@ PostgreSQL documentation
        <para>
         Requesting exclusive locks on database objects while running a parallel dump could
         cause the dump to fail. The reason is that the <application>pg_dump</application> leader process
-        requests shared locks on the objects that the worker processes are going to dump later
-        in order to
+        requests shared locks (<link linkend="locking-tables">ACCESS SHARE</link>) on the
+        objects that the worker processes are going to dump later in order to
         make sure that nobody deletes them and makes them go away while the dump is running.
         If another client then requests an exclusive lock on a table, that lock will not be
         granted but will be queued waiting for the shared lock of the leader process to be
