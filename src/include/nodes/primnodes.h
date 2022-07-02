@@ -63,14 +63,27 @@ typedef enum OnCommitAction
 typedef struct RangeVar
 {
 	NodeTag		type;
-	char	   *catalogname;	/* the catalog (database) name, or NULL */
-	char	   *schemaname;		/* the schema name, or NULL */
-	char	   *relname;		/* the relation/sequence name */
-	bool		inh;			/* expand rel by inheritance? recursively act
-								 * on children? */
-	char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
-	Alias	   *alias;			/* table alias & optional column aliases */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* the catalog (database) name, or NULL */
+	char	   *catalogname;
+
+	/* the schema name, or NULL */
+	char	   *schemaname;
+
+	/* the relation/sequence name */
+	char	   *relname;
+
+	/* expand rel by inheritance? recursively act on children? */
+	bool		inh;
+
+	/* see RELPERSISTENCE_* in pg_class.h */
+	char		relpersistence;
+
+	/* table alias & optional column aliases */
+	Alias	   *alias;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } RangeVar;
 
 typedef enum TableFuncType
@@ -195,19 +208,38 @@ typedef struct Expr
 typedef struct Var
 {
 	Expr		xpr;
-	int			varno;			/* index of this var's relation in the range
-								 * table, or INNER_VAR/OUTER_VAR/etc */
-	AttrNumber	varattno;		/* attribute number of this var, or zero for
-								 * all attrs ("whole-row Var") */
-	Oid			vartype;		/* pg_type OID for the type of this var */
-	int32		vartypmod;		/* pg_attribute typmod value */
-	Oid			varcollid;		/* OID of collation, or InvalidOid if none */
-	Index		varlevelsup;	/* for subquery variables referencing outer
-								 * relations; 0 in a normal var, >0 means N
-								 * levels up */
-	Index		varnosyn;		/* syntactic relation index (0 if unknown) */
-	AttrNumber	varattnosyn;	/* syntactic attribute number */
-	int			location;		/* token location, or -1 if unknown */
+
+	/*
+	 * index of this var's relation in the range table, or
+	 * INNER_VAR/OUTER_VAR/etc
+	 */
+	int			varno;
+
+	/*
+	 * attribute number of this var, or zero for all attrs ("whole-row Var")
+	 */
+	AttrNumber	varattno;
+
+	/* pg_type OID for the type of this var */
+	Oid			vartype;
+	/* pg_attribute typmod value */
+	int32		vartypmod;
+	/* OID of collation, or InvalidOid if none */
+	Oid			varcollid;
+
+	/*
+	 * for subquery variables referencing outer relations; 0 in a normal var,
+	 * >0 means N levels up
+	 */
+	Index		varlevelsup;
+
+	/* syntactic relation index (0 if unknown) */
+	Index		varnosyn;
+	/* syntactic attribute number */
+	AttrNumber	varattnosyn;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Var;
 
 /*
@@ -329,26 +361,66 @@ typedef struct Param
 typedef struct Aggref
 {
 	Expr		xpr;
-	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggtype;		/* type Oid of result of the aggregate */
-	Oid			aggcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
-	List	   *aggargtypes;	/* type Oids of direct and aggregated args */
-	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
-	List	   *args;			/* aggregated arguments and sort expressions */
-	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
-	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	Expr	   *aggfilter;		/* FILTER expression, if any */
-	bool		aggstar;		/* true if argument list was really '*' */
-	bool		aggvariadic;	/* true if variadic arguments have been
-								 * combined into an array last argument */
-	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
-	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
-	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
-	int			aggno;			/* unique ID within the Agg node */
-	int			aggtransno;		/* unique ID of transition state in the Agg */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* pg_proc Oid of the aggregate */
+	Oid			aggfnoid;
+
+	/* type Oid of result of the aggregate */
+	Oid			aggtype;
+
+	/* OID of collation of result */
+	Oid			aggcollid;
+
+	/* OID of collation that function should use */
+	Oid			inputcollid;
+
+	/* type Oid of aggregate's transition value */
+	Oid			aggtranstype;
+
+	/* type Oids of direct and aggregated args */
+	List	   *aggargtypes;
+
+	/* direct arguments, if an ordered-set agg */
+	List	   *aggdirectargs;
+
+	/* aggregated arguments and sort expressions */
+	List	   *args;
+
+	/* ORDER BY (list of SortGroupClause) */
+	List	   *aggorder;
+
+	/* DISTINCT (list of SortGroupClause) */
+	List	   *aggdistinct;
+
+	/* FILTER expression, if any */
+	Expr	   *aggfilter;
+
+	/* true if argument list was really '*' */
+	bool		aggstar;
+
+	/*
+	 * true if variadic arguments have been combined into an array last
+	 * argument
+	 */
+	bool		aggvariadic;
+
+	/* aggregate kind (see pg_aggregate.h) */
+	char		aggkind;
+
+	/* > 0 if agg belongs to outer query */
+	Index		agglevelsup;
+
+	/* expected agg-splitting mode of parent Agg */
+	AggSplit	aggsplit;
+
+	/* unique ID within the Agg node */
+	int			aggno;
+
+	/* unique ID of transition state in the Agg */
+	int			aggtransno;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Aggref;
 
 /*
@@ -378,12 +450,21 @@ typedef struct Aggref
 typedef struct GroupingFunc
 {
 	Expr		xpr;
-	List	   *args;			/* arguments, not evaluated but kept for
-								 * benefit of EXPLAIN etc. */
-	List	   *refs;			/* ressortgrouprefs of arguments */
-	List	   *cols;			/* actual column positions set by planner */
-	Index		agglevelsup;	/* same as Aggref.agglevelsup */
-	int			location;		/* token location */
+
+	/* arguments, not evaluated but kept for benefit of EXPLAIN etc. */
+	List	   *args;
+
+	/* ressortgrouprefs of arguments */
+	List	   *refs;
+
+	/* actual column positions set by planner */
+	List	   *cols;
+
+	/* same as Aggref.agglevelsup */
+	Index		agglevelsup;
+
+	/* token location */
+	int			location;
 } GroupingFunc;
 
 /*
@@ -548,14 +629,30 @@ typedef struct NamedArgExpr
 typedef struct OpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of underlying function */
-	Oid			opresulttype;	/* PG_TYPE OID of result value */
-	bool		opretset;		/* true if operator returns set */
-	Oid			opcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* arguments to the operator (1 or 2) */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of underlying function */
+	Oid			opfuncid;
+
+	/* PG_TYPE OID of result value */
+	Oid			opresulttype;
+
+	/* true if operator returns set */
+	bool		opretset;
+
+	/* OID of collation of result */
+	Oid			opcollid;
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid;
+
+	/* arguments to the operator (1 or 2) */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } OpExpr;
 
 /*
@@ -605,15 +702,30 @@ typedef OpExpr NullIfExpr;
 typedef struct ScalarArrayOpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of comparison function */
-	Oid			hashfuncid;		/* PG_PROC OID of hash func or InvalidOid */
-	Oid			negfuncid;		/* PG_PROC OID of negator of opfuncid function
-								 * or InvalidOid.  See above */
-	bool		useOr;			/* true for ANY, false for ALL */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* the scalar and array operands */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of comparison function */
+	Oid			opfuncid;
+
+	/* PG_PROC OID of hash func or InvalidOid */
+	Oid			hashfuncid;
+
+	/* PG_PROC OID of negator of opfuncid function or InvalidOid.  See above */
+	Oid			negfuncid;
+
+	/* true for ANY, false for ALL */
+	bool		useOr;
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid;
+
+	/* the scalar and array operands */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } ScalarArrayOpExpr;
 
 /*
