@@ -10,6 +10,10 @@
 #include "ecpgtype.h"
 #include "sqlca.h"
 
+#ifdef HAVE_USELOCALE
+locale_t	ecpg_clocale;
+#endif
+
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
@@ -531,6 +535,42 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&connections_mutex);
 #endif
+
+	/*
+	 * ... but first, make certain we have created ecpg_clocale.  Rely on
+	 * holding connections_mutex to ensure this is done by only one thread.
+	 */
+#ifdef HAVE_USELOCALE
+	if (!ecpg_clocale)
+	{
+		ecpg_clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
+		if (!ecpg_clocale)
+		{
+#ifdef ENABLE_THREAD_SAFETY
+			pthread_mutex_unlock(&connections_mutex);
+#endif
+			ecpg_raise(lineno, ECPG_OUT_OF_MEMORY,
+					   ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+			if (host)
+				ecpg_free(host);
+			if (port)
+				ecpg_free(port);
+			if (options)
+				ecpg_free(options);
+			if (realname)
+				ecpg_free(realname);
+			if (dbname)
+				ecpg_free(dbname);
+			if (conn_keywords)
+				ecpg_free(conn_keywords);
+			if (conn_values)
+				ecpg_free(conn_values);
+			free(this);
+			return false;
+		}
+	}
+#endif
+
 	if (connection_name != NULL)
 		this->name = ecpg_strdup(connection_name, lineno);
 	else
