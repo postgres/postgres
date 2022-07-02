@@ -46,7 +46,7 @@ static int	nconns = 0;
 static bool any_new_notice = false;
 
 /* Maximum time to wait before giving up on a step (in usec) */
-static int64 max_step_wait = 300 * USECS_PER_SEC;
+static int64 max_step_wait = 360 * USECS_PER_SEC;
 
 
 static void check_testspec(TestSpec *testspec);
@@ -128,12 +128,12 @@ main(int argc, char **argv)
 		conninfo = "dbname = postgres";
 
 	/*
-	 * If PGISOLATIONTIMEOUT is set in the environment, adopt its value (given
-	 * in seconds) as the max time to wait for any one step to complete.
+	 * If PG_TEST_TIMEOUT_DEFAULT is set, adopt its value (given in seconds)
+	 * as half the max time to wait for any one step to complete.
 	 */
-	env_wait = getenv("PGISOLATIONTIMEOUT");
+	env_wait = getenv("PG_TEST_TIMEOUT_DEFAULT");
 	if (env_wait != NULL)
-		max_step_wait = ((int64) atoi(env_wait)) * USECS_PER_SEC;
+		max_step_wait = 2 * ((int64) atoi(env_wait)) * USECS_PER_SEC;
 
 	/* Read the test spec from stdin */
 	spec_yyparse();
