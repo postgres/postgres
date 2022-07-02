@@ -147,7 +147,7 @@
 					#   sysv
 					#   windows
 					# (change requires restart)
-#dynamic_shared_memory_type = posix	# the default is the first option
+#dynamic_shared_memory_type = posix	# the default is usually the first option
 					# supported by the operating system:
 					#   posix
 					#   sysv
