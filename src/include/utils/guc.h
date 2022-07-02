@@ -307,7 +307,7 @@ extern void DefineCustomBoolVariable(const char *name,
 									 int flags,
 									 GucBoolCheckHook check_hook,
 									 GucBoolAssignHook assign_hook,
-									 GucShowHook show_hook);
+									 GucShowHook show_hook) pg_attribute_nonnull(1, 4);
 
 extern void DefineCustomIntVariable(const char *name,
 									const char *short_desc,
@@ -320,7 +320,7 @@ extern void DefineCustomIntVariable(const char *name,
 									int flags,
 									GucIntCheckHook check_hook,
 									GucIntAssignHook assign_hook,
-									GucShowHook show_hook);
+									GucShowHook show_hook) pg_attribute_nonnull(1, 4);
 
 extern void DefineCustomRealVariable(const char *name,
 									 const char *short_desc,
@@ -333,7 +333,7 @@ extern void DefineCustomRealVariable(const char *name,
 									 int flags,
 									 GucRealCheckHook check_hook,
 									 GucRealAssignHook assign_hook,
-									 GucShowHook show_hook);
+									 GucShowHook show_hook) pg_attribute_nonnull(1, 4);
 
 extern void DefineCustomStringVariable(const char *name,
 									   const char *short_desc,
@@ -344,7 +344,7 @@ extern void DefineCustomStringVariable(const char *name,
 									   int flags,
 									   GucStringCheckHook check_hook,
 									   GucStringAssignHook assign_hook,
-									   GucShowHook show_hook);
+									   GucShowHook show_hook) pg_attribute_nonnull(1, 4);
 
 extern void DefineCustomEnumVariable(const char *name,
 									 const char *short_desc,
@@ -356,7 +356,7 @@ extern void DefineCustomEnumVariable(const char *name,
 									 int flags,
 									 GucEnumCheckHook check_hook,
 									 GucEnumAssignHook assign_hook,
-									 GucShowHook show_hook);
+									 GucShowHook show_hook) pg_attribute_nonnull(1, 4);
 
 extern void MarkGUCPrefixReserved(const char *className);
 

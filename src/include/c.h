@@ -145,6 +145,17 @@
 #endif
 
 /*
+ * pg_attribute_nonnull means the compiler should warn if the function is
+ * called with the listed arguments set to NULL.  If no arguments are
+ * listed, the compiler should warn if any pointer arguments are set to NULL.
+ */
+#if __has_attribute (nonnull)
+#define pg_attribute_nonnull(...) __attribute__((nonnull(__VA_ARGS__)))
+#else
+#define pg_attribute_nonnull(...)
+#endif
+
+/*
  * Append PG_USED_FOR_ASSERTS_ONLY to definitions of variables that are only
  * used in assert-enabled builds, to avoid compiler warnings about unused
  * variables in assert-disabled builds.
