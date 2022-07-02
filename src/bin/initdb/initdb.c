@@ -842,11 +842,14 @@ set_null_conf(void)
  * segment in dsm_impl.c; if it doesn't work, we assume it won't work for
  * the postmaster either, and configure the cluster for System V shared
  * memory instead.
+ *
+ * We avoid choosing Solaris's implementation of shm_open() by default.  It
+ * can sleep and fail spuriously under contention.
  */
 static const char *
 choose_dsm_implementation(void)
 {
-#ifdef HAVE_SHM_OPEN
+#if defined(HAVE_SHM_OPEN) && !defined(__sun__)
 	int			ntries = 10;
 	pg_prng_state prng_state;
 
