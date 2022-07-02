@@ -491,9 +491,16 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 		/* since the database gives the standard decimal point */
 		/* (see comments in execute.c) */
 #ifdef HAVE_USELOCALE
-		stmt.clocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t) 0);
-		if (stmt.clocale != (locale_t) 0)
-			stmt.oldlocale = uselocale(stmt.clocale);
+
+		/*
+		 * To get here, the above PQnfields() test must have found nonzero
+		 * fields.  One needs a connection to create such a descriptor.  (EXEC
+		 * SQL SET DESCRIPTOR can populate the descriptor's "items", but it
+		 * can't change the descriptor's PQnfields().)  Any successful
+		 * connection initializes ecpg_clocale.
+		 */
+		Assert(ecpg_clocale);
+		stmt.oldlocale = uselocale(ecpg_clocale);
 #else
 #ifdef HAVE__CONFIGTHREADLOCALE
 		stmt.oldthreadlocale = _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
@@ -509,8 +516,6 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 #ifdef HAVE_USELOCALE
 		if (stmt.oldlocale != (locale_t) 0)
 			uselocale(stmt.oldlocale);
-		if (stmt.clocale)
-			freelocale(stmt.clocale);
 #else
 		if (stmt.oldlocale)
 		{
