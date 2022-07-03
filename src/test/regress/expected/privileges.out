@@ -2099,6 +2099,24 @@ SELECT has_table_privilege('regress_priv_user1', 'testns.acltest1', 'INSERT'); -
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE EXECUTE ON FUNCTIONS FROM public;
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_priv_user2; -- error
 ERROR:  cannot use IN SCHEMA clause when using GRANT/REVOKE ON SCHEMAS
+-- Test makeaclitem()
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT', TRUE);  -- single privilege
+               makeaclitem                
+------------------------------------------
+ regress_priv_user1=r*/regress_priv_user2
+(1 row)
+
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, INSERT,  UPDATE , DELETE  ', FALSE);  -- multiple privileges
+                makeaclitem                 
+--------------------------------------------
+ regress_priv_user1=arwd/regress_priv_user2
+(1 row)
+
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, fake_privilege', FALSE);  -- error
+ERROR:  unrecognized privilege type: "fake_privilege"
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.

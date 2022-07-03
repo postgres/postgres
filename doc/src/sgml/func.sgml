@@ -24236,7 +24236,8 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         If the grantee is the pseudo-role PUBLIC, it is represented by zero in
         the <parameter>grantee</parameter> column.  Each granted privilege is
         represented as <literal>SELECT</literal>, <literal>INSERT</literal>,
-        etc.  Note that each privilege is broken out as a separate row, so
+        etc (see <xref linkend="privilege-abbrevs-table"/> for a full list).
+        Note that each privilege is broken out as a separate row, so
         only one keyword appears in the <parameter>privilege_type</parameter>
         column.
        </para></entry>
@@ -24256,6 +24257,12 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
        </para>
        <para>
         Constructs an <type>aclitem</type> with the given properties.
+        <parameter>privileges</parameter> is a comma-separated list of
+        privilege names such as <literal>SELECT</literal>,
+        <literal>INSERT</literal>, etc, all of which are set in the
+        result.  (Case of the privilege string is not significant, and
+        extra whitespace is allowed between but not within privilege
+        names.)
        </para></entry>
       </row>
      </tbody>

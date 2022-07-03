@@ -1339,6 +1339,14 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE EXECUTE ON FUNCTIONS
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_priv_user2; -- error
 
+-- Test makeaclitem()
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT', TRUE);  -- single privilege
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, INSERT,  UPDATE , DELETE  ', FALSE);  -- multiple privileges
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, fake_privilege', FALSE);  -- error
+
 --
 -- Testing blanket default grants is very hazardous since it might change
 -- the privileges attached to objects created by concurrent regression tests.

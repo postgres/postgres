@@ -86,7 +86,6 @@ static void check_circularity(const Acl *old_acl, const AclItem *mod_aip,
 static Acl *recursive_revoke(Acl *acl, Oid grantee, AclMode revoke_privs,
 							 Oid ownerId, DropBehavior behavior);
 
-static AclMode convert_priv_string(text *priv_type_text);
 static AclMode convert_any_priv_string(text *priv_type_text,
 									   const priv_map *privileges);
 
@@ -1573,8 +1572,27 @@ makeaclitem(PG_FUNCTION_ARGS)
 	bool		goption = PG_GETARG_BOOL(3);
 	AclItem    *result;
 	AclMode		priv;
+	static const priv_map any_priv_map[] = {
+		{"SELECT", ACL_SELECT},
+		{"INSERT", ACL_INSERT},
+		{"UPDATE", ACL_UPDATE},
+		{"DELETE", ACL_DELETE},
+		{"TRUNCATE", ACL_TRUNCATE},
+		{"REFERENCES", ACL_REFERENCES},
+		{"TRIGGER", ACL_TRIGGER},
+		{"EXECUTE", ACL_EXECUTE},
+		{"USAGE", ACL_USAGE},
+		{"CREATE", ACL_CREATE},
+		{"TEMP", ACL_CREATE_TEMP},
+		{"TEMPORARY", ACL_CREATE_TEMP},
+		{"CONNECT", ACL_CONNECT},
+		{"SET", ACL_SET},
+		{"ALTER SYSTEM", ACL_ALTER_SYSTEM},
+		{"RULE", 0},			/* ignore old RULE privileges */
+		{NULL, 0}
+	};
 
-	priv = convert_priv_string(privtext);
+	priv = convert_any_priv_string(privtext, any_priv_map);
 
 	result = (AclItem *) palloc(sizeof(AclItem));
 
@@ -1585,50 +1603,6 @@ makeaclitem(PG_FUNCTION_ARGS)
 							   (goption ? priv : ACL_NO_RIGHTS));
 
 	PG_RETURN_ACLITEM_P(result);
-}
-
-static AclMode
-convert_priv_string(text *priv_type_text)
-{
-	char	   *priv_type = text_to_cstring(priv_type_text);
-
-	if (pg_strcasecmp(priv_type, "SELECT") == 0)
-		return ACL_SELECT;
-	if (pg_strcasecmp(priv_type, "INSERT") == 0)
-		return ACL_INSERT;
-	if (pg_strcasecmp(priv_type, "UPDATE") == 0)
-		return ACL_UPDATE;
-	if (pg_strcasecmp(priv_type, "DELETE") == 0)
-		return ACL_DELETE;
-	if (pg_strcasecmp(priv_type, "TRUNCATE") == 0)
-		return ACL_TRUNCATE;
-	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
-		return ACL_REFERENCES;
-	if (pg_strcasecmp(priv_type, "TRIGGER") == 0)
-		return ACL_TRIGGER;
-	if (pg_strcasecmp(priv_type, "EXECUTE") == 0)
-		return ACL_EXECUTE;
-	if (pg_strcasecmp(priv_type, "USAGE") == 0)
-		return ACL_USAGE;
-	if (pg_strcasecmp(priv_type, "CREATE") == 0)
-		return ACL_CREATE;
-	if (pg_strcasecmp(priv_type, "TEMP") == 0)
-		return ACL_CREATE_TEMP;
-	if (pg_strcasecmp(priv_type, "TEMPORARY") == 0)
-		return ACL_CREATE_TEMP;
-	if (pg_strcasecmp(priv_type, "CONNECT") == 0)
-		return ACL_CONNECT;
-	if (pg_strcasecmp(priv_type, "SET") == 0)
-		return ACL_SET;
-	if (pg_strcasecmp(priv_type, "ALTER SYSTEM") == 0)
-		return ACL_ALTER_SYSTEM;
-	if (pg_strcasecmp(priv_type, "RULE") == 0)
-		return 0;				/* ignore old RULE privileges */
-
-	ereport(ERROR,
-			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			 errmsg("unrecognized privilege type: \"%s\"", priv_type)));
-	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }
 
 
