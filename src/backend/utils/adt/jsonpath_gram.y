@@ -74,7 +74,6 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 %pure-parser
 %expect 0
 %name-prefix="jsonpath_yy"
-%error-verbose
 %parse-param {JsonPathParseResult **result}
 
 %union {
