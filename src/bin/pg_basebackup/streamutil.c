@@ -197,16 +197,14 @@ GetConnection(void)
 		PQfinish(tmpconn);
 		free(values);
 		free(keywords);
-		if (conn_opts)
-			PQconninfoFree(conn_opts);
+		PQconninfoFree(conn_opts);
 		return NULL;
 	}
 
 	/* Connection ok! */
 	free(values);
 	free(keywords);
-	if (conn_opts)
-		PQconninfoFree(conn_opts);
+	PQconninfoFree(conn_opts);
 
 	/*
 	 * Set always-secure search path, so malicious users can't get control.

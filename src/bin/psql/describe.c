@@ -3492,8 +3492,7 @@ error_return:
 
 	free(view_def);
 
-	if (res)
-		PQclear(res);
+	PQclear(res);
 
 	return retval;
 }

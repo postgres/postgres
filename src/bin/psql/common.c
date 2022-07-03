@@ -463,8 +463,7 @@ ClearOrSaveResult(PGresult *result)
 		{
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
-				if (pset.last_error_result)
-					PQclear(pset.last_error_result);
+				PQclear(pset.last_error_result);
 				pset.last_error_result = result;
 				break;
 

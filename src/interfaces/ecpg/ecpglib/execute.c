@@ -1714,8 +1714,7 @@ ecpg_process_output(struct statement *stmt, bool clear_result)
 					status = false;
 				else
 				{
-					if (desc->result)
-						PQclear(desc->result);
+					PQclear(desc->result);
 					desc->result = stmt->results;
 					clear_result = false;
 					ecpg_log("ecpg_process_output on line %d: putting result (%d tuples) into descriptor %s\n",

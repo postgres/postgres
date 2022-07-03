@@ -2790,8 +2790,7 @@ postgresEndDirectModify(ForeignScanState *node)
 		return;
 
 	/* Release PGresult */
-	if (dmstate->result)
-		PQclear(dmstate->result);
+	PQclear(dmstate->result);
 
 	/* Release remote connection */
 	ReleaseConnection(dmstate->conn);
@@ -3604,8 +3603,7 @@ get_remote_estimate(const char *sql, PGconn *conn,
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 }
@@ -3853,8 +3851,7 @@ fetch_more_data(ForeignScanState *node)
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 
@@ -4338,8 +4335,7 @@ store_returning_result(PgFdwModifyState *fmstate,
 	}
 	PG_CATCH();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -4627,8 +4623,7 @@ get_returning_data(ForeignScanState *node)
 		}
 		PG_CATCH();
 		{
-			if (dmstate->result)
-				PQclear(dmstate->result);
+			PQclear(dmstate->result);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -4957,8 +4952,7 @@ postgresAnalyzeForeignTable(Relation relation,
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 
@@ -5114,8 +5108,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	}
 	PG_CATCH();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -5496,8 +5489,7 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 

@@ -3628,6 +3628,9 @@ char *PQresultErrorField(const PGresult *res, int fieldcode);
 <synopsis>
 void PQclear(PGresult *res);
 </synopsis>
+
+        If the argument is a <symbol>NULL</symbol> pointer, no operation is
+        performed.
        </para>
 
        <para>
@@ -6670,6 +6673,8 @@ void PQfreemem(void *ptr);
 <synopsis>
 void PQconninfoFree(PQconninfoOption *connOptions);
 </synopsis>
+      If the argument is a <symbol>NULL</symbol> pointer, no operation is
+      performed.
      </para>
 
      <para>

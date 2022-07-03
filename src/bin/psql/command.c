@@ -3476,8 +3476,7 @@ do_connect(enum trivalue reuse_previous_specification,
 
 	/* Release locally allocated data, whether we succeeded or not */
 	pg_free(password);
-	if (cinfo)
-		PQconninfoFree(cinfo);
+	PQconninfoFree(cinfo);
 
 	if (!success)
 	{

@@ -3766,8 +3766,7 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/* Something went wrong with "SHOW transaction_read_only". */
-				if (res)
-					PQclear(res);
+				PQclear(res);
 
 				/* Append error report to conn->errorMessage. */
 				appendPQExpBuffer(&conn->errorMessage,
@@ -3818,8 +3817,7 @@ keep_going:						/* We will come back to here until there is
 				}
 
 				/* Something went wrong with "SELECT pg_is_in_recovery()". */
-				if (res)
-					PQclear(res);
+				PQclear(res);
 
 				/* Append error report to conn->errorMessage. */
 				appendPQExpBuffer(&conn->errorMessage,

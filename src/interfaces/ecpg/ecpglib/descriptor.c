@@ -923,8 +923,7 @@ ECPGdescribe(int line, int compat, bool input, const char *connection_name, cons
 					if (!ecpg_check_PQresult(res, line, con->connection, compat))
 						break;
 
-					if (desc->result != NULL)
-						PQclear(desc->result);
+					PQclear(desc->result);
 
 					desc->result = res;
 					ret = true;
