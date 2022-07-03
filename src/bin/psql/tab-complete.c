@@ -1927,7 +1927,7 @@ psql_completion(const char *text, int start, int end)
 
 	/* ALTER EXTENSION <name> */
 	else if (Matches("ALTER", "EXTENSION", MatchAny))
-		COMPLETE_WITH("ADD", "DROP", "UPDATE TO", "SET SCHEMA");
+		COMPLETE_WITH("ADD", "DROP", "UPDATE", "SET SCHEMA");
 
 	/* ALTER EXTENSION <name> UPDATE */
 	else if (Matches("ALTER", "EXTENSION", MatchAny, "UPDATE"))
