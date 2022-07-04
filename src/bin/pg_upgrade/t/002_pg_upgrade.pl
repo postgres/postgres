@@ -226,6 +226,7 @@ command_fails(
 		'-D',         $newnode->data_dir,
 		'-b',         $oldbindir . '/does/not/exist/',
 		'-B',         $newbindir,
+		'-s',         $newnode->host,
 		'-p',         $oldnode->port,
 		'-P',         $newnode->port,
 		'--check'
@@ -240,8 +241,9 @@ command_ok(
 	[
 		'pg_upgrade', '--no-sync',        '-d', $oldnode->data_dir,
 		'-D',         $newnode->data_dir, '-b', $oldbindir,
-		'-B',         $newbindir,         '-p', $oldnode->port,
-		'-P',         $newnode->port,     '--check'
+		'-B',         $newbindir,         '-s', $newnode->host,
+		'-p',         $oldnode->port,     '-P', $newnode->port,
+		'--check'
 	],
 	'run of pg_upgrade --check for new instance');
 ok(!-d $newnode->data_dir . "/pg_upgrade_output.d",
@@ -252,8 +254,8 @@ command_ok(
 	[
 		'pg_upgrade', '--no-sync',        '-d', $oldnode->data_dir,
 		'-D',         $newnode->data_dir, '-b', $oldbindir,
-		'-B',         $newbindir,         '-p', $oldnode->port,
-		'-P',         $newnode->port
+		'-B',         $newbindir,         '-s', $newnode->host,
+		'-p',         $oldnode->port,     '-P', $newnode->port
 	],
 	'run of pg_upgrade for new instance');
 ok( !-d $newnode->data_dir . "/pg_upgrade_output.d",
