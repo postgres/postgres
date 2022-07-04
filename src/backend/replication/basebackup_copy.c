@@ -361,7 +361,7 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 	 * would not be wide enough for this, as TimeLineID is unsigned.
 	 */
 	pq_sendint32(&buf, INT8OID);	/* type oid */
-	pq_sendint16(&buf, -1);
+	pq_sendint16(&buf, 8);
 	pq_sendint32(&buf, 0);
 	pq_sendint16(&buf, 0);
 	pq_endmessage(&buf);
