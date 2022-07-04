@@ -1923,15 +1923,7 @@ init_rel_sync_cache(MemoryContext cachectx)
 static bool
 get_schema_sent_in_streamed_txn(RelationSyncEntry *entry, TransactionId xid)
 {
-	ListCell   *lc;
-
-	foreach(lc, entry->streamed_txns)
-	{
-		if (xid == (uint32) lfirst_int(lc))
-			return true;
-	}
-
-	return false;
+	return list_member_xid(entry->streamed_txns, xid);
 }
 
 /*
@@ -1945,7 +1937,7 @@ set_schema_sent_in_streamed_txn(RelationSyncEntry *entry, TransactionId xid)
 
 	oldctx = MemoryContextSwitchTo(CacheMemoryContext);
 
-	entry->streamed_txns = lappend_int(entry->streamed_txns, xid);
+	entry->streamed_txns = lappend_xid(entry->streamed_txns, xid);
 
 	MemoryContextSwitchTo(oldctx);
 }
@@ -2248,7 +2240,7 @@ cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
 		 */
 		foreach(lc, entry->streamed_txns)
 		{
-			if (xid == (uint32) lfirst_int(lc))
+			if (xid == lfirst_xid(lc))
 			{
 				if (is_commit)
 					entry->schema_sent = true;

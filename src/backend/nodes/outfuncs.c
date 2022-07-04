@@ -221,6 +221,8 @@ _outList(StringInfo str, const List *node)
 		appendStringInfoChar(str, 'i');
 	else if (IsA(node, OidList))
 		appendStringInfoChar(str, 'o');
+	else if (IsA(node, XidList))
+		appendStringInfoChar(str, 'x');
 
 	foreach(lc, node)
 	{
@@ -239,6 +241,8 @@ _outList(StringInfo str, const List *node)
 			appendStringInfo(str, " %d", lfirst_int(lc));
 		else if (IsA(node, OidList))
 			appendStringInfo(str, " %u", lfirst_oid(lc));
+		else if (IsA(node, XidList))
+			appendStringInfo(str, " %u", lfirst_xid(lc));
 		else
 			elog(ERROR, "unrecognized list node type: %d",
 				 (int) node->type);

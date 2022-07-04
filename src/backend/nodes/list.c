@@ -54,6 +54,7 @@
 #define IsPointerList(l)		((l) == NIL || IsA((l), List))
 #define IsIntegerList(l)		((l) == NIL || IsA((l), IntList))
 #define IsOidList(l)			((l) == NIL || IsA((l), OidList))
+#define IsXidList(l)			((l) == NIL || IsA((l), XidList))
 
 #ifdef USE_ASSERT_CHECKING
 /*
@@ -71,7 +72,8 @@ check_list_invariants(const List *list)
 
 	Assert(list->type == T_List ||
 		   list->type == T_IntList ||
-		   list->type == T_OidList);
+		   list->type == T_OidList ||
+		   list->type == T_XidList);
 }
 #else
 #define check_list_invariants(l)  ((void) 0)
@@ -379,6 +381,24 @@ lappend_oid(List *list, Oid datum)
 		new_tail_cell(list);
 
 	llast_oid(list) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Append a TransactionId to the specified list. See lappend()
+ */
+List *
+lappend_xid(List *list, TransactionId datum)
+{
+	Assert(IsXidList(list));
+
+	if (list == NIL)
+		list = new_list(T_XidList, 1);
+	else
+		new_tail_cell(list);
+
+	llast_xid(list) = datum;
 	check_list_invariants(list);
 	return list;
 }
@@ -703,6 +723,26 @@ list_member_oid(const List *list, Oid datum)
 	const ListCell *cell;
 
 	Assert(IsOidList(list));
+	check_list_invariants(list);
+
+	foreach(cell, list)
+	{
+		if (lfirst_oid(cell) == datum)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Return true iff the TransactionId 'datum' is a member of the list.
+ */
+bool
+list_member_xid(const List *list, TransactionId datum)
+{
+	const ListCell *cell;
+
+	Assert(IsXidList(list));
 	check_list_invariants(list);
 
 	foreach(cell, list)

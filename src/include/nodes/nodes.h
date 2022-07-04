@@ -317,6 +317,7 @@ typedef enum NodeTag
 	T_List,
 	T_IntList,
 	T_OidList,
+	T_XidList,
 
 	/*
 	 * TAGS FOR EXTENSIBLE NODES (extensible.h)
