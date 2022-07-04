@@ -1838,7 +1838,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        </varlistentry>
 
        <varlistentry>
-        <term><literal>timeline</literal> (<type>int4</type>)</term>
+        <term><literal>timeline</literal> (<type>int8</type>)</term>
         <listitem>
          <para>
           Current timeline ID. Also useful to check that the standby is

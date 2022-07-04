@@ -444,7 +444,7 @@ IdentifySystem(void)
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "systemid",
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "timeline",
-							  INT4OID, -1, 0);
+							  INT8OID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "xlogpos",
 							  TEXTOID, -1, 0);
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 4, "dbname",
