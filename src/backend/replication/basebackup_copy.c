@@ -25,11 +25,13 @@
  */
 #include "postgres.h"
 
+#include "access/tupdesc.h"
 #include "catalog/pg_type_d.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "replication/basebackup.h"
 #include "replication/basebackup_sink.h"
+#include "tcop/dest.h"
 #include "utils/timestamp.h"
 
 typedef struct bbsink_copystream
@@ -336,35 +338,24 @@ SendCopyDone(void)
 static void
 SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 {
+	DestReceiver *dest;
+	TupleDesc	tupdesc;
 	StringInfoData buf;
 	char		str[MAXFNAMELEN];
 	Size		len;
 
-	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint16(&buf, 2);		/* 2 fields */
+	dest = CreateDestReceiver(DestRemoteSimple);
 
-	/* Field headers */
-	pq_sendstring(&buf, "recptr");
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, TEXTOID);	/* type oid */
-	pq_sendint16(&buf, -1);
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-
-	pq_sendstring(&buf, "tli");
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-
+	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "recptr", TEXTOID, -1, 0);
 	/*
 	 * int8 may seem like a surprising data type for this, but in theory int4
 	 * would not be wide enough for this, as TimeLineID is unsigned.
 	 */
-	pq_sendint32(&buf, INT8OID);	/* type oid */
-	pq_sendint16(&buf, 8);
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-	pq_endmessage(&buf);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "tli", INT8OID, -1, 0);
+
+	/* send RowDescription */
+	dest->rStartup(dest, CMD_SELECT, tupdesc);
 
 	/* Data row */
 	pq_beginmessage(&buf, 'D');
@@ -391,41 +382,22 @@ SendXlogRecPtrResult(XLogRecPtr ptr, TimeLineID tli)
 static void
 SendTablespaceList(List *tablespaces)
 {
+	DestReceiver *dest;
+	TupleDesc	tupdesc;
 	StringInfoData buf;
 	ListCell   *lc;
 
+	dest = CreateDestReceiver(DestRemoteSimple);
+
+	tupdesc = CreateTemplateTupleDesc(3);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "spcoid", OIDOID, -1, 0);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "spclocation", TEXTOID, -1, 0);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "size", INT8OID, -1, 0);
+
+	/* send RowDescription */
+	dest->rStartup(dest, CMD_SELECT, tupdesc);
+
 	/* Construct and send the directory information */
-	pq_beginmessage(&buf, 'T'); /* RowDescription */
-	pq_sendint16(&buf, 3);		/* 3 fields */
-
-	/* First field - spcoid */
-	pq_sendstring(&buf, "spcoid");
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, OIDOID); /* type oid */
-	pq_sendint16(&buf, 4);		/* typlen */
-	pq_sendint32(&buf, 0);		/* typmod */
-	pq_sendint16(&buf, 0);		/* format code */
-
-	/* Second field - spclocation */
-	pq_sendstring(&buf, "spclocation");
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-	pq_sendint32(&buf, TEXTOID);
-	pq_sendint16(&buf, -1);
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-
-	/* Third field - size */
-	pq_sendstring(&buf, "size");
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-	pq_sendint32(&buf, INT8OID);
-	pq_sendint16(&buf, 8);
-	pq_sendint32(&buf, 0);
-	pq_sendint16(&buf, 0);
-	pq_endmessage(&buf);
-
 	foreach(lc, tablespaces)
 	{
 		tablespaceinfo *ti = lfirst(lc);

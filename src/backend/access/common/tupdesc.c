@@ -739,6 +739,15 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 			att->attcollation = InvalidOid;
 			break;
 
+		case OIDOID:
+			att->attlen = 4;
+			att->attbyval = true;
+			att->attalign = TYPALIGN_INT;
+			att->attstorage = TYPSTORAGE_PLAIN;
+			att->attcompression = InvalidCompressionMethod;
+			att->attcollation = InvalidOid;
+			break;
+
 		default:
 			elog(ERROR, "unsupported type %u", oidtypeid);
 	}

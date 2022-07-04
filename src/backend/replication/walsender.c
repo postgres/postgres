@@ -579,6 +579,8 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 static void
 SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 {
+	DestReceiver *dest;
+	TupleDesc	tupdesc;
 	StringInfoData buf;
 	char		histfname[MAXFNAMELEN];
 	char		path[MAXPGPATH];
@@ -587,36 +589,21 @@ SendTimeLineHistory(TimeLineHistoryCmd *cmd)
 	off_t		bytesleft;
 	Size		len;
 
+	dest = CreateDestReceiver(DestRemoteSimple);
+
 	/*
 	 * Reply with a result set with one row, and two columns. The first col is
 	 * the name of the history file, 2nd is the contents.
 	 */
+	tupdesc = CreateTemplateTupleDesc(2);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 1, "filename", TEXTOID, -1, 0);
+	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 2, "content", TEXTOID, -1, 0);
 
 	TLHistoryFileName(histfname, cmd->timeline);
 	TLHistoryFilePath(path, cmd->timeline);
 
 	/* Send a RowDescription message */
-	pq_beginmessage(&buf, 'T');
-	pq_sendint16(&buf, 2);		/* 2 fields */
-
-	/* first field */
-	pq_sendstring(&buf, "filename");	/* col name */
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, TEXTOID);	/* type oid */
-	pq_sendint16(&buf, -1);		/* typlen */
-	pq_sendint32(&buf, 0);		/* typmod */
-	pq_sendint16(&buf, 0);		/* format code */
-
-	/* second field */
-	pq_sendstring(&buf, "content"); /* col name */
-	pq_sendint32(&buf, 0);		/* table oid */
-	pq_sendint16(&buf, 0);		/* attnum */
-	pq_sendint32(&buf, TEXTOID);	/* type oid */
-	pq_sendint16(&buf, -1);		/* typlen */
-	pq_sendint32(&buf, 0);		/* typmod */
-	pq_sendint16(&buf, 0);		/* format code */
-	pq_endmessage(&buf);
+	dest->rStartup(dest, CMD_SELECT, tupdesc);
 
 	/* Send a DataRow message */
 	pq_beginmessage(&buf, 'D');
