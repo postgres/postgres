@@ -93,6 +93,9 @@ be_lo_open(PG_FUNCTION_ARGS)
 	elog(DEBUG4, "lo_open(%u,%d)", lobjId, mode);
 #endif
 
+	if (mode & INV_WRITE)
+		PreventCommandIfReadOnly("lo_open(INV_WRITE)");
+
 	/*
 	 * Allocate a large object descriptor first.  This will also create
 	 * 'fscxt' if this is the first LO opened in this transaction.
@@ -245,6 +248,8 @@ be_lo_creat(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId;
 
+	PreventCommandIfReadOnly("lo_creat()");
+
 	lo_cleanup_needed = true;
 	lobjId = inv_create(InvalidOid);
 
@@ -255,6 +260,8 @@ Datum
 be_lo_create(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
+
+	PreventCommandIfReadOnly("lo_create()");
 
 	lo_cleanup_needed = true;
 	lobjId = inv_create(lobjId);
@@ -305,6 +312,8 @@ Datum
 be_lo_unlink(PG_FUNCTION_ARGS)
 {
 	Oid			lobjId = PG_GETARG_OID(0);
+
+	PreventCommandIfReadOnly("lo_unlink()");
 
 	/*
 	 * Must be owner of the large object.  It would be cleaner to check this
@@ -368,6 +377,8 @@ be_lowrite(PG_FUNCTION_ARGS)
 	int			bytestowrite;
 	int			totalwritten;
 
+	PreventCommandIfReadOnly("lowrite()");
+
 	bytestowrite = VARSIZE_ANY_EXHDR(wbuf);
 	totalwritten = lo_write(fd, VARDATA_ANY(wbuf), bytestowrite);
 	PG_RETURN_INT32(totalwritten);
@@ -412,6 +423,8 @@ lo_import_internal(text *filename, Oid lobjOid)
 	char		fnamebuf[MAXPGPATH];
 	LargeObjectDesc *lobj;
 	Oid			oid;
+
+	PreventCommandIfReadOnly("lo_import()");
 
 	/*
 	 * open the file to be read in
@@ -561,6 +574,8 @@ be_lo_truncate(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 	int32		len = PG_GETARG_INT32(1);
 
+	PreventCommandIfReadOnly("lo_truncate()");
+
 	lo_truncate_internal(fd, len);
 	PG_RETURN_INT32(0);
 }
@@ -570,6 +585,8 @@ be_lo_truncate64(PG_FUNCTION_ARGS)
 {
 	int32		fd = PG_GETARG_INT32(0);
 	int64		len = PG_GETARG_INT64(1);
+
+	PreventCommandIfReadOnly("lo_truncate64()");
 
 	lo_truncate_internal(fd, len);
 	PG_RETURN_INT32(0);
@@ -815,6 +832,8 @@ be_lo_from_bytea(PG_FUNCTION_ARGS)
 	LargeObjectDesc *loDesc;
 	int			written PG_USED_FOR_ASSERTS_ONLY;
 
+	PreventCommandIfReadOnly("lo_from_bytea()");
+
 	lo_cleanup_needed = true;
 	loOid = inv_create(loOid);
 	loDesc = inv_open(loOid, INV_WRITE, CurrentMemoryContext);
@@ -836,6 +855,8 @@ be_lo_put(PG_FUNCTION_ARGS)
 	bytea	   *str = PG_GETARG_BYTEA_PP(2);
 	LargeObjectDesc *loDesc;
 	int			written PG_USED_FOR_ASSERTS_ONLY;
+
+	PreventCommandIfReadOnly("lo_put()");
 
 	lo_cleanup_needed = true;
 	loDesc = inv_open(loOid, INV_WRITE, CurrentMemoryContext);
