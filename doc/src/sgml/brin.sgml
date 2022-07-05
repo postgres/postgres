@@ -16,7 +16,12 @@
   <acronym>BRIN</acronym> is designed for handling very large tables
   in which certain columns have some natural correlation with their
   physical location within the table.
-  A <firstterm>block range</firstterm> is a group of pages that are physically
+ </para>
+
+ <para>
+  <acronym>BRIN</acronym> works in terms of <firstterm>block ranges</firstterm>
+  (or <quote>page ranges</quote>).
+  A block range is a group of pages that are physically
   adjacent in the table; for each block range, some summary info is stored
   by the index.
   For example, a table storing a store's sale orders might have
@@ -70,34 +75,65 @@
    summarized will cause the summary information to be updated with data
    from the new tuples.
    When a new page is created that does not fall within the last
-   summarized range, that range does not automatically acquire a summary
-   tuple; those tuples remain unsummarized until a summarization run is
-   invoked later, creating initial summaries.
-   This process can be invoked manually using the
-   <function>brin_summarize_range(regclass, bigint)</function> or
-   <function>brin_summarize_new_values(regclass)</function> functions;
-   automatically when <command>VACUUM</command> processes the table;
-   or by automatic summarization executed by autovacuum, as insertions
-   occur.  (This last trigger is disabled by default and can be enabled
-   with the <literal>autosummarize</literal> parameter.)
-   Conversely, a range can be de-summarized using the
-   <function>brin_desummarize_range(regclass, bigint)</function> function,
-   which is useful when the index tuple is no longer a very good
-   representation because the existing values have changed.
+   summarized range, the range that the new page belongs into
+   does not automatically acquire a summary tuple;
+   those tuples remain unsummarized until a summarization run is
+   invoked later, creating the initial summary for that range.
   </para>
 
   <para>
-   When autosummarization is enabled, each time a page range is filled a
-   request is sent to autovacuum for it to execute a targeted summarization
-   for that range, to be fulfilled at the end of the next worker run on the
+   There are several ways to trigger the initial summarization of a page range.
+   If the table is vacuumed, either manually or by
+   <link linkend="autovacuum">autovacuum</link>, all existing unsummarized
+   page ranges are summarized.
+   Also, if the index's
+   <xref linkend="index-reloption-autosummarize"/> parameter is enabled,
+   which it isn't by default,
+   whenever autovacuum runs in that database, summarization will occur for all
+   unsummarized page ranges that have been filled,
+   regardless of whether the table itself is processed by autovacuum; see below.
+  </para>
+
+  <para>
+   Lastly, the following functions can be used:
+   <simplelist>
+    <member>
+     <function>brin_summarize_new_values(regclass)</function>
+     which summarizes all unsummarized ranges;
+    </member>
+    <member>
+     <function>brin_summarize_range(regclass, bigint)</function>
+     which summarizes only the range containing the given page,
+     if it is unsummarized.
+    </member>
+   </simplelist>
+  </para>
+
+  <para>
+   When autosummarization is enabled, a request is sent to
+   <literal>autovacuum</literal> to execute a targeted summarization
+   for a block range when an insertion is detected for the first item
+   of the first page of the next block range,
+   to be fulfilled the next time an autovacuum
+   worker finishes running in the
    same database.  If the request queue is full, the request is not recorded
    and a message is sent to the server log:
 <screen>
 LOG:  request for BRIN range summarization for index "brin_wi_idx" page 128 was not recorded
 </screen>
-   When this happens, the range will be summarized normally during the next
-   regular vacuum of the table.
+   When this happens, the range will remain unsummarized until the next
+   regular vacuum run on the table, or one of the functions mentioned above
+   are invoked.
   </para>
+
+  <para>
+   Conversely, a range can be de-summarized using the
+   <function>brin_desummarize_range(regclass, bigint)</function> function,
+   which is useful when the index tuple is no longer a very good
+   representation because the existing values have changed.
+   See <xref linkend="functions-admin-index"/> for details.
+  </para>
+
  </sect2>
 </sect1>
 
