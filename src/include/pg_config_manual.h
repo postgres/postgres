@@ -153,13 +153,6 @@
 #endif
 
 /*
- * Define this if your operating system supports link()
- */
-#if !defined(WIN32) && !defined(__CYGWIN__)
-#define HAVE_WORKING_LINK 1
-#endif
-
-/*
  * USE_POSIX_FADVISE controls whether Postgres will attempt to use the
  * posix_fadvise() kernel call.  Usually the automatic configure tests are
  * sufficient, but some older Linux distributions had broken versions of
