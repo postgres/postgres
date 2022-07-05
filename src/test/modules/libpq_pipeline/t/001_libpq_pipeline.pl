@@ -26,7 +26,8 @@ for my $testname (@tests)
 	my @extraargs = ('-r', $numrows);
 	my $cmptrace = grep(/^$testname$/,
 		qw(simple_pipeline nosync multi_pipelines prepared singlerow
-		  pipeline_abort transaction disallowed_in_pipeline)) > 0;
+		  pipeline_abort pipeline_idle transaction
+		  disallowed_in_pipeline)) > 0;
 
 	# For a bunch of tests, generate a libpq trace file too.
 	my $traceout = "$TestLib::tmp_check/traces/$testname.trace";

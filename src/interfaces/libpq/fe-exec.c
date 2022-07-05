@@ -1279,7 +1279,8 @@ pqAppendCmdQueueEntry(PGconn *conn, PGcmdQueueEntry *entry)
 			 * itself consume commands from the queue; if we're in any other
 			 * state, we don't have to do anything.
 			 */
-			if (conn->asyncStatus == PGASYNC_IDLE)
+			if (conn->asyncStatus == PGASYNC_IDLE ||
+				conn->asyncStatus == PGASYNC_PIPELINE_IDLE)
 			{
 				resetPQExpBuffer(&conn->errorMessage);
 				pqPipelineProcessQueue(conn);
@@ -1338,6 +1339,7 @@ static int
 PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 {
 	PGcmdQueueEntry *entry = NULL;
+	PGcmdQueueEntry *entry2 = NULL;
 
 	if (!PQsendQueryStart(conn, newQuery))
 		return 0;
@@ -1353,6 +1355,12 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 	entry = pqAllocCmdQueueEntry(conn);
 	if (entry == NULL)
 		return 0;				/* error msg already set */
+	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
+	{
+		entry2 = pqAllocCmdQueueEntry(conn);
+		if (entry2 == NULL)
+			goto sendFailed;
+	}
 
 	/* Send the query message(s) */
 	if (conn->pipelineStatus == PQ_PIPELINE_OFF)
@@ -1422,6 +1430,20 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 
 	/* OK, it's launched! */
 	pqAppendCmdQueueEntry(conn, entry);
+
+	/*
+	 * When pipeline mode is in use, we need a second entry in the command
+	 * queue to represent Close Portal message.  This allows us later to wait
+	 * for the CloseComplete message to be received before getting in IDLE
+	 * state.
+	 */
+	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
+	{
+		entry2->queryclass = PGQUERY_CLOSE;
+		entry2->query = NULL;
+		pqAppendCmdQueueEntry(conn, entry2);
+	}
+
 	return 1;
 
 sendFailed:
@@ -1667,11 +1689,13 @@ PQsendQueryStart(PGconn *conn, bool newQuery)
 		switch (conn->asyncStatus)
 		{
 			case PGASYNC_IDLE:
+			case PGASYNC_PIPELINE_IDLE:
 			case PGASYNC_READY:
 			case PGASYNC_READY_MORE:
 			case PGASYNC_BUSY:
 				/* ok to queue */
 				break;
+
 			case PGASYNC_COPY_IN:
 			case PGASYNC_COPY_OUT:
 			case PGASYNC_COPY_BOTH:
@@ -2047,19 +2071,22 @@ PQgetResult(PGconn *conn)
 	{
 		case PGASYNC_IDLE:
 			res = NULL;			/* query is complete */
-			if (conn->pipelineStatus != PQ_PIPELINE_OFF)
-			{
-				/*
-				 * We're about to return the NULL that terminates the round of
-				 * results from the current query; prepare to send the results
-				 * of the next query when we're called next.  Also, since this
-				 * is the start of the results of the next query, clear any
-				 * prior error message.
-				 */
-				resetPQExpBuffer(&conn->errorMessage);
-				pqPipelineProcessQueue(conn);
-			}
 			break;
+		case PGASYNC_PIPELINE_IDLE:
+			Assert(conn->pipelineStatus != PQ_PIPELINE_OFF);
+
+			/*
+			 * We're about to return the NULL that terminates the round of
+			 * results from the current query; prepare to send the results
+			 * of the next query, if any, when we're called next.  If there's
+			 * no next element in the command queue, this gets us in IDLE
+			 * state.
+			 */
+			resetPQExpBuffer(&conn->errorMessage);
+			pqPipelineProcessQueue(conn);
+			res = NULL;			/* query is complete */
+			break;
+
 		case PGASYNC_READY:
 
 			/*
@@ -2080,7 +2107,7 @@ PQgetResult(PGconn *conn)
 				 * We're about to send the results of the current query.  Set
 				 * us idle now, and ...
 				 */
-				conn->asyncStatus = PGASYNC_IDLE;
+				conn->asyncStatus = PGASYNC_PIPELINE_IDLE;
 
 				/*
 				 * ... in cases when we're sending a pipeline-sync result,
@@ -2122,6 +2149,22 @@ PQgetResult(PGconn *conn)
 							  (int) conn->asyncStatus);
 			res = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			break;
+	}
+
+	/* If the next command we expect is CLOSE, read and consume it */
+	if (conn->asyncStatus == PGASYNC_PIPELINE_IDLE &&
+		conn->cmd_queue_head &&
+		conn->cmd_queue_head->queryclass == PGQUERY_CLOSE)
+	{
+		if (res && res->resultStatus != PGRES_FATAL_ERROR)
+		{
+			conn->asyncStatus = PGASYNC_BUSY;
+			parseInput(conn);
+			conn->asyncStatus = PGASYNC_PIPELINE_IDLE;
+		}
+		else
+			/* we won't ever see the Close */
+			pqCommandQueueAdvance(conn);
 	}
 
 	if (res)
@@ -2932,7 +2975,10 @@ PQexitPipelineMode(PGconn *conn)
 	if (!conn)
 		return 0;
 
-	if (conn->pipelineStatus == PQ_PIPELINE_OFF)
+	if (conn->pipelineStatus == PQ_PIPELINE_OFF &&
+		(conn->asyncStatus == PGASYNC_IDLE ||
+		 conn->asyncStatus == PGASYNC_PIPELINE_IDLE) &&
+		conn->cmd_queue_head == NULL)
 		return 1;
 
 	switch (conn->asyncStatus)
@@ -2949,9 +2995,16 @@ PQexitPipelineMode(PGconn *conn)
 								 libpq_gettext("cannot exit pipeline mode while busy\n"));
 			return 0;
 
-		default:
+		case PGASYNC_IDLE:
+		case PGASYNC_PIPELINE_IDLE:
 			/* OK */
 			break;
+
+		case PGASYNC_COPY_IN:
+		case PGASYNC_COPY_OUT:
+		case PGASYNC_COPY_BOTH:
+			appendPQExpBufferStr(&conn->errorMessage,
+								 libpq_gettext("cannot exit pipeline mode while in COPY\n"));
 	}
 
 	/* still work to process */
@@ -2988,6 +3041,10 @@ pqCommandQueueAdvance(PGconn *conn)
 	prevquery = conn->cmd_queue_head;
 	conn->cmd_queue_head = conn->cmd_queue_head->next;
 
+	/* If the queue is now empty, reset the tail too */
+	if (conn->cmd_queue_head == NULL)
+		conn->cmd_queue_tail = NULL;
+
 	/* and make it recyclable */
 	prevquery->next = NULL;
 	pqRecycleCmdQueueEntry(conn, prevquery);
@@ -3010,15 +3067,35 @@ pqPipelineProcessQueue(PGconn *conn)
 		case PGASYNC_BUSY:
 			/* client still has to process current query or results */
 			return;
+
 		case PGASYNC_IDLE:
+			/*
+			 * If we're in IDLE mode and there's some command in the queue,
+			 * get us into PIPELINE_IDLE mode and process normally.  Otherwise
+			 * there's nothing for us to do.
+			 */
+			if (conn->cmd_queue_head != NULL)
+			{
+				conn->asyncStatus = PGASYNC_PIPELINE_IDLE;
+				break;
+			}
+			return;
+
+		case PGASYNC_PIPELINE_IDLE:
+			Assert(conn->pipelineStatus != PQ_PIPELINE_OFF);
 			/* next query please */
 			break;
 	}
 
-	/* Nothing to do if not in pipeline mode, or queue is empty */
-	if (conn->pipelineStatus == PQ_PIPELINE_OFF ||
-		conn->cmd_queue_head == NULL)
+	/*
+	 * If there are no further commands to process in the queue, get us in
+	 * "real idle" mode now.
+	 */
+	if (conn->cmd_queue_head == NULL)
+	{
+		conn->asyncStatus = PGASYNC_IDLE;
 		return;
+	}
 
 	/* Initialize async result-accumulation state */
 	pqClearAsyncResult(conn);
@@ -3105,6 +3182,7 @@ PQpipelineSync(PGconn *conn)
 		case PGASYNC_READY_MORE:
 		case PGASYNC_BUSY:
 		case PGASYNC_IDLE:
+		case PGASYNC_PIPELINE_IDLE:
 			/* OK to send sync */
 			break;
 	}
