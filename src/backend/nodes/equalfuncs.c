@@ -148,13 +148,28 @@ _equalTableFunc(const TableFunc *a, const TableFunc *b)
 }
 
 static bool
+_equalJsonTablePlan(const JsonTablePlan *a, const JsonTablePlan *b)
+{
+	COMPARE_SCALAR_FIELD(plan_type);
+	COMPARE_SCALAR_FIELD(join_type);
+	COMPARE_NODE_FIELD(plan1);
+	COMPARE_NODE_FIELD(plan2);
+	COMPARE_STRING_FIELD(pathname);
+	COMPARE_LOCATION_FIELD(location);
+
+	return true;
+}
+
+static bool
 _equalJsonTable(const JsonTable *a, const JsonTable *b)
 {
 	COMPARE_NODE_FIELD(common);
 	COMPARE_NODE_FIELD(columns);
+	COMPARE_NODE_FIELD(plan);
 	COMPARE_NODE_FIELD(on_error);
 	COMPARE_NODE_FIELD(alias);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_SCALAR_FIELD(lateral);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -166,13 +181,14 @@ _equalJsonTableColumn(const JsonTableColumn *a, const JsonTableColumn *b)
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(typeName);
 	COMPARE_STRING_FIELD(pathspec);
-	COMPARE_SCALAR_FIELD(format);
+	COMPARE_STRING_FIELD(pathname);
+	COMPARE_NODE_FIELD(format);
 	COMPARE_SCALAR_FIELD(wrapper);
 	COMPARE_SCALAR_FIELD(omit_quotes);
 	COMPARE_NODE_FIELD(columns);
 	COMPARE_NODE_FIELD(on_empty);
 	COMPARE_NODE_FIELD(on_error);
-	COMPARE_SCALAR_FIELD(location);
+	COMPARE_LOCATION_FIELD(location);
 
 	return true;
 }
@@ -4404,6 +4420,9 @@ equal(const void *a, const void *b)
 			break;
 		case T_JsonArgument:
 			retval = _equalJsonArgument(a, b);
+			break;
+		case T_JsonTablePlan:
+			retval = _equalJsonTablePlan(a, b);
 			break;
 		case T_JsonTable:
 			retval = _equalJsonTable(a, b);
