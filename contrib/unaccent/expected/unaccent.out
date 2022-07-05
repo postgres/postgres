@@ -37,6 +37,18 @@ SELECT unaccent('À');  -- Remove combining diacritical 0x0300
  A
 (1 row)
 
+SELECT unaccent('℃℉'); -- degree signs
+ unaccent 
+----------
+ °C°F
+(1 row)
+
+SELECT unaccent('℗'); -- sound recording copyright
+ unaccent 
+----------
+ (P)
+(1 row)
+
 SELECT unaccent('unaccent', 'foobar');
  unaccent 
 ----------
@@ -67,6 +79,18 @@ SELECT unaccent('unaccent', 'À');
  A
 (1 row)
 
+SELECT unaccent('unaccent', '℃℉');
+ unaccent 
+----------
+ °C°F
+(1 row)
+
+SELECT unaccent('unaccent', '℗');
+ unaccent 
+----------
+ (P)
+(1 row)
+
 SELECT ts_lexize('unaccent', 'foobar');
  ts_lexize 
 -----------
@@ -95,5 +119,25 @@ SELECT ts_lexize('unaccent', 'À');
  ts_lexize 
 -----------
  {A}
+(1 row)
+
+SELECT ts_lexize('unaccent', '℃℉');
+ ts_lexize 
+-----------
+ {°C°F}
+(1 row)
+
+SELECT ts_lexize('unaccent', '℗');
+ ts_lexize 
+-----------
+ {(P)}
+(1 row)
+
+-- Controversial case.  Black-Letter Capital H (U+210C) is translated by
+-- Latin-ASCII.xml as 'x', but it should be 'H'.
+SELECT unaccent('ℌ');
+ unaccent 
+----------
+ x
 (1 row)
 
