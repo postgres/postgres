@@ -583,7 +583,7 @@ DROP ROLE doomed_role;
        COPY and other functions which allow executing a server-side program.</entry>
       </row>
       <row>
-       <entry>pg_checkpointer</entry>
+       <entry>pg_checkpoint</entry>
        <entry>Allow executing
        the <link linkend="sql-checkpoint"><command>CHECKPOINT</command></link>
        command.</entry>
