@@ -282,9 +282,10 @@ basic_archive_file_internal(const char *file, const char *path)
 
 	/*
 	 * Sync the temporary file to disk and move it to its final destination.
-	 * This will fail if destination already exists.
+	 * Note that this will overwrite any existing file, but this is only
+	 * possible if someone else created the file since the stat() above.
 	 */
-	(void) durable_rename_excl(temp, destination, ERROR);
+	(void) durable_rename(temp, destination, ERROR);
 
 	ereport(DEBUG1,
 			(errmsg("archived \"%s\" via basic_archive", file)));

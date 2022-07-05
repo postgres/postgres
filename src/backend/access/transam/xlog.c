@@ -3323,14 +3323,11 @@ InstallXLogFileSegment(XLogSegNo *segno, char *tmppath,
 		}
 	}
 
-	/*
-	 * Perform the rename using link if available, paranoidly trying to avoid
-	 * overwriting an existing file (there shouldn't be one).
-	 */
-	if (durable_rename_excl(tmppath, path, LOG) != 0)
+	Assert(access(path, F_OK) != 0 && errno == ENOENT);
+	if (durable_rename(tmppath, path, LOG) != 0)
 	{
 		LWLockRelease(ControlFileLock);
-		/* durable_rename_excl already emitted log message */
+		/* durable_rename already emitted log message */
 		return false;
 	}
 
