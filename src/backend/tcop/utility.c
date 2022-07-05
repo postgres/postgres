@@ -947,10 +947,10 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 			break;
 
 		case T_CheckPointStmt:
-			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINTER))
+			if (!has_privs_of_role(GetUserId(), ROLE_PG_CHECKPOINT))
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-						 errmsg("must be superuser or have privileges of pg_checkpointer to do CHECKPOINT")));
+						 errmsg("must be superuser or have privileges of pg_checkpoint to do CHECKPOINT")));
 
 			RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_WAIT |
 							  (RecoveryInProgress() ? 0 : CHECKPOINT_FORCE));
