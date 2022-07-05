@@ -71,6 +71,10 @@ PREPARE q6 AS
 PREPARE q7(unknown) AS
     SELECT * FROM road WHERE thepath = $1;
 
+-- DML statements
+PREPARE q8 AS
+    UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;
+
 SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements
     ORDER BY name;
 

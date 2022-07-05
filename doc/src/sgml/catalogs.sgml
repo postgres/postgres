@@ -11511,6 +11511,8 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        form of an array of <type>regtype</type>. The OID corresponding
        to an element of this array can be obtained by casting the
        <type>regtype</type> value to <type>oid</type>.
+       If the prepared statement does not provide a result (e.g., a DML
+       statement), then this field will be null.
       </para></entry>
      </row>
 

@@ -159,6 +159,9 @@ PREPARE q6 AS
     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;
 PREPARE q7(unknown) AS
     SELECT * FROM road WHERE thepath = $1;
+-- DML statements
+PREPARE q8 AS
+    UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;
 SELECT name, statement, parameter_types, result_types FROM pg_prepared_statements
     ORDER BY name;
  name |                            statement                             |                  parameter_types                   |                                                       result_types                                                       
@@ -177,7 +180,9 @@ SELECT name, statement, parameter_types, result_types FROM pg_prepared_statement
       |     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;    |                                                    | 
  q7   | PREPARE q7(unknown) AS                                          +| {path}                                             | {text,path}
       |     SELECT * FROM road WHERE thepath = $1;                       |                                                    | 
-(5 rows)
+ q8   | PREPARE q8 AS                                                   +| {integer,name}                                     | 
+      |     UPDATE tenk1 SET stringu1 = $2 WHERE unique1 = $1;           |                                                    | 
+(6 rows)
 
 -- test DEALLOCATE ALL;
 DEALLOCATE ALL;
