@@ -994,7 +994,8 @@ Author: Peter Geoghegan <pg@bowt.ie>
       <listitem>
        <para>
         Allow <link linkend="routine-vacuuming">vacuum</link> to be more
-        aggressive in setting the oldest frozenxid (Peter Geoghegan)
+        aggressive in setting the oldest frozen and multi transaction id
+        (Peter Geoghegan)
        </para>
       </listitem>
 
