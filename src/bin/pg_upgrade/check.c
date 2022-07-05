@@ -1070,6 +1070,7 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 								"JOIN pg_proc AS transfn ON transfn.oid=a.aggtransfn "
 								"WHERE p.oid >= 16384 "
 								"AND a.aggtransfn = ANY(ARRAY[%s]::regprocedure[]) "
+								"AND a.aggtranstype = ANY(ARRAY['anyarray', 'anyelement']::regtype[]) "
 
 		/* Aggregate final functions */
 								"UNION ALL "
@@ -1079,13 +1080,15 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 								"JOIN pg_proc AS finalfn ON finalfn.oid=a.aggfinalfn "
 								"WHERE p.oid >= 16384 "
 								"AND a.aggfinalfn = ANY(ARRAY[%s]::regprocedure[]) "
+								"AND a.aggtranstype = ANY(ARRAY['anyarray', 'anyelement']::regtype[]) "
 
 		/* Operators */
 								"UNION ALL "
 								"SELECT 'operator' AS objkind, op.oid::regoperator::text AS objname "
 								"FROM pg_operator AS op "
 								"WHERE op.oid >= 16384 "
-								"AND oprcode = ANY(ARRAY[%s]::regprocedure[]);",
+								"AND oprcode = ANY(ARRAY[%s]::regprocedure[]) "
+								"AND oprleft = ANY(ARRAY['anyarray', 'anyelement']::regtype[]);",
 								old_polymorphics.data,
 								old_polymorphics.data,
 								old_polymorphics.data);
