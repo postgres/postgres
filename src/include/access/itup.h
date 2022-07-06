@@ -150,6 +150,9 @@ typedef IndexAttributeBitMapData * IndexAttributeBitMap;
 /* routines in indextuple.c */
 extern IndexTuple index_form_tuple(TupleDesc tupleDescriptor,
 								   Datum *values, bool *isnull);
+extern IndexTuple index_form_tuple_context(TupleDesc tupleDescriptor,
+										   Datum *values, bool *isnull,
+										   MemoryContext context);
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 								   TupleDesc tupleDesc);
 extern void index_deform_tuple(IndexTuple tup, TupleDesc tupleDescriptor,
