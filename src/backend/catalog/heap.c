@@ -77,9 +77,9 @@
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_heap_pg_class_relfilenode = InvalidOid;
 Oid			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_toast_pg_class_relfilenode = InvalidOid;
+RelFileNumber binary_upgrade_next_heap_pg_class_relfilenumber = InvalidRelFileNumber;
+RelFileNumber binary_upgrade_next_toast_pg_class_relfilenumber = InvalidRelFileNumber;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 								Relation new_rel_desc,
@@ -273,7 +273,7 @@ SystemAttributeByName(const char *attname)
  *		heap_create		- Create an uncataloged heap relation
  *
  *		Note API change: the caller must now always provide the OID
- *		to use for the relation.  The relfilenode may be (and in
+ *		to use for the relation.  The relfilenumber may be (and in
  *		the simplest cases is) left unspecified.
  *
  *		create_storage indicates whether or not to create the storage.
@@ -289,7 +289,7 @@ heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
 			Oid relid,
-			Oid relfilenode,
+			RelFileNumber relfilenumber,
 			Oid accessmtd,
 			TupleDesc tupDesc,
 			char relkind,
@@ -341,11 +341,11 @@ heap_create(const char *relname,
 	else
 	{
 		/*
-		 * If relfilenode is unspecified by the caller then create storage
+		 * If relfilenumber is unspecified by the caller then create storage
 		 * with oid same as relid.
 		 */
-		if (!OidIsValid(relfilenode))
-			relfilenode = relid;
+		if (!RelFileNumberIsValid(relfilenumber))
+			relfilenumber = relid;
 	}
 
 	/*
@@ -368,7 +368,7 @@ heap_create(const char *relname,
 									 tupDesc,
 									 relid,
 									 accessmtd,
-									 relfilenode,
+									 relfilenumber,
 									 reltablespace,
 									 shared_relation,
 									 mapped_relation,
@@ -385,11 +385,11 @@ heap_create(const char *relname,
 	if (create_storage)
 	{
 		if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind))
-			table_relation_set_new_filenode(rel, &rel->rd_node,
-											relpersistence,
-											relfrozenxid, relminmxid);
+			table_relation_set_new_filelocator(rel, &rel->rd_locator,
+											   relpersistence,
+											   relfrozenxid, relminmxid);
 		else if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
-			RelationCreateStorage(rel->rd_node, relpersistence, true);
+			RelationCreateStorage(rel->rd_locator, relpersistence, true);
 		else
 			Assert(false);
 	}
@@ -1069,7 +1069,7 @@ AddNewRelationType(const char *typeName,
  *	relkind: relkind for new rel
  *	relpersistence: rel's persistence status (permanent, temp, or unlogged)
  *	shared_relation: true if it's to be a shared relation
- *	mapped_relation: true if the relation will use the relfilenode map
+ *	mapped_relation: true if the relation will use the relfilenumber map
  *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
  *	reloptions: reloptions in Datum form, or (Datum) 0 if none
  *	use_user_acl: true if should look for user-defined default permissions;
@@ -1115,7 +1115,7 @@ heap_create_with_catalog(const char *relname,
 	Oid			new_type_oid;
 
 	/* By default set to InvalidOid unless overridden by binary-upgrade */
-	Oid			relfilenode = InvalidOid;
+	RelFileNumber relfilenumber = InvalidRelFileNumber;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
 
@@ -1173,12 +1173,12 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * The OID will be the relfilenumber as well, so make sure it doesn't
 	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(relid))
 	{
-		/* Use binary-upgrade override for pg_class.oid and relfilenode */
+		/* Use binary-upgrade override for pg_class.oid and relfilenumber */
 		if (IsBinaryUpgrade)
 		{
 			/*
@@ -1196,13 +1196,13 @@ heap_create_with_catalog(const char *relname,
 					relid = binary_upgrade_next_toast_pg_class_oid;
 					binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 
-					if (!OidIsValid(binary_upgrade_next_toast_pg_class_relfilenode))
+					if (!RelFileNumberIsValid(binary_upgrade_next_toast_pg_class_relfilenumber))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("toast relfilenode value not set when in binary upgrade mode")));
+								 errmsg("toast relfilenumber value not set when in binary upgrade mode")));
 
-					relfilenode = binary_upgrade_next_toast_pg_class_relfilenode;
-					binary_upgrade_next_toast_pg_class_relfilenode = InvalidOid;
+					relfilenumber = binary_upgrade_next_toast_pg_class_relfilenumber;
+					binary_upgrade_next_toast_pg_class_relfilenumber = InvalidRelFileNumber;
 				}
 			}
 			else
@@ -1217,20 +1217,20 @@ heap_create_with_catalog(const char *relname,
 
 				if (RELKIND_HAS_STORAGE(relkind))
 				{
-					if (!OidIsValid(binary_upgrade_next_heap_pg_class_relfilenode))
+					if (!RelFileNumberIsValid(binary_upgrade_next_heap_pg_class_relfilenumber))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("relfilenode value not set when in binary upgrade mode")));
+								 errmsg("relfilenumber value not set when in binary upgrade mode")));
 
-					relfilenode = binary_upgrade_next_heap_pg_class_relfilenode;
-					binary_upgrade_next_heap_pg_class_relfilenode = InvalidOid;
+					relfilenumber = binary_upgrade_next_heap_pg_class_relfilenumber;
+					binary_upgrade_next_heap_pg_class_relfilenumber = InvalidRelFileNumber;
 				}
 			}
 		}
 
 		if (!OidIsValid(relid))
-			relid = GetNewRelFileNode(reltablespace, pg_class_desc,
-									  relpersistence);
+			relid = GetNewRelFileNumber(reltablespace, pg_class_desc,
+										relpersistence);
 	}
 
 	/*
@@ -1273,7 +1273,7 @@ heap_create_with_catalog(const char *relname,
 							   relnamespace,
 							   reltablespace,
 							   relid,
-							   relfilenode,
+							   relfilenumber,
 							   accessmtd,
 							   tupdesc,
 							   relkind,

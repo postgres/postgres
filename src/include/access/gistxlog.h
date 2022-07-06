@@ -97,7 +97,7 @@ typedef struct gistxlogPageDelete
  */
 typedef struct gistxlogPageReuse
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	BlockNumber block;
 	FullTransactionId latestRemovedFullXid;
 } gistxlogPageReuse;

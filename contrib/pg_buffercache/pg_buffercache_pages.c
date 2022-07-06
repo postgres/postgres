@@ -26,7 +26,7 @@ PG_MODULE_MAGIC;
 typedef struct
 {
 	uint32		bufferid;
-	Oid			relfilenode;
+	RelFileNumber relfilenumber;
 	Oid			reltablespace;
 	Oid			reldatabase;
 	ForkNumber	forknum;
@@ -153,9 +153,9 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			buf_state = LockBufHdr(bufHdr);
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
-			fctx->record[i].relfilenode = bufHdr->tag.rnode.relNode;
-			fctx->record[i].reltablespace = bufHdr->tag.rnode.spcNode;
-			fctx->record[i].reldatabase = bufHdr->tag.rnode.dbNode;
+			fctx->record[i].relfilenumber = bufHdr->tag.rlocator.relNumber;
+			fctx->record[i].reltablespace = bufHdr->tag.rlocator.spcOid;
+			fctx->record[i].reldatabase = bufHdr->tag.rlocator.dbOid;
 			fctx->record[i].forknum = bufHdr->tag.forkNum;
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 			fctx->record[i].usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
@@ -209,7 +209,7 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenode);
+			values[1] = ObjectIdGetDatum(fctx->record[i].relfilenumber);
 			nulls[1] = false;
 			values[2] = ObjectIdGetDatum(fctx->record[i].reltablespace);
 			nulls[2] = false;

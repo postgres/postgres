@@ -30,7 +30,7 @@ struct options
 {
 	eary	   *tables;
 	eary	   *oids;
-	eary	   *filenodes;
+	eary	   *filenumbers;
 
 	bool		quiet;
 	bool		systables;
@@ -125,9 +125,9 @@ get_opts(int argc, char **argv, struct options *my_opts)
 				my_opts->dbname = pg_strdup(optarg);
 				break;
 
-				/* specify one filenode to show */
+				/* specify one filenumber to show */
 			case 'f':
-				add_one_elt(optarg, my_opts->filenodes);
+				add_one_elt(optarg, my_opts->filenumbers);
 				break;
 
 				/* host to connect to */
@@ -494,7 +494,7 @@ sql_exec_dumpalltables(PGconn *conn, struct options *opts)
 }
 
 /*
- * Show oid, filenode, name, schema and tablespace for each of the
+ * Show oid, filenumber, name, schema and tablespace for each of the
  * given objects in the current database.
  */
 void
@@ -504,19 +504,19 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 	char	   *qualifiers,
 			   *ptr;
 	char	   *comma_oids,
-			   *comma_filenodes,
+			   *comma_filenumbers,
 			   *comma_tables;
 	bool		written = false;
 	char	   *addfields = ",c.oid AS \"Oid\", nspname AS \"Schema\", spcname as \"Tablespace\" ";
 
-	/* get tables qualifiers, whether names, filenodes, or OIDs */
+	/* get tables qualifiers, whether names, filenumbers, or OIDs */
 	comma_oids = get_comma_elts(opts->oids);
 	comma_tables = get_comma_elts(opts->tables);
-	comma_filenodes = get_comma_elts(opts->filenodes);
+	comma_filenumbers = get_comma_elts(opts->filenumbers);
 
 	/* 80 extra chars for SQL expression */
 	qualifiers = (char *) pg_malloc(strlen(comma_oids) + strlen(comma_tables) +
-									strlen(comma_filenodes) + 80);
+									strlen(comma_filenumbers) + 80);
 	ptr = qualifiers;
 
 	if (opts->oids->num > 0)
@@ -524,11 +524,12 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 		ptr += sprintf(ptr, "c.oid IN (%s)", comma_oids);
 		written = true;
 	}
-	if (opts->filenodes->num > 0)
+	if (opts->filenumbers->num > 0)
 	{
 		if (written)
 			ptr += sprintf(ptr, " OR ");
-		ptr += sprintf(ptr, "pg_catalog.pg_relation_filenode(c.oid) IN (%s)", comma_filenodes);
+		ptr += sprintf(ptr, "pg_catalog.pg_relation_filenode(c.oid) IN (%s)",
+					   comma_filenumbers);
 		written = true;
 	}
 	if (opts->tables->num > 0)
@@ -539,7 +540,7 @@ sql_exec_searchtables(PGconn *conn, struct options *opts)
 	}
 	free(comma_oids);
 	free(comma_tables);
-	free(comma_filenodes);
+	free(comma_filenumbers);
 
 	/* now build the query */
 	todo = psprintf("SELECT pg_catalog.pg_relation_filenode(c.oid) as \"Filenode\", relname as \"Table Name\" %s\n"
@@ -588,11 +589,11 @@ main(int argc, char **argv)
 
 	my_opts->oids = (eary *) pg_malloc(sizeof(eary));
 	my_opts->tables = (eary *) pg_malloc(sizeof(eary));
-	my_opts->filenodes = (eary *) pg_malloc(sizeof(eary));
+	my_opts->filenumbers = (eary *) pg_malloc(sizeof(eary));
 
 	my_opts->oids->num = my_opts->oids->alloc = 0;
 	my_opts->tables->num = my_opts->tables->alloc = 0;
-	my_opts->filenodes->num = my_opts->filenodes->alloc = 0;
+	my_opts->filenumbers->num = my_opts->filenumbers->alloc = 0;
 
 	/* parse the opts */
 	get_opts(argc, argv, my_opts);
@@ -618,7 +619,7 @@ main(int argc, char **argv)
 	/* display the given elements in the database */
 	if (my_opts->oids->num > 0 ||
 		my_opts->tables->num > 0 ||
-		my_opts->filenodes->num > 0)
+		my_opts->filenumbers->num > 0)
 	{
 		if (!my_opts->quiet)
 			printf("From database \"%s\":\n", my_opts->dbname);

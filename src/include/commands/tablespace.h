@@ -50,7 +50,7 @@ extern void DropTableSpace(DropTableSpaceStmt *stmt);
 extern ObjectAddress RenameTableSpace(const char *oldname, const char *newname);
 extern Oid	AlterTableSpaceOptions(AlterTableSpaceOptionsStmt *stmt);
 
-extern void TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo);
+extern void TablespaceCreateDbspace(Oid spcOid, Oid dbOid, bool isRedo);
 
 extern Oid	GetDefaultTablespace(char relpersistence, bool partitioned);
 

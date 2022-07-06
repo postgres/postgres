@@ -596,7 +596,7 @@ static void ATExecForceNoForceRowSecurity(Relation rel, bool force_rls);
 static ObjectAddress ATExecSetCompression(AlteredTableInfo *tab, Relation rel,
 										  const char *column, Node *newValue, LOCKMODE lockmode);
 
-static void index_copy_data(Relation rel, RelFileNode newrnode);
+static void index_copy_data(Relation rel, RelFileLocator newrlocator);
 static const char *storage_name(char c);
 
 static void RangeVarCallbackForDropRelation(const RangeVar *rel, Oid relOid,
@@ -1986,12 +1986,12 @@ ExecuteTruncateGuts(List *explicit_rels,
 		/*
 		 * Normally, we need a transaction-safe truncation here.  However, if
 		 * the table was either created in the current (sub)transaction or has
-		 * a new relfilenode in the current (sub)transaction, then we can just
-		 * truncate it in-place, because a rollback would cause the whole
+		 * a new relfilenumber in the current (sub)transaction, then we can
+		 * just truncate it in-place, because a rollback would cause the whole
 		 * table or the current physical file to be thrown away anyway.
 		 */
 		if (rel->rd_createSubid == mySubid ||
-			rel->rd_newRelfilenodeSubid == mySubid)
+			rel->rd_newRelfilelocatorSubid == mySubid)
 		{
 			/* Immediate, non-rollbackable truncation is OK */
 			heap_truncate_one_rel(rel);
@@ -2014,10 +2014,10 @@ ExecuteTruncateGuts(List *explicit_rels,
 			 * Need the full transaction-safe pushups.
 			 *
 			 * Create a new empty storage file for the relation, and assign it
-			 * as the relfilenode value. The old storage file is scheduled for
-			 * deletion at commit.
+			 * as the relfilenumber value. The old storage file is scheduled
+			 * for deletion at commit.
 			 */
-			RelationSetNewRelfilenode(rel, rel->rd_rel->relpersistence);
+			RelationSetNewRelfilenumber(rel, rel->rd_rel->relpersistence);
 
 			heap_relid = RelationGetRelid(rel);
 
@@ -2030,8 +2030,8 @@ ExecuteTruncateGuts(List *explicit_rels,
 				Relation	toastrel = relation_open(toast_relid,
 													 AccessExclusiveLock);
 
-				RelationSetNewRelfilenode(toastrel,
-										  toastrel->rd_rel->relpersistence);
+				RelationSetNewRelfilenumber(toastrel,
+											toastrel->rd_rel->relpersistence);
 				table_close(toastrel, NoLock);
 			}
 
@@ -3315,11 +3315,11 @@ CheckRelationTableSpaceMove(Relation rel, Oid newTableSpaceId)
 
 /*
  * SetRelationTableSpace
- *		Set new reltablespace and relfilenode in pg_class entry.
+ *		Set new reltablespace and relfilenumber in pg_class entry.
  *
  * newTableSpaceId is the new tablespace for the relation, and
- * newRelFileNode its new filenode.  If newRelFileNode is InvalidOid,
- * this field is not updated.
+ * newRelFilenumber its new filenumber.  If newRelFilenumber is
+ * InvalidRelFileNumber, this field is not updated.
  *
  * NOTE: The caller must hold AccessExclusiveLock on the relation.
  *
@@ -3331,7 +3331,7 @@ CheckRelationTableSpaceMove(Relation rel, Oid newTableSpaceId)
 void
 SetRelationTableSpace(Relation rel,
 					  Oid newTableSpaceId,
-					  Oid newRelFileNode)
+					  RelFileNumber newRelFilenumber)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
@@ -3351,8 +3351,8 @@ SetRelationTableSpace(Relation rel,
 	/* Update the pg_class row. */
 	rd_rel->reltablespace = (newTableSpaceId == MyDatabaseTableSpace) ?
 		InvalidOid : newTableSpaceId;
-	if (OidIsValid(newRelFileNode))
-		rd_rel->relfilenode = newRelFileNode;
+	if (RelFileNumberIsValid(newRelFilenumber))
+		rd_rel->relfilenode = newRelFilenumber;
 	CatalogTupleUpdate(pg_class, &tuple->t_self, tuple);
 
 	/*
@@ -5420,7 +5420,7 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 		 * persistence: on one hand, we need to ensure that the buffers
 		 * belonging to each of the two relations are marked with or without
 		 * BM_PERMANENT properly.  On the other hand, since rewriting creates
-		 * and assigns a new relfilenode, we automatically create or drop an
+		 * and assigns a new relfilenumber, we automatically create or drop an
 		 * init fork for the relation as appropriate.
 		 */
 		if (tab->rewrite > 0 && tab->relkind != RELKIND_SEQUENCE)
@@ -5506,12 +5506,13 @@ ATRewriteTables(AlterTableStmt *parsetree, List **wqueue, LOCKMODE lockmode,
 			 * Create transient table that will receive the modified data.
 			 *
 			 * Ensure it is marked correctly as logged or unlogged.  We have
-			 * to do this here so that buffers for the new relfilenode will
+			 * to do this here so that buffers for the new relfilenumber will
 			 * have the right persistence set, and at the same time ensure
-			 * that the original filenode's buffers will get read in with the
-			 * correct setting (i.e. the original one).  Otherwise a rollback
-			 * after the rewrite would possibly result with buffers for the
-			 * original filenode having the wrong persistence setting.
+			 * that the original filenumbers's buffers will get read in with
+			 * the correct setting (i.e. the original one).  Otherwise a
+			 * rollback after the rewrite would possibly result with buffers
+			 * for the original filenumbers having the wrong persistence
+			 * setting.
 			 *
 			 * NB: This relies on swap_relation_files() also swapping the
 			 * persistence. That wouldn't work for pg_class, but that can't be
@@ -8597,7 +8598,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	/* suppress schema rights check when rebuilding existing index */
 	check_rights = !is_rebuild;
 	/* skip index build if phase 3 will do it or we're reusing an old one */
-	skip_build = tab->rewrite > 0 || OidIsValid(stmt->oldNode);
+	skip_build = tab->rewrite > 0 || RelFileNumberIsValid(stmt->oldNumber);
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
 
@@ -8613,21 +8614,21 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 						  quiet);
 
 	/*
-	 * If TryReuseIndex() stashed a relfilenode for us, we used it for the new
-	 * index instead of building from scratch.  Restore associated fields.
+	 * If TryReuseIndex() stashed a relfilenumber for us, we used it for the
+	 * new index instead of building from scratch.  Restore associated fields.
 	 * This may store InvalidSubTransactionId in both fields, in which case
 	 * relcache.c will assume it can rebuild the relcache entry.  Hence, do
 	 * this after the CCI that made catalog rows visible to any rebuild.  The
 	 * DROP of the old edition of this index will have scheduled the storage
 	 * for deletion at commit, so cancel that pending deletion.
 	 */
-	if (OidIsValid(stmt->oldNode))
+	if (RelFileNumberIsValid(stmt->oldNumber))
 	{
 		Relation	irel = index_open(address.objectId, NoLock);
 
 		irel->rd_createSubid = stmt->oldCreateSubid;
-		irel->rd_firstRelfilenodeSubid = stmt->oldFirstRelfilenodeSubid;
-		RelationPreserveStorage(irel->rd_node, true);
+		irel->rd_firstRelfilelocatorSubid = stmt->oldFirstRelfilelocatorSubid;
+		RelationPreserveStorage(irel->rd_locator, true);
 		index_close(irel, NoLock);
 	}
 
@@ -13491,9 +13492,9 @@ TryReuseIndex(Oid oldId, IndexStmt *stmt)
 		/* If it's a partitioned index, there is no storage to share. */
 		if (irel->rd_rel->relkind != RELKIND_PARTITIONED_INDEX)
 		{
-			stmt->oldNode = irel->rd_node.relNode;
+			stmt->oldNumber = irel->rd_locator.relNumber;
 			stmt->oldCreateSubid = irel->rd_createSubid;
-			stmt->oldFirstRelfilenodeSubid = irel->rd_firstRelfilenodeSubid;
+			stmt->oldFirstRelfilelocatorSubid = irel->rd_firstRelfilelocatorSubid;
 		}
 		index_close(irel, NoLock);
 	}
@@ -14340,8 +14341,8 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 {
 	Relation	rel;
 	Oid			reltoastrelid;
-	Oid			newrelfilenode;
-	RelFileNode newrnode;
+	RelFileNumber newrelfilenumber;
+	RelFileLocator newrlocator;
 	List	   *reltoastidxids = NIL;
 	ListCell   *lc;
 
@@ -14370,26 +14371,26 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	}
 
 	/*
-	 * Relfilenodes are not unique in databases across tablespaces, so we need
-	 * to allocate a new one in the new tablespace.
+	 * Relfilenumbers are not unique in databases across tablespaces, so we
+	 * need to allocate a new one in the new tablespace.
 	 */
-	newrelfilenode = GetNewRelFileNode(newTableSpace, NULL,
-									   rel->rd_rel->relpersistence);
+	newrelfilenumber = GetNewRelFileNumber(newTableSpace, NULL,
+										   rel->rd_rel->relpersistence);
 
 	/* Open old and new relation */
-	newrnode = rel->rd_node;
-	newrnode.relNode = newrelfilenode;
-	newrnode.spcNode = newTableSpace;
+	newrlocator = rel->rd_locator;
+	newrlocator.relNumber = newrelfilenumber;
+	newrlocator.spcOid = newTableSpace;
 
-	/* hand off to AM to actually create the new filenode and copy the data */
+	/* hand off to AM to actually create new rel storage and copy the data */
 	if (rel->rd_rel->relkind == RELKIND_INDEX)
 	{
-		index_copy_data(rel, newrnode);
+		index_copy_data(rel, newrlocator);
 	}
 	else
 	{
 		Assert(RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind));
-		table_relation_copy_data(rel, &newrnode);
+		table_relation_copy_data(rel, &newrlocator);
 	}
 
 	/*
@@ -14400,11 +14401,11 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	 * the updated pg_class entry), but that's forbidden with
 	 * CheckRelationTableSpaceMove().
 	 */
-	SetRelationTableSpace(rel, newTableSpace, newrelfilenode);
+	SetRelationTableSpace(rel, newTableSpace, newrelfilenumber);
 
 	InvokeObjectPostAlterHook(RelationRelationId, RelationGetRelid(rel), 0);
 
-	RelationAssumeNewRelfilenode(rel);
+	RelationAssumeNewRelfilelocator(rel);
 
 	relation_close(rel, NoLock);
 
@@ -14630,11 +14631,11 @@ AlterTableMoveAll(AlterTableMoveAllStmt *stmt)
 }
 
 static void
-index_copy_data(Relation rel, RelFileNode newrnode)
+index_copy_data(Relation rel, RelFileLocator newrlocator)
 {
 	SMgrRelation dstrel;
 
-	dstrel = smgropen(newrnode, rel->rd_backend);
+	dstrel = smgropen(newrlocator, rel->rd_backend);
 
 	/*
 	 * Since we copy the file directly without looking at the shared buffers,
@@ -14648,10 +14649,10 @@ index_copy_data(Relation rel, RelFileNode newrnode)
 	 * Create and copy all forks of the relation, and schedule unlinking of
 	 * old physical files.
 	 *
-	 * NOTE: any conflict in relfilenode value will be caught in
+	 * NOTE: any conflict in relfilenumber value will be caught in
 	 * RelationCreateStorage().
 	 */
-	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence, true);
+	RelationCreateStorage(newrlocator, rel->rd_rel->relpersistence, true);
 
 	/* copy main fork */
 	RelationCopyStorage(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
@@ -14672,7 +14673,7 @@ index_copy_data(Relation rel, RelFileNode newrnode)
 			if (RelationIsPermanent(rel) ||
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
-				log_smgrcreate(&newrnode, forkNum);
+				log_smgrcreate(&newrlocator, forkNum);
 			RelationCopyStorage(RelationGetSmgr(rel), dstrel, forkNum,
 								rel->rd_rel->relpersistence);
 		}

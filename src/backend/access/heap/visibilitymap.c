@@ -283,7 +283,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 			if (XLogRecPtrIsInvalid(recptr))
 			{
 				Assert(!InRecovery);
-				recptr = log_heap_visible(rel->rd_node, heapBuf, vmBuf,
+				recptr = log_heap_visible(rel->rd_locator, heapBuf, vmBuf,
 										  cutoff_xid, flags);
 
 				/*
@@ -668,7 +668,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * to keep checking for creation or extension of the file, which happens
 	 * infrequently.
 	 */
-	CacheInvalidateSmgr(reln->smgr_rnode);
+	CacheInvalidateSmgr(reln->smgr_rlocator);
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
 }

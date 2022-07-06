@@ -66,7 +66,7 @@ extern void SetRelationHasSubclass(Oid relationId, bool relhassubclass);
 
 extern bool CheckRelationTableSpaceMove(Relation rel, Oid newTableSpaceId);
 extern void SetRelationTableSpace(Relation rel, Oid newTableSpaceId,
-								  Oid newRelFileNode);
+								  RelFileNumber newRelFileNumber);
 
 extern ObjectAddress renameatt(RenameStmt *stmt);
 

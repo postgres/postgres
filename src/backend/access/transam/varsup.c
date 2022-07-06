@@ -521,7 +521,7 @@ ForceTransactionIdLimitUpdate(void)
  * wide, counter wraparound will occur eventually, and therefore it is unwise
  * to assume they are unique unless precautions are taken to make them so.
  * Hence, this routine should generally not be used directly.  The only direct
- * callers should be GetNewOidWithIndex() and GetNewRelFileNode() in
+ * callers should be GetNewOidWithIndex() and GetNewRelFileNumber() in
  * catalog/catalog.c.
  */
 Oid

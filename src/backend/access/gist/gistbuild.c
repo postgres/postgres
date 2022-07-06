@@ -462,7 +462,7 @@ gist_indexsortbuild(GISTBuildState *state)
 	smgrwrite(RelationGetSmgr(state->indexrel), MAIN_FORKNUM, GIST_ROOT_BLKNO,
 			  levelstate->pages[0], true);
 	if (RelationNeedsWAL(state->indexrel))
-		log_newpage(&state->indexrel->rd_node, MAIN_FORKNUM, GIST_ROOT_BLKNO,
+		log_newpage(&state->indexrel->rd_locator, MAIN_FORKNUM, GIST_ROOT_BLKNO,
 					levelstate->pages[0], true);
 
 	pfree(levelstate->pages[0]);
@@ -663,7 +663,7 @@ gist_indexsortbuild_flush_ready_pages(GISTBuildState *state)
 	}
 
 	if (RelationNeedsWAL(state->indexrel))
-		log_newpages(&state->indexrel->rd_node, MAIN_FORKNUM, state->ready_num_pages,
+		log_newpages(&state->indexrel->rd_locator, MAIN_FORKNUM, state->ready_num_pages,
 					 state->ready_blknos, state->ready_pages, true);
 
 	for (int i = 0; i < state->ready_num_pages; i++)

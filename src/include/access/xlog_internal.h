@@ -25,7 +25,7 @@
 #include "lib/stringinfo.h"
 #include "pgtime.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 
 /*

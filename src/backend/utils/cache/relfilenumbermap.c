@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * relfilenodemap.c
- *	  relfilenode to oid mapping cache.
+ * relfilenumbermap.c
+ *	  relfilenumber to oid mapping cache.
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  src/backend/utils/cache/relfilenodemap.c
+ *	  src/backend/utils/cache/relfilenumbermap.c
  *
  *-------------------------------------------------------------------------
  */
@@ -25,42 +25,42 @@
 #include "utils/hsearch.h"
 #include "utils/inval.h"
 #include "utils/rel.h"
-#include "utils/relfilenodemap.h"
+#include "utils/relfilenumbermap.h"
 #include "utils/relmapper.h"
 
-/* Hash table for information about each relfilenode <-> oid pair */
-static HTAB *RelfilenodeMapHash = NULL;
+/* Hash table for information about each relfilenumber <-> oid pair */
+static HTAB *RelfilenumberMapHash = NULL;
 
-/* built first time through in InitializeRelfilenodeMap */
-static ScanKeyData relfilenode_skey[2];
+/* built first time through in InitializeRelfilenumberMap */
+static ScanKeyData relfilenumber_skey[2];
 
 typedef struct
 {
 	Oid			reltablespace;
-	Oid			relfilenode;
-} RelfilenodeMapKey;
+	RelFileNumber relfilenumber;
+} RelfilenumberMapKey;
 
 typedef struct
 {
-	RelfilenodeMapKey key;		/* lookup key - must be first */
+	RelfilenumberMapKey key;	/* lookup key - must be first */
 	Oid			relid;			/* pg_class.oid */
-} RelfilenodeMapEntry;
+} RelfilenumberMapEntry;
 
 /*
- * RelfilenodeMapInvalidateCallback
+ * RelfilenumberMapInvalidateCallback
  *		Flush mapping entries when pg_class is updated in a relevant fashion.
  */
 static void
-RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
+RelfilenumberMapInvalidateCallback(Datum arg, Oid relid)
 {
 	HASH_SEQ_STATUS status;
-	RelfilenodeMapEntry *entry;
+	RelfilenumberMapEntry *entry;
 
 	/* callback only gets registered after creating the hash */
-	Assert(RelfilenodeMapHash != NULL);
+	Assert(RelfilenumberMapHash != NULL);
 
-	hash_seq_init(&status, RelfilenodeMapHash);
-	while ((entry = (RelfilenodeMapEntry *) hash_seq_search(&status)) != NULL)
+	hash_seq_init(&status, RelfilenumberMapHash);
+	while ((entry = (RelfilenumberMapEntry *) hash_seq_search(&status)) != NULL)
 	{
 		/*
 		 * If relid is InvalidOid, signaling a complete reset, we must remove
@@ -71,7 +71,7 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 			entry->relid == InvalidOid ||	/* negative cache entry */
 			entry->relid == relid)	/* individual flushed relation */
 		{
-			if (hash_search(RelfilenodeMapHash,
+			if (hash_search(RelfilenumberMapHash,
 							(void *) &entry->key,
 							HASH_REMOVE,
 							NULL) == NULL)
@@ -81,11 +81,11 @@ RelfilenodeMapInvalidateCallback(Datum arg, Oid relid)
 }
 
 /*
- * InitializeRelfilenodeMap
+ * InitializeRelfilenumberMap
  *		Initialize cache, either on first use or after a reset.
  */
 static void
-InitializeRelfilenodeMap(void)
+InitializeRelfilenumberMap(void)
 {
 	HASHCTL		ctl;
 	int			i;
@@ -95,50 +95,50 @@ InitializeRelfilenodeMap(void)
 		CreateCacheMemoryContext();
 
 	/* build skey */
-	MemSet(&relfilenode_skey, 0, sizeof(relfilenode_skey));
+	MemSet(&relfilenumber_skey, 0, sizeof(relfilenumber_skey));
 
 	for (i = 0; i < 2; i++)
 	{
 		fmgr_info_cxt(F_OIDEQ,
-					  &relfilenode_skey[i].sk_func,
+					  &relfilenumber_skey[i].sk_func,
 					  CacheMemoryContext);
-		relfilenode_skey[i].sk_strategy = BTEqualStrategyNumber;
-		relfilenode_skey[i].sk_subtype = InvalidOid;
-		relfilenode_skey[i].sk_collation = InvalidOid;
+		relfilenumber_skey[i].sk_strategy = BTEqualStrategyNumber;
+		relfilenumber_skey[i].sk_subtype = InvalidOid;
+		relfilenumber_skey[i].sk_collation = InvalidOid;
 	}
 
-	relfilenode_skey[0].sk_attno = Anum_pg_class_reltablespace;
-	relfilenode_skey[1].sk_attno = Anum_pg_class_relfilenode;
+	relfilenumber_skey[0].sk_attno = Anum_pg_class_reltablespace;
+	relfilenumber_skey[1].sk_attno = Anum_pg_class_relfilenode;
 
 	/*
-	 * Only create the RelfilenodeMapHash now, so we don't end up partially
+	 * Only create the RelfilenumberMapHash now, so we don't end up partially
 	 * initialized when fmgr_info_cxt() above ERRORs out with an out of memory
 	 * error.
 	 */
-	ctl.keysize = sizeof(RelfilenodeMapKey);
-	ctl.entrysize = sizeof(RelfilenodeMapEntry);
+	ctl.keysize = sizeof(RelfilenumberMapKey);
+	ctl.entrysize = sizeof(RelfilenumberMapEntry);
 	ctl.hcxt = CacheMemoryContext;
 
-	RelfilenodeMapHash =
-		hash_create("RelfilenodeMap cache", 64, &ctl,
+	RelfilenumberMapHash =
+		hash_create("RelfilenumberMap cache", 64, &ctl,
 					HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* Watch for invalidation events. */
-	CacheRegisterRelcacheCallback(RelfilenodeMapInvalidateCallback,
+	CacheRegisterRelcacheCallback(RelfilenumberMapInvalidateCallback,
 								  (Datum) 0);
 }
 
 /*
- * Map a relation's (tablespace, filenode) to a relation's oid and cache the
- * result.
+ * Map a relation's (tablespace, relfilenumber) to a relation's oid and cache
+ * the result.
  *
  * Returns InvalidOid if no relation matching the criteria could be found.
  */
 Oid
-RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
+RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 {
-	RelfilenodeMapKey key;
-	RelfilenodeMapEntry *entry;
+	RelfilenumberMapKey key;
+	RelfilenumberMapEntry *entry;
 	bool		found;
 	SysScanDesc scandesc;
 	Relation	relation;
@@ -146,8 +146,8 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	ScanKeyData skey[2];
 	Oid			relid;
 
-	if (RelfilenodeMapHash == NULL)
-		InitializeRelfilenodeMap();
+	if (RelfilenumberMapHash == NULL)
+		InitializeRelfilenumberMap();
 
 	/* pg_class will show 0 when the value is actually MyDatabaseTableSpace */
 	if (reltablespace == MyDatabaseTableSpace)
@@ -155,7 +155,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 
 	MemSet(&key, 0, sizeof(key));
 	key.reltablespace = reltablespace;
-	key.relfilenode = relfilenode;
+	key.relfilenumber = relfilenumber;
 
 	/*
 	 * Check cache and return entry if one is found. Even if no target
@@ -164,7 +164,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	 * since querying invalid values isn't supposed to be a frequent thing,
 	 * but it's basically free.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_FIND, &found);
+	entry = hash_search(RelfilenumberMapHash, (void *) &key, HASH_FIND, &found);
 
 	if (found)
 		return entry->relid;
@@ -179,7 +179,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 		/*
 		 * Ok, shared table, check relmapper.
 		 */
-		relid = RelationMapFilenodeToOid(relfilenode, true);
+		relid = RelationMapFilenumberToOid(relfilenumber, true);
 	}
 	else
 	{
@@ -192,11 +192,11 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 		relation = table_open(RelationRelationId, AccessShareLock);
 
 		/* copy scankey to local copy, it will be modified during the scan */
-		memcpy(skey, relfilenode_skey, sizeof(skey));
+		memcpy(skey, relfilenumber_skey, sizeof(skey));
 
 		/* set scan arguments */
 		skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
-		skey[1].sk_argument = ObjectIdGetDatum(relfilenode);
+		skey[1].sk_argument = ObjectIdGetDatum(relfilenumber);
 
 		scandesc = systable_beginscan(relation,
 									  ClassTblspcRelfilenodeIndexId,
@@ -213,12 +213,12 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 
 			if (found)
 				elog(ERROR,
-					 "unexpected duplicate for tablespace %u, relfilenode %u",
-					 reltablespace, relfilenode);
+					 "unexpected duplicate for tablespace %u, relfilenumber %u",
+					 reltablespace, relfilenumber);
 			found = true;
 
 			Assert(classform->reltablespace == reltablespace);
-			Assert(classform->relfilenode == relfilenode);
+			Assert(classform->relfilenode == relfilenumber);
 			relid = classform->oid;
 		}
 
@@ -227,7 +227,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 
 		/* check for tables that are mapped but not shared */
 		if (!found)
-			relid = RelationMapFilenodeToOid(relfilenode, false);
+			relid = RelationMapFilenumberToOid(relfilenumber, false);
 	}
 
 	/*
@@ -235,7 +235,7 @@ RelidByRelfilenode(Oid reltablespace, Oid relfilenode)
 	 * caused cache invalidations to be executed which would have deleted a
 	 * new entry if we had entered it above.
 	 */
-	entry = hash_search(RelfilenodeMapHash, (void *) &key, HASH_ENTER, &found);
+	entry = hash_search(RelfilenumberMapHash, (void *) &key, HASH_ENTER, &found);
 	if (found)
 		elog(ERROR, "corrupted hashtable");
 	entry->relid = relid;

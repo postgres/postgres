@@ -17,7 +17,7 @@
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 
@@ -176,13 +176,13 @@ extern PrefetchBufferResult PrefetchSharedBuffer(struct SMgrRelationData *smgr_r
 												 BlockNumber blockNum);
 extern PrefetchBufferResult PrefetchBuffer(Relation reln, ForkNumber forkNum,
 										   BlockNumber blockNum);
-extern bool ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum,
+extern bool ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum,
 							 BlockNumber blockNum, Buffer recent_buffer);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
 								 BlockNumber blockNum, ReadBufferMode mode,
 								 BufferAccessStrategy strategy);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode,
+extern Buffer ReadBufferWithoutRelcache(RelFileLocator rlocator,
 										ForkNumber forkNum, BlockNumber blockNum,
 										ReadBufferMode mode, BufferAccessStrategy strategy,
 										bool permanent);
@@ -204,13 +204,15 @@ extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
 extern void FlushOneBuffer(Buffer buffer);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
-extern void CreateAndCopyRelationData(RelFileNode src_rnode,
-									  RelFileNode dst_rnode,
+extern void CreateAndCopyRelationData(RelFileLocator src_rlocator,
+									  RelFileLocator dst_rlocator,
 									  bool permanent);
 extern void FlushDatabaseBuffers(Oid dbid);
-extern void DropRelFileNodeBuffers(struct SMgrRelationData *smgr_reln, ForkNumber *forkNum,
-								   int nforks, BlockNumber *firstDelBlock);
-extern void DropRelFileNodesAllBuffers(struct SMgrRelationData **smgr_reln, int nnodes);
+extern void DropRelFileLocatorBuffers(struct SMgrRelationData *smgr_reln,
+									  ForkNumber *forkNum,
+									  int nforks, BlockNumber *firstDelBlock);
+extern void DropRelFileLocatorsAllBuffers(struct SMgrRelationData **smgr_reln,
+										  int nlocators);
 extern void DropDatabaseBuffers(Oid dbid);
 
 #define RelationGetNumberOfBlocks(reln) \
@@ -223,7 +225,7 @@ extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
 extern void PrintPinnedBufs(void);
 #endif
 extern Size BufferShmemSize(void);
-extern void BufferGetTag(Buffer buffer, RelFileNode *rnode,
+extern void BufferGetTag(Buffer buffer, RelFileLocator *rlocator,
 						 ForkNumber *forknum, BlockNumber *blknum);
 
 extern void MarkBufferDirtyHint(Buffer buffer, bool buffer_std);

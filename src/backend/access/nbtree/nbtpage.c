@@ -836,7 +836,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, FullTransactionId safexid)
 	 */
 
 	/* XLOG stuff */
-	xlrec_reuse.node = rel->rd_node;
+	xlrec_reuse.locator = rel->rd_locator;
 	xlrec_reuse.block = blkno;
 	xlrec_reuse.latestRemovedFullXid = safexid;
 

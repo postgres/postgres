@@ -135,7 +135,7 @@ typedef struct
 	char	   *nspname;		/* namespace name */
 	char	   *relname;		/* relation name */
 	Oid			reloid;			/* relation OID */
-	Oid			relfilenode;	/* relation file node */
+	RelFileNumber relfilenumber;	/* relation file number */
 	Oid			indtable;		/* if index, OID of its table, else 0 */
 	Oid			toastheap;		/* if toast table, OID of base table, else 0 */
 	char	   *tablespace;		/* tablespace path; "" for cluster default */
@@ -159,7 +159,7 @@ typedef struct
 	const char *old_tablespace_suffix;
 	const char *new_tablespace_suffix;
 	Oid			db_oid;
-	Oid			relfilenode;
+	RelFileNumber relfilenumber;
 	/* the rest are used only for logging and error reporting */
 	char	   *nspname;		/* namespaces */
 	char	   *relname;
@@ -400,7 +400,7 @@ void		parseCommandLine(int argc, char *argv[]);
 void		adjust_data_dir(ClusterInfo *cluster);
 void		get_sock_dir(ClusterInfo *cluster, bool live_check);
 
-/* relfilenode.c */
+/* relfilenumber.c */
 
 void		transfer_all_new_tablespaces(DbInfoArr *old_db_arr,
 										 DbInfoArr *new_db_arr, char *old_pgdata, char *new_pgdata);

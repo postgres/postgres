@@ -557,7 +557,7 @@ void XLogRegisterBuffer(uint8 block_id, Buffer buf, uint8 flags);
     XLogRegisterBuffer adds information about a data block to the WAL record.
     block_id is an arbitrary number used to identify this page reference in
     the redo routine.  The information needed to re-find the page at redo -
-    relfilenode, fork, and block number - are included in the WAL record.
+    relfilelocator, fork, and block number - are included in the WAL record.
 
     XLogInsert will automatically include a full copy of the page contents, if
     this is the first modification of the buffer since the last checkpoint.
@@ -692,7 +692,7 @@ by having database restart search for files that don't have any committed
 entry in pg_class, but that currently isn't done because of the possibility
 of deleting data that is useful for forensic analysis of the crash.
 Orphan files are harmless --- at worst they waste a bit of disk space ---
-because we check for on-disk collisions when allocating new relfilenode
+because we check for on-disk collisions when allocating new relfilenumber
 OIDs.  So cleaning up isn't really necessary.
 
 3. Deleting a table, which requires an unlink() that could fail.
@@ -725,10 +725,10 @@ then restart recovery.  This is part of the reason for not writing a WAL
 entry until we've successfully done the original action.
 
 
-Skipping WAL for New RelFileNode
+Skipping WAL for New RelFileLocator
 --------------------------------
 
-Under wal_level=minimal, if a change modifies a relfilenode that ROLLBACK
+Under wal_level=minimal, if a change modifies a relfilenumber that ROLLBACK
 would unlink, in-tree access methods write no WAL for that change.  Code that
 writes WAL without calling RelationNeedsWAL() must check for this case.  This
 skipping is mandatory.  If a WAL-writing change preceded a WAL-skipping change
@@ -748,9 +748,9 @@ unconditionally for permanent relations.  Under these approaches, the access
 method callbacks must not call functions that react to RelationNeedsWAL().
 
 This applies only to WAL records whose replay would modify bytes stored in the
-new relfilenode.  It does not apply to other records about the relfilenode,
+new relfilenumber.  It does not apply to other records about the relfilenumber,
 such as XLOG_SMGR_CREATE.  Because it operates at the level of individual
-relfilenodes, RelationNeedsWAL() can differ for tightly-coupled relations.
+relfilenumbers, RelationNeedsWAL() can differ for tightly-coupled relations.
 Consider "CREATE TABLE t (); BEGIN; ALTER TABLE t ADD c text; ..." in which
 ALTER TABLE adds a TOAST relation.  The TOAST relation will skip WAL, while
 the table owning it will not.  ALTER TABLE SET TABLESPACE will cause a table
@@ -860,7 +860,7 @@ Changes to a temp table are not WAL-logged, hence could reach disk in
 advance of T1's commit, but we don't care since temp table contents don't
 survive crashes anyway.
 
-Database writes that skip WAL for new relfilenodes are also safe.  In these
+Database writes that skip WAL for new relfilenumbers are also safe.  In these
 cases it's entirely possible for the data to reach disk before T1's commit,
 because T1 will fsync it down to disk without any sort of interlock.  However,
 all these paths are designed to write data that no other transaction can see

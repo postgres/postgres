@@ -15,7 +15,7 @@
 #define MD_H
 
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
 
@@ -25,7 +25,7 @@ extern void mdopen(SMgrRelation reln);
 extern void mdclose(SMgrRelation reln, ForkNumber forknum);
 extern void mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo);
 extern bool mdexists(SMgrRelation reln, ForkNumber forknum);
-extern void mdunlink(RelFileNodeBackend rnode, ForkNumber forknum, bool isRedo);
+extern void mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo);
 extern void mdextend(SMgrRelation reln, ForkNumber forknum,
 					 BlockNumber blocknum, char *buffer, bool skipFsync);
 extern bool mdprefetch(SMgrRelation reln, ForkNumber forknum,
@@ -42,7 +42,7 @@ extern void mdtruncate(SMgrRelation reln, ForkNumber forknum,
 extern void mdimmedsync(SMgrRelation reln, ForkNumber forknum);
 
 extern void ForgetDatabaseSyncRequests(Oid dbid);
-extern void DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo);
+extern void DropRelationFiles(RelFileLocator *delrels, int ndelrels, bool isRedo);
 
 /* md sync callbacks */
 extern int	mdsyncfiletag(const FileTag *ftag, char *path);

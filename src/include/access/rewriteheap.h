@@ -15,7 +15,7 @@
 
 #include "access/htup.h"
 #include "storage/itemptr.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
 /* struct definition is private to rewriteheap.c */
@@ -34,8 +34,8 @@ extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
  */
 typedef struct LogicalRewriteMappingData
 {
-	RelFileNode old_node;
-	RelFileNode new_node;
+	RelFileLocator old_locator;
+	RelFileLocator new_locator;
 	ItemPointerData old_tid;
 	ItemPointerData new_tid;
 } LogicalRewriteMappingData;

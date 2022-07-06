@@ -661,11 +661,11 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		 * We could have smgr entries for relations of other databases, so no
 		 * short-circuit test is possible here.
 		 */
-		RelFileNodeBackend rnode;
+		RelFileLocatorBackend rlocator;
 
-		rnode.node = msg->sm.rnode;
-		rnode.backend = (msg->sm.backend_hi << 16) | (int) msg->sm.backend_lo;
-		smgrclosenode(rnode);
+		rlocator.locator = msg->sm.rlocator;
+		rlocator.backend = (msg->sm.backend_hi << 16) | (int) msg->sm.backend_lo;
+		smgrcloserellocator(rlocator);
 	}
 	else if (msg->id == SHAREDINVALRELMAP_ID)
 	{
@@ -1459,14 +1459,14 @@ CacheInvalidateRelcacheByRelid(Oid relid)
  * Thus, the maximum possible backend ID is 2^23-1.
  */
 void
-CacheInvalidateSmgr(RelFileNodeBackend rnode)
+CacheInvalidateSmgr(RelFileLocatorBackend rlocator)
 {
 	SharedInvalidationMessage msg;
 
 	msg.sm.id = SHAREDINVALSMGR_ID;
-	msg.sm.backend_hi = rnode.backend >> 16;
-	msg.sm.backend_lo = rnode.backend & 0xffff;
-	msg.sm.rnode = rnode.node;
+	msg.sm.backend_hi = rlocator.backend >> 16;
+	msg.sm.backend_lo = rlocator.backend & 0xffff;
+	msg.sm.rlocator = rlocator.locator;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
 	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
 

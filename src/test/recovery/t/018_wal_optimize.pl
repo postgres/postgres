@@ -5,7 +5,7 @@
 #
 # These tests exercise code that once violated the mandate described in
 # src/backend/access/transam/README section "Skipping WAL for New
-# RelFileNode".  The tests work by committing some transactions, initiating an
+# RelFileLocator".  The tests work by committing some transactions, initiating an
 # immediate shutdown, and confirming that the expected data survives recovery.
 # For many years, individual commands made the decision to skip WAL, hence the
 # frequent appearance of COPY in these tests.

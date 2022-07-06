@@ -407,7 +407,7 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 		xl_smgr_truncate xlrec;
 
 		xlrec.blkno = 0;
-		xlrec.rnode = rel->rd_node;
+		xlrec.rlocator = rel->rd_locator;
 		xlrec.flags = SMGR_TRUNCATE_VM;
 
 		XLogBeginInsert();

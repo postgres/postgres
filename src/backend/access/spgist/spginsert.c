@@ -171,7 +171,7 @@ spgbuildempty(Relation index)
 	PageSetChecksumInplace(page, SPGIST_METAPAGE_BLKNO);
 	smgrwrite(RelationGetSmgr(index), INIT_FORKNUM, SPGIST_METAPAGE_BLKNO,
 			  (char *) page, true);
-	log_newpage(&(RelationGetSmgr(index))->smgr_rnode.node, INIT_FORKNUM,
+	log_newpage(&(RelationGetSmgr(index))->smgr_rlocator.locator, INIT_FORKNUM,
 				SPGIST_METAPAGE_BLKNO, page, true);
 
 	/* Likewise for the root page. */
@@ -180,7 +180,7 @@ spgbuildempty(Relation index)
 	PageSetChecksumInplace(page, SPGIST_ROOT_BLKNO);
 	smgrwrite(RelationGetSmgr(index), INIT_FORKNUM, SPGIST_ROOT_BLKNO,
 			  (char *) page, true);
-	log_newpage(&(RelationGetSmgr(index))->smgr_rnode.node, INIT_FORKNUM,
+	log_newpage(&(RelationGetSmgr(index))->smgr_rlocator.locator, INIT_FORKNUM,
 				SPGIST_ROOT_BLKNO, page, true);
 
 	/* Likewise for the null-tuples root page. */
@@ -189,7 +189,7 @@ spgbuildempty(Relation index)
 	PageSetChecksumInplace(page, SPGIST_NULL_BLKNO);
 	smgrwrite(RelationGetSmgr(index), INIT_FORKNUM, SPGIST_NULL_BLKNO,
 			  (char *) page, true);
-	log_newpage(&(RelationGetSmgr(index))->smgr_rnode.node, INIT_FORKNUM,
+	log_newpage(&(RelationGetSmgr(index))->smgr_rlocator.locator, INIT_FORKNUM,
 				SPGIST_NULL_BLKNO, page, true);
 
 	/*

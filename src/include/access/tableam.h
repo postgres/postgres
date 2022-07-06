@@ -560,32 +560,32 @@ typedef struct TableAmRoutine
 	 */
 
 	/*
-	 * This callback needs to create a new relation filenode for `rel`, with
+	 * This callback needs to create new relation storage for `rel`, with
 	 * appropriate durability behaviour for `persistence`.
 	 *
 	 * Note that only the subset of the relcache filled by
 	 * RelationBuildLocalRelation() can be relied upon and that the relation's
 	 * catalog entries will either not yet exist (new relation), or will still
-	 * reference the old relfilenode.
+	 * reference the old relfilelocator.
 	 *
 	 * As output *freezeXid, *minmulti must be set to the values appropriate
 	 * for pg_class.{relfrozenxid, relminmxid}. For AMs that don't need those
 	 * fields to be filled they can be set to InvalidTransactionId and
 	 * InvalidMultiXactId, respectively.
 	 *
-	 * See also table_relation_set_new_filenode().
+	 * See also table_relation_set_new_filelocator().
 	 */
-	void		(*relation_set_new_filenode) (Relation rel,
-											  const RelFileNode *newrnode,
-											  char persistence,
-											  TransactionId *freezeXid,
-											  MultiXactId *minmulti);
+	void		(*relation_set_new_filelocator) (Relation rel,
+												 const RelFileLocator *newrlocator,
+												 char persistence,
+												 TransactionId *freezeXid,
+												 MultiXactId *minmulti);
 
 	/*
 	 * This callback needs to remove all contents from `rel`'s current
-	 * relfilenode. No provisions for transactional behaviour need to be made.
-	 * Often this can be implemented by truncating the underlying storage to
-	 * its minimal size.
+	 * relfilelocator. No provisions for transactional behaviour need to be
+	 * made.  Often this can be implemented by truncating the underlying
+	 * storage to its minimal size.
 	 *
 	 * See also table_relation_nontransactional_truncate().
 	 */
@@ -598,7 +598,7 @@ typedef struct TableAmRoutine
 	 * storage, unless it contains references to the tablespace internally.
 	 */
 	void		(*relation_copy_data) (Relation rel,
-									   const RelFileNode *newrnode);
+									   const RelFileLocator *newrlocator);
 
 	/* See table_relation_copy_for_cluster() */
 	void		(*relation_copy_for_cluster) (Relation NewTable,
@@ -1348,7 +1348,7 @@ table_index_delete_tuples(Relation rel, TM_IndexDeleteOp *delstate)
  * RelationGetBufferForTuple. See that method for more information.
  *
  * TABLE_INSERT_FROZEN should only be specified for inserts into
- * relfilenodes created during the current subtransaction and when
+ * relation storage created during the current subtransaction and when
  * there are no prior snapshots or pre-existing portals open.
  * This causes rows to be frozen, which is an MVCC violation and
  * requires explicit options chosen by user.
@@ -1577,33 +1577,34 @@ table_finish_bulk_insert(Relation rel, int options)
  */
 
 /*
- * Create storage for `rel` in `newrnode`, with persistence set to
+ * Create storage for `rel` in `newrlocator`, with persistence set to
  * `persistence`.
  *
  * This is used both during relation creation and various DDL operations to
- * create a new relfilenode that can be filled from scratch.  When creating
- * new storage for an existing relfilenode, this should be called before the
+ * create new rel storage that can be filled from scratch.  When creating
+ * new storage for an existing relfilelocator, this should be called before the
  * relcache entry has been updated.
  *
  * *freezeXid, *minmulti are set to the xid / multixact horizon for the table
  * that pg_class.{relfrozenxid, relminmxid} have to be set to.
  */
 static inline void
-table_relation_set_new_filenode(Relation rel,
-								const RelFileNode *newrnode,
-								char persistence,
-								TransactionId *freezeXid,
-								MultiXactId *minmulti)
+table_relation_set_new_filelocator(Relation rel,
+								   const RelFileLocator *newrlocator,
+								   char persistence,
+								   TransactionId *freezeXid,
+								   MultiXactId *minmulti)
 {
-	rel->rd_tableam->relation_set_new_filenode(rel, newrnode, persistence,
-											   freezeXid, minmulti);
+	rel->rd_tableam->relation_set_new_filelocator(rel, newrlocator,
+												  persistence, freezeXid,
+												  minmulti);
 }
 
 /*
  * Remove all table contents from `rel`, in a non-transactional manner.
  * Non-transactional meaning that there's no need to support rollbacks. This
- * commonly only is used to perform truncations for relfilenodes created in the
- * current transaction.
+ * commonly only is used to perform truncations for relation storage created in
+ * the current transaction.
  */
 static inline void
 table_relation_nontransactional_truncate(Relation rel)
@@ -1612,15 +1613,15 @@ table_relation_nontransactional_truncate(Relation rel)
 }
 
 /*
- * Copy data from `rel` into the new relfilenode `newrnode`. The new
- * relfilenode may not have storage associated before this function is
+ * Copy data from `rel` into the new relfilelocator `newrlocator`. The new
+ * relfilelocator may not have storage associated before this function is
  * called. This is only supposed to be used for low level operations like
  * changing a relation's tablespace.
  */
 static inline void
-table_relation_copy_data(Relation rel, const RelFileNode *newrnode)
+table_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 {
-	rel->rd_tableam->relation_copy_data(rel, newrnode);
+	rel->rd_tableam->relation_copy_data(rel, newrlocator);
 }
 
 /*

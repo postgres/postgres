@@ -37,7 +37,7 @@ static const char *progname;
 static int	WalSegSz;
 static volatile sig_atomic_t time_to_stop = false;
 
-static const RelFileNode emptyRelFileNode = {0, 0, 0};
+static const RelFileLocator emptyRelFileLocator = {0, 0, 0};
 
 typedef struct XLogDumpPrivate
 {
@@ -63,7 +63,7 @@ typedef struct XLogDumpConfig
 	bool		filter_by_rmgr_enabled;
 	TransactionId filter_by_xid;
 	bool		filter_by_xid_enabled;
-	RelFileNode filter_by_relation;
+	RelFileLocator filter_by_relation;
 	bool		filter_by_extended;
 	bool		filter_by_relation_enabled;
 	BlockNumber filter_by_relation_block;
@@ -393,7 +393,7 @@ WALDumpReadPage(XLogReaderState *state, XLogRecPtr targetPagePtr, int reqLen,
  */
 static bool
 XLogRecordMatchesRelationBlock(XLogReaderState *record,
-							   RelFileNode matchRnode,
+							   RelFileLocator matchRlocator,
 							   BlockNumber matchBlock,
 							   ForkNumber matchFork)
 {
@@ -401,17 +401,17 @@ XLogRecordMatchesRelationBlock(XLogReaderState *record,
 
 	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 		ForkNumber	forknum;
 		BlockNumber blk;
 
 		if (!XLogRecGetBlockTagExtended(record, block_id,
-										&rnode, &forknum, &blk, NULL))
+										&rlocator, &forknum, &blk, NULL))
 			continue;
 
 		if ((matchFork == InvalidForkNumber || matchFork == forknum) &&
-			(RelFileNodeEquals(matchRnode, emptyRelFileNode) ||
-			 RelFileNodeEquals(matchRnode, rnode)) &&
+			(RelFileLocatorEquals(matchRlocator, emptyRelFileLocator) ||
+			 RelFileLocatorEquals(matchRlocator, rlocator)) &&
 			(matchBlock == InvalidBlockNumber || matchBlock == blk))
 			return true;
 	}
@@ -885,11 +885,11 @@ main(int argc, char **argv)
 				break;
 			case 'R':
 				if (sscanf(optarg, "%u/%u/%u",
-						   &config.filter_by_relation.spcNode,
-						   &config.filter_by_relation.dbNode,
-						   &config.filter_by_relation.relNode) != 3 ||
-					!OidIsValid(config.filter_by_relation.spcNode) ||
-					!OidIsValid(config.filter_by_relation.relNode))
+						   &config.filter_by_relation.spcOid,
+						   &config.filter_by_relation.dbOid,
+						   &config.filter_by_relation.relNumber) != 3 ||
+					!OidIsValid(config.filter_by_relation.spcOid) ||
+					!RelFileNumberIsValid(config.filter_by_relation.relNumber))
 				{
 					pg_log_error("invalid relation specification: \"%s\"", optarg);
 					pg_log_error_detail("Expecting \"tablespace OID/database OID/relation filenode\".");
@@ -1132,7 +1132,7 @@ main(int argc, char **argv)
 			!XLogRecordMatchesRelationBlock(xlogreader_state,
 											config.filter_by_relation_enabled ?
 											config.filter_by_relation :
-											emptyRelFileNode,
+											emptyRelFileLocator,
 											config.filter_by_relation_block_enabled ?
 											config.filter_by_relation_block :
 											InvalidBlockNumber,

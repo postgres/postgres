@@ -293,7 +293,7 @@ cluster_multiple_rels(List *rtcs, ClusterParams *params)
  * cluster_rel
  *
  * This clusters the table by creating a new, clustered table and
- * swapping the relfilenodes of the new table and the old table, so
+ * swapping the relfilenumbers of the new table and the old table, so
  * the OID of the original table is preserved.  Thus we do not lose
  * GRANT, inheritance nor references to this table (this was a bug
  * in releases through 7.3).
@@ -1025,8 +1025,8 @@ copy_table_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex, bool verbose,
 /*
  * Swap the physical files of two given relations.
  *
- * We swap the physical identity (reltablespace, relfilenode) while keeping the
- * same logical identities of the two relations.  relpersistence is also
+ * We swap the physical identity (reltablespace, relfilenumber) while keeping
+ * the same logical identities of the two relations.  relpersistence is also
  * swapped, which is critical since it determines where buffers live for each
  * relation.
  *
@@ -1061,9 +1061,9 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 				reltup2;
 	Form_pg_class relform1,
 				relform2;
-	Oid			relfilenode1,
-				relfilenode2;
-	Oid			swaptemp;
+	RelFileNumber relfilenumber1,
+				relfilenumber2;
+	RelFileNumber swaptemp;
 	char		swptmpchr;
 
 	/* We need writable copies of both pg_class tuples. */
@@ -1079,13 +1079,14 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		elog(ERROR, "cache lookup failed for relation %u", r2);
 	relform2 = (Form_pg_class) GETSTRUCT(reltup2);
 
-	relfilenode1 = relform1->relfilenode;
-	relfilenode2 = relform2->relfilenode;
+	relfilenumber1 = relform1->relfilenode;
+	relfilenumber2 = relform2->relfilenode;
 
-	if (OidIsValid(relfilenode1) && OidIsValid(relfilenode2))
+	if (RelFileNumberIsValid(relfilenumber1) &&
+		RelFileNumberIsValid(relfilenumber2))
 	{
 		/*
-		 * Normal non-mapped relations: swap relfilenodes, reltablespaces,
+		 * Normal non-mapped relations: swap relfilenumbers, reltablespaces,
 		 * relpersistence
 		 */
 		Assert(!target_is_pg_class);
@@ -1120,7 +1121,8 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		 * Mapped-relation case.  Here we have to swap the relation mappings
 		 * instead of modifying the pg_class columns.  Both must be mapped.
 		 */
-		if (OidIsValid(relfilenode1) || OidIsValid(relfilenode2))
+		if (RelFileNumberIsValid(relfilenumber1) ||
+			RelFileNumberIsValid(relfilenumber2))
 			elog(ERROR, "cannot swap mapped relation \"%s\" with non-mapped relation",
 				 NameStr(relform1->relname));
 
@@ -1148,12 +1150,12 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		/*
 		 * Fetch the mappings --- shouldn't fail, but be paranoid
 		 */
-		relfilenode1 = RelationMapOidToFilenode(r1, relform1->relisshared);
-		if (!OidIsValid(relfilenode1))
+		relfilenumber1 = RelationMapOidToFilenumber(r1, relform1->relisshared);
+		if (!RelFileNumberIsValid(relfilenumber1))
 			elog(ERROR, "could not find relation mapping for relation \"%s\", OID %u",
 				 NameStr(relform1->relname), r1);
-		relfilenode2 = RelationMapOidToFilenode(r2, relform2->relisshared);
-		if (!OidIsValid(relfilenode2))
+		relfilenumber2 = RelationMapOidToFilenumber(r2, relform2->relisshared);
+		if (!RelFileNumberIsValid(relfilenumber2))
 			elog(ERROR, "could not find relation mapping for relation \"%s\", OID %u",
 				 NameStr(relform2->relname), r2);
 
@@ -1161,15 +1163,15 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		 * Send replacement mappings to relmapper.  Note these won't actually
 		 * take effect until CommandCounterIncrement.
 		 */
-		RelationMapUpdateMap(r1, relfilenode2, relform1->relisshared, false);
-		RelationMapUpdateMap(r2, relfilenode1, relform2->relisshared, false);
+		RelationMapUpdateMap(r1, relfilenumber2, relform1->relisshared, false);
+		RelationMapUpdateMap(r2, relfilenumber1, relform2->relisshared, false);
 
 		/* Pass OIDs of mapped r2 tables back to caller */
 		*mapped_tables++ = r2;
 	}
 
 	/*
-	 * Recognize that rel1's relfilenode (swapped from rel2) is new in this
+	 * Recognize that rel1's relfilenumber (swapped from rel2) is new in this
 	 * subtransaction. The rel2 storage (swapped from rel1) may or may not be
 	 * new.
 	 */
@@ -1180,9 +1182,9 @@ swap_relation_files(Oid r1, Oid r2, bool target_is_pg_class,
 		rel1 = relation_open(r1, NoLock);
 		rel2 = relation_open(r2, NoLock);
 		rel2->rd_createSubid = rel1->rd_createSubid;
-		rel2->rd_newRelfilenodeSubid = rel1->rd_newRelfilenodeSubid;
-		rel2->rd_firstRelfilenodeSubid = rel1->rd_firstRelfilenodeSubid;
-		RelationAssumeNewRelfilenode(rel1);
+		rel2->rd_newRelfilelocatorSubid = rel1->rd_newRelfilelocatorSubid;
+		rel2->rd_firstRelfilelocatorSubid = rel1->rd_firstRelfilelocatorSubid;
+		RelationAssumeNewRelfilelocator(rel1);
 		relation_close(rel1, NoLock);
 		relation_close(rel2, NoLock);
 	}
@@ -1523,7 +1525,7 @@ finish_heap_swap(Oid OIDOldHeap, Oid OIDNewHeap,
 		table_close(relRelation, RowExclusiveLock);
 	}
 
-	/* Destroy new heap with old filenode */
+	/* Destroy new heap with old filenumber */
 	object.classId = RelationRelationId;
 	object.objectId = OIDNewHeap;
 	object.objectSubId = 0;

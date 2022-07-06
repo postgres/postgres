@@ -191,11 +191,12 @@ gistRedoDeleteRecord(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 
-		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
+		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
 
-		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid, rnode);
+		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid,
+											rlocator);
 	}
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
@@ -395,7 +396,7 @@ gistRedoPageReuse(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->latestRemovedFullXid,
-												   xlrec->node);
+												   xlrec->locator);
 }
 
 void
@@ -607,7 +608,7 @@ gistXLogPageReuse(Relation rel, BlockNumber blkno, FullTransactionId latestRemov
 	 */
 
 	/* XLOG stuff */
-	xlrec_reuse.node = rel->rd_node;
+	xlrec_reuse.locator = rel->rd_locator;
 	xlrec_reuse.block = blkno;
 	xlrec_reuse.latestRemovedFullXid = latestRemovedXid;
 

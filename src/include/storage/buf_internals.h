@@ -90,30 +90,30 @@
  */
 typedef struct buftag
 {
-	RelFileNode rnode;			/* physical relation identifier */
+	RelFileLocator rlocator;	/* physical relation identifier */
 	ForkNumber	forkNum;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
 
 #define CLEAR_BUFFERTAG(a) \
 ( \
-	(a).rnode.spcNode = InvalidOid, \
-	(a).rnode.dbNode = InvalidOid, \
-	(a).rnode.relNode = InvalidOid, \
+	(a).rlocator.spcOid = InvalidOid, \
+	(a).rlocator.dbOid = InvalidOid, \
+	(a).rlocator.relNumber = InvalidRelFileNumber, \
 	(a).forkNum = InvalidForkNumber, \
 	(a).blockNum = InvalidBlockNumber \
 )
 
-#define INIT_BUFFERTAG(a,xx_rnode,xx_forkNum,xx_blockNum) \
+#define INIT_BUFFERTAG(a,xx_rlocator,xx_forkNum,xx_blockNum) \
 ( \
-	(a).rnode = (xx_rnode), \
+	(a).rlocator = (xx_rlocator), \
 	(a).forkNum = (xx_forkNum), \
 	(a).blockNum = (xx_blockNum) \
 )
 
 #define BUFFERTAGS_EQUAL(a,b) \
 ( \
-	RelFileNodeEquals((a).rnode, (b).rnode) && \
+	RelFileLocatorEquals((a).rlocator, (b).rlocator) && \
 	(a).blockNum == (b).blockNum && \
 	(a).forkNum == (b).forkNum \
 )
@@ -292,7 +292,7 @@ extern PGDLLIMPORT BufferDesc *LocalBufferDescriptors;
 typedef struct CkptSortItem
 {
 	Oid			tsId;
-	Oid			relNode;
+	RelFileNumber relNumber;
 	ForkNumber	forkNum;
 	BlockNumber blockNum;
 	int			buf_id;
@@ -337,9 +337,9 @@ extern PrefetchBufferResult PrefetchLocalBuffer(SMgrRelation smgr,
 extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 									BlockNumber blockNum, bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);
-extern void DropRelFileNodeLocalBuffers(RelFileNode rnode, ForkNumber forkNum,
-										BlockNumber firstDelBlock);
-extern void DropRelFileNodeAllLocalBuffers(RelFileNode rnode);
+extern void DropRelFileLocatorLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
+										   BlockNumber firstDelBlock);
+extern void DropRelFileLocatorAllLocalBuffers(RelFileLocator rlocator);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif							/* BUFMGR_INTERNALS_H */

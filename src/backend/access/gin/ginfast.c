@@ -235,7 +235,7 @@ ginHeapTupleFastInsert(GinState *ginstate, GinTupleCollector *collector)
 
 	needWal = RelationNeedsWAL(index);
 
-	data.node = index->rd_node;
+	data.locator = index->rd_locator;
 	data.ntuples = 0;
 	data.newRightlink = data.prevTail = InvalidBlockNumber;
 

@@ -16,7 +16,7 @@
 
 #include "access/gistxlog.h"
 #include "lib/stringinfo.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 static void
 out_gistxlogPageUpdate(StringInfo buf, gistxlogPageUpdate *xlrec)
@@ -27,8 +27,8 @@ static void
 out_gistxlogPageReuse(StringInfo buf, gistxlogPageReuse *xlrec)
 {
 	appendStringInfo(buf, "rel %u/%u/%u; blk %u; latestRemovedXid %u:%u",
-					 xlrec->node.spcNode, xlrec->node.dbNode,
-					 xlrec->node.relNode, xlrec->block,
+					 xlrec->locator.spcOid, xlrec->locator.dbOid,
+					 xlrec->locator.relNumber, xlrec->block,
 					 EpochFromFullTransactionId(xlrec->latestRemovedFullXid),
 					 XidFromFullTransactionId(xlrec->latestRemovedFullXid));
 }

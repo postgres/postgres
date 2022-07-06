@@ -118,7 +118,7 @@ SetMatViewPopulatedState(Relation relation, bool newstate)
  * ExecRefreshMatView -- execute a REFRESH MATERIALIZED VIEW command
  *
  * This refreshes the materialized view by creating a new table and swapping
- * the relfilenodes of the new table and the old materialized view, so the OID
+ * the relfilenumbers of the new table and the old materialized view, so the OID
  * of the original materialized view is preserved. Thus we do not lose GRANT
  * nor references to this materialized view.
  *

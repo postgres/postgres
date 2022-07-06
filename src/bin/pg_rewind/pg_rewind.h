@@ -16,7 +16,7 @@
 #include "datapagemap.h"
 #include "libpq-fe.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /* Configuration options */
 extern char *datadir_target;

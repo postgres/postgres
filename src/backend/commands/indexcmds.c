@@ -1109,10 +1109,10 @@ DefineIndex(Oid relationId,
 	}
 
 	/*
-	 * A valid stmt->oldNode implies that we already have a built form of the
-	 * index.  The caller should also decline any index build.
+	 * A valid stmt->oldNumber implies that we already have a built form of
+	 * the index.  The caller should also decline any index build.
 	 */
-	Assert(!OidIsValid(stmt->oldNode) || (skip_build && !concurrent));
+	Assert(!RelFileNumberIsValid(stmt->oldNumber) || (skip_build && !concurrent));
 
 	/*
 	 * Make the catalog entries for the index, including constraints. This
@@ -1154,7 +1154,7 @@ DefineIndex(Oid relationId,
 	indexRelationId =
 		index_create(rel, indexRelationName, indexRelationId, parentIndexId,
 					 parentConstraintId,
-					 stmt->oldNode, indexInfo, indexColNames,
+					 stmt->oldNumber, indexInfo, indexColNames,
 					 accessMethodId, tablespaceId,
 					 collationObjectId, classObjectId,
 					 coloptions, reloptions,
@@ -1361,15 +1361,15 @@ DefineIndex(Oid relationId,
 					 * We can't use the same index name for the child index,
 					 * so clear idxname to let the recursive invocation choose
 					 * a new name.  Likewise, the existing target relation
-					 * field is wrong, and if indexOid or oldNode are set,
+					 * field is wrong, and if indexOid or oldNumber are set,
 					 * they mustn't be applied to the child either.
 					 */
 					childStmt->idxname = NULL;
 					childStmt->relation = NULL;
 					childStmt->indexOid = InvalidOid;
-					childStmt->oldNode = InvalidOid;
+					childStmt->oldNumber = InvalidRelFileNumber;
 					childStmt->oldCreateSubid = InvalidSubTransactionId;
-					childStmt->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
+					childStmt->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
 
 					/*
 					 * Adjust any Vars (both in expressions and in the index's
@@ -3015,7 +3015,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			 * particular this eliminates all shared catalogs.).
 			 */
 			if (RELKIND_HAS_STORAGE(classtuple->relkind) &&
-				!OidIsValid(classtuple->relfilenode))
+				!RelFileNumberIsValid(classtuple->relfilenode))
 				skip_rel = true;
 
 			/*

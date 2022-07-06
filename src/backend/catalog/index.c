@@ -87,7 +87,8 @@
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_index_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_index_pg_class_relfilenode = InvalidOid;
+RelFileNumber binary_upgrade_next_index_pg_class_relfilenumber =
+InvalidRelFileNumber;
 
 /*
  * Pointer-free representation of variables used when reindexing system
@@ -662,8 +663,8 @@ UpdateIndexRelation(Oid indexoid,
  *		parent index; otherwise InvalidOid.
  * parentConstraintId: if creating a constraint on a partition, the OID
  *		of the constraint in the parent; otherwise InvalidOid.
- * relFileNode: normally, pass InvalidOid to get new storage.  May be
- *		nonzero to attach an existing valid build.
+ * relFileNumber: normally, pass InvalidRelFileNumber to get new storage.
+ *		May be nonzero to attach an existing valid build.
  * indexInfo: same info executor uses to insert into the index
  * indexColNames: column names to use for index (List of char *)
  * accessMethodObjectId: OID of index AM to use
@@ -703,7 +704,7 @@ index_create(Relation heapRelation,
 			 Oid indexRelationId,
 			 Oid parentIndexRelid,
 			 Oid parentConstraintId,
-			 Oid relFileNode,
+			 RelFileNumber relFileNumber,
 			 IndexInfo *indexInfo,
 			 List *indexColNames,
 			 Oid accessMethodObjectId,
@@ -735,7 +736,7 @@ index_create(Relation heapRelation,
 	char		relkind;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
-	bool		create_storage = !OidIsValid(relFileNode);
+	bool		create_storage = !RelFileNumberIsValid(relFileNumber);
 
 	/* constraint flags can only be set when a constraint is requested */
 	Assert((constr_flags == 0) ||
@@ -751,7 +752,7 @@ index_create(Relation heapRelation,
 	/*
 	 * The index will be in the same namespace as its parent table, and is
 	 * shared across databases if and only if the parent is.  Likewise, it
-	 * will use the relfilenode map if and only if the parent does; and it
+	 * will use the relfilenumber map if and only if the parent does; and it
 	 * inherits the parent's relpersistence.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
@@ -902,12 +903,12 @@ index_create(Relation heapRelation,
 	/*
 	 * Allocate an OID for the index, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * The OID will be the relfilenumber as well, so make sure it doesn't
 	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-		/* Use binary-upgrade override for pg_class.oid and relfilenode */
+		/* Use binary-upgrade override for pg_class.oid and relfilenumber */
 		if (IsBinaryUpgrade)
 		{
 			if (!OidIsValid(binary_upgrade_next_index_pg_class_oid))
@@ -918,14 +919,14 @@ index_create(Relation heapRelation,
 			indexRelationId = binary_upgrade_next_index_pg_class_oid;
 			binary_upgrade_next_index_pg_class_oid = InvalidOid;
 
-			/* Override the index relfilenode */
+			/* Override the index relfilenumber */
 			if ((relkind == RELKIND_INDEX) &&
-				(!OidIsValid(binary_upgrade_next_index_pg_class_relfilenode)))
+				(!RelFileNumberIsValid(binary_upgrade_next_index_pg_class_relfilenumber)))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("index relfilenode value not set when in binary upgrade mode")));
-			relFileNode = binary_upgrade_next_index_pg_class_relfilenode;
-			binary_upgrade_next_index_pg_class_relfilenode = InvalidOid;
+						 errmsg("index relfilenumber value not set when in binary upgrade mode")));
+			relFileNumber = binary_upgrade_next_index_pg_class_relfilenumber;
+			binary_upgrade_next_index_pg_class_relfilenumber = InvalidRelFileNumber;
 
 			/*
 			 * Note that we want create_storage = true for binary upgrade. The
@@ -937,7 +938,7 @@ index_create(Relation heapRelation,
 		else
 		{
 			indexRelationId =
-				GetNewRelFileNode(tableSpaceId, pg_class, relpersistence);
+				GetNewRelFileNumber(tableSpaceId, pg_class, relpersistence);
 		}
 	}
 
@@ -950,7 +951,7 @@ index_create(Relation heapRelation,
 								namespaceId,
 								tableSpaceId,
 								indexRelationId,
-								relFileNode,
+								relFileNumber,
 								accessMethodObjectId,
 								indexTupDesc,
 								relkind,
@@ -1408,7 +1409,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							  InvalidOid,	/* indexRelationId */
 							  InvalidOid,	/* parentIndexRelid */
 							  InvalidOid,	/* parentConstraintId */
-							  InvalidOid,	/* relFileNode */
+							  InvalidRelFileNumber, /* relFileNumber */
 							  newInfo,
 							  indexColNames,
 							  indexRelation->rd_rel->relam,
@@ -3024,7 +3025,7 @@ index_build(Relation heapRelation,
 	 * it -- but we must first check whether one already exists.  If, for
 	 * example, an unlogged relation is truncated in the transaction that
 	 * created it, or truncated twice in a subsequent transaction, the
-	 * relfilenode won't change, and nothing needs to be done here.
+	 * relfilenumber won't change, and nothing needs to be done here.
 	 */
 	if (indexRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 		!smgrexists(RelationGetSmgr(indexRelation), INIT_FORKNUM))
@@ -3681,7 +3682,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		 * Schedule unlinking of the old index storage at transaction commit.
 		 */
 		RelationDropStorage(iRel);
-		RelationAssumeNewRelfilenode(iRel);
+		RelationAssumeNewRelfilelocator(iRel);
 
 		/* Make sure the reltablespace change is visible */
 		CommandCounterIncrement();
@@ -3711,7 +3712,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	SetReindexProcessing(heapId, indexId);
 
 	/* Create a new physical relation for the index */
-	RelationSetNewRelfilenode(iRel, persistence);
+	RelationSetNewRelfilenumber(iRel, persistence);
 
 	/* Initialize the index and rebuild */
 	/* Note: we do not need to re-establish pkey setting */

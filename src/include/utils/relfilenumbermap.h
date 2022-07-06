@@ -1,18 +1,19 @@
 /*-------------------------------------------------------------------------
  *
- * relfilenodemap.h
- *	  relfilenode to oid mapping cache.
+ * relfilenumbermap.h
+ *	  relfilenumber to oid mapping cache.
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/utils/relfilenodemap.h
+ * src/include/utils/relfilenumbermap.h
  *
  *-------------------------------------------------------------------------
  */
-#ifndef RELFILENODEMAP_H
-#define RELFILENODEMAP_H
+#ifndef RELFILENUMBERMAP_H
+#define RELFILENUMBERMAP_H
 
-extern Oid	RelidByRelfilenode(Oid reltablespace, Oid relfilenode);
+extern Oid	RelidByRelfilenumber(Oid reltablespace,
+								 RelFileNumber relfilenumber);
 
-#endif							/* RELFILENODEMAP_H */
+#endif							/* RELFILENUMBERMAP_H */

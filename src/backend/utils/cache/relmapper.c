@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * relmapper.c
- *	  Catalog-to-filenode mapping
+ *	  Catalog-to-filenumber mapping
  *
  * For most tables, the physical file underlying the table is specified by
  * pg_class.relfilenode.  However, that obviously won't work for pg_class
@@ -11,7 +11,7 @@
  * update other databases' pg_class entries when relocating a shared catalog.
  * Therefore, for these special catalogs (henceforth referred to as "mapped
  * catalogs") we rely on a separately maintained file that shows the mapping
- * from catalog OIDs to filenode numbers.  Each database has a map file for
+ * from catalog OIDs to filenumbers.  Each database has a map file for
  * its local mapped catalogs, and there is a separate map file for shared
  * catalogs.  Mapped catalogs have zero in their pg_class.relfilenode entries.
  *
@@ -79,7 +79,7 @@
 typedef struct RelMapping
 {
 	Oid			mapoid;			/* OID of a catalog */
-	Oid			mapfilenode;	/* its filenode number */
+	RelFileNumber mapfilenumber;	/* its rel file number */
 } RelMapping;
 
 typedef struct RelMapFile
@@ -116,7 +116,7 @@ static RelMapFile local_map;
  * subtransactions, so one set of transaction-level changes is sufficient.
  *
  * The active_xxx variables contain updates that are valid in our transaction
- * and should be honored by RelationMapOidToFilenode.  The pending_xxx
+ * and should be honored by RelationMapOidToFilenumber.  The pending_xxx
  * variables contain updates we have been told about that aren't active yet;
  * they will become active at the next CommandCounterIncrement.  This setup
  * lets map updates act similarly to updates of pg_class rows, ie, they
@@ -132,8 +132,8 @@ static RelMapFile pending_local_updates;
 
 
 /* non-export function prototypes */
-static void apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode,
-							 bool add_okay);
+static void apply_map_update(RelMapFile *map, Oid relationId,
+							 RelFileNumber filenumber, bool add_okay);
 static void merge_map_updates(RelMapFile *map, const RelMapFile *updates,
 							  bool add_okay);
 static void load_relmap_file(bool shared, bool lock_held);
@@ -146,19 +146,20 @@ static void perform_relmap_update(bool shared, const RelMapFile *updates);
 
 
 /*
- * RelationMapOidToFilenode
+ * RelationMapOidToFilenumber
  *
- * The raison d' etre ... given a relation OID, look up its filenode.
+ * The raison d' etre ... given a relation OID, look up its filenumber.
  *
  * Although shared and local relation OIDs should never overlap, the caller
  * always knows which we need --- so pass that information to avoid useless
  * searching.
  *
- * Returns InvalidOid if the OID is not known (which should never happen,
- * but the caller is in a better position to report a meaningful error).
+ * Returns InvalidRelFileNumber if the OID is not known (which should never
+ * happen, but the caller is in a better position to report a meaningful
+ * error).
  */
-Oid
-RelationMapOidToFilenode(Oid relationId, bool shared)
+RelFileNumber
+RelationMapOidToFilenumber(Oid relationId, bool shared)
 {
 	const RelMapFile *map;
 	int32		i;
@@ -170,13 +171,13 @@ RelationMapOidToFilenode(Oid relationId, bool shared)
 		for (i = 0; i < map->num_mappings; i++)
 		{
 			if (relationId == map->mappings[i].mapoid)
-				return map->mappings[i].mapfilenode;
+				return map->mappings[i].mapfilenumber;
 		}
 		map = &shared_map;
 		for (i = 0; i < map->num_mappings; i++)
 		{
 			if (relationId == map->mappings[i].mapoid)
-				return map->mappings[i].mapfilenode;
+				return map->mappings[i].mapfilenumber;
 		}
 	}
 	else
@@ -185,33 +186,33 @@ RelationMapOidToFilenode(Oid relationId, bool shared)
 		for (i = 0; i < map->num_mappings; i++)
 		{
 			if (relationId == map->mappings[i].mapoid)
-				return map->mappings[i].mapfilenode;
+				return map->mappings[i].mapfilenumber;
 		}
 		map = &local_map;
 		for (i = 0; i < map->num_mappings; i++)
 		{
 			if (relationId == map->mappings[i].mapoid)
-				return map->mappings[i].mapfilenode;
+				return map->mappings[i].mapfilenumber;
 		}
 	}
 
-	return InvalidOid;
+	return InvalidRelFileNumber;
 }
 
 /*
- * RelationMapFilenodeToOid
+ * RelationMapFilenumberToOid
  *
  * Do the reverse of the normal direction of mapping done in
- * RelationMapOidToFilenode.
+ * RelationMapOidToFilenumber.
  *
  * This is not supposed to be used during normal running but rather for
  * information purposes when looking at the filesystem or xlog.
  *
  * Returns InvalidOid if the OID is not known; this can easily happen if the
- * relfilenode doesn't pertain to a mapped relation.
+ * relfilenumber doesn't pertain to a mapped relation.
  */
 Oid
-RelationMapFilenodeToOid(Oid filenode, bool shared)
+RelationMapFilenumberToOid(RelFileNumber filenumber, bool shared)
 {
 	const RelMapFile *map;
 	int32		i;
@@ -222,13 +223,13 @@ RelationMapFilenodeToOid(Oid filenode, bool shared)
 		map = &active_shared_updates;
 		for (i = 0; i < map->num_mappings; i++)
 		{
-			if (filenode == map->mappings[i].mapfilenode)
+			if (filenumber == map->mappings[i].mapfilenumber)
 				return map->mappings[i].mapoid;
 		}
 		map = &shared_map;
 		for (i = 0; i < map->num_mappings; i++)
 		{
-			if (filenode == map->mappings[i].mapfilenode)
+			if (filenumber == map->mappings[i].mapfilenumber)
 				return map->mappings[i].mapoid;
 		}
 	}
@@ -237,13 +238,13 @@ RelationMapFilenodeToOid(Oid filenode, bool shared)
 		map = &active_local_updates;
 		for (i = 0; i < map->num_mappings; i++)
 		{
-			if (filenode == map->mappings[i].mapfilenode)
+			if (filenumber == map->mappings[i].mapfilenumber)
 				return map->mappings[i].mapoid;
 		}
 		map = &local_map;
 		for (i = 0; i < map->num_mappings; i++)
 		{
-			if (filenode == map->mappings[i].mapfilenode)
+			if (filenumber == map->mappings[i].mapfilenumber)
 				return map->mappings[i].mapoid;
 		}
 	}
@@ -252,13 +253,13 @@ RelationMapFilenodeToOid(Oid filenode, bool shared)
 }
 
 /*
- * RelationMapOidToFilenodeForDatabase
+ * RelationMapOidToFilenumberForDatabase
  *
- * Like RelationMapOidToFilenode, but reads the mapping from the indicated
+ * Like RelationMapOidToFilenumber, but reads the mapping from the indicated
  * path instead of using the one for the current database.
  */
-Oid
-RelationMapOidToFilenodeForDatabase(char *dbpath, Oid relationId)
+RelFileNumber
+RelationMapOidToFilenumberForDatabase(char *dbpath, Oid relationId)
 {
 	RelMapFile	map;
 	int			i;
@@ -270,10 +271,10 @@ RelationMapOidToFilenodeForDatabase(char *dbpath, Oid relationId)
 	for (i = 0; i < map.num_mappings; i++)
 	{
 		if (relationId == map.mappings[i].mapoid)
-			return map.mappings[i].mapfilenode;
+			return map.mappings[i].mapfilenumber;
 	}
 
-	return InvalidOid;
+	return InvalidRelFileNumber;
 }
 
 /*
@@ -311,13 +312,13 @@ RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath, char *dstdbpath)
 /*
  * RelationMapUpdateMap
  *
- * Install a new relfilenode mapping for the specified relation.
+ * Install a new relfilenumber mapping for the specified relation.
  *
  * If immediate is true (or we're bootstrapping), the mapping is activated
  * immediately.  Otherwise it is made pending until CommandCounterIncrement.
  */
 void
-RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
+RelationMapUpdateMap(Oid relationId, RelFileNumber fileNumber, bool shared,
 					 bool immediate)
 {
 	RelMapFile *map;
@@ -362,7 +363,7 @@ RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
 				map = &pending_local_updates;
 		}
 	}
-	apply_map_update(map, relationId, fileNode, true);
+	apply_map_update(map, relationId, fileNumber, true);
 }
 
 /*
@@ -375,7 +376,8 @@ RelationMapUpdateMap(Oid relationId, Oid fileNode, bool shared,
  * add_okay = false to draw an error if not.
  */
 static void
-apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode, bool add_okay)
+apply_map_update(RelMapFile *map, Oid relationId, RelFileNumber fileNumber,
+				 bool add_okay)
 {
 	int32		i;
 
@@ -384,7 +386,7 @@ apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode, bool add_okay)
 	{
 		if (relationId == map->mappings[i].mapoid)
 		{
-			map->mappings[i].mapfilenode = fileNode;
+			map->mappings[i].mapfilenumber = fileNumber;
 			return;
 		}
 	}
@@ -396,7 +398,7 @@ apply_map_update(RelMapFile *map, Oid relationId, Oid fileNode, bool add_okay)
 	if (map->num_mappings >= MAX_MAPPINGS)
 		elog(ERROR, "ran out of space in relation map");
 	map->mappings[map->num_mappings].mapoid = relationId;
-	map->mappings[map->num_mappings].mapfilenode = fileNode;
+	map->mappings[map->num_mappings].mapfilenumber = fileNumber;
 	map->num_mappings++;
 }
 
@@ -415,7 +417,7 @@ merge_map_updates(RelMapFile *map, const RelMapFile *updates, bool add_okay)
 	{
 		apply_map_update(map,
 						 updates->mappings[i].mapoid,
-						 updates->mappings[i].mapfilenode,
+						 updates->mappings[i].mapfilenumber,
 						 add_okay);
 	}
 }
@@ -983,12 +985,12 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 
 		for (i = 0; i < newmap->num_mappings; i++)
 		{
-			RelFileNode rnode;
+			RelFileLocator rlocator;
 
-			rnode.spcNode = tsid;
-			rnode.dbNode = dbid;
-			rnode.relNode = newmap->mappings[i].mapfilenode;
-			RelationPreserveStorage(rnode, false);
+			rlocator.spcOid = tsid;
+			rlocator.dbOid = dbid;
+			rlocator.relNumber = newmap->mappings[i].mapfilenumber;
+			RelationPreserveStorage(rlocator, false);
 		}
 	}
 

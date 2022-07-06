@@ -877,11 +877,11 @@ spgRedoVacuumRedirect(XLogReaderState *record)
 	{
 		if (TransactionIdIsValid(xldata->newestRedirectXid))
 		{
-			RelFileNode node;
+			RelFileLocator locator;
 
-			XLogRecGetBlockTag(record, 0, &node, NULL, NULL);
+			XLogRecGetBlockTag(record, 0, &locator, NULL, NULL);
 			ResolveRecoveryConflictWithSnapshot(xldata->newestRedirectXid,
-												node);
+												locator);
 		}
 	}
 

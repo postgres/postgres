@@ -1638,7 +1638,7 @@ DecodeXLogRecord(XLogReaderState *state,
 	char	   *out;
 	uint32		remaining;
 	uint32		datatotal;
-	RelFileNode *rnode = NULL;
+	RelFileLocator *rlocator = NULL;
 	uint8		block_id;
 
 	decoded->header = *record;
@@ -1823,12 +1823,12 @@ DecodeXLogRecord(XLogReaderState *state,
 			}
 			if (!(fork_flags & BKPBLOCK_SAME_REL))
 			{
-				COPY_HEADER_FIELD(&blk->rnode, sizeof(RelFileNode));
-				rnode = &blk->rnode;
+				COPY_HEADER_FIELD(&blk->rlocator, sizeof(RelFileLocator));
+				rlocator = &blk->rlocator;
 			}
 			else
 			{
-				if (rnode == NULL)
+				if (rlocator == NULL)
 				{
 					report_invalid_record(state,
 										  "BKPBLOCK_SAME_REL set but no previous rel at %X/%X",
@@ -1836,7 +1836,7 @@ DecodeXLogRecord(XLogReaderState *state,
 					goto err;
 				}
 
-				blk->rnode = *rnode;
+				blk->rlocator = *rlocator;
 			}
 			COPY_HEADER_FIELD(&blk->blkno, sizeof(BlockNumber));
 		}
@@ -1926,10 +1926,11 @@ err:
  */
 void
 XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
-				   RelFileNode *rnode, ForkNumber *forknum, BlockNumber *blknum)
+				   RelFileLocator *rlocator, ForkNumber *forknum,
+				   BlockNumber *blknum)
 {
-	if (!XLogRecGetBlockTagExtended(record, block_id, rnode, forknum, blknum,
-									NULL))
+	if (!XLogRecGetBlockTagExtended(record, block_id, rlocator, forknum,
+									blknum, NULL))
 	{
 #ifndef FRONTEND
 		elog(ERROR, "failed to locate backup block with ID %d in WAL record",
@@ -1945,13 +1946,13 @@ XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
  * Returns information about the block that a block reference refers to,
  * optionally including the buffer that the block may already be in.
  *
- * If the WAL record contains a block reference with the given ID, *rnode,
+ * If the WAL record contains a block reference with the given ID, *rlocator,
  * *forknum, *blknum and *prefetch_buffer are filled in (if not NULL), and
  * returns true.  Otherwise returns false.
  */
 bool
 XLogRecGetBlockTagExtended(XLogReaderState *record, uint8 block_id,
-						   RelFileNode *rnode, ForkNumber *forknum,
+						   RelFileLocator *rlocator, ForkNumber *forknum,
 						   BlockNumber *blknum,
 						   Buffer *prefetch_buffer)
 {
@@ -1961,8 +1962,8 @@ XLogRecGetBlockTagExtended(XLogReaderState *record, uint8 block_id,
 		return false;
 
 	bkpb = &record->record->blocks[block_id];
-	if (rnode)
-		*rnode = bkpb->rnode;
+	if (rlocator)
+		*rlocator = bkpb->rlocator;
 	if (forknum)
 		*forknum = bkpb->forknum;
 	if (blknum)

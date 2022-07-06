@@ -566,11 +566,11 @@ tuple_lock_retry:
  */
 
 static void
-heapam_relation_set_new_filenode(Relation rel,
-								 const RelFileNode *newrnode,
-								 char persistence,
-								 TransactionId *freezeXid,
-								 MultiXactId *minmulti)
+heapam_relation_set_new_filelocator(Relation rel,
+									const RelFileLocator *newrlocator,
+									char persistence,
+									TransactionId *freezeXid,
+									MultiXactId *minmulti)
 {
 	SMgrRelation srel;
 
@@ -591,7 +591,7 @@ heapam_relation_set_new_filenode(Relation rel,
 	 */
 	*minmulti = GetOldestMultiXactId();
 
-	srel = RelationCreateStorage(*newrnode, persistence, true);
+	srel = RelationCreateStorage(*newrlocator, persistence, true);
 
 	/*
 	 * If required, set up an init fork for an unlogged table so that it can
@@ -608,7 +608,7 @@ heapam_relation_set_new_filenode(Relation rel,
 			   rel->rd_rel->relkind == RELKIND_MATVIEW ||
 			   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
 		smgrcreate(srel, INIT_FORKNUM, false);
-		log_smgrcreate(newrnode, INIT_FORKNUM);
+		log_smgrcreate(newrlocator, INIT_FORKNUM);
 		smgrimmedsync(srel, INIT_FORKNUM);
 	}
 
@@ -622,11 +622,11 @@ heapam_relation_nontransactional_truncate(Relation rel)
 }
 
 static void
-heapam_relation_copy_data(Relation rel, const RelFileNode *newrnode)
+heapam_relation_copy_data(Relation rel, const RelFileLocator *newrlocator)
 {
 	SMgrRelation dstrel;
 
-	dstrel = smgropen(*newrnode, rel->rd_backend);
+	dstrel = smgropen(*newrlocator, rel->rd_backend);
 
 	/*
 	 * Since we copy the file directly without looking at the shared buffers,
@@ -640,10 +640,10 @@ heapam_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 	 * Create and copy all forks of the relation, and schedule unlinking of
 	 * old physical files.
 	 *
-	 * NOTE: any conflict in relfilenode value will be caught in
+	 * NOTE: any conflict in relfilenumber value will be caught in
 	 * RelationCreateStorage().
 	 */
-	RelationCreateStorage(*newrnode, rel->rd_rel->relpersistence, true);
+	RelationCreateStorage(*newrlocator, rel->rd_rel->relpersistence, true);
 
 	/* copy main fork */
 	RelationCopyStorage(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
@@ -664,7 +664,7 @@ heapam_relation_copy_data(Relation rel, const RelFileNode *newrnode)
 			if (RelationIsPermanent(rel) ||
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
-				log_smgrcreate(newrnode, forkNum);
+				log_smgrcreate(newrlocator, forkNum);
 			RelationCopyStorage(RelationGetSmgr(rel), dstrel, forkNum,
 								rel->rd_rel->relpersistence);
 		}
@@ -2569,7 +2569,7 @@ static const TableAmRoutine heapam_methods = {
 	.tuple_satisfies_snapshot = heapam_tuple_satisfies_snapshot,
 	.index_delete_tuples = heap_index_delete_tuples,
 
-	.relation_set_new_filenode = heapam_relation_set_new_filenode,
+	.relation_set_new_filelocator = heapam_relation_set_new_filelocator,
 	.relation_nontransactional_truncate = heapam_relation_nontransactional_truncate,
 	.relation_copy_data = heapam_relation_copy_data,
 	.relation_copy_for_cluster = heapam_relation_copy_for_cluster,

@@ -7990,9 +7990,9 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
-					n->oldNode = InvalidOid;
+					n->oldNumber = InvalidRelFileNumber;
 					n->oldCreateSubid = InvalidSubTransactionId;
-					n->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
+					n->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
 					n->primary = false;
 					n->isconstraint = false;
 					n->deferrable = false;
@@ -8022,9 +8022,9 @@ IndexStmt:	CREATE opt_unique INDEX opt_concurrently opt_index_name
 					n->excludeOpNames = NIL;
 					n->idxcomment = NULL;
 					n->indexOid = InvalidOid;
-					n->oldNode = InvalidOid;
+					n->oldNumber = InvalidRelFileNumber;
 					n->oldCreateSubid = InvalidSubTransactionId;
-					n->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
+					n->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
 					n->primary = false;
 					n->isconstraint = false;
 					n->deferrable = false;

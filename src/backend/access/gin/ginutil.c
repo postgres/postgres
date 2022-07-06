@@ -688,7 +688,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 		XLogRecPtr	recptr;
 		ginxlogUpdateMeta data;
 
-		data.node = index->rd_node;
+		data.locator = index->rd_locator;
 		data.ntuples = 0;
 		data.newRightlink = data.prevTail = InvalidBlockNumber;
 		memcpy(&data.metadata, metadata, sizeof(GinMetaPageData));

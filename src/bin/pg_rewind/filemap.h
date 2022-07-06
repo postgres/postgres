@@ -10,7 +10,7 @@
 
 #include "datapagemap.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /* these enum values are sorted in the order we want actions to be processed */
 typedef enum
@@ -103,7 +103,7 @@ extern void process_source_file(const char *path, file_type_t type,
 extern void process_target_file(const char *path, file_type_t type,
 								size_t size, const char *link_target);
 extern void process_target_wal_block_change(ForkNumber forknum,
-											RelFileNode rnode,
+											RelFileLocator rlocator,
 											BlockNumber blkno);
 
 extern filemap_t *decide_file_actions(void);

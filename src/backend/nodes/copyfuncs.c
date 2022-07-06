@@ -4194,9 +4194,9 @@ _copyIndexStmt(const IndexStmt *from)
 	COPY_NODE_FIELD(excludeOpNames);
 	COPY_STRING_FIELD(idxcomment);
 	COPY_SCALAR_FIELD(indexOid);
-	COPY_SCALAR_FIELD(oldNode);
+	COPY_SCALAR_FIELD(oldNumber);
 	COPY_SCALAR_FIELD(oldCreateSubid);
-	COPY_SCALAR_FIELD(oldFirstRelfilenodeSubid);
+	COPY_SCALAR_FIELD(oldFirstRelfilelocatorSubid);
 	COPY_SCALAR_FIELD(unique);
 	COPY_SCALAR_FIELD(nulls_not_distinct);
 	COPY_SCALAR_FIELD(primary);

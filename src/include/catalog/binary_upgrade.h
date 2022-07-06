@@ -22,11 +22,11 @@ extern PGDLLIMPORT Oid binary_upgrade_next_mrng_pg_type_oid;
 extern PGDLLIMPORT Oid binary_upgrade_next_mrng_array_pg_type_oid;
 
 extern PGDLLIMPORT Oid binary_upgrade_next_heap_pg_class_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_heap_pg_class_relfilenode;
+extern PGDLLIMPORT RelFileNumber binary_upgrade_next_heap_pg_class_relfilenumber;
 extern PGDLLIMPORT Oid binary_upgrade_next_index_pg_class_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_index_pg_class_relfilenode;
+extern PGDLLIMPORT RelFileNumber binary_upgrade_next_index_pg_class_relfilenumber;
 extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_class_oid;
-extern PGDLLIMPORT Oid binary_upgrade_next_toast_pg_class_relfilenode;
+extern PGDLLIMPORT RelFileNumber binary_upgrade_next_toast_pg_class_relfilenumber;
 
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_enum_oid;
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_authid_oid;

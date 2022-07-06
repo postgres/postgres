@@ -1,10 +1,10 @@
 /*
- *	relfilenode.c
+ *	relfilenumber.c
  *
- *	relfilenode functions
+ *	relfilenumber functions
  *
  *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
- *	src/bin/pg_upgrade/relfilenode.c
+ *	src/bin/pg_upgrade/relfilenumber.c
  */
 
 #include "postgres_fe.h"
@@ -181,7 +181,7 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 	/*
 	 * Now copy/link any related segments as well. Remember, PG breaks large
 	 * files into 1GB segments, the first segment has no extension, subsequent
-	 * segments are named relfilenode.1, relfilenode.2, relfilenode.3.
+	 * segments are named relfilenumber.1, relfilenumber.2, relfilenumber.3.
 	 */
 	for (segno = 0;; segno++)
 	{
@@ -194,14 +194,14 @@ transfer_relfile(FileNameMap *map, const char *type_suffix, bool vm_must_add_fro
 				 map->old_tablespace,
 				 map->old_tablespace_suffix,
 				 map->db_oid,
-				 map->relfilenode,
+				 map->relfilenumber,
 				 type_suffix,
 				 extent_suffix);
 		snprintf(new_file, sizeof(new_file), "%s%s/%u/%u%s%s",
 				 map->new_tablespace,
 				 map->new_tablespace_suffix,
 				 map->db_oid,
-				 map->relfilenode,
+				 map->relfilenumber,
 				 type_suffix,
 				 extent_suffix);
 

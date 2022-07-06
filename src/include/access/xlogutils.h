@@ -60,9 +60,9 @@ extern PGDLLIMPORT HotStandbyState standbyState;
 extern bool XLogHaveInvalidPages(void);
 extern void XLogCheckInvalidPages(void);
 
-extern void XLogDropRelation(RelFileNode rnode, ForkNumber forknum);
+extern void XLogDropRelation(RelFileLocator rlocator, ForkNumber forknum);
 extern void XLogDropDatabase(Oid dbid);
-extern void XLogTruncateRelation(RelFileNode rnode, ForkNumber forkNum,
+extern void XLogTruncateRelation(RelFileLocator rlocator, ForkNumber forkNum,
 								 BlockNumber nblocks);
 
 /* Result codes for XLogReadBufferForRedo[Extended] */
@@ -89,11 +89,11 @@ extern XLogRedoAction XLogReadBufferForRedoExtended(XLogReaderState *record,
 													ReadBufferMode mode, bool get_cleanup_lock,
 													Buffer *buf);
 
-extern Buffer XLogReadBufferExtended(RelFileNode rnode, ForkNumber forknum,
+extern Buffer XLogReadBufferExtended(RelFileLocator rlocator, ForkNumber forknum,
 									 BlockNumber blkno, ReadBufferMode mode,
 									 Buffer recent_buffer);
 
-extern Relation CreateFakeRelcacheEntry(RelFileNode rnode);
+extern Relation CreateFakeRelcacheEntry(RelFileLocator rlocator);
 extern void FreeFakeRelcacheEntry(Relation fakerel);
 
 extern int	read_local_xlog_page(XLogReaderState *state,

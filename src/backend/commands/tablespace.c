@@ -12,12 +12,12 @@
  * remove the possibility of having file name conflicts, we isolate
  * files within a tablespace into database-specific subdirectories.
  *
- * To support file access via the information given in RelFileNode, we
+ * To support file access via the information given in RelFileLocator, we
  * maintain a symbolic-link map in $PGDATA/pg_tblspc. The symlinks are
  * named by tablespace OIDs and point to the actual tablespace directories.
  * There is also a per-cluster version directory in each tablespace.
  * Thus the full path to an arbitrary file is
- *			$PGDATA/pg_tblspc/spcoid/PG_MAJORVER_CATVER/dboid/relfilenode
+ *			$PGDATA/pg_tblspc/spcoid/PG_MAJORVER_CATVER/dboid/relfilenumber
  * e.g.
  *			$PGDATA/pg_tblspc/20981/PG_9.0_201002161/719849/83292814
  *
@@ -25,8 +25,8 @@
  * tables) and pg_default (for everything else).  For backwards compatibility
  * and to remain functional on platforms without symlinks, these tablespaces
  * are accessed specially: they are respectively
- *			$PGDATA/global/relfilenode
- *			$PGDATA/base/dboid/relfilenode
+ *			$PGDATA/global/relfilenumber
+ *			$PGDATA/base/dboid/relfilenumber
  *
  * To allow CREATE DATABASE to give a new database a default tablespace
  * that's different from the template database's default, we make the
@@ -115,7 +115,7 @@ static bool destroy_tablespace_directories(Oid tablespaceoid, bool redo);
  * re-create a database subdirectory (of $PGDATA/base) during WAL replay.
  */
 void
-TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
+TablespaceCreateDbspace(Oid spcOid, Oid dbOid, bool isRedo)
 {
 	struct stat st;
 	char	   *dir;
@@ -124,13 +124,13 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 	 * The global tablespace doesn't have per-database subdirectories, so
 	 * nothing to do for it.
 	 */
-	if (spcNode == GLOBALTABLESPACE_OID)
+	if (spcOid == GLOBALTABLESPACE_OID)
 		return;
 
-	Assert(OidIsValid(spcNode));
-	Assert(OidIsValid(dbNode));
+	Assert(OidIsValid(spcOid));
+	Assert(OidIsValid(dbOid));
 
-	dir = GetDatabasePath(dbNode, spcNode);
+	dir = GetDatabasePath(dbOid, spcOid);
 
 	if (stat(dir, &st) < 0)
 	{

@@ -664,11 +664,11 @@ btree_xlog_delete(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 
-		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
+		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
 
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, rnode);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, rlocator);
 	}
 
 	/*
@@ -1006,7 +1006,7 @@ btree_xlog_reuse_page(XLogReaderState *record)
 
 	if (InHotStandby)
 		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->latestRemovedFullXid,
-												   xlrec->node);
+												   xlrec->locator);
 }
 
 void

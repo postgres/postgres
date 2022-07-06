@@ -16,7 +16,7 @@
 #define _BGWRITER_H
 
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
 

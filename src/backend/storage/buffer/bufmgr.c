@@ -121,12 +121,12 @@ typedef struct CkptTsStatus
  * Type for array used to sort SMgrRelations
  *
  * FlushRelationsAllBuffers shares the same comparator function with
- * DropRelFileNodesAllBuffers. Pointer to this struct and RelFileNode must be
+ * DropRelFileLocatorsAllBuffers. Pointer to this struct and RelFileLocator must be
  * compatible.
  */
 typedef struct SMgrSortArray
 {
-	RelFileNode rnode;			/* This must be the first member */
+	RelFileLocator rlocator;	/* This must be the first member */
 	SMgrRelation srel;
 } SMgrSortArray;
 
@@ -483,16 +483,16 @@ static BufferDesc *BufferAlloc(SMgrRelation smgr,
 							   BufferAccessStrategy strategy,
 							   bool *foundPtr);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
-static void FindAndDropRelFileNodeBuffers(RelFileNode rnode,
-										  ForkNumber forkNum,
-										  BlockNumber nForkBlock,
-										  BlockNumber firstDelBlock);
+static void FindAndDropRelFileLocatorBuffers(RelFileLocator rlocator,
+											 ForkNumber forkNum,
+											 BlockNumber nForkBlock,
+											 BlockNumber firstDelBlock);
 static void RelationCopyStorageUsingBuffer(Relation src, Relation dst,
 										   ForkNumber forkNum,
 										   bool isunlogged);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
-static int	rnode_comparator(const void *p1, const void *p2);
+static int	rlocator_comparator(const void *p1, const void *p2);
 static inline int buffertag_comparator(const BufferTag *a, const BufferTag *b);
 static inline int ckpt_buforder_comparator(const CkptSortItem *a, const CkptSortItem *b);
 static int	ts_ckpt_progress_comparator(Datum a, Datum b, void *arg);
@@ -515,7 +515,7 @@ PrefetchSharedBuffer(SMgrRelation smgr_reln,
 	Assert(BlockNumberIsValid(blockNum));
 
 	/* create a tag so we can lookup the buffer */
-	INIT_BUFFERTAG(newTag, smgr_reln->smgr_rnode.node,
+	INIT_BUFFERTAG(newTag, smgr_reln->smgr_rlocator.locator,
 				   forkNum, blockNum);
 
 	/* determine its hash code and partition lock ID */
@@ -620,7 +620,7 @@ PrefetchBuffer(Relation reln, ForkNumber forkNum, BlockNumber blockNum)
  * tag.  In that case, the buffer is pinned and the usage count is bumped.
  */
 bool
-ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
+ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum, BlockNumber blockNum,
 				 Buffer recent_buffer)
 {
 	BufferDesc *bufHdr;
@@ -632,7 +632,7 @@ ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum, BlockNumber blockNum,
 
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 	ReservePrivateRefCountEntry();
-	INIT_BUFFERTAG(tag, rnode, forkNum, blockNum);
+	INIT_BUFFERTAG(tag, rlocator, forkNum, blockNum);
 
 	if (BufferIsLocal(recent_buffer))
 	{
@@ -786,13 +786,13 @@ ReadBufferExtended(Relation reln, ForkNumber forkNum, BlockNumber blockNum,
  * BackendId).
  */
 Buffer
-ReadBufferWithoutRelcache(RelFileNode rnode, ForkNumber forkNum,
+ReadBufferWithoutRelcache(RelFileLocator rlocator, ForkNumber forkNum,
 						  BlockNumber blockNum, ReadBufferMode mode,
 						  BufferAccessStrategy strategy, bool permanent)
 {
 	bool		hit;
 
-	SMgrRelation smgr = smgropen(rnode, InvalidBackendId);
+	SMgrRelation smgr = smgropen(rlocator, InvalidBackendId);
 
 	return ReadBuffer_common(smgr, permanent ? RELPERSISTENCE_PERMANENT :
 							 RELPERSISTENCE_UNLOGGED, forkNum, blockNum,
@@ -824,10 +824,10 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	isExtend = (blockNum == P_NEW);
 
 	TRACE_POSTGRESQL_BUFFER_READ_START(forkNum, blockNum,
-									   smgr->smgr_rnode.node.spcNode,
-									   smgr->smgr_rnode.node.dbNode,
-									   smgr->smgr_rnode.node.relNode,
-									   smgr->smgr_rnode.backend,
+									   smgr->smgr_rlocator.locator.spcOid,
+									   smgr->smgr_rlocator.locator.dbOid,
+									   smgr->smgr_rlocator.locator.relNumber,
+									   smgr->smgr_rlocator.backend,
 									   isExtend);
 
 	/* Substitute proper block number if caller asked for P_NEW */
@@ -839,7 +839,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 					 errmsg("cannot extend relation %s beyond %u blocks",
-							relpath(smgr->smgr_rnode, forkNum),
+							relpath(smgr->smgr_rlocator, forkNum),
 							P_NEW)));
 	}
 
@@ -886,10 +886,10 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				VacuumCostBalance += VacuumCostPageHit;
 
 			TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-											  smgr->smgr_rnode.node.spcNode,
-											  smgr->smgr_rnode.node.dbNode,
-											  smgr->smgr_rnode.node.relNode,
-											  smgr->smgr_rnode.backend,
+											  smgr->smgr_rlocator.locator.spcOid,
+											  smgr->smgr_rlocator.locator.dbOid,
+											  smgr->smgr_rlocator.locator.relNumber,
+											  smgr->smgr_rlocator.backend,
 											  isExtend,
 											  found);
 
@@ -926,7 +926,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		if (!PageIsNew((Page) bufBlock))
 			ereport(ERROR,
 					(errmsg("unexpected data beyond EOF in block %u of relation %s",
-							blockNum, relpath(smgr->smgr_rnode, forkNum)),
+							blockNum, relpath(smgr->smgr_rlocator, forkNum)),
 					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
 
 		/*
@@ -1028,7 +1028,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("invalid page in block %u of relation %s; zeroing out page",
 									blockNum,
-									relpath(smgr->smgr_rnode, forkNum))));
+									relpath(smgr->smgr_rlocator, forkNum))));
 					MemSet((char *) bufBlock, 0, BLCKSZ);
 				}
 				else
@@ -1036,7 +1036,7 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 							(errcode(ERRCODE_DATA_CORRUPTED),
 							 errmsg("invalid page in block %u of relation %s",
 									blockNum,
-									relpath(smgr->smgr_rnode, forkNum))));
+									relpath(smgr->smgr_rlocator, forkNum))));
 			}
 		}
 	}
@@ -1076,10 +1076,10 @@ ReadBuffer_common(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 		VacuumCostBalance += VacuumCostPageMiss;
 
 	TRACE_POSTGRESQL_BUFFER_READ_DONE(forkNum, blockNum,
-									  smgr->smgr_rnode.node.spcNode,
-									  smgr->smgr_rnode.node.dbNode,
-									  smgr->smgr_rnode.node.relNode,
-									  smgr->smgr_rnode.backend,
+									  smgr->smgr_rlocator.locator.spcOid,
+									  smgr->smgr_rlocator.locator.dbOid,
+									  smgr->smgr_rlocator.locator.relNumber,
+									  smgr->smgr_rlocator.backend,
 									  isExtend,
 									  found);
 
@@ -1124,7 +1124,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 	uint32		buf_state;
 
 	/* create a tag so we can lookup the buffer */
-	INIT_BUFFERTAG(newTag, smgr->smgr_rnode.node, forkNum, blockNum);
+	INIT_BUFFERTAG(newTag, smgr->smgr_rlocator.locator, forkNum, blockNum);
 
 	/* determine its hash code and partition lock ID */
 	newHash = BufTableHashCode(&newTag);
@@ -1255,9 +1255,9 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 
 				/* OK, do the I/O */
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_START(forkNum, blockNum,
-														  smgr->smgr_rnode.node.spcNode,
-														  smgr->smgr_rnode.node.dbNode,
-														  smgr->smgr_rnode.node.relNode);
+														  smgr->smgr_rlocator.locator.spcOid,
+														  smgr->smgr_rlocator.locator.dbOid,
+														  smgr->smgr_rlocator.locator.relNumber);
 
 				FlushBuffer(buf, NULL);
 				LWLockRelease(BufferDescriptorGetContentLock(buf));
@@ -1266,9 +1266,9 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 											  &buf->tag);
 
 				TRACE_POSTGRESQL_BUFFER_WRITE_DIRTY_DONE(forkNum, blockNum,
-														 smgr->smgr_rnode.node.spcNode,
-														 smgr->smgr_rnode.node.dbNode,
-														 smgr->smgr_rnode.node.relNode);
+														 smgr->smgr_rlocator.locator.spcOid,
+														 smgr->smgr_rlocator.locator.dbOid,
+														 smgr->smgr_rlocator.locator.relNumber);
 			}
 			else
 			{
@@ -1647,7 +1647,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 		{
 			bufHdr = GetLocalBufferDescriptor(-buffer - 1);
 			if (bufHdr->tag.blockNum == blockNum &&
-				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node) &&
+				RelFileLocatorEquals(bufHdr->tag.rlocator, relation->rd_locator) &&
 				bufHdr->tag.forkNum == forkNum)
 				return buffer;
 			ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
@@ -1658,7 +1658,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 			bufHdr = GetBufferDescriptor(buffer - 1);
 			/* we have pin, so it's ok to examine tag without spinlock */
 			if (bufHdr->tag.blockNum == blockNum &&
-				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node) &&
+				RelFileLocatorEquals(bufHdr->tag.rlocator, relation->rd_locator) &&
 				bufHdr->tag.forkNum == forkNum)
 				return buffer;
 			UnpinBuffer(bufHdr, true);
@@ -2000,8 +2000,8 @@ BufferSync(int flags)
 
 			item = &CkptBufferIds[num_to_scan++];
 			item->buf_id = buf_id;
-			item->tsId = bufHdr->tag.rnode.spcNode;
-			item->relNode = bufHdr->tag.rnode.relNode;
+			item->tsId = bufHdr->tag.rlocator.spcOid;
+			item->relNumber = bufHdr->tag.rlocator.relNumber;
 			item->forkNum = bufHdr->tag.forkNum;
 			item->blockNum = bufHdr->tag.blockNum;
 		}
@@ -2708,7 +2708,7 @@ PrintBufferLeakWarning(Buffer buffer)
 	}
 
 	/* theoretically we should lock the bufhdr here */
-	path = relpathbackend(buf->tag.rnode, backend, buf->tag.forkNum);
+	path = relpathbackend(buf->tag.rlocator, backend, buf->tag.forkNum);
 	buf_state = pg_atomic_read_u32(&buf->state);
 	elog(WARNING,
 		 "buffer refcount leak: [%03d] "
@@ -2769,11 +2769,11 @@ BufferGetBlockNumber(Buffer buffer)
 
 /*
  * BufferGetTag
- *		Returns the relfilenode, fork number and block number associated with
+ *		Returns the relfilelocator, fork number and block number associated with
  *		a buffer.
  */
 void
-BufferGetTag(Buffer buffer, RelFileNode *rnode, ForkNumber *forknum,
+BufferGetTag(Buffer buffer, RelFileLocator *rlocator, ForkNumber *forknum,
 			 BlockNumber *blknum)
 {
 	BufferDesc *bufHdr;
@@ -2787,7 +2787,7 @@ BufferGetTag(Buffer buffer, RelFileNode *rnode, ForkNumber *forknum,
 		bufHdr = GetBufferDescriptor(buffer - 1);
 
 	/* pinned, so OK to read tag without spinlock */
-	*rnode = bufHdr->tag.rnode;
+	*rlocator = bufHdr->tag.rlocator;
 	*forknum = bufHdr->tag.forkNum;
 	*blknum = bufHdr->tag.blockNum;
 }
@@ -2838,13 +2838,13 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 
 	/* Find smgr relation for buffer */
 	if (reln == NULL)
-		reln = smgropen(buf->tag.rnode, InvalidBackendId);
+		reln = smgropen(buf->tag.rlocator, InvalidBackendId);
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_START(buf->tag.forkNum,
 										buf->tag.blockNum,
-										reln->smgr_rnode.node.spcNode,
-										reln->smgr_rnode.node.dbNode,
-										reln->smgr_rnode.node.relNode);
+										reln->smgr_rlocator.locator.spcOid,
+										reln->smgr_rlocator.locator.dbOid,
+										reln->smgr_rlocator.locator.relNumber);
 
 	buf_state = LockBufHdr(buf);
 
@@ -2922,9 +2922,9 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 
 	TRACE_POSTGRESQL_BUFFER_FLUSH_DONE(buf->tag.forkNum,
 									   buf->tag.blockNum,
-									   reln->smgr_rnode.node.spcNode,
-									   reln->smgr_rnode.node.dbNode,
-									   reln->smgr_rnode.node.relNode);
+									   reln->smgr_rlocator.locator.spcOid,
+									   reln->smgr_rlocator.locator.dbOid,
+									   reln->smgr_rlocator.locator.relNumber);
 
 	/* Pop the error context stack */
 	error_context_stack = errcallback.previous;
@@ -3026,7 +3026,7 @@ BufferGetLSNAtomic(Buffer buffer)
 }
 
 /* ---------------------------------------------------------------------
- *		DropRelFileNodeBuffers
+ *		DropRelFileLocatorBuffers
  *
  *		This function removes from the buffer pool all the pages of the
  *		specified relation forks that have block numbers >= firstDelBlock.
@@ -3047,25 +3047,25 @@ BufferGetLSNAtomic(Buffer buffer)
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
-					   int nforks, BlockNumber *firstDelBlock)
+DropRelFileLocatorBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
+						  int nforks, BlockNumber *firstDelBlock)
 {
 	int			i;
 	int			j;
-	RelFileNodeBackend rnode;
+	RelFileLocatorBackend rlocator;
 	BlockNumber nForkBlock[MAX_FORKNUM];
 	uint64		nBlocksToInvalidate = 0;
 
-	rnode = smgr_reln->smgr_rnode;
+	rlocator = smgr_reln->smgr_rlocator;
 
 	/* If it's a local relation, it's localbuf.c's problem. */
-	if (RelFileNodeBackendIsTemp(rnode))
+	if (RelFileLocatorBackendIsTemp(rlocator))
 	{
-		if (rnode.backend == MyBackendId)
+		if (rlocator.backend == MyBackendId)
 		{
 			for (j = 0; j < nforks; j++)
-				DropRelFileNodeLocalBuffers(rnode.node, forkNum[j],
-											firstDelBlock[j]);
+				DropRelFileLocatorLocalBuffers(rlocator.locator, forkNum[j],
+											   firstDelBlock[j]);
 		}
 		return;
 	}
@@ -3115,8 +3115,8 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 		nBlocksToInvalidate < BUF_DROP_FULL_SCAN_THRESHOLD)
 	{
 		for (j = 0; j < nforks; j++)
-			FindAndDropRelFileNodeBuffers(rnode.node, forkNum[j],
-										  nForkBlock[j], firstDelBlock[j]);
+			FindAndDropRelFileLocatorBuffers(rlocator.locator, forkNum[j],
+											 nForkBlock[j], firstDelBlock[j]);
 		return;
 	}
 
@@ -3138,17 +3138,17 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 		 * false positives are safe because we'll recheck after getting the
 		 * buffer lock.
 		 *
-		 * We could check forkNum and blockNum as well as the rnode, but the
-		 * incremental win from doing so seems small.
+		 * We could check forkNum and blockNum as well as the rlocator, but
+		 * the incremental win from doing so seems small.
 		 */
-		if (!RelFileNodeEquals(bufHdr->tag.rnode, rnode.node))
+		if (!RelFileLocatorEquals(bufHdr->tag.rlocator, rlocator.locator))
 			continue;
 
 		buf_state = LockBufHdr(bufHdr);
 
 		for (j = 0; j < nforks; j++)
 		{
-			if (RelFileNodeEquals(bufHdr->tag.rnode, rnode.node) &&
+			if (RelFileLocatorEquals(bufHdr->tag.rlocator, rlocator.locator) &&
 				bufHdr->tag.forkNum == forkNum[j] &&
 				bufHdr->tag.blockNum >= firstDelBlock[j])
 			{
@@ -3162,16 +3162,16 @@ DropRelFileNodeBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 }
 
 /* ---------------------------------------------------------------------
- *		DropRelFileNodesAllBuffers
+ *		DropRelFileLocatorsAllBuffers
  *
  *		This function removes from the buffer pool all the pages of all
  *		forks of the specified relations.  It's equivalent to calling
- *		DropRelFileNodeBuffers once per fork per relation with
+ *		DropRelFileLocatorBuffers once per fork per relation with
  *		firstDelBlock = 0.
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
+DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 {
 	int			i;
 	int			j;
@@ -3179,22 +3179,22 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 	SMgrRelation *rels;
 	BlockNumber (*block)[MAX_FORKNUM + 1];
 	uint64		nBlocksToInvalidate = 0;
-	RelFileNode *nodes;
+	RelFileLocator *locators;
 	bool		cached = true;
 	bool		use_bsearch;
 
-	if (nnodes == 0)
+	if (nlocators == 0)
 		return;
 
-	rels = palloc(sizeof(SMgrRelation) * nnodes);	/* non-local relations */
+	rels = palloc(sizeof(SMgrRelation) * nlocators);	/* non-local relations */
 
 	/* If it's a local relation, it's localbuf.c's problem. */
-	for (i = 0; i < nnodes; i++)
+	for (i = 0; i < nlocators; i++)
 	{
-		if (RelFileNodeBackendIsTemp(smgr_reln[i]->smgr_rnode))
+		if (RelFileLocatorBackendIsTemp(smgr_reln[i]->smgr_rlocator))
 		{
-			if (smgr_reln[i]->smgr_rnode.backend == MyBackendId)
-				DropRelFileNodeAllLocalBuffers(smgr_reln[i]->smgr_rnode.node);
+			if (smgr_reln[i]->smgr_rlocator.backend == MyBackendId)
+				DropRelFileLocatorAllLocalBuffers(smgr_reln[i]->smgr_rlocator.locator);
 		}
 		else
 			rels[n++] = smgr_reln[i];
@@ -3219,7 +3219,7 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 
 	/*
 	 * We can avoid scanning the entire buffer pool if we know the exact size
-	 * of each of the given relation forks. See DropRelFileNodeBuffers.
+	 * of each of the given relation forks. See DropRelFileLocatorBuffers.
 	 */
 	for (i = 0; i < n && cached; i++)
 	{
@@ -3257,8 +3257,8 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 					continue;
 
 				/* drop all the buffers for a particular relation fork */
-				FindAndDropRelFileNodeBuffers(rels[i]->smgr_rnode.node,
-											  j, block[i][j], 0);
+				FindAndDropRelFileLocatorBuffers(rels[i]->smgr_rlocator.locator,
+												 j, block[i][j], 0);
 			}
 		}
 
@@ -3268,9 +3268,9 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 	}
 
 	pfree(block);
-	nodes = palloc(sizeof(RelFileNode) * n);	/* non-local relations */
+	locators = palloc(sizeof(RelFileLocator) * n);	/* non-local relations */
 	for (i = 0; i < n; i++)
-		nodes[i] = rels[i]->smgr_rnode.node;
+		locators[i] = rels[i]->smgr_rlocator.locator;
 
 	/*
 	 * For low number of relations to drop just use a simple walk through, to
@@ -3280,19 +3280,19 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 	 */
 	use_bsearch = n > RELS_BSEARCH_THRESHOLD;
 
-	/* sort the list of rnodes if necessary */
+	/* sort the list of rlocators if necessary */
 	if (use_bsearch)
-		pg_qsort(nodes, n, sizeof(RelFileNode), rnode_comparator);
+		pg_qsort(locators, n, sizeof(RelFileLocator), rlocator_comparator);
 
 	for (i = 0; i < NBuffers; i++)
 	{
-		RelFileNode *rnode = NULL;
+		RelFileLocator *rlocator = NULL;
 		BufferDesc *bufHdr = GetBufferDescriptor(i);
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
-		 * and saves some cycles.
+		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * safe and saves some cycles.
 		 */
 
 		if (!use_bsearch)
@@ -3301,37 +3301,37 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
 
 			for (j = 0; j < n; j++)
 			{
-				if (RelFileNodeEquals(bufHdr->tag.rnode, nodes[j]))
+				if (RelFileLocatorEquals(bufHdr->tag.rlocator, locators[j]))
 				{
-					rnode = &nodes[j];
+					rlocator = &locators[j];
 					break;
 				}
 			}
 		}
 		else
 		{
-			rnode = bsearch((const void *) &(bufHdr->tag.rnode),
-							nodes, n, sizeof(RelFileNode),
-							rnode_comparator);
+			rlocator = bsearch((const void *) &(bufHdr->tag.rlocator),
+							   locators, n, sizeof(RelFileLocator),
+							   rlocator_comparator);
 		}
 
-		/* buffer doesn't belong to any of the given relfilenodes; skip it */
-		if (rnode == NULL)
+		/* buffer doesn't belong to any of the given relfilelocators; skip it */
+		if (rlocator == NULL)
 			continue;
 
 		buf_state = LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, (*rnode)))
+		if (RelFileLocatorEquals(bufHdr->tag.rlocator, (*rlocator)))
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
 		else
 			UnlockBufHdr(bufHdr, buf_state);
 	}
 
-	pfree(nodes);
+	pfree(locators);
 	pfree(rels);
 }
 
 /* ---------------------------------------------------------------------
- *		FindAndDropRelFileNodeBuffers
+ *		FindAndDropRelFileLocatorBuffers
  *
  *		This function performs look up in BufMapping table and removes from the
  *		buffer pool all the pages of the specified relation fork that has block
@@ -3340,9 +3340,9 @@ DropRelFileNodesAllBuffers(SMgrRelation *smgr_reln, int nnodes)
  * --------------------------------------------------------------------
  */
 static void
-FindAndDropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
-							  BlockNumber nForkBlock,
-							  BlockNumber firstDelBlock)
+FindAndDropRelFileLocatorBuffers(RelFileLocator rlocator, ForkNumber forkNum,
+								 BlockNumber nForkBlock,
+								 BlockNumber firstDelBlock)
 {
 	BlockNumber curBlock;
 
@@ -3356,7 +3356,7 @@ FindAndDropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
 		uint32		buf_state;
 
 		/* create a tag so we can lookup the buffer */
-		INIT_BUFFERTAG(bufTag, rnode, forkNum, curBlock);
+		INIT_BUFFERTAG(bufTag, rlocator, forkNum, curBlock);
 
 		/* determine its hash code and partition lock ID */
 		bufHash = BufTableHashCode(&bufTag);
@@ -3380,7 +3380,7 @@ FindAndDropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
 		 */
 		buf_state = LockBufHdr(bufHdr);
 
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+		if (RelFileLocatorEquals(bufHdr->tag.rlocator, rlocator) &&
 			bufHdr->tag.forkNum == forkNum &&
 			bufHdr->tag.blockNum >= firstDelBlock)
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
@@ -3397,7 +3397,7 @@ FindAndDropRelFileNodeBuffers(RelFileNode rnode, ForkNumber forkNum,
  *		bothering to write them out first.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
  *		tree no longer exists.  Implementation is pretty similar to
- *		DropRelFileNodeBuffers() which is for destroying just one relation.
+ *		DropRelFileLocatorBuffers() which is for destroying just one relation.
  * --------------------------------------------------------------------
  */
 void
@@ -3416,14 +3416,14 @@ DropDatabaseBuffers(Oid dbid)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
-		 * and saves some cycles.
+		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * safe and saves some cycles.
 		 */
-		if (bufHdr->tag.rnode.dbNode != dbid)
+		if (bufHdr->tag.rlocator.dbOid != dbid)
 			continue;
 
 		buf_state = LockBufHdr(bufHdr);
-		if (bufHdr->tag.rnode.dbNode == dbid)
+		if (bufHdr->tag.rlocator.dbOid == dbid)
 			InvalidateBuffer(bufHdr);	/* releases spinlock */
 		else
 			UnlockBufHdr(bufHdr, buf_state);
@@ -3453,7 +3453,7 @@ PrintBufferDescs(void)
 			 "[%02d] (freeNext=%d, rel=%s, "
 			 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 			 i, buf->freeNext,
-			 relpathbackend(buf->tag.rnode, InvalidBackendId, buf->tag.forkNum),
+			 relpathbackend(buf->tag.rlocator, InvalidBackendId, buf->tag.forkNum),
 			 buf->tag.blockNum, buf->flags,
 			 buf->refcount, GetPrivateRefCount(b));
 	}
@@ -3478,7 +3478,7 @@ PrintPinnedBufs(void)
 				 "[%02d] (freeNext=%d, rel=%s, "
 				 "blockNum=%u, flags=0x%x, refcount=%u %d)",
 				 i, buf->freeNext,
-				 relpathperm(buf->tag.rnode, buf->tag.forkNum),
+				 relpathperm(buf->tag.rlocator, buf->tag.forkNum),
 				 buf->tag.blockNum, buf->flags,
 				 buf->refcount, GetPrivateRefCount(b));
 		}
@@ -3517,7 +3517,7 @@ FlushRelationBuffers(Relation rel)
 			uint32		buf_state;
 
 			bufHdr = GetLocalBufferDescriptor(i);
-			if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node) &&
+			if (RelFileLocatorEquals(bufHdr->tag.rlocator, rel->rd_locator) &&
 				((buf_state = pg_atomic_read_u32(&bufHdr->state)) &
 				 (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 			{
@@ -3561,16 +3561,16 @@ FlushRelationBuffers(Relation rel)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
-		 * and saves some cycles.
+		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * safe and saves some cycles.
 		 */
-		if (!RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node))
+		if (!RelFileLocatorEquals(bufHdr->tag.rlocator, rel->rd_locator))
 			continue;
 
 		ReservePrivateRefCountEntry();
 
 		buf_state = LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rel->rd_node) &&
+		if (RelFileLocatorEquals(bufHdr->tag.rlocator, rel->rd_locator) &&
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
@@ -3608,21 +3608,21 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 
 	for (i = 0; i < nrels; i++)
 	{
-		Assert(!RelFileNodeBackendIsTemp(smgrs[i]->smgr_rnode));
+		Assert(!RelFileLocatorBackendIsTemp(smgrs[i]->smgr_rlocator));
 
-		srels[i].rnode = smgrs[i]->smgr_rnode.node;
+		srels[i].rlocator = smgrs[i]->smgr_rlocator.locator;
 		srels[i].srel = smgrs[i];
 	}
 
 	/*
 	 * Save the bsearch overhead for low number of relations to sync. See
-	 * DropRelFileNodesAllBuffers for details.
+	 * DropRelFileLocatorsAllBuffers for details.
 	 */
 	use_bsearch = nrels > RELS_BSEARCH_THRESHOLD;
 
 	/* sort the list of SMgrRelations if necessary */
 	if (use_bsearch)
-		pg_qsort(srels, nrels, sizeof(SMgrSortArray), rnode_comparator);
+		pg_qsort(srels, nrels, sizeof(SMgrSortArray), rlocator_comparator);
 
 	/* Make sure we can handle the pin inside the loop */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
@@ -3634,8 +3634,8 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
-		 * and saves some cycles.
+		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * safe and saves some cycles.
 		 */
 
 		if (!use_bsearch)
@@ -3644,7 +3644,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 
 			for (j = 0; j < nrels; j++)
 			{
-				if (RelFileNodeEquals(bufHdr->tag.rnode, srels[j].rnode))
+				if (RelFileLocatorEquals(bufHdr->tag.rlocator, srels[j].rlocator))
 				{
 					srelent = &srels[j];
 					break;
@@ -3653,19 +3653,19 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		}
 		else
 		{
-			srelent = bsearch((const void *) &(bufHdr->tag.rnode),
+			srelent = bsearch((const void *) &(bufHdr->tag.rlocator),
 							  srels, nrels, sizeof(SMgrSortArray),
-							  rnode_comparator);
+							  rlocator_comparator);
 		}
 
-		/* buffer doesn't belong to any of the given relfilenodes; skip it */
+		/* buffer doesn't belong to any of the given relfilelocators; skip it */
 		if (srelent == NULL)
 			continue;
 
 		ReservePrivateRefCountEntry();
 
 		buf_state = LockBufHdr(bufHdr);
-		if (RelFileNodeEquals(bufHdr->tag.rnode, srelent->rnode) &&
+		if (RelFileLocatorEquals(bufHdr->tag.rlocator, srelent->rlocator) &&
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
@@ -3729,7 +3729,7 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
 		CHECK_FOR_INTERRUPTS();
 
 		/* Read block from source relation. */
-		srcBuf = ReadBufferWithoutRelcache(src->rd_node, forkNum, blkno,
+		srcBuf = ReadBufferWithoutRelcache(src->rd_locator, forkNum, blkno,
 										   RBM_NORMAL, bstrategy_src,
 										   permanent);
 		srcPage = BufferGetPage(srcBuf);
@@ -3740,7 +3740,7 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
 		}
 
 		/* Use P_NEW to extend the destination relation. */
-		dstBuf = ReadBufferWithoutRelcache(dst->rd_node, forkNum, P_NEW,
+		dstBuf = ReadBufferWithoutRelcache(dst->rd_locator, forkNum, P_NEW,
 										   RBM_NORMAL, bstrategy_dst,
 										   permanent);
 		LockBuffer(dstBuf, BUFFER_LOCK_EXCLUSIVE);
@@ -3775,8 +3775,8 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
  * --------------------------------------------------------------------
  */
 void
-CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
-						  bool permanent)
+CreateAndCopyRelationData(RelFileLocator src_rlocator,
+						  RelFileLocator dst_rlocator, bool permanent)
 {
 	Relation	src_rel;
 	Relation	dst_rel;
@@ -3793,8 +3793,8 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 	 * used the smgr layer directly, we would have to worry about
 	 * invalidations.
 	 */
-	src_rel = CreateFakeRelcacheEntry(src_rnode);
-	dst_rel = CreateFakeRelcacheEntry(dst_rnode);
+	src_rel = CreateFakeRelcacheEntry(src_rlocator);
+	dst_rel = CreateFakeRelcacheEntry(dst_rlocator);
 
 	/*
 	 * Create and copy all forks of the relation.  During create database we
@@ -3802,7 +3802,7 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 	 * directory.  Therefore, each individual relation doesn't need to be
 	 * registered for cleanup.
 	 */
-	RelationCreateStorage(dst_rnode, relpersistence, false);
+	RelationCreateStorage(dst_rlocator, relpersistence, false);
 
 	/* copy main fork. */
 	RelationCopyStorageUsingBuffer(src_rel, dst_rel, MAIN_FORKNUM, permanent);
@@ -3820,7 +3820,7 @@ CreateAndCopyRelationData(RelFileNode src_rnode, RelFileNode dst_rnode,
 			 * init fork of an unlogged relation.
 			 */
 			if (permanent || forkNum == INIT_FORKNUM)
-				log_smgrcreate(&dst_rnode, forkNum);
+				log_smgrcreate(&dst_rlocator, forkNum);
 
 			/* Copy a fork's data, block by block. */
 			RelationCopyStorageUsingBuffer(src_rel, dst_rel, forkNum,
@@ -3864,16 +3864,16 @@ FlushDatabaseBuffers(Oid dbid)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelFileNodeBuffers, an unlocked precheck should be safe
-		 * and saves some cycles.
+		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * safe and saves some cycles.
 		 */
-		if (bufHdr->tag.rnode.dbNode != dbid)
+		if (bufHdr->tag.rlocator.dbOid != dbid)
 			continue;
 
 		ReservePrivateRefCountEntry();
 
 		buf_state = LockBufHdr(bufHdr);
-		if (bufHdr->tag.rnode.dbNode == dbid &&
+		if (bufHdr->tag.rlocator.dbOid == dbid &&
 			(buf_state & (BM_VALID | BM_DIRTY)) == (BM_VALID | BM_DIRTY))
 		{
 			PinBuffer_Locked(bufHdr);
@@ -4034,7 +4034,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 			(pg_atomic_read_u32(&bufHdr->state) & BM_PERMANENT))
 		{
 			/*
-			 * If we must not write WAL, due to a relfilenode-specific
+			 * If we must not write WAL, due to a relfilelocator-specific
 			 * condition or being in recovery, don't dirty the page.  We can
 			 * set the hint, just not dirty the page as a result so the hint
 			 * is lost when we evict the page or shutdown.
@@ -4042,7 +4042,7 @@ MarkBufferDirtyHint(Buffer buffer, bool buffer_std)
 			 * See src/backend/storage/page/README for longer discussion.
 			 */
 			if (RecoveryInProgress() ||
-				RelFileNodeSkippingWAL(bufHdr->tag.rnode))
+				RelFileLocatorSkippingWAL(bufHdr->tag.rlocator))
 				return;
 
 			/*
@@ -4651,7 +4651,7 @@ AbortBufferIO(void)
 				/* Buffer is pinned, so we can read tag without spinlock */
 				char	   *path;
 
-				path = relpathperm(buf->tag.rnode, buf->tag.forkNum);
+				path = relpathperm(buf->tag.rlocator, buf->tag.forkNum);
 				ereport(WARNING,
 						(errcode(ERRCODE_IO_ERROR),
 						 errmsg("could not write block %u of %s",
@@ -4675,7 +4675,7 @@ shared_buffer_write_error_callback(void *arg)
 	/* Buffer is pinned, so we can read the tag without locking the spinlock */
 	if (bufHdr != NULL)
 	{
-		char	   *path = relpathperm(bufHdr->tag.rnode, bufHdr->tag.forkNum);
+		char	   *path = relpathperm(bufHdr->tag.rlocator, bufHdr->tag.forkNum);
 
 		errcontext("writing block %u of relation %s",
 				   bufHdr->tag.blockNum, path);
@@ -4693,7 +4693,7 @@ local_buffer_write_error_callback(void *arg)
 
 	if (bufHdr != NULL)
 	{
-		char	   *path = relpathbackend(bufHdr->tag.rnode, MyBackendId,
+		char	   *path = relpathbackend(bufHdr->tag.rlocator, MyBackendId,
 										  bufHdr->tag.forkNum);
 
 		errcontext("writing block %u of relation %s",
@@ -4703,27 +4703,27 @@ local_buffer_write_error_callback(void *arg)
 }
 
 /*
- * RelFileNode qsort/bsearch comparator; see RelFileNodeEquals.
+ * RelFileLocator qsort/bsearch comparator; see RelFileLocatorEquals.
  */
 static int
-rnode_comparator(const void *p1, const void *p2)
+rlocator_comparator(const void *p1, const void *p2)
 {
-	RelFileNode n1 = *(const RelFileNode *) p1;
-	RelFileNode n2 = *(const RelFileNode *) p2;
+	RelFileLocator n1 = *(const RelFileLocator *) p1;
+	RelFileLocator n2 = *(const RelFileLocator *) p2;
 
-	if (n1.relNode < n2.relNode)
+	if (n1.relNumber < n2.relNumber)
 		return -1;
-	else if (n1.relNode > n2.relNode)
+	else if (n1.relNumber > n2.relNumber)
 		return 1;
 
-	if (n1.dbNode < n2.dbNode)
+	if (n1.dbOid < n2.dbOid)
 		return -1;
-	else if (n1.dbNode > n2.dbNode)
+	else if (n1.dbOid > n2.dbOid)
 		return 1;
 
-	if (n1.spcNode < n2.spcNode)
+	if (n1.spcOid < n2.spcOid)
 		return -1;
-	else if (n1.spcNode > n2.spcNode)
+	else if (n1.spcOid > n2.spcOid)
 		return 1;
 	else
 		return 0;
@@ -4789,7 +4789,7 @@ buffertag_comparator(const BufferTag *ba, const BufferTag *bb)
 {
 	int			ret;
 
-	ret = rnode_comparator(&ba->rnode, &bb->rnode);
+	ret = rlocator_comparator(&ba->rlocator, &bb->rlocator);
 
 	if (ret != 0)
 		return ret;
@@ -4822,9 +4822,9 @@ ckpt_buforder_comparator(const CkptSortItem *a, const CkptSortItem *b)
 	else if (a->tsId > b->tsId)
 		return 1;
 	/* compare relation */
-	if (a->relNode < b->relNode)
+	if (a->relNumber < b->relNumber)
 		return -1;
-	else if (a->relNode > b->relNode)
+	else if (a->relNumber > b->relNumber)
 		return 1;
 	/* compare fork */
 	else if (a->forkNum < b->forkNum)
@@ -4960,7 +4960,7 @@ IssuePendingWritebacks(WritebackContext *context)
 			next = &context->pending_writebacks[i + ahead + 1];
 
 			/* different file, stop */
-			if (!RelFileNodeEquals(cur->tag.rnode, next->tag.rnode) ||
+			if (!RelFileLocatorEquals(cur->tag.rlocator, next->tag.rlocator) ||
 				cur->tag.forkNum != next->tag.forkNum)
 				break;
 
@@ -4979,7 +4979,7 @@ IssuePendingWritebacks(WritebackContext *context)
 		i += ahead;
 
 		/* and finally tell the kernel to write the data to storage */
-		reln = smgropen(tag.rnode, InvalidBackendId);
+		reln = smgropen(tag.rlocator, InvalidBackendId);
 		smgrwriteback(reln, tag.forkNum, tag.blockNum, nblocks);
 	}
 

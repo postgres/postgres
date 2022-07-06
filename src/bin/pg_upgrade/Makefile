@@ -19,7 +19,7 @@ OBJS = \
 	option.o \
 	parallel.o \
 	pg_upgrade.o \
-	relfilenode.o \
+	relfilenumber.o \
 	server.o \
 	tablespace.o \
 	util.o \

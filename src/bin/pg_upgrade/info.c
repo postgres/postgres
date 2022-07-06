@@ -190,9 +190,9 @@ create_rel_filename_map(const char *old_data, const char *new_data,
 		map->new_tablespace_suffix = new_cluster.tablespace_suffix;
 	}
 
-	/* DB oid and relfilenodes are preserved between old and new cluster */
+	/* DB oid and relfilenumbers are preserved between old and new cluster */
 	map->db_oid = old_db->db_oid;
-	map->relfilenode = old_rel->relfilenode;
+	map->relfilenumber = old_rel->relfilenumber;
 
 	/* used only for logging and error reporting, old/new are identical */
 	map->nspname = old_rel->nspname;
@@ -399,7 +399,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 				i_reloid,
 				i_indtable,
 				i_toastheap,
-				i_relfilenode,
+				i_relfilenumber,
 				i_reltablespace;
 	char		query[QUERY_ALLOC];
 	char	   *last_namespace = NULL,
@@ -495,7 +495,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 	i_toastheap = PQfnumber(res, "toastheap");
 	i_nspname = PQfnumber(res, "nspname");
 	i_relname = PQfnumber(res, "relname");
-	i_relfilenode = PQfnumber(res, "relfilenode");
+	i_relfilenumber = PQfnumber(res, "relfilenode");
 	i_reltablespace = PQfnumber(res, "reltablespace");
 	i_spclocation = PQfnumber(res, "spclocation");
 
@@ -527,7 +527,7 @@ get_rel_infos(ClusterInfo *cluster, DbInfo *dbinfo)
 		relname = PQgetvalue(res, relnum, i_relname);
 		curr->relname = pg_strdup(relname);
 
-		curr->relfilenode = atooid(PQgetvalue(res, relnum, i_relfilenode));
+		curr->relfilenumber = atooid(PQgetvalue(res, relnum, i_relfilenumber));
 		curr->tblsp_alloc = false;
 
 		/* Is the tablespace oid non-default? */

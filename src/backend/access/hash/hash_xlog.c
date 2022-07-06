@@ -999,10 +999,10 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 
-		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
-		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid, rnode);
+		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
+		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid, rlocator);
 	}
 
 	action = XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &buffer);

@@ -17,7 +17,7 @@
 #include "datatype/timestamp.h"
 #include "storage/lock.h"
 #include "storage/procsignal.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/standbydefs.h"
 
 /* User-settable GUC parameters */
@@ -30,9 +30,9 @@ extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);
 
 extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
-												RelFileNode node);
+												RelFileLocator locator);
 extern void ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXid,
-													   RelFileNode node);
+													   RelFileLocator locator);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 

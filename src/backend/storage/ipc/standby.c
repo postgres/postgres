@@ -442,7 +442,7 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 }
 
 void
-ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode node)
+ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileLocator locator)
 {
 	VirtualTransactionId *backends;
 
@@ -461,7 +461,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
 		return;
 
 	backends = GetConflictingVirtualXIDs(latestRemovedXid,
-										 node.dbNode);
+										 locator.dbOid);
 
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
 										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
@@ -475,7 +475,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileNode 
  */
 void
 ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXid,
-										   RelFileNode node)
+										   RelFileLocator locator)
 {
 	/*
 	 * ResolveRecoveryConflictWithSnapshot operates on 32-bit TransactionIds,
@@ -493,7 +493,7 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 		TransactionId latestRemovedXid;
 
 		latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
-		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, node);
+		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, locator);
 	}
 }
 

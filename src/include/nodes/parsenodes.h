@@ -3248,10 +3248,10 @@ typedef struct IndexStmt
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
-	Oid			oldNode;		/* relfilenode of existing storage, if any */
-	SubTransactionId oldCreateSubid;	/* rd_createSubid of oldNode */
-	SubTransactionId oldFirstRelfilenodeSubid;	/* rd_firstRelfilenodeSubid of
-												 * oldNode */
+	RelFileNumber oldNumber;	/* relfilenumber of existing storage, if any */
+	SubTransactionId oldCreateSubid;	/* rd_createSubid of oldNumber */
+	SubTransactionId oldFirstRelfilelocatorSubid;	/* rd_firstRelfilelocatorSubid
+													 * of oldNumber */
 	bool		unique;			/* is index unique? */
 	bool		nulls_not_distinct; /* null treatment for UNIQUE constraints */
 	bool		primary;		/* is index a primary key? */

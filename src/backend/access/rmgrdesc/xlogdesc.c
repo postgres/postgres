@@ -219,12 +219,12 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 
 	for (block_id = 0; block_id <= XLogRecMaxBlockId(record); block_id++)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 		ForkNumber	forknum;
 		BlockNumber blk;
 
 		if (!XLogRecGetBlockTagExtended(record, block_id,
-										&rnode, &forknum, &blk, NULL))
+										&rlocator, &forknum, &blk, NULL))
 			continue;
 
 		if (detailed_format)
@@ -239,7 +239,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 			appendStringInfo(buf,
 							 "blkref #%d: rel %u/%u/%u fork %s blk %u",
 							 block_id,
-							 rnode.spcNode, rnode.dbNode, rnode.relNode,
+							 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 							 forkNames[forknum],
 							 blk);
 
@@ -299,7 +299,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 				appendStringInfo(buf,
 								 ", blkref #%d: rel %u/%u/%u fork %s blk %u",
 								 block_id,
-								 rnode.spcNode, rnode.dbNode, rnode.relNode,
+								 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 								 forkNames[forknum],
 								 blk);
 			}
@@ -308,7 +308,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 				appendStringInfo(buf,
 								 ", blkref #%d: rel %u/%u/%u blk %u",
 								 block_id,
-								 rnode.spcNode, rnode.dbNode, rnode.relNode,
+								 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 								 blk);
 			}
 

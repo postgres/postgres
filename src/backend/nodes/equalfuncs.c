@@ -1768,9 +1768,9 @@ _equalIndexStmt(const IndexStmt *a, const IndexStmt *b)
 	COMPARE_NODE_FIELD(excludeOpNames);
 	COMPARE_STRING_FIELD(idxcomment);
 	COMPARE_SCALAR_FIELD(indexOid);
-	COMPARE_SCALAR_FIELD(oldNode);
+	COMPARE_SCALAR_FIELD(oldNumber);
 	COMPARE_SCALAR_FIELD(oldCreateSubid);
-	COMPARE_SCALAR_FIELD(oldFirstRelfilenodeSubid);
+	COMPARE_SCALAR_FIELD(oldFirstRelfilelocatorSubid);
 	COMPARE_SCALAR_FIELD(unique);
 	COMPARE_SCALAR_FIELD(nulls_not_distinct);
 	COMPARE_SCALAR_FIELD(primary);
