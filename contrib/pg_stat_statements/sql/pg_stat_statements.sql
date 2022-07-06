@@ -122,7 +122,7 @@ SET pg_stat_statements.track_utility = FALSE;
 SELECT query, calls, rows,
 wal_bytes > 0 as wal_bytes_generated,
 wal_records > 0 as wal_records_generated,
-wal_records = rows as wal_records_as_rows
+wal_records >= rows as wal_records_ge_rows
 FROM pg_stat_statements ORDER BY query COLLATE "C";
 
 --

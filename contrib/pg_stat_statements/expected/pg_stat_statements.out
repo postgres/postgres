@@ -259,18 +259,18 @@ SET pg_stat_statements.track_utility = FALSE;
 SELECT query, calls, rows,
 wal_bytes > 0 as wal_bytes_generated,
 wal_records > 0 as wal_records_generated,
-wal_records = rows as wal_records_as_rows
+wal_records >= rows as wal_records_ge_rows
 FROM pg_stat_statements ORDER BY query COLLATE "C";
-                           query                           | calls | rows | wal_bytes_generated | wal_records_generated | wal_records_as_rows 
+                           query                           | calls | rows | wal_bytes_generated | wal_records_generated | wal_records_ge_rows 
 -----------------------------------------------------------+-------+------+---------------------+-----------------------+---------------------
  DELETE FROM pgss_test WHERE a > $1                        |     1 |    1 | t                   | t                     | t
- DROP TABLE pgss_test                                      |     1 |    0 | t                   | t                     | f
+ DROP TABLE pgss_test                                      |     1 |    0 | t                   | t                     | t
  INSERT INTO pgss_test VALUES(generate_series($1, $2), $3) |     1 |   10 | t                   | t                     | t
  SELECT pg_stat_statements_reset()                         |     1 |    1 | f                   | f                     | f
  SELECT query, calls, rows,                               +|     0 |    0 | f                   | f                     | t
  wal_bytes > $1 as wal_bytes_generated,                   +|       |      |                     |                       | 
  wal_records > $2 as wal_records_generated,               +|       |      |                     |                       | 
- wal_records = rows as wal_records_as_rows                +|       |      |                     |                       | 
+ wal_records >= rows as wal_records_ge_rows               +|       |      |                     |                       | 
  FROM pg_stat_statements ORDER BY query COLLATE "C"        |       |      |                     |                       | 
  SET pg_stat_statements.track_utility = FALSE              |     1 |    0 | f                   | f                     | t
  UPDATE pgss_test SET b = $1 WHERE a > $2                  |     1 |    3 | t                   | t                     | t
