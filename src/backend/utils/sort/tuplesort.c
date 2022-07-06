@@ -1884,12 +1884,13 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 							  ItemPointer self, Datum *values,
 							  bool *isnull)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
+	MemoryContext oldcontext;
 	SortTuple	stup;
 	Datum		original;
 	IndexTuple	tuple;
 
-	stup.tuple = index_form_tuple(RelationGetDescr(rel), values, isnull);
+	stup.tuple = index_form_tuple_context(RelationGetDescr(rel), values,
+										  isnull, state->tuplecontext);
 	tuple = ((IndexTuple) stup.tuple);
 	tuple->t_tid = *self;
 	USEMEM(state, GetMemoryChunkSpace(stup.tuple));
@@ -1899,7 +1900,7 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 							 RelationGetDescr(state->indexRel),
 							 &stup.isnull1);
 
-	MemoryContextSwitchTo(state->sortcontext);
+	oldcontext = MemoryContextSwitchTo(state->sortcontext);
 
 	if (!state->sortKeys || !state->sortKeys->abbrev_converter || stup.isnull1)
 	{

@@ -33,20 +33,39 @@
  * ----------------------------------------------------------------
  */
 
+ /* ----------------
+  *		index_form_tuple
+  *
+  *		As index_form_tuple_context, but allocates the returned tuple in the
+  *		CurrentMemoryContext.
+  * ----------------
+  */
+IndexTuple
+index_form_tuple(TupleDesc tupleDescriptor,
+				 Datum *values,
+				 bool *isnull)
+{
+	return index_form_tuple_context(tupleDescriptor, values, isnull,
+									CurrentMemoryContext);
+}
+
 /* ----------------
- *		index_form_tuple
+ *		index_form_tuple_context
  *
  *		This shouldn't leak any memory; otherwise, callers such as
  *		tuplesort_putindextuplevalues() will be very unhappy.
  *
  *		This shouldn't perform external table access provided caller
  *		does not pass values that are stored EXTERNAL.
+ *
+ *		Allocates returned tuple in provided 'context'.
  * ----------------
  */
 IndexTuple
-index_form_tuple(TupleDesc tupleDescriptor,
-				 Datum *values,
-				 bool *isnull)
+index_form_tuple_context(TupleDesc tupleDescriptor,
+						 Datum *values,
+						 bool *isnull,
+						 MemoryContext context)
 {
 	char	   *tp;				/* tuple pointer */
 	IndexTuple	tuple;			/* return tuple */
@@ -143,7 +162,7 @@ index_form_tuple(TupleDesc tupleDescriptor,
 	size = hoff + data_size;
 	size = MAXALIGN(size);		/* be conservative */
 
-	tp = (char *) palloc0(size);
+	tp = (char *) MemoryContextAllocZero(context, size);
 	tuple = (IndexTuple) tp;
 
 	heap_fill_tuple(tupleDescriptor,
