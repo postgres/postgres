@@ -396,7 +396,7 @@ endif # PORTNAME == cygwin || PORTNAME == win32
 	echo >>$@
 	echo 'Name: lib$(NAME)' >>$@
 	echo 'Description: PostgreSQL lib$(NAME) library' >>$@
-	echo 'Url: $(PACKAGE_URL)' >>$@
+	echo 'URL: $(PACKAGE_URL)' >>$@
 	echo 'Version: $(VERSION)' >>$@
 	echo 'Requires: ' >>$@
 	echo 'Requires.private: $(PKG_CONFIG_REQUIRES_PRIVATE)' >>$@
