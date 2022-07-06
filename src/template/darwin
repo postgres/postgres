@@ -55,3 +55,5 @@ case $host_os in
     USE_SYSV_SEMAPHORES=1
     ;;
 esac
+
+DLSUFFIX=".dylib"
