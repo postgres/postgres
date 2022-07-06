@@ -147,9 +147,7 @@ pgstat_get_slru_index(const char *name)
  * Flush out locally pending SLRU stats entries
  *
  * If nowait is true, this function returns false on lock failure. Otherwise
- * this function always returns true. Writer processes are mutually excluded
- * using LWLock, but readers are expected to use change-count protocol to avoid
- * interference with writers.
+ * this function always returns true.
  *
  * If nowait is true, this function returns true if the lock could not be
  * acquired. Otherwise return false.
