@@ -485,10 +485,10 @@ _readMergeWhenClause(void)
 
 	READ_BOOL_FIELD(matched);
 	READ_ENUM_FIELD(commandType, CmdType);
+	READ_ENUM_FIELD(override, OverridingKind);
 	READ_NODE_FIELD(condition);
 	READ_NODE_FIELD(targetList);
 	READ_NODE_FIELD(values);
-	READ_ENUM_FIELD(override, OverridingKind);
 
 	READ_DONE();
 }
