@@ -19,12 +19,14 @@
 #include "common/pg_prng.h"
 #include "executor/instrument.h"
 #include "jit/jit.h"
+#include "nodes/params.h"
 #include "utils/guc.h"
 
 PG_MODULE_MAGIC;
 
 /* GUC variables */
 static int	auto_explain_log_min_duration = -1; /* msec or -1 */
+static int	auto_explain_log_parameter_max_length = -1; /* bytes or -1 */
 static bool auto_explain_log_analyze = false;
 static bool auto_explain_log_verbose = false;
 static bool auto_explain_log_buffers = false;
@@ -101,6 +103,18 @@ _PG_init(void)
 							-1, INT_MAX,
 							PGC_SUSET,
 							GUC_UNIT_MS,
+							NULL,
+							NULL,
+							NULL);
+
+	DefineCustomIntVariable("auto_explain.log_parameter_max_length",
+							"Sets the maximum length of query parameters to log.",
+							"Zero logs no query parameters, -1 logs them in full.",
+							&auto_explain_log_parameter_max_length,
+							-1,
+							-1, INT_MAX,
+							PGC_SUSET,
+							GUC_UNIT_BYTE,
 							NULL,
 							NULL,
 							NULL);
@@ -389,6 +403,7 @@ explain_ExecutorEnd(QueryDesc *queryDesc)
 
 			ExplainBeginOutput(es);
 			ExplainQueryText(es, queryDesc);
+			ExplainQueryParameters(es, queryDesc->params, auto_explain_log_parameter_max_length);
 			ExplainPrintPlan(es, queryDesc);
 			if (es->analyze && auto_explain_log_triggers)
 				ExplainPrintTriggers(es, queryDesc);

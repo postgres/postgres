@@ -973,6 +973,28 @@ ExplainQueryText(ExplainState *es, QueryDesc *queryDesc)
 }
 
 /*
+ * ExplainQueryParameters -
+ *	  add a "Query Parameters" node that describes the parameters of the query
+ *
+ * The caller should have set up the options fields of *es, as well as
+ * initializing the output buffer es->str.
+ *
+ */
+void
+ExplainQueryParameters(ExplainState *es, ParamListInfo params, int maxlen)
+{
+	char	   *str;
+
+	/* This check is consistent with errdetail_params() */
+	if (params == NULL || params->numParams <= 0 || maxlen == 0)
+		return;
+
+	str = BuildParamLogString(params, NULL, maxlen);
+	if (str && str[0] != '\0')
+		ExplainPropertyText("Query Parameters", str, es);
+}
+
+/*
  * report_triggers -
  *		report execution stats for a single relation's triggers
  */

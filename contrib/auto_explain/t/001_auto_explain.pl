@@ -60,6 +60,11 @@ like(
 	qr/Query Text: SELECT \* FROM pg_class;/,
 	"query text logged, text mode");
 
+unlike(
+	$log_contents,
+	qr/Query Parameters:/,
+	"no query parameters logged when none, text mode");
+
 like(
 	$log_contents,
 	qr/Seq Scan on pg_class/,
@@ -77,8 +82,46 @@ like(
 
 like(
 	$log_contents,
+	qr/Query Parameters: \$1 = 'int4pl'/,
+	"query parameters logged, text mode");
+
+like(
+	$log_contents,
 	qr/Index Scan using pg_proc_proname_args_nsp_index on pg_proc/,
 	"index scan logged, text mode");
+
+
+# Prepared query with truncated parameters.
+$log_contents = query_log(
+	$node,
+	q{PREPARE get_type(name) AS SELECT * FROM pg_type WHERE typname = $1; EXECUTE get_type('float8');},
+	{ "auto_explain.log_parameter_max_length" => 3 });
+
+like(
+	$log_contents,
+	qr/Query Text: PREPARE get_type\(name\) AS SELECT \* FROM pg_type WHERE typname = \$1;/,
+	"prepared query text logged, text mode");
+
+like(
+	$log_contents,
+	qr/Query Parameters: \$1 = 'flo\.\.\.'/,
+	"query parameters truncated, text mode");
+
+# Prepared query with parameter logging disabled.
+$log_contents = query_log(
+	$node,
+	q{PREPARE get_type(name) AS SELECT * FROM pg_type WHERE typname = $1; EXECUTE get_type('float8');},
+	{ "auto_explain.log_parameter_max_length" => 0 });
+
+like(
+	$log_contents,
+	qr/Query Text: PREPARE get_type\(name\) AS SELECT \* FROM pg_type WHERE typname = \$1;/,
+	"prepared query text logged, text mode");
+
+unlike(
+	$log_contents,
+	qr/Query Parameters:/,
+	"query parameters not logged when disabled, text mode");
 
 # JSON format.
 $log_contents = query_log(
@@ -90,6 +133,11 @@ like(
 	$log_contents,
 	qr/"Query Text": "SELECT \* FROM pg_proc;"/,
 	"query text logged, json mode");
+
+unlike(
+	$log_contents,
+	qr/"Query Parameters":/,
+	"query parameters not logged when none, json mode");
 
 like(
 	$log_contents,
