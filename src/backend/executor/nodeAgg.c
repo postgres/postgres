@@ -3388,7 +3388,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		if (phaseidx > 0)
 		{
 			aggnode = list_nth_node(Agg, node->chain, phaseidx - 1);
-			sortnode = castNode(Sort, aggnode->plan.lefttree);
+			sortnode = castNode(Sort, outerPlan(aggnode));
 		}
 		else
 		{

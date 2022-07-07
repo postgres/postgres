@@ -396,7 +396,7 @@ search_plan_tree(PlanState *node, Oid table_oid,
 			 */
 		case T_ResultState:
 		case T_LimitState:
-			result = search_plan_tree(node->lefttree,
+			result = search_plan_tree(outerPlanState(node),
 									  table_oid,
 									  pending_rescan);
 			break;

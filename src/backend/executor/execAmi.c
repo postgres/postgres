@@ -117,11 +117,11 @@ ExecReScan(PlanState *node)
 			if (splan->plan->extParam != NULL)
 				UpdateChangedParamSet(splan, node->chgParam);
 		}
-		/* Well. Now set chgParam for left/right trees. */
-		if (node->lefttree != NULL)
-			UpdateChangedParamSet(node->lefttree, node->chgParam);
-		if (node->righttree != NULL)
-			UpdateChangedParamSet(node->righttree, node->chgParam);
+		/* Well. Now set chgParam for child trees. */
+		if (outerPlanState(node) != NULL)
+			UpdateChangedParamSet(outerPlanState(node), node->chgParam);
+		if (innerPlanState(node) != NULL)
+			UpdateChangedParamSet(innerPlanState(node), node->chgParam);
 	}
 
 	/* Call expression callbacks */
