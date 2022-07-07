@@ -9,8 +9,6 @@ use warnings;
 
 use PostgreSQL::Test::Utils;
 use PostgreSQL::Test::Cluster;
-
-use File::Path qw(rmtree);
 use Test::More;
 use Time::HiRes qw(usleep);
 
@@ -429,7 +427,7 @@ sub advance_wal
 {
 	my ($node, $n) = @_;
 
-	# Advance by $n segments (= (16 * $n) MB) on primary
+	# Advance by $n segments (= (wal_segment_size * $n) bytes) on primary.
 	for (my $i = 0; $i < $n; $i++)
 	{
 		$node->safe_psql('postgres',
