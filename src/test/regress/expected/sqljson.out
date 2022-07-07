@@ -302,12 +302,22 @@ SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING bytea);
  \x7b20226122203a2031207d20
 (1 row)
 
+SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING varchar);
+ json_serialize 
+----------------
+ { "a" : 1 } 
+(1 row)
+
 SELECT pg_typeof(JSON_SERIALIZE(NULL));
  pg_typeof 
 -----------
  text
 (1 row)
 
+-- only string types or bytea allowed
+SELECT JSON_SERIALIZE('{ "a" : 1 } ' RETURNING jsonb);
+ERROR:  cannot use RETURNING type jsonb in JSON_SERIALIZE
+HINT:  Try returning a string type or bytea
 EXPLAIN (VERBOSE, COSTS OFF) SELECT JSON_SERIALIZE('{}');
                      QUERY PLAN                      
 -----------------------------------------------------
