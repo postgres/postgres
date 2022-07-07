@@ -3245,11 +3245,28 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			foreach(rt, qry->rtable)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+				char	   *rtename;
 
 				++i;
 				if (!rte->inFromCl)
 					continue;
-				if (strcmp(rte->eref->aliasname, thisrel->relname) == 0)
+
+				/*
+				 * A join RTE without an alias is not visible as a relation
+				 * name and needs to be skipped (otherwise it might hide a
+				 * base relation with the same name), except if it has a USING
+				 * alias, which *is* visible.
+				 */
+				if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
+				{
+					if (rte->join_using_alias == NULL)
+						continue;
+					rtename = rte->join_using_alias->aliasname;
+				}
+				else
+					rtename = rte->eref->aliasname;
+
+				if (strcmp(rtename, thisrel->relname) == 0)
 				{
 					switch (rte->rtekind)
 					{
