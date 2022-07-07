@@ -11,24 +11,13 @@
 
 /*
  * Make sure _WIN32_WINNT has the minimum required value.
- * Leave a higher value in place. When building with at least Visual
- * Studio 2015 the minimum requirement is Windows Vista (0x0600) to
- * get support for GetLocaleInfoEx() with locales. For everything else
- * the minimum version is Windows XP (0x0501).
+ * Leave a higher value in place.  The minimum requirement is Windows 10.
  */
-#if defined(_MSC_VER) && _MSC_VER >= 1900
-#define MIN_WINNT 0x0600
-#else
-#define MIN_WINNT 0x0501
-#endif
-
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < MIN_WINNT
+#ifdef _WIN32_WINNT
 #undef _WIN32_WINNT
 #endif
 
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT MIN_WINNT
-#endif
+#define _WIN32_WINNT 0x0A00
 
 /*
  * We need to prevent <crtdefs.h> from defining a symbol conflicting with

@@ -1719,7 +1719,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 		else
 			ereport(ERROR,
 					(errmsg("could not load locale \"%s\"", collcollate)));
-#elif defined(WIN32) && _WIN32_WINNT >= 0x0600
+#elif defined(WIN32)
 		/*
 		 * If we are targeting Windows Vista and above, we can ask for a name
 		 * given a collation name (earlier versions required a location code
@@ -1747,7 +1747,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 							collcollate,
 							GetLastError())));
 		}
-		collversion = psprintf("%d.%d,%d.%d",
+		collversion = psprintf("%ld.%ld,%ld.%ld",
 							   (version.dwNLSVersion >> 8) & 0xFFFF,
 							   version.dwNLSVersion & 0xFF,
 							   (version.dwDefinedVersion >> 8) & 0xFFFF,

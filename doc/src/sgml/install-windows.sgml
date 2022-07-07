@@ -82,11 +82,7 @@
   as well as standalone Windows SDK releases 8.1a to 10.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 8.1a to 10 or
-  <productname>Visual Studio 2013</productname> and above. Compilation
-  is supported down to <productname>Windows 7</productname> and
-  <productname>Windows Server 2008 R2 SP1</productname> when building with
-  <productname>Visual Studio 2013</productname> to
-  <productname>Visual Studio 2022</productname>.
+  <productname>Visual Studio 2013</productname> and above.
    <!--
        For 2013 requirements:
        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
@@ -358,8 +354,7 @@ $ENV{MSBFLAGS}="/m";
   <title>Special Considerations for 64-Bit Windows</title>
 
   <para>
-   PostgreSQL will only build for the x64 architecture on 64-bit Windows, there
-   is no support for Itanium processors.
+   PostgreSQL will only build for the x64 architecture on 64-bit Windows.
   </para>
 
   <para>

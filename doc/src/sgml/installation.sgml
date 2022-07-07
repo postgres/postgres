@@ -2136,7 +2136,7 @@ export MANPATH
 
   <para>
    <productname>PostgreSQL</productname> can be expected to work on these operating
-   systems: Linux (all recent distributions), Windows (XP and later),
+   systems: Linux (all recent distributions), Windows (10 and later),
    FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
@@ -2323,16 +2323,15 @@ ERROR:  could not load library "/opt/dbs/pgsql/lib/plperl.so": Bad address
      <listitem>
       <para>
        The <command>adduser</command> command is not supported; use
-       the appropriate user management application on Windows NT,
-       2000, or XP.  Otherwise, skip this step.
+       the appropriate user management application on Windows.
+       Otherwise, skip this step.
       </para>
      </listitem>
 
      <listitem>
       <para>
        The <command>su</command> command is not supported; use ssh to
-       simulate su on Windows NT, 2000, or XP. Otherwise, skip this
-       step.
+       simulate su on Windows. Otherwise, skip this step.
       </para>
      </listitem>
 
