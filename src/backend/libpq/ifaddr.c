@@ -333,17 +333,11 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 #endif
 
 /*
- * SIOCGIFCONF does not return IPv6 addresses on Solaris
- * and HP/UX. So we prefer SIOCGLIFCONF if it's available.
- *
- * On HP/UX, however, it *only* returns IPv6 addresses,
- * and the structs are named slightly differently too.
- * We'd have to do another call with SIOCGIFCONF to get the
- * IPv4 addresses as well. We don't currently bother, just
- * fall back to SIOCGIFCONF on HP/UX.
+ * SIOCGIFCONF does not return IPv6 addresses on Solaris.
+ * So we prefer SIOCGLIFCONF if it's available.
  */
 
-#if defined(SIOCGLIFCONF) && !defined(__hpux)
+#if defined(SIOCGLIFCONF)
 
 /*
  * Enumerate the system's network interface addresses and call the callback

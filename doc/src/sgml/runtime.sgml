@@ -1019,25 +1019,6 @@ psql: error: connection to server on socket "/tmp/.s.PGSQL.5432" failed: No such
      </varlistentry>
 
      <varlistentry>
-      <term><systemitem class="osname">HP-UX</systemitem>
-      <indexterm><primary>HP-UX</primary><secondary>IPC configuration</secondary></indexterm>
-      </term>
-      <listitem>
-       <para>
-        The default settings tend to suffice for normal installations.
-       </para>
-       <para>
-        <acronym>IPC</acronym> parameters can be set in the <application>System
-        Administration Manager</application> (<acronym>SAM</acronym>) under
-        <menuchoice><guimenu>Kernel
-        Configuration</guimenu><guimenuitem>Configurable Parameters</guimenuitem></menuchoice>. Choose
-        <guibutton>Create A New Kernel</guibutton> when you're done.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
       <term><systemitem class="osname">Linux</systemitem>
       <indexterm><primary>Linux</primary><secondary>IPC configuration</secondary></indexterm>
       </term>

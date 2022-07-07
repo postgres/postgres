@@ -12160,7 +12160,7 @@ DPPP_(my_newCONSTSUB)(HV *stash, const char *name, SV *sv)
         STMT_START {                                                        \
             ASSUME(!"UNREACHABLE"); __builtin_unreachable();                \
         } STMT_END
-#  elif ! defined(__GNUC__) && (defined(__sun) || defined(__hpux))
+#  elif ! defined(__GNUC__) && defined(__sun)
 #    define NOT_REACHED
 #  else
 #    define NOT_REACHED  ASSUME(!"UNREACHABLE")

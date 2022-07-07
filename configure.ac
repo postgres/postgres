@@ -67,7 +67,6 @@ case $host_os in
   darwin*) template=darwin ;;
 dragonfly*) template=netbsd ;;
  freebsd*) template=freebsd ;;
-    hpux*) template=hpux ;;
  linux*|gnu*|k*bsd*-gnu)
            template=linux ;;
    mingw*) template=win32 ;;
@@ -570,11 +569,6 @@ elif test "$PORTNAME" = "aix"; then
   PGAC_PROG_CXX_CFLAGS_OPT([-qnoansialias])
   PGAC_PROG_CC_CFLAGS_OPT([-qlonglong])
   PGAC_PROG_CXX_CFLAGS_OPT([-qlonglong])
-elif test "$PORTNAME" = "hpux"; then
-  # On some versions of HP-UX, libm functions do not set errno by default.
-  # Fix that by using +Olibmerrno if the compiler recognizes it.
-  PGAC_PROG_CC_CFLAGS_OPT([+Olibmerrno])
-  PGAC_PROG_CXX_CFLAGS_OPT([+Olibmerrno])
 fi
 
 AC_SUBST(CFLAGS_UNROLL_LOOPS)
@@ -1452,7 +1446,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/personality.h
 	sys/prctl.h
 	sys/procctl.h
-	sys/pstat.h
 	sys/resource.h
 	sys/select.h
 	sys/sem.h
@@ -1801,7 +1794,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	poll
 	posix_fallocate
 	ppoll
-	pstat
 	pthread_is_threaded_np
 	readlink
 	readv

@@ -175,39 +175,6 @@ ifeq ($(PORTNAME), netbsd)
   endif
 endif
 
-ifeq ($(PORTNAME), hpux)
-  ifdef SO_MAJOR_VERSION
-    shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-  endif
-  ifeq ($(with_gnu_ld), yes)
-    LINK.shared		= $(CC) -shared -Wl,-Bsymbolic
-    ifdef soname
-      LINK.shared	+= -Wl,-h -Wl,$(soname)
-    endif
-  else
-    LINK.shared		= $(LD) -b -Bsymbolic
-    ifdef soname
-      LINK.shared	+= +h $(soname)
-    endif
-    # can't use the CC-syntax rpath pattern here, so instead:
-    rpath =
-    ifeq ($(enable_rpath), yes)
-      LINK.shared	+= +s +b '$(rpathdir)'
-    endif
-    # On HPUX platforms, gcc is usually configured to search for libraries
-    # in /usr/local/lib, but ld won't do so.  Add an explicit -L switch so
-    # ld can find the same libraries gcc does.  Make sure it goes after any
-    # -L switches provided explicitly.
-    ifeq ($(GCC), yes)
-      SHLIB_LINK	+= -L/usr/local/lib
-    endif
-  endif
-  # And we need to link with libgcc, too
-  ifeq ($(GCC), yes)
-    SHLIB_LINK		+= `$(CC) $(LDFLAGS) -print-libgcc-file-name`
-  endif
-endif
-
 ifeq ($(PORTNAME), linux)
   LINK.shared		= $(COMPILER) -shared
   ifdef soname

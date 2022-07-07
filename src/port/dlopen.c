@@ -15,55 +15,7 @@
 
 #include "c.h"
 
-#if defined(__hpux)
-
-/* System includes */
-#include <a.out.h>
-#include <dl.h>
-
-void *
-dlopen(const char *file, int mode)
-{
-	int			flags = 0;
-
-	if (mode & RTLD_NOW)
-		flags |= BIND_IMMEDIATE;
-#ifdef NOT_USED
-	if (mode & RTLD_LAZY)
-		flags |= BIND_DEFERRED;
-#endif
-
-	return shl_load(file, flags | BIND_VERBOSE, 0L);
-}
-
-void *
-dlsym(void *handle, const char *symbol)
-{
-	void	   *value;
-
-	if (shl_findsym((shl_t *) & handle, symbol, TYPE_PROCEDURE, &value) == -1)
-		return NULL;
-	return value;
-}
-
-int
-dlclose(void *handle)
-{
-	return shl_unload((shl_t) handle);
-}
-
-char *
-dlerror(void)
-{
-	static char errmsg[] = "shl_load failed";
-
-	if (errno)
-		return strerror(errno);
-
-	return errmsg;
-}
-
-#elif defined(WIN32)
+#if defined(WIN32)
 
 static char last_dyn_error[512];
 

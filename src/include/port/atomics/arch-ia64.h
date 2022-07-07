@@ -21,8 +21,6 @@
 #	define pg_memory_barrier_impl()		__mf()
 #elif defined(__GNUC__)
 #	define pg_memory_barrier_impl()		__asm__ __volatile__ ("mf" : : : "memory")
-#elif defined(__hpux)
-#	define pg_memory_barrier_impl()		_Asm_mf()
 #endif
 
 /* per architecture manual doubleword accesses have single copy atomicity */

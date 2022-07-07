@@ -93,7 +93,7 @@ typedef struct pg_atomic_flag
 typedef struct pg_atomic_uint32
 {
 	/* Check pg_atomic_flag's definition above for an explanation */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC */
 	int			sema[4];
 #else
 	int			sema;
@@ -111,7 +111,7 @@ typedef struct pg_atomic_uint32
 typedef struct pg_atomic_uint64
 {
 	/* Check pg_atomic_flag's definition above for an explanation */
-#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC, GCC and HP compilers */
+#if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC */
 	int			sema[4];
 #else
 	int			sema;

@@ -689,13 +689,13 @@ testname:output:platformpattern=comparisonfilename
     Therefore, we provide a variant comparison file,
     <filename>float4-misrounded-input.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
-    <quote>failure</quote> message on <systemitem>HP-UX 10</systemitem>
+    <quote>failure</quote> message on <systemitem>Cygwin</systemitem>
     platforms, <filename>resultmap</filename> includes:
 <programlisting>
-float4:out:hppa.*-hp-hpux10.*=float4-misrounded-input.out
+float4:out:.*-.*-cygwin.*=float4-misrounded-input.out
 </programlisting>
     which will trigger on any machine where the output of
-    <command>config.guess</command> matches <literal>hppa.*-hp-hpux10.*</literal>.
+    <command>config.guess</command> matches <literal>.*-.*-cygwin.*</literal>.
     Other lines in <filename>resultmap</filename> select the variant comparison
     file for other platforms where it's appropriate.
    </para>

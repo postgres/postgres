@@ -59,7 +59,6 @@ do
 	test "$f" = src/include/port/cygwin.h && continue
 	test "$f" = src/include/port/darwin.h && continue
 	test "$f" = src/include/port/freebsd.h && continue
-	test "$f" = src/include/port/hpux.h && continue
 	test "$f" = src/include/port/linux.h && continue
 	test "$f" = src/include/port/netbsd.h && continue
 	test "$f" = src/include/port/openbsd.h && continue

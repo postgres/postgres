@@ -1974,7 +1974,6 @@ build-postgresql:
     shared libraries.  The systems on which this is
     <emphasis>not</emphasis> necessary include
     <systemitem class="osname">FreeBSD</systemitem>,
-    <systemitem class="osname">HP-UX</systemitem>,
     <systemitem class="osname">Linux</systemitem>,
     <systemitem class="osname">NetBSD</systemitem>, <systemitem
     class="osname">OpenBSD</systemitem>, and
@@ -2137,7 +2136,7 @@ export MANPATH
   <para>
    <productname>PostgreSQL</productname> can be expected to work on these operating
    systems: Linux (all recent distributions), Windows (10 and later),
-   FreeBSD, OpenBSD, NetBSD, macOS, AIX, HP/UX, and Solaris.
+   FreeBSD, OpenBSD, NetBSD, macOS, AIX, and Solaris.
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in

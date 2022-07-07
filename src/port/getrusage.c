@@ -20,7 +20,6 @@
 /* This code works on:
  *		solaris_i386
  *		solaris_sparc
- *		hpux 9.*
  *		win32
  * which currently is all the supported platforms that don't have a
  * native version of getrusage().  So, if configure decides to compile

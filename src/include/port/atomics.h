@@ -95,8 +95,6 @@
 #include "port/atomics/generic-gcc.h"
 #elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"
-#elif defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
-#include "port/atomics/generic-acc.h"
 #elif defined(__SUNPRO_C) && !defined(__GNUC__)
 #include "port/atomics/generic-sunpro.h"
 #else
