@@ -2809,6 +2809,15 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 				++i;
 				if (!rte->inFromCl)
 					continue;
+
+				/*
+				 * A join RTE without an alias is not visible as a relation
+				 * name and needs to be skipped (otherwise it might hide a
+				 * base relation with the same name).
+				 */
+				if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
+					continue;
+
 				if (strcmp(rte->eref->aliasname, thisrel->relname) == 0)
 				{
 					switch (rte->rtekind)
