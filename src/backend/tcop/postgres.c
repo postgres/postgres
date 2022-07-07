@@ -133,13 +133,6 @@ static long max_stack_depth_bytes = 100 * 1024L;
 static char *stack_base_ptr = NULL;
 
 /*
- * On IA64 we also have to remember the register stack base.
- */
-#if defined(__ia64__) || defined(__ia64)
-static char *register_stack_base_ptr = NULL;
-#endif
-
-/*
  * Flag to keep track of whether we have started a transaction.
  * For extended query protocol this has to be remembered across messages.
  */
@@ -3392,41 +3385,6 @@ ProcessInterrupts(void)
 		ProcessLogMemoryContextInterrupt();
 }
 
-
-/*
- * IA64-specific code to fetch the AR.BSP register for stack depth checks.
- *
- * We currently support gcc and icc here.
- *
- * Note: while icc accepts gcc asm blocks on x86[_64], this is not true on
- * ia64 (at least not in icc versions before 12.x).  So we have to carry a
- * separate implementation for it.
- */
-#if defined(__ia64__) || defined(__ia64)
-
-#if defined(__INTEL_COMPILER)
-/* icc */
-#include <asm/ia64regs.h>
-#define ia64_get_bsp() ((char *) __getReg(_IA64_REG_AR_BSP))
-#else
-/* gcc */
-static __inline__ char *
-ia64_get_bsp(void)
-{
-	char	   *ret;
-
-	/* the ;; is a "stop", seems to be required before fetching BSP */
-	__asm__ __volatile__(
-						 ";;\n"
-						 "	mov	%0=ar.bsp	\n"
-:						 "=r"(ret));
-
-	return ret;
-}
-#endif
-#endif							/* IA64 */
-
-
 /*
  * set_stack_base: set up reference point for stack depth checking
  *
@@ -3440,12 +3398,7 @@ set_stack_base(void)
 #endif
 	pg_stack_base_t old;
 
-#if defined(__ia64__) || defined(__ia64)
-	old.stack_base_ptr = stack_base_ptr;
-	old.register_stack_base_ptr = register_stack_base_ptr;
-#else
 	old = stack_base_ptr;
-#endif
 
 	/*
 	 * Set up reference point for stack depth checking.  On recent gcc we use
@@ -3456,9 +3409,6 @@ set_stack_base(void)
 	stack_base_ptr = __builtin_frame_address(0);
 #else
 	stack_base_ptr = &stack_base;
-#endif
-#if defined(__ia64__) || defined(__ia64)
-	register_stack_base_ptr = ia64_get_bsp();
 #endif
 
 	return old;
@@ -3476,12 +3426,7 @@ set_stack_base(void)
 void
 restore_stack_base(pg_stack_base_t base)
 {
-#if defined(__ia64__) || defined(__ia64)
-	stack_base_ptr = base.stack_base_ptr;
-	register_stack_base_ptr = base.register_stack_base_ptr;
-#else
 	stack_base_ptr = base;
-#endif
 }
 
 /*
@@ -3537,22 +3482,6 @@ stack_is_too_deep(void)
 	if (stack_depth > max_stack_depth_bytes &&
 		stack_base_ptr != NULL)
 		return true;
-
-	/*
-	 * On IA64 there is a separate "register" stack that requires its own
-	 * independent check.  For this, we have to measure the change in the
-	 * "BSP" pointer from PostgresMain to here.  Logic is just as above,
-	 * except that we know IA64's register stack grows up.
-	 *
-	 * Note we assume that the same max_stack_depth applies to both stacks.
-	 */
-#if defined(__ia64__) || defined(__ia64)
-	stack_depth = (long) (ia64_get_bsp() - register_stack_base_ptr);
-
-	if (stack_depth > max_stack_depth_bytes &&
-		register_stack_base_ptr != NULL)
-		return true;
-#endif							/* IA64 */
 
 	return false;
 }

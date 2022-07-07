@@ -81,7 +81,6 @@ do
 	# relevant to our platform will be included by atomics.h.
 	test "$f" = src/include/port/atomics/arch-arm.h && continue
 	test "$f" = src/include/port/atomics/arch-hppa.h && continue
-	test "$f" = src/include/port/atomics/arch-ia64.h && continue
 	test "$f" = src/include/port/atomics/arch-ppc.h && continue
 	test "$f" = src/include/port/atomics/arch-x86.h && continue
 	test "$f" = src/include/port/atomics/fallback.h && continue

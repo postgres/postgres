@@ -68,8 +68,6 @@
 #include "port/atomics/arch-arm.h"
 #elif defined(__i386__) || defined(__i386) || defined(__x86_64__)
 #include "port/atomics/arch-x86.h"
-#elif defined(__ia64__) || defined(__ia64)
-#include "port/atomics/arch-ia64.h"
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 #include "port/atomics/arch-ppc.h"
 #elif defined(__hppa) || defined(__hppa__)
