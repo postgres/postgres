@@ -325,7 +325,7 @@ make_new_connection(ConnCacheEntry *entry, UserMapping *user)
 	 * default.
 	 *
 	 * Note: it's enough to determine these only when making a new connection
-	 * because these settings for it are changed, it will be closed and
+	 * because if these settings for it are changed, it will be closed and
 	 * re-made later.
 	 */
 	entry->keep_connections = true;
