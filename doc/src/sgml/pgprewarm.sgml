@@ -121,6 +121,19 @@ autoprewarm_dump_now() RETURNS int8
     </listitem>
    </varlistentry>
   </variablelist>
+  <para>
+   These parameters must be set in <filename>postgresql.conf</filename>.
+   Typical usage might be:
+  </para>
+
+<programlisting>
+# postgresql.conf
+shared_preload_libraries = 'pg_prewarm'
+
+pg_prewarm.autoprewarm = true
+pg_prewarm.autoprewarm_interval = 300s
+
+</programlisting>
 
  </sect2>
 
