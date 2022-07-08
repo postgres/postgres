@@ -91,45 +91,65 @@ typedef struct PlannerGlobal
 {
 	NodeTag		type;
 
-	ParamListInfo boundParams;	/* Param values provided to planner() */
+	/* Param values provided to planner() */
+	ParamListInfo boundParams;
 
-	List	   *subplans;		/* Plans for SubPlan nodes */
+	/* Plans for SubPlan nodes */
+	List	   *subplans;
 
-	List	   *subroots;		/* PlannerInfos for SubPlan nodes */
+	/* PlannerInfos for SubPlan nodes */
+	List	   *subroots;
 
-	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
+	/* indices of subplans that require REWIND */
+	Bitmapset  *rewindPlanIDs;
 
-	List	   *finalrtable;	/* "flat" rangetable for executor */
+	/* "flat" rangetable for executor */
+	List	   *finalrtable;
 
-	List	   *finalrowmarks;	/* "flat" list of PlanRowMarks */
+	/* "flat" list of PlanRowMarks */
+	List	   *finalrowmarks;
 
-	List	   *resultRelations;	/* "flat" list of integer RT indexes */
+	/* "flat" list of integer RT indexes */
+	List	   *resultRelations;
 
-	List	   *appendRelations;	/* "flat" list of AppendRelInfos */
+	/* "flat" list of AppendRelInfos */
+	List	   *appendRelations;
 
-	List	   *relationOids;	/* OIDs of relations the plan depends on */
+	/* OIDs of relations the plan depends on */
+	List	   *relationOids;
 
-	List	   *invalItems;		/* other dependencies, as PlanInvalItems */
+	/* other dependencies, as PlanInvalItems */
+	List	   *invalItems;
 
-	List	   *paramExecTypes; /* type OIDs for PARAM_EXEC Params */
+	/* type OIDs for PARAM_EXEC Params */
+	List	   *paramExecTypes;
 
-	Index		lastPHId;		/* highest PlaceHolderVar ID assigned */
+	/* highest PlaceHolderVar ID assigned */
+	Index		lastPHId;
 
-	Index		lastRowMarkId;	/* highest PlanRowMark ID assigned */
+	/* highest PlanRowMark ID assigned */
+	Index		lastRowMarkId;
 
-	int			lastPlanNodeId; /* highest plan node ID assigned */
+	/* highest plan node ID assigned */
+	int			lastPlanNodeId;
 
-	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
+	/* redo plan when TransactionXmin changes? */
+	bool		transientPlan;
 
-	bool		dependsOnRole;	/* is plan specific to current role? */
+	/* is plan specific to current role? */
+	bool		dependsOnRole;
 
-	bool		parallelModeOK; /* parallel mode potentially OK? */
+	/* parallel mode potentially OK? */
+	bool		parallelModeOK;
 
-	bool		parallelModeNeeded; /* parallel mode actually required? */
+	/* parallel mode actually required? */
+	bool		parallelModeNeeded;
 
-	char		maxParallelHazard;	/* worst PROPARALLEL hazard level */
+	/* worst PROPARALLEL hazard level */
+	char		maxParallelHazard;
 
-	PartitionDirectory partition_directory; /* partition descriptors */
+	/* partition descriptors */
+	PartitionDirectory partition_directory;
 } PlannerGlobal;
 
 /* macro for fetching the Plan associated with a SubPlan node */
@@ -159,13 +179,17 @@ struct PlannerInfo
 {
 	NodeTag		type;
 
-	Query	   *parse;			/* the Query being planned */
+	/* the Query being planned */
+	Query	   *parse;
 
-	PlannerGlobal *glob;		/* global info for current planner run */
+	/* global info for current planner run */
+	PlannerGlobal *glob;
 
-	Index		query_level;	/* 1 at the outermost Query */
+	/* 1 at the outermost Query */
+	Index		query_level;
 
-	PlannerInfo *parent_root;	/* NULL at outermost Query */
+	/* NULL at outermost Query */
+	PlannerInfo *parent_root;
 
 	/*
 	 * plan_params contains the expressions that this query level needs to
@@ -173,7 +197,8 @@ struct PlannerInfo
 	 * outer_params contains the paramIds of PARAM_EXEC Params that outer
 	 * query levels will make available to this query level.
 	 */
-	List	   *plan_params;	/* list of PlannerParamItems, see below */
+	/* list of PlannerParamItems, see below */
+	List	   *plan_params;
 	Bitmapset  *outer_params;
 
 	/*
@@ -183,15 +208,16 @@ struct PlannerInfo
 	 * does not correspond to a base relation, such as a join RTE or an
 	 * unreferenced view RTE; or if the RelOptInfo hasn't been made yet.
 	 */
-	struct RelOptInfo **simple_rel_array;	/* All 1-rel RelOptInfos */
-	int			simple_rel_array_size;	/* allocated size of array */
+	struct RelOptInfo **simple_rel_array;
+	/* allocated size of array */
+	int			simple_rel_array_size;
 
 	/*
 	 * simple_rte_array is the same length as simple_rel_array and holds
 	 * pointers to the associated rangetable entries.  Using this is a shade
 	 * faster than using rt_fetch(), mostly due to fewer indirections.
 	 */
-	RangeTblEntry **simple_rte_array;	/* rangetable as an array */
+	RangeTblEntry **simple_rte_array;
 
 	/*
 	 * append_rel_array is the same length as the above arrays, and holds
@@ -236,35 +262,51 @@ struct PlannerInfo
 	 * automatically added to the join_rel_level[join_cur_level] list.
 	 * join_rel_level is NULL if not in use.
 	 */
-	List	  **join_rel_level; /* lists of join-relation RelOptInfos */
-	int			join_cur_level; /* index of list being extended */
+	/* lists of join-relation RelOptInfos */
+	List	  **join_rel_level;
+	/* index of list being extended */
+	int			join_cur_level;
 
-	List	   *init_plans;		/* init SubPlans for query */
+	/* init SubPlans for query */
+	List	   *init_plans;
 
-	List	   *cte_plan_ids;	/* per-CTE-item list of subplan IDs (or -1 if
-								 * no subplan was made for that CTE) */
+	/*
+	 * per-CTE-item list of subplan IDs (or -1 if no subplan was made for that
+	 * CTE)
+	 */
+	List	   *cte_plan_ids;
 
-	List	   *multiexpr_params;	/* List of Lists of Params for MULTIEXPR
-									 * subquery outputs */
+	/* List of Lists of Params for MULTIEXPR subquery outputs */
+	List	   *multiexpr_params;
 
-	List	   *eq_classes;		/* list of active EquivalenceClasses */
+	/* list of active EquivalenceClasses */
+	List	   *eq_classes;
 
-	bool		ec_merging_done;	/* set true once ECs are canonical */
+	/* set true once ECs are canonical */
+	bool		ec_merging_done;
 
-	List	   *canon_pathkeys; /* list of "canonical" PathKeys */
+	/* list of "canonical" PathKeys */
+	List	   *canon_pathkeys;
 
-	List	   *left_join_clauses;	/* list of RestrictInfos for mergejoinable
-									 * outer join clauses w/nonnullable var on
-									 * left */
+	/*
+	 * list of RestrictInfos for mergejoinable outer join clauses
+	 * w/nonnullable var on left
+	 */
+	List	   *left_join_clauses;
 
-	List	   *right_join_clauses; /* list of RestrictInfos for mergejoinable
-									 * outer join clauses w/nonnullable var on
-									 * right */
+	/*
+	 * list of RestrictInfos for mergejoinable outer join clauses
+	 * w/nonnullable var on right
+	 */
+	List	   *right_join_clauses;
 
-	List	   *full_join_clauses;	/* list of RestrictInfos for mergejoinable
-									 * full join clauses */
+	/*
+	 * list of RestrictInfos for mergejoinable full join clauses
+	 */
+	List	   *full_join_clauses;
 
-	List	   *join_info_list; /* list of SpecialJoinInfos */
+	/* list of SpecialJoinInfos */
+	List	   *join_info_list;
 
 	/*
 	 * all_result_relids is empty for SELECT, otherwise it contains at least
@@ -274,38 +316,55 @@ struct PlannerInfo
 	 * leaf_result_relids is similar except that only actual result tables,
 	 * not partitioned tables, are included in it.
 	 */
-	Relids		all_result_relids;	/* set of all result relids */
-	Relids		leaf_result_relids; /* set of all leaf relids */
+	/* set of all result relids */
+	Relids		all_result_relids;
+	/* set of all leaf relids */
+	Relids		leaf_result_relids;
 
 	/*
+	 * list of AppendRelInfos
+	 *
 	 * Note: for AppendRelInfos describing partitions of a partitioned table,
 	 * we guarantee that partitions that come earlier in the partitioned
 	 * table's PartitionDesc will appear earlier in append_rel_list.
 	 */
-	List	   *append_rel_list;	/* list of AppendRelInfos */
+	List	   *append_rel_list;
 
-	List	   *row_identity_vars;	/* list of RowIdentityVarInfos */
+	/* list of RowIdentityVarInfos */
+	List	   *row_identity_vars;
 
-	List	   *rowMarks;		/* list of PlanRowMarks */
+	/* list of PlanRowMarks */
+	List	   *rowMarks;
 
-	List	   *placeholder_list;	/* list of PlaceHolderInfos */
+	/* list of PlaceHolderInfos */
+	List	   *placeholder_list;
 
-	List	   *fkey_list;		/* list of ForeignKeyOptInfos */
+	/* list of ForeignKeyOptInfos */
+	List	   *fkey_list;
 
-	List	   *query_pathkeys; /* desired pathkeys for query_planner() */
+	/* desired pathkeys for query_planner() */
+	List	   *query_pathkeys;
 
-	List	   *group_pathkeys; /* groupClause pathkeys, if any */
-	List	   *window_pathkeys;	/* pathkeys of bottom window, if any */
-	List	   *distinct_pathkeys;	/* distinctClause pathkeys, if any */
-	List	   *sort_pathkeys;	/* sortClause pathkeys, if any */
+	/* groupClause pathkeys, if any */
+	List	   *group_pathkeys;
+	/* pathkeys of bottom window, if any */
+	List	   *window_pathkeys;
+	/* distinctClause pathkeys, if any */
+	List	   *distinct_pathkeys;
+	/* sortClause pathkeys, if any */
+	List	   *sort_pathkeys;
 
-	List	   *part_schemes;	/* Canonicalised partition schemes used in the
-								 * query. */
+	/* Canonicalised partition schemes used in the query. */
+	List	   *part_schemes;
 
-	List	   *initial_rels;	/* RelOptInfos we are now trying to join */
+	/* RelOptInfos we are now trying to join */
+	List	   *initial_rels;
 
-	/* Use fetch_upper_rel() to get any particular upper rel */
-	List	   *upper_rels[UPPERREL_FINAL + 1]; /* upper-rel RelOptInfos */
+	/*
+	 * Upper-rel RelOptInfos. Use fetch_upper_rel() to get any particular
+	 * upper rel.
+	 */
+	List	   *upper_rels[UPPERREL_FINAL + 1];
 
 	/* Result tlists chosen by grouping_planner for upper-stage processing */
 	struct PathTarget *upper_targets[UPPERREL_FINAL + 1];
@@ -340,39 +399,62 @@ struct PlannerInfo
 	/* context holding PlannerInfo */
 	MemoryContext planner_cxt;
 
-	Cardinality total_table_pages;	/* # of pages in all non-dummy tables of
-									 * query */
+	/* # of pages in all non-dummy tables of query */
+	Cardinality total_table_pages;
 
-	Selectivity tuple_fraction; /* tuple_fraction passed to query_planner */
-	Cardinality limit_tuples;	/* limit_tuples passed to query_planner */
+	/* tuple_fraction passed to query_planner */
+	Selectivity tuple_fraction;
+	/* limit_tuples passed to query_planner */
+	Cardinality limit_tuples;
 
-	Index		qual_security_level;	/* minimum security_level for quals */
-	/* Note: qual_security_level is zero if there are no securityQuals */
+	/*
+	 * Minimum security_level for quals. Note: qual_security_level is zero if
+	 * there are no securityQuals.
+	 */
+	Index		qual_security_level;
 
-	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
-	bool		hasLateralRTEs; /* true if any RTEs are marked LATERAL */
-	bool		hasHavingQual;	/* true if havingQual was non-null */
-	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
-										 * pseudoconstant = true */
-	bool		hasAlternativeSubPlans; /* true if we've made any of those */
-	bool		hasRecursion;	/* true if planning a recursive WITH item */
+	/* true if any RTEs are RTE_JOIN kind */
+	bool		hasJoinRTEs;
+	/* true if any RTEs are marked LATERAL */
+	bool		hasLateralRTEs;
+	/* true if havingQual was non-null */
+	bool		hasHavingQual;
+	/* true if any RestrictInfo has pseudoconstant = true */
+	bool		hasPseudoConstantQuals;
+	/* true if we've made any of those */
+	bool		hasAlternativeSubPlans;
+	/* true if planning a recursive WITH item */
+	bool		hasRecursion;
 
 	/*
 	 * Information about aggregates. Filled by preprocess_aggrefs().
 	 */
-	List	   *agginfos;		/* AggInfo structs */
-	List	   *aggtransinfos;	/* AggTransInfo structs */
-	int			numOrderedAggs; /* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
-	bool		hasNonPartialAggs;	/* does any agg not support partial mode? */
-	bool		hasNonSerialAggs;	/* is any partial agg non-serializable? */
+	/* AggInfo structs */
+	List	   *agginfos;
+	/* AggTransInfo structs */
+	List	   *aggtransinfos;
+	/* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
+	int			numOrderedAggs;
+	/* does any agg not support partial mode? */
+	bool		hasNonPartialAggs;
+	/* is any partial agg non-serializable? */
+	bool		hasNonSerialAggs;
 
-	/* These fields are used only when hasRecursion is true: */
-	int			wt_param_id;	/* PARAM_EXEC ID for the work table */
-	struct Path *non_recursive_path;	/* a path for non-recursive term */
+	/*
+	 * These fields are used only when hasRecursion is true:
+	 */
+	/* PARAM_EXEC ID for the work table */
+	int			wt_param_id;
+	/* a path for non-recursive term */
+	struct Path *non_recursive_path;
 
-	/* These fields are workspace for createplan.c */
-	Relids		curOuterRels;	/* outer rels above current node */
-	List	   *curOuterParams; /* not-yet-assigned NestLoopParams */
+	/*
+	 * These fields are workspace for createplan.c
+	 */
+	/* outer rels above current node */
+	Relids		curOuterRels;
+	/* not-yet-assigned NestLoopParams */
+	List	   *curOuterParams;
 
 	/*
 	 * These fields are workspace for setrefs.c.  Each is an array

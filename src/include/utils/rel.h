@@ -269,14 +269,24 @@ typedef struct RelationData
 typedef struct ForeignKeyCacheInfo
 {
 	NodeTag		type;
-	Oid			conoid;			/* oid of the constraint itself */
-	Oid			conrelid;		/* relation constrained by the foreign key */
-	Oid			confrelid;		/* relation referenced by the foreign key */
-	int			nkeys;			/* number of columns in the foreign key */
-	/* these arrays each have nkeys valid entries: */
-	AttrNumber	conkey[INDEX_MAX_KEYS]; /* cols in referencing table */
-	AttrNumber	confkey[INDEX_MAX_KEYS];	/* cols in referenced table */
-	Oid			conpfeqop[INDEX_MAX_KEYS];	/* PK = FK operator OIDs */
+	/* oid of the constraint itself */
+	Oid			conoid;
+	/* relation constrained by the foreign key */
+	Oid			conrelid;
+	/* relation referenced by the foreign key */
+	Oid			confrelid;
+	/* number of columns in the foreign key */
+	int			nkeys;
+
+	/*
+	 * these arrays each have nkeys valid entries:
+	 */
+	/* cols in referencing table */
+	AttrNumber	conkey[INDEX_MAX_KEYS];
+	/* cols in referenced table */
+	AttrNumber	confkey[INDEX_MAX_KEYS];
+	/* PK = FK operator OIDs */
+	Oid			conpfeqop[INDEX_MAX_KEYS];
 } ForeignKeyCacheInfo;
 
 
