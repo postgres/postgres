@@ -3520,7 +3520,7 @@ _outTableSampleClause(StringInfo str, const TableSampleClause *node)
 static void
 _outA_Expr(StringInfo str, const A_Expr *node)
 {
-	WRITE_NODE_TYPE("AEXPR");
+	WRITE_NODE_TYPE("A_EXPR");
 
 	switch (node->kind)
 	{
