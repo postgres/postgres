@@ -62,7 +62,7 @@ struct RBTree
 
 static RBTNode sentinel =
 {
-	RBTBLACK, RBTNIL, RBTNIL, NULL
+	.color = RBTBLACK,.left = RBTNIL,.right = RBTNIL,.parent = NULL
 };
 
 
