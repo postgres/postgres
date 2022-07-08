@@ -43,7 +43,6 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
 	 */
-	T_Plan,
 	T_Result,
 	T_ProjectSet,
 	T_ModifyTable,
@@ -70,7 +69,6 @@ typedef enum NodeTag
 	T_WorkTableScan,
 	T_ForeignScan,
 	T_CustomScan,
-	T_Join,
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,

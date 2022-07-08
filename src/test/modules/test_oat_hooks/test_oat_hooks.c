@@ -468,9 +468,6 @@ nodetag_to_string(NodeTag tag)
 		case T_TupleTableSlot:
 			return "TupleTableSlot";
 			break;
-		case T_Plan:
-			return "Plan";
-			break;
 		case T_Result:
 			return "Result";
 			break;
@@ -548,9 +545,6 @@ nodetag_to_string(NodeTag tag)
 			break;
 		case T_CustomScan:
 			return "CustomScan";
-			break;
-		case T_Join:
-			return "Join";
 			break;
 		case T_NestLoop:
 			return "NestLoop";

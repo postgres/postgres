@@ -386,15 +386,6 @@ _outJoinPlanInfo(StringInfo str, const Join *node)
 	WRITE_NODE_FIELD(joinqual);
 }
 
-
-static void
-_outPlan(StringInfo str, const Plan *node)
-{
-	WRITE_NODE_TYPE("PLAN");
-
-	_outPlanInfo(str, (const Plan *) node);
-}
-
 static void
 _outResult(StringInfo str, const Result *node)
 {
@@ -748,14 +739,6 @@ _outCustomScan(StringInfo str, const CustomScan *node)
 	/* CustomName is a key to lookup CustomScanMethods */
 	appendStringInfoString(str, " :methods ");
 	outToken(str, node->methods->CustomName);
-}
-
-static void
-_outJoin(StringInfo str, const Join *node)
-{
-	WRITE_NODE_TYPE("JOIN");
-
-	_outJoinPlanInfo(str, (const Join *) node);
 }
 
 static void
@@ -4058,9 +4041,6 @@ outNode(StringInfo str, const void *obj)
 			case T_PlannedStmt:
 				_outPlannedStmt(str, obj);
 				break;
-			case T_Plan:
-				_outPlan(str, obj);
-				break;
 			case T_Result:
 				_outResult(str, obj);
 				break;
@@ -4144,9 +4124,6 @@ outNode(StringInfo str, const void *obj)
 				break;
 			case T_CustomScan:
 				_outCustomScan(str, obj);
-				break;
-			case T_Join:
-				_outJoin(str, obj);
 				break;
 			case T_NestLoop:
 				_outNestLoop(str, obj);

@@ -1860,19 +1860,6 @@ ReadCommonPlan(Plan *local_node)
 }
 
 /*
- * _readPlan
- */
-static Plan *
-_readPlan(void)
-{
-	READ_LOCALS_NO_FIELDS(Plan);
-
-	ReadCommonPlan(local_node);
-
-	READ_DONE();
-}
-
-/*
  * _readResult
  */
 static Result *
@@ -2360,19 +2347,6 @@ ReadCommonJoin(Join *local_node)
 	READ_ENUM_FIELD(jointype, JoinType);
 	READ_BOOL_FIELD(inner_unique);
 	READ_NODE_FIELD(joinqual);
-}
-
-/*
- * _readJoin
- */
-static Join *
-_readJoin(void)
-{
-	READ_LOCALS_NO_FIELDS(Join);
-
-	ReadCommonJoin(local_node);
-
-	READ_DONE();
 }
 
 /*
@@ -3099,8 +3073,6 @@ parseNodeString(void)
 		return_value = _readDeclareCursorStmt();
 	else if (MATCH("PLANNEDSTMT", 11))
 		return_value = _readPlannedStmt();
-	else if (MATCH("PLAN", 4))
-		return_value = _readPlan();
 	else if (MATCH("RESULT", 6))
 		return_value = _readResult();
 	else if (MATCH("PROJECTSET", 10))
@@ -3153,8 +3125,6 @@ parseNodeString(void)
 		return_value = _readForeignScan();
 	else if (MATCH("CUSTOMSCAN", 10))
 		return_value = _readCustomScan();
-	else if (MATCH("JOIN", 4))
-		return_value = _readJoin();
 	else if (MATCH("NESTLOOP", 8))
 		return_value = _readNestLoop();
 	else if (MATCH("MERGEJOIN", 9))
