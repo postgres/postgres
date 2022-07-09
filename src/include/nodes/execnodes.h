@@ -3,6 +3,12 @@
  * execnodes.h
  *	  definitions for executor state nodes
  *
+ * ExprState represents the evaluation state for a whole expression tree.
+ * Most Expr-based plan nodes do not have a corresponding expression state
+ * node, they're fully handled within execExpr* - but sometimes the state
+ * needs to be shared with other parts of the executor, as for example
+ * with SubPlanState, which nodeSubplan.c has to modify.
+ *
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California

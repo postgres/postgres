@@ -218,12 +218,6 @@ typedef enum NodeTag
 
 	/*
 	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
-	 *
-	 * ExprState represents the evaluation state for a whole expression tree.
-	 * Most Expr-based plan nodes do not have a corresponding expression state
-	 * node, they're fully handled within execExpr* - but sometimes the state
-	 * needs to be shared with other parts of the executor, as for example
-	 * with SubPlanState, which nodeSubplan.c has to modify.
 	 */
 	T_ExprState,
 	T_WindowFuncExprState,
