@@ -64,8 +64,11 @@ typedef struct RangeVar
 {
 	NodeTag		type;
 
-	/* the catalog (database) name, or NULL */
-	char	   *catalogname;
+	/*
+	 * the catalog (database) name, or NULL; ignored for read/write, since it
+	 * is presently not semantically meaningful
+	 */
+	char	   *catalogname pg_node_attr(read_write_ignore, read_as(NULL));
 
 	/* the schema name, or NULL */
 	char	   *schemaname;
@@ -157,6 +160,8 @@ typedef struct IntoClause
  */
 typedef struct Expr
 {
+	pg_node_attr(abstract)
+
 	NodeTag		type;
 } Expr;
 
@@ -233,10 +238,15 @@ typedef struct Var
 	 */
 	Index		varlevelsup;
 
+	/*
+	 * varnosyn/varattnosyn are ignored for equality, because Vars with
+	 * different syntactic identifiers are semantically the same as long as
+	 * their varno/varattno match.
+	 */
 	/* syntactic relation index (0 if unknown) */
-	Index		varnosyn;
+	Index		varnosyn pg_node_attr(equal_ignore);
 	/* syntactic attribute number */
-	AttrNumber	varattnosyn;
+	AttrNumber	varattnosyn pg_node_attr(equal_ignore);
 
 	/* token location, or -1 if unknown */
 	int			location;
@@ -252,6 +262,8 @@ typedef struct Var
  */
 typedef struct Const
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	Expr		xpr;
 	Oid			consttype;		/* pg_type OID of the constant's datatype */
 	int32		consttypmod;	/* typmod value, if any */
@@ -374,8 +386,11 @@ typedef struct Aggref
 	/* OID of collation that function should use */
 	Oid			inputcollid;
 
-	/* type Oid of aggregate's transition value */
-	Oid			aggtranstype;
+	/*
+	 * type Oid of aggregate's transition value; ignored for equal since it
+	 * might not be set yet
+	 */
+	Oid			aggtranstype pg_node_attr(equal_ignore);
 
 	/* type Oids of direct and aggregated args */
 	List	   *aggargtypes;
@@ -455,10 +470,10 @@ typedef struct GroupingFunc
 	List	   *args;
 
 	/* ressortgrouprefs of arguments */
-	List	   *refs;
+	List	   *refs pg_node_attr(equal_ignore);
 
 	/* actual column positions set by planner */
-	List	   *cols;
+	List	   *cols pg_node_attr(equal_ignore);
 
 	/* same as Aggref.agglevelsup */
 	Index		agglevelsup;
@@ -625,6 +640,7 @@ typedef struct NamedArgExpr
  * Note that opfuncid is not necessarily filled in immediately on creation
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opfuncid can be 0.
+ * Therefore, equal() will accept a zero value as being equal to other values.
  */
 typedef struct OpExpr
 {
@@ -634,7 +650,7 @@ typedef struct OpExpr
 	Oid			opno;
 
 	/* PG_PROC OID of underlying function */
-	Oid			opfuncid;
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero);
 
 	/* PG_TYPE OID of result value */
 	Oid			opresulttype;
@@ -698,6 +714,10 @@ typedef OpExpr NullIfExpr;
  * corresponding function and won't be used during execution.  For
  * non-hashtable based NOT INs, negfuncid will be set to InvalidOid.  See
  * convert_saop_to_hashed_saop().
+ *
+ * Similar to OpExpr, opfuncid, hashfuncid, and negfuncid are not necessarily
+ * filled in right away, so will be ignored for equality if they are not set
+ * yet.
  */
 typedef struct ScalarArrayOpExpr
 {
@@ -707,13 +727,13 @@ typedef struct ScalarArrayOpExpr
 	Oid			opno;
 
 	/* PG_PROC OID of comparison function */
-	Oid			opfuncid;
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero);
 
 	/* PG_PROC OID of hash func or InvalidOid */
-	Oid			hashfuncid;
+	Oid			hashfuncid pg_node_attr(equal_ignore_if_zero);
 
 	/* PG_PROC OID of negator of opfuncid function or InvalidOid.  See above */
-	Oid			negfuncid;
+	Oid			negfuncid pg_node_attr(equal_ignore_if_zero);
 
 	/* true for ANY, false for ALL */
 	bool		useOr;
@@ -742,6 +762,8 @@ typedef enum BoolExprType
 
 typedef struct BoolExpr
 {
+	pg_node_attr(custom_read_write)
+
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */

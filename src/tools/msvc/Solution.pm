@@ -839,6 +839,54 @@ EOF
 		close($chs);
 	}
 
+	if (IsNewer(
+			'src/backend/nodes/node-support-stamp',
+			'src/backend/nodes/gen_node_support.pl'))
+	{
+		# XXX duplicates src/backend/nodes/Makefile
+
+		my @node_headers = qw(
+		  nodes/nodes.h
+		  nodes/execnodes.h
+		  nodes/plannodes.h
+		  nodes/primnodes.h
+		  nodes/pathnodes.h
+		  nodes/extensible.h
+		  nodes/parsenodes.h
+		  nodes/replnodes.h
+		  nodes/value.h
+		  commands/trigger.h
+		  commands/event_trigger.h
+		  foreign/fdwapi.h
+		  access/amapi.h
+		  access/tableam.h
+		  access/tsmapi.h
+		  utils/rel.h
+		  nodes/supportnodes.h
+		  executor/tuptable.h
+		  nodes/lockoptions.h
+		  access/sdir.h
+		);
+
+		chdir('src/backend/nodes');
+
+		my @node_files = map { "../../../src/include/$_" } @node_headers;
+
+		system("perl gen_node_support.pl @node_files");
+		open(my $f, '>', 'node-support-stamp')
+		  || confess "Could not touch node-support-stamp";
+		close($f);
+		chdir('../../..');
+	}
+
+	if (IsNewer(
+			'src/include/nodes/nodetags.h',
+			'src/backend/nodes/nodetags.h'))
+	{
+		copyFile('src/backend/nodes/nodetags.h',
+			'src/include/nodes/nodetags.h');
+	}
+
 	open(my $o, '>', "doc/src/sgml/version.sgml")
 	  || croak "Could not write to version.sgml\n";
 	print $o <<EOF;

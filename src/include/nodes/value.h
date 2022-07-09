@@ -27,6 +27,8 @@
 
 typedef struct Integer
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	int			ival;
 } Integer;
@@ -44,24 +46,32 @@ typedef struct Integer
  */
 typedef struct Float
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *fval;
 } Float;
 
 typedef struct Boolean
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	bool		boolval;
 } Boolean;
 
 typedef struct String
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *sval;
 } String;
 
 typedef struct BitString
 {
+	pg_node_attr(special_read_write)
+
 	NodeTag		type;
 	char	   *bsval;
 } BitString;

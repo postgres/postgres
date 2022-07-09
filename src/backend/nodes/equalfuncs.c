@@ -10,9 +10,6 @@
  * because the circular linkages between RelOptInfo and Path nodes can't
  * be handled easily in a simple depth-first traversal.
  *
- * Currently, in fact, equal() doesn't know how to compare Plan trees
- * either.  This might need to be fixed someday.
- *
  * NOTE: it is intentional that parse location fields (in nodes that have
  * one) are not compared.  This is because we want, for example, a variable
  * "x" to be considered equal() to another reference to "x" in the query.
@@ -30,8 +27,6 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
-#include "nodes/extensible.h"
-#include "nodes/pathnodes.h"
 #include "utils/datum.h"
 
 
@@ -97,6 +92,9 @@
 	((void) 0)
 
 
+#include "equalfuncs.funcs.c"
+
+#ifdef OBSOLETE
 /*
  *	Stuff from primnodes.h
  */
@@ -258,6 +256,7 @@ _equalVar(const Var *a, const Var *b)
 
 	return true;
 }
+#endif							/* OBSOLETE */
 
 static bool
 _equalConst(const Const *a, const Const *b)
@@ -280,6 +279,7 @@ _equalConst(const Const *a, const Const *b)
 						a->constbyval, a->constlen);
 }
 
+#ifdef OBSOLETE
 static bool
 _equalParam(const Param *a, const Param *b)
 {
@@ -1304,6 +1304,7 @@ _equalPlaceHolderInfo(const PlaceHolderInfo *a, const PlaceHolderInfo *b)
 
 	return true;
 }
+#endif							/* OBSOLETE */
 
 /*
  * Stuff from extensible.h
@@ -1325,6 +1326,7 @@ _equalExtensibleNode(const ExtensibleNode *a, const ExtensibleNode *b)
 	return true;
 }
 
+#ifdef OBSOLETE
 /*
  * Stuff from parsenodes.h
  */
@@ -2815,6 +2817,7 @@ _equalParamRef(const ParamRef *a, const ParamRef *b)
 
 	return true;
 }
+#endif							/* OBSOLETE */
 
 static bool
 _equalA_Const(const A_Const *a, const A_Const *b)
@@ -2831,6 +2834,7 @@ _equalA_Const(const A_Const *a, const A_Const *b)
 	return true;
 }
 
+#ifdef OBSOLETE
 static bool
 _equalFuncCall(const FuncCall *a, const FuncCall *b)
 {
@@ -3468,6 +3472,7 @@ _equalPartitionCmd(const PartitionCmd *a, const PartitionCmd *b)
 
 	return true;
 }
+#endif							/* OBSOLETE */
 
 /*
  * Stuff from pg_list.h
@@ -3528,6 +3533,7 @@ _equalList(const List *a, const List *b)
 	return true;
 }
 
+#ifdef OBSOLETE
 /*
  * Stuff from value.h
  */
@@ -3571,6 +3577,7 @@ _equalBitString(const BitString *a, const BitString *b)
 
 	return true;
 }
+#endif							/* OBSOLETE */
 
 /*
  * equal
@@ -3601,6 +3608,8 @@ equal(const void *a, const void *b)
 
 	switch (nodeTag(a))
 	{
+#include "equalfuncs.switch.c"
+#ifdef OBSOLETE
 			/*
 			 * PRIMITIVE NODES
 			 */
@@ -3821,6 +3830,7 @@ equal(const void *a, const void *b)
 		case T_PlaceHolderInfo:
 			retval = _equalPlaceHolderInfo(a, b);
 			break;
+#endif							/* OBSOLETE */
 
 		case T_List:
 		case T_IntList:
@@ -3828,6 +3838,7 @@ equal(const void *a, const void *b)
 			retval = _equalList(a, b);
 			break;
 
+#ifdef OBSOLETE
 		case T_Integer:
 			retval = _equalInteger(a, b);
 			break;
@@ -4430,6 +4441,7 @@ equal(const void *a, const void *b)
 		case T_JsonTableColumn:
 			retval = _equalJsonTableColumn(a, b);
 			break;
+#endif							/* OBSOLETE */
 
 		default:
 			elog(ERROR, "unrecognized node type: %d",

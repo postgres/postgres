@@ -31,6 +31,8 @@
  */
 typedef struct ExtensibleNode
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	NodeTag		type;
 	const char *extnodename;	/* identifier of ExtensibleNodeMethods */
 } ExtensibleNode;

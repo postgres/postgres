@@ -81,6 +81,7 @@ clean:
 	rm -f parser/gram.h storage/lwlocknames.h utils/probes.h
 	rm -f catalog/schemapg.h catalog/system_fk_info.h
 	rm -f catalog/pg_*_d.h catalog/header-stamp
+	rm -f nodes/nodetags.h nodes/header-stamp
 
 distclean maintainer-clean: clean
 	rm -f pg_config.h pg_config_ext.h pg_config_os.h stamp-h stamp-ext-h

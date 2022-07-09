@@ -237,6 +237,8 @@ extern PGDLLIMPORT const TupleTableSlotOps TTSOpsBufferHeapTuple;
 
 typedef struct VirtualTupleTableSlot
 {
+	pg_node_attr(abstract)
+
 	TupleTableSlot base;
 
 	char	   *data;			/* data for materialized slots */
@@ -244,6 +246,8 @@ typedef struct VirtualTupleTableSlot
 
 typedef struct HeapTupleTableSlot
 {
+	pg_node_attr(abstract)
+
 	TupleTableSlot base;
 
 #define FIELDNO_HEAPTUPLETABLESLOT_TUPLE 1
@@ -256,6 +260,8 @@ typedef struct HeapTupleTableSlot
 /* heap tuple residing in a buffer */
 typedef struct BufferHeapTupleTableSlot
 {
+	pg_node_attr(abstract)
+
 	HeapTupleTableSlot base;
 
 	/*
@@ -269,6 +275,8 @@ typedef struct BufferHeapTupleTableSlot
 
 typedef struct MinimalTupleTableSlot
 {
+	pg_node_attr(abstract)
+
 	TupleTableSlot base;
 
 	/*

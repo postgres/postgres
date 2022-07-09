@@ -117,14 +117,19 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  */
 typedef struct Query
 {
+	pg_node_attr(custom_read_write)
+
 	NodeTag		type;
 
 	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
 
 	QuerySource querySource;	/* where did I come from? */
 
-	/* query identifier (can be set by plugins) */
-	uint64		queryId;
+	/*
+	 * query identifier (can be set by plugins); ignored for equal, might not
+	 * be set
+	 */
+	uint64		queryId pg_node_attr(equal_ignore, read_as(0));
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -288,6 +293,8 @@ typedef enum A_Expr_Kind
 
 typedef struct A_Expr
 {
+	pg_node_attr(custom_read_write, no_read)
+
 	NodeTag		type;
 	A_Expr_Kind kind;			/* see above */
 	List	   *name;			/* possibly-qualified name of operator */
@@ -301,6 +308,8 @@ typedef struct A_Expr
  */
 typedef struct A_Const
 {
+	pg_node_attr(custom_copy_equal, custom_read_write, no_read)
+
 	NodeTag		type;
 
 	/*
@@ -400,6 +409,8 @@ typedef struct FuncCall
  */
 typedef struct A_Star
 {
+	pg_node_attr(no_read)
+
 	NodeTag		type;
 } A_Star;
 
@@ -1012,6 +1023,8 @@ typedef enum RTEKind
 
 typedef struct RangeTblEntry
 {
+	pg_node_attr(custom_read_write)
+
 	NodeTag		type;
 
 	RTEKind		rtekind;		/* see above */
@@ -2608,6 +2621,8 @@ typedef enum ConstrType			/* types of constraints */
 
 typedef struct Constraint
 {
+	pg_node_attr(custom_read_write, no_read)
+
 	NodeTag		type;
 	ConstrType	contype;		/* see above */
 

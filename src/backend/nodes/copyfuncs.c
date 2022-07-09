@@ -23,11 +23,7 @@
 #include "postgres.h"
 
 #include "miscadmin.h"
-#include "nodes/extensible.h"
-#include "nodes/pathnodes.h"
-#include "nodes/plannodes.h"
 #include "utils/datum.h"
-#include "utils/rel.h"
 
 
 /*
@@ -73,6 +69,9 @@
 	(newnode->fldname = from->fldname)
 
 
+#include "copyfuncs.funcs.c"
+
+#ifdef OBSOLETE
 /* ****************************************************************
  *					 plannodes.h copy functions
  * ****************************************************************
@@ -1431,6 +1430,7 @@ _copyVar(const Var *from)
 
 	return newnode;
 }
+#endif							/* OBSOLETE */
 
 /*
  * _copyConst
@@ -1470,6 +1470,7 @@ _copyConst(const Const *from)
 	return newnode;
 }
 
+#ifdef OBSOLETE
 /*
  * _copyParam
  */
@@ -3214,6 +3215,7 @@ _copyParamRef(const ParamRef *from)
 
 	return newnode;
 }
+#endif							/* OBSOLETE */
 
 static A_Const *
 _copyA_Const(const A_Const *from)
@@ -3254,6 +3256,7 @@ _copyA_Const(const A_Const *from)
 	return newnode;
 }
 
+#ifdef OBSOLETE
 static FuncCall *
 _copyFuncCall(const FuncCall *from)
 {
@@ -5419,6 +5422,7 @@ _copyDropSubscriptionStmt(const DropSubscriptionStmt *from)
 
 	return newnode;
 }
+#endif							/* OBSOLETE */
 
 /* ****************************************************************
  *					extensible.h copy functions
@@ -5441,6 +5445,7 @@ _copyExtensibleNode(const ExtensibleNode *from)
 	return newnode;
 }
 
+#ifdef OBSOLETE
 /* ****************************************************************
  *					value.h copy functions
  * ****************************************************************
@@ -5511,6 +5516,7 @@ _copyForeignKeyCacheInfo(const ForeignKeyCacheInfo *from)
 
 	return newnode;
 }
+#endif							/* OBSOLETE */
 
 /*
  * copyObjectImpl -- implementation of copyObject(); see nodes/nodes.h
@@ -5531,6 +5537,8 @@ copyObjectImpl(const void *from)
 
 	switch (nodeTag(from))
 	{
+#include "copyfuncs.switch.c"
+#ifdef OBSOLETE
 			/*
 			 * PLAN NODES
 			 */
@@ -5969,6 +5977,7 @@ copyObjectImpl(const void *from)
 		case T_BitString:
 			retval = _copyBitString(from);
 			break;
+#endif							/* OBSOLETE */
 
 			/*
 			 * LIST NODES
@@ -5985,6 +5994,8 @@ copyObjectImpl(const void *from)
 		case T_OidList:
 			retval = list_copy(from);
 			break;
+
+#ifdef OBSOLETE
 
 			/*
 			 * EXTENSIBLE NODES
@@ -6537,6 +6548,7 @@ copyObjectImpl(const void *from)
 		case T_ForeignKeyCacheInfo:
 			retval = _copyForeignKeyCacheInfo(from);
 			break;
+#endif							/* OBSOLETE */
 
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(from));

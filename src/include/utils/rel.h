@@ -268,6 +268,8 @@ typedef struct RelationData
  */
 typedef struct ForeignKeyCacheInfo
 {
+	pg_node_attr(no_equal, no_read)
+
 	NodeTag		type;
 	/* oid of the constraint itself */
 	Oid			conoid;
@@ -282,11 +284,11 @@ typedef struct ForeignKeyCacheInfo
 	 * these arrays each have nkeys valid entries:
 	 */
 	/* cols in referencing table */
-	AttrNumber	conkey[INDEX_MAX_KEYS];
+	AttrNumber	conkey[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
 	/* cols in referenced table */
-	AttrNumber	confkey[INDEX_MAX_KEYS];
+	AttrNumber	confkey[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
 	/* PK = FK operator OIDs */
-	Oid			conpfeqop[INDEX_MAX_KEYS];
+	Oid			conpfeqop[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
 } ForeignKeyCacheInfo;
 
 

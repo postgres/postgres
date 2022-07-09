@@ -7,6 +7,11 @@ src/include/port/atomics/
 # This contains C++ constructs that confuse pgindent.
 src/include/jit/llvmjit\.h$
 #
+# These are generated files with incomplete code fragments that
+# confuse pgindent.
+src/backend/nodes/\w+\.funcs\.c$
+src/backend/nodes/\w+\.switch\.c$
+#
 # This confuses pgindent, and it's a derived file anyway.
 src/backend/utils/fmgrtab\.c$
 #

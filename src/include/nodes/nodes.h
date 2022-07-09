@@ -27,6 +27,9 @@ typedef enum NodeTag
 {
 	T_Invalid = 0,
 
+#include "nodes/nodetags.h"
+#ifdef OBSOLETE
+
 	/*
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
 	 */
@@ -561,7 +564,70 @@ typedef enum NodeTag
 	T_SupportRequestRows,		/* in nodes/supportnodes.h */
 	T_SupportRequestIndexCondition, /* in nodes/supportnodes.h */
 	T_SupportRequestWFuncMonotonic	/* in nodes/supportnodes.h */
+#endif							/* OBSOLETE */
 } NodeTag;
+
+/*
+ * pg_node_attr() - Used in node definitions to set extra information for
+ * gen_node_support.pl
+ *
+ * Attributes can be attached to a node as a whole (place the attribute
+ * specification on the first line after the struct's opening brace)
+ * or to a specific field (place it at the end of that field's line).  The
+ * argument is a comma-separated list of attributes.  Unrecognized attributes
+ * cause an error.
+ *
+ * Valid node attributes:
+ *
+ * - abstract: Abstract types are types that cannot be instantiated but that
+ *   can be supertypes of other types.  We track their fields, so that
+ *   subtypes can use them, but we don't emit a node tag, so you can't
+ *   instantiate them.
+ *
+ * - custom_copy_equal: Has custom implementations in copyfuncs.c and
+ *   equalfuncs.c.
+ *
+ * - custom_read_write: Has custom implementations in outfuncs.c and
+ *   readfuncs.c.
+ *
+ * - no_copy: Does not support copyObject() at all.
+ *
+ * - no_equal: Does not support equal() at all.
+ *
+ * - no_copy_equal: Shorthand for both no_copy and no_equal.
+ *
+ * - no_read: Does not support nodeRead() at all.
+ *
+ * - special_read_write: Has special treatment in outNode() and nodeRead().
+ *
+ * Node types can be supertypes of other types whether or not they are marked
+ * abstract: if a node struct appears as the first field of another struct
+ * type, then it is the supertype of that type.  The no_copy, no_equal, and
+ * no_read node attributes are automatically inherited from the supertype.
+ *
+ * Valid node field attributes:
+ *
+ * - array_size(OTHERFIELD): This field is a dynamically allocated array with
+ *   size indicated by the mentioned other field.  The other field is either a
+ *   scalar or a list, in which case the length of the list is used.
+ *
+ * - copy_as(VALUE): In copyObject(), replace the field's value with VALUE.
+ *
+ * - equal_ignore: Ignore the field for equality.
+ *
+ * - equal_ignore_if_zero: Ignore the field for equality if it is zero.
+ *   (Otherwise, compare normally.)
+ *
+ * - read_as(VALUE): In nodeRead(), replace the field's value with VALUE.
+ *
+ * - read_write_ignore: Ignore the field for read/write.  This is only allowed
+ *   if the node type is marked no_read or read_as() is also specified.
+ *
+ * - write_only_relids, write_only_nondefault_pathtarget, write_only_req_outer:
+ *   Special handling for Path struct; see there.
+ *
+ */
+#define pg_node_attr(...)
 
 /*
  * The first field of a node of any type is guaranteed to be the NodeTag.
