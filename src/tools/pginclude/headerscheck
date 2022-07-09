@@ -93,6 +93,10 @@ do
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue
 
+	# nodetags.h cannot be included standalone: it's just a code fragment.
+	test "$f" = src/include/nodes/nodetags.h && continue
+	test "$f" = src/backend/nodes/nodetags.h && continue
+
 	# These files are not meant to be included standalone, because
 	# they contain lists that might have multiple use-cases.
 	test "$f" = src/include/access/rmgrlist.h && continue
