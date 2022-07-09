@@ -12,6 +12,8 @@ subdir = src/backend/nodes
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
+override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
+
 OBJS = \
 	bitmapset.o \
 	copyfuncs.o \
