@@ -492,9 +492,6 @@ nodetag_to_string(NodeTag tag)
 		case T_BitmapOr:
 			return "BitmapOr";
 			break;
-		case T_Scan:
-			return "Scan";
-			break;
 		case T_SeqScan:
 			return "SeqScan";
 			break;

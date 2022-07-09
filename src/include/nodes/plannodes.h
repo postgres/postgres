@@ -371,10 +371,14 @@ typedef struct BitmapOr
 /*
  * ==========
  * Scan nodes
+ *
+ * Scan is an abstract type that all relation scan plan types inherit from.
  * ==========
  */
 typedef struct Scan
 {
+	pg_node_attr(abstract)
+
 	Plan		plan;
 	Index		scanrelid;		/* relid is index into the range table */
 } Scan;
