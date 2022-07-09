@@ -10,19 +10,6 @@
  * IDENTIFICATION
  *	  src/backend/nodes/outfuncs.c
  *
- * NOTES
- *	  Every node type that can appear in stored rules' parsetrees *must*
- *	  have an output function defined here (as well as an input function
- *	  in readfuncs.c).  In addition, plan nodes should have input and
- *	  output functions so that they can be sent to parallel workers.
- *
- *	  For use in debugging, we also provide output functions for nodes
- *	  that appear in raw parsetrees and planner Paths.  These node types
- *	  need not have input functions.  Output support for raw parsetrees
- *	  is somewhat incomplete, too; in particular, utility statements are
- *	  almost entirely unsupported.  We try to support everything that can
- *	  appear in a raw SELECT, though.
- *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"

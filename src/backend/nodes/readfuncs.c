@@ -11,16 +11,12 @@
  *	  src/backend/nodes/readfuncs.c
  *
  * NOTES
- *	  Path nodes do not have any readfuncs support, because we never
- *	  have occasion to read them in.  (There was once code here that
- *	  claimed to read them, but it was broken as well as unused.)  We
- *	  never read executor state trees, either.
- *
  *	  Parse location fields are written out by outfuncs.c, but only for
  *	  debugging use.  When reading a location field, we normally discard
  *	  the stored value and set the location field to -1 (ie, "unknown").
  *	  This is because nodes coming from a stored rule should not be thought
  *	  to have a known location in the current query's text.
+ *
  *	  However, if restore_location_fields is true, we do restore location
  *	  fields from the string.  This is currently intended only for use by the
  *	  WRITE_READ_PARSE_PLAN_TREES test code, which doesn't want to cause
