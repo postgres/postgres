@@ -77,6 +77,8 @@ typedef struct MemoryContextMethods
 
 typedef struct MemoryContextData
 {
+	pg_node_attr(abstract)		/* there are no nodes of this type */
+
 	NodeTag		type;			/* identifies exact kind of context */
 	/* these two fields are placed here to minimize alignment wastage: */
 	bool		isReset;		/* T = no space alloced since last reset */

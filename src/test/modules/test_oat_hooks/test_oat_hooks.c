@@ -618,9 +618,6 @@ nodetag_to_string(NodeTag tag)
 		case T_PlanInvalItem:
 			return "PlanInvalItem";
 			break;
-		case T_PlanState:
-			return "PlanState";
-			break;
 		case T_ResultState:
 			return "ResultState";
 			break;

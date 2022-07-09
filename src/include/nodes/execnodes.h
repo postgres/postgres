@@ -999,6 +999,8 @@ typedef TupleTableSlot *(*ExecProcNodeMtd) (struct PlanState *pstate);
  */
 typedef struct PlanState
 {
+	pg_node_attr(abstract)
+
 	NodeTag		type;
 
 	Plan	   *plan;			/* associated Plan node */
