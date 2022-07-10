@@ -2125,18 +2125,19 @@ export MANPATH
 
   <para>
    In general, <productname>PostgreSQL</productname> can be expected to work on
-   these CPU architectures: x86, x86_64, PowerPC,
-   PowerPC 64, S/390, S/390x, Sparc, Sparc 64, ARM, MIPS, MIPSEL,
-   and PA-RISC.  Code support exists for M68K, M32R, and VAX, but these
+   these CPU architectures: x86, PowerPC, S/390, Sparc, ARM, MIPS, RISC-V,
+   and PA-RISC, including
+   big-endian, little-endian, 32-bit, and 64-bit variants where applicable.
+   Code support exists for M68K, M88K, M32R, and SuperH, but these
    architectures are not known to have been tested recently.  It is often
    possible to build on an unsupported CPU type by configuring with
    <option>--disable-spinlocks</option>, but performance will be poor.
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> can be expected to work on these operating
-   systems: Linux (all recent distributions), Windows (10 and later),
-   FreeBSD, OpenBSD, NetBSD, macOS, AIX, and Solaris.
+   <productname>PostgreSQL</productname> can be expected to work on current
+   versions of these operating systems: Linux, Windows,
+   FreeBSD, OpenBSD, NetBSD, DragonFlyBSD, macOS, AIX, Solaris, and illumos.
    Other Unix-like systems may also work but are not currently
    being tested.  In most cases, all CPU architectures supported by
    a given operating system will work.  Look in

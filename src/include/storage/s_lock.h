@@ -548,36 +548,6 @@ tas(volatile slock_t *lock)
 #endif	 /* __m88k__ */
 
 
-/*
- * VAXen -- even multiprocessor ones
- * (thanks to Tom Ivar Helbekkmo)
- */
-#if defined(__vax__)
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register int	_res;
-
-	__asm__ __volatile__(
-		"	movl 	$1, %0			\n"
-		"	bbssi	$0, (%2), 1f	\n"
-		"	clrl	%0				\n"
-		"1: \n"
-:		"=&r"(_res), "+m"(*lock)
-:		"r"(lock)
-:		"memory");
-	return _res;
-}
-
-#endif	 /* __vax__ */
-
-
 #if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
 #define HAS_TEST_AND_SET
 
