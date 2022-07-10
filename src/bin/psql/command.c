@@ -4675,6 +4675,14 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		sigint_interrupt_enabled = false;
 	}
 
+	/*
+	 * If the terminal driver echoed "^C", libedit/libreadline might be
+	 * confused about the cursor position.  Therefore, inject a newline
+	 * before the next prompt is displayed.
+	 */
+	fprintf(stdout, "\n");
+	fflush(stdout);
+
 	pg_free(title);
 	return (res >= 0);
 }
