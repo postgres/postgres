@@ -5145,6 +5145,18 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		pclose(pagerpipe);
 		restore_sigpipe_trap();
 	}
+	else
+	{
+		/*
+		 * If the terminal driver echoed "^C", libedit/libreadline might be
+		 * confused about the cursor position.  Therefore, inject a newline
+		 * before the next prompt is displayed.  We only do this when not
+		 * using a pager, because pagers are expected to restore the screen to
+		 * a sane state on exit.
+		 */
+		fprintf(stdout, "\n");
+		fflush(stdout);
+	}
 
 #ifdef HAVE_POSIX_DECL_SIGWAIT
 	/* Disable the interval timer. */
