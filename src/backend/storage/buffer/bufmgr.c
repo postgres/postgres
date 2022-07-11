@@ -3589,8 +3589,8 @@ FlushRelationBuffers(Relation rel)
  *
  *		This function flushes out of the buffer pool all the pages of all
  *		forks of the specified smgr relations.  It's equivalent to calling
- *		FlushRelationBuffers once per fork per relation.  The relations are
- *		assumed not to use local buffers.
+ *		FlushRelationBuffers once per relation.  The relations are assumed not
+ *		to use local buffers.
  * --------------------------------------------------------------------
  */
 void
