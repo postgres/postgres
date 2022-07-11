@@ -498,56 +498,6 @@ do \
 #endif /* powerpc */
 
 
-/* Linux Motorola 68k */
-#if (defined(__mc68000__) || defined(__m68k__)) && defined(__linux__)
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register int rv;
-
-	__asm__	__volatile__(
-		"	clrl	%0		\n"
-		"	tas		%1		\n"
-		"	sne		%0		\n"
-:		"=d"(rv), "+m"(*lock)
-:		/* no inputs */
-:		"memory", "cc");
-	return rv;
-}
-
-#endif	 /* (__mc68000__ || __m68k__) && __linux__ */
-
-
-/* Motorola 88k */
-#if defined(__m88k__)
-#define HAS_TEST_AND_SET
-
-typedef unsigned int slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register slock_t _res = 1;
-
-	__asm__ __volatile__(
-		"	xmem	%0, %2, %%r0	\n"
-:		"+r"(_res), "+m"(*lock)
-:		"r"(lock)
-:		"memory");
-	return (int) _res;
-}
-
-#endif	 /* __m88k__ */
-
-
 #if defined(__mips__) && !defined(__sgi)	/* non-SGI MIPS */
 #define HAS_TEST_AND_SET
 
@@ -617,58 +567,6 @@ do \
 } while (0)
 
 #endif /* __mips__ && !__sgi */
-
-
-#if defined(__m32r__) && defined(HAVE_SYS_TAS_H)	/* Renesas' M32R */
-#define HAS_TEST_AND_SET
-
-#include <sys/tas.h>
-
-typedef int slock_t;
-
-#define TAS(lock) tas(lock)
-
-#endif /* __m32r__ */
-
-
-#if defined(__sh__)				/* Renesas' SuperH */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-
-#define TAS(lock) tas(lock)
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register int _res;
-
-	/*
-	 * This asm is coded as if %0 could be any register, but actually SuperH
-	 * restricts the target of xor-immediate to be R0.  That's handled by
-	 * the "z" constraint on _res.
-	 */
-	__asm__ __volatile__(
-		"	tas.b @%2    \n"
-		"	movt  %0     \n"
-		"	xor   #1,%0  \n"
-:		"=z"(_res), "+m"(*lock)
-:		"r"(lock)
-:		"memory", "t");
-	return _res;
-}
-
-#endif	 /* __sh__ */
-
-
-/* These live in s_lock.c, but only for gcc */
-
-
-#if defined(__m68k__) && !defined(__linux__)	/* non-Linux Motorola 68k */
-#define HAS_TEST_AND_SET
-
-typedef unsigned char slock_t;
-#endif
 
 
 #if defined(__hppa) || defined(__hppa__)	/* HP PA-RISC */
