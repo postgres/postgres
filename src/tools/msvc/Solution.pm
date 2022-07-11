@@ -843,29 +843,28 @@ EOF
 			'src/backend/nodes/node-support-stamp',
 			'src/backend/nodes/gen_node_support.pl'))
 	{
-		# XXX duplicates src/backend/nodes/Makefile
-
+		# XXX duplicates node_headers list in src/backend/nodes/Makefile
 		my @node_headers = qw(
 		  nodes/nodes.h
-		  nodes/execnodes.h
-		  nodes/plannodes.h
 		  nodes/primnodes.h
-		  nodes/pathnodes.h
-		  nodes/extensible.h
 		  nodes/parsenodes.h
-		  nodes/replnodes.h
-		  nodes/value.h
-		  commands/trigger.h
-		  commands/event_trigger.h
-		  foreign/fdwapi.h
+		  nodes/pathnodes.h
+		  nodes/plannodes.h
+		  nodes/execnodes.h
 		  access/amapi.h
+		  access/sdir.h
 		  access/tableam.h
 		  access/tsmapi.h
-		  utils/rel.h
-		  nodes/supportnodes.h
+		  commands/event_trigger.h
+		  commands/trigger.h
 		  executor/tuptable.h
+		  foreign/fdwapi.h
+		  nodes/extensible.h
 		  nodes/lockoptions.h
-		  access/sdir.h
+		  nodes/replnodes.h
+		  nodes/supportnodes.h
+		  nodes/value.h
+		  utils/rel.h
 		);
 
 		chdir('src/backend/nodes');

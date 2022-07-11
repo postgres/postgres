@@ -33,27 +33,31 @@ OBJS = \
 
 include $(top_srcdir)/src/backend/common.mk
 
+# The principal node-defining headers are listed in their inclusion order,
+# to ensure cross-file subtyping works correctly.  The rest can just be
+# listed alphabetically.
+# Caution: re-ordering this list risks ABI breakage!
 node_headers = \
 	nodes/nodes.h \
-	nodes/execnodes.h \
-	nodes/plannodes.h \
 	nodes/primnodes.h \
-	nodes/pathnodes.h \
-	nodes/extensible.h \
 	nodes/parsenodes.h \
-	nodes/replnodes.h \
-	nodes/value.h \
-	commands/trigger.h \
-	commands/event_trigger.h \
-	foreign/fdwapi.h \
+	nodes/pathnodes.h \
+	nodes/plannodes.h \
+	nodes/execnodes.h \
 	access/amapi.h \
+	access/sdir.h \
 	access/tableam.h \
 	access/tsmapi.h \
-	utils/rel.h \
-	nodes/supportnodes.h \
+	commands/event_trigger.h \
+	commands/trigger.h \
 	executor/tuptable.h \
+	foreign/fdwapi.h \
+	nodes/extensible.h \
 	nodes/lockoptions.h \
-	access/sdir.h
+	nodes/replnodes.h \
+	nodes/supportnodes.h \
+	nodes/value.h \
+	utils/rel.h
 
 # see also catalog/Makefile for an explanation of these make rules
 

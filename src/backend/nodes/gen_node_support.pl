@@ -95,6 +95,22 @@ push @scalar_types, qw(EquivalenceClass* EquivalenceMember*);
 # currently not required.
 push @scalar_types, qw(QualCost);
 
+# Nodes from these input files don't need support functions, just node tags.
+my @nodetag_only_files = qw(
+  nodes/execnodes.h
+  access/amapi.h
+  access/sdir.h
+  access/tableam.h
+  access/tsmapi.h
+  commands/event_trigger.h
+  commands/trigger.h
+  executor/tuptable.h
+  foreign/fdwapi.h
+  nodes/lockoptions.h
+  nodes/replnodes.h
+  nodes/supportnodes.h
+);
+
 # XXX various things we are not publishing right now to stay level
 # with the manual system
 push @no_copy,  qw(CallContext InlineCodeBlock);
@@ -132,6 +148,9 @@ foreach my $infile (@ARGV)
 	my %my_field_attrs;
 
 	open my $ifh, '<', $infile or die "could not open \"$infile\": $!";
+
+	# now shorten filename for use below
+	$infile =~ s!.*src/include/!!;
 
 	my $raw_file_content = do { local $/; <$ifh> };
 
@@ -295,12 +314,8 @@ foreach my $infile (@ARGV)
 					$node_type_info{$in_struct}->{field_types} = \%ft;
 					$node_type_info{$in_struct}->{field_attrs} = \%fa;
 
-					# Nodes from these files don't need support functions,
-					# just node tags.
-					if (elem basename($infile),
-						qw(execnodes.h trigger.h event_trigger.h amapi.h tableam.h
-						tsmapi.h fdwapi.h tuptable.h replnodes.h supportnodes.h)
-					  )
+					# Exclude nodes in nodetag_only_files from support.
+					if (elem $infile, @nodetag_only_files)
 					{
 						push @no_copy,       $in_struct;
 						push @no_equal,      $in_struct;
