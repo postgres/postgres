@@ -228,7 +228,7 @@ scan_file(const char *fn, int segmentno)
 		current_size += r;
 
 		/* New pages have no checksum yet */
-		if (PageIsNew(header))
+		if (PageIsNew(buf.data))
 			continue;
 
 		csum = pg_checksum_page(buf.data, blockno + segmentno * RELSEG_SIZE);

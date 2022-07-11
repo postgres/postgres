@@ -230,7 +230,7 @@ PageAddItemExtended(Page page,
 		{
 			if (offsetNumber < limit)
 			{
-				itemId = PageGetItemId(phdr, offsetNumber);
+				itemId = PageGetItemId(page, offsetNumber);
 				if (ItemIdIsUsed(itemId) || ItemIdHasStorage(itemId))
 				{
 					elog(WARNING, "will not overwrite a used ItemId");
@@ -248,7 +248,7 @@ PageAddItemExtended(Page page,
 	{
 		/* offsetNumber was not passed in, so find a free slot */
 		/* if no free slot, we'll put it at limit (1st open slot) */
-		if (PageHasFreeLinePointers(phdr))
+		if (PageHasFreeLinePointers(page))
 		{
 			/*
 			 * Scan line pointer array to locate a "recyclable" (unused)
@@ -262,7 +262,7 @@ PageAddItemExtended(Page page,
 				 offsetNumber < limit;	/* limit is maxoff+1 */
 				 offsetNumber++)
 			{
-				itemId = PageGetItemId(phdr, offsetNumber);
+				itemId = PageGetItemId(page, offsetNumber);
 
 				/*
 				 * We check for no storage as well, just to be paranoid;
@@ -277,7 +277,7 @@ PageAddItemExtended(Page page,
 			if (offsetNumber >= limit)
 			{
 				/* the hint is wrong, so reset it */
-				PageClearHasFreeLinePointers(phdr);
+				PageClearHasFreeLinePointers(page);
 			}
 		}
 		else
@@ -322,7 +322,7 @@ PageAddItemExtended(Page page,
 	/*
 	 * OK to insert the item.  First, shuffle the existing pointers if needed.
 	 */
-	itemId = PageGetItemId(phdr, offsetNumber);
+	itemId = PageGetItemId(page, offsetNumber);
 
 	if (needshuffle)
 		memmove(itemId + 1, itemId,
@@ -1004,7 +1004,7 @@ PageGetHeapFreeSpace(Page page)
 		nline = PageGetMaxOffsetNumber(page);
 		if (nline >= MaxHeapTuplesPerPage)
 		{
-			if (PageHasFreeLinePointers((PageHeader) page))
+			if (PageHasFreeLinePointers(page))
 			{
 				/*
 				 * Since this is just a hint, we must confirm that there is
@@ -1139,7 +1139,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		nline--;				/* there's one less than when we started */
 		for (i = 1; i <= nline; i++)
 		{
-			ItemId		ii = PageGetItemId(phdr, i);
+			ItemId		ii = PageGetItemId(page, i);
 
 			Assert(ItemIdHasStorage(ii));
 			if (ItemIdGetOffset(ii) <= offset)
@@ -1374,7 +1374,7 @@ PageIndexTupleDeleteNoCompact(Page page, OffsetNumber offnum)
 
 		for (i = 1; i <= nline; i++)
 		{
-			ItemId		ii = PageGetItemId(phdr, i);
+			ItemId		ii = PageGetItemId(page, i);
 
 			if (ItemIdHasStorage(ii) && ItemIdGetOffset(ii) <= offset)
 				ii->lp_off += size;
@@ -1473,7 +1473,7 @@ PageIndexTupleOverwrite(Page page, OffsetNumber offnum,
 		/* adjust affected line pointers too */
 		for (i = FirstOffsetNumber; i <= itemcount; i++)
 		{
-			ItemId		ii = PageGetItemId(phdr, i);
+			ItemId		ii = PageGetItemId(page, i);
 
 			/* Allow items without storage; currently only BRIN needs that */
 			if (ItemIdHasStorage(ii) && ItemIdGetOffset(ii) <= offset)
