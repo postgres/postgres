@@ -110,8 +110,6 @@ struct dshash_table
 	dshash_table_control *control;	/* Control object in DSM. */
 	dsa_pointer *buckets;		/* Current bucket pointers in DSM. */
 	size_t		size_log2;		/* log2(number of buckets) */
-	bool		find_locked;	/* Is any partition lock held by 'find'? */
-	bool		find_exclusively_locked;	/* ... exclusively? */
 };
 
 /* Given a pointer to an item, find the entry (user data) it holds. */
@@ -186,6 +184,10 @@ static inline bool equal_keys(dshash_table *hash_table,
 #define PARTITION_LOCK(hash_table, i)			\
 	(&(hash_table)->control->partitions[(i)].lock)
 
+#define ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table) \
+	Assert(!LWLockAnyHeldByMe(&(hash_table)->control->partitions[0].lock, \
+		   DSHASH_NUM_PARTITIONS, sizeof(dshash_partition)))
+
 /*
  * Create a new hash table backed by the given dynamic shared area, with the
  * given parameters.  The returned object is allocated in backend-local memory
@@ -225,9 +227,6 @@ dshash_create(dsa_area *area, const dshash_parameters *params, void *arg)
 			partitions[i].count = 0;
 		}
 	}
-
-	hash_table->find_locked = false;
-	hash_table->find_exclusively_locked = false;
 
 	/*
 	 * Set up the initial array of buckets.  Our initial size is the same as
@@ -277,8 +276,6 @@ dshash_attach(dsa_area *area, const dshash_parameters *params,
 	hash_table->params = *params;
 	hash_table->arg = arg;
 	hash_table->control = dsa_get_address(area, control);
-	hash_table->find_locked = false;
-	hash_table->find_exclusively_locked = false;
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
 
 	/*
@@ -301,7 +298,7 @@ dshash_attach(dsa_area *area, const dshash_parameters *params,
 void
 dshash_detach(dshash_table *hash_table)
 {
-	Assert(!hash_table->find_locked);
+	ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table);
 
 	/* The hash table may have been destroyed.  Just free local memory. */
 	pfree(hash_table);
@@ -392,7 +389,7 @@ dshash_find(dshash_table *hash_table, const void *key, bool exclusive)
 	partition = PARTITION_FOR_HASH(hash);
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(!hash_table->find_locked);
+	ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table);
 
 	LWLockAcquire(PARTITION_LOCK(hash_table, partition),
 				  exclusive ? LW_EXCLUSIVE : LW_SHARED);
@@ -409,9 +406,7 @@ dshash_find(dshash_table *hash_table, const void *key, bool exclusive)
 	}
 	else
 	{
-		/* The caller will free the lock by calling dshash_release. */
-		hash_table->find_locked = true;
-		hash_table->find_exclusively_locked = exclusive;
+		/* The caller will free the lock by calling dshash_release_lock. */
 		return ENTRY_FROM_ITEM(item);
 	}
 }
@@ -441,7 +436,7 @@ dshash_find_or_insert(dshash_table *hash_table,
 	partition = &hash_table->control->partitions[partition_index];
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(!hash_table->find_locked);
+	ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table);
 
 restart:
 	LWLockAcquire(PARTITION_LOCK(hash_table, partition_index),
@@ -486,8 +481,6 @@ restart:
 	}
 
 	/* The caller must release the lock with dshash_release_lock. */
-	hash_table->find_locked = true;
-	hash_table->find_exclusively_locked = true;
 	return ENTRY_FROM_ITEM(item);
 }
 
@@ -506,7 +499,7 @@ dshash_delete_key(dshash_table *hash_table, const void *key)
 	bool		found;
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(!hash_table->find_locked);
+	ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table);
 
 	hash = hash_key(hash_table, key);
 	partition = PARTITION_FOR_HASH(hash);
@@ -543,14 +536,10 @@ dshash_delete_entry(dshash_table *hash_table, void *entry)
 	size_t		partition = PARTITION_FOR_HASH(item->hash);
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(hash_table->find_locked);
-	Assert(hash_table->find_exclusively_locked);
 	Assert(LWLockHeldByMeInMode(PARTITION_LOCK(hash_table, partition),
 								LW_EXCLUSIVE));
 
 	delete_item(hash_table, item);
-	hash_table->find_locked = false;
-	hash_table->find_exclusively_locked = false;
 	LWLockRelease(PARTITION_LOCK(hash_table, partition));
 }
 
@@ -564,13 +553,7 @@ dshash_release_lock(dshash_table *hash_table, void *entry)
 	size_t		partition_index = PARTITION_FOR_HASH(item->hash);
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(hash_table->find_locked);
-	Assert(LWLockHeldByMeInMode(PARTITION_LOCK(hash_table, partition_index),
-								hash_table->find_exclusively_locked
-								? LW_EXCLUSIVE : LW_SHARED));
 
-	hash_table->find_locked = false;
-	hash_table->find_exclusively_locked = false;
 	LWLockRelease(PARTITION_LOCK(hash_table, partition_index));
 }
 
@@ -603,7 +586,7 @@ dshash_dump(dshash_table *hash_table)
 	size_t		j;
 
 	Assert(hash_table->control->magic == DSHASH_MAGIC);
-	Assert(!hash_table->find_locked);
+	ASSERT_NO_PARTITION_LOCKS_HELD_BY_ME(hash_table);
 
 	for (i = 0; i < DSHASH_NUM_PARTITIONS; ++i)
 	{
