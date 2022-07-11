@@ -41,10 +41,13 @@ privileges for parameter test_oat_hooks.super_var2
 privileges for parameter none.such
 privileges for parameter another.bogus
 -- Check the behavior of the hooks relative to do-nothing grants and revokes
-GRANT SET ON PARAMETER work_mem TO PUBLIC;
+GRANT SET ON PARAMETER maintenance_work_mem TO PUBLIC;
 NOTICE:  in process utility: superuser attempting GrantStmt
 NOTICE:  in process utility: superuser finished GrantStmt
-REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM PUBLIC;
+REVOKE SET ON PARAMETER maintenance_work_mem FROM PUBLIC;
+NOTICE:  in process utility: superuser attempting GrantStmt
+NOTICE:  in process utility: superuser finished GrantStmt
+REVOKE ALTER SYSTEM ON PARAMETER maintenance_work_mem FROM PUBLIC;
 NOTICE:  in process utility: superuser attempting GrantStmt
 NOTICE:  in process utility: superuser finished GrantStmt
 -- Check the behavior of the hooks relative to unrecognized parameters
@@ -299,3 +302,4 @@ REVOKE ALL PRIVILEGES ON PARAMETER
 	test_oat_hooks.user_var2, test_oat_hooks.super_var2
 	FROM regress_role_joe;
 DROP ROLE regress_role_joe;
+DROP ROLE regress_test_user;

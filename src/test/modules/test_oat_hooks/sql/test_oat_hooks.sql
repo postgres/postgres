@@ -25,8 +25,9 @@ GRANT SET, ALTER SYSTEM ON PARAMETER another.bogus TO regress_role_joe WITH GRAN
 DROP ROLE regress_role_joe;
 
 -- Check the behavior of the hooks relative to do-nothing grants and revokes
-GRANT SET ON PARAMETER work_mem TO PUBLIC;
-REVOKE ALTER SYSTEM ON PARAMETER work_mem FROM PUBLIC;
+GRANT SET ON PARAMETER maintenance_work_mem TO PUBLIC;
+REVOKE SET ON PARAMETER maintenance_work_mem FROM PUBLIC;
+REVOKE ALTER SYSTEM ON PARAMETER maintenance_work_mem FROM PUBLIC;
 
 -- Check the behavior of the hooks relative to unrecognized parameters
 GRANT ALL ON PARAMETER "none.such" TO PUBLIC;
@@ -98,3 +99,4 @@ REVOKE ALL PRIVILEGES ON PARAMETER
 	test_oat_hooks.user_var2, test_oat_hooks.super_var2
 	FROM regress_role_joe;
 DROP ROLE regress_role_joe;
+DROP ROLE regress_test_user;
