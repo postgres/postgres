@@ -1100,8 +1100,8 @@ Author: Andres Freund <andres@anarazel.de>
 
       <listitem>
        <para>
-        Store <link linkend="monitoring-stats">server-level
-        statistics</link> in shared memory (Kyotaro Horiguchi, Andres
+        Store <link linkend="monitoring-stats">cumulative statistics
+        system</link> data in shared memory (Kyotaro Horiguchi, Andres
         Freund, Melanie Plageman)
        </para>
 
@@ -1248,7 +1248,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        </para>
 
        <para>
-        New function <function>has_parameter_privilege()</function>
+        The new function <function>has_parameter_privilege()</function>
         reports on this privilege.
        </para>
       </listitem>
@@ -1656,7 +1656,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-        New function <link
+        The new function <link
         linkend="monitoring-stats-functions"><function>pg_stat_reset_subscription_stats()</function></link>
         allows the resetting of subscriber statistics.
        </para>
