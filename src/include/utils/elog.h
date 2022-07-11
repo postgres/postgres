@@ -16,6 +16,8 @@
 
 #include <setjmp.h>
 
+#include "lib/stringinfo.h"
+
 /* Error level codes */
 #define DEBUG5		10			/* Debugging messages, in categories of
 								 * decreasing detail. */
@@ -439,6 +441,8 @@ extern PGDLLIMPORT bool syslog_split_messages;
 #define LOG_DESTINATION_JSONLOG	16
 
 /* Other exported functions */
+extern void log_status_format(StringInfo buf, const char *format,
+							  ErrorData *edata);
 extern void DebugFileOpen(void);
 extern char *unpack_sql_state(int sql_state);
 extern bool in_error_recursion_trouble(void);
