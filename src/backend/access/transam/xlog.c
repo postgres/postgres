@@ -11879,6 +11879,8 @@ do_pg_abort_backup(int code, Datum arg)
 	{
 		XLogCtl->Insert.forcePageWrites = false;
 	}
+
+	sessionBackupState = SESSION_BACKUP_NONE;
 	WALInsertLockRelease();
 
 	if (emit_warning)
