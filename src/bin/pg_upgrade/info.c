@@ -123,7 +123,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 			strcmp(old_rel->relname, new_rel->relname) != 0)
 		{
 			pg_log(PG_WARNING, "Relation names for OID %u in database \"%s\" do not match: "
-				   "old name \"%s.%s\", new name \"%s.%s\"\n",
+				   "old name \"%s.%s\", new name \"%s.%s\"",
 				   old_rel->reloid, old_db->db_name,
 				   old_rel->nspname, old_rel->relname,
 				   new_rel->nspname, new_rel->relname);
@@ -142,7 +142,7 @@ gen_db_file_maps(DbInfo *old_db, DbInfo *new_db,
 	}
 
 	if (!all_matched)
-		pg_fatal("Failed to match up old and new tables in database \"%s\"\n",
+		pg_fatal("Failed to match up old and new tables in database \"%s\"",
 				 old_db->db_name);
 
 	*nmaps = num_maps;
@@ -257,10 +257,10 @@ report_unmatched_relation(const RelInfo *rel, const DbInfo *db, bool is_new_db)
 	}
 
 	if (is_new_db)
-		pg_log(PG_WARNING, "No match found in old cluster for new relation with OID %u in database \"%s\": %s\n",
+		pg_log(PG_WARNING, "No match found in old cluster for new relation with OID %u in database \"%s\": %s",
 			   reloid, db->db_name, reldesc);
 	else
-		pg_log(PG_WARNING, "No match found in new cluster for old relation with OID %u in database \"%s\": %s\n",
+		pg_log(PG_WARNING, "No match found in new cluster for old relation with OID %u in database \"%s\": %s",
 			   reloid, db->db_name, reldesc);
 }
 
@@ -284,9 +284,9 @@ get_db_and_rel_infos(ClusterInfo *cluster)
 		get_rel_infos(cluster, &cluster->dbarr.dbs[dbnum]);
 
 	if (cluster == &old_cluster)
-		pg_log(PG_VERBOSE, "\nsource databases:\n");
+		pg_log(PG_VERBOSE, "\nsource databases:");
 	else
-		pg_log(PG_VERBOSE, "\ntarget databases:\n");
+		pg_log(PG_VERBOSE, "\ntarget databases:");
 
 	if (log_opts.verbose)
 		print_db_infos(&cluster->dbarr);
@@ -602,9 +602,8 @@ print_db_infos(DbInfoArr *db_arr)
 
 	for (dbnum = 0; dbnum < db_arr->ndbs; dbnum++)
 	{
-		pg_log(PG_VERBOSE, "Database: %s\n", db_arr->dbs[dbnum].db_name);
+		pg_log(PG_VERBOSE, "Database: %s", db_arr->dbs[dbnum].db_name);
 		print_rel_infos(&db_arr->dbs[dbnum].rel_arr);
-		pg_log(PG_VERBOSE, "\n\n");
 	}
 }
 
@@ -615,7 +614,7 @@ print_rel_infos(RelInfoArr *rel_arr)
 	int			relnum;
 
 	for (relnum = 0; relnum < rel_arr->nrels; relnum++)
-		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s\n",
+		pg_log(PG_VERBOSE, "relname: %s.%s: reloid: %u reltblspace: %s",
 			   rel_arr->rels[relnum].nspname,
 			   rel_arr->rels[relnum].relname,
 			   rel_arr->rels[relnum].reloid,

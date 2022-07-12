@@ -42,13 +42,13 @@ get_bin_version(ClusterInfo *cluster)
 
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
-		pg_fatal("could not get pg_ctl version data using %s: %s\n",
+		pg_fatal("could not get pg_ctl version data using %s: %s",
 				 cmd, strerror(errno));
 
 	pclose(output);
 
 	if (sscanf(cmd_output, "%*s %*s %d.%d", &v1, &v2) < 1)
-		pg_fatal("could not get pg_ctl version output from %s\n", cmd);
+		pg_fatal("could not get pg_ctl version output from %s", cmd);
 
 	if (v1 < 10)
 	{
@@ -105,13 +105,13 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 	written += vsnprintf(cmd + written, MAXCMDLEN - written, fmt, ap);
 	va_end(ap);
 	if (written >= MAXCMDLEN)
-		pg_fatal("command too long\n");
+		pg_fatal("command too long");
 	written += snprintf(cmd + written, MAXCMDLEN - written,
 						" >> \"%s\" 2>&1", log_file);
 	if (written >= MAXCMDLEN)
-		pg_fatal("command too long\n");
+		pg_fatal("command too long");
 
-	pg_log(PG_VERBOSE, "%s\n", cmd);
+	pg_log(PG_VERBOSE, "%s", cmd);
 
 #ifdef WIN32
 
@@ -150,7 +150,7 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 #endif
 
 	if (log == NULL)
-		pg_fatal("could not open log file \"%s\": %m\n", log_file);
+		pg_fatal("could not open log file \"%s\": %m", log_file);
 
 #ifdef WIN32
 	/* Are we printing "command:" before its output? */
@@ -182,16 +182,16 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 		report_status(PG_REPORT, "\n*failure*");
 		fflush(stdout);
 
-		pg_log(PG_VERBOSE, "There were problems executing \"%s\"\n", cmd);
+		pg_log(PG_VERBOSE, "There were problems executing \"%s\"", cmd);
 		if (opt_log_file)
 			pg_log(exit_on_error ? PG_FATAL : PG_REPORT,
 				   "Consult the last few lines of \"%s\" or \"%s\" for\n"
-				   "the probable cause of the failure.\n",
+				   "the probable cause of the failure.",
 				   log_file, opt_log_file);
 		else
 			pg_log(exit_on_error ? PG_FATAL : PG_REPORT,
 				   "Consult the last few lines of \"%s\" for\n"
-				   "the probable cause of the failure.\n",
+				   "the probable cause of the failure.",
 				   log_file);
 	}
 
@@ -205,7 +205,7 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 	 * log these commands to a third file, but that just adds complexity.
 	 */
 	if ((log = fopen(log_file, "a")) == NULL)
-		pg_fatal("could not write to log file \"%s\": %m\n", log_file);
+		pg_fatal("could not write to log file \"%s\": %m", log_file);
 	fprintf(log, "\n\n");
 	fclose(log);
 #endif
@@ -231,7 +231,7 @@ pid_lock_file_exists(const char *datadir)
 	{
 		/* ENOTDIR means we will throw a more useful error later */
 		if (errno != ENOENT && errno != ENOTDIR)
-			pg_fatal("could not open file \"%s\" for reading: %s\n",
+			pg_fatal("could not open file \"%s\" for reading: %s",
 					 path, strerror(errno));
 
 		return false;
@@ -258,7 +258,7 @@ verify_directories(void)
 #else
 	if (win32_check_directory_write_permissions() != 0)
 #endif
-		pg_fatal("You must have read and write access in the current directory.\n");
+		pg_fatal("You must have read and write access in the current directory.");
 
 	check_bin_dir(&old_cluster, false);
 	check_data_dir(&old_cluster);
@@ -311,10 +311,10 @@ check_single_dir(const char *pg_data, const char *subdir)
 			 subdir);
 
 	if (stat(subDirName, &statBuf) != 0)
-		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
+		report_status(PG_FATAL, "check for \"%s\" failed: %s",
 					  subDirName, strerror(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
-		report_status(PG_FATAL, "\"%s\" is not a directory\n",
+		report_status(PG_FATAL, "\"%s\" is not a directory",
 					  subDirName);
 }
 
@@ -377,10 +377,10 @@ check_bin_dir(ClusterInfo *cluster, bool check_versions)
 
 	/* check bindir */
 	if (stat(cluster->bindir, &statBuf) != 0)
-		report_status(PG_FATAL, "check for \"%s\" failed: %s\n",
+		report_status(PG_FATAL, "check for \"%s\" failed: %s",
 					  cluster->bindir, strerror(errno));
 	else if (!S_ISDIR(statBuf.st_mode))
-		report_status(PG_FATAL, "\"%s\" is not a directory\n",
+		report_status(PG_FATAL, "\"%s\" is not a directory",
 					  cluster->bindir);
 
 	check_exec(cluster->bindir, "postgres", check_versions);
@@ -430,16 +430,16 @@ check_exec(const char *dir, const char *program, bool check_version)
 	ret = validate_exec(path);
 
 	if (ret == -1)
-		pg_fatal("check for \"%s\" failed: not a regular file\n",
+		pg_fatal("check for \"%s\" failed: does not exist or cannot be executed",
 				 path);
 	else if (ret == -2)
-		pg_fatal("check for \"%s\" failed: cannot execute (permission denied)\n",
+		pg_fatal("check for \"%s\" failed: cannot read (permission denied)",
 				 path);
 
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V", path);
 
 	if (!pipe_read_line(cmd, line, sizeof(line)))
-		pg_fatal("check for \"%s\" failed: cannot execute\n",
+		pg_fatal("check for \"%s\" failed: cannot execute",
 				 path);
 
 	if (check_version)
@@ -449,7 +449,7 @@ check_exec(const char *dir, const char *program, bool check_version)
 		snprintf(versionstr, sizeof(versionstr), "%s (PostgreSQL) " PG_VERSION, program);
 
 		if (strcmp(line, versionstr) != 0)
-			pg_fatal("check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"\n",
+			pg_fatal("check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"",
 					 path, line, versionstr);
 	}
 }

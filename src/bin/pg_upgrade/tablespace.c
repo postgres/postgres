@@ -26,7 +26,7 @@ init_tablespaces(void)
 	if (os_info.num_old_tablespaces > 0 &&
 		strcmp(old_cluster.tablespace_suffix, new_cluster.tablespace_suffix) == 0)
 		pg_fatal("Cannot upgrade to/from the same system catalog version when\n"
-				 "using tablespaces.\n");
+				 "using tablespaces.");
 }
 
 
@@ -80,16 +80,16 @@ get_tablespace_paths(void)
 		{
 			if (errno == ENOENT)
 				report_status(PG_FATAL,
-							  "tablespace directory \"%s\" does not exist\n",
+							  "tablespace directory \"%s\" does not exist",
 							  os_info.old_tablespaces[tblnum]);
 			else
 				report_status(PG_FATAL,
-							  "could not stat tablespace directory \"%s\": %s\n",
+							  "could not stat tablespace directory \"%s\": %s",
 							  os_info.old_tablespaces[tblnum], strerror(errno));
 		}
 		if (!S_ISDIR(statBuf.st_mode))
 			report_status(PG_FATAL,
-						  "tablespace path \"%s\" is not a directory\n",
+						  "tablespace path \"%s\" is not a directory",
 						  os_info.old_tablespaces[tblnum]);
 	}
 

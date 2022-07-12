@@ -235,7 +235,8 @@ typedef enum
 typedef enum
 {
 	PG_VERBOSE,
-	PG_STATUS,
+	PG_STATUS,					/* these messages do not get a newline added */
+	PG_REPORT_NONL,				/* these too */
 	PG_REPORT,
 	PG_WARNING,
 	PG_FATAL

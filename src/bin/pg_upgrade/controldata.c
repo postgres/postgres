@@ -12,6 +12,8 @@
 #include <ctype.h>
 
 #include "pg_upgrade.h"
+#include "common/string.h"
+
 
 /*
  * get_control_data()
@@ -125,7 +127,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		fflush(stderr);
 
 		if ((output = popen(cmd, "r")) == NULL)
-			pg_fatal("could not get control data using %s: %s\n",
+			pg_fatal("could not get control data using %s: %s",
 					 cmd, strerror(errno));
 
 		/* we have the result of cmd in "output". so parse it line by line now */
@@ -136,7 +138,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				p = strchr(p, ':');
 
 				if (p == NULL || strlen(p) <= 1)
-					pg_fatal("%d: database cluster state problem\n", __LINE__);
+					pg_fatal("%d: database cluster state problem", __LINE__);
 
 				p++;			/* remove ':' char */
 
@@ -154,16 +156,16 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				if (strcmp(p, "shut down in recovery\n") == 0)
 				{
 					if (cluster == &old_cluster)
-						pg_fatal("The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n");
+						pg_fatal("The source cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.");
 					else
-						pg_fatal("The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.\n");
+						pg_fatal("The target cluster was shut down while in recovery mode.  To upgrade, use \"rsync\" as documented or shut it down as a primary.");
 				}
 				else if (strcmp(p, "shut down\n") != 0)
 				{
 					if (cluster == &old_cluster)
-						pg_fatal("The source cluster was not shut down cleanly.\n");
+						pg_fatal("The source cluster was not shut down cleanly.");
 					else
-						pg_fatal("The target cluster was not shut down cleanly.\n");
+						pg_fatal("The target cluster was not shut down cleanly.");
 				}
 				got_cluster_state = true;
 			}
@@ -174,9 +176,9 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		if (!got_cluster_state)
 		{
 			if (cluster == &old_cluster)
-				pg_fatal("The source cluster lacks cluster state information:\n");
+				pg_fatal("The source cluster lacks cluster state information:");
 			else
-				pg_fatal("The target cluster lacks cluster state information:\n");
+				pg_fatal("The target cluster lacks cluster state information:");
 		}
 	}
 
@@ -193,7 +195,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	fflush(stderr);
 
 	if ((output = popen(cmd, "r")) == NULL)
-		pg_fatal("could not get control data using %s: %s\n",
+		pg_fatal("could not get control data using %s: %s",
 				 cmd, strerror(errno));
 
 	/* Only in <= 9.2 */
@@ -206,6 +208,8 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	/* we have the result of cmd in "output". so parse it line by line now */
 	while (fgets(bufin, sizeof(bufin), output))
 	{
+		/* In verbose mode, log each line */
+		pg_strip_crlf(bufin);
 		pg_log(PG_VERBOSE, "%s", bufin);
 
 		if ((p = strstr(bufin, "pg_control version number:")) != NULL)
@@ -213,7 +217,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: pg_resetwal problem\n", __LINE__);
+				pg_fatal("%d: pg_resetwal problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.ctrl_ver = str2uint(p);
@@ -223,7 +227,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.cat_ver = str2uint(p);
@@ -233,7 +237,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			tli = str2uint(p);
@@ -244,7 +248,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			logid = str2uint(p);
@@ -255,7 +259,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			segno = str2uint(p);
@@ -266,7 +270,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtepoch = str2uint(p);
@@ -285,7 +289,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				p = NULL;
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove '/' or ':' char */
 			cluster->controldata.chkpnt_nxtxid = str2uint(p);
@@ -296,7 +300,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtoid = str2uint(p);
@@ -307,7 +311,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtmulti = str2uint(p);
@@ -318,7 +322,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_oldstxid = str2uint(p);
@@ -329,7 +333,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_oldstMulti = str2uint(p);
@@ -340,7 +344,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
@@ -351,14 +355,14 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			/* Skip the colon and any whitespace after it */
 			p = strchr(p, ':');
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 			p = strpbrk(p, "01234567890ABCDEF");
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			/* Make sure it looks like a valid WAL file name */
 			if (strspn(p, "0123456789ABCDEF") != 24)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			strlcpy(cluster->controldata.nextxlogfile, p, 25);
 			got_nextxlogfile = true;
@@ -368,7 +372,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			/* used later for contrib check */
@@ -380,7 +384,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.align = str2uint(p);
@@ -391,7 +395,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.blocksz = str2uint(p);
@@ -402,7 +406,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.largesz = str2uint(p);
@@ -413,7 +417,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.walsz = str2uint(p);
@@ -424,7 +428,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.walseg = str2uint(p);
@@ -435,7 +439,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.ident = str2uint(p);
@@ -446,7 +450,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.index = str2uint(p);
@@ -457,7 +461,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.toast = str2uint(p);
@@ -468,7 +472,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.large_object = str2uint(p);
@@ -479,7 +483,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			cluster->controldata.date_is_int = strstr(p, "64-bit integers") != NULL;
@@ -490,7 +494,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			p = strchr(p, ':');
 
 			if (p == NULL || strlen(p) <= 1)
-				pg_fatal("%d: controldata retrieval problem\n", __LINE__);
+				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
 			/* used later for contrib check */
@@ -569,72 +573,72 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	{
 		if (cluster == &old_cluster)
 			pg_log(PG_REPORT,
-				   "The source cluster lacks some required control information:\n");
+				   "The source cluster lacks some required control information:");
 		else
 			pg_log(PG_REPORT,
-				   "The target cluster lacks some required control information:\n");
+				   "The target cluster lacks some required control information:");
 
 		if (!got_xid)
-			pg_log(PG_REPORT, "  checkpoint next XID\n");
+			pg_log(PG_REPORT, "  checkpoint next XID");
 
 		if (!got_oid)
-			pg_log(PG_REPORT, "  latest checkpoint next OID\n");
+			pg_log(PG_REPORT, "  latest checkpoint next OID");
 
 		if (!got_multi)
-			pg_log(PG_REPORT, "  latest checkpoint next MultiXactId\n");
+			pg_log(PG_REPORT, "  latest checkpoint next MultiXactId");
 
 		if (!got_oldestmulti &&
 			cluster->controldata.cat_ver >= MULTIXACT_FORMATCHANGE_CAT_VER)
-			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId\n");
+			pg_log(PG_REPORT, "  latest checkpoint oldest MultiXactId");
 
 		if (!got_oldestxid)
-			pg_log(PG_REPORT, "  latest checkpoint oldestXID\n");
+			pg_log(PG_REPORT, "  latest checkpoint oldestXID");
 
 		if (!got_mxoff)
-			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset\n");
+			pg_log(PG_REPORT, "  latest checkpoint next MultiXactOffset");
 
 		if (!live_check && !got_nextxlogfile)
-			pg_log(PG_REPORT, "  first WAL segment after reset\n");
+			pg_log(PG_REPORT, "  first WAL segment after reset");
 
 		if (!got_float8_pass_by_value)
-			pg_log(PG_REPORT, "  float8 argument passing method\n");
+			pg_log(PG_REPORT, "  float8 argument passing method");
 
 		if (!got_align)
-			pg_log(PG_REPORT, "  maximum alignment\n");
+			pg_log(PG_REPORT, "  maximum alignment");
 
 		if (!got_blocksz)
-			pg_log(PG_REPORT, "  block size\n");
+			pg_log(PG_REPORT, "  block size");
 
 		if (!got_largesz)
-			pg_log(PG_REPORT, "  large relation segment size\n");
+			pg_log(PG_REPORT, "  large relation segment size");
 
 		if (!got_walsz)
-			pg_log(PG_REPORT, "  WAL block size\n");
+			pg_log(PG_REPORT, "  WAL block size");
 
 		if (!got_walseg)
-			pg_log(PG_REPORT, "  WAL segment size\n");
+			pg_log(PG_REPORT, "  WAL segment size");
 
 		if (!got_ident)
-			pg_log(PG_REPORT, "  maximum identifier length\n");
+			pg_log(PG_REPORT, "  maximum identifier length");
 
 		if (!got_index)
-			pg_log(PG_REPORT, "  maximum number of indexed columns\n");
+			pg_log(PG_REPORT, "  maximum number of indexed columns");
 
 		if (!got_toast)
-			pg_log(PG_REPORT, "  maximum TOAST chunk size\n");
+			pg_log(PG_REPORT, "  maximum TOAST chunk size");
 
 		if (!got_large_object &&
 			cluster->controldata.ctrl_ver >= LARGE_OBJECT_SIZE_PG_CONTROL_VER)
-			pg_log(PG_REPORT, "  large-object chunk size\n");
+			pg_log(PG_REPORT, "  large-object chunk size");
 
 		if (!got_date_is_int)
-			pg_log(PG_REPORT, "  dates/times are integers?\n");
+			pg_log(PG_REPORT, "  dates/times are integers?");
 
 		/* value added in Postgres 9.3 */
 		if (!got_data_checksum_version)
-			pg_log(PG_REPORT, "  data checksum version\n");
+			pg_log(PG_REPORT, "  data checksum version");
 
-		pg_fatal("Cannot continue without required control information, terminating\n");
+		pg_fatal("Cannot continue without required control information, terminating");
 	}
 }
 
@@ -649,37 +653,37 @@ check_control_data(ControlData *oldctrl,
 				   ControlData *newctrl)
 {
 	if (oldctrl->align == 0 || oldctrl->align != newctrl->align)
-		pg_fatal("old and new pg_controldata alignments are invalid or do not match\n"
-				 "Likely one cluster is a 32-bit install, the other 64-bit\n");
+		pg_fatal("old and new pg_controldata alignments are invalid or do not match.\n"
+				 "Likely one cluster is a 32-bit install, the other 64-bit");
 
 	if (oldctrl->blocksz == 0 || oldctrl->blocksz != newctrl->blocksz)
-		pg_fatal("old and new pg_controldata block sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata block sizes are invalid or do not match");
 
 	if (oldctrl->largesz == 0 || oldctrl->largesz != newctrl->largesz)
-		pg_fatal("old and new pg_controldata maximum relation segment sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata maximum relation segment sizes are invalid or do not match");
 
 	if (oldctrl->walsz == 0 || oldctrl->walsz != newctrl->walsz)
-		pg_fatal("old and new pg_controldata WAL block sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata WAL block sizes are invalid or do not match");
 
 	if (oldctrl->walseg == 0 || oldctrl->walseg != newctrl->walseg)
-		pg_fatal("old and new pg_controldata WAL segment sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata WAL segment sizes are invalid or do not match");
 
 	if (oldctrl->ident == 0 || oldctrl->ident != newctrl->ident)
-		pg_fatal("old and new pg_controldata maximum identifier lengths are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata maximum identifier lengths are invalid or do not match");
 
 	if (oldctrl->index == 0 || oldctrl->index != newctrl->index)
-		pg_fatal("old and new pg_controldata maximum indexed columns are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata maximum indexed columns are invalid or do not match");
 
 	if (oldctrl->toast == 0 || oldctrl->toast != newctrl->toast)
-		pg_fatal("old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match");
 
 	/* large_object added in 9.5, so it might not exist in the old cluster */
 	if (oldctrl->large_object != 0 &&
 		oldctrl->large_object != newctrl->large_object)
-		pg_fatal("old and new pg_controldata large-object chunk sizes are invalid or do not match\n");
+		pg_fatal("old and new pg_controldata large-object chunk sizes are invalid or do not match");
 
 	if (oldctrl->date_is_int != newctrl->date_is_int)
-		pg_fatal("old and new pg_controldata date/time storage types do not match\n");
+		pg_fatal("old and new pg_controldata date/time storage types do not match");
 
 	/*
 	 * float8_pass_by_value does not need to match, but is used in
@@ -692,12 +696,12 @@ check_control_data(ControlData *oldctrl,
 	 */
 	if (oldctrl->data_checksum_version == 0 &&
 		newctrl->data_checksum_version != 0)
-		pg_fatal("old cluster does not use data checksums but the new one does\n");
+		pg_fatal("old cluster does not use data checksums but the new one does");
 	else if (oldctrl->data_checksum_version != 0 &&
 			 newctrl->data_checksum_version == 0)
-		pg_fatal("old cluster uses data checksums but the new one does not\n");
+		pg_fatal("old cluster uses data checksums but the new one does not");
 	else if (oldctrl->data_checksum_version != newctrl->data_checksum_version)
-		pg_fatal("old and new cluster pg_controldata checksum versions do not match\n");
+		pg_fatal("old and new cluster pg_controldata checksum versions do not match");
 }
 
 
@@ -713,12 +717,14 @@ disable_old_cluster(void)
 	snprintf(old_path, sizeof(old_path), "%s/global/pg_control", old_cluster.pgdata);
 	snprintf(new_path, sizeof(new_path), "%s/global/pg_control.old", old_cluster.pgdata);
 	if (pg_mv_file(old_path, new_path) != 0)
-		pg_fatal("Unable to rename %s to %s.\n", old_path, new_path);
+		pg_fatal("could not rename file \"%s\" to \"%s\": %m",
+				 old_path, new_path);
 	check_ok();
 
 	pg_log(PG_REPORT, "\n"
 		   "If you want to start the old cluster, you will need to remove\n"
 		   "the \".old\" suffix from %s/global/pg_control.old.\n"
 		   "Because \"link\" mode was used, the old cluster cannot be safely\n"
-		   "started once the new cluster has been started.\n\n", old_cluster.pgdata);
+		   "started once the new cluster has been started.",
+		   old_cluster.pgdata);
 }

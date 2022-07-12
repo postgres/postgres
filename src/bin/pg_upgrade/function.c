@@ -162,7 +162,7 @@ check_loadable_libraries(void)
 				was_load_failure = true;
 
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s\n",
+					pg_fatal("could not open file \"%s\": %s",
 							 output_path, strerror(errno));
 				fprintf(script, _("could not load library \"%s\": %s"),
 						lib,
@@ -184,12 +184,12 @@ check_loadable_libraries(void)
 	if (found)
 	{
 		fclose(script);
-		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation references loadable libraries that are missing from the\n"
 				 "new installation.  You can add these libraries to the new installation,\n"
 				 "or remove the functions using them from the old installation.  A list of\n"
 				 "problem libraries is in the file:\n"
-				 "    %s\n\n", output_path);
+				 "    %s", output_path);
 	}
 	else
 		check_ok();

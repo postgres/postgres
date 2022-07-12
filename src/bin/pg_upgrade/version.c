@@ -113,7 +113,7 @@ check_for_data_types_usage(ClusterInfo *cluster,
 		{
 			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n", output_path,
+				pg_fatal("could not open file \"%s\": %s", output_path,
 						 strerror(errno));
 			if (!db_used)
 			{
@@ -187,14 +187,14 @@ old_9_3_check_for_line_data_type_usage(ClusterInfo *cluster)
 
 	if (check_for_data_type_usage(cluster, "pg_catalog.line", output_path))
 	{
-		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains the \"line\" data type in user tables.\n"
 				 "This data type changed its internal and input/output format\n"
 				 "between your old and new versions so this\n"
 				 "cluster cannot currently be upgraded.  You can\n"
 				 "drop the problem columns and restart the upgrade.\n"
 				 "A list of the problem columns is in the file:\n"
-				 "    %s\n\n", output_path);
+				 "    %s", output_path);
 	}
 	else
 		check_ok();
@@ -225,13 +225,13 @@ old_9_6_check_for_unknown_data_type_usage(ClusterInfo *cluster)
 
 	if (check_for_data_type_usage(cluster, "pg_catalog.unknown", output_path))
 	{
-		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains the \"unknown\" data type in user tables.\n"
 				 "This data type is no longer allowed in tables, so this\n"
 				 "cluster cannot currently be upgraded.  You can\n"
 				 "drop the problem columns and restart the upgrade.\n"
 				 "A list of the problem columns is in the file:\n"
-				 "    %s\n\n", output_path);
+				 "    %s", output_path);
 	}
 	else
 		check_ok();
@@ -285,7 +285,7 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 			if (!check_mode)
 			{
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-					pg_fatal("could not open file \"%s\": %s\n", output_path,
+					pg_fatal("could not open file \"%s\": %s", output_path,
 							 strerror(errno));
 				if (!db_used)
 				{
@@ -334,7 +334,7 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 				   "Your installation contains hash indexes.  These indexes have different\n"
 				   "internal formats between your old and new clusters, so they must be\n"
 				   "reindexed with the REINDEX command.  After upgrading, you will be given\n"
-				   "REINDEX instructions.\n\n");
+				   "REINDEX instructions.");
 		else
 			pg_log(PG_WARNING, "\n"
 				   "Your installation contains hash indexes.  These indexes have different\n"
@@ -342,7 +342,7 @@ old_9_6_invalidate_hash_indexes(ClusterInfo *cluster, bool check_mode)
 				   "reindexed with the REINDEX command.  The file\n"
 				   "    %s\n"
 				   "when executed by psql by the database superuser will recreate all invalid\n"
-				   "indexes; until then, none of these indexes will be used.\n\n",
+				   "indexes; until then, none of these indexes will be used.",
 				   output_path);
 	}
 	else
@@ -369,13 +369,13 @@ old_11_check_for_sql_identifier_data_type_usage(ClusterInfo *cluster)
 	if (check_for_data_type_usage(cluster, "information_schema.sql_identifier",
 								  output_path))
 	{
-		pg_log(PG_REPORT, "fatal\n");
+		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains the \"sql_identifier\" data type in user tables.\n"
 				 "The on-disk format for this data type has changed, so this\n"
 				 "cluster cannot currently be upgraded.  You can\n"
 				 "drop the problem columns and restart the upgrade.\n"
 				 "A list of the problem columns is in the file:\n"
-				 "    %s\n\n", output_path);
+				 "    %s", output_path);
 	}
 	else
 		check_ok();
@@ -420,7 +420,7 @@ report_extension_updates(ClusterInfo *cluster)
 			found = true;
 
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
-				pg_fatal("could not open file \"%s\": %s\n", output_path,
+				pg_fatal("could not open file \"%s\": %s", output_path,
 						 strerror(errno));
 			if (!db_used)
 			{
@@ -452,7 +452,7 @@ report_extension_updates(ClusterInfo *cluster)
 			   "with the ALTER EXTENSION command.  The file\n"
 			   "    %s\n"
 			   "when executed by psql by the database superuser will update\n"
-			   "these extensions.\n\n",
+			   "these extensions.",
 			   output_path);
 	}
 	else

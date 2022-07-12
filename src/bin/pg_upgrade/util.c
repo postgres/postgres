@@ -23,18 +23,19 @@ static void pg_log_v(eLogType type, const char *fmt, va_list ap) pg_attribute_pr
  * report_status()
  *
  *	Displays the result of an operation (ok, failed, error message,...)
+ *
+ *	This is no longer functionally different from pg_log(), but we keep
+ *	it around to maintain a notational distinction between operation
+ *	results and other messages.
  */
 void
 report_status(eLogType type, const char *fmt,...)
 {
 	va_list		args;
-	char		message[MAX_STRING];
 
 	va_start(args, fmt);
-	vsnprintf(message, sizeof(message), fmt, args);
+	pg_log_v(type, fmt, args);
 	va_end(args);
-
-	pg_log(type, "%s\n", message);
 }
 
 
@@ -49,10 +50,10 @@ end_progress_output(void)
 	if (log_opts.isatty)
 	{
 		printf("\r");
-		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, "");
+		pg_log(PG_REPORT_NONL, "%-*s", MESSAGE_WIDTH, "");
 	}
 	else if (log_opts.verbose)
-		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, "");
+		pg_log(PG_REPORT_NONL, "%-*s", MESSAGE_WIDTH, "");
 }
 
 /*
@@ -92,7 +93,7 @@ cleanup_output_dirs(void)
 
 		default:
 			/* different failure, just report it */
-			pg_log(PG_WARNING, "could not access directory \"%s\": %m\n",
+			pg_log(PG_WARNING, "could not access directory \"%s\": %m",
 				   log_opts.rootdir);
 			break;
 	}
@@ -102,16 +103,16 @@ cleanup_output_dirs(void)
  * prep_status
  *
  *	Displays a message that describes an operation we are about to begin.
- *	We pad the message out to MESSAGE_WIDTH characters so that all of the "ok" and
- *	"failed" indicators line up nicely.
+ *	We pad the message out to MESSAGE_WIDTH characters so that all of the
+ *	"ok" and "failed" indicators line up nicely.  (Overlength messages
+ *	will be truncated, so don't get too verbose.)
  *
  *	A typical sequence would look like this:
- *		prep_status("about to flarb the next %d files", fileCount );
- *
- *		if(( message = flarbFiles(fileCount)) == NULL)
- *		  report_status(PG_REPORT, "ok" );
+ *		prep_status("about to flarb the next %d files", fileCount);
+ *		if ((message = flarbFiles(fileCount)) == NULL)
+ *		  report_status(PG_REPORT, "ok");
  *		else
- *		  pg_log(PG_FATAL, "failed - %s\n", message );
+ *		  pg_log(PG_FATAL, "failed: %s", message);
  */
 void
 prep_status(const char *fmt,...)
@@ -124,7 +125,7 @@ prep_status(const char *fmt,...)
 	va_end(args);
 
 	/* trim strings */
-	pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, message);
+	pg_log(PG_REPORT_NONL, "%-*s", MESSAGE_WIDTH, message);
 }
 
 /*
@@ -155,15 +156,19 @@ prep_status_progress(const char *fmt,...)
 	 * put the individual progress items onto the next line.
 	 */
 	if (log_opts.isatty || log_opts.verbose)
-		pg_log(PG_REPORT, "%-*s\n", MESSAGE_WIDTH, message);
-	else
 		pg_log(PG_REPORT, "%-*s", MESSAGE_WIDTH, message);
+	else
+		pg_log(PG_REPORT_NONL, "%-*s", MESSAGE_WIDTH, message);
 }
 
 static void
 pg_log_v(eLogType type, const char *fmt, va_list ap)
 {
 	char		message[QUERY_ALLOC];
+
+	/* No incoming message should end in newline; we add that here. */
+	Assert(fmt);
+	Assert(fmt[0] == '\0' || fmt[strlen(fmt) - 1] != '\n');
 
 	vsnprintf(message, sizeof(message), _(fmt), ap);
 
@@ -173,10 +178,12 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 		log_opts.internal != NULL)
 	{
 		if (type == PG_STATUS)
-			/* status messages need two leading spaces and a newline */
+			/* status messages get two leading spaces, see below */
 			fprintf(log_opts.internal, "  %s\n", message);
-		else
+		else if (type == PG_REPORT_NONL)
 			fprintf(log_opts.internal, "%s", message);
+		else
+			fprintf(log_opts.internal, "%s\n", message);
 		fflush(log_opts.internal);
 	}
 
@@ -184,45 +191,54 @@ pg_log_v(eLogType type, const char *fmt, va_list ap)
 	{
 		case PG_VERBOSE:
 			if (log_opts.verbose)
-				printf("%s", message);
+				printf("%s\n", message);
 			break;
 
 		case PG_STATUS:
 
 			/*
-			 * For output to a display, do leading truncation. Append \r so
-			 * that the next message is output at the start of the line.
+			 * For output to a terminal, we add two leading spaces and no
+			 * newline; instead append \r so that the next message is output
+			 * on the same line.  Truncate on the left to fit into
+			 * MESSAGE_WIDTH (counting the spaces as part of that).
 			 *
 			 * If going to non-interactive output, only display progress if
 			 * verbose is enabled. Otherwise the output gets unreasonably
 			 * large by default.
 			 */
 			if (log_opts.isatty)
-				/* -2 because we use a 2-space indent */
-				printf("  %s%-*.*s\r",
+			{
+				bool		itfits = (strlen(message) <= MESSAGE_WIDTH - 2);
+
 				/* prefix with "..." if we do leading truncation */
-					   strlen(message) <= MESSAGE_WIDTH - 2 ? "" : "...",
+				printf("  %s%-*.*s\r",
+					   itfits ? "" : "...",
 					   MESSAGE_WIDTH - 2, MESSAGE_WIDTH - 2,
-				/* optional leading truncation */
-					   strlen(message) <= MESSAGE_WIDTH - 2 ? message :
+					   itfits ? message :
 					   message + strlen(message) - MESSAGE_WIDTH + 3 + 2);
+			}
 			else if (log_opts.verbose)
 				printf("  %s\n", message);
 			break;
 
-		case PG_REPORT:
-		case PG_WARNING:
+		case PG_REPORT_NONL:
+			/* This option is for use by prep_status and friends */
 			printf("%s", message);
 			break;
 
+		case PG_REPORT:
+		case PG_WARNING:
+			printf("%s\n", message);
+			break;
+
 		case PG_FATAL:
-			printf("\n%s", message);
+			/* Extra newline in case we're interrupting status output */
+			printf("\n%s\n", message);
 			printf(_("Failure, exiting\n"));
 			exit(1);
 			break;
 
-		default:
-			break;
+			/* No default:, we want a warning for omitted cases */
 	}
 	fflush(stdout);
 }
@@ -247,6 +263,7 @@ pg_fatal(const char *fmt,...)
 	va_start(args, fmt);
 	pg_log_v(PG_FATAL, fmt, args);
 	va_end(args);
+	/* NOTREACHED */
 	printf(_("Failure, exiting\n"));
 	exit(1);
 }
@@ -257,7 +274,6 @@ check_ok(void)
 {
 	/* all seems well */
 	report_status(PG_REPORT, "ok");
-	fflush(stdout);
 }
 
 
@@ -307,7 +323,7 @@ get_user_info(char **user_name_p)
 
 	user_name = get_user_name(&errstr);
 	if (!user_name)
-		pg_fatal("%s\n", errstr);
+		pg_fatal("%s", errstr);
 
 	/* make a copy */
 	*user_name_p = pg_strdup(user_name);
