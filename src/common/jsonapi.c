@@ -686,6 +686,8 @@ json_lex_string(JsonLexContext *lex)
 			lex->token_terminator = s;
 			return JSON_INVALID_TOKEN;
 		}
+		else if (*s == '"')
+			break;
 		else if (*s == '\\')
 		{
 			/* OK, we have an escape character. */
@@ -870,14 +872,6 @@ json_lex_string(JsonLexContext *lex)
 			if (lex->strval != NULL)
 				appendBinaryStringInfo(lex->strval, s, p - s);
 
-			if (*p == '"')
-			{
-				/* Hooray, we found the end of the string! */
-				lex->prev_token_terminator = lex->token_terminator;
-				lex->token_terminator = p + 1;
-				return JSON_SUCCESS;
-			}
-
 			/*
 			 * s will be incremented at the top of the loop, so set it to just
 			 * behind our lookahead position
@@ -885,6 +879,14 @@ json_lex_string(JsonLexContext *lex)
 			s = p - 1;
 		}
 	}
+
+	if (hi_surrogate != -1)
+		return JSON_UNICODE_LOW_SURROGATE;
+
+	/* Hooray, we found the end of the string! */
+	lex->prev_token_terminator = lex->token_terminator;
+	lex->token_terminator = s + 1;
+	return JSON_SUCCESS;
 }
 
 /*
