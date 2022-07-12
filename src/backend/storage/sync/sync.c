@@ -510,26 +510,26 @@ RememberSyncRequest(const FileTag *ftag, SyncRequestType type)
 	else if (type == SYNC_FILTER_REQUEST)
 	{
 		HASH_SEQ_STATUS hstat;
-		PendingFsyncEntry *entry;
+		PendingFsyncEntry *pfe;
 		ListCell   *cell;
 
 		/* Cancel matching fsync requests */
 		hash_seq_init(&hstat, pendingOps);
-		while ((entry = (PendingFsyncEntry *) hash_seq_search(&hstat)) != NULL)
+		while ((pfe = (PendingFsyncEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-			if (entry->tag.handler == ftag->handler &&
-				syncsw[ftag->handler].sync_filetagmatches(ftag, &entry->tag))
-				entry->canceled = true;
+			if (pfe->tag.handler == ftag->handler &&
+				syncsw[ftag->handler].sync_filetagmatches(ftag, &pfe->tag))
+				pfe->canceled = true;
 		}
 
 		/* Cancel matching unlink requests */
 		foreach(cell, pendingUnlinks)
 		{
-			PendingUnlinkEntry *entry = (PendingUnlinkEntry *) lfirst(cell);
+			PendingUnlinkEntry *pue = (PendingUnlinkEntry *) lfirst(cell);
 
-			if (entry->tag.handler == ftag->handler &&
-				syncsw[ftag->handler].sync_filetagmatches(ftag, &entry->tag))
-				entry->canceled = true;
+			if (pue->tag.handler == ftag->handler &&
+				syncsw[ftag->handler].sync_filetagmatches(ftag, &pue->tag))
+				pue->canceled = true;
 		}
 	}
 	else if (type == SYNC_UNLINK_REQUEST)
