@@ -983,10 +983,19 @@ cppline			{space}*#([^i][A-Za-z]*|{if}|{ifdef}|{ifndef}|{import})((\/\*[^*/]*\*+
 					{
 						int		kwvalue;
 
-						/* Is it an SQL/ECPG keyword? */
-						kwvalue = ScanECPGKeywordLookup(yytext);
-						if (kwvalue >= 0)
-							return kwvalue;
+						/*
+						 * User-defined typedefs override SQL keywords, but
+						 * not C keywords.  Currently, a typedef name is just
+						 * reported as IDENT, but someday we might need to
+						 * return a distinct token type.
+						 */
+						if (get_typedef(yytext, true) == NULL)
+						{
+							/* Is it an SQL/ECPG keyword? */
+							kwvalue = ScanECPGKeywordLookup(yytext);
+							if (kwvalue >= 0)
+								return kwvalue;
+						}
 
 						/* Is it a C keyword? */
 						kwvalue = ScanCKeywordLookup(yytext);

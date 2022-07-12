@@ -564,8 +564,29 @@ var_type:	simple_type
 			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
-		| ECPGColLabelCommon '(' precision opt_scale ')'
+		| NUMERIC '(' precision opt_scale ')'
 		{
+			$$.type_enum = ECPGt_numeric;
+			$$.type_str = mm_strdup("numeric");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| DECIMAL_P '(' precision opt_scale ')'
+		{
+			$$.type_enum = ECPGt_decimal;
+			$$.type_str = mm_strdup("decimal");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| IDENT '(' precision opt_scale ')'
+		{
+			/*
+			 * In C parsing mode, NUMERIC and DECIMAL are not keywords, so
+			 * they will show up here as a plain identifier, and we need
+			 * this duplicate code to recognize them.
+			 */
 			if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
@@ -587,15 +608,98 @@ var_type:	simple_type
 			$$.type_index = mm_strdup("-1");
 			$$.type_sizeof = NULL;
 		}
-		| ECPGColLabelCommon ecpg_interval
+		| VARCHAR
 		{
+			$$.type_enum = ECPGt_varchar;
+			$$.type_str = EMPTY; /*mm_strdup("varchar");*/
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| FLOAT_P
+		{
+			/* Note: DOUBLE is handled in simple_type */
+			$$.type_enum = ECPGt_float;
+			$$.type_str = mm_strdup("float");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| NUMERIC
+		{
+			$$.type_enum = ECPGt_numeric;
+			$$.type_str = mm_strdup("numeric");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| DECIMAL_P
+		{
+			$$.type_enum = ECPGt_decimal;
+			$$.type_str = mm_strdup("decimal");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| TIMESTAMP
+		{
+			$$.type_enum = ECPGt_timestamp;
+			$$.type_str = mm_strdup("timestamp");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| INTERVAL ecpg_interval
+		{
+			$$.type_enum = ECPGt_interval;
+			$$.type_str = mm_strdup("interval");
+			$$.type_dimension = mm_strdup("-1");
+			$$.type_index = mm_strdup("-1");
+			$$.type_sizeof = NULL;
+		}
+		| STRING
+		{
+			if (INFORMIX_MODE)
+			{
+				/* In Informix mode, "string" is automatically a typedef */
+				$$.type_enum = ECPGt_string;
+				$$.type_str = mm_strdup("char");
+				$$.type_dimension = mm_strdup("-1");
+				$$.type_index = mm_strdup("-1");
+				$$.type_sizeof = NULL;
+			}
+			else
+			{
+				/* Otherwise, legal only if user typedef'ed it */
+				struct typedefs *this = get_typedef("string", false);
+
+				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
+				$$.type_enum = this->type->type_enum;
+				$$.type_dimension = this->type->type_dimension;
+				$$.type_index = this->type->type_index;
+				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
+					$$.type_sizeof = this->type->type_sizeof;
+				else
+					$$.type_sizeof = cat_str(3, mm_strdup("sizeof("), mm_strdup(this->name), mm_strdup(")"));
+
+				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
+			}
+		}
+		| IDENT ecpg_interval
+		{
+			/*
+			 * In C parsing mode, the above SQL type names are not keywords,
+			 * so they will show up here as a plain identifier, and we need
+			 * this duplicate code to recognize them.
+			 *
+			 * Note that we also handle the type names bytea, date, and
+			 * datetime here, but not above because those are not currently
+			 * SQL keywords.  If they ever become so, they must gain duplicate
+			 * productions above.
+			 */
 			if (strlen($2) != 0 && strcmp ($1, "datetime") != 0 && strcmp ($1, "interval") != 0)
 				mmerror (PARSE_ERROR, ET_ERROR, "interval specification not allowed here");
 
-			/*
-			 * Check for type names that the SQL grammar treats as
-			 * unreserved keywords
-			 */
 			if (strcmp($1, "varchar") == 0)
 			{
 				$$.type_enum = ECPGt_varchar;
@@ -686,45 +790,8 @@ var_type:	simple_type
 			}
 			else
 			{
-				/* this is for typedef'ed types */
-				struct typedefs *this = get_typedef($1);
-
-				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
-				$$.type_enum = this->type->type_enum;
-				$$.type_dimension = this->type->type_dimension;
-				$$.type_index = this->type->type_index;
-				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
-					$$.type_sizeof = this->type->type_sizeof;
-				else
-					$$.type_sizeof = cat_str(3, mm_strdup("sizeof("), mm_strdup(this->name), mm_strdup(")"));
-
-				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
-			}
-		}
-		| STRING
-		{
-			/*
-			 * It's quite horrid that ECPGColLabelCommon excludes
-			 * unreserved_keyword, meaning that unreserved keywords can't be
-			 * used as type names in var_type.  However, this is hard to avoid
-			 * since what follows ecpgstart can be either a random SQL
-			 * statement or an ECPGVarDeclaration (beginning with var_type).
-			 * Pending a bright idea about how to fix that, we must
-			 * special-case STRING (and any other unreserved keywords that are
-			 * likely to be needed here).
-			 */
-			if (INFORMIX_MODE)
-			{
-				$$.type_enum = ECPGt_string;
-				$$.type_str = mm_strdup("char");
-				$$.type_dimension = mm_strdup("-1");
-				$$.type_index = mm_strdup("-1");
-				$$.type_sizeof = NULL;
-			}
-			else
-			{
-				/* this is for typedef'ed types */
-				struct typedefs *this = get_typedef("string");
+				/* Otherwise, it must be a user-defined typedef name */
+				struct typedefs *this = get_typedef($1, false);
 
 				$$.type_str = (this->type->type_enum == ECPGt_varchar || this->type->type_enum == ECPGt_bytea) ? EMPTY : mm_strdup(this->name);
 				$$.type_enum = this->type->type_enum;
@@ -751,7 +818,7 @@ var_type:	simple_type
 			{
 				/* No */
 
-				this = get_typedef(name);
+				this = get_typedef(name, false);
 				$$.type_str = mm_strdup(this->name);
 				$$.type_enum = this->type->type_enum;
 				$$.type_dimension = this->type->type_dimension;
@@ -1657,17 +1724,14 @@ ColLabel:  ECPGColLabel				{ $$ = $1; }
 		| ECPGunreserved_interval	{ $$ = $1; }
 		;
 
-ECPGColLabel:  ECPGColLabelCommon	{ $$ = $1; }
+ECPGColLabel:  ecpg_ident			{ $$ = $1; }
 		| unreserved_keyword		{ $$ = $1; }
-		| reserved_keyword			{ $$ = $1; }
-		| ECPGKeywords_rest			{ $$ = $1; }
-		| CONNECTION				{ $$ = mm_strdup("connection"); }
-		;
-
-ECPGColLabelCommon:  ecpg_ident		{ $$ = $1; }
 		| col_name_keyword			{ $$ = $1; }
 		| type_func_name_keyword	{ $$ = $1; }
+		| reserved_keyword			{ $$ = $1; }
 		| ECPGKeywords_vanames		{ $$ = $1; }
+		| ECPGKeywords_rest			{ $$ = $1; }
+		| CONNECTION				{ $$ = mm_strdup("connection"); }
 		;
 
 ECPGCKeywords: S_AUTO				{ $$ = mm_strdup("auto"); }
