@@ -932,6 +932,12 @@ void
 SendBaseBackup(BaseBackupCmd *cmd)
 {
 	basebackup_options opt;
+	SessionBackupState status = get_backup_status();
+
+	if (status == SESSION_BACKUP_NON_EXCLUSIVE)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("a backup is already in progress in this session")));
 
 	parse_basebackup_options(cmd->options, &opt);
 
