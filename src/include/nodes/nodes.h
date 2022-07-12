@@ -66,6 +66,11 @@ typedef enum NodeTag
  *
  * - special_read_write: Has special treatment in outNode() and nodeRead().
  *
+ * - nodetag_number(VALUE): assign the specified nodetag number instead of
+ *   an auto-generated number.  Typically this would only be used in stable
+ *   branches, to give a newly-added node type a number without breaking ABI
+ *   by changing the numbers of existing node types.
+ *
  * Node types can be supertypes of other types whether or not they are marked
  * abstract: if a node struct appears as the first field of another struct
  * type, then it is the supertype of that type.  The no_copy, no_equal, and

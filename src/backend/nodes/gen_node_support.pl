@@ -34,6 +34,72 @@ sub elem
 	return grep { $_ eq $x } @_;
 }
 
+
+# This list defines the canonical set of header files to be read by this
+# script, and the order they are to be processed in.  We must have a stable
+# processing order, else the NodeTag enum's order will vary, with catastrophic
+# consequences for ABI stability across different builds.
+#
+# Currently, the various build systems also have copies of this list,
+# so that they can do dependency checking properly.  In future we may be
+# able to make this list the only copy.  For now, we just check that
+# it matches the list of files passed on the command line.
+my @all_input_files = qw(
+  nodes/nodes.h
+  nodes/primnodes.h
+  nodes/parsenodes.h
+  nodes/pathnodes.h
+  nodes/plannodes.h
+  nodes/execnodes.h
+  access/amapi.h
+  access/sdir.h
+  access/tableam.h
+  access/tsmapi.h
+  commands/event_trigger.h
+  commands/trigger.h
+  executor/tuptable.h
+  foreign/fdwapi.h
+  nodes/extensible.h
+  nodes/lockoptions.h
+  nodes/replnodes.h
+  nodes/supportnodes.h
+  nodes/value.h
+  utils/rel.h
+);
+
+# Nodes from these input files are automatically treated as nodetag_only.
+# In the future we might add explicit pg_node_attr labeling to some of these
+# files and remove them from this list, but for now this is the path of least
+# resistance.
+my @nodetag_only_files = qw(
+  nodes/execnodes.h
+  access/amapi.h
+  access/sdir.h
+  access/tableam.h
+  access/tsmapi.h
+  commands/event_trigger.h
+  commands/trigger.h
+  executor/tuptable.h
+  foreign/fdwapi.h
+  nodes/lockoptions.h
+  nodes/replnodes.h
+  nodes/supportnodes.h
+);
+
+# ARM ABI STABILITY CHECK HERE:
+#
+# In stable branches, set $last_nodetag to the name of the last node type
+# that should receive an auto-generated nodetag number, and $last_nodetag_no
+# to its number.  (Find these values in the last line of the current
+# nodetags.h file.)  The script will then complain if those values don't
+# match reality, providing a cross-check that we haven't broken ABI by
+# adding or removing nodetags.
+# In HEAD, these variables should be left undef, since we don't promise
+# ABI stability during development.
+
+my $last_nodetag    = undef;
+my $last_nodetag_no = undef;
+
 # output file names
 my @output_files;
 
@@ -90,31 +156,15 @@ my @custom_copy_equal;
 # Similarly for custom read/write implementations.
 my @custom_read_write;
 
+# Track node types with manually assigned NodeTag numbers.
+my %manual_nodetag_number;
+
 # EquivalenceClasses are never moved, so just shallow-copy the pointer
 push @scalar_types, qw(EquivalenceClass* EquivalenceMember*);
 
 # This is a struct, so we can copy it by assignment.  Equal support is
 # currently not required.
 push @scalar_types, qw(QualCost);
-
-# Nodes from these input files are automatically treated as nodetag_only.
-# In the future we might add explicit pg_node_attr labeling to some of these
-# files and remove them from this list, but for now this is the path of least
-# resistance.
-my @nodetag_only_files = qw(
-  nodes/execnodes.h
-  access/amapi.h
-  access/sdir.h
-  access/tableam.h
-  access/tsmapi.h
-  commands/event_trigger.h
-  commands/trigger.h
-  executor/tuptable.h
-  foreign/fdwapi.h
-  nodes/lockoptions.h
-  nodes/replnodes.h
-  nodes/supportnodes.h
-);
 
 # XXX various things we are not publishing right now to stay level
 # with the manual system
@@ -134,8 +184,13 @@ push @no_read, qw(A_ArrayExpr A_Indices A_Indirection AlterStatsStmt
   TriggerTransition TypeCast TypeName WindowDef WithClause XmlSerialize);
 
 
+## check that we have the expected number of files on the command line
+die "wrong number of input files, expected @all_input_files\n"
+  if ($#ARGV != $#all_input_files);
+
 ## read input
 
+my $next_input_file = 0;
 foreach my $infile (@ARGV)
 {
 	my $in_struct;
@@ -150,10 +205,16 @@ foreach my $infile (@ARGV)
 	my %my_field_types;
 	my %my_field_attrs;
 
+	# open file with name from command line, which may have a path prefix
 	open my $ifh, '<', $infile or die "could not open \"$infile\": $!";
 
 	# now shorten filename for use below
 	$infile =~ s!.*src/include/!!;
+
+	# check it against next member of @all_input_files
+	die "wrong input file ordering, expected @all_input_files\n"
+	  if ($infile ne $all_input_files[$next_input_file]);
+	$next_input_file++;
 
 	my $raw_file_content = do { local $/; <$ifh> };
 
@@ -273,6 +334,10 @@ foreach my $infile (@ARGV)
 							# be confusing, since read/write support
 							# does in fact exist.
 							push @no_read_write, $in_struct;
+						}
+						elsif ($attr =~ /^nodetag_number\((\d+)\)$/)
+						{
+							$manual_nodetag_number{$in_struct} = $1;
 						}
 						else
 						{
@@ -475,13 +540,30 @@ open my $nt, '>', 'nodetags.h' . $tmpext or die $!;
 
 printf $nt $header_comment, 'nodetags.h';
 
-my $i = 1;
+my $tagno    = 0;
+my $last_tag = undef;
 foreach my $n (@node_types, @extra_tags)
 {
 	next if elem $n, @abstract_types;
-	print $nt "\tT_${n} = $i,\n";
-	$i++;
+	if (defined $manual_nodetag_number{$n})
+	{
+		# do not change $tagno or $last_tag
+		print $nt "\tT_${n} = $manual_nodetag_number{$n},\n";
+	}
+	else
+	{
+		$tagno++;
+		$last_tag = $n;
+		print $nt "\tT_${n} = $tagno,\n";
+	}
 }
+
+# verify that last auto-assigned nodetag stays stable
+die "ABI stability break: last nodetag is $last_tag not $last_nodetag\n"
+  if (defined $last_nodetag && $last_nodetag ne $last_tag);
+die
+  "ABI stability break: last nodetag number is $tagno not $last_nodetag_no\n"
+  if (defined $last_nodetag_no && $last_nodetag_no != $tagno);
 
 close $nt;
 
