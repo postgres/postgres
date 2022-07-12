@@ -404,7 +404,7 @@ count_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss)
  *		order.
  */
 static int
-compare_sort_item_count(const void *a, const void *b)
+compare_sort_item_count(const void *a, const void *b, void *arg)
 {
 	SortItem   *ia = (SortItem *) a;
 	SortItem   *ib = (SortItem *) b;
@@ -457,8 +457,8 @@ build_distinct_groups(int numrows, SortItem *items, MultiSortSupport mss,
 	Assert(j + 1 == ngroups);
 
 	/* Sort the distinct groups by frequency (in descending order). */
-	pg_qsort((void *) groups, ngroups, sizeof(SortItem),
-			 compare_sort_item_count);
+	qsort_interruptible((void *) groups, ngroups, sizeof(SortItem),
+						compare_sort_item_count, NULL);
 
 	*ndistinct = ngroups;
 	return groups;
@@ -528,8 +528,8 @@ build_column_frequencies(SortItem *groups, int ngroups,
 		}
 
 		/* sort the values, deduplicate */
-		qsort_arg((void *) result[dim], ngroups, sizeof(SortItem),
-				  sort_item_compare, ssup);
+		qsort_interruptible((void *) result[dim], ngroups, sizeof(SortItem),
+							sort_item_compare, ssup);
 
 		/*
 		 * Identify distinct values, compute frequency (there might be
@@ -696,8 +696,8 @@ statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats)
 
 		PrepareSortSupportFromOrderingOp(typentry->lt_opr, &ssup[dim]);
 
-		qsort_arg(values[dim], counts[dim], sizeof(Datum),
-				  compare_scalars_simple, &ssup[dim]);
+		qsort_interruptible(values[dim], counts[dim], sizeof(Datum),
+							compare_scalars_simple, &ssup[dim]);
 
 		/*
 		 * Walk through the array and eliminate duplicate values, but keep the

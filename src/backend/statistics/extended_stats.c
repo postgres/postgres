@@ -1129,8 +1129,8 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	}
 
 	/* do the sort, using the multi-sort */
-	qsort_arg((void *) items, nrows, sizeof(SortItem),
-			  multi_sort_compare, mss);
+	qsort_interruptible((void *) items, nrows, sizeof(SortItem),
+						multi_sort_compare, mss);
 
 	return items;
 }
