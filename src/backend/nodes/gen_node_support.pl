@@ -50,6 +50,8 @@ my @no_equal;
 my @no_read;
 # node types we don't want read/write support for
 my @no_read_write;
+# node types we don't want any support functions for, just node tags
+my @nodetag_only;
 
 # types that are copied by straight assignment
 my @scalar_types = qw(
@@ -95,7 +97,10 @@ push @scalar_types, qw(EquivalenceClass* EquivalenceMember*);
 # currently not required.
 push @scalar_types, qw(QualCost);
 
-# Nodes from these input files don't need support functions, just node tags.
+# Nodes from these input files are automatically treated as nodetag_only.
+# In the future we might add explicit pg_node_attr labeling to some of these
+# files and remove them from this list, but for now this is the path of least
+# resistance.
 my @nodetag_only_files = qw(
   nodes/execnodes.h
   access/amapi.h
@@ -113,10 +118,8 @@ my @nodetag_only_files = qw(
 
 # XXX various things we are not publishing right now to stay level
 # with the manual system
-push @no_copy,  qw(CallContext InlineCodeBlock);
-push @no_equal, qw(CallContext InlineCodeBlock);
 push @no_read_write,
-  qw(AccessPriv AlterTableCmd CallContext CreateOpClassItem FunctionParameter InferClause InlineCodeBlock ObjectWithArgs OnConflictClause PartitionCmd RoleSpec VacuumRelation);
+  qw(AccessPriv AlterTableCmd CreateOpClassItem FunctionParameter InferClause ObjectWithArgs OnConflictClause PartitionCmd RoleSpec VacuumRelation);
 push @no_read, qw(A_ArrayExpr A_Indices A_Indirection AlterStatsStmt
   CollateClause ColumnDef ColumnRef CreateForeignTableStmt CreateStatsStmt
   CreateStmt FuncCall ImportForeignSchemaStmt IndexElem IndexStmt
@@ -254,6 +257,10 @@ foreach my $infile (@ARGV)
 						{
 							push @no_read, $in_struct;
 						}
+						elsif ($attr eq 'nodetag_only')
+						{
+							push @nodetag_only, $in_struct;
+						}
 						elsif ($attr eq 'special_read_write')
 						{
 							# This attribute is called
@@ -314,13 +321,9 @@ foreach my $infile (@ARGV)
 					$node_type_info{$in_struct}->{field_types} = \%ft;
 					$node_type_info{$in_struct}->{field_attrs} = \%fa;
 
-					# Exclude nodes in nodetag_only_files from support.
-					if (elem $infile, @nodetag_only_files)
-					{
-						push @no_copy,       $in_struct;
-						push @no_equal,      $in_struct;
-						push @no_read_write, $in_struct;
-					}
+					# Propagate nodetag_only marking from files to nodes
+					push @nodetag_only, $in_struct
+					  if (elem $infile, @nodetag_only_files);
 
 					# Propagate some node attributes from supertypes
 					if ($supertype)
@@ -515,6 +518,7 @@ print $eff $node_includes;
 foreach my $n (@node_types)
 {
 	next if elem $n, @abstract_types;
+	next if elem $n, @nodetag_only;
 	my $struct_no_copy  = (elem $n, @no_copy);
 	my $struct_no_equal = (elem $n, @no_equal);
 	next if $struct_no_copy && $struct_no_equal;
@@ -706,6 +710,7 @@ print $rff $node_includes;
 foreach my $n (@node_types)
 {
 	next if elem $n, @abstract_types;
+	next if elem $n, @nodetag_only;
 	next if elem $n, @no_read_write;
 
 	# XXX For now, skip all "Stmt"s except that ones that were there before.

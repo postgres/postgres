@@ -3382,6 +3382,8 @@ typedef struct DoStmt
 
 typedef struct InlineCodeBlock
 {
+	pg_node_attr(nodetag_only)	/* this is not a member of parse trees */
+
 	NodeTag		type;
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
@@ -3408,6 +3410,8 @@ typedef struct CallStmt
 
 typedef struct CallContext
 {
+	pg_node_attr(nodetag_only)	/* this is not a member of parse trees */
+
 	NodeTag		type;
 	bool		atomic;
 } CallContext;
