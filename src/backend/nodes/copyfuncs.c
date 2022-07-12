@@ -187,11 +187,12 @@ copyObjectImpl(const void *from)
 			break;
 
 			/*
-			 * Lists of integers and OIDs don't need to be deep-copied, so we
-			 * perform a shallow copy via list_copy()
+			 * Lists of integers, OIDs and XIDs don't need to be deep-copied,
+			 * so we perform a shallow copy via list_copy()
 			 */
 		case T_IntList:
 		case T_OidList:
+		case T_XidList:
 			retval = list_copy(from);
 			break;
 

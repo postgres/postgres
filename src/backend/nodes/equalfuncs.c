@@ -188,6 +188,13 @@ _equalList(const List *a, const List *b)
 					return false;
 			}
 			break;
+		case T_XidList:
+			forboth(item_a, a, item_b, b)
+			{
+				if (lfirst_xid(item_a) != lfirst_xid(item_b))
+					return false;
+			}
+			break;
 		default:
 			elog(ERROR, "unrecognized list node type: %d",
 				 (int) a->type);
@@ -238,6 +245,7 @@ equal(const void *a, const void *b)
 		case T_List:
 		case T_IntList:
 		case T_OidList:
+		case T_XidList:
 			retval = _equalList(a, b);
 			break;
 

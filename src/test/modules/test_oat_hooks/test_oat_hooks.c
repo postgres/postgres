@@ -1122,6 +1122,9 @@ nodetag_to_string(NodeTag tag)
 		case T_OidList:
 			return "OidList";
 			break;
+		case T_XidList:
+			return "XidList";
+			break;
 		case T_ExtensibleNode:
 			return "ExtensibleNode";
 			break;
