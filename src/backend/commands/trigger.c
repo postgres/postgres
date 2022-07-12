@@ -295,13 +295,6 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 							RelationGetRelationName(rel)),
 					 errdetail("Foreign tables cannot have INSTEAD OF triggers.")));
 
-		if (TRIGGER_FOR_TRUNCATE(stmt->events))
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("\"%s\" is a foreign table",
-							RelationGetRelationName(rel)),
-					 errdetail("Foreign tables cannot have TRUNCATE triggers.")));
-
 		/*
 		 * We disallow constraint triggers to protect the assumption that
 		 * triggers on FKs can't be deferred.  See notes with AfterTriggers
