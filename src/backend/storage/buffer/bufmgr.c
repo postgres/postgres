@@ -121,7 +121,7 @@ typedef struct CkptTsStatus
  * Type for array used to sort SMgrRelations
  *
  * FlushRelationsAllBuffers shares the same comparator function with
- * DropRelFileLocatorsAllBuffers. Pointer to this struct and RelFileLocator must be
+ * DropRelationsAllBuffers. Pointer to this struct and RelFileLocator must be
  * compatible.
  */
 typedef struct SMgrSortArray
@@ -483,10 +483,10 @@ static BufferDesc *BufferAlloc(SMgrRelation smgr,
 							   BufferAccessStrategy strategy,
 							   bool *foundPtr);
 static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
-static void FindAndDropRelFileLocatorBuffers(RelFileLocator rlocator,
-											 ForkNumber forkNum,
-											 BlockNumber nForkBlock,
-											 BlockNumber firstDelBlock);
+static void FindAndDropRelationBuffers(RelFileLocator rlocator,
+									   ForkNumber forkNum,
+									   BlockNumber nForkBlock,
+									   BlockNumber firstDelBlock);
 static void RelationCopyStorageUsingBuffer(Relation src, Relation dst,
 										   ForkNumber forkNum,
 										   bool isunlogged);
@@ -3026,7 +3026,7 @@ BufferGetLSNAtomic(Buffer buffer)
 }
 
 /* ---------------------------------------------------------------------
- *		DropRelFileLocatorBuffers
+ *		DropRelationBuffers
  *
  *		This function removes from the buffer pool all the pages of the
  *		specified relation forks that have block numbers >= firstDelBlock.
@@ -3047,8 +3047,8 @@ BufferGetLSNAtomic(Buffer buffer)
  * --------------------------------------------------------------------
  */
 void
-DropRelFileLocatorBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
-						  int nforks, BlockNumber *firstDelBlock)
+DropRelationBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
+					int nforks, BlockNumber *firstDelBlock)
 {
 	int			i;
 	int			j;
@@ -3064,8 +3064,8 @@ DropRelFileLocatorBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 		if (rlocator.backend == MyBackendId)
 		{
 			for (j = 0; j < nforks; j++)
-				DropRelFileLocatorLocalBuffers(rlocator.locator, forkNum[j],
-											   firstDelBlock[j]);
+				DropRelationLocalBuffers(rlocator.locator, forkNum[j],
+										 firstDelBlock[j]);
 		}
 		return;
 	}
@@ -3115,8 +3115,8 @@ DropRelFileLocatorBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 		nBlocksToInvalidate < BUF_DROP_FULL_SCAN_THRESHOLD)
 	{
 		for (j = 0; j < nforks; j++)
-			FindAndDropRelFileLocatorBuffers(rlocator.locator, forkNum[j],
-											 nForkBlock[j], firstDelBlock[j]);
+			FindAndDropRelationBuffers(rlocator.locator, forkNum[j],
+									   nForkBlock[j], firstDelBlock[j]);
 		return;
 	}
 
@@ -3162,16 +3162,15 @@ DropRelFileLocatorBuffers(SMgrRelation smgr_reln, ForkNumber *forkNum,
 }
 
 /* ---------------------------------------------------------------------
- *		DropRelFileLocatorsAllBuffers
+ *		DropRelationsAllBuffers
  *
  *		This function removes from the buffer pool all the pages of all
  *		forks of the specified relations.  It's equivalent to calling
- *		DropRelFileLocatorBuffers once per fork per relation with
- *		firstDelBlock = 0.
- * --------------------------------------------------------------------
+ *		DropRelationBuffers once per fork per relation with firstDelBlock = 0.
+ *		--------------------------------------------------------------------
  */
 void
-DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
+DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 {
 	int			i;
 	int			j;
@@ -3194,7 +3193,7 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 		if (RelFileLocatorBackendIsTemp(smgr_reln[i]->smgr_rlocator))
 		{
 			if (smgr_reln[i]->smgr_rlocator.backend == MyBackendId)
-				DropRelFileLocatorAllLocalBuffers(smgr_reln[i]->smgr_rlocator.locator);
+				DropRelationAllLocalBuffers(smgr_reln[i]->smgr_rlocator.locator);
 		}
 		else
 			rels[n++] = smgr_reln[i];
@@ -3219,7 +3218,7 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 
 	/*
 	 * We can avoid scanning the entire buffer pool if we know the exact size
-	 * of each of the given relation forks. See DropRelFileLocatorBuffers.
+	 * of each of the given relation forks. See DropRelationBuffers.
 	 */
 	for (i = 0; i < n && cached; i++)
 	{
@@ -3257,8 +3256,8 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 					continue;
 
 				/* drop all the buffers for a particular relation fork */
-				FindAndDropRelFileLocatorBuffers(rels[i]->smgr_rlocator.locator,
-												 j, block[i][j], 0);
+				FindAndDropRelationBuffers(rels[i]->smgr_rlocator.locator,
+										   j, block[i][j], 0);
 			}
 		}
 
@@ -3291,7 +3290,7 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * As in DropRelationBuffers, an unlocked precheck should be
 		 * safe and saves some cycles.
 		 */
 
@@ -3331,7 +3330,7 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 }
 
 /* ---------------------------------------------------------------------
- *		FindAndDropRelFileLocatorBuffers
+ *		FindAndDropRelationBuffers
  *
  *		This function performs look up in BufMapping table and removes from the
  *		buffer pool all the pages of the specified relation fork that has block
@@ -3340,9 +3339,9 @@ DropRelFileLocatorsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
  * --------------------------------------------------------------------
  */
 static void
-FindAndDropRelFileLocatorBuffers(RelFileLocator rlocator, ForkNumber forkNum,
-								 BlockNumber nForkBlock,
-								 BlockNumber firstDelBlock)
+FindAndDropRelationBuffers(RelFileLocator rlocator, ForkNumber forkNum,
+						   BlockNumber nForkBlock,
+						   BlockNumber firstDelBlock)
 {
 	BlockNumber curBlock;
 
@@ -3397,7 +3396,7 @@ FindAndDropRelFileLocatorBuffers(RelFileLocator rlocator, ForkNumber forkNum,
  *		bothering to write them out first.  This is used when we destroy a
  *		database, to avoid trying to flush data to disk when the directory
  *		tree no longer exists.  Implementation is pretty similar to
- *		DropRelFileLocatorBuffers() which is for destroying just one relation.
+ *		DropRelationBuffers() which is for destroying just one relation.
  * --------------------------------------------------------------------
  */
 void
@@ -3416,7 +3415,7 @@ DropDatabaseBuffers(Oid dbid)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * As in DropRelationBuffers, an unlocked precheck should be
 		 * safe and saves some cycles.
 		 */
 		if (bufHdr->tag.rlocator.dbOid != dbid)
@@ -3561,7 +3560,7 @@ FlushRelationBuffers(Relation rel)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * As in DropRelationBuffers, an unlocked precheck should be
 		 * safe and saves some cycles.
 		 */
 		if (!RelFileLocatorEquals(bufHdr->tag.rlocator, rel->rd_locator))
@@ -3616,7 +3615,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 
 	/*
 	 * Save the bsearch overhead for low number of relations to sync. See
-	 * DropRelFileLocatorsAllBuffers for details.
+	 * DropRelationsAllBuffers for details.
 	 */
 	use_bsearch = nrels > RELS_BSEARCH_THRESHOLD;
 
@@ -3634,7 +3633,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 		uint32		buf_state;
 
 		/*
-		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * As in DropRelationBuffers, an unlocked precheck should be
 		 * safe and saves some cycles.
 		 */
 
@@ -3864,7 +3863,7 @@ FlushDatabaseBuffers(Oid dbid)
 		bufHdr = GetBufferDescriptor(i);
 
 		/*
-		 * As in DropRelFileLocatorBuffers, an unlocked precheck should be
+		 * As in DropRelationBuffers, an unlocked precheck should be
 		 * safe and saves some cycles.
 		 */
 		if (bufHdr->tag.rlocator.dbOid != dbid)

@@ -337,9 +337,10 @@ extern PrefetchBufferResult PrefetchLocalBuffer(SMgrRelation smgr,
 extern BufferDesc *LocalBufferAlloc(SMgrRelation smgr, ForkNumber forkNum,
 									BlockNumber blockNum, bool *foundPtr);
 extern void MarkLocalBufferDirty(Buffer buffer);
-extern void DropRelFileLocatorLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
-										   BlockNumber firstDelBlock);
-extern void DropRelFileLocatorAllLocalBuffers(RelFileLocator rlocator);
+extern void DropRelationLocalBuffers(RelFileLocator rlocator,
+									 ForkNumber forkNum,
+									 BlockNumber firstDelBlock);
+extern void DropRelationAllLocalBuffers(RelFileLocator rlocator);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif							/* BUFMGR_INTERNALS_H */

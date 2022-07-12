@@ -208,11 +208,11 @@ extern void CreateAndCopyRelationData(RelFileLocator src_rlocator,
 									  RelFileLocator dst_rlocator,
 									  bool permanent);
 extern void FlushDatabaseBuffers(Oid dbid);
-extern void DropRelFileLocatorBuffers(struct SMgrRelationData *smgr_reln,
-									  ForkNumber *forkNum,
-									  int nforks, BlockNumber *firstDelBlock);
-extern void DropRelFileLocatorsAllBuffers(struct SMgrRelationData **smgr_reln,
-										  int nlocators);
+extern void DropRelationBuffers(struct SMgrRelationData *smgr_reln,
+								ForkNumber *forkNum,
+								int nforks, BlockNumber *firstDelBlock);
+extern void DropRelationsAllBuffers(struct SMgrRelationData **smgr_reln,
+									int nlocators);
 extern void DropDatabaseBuffers(Oid dbid);
 
 #define RelationGetNumberOfBlocks(reln) \

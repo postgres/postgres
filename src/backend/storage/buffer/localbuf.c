@@ -312,7 +312,7 @@ MarkLocalBufferDirty(Buffer buffer)
 }
 
 /*
- * DropRelFileLocatorLocalBuffers
+ * DropRelationLocalBuffers
  *		This function removes from the buffer pool all the pages of the
  *		specified relation that have block numbers >= firstDelBlock.
  *		(In particular, with firstDelBlock = 0, all pages are removed.)
@@ -320,11 +320,11 @@ MarkLocalBufferDirty(Buffer buffer)
  *		out first.  Therefore, this is NOT rollback-able, and so should be
  *		used only with extreme caution!
  *
- *		See DropRelFileLocatorBuffers in bufmgr.c for more notes.
+ *		See DropRelationBuffers in bufmgr.c for more notes.
  */
 void
-DropRelFileLocatorLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
-							   BlockNumber firstDelBlock)
+DropRelationLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
+						 BlockNumber firstDelBlock)
 {
 	int			i;
 
@@ -363,14 +363,14 @@ DropRelFileLocatorLocalBuffers(RelFileLocator rlocator, ForkNumber forkNum,
 }
 
 /*
- * DropRelFileLocatorAllLocalBuffers
+ * DropRelationAllLocalBuffers
  *		This function removes from the buffer pool all pages of all forks
  *		of the specified relation.
  *
- *		See DropRelFileLocatorsAllBuffers in bufmgr.c for more notes.
+ *		See DropRelationsAllBuffers in bufmgr.c for more notes.
  */
 void
-DropRelFileLocatorAllLocalBuffers(RelFileLocator rlocator)
+DropRelationAllLocalBuffers(RelFileLocator rlocator)
 {
 	int			i;
 
@@ -589,7 +589,7 @@ AtProcExit_LocalBuffers(void)
 {
 	/*
 	 * We shouldn't be holding any remaining pins; if we are, and assertions
-	 * aren't enabled, we'll fail later in DropRelFileLocatorBuffers while
+	 * aren't enabled, we'll fail later in DropRelationBuffers while
 	 * trying to drop the temp rels.
 	 */
 	CheckForLocalBufferLeaks();

@@ -430,7 +430,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * Get rid of any remaining buffers for the relations.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
-	DropRelFileLocatorsAllBuffers(rels, nrels);
+	DropRelationsAllBuffers(rels, nrels);
 
 	/*
 	 * create an array which contains all relations to be dropped, and close
@@ -631,7 +631,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
 	 */
-	DropRelFileLocatorBuffers(reln, forknum, nforks, nblocks);
+	DropRelationBuffers(reln, forknum, nforks, nblocks);
 
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
