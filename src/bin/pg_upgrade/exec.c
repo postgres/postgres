@@ -423,18 +423,11 @@ check_exec(const char *dir, const char *program, bool check_version)
 	char		line[MAXPGPATH];
 	char		cmd[MAXPGPATH];
 	char		versionstr[128];
-	int			ret;
 
 	snprintf(path, sizeof(path), "%s/%s", dir, program);
 
-	ret = validate_exec(path);
-
-	if (ret == -1)
-		pg_fatal("check for \"%s\" failed: does not exist or cannot be executed",
-				 path);
-	else if (ret == -2)
-		pg_fatal("check for \"%s\" failed: cannot read (permission denied)",
-				 path);
+	if (validate_exec(path) != 0)
+		pg_fatal("check for \"%s\" failed: %m", path);
 
 	snprintf(cmd, sizeof(cmd), "\"%s\" -V", path);
 

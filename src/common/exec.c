@@ -74,6 +74,7 @@ static BOOL GetTokenUser(HANDLE hToken, PTOKEN_USER *ppTokenUser);
  * returns 0 if the file is found and no error is encountered.
  *		  -1 if the regular file "path" does not exist or cannot be executed.
  *		  -2 if the file is otherwise valid but cannot be read.
+ * in the failure cases, errno is set appropriately
  */
 int
 validate_exec(const char *path)
@@ -105,7 +106,16 @@ validate_exec(const char *path)
 		return -1;
 
 	if (!S_ISREG(buf.st_mode))
+	{
+		/*
+		 * POSIX offers no errno code that's simply "not a regular file".  If
+		 * it's a directory we can use EISDIR.  Otherwise, it's most likely a
+		 * device special file, and EPERM (Operation not permitted) isn't too
+		 * horribly off base.
+		 */
+		errno = S_ISDIR(buf.st_mode) ? EISDIR : EPERM;
 		return -1;
+	}
 
 	/*
 	 * Ensure that the file is both executable and readable (required for
@@ -114,9 +124,11 @@ validate_exec(const char *path)
 #ifndef WIN32
 	is_r = (access(path, R_OK) == 0);
 	is_x = (access(path, X_OK) == 0);
+	/* access() will set errno if it returns -1 */
 #else
 	is_r = buf.st_mode & S_IRUSR;
 	is_x = buf.st_mode & S_IXUSR;
+	errno = EACCES;				/* appropriate thing if we return nonzero */
 #endif
 	return is_x ? (is_r ? 0 : -2) : -1;
 }
@@ -165,7 +177,7 @@ find_my_exec(const char *argv0, char *retpath)
 			return resolve_symlinks(retpath);
 
 		log_error(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				  _("invalid binary \"%s\""), retpath);
+				  _("invalid binary \"%s\": %m"), retpath);
 		return -1;
 	}
 
@@ -215,7 +227,7 @@ find_my_exec(const char *argv0, char *retpath)
 					break;
 				case -2:		/* found but disqualified */
 					log_error(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							  _("could not read binary \"%s\""),
+							  _("could not read binary \"%s\": %m"),
 							  retpath);
 					break;
 			}
