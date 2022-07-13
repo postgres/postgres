@@ -1,5 +1,5 @@
 # src/pl/plperl/nls.mk
 CATALOG_NAME     = plperl
-GETTEXT_FILES    = $(wildcard *.c)
+GETTEXT_FILES    = plperl.c SPI.c
 GETTEXT_TRIGGERS = $(BACKEND_COMMON_GETTEXT_TRIGGERS)
 GETTEXT_FLAGS    = $(BACKEND_COMMON_GETTEXT_FLAGS)
