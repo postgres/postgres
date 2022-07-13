@@ -77,6 +77,20 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-a <replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--admin=<replaceable class="parameter">role</replaceable></option></term>
+      <listitem>
+       <para>
+        Indicates role that will be immediately added as a member of the new
+        role with admin option, giving it the right to grant membership in the
+        new role to others.  Multiple roles to add as members (with admin
+        option) of the new role can be specified by writing multiple
+        <option>-a</option> switches.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-c <replaceable class="parameter">number</replaceable></option></term>
       <term><option>--connection-limit=<replaceable class="parameter">number</replaceable></option></term>
       <listitem>
@@ -205,6 +219,18 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-m <replaceable class="parameter">role</replaceable></option></term>
+      <term><option>--member=<replaceable class="parameter">role</replaceable></option></term>
+      <listitem>
+       <para>
+        Indicates role that will be immediately added as a member of the new
+        role.  Multiple roles to add as members of the new role can be specified
+        by writing multiple <option>-m</option> switches.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-P</option></term>
       <term><option>--pwprompt</option></term>
       <listitem>
@@ -259,6 +285,17 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-v <replaceable class="parameter">timestamp</replaceable></option></term>
+      <term><option>--valid-until=<replaceable class="parameter">timestamp</replaceable></option></term>
+      <listitem>
+       <para>
+        Set a date and time after which the role's password is no longer valid.
+        The default is to set no password expiry date.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
        <term><option>-V</option></term>
        <term><option>--version</option></term>
        <listitem>
@@ -266,6 +303,25 @@ PostgreSQL documentation
        Print the <application>createuser</application> version and exit.
        </para>
        </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--bypassrls</option></term>
+      <listitem>
+       <para>
+        The new user will bypass every row-level security (RLS) policy.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--no-bypassrls</option></term>
+      <listitem>
+       <para>
+        The new user will not bypass row-level security (RLS) policies.  This is
+        the default.
+       </para>
+      </listitem>
      </varlistentry>
 
      <varlistentry>
