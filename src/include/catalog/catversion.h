@@ -32,6 +32,10 @@
  * include/catalog is the most common kind of initdb-forcing change.
  * But it could be used to protect any kind of incompatible change in
  * database contents or layout, such as altering tuple headers.
+ * Another common reason for a catversion update is a change in parsetree
+ * external representation, since serialized parsetrees appear in stored
+ * rules and new-style SQL functions.  Almost any change in primnodes.h or
+ * parsenodes.h will warrant a catversion update.
  *
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
@@ -53,6 +57,6 @@
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202207091
+#define CATALOG_VERSION_NO	202207131
 
 #endif

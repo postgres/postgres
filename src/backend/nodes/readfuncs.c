@@ -240,56 +240,6 @@ readBitmapset(void)
  * special_read_write attribute
  */
 
-static Query *
-_readQuery(void)
-{
-	READ_LOCALS(Query);
-
-	READ_ENUM_FIELD(commandType, CmdType);
-	READ_ENUM_FIELD(querySource, QuerySource);
-	local_node->queryId = UINT64CONST(0);	/* not saved in output format */
-	READ_BOOL_FIELD(canSetTag);
-	READ_NODE_FIELD(utilityStmt);
-	READ_INT_FIELD(resultRelation);
-	READ_BOOL_FIELD(hasAggs);
-	READ_BOOL_FIELD(hasWindowFuncs);
-	READ_BOOL_FIELD(hasTargetSRFs);
-	READ_BOOL_FIELD(hasSubLinks);
-	READ_BOOL_FIELD(hasDistinctOn);
-	READ_BOOL_FIELD(hasRecursive);
-	READ_BOOL_FIELD(hasModifyingCTE);
-	READ_BOOL_FIELD(hasForUpdate);
-	READ_BOOL_FIELD(hasRowSecurity);
-	READ_BOOL_FIELD(isReturn);
-	READ_NODE_FIELD(cteList);
-	READ_NODE_FIELD(rtable);
-	READ_NODE_FIELD(jointree);
-	READ_NODE_FIELD(targetList);
-	READ_ENUM_FIELD(override, OverridingKind);
-	READ_NODE_FIELD(onConflict);
-	READ_NODE_FIELD(returningList);
-	READ_NODE_FIELD(groupClause);
-	READ_BOOL_FIELD(groupDistinct);
-	READ_NODE_FIELD(groupingSets);
-	READ_NODE_FIELD(havingQual);
-	READ_NODE_FIELD(windowClause);
-	READ_NODE_FIELD(distinctClause);
-	READ_NODE_FIELD(sortClause);
-	READ_NODE_FIELD(limitOffset);
-	READ_NODE_FIELD(limitCount);
-	READ_ENUM_FIELD(limitOption, LimitOption);
-	READ_NODE_FIELD(rowMarks);
-	READ_NODE_FIELD(setOperations);
-	READ_NODE_FIELD(constraintDeps);
-	READ_NODE_FIELD(withCheckOptions);
-	READ_NODE_FIELD(mergeActionList);
-	READ_BOOL_FIELD(mergeUseOuterJoin);
-	READ_LOCATION_FIELD(stmt_location);
-	READ_INT_FIELD(stmt_len);
-
-	READ_DONE();
-}
-
 static Const *
 _readConst(void)
 {

@@ -117,8 +117,6 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  */
 typedef struct Query
 {
-	pg_node_attr(custom_read_write)
-
 	NodeTag		type;
 
 	CmdType		commandType;	/* select|insert|update|delete|merge|utility */
@@ -126,10 +124,10 @@ typedef struct Query
 	QuerySource querySource;	/* where did I come from? */
 
 	/*
-	 * query identifier (can be set by plugins); ignored for equal, might not
-	 * be set
+	 * query identifier (can be set by plugins); ignored for equal, as it
+	 * might not be set; also not stored
 	 */
-	uint64		queryId pg_node_attr(equal_ignore, read_as(0));
+	uint64		queryId pg_node_attr(equal_ignore, read_write_ignore, read_as(0));
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -409,8 +407,6 @@ typedef struct FuncCall
  */
 typedef struct A_Star
 {
-	pg_node_attr(no_read)
-
 	NodeTag		type;
 } A_Star;
 

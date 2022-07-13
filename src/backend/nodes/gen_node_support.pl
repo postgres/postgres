@@ -166,23 +166,6 @@ push @scalar_types, qw(EquivalenceClass* EquivalenceMember*);
 # currently not required.
 push @scalar_types, qw(QualCost);
 
-# XXX various things we are not publishing right now to stay level
-# with the manual system
-push @no_read_write,
-  qw(AccessPriv AlterTableCmd CreateOpClassItem FunctionParameter InferClause ObjectWithArgs OnConflictClause PartitionCmd RoleSpec VacuumRelation);
-push @no_read, qw(A_ArrayExpr A_Indices A_Indirection AlterStatsStmt
-  CollateClause ColumnDef ColumnRef CreateForeignTableStmt CreateStatsStmt
-  CreateStmt FuncCall ImportForeignSchemaStmt IndexElem IndexStmt
-  JsonAggConstructor JsonArgument JsonArrayAgg JsonArrayConstructor
-  JsonArrayQueryConstructor JsonCommon JsonFuncExpr JsonKeyValue
-  JsonObjectAgg JsonObjectConstructor JsonOutput JsonParseExpr JsonScalarExpr
-  JsonSerializeExpr JsonTable JsonTableColumn JsonTablePlan LockingClause
-  MultiAssignRef PLAssignStmt ParamRef PartitionElem PartitionSpec
-  PlaceHolderVar PublicationObjSpec PublicationTable RangeFunction
-  RangeSubselect RangeTableFunc RangeTableFuncCol RangeTableSample RawStmt
-  ResTarget ReturnStmt SelectStmt SortBy StatsElem TableLikeClause
-  TriggerTransition TypeCast TypeName WindowDef WithClause XmlSerialize);
-
 
 ## check that we have the expected number of files on the command line
 die "wrong number of input files, expected @all_input_files\n"
@@ -795,14 +778,6 @@ foreach my $n (@node_types)
 	next if elem $n, @nodetag_only;
 	next if elem $n, @no_read_write;
 
-	# XXX For now, skip all "Stmt"s except that ones that were there before.
-	if ($n =~ /Stmt$/)
-	{
-		my @keep =
-		  qw(AlterStatsStmt CreateForeignTableStmt CreateStatsStmt CreateStmt DeclareCursorStmt ImportForeignSchemaStmt IndexStmt NotifyStmt PlannedStmt PLAssignStmt RawStmt ReturnStmt SelectStmt SetOperationStmt);
-		next unless elem $n, @keep;
-	}
-
 	my $no_read = (elem $n, @no_read);
 
 	# output format starts with upper case node type name
@@ -827,13 +802,20 @@ _out${n}(StringInfo str, const $n *node)
 
 ";
 
-	print $rff "
+	if (!$no_read)
+	{
+		my $macro =
+		  (@{ $node_type_info{$n}->{fields} } > 0)
+		  ? 'READ_LOCALS'
+		  : 'READ_LOCALS_NO_FIELDS';
+		print $rff "
 static $n *
 _read${n}(void)
 {
-\tREAD_LOCALS($n);
+\t$macro($n);
 
-" unless $no_read;
+";
+	}
 
 	# print instructions for each field
 	foreach my $f (@{ $node_type_info{$n}->{fields} })
@@ -883,6 +865,7 @@ _read${n}(void)
 			print $rff "\tREAD_LOCATION_FIELD($f);\n" unless $no_read;
 		}
 		elsif ($t eq 'int'
+			|| $t eq 'int16'
 			|| $t eq 'int32'
 			|| $t eq 'AttrNumber'
 			|| $t eq 'StrategyNumber')
