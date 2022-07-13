@@ -98,7 +98,7 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 #define BUFFER_LOCK_EXCLUSIVE	2
 
 /*
- * These routines are beaten on quite heavily, hence the macroization.
+ * These routines are beaten on quite heavily, hence inline.
  */
 
 /*
@@ -120,11 +120,14 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * even in non-assert-enabled builds can be significant.  Thus, we've
  * now demoted the range checks to assertions within the macro itself.
  */
-#define BufferIsValid(bufnum) \
-( \
-	AssertMacro((bufnum) <= NBuffers && (bufnum) >= -NLocBuffer), \
-	(bufnum) != InvalidBuffer  \
-)
+static inline bool
+BufferIsValid(Buffer bufnum)
+{
+	Assert(bufnum <= NBuffers);
+	Assert(bufnum >= -NLocBuffer);
+
+	return bufnum != InvalidBuffer;
+}
 
 /*
  * BufferGetBlock
@@ -133,14 +136,16 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * Note:
  *		Assumes buffer is valid.
  */
-#define BufferGetBlock(buffer) \
-( \
-	AssertMacro(BufferIsValid(buffer)), \
-	BufferIsLocal(buffer) ? \
-		LocalBufferBlockPointers[-(buffer) - 1] \
-	: \
-		(Block) (BufferBlocks + ((Size) ((buffer) - 1)) * BLCKSZ) \
-)
+static inline Block
+BufferGetBlock(Buffer buffer)
+{
+	Assert(BufferIsValid(buffer));
+
+	if (BufferIsLocal(buffer))
+		return LocalBufferBlockPointers[-buffer - 1];
+	else
+		return (Block) (BufferBlocks + ((Size) (buffer - 1)) * BLCKSZ);
+}
 
 /*
  * BufferGetPageSize
@@ -153,11 +158,12 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  *		(formatted) disk page.
  */
 /* XXX should dig out of buffer descriptor */
-#define BufferGetPageSize(buffer) \
-( \
-	AssertMacro(BufferIsValid(buffer)), \
-	(Size)BLCKSZ \
-)
+static inline Size
+BufferGetPageSize(Buffer buffer)
+{
+	AssertMacro(BufferIsValid(buffer));
+	return (Size) BLCKSZ;
+}
 
 /*
  * BufferGetPage
@@ -166,7 +172,11 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * When this is called as part of a scan, there may be a need for a nearby
  * call to TestForOldSnapshot().  See the definition of that for details.
  */
-#define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
+static inline Page
+BufferGetPage(Buffer buffer)
+{
+	return (Page) BufferGetBlock(buffer);
+}
 
 /*
  * prototypes for functions in bufmgr.c
@@ -201,6 +211,12 @@ extern void CheckPointBuffers(int flags);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
 												   ForkNumber forkNum);
+static inline BlockNumber
+RelationGetNumberOfBlocks(Relation reln)
+{
+	return RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM);
+}
+
 extern void FlushOneBuffer(Buffer buffer);
 extern void FlushRelationBuffers(Relation rel);
 extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
@@ -214,9 +230,6 @@ extern void DropRelationBuffers(struct SMgrRelationData *smgr_reln,
 extern void DropRelationsAllBuffers(struct SMgrRelationData **smgr_reln,
 									int nlocators);
 extern void DropDatabaseBuffers(Oid dbid);
-
-#define RelationGetNumberOfBlocks(reln) \
-	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
 
 extern bool BufferIsPermanent(Buffer buffer);
 extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
