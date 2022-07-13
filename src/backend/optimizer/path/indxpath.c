@@ -3026,14 +3026,12 @@ expand_indexqual_rowcompare(PlannerInfo *root,
 
 			rc->rctype = (RowCompareType) op_strategy;
 			rc->opnos = new_ops;
-			rc->opfamilies = list_truncate(list_copy(clause->opfamilies),
-										   matching_cols);
-			rc->inputcollids = list_truncate(list_copy(clause->inputcollids),
-											 matching_cols);
-			rc->largs = list_truncate(copyObject(var_args),
-									  matching_cols);
-			rc->rargs = list_truncate(copyObject(non_var_args),
-									  matching_cols);
+			rc->opfamilies = list_copy_head(clause->opfamilies,
+											matching_cols);
+			rc->inputcollids = list_copy_head(clause->inputcollids,
+											  matching_cols);
+			rc->largs = list_copy_head(var_args, matching_cols);
+			rc->rargs = list_copy_head(non_var_args, matching_cols);
 			iclause->indexquals = list_make1(make_simple_restrictinfo(root,
 																	  (Expr *) rc));
 		}

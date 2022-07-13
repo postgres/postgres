@@ -1397,8 +1397,7 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path, int flags)
 	 */
 	if (tlist_was_changed && (flags & (CP_EXACT_TLIST | CP_SMALL_TLIST)))
 	{
-		tlist = list_truncate(list_copy(plan->plan.targetlist),
-							  orig_tlist_length);
+		tlist = list_copy_head(plan->plan.targetlist, orig_tlist_length);
 		return inject_projection_plan((Plan *) plan, tlist,
 									  plan->plan.parallel_safe);
 	}
@@ -1557,7 +1556,7 @@ create_merge_append_plan(PlannerInfo *root, MergeAppendPath *best_path,
 	 */
 	if (tlist_was_changed && (flags & (CP_EXACT_TLIST | CP_SMALL_TLIST)))
 	{
-		tlist = list_truncate(list_copy(plan->targetlist), orig_tlist_length);
+		tlist = list_copy_head(plan->targetlist, orig_tlist_length);
 		return inject_projection_plan(plan, tlist, plan->parallel_safe);
 	}
 	else

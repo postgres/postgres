@@ -2464,7 +2464,7 @@ truncate_useless_pathkeys(PlannerInfo *root,
 	else if (nuseful == list_length(pathkeys))
 		return pathkeys;
 	else
-		return list_truncate(list_copy(pathkeys), nuseful);
+		return list_copy_head(pathkeys, nuseful);
 }
 
 /*

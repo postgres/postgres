@@ -1620,7 +1620,7 @@ process_owned_by(Relation seqrel, List *owned_by, bool for_identity)
 		RangeVar   *rel;
 
 		/* Separate relname and attr name */
-		relname = list_truncate(list_copy(owned_by), nnames - 1);
+		relname = list_copy_head(owned_by, nnames - 1);
 		attrname = strVal(llast(owned_by));
 
 		/* Open and lock rel to ensure it won't go away meanwhile */

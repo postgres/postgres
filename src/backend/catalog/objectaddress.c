@@ -1453,7 +1453,7 @@ get_object_address_relobject(ObjectType objtype, List *object,
 				 errmsg("must specify relation and object name")));
 
 	/* Extract relation name and open relation. */
-	relname = list_truncate(list_copy(object), nnames - 1);
+	relname = list_copy_head(object, nnames - 1);
 	relation = table_openrv_extended(makeRangeVarFromNameList(relname),
 									 AccessShareLock,
 									 missing_ok);
@@ -1528,7 +1528,7 @@ get_object_address_attribute(ObjectType objtype, List *object,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column name must be qualified")));
 	attname = strVal(llast(object));
-	relname = list_truncate(list_copy(object), list_length(object) - 1);
+	relname = list_copy_head(object, list_length(object) - 1);
 	/* XXX no missing_ok support here */
 	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
 	reloid = RelationGetRelid(relation);
@@ -1581,7 +1581,7 @@ get_object_address_attrdef(ObjectType objtype, List *object,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("column name must be qualified")));
 	attname = strVal(llast(object));
-	relname = list_truncate(list_copy(object), list_length(object) - 1);
+	relname = list_copy_head(object, list_length(object) - 1);
 	/* XXX no missing_ok support here */
 	relation = relation_openrv(makeRangeVarFromNameList(relname), lockmode);
 	reloid = RelationGetRelid(relation);
@@ -1715,7 +1715,7 @@ get_object_address_opf_member(ObjectType objtype,
 	 * address.  The rest can be used directly by get_object_address_opcf().
 	 */
 	membernum = atoi(strVal(llast(linitial(object))));
-	copy = list_truncate(list_copy(linitial(object)), list_length(linitial(object)) - 1);
+	copy = list_copy_head(linitial(object), list_length(linitial(object)) - 1);
 
 	/* no missing_ok support here */
 	famaddr = get_object_address_opcf(OBJECT_OPFAMILY, copy, false);

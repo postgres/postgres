@@ -2053,9 +2053,8 @@ accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 			*subpaths = list_concat(*subpaths,
 									list_copy_tail(apath->subpaths,
 												   apath->first_partial_path));
-			new_special_subpaths =
-				list_truncate(list_copy(apath->subpaths),
-							  apath->first_partial_path);
+			new_special_subpaths = list_copy_head(apath->subpaths,
+												  apath->first_partial_path);
 			*special_subpaths = list_concat(*special_subpaths,
 											new_special_subpaths);
 			return;
@@ -3086,8 +3085,8 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel,
 										   root->query_pathkeys);
 		else if (npathkeys > 0)
 			useful_pathkeys_list = lappend(useful_pathkeys_list,
-										   list_truncate(list_copy(root->query_pathkeys),
-														 npathkeys));
+										   list_copy_head(root->query_pathkeys,
+														  npathkeys));
 	}
 
 	return useful_pathkeys_list;
