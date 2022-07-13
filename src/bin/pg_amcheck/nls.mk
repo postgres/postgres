@@ -1,6 +1,5 @@
 # src/bin/pg_amcheck/nls.mk
 CATALOG_NAME     = pg_amcheck
-AVAIL_LANGUAGES  = de el es fr ja ru sv uk zh_CN
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    pg_amcheck.c \
                    ../../fe_utils/cancel.c \

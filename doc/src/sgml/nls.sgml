@@ -175,10 +175,11 @@ make init-po
     Copy this file to
     <filename><replaceable>language</replaceable>.po</filename> and
     edit it.  To make it known that the new language is available,
-    also edit the file <filename>nls.mk</filename> and add the
-    language (or language and country) code to the line that looks like:
+    also edit the file <filename>po/LINGUAS</filename> and add the
+    language (or language and country) code next to languages already listed,
+    like:
 <programlisting>
-AVAIL_LANGUAGES := de fr
+de fr
 </programlisting>
     (Other languages can appear, of course.)
    </para>
@@ -376,16 +377,6 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
       </varlistentry>
 
       <varlistentry>
-       <term><varname>AVAIL_LANGUAGES</varname></term>
-
-       <listitem>
-        <para>
-         List of provided translations &mdash; initially empty.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><varname>GETTEXT_FILES</varname></term>
 
        <listitem>
@@ -424,6 +415,12 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
     </para>
    </step>
 
+   <step>
+    <para>
+     Add a file <filename>po/LINGUAS</filename>, which will contain the list
+     of provided translations &mdash; initially empty.
+    </para>
+   </step>
   </procedure>
 
   <para>
