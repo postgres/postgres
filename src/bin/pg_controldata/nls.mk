@@ -1,5 +1,5 @@
 # src/bin/pg_controldata/nls.mk
 CATALOG_NAME     = pg_controldata
-GETTEXT_FILES    = pg_controldata.c ../../common/controldata_utils.c
+GETTEXT_FILES    = $(wildcard *.c) ../../common/controldata_utils.c
 GETTEXT_TRIGGERS = $(FRONTEND_COMMON_GETTEXT_TRIGGERS)
 GETTEXT_FLAGS    = $(FRONTEND_COMMON_GETTEXT_FLAGS)

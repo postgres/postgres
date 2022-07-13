@@ -1,11 +1,6 @@
 # src/bin/scripts/nls.mk
 CATALOG_NAME     = pgscripts
-GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
-                   createdb.c createuser.c \
-                   dropdb.c dropuser.c \
-                   clusterdb.c vacuumdb.c reindexdb.c \
-                   pg_isready.c \
-                   common.c \
+GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) $(wildcard *.c) \
                    ../../fe_utils/parallel_slot.c \
                    ../../fe_utils/cancel.c ../../fe_utils/print.c \
                    ../../fe_utils/connect_utils.c \
