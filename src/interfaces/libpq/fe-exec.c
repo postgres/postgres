@@ -1546,6 +1546,7 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 
 sendFailed:
 	pqRecycleCmdQueueEntry(conn, entry);
+	pqRecycleCmdQueueEntry(conn, entry2);
 	/* error message should be set up already */
 	return 0;
 }
