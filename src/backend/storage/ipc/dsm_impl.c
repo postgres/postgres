@@ -62,6 +62,7 @@
 #endif
 
 #include "common/file_perm.h"
+#include "libpq/pqsignal.h"		/* for PG_SETMASK macro */
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "portability/mem.h"
@@ -303,14 +304,6 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		shm_unlink(name);
 		errno = save_errno;
 
-		/*
-		 * If we received a query cancel or termination signal, we will have
-		 * EINTR set here.  If the caller said that errors are OK here, check
-		 * for interrupts immediately.
-		 */
-		if (errno == EINTR && elevel >= ERROR)
-			CHECK_FOR_INTERRUPTS();
-
 		ereport(elevel,
 				(errcode_for_dynamic_shared_memory(),
 				 errmsg("could not resize shared memory segment \"%s\" to %zu bytes: %m",
@@ -358,9 +351,21 @@ static int
 dsm_impl_posix_resize(int fd, off_t size)
 {
 	int			rc;
+	int			save_errno;
+
+	/*
+	 * Block all blockable signals, except SIGQUIT.  posix_fallocate() can run
+	 * for quite a long time, and is an all-or-nothing operation.  If we
+	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to recovery
+	 * conflicts), the retry loop might never succeed.
+	 */
+	PG_SETMASK(&BlockSig);
 
 	/* Truncate (or extend) the file to the requested size. */
-	rc = ftruncate(fd, size);
+	do
+	{
+		rc = ftruncate(fd, size);
+	} while (rc < 0 && errno == EINTR);
 
 	/*
 	 * On Linux, a shm_open fd is backed by a tmpfs file.  After resizing with
@@ -374,15 +379,15 @@ dsm_impl_posix_resize(int fd, off_t size)
 	if (rc == 0)
 	{
 		/*
-		 * We may get interrupted.  If so, just retry unless there is an
-		 * interrupt pending.  This avoids the possibility of looping forever
-		 * if another backend is repeatedly trying to interrupt us.
+		 * We still use a traditional EINTR retry loop to handle SIGCONT.
+		 * posix_fallocate() doesn't restart automatically, and we don't want
+		 * this to fail if you attach a debugger.
 		 */
 		pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
 		do
 		{
 			rc = posix_fallocate(fd, 0, size);
-		} while (rc == EINTR && !(ProcDiePending || QueryCancelPending));
+		} while (rc == EINTR);
 		pgstat_report_wait_end();
 
 		/*
@@ -393,6 +398,10 @@ dsm_impl_posix_resize(int fd, off_t size)
 		errno = rc;
 	}
 #endif							/* HAVE_POSIX_FALLOCATE && __linux__ */
+
+	save_errno = errno;
+	PG_SETMASK(&UnBlockSig);
+	errno = save_errno;
 
 	return rc;
 }
