@@ -1213,7 +1213,6 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 			{
 				Node	   *field1 = (Node *) linitial(cref->fields);
 
-				Assert(IsA(field1, String));
 				name1 = strVal(field1);
 				nnames_scalar = 1;
 				nnames_wholerow = 1;
@@ -1224,7 +1223,6 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 				Node	   *field1 = (Node *) linitial(cref->fields);
 				Node	   *field2 = (Node *) lsecond(cref->fields);
 
-				Assert(IsA(field1, String));
 				name1 = strVal(field1);
 
 				/* Whole-row reference? */
@@ -1236,7 +1234,6 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 					break;
 				}
 
-				Assert(IsA(field2, String));
 				name2 = strVal(field2);
 				colname = name2;
 				nnames_scalar = 2;
@@ -1250,9 +1247,7 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 				Node	   *field2 = (Node *) lsecond(cref->fields);
 				Node	   *field3 = (Node *) lthird(cref->fields);
 
-				Assert(IsA(field1, String));
 				name1 = strVal(field1);
-				Assert(IsA(field2, String));
 				name2 = strVal(field2);
 
 				/* Whole-row reference? */
@@ -1264,7 +1259,6 @@ resolve_column_ref(ParseState *pstate, PLpgSQL_expr *expr,
 					break;
 				}
 
-				Assert(IsA(field3, String));
 				name3 = strVal(field3);
 				colname = name3;
 				nnames_field = 2;

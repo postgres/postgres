@@ -631,7 +631,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			{
 				Node	   *field1 = (Node *) linitial(cref->fields);
 
-				Assert(IsA(field1, String));
 				colname = strVal(field1);
 
 				/* Try to identify as an unqualified column */
@@ -664,7 +663,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				Node	   *field1 = (Node *) linitial(cref->fields);
 				Node	   *field2 = (Node *) lsecond(cref->fields);
 
-				Assert(IsA(field1, String));
 				relname = strVal(field1);
 
 				/* Locate the referenced nsitem */
@@ -685,7 +683,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					break;
 				}
 
-				Assert(IsA(field2, String));
 				colname = strVal(field2);
 
 				/* Try to identify as a column of the nsitem */
@@ -712,9 +709,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				Node	   *field2 = (Node *) lsecond(cref->fields);
 				Node	   *field3 = (Node *) lthird(cref->fields);
 
-				Assert(IsA(field1, String));
 				nspname = strVal(field1);
-				Assert(IsA(field2, String));
 				relname = strVal(field2);
 
 				/* Locate the referenced nsitem */
@@ -735,7 +730,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					break;
 				}
 
-				Assert(IsA(field3, String));
 				colname = strVal(field3);
 
 				/* Try to identify as a column of the nsitem */
@@ -764,11 +758,8 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				Node	   *field4 = (Node *) lfourth(cref->fields);
 				char	   *catname;
 
-				Assert(IsA(field1, String));
 				catname = strVal(field1);
-				Assert(IsA(field2, String));
 				nspname = strVal(field2);
-				Assert(IsA(field3, String));
 				relname = strVal(field3);
 
 				/*
@@ -798,7 +789,6 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					break;
 				}
 
-				Assert(IsA(field4, String));
 				colname = strVal(field4);
 
 				/* Try to identify as a column of the nsitem */

@@ -318,12 +318,10 @@ sql_fn_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 		nnames--;
 
 	field1 = (Node *) linitial(cref->fields);
-	Assert(IsA(field1, String));
 	name1 = strVal(field1);
 	if (nnames > 1)
 	{
 		subfield = (Node *) lsecond(cref->fields);
-		Assert(IsA(subfield, String));
 		name2 = strVal(subfield);
 	}
 

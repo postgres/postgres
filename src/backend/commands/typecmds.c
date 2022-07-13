@@ -3577,7 +3577,6 @@ replace_domain_constraint_value(ParseState *pstate, ColumnRef *cref)
 		Node	   *field1 = (Node *) linitial(cref->fields);
 		char	   *colname;
 
-		Assert(IsA(field1, String));
 		colname = strVal(field1);
 		if (strcmp(colname, "value") == 0)
 		{
