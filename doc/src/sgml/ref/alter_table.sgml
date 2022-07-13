@@ -367,7 +367,7 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
 
    <varlistentry>
     <term>
-     <literal>SET STORAGE</literal>
+     <literal>SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }</literal>
      <indexterm>
       <primary>TOAST</primary>
       <secondary>per-column storage settings</secondary>

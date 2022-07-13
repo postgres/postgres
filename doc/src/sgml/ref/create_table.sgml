@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name</replaceable> ( [
-  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ COMPRESSION <replaceable>compression_method</replaceable> ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
+  { <replaceable class="parameter">column_name</replaceable> <replaceable class="parameter">data_type</replaceable> [ STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN } ] [ COMPRESSION <replaceable>compression_method</replaceable> ] [ COLLATE <replaceable>collation</replaceable> ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable>
     | LIKE <replaceable>source_table</replaceable> [ <replaceable>like_option</replaceable> ... ] }
     [, ... ]
@@ -293,6 +293,33 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       The <literal>COLLATE</literal> clause assigns a collation to
       the column (which must be of a collatable data type).
       If not specified, the column data type's default collation is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
+     <literal>STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }</literal>
+     <indexterm>
+      <primary>TOAST</primary>
+      <secondary>per-column storage settings</secondary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      This form sets the storage mode for the column. This controls whether this
+      column is held inline or in a secondary <acronym>TOAST</acronym> table,
+      and whether the data should be compressed or not. <literal>PLAIN</literal>
+      must be used for fixed-length values such as <type>integer</type> and is
+      inline, uncompressed. <literal>MAIN</literal> is for inline, compressible
+      data. <literal>EXTERNAL</literal> is for external, uncompressed data, and
+      <literal>EXTENDED</literal> is for external, compressed data.
+      <literal>EXTENDED</literal> is the default for most data types that
+      support non-<literal>PLAIN</literal> storage. Use of
+      <literal>EXTERNAL</literal> will make substring operations on very large
+      <type>text</type> and <type>bytea</type> values run faster, at the penalty
+      of increased storage space. See <xref linkend="storage-toast"/> for more
+      information.
      </para>
     </listitem>
    </varlistentry>
