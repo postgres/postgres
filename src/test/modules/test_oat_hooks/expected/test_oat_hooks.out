@@ -83,6 +83,11 @@ NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
 NOTICE:  in object access: superuser attempting create (subId=0x0) [internal]
 NOTICE:  in object access: superuser finished create (subId=0x0) [internal]
 NOTICE:  in process utility: superuser finished CreateStmt
+CREATE INDEX regress_test_table_t_idx ON regress_test_table (t);
+NOTICE:  in process utility: superuser attempting IndexStmt
+NOTICE:  in object access: superuser attempting create (subId=0x0) [explicit]
+NOTICE:  in object access: superuser finished create (subId=0x0) [explicit]
+NOTICE:  in process utility: superuser finished IndexStmt
 GRANT SELECT ON Table regress_test_table TO public;
 NOTICE:  in process utility: superuser attempting GrantStmt
 NOTICE:  in process utility: superuser finished GrantStmt
@@ -280,12 +285,18 @@ NOTICE:  in process utility: superuser attempting alter system
 NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x2000, alter system) [work_mem]
 NOTICE:  in process utility: superuser finished alter system
--- Clean up
+-- try labelled drops
 RESET SESSION AUTHORIZATION;
 NOTICE:  in process utility: superuser attempting set
 NOTICE:  in object_access_hook_str: superuser attempting alter (subId=0x1000, set) [session_authorization]
 NOTICE:  in object_access_hook_str: superuser finished alter (subId=0x1000, set) [session_authorization]
 NOTICE:  in process utility: superuser finished set
+DROP INDEX CONCURRENTLY regress_test_table_t_idx;
+NOTICE:  in process utility: superuser attempting DropStmt
+NOTICE:  in object access: superuser attempting drop (subId=0x0) [concurrent drop,]
+NOTICE:  in object access: superuser finished drop (subId=0x0) [concurrent drop,]
+NOTICE:  in process utility: superuser finished DropStmt
+-- Clean up
 SET test_oat_hooks.audit = false;
 NOTICE:  in process utility: superuser attempting set
 DROP ROLE regress_role_joe;  -- fails
