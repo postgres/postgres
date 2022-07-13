@@ -29,7 +29,7 @@
 # existence checked by Makefile.global; otherwise we won't get here
 include $(srcdir)/nls.mk
 
-AVAIL_LANGUAGES := $(shell sed -e "/^#/d" -e "s/#.*//" po/LINGUAS)
+AVAIL_LANGUAGES := $(shell cat $(srcdir)/po/LINGUAS)
 
 # If user specified the languages he wants in --enable-nls=LANGUAGES,
 # filter out the rest.  Else use all available ones.
