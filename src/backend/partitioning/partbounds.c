@@ -648,13 +648,14 @@ create_list_bounds(PartitionBoundSpec **boundspecs, int nparts,
 																  index);
 
 				/*
-				 * Mark the NULL partition as interleaved if we find that it
-				 * allows some other non-NULL Datum.
+				 * Otherwise, if the null_index exists in the indexes array,
+				 * then the NULL partition must also allow some other Datum,
+				 * therefore it's "interleaved".
 				 */
-				if (partition_bound_accepts_nulls(boundinfo) &&
-					index == boundinfo->null_index)
+				else if (partition_bound_accepts_nulls(boundinfo) &&
+						 index == boundinfo->null_index)
 					boundinfo->interleaved_parts = bms_add_member(boundinfo->interleaved_parts,
-																  boundinfo->null_index);
+																  index);
 
 				last_index = index;
 			}
