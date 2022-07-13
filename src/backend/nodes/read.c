@@ -304,7 +304,7 @@ nodeTokenType(const char *token, int length)
  *	* Value token nodes (integers, floats, booleans, or strings);
  *	* General nodes (via parseNodeString() from readfuncs.c);
  *	* Lists of the above;
- *	* Lists of integers or OIDs.
+ *	* Lists of integers, OIDs, or TransactionIds.
  * The return value is declared void *, not Node *, to avoid having to
  * cast it explicitly in callers that assign to fields of different types.
  *
@@ -346,6 +346,7 @@ nodeRead(const char *token, int tok_len)
 				/*----------
 				 * Could be an integer list:	(i int int ...)
 				 * or an OID list:				(o int int ...)
+				 * or an XID list:				(x int int ...)
 				 * or a list of nodes/values:	(node node ...)
 				 *----------
 				 */
@@ -390,6 +391,26 @@ nodeRead(const char *token, int tok_len)
 							elog(ERROR, "unrecognized OID: \"%.*s\"",
 								 tok_len, token);
 						l = lappend_oid(l, val);
+					}
+				}
+				else if (tok_len == 1 && token[0] == 'x')
+				{
+					/* List of TransactionIds */
+					for (;;)
+					{
+						TransactionId val;
+						char	   *endptr;
+
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated List structure");
+						if (token[0] == ')')
+							break;
+						val = (TransactionId) strtoul(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized Xid: \"%.*s\"",
+								 tok_len, token);
+						l = lappend_xid(l, val);
 					}
 				}
 				else
