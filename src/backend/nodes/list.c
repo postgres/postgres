@@ -1545,6 +1545,27 @@ list_copy(const List *oldlist)
 }
 
 /*
+ * Return a shallow copy of the specified list containing only the first 'len'
+ * elements.  If oldlist is shorter than 'len' then we copy the entire list.
+ */
+List *
+list_copy_head(const List *oldlist, int len)
+{
+	List	   *newlist;
+
+	len = Min(oldlist->length, len);
+
+	if (len <= 0)
+		return NIL;
+
+	newlist = new_list(oldlist->type, len);
+	memcpy(newlist->elements, oldlist->elements, len * sizeof(ListCell));
+
+	check_list_invariants(newlist);
+	return newlist;
+}
+
+/*
  * Return a shallow copy of the specified list, without the first N elements.
  */
 List *

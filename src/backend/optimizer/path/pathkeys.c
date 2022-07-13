@@ -17,6 +17,8 @@
  */
 #include "postgres.h"
 
+#include <float.h>
+
 #include "miscadmin.h"
 #include "access/stratnum.h"
 #include "catalog/pg_opfamily.h"
@@ -591,7 +593,7 @@ get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
 
 	ListCell   *cell;
 	PathkeyMutatorState mstate;
-	double		cheapest_sort_cost = -1.0;
+	double		cheapest_sort_cost = DBL_MAX;
 
 	int			nFreeKeys;
 	int			nToPermute;
@@ -620,23 +622,23 @@ get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
 	nToPermute = 4;
 	if (nFreeKeys > nToPermute)
 	{
-		int			i;
 		PathkeySortCost *costs = palloc(sizeof(PathkeySortCost) * nFreeKeys);
+		PathkeySortCost *cost = costs;
 
-		/* skip the pre-ordered pathkeys */
-		cell = list_nth_cell(*group_pathkeys, n_preordered);
-
-		/* estimate cost for sorting individual pathkeys */
-		for (i = 0; cell != NULL; i++, (cell = lnext(*group_pathkeys, cell)))
+		/*
+		 * Estimate cost for sorting individual pathkeys skipping the
+		 * pre-ordered pathkeys.
+		 */
+		for_each_from(cell, *group_pathkeys, n_preordered)
 		{
-			List	   *to_cost = list_make1(lfirst(cell));
+			PathKey    *pathkey = (PathKey *) lfirst(cell);
+			List	   *to_cost = list_make1(pathkey);
 
-			Assert(i < nFreeKeys);
+			cost->pathkey = pathkey;
+			cost->cost = cost_sort_estimate(root, to_cost, 0, nrows);
+			cost++;
 
-			costs[i].pathkey = lfirst(cell);
-			costs[i].cost = cost_sort_estimate(root, to_cost, 0, nrows);
-
-			pfree(to_cost);
+			list_free(to_cost);
 		}
 
 		/* sort the pathkeys by sort cost in ascending order */
@@ -646,9 +648,9 @@ get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
 		 * Rebuild the list of pathkeys - first the preordered ones, then the
 		 * rest ordered by cost.
 		 */
-		new_group_pathkeys = list_truncate(list_copy(*group_pathkeys), n_preordered);
+		new_group_pathkeys = list_copy_head(*group_pathkeys, n_preordered);
 
-		for (i = 0; i < nFreeKeys; i++)
+		for (int i = 0; i < nFreeKeys; i++)
 			new_group_pathkeys = lappend(new_group_pathkeys, costs[i].pathkey);
 
 		pfree(costs);
@@ -689,7 +691,7 @@ get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
 
 		cost = cost_sort_estimate(root, var_group_pathkeys, n_preordered, nrows);
 
-		if (cost < cheapest_sort_cost || cheapest_sort_cost < 0)
+		if (cost < cheapest_sort_cost)
 		{
 			list_free(new_group_pathkeys);
 			new_group_pathkeys = list_copy(var_group_pathkeys);
