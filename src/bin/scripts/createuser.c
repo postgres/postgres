@@ -28,29 +28,29 @@ int
 main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
-		{"host", required_argument, NULL, 'h'},
-		{"port", required_argument, NULL, 'p'},
-		{"username", required_argument, NULL, 'U'},
-		{"role", required_argument, NULL, 'g'},
-		{"no-password", no_argument, NULL, 'w'},
-		{"password", no_argument, NULL, 'W'},
-		{"echo", no_argument, NULL, 'e'},
+		{"connection-limit", required_argument, NULL, 'c'},
 		{"createdb", no_argument, NULL, 'd'},
 		{"no-createdb", no_argument, NULL, 'D'},
-		{"superuser", no_argument, NULL, 's'},
-		{"no-superuser", no_argument, NULL, 'S'},
-		{"createrole", no_argument, NULL, 'r'},
-		{"no-createrole", no_argument, NULL, 'R'},
+		{"echo", no_argument, NULL, 'e'},
+		{"encrypted", no_argument, NULL, 'E'},
+		{"role", required_argument, NULL, 'g'},
+		{"host", required_argument, NULL, 'h'},
 		{"inherit", no_argument, NULL, 'i'},
 		{"no-inherit", no_argument, NULL, 'I'},
 		{"login", no_argument, NULL, 'l'},
 		{"no-login", no_argument, NULL, 'L'},
+		{"port", required_argument, NULL, 'p'},
+		{"pwprompt", no_argument, NULL, 'P'},
+		{"createrole", no_argument, NULL, 'r'},
+		{"no-createrole", no_argument, NULL, 'R'},
+		{"superuser", no_argument, NULL, 's'},
+		{"no-superuser", no_argument, NULL, 'S'},
+		{"username", required_argument, NULL, 'U'},
+		{"no-password", no_argument, NULL, 'w'},
+		{"password", no_argument, NULL, 'W'},
 		{"replication", no_argument, NULL, 1},
 		{"no-replication", no_argument, NULL, 2},
 		{"interactive", no_argument, NULL, 3},
-		{"connection-limit", required_argument, NULL, 'c'},
-		{"pwprompt", no_argument, NULL, 'P'},
-		{"encrypted", no_argument, NULL, 'E'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -89,31 +89,15 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createuser", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSrRiIlLc:PE",
+	while ((c = getopt_long(argc, argv, "c:dDeEg:h:iIlLp:PrRsSU:wW",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
-			case 'h':
-				host = pg_strdup(optarg);
-				break;
-			case 'p':
-				port = pg_strdup(optarg);
-				break;
-			case 'U':
-				username = pg_strdup(optarg);
-				break;
-			case 'g':
-				simple_string_list_append(&roles, optarg);
-				break;
-			case 'w':
-				prompt_password = TRI_NO;
-				break;
-			case 'W':
-				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
+			case 'c':
+				if (!option_parse_int(optarg, "-c/--connection-limit",
+									  -1, INT_MAX, &conn_limit))
+					exit(1);
 				break;
 			case 'd':
 				createdb = TRI_YES;
@@ -121,17 +105,17 @@ main(int argc, char *argv[])
 			case 'D':
 				createdb = TRI_NO;
 				break;
-			case 's':
-				superuser = TRI_YES;
+			case 'e':
+				echo = true;
 				break;
-			case 'S':
-				superuser = TRI_NO;
+			case 'E':
+				/* no-op, accepted for backward compatibility */
 				break;
-			case 'r':
-				createrole = TRI_YES;
+			case 'g':
+				simple_string_list_append(&roles, optarg);
 				break;
-			case 'R':
-				createrole = TRI_NO;
+			case 'h':
+				host = pg_strdup(optarg);
 				break;
 			case 'i':
 				inherit = TRI_YES;
@@ -145,16 +129,32 @@ main(int argc, char *argv[])
 			case 'L':
 				login = TRI_NO;
 				break;
-			case 'c':
-				if (!option_parse_int(optarg, "-c/--connection-limit",
-									  -1, INT_MAX, &conn_limit))
-					exit(1);
+			case 'p':
+				port = pg_strdup(optarg);
 				break;
 			case 'P':
 				pwprompt = true;
 				break;
-			case 'E':
-				/* no-op, accepted for backward compatibility */
+			case 'r':
+				createrole = TRI_YES;
+				break;
+			case 'R':
+				createrole = TRI_NO;
+				break;
+			case 's':
+				superuser = TRI_YES;
+				break;
+			case 'S':
+				superuser = TRI_NO;
+				break;
+			case 'U':
+				username = pg_strdup(optarg);
+				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
+			case 'W':
+				prompt_password = TRI_YES;
 				break;
 			case 1:
 				replication = TRI_YES;
