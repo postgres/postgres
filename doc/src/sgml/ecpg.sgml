@@ -8276,7 +8276,7 @@ EXEC SQL CLOSE DATABASE;
       <term><literal>FREE cursor_name</literal></term>
       <listitem>
        <para>
-        Due to the differences how ECPG works compared to Informix's ESQL/C (i.e., which steps
+        Due to differences in how ECPG works compared to Informix's ESQL/C (namely, which steps
         are purely grammar transformations and which steps rely on the underlying run-time library)
         there is no <literal>FREE cursor_name</literal> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
