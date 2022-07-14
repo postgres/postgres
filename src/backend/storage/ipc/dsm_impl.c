@@ -362,7 +362,8 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to recovery
 	 * conflicts), the retry loop might never succeed.
 	 */
-	PG_SETMASK(&BlockSig);
+	if (IsUnderPostmaster)
+		PG_SETMASK(&BlockSig);
 
 	pgstat_report_wait_start(WAIT_EVENT_DSM_ALLOCATE);
 #if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
@@ -398,9 +399,12 @@ dsm_impl_posix_resize(int fd, off_t size)
 #endif
 	pgstat_report_wait_end();
 
-	save_errno = errno;
-	PG_SETMASK(&UnBlockSig);
-	errno = save_errno;
+	if (IsUnderPostmaster)
+	{
+		save_errno = errno;
+		PG_SETMASK(&UnBlockSig);
+		errno = save_errno;
+	}
 
 	return rc;
 }
