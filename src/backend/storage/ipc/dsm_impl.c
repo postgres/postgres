@@ -362,7 +362,8 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to recovery
 	 * conflicts), the retry loop might never succeed.
 	 */
-	PG_SETMASK(&BlockSig);
+	if (IsUnderPostmaster)
+		PG_SETMASK(&BlockSig);
 
 	/* Truncate (or extend) the file to the requested size. */
 	do
@@ -402,9 +403,12 @@ dsm_impl_posix_resize(int fd, off_t size)
 	}
 #endif							/* HAVE_POSIX_FALLOCATE && __linux__ */
 
-	save_errno = errno;
-	PG_SETMASK(&UnBlockSig);
-	errno = save_errno;
+	if (IsUnderPostmaster)
+	{
+		save_errno = errno;
+		PG_SETMASK(&UnBlockSig);
+		errno = save_errno;
+	}
 
 	return rc;
 }
