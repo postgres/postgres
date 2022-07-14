@@ -1098,7 +1098,7 @@ struct IndexOptInfo
 
 	/*
 	 * Remaining fields are copied from the index AM's API struct
-	 * (IndexAmRoutine)
+	 * (IndexAmRoutine).  We don't bother to dump them.
 	 */
 	bool		amcanorderbyop pg_node_attr(read_write_ignore);
 	bool		amoptionalkey pg_node_attr(read_write_ignore);
@@ -1111,8 +1111,9 @@ struct IndexOptInfo
 	bool		amcanparallel pg_node_attr(read_write_ignore);
 	/* does AM have ammarkpos interface? */
 	bool		amcanmarkpos pg_node_attr(read_write_ignore);
+	/* AM's cost estimator */
 	/* Rather than include amapi.h here, we declare amcostestimate like this */
-	void		(*amcostestimate) ();	/* AM's cost estimator */
+	void		(*amcostestimate) () pg_node_attr(read_write_ignore);
 };
 
 /*

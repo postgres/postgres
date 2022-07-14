@@ -213,14 +213,38 @@ foreach my $infile (@ARGV)
 	}
 	$file_content .= $raw_file_content;
 
-	my $lineno = 0;
+	my $lineno   = 0;
+	my $prevline = '';
 	foreach my $line (split /\n/, $file_content)
 	{
+		# per-physical-line processing
 		$lineno++;
 		chomp $line;
 		$line =~ s/\s*$//;
 		next if $line eq '';
 		next if $line =~ /^#(define|ifdef|endif)/;
+
+		# within a struct, don't process until we have whole logical line
+		if ($in_struct && $subline > 0)
+		{
+			if ($line =~ /;$/)
+			{
+				# found the end, re-attach any previous line(s)
+				$line     = $prevline . $line;
+				$prevline = '';
+			}
+			elsif ($prevline eq ''
+				&& $line =~ /^\s*pg_node_attr\(([\w(), ]*)\)$/)
+			{
+				# special case: node-attributes line doesn't end with semi
+			}
+			else
+			{
+				# set it aside for a moment
+				$prevline .= $line . ' ';
+				next;
+			}
+		}
 
 		# we are analyzing a struct definition
 		if ($in_struct)
@@ -394,7 +418,7 @@ foreach my $infile (@ARGV)
 			}
 			# normal struct field
 			elsif ($line =~
-				/^\s*(.+)\s*\b(\w+)(\[\w+\])?\s*(?:pg_node_attr\(([\w(), ]*)\))?;/
+				/^\s*(.+)\s*\b(\w+)(\[[\w\s+]+\])?\s*(?:pg_node_attr\(([\w(), ]*)\))?;/
 			  )
 			{
 				if ($is_node_struct)
@@ -441,12 +465,45 @@ foreach my $infile (@ARGV)
 					$my_field_attrs{$name} = \@attrs;
 				}
 			}
-			else
+			# function pointer field
+			elsif ($line =~
+				/^\s*([\w\s*]+)\s*\(\*(\w+)\)\s*\((.*)\)\s*(?:pg_node_attr\(([\w(), ]*)\))?;/
+			  )
 			{
 				if ($is_node_struct)
 				{
-					#warn "$infile:$lineno: could not parse \"$line\"\n";
+					my $type  = $1;
+					my $name  = $2;
+					my $args  = $3;
+					my $attrs = $4;
+
+					my @attrs;
+					if ($attrs)
+					{
+						@attrs = split /,\s*/, $attrs;
+						foreach my $attr (@attrs)
+						{
+							if (   $attr !~ /^copy_as\(\w+\)$/
+								&& $attr !~ /^read_as\(\w+\)$/
+								&& !elem $attr,
+								qw(equal_ignore read_write_ignore))
+							{
+								die
+								  "$infile:$lineno: unrecognized attribute \"$attr\"\n";
+							}
+						}
+					}
+
+					push @my_fields, $name;
+					$my_field_types{$name} = 'function pointer';
+					$my_field_attrs{$name} = \@attrs;
 				}
+			}
+			else
+			{
+				# We're not too picky about what's outside structs,
+				# but we'd better understand everything inside.
+				die "$infile:$lineno: could not parse \"$line\"\n";
 			}
 		}
 		# not in a struct
@@ -708,6 +765,12 @@ _equal${n}(const $n *a, const $n *b)
 				  "\tCOMPARE_POINTER_FIELD($f, a->$array_size_field * sizeof($tt));\n"
 				  unless $equal_ignore;
 			}
+		}
+		elsif ($t eq 'function pointer')
+		{
+			# we can copy and compare as a scalar
+			print $cff "\tCOPY_SCALAR_FIELD($f);\n"    unless $copy_ignore;
+			print $eff "\tCOMPARE_SCALAR_FIELD($f);\n" unless $equal_ignore;
 		}
 		# node type
 		elsif ($t =~ /(\w+)\*/ and elem $1, @node_types)
@@ -979,6 +1042,12 @@ _read${n}(void)
 				  "\tREAD_${tt}_ARRAY($f, local_node->$array_size_field);\n"
 				  unless $no_read;
 			}
+		}
+		elsif ($t eq 'function pointer')
+		{
+			# We don't print these, and we can't read them either
+			die "cannot read function pointer in struct \"$n\" field \"$f\"\n"
+			  unless $no_read;
 		}
 		# Special treatments of several Path node fields
 		elsif ($t eq 'RelOptInfo*' && elem 'write_only_relids', @a)

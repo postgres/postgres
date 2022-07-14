@@ -303,26 +303,26 @@ typedef struct A_Expr
 
 /*
  * A_Const - a literal constant
+ *
+ * Value nodes are inline for performance.  You can treat 'val' as a node,
+ * as in IsA(&val, Integer).  'val' is not valid if isnull is true.
  */
+union ValUnion
+{
+	Node		node;
+	Integer		ival;
+	Float		fval;
+	Boolean		boolval;
+	String		sval;
+	BitString	bsval;
+};
+
 typedef struct A_Const
 {
 	pg_node_attr(custom_copy_equal, custom_read_write, no_read)
 
 	NodeTag		type;
-
-	/*
-	 * Value nodes are inline for performance.  You can treat 'val' as a node,
-	 * as in IsA(&val, Integer).  'val' is not valid if isnull is true.
-	 */
-	union ValUnion
-	{
-		Node		node;
-		Integer		ival;
-		Float		fval;
-		Boolean		boolval;
-		String		sval;
-		BitString	bsval;
-	}			val;
+	union ValUnion val;
 	bool		isnull;			/* SQL NULL constant */
 	int			location;		/* token location, or -1 if unknown */
 } A_Const;
