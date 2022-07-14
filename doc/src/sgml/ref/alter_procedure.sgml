@@ -147,7 +147,12 @@ ALTER PROCEDURE <replaceable>name</replaceable> [ ( [ [ <replaceable class="para
     <term><replaceable class="parameter">extension_name</replaceable></term>
     <listitem>
      <para>
-      The name of the extension that the procedure is to depend on.
+      This form marks the procedure as dependent on the extension, or no longer
+      dependent on the extension if <literal>NO</literal> is specified.
+      A procedure that's marked as dependent on an extension is dropped when the
+      extension is dropped, even if cascade is not specified.
+      A procedure can depend upon multiple extensions, and will be dropped when
+      any one of those extensions is dropped.
      </para>
     </listitem>
    </varlistentry>

@@ -160,8 +160,10 @@ ALTER FUNCTION <replaceable>name</replaceable> [ ( [ [ <replaceable class="param
      <para>
       This form marks the function as dependent on the extension, or no longer
       dependent on that extension if <literal>NO</literal> is specified.
-      A function that's marked as dependent on an extension is automatically
-      dropped when the extension is dropped.
+      A function that's marked as dependent on an extension is dropped when the
+      extension is dropped, even if <literal>CASCADE</literal> is not specified.
+      A function can depend upon multiple extensions, and will be dropped when
+      any one of those extensions is dropped.
      </para>
     </listitem>
    </varlistentry>
