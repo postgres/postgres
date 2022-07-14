@@ -364,43 +364,39 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 */
 	PG_SETMASK(&BlockSig);
 
-	/* Truncate (or extend) the file to the requested size. */
-	do
-	{
-		rc = ftruncate(fd, size);
-	} while (rc < 0 && errno == EINTR);
-
+	pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
+#if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
 	/*
-	 * On Linux, a shm_open fd is backed by a tmpfs file.  After resizing with
-	 * ftruncate, the file may contain a hole.  Accessing memory backed by a
+	 * On Linux, a shm_open fd is backed by a tmpfs file.  If we were to use
+	 * ftruncate, the file would contain a hole.  Accessing memory backed by a
 	 * hole causes tmpfs to allocate pages, which fails with SIGBUS if there
 	 * is no more tmpfs space available.  So we ask tmpfs to allocate pages
 	 * here, so we can fail gracefully with ENOSPC now rather than risking
 	 * SIGBUS later.
+	 *
+	 * We still use a traditional EINTR retry loop to handle SIGCONT.
+	 * posix_fallocate() doesn't restart automatically, and we don't want
+	 * this to fail if you attach a debugger.
 	 */
-#if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
-	if (rc == 0)
+	do
 	{
-		/*
-		 * We still use a traditional EINTR retry loop to handle SIGCONT.
-		 * posix_fallocate() doesn't restart automatically, and we don't want
-		 * this to fail if you attach a debugger.
-		 */
-		pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
-		do
-		{
-			rc = posix_fallocate(fd, 0, size);
-		} while (rc == EINTR);
-		pgstat_report_wait_end();
+		rc = posix_fallocate(fd, 0, size);
+	} while (rc == EINTR);
 
-		/*
-		 * The caller expects errno to be set, but posix_fallocate() doesn't
-		 * set it.  Instead it returns error numbers directly.  So set errno,
-		 * even though we'll also return rc to indicate success or failure.
-		 */
-		errno = rc;
-	}
-#endif							/* HAVE_POSIX_FALLOCATE && __linux__ */
+	/*
+	 * The caller expects errno to be set, but posix_fallocate() doesn't
+	 * set it.  Instead it returns error numbers directly.  So set errno,
+	 * even though we'll also return rc to indicate success or failure.
+	 */
+	errno = rc;
+#else
+	/* Extend the file to the requested size. */
+	do
+	{
+		rc = ftruncate(fd, size);
+	} while (rc < 0 && errno == EINTR);
+#endif
+	pgstat_report_wait_end();
 
 	save_errno = errno;
 	PG_SETMASK(&UnBlockSig);
