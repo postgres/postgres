@@ -33,11 +33,7 @@ sub CreateSolution
 		$visualStudioVersion = DetermineVisualStudioVersion();
 	}
 
-	if ($visualStudioVersion eq '12.00')
-	{
-		return new VS2013Solution(@_);
-	}
-	elsif ($visualStudioVersion eq '14.00')
+	if ($visualStudioVersion eq '14.00')
 	{
 		return new VS2015Solution(@_);
 	}
@@ -87,11 +83,7 @@ sub CreateProject
 		$visualStudioVersion = DetermineVisualStudioVersion();
 	}
 
-	if ($visualStudioVersion eq '12.00')
-	{
-		return new VC2013Project(@_);
-	}
-	elsif ($visualStudioVersion eq '14.00')
+	if ($visualStudioVersion eq '14.00')
 	{
 		return new VC2015Project(@_);
 	}

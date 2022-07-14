@@ -30,11 +30,6 @@
 #include <sys/param.h>
 #endif
 
-#if defined(_M_AMD64) && _MSC_VER == 1800
-#include <math.h>
-#include <versionhelpers.h>
-#endif
-
 #include "bootstrap/bootstrap.h"
 #include "common/username.h"
 #include "port/atomics.h"

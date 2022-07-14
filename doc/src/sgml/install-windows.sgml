@@ -22,7 +22,7 @@
   <productname>Windows</productname>. The simplest way to build with
   Microsoft tools is to install <productname>Visual Studio 2022</productname>
   and use the included compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2013 to 2022</productname>.
+  <productname>Microsoft Visual C++ 2015 to 2022</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,15 +77,13 @@
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL builds are possible with
-  <productname>Visual Studio 2013</productname> to
+  <productname>Visual Studio 2015</productname> to
   <productname>Visual Studio 2022</productname>,
   as well as standalone Windows SDK releases 8.1a to 10.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 8.1a to 10 or
-  <productname>Visual Studio 2013</productname> and above.
+  <productname>Visual Studio 2015</productname> and above.
    <!--
-       For 2013 requirements:
-       https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
        For 2015 requirements:
        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
        For 2017 requirements:

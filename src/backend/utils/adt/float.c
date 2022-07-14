@@ -249,13 +249,9 @@ float4in(PG_FUNCTION_ARGS)
 			 * precision).  We'd prefer not to throw error for that, so try to
 			 * detect whether it's a "real" out-of-range condition by checking
 			 * to see if the result is zero or huge.
-			 *
-			 * Use isinf() rather than HUGE_VALF on VS2013 because it
-			 * generates a spurious overflow warning for -HUGE_VALF.  Also use
-			 * isinf() if HUGE_VALF is missing.
 			 */
 			if (val == 0.0 ||
-#if !defined(HUGE_VALF) || (defined(_MSC_VER) && (_MSC_VER < 1900))
+#if !defined(HUGE_VALF)
 				isinf(val)
 #else
 				(val >= HUGE_VALF || val <= -HUGE_VALF)

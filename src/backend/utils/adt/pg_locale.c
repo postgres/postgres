@@ -950,7 +950,6 @@ cache_locale_time(void)
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
 
-#if _MSC_VER >= 1900
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
  *
@@ -1100,7 +1099,6 @@ get_iso_localename(const char *winlocname)
 
 	return NULL;
 }
-#endif							/* _MSC_VER >= 1900 */
 
 static char *
 IsoLocaleName(const char *winlocname)
@@ -1115,46 +1113,8 @@ IsoLocaleName(const char *winlocname)
 		return iso_lc_messages;
 	}
 	else
-	{
-#if (_MSC_VER >= 1900)			/* Visual Studio 2015 or later */
 		return get_iso_localename(winlocname);
-#else
-		_locale_t	loct;
 
-		loct = _create_locale(LC_CTYPE, winlocname);
-		if (loct != NULL)
-		{
-			size_t		rc;
-			char	   *hyphen;
-
-			/* Locale names use only ASCII, any conversion locale suffices. */
-			rc = wchar2char(iso_lc_messages, loct->locinfo->locale_name[LC_CTYPE],
-							sizeof(iso_lc_messages), NULL);
-			_free_locale(loct);
-			if (rc == -1 || rc == sizeof(iso_lc_messages))
-				return NULL;
-
-			/*
-			 * Since the message catalogs sit on a case-insensitive
-			 * filesystem, we need not standardize letter case here.  So long
-			 * as we do not ship message catalogs for which it would matter,
-			 * we also need not translate the script/variant portion, e.g.
-			 * uz-Cyrl-UZ to uz_UZ@cyrillic.  Simply replace the hyphen with
-			 * an underscore.
-			 *
-			 * Note that the locale name can be less-specific than the value
-			 * we would derive under earlier Visual Studio releases.  For
-			 * example, French_France.1252 yields just "fr".  This does not
-			 * affect any of the country-specific message catalogs available
-			 * as of this writing (pt_BR, zh_CN, zh_TW).
-			 */
-			hyphen = strchr(iso_lc_messages, '-');
-			if (hyphen)
-				*hyphen = '_';
-			return iso_lc_messages;
-		}
-#endif							/* Visual Studio 2015 or later */
-	}
 #endif							/* defined(_MSC_VER) */
 	return NULL;				/* Not supported on this version of msvc/mingw */
 }
