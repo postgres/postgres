@@ -364,7 +364,7 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 */
 	PG_SETMASK(&BlockSig);
 
-	pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
+	pgstat_report_wait_start(WAIT_EVENT_DSM_ALLOCATE);
 #if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
 	/*
 	 * On Linux, a shm_open fd is backed by a tmpfs file.  If we were to use
