@@ -1822,7 +1822,8 @@ EXEC SQL SELECT b INTO :val :val_ind FROM test1;
 </programlisting>
     The indicator variable <varname>val_ind</varname> will be zero if
     the value was not null, and it will be negative if the value was
-    null.
+    null.  (See <xref linkend="ecpg-oracle-compat"/> to enable
+    Oracle-specific behavior.)
    </para>
 
    <para>
@@ -9566,6 +9567,42 @@ risnull(CINTTYPE, (char *) &i);
     </variablelist>
    </para>
   </sect2>
+ </sect1>
+
+ <sect1 id="ecpg-oracle-compat">
+  <title><productname>Oracle</productname> Compatibility Mode</title>
+  <para>
+   <command>ecpg</command> can be run in a so-called <firstterm>Oracle
+   compatibility mode</firstterm>. If this mode is active, it tries to
+   behave as if it were Oracle <productname>Pro*C</productname>.
+  </para>
+
+  <para>
+   Specifically, this mode changes <command>ecpg</command> in three ways:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Pad character arrays receiving character string types with
+      trailing spaces to the specified length
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Zero byte terminate these character arrays, and set the indicator
+      variable if truncation occurs
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Set the null indicator to <literal>-1</literal> when character
+      arrays receive empty character string types
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
  </sect1>
 
  <sect1 id="ecpg-develop">
