@@ -251,6 +251,7 @@ break is not needed in a wider output rendering.
 
   &arch-dev;
   &catalogs;
+  &system-views;
   &protocol;
   &sources;
   &nls;

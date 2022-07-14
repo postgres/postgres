@@ -83,6 +83,7 @@
 <!ENTITY arch-dev   SYSTEM "arch-dev.sgml">
 <!ENTITY bki        SYSTEM "bki.sgml">
 <!ENTITY catalogs   SYSTEM "catalogs.sgml">
+<!ENTITY system-views  SYSTEM "system-views.sgml">
 <!ENTITY geqo       SYSTEM "geqo.sgml">
 <!ENTITY btree      SYSTEM "btree.sgml">
 <!ENTITY gist       SYSTEM "gist.sgml">
