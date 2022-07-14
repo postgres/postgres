@@ -75,6 +75,11 @@ INSERT INTO <replaceable class="parameter">table_name</replaceable> [ AS <replac
   </para>
 
   <para>
+   <command>INSERT</command> into tables that lack unique indexes will
+   not be blocked by concurrent activity.  Tables with unique indexes
+   might block if concurrent sessions perform actions that lock or modify
+   rows matching the unique index values being inserted;  the details
+   are covered in <xref linkend="index-unique-checks"/>.
    <literal>ON CONFLICT</literal> can be used to specify an alternative
    action to raising a unique constraint or exclusion constraint
    violation error. (See <xref linkend="sql-on-conflict"/> below.)
