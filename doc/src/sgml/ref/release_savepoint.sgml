@@ -82,8 +82,9 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
   </para>
 
   <para>
-   If multiple savepoints have the same name, only the one that was most
-   recently defined is released.
+   If multiple savepoints have the same name, only the most recently defined
+   unreleased one is released.  Repeated commands will release progressively
+   older savepoints.
   </para>
 
  </refsect1>
