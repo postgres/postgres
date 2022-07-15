@@ -3933,8 +3933,31 @@ PostgresSingleUserMain(int argc, char *argv[],
 	/* read control file (error checking and contains config ) */
 	LocalProcessControlFile(false);
 
+	/*
+	 * process any libraries that should be preloaded at postmaster start
+	 */
+	process_shared_preload_libraries();
+
 	/* Initialize MaxBackends */
 	InitializeMaxBackends();
+
+	/*
+	 * Give preloaded libraries a chance to request additional shared memory.
+	 */
+	process_shmem_requests();
+
+	/*
+	 * Now that loadable modules have had their chance to request additional
+	 * shared memory, determine the value of any runtime-computed GUCs that
+	 * depend on the amount of shared memory required.
+	 */
+	InitializeShmemGUCs();
+
+	/*
+	 * Now that modules have been loaded, we can process any custom resource
+	 * managers specified in the wal_consistency_checking GUC.
+	 */
+	InitializeWalConsistencyChecking();
 
 	CreateSharedMemoryAndSemaphores();
 
