@@ -551,6 +551,7 @@ typedef struct ViewOptions
 	(RELKIND_HAS_STORAGE((relation)->rd_rel->relkind) && \
 	 ((relation)->rd_rel->relfilenode == InvalidRelFileNumber))
 
+#ifndef FRONTEND
 /*
  * RelationGetSmgr
  *		Returns smgr file handle for a relation, opening it if needed.
@@ -571,6 +572,7 @@ RelationGetSmgr(Relation rel)
 		smgrsetowner(&(rel->rd_smgr), smgropen(rel->rd_locator, rel->rd_backend));
 	return rel->rd_smgr;
 }
+#endif
 
 /*
  * RelationCloseSmgr

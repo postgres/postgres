@@ -466,6 +466,15 @@ do { \
 #define PIV_LOG_WARNING			(1 << 0)
 #define PIV_REPORT_STAT			(1 << 1)
 
+#define PageAddItem(page, item, size, offsetNumber, overwrite, is_heap) \
+	PageAddItemExtended(page, item, size, offsetNumber, \
+						((overwrite) ? PAI_OVERWRITE : 0) | \
+						((is_heap) ? PAI_IS_HEAP : 0))
+
+#define PageIsVerified(page, blkno) \
+	PageIsVerifiedExtended(page, blkno, \
+						   PIV_LOG_WARNING | PIV_REPORT_STAT)
+
 /*
  * Check that BLCKSZ is a multiple of sizeof(size_t).  In
  * PageIsVerifiedExtended(), it is much faster to check if a page is
@@ -480,21 +489,6 @@ extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageIsVerifiedExtended(Page page, BlockNumber blkno, int flags);
 extern OffsetNumber PageAddItemExtended(Page page, Item item, Size size,
 										OffsetNumber offsetNumber, int flags);
-
-static inline OffsetNumber
-PageAddItem(Page page, Item item, Size size, OffsetNumber offsetNumber, bool overwrite, bool is_heap)
-{
-	return PageAddItemExtended(page, item, size, offsetNumber,
-							   (overwrite ? PAI_OVERWRITE : 0) |
-							   (is_heap ? PAI_IS_HEAP : 0));
-}
-
-static inline bool
-PageIsVerified(Page page, BlockNumber blkno)
-{
-	return PageIsVerifiedExtended(page, blkno, PIV_LOG_WARNING | PIV_REPORT_STAT);
-}
-
 extern Page PageGetTempPage(Page page);
 extern Page PageGetTempPageCopy(Page page);
 extern Page PageGetTempPageCopySpecial(Page page);
