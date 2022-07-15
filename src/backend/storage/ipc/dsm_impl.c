@@ -50,6 +50,7 @@
 #include "miscadmin.h"
 
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 #ifndef WIN32
 #include <sys/mman.h>
@@ -63,7 +64,7 @@
 #endif
 
 #include "common/file_perm.h"
-#include "libpq/pqsignal.h"		/* for PG_SETMASK macro */
+#include "libpq/pqsignal.h"
 #include "pgstat.h"
 #include "portability/mem.h"
 #include "storage/dsm_impl.h"
@@ -345,6 +346,7 @@ dsm_impl_posix_resize(int fd, off_t size)
 {
 	int			rc;
 	int			save_errno;
+	sigset_t	save_sigmask;
 
 	/*
 	 * Block all blockable signals, except SIGQUIT.  posix_fallocate() can run
@@ -353,7 +355,7 @@ dsm_impl_posix_resize(int fd, off_t size)
 	 * conflicts), the retry loop might never succeed.
 	 */
 	if (IsUnderPostmaster)
-		PG_SETMASK(&BlockSig);
+		sigprocmask(SIG_SETMASK, &BlockSig, &save_sigmask);
 
 	/* Truncate (or extend) the file to the requested size. */
 	do
@@ -394,7 +396,7 @@ dsm_impl_posix_resize(int fd, off_t size)
 	if (IsUnderPostmaster)
 	{
 		save_errno = errno;
-		PG_SETMASK(&UnBlockSig);
+		sigprocmask(SIG_SETMASK, &save_sigmask, NULL);
 		errno = save_errno;
 	}
 
