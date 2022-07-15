@@ -159,74 +159,112 @@ typedef XLogLongPageHeaderData *XLogLongPageHeader;
 #define XLOG_FNAME_LEN	   24
 
 /*
- * Generate a WAL segment file name.  Do not use this macro in a helper
+ * Generate a WAL segment file name.  Do not use this function in a helper
  * function allocating the result generated.
  */
-#define XLogFileName(fname, tli, logSegNo, wal_segsz_bytes)	\
-	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,		\
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)))
+static inline void
+XLogFileName(char *fname, TimeLineID tli, XLogSegNo logSegNo, int wal_segsz_bytes)
+{
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli,
+			 (uint32) (logSegNo / XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (logSegNo % XLogSegmentsPerXLogId(wal_segsz_bytes)));
+}
 
-#define XLogFileNameById(fname, tli, log, seg)	\
-	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg)
+static inline void
+XLogFileNameById(char *fname, TimeLineID tli, uint32 log, uint32 seg)
+{
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X", tli, log, seg);
+}
 
-#define IsXLogFileName(fname) \
-	(strlen(fname) == XLOG_FNAME_LEN && \
-	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN)
+static inline bool
+IsXLogFileName(const char *fname)
+{
+	return (strlen(fname) == XLOG_FNAME_LEN && \
+			strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN);
+}
 
 /*
  * XLOG segment with .partial suffix.  Used by pg_receivewal and at end of
  * archive recovery, when we want to archive a WAL segment but it might not
  * be complete yet.
  */
-#define IsPartialXLogFileName(fname)	\
-	(strlen(fname) == XLOG_FNAME_LEN + strlen(".partial") &&	\
-	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN &&		\
-	 strcmp((fname) + XLOG_FNAME_LEN, ".partial") == 0)
+static inline bool
+IsPartialXLogFileName(const char *fname)
+{
+	return (strlen(fname) == XLOG_FNAME_LEN + strlen(".partial") &&
+			strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN &&
+			strcmp(fname + XLOG_FNAME_LEN, ".partial") == 0);
+}
 
-#define XLogFromFileName(fname, tli, logSegNo, wal_segsz_bytes)	\
-	do {												\
-		uint32 log;										\
-		uint32 seg;										\
-		sscanf(fname, "%08X%08X%08X", tli, &log, &seg); \
-		*logSegNo = (uint64) log * XLogSegmentsPerXLogId(wal_segsz_bytes) + seg; \
-	} while (0)
+static inline void
+XLogFromFileName(const char *fname, TimeLineID *tli, XLogSegNo *logSegNo, int wal_segsz_bytes)
+{
+	uint32		log;
+	uint32		seg;
 
-#define XLogFilePath(path, tli, logSegNo, wal_segsz_bytes)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,	\
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)))
+	sscanf(fname, "%08X%08X%08X", tli, &log, &seg);
+	*logSegNo = (uint64) log * XLogSegmentsPerXLogId(wal_segsz_bytes) + seg;
+}
 
-#define TLHistoryFileName(fname, tli)	\
-	snprintf(fname, MAXFNAMELEN, "%08X.history", tli)
+static inline void
+XLogFilePath(char *path, TimeLineID tli, XLogSegNo logSegNo, int wal_segsz_bytes)
+{
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X", tli,
+			 (uint32) (logSegNo / XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (logSegNo % XLogSegmentsPerXLogId(wal_segsz_bytes)));
+}
 
-#define IsTLHistoryFileName(fname)	\
-	(strlen(fname) == 8 + strlen(".history") &&		\
-	 strspn(fname, "0123456789ABCDEF") == 8 &&		\
-	 strcmp((fname) + 8, ".history") == 0)
+static inline void
+TLHistoryFileName(char *fname, TimeLineID tli)
+{
+	snprintf(fname, MAXFNAMELEN, "%08X.history", tli);
+}
 
-#define TLHistoryFilePath(path, tli)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X.history", tli)
+static inline bool
+IsTLHistoryFileName(const char *fname)
+{
+	return (strlen(fname) == 8 + strlen(".history") &&
+			strspn(fname, "0123456789ABCDEF") == 8 &&
+			strcmp(fname + 8, ".history") == 0);
+}
 
-#define StatusFilePath(path, xlog, suffix)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status/%s%s", xlog, suffix)
+static inline void
+TLHistoryFilePath(char *path, TimeLineID tli)
+{
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X.history", tli);
+}
 
-#define BackupHistoryFileName(fname, tli, logSegNo, startpoint, wal_segsz_bytes) \
-	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli, \
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) (XLogSegmentOffset(startpoint, wal_segsz_bytes)))
+static inline void
+StatusFilePath(char *path, const char *xlog, const char *suffix)
+{
+	snprintf(path, MAXPGPATH, XLOGDIR "/archive_status/%s%s", xlog, suffix);
+}
 
-#define IsBackupHistoryFileName(fname) \
-	(strlen(fname) > XLOG_FNAME_LEN && \
-	 strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN && \
-	 strcmp((fname) + strlen(fname) - strlen(".backup"), ".backup") == 0)
+static inline void
+BackupHistoryFileName(char *fname, TimeLineID tli, XLogSegNo logSegNo, XLogRecPtr startpoint, int wal_segsz_bytes)
+{
+	snprintf(fname, MAXFNAMELEN, "%08X%08X%08X.%08X.backup", tli,
+			 (uint32) (logSegNo / XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (logSegNo % XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (XLogSegmentOffset(startpoint, wal_segsz_bytes)));
+}
 
-#define BackupHistoryFilePath(path, tli, logSegNo, startpoint, wal_segsz_bytes)	\
-	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli, \
-			 (uint32) ((logSegNo) / XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) ((logSegNo) % XLogSegmentsPerXLogId(wal_segsz_bytes)), \
-			 (uint32) (XLogSegmentOffset((startpoint), wal_segsz_bytes)))
+static inline bool
+IsBackupHistoryFileName(const char *fname)
+{
+	return (strlen(fname) > XLOG_FNAME_LEN &&
+			strspn(fname, "0123456789ABCDEF") == XLOG_FNAME_LEN &&
+			strcmp(fname + strlen(fname) - strlen(".backup"), ".backup") == 0);
+}
+
+static inline void
+BackupHistoryFilePath(char *path, TimeLineID tli, XLogSegNo logSegNo, XLogRecPtr startpoint, int wal_segsz_bytes)
+{
+	snprintf(path, MAXPGPATH, XLOGDIR "/%08X%08X%08X.%08X.backup", tli,
+			 (uint32) (logSegNo / XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (logSegNo % XLogSegmentsPerXLogId(wal_segsz_bytes)),
+			 (uint32) (XLogSegmentOffset((startpoint), wal_segsz_bytes)));
+}
 
 /*
  * Information logged when we detect a change in one of the parameters
