@@ -88,7 +88,7 @@ sub init
 		"client.key",               "client-revoked.key",
 		"client-der.key",           "client-encrypted-pem.key",
 		"client-encrypted-der.key", "client-dn.key",
-		"client_ext.key");
+		"client_ext.key",           "client-long.key");
 	foreach my $keyfile (@keys)
 	{
 		copy("ssl/$keyfile", "$cert_tempdir/$keyfile")

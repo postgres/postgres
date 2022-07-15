@@ -683,6 +683,10 @@ $node->connect_fails(
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert",
 	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
+	log_like => [
+		qr{Client certificate verification failed at depth 0: certificate revoked},
+		qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number 2315134995201656577, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
+	],
 	# revoked certificates should not authenticate the user
 	log_unlike => [qr/connection authenticated:/],);
 
@@ -730,7 +734,35 @@ $node->connect_ok(
 $node->connect_fails(
 	$common_connstr . " " . "sslmode=require sslcert=ssl/client.crt",
 	"intermediate client certificate is missing",
-	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/);
+	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/,
+	log_like => [
+		qr{Client certificate verification failed at depth 0: unable to get local issuer certificate},
+		qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number 2315134995201656576, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
+	]);
+
+$node->connect_fails(
+	"$common_connstr sslmode=require sslcert=ssl/client-long.crt " . sslkey('client-long.key'),
+	"logged client certificate Subjects are truncated if they're too long",
+	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/,
+	log_like => [
+		qr{Client certificate verification failed at depth 0: unable to get local issuer certificate},
+		qr{Failed certificate data \(unverified\): subject "\.\.\./CN=ssl-123456789012345678901234567890123456789012345678901234567890", serial number 2315418733629425152, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
+	]);
+
+# Use an invalid cafile here so that the next test won't be able to verify the
+# client CA.
+switch_server_cert($node, certfile => 'server-cn-only', cafile => 'server-cn-only');
+
+# intermediate CA is provided but doesn't have a trusted root (checks error
+# logging for cert chain depths > 0)
+$node->connect_fails(
+	"$common_connstr sslmode=require sslcert=ssl/client+client_ca.crt",
+	"intermediate client certificate is untrusted",
+	expected_stderr => qr/SSL error: tlsv1 alert unknown ca/,
+	log_like => [
+		qr{Client certificate verification failed at depth 1: unable to get local issuer certificate},
+		qr{Failed certificate data \(unverified\): subject "/CN=Test CA for PostgreSQL SSL regression test client certs", serial number 2315134995201656577, issuer "/CN=Test root CA for PostgreSQL SSL regression test suite"},
+	]);
 
 # test server-side CRL directory
 switch_server_cert(
@@ -743,6 +775,10 @@ $node->connect_fails(
 	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked.crt "
 	  . sslkey('client-revoked.key'),
 	"certificate authorization fails with revoked client cert with server-side CRL directory",
-	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/);
+	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
+	log_like => [
+		qr{Client certificate verification failed at depth 0: certificate revoked},
+		qr{Failed certificate data \(unverified\): subject "/CN=ssltestuser", serial number 2315134995201656577, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
+	]);
 
 done_testing();
