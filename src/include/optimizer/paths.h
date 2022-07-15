@@ -208,7 +208,7 @@ extern int	group_keys_reorder_by_pathkeys(List *pathkeys,
 										   List **group_clauses);
 extern List *get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 											 List *path_pathkeys,
-											 List *pathkeys, List *clauses);
+											 List *group_pathkeys, List *group_clauses);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 											Relids required_outer,
 											CostSelector cost_criterion,
