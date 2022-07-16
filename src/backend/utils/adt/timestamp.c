@@ -2403,7 +2403,7 @@ interval_cmp_value(const Interval *interval)
 }
 
 static int
-interval_cmp_internal(Interval *interval1, Interval *interval2)
+interval_cmp_internal(const Interval *interval1, const Interval *interval2)
 {
 	INT128		span1 = interval_cmp_value(interval1);
 	INT128		span2 = interval_cmp_value(interval2);
@@ -5777,7 +5777,7 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		Timestamp	finish = PG_GETARG_TIMESTAMP(1);
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval	interval_zero;
+		const Interval interval_zero = {0};
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -5800,7 +5800,6 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		fctx->step = *step;
 
 		/* Determine sign of the interval */
-		MemSet(&interval_zero, 0, sizeof(Interval));
 		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
 
 		if (fctx->step_sign == 0)
@@ -5857,7 +5856,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		TimestampTz finish = PG_GETARG_TIMESTAMPTZ(1);
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval	interval_zero;
+		const Interval interval_zero = {0};
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -5880,7 +5879,6 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		fctx->step = *step;
 
 		/* Determine sign of the interval */
-		MemSet(&interval_zero, 0, sizeof(Interval));
 		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
 
 		if (fctx->step_sign == 0)

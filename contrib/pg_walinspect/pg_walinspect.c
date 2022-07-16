@@ -229,8 +229,8 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 {
 #define PG_GET_WAL_RECORD_INFO_COLS 11
 	Datum		result;
-	Datum		values[PG_GET_WAL_RECORD_INFO_COLS];
-	bool		nulls[PG_GET_WAL_RECORD_INFO_COLS];
+	Datum		values[PG_GET_WAL_RECORD_INFO_COLS] = {0};
+	bool		nulls[PG_GET_WAL_RECORD_INFO_COLS] = {0};
 	XLogRecPtr	lsn;
 	XLogRecPtr	curr_lsn;
 	XLogRecPtr	first_record;
@@ -265,9 +265,6 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("could not read WAL at %X/%X",
 						LSN_FORMAT_ARGS(first_record))));
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	GetWALRecordInfo(xlogreader, first_record, values, nulls,
 					 PG_GET_WAL_RECORD_INFO_COLS);
@@ -334,17 +331,14 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS];
-	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS];
+	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
+	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 
 	SetSingleFuncCall(fcinfo, 0);
 
 	xlogreader = InitXLogReaderState(start_lsn, &first_record);
 
 	Assert(xlogreader);
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	while (ReadNextXLogRecord(xlogreader, first_record) &&
 		   xlogreader->EndRecPtr <= end_lsn)
@@ -556,16 +550,14 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 #define PG_GET_WAL_STATS_COLS 9
 	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
-	XLogStats	stats;
+	XLogStats	stats = {0};
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum		values[PG_GET_WAL_STATS_COLS];
-	bool		nulls[PG_GET_WAL_STATS_COLS];
+	Datum		values[PG_GET_WAL_STATS_COLS] = {0};
+	bool		nulls[PG_GET_WAL_STATS_COLS] = {0};
 
 	SetSingleFuncCall(fcinfo, 0);
 
 	xlogreader = InitXLogReaderState(start_lsn, &first_record);
-
-	MemSet(&stats, 0, sizeof(stats));
 
 	while (ReadNextXLogRecord(xlogreader, first_record) &&
 		   xlogreader->EndRecPtr <= end_lsn)
@@ -577,9 +569,6 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 
 	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	GetXLogSummaryStats(&stats, rsinfo, values, nulls,
 						PG_GET_WAL_STATS_COLS,

@@ -111,15 +111,12 @@ StoreAttrDefault(Relation rel, AttrNumber attnum,
 		Expr	   *expr2 = (Expr *) expr;
 		EState	   *estate = NULL;
 		ExprContext *econtext;
-		Datum		valuesAtt[Natts_pg_attribute];
-		bool		nullsAtt[Natts_pg_attribute];
-		bool		replacesAtt[Natts_pg_attribute];
+		Datum		valuesAtt[Natts_pg_attribute] = {0};
+		bool		nullsAtt[Natts_pg_attribute] = {0};
+		bool		replacesAtt[Natts_pg_attribute] = {0};
 		Datum		missingval = (Datum) 0;
 		bool		missingIsNull = true;
 
-		MemSet(valuesAtt, 0, sizeof(valuesAtt));
-		MemSet(nullsAtt, false, sizeof(nullsAtt));
-		MemSet(replacesAtt, false, sizeof(replacesAtt));
 		valuesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 		replacesAtt[Anum_pg_attribute_atthasdef - 1] = true;
 

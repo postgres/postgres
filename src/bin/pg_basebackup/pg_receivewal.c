@@ -564,10 +564,8 @@ StreamLog(void)
 {
 	XLogRecPtr	serverpos;
 	TimeLineID	servertli;
-	StreamCtl	stream;
+	StreamCtl	stream = {0};
 	char	   *sysidentifier;
-
-	MemSet(&stream, 0, sizeof(stream));
 
 	/*
 	 * Connect in replication mode to the server

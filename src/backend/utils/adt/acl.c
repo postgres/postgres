@@ -1785,15 +1785,13 @@ aclexplode(PG_FUNCTION_ARGS)
 		{
 			Datum		result;
 			Datum		values[4];
-			bool		nulls[4];
+			bool		nulls[4] = {0};
 			HeapTuple	tuple;
 
 			values[0] = ObjectIdGetDatum(aidata->ai_grantor);
 			values[1] = ObjectIdGetDatum(aidata->ai_grantee);
 			values[2] = CStringGetTextDatum(convert_aclright_to_string(priv_bit));
 			values[3] = BoolGetDatum((ACLITEM_GET_GOPTIONS(*aidata) & priv_bit) != 0);
-
-			MemSet(nulls, 0, sizeof(nulls));
 
 			tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 			result = HeapTupleGetDatum(tuple);

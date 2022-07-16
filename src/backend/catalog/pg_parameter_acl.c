@@ -74,8 +74,8 @@ ParameterAclCreate(const char *parameter)
 	Relation	rel;
 	TupleDesc	tupDesc;
 	HeapTuple	tuple;
-	Datum		values[Natts_pg_parameter_acl];
-	bool		nulls[Natts_pg_parameter_acl];
+	Datum		values[Natts_pg_parameter_acl] = {0};
+	bool		nulls[Natts_pg_parameter_acl] = {0};
 
 	/*
 	 * To prevent cluttering pg_parameter_acl with useless entries, insist
@@ -98,8 +98,6 @@ ParameterAclCreate(const char *parameter)
 	 */
 	rel = table_open(ParameterAclRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, false, sizeof(nulls));
 	parameterId = GetNewOidWithIndex(rel,
 									 ParameterAclOidIndexId,
 									 Anum_pg_parameter_acl_oid);

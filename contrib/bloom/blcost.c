@@ -26,9 +26,7 @@ blcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
-
-	MemSet(&costs, 0, sizeof(costs));
+	GenericCosts costs = {0};
 
 	/* We have to visit all index tuples anyway */
 	costs.numIndexTuples = index->tuples;

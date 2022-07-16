@@ -6642,10 +6642,10 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Oid			relid;
 	AttrNumber	colnum;
-	VariableStatData vardata;
+	VariableStatData vardata = {0};
 	double		numIndexTuples;
 	Cost		descentCost;
 	List	   *indexBoundQuals;
@@ -6797,7 +6797,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	/*
 	 * Now do generic index cost estimation.
 	 */
-	MemSet(&costs, 0, sizeof(costs));
 	costs.numIndexTuples = numIndexTuples;
 
 	genericcostestimate(root, path, loop_count, &costs);
@@ -6842,8 +6841,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
 	 */
-	MemSet(&vardata, 0, sizeof(vardata));
-
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
@@ -6947,9 +6944,7 @@ hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Selectivity *indexSelectivity, double *indexCorrelation,
 				 double *indexPages)
 {
-	GenericCosts costs;
-
-	MemSet(&costs, 0, sizeof(costs));
+	GenericCosts costs = {0};
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -6992,10 +6987,8 @@ gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Cost		descentCost;
-
-	MemSet(&costs, 0, sizeof(costs));
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -7049,10 +7042,8 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Cost		descentCost;
-
-	MemSet(&costs, 0, sizeof(costs));
 
 	genericcostestimate(root, path, loop_count, &costs);
 

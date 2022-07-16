@@ -1110,7 +1110,7 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	int			convertedbytes;
 	int			dstlen;
 	Datum		values[2];
-	bool		nulls[2];
+	bool		nulls[2] = {0};
 	HeapTuple	tuple;
 
 	if (src_encoding < 0)
@@ -1199,7 +1199,6 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 		pfree(dst);
 	}
 
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int32GetDatum(convertedbytes);
 	values[1] = PointerGetDatum(retval);
 	tuple = heap_form_tuple(tupdesc, values, nulls);

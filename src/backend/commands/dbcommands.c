@@ -689,8 +689,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	volatile Oid dst_deftablespace;
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
-	Datum		new_record[Natts_pg_database];
-	bool		new_record_nulls[Natts_pg_database];
+	Datum		new_record[Natts_pg_database] = {0};
+	bool		new_record_nulls[Natts_pg_database] = {0};
 	Oid			dboid = InvalidOid;
 	Oid			datdba;
 	ListCell   *option;
@@ -1296,9 +1296,6 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		   (dblocprovider != COLLPROVIDER_ICU && !dbiculocale));
 
 	/* Form tuple */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-
 	new_record[Anum_pg_database_oid - 1] = ObjectIdGetDatum(dboid);
 	new_record[Anum_pg_database_datname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
@@ -1822,9 +1819,6 @@ movedb(const char *dbname, const char *tblspcname)
 				newtuple;
 	Oid			src_tblspcoid,
 				dst_tblspcoid;
-	Datum		new_record[Natts_pg_database];
-	bool		new_record_nulls[Natts_pg_database];
-	bool		new_record_repl[Natts_pg_database];
 	ScanKeyData scankey;
 	SysScanDesc sysscan;
 	AclResult	aclresult;
@@ -2003,6 +1997,10 @@ movedb(const char *dbname, const char *tblspcname)
 	PG_ENSURE_ERROR_CLEANUP(movedb_failure_callback,
 							PointerGetDatum(&fparms));
 	{
+		Datum		new_record[Natts_pg_database] = {0};
+		bool		new_record_nulls[Natts_pg_database] = {0};
+		bool		new_record_repl[Natts_pg_database] = {0};
+
 		/*
 		 * Copy files from the old tablespace to the new one
 		 */
@@ -2041,10 +2039,6 @@ movedb(const char *dbname, const char *tblspcname)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", dbname)));
-
-		MemSet(new_record, 0, sizeof(new_record));
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 		new_record[Anum_pg_database_dattablespace - 1] = ObjectIdGetDatum(dst_tblspcoid);
 		new_record_repl[Anum_pg_database_dattablespace - 1] = true;
@@ -2194,9 +2188,9 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	DefElem    *dallowconnections = NULL;
 	DefElem    *dconnlimit = NULL;
 	DefElem    *dtablespace = NULL;
-	Datum		new_record[Natts_pg_database];
-	bool		new_record_nulls[Natts_pg_database];
-	bool		new_record_repl[Natts_pg_database];
+	Datum		new_record[Natts_pg_database] = {0};
+	bool		new_record_nulls[Natts_pg_database] = {0};
+	bool		new_record_repl[Natts_pg_database] = {0};
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -2305,10 +2299,6 @@ AlterDatabase(ParseState *pstate, AlterDatabaseStmt *stmt, bool isTopLevel)
 	/*
 	 * Build an updated tuple, perusing the information just obtained
 	 */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
-
 	if (distemplate)
 	{
 		new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(dbistemplate);
@@ -2492,8 +2482,8 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 	if (datForm->datdba != newOwnerId)
 	{
 		Datum		repl_val[Natts_pg_database];
-		bool		repl_null[Natts_pg_database];
-		bool		repl_repl[Natts_pg_database];
+		bool		repl_null[Natts_pg_database] = {0};
+		bool		repl_repl[Natts_pg_database] = {0};
 		Acl		   *newAcl;
 		Datum		aclDatum;
 		bool		isNull;
@@ -2520,9 +2510,6 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to change owner of database")));
-
-		memset(repl_null, false, sizeof(repl_null));
-		memset(repl_repl, false, sizeof(repl_repl));
 
 		repl_repl[Anum_pg_database_datdba - 1] = true;
 		repl_val[Anum_pg_database_datdba - 1] = ObjectIdGetDatum(newOwnerId);

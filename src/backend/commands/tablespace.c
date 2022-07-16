@@ -238,7 +238,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 #ifdef HAVE_SYMLINK
 	Relation	rel;
 	Datum		values[Natts_pg_tablespace];
-	bool		nulls[Natts_pg_tablespace];
+	bool		nulls[Natts_pg_tablespace] = {0};
 	HeapTuple	tuple;
 	Oid			tablespaceoid;
 	char	   *location;
@@ -339,8 +339,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * insertion will roll back if we find problems below.
 	 */
 	rel = table_open(TableSpaceRelationId, RowExclusiveLock);
-
-	MemSet(nulls, false, sizeof(nulls));
 
 	if (IsBinaryUpgrade)
 	{

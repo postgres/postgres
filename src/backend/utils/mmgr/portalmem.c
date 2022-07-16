@@ -1146,13 +1146,11 @@ pg_cursor(PG_FUNCTION_ARGS)
 	{
 		Portal		portal = hentry->portal;
 		Datum		values[6];
-		bool		nulls[6];
+		bool		nulls[6] = {0};
 
 		/* report only "visible" entries */
 		if (!portal->visible)
 			continue;
-
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = CStringGetTextDatum(portal->name);
 		values[1] = CStringGetTextDatum(portal->sourceText);

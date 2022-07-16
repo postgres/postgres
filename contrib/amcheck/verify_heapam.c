@@ -554,12 +554,10 @@ report_corruption_internal(Tuplestorestate *tupstore, TupleDesc tupdesc,
 						   BlockNumber blkno, OffsetNumber offnum,
 						   AttrNumber attnum, char *msg)
 {
-	Datum		values[HEAPCHECK_RELATION_COLS];
-	bool		nulls[HEAPCHECK_RELATION_COLS];
+	Datum		values[HEAPCHECK_RELATION_COLS] = {0};
+	bool		nulls[HEAPCHECK_RELATION_COLS] = {0};
 	HeapTuple	tuple;
 
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int64GetDatum(blkno);
 	values[1] = Int32GetDatum(offnum);
 	values[2] = Int32GetDatum(attnum);

@@ -1709,15 +1709,11 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 		/* clear the missing value if any */
 		if (attStruct->atthasmissing)
 		{
-			Datum		valuesAtt[Natts_pg_attribute];
-			bool		nullsAtt[Natts_pg_attribute];
-			bool		replacesAtt[Natts_pg_attribute];
+			Datum		valuesAtt[Natts_pg_attribute] = {0};
+			bool		nullsAtt[Natts_pg_attribute] = {0};
+			bool		replacesAtt[Natts_pg_attribute] = {0};
 
 			/* update the tuple - set atthasmissing and attmissingval */
-			MemSet(valuesAtt, 0, sizeof(valuesAtt));
-			MemSet(nullsAtt, false, sizeof(nullsAtt));
-			MemSet(replacesAtt, false, sizeof(replacesAtt));
-
 			valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
 				BoolGetDatum(false);
 			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
@@ -2006,9 +2002,9 @@ RelationClearMissing(Relation rel)
 void
 SetAttrMissing(Oid relid, char *attname, char *value)
 {
-	Datum		valuesAtt[Natts_pg_attribute];
-	bool		nullsAtt[Natts_pg_attribute];
-	bool		replacesAtt[Natts_pg_attribute];
+	Datum		valuesAtt[Natts_pg_attribute] = {0};
+	bool		nullsAtt[Natts_pg_attribute] = {0};
+	bool		replacesAtt[Natts_pg_attribute] = {0};
 	Datum		missingval;
 	Form_pg_attribute attStruct;
 	Relation	attrrel,
@@ -2041,10 +2037,6 @@ SetAttrMissing(Oid relid, char *attname, char *value)
 								  Int32GetDatum(attStruct->atttypmod));
 
 	/* update the tuple - set atthasmissing and attmissingval */
-	MemSet(valuesAtt, 0, sizeof(valuesAtt));
-	MemSet(nullsAtt, false, sizeof(nullsAtt));
-	MemSet(replacesAtt, false, sizeof(replacesAtt));
-
 	valuesAtt[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(true);
 	replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
 	valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
@@ -3321,7 +3313,7 @@ StorePartitionKey(Relation rel,
 	Relation	pg_partitioned_table;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_partitioned_table];
-	bool		nulls[Natts_pg_partitioned_table];
+	bool		nulls[Natts_pg_partitioned_table] = {0};
 	ObjectAddress myself;
 	ObjectAddress referenced;
 	ObjectAddresses *addrs;
@@ -3346,8 +3338,6 @@ StorePartitionKey(Relation rel,
 		partexprDatum = (Datum) 0;
 
 	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
-
-	MemSet(nulls, false, sizeof(nulls));
 
 	/* Only this can ever be NULL */
 	if (!partexprDatum)

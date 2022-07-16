@@ -938,8 +938,8 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 	for (i = 0; i < max_logical_replication_workers; i++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_SUBSCRIPTION_COLS];
-		bool		nulls[PG_STAT_GET_SUBSCRIPTION_COLS];
+		Datum		values[PG_STAT_GET_SUBSCRIPTION_COLS] = {0};
+		bool		nulls[PG_STAT_GET_SUBSCRIPTION_COLS] = {0};
 		int			worker_pid;
 		LogicalRepWorker worker;
 
@@ -952,9 +952,6 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 			continue;
 
 		worker_pid = worker.proc->pid;
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = ObjectIdGetDatum(worker.subid);
 		if (OidIsValid(worker.relid))

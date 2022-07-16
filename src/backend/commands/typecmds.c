@@ -2570,9 +2570,9 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	Relation	rel;
 	char	   *defaultValue;
 	Node	   *defaultExpr = NULL; /* NULL if no default specified */
-	Datum		new_record[Natts_pg_type];
-	bool		new_record_nulls[Natts_pg_type];
-	bool		new_record_repl[Natts_pg_type];
+	Datum		new_record[Natts_pg_type] = {0};
+	bool		new_record_nulls[Natts_pg_type] = {0};
+	bool		new_record_repl[Natts_pg_type] = {0};
 	HeapTuple	newtuple;
 	Form_pg_type typTup;
 	ObjectAddress address;
@@ -2593,9 +2593,6 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	checkDomainOwner(tup);
 
 	/* Setup new tuple */
-	MemSet(new_record, (Datum) 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 	/* Store the new default into the tuple */
 	if (defaultRaw)

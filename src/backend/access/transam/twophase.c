@@ -780,8 +780,8 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 	{
 		GlobalTransaction gxact = &status->array[status->currIdx++];
 		PGPROC	   *proc = &ProcGlobal->allProcs[gxact->pgprocno];
-		Datum		values[5];
-		bool		nulls[5];
+		Datum		values[5] = {0};
+		bool		nulls[5] = {0};
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -791,8 +791,6 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 		/*
 		 * Form tuple with appropriate data.
 		 */
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = TransactionIdGetDatum(proc->xid);
 		values[1] = CStringGetTextDatum(gxact->gid);

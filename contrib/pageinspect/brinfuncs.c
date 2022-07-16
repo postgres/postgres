@@ -202,7 +202,7 @@ brin_page_items(PG_FUNCTION_ARGS)
 	for (;;)
 	{
 		Datum		values[7];
-		bool		nulls[7];
+		bool		nulls[7] = {0};
 
 		/*
 		 * This loop is called once for every attribute of every tuple in the
@@ -229,8 +229,6 @@ brin_page_items(PG_FUNCTION_ARGS)
 		}
 		else
 			attno++;
-
-		MemSet(nulls, 0, sizeof(nulls));
 
 		if (unusedItem)
 		{
@@ -334,7 +332,7 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 	BrinMetaPageData *meta;
 	TupleDesc	tupdesc;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 	HeapTuple	htup;
 
 	if (!superuser())
@@ -354,7 +352,6 @@ brin_metapage_info(PG_FUNCTION_ARGS)
 
 	/* Extract values from the metapage */
 	meta = (BrinMetaPageData *) PageGetContents(page);
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = CStringGetTextDatum(psprintf("0x%08X", meta->brinMagic));
 	values[1] = Int32GetDatum(meta->brinVersion);
 	values[2] = Int32GetDatum(meta->pagesPerRange);

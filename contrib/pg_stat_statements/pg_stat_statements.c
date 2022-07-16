@@ -1854,8 +1854,8 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 {
 	pgssGlobalStats stats;
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_STATEMENTS_INFO_COLS];
-	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS];
+	Datum		values[PG_STAT_STATEMENTS_INFO_COLS] = {0};
+	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS] = {0};
 
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
@@ -1865,9 +1865,6 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Read global statistics for pg_stat_statements */
 	{

@@ -106,8 +106,8 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 {
 #define PG_STOP_BACKUP_V2_COLS 3
 	TupleDesc	tupdesc;
-	Datum		values[PG_STOP_BACKUP_V2_COLS];
-	bool		nulls[PG_STOP_BACKUP_V2_COLS];
+	Datum		values[PG_STOP_BACKUP_V2_COLS] = {0};
+	bool		nulls[PG_STOP_BACKUP_V2_COLS] = {0};
 
 	bool		waitforarchive = PG_GETARG_BOOL(0);
 	XLogRecPtr	stoppoint;
@@ -116,9 +116,6 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	/* Initialize attributes information in the tuple descriptor */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	if (status != SESSION_BACKUP_RUNNING)
 		ereport(ERROR,

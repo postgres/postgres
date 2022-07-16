@@ -1594,9 +1594,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 					 * to.  We have to build an additional level of ParseState
 					 * to keep in step with varlevelsup in the subselect.
 					 */
-					ParseState	mypstate;
+					ParseState	mypstate = {0};
 
-					MemSet(&mypstate, 0, sizeof(mypstate));
 					mypstate.parentParseState = pstate;
 					mypstate.p_rtable = rte->subquery->rtable;
 					/* don't bother filling the rest of the fake pstate */

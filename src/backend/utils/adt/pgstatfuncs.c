@@ -488,12 +488,9 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 	{
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
-		Datum		values[PG_STAT_GET_PROGRESS_COLS];
-		bool		nulls[PG_STAT_GET_PROGRESS_COLS];
+		Datum		values[PG_STAT_GET_PROGRESS_COLS] = {0};
+		bool		nulls[PG_STAT_GET_PROGRESS_COLS] = {0};
 		int			i;
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
 
@@ -551,16 +548,13 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_ACTIVITY_COLS];
-		bool		nulls[PG_STAT_GET_ACTIVITY_COLS];
+		Datum		values[PG_STAT_GET_ACTIVITY_COLS] = {0};
+		bool		nulls[PG_STAT_GET_ACTIVITY_COLS] = {0};
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
 		PGPROC	   *proc;
 		const char *wait_event_type = NULL;
 		const char *wait_event = NULL;
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		/* Get the next one in the list */
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
@@ -1747,14 +1741,10 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_WAL_COLS	9
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_WAL_COLS];
-	bool		nulls[PG_STAT_GET_WAL_COLS];
+	Datum		values[PG_STAT_GET_WAL_COLS] = {0};
+	bool		nulls[PG_STAT_GET_WAL_COLS] = {0};
 	char		buf[256];
 	PgStat_WalStats *wal_stats;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
@@ -1826,8 +1816,8 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	for (i = 0;; i++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_SLRU_COLS];
-		bool		nulls[PG_STAT_GET_SLRU_COLS];
+		Datum		values[PG_STAT_GET_SLRU_COLS] = {0};
+		bool		nulls[PG_STAT_GET_SLRU_COLS] = {0};
 		PgStat_SLRUStats stat;
 		const char *name;
 
@@ -1837,8 +1827,6 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 			break;
 
 		stat = stats[i];
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = PointerGetDatum(cstring_to_text(name));
 		values[1] = Int64GetDatum(stat.blocks_zeroed);
@@ -2201,13 +2189,9 @@ Datum
 pg_stat_get_archiver(PG_FUNCTION_ARGS)
 {
 	TupleDesc	tupdesc;
-	Datum		values[7];
-	bool		nulls[7];
+	Datum		values[7] = {0};
+	bool		nulls[7] = {0};
 	PgStat_ArchiverStats *archiver_stats;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(7);
@@ -2274,14 +2258,10 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	text	   *slotname_text = PG_GETARG_TEXT_P(0);
 	NameData	slotname;
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS];
-	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS];
+	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS] = {0};
+	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS] = {0};
 	PgStat_StatReplSlotEntry *slotent;
 	PgStat_StatReplSlotEntry allzero;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_REPLICATION_SLOT_COLS);
@@ -2348,8 +2328,8 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 #define PG_STAT_GET_SUBSCRIPTION_STATS_COLS	4
 	Oid			subid = PG_GETARG_OID(0);
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_SUBSCRIPTION_STATS_COLS];
-	bool		nulls[PG_STAT_GET_SUBSCRIPTION_STATS_COLS];
+	Datum		values[PG_STAT_GET_SUBSCRIPTION_STATS_COLS] = {0};
+	bool		nulls[PG_STAT_GET_SUBSCRIPTION_STATS_COLS] = {0};
 	PgStat_StatSubEntry *subentry;
 	PgStat_StatSubEntry allzero;
 
@@ -2367,10 +2347,6 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
 	BlessTupleDesc(tupdesc);
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	if (!subentry)
 	{

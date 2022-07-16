@@ -507,8 +507,8 @@ Datum
 heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 {
 #define HEAP_TUPLE_INFOMASK_COLS 2
-	Datum		values[HEAP_TUPLE_INFOMASK_COLS];
-	bool		nulls[HEAP_TUPLE_INFOMASK_COLS];
+	Datum		values[HEAP_TUPLE_INFOMASK_COLS] = {0};
+	bool		nulls[HEAP_TUPLE_INFOMASK_COLS] = {0};
 	uint16		t_infomask = PG_GETARG_INT16(0);
 	uint16		t_infomask2 = PG_GETARG_INT16(1);
 	int			cnt = 0;
@@ -529,10 +529,6 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 
 	bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
 		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
-
-	/* Initialize values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* If no flags, return a set of empty arrays */
 	if (bitcnt <= 0)

@@ -165,13 +165,11 @@ static int
 getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 				 struct addrinfo **result)
 {
-	struct addrinfo hints;
+	struct addrinfo hints = {0};
 	struct addrinfo *aip;
 	struct sockaddr_un *unp;
 
 	*result = NULL;
-
-	MemSet(&hints, 0, sizeof(hints));
 
 	if (strlen(path) >= sizeof(unp->sun_path))
 		return EAI_FAIL;

@@ -575,7 +575,7 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
 	Datum		values[8];
-	bool		nulls[8];
+	bool		nulls[8] = {0};
 	Buffer		metabuf;
 	HashMetaPage metap;
 	float8		free_percent;
@@ -697,7 +697,6 @@ pgstathashindex(PG_FUNCTION_ARGS)
 	/*
 	 * Build and return the tuple
 	 */
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int32GetDatum(stats.version);
 	values[1] = Int64GetDatum((int64) stats.bucket_pages);
 	values[2] = Int64GetDatum((int64) stats.overflow_pages);

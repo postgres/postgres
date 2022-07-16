@@ -1678,17 +1678,14 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 	while ((entry = (ConnCacheEntry *) hash_seq_search(&scan)))
 	{
 		ForeignServer *server;
-		Datum		values[POSTGRES_FDW_GET_CONNECTIONS_COLS];
-		bool		nulls[POSTGRES_FDW_GET_CONNECTIONS_COLS];
+		Datum		values[POSTGRES_FDW_GET_CONNECTIONS_COLS] = {0};
+		bool		nulls[POSTGRES_FDW_GET_CONNECTIONS_COLS] = {0};
 
 		/* We only look for open remote connections */
 		if (!entry->conn)
 			continue;
 
 		server = GetForeignServerExtended(entry->serverid, FSV_MISSING_OK);
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		/*
 		 * The foreign server may have been dropped in current explicit

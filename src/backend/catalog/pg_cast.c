@@ -47,7 +47,7 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 	HeapTuple	tuple;
 	Oid			castid;
 	Datum		values[Natts_pg_cast];
-	bool		nulls[Natts_pg_cast];
+	bool		nulls[Natts_pg_cast] = {0};
 	ObjectAddress myself,
 				referenced;
 	ObjectAddresses *addrs;
@@ -77,8 +77,6 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 	values[Anum_pg_cast_castfunc - 1] = ObjectIdGetDatum(funcid);
 	values[Anum_pg_cast_castcontext - 1] = CharGetDatum(castcontext);
 	values[Anum_pg_cast_castmethod - 1] = CharGetDatum(castmethod);
-
-	MemSet(nulls, false, sizeof(nulls));
 
 	tuple = heap_form_tuple(RelationGetDescr(relation), values, nulls);
 

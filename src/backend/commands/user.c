@@ -74,8 +74,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	Relation	pg_authid_rel;
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple;
-	Datum		new_record[Natts_pg_authid];
-	bool		new_record_nulls[Natts_pg_authid];
+	Datum		new_record[Natts_pg_authid] = {0};
+	bool		new_record_nulls[Natts_pg_authid] = {0};
 	Oid			roleid;
 	ListCell   *item;
 	ListCell   *option;
@@ -338,12 +338,8 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	/*
 	 * Build a tuple to insert
 	 */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-
 	new_record[Anum_pg_authid_rolname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(stmt->role));
-
 	new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(issuper);
 	new_record[Anum_pg_authid_rolinherit - 1] = BoolGetDatum(inherit);
 	new_record[Anum_pg_authid_rolcreaterole - 1] = BoolGetDatum(createrole);
@@ -492,9 +488,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 Oid
 AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 {
-	Datum		new_record[Natts_pg_authid];
-	bool		new_record_nulls[Natts_pg_authid];
-	bool		new_record_repl[Natts_pg_authid];
+	Datum		new_record[Natts_pg_authid] = {0};
+	bool		new_record_nulls[Natts_pg_authid] = {0};
+	bool		new_record_repl[Natts_pg_authid] = {0};
 	Relation	pg_authid_rel;
 	TupleDesc	pg_authid_dsc;
 	HeapTuple	tuple,
@@ -691,9 +687,6 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	/*
 	 * Build an updated tuple, perusing the information just obtained
 	 */
-	MemSet(new_record, 0, sizeof(new_record));
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-	MemSet(new_record_repl, false, sizeof(new_record_repl));
 
 	/*
 	 * issuper/createrole/etc
@@ -1440,9 +1433,9 @@ AddRoleMems(const char *rolename, Oid roleid,
 		Oid			memberid = lfirst_oid(iditem);
 		HeapTuple	authmem_tuple;
 		HeapTuple	tuple;
-		Datum		new_record[Natts_pg_auth_members];
-		bool		new_record_nulls[Natts_pg_auth_members];
-		bool		new_record_repl[Natts_pg_auth_members];
+		Datum		new_record[Natts_pg_auth_members] = {0};
+		bool		new_record_nulls[Natts_pg_auth_members] = {0};
+		bool		new_record_repl[Natts_pg_auth_members] = {0};
 
 		/*
 		 * pg_database_owner is never a role member.  Lifting this restriction
@@ -1500,10 +1493,6 @@ AddRoleMems(const char *rolename, Oid roleid,
 		}
 
 		/* Build a tuple to insert or update */
-		MemSet(new_record, 0, sizeof(new_record));
-		MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-		MemSet(new_record_repl, false, sizeof(new_record_repl));
-
 		new_record[Anum_pg_auth_members_roleid - 1] = ObjectIdGetDatum(roleid);
 		new_record[Anum_pg_auth_members_member - 1] = ObjectIdGetDatum(memberid);
 		new_record[Anum_pg_auth_members_grantor - 1] = ObjectIdGetDatum(grantorId);
@@ -1614,15 +1603,11 @@ DelRoleMems(const char *rolename, Oid roleid,
 		{
 			/* Just turn off the admin option */
 			HeapTuple	tuple;
-			Datum		new_record[Natts_pg_auth_members];
-			bool		new_record_nulls[Natts_pg_auth_members];
-			bool		new_record_repl[Natts_pg_auth_members];
+			Datum		new_record[Natts_pg_auth_members] = {0};
+			bool		new_record_nulls[Natts_pg_auth_members] = {0};
+			bool		new_record_repl[Natts_pg_auth_members] = {0};
 
 			/* Build a tuple to update with */
-			MemSet(new_record, 0, sizeof(new_record));
-			MemSet(new_record_nulls, false, sizeof(new_record_nulls));
-			MemSet(new_record_repl, false, sizeof(new_record_repl));
-
 			new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(false);
 			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 

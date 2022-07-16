@@ -402,7 +402,7 @@ IdentifySystem(void)
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 	TimeLineID	currTLI;
 
 	/*
@@ -437,7 +437,6 @@ IdentifySystem(void)
 	}
 
 	dest = CreateDestReceiver(DestRemoteSimple);
-	MemSet(nulls, false, sizeof(nulls));
 
 	/* need a tuple descriptor representing four columns */
 	tupdesc = CreateTemplateTupleDesc(4);
@@ -483,7 +482,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 	DestReceiver *dest;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
-	Datum		values[READ_REPLICATION_SLOT_COLS];
+	Datum		values[READ_REPLICATION_SLOT_COLS] = {0};
 	bool		nulls[READ_REPLICATION_SLOT_COLS];
 
 	tupdesc = CreateTemplateTupleDesc(READ_REPLICATION_SLOT_COLS);
@@ -495,8 +494,7 @@ ReadReplicationSlot(ReadReplicationSlotCmd *cmd)
 	TupleDescInitBuiltinEntry(tupdesc, (AttrNumber) 3, "restart_tli",
 							  INT8OID, -1, 0);
 
-	MemSet(values, 0, READ_REPLICATION_SLOT_COLS * sizeof(Datum));
-	MemSet(nulls, true, READ_REPLICATION_SLOT_COLS * sizeof(bool));
+	memset(nulls, true, READ_REPLICATION_SLOT_COLS * sizeof(bool));
 
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	slot = SearchNamedReplicationSlot(cmd->slotname, false);
@@ -859,13 +857,12 @@ StartReplication(StartReplicationCmd *cmd)
 		TupOutputState *tstate;
 		TupleDesc	tupdesc;
 		Datum		values[2];
-		bool		nulls[2];
+		bool		nulls[2] = {0};
 
 		snprintf(startpos_str, sizeof(startpos_str), "%X/%X",
 				 LSN_FORMAT_ARGS(sendTimeLineValidUpto));
 
 		dest = CreateDestReceiver(DestRemoteSimple);
-		MemSet(nulls, false, sizeof(nulls));
 
 		/*
 		 * Need a tuple descriptor representing two columns. int8 may seem
@@ -1043,7 +1040,7 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 
 	Assert(!MyReplicationSlot);
 
@@ -1178,7 +1175,6 @@ CreateReplicationSlot(CreateReplicationSlotCmd *cmd)
 			 LSN_FORMAT_ARGS(MyReplicationSlot->data.confirmed_flush));
 
 	dest = CreateDestReceiver(DestRemoteSimple);
-	MemSet(nulls, false, sizeof(nulls));
 
 	/*----------
 	 * Need a tuple descriptor representing four columns:
@@ -3488,7 +3484,7 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 		TimestampTz replyTime;
 		bool		is_sync_standby;
 		Datum		values[PG_STAT_GET_WAL_SENDERS_COLS];
-		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS];
+		bool		nulls[PG_STAT_GET_WAL_SENDERS_COLS] = {0};
 		int			j;
 
 		/* Collect data from shared memory */
@@ -3527,7 +3523,6 @@ pg_stat_get_wal_senders(PG_FUNCTION_ARGS)
 			}
 		}
 
-		memset(nulls, 0, sizeof(nulls));
 		values[0] = Int32GetDatum(pid);
 
 		if (!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))

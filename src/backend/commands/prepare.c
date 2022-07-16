@@ -685,11 +685,9 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		{
 			TupleDesc	result_desc;
 			Datum		values[8];
-			bool		nulls[8];
+			bool		nulls[8] = {0};
 
 			result_desc = prep_stmt->plansource->resultDesc;
-
-			MemSet(nulls, 0, sizeof(nulls));
 
 			values[0] = CStringGetTextDatum(prep_stmt->stmt_name);
 			values[1] = CStringGetTextDatum(prep_stmt->plansource->query_string);

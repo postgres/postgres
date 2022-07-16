@@ -554,7 +554,7 @@ UpdateIndexRelation(Oid indexoid,
 	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
-	bool		nulls[Natts_pg_index];
+	bool		nulls[Natts_pg_index] = {0};
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
@@ -608,8 +608,6 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * Build a pg_index tuple
 	 */
-	MemSet(nulls, false, sizeof(nulls));
-
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);

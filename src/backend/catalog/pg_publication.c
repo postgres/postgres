@@ -1162,14 +1162,12 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 		HeapTuple	pubtuple = NULL;
 		HeapTuple	rettuple;
 		Oid			relid = list_nth_oid(tables, funcctx->call_cntr);
-		Datum		values[NUM_PUBLICATION_TABLES_ELEM];
-		bool		nulls[NUM_PUBLICATION_TABLES_ELEM];
+		Datum		values[NUM_PUBLICATION_TABLES_ELEM] = {0};
+		bool		nulls[NUM_PUBLICATION_TABLES_ELEM] = {0};
 
 		/*
 		 * Form tuple with appropriate data.
 		 */
-		MemSet(nulls, 0, sizeof(nulls));
-		MemSet(values, 0, sizeof(values));
 
 		publication = GetPublicationByName(pubname, false);
 
