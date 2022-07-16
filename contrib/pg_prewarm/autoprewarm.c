@@ -814,11 +814,12 @@ apw_detach_shmem(int code, Datum arg)
 static void
 apw_start_leader_worker(void)
 {
-	BackgroundWorker worker = {0};
+	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
 	BgwHandleStatus status;
 	pid_t		pid;
 
+	MemSet(&worker, 0, sizeof(BackgroundWorker));
 	worker.bgw_flags = BGWORKER_SHMEM_ACCESS;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
 	strcpy(worker.bgw_library_name, "pg_prewarm");
@@ -855,9 +856,10 @@ apw_start_leader_worker(void)
 static void
 apw_start_database_worker(void)
 {
-	BackgroundWorker worker = {0};
+	BackgroundWorker worker;
 	BackgroundWorkerHandle *handle;
 
+	MemSet(&worker, 0, sizeof(BackgroundWorker));
 	worker.bgw_flags =
 		BGWORKER_SHMEM_ACCESS | BGWORKER_BACKEND_DATABASE_CONNECTION;
 	worker.bgw_start_time = BgWorkerStart_ConsistentState;
