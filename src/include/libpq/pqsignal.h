@@ -15,15 +15,18 @@
 
 #include <signal.h>
 
-#ifndef WIN32
 #define PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
-#else
+
+#ifdef WIN32
 /* Emulate POSIX sigset_t APIs on Windows */
 typedef int sigset_t;
 
-extern int	pqsigsetmask(int mask);
+extern int	pqsigprocmask(int how, const sigset_t *set, sigset_t *oset);
 
-#define PG_SETMASK(mask)		pqsigsetmask(*(mask))
+#define SIG_BLOCK				1
+#define SIG_UNBLOCK				2
+#define SIG_SETMASK				3
+#define sigprocmask(how, set, oset) pqsigprocmask((how), (set), (oset))
 #define sigemptyset(set)		(*(set) = 0)
 #define sigfillset(set)			(*(set) = ~0)
 #define sigaddset(set, signum)	(*(set) |= (sigmask(signum)))

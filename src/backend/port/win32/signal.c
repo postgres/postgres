@@ -112,7 +112,7 @@ pgwin32_signal_initialize(void)
 /*
  * Dispatch all signals currently queued and not blocked
  * Blocked signals are ignored, and will be fired at the time of
- * the pqsigsetmask() call.
+ * the pqsigprocmask() call.
  */
 void
 pgwin32_dispatch_queued_signals(void)
@@ -154,12 +154,29 @@ pgwin32_dispatch_queued_signals(void)
 
 /* signal masking. Only called on main thread, no sync required */
 int
-pqsigsetmask(int mask)
+pqsigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
-	int			prevmask;
+	if (oset)
+		*oset = pg_signal_mask;
 
-	prevmask = pg_signal_mask;
-	pg_signal_mask = mask;
+	if (!set)
+		return 0;
+
+	switch (how)
+	{
+		case SIG_BLOCK:
+			pg_signal_mask |= *set;
+			break;
+		case SIG_UNBLOCK:
+			pg_signal_mask &= ~*set;
+			break;
+		case SIG_SETMASK:
+			pg_signal_mask = *set;
+			break;
+		default:
+			errno = EINVAL;
+			return -1;
+	}
 
 	/*
 	 * Dispatch any signals queued up right away, in case we have unblocked
@@ -167,7 +184,7 @@ pqsigsetmask(int mask)
 	 */
 	pgwin32_dispatch_queued_signals();
 
-	return prevmask;
+	return 0;
 }
 
 
