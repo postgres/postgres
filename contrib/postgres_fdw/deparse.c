@@ -37,11 +37,14 @@
 #include "access/sysattr.h"
 #include "access/table.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "nodes/makefuncs.h"
@@ -383,6 +386,75 @@ foreign_expr_walker(Node *node,
 		case T_Const:
 			{
 				Const	   *c = (Const *) node;
+
+				/*
+				 * Constants of regproc and related types can't be shipped
+				 * unless the referenced object is shippable.  But NULL's ok.
+				 * (See also the related code in dependency.c.)
+				 */
+				if (!c->constisnull)
+				{
+					switch (c->consttype)
+					{
+						case REGPROCOID:
+						case REGPROCEDUREOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  ProcedureRelationId, fpinfo))
+								return false;
+							break;
+						case REGOPEROID:
+						case REGOPERATOROID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  OperatorRelationId, fpinfo))
+								return false;
+							break;
+						case REGCLASSOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  RelationRelationId, fpinfo))
+								return false;
+							break;
+						case REGTYPEOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  TypeRelationId, fpinfo))
+								return false;
+							break;
+						case REGCOLLATIONOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  CollationRelationId, fpinfo))
+								return false;
+							break;
+						case REGCONFIGOID:
+
+							/*
+							 * For text search objects only, we weaken the
+							 * normal shippability criterion to allow all OIDs
+							 * below FirstNormalObjectId.  Without this, none
+							 * of the initdb-installed TS configurations would
+							 * be shippable, which would be quite annoying.
+							 */
+							if (DatumGetObjectId(c->constvalue) >= FirstNormalObjectId &&
+								!is_shippable(DatumGetObjectId(c->constvalue),
+											  TSConfigRelationId, fpinfo))
+								return false;
+							break;
+						case REGDICTIONARYOID:
+							if (DatumGetObjectId(c->constvalue) >= FirstNormalObjectId &&
+								!is_shippable(DatumGetObjectId(c->constvalue),
+											  TSDictionaryRelationId, fpinfo))
+								return false;
+							break;
+						case REGNAMESPACEOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  NamespaceRelationId, fpinfo))
+								return false;
+							break;
+						case REGROLEOID:
+							if (!is_shippable(DatumGetObjectId(c->constvalue),
+											  AuthIdRelationId, fpinfo))
+								return false;
+							break;
+					}
+				}
 
 				/*
 				 * If the constant has nondefault collation, either it's of a
