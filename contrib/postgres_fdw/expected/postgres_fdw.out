@@ -1034,6 +1034,26 @@ SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2 order by t1.c2 limit 1;
   1 |  1 | 00001 | Fri Jan 02 00:00:00 1970 PST | Fri Jan 02 00:00:00 1970 | 1  | 1          | foo
 (1 row)
 
+-- check schema-qualification of regconfig constant
+CREATE TEXT SEARCH CONFIGURATION public.custom_search
+  (COPY = pg_catalog.english);
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT c1, to_tsvector('custom_search'::regconfig, c3) FROM ft1
+WHERE c1 = 642 AND length(to_tsvector('custom_search'::regconfig, c3)) > 0;
+                                                                  QUERY PLAN                                                                  
+----------------------------------------------------------------------------------------------------------------------------------------------
+ Foreign Scan on public.ft1
+   Output: c1, to_tsvector('custom_search'::regconfig, c3)
+   Remote SQL: SELECT "C 1", c3 FROM "S 1"."T 1" WHERE (("C 1" = 642)) AND ((length(to_tsvector('public.custom_search'::regconfig, c3)) > 0))
+(3 rows)
+
+SELECT c1, to_tsvector('custom_search'::regconfig, c3) FROM ft1
+WHERE c1 = 642 AND length(to_tsvector('custom_search'::regconfig, c3)) > 0;
+ c1  | to_tsvector 
+-----+-------------
+ 642 | '00642':1
+(1 row)
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================

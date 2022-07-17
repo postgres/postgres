@@ -373,6 +373,15 @@ EXPLAIN (VERBOSE, COSTS OFF)
   SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2 order by t1.c2 limit 1;
 SELECT * FROM ft1 t1 WHERE t1.c1 === t1.c2 order by t1.c2 limit 1;
 
+-- check schema-qualification of regconfig constant
+CREATE TEXT SEARCH CONFIGURATION public.custom_search
+  (COPY = pg_catalog.english);
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT c1, to_tsvector('custom_search'::regconfig, c3) FROM ft1
+WHERE c1 = 642 AND length(to_tsvector('custom_search'::regconfig, c3)) > 0;
+SELECT c1, to_tsvector('custom_search'::regconfig, c3) FROM ft1
+WHERE c1 = 642 AND length(to_tsvector('custom_search'::regconfig, c3)) > 0;
+
 -- ===================================================================
 -- JOIN queries
 -- ===================================================================
