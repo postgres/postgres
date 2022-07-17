@@ -4326,6 +4326,7 @@ convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
+		case REGCOLLATIONOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 		case REGROLEOID:
@@ -4457,6 +4458,7 @@ convert_numeric_to_scalar(Datum value, Oid typid, bool *failure)
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
+		case REGCOLLATIONOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 		case REGROLEOID:
