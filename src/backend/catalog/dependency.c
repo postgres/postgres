@@ -1851,6 +1851,13 @@ find_expr_references_walker(Node *node,
 						add_object_address(OCLASS_TYPE, objoid, 0,
 										   context->addrs);
 					break;
+				case REGCOLLATIONOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists1(COLLOID,
+											  ObjectIdGetDatum(objoid)))
+						add_object_address(OCLASS_COLLATION, objoid, 0,
+										   context->addrs);
+					break;
 				case REGCONFIGOID:
 					objoid = DatumGetObjectId(con->constvalue);
 					if (SearchSysCacheExists1(TSCONFIGOID,
