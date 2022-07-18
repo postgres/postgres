@@ -56,7 +56,7 @@ sql_help.c: sql_help.h
 	touch $@
 
 sql_help.h: create_help.pl $(wildcard $(REFDOCDIR)/*.sgml)
-	$(PERL) $< $(REFDOCDIR) $*
+	$(PERL) $< --docdir $(REFDOCDIR) --basename $*
 
 psqlscanslash.c: FLEXFLAGS = -Cfe -p -p
 psqlscanslash.c: FLEX_NO_BACKUP=yes

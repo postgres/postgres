@@ -692,9 +692,8 @@ sub GenerateFiles
 	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
 	{
 		print "Generating sql_help.h...\n";
-		chdir('src/bin/psql');
-		system("perl create_help.pl ../../../doc/src/sgml/ref sql_help");
-		chdir('../../..');
+		my $psql = 'src/bin/psql';
+		system("perl $psql/create_help.pl --docdir doc/src/sgml/ref --outdir $psql --basename sql_help");
 	}
 
 	if (IsNewer('src/common/kwlist_d.h', 'src/include/parser/kwlist.h'))
