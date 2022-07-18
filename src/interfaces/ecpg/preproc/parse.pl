@@ -27,8 +27,8 @@ GetOptions(
 	'parser=s' => \$parser,) or die "wrong arguments";
 
 # open parser / output file early, to raise errors early
-open(our $parserfh, '<', $parser) or die "could not open parser file $parser";
-open(our $outfh, '>', $outfile) or die "could not open output file $outfile";
+open(my $parserfh, '<', $parser) or die "could not open parser file $parser";
+open(my $outfh, '>', $outfile) or die "could not open output file $outfile";
 
 my $copymode              = 0;
 my $brace_indent          = 0;
