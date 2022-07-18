@@ -16,6 +16,9 @@ if (!defined $gzip || $gzip eq '')
 	plan skip_all => 'gzip not available';
 }
 
+# to ensure path can be embedded in postgresql.conf
+$gzip =~ s{\\}{/}g if ($PostgreSQL::Test::Utils::windows_os);
+
 my $node = PostgreSQL::Test::Cluster->new('primary');
 
 # Make sure pg_hba.conf is set up to allow connections from backupuser.
@@ -53,8 +56,8 @@ $escaped_backup_path =~ s{\\}{\\\\}g
   if ($PostgreSQL::Test::Utils::windows_os);
 my $shell_command =
   $PostgreSQL::Test::Utils::windows_os
-  ? qq{$gzip --fast > "$escaped_backup_path\\\\%f.gz"}
-  : qq{$gzip --fast > "$escaped_backup_path/%f.gz"};
+  ? qq{"$gzip" --fast > "$escaped_backup_path\\\\%f.gz"}
+  : qq{"$gzip" --fast > "$escaped_backup_path/%f.gz"};
 $node->append_conf('postgresql.conf',
 	"basebackup_to_shell.command='$shell_command'");
 $node->reload();
@@ -74,8 +77,8 @@ $node->command_fails_like(
 # Reconfigure to restrict access and require a detail.
 $shell_command =
   $PostgreSQL::Test::Utils::windows_os
-  ? qq{$gzip --fast > "$escaped_backup_path\\\\%d.%f.gz"}
-  : qq{$gzip --fast > "$escaped_backup_path/%d.%f.gz"};
+  ? qq{"$gzip" --fast > "$escaped_backup_path\\\\%d.%f.gz"}
+  : qq{"$gzip" --fast > "$escaped_backup_path/%d.%f.gz"};
 $node->append_conf('postgresql.conf',
 	"basebackup_to_shell.command='$shell_command'");
 $node->append_conf('postgresql.conf',
