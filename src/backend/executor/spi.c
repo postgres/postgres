@@ -417,6 +417,16 @@ SPI_rollback_and_chain(void)
 }
 
 /*
+ * SPICleanup is a no-op, kept for backwards compatibility. We rely on
+ * AtEOXact_SPI to cleanup. Extensions should not (need to) fiddle with the
+ * internal SPI state directly.
+ */
+void
+SPICleanup(void)
+{
+}
+
+/*
  * Clean up SPI state at transaction commit or abort.
  */
 void
