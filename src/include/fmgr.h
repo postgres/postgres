@@ -424,6 +424,17 @@ CppConcat(pg_finfo_,funcname) (void) \
 extern int no_such_variable
 
 
+/*
+ * Declare _PG_init/_PG_fini centrally. Historically each shared library had
+ * its own declaration; but now that we want to mark these PGDLLEXPORT, using
+ * central declarations avoids each extension having to add that.  Any
+ * existing declarations in extensions will continue to work if fmgr.h is
+ * included before them, otherwise compilation for Windows will fail.
+ */
+extern PGDLLEXPORT void _PG_init(void);
+extern PGDLLEXPORT void _PG_fini(void);
+
+
 /*-------------------------------------------------------------------------
  *		Support for verifying backend compatibility of loaded modules
  *

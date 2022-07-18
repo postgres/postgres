@@ -63,6 +63,8 @@ typedef struct ArchiveModuleCallbacks
  */
 typedef void (*ArchiveModuleInit) (ArchiveModuleCallbacks *cb);
 
+extern PGDLLEXPORT void _PG_archive_module_init(ArchiveModuleCallbacks *cb);
+
 /*
  * Since the logic for archiving via a shell command is in the core server
  * and does not need to be loaded via a shared library, it has a special
