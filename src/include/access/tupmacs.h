@@ -22,8 +22,13 @@
  * Note that a 0 in the null bitmap indicates a null, while 1 indicates
  * non-null.
  */
-#define att_isnull(ATT, BITS) (!((BITS)[(ATT) >> 3] & (1 << ((ATT) & 0x07))))
+static inline bool
+att_isnull(int ATT, const bits8 *BITS)
+{
+	return !(BITS[ATT >> 3] & (1 << (ATT & 0x07)));
+}
 
+#ifndef FRONTEND
 /*
  * Given a Form_pg_attribute and a pointer into a tuple's data area,
  * return the correct value or pointer.
@@ -43,56 +48,32 @@
 /*
  * Same, but work from byval/len parameters rather than Form_pg_attribute.
  */
+static inline Datum
+fetch_att(const void *T, bool attbyval, int attlen)
+{
+	if (attbyval)
+	{
+		switch (attlen)
+		{
+			case sizeof(char):
+				return CharGetDatum(*((const char *) T));
+			case sizeof(int16):
+				return Int16GetDatum(*((const int16 *) T));
+			case sizeof(int32):
+				return Int32GetDatum(*((const int32 *) T));
 #if SIZEOF_DATUM == 8
-
-#define fetch_att(T,attbyval,attlen) \
-( \
-	(attbyval) ? \
-	( \
-		(attlen) == (int) sizeof(Datum) ? \
-			*((Datum *)(T)) \
-		: \
-	  ( \
-		(attlen) == (int) sizeof(int32) ? \
-			Int32GetDatum(*((int32 *)(T))) \
-		: \
-		( \
-			(attlen) == (int) sizeof(int16) ? \
-				Int16GetDatum(*((int16 *)(T))) \
-			: \
-			( \
-				AssertMacro((attlen) == 1), \
-				CharGetDatum(*((char *)(T))) \
-			) \
-		) \
-	  ) \
-	) \
-	: \
-	PointerGetDatum((char *) (T)) \
-)
-#else							/* SIZEOF_DATUM != 8 */
-
-#define fetch_att(T,attbyval,attlen) \
-( \
-	(attbyval) ? \
-	( \
-		(attlen) == (int) sizeof(int32) ? \
-			Int32GetDatum(*((int32 *)(T))) \
-		: \
-		( \
-			(attlen) == (int) sizeof(int16) ? \
-				Int16GetDatum(*((int16 *)(T))) \
-			: \
-			( \
-				AssertMacro((attlen) == 1), \
-				CharGetDatum(*((char *)(T))) \
-			) \
-		) \
-	) \
-	: \
-	PointerGetDatum((char *) (T)) \
-)
-#endif							/* SIZEOF_DATUM == 8 */
+			case sizeof(Datum):
+				return *((const Datum *) T);
+#endif
+			default:
+				elog(ERROR, "unsupported byval length: %d", attlen);
+				return 0;
+		}
+	}
+	else
+		return PointerGetDatum(T);
+}
+#endif							/* FRONTEND */
 
 /*
  * att_align_datum aligns the given offset as needed for a datum of alignment
@@ -190,58 +171,37 @@
 	)) \
 )
 
+#ifndef FRONTEND
 /*
  * store_att_byval is a partial inverse of fetch_att: store a given Datum
  * value into a tuple data area at the specified address.  However, it only
  * handles the byval case, because in typical usage the caller needs to
- * distinguish by-val and by-ref cases anyway, and so a do-it-all macro
+ * distinguish by-val and by-ref cases anyway, and so a do-it-all function
  * wouldn't be convenient.
  */
+static inline void
+store_att_byval(void *T, Datum newdatum, int attlen)
+{
+	switch (attlen)
+	{
+		case sizeof(char):
+			*(char *) T = DatumGetChar(newdatum);
+			break;
+		case sizeof(int16):
+			*(int16 *) T = DatumGetInt16(newdatum);
+			break;
+		case sizeof(int32):
+			*(int32 *) T = DatumGetInt32(newdatum);
+			break;
 #if SIZEOF_DATUM == 8
-
-#define store_att_byval(T,newdatum,attlen) \
-	do { \
-		switch (attlen) \
-		{ \
-			case sizeof(char): \
-				*(char *) (T) = DatumGetChar(newdatum); \
-				break; \
-			case sizeof(int16): \
-				*(int16 *) (T) = DatumGetInt16(newdatum); \
-				break; \
-			case sizeof(int32): \
-				*(int32 *) (T) = DatumGetInt32(newdatum); \
-				break; \
-			case sizeof(Datum): \
-				*(Datum *) (T) = (newdatum); \
-				break; \
-			default: \
-				elog(ERROR, "unsupported byval length: %d", \
-					 (int) (attlen)); \
-				break; \
-		} \
-	} while (0)
-#else							/* SIZEOF_DATUM != 8 */
-
-#define store_att_byval(T,newdatum,attlen) \
-	do { \
-		switch (attlen) \
-		{ \
-			case sizeof(char): \
-				*(char *) (T) = DatumGetChar(newdatum); \
-				break; \
-			case sizeof(int16): \
-				*(int16 *) (T) = DatumGetInt16(newdatum); \
-				break; \
-			case sizeof(int32): \
-				*(int32 *) (T) = DatumGetInt32(newdatum); \
-				break; \
-			default: \
-				elog(ERROR, "unsupported byval length: %d", \
-					 (int) (attlen)); \
-				break; \
-		} \
-	} while (0)
-#endif							/* SIZEOF_DATUM == 8 */
-
+		case sizeof(Datum):
+			*(Datum *) T = newdatum;
+			break;
 #endif
+		default:
+			elog(ERROR, "unsupported byval length: %d", attlen);
+	}
+}
+#endif							/* FRONTEND */
+
+#endif							/* TUPMACS_H */
