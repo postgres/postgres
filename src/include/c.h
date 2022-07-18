@@ -1347,13 +1347,18 @@ extern unsigned long long strtoull(const char *str, char **endptr, int base);
 
 /*
  * Use "extern PGDLLEXPORT ..." to declare functions that are defined in
- * loadable modules and need to be callable by the core backend.  (Usually,
- * this is not necessary because our build process automatically exports
- * such symbols, but sometimes manual marking is required.)
- * No special marking is required on most ports.
+ * loadable modules and need to be callable by the core backend or other
+ * loadable modules.
+ * If the compiler knows __attribute__((visibility("*"))), we use that,
+ * unless we already have a platform-specific definition.  Otherwise,
+ * no special marking is required.
  */
 #ifndef PGDLLEXPORT
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+#define PGDLLEXPORT __attribute__((visibility("default")))
+#else
 #define PGDLLEXPORT
+#endif
 #endif
 
 /*

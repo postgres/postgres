@@ -700,6 +700,9 @@
 /* Define to 1 if you have the <uuid/uuid.h> header file. */
 #undef HAVE_UUID_UUID_H
 
+/* Define to 1 if your compiler knows the visibility("hidden") attribute. */
+#undef HAVE_VISIBILITY_ATTRIBUTE
+
 /* Define to 1 if you have the `wcstombs_l' function. */
 #undef HAVE_WCSTOMBS_L
 

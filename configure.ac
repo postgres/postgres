@@ -525,6 +525,17 @@ if test "$GCC" = yes -a "$ICC" = no; then
   # Optimization flags for specific files that benefit from vectorization
   PGAC_PROG_CC_VAR_OPT(CFLAGS_VECTORIZE, [-ftree-vectorize])
   #
+  # If the compiler knows how to hide symbols add the switch needed for that
+  # to CFLAGS_SL_MODULE and define HAVE_VISIBILITY_ATTRIBUTE.
+  PGAC_PROG_CC_VAR_OPT(CFLAGS_SL_MODULE, [-fvisibility=hidden])
+  if test "$pgac_cv_prog_CC_cflags__fvisibility_hidden" = yes; then
+     AC_DEFINE([HAVE_VISIBILITY_ATTRIBUTE], 1,
+               [Define to 1 if your compiler knows the visibility("hidden") attribute.])
+  fi
+  # For C++ we additionally want -fvisibility-inlines-hidden
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CXX, CXXFLAGS_SL_MODULE, [-fvisibility=hidden])
+  PGAC_PROG_VARCXX_VARFLAGS_OPT(CXX, CXXFLAGS_SL_MODULE, [-fvisibility-inlines-hidden])
+  #
   # The following tests want to suppress various unhelpful warnings by adding
   # -Wno-foo switches.  But gcc won't complain about unrecognized -Wno-foo
   # switches, so we have to test for the positive form and if that works,
@@ -573,6 +584,8 @@ fi
 
 AC_SUBST(CFLAGS_UNROLL_LOOPS)
 AC_SUBST(CFLAGS_VECTORIZE)
+AC_SUBST(CFLAGS_SL_MODULE)
+AC_SUBST(CXXFLAGS_SL_MODULE)
 
 # Determine flags used to emit bitcode for JIT inlining.
 # 1. We must duplicate any behaviour-changing compiler flags used above,
