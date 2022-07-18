@@ -4980,13 +4980,7 @@ ExecEvalJsonExpr(ExprEvalStep *op, ExprContext *econtext,
 					 * type simply does not exist.
 					 */
 					ereport(ERROR,
-
-					/*
-					 * XXX Standard says about a separate error code
-					 * ERRCODE_SQL_JSON_ITEM_CANNOT_BE_CAST_TO_TARGET_TYPE but
-					 * does not define its number.
-					 */
-							(errcode(ERRCODE_SQL_JSON_SCALAR_REQUIRED),
+							(errcode(ERRCODE_SQL_JSON_ITEM_CANNOT_BE_CAST_TO_TARGET_TYPE),
 							 errmsg("SQL/JSON item cannot be cast to target type")));
 				}
 				else if (!jcstate->estate)

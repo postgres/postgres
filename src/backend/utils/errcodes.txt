@@ -222,6 +222,7 @@ Section: Class 22 - Data Exception
 2203D    E    ERRCODE_TOO_MANY_JSON_ARRAY_ELEMENTS                           too_many_json_array_elements
 2203E    E    ERRCODE_TOO_MANY_JSON_OBJECT_MEMBERS                           too_many_json_object_members
 2203F    E    ERRCODE_SQL_JSON_SCALAR_REQUIRED                               sql_json_scalar_required
+2203G    E    ERRCODE_SQL_JSON_ITEM_CANNOT_BE_CAST_TO_TARGET_TYPE            sql_json_item_cannot_be_cast_to_target_type
 
 Section: Class 23 - Integrity Constraint Violation
 
