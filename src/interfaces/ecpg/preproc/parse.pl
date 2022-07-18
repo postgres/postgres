@@ -14,7 +14,6 @@
 
 use strict;
 use warnings;
-no warnings 'uninitialized';
 use Getopt::Long;
 
 my $srcdir  = '.';
@@ -40,7 +39,8 @@ my $tokenmode             = 0;
 
 my (%buff, $infield, $comment, %tokens, %addons);
 my ($stmt_mode, @fields);
-my ($line,      $non_term_id);
+my $line = '';
+my $non_term_id;
 
 
 # some token have to be replaced by other symbols
@@ -195,6 +195,16 @@ sub main
 		# Now split the line into individual fields
 		my @arr = split(' ');
 
+		if (!@arr)
+		{
+			# empty line: in tokenmode 1, emit an empty line, else ignore
+			if ($tokenmode == 1)
+			{
+				add_to_buffer('orig_tokens', '');
+			}
+			next line;
+		}
+
 		if ($arr[0] eq '%token' && $tokenmode == 0)
 		{
 			$tokenmode = 1;
@@ -341,7 +351,8 @@ sub main
 
 			# Are we looking at a declaration of a non-terminal ?
 			if (($arr[$fieldIndexer] =~ /[A-Za-z0-9]+:/)
-				|| $arr[ $fieldIndexer + 1 ] eq ':')
+				|| (   $fieldIndexer + 1 < scalar(@arr)
+					&& $arr[ $fieldIndexer + 1 ] eq ':'))
 			{
 				$non_term_id = $arr[$fieldIndexer];
 				$non_term_id =~ tr/://d;
@@ -409,11 +420,13 @@ sub main
 			if (   $copymode
 				&& !$prec
 				&& !$comment
+				&& $fieldIndexer < scalar(@arr)
 				&& length($arr[$fieldIndexer])
 				&& $infield)
 			{
 				if ($arr[$fieldIndexer] ne 'Op'
-					&& (   $tokens{ $arr[$fieldIndexer] } > 0
+					&& ((   defined $tokens{ $arr[$fieldIndexer] }
+							&& $tokens{ $arr[$fieldIndexer] } > 0)
 						|| $arr[$fieldIndexer] =~ /'.+'/)
 					|| $stmt_mode == 1)
 				{
@@ -472,11 +485,12 @@ sub include_addon
 	my $rec = $addons{$block};
 	return 0 unless $rec;
 
-	if ($rec->{type} eq 'rule')
+	my $rectype = (defined $rec->{type}) ? $rec->{type} : '';
+	if ($rectype eq 'rule')
 	{
 		dump_fields($stmt_mode, $fields, ' { ');
 	}
-	elsif ($rec->{type} eq 'addon')
+	elsif ($rectype eq 'addon')
 	{
 		add_to_buffer('rules', ' { ');
 	}
@@ -487,7 +501,7 @@ sub include_addon
 
 	push(@{ $buff{$buffer} }, @{ $rec->{lines} });
 
-	if ($rec->{type} eq 'addon')
+	if ($rectype eq 'addon')
 	{
 		dump_fields($stmt_mode, $fields, '');
 	}

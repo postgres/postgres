@@ -18,7 +18,6 @@
 
 use strict;
 use warnings;
-no warnings 'uninitialized';
 use Getopt::Long;
 
 my $srcdir  = '.';
@@ -142,7 +141,8 @@ while (<$parser_fh>)
 			$in_rule = 0 if $arr[$fieldIndexer] eq ';';
 		}
 		elsif (($arr[$fieldIndexer] =~ '[A-Za-z0-9]+:')
-			|| $arr[ $fieldIndexer + 1 ] eq ':')
+			   || (   $fieldIndexer + 1 < $n
+					  && $arr[ $fieldIndexer + 1 ] eq ':'))
 		{
 			die "unterminated rule at grammar line $.\n"
 			  if $in_rule;
