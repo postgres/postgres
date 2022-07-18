@@ -261,7 +261,6 @@ static const TclExceptionNameMap exception_name_map[] = {
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
-void		_PG_init(void);
 
 static void pltcl_init_interp(pltcl_interp_desc *interp_desc,
 							  Oid prolang, bool pltrusted);

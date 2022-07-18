@@ -29,8 +29,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* Install hooks */
 void
 _PG_init(void)

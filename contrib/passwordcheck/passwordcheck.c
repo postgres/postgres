@@ -32,8 +32,6 @@ static check_password_hook_type prev_check_password_hook = NULL;
 /* passwords shorter than this will be rejected */
 #define MIN_PWD_LENGTH 8
 
-extern void _PG_init(void);
-
 /*
  * check_password
  *

@@ -1265,11 +1265,6 @@ extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_HashTableInit(void);
 
 /*
- * Functions in pl_handler.c
- */
-extern void _PG_init(void);
-
-/*
  * Functions in pl_exec.c
  */
 extern Datum plpgsql_exec_function(PLpgSQL_function *func,

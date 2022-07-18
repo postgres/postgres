@@ -20,8 +20,6 @@ double		similarity_threshold = 0.3f;
 double		word_similarity_threshold = 0.6f;
 double		strict_word_similarity_threshold = 0.5f;
 
-void		_PG_init(void);
-
 PG_FUNCTION_INFO_V1(set_limit);
 PG_FUNCTION_INFO_V1(show_limit);
 PG_FUNCTION_INFO_V1(show_trgm);

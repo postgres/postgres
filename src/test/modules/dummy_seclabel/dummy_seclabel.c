@@ -19,9 +19,6 @@
 
 PG_MODULE_MAGIC;
 
-/* Entrypoint of the module */
-void		_PG_init(void);
-
 PG_FUNCTION_INFO_V1(dummy_seclabel_dummy);
 
 static void

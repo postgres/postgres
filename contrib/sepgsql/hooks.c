@@ -30,7 +30,6 @@ PG_MODULE_MAGIC;
 /*
  * Declarations
  */
-void		_PG_init(void);
 
 /*
  * Saved hook entries (if stacked)

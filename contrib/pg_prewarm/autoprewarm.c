@@ -82,7 +82,6 @@ typedef struct AutoPrewarmSharedState
 	int			prewarmed_blocks;
 } AutoPrewarmSharedState;
 
-void		_PG_init(void);
 void		autoprewarm_main(Datum main_arg);
 void		autoprewarm_database_main(Datum main_arg);
 

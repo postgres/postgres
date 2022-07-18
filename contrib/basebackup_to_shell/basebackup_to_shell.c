@@ -37,8 +37,6 @@ typedef struct bbsink_shell
 	FILE	   *pipe;
 } bbsink_shell;
 
-void		_PG_init(void);
-
 static void *shell_check_detail(char *target, char *target_detail);
 static bbsink *shell_get_sink(bbsink *next_sink, void *detail_arg);
 

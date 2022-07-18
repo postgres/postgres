@@ -23,8 +23,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* parse table for fillRelOptions */
 relopt_parse_elt di_relopt_tab[6];
 

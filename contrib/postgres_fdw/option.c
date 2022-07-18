@@ -51,8 +51,6 @@ static PQconninfoOption *libpq_options;
  */
 char	   *pgfdw_application_name = NULL;
 
-void		_PG_init(void);
-
 /*
  * Helper functions
  */

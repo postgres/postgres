@@ -36,8 +36,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 struct WalReceiverConn
 {
 	/* Current connection to the primary, if any */

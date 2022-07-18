@@ -7,8 +7,6 @@
 
 PG_MODULE_MAGIC;
 
-extern void _PG_init(void);
-
 /* Linkage to functions in plpython module */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);
 static PLyObject_AsString_t PLyObject_AsString_p;

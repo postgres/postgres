@@ -36,9 +36,6 @@ static int	post_planning_lock_id = 0;
 /* Save previous planner hook user to be a good citizen */
 static planner_hook_type prev_planner_hook = NULL;
 
-/* Module load function */
-void		_PG_init(void);
-
 
 /* planner_hook function to provide the desired delay */
 static PlannedStmt *

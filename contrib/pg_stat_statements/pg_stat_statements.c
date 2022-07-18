@@ -305,8 +305,6 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 
 /*---- Function declarations ----*/
 
-void		_PG_init(void);
-
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset_1_7);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);

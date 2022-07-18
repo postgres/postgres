@@ -69,8 +69,6 @@ static char *accesstype_to_string(ObjectAccessType access, int subId);
 static char *accesstype_arg_to_string(ObjectAccessType access, void *arg);
 
 
-void		_PG_init(void);
-
 /*
  * Module load callback
  */

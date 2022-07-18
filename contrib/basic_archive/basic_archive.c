@@ -40,9 +40,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-void		_PG_archive_module_init(ArchiveModuleCallbacks *cb);
-
 static char *archive_directory = NULL;
 static MemoryContext basic_archive_context;
 
