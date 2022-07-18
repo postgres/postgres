@@ -389,39 +389,9 @@ sub GenerateTsearchFiles
 	my $target = shift;
 
 	print "Generating tsearch script...";
-	my $F;
-	my $tmpl = read_file('src/backend/snowball/snowball.sql.in');
-	my $mf   = read_file('src/backend/snowball/Makefile');
-	$mf =~ s{\\\r?\n}{}g;
-	$mf =~ /^LANGUAGES\s*=\s*(.*)$/m
-	  || die "Could not find LANGUAGES line in snowball Makefile\n";
-	my @pieces = split /\s+/, $1;
-	open($F, '>', "$target/share/snowball_create.sql")
-	  || die "Could not write snowball_create.sql";
-	print $F read_file('src/backend/snowball/snowball_func.sql.in');
-
-	while ($#pieces > 0)
-	{
-		my $lang    = shift @pieces || last;
-		my $asclang = shift @pieces || last;
-		my $txt     = $tmpl;
-		my $stop    = '';
-
-		if (-s "src/backend/snowball/stopwords/$lang.stop")
-		{
-			$stop = ", StopWords=$lang";
-		}
-
-		$txt =~ s#_LANGNAME_#${lang}#gs;
-		$txt =~ s#_DICTNAME_#${lang}_stem#gs;
-		$txt =~ s#_CFGNAME_#${lang}#gs;
-		$txt =~ s#_ASCDICTNAME_#${asclang}_stem#gs;
-		$txt =~ s#_NONASCDICTNAME_#${lang}_stem#gs;
-		$txt =~ s#_STOPWORDS_#$stop#gs;
-		print $F $txt;
-		print ".";
-	}
-	close($F);
+	system('perl', 'src/backend/snowball/snowball_create.pl',
+		'--input', 'src/backend/snowball/',
+		'--outdir', "$target/share/");
 	print "\n";
 	return;
 }
