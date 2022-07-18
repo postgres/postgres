@@ -19,16 +19,20 @@
 use strict;
 use warnings;
 no warnings 'uninitialized';
+use Getopt::Long;
 
+my $srcdir  = '.';
+my $parser  = '../../../backend/parser/gram.y';
+my $stamp   = '';
 my $verbose = 0;
-if ($ARGV[0] eq '-v')
-{
-	$verbose = shift;
-}
-my $path   = shift || '.';
-my $parser = shift || '../../../backend/parser/gram.y';
 
-my $filename = $path . "/ecpg.addons";
+GetOptions(
+	'srcdir=s' => \$srcdir,
+	'parser=s' => \$parser,
+	'stamp=s'  => \$stamp,
+	'verbose'  => \$verbose,) or die "wrong arguments";
+
+my $filename = "$srcdir/ecpg.addons";
 if ($verbose)
 {
 	print "parser: $parser\n";
@@ -186,6 +190,12 @@ close $ecpg_fh;
 if ($verbose)
 {
 	print "$cc rules checked\n";
+}
+
+if ($stamp)
+{
+	open my $stampfh, '>', $stamp or die $!;
+	close $stampfh;
 }
 
 exit $ret;

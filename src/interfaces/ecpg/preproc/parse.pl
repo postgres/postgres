@@ -15,9 +15,20 @@
 use strict;
 use warnings;
 no warnings 'uninitialized';
+use Getopt::Long;
 
-my $path = shift @ARGV;
-$path = "." unless $path;
+my $srcdir  = '.';
+my $outfile = '';
+my $parser  = '';
+
+GetOptions(
+	'srcdir=s' => \$srcdir,
+	'output=s' => \$outfile,
+	'parser=s' => \$parser,) or die "wrong arguments";
+
+# open parser / output file early, to raise errors early
+open(our $parserfh, '<', $parser) or die "could not open parser file $parser";
+open(our $outfh, '>', $outfile) or die "could not open output file $outfile";
 
 my $copymode              = 0;
 my $brace_indent          = 0;
@@ -128,15 +139,17 @@ dump_buffer('tokens');
 dump_buffer('types');
 dump_buffer('ecpgtype');
 dump_buffer('orig_tokens');
-print '%%',                "\n";
-print 'prog: statements;', "\n";
+print $outfh '%%',                "\n";
+print $outfh 'prog: statements;', "\n";
 dump_buffer('rules');
 include_file('trailer', 'ecpg.trailer');
 dump_buffer('trailer');
 
+close($parserfh);
+
 sub main
 {
-  line: while (<>)
+  line: while (<$parserfh>)
 	{
 		if (/ERRCODE_FEATURE_NOT_SUPPORTED/)
 		{
@@ -442,7 +455,7 @@ sub main
 sub include_file
 {
 	my ($buffer, $filename) = @_;
-	my $full = "$path/$filename";
+	my $full = "$srcdir/$filename";
 	open(my $fh, '<', $full) or die;
 	while (<$fh>)
 	{
@@ -498,9 +511,9 @@ sub add_to_buffer
 sub dump_buffer
 {
 	my ($buffer) = @_;
-	print '/* ', $buffer, ' */', "\n";
+	print $outfh '/* ', $buffer, ' */', "\n";
 	my $ref = $buff{$buffer};
-	print @$ref;
+	print $outfh @$ref;
 	return;
 }
 
@@ -652,7 +665,7 @@ sub dump_line
 
 sub preload_addons
 {
-	my $filename = $path . "/ecpg.addons";
+	my $filename = $srcdir . "/ecpg.addons";
 	open(my $fh, '<', $filename) or die;
 
 	# there may be multiple lines starting ECPG: and then multiple lines of code.
