@@ -52,7 +52,7 @@ fmgr-stamp: Gen_fmgrtab.pl $(catalogdir)/Catalog.pm $(top_srcdir)/src/include/ca
 	touch $@
 
 errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
-	$(PERL) $(srcdir)/generate-errcodes.pl $< > $@
+	$(PERL) $(srcdir)/generate-errcodes.pl --outfile $@ $<
 
 ifneq ($(enable_dtrace), yes)
 probes.h: Gen_dummy_probes.sed
