@@ -625,9 +625,8 @@ sub GenerateFiles
 			'src/backend/storage/lmgr/lwlocknames.txt'))
 	{
 		print "Generating lwlocknames.c and lwlocknames.h...\n";
-		chdir('src/backend/storage/lmgr');
-		system('perl generate-lwlocknames.pl lwlocknames.txt');
-		chdir('../../../..');
+		my $lmgr = 'src/backend/storage/lmgr';
+		system("perl $lmgr/generate-lwlocknames.pl --outdir $lmgr $lmgr/lwlocknames.txt");
 	}
 	if (IsNewer(
 			'src/include/storage/lwlocknames.h',
