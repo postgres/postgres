@@ -285,4 +285,115 @@ SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
 
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
+
+
+-----
+-- Test that various stats views are being properly populated
+-----
+
+-- Test that sessions is incremented when a new session is started in pg_stat_database
+SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+\c
+SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database());
+
+-- Test pg_stat_bgwriter checkpointer-related stats, together with pg_stat_wal
+SELECT checkpoints_req AS rqst_ckpts_before FROM pg_stat_bgwriter \gset
+
+-- Test pg_stat_wal
+SELECT wal_bytes AS wal_bytes_before FROM pg_stat_wal \gset
+
+CREATE TABLE test_stats_temp AS SELECT 17;
+DROP TABLE test_stats_temp;
+
+-- Checkpoint twice: The checkpointer reports stats after reporting completion
+-- of the checkpoint. But after a second checkpoint we'll see at least the
+-- results of the first.
+CHECKPOINT;
+CHECKPOINT;
+
+SELECT checkpoints_req > :rqst_ckpts_before FROM pg_stat_bgwriter;
+SELECT wal_bytes > :wal_bytes_before FROM pg_stat_wal;
+
+
+-----
+-- Test that resetting stats works for reset timestamp
+-----
+
+-- Test that reset_slru with a specified SLRU works.
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
+SELECT stats_reset AS slru_notify_reset_ts FROM pg_stat_slru WHERE name = 'Notify' \gset
+SELECT pg_stat_reset_slru('CommitTs');
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
+SELECT stats_reset AS slru_commit_ts_reset_ts FROM pg_stat_slru WHERE name = 'CommitTs' \gset
+
+-- Test that multiple SLRUs are reset when no specific SLRU provided to reset function
+SELECT pg_stat_reset_slru(NULL);
+SELECT stats_reset > :'slru_commit_ts_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'CommitTs';
+SELECT stats_reset > :'slru_notify_reset_ts'::timestamptz FROM pg_stat_slru WHERE name = 'Notify';
+
+-- Test that reset_shared with archiver specified as the stats type works
+SELECT stats_reset AS archiver_reset_ts FROM pg_stat_archiver \gset
+SELECT pg_stat_reset_shared('archiver');
+SELECT stats_reset > :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
+SELECT stats_reset AS archiver_reset_ts FROM pg_stat_archiver \gset
+
+-- Test that reset_shared with bgwriter specified as the stats type works
+SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
+SELECT pg_stat_reset_shared('bgwriter');
+SELECT stats_reset > :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
+SELECT stats_reset AS bgwriter_reset_ts FROM pg_stat_bgwriter \gset
+
+-- Test that reset_shared with wal specified as the stats type works
+SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
+SELECT pg_stat_reset_shared('wal');
+SELECT stats_reset > :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
+SELECT stats_reset AS wal_reset_ts FROM pg_stat_wal \gset
+
+-- Test that reset_shared with no specified stats type doesn't reset anything
+SELECT pg_stat_reset_shared(NULL);
+SELECT stats_reset = :'archiver_reset_ts'::timestamptz FROM pg_stat_archiver;
+SELECT stats_reset = :'bgwriter_reset_ts'::timestamptz FROM pg_stat_bgwriter;
+SELECT stats_reset = :'wal_reset_ts'::timestamptz FROM pg_stat_wal;
+
+-- Test that reset works for pg_stat_database
+
+-- Since pg_stat_database stats_reset starts out as NULL, reset it once first so we have something to compare it to
+SELECT pg_stat_reset();
+SELECT stats_reset AS db_reset_ts FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
+SELECT pg_stat_reset();
+SELECT stats_reset > :'db_reset_ts'::timestamptz FROM pg_stat_database WHERE datname = (SELECT current_database());
+
+
+----
+-- pg_stat_get_snapshot_timestamp behavior
+----
+BEGIN;
+SET LOCAL stats_fetch_consistency = snapshot;
+-- no snapshot yet, return NULL
+SELECT pg_stat_get_snapshot_timestamp();
+-- any attempt at accessing stats will build snapshot
+SELECT pg_stat_get_function_calls(0);
+SELECT pg_stat_get_snapshot_timestamp() >= NOW();
+-- shows NULL again after clearing
+SELECT pg_stat_clear_snapshot();
+SELECT pg_stat_get_snapshot_timestamp();
+COMMIT;
+
+----
+-- pg_stat_have_stats behavior
+----
+-- fixed-numbered stats exist
+SELECT pg_stat_have_stats('bgwriter', 0, 0);
+-- unknown stats kinds error out
+SELECT pg_stat_have_stats('zaphod', 0, 0);
+-- db stats have objoid 0
+SELECT pg_stat_have_stats('database', (SELECT oid FROM pg_database WHERE datname = current_database()), 1);
+SELECT pg_stat_have_stats('database', (SELECT oid FROM pg_database WHERE datname = current_database()), 0);
+
+
+-- ensure that stats accessors handle NULL input correctly
+SELECT pg_stat_get_replication_slot(NULL);
+SELECT pg_stat_get_subscription_stats(NULL);
+
+
 -- End of Stats Test
