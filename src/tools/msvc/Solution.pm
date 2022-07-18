@@ -865,15 +865,12 @@ EOF
 		  utils/rel.h
 		);
 
-		chdir('src/backend/nodes');
+		my @node_files = map { "src/include/$_" } @node_headers;
 
-		my @node_files = map { "../../../src/include/$_" } @node_headers;
-
-		system("perl gen_node_support.pl @node_files");
-		open(my $f, '>', 'node-support-stamp')
+		system("perl src/backend/nodes/gen_node_support.pl --outdir src/backend/nodes @node_files");
+		open(my $f, '>', 'src/backend/nodes/node-support-stamp')
 		  || confess "Could not touch node-support-stamp";
 		close($f);
-		chdir('../../..');
 	}
 
 	if (IsNewer(

@@ -19,11 +19,18 @@ use strict;
 use warnings;
 
 use File::Basename;
+use Getopt::Long;
 
 use FindBin;
 use lib "$FindBin::RealBin/../catalog";
 
 use Catalog;    # for RenameTempFile
+
+my $output_path = '.';
+
+GetOptions(
+	'outdir:s'       => \$output_path)
+  or die "$0: wrong arguments";
 
 
 # Test whether first argument is element of the list in the second
@@ -576,7 +583,7 @@ my $header_comment =
 # nodetags.h
 
 push @output_files, 'nodetags.h';
-open my $nt, '>', 'nodetags.h' . $tmpext or die $!;
+open my $nt, '>', "$output_path/nodetags.h$tmpext" or die "$output_path/nodetags.h$tmpext: $!";
 
 printf $nt $header_comment, 'nodetags.h';
 
@@ -620,13 +627,13 @@ foreach my $infile (sort @ARGV)
 # copyfuncs.c, equalfuncs.c
 
 push @output_files, 'copyfuncs.funcs.c';
-open my $cff, '>', 'copyfuncs.funcs.c' . $tmpext or die $!;
+open my $cff, '>', "$output_path/copyfuncs.funcs.c$tmpext" or die $!;
 push @output_files, 'equalfuncs.funcs.c';
-open my $eff, '>', 'equalfuncs.funcs.c' . $tmpext or die $!;
+open my $eff, '>', "$output_path/equalfuncs.funcs.c$tmpext" or die $!;
 push @output_files, 'copyfuncs.switch.c';
-open my $cfs, '>', 'copyfuncs.switch.c' . $tmpext or die $!;
+open my $cfs, '>', "$output_path/copyfuncs.switch.c$tmpext" or die $!;
 push @output_files, 'equalfuncs.switch.c';
-open my $efs, '>', 'equalfuncs.switch.c' . $tmpext or die $!;
+open my $efs, '>', "$output_path/equalfuncs.switch.c$tmpext" or die $!;
 
 printf $cff $header_comment, 'copyfuncs.funcs.c';
 printf $eff $header_comment, 'equalfuncs.funcs.c';
@@ -819,13 +826,13 @@ close $efs;
 # outfuncs.c, readfuncs.c
 
 push @output_files, 'outfuncs.funcs.c';
-open my $off, '>', 'outfuncs.funcs.c' . $tmpext or die $!;
+open my $off, '>', "$output_path/outfuncs.funcs.c$tmpext" or die $!;
 push @output_files, 'readfuncs.funcs.c';
-open my $rff, '>', 'readfuncs.funcs.c' . $tmpext or die $!;
+open my $rff, '>', "$output_path/readfuncs.funcs.c$tmpext" or die $!;
 push @output_files, 'outfuncs.switch.c';
-open my $ofs, '>', 'outfuncs.switch.c' . $tmpext or die $!;
+open my $ofs, '>', "$output_path/outfuncs.switch.c$tmpext" or die $!;
 push @output_files, 'readfuncs.switch.c';
-open my $rfs, '>', 'readfuncs.switch.c' . $tmpext or die $!;
+open my $rfs, '>', "$output_path/readfuncs.switch.c$tmpext" or die $!;
 
 printf $off $header_comment, 'outfuncs.funcs.c';
 printf $rff $header_comment, 'readfuncs.funcs.c';
@@ -1130,7 +1137,7 @@ close $rfs;
 # now rename the temporary files to their final names
 foreach my $file (@output_files)
 {
-	Catalog::RenameTempFile($file, $tmpext);
+	Catalog::RenameTempFile("$output_path/$file", $tmpext);
 }
 
 
@@ -1144,7 +1151,7 @@ END
 	{
 		foreach my $file (@output_files)
 		{
-			unlink($file . $tmpext);
+			unlink("$output_path/$file$tmpext");
 		}
 	}
 
