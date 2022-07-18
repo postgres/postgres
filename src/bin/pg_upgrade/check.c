@@ -1124,10 +1124,10 @@ check_for_incompatible_polymorphics(ClusterInfo *cluster)
 		fclose(script);
 		pg_log(PG_REPORT, "fatal\n");
 		pg_fatal("Your installation contains user-defined objects that refer to internal\n"
-				 "polymorphic functions with arguments of type 'anyarray' or 'anyelement'.\n"
+				 "polymorphic functions with arguments of type \"anyarray\" or \"anyelement\".\n"
 				 "These user-defined objects must be dropped before upgrading and restored\n"
 				 "afterwards, changing them to refer to the new corresponding functions with\n"
-				 "arguments of type 'anycompatiblearray' and 'anycompatible'.\n"
+				 "arguments of type \"anycompatiblearray\" and \"anycompatible\".\n"
 				 "A list of the problematic objects is in the file:\n"
 				 "    %s\n\n", output_path);
 	}
