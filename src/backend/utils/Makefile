@@ -57,6 +57,7 @@ errcodes.h: $(top_srcdir)/src/backend/utils/errcodes.txt generate-errcodes.pl
 ifeq ($(enable_dtrace), yes)
 probes.h: postprocess_dtrace.sed probes.h.tmp
 	sed -f $^ >$@
+	rm probes.h.tmp
 
 probes.h.tmp: probes.d
 	$(DTRACE) -C -h -s $< -o $@
@@ -106,7 +107,7 @@ uninstall-data:
 # fmgroids.h, fmgrprotos.h, fmgrtab.c, fmgr-stamp, and errcodes.h are in the
 # distribution tarball, so they are not cleaned here.
 clean:
-	rm -f probes.h
+	rm -f probes.h probes.h.tmp
 
 maintainer-clean: clean
 	rm -f fmgroids.h fmgrprotos.h fmgrtab.c fmgr-stamp errcodes.h
