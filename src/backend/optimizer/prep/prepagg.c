@@ -223,13 +223,13 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 	aggno = find_compatible_agg(root, aggref, &same_input_transnos);
 	if (aggno != -1)
 	{
-		AggInfo    *agginfo = list_nth(root->agginfos, aggno);
+		AggInfo    *agginfo = list_nth_node(AggInfo, root->agginfos, aggno);
 
 		transno = agginfo->transno;
 	}
 	else
 	{
-		AggInfo    *agginfo = palloc(sizeof(AggInfo));
+		AggInfo    *agginfo = makeNode(AggInfo);
 
 		agginfo->finalfn_oid = aggfinalfn;
 		agginfo->representative_aggref = aggref;
@@ -266,7 +266,7 @@ preprocess_aggref(Aggref *aggref, PlannerInfo *root)
 										same_input_transnos);
 		if (transno == -1)
 		{
-			AggTransInfo *transinfo = palloc(sizeof(AggTransInfo));
+			AggTransInfo *transinfo = makeNode(AggTransInfo);
 
 			transinfo->args = aggref->args;
 			transinfo->aggfilter = aggref->aggfilter;
@@ -381,7 +381,7 @@ find_compatible_agg(PlannerInfo *root, Aggref *newagg,
 	aggno = -1;
 	foreach(lc, root->agginfos)
 	{
-		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
+		AggInfo    *agginfo = lfirst_node(AggInfo, lc);
 		Aggref	   *existingRef;
 
 		aggno++;
@@ -452,7 +452,9 @@ find_compatible_trans(PlannerInfo *root, Aggref *newagg, bool shareable,
 	foreach(lc, transnos)
 	{
 		int			transno = lfirst_int(lc);
-		AggTransInfo *pertrans = (AggTransInfo *) list_nth(root->aggtransinfos, transno);
+		AggTransInfo *pertrans = list_nth_node(AggTransInfo,
+											   root->aggtransinfos,
+											   transno);
 
 		/*
 		 * if the transfns or transition state types are not the same then the
@@ -541,7 +543,7 @@ get_agg_clause_costs(PlannerInfo *root, AggSplit aggsplit, AggClauseCosts *costs
 
 	foreach(lc, root->aggtransinfos)
 	{
-		AggTransInfo *transinfo = (AggTransInfo *) lfirst(lc);
+		AggTransInfo *transinfo = lfirst_node(AggTransInfo, lc);
 
 		/*
 		 * Add the appropriate component function execution costs to
@@ -645,7 +647,7 @@ get_agg_clause_costs(PlannerInfo *root, AggSplit aggsplit, AggClauseCosts *costs
 
 	foreach(lc, root->agginfos)
 	{
-		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
+		AggInfo    *agginfo = lfirst_node(AggInfo, lc);
 		Aggref	   *aggref = agginfo->representative_aggref;
 
 		/*

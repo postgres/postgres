@@ -442,15 +442,15 @@ struct PlannerInfo
 	 * Information about aggregates. Filled by preprocess_aggrefs().
 	 */
 	/* AggInfo structs */
-	List	   *agginfos pg_node_attr(read_write_ignore);
+	List	   *agginfos;
 	/* AggTransInfo structs */
-	List	   *aggtransinfos pg_node_attr(read_write_ignore);
-	/* number w/ DISTINCT/ORDER BY/WITHIN GROUP */
-	int			numOrderedAggs pg_node_attr(read_write_ignore);
+	List	   *aggtransinfos;
+	/* number of aggs with DISTINCT/ORDER BY/WITHIN GROUP */
+	int			numOrderedAggs;
 	/* does any agg not support partial mode? */
-	bool		hasNonPartialAggs pg_node_attr(read_write_ignore);
+	bool		hasNonPartialAggs;
 	/* is any partial agg non-serializable? */
-	bool		hasNonSerialAggs pg_node_attr(read_write_ignore);
+	bool		hasNonSerialAggs;
 
 	/*
 	 * These fields are used only when hasRecursion is true:
@@ -3121,6 +3121,10 @@ typedef struct JoinCostWorkspace
  */
 typedef struct AggInfo
 {
+	pg_node_attr(no_copy_equal, no_read)
+
+	NodeTag		type;
+
 	/*
 	 * Link to an Aggref expr this state value is for.
 	 *
@@ -3129,6 +3133,7 @@ typedef struct AggInfo
 	 */
 	Aggref	   *representative_aggref;
 
+	/* Transition state number for this aggregate */
 	int			transno;
 
 	/*
@@ -3137,9 +3142,8 @@ typedef struct AggInfo
 	 */
 	bool		shareable;
 
-	/* Oid of the final function or InvalidOid */
+	/* Oid of the final function, or InvalidOid if none */
 	Oid			finalfn_oid;
-
 } AggInfo;
 
 /*
@@ -3151,34 +3155,40 @@ typedef struct AggInfo
  */
 typedef struct AggTransInfo
 {
+	pg_node_attr(no_copy_equal, no_read)
+
+	NodeTag		type;
+
+	/* Inputs for this transition state */
 	List	   *args;
 	Expr	   *aggfilter;
 
 	/* Oid of the state transition function */
 	Oid			transfn_oid;
 
-	/* Oid of the serialization function or InvalidOid */
+	/* Oid of the serialization function, or InvalidOid if none */
 	Oid			serialfn_oid;
 
-	/* Oid of the deserialization function or InvalidOid */
+	/* Oid of the deserialization function, or InvalidOid if none */
 	Oid			deserialfn_oid;
 
-	/* Oid of the combine function or InvalidOid */
+	/* Oid of the combine function, or InvalidOid if none */
 	Oid			combinefn_oid;
 
 	/* Oid of state value's datatype */
 	Oid			aggtranstype;
+
+	/* Additional data about transtype */
 	int32		aggtranstypmod;
 	int			transtypeLen;
 	bool		transtypeByVal;
+
+	/* Space-consumption estimate */
 	int32		aggtransspace;
 
-	/*
-	 * initial value from pg_aggregate entry
-	 */
-	Datum		initValue;
+	/* Initial value from pg_aggregate entry */
+	Datum		initValue pg_node_attr(read_write_ignore);
 	bool		initValueIsNull;
-
 } AggTransInfo;
 
 #endif							/* PATHNODES_H */
