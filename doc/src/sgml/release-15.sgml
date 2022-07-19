@@ -544,8 +544,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       The default is now that custom scan providers are assumed to not
-      support projections;  those that do need to be updated for this
-      release.
+      support projections;  those that do will need to be updated for
+      this release.
      </para>
     </listitem>
 
@@ -2495,30 +2495,21 @@ Author: Robert Haas <rhaas@postgresql.org>
 2022-02-11 [751b8d23b] pg_basebackup: Allow client-side LZ4 (de)compression.
 Author: Robert Haas <rhaas@postgresql.org>
 2022-03-08 [7cf085f07] Add support for zstd base backup compression.
--->
-
-     <listitem>
-      <para>
-       Allow <application>pg_basebackup</application> to do LZ4 and
-       Zstandard server-side compression on base backup files (Dipesh
-       Pandit, Jeevan Ladhe)
-      </para>
-     </listitem>
-
-<!--
-Author: Michael Paquier <michael@paquier.xyz>
-2022-01-21 [5c649fe15] Extend the options of pg_basebackup to control compressi
 Author: Robert Haas <rhaas@postgresql.org>
 2022-01-24 [0ad803291] Server-side gzip compression.
-Author: Robert Haas <rhaas@postgresql.org>
-2022-01-25 [e1f860f13] Tidy up a few cosmetic issues related to pg_basebackup.
 -->
 
      <listitem>
       <para>
-       Allow <application>pg_basebackup</application>'s
-       <option>--compress</option> option to control the compression
-       method and options (Michael Paquier, Robert Haas)
+       Allow <application>pg_basebackup</application> to do server-side
+       gzip, LZ4, and Zstandard compression and client-side LZ4 and
+       Zstandard compression of base backup files (Dipesh Pandit,
+       Jeevan Ladhe)
+      </para>
+
+      <para>
+       Client-side <literal>gzip</literal> compression was already
+       supported.
       </para>
      </listitem>
 
@@ -2537,6 +2528,24 @@ Author: Robert Haas <rhaas@postgresql.org>
       <para>
        This is accomplished by specifying compression on the server side
        and plain output format.
+      </para>
+     </listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-01-21 [5c649fe15] Extend the options of pg_basebackup to control compressi
+Author: Robert Haas <rhaas@postgresql.org>
+2022-01-24 [0ad803291] Server-side gzip compression.
+Author: Robert Haas <rhaas@postgresql.org>
+2022-01-25 [e1f860f13] Tidy up a few cosmetic issues related to pg_basebackup.
+-->
+
+     <listitem>
+      <para>
+       Allow <application>pg_basebackup</application>'s
+       <option>--compress</option> option to control the compression
+       location (server or client), compression method, and compression
+       options (Michael Paquier, Robert Haas)
       </para>
      </listitem>
 
