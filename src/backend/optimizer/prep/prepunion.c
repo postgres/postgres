@@ -78,7 +78,8 @@ static List *generate_setop_tlist(List *colTypes, List *colCollations,
 								  Index varno,
 								  bool hack_constants,
 								  List *input_tlist,
-								  List *refnames_tlist);
+								  List *refnames_tlist,
+								  bool *trivial_tlist);
 static List *generate_append_tlist(List *colTypes, List *colCollations,
 								   bool flag,
 								   List *input_tlists,
@@ -226,6 +227,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		Path	   *subpath;
 		Path	   *path;
 		List	   *tlist;
+		bool		trivial_tlist;
 
 		Assert(subquery != NULL);
 
@@ -254,7 +256,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 									 rtr->rtindex,
 									 true,
 									 subroot->processed_tlist,
-									 refnames_tlist);
+									 refnames_tlist,
+									 &trivial_tlist);
 		rel->reltarget = create_pathtarget(root, tlist);
 
 		/* Return the fully-fledged tlist to caller, too */
@@ -291,6 +294,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		 * soon too, likely.)
 		 */
 		path = (Path *) create_subqueryscan_path(root, rel, subpath,
+												 trivial_tlist,
 												 NIL, NULL);
 
 		add_path(rel, path);
@@ -309,6 +313,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 			partial_subpath = linitial(final_rel->partial_pathlist);
 			partial_path = (Path *)
 				create_subqueryscan_path(root, rel, partial_subpath,
+										 trivial_tlist,
 										 NIL, NULL);
 			add_partial_path(rel, partial_path);
 		}
@@ -376,6 +381,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 			!tlist_same_collations(*pTargetList, colCollations, junkOK))
 		{
 			PathTarget *target;
+			bool		trivial_tlist;
 			ListCell   *lc;
 
 			*pTargetList = generate_setop_tlist(colTypes, colCollations,
@@ -383,7 +389,8 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 												0,
 												false,
 												*pTargetList,
-												refnames_tlist);
+												refnames_tlist,
+												&trivial_tlist);
 			target = create_pathtarget(root, *pTargetList);
 
 			/* Apply projection to each path */
@@ -1117,6 +1124,7 @@ choose_hashed_setop(PlannerInfo *root, List *groupClauses,
  * hack_constants: true to copy up constants (see comments in code)
  * input_tlist: targetlist of this node's input node
  * refnames_tlist: targetlist to take column names from
+ * trivial_tlist: output parameter, set to true if targetlist is trivial
  */
 static List *
 generate_setop_tlist(List *colTypes, List *colCollations,
@@ -1124,7 +1132,8 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 					 Index varno,
 					 bool hack_constants,
 					 List *input_tlist,
-					 List *refnames_tlist)
+					 List *refnames_tlist,
+					 bool *trivial_tlist)
 {
 	List	   *tlist = NIL;
 	int			resno = 1;
@@ -1134,6 +1143,8 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 			   *rtlc;
 	TargetEntry *tle;
 	Node	   *expr;
+
+	*trivial_tlist = true;		/* until proven differently */
 
 	forfour(ctlc, colTypes, cclc, colCollations,
 			itlc, input_tlist, rtlc, refnames_tlist)
@@ -1160,6 +1171,9 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 		 * this only at the first level of subquery-scan plans; we don't want
 		 * phony constants appearing in the output tlists of upper-level
 		 * nodes!
+		 *
+		 * Note that copying a constant doesn't in itself require us to mark
+		 * the tlist nontrivial; see trivial_subqueryscan() in setrefs.c.
 		 */
 		if (hack_constants && inputtle->expr && IsA(inputtle->expr, Const))
 			expr = (Node *) inputtle->expr;
@@ -1185,6 +1199,7 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 										 expr,
 										 colType,
 										 "UNION/INTERSECT/EXCEPT");
+			*trivial_tlist = false; /* the coercion makes it not trivial */
 		}
 
 		/*
@@ -1199,9 +1214,12 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 		 * will reach the executor without any further processing.
 		 */
 		if (exprCollation(expr) != colColl)
+		{
 			expr = applyRelabelType(expr,
 									exprType(expr), exprTypmod(expr), colColl,
 									COERCE_IMPLICIT_CAST, -1, false);
+			*trivial_tlist = false; /* the relabel makes it not trivial */
+		}
 
 		tle = makeTargetEntry((Expr *) expr,
 							  (AttrNumber) resno++,
@@ -1234,6 +1252,7 @@ generate_setop_tlist(List *colTypes, List *colCollations,
 							  pstrdup("flag"),
 							  true);
 		tlist = lappend(tlist, tle);
+		*trivial_tlist = false; /* the extra entry makes it not trivial */
 	}
 
 	return tlist;

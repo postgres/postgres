@@ -5207,11 +5207,11 @@ explain (costs off)
    Sort Key: a.q1, a.q2, x.q1, x.q2, (a.q1)
    ->  Nested Loop
          ->  Seq Scan on int8_tbl a
-         ->  Hash Right Join
-               Hash Cond: ((a.q1) = x.q2)
-               ->  Seq Scan on int4_tbl y
+         ->  Hash Left Join
+               Hash Cond: (x.q2 = (a.q1))
+               ->  Seq Scan on int8_tbl x
                ->  Hash
-                     ->  Seq Scan on int8_tbl x
+                     ->  Seq Scan on int4_tbl y
 (9 rows)
 
 select * from int8_tbl a,

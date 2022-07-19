@@ -1976,18 +1976,18 @@ select * from tt24v;
 ------------------------------------------------------------------------------------------
  Hash Join
    Output: (cte.r).column2, ((ROW("*VALUES*".column1, "*VALUES*".column2))).column2
-   Hash Cond: (((ROW("*VALUES*".column1, "*VALUES*".column2))).column1 = (cte.r).column1)
+   Hash Cond: ((cte.r).column1 = ((ROW("*VALUES*".column1, "*VALUES*".column2))).column1)
    CTE cte
      ->  Values Scan on "*VALUES*_1"
            Output: ROW("*VALUES*_1".column1, "*VALUES*_1".column2)
-   ->  Limit
-         Output: (ROW("*VALUES*".column1, "*VALUES*".column2))
-         ->  Values Scan on "*VALUES*"
-               Output: ROW("*VALUES*".column1, "*VALUES*".column2)
-   ->  Hash
+   ->  CTE Scan on cte
          Output: cte.r
-         ->  CTE Scan on cte
-               Output: cte.r
+   ->  Hash
+         Output: (ROW("*VALUES*".column1, "*VALUES*".column2))
+         ->  Limit
+               Output: (ROW("*VALUES*".column1, "*VALUES*".column2))
+               ->  Values Scan on "*VALUES*"
+                     Output: ROW("*VALUES*".column1, "*VALUES*".column2)
 (14 rows)
 
 explain (verbose, costs off)

@@ -1636,9 +1636,10 @@ set_append_references(PlannerInfo *root,
 	/*
 	 * See if it's safe to get rid of the Append entirely.  For this to be
 	 * safe, there must be only one child plan and that child plan's parallel
-	 * awareness must match that of the Append's.  The reason for the latter
-	 * is that if the Append is parallel aware and the child is not, then the
-	 * calling plan may execute the non-parallel aware child multiple times.
+	 * awareness must match the Append's.  The reason for the latter is that
+	 * if the Append is parallel aware and the child is not, then the calling
+	 * plan may execute the non-parallel aware child multiple times.  (If you
+	 * change these rules, update create_append_path to match.)
 	 */
 	if (list_length(aplan->appendplans) == 1)
 	{
@@ -1710,10 +1711,11 @@ set_mergeappend_references(PlannerInfo *root,
 	/*
 	 * See if it's safe to get rid of the MergeAppend entirely.  For this to
 	 * be safe, there must be only one child plan and that child plan's
-	 * parallel awareness must match that of the MergeAppend's.  The reason
-	 * for the latter is that if the MergeAppend is parallel aware and the
-	 * child is not then the calling plan may execute the non-parallel aware
-	 * child multiple times.
+	 * parallel awareness must match the MergeAppend's.  The reason for the
+	 * latter is that if the MergeAppend is parallel aware and the child is
+	 * not, then the calling plan may execute the non-parallel aware child
+	 * multiple times.  (If you change these rules, update
+	 * create_merge_append_path to match.)
 	 */
 	if (list_length(mplan->mergeplans) == 1)
 	{

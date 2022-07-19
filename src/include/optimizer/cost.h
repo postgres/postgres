@@ -91,7 +91,8 @@ extern void cost_tidrangescan(Path *path, PlannerInfo *root,
 							  RelOptInfo *baserel, List *tidrangequals,
 							  ParamPathInfo *param_info);
 extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
-							  RelOptInfo *baserel, ParamPathInfo *param_info);
+							  RelOptInfo *baserel, ParamPathInfo *param_info,
+							  bool trivial_pathtarget);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
