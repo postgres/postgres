@@ -1637,14 +1637,16 @@ set_append_references(PlannerInfo *root,
 	 * See if it's safe to get rid of the Append entirely.  For this to be
 	 * safe, there must be only one child plan and that child plan's parallel
 	 * awareness must match that of the Append's.  The reason for the latter
-	 * is that the if the Append is parallel aware and the child is not then
-	 * the calling plan may execute the non-parallel aware child multiple
-	 * times.
+	 * is that if the Append is parallel aware and the child is not, then the
+	 * calling plan may execute the non-parallel aware child multiple times.
 	 */
-	if (list_length(aplan->appendplans) == 1 &&
-		((Plan *) linitial(aplan->appendplans))->parallel_aware == aplan->plan.parallel_aware)
-		return clean_up_removed_plan_level((Plan *) aplan,
-										   (Plan *) linitial(aplan->appendplans));
+	if (list_length(aplan->appendplans) == 1)
+	{
+		Plan	   *p = (Plan *) linitial(aplan->appendplans);
+
+		if (p->parallel_aware == aplan->plan.parallel_aware)
+			return clean_up_removed_plan_level((Plan *) aplan, p);
+	}
 
 	/*
 	 * Otherwise, clean up the Append as needed.  It's okay to do this after
@@ -1709,14 +1711,17 @@ set_mergeappend_references(PlannerInfo *root,
 	 * See if it's safe to get rid of the MergeAppend entirely.  For this to
 	 * be safe, there must be only one child plan and that child plan's
 	 * parallel awareness must match that of the MergeAppend's.  The reason
-	 * for the latter is that the if the MergeAppend is parallel aware and the
+	 * for the latter is that if the MergeAppend is parallel aware and the
 	 * child is not then the calling plan may execute the non-parallel aware
 	 * child multiple times.
 	 */
-	if (list_length(mplan->mergeplans) == 1 &&
-		((Plan *) linitial(mplan->mergeplans))->parallel_aware == mplan->plan.parallel_aware)
-		return clean_up_removed_plan_level((Plan *) mplan,
-										   (Plan *) linitial(mplan->mergeplans));
+	if (list_length(mplan->mergeplans) == 1)
+	{
+		Plan	   *p = (Plan *) linitial(mplan->mergeplans);
+
+		if (p->parallel_aware == mplan->plan.parallel_aware)
+			return clean_up_removed_plan_level((Plan *) mplan, p);
+	}
 
 	/*
 	 * Otherwise, clean up the MergeAppend as needed.  It's okay to do this
