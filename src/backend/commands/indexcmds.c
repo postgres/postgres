@@ -2877,10 +2877,15 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	bool		concurrent_warning = false;
 	bool		tablespace_warning = false;
 
-	AssertArg(objectName);
 	Assert(objectKind == REINDEX_OBJECT_SCHEMA ||
 		   objectKind == REINDEX_OBJECT_SYSTEM ||
 		   objectKind == REINDEX_OBJECT_DATABASE);
+
+	/*
+	 * This matches the options enforced by the grammar, where the object name
+	 * is optional for DATABASE and SYSTEM.
+	 */
+	AssertArg(objectName || objectKind != REINDEX_OBJECT_SCHEMA);
 
 	if (objectKind == REINDEX_OBJECT_SYSTEM &&
 		(params->options & REINDEXOPT_CONCURRENTLY) != 0)
@@ -2906,13 +2911,13 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	{
 		objectOid = MyDatabaseId;
 
-		if (strcmp(objectName, get_database_name(objectOid)) != 0)
+		if (objectName && strcmp(objectName, get_database_name(objectOid)) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("can only reindex the currently open database")));
 		if (!pg_database_ownercheck(objectOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
-						   objectName);
+						   get_database_name(objectOid));
 	}
 
 	/*
@@ -2970,9 +2975,15 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			!isTempNamespace(classtuple->relnamespace))
 			continue;
 
-		/* Check user/system classification, and optionally skip */
+		/*
+		 * Check user/system classification.  SYSTEM processes all the
+		 * catalogs, and DATABASE processes everything that's not a catalog.
+		 */
 		if (objectKind == REINDEX_OBJECT_SYSTEM &&
-			!IsSystemClass(relid, classtuple))
+			!IsCatalogRelationOid(relid))
+			continue;
+		else if (objectKind == REINDEX_OBJECT_DATABASE &&
+				 IsCatalogRelationOid(relid))
 			continue;
 
 		/*

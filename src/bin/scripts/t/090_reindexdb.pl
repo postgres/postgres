@@ -83,8 +83,8 @@ $node->issues_sql_like(
 	'SQL REINDEX run');
 my $relnode_info = $node->safe_psql('postgres', $compare_relfilenodes);
 is( $relnode_info,
-	qq(pg_constraint|pg_constraint_oid_index|relfilenode has changed
-pg_constraint|pg_toast.pg_toast_<oid>_index|relfilenode has changed
+	qq(pg_constraint|pg_constraint_oid_index|relfilenode is unchanged
+pg_constraint|pg_toast.pg_toast_<oid>_index|relfilenode is unchanged
 test1|pg_toast.pg_toast_<oid>_index|relfilenode has changed
 test1|test1x|relfilenode has changed),
 	'relfilenode change after REINDEX DATABASE');
@@ -235,11 +235,6 @@ $node->command_fails(
 $node->command_fails(
 	[ 'reindexdb', '-j', '2', '-i', 'i1', 'postgres' ],
 	'parallel reindexdb cannot process indexes');
-$node->issues_sql_like(
-	[ 'reindexdb', '-j', '2', 'postgres' ],
-	qr/statement:\ REINDEX SYSTEM postgres;
-.*statement:\ REINDEX TABLE public\.test1/s,
-	'parallel reindexdb for database issues REINDEX SYSTEM first');
 # Note that the ordering of the commands is not stable, so the second
 # command for s2.t2 is not checked after.
 $node->issues_sql_like(
@@ -249,13 +244,8 @@ $node->issues_sql_like(
 $node->command_ok(
 	[ 'reindexdb', '-j', '2', '-S', 's3' ],
 	'parallel reindexdb with empty schema');
-$node->command_checks_all(
+$node->command_ok(
 	[ 'reindexdb', '-j', '2', '--concurrently', '-d', 'postgres' ],
-	0,
-	[qr/^$/],
-	[
-		qr/^reindexdb: warning: cannot reindex system catalogs concurrently, skipping all/s
-	],
-	'parallel reindexdb for system with --concurrently skips catalogs');
+	'parallel reindexdb on database, concurrently');
 
 done_testing();

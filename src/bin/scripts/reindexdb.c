@@ -360,18 +360,6 @@ reindex_one_database(ConnParams *cparams, ReindexType type,
 		{
 			case REINDEX_DATABASE:
 
-				/*
-				 * Database-wide parallel reindex requires special processing.
-				 * If multiple jobs were asked, we have to reindex system
-				 * catalogs first as they cannot be processed in parallel.
-				 */
-				if (concurrently)
-					pg_log_warning("cannot reindex system catalogs concurrently, skipping all");
-				else
-					run_reindex_command(conn, REINDEX_SYSTEM, PQdb(conn), echo,
-										verbose, concurrently, false,
-										tablespace);
-
 				/* Build a list of relations from the database */
 				process_list = get_parallel_object_list(conn, process_type,
 														user_list, echo);
