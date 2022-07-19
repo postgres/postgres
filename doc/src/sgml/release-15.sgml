@@ -538,13 +538,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
     <listitem>
      <para>
-      Allow <link linkend="custom-scan">custom scan provders</link>
+      Allow <link linkend="custom-scan">custom scan providers</link>
       to indicate if they support projections (Sven Klemm)
      </para>
 
      <para>
-      The default is now that custom scan providers can't support
-      projections, so they need to be updated for this release.
+      The default is now that custom scan providers are assumed to not
+      support projections;  those that do need to be updated for this
+      release.
      </para>
     </listitem>
 
@@ -730,9 +731,9 @@ Author: Peter Geoghegan <pg@bowt.ie>
 
       <listitem>
        <para>
-        Enable system and <link
-        linkend="storage-toast"><acronym>TOAST</acronym></link> btree
-        indexes to efficiently store duplicates (Peter Geoghegan)
+        Allow btree indexes on system and <link
+        linkend="storage-toast"><acronym>TOAST</acronym></link>
+        tables to efficiently store duplicates (Peter Geoghegan)
        </para>
 
        <para>
@@ -750,19 +751,6 @@ Author: Alexander Korotkov <akorotkov@postgresql.org>
         Improve lookup performance of <link
         linkend="gist"><acronym>GiST</acronym></link> indexes built using
         sorting (Aliaksandr Kalenik, Sergei Shoulbakov, Andrey Borodin)
-       </para>
-      </listitem>
-
-<!--
-Author: Tomas Vondra <tomas.vondra@postgresql.org>
-2021-11-30 [5753d4ee3] Ignore BRIN indexes when checking for HOT udpates
--->
-
-      <listitem>
-       <para>
-        Prevent changes to columns only indexed by <link
-        linkend="brin"><acronym>BRIN</acronym></link> indexes from
-        disabling <acronym>HOT</acronym> updates (Josef Simanek)
        </para>
       </listitem>
 
@@ -1085,7 +1073,7 @@ Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
        </para>
 
        <para>
-        Messages report the cause of the delay.  The time interval for
+        The messages report the cause of the delay.  The time interval for
         notification is controlled by the new server variable <link
         linkend="guc-log-startup-progress-interval"><varname>log_startup_progress_interval</varname></link>.
        </para>
@@ -1488,7 +1476,7 @@ Author: Amit Kapila <akapila@postgresql.org>
         linkend="sql-createpublication"><command>CREATE PUBLICATION pub1
         FOR ALL TABLES IN SCHEMA s1,s2;</command></link>  <command>ALTER
         PUBLICATION</command> supports a similar syntax.  Tables added
-        to the listed schemas in the future will also be replicated.
+        later to the listed schemas will also be replicated.
        </para>
       </listitem>
 
@@ -1614,7 +1602,7 @@ Author: Amit Kapila <akapila@postgresql.org>
 
       <listitem>
        <para>
-        Allow subscribers to stop logical replication application on error
+        Allow subscribers to stop the application of logical replication changes on error
         (Osumi Takamichi, Mark Dilger)
        </para>
 
@@ -1752,13 +1740,14 @@ Author: Robert Haas <rhaas@postgresql.org>
 
      <listitem>
       <para>
-       Add new default <acronym>WAL</acronym>-logged method for <link
+       Add new <acronym>WAL</acronym>-logged method for <link
        linkend="sql-createdatabase">database creation</link> (Dilip Kumar)
       </para>
 
       <para>
-       This avoids the need for checkpoints during database creation;
-       the old method is still available.
+       This is the new default for database creation and avoids the need
+       for checkpoints during database creation; the old method is still
+       available.
       </para>
      </listitem>
 
@@ -2510,8 +2499,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 
      <listitem>
       <para>
-       Allow <application>pg_basebackup</application> to use LZ4 and
-       Zstandard compression on server-side base backup files (Dipesh
+       Allow <application>pg_basebackup</application> to do LZ4 and
+       Zstandard server-side compression on base backup files (Dipesh
        Pandit, Jeevan Ladhe)
       </para>
      </listitem>
@@ -2530,12 +2519,6 @@ Author: Robert Haas <rhaas@postgresql.org>
        Allow <application>pg_basebackup</application>'s
        <option>--compress</option> option to control the compression
        method and options (Michael Paquier, Robert Haas)
-      </para>
-
-      <para>
-       New options include <literal>server-gzip</literal> (gzip
-       on the server), <literal>client-gzip</literal> (same as
-       <literal>gzip</literal>).
       </para>
      </listitem>
 
@@ -2799,8 +2782,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 
       <listitem>
        <para>
-        Have <application>pg_upgrade</application> preserve relfilenodes,
-        tablespace, and database OIDs between old and new clusters
+        Have <application>pg_upgrade</application> preserve tablespace
+        and database OIDs, and relfilenodes between old and new clusters
         (Shruthi KC, Antonin Houska)
        </para>
       </listitem>
@@ -3009,7 +2992,7 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       </para>
 
       <para>
-       Some internal-use-only types have also been assigned this column.
+       Some other internal-use-only values have also been assigned to this column.
       </para>
      </listitem>
 
