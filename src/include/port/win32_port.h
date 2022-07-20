@@ -87,7 +87,9 @@
  * We have a replacement for fdatasync() in src/port/fdatasync.c, which is
  * unconditionally used by MSVC and Mingw builds.
  */
+#ifndef HAVE_FDATASYNC
 #define HAVE_FDATASYNC
+#endif
 
 #define USES_WINSOCK
 
