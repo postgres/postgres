@@ -28,8 +28,7 @@ use Catalog;    # for RenameTempFile
 
 my $output_path = '.';
 
-GetOptions(
-	'outdir:s'       => \$output_path)
+GetOptions('outdir:s' => \$output_path)
   or die "$0: wrong arguments";
 
 
@@ -441,6 +440,8 @@ foreach my $infile (@ARGV)
 					$type =~ s/\s*$//;
 					# strip space between type and "*" (pointer) */
 					$type =~ s/\s+\*$/*/;
+					# strip space between type and "**" (array of pointers) */
+					$type =~ s/\s+\*\*$/**/;
 
 					die
 					  "$infile:$lineno: cannot parse data type in \"$line\"\n"
@@ -583,7 +584,8 @@ my $header_comment =
 # nodetags.h
 
 push @output_files, 'nodetags.h';
-open my $nt, '>', "$output_path/nodetags.h$tmpext" or die "$output_path/nodetags.h$tmpext: $!";
+open my $nt, '>', "$output_path/nodetags.h$tmpext"
+  or die "$output_path/nodetags.h$tmpext: $!";
 
 printf $nt $header_comment, 'nodetags.h';
 
@@ -745,8 +747,8 @@ _equal${n}(const $n *a, const $n *b)
 				  unless $equal_ignore || $t eq 'CoercionForm';
 			}
 		}
-		# scalar type pointer
-		elsif ($t =~ /(\w+)\*/ and elem $1, @scalar_types)
+		# arrays of scalar types
+		elsif ($t =~ /^(\w+)\*$/ and elem $1, @scalar_types)
 		{
 			my $tt = $1;
 			if (!defined $array_size_field)
@@ -780,13 +782,14 @@ _equal${n}(const $n *a, const $n *b)
 			print $eff "\tCOMPARE_SCALAR_FIELD($f);\n" unless $equal_ignore;
 		}
 		# node type
-		elsif ($t =~ /(\w+)\*/ and elem $1, @node_types)
+		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
+			and elem $1, @node_types)
 		{
 			print $cff "\tCOPY_NODE_FIELD($f);\n"    unless $copy_ignore;
 			print $eff "\tCOMPARE_NODE_FIELD($f);\n" unless $equal_ignore;
 		}
 		# array (inline)
-		elsif ($t =~ /\w+\[/)
+		elsif ($t =~ /^\w+\[\w+\]$/)
 		{
 			print $cff "\tCOPY_ARRAY_FIELD($f);\n"    unless $copy_ignore;
 			print $eff "\tCOMPARE_ARRAY_FIELD($f);\n" unless $equal_ignore;
@@ -894,11 +897,16 @@ _read${n}(void)
 		my @a = @{ $node_type_info{$n}->{field_attrs}{$f} };
 
 		# extract per-field attributes
-		my $read_write_ignore = 0;
+		my $array_size_field;
 		my $read_as_field;
+		my $read_write_ignore = 0;
 		foreach my $a (@a)
 		{
-			if ($a =~ /^read_as\(([\w.]+)\)$/)
+			if ($a =~ /^array_size\(([\w.]+)\)$/)
+			{
+				$array_size_field = $1;
+			}
+			elsif ($a =~ /^read_as\(([\w.]+)\)$/)
 			{
 				$read_as_field = $1;
 			}
@@ -1015,19 +1023,10 @@ _read${n}(void)
 			print $off "\tWRITE_ENUM_FIELD($f, $t);\n";
 			print $rff "\tREAD_ENUM_FIELD($f, $t);\n" unless $no_read;
 		}
-		# arrays
-		elsif ($t =~ /(\w+)(\*|\[)/ and elem $1, @scalar_types)
+		# arrays of scalar types
+		elsif ($t =~ /^(\w+)(\*|\[\w+\])$/ and elem $1, @scalar_types)
 		{
 			my $tt = uc $1;
-			my $array_size_field;
-			foreach my $a (@a)
-			{
-				if ($a =~ /^array_size\(([\w.]+)\)$/)
-				{
-					$array_size_field = $1;
-					last;
-				}
-			}
 			if (!defined $array_size_field)
 			{
 				die "no array size defined for $n.$f of type $t\n";
@@ -1080,10 +1079,37 @@ _read${n}(void)
 			  . "\t\toutBitmapset(str, NULL);\n";
 		}
 		# node type
-		elsif ($t =~ /(\w+)\*/ and elem $1, @node_types)
+		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
+			and elem $1, @node_types)
 		{
 			print $off "\tWRITE_NODE_FIELD($f);\n";
 			print $rff "\tREAD_NODE_FIELD($f);\n" unless $no_read;
+		}
+		# arrays of node pointers (currently supported for write only)
+		elsif (($t =~ /^(\w+)\*\*$/ or $t =~ /^struct\s+(\w+)\*\*$/)
+			and elem($1, @node_types))
+		{
+			if (!defined $array_size_field)
+			{
+				die "no array size defined for $n.$f of type $t\n";
+			}
+			if ($node_type_info{$n}->{field_types}{$array_size_field} eq
+				'List*')
+			{
+				print $off
+				  "\tWRITE_NODE_ARRAY($f, list_length(node->$array_size_field));\n";
+				print $rff
+				  "\tREAD_NODE_ARRAY($f, list_length(local_node->$array_size_field));\n"
+				  unless $no_read;
+			}
+			else
+			{
+				print $off
+				  "\tWRITE_NODE_ARRAY($f, node->$array_size_field);\n";
+				print $rff
+				  "\tREAD_NODE_ARRAY($f, local_node->$array_size_field);\n"
+				  unless $no_read;
+			}
 		}
 		elsif ($t eq 'struct CustomPathMethods*'
 			|| $t eq 'struct CustomScanMethods*')

@@ -97,6 +97,11 @@ static void outChar(StringInfo str, char c);
 	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
 	 outBitmapset(str, node->fldname))
 
+/* Write a variable-length array (not a List) of Node pointers */
+#define WRITE_NODE_ARRAY(fldname, len) \
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeNodeArray(str, (const Node * const *) node->fldname, len))
+
 /* Write a variable-length array of AttrNumber */
 #define WRITE_ATTRNUMBER_ARRAY(fldname, len) \
 	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
@@ -207,6 +212,29 @@ WRITE_SCALAR_ARRAY(writeOidCols, Oid, " %u",)
 WRITE_SCALAR_ARRAY(writeIndexCols, Index, " %u",)
 WRITE_SCALAR_ARRAY(writeIntCols, int, " %d",)
 WRITE_SCALAR_ARRAY(writeBoolCols, bool, " %s", booltostr)
+
+/*
+ * Print an array (not a List) of Node pointers.
+ *
+ * The decoration is identical to that of scalar arrays, but we can't
+ * quite use appendStringInfo() in the loop.
+ */
+static void
+writeNodeArray(StringInfo str, const Node *const *arr, int len)
+{
+	if (arr != NULL)
+	{
+		appendStringInfoChar(str, '(');
+		for (int i = 0; i < len; i++)
+		{
+			appendStringInfoChar(str, ' ');
+			outNode(str, arr[i]);
+		}
+		appendStringInfoChar(str, ')');
+	}
+	else
+		appendStringInfoString(str, "<>");
+}
 
 /*
  * Print a List.
