@@ -246,6 +246,8 @@ UPDATE agg_csv SET a = 1;
 ERROR:  cannot update foreign table "agg_csv"
 DELETE FROM agg_csv WHERE a = 100;
 ERROR:  cannot delete from foreign table "agg_csv"
+TRUNCATE agg_csv;
+ERROR:  cannot truncate foreign table "agg_csv"
 -- but this should be allowed
 SELECT * FROM agg_csv FOR UPDATE;
   a  |    b    
