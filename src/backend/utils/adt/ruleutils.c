@@ -11725,7 +11725,11 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		else if (rte->rtekind == RTE_SUBQUERY ||
 				 rte->rtekind == RTE_VALUES)
 		{
-			/* Alias is syntactically required for SUBQUERY and VALUES */
+			/*
+			 * For a subquery, always print alias.  This makes the output SQL
+			 * spec-compliant, even though we allow the alias to be omitted on
+			 * input.
+			 */
 			printalias = true;
 		}
 		else if (rte->rtekind == RTE_CTE)

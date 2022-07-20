@@ -51,7 +51,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
 
     [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
                 [ TABLESAMPLE <replaceable class="parameter">sampling_method</replaceable> ( <replaceable class="parameter">argument</replaceable> [, ...] ) [ REPEATABLE ( <replaceable class="parameter">seed</replaceable> ) ] ]
-    [ LATERAL ] ( <replaceable class="parameter">select</replaceable> ) [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ]
+    [ LATERAL ] ( <replaceable class="parameter">select</replaceable> ) [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     <replaceable class="parameter">with_query_name</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] )
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
@@ -490,8 +490,8 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         output were created as a temporary table for the duration of
         this single <command>SELECT</command> command.  Note that the
         sub-<command>SELECT</command> must be surrounded by
-        parentheses, and an alias <emphasis>must</emphasis> be
-        provided for it.  A
+        parentheses, and an alias can be provided in the same way as for a
+        table.  A
         <link linkend="sql-values"><command>VALUES</command></link> command
         can also be used here.
        </para>
@@ -2038,6 +2038,16 @@ SELECT 2+2;
     be omitted before an alias that is an unreserved keyword.  But
     this is impractical for output column names, because of syntactic
     ambiguities.
+   </para>
+  </refsect2>
+
+  <refsect2>
+   <title>Omitting sub-<command>SELECT</command> aliases in <literal>FROM</literal></title>
+
+   <para>
+    According to the SQL standard, a sub-<command>SELECT</command> in the
+    <literal>FROM</literal> list must have an alias.  In
+    <productname>PostgreSQL</productname>, this alias may be omitted.
    </para>
   </refsect2>
 

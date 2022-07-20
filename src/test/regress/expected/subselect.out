@@ -30,6 +30,12 @@ SELECT * FROM ((SELECT 1 AS x)) ss;
  1
 (1 row)
 
+SELECT * FROM ((SELECT 1 AS x)), ((SELECT * FROM ((SELECT 2 AS y))));
+ x | y 
+---+---
+ 1 | 2
+(1 row)
+
 (SELECT 2) UNION SELECT 2;
  ?column? 
 ----------
@@ -196,6 +202,69 @@ SELECT f1 AS "Correlated Field"
                 3
 (5 rows)
 
+-- Subselects without aliases
+SELECT count FROM (SELECT COUNT(DISTINCT name) FROM road);
+ count 
+-------
+  2911
+(1 row)
+
+SELECT COUNT(*) FROM (SELECT DISTINCT name FROM road);
+ count 
+-------
+  2911
+(1 row)
+
+SELECT * FROM (SELECT * FROM int4_tbl), (VALUES (123456)) WHERE f1 = column1;
+   f1   | column1 
+--------+---------
+ 123456 |  123456
+(1 row)
+
+CREATE VIEW view_unnamed_ss AS
+SELECT * FROM (SELECT * FROM (SELECT abs(f1) AS a1 FROM int4_tbl)),
+              (SELECT * FROM int8_tbl)
+  WHERE a1 < 10 AND q1 > a1 ORDER BY q1, q2;
+SELECT * FROM view_unnamed_ss;
+ a1 |        q1        |        q2         
+----+------------------+-------------------
+  0 |              123 |               456
+  0 |              123 |  4567890123456789
+  0 | 4567890123456789 | -4567890123456789
+  0 | 4567890123456789 |               123
+  0 | 4567890123456789 |  4567890123456789
+(5 rows)
+
+\sv view_unnamed_ss
+CREATE OR REPLACE VIEW public.view_unnamed_ss AS
+ SELECT unnamed_subquery.a1,
+    unnamed_subquery_1.q1,
+    unnamed_subquery_1.q2
+   FROM ( SELECT unnamed_subquery_2.a1
+           FROM ( SELECT abs(int4_tbl.f1) AS a1
+                   FROM int4_tbl) unnamed_subquery_2) unnamed_subquery,
+    ( SELECT int8_tbl.q1,
+            int8_tbl.q2
+           FROM int8_tbl) unnamed_subquery_1
+  WHERE unnamed_subquery.a1 < 10 AND unnamed_subquery_1.q1 > unnamed_subquery.a1
+  ORDER BY unnamed_subquery_1.q1, unnamed_subquery_1.q2
+DROP VIEW view_unnamed_ss;
+-- Test matching of locking clause to correct alias
+CREATE VIEW view_unnamed_ss_locking AS
+SELECT * FROM (SELECT * FROM int4_tbl), int8_tbl AS unnamed_subquery
+  WHERE f1 = q1
+  FOR UPDATE OF unnamed_subquery;
+\sv view_unnamed_ss_locking
+CREATE OR REPLACE VIEW public.view_unnamed_ss_locking AS
+ SELECT unnamed_subquery.f1,
+    unnamed_subquery_1.q1,
+    unnamed_subquery_1.q2
+   FROM ( SELECT int4_tbl.f1
+           FROM int4_tbl) unnamed_subquery,
+    int8_tbl unnamed_subquery_1
+  WHERE unnamed_subquery.f1 = unnamed_subquery_1.q1
+ FOR UPDATE OF unnamed_subquery_1
+DROP VIEW view_unnamed_ss_locking;
 --
 -- Use some existing tables in the regression test
 --

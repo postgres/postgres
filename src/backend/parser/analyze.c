@@ -3291,7 +3291,7 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			foreach(rt, qry->rtable)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-				char	   *rtename;
+				char	   *rtename = rte->eref->aliasname;
 
 				++i;
 				if (!rte->inFromCl)
@@ -3302,15 +3302,22 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 				 * name and needs to be skipped (otherwise it might hide a
 				 * base relation with the same name), except if it has a USING
 				 * alias, which *is* visible.
+				 *
+				 * Subquery and values RTEs without aliases are never visible
+				 * as relation names and must always be skipped.
 				 */
-				if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
+				if (rte->alias == NULL)
 				{
-					if (rte->join_using_alias == NULL)
+					if (rte->rtekind == RTE_JOIN)
+					{
+						if (rte->join_using_alias == NULL)
+							continue;
+						rtename = rte->join_using_alias->aliasname;
+					}
+					else if (rte->rtekind == RTE_SUBQUERY ||
+							 rte->rtekind == RTE_VALUES)
 						continue;
-					rtename = rte->join_using_alias->aliasname;
 				}
-				else
-					rtename = rte->eref->aliasname;
 
 				if (strcmp(rtename, thisrel->relname) == 0)
 				{
