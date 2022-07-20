@@ -3447,7 +3447,7 @@ checkJsonOutputFormat(ParseState *pstate, const JsonFormat *format,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("unsupported JSON encoding"),
-					 errhint("only UTF8 JSON encoding is supported"),
+					 errhint("Only UTF8 JSON encoding is supported."),
 					 parser_errposition(pstate, format->location)));
 	}
 }
@@ -4580,7 +4580,7 @@ transformJsonSerializeExpr(ParseState *pstate, JsonSerializeExpr *expr)
 						 errmsg("cannot use RETURNING type %s in %s",
 								format_type_be(returning->typid),
 								"JSON_SERIALIZE()"),
-						 errhint("Try returning a string type or bytea")));
+						 errhint("Try returning a string type or bytea.")));
 		}
 	}
 	else

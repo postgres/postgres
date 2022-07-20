@@ -17790,7 +17790,7 @@ ATExecAttachPartition(List **wqueue, Relation rel, PartitionCmd *cmd,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("trigger \"%s\" prevents table \"%s\" from becoming a partition",
 						trigger_name, RelationGetRelationName(attachrel)),
-				 errdetail("ROW triggers with transition tables are not supported on partitions")));
+				 errdetail("ROW triggers with transition tables are not supported on partitions.")));
 
 	/*
 	 * Check that the new partition's bound is valid and does not overlap any

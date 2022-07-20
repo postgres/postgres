@@ -526,7 +526,7 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid input syntax for type %s", "jsonpath"),
-						 errdetail("unrecognized flag character \"%.*s\" in LIKE_REGEX predicate",
+						 errdetail("Unrecognized flag character \"%.*s\" in LIKE_REGEX predicate.",
 								   pg_mblen(flags->val + i), flags->val + i)));
 				break;
 		}

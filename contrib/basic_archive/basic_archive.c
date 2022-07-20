@@ -111,7 +111,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 */
 	if (strlen(*newval) + 64 + 2 >= MAXPGPATH)
 	{
-		GUC_check_errdetail("archive directory too long");
+		GUC_check_errdetail("Archive directory too long.");
 		return false;
 	}
 
@@ -122,7 +122,7 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 */
 	if (stat(*newval, &st) != 0 || !S_ISDIR(st.st_mode))
 	{
-		GUC_check_errdetail("specified archive directory does not exist");
+		GUC_check_errdetail("Specified archive directory does not exist.");
 		return false;
 	}
 

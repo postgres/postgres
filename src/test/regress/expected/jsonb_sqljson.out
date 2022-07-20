@@ -716,7 +716,7 @@ SELECT JSON_QUERY(jsonb '[]', '$[*]' ERROR ON ERROR);
 
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' ERROR ON ERROR);
 ERROR:  JSON path expression in JSON_QUERY should return singleton item without wrapper
-HINT:  use WITH WRAPPER clause to wrap SQL/JSON item sequence into array
+HINT:  Use WITH WRAPPER clause to wrap SQL/JSON item sequence into array.
 SELECT JSON_QUERY(jsonb '[1,2]', '$[*]' DEFAULT '"empty"' ON ERROR);
  json_query 
 ------------
@@ -1378,7 +1378,7 @@ SELECT * FROM JSON_TABLE(
 	)
 ) jt;
 ERROR:  duplicate JSON_TABLE column name: a
-HINT:  JSON_TABLE column names must be distinct from one another
+HINT:  JSON_TABLE column names must be distinct from one another.
 SELECT * FROM JSON_TABLE(
 	jsonb '[]', '$' AS a
 	COLUMNS (
@@ -1390,7 +1390,7 @@ SELECT * FROM JSON_TABLE(
 	)
 ) jt;
 ERROR:  duplicate JSON_TABLE column name: a
-HINT:  JSON_TABLE column names must be distinct from one another
+HINT:  JSON_TABLE column names must be distinct from one another.
 SELECT * FROM JSON_TABLE(
 	jsonb '[]', '$'
 	COLUMNS (
@@ -1402,7 +1402,7 @@ SELECT * FROM JSON_TABLE(
 	)
 ) jt;
 ERROR:  duplicate JSON_TABLE column name: b
-HINT:  JSON_TABLE column names must be distinct from one another
+HINT:  JSON_TABLE column names must be distinct from one another.
 SELECT * FROM JSON_TABLE(
 	jsonb '[]', '$'
 	COLUMNS (
@@ -1420,7 +1420,7 @@ SELECT * FROM JSON_TABLE(
 	)
 ) jt;
 ERROR:  duplicate JSON_TABLE column name: a
-HINT:  JSON_TABLE column names must be distinct from one another
+HINT:  JSON_TABLE column names must be distinct from one another.
 -- JSON_TABLE: plan validation
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
@@ -1438,7 +1438,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 12:  PLAN (p1)
                 ^
-DETAIL:  path name mismatch: expected p0 but p1 is given
+DETAIL:  Path name mismatch: expected p0 but p1 is given.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1455,7 +1455,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 4:   NESTED PATH '$' AS p1 COLUMNS (
           ^
-DETAIL:  plan node for nested path p1 was not found in plan
+DETAIL:  Plan node for nested path p1 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1472,7 +1472,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 4:   NESTED PATH '$' AS p1 COLUMNS (
           ^
-DETAIL:  plan node for nested path p1 was not found in plan
+DETAIL:  Plan node for nested path p1 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1489,7 +1489,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 12:  PLAN (p0 UNION p1 UNION p11)
                 ^
-DETAIL:  expected INNER or OUTER JSON_TABLE plan node
+DETAIL:  Expected INNER or OUTER JSON_TABLE plan node.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1506,7 +1506,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 8:   NESTED PATH '$' AS p2 COLUMNS (
           ^
-DETAIL:  plan node for nested path p2 was not found in plan
+DETAIL:  Plan node for nested path p2 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1523,7 +1523,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 5:    NESTED PATH '$' AS p11 COLUMNS ( foo int ),
            ^
-DETAIL:  plan node for nested path p11 was not found in plan
+DETAIL:  Plan node for nested path p11 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1540,7 +1540,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 12:  PLAN (p0 OUTER ((p1 UNION p11) CROSS p2))
                          ^
-DETAIL:  plan node contains some extra or duplicate sibling nodes
+DETAIL:  Plan node contains some extra or duplicate sibling nodes.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1557,7 +1557,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 6:    NESTED PATH '$' AS p12 COLUMNS ( bar int )
            ^
-DETAIL:  plan node for nested path p12 was not found in plan
+DETAIL:  Plan node for nested path p12 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', '$[*]' AS p0
 	COLUMNS (
@@ -1574,7 +1574,7 @@ SELECT * FROM JSON_TABLE(
 ERROR:  invalid JSON_TABLE plan
 LINE 9:    NESTED PATH '$' AS p21 COLUMNS ( baz int )
            ^
-DETAIL:  plan node for nested path p21 was not found in plan
+DETAIL:  Plan node for nested path p21 was not found in plan.
 SELECT * FROM JSON_TABLE(
 	jsonb 'null', 'strict $[*]' AS p0
 	COLUMNS (

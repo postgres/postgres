@@ -2973,8 +2973,8 @@ JsonPathQuery(Datum jb, JsonPath *jp, JsonWrapper wrapper, bool *empty,
 				(errcode(ERRCODE_MORE_THAN_ONE_SQL_JSON_ITEM),
 				 errmsg("JSON path expression in JSON_QUERY should return "
 						"singleton item without wrapper"),
-				 errhint("use WITH WRAPPER clause to wrap SQL/JSON item "
-						 "sequence into array")));
+				 errhint("Use WITH WRAPPER clause to wrap SQL/JSON item "
+						 "sequence into array.")));
 	}
 
 	if (first)
