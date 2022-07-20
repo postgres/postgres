@@ -3,4 +3,4 @@ tasks:
       sudo apt-get -yq install build-essential libreadline-dev zlib1g-dev flex bison libxml2-dev libxslt-dev libssl-dev libxml2-utils xsltproc ccache
       ./configure
       make
-  - command: git show --summary
+  - command: git log --name-status HEAD^..HEAD
