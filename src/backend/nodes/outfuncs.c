@@ -16,6 +16,7 @@
 
 #include <ctype.h>
 
+#include "access/attnum.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
@@ -96,48 +97,30 @@ static void outChar(StringInfo str, char c);
 	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
 	 outBitmapset(str, node->fldname))
 
+/* Write a variable-length array of AttrNumber */
 #define WRITE_ATTRNUMBER_ARRAY(fldname, len) \
-	do { \
-		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		for (int i = 0; i < len; i++) \
-			appendStringInfo(str, " %d", node->fldname[i]); \
-	} while(0)
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeAttrNumberCols(str, node->fldname, len))
 
+/* Write a variable-length array of Oid */
 #define WRITE_OID_ARRAY(fldname, len) \
-	do { \
-		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		for (int i = 0; i < len; i++) \
-			appendStringInfo(str, " %u", node->fldname[i]); \
-	} while(0)
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeOidCols(str, node->fldname, len))
 
-/*
- * This macro supports the case that the field is NULL.  For the other array
- * macros, that is currently not needed.
- */
+/* Write a variable-length array of Index */
 #define WRITE_INDEX_ARRAY(fldname, len) \
-	do { \
-		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		if (node->fldname) \
-			for (int i = 0; i < len; i++) \
-				appendStringInfo(str, " %u", node->fldname[i]); \
-		else \
-			appendStringInfoString(str, "<>"); \
-	} while(0)
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeIndexCols(str, node->fldname, len))
 
+/* Write a variable-length array of int */
 #define WRITE_INT_ARRAY(fldname, len) \
-	do { \
-		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		for (int i = 0; i < len; i++) \
-			appendStringInfo(str, " %d", node->fldname[i]); \
-	} while(0)
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeIntCols(str, node->fldname, len))
 
+/* Write a variable-length array of bool */
 #define WRITE_BOOL_ARRAY(fldname, len) \
-	do { \
-		appendStringInfoString(str, " :" CppAsString(fldname) " "); \
-		for (int i = 0; i < len; i++) \
-			appendStringInfo(str, " %s", booltostr(node->fldname[i])); \
-	} while(0)
-
+	(appendStringInfoString(str, " :" CppAsString(fldname) " "), \
+	 writeBoolCols(str, node->fldname, len))
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
@@ -196,6 +179,38 @@ outChar(StringInfo str, char c)
 	outToken(str, in);
 }
 
+/*
+ * common implementation for scalar-array-writing functions
+ *
+ * The data format is either "<>" for a NULL pointer or "(item item item)".
+ * fmtstr must include a leading space, and the rest of it must produce
+ * something that will be seen as a single simple token by pg_strtok().
+ * convfunc can be empty, or the name of a conversion macro or function.
+ */
+#define WRITE_SCALAR_ARRAY(fnname, datatype, fmtstr, convfunc) \
+static void \
+fnname(StringInfo str, const datatype *arr, int len) \
+{ \
+	if (arr != NULL) \
+	{ \
+		appendStringInfoChar(str, '('); \
+		for (int i = 0; i < len; i++) \
+			appendStringInfo(str, fmtstr, convfunc(arr[i])); \
+		appendStringInfoChar(str, ')'); \
+	} \
+	else \
+		appendStringInfoString(str, "<>"); \
+}
+
+WRITE_SCALAR_ARRAY(writeAttrNumberCols, AttrNumber, " %d",)
+WRITE_SCALAR_ARRAY(writeOidCols, Oid, " %u",)
+WRITE_SCALAR_ARRAY(writeIndexCols, Index, " %u",)
+WRITE_SCALAR_ARRAY(writeIntCols, int, " %d",)
+WRITE_SCALAR_ARRAY(writeBoolCols, bool, " %s", booltostr)
+
+/*
+ * Print a List.
+ */
 static void
 _outList(StringInfo str, const List *node)
 {

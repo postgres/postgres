@@ -502,97 +502,47 @@ readDatum(bool typbyval)
 }
 
 /*
- * readAttrNumberCols
+ * common implementation for scalar-array-reading functions
+ *
+ * The data format is either "<>" for a NULL pointer (in which case numCols
+ * is ignored) or "(item item item)" where the number of items must equal
+ * numCols.  The convfunc must be okay with stopping at whitespace or a
+ * right parenthesis, since pg_strtok won't null-terminate the token.
  */
-AttrNumber *
-readAttrNumberCols(int numCols)
-{
-	int			tokenLength,
-				i;
-	const char *token;
-	AttrNumber *attr_vals;
-
-	if (numCols <= 0)
-		return NULL;
-
-	attr_vals = (AttrNumber *) palloc(numCols * sizeof(AttrNumber));
-	for (i = 0; i < numCols; i++)
-	{
-		token = pg_strtok(&tokenLength);
-		attr_vals[i] = atoi(token);
-	}
-
-	return attr_vals;
+#define READ_SCALAR_ARRAY(fnname, datatype, convfunc) \
+datatype * \
+fnname(int numCols) \
+{ \
+	datatype   *vals; \
+	READ_TEMP_LOCALS(); \
+	token = pg_strtok(&length); \
+	if (token == NULL) \
+		elog(ERROR, "incomplete scalar array"); \
+	if (length == 0) \
+		return NULL;			/* it was "<>", so return NULL pointer */ \
+	if (length != 1 || token[0] != '(') \
+		elog(ERROR, "unrecognized token: \"%.*s\"", length, token); \
+	vals = (datatype *) palloc(numCols * sizeof(datatype)); \
+	for (int i = 0; i < numCols; i++) \
+	{ \
+		token = pg_strtok(&length); \
+		if (token == NULL || token[0] == ')') \
+			elog(ERROR, "incomplete scalar array"); \
+		vals[i] = convfunc(token); \
+	} \
+	token = pg_strtok(&length); \
+	if (token == NULL || length != 1 || token[0] != ')') \
+		elog(ERROR, "incomplete scalar array"); \
+	return vals; \
 }
 
 /*
- * readOidCols
+ * Note: these functions are exported in nodes.h for possible use by
+ * extensions, so don't mess too much with their names or API.
  */
-Oid *
-readOidCols(int numCols)
-{
-	int			tokenLength,
-				i;
-	const char *token;
-	Oid		   *oid_vals;
-
-	if (numCols <= 0)
-		return NULL;
-
-	oid_vals = (Oid *) palloc(numCols * sizeof(Oid));
-	for (i = 0; i < numCols; i++)
-	{
-		token = pg_strtok(&tokenLength);
-		oid_vals[i] = atooid(token);
-	}
-
-	return oid_vals;
-}
-
-/*
- * readIntCols
- */
-int *
-readIntCols(int numCols)
-{
-	int			tokenLength,
-				i;
-	const char *token;
-	int		   *int_vals;
-
-	if (numCols <= 0)
-		return NULL;
-
-	int_vals = (int *) palloc(numCols * sizeof(int));
-	for (i = 0; i < numCols; i++)
-	{
-		token = pg_strtok(&tokenLength);
-		int_vals[i] = atoi(token);
-	}
-
-	return int_vals;
-}
-
-/*
- * readBoolCols
- */
-bool *
-readBoolCols(int numCols)
-{
-	int			tokenLength,
-				i;
-	const char *token;
-	bool	   *bool_vals;
-
-	if (numCols <= 0)
-		return NULL;
-
-	bool_vals = (bool *) palloc(numCols * sizeof(bool));
-	for (i = 0; i < numCols; i++)
-	{
-		token = pg_strtok(&tokenLength);
-		bool_vals[i] = strtobool(token);
-	}
-
-	return bool_vals;
-}
+READ_SCALAR_ARRAY(readAttrNumberCols, int16, atoi)
+READ_SCALAR_ARRAY(readOidCols, Oid, atooid)
+/* outfuncs.c has writeIndexCols, but we don't yet need that here */
+/* READ_SCALAR_ARRAY(readIndexCols, Index, atoui) */
+READ_SCALAR_ARRAY(readIntCols, int, atoi)
+READ_SCALAR_ARRAY(readBoolCols, bool, strtobool)
