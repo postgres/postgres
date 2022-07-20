@@ -940,7 +940,7 @@ ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- fail - cannot use column list for partitioned table
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk (a);
 ERROR:  cannot use publication column list for relation "rf_tbl_abcd_part_pk"
-DETAIL:  column list cannot be used for a partitioned table when publish_via_partition_root is false.
+DETAIL:  Column list cannot be used for a partitioned table when publish_via_partition_root is false.
 -- ok - can use column list for partition
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 (a);
 -- ok - "a" is a PK col

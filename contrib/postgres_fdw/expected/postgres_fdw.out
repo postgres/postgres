@@ -9564,7 +9564,7 @@ HINT:  Target server's authentication method must be changed or password_require
 -- Unpriv user cannot make the mapping passwordless
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD password_required 'false');
 ERROR:  password_required=false is superuser-only
-HINT:  User mappings with the password_required option set to false may only be created or modified by the superuser
+HINT:  User mappings with the password_required option set to false may only be created or modified by the superuser.
 SELECT 1 FROM ft1_nopw LIMIT 1;
 ERROR:  password is required
 DETAIL:  Non-superuser cannot connect if the server does not request a password.
@@ -9585,10 +9585,10 @@ SELECT 1 FROM ft1_nopw LIMIT 1;
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (SET password_required 'true');
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD sslcert 'foo.crt');
 ERROR:  sslcert and sslkey are superuser-only
-HINT:  User mappings with the sslcert or sslkey options set may only be created or modified by the superuser
+HINT:  User mappings with the sslcert or sslkey options set may only be created or modified by the superuser.
 ALTER USER MAPPING FOR CURRENT_USER SERVER loopback_nopw OPTIONS (ADD sslkey 'foo.key');
 ERROR:  sslcert and sslkey are superuser-only
-HINT:  User mappings with the sslcert or sslkey options set may only be created or modified by the superuser
+HINT:  User mappings with the sslcert or sslkey options set may only be created or modified by the superuser.
 -- We're done with the role named after a specific user and need to check the
 -- changes to the public mapping.
 DROP USER MAPPING FOR CURRENT_USER SERVER loopback_nopw;

@@ -477,7 +477,7 @@ select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
 ERROR:  invalid input syntax for type jsonpath
 LINE 1: select '$ ? (@ like_regex "pattern" flag "a")'::jsonpath;
                ^
-DETAIL:  unrecognized flag character "a" in LIKE_REGEX predicate
+DETAIL:  Unrecognized flag character "a" in LIKE_REGEX predicate.
 select '$ < 1'::jsonpath;
  jsonpath 
 ----------

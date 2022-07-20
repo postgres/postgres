@@ -12565,7 +12565,7 @@ check_client_connection_check_interval(int *newval, void **extra, GucSource sour
 {
 	if (!WaitEventSetCanReportClosed() && *newval != 0)
 	{
-		GUC_check_errdetail("client_connection_check_interval must be set to 0 on this platform");
+		GUC_check_errdetail("client_connection_check_interval must be set to 0 on this platform.");
 		return false;
 	}
 	return true;

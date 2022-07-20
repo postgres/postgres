@@ -141,7 +141,7 @@ registerJsonTableColumn(JsonTableContext *cxt, char *colname)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_ALIAS),
 				 errmsg("duplicate JSON_TABLE column name: %s", colname),
-				 errhint("JSON_TABLE column names must be distinct from one another")));
+				 errhint("JSON_TABLE column names must be distinct from one another.")));
 
 	cxt->pathNames = lappend(cxt->pathNames, colname);
 }
@@ -258,7 +258,7 @@ validateJsonTableChildPlan(ParseState *pstate, JsonTablePlan *plan,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid JSON_TABLE plan"),
-						 errdetail("plan node for nested path %s was not found in plan", jtc->pathname),
+						 errdetail("Plan node for nested path %s was not found in plan.", jtc->pathname),
 						 parser_errposition(pstate, jtc->location)));
 
 			nchildren++;
@@ -269,7 +269,7 @@ validateJsonTableChildPlan(ParseState *pstate, JsonTablePlan *plan,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid JSON_TABLE plan"),
-				 errdetail("plan node contains some extra or duplicate sibling nodes"),
+				 errdetail("Plan node contains some extra or duplicate sibling nodes."),
 				 parser_errposition(pstate, plan ? plan->location : -1)));
 }
 
@@ -385,7 +385,7 @@ transformJsonTableChildPlan(JsonTableContext *cxt, JsonTablePlan *plan,
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("invalid JSON_TABLE plan"),
-				 errdetail("path name was %s not found in nested columns list",
+				 errdetail("Path name was %s not found in nested columns list.",
 						   plan->pathname),
 				 parser_errposition(cxt->pstate, plan->location)));
 
@@ -586,7 +586,7 @@ transformJsonTableColumns(JsonTableContext *cxt, JsonTablePlan *plan,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid JSON_TABLE plan"),
-						 errdetail("expected INNER or OUTER JSON_TABLE plan node"),
+						 errdetail("Expected INNER or OUTER JSON_TABLE plan node."),
 						 parser_errposition(cxt->pstate, plan->location)));
 
 			parentPlan = plan->plan1;
@@ -605,7 +605,7 @@ transformJsonTableColumns(JsonTableContext *cxt, JsonTablePlan *plan,
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("invalid JSON_TABLE plan"),
-					 errdetail("path name mismatch: expected %s but %s is given",
+					 errdetail("Path name mismatch: expected %s but %s is given.",
 							   *pathName, parentPlan->pathname),
 					 parser_errposition(cxt->pstate, plan->location)));
 

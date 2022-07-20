@@ -743,7 +743,7 @@ CheckPubRelationColumnList(List *tables, const char *queryString,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("cannot use publication column list for relation \"%s\"",
 							RelationGetRelationName(pri->relation)),
-					 errdetail("column list cannot be used for a partitioned table when %s is false.",
+					 errdetail("Column list cannot be used for a partitioned table when %s is false.",
 							   "publish_via_partition_root")));
 	}
 }
