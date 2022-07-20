@@ -24,7 +24,6 @@
 #include "common/string.h"
 #include "fe_utils/recovery_gen.h"
 #include "file_ops.h"
-#include "filemap.h"
 #include "getopt_long.h"
 #include "pg_rewind.h"
 #include "rewind_source.h"
@@ -66,6 +65,8 @@ bool		showprogress = false;
 bool		dry_run = false;
 bool		do_sync = true;
 bool		restore_wal = false;
+
+static XLogRecPtr   divergerec;
 
 /* Target history */
 TimeLineHistoryEntry *targetHistory;
@@ -124,7 +125,6 @@ main(int argc, char **argv)
 	};
 	int			option_index;
 	int			c;
-	XLogRecPtr	divergerec;
 	int			lastcommontliIndex;
 	XLogRecPtr	chkptrec;
 	TimeLineID	chkpttli;
@@ -481,6 +481,41 @@ main(int argc, char **argv)
 	pg_log_info("Done!");
 
 	return 0;
+}
+
+file_action_t
+decide_wal_file_action(const char *fname)
+{
+    TimeLineID  file_tli;
+    XLogSegNo	file_segno;
+    XLogSegNo   last_common_segno;
+
+    /*
+	 * Find last common WAL segment number between source and target before
+	 * divergence given last common LSN (byte position).
+	 */
+    XLByteToSeg(divergerec, last_common_segno, ControlFile_target.xlog_seg_size);
+
+    /* Get current WAL segment number given current segment file name. */
+    XLogFromFileName(fname, &file_tli, &file_segno, ControlFile_target.xlog_seg_size);
+
+    /*
+     * Avoid unnecessarily copying WAL segment files created before last common
+     * segment to avoid performance penalty when many WAL segment files are
+     * retained on source and copied to target.
+     *
+     * These files are already common between new source (old target) and new
+     * target (old source). Only WAL segment files after the last common segment
+     * number on the new source need to be copied to the new target.
+     */
+    if (file_segno < last_common_segno)
+    {
+        pg_log_debug("WAL file entry \"%s\" not copied to target", fname);
+        return FILE_ACTION_NONE;
+    }
+
+    pg_log_debug("WAL file entry \"%s\" is copied to target", fname);
+    return FILE_ACTION_COPY;
 }
 
 /*

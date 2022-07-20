@@ -26,6 +26,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "access/xlog_internal.h"
 #include "catalog/pg_tablespace_d.h"
 #include "common/hashfn.h"
 #include "common/string.h"
@@ -729,11 +730,25 @@ decide_file_action(file_entry_t *entry)
 		case FILE_TYPE_REGULAR:
 			if (!entry->isrelfile)
 			{
-				/*
-				 * It's a non-data file that we have no special processing
-				 * for. Copy it in toto.
-				 */
-				return FILE_ACTION_COPY;
+                /* Handle WAL segment file. */
+                const char  *fname;
+                char        *slash;
+
+                /* Split filepath into directory & filename. */
+                slash = strrchr(path, '/');
+                if (slash)
+                    fname = slash + 1;
+                else
+                    fname = path;
+
+                if (IsXLogFileName(fname))
+                    return decide_wal_file_action(fname);
+
+                /*
+                 * It's a non-data file that we have no special processing
+                 * for. Copy it in toto.
+                 */
+                return FILE_ACTION_COPY;
 			}
 			else
 			{
