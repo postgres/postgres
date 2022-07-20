@@ -20,6 +20,8 @@
 #include "port/win32ntdll.h"
 
 RtlGetLastNtStatus_t pg_RtlGetLastNtStatus;
+RtlNtStatusToDosError_t pg_RtlNtStatusToDosError;
+NtFlushBuffersFileEx_t pg_NtFlushBuffersFileEx;
 
 typedef struct NtDllRoutine
 {
@@ -28,7 +30,9 @@ typedef struct NtDllRoutine
 } NtDllRoutine;
 
 static const NtDllRoutine routines[] = {
-	{"RtlGetLastNtStatus", (pg_funcptr_t *) &pg_RtlGetLastNtStatus}
+	{"RtlGetLastNtStatus", (pg_funcptr_t *) &pg_RtlGetLastNtStatus},
+	{"RtlNtStatusToDosError", (pg_funcptr_t *) &pg_RtlNtStatusToDosError},
+	{"NtFlushBuffersFileEx", (pg_funcptr_t *) &pg_NtFlushBuffersFileEx}
 };
 
 static bool initialized;

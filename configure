@@ -17133,6 +17133,12 @@ fi
 esac
 
   case " $LIBOBJS " in
+  *" fdatasync.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS fdatasync.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
   *" kill.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS kill.$ac_objext"
  ;;

@@ -108,7 +108,8 @@
         <literal>open_datasync</literal> (the default), write caching can be disabled
         by unchecking <literal>My Computer\Open\<replaceable>disk drive</replaceable>\Properties\Hardware\Properties\Policies\Enable write caching on the disk</literal>.
         Alternatively, set <varname>wal_sync_method</varname> to
-        <literal>fsync</literal> or <literal>fsync_writethrough</literal>, which prevent
+        <literal>fdatasync</literal> (NTFS only), <literal>fsync</literal> or
+        <literal>fsync_writethrough</literal>, which prevent
         write caching.
       </para>
     </listitem>

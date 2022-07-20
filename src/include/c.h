@@ -1290,7 +1290,7 @@ typedef union PGAlignedXLogBlock
  * standard C library.
  */
 
-#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
+#if !HAVE_DECL_FDATASYNC
 extern int	fdatasync(int fildes);
 #endif
 
