@@ -2888,6 +2888,22 @@ statement latencies in milliseconds, failures and retries:
  </refsect2>
 
  <refsect2>
+  <title>Table Access Methods</title>
+
+  <para>
+   You may specify the <link linkend="tableam">Table Access Method</link>
+   for the pgbench tables.  The environment variable <envar>PGOPTIONS</envar>
+   specifies database configuration options that are passed to PostgreSQL via
+   the command line (See <xref linkend="config-setting-shell"/>).
+   For example, a hypothetical default Table Access Method for the tables that
+   pgbench creates called <literal>wuzza</literal> can be specified with:
+<programlisting>
+PGOPTIONS='-c default_table_access_method=wuzza'
+</programlisting>
+  </para>
+ </refsect2>
+
+ <refsect2>
   <title>Good Practices</title>
 
   <para>
