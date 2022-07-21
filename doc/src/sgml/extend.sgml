@@ -951,7 +951,7 @@ SET LOCAL search_path TO @extschema@, pg_temp;
      <application>pg_dump</application>.  But that behavior is undesirable for a
      configuration table; any data changes made by the user need to be
      included in dumps, or the extension will behave differently after a dump
-     and reload.
+     and restore.
     </para>
 
    <indexterm>
