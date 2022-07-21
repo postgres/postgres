@@ -31,6 +31,18 @@
 #define LOGICALREP_TWOPHASE_STATE_PENDING 'p'
 #define LOGICALREP_TWOPHASE_STATE_ENABLED 'e'
 
+/*
+ * The subscription will request the publisher to only send changes that do not
+ * have any origin.
+ */
+#define LOGICALREP_ORIGIN_NONE "none"
+
+/*
+ * The subscription will request the publisher to send changes regardless
+ * of their origin.
+ */
+#define LOGICALREP_ORIGIN_ANY "any"
+
 /* ----------------
  *		pg_subscription definition. cpp turns this into
  *		typedef struct FormData_pg_subscription
@@ -87,6 +99,9 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	/* List of publications subscribed to */
 	text		subpublications[1] BKI_FORCE_NOT_NULL;
+
+	/* Only publish data originating from the specified origin */
+	text		suborigin BKI_DEFAULT(LOGICALREP_ORIGIN_ANY);
 #endif
 } FormData_pg_subscription;
 
@@ -118,6 +133,8 @@ typedef struct Subscription
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
 	List	   *publications;	/* List of publication names to subscribe to */
+	char	   *origin;			/* Only publish data originating from the
+								 * specified origin */
 } Subscription;
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);

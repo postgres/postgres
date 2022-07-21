@@ -77,6 +77,7 @@
 #include "access/xloginsert.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_subscription.h"
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
@@ -194,6 +195,17 @@ replorigin_check_prerequisites(bool check_slots, bool recoveryOK)
 				 errmsg("cannot manipulate replication origins during recovery")));
 }
 
+
+/*
+ * IsReservedOriginName
+ *		True iff name is either "none" or "any".
+ */
+static bool
+IsReservedOriginName(const char *name)
+{
+	return ((pg_strcasecmp(name, LOGICALREP_ORIGIN_NONE) == 0) ||
+			(pg_strcasecmp(name, LOGICALREP_ORIGIN_ANY) == 0));
+}
 
 /* ---------------------------------------------------------------------------
  * Functions for working with replication origins themselves.
@@ -1244,13 +1256,17 @@ pg_replication_origin_create(PG_FUNCTION_ARGS)
 
 	name = text_to_cstring((text *) DatumGetPointer(PG_GETARG_DATUM(0)));
 
-	/* Replication origins "pg_xxx" are reserved for internal use */
-	if (IsReservedName(name))
+	/*
+	 * Replication origins "any and "none" are reserved for system options.
+	 * The origins "pg_xxx" are reserved for internal use.
+	 */
+	if (IsReservedName(name) || IsReservedOriginName(name))
 		ereport(ERROR,
 				(errcode(ERRCODE_RESERVED_NAME),
 				 errmsg("replication origin name \"%s\" is reserved",
 						name),
-				 errdetail("Origin names starting with \"pg_\" are reserved.")));
+				 errdetail("Origin names \"%s\", \"%s\", and names starting with \"pg_\" are reserved.",
+						   LOGICALREP_ORIGIN_ANY, LOGICALREP_ORIGIN_NONE)));
 
 	/*
 	 * If built with appropriate switch, whine when regression-testing

@@ -2465,6 +2465,28 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'CREATE SUBSCRIPTION sub2' => {
+		create_order => 50,
+		create_sql   => 'CREATE SUBSCRIPTION sub2
+						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
+						 WITH (connect = false, origin = none);',
+		regexp => qr/^
+			\QCREATE SUBSCRIPTION sub2 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub2', origin = none);\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'CREATE SUBSCRIPTION sub3' => {
+		create_order => 50,
+		create_sql   => 'CREATE SUBSCRIPTION sub3
+						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
+						 WITH (connect = false, origin = any);',
+		regexp => qr/^
+			\QCREATE SUBSCRIPTION sub3 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub3');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
 	'ALTER PUBLICATION pub1 ADD TABLE test_table' => {
 		create_order => 51,
 		create_sql =>

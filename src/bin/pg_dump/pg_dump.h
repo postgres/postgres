@@ -659,6 +659,7 @@ typedef struct _SubscriptionInfo
 	char	   *substream;
 	char	   *subtwophasestate;
 	char	   *subdisableonerr;
+	char	   *suborigin;
 	char	   *subsynccommit;
 	char	   *subpublications;
 } SubscriptionInfo;

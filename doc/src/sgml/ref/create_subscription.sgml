@@ -302,6 +302,21 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal>origin</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription will request the publisher to only
+          send changes that don't have an origin or send changes regardless of
+          origin. Setting <literal>origin</literal> to <literal>none</literal>
+          means that the subscription will request the publisher to only send
+          changes that don't have an origin. Setting <literal>origin</literal>
+          to <literal>any</literal> means that the publisher sends changes
+          regardless of their origin. The default is <literal>any</literal>.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist></para>
 
     </listitem>

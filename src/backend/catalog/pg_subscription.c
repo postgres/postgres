@@ -106,6 +106,14 @@ GetSubscription(Oid subid, bool missing_ok)
 	Assert(!isnull);
 	sub->publications = textarray_to_stringlist(DatumGetArrayTypeP(datum));
 
+	/* Get origin */
+	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
+							tup,
+							Anum_pg_subscription_suborigin,
+							&isnull);
+	Assert(!isnull);
+	sub->origin = TextDatumGetCString(datum);
+
 	ReleaseSysCache(tup);
 
 	return sub;
