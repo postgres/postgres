@@ -3079,6 +3079,9 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
  *
  * "*" is returned if the given attnum is InvalidAttrNumber --- this case
  * occurs when a Var represents a whole tuple of a relation.
+ *
+ * It is caller's responsibility to not call this on a dropped attribute.
+ * (You will get some answer for such cases, but it might not be sensible.)
  */
 char *
 get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
