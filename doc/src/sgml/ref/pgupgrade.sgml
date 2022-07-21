@@ -39,7 +39,7 @@ PostgreSQL documentation
  <para>
   <application>pg_upgrade</application> (formerly called <application>pg_migrator</application>) allows data
   stored in <productname>PostgreSQL</productname> data files to be upgraded to a later <productname>PostgreSQL</productname>
-  major version without the data dump/reload typically required for
+  major version without the data dump/restore typically required for
   major version upgrades, e.g., from 9.5.8 to 9.6.4 or from 10.7 to 11.2.
   It is not required for minor version upgrades, e.g., from 9.6.2 to 9.6.3
   or from 10.1 to 10.2.
@@ -420,7 +420,7 @@ NET STOP postgresql-&majorversion;
 
     <para>
      The <option>--jobs</option> option allows multiple CPU cores to be used
-     for copying/linking of files and to dump and reload database schemas
+     for copying/linking of files and to dump and restore database schemas
      in parallel;  a good place to start is the maximum of the number of
      CPU cores and tablespaces.  This option can dramatically reduce the
      time to upgrade a multi-database server running on a multiprocessor

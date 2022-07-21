@@ -276,9 +276,9 @@ PostgreSQL documentation
         This option is relevant only when creating a data-only dump.
         It instructs <application>pg_dumpall</application> to include commands
         to temporarily disable triggers on the target tables while
-        the data is reloaded.  Use this if you have referential
+        the data is restored.  Use this if you have referential
         integrity checks or other triggers on the tables that you
-        do not want to invoke during data reload.
+        do not want to invoke during data restore.
        </para>
 
        <para>
@@ -355,7 +355,7 @@ PostgreSQL documentation
         target the root of the partitioning hierarchy that contains it, rather
         than the partition itself.  This causes the appropriate partition to
         be re-determined for each row when the data is loaded.  This may be
-        useful when reloading data on a server where rows do not always fall
+        useful when restoring data on a server where rows do not always fall
         into the same partitions as they did on the original server.  That
         could happen, for example, if the partitioning column is of type text
         and the two systems have different definitions of the collation used
@@ -530,7 +530,7 @@ PostgreSQL documentation
         Dump data as <command>INSERT</command> commands (rather than
         <command>COPY</command>).  Controls the maximum number of rows per
         <command>INSERT</command> command. The value specified must be a
-        number greater than zero.  Any error during reloading will cause only
+        number greater than zero.  Any error during restoring will cause only
         rows that are part of the problematic <command>INSERT</command> to be
         lost, rather than the entire table contents.
        </para>
@@ -799,7 +799,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   To reload database(s) from this file, you can use:
+   To restore database(s) from this file, you can use:
 <screen>
 <prompt>$</prompt> <userinput>psql -f db.out postgres</userinput>
 </screen>

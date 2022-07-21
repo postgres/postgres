@@ -1650,7 +1650,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    For <emphasis>major</emphasis> releases of <productname>PostgreSQL</productname>, the
    internal data storage format is subject to change, thus complicating
    upgrades.  The traditional method for moving data to a new major version
-   is to dump and reload the database, though this can be slow.  A
+   is to dump and restore the database, though this can be slow.  A
    faster method is <xref linkend="pgupgrade"/>.  Replication methods are
    also available, as discussed below.
    (If you are using a pre-packaged version
@@ -1736,7 +1736,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <para>
     One upgrade method is to dump data from one major version of
-    <productname>PostgreSQL</productname> and reload it in another &mdash;  to do
+    <productname>PostgreSQL</productname> and restore it in another &mdash;  to do
     this, you must use a <emphasis>logical</emphasis> backup tool like
     <application>pg_dumpall</application>; file system
     level backup methods will not work. (There are checks in place that prevent
