@@ -1477,17 +1477,26 @@ select * from tt14v;
 begin;
 -- this perhaps should be rejected, but it isn't:
 alter table tt14t drop column f3;
--- f3 is still in the view ...
+-- column f3 is still in the view, sort of ...
 select pg_get_viewdef('tt14v', true);
-         pg_get_viewdef         
---------------------------------
-  SELECT t.f1,                 +
-     t.f3,                     +
-     t.f4                      +
-    FROM tt14f() t(f1, f3, f4);
+         pg_get_viewdef          
+---------------------------------
+  SELECT t.f1,                  +
+     t."?dropped?column?" AS f3,+
+     t.f4                       +
+    FROM tt14f() t(f1, f4);
 (1 row)
 
--- but will fail at execution
+-- ... and you can even EXPLAIN it ...
+explain (verbose, costs off) select * from tt14v;
+               QUERY PLAN               
+----------------------------------------
+ Function Scan on testviewschm2.tt14f t
+   Output: t.f1, t.f3, t.f4
+   Function Call: tt14f()
+(3 rows)
+
+-- but it will fail at execution
 select f1, f4 from tt14v;
  f1  | f4 
 -----+----
