@@ -7078,7 +7078,7 @@ fetch_more_data_begin(AsyncRequest *areq)
 	snprintf(sql, sizeof(sql), "FETCH %d FROM c%u",
 			 fsstate->fetch_size, fsstate->cursor_number);
 
-	if (PQsendQuery(fsstate->conn, sql) < 0)
+	if (!PQsendQuery(fsstate->conn, sql))
 		pgfdw_report_error(ERROR, NULL, fsstate->conn, false, fsstate->query);
 
 	/* Remember that the request is in process */
