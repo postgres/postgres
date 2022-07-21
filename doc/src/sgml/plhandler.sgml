@@ -208,7 +208,7 @@ CREATE LANGUAGE plsample
     attached to a function when <varname>check_function_bodies</varname> is on.
     Therefore, checks whose results might be affected by GUC parameters
     definitely should be skipped when <varname>check_function_bodies</varname> is
-    off, to avoid false failures when reloading a dump.
+    off, to avoid false failures when restoring a dump.
    </para>
 
    <para>

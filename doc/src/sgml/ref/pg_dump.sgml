@@ -676,7 +676,7 @@ PostgreSQL documentation
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
         However, since this option generates a separate command for each row,
-        an error in reloading a row causes only that row to be lost rather
+        an error in restoring a row causes only that row to be lost rather
         than the entire table contents.
        </para>
       </listitem>
@@ -699,9 +699,9 @@ PostgreSQL documentation
         This option is relevant only when creating a data-only dump.
         It instructs <application>pg_dump</application> to include commands
         to temporarily disable triggers on the target tables while
-        the data is reloaded.  Use this if you have referential
+        the data is restored.  Use this if you have referential
         integrity checks or other triggers on the tables that you
-        do not want to invoke during data reload.
+        do not want to invoke during data restore.
        </para>
 
        <para>
@@ -779,7 +779,7 @@ PostgreSQL documentation
         it is mainly useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
         However, since this option generates a separate command for each row,
-        an error in reloading a row causes only that row to be lost rather
+        an error in restoring a row causes only that row to be lost rather
         than the entire table contents.
         Note that
         the restore might fail altogether if you have rearranged column order.
@@ -798,7 +798,7 @@ PostgreSQL documentation
         target the root of the partitioning hierarchy that contains it, rather
         than the partition itself.  This causes the appropriate partition to
         be re-determined for each row when the data is loaded.  This may be
-        useful when reloading data on a server where rows do not always fall
+        useful when restoring data on a server where rows do not always fall
         into the same partitions as they did on the original server.  That
         could happen, for example, if the partitioning column is of type text
         and the two systems have different definitions of the collation used
@@ -810,7 +810,7 @@ PostgreSQL documentation
         with this option, because <application>pg_restore</application> will
         not know exactly which partition(s) a given archive data item will
         load data into.  This could result in inefficiency due to lock
-        conflicts between parallel jobs, or perhaps even reload failures due
+        conflicts between parallel jobs, or perhaps even restore failures due
         to foreign key constraints being set up before all the relevant data
         is loaded.
        </para>

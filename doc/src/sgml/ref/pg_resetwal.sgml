@@ -55,7 +55,7 @@ PostgreSQL documentation
    After running this command, it should be possible to start the server,
    but bear in mind that the database might contain inconsistent data due to
    partially-committed transactions.  You should immediately dump your data,
-   run <command>initdb</command>, and reload.  After reload, check for
+   run <command>initdb</command>, and restore.  After restore, check for
    inconsistencies and repair as needed.
   </para>
 
@@ -78,7 +78,7 @@ PostgreSQL documentation
    discussed below. If you are not able to determine correct values for all
    these fields, <option>-f</option> can still be used, but
    the recovered database must be treated with even more suspicion than
-   usual: an immediate dump and reload is imperative.  <emphasis>Do not</emphasis>
+   usual: an immediate dump and restore is imperative.  <emphasis>Do not</emphasis>
    execute any data-modifying operations in the database before you dump,
    as any such action is likely to make the corruption worse.
   </para>
