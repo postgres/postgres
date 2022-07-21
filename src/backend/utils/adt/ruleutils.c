@@ -53,6 +53,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_node.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_relation.h"
 #include "parser/parser.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
@@ -4222,9 +4223,9 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	int			j;
 
 	/*
-	 * Extract the RTE's "real" column names.  This is comparable to
-	 * get_rte_attribute_name, except that it's important to disregard dropped
-	 * columns.  We put NULL into the array for a dropped column.
+	 * Construct an array of the current "real" column names of the RTE.
+	 * real_colnames[] will be indexed by physical column number, with NULL
+	 * entries for dropped columns.
 	 */
 	if (rte->rtekind == RTE_RELATION)
 	{
@@ -4251,19 +4252,43 @@ set_relation_column_names(deparse_namespace *dpns, RangeTblEntry *rte,
 	}
 	else
 	{
-		/* Otherwise use the column names from eref */
+		/* Otherwise get the column names from eref or expandRTE() */
+		List	   *colnames;
 		ListCell   *lc;
 
-		ncolumns = list_length(rte->eref->colnames);
+		/*
+		 * Functions returning composites have the annoying property that some
+		 * of the composite type's columns might have been dropped since the
+		 * query was parsed.  If possible, use expandRTE() to handle that
+		 * case, since it has the tedious logic needed to find out about
+		 * dropped columns.  However, if we're explaining a plan, then we
+		 * don't have rte->functions because the planner thinks that won't be
+		 * needed later, and that breaks expandRTE().  So in that case we have
+		 * to rely on rte->eref, which may lead us to report a dropped
+		 * column's old name; that seems close enough for EXPLAIN's purposes.
+		 *
+		 * For non-RELATION, non-FUNCTION RTEs, we can just look at rte->eref,
+		 * which should be sufficiently up-to-date: no other RTE types can
+		 * have columns get dropped from under them after parsing.
+		 */
+		if (rte->rtekind == RTE_FUNCTION && rte->functions != NIL)
+		{
+			/* Since we're not creating Vars, rtindex etc. don't matter */
+			expandRTE(rte, 1, 0, -1, true /* include dropped */ ,
+					  &colnames, NULL);
+		}
+		else
+			colnames = rte->eref->colnames;
+
+		ncolumns = list_length(colnames);
 		real_colnames = (char **) palloc(ncolumns * sizeof(char *));
 
 		i = 0;
-		foreach(lc, rte->eref->colnames)
+		foreach(lc, colnames)
 		{
 			/*
-			 * If the column name shown in eref is an empty string, then it's
-			 * a column that was dropped at the time of parsing the query, so
-			 * treat it as dropped.
+			 * If the column name we find here is an empty string, then it's a
+			 * dropped column, so change to NULL.
 			 */
 			char	   *cname = strVal(lfirst(lc));
 
@@ -7192,9 +7217,16 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 			elog(ERROR, "invalid attnum %d for relation \"%s\"",
 				 attnum, rte->eref->aliasname);
 		attname = colinfo->colnames[attnum - 1];
-		if (attname == NULL)	/* dropped column? */
-			elog(ERROR, "invalid attnum %d for relation \"%s\"",
-				 attnum, rte->eref->aliasname);
+
+		/*
+		 * If we find a Var referencing a dropped column, it seems better to
+		 * print something (anything) than to fail.  In general this should
+		 * not happen, but there are specific cases involving functions
+		 * returning named composite types where we don't sufficiently enforce
+		 * that you can't drop a column that's referenced in some view.
+		 */
+		if (attname == NULL)
+			attname = "?dropped?column?";
 	}
 	else
 	{
