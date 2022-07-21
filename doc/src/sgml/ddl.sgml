@@ -557,7 +557,7 @@ CREATE TABLE products (
      tests, it cannot guarantee that the database will not reach a state
      in which the constraint condition is false (due to subsequent changes
      of the other row(s) involved).  This would cause a database dump and
-     reload to fail.  The reload could fail even when the complete
+     restore to fail.  The restore could fail even when the complete
      database state is consistent with the constraint, due to rows not
      being loaded in an order that will satisfy the constraint.  If
      possible, use <literal>UNIQUE</literal>, <literal>EXCLUDE</literal>,
@@ -569,10 +569,10 @@ CREATE TABLE products (
      If what you desire is a one-time check against other rows at row
      insertion, rather than a continuously-maintained consistency
      guarantee, a custom <link linkend="triggers">trigger</link> can be used
-     to implement that.  (This approach avoids the dump/reload problem because
+     to implement that.  (This approach avoids the dump/restore problem because
      <application>pg_dump</application> does not reinstall triggers until after
-     reloading data, so that the check will not be enforced during a
-     dump/reload.)
+     restoring data, so that the check will not be enforced during a
+     dump/restore.)
     </para>
    </note>
 
@@ -594,7 +594,7 @@ CREATE TABLE products (
      function.  <productname>PostgreSQL</productname> does not disallow
      that, but it will not notice if there are rows in the table that now
      violate the <literal>CHECK</literal> constraint. That would cause a
-     subsequent database dump and reload to fail.
+     subsequent database dump and restore to fail.
      The recommended way to handle such a change is to drop the constraint
      (using <command>ALTER TABLE</command>), adjust the function definition,
      and re-add the constraint, thereby rechecking it against all table rows.

@@ -305,7 +305,7 @@ ALTER TYPE <replaceable class="parameter">name</replaceable> RENAME VALUE <repla
    around</quote> since the original creation of the enum type).  The slowdown is
    usually insignificant; but if it matters, optimal performance can be
    regained by dropping and recreating the enum type, or by dumping and
-   reloading the database.
+   restoring the database.
   </para>
  </refsect1>
 
