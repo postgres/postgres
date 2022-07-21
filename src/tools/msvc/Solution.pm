@@ -258,7 +258,6 @@ sub GenerateFiles
 		HAVE_EXECINFO_H                             => undef,
 		HAVE_EXPLICIT_BZERO                         => undef,
 		HAVE_FDATASYNC                              => 1,
-		HAVE_FLS                                    => undef,
 		HAVE_FSEEKO                                 => 1,
 		HAVE_FUNCNAME__FUNC                         => undef,
 		HAVE_FUNCNAME__FUNCTION                     => 1,

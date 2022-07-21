@@ -47,6 +47,7 @@
 #include "parser/parsetree.h"
 #include "partitioning/partbounds.h"
 #include "partitioning/partprune.h"
+#include "port/pg_bitutils.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -1491,7 +1492,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		if (enable_parallel_append)
 		{
 			parallel_workers = Max(parallel_workers,
-								   fls(list_length(live_childrels)));
+								   pg_leftmost_one_pos32(list_length(live_childrels)) + 1);
 			parallel_workers = Min(parallel_workers,
 								   max_parallel_workers_per_gather);
 		}
@@ -1542,7 +1543,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * the planned number of parallel workers.
 		 */
 		parallel_workers = Max(parallel_workers,
-							   fls(list_length(live_childrels)));
+							   pg_leftmost_one_pos32(list_length(live_childrels)) + 1);
 		parallel_workers = Min(parallel_workers,
 							   max_parallel_workers_per_gather);
 		Assert(parallel_workers > 0);

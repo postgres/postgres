@@ -366,10 +366,6 @@ extern int	gettimeofday(struct timeval *tp, struct timezone *tzp);
 #define pgoff_t off_t
 #endif
 
-#ifndef HAVE_FLS
-extern int	fls(int mask);
-#endif
-
 #ifndef HAVE_GETPEEREID
 /* On Windows, Perl might have incompatible definitions of uid_t and gid_t. */
 #ifndef PLPERL_HAVE_UID_GID

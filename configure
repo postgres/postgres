@@ -16771,19 +16771,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "fls" "ac_cv_func_fls"
-if test "x$ac_cv_func_fls" = xyes; then :
-  $as_echo "#define HAVE_FLS 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" fls.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS fls.$ac_objext"
- ;;
-esac
-
-fi
-
 ac_fn_c_check_func "$LINENO" "getopt" "ac_cv_func_getopt"
 if test "x$ac_cv_func_getopt" = xyes; then :
   $as_echo "#define HAVE_GETOPT 1" >>confdefs.h

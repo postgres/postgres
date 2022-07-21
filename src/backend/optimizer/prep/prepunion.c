@@ -675,7 +675,7 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 		if (enable_parallel_append)
 		{
 			parallel_workers = Max(parallel_workers,
-								   fls(list_length(partial_pathlist)));
+								   pg_leftmost_one_pos32(list_length(partial_pathlist)) + 1);
 			parallel_workers = Min(parallel_workers,
 								   max_parallel_workers_per_gather);
 		}
