@@ -58,16 +58,20 @@ Author: Noah Misch <noah@leadboat.com>
      </para>
 
      <para>
-      This is a change in the default for newly-created databases in
-      existing clusters and for new clusters;  <literal>USAGE</literal>
-      permissions on the <literal>public</literal> schema has not
-      been changed.  Databases restored from previous Postgres releases
-      will be restored with their current permissions.  Users wishing
-      to have the former permissions will need to grant
-      <literal>CREATE</literal> permission for <literal>PUBLIC</literal>
-      on the <literal>public</literal> schema; this change can be made
-      on <literal>template1</literal> to cause all new databases
-      to have these permissions.
+      The new default is one of the secure schema usage patterns that <xref
+      linkend="ddl-schemas-patterns"/> has recommended since the security
+      release for CVE-2018-1058.  The change applies to newly-created
+      databases in existing clusters and for new clusters.  Upgrading a
+      cluster or restoring a database dump will preserve existing permissions.
+     </para>
+
+     <para>
+      For existing databases, especially those having multiple users,
+      consider revoking <literal>CREATE</literal> permission on
+      the <literal>public</literal> schema to adopt this new default.
+      For new databases having zero need to defend against insider threats,
+      granting <literal>CREATE</literal> permission will yield the behavior
+      of prior releases.
      </para>
     </listitem>
 
