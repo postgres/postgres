@@ -1555,12 +1555,12 @@ ANALYZE tststats.priv_test_tbl;
 
 -- Check printing info about extended statistics by \dX
 create table stts_t1 (a int, b int);
-create statistics stts_1 (ndistinct) on a, b from stts_t1;
-create statistics stts_2 (ndistinct, dependencies) on a, b from stts_t1;
-create statistics stts_3 (ndistinct, dependencies, mcv) on a, b from stts_t1;
+create statistics (ndistinct) on a, b from stts_t1;
+create statistics (ndistinct, dependencies) on a, b from stts_t1;
+create statistics (ndistinct, dependencies, mcv) on a, b from stts_t1;
 
 create table stts_t2 (a int, b int, c int);
-create statistics stts_4 on b, c from stts_t2;
+create statistics on b, c from stts_t2;
 
 create table stts_t3 (col1 int, col2 int, col3 int);
 create statistics stts_hoge on col1, col2, col3 from stts_t3;
@@ -1575,12 +1575,20 @@ analyze stts_t1;
 set search_path to public, stts_s1, stts_s2, tststats;
 
 \dX
-\dX stts_?
+\dX stts_t*
 \dX *stts_hoge
 \dX+
-\dX+ stts_?
+\dX+ stts_t*
 \dX+ *stts_hoge
 \dX+ stts_s2.stts_yama
+
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON (a+b), (a-b) FROM stts_t1;
+\dX stts_t*expr*
+drop statistics stts_t1_a_b_expr_expr_stat;
+drop statistics stts_t1_a_b_expr_expr_stat1;
+drop statistics stts_t1_expr_expr_stat;
 
 set search_path to public, stts_s1;
 \dX

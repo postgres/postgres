@@ -434,7 +434,8 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 				old_aggr_definition old_aggr_list
 				oper_argtypes RuleActionList RuleActionMulti
 				opt_column_list columnList opt_name_list
-				sort_clause opt_sort_clause sortby_list index_params stats_params
+				sort_clause opt_sort_clause sortby_list index_params
+				opt_stats_name stats_params
 				opt_include opt_c_include index_including_params
 				name_list role_list from_clause from_list opt_array_bounds
 				qualified_name_list any_name any_name_list type_name_list
@@ -4533,7 +4534,7 @@ ExistingIndex:   USING INDEX name					{ $$ = $3; }
 /*****************************************************************************
  *
  *		QUERY :
- *				CREATE STATISTICS [IF NOT EXISTS] stats_name [(stat types)]
+ *				CREATE STATISTICS [[IF NOT EXISTS] stats_name] [(stat types)]
  *					ON expression-list FROM from_list
  *
  * Note: the expectation here is that the clauses after ON are a subset of
@@ -4545,7 +4546,7 @@ ExistingIndex:   USING INDEX name					{ $$ = $3; }
  *****************************************************************************/
 
 CreateStatsStmt:
-			CREATE STATISTICS any_name
+			CREATE STATISTICS opt_stats_name
 			opt_name_list ON stats_params FROM from_list
 				{
 					CreateStatsStmt *n = makeNode(CreateStatsStmt);
@@ -4572,6 +4573,12 @@ CreateStatsStmt:
 					$$ = (Node *) n;
 				}
 			;
+
+/* Statistics name is optional unless IF NOT EXISTS is specified */
+opt_stats_name:
+			any_name								{ $$ = $1; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
 
 /*
  * Statistics attributes can be either simple column references, or arbitrary

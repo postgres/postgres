@@ -155,10 +155,9 @@ CreateStatistics(CreateStatsStmt *stmt)
 
 	/*
 	 * If the node has a name, split it up and determine creation namespace.
-	 * If not (a possibility not considered by the grammar, but one which can
-	 * occur via the "CREATE TABLE ... (LIKE)" command), then we put the
-	 * object in the same namespace as the relation, and cons up a name for
-	 * it.
+	 * If not, put the object in the same namespace as the relation, and cons
+	 * up a name for it.  (This can happen either via "CREATE STATISTICS ..."
+	 * or via "CREATE TABLE ... (LIKE)".)
 	 */
 	if (stmt->defnames)
 		namespaceId = QualifiedNameGetCreationNamespace(stmt->defnames,

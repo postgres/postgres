@@ -21,11 +21,11 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable>
+CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable> ]
     ON ( <replaceable class="parameter">expression</replaceable> )
     FROM <replaceable class="parameter">table_name</replaceable>
 
-CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable>
+CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_name</replaceable> ]
     [ ( <replaceable class="parameter">statistics_kind</replaceable> [, ... ] ) ]
     ON { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) }, { <replaceable class="parameter">column_name</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [, ...]
     FROM <replaceable class="parameter">table_name</replaceable>
@@ -60,8 +60,8 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
    If a schema name is given (for example, <literal>CREATE STATISTICS
    myschema.mystat ...</literal>) then the statistics object is created in the
    specified schema.  Otherwise it is created in the current schema.
-   The name of the statistics object must be distinct from the name of any
-   other statistics object in the same schema.
+   If given, the name of the statistics object must be distinct from the name
+   of any other statistics object in the same schema.
   </para>
  </refsect1>
 
@@ -78,6 +78,7 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
       exists.  A notice is issued in this case.  Note that only the name of
       the statistics object is considered here, not the details of its
       definition.
+      Statistics name is required when <literal>IF NOT EXISTS</literal> is specified.
      </para>
     </listitem>
    </varlistentry>
@@ -88,6 +89,9 @@ CREATE STATISTICS [ IF NOT EXISTS ] <replaceable class="parameter">statistics_na
      <para>
       The name (optionally schema-qualified) of the statistics object to be
       created.
+      If the name is omitted, <productname>PostgreSQL</productname> chooses a
+      suitable name based on the parent table's name and the defined column
+      name(s) and/or expression(s).
      </para>
     </listitem>
    </varlistentry>

@@ -3062,11 +3062,11 @@ CREATE STATISTICS tststats.priv_test_stats (mcv) ON a, b
 ANALYZE tststats.priv_test_tbl;
 -- Check printing info about extended statistics by \dX
 create table stts_t1 (a int, b int);
-create statistics stts_1 (ndistinct) on a, b from stts_t1;
-create statistics stts_2 (ndistinct, dependencies) on a, b from stts_t1;
-create statistics stts_3 (ndistinct, dependencies, mcv) on a, b from stts_t1;
+create statistics (ndistinct) on a, b from stts_t1;
+create statistics (ndistinct, dependencies) on a, b from stts_t1;
+create statistics (ndistinct, dependencies, mcv) on a, b from stts_t1;
 create table stts_t2 (a int, b int, c int);
-create statistics stts_4 on b, c from stts_t2;
+create statistics on b, c from stts_t2;
 create table stts_t3 (col1 int, col2 int, col3 int);
 create statistics stts_hoge on col1, col2, col3 from stts_t3;
 create schema stts_s1;
@@ -3084,24 +3084,24 @@ set search_path to public, stts_s1, stts_s2, tststats;
  public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
  public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
  public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
  public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ public   | stts_t1_a_b_stat       | a, b FROM stts_t1                                                | defined   |              | 
+ public   | stts_t1_a_b_stat1      | a, b FROM stts_t1                                                | defined   | defined      | 
+ public   | stts_t1_a_b_stat2      | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public   | stts_t2_b_c_stat       | b, c FROM stts_t2                                                | defined   | defined      | defined
  stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
  stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                          |           | defined      | defined
  tststats | priv_test_stats        | a, b FROM priv_test_tbl                                          |           |              | defined
 (12 rows)
 
-\dX stts_?
-                       List of extended statistics
- Schema |  Name  |    Definition     | Ndistinct | Dependencies |   MCV   
---------+--------+-------------------+-----------+--------------+---------
- public | stts_1 | a, b FROM stts_t1 | defined   |              | 
- public | stts_2 | a, b FROM stts_t1 | defined   | defined      | 
- public | stts_3 | a, b FROM stts_t1 | defined   | defined      | defined
- public | stts_4 | b, c FROM stts_t2 | defined   | defined      | defined
+\dX stts_t*
+                             List of extended statistics
+ Schema |       Name        |    Definition     | Ndistinct | Dependencies |   MCV   
+--------+-------------------+-------------------+-----------+--------------+---------
+ public | stts_t1_a_b_stat  | a, b FROM stts_t1 | defined   |              | 
+ public | stts_t1_a_b_stat1 | a, b FROM stts_t1 | defined   | defined      | 
+ public | stts_t1_a_b_stat2 | a, b FROM stts_t1 | defined   | defined      | defined
+ public | stts_t2_b_c_stat  | b, c FROM stts_t2 | defined   | defined      | defined
 (4 rows)
 
 \dX *stts_hoge
@@ -3119,24 +3119,24 @@ set search_path to public, stts_s1, stts_s2, tststats;
  public   | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
  public   | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
  public   | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
- public   | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
- public   | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
- public   | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
- public   | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
  public   | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ public   | stts_t1_a_b_stat       | a, b FROM stts_t1                                                | defined   |              | 
+ public   | stts_t1_a_b_stat1      | a, b FROM stts_t1                                                | defined   | defined      | 
+ public   | stts_t1_a_b_stat2      | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public   | stts_t2_b_c_stat       | b, c FROM stts_t2                                                | defined   | defined      | defined
  stts_s1  | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
  stts_s2  | stts_yama              | col1, col3 FROM stts_t3                                          |           | defined      | defined
  tststats | priv_test_stats        | a, b FROM priv_test_tbl                                          |           |              | defined
 (12 rows)
 
-\dX+ stts_?
-                       List of extended statistics
- Schema |  Name  |    Definition     | Ndistinct | Dependencies |   MCV   
---------+--------+-------------------+-----------+--------------+---------
- public | stts_1 | a, b FROM stts_t1 | defined   |              | 
- public | stts_2 | a, b FROM stts_t1 | defined   | defined      | 
- public | stts_3 | a, b FROM stts_t1 | defined   | defined      | defined
- public | stts_4 | b, c FROM stts_t2 | defined   | defined      | defined
+\dX+ stts_t*
+                             List of extended statistics
+ Schema |       Name        |    Definition     | Ndistinct | Dependencies |   MCV   
+--------+-------------------+-------------------+-----------+--------------+---------
+ public | stts_t1_a_b_stat  | a, b FROM stts_t1 | defined   |              | 
+ public | stts_t1_a_b_stat1 | a, b FROM stts_t1 | defined   | defined      | 
+ public | stts_t1_a_b_stat2 | a, b FROM stts_t1 | defined   | defined      | defined
+ public | stts_t2_b_c_stat  | b, c FROM stts_t2 | defined   | defined      | defined
 (4 rows)
 
 \dX+ *stts_hoge
@@ -3153,6 +3153,21 @@ set search_path to public, stts_s1, stts_s2, tststats;
  stts_s2 | stts_yama | col1, col3 FROM stts_t3 |           | defined      | defined
 (1 row)
 
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON (a+b), (a-b) FROM stts_t1;
+\dX stts_t*expr*
+                                           List of extended statistics
+ Schema |            Name             |             Definition              | Ndistinct | Dependencies |   MCV   
+--------+-----------------------------+-------------------------------------+-----------+--------------+---------
+ public | stts_t1_a_b_expr_expr_stat  | a, b, (a + b), (a - b) FROM stts_t1 |           |              | defined
+ public | stts_t1_a_b_expr_expr_stat1 | a, b, (a + b), (a - b) FROM stts_t1 |           |              | defined
+ public | stts_t1_expr_expr_stat      | (a + b), (a - b) FROM stts_t1       |           |              | defined
+(3 rows)
+
+drop statistics stts_t1_a_b_expr_expr_stat;
+drop statistics stts_t1_a_b_expr_expr_stat1;
+drop statistics stts_t1_expr_expr_stat;
 set search_path to public, stts_s1;
 \dX
                                                        List of extended statistics
@@ -3162,11 +3177,11 @@ set search_path to public, stts_s1;
  public  | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
  public  | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
  public  | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
- public  | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
- public  | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
- public  | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
- public  | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
  public  | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ public  | stts_t1_a_b_stat       | a, b FROM stts_t1                                                | defined   |              | 
+ public  | stts_t1_a_b_stat1      | a, b FROM stts_t1                                                | defined   | defined      | 
+ public  | stts_t1_a_b_stat2      | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public  | stts_t2_b_c_stat       | b, c FROM stts_t2                                                | defined   | defined      | defined
  stts_s1 | stts_foo               | col1, col2 FROM stts_t3                                          | defined   | defined      | defined
 (10 rows)
 
@@ -3180,11 +3195,11 @@ set role regress_stats_ext;
  public | mcv_lists_arrays_stats | a, b, c FROM mcv_lists_arrays                                    |           |              | defined
  public | mcv_lists_bool_stats   | a, b, c FROM mcv_lists_bool                                      |           |              | defined
  public | mcv_lists_stats        | a, b, d FROM mcv_lists                                           |           |              | defined
- public | stts_1                 | a, b FROM stts_t1                                                | defined   |              | 
- public | stts_2                 | a, b FROM stts_t1                                                | defined   | defined      | 
- public | stts_3                 | a, b FROM stts_t1                                                | defined   | defined      | defined
- public | stts_4                 | b, c FROM stts_t2                                                | defined   | defined      | defined
  public | stts_hoge              | col1, col2, col3 FROM stts_t3                                    | defined   | defined      | defined
+ public | stts_t1_a_b_stat       | a, b FROM stts_t1                                                | defined   |              | 
+ public | stts_t1_a_b_stat1      | a, b FROM stts_t1                                                | defined   | defined      | 
+ public | stts_t1_a_b_stat2      | a, b FROM stts_t1                                                | defined   | defined      | defined
+ public | stts_t2_b_c_stat       | b, c FROM stts_t2                                                | defined   | defined      | defined
 (9 rows)
 
 reset role;
