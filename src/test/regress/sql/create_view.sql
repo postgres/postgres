@@ -509,9 +509,11 @@ begin;
 -- this perhaps should be rejected, but it isn't:
 alter table tt14t drop column f3;
 
--- f3 is still in the view ...
+-- column f3 is still in the view, sort of ...
 select pg_get_viewdef('tt14v', true);
--- but will fail at execution
+-- ... and you can even EXPLAIN it ...
+explain (verbose, costs off) select * from tt14v;
+-- but it will fail at execution
 select f1, f4 from tt14v;
 select * from tt14v;
 
