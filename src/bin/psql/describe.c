@@ -112,7 +112,10 @@ describeAggregates(const char *pattern, bool verbose, bool showSystem)
 								"n.nspname", "p.proname", NULL,
 								"pg_catalog.pg_function_is_visible(p.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
 
@@ -182,7 +185,10 @@ describeAccessMethods(const char *pattern, bool verbose)
 								NULL, "amname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -244,7 +250,10 @@ describeTablespaces(const char *pattern, bool verbose)
 								NULL, "spcname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -534,7 +543,7 @@ describeFunctions(const char *functypes, const char *func_pattern,
 								"n.nspname", "p.proname", NULL,
 								"pg_catalog.pg_function_is_visible(p.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	for (int i = 0; i < num_arg_patterns; i++)
 	{
@@ -561,7 +570,7 @@ describeFunctions(const char *functypes, const char *func_pattern,
 										true, false,
 										nspname, typname, ft, tiv,
 										NULL, 3))
-				return false;
+				goto error_return;
 		}
 		else
 		{
@@ -599,6 +608,10 @@ describeFunctions(const char *functypes, const char *func_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -682,7 +695,10 @@ describeTypes(const char *pattern, bool verbose, bool showSystem)
 								"pg_catalog.format_type(t.oid, NULL)",
 								"pg_catalog.pg_type_is_visible(t.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -836,7 +852,7 @@ describeOperators(const char *oper_pattern,
 								"n.nspname", "o.oprname", NULL,
 								"pg_catalog.pg_operator_is_visible(o.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	if (num_arg_patterns == 1)
 		appendPQExpBufferStr(&buf, "  AND o.oprleft = 0\n");
@@ -866,7 +882,7 @@ describeOperators(const char *oper_pattern,
 										true, false,
 										nspname, typname, ft, tiv,
 										NULL, 3))
-				return false;
+				goto error_return;
 		}
 		else
 		{
@@ -890,6 +906,10 @@ describeOperators(const char *oper_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -950,10 +970,15 @@ listAllDbs(const char *pattern, bool verbose)
 							 "  JOIN pg_catalog.pg_tablespace t on d.dattablespace = t.oid\n");
 
 	if (pattern)
+	{
 		if (!validateSQLNamePattern(&buf, pattern, false, false,
 									NULL, "d.datname", NULL, NULL,
 									NULL, 1))
+		{
+			termPQExpBuffer(&buf);
 			return false;
+		}
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 	res = PSQLexec(buf.data);
@@ -1106,16 +1131,13 @@ permissionsList(const char *pattern)
 								"n.nspname", "c.relname", NULL,
 								"n.nspname !~ '^pg_' AND pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
 	res = PSQLexec(buf.data);
 	if (!res)
-	{
-		termPQExpBuffer(&buf);
-		return false;
-	}
+		goto error_return;
 
 	myopt.nullPrint = NULL;
 	printfPQExpBuffer(&buf, _("Access privileges"));
@@ -1129,6 +1151,10 @@ permissionsList(const char *pattern)
 	termPQExpBuffer(&buf);
 	PQclear(res);
 	return true;
+
+error_return:
+		termPQExpBuffer(&buf);
+		return false;
 }
 
 
@@ -1177,16 +1203,13 @@ listDefaultACLs(const char *pattern)
 								"pg_catalog.pg_get_userbyid(d.defaclrole)",
 								NULL,
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 3;");
 
 	res = PSQLexec(buf.data);
 	if (!res)
-	{
-		termPQExpBuffer(&buf);
-		return false;
-	}
+		goto error_return;
 
 	myopt.nullPrint = NULL;
 	printfPQExpBuffer(&buf, _("Default access privileges"));
@@ -1200,6 +1223,10 @@ listDefaultACLs(const char *pattern)
 	termPQExpBuffer(&buf);
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -1253,7 +1280,7 @@ objectDescription(const char *pattern, bool showSystem)
 								false, "n.nspname", "pgc.conname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	/* Domain constraint descriptions */
 	appendPQExpBuffer(&buf,
@@ -1277,7 +1304,7 @@ objectDescription(const char *pattern, bool showSystem)
 								false, "n.nspname", "pgc.conname", NULL,
 								"pg_catalog.pg_type_is_visible(t.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	/* Operator class descriptions */
 	appendPQExpBuffer(&buf,
@@ -1301,7 +1328,7 @@ objectDescription(const char *pattern, bool showSystem)
 								"n.nspname", "o.opcname", NULL,
 								"pg_catalog.pg_opclass_is_visible(o.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	/* Operator family descriptions */
 	appendPQExpBuffer(&buf,
@@ -1325,7 +1352,7 @@ objectDescription(const char *pattern, bool showSystem)
 								"n.nspname", "opf.opfname", NULL,
 								"pg_catalog.pg_opfamily_is_visible(opf.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	/* Rule descriptions (ignore rules for views) */
 	appendPQExpBuffer(&buf,
@@ -1348,7 +1375,7 @@ objectDescription(const char *pattern, bool showSystem)
 								"n.nspname", "r.rulename", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	/* Trigger descriptions */
 	appendPQExpBuffer(&buf,
@@ -1370,7 +1397,7 @@ objectDescription(const char *pattern, bool showSystem)
 								"n.nspname", "t.tgname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf,
 						 ") AS tt\n"
@@ -1393,6 +1420,10 @@ objectDescription(const char *pattern, bool showSystem)
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -1428,7 +1459,10 @@ describeTableDetails(const char *pattern, bool verbose, bool showSystem)
 								"n.nspname", "c.relname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 2, 3;");
 
@@ -3617,7 +3651,10 @@ describeRoles(const char *pattern, bool verbose, bool showSystem)
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "r.rolname", NULL, NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -3742,11 +3779,11 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 					  gettext_noop("Settings"));
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "r.rolname", NULL, NULL, &havewhere, 1))
-		return false;
+		goto error_return;
 	if (!validateSQLNamePattern(&buf, pattern2, havewhere, false,
 								NULL, "d.datname", NULL, NULL,
 								NULL, 1))
-		return false;
+		goto error_return;
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
 	res = PSQLexec(buf.data);
@@ -3782,6 +3819,10 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -3943,7 +3984,10 @@ listTables(const char *tabtypes, const char *pattern, bool verbose, bool showSys
 								"n.nspname", "c.relname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1,2;");
 
@@ -4160,7 +4204,10 @@ listPartitionedTables(const char *reltypes, const char *pattern, bool verbose)
 								"n.nspname", "c.relname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBuffer(&buf, "ORDER BY \"Schema\", %s%s\"Name\";",
 					  mixed_output ? "\"Type\" DESC, " : "",
@@ -4233,10 +4280,15 @@ listLanguages(const char *pattern, bool verbose, bool showSystem)
 					  gettext_noop("Description"));
 
 	if (pattern)
+	{
 		if (!validateSQLNamePattern(&buf, pattern, false, false,
 									NULL, "l.lanname", NULL, NULL,
 									NULL, 2))
+		{
+			termPQExpBuffer(&buf);
 			return false;
+		}
+	}
 
 	if (!showSystem && !pattern)
 		appendPQExpBufferStr(&buf, "WHERE l.lanplcallfoid != 0\n");
@@ -4322,7 +4374,10 @@ listDomains(const char *pattern, bool verbose, bool showSystem)
 								"n.nspname", "t.typname", NULL,
 								"pg_catalog.pg_type_is_visible(t.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -4398,7 +4453,10 @@ listConversions(const char *pattern, bool verbose, bool showSystem)
 								"n.nspname", "c.conname", NULL,
 								"pg_catalog.pg_conversion_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -4545,7 +4603,10 @@ listEventTriggers(const char *pattern, bool verbose)
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "evtname", NULL, NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1");
 
@@ -4641,7 +4702,10 @@ listExtendedStats(const char *pattern)
 								"es.stxnamespace::pg_catalog.regnamespace::pg_catalog.text", "es.stxname",
 								NULL, "pg_catalog.pg_statistics_obj_is_visible(es.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -4745,7 +4809,7 @@ listCasts(const char *pattern, bool verbose)
 								"pg_catalog.format_type(ts.oid, NULL)",
 								"pg_catalog.pg_type_is_visible(ts.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf, ") OR (true");
 
@@ -4754,7 +4818,7 @@ listCasts(const char *pattern, bool verbose)
 								"pg_catalog.format_type(tt.oid, NULL)",
 								"pg_catalog.pg_type_is_visible(tt.oid)",
 								NULL, 3))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf, ") )\nORDER BY 1, 2;");
 
@@ -4773,6 +4837,10 @@ listCasts(const char *pattern, bool verbose)
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 /*
@@ -4854,7 +4922,10 @@ listCollations(const char *pattern, bool verbose, bool showSystem)
 								"n.nspname", "c.collname", NULL,
 								"pg_catalog.pg_collation_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -4917,16 +4988,13 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 								NULL, "n.nspname", NULL,
 								NULL,
 								NULL, 2))
-		return false;
+		goto error_return;
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
 	res = PSQLexec(buf.data);
 	if (!res)
-	{
-		termPQExpBuffer(&buf);
-		return false;
-	}
+		goto error_return;
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of schemas");
@@ -4947,10 +5015,7 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 						  pattern);
 		result = PSQLexec(buf.data);
 		if (!result)
-		{
-			termPQExpBuffer(&buf);
-			return false;
-		}
+			goto error_return;
 		else
 			pub_schema_tuples = PQntuples(result);
 
@@ -4997,6 +5062,10 @@ listSchemas(const char *pattern, bool verbose, bool showSystem)
 	}
 
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 
@@ -5032,7 +5101,10 @@ listTSParsers(const char *pattern, bool verbose)
 								"n.nspname", "p.prsname", NULL,
 								"pg_catalog.pg_ts_parser_is_visible(p.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5075,7 +5147,10 @@ listTSParsersVerbose(const char *pattern)
 								"n.nspname", "p.prsname", NULL,
 								"pg_catalog.pg_ts_parser_is_visible(p.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5218,7 +5293,10 @@ describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
 	if (!res)
+	{
+		termPQExpBuffer(&title);
 		return false;
+	}
 
 	myopt.nullPrint = NULL;
 	if (nspname)
@@ -5284,7 +5362,10 @@ listTSDictionaries(const char *pattern, bool verbose)
 								"n.nspname", "d.dictname", NULL,
 								"pg_catalog.pg_ts_dict_is_visible(d.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5347,7 +5428,10 @@ listTSTemplates(const char *pattern, bool verbose)
 								"n.nspname", "t.tmplname", NULL,
 								"pg_catalog.pg_ts_template_is_visible(t.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5399,7 +5483,10 @@ listTSConfigs(const char *pattern, bool verbose)
 								"n.nspname", "c.cfgname", NULL,
 								"pg_catalog.pg_ts_config_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5443,7 +5530,10 @@ listTSConfigsVerbose(const char *pattern)
 								"n.nspname", "c.cfgname", NULL,
 								"pg_catalog.pg_ts_config_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 3, 2;");
 
@@ -5616,7 +5706,10 @@ listForeignDataWrappers(const char *pattern, bool verbose)
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "fdwname", NULL, NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -5690,7 +5783,10 @@ listForeignServers(const char *pattern, bool verbose)
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "s.srvname", NULL, NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -5743,7 +5839,10 @@ listUserMappings(const char *pattern, bool verbose)
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "um.srvname", "um.usename", NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5813,7 +5912,10 @@ listForeignTables(const char *pattern, bool verbose)
 								"n.nspname", "c.relname", NULL,
 								"pg_catalog.pg_table_is_visible(c.oid)",
 								NULL, 3))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2;");
 
@@ -5862,7 +5964,10 @@ listExtensions(const char *pattern)
 								NULL, "e.extname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -5903,7 +6008,10 @@ listExtensionContents(const char *pattern)
 								NULL, "e.extname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -6017,8 +6125,7 @@ validateSQLNamePattern(PQExpBuffer buf, const char *pattern, bool have_where,
 	{
 		pg_log_error("improper qualified name (too many dotted names): %s",
 					 pattern);
-		termPQExpBuffer(&dbbuf);
-		return false;
+		goto error_return;
 	}
 
 	if (maxparts > 1 && dotcnt == maxparts - 1)
@@ -6026,16 +6133,21 @@ validateSQLNamePattern(PQExpBuffer buf, const char *pattern, bool have_where,
 		if (PQdb(pset.db) == NULL)
 		{
 			pg_log_error("You are currently not connected to a database.");
-			return false;
+			goto error_return;
 		}
 		if (strcmp(PQdb(pset.db), dbbuf.data) != 0)
 		{
 			pg_log_error("cross-database references are not implemented: %s",
 						 pattern);
-			return false;
+			goto error_return;
 		}
 	}
+	termPQExpBuffer(&dbbuf);
 	return true;
+
+error_return:
+	termPQExpBuffer(&dbbuf);
+	return false;
 }
 
 /*
@@ -6093,7 +6205,10 @@ listPublications(const char *pattern)
 								NULL, "pubname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -6208,7 +6323,10 @@ describePublications(const char *pattern)
 								NULL, "pubname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 2;");
 
@@ -6420,7 +6538,10 @@ describeSubscriptions(const char *pattern, bool verbose)
 								NULL, "subname", NULL,
 								NULL,
 								NULL, 1))
+	{
+		termPQExpBuffer(&buf);
 		return false;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1;");
 
@@ -6524,7 +6645,7 @@ listOperatorClasses(const char *access_method_pattern,
 		if (!validateSQLNamePattern(&buf, access_method_pattern,
 									false, false, NULL, "am.amname", NULL, NULL,
 									&have_where, 1))
-			return false;
+			goto error_return;
 	if (type_pattern)
 	{
 		/* Match type name pattern against either internal or external name */
@@ -6533,7 +6654,7 @@ listOperatorClasses(const char *access_method_pattern,
 									"pg_catalog.format_type(t.oid, NULL)",
 									"pg_catalog.pg_type_is_visible(t.oid)",
 									NULL, 3))
-			return false;
+			goto error_return;
 	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2, 4;");
@@ -6552,6 +6673,10 @@ listOperatorClasses(const char *access_method_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 /*
@@ -6600,7 +6725,7 @@ listOperatorFamilies(const char *access_method_pattern,
 		if (!validateSQLNamePattern(&buf, access_method_pattern,
 									false, false, NULL, "am.amname", NULL, NULL,
 									&have_where, 1))
-			return false;
+			goto error_return;
 	if (type_pattern)
 	{
 		appendPQExpBuffer(&buf,
@@ -6617,7 +6742,7 @@ listOperatorFamilies(const char *access_method_pattern,
 									"pg_catalog.format_type(t.oid, NULL)",
 									"pg_catalog.pg_type_is_visible(t.oid)",
 									NULL, 3))
-			return false;
+			goto error_return;
 		appendPQExpBufferStr(&buf, "  )\n");
 	}
 
@@ -6637,6 +6762,10 @@ listOperatorFamilies(const char *access_method_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 /*
@@ -6695,17 +6824,21 @@ listOpFamilyOperators(const char *access_method_pattern,
 							 "  LEFT JOIN pg_catalog.pg_opfamily ofs ON ofs.oid = o.amopsortfamily\n");
 
 	if (access_method_pattern)
+	{
 		if (!validateSQLNamePattern(&buf, access_method_pattern,
 									false, false, NULL, "am.amname",
 									NULL, NULL,
 									&have_where, 1))
-			return false;
+			goto error_return;
+	}
 
 	if (family_pattern)
+	{
 		if (!validateSQLNamePattern(&buf, family_pattern, have_where, false,
 									"nsf.nspname", "of.opfname", NULL, NULL,
 									NULL, 3))
-			return false;
+			goto error_return;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2,\n"
 						 "  o.amoplefttype = o.amoprighttype DESC,\n"
@@ -6728,6 +6861,10 @@ listOpFamilyOperators(const char *access_method_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 /*
@@ -6783,16 +6920,20 @@ listOpFamilyFunctions(const char *access_method_pattern,
 						 "  LEFT JOIN pg_catalog.pg_proc p ON ap.amproc = p.oid\n");
 
 	if (access_method_pattern)
+	{
 		if (!validateSQLNamePattern(&buf, access_method_pattern,
 									false, false, NULL, "am.amname",
 									NULL, NULL,
 									&have_where, 1))
-			return false;
+			goto error_return;
+	}
 	if (family_pattern)
+	{
 		if (!validateSQLNamePattern(&buf, family_pattern, have_where, false,
 									"ns.nspname", "of.opfname", NULL, NULL,
 									NULL, 3))
-			return false;
+			goto error_return;
+	}
 
 	appendPQExpBufferStr(&buf, "ORDER BY 1, 2,\n"
 						 "  ap.amproclefttype = ap.amprocrighttype DESC,\n"
@@ -6813,6 +6954,10 @@ listOpFamilyFunctions(const char *access_method_pattern,
 
 	PQclear(res);
 	return true;
+
+error_return:
+	termPQExpBuffer(&buf);
+	return false;
 }
 
 /*
