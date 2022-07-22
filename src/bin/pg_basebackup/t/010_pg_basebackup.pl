@@ -904,4 +904,21 @@ ok( pump_until(
 	'background process exit message');
 $sigchld_bb->finish();
 
+# Test that we can back up an in-place tablespace
+$node->safe_psql('postgres',
+	"SET allow_in_place_tablespaces = on; CREATE TABLESPACE tblspc2 LOCATION '';");
+$node->safe_psql('postgres',
+	    "CREATE TABLE test2 (a int) TABLESPACE tblspc2;"
+	  . "INSERT INTO test2 VALUES (1234);");
+my $tblspc_oid = $node->safe_psql('postgres',
+	"SELECT oid FROM pg_tablespace WHERE spcname = 'tblspc2';");
+$node->backup('backup3');
+$node->safe_psql('postgres', "DROP TABLE test2;");
+$node->safe_psql('postgres', "DROP TABLESPACE tblspc2;");
+
+# check that the in-place tablespace exists in the backup
+$backupdir = $node->backup_dir . '/backup3';
+my @dst_tblspc = glob "$backupdir/pg_tblspc/$tblspc_oid/PG_*";
+is(@dst_tblspc, 1, 'tblspc directory copied');
+
 done_testing();
