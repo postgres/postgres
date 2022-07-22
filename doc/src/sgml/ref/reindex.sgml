@@ -22,7 +22,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
-REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DATABASE | SYSTEM } [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ]
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] DATABASE [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ]
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] SYSTEM [ <replaceable class="parameter">name</replaceable> ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
