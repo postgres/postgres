@@ -1227,4 +1227,7 @@ patternToSQLRegex(int encoding, PQExpBuffer dbnamebuf, PQExpBuffer schemabuf,
 			appendPQExpBufferStr(dbnamebuf, curbuf->data);
 		termPQExpBuffer(curbuf);
 	}
+
+	if (want_literal_dbname)
+		termPQExpBuffer(&left_literal);
 }

@@ -5159,6 +5159,10 @@ _complete_from_query(const char *simple_query,
 
 		/* Clean up */
 		termPQExpBuffer(&query_buffer);
+		if (schemaname)
+			free(schemaname);
+		if (objectname)
+			free(objectname);
 		free(e_object_like);
 		if (e_schemaname)
 			free(e_schemaname);
