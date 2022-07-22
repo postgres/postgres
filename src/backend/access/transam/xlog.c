@@ -171,10 +171,10 @@ const struct config_enum_entry sync_method_options[] = {
 #ifdef HAVE_FDATASYNC
 	{"fdatasync", SYNC_METHOD_FDATASYNC, false},
 #endif
-#ifdef OPEN_SYNC_FLAG
+#ifdef O_SYNC
 	{"open_sync", SYNC_METHOD_OPEN, false},
 #endif
-#ifdef OPEN_DATASYNC_FLAG
+#ifdef O_DSYNC
 	{"open_datasync", SYNC_METHOD_OPEN_DSYNC, false},
 #endif
 	{NULL, 0, false}
@@ -7894,10 +7894,10 @@ get_sync_bit(int method)
 
 	/*
 	 * Optimize writes by bypassing kernel cache with O_DIRECT when using
-	 * O_SYNC/O_FSYNC and O_DSYNC.  But only if archiving and streaming are
-	 * disabled, otherwise the archive command or walsender process will read
-	 * the WAL soon after writing it, which is guaranteed to cause a physical
-	 * read if we bypassed the kernel cache. We also skip the
+	 * O_SYNC and O_DSYNC.  But only if archiving and streaming are disabled,
+	 * otherwise the archive command or walsender process will read the WAL
+	 * soon after writing it, which is guaranteed to cause a physical read if
+	 * we bypassed the kernel cache. We also skip the
 	 * posix_fadvise(POSIX_FADV_DONTNEED) call in XLogFileClose() for the same
 	 * reason.
 	 *
@@ -7921,13 +7921,13 @@ get_sync_bit(int method)
 		case SYNC_METHOD_FSYNC_WRITETHROUGH:
 		case SYNC_METHOD_FDATASYNC:
 			return 0;
-#ifdef OPEN_SYNC_FLAG
+#ifdef O_SYNC
 		case SYNC_METHOD_OPEN:
-			return OPEN_SYNC_FLAG | o_direct_flag;
+			return O_SYNC | o_direct_flag;
 #endif
-#ifdef OPEN_DATASYNC_FLAG
+#ifdef O_DSYNC
 		case SYNC_METHOD_OPEN_DSYNC:
-			return OPEN_DATASYNC_FLAG | o_direct_flag;
+			return O_DSYNC | o_direct_flag;
 #endif
 		default:
 			/* can't happen (unless we are out of sync with option array) */

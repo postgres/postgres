@@ -300,7 +300,7 @@ test_sync(int writes_per_op)
 	printf(LABEL_FORMAT, "open_datasync");
 	fflush(stdout);
 
-#ifdef OPEN_DATASYNC_FLAG
+#ifdef O_DSYNC
 	if ((tmpfile = open_direct(filename, O_RDWR | O_DSYNC | PG_BINARY, 0)) == -1)
 	{
 		printf(NA_FORMAT, _("n/a*"));
@@ -407,8 +407,8 @@ test_sync(int writes_per_op)
 	printf(LABEL_FORMAT, "open_sync");
 	fflush(stdout);
 
-#ifdef OPEN_SYNC_FLAG
-	if ((tmpfile = open_direct(filename, O_RDWR | OPEN_SYNC_FLAG | PG_BINARY, 0)) == -1)
+#ifdef O_SYNC
+	if ((tmpfile = open_direct(filename, O_RDWR | O_SYNC | PG_BINARY, 0)) == -1)
 	{
 		printf(NA_FORMAT, _("n/a*"));
 		fs_warning = true;
@@ -466,7 +466,7 @@ test_open_syncs(void)
 static void
 test_open_sync(const char *msg, int writes_size)
 {
-#ifdef OPEN_SYNC_FLAG
+#ifdef O_SYNC
 	int			tmpfile,
 				ops,
 				writes;
@@ -475,8 +475,8 @@ test_open_sync(const char *msg, int writes_size)
 	printf(LABEL_FORMAT, msg);
 	fflush(stdout);
 
-#ifdef OPEN_SYNC_FLAG
-	if ((tmpfile = open_direct(filename, O_RDWR | OPEN_SYNC_FLAG | PG_BINARY, 0)) == -1)
+#ifdef O_SYNC
+	if ((tmpfile = open_direct(filename, O_RDWR | O_SYNC | PG_BINARY, 0)) == -1)
 		printf(NA_FORMAT, _("n/a*"));
 	else
 	{
