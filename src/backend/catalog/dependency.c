@@ -74,6 +74,7 @@
 #include "commands/sequence.h"
 #include "commands/trigger.h"
 #include "commands/typecmds.h"
+#include "funcapi.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
@@ -205,6 +206,8 @@ static void deleteOneObject(const ObjectAddress *object,
 static void doDeletion(const ObjectAddress *object, int flags);
 static bool find_expr_references_walker(Node *node,
 										find_expr_references_context *context);
+static void process_function_rte_ref(RangeTblEntry *rte, AttrNumber attnum,
+									 find_expr_references_context *context);
 static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
 static int	object_address_comparator(const void *a, const void *b);
 static void add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
@@ -1768,6 +1771,12 @@ find_expr_references_walker(Node *node,
 			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
 							   context->addrs);
 		}
+		else if (rte->rtekind == RTE_FUNCTION)
+		{
+			/* Might need to add a dependency on a composite type's column */
+			/* (done out of line, because it's a bit bulky) */
+			process_function_rte_ref(rte, var->varattno, context);
+		}
 
 		/*
 		 * Vars referencing other RTE types require no additional work.  In
@@ -2340,6 +2349,65 @@ find_expr_references_walker(Node *node,
 
 	return expression_tree_walker(node, find_expr_references_walker,
 								  (void *) context);
+}
+
+/*
+ * find_expr_references_walker subroutine: handle a Var reference
+ * to an RTE_FUNCTION RTE
+ */
+static void
+process_function_rte_ref(RangeTblEntry *rte, AttrNumber attnum,
+						 find_expr_references_context *context)
+{
+	int			atts_done = 0;
+	ListCell   *lc;
+
+	/*
+	 * Identify which RangeTblFunction produces this attnum, and see if it
+	 * returns a composite type.  If so, we'd better make a dependency on the
+	 * referenced column of the composite type (or actually, of its associated
+	 * relation).
+	 */
+	foreach(lc, rte->functions)
+	{
+		RangeTblFunction *rtfunc = (RangeTblFunction *) lfirst(lc);
+
+		if (attnum > atts_done &&
+			attnum <= atts_done + rtfunc->funccolcount)
+		{
+			TupleDesc	tupdesc;
+
+			tupdesc = get_expr_result_tupdesc(rtfunc->funcexpr, true);
+			if (tupdesc && tupdesc->tdtypeid != RECORDOID)
+			{
+				/*
+				 * Named composite type, so individual columns could get
+				 * dropped.  Make a dependency on this specific column.
+				 */
+				Oid			reltype = get_typ_typrelid(tupdesc->tdtypeid);
+
+				Assert(attnum - atts_done <= tupdesc->natts);
+				if (OidIsValid(reltype))	/* can this fail? */
+					add_object_address(OCLASS_CLASS, reltype,
+									   attnum - atts_done,
+									   context->addrs);
+				return;
+			}
+			/* Nothing to do; function's result type is handled elsewhere */
+			return;
+		}
+		atts_done += rtfunc->funccolcount;
+	}
+
+	/* If we get here, must be looking for the ordinality column */
+	if (rte->funcordinality && attnum == atts_done + 1)
+		return;
+
+	/* this probably can't happen ... */
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_COLUMN),
+			 errmsg("column %d of relation \"%s\" does not exist",
+					attnum, rte->eref->aliasname)));
 }
 
 /*

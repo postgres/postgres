@@ -7330,9 +7330,9 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		/*
 		 * If we find a Var referencing a dropped column, it seems better to
 		 * print something (anything) than to fail.  In general this should
-		 * not happen, but there are specific cases involving functions
-		 * returning named composite types where we don't sufficiently enforce
-		 * that you can't drop a column that's referenced in some view.
+		 * not happen, but it used to be possible for some cases involving
+		 * functions returning named composite types, and perhaps there are
+		 * still bugs out there.
 		 */
 		if (attname == NULL)
 			attname = "?dropped?column?";

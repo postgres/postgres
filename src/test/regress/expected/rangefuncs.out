@@ -2247,15 +2247,55 @@ select * from usersview;
  id2    |   2 | email2 |       12 | t       |              11 |          2
 (2 rows)
 
+alter table users drop column moredrop;  -- fail, view has reference
+ERROR:  cannot drop column moredrop of table users because other objects depend on it
+DETAIL:  view usersview depends on column moredrop of table users
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+-- We used to have a bug that would allow the above to succeed, posing
+-- hazards for later execution of the view.  Check that the internal
+-- defenses for those hazards haven't bit-rotted, in case some other
+-- bug with similar symptoms emerges.
 begin;
+-- destroy the dependency entry that prevents the DROP:
+delete from pg_depend where
+  objid = (select oid from pg_rewrite
+           where ev_class = 'usersview'::regclass and rulename = '_RETURN')
+  and refobjsubid = 5
+returning pg_describe_object(classid, objid, objsubid) as obj,
+          pg_describe_object(refclassid, refobjid, refobjsubid) as ref,
+          deptype;
+              obj               |              ref               | deptype 
+--------------------------------+--------------------------------+---------
+ rule _RETURN on view usersview | column moredrop of table users | n
+(1 row)
+
 alter table users drop column moredrop;
 select * from usersview;  -- expect clean failure
 ERROR:  attribute 5 of type record has been dropped
 rollback;
+alter table users alter column seq type numeric;  -- fail, view has reference
+ERROR:  cannot alter type of a column used by a view or rule
+DETAIL:  rule _RETURN on view usersview depends on column "seq"
+-- likewise, check we don't crash if the dependency goes wrong
+begin;
+-- destroy the dependency entry that prevents the ALTER:
+delete from pg_depend where
+  objid = (select oid from pg_rewrite
+           where ev_class = 'usersview'::regclass and rulename = '_RETURN')
+  and refobjsubid = 2
+returning pg_describe_object(classid, objid, objsubid) as obj,
+          pg_describe_object(refclassid, refobjid, refobjsubid) as ref,
+          deptype;
+              obj               |            ref            | deptype 
+--------------------------------+---------------------------+---------
+ rule _RETURN on view usersview | column seq of table users | n
+(1 row)
+
 alter table users alter column seq type numeric;
 select * from usersview;  -- expect clean failure
 ERROR:  attribute 2 of type record has wrong type
 DETAIL:  Table has type numeric, but query expects integer.
+rollback;
 drop view usersview;
 drop function get_first_user();
 drop function get_users();
