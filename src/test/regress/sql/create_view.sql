@@ -575,9 +575,24 @@ create view tt14v as select t.* from tt14f() t;
 select pg_get_viewdef('tt14v', true);
 select * from tt14v;
 
+alter table tt14t drop column f3;  -- fail, view has explicit reference to f3
+
+-- We used to have a bug that would allow the above to succeed, posing
+-- hazards for later execution of the view.  Check that the internal
+-- defenses for those hazards haven't bit-rotted, in case some other
+-- bug with similar symptoms emerges.
 begin;
 
--- this perhaps should be rejected, but it isn't:
+-- destroy the dependency entry that prevents the DROP:
+delete from pg_depend where
+  objid = (select oid from pg_rewrite
+           where ev_class = 'tt14v'::regclass and rulename = '_RETURN')
+  and refobjsubid = 3
+returning pg_describe_object(classid, objid, objsubid) as obj,
+          pg_describe_object(refclassid, refobjid, refobjsubid) as ref,
+          deptype;
+
+-- this will now succeed:
 alter table tt14t drop column f3;
 
 -- column f3 is still in the view, sort of ...
@@ -590,9 +605,22 @@ select * from tt14v;
 
 rollback;
 
+-- likewise, altering a referenced column's type is prohibited ...
+alter table tt14t alter column f4 type integer using f4::integer;  -- fail
+
+-- ... but some bug might let it happen, so check defenses
 begin;
 
--- this perhaps should be rejected, but it isn't:
+-- destroy the dependency entry that prevents the ALTER:
+delete from pg_depend where
+  objid = (select oid from pg_rewrite
+           where ev_class = 'tt14v'::regclass and rulename = '_RETURN')
+  and refobjsubid = 4
+returning pg_describe_object(classid, objid, objsubid) as obj,
+          pg_describe_object(refclassid, refobjid, refobjsubid) as ref,
+          deptype;
+
+-- this will now succeed:
 alter table tt14t alter column f4 type integer using f4::integer;
 
 -- f4 is still in the view ...
@@ -602,6 +630,19 @@ select f1, f3 from tt14v;
 select * from tt14v;
 
 rollback;
+
+drop view tt14v;
+
+create view tt14v as select t.f1, t.f4 from tt14f() t;
+
+select pg_get_viewdef('tt14v', true);
+select * from tt14v;
+
+alter table tt14t drop column f3;  -- ok
+
+select pg_get_viewdef('tt14v', true);
+explain (verbose, costs off) select * from tt14v;
+select * from tt14v;
 
 -- check display of whole-row variables in some corner cases
 
