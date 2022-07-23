@@ -633,7 +633,6 @@ submake-libpgfeutils: | submake-generated-headers
 
 ifneq ($(USE_MODULE_DB),)
   PL_TESTDB = pl_regression_$(NAME)
-  # Replace this with $(or ...) if we ever require GNU make 3.81.
   ifneq ($(MODULE_big),)
     CONTRIB_TESTDB=contrib_regression_$(MODULE_big)
     ISOLATION_TESTDB=isolation_regression_$(MODULE_big)
@@ -870,11 +869,11 @@ install-strip:
 # allows parallel make across directories and lets make -k and -q work
 # correctly.
 
-# We need the $(eval) function and order-only prerequisites, which are
-# available in GNU make 3.80.  That also happens to be the version
-# where the .VARIABLES variable was introduced, so this is a simple check.
-ifndef .VARIABLES
-$(error GNU make 3.80 or newer is required.  You are using version $(MAKE_VERSION))
+# We need the ability to export target-specific variables, which was
+# added in GNU make 3.81.  That also happens to be the version
+# where the .FEATURES variable was introduced, so this is a simple check.
+ifndef .FEATURES
+$(error GNU make 3.81 or newer is required.  You are using version $(MAKE_VERSION))
 endif
 
 # This function is only for internal use below.  It should be called
@@ -882,7 +881,7 @@ endif
 # given subdirectory.  For the tree-wide all/install/check/installcheck cases,
 # ensure we do our one-time tasks before recursing (see targets above).
 # Note that to avoid a nasty bug in make 3.80,
-# this function has to avoid using any complicated constructs (like
+# this function was written to not use any complicated constructs (like
 # multiple targets on a line) and also not contain any lines that expand
 # to more than about 200 bytes.  This is why we make it apply to just one
 # subdirectory at a time, rather than to a list of subdirectories.

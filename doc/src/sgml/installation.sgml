@@ -77,7 +77,7 @@ su - postgres
        <primary>make</primary>
       </indexterm>
 
-      <acronym>GNU</acronym> <application>make</application> version 3.80 or newer is required; other
+      <acronym>GNU</acronym> <application>make</application> version 3.81 or newer is required; other
       <application>make</application> programs or older <acronym>GNU</acronym> <application>make</application> versions will <emphasis>not</emphasis> work.
       (<acronym>GNU</acronym> <application>make</application> is sometimes installed under
       the name <filename>gmake</filename>.)  To test for <acronym>GNU</acronym>
