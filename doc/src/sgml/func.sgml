@@ -1171,6 +1171,9 @@
    subsequent <function>random()</function> calls in the current session are
    repeatable by re-issuing <function>setseed()</function> with the same
    argument.
+   Without any prior <function>setseed()</function> call in the same
+   session, the first <function>random()</function> call obtains a seed
+   from a platform-dependent source of random bits.
   </para>
 
   <para>
