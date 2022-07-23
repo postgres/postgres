@@ -14,19 +14,11 @@
 
 #include <ctype.h>
 #include <limits.h>
+#include <wctype.h>
 
 #include "lib/stringinfo.h"
 #include "mb/pg_wchar.h"
 #include "utils/pg_locale.h"
-
-/*
- * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
- * declare them in <wchar.h>, so include that too.
- */
-#include <wchar.h>
-#ifdef HAVE_WCTYPE_H
-#include <wctype.h>
-#endif
 
 /* working state for tsearch_readline (should be a local var in caller) */
 typedef struct

@@ -69,15 +69,7 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
-
-/*
- * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
- * declare them in <wchar.h>, so include that too.
- */
-#include <wchar.h>
-#ifdef HAVE_WCTYPE_H
 #include <wctype.h>
-#endif
 
 #ifdef USE_ICU
 #include <unicode/ustring.h>
