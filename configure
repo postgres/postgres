@@ -16797,19 +16797,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "getrusage" "ac_cv_func_getrusage"
-if test "x$ac_cv_func_getrusage" = xyes; then :
-  $as_echo "#define HAVE_GETRUSAGE 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" getrusage.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getrusage.$ac_objext"
- ;;
-esac
-
-fi
-
 ac_fn_c_check_func "$LINENO" "inet_aton" "ac_cv_func_inet_aton"
 if test "x$ac_cv_func_inet_aton" = xyes; then :
   $as_echo "#define HAVE_INET_ATON 1" >>confdefs.h
@@ -17122,6 +17109,12 @@ esac
   case " $LIBOBJS " in
   *" fdatasync.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS fdatasync.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
+  *" getrusage.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS getrusage.$ac_objext"
  ;;
 esac
 

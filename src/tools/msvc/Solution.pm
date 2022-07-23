@@ -277,7 +277,6 @@ sub GenerateFiles
 		HAVE_GETPEERUCRED                           => undef,
 		HAVE_GETPWUID_R                             => undef,
 		HAVE_GETRLIMIT                              => undef,
-		HAVE_GETRUSAGE                              => undef,
 		HAVE_GETTIMEOFDAY                           => undef,
 		HAVE_GSSAPI_GSSAPI_H                        => undef,
 		HAVE_GSSAPI_H                               => undef,

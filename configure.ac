@@ -1911,7 +1911,6 @@ AC_REPLACE_FUNCS(m4_normalize([
 	explicit_bzero
 	getopt
 	getpeereid
-	getrusage
 	inet_aton
 	link
 	mkdtemp
@@ -1986,6 +1985,7 @@ if test "$PORTNAME" = "win32"; then
   AC_REPLACE_FUNCS(gettimeofday)
   AC_LIBOBJ(dirmod)
   AC_LIBOBJ(fdatasync)
+  AC_LIBOBJ(getrusage)
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
   AC_LIBOBJ(system)
