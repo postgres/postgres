@@ -4953,7 +4953,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	FILE	   *pagerpipe = NULL;
 	int			title_len;
 	int			res = 0;
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 	sigset_t	sigalrm_sigchld_sigint;
 	sigset_t	sigalrm_sigchld;
 	sigset_t	sigint;
@@ -4967,7 +4967,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		return false;
 	}
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 	sigemptyset(&sigalrm_sigchld_sigint);
 	sigaddset(&sigalrm_sigchld_sigint, SIGCHLD);
 	sigaddset(&sigalrm_sigchld_sigint, SIGALRM);
@@ -5006,7 +5006,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 	 * PAGER environment variables, because traditional pagers probably won't
 	 * be very useful for showing a stream of results.
 	 */
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 	pagerprog = getenv("PSQL_WATCH_PAGER");
 #endif
 	if (pagerprog && myopt.topt.pager)
@@ -5077,7 +5077,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		if (pagerpipe && ferror(pagerpipe))
 			break;
 
-#ifndef HAVE_POSIX_DECL_SIGWAIT
+#ifdef WIN32
 
 		/*
 		 * Set up cancellation of 'watch' via SIGINT.  We redo this each time
@@ -5158,7 +5158,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 		fflush(stdout);
 	}
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 	/* Disable the interval timer. */
 	memset(&interval, 0, sizeof(interval));
 	setitimer(ITIMER_REAL, &interval, NULL);

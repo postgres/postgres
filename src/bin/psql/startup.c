@@ -110,7 +110,7 @@ log_locus_callback(const char **filename, uint64 *lineno)
 	}
 }
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 static void
 empty_signal_handler(SIGNAL_ARGS)
 {
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 
 	psql_setup_cancel_handler();
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 
 	/*
 	 * do_watch() needs signal handlers installed (otherwise sigwait() will

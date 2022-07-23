@@ -16394,11 +16394,9 @@ $as_echo "#define HAVE_FSEEKO 1" >>confdefs.h
 fi
 
 
-# Make sure there's a declaration for sigwait(), then make sure
-# that it conforms to the POSIX standard (there seem to still be
-# some platforms out there with pre-POSIX sigwait()).  On Solaris,
-# _POSIX_PTHREAD_SEMANTICS affects the result, but we already
-# added that to CPPFLAGS.
+# posix_fadvise() is a no-op on Solaris, so don't incur function overhead
+# by calling it, 2009-04-02
+# http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
 # The Clang compiler raises a warning for an undeclared identifier that matches
 # a compiler builtin function.  All extant Clang versions are affected, as of
 # Clang 3.6.0.  Test a builtin known to every version.  This problem affects the
@@ -16487,62 +16485,6 @@ case $ac_cv_c_decl_report in
   *) ac_c_decl_warn_flag= ;;
 esac
 
-ac_fn_c_check_decl "$LINENO" "sigwait" "ac_cv_have_decl_sigwait" "#include <signal.h>
-"
-if test "x$ac_cv_have_decl_sigwait" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_SIGWAIT $ac_have_decl
-_ACEOF
-
-if test "x$ac_cv_have_decl_sigwait" = xyes; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for POSIX-conforming sigwait declaration" >&5
-$as_echo_n "checking for POSIX-conforming sigwait declaration... " >&6; }
-if ${pgac_cv_have_posix_decl_sigwait+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-      #include <signal.h>
-      int sigwait(const sigset_t *set, int *sig);
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  pgac_cv_have_posix_decl_sigwait=yes
-else
-  pgac_cv_have_posix_decl_sigwait=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_have_posix_decl_sigwait" >&5
-$as_echo "$pgac_cv_have_posix_decl_sigwait" >&6; }
-fi
-if test "x$pgac_cv_have_posix_decl_sigwait" = xyes; then
-
-$as_echo "#define HAVE_POSIX_DECL_SIGWAIT 1" >>confdefs.h
-
-else
-  # On non-Windows, libpq requires POSIX sigwait() for thread safety.
-  if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-    as_fn_error $? "POSIX-conforming sigwait is required to enable thread safety." "$LINENO" 5
-  fi
-fi
-
-# posix_fadvise() is a no-op on Solaris, so don't incur function overhead
-# by calling it, 2009-04-02
-# http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
 if test "$PORTNAME" != "solaris"; then :
 
 for ac_func in posix_fadvise

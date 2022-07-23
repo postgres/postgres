@@ -1838,33 +1838,6 @@ PGAC_CHECK_BUILTIN_FUNC_PTR([__builtin_frame_address], [0])
 # in case it finds that _LARGEFILE_SOURCE has to be #define'd for that.
 AC_FUNC_FSEEKO
 
-# Make sure there's a declaration for sigwait(), then make sure
-# that it conforms to the POSIX standard (there seem to still be
-# some platforms out there with pre-POSIX sigwait()).  On Solaris,
-# _POSIX_PTHREAD_SEMANTICS affects the result, but we already
-# added that to CPPFLAGS.
-AC_CHECK_DECLS(sigwait, [], [], [#include <signal.h>])
-if test "x$ac_cv_have_decl_sigwait" = xyes; then
-  AC_CACHE_CHECK([for POSIX-conforming sigwait declaration],
-    [pgac_cv_have_posix_decl_sigwait],
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-      #include <signal.h>
-      int sigwait(const sigset_t *set, int *sig);
-      ],
-      [])],
-      [pgac_cv_have_posix_decl_sigwait=yes],
-      [pgac_cv_have_posix_decl_sigwait=no])])
-fi
-if test "x$pgac_cv_have_posix_decl_sigwait" = xyes; then
-  AC_DEFINE(HAVE_POSIX_DECL_SIGWAIT, 1,
-            [Define to 1 if you have a POSIX-conforming sigwait declaration.])
-else
-  # On non-Windows, libpq requires POSIX sigwait() for thread safety.
-  if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
-    AC_MSG_ERROR([POSIX-conforming sigwait is required to enable thread safety.])
-  fi
-fi
-
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
 # http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
