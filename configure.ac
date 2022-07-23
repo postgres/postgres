@@ -1214,7 +1214,7 @@ LIBS="$LIBS $PTHREAD_LIBS"
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
 pthread.h not found;  use --disable-thread-safety to disable thread safety])])
 
-AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
+AC_CHECK_FUNCS([strerror_r gethostbyname_r])
 
 # Do test here with the proper thread flags
 PGAC_FUNC_STRERROR_R_INT
