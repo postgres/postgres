@@ -175,8 +175,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</rep
       <para>
        Sets the internal seed for the random number generator (the
        function <function>random</function>).  Allowed values are
-       floating-point numbers between -1 and 1, which are then
-       multiplied by 2<superscript>31</superscript>-1.
+       floating-point numbers between -1 and 1 inclusive.
       </para>
 
       <para>
