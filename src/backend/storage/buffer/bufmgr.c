@@ -636,18 +636,28 @@ ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum, BlockNumber blockN
 
 	if (BufferIsLocal(recent_buffer))
 	{
-		bufHdr = GetBufferDescriptor(-recent_buffer - 1);
+		int			b = -recent_buffer - 1;
+
+		bufHdr = GetLocalBufferDescriptor(b);
 		buf_state = pg_atomic_read_u32(&bufHdr->state);
 
 		/* Is it still valid and holding the right tag? */
 		if ((buf_state & BM_VALID) && BUFFERTAGS_EQUAL(tag, bufHdr->tag))
 		{
-			/* Bump local buffer's ref and usage counts. */
+			/*
+			 * Bump buffer's ref and usage counts. This is equivalent of
+			 * PinBuffer for a shared buffer.
+			 */
+			if (LocalRefCount[b] == 0)
+			{
+				if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
+				{
+					buf_state += BUF_USAGECOUNT_ONE;
+					pg_atomic_unlocked_write_u32(&bufHdr->state, buf_state);
+				}
+			}
+			LocalRefCount[b]++;
 			ResourceOwnerRememberBuffer(CurrentResourceOwner, recent_buffer);
-			LocalRefCount[-recent_buffer - 1]++;
-			if (BUF_STATE_GET_USAGECOUNT(buf_state) < BM_MAX_USAGE_COUNT)
-				pg_atomic_write_u32(&bufHdr->state,
-									buf_state + BUF_USAGECOUNT_ONE);
 
 			pgBufferUsage.local_blks_hit++;
 
