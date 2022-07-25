@@ -4076,7 +4076,11 @@ PostgresMain(const char *dbname, const char *username)
 	 * it inside InitPostgres() instead.  In particular, anything that
 	 * involves database access should be there, not here.
 	 */
-	InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL, false);
+	InitPostgres(dbname, InvalidOid,	/* database to connect to */
+				 username, InvalidOid,	/* role to connect as */
+				 !am_walsender, /* honor session_preload_libraries? */
+				 false,			/* don't ignore datallowconn */
+				 NULL);			/* no out_dbname */
 
 	/*
 	 * If the PostmasterContext is still around, recycle the space; we don't
@@ -4111,12 +4115,6 @@ PostgresMain(const char *dbname, const char *username)
 	/* Perform initialization specific to a WAL sender process. */
 	if (am_walsender)
 		InitWalSender();
-
-	/*
-	 * process any libraries that should be preloaded at backend start (this
-	 * likewise can't be done until GUC settings are complete)
-	 */
-	process_session_preload_libraries();
 
 	/*
 	 * Send this backend's cancellation info to the frontend.

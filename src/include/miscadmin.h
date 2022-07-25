@@ -449,8 +449,11 @@ extern PGDLLIMPORT AuxProcType MyAuxProcType;
 /* in utils/init/postinit.c */
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
 extern void InitializeMaxBackends(void);
-extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
-						 Oid useroid, char *out_dbname, bool override_allow_connections);
+extern void InitPostgres(const char *in_dbname, Oid dboid,
+						 const char *username, Oid useroid,
+						 bool load_session_libraries,
+						 bool override_allow_connections,
+						 char *out_dbname);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */

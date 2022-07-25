@@ -475,7 +475,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* Early initialization */
 	BaseInit();
 
-	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, false, false, NULL);
 
 	SetProcessingMode(NormalProcessing);
 
@@ -1694,12 +1694,13 @@ AutoVacWorkerMain(int argc, char *argv[])
 		pgstat_report_autovac(dbid);
 
 		/*
-		 * Connect to the selected database
+		 * Connect to the selected database, specifying no particular user
 		 *
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(NULL, dbid, NULL, InvalidOid, dbname, false);
+		InitPostgres(NULL, dbid, NULL, InvalidOid, false, false,
+					 dbname);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(dbname);
 		ereport(DEBUG1,
