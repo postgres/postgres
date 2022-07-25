@@ -4654,13 +4654,16 @@ psql_completion(const char *text, int start, int end)
 						 "tableattr", "title", "tuples_only",
 						 "unicode_border_linestyle",
 						 "unicode_column_linestyle",
-						 "unicode_header_linestyle");
+						 "unicode_header_linestyle",
+						 "xheader_width");
 	else if (TailMatchesCS("\\pset", MatchAny))
 	{
 		if (TailMatchesCS("format"))
 			COMPLETE_WITH_CS("aligned", "asciidoc", "csv", "html", "latex",
 							 "latex-longtable", "troff-ms", "unaligned",
 							 "wrapped");
+		else if (TailMatchesCS("xheader_width"))
+			COMPLETE_WITH_CS("full", "column", "page");
 		else if (TailMatchesCS("linestyle"))
 			COMPLETE_WITH_CS("ascii", "old-ascii", "unicode");
 		else if (TailMatchesCS("pager"))

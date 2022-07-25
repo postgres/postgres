@@ -317,6 +317,7 @@ tuples_only              off
 unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
+xheader_width            full
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab

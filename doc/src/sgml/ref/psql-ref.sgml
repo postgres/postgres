@@ -2843,6 +2843,39 @@ lo_import 152801
           </varlistentry>
 
           <varlistentry>
+          <term><literal>xheader_width</literal></term>
+          <listitem>
+          <para>
+           Sets the maximum width of the header for expanded output to one of
+           <literal>full</literal> (the default value),
+           <literal>column</literal>, <literal>page</literal>, or an
+           <replaceable class="parameter">integer value</replaceable>.
+          </para>
+
+          <para>
+           <literal>full</literal>: the expanded header is not truncated,
+           and will be as wide as the widest output
+           line.
+          </para>
+
+          <para>
+           <literal>column</literal>: truncate the header line at the
+           width of the first column.
+          </para>
+
+          <para>
+           <literal>page</literal>: truncate the the header line at the terminal
+           width.
+          </para>
+
+          <para>
+           <replaceable class="parameter">integer value</replaceable>: specify
+           the exact maximum width of the header line.
+          </para>
+          </listitem>
+          </varlistentry>
+
+          <varlistentry>
           <term><literal>fieldsep</literal></term>
           <listitem>
           <para>

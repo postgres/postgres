@@ -3569,6 +3569,7 @@ printTextFormat
 printTextLineFormat
 printTextLineWrap
 printTextRule
+printXheaderWidthType
 printfunc
 priv_map
 process_file_callback_t
