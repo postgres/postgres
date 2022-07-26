@@ -1050,6 +1050,64 @@ SELCT 1/0;<!-- this typo is intentional -->
    </note>
   </sect2>
 
+  <sect2 id="protocol-flow-pipelining">
+   <title>Pipelining</title>
+
+   <indexterm zone="protocol-flow-pipelining">
+    <primary>pipelining</primary>
+    <secondary>protocol specification</secondary>
+   </indexterm>
+
+   <para>
+    Use of the extended query protocol
+    allows <firstterm>pipelining</firstterm>, which means sending a series
+    of queries without waiting for earlier ones to complete.  This reduces
+    the number of network round trips needed to complete a given series of
+    operations.  However, the user must carefully consider the required
+    behavior if one of the steps fails, since later queries will already
+    be in flight to the server.
+   </para>
+
+   <para>
+    One way to deal with that is to make the whole query series be a
+    single transaction, that is wrap it in <command>BEGIN</command> ...
+    <command>COMMIT</command>.  However, this does not help if one wishes
+    for some of the commands to commit independently of others.
+   </para>
+
+   <para>
+    The extended query protocol provides another way to manage this
+    concern, which is to omit sending Sync messages between steps that
+    are dependent.  Since, after an error, the backend will skip command
+    messages until it finds Sync, this allows later commands in a pipeline
+    to be skipped automatically when an earlier one fails, without the
+    client having to manage that explicitly with <command>BEGIN</command>
+    and <command>COMMIT</command>.  Independently-committable segments
+    of the pipeline can be separated by Sync messages.
+   </para>
+
+   <para>
+    If the client has not issued an explicit <command>BEGIN</command>,
+    then each Sync ordinarily causes an implicit <command>COMMIT</command>
+    if the preceding step(s) succeeded, or an
+    implicit <command>ROLLBACK</command> if they failed.  However, there
+    are a few DDL commands (such as <command>CREATE DATABASE</command>)
+    that cannot be executed inside a transaction block.  If one of
+    these is executed in a pipeline, it will, upon success, force an
+    immediate commit to preserve database consistency.
+    A Sync immediately following one of these has no effect except to
+    respond with ReadyForQuery.
+   </para>
+
+   <para>
+    When using this method, completion of the pipeline must be determined
+    by counting ReadyForQuery messages and waiting for that to reach the
+    number of Syncs sent.  Counting command completion responses is
+    unreliable, since some of the commands may not be executed and thus not
+    produce a completion message.
+   </para>
+  </sect2>
+
   <sect2>
    <title>Function Call</title>
 
