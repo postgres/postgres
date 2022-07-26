@@ -60,21 +60,26 @@
 /*
  * The map file is critical data: we have no automatic method for recovering
  * from loss or corruption of it.  We use a CRC so that we can detect
- * corruption.  To minimize the risk of failed updates, the map file should
- * be kept to no more than one standard-size disk sector (ie 512 bytes),
- * and we use overwrite-in-place rather than playing renaming games.
- * The struct layout below is designed to occupy exactly 512 bytes, which
- * might make filesystem updates a bit more efficient.
+ * corruption.  Since the file might be more than one standard-size disk
+ * sector in size, we cannot rely on overwrite-in-place. Instead, we generate
+ * a new file and rename it into place, atomically replacing the original file.
  *
  * Entries in the mappings[] array are in no particular order.  We could
  * speed searching by insisting on OID order, but it really shouldn't be
  * worth the trouble given the intended size of the mapping sets.
  */
 #define RELMAPPER_FILENAME		"pg_filenode.map"
+#define RELMAPPER_TEMP_FILENAME	"pg_filenode.map.tmp"
 
 #define RELMAPPER_FILEMAGIC		0x592717	/* version ID value */
 
-#define MAX_MAPPINGS			62	/* 62 * 8 + 16 = 512 */
+/*
+ * There's no need for this constant to have any particular value, and we
+ * can raise it as necessary if we end up with more mapped relations. For
+ * now, we just pick a round number that is modestly larger than the expected
+ * number of mappings.
+ */
+#define MAX_MAPPINGS			64
 
 typedef struct RelMapping
 {
@@ -88,7 +93,6 @@ typedef struct RelMapFile
 	int32		num_mappings;	/* number of valid RelMapping entries */
 	RelMapping	mappings[MAX_MAPPINGS];
 	pg_crc32c	crc;			/* CRC of all above */
-	int32		pad;			/* to make the struct size be 512 exactly */
 } RelMapFile;
 
 /*
@@ -877,6 +881,7 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 {
 	int			fd;
 	char		mapfilename[MAXPGPATH];
+	char		maptempfilename[MAXPGPATH];
 
 	/*
 	 * Fill in the overhead fields and update CRC.
@@ -890,17 +895,47 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 	FIN_CRC32C(newmap->crc);
 
 	/*
-	 * Open the target file.  We prefer to do this before entering the
-	 * critical section, so that an open() failure need not force PANIC.
+	 * Construct filenames -- a temporary file that we'll create to write the
+	 * data initially, and then the permanent name to which we will rename it.
 	 */
 	snprintf(mapfilename, sizeof(mapfilename), "%s/%s",
 			 dbpath, RELMAPPER_FILENAME);
-	fd = OpenTransientFile(mapfilename, O_WRONLY | O_CREAT | PG_BINARY);
+	snprintf(maptempfilename, sizeof(maptempfilename), "%s/%s",
+			 dbpath, RELMAPPER_TEMP_FILENAME);
+
+	/*
+	 * Open a temporary file. If a file already exists with this name, it must
+	 * be left over from a previous crash, so we can overwrite it. Concurrent
+	 * calls to this function are not allowed.
+	 */
+	fd = OpenTransientFile(maptempfilename,
+						   O_WRONLY | O_CREAT | O_TRUNC | PG_BINARY);
 	if (fd < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m",
-						mapfilename)));
+						maptempfilename)));
+
+	/* Write new data to the file. */
+	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_WRITE);
+	if (write(fd, newmap, sizeof(RelMapFile)) != sizeof(RelMapFile))
+	{
+		/* if write didn't set errno, assume problem is no disk space */
+		if (errno == 0)
+			errno = ENOSPC;
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write file \"%s\": %m",
+						maptempfilename)));
+	}
+	pgstat_report_wait_end();
+
+	/* And close the file. */
+	if (CloseTransientFile(fd) != 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close file \"%s\": %m",
+						maptempfilename)));
 
 	if (write_wal)
 	{
@@ -924,39 +959,16 @@ write_relmap_file(RelMapFile *newmap, bool write_wal, bool send_sinval,
 		XLogFlush(lsn);
 	}
 
-	errno = 0;
-	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_WRITE);
-	if (write(fd, newmap, sizeof(RelMapFile)) != sizeof(RelMapFile))
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write file \"%s\": %m",
-						mapfilename)));
-	}
-	pgstat_report_wait_end();
-
 	/*
-	 * We choose to fsync the data to disk before considering the task done.
-	 * It would be possible to relax this if it turns out to be a performance
-	 * issue, but it would complicate checkpointing --- see notes for
-	 * CheckPointRelationMap.
+	 * durable_rename() does all the hard work of making sure that we rename
+	 * the temporary file into place in a crash-safe manner.
+	 *
+	 * NB: Although we instruct durable_rename() to use ERROR, we will often
+	 * be in a critical section at this point; if so, ERROR will become PANIC.
 	 */
-	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_SYNC);
-	if (pg_fsync(fd) != 0)
-		ereport(data_sync_elevel(ERROR),
-				(errcode_for_file_access(),
-				 errmsg("could not fsync file \"%s\": %m",
-						mapfilename)));
+	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_REPLACE);
+	durable_rename(maptempfilename, mapfilename, ERROR);
 	pgstat_report_wait_end();
-
-	if (CloseTransientFile(fd) != 0)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not close file \"%s\": %m",
-						mapfilename)));
 
 	/*
 	 * Now that the file is safely on disk, send sinval message to let other

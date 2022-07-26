@@ -1409,8 +1409,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a read of the relation map file.</entry>
      </row>
      <row>
-      <entry><literal>RelationMapSync</literal></entry>
-      <entry>Waiting for the relation map file to reach durable storage.</entry>
+      <entry><literal>RelationMapReplace</literal></entry>
+      <entry>Waiting for durable replacement of a relation map file.</entry>
      </row>
      <row>
       <entry><literal>RelationMapWrite</literal></entry>
