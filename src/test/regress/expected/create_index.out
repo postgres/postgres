@@ -2521,9 +2521,7 @@ ERROR:  cannot reindex system catalogs concurrently
 REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
 ERROR:  cannot reindex system catalogs concurrently
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
-ERROR:  syntax error at or near "CONCURRENTLY"
-LINE 1: REINDEX SYSTEM CONCURRENTLY postgres;
-                       ^
+ERROR:  cannot reindex system catalogs concurrently
 REINDEX (CONCURRENTLY) SYSTEM postgres; -- ditto
 ERROR:  cannot reindex system catalogs concurrently
 REINDEX (CONCURRENTLY) SYSTEM;  -- ditto
@@ -2531,6 +2529,9 @@ ERROR:  cannot reindex system catalogs concurrently
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
 WARNING:  cannot reindex system catalogs concurrently, skipping all
+-- Not the current database
+REINDEX DATABASE not_current_database;
+ERROR:  can only reindex the currently open database
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab
          Table "public.concur_reindex_tab"

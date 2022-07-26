@@ -564,7 +564,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <defelt>	generic_option_elem alter_generic_option_elem
 %type <list>	generic_option_list alter_generic_option_list
 
-%type <ival>	reindex_target_type
+%type <ival>	reindex_target_relation reindex_target_all
 %type <list>	opt_reindex_option_list
 
 %type <node>	copy_generic_opt_arg copy_generic_opt_arg_list_item
@@ -9092,13 +9092,12 @@ DropTransformStmt: DROP TRANSFORM opt_if_exists FOR Typename LANGUAGE name opt_d
  *
  *		QUERY:
  *
- *		REINDEX [ (options) ] {TABLE | INDEX | SCHEMA} [CONCURRENTLY] <name>
- *		REINDEX [ (options) ] DATABASE [CONCURRENTLY] [<name>]
- *		REINDEX [ (options) ] SYSTEM [<name>]
+ *		REINDEX [ (options) ] {INDEX | TABLE | SCHEMA} [CONCURRENTLY] <name>
+ *		REINDEX [ (options) ] {DATABASE | SYSTEM} [CONCURRENTLY] [<name>]
  *****************************************************************************/
 
 ReindexStmt:
-			REINDEX opt_reindex_option_list reindex_target_type opt_concurrently qualified_name
+			REINDEX opt_reindex_option_list reindex_target_relation opt_concurrently qualified_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
 
@@ -9116,36 +9115,35 @@ ReindexStmt:
 					ReindexStmt *n = makeNode(ReindexStmt);
 
 					n->kind = REINDEX_OBJECT_SCHEMA;
-					n->name = $5;
 					n->relation = NULL;
+					n->name = $5;
 					n->params = $2;
 					if ($4)
 						n->params = lappend(n->params,
 											makeDefElem("concurrently", NULL, @4));
 					$$ = (Node *) n;
 				}
-			| REINDEX opt_reindex_option_list DATABASE opt_concurrently opt_single_name
+			| REINDEX opt_reindex_option_list reindex_target_all opt_concurrently opt_single_name
 				{
 					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_DATABASE;
-					n->name = NULL;
+
+					n->kind = $3;
 					n->relation = NULL;
+					n->name = $5;
 					n->params = $2;
-					$$ = (Node *) n;
-				}
-			| REINDEX opt_reindex_option_list SYSTEM_P opt_single_name
-				{
-					ReindexStmt *n = makeNode(ReindexStmt);
-					n->kind = REINDEX_OBJECT_SYSTEM;
-					n->name = NULL;
-					n->relation = NULL;
-					n->params = $2;
+					if ($4)
+						n->params = lappend(n->params,
+											makeDefElem("concurrently", NULL, @4));
 					$$ = (Node *) n;
 				}
 		;
-reindex_target_type:
+reindex_target_relation:
 			INDEX					{ $$ = REINDEX_OBJECT_INDEX; }
 			| TABLE					{ $$ = REINDEX_OBJECT_TABLE; }
+		;
+reindex_target_all:
+			SYSTEM_P				{ $$ = REINDEX_OBJECT_SYSTEM; }
+			| DATABASE				{ $$ = REINDEX_OBJECT_DATABASE; }
 		;
 opt_reindex_option_list:
 			'(' utility_option_list ')'				{ $$ = $2; }

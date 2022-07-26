@@ -1076,6 +1076,8 @@ REINDEX (CONCURRENTLY) SYSTEM postgres; -- ditto
 REINDEX (CONCURRENTLY) SYSTEM;  -- ditto
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
+-- Not the current database
+REINDEX DATABASE not_current_database;
 
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab
