@@ -693,14 +693,14 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	 */
 	if (dissuper)
 	{
-		bool	should_be_super = BoolGetDatum(boolVal(dissuper->arg));
+		bool	should_be_super = boolVal(dissuper->arg);
 
 		if (!should_be_super && roleid == BOOTSTRAP_SUPERUSERID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied: bootstrap user must be superuser")));
 
-		new_record[Anum_pg_authid_rolsuper - 1] = should_be_super;
+		new_record[Anum_pg_authid_rolsuper - 1] = BoolGetDatum(should_be_super);
 		new_record_repl[Anum_pg_authid_rolsuper - 1] = true;
 	}
 
