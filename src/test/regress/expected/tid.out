@@ -61,7 +61,8 @@ DROP SEQUENCE tid_seq;
 -- Index, fails with incorrect relation type
 CREATE INDEX tid_ind ON tid_tab(a);
 SELECT currtid2('tid_ind'::text, '(0,1)'::tid); -- fails
-ERROR:  "tid_ind" is an index
+ERROR:  cannot open relation "tid_ind"
+DETAIL:  This operation is not supported for indexes.
 DROP INDEX tid_ind;
 -- Partitioned table, no storage
 CREATE TABLE tid_part (a int) PARTITION BY RANGE (a);
