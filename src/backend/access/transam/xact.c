@@ -3208,6 +3208,9 @@ AbortCurrentTransaction(void)
  *	could issue more commands and possibly cause a failure after the statement
  *	completes).  Subtransactions are verboten too.
  *
+ *	We must also set XACT_FLAGS_NEEDIMMEDIATECOMMIT in MyXactFlags, to ensure
+ *	that postgres.c follows through by committing after the statement is done.
+ *
  *	isTopLevel: passed down from ProcessUtility to determine whether we are
  *	inside a function or multi-query querystring.  (We will always fail if
  *	this is false, but it's convenient to centralize the check here instead of
@@ -3251,7 +3254,9 @@ PreventTransactionChain(bool isTopLevel, const char *stmtType)
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
 		CurrentTransactionState->blockState != TBLOCK_STARTED)
 		elog(FATAL, "cannot prevent transaction chain");
-	/* all okay */
+
+	/* All okay.  Set the flag to make sure the right thing happens later. */
+	MyXactFlags |= XACT_FLAGS_NEEDIMMEDIATECOMMIT;
 }
 
 /*
@@ -3349,6 +3354,13 @@ IsInTransactionChain(bool isTopLevel)
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
 		CurrentTransactionState->blockState != TBLOCK_STARTED)
 		return true;
+
+	/*
+	 * If we tell the caller we're not in a transaction block, then inform
+	 * postgres.c that it had better commit when the statement is done.
+	 * Otherwise our report could be a lie.
+	 */
+	MyXactFlags |= XACT_FLAGS_NEEDIMMEDIATECOMMIT;
 
 	return false;
 }
