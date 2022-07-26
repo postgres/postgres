@@ -197,9 +197,9 @@ SELECT typname FROM pg_type WHERE oid = 'attmp_array[]'::regtype;
 (1 row)
 
 SELECT typname FROM pg_type WHERE oid = '_attmp_array[]'::regtype;
-    typname     
-----------------
- ___attmp_array
+     typname     
+-----------------
+ __attmp_array_1
 (1 row)
 
 DROP TABLE _attmp_array;
