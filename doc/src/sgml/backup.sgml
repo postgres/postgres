@@ -681,14 +681,29 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
     any pre-existing archive file.  This is an important safety feature to
     preserve the integrity of your archive in case of administrator error
     (such as sending the output of two different servers to the same archive
-    directory).
+    directory).  It is advisable to test your proposed archive library to ensure
+    that it does not overwrite an existing file.
    </para>
 
    <para>
-    It is advisable to test your proposed archive library to ensure that it
-    indeed does not overwrite an existing file, <emphasis>and that it returns
-    <literal>false</literal> in this case</emphasis>.
-    The example command above for Unix ensures this by including a separate
+    In rare cases, <productname>PostgreSQL</productname> may attempt to
+    re-archive a WAL file that was previously archived.  For example, if the
+    system crashes before the server makes a durable record of archival success,
+    the server will attempt to archive the file again after restarting (provided
+    archiving is still enabled).  When an archive library encounters a
+    pre-existing file, it may return <literal>true</literal> if the WAL file has
+    identical contents to the pre-existing archive and the pre-existing archive
+    is fully persisted to storage.  Alternatively, the archive library may
+    return <literal>false</literal> anytime a pre-existing file is encountered,
+    but this will require manual action by an administrator to resolve.  If a
+    pre-existing file contains different contents than the WAL file being
+    archived, the archive library <emphasis>must</emphasis> return
+    <literal>false</literal>.
+   </para>
+
+   <para>
+    The example command above for Unix avoids overwriting a pre-existing archive
+    by including a separate
     <command>test</command> step.  On some Unix platforms, <command>cp</command> has
     switches such as <option>-i</option> that can be used to do the same thing
     less verbosely, but you should not rely on these without verifying that
