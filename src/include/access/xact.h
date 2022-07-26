@@ -108,6 +108,12 @@ extern int	MyXactFlags;
 #define XACT_FLAGS_ACQUIREDACCESSEXCLUSIVELOCK	(1U << 1)
 
 /*
+ * XACT_FLAGS_NEEDIMMEDIATECOMMIT - records whether the top level statement
+ * is one that requires immediate commit, such as CREATE DATABASE.
+ */
+#define XACT_FLAGS_NEEDIMMEDIATECOMMIT			(1U << 2)
+
+/*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
  */
 typedef enum
