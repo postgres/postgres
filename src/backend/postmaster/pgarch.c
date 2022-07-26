@@ -745,7 +745,19 @@ pgarch_archiveDone(char *xlog)
 
 	StatusFilePath(rlogready, xlog, ".ready");
 	StatusFilePath(rlogdone, xlog, ".done");
-	(void) durable_rename(rlogready, rlogdone, WARNING);
+
+	/*
+	 * To avoid extra overhead, we don't durably rename the .ready file to
+	 * .done.  Archive commands and libraries must gracefully handle attempts
+	 * to re-archive files (e.g., if the server crashes just before this
+	 * function is called), so it should be okay if the .ready file reappears
+	 * after a crash.
+	 */
+	if (rename(rlogready, rlogdone) < 0)
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						rlogready, rlogdone)));
 }
 
 
