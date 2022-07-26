@@ -512,7 +512,7 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 				 errmsg("could not open usermap file \"%s\": %m",
 						IdentFileName)));
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &ident_lines, DEBUG3);
+	linecxt = tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3);
 	FreeFile(file);
 
 	/* Now parse all the lines */
