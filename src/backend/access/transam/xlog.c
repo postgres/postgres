@@ -10925,12 +10925,32 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			int			rllen;
 			StringInfoData buflinkpath;
 			char	   *s = linkpath;
+#ifndef WIN32
+			struct stat st;
+#endif
 
 			/* Skip special stuff */
 			if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
 				continue;
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
+
+			/*
+			 * Skip anything that isn't a symlink/junction.  For testing only,
+			 * we sometimes use allow_in_place_tablespaces to create
+			 * directories directly under pg_tblspc, which would fail below.
+			 */
+#ifndef WIN32
+			if (lstat(fullpath, &st) < 0)
+				ereport(LOG,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m",
+								fullpath)));
+			else if (!S_ISLNK(st.st_mode))
+#else			/* WIN32 */
+			if (!pgwin32_is_junction(fullpath))
+#endif
+				continue;
 
 #if defined(HAVE_READLINK) || defined(WIN32)
 			rllen = readlink(fullpath, linkpath, sizeof(linkpath));
