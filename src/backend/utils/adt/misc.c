@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
@@ -307,6 +308,9 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	char		sourcepath[MAXPGPATH];
 	char		targetpath[MAXPGPATH];
 	int			rllen;
+#ifndef WIN32
+	struct stat st;
+#endif
 
 	/*
 	 * It's useful to apply this function to pg_class.reltablespace, wherein
@@ -331,6 +335,31 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	 */
 	snprintf(sourcepath, sizeof(sourcepath), "pg_tblspc/%u", tablespaceOid);
 
+	/*
+	 * Before reading the link, check if the source path is a link or a
+	 * junction point.  Note that a directory is possible for a tablespace
+	 * created with allow_in_place_tablespaces enabled.  If a directory is
+	 * found, a relative path to the data directory is returned.
+	 */
+#ifdef WIN32
+	if (!pgwin32_is_junction(sourcepath))
+		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
+#else
+	if (lstat(sourcepath, &st) < 0)
+	{
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not stat file \"%s\": %m",
+						sourcepath)));
+	}
+
+	if (!S_ISLNK(st.st_mode))
+		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
+#endif
+
+	/*
+	 * In presence of a link or a junction point, return the path pointing to.
+	 */
 	rllen = readlink(sourcepath, targetpath, sizeof(targetpath));
 	if (rllen < 0)
 		ereport(ERROR,
