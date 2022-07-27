@@ -788,16 +788,6 @@ read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
 
 	Assert(elevel >= ERROR);
 
-	/* Open the target file. */
-	snprintf(mapfilename, sizeof(mapfilename), "%s/%s", dbpath,
-			 RELMAPPER_FILENAME);
-	fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
-	if (fd < 0)
-		ereport(elevel,
-				(errcode_for_file_access(),
-				 errmsg("could not open file \"%s\": %m",
-						mapfilename)));
-
 	/*
 	 * Grab the lock to prevent the file from being updated while we read it,
 	 * unless the caller is already holding the lock.  If the file is updated
@@ -807,6 +797,24 @@ read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
 	 */
 	if (!lock_held)
 		LWLockAcquire(RelationMappingLock, LW_SHARED);
+
+	/*
+	 * Open the target file.
+	 *
+	 * Because Windows isn't happy about the idea of renaming over a file
+	 * that someone has open, we only open this file after acquiring the lock,
+	 * and for the same reason, we close it before releasing the lock. That
+	 * way, by the time write_relmap_file() acquires an exclusive lock, no
+	 * one else will have it open.
+	 */
+	snprintf(mapfilename, sizeof(mapfilename), "%s/%s", dbpath,
+			 RELMAPPER_FILENAME);
+	fd = OpenTransientFile(mapfilename, O_RDONLY | PG_BINARY);
+	if (fd < 0)
+		ereport(elevel,
+				(errcode_for_file_access(),
+				 errmsg("could not open file \"%s\": %m",
+						mapfilename)));
 
 	/* Now read the data. */
 	pgstat_report_wait_start(WAIT_EVENT_RELATION_MAP_READ);
@@ -825,14 +833,14 @@ read_relmap_file(RelMapFile *map, char *dbpath, bool lock_held, int elevel)
 	}
 	pgstat_report_wait_end();
 
-	if (!lock_held)
-		LWLockRelease(RelationMappingLock);
-
 	if (CloseTransientFile(fd) != 0)
 		ereport(elevel,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m",
 						mapfilename)));
+
+	if (!lock_held)
+		LWLockRelease(RelationMappingLock);
 
 	/* check for correct magic number, etc */
 	if (map->magic != RELMAPPER_FILEMAGIC ||
