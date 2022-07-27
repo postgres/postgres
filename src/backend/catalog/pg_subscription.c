@@ -533,65 +533,14 @@ HasSubscriptionRelations(Oid subid)
 }
 
 /*
- * Get all relations for subscription.
+ * Get the relations for the subscription.
  *
- * Returned list is palloc'ed in current memory context.
+ * If not_ready is true, return only the relations that are not in a ready
+ * state, otherwise return all the relations of the subscription.  The
+ * returned list is palloc'ed in the current memory context.
  */
 List *
-GetSubscriptionRelations(Oid subid)
-{
-	List	   *res = NIL;
-	Relation	rel;
-	HeapTuple	tup;
-	ScanKeyData skey[1];
-	SysScanDesc scan;
-
-	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
-
-	ScanKeyInit(&skey[0],
-				Anum_pg_subscription_rel_srsubid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(subid));
-
-	scan = systable_beginscan(rel, InvalidOid, false,
-							  NULL, 1, skey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_subscription_rel subrel;
-		SubscriptionRelState *relstate;
-		Datum		d;
-		bool		isnull;
-
-		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
-
-		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
-		relstate->relid = subrel->srrelid;
-		relstate->state = subrel->srsubstate;
-		d = SysCacheGetAttr(SUBSCRIPTIONRELMAP, tup,
-							Anum_pg_subscription_rel_srsublsn, &isnull);
-		if (isnull)
-			relstate->lsn = InvalidXLogRecPtr;
-		else
-			relstate->lsn = DatumGetLSN(d);
-
-		res = lappend(res, relstate);
-	}
-
-	/* Cleanup */
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
-
-	return res;
-}
-
-/*
- * Get all relations for subscription that are not in a ready state.
- *
- * Returned list is palloc'ed in current memory context.
- */
-List *
-GetSubscriptionNotReadyRelations(Oid subid)
+GetSubscriptionRelations(Oid subid, bool not_ready)
 {
 	List	   *res = NIL;
 	Relation	rel;
@@ -607,10 +556,11 @@ GetSubscriptionNotReadyRelations(Oid subid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(subid));
 
-	ScanKeyInit(&skey[nkeys++],
-				Anum_pg_subscription_rel_srsubstate,
-				BTEqualStrategyNumber, F_CHARNE,
-				CharGetDatum(SUBREL_STATE_READY));
+	if (not_ready)
+		ScanKeyInit(&skey[nkeys++],
+					Anum_pg_subscription_rel_srsubstate,
+					BTEqualStrategyNumber, F_CHARNE,
+					CharGetDatum(SUBREL_STATE_READY));
 
 	scan = systable_beginscan(rel, InvalidOid, false,
 							  NULL, nkeys, skey);
