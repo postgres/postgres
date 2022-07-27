@@ -141,14 +141,15 @@ typedef struct BackgroundWorker
    which the initial entry point for the background worker should be sought.
    The named library will be dynamically loaded by the worker process and
    <structfield>bgw_function_name</structfield> will be used to identify the
-   function to be called.  If loading a function from the core code, this must
-   be set to "postgres".
+   function to be called.  If calling a function in the core code, this must
+   be set to <literal>"postgres"</literal>.
   </para>
 
   <para>
-   <structfield>bgw_function_name</structfield> is the name of a function in
-   a dynamically loaded library which should be used as the initial entry point
-   for a new background worker.
+   <structfield>bgw_function_name</structfield> is the name of the function
+   to use as the initial entry point for the new background worker.  If
+   this function is in a dynamically loaded library, it must be marked
+   <literal>PGDLLEXPORT</literal> (and not <literal>static</literal>).
   </para>
 
   <para>

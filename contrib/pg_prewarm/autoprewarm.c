@@ -82,8 +82,8 @@ typedef struct AutoPrewarmSharedState
 	int			prewarmed_blocks;
 } AutoPrewarmSharedState;
 
-void		autoprewarm_main(Datum main_arg);
-void		autoprewarm_database_main(Datum main_arg);
+PGDLLEXPORT void autoprewarm_main(Datum main_arg);
+PGDLLEXPORT void autoprewarm_database_main(Datum main_arg);
 
 PG_FUNCTION_INFO_V1(autoprewarm_start_worker);
 PG_FUNCTION_INFO_V1(autoprewarm_dump_now);
