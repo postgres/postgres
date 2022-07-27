@@ -28,7 +28,7 @@ sub query_log
 }
 
 my $node = PostgreSQL::Test::Cluster->new('main');
-$node->init;
+$node->init('auth_extra' => [ '--create-role', 'regress_user1' ]);
 $node->append_conf('postgresql.conf',
 	"session_preload_libraries = 'auto_explain'");
 $node->append_conf('postgresql.conf', "auto_explain.log_min_duration = 0");
@@ -115,29 +115,30 @@ CREATE USER regress_user1;
 GRANT SET ON PARAMETER auto_explain.log_format TO regress_user1;
 });
 
-$ENV{PGUSER} = "regress_user1";
+{
+	local $ENV{PGUSER} = "regress_user1";
 
-$log_contents = query_log(
-	$node,
-	"SELECT * FROM pg_database;",
-	{ "auto_explain.log_format" => "json" });
+	$log_contents = query_log(
+		$node,
+		"SELECT * FROM pg_database;",
+		{ "auto_explain.log_format" => "json" });
 
-like(
-	$log_contents,
-	qr/"Query Text": "SELECT \* FROM pg_database;"/,
-	"query text logged, json mode selected by non-superuser");
+	like(
+		$log_contents,
+		qr/"Query Text": "SELECT \* FROM pg_database;"/,
+		"query text logged, json mode selected by non-superuser");
 
-$log_contents = query_log(
-	$node,
-	"SELECT * FROM pg_database;",
-	{ "auto_explain.log_level" => "log" });
+	$log_contents = query_log(
+		$node,
+		"SELECT * FROM pg_database;",
+		{ "auto_explain.log_level" => "log" });
 
-like(
-	$log_contents,
-	qr/WARNING:  permission denied to set parameter "auto_explain\.log_level"/,
-	"permission failure logged");
+	like(
+		$log_contents,
+		qr/WARNING:  permission denied to set parameter "auto_explain\.log_level"/,
+		"permission failure logged");
 
-$ENV{PGUSER} = undef;
+}    # end queries run as regress_user1
 
 $node->safe_psql(
 	"postgres", q{
