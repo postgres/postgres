@@ -348,7 +348,7 @@ XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator, ForkNumber forknum,
  * XLogRecGetData().
  */
 void
-XLogRegisterData(char *data, int len)
+XLogRegisterData(char *data, uint32 len)
 {
 	XLogRecData *rdata;
 
@@ -386,7 +386,7 @@ XLogRegisterData(char *data, int len)
  * limited)
  */
 void
-XLogRegisterBufData(uint8 block_id, char *data, int len)
+XLogRegisterBufData(uint8 block_id, char *data, uint32 len)
 {
 	registered_buffer *regbuf;
 	XLogRecData *rdata;
@@ -399,8 +399,16 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 		elog(ERROR, "no block with id %d registered with WAL insertion",
 			 block_id);
 
-	if (num_rdatas >= max_rdatas)
+	/*
+	 * Check against max_rdatas and ensure we do not register more data per
+	 * buffer than can be handled by the physical data format; i.e. that
+	 * regbuf->rdata_len does not grow beyond what
+	 * XLogRecordBlockHeader->data_length can hold.
+	 */
+	if (num_rdatas >= max_rdatas ||
+		regbuf->rdata_len + len > UINT16_MAX)
 		elog(ERROR, "too much WAL data");
+
 	rdata = &rdatas[num_rdatas++];
 
 	rdata->data = data;
@@ -757,11 +765,17 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if (needs_data)
 		{
 			/*
+			 * When copying to XLogRecordBlockHeader, the length is narrowed
+			 * to an uint16.  Double-check that it is still correct.
+			 */
+			Assert(regbuf->rdata_len <= UINT16_MAX);
+
+			/*
 			 * Link the caller-supplied rdata chain for this buffer to the
 			 * overall list.
 			 */
 			bkpb.fork_flags |= BKPBLOCK_HAS_DATA;
-			bkpb.data_length = regbuf->rdata_len;
+			bkpb.data_length = (uint16) regbuf->rdata_len;
 			total_len += regbuf->rdata_len;
 
 			rdt_datas_last->next = regbuf->rdata_head;
