@@ -280,14 +280,6 @@ struct Tuplesortstate
 	SortTupleComparator comparetup;
 
 	/*
-	 * Function to copy a supplied input tuple into palloc'd space and set up
-	 * its SortTuple representation (ie, set tuple/datum1/isnull1).  Also,
-	 * state->availMem must be decreased by the amount of space used for the
-	 * tuple copy (note the SortTuple struct itself is not counted).
-	 */
-	void		(*copytup) (Tuplesortstate *state, SortTuple *stup, void *tup);
-
-	/*
 	 * Function to write a stored tuple onto tape.  The representation of the
 	 * tuple on tape need not be the same as it is in memory; requirements on
 	 * the tape representation are given below.  Unless the slab allocator is
@@ -549,7 +541,6 @@ struct Sharedsort
 	} while(0)
 
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (a, b, state))
-#define COPYTUP(state,stup,tup) ((*(state)->copytup) (state, stup, tup))
 #define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
 #define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
 #define LACKMEM(state)		((state)->availMem < 0 && !(state)->slabAllocatorUsed)
@@ -600,10 +591,7 @@ struct Sharedsort
  * a lot better than what we were doing before 7.3.  As of 9.6, a
  * separate memory context is used for caller passed tuples.  Resetting
  * it at certain key increments significantly ameliorates fragmentation.
- * Note that this places a responsibility on copytup routines to use the
- * correct memory context for these tuples (and to not use the reset
- * context for anything whose lifetime needs to span multiple external
- * sort runs).  readtup routines use the slab allocator (they cannot use
+ * readtup routines use the slab allocator (they cannot use
  * the reset context because it gets deleted at the point that merging
  * begins).
  */
@@ -643,14 +631,12 @@ static void markrunend(LogicalTape *tape);
 static void *readtup_alloc(Tuplesortstate *state, Size tuplen);
 static int	comparetup_heap(const SortTuple *a, const SortTuple *b,
 							Tuplesortstate *state);
-static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_heap(Tuplesortstate *state, LogicalTape *tape,
 						  SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 						 LogicalTape *tape, unsigned int len);
 static int	comparetup_cluster(const SortTuple *a, const SortTuple *b,
 							   Tuplesortstate *state);
-static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_cluster(Tuplesortstate *state, LogicalTape *tape,
 							 SortTuple *stup);
 static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
@@ -659,14 +645,12 @@ static int	comparetup_index_btree(const SortTuple *a, const SortTuple *b,
 								   Tuplesortstate *state);
 static int	comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 								  Tuplesortstate *state);
-static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_index(Tuplesortstate *state, LogicalTape *tape,
 						   SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, SortTuple *stup,
 						  LogicalTape *tape, unsigned int len);
 static int	comparetup_datum(const SortTuple *a, const SortTuple *b,
 							 Tuplesortstate *state);
-static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
 static void writetup_datum(Tuplesortstate *state, LogicalTape *tape,
 						   SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
@@ -1059,7 +1043,6 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 								PARALLEL_SORT(state));
 
 	state->comparetup = comparetup_heap;
-	state->copytup = copytup_heap;
 	state->writetup = writetup_heap;
 	state->readtup = readtup_heap;
 	state->haveDatum1 = true;
@@ -1135,7 +1118,6 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 								PARALLEL_SORT(state));
 
 	state->comparetup = comparetup_cluster;
-	state->copytup = copytup_cluster;
 	state->writetup = writetup_cluster;
 	state->readtup = readtup_cluster;
 	state->abbrevNext = 10;
@@ -1240,7 +1222,6 @@ tuplesort_begin_index_btree(Relation heapRel,
 								PARALLEL_SORT(state));
 
 	state->comparetup = comparetup_index_btree;
-	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
 	state->abbrevNext = 10;
@@ -1317,7 +1298,6 @@ tuplesort_begin_index_hash(Relation heapRel,
 	state->nKeys = 1;			/* Only one sort column, the hash code */
 
 	state->comparetup = comparetup_index_hash;
-	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
 	state->haveDatum1 = true;
@@ -1358,7 +1338,6 @@ tuplesort_begin_index_gist(Relation heapRel,
 	state->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
 
 	state->comparetup = comparetup_index_btree;
-	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
 	state->haveDatum1 = true;
@@ -1422,7 +1401,6 @@ tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
 								PARALLEL_SORT(state));
 
 	state->comparetup = comparetup_datum;
-	state->copytup = copytup_datum;
 	state->writetup = writetup_datum;
 	state->readtup = readtup_datum;
 	state->abbrevNext = 10;
@@ -1839,14 +1817,75 @@ noalloc:
 void
 tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
 	SortTuple	stup;
+	Datum		original;
+	MinimalTuple tuple;
+	HeapTupleData htup;
 
-	/*
-	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the common code.
-	 */
-	COPYTUP(state, &stup, (void *) slot);
+	/* copy the tuple into sort storage */
+	tuple = ExecCopySlotMinimalTuple(slot);
+	stup.tuple = (void *) tuple;
+	USEMEM(state, GetMemoryChunkSpace(tuple));
+	/* set up first-column key value */
+	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
+	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
+	original = heap_getattr(&htup,
+							state->sortKeys[0].ssup_attno,
+							state->tupDesc,
+							&stup.isnull1);
+
+	MemoryContextSwitchTo(state->sortcontext);
+
+	if (!state->sortKeys->abbrev_converter || stup.isnull1)
+	{
+		/*
+		 * Store ordinary Datum representation, or NULL value.  If there is a
+		 * converter it won't expect NULL values, and cost model is not
+		 * required to account for NULL, so in that case we avoid calling
+		 * converter and just set datum1 to zeroed representation (to be
+		 * consistent, and to support cheap inequality tests for NULL
+		 * abbreviated keys).
+		 */
+		stup.datum1 = original;
+	}
+	else if (!consider_abort_common(state))
+	{
+		/* Store abbreviated key representation */
+		stup.datum1 = state->sortKeys->abbrev_converter(original,
+														state->sortKeys);
+	}
+	else
+	{
+		/* Abort abbreviation */
+		int			i;
+
+		stup.datum1 = original;
+
+		/*
+		 * Set state to be consistent with never trying abbreviation.
+		 *
+		 * Alter datum1 representation in already-copied tuples, so as to
+		 * ensure a consistent representation (current tuple was just
+		 * handled).  It does not matter if some dumped tuples are already
+		 * sorted on tape, since serialized tuples lack abbreviated keys
+		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
+		 */
+		for (i = 0; i < state->memtupcount; i++)
+		{
+			SortTuple  *mtup = &state->memtuples[i];
+
+			htup.t_len = ((MinimalTuple) mtup->tuple)->t_len +
+				MINIMAL_TUPLE_OFFSET;
+			htup.t_data = (HeapTupleHeader) ((char *) mtup->tuple -
+											 MINIMAL_TUPLE_OFFSET);
+
+			mtup->datum1 = heap_getattr(&htup,
+										state->sortKeys[0].ssup_attno,
+										state->tupDesc,
+										&mtup->isnull1);
+		}
+	}
 
 	puttuple_common(state, &stup);
 
@@ -1861,14 +1900,75 @@ tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
 void
 tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
 	SortTuple	stup;
+	Datum		original;
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
+
+	/* copy the tuple into sort storage */
+	tup = heap_copytuple(tup);
+	stup.tuple = (void *) tup;
+	USEMEM(state, GetMemoryChunkSpace(tup));
+
+	MemoryContextSwitchTo(state->sortcontext);
 
 	/*
-	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the common code.
+	 * set up first-column key value, and potentially abbreviate, if it's a
+	 * simple column
 	 */
-	COPYTUP(state, &stup, (void *) tup);
+	if (state->haveDatum1)
+	{
+		original = heap_getattr(tup,
+								state->indexInfo->ii_IndexAttrNumbers[0],
+								state->tupDesc,
+								&stup.isnull1);
+
+		if (!state->sortKeys->abbrev_converter || stup.isnull1)
+		{
+			/*
+			 * Store ordinary Datum representation, or NULL value.  If there
+			 * is a converter it won't expect NULL values, and cost model is
+			 * not required to account for NULL, so in that case we avoid
+			 * calling converter and just set datum1 to zeroed representation
+			 * (to be consistent, and to support cheap inequality tests for
+			 * NULL abbreviated keys).
+			 */
+			stup.datum1 = original;
+		}
+		else if (!consider_abort_common(state))
+		{
+			/* Store abbreviated key representation */
+			stup.datum1 = state->sortKeys->abbrev_converter(original,
+															state->sortKeys);
+		}
+		else
+		{
+			/* Abort abbreviation */
+			int			i;
+
+			stup.datum1 = original;
+
+			/*
+			 * Set state to be consistent with never trying abbreviation.
+			 *
+			 * Alter datum1 representation in already-copied tuples, so as to
+			 * ensure a consistent representation (current tuple was just
+			 * handled).  It does not matter if some dumped tuples are already
+			 * sorted on tape, since serialized tuples lack abbreviated keys
+			 * (TSS_BUILDRUNS state prevents control reaching here in any
+			 * case).
+			 */
+			for (i = 0; i < state->memtupcount; i++)
+			{
+				SortTuple  *mtup = &state->memtuples[i];
+
+				tup = (HeapTuple) mtup->tuple;
+				mtup->datum1 = heap_getattr(tup,
+											state->indexInfo->ii_IndexAttrNumbers[0],
+											state->tupDesc,
+											&mtup->isnull1);
+			}
+		}
+	}
 
 	puttuple_common(state, &stup);
 
@@ -3948,84 +4048,6 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 }
 
 static void
-copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/*
-	 * We expect the passed "tup" to be a TupleTableSlot, and form a
-	 * MinimalTuple using the exported interface for that.
-	 */
-	TupleTableSlot *slot = (TupleTableSlot *) tup;
-	Datum		original;
-	MinimalTuple tuple;
-	HeapTupleData htup;
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-
-	/* copy the tuple into sort storage */
-	tuple = ExecCopySlotMinimalTuple(slot);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	original = heap_getattr(&htup,
-							state->sortKeys[0].ssup_attno,
-							state->tupDesc,
-							&stup->isnull1);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	if (!state->sortKeys->abbrev_converter || stup->isnull1)
-	{
-		/*
-		 * Store ordinary Datum representation, or NULL value.  If there is a
-		 * converter it won't expect NULL values, and cost model is not
-		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to zeroed representation (to be
-		 * consistent, and to support cheap inequality tests for NULL
-		 * abbreviated keys).
-		 */
-		stup->datum1 = original;
-	}
-	else if (!consider_abort_common(state))
-	{
-		/* Store abbreviated key representation */
-		stup->datum1 = state->sortKeys->abbrev_converter(original,
-														 state->sortKeys);
-	}
-	else
-	{
-		/* Abort abbreviation */
-		int			i;
-
-		stup->datum1 = original;
-
-		/*
-		 * Set state to be consistent with never trying abbreviation.
-		 *
-		 * Alter datum1 representation in already-copied tuples, so as to
-		 * ensure a consistent representation (current tuple was just
-		 * handled).  It does not matter if some dumped tuples are already
-		 * sorted on tape, since serialized tuples lack abbreviated keys
-		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
-		 */
-		for (i = 0; i < state->memtupcount; i++)
-		{
-			SortTuple  *mtup = &state->memtuples[i];
-
-			htup.t_len = ((MinimalTuple) mtup->tuple)->t_len +
-				MINIMAL_TUPLE_OFFSET;
-			htup.t_data = (HeapTupleHeader) ((char *) mtup->tuple -
-											 MINIMAL_TUPLE_OFFSET);
-
-			mtup->datum1 = heap_getattr(&htup,
-										state->sortKeys[0].ssup_attno,
-										state->tupDesc,
-										&mtup->isnull1);
-		}
-	}
-}
-
-static void
 writetup_heap(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
 {
 	MinimalTuple tuple = (MinimalTuple) stup->tuple;
@@ -4191,79 +4213,6 @@ comparetup_cluster(const SortTuple *a, const SortTuple *b,
 	}
 
 	return 0;
-}
-
-static void
-copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	HeapTuple	tuple = (HeapTuple) tup;
-	Datum		original;
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-
-	/* copy the tuple into sort storage */
-	tuple = heap_copytuple(tuple);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * set up first-column key value, and potentially abbreviate, if it's a
-	 * simple column
-	 */
-	if (!state->haveDatum1)
-		return;
-
-	original = heap_getattr(tuple,
-							state->indexInfo->ii_IndexAttrNumbers[0],
-							state->tupDesc,
-							&stup->isnull1);
-
-	if (!state->sortKeys->abbrev_converter || stup->isnull1)
-	{
-		/*
-		 * Store ordinary Datum representation, or NULL value.  If there is a
-		 * converter it won't expect NULL values, and cost model is not
-		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to zeroed representation (to be
-		 * consistent, and to support cheap inequality tests for NULL
-		 * abbreviated keys).
-		 */
-		stup->datum1 = original;
-	}
-	else if (!consider_abort_common(state))
-	{
-		/* Store abbreviated key representation */
-		stup->datum1 = state->sortKeys->abbrev_converter(original,
-														 state->sortKeys);
-	}
-	else
-	{
-		/* Abort abbreviation */
-		int			i;
-
-		stup->datum1 = original;
-
-		/*
-		 * Set state to be consistent with never trying abbreviation.
-		 *
-		 * Alter datum1 representation in already-copied tuples, so as to
-		 * ensure a consistent representation (current tuple was just
-		 * handled).  It does not matter if some dumped tuples are already
-		 * sorted on tape, since serialized tuples lack abbreviated keys
-		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
-		 */
-		for (i = 0; i < state->memtupcount; i++)
-		{
-			SortTuple  *mtup = &state->memtuples[i];
-
-			tuple = (HeapTuple) mtup->tuple;
-			mtup->datum1 = heap_getattr(tuple,
-										state->indexInfo->ii_IndexAttrNumbers[0],
-										state->tupDesc,
-										&mtup->isnull1);
-		}
-	}
 }
 
 static void
@@ -4513,13 +4462,6 @@ comparetup_index_hash(const SortTuple *a, const SortTuple *b,
 }
 
 static void
-copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/* Not currently needed */
-	elog(ERROR, "copytup_index() should not be called");
-}
-
-static void
 writetup_index(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
 {
 	IndexTuple	tuple = (IndexTuple) stup->tuple;
@@ -4581,13 +4523,6 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 												state->sortKeys);
 
 	return compare;
-}
-
-static void
-copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/* Not currently needed */
-	elog(ERROR, "copytup_datum() should not be called");
 }
 
 static void
