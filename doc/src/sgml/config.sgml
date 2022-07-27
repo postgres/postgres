@@ -10369,6 +10369,25 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     </para>
 
     <variablelist>
+     <varlistentry id="guc-allow-in-place-tablespaces" xreflabel="allow_in_place_tablespaces">
+      <term><varname>allow_in_place_tablespaces</varname> (<type>boolean</type>)
+      <indexterm>
+        <primary><varname>allow_in_place_tablespaces</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        Allows tablespaces to be created as directories inside
+        <filename>pg_tblspc</filename>, when an empty location string
+        is provided to the <command>CREATE TABLESPACE</command> command.  This
+        is intended to allow testing replication scenarios where primary and
+        standby servers are running on the same machine.  Such directories
+        are likely to confuse backup tools that expect to find only symbolic
+        links in that location.  Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-allow-system-table-mods" xreflabel="allow_system_table_mods">
       <term><varname>allow_system_table_mods</varname> (<type>boolean</type>)
       <indexterm>

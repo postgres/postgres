@@ -43,6 +43,7 @@
 #include "commands/progress.h"
 #include "commands/tablespace.h"
 #include "common/controldata_utils.h"
+#include "common/file_utils.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
@@ -11167,6 +11168,14 @@ do_pg_start_backup(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				continue;
 
 			snprintf(fullpath, sizeof(fullpath), "pg_tblspc/%s", de->d_name);
+
+			/*
+			 * Skip anything that isn't a symlink/junction.  For testing only,
+			 * we sometimes use allow_in_place_tablespaces to create
+			 * directories directly under pg_tblspc, which would fail below.
+			 */
+			if (get_dirent_type(fullpath, de, false, ERROR) != PGFILETYPE_LNK)
+				continue;
 
 #if defined(HAVE_READLINK) || defined(WIN32)
 			rllen = readlink(fullpath, linkpath, sizeof(linkpath));
