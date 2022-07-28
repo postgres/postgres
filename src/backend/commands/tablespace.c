@@ -156,8 +156,6 @@ TablespaceCreateDbspace(Oid spcOid, Oid dbOid, bool isRedo)
 				/* Directory creation failed? */
 				if (MakePGDirectory(dir) < 0)
 				{
-					char	   *parentdir;
-
 					/* Failure other than not exists or not in WAL replay? */
 					if (errno != ENOENT || !isRedo)
 						ereport(ERROR,
@@ -166,36 +164,16 @@ TablespaceCreateDbspace(Oid spcOid, Oid dbOid, bool isRedo)
 										dir)));
 
 					/*
-					 * Parent directories are missing during WAL replay, so
-					 * continue by creating simple parent directories rather
-					 * than a symlink.
+					 * During WAL replay, it's conceivable that several levels
+					 * of directories are missing if tablespaces are dropped
+					 * further ahead of the WAL stream than we're currently
+					 * replaying.  An easy way forward is to create them as
+					 * plain directories and hope they are removed by further
+					 * WAL replay if necessary.  If this also fails, there is
+					 * trouble we cannot get out of, so just report that and
+					 * bail out.
 					 */
-
-					/* create two parents up if not exist */
-					parentdir = pstrdup(dir);
-					get_parent_directory(parentdir);
-					get_parent_directory(parentdir);
-					/* Can't create parent and it doesn't already exist? */
-					if (MakePGDirectory(parentdir) < 0 && errno != EEXIST)
-						ereport(ERROR,
-								(errcode_for_file_access(),
-								 errmsg("could not create directory \"%s\": %m",
-										parentdir)));
-					pfree(parentdir);
-
-					/* create one parent up if not exist */
-					parentdir = pstrdup(dir);
-					get_parent_directory(parentdir);
-					/* Can't create parent and it doesn't already exist? */
-					if (MakePGDirectory(parentdir) < 0 && errno != EEXIST)
-						ereport(ERROR,
-								(errcode_for_file_access(),
-								 errmsg("could not create directory \"%s\": %m",
-										parentdir)));
-					pfree(parentdir);
-
-					/* Create database directory */
-					if (MakePGDirectory(dir) < 0)
+					if (pg_mkdir_p(dir, pg_dir_create_mode) < 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
 								 errmsg("could not create directory \"%s\": %m",
