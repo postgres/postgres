@@ -1172,7 +1172,8 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 		int			excludeIdx;
 		bool		excludeFound;
 		ForkNumber	relForkNum; /* Type of fork if file is a relation */
-		int			relOidChars;	/* Chars in filename that are the rel oid */
+		int			relnumchars;	/* Chars in filename that are the
+									 * relnumber */
 
 		/* Skip special stuff */
 		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
@@ -1222,23 +1223,24 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 
 		/* Exclude all forks for unlogged tables except the init fork */
 		if (isDbDir &&
-			parse_filename_for_nontemp_relation(de->d_name, &relOidChars,
+			parse_filename_for_nontemp_relation(de->d_name, &relnumchars,
 												&relForkNum))
 		{
 			/* Never exclude init forks */
 			if (relForkNum != INIT_FORKNUM)
 			{
 				char		initForkFile[MAXPGPATH];
-				char		relOid[OIDCHARS + 1];
+				char		relNumber[OIDCHARS + 1];
 
 				/*
 				 * If any other type of fork, check if there is an init fork
-				 * with the same OID. If so, the file can be excluded.
+				 * with the same RelFileNumber. If so, the file can be
+				 * excluded.
 				 */
-				memcpy(relOid, de->d_name, relOidChars);
-				relOid[relOidChars] = '\0';
+				memcpy(relNumber, de->d_name, relnumchars);
+				relNumber[relnumchars] = '\0';
 				snprintf(initForkFile, sizeof(initForkFile), "%s/%s_init",
-						 path, relOid);
+						 path, relNumber);
 
 				if (lstat(initForkFile, &statbuf) == 0)
 				{
