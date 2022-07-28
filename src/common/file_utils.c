@@ -465,5 +465,21 @@ get_dirent_type(const char *path,
 #endif
 	}
 
+#if defined(WIN32) && !defined(_MSC_VER)
+
+	/*
+	 * If we're on native Windows (not Cygwin, which has its own POSIX
+	 * symlinks), but not using the MSVC compiler, then we're using a
+	 * readdir() emulation provided by the MinGW runtime that has no d_type.
+	 * Since the lstat() fallback code reports junction points as directories,
+	 * we need an extra system call to check if we should report them as
+	 * symlinks instead, following our convention.
+	 */
+	if (result == PGFILETYPE_DIR &&
+		!look_through_symlinks &&
+		pgwin32_is_junction(path))
+		result = PGFILETYPE_LNK;
+#endif
+
 	return result;
 }
