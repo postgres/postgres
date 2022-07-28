@@ -319,6 +319,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 {
 	char	   *path;
 	int			ret;
+	BlockNumber segno = 0;
 
 	path = relpath(rlocator, forkNum);
 
@@ -353,8 +354,22 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 		/* Prevent other backends' fds from holding on to the disk space */
 		ret = do_truncate(path);
 
-		/* Register request to unlink first segment later */
-		register_unlink_segment(rlocator, forkNum, 0 /* first seg */ );
+		/*
+		 * Except during a binary upgrade, register request to unlink first
+		 * segment later, rather than now.
+		 *
+		 * If we're performing a binary upgrade, the dangers described in the
+		 * header comments for mdunlink() do not exist, since after a crash
+		 * or even a simple ERROR, the upgrade fails and the whole new cluster
+		 * must be recreated from scratch. And, on the other hand, it is
+		 * important to remove the files from disk immediately, because we
+		 * may be about to reuse the same relfilenumber.
+		 */
+		if (!IsBinaryUpgrade)
+		{
+			register_unlink_segment(rlocator, forkNum, 0 /* first seg */ );
+			++segno;
+		}
 	}
 
 	/*
@@ -363,15 +378,17 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 	if (ret >= 0)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
-		BlockNumber segno;
 
 		/*
 		 * Note that because we loop until getting ENOENT, we will correctly
 		 * remove all inactive segments as well as active ones.
 		 */
-		for (segno = 1;; segno++)
+		for (;; segno++)
 		{
-			sprintf(segpath, "%s.%u", path, segno);
+			if (segno == 0)
+				strcpy(segpath, path);
+			else
+				sprintf(segpath, "%s.%u", path, segno);
 
 			if (!RelFileLocatorBackendIsTemp(rlocator))
 			{

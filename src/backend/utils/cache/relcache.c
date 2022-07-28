@@ -41,6 +41,7 @@
 #include "access/tupdesc_details.h"
 #include "access/xact.h"
 #include "access/xlog.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -3707,9 +3708,36 @@ RelationSetNewRelfilenumber(Relation relation, char persistence)
 	TransactionId freezeXid = InvalidTransactionId;
 	RelFileLocator newrlocator;
 
-	/* Allocate a new relfilenumber */
-	newrelfilenumber = GetNewRelFileNumber(relation->rd_rel->reltablespace,
-										   NULL, persistence);
+	if (!IsBinaryUpgrade)
+	{
+		/* Allocate a new relfilenumber */
+		newrelfilenumber = GetNewRelFileNumber(relation->rd_rel->reltablespace,
+											   NULL, persistence);
+	}
+	else if (relation->rd_rel->relkind == RELKIND_INDEX)
+	{
+		if (!OidIsValid(binary_upgrade_next_index_pg_class_relfilenumber))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("index relfilenumber value not set when in binary upgrade mode")));
+
+		newrelfilenumber = binary_upgrade_next_index_pg_class_relfilenumber;
+		binary_upgrade_next_index_pg_class_relfilenumber = InvalidOid;
+	}
+	else if (relation->rd_rel->relkind == RELKIND_RELATION)
+	{
+		if (!OidIsValid(binary_upgrade_next_heap_pg_class_relfilenumber))
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("heap relfilenumber value not set when in binary upgrade mode")));
+
+		newrelfilenumber = binary_upgrade_next_heap_pg_class_relfilenumber;
+		binary_upgrade_next_heap_pg_class_relfilenumber = InvalidOid;
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unexpected request for new relfilenumber in binary upgrade mode")));
 
 	/*
 	 * Get a writable copy of the pg_class tuple for the given relation.
@@ -3724,9 +3752,37 @@ RelationSetNewRelfilenumber(Relation relation, char persistence)
 	classform = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-	 * Schedule unlinking of the old storage at transaction commit.
+	 * Schedule unlinking of the old storage at transaction commit, except
+	 * when performing a binary upgrade, when we must do it immediately.
 	 */
-	RelationDropStorage(relation);
+	if (IsBinaryUpgrade)
+	{
+		SMgrRelation	srel;
+
+		/*
+		 * During a binary upgrade, we use this code path to ensure that
+		 * pg_largeobject and its index have the same relfilenumbers as in
+		 * the old cluster. This is necessary because pg_upgrade treats
+		 * pg_largeobject like a user table, not a system table. It is however
+		 * possible that a table or index may need to end up with the same
+		 * relfilenumber in the new cluster as what it had in the old cluster.
+		 * Hence, we can't wait until commit time to remove the old storage.
+		 *
+		 * In general, this function needs to have transactional semantics,
+		 * and removing the old storage before commit time surely isn't.
+		 * However, it doesn't really matter, because if a binary upgrade
+		 * fails at this stage, the new cluster will need to be recreated
+		 * anyway.
+		 */
+		srel = smgropen(relation->rd_locator, relation->rd_backend);
+		smgrdounlinkall(&srel, 1, false);
+		smgrclose(srel);
+	}
+	else
+	{
+		/* Not a binary upgrade, so just schedule it to happen later. */
+		RelationDropStorage(relation);
+	}
 
 	/*
 	 * Create storage for the main fork of the new relfilenumber.  If it's a
