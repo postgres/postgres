@@ -3593,7 +3593,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>inherited</structfield> <type>bool</type>
       </para>
       <para>
-       If true, this row includes inheritance child columns, not just the
+       If true, this row includes values from child tables, not just the
        values in the specified table
       </para></entry>
      </row>
@@ -3855,7 +3855,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
       </para>
       <para>
-       If true, the stats include inheritance child columns, not just the
+       If true, the stats include values from child tables, not just the
        values in the specified relation
       </para></entry>
      </row>
@@ -4047,7 +4047,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        (references <link linkend="catalog-pg-statistic-ext-data"><structname>pg_statistic_ext_data</structname></link>.<structfield>stxdinherit</structfield>)
       </para>
       <para>
-       If true, the stats include inheritance child columns, not just the
+       If true, the stats include values from child tables, not just the
        values in the specified relation
       </para></entry>
      </row>
