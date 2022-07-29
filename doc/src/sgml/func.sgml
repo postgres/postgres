@@ -28412,12 +28412,22 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
    </para>
 
    <para>
+    When granting privilege on these functions, note that the table entries
+    showing optional parameters are mostly implemented as several physical
+    functions with different parameter lists.  Privilege must be granted
+    separately on each such function, if it is to be
+    used.  <application>psql</application>'s <command>\df</command> command
+    can be useful to check what the actual function signatures are.
+   </para>
+
+   <para>
     Some of these functions take an optional <parameter>missing_ok</parameter>
     parameter, which specifies the behavior when the file or directory does
     not exist.  If <literal>true</literal>, the function
     returns <literal>NULL</literal> or an empty result set, as appropriate.
-    If <literal>false</literal>, an error is raised.  The default
-    is <literal>false</literal>.
+    If <literal>false</literal>, an error is raised.  (Failure conditions
+    other than <quote>file not found</quote> are reported as errors in any
+    case.)  The default is <literal>false</literal>.
    </para>
 
    <table id="functions-admin-genfile-table">
@@ -28636,7 +28646,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         <indexterm>
          <primary>pg_read_file</primary>
         </indexterm>
-        <function>pg_read_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional></optional> )
+        <function>pg_read_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -28661,7 +28671,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         <indexterm>
          <primary>pg_read_binary_file</primary>
         </indexterm>
-        <function>pg_read_binary_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional></optional> )
+        <function>pg_read_binary_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
         <returnvalue>bytea</returnvalue>
        </para>
        <para>

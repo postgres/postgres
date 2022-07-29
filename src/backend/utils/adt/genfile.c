@@ -278,81 +278,50 @@ pg_read_file(PG_FUNCTION_ARGS)
  *
  * No superuser check done here- instead privileges are handled by the
  * GRANT system.
+ *
+ * If read_to_eof is true, bytes_to_read must be -1, otherwise negative values
+ * are not allowed for bytes_to_read.
  */
-Datum
-pg_read_file_v2(PG_FUNCTION_ARGS)
+static text *
+pg_read_file_common(text *filename_t, int64 seek_offset, int64 bytes_to_read,
+					bool read_to_eof, bool missing_ok)
 {
-	text	   *filename_t = PG_GETARG_TEXT_PP(0);
-	int64		seek_offset = 0;
-	int64		bytes_to_read = -1;
-	bool		missing_ok = false;
-	char	   *filename;
-	text	   *result;
+	if (read_to_eof)
+		Assert(bytes_to_read == -1);
+	else if (bytes_to_read < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
 
-	/* handle optional arguments */
-	if (PG_NARGS() >= 3)
-	{
-		seek_offset = PG_GETARG_INT64(1);
-		bytes_to_read = PG_GETARG_INT64(2);
-
-		if (bytes_to_read < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("requested length cannot be negative")));
-	}
-	if (PG_NARGS() >= 4)
-		missing_ok = PG_GETARG_BOOL(3);
-
-	filename = convert_and_check_filename(filename_t);
-
-	result = read_text_file(filename, seek_offset, bytes_to_read, missing_ok);
-	if (result)
-		PG_RETURN_TEXT_P(result);
-	else
-		PG_RETURN_NULL();
+	return read_text_file(convert_and_check_filename(filename_t),
+						  seek_offset, bytes_to_read, missing_ok);
 }
 
 /*
  * Read a section of a file, returning it as bytea
+ *
+ * Parameters are interpreted the same as pg_read_file_common().
  */
-Datum
-pg_read_binary_file(PG_FUNCTION_ARGS)
+static bytea *
+pg_read_binary_file_common(text *filename_t,
+						   int64 seek_offset, int64 bytes_to_read,
+						   bool read_to_eof, bool missing_ok)
 {
-	text	   *filename_t = PG_GETARG_TEXT_PP(0);
-	int64		seek_offset = 0;
-	int64		bytes_to_read = -1;
-	bool		missing_ok = false;
-	char	   *filename;
-	bytea	   *result;
+	if (read_to_eof)
+		Assert(bytes_to_read == -1);
+	else if (bytes_to_read < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("requested length cannot be negative")));
 
-	/* handle optional arguments */
-	if (PG_NARGS() >= 3)
-	{
-		seek_offset = PG_GETARG_INT64(1);
-		bytes_to_read = PG_GETARG_INT64(2);
-
-		if (bytes_to_read < 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("requested length cannot be negative")));
-	}
-	if (PG_NARGS() >= 4)
-		missing_ok = PG_GETARG_BOOL(3);
-
-	filename = convert_and_check_filename(filename_t);
-
-	result = read_binary_file(filename, seek_offset,
-							  bytes_to_read, missing_ok);
-	if (result)
-		PG_RETURN_BYTEA_P(result);
-	else
-		PG_RETURN_NULL();
+	return read_binary_file(convert_and_check_filename(filename_t),
+							seek_offset, bytes_to_read, missing_ok);
 }
 
 
 /*
- * Wrapper functions for the 1 and 3 argument variants of pg_read_file_v2()
- * and pg_read_binary_file().
+ * Wrapper functions for the variants of SQL functions pg_read_file() and
+ * pg_read_binary_file().
  *
  * These are necessary to pass the sanity check in opr_sanity, which checks
  * that all built-in functions that share the implementing C function take
@@ -361,25 +330,126 @@ pg_read_binary_file(PG_FUNCTION_ARGS)
 Datum
 pg_read_file_off_len(PG_FUNCTION_ARGS)
 {
-	return pg_read_file_v2(fcinfo);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+	text	   *ret;
+
+	ret = pg_read_file_common(filename_t, seek_offset, bytes_to_read,
+							  false, false);
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(ret);
+}
+
+Datum
+pg_read_file_off_len_missing(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+	bool		missing_ok = PG_GETARG_BOOL(3);
+	text	   *ret;
+
+	ret = pg_read_file_common(filename_t, seek_offset, bytes_to_read,
+							  false, missing_ok);
+
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(ret);
 }
 
 Datum
 pg_read_file_all(PG_FUNCTION_ARGS)
 {
-	return pg_read_file_v2(fcinfo);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	text	   *ret;
+
+	ret = pg_read_file_common(filename_t, 0, -1, true, false);
+
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(ret);
+}
+
+Datum
+pg_read_file_all_missing(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	bool		missing_ok = PG_GETARG_BOOL(1);
+	text	   *ret;
+
+	ret = pg_read_file_common(filename_t, 0, -1, true, missing_ok);
+
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_TEXT_P(ret);
 }
 
 Datum
 pg_read_binary_file_off_len(PG_FUNCTION_ARGS)
 {
-	return pg_read_binary_file(fcinfo);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+	text	   *ret;
+
+	ret = pg_read_binary_file_common(filename_t, seek_offset, bytes_to_read,
+									 false, false);
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P(ret);
+}
+
+Datum
+pg_read_binary_file_off_len_missing(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	int64		seek_offset = PG_GETARG_INT64(1);
+	int64		bytes_to_read = PG_GETARG_INT64(2);
+	bool		missing_ok = PG_GETARG_BOOL(3);
+	text	   *ret;
+
+	ret = pg_read_binary_file_common(filename_t, seek_offset, bytes_to_read,
+									 false, missing_ok);
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P(ret);
 }
 
 Datum
 pg_read_binary_file_all(PG_FUNCTION_ARGS)
 {
-	return pg_read_binary_file(fcinfo);
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	text	   *ret;
+
+	ret = pg_read_binary_file_common(filename_t, 0, -1, true, false);
+
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P(ret);
+}
+
+Datum
+pg_read_binary_file_all_missing(PG_FUNCTION_ARGS)
+{
+	text	   *filename_t = PG_GETARG_TEXT_PP(0);
+	bool		missing_ok = PG_GETARG_BOOL(1);
+	text	   *ret;
+
+	ret = pg_read_binary_file_common(filename_t, 0, -1, true, missing_ok);
+
+	if (!ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_BYTEA_P(ret);
 }
 
 /*
