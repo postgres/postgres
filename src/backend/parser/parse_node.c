@@ -83,7 +83,7 @@ free_parsestate(ParseState *pstate)
 	 */
 	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
 		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
 				 errmsg("target lists can have at most %d entries",
 						MaxTupleAttributeNumber)));
 
