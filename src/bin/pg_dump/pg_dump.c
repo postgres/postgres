@@ -3141,7 +3141,7 @@ dumpDatabase(Archive *fout)
 		PGresult   *lo_res;
 		PQExpBuffer loFrozenQry = createPQExpBuffer();
 		PQExpBuffer loOutQry = createPQExpBuffer();
-		PQExpBuffer loVacQry = createPQExpBuffer();
+		PQExpBuffer loHorizonQry = createPQExpBuffer();
 		int			i_relfrozenxid,
 					i_relfilenode,
 					i_oid,
@@ -3168,14 +3168,14 @@ dumpDatabase(Archive *fout)
 		i_relfilenode = PQfnumber(lo_res, "relfilenode");
 		i_oid = PQfnumber(lo_res, "oid");
 
-		appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, set pg_largeobject relfrozenxid and relminmxid\n");
-		appendPQExpBufferStr(loVacQry, "\n-- For binary upgrade, preserve pg_largeobject and index relfilenodes\n");
+		appendPQExpBufferStr(loHorizonQry, "\n-- For binary upgrade, set pg_largeobject relfrozenxid and relminmxid\n");
+		appendPQExpBufferStr(loOutQry, "\n-- For binary upgrade, preserve pg_largeobject and index relfilenodes\n");
 		for (int i = 0; i < PQntuples(lo_res); ++i)
 		{
 			Oid		oid;
 			Oid		relfilenode;
 
-			appendPQExpBuffer(loOutQry, "UPDATE pg_catalog.pg_class\n"
+			appendPQExpBuffer(loHorizonQry, "UPDATE pg_catalog.pg_class\n"
 							  "SET relfrozenxid = '%u', relminmxid = '%u'\n"
 							  "WHERE oid = %u;\n",
 							  atooid(PQgetvalue(lo_res, i, i_relfrozenxid)),
@@ -3186,18 +3186,18 @@ dumpDatabase(Archive *fout)
 			relfilenode = atooid(PQgetvalue(lo_res, i, i_relfilenode));
 
 			if (oid == LargeObjectRelationId)
-				appendPQExpBuffer(loVacQry,
+				appendPQExpBuffer(loOutQry,
 								  "SELECT pg_catalog.binary_upgrade_set_next_heap_relfilenode('%u'::pg_catalog.oid);\n",
 								  relfilenode);
 			else if (oid == LargeObjectLOidPNIndexId)
-				appendPQExpBuffer(loVacQry,
+				appendPQExpBuffer(loOutQry,
 								  "SELECT pg_catalog.binary_upgrade_set_next_index_relfilenode('%u'::pg_catalog.oid);\n",
 								  relfilenode);
 		}
 
-		appendPQExpBufferStr(loVacQry,
+		appendPQExpBufferStr(loOutQry,
 							 "TRUNCATE pg_catalog.pg_largeobject;\n");
-		appendPQExpBufferStr(loOutQry, loVacQry->data);
+		appendPQExpBufferStr(loOutQry, loHorizonQry->data);
 
 		ArchiveEntry(fout, nilCatalogId, createDumpId(),
 					 ARCHIVE_OPTS(.tag = "pg_largeobject",
@@ -3208,8 +3208,8 @@ dumpDatabase(Archive *fout)
 		PQclear(lo_res);
 
 		destroyPQExpBuffer(loFrozenQry);
+		destroyPQExpBuffer(loHorizonQry);
 		destroyPQExpBuffer(loOutQry);
-		destroyPQExpBuffer(loVacQry);
 	}
 
 	PQclear(res);
