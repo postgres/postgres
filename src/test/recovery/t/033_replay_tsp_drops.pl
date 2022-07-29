@@ -24,6 +24,7 @@ sub test_tablespace
 			CREATE TABLESPACE source_ts  LOCATION '';
 			CREATE TABLESPACE target_ts  LOCATION '';
 			CREATE DATABASE template_db IS_TEMPLATE = true;
+			SELECT pg_create_physical_replication_slot('slot', true);
 		]);
 	my $backup_name = 'my_backup';
 	$node_primary->backup($backup_name);
@@ -38,10 +39,11 @@ sub test_tablespace
 	# Make sure connection is made
 	$node_primary->poll_query_until('postgres',
 		'SELECT count(*) = 1 FROM pg_stat_replication');
+	$node_primary->safe_psql('postgres', "SELECT pg_drop_replication_slot('slot')");
 
 	$node_standby->safe_psql('postgres', 'CHECKPOINT');
 
-	# Do immediate shutdown just after a sequence of CREAT DATABASE / DROP
+	# Do immediate shutdown just after a sequence of CREATE DATABASE / DROP
 	# DATABASE / DROP TABLESPACE. This causes CREATE DATABASE WAL records
 	# to be applied to already-removed directories.
 	my $query = q[
