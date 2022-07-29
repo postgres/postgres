@@ -161,6 +161,27 @@ $newnode->command_ok(
 	],
 	'dump before running pg_upgrade');
 
+# Also record the relfrozenxid and relminmxid horizons.
+my $horizon_query = <<EOM;
+SELECT
+  c.oid::regclass, c.relfrozenxid, c.relminmxid
+FROM
+  pg_class c, pg_namespace n
+WHERE
+  c.relnamespace = n.oid AND
+  ((n.nspname !~ '^pg_temp_' AND n.nspname !~ '^pg_toast_temp_' AND
+    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade',
+                      'pg_toast'))
+  OR (n.nspname = 'pg_catalog' AND relname IN ('pg_largeobject')))
+EOM
+$horizon_query =~ s/\s+/ /g; # run it together on one line
+$newnode->command_ok(
+	[
+		'psql', '-At', '-d', $oldnode->connstr('postgres'),
+		'-o', "$tempdir/horizon1.txt", '-c', $horizon_query,
+	],
+	'horizons before running pg_upgrade');
+
 # After dumping, update references to the old source tree's regress.so
 # to point to the new tree.
 if (defined($ENV{oldinstall}))
@@ -294,6 +315,14 @@ $newnode->command_ok(
 	],
 	'dump after running pg_upgrade');
 
+# And second record of horizons as well.
+$newnode->command_ok(
+	[
+		'psql', '-At', '-d', $newnode->connstr('postgres'),
+		'-o', "$tempdir/horizon2.txt", '-c', $horizon_query,
+	],
+	'horizons after running pg_upgrade');
+
 # Compare the two dumps, there should be no differences.
 my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");
 is($compare_res, 0, 'old and new dumps match after pg_upgrade');
@@ -304,6 +333,23 @@ if ($compare_res != 0)
 	my ($stdout, $stderr) =
 	  run_command([ 'diff', "$tempdir/dump1.sql", "$tempdir/dump2.sql" ]);
 	print "=== diff of $tempdir/dump1.sql and $tempdir/dump2.sql\n";
+	print "=== stdout ===\n";
+	print $stdout;
+	print "=== stderr ===\n";
+	print $stderr;
+	print "=== EOF ===\n";
+}
+
+# Compare the horizons, there should be no differences.
+$compare_res = compare("$tempdir/horizon1.txt", "$tempdir/horizon2.txt");
+is($compare_res, 0, 'old and new horizons match after pg_upgrade');
+
+# Provide more context if the horizons do not match.
+if ($compare_res != 0)
+{
+	my ($stdout, $stderr) =
+	  run_command([ 'diff', "$tempdir/horizon1.txt", "$tempdir/horizon2.txt" ]);
+	print "=== diff of $tempdir/horizon1.txt and $tempdir/horizon2.txt\n";
 	print "=== stdout ===\n";
 	print $stdout;
 	print "=== stderr ===\n";
