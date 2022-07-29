@@ -115,8 +115,8 @@ check_publication_add_schema(Oid schemaid)
  * Returns if relation represented by oid and Form_pg_class entry
  * is publishable.
  *
- * Does same checks as the above, but does not need relation to be opened
- * and also does not throw errors.
+ * Does same checks as check_publication_add_relation() above, but does not
+ * need relation to be opened and also does not throw errors.
  *
  * XXX  This also excludes all tables with relid < FirstNormalObjectId,
  * ie all tables created during initdb.  This mainly affects the preinstalled
@@ -138,6 +138,15 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 		!IsCatalogRelationOid(relid) &&
 		reltuple->relpersistence == RELPERSISTENCE_PERMANENT &&
 		relid >= FirstNormalObjectId;
+}
+
+/*
+ * Another variant of is_publishable_class(), taking a Relation.
+ */
+bool
+is_publishable_relation(Relation rel)
+{
+	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
 }
 
 /*
@@ -177,15 +186,6 @@ filter_partitions(List *relids)
 	}
 
 	return result;
-}
-
-/*
- * Another variant of this, taking a Relation.
- */
-bool
-is_publishable_relation(Relation rel)
-{
-	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
 }
 
 /*
