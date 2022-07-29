@@ -133,7 +133,7 @@ while ($max_attempts-- >= 0)
 	last
 	  if (
 		find_in_log(
-			$node_standby, "WARNING:  creating missing directory: pg_tblspc/",
+			$node_standby, qr!WARNING: ( [A-Z0-9]+:)? creating missing directory: pg_tblspc/!,
 			$logstart));
 	sleep 1;
 }
