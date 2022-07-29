@@ -3180,7 +3180,7 @@ dumpDatabase(Archive *fout)
 							  "WHERE oid = %u;\n",
 							  atooid(PQgetvalue(lo_res, i, i_relfrozenxid)),
 							  atooid(PQgetvalue(lo_res, i, i_relminmxid)),
-							  atooid(PQgetvalue(lo_res, i, i_relfilenode)));
+							  atooid(PQgetvalue(lo_res, i, i_oid)));
 
 			oid = atooid(PQgetvalue(lo_res, i, i_oid));
 			relfilenumber = atooid(PQgetvalue(lo_res, i, i_relfilenode));
