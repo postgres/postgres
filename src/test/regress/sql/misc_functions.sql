@@ -124,8 +124,8 @@ from (select pg_ls_waldir() w) ss where length((w).name) = 24 limit 1;
 select count(*) >= 0 as ok from pg_ls_archive_statusdir();
 
 -- pg_read_file()
-select length(pg_read_file('postgresql.auto.conf')) > 30;
-select length(pg_read_file('postgresql.auto.conf', 1, 30));
+select length(pg_read_file('postmaster.pid')) > 20;
+select length(pg_read_file('postmaster.pid', 1, 20));
 -- Test missing_ok
 select pg_read_file('does not exist'); -- error
 select pg_read_file('does not exist', true) IS NULL; -- ok
@@ -134,8 +134,8 @@ select pg_read_file('does not exist', 0, -1); -- error
 select pg_read_file('does not exist', 0, -1, true); -- error
 
 -- pg_read_binary_file()
-select length(pg_read_binary_file('postgresql.auto.conf')) > 30;
-select length(pg_read_binary_file('postgresql.auto.conf', 1, 30));
+select length(pg_read_binary_file('postmaster.pid')) > 20;
+select length(pg_read_binary_file('postmaster.pid', 1, 20));
 -- Test missing_ok
 select pg_read_binary_file('does not exist'); -- error
 select pg_read_binary_file('does not exist', true) IS NULL; -- ok
@@ -144,7 +144,7 @@ select pg_read_binary_file('does not exist', 0, -1); -- error
 select pg_read_binary_file('does not exist', 0, -1, true); -- error
 
 -- pg_stat_file()
-select size > 30, isdir from pg_stat_file('postgresql.auto.conf');
+select size > 20, isdir from pg_stat_file('postmaster.pid');
 
 -- pg_ls_dir()
 select * from (select pg_ls_dir('.') a) a where a = 'base' limit 1;

@@ -373,16 +373,16 @@ select count(*) >= 0 as ok from pg_ls_archive_statusdir();
 (1 row)
 
 -- pg_read_file()
-select length(pg_read_file('postgresql.auto.conf')) > 30;
+select length(pg_read_file('postmaster.pid')) > 20;
  ?column? 
 ----------
  t
 (1 row)
 
-select length(pg_read_file('postgresql.auto.conf', 1, 30));
+select length(pg_read_file('postmaster.pid', 1, 20));
  length 
 --------
-     30
+     20
 (1 row)
 
 -- Test missing_ok
@@ -400,16 +400,16 @@ ERROR:  requested length cannot be negative
 select pg_read_file('does not exist', 0, -1, true); -- error
 ERROR:  requested length cannot be negative
 -- pg_read_binary_file()
-select length(pg_read_binary_file('postgresql.auto.conf')) > 30;
+select length(pg_read_binary_file('postmaster.pid')) > 20;
  ?column? 
 ----------
  t
 (1 row)
 
-select length(pg_read_binary_file('postgresql.auto.conf', 1, 30));
+select length(pg_read_binary_file('postmaster.pid', 1, 20));
  length 
 --------
-     30
+     20
 (1 row)
 
 -- Test missing_ok
@@ -427,7 +427,7 @@ ERROR:  requested length cannot be negative
 select pg_read_binary_file('does not exist', 0, -1, true); -- error
 ERROR:  requested length cannot be negative
 -- pg_stat_file()
-select size > 30, isdir from pg_stat_file('postgresql.auto.conf');
+select size > 20, isdir from pg_stat_file('postmaster.pid');
  ?column? | isdir 
 ----------+-------
  t        | f
