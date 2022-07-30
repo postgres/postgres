@@ -553,12 +553,11 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * its own pool of workers.  Instead, we'll consider gathering partial
 	 * paths for the parent appendrel.
 	 *
-	 * Also, if this is the topmost scan/join rel (that is, the only baserel),
-	 * we postpone gathering until the final scan/join targetlist is available
-	 * (see grouping_planner).
+	 * Also, if this is the topmost scan/join rel, we postpone gathering until
+	 * the final scan/join targetlist is available (see grouping_planner).
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
-		bms_membership(root->all_baserels) != BMS_SINGLETON)
+		!bms_equal(rel->relids, root->all_baserels))
 		generate_useful_gather_paths(root, rel, false);
 
 	/* Now find the cheapest of the paths for this rel */
@@ -3402,7 +3401,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			 * partial paths.  We'll do the same for the topmost scan/join rel
 			 * once we know the final targetlist (see grouping_planner).
 			 */
-			if (lev < levels_needed)
+			if (!bms_equal(rel->relids, root->all_baserels))
 				generate_useful_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */
