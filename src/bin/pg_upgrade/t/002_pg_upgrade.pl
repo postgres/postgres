@@ -161,27 +161,6 @@ $newnode->command_ok(
 	],
 	'dump before running pg_upgrade');
 
-# Also record the relfrozenxid and relminmxid horizons.
-my $horizon_query = <<EOM;
-SELECT
-  c.oid::regclass, c.relfrozenxid, c.relminmxid
-FROM
-  pg_class c, pg_namespace n
-WHERE
-  c.relnamespace = n.oid AND
-  ((n.nspname !~ '^pg_temp_' AND n.nspname !~ '^pg_toast_temp_' AND
-    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade',
-                      'pg_toast'))
-  OR (n.nspname = 'pg_catalog' AND relname IN ('pg_largeobject')))
-EOM
-$horizon_query =~ s/\s+/ /g; # run it together on one line
-$newnode->command_ok(
-	[
-		'psql', '-At', '-d', $oldnode->connstr('postgres'),
-		'-o', "$tempdir/horizon1.txt", '-c', $horizon_query,
-	],
-	'horizons before running pg_upgrade');
-
 # After dumping, update references to the old source tree's regress.so
 # to point to the new tree.
 if (defined($ENV{oldinstall}))
@@ -230,6 +209,23 @@ if (defined($ENV{oldinstall}))
 }
 
 $oldnode->safe_psql("regression", "VACUUM FULL pg_largeobject;");
+
+# Record the relfrozenxid and relminmxid horizons from the old server.
+my $horizon_query = <<EOM;
+SELECT
+  c.oid::regclass, c.relfrozenxid, c.relminmxid
+FROM
+  pg_class c, pg_namespace n
+WHERE
+  c.relnamespace = n.oid AND
+  ((n.nspname !~ '^pg_temp_' AND n.nspname !~ '^pg_toast_temp_' AND
+    n.nspname NOT IN ('pg_catalog', 'information_schema', 'binary_upgrade',
+                      'pg_toast'))
+  OR (n.nspname = 'pg_catalog' AND relname IN ('pg_largeobject')))
+ORDER BY c.oid::regclass::text
+EOM
+$horizon_query =~ s/\s+/ /g; # run it together on one line
+my $horizon1 = $oldnode->safe_psql('regression', $horizon_query);
 
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run pg_upgrade in the build directory so that any files generated finish
@@ -315,13 +311,8 @@ $newnode->command_ok(
 	],
 	'dump after running pg_upgrade');
 
-# And second record of horizons as well.
-$newnode->command_ok(
-	[
-		'psql', '-At', '-d', $newnode->connstr('postgres'),
-		'-o', "$tempdir/horizon2.txt", '-c', $horizon_query,
-	],
-	'horizons after running pg_upgrade');
+# And record the horizons from the upgraded cluster as well.
+my $horizon2 = $newnode->safe_psql('regression', $horizon_query);
 
 # Compare the two dumps, there should be no differences.
 my $compare_res = compare("$tempdir/dump1.sql", "$tempdir/dump2.sql");
@@ -341,14 +332,21 @@ if ($compare_res != 0)
 }
 
 # Compare the horizons, there should be no differences.
-$compare_res = compare("$tempdir/horizon1.txt", "$tempdir/horizon2.txt");
-is($compare_res, 0, 'old and new horizons match after pg_upgrade');
+my $horizons_ok = $horizon1 eq $horizon2;
+ok($horizons_ok, 'old and new horizons match after pg_upgrade');
 
 # Provide more context if the horizons do not match.
-if ($compare_res != 0)
+if (! $horizons_ok)
 {
+	# output is long, so use diff to compare
+	open my $fh, ">", "$tempdir/horizon1.txt" or die "could not open file: $!";
+	print $fh $horizon1;
+	close $fh;
+	open $fh, ">", "$tempdir/horizon2.txt" or die "could not open file: $!";
+	print $fh $horizon2;
 	my ($stdout, $stderr) =
-	  run_command([ 'diff', "$tempdir/horizon1.txt", "$tempdir/horizon2.txt" ]);
+		run_command([ 'diff', "$tempdir/horizon1.txt", "$tempdir/horizon2.txt" ]);
+	close $fh;
 	print "=== diff of $tempdir/horizon1.txt and $tempdir/horizon2.txt\n";
 	print "=== stdout ===\n";
 	print $stdout;
