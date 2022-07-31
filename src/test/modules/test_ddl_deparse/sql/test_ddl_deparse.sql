@@ -29,9 +29,9 @@ BEGIN
 		-- if alter table, log more
 		IF cmdtype = 'alter table' THEN
 			FOR r2 IN SELECT *
-						FROM unnest(public.get_altertable_subcmdtypes(r.command))
+						FROM public.get_altertable_subcmdinfo(r.command)
 			LOOP
-				RAISE NOTICE '  subcommand: %', r2.unnest;
+				RAISE NOTICE '  subcommand: type % desc %', r2.cmdtype, r2.objdesc;
 			END LOOP;
 		END IF;
 	END LOOP;

@@ -8,7 +8,7 @@ CREATE OR REPLACE VIEW static_view AS
   SELECT 'bar'::TEXT AS col;
 NOTICE:  DDL test: type simple, tag CREATE VIEW
 NOTICE:  DDL test: type alter table, tag CREATE VIEW
-NOTICE:    subcommand: REPLACE RELOPTIONS
+NOTICE:    subcommand: type REPLACE RELOPTIONS desc <NULL>
 CREATE VIEW datatype_view AS
   SELECT * FROM datatype_table;
 NOTICE:  DDL test: type simple, tag CREATE VIEW
