@@ -135,7 +135,7 @@ GRANT SET ON PARAMETER auto_explain.log_format TO regress_user1;
 
 	like(
 		$log_contents,
-		qr/WARNING:  permission denied to set parameter "auto_explain\.log_level"/,
+		qr/WARNING: ( 42501:)? permission denied to set parameter "auto_explain\.log_level"/,
 		"permission failure logged");
 
 }    # end queries run as regress_user1
