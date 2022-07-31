@@ -2445,3 +2445,5 @@ SELECT trim_array(ARRAY[1, 2, 3], -1); -- fail
 ERROR:  number of elements to trim must be between 0 and 3
 SELECT trim_array(ARRAY[1, 2, 3], 10); -- fail
 ERROR:  number of elements to trim must be between 0 and 3
+SELECT trim_array(ARRAY[]::int[], 1); -- fail
+ERROR:  number of elements to trim must be between 0 and 0
