@@ -50,10 +50,10 @@ CREATE TABLE part2 (a int);
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 ALTER TABLE part ATTACH PARTITION part2 FOR VALUES FROM (101) to (200);
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type ATTACH PARTITION desc <NULL>
+NOTICE:    subcommand: type ATTACH PARTITION desc table part2
 ALTER TABLE part DETACH PARTITION part2;
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: type DETACH PARTITION desc <NULL>
+NOTICE:    subcommand: type DETACH PARTITION desc table part2
 DROP TABLE part2;
 ALTER TABLE part ADD PRIMARY KEY (a);
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
