@@ -531,4 +531,59 @@ my $primary_data = $node_primary->data_dir;
 ok(!-f "$primary_data/pg_wal/$segment_removed",
 	"WAL segment $segment_removed recycled after physical slot advancing");
 
+note "testing pg_backup_start() followed by BASE_BACKUP";
+my $connstr = $node_primary->connstr('postgres') . " replication=database";
+
+# This test requires a replication connection with a database, as it mixes
+# a replication command and a SQL command.
+$node_primary->command_fails_like(
+	[
+		'psql', '-c', "SELECT pg_backup_start('backup', true)",
+		'-c',   'BASE_BACKUP', '-d', $connstr
+	],
+	qr/a backup is already in progress in this session/,
+	'BASE_BACKUP cannot run in session already running backup');
+
+note "testing BASE_BACKUP cancellation";
+
+my $sigchld_bb_timeout =
+  IPC::Run::timer($PostgreSQL::Test::Utils::timeout_default);
+
+# This test requires a replication connection with a database, as it mixes
+# a replication command and a SQL command.  The first BASE_BACKUP is throttled
+# to give enough room for the cancellation running below.  The second command
+# for pg_backup_stop() should fail.
+my ($sigchld_bb_stdin, $sigchld_bb_stdout, $sigchld_bb_stderr) = ('', '', '');
+my $sigchld_bb = IPC::Run::start(
+	[
+		'psql', '-X', '-c', "BASE_BACKUP (CHECKPOINT 'fast', MAX_RATE 32);",
+		'-c',   'SELECT pg_backup_stop()',
+		'-d',   $connstr
+	],
+	'<',
+	\$sigchld_bb_stdin,
+	'>',
+	\$sigchld_bb_stdout,
+	'2>',
+	\$sigchld_bb_stderr,
+	$sigchld_bb_timeout);
+
+# The cancellation is issued once the database files are streamed and
+# the checkpoint issued at backup start completes.
+is( $node_primary->poll_query_until(
+		'postgres',
+		"SELECT pg_cancel_backend(a.pid) FROM "
+		  . "pg_stat_activity a, pg_stat_progress_basebackup b WHERE "
+		  . "a.pid = b.pid AND a.query ~ 'BASE_BACKUP' AND "
+		  . "b.phase = 'streaming database files';"),
+	"1",
+	"WAL sender sending base backup killed");
+
+# The psql command should fail on pg_backup_stop().
+ok( pump_until(
+		$sigchld_bb,         $sigchld_bb_timeout,
+		\$sigchld_bb_stderr, qr/backup is not in progress/),
+	'base backup cleanly cancelled');
+$sigchld_bb->finish();
+
 done_testing();
