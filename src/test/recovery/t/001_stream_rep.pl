@@ -538,7 +538,7 @@ my $connstr = $node_primary->connstr('postgres') . " replication=database";
 # a replication command and a SQL command.
 $node_primary->command_fails_like(
 	[
-		'psql', '-c', "SELECT pg_backup_start('backup', true)",
+		'psql', '-X',          '-c', "SELECT pg_backup_start('backup', true)",
 		'-c',   'BASE_BACKUP', '-d', $connstr
 	],
 	qr/a backup is already in progress in this session/,
