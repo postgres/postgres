@@ -52,7 +52,7 @@ task:
 
   compute_engine_instance:
     image_project: $IMAGE_PROJECT
-    image: family/pg-ci-freebsd-13-1
+    image: family/pg-ci-freebsd-13
     platform: freebsd
     cpu: $CPUS
     memory: 2G
