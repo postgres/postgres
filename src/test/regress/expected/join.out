@@ -2437,6 +2437,37 @@ select count(*) from
  10000
 (1 row)
 
+set enable_hashjoin = 0;
+set enable_nestloop = 0;
+set enable_hashagg = 0;
+--
+-- Check that we use the pathkeys from a prefix of the group by / order by
+-- clause for the join pathkeys when that prefix covers all join quals.  We
+-- expect this to lead to an incremental sort for the group by / order by.
+--
+explain (costs off)
+select x.thousand, x.twothousand, count(*)
+from tenk1 x inner join tenk1 y on x.thousand = y.thousand
+group by x.thousand, x.twothousand
+order by x.thousand desc, x.twothousand;
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ GroupAggregate
+   Group Key: x.thousand, x.twothousand
+   ->  Incremental Sort
+         Sort Key: x.thousand DESC, x.twothousand
+         Presorted Key: x.thousand
+         ->  Merge Join
+               Merge Cond: (y.thousand = x.thousand)
+               ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1 y
+               ->  Sort
+                     Sort Key: x.thousand DESC
+                     ->  Seq Scan on tenk1 x
+(11 rows)
+
+reset enable_hashagg;
+reset enable_nestloop;
+reset enable_hashjoin;
 --
 -- Clean up
 --
