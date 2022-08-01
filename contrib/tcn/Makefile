@@ -6,6 +6,8 @@ EXTENSION = tcn
 DATA = tcn--1.0.sql
 PGFILEDESC = "tcn - trigger function notifying listeners"
 
+ISOLATION = tcn
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
