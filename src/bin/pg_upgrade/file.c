@@ -62,9 +62,11 @@ cloneFile(const char *src, const char *dst,
 
 	if (ioctl(dest_fd, FICLONE, src_fd) < 0)
 	{
+		int			save_errno = errno;
+
 		unlink(dst);
 		pg_fatal("error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n",
-				 schemaName, relName, src, dst, strerror(errno));
+				 schemaName, relName, src, dst, strerror(save_errno));
 	}
 
 	close(src_fd);
