@@ -1333,9 +1333,48 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 }
 
 /*
+ * The number of times the same partition must be found in a row before we
+ * switch from a binary search for the given values to just checking if the
+ * values belong to the last found partition.  This must be above 0.
+ */
+#define PARTITION_CACHED_FIND_THRESHOLD			16
+
+/*
  * get_partition_for_tuple
  *		Finds partition of relation which accepts the partition key specified
- *		in values and isnull
+ *		in values and isnull.
+ *
+ * Calling this function can be quite expensive when LIST and RANGE
+ * partitioned tables have many partitions.  This is due to the binary search
+ * that's done to find the correct partition.  Many of the use cases for LIST
+ * and RANGE partitioned tables make it likely that the same partition is
+ * found in subsequent ExecFindPartition() calls.  This is especially true for
+ * cases such as RANGE partitioned tables on a TIMESTAMP column where the
+ * partition key is the current time.  When asked to find a partition for a
+ * RANGE or LIST partitioned table, we record the partition index and datum
+ * offset we've found for the given 'values' in the PartitionDesc (which is
+ * stored in relcache), and if we keep finding the same partition
+ * PARTITION_CACHED_FIND_THRESHOLD times in a row, then we'll enable caching
+ * logic and instead of performing a binary search to find the correct
+ * partition, we'll just double-check that 'values' still belong to the last
+ * found partition, and if so, we'll return that partition index, thus
+ * skipping the need for the binary search.  If we fail to match the last
+ * partition when double checking, then we fall back on doing a binary search.
+ * In this case, unless we find 'values' belong to the DEFAULT partition,
+ * we'll reset the number of times we've hit the same partition so that we
+ * don't attempt to use the cache again until we've found that partition at
+ * least PARTITION_CACHED_FIND_THRESHOLD times in a row.
+ *
+ * For cases where the partition changes on each lookup, the amount of
+ * additional work required just amounts to recording the last found partition
+ * and bound offset then resetting the found counter.  This is cheap and does
+ * not appear to cause any meaningful slowdowns for such cases.
+ *
+ * No caching of partitions is done when the last found partition is the
+ * DEFAULT or NULL partition.  For the case of the DEFAULT partition, there
+ * is no bound offset storing the matching datum, so we cannot confirm the
+ * indexes match.  For the NULL partition, this is just so cheap, there's no
+ * sense in caching.
  *
  * Return value is index of the partition (>= 0 and < partdesc->nparts) if one
  * found or -1 if none found.
@@ -1343,11 +1382,23 @@ FormPartitionKeyDatum(PartitionDispatch pd,
 static int
 get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 {
-	int			bound_offset;
+	int			bound_offset = -1;
 	int			part_index = -1;
 	PartitionKey key = pd->key;
 	PartitionDesc partdesc = pd->partdesc;
 	PartitionBoundInfo boundinfo = partdesc->boundinfo;
+
+	/*
+	 * In the switch statement below, when we perform a cached lookup for
+	 * RANGE and LIST partitioned tables, if we find that the last found
+	 * partition matches the 'values', we return the partition index right
+	 * away.  We do this instead of breaking out of the switch as we don't
+	 * want to execute the code about the DEFAULT partition or do any updates
+	 * for any of the cache-related fields.  That would be a waste of effort
+	 * as we already know it's not the DEFAULT partition and have no need to
+	 * increment the number of times we found the same partition any higher
+	 * than PARTITION_CACHED_FIND_THRESHOLD.
+	 */
 
 	/* Route as appropriate based on partitioning strategy. */
 	switch (key->strategy)
@@ -1356,24 +1407,59 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 			{
 				uint64		rowHash;
 
+				/* hash partitioning is too cheap to bother caching */
 				rowHash = compute_partition_hash_value(key->partnatts,
 													   key->partsupfunc,
 													   key->partcollation,
 													   values, isnull);
 
-				part_index = boundinfo->indexes[rowHash % boundinfo->nindexes];
+				/*
+				 * HASH partitions can't have a DEFAULT partition and we don't
+				 * do any caching work for them, so just return the part index
+				 */
+				return boundinfo->indexes[rowHash % boundinfo->nindexes];
 			}
-			break;
 
 		case PARTITION_STRATEGY_LIST:
 			if (isnull[0])
 			{
+				/* this is far too cheap to bother doing any caching */
 				if (partition_bound_accepts_nulls(boundinfo))
-					part_index = boundinfo->null_index;
+				{
+					/*
+					 * When there is a NULL partition we just return that
+					 * directly.  We don't have a bound_offset so it's not
+					 * valid to drop into the code after the switch which
+					 * checks and updates the cache fields.  We perhaps should
+					 * be invalidating the details of the last cached
+					 * partition but there's no real need to.  Keeping those
+					 * fields set gives a chance at matching to the cached
+					 * partition on the next lookup.
+					 */
+					return boundinfo->null_index;
+				}
 			}
 			else
 			{
-				bool		equal = false;
+				bool		equal;
+
+				if (partdesc->last_found_count >= PARTITION_CACHED_FIND_THRESHOLD)
+				{
+					int			last_datum_offset = partdesc->last_found_datum_index;
+					Datum		lastDatum = boundinfo->datums[last_datum_offset][0];
+					int32		cmpval;
+
+					/* does the last found datum index match this datum? */
+					cmpval = DatumGetInt32(FunctionCall2Coll(&key->partsupfunc[0],
+															 key->partcollation[0],
+															 lastDatum,
+															 values[0]));
+
+					if (cmpval == 0)
+						return boundinfo->indexes[last_datum_offset];
+
+					/* fall-through and do a manual lookup */
+				}
 
 				bound_offset = partition_list_bsearch(key->partsupfunc,
 													  key->partcollation,
@@ -1403,23 +1489,64 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 					}
 				}
 
-				if (!range_partkey_has_null)
+				/* NULLs belong in the DEFAULT partition */
+				if (range_partkey_has_null)
+					break;
+
+				if (partdesc->last_found_count >= PARTITION_CACHED_FIND_THRESHOLD)
 				{
-					bound_offset = partition_range_datum_bsearch(key->partsupfunc,
-																 key->partcollation,
-																 boundinfo,
-																 key->partnatts,
-																 values,
-																 &equal);
+					int			last_datum_offset = partdesc->last_found_datum_index;
+					Datum	   *lastDatums = boundinfo->datums[last_datum_offset];
+					PartitionRangeDatumKind *kind = boundinfo->kind[last_datum_offset];
+					int32		cmpval;
+
+					/* check if the value is >= to the lower bound */
+					cmpval = partition_rbound_datum_cmp(key->partsupfunc,
+														key->partcollation,
+														lastDatums,
+														kind,
+														values,
+														key->partnatts);
 
 					/*
-					 * The bound at bound_offset is less than or equal to the
-					 * tuple value, so the bound at offset+1 is the upper
-					 * bound of the partition we're looking for, if there
-					 * actually exists one.
+					 * If it's equal to the lower bound then no need to check
+					 * the upper bound.
 					 */
-					part_index = boundinfo->indexes[bound_offset + 1];
+					if (cmpval == 0)
+						return boundinfo->indexes[last_datum_offset + 1];
+
+					if (cmpval < 0 && last_datum_offset + 1 < boundinfo->ndatums)
+					{
+						/* check if the value is below the upper bound */
+						lastDatums = boundinfo->datums[last_datum_offset + 1];
+						kind = boundinfo->kind[last_datum_offset + 1];
+						cmpval = partition_rbound_datum_cmp(key->partsupfunc,
+															key->partcollation,
+															lastDatums,
+															kind,
+															values,
+															key->partnatts);
+
+						if (cmpval > 0)
+							return boundinfo->indexes[last_datum_offset + 1];
+					}
+					/* fall-through and do a manual lookup */
 				}
+
+				bound_offset = partition_range_datum_bsearch(key->partsupfunc,
+															 key->partcollation,
+															 boundinfo,
+															 key->partnatts,
+															 values,
+															 &equal);
+
+				/*
+				 * The bound at bound_offset is less than or equal to the
+				 * tuple value, so the bound at offset+1 is the upper bound of
+				 * the partition we're looking for, if there actually exists
+				 * one.
+				 */
+				part_index = boundinfo->indexes[bound_offset + 1];
 			}
 			break;
 
@@ -1433,7 +1560,34 @@ get_partition_for_tuple(PartitionDispatch pd, Datum *values, bool *isnull)
 	 * the default partition, if there is one.
 	 */
 	if (part_index < 0)
-		part_index = boundinfo->default_index;
+	{
+		/*
+		 * No need to reset the cache fields here.  The next set of values
+		 * might end up belonging to the cached partition, so leaving the
+		 * cache alone improves the chances of a cache hit on the next lookup.
+		 */
+		return boundinfo->default_index;
+	}
+
+	/* we should only make it here when the code above set bound_offset */
+	Assert(bound_offset >= 0);
+
+	/*
+	 * Attend to the cache fields.  If the bound_offset matches the last
+	 * cached bound offset then we've found the same partition as last time,
+	 * so bump the count by one.  If all goes well, we'll eventually reach
+	 * PARTITION_CACHED_FIND_THRESHOLD and try the cache path next time
+	 * around.  Otherwise, we'll reset the cache count back to 1 to mark that
+	 * we've found this partition for the first time.
+	 */
+	if (bound_offset == partdesc->last_found_datum_index)
+		partdesc->last_found_count++;
+	else
+	{
+		partdesc->last_found_count = 1;
+		partdesc->last_found_part_index = part_index;
+		partdesc->last_found_datum_index = bound_offset;
+	}
 
 	return part_index;
 }

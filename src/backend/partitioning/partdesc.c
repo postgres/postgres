@@ -290,6 +290,12 @@ RelationBuildPartitionDesc(Relation rel, bool omit_detached)
 	{
 		oldcxt = MemoryContextSwitchTo(new_pdcxt);
 		partdesc->boundinfo = partition_bounds_copy(boundinfo, key);
+
+		/* Initialize caching fields for speeding up ExecFindPartition */
+		partdesc->last_found_datum_index = -1;
+		partdesc->last_found_part_index = -1;
+		partdesc->last_found_count = 0;
+
 		partdesc->oids = (Oid *) palloc(nparts * sizeof(Oid));
 		partdesc->is_leaf = (bool *) palloc(nparts * sizeof(bool));
 
