@@ -206,56 +206,6 @@ DisableSubscription(Oid subid)
 }
 
 /*
- * get_subscription_oid - given a subscription name, look up the OID
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return InvalidOid.
- */
-Oid
-get_subscription_oid(const char *subname, bool missing_ok)
-{
-	Oid			oid;
-
-	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
-						  MyDatabaseId, CStringGetDatum(subname));
-	if (!OidIsValid(oid) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("subscription \"%s\" does not exist", subname)));
-	return oid;
-}
-
-/*
- * get_subscription_name - given a subscription OID, look up the name
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return NULL.
- */
-char *
-get_subscription_name(Oid subid, bool missing_ok)
-{
-	HeapTuple	tup;
-	char	   *subname;
-	Form_pg_subscription subform;
-
-	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
-
-	if (!HeapTupleIsValid(tup))
-	{
-		if (!missing_ok)
-			elog(ERROR, "cache lookup failed for subscription %u", subid);
-		return NULL;
-	}
-
-	subform = (Form_pg_subscription) GETSTRUCT(tup);
-	subname = pstrdup(NameStr(subform->subname));
-
-	ReleaseSysCache(tup);
-
-	return subname;
-}
-
-/*
  * Convert text array to list of strings.
  *
  * Note: the resulting list of strings is pallocated here.

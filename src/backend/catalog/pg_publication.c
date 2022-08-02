@@ -150,6 +150,28 @@ is_publishable_relation(Relation rel)
 }
 
 /*
+ * SQL-callable variant of the above
+ *
+ * This returns null when the relation does not exist.  This is intended to be
+ * used for example in psql to avoid gratuitous errors when there are
+ * concurrent catalog changes.
+ */
+Datum
+pg_relation_is_publishable(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	bool		result;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		PG_RETURN_NULL();
+	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(result);
+}
+
+/*
  * Filter out the partitions whose parent tables were also specified in
  * the publication.
  */
@@ -217,28 +239,6 @@ is_schema_publication(Oid pubid)
 	table_close(pubschsrel, AccessShareLock);
 
 	return result;
-}
-
-/*
- * SQL-callable variant of the above
- *
- * This returns null when the relation does not exist.  This is intended to be
- * used for example in psql to avoid gratuitous errors when there are
- * concurrent catalog changes.
- */
-Datum
-pg_relation_is_publishable(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	bool		result;
-
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-	if (!HeapTupleIsValid(tuple))
-		PG_RETURN_NULL();
-	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
-	ReleaseSysCache(tuple);
-	PG_RETURN_BOOL(result);
 }
 
 /*
@@ -1012,7 +1012,6 @@ GetPublication(Oid pubid)
 	return pub;
 }
 
-
 /*
  * Get Publication using name.
  */
@@ -1024,56 +1023,6 @@ GetPublicationByName(const char *pubname, bool missing_ok)
 	oid = get_publication_oid(pubname, missing_ok);
 
 	return OidIsValid(oid) ? GetPublication(oid) : NULL;
-}
-
-/*
- * get_publication_oid - given a publication name, look up the OID
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return InvalidOid.
- */
-Oid
-get_publication_oid(const char *pubname, bool missing_ok)
-{
-	Oid			oid;
-
-	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
-						  CStringGetDatum(pubname));
-	if (!OidIsValid(oid) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("publication \"%s\" does not exist", pubname)));
-	return oid;
-}
-
-/*
- * get_publication_name - given a publication Oid, look up the name
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return NULL.
- */
-char *
-get_publication_name(Oid pubid, bool missing_ok)
-{
-	HeapTuple	tup;
-	char	   *pubname;
-	Form_pg_publication pubform;
-
-	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
-
-	if (!HeapTupleIsValid(tup))
-	{
-		if (!missing_ok)
-			elog(ERROR, "cache lookup failed for publication %u", pubid);
-		return NULL;
-	}
-
-	pubform = (Form_pg_publication) GETSTRUCT(tup);
-	pubname = pstrdup(NameStr(pubform->pubname));
-
-	ReleaseSysCache(tup);
-
-	return pubname;
 }
 
 /*

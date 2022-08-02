@@ -155,7 +155,4 @@ extern ObjectAddress publication_add_schema(Oid pubid, Oid schemaid,
 extern Bitmapset *pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols,
 										   MemoryContext mcxt);
 
-extern Oid	get_publication_oid(const char *pubname, bool missing_ok);
-extern char *get_publication_name(Oid pubid, bool missing_ok);
-
 #endif							/* PG_PUBLICATION_H */
