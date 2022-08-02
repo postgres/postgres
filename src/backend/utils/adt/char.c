@@ -20,6 +20,11 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 
+#define ISOCTAL(c)   (((c) >= '0') && ((c) <= '7'))
+#define TOOCTAL(c)   ((c) + '0')
+#define FROMOCTAL(c) ((unsigned char) (c) - '0')
+
+
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
@@ -27,31 +32,53 @@
 /*
  *		charin			- converts "x" to 'x'
  *
- * Note that an empty input string will implicitly be converted to \0.
+ * This accepts the formats charout produces.  If we have multibyte input
+ * that is not in the form '\ooo', then we take its first byte as the value
+ * and silently discard the rest; this is a backwards-compatibility provision.
  */
 Datum
 charin(PG_FUNCTION_ARGS)
 {
 	char	   *ch = PG_GETARG_CSTRING(0);
 
+	if (strlen(ch) == 4 && ch[0] == '\\' &&
+		ISOCTAL(ch[1]) && ISOCTAL(ch[2]) && ISOCTAL(ch[3]))
+		PG_RETURN_CHAR((FROMOCTAL(ch[1]) << 6) +
+					   (FROMOCTAL(ch[2]) << 3) +
+					   FROMOCTAL(ch[3]));
+	/* This will do the right thing for a zero-length input string */
 	PG_RETURN_CHAR(ch[0]);
 }
 
 /*
  *		charout			- converts 'x' to "x"
  *
- * Note that if the char value is \0, the resulting string will appear
- * to be empty (null-terminated after zero characters).  So this is the
- * inverse of the charin() function for such data.
+ * The possible output formats are:
+ * 1. 0x00 is represented as an empty string.
+ * 2. 0x01..0x7F are represented as a single ASCII byte.
+ * 3. 0x80..0xFF are represented as \ooo (backslash and 3 octal digits).
+ * Case 3 is meant to match the traditional "escape" format of bytea.
  */
 Datum
 charout(PG_FUNCTION_ARGS)
 {
 	char		ch = PG_GETARG_CHAR(0);
-	char	   *result = (char *) palloc(2);
+	char	   *result = (char *) palloc(5);
 
-	result[0] = ch;
-	result[1] = '\0';
+	if (IS_HIGHBIT_SET(ch))
+	{
+		result[0] = '\\';
+		result[1] = TOOCTAL(((unsigned char) ch) >> 6);
+		result[2] = TOOCTAL((((unsigned char) ch) >> 3) & 07);
+		result[3] = TOOCTAL(((unsigned char) ch) & 07);
+		result[4] = '\0';
+	}
+	else
+	{
+		/* This produces acceptable results for 0x00 as well */
+		result[0] = ch;
+		result[1] = '\0';
+	}
 	PG_RETURN_CSTRING(result);
 }
 
@@ -176,15 +203,20 @@ Datum
 text_char(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_PP(0);
+	char	   *ch = VARDATA_ANY(arg1);
 	char		result;
 
 	/*
-	 * An empty input string is converted to \0 (for consistency with charin).
-	 * If the input is longer than one character, the excess data is silently
-	 * discarded.
+	 * Conversion rules are the same as in charin(), but here we need to
+	 * handle the empty-string case honestly.
 	 */
-	if (VARSIZE_ANY_EXHDR(arg1) > 0)
-		result = *(VARDATA_ANY(arg1));
+	if (VARSIZE_ANY_EXHDR(arg1) == 4 && ch[0] == '\\' &&
+		ISOCTAL(ch[1]) && ISOCTAL(ch[2]) && ISOCTAL(ch[3]))
+		result = (FROMOCTAL(ch[1]) << 6) +
+			(FROMOCTAL(ch[2]) << 3) +
+			FROMOCTAL(ch[3]);
+	else if (VARSIZE_ANY_EXHDR(arg1) > 0)
+		result = ch[0];
 	else
 		result = '\0';
 
@@ -195,13 +227,21 @@ Datum
 char_text(PG_FUNCTION_ARGS)
 {
 	char		arg1 = PG_GETARG_CHAR(0);
-	text	   *result = palloc(VARHDRSZ + 1);
+	text	   *result = palloc(VARHDRSZ + 4);
 
 	/*
-	 * Convert \0 to an empty string, for consistency with charout (and
-	 * because the text stuff doesn't like embedded nulls all that well).
+	 * Conversion rules are the same as in charout(), but here we need to be
+	 * honest about converting 0x00 to an empty string.
 	 */
-	if (arg1 != '\0')
+	if (IS_HIGHBIT_SET(arg1))
+	{
+		SET_VARSIZE(result, VARHDRSZ + 4);
+		(VARDATA(result))[0] = '\\';
+		(VARDATA(result))[1] = TOOCTAL(((unsigned char) arg1) >> 6);
+		(VARDATA(result))[2] = TOOCTAL((((unsigned char) arg1) >> 3) & 07);
+		(VARDATA(result))[3] = TOOCTAL(((unsigned char) arg1) & 07);
+	}
+	else if (arg1 != '\0')
 	{
 		SET_VARSIZE(result, VARHDRSZ + 1);
 		*(VARDATA(result)) = arg1;

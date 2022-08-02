@@ -2,8 +2,8 @@
 -- CHAR
 --
 
--- fixed-length by value
--- internally passed by value if <= 4 bytes in storage
+-- Per SQL standard, CHAR means character(1), that is a varlena type
+-- with a constraint restricting it to one character (not byte)
 
 SELECT char 'c' = char 'c' AS true;
 
@@ -71,3 +71,19 @@ DROP TABLE CHAR_TBL;
 INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
 
 SELECT * FROM CHAR_TBL;
+
+--
+-- Also test "char", which is an ad-hoc one-byte type.  It can only
+-- really store ASCII characters, but we allow high-bit-set characters
+-- to be accessed via bytea-like escapes.
+--
+
+SELECT 'a'::"char";
+SELECT '\101'::"char";
+SELECT '\377'::"char";
+SELECT 'a'::"char"::text;
+SELECT '\377'::"char"::text;
+SELECT '\000'::"char"::text;
+SELECT 'a'::text::"char";
+SELECT '\377'::text::"char";
+SELECT ''::text::"char";

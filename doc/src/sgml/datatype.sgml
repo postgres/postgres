@@ -1338,9 +1338,10 @@ SELECT b, char_length(b) FROM test2;
    <para>
     There are two other fixed-length character types in
     <productname>PostgreSQL</productname>, shown in <xref
-    linkend="datatype-character-special-table"/>. The <type>name</type>
-    type exists <emphasis>only</emphasis> for the storage of identifiers
-    in the internal system catalogs and is not intended for use by the general user. Its
+    linkend="datatype-character-special-table"/>.
+    These are not intended for general-purpose use, only for use
+    in the internal system catalogs.
+    The <type>name</type> type is used to store identifiers. Its
     length is currently defined as 64 bytes (63 usable characters plus
     terminator) but should be referenced using the constant
     <symbol>NAMEDATALEN</symbol> in <literal>C</literal> source code.
@@ -1348,7 +1349,8 @@ SELECT b, char_length(b) FROM test2;
     is therefore adjustable for special uses); the default maximum
     length might change in a future release. The type <type>"char"</type>
     (note the quotes) is different from <type>char(1)</type> in that it
-    only uses one byte of storage. It is internally used in the system
+    only uses one byte of storage, and therefore can store only a single
+    ASCII character. It is used in the system
     catalogs as a simplistic enumeration type.
    </para>
 
