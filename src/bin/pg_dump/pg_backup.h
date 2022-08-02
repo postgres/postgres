@@ -198,11 +198,12 @@ typedef struct _dumpOptions
 
 	int			sequence_data;	/* dump sequence data even in schema-only mode */
 	int			do_nothing;
+	bool		cant_be_masked; /* mark options that don't work with masking */
 } DumpOptions;
 
 /*
- *	We may want to have some more user-readable data, but in the mean
- *	time this gives us some abstraction and type checking.
+ *	We may want to have some more user-readable data, but in the meantime
+ *	this gives us some abstraction and type checking.
  */
 typedef struct Archive
 {

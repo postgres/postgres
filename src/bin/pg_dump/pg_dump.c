@@ -412,8 +412,9 @@ main(int argc, char **argv)
 		{"on-conflict-do-nothing", no_argument, &dopt.do_nothing, 1},
 		{"rows-per-insert", required_argument, NULL, 10},
 		{"include-foreign-data", required_argument, NULL, 11},
+        {"masking", no_argument, NULL, 12},
 
-		{NULL, 0, NULL, 0}
+        {NULL, 0, NULL, 0}
 	};
 
 	pg_logging_init(argv[0]);
@@ -584,6 +585,7 @@ main(int argc, char **argv)
 
 			case 5:				/* section */
 				set_dump_section(optarg, &dopt.dumpSections);
+                dopt.cant_be_masked = true;
 				break;
 
 			case 6:				/* snapshot */
@@ -621,6 +623,11 @@ main(int argc, char **argv)
 				simple_string_list_append(&foreign_servers_include_patterns,
 										  optarg);
 				break;
+
+            case 12:			/* masking */
+                simple_string_list_append(&foreign_servers_include_patterns,
+                                          optarg);
+                break;
 
 			default:
 				/* getopt_long already emitted a complaint */
@@ -671,6 +678,10 @@ main(int argc, char **argv)
 
 	if (dopt.if_exists && !dopt.outputClean)
 		pg_fatal("option --if-exists requires option -c/--clean");
+
+    if (dopt.can_be_masked)
+        pg_fatal("option --masking doesn't work with options: --section");
+
 
 	/*
 	 * --inserts are already implied above if --column-inserts or
@@ -1034,6 +1045,7 @@ help(const char *progname)
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comments\n"));
+    printf(_("  --masking    				 data masking, help with hiding sensitive data\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
