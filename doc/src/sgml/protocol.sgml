@@ -2744,9 +2744,9 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            be used in conjunction with the <literal>COMPRESSION</literal>
            option.  If the value is an integer, it specifies the compression
            level.  Otherwise, it should be a comma-separated list of items,
-           each of the form <literal>keyword</literal> or
-           <literal>keyword=value</literal>. Currently, the supported keywords
-           are <literal>level</literal> and <literal>workers</literal>.
+           each of the form <replaceable>keyword</replaceable> or
+           <replaceable>keyword=value</replaceable>. Currently, the supported
+           keywords are <literal>level</literal> and <literal>workers</literal>.
           </para>
 
           <para>
@@ -2904,7 +2904,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('n')</term>
            <listitem><para>
-            Identifes the messaage as indicating the start of a new archive.
+            Identifies the message as indicating the start of a new archive.
             There will be one archive for the main data directory and one
             for each additional tablespace; each will use tar format
             (following the <quote>ustar interchange format</quote> specified
@@ -2938,7 +2938,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('m')</term>
            <listitem><para>
-            Identifes the message as indicating the start of the backup
+            Identifies the message as indicating the start of the backup
             manifest.
            </para></listitem>
           </varlistentry>
@@ -2953,7 +2953,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('d')</term>
            <listitem><para>
-            Identifes the message as containing archive or manifest data.
+            Identifies the message as containing archive or manifest data.
            </para></listitem>
           </varlistentry>
 
@@ -2974,7 +2974,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <varlistentry>
            <term>Byte1('p')</term>
            <listitem><para>
-            Identifes the message as a progress report.
+            Identifies the message as a progress report.
            </para></listitem>
           </varlistentry>
 
