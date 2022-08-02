@@ -365,6 +365,14 @@ struct PlannerInfo
 
 	/* groupClause pathkeys, if any */
 	List	   *group_pathkeys;
+
+	/*
+	 * The number of elements in the group_pathkeys list which belong to the
+	 * GROUP BY clause.  Additional ones belong to ORDER BY / DISTINCT
+	 * aggregates.
+	 */
+	int			num_groupby_pathkeys;
+
 	/* pathkeys of bottom window, if any */
 	List	   *window_pathkeys;
 	/* distinctClause pathkeys, if any */
@@ -3134,12 +3142,12 @@ typedef struct AggInfo
 	NodeTag		type;
 
 	/*
-	 * Link to an Aggref expr this state value is for.
+	 * List of Aggref exprs that this state value is for.
 	 *
-	 * There can be multiple identical Aggref's sharing the same per-agg. This
-	 * points to the first one of them.
+	 * There will always be at least one, but there can be multiple identical
+	 * Aggref's sharing the same per-agg.
 	 */
-	Aggref	   *representative_aggref;
+	List	   *aggrefs;
 
 	/* Transition state number for this aggregate */
 	int			transno;

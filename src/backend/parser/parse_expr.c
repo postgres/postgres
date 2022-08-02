@@ -3816,6 +3816,7 @@ transformJsonAggConstructor(ParseState *pstate, JsonAggConstructor *agg_ctor,
 		aggref->aggstar = false;
 		aggref->aggvariadic = false;
 		aggref->aggkind = AGGKIND_NORMAL;
+		aggref->aggpresorted = false;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->aggsplit = AGGSPLIT_SIMPLE; /* planner might change this */
 		aggref->location = agg_ctor->location;

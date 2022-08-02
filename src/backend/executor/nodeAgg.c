@@ -583,7 +583,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 	/*
 	 * Start a fresh sort operation for each DISTINCT/ORDER BY aggregate.
 	 */
-	if (pertrans->numSortCols > 0)
+	if (pertrans->aggsortrequired)
 	{
 		/*
 		 * In case of rescan, maybe there could be an uncompleted sort
@@ -1309,7 +1309,7 @@ finalize_aggregates(AggState *aggstate,
 
 		pergroupstate = &pergroup[transno];
 
-		if (pertrans->numSortCols > 0)
+		if (pertrans->aggsortrequired)
 		{
 			Assert(aggstate->aggstrategy != AGG_HASHED &&
 				   aggstate->aggstrategy != AGG_MIXED);
@@ -1322,6 +1322,21 @@ finalize_aggregates(AggState *aggstate,
 				process_ordered_aggregate_multi(aggstate,
 												pertrans,
 												pergroupstate);
+		}
+		else if (pertrans->numDistinctCols > 0 && pertrans->haslast)
+		{
+			pertrans->haslast = false;
+
+			if (pertrans->numDistinctCols == 1)
+			{
+				if (!pertrans->inputtypeByVal && !pertrans->lastisnull)
+					pfree(DatumGetPointer(pertrans->lastdatum));
+
+				pertrans->lastisnull = false;
+				pertrans->lastdatum = (Datum) 0;
+			}
+			else
+				ExecClearTuple(pertrans->uniqslot);
 		}
 	}
 
@@ -4127,6 +4142,12 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	 * stick them into arrays.  We ignore ORDER BY for an ordered-set agg,
 	 * however; the agg's transfn and finalfn are responsible for that.
 	 *
+	 * When the planner has set the aggpresorted flag, the input to the
+	 * aggregate is already correctly sorted.  For ORDER BY aggregates we can
+	 * simply treat these as normal aggregates.  For presorted DISTINCT
+	 * aggregates an extra step must be added to remove duplicate consecutive
+	 * inputs.
+	 *
 	 * Note that by construction, if there is a DISTINCT clause then the ORDER
 	 * BY clause is a prefix of it (see transformDistinctClause).
 	 */
@@ -4134,18 +4155,27 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	{
 		sortlist = NIL;
 		numSortCols = numDistinctCols = 0;
+		pertrans->aggsortrequired = false;
+	}
+	else if (aggref->aggpresorted && aggref->aggdistinct == NIL)
+	{
+		sortlist = NIL;
+		numSortCols = numDistinctCols = 0;
+		pertrans->aggsortrequired = false;
 	}
 	else if (aggref->aggdistinct)
 	{
 		sortlist = aggref->aggdistinct;
 		numSortCols = numDistinctCols = list_length(sortlist);
 		Assert(numSortCols >= list_length(aggref->aggorder));
+		pertrans->aggsortrequired = !aggref->aggpresorted;
 	}
 	else
 	{
 		sortlist = aggref->aggorder;
 		numSortCols = list_length(sortlist);
 		numDistinctCols = 0;
+		pertrans->aggsortrequired = (numSortCols > 0);
 	}
 
 	pertrans->numSortCols = numSortCols;

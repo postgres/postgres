@@ -104,6 +104,28 @@ make_canonical_pathkey(PlannerInfo *root,
 }
 
 /*
+ * append_pathkeys
+ *		Append all non-redundant PathKeys in 'source' onto 'target' and
+ *		returns the updated 'target' list.
+ */
+List *
+append_pathkeys(List *target, List *source)
+{
+	ListCell   *lc;
+
+	Assert(target != NIL);
+
+	foreach(lc, source)
+	{
+		PathKey    *pk = lfirst_node(PathKey, lc);
+
+		if (!pathkey_is_redundant(pk, target))
+			target = lappend(target, pk);
+	}
+	return target;
+}
+
+/*
  * pathkey_is_redundant
  *	   Is a pathkey redundant with one already in the given list?
  *
@@ -746,7 +768,8 @@ get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
 List *
 get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 								List *path_pathkeys,
-								List *group_pathkeys, List *group_clauses)
+								List *group_pathkeys, List *group_clauses,
+								List *aggregate_pathkeys)
 {
 	Query	   *parse = root->parse;
 	List	   *infos = NIL;
@@ -758,7 +781,10 @@ get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 
 	/* always return at least the original pathkeys/clauses */
 	info = makeNode(PathKeyInfo);
-	info->pathkeys = pathkeys;
+	if (aggregate_pathkeys != NIL)
+		info->pathkeys = list_concat_copy(pathkeys, aggregate_pathkeys);
+	else
+		info->pathkeys = pathkeys;
 	info->clauses = clauses;
 
 	infos = lappend(infos, info);
@@ -783,7 +809,10 @@ get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 									  n_preordered))
 	{
 		info = makeNode(PathKeyInfo);
-		info->pathkeys = pathkeys;
+		if (aggregate_pathkeys != NIL)
+			info->pathkeys = list_concat_copy(pathkeys, aggregate_pathkeys);
+		else
+			info->pathkeys = pathkeys;
 		info->clauses = clauses;
 
 		infos = lappend(infos, info);
@@ -822,7 +851,10 @@ get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 		 * still want to keep the keys reordered to path_pathkeys.
 		 */
 		info = makeNode(PathKeyInfo);
-		info->pathkeys = pathkeys;
+		if (aggregate_pathkeys != NIL)
+			info->pathkeys = list_concat_copy(pathkeys, aggregate_pathkeys);
+		else
+			info->pathkeys = pathkeys;
 		info->clauses = clauses;
 
 		infos = lappend(infos, info);
@@ -850,7 +882,10 @@ get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 
 		/* keep the group keys reordered to match ordering of input path */
 		info = makeNode(PathKeyInfo);
-		info->pathkeys = pathkeys;
+		if (aggregate_pathkeys != NIL)
+			info->pathkeys = list_concat_copy(pathkeys, aggregate_pathkeys);
+		else
+			info->pathkeys = pathkeys;
 		info->clauses = clauses;
 
 		infos = lappend(infos, info);

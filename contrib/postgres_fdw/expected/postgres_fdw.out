@@ -3295,15 +3295,18 @@ create operator class my_op_class for type int using btree family my_op_family a
 -- extension yet.
 explain (verbose, costs off)
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
  GroupAggregate
    Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
    Group Key: ft2.c2
-   ->  Foreign Scan on public.ft2
-         Output: c1, c2
-         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
-(6 rows)
+   ->  Sort
+         Output: c2, c1
+         Sort Key: ft2.c1 USING <^
+         ->  Foreign Scan on public.ft2
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
+(9 rows)
 
 -- This should not be pushed either.
 explain (verbose, costs off)
@@ -3329,6 +3332,7 @@ alter extension postgres_fdw add operator public.=^(int, int);
 alter extension postgres_fdw add operator public.>^(int, int);
 alter server loopback options (set extensions 'postgres_fdw');
 -- Now this will be pushed as sort operator is part of the extension.
+alter server loopback options (add fdw_tuple_cost '0.5');
 explain (verbose, costs off)
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
                                                                            QUERY PLAN                                                                           
@@ -3345,6 +3349,7 @@ select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6
  {6,16,26,36,46,56,66,76,86,96}
 (1 row)
 
+alter server loopback options (drop fdw_tuple_cost);
 -- This should be pushed too.
 explain (verbose, costs off)
 select * from ft2 order by c1 using operator(public.<^);
@@ -3366,15 +3371,18 @@ alter server loopback options (set extensions 'postgres_fdw');
 -- This will not be pushed as sort operator is now removed from the extension.
 explain (verbose, costs off)
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
  GroupAggregate
    Output: array_agg(c1 ORDER BY c1 USING <^ NULLS LAST), c2
    Group Key: ft2.c2
-   ->  Foreign Scan on public.ft2
-         Output: c1, c2
-         Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
-(6 rows)
+   ->  Sort
+         Output: c2, c1
+         Sort Key: ft2.c1 USING <^
+         ->  Foreign Scan on public.ft2
+               Output: c2, c1
+               Remote SQL: SELECT "C 1", c2 FROM "S 1"."T 1" WHERE (("C 1" < 100)) AND ((c2 = 6))
+(9 rows)
 
 -- Cleanup
 drop operator class my_op_class using btree;

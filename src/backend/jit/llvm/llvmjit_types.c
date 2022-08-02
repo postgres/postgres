@@ -103,6 +103,8 @@ void	   *referenced_functions[] =
 {
 	ExecAggInitGroup,
 	ExecAggTransReparent,
+	ExecEvalPreOrderedDistinctSingle,
+	ExecEvalPreOrderedDistinctMulti,
 	ExecEvalAggOrderedTransDatum,
 	ExecEvalAggOrderedTransTuple,
 	ExecEvalArrayCoerce,

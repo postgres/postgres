@@ -504,6 +504,49 @@ select t1.f1 from t1 left join t2 using (f1) group by f1;
 drop table t1, t2;
 
 --
+-- Test planner's selection of pathkeys for ORDER BY aggregates
+--
+
+-- Ensure we order by four.  This suits the most aggregate functions.
+explain (costs off)
+select sum(two order by two),max(four order by four), min(four order by four)
+from tenk1;
+
+-- Ensure we order by two.  It's a tie between ordering by two and four but
+-- we tiebreak on the aggregate's position.
+explain (costs off)
+select
+  sum(two order by two), max(four order by four),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Similar to above, but tiebreak on ordering by four
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Ensure this one orders by ten since there are 3 aggregates that require ten
+-- vs two that suit two and four.
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two),
+  sum(ten order by ten), min(ten order by ten), max(ten order by ten)
+from tenk1;
+
+-- Try a case involving a GROUP BY clause where the GROUP BY column is also
+-- part of an aggregate's ORDER BY clause.  We want a sort order that works
+-- for the GROUP BY along with the first and the last aggregate.
+explain (costs off)
+select
+  sum(unique1 order by ten, two), sum(unique1 order by four),
+  sum(unique1 order by two, four)
+from tenk1
+group by ten;
+
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 

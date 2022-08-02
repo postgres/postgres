@@ -357,6 +357,10 @@ typedef struct Param
  * replaced with a single argument representing the partial-aggregate
  * transition values.
  *
+ * aggpresorted is set by the query planner for ORDER BY and DISTINCT
+ * aggregates where the chosen plan provides presorted input for this
+ * aggregate during execution.
+ *
  * aggsplit indicates the expected partial-aggregation mode for the Aggref's
  * parent plan node.  It's always set to AGGSPLIT_SIMPLE in the parser, but
  * the planner might change it to something else.  We use this mainly as
@@ -421,6 +425,9 @@ typedef struct Aggref
 
 	/* aggregate kind (see pg_aggregate.h) */
 	char		aggkind;
+
+	/* aggregate input already sorted */
+	bool		aggpresorted pg_node_attr(equal_ignore);
 
 	/* > 0 if agg belongs to outer query */
 	Index		agglevelsup;

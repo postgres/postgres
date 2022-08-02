@@ -2335,6 +2335,54 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
+			case EEOP_AGG_PRESORTED_DISTINCT_SINGLE:
+				{
+					AggState   *aggstate = castNode(AggState, state->parent);
+					AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+					int			jumpdistinct = op->d.agg_presorted_distinctcheck.jumpdistinct;
+
+					LLVMValueRef v_fn = llvm_pg_func(mod, "ExecEvalPreOrderedDistinctSingle");
+					LLVMValueRef v_args[2];
+					LLVMValueRef v_ret;
+
+					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
+					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
+
+					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
+												  l_sbool_const(1), ""),
+									opblocks[opno + 1],
+									opblocks[jumpdistinct]);
+					break;
+				}
+
+			case EEOP_AGG_PRESORTED_DISTINCT_MULTI:
+				{
+					AggState   *aggstate = castNode(AggState, state->parent);
+					AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+					int			jumpdistinct = op->d.agg_presorted_distinctcheck.jumpdistinct;
+
+					LLVMValueRef v_fn = llvm_pg_func(mod, "ExecEvalPreOrderedDistinctMulti");
+					LLVMValueRef v_args[2];
+					LLVMValueRef v_ret;
+
+					v_args[0] = l_ptr_const(aggstate, l_ptr(StructAggState));
+					v_args[1] = l_ptr_const(pertrans, l_ptr(StructAggStatePerTransData));
+
+					v_ret = LLVMBuildCall(b, v_fn, v_args, 2, "");
+					v_ret = LLVMBuildZExt(b, v_ret, TypeStorageBool, "");
+
+					LLVMBuildCondBr(b,
+									LLVMBuildICmp(b, LLVMIntEQ, v_ret,
+												  l_sbool_const(1), ""),
+									opblocks[opno + 1],
+									opblocks[jumpdistinct]);
+					break;
+				}
+
 			case EEOP_AGG_ORDERED_TRANS_DATUM:
 				build_EvalXFunc(b, mod, "ExecEvalAggOrderedTransDatum",
 								v_state, op, v_econtext);

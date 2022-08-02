@@ -943,9 +943,11 @@ alter extension postgres_fdw add operator public.>^(int, int);
 alter server loopback options (set extensions 'postgres_fdw');
 
 -- Now this will be pushed as sort operator is part of the extension.
+alter server loopback options (add fdw_tuple_cost '0.5');
 explain (verbose, costs off)
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
 select array_agg(c1 order by c1 using operator(public.<^)) from ft2 where c2 = 6 and c1 < 100 group by c2;
+alter server loopback options (drop fdw_tuple_cost);
 
 -- This should be pushed too.
 explain (verbose, costs off)

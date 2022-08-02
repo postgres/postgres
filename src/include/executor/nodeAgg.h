@@ -49,6 +49,11 @@ typedef struct AggStatePerTransData
 	bool		aggshared;
 
 	/*
+	 * True for ORDER BY and DISTINCT Aggrefs that are not aggpresorted.
+	 */
+	bool		aggsortrequired;
+
+	/*
 	 * Number of aggregated input columns.  This includes ORDER BY expressions
 	 * in both the plain-agg and ordered-set cases.  Ordered-set direct args
 	 * are not counted, though.
@@ -136,6 +141,9 @@ typedef struct AggStatePerTransData
 	TupleTableSlot *sortslot;	/* current input tuple */
 	TupleTableSlot *uniqslot;	/* used for multi-column DISTINCT */
 	TupleDesc	sortdesc;		/* descriptor of input tuples */
+	Datum		lastdatum;		/* used for single-column DISTINCT */
+	bool		lastisnull;		/* used for single-column DISTINCT */
+	bool		haslast;		/* got a last value for DISTINCT check */
 
 	/*
 	 * These values are working state that is initialized at the start of an

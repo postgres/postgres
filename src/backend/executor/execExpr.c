@@ -3666,19 +3666,30 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				scratch.resnull = &state->resnull;
 			}
 			argno++;
+
+			Assert(pertrans->numInputs == argno);
 		}
-		else if (pertrans->numSortCols == 0)
+		else if (!pertrans->aggsortrequired)
 		{
 			ListCell   *arg;
 
 			/*
-			 * Normal transition function without ORDER BY / DISTINCT.
+			 * Normal transition function without ORDER BY / DISTINCT or with
+			 * ORDER BY / DISTINCT but the planner has given us pre-sorted
+			 * input.
 			 */
 			strictargs = trans_fcinfo->args + 1;
 
 			foreach(arg, pertrans->aggref->args)
 			{
 				TargetEntry *source_tle = (TargetEntry *) lfirst(arg);
+
+				/*
+				 * Don't initialize args for any ORDER BY clause that might
+				 * exist in a presorted aggregate.
+				 */
+				if (argno == pertrans->numTransInputs)
+					break;
 
 				/*
 				 * Start from 1, since the 0th arg will be the transition
@@ -3689,11 +3700,13 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 								&trans_fcinfo->args[argno + 1].isnull);
 				argno++;
 			}
+			Assert(pertrans->numTransInputs == argno);
 		}
 		else if (pertrans->numInputs == 1)
 		{
 			/*
-			 * DISTINCT and/or ORDER BY case, with a single column sorted on.
+			 * Non-presorted DISTINCT and/or ORDER BY case, with a single
+			 * column sorted on.
 			 */
 			TargetEntry *source_tle =
 			(TargetEntry *) linitial(pertrans->aggref->args);
@@ -3705,11 +3718,14 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 							&state->resnull);
 			strictnulls = &state->resnull;
 			argno++;
+
+			Assert(pertrans->numInputs == argno);
 		}
 		else
 		{
 			/*
-			 * DISTINCT and/or ORDER BY case, with multiple columns sorted on.
+			 * Non-presorted DISTINCT and/or ORDER BY case, with multiple
+			 * columns sorted on.
 			 */
 			Datum	   *values = pertrans->sortslot->tts_values;
 			bool	   *nulls = pertrans->sortslot->tts_isnull;
@@ -3725,8 +3741,8 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 								&values[argno], &nulls[argno]);
 				argno++;
 			}
+			Assert(pertrans->numInputs == argno);
 		}
-		Assert(pertrans->numInputs == argno);
 
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
@@ -3743,6 +3759,21 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			scratch.d.agg_strict_input_check.args = strictargs;
 			scratch.d.agg_strict_input_check.jumpnull = -1; /* adjust later */
 			scratch.d.agg_strict_input_check.nargs = pertrans->numTransInputs;
+			ExprEvalPushStep(state, &scratch);
+			adjust_bailout = lappend_int(adjust_bailout,
+										 state->steps_len - 1);
+		}
+
+		/* Handle DISTINCT aggregates which have pre-sorted input */
+		if (pertrans->numDistinctCols > 0 && !pertrans->aggsortrequired)
+		{
+			if (pertrans->numDistinctCols > 1)
+				scratch.opcode = EEOP_AGG_PRESORTED_DISTINCT_MULTI;
+			else
+				scratch.opcode = EEOP_AGG_PRESORTED_DISTINCT_SINGLE;
+
+			scratch.d.agg_presorted_distinctcheck.pertrans = pertrans;
+			scratch.d.agg_presorted_distinctcheck.jumpdistinct = -1;	/* adjust later */
 			ExprEvalPushStep(state, &scratch);
 			adjust_bailout = lappend_int(adjust_bailout,
 										 state->steps_len - 1);
@@ -3808,6 +3839,12 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				Assert(as->d.agg_deserialize.jumpnull == -1);
 				as->d.agg_deserialize.jumpnull = state->steps_len;
 			}
+			else if (as->opcode == EEOP_AGG_PRESORTED_DISTINCT_SINGLE ||
+					 as->opcode == EEOP_AGG_PRESORTED_DISTINCT_MULTI)
+			{
+				Assert(as->d.agg_presorted_distinctcheck.jumpdistinct == -1);
+				as->d.agg_presorted_distinctcheck.jumpdistinct = state->steps_len;
+			}
 			else
 				Assert(false);
 		}
@@ -3857,7 +3894,8 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	/*
 	 * Determine appropriate transition implementation.
 	 *
-	 * For non-ordered aggregates:
+	 * For non-ordered aggregates and ORDER BY / DISTINCT aggregates with
+	 * presorted input:
 	 *
 	 * If the initial value for the transition state doesn't exist in the
 	 * pg_aggregate table then we will let the first non-NULL value returned
@@ -3887,7 +3925,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	 * process_ordered_aggregate_{single, multi} and
 	 * advance_transition_function.
 	 */
-	if (pertrans->numSortCols == 0)
+	if (!pertrans->aggsortrequired)
 	{
 		if (pertrans->transtypeByVal)
 		{

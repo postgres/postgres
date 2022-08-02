@@ -502,6 +502,8 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 		&&CASE_EEOP_AGG_PLAIN_TRANS_INIT_STRICT_BYREF,
 		&&CASE_EEOP_AGG_PLAIN_TRANS_STRICT_BYREF,
 		&&CASE_EEOP_AGG_PLAIN_TRANS_BYREF,
+		&&CASE_EEOP_AGG_PRESORTED_DISTINCT_SINGLE,
+		&&CASE_EEOP_AGG_PRESORTED_DISTINCT_MULTI,
 		&&CASE_EEOP_AGG_ORDERED_TRANS_DATUM,
 		&&CASE_EEOP_AGG_ORDERED_TRANS_TUPLE,
 		&&CASE_EEOP_LAST
@@ -1784,6 +1786,28 @@ ExecInterpExpr(ExprState *state, ExprContext *econtext, bool *isnull)
 								   op->d.agg_trans.setno);
 
 			EEO_NEXT();
+		}
+
+		EEO_CASE(EEOP_AGG_PRESORTED_DISTINCT_SINGLE)
+		{
+			AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+			AggState   *aggstate = castNode(AggState, state->parent);
+
+			if (ExecEvalPreOrderedDistinctSingle(aggstate, pertrans))
+				EEO_NEXT();
+			else
+				EEO_JUMP(op->d.agg_presorted_distinctcheck.jumpdistinct);
+		}
+
+		EEO_CASE(EEOP_AGG_PRESORTED_DISTINCT_MULTI)
+		{
+			AggState   *aggstate = castNode(AggState, state->parent);
+			AggStatePerTrans pertrans = op->d.agg_presorted_distinctcheck.pertrans;
+
+			if (ExecEvalPreOrderedDistinctMulti(aggstate, pertrans))
+				EEO_NEXT();
+			else
+				EEO_JUMP(op->d.agg_presorted_distinctcheck.jumpdistinct);
 		}
 
 		/* process single-column ordered aggregate datum */
@@ -4400,6 +4424,84 @@ ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
 	}
 
 	return newValue;
+}
+
+/*
+ * ExecEvalPreOrderedDistinctSingle
+ *		Returns true when the aggregate transition value Datum is distinct
+ *		from the previous input Datum and returns false when the input Datum
+ *		matches the previous input Datum.
+ */
+bool
+ExecEvalPreOrderedDistinctSingle(AggState *aggstate, AggStatePerTrans pertrans)
+{
+	Datum		value = pertrans->transfn_fcinfo->args[1].value;
+	bool		isnull = pertrans->transfn_fcinfo->args[1].isnull;
+
+	if (!pertrans->haslast ||
+		pertrans->lastisnull != isnull ||
+		!DatumGetBool(FunctionCall2Coll(&pertrans->equalfnOne,
+										pertrans->aggCollation,
+										pertrans->lastdatum, value)))
+	{
+		if (pertrans->haslast && !pertrans->inputtypeByVal)
+			pfree(DatumGetPointer(pertrans->lastdatum));
+
+		pertrans->haslast = true;
+		if (!isnull)
+		{
+			MemoryContext oldContext;
+
+			oldContext = MemoryContextSwitchTo(aggstate->curaggcontext->ecxt_per_tuple_memory);
+
+			pertrans->lastdatum = datumCopy(value, pertrans->inputtypeByVal,
+											pertrans->inputtypeLen);
+
+			MemoryContextSwitchTo(oldContext);
+		}
+		else
+			pertrans->lastdatum = (Datum) 0;
+		pertrans->lastisnull = isnull;
+		return true;
+	}
+
+	return false;
+}
+
+/*
+ * ExecEvalPreOrderedDistinctMulti
+ *		Returns true when the aggregate input is distinct from the previous
+ *		input and returns false when the input matches the previous input.
+ */
+bool
+ExecEvalPreOrderedDistinctMulti(AggState *aggstate, AggStatePerTrans pertrans)
+{
+	ExprContext *tmpcontext = aggstate->tmpcontext;
+
+	for (int i = 0; i < pertrans->numTransInputs; i++)
+	{
+		pertrans->sortslot->tts_values[i] = pertrans->transfn_fcinfo->args[i + 1].value;
+		pertrans->sortslot->tts_isnull[i] = pertrans->transfn_fcinfo->args[i + 1].isnull;
+	}
+
+	ExecClearTuple(pertrans->sortslot);
+	pertrans->sortslot->tts_nvalid = pertrans->numInputs;
+	ExecStoreVirtualTuple(pertrans->sortslot);
+
+	tmpcontext->ecxt_outertuple = pertrans->sortslot;
+	tmpcontext->ecxt_innertuple = pertrans->uniqslot;
+
+	if (!pertrans->haslast ||
+		!ExecQual(pertrans->equalfnMulti, tmpcontext))
+	{
+		if (pertrans->haslast)
+			ExecClearTuple(pertrans->uniqslot);
+
+		pertrans->haslast = true;
+		ExecCopySlot(pertrans->uniqslot, pertrans->sortslot);
+		return true;
+	}
+	return false;
 }
 
 /*

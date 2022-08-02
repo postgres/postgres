@@ -208,7 +208,8 @@ extern int	group_keys_reorder_by_pathkeys(List *pathkeys,
 										   List **group_clauses);
 extern List *get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
 											 List *path_pathkeys,
-											 List *group_pathkeys, List *group_clauses);
+											 List *group_pathkeys, List *group_clauses,
+											 List *aggregate_pathkeys);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 											Relids required_outer,
 											CostSelector cost_criterion,
@@ -255,6 +256,7 @@ extern List *truncate_useless_pathkeys(PlannerInfo *root,
 									   RelOptInfo *rel,
 									   List *pathkeys);
 extern bool has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel);
+extern List *append_pathkeys(List *target, List *source);
 extern PathKey *make_canonical_pathkey(PlannerInfo *root,
 									   EquivalenceClass *eclass, Oid opfamily,
 									   int strategy, bool nulls_first);

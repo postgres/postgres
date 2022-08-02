@@ -258,6 +258,8 @@ typedef enum ExprEvalOp
 	EEOP_AGG_PLAIN_TRANS_INIT_STRICT_BYREF,
 	EEOP_AGG_PLAIN_TRANS_STRICT_BYREF,
 	EEOP_AGG_PLAIN_TRANS_BYREF,
+	EEOP_AGG_PRESORTED_DISTINCT_SINGLE,
+	EEOP_AGG_PRESORTED_DISTINCT_MULTI,
 	EEOP_AGG_ORDERED_TRANS_DATUM,
 	EEOP_AGG_ORDERED_TRANS_TUPLE,
 
@@ -659,6 +661,17 @@ typedef struct ExprEvalStep
 			int			jumpnull;
 		}			agg_plain_pergroup_nullcheck;
 
+		/* for EEOP_AGG_PRESORTED_DISTINCT_{SINGLE,MULTI} */
+		struct
+		{
+			AggStatePerTrans pertrans;
+			ExprContext *aggcontext;
+			int			setno;
+			int			transno;
+			int			setoff;
+			int			jumpdistinct;
+		}			agg_presorted_distinctcheck;
+
 		/* for EEOP_AGG_PLAIN_TRANS_[INIT_][STRICT_]{BYVAL,BYREF} */
 		/* for EEOP_AGG_ORDERED_TRANS_{DATUM,TUPLE} */
 		struct
@@ -868,6 +881,10 @@ extern void ExecAggInitGroup(AggState *aggstate, AggStatePerTrans pertrans, AggS
 extern Datum ExecAggTransReparent(AggState *aggstate, AggStatePerTrans pertrans,
 								  Datum newValue, bool newValueIsNull,
 								  Datum oldValue, bool oldValueIsNull);
+extern bool ExecEvalPreOrderedDistinctSingle(AggState *aggstate,
+											 AggStatePerTrans pertrans);
+extern bool ExecEvalPreOrderedDistinctMulti(AggState *aggstate,
+											AggStatePerTrans pertrans);
 extern void ExecEvalAggOrderedTransDatum(ExprState *state, ExprEvalStep *op,
 										 ExprContext *econtext);
 extern void ExecEvalAggOrderedTransTuple(ExprState *state, ExprEvalStep *op,
