@@ -57,10 +57,6 @@ my $synced_query =
 $node_subscriber->poll_query_until('postgres', $synced_query)
   or die "Timed out while waiting for subscriber to synchronize data";
 
-# Also wait for initial table sync to finish.
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-
 # Specifying non-existent publication along with add publication.
 ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',
 	"ALTER SUBSCRIPTION mysub1 ADD PUBLICATION non_existent_pub1, non_existent_pub2"
