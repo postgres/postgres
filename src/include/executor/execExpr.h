@@ -666,9 +666,6 @@ typedef struct ExprEvalStep
 		{
 			AggStatePerTrans pertrans;
 			ExprContext *aggcontext;
-			int			setno;
-			int			transno;
-			int			setoff;
 			int			jumpdistinct;
 		}			agg_presorted_distinctcheck;
 
