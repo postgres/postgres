@@ -363,7 +363,7 @@ _PG_init(void)
 							&pgss_max,
 							5000,
 							100,
-							INT_MAX,
+							INT_MAX / 2,
 							PGC_POSTMASTER,
 							0,
 							NULL,
@@ -1868,6 +1868,18 @@ qtext_store(const char *query, int query_len,
 
 	*query_offset = off;
 
+	/*
+	 * Don't allow the file to grow larger than what qtext_load_file can
+	 * (theoretically) handle.  This has been seen to be reachable on 32-bit
+	 * platforms.
+	 */
+	if (unlikely(query_len >= MaxAllocHugeSize - off))
+	{
+		errno = EFBIG;			/* not quite right, but it'll do */
+		fd = -1;
+		goto error;
+	}
+
 	/* Now write the data into the successfully-reserved part of the file */
 	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY,
 						   S_IRUSR | S_IWUSR);
@@ -2054,8 +2066,14 @@ need_gc_qtexts(void)
 		SpinLockRelease(&s->mutex);
 	}
 
-	/* Don't proceed if file does not exceed 512 bytes per possible entry */
-	if (extent < 512 * pgss_max)
+	/*
+	 * Don't proceed if file does not exceed 512 bytes per possible entry.
+	 *
+	 * Here and in the next test, 32-bit machines have overflow hazards if
+	 * pgss_max and/or mean_query_len are large.  Force the multiplications
+	 * and comparisons to be done in uint64 arithmetic to forestall trouble.
+	 */
+	if ((uint64) extent < (uint64) 512 * pgss_max)
 		return false;
 
 	/*
@@ -2065,7 +2083,7 @@ need_gc_qtexts(void)
 	 * query length in order to prevent garbage collection from thrashing
 	 * uselessly.
 	 */
-	if (extent < pgss->mean_query_len * pgss_max * 2)
+	if ((uint64) extent < (uint64) pgss->mean_query_len * pgss_max * 2)
 		return false;
 
 	return true;
