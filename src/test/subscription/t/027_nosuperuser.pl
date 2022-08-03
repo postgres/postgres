@@ -153,13 +153,8 @@ SET SESSION AUTHORIZATION regress_admin;
 CREATE SUBSCRIPTION admin_sub CONNECTION '$publisher_connstr' PUBLICATION alice;
 ));
 
-$node_publisher->wait_for_catchup('admin_sub');
-
-# Wait for initial sync to finish as well
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');";
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'admin_sub');
 
 # Verify that "regress_admin" can replicate into the tables
 #

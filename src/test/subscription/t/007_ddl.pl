@@ -49,13 +49,8 @@ ok( $stderr =~
 	  m/WARNING:  publication "non_existent_pub" does not exist in the publisher/,
 	"Create subscription throws warning for non-existent publication");
 
-$node_publisher->wait_for_catchup('mysub1');
-
-# Also wait for initial table sync to finish.
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish.
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'mysub1');
 
 # Specifying non-existent publication along with add publication.
 ($ret, $stdout, $stderr) = $node_subscriber->psql('postgres',

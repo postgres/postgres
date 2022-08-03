@@ -22,18 +22,6 @@ $node_subscriber->start;
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 my $offset            = 0;
 
-sub wait_for_subscription_sync
-{
-	my ($node) = @_;
-
-	# Also wait for initial table sync to finish
-	my $synced_query =
-	  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-
-	$node->poll_query_until('postgres', $synced_query)
-	  or die "Timed out while waiting for subscriber to synchronize data";
-}
-
 # setup tables on both nodes
 
 # tab1: simple 1:1 replication
@@ -160,7 +148,7 @@ $node_subscriber->safe_psql(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub1
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 # tab1: only (a,b) is replicated
 $result =
@@ -333,7 +321,7 @@ $node_subscriber->safe_psql('postgres',
 
 # wait for the tablesync to complete, add a bit more data and then check
 # the results of the replication
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -385,9 +373,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub2, pub3
 ));
 
-wait_for_subscription_sync($node_subscriber);
-
-$node_publisher->wait_for_catchup('sub1');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'sub1');
 
 # insert data and make sure the columns in column list get fully replicated
 $node_publisher->safe_psql(
@@ -428,7 +414,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub4
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -465,7 +451,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -504,7 +490,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub5
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -621,7 +607,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub6
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -687,7 +673,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub7
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -758,7 +744,7 @@ $node_subscriber->safe_psql(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub8;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -795,7 +781,7 @@ $node_subscriber->safe_psql(
 	TRUNCATE test_part_c;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -855,7 +841,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub9
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -898,7 +884,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -938,7 +924,7 @@ $node_subscriber->safe_psql(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub_mix_5, pub_mix_6;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -985,7 +971,7 @@ $node_subscriber->safe_psql(
 	CREATE SUBSCRIPTION sub1 CONNECTION '$publisher_connstr' PUBLICATION pub_root_true;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -1034,7 +1020,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub1, pub2;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -1058,7 +1044,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub2, pub1;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -1102,7 +1088,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub3;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(
@@ -1150,7 +1136,7 @@ $node_subscriber->safe_psql(
 	ALTER SUBSCRIPTION sub1 SET PUBLICATION pub4;
 ));
 
-wait_for_subscription_sync($node_subscriber);
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql(
 	'postgres', qq(

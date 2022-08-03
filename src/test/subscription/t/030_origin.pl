@@ -51,17 +51,9 @@ $node_A->safe_psql(
 	PUBLICATION tap_pub_B
 	WITH (origin = none, copy_data = off)");
 
-# Wait for subscribers to finish initialization
-$node_A->wait_for_catchup($appname_B1);
-$node_B->wait_for_catchup($appname_A);
-
-# Also wait for initial table sync to finish
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_A->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-$node_B->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish
+$node_A->wait_for_subscription_sync($node_B, $appname_A);
+$node_B->wait_for_subscription_sync($node_A, $appname_B1);
 
 is(1, 1, 'Bidirectional replication setup is complete');
 
@@ -126,10 +118,7 @@ $node_B->safe_psql(
 	PUBLICATION tap_pub_C
 	WITH (origin = none)");
 
-$node_C->wait_for_catchup($appname_B2);
-
-$node_B->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_B->wait_for_subscription_sync($node_C, $appname_B2);
 
 # insert a record
 $node_C->safe_psql('postgres', "INSERT INTO tab VALUES (32);");

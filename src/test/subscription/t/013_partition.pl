@@ -153,12 +153,8 @@ ALTER TABLE ONLY tab1_2 ENABLE REPLICA TRIGGER sub2_tab1_2_log_op_trigger;
 });
 
 # Wait for initial sync of all subscriptions
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_subscriber1->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-$node_subscriber2->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber1->wait_for_subscription_sync;
+$node_subscriber2->wait_for_subscription_sync;
 
 # Tests for replication using leaf partition identity and schema
 
@@ -490,10 +486,8 @@ $node_subscriber2->safe_psql('postgres',
 	"ALTER SUBSCRIPTION sub2 SET PUBLICATION pub_lower_level, pub_all");
 
 # Wait for initial sync of all subscriptions
-$node_subscriber1->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-$node_subscriber2->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber1->wait_for_subscription_sync;
+$node_subscriber2->wait_for_subscription_sync;
 
 # check that data is synced correctly
 $result = $node_subscriber1->safe_psql('postgres', "SELECT c, a FROM tab2");
@@ -568,8 +562,7 @@ $node_subscriber2->safe_psql('postgres',
 
 # make sure the subscription on the second subscriber is synced, before
 # continuing
-$node_subscriber2->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber2->wait_for_subscription_sync;
 
 # Insert a change into the leaf partition, should be replicated through
 # the partition root (thanks to the FOR ALL TABLES partition).
@@ -824,8 +817,7 @@ $node_subscriber2->safe_psql(
 $node_subscriber2->safe_psql('postgres',
 	"ALTER SUBSCRIPTION sub2 REFRESH PUBLICATION");
 
-$node_subscriber2->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber2->wait_for_subscription_sync;
 
 # Make partition map cache
 $node_publisher->safe_psql('postgres', "INSERT INTO tab5 VALUES (1, 1)");
