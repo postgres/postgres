@@ -1,27 +1,5 @@
 Parsed test spec with 2 sessions
 
-starting permutation: s1decl s1f1 s1sleep s1f2 s2u
-step s1decl: DECLARE cursor1 CURSOR FOR SELECT c FROM sto1;
-step s1f1: FETCH FIRST FROM cursor1;
-c
--
-1
-(1 row)
-
-step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
-setting|pg_sleep
--------+--------
-      0|        
-(1 row)
-
-step s1f2: FETCH FIRST FROM cursor1;
-c
--
-1
-(1 row)
-
-step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
-
 starting permutation: s1decl s1f1 s1sleep s2u s1f2
 step s1decl: DECLARE cursor1 CURSOR FOR SELECT c FROM sto1;
 step s1f1: FETCH FIRST FROM cursor1;
@@ -37,59 +15,5 @@ setting|pg_sleep
 (1 row)
 
 step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
-step s1f2: FETCH FIRST FROM cursor1;
-ERROR:  snapshot too old
-
-starting permutation: s1decl s1f1 s2u s1sleep s1f2
-step s1decl: DECLARE cursor1 CURSOR FOR SELECT c FROM sto1;
-step s1f1: FETCH FIRST FROM cursor1;
-c
--
-1
-(1 row)
-
-step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
-step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
-setting|pg_sleep
--------+--------
-      0|        
-(1 row)
-
-step s1f2: FETCH FIRST FROM cursor1;
-ERROR:  snapshot too old
-
-starting permutation: s1decl s2u s1f1 s1sleep s1f2
-step s1decl: DECLARE cursor1 CURSOR FOR SELECT c FROM sto1;
-step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
-step s1f1: FETCH FIRST FROM cursor1;
-c
--
-1
-(1 row)
-
-step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
-setting|pg_sleep
--------+--------
-      0|        
-(1 row)
-
-step s1f2: FETCH FIRST FROM cursor1;
-ERROR:  snapshot too old
-
-starting permutation: s2u s1decl s1f1 s1sleep s1f2
-step s2u: UPDATE sto1 SET c = 1001 WHERE c = 1;
-step s1decl: DECLARE cursor1 CURSOR FOR SELECT c FROM sto1;
-step s1f1: FETCH FIRST FROM cursor1;
-c
--
-2
-(1 row)
-
-step s1sleep: SELECT setting, pg_sleep(6) FROM pg_settings WHERE name = 'old_snapshot_threshold';
-setting|pg_sleep
--------+--------
-      0|        
-(1 row)
-
 step s1f2: FETCH FIRST FROM cursor1;
 ERROR:  snapshot too old
