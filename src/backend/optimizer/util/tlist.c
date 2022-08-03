@@ -22,6 +22,17 @@
 
 
 /*
+ * Test if an expression node represents a SRF call.  Beware multiple eval!
+ *
+ * Please note that this is only meant for use in split_pathtarget_at_srfs();
+ * if you use it anywhere else, your code is almost certainly wrong for SRFs
+ * nested within expressions.  Use expression_returns_set() instead.
+ */
+#define IS_SRF_CALL(node) \
+	((IsA(node, FuncExpr) && ((FuncExpr *) (node))->funcretset) || \
+	 (IsA(node, OpExpr) && ((OpExpr *) (node))->opretset))
+
+/*
  * Data structures for split_pathtarget_at_srfs().  To preserve the identity
  * of sortgroupref items even if they are textually equal(), what we track is
  * not just bare expressions but expressions plus their sortgroupref indexes.
