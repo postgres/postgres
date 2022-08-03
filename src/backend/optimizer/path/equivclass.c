@@ -1002,7 +1002,7 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 		 * one are effectively checking properties of targetexpr, so there's
 		 * no point in asking whether some other EC member would be better.)
 		 */
-		if (IS_SRF_CALL((Node *) em->em_expr))
+		if (expression_returns_set((Node *) em->em_expr))
 			continue;
 
 		/*
@@ -1030,7 +1030,7 @@ find_em_expr_usable_for_sorting_rel(PlannerInfo *root, EquivalenceClass *ec,
 	 * member in this case; since SRFs can't appear in WHERE, they cannot
 	 * belong to multi-member ECs.)
 	 */
-	if (IS_SRF_CALL((Node *) em->em_expr))
+	if (expression_returns_set((Node *) em->em_expr))
 		return NULL;
 
 	return em->em_expr;
