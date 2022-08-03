@@ -24,11 +24,6 @@
 
 #include "nodes/parsenodes.h"
 
-/* Test if an expression node represents a SRF call.  Beware multiple eval! */
-#define IS_SRF_CALL(node) \
-	((IsA(node, FuncExpr) && ((FuncExpr *) (node))->funcretset) || \
-	 (IsA(node, OpExpr) && ((OpExpr *) (node))->opretset))
-
 /*
  * We don't want to include nodes/pathnodes.h here, because non-planner
  * code should generally treat PlannerInfo as an opaque typedef.

@@ -986,7 +986,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 		 * one are effectively checking properties of targetexpr, so there's
 		 * no point in asking whether some other EC member would be better.)
 		 */
-		if (IS_SRF_CALL((Node *) em->em_expr))
+		if (expression_returns_set((Node *) em->em_expr))
 			continue;
 
 		/*
@@ -1014,7 +1014,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 	 * member in this case; since SRFs can't appear in WHERE, they cannot
 	 * belong to multi-member ECs.)
 	 */
-	if (IS_SRF_CALL((Node *) em->em_expr))
+	if (expression_returns_set((Node *) em->em_expr))
 		return false;
 
 	return true;
