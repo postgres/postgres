@@ -519,4 +519,12 @@ extern char *wait_result_to_str(int exit_status);
 extern bool wait_result_is_signal(int exit_status, int signum);
 extern bool wait_result_is_any_signal(int exit_status, bool include_command_not_found);
 
+/*
+ * Interfaces that we assume all Unix system have.  We retain individual macros
+ * for better documentation.
+ */
+#ifndef WIN32
+#define HAVE_GETRLIMIT 1
+#endif
+
 #endif							/* PG_PORT_H */

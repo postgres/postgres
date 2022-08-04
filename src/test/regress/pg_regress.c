@@ -129,7 +129,7 @@ static void psql_end_command(StringInfo buf, const char *database);
 /*
  * allow core files if possible.
  */
-#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+#if defined(HAVE_GETRLIMIT)
 static void
 unlimit_core_size(void)
 {
@@ -2229,7 +2229,7 @@ regression_main(int argc, char *argv[],
 
 	initialize_environment();
 
-#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+#if defined(HAVE_GETRLIMIT)
 	unlimit_core_size();
 #endif
 

@@ -4770,7 +4770,7 @@ forbidden_in_wal_sender(char firstchar)
 long
 get_stack_depth_rlimit(void)
 {
-#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_STACK)
+#if defined(HAVE_GETRLIMIT)
 	static long val = 0;
 
 	/* This won't change after process launch, so check just once */
@@ -4789,13 +4789,9 @@ get_stack_depth_rlimit(void)
 			val = rlim.rlim_cur;
 	}
 	return val;
-#else							/* no getrlimit */
-#if defined(WIN32) || defined(__CYGWIN__)
+#else
 	/* On Windows we set the backend stack size in src/backend/Makefile */
 	return WIN32_STACK_RLIMIT;
-#else							/* not windows ... give up */
-	return -1;
-#endif
 #endif
 }
 

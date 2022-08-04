@@ -6662,11 +6662,7 @@ main(int argc, char **argv)
 					exit(1);
 				}
 #ifdef HAVE_GETRLIMIT
-#ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 				if (getrlimit(RLIMIT_NOFILE, &rlim) == -1)
-#else							/* but BSD doesn't ... */
-				if (getrlimit(RLIMIT_OFILE, &rlim) == -1)
-#endif							/* RLIMIT_NOFILE */
 					pg_fatal("getrlimit failed: %m");
 				if (rlim.rlim_cur < nclients + 3)
 				{

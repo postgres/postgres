@@ -895,11 +895,7 @@ count_usable_fds(int max_to_probe, int *usable_fds, int *already_open)
 	fd = (int *) palloc(size * sizeof(int));
 
 #ifdef HAVE_GETRLIMIT
-#ifdef RLIMIT_NOFILE			/* most platforms use RLIMIT_NOFILE */
 	getrlimit_status = getrlimit(RLIMIT_NOFILE, &rlim);
-#else							/* but BSD doesn't ... */
-	getrlimit_status = getrlimit(RLIMIT_OFILE, &rlim);
-#endif							/* RLIMIT_NOFILE */
 	if (getrlimit_status != 0)
 		ereport(WARNING, (errmsg("getrlimit failed: %m")));
 #endif							/* HAVE_GETRLIMIT */

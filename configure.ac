@@ -1797,7 +1797,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	fdatasync
 	getifaddrs
 	getpeerucred
-	getrlimit
 	inet_pton
 	kqueue
 	mbstowcs_l
