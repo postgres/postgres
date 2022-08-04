@@ -3646,6 +3646,23 @@ WHERE c <= 3;
      3 | sales     |   4800 | 3
 (8 rows)
 
+-- Ensure we get the correct run condition when the window function is both
+-- monotonically increasing and decreasing.
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          depname,
+          salary,
+          count(empno) OVER () c
+   FROM empsalary) emp
+WHERE c = 1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ WindowAgg
+   Run Condition: (count(empsalary.empno) OVER (?) = 1)
+   ->  Seq Scan on empsalary
+(3 rows)
+
 -- Some more complex cases with multiple window clauses
 EXPLAIN (COSTS OFF)
 SELECT * FROM

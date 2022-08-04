@@ -1150,6 +1150,17 @@ SELECT * FROM
    FROM empsalary) emp
 WHERE c <= 3;
 
+-- Ensure we get the correct run condition when the window function is both
+-- monotonically increasing and decreasing.
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          depname,
+          salary,
+          count(empno) OVER () c
+   FROM empsalary) emp
+WHERE c = 1;
+
 -- Some more complex cases with multiple window clauses
 EXPLAIN (COSTS OFF)
 SELECT * FROM

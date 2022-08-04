@@ -2306,6 +2306,7 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 			{
 				*keep_original = false;
 				runopexpr = opexpr;
+				runoperator = opexpr->opno;
 				break;
 			}
 
