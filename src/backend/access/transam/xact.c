@@ -3140,7 +3140,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were just issued a SAVEPOINT inside a transaction block.
+			 * The user issued a SAVEPOINT inside a transaction block.
 			 * Start a subtransaction.  (DefineSavepoint already did
 			 * PushTransaction, so as to have someplace to put the SUBBEGIN
 			 * state.)
@@ -3151,7 +3151,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a RELEASE command, so we end the current
+			 * The user issued a RELEASE command, so we end the current
 			 * subtransaction and return to the parent transaction. The parent
 			 * might be ended too, so repeat till we find an INPROGRESS
 			 * transaction or subtransaction.
@@ -3168,7 +3168,7 @@ CommitTransactionCommand(void)
 			break;
 
 			/*
-			 * We were issued a COMMIT, so we end the current subtransaction
+			 * The user issued a COMMIT, so we end the current subtransaction
 			 * hierarchy and perform final commit. We do this by rolling up
 			 * any subtransactions into their parent, which leads to O(N^2)
 			 * operations with respect to resource owners - this isn't that
