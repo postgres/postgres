@@ -402,7 +402,8 @@ extern float pg_strtof(const char *nptr, char **endptr);
 #define strtof(a,b) (pg_strtof((a),(b)))
 #endif
 
-#ifndef HAVE_LINK
+#ifdef WIN32
+/* src/port/win32link.c */
 extern int	link(const char *src, const char *dst);
 #endif
 

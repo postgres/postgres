@@ -334,9 +334,6 @@
 /* Define to 1 if you have the `zstd' library (-lzstd). */
 #undef HAVE_LIBZSTD
 
-/* Define to 1 if you have the `link' function. */
-#undef HAVE_LINK
-
 /* Define to 1 if the system has the type `locale_t'. */
 #undef HAVE_LOCALE_T
 

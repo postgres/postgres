@@ -1,20 +1,18 @@
 /*-------------------------------------------------------------------------
  *
- * link.c
+ * win32link.c
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  src/port/link.c
+ *	  src/port/win32link.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
-
-#ifdef WIN32
 
 int
 link(const char *src, const char *dst)
@@ -31,5 +29,3 @@ link(const char *src, const char *dst)
 	else
 		return 0;
 }
-
-#endif

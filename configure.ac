@@ -1877,7 +1877,6 @@ AC_REPLACE_FUNCS(m4_normalize([
 	getopt
 	getpeereid
 	inet_aton
-	link
 	mkdtemp
 	pread
 	pwrite
@@ -1957,6 +1956,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32dlopen)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
+  AC_LIBOBJ(win32link)
   AC_LIBOBJ(win32ntdll)
   AC_LIBOBJ(win32security)
   AC_LIBOBJ(win32setlocale)
