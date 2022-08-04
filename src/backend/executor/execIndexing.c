@@ -699,13 +699,19 @@ check_exclusion_or_unique_constraint(Relation heap, Relation index,
 	}
 
 	/*
-	 * If any of the input values are NULL, the constraint check is assumed to
-	 * pass (i.e., we assume the operators are strict).
+	 * If any of the input values are NULL, and the index uses the default
+	 * nulls-are-distinct mode, the constraint check is assumed to pass (i.e.,
+	 * we assume the operators are strict).  Otherwise, we interpret the
+	 * constraint as specifying IS NULL for each column whose input value is
+	 * NULL.
 	 */
-	for (i = 0; i < indnkeyatts; i++)
+	if (!indexInfo->ii_NullsNotDistinct)
 	{
-		if (isnull[i])
-			return true;
+		for (i = 0; i < indnkeyatts; i++)
+		{
+			if (isnull[i])
+				return true;
+		}
 	}
 
 	/*
@@ -717,7 +723,7 @@ check_exclusion_or_unique_constraint(Relation heap, Relation index,
 	for (i = 0; i < indnkeyatts; i++)
 	{
 		ScanKeyEntryInitialize(&scankeys[i],
-							   0,
+							   isnull[i] ? SK_ISNULL | SK_SEARCHNULL : 0,
 							   i + 1,
 							   constr_strats[i],
 							   InvalidOid,
