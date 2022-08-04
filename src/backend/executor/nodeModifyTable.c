@@ -956,9 +956,11 @@ ExecInsert(ModifyTableContext *context,
 			 *
 			 * We loop back here if we find a conflict below, either during
 			 * the pre-check, or when we re-check after inserting the tuple
-			 * speculatively.
+			 * speculatively.  Better allow interrupts in case some bug makes
+			 * this an infinite loop.
 			 */
 	vlock:
+			CHECK_FOR_INTERRUPTS();
 			specConflict = false;
 			if (!ExecCheckIndexConstraints(resultRelInfo, slot, estate,
 										   &conflictTid, arbiterIndexes))
