@@ -188,7 +188,7 @@ CreateDatabaseUsingWalLog(Oid src_dboid, Oid dst_dboid,
 
 		/*
 		 * If the relation is from the source db's default tablespace then we
-		 * need to create it in the destinations db's default tablespace.
+		 * need to create it in the destination db's default tablespace.
 		 * Otherwise, we need to create in the same tablespace as it is in the
 		 * source database.
 		 */
@@ -1351,8 +1351,8 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 	/*
 	 * If we're going to be reading data for the to-be-created database into
 	 * shared_buffers, take a lock on it. Nobody should know that this
-	 * database exists yet, but it's good to maintain the invariant that a
-	 * lock an AccessExclusiveLock on the database is sufficient to drop all
+	 * database exists yet, but it's good to maintain the invariant that an
+	 * AccessExclusiveLock on the database is sufficient to drop all
 	 * of its buffers without worrying about more being read later.
 	 *
 	 * Note that we need to do this before entering the

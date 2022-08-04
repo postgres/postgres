@@ -3284,7 +3284,6 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-
 		if (es->costs)
 			ExplainPropertyInteger("Planned Partitions", NULL,
 								   aggstate->hash_planned_partitions, es);

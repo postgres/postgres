@@ -262,7 +262,7 @@ typedef struct ReorderBufferTXN
 	 * aborted. This can be a
 	 * * plain commit record
 	 * * plain commit record, of a parent transaction
-	 * * prepared tansaction
+	 * * prepared transaction
 	 * * prepared transaction commit
 	 * * plain abort record
 	 * * prepared transaction abort
