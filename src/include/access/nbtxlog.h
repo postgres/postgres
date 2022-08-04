@@ -342,10 +342,14 @@ typedef struct xl_btree_newroot
  * prototypes for functions in nbtxlog.c
  */
 extern void btree_redo(XLogReaderState *record);
-extern void btree_desc(StringInfo buf, XLogReaderState *record);
-extern const char *btree_identify(uint8 info);
 extern void btree_xlog_startup(void);
 extern void btree_xlog_cleanup(void);
 extern void btree_mask(char *pagedata, BlockNumber blkno);
+
+/*
+ * prototypes for functions in nbtdesc.c
+ */
+extern void btree_desc(StringInfo buf, XLogReaderState *record);
+extern const char *btree_identify(uint8 info);
 
 #endif							/* NBTXLOG_H */
