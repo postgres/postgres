@@ -16728,32 +16728,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "pread" "ac_cv_func_pread"
-if test "x$ac_cv_func_pread" = xyes; then :
-  $as_echo "#define HAVE_PREAD 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" pread.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS pread.$ac_objext"
- ;;
-esac
-
-fi
-
-ac_fn_c_check_func "$LINENO" "pwrite" "ac_cv_func_pwrite"
-if test "x$ac_cv_func_pwrite" = xyes; then :
-  $as_echo "#define HAVE_PWRITE 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" pwrite.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS pwrite.$ac_objext"
- ;;
-esac
-
-fi
-
 ac_fn_c_check_func "$LINENO" "strlcat" "ac_cv_func_strlcat"
 if test "x$ac_cv_func_strlcat" = xyes; then :
   $as_echo "#define HAVE_STRLCAT 1" >>confdefs.h
@@ -17012,6 +16986,18 @@ esac
   case " $LIBOBJS " in
   *" win32ntdll.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS win32ntdll.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
+  *" win32pread.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32pread.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
+  *" win32pwrite.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32pwrite.$ac_objext"
  ;;
 esac
 

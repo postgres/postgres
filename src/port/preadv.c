@@ -30,7 +30,7 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 {
 #ifdef HAVE_READV
 	if (iovcnt == 1)
-		return pg_pread(fd, iov[0].iov_base, iov[0].iov_len, offset);
+		return pread(fd, iov[0].iov_base, iov[0].iov_len, offset);
 	if (lseek(fd, offset, SEEK_SET) < 0)
 		return -1;
 	return readv(fd, iov, iovcnt);
@@ -40,7 +40,7 @@ pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 
 	for (int i = 0; i < iovcnt; ++i)
 	{
-		part = pg_pread(fd, iov[i].iov_base, iov[i].iov_len, offset);
+		part = pread(fd, iov[i].iov_base, iov[i].iov_len, offset);
 		if (part < 0)
 		{
 			if (i == 0)

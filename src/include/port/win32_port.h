@@ -562,4 +562,10 @@ typedef unsigned short mode_t;
 #define HAVE_BUGGY_STRTOF 1
 #endif
 
+/* in port/win32pread.c */
+extern ssize_t pread(int fd, void *buf, size_t nbyte, off_t offset);
+
+/* in port/win32pwrite.c */
+extern ssize_t pwrite(int fd, const void *buf, size_t nbyte, off_t offset);
+
 #endif							/* PG_WIN32_PORT_H */

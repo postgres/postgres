@@ -375,11 +375,11 @@ extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
 
 /*
  * Error information from WALRead that both backend and frontend caller can
- * process.  Currently only errors from pg_pread can be reported.
+ * process.  Currently only errors from pread can be reported.
  */
 typedef struct WALReadError
 {
-	int			wre_errno;		/* errno set by the last pg_pread() */
+	int			wre_errno;		/* errno set by the last pread() */
 	int			wre_off;		/* Offset we tried to read from. */
 	int			wre_req;		/* Bytes requested to be read. */
 	int			wre_read;		/* Bytes read by the last read(). */

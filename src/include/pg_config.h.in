@@ -388,9 +388,6 @@
 /* Define to 1 if you have the `ppoll' function. */
 #undef HAVE_PPOLL
 
-/* Define to 1 if you have the `pread' function. */
-#undef HAVE_PREAD
-
 /* Define to 1 if the PS_STRINGS thing exists. */
 #undef HAVE_PS_STRINGS
 
@@ -405,9 +402,6 @@
 
 /* Have PTHREAD_PRIO_INHERIT. */
 #undef HAVE_PTHREAD_PRIO_INHERIT
-
-/* Define to 1 if you have the `pwrite' function. */
-#undef HAVE_PWRITE
 
 /* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H

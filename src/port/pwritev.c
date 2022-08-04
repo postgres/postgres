@@ -30,7 +30,7 @@ pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 {
 #ifdef HAVE_WRITEV
 	if (iovcnt == 1)
-		return pg_pwrite(fd, iov[0].iov_base, iov[0].iov_len, offset);
+		return pwrite(fd, iov[0].iov_base, iov[0].iov_len, offset);
 	if (lseek(fd, offset, SEEK_SET) < 0)
 		return -1;
 	return writev(fd, iov, iovcnt);
@@ -40,7 +40,7 @@ pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 
 	for (int i = 0; i < iovcnt; ++i)
 	{
-		part = pg_pwrite(fd, iov[i].iov_base, iov[i].iov_len, offset);
+		part = pwrite(fd, iov[i].iov_base, iov[i].iov_len, offset);
 		if (part < 0)
 		{
 			if (i == 0)
