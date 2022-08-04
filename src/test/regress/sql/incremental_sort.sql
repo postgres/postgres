@@ -281,5 +281,3 @@ from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub;
 explain (costs off) select sub.unique1, stringu1 || random()::text
 from tenk1, lateral (select tenk1.unique1 from generate_series(1, 1000)) as sub
 order by 1, 2;
--- Disallow pushing down sort when pathkey is an SRF.
-explain (costs off) select unique1 from tenk1 order by unnest('{1,2}'::int[]);
