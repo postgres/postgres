@@ -2763,12 +2763,8 @@ main(int argc, char **argv)
 						   PQserverVersion(conn) < MINIMUM_VERSION_FOR_PG_WAL ?
 						   "pg_xlog" : "pg_wal");
 
-#ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, linkloc) != 0)
 			pg_fatal("could not create symbolic link \"%s\": %m", linkloc);
-#else
-		pg_fatal("symlinks are not supported on this platform");
-#endif
 		free(linkloc);
 	}
 

@@ -16039,7 +16039,7 @@ fi
 LIBS_including_readline="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred inet_pton kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pthread_is_threaded_np readlink readv setproctitle setproctitle_fast strchrnul strsignal symlink syncfs sync_file_range uselocale wcstombs_l writev
+for ac_func in backtrace_symbols clock_gettime copyfile fdatasync getifaddrs getpeerucred inet_pton kqueue mbstowcs_l memset_s poll posix_fallocate ppoll pthread_is_threaded_np readv setproctitle setproctitle_fast strchrnul strsignal syncfs sync_file_range uselocale wcstombs_l writev
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -17082,9 +17082,6 @@ esac
   *) LIBOBJS="$LIBOBJS win32stat.$ac_objext"
  ;;
 esac
-
-
-$as_echo "#define HAVE_SYMLINK 1" >>confdefs.h
 
   ac_fn_c_check_type "$LINENO" "MINIDUMP_TYPE" "ac_cv_type_MINIDUMP_TYPE" "
 #define WIN32_LEAN_AND_MEAN

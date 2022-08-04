@@ -1330,7 +1330,6 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 #endif
 			)
 		{
-#if defined(HAVE_READLINK) || defined(WIN32)
 			char		linkpath[MAXPGPATH];
 			int			rllen;
 
@@ -1349,18 +1348,6 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 
 			size += _tarWriteHeader(sink, pathbuf + basepathlen + 1, linkpath,
 									&statbuf, sizeonly);
-#else
-
-			/*
-			 * If the platform does not have symbolic links, it should not be
-			 * possible to have tablespaces - clearly somebody else created
-			 * them. Warn about it and ignore.
-			 */
-			ereport(WARNING,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("tablespaces are not supported on this platform")));
-			continue;
-#endif							/* HAVE_READLINK */
 		}
 		else if (S_ISDIR(statbuf.st_mode))
 		{

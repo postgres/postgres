@@ -250,6 +250,10 @@ find_my_exec(const char *argv0, char *retpath)
  * Note: we are not particularly tense about producing nice error messages
  * because we are not really expecting error here; we just determined that
  * the symlink does point to a valid executable.
+ *
+ * Here we test HAVE_READLINK, which excludes Windows.  There's no point in
+ * using our junction point-based replacement code for this, because that only
+ * works for directories.
  */
 static int
 resolve_symlinks(char *path)

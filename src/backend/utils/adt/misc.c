@@ -302,8 +302,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 		tablespaceOid == GLOBALTABLESPACE_OID)
 		PG_RETURN_TEXT_P(cstring_to_text(""));
 
-#if defined(HAVE_READLINK) || defined(WIN32)
-
 	/*
 	 * Find the location of the tablespace by reading the symbolic link that
 	 * is in pg_tblspc/<oid>.
@@ -349,12 +347,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	targetpath[rllen] = '\0';
 
 	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("tablespaces are not supported on this platform")));
-	PG_RETURN_NULL();
-#endif
 }
 
 /*

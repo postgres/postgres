@@ -1805,13 +1805,11 @@ AC_CHECK_FUNCS(m4_normalize([
 	posix_fallocate
 	ppoll
 	pthread_is_threaded_np
-	readlink
 	readv
 	setproctitle
 	setproctitle_fast
 	strchrnul
 	strsignal
-	symlink
 	syncfs
 	sync_file_range
 	uselocale
@@ -1963,8 +1961,6 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32security)
   AC_LIBOBJ(win32setlocale)
   AC_LIBOBJ(win32stat)
-  AC_DEFINE([HAVE_SYMLINK], 1,
-            [Define to 1 if you have the `symlink' function.])
   AC_CHECK_TYPES(MINIDUMP_TYPE, [pgac_minidump_type=yes], [pgac_minidump_type=no], [
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

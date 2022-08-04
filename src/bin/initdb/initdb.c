@@ -2646,13 +2646,9 @@ create_xlog_or_symlink(void)
 				pg_fatal("could not access directory \"%s\": %m", xlog_dir);
 		}
 
-#ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, subdirloc) != 0)
 			pg_fatal("could not create symbolic link \"%s\": %m",
 					 subdirloc);
-#else
-		pg_fatal("symlinks are not supported on this platform");
-#endif
 	}
 	else
 	{

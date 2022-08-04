@@ -522,11 +522,19 @@ extern bool wait_result_is_any_signal(int exit_status, bool include_command_not_
 /*
  * Interfaces that we assume all Unix system have.  We retain individual macros
  * for better documentation.
+ *
+ * For symlink-related functions, there is often no need to test these macros,
+ * because we provided basic support on Windows that can work with absolute
+ * paths to directories.  Code that wants to test for complete symlink support
+ * (including relative paths and non-directories) should be conditional on
+ * HAVE_READLINK or HAVE_SYMLINK.
  */
 #ifndef WIN32
 #define HAVE_GETRLIMIT 1
+#define HAVE_READLINK 1
 #define HAVE_SETSID 1
 #define HAVE_SHM_OPEN 1
+#define HAVE_SYMLINK 1
 #endif
 
 #endif							/* PG_PORT_H */
