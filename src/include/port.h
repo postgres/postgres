@@ -455,29 +455,6 @@ extern int	setenv(const char *name, const char *value, int overwrite);
 extern int	unsetenv(const char *name);
 #endif
 
-#ifndef HAVE_DLOPEN
-extern void *dlopen(const char *file, int mode);
-extern void *dlsym(void *handle, const char *symbol);
-extern int	dlclose(void *handle);
-extern char *dlerror(void);
-#endif
-
-/*
- * In some older systems, the RTLD_NOW flag isn't defined and the mode
- * argument to dlopen must always be 1.
- */
-#if !HAVE_DECL_RTLD_NOW
-#define RTLD_NOW 1
-#endif
-
-/*
- * The RTLD_GLOBAL flag is wanted if available, but it doesn't exist
- * everywhere.  If it doesn't exist, set it to 0 so it has no effect.
- */
-#if !HAVE_DECL_RTLD_GLOBAL
-#define RTLD_GLOBAL 0
-#endif
-
 /* thread.c */
 #ifndef WIN32
 extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);

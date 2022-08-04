@@ -1858,8 +1858,6 @@ AC_CHECK_DECLS([pwritev], [], [AC_LIBOBJ(pwritev)], [#include <sys/uio.h>])
 # This is probably only present on macOS, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
-AC_CHECK_DECLS([RTLD_GLOBAL, RTLD_NOW], [], [], [#include <dlfcn.h>])
-
 AC_CHECK_TYPE([struct sockaddr_in6],
         [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])],
         [],
@@ -1880,7 +1878,6 @@ if test "$pgac_cv_var_PS_STRINGS" = yes ; then
 fi
 
 AC_REPLACE_FUNCS(m4_normalize([
-	dlopen
 	explicit_bzero
 	getopt
 	getpeereid
@@ -1962,6 +1959,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
   AC_LIBOBJ(system)
+  AC_LIBOBJ(win32dlopen)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
   AC_LIBOBJ(win32ntdll)

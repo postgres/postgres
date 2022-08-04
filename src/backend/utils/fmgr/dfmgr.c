@@ -16,7 +16,7 @@
 
 #include <sys/stat.h>
 
-#ifdef HAVE_DLOPEN
+#ifndef WIN32
 #include <dlfcn.h>
 
 /*
@@ -28,7 +28,7 @@
 #undef bool
 #endif
 #endif
-#endif							/* HAVE_DLOPEN */
+#endif							/* !WIN32 */
 
 #include "fmgr.h"
 #include "lib/stringinfo.h"

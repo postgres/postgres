@@ -16618,30 +16618,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-ac_fn_c_check_decl "$LINENO" "RTLD_GLOBAL" "ac_cv_have_decl_RTLD_GLOBAL" "#include <dlfcn.h>
-"
-if test "x$ac_cv_have_decl_RTLD_GLOBAL" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_RTLD_GLOBAL $ac_have_decl
-_ACEOF
-ac_fn_c_check_decl "$LINENO" "RTLD_NOW" "ac_cv_have_decl_RTLD_NOW" "#include <dlfcn.h>
-"
-if test "x$ac_cv_have_decl_RTLD_NOW" = xyes; then :
-  ac_have_decl=1
-else
-  ac_have_decl=0
-fi
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_DECL_RTLD_NOW $ac_have_decl
-_ACEOF
-
-
 ac_fn_c_check_type "$LINENO" "struct sockaddr_in6" "ac_cv_type_struct_sockaddr_in6" "$ac_includes_default
 #include <netinet/in.h>
 "
@@ -16684,19 +16660,6 @@ $as_echo "$pgac_cv_var_PS_STRINGS" >&6; }
 if test "$pgac_cv_var_PS_STRINGS" = yes ; then
 
 $as_echo "#define HAVE_PS_STRINGS 1" >>confdefs.h
-
-fi
-
-ac_fn_c_check_func "$LINENO" "dlopen" "ac_cv_func_dlopen"
-if test "x$ac_cv_func_dlopen" = xyes; then :
-  $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" dlopen.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS dlopen.$ac_objext"
- ;;
-esac
 
 fi
 
@@ -17075,6 +17038,12 @@ esac
   case " $LIBOBJS " in
   *" system.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS system.$ac_objext"
+ ;;
+esac
+
+  case " $LIBOBJS " in
+  *" win32dlopen.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS win32dlopen.$ac_objext"
  ;;
 esac
 

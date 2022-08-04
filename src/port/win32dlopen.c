@@ -1,21 +1,19 @@
 /*-------------------------------------------------------------------------
  *
- * dlopen.c
- *	  dynamic loader for platforms without dlopen()
+ * win32dlopen.c
+ *	  dynamic loader for Windows
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  src/port/dlopen.c
+ *	  src/port/win32dlopen.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
-
-#if defined(WIN32)
 
 static char last_dyn_error[512];
 
@@ -93,5 +91,3 @@ dlopen(const char *file, int mode)
 	last_dyn_error[0] = 0;
 	return (void *) h;
 }
-
-#endif
