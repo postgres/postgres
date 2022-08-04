@@ -1803,7 +1803,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	posix_fallocate
 	ppoll
 	pthread_is_threaded_np
-	readv
 	setproctitle
 	setproctitle_fast
 	strchrnul
@@ -1812,7 +1811,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	sync_file_range
 	uselocale
 	wcstombs_l
-	writev
 ]))
 
 # These typically are compiler builtins, for which AC_CHECK_FUNCS fails.

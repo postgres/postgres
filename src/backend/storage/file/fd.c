@@ -3762,7 +3762,7 @@ data_sync_elevel(int elevel)
 }
 
 /*
- * A convenience wrapper for pg_pwritev() that retries on partial write.  If an
+ * A convenience wrapper for pwritev() that retries on partial write.  If an
  * error is returned, it is unspecified how much has been written.
  */
 ssize_t
@@ -3782,7 +3782,7 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 	for (;;)
 	{
 		/* Write as much as we can. */
-		part = pg_pwritev(fd, iov, iovcnt, offset);
+		part = pwritev(fd, iov, iovcnt, offset);
 		if (part < 0)
 			return -1;
 

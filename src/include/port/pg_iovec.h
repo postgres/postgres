@@ -39,16 +39,12 @@ struct iovec
 /* Define a reasonable maximum that is safe to use on the stack. */
 #define PG_IOV_MAX Min(IOV_MAX, 32)
 
-#if HAVE_DECL_PREADV
-#define pg_preadv preadv
-#else
-extern ssize_t pg_preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
+#if !HAVE_DECL_PREADV
+extern ssize_t preadv(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 #endif
 
-#if HAVE_DECL_PWRITEV
-#define pg_pwritev pwritev
-#else
-extern ssize_t pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
+#if !HAVE_DECL_PWRITEV
+extern ssize_t pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset);
 #endif
 
 #endif							/* PG_IOVEC_H */
