@@ -448,14 +448,6 @@ extern size_t strlcpy(char *dst, const char *src, size_t siz);
 extern size_t strnlen(const char *str, size_t maxlen);
 #endif
 
-#ifndef HAVE_SETENV
-extern int	setenv(const char *name, const char *value, int overwrite);
-#endif
-
-#ifndef HAVE_UNSETENV
-extern int	unsetenv(const char *name);
-#endif
-
 /* thread.c */
 #ifndef WIN32
 extern bool pg_get_user_name(uid_t user_id, char *buffer, size_t buflen);

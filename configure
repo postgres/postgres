@@ -16841,49 +16841,6 @@ esac
 $as_echo "$as_me: On $host_os we will use our strtof wrapper." >&6;}
 fi
 
-case $host_os in
-        # Windows uses a specialised env handler
-        mingw*)
-
-$as_echo "#define HAVE_SETENV 1" >>confdefs.h
-
-
-$as_echo "#define HAVE_UNSETENV 1" >>confdefs.h
-
-                ac_cv_func_setenv=yes
-                ac_cv_func_unsetenv=yes
-                ;;
-        *)
-                ac_fn_c_check_func "$LINENO" "setenv" "ac_cv_func_setenv"
-if test "x$ac_cv_func_setenv" = xyes; then :
-  $as_echo "#define HAVE_SETENV 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" setenv.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS setenv.$ac_objext"
- ;;
-esac
-
-fi
-
-ac_fn_c_check_func "$LINENO" "unsetenv" "ac_cv_func_unsetenv"
-if test "x$ac_cv_func_unsetenv" = xyes; then :
-  $as_echo "#define HAVE_UNSETENV 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" unsetenv.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS unsetenv.$ac_objext"
- ;;
-esac
-
-fi
-
-
-                ;;
-esac
-
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
 # We use only our own getaddrinfo.c on Windows, but it's time to revisit that.

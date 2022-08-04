@@ -1898,19 +1898,6 @@ if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	AC_MSG_NOTICE([On $host_os we will use our strtof wrapper.])
 fi
 
-case $host_os in
-        # Windows uses a specialised env handler
-        mingw*)
-                AC_DEFINE(HAVE_SETENV, 1, [Define to 1 because replacement version used.])
-                AC_DEFINE(HAVE_UNSETENV, 1, [Define to 1 because replacement version used.])
-                ac_cv_func_setenv=yes
-                ac_cv_func_unsetenv=yes
-                ;;
-        *)
-                AC_REPLACE_FUNCS([setenv unsetenv])
-                ;;
-esac
-
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
 # We use only our own getaddrinfo.c on Windows, but it's time to revisit that.
