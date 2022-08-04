@@ -469,9 +469,6 @@
 /* Define to 1 if you have the `setproctitle_fast' function. */
 #undef HAVE_SETPROCTITLE_FAST
 
-/* Define to 1 if you have the `setsid' function. */
-#undef HAVE_SETSID
-
 /* Define to 1 if the system has the type `socklen_t'. */
 #undef HAVE_SOCKLEN_T
 
