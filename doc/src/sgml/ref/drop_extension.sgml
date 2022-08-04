@@ -32,7 +32,8 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
    <command>DROP EXTENSION</command> removes extensions from the database.
    Dropping an extension causes its component objects, and other explicitly
    dependent routines (see <xref linkend="sql-alterroutine"/>,
-   the depends on extension action), to be dropped as well.
+   the <literal>DEPENDS ON EXTENSION <replaceable>extension_name</replaceable>
+   </literal> action), to be dropped as well.
   </para>
 
   <para>
