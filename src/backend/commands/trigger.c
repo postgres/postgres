@@ -1806,14 +1806,16 @@ renametrig(RenameStmt *stmt)
  *			   enablement/disablement, this also defines when the trigger
  *			   should be fired in session replication roles.
  * skip_system: if true, skip "system" triggers (constraint triggers)
+ * recurse: if true, recurse to partitions
  *
  * Caller should have checked permissions for the table; here we also
  * enforce that superuser privilege is required to alter the state of
  * system triggers
  */
 void
-EnableDisableTrigger(Relation rel, const char *tgname,
-					 char fires_when, bool skip_system, LOCKMODE lockmode)
+EnableDisableTriggerNew(Relation rel, const char *tgname,
+						char fires_when, bool skip_system, bool recurse,
+						LOCKMODE lockmode)
 {
 	Relation	tgrel;
 	int			nkeys;
@@ -1879,6 +1881,34 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 			changed = true;
 		}
 
+		/*
+		 * When altering FOR EACH ROW triggers on a partitioned table, do the
+		 * same on the partitions as well, unless ONLY is specified.
+		 *
+		 * Note that we recurse even if we didn't change the trigger above,
+		 * because the partitions' copy of the trigger may have a different
+		 * value of tgenabled than the parent's trigger and thus might need to
+		 * be changed.
+		 */
+		if (recurse &&
+			rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE &&
+			(TRIGGER_FOR_ROW(oldtrig->tgtype)))
+		{
+			PartitionDesc partdesc = RelationGetPartitionDesc(rel);
+			int			i;
+
+			for (i = 0; i < partdesc->nparts; i++)
+			{
+				Relation	part;
+
+				part = relation_open(partdesc->oids[i], lockmode);
+				EnableDisableTriggerNew(part, NameStr(oldtrig->tgname),
+										fires_when, skip_system, recurse,
+										lockmode);
+				table_close(part, NoLock);	/* keep lock till commit */
+			}
+		}
+
 		InvokeObjectPostAlterHook(TriggerRelationId,
 								  oldtrig->oid, 0);
 	}
@@ -1900,6 +1930,19 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 	 */
 	if (changed)
 		CacheInvalidateRelcache(rel);
+}
+
+/*
+ * ABI-compatible wrapper for the above.  To keep as close possible to the old
+ * behavior, this never recurses.  Do not call this function in new code.
+ */
+void
+EnableDisableTrigger(Relation rel, const char *tgname,
+					 char fires_when, bool skip_system,
+					 LOCKMODE lockmode)
+{
+	EnableDisableTriggerNew(rel, tgname, fires_when, skip_system,
+							true, lockmode);
 }
 
 
