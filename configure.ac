@@ -1452,7 +1452,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	ifaddrs.h
 	langinfo.h
 	mbarrier.h
-	poll.h
 	sys/epoll.h
 	sys/event.h
 	sys/ipc.h
@@ -1801,7 +1800,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	kqueue
 	mbstowcs_l
 	memset_s
-	poll
 	posix_fallocate
 	ppoll
 	pthread_is_threaded_np

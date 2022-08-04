@@ -320,8 +320,6 @@ sub GenerateFiles
 		HAVE_OPENSSL_INIT_SSL       => undef,
 		HAVE_OSSP_UUID_H            => undef,
 		HAVE_PAM_PAM_APPL_H         => undef,
-		HAVE_POLL                   => undef,
-		HAVE_POLL_H                 => undef,
 		HAVE_POSIX_FADVISE          => undef,
 		HAVE_POSIX_FALLOCATE        => undef,
 		HAVE_PPC_LWARX_MUTEX_HINT   => undef,
