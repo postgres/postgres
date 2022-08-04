@@ -75,7 +75,7 @@
    summarized will cause the summary information to be updated with data
    from the new tuples.
    When a new page is created that does not fall within the last
-   summarized range, the range that the new page belongs into
+   summarized range, the range that the new page belongs to
    does not automatically acquire a summary tuple;
    those tuples remain unsummarized until a summarization run is
    invoked later, creating the initial summary for that range.

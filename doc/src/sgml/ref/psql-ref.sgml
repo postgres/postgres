@@ -2864,7 +2864,7 @@ lo_import 152801
           </para>
 
           <para>
-           <literal>page</literal>: truncate the the header line at the terminal
+           <literal>page</literal>: truncate the header line at the terminal
            width.
           </para>
 

@@ -81,8 +81,8 @@ DROP EXTENSION [ IF EXISTS ] <replaceable class="parameter">name</replaceable> [
     <listitem>
      <para>
       This option prevents the specified extensions from being dropped
-      if there exists non-extension-member objects that depends on any
-      the extensions.  This is the default.
+      if there exist non-extension-member objects that depend on any
+      of the extensions.  This is the default.
      </para>
     </listitem>
    </varlistentry>
