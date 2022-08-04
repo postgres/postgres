@@ -351,7 +351,6 @@ sub GenerateFiles
 		HAVE_SETPROCTITLE                        => undef,
 		HAVE_SETPROCTITLE_FAST                   => undef,
 		HAVE_SETSID                              => undef,
-		HAVE_SHM_OPEN                            => undef,
 		HAVE_SOCKLEN_T                           => 1,
 		HAVE_SPINLOCKS                           => 1,
 		HAVE_STDBOOL_H                           => 1,

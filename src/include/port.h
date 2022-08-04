@@ -525,6 +525,7 @@ extern bool wait_result_is_any_signal(int exit_status, bool include_command_not_
  */
 #ifndef WIN32
 #define HAVE_GETRLIMIT 1
+#define HAVE_SHM_OPEN 1
 #endif
 
 #endif							/* PG_PORT_H */

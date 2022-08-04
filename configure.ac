@@ -1810,7 +1810,6 @@ AC_CHECK_FUNCS(m4_normalize([
 	setproctitle
 	setproctitle_fast
 	setsid
-	shm_open
 	strchrnul
 	strsignal
 	symlink
