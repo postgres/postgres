@@ -580,7 +580,8 @@ static void ATExecSetRelOptions(Relation rel, List *defList,
 								AlterTableType operation,
 								LOCKMODE lockmode);
 static void ATExecEnableDisableTrigger(Relation rel, const char *trigname,
-									   char fires_when, bool skip_system, LOCKMODE lockmode);
+									   char fires_when, bool skip_system, bool recurse,
+									   LOCKMODE lockmode);
 static void ATExecEnableDisableRule(Relation rel, const char *rulename,
 									char fires_when, LOCKMODE lockmode);
 static void ATPrepAddInherit(Relation child_rel);
@@ -4057,15 +4058,19 @@ AlterTableLookupRelation(AlterTableStmt *stmt, LOCKMODE lockmode)
  * be done in this phase.  Generally, this phase acquires table locks,
  * checks permissions and relkind, and recurses to find child tables.
  *
- * ATRewriteCatalogs performs phase 2 for each affected table.  (Note that
- * phases 2 and 3 normally do no explicit recursion, since phase 1 already
- * did it --- although some subcommands have to recurse in phase 2 instead.)
+ * ATRewriteCatalogs performs phase 2 for each affected table.
  * Certain subcommands need to be performed before others to avoid
  * unnecessary conflicts; for example, DROP COLUMN should come before
  * ADD COLUMN.  Therefore phase 1 divides the subcommands into multiple
  * lists, one for each logical "pass" of phase 2.
  *
  * ATRewriteTables performs phase 3 for those tables that need it.
+ *
+ * For most subcommand types, phases 2 and 3 do no explicit recursion,
+ * since phase 1 already does it.  However, for certain subcommand types
+ * it is only possible to determine how to recurse at phase 2 time; for
+ * those cases, phase 1 sets the cmd->recurse flag (or, in some older coding,
+ * changes the command subtype of a "Recurse" variant XXX to be cleaned up.)
  *
  * Thanks to the magic of MVCC, an error anywhere along the way rolls back
  * the whole operation; we don't have to do anything special to clean up.
@@ -4487,10 +4492,10 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 				errhint("Use ALTER TABLE ... DETACH PARTITION ... FINALIZE to complete the pending detach operation."));
 
 	/*
-	 * Copy the original subcommand for each table.  This avoids conflicts
-	 * when different child tables need to make different parse
-	 * transformations (for example, the same column may have different column
-	 * numbers in different children).
+	 * Copy the original subcommand for each table, so we can scribble on it.
+	 * This avoids conflicts when different child tables need to make
+	 * different parse transformations (for example, the same column may have
+	 * different column numbers in different children).
 	 */
 	cmd = copyObject(cmd);
 
@@ -4777,8 +4782,9 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
 			ATSimplePermissions(cmd->subtype, rel, ATT_TABLE | ATT_FOREIGN_TABLE);
-			if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-				ATSimpleRecursion(wqueue, rel, cmd, recurse, lockmode, context);
+			/* Set up recursion for phase 2; no other prep needed */
+			if (recurse)
+				cmd->recurse = true;
 			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableRule:		/* ENABLE/DISABLE RULE variants */
@@ -5119,35 +5125,51 @@ ATExecCmd(List **wqueue, AlteredTableInfo *tab,
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
+									   TRIGGER_FIRES_ON_ORIGIN, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_EnableAlwaysTrig:	/* ENABLE ALWAYS TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_FIRES_ALWAYS, false, lockmode);
+									   TRIGGER_FIRES_ALWAYS, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_EnableReplicaTrig:	/* ENABLE REPLICA TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_FIRES_ON_REPLICA, false, lockmode);
+									   TRIGGER_FIRES_ON_REPLICA, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_DisableTrig:	/* DISABLE TRIGGER name */
 			ATExecEnableDisableTrigger(rel, cmd->name,
-									   TRIGGER_DISABLED, false, lockmode);
+									   TRIGGER_DISABLED, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_EnableTrigAll:	/* ENABLE TRIGGER ALL */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_FIRES_ON_ORIGIN, false, lockmode);
+									   TRIGGER_FIRES_ON_ORIGIN, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_DisableTrigAll: /* DISABLE TRIGGER ALL */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_DISABLED, false, lockmode);
+									   TRIGGER_DISABLED, false,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_EnableTrigUser: /* ENABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_FIRES_ON_ORIGIN, true, lockmode);
+									   TRIGGER_FIRES_ON_ORIGIN, true,
+									   cmd->recurse,
+									   lockmode);
 			break;
 		case AT_DisableTrigUser:	/* DISABLE TRIGGER USER */
 			ATExecEnableDisableTrigger(rel, NULL,
-									   TRIGGER_DISABLED, true, lockmode);
+									   TRIGGER_DISABLED, true,
+									   cmd->recurse,
+									   lockmode);
 			break;
 
 		case AT_EnableRule:		/* ENABLE RULE name */
@@ -14660,9 +14682,11 @@ index_copy_data(Relation rel, RelFileLocator newrlocator)
  */
 static void
 ATExecEnableDisableTrigger(Relation rel, const char *trigname,
-						   char fires_when, bool skip_system, LOCKMODE lockmode)
+						   char fires_when, bool skip_system, bool recurse,
+						   LOCKMODE lockmode)
 {
-	EnableDisableTrigger(rel, trigname, fires_when, skip_system, lockmode);
+	EnableDisableTrigger(rel, trigname, fires_when, skip_system, recurse,
+						 lockmode);
 }
 
 /*

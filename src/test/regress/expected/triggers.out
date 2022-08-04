@@ -2681,24 +2681,42 @@ create table parent (a int) partition by list (a);
 create table child1 partition of parent for values in (1);
 create trigger tg after insert on parent
   for each row execute procedure trig_nothing();
+create trigger tg_stmt after insert on parent
+  for statement execute procedure trig_nothing();
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text;
- tgrelid | tgname | tgenabled 
----------+--------+-----------
- child1  | tg     | O
- parent  | tg     | O
-(2 rows)
+ tgrelid | tgname  | tgenabled 
+---------+---------+-----------
+ child1  | tg      | O
+ parent  | tg      | O
+ parent  | tg_stmt | O
+(3 rows)
 
-alter table only parent enable always trigger tg;
+alter table only parent enable always trigger tg;	-- no recursion because ONLY
+alter table parent enable always trigger tg_stmt;	-- no recursion because statement trigger
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text;
- tgrelid | tgname | tgenabled 
----------+--------+-----------
- child1  | tg     | O
- parent  | tg     | A
-(2 rows)
+ tgrelid | tgname  | tgenabled 
+---------+---------+-----------
+ child1  | tg      | O
+ parent  | tg      | A
+ parent  | tg_stmt | A
+(3 rows)
+
+-- The following is a no-op for the parent trigger but not so
+-- for the child trigger, so recursion should be applied.
+alter table parent enable always trigger tg;
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+ tgrelid | tgname  | tgenabled 
+---------+---------+-----------
+ child1  | tg      | A
+ parent  | tg      | A
+ parent  | tg_stmt | A
+(3 rows)
 
 drop table parent, child1;
 -- Verify that firing state propagates correctly on creation, too

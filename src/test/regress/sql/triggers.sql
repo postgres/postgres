@@ -1865,10 +1865,19 @@ create table parent (a int) partition by list (a);
 create table child1 partition of parent for values in (1);
 create trigger tg after insert on parent
   for each row execute procedure trig_nothing();
+create trigger tg_stmt after insert on parent
+  for statement execute procedure trig_nothing();
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text;
-alter table only parent enable always trigger tg;
+alter table only parent enable always trigger tg;	-- no recursion because ONLY
+alter table parent enable always trigger tg_stmt;	-- no recursion because statement trigger
+select tgrelid::regclass, tgname, tgenabled from pg_trigger
+  where tgrelid in ('parent'::regclass, 'child1'::regclass)
+  order by tgrelid::regclass::text;
+-- The following is a no-op for the parent trigger but not so
+-- for the child trigger, so recursion should be applied.
+alter table parent enable always trigger tg;
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
   order by tgrelid::regclass::text;
