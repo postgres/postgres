@@ -1672,15 +1672,3 @@ order by 1, 2;
                ->  Function Scan on generate_series
 (7 rows)
 
--- Disallow pushing down sort when pathkey is an SRF.
-explain (costs off) select unique1 from tenk1 order by unnest('{1,2}'::int[]);
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Sort
-   Sort Key: (unnest('{1,2}'::integer[]))
-   ->  Gather
-         Workers Planned: 2
-         ->  ProjectSet
-               ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
-(6 rows)
-
