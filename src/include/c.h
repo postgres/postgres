@@ -1294,35 +1294,6 @@ typedef union PGAlignedXLogBlock
 extern int	fdatasync(int fildes);
 #endif
 
-/* Older platforms may provide strto[u]ll functionality under other names */
-#if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
-#define strtoll __strtoll
-#define HAVE_STRTOLL 1
-#endif
-
-#if !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
-#define strtoll strtoq
-#define HAVE_STRTOLL 1
-#endif
-
-#if !defined(HAVE_STRTOULL) && defined(HAVE___STRTOULL)
-#define strtoull __strtoull
-#define HAVE_STRTOULL 1
-#endif
-
-#if !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
-#define strtoull strtouq
-#define HAVE_STRTOULL 1
-#endif
-
-#if defined(HAVE_STRTOLL) && !HAVE_DECL_STRTOLL
-extern long long strtoll(const char *str, char **endptr, int base);
-#endif
-
-#if defined(HAVE_STRTOULL) && !HAVE_DECL_STRTOULL
-extern unsigned long long strtoull(const char *str, char **endptr, int base);
-#endif
-
 /*
  * Thin wrappers that convert strings to exactly 64-bit integers, matching our
  * definition of int64.  (For the naming, compare that POSIX has

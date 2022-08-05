@@ -1981,11 +1981,6 @@ if test x"$pgac_cv_var_int_optreset" = x"yes"; then
   AC_DEFINE(HAVE_INT_OPTRESET, 1, [Define to 1 if you have the global variable 'int optreset'.])
 fi
 
-AC_CHECK_FUNCS([strtoll __strtoll strtoq], [break])
-AC_CHECK_FUNCS([strtoull __strtoull strtouq], [break])
-# strto[u]ll may exist but not be declared
-AC_CHECK_DECLS([strtoll, strtoull])
-
 if test "$with_icu" = yes; then
   ac_save_CPPFLAGS=$CPPFLAGS
   CPPFLAGS="$ICU_CFLAGS $CPPFLAGS"

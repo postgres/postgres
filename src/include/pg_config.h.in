@@ -150,14 +150,6 @@
    don't. */
 #undef HAVE_DECL_STRNLEN
 
-/* Define to 1 if you have the declaration of `strtoll', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRTOLL
-
-/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRTOULL
-
 /* Define to 1 if you have the <editline/history.h> header file. */
 #undef HAVE_EDITLINE_HISTORY_H
 
@@ -481,18 +473,6 @@
 /* Define to 1 if you have the `strtof' function. */
 #undef HAVE_STRTOF
 
-/* Define to 1 if you have the `strtoll' function. */
-#undef HAVE_STRTOLL
-
-/* Define to 1 if you have the `strtoq' function. */
-#undef HAVE_STRTOQ
-
-/* Define to 1 if you have the `strtoull' function. */
-#undef HAVE_STRTOULL
-
-/* Define to 1 if you have the `strtouq' function. */
-#undef HAVE_STRTOUQ
-
 /* Define to 1 if the system has the type `struct addrinfo'. */
 #undef HAVE_STRUCT_ADDRINFO
 
@@ -687,12 +667,6 @@
 
 /* Define to 1 if your compiler understands _Static_assert. */
 #undef HAVE__STATIC_ASSERT
-
-/* Define to 1 if you have the `__strtoll' function. */
-#undef HAVE___STRTOLL
-
-/* Define to 1 if you have the `__strtoull' function. */
-#undef HAVE___STRTOULL
 
 /* Define to the appropriate printf length modifier for 64-bit ints. */
 #undef INT64_MODIFIER
