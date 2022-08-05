@@ -1051,13 +1051,19 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		RangeTblEntry *rte = root->simple_rte_array[relid];
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) clause;
 		Var		   *var;
+		Const	   *cst;
+		bool		expronleft;
 
 		/* Only expressions with two arguments are considered compatible. */
 		if (list_length(expr->args) != 2)
 			return false;
 
 		/* Check if the expression has the right shape (one Var, one Const) */
-		if (!examine_clause_args(expr->args, &var, NULL, NULL))
+		if (!examine_clause_args(expr->args, &var, &cst, &expronleft))
+			return false;
+
+		/* We only support Var on left and non-null array constants */
+		if (!expronleft || cst->constisnull)
 			return false;
 
 		/*
@@ -1161,7 +1167,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
  * statext_is_compatible_clause
  *		Determines if the clause is compatible with MCV lists.
  *
- * Currently, we only support three types of clauses:
+ * Currently, we only support the following types of clauses:
  *
  * (a) OpExprs of the form (Var op Const), or (Const op Var), where the op
  * is one of ("=", "<", ">", ">=", "<=")
@@ -1169,6 +1175,9 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
  * (b) (Var IS [NOT] NULL)
  *
  * (c) combinations using AND/OR/NOT
+ *
+ * (d) ScalarArrayOpExprs of the form (Var op ANY (Const)) or
+ * (Var op ALL (Const))
  *
  * In the future, the range of supported clauses may be expanded to more
  * complex cases, for example (Var op Var).

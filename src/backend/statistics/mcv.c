@@ -1679,19 +1679,17 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 				Datum	   *elem_values;
 				bool	   *elem_nulls;
 
-				/* ScalarArrayOpExpr has the Var always on the left */
-				Assert(varonleft);
+				/* We expect Var on left and non-null constant on right */
+				if (!varonleft || cst->constisnull)
+					elog(ERROR, "incompatible clause");
 
-				if (!cst->constisnull)
-				{
-					arrayval = DatumGetArrayTypeP(cst->constvalue);
-					get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
-										 &elmlen, &elmbyval, &elmalign);
-					deconstruct_array(arrayval,
-									  ARR_ELEMTYPE(arrayval),
-									  elmlen, elmbyval, elmalign,
-									  &elem_values, &elem_nulls, &num_elems);
-				}
+				arrayval = DatumGetArrayTypeP(cst->constvalue);
+				get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
+									 &elmlen, &elmbyval, &elmalign);
+				deconstruct_array(arrayval,
+								  ARR_ELEMTYPE(arrayval),
+								  elmlen, elmbyval, elmalign,
+								  &elem_values, &elem_nulls, &num_elems);
 
 				/* match the attribute to a dimension of the statistic */
 				idx = bms_member_index(keys, var->varattno);
