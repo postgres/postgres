@@ -358,4 +358,10 @@ brin_mask(char *pagedata, BlockNumber blkno)
 	{
 		mask_unused_space(page);
 	}
+
+	/*
+	 * BRIN_EVACUATE_PAGE is not WAL-logged, since it's of no use in recovery.
+	 * Mask it.  See brin_start_evacuating_page() for details.
+	 */
+	BrinPageFlags(page) &= ~BRIN_EVACUATE_PAGE;
 }
