@@ -688,16 +688,14 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    <para>
     In rare cases, <productname>PostgreSQL</productname> may attempt to
     re-archive a WAL file that was previously archived.  For example, if the
-    system crashes before the server makes a durable record of archival success,
-    the server will attempt to archive the file again after restarting (provided
-    archiving is still enabled).  When an archive library encounters a
-    pre-existing file, it may return <literal>true</literal> if the WAL file has
-    identical contents to the pre-existing archive and the pre-existing archive
-    is fully persisted to storage.  Alternatively, the archive library may
-    return <literal>false</literal> anytime a pre-existing file is encountered,
-    but this will require manual action by an administrator to resolve.  If a
-    pre-existing file contains different contents than the WAL file being
-    archived, the archive library <emphasis>must</emphasis> return
+    system crashes before the server makes a durable record of archival
+    success, the server will attempt to archive the file again after
+    restarting (provided archiving is still enabled).  When an archive library
+    encounters a pre-existing file, it should return <literal>true</literal>
+    if the WAL file has identical contents to the pre-existing archive and the
+    pre-existing archive is fully persisted to storage.  If a pre-existing
+    file contains different contents than the WAL file being archived, the
+    archive library <emphasis>must</emphasis> return
     <literal>false</literal>.
    </para>
 
