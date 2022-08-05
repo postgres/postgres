@@ -1,0 +1,204 @@
+# As of git 2.23, git-blame supports ignoring specific commits.  This is useful
+# with commits that make bulk formatting changes without truly changing any
+# code.
+#
+# This file lists ignorable pgindent, pgperltidy, and reformat-dat-files
+# related commits only.  Please don't add commits that are not in this
+# category.
+#
+# You can use the ignore list file by running:
+#
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Add new entries by adding the output of the following to the top of the file:
+#
+# $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
+
+9e1c9f959422192bbe1b842a2a1ffaf76b080196 # 2019-07-01 12:37:52 -0400
+# pgindent run prior to branching v12.
+
+db6e2b4c52ade524f3db419d75084728e96e1f9c # 2019-05-22 13:36:19 -0400
+# Initial pgperltidy run for v12.
+
+8255c7a5eeba8f1a38b7a431c04909bde4f5e67d # 2019-05-22 13:04:48 -0400
+# Phase 2 pgindent run for v12.
+
+be76af171cdb3e7465c4ef234af403f97ad79b7b # 2019-05-22 12:55:34 -0400
+# Initial pgindent run for v12.
+
+d8421390996dcd762383a28e57d1f3f16cc5f76f # 2018-06-30 12:28:55 -0400
+# perltidy run prior to branching
+
+1e9c8580904625576871eeb2efec7f04d4c3bc1c # 2018-06-30 12:25:49 -0400
+# pgindent run prior to branching
+
+bdf46af748d0f15f257c99bf06e9e25aba6a24f9 # 2018-04-26 14:47:16 -0400
+# Post-feature-freeze pgindent run.
+
+f04d4ac919b9ae9b57e977523e4b40979aa8b951 # 2018-04-25 14:00:19 -0400
+# Reindent Perl files with perltidy version 20170521.
+
+eaedf0df7197b21182f6c341a44e4fdaa3cd6ea6 # 2017-11-29 09:24:24 -0500
+# Update typedefs.list and re-run pgindent
+
+21d304dfedb4f26d0d6587d9ac39b1b5c499bb55 # 2017-08-14 17:29:33 -0400
+# Final pgindent + perltidy run for v10.
+
+382ceffdf7f620d8f2d50e451b4167d291ae2348 # 2017-06-21 15:35:54 -0400
+# Phase 3 of pgindent updates.
+
+c7b8998ebbf310a156aa38022555a24d98fdbfb4 # 2017-06-21 15:19:25 -0400
+# Phase 2 of pgindent updates.
+
+e3860ffa4dd0dad0dd9eea4be9cc1412373a8c89 # 2017-06-21 14:39:04 -0400
+# Initial pgindent run with pg_bsd_indent version 2.0.
+
+9ef2dbefc7fb3ac22e1528bc22a41a5c6c6a9539 # 2017-06-21 14:09:24 -0400
+# Final pgindent run with old pg_bsd_indent (version 1.3).
+
+651902deb1551db8b401fdeab9bdb8a61cee7f9f # 2017-06-13 13:05:59 -0400
+# Re-run pgindent.
+
+ce554810329b9b8e862eade08b598148931eb456 # 2017-05-17 19:01:23 -0400
+# Post-PG 10 beta1 pgperltidy run
+
+a6fd7b7a5f7bf3a8aa3f3d076cf09d922c1c6dd2 # 2017-05-17 16:31:56 -0400
+# Post-PG 10 beta1 pgindent run
+
+b5bce6c1ec6061c8a4f730d927e162db7e2ce365 # 2016-08-15 13:42:51 -0400
+# Final pgindent + perltidy run for 9.6.
+
+3be0a62ffe58f0753d190cbe22acbeb8b4926b85 # 2016-06-12 04:19:56 -0400
+# Finish pgindent run for 9.6: Perl files.
+
+4bc424b968058c7f0aa685821d7039e86faac99c # 2016-06-09 18:02:36 -0400
+# pgindent run for 9.6
+
+de94e2af184e25576b13cbda8cf825118835d1cd # 2016-04-06 11:34:02 -0400
+# Run pgindent on a batch of (mostly-planner-related) source files.
+
+be060cbcd42737693f6fd425db4c139121181cce # 2016-03-09 13:51:11 -0500
+# Re-pgindent vacuumlazy.c.
+
+0231f838565d2921a0960407c4240237ba1d56ae # 2016-02-08 15:17:40 -0500
+# Re-pgindent varlena.c.
+
+d0cd7bda97a626049aa7d247374909c52399c413 # 2016-02-04 22:30:08 -0500
+# postgres_fdw: pgindent run.
+
+8d290c8ec6c182a4df1d089c21fe84c7912f01fe # 2016-01-17 19:13:18 -0500
+# Re-pgindent a few files.
+
+befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:45:01 -0400
+# Revert 9.5 pgindent changes to atomics directory files
+
+807b9e0dff663c5da875af7907a5106c0ff90673 # 2015-05-23 21:35:49 -0400
+# pgindent run for 9.5
+
+785941cdc359c6e595201ffb0df9d28f3f7173a4 # 2015-03-26 14:03:25 -0400
+# Tweak __attribute__-wrapping macros for better pgindent results.
+
+7584649a1c58029a83a7a57d74cedcf1af434c97 # 2014-10-17 12:19:05 -0400
+# Re-pgindent src/bin/pg_dump/*.
+
+84288a86ac74dbeae486b6ff699c017f7d9517bb # 2014-05-06 20:39:28 -0400
+# With ecpg exclusion removed, re-run pgindent for 9.4
+
+0a7832005792fa6dad171f9cadb8d587fe0dd800 # 2014-05-06 12:12:18 -0400
+# pgindent run for 9.4
+
+9af4159fce6654aa0e081b00d02bca40b978745c # 2013-05-29 16:58:43 -0400
+# pgindent run for release 9.3 This is the first run of the Perl-based pgindent script.  Also update pgindent instructions.
+
+927d61eeff78363ea3938c818d07e511ebaf75cf # 2012-06-10 15:20:04 -0400
+# Run pgindent on 9.2 source tree in preparation for first 9.3 commit-fest.
+
+6560407c7db2c7e32926a46f5fb52175ac10d9e5 # 2011-06-09 14:32:50 -0400
+# Pgindent run before 9.1 beta2.
+
+bf50caf105a901c4f83ac1df3cdaf910c26694a4 # 2011-04-10 11:42:00 -0400
+# pgindent run before PG 9.1 beta 1.
+
+239d769e7e05e0a5ef3bd6828e93e22ef3962780 # 2010-07-06 19:19:02 +0000
+# pgindent run for 9.0, second run
+
+65e806cba1f0f154d51caa7478e7192ce58d1056 # 2010-02-26 02:01:40 +0000
+# pgindent run for 9.0
+
+d7471402794266078953f1bd113dab4913d631a1 # 2009-06-11 14:49:15 +0000
+# 8.4 pgindent run, with new combined Linux/FreeBSD/MinGW typedef list provided by Andrew.
+
+f6e8730d11ddfc720eda1dde23794d262ad8cc08 # 2007-11-15 22:25:18 +0000
+# Re-run pgindent with updated list of typedefs.  (Updated README should avoid this problem in the future.)
+
+fdf5a5efb7b28c13085fe7313658de8d7b9914f6 # 2007-11-15 21:14:46 +0000
+# pgindent run for 8.3.
+
+f99a569a2ee3763b4ae174e81250c95ca0fdcbb6 # 2006-10-04 00:30:14 +0000
+# pgindent run for 8.2.
+
+436a2956d80db29ac1dff640b631620d856b4f70 # 2005-11-22 18:17:34 +0000
+# Re-run pgindent, fixing a problem where comment lines after a blank comment line where output as too long, and update typedefs for /lib directory.  Also fix case where identifiers were used as variable names in the backend, but as typedefs in ecpg (favor the backend for indenting).
+
+1dc34982511d91ef8a2b71bdcb870f067c1b3da9 # 2005-10-15 02:49:52 +0000
+# Standard pgindent run for 8.1.
+
+15d3f9f6b7849a70281f151f0def7a6d335767d7 # 2004-08-30 02:54:42 +0000
+# Another pgindent run with lib typedefs added.
+
+b6b71b85bc45b49005b5aec87cba2c33fc8baf49 # 2004-08-29 05:07:03 +0000
+# Pgindent run for 8.0.
+
+46785776c42143af8f5433bb580ff13f2a9f65e1 # 2003-08-08 21:42:59 +0000
+# Another pgindent run with updated typedefs.
+
+089003fb462fcce46c02bf47322b429f73c33c50 # 2003-08-04 00:43:34 +0000
+# pgindent run.
+
+e50f52a074bdf0d6a9dc384840e641c4c0b0bb1a # 2002-09-04 20:31:48 +0000
+# pgindent run.
+
+ea08e6cd5542cb269ecd3e735f1dfa3bb61fbc4f # 2001-11-05 17:46:40 +0000
+# New pgindent run with fixes suggested by Tom.  Patch manually reviewed, initdb/regression tests pass.
+
+6783b2372ef13c141649840a836ff0a954ea1d4d # 2001-10-28 06:26:15 +0000
+# Another pgindent run.  Fixes enum indenting, and improves #endif spacing.  Also adds space for one-line comments.
+
+b81844b1738c584d92330a5ccd0fbd8b603d2886 # 2001-10-25 05:50:21 +0000
+# pgindent run on all C files.  Java run to follow.  initdb/regression tests pass.
+
+0686d49da0a34ad92f61f791ea1039dec5d20f41 # 2001-03-22 06:16:21 +0000
+# Remove dashes in comments that don't need them, rewrap with pgindent.
+
+9e1552607a9dc6bc23e43d46770a9063ade4f3f0 # 2001-03-22 04:01:46 +0000
+# pgindent run.  Make it all clean.
+
+52f77df613cea1803ce86321c37229626d9f213c # 2000-04-12 17:17:23 +0000
+# Ye-old pgindent run.  Same 4-space tabs.
+
+fcff1cdf4eadbc6dcba4b9a2cd09f38f466ffa31 # 1999-05-25 22:43:53 +0000
+# Another pgindent run.  Sorry folks.
+
+07842084fe3e11041f83563c851236395f481470 # 1999-05-25 16:15:34 +0000
+# pgindent run over code.
+
+fa1a8d6a97068295fe30ac646aec7493a6305bc2 # 1998-09-01 04:40:42 +0000
+# OK, folks, here is the pgindent output.
+
+af74855a608da4cd7ef88ceb2241ec1c75537f39 # 1998-09-01 03:29:17 +0000
+# Renaming cleanup, no pgindent yet.
+
+a32450a5855eed4bfd756ef292ee45d3c754665b # 1998-02-26 04:46:47 +0000
+# pgindent run before 6.3 release, with Thomas' requested changes.
+
+59f6a57e59fe8353f9edaa3703516ea67e06672b # 1997-09-08 21:56:23 +0000
+# Used modified version of indent that understands over 100 typedefs.
+
+075cede74858a9a04e97097b1ccd555121516c20 # 1997-09-08 20:59:27 +0000
+# Add typdefs to pgindent run.
+
+319dbfa7364721d3343af03a7ce063c2a2c9d385 # 1997-09-08 02:41:22 +0000
+# Another PGINDENT run that changes variable indenting and case label indenting.  Also static variable indenting.
+
+1ccd423235a48739d6f7a4d7889705b5f9ecc69b # 1997-09-07 05:04:48 +0000
+# Massive commit to run PGINDENT on all *.c and *.h files.
