@@ -709,13 +709,14 @@ extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
 static inline bool
 is_valid_ascii(const unsigned char *s, int len)
 {
+	const unsigned char *const s_end = s + len;
 	uint64		chunk,
 				highbit_cum = UINT64CONST(0),
 				zero_cum = UINT64CONST(0x8080808080808080);
 
 	Assert(len % sizeof(chunk) == 0);
 
-	while (len > 0)
+	while (s < s_end)
 	{
 		memcpy(&chunk, s, sizeof(chunk));
 
@@ -734,11 +735,10 @@ is_valid_ascii(const unsigned char *s, int len)
 		 */
 		zero_cum &= (chunk + UINT64CONST(0x7f7f7f7f7f7f7f7f));
 
-		/* Capture any set bits in this chunk. */
+		/* Capture all set bits in this chunk. */
 		highbit_cum |= chunk;
 
 		s += sizeof(chunk);
-		len -= sizeof(chunk);
 	}
 
 	/* Check if any high bits in the high bit accumulator got set. */
