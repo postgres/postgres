@@ -341,4 +341,10 @@ brin_mask(char *pagedata, BlockNumber blkno)
 		/* Regular brin pages contain unused space which needs to be masked. */
 		mask_unused_space(page);
 	}
+
+	/*
+	 * BRIN_EVACUATE_PAGE is not WAL-logged, since it's of no use in recovery.
+	 * Mask it.  See brin_start_evacuating_page() for details.
+	 */
+	BrinPageFlags(page) &= ~BRIN_EVACUATE_PAGE;
 }
