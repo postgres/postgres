@@ -271,14 +271,23 @@ SELECT stxkind FROM pg_statistic_ext WHERE stxname = 'ab1_exprstat_3';
 CREATE STATISTICS ab1_exprstat_4 ON date_trunc('day', d) FROM ab1;
 -- date_trunc on timestamp is immutable
 CREATE STATISTICS ab1_exprstat_5 ON date_trunc('day', c) FROM ab1;
+-- check use of a boolean-returning expression
+CREATE STATISTICS ab1_exprstat_6 ON
+  (case a when 1 then true else false end), b FROM ab1;
 -- insert some data and run analyze, to test that these cases build properly
 INSERT INTO ab1
-SELECT
-    generate_series(1,10),
-    generate_series(1,10),
-    generate_series('2020-10-01'::timestamp, '2020-10-10'::timestamp, interval '1 day'),
-    generate_series('2020-10-01'::timestamptz, '2020-10-10'::timestamptz, interval '1 day');
+SELECT x / 10, x / 3,
+    '2020-10-01'::timestamp + x * interval '1 day',
+    '2020-10-01'::timestamptz + x * interval '1 day'
+FROM generate_series(1, 100) x;
 ANALYZE ab1;
+-- apply some stats
+SELECT * FROM check_estimated_rows('SELECT * FROM ab1 WHERE (case a when 1 then true else false end) AND b=2');
+ estimated | actual 
+-----------+--------
+         1 |      0
+(1 row)
+
 DROP TABLE ab1;
 -- Verify supported object types for extended statistics
 CREATE schema tststats;
