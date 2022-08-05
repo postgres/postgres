@@ -1419,7 +1419,8 @@ PostmasterMain(int argc, char *argv[])
 		 * since there is no way to connect to the database in this case.
 		 */
 		ereport(FATAL,
-				(errmsg("could not load pg_hba.conf")));
+		/* translator: %s is a configuration file */
+				(errmsg("could not load %s", HbaFileName)));
 	}
 	if (!load_ident())
 	{
@@ -2769,11 +2770,11 @@ SIGHUP_handler(SIGNAL_ARGS)
 		if (!load_hba())
 			ereport(LOG,
 			/* translator: %s is a configuration file */
-					(errmsg("%s was not reloaded", "pg_hba.conf")));
+					(errmsg("%s was not reloaded", HbaFileName)));
 
 		if (!load_ident())
 			ereport(LOG,
-					(errmsg("%s was not reloaded", "pg_ident.conf")));
+					(errmsg("%s was not reloaded", IdentFileName)));
 
 #ifdef USE_SSL
 		/* Reload SSL configuration as well */
