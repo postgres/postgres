@@ -566,6 +566,8 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 	{
 		/* Use original, unchanged base tuple */
 		tuplesz = IndexTupleSize(state->base);
+		Assert(tuplesz == MAXALIGN(IndexTupleSize(state->base)));
+		Assert(tuplesz <= BTMaxItemSize(newpage));
 		if (PageAddItem(newpage, (Item) state->base, tuplesz, tupoff,
 						false, false) == InvalidOffsetNumber)
 			elog(ERROR, "deduplication failed to add tuple to page");
@@ -585,6 +587,7 @@ _bt_dedup_finish_pending(Page newpage, BTDedupState state)
 		state->intervals[state->nintervals].nitems = state->nitems;
 
 		Assert(tuplesz == MAXALIGN(IndexTupleSize(final)));
+		Assert(tuplesz <= BTMaxItemSize(newpage));
 		if (PageAddItem(newpage, (Item) final, tuplesz, tupoff, false,
 						false) == InvalidOffsetNumber)
 			elog(ERROR, "deduplication failed to add tuple to page");

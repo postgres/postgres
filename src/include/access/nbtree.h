@@ -162,10 +162,10 @@ typedef struct BTMetaPageData
  * attribute, which we account for here.
  */
 #define BTMaxItemSize(page) \
-	MAXALIGN_DOWN((PageGetPageSize(page) - \
-				   MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
-				   MAXALIGN(sizeof(BTPageOpaqueData))) / 3) - \
-				   MAXALIGN(sizeof(ItemPointerData))
+	(MAXALIGN_DOWN((PageGetPageSize(page) - \
+					MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
+					MAXALIGN(sizeof(BTPageOpaqueData))) / 3) - \
+					MAXALIGN(sizeof(ItemPointerData)))
 #define BTMaxItemSizeNoHeapTid(page) \
 	MAXALIGN_DOWN((PageGetPageSize(page) - \
 				   MAXALIGN(SizeOfPageHeaderData + 3*sizeof(ItemIdData)) - \
