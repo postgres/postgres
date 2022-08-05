@@ -900,8 +900,9 @@ do { \
 	if (!field) { \
 		ereport(elevel, \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
-				 errmsg("missing entry in file \"%s\" at end of line %d", \
-						IdentFileName, line_num))); \
+				 errmsg("missing entry at end of line"), \
+				 errcontext("line %d of configuration file \"%s\"", \
+							line_num, IdentFileName))); \
 		*err_msg = psprintf("missing entry at end of line"); \
 		return NULL; \
 	} \
@@ -2372,7 +2373,9 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 			ereport(elevel,
 					(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
 					 errmsg("invalid regular expression \"%s\": %s",
-							parsedline->ident_user + 1, errstr)));
+							parsedline->ident_user + 1, errstr),
+					 errcontext("line %d of configuration file \"%s\"",
+							line_num, IdentFileName)));
 
 			*err_msg = psprintf("invalid regular expression \"%s\": %s",
 								parsedline->ident_user + 1, errstr);
