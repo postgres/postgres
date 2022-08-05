@@ -12,7 +12,7 @@
 #
 # Add new entries by adding the output of the following to the top of the file:
 #
-# $ git log --pretty=format:"%H # %cd %n# %s" $PGINDENTGITHASH -1 --date=iso
+# $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
 82d0ffae3219e4bc153a1306ce23013d168e04a2 # 2022-06-30 11:03:03 -0400
 # pgindent run prior to branching v15.
@@ -47,7 +47,7 @@ fa27dd40d5c5f56a1ee837a75c97549e992e32a4 # 2020-05-16 11:54:51 -0400
 e02ad575d8ab6b44500d2a3fd8c3212345e3aa2b # 2020-05-16 11:49:14 -0400
 # Final pgindent run with pg_bsd_indent version 2.1.
 
-5cbfce562f7cd2aab0cdc4694ce298ec3567930e # 2020-05-14 13:06:38 -0400
+5cbfce562f7cd2aab0cdc4694ce298ec3567930e # 2020-05-14 13:06:50 -0400
 # Initial pgindent and pgperltidy run for v13.
 
 b78542b9e975494bba6db2d2802439c3328d5ef7 # 2020-02-15 14:58:30 -0500
@@ -89,7 +89,7 @@ eaedf0df7197b21182f6c341a44e4fdaa3cd6ea6 # 2017-11-29 09:24:24 -0500
 382ceffdf7f620d8f2d50e451b4167d291ae2348 # 2017-06-21 15:35:54 -0400
 # Phase 3 of pgindent updates.
 
-c7b8998ebbf310a156aa38022555a24d98fdbfb4 # 2017-06-21 15:18:54 -0400
+c7b8998ebbf310a156aa38022555a24d98fdbfb4 # 2017-06-21 15:19:25 -0400
 # Phase 2 of pgindent updates.
 
 e3860ffa4dd0dad0dd9eea4be9cc1412373a8c89 # 2017-06-21 14:39:04 -0400
@@ -122,19 +122,22 @@ de94e2af184e25576b13cbda8cf825118835d1cd # 2016-04-06 11:34:02 -0400
 be060cbcd42737693f6fd425db4c139121181cce # 2016-03-09 13:51:11 -0500
 # Re-pgindent vacuumlazy.c.
 
+0231f838565d2921a0960407c4240237ba1d56ae # 2016-02-08 15:17:40 -0500
+# Re-pgindent varlena.c.
+
 d0cd7bda97a626049aa7d247374909c52399c413 # 2016-02-04 22:30:08 -0500
 # postgres_fdw: pgindent run.
 
 8d290c8ec6c182a4df1d089c21fe84c7912f01fe # 2016-01-17 19:13:18 -0500
 # Re-pgindent a few files.
 
-befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:44:57 -0400
+befa3e648ce018d84cd2a0df701927c56fe3da4e # 2015-05-24 21:45:01 -0400
 # Revert 9.5 pgindent changes to atomics directory files
 
 807b9e0dff663c5da875af7907a5106c0ff90673 # 2015-05-23 21:35:49 -0400
 # pgindent run for 9.5
 
-785941cdc359c6e595201ffb0df9d28f3f7173a4 # 2015-03-26 14:03:19 -0400
+785941cdc359c6e595201ffb0df9d28f3f7173a4 # 2015-03-26 14:03:25 -0400
 # Tweak __attribute__-wrapping macros for better pgindent results.
 
 7584649a1c58029a83a7a57d74cedcf1af434c97 # 2014-10-17 12:19:05 -0400
