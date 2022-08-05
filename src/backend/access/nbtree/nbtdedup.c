@@ -166,8 +166,8 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 			 * maxpostingsize).
 			 *
 			 * If state contains pending posting list with more than one item,
-			 * form new posting tuple, and actually update the page.  Else
-			 * reset the state and move on without modifying the page.
+			 * form new posting tuple and add it to our temp page (newpage).
+			 * Else add pending interval's base tuple to the temp page as-is.
 			 */
 			pagesaving += _bt_dedup_finish_pending(newpage, state);
 
@@ -184,7 +184,8 @@ _bt_dedup_pass(Relation rel, Buffer buf, Relation heapRel, IndexTuple newitem,
 				 * stop merging together tuples altogether.  The few tuples
 				 * that remain at the end of the page won't be merged together
 				 * at all (at least not until after a future page split takes
-				 * place).
+				 * place, when this page's newly allocated right sibling page
+				 * gets its first deduplication pass).
 				 */
 				if (state->nmaxitems == 5)
 					_bt_singleval_fillfactor(page, state, newitemsz);
