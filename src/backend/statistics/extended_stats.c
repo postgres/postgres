@@ -1051,7 +1051,6 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		RangeTblEntry *rte = root->simple_rte_array[relid];
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) clause;
 		Var		   *var;
-		Const	   *cst;
 		bool		expronleft;
 
 		/* Only expressions with two arguments are considered compatible. */
@@ -1059,11 +1058,11 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 			return false;
 
 		/* Check if the expression has the right shape (one Var, one Const) */
-		if (!examine_clause_args(expr->args, &var, &cst, &expronleft))
+		if (!examine_clause_args(expr->args, &var, NULL, &expronleft))
 			return false;
 
-		/* We only support Var on left and non-null array constants */
-		if (!expronleft || cst->constisnull)
+		/* We only support Var on left, Const on right */
+		if (!expronleft)
 			return false;
 
 		/*
