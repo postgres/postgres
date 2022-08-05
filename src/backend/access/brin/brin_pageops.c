@@ -542,7 +542,12 @@ brin_start_evacuating_page(Relation idxRel, Buffer buf)
 		lp = PageGetItemId(page, off);
 		if (ItemIdIsUsed(lp))
 		{
-			/* prevent other backends from adding more stuff to this page */
+			/*
+			 * Prevent other backends from adding more stuff to this page:
+			 * BRIN_EVACUATE_PAGE informs br_page_get_freespace that this page
+			 * can no longer be used to add new tuples.  Note that this flag
+			 * is not WAL-logged, except accidentally.
+			 */
 			BrinPageFlags(page) |= BRIN_EVACUATE_PAGE;
 			MarkBufferDirtyHint(buf, true);
 
