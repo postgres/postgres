@@ -1740,17 +1740,24 @@ mcv_get_match_bitmap(PlannerInfo *root, List *clauses,
 			if (!examine_opclause_args(expr->args, &clause_expr, &cst, &expronleft))
 				elog(ERROR, "incompatible clause");
 
-			/* We expect Var on left and non-null constant on right */
-			if (!expronleft || cst->constisnull)
+			/* We expect Var on left */
+			if (!expronleft)
 				elog(ERROR, "incompatible clause");
 
-			arrayval = DatumGetArrayTypeP(cst->constvalue);
-			get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
-								 &elmlen, &elmbyval, &elmalign);
-			deconstruct_array(arrayval,
-							  ARR_ELEMTYPE(arrayval),
-							  elmlen, elmbyval, elmalign,
-							  &elem_values, &elem_nulls, &num_elems);
+			/*
+			 * Deconstruct the array constant, unless it's NULL (we'll cover
+			 * that case below)
+			 */
+			if (!cst->constisnull)
+			{
+				arrayval = DatumGetArrayTypeP(cst->constvalue);
+				get_typlenbyvalalign(ARR_ELEMTYPE(arrayval),
+									 &elmlen, &elmbyval, &elmalign);
+				deconstruct_array(arrayval,
+								  ARR_ELEMTYPE(arrayval),
+								  elmlen, elmbyval, elmalign,
+								  &elem_values, &elem_nulls, &num_elems);
+			}
 
 			/* match the attribute/expression to a dimension of the statistic */
 			idx = mcv_match_expression(clause_expr, keys, exprs, &collid);
