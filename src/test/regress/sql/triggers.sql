@@ -1836,18 +1836,18 @@ create trigger tg_stmt after insert on parent
   for statement execute procedure trig_nothing();
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
-  order by tgrelid::regclass::text;
+  order by tgrelid::regclass::text, tgname;
 alter table only parent enable always trigger tg;	-- no recursion because ONLY
 alter table parent enable always trigger tg_stmt;	-- no recursion because statement trigger
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
-  order by tgrelid::regclass::text;
+  order by tgrelid::regclass::text, tgname;
 -- The following is a no-op for the parent trigger but not so
 -- for the child trigger, so recursion should be applied.
 alter table parent enable always trigger tg;
 select tgrelid::regclass, tgname, tgenabled from pg_trigger
   where tgrelid in ('parent'::regclass, 'child1'::regclass)
-  order by tgrelid::regclass::text;
+  order by tgrelid::regclass::text, tgname;
 drop table parent, child1;
 
 -- Verify that firing state propagates correctly on creation, too
