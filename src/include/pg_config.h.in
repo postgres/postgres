@@ -170,9 +170,6 @@
 /* Define to 1 if you have the `explicit_bzero' function. */
 #undef HAVE_EXPLICIT_BZERO
 
-/* Define to 1 if you have the `fdatasync' function. */
-#undef HAVE_FDATASYNC
-
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 

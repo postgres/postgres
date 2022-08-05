@@ -331,7 +331,6 @@ test_sync(int writes_per_op)
 	printf(LABEL_FORMAT, "fdatasync");
 	fflush(stdout);
 
-#ifdef HAVE_FDATASYNC
 	if ((tmpfile = open(filename, O_RDWR | PG_BINARY, 0)) == -1)
 		die("could not open output file");
 	START_TIMER;
@@ -347,9 +346,6 @@ test_sync(int writes_per_op)
 	}
 	STOP_TIMER;
 	close(tmpfile);
-#else
-	printf(NA_FORMAT, _("n/a"));
-#endif
 
 /*
  * Test fsync

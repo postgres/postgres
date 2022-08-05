@@ -1792,7 +1792,6 @@ LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 AC_CHECK_FUNCS(m4_normalize([
 	backtrace_symbols
 	copyfile
-	fdatasync
 	getifaddrs
 	getpeerucred
 	inet_pton
@@ -1928,7 +1927,6 @@ if test "$PORTNAME" = "win32"; then
   AC_CHECK_FUNCS(_configthreadlocale)
   AC_REPLACE_FUNCS(gettimeofday)
   AC_LIBOBJ(dirmod)
-  AC_LIBOBJ(fdatasync)
   AC_LIBOBJ(getrusage)
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
@@ -1936,6 +1934,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32dlopen)
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
+  AC_LIBOBJ(win32fdatasync)
   AC_LIBOBJ(win32link)
   AC_LIBOBJ(win32ntdll)
   AC_LIBOBJ(win32pread)

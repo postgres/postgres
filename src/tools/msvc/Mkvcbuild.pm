@@ -99,7 +99,7 @@ sub mkvcbuild
 	$solution = CreateSolution($vsVersion, $config);
 
 	our @pgportfiles = qw(
-	  chklocale.c explicit_bzero.c fdatasync.c
+	  chklocale.c explicit_bzero.c
 	  getpeereid.c getrusage.c inet_aton.c
 	  getaddrinfo.c gettimeofday.c inet_net_ntop.c kill.c open.c
 	  snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
@@ -110,6 +110,7 @@ sub mkvcbuild
 	  strerror.c tar.c
 	  win32dlopen.c
 	  win32env.c win32error.c
+	  win32fdatasync.c
 	  win32link.c
 	  win32pread.c
 	  win32pwrite.c

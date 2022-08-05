@@ -168,9 +168,7 @@ const struct config_enum_entry sync_method_options[] = {
 #ifdef HAVE_FSYNC_WRITETHROUGH
 	{"fsync_writethrough", SYNC_METHOD_FSYNC_WRITETHROUGH, false},
 #endif
-#ifdef HAVE_FDATASYNC
 	{"fdatasync", SYNC_METHOD_FDATASYNC, false},
-#endif
 #ifdef O_SYNC
 	{"open_sync", SYNC_METHOD_OPEN, false},
 #endif
@@ -8015,12 +8013,10 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 				msg = _("could not fsync write-through file \"%s\": %m");
 			break;
 #endif
-#ifdef HAVE_FDATASYNC
 		case SYNC_METHOD_FDATASYNC:
 			if (pg_fdatasync(fd) != 0)
 				msg = _("could not fdatasync file \"%s\": %m");
 			break;
-#endif
 		case SYNC_METHOD_OPEN:
 		case SYNC_METHOD_OPEN_DSYNC:
 			/* not reachable */

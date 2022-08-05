@@ -442,20 +442,12 @@ pg_fsync_writethrough(int fd)
 
 /*
  * pg_fdatasync --- same as fdatasync except does nothing if enableFsync is off
- *
- * Not all platforms have fdatasync; treat as fsync if not available.
  */
 int
 pg_fdatasync(int fd)
 {
 	if (enableFsync)
-	{
-#ifdef HAVE_FDATASYNC
 		return fdatasync(fd);
-#else
-		return fsync(fd);
-#endif
-	}
 	else
 		return 0;
 }
