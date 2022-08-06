@@ -79,7 +79,6 @@ fsync_pgdata(const char *pg_data,
 	 */
 	xlog_is_symlink = false;
 
-#ifndef WIN32
 	{
 		struct stat st;
 
@@ -88,10 +87,6 @@ fsync_pgdata(const char *pg_data,
 		else if (S_ISLNK(st.st_mode))
 			xlog_is_symlink = true;
 	}
-#else
-	if (pgwin32_is_junction(pg_wal))
-		xlog_is_symlink = true;
-#endif
 
 	/*
 	 * If possible, hint to the kernel that we're soon going to fsync the data
@@ -459,27 +454,9 @@ get_dirent_type(const char *path,
 			result = PGFILETYPE_REG;
 		else if (S_ISDIR(fst.st_mode))
 			result = PGFILETYPE_DIR;
-#ifdef S_ISLNK
 		else if (S_ISLNK(fst.st_mode))
 			result = PGFILETYPE_LNK;
-#endif
 	}
-
-#if defined(WIN32) && !defined(_MSC_VER)
-
-	/*
-	 * If we're on native Windows (not Cygwin, which has its own POSIX
-	 * symlinks), but not using the MSVC compiler, then we're using a
-	 * readdir() emulation provided by the MinGW runtime that has no d_type.
-	 * Since the lstat() fallback code reports junction points as directories,
-	 * we need an extra system call to check if we should report them as
-	 * symlinks instead, following our convention.
-	 */
-	if (result == PGFILETYPE_DIR &&
-		!look_through_symlinks &&
-		pgwin32_is_junction(path))
-		result = PGFILETYPE_LNK;
-#endif
 
 	return result;
 }
