@@ -55,13 +55,6 @@
    (--enable-thread-safety) */
 #undef ENABLE_THREAD_SAFETY
 
-/* Define to 1 if gettimeofday() takes only 1 argument. */
-#undef GETTIMEOFDAY_1ARG
-
-#ifdef GETTIMEOFDAY_1ARG
-# define gettimeofday(a,b) gettimeofday(a)
-#endif
-
 /* Define to 1 if you have the `append_history' function. */
 #undef HAVE_APPEND_HISTORY
 
@@ -214,9 +207,6 @@
 
 /* Define to 1 if you have the `getpeerucred' function. */
 #undef HAVE_GETPEERUCRED
-
-/* Define to 1 if you have the `gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #undef HAVE_GSSAPI_GSSAPI_H

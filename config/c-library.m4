@@ -37,30 +37,6 @@ AC_DEFUN([PGAC_STRUCT_TIMEZONE],
 ])# PGAC_STRUCT_TIMEZONE
 
 
-# PGAC_FUNC_GETTIMEOFDAY_1ARG
-# ---------------------------
-# Check if gettimeofday() has only one arguments. (Normal is two.)
-# If so, define GETTIMEOFDAY_1ARG.
-AC_DEFUN([PGAC_FUNC_GETTIMEOFDAY_1ARG],
-[AC_CACHE_CHECK(whether gettimeofday takes only one argument,
-pgac_cv_func_gettimeofday_1arg,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/time.h>],
-[struct timeval *tp;
-struct timezone *tzp;
-gettimeofday(tp,tzp);])],
-[pgac_cv_func_gettimeofday_1arg=no],
-[pgac_cv_func_gettimeofday_1arg=yes])])
-if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
-  AC_DEFINE(GETTIMEOFDAY_1ARG, 1,
-            [Define to 1 if gettimeofday() takes only 1 argument.])
-fi
-AH_VERBATIM(GETTIMEOFDAY_1ARG_,
-[@%:@ifdef GETTIMEOFDAY_1ARG
-@%:@ define gettimeofday(a,b) gettimeofday(a)
-@%:@endif])dnl
-])# PGAC_FUNC_GETTIMEOFDAY_1ARG
-
-
 # PGAC_FUNC_STRERROR_R_INT
 # ---------------------------
 # Check if strerror_r() returns int (POSIX) rather than char * (GNU libc).

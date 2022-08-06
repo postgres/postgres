@@ -1,8 +1,8 @@
 /*
- * gettimeofday.c
+ * win32gettimeofday.c
  *	  Win32 gettimeofday() replacement
  *
- * src/port/gettimeofday.c
+ * src/port/win32gettimeofday.c
  *
  * Copyright (c) 2003 SRA, Inc.
  * Copyright (c) 2003 SKC, Inc.
