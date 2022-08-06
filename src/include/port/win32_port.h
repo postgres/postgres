@@ -284,10 +284,11 @@ struct stat						/* This should match struct __stat64 */
 
 extern int	_pgfstat64(int fileno, struct stat *buf);
 extern int	_pgstat64(const char *name, struct stat *buf);
+extern int	_pglstat64(const char *name, struct stat *buf);
 
 #define fstat(fileno, sb)	_pgfstat64(fileno, sb)
 #define stat(path, sb)		_pgstat64(path, sb)
-#define lstat(path, sb)		_pgstat64(path, sb)
+#define lstat(path, sb)		_pglstat64(path, sb)
 
 /* These macros are not provided by older MinGW, nor by MSVC */
 #ifndef S_IRUSR
@@ -332,6 +333,21 @@ extern int	_pgstat64(const char *name, struct stat *buf);
 #ifndef S_ISREG
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
+
+/*
+ * In order for lstat() to be able to report junction points as symlinks, we
+ * need to hijack a bit in st_mode, since neither MSVC nor MinGW provides
+ * S_ISLNK and there aren't any spare bits.  We'll steal the one for character
+ * devices, because we don't otherwise make use of those.
+ */
+#ifdef S_ISLNK
+#error "S_ISLNK is already defined"
+#endif
+#ifdef S_IFLNK
+#error "S_IFLNK is already defined"
+#endif
+#define S_IFLNK S_IFCHR
+#define S_ISLNK(m) (((m) & S_IFLNK) == S_IFLNK)
 
 /*
  * Supplement to <fcntl.h>.
