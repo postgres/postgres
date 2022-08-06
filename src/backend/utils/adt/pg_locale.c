@@ -118,7 +118,7 @@ static HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *);	/* MSVC specific */
+static char *IsoLocaleName(const char *);
 #endif
 
 #ifdef USE_ICU
@@ -950,6 +950,8 @@ cache_locale_time(void)
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
 
+#if defined(_MSC_VER)
+
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
  *
@@ -1088,8 +1090,11 @@ get_iso_localename(const char *winlocname)
 			return NULL;
 
 		/*
-		 * Simply replace the hyphen with an underscore.  See comments in
-		 * IsoLocaleName.
+		 * Since the message catalogs sit on a case-insensitive filesystem, we
+		 * need not standardize letter case here.  So long as we do not ship
+		 * message catalogs for which it would matter, we also need not
+		 * translate the script/variant portion, e.g.  uz-Cyrl-UZ to
+		 * uz_UZ@cyrillic.  Simply replace the hyphen with an underscore.
 		 */
 		hyphen = strchr(iso_lc_messages, '-');
 		if (hyphen)
@@ -1103,7 +1108,6 @@ get_iso_localename(const char *winlocname)
 static char *
 IsoLocaleName(const char *winlocname)
 {
-#if defined(_MSC_VER)
 	static char iso_lc_messages[LOCALE_NAME_MAX_LENGTH];
 
 	if (pg_strcasecmp("c", winlocname) == 0 ||
@@ -1114,10 +1118,18 @@ IsoLocaleName(const char *winlocname)
 	}
 	else
 		return get_iso_localename(winlocname);
+}
+
+#else							/* !defined(_MSC_VER) */
+
+static char *
+IsoLocaleName(const char *winlocname)
+{
+	return NULL;				/* Not supported on MinGW */
+}
 
 #endif							/* defined(_MSC_VER) */
-	return NULL;				/* Not supported on this version of msvc/mingw */
-}
+
 #endif							/* WIN32 && LC_MESSAGES */
 
 
