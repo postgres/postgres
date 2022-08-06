@@ -15,7 +15,11 @@
 
 #ifdef WIN32
 
+#define UMDF_USING_NTSTATUS
+
 #include "c.h"
+#include "port/win32ntdll.h"
+
 #include <windows.h>
 
 /*
@@ -107,12 +111,10 @@ fileinfo_to_stat(HANDLE hFile, struct stat *buf)
 }
 
 /*
- * Windows implementation of stat().
- *
- * This currently also implements lstat(), though perhaps that should change.
+ * Windows implementation of lstat().
  */
 int
-_pgstat64(const char *name, struct stat *buf)
+_pglstat64(const char *name, struct stat *buf)
 {
 	/*
 	 * Our open wrapper will report STATUS_DELETE_PENDING as ENOENT.  We
@@ -129,7 +131,107 @@ _pgstat64(const char *name, struct stat *buf)
 
 	ret = fileinfo_to_stat(hFile, buf);
 
+	/*
+	 * Junction points appear as directories to fileinfo_to_stat(), so we'll
+	 * need to do a bit more work to distinguish them.
+	 */
+	if (ret == 0 && S_ISDIR(buf->st_mode))
+	{
+		char		next[MAXPGPATH];
+		ssize_t		size;
+
+		/*
+		 * POSIX says we need to put the length of the target path into
+		 * st_size.  Use readlink() to get it, or learn that this is not a
+		 * junction point.
+		 */
+		size = readlink(name, next, sizeof(next));
+		if (size < 0)
+		{
+			if (errno == EACCES &&
+				pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+			{
+				/* Unlinked underneath us. */
+				errno = ENOENT;
+				ret = -1;
+			}
+			else if (errno == EINVAL)
+			{
+				/* It's not a junction point, nothing to do. */
+			}
+			else
+			{
+				/* Some other failure. */
+				ret = -1;
+			}
+		}
+		else
+		{
+			/* It's a junction point, so report it as a symlink. */
+			buf->st_mode &= ~S_IFDIR;
+			buf->st_mode |= S_IFLNK;
+			buf->st_size = size;
+		}
+	}
+
 	CloseHandle(hFile);
+	return ret;
+}
+
+/*
+ * Windows implementation of stat().
+ */
+int
+_pgstat64(const char *name, struct stat *buf)
+{
+	int			ret;
+
+	ret = _pglstat64(name, buf);
+
+	/* Do we need to follow a symlink (junction point)? */
+	if (ret == 0 && S_ISLNK(buf->st_mode))
+	{
+		char		next[MAXPGPATH];
+		ssize_t		size;
+
+		/*
+		 * _pglstat64() already called readlink() once to be able to fill in
+		 * st_size, and now we need to do it again to get the path to follow.
+		 * That could be optimized, but stat() on symlinks is probably rare
+		 * and this way is simple.
+		 */
+		size = readlink(name, next, sizeof(next));
+		if (size < 0)
+		{
+			if (errno == EACCES &&
+				pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+			{
+				/* Unlinked underneath us. */
+				errno = ENOENT;
+			}
+			return -1;
+		}
+		if (size >= sizeof(next))
+		{
+			errno = ENAMETOOLONG;
+			return -1;
+		}
+		next[size] = 0;
+
+		ret = _pglstat64(next, buf);
+		if (ret == 0 && S_ISLNK(buf->st_mode))
+		{
+			/*
+			 * We're only prepared to go one hop, because we only expect to
+			 * deal with the simple cases that we create.  The error for too
+			 * many symlinks is supposed to be ELOOP, but Windows hasn't got
+			 * it.
+			 */
+			errno = EIO;
+			return -1;
+		}
+	}
+
 	return ret;
 }
 
