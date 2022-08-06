@@ -58,7 +58,7 @@ typedef struct CopyFromStateData
 	/* low-level state data */
 	CopySource	copy_src;		/* type of copy source */
 	FILE	   *copy_file;		/* used if copy_src == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used if copy_src == COPY_NEW_FE */
+	StringInfo	fe_msgbuf;		/* used if copy_src == COPY_FRONTEND */
 
 	EolType		eol_type;		/* EOL type of input */
 	int			file_encoding;	/* file or remote side's character encoding */
