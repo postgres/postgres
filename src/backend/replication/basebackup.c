@@ -1415,13 +1415,7 @@ sendDir(const char *path, int basepathlen, bool sizeonly, List *tablespaces,
 		}
 
 		/* Allow symbolic links in pg_tblspc only */
-		if (strcmp(path, "./pg_tblspc") == 0 &&
-#ifndef WIN32
-			S_ISLNK(statbuf.st_mode)
-#else
-			pgwin32_is_junction(pathbuf)
-#endif
-			)
+		if (strcmp(path, "./pg_tblspc") == 0 && S_ISLNK(statbuf.st_mode))
 		{
 #if defined(HAVE_READLINK) || defined(WIN32)
 			char		linkpath[MAXPGPATH];
@@ -1884,11 +1878,7 @@ _tarWriteDir(const char *pathbuf, int basepathlen, struct stat *statbuf,
 			 bool sizeonly)
 {
 	/* If symlink, write it as a directory anyway */
-#ifndef WIN32
 	if (S_ISLNK(statbuf->st_mode))
-#else
-	if (pgwin32_is_junction(pathbuf))
-#endif
 		statbuf->st_mode = S_IFDIR | pg_dir_create_mode;
 
 	return _tarWriteHeader(pathbuf + basepathlen + 1, NULL, statbuf, sizeonly);

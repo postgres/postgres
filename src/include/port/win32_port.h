@@ -228,7 +228,6 @@ extern pgoff_t _pgftello64(FILE *stream);
  */
 extern int	pgsymlink(const char *oldpath, const char *newpath);
 extern int	pgreadlink(const char *path, char *buf, size_t size);
-extern bool pgwin32_is_junction(const char *path);
 
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #define readlink(path, buf, size)	pgreadlink(path, buf, size)

@@ -391,11 +391,7 @@ scan_directory(const char *basedir, const char *subdir, bool sizeonly)
 			if (!sizeonly)
 				scan_file(fn, segmentno);
 		}
-#ifndef WIN32
 		else if (S_ISDIR(st.st_mode) || S_ISLNK(st.st_mode))
-#else
-		else if (S_ISDIR(st.st_mode) || pgwin32_is_junction(fn))
-#endif
 		{
 			/*
 			 * If going through the entries of pg_tblspc, we assume to operate
