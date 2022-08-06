@@ -431,11 +431,7 @@ recurse_dir(const char *datadir, const char *parentpath,
 			/* recurse to handle subdirectories */
 			recurse_dir(datadir, path, callback);
 		}
-#ifndef WIN32
 		else if (S_ISLNK(fst.st_mode))
-#else
-		else if (pgwin32_is_junction(fullpath))
-#endif
 		{
 			char		link_target[MAXPGPATH];
 			int			len;
