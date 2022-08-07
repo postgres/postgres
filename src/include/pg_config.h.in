@@ -460,9 +460,6 @@
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
 
-/* Define to 1 if you have the `strtof' function. */
-#undef HAVE_STRTOF
-
 /* Define to 1 if the system has the type `struct addrinfo'. */
 #undef HAVE_STRUCT_ADDRINFO
 

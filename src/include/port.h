@@ -387,10 +387,6 @@ extern int	getpeereid(int sock, uid_t *uid, gid_t *gid);
 extern void explicit_bzero(void *buf, size_t len);
 #endif
 
-#ifndef HAVE_STRTOF
-extern float strtof(const char *nptr, char **endptr);
-#endif
-
 #ifdef HAVE_BUGGY_STRTOF
 extern float pg_strtof(const char *nptr, char **endptr);
 #define strtof(a,b) (pg_strtof((a),(b)))

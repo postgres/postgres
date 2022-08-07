@@ -16734,19 +16734,6 @@ esac
 
 fi
 
-ac_fn_c_check_func "$LINENO" "strtof" "ac_cv_func_strtof"
-if test "x$ac_cv_func_strtof" = xyes; then :
-  $as_echo "#define HAVE_STRTOF 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" strtof.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS strtof.$ac_objext"
- ;;
-esac
-
-fi
-
 
 
 if test "$enable_thread_safety" = yes; then
@@ -16770,8 +16757,7 @@ if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# Cygwin and (apparently, based on test results) Mingw both
 	# have a broken strtof(), so substitute its implementation.
 	# That's not a perfect fix, since it doesn't avoid double-rounding,
-	# but we have no better options. To get that, though, we have to
-	# force the file to be compiled despite HAVE_STRTOF.
+	# but we have no better options.
 	case " $LIBOBJS " in
   *" strtof.$ac_objext "* ) ;;
   *) LIBOBJS="$LIBOBJS strtof.$ac_objext"

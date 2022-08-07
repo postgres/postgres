@@ -16,43 +16,7 @@
 #include <float.h>
 #include <math.h>
 
-#ifndef HAVE_STRTOF
-/*
- * strtof() is part of C99; this version is only for the benefit of obsolete
- * platforms. As such, it is known to return incorrect values for edge cases,
- * which have to be allowed for in variant files for regression test results
- * for any such platform.
- */
 
-float
-strtof(const char *nptr, char **endptr)
-{
-	int			caller_errno = errno;
-	double		dresult;
-	float		fresult;
-
-	errno = 0;
-	dresult = strtod(nptr, endptr);
-	fresult = (float) dresult;
-
-	if (errno == 0)
-	{
-		/*
-		 * Value might be in-range for double but not float.
-		 */
-		if (dresult != 0 && fresult == 0)
-			caller_errno = ERANGE;	/* underflow */
-		if (!isinf(dresult) && isinf(fresult))
-			caller_errno = ERANGE;	/* overflow */
-	}
-	else
-		caller_errno = errno;
-
-	errno = caller_errno;
-	return fresult;
-}
-
-#elif HAVE_BUGGY_STRTOF
 /*
  * Cygwin has a strtof() which is literally just (float)strtod(), which means
  * we can't avoid the double-rounding problem; but using this wrapper does get
@@ -119,5 +83,3 @@ pg_strtof(const char *nptr, char **endptr)
 		}
 	}
 }
-
-#endif
