@@ -46,7 +46,7 @@ $whiskey->safe_psql(
 do
 $$
 declare
-  current timestamp with time zone := '2019-03-27 08:14:01.123456789 America/Punta_Arenas';
+  current timestamp with time zone := '2019-03-27 08:14:01.123456789 UTC';
 begin
   loop
     insert into tbl_timestamp0 select i from
