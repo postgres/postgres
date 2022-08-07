@@ -13874,67 +13874,13 @@ $as_echo "#define HAVE_STDBOOL_H 1" >>confdefs.h
 fi
 
 
-for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h sys/epoll.h sys/event.h sys/ipc.h sys/personality.h sys/prctl.h sys/procctl.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/signalfd.h sys/sockio.h sys/uio.h sys/un.h termios.h ucred.h
+for ac_header in atomic.h copyfile.h execinfo.h getopt.h ifaddrs.h langinfo.h mbarrier.h net/if.h netinet/tcp.h sys/epoll.h sys/event.h sys/ipc.h sys/personality.h sys/prctl.h sys/procctl.h sys/resource.h sys/select.h sys/sem.h sys/shm.h sys/signalfd.h sys/sockio.h sys/ucred.h sys/uio.h sys/un.h termios.h ucred.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
 #define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-# On BSD, test for net/if.h will fail unless sys/socket.h
-# is included first.
-for ac_header in net/if.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "net/if.h" "ac_cv_header_net_if_h" "$ac_includes_default
-#include <sys/socket.h>
-
-"
-if test "x$ac_cv_header_net_if_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_NET_IF_H 1
-_ACEOF
-
-fi
-
-done
-
-
-# On OpenBSD, test for sys/ucred.h will fail unless sys/param.h
-# is included first.
-for ac_header in sys/ucred.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "sys/ucred.h" "ac_cv_header_sys_ucred_h" "$ac_includes_default
-#include <sys/param.h>
-
-"
-if test "x$ac_cv_header_sys_ucred_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_SYS_UCRED_H 1
-_ACEOF
-
-fi
-
-done
-
-
-# At least on IRIX, test for netinet/tcp.h will fail unless
-# netinet/in.h is included first.
-for ac_header in netinet/tcp.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "netinet/tcp.h" "ac_cv_header_netinet_tcp_h" "$ac_includes_default
-#include <netinet/in.h>
-
-"
-if test "x$ac_cv_header_netinet_tcp_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_NETINET_TCP_H 1
 _ACEOF
 
 fi

@@ -1452,6 +1452,8 @@ AC_CHECK_HEADERS(m4_normalize([
 	ifaddrs.h
 	langinfo.h
 	mbarrier.h
+	net/if.h
+	netinet/tcp.h
 	sys/epoll.h
 	sys/event.h
 	sys/ipc.h
@@ -1464,32 +1466,12 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/shm.h
 	sys/signalfd.h
 	sys/sockio.h
+	sys/ucred.h
 	sys/uio.h
 	sys/un.h
 	termios.h
 	ucred.h
 ]))
-
-# On BSD, test for net/if.h will fail unless sys/socket.h
-# is included first.
-AC_CHECK_HEADERS(net/if.h, [], [],
-[AC_INCLUDES_DEFAULT
-#include <sys/socket.h>
-])
-
-# On OpenBSD, test for sys/ucred.h will fail unless sys/param.h
-# is included first.
-AC_CHECK_HEADERS(sys/ucred.h, [], [],
-[AC_INCLUDES_DEFAULT
-#include <sys/param.h>
-])
-
-# At least on IRIX, test for netinet/tcp.h will fail unless
-# netinet/in.h is included first.
-AC_CHECK_HEADERS(netinet/tcp.h, [], [],
-[AC_INCLUDES_DEFAULT
-#include <netinet/in.h>
-])
 
 if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then
   AC_CHECK_HEADERS(readline/readline.h, [],
