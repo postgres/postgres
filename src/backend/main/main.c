@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	 * If supported on the current platform, set up a handler to be called if
 	 * the backend/postmaster crashes with a fatal signal or exception.
 	 */
-#if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
+#if defined(WIN32)
 	pgwin32_install_crashdump_handler();
 #endif
 

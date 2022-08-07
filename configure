@@ -648,7 +648,6 @@ MSGFMT
 PG_CRC32C_OBJS
 CFLAGS_ARMV8_CRC32C
 CFLAGS_SSE42
-have_win32_dbghelp
 LIBOBJS
 ZSTD
 LZ4
@@ -16897,32 +16896,7 @@ esac
  ;;
 esac
 
-  ac_fn_c_check_type "$LINENO" "MINIDUMP_TYPE" "ac_cv_type_MINIDUMP_TYPE" "
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <string.h>
-#include <dbghelp.h>
-"
-if test "x$ac_cv_type_MINIDUMP_TYPE" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_MINIDUMP_TYPE 1
-_ACEOF
-
-pgac_minidump_type=yes
-else
-  pgac_minidump_type=no
 fi
-
-fi
-if test x"$pgac_minidump_type" = x"yes" ; then
-  have_win32_dbghelp=yes
-
-else
-  have_win32_dbghelp=no
-
-fi
-
 # Cygwin needs only a bit of that
 if test "$PORTNAME" = "cygwin"; then
   case " $LIBOBJS " in
