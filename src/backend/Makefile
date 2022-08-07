@@ -101,15 +101,7 @@ postgres: $(POSTGRES_IMP)
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
-ifeq ($(host_os), aix3.2.5)
 	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
-else
-ifneq (,$(findstring aix4.1, $(host_os)))
-	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
-else
-	$(MKLDEXPORT) SUBSYS.o . > $@
-endif
-endif
 	@rm -f SUBSYS.o
 
 endif # aix
