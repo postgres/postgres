@@ -188,17 +188,9 @@ ifeq ($(PORTNAME), linux)
 endif
 
 ifeq ($(PORTNAME), solaris)
-  ifeq ($(GCC), yes)
-    LINK.shared		= $(COMPILER) -shared -Wl,-Bsymbolic
-  else
-    LINK.shared		= $(COMPILER) -G -Bsymbolic
-  endif
+  LINK.shared		= $(COMPILER) -shared -Wl,-Bsymbolic
   ifdef soname
-    ifeq ($(with_gnu_ld), yes)
-      LINK.shared	+= -Wl,-soname,$(soname)
-    else
-      LINK.shared	+= -h $(soname)
-    endif
+    LINK.shared	+= -Wl,-soname,$(soname)
   endif
 endif
 
