@@ -250,8 +250,6 @@ sub GenerateFiles
 		HAVE_EXECINFO_H                             => undef,
 		HAVE_EXPLICIT_BZERO                         => undef,
 		HAVE_FSEEKO                                 => 1,
-		HAVE_FUNCNAME__FUNC                         => undef,
-		HAVE_FUNCNAME__FUNCTION                     => 1,
 		HAVE_GCC__ATOMIC_INT32_CAS                  => undef,
 		HAVE_GCC__ATOMIC_INT64_CAS                  => undef,
 		HAVE_GCC__SYNC_CHAR_TAS                     => undef,

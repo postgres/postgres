@@ -768,7 +768,7 @@ extern int	tas_sema(volatile slock_t *lock);
 
 #if !defined(S_LOCK)
 #define S_LOCK(lock) \
-	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__, PG_FUNCNAME_MACRO) : 0)
+	(TAS(lock) ? s_lock((lock), __FILE__, __LINE__, __func__) : 0)
 #endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_FREE)
@@ -855,7 +855,7 @@ init_spin_delay(SpinDelayStatus *status,
 	status->func = func;
 }
 
-#define init_local_spin_delay(status) init_spin_delay(status, __FILE__, __LINE__, PG_FUNCNAME_MACRO)
+#define init_local_spin_delay(status) init_spin_delay(status, __FILE__, __LINE__, __func__)
 extern void perform_spin_delay(SpinDelayStatus *status);
 extern void finish_spin_delay(SpinDelayStatus *status);
 

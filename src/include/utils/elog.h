@@ -140,7 +140,7 @@
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR ? \
 			errstart_cold(elevel, domain) : \
 			errstart(elevel, domain)) \
-			__VA_ARGS__, errfinish(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
+			__VA_ARGS__, errfinish(__FILE__, __LINE__, __func__); \
 		if (__builtin_constant_p(elevel) && (elevel) >= ERROR) \
 			pg_unreachable(); \
 	} while(0)
@@ -150,7 +150,7 @@
 		const int elevel_ = (elevel); \
 		pg_prevent_errno_in_scope(); \
 		if (errstart(elevel_, domain)) \
-			__VA_ARGS__, errfinish(__FILE__, __LINE__, PG_FUNCNAME_MACRO); \
+			__VA_ARGS__, errfinish(__FILE__, __LINE__, __func__); \
 		if (elevel_ >= ERROR) \
 			pg_unreachable(); \
 	} while(0)

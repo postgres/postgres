@@ -165,32 +165,6 @@ if (q != holder)
 fi])# PGAC_TYPE_128BIT_INT
 
 
-# PGAC_C_FUNCNAME_SUPPORT
-# -----------------------
-# Check if the C compiler understands __func__ (C99) or __FUNCTION__ (gcc).
-# Define HAVE_FUNCNAME__FUNC or HAVE_FUNCNAME__FUNCTION accordingly.
-AC_DEFUN([PGAC_C_FUNCNAME_SUPPORT],
-[AC_CACHE_CHECK(for __func__, pgac_cv_funcname_func_support,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>],
-[printf("%s\n", __func__);])],
-[pgac_cv_funcname_func_support=yes],
-[pgac_cv_funcname_func_support=no])])
-if test x"$pgac_cv_funcname_func_support" = xyes ; then
-AC_DEFINE(HAVE_FUNCNAME__FUNC, 1,
-          [Define to 1 if your compiler understands __func__.])
-else
-AC_CACHE_CHECK(for __FUNCTION__, pgac_cv_funcname_function_support,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>],
-[printf("%s\n", __FUNCTION__);])],
-[pgac_cv_funcname_function_support=yes],
-[pgac_cv_funcname_function_support=no])])
-if test x"$pgac_cv_funcname_function_support" = xyes ; then
-AC_DEFINE(HAVE_FUNCNAME__FUNCTION, 1,
-          [Define to 1 if your compiler understands __FUNCTION__.])
-fi
-fi])# PGAC_C_FUNCNAME_SUPPORT
-
-
 
 # PGAC_C_STATIC_ASSERT
 # --------------------

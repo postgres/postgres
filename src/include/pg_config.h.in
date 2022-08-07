@@ -158,12 +158,6 @@
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 
-/* Define to 1 if your compiler understands __func__. */
-#undef HAVE_FUNCNAME__FUNC
-
-/* Define to 1 if your compiler understands __FUNCTION__. */
-#undef HAVE_FUNCNAME__FUNCTION
-
 /* Define to 1 if you have __atomic_compare_exchange_n(int *, int *, int). */
 #undef HAVE_GCC__ATOMIC_INT32_CAS
 
