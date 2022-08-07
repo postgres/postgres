@@ -28,6 +28,8 @@
 
 #include "c.h"
 
+#include <sysinfoapi.h>
+
 #include <sys/time.h>
 
 /* FILETIME of Jan 1 1970 00:00:00, the PostgreSQL epoch */
@@ -40,59 +42,6 @@ static const unsigned __int64 epoch = UINT64CONST(116444736000000000);
 #define FILETIME_UNITS_PER_SEC	10000000L
 #define FILETIME_UNITS_PER_USEC 10
 
-/*
- * Both GetSystemTimeAsFileTime and GetSystemTimePreciseAsFileTime share a
- * signature, so we can just store a pointer to whichever we find. This
- * is the pointer's type.
- */
-typedef VOID(WINAPI * PgGetSystemTimeFn) (LPFILETIME);
-
-/* One-time initializer function, must match that signature. */
-static void WINAPI init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime);
-
-/* Storage for the function we pick at runtime */
-static PgGetSystemTimeFn pg_get_system_time = &init_gettimeofday;
-
-/*
- * One time initializer.  Determine whether GetSystemTimePreciseAsFileTime
- * is available and if so, plan to use it; if not, fall back to
- * GetSystemTimeAsFileTime.
- */
-static void WINAPI
-init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
-{
-	/*
-	 * Because it's guaranteed that kernel32.dll will be linked into our
-	 * address space already, we don't need to LoadLibrary it and worry about
-	 * closing it afterwards, so we're not using Pg's dlopen/dlsym() wrapper.
-	 *
-	 * We'll just look up the address of GetSystemTimePreciseAsFileTime if
-	 * present.
-	 *
-	 * While we could look up the Windows version and skip this on Windows
-	 * versions below Windows 8 / Windows Server 2012 there isn't much point,
-	 * and determining the windows version is its self somewhat Windows
-	 * version and development SDK specific...
-	 */
-	pg_get_system_time = (PgGetSystemTimeFn) GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")),
-															"GetSystemTimePreciseAsFileTime");
-	if (pg_get_system_time == NULL)
-	{
-		/*
-		 * The expected error from GetLastError() is ERROR_PROC_NOT_FOUND, if
-		 * the function isn't present. No other error should occur.
-		 *
-		 * We can't report an error here because this might be running in
-		 * frontend code; and even if we're in the backend, it's too early to
-		 * elog(...) if we get some unexpected error.  Also, it's not a
-		 * serious problem, so just silently fall back to
-		 * GetSystemTimeAsFileTime irrespective of why the failure occurred.
-		 */
-		pg_get_system_time = &GetSystemTimeAsFileTime;
-	}
-
-	(*pg_get_system_time) (lpSystemTimeAsFileTime);
-}
 
 /*
  * timezone information is stored outside the kernel so tzp isn't used anymore.
@@ -101,12 +50,20 @@ init_gettimeofday(LPFILETIME lpSystemTimeAsFileTime)
  * elapsed_time().
  */
 int
-gettimeofday(struct timeval *tp, struct timezone *tzp)
+gettimeofday(struct timeval *tp, void *tzp)
 {
 	FILETIME	file_time;
 	ULARGE_INTEGER ularge;
 
-	(*pg_get_system_time) (&file_time);
+	/*
+	 * POSIX declines to define what tzp points to, saying "If tzp is not a
+	 * null pointer, the behavior is unspecified".  Let's take this
+	 * opportunity to verify that noplace in Postgres tries to use any
+	 * unportable behavior.
+	 */
+	Assert(tzp == NULL);
+
+	GetSystemTimePreciseAsFileTime(&file_time);
 	ularge.LowPart = file_time.dwLowDateTime;
 	ularge.HighPart = file_time.dwHighDateTime;
 
