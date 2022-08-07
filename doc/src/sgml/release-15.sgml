@@ -3097,19 +3097,6 @@ Author: Michael Paquier <michael@paquier.xyz>
      </listitem>
 
 <!--
-Author: Thomas Munro <tmunro@postgresql.org>
-2022-01-15 [7170f2159] Allow "in place" tablespaces.
--->
-
-     <listitem>
-      <para>
-       Add server variable <link
-       linkend="guc-allow-in-place-tablespaces"><varname>allow_in_place_tablespaces</varname></link>
-       for tablespace testing (Thomas Munro)
-      </para>
-     </listitem>
-
-<!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-04-08 [8ec569479] Apply PGDLLIMPORT markings broadly.
 -->
