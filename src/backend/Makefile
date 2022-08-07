@@ -101,7 +101,7 @@ postgres: $(POSTGRES_IMP)
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
-	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
+	$(MKLDEXPORT) SUBSYS.o . > $@
 	@rm -f SUBSYS.o
 
 endif # aix
