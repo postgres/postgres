@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL 13)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-08-21 23:39+0900\n"
-"PO-Revision-Date: 2020-08-22 00:02+0900\n"
+"POT-Creation-Date: 2022-06-13 23:56+0900\n"
+"PO-Revision-Date: 2022-06-14 17:51+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -51,14 +51,14 @@ msgstr "nonce を生成できませんでした\n"
 #: fe-auth-scram.c:600 fe-auth-scram.c:626 fe-auth-scram.c:641
 #: fe-auth-scram.c:691 fe-auth-scram.c:725 fe-auth.c:289 fe-auth.c:359
 #: fe-auth.c:394 fe-auth.c:611 fe-auth.c:770 fe-auth.c:1129 fe-auth.c:1277
-#: fe-connect.c:892 fe-connect.c:1423 fe-connect.c:1599 fe-connect.c:2204
-#: fe-connect.c:2227 fe-connect.c:2956 fe-connect.c:4602 fe-connect.c:4858
-#: fe-connect.c:4977 fe-connect.c:5230 fe-connect.c:5310 fe-connect.c:5409
-#: fe-connect.c:5665 fe-connect.c:5694 fe-connect.c:5766 fe-connect.c:5790
-#: fe-connect.c:5808 fe-connect.c:5909 fe-connect.c:5918 fe-connect.c:6274
-#: fe-connect.c:6424 fe-exec.c:2747 fe-exec.c:3494 fe-exec.c:3659
-#: fe-gssapi-common.c:111 fe-lobj.c:895 fe-protocol2.c:1207 fe-protocol3.c:995
-#: fe-protocol3.c:1699 fe-secure-common.c:110 fe-secure-gssapi.c:504
+#: fe-connect.c:892 fe-connect.c:1424 fe-connect.c:1600 fe-connect.c:2205
+#: fe-connect.c:2228 fe-connect.c:2962 fe-connect.c:4652 fe-connect.c:4908
+#: fe-connect.c:5027 fe-connect.c:5280 fe-connect.c:5360 fe-connect.c:5459
+#: fe-connect.c:5715 fe-connect.c:5744 fe-connect.c:5816 fe-connect.c:5840
+#: fe-connect.c:5858 fe-connect.c:5959 fe-connect.c:5968 fe-connect.c:6324
+#: fe-connect.c:6474 fe-exec.c:2751 fe-exec.c:3498 fe-exec.c:3663
+#: fe-gssapi-common.c:112 fe-lobj.c:895 fe-protocol2.c:1207 fe-protocol3.c:963
+#: fe-protocol3.c:1667 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:440 fe-secure-openssl.c:1091
 msgid "out of memory\n"
 msgstr "メモリ不足\n"
@@ -77,7 +77,7 @@ msgstr "不正なSCRAM応答 (nonce の不一致)\n"
 
 #: fe-auth-scram.c:651
 msgid "malformed SCRAM message (invalid salt)\n"
-msgstr "SCRAMメッセージのフォーマット異常 (不正なサーバソルト)\n"
+msgstr "SCRAMメッセージのフォーマット異常 (不正なソルト)\n"
 
 #: fe-auth-scram.c:665
 msgid "malformed SCRAM message (invalid iteration count)\n"
@@ -109,7 +109,7 @@ msgstr "GSSAPIバッファの割り当ての際のメモリ不足(%d)\n"
 msgid "GSSAPI continuation error"
 msgstr "GSSAI続行エラー"
 
-#: fe-auth.c:158 fe-auth.c:388 fe-gssapi-common.c:98 fe-secure-common.c:98
+#: fe-auth.c:158 fe-auth.c:388 fe-gssapi-common.c:99 fe-secure-common.c:98
 msgid "host name must be specified\n"
 msgstr "ホスト名を指定しなければなりません\n"
 
@@ -209,12 +209,12 @@ msgstr "認証方式%uはサポートされていません\n"
 msgid "user name lookup failure: error code %lu\n"
 msgstr "ユーザー名の検索に失敗: エラー コード %lu\n"
 
-#: fe-auth.c:1114 fe-connect.c:2838
+#: fe-auth.c:1114 fe-connect.c:2839
 #, c-format
 msgid "could not look up local user ID %d: %s\n"
 msgstr "ローカルユーザID%dが見つかりませんでした: %s\n"
 
-#: fe-auth.c:1119 fe-connect.c:2843
+#: fe-auth.c:1119 fe-connect.c:2844
 #, c-format
 msgid "local user with ID %d does not exist\n"
 msgstr "ID %d を持つローカルユーザは存在しません\n"
@@ -237,37 +237,61 @@ msgstr "認識できないパスワード暗号化アルゴリズム \"%s\"\n"
 msgid "could not match %d host names to %d hostaddr values\n"
 msgstr "%d個のホスト名と%d個のhostaddrの値との突き合せはできません\n"
 
-#: fe-connect.c:1156
+#: fe-connect.c:1161
 #, c-format
 msgid "could not match %d port numbers to %d hosts\n"
 msgstr "%d個のポート番号と%d個のホストとの突き合せはできません\n"
 
-#: fe-connect.c:1249 fe-connect.c:1275 fe-connect.c:1317 fe-connect.c:1326
-#: fe-connect.c:1359 fe-connect.c:1404
+#: fe-connect.c:1254
 #, c-format
-msgid "invalid %s value: \"%s\"\n"
-msgstr "%s の値が不正: \"%s\"\n"
+msgid "invalid channel_binding value: \"%s\"\n"
+msgstr "不正なchannel_bindingの値: \"%s\"\n"
 
-#: fe-connect.c:1296
+#: fe-connect.c:1280
+#, c-format
+msgid "invalid sslmode value: \"%s\"\n"
+msgstr "不正なsslmodeの値: \"%s\"\n"
+
+#: fe-connect.c:1301
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr "SSLサポートが組み込まれていない場合sslmodeの値\"%s\"は不正です\n"
 
-#: fe-connect.c:1344
+#: fe-connect.c:1322
+#, c-format
+msgid "invalid ssl_min_protocol_version value: \"%s\"\n"
+msgstr "不正なssl_min_protocol_versionの値: \"%s\"\n"
+
+#: fe-connect.c:1330
+#, c-format
+msgid "invalid ssl_max_protocol_version value: \"%s\"\n"
+msgstr "不正なssl_max_protocol_versionの値: \"%s\"\n"
+
+#: fe-connect.c:1347
 msgid "invalid SSL protocol version range\n"
 msgstr "不正なSSLプロトコルバージョン範囲\n"
 
-#: fe-connect.c:1369
+#: fe-connect.c:1362
+#, c-format
+msgid "invalid gssencmode value: \"%s\"\n"
+msgstr "gssencmodeの値が不正です: \"%s\"\n"
+
+#: fe-connect.c:1371
 #, c-format
 msgid "gssencmode value \"%s\" invalid when GSSAPI support is not compiled in\n"
 msgstr "gssencmodeの値\"%s\"はGSSAPIサポートがコンパイルされていない場合は不正\n"
 
-#: fe-connect.c:1623
+#: fe-connect.c:1406
+#, c-format
+msgid "invalid target_session_attrs value: \"%s\"\n"
+msgstr "target_session_attrsの値が不正です: \"%s\"\n"
+
+#: fe-connect.c:1624
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "TCPソケットを非遅延モードに設定できませんでした: %s\n"
 
-#: fe-connect.c:1684
+#: fe-connect.c:1685
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -278,7 +302,7 @@ msgstr ""
 "                              ローカルにサーバが稼動していますか?\n"
 "                              Unixドメインソケット\"%s\"で通信を受け付けていますか?\n"
 
-#: fe-connect.c:1721
+#: fe-connect.c:1722
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -289,7 +313,7 @@ msgstr ""
 "\tサーバはホスト \"%s\" (%s) で稼動しており、\n"
 "\tまた、ポート %s で TCP/IP 接続を受け付けていますか?\n"
 
-#: fe-connect.c:1729
+#: fe-connect.c:1730
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -300,331 +324,334 @@ msgstr ""
 "\tサーバはホスト\"%s\"で稼動していますか?\n"
 "\tまた、ポート%sでTCP/IP接続を受け付けていますか?\n"
 
-#: fe-connect.c:1799
+#: fe-connect.c:1800
 #, c-format
 msgid "invalid integer value \"%s\" for connection option \"%s\"\n"
 msgstr "接続オプション\"%2$s\"に対する不正な整数値\"%1$s\"\n"
 
-#: fe-connect.c:1829 fe-connect.c:1863 fe-connect.c:1898 fe-connect.c:1985
-#: fe-connect.c:2627
+#: fe-connect.c:1830 fe-connect.c:1864 fe-connect.c:1899 fe-connect.c:1986
+#: fe-connect.c:2628
 #, c-format
 msgid "setsockopt(%s) failed: %s\n"
 msgstr "setsockopt(%s)が失敗しました: %s\n"
 
-#: fe-connect.c:1951
+#: fe-connect.c:1952
 #, c-format
 msgid "WSAIoctl(SIO_KEEPALIVE_VALS) failed: %ui\n"
 msgstr "WSAIoctl(SIO_KEEPALIVE_VALS)に失敗しました:%ui\n"
 
-#: fe-connect.c:2317
+#: fe-connect.c:2318
 msgid "invalid connection state, probably indicative of memory corruption\n"
 msgstr "接続状態が不正です。メモリ障害の可能性があります\n"
 
-#: fe-connect.c:2383
+#: fe-connect.c:2384
 #, c-format
 msgid "invalid port number: \"%s\"\n"
 msgstr "不正なポート番号です: \"%s\"\n"
 
-#: fe-connect.c:2399
+#: fe-connect.c:2400
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
 msgstr "ホスト名\"%s\"をアドレスに変換できませんでした: %s\n"
 
-#: fe-connect.c:2412
+#: fe-connect.c:2413
 #, c-format
 msgid "could not parse network address \"%s\": %s\n"
 msgstr "ネットワークアドレス\"%s\"をパースできませんでした: %s\n"
 
-#: fe-connect.c:2425
+#: fe-connect.c:2426
 #, c-format
 msgid "Unix-domain socket path \"%s\" is too long (maximum %d bytes)\n"
 msgstr "Unixドメインソケットのパス\"%s\"が長すぎます(最大 %d バイト)\n"
 
-#: fe-connect.c:2440
+#: fe-connect.c:2441
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
 msgstr "Unixドメインソケットのパス\"%s\"をアドレスに変換できませんでした: %s\n"
 
-#: fe-connect.c:2564
+#: fe-connect.c:2565
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "ソケットを作成できませんでした: %s\n"
 
-#: fe-connect.c:2586
+#: fe-connect.c:2587
 #, c-format
 msgid "could not set socket to nonblocking mode: %s\n"
 msgstr "ソケットを非ブロッキングモードに設定できませんでした: %s\n"
 
-#: fe-connect.c:2596
+#: fe-connect.c:2597
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
 msgstr "ソケットをclose-on-execモードに設定できませんでした: %s\n"
 
-#: fe-connect.c:2614
+#: fe-connect.c:2615
 msgid "keepalives parameter must be an integer\n"
 msgstr "keepaliveのパラメータは整数でなければなりません\n"
 
-#: fe-connect.c:2754
+#: fe-connect.c:2755
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "ソケットのエラー状態を入手できませんでした: %s\n"
 
-#: fe-connect.c:2782
+#: fe-connect.c:2783
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "ソケットからクライアントアドレスを入手できませんでした: %s\n"
 
-#: fe-connect.c:2824
+#: fe-connect.c:2825
 msgid "requirepeer parameter is not supported on this platform\n"
 msgstr "このプラットフォームでは requirepeer パラメータはサポートされていません\n"
 
-#: fe-connect.c:2827
+#: fe-connect.c:2828
 #, c-format
 msgid "could not get peer credentials: %s\n"
 msgstr "ピアの資格証明を入手できませんでした: %s\n"
 
-#: fe-connect.c:2851
+#: fe-connect.c:2852
 #, c-format
 msgid "requirepeer specifies \"%s\", but actual peer user name is \"%s\"\n"
 msgstr "requirepeerは\"%s\"を指定していますが、実際のピア名は\"%s\"です\n"
 
-#: fe-connect.c:2891
+#: fe-connect.c:2892
 #, c-format
 msgid "could not send GSSAPI negotiation packet: %s\n"
 msgstr "GSSAPIネゴシエーションパケットを送信できませんでした: %s\n"
 
-#: fe-connect.c:2903
+#: fe-connect.c:2904
 msgid "GSSAPI encryption required but was impossible (possibly no credential cache, no server support, or using a local socket)\n"
 msgstr "GSSAPI暗号化が要求されていますが、実行できませんでした(おそらく資格キャッシュがない、サーバがサポートしていないあるいはローカルソケットで接続しています)\n"
 
-#: fe-connect.c:2930
+#: fe-connect.c:2936
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "SSLネゴシエーションパケットを送信できませんでした: %s\n"
 
-#: fe-connect.c:2969
+#: fe-connect.c:2975
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "開始パケットを送信できませんでした: %s\n"
 
-#: fe-connect.c:3039
+#: fe-connect.c:3045
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "サーバはSSLをサポートしていませんが、SSLが要求されました\n"
 
-#: fe-connect.c:3065
+#: fe-connect.c:3072
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "SSLネゴシエーションに対して不正な応答を受信しました: %c\n"
 
-#: fe-connect.c:3155
+#: fe-connect.c:3093
+msgid "received unencrypted data after SSL response\n"
+msgstr "SSL応答の後に非暗号化データを受信しました\n"
+
+#: fe-connect.c:3174
 msgid "server doesn't support GSSAPI encryption, but it was required\n"
 msgstr "サーバはGSSAPI暗号化をサポートしていませんが、要求されました\n"
 
-#: fe-connect.c:3166
+#: fe-connect.c:3186
 #, c-format
 msgid "received invalid response to GSSAPI negotiation: %c\n"
 msgstr "GSSAPIネゴシエーションに対して不正な応答を受信しました: %c\n"
 
-#: fe-connect.c:3233 fe-connect.c:3264
+#: fe-connect.c:3205
+msgid "received unencrypted data after GSSAPI encryption response\n"
+msgstr "GSSAPI暗号化応答の後に非暗号化データを受信しました\n"
+
+#: fe-connect.c:3265 fe-connect.c:3296
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "サーバからの認証要求を想定していましたが、%cを受信しました\n"
 
-#: fe-connect.c:3506
+#: fe-connect.c:3537
 msgid "unexpected message from server during startup\n"
 msgstr "起動時にサーバから想定外のメッセージがありました\n"
 
-#: fe-connect.c:3711
+#: fe-connect.c:3742
 #, c-format
 msgid "could not make a writable connection to server \"%s:%s\"\n"
 msgstr "サーバ\"%s:%s\"への書き込み可能な接続を確立できませんでした\n"
 
-#: fe-connect.c:3757
+#: fe-connect.c:3788
 #, c-format
 msgid "test \"SHOW transaction_read_only\" failed on server \"%s:%s\"\n"
 msgstr "サーバ\"%s:%s\"で\"SHOW transaction_read_only\"のテストに失敗しました\n"
 
-#: fe-connect.c:3772
+#: fe-connect.c:3803
 #, c-format
 msgid "invalid connection state %d, probably indicative of memory corruption\n"
 msgstr "接続状態%dが不正です。メモリ障害の可能性があります\n"
 
-#: fe-connect.c:4208 fe-connect.c:4268
+#: fe-connect.c:4242 fe-connect.c:4302
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_CONNRESET event\n"
 msgstr "PGEVT_CONNRESETイベント中にPGEventProc \"%s\"に失敗しました\n"
 
-#: fe-connect.c:4615
+#: fe-connect.c:4665
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
 msgstr "不正なLDAP URL\"%s\":スキーマはldap://でなければなりません\n"
 
-#: fe-connect.c:4630
+#: fe-connect.c:4680
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "不正なLDAP URL \"%s\": 区別名がありません\n"
 
-#: fe-connect.c:4642 fe-connect.c:4697
+#: fe-connect.c:4692 fe-connect.c:4747
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
 msgstr "不正なLDAP URL \"%s\": 正確に1つの属性を持たなければなりません\n"
 
-#: fe-connect.c:4653 fe-connect.c:4712
+#: fe-connect.c:4703 fe-connect.c:4762
 #, c-format
 msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "不正なLDAP URL \"%s\": 検索スコープ(base/one/sub)を持たなければなりません\n"
 
-#: fe-connect.c:4664
+#: fe-connect.c:4714
 #, c-format
 msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "不正なLDAP URL \"%s\": フィルタがありません\n"
 
-#: fe-connect.c:4685
+#: fe-connect.c:4735
 #, c-format
 msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "不正なLDAP URL \"%s\": ポート番号が不正です\n"
 
-#: fe-connect.c:4721
+#: fe-connect.c:4771
 msgid "could not create LDAP structure\n"
 msgstr "LDAP構造体を作成できませんでした\n"
 
-#: fe-connect.c:4797
+#: fe-connect.c:4847
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "LDAPサーバで検索に失敗しました: %s\n"
 
-#: fe-connect.c:4808
+#: fe-connect.c:4858
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "LDAP検索結果が複数ありました\n"
 
-#: fe-connect.c:4809 fe-connect.c:4821
+#: fe-connect.c:4859 fe-connect.c:4871
 msgid "no entry found on LDAP lookup\n"
 msgstr "LDAP検索結果が空でした\n"
 
-#: fe-connect.c:4832 fe-connect.c:4845
+#: fe-connect.c:4882 fe-connect.c:4895
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "LDAP検索で属性に値がありませんでした\n"
 
-#: fe-connect.c:4897 fe-connect.c:4916 fe-connect.c:5448
+#: fe-connect.c:4947 fe-connect.c:4966 fe-connect.c:5498
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "接続情報文字列において\"%s\"の後に\"=\"がありませんでした\n"
 
-#: fe-connect.c:4989 fe-connect.c:5633 fe-connect.c:6407
+#: fe-connect.c:5039 fe-connect.c:5683 fe-connect.c:6457
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "接続オプション\"%s\"は不正です\n"
 
-#: fe-connect.c:5005 fe-connect.c:5497
+#: fe-connect.c:5055 fe-connect.c:5547
 msgid "unterminated quoted string in connection info string\n"
 msgstr "接続情報文字列において閉じていない引用符がありました\n"
 
-#: fe-connect.c:5088
+#: fe-connect.c:5138
 #, c-format
 msgid "definition of service \"%s\" not found\n"
 msgstr "サービス定義\"%s\"がみつかりません\n"
 
-#: fe-connect.c:5111
+#: fe-connect.c:5161
 #, c-format
 msgid "service file \"%s\" not found\n"
 msgstr "サービスファイル\"%s\"がみつかりません\n"
 
-#: fe-connect.c:5126
+#: fe-connect.c:5176
 #, c-format
 msgid "line %d too long in service file \"%s\"\n"
 msgstr "サービスファイル\"%2$s\"の行%1$dが長すぎます。\n"
 
-#: fe-connect.c:5198 fe-connect.c:5242
+#: fe-connect.c:5248 fe-connect.c:5292
 #, c-format
 msgid "syntax error in service file \"%s\", line %d\n"
 msgstr "サービスファイル\"%s\"の行%dに構文エラーがあります\n"
 
-#: fe-connect.c:5209
+#: fe-connect.c:5259
 #, c-format
 msgid "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr "サービスファイル\"%s\"ではネストしたサービス指定はサポートされていません、行%d\n"
 
-#: fe-connect.c:5929
+#: fe-connect.c:5979
 #, c-format
 msgid "invalid URI propagated to internal parser routine: \"%s\"\n"
 msgstr "内部パーサ処理へ伝わった不正なURI: \"%s\"\n"
 
-#: fe-connect.c:6006
+#: fe-connect.c:6056
 #, c-format
 msgid "end of string reached when looking for matching \"]\" in IPv6 host address in URI: \"%s\"\n"
 msgstr "URI \"%s\"内のIPv6ホストアドレスにおいて対応する\"]\"を探している間に文字列が終わりました\n"
 
-#: fe-connect.c:6013
+#: fe-connect.c:6063
 #, c-format
 msgid "IPv6 host address may not be empty in URI: \"%s\"\n"
 msgstr "URI \"%s\"内のIPv6ホストアドレスが空である可能性があります\n"
 
-#: fe-connect.c:6028
+#: fe-connect.c:6078
 #, c-format
 msgid "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): \"%s\"\n"
 msgstr "URI（\":\"と\"/\"を除く）内の位置%2$dに想定外の\"%1$c\"文字があります: \"%3$s\"\n"
 
-#: fe-connect.c:6157
+#: fe-connect.c:6207
 #, c-format
 msgid "extra key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "URI問い合わせパラメータ内に余分なキーと値を分ける\"=\"があります: \"%s\"\n"
 
-#: fe-connect.c:6177
+#: fe-connect.c:6227
 #, c-format
 msgid "missing key/value separator \"=\" in URI query parameter: \"%s\"\n"
 msgstr "URI問い合わせパラメータ内にキーと値を分ける\\\"=\\\"がありません: \"%s\"\n"
 
-#: fe-connect.c:6228
+#: fe-connect.c:6278
 #, c-format
 msgid "invalid URI query parameter: \"%s\"\n"
 msgstr "不正なURI問い合わせパラメータ:\"%s\"\n"
 
-#: fe-connect.c:6302
+#: fe-connect.c:6352
 #, c-format
 msgid "invalid percent-encoded token: \"%s\"\n"
 msgstr "不正なパーセント符号化トークン: \"%s\"\n"
 
-#: fe-connect.c:6312
+#: fe-connect.c:6362
 #, c-format
 msgid "forbidden value %%00 in percent-encoded value: \"%s\"\n"
 msgstr "パーセント符号化された値では%%00値は許されません: \"%s\"\n"
 
-#: fe-connect.c:6675
+#: fe-connect.c:6725
 msgid "connection pointer is NULL\n"
 msgstr "接続ポインタはNULLです\n"
 
-#: fe-connect.c:6974
+#: fe-connect.c:7021
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "WARNING: パスワードファイル\"%s\"がテキストファイルではありません\n"
 
-#: fe-connect.c:6983
+#: fe-connect.c:7030
 #, c-format
 msgid "WARNING: password file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
 msgstr "警告: パスワードファイル \"%s\" がグループメンバもしくは他のユーザから読める状態になっています。この権限はu=rw (0600)以下にすべきです\n"
 
-#: fe-connect.c:7024
-#, c-format
-msgid "WARNING: line %d too long in password file \"%s\"\n"
-msgstr "警告: パスワードファイル\"%2$s\"中の行%1$dが長すぎます\n"
-
-#: fe-connect.c:7103
+#: fe-connect.c:7138
 #, c-format
 msgid "password retrieved from file \"%s\"\n"
 msgstr "ファイル\"%s\"からパスワードを読み込みました\n"
 
-#: fe-exec.c:444 fe-exec.c:2821
+#: fe-exec.c:444 fe-exec.c:2825
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "行番号%dは0..%dの範囲を超えています"
 
 #: fe-exec.c:505 fe-protocol2.c:497 fe-protocol2.c:532 fe-protocol2.c:1050
-#: fe-protocol3.c:206 fe-protocol3.c:233 fe-protocol3.c:250 fe-protocol3.c:330
-#: fe-protocol3.c:723 fe-protocol3.c:954
+#: fe-protocol3.c:208 fe-protocol3.c:235 fe-protocol3.c:252 fe-protocol3.c:330
+#: fe-protocol3.c:694 fe-protocol3.c:922
 msgid "out of memory"
 msgstr "メモリ不足です"
 
-#: fe-exec.c:506 fe-protocol2.c:1396 fe-protocol3.c:1907
+#: fe-exec.c:506 fe-protocol2.c:1396 fe-protocol3.c:1875
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -657,7 +684,7 @@ msgstr "パラメータ数は0から65535まででなければなりません\n"
 msgid "statement name is a null pointer\n"
 msgstr "文の名前がヌルポインタです\n"
 
-#: fe-exec.c:1361 fe-exec.c:1524 fe-exec.c:2233 fe-exec.c:2435
+#: fe-exec.c:1361 fe-exec.c:1524 fe-exec.c:2237 fe-exec.c:2439
 msgid "function requires at least protocol version 3.0\n"
 msgstr "関数は少なくともプロトコルバージョン3.0が必要です\n"
 
@@ -673,69 +700,69 @@ msgstr "他のコマンドを処理しています\n"
 msgid "length must be given for binary parameter\n"
 msgstr "バイナリパラメータには長さを指定しなければなりません\n"
 
-#: fe-exec.c:1863
+#: fe-exec.c:1867
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "想定外のasyncStatus: %d\n"
 
-#: fe-exec.c:1883
+#: fe-exec.c:1887
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "PGEVT_RESULTCREATEイベント中にPGEventProc \"%s\"に失敗しました\n"
 
-#: fe-exec.c:2043
+#: fe-exec.c:2047
 msgid "COPY terminated by new PQexec"
 msgstr "新たなPQexec\"によりCOPYが終了しました"
 
-#: fe-exec.c:2051
+#: fe-exec.c:2055
 msgid "COPY IN state must be terminated first\n"
 msgstr "まずCOPY IN状態を終了させなければなりません\n"
 
-#: fe-exec.c:2071
+#: fe-exec.c:2075
 msgid "COPY OUT state must be terminated first\n"
 msgstr "まずCOPY OUT状態を終了させなければなりません\n"
 
-#: fe-exec.c:2079
+#: fe-exec.c:2083
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "COPY BOTH 実行中の PQexec は許可されていません\n"
 
-#: fe-exec.c:2325 fe-exec.c:2392 fe-exec.c:2482 fe-protocol2.c:1353
-#: fe-protocol3.c:1838
+#: fe-exec.c:2329 fe-exec.c:2396 fe-exec.c:2486 fe-protocol2.c:1353
+#: fe-protocol3.c:1806
 msgid "no COPY in progress\n"
 msgstr "実行中のCOPYはありません\n"
 
-#: fe-exec.c:2672
+#: fe-exec.c:2676
 msgid "connection in wrong state\n"
 msgstr "接続状態が異常です\n"
 
-#: fe-exec.c:2703
+#: fe-exec.c:2707
 msgid "invalid ExecStatusType code"
 msgstr "ExecStatusTypeコードが不正です"
 
-#: fe-exec.c:2730
+#: fe-exec.c:2734
 msgid "PGresult is not an error result\n"
 msgstr "PGresutがエラー結果ではありません\n"
 
-#: fe-exec.c:2805 fe-exec.c:2828
+#: fe-exec.c:2809 fe-exec.c:2832
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "列番号%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:2843
+#: fe-exec.c:2847
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "パラメータ%dは0..%dの範囲を超えています"
 
-#: fe-exec.c:3153
+#: fe-exec.c:3157
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "サーバからの結果を解釈できませんでした: %s"
 
-#: fe-exec.c:3392 fe-exec.c:3476
+#: fe-exec.c:3396 fe-exec.c:3480
 msgid "incomplete multibyte character\n"
 msgstr "不完全なマルチバイト文字\n"
 
-#: fe-gssapi-common.c:124
+#: fe-gssapi-common.c:125
 msgid "GSSAPI name import error"
 msgstr "GSSAPI名のインポートエラー"
 
@@ -822,21 +849,21 @@ msgstr "loread関数のOIDを決定できません\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "lowrite関数のOIDを決定できません\n"
 
-#: fe-misc.c:276
+#: fe-misc.c:289
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "サイズ%luの整数はpqGetIntでサポートされていません"
 
-#: fe-misc.c:312
+#: fe-misc.c:325
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "サイズ%luの整数はpqPutIntでサポートされていません"
 
-#: fe-misc.c:623 fe-misc.c:856
+#: fe-misc.c:636 fe-misc.c:869
 msgid "connection not open\n"
 msgstr "接続はオープンされていません\n"
 
-#: fe-misc.c:792 fe-secure-openssl.c:209 fe-secure-openssl.c:316
+#: fe-misc.c:805 fe-secure-openssl.c:209 fe-secure-openssl.c:316
 #: fe-secure.c:267 fe-secure.c:383
 msgid ""
 "server closed the connection unexpectedly\n"
@@ -847,15 +874,15 @@ msgstr ""
 "        おそらく要求の処理前または処理中にサーバが異常終了\n"
 "        したことを意味しています。\n"
 
-#: fe-misc.c:1050
+#: fe-misc.c:1063
 msgid "timeout expired\n"
 msgstr "タイムアウト期間が過ぎました\n"
 
-#: fe-misc.c:1095
+#: fe-misc.c:1108
 msgid "invalid socket\n"
 msgstr "不正なソケットです\n"
 
-#: fe-misc.c:1118
+#: fe-misc.c:1131
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select()が失敗しました: %s\n"
@@ -870,7 +897,7 @@ msgstr "setenv状態%cは不正です。メモリ障害の可能性がありま�
 msgid "invalid state %c, probably indicative of memory corruption\n"
 msgstr "状態%cは不正です。メモリ障害の可能性があります\n"
 
-#: fe-protocol2.c:473 fe-protocol3.c:183
+#: fe-protocol2.c:473 fe-protocol3.c:185
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "待機中にサーバからメッセージ種類0x%02xが届きました"
@@ -890,12 +917,12 @@ msgstr "サーバが事前の行記述(\"T\"メッセージ)なしにデータ(\
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
 msgstr "サーバが事前の行記述(\"T\"メッセージ)なしにバイナリデータ(\"B\"メッセージ)を送信しました"
 
-#: fe-protocol2.c:626 fe-protocol3.c:408
+#: fe-protocol2.c:626 fe-protocol3.c:405
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "サーバから想定外の応答がありました。受け付けた先頭文字は\"%c\"です\n"
 
-#: fe-protocol2.c:755 fe-protocol2.c:930 fe-protocol3.c:622 fe-protocol3.c:849
+#: fe-protocol2.c:755 fe-protocol2.c:930 fe-protocol3.c:605 fe-protocol3.c:811
 msgid "out of memory for query result"
 msgstr "問い合わせ結果用のメモリが不足しています"
 
@@ -904,124 +931,116 @@ msgstr "問い合わせ結果用のメモリが不足しています"
 msgid "lost synchronization with server, resetting connection"
 msgstr "サーバとの動機が失われました。接続をリセットしています"
 
-#: fe-protocol2.c:1530 fe-protocol2.c:1562 fe-protocol3.c:2095
+#: fe-protocol2.c:1530 fe-protocol2.c:1562 fe-protocol3.c:2063
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "プロトコルエラー: id=0x%x\n"
 
-#: fe-protocol3.c:365
+#: fe-protocol3.c:362
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "サーバが事前の行記述(\"T\"メッセージ)なしにデータ(\"D\"メッセージ)を送信しました\"\n"
 
-#: fe-protocol3.c:429
+#: fe-protocol3.c:426
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "メッセージの内容がメッセージ種類\"%c\"の長さに合いません\n"
 
-#: fe-protocol3.c:449
+#: fe-protocol3.c:446
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "サーバとの同期が失われました。受信したメッセージ種類は\"%c\"、長さは%d\n"
 
-#: fe-protocol3.c:500 fe-protocol3.c:540
+#: fe-protocol3.c:496 fe-protocol3.c:536
 msgid "insufficient data in \"T\" message"
 msgstr "\"T\"メッセージ内のデータが不十分です"
 
-#: fe-protocol3.c:573
-msgid "extraneous data in \"T\" message"
-msgstr "\"T\"メッセージ内に無関係なデータがあります"
+#: fe-protocol3.c:674
+msgid "insufficient data in \"t\" message"
+msgstr "\"t\"メッセージ内のデータが不十分です"
 
-#: fe-protocol3.c:686
-msgid "extraneous data in \"t\" message"
-msgstr "\"t\"メッセージ内に無関係なデータがあります"
-
-#: fe-protocol3.c:757 fe-protocol3.c:789 fe-protocol3.c:807
+#: fe-protocol3.c:733 fe-protocol3.c:765 fe-protocol3.c:783
 msgid "insufficient data in \"D\" message"
 msgstr "\"D\"\"メッセージ内のデータが不十分です"
 
-#: fe-protocol3.c:763
+#: fe-protocol3.c:739
 msgid "unexpected field count in \"D\" message"
 msgstr "\"D\"メッセージ内のフィールド数が想定外です。"
 
-#: fe-protocol3.c:816
-msgid "extraneous data in \"D\" message"
-msgstr "”D\"メッセージ内に無関係なデータがあります"
-
-#: fe-protocol3.c:1008
+#: fe-protocol3.c:976
 msgid "no error message available\n"
 msgstr "エラーメッセージがありません\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1056 fe-protocol3.c:1075
+#: fe-protocol3.c:1024 fe-protocol3.c:1043
 #, c-format
 msgid " at character %s"
 msgstr "(文字位置: %s)"
 
-#: fe-protocol3.c:1088
+#: fe-protocol3.c:1056
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1091
+#: fe-protocol3.c:1059
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "HINT:  %s\n"
 
-#: fe-protocol3.c:1094
+#: fe-protocol3.c:1062
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "QUERY:  %s\n"
 
-#: fe-protocol3.c:1101
+#: fe-protocol3.c:1069
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "CONTEXT:  %s\n"
 
-#: fe-protocol3.c:1110
+#: fe-protocol3.c:1078
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMA NAME:  %s\n"
 
-#: fe-protocol3.c:1114
+#: fe-protocol3.c:1082
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABLE NAME:  %s\n"
 
-#: fe-protocol3.c:1118
+#: fe-protocol3.c:1086
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "COLUMN NAME:  %s\n"
 
-#: fe-protocol3.c:1122
+#: fe-protocol3.c:1090
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATATYPE NAME:  %s\n"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1094
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT NAME:  %s\n"
 
-#: fe-protocol3.c:1138
+#: fe-protocol3.c:1106
 msgid "LOCATION:  "
 msgstr "LOCATION:  "
 
-#: fe-protocol3.c:1140
+#: fe-protocol3.c:1108
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1142
+#: fe-protocol3.c:1110
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1337
+#: fe-protocol3.c:1305
 #, c-format
 msgid "LINE %d: "
 msgstr "行 %d: "
 
-#: fe-protocol3.c:1732
+#: fe-protocol3.c:1700
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: テキストのCOPY OUTを行っていません\n"
 
@@ -1070,26 +1089,26 @@ msgstr "受信したGSSAPIパケットは機密性を使用していませんで
 
 #: fe-secure-gssapi.c:642
 msgid "could not initiate GSSAPI security context"
-msgstr "GSSAPIセキュリティコンテキストを初期化できませんでした"
+msgstr "GSSAPIセキュリティコンテキストを開始できませんでした"
 
-#: fe-secure-gssapi.c:673
+#: fe-secure-gssapi.c:670
 msgid "GSSAPI size check error"
 msgstr "GSSAPIサイズチェックエラー"
 
-#: fe-secure-gssapi.c:684
+#: fe-secure-gssapi.c:681
 msgid "GSSAPI context establishment error"
 msgstr "GSSAPIコンテクスト確立エラー"
 
-#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1291
+#: fe-secure-openssl.c:214 fe-secure-openssl.c:321 fe-secure-openssl.c:1325
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALLエラー: %s\n"
 
-#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1295
+#: fe-secure-openssl.c:221 fe-secure-openssl.c:328 fe-secure-openssl.c:1329
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALLエラー: EOFを検知\n"
 
-#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1304
+#: fe-secure-openssl.c:232 fe-secure-openssl.c:339 fe-secure-openssl.c:1338
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSLエラー: %s\n"
@@ -1098,7 +1117,7 @@ msgstr "SSLエラー: %s\n"
 msgid "SSL connection has been closed unexpectedly\n"
 msgstr "SSL接続が意図せずにクローズされました\n"
 
-#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1354
+#: fe-secure-openssl.c:253 fe-secure-openssl.c:360 fe-secure-openssl.c:1388
 #, c-format
 msgid "unrecognized SSL error code: %d\n"
 msgstr "不明のSSLエラーコード: %d\n"
@@ -1207,42 +1226,47 @@ msgstr "SSL秘密キー\"%s\"をエンジン\"%s\"から読み取れませんで
 msgid "certificate present, but not private key file \"%s\"\n"
 msgstr "証明書はありましたが、秘密キーファイル\"%s\"はありませんでした\n"
 
-#: fe-secure-openssl.c:1194
+#: fe-secure-openssl.c:1195
 #, c-format
-msgid "private key file \"%s\" has group or world access; permissions should be u=rw (0600) or less\n"
-msgstr "警告：秘密キーファイル \"%s\" がグループメンバや第三者から読める状態になっています。この権限はu=rw (0600)またはそれ以下とすべきです\n"
+msgid "private key file \"%s\" is not a regular file\n"
+msgstr "秘密鍵ファイル\"%s\"は通常のファイルではありません\n"
 
-#: fe-secure-openssl.c:1219
+#: fe-secure-openssl.c:1228
+#, c-format
+msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
+msgstr "秘密鍵ファイル\"%s\"はグループに対して、もしくは無制限にアクセスを許可しています; ファイルのパーミッションは u=rw (0600) かそれよりも狭い必要があります、rootが所有している場合は  u=rw,g=r (0640) かそれよりも狭い必要があります\n"
+
+#: fe-secure-openssl.c:1253
 #, c-format
 msgid "could not load private key file \"%s\": %s\n"
 msgstr "秘密キーファイル\"%s\"をロードできませんでした: %s\n"
 
-#: fe-secure-openssl.c:1237
+#: fe-secure-openssl.c:1271
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
 msgstr "証明書と秘密キーファイル\"%s\"が一致しません: %s\n"
 
-#: fe-secure-openssl.c:1337
+#: fe-secure-openssl.c:1371
 #, c-format
 msgid "This may indicate that the server does not support any SSL protocol version between %s and %s.\n"
 msgstr "このことは、クライアントがSSLプロトコルのバージョン%sから%sの間のいずれもサポートしていないことを示唆しているかもしれません。\n"
 
-#: fe-secure-openssl.c:1373
+#: fe-secure-openssl.c:1407
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "証明書を入手できませんでした: %s\n"
 
-#: fe-secure-openssl.c:1462
+#: fe-secure-openssl.c:1496
 #, c-format
 msgid "no SSL error reported"
 msgstr "SSLエラーはありませんでした"
 
-#: fe-secure-openssl.c:1471
+#: fe-secure-openssl.c:1505
 #, c-format
 msgid "SSL error code %lu"
 msgstr "SSLエラーコード: %lu"
 
-#: fe-secure-openssl.c:1718
+#: fe-secure-openssl.c:1753
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "警告: sslpasswordが切り詰められました\n"
@@ -1261,12 +1285,3 @@ msgstr "サーバにデータを送信できませんでした: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "不明なソケットエラー 0x%08X/%d"
-
-#~ msgid "SSL library does not support CRL certificates (file \"%s\")\n"
-#~ msgstr "SSLライブラリがCRL証明書（\"%s\"）をオープンできませんでした\n"
-
-#~ msgid "invalid target_session_attrs value: \"%s\"\n"
-#~ msgstr "target_session_attrsの値が不正です: \"%s\"\n"
-
-#~ msgid "invalid gssencmode value: \"%s\"\n"
-#~ msgstr "gssencmodeの値が不正です: \"%s\"\n"

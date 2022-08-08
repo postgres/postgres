@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_checksums (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-13 14:01+0000\n"
+"POT-Creation-Date: 2022-08-07 20:49+0000\n"
 "PO-Revision-Date: 2020-09-12 10:54-0500\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: pgsql-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -286,10 +286,9 @@ msgid "Bad checksums:  %s\n"
 msgstr "Checksums incorrectos: %s\n"
 
 #: pg_checksums.c:645 pg_checksums.c:672
-#, fuzzy, c-format
-#| msgid "Data checksum version: %d\n"
+#, c-format
 msgid "Data checksum version: %u\n"
-msgstr "Versión de checksums de datos: %d\n"
+msgstr "Versión de checksums de datos: %u\n"
 
 #: pg_checksums.c:664
 #, c-format

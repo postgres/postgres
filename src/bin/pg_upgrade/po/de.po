@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 13\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-05 11:58+0000\n"
-"PO-Revision-Date: 2021-08-06 22:31+0200\n"
+"PO-Revision-Date: 2022-05-23 19:32+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -1496,7 +1496,7 @@ msgstr "Setze minmxid im neuen Cluster"
 #: relfilenode.c:35
 #, c-format
 msgid "Cloning user relation files\n"
-msgstr "Klonen Benutzertabellendateien\n"
+msgstr "Klone Benutzertabellendateien\n"
 
 #: relfilenode.c:38
 #, c-format

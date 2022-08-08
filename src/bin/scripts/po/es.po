@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-13 14:00+0000\n"
-"PO-Revision-Date: 2020-10-16 16:01-0300\n"
+"POT-Creation-Date: 2022-08-07 20:48+0000\n"
+"PO-Revision-Date: 2022-08-08 01:23+0200\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -63,11 +63,11 @@ msgstr "el usuario no existe"
 msgid "user name lookup failure: error code %lu"
 msgstr "fallo en la búsqueda de nombre de usuario: código de error %lu"
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "Petición de cancelación enviada\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "No se pudo enviar el paquete de cancelación: "
 
@@ -78,22 +78,22 @@ msgid_plural "(%lu rows)"
 msgstr[0] "(%lu fila)"
 msgstr[1] "(%lu filas)"
 
-#: ../../fe_utils/print.c:3055
+#: ../../fe_utils/print.c:3056
 #, c-format
 msgid "Interrupted\n"
 msgstr "Interrumpido\n"
 
-#: ../../fe_utils/print.c:3119
+#: ../../fe_utils/print.c:3120
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "No se puede agregar un encabezado al contenido de la tabla: la cantidad de columnas de %d ha sido excedida.\n"
 
-#: ../../fe_utils/print.c:3159
+#: ../../fe_utils/print.c:3160
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "No se puede agregar una celda al contenido de la tabla: la cantidad de celdas de %d ha sido excedida.\n"
 
-#: ../../fe_utils/print.c:3417
+#: ../../fe_utils/print.c:3418
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "formato de salida no válido (error interno): %d"
@@ -277,36 +277,36 @@ msgstr ""
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
 
-#: common.c:80 common.c:138
+#: common.c:82 common.c:140
 msgid "Password: "
 msgstr "Contraseña: "
 
-#: common.c:125
+#: common.c:127
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "no se pudo conectar a la base de datos %s: memoria agotada"
 
-#: common.c:152
+#: common.c:154
 #, c-format
 msgid "could not connect to database %s: %s"
 msgstr "no se pudo conectar a la base de datos %s: %s"
 
-#: common.c:231 common.c:256
+#: common.c:233 common.c:258
 #, c-format
 msgid "query failed: %s"
 msgstr "la consulta falló: %s"
 
-#: common.c:232 common.c:257
+#: common.c:234 common.c:259
 #, c-format
 msgid "query was: %s"
 msgstr "la consulta era: %s"
 
-#: common.c:329
+#: common.c:331
 #, c-format
 msgid "processing of database \"%s\" failed: %s"
 msgstr "falló el procesamiento de la base de datos «%s»: %s"
 
-#: common.c:423
+#: common.c:425
 #, c-format
 msgid "query returned %d row instead of one: %s"
 msgid_plural "query returned %d rows instead of one: %s"
@@ -314,23 +314,23 @@ msgstr[0] "la consulta retornó %d fila en lugar de una: %s"
 msgstr[1] "la consulta retornó %d filas en lugar de una: %s"
 
 #. translator: abbreviation for "yes"
-#: common.c:447
+#: common.c:449
 msgid "y"
 msgstr "s"
 
 #. translator: abbreviation for "no"
-#: common.c:449
+#: common.c:451
 msgid "n"
 msgstr "n"
 
 #. translator: This is a question followed by the translated options for
 #. "yes" and "no".
-#: common.c:459
+#: common.c:461
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:473
+#: common.c:475
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Por favor conteste «%s» o «%s».\n"
@@ -939,8 +939,8 @@ msgstr "  -j, --jobs=NUM            usar esta cantidad de conexiones concurrente
 
 #: reindexdb.c:760
 #, c-format
-msgid "  -s, --system              reindex system catalogs\n"
-msgstr "  -s, --system              reindexa los catálogos del sistema\n"
+msgid "  -s, --system              reindex system catalogs only\n"
+msgstr "  -s, --system                 solo reindexar los catálogos del sistema\n"
 
 #: reindexdb.c:761
 #, c-format
@@ -968,8 +968,8 @@ msgstr "demasiados procesos para esta plataforma -- intente con %d"
 
 #: vacuumdb.c:192
 #, c-format
-msgid "parallel vacuum degree must be a non-negative integer"
-msgstr "el grado de vacuum paralelo debe ser un entero no negativo"
+msgid "parallel workers for vacuum must be greater than or equal to zero"
+msgstr "el número de procesos paralelos para vacuum debe ser mayor o igual que cero"
 
 #: vacuumdb.c:212
 #, c-format
@@ -987,8 +987,7 @@ msgid "cannot use the \"%s\" option when performing only analyze"
 msgstr "no se puede usar la opción «%s» cuando se está sólo actualizando estadísticas"
 
 #: vacuumdb.c:282
-#, fuzzy, c-format
-#| msgid "cannot use the \"%s\" option when performing full"
+#, c-format
 msgid "cannot use the \"%s\" option when performing full vacuum"
 msgstr "no se puede usar la opción «%s» cuando se está ejecutando vacuum full"
 
@@ -1090,8 +1089,8 @@ msgstr "      --min-xid-age=EDAD_XID      edad de ID de transacción mínima de 
 
 #: vacuumdb.c:923
 #, c-format
-msgid "  -P, --parallel=PARALLEL_DEGREE  use this many background workers for vacuum, if available\n"
-msgstr "  -P, --parallel=GRADO_PARALELISMO use esta cantidad de procesos para vacuum, si están disponibles\n"
+msgid "  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"
+msgstr "  -P, --parallel=PROC_PARALELOS   usar esta cantidad de procesos para vacuum, si están disponibles\n"
 
 #: vacuumdb.c:924
 #, c-format
@@ -1155,6 +1154,3 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción de la orden VACUUM de SQL para obtener mayores detalles.\n"
-
-#~ msgid "Could not send cancel request: %s"
-#~ msgstr "No se pudo enviar el paquete de cancelación: %s"
