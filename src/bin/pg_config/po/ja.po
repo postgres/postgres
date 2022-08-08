@@ -3,7 +3,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 10\n"
+"Project-Id-Version: pg_config (PostgreSQL 10)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-03-05 23:14+0000\n"
 "PO-Revision-Date: 2018-03-06 16:39+0900\n"

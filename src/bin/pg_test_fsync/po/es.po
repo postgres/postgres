@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-09-15 20:46+0000\n"
+"POT-Creation-Date: 2022-08-07 21:21+0000\n"
 "PO-Revision-Date: 2017-09-15 18:07-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -28,7 +28,6 @@ msgstr "%13.3f ops/seg  %6.0f usegs/op\n"
 
 #: pg_test_fsync.c:49
 #, c-format
-#| msgid "Cannot create thread for alarm\n"
 msgid "Could not create thread for alarm\n"
 msgstr "No se pudo crear hilo para alarma\n"
 
@@ -49,7 +48,6 @@ msgstr "%s: demasiados argumentos de línea de órdenes (el primero es «%s»)\n
 
 #: pg_test_fsync.c:195
 #, c-format
-#| msgid "%d seconds per test\n"
 msgid "%d second per test\n"
 msgid_plural "%d seconds per test\n"
 msgstr[0] "%d segundo por prueba\n"
@@ -58,8 +56,7 @@ msgstr[1] "%d segundos por prueba\n"
 #: pg_test_fsync.c:200
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
-msgstr ""
-"O_DIRECT tiene soporte en esta plataforma para open_datasync y open_sync.\n"
+msgstr "O_DIRECT tiene soporte en esta plataforma para open_datasync y open_sync.\n"
 
 #: pg_test_fsync.c:202
 #, c-format
@@ -104,14 +101,10 @@ msgstr ""
 
 #: pg_test_fsync.c:251
 #, c-format
-msgid ""
-"(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
-msgstr ""
-"(en orden de preferencia de wal_sync_method, excepto en Linux donde "
-"fdatasync es el predeterminado)\n"
+msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
+msgstr "(en orden de preferencia de wal_sync_method, excepto en Linux donde fdatasync es el predeterminado)\n"
 
 #: pg_test_fsync.c:262 pg_test_fsync.c:365 pg_test_fsync.c:431
-#| msgid "n/a*\n"
 msgid "n/a*"
 msgstr "n/a*"
 
@@ -122,7 +115,6 @@ msgstr "búsqueda falló"
 
 #: pg_test_fsync.c:280 pg_test_fsync.c:305 pg_test_fsync.c:353
 #: pg_test_fsync.c:390 pg_test_fsync.c:448
-#| msgid "n/a\n"
 msgid "n/a"
 msgstr "n/a"
 

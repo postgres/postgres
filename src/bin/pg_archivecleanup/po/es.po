@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_archivecleanup (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-07-10 12:15-0400\n"
+"POT-Creation-Date: 2022-08-07 21:21+0000\n"
 "PO-Revision-Date: 2017-08-28 16:15+0000\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@postgresql.org>\n"
@@ -55,7 +55,6 @@ msgstr "%s: no se pudo abrir la ubicación del archivador «%s»: %s\n"
 
 #: pg_archivecleanup.c:248
 #, c-format
-#| msgid "%s: invalid filename input\n"
 msgid "%s: invalid file name argument\n"
 msgstr "%s: el nombre de archivo usado como argumento no es válido\n"
 
@@ -100,12 +99,8 @@ msgstr "  -d             genera salida de depuración (modo verboso)\n"
 
 #: pg_archivecleanup.c:267
 #, c-format
-msgid ""
-"  -n             dry run, show the names of the files that would be "
-"removed\n"
-msgstr ""
-"  -n             simulacro, muestra el nombre de los archivos que se "
-"eliminarían\n"
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr "  -n             simulacro, muestra el nombre de los archivos que se eliminarían\n"
 
 #: pg_archivecleanup.c:268
 #, c-format
@@ -166,21 +161,15 @@ msgstr "%s: debe especificar la ubicación del archivador\n"
 
 #: pg_archivecleanup.c:353
 #, c-format
-#| msgid "%s: must specify restartfilename\n"
 msgid "%s: must specify oldest kept WAL file\n"
 msgstr "%s: debe especificar el fichero WAL más antiguo a mantener\n"
 
 #: pg_archivecleanup.c:360
 #, c-format
-#| msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgid "%s: too many command-line arguments\n"
 msgstr "%s: demasiados argumentos de línea de órdenes\n"
 
 #: pg_archivecleanup.c:379
 #, c-format
-#| msgid "%s: keep WAL file \"%s\" and later\n"
 msgid "%s: keeping WAL file \"%s\" and later\n"
 msgstr "%s: conservando el fichero de WAL «%s» y posteriores\n"
-
-#~ msgid "%s: too many parameters\n"
-#~ msgstr "%s: demasiados parámetros\n"

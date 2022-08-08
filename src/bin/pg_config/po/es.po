@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2020-05-16 10:15+0000\n"
+"POT-Creation-Date: 2022-08-07 21:19+0000\n"
 "PO-Revision-Date: 2017-07-10 12:13-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
@@ -27,37 +27,37 @@ msgstr ""
 msgid "not recorded"
 msgstr "no registrado"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:132 ../../common/exec.c:246 ../../common/exec.c:289
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "no se pudo identificar el directorio actual: %s"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:151
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "el binario «%s» no es válido"
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:200
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "no se pudo leer el binario «%s»"
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:207
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "no se pudo encontrar un «%s» para ejecutar"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:262 ../../common/exec.c:298
 #, c-format
 msgid "could not change directory to \"%s\": %s"
 msgstr "no se pudo cambiar el directorio a «%s»: %s"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:277
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "no se pudo leer el enlace simbólico «%s»"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:528
 #, c-format
 msgid "pclose failed: %s"
 msgstr "pclose falló: %s"
