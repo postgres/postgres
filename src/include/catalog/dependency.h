@@ -201,6 +201,8 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 extern void recordDependencyOnCurrentExtension(const ObjectAddress *object,
 											   bool isReplace);
 
+extern void checkMembershipInCurrentExtension(const ObjectAddress *object);
+
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId,
 									   bool skipExtensionDeps);
 
