@@ -797,36 +797,30 @@ EOF
 		close($chs);
 	}
 
-	if (IsNewer(
-			'src/backend/nodes/node-support-stamp',
-			'src/backend/nodes/gen_node_support.pl'))
+	my $nmf = Project::read_file('src/backend/nodes/Makefile');
+	$nmf =~ s{\\\r?\n}{}g;
+	$nmf =~ /^node_headers\s*:?=(.*)$/gm
+	  || croak "Could not find node_headers in Makefile\n";
+	my @node_headers = split /\s+/, $1;
+	@node_headers = grep { $_ ne '' } @node_headers;
+	my @node_files = map { "src/include/$_" } @node_headers;
+
+	my $need_node_support = 0;
+	foreach my $nodefile (@node_files)
 	{
-		# XXX duplicates node_headers list in src/backend/nodes/Makefile
-		my @node_headers = qw(
-		  nodes/nodes.h
-		  nodes/primnodes.h
-		  nodes/parsenodes.h
-		  nodes/pathnodes.h
-		  nodes/plannodes.h
-		  nodes/execnodes.h
-		  access/amapi.h
-		  access/sdir.h
-		  access/tableam.h
-		  access/tsmapi.h
-		  commands/event_trigger.h
-		  commands/trigger.h
-		  executor/tuptable.h
-		  foreign/fdwapi.h
-		  nodes/extensible.h
-		  nodes/lockoptions.h
-		  nodes/replnodes.h
-		  nodes/supportnodes.h
-		  nodes/value.h
-		  utils/rel.h
-		);
+		if (IsNewer('src/backend/nodes/node-support-stamp', $nodefile))
+		{
+			$need_node_support = 1;
+			last;
+		}
+	}
+	$need_node_support = 1
+	  if IsNewer(
+		'src/backend/nodes/node-support-stamp',
+		'src/backend/nodes/gen_node_support.pl');
 
-		my @node_files = map { "src/include/$_" } @node_headers;
-
+	if ($need_node_support)
+	{
 		system("perl src/backend/nodes/gen_node_support.pl --outdir src/backend/nodes @node_files");
 		open(my $f, '>', 'src/backend/nodes/node-support-stamp')
 		  || confess "Could not touch node-support-stamp";

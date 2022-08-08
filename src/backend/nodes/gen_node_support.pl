@@ -174,7 +174,7 @@ push @scalar_types, qw(QualCost);
 
 
 ## check that we have the expected number of files on the command line
-die "wrong number of input files, expected @all_input_files\n"
+die "wrong number of input files, expected:\n@all_input_files\ngot:\n@ARGV\n"
   if ($#ARGV != $#all_input_files);
 
 ## read input
