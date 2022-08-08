@@ -855,13 +855,22 @@ CreateForeignServer(CreateForeignServerStmt *stmt)
 	ownerId = GetUserId();
 
 	/*
-	 * Check that there is no other foreign server by this name. Do nothing if
-	 * IF NOT EXISTS was enforced.
+	 * Check that there is no other foreign server by this name.  If there is
+	 * one, do nothing if IF NOT EXISTS was specified.
 	 */
-	if (GetForeignServerByName(stmt->servername, true) != NULL)
+	srvId = get_foreign_server_oid(stmt->servername, true);
+	if (OidIsValid(srvId))
 	{
 		if (stmt->if_not_exists)
 		{
+			/*
+			 * If we are in an extension script, insist that the pre-existing
+			 * object be a member of the extension, to avoid security risks.
+			 */
+			ObjectAddressSet(myself, ForeignServerRelationId, srvId);
+			checkMembershipInCurrentExtension(&myself);
+
+			/* OK to skip */
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("server \"%s\" already exists, skipping",
@@ -1126,6 +1135,10 @@ CreateUserMapping(CreateUserMappingStmt *stmt)
 	{
 		if (stmt->if_not_exists)
 		{
+			/*
+			 * Since user mappings aren't members of extensions (see comments
+			 * below), no need for checkMembershipInCurrentExtension here.
+			 */
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("user mapping for \"%s\" already exists for server \"%s\", skipping",
