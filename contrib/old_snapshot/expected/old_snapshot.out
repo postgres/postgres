@@ -1,0 +1,6 @@
+CREATE EXTENSION old_snapshot;
+SELECT * FROM pg_old_snapshot_time_mapping() LIMIT 0;
+ array_offset | end_timestamp | newest_xmin 
+--------------+---------------+-------------
+(0 rows)
+

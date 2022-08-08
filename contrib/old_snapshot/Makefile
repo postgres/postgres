@@ -9,6 +9,9 @@ EXTENSION = old_snapshot
 DATA = old_snapshot--1.0.sql
 PGFILEDESC = "old_snapshot - utilities in support of old_snapshot_threshold"
 
+REGRESS = old_snapshot
+REGRESS_OPTS = --temp-config $(top_srcdir)/contrib/old_snapshot/old_snapshot.conf
+
 ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
