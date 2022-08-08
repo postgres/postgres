@@ -393,11 +393,14 @@ bool
 CreateTableAsRelExists(CreateTableAsStmt *ctas)
 {
 	Oid			nspid;
+	Oid			oldrelid;
+	ObjectAddress address;
 	IntoClause *into = ctas->into;
 
 	nspid = RangeVarGetCreationNamespace(into->rel);
 
-	if (get_relname_relid(into->rel->relname, nspid))
+	oldrelid = get_relname_relid(into->rel->relname, nspid);
+	if (OidIsValid(oldrelid))
 	{
 		if (!ctas->if_not_exists)
 			ereport(ERROR,
@@ -405,7 +408,16 @@ CreateTableAsRelExists(CreateTableAsStmt *ctas)
 					 errmsg("relation \"%s\" already exists",
 							into->rel->relname)));
 
-		/* The relation exists and IF NOT EXISTS has been specified */
+		/*
+		 * The relation exists and IF NOT EXISTS has been specified.
+		 *
+		 * If we are in an extension script, insist that the pre-existing
+		 * object be a member of the extension, to avoid security risks.
+		 */
+		ObjectAddressSet(address, RelationRelationId, oldrelid);
+		checkMembershipInCurrentExtension(&address);
+
+		/* OK to skip */
 		ereport(NOTICE,
 				(errcode(ERRCODE_DUPLICATE_TABLE),
 				 errmsg("relation \"%s\" already exists, skipping",

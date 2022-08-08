@@ -1319,17 +1319,6 @@ SELECT * FROM pg_extension_update_paths('<replaceable>extension_name</replaceabl
       trusted if it depends on another one, unless that other one is always
       installed in <literal>pg_catalog</literal>.
      </para>
-
-     <para>
-      Do <emphasis>not</emphasis> use <command>CREATE OR REPLACE
-      FUNCTION</command>, except in an update script that must change the
-      definition of a function that is known to be an extension member
-      already.  (Likewise for other <literal>OR REPLACE</literal> options.)
-      Using <literal>OR REPLACE</literal> unnecessarily not only has a risk
-      of accidentally overwriting someone else's function, but it creates a
-      security hazard since the overwritten function would still be owned by
-      its original owner, who could modify it.
-     </para>
     </sect3>
    </sect2>
 
