@@ -35,6 +35,41 @@
 
     <listitem>
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [b9b21acc7] 2022-08-08 11:12:31 -0400
+Branch: REL_15_STABLE [cc7e0feba] 2022-08-08 11:12:31 -0400
+Branch: REL_14_STABLE [5721da7e4] 2022-08-08 11:12:31 -0400
+Branch: REL_13_STABLE [7e92f78ab] 2022-08-08 11:12:31 -0400
+Branch: REL_12_STABLE [5579726bd] 2022-08-08 11:12:31 -0400
+Branch: REL_11_STABLE [f52d2fbd8] 2022-08-08 11:12:31 -0400
+Branch: REL_10_STABLE [5919bb5a5] 2022-08-08 11:12:31 -0400
+-->
+     <para>
+      Do not let extension scripts replace objects not already belonging
+      to the extension (Tom Lane)
+     </para>
+
+     <para>
+      This change prevents extension scripts from doing <command>CREATE
+      OR REPLACE</command> if there is an existing object that does not
+      belong to the extension.  It also prevents <command>CREATE IF NOT
+      EXISTS</command> in the same situation.  This prevents a form of
+      trojan-horse attack in which a hostile database user could become
+      the owner of an extension object and then modify it to compromise
+      future uses of the object by other users.  As a side benefit, it
+      also reduces the risk of accidentally replacing objects one did
+      not mean to.
+     </para>
+
+     <para>
+      The <productname>PostgreSQL</productname> Project thanks
+      Sven Klemm for reporting this problem.
+      (CVE-2022-2625)
+     </para>
+    </listitem>
+
+    <listitem>
+<!--
 Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
 Branch: master [9e4f914b5] 2022-07-28 08:40:06 +0200
 Branch: REL_15_STABLE [8348413db] 2022-07-28 08:26:05 +0200
