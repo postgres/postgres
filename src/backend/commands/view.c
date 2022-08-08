@@ -205,7 +205,7 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		CommandCounterIncrement();
 
 		/*
-		 * Finally update the view options.
+		 * Update the view's options.
 		 *
 		 * The new options list replaces the existing options list, even if
 		 * it's empty.
@@ -218,7 +218,21 @@ DefineVirtualRelation(RangeVar *relation, List *tlist, bool replace,
 		/* EventTriggerAlterTableStart called by ProcessUtilitySlow */
 		AlterTableInternal(viewOid, atcmds, true);
 
+		/*
+		 * There is very little to do here to update the view's dependencies.
+		 * Most view-level dependency relationships, such as those on the
+		 * owner, schema, and associated composite type, aren't changing.
+		 * Because we don't allow changing type or collation of an existing
+		 * view column, those dependencies of the existing columns don't
+		 * change either, while the AT_AddColumnToView machinery took care of
+		 * adding such dependencies for new view columns.  The dependencies of
+		 * the view's query could have changed arbitrarily, but that was dealt
+		 * with inside StoreViewQuery.  What remains is only to check that
+		 * view replacement is allowed when we're creating an extension.
+		 */
 		ObjectAddressSet(address, RelationRelationId, viewOid);
+
+		recordDependencyOnCurrentExtension(&address, true);
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
