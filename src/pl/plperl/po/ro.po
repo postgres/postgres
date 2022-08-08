@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 9.1\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2011-11-09 20:39+0000\n"
-"PO-Revision-Date: 2013-09-05 23:03-0400\n"
+"PO-Revision-Date: 2022-06-15 09:26+0200\n"
 "Last-Translator: Gheorge Rosca Codreanu <max@oceanline.co.uk>\n"
 "Language-Team: ROMANA <xsoftware.consultancy@gmail.com>\n"
 "Language: ro\n"
@@ -59,7 +59,7 @@ msgstr "în timpul parsing inițializării Perl"
 
 #: plperl.c:793
 msgid "while running Perl initialization"
-msgstr "în timpul rulării intializării Perl"
+msgstr "în timpul rulării inițializării Perl"
 
 #: plperl.c:897
 msgid "while executing PLC_TRUSTED"

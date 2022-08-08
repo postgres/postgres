@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
+"Project-Id-Version: pg_waldump (PostgreSQL 10)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-08-31 16:22+0900\n"
 "PO-Revision-Date: 2018-08-20 17:21+0900\n"
