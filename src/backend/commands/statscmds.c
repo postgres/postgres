@@ -166,6 +166,10 @@ CreateStatistics(CreateStatsStmt *stmt)
 	{
 		if (stmt->if_not_exists)
 		{
+			/*
+			 * Since stats objects aren't members of extensions (see comments
+			 * below), no need for checkMembershipInCurrentExtension here.
+			 */
 			ereport(NOTICE,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
 					 errmsg("statistics object \"%s\" already exists, skipping",
