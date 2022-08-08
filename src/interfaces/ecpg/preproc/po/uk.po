@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-17 08:39+0000\n"
-"PO-Revision-Date: 2021-08-17 11:18\n"
+"POT-Creation-Date: 2022-03-16 09:09+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/ecpg.pot\n"
+"X-Crowdin-File: /REL_14_STABLE/ecpg.pot\n"
 "X-Crowdin-File-ID: 782\n"
 
 #: descriptor.c:64
@@ -371,8 +371,8 @@ msgstr "багатовимірні масиви для простих типів
 
 #: preproc.y:599
 #, c-format
-msgid "connection %s is overwritten to %s."
-msgstr "підключення %s перезаписано на %s."
+msgid "connection %s is overwritten with %s by DECLARE statement %s"
+msgstr "підключення %s було перезаписано з %s командою DECLARE %s"
 
 #: preproc.y:1753
 #, c-format

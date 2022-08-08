@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-17 08:47+0000\n"
-"PO-Revision-Date: 2021-08-17 10:54\n"
+"POT-Creation-Date: 2022-03-16 09:17+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pg_resetwal.pot\n"
+"X-Crowdin-File: /REL_14_STABLE/pg_resetwal.pot\n"
 "X-Crowdin-File-ID: 762\n"
 
 #: ../../../src/common/logging.c:259
@@ -96,12 +96,12 @@ msgstr "епоха ID транзакції (-e) не повинна бути -1"
 #: pg_resetwal.c:183
 #, c-format
 msgid "oldest transaction ID (-u) must be greater than or equal to %u"
-msgstr ""
+msgstr "найстаріший ID транзакції (-u) має бути більший або рівним %u"
 
 #: pg_resetwal.c:198
 #, c-format
 msgid "transaction ID (-x) must be greater than or equal to %u"
-msgstr ""
+msgstr "ID транзакції (-x) має бути більшим чи рівним %u"
 
 #: pg_resetwal.c:222 pg_resetwal.c:229
 #, c-format
@@ -546,72 +546,74 @@ msgstr "Параметри:\n"
 msgid "  -c, --commit-timestamp-ids=XID,XID\n"
 "                                   set oldest and newest transactions bearing\n"
 "                                   commit timestamp (zero means no change)\n"
-msgstr ""
+msgstr "  -c, --commit-timestamp-ids=XID,XID\n"
+"                                   встановити найстарішу та найновішу транзакції\n"
+"                                   затвердити позначку часу (нуль означає залишити без змін)\n"
 
 #: pg_resetwal.c:1223
 #, c-format
 msgid " [-D, --pgdata=]DATADIR            data directory\n"
-msgstr ""
+msgstr " [-D, --pgdata=]DATADIR            каталог даних\n"
 
 #: pg_resetwal.c:1224
 #, c-format
 msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
-msgstr ""
+msgstr "  -e, --epoch=XIDEPOCH             встановити наступну епоху ID транзакцій\n"
 
 #: pg_resetwal.c:1225
 #, c-format
 msgid "  -f, --force                      force update to be done\n"
-msgstr ""
+msgstr "  -f, --force                      примусово виконати оновлення\n"
 
 #: pg_resetwal.c:1226
 #, c-format
 msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
-msgstr ""
+msgstr "  -l, --next-wal-file=WALFILE      задати мінімальне початкове розташування для нового WAL\n"
 
 #: pg_resetwal.c:1227
 #, c-format
 msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
-msgstr ""
+msgstr "  -m, --multixact-ids=MXID,MXID    задати ID наступної і найстарішої мультитранзакції\n"
 
 #: pg_resetwal.c:1228
 #, c-format
 msgid "  -n, --dry-run                    no update, just show what would be done\n"
-msgstr ""
+msgstr "  -n, --dry-run                    без оновлень, просто показати, що буде зроблено\n"
 
 #: pg_resetwal.c:1229
 #, c-format
 msgid "  -o, --next-oid=OID               set next OID\n"
-msgstr ""
+msgstr "  -o, --next-oid=OID               задати наступний OID\n"
 
 #: pg_resetwal.c:1230
 #, c-format
 msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
-msgstr ""
+msgstr "  -O, --multixact-offset=OFFSET    задати зсув наступної мультитранзакції\n"
 
 #: pg_resetwal.c:1231
 #, c-format
 msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
-msgstr ""
+msgstr "  -u, --oldest-transaction-id=XID  задати ID найстарішої транзакції\n"
 
 #: pg_resetwal.c:1232
 #, c-format
 msgid "  -V, --version                    output version information, then exit\n"
-msgstr ""
+msgstr "  -V, --version                    вивести інформацію про версію і вийти\n"
 
 #: pg_resetwal.c:1233
 #, c-format
 msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
-msgstr ""
+msgstr "  -x, --next-transaction-id=XID    задати ID наступної транзакції\n"
 
 #: pg_resetwal.c:1234
 #, c-format
 msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
-msgstr ""
+msgstr "      --wal-segsize=SIZE           розмір сегментів WAL, у мегабайтах\n"
 
 #: pg_resetwal.c:1235
 #, c-format
 msgid "  -?, --help                       show this help, then exit\n"
-msgstr ""
+msgstr "  -?, --help                       показати цю довідку і вийти\n"
 
 #: pg_resetwal.c:1236
 #, c-format

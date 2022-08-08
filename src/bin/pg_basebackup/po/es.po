@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-01-12 04:16+0000\n"
+"POT-Creation-Date: 2022-08-07 20:33+0000\n"
 "PO-Revision-Date: 2022-01-12 17:29-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -1485,18 +1485,3 @@ msgstr "unlink no soportado con compresión"
 #: walmethods.c:1081
 msgid "could not close compression stream"
 msgstr "no se pudo cerrar el flujo comprimido"
-
-#~ msgid "--no-manifest and --manifest-checksums are incompatible options"
-#~ msgstr "--no-manifest y --manifest-checksums son opciones incompatibles"
-
-#~ msgid "--no-manifest and --manifest-force-encode are incompatible options"
-#~ msgstr "--no-manifest y --manifest-force-encode son opciones incompatibles"
-
-#~ msgid "--progress and --no-estimate-size are incompatible options"
-#~ msgstr "--progress y --no-estimate-size son opciones incompatibles"
-
-#~ msgid "could not connect to server: %s"
-#~ msgstr "no se pudo conectar al servidor: %s"
-
-#~ msgid "select() failed: %m"
-#~ msgstr "select() falló: %m"

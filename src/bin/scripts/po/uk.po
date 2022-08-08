@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-08-17 08:47+0000\n"
-"PO-Revision-Date: 2021-08-17 11:21\n"
+"POT-Creation-Date: 2022-03-16 09:18+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /REL_14_DEV/pgscripts.pot\n"
+"X-Crowdin-File: /REL_14_STABLE/pgscripts.pot\n"
 "X-Crowdin-File-ID: 784\n"
 
 #: ../../../src/common/logging.c:259
@@ -57,11 +57,11 @@ msgstr "користувача не існує"
 msgid "user name lookup failure: error code %lu"
 msgstr "невдала підстановка імені користувача: код помилки %lu"
 
-#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+#: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
 msgstr "Запит на скасування відправлений\n"
 
-#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+#: ../../fe_utils/cancel.c:190 ../../fe_utils/cancel.c:239
 msgid "Could not send cancel request: "
 msgstr "Не вдалося надіслати запит на скасування: "
 
@@ -98,22 +98,22 @@ msgstr[1] "(%lu рядки)"
 msgstr[2] "(%lu рядків)"
 msgstr[3] "(%lu рядка)"
 
-#: ../../fe_utils/print.c:3039
+#: ../../fe_utils/print.c:3040
 #, c-format
 msgid "Interrupted\n"
 msgstr "Перервано\n"
 
-#: ../../fe_utils/print.c:3103
+#: ../../fe_utils/print.c:3104
 #, c-format
 msgid "Cannot add header to table content: column count of %d exceeded.\n"
 msgstr "Неможливо додати заголовок до вмісту таблиці: кількість колонок %d перевищено.\n"
 
-#: ../../fe_utils/print.c:3143
+#: ../../fe_utils/print.c:3144
 #, c-format
 msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
 msgstr "Неможливо додати комірку до вмісту таблиці: перевищено загальну кількість комірок %d.\n"
 
-#: ../../fe_utils/print.c:3401
+#: ../../fe_utils/print.c:3402
 #, c-format
 msgid "invalid output format (internal error): %d"
 msgstr "невірний формат виводу (внутрішня помилка): %d"
@@ -884,8 +884,8 @@ msgstr "  -q, --quiet                  не писати жодних повід
 
 #: reindexdb.c:802
 #, c-format
-msgid "  -s, --system                 reindex system catalogs\n"
-msgstr "  -s, --system                 переіндексувати системні каталоги\n"
+msgid "  -s, --system                 reindex system catalogs only\n"
+msgstr "  -s, --system                 переіндексувати тільки системні каталоги\n"
 
 #: reindexdb.c:803
 #, c-format

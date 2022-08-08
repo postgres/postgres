@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetwal (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-10-13 22:16+0000\n"
+"POT-Creation-Date: 2022-08-07 20:34+0000\n"
 "PO-Revision-Date: 2021-10-14 10:01-0500\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -674,12 +674,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
-
-#~ msgid "transaction ID (-x) must not be 0"
-#~ msgstr "el ID de transacción (-x) no debe ser 0"
-
-#~ msgid "  -V, --version                  output version information, then exit\n"
-#~ msgstr "  -V, --version            mostrar información de versión y salir\n"
-
-#~ msgid "  -?, --help                     show this help, then exit\n"
-#~ msgstr "  -?, --help               mostrar esta ayuda y salir\n"

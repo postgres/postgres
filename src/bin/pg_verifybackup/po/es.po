@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-14 19:45+0000\n"
+"POT-Creation-Date: 2022-08-07 20:32+0000\n"
 "PO-Revision-Date: 2021-05-24 16:53-0500\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -315,112 +315,112 @@ msgstr ""
 "pero no es de la misma versión que %s.\n"
 "Verifique su instalación."
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:362
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "copia de seguridad verificada correctamente\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:388 pg_verifybackup.c:724
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "no se pudo abrir el archivo «%s»: %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:392
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo «%s»: %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:752
+#: pg_verifybackup.c:412 pg_verifybackup.c:753
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "no se pudo leer el archivo «%s»: %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:415
 #, c-format
 msgid "could not read file \"%s\": read %d of %lld"
 msgstr "no se pudo leer el archivo «%s»: leídos %d de %lld"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:475
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "nombre de ruta duplicado en el manifiesto de la copia de seguridad: \"%s\""
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:538 pg_verifybackup.c:545
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:577
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:597
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "no se pudo hacer stat al archivo o directorio «%s»: %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:620
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" no es un archivo o directorio"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:630
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" está presente en el disco pero no en el manifiesto"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:642
 #, c-format
 msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
 msgstr "\"%s\" tiene un tamaño %lld en el disco pero un tamaño %zu en el manifiesto"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:669
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" está presente en el manifiesto pero no en el disco"
 
-#: pg_verifybackup.c:731
+#: pg_verifybackup.c:732
 #, c-format
 msgid "could not initialize checksum of file \"%s\""
 msgstr "no se pudo inicializar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:743
+#: pg_verifybackup.c:744
 #, c-format
 msgid "could not update checksum of file \"%s\""
 msgstr "no se pudo actualizar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:758
+#: pg_verifybackup.c:759
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo «%s»: %m"
 
-#: pg_verifybackup.c:777
+#: pg_verifybackup.c:778
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "el archivo \"%s\" debe contener %zu bytes, pero se leyeron %zu bytes"
 
-#: pg_verifybackup.c:787
+#: pg_verifybackup.c:788
 #, c-format
 msgid "could not finalize checksum of file \"%s\""
 msgstr "no se pudo finalizar la suma de verificación para el archivo «%s»"
 
-#: pg_verifybackup.c:795
+#: pg_verifybackup.c:796
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
 msgstr "el archivo \"%s\" tiene una suma de comprobación de longitud %d, pero se esperaba %d"
 
-#: pg_verifybackup.c:799
+#: pg_verifybackup.c:800
 #, c-format
 msgid "checksum mismatch for file \"%s\""
 msgstr "no coincide la suma de comprobación para el archivo \"%s\""
 
-#: pg_verifybackup.c:823
+#: pg_verifybackup.c:824
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "Error al analizar el WAL para el timeline %u"
 
-#: pg_verifybackup.c:909
+#: pg_verifybackup.c:910
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -429,7 +429,7 @@ msgstr ""
 "%s verifica una copia de seguridad con el fichero de manifiesto de la copia de seguridad.\n"
 "\n"
 
-#: pg_verifybackup.c:910
+#: pg_verifybackup.c:911
 #, c-format
 msgid ""
 "Usage:\n"
@@ -440,57 +440,57 @@ msgstr ""
 "  %s [OPCIÓN]... BACKUPDIR\n"
 "\n"
 
-#: pg_verifybackup.c:911
+#: pg_verifybackup.c:912
 #, c-format
 msgid "Options:\n"
 msgstr "Opciones:\n"
 
-#: pg_verifybackup.c:912
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         salir inmediatamente en caso de error\n"
 
-#: pg_verifybackup.c:913
+#: pg_verifybackup.c:914
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIVE_PATH  ignorar la ruta indicada\n"
 
-#: pg_verifybackup.c:914
+#: pg_verifybackup.c:915
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=PATH    usar la ruta especificada para el manifiesto\n"
 
-#: pg_verifybackup.c:915
+#: pg_verifybackup.c:916
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          no intentar analizar archivos WAL\n"
 
-#: pg_verifybackup.c:916
+#: pg_verifybackup.c:917
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 no escribir ningún mensaje, excepto errores\n"
 
-#: pg_verifybackup.c:917
+#: pg_verifybackup.c:918
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
 msgstr "  -s, --skip-checksums        omitir la verificación de la suma de comprobación\n"
 
-#: pg_verifybackup.c:918
+#: pg_verifybackup.c:919
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=PATH    utilizar la ruta especificada para los archivos WAL\n"
 
-#: pg_verifybackup.c:919
+#: pg_verifybackup.c:920
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               mostrar la información de la versión, luego salir\n"
 
-#: pg_verifybackup.c:920
+#: pg_verifybackup.c:921
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  muestra esta ayuda, luego salir\n"
 
-#: pg_verifybackup.c:921
+#: pg_verifybackup.c:922
 #, c-format
 msgid ""
 "\n"
@@ -499,7 +499,7 @@ msgstr ""
 "\n"
 "Reporte errores a <%s>.\n"
 
-#: pg_verifybackup.c:922
+#: pg_verifybackup.c:923
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
