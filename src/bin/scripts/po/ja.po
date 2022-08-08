@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: scripts (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:17+0900\n"
+"POT-Creation-Date: 2022-06-14 20:17+0900\n"
 "PO-Revision-Date: 2022-05-11 14:48+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -20,22 +20,22 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:277
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:284
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:295
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:302
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -1186,53 +1186,20 @@ msgstr ""
 "\n"
 "詳細はSQLコマンドのVACUUMの説明を参照してください。\n"
 
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
+#~ msgid "  --version                 output version information, then exit\n"
+#~ msgstr "  --version                バージョン情報を表示して終了します\n"
 
-#~ msgid "Could not send cancel request: %s"
-#~ msgstr "キャンセル要求を送信できませんでした: %s"
+#~ msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
+#~ msgstr "pg_strdup: nullポインタを複製できません(内部エラー)。\n"
 
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
+#~ msgid "  --help                    show this help, then exit\n"
+#~ msgstr "  --help                    ヘルプを表示して終了します\n"
 
-#~ msgid "could not connect to database %s: %s"
-#~ msgstr "データベース%sに接続できませんでした: %s"
+#~ msgid "  --help                       show this help, then exit\n"
+#~ msgstr "  --help                       ヘルプを表示して終了\n"
 
-#~ msgid "invalid value for --connection-limit: %s"
-#~ msgstr "--connection-limit に対する不正な値: %s"
-
-#~ msgid "number of parallel jobs must be at least 1"
-#~ msgstr "並列ジョブの数は最低でも1以上でなければなりません"
-
-#~ msgid "parallel vacuum degree must be a non-negative integer"
-#~ msgstr "並列VACUUMの並列度は非負の整数でなければなりません"
-
-#~ msgid "minimum transaction ID age must be at least 1"
-#~ msgstr "最小トランザクションID差分は1以上でなければなりません"
-
-#~ msgid "minimum multixact ID age must be at least 1"
-#~ msgstr "最小マルチトランザクションID差分は1以上でなくてはなりません"
-
-#~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: 現在のユーザに関する情報を取得できませんでした: %s\n"
-
-#~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: 現在のユーザ名を取得できませんでした: %s\n"
-
-#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
-#~ msgstr "%s: analyze のみを実行する場合 \"freeze\" は使えません\n"
-
-#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-#~ msgstr "%s: まだ関数%sが言語\"%s\"内で宣言されています。言語は削除されません\n"
-
-#~ msgid "  --version                    output version information, then exit\n"
-#~ msgstr "  --version                   バージョン情報を表示して終了\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: メモリ不足です\n"
-
-#~ msgid "  --help                          show this help, then exit\n"
-#~ msgstr "  --help                          ヘルプを表示して終了します\n"
+#~ msgid "  --version                       output version information, then exit\n"
+#~ msgstr "  --version                       バージョン情報を表示して終了します\n"
 
 #~ msgid ""
 #~ "\n"
@@ -1242,17 +1209,50 @@ msgstr ""
 #~ "\n"
 #~ "-d, -D, -r, -R, -s, -S でロール名が指定されない場合、ロール名をその場で入力できます\n"
 
-#~ msgid "  --version                       output version information, then exit\n"
-#~ msgstr "  --version                       バージョン情報を表示して終了します\n"
+#~ msgid "  --help                          show this help, then exit\n"
+#~ msgstr "  --help                          ヘルプを表示して終了します\n"
 
-#~ msgid "  --help                       show this help, then exit\n"
-#~ msgstr "  --help                       ヘルプを表示して終了\n"
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: メモリ不足です\n"
 
-#~ msgid "  --help                    show this help, then exit\n"
-#~ msgstr "  --help                    ヘルプを表示して終了します\n"
+#~ msgid "  --version                    output version information, then exit\n"
+#~ msgstr "  --version                   バージョン情報を表示して終了\n"
 
-#~ msgid "pg_strdup: cannot duplicate null pointer (internal error)\n"
-#~ msgstr "pg_strdup: nullポインタを複製できません(内部エラー)。\n"
+#~ msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
+#~ msgstr "%s: まだ関数%sが言語\"%s\"内で宣言されています。言語は削除されません\n"
 
-#~ msgid "  --version                 output version information, then exit\n"
-#~ msgstr "  --version                バージョン情報を表示して終了します\n"
+#~ msgid "%s: cannot use the \"freeze\" option when performing only analyze\n"
+#~ msgstr "%s: analyze のみを実行する場合 \"freeze\" は使えません\n"
+
+#~ msgid "%s: could not get current user name: %s\n"
+#~ msgstr "%s: 現在のユーザ名を取得できませんでした: %s\n"
+
+#~ msgid "%s: could not obtain information about current user: %s\n"
+#~ msgstr "%s: 現在のユーザに関する情報を取得できませんでした: %s\n"
+
+#~ msgid "minimum multixact ID age must be at least 1"
+#~ msgstr "最小マルチトランザクションID差分は1以上でなくてはなりません"
+
+#~ msgid "minimum transaction ID age must be at least 1"
+#~ msgstr "最小トランザクションID差分は1以上でなければなりません"
+
+#~ msgid "parallel vacuum degree must be a non-negative integer"
+#~ msgstr "並列VACUUMの並列度は非負の整数でなければなりません"
+
+#~ msgid "number of parallel jobs must be at least 1"
+#~ msgstr "並列ジョブの数は最低でも1以上でなければなりません"
+
+#~ msgid "invalid value for --connection-limit: %s"
+#~ msgstr "--connection-limit に対する不正な値: %s"
+
+#~ msgid "could not connect to database %s: %s"
+#~ msgstr "データベース%sに接続できませんでした: %s"
+
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
+
+#~ msgid "Could not send cancel request: %s"
+#~ msgstr "キャンセル要求を送信できませんでした: %s"
+
+#~ msgid "fatal: "
+#~ msgstr "致命的エラー: "

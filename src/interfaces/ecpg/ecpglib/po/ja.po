@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpglib (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
+"POT-Creation-Date: 2022-06-15 10:11+0900\n"
 "PO-Revision-Date: 2019-06-11 09:04+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -17,11 +17,11 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.5.4\n"
 
-#: connect.c:237
+#: connect.c:239
 msgid "empty message text"
 msgstr "メッセージテキストが空です"
 
-#: connect.c:404 connect.c:633
+#: connect.c:406 connect.c:635
 msgid "<DEFAULT>"
 msgstr "<デフォルト>"
 
@@ -185,11 +185,11 @@ msgstr "行番号%2$dにおいて、データベース\"%1$s\"に接続できま
 msgid "SQL error %d on line %d"
 msgstr "行番号%2$dにおいて、SQLエラー%1$dがあります"
 
-#: error.c:254
+#: error.c:253
 msgid "the connection to the server was lost"
 msgstr "サーバへの接続が切れました"
 
-#: error.c:346
+#: error.c:345
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "SQLエラー: %s\n"

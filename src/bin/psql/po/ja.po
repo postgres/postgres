@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-06-13 23:21+0900\n"
-"PO-Revision-Date: 2022-06-14 15:13+0900\n"
+"POT-Creation-Date: 2022-06-27 12:42+0900\n"
+"PO-Revision-Date: 2022-06-27 14:10+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -2308,7 +2308,7 @@ msgid "Streaming"
 msgstr "ストリーミング"
 
 #: describe.c:6396
-msgid "Two phase commit"
+msgid "Two-phase commit"
 msgstr "2相コミット"
 
 #: describe.c:6397
@@ -5530,8 +5530,8 @@ msgid "when_clause"
 msgstr "WHEN句"
 
 #: sql_help.c:4073
-msgid "where data_source is"
-msgstr "ここでデータ源は以下の通り"
+msgid "where data_source is:"
+msgstr "ここで\"データ源\"は以下の通り:"
 
 #: sql_help.c:4074
 msgid "source_table_name"
@@ -5546,8 +5546,8 @@ msgid "source_alias"
 msgstr "データ源別名"
 
 #: sql_help.c:4077
-msgid "and when_clause is"
-msgstr "WHEN句は以下の通り"
+msgid "and when_clause is:"
+msgstr "WHEN句は以下の通り:"
 
 #: sql_help.c:4079
 msgid "merge_update"
@@ -5562,16 +5562,16 @@ msgid "merge_insert"
 msgstr "マージ挿入"
 
 #: sql_help.c:4083
-msgid "and merge_insert is"
-msgstr "そしてマージ挿入は以下の通り"
+msgid "and merge_insert is:"
+msgstr "そして\"マージ挿入\"は以下の通り:"
 
 #: sql_help.c:4086
-msgid "and merge_update is"
-msgstr "そしてマージ更新は以下の通り"
+msgid "and merge_update is:"
+msgstr "そして\"マージ更新\"は以下の通り:"
 
 #: sql_help.c:4091
-msgid "and merge_delete is"
-msgstr "そしてマージ削除は以下の通り"
+msgid "and merge_delete is:"
+msgstr "そして\"マージ削除\"は以下の通り:"
 
 #: sql_help.c:4132
 msgid "payload"
@@ -6416,7 +6416,7 @@ msgstr "-1 は非対話モード時でのみ使用可能です"
 msgid "could not open log file \"%s\": %m"
 msgstr "ロックファイル\"%s\"をオープンできませんでした: %m"
 
-#: startup.c:455
+#: startup.c:460
 #, c-format
 msgid ""
 "Type \"help\" for help.\n"
@@ -6425,27 +6425,27 @@ msgstr ""
 "\"help\"でヘルプを表示します。\n"
 "\n"
 
-#: startup.c:607
+#: startup.c:612
 #, c-format
 msgid "could not set printing parameter \"%s\""
 msgstr "表示パラメータ\"%s\"を設定できませんでした"
 
-#: startup.c:714
+#: startup.c:719
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: startup.c:730
+#: startup.c:735
 #, c-format
 msgid "extra command-line argument \"%s\" ignored"
 msgstr "余分なコマンドライン引数\"%s\"は無視されました"
 
-#: startup.c:778
+#: startup.c:783
 #, c-format
 msgid "could not find own program executable"
 msgstr "実行可能ファイルが見つかりませんでした"
 
-#: tab-complete.c:5922
+#: tab-complete.c:5917
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"

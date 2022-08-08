@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:17+0900\n"
+"POT-Creation-Date: 2022-06-14 20:17+0900\n"
 "PO-Revision-Date: 2022-06-14 17:36+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -22,22 +22,22 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:277
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:284
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:295
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:302
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -1853,291 +1853,291 @@ msgstr "行レベルセキュリティポリシーを読み取ります"
 msgid "unexpected policy command type: %c"
 msgstr "想定外のポリシコマンドタイプ: \"%c\""
 
-#: pg_dump.c:4245 pg_dump.c:4562 pg_dump.c:11693 pg_dump.c:17510
-#: pg_dump.c:17512 pg_dump.c:18133
+#: pg_dump.c:4245 pg_dump.c:4563 pg_dump.c:11694 pg_dump.c:17511
+#: pg_dump.c:17513 pg_dump.c:18134
 #, c-format
 msgid "could not parse %s array"
 msgstr "%s配列をパースできませんでした"
 
-#: pg_dump.c:4430
+#: pg_dump.c:4431
 #, c-format
 msgid "subscriptions not dumped because current user is not a superuser"
 msgstr "現在のユーザがスーパユーザではないため、サブスクリプションはダンプされません"
 
-#: pg_dump.c:4944
+#: pg_dump.c:4945
 #, c-format
 msgid "could not find parent extension for %s %s"
 msgstr "%s %sの親となる機能拡張がありませんでした"
 
-#: pg_dump.c:5089
+#: pg_dump.c:5090
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "OID %uのスキーマは存在しません"
 
-#: pg_dump.c:6543 pg_dump.c:16774
+#: pg_dump.c:6544 pg_dump.c:16775
 #, c-format
 msgid "failed sanity check, parent table with OID %u of sequence with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるシーケンスの OID %1$u である親テーブルがありません"
 
-#: pg_dump.c:6847 pg_dump.c:7114 pg_dump.c:7585 pg_dump.c:8252 pg_dump.c:8373
-#: pg_dump.c:8527
+#: pg_dump.c:6848 pg_dump.c:7115 pg_dump.c:7586 pg_dump.c:8253 pg_dump.c:8374
+#: pg_dump.c:8528
 #, c-format
 msgid "unrecognized table OID %u"
 msgstr "認識できないテーブルOID %u"
 
-#: pg_dump.c:6851
+#: pg_dump.c:6852
 #, c-format
 msgid "unexpected index data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外のインデックスデータ"
 
-#: pg_dump.c:7346
+#: pg_dump.c:7347
 #, c-format
 msgid "failed sanity check, parent table with OID %u of pg_rewrite entry with OID %u not found"
 msgstr "健全性検査に失敗しました、OID %2$u であるpg_rewriteエントリのOID %1$u である親テーブルが見つかりません"
 
-#: pg_dump.c:7637
+#: pg_dump.c:7638
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)"
 msgstr "問い合わせがテーブル\"%2$s\"上の外部キートリガ\"%1$s\"の参照テーブル名としてNULLを返しました(テーブルのOID: %3$u)"
 
-#: pg_dump.c:8256
+#: pg_dump.c:8257
 #, c-format
 msgid "unexpected column data for table \"%s\""
 msgstr "テーブル\"%s\"に対する想定外の列データ"
 
-#: pg_dump.c:8286
+#: pg_dump.c:8287
 #, c-format
 msgid "invalid column numbering in table \"%s\""
 msgstr "テーブル\"%s\"の列番号が不正です"
 
-#: pg_dump.c:8335
+#: pg_dump.c:8336
 #, c-format
 msgid "finding table default expressions"
 msgstr "テーブルのデフォルト式を探しています"
 
-#: pg_dump.c:8377
+#: pg_dump.c:8378
 #, c-format
 msgid "invalid adnum value %d for table \"%s\""
 msgstr "テーブル\"%2$s\"用のadnumの値%1$dが不正です"
 
-#: pg_dump.c:8477
+#: pg_dump.c:8478
 #, c-format
 msgid "finding table check constraints"
 msgstr "テーブルのチェック制約を探しています"
 
-#: pg_dump.c:8531
+#: pg_dump.c:8532
 #, c-format
 msgid "expected %d check constraint on table \"%s\" but found %d"
 msgid_plural "expected %d check constraints on table \"%s\" but found %d"
 msgstr[0] "テーブル\"%2$s\"で想定する検査制約は%1$d個でしたが、%3$dありました"
 
-#: pg_dump.c:8535
+#: pg_dump.c:8536
 #, c-format
 msgid "The system catalogs might be corrupted."
 msgstr "システムカタログが破損している可能性があります。"
 
-#: pg_dump.c:9225
+#: pg_dump.c:9226
 #, c-format
 msgid "role with OID %u does not exist"
 msgstr "OID が %u であるロールは存在しません"
 
-#: pg_dump.c:9337 pg_dump.c:9366
+#: pg_dump.c:9338 pg_dump.c:9367
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
 msgstr "非サポートのpg_init_privsエントリ: %u %u %d"
 
-#: pg_dump.c:10187
+#: pg_dump.c:10188
 #, c-format
 msgid "typtype of data type \"%s\" appears to be invalid"
 msgstr "データ型\"%s\"のtyptypeが不正なようです"
 
-#: pg_dump.c:11762
+#: pg_dump.c:11763
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
 msgstr "関数\"%s\"のprovolatileの値が認識できません"
 
-#: pg_dump.c:11812 pg_dump.c:13603
+#: pg_dump.c:11813 pg_dump.c:13604
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
 msgstr "関数\"%s\"のproparallel値が認識できません"
 
-#: pg_dump.c:11943 pg_dump.c:12049 pg_dump.c:12056
+#: pg_dump.c:11944 pg_dump.c:12050 pg_dump.c:12057
 #, c-format
 msgid "could not find function definition for function with OID %u"
 msgstr "OID %uの関数の関数定義が見つかりませんでした"
 
-#: pg_dump.c:11982
+#: pg_dump.c:11983
 #, c-format
 msgid "bogus value in pg_cast.castfunc or pg_cast.castmethod field"
 msgstr "pg_cast.castfuncまたはpg_cast.castmethodフィールドの値がおかしいです"
 
-#: pg_dump.c:11985
+#: pg_dump.c:11986
 #, c-format
 msgid "bogus value in pg_cast.castmethod field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12075
+#: pg_dump.c:12076
 #, c-format
 msgid "bogus transform definition, at least one of trffromsql and trftosql should be nonzero"
 msgstr "おかしな変換定義、trffromsql か trftosql の少なくとも一方は非ゼロであるはずです"
 
-#: pg_dump.c:12092
+#: pg_dump.c:12093
 #, c-format
 msgid "bogus value in pg_transform.trffromsql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12113
+#: pg_dump.c:12114
 #, c-format
 msgid "bogus value in pg_transform.trftosql field"
 msgstr "pg_cast.castmethod フィールドの値がおかしいです"
 
-#: pg_dump.c:12258
+#: pg_dump.c:12259
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
 msgstr "後置演算子は今後サポートされません(演算子\"%s\")"
 
-#: pg_dump.c:12428
+#: pg_dump.c:12429
 #, c-format
 msgid "could not find operator with OID %s"
 msgstr "OID %sの演算子がありませんでした"
 
-#: pg_dump.c:12496
+#: pg_dump.c:12497
 #, c-format
 msgid "invalid type \"%c\" of access method \"%s\""
 msgstr "アクセスメソッド\"%2$s\"の不正なタイプ\"%1$c\""
 
-#: pg_dump.c:13115
+#: pg_dump.c:13116
 #, c-format
 msgid "unrecognized collation provider: %s"
 msgstr "認識できないの照合順序プロバイダ: %s"
 
-#: pg_dump.c:13522
+#: pg_dump.c:13523
 #, c-format
 msgid "unrecognized aggfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggfinalmodifyの値が識別できません"
 
-#: pg_dump.c:13578
+#: pg_dump.c:13579
 #, c-format
 msgid "unrecognized aggmfinalmodify value for aggregate \"%s\""
 msgstr "集約\"%s\"のaggmfinalmodifyの値が識別できません"
 
-#: pg_dump.c:14296
+#: pg_dump.c:14297
 #, c-format
 msgid "unrecognized object type in default privileges: %d"
 msgstr "デフォルト権限設定中の認識できないオブジェクト型: %d"
 
-#: pg_dump.c:14312
+#: pg_dump.c:14313
 #, c-format
 msgid "could not parse default ACL list (%s)"
 msgstr "デフォルトの ACL リスト(%s)をパースできませんでした"
 
-#: pg_dump.c:14394
+#: pg_dump.c:14395
 #, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)の初期ACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:14419
+#: pg_dump.c:14420
 #, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
 msgstr "オブジェクト\"%3$s\"(%4$s)のACLリスト(%1$s)またはデフォルト値(%2$s)をパースできませんでした"
 
-#: pg_dump.c:14957
+#: pg_dump.c:14958
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせがデータを返却しませんでした"
 
-#: pg_dump.c:14960
+#: pg_dump.c:14961
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition"
 msgstr "ビュー\"%s\"の定義を取り出すための問い合わせが2つ以上の定義を返却しました"
 
-#: pg_dump.c:14967
+#: pg_dump.c:14968
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)"
 msgstr "ビュー\"%s\"の定義が空のようです(長さが0)"
 
-#: pg_dump.c:15051
+#: pg_dump.c:15052
 #, c-format
 msgid "WITH OIDS is not supported anymore (table \"%s\")"
 msgstr "WITH OIDSは今後サポートされません(テーブル\"%s\")"
 
-#: pg_dump.c:15980
+#: pg_dump.c:15981
 #, c-format
 msgid "invalid column number %d for table \"%s\""
 msgstr "テーブル\"%2$s\"の列番号%1$dは不正です"
 
-#: pg_dump.c:16058
+#: pg_dump.c:16059
 #, c-format
 msgid "could not parse index statistic columns"
 msgstr "インデックス統計列をパースできませんでした"
 
-#: pg_dump.c:16060
+#: pg_dump.c:16061
 #, c-format
 msgid "could not parse index statistic values"
 msgstr "インデックス統計値をパースできませんでした"
 
-#: pg_dump.c:16062
+#: pg_dump.c:16063
 #, c-format
 msgid "mismatched number of columns and values for index statistics"
 msgstr "インデックス統計に対して列と値の数が合致しません"
 
-#: pg_dump.c:16280
+#: pg_dump.c:16281
 #, c-format
 msgid "missing index for constraint \"%s\""
 msgstr "制約\"%s\"のインデックスが見つかりません"
 
-#: pg_dump.c:16508
+#: pg_dump.c:16509
 #, c-format
 msgid "unrecognized constraint type: %c"
 msgstr "制約のタイプが識別できません: %c"
 
-#: pg_dump.c:16609 pg_dump.c:16838
+#: pg_dump.c:16610 pg_dump.c:16839
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] "シーケンス\"%s\"のデータを得るための問い合わせが%d行返却しました(想定は1)"
 
-#: pg_dump.c:16641
+#: pg_dump.c:16642
 #, c-format
 msgid "unrecognized sequence type: %s"
 msgstr "認識されないシーケンスの型\"%s\""
 
-#: pg_dump.c:16930
+#: pg_dump.c:16931
 #, c-format
 msgid "unexpected tgtype value: %d"
 msgstr "想定外のtgtype値: %d"
 
-#: pg_dump.c:17002
+#: pg_dump.c:17003
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\""
 msgstr "テーブル\"%3$s\"上のトリガ\"%2$s\"の引数文字列(%1$s)が不正です"
 
-#: pg_dump.c:17271
+#: pg_dump.c:17272
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "テーブル\"%2$s\"のルール\"%1$s\"を得るための問い合わせが失敗しました: 間違った行数が返却されました"
 
-#: pg_dump.c:17424
+#: pg_dump.c:17425
 #, c-format
 msgid "could not find referenced extension %u"
 msgstr "親の機能拡張%uが見つかりません"
 
-#: pg_dump.c:17514
+#: pg_dump.c:17515
 #, c-format
 msgid "mismatched number of configurations and conditions for extension"
 msgstr "機能拡張に対して設定と条件の数が一致しません"
 
-#: pg_dump.c:17646
+#: pg_dump.c:17647
 #, c-format
 msgid "reading dependency data"
 msgstr "データの依存データを読み込んでいます"
 
-#: pg_dump.c:17732
+#: pg_dump.c:17733
 #, c-format
 msgid "no referencing object %u %u"
 msgstr "参照元オブジェクト%u %uがありません"
 
-#: pg_dump.c:17743
+#: pg_dump.c:17744
 #, c-format
 msgid "no referenced object %u %u"
 msgstr "参照先オブジェクト%u %uがありません"
@@ -2610,56 +2610,232 @@ msgstr ""
 "入力ファイル名が指定されない場合、標準入力が使用されます。\n"
 "\n"
 
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
+#~ msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
+#~ msgstr "内部エラー -- tarReadRaw()にてthもfhも指定されていませんでした\n"
 
-#~ msgid "pclose failed: %m"
-#~ msgstr "pcloseが失敗しました: %m"
+#~ msgid "worker process crashed: status %d\n"
+#~ msgstr "ワーカープロセスがクラッシュしました：ステータス %d\n"
 
-#~ msgid "WSAStartup failed: %d"
-#~ msgstr "WSAStartupが失敗しました: %d"
+#~ msgid "parallel_restore should not return\n"
+#~ msgstr "parallel_restore は return しません\n"
 
-#~ msgid "select() failed: %m"
-#~ msgstr "select()が失敗しました: %m"
+#~ msgid "missing pg_database entry for this database\n"
+#~ msgstr "このデータベース用のpg_databaseエントリが見つかりません\n"
 
-#~ msgid "could not write to large object (result: %lu, expected: %lu)"
-#~ msgstr "ラージオブジェクトを書き出すことができませんでした(結果は%lu、想定は%lu)"
+#~ msgid "-C and -c are incompatible options\n"
+#~ msgstr "オプション-Cと-cは互換性がありません\n"
 
-#~ msgid "connecting to database \"%s\" as user \"%s\""
-#~ msgstr "データベース\"%s\"にユーザ\"%s\"で接続しています"
+#~ msgid "could not close data file after reading\n"
+#~ msgstr "読み込んだ後データファイルをクローズできませんでした\n"
 
-#~ msgid "could not reconnect to database"
-#~ msgstr "データベースへの再接続ができませんでした"
+#~ msgid "  --version                   output version information, then exit\n"
+#~ msgstr "  --version                   バージョン情報を表示して終了\n"
 
-#~ msgid "could not reconnect to database: %s"
-#~ msgstr "データベース%sへの再接続ができませんでした"
+#~ msgid "child process was terminated by signal %s"
+#~ msgstr "子プロセスがシグナル%sで終了しました"
 
-#~ msgid "connection needs password"
-#~ msgstr "接続にパスワードが必要です"
+#~ msgid "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n"
+#~ msgstr "dumpDatabase(): pg_largeobject_metadata.relfrozenxidが見つかりません\n"
 
-#~ msgid "connection to database \"%s\" failed: %s"
-#~ msgstr "データベース\"%s\"への接続が失敗しました: %s"
+#~ msgid "could not parse version string \"%s\"\n"
+#~ msgstr "バージョン文字列\"%s\"を解析できませんでした\n"
 
-#~ msgid "could not open temporary file"
-#~ msgstr "一時ファイルをオープンできませんでした"
+#~ msgid "found more than one pg_database entry for this database\n"
+#~ msgstr "このデータベース用のpg_databaseエントリが複数ありました\n"
 
-#~ msgid "could not close tar member"
-#~ msgstr "tarメンバをクローズできませんでした"
+#~ msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
+#~ msgstr "COPY文が無効です -- 文字列\"%s\"の%lu位置から\"from stdin\"がありませんでした\n"
 
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "詳細は \"%s --help\" を実行してください\n"
+#~ msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
+#~ msgstr "問い合わせにより、データベース\"%2$s\"用のエントリがpg_databaseから複数(%1$d)返されました\n"
 
-#~ msgid "compression level must be in range 0..9"
-#~ msgstr "圧縮レベルは 0..9 の範囲でなければなりません"
+#~ msgid "  --disable-triggers       disable triggers during data-only restore\n"
+#~ msgstr ""
+#~ "  --disable-triggers       \n"
+#~ "                           データのみの復元中にトリガを無効にします\n"
 
-#~ msgid "extra_float_digits must be in range -15..3"
-#~ msgstr "extra_float_digitsは -15..3 の範囲でなければなりません"
+#~ msgid "SQL command failed\n"
+#~ msgstr "SQLコマンドが失敗しました\n"
 
-#~ msgid "invalid number of parallel jobs"
-#~ msgstr "不正な並列ジョブ数"
+#~ msgid "  --help                      show this help, then exit\n"
+#~ msgstr "  --help                       ヘルプを表示して終了\n"
+
+#~ msgid "  -c, --clean              clean (drop) database objects before recreating\n"
+#~ msgstr "  -c, --clean              再作成前にデータベースを削除します\n"
+
+#~ msgid "%s: out of memory\n"
+#~ msgstr "%s: メモリ不足です\n"
 
 #~ msgid ""
-#~ "Synchronized snapshots are not supported by this server version.\n"
+#~ "  --use-set-session-authorization\n"
+#~ "                           use SET SESSION AUTHORIZATION commands instead of\n"
+#~ "                           ALTER OWNER commands to set ownership\n"
+#~ msgstr ""
+#~ "  --use-set-session-authorization\n"
+#~ "                           所有者をセットする際、ALTER OWNER コマンドの代り\n"
+#~ "                           に SET SESSION AUTHORIZATION コマンドを使用する\n"
+
+#~ msgid "cannot duplicate null pointer\n"
+#~ msgstr "null ポインタを複製できません\n"
+
+#~ msgid "  -O, --no-owner           skip restoration of object ownership\n"
+#~ msgstr "  -O, --no-owner           オブジェクトの所有権の復元を省略\n"
+
+#~ msgid "could not close large object file\n"
+#~ msgstr "ラージオブジェクトファイルをクローズできませんでした\n"
+
+#~ msgid "%s: could not parse version \"%s\"\n"
+#~ msgstr "%s: バージョン\"%s\"を解析できませんでした\n"
+
+#~ msgid ""
+#~ "WARNING:\n"
+#~ "  This format is for demonstration purposes; it is not intended for\n"
+#~ "  normal use. Files will be written in the current working directory.\n"
+#~ msgstr ""
+#~ "警告:\n"
+#~ "この書式はデモを目的としたものです。通常の使用を意図したものではありま\n"
+#~ "せん。ファイルは現在の作業ディレクトリに書き出されます\n"
+
+#~ msgid "%s: invalid -X option -- %s\n"
+#~ msgstr "%s: 無効な -X オプション -- %s\n"
+
+#~ msgid "missing pg_database entry for database \"%s\"\n"
+#~ msgstr "データベース\"%s\"用のエントリがpg_databaseにありません\n"
+
+#~ msgid "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n"
+#~ msgstr "dumpDatabase(): pg_largeobject.relfrozenxid が見つかりません\n"
+
+#~ msgid "query returned no rows: %s\n"
+#~ msgstr "問い合わせの結果行がありませんでした: %s\n"
+
+#~ msgid "could not open large object TOC for input: %s\n"
+#~ msgstr "入力用のラージオブジェクトTOCをオープンできませんでした: %s\n"
+
+#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
+#~ msgstr "COPY文が無効です -- 文字列\"%s\"に\"copy\"がありませんでした\n"
+
+#~ msgid "  --help                   show this help, then exit\n"
+#~ msgstr "  --help                   ヘルプを表示し、終了します\n"
+
+#~ msgid "could not open large object TOC for output: %s\n"
+#~ msgstr "出力用のラージオブジェクトTOCをオープンできませんでした: %s\n"
+
+#~ msgid "could not find entry for pg_indexes in pg_class\n"
+#~ msgstr "pg_class内にpg_indexes用のエントリがありませんでした\n"
+
+#~ msgid "cannot reopen stdin\n"
+#~ msgstr "標準入力を再オープンできません\n"
+
+#~ msgid "restoring large object OID %u\n"
+#~ msgstr "OID %uのラージオブジェクトをリストアしています\n"
+
+#~ msgid "cannot reopen non-seekable file\n"
+#~ msgstr "シークできないファイルを再オープンできません\n"
+
+#~ msgid "found more than one entry for pg_indexes in pg_class\n"
+#~ msgstr "pg_class内にpg_indexes用のエントリが複数ありました\n"
+
+#~ msgid "*** aborted because of error\n"
+#~ msgstr "*** エラーのため中断\n"
+
+#~ msgid "could not create worker thread: %s\n"
+#~ msgstr "ワーカースレッドを作成できませんでした: %s\n"
+
+#~ msgid "file archiver"
+#~ msgstr "ファイルアーカイバ"
+
+#~ msgid "  --version                output version information, then exit\n"
+#~ msgstr "  --version                バージョン情報を表示し、終了します\n"
+
+#~ msgid "could not change directory to \"%s\""
+#~ msgstr "ディレクトリを\"%s\"に変更できませんでした"
+
+#~ msgid "child process was terminated by signal %d"
+#~ msgstr "子プロセスがシグナル%dで終了しました"
+
+#~ msgid "maximum number of parallel jobs is %d"
+#~ msgstr "並列ジョブ数の最大値は%dです"
+
+#~ msgid "could not connect to database \"%s\": %s"
+#~ msgstr "データベース\"%s\"へ接続できませんでした: %s"
+
+#~ msgid "could not parse proconfig array"
+#~ msgstr "proconfig配列のパースができませんでした"
+
+#~ msgid "could not parse proargnames array"
+#~ msgstr "proargnames配列のパースができませんでした"
+
+#~ msgid "could not parse proargmodes array"
+#~ msgstr "proargmodes配列のパースができませんでした"
+
+#~ msgid "could not parse proallargtypes array"
+#~ msgstr "proallargtypes配列のパースができませんでした"
+
+#~ msgid "bogus value in proargmodes array"
+#~ msgstr "proargmodes配列内におかしな値があります"
+
+#~ msgid "finding check constraints for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"の検査制約を探しています"
+
+#~ msgid "finding default expressions of table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"のデフォルト式を探しています"
+
+#~ msgid "finding the columns and types of table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"の列と型を探しています"
+
+#~ msgid "reading triggers for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"のトリガを読み込んでいます"
+
+#~ msgid "reading foreign key constraints for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"の外部キー制約を読み込んでいます"
+
+#~ msgid "reading indexes for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"のインデックスを読み込んでいます"
+
+#~ msgid "owner of table \"%s\" appears to be invalid"
+#~ msgstr "テーブル\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of function \"%s\" appears to be invalid"
+#~ msgstr "関数\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of aggregate function \"%s\" appears to be invalid"
+#~ msgstr "集約関数\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of operator family \"%s\" appears to be invalid"
+#~ msgstr "演算子族\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of operator class \"%s\" appears to be invalid"
+#~ msgstr "演算子クラス\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of operator \"%s\" appears to be invalid"
+#~ msgstr "演算子\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of data type \"%s\" appears to be invalid"
+#~ msgstr "データ型\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of schema \"%s\" appears to be invalid"
+#~ msgstr "スキーマ\"%s\"の所有者が無効なようです"
+
+#~ msgid "could not parse subpublications array"
+#~ msgstr "subpublications配列をパースできませんでした"
+
+#~ msgid "owner of subscription \"%s\" appears to be invalid"
+#~ msgstr "サブスクリプション\"%s\"の所有者が無効なようです"
+
+#~ msgid "owner of publication \"%s\" appears to be invalid"
+#~ msgstr "パブリケーション\"%s\"の所有者が不正なようです"
+
+#~ msgid "reading policies for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"のポリシを読み込んでいます"
+
+#~ msgid "reading row security enabled for table \"%s.%s\""
+#~ msgstr "テーブル\"%s.%s\"で有効な行セキュリティ設定を読み込んでいます"
+
+#~ msgid "The command was: %s"
+#~ msgstr "コマンド: %s"
+
+#~ msgid ""
+#~ "Synchronized snapshots on standby servers are not supported by this server version.\n"
 #~ "Run with --no-synchronized-snapshots instead if you do not need\n"
 #~ "synchronized snapshots."
 #~ msgstr ""
@@ -2671,7 +2847,7 @@ msgstr ""
 #~ msgstr "  --no-synchronized-snapshots 並列ジョブにおいて同期スナップショットを使用しない\n"
 
 #~ msgid ""
-#~ "Synchronized snapshots on standby servers are not supported by this server version.\n"
+#~ "Synchronized snapshots are not supported by this server version.\n"
 #~ "Run with --no-synchronized-snapshots instead if you do not need\n"
 #~ "synchronized snapshots."
 #~ msgstr ""
@@ -2679,226 +2855,50 @@ msgstr ""
 #~ "同期スナップショットが不要ならば--no-synchronized-snapshotsを付けて\n"
 #~ "実行してください。"
 
-#~ msgid "The command was: %s"
-#~ msgstr "コマンド: %s"
+#~ msgid "invalid number of parallel jobs"
+#~ msgstr "不正な並列ジョブ数"
 
-#~ msgid "reading row security enabled for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"で有効な行セキュリティ設定を読み込んでいます"
+#~ msgid "extra_float_digits must be in range -15..3"
+#~ msgstr "extra_float_digitsは -15..3 の範囲でなければなりません"
 
-#~ msgid "reading policies for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"のポリシを読み込んでいます"
+#~ msgid "compression level must be in range 0..9"
+#~ msgstr "圧縮レベルは 0..9 の範囲でなければなりません"
 
-#~ msgid "owner of publication \"%s\" appears to be invalid"
-#~ msgstr "パブリケーション\"%s\"の所有者が不正なようです"
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "詳細は \"%s --help\" を実行してください\n"
 
-#~ msgid "owner of subscription \"%s\" appears to be invalid"
-#~ msgstr "サブスクリプション\"%s\"の所有者が無効なようです"
+#~ msgid "could not close tar member"
+#~ msgstr "tarメンバをクローズできませんでした"
 
-#~ msgid "could not parse subpublications array"
-#~ msgstr "subpublications配列をパースできませんでした"
+#~ msgid "could not open temporary file"
+#~ msgstr "一時ファイルをオープンできませんでした"
 
-#~ msgid "owner of schema \"%s\" appears to be invalid"
-#~ msgstr "スキーマ\"%s\"の所有者が無効なようです"
+#~ msgid "connection to database \"%s\" failed: %s"
+#~ msgstr "データベース\"%s\"への接続が失敗しました: %s"
 
-#~ msgid "owner of data type \"%s\" appears to be invalid"
-#~ msgstr "データ型\"%s\"の所有者が無効なようです"
+#~ msgid "connection needs password"
+#~ msgstr "接続にパスワードが必要です"
 
-#~ msgid "owner of operator \"%s\" appears to be invalid"
-#~ msgstr "演算子\"%s\"の所有者が無効なようです"
+#~ msgid "could not reconnect to database: %s"
+#~ msgstr "データベース%sへの再接続ができませんでした"
 
-#~ msgid "owner of operator class \"%s\" appears to be invalid"
-#~ msgstr "演算子クラス\"%s\"の所有者が無効なようです"
+#~ msgid "could not reconnect to database"
+#~ msgstr "データベースへの再接続ができませんでした"
 
-#~ msgid "owner of operator family \"%s\" appears to be invalid"
-#~ msgstr "演算子族\"%s\"の所有者が無効なようです"
+#~ msgid "connecting to database \"%s\" as user \"%s\""
+#~ msgstr "データベース\"%s\"にユーザ\"%s\"で接続しています"
 
-#~ msgid "owner of aggregate function \"%s\" appears to be invalid"
-#~ msgstr "集約関数\"%s\"の所有者が無効なようです"
+#~ msgid "could not write to large object (result: %lu, expected: %lu)"
+#~ msgstr "ラージオブジェクトを書き出すことができませんでした(結果は%lu、想定は%lu)"
 
-#~ msgid "owner of function \"%s\" appears to be invalid"
-#~ msgstr "関数\"%s\"の所有者が無効なようです"
+#~ msgid "select() failed: %m"
+#~ msgstr "select()が失敗しました: %m"
 
-#~ msgid "owner of table \"%s\" appears to be invalid"
-#~ msgstr "テーブル\"%s\"の所有者が無効なようです"
+#~ msgid "WSAStartup failed: %d"
+#~ msgstr "WSAStartupが失敗しました: %d"
 
-#~ msgid "reading indexes for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"のインデックスを読み込んでいます"
+#~ msgid "pclose failed: %m"
+#~ msgstr "pcloseが失敗しました: %m"
 
-#~ msgid "reading foreign key constraints for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"の外部キー制約を読み込んでいます"
-
-#~ msgid "reading triggers for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"のトリガを読み込んでいます"
-
-#~ msgid "finding the columns and types of table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"の列と型を探しています"
-
-#~ msgid "finding default expressions of table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"のデフォルト式を探しています"
-
-#~ msgid "finding check constraints for table \"%s.%s\""
-#~ msgstr "テーブル\"%s.%s\"の検査制約を探しています"
-
-#~ msgid "bogus value in proargmodes array"
-#~ msgstr "proargmodes配列内におかしな値があります"
-
-#~ msgid "could not parse proallargtypes array"
-#~ msgstr "proallargtypes配列のパースができませんでした"
-
-#~ msgid "could not parse proargmodes array"
-#~ msgstr "proargmodes配列のパースができませんでした"
-
-#~ msgid "could not parse proargnames array"
-#~ msgstr "proargnames配列のパースができませんでした"
-
-#~ msgid "could not parse proconfig array"
-#~ msgstr "proconfig配列のパースができませんでした"
-
-#~ msgid "could not connect to database \"%s\": %s"
-#~ msgstr "データベース\"%s\"へ接続できませんでした: %s"
-
-#~ msgid "maximum number of parallel jobs is %d"
-#~ msgstr "並列ジョブ数の最大値は%dです"
-
-#~ msgid "child process was terminated by signal %d"
-#~ msgstr "子プロセスがシグナル%dで終了しました"
-
-#~ msgid "could not change directory to \"%s\""
-#~ msgstr "ディレクトリを\"%s\"に変更できませんでした"
-
-#~ msgid "  --version                output version information, then exit\n"
-#~ msgstr "  --version                バージョン情報を表示し、終了します\n"
-
-#~ msgid "file archiver"
-#~ msgstr "ファイルアーカイバ"
-
-#~ msgid "could not create worker thread: %s\n"
-#~ msgstr "ワーカースレッドを作成できませんでした: %s\n"
-
-#~ msgid "*** aborted because of error\n"
-#~ msgstr "*** エラーのため中断\n"
-
-#~ msgid "found more than one entry for pg_indexes in pg_class\n"
-#~ msgstr "pg_class内にpg_indexes用のエントリが複数ありました\n"
-
-#~ msgid "cannot reopen non-seekable file\n"
-#~ msgstr "シークできないファイルを再オープンできません\n"
-
-#~ msgid "restoring large object OID %u\n"
-#~ msgstr "OID %uのラージオブジェクトをリストアしています\n"
-
-#~ msgid "cannot reopen stdin\n"
-#~ msgstr "標準入力を再オープンできません\n"
-
-#~ msgid "could not find entry for pg_indexes in pg_class\n"
-#~ msgstr "pg_class内にpg_indexes用のエントリがありませんでした\n"
-
-#~ msgid "could not open large object TOC for output: %s\n"
-#~ msgstr "出力用のラージオブジェクトTOCをオープンできませんでした: %s\n"
-
-#~ msgid "  --help                   show this help, then exit\n"
-#~ msgstr "  --help                   ヘルプを表示し、終了します\n"
-
-#~ msgid "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n"
-#~ msgstr "COPY文が無効です -- 文字列\"%s\"に\"copy\"がありませんでした\n"
-
-#~ msgid "could not open large object TOC for input: %s\n"
-#~ msgstr "入力用のラージオブジェクトTOCをオープンできませんでした: %s\n"
-
-#~ msgid "query returned no rows: %s\n"
-#~ msgstr "問い合わせの結果行がありませんでした: %s\n"
-
-#~ msgid "dumpDatabase(): could not find pg_largeobject.relfrozenxid\n"
-#~ msgstr "dumpDatabase(): pg_largeobject.relfrozenxid が見つかりません\n"
-
-#~ msgid "missing pg_database entry for database \"%s\"\n"
-#~ msgstr "データベース\"%s\"用のエントリがpg_databaseにありません\n"
-
-#~ msgid "%s: invalid -X option -- %s\n"
-#~ msgstr "%s: 無効な -X オプション -- %s\n"
-
-#~ msgid ""
-#~ "WARNING:\n"
-#~ "  This format is for demonstration purposes; it is not intended for\n"
-#~ "  normal use. Files will be written in the current working directory.\n"
-#~ msgstr ""
-#~ "警告:\n"
-#~ "この書式はデモを目的としたものです。通常の使用を意図したものではありま\n"
-#~ "せん。ファイルは現在の作業ディレクトリに書き出されます\n"
-
-#~ msgid "%s: could not parse version \"%s\"\n"
-#~ msgstr "%s: バージョン\"%s\"を解析できませんでした\n"
-
-#~ msgid "could not close large object file\n"
-#~ msgstr "ラージオブジェクトファイルをクローズできませんでした\n"
-
-#~ msgid "  -O, --no-owner           skip restoration of object ownership\n"
-#~ msgstr "  -O, --no-owner           オブジェクトの所有権の復元を省略\n"
-
-#~ msgid "cannot duplicate null pointer\n"
-#~ msgstr "null ポインタを複製できません\n"
-
-#~ msgid ""
-#~ "  --use-set-session-authorization\n"
-#~ "                           use SET SESSION AUTHORIZATION commands instead of\n"
-#~ "                           ALTER OWNER commands to set ownership\n"
-#~ msgstr ""
-#~ "  --use-set-session-authorization\n"
-#~ "                           所有者をセットする際、ALTER OWNER コマンドの代り\n"
-#~ "                           に SET SESSION AUTHORIZATION コマンドを使用する\n"
-
-#~ msgid "%s: out of memory\n"
-#~ msgstr "%s: メモリ不足です\n"
-
-#~ msgid "  -c, --clean              clean (drop) database objects before recreating\n"
-#~ msgstr "  -c, --clean              再作成前にデータベースを削除します\n"
-
-#~ msgid "  --help                      show this help, then exit\n"
-#~ msgstr "  --help                       ヘルプを表示して終了\n"
-
-#~ msgid "SQL command failed\n"
-#~ msgstr "SQLコマンドが失敗しました\n"
-
-#~ msgid "  --disable-triggers       disable triggers during data-only restore\n"
-#~ msgstr ""
-#~ "  --disable-triggers       \n"
-#~ "                           データのみの復元中にトリガを無効にします\n"
-
-#~ msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
-#~ msgstr "問い合わせにより、データベース\"%2$s\"用のエントリがpg_databaseから複数(%1$d)返されました\n"
-
-#~ msgid "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n"
-#~ msgstr "COPY文が無効です -- 文字列\"%s\"の%lu位置から\"from stdin\"がありませんでした\n"
-
-#~ msgid "found more than one pg_database entry for this database\n"
-#~ msgstr "このデータベース用のpg_databaseエントリが複数ありました\n"
-
-#~ msgid "could not parse version string \"%s\"\n"
-#~ msgstr "バージョン文字列\"%s\"を解析できませんでした\n"
-
-#~ msgid "dumpDatabase(): could not find pg_largeobject_metadata.relfrozenxid\n"
-#~ msgstr "dumpDatabase(): pg_largeobject_metadata.relfrozenxidが見つかりません\n"
-
-#~ msgid "child process was terminated by signal %s"
-#~ msgstr "子プロセスがシグナル%sで終了しました"
-
-#~ msgid "  --version                   output version information, then exit\n"
-#~ msgstr "  --version                   バージョン情報を表示して終了\n"
-
-#~ msgid "could not close data file after reading\n"
-#~ msgstr "読み込んだ後データファイルをクローズできませんでした\n"
-
-#~ msgid "-C and -c are incompatible options\n"
-#~ msgstr "オプション-Cと-cは互換性がありません\n"
-
-#~ msgid "missing pg_database entry for this database\n"
-#~ msgstr "このデータベース用のpg_databaseエントリが見つかりません\n"
-
-#~ msgid "parallel_restore should not return\n"
-#~ msgstr "parallel_restore は return しません\n"
-
-#~ msgid "worker process crashed: status %d\n"
-#~ msgstr "ワーカープロセスがクラッシュしました：ステータス %d\n"
-
-#~ msgid "internal error -- neither th nor fh specified in tarReadRaw()\n"
-#~ msgstr "内部エラー -- tarReadRaw()にてthもfhも指定されていませんでした\n"
+#~ msgid "fatal: "
+#~ msgstr "致命的エラー: "

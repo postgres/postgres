@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-16 21:40+0000\n"
-"PO-Revision-Date: 2022-05-17 16:34+0200\n"
+"POT-Creation-Date: 2022-07-13 11:10+0000\n"
+"PO-Revision-Date: 2022-07-13 18:13+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -70,10 +70,10 @@ msgstr "konnte Nonce nicht erzeugen\n"
 #: fe-connect.c:5537 fe-connect.c:5636 fe-connect.c:5892 fe-connect.c:5921
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
-#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3135 fe-exec.c:3318
-#: fe-exec.c:4096 fe-exec.c:4261 fe-gssapi-common.c:111 fe-lobj.c:884
-#: fe-protocol3.c:985 fe-protocol3.c:1000 fe-protocol3.c:1033
-#: fe-protocol3.c:1741 fe-protocol3.c:2144 fe-secure-common.c:112
+#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3215 fe-exec.c:3399
+#: fe-exec.c:4177 fe-exec.c:4342 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
+#: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
@@ -120,8 +120,8 @@ msgstr "fehlerhafte SCRAM-Nachricht (Müll am Ende der »server-final-message«)
 msgid "malformed SCRAM message (invalid server signature)\n"
 msgstr "fehlerhafte SCRAM-Nachricht (ungültige Serversignatur)\n"
 
-#: fe-auth-scram.c:934 fe-exec.c:527 fe-protocol3.c:219 fe-protocol3.c:244
-#: fe-protocol3.c:273 fe-protocol3.c:291 fe-protocol3.c:372 fe-protocol3.c:745
+#: fe-auth-scram.c:934 fe-exec.c:527 fe-protocol3.c:207 fe-protocol3.c:232
+#: fe-protocol3.c:261 fe-protocol3.c:279 fe-protocol3.c:376 fe-protocol3.c:749
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
@@ -641,12 +641,12 @@ msgstr "WARNUNG: Passwortdatei »%s« erlaubt Lesezugriff für Gruppe oder Ander
 msgid "password retrieved from file \"%s\"\n"
 msgstr "Passwort wurde aus Datei »%s« gelesen\n"
 
-#: fe-exec.c:466 fe-exec.c:3392
+#: fe-exec.c:466 fe-exec.c:3473
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:528 fe-protocol3.c:1949
+#: fe-exec.c:528 fe-protocol3.c:1953
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -671,104 +671,108 @@ msgstr "PGresult kann nicht mehr als INT_MAX Tupel enthalten"
 msgid "size_t overflow"
 msgstr "Überlauf von size_t"
 
-#: fe-exec.c:1447 fe-exec.c:1552 fe-exec.c:1601
+#: fe-exec.c:1449 fe-exec.c:1575 fe-exec.c:1624
 msgid "command string is a null pointer\n"
 msgstr "Befehlszeichenkette ist ein NULL-Zeiger\n"
 
-#: fe-exec.c:1558 fe-exec.c:1607 fe-exec.c:1703
+#: fe-exec.c:1581 fe-exec.c:1630 fe-exec.c:1726
 #, c-format
 msgid "number of parameters must be between 0 and %d\n"
 msgstr "Anzahl der Parameter muss zwischen 0 und %d sein\n"
 
-#: fe-exec.c:1595 fe-exec.c:1697
+#: fe-exec.c:1618 fe-exec.c:1720
 msgid "statement name is a null pointer\n"
 msgstr "Anweisungsname ist ein NULL-Zeiger\n"
 
-#: fe-exec.c:1741 fe-exec.c:3245
+#: fe-exec.c:1764 fe-exec.c:3326
 msgid "no connection to the server\n"
 msgstr "keine Verbindung mit dem Server\n"
 
-#: fe-exec.c:1750 fe-exec.c:3254
+#: fe-exec.c:1773 fe-exec.c:3335
 msgid "another command is already in progress\n"
 msgstr "ein anderer Befehl ist bereits in Ausführung\n"
 
-#: fe-exec.c:1779
+#: fe-exec.c:1804
 msgid "cannot queue commands during COPY\n"
 msgstr "während COPY können keine Befehle aufgereiht werden\n"
 
-#: fe-exec.c:1897
+#: fe-exec.c:1922
 msgid "length must be given for binary parameter\n"
 msgstr "für binäre Parameter muss eine Länge angegeben werden\n"
 
-#: fe-exec.c:2215
+#: fe-exec.c:2245
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "unerwarteter asyncStatus: %d\n"
 
-#: fe-exec.c:2373
+#: fe-exec.c:2419
 msgid "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr "synchrone Befehlsausführungsfunktionen sind im Pipeline-Modus nicht erlaubt\n"
 
-#: fe-exec.c:2390
+#: fe-exec.c:2436
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:2407
+#: fe-exec.c:2453
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec ist während COPY BOTH nicht erlaubt\n"
 
-#: fe-exec.c:2635 fe-exec.c:2691 fe-exec.c:2760 fe-protocol3.c:1880
+#: fe-exec.c:2681 fe-exec.c:2737 fe-exec.c:2806 fe-protocol3.c:1884
 msgid "no COPY in progress\n"
 msgstr "keine COPY in Ausführung\n"
 
-#: fe-exec.c:2940
+#: fe-exec.c:2986
 msgid "PQfn not allowed in pipeline mode\n"
 msgstr "PQfn im Pipeline-Modus nicht erlaubt\n"
 
-#: fe-exec.c:2948
+#: fe-exec.c:2994
 msgid "connection in wrong state\n"
 msgstr "Verbindung im falschen Zustand\n"
 
-#: fe-exec.c:2992
+#: fe-exec.c:3038
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr "kann Pipeline-Modus nicht einschalten, Verbindung ist nicht inaktiv\n"
 
-#: fe-exec.c:3026 fe-exec.c:3043
+#: fe-exec.c:3075 fe-exec.c:3099
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr "kann Pipeline-Modus nicht beenden, wegen nicht eingesammelter Ergebnisse\n"
 
-#: fe-exec.c:3031
+#: fe-exec.c:3080
 msgid "cannot exit pipeline mode while busy\n"
 msgstr "kann Pipeline-Modus nicht beenden während die Verbindung beschäftigt ist\n"
 
-#: fe-exec.c:3179
+#: fe-exec.c:3092
+msgid "cannot exit pipeline mode while in COPY\n"
+msgstr "kann Pipeline-Modus nicht beenden während COPY aktiv ist\n"
+
+#: fe-exec.c:3259
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr "Pipeline kann nicht gesendet werden, wenn der Pipeline-Modus aus ist\n"
 
-#: fe-exec.c:3281
+#: fe-exec.c:3362
 msgid "invalid ExecStatusType code"
 msgstr "ungültiger ExecStatusType-Kode"
 
-#: fe-exec.c:3308
+#: fe-exec.c:3389
 msgid "PGresult is not an error result\n"
 msgstr "PGresult ist kein Fehlerresultat\n"
 
-#: fe-exec.c:3376 fe-exec.c:3399
+#: fe-exec.c:3457 fe-exec.c:3480
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "Spaltennummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3414
+#: fe-exec.c:3495
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 
-#: fe-exec.c:3725
+#: fe-exec.c:3806
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:3987 fe-exec.c:4078
+#: fe-exec.c:4068 fe-exec.c:4159
 msgid "incomplete multibyte character\n"
 msgstr "unvollständiges Mehrbyte-Zeichen\n"
 
@@ -853,133 +857,133 @@ msgstr "ungültiges Socket\n"
 msgid "%s() failed: %s\n"
 msgstr "%s() fehlgeschlagen: %s\n"
 
-#: fe-protocol3.c:196
+#: fe-protocol3.c:184
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "Nachricht vom Typ 0x%02x kam vom Server im Ruhezustand"
 
-#: fe-protocol3.c:405
+#: fe-protocol3.c:409
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "Server sendete Daten (»D«-Nachricht) ohne vorherige Zeilenbeschreibung (»T«-Nachricht)\n"
 
-#: fe-protocol3.c:448
+#: fe-protocol3.c:452
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "unerwartete Antwort vom Server; erstes empfangenes Zeichen war »%c«\n"
 
-#: fe-protocol3.c:473
+#: fe-protocol3.c:477
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "Nachrichteninhalt stimmt nicht mit Länge in Nachrichtentyp »%c« überein\n"
 
-#: fe-protocol3.c:493
+#: fe-protocol3.c:497
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "Synchronisation mit Server verloren: Nachrichtentyp »%c« empfangen, Länge %d\n"
 
-#: fe-protocol3.c:545 fe-protocol3.c:585
+#: fe-protocol3.c:549 fe-protocol3.c:589
 msgid "insufficient data in \"T\" message"
 msgstr "nicht genug Daten in »T«-Nachricht"
 
-#: fe-protocol3.c:656 fe-protocol3.c:862
+#: fe-protocol3.c:660 fe-protocol3.c:866
 msgid "out of memory for query result"
 msgstr "Speicher für Anfrageergebnis aufgebraucht"
 
-#: fe-protocol3.c:725
+#: fe-protocol3.c:729
 msgid "insufficient data in \"t\" message"
 msgstr "nicht genug Daten in »t«-Nachricht"
 
-#: fe-protocol3.c:784 fe-protocol3.c:816 fe-protocol3.c:834
+#: fe-protocol3.c:788 fe-protocol3.c:820 fe-protocol3.c:838
 msgid "insufficient data in \"D\" message"
 msgstr "nicht genug Daten in »D«-Nachricht"
 
-#: fe-protocol3.c:790
+#: fe-protocol3.c:794
 msgid "unexpected field count in \"D\" message"
 msgstr "unerwartete Feldzahl in »D«-Nachricht"
 
-#: fe-protocol3.c:1046
+#: fe-protocol3.c:1050
 msgid "no error message available\n"
 msgstr "keine Fehlermeldung verfügbar\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1094 fe-protocol3.c:1113
+#: fe-protocol3.c:1098 fe-protocol3.c:1117
 #, c-format
 msgid " at character %s"
 msgstr " bei Zeichen %s"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1130
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETAIL:  %s\n"
 
-#: fe-protocol3.c:1129
+#: fe-protocol3.c:1133
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "TIP:  %s\n"
 
-#: fe-protocol3.c:1132
+#: fe-protocol3.c:1136
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ANFRAGE:  %s\n"
 
-#: fe-protocol3.c:1139
+#: fe-protocol3.c:1143
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "KONTEXT:  %s\n"
 
-#: fe-protocol3.c:1148
+#: fe-protocol3.c:1152
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMANAME:  %s\n"
 
-#: fe-protocol3.c:1152
+#: fe-protocol3.c:1156
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABELLENNAME:  %s\n"
 
-#: fe-protocol3.c:1156
+#: fe-protocol3.c:1160
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "SPALTENNAME:  %s\n"
 
-#: fe-protocol3.c:1160
+#: fe-protocol3.c:1164
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATENTYPNAME:  %s\n"
 
-#: fe-protocol3.c:1164
+#: fe-protocol3.c:1168
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "CONSTRAINT-NAME:  %s\n"
 
-#: fe-protocol3.c:1176
+#: fe-protocol3.c:1180
 msgid "LOCATION:  "
 msgstr "ORT:  "
 
-#: fe-protocol3.c:1178
+#: fe-protocol3.c:1182
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1180
+#: fe-protocol3.c:1184
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1375
+#: fe-protocol3.c:1379
 #, c-format
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: fe-protocol3.c:1774
+#: fe-protocol3.c:1778
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: Text COPY OUT nicht ausgeführt\n"
 
-#: fe-protocol3.c:2151
+#: fe-protocol3.c:2155
 msgid "protocol error: no function result\n"
 msgstr "Protokollfehler: kein Funktionsergebnis\n"
 
-#: fe-protocol3.c:2163
+#: fe-protocol3.c:2167
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "Protokollfehler: id=0x%x\n"
@@ -1194,11 +1198,6 @@ msgstr "konnte »stat« für private Schlüsseldatei »%s« nicht ausführen: %m
 #, c-format
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "private Schlüsseldatei »%s« ist keine normale Datei\n"
-
-#: fe-secure-openssl.c:1394
-#, c-format
-msgid "private key file \"%s\" must be owned by the current user or root\n"
-msgstr "private Schlüsseldatei »%s« muss als Eigentümer den aktuellen Benutzer oder »root« haben\n"
 
 #: fe-secure-openssl.c:1403
 #, c-format

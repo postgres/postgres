@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
+"POT-Creation-Date: 2022-06-14 20:17+0900\n"
 "PO-Revision-Date: 2022-05-11 14:50+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -390,12 +390,12 @@ msgstr "型定義では初期化子は許されません"
 msgid "type name \"string\" is reserved in Informix mode"
 msgstr "型名\"string\"はInformixモードですでに予約されています"
 
-#: preproc.y:552 preproc.y:19317
+#: preproc.y:552 preproc.y:19354
 #, c-format
 msgid "type \"%s\" is already defined"
 msgstr "\"%s\"型はすでに定義されています"
 
-#: preproc.y:577 preproc.y:19952 preproc.y:20277 variable.c:621
+#: preproc.y:577 preproc.y:19989 preproc.y:20314 variable.c:621
 #, c-format
 msgid "multidimensional arrays for simple data types are not supported"
 msgstr "単純なデータ型の多次元配列はサポートされていません"
@@ -552,33 +552,33 @@ msgstr "数値データ型または10進数データ型のみが精度/位取り
 msgid "interval specification not allowed here"
 msgstr "時間間隔の指定はここでは許されません"
 
-#: preproc.y:19292 preproc.y:19344
+#: preproc.y:19329 preproc.y:19381
 #, c-format
 msgid "too many levels in nested structure/union definition"
 msgstr "構造体/ユニオンの定義の入れ子レベルが深すぎます"
 
-#: preproc.y:19467
+#: preproc.y:19504
 #, c-format
 msgid "pointers to varchar are not implemented"
 msgstr "varcharを指し示すポインタは実装されていません"
 
-#: preproc.y:19918
+#: preproc.y:19955
 #, c-format
 msgid "initializer not allowed in EXEC SQL VAR command"
 msgstr "EXEC SQL VARコマンドでは初期化子は許されません"
 
-#: preproc.y:20235
+#: preproc.y:20272
 #, c-format
 msgid "arrays of indicators are not allowed on input"
 msgstr "指示子配列は入力として許されません"
 
-#: preproc.y:20422
+#: preproc.y:20459
 #, c-format
 msgid "operator not allowed in variable definition"
 msgstr "変数定義では演算子は許されません"
 
 #. translator: %s is typically the translation of "syntax error"
-#: preproc.y:20463
+#: preproc.y:20500
 #, c-format
 msgid "%s at or near \"%s\""
 msgstr "\"%2$s\"またはその近辺で%1$s"
@@ -711,17 +711,17 @@ msgstr "構造体の多次元配列はサポートされていません"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
+#~ "不具合は<pgsql-bugs@postgresql.org>に報告してください。\n"
 
 #~ msgid "using unsupported DESCRIBE statement"
 #~ msgstr "未サポートのDESCRIBE文の使用"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "不具合は<pgsql-bugs@postgresql.org>に報告してください。\n"
+#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"

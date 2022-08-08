@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-12 20:09+0000\n"
-"PO-Revision-Date: 2022-04-11 22:47+0200\n"
+"POT-Creation-Date: 2022-08-04 09:10+0000\n"
+"PO-Revision-Date: 2022-08-04 12:19+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -72,10 +72,10 @@ msgstr "kunde inte skapa engångsnummer\n"
 #: fe-connect.c:5537 fe-connect.c:5636 fe-connect.c:5892 fe-connect.c:5921
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
-#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3135 fe-exec.c:3318
-#: fe-exec.c:4096 fe-exec.c:4261 fe-gssapi-common.c:111 fe-lobj.c:884
-#: fe-protocol3.c:985 fe-protocol3.c:1000 fe-protocol3.c:1033
-#: fe-protocol3.c:1741 fe-protocol3.c:2144 fe-secure-common.c:112
+#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3215 fe-exec.c:3399
+#: fe-exec.c:4177 fe-exec.c:4342 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
+#: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
 msgid "out of memory\n"
 msgstr "slut på minne\n"
@@ -122,8 +122,8 @@ msgstr "felaktigt SCRAM-meddelande (skräp i slutet av server-final-message)\n"
 msgid "malformed SCRAM message (invalid server signature)\n"
 msgstr "felaktigt SCRAM-meddelande (ogiltigt serversignatur)\n"
 
-#: fe-auth-scram.c:934 fe-exec.c:527 fe-protocol3.c:219 fe-protocol3.c:244
-#: fe-protocol3.c:273 fe-protocol3.c:291 fe-protocol3.c:372 fe-protocol3.c:745
+#: fe-auth-scram.c:934 fe-exec.c:527 fe-protocol3.c:207 fe-protocol3.c:232
+#: fe-protocol3.c:261 fe-protocol3.c:279 fe-protocol3.c:376 fe-protocol3.c:749
 msgid "out of memory"
 msgstr "slut på minne"
 
@@ -645,12 +645,12 @@ msgstr "VARNING: lösenordsfilen \"%s\" har läsrättigheter för gruppen eller 
 msgid "password retrieved from file \"%s\"\n"
 msgstr "lösenord hämtat från fil \"%s\"\n"
 
-#: fe-exec.c:466 fe-exec.c:3392
+#: fe-exec.c:466 fe-exec.c:3473
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "radnummer %d är utanför giltigt intervall 0..%d"
 
-#: fe-exec.c:528 fe-protocol3.c:1949
+#: fe-exec.c:528 fe-protocol3.c:1953
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -675,104 +675,108 @@ msgstr "PGresult stöder inte mer än INT_MAX tupler"
 msgid "size_t overflow"
 msgstr "size_t-överspill"
 
-#: fe-exec.c:1447 fe-exec.c:1552 fe-exec.c:1601
+#: fe-exec.c:1449 fe-exec.c:1575 fe-exec.c:1624
 msgid "command string is a null pointer\n"
 msgstr "kommandosträngen är en null-pekare\n"
 
-#: fe-exec.c:1558 fe-exec.c:1607 fe-exec.c:1703
+#: fe-exec.c:1581 fe-exec.c:1630 fe-exec.c:1726
 #, c-format
 msgid "number of parameters must be between 0 and %d\n"
 msgstr "antal parametrar måste vara mellan 0 och %d\n"
 
-#: fe-exec.c:1595 fe-exec.c:1697
+#: fe-exec.c:1618 fe-exec.c:1720
 msgid "statement name is a null pointer\n"
 msgstr "satsens namn  är en null-pekare\n"
 
-#: fe-exec.c:1741 fe-exec.c:3245
+#: fe-exec.c:1764 fe-exec.c:3326
 msgid "no connection to the server\n"
 msgstr "inte förbunden till servern\n"
 
-#: fe-exec.c:1750 fe-exec.c:3254
+#: fe-exec.c:1773 fe-exec.c:3335
 msgid "another command is already in progress\n"
 msgstr "ett annat kommando pågår redan\n"
 
-#: fe-exec.c:1779
+#: fe-exec.c:1804
 msgid "cannot queue commands during COPY\n"
 msgstr "kan inte köa kommandon när COPY körs\n"
 
-#: fe-exec.c:1897
+#: fe-exec.c:1922
 msgid "length must be given for binary parameter\n"
 msgstr "längden måste anges för en binär parameter\n"
 
-#: fe-exec.c:2215
+#: fe-exec.c:2245
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "oväntad asyncStatus: %d\n"
 
-#: fe-exec.c:2373
+#: fe-exec.c:2419
 msgid "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr "synkrona kommandoexekveringsfunktioner tillåts inte i pipeline-läge\n"
 
-#: fe-exec.c:2390
+#: fe-exec.c:2436
 msgid "COPY terminated by new PQexec"
 msgstr "COPY terminerad av ny PQexec"
 
-#: fe-exec.c:2407
+#: fe-exec.c:2453
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "PQexec tillåts inte under COPY BOTH\n"
 
-#: fe-exec.c:2635 fe-exec.c:2691 fe-exec.c:2760 fe-protocol3.c:1880
+#: fe-exec.c:2681 fe-exec.c:2737 fe-exec.c:2806 fe-protocol3.c:1884
 msgid "no COPY in progress\n"
 msgstr "ingen COPY pågår\n"
 
-#: fe-exec.c:2940
+#: fe-exec.c:2986
 msgid "PQfn not allowed in pipeline mode\n"
 msgstr "PQfn tillåts inte i pipeline-läge\n"
 
-#: fe-exec.c:2948
+#: fe-exec.c:2994
 msgid "connection in wrong state\n"
 msgstr "anslutning i felaktigt tillstånd\n"
 
-#: fe-exec.c:2992
+#: fe-exec.c:3038
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr "kan inte byta till pipeline-läge, anslutningen är inte inaktiv\n"
 
-#: fe-exec.c:3026 fe-exec.c:3043
+#: fe-exec.c:3075 fe-exec.c:3099
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr "kan inte anvsluta pipeline-läge när alla svar inte tagits emot\n"
 
-#: fe-exec.c:3031
+#: fe-exec.c:3080
 msgid "cannot exit pipeline mode while busy\n"
 msgstr "är upptagen och kan inte avsluta pipeline-läge\n"
 
-#: fe-exec.c:3179
+#: fe-exec.c:3092
+msgid "cannot exit pipeline mode while in COPY\n"
+msgstr "kan inte avsluta pipeline-läge inne i en COPY\n"
+
+#: fe-exec.c:3259
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr "kan inte skicka en pipeline när vi inte är i pipeline-läge\n"
 
-#: fe-exec.c:3281
+#: fe-exec.c:3362
 msgid "invalid ExecStatusType code"
 msgstr "ogiltig ExecStatusType-kod"
 
-#: fe-exec.c:3308
+#: fe-exec.c:3389
 msgid "PGresult is not an error result\n"
 msgstr "PGresult är inte ett felresultat\n"
 
-#: fe-exec.c:3376 fe-exec.c:3399
+#: fe-exec.c:3457 fe-exec.c:3480
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "kolumnnummer %d är utanför giltigt intervall 0..%d"
 
-#: fe-exec.c:3414
+#: fe-exec.c:3495
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "parameter nummer %d är utanför giltigt intervall 0..%d"
 
-#: fe-exec.c:3725
+#: fe-exec.c:3806
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "kunde inte tolka svaret från servern: %s"
 
-#: fe-exec.c:3987 fe-exec.c:4078
+#: fe-exec.c:4068 fe-exec.c:4159
 msgid "incomplete multibyte character\n"
 msgstr "ofullständigt multibyte-tecken\n"
 
@@ -857,133 +861,133 @@ msgstr "ogiltigt uttag\n"
 msgid "%s() failed: %s\n"
 msgstr "%s() misslyckades: %s\n"
 
-#: fe-protocol3.c:196
+#: fe-protocol3.c:184
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "meddelandetyp 0x%02x kom från server under viloperiod"
 
-#: fe-protocol3.c:405
+#: fe-protocol3.c:409
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
 msgstr "servern skickade data (meddelande \"D\") utan att först skicka en radbeskrivning (meddelande \"T\")\n"
 
-#: fe-protocol3.c:448
+#: fe-protocol3.c:452
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "oväntat svar för servern; första mottagna tecknet var \"%c\"\n"
 
-#: fe-protocol3.c:473
+#: fe-protocol3.c:477
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "meddelandeinnehåll stämmer inte med längden för meddelandetyp \"%c\"\n"
 
-#: fe-protocol3.c:493
+#: fe-protocol3.c:497
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr "tappade synkronisering med servern: fick meddelandetyp \"%c\", längd %d\n"
 
-#: fe-protocol3.c:545 fe-protocol3.c:585
+#: fe-protocol3.c:549 fe-protocol3.c:589
 msgid "insufficient data in \"T\" message"
 msgstr "otillräckligt med data i \"T\"-meddelande"
 
-#: fe-protocol3.c:656 fe-protocol3.c:862
+#: fe-protocol3.c:660 fe-protocol3.c:866
 msgid "out of memory for query result"
 msgstr "slut på minnet för frågeresultat"
 
-#: fe-protocol3.c:725
+#: fe-protocol3.c:729
 msgid "insufficient data in \"t\" message"
 msgstr "otillräckligt med data i \"t\"-meddelande"
 
-#: fe-protocol3.c:784 fe-protocol3.c:816 fe-protocol3.c:834
+#: fe-protocol3.c:788 fe-protocol3.c:820 fe-protocol3.c:838
 msgid "insufficient data in \"D\" message"
 msgstr "otillräckligt med data i \"D\"-meddelande"
 
-#: fe-protocol3.c:790
+#: fe-protocol3.c:794
 msgid "unexpected field count in \"D\" message"
 msgstr "oväntat fältantal i \"D\"-meddelande"
 
-#: fe-protocol3.c:1046
+#: fe-protocol3.c:1050
 msgid "no error message available\n"
 msgstr "inget felmeddelande finns tillgängligt\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1094 fe-protocol3.c:1113
+#: fe-protocol3.c:1098 fe-protocol3.c:1117
 #, c-format
 msgid " at character %s"
 msgstr " vid tecken %s"
 
-#: fe-protocol3.c:1126
+#: fe-protocol3.c:1130
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "DETALJ:  %s\n"
 
-#: fe-protocol3.c:1129
+#: fe-protocol3.c:1133
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "TIPS:  %s\n"
 
-#: fe-protocol3.c:1132
+#: fe-protocol3.c:1136
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "FRÅGA:  %s\n"
 
-#: fe-protocol3.c:1139
+#: fe-protocol3.c:1143
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "KONTEXT:  %s\n"
 
-#: fe-protocol3.c:1148
+#: fe-protocol3.c:1152
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "SCHEMANAMN:  %s\n"
 
-#: fe-protocol3.c:1152
+#: fe-protocol3.c:1156
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "TABELLNAMN:  %s\n"
 
-#: fe-protocol3.c:1156
+#: fe-protocol3.c:1160
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "KOLUMNNAMN:  %s\n"
 
-#: fe-protocol3.c:1160
+#: fe-protocol3.c:1164
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "DATATYPNAMN:  %s\n"
 
-#: fe-protocol3.c:1164
+#: fe-protocol3.c:1168
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "VILLKORSNAMN:  %s\n"
 
-#: fe-protocol3.c:1176
+#: fe-protocol3.c:1180
 msgid "LOCATION:  "
 msgstr "PLATS:  "
 
-#: fe-protocol3.c:1178
+#: fe-protocol3.c:1182
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1180
+#: fe-protocol3.c:1184
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1375
+#: fe-protocol3.c:1379
 #, c-format
 msgid "LINE %d: "
 msgstr "RAD %d: "
 
-#: fe-protocol3.c:1774
+#: fe-protocol3.c:1778
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: utför inte text-COPY OUT\n"
 
-#: fe-protocol3.c:2151
+#: fe-protocol3.c:2155
 msgid "protocol error: no function result\n"
 msgstr "protokollfel: inget funktionsresultat\n"
 
-#: fe-protocol3.c:2163
+#: fe-protocol3.c:2167
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "protokollfel: id=0x%x\n"
@@ -1199,11 +1203,6 @@ msgstr "kunde inte köra stat() på privata nyckelfilen \"%s\": %m\n"
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "privat nyckelfilen \"%s\" är inte en vanlig fil\n"
 
-#: fe-secure-openssl.c:1394
-#, c-format
-msgid "private key file \"%s\" must be owned by the current user or root\n"
-msgstr "privat nyckelfilen \"%s\" måste ägas av databasanvändaren eller root\n"
-
 #: fe-secure-openssl.c:1403
 #, c-format
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
@@ -1258,3 +1257,7 @@ msgstr "kan inte skicka data till servern: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "okänt uttagsfel: 0x%08X/%d"
+
+#, c-format
+#~ msgid "private key file \"%s\" must be owned by the current user or root\n"
+#~ msgstr "privat nyckelfilen \"%s\" måste ägas av databasanvändaren eller root\n"

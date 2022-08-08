@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-11 14:16+0900\n"
+"POT-Creation-Date: 2022-06-14 20:17+0900\n"
 "PO-Revision-Date: 2022-05-10 13:38+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -22,22 +22,22 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Poedit 1.8.13\n"
 
-#: ../../../src/common/logging.c:277
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "エラー: "
 
-#: ../../../src/common/logging.c:284
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "警告: "
 
-#: ../../../src/common/logging.c:295
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "詳細: "
 
-#: ../../../src/common/logging.c:302
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "ヒント: "
@@ -160,7 +160,7 @@ msgstr "ファイル\"%s\"をクローズできませんでした: %m"
 msgid "unexpected state while extracting archive"
 msgstr "アーカイブの抽出中に想定外の状態"
 
-#: bbstreamer_file.c:298 pg_basebackup.c:685 pg_basebackup.c:737
+#: bbstreamer_file.c:298 pg_basebackup.c:686 pg_basebackup.c:738
 #, c-format
 msgid "could not create directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"を作成できませんでした: %m"
@@ -220,7 +220,7 @@ msgstr "圧縮ファイル\"%s\"をクローズすることができませんで
 msgid "could not initialize compression library"
 msgstr "圧縮ライブラリを初期化できませんでした"
 
-#: bbstreamer_gzip.c:297 bbstreamer_lz4.c:355 bbstreamer_zstd.c:319
+#: bbstreamer_gzip.c:298 bbstreamer_lz4.c:355 bbstreamer_zstd.c:319
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "データを伸張できませんでした: %s"
@@ -305,87 +305,87 @@ msgstr "このビルドではzstd圧縮をサポートしていません"
 msgid "could not create zstd decompression context"
 msgstr "zstd伸張コンテクストを生成できませんでした"
 
-#: pg_basebackup.c:239
+#: pg_basebackup.c:240
 #, c-format
 msgid "removing data directory \"%s\""
 msgstr "データディレクトリ\"%s\"を削除しています"
 
-#: pg_basebackup.c:241
+#: pg_basebackup.c:242
 #, c-format
 msgid "failed to remove data directory"
 msgstr "データディレクトリの削除に失敗しました"
 
-#: pg_basebackup.c:245
+#: pg_basebackup.c:246
 #, c-format
 msgid "removing contents of data directory \"%s\""
 msgstr "データディレクトリ\"%s\"の内容を削除しています"
 
-#: pg_basebackup.c:247
+#: pg_basebackup.c:248
 #, c-format
 msgid "failed to remove contents of data directory"
 msgstr "データディレクトリの中身の削除に失敗しました"
 
-#: pg_basebackup.c:252
+#: pg_basebackup.c:253
 #, c-format
 msgid "removing WAL directory \"%s\""
 msgstr "WAL ディレクトリ\"%s\"を削除しています"
 
-#: pg_basebackup.c:254
+#: pg_basebackup.c:255
 #, c-format
 msgid "failed to remove WAL directory"
 msgstr "WAL ディレクトリの削除に失敗しました"
 
-#: pg_basebackup.c:258
+#: pg_basebackup.c:259
 #, c-format
 msgid "removing contents of WAL directory \"%s\""
 msgstr "WAL ディレクトリ\"%s\"の中身を削除しています"
 
-#: pg_basebackup.c:260
+#: pg_basebackup.c:261
 #, c-format
 msgid "failed to remove contents of WAL directory"
 msgstr "WAL ディレクトリの中身の削除に失敗しました"
 
-#: pg_basebackup.c:266
+#: pg_basebackup.c:267
 #, c-format
 msgid "data directory \"%s\" not removed at user's request"
 msgstr "ユーザの要求により、データディレクトリ\"%s\"を削除しませんでした"
 
-#: pg_basebackup.c:269
+#: pg_basebackup.c:270
 #, c-format
 msgid "WAL directory \"%s\" not removed at user's request"
 msgstr "ユーザの要求により、WAL ディレクトリ\"%s\"を削除しませんでした"
 
-#: pg_basebackup.c:273
+#: pg_basebackup.c:274
 #, c-format
 msgid "changes to tablespace directories will not be undone"
 msgstr "テーブル空間用ディレクトリへの変更は取り消されません"
 
-#: pg_basebackup.c:325
+#: pg_basebackup.c:326
 #, c-format
 msgid "directory name too long"
 msgstr "ディレクトリ名が長すぎます"
 
-#: pg_basebackup.c:332
+#: pg_basebackup.c:333
 #, c-format
 msgid "multiple \"=\" signs in tablespace mapping"
 msgstr "テーブル空間のマッピングに複数の\"=\"記号があります"
 
-#: pg_basebackup.c:341
+#: pg_basebackup.c:342
 #, c-format
 msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
 msgstr "テーブル空間のマッピング形式\"%s\"が不正です。\"旧DIR=新DIR\"でなければなりません"
 
-#: pg_basebackup.c:350
+#: pg_basebackup.c:351
 #, c-format
 msgid "old directory is not an absolute path in tablespace mapping: %s"
 msgstr "テーブル空間のマッピングにおいて、旧ディレクトリが絶対パスではありません: %s"
 
-#: pg_basebackup.c:354
+#: pg_basebackup.c:355
 #, c-format
 msgid "new directory is not an absolute path in tablespace mapping: %s"
 msgstr "テーブル空間のマッピングにおいて、新ディレクトリが絶対パスではありません: %s"
 
-#: pg_basebackup.c:376
+#: pg_basebackup.c:377
 #, c-format
 msgid ""
 "%s takes a base backup of a running PostgreSQL server.\n"
@@ -394,17 +394,17 @@ msgstr ""
 "%sは実行中のPostgreSQLサーバのベースバックアップを取得します。\n"
 "\n"
 
-#: pg_basebackup.c:378 pg_receivewal.c:81 pg_recvlogical.c:78
+#: pg_basebackup.c:379 pg_receivewal.c:81 pg_recvlogical.c:78
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_basebackup.c:379 pg_receivewal.c:82 pg_recvlogical.c:79
+#: pg_basebackup.c:380 pg_receivewal.c:82 pg_recvlogical.c:79
 #, c-format
 msgid "  %s [OPTION]...\n"
 msgstr "  %s [オプション]...\n"
 
-#: pg_basebackup.c:380
+#: pg_basebackup.c:381
 #, c-format
 msgid ""
 "\n"
@@ -413,17 +413,17 @@ msgstr ""
 "\n"
 "出力を制御するオプション:\n"
 
-#: pg_basebackup.c:381
+#: pg_basebackup.c:382
 #, c-format
 msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
 msgstr "  -D, --pgdata=DIRECTORY ベースバックアップをディレクトリ内に格納\n"
 
-#: pg_basebackup.c:382
+#: pg_basebackup.c:383
 #, c-format
 msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
 msgstr "  -F, --format=p|t       出力フォーマット(プレイン(デフォルト)またはtar)\n"
 
-#: pg_basebackup.c:383
+#: pg_basebackup.c:384
 #, c-format
 msgid ""
 "  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
@@ -432,7 +432,7 @@ msgstr ""
 "  -r, --max-rate=RATE    データディレクトリ転送の際の最大転送速度\n"
 "                         (kB/s 単位、または 接尾辞 \"k\" か\"M\" を使用)\n"
 
-#: pg_basebackup.c:385
+#: pg_basebackup.c:386
 #, c-format
 msgid ""
 "  -R, --write-recovery-conf\n"
@@ -441,7 +441,7 @@ msgstr ""
 "  -R, --write-recovery-conf\n"
 "                         レプリケーションのための設定を書き込む\n"
 
-#: pg_basebackup.c:387
+#: pg_basebackup.c:388
 #, c-format
 msgid ""
 "  -t, --target=TARGET[:DETAIL]\n"
@@ -450,7 +450,7 @@ msgstr ""
 "  -t, --target=ターゲット[:詳細]\n"
 "                         バックアップターゲット(クライアント以外の場合)\n"
 
-#: pg_basebackup.c:389
+#: pg_basebackup.c:390
 #, c-format
 msgid ""
 "  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
@@ -459,12 +459,12 @@ msgstr ""
 "  -T, --tablespace-mapping=旧DIR=新DIR\n"
 "                         テーブル空間を旧DIRから新DIRに移動する\n"
 
-#: pg_basebackup.c:391
+#: pg_basebackup.c:392
 #, c-format
 msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
 msgstr "      --waldir=WALDIR    先行書き込みログ用ディレクトリの位置\n"
 
-#: pg_basebackup.c:392
+#: pg_basebackup.c:393
 #, c-format
 msgid ""
 "  -X, --wal-method=none|fetch|stream\n"
@@ -474,12 +474,12 @@ msgstr ""
 "                         要求されたWALファイルを指定の方式でバックアップ\n"
 "                         に含める\n"
 
-#: pg_basebackup.c:394
+#: pg_basebackup.c:395
 #, c-format
 msgid "  -z, --gzip             compress tar output\n"
 msgstr "  -z, --gzip             tar の出力を圧縮する\n"
 
-#: pg_basebackup.c:395
+#: pg_basebackup.c:396
 #, c-format
 msgid ""
 "  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
@@ -488,12 +488,12 @@ msgstr ""
 "  -Z, --compress=[{client|server}-]方式[:詳細]\n"
 "                         指定に従ってクライアント側またはサーバー側で圧縮\n"
 
-#: pg_basebackup.c:397
+#: pg_basebackup.c:398
 #, c-format
 msgid "  -Z, --compress=none    do not compress tar output\n"
 msgstr "  -Z, --compress=none    tar出力を圧縮しない\n"
 
-#: pg_basebackup.c:398
+#: pg_basebackup.c:399
 #, c-format
 msgid ""
 "\n"
@@ -502,7 +502,7 @@ msgstr ""
 "\n"
 "汎用オプション:\n"
 
-#: pg_basebackup.c:399
+#: pg_basebackup.c:400
 #, c-format
 msgid ""
 "  -c, --checkpoint=fast|spread\n"
@@ -511,47 +511,47 @@ msgstr ""
 "  -c, --checkpoint=fast|spread\n"
 "                         高速または分散チェックポイント処理の指定\n"
 
-#: pg_basebackup.c:401
+#: pg_basebackup.c:402
 #, c-format
 msgid "  -C, --create-slot      create replication slot\n"
 msgstr "  -C, --create-slot      新しいレプリケーションスロットを作成する\n"
 
-#: pg_basebackup.c:402
+#: pg_basebackup.c:403
 #, c-format
 msgid "  -l, --label=LABEL      set backup label\n"
 msgstr "  -l, --label=LABEL      バックアップラベルの設定\n"
 
-#: pg_basebackup.c:403
+#: pg_basebackup.c:404
 #, c-format
 msgid "  -n, --no-clean         do not clean up after errors\n"
 msgstr "  -n, --noclean          エラー発生後作成したファイルの削除を行わない\n"
 
-#: pg_basebackup.c:404
+#: pg_basebackup.c:405
 #, c-format
 msgid "  -N, --no-sync          do not wait for changes to be written safely to disk\n"
 msgstr "  -N, --nosync           ディスクへの安全な書き込みを待機しない\n"
 
-#: pg_basebackup.c:405
+#: pg_basebackup.c:406
 #, c-format
 msgid "  -P, --progress         show progress information\n"
 msgstr "  -P, --progress         進行状況の表示\n"
 
-#: pg_basebackup.c:406 pg_receivewal.c:91
+#: pg_basebackup.c:407 pg_receivewal.c:91
 #, c-format
 msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
 msgstr "  -S, --slot=スロット名  使用するレプリケーションスロット\n"
 
-#: pg_basebackup.c:407 pg_receivewal.c:93 pg_recvlogical.c:100
+#: pg_basebackup.c:408 pg_receivewal.c:93 pg_recvlogical.c:100
 #, c-format
 msgid "  -v, --verbose          output verbose messages\n"
 msgstr "  -v, --verbose          冗長メッセージの出力\n"
 
-#: pg_basebackup.c:408 pg_receivewal.c:94 pg_recvlogical.c:101
+#: pg_basebackup.c:409 pg_receivewal.c:94 pg_recvlogical.c:101
 #, c-format
 msgid "  -V, --version          output version information, then exit\n"
 msgstr "  -V, --version          バージョン情報を表示して終了\n"
 
-#: pg_basebackup.c:409
+#: pg_basebackup.c:410
 #, c-format
 msgid ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
@@ -560,7 +560,7 @@ msgstr ""
 "      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
 "                         目録チェックサムに使用するアルゴリズム\n"
 
-#: pg_basebackup.c:411
+#: pg_basebackup.c:412
 #, c-format
 msgid ""
 "      --manifest-force-encode\n"
@@ -569,22 +569,22 @@ msgstr ""
 "      --manifest-force-encode\n"
 "                         目録中の全てのファイル名を16進エンコードする\n"
 
-#: pg_basebackup.c:413
+#: pg_basebackup.c:414
 #, c-format
 msgid "      --no-estimate-size do not estimate backup size in server side\n"
 msgstr "      --no-estimate-size サーバ側でバックアップサイズを見積もらない\n"
 
-#: pg_basebackup.c:414
+#: pg_basebackup.c:415
 #, c-format
 msgid "      --no-manifest      suppress generation of backup manifest\n"
 msgstr "      --no-manifest      バックアップ目録の作成を省略する\n"
 
-#: pg_basebackup.c:415
+#: pg_basebackup.c:416
 #, c-format
 msgid "      --no-slot          prevent creation of temporary replication slot\n"
 msgstr "      --no-slot          一時レプリケーションスロットの作成を行わない\n"
 
-#: pg_basebackup.c:416
+#: pg_basebackup.c:417
 #, c-format
 msgid ""
 "      --no-verify-checksums\n"
@@ -593,12 +593,12 @@ msgstr ""
 "      --no-verify-checksums\n"
 "                         チェックサムを検証しない\n"
 
-#: pg_basebackup.c:418 pg_receivewal.c:97 pg_recvlogical.c:102
+#: pg_basebackup.c:419 pg_receivewal.c:97 pg_recvlogical.c:102
 #, c-format
 msgid "  -?, --help             show this help, then exit\n"
 msgstr "  -?, --help             このヘルプを表示して終了\n"
 
-#: pg_basebackup.c:419 pg_receivewal.c:98 pg_recvlogical.c:103
+#: pg_basebackup.c:420 pg_receivewal.c:98 pg_recvlogical.c:103
 #, c-format
 msgid ""
 "\n"
@@ -607,22 +607,22 @@ msgstr ""
 "\n"
 "接続オプション:\n"
 
-#: pg_basebackup.c:420 pg_receivewal.c:99
+#: pg_basebackup.c:421 pg_receivewal.c:99
 #, c-format
 msgid "  -d, --dbname=CONNSTR   connection string\n"
 msgstr "  -d, --dbname=CONNSTR   接続文字列\n"
 
-#: pg_basebackup.c:421 pg_receivewal.c:100 pg_recvlogical.c:105
+#: pg_basebackup.c:422 pg_receivewal.c:100 pg_recvlogical.c:105
 #, c-format
 msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME    データベースサーバホストまたはソケットディレクトリ\n"
 
-#: pg_basebackup.c:422 pg_receivewal.c:101 pg_recvlogical.c:106
+#: pg_basebackup.c:423 pg_receivewal.c:101 pg_recvlogical.c:106
 #, c-format
 msgid "  -p, --port=PORT        database server port number\n"
 msgstr "  -p, --port=PORT        データベースサーバのポート番号\n"
 
-#: pg_basebackup.c:423
+#: pg_basebackup.c:424
 #, c-format
 msgid ""
 "  -s, --status-interval=INTERVAL\n"
@@ -631,22 +631,22 @@ msgstr ""
 "  -s, --status-interval=INTERVAL\n"
 "                         サーバへ送出するステータスパケットの間隔(秒単位)\n"
 
-#: pg_basebackup.c:425 pg_receivewal.c:102 pg_recvlogical.c:107
+#: pg_basebackup.c:426 pg_receivewal.c:102 pg_recvlogical.c:107
 #, c-format
 msgid "  -U, --username=NAME    connect as specified database user\n"
 msgstr "  -U, --username=NAME    指定したデータベースユーザで接続\n"
 
-#: pg_basebackup.c:426 pg_receivewal.c:103 pg_recvlogical.c:108
+#: pg_basebackup.c:427 pg_receivewal.c:103 pg_recvlogical.c:108
 #, c-format
 msgid "  -w, --no-password      never prompt for password\n"
 msgstr "  -w, --no-password      パスワードの入力を要求しない\n"
 
-#: pg_basebackup.c:427 pg_receivewal.c:104 pg_recvlogical.c:109
+#: pg_basebackup.c:428 pg_receivewal.c:104 pg_recvlogical.c:109
 #, c-format
 msgid "  -W, --password         force password prompt (should happen automatically)\n"
 msgstr "  -W, --password         パスワード入力要求を強制(自動的に行われるはず)\n"
 
-#: pg_basebackup.c:428 pg_receivewal.c:108 pg_recvlogical.c:110
+#: pg_basebackup.c:429 pg_receivewal.c:108 pg_recvlogical.c:110
 #, c-format
 msgid ""
 "\n"
@@ -655,162 +655,162 @@ msgstr ""
 "\n"
 "バグは<%s>に報告してください。\n"
 
-#: pg_basebackup.c:429 pg_receivewal.c:109 pg_recvlogical.c:111
+#: pg_basebackup.c:430 pg_receivewal.c:109 pg_recvlogical.c:111
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s ホームページ: <%s>\n"
 
-#: pg_basebackup.c:471
+#: pg_basebackup.c:472
 #, c-format
 msgid "could not read from ready pipe: %m"
 msgstr "準備ができたパイプからの読み込みが失敗しました: %m"
 
-#: pg_basebackup.c:474 pg_basebackup.c:621 pg_basebackup.c:2178
+#: pg_basebackup.c:475 pg_basebackup.c:622 pg_basebackup.c:2178
 #: streamutil.c:444
 #, c-format
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "先行書き込みログの位置\"%s\"をパースできませんでした"
 
-#: pg_basebackup.c:580 pg_receivewal.c:665
+#: pg_basebackup.c:581 pg_receivewal.c:665
 #, c-format
 msgid "could not finish writing WAL files: %m"
 msgstr "WALファイルの書き込みを終了できませんでした: %m"
 
-#: pg_basebackup.c:630
+#: pg_basebackup.c:631
 #, c-format
 msgid "could not create pipe for background process: %m"
 msgstr "バックグランドプロセス用のパイプを作成できませんでした: \"%m"
 
-#: pg_basebackup.c:663
+#: pg_basebackup.c:664
 #, c-format
 msgid "created temporary replication slot \"%s\""
 msgstr "一時レプリケーションスロット\"%s\"を作成しました"
 
-#: pg_basebackup.c:666
+#: pg_basebackup.c:667
 #, c-format
 msgid "created replication slot \"%s\""
 msgstr "レプリケーションスロット\"%s\"を作成していました"
 
-#: pg_basebackup.c:703
+#: pg_basebackup.c:704
 #, c-format
 msgid "log streamer with pid %d exiting"
 msgstr "PID %dのログストリーマーが終了します"
 
-#: pg_basebackup.c:708
+#: pg_basebackup.c:709
 #, c-format
 msgid "could not create background process: %m"
 msgstr "バックグラウンドプロセスを生成できませんでした: %m"
 
-#: pg_basebackup.c:717
+#: pg_basebackup.c:718
 #, c-format
 msgid "could not create background thread: %m"
 msgstr "バックグラウンドスレッドを生成できませんでした: %m"
 
-#: pg_basebackup.c:756
+#: pg_basebackup.c:757
 #, c-format
 msgid "directory \"%s\" exists but is not empty"
 msgstr "ディレクトリ\"%s\"は存在しますが空ではありません"
 
-#: pg_basebackup.c:762
+#: pg_basebackup.c:763
 #, c-format
 msgid "could not access directory \"%s\": %m"
 msgstr "ディレクトリ\"%s\"にアクセスできませんでした: %m"
 
-#: pg_basebackup.c:839
+#: pg_basebackup.c:840
 #, c-format
 msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
 msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
 msgstr[0] "%*s/%s kB (100%%), %d/%d テーブル空間 %*s"
 
-#: pg_basebackup.c:851
+#: pg_basebackup.c:852
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d テーブル空間 (%s%-*.*s)"
 
-#: pg_basebackup.c:867
+#: pg_basebackup.c:868
 #, c-format
 msgid "%*s/%s kB (%d%%), %d/%d tablespace"
 msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
 msgstr[0] "%*s/%s kB (%d%%), %d/%d テーブル空間"
 
-#: pg_basebackup.c:891
+#: pg_basebackup.c:892
 #, c-format
 msgid "transfer rate \"%s\" is not a valid value"
 msgstr "転送速度\"%s\"は無効な値です"
 
-#: pg_basebackup.c:893
+#: pg_basebackup.c:894
 #, c-format
 msgid "invalid transfer rate \"%s\": %m"
 msgstr "転送速度\"%s\"は無効です: %m"
 
-#: pg_basebackup.c:900
+#: pg_basebackup.c:901
 #, c-format
 msgid "transfer rate must be greater than zero"
 msgstr "転送速度は0より大きな値でなければなりません"
 
-#: pg_basebackup.c:930
+#: pg_basebackup.c:931
 #, c-format
 msgid "invalid --max-rate unit: \"%s\""
 msgstr "--max-rate の単位が不正です: \"%s\""
 
-#: pg_basebackup.c:934
+#: pg_basebackup.c:935
 #, c-format
 msgid "transfer rate \"%s\" exceeds integer range"
 msgstr "転送速度\"%s\"がintegerの範囲を超えています"
 
-#: pg_basebackup.c:941
+#: pg_basebackup.c:942
 #, c-format
 msgid "transfer rate \"%s\" is out of range"
 msgstr "転送速度\"%s\"が範囲外です"
 
-#: pg_basebackup.c:1037
+#: pg_basebackup.c:1038
 #, c-format
 msgid "could not get COPY data stream: %s"
 msgstr "COPYデータストリームを取得できませんでした: %s"
 
-#: pg_basebackup.c:1054 pg_recvlogical.c:438 pg_recvlogical.c:610
+#: pg_basebackup.c:1055 pg_recvlogical.c:438 pg_recvlogical.c:610
 #: receivelog.c:981
 #, c-format
 msgid "could not read COPY data: %s"
 msgstr "COPYデータを読み取ることができませんでした: %s"
 
-#: pg_basebackup.c:1058
+#: pg_basebackup.c:1059
 #, c-format
 msgid "background process terminated unexpectedly"
 msgstr "バックグラウンドプロセスが突然終了しました"
 
-#: pg_basebackup.c:1129
+#: pg_basebackup.c:1130
 #, c-format
 msgid "cannot inject manifest into a compressed tarfile"
 msgstr "圧縮tarファイルには目録は出力できません"
 
-#: pg_basebackup.c:1130
+#: pg_basebackup.c:1131
 #, c-format
 msgid "use client-side compression, send the output to a directory rather than standard output, or use --no-manifest"
 msgstr "クライアントサイド圧縮を使用して標準出力ではなくディレクトリに出力する、または --no-manifestを使用してください"
 
-#: pg_basebackup.c:1145
+#: pg_basebackup.c:1146
 #, c-format
 msgid "unable to parse archive: %s"
 msgstr "アーカイバのパースができませんでした: %s"
 
-#: pg_basebackup.c:1146
+#: pg_basebackup.c:1147
 #, c-format
 msgid "Only tar archives can be parsed."
 msgstr "tarアーカイブのみパース可能です。"
 
-#: pg_basebackup.c:1148
+#: pg_basebackup.c:1149
 #, c-format
 msgid "Plain format requires pg_basebackup to parse the archive."
 msgstr "Plainフォーマットではpg_basebackupがアーカイブをパースする必要があります。"
 
-#: pg_basebackup.c:1150
+#: pg_basebackup.c:1151
 #, c-format
 msgid "Using - as the output directory requires pg_basebackup to parse the archive."
 msgstr "出力ディレクトリに - を指定する際にはpg_basebackupがアーカイブをパースする必要があります。"
 
-#: pg_basebackup.c:1152
+#: pg_basebackup.c:1153
 #, c-format
 msgid "The -R option requires pg_basebackup to parse the archive."
 msgstr "-Rオプションを指定する場合はpg_basebackupがアーカイブをパースする必要があります。"
@@ -1115,12 +1115,12 @@ msgstr "WALディレクトリの位置は plainモードでのみ指定可能で
 msgid "WAL directory location must be an absolute path"
 msgstr "WALディレクトリの位置は、絶対パスでなければなりません"
 
-#: pg_basebackup.c:2781
+#: pg_basebackup.c:2782
 #, c-format
 msgid "could not create symbolic link \"%s\": %m"
 msgstr "シンボリックリンク\"%s\"を作成できませんでした: %m"
 
-#: pg_basebackup.c:2783
+#: pg_basebackup.c:2784
 #, c-format
 msgid "symlinks are not supported on this platform"
 msgstr "このプラットフォームでシンボリックリンクはサポートされていません"

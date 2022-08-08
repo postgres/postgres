@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-12 05:16+0000\n"
-"PO-Revision-Date: 2022-04-12 17:29+0200\n"
+"POT-Creation-Date: 2022-07-18 13:18+0000\n"
+"PO-Revision-Date: 2022-07-18 17:28+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,24 +19,24 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.1\n"
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "erreur : "
 
-#: ../../../src/common/logging.c:280
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "attention : "
 
-#: ../../../src/common/logging.c:291
+#: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
 msgstr "détail : "
 
-#: ../../../src/common/logging.c:298
+#: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
 msgstr "astuce : "
@@ -268,23 +268,23 @@ msgstr "aucun argument spécifié"
 
 #: pg_waldump.c:797
 #, c-format
-msgid "could not parse valid block number \"%s\""
-msgstr "n'a pas pu analyser le numéro de bloc valide « %s »"
+msgid "invalid block number: \"%s\""
+msgstr "numéro de bloc invalide : « %s »"
 
-#: pg_waldump.c:806
+#: pg_waldump.c:806 pg_waldump.c:904
 #, c-format
-msgid "could not parse end WAL location \"%s\""
-msgstr "n'a pas pu analyser l'emplacement de fin du journal de transactions « %s »"
+msgid "invalid WAL location: \"%s\""
+msgstr "emplacement WAL invalide :  « %s »"
 
 #: pg_waldump.c:819
 #, c-format
-msgid "could not parse fork \"%s\""
-msgstr "n'a pas pu analyser le fork « %s »"
+msgid "invalid fork name: \"%s\""
+msgstr "nom du fork invalide : « %s »"
 
 #: pg_waldump.c:827
 #, c-format
-msgid "could not parse limit \"%s\""
-msgstr "n'a pas pu analyser la limite « %s »"
+msgid "invalid value \"%s\" for option %s"
+msgstr "valeur « %s » invalide pour l'option %s"
 
 #: pg_waldump.c:858
 #, c-format
@@ -298,33 +298,33 @@ msgstr "le gestionnaire de ressources « %s » n'existe pas"
 
 #: pg_waldump.c:894
 #, c-format
-msgid "could not parse valid relation from \"%s\" (expecting \"tablespace OID/database OID/relation filenode\")"
-msgstr "n'a pas pu analyser une relation valide à partir de « %s » (s'attendait à \"OID tablespace/OID base/filenode relation\")"
+msgid "invalid relation specification: \"%s\""
+msgstr "spécification de relation invalide : « %s »"
 
-#: pg_waldump.c:905
+#: pg_waldump.c:895
 #, c-format
-msgid "could not parse start WAL location \"%s\""
-msgstr "n'a pas pu analyser l'emplacement de début du journal de transactions « %s »"
+msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
+msgstr "Attendait « OID tablespace/OID base/filenode relation »."
 
-#: pg_waldump.c:915
+#: pg_waldump.c:914
 #, c-format
-msgid "could not parse timeline \"%s\""
-msgstr "n'a pas pu analyser la timeline « %s »"
+msgid "invalid timeline specification: \"%s\""
+msgstr "spécification de timeline invalide : « %s »"
 
-#: pg_waldump.c:925
+#: pg_waldump.c:924
 #, c-format
-msgid "could not parse \"%s\" as a transaction ID"
-msgstr "n'a pas pu analyser « %s » comme un identifiant de transaction"
+msgid "invalid transaction ID specification: \"%s\""
+msgstr "spécification d'identifiant de transaction invalide : « %s »"
 
-#: pg_waldump.c:940
+#: pg_waldump.c:939
 #, c-format
-msgid "unrecognized argument to --stats: %s"
-msgstr "argument non reconnu pour --stats : %s"
+msgid "unrecognized value for option %s: %s"
+msgstr "valeur non reconnue pour l'option %s : %s"
 
-#: pg_waldump.c:954
+#: pg_waldump.c:953
 #, c-format
-msgid "--block option requires --relation option to be specified"
-msgstr "l'option --block requiert l'utilisation de l'option --relation"
+msgid "option %s requires option %s to be specified"
+msgstr "l'option %s requiert la spécification de l'option %s"
 
 #: pg_waldump.c:960
 #, c-format
@@ -411,6 +411,34 @@ msgstr "Essayez « %s --help » pour plus d'informations."
 #~ msgid "could not open file \"%s\": %s"
 #~ msgstr "n'a pas pu ouvrir le fichier « %s » : %s"
 
+#, c-format
+#~ msgid "could not parse \"%s\" as a transaction ID"
+#~ msgstr "n'a pas pu analyser « %s » comme un identifiant de transaction"
+
+#, c-format
+#~ msgid "could not parse end WAL location \"%s\""
+#~ msgstr "n'a pas pu analyser l'emplacement de fin du journal de transactions « %s »"
+
+#, c-format
+#~ msgid "could not parse fork \"%s\""
+#~ msgstr "n'a pas pu analyser le fork « %s »"
+
+#, c-format
+#~ msgid "could not parse limit \"%s\""
+#~ msgstr "n'a pas pu analyser la limite « %s »"
+
+#, c-format
+#~ msgid "could not parse start WAL location \"%s\""
+#~ msgstr "n'a pas pu analyser l'emplacement de début du journal de transactions « %s »"
+
+#, c-format
+#~ msgid "could not parse timeline \"%s\""
+#~ msgstr "n'a pas pu analyser la timeline « %s »"
+
+#, c-format
+#~ msgid "could not parse valid block number \"%s\""
+#~ msgstr "n'a pas pu analyser le numéro de bloc valide « %s »"
+
 #~ msgid "could not read file \"%s\": %s"
 #~ msgstr "n'a pas pu lire le fichier « %s » : %s"
 
@@ -440,3 +468,7 @@ msgstr "Essayez « %s --help » pour plus d'informations."
 
 #~ msgid "path \"%s\" could not be opened: %s"
 #~ msgstr "le chemin « %s » n'a pas pu être ouvert : %s"
+
+#, c-format
+#~ msgid "unrecognized argument to --stats: %s"
+#~ msgstr "argument non reconnu pour --stats : %s"
