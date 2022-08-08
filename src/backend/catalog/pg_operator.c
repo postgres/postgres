@@ -874,7 +874,7 @@ makeOperatorDependencies(HeapTuple tuple,
 
 	/* Dependency on extension */
 	if (makeExtensionDep)
-		recordDependencyOnCurrentExtension(&myself, true);
+		recordDependencyOnCurrentExtension(&myself, isUpdate);
 
 	return myself;
 }
