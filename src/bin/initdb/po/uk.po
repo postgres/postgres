@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-19 12:15+0000\n"
-"PO-Revision-Date: 2020-07-17 12:35\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2022-05-17 15:56+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -15,59 +15,59 @@ msgstr ""
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/initdb.pot\n"
-"X-Crowdin-File-ID: 224\n"
+"X-Crowdin-File-ID: 728\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "збій: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
 
-#: ../../common/exec.c:138 ../../common/exec.c:255 ../../common/exec.c:301
+#: ../../common/exec.c:143 ../../common/exec.c:260 ../../common/exec.c:306
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "не вдалося визначити поточний каталог: %m"
 
-#: ../../common/exec.c:157
+#: ../../common/exec.c:162
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "невірний бінарний файл \"%s\""
 
-#: ../../common/exec.c:207
+#: ../../common/exec.c:212
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "неможливо прочитати бінарний файл \"%s\""
 
-#: ../../common/exec.c:215
+#: ../../common/exec.c:220
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "неможливо знайти \"%s\" для виконання"
 
-#: ../../common/exec.c:271 ../../common/exec.c:310
+#: ../../common/exec.c:276 ../../common/exec.c:315
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "не вдалося змінити каталог на \"%s\": %m"
 
-#: ../../common/exec.c:288
+#: ../../common/exec.c:293
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не можливо прочитати символічне послання \"%s\": %m"
 
-#: ../../common/exec.c:541
+#: ../../common/exec.c:546
 #, c-format
 msgid "pclose failed: %m"
 msgstr "помилка pclose: %m"
 
-#: ../../common/exec.c:670 ../../common/exec.c:715 ../../common/exec.c:807
+#: ../../common/exec.c:675 ../../common/exec.c:720 ../../common/exec.c:812
 #: initdb.c:339
 #, c-format
 msgid "out of memory"
@@ -417,7 +417,7 @@ msgstr "setlocale() завершився невдало"
 #: initdb.c:2232
 #, c-format
 msgid "failed to restore old locale \"%s\""
-msgstr "не вдалося відновити старі локалі \"%s\""
+msgstr "не вдалося відновити стару локаль \"%s\""
 
 #: initdb.c:2241
 #, c-format
@@ -704,7 +704,7 @@ msgstr "Перезапустіть %s з параметром -E.\n"
 #: initdb.c:2568 initdb.c:3196 initdb.c:3217
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: initdb.c:2581
 #, c-format
@@ -912,11 +912,11 @@ msgstr "Ви можете змінити це, змінивши pg_hba.conf аб
 "--auth-local і --auth-host, наступний раз, коли ви запускаєте initdb.\n"
 
 #. translator: This is a placeholder in a shell command.
-#: initdb.c:3362
+#: initdb.c:3365
 msgid "logfile"
 msgstr "logfile"
 
-#: initdb.c:3364
+#: initdb.c:3367
 #, c-format
 msgid "\n"
 "Success. You can now start the database server using:\n\n"

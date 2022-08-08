@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-19 12:15+0000\n"
-"PO-Revision-Date: 2020-07-17 12:35\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2022-02-12 19:11+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -15,7 +15,7 @@ msgstr ""
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/pg_test_timing.pot\n"
-"X-Crowdin-File-ID: 248\n"
+"X-Crowdin-File-ID: 704\n"
 
 #: pg_test_timing.c:55
 #, c-format
@@ -25,7 +25,7 @@ msgstr "Використання: %s [-d ТРИВАЛІСТЬ]\n"
 #: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
 #: pg_test_timing.c:85
 #, c-format

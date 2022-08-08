@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-19 12:09+0000\n"
-"PO-Revision-Date: 2020-07-17 12:35\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2022-06-15 08:20+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -15,13 +15,13 @@ msgstr ""
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/ecpglib.pot\n"
-"X-Crowdin-File-ID: 222\n"
+"X-Crowdin-File-ID: 708\n"
 
-#: connect.c:237
+#: connect.c:239
 msgid "empty message text"
 msgstr "пусте повідомлення"
 
-#: connect.c:401 connect.c:430 connect.c:638
+#: connect.c:403 connect.c:432 connect.c:647
 msgid "<DEFAULT>"
 msgstr "<ЗА_ЗАМОВЧУВАННЯМ>"
 
@@ -185,11 +185,11 @@ msgstr "неможливо під'єднатися до бази даних %s �
 msgid "SQL error %d on line %d"
 msgstr "помилка SQL %d в рядку %d"
 
-#: error.c:254
+#: error.c:253
 msgid "the connection to the server was lost"
 msgstr "з'єднання із сервером втрачено"
 
-#: error.c:347
+#: error.c:346
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "помилка SQL: %s\n"

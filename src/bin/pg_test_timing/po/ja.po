@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
+"Project-Id-Version: pg_test_timing (PostgreSQL 12)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
 "POT-Creation-Date: 2018-01-31 13:31+0900\n"
 "PO-Revision-Date: 2018-01-31 14:03+0900\n"

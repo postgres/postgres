@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-19 12:16+0000\n"
-"PO-Revision-Date: 2020-07-17 12:35\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2022-04-18 03:58+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -15,19 +15,19 @@ msgstr ""
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/pg_rewind.pot\n"
-"X-Crowdin-File-ID: 244\n"
+"X-Crowdin-File-ID: 720\n"
 
-#: ../../../src/common/logging.c:188
+#: ../../../src/common/logging.c:236
 #, c-format
 msgid "fatal: "
 msgstr "збій: "
 
-#: ../../../src/common/logging.c:195
+#: ../../../src/common/logging.c:243
 #, c-format
 msgid "error: "
 msgstr "помилка: "
 
-#: ../../../src/common/logging.c:202
+#: ../../../src/common/logging.c:250
 #, c-format
 msgid "warning: "
 msgstr "попередження: "
@@ -83,7 +83,7 @@ msgstr "не вдалося отримати код завершення під�
 msgid "could not open directory \"%s\": %m"
 msgstr "не вдалося відкрити каталог \"%s\": %m"
 
-#: copy_fetch.c:88 filemap.c:187 filemap.c:348
+#: copy_fetch.c:88 filemap.c:201
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "не вдалося отримати інформацію від файлу \"%s\": %m"
@@ -123,7 +123,7 @@ msgstr "не вдалося відкрити вихідний файл \"%s\": %
 msgid "could not seek in source file: %m"
 msgstr "не вдалося знайти у вихідному файлі: %m"
 
-#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:314
+#: copy_fetch.c:187 file_ops.c:311 parsexlog.c:327
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "не вдалося прочитати файл \"%s\": %m"
@@ -203,197 +203,202 @@ msgstr "не вдалося видалити символьне посиланн
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "не вдалося відкрити файл \"%s\" для читання: %m"
 
-#: file_ops.c:314 parsexlog.c:316
+#: file_ops.c:314 parsexlog.c:329
 #, c-format
 msgid "could not read file \"%s\": read %d of %zu"
 msgstr "не вдалося прочитати файл \"%s\": прочитано %d з %zu"
 
-#: filemap.c:179
+#: filemap.c:193
 #, c-format
 msgid "data file \"%s\" in source is not a regular file"
 msgstr "файл даних \"%s\" в джерелі не є регулярним файлом"
 
-#: filemap.c:201
+#: filemap.c:215
 #, c-format
 msgid "\"%s\" is not a directory"
 msgstr "\"%s\" не є каталогом"
 
-#: filemap.c:224
+#: filemap.c:238
 #, c-format
 msgid "\"%s\" is not a symbolic link"
 msgstr "\"%s\" не є символічним посиланням"
 
-#: filemap.c:236
+#: filemap.c:250
 #, c-format
 msgid "\"%s\" is not a regular file"
 msgstr "\"%s\" не є регулярним файлом"
 
-#: filemap.c:360
+#: filemap.c:362
 #, c-format
 msgid "source file list is empty"
 msgstr "список файлів в джерелі порожній"
 
-#: filemap.c:475
+#: filemap.c:477
 #, c-format
 msgid "unexpected page modification for directory or symbolic link \"%s\""
 msgstr "неочікувана модифікація сторінки для каталогу або символічного посилання \"%s\""
 
 #: libpq_fetch.c:52
 #, c-format
-msgid "could not connect to server: %s"
-msgstr "не вдалося підключитися до сервера: %s"
+msgid "%s"
+msgstr "%s"
 
-#: libpq_fetch.c:56
+#: libpq_fetch.c:55
 #, c-format
 msgid "connected to server"
 msgstr "під'єднано до серверу"
 
-#: libpq_fetch.c:65
+#: libpq_fetch.c:64
 #, c-format
 msgid "could not clear search_path: %s"
 msgstr "не вдалося очистити search_path: %s"
 
-#: libpq_fetch.c:77
+#: libpq_fetch.c:76
 #, c-format
 msgid "source server must not be in recovery mode"
 msgstr "початковий сервер не повинен бути у стані відновлення"
 
-#: libpq_fetch.c:87
+#: libpq_fetch.c:86
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
 msgstr "на початковому сервері повинно бути увімкнено full_page_writes"
 
-#: libpq_fetch.c:113 libpq_fetch.c:139
+#: libpq_fetch.c:112 libpq_fetch.c:138
 #, c-format
 msgid "error running query (%s) in source server: %s"
 msgstr "помилка при виконанні запиту (%s) на початковому сервері: %s"
 
-#: libpq_fetch.c:118
+#: libpq_fetch.c:117
 #, c-format
 msgid "unexpected result set from query"
 msgstr "неочікуваний результат запиту"
 
-#: libpq_fetch.c:159
+#: libpq_fetch.c:158
 #, c-format
 msgid "unrecognized result \"%s\" for current WAL insert location"
 msgstr "нерозпізнаний результат \"%s\" замість поточної добавленої позиції WAL"
 
-#: libpq_fetch.c:209
+#: libpq_fetch.c:208
 #, c-format
 msgid "could not fetch file list: %s"
 msgstr "не вдалося отримати список файлів: %s"
 
-#: libpq_fetch.c:214
+#: libpq_fetch.c:213
 #, c-format
 msgid "unexpected result set while fetching file list"
 msgstr "неочікуваний результат при отриманні списку файлів"
 
-#: libpq_fetch.c:262
+#: libpq_fetch.c:266
 #, c-format
 msgid "could not send query: %s"
 msgstr "не вдалося надіслати запит: %s"
 
-#: libpq_fetch.c:267
+#: libpq_fetch.c:271
 #, c-format
 msgid "could not set libpq connection to single row mode"
 msgstr "не вдалося встановити libpq з'єднання для однорядкового режиму"
 
-#: libpq_fetch.c:288
+#: libpq_fetch.c:292
 #, c-format
 msgid "unexpected result while fetching remote files: %s"
 msgstr "неочікуваний результат при отриманні віддалених файлів: %s"
 
-#: libpq_fetch.c:294
+#: libpq_fetch.c:298
 #, c-format
 msgid "unexpected result set size while fetching remote files"
 msgstr "неочікуваний розмір набору результатів при отриманні віддалених файлів"
 
-#: libpq_fetch.c:300
+#: libpq_fetch.c:304
 #, c-format
 msgid "unexpected data types in result set while fetching remote files: %u %u %u"
 msgstr "неочікувані типи даних в результаті при отриманні віддалених файлів: %u %u %u"
 
-#: libpq_fetch.c:308
+#: libpq_fetch.c:312
 #, c-format
 msgid "unexpected result format while fetching remote files"
 msgstr "неочікуваний формат результату при отриманні віддалених файлів"
 
-#: libpq_fetch.c:314
+#: libpq_fetch.c:318
 #, c-format
 msgid "unexpected null values in result while fetching remote files"
 msgstr "неочікувані нульові значення в результаті при отриманні віддалених файлів"
 
-#: libpq_fetch.c:318
+#: libpq_fetch.c:322
 #, c-format
 msgid "unexpected result length while fetching remote files"
 msgstr "неочікувана довжина результату при отриманні віддалених файлів"
 
-#: libpq_fetch.c:384
+#: libpq_fetch.c:388
 #, c-format
 msgid "could not fetch remote file \"%s\": %s"
 msgstr "не вдалося отримати віддалений файл \"%s\": %s"
 
-#: libpq_fetch.c:389
+#: libpq_fetch.c:393
 #, c-format
 msgid "unexpected result set while fetching remote file \"%s\""
 msgstr "неочікуваний набір результатів при отриманні віддаленого файлу \"%s\""
 
-#: libpq_fetch.c:433
+#: libpq_fetch.c:437
 #, c-format
 msgid "could not send COPY data: %s"
 msgstr "не вдалося надіслати дані COPY: %s"
 
-#: libpq_fetch.c:462
+#: libpq_fetch.c:466
 #, c-format
 msgid "could not send file list: %s"
 msgstr "не вдалося надіслати список файлів: %s"
 
-#: libpq_fetch.c:504
+#: libpq_fetch.c:508
 #, c-format
 msgid "could not send end-of-COPY: %s"
 msgstr "не вдалося надіслати сповіщення про закінчення копіювання: %s"
 
-#: libpq_fetch.c:510
+#: libpq_fetch.c:514
 #, c-format
 msgid "unexpected result while sending file list: %s"
 msgstr "неочікуваний результат при надсиланні списку файлів: %s"
 
-#: parsexlog.c:74 parsexlog.c:127 parsexlog.c:185
+#: parsexlog.c:77 parsexlog.c:140 parsexlog.c:198
 #, c-format
 msgid "out of memory"
 msgstr "недостатньо пам'яті"
 
-#: parsexlog.c:87 parsexlog.c:133
+#: parsexlog.c:90 parsexlog.c:146
 #, c-format
 msgid "could not read WAL record at %X/%X: %s"
 msgstr "не вдалося прочитати запис WAL на %X/%X: %s"
 
-#: parsexlog.c:91 parsexlog.c:136
+#: parsexlog.c:94 parsexlog.c:149
 #, c-format
 msgid "could not read WAL record at %X/%X"
 msgstr "не вдалося прочитати запис WAL на %X/%X"
 
-#: parsexlog.c:197
+#: parsexlog.c:109
+#, c-format
+msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
+msgstr "кінцевий покажчик %X/%X не є допустимою кінцевою точкою; очікувалось %X/%X"
+
+#: parsexlog.c:210
 #, c-format
 msgid "could not find previous WAL record at %X/%X: %s"
 msgstr "не вдалося знайти попередній запис WAL на %X/%X: %s"
 
-#: parsexlog.c:201
+#: parsexlog.c:214
 #, c-format
 msgid "could not find previous WAL record at %X/%X"
 msgstr "не вдалося знайти попередній запис WAL на %X/%X"
 
-#: parsexlog.c:292
+#: parsexlog.c:305
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "не можливо відкрити файл \"%s\": %m"
 
-#: parsexlog.c:305
+#: parsexlog.c:318
 #, c-format
 msgid "could not seek in file \"%s\": %m"
 msgstr "не вдалося знайти в файлі \"%s\": %m"
 
-#: parsexlog.c:385
+#: parsexlog.c:398
 #, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
 msgstr "WAL модифікує відношення, але тип запису не розпізнано: lsn: %X/%X, rmgr: %s, info: %02X"
@@ -468,158 +473,158 @@ msgid "\n"
 msgstr "\n"
 "Про помилки повідомляйте на <pgsql-bugs@lists.postgresql.org>.\n"
 
-#: pg_rewind.c:142 pg_rewind.c:178 pg_rewind.c:185 pg_rewind.c:192
-#: pg_rewind.c:200
+#: pg_rewind.c:143 pg_rewind.c:179 pg_rewind.c:186 pg_rewind.c:193
+#: pg_rewind.c:201
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Спробуйте \"%s --help\" для отримання додаткової інформації.\n"
+msgstr "Спробуйте \"%s --help\" для додаткової інформації.\n"
 
-#: pg_rewind.c:177
+#: pg_rewind.c:178
 #, c-format
 msgid "no source specified (--source-pgdata or --source-server)"
 msgstr "джерело не вказано (--source-pgdata чи --source-server)"
 
-#: pg_rewind.c:184
+#: pg_rewind.c:185
 #, c-format
 msgid "only one of --source-pgdata or --source-server can be specified"
 msgstr "може бути вказано лише --source-pgdata чи --source-server"
 
-#: pg_rewind.c:191
+#: pg_rewind.c:192
 #, c-format
 msgid "no target data directory specified (--target-pgdata)"
 msgstr "не вказано жодного каталогу цільових даних (--target-pgdata)"
 
-#: pg_rewind.c:198
+#: pg_rewind.c:199
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "забагато аргументів у командному рядку (перший \"%s\")"
 
-#: pg_rewind.c:213
+#: pg_rewind.c:214
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "\"root\" не може це виконувати"
 
-#: pg_rewind.c:214
+#: pg_rewind.c:215
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
 msgstr "Запускати %s треба від суперкористувача PostgreSQL.\n"
 
-#: pg_rewind.c:225
+#: pg_rewind.c:226
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "не вдалося прочитати дозволи на каталог \"%s\": %m"
 
-#: pg_rewind.c:256
+#: pg_rewind.c:257
 #, c-format
 msgid "source and target cluster are on the same timeline"
 msgstr "початковий і цільовий кластери знаходяться на одній лінії часу"
 
-#: pg_rewind.c:262
+#: pg_rewind.c:266
 #, c-format
 msgid "servers diverged at WAL location %X/%X on timeline %u"
 msgstr "сервери розійшлись в позиції WAL %X/%X на лінії часу %u"
 
-#: pg_rewind.c:299
+#: pg_rewind.c:313
 #, c-format
 msgid "no rewind required"
 msgstr "перемотування не потрібне"
 
-#: pg_rewind.c:306
+#: pg_rewind.c:320
 #, c-format
 msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
 msgstr "перемотування від останньої спільної контрольної точки на %X/%X на лінії часу %u"
 
-#: pg_rewind.c:315
+#: pg_rewind.c:329
 #, c-format
 msgid "reading source file list"
 msgstr "читання списку файлів із джерела"
 
-#: pg_rewind.c:318
+#: pg_rewind.c:332
 #, c-format
 msgid "reading target file list"
 msgstr "читання списку цільових файлів"
 
-#: pg_rewind.c:329
+#: pg_rewind.c:341
 #, c-format
 msgid "reading WAL in target"
 msgstr "читання WAL у цілі"
 
-#: pg_rewind.c:346
+#: pg_rewind.c:358
 #, c-format
 msgid "need to copy %lu MB (total source directory size is %lu MB)"
 msgstr "треба скопіювати %lu МБ (загальний розмір каталогу джерела становить %lu МБ)"
 
-#: pg_rewind.c:365
+#: pg_rewind.c:376
 #, c-format
 msgid "creating backup label and updating control file"
 msgstr "створення мітки резервного копіювання і оновлення контрольного файлу"
 
-#: pg_rewind.c:395
+#: pg_rewind.c:406
 #, c-format
 msgid "syncing target data directory"
 msgstr "синхронізація цільового каталогу даних"
 
-#: pg_rewind.c:398
+#: pg_rewind.c:409
 #, c-format
 msgid "Done!"
 msgstr "Готово!"
 
-#: pg_rewind.c:410
+#: pg_rewind.c:421
 #, c-format
 msgid "source and target clusters are from different systems"
 msgstr "початковий і цільовий кластер належать до різних систем"
 
-#: pg_rewind.c:418
+#: pg_rewind.c:429
 #, c-format
 msgid "clusters are not compatible with this version of pg_rewind"
 msgstr "кластери не сумісні з даною версією pg_rewind"
 
-#: pg_rewind.c:428
+#: pg_rewind.c:439
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
 msgstr "цільовий сервер потребує використання контрольної суми даних або \"wal_log_hints = on\""
 
-#: pg_rewind.c:439
+#: pg_rewind.c:450
 #, c-format
 msgid "target server must be shut down cleanly"
 msgstr "цільовий сервер повинен бути вимкненим штатно"
 
-#: pg_rewind.c:449
+#: pg_rewind.c:460
 #, c-format
 msgid "source data directory must be shut down cleanly"
 msgstr "робота з початковим каталогом даних повинна бути завершена штатно"
 
-#: pg_rewind.c:498
+#: pg_rewind.c:512
 #, c-format
 msgid "%*s/%s kB (%d%%) copied"
 msgstr "скопійовано %*s/%s кБ (%d%%)"
 
-#: pg_rewind.c:559
+#: pg_rewind.c:575
 #, c-format
 msgid "invalid control file"
 msgstr "неприпустимий контрольний файл"
 
-#: pg_rewind.c:643
+#: pg_rewind.c:659
 #, c-format
 msgid "could not find common ancestor of the source and target cluster's timelines"
 msgstr "не вдалося знайти спільного предка ліній часу початкового та цільового кластерів"
 
-#: pg_rewind.c:684
+#: pg_rewind.c:700
 #, c-format
 msgid "backup label buffer too small"
 msgstr "буфер для мітки резервного копіювання замалий"
 
-#: pg_rewind.c:707
+#: pg_rewind.c:723
 #, c-format
 msgid "unexpected control file CRC"
 msgstr "неочікуваний контрольний файл CRC"
 
-#: pg_rewind.c:717
+#: pg_rewind.c:733
 #, c-format
 msgid "unexpected control file size %d, expected %d"
 msgstr "неочікуваний розмір контрольного файлу %d, очікувалося %d"
 
-#: pg_rewind.c:726
+#: pg_rewind.c:742
 #, c-format
 msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
 msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
@@ -663,137 +668,137 @@ msgstr "неприпустимі дані у файлі історії"
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "Ідентифікатори ліній часу повинні бути меншими від ідентифікатора дочірньої лінії."
 
-#: xlogreader.c:299
+#: xlogreader.c:304
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "невірний зсув запису: %X/%X"
 
-#: xlogreader.c:307
+#: xlogreader.c:312
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "по зсуву %X/%X запитано продовження запису"
 
-#: xlogreader.c:348 xlogreader.c:645
+#: xlogreader.c:353 xlogreader.c:683
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
 msgstr "невірна довжина запису по зсуву %X/%X: очікувалось %u, отримано %u"
 
-#: xlogreader.c:372
+#: xlogreader.c:379
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "довжина запису %u на %X/%X є задовгою"
 
-#: xlogreader.c:404
+#: xlogreader.c:428
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
-msgstr "немає флага contrecord в позиції %X/%X"
+msgstr "немає прапорця contrecord в позиції %X/%X"
 
-#: xlogreader.c:417
+#: xlogreader.c:441
 #, c-format
 msgid "invalid contrecord length %u at %X/%X"
-msgstr "невірна довижна contrecord (%u) в позиції %X/%X"
+msgstr "невірна довжина contrecord %u в позиції %X/%X"
 
-#: xlogreader.c:653
+#: xlogreader.c:691
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "невірний ID менеджера ресурсів %u в %X/%X"
 
-#: xlogreader.c:667 xlogreader.c:684
+#: xlogreader.c:705 xlogreader.c:722
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "запис з неправильним попереднім посиланням %X/%X на %X/%X"
 
-#: xlogreader.c:721
+#: xlogreader.c:759
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "некоректна контрольна сума даних менеджера ресурсів у запису по зсуву %X/%X"
 
-#: xlogreader.c:758
+#: xlogreader.c:796
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
 msgstr "невірне магічне число %04X в сегменті журналу %s, зсув %u"
 
-#: xlogreader.c:772 xlogreader.c:823
+#: xlogreader.c:810 xlogreader.c:861
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "невірні інформаційні біти %04X в сегменті журналу %s, зсув %u"
 
-#: xlogreader.c:798
+#: xlogreader.c:836
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
 msgstr "Файл WAL належить іншій системі баз даних: у ньому вказаний ідентифікатор %s, а ідентифікатор системи %s"
 
-#: xlogreader.c:805
+#: xlogreader.c:843
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний розмір сегменту в заголовку сторінки"
 
-#: xlogreader.c:811
+#: xlogreader.c:849
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "Файл WAL належить іншій системі баз даних: некоректний XLOG_BLCKSZ в заголовку сторінки"
 
-#: xlogreader.c:842
+#: xlogreader.c:880
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "неочікуваний pageaddr %X/%X в сегменті журналу %s, зсув %u"
 
-#: xlogreader.c:867
+#: xlogreader.c:905
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "порушення послідовності ID лінії часу %u (після %u) в сегменті журналу %s, зсув %u"
 
-#: xlogreader.c:1112
+#: xlogreader.c:1150
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "ідентифікатор блока %u out-of-order в позиції %X/%X"
 
-#: xlogreader.c:1135
+#: xlogreader.c:1173
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але немає даних в позиції %X/%X"
 
-#: xlogreader.c:1142
+#: xlogreader.c:1180
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATA встановлений, але довжина даних дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1178
+#: xlogreader.c:1216
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE встановлений, але для пропуску задані: зсув %u, довжина %u, при довжині образу блока %u в позиції %X/%X"
 
-#: xlogreader.c:1194
+#: xlogreader.c:1232
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE не встановлений, але для пропуску задані: зсув %u, довжина %u в позиції %X/%X"
 
-#: xlogreader.c:1209
+#: xlogreader.c:1247
 #, c-format
 msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_IS_COMPRESSED встановлений, але довжина образу блока дорівнює %u в позиції %X/%X"
 
-#: xlogreader.c:1224
+#: xlogreader.c:1262
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "ні BKPIMAGE_HAS_HOLE, ні BKPIMAGE_IS_COMPRESSED не встановлені, але довжина образу блока дорвінює %u в позиції %X/%X"
 
-#: xlogreader.c:1240
+#: xlogreader.c:1278
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_REL встановлений, але попереднє значення не задано в позиції %X/%X"
 
-#: xlogreader.c:1252
+#: xlogreader.c:1290
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "невірний ідентифікатор блоку %u в позиції %X/%X"
 
-#: xlogreader.c:1341
+#: xlogreader.c:1379
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "запис з невірною довжиною на %X/%X"
 
-#: xlogreader.c:1430
+#: xlogreader.c:1468
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "невірно стиснутий образ в позиції %X/%X, блок %d"

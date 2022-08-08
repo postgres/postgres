@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-02-03 03:42+0000\n"
-"PO-Revision-Date: 2020-08-08 07:29+0200\n"
+"PO-Revision-Date: 2022-05-17 16:55+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -245,7 +245,7 @@ msgstr "finde Erweiterungstabellen"
 #: common.c:224
 #, c-format
 msgid "finding inheritance relationships"
-msgstr "fine Vererbungsbeziehungen"
+msgstr "finde Vererbungsbeziehungen"
 
 #: common.c:227
 #, c-format

@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-02-19 12:08+0000\n"
-"PO-Revision-Date: 2020-07-17 12:35\n"
-"Last-Translator: pasha_golub\n"
+"POT-Creation-Date: 2022-03-16 06:34+0000\n"
+"PO-Revision-Date: 2022-06-19 10:10\n"
+"Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
 "MIME-Version: 1.0\n"
@@ -15,207 +15,207 @@ msgstr ""
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
 "X-Crowdin-File: /REL_12_STABLE/plperl.pot\n"
-"X-Crowdin-File-ID: 256\n"
+"X-Crowdin-File-ID: 722\n"
 
-#: plperl.c:406
+#: plperl.c:409
 msgid "If true, trusted and untrusted Perl code will be compiled in strict mode."
 msgstr "Якщо увімкнено, надійний і ненадійний код Perl буде скомпільований в суворому режимі."
 
-#: plperl.c:420
+#: plperl.c:423
 msgid "Perl initialization code to execute when a Perl interpreter is initialized."
 msgstr "Виконати ініціалізаційний код під час ініціалізації інтерпретатора Perl."
 
-#: plperl.c:442
+#: plperl.c:445
 msgid "Perl initialization code to execute once when plperl is first used."
 msgstr "Виконати код ініціалізації один раз під час першого використання plperl."
 
-#: plperl.c:450
+#: plperl.c:453
 msgid "Perl initialization code to execute once when plperlu is first used."
 msgstr "Виконати код ініціалізації один раз під час першого використання plperlu."
 
-#: plperl.c:647
+#: plperl.c:650
 #, c-format
 msgid "cannot allocate multiple Perl interpreters on this platform"
 msgstr "не можна розмістити декілька Perl інтерпретаторів на цій платформі"
 
-#: plperl.c:670 plperl.c:854 plperl.c:860 plperl.c:977 plperl.c:989
-#: plperl.c:1032 plperl.c:1055 plperl.c:2154 plperl.c:2264 plperl.c:2332
-#: plperl.c:2395
+#: plperl.c:673 plperl.c:857 plperl.c:863 plperl.c:980 plperl.c:992
+#: plperl.c:1035 plperl.c:1058 plperl.c:2159 plperl.c:2269 plperl.c:2337
+#: plperl.c:2400
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: plperl.c:671
+#: plperl.c:674
 #, c-format
 msgid "while executing PostgreSQL::InServer::SPI::bootstrap"
 msgstr "під час виконання PostgreSQL::InServer::SPI::bootstrap"
 
-#: plperl.c:855
+#: plperl.c:858
 #, c-format
 msgid "while parsing Perl initialization"
 msgstr "під час обробки ініціалізації Perl"
 
-#: plperl.c:861
+#: plperl.c:864
 #, c-format
 msgid "while running Perl initialization"
 msgstr "під час запуску Perl ініціалізації"
 
-#: plperl.c:978
+#: plperl.c:981
 #, c-format
 msgid "while executing PLC_TRUSTED"
 msgstr "під час виконання PLC_TRUSTED"
 
-#: plperl.c:990
+#: plperl.c:993
 #, c-format
 msgid "while executing utf8fix"
 msgstr "під час виконання utf8fix"
 
-#: plperl.c:1033
+#: plperl.c:1036
 #, c-format
 msgid "while executing plperl.on_plperl_init"
 msgstr "під час виконання plperl.on_plperl_init"
 
-#: plperl.c:1056
+#: plperl.c:1059
 #, c-format
 msgid "while executing plperl.on_plperlu_init"
 msgstr "під час виконання plperl.on_plperlu_init"
 
-#: plperl.c:1102 plperl.c:1793
+#: plperl.c:1105 plperl.c:1798
 #, c-format
 msgid "Perl hash contains nonexistent column \"%s\""
 msgstr "хеш Perl містить неіснуючу колонку \"%s\""
 
-#: plperl.c:1107 plperl.c:1798
+#: plperl.c:1110 plperl.c:1803
 #, c-format
 msgid "cannot set system attribute \"%s\""
 msgstr "не вдалося встановити системний атрибут \"%s\""
 
-#: plperl.c:1195
+#: plperl.c:1198
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "число вимірів масива (%d) перевищує ліміт (%d)"
 
-#: plperl.c:1207 plperl.c:1224
+#: plperl.c:1210 plperl.c:1227
 #, c-format
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "для багатовимірних масивів повинні задаватись вирази з відповідними вимірами"
 
-#: plperl.c:1260
+#: plperl.c:1263
 #, c-format
 msgid "cannot convert Perl array to non-array type %s"
 msgstr "неможливо конвертувати масив Perl у тип не масиву %s"
 
-#: plperl.c:1363
+#: plperl.c:1366
 #, c-format
 msgid "cannot convert Perl hash to non-composite type %s"
 msgstr "неможливо конвертувати хеш Perl у нескладений тип %s"
 
-#: plperl.c:1385 plperl.c:3306
+#: plperl.c:1388 plperl.c:3328
 #, c-format
 msgid "function returning record called in context that cannot accept type record"
 msgstr "функція, що повертає набір, викликана у контексті, що не приймає тип запис"
 
-#: plperl.c:1444
+#: plperl.c:1449
 #, c-format
 msgid "lookup failed for type %s"
 msgstr "неможливо фільтрувати для типу %s"
 
-#: plperl.c:1768
+#: plperl.c:1773
 #, c-format
 msgid "$_TD->{new} does not exist"
 msgstr "$_TD->{new} не існує"
 
-#: plperl.c:1772
+#: plperl.c:1777
 #, c-format
 msgid "$_TD->{new} is not a hash reference"
 msgstr "$_TD->{new} не є посиланням на хеш"
 
-#: plperl.c:1803
+#: plperl.c:1808
 #, c-format
 msgid "cannot set generated column \"%s\""
 msgstr "неможливо оновити згенерований стовпець \"%s\""
 
-#: plperl.c:2029 plperl.c:2871
+#: plperl.c:2034 plperl.c:2876
 #, c-format
 msgid "PL/Perl functions cannot return type %s"
 msgstr "функції PL/Perl не можуть повертати тип %s"
 
-#: plperl.c:2042 plperl.c:2912
+#: plperl.c:2047 plperl.c:2917
 #, c-format
 msgid "PL/Perl functions cannot accept type %s"
 msgstr "функції PL/Perl не можуть приймати тип %s"
 
-#: plperl.c:2159
+#: plperl.c:2164
 #, c-format
 msgid "didn't get a CODE reference from compiling function \"%s\""
 msgstr "не отримано посилання CODE з функції компіляції \"%s\""
 
-#: plperl.c:2252
+#: plperl.c:2257
 #, c-format
 msgid "didn't get a return item from function"
 msgstr "не отримано елемент результату з функції"
 
-#: plperl.c:2296 plperl.c:2363
+#: plperl.c:2301 plperl.c:2368
 #, c-format
 msgid "couldn't fetch $_TD"
 msgstr "не вдалось отримати $_TD"
 
-#: plperl.c:2320 plperl.c:2383
+#: plperl.c:2325 plperl.c:2388
 #, c-format
 msgid "didn't get a return item from trigger function"
 msgstr "не отримано елемент результату з функції-тригеру"
 
-#: plperl.c:2444
+#: plperl.c:2449
 #, c-format
 msgid "set-valued function called in context that cannot accept a set"
 msgstr "функція \"set-valued\" викликана в контексті, де йому немає місця"
 
-#: plperl.c:2489
+#: plperl.c:2494
 #, c-format
 msgid "set-returning PL/Perl function must return reference to array or use return_next"
 msgstr "функція PL/Perl, що вертає набір значень, повинна посилатися на масив або використовувати return_next"
 
-#: plperl.c:2610
+#: plperl.c:2615
 #, c-format
 msgid "ignoring modified row in DELETE trigger"
 msgstr "ігнорується змінений рядок у тригері DELETE"
 
-#: plperl.c:2618
+#: plperl.c:2623
 #, c-format
 msgid "result of PL/Perl trigger function must be undef, \"SKIP\", or \"MODIFY\""
 msgstr "результат тригерної функції PL/Perl повинен бути undef, \"SKIP\" або \"MODIFY\""
 
-#: plperl.c:2866
+#: plperl.c:2871
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "тригер-функція може викликатися лише як тригер"
 
-#: plperl.c:3213
+#: plperl.c:3233
 #, c-format
 msgid "query result has too many rows to fit in a Perl array"
 msgstr "результат запиту має забагато рядків для відповідності в масиві Perl"
 
-#: plperl.c:3283
+#: plperl.c:3305
 #, c-format
 msgid "cannot use return_next in a non-SETOF function"
 msgstr "не можна використовувати return_next в функціях, що не повертають набори даних"
 
-#: plperl.c:3357
+#: plperl.c:3379
 #, c-format
 msgid "SETOF-composite-returning PL/Perl function must call return_next with reference to hash"
 msgstr "Функція PL/Perl, що повертає набір композитних даних, повинна викликати return_next з посиланням на хеш"
 
-#: plperl.c:4132
+#: plperl.c:4163
 #, c-format
 msgid "PL/Perl function \"%s\""
 msgstr "PL/Perl функція \"%s\""
 
-#: plperl.c:4144
+#: plperl.c:4175
 #, c-format
 msgid "compilation of PL/Perl function \"%s\""
 msgstr "компіляція функції PL/Perl \"%s\""
 
-#: plperl.c:4153
+#: plperl.c:4184
 #, c-format
 msgid "PL/Perl anonymous code block"
 msgstr "анонімний блок коду PL/Perl"

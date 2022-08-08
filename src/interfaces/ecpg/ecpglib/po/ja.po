@@ -4,7 +4,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ecpglib (PostgreSQL 12 beta 1)\n"
+"Project-Id-Version: ecpglib (PostgreSQL 12)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-06-11 09:00+0900\n"
 "PO-Revision-Date: 2019-06-11 09:04+0900\n"

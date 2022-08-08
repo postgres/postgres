@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-05-16 09:50+0000\n"
+"POT-Creation-Date: 2022-08-07 20:51+0000\n"
 "PO-Revision-Date: 2019-06-06 17:26-0400\n"
 "Last-Translator: Carlos Chapi <carlos.chapi@2ndquadrant.com>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -68,7 +68,7 @@ msgstr "el resultado de la consulta tiene demasiados registros y no entran en un
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "cerrando un cursor en una subtransacción abortada"
 
-#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:553
+#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:551
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -229,46 +229,46 @@ msgstr "función PL/Python «%s»"
 msgid "PL/Python anonymous code block"
 msgstr "bloque de código anónimo de PL/Python"
 
-#: plpy_plpymodule.c:186 plpy_plpymodule.c:189
+#: plpy_plpymodule.c:184 plpy_plpymodule.c:187
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "no se pudo importar el módulo «plpy»"
 
-#: plpy_plpymodule.c:204
+#: plpy_plpymodule.c:202
 #, c-format
 msgid "could not create the spiexceptions module"
 msgstr "no se pudo crear el módulo spiexceptions"
 
-#: plpy_plpymodule.c:212
+#: plpy_plpymodule.c:210
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "no se pudo importar el módulo spiexceptions"
 
-#: plpy_plpymodule.c:280
+#: plpy_plpymodule.c:278
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "no se pudo generar excepciones SPI"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:446
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "no se pudo desempaquetar los argumentos de plpy.elog"
 
-#: plpy_plpymodule.c:457
+#: plpy_plpymodule.c:455
 msgid "could not parse error message in plpy.elog"
 msgstr "no se pudo analizar el mensaje de error de plpy.elog"
 
-#: plpy_plpymodule.c:474
+#: plpy_plpymodule.c:472
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "el argumento 'message' fue pasado por nombre y posición"
 
-#: plpy_plpymodule.c:501
+#: plpy_plpymodule.c:499
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "«%s» no es un argumento válido para esta función"
 
-#: plpy_plpymodule.c:512 plpy_plpymodule.c:518
+#: plpy_plpymodule.c:510 plpy_plpymodule.c:516
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "código SQLSTATE no válido"

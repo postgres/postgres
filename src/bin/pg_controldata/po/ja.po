@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_controldata (PostgreSQL 12 beta 1)\n"
+"Project-Id-Version: pg_controldata (PostgreSQL 12)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-06-06 10:43+0900\n"
 "PO-Revision-Date: 2019-06-11 20:10+0900\n"
