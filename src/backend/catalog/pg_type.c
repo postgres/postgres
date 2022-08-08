@@ -546,8 +546,11 @@ TypeCreate(Oid newTypeOid,
  * rebuild should be true if this is a pre-existing type.  We will remove
  * existing dependencies and rebuild them from scratch.  This is needed for
  * ALTER TYPE, and also when replacing a shell type.  We don't remove any
- * existing extension dependency, though (hence, if makeExtensionDep is also
- * true and the type belongs to some other extension, an error will occur).
+ * existing extension dependency, though; hence, if makeExtensionDep is also
+ * true and we're in an extension script, an error will occur unless the
+ * type already belongs to the current extension.  That's the behavior we
+ * want when replacing a shell type, which is the only case where both flags
+ * are true.
  */
 void
 GenerateTypeDependencies(HeapTuple typeTuple,

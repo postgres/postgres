@@ -1,0 +1,3 @@
+comment = 'Test extension using CREATE OR REPLACE'
+default_version = '1.0'
+relocatable = true
