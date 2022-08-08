@@ -4,10 +4,9 @@
  *	  portable high-precision interval timing
  *
  * This file provides an abstraction layer to hide portability issues in
- * interval timing.  On Unix we use clock_gettime() if available, else
- * gettimeofday().  On Windows, gettimeofday() gives a low-precision result
- * so we must use QueryPerformanceCounter() instead.  These macros also give
- * some breathing room to use other high-precision-timing APIs.
+ * interval timing.  On Unix we use clock_gettime(), and on Windows we use
+ * QueryPerformanceCounter().  These macros also give some breathing room to
+ * use other high-precision-timing APIs.
  *
  * The basic data type is instr_time, which all callers should treat as an
  * opaque typedef.  instr_time can store either an absolute time (of
