@@ -778,6 +778,8 @@ const char *const config_group_names[] =
 	gettext_noop("File Locations"),
 	/* CONN_AUTH_SETTINGS */
 	gettext_noop("Connections and Authentication / Connection Settings"),
+	/* CONN_AUTH_TCP */
+	gettext_noop("Connections and Authentication / TCP Settings"),
 	/* CONN_AUTH_AUTH */
 	gettext_noop("Connections and Authentication / Authentication"),
 	/* CONN_AUTH_SSL */
@@ -1216,7 +1218,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"enable_group_by_reordering", PGC_USERSET, QUERY_TUNING_METHOD,
-			gettext_noop("enable reordering of GROUP BY key"),
+			gettext_noop("Enable reordering of GROUP BY key."),
 			NULL,
 			GUC_EXPLAIN
 		},
@@ -3460,7 +3462,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_idle", PGC_USERSET, CONN_AUTH_SETTINGS,
+		{"tcp_keepalives_idle", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Time between issuing TCP keepalives."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
@@ -3471,7 +3473,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_interval", PGC_USERSET, CONN_AUTH_SETTINGS,
+		{"tcp_keepalives_interval", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Time between TCP keepalive retransmits."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_S
@@ -3493,7 +3495,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_keepalives_count", PGC_USERSET, CONN_AUTH_SETTINGS,
+		{"tcp_keepalives_count", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
 			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
 						 "lost before a connection is considered dead. A value of 0 uses the "
@@ -3595,7 +3597,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"tcp_user_timeout", PGC_USERSET, CONN_AUTH_SETTINGS,
+		{"tcp_user_timeout", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("TCP user timeout."),
 			gettext_noop("A value of 0 uses the system default."),
 			GUC_UNIT_MS
@@ -3640,7 +3642,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"client_connection_check_interval", PGC_USERSET, CONN_AUTH_SETTINGS,
+		{"client_connection_check_interval", PGC_USERSET, CONN_AUTH_TCP,
 			gettext_noop("Sets the time interval between checks for disconnection while running queries."),
 			NULL,
 			GUC_UNIT_MS
@@ -4953,7 +4955,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"stats_fetch_consistency", PGC_USERSET, STATS_CUMULATIVE,
-			gettext_noop("Sets the consistency of accesses to statistics data"),
+			gettext_noop("Sets the consistency of accesses to statistics data."),
 			NULL
 		},
 		&pgstat_fetch_consistency,
@@ -5044,7 +5046,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"recovery_prefetch", PGC_SIGHUP, WAL_RECOVERY,
-			gettext_noop("Prefetch referenced blocks during recovery"),
+			gettext_noop("Prefetch referenced blocks during recovery."),
 			gettext_noop("Look ahead in the WAL to find references to uncached data.")
 		},
 		&recovery_prefetch,

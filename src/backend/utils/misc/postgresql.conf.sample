@@ -597,10 +597,7 @@
 					# -1 disables, 0 logs all temp files
 #log_timezone = 'GMT'
 
-
-#------------------------------------------------------------------------------
-# PROCESS TITLE
-#------------------------------------------------------------------------------
+# - Process Title -
 
 #cluster_name = ''			# added to process titles if nonempty
 					# (change requires restart)

@@ -56,6 +56,7 @@ enum config_group
 	UNGROUPED,					/* use for options not shown in pg_settings */
 	FILE_LOCATIONS,
 	CONN_AUTH_SETTINGS,
+	CONN_AUTH_TCP,
 	CONN_AUTH_AUTH,
 	CONN_AUTH_SSL,
 	RESOURCES_MEM,

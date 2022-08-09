@@ -896,6 +896,13 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
+     </variablelist>
+     </sect2>
+
+     <sect2 id="runtime-config-tcp-settings">
+     <title>TCP Settings</title>
+
+     <variablelist>
 
      <varlistentry id="guc-tcp-keepalives-idle" xreflabel="tcp_keepalives_idle">
       <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)
