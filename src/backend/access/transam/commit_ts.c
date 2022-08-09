@@ -7,13 +7,10 @@
  * for each transaction.
  *
  * XLOG interactions: this module generates an XLOG record whenever a new
- * CommitTs page is initialized to zeroes.  Also, one XLOG record is
- * generated for setting of values when the caller requests it; this allows
- * us to support values coming from places other than transaction commit.
- * Other writes of CommitTS come from recording of transaction commit in
- * xact.c, which generates its own XLOG records for these events and will
- * re-perform the status update on redo; so we need make no additional XLOG
- * entry here.
+ * CommitTs page is initialized to zeroes.  Other writes of CommitTS come
+ * from recording of transaction commit in xact.c, which generates its own
+ * XLOG records for these events and will re-perform the status update on
+ * redo; so we need make no additional XLOG entry here.
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
