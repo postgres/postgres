@@ -271,6 +271,19 @@ SELECT amname FROM pg_class c, pg_am am
  heap2
 (1 row)
 
+-- ALTER MATERIALIZED VIEW should work with event triggers as well
+CREATE OR REPLACE FUNCTION empty_event_trigger()
+  RETURNS event_trigger AS $$
+DECLARE
+BEGIN
+END;
+$$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER empty_triggger ON sql_drop EXECUTE PROCEDURE empty_event_trigger();
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+-- cleanup the trigger
+DROP FUNCTION empty_event_trigger() CASCADE;
+NOTICE:  drop cascades to event trigger empty_triggger
 SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heapmv;
  count | count 
 -------+-------

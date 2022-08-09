@@ -177,6 +177,21 @@ SELECT amname FROM pg_class c, pg_am am
 ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
 SELECT amname FROM pg_class c, pg_am am
   WHERE c.relam = am.oid AND c.oid = 'heapmv'::regclass;
+
+-- ALTER MATERIALIZED VIEW should work with event triggers as well
+CREATE OR REPLACE FUNCTION empty_event_trigger()
+  RETURNS event_trigger AS $$
+DECLARE
+BEGIN
+END;
+$$ LANGUAGE plpgsql;
+CREATE EVENT TRIGGER empty_triggger ON sql_drop EXECUTE PROCEDURE empty_event_trigger();
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+
+-- cleanup the trigger
+DROP FUNCTION empty_event_trigger() CASCADE;
+
 SELECT COUNT(a), COUNT(1) FILTER(WHERE a=1) FROM heapmv;
 -- No support for multiple subcommands
 ALTER TABLE heaptable SET ACCESS METHOD heap, SET ACCESS METHOD heap2;
