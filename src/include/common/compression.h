@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		  src/common/compression.h
+ *		  src/include/common/compression.h
  *-------------------------------------------------------------------------
  */
 
