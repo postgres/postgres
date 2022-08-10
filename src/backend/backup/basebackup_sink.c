@@ -5,14 +5,14 @@
  *
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
- * src/backend/replication/basebackup_sink.c
+ * src/backend/backup/basebackup_sink.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "replication/basebackup_sink.h"
+#include "backup/basebackup_sink.h"
 
 /*
  * Forward begin_backup callback.

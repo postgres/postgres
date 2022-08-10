@@ -6,18 +6,18 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/backup_manifest.c
+ *	  src/backend/backup/backup_manifest.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/timeline.h"
+#include "backup/backup_manifest.h"
+#include "backup/basebackup_sink.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
-#include "replication/backup_manifest.h"
-#include "replication/basebackup_sink.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
 

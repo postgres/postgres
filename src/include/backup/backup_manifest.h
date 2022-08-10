@@ -5,16 +5,16 @@
  *
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
- * src/include/replication/backup_manifest.h
+ * src/include/backup/backup_manifest.h
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BACKUP_MANIFEST_H
 #define BACKUP_MANIFEST_H
 
+#include "backup/basebackup_sink.h"
 #include "common/checksum_helper.h"
 #include "pgtime.h"
-#include "replication/basebackup_sink.h"
 #include "storage/buffile.h"
 
 typedef enum manifest_option

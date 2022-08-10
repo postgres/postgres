@@ -4,17 +4,17 @@
  *	  store basebackup archives on the server
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_server.c
+ *	  src/backend/backup/basebackup_server.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "backup/basebackup.h"
+#include "backup/basebackup_sink.h"
 #include "catalog/pg_authid.h"
 #include "miscadmin.h"
-#include "replication/basebackup.h"
-#include "replication/basebackup_sink.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/timestamp.h"

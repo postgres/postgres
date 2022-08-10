@@ -5,14 +5,14 @@
  *
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
- * src/include/replication/basebackup_target.h
+ * src/include/backup/basebackup_target.h
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BASEBACKUP_TARGET_H
 #define BASEBACKUP_TARGET_H
 
-#include "replication/basebackup_sink.h"
+#include "backup/basebackup_sink.h"
 
 struct BaseBackupTargetHandle;
 typedef struct BaseBackupTargetHandle BaseBackupTargetHandle;

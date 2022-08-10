@@ -19,17 +19,17 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_copy.c
+ *	  src/backend/backup/basebackup_copy.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "backup/basebackup.h"
+#include "backup/basebackup_sink.h"
 #include "catalog/pg_type_d.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
-#include "replication/basebackup.h"
-#include "replication/basebackup_sink.h"
 #include "utils/timestamp.h"
 
 typedef struct bbsink_copystream
