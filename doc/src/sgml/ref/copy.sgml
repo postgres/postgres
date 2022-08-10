@@ -280,7 +280,7 @@ COPY { <replaceable class="parameter">table_name</replaceable> [ ( <replaceable 
       option is set to <literal>true</literal> (or equivalent Boolean value).
       If this option is set to <literal>MATCH</literal>, the number and names
       of the columns in the header line must match the actual column names of
-      the table, otherwise an error is raised.
+      the table, in order;  otherwise an error is raised.
       This option is not allowed when using <literal>binary</literal> format.
       The <literal>MATCH</literal> option is only valid for <command>COPY
       FROM</command> commands.
