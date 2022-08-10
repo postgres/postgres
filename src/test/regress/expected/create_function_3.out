@@ -340,9 +340,25 @@ SELECT * FROM voidtest5(3);
 -----------
 (0 rows)
 
+-- Regression tests for bugs:
+-- Check that arguments that are R/W expanded datums aren't corrupted by
+-- multiple uses.  This test knows that array_append() returns a R/W datum
+-- and will modify a R/W array input in-place.  We use SETOF to prevent
+-- inlining of the SQL function.
+CREATE FUNCTION double_append(anyarray, anyelement) RETURNS SETOF anyarray
+LANGUAGE SQL IMMUTABLE AS
+$$ SELECT array_append($1, $2) || array_append($1, $2) $$;
+SELECT double_append(array_append(ARRAY[q1], q2), q3)
+  FROM (VALUES(1,2,3), (4,5,6)) v(q1,q2,q3);
+ double_append 
+---------------
+ {1,2,3,1,2,3}
+ {4,5,6,4,5,6}
+(2 rows)
+
 -- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 21 other objects
+NOTICE:  drop cascades to 22 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -364,5 +380,6 @@ drop cascades to function voidtest2(integer,integer)
 drop cascades to function voidtest3(integer)
 drop cascades to function voidtest4(integer)
 drop cascades to function voidtest5(integer)
+drop cascades to function double_append(anyarray,anyelement)
 DROP USER regress_unpriv_user;
 RESET search_path;
