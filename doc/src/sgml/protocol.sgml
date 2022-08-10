@@ -6895,7 +6895,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('b')</term>
        <listitem>
         <para>
-         Identifies the message as the beginning of a two-phase transaction message.
+         Identifies the message as the beginning of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -6941,7 +6941,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -6957,7 +6957,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('P')</term>
        <listitem>
         <para>
-         Identifies the message as a two-phase prepared transaction message.
+         Identifies the message as a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7012,7 +7012,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7028,7 +7028,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('K')</term>
        <listitem>
         <para>
-         Identifies the message as the commit of a two-phase transaction message.
+         Identifies the message as the commit of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7046,7 +7046,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The LSN of the commit prepared.
+         The LSN of the commit of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7055,7 +7055,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the commit prepared transaction.
+         The end LSN of the commit of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7083,7 +7083,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7099,7 +7099,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('r')</term>
        <listitem>
         <para>
-         Identifies the message as the rollback of a two-phase transaction message.
+         Identifies the message as the rollback of a prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7126,7 +7126,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the rollback prepared transaction.
+         The end LSN of the rollback of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7164,7 +7164,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7180,7 +7180,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Byte1('p')</term>
        <listitem>
         <para>
-         Identifies the message as a two-phase stream prepare message.
+         Identifies the message as a stream prepared transaction message.
         </para>
        </listitem>
       </varlistentry>
@@ -7207,7 +7207,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>Int64 (XLogRecPtr)</term>
        <listitem>
         <para>
-         The end LSN of the prepare transaction.
+         The end LSN of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
@@ -7235,7 +7235,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
        <term>String</term>
        <listitem>
         <para>
-         The user defined GID of the two-phase transaction.
+         The user defined GID of the prepared transaction.
         </para>
        </listitem>
       </varlistentry>
