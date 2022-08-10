@@ -9,13 +9,13 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_target.c
+ *	  src/backend/backup/basebackup_target.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "replication/basebackup_target.h"
+#include "backup/basebackup_target.h"
 #include "utils/memutils.h"
 
 typedef struct BaseBackupTargetType

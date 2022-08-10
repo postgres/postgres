@@ -8,14 +8,14 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_throttle.c
+ *	  src/backend/backup/basebackup_throttle.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "backup/basebackup_sink.h"
 #include "miscadmin.h"
-#include "replication/basebackup_sink.h"
 #include "pgstat.h"
 #include "storage/latch.h"
 #include "utils/timestamp.h"

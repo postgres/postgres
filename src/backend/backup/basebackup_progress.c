@@ -25,16 +25,16 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_progress.c
+ *	  src/backend/backup/basebackup_progress.c
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "backup/basebackup.h"
+#include "backup/basebackup_sink.h"
 #include "commands/progress.h"
 #include "miscadmin.h"
-#include "replication/basebackup.h"
-#include "replication/basebackup_sink.h"
 #include "pgstat.h"
 #include "storage/latch.h"
 #include "utils/timestamp.h"

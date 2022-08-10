@@ -11,8 +11,8 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "backup/basebackup_target.h"
 #include "miscadmin.h"
-#include "replication/basebackup_target.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/guc.h"

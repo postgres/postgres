@@ -6,7 +6,7 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_gzip.c
+ *	  src/backend/backup/basebackup_gzip.c
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <zlib.h>
 #endif
 
-#include "replication/basebackup_sink.h"
+#include "backup/basebackup_sink.h"
 
 #ifdef HAVE_LIBZ
 typedef struct bbsink_gzip

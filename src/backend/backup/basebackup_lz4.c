@@ -6,7 +6,7 @@
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  src/backend/replication/basebackup_lz4.c
+ *	  src/backend/backup/basebackup_lz4.c
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include <lz4frame.h>
 #endif
 
-#include "replication/basebackup_sink.h"
+#include "backup/basebackup_sink.h"
 
 #ifdef USE_LZ4
 

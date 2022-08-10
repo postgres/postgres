@@ -28,6 +28,7 @@
 #endif
 
 #include "access/xlog_internal.h"
+#include "backup/basebackup.h"
 #include "bbstreamer.h"
 #include "common/compression.h"
 #include "common/file_perm.h"
@@ -37,7 +38,6 @@
 #include "fe_utils/recovery_gen.h"
 #include "getopt_long.h"
 #include "receivelog.h"
-#include "replication/basebackup.h"
 #include "streamutil.h"
 
 #define ERRCODE_DATA_CORRUPTED	"XX001"

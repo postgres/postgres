@@ -19,7 +19,7 @@
  *
  * Portions Copyright (c) 2010-2022, PostgreSQL Global Development Group
  *
- * src/include/replication/basebackup_sink.h
+ * src/include/backup/basebackup_sink.h
  *
  *-------------------------------------------------------------------------
  */
