@@ -166,8 +166,20 @@ DROP FUNCTION functest_b_1;
 DROP FUNCTION functest_b_1;  -- error, not found
 DROP FUNCTION functest_b_2;  -- error, ambiguous
 
+-- Regression tests for bugs:
 
--- Cleanups
+-- Check that arguments that are R/W expanded datums aren't corrupted by
+-- multiple uses.  This test knows that array_append() returns a R/W datum
+-- and will modify a R/W array input in-place.  We use SETOF to prevent
+-- inlining of the SQL function.
+CREATE FUNCTION double_append(anyarray, anyelement) RETURNS SETOF anyarray
+LANGUAGE SQL IMMUTABLE AS
+$$ SELECT array_append($1, $2) || array_append($1, $2) $$;
+
+SELECT double_append(array_append(ARRAY[q1], q2), q3)
+  FROM (VALUES(1,2,3), (4,5,6)) v(q1,q2,q3);
+
+-- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
 DROP USER regress_unpriv_user;
 RESET search_path;

@@ -227,9 +227,25 @@ ERROR:  could not find a function named "functest_b_1"
 DROP FUNCTION functest_b_2;  -- error, ambiguous
 ERROR:  function name "functest_b_2" is not unique
 HINT:  Specify the argument list to select the function unambiguously.
--- Cleanups
+-- Regression tests for bugs:
+-- Check that arguments that are R/W expanded datums aren't corrupted by
+-- multiple uses.  This test knows that array_append() returns a R/W datum
+-- and will modify a R/W array input in-place.  We use SETOF to prevent
+-- inlining of the SQL function.
+CREATE FUNCTION double_append(anyarray, anyelement) RETURNS SETOF anyarray
+LANGUAGE SQL IMMUTABLE AS
+$$ SELECT array_append($1, $2) || array_append($1, $2) $$;
+SELECT double_append(array_append(ARRAY[q1], q2), q3)
+  FROM (VALUES(1,2,3), (4,5,6)) v(q1,q2,q3);
+ double_append 
+---------------
+ {1,2,3,1,2,3}
+ {4,5,6,4,5,6}
+(2 rows)
+
+-- Cleanup
 DROP SCHEMA temp_func_test CASCADE;
-NOTICE:  drop cascades to 16 other objects
+NOTICE:  drop cascades to 17 other objects
 DETAIL:  drop cascades to function functest_a_1(text,date)
 drop cascades to function functest_a_2(text[])
 drop cascades to function functest_a_3()
@@ -246,5 +262,6 @@ drop cascades to function functext_f_2(integer)
 drop cascades to function functext_f_3(integer)
 drop cascades to function functext_f_4(integer)
 drop cascades to function functest_b_2(bigint)
+drop cascades to function double_append(anyarray,anyelement)
 DROP USER regress_unpriv_user;
 RESET search_path;
