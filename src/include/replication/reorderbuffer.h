@@ -381,6 +381,11 @@ typedef struct ReorderBufferTXN
 	dlist_node	node;
 
 	/*
+	 * A node in the list of catalog modifying transactions
+	 */
+	dlist_node	catchange_node;
+
+	/*
 	 * Size of this transaction (changes currently in memory, in bytes).
 	 */
 	Size		size;
@@ -525,6 +530,12 @@ struct ReorderBuffer
 	 * writes), whereas the initial LSN could be set by other operations.
 	 */
 	dlist_head	txns_by_base_snapshot_lsn;
+
+	/*
+	 * Transactions and subtransactions that have modified system catalogs.
+	 */
+	dlist_head	catchange_txns;
+	int			catchange_ntxns;
 
 	/*
 	 * one-entry sized cache for by_txn. Very frequently the same txn gets
@@ -677,6 +688,7 @@ extern void ReorderBufferSkipPrepare(ReorderBuffer *rb, TransactionId xid);
 extern void ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid, char *gid);
 extern ReorderBufferTXN *ReorderBufferGetOldestTXN(ReorderBuffer *);
 extern TransactionId ReorderBufferGetOldestXmin(ReorderBuffer *rb);
+extern TransactionId *ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb);
 
 extern void ReorderBufferSetRestartPoint(ReorderBuffer *, XLogRecPtr ptr);
 
