@@ -691,6 +691,21 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 		commit_time = parsed->origin_timestamp;
 	}
 
+	/*
+	 * If the COMMIT record has invalidation messages, it could have catalog
+	 * changes. It is possible that we didn't mark this transaction as
+	 * containing catalog changes when the decoding starts from a commit
+	 * record without decoding the transaction's other changes. So, we ensure
+	 * to mark such transactions as containing catalog change.
+	 *
+	 * This must be done before SnapBuildCommitTxn() so that we can include
+	 * these transactions in the historic snapshot.
+	 */
+	if (parsed->xinfo & XACT_XINFO_HAS_INVALS)
+		SnapBuildXidSetCatalogChanges(ctx->snapshot_builder, xid,
+									  parsed->nsubxacts, parsed->subxacts,
+									  buf->origptr);
+
 	SnapBuildCommitTxn(ctx->snapshot_builder, buf->origptr, xid,
 					   parsed->nsubxacts, parsed->subxacts);
 

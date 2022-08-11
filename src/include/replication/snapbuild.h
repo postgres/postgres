@@ -90,4 +90,7 @@ extern void SnapBuildProcessRunningXacts(SnapBuild *builder, XLogRecPtr lsn,
 										 struct xl_running_xacts *running);
 extern void SnapBuildSerializationPoint(SnapBuild *builder, XLogRecPtr lsn);
 
+extern void SnapBuildXidSetCatalogChanges(SnapBuild *builder, TransactionId xid,
+										  int subxcnt, TransactionId *subxacts,
+										  XLogRecPtr lsn);
 #endif							/* SNAPBUILD_H */
