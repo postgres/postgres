@@ -82,21 +82,21 @@ static WalRcvExecResult *libpqrcv_exec(WalReceiverConn *conn,
 static void libpqrcv_disconnect(WalReceiverConn *conn);
 
 static WalReceiverFunctionsType PQWalReceiverFunctions = {
-	libpqrcv_connect,
-	libpqrcv_check_conninfo,
-	libpqrcv_get_conninfo,
-	libpqrcv_get_senderinfo,
-	libpqrcv_identify_system,
-	libpqrcv_server_version,
-	libpqrcv_readtimelinehistoryfile,
-	libpqrcv_startstreaming,
-	libpqrcv_endstreaming,
-	libpqrcv_receive,
-	libpqrcv_send,
-	libpqrcv_create_slot,
-	libpqrcv_get_backend_pid,
-	libpqrcv_exec,
-	libpqrcv_disconnect
+	.walrcv_connect = libpqrcv_connect,
+	.walrcv_check_conninfo = libpqrcv_check_conninfo,
+	.walrcv_get_conninfo = libpqrcv_get_conninfo,
+	.walrcv_get_senderinfo = libpqrcv_get_senderinfo,
+	.walrcv_identify_system = libpqrcv_identify_system,
+	.walrcv_server_version = libpqrcv_server_version,
+	.walrcv_readtimelinehistoryfile = libpqrcv_readtimelinehistoryfile,
+	.walrcv_startstreaming = libpqrcv_startstreaming,
+	.walrcv_endstreaming = libpqrcv_endstreaming,
+	.walrcv_receive = libpqrcv_receive,
+	.walrcv_send = libpqrcv_send,
+	.walrcv_create_slot = libpqrcv_create_slot,
+	.walrcv_get_backend_pid = libpqrcv_get_backend_pid,
+	.walrcv_exec = libpqrcv_exec,
+	.walrcv_disconnect = libpqrcv_disconnect
 };
 
 /* Prototypes for private functions */
