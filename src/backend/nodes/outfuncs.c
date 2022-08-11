@@ -660,7 +660,7 @@ _outA_Const(StringInfo str, const A_Const *node)
 	WRITE_NODE_TYPE("A_CONST");
 
 	if (node->isnull)
-		appendStringInfoString(str, "NULL");
+		appendStringInfoString(str, " NULL");
 	else
 	{
 		appendStringInfoString(str, " :val ");
