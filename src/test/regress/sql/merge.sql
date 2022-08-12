@@ -88,6 +88,16 @@ MERGE INTO target
 USING target
 ON tid = tid
 WHEN MATCHED THEN DO NOTHING;
+-- used in a CTE
+WITH foo AS (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) SELECT * FROM foo;
+-- used in COPY
+COPY (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) TO stdout;
 
 -- unsupported relation types
 -- view
