@@ -497,7 +497,6 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 				pg_fatal("%d: controldata retrieval problem", __LINE__);
 
 			p++;				/* remove ':' char */
-			/* used later for contrib check */
 			cluster->controldata.data_checksum_version = str2uint(p);
 			got_data_checksum_version = true;
 		}
