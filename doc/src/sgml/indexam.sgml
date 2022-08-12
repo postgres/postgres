@@ -45,7 +45,8 @@
    extant versions of the same logical row; to an index, each tuple is
    an independent object that needs its own index entry.  Thus, an
    update of a row always creates all-new index entries for the row, even if
-   the key values did not change.  (HOT tuples are an exception to this
+   the key values did not change.  (<link linkend="storage-hot">HOT
+   tuples</link> are an exception to this
    statement; but indexes do not deal with those, either.)  Index entries for
    dead tuples are reclaimed (by vacuuming) when the dead tuples themselves
    are reclaimed.

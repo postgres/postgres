@@ -1435,7 +1435,9 @@ WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REM
       to the indicated percentage; the remaining space on each page is
       reserved for updating rows on that page.  This gives <command>UPDATE</command>
       a chance to place the updated copy of a row on the same page as the
-      original, which is more efficient than placing it on a different page.
+      original, which is more efficient than placing it on a different
+      page, and makes <link linkend="storage-hot">heap-only tuple
+      updates</link> more likely.
       For a table whose entries are never updated, complete packing is the
       best choice, but in heavily updated tables smaller fillfactors are
       appropriate.  This parameter cannot be set for TOAST tables.
