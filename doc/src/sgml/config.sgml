@@ -6649,6 +6649,13 @@ local0.*    /var/log/postgresql
      <sect2 id="runtime-config-logging-what">
      <title>What to Log</title>
 
+     <note>
+      <para>
+       What you choose to log can have security implications;  see
+       <xref linkend="logfile-maintenance"/>.
+      </para>
+     </note>
+
      <variablelist>
 
      <varlistentry id="guc-application-name" xreflabel="application_name">
@@ -7240,6 +7247,10 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
          fail before the Execute phase (i.e., during parse analysis or
          planning).  Set <varname>log_min_error_statement</varname> to
          <literal>ERROR</literal> (or lower) to log such statements.
+        </para>
+        <para>
+         Logged statements might reveal sensitive data and even contain
+         plaintext passwords.
         </para>
        </note>
       </listitem>
