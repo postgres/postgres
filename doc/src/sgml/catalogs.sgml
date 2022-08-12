@@ -4317,7 +4317,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <para>
        If true, queries must not use the index until the <structfield>xmin</structfield>
        of this <structname>pg_index</structname> row is below their <symbol>TransactionXmin</symbol>
-       event horizon, because the table may contain broken HOT chains with
+       event horizon, because the table may contain broken <link linkend="storage-hot">HOT chains</link> with
        incompatible rows that they can see
       </para></entry>
      </row>

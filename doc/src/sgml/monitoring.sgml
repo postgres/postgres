@@ -4153,7 +4153,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_upd</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows updated (includes HOT updated rows)
+       Number of rows updated (includes <link linkend="storage-hot">HOT updated rows</link>)
       </para></entry>
      </row>
 

@@ -4379,7 +4379,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies the number of transactions by which <command>VACUUM</command> and
-        <acronym>HOT</acronym> updates will defer cleanup of dead row versions. The
+        <link linkend="storage-hot"><acronym>HOT</acronym> updates</link>
+        will defer cleanup of dead row versions. The
         default is zero transactions, meaning that dead row versions can be
         removed as soon as possible, that is, as soon as they are no longer
         visible to any open transaction.  You may wish to set this to a
