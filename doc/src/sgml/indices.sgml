@@ -103,7 +103,9 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    After an index is created, the system has to keep it synchronized with the
-   table.  This adds overhead to data manipulation operations.
+   table.  This adds overhead to data manipulation operations.  Indexes can
+   also prevent the creation of <link linkend="storage-hot">heap-only
+   tuples</link>.
    Therefore indexes that are seldom or never used in queries
    should be removed.
   </para>
@@ -749,7 +751,7 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
   <para>
    Index expressions are relatively expensive to maintain, because the
    derived expression(s) must be computed for each row insertion
-   and non-HOT update.  However, the index expressions are
+   and <link linkend="storage-hot">non-HOT update.</link>  However, the index expressions are
    <emphasis>not</emphasis> recomputed during an indexed search, since they are
    already stored in the index.  In both examples above, the system
    sees the query as just <literal>WHERE indexedcolumn = 'constant'</literal>
