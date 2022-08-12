@@ -2754,9 +2754,10 @@ include_dir 'conf.d'
         levels.  This parameter can only be set at server start.
        </para>
        <para>
-        In <literal>minimal</literal> level, no information is logged for
-        permanent relations for the remainder of a transaction that creates or
-        rewrites them.  This can make operations much faster (see
+        The <literal>minimal</literal> level generates the least WAL
+        volume.  It logs no row information for permanent relations
+        in transactions that create or
+        rewrite them.  This can make operations much faster (see
         <xref linkend="populate-pitr"/>).  Operations that initiate this
         optimization include:
         <simplelist>
@@ -2768,19 +2769,20 @@ include_dir 'conf.d'
          <member><command>REINDEX</command></member>
          <member><command>TRUNCATE</command></member>
         </simplelist>
-        But minimal WAL does not contain enough information to reconstruct the
-        data from a base backup and the WAL logs, so <literal>replica</literal> or
-        higher must be used to enable WAL archiving
-        (<xref linkend="guc-archive-mode"/>) and streaming replication.
+        However, minimal WAL does not contain sufficient information for
+        point-in-time recovery, so <literal>replica</literal> or
+        higher must be used to enable continuous archiving
+        (<xref linkend="guc-archive-mode"/>) and streaming binary replication.
+        In fact, the server will not even start in this mode if
+        <varname>max_wal_senders</varname> is non-zero.
         Note that changing <varname>wal_level</varname> to
-        <literal>minimal</literal> makes any base backups taken before
-        unavailable for archive recovery and standby server, which may
-        lead to data loss.
+        <literal>minimal</literal> makes previous base backups unusable
+        for point-in-time recovery and standby servers.
        </para>
        <para>
         In <literal>logical</literal> level, the same information is logged as
-        with <literal>replica</literal>, plus information needed to allow
-        extracting logical change sets from the WAL. Using a level of
+        with <literal>replica</literal>, plus information needed to
+        extract logical change sets from the WAL. Using a level of
         <literal>logical</literal> will increase the WAL volume, particularly if many
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</command> and <command>DELETE</command> statements are
