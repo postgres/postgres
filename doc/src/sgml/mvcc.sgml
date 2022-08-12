@@ -402,7 +402,8 @@
     and a unique index is present and a duplicate row is concurrently
     inserted, then a uniqueness violation error is raised;
     <command>MERGE</command> does not attempt to avoid such
-    errors by evaluating <literal>MATCHED</literal> conditions.
+    errors by restarting evaluation of <literal>MATCHED</literal>
+    conditions.
    </para>
 
    <para>

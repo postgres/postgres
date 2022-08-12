@@ -267,10 +267,6 @@ DELETE
       or null if there is none.
      </para>
      <para>
-      If the expression for any column is not of the correct data type,
-      automatic type conversion will be attempted.
-     </para>
-     <para>
       If <replaceable class="parameter">target_table_name</replaceable>
       is a partitioned table, each row is routed to the appropriate partition
       and inserted into it.
@@ -581,12 +577,12 @@ WHEN NOT MATCHED THEN
 <programlisting>
 MERGE INTO CustomerAccount CA
 USING (Select CustomerId, TransactionValue From RecentTransactions) AS T
-ON CA.CustomerId = T.CustomerId
+ON T.CustomerId = CA.CustomerId
+WHEN MATCHED THEN
+  UPDATE SET Balance = Balance + TransactionValue;
 WHEN NOT MATCHED THEN
   INSERT (CustomerId, Balance)
   VALUES (T.CustomerId, T.TransactionValue)
-WHEN MATCHED THEN
-  UPDATE SET Balance = Balance + TransactionValue;
 </programlisting>
   </para>
 
