@@ -122,7 +122,7 @@
  </para>
 
  <para>
-  Before you build, you may need to edit the file <filename>config.pl</filename>
+  Before you build, you can create the file <filename>config.pl</filename>
   to reflect any configuration options you want to change, or the paths to
   any third party libraries to use. The complete configuration is determined
   by first reading and parsing the file <filename>config_default.pl</filename>,
