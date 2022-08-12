@@ -708,8 +708,9 @@ options(<replaceable>relopts</replaceable> <type>local_relopts *</type>) returns
    entry.  <quote>Version duplicates</quote> may sometimes accumulate
    and adversely affect query latency and throughput.  This typically
    occurs with <command>UPDATE</command>-heavy workloads where most
-   individual updates cannot apply the <acronym>HOT</acronym>
-   optimization (often because at least one indexed column gets
+   individual updates cannot apply the
+   <link linkend="storage-hot"><acronym>HOT</acronym> optimization</link>
+   (often because at least one indexed column gets
    modified, necessitating a new set of index tuple versions &mdash;
    one new tuple for <emphasis>each and every</emphasis> index).  In
    effect, B-Tree deduplication ameliorates index bloat caused by
