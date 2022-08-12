@@ -150,6 +150,18 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      </varlistentry>
 
      <varlistentry>
+      <term><literal>USING</literal></term>
+      <listitem>
+       <para>
+        The optional <literal>USING</literal> clause specifies an index
+        type as described in <xref linkend="indexes-types"/>.  If not
+        specified, a default index type will be used based on the
+        data types of the columns.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><literal>INCLUDE</literal></term>
       <listitem>
        <para>
