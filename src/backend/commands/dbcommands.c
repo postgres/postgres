@@ -257,8 +257,8 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 	Page		page;
 	List	   *rnodelist = NIL;
 	LockRelId	relid;
-	Relation	rel;
 	Snapshot	snapshot;
+	SMgrRelation	smgr;
 	BufferAccessStrategy bstrategy;
 
 	/* Get pg_class relfilenode. */
@@ -275,16 +275,9 @@ ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath)
 	rnode.dbNode = dbid;
 	rnode.relNode = relfilenode;
 
-	/*
-	 * We can't use a real relcache entry for a relation in some other
-	 * database, but since we're only going to access the fields related to
-	 * physical storage, a fake one is good enough. If we didn't do this and
-	 * used the smgr layer directly, we would have to worry about
-	 * invalidations.
-	 */
-	rel = CreateFakeRelcacheEntry(rnode);
-	nblocks = smgrnblocks(RelationGetSmgr(rel), MAIN_FORKNUM);
-	FreeFakeRelcacheEntry(rel);
+	smgr = smgropen(rnode, InvalidBackendId);
+	nblocks = smgrnblocks(smgr, MAIN_FORKNUM);
+	smgrclose(smgr);
 
 	/* Use a buffer access strategy since this is a bulk read operation. */
 	bstrategy = GetAccessStrategy(BAS_BULKREAD);
