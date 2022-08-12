@@ -2582,9 +2582,10 @@ include_dir 'conf.d'
         levels.  This parameter can only be set at server start.
        </para>
        <para>
-        In <literal>minimal</literal> level, no information is logged for
-        permanent relations for the remainder of a transaction that creates or
-        rewrites them.  This can make operations much faster (see
+        The <literal>minimal</literal> level generates the least WAL
+        volume.  It logs no row information for permanent relations
+        in transactions that create or
+        rewrite them.  This can make operations much faster (see
         <xref linkend="populate-pitr"/>).  Operations that initiate this
         optimization include:
         <simplelist>
