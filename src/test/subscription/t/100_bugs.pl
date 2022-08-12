@@ -144,12 +144,7 @@ $node_twoways->safe_psql('d2',
 # We cannot rely solely on wait_for_catchup() here; it isn't sufficient
 # when tablesync workers might still be running. So in addition to that,
 # verify that tables are synced.
-# XXX maybe this should be integrated in wait_for_catchup() itself.
-$node_twoways->wait_for_catchup('testsub');
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_twoways->poll_query_until('d2', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_twoways->wait_for_subscription_sync($node_twoways, 'testsub', 'd2');
 
 is($node_twoways->safe_psql('d2', "SELECT count(f) FROM t"),
 	$rows * 2, "2x$rows rows in t");
@@ -278,11 +273,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
 );
 
-$node_publisher->wait_for_catchup('tap_sub');
-
-# Also wait for initial table sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 is( $node_subscriber->safe_psql(
 		'postgres', "SELECT * FROM tab_replidentity_index"),
