@@ -273,6 +273,12 @@ DoCopy(ParseState *pstate, const CopyStmt *stmt,
 	{
 		Assert(stmt->query);
 
+		/* MERGE is allowed by parser, but unimplemented. Reject for now */
+		if (IsA(stmt->query, MergeStmt))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("MERGE not supported in COPY"));
+
 		query = makeNode(RawStmt);
 		query->stmt = stmt->query;
 		query->stmt_location = stmt_location;

@@ -126,6 +126,13 @@ transformWithClause(ParseState *pstate, WithClause *withClause)
 		CommonTableExpr *cte = (CommonTableExpr *) lfirst(lc);
 		ListCell   *rest;
 
+		/* MERGE is allowed by parser, but unimplemented. Reject for now */
+		if (IsA(cte->ctequery, MergeStmt))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("MERGE not supported in WITH query"),
+					parser_errposition(pstate, cte->location));
+
 		for_each_cell(rest, withClause->ctes, lnext(withClause->ctes, lc))
 		{
 			CommonTableExpr *cte2 = (CommonTableExpr *) lfirst(rest);

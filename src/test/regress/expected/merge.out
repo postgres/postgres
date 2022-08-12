@@ -123,6 +123,20 @@ ON tid = tid
 WHEN MATCHED THEN DO NOTHING;
 ERROR:  name "target" specified more than once
 DETAIL:  The name is used both as MERGE target table and data source.
+-- used in a CTE
+WITH foo AS (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) SELECT * FROM foo;
+ERROR:  MERGE not supported in WITH query
+LINE 1: WITH foo AS (
+             ^
+-- used in COPY
+COPY (
+  MERGE INTO target USING source ON (true)
+  WHEN MATCHED THEN DELETE
+) TO stdout;
+ERROR:  MERGE not supported in COPY
 -- unsupported relation types
 -- view
 CREATE VIEW tv AS SELECT * FROM target;
