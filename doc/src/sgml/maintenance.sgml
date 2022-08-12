@@ -977,7 +977,25 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    It is a good idea to save the database server's log output
    somewhere, rather than just discarding it via <filename>/dev/null</filename>.
    The log output is invaluable when diagnosing
-   problems.  However, the log output tends to be voluminous
+   problems.
+  </para>
+
+  <note>
+   <para>
+    The server log can contain sensitive information and needs to be protected,
+    no matter how or where it is stored, or the destination to which it is routed.
+    For example, some DDL statements might contain plaintext passwords or other
+    authentication details. Logged statements at the <literal>ERROR</literal>
+    level might show the SQL source code for applications
+    and might also contain some parts of data rows. Recording data, events and
+    related information is the intended function of this facility, so this is
+    not a leakage or a bug. Please ensure the server logs are visible only to
+    appropriately authorized people.
+   </para>
+  </note>
+
+  <para>
+   Log output tends to be voluminous
    (especially at higher debug levels) so you won't want to save it
    indefinitely.  You need to <emphasis>rotate</emphasis> the log files so that
    new log files are started and old ones removed after a reasonable
