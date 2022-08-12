@@ -95,9 +95,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
     <term><literal>IF NOT EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if a relation with the same name already exists.
-      A notice is issued in this case. Refer to <xref linkend="sql-createtable"/>
-      for details.
+      Do not throw an error if a relation with the same name already
+      exists; simply issue a notice and leave the table unmodified.
      </para>
     </listitem>
    </varlistentry>
