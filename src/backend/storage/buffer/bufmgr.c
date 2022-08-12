@@ -487,9 +487,9 @@ static void FindAndDropRelationBuffers(RelFileLocator rlocator,
 									   ForkNumber forkNum,
 									   BlockNumber nForkBlock,
 									   BlockNumber firstDelBlock);
-static void RelationCopyStorageUsingBuffer(Relation src, Relation dst,
-										   ForkNumber forkNum,
-										   bool isunlogged);
+static void RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
+										   RelFileLocator dstlocator,
+										   ForkNumber forkNum, bool permanent);
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
 static int	rlocator_comparator(const void *p1, const void *p2);
@@ -3701,8 +3701,9 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
  * --------------------------------------------------------------------
  */
 static void
-RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
-							   bool permanent)
+RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
+							   RelFileLocator dstlocator,
+							   ForkNumber forkNum, bool permanent)
 {
 	Buffer		srcBuf;
 	Buffer		dstBuf;
@@ -3722,7 +3723,8 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
 	use_wal = XLogIsNeeded() && (permanent || forkNum == INIT_FORKNUM);
 
 	/* Get number of blocks in the source relation. */
-	nblocks = smgrnblocks(RelationGetSmgr(src), forkNum);
+	nblocks = smgrnblocks(smgropen(srclocator, InvalidBackendId),
+						  forkNum);
 
 	/* Nothing to copy; just return. */
 	if (nblocks == 0)
@@ -3738,14 +3740,14 @@ RelationCopyStorageUsingBuffer(Relation src, Relation dst, ForkNumber forkNum,
 		CHECK_FOR_INTERRUPTS();
 
 		/* Read block from source relation. */
-		srcBuf = ReadBufferWithoutRelcache(src->rd_locator, forkNum, blkno,
+		srcBuf = ReadBufferWithoutRelcache(srclocator, forkNum, blkno,
 										   RBM_NORMAL, bstrategy_src,
 										   permanent);
 		LockBuffer(srcBuf, BUFFER_LOCK_SHARE);
 		srcPage = BufferGetPage(srcBuf);
 
 		/* Use P_NEW to extend the destination relation. */
-		dstBuf = ReadBufferWithoutRelcache(dst->rd_locator, forkNum, P_NEW,
+		dstBuf = ReadBufferWithoutRelcache(dstlocator, forkNum, P_NEW,
 										   RBM_NORMAL, bstrategy_dst,
 										   permanent);
 		LockBuffer(dstBuf, BUFFER_LOCK_EXCLUSIVE);
@@ -3783,23 +3785,12 @@ void
 CreateAndCopyRelationData(RelFileLocator src_rlocator,
 						  RelFileLocator dst_rlocator, bool permanent)
 {
-	Relation	src_rel;
-	Relation	dst_rel;
+	RelFileLocatorBackend rlocator;
 	char		relpersistence;
 
 	/* Set the relpersistence. */
 	relpersistence = permanent ?
 		RELPERSISTENCE_PERMANENT : RELPERSISTENCE_UNLOGGED;
-
-	/*
-	 * We can't use a real relcache entry for a relation in some other
-	 * database, but since we're only going to access the fields related to
-	 * physical storage, a fake one is good enough. If we didn't do this and
-	 * used the smgr layer directly, we would have to worry about
-	 * invalidations.
-	 */
-	src_rel = CreateFakeRelcacheEntry(src_rlocator);
-	dst_rel = CreateFakeRelcacheEntry(dst_rlocator);
 
 	/*
 	 * Create and copy all forks of the relation.  During create database we
@@ -3810,15 +3801,16 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 	RelationCreateStorage(dst_rlocator, relpersistence, false);
 
 	/* copy main fork. */
-	RelationCopyStorageUsingBuffer(src_rel, dst_rel, MAIN_FORKNUM, permanent);
+	RelationCopyStorageUsingBuffer(src_rlocator, dst_rlocator, MAIN_FORKNUM,
+								   permanent);
 
 	/* copy those extra forks that exist */
 	for (ForkNumber forkNum = MAIN_FORKNUM + 1;
 		 forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		if (smgrexists(RelationGetSmgr(src_rel), forkNum))
+		if (smgrexists(smgropen(src_rlocator, InvalidBackendId), forkNum))
 		{
-			smgrcreate(RelationGetSmgr(dst_rel), forkNum, false);
+			smgrcreate(smgropen(dst_rlocator, InvalidBackendId), forkNum, false);
 
 			/*
 			 * WAL log creation if the relation is persistent, or this is the
@@ -3828,14 +3820,19 @@ CreateAndCopyRelationData(RelFileLocator src_rlocator,
 				log_smgrcreate(&dst_rlocator, forkNum);
 
 			/* Copy a fork's data, block by block. */
-			RelationCopyStorageUsingBuffer(src_rel, dst_rel, forkNum,
+			RelationCopyStorageUsingBuffer(src_rlocator, dst_rlocator, forkNum,
 										   permanent);
 		}
 	}
 
-	/* Release fake relcache entries. */
-	FreeFakeRelcacheEntry(src_rel);
-	FreeFakeRelcacheEntry(dst_rel);
+	/* close source and destination smgr if exists. */
+	rlocator.backend = InvalidBackendId;
+
+	rlocator.locator = src_rlocator;
+	smgrcloserellocator(rlocator);
+
+	rlocator.locator = dst_rlocator;
+	smgrcloserellocator(rlocator);
 }
 
 /* ---------------------------------------------------------------------
