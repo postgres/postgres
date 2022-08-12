@@ -236,6 +236,39 @@ CREATE USER <replaceable>name</replaceable>;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>inheritance of privileges<indexterm><primary>role</primary><secondary>privilege to inherit</secondary></indexterm></term>
+      <listitem>
+       <para>
+        A role is given permission to inherit the privileges of roles it is a
+        member of, by default. However, to create a role without the permission,
+        use <literal>CREATE ROLE <replaceable>name</replaceable> NOINHERIT</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>bypassing row-level security<indexterm><primary>role</primary><secondary>privilege to bypass</secondary></indexterm></term>
+      <listitem>
+       <para>
+        A role must be explicitly given permission to bypass every row-level security (RLS) policy
+        (except for superusers, since those bypass all permission checks).
+        To create such a role, use <literal>CREATE ROLE <replaceable>name</replaceable> BYPASSRLS</literal> as a superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>connection limit<indexterm><primary>role</primary><secondary>privilege to limit connection</secondary></indexterm></term>
+      <listitem>
+       <para>
+        Connection limit can specify how many concurrent connections a role can make.
+        -1 (the default) means no limit. Specify connection limit upon role creation with
+        <literal>CREATE ROLE <replaceable>name</replaceable> CONNECTION LIMIT '<replaceable>integer</replaceable>'</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
 
     A role's attributes can be modified after creation with
