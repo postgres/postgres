@@ -243,9 +243,6 @@ typedef enum
 } eLogType;
 
 
-typedef long pgpid_t;
-
-
 /*
  * cluster
  *
