@@ -656,7 +656,7 @@ EOF
     of these options are required; there are useful defaults. If you omit the host
     name, <application>psql</application> will connect via a Unix-domain socket
     to a server on the local host, or via TCP/IP to <literal>localhost</literal> on
-    machines that don't have Unix-domain sockets. The default port number is
+    Windows. The default port number is
     determined at compile time.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your

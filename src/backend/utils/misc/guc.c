@@ -4452,11 +4452,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_LIST_INPUT | GUC_LIST_QUOTE | GUC_SUPERUSER_ONLY
 		},
 		&Unix_socket_directories,
-#ifdef HAVE_UNIX_SOCKETS
 		DEFAULT_PGSOCKET_DIR,
-#else
-		"",
-#endif
 		NULL, NULL, NULL
 	},
 

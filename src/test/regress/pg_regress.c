@@ -99,11 +99,9 @@ static char *logfilename;
 static FILE *logfile;
 static char *difffilename;
 static const char *sockdir;
-#ifdef HAVE_UNIX_SOCKETS
 static const char *temp_sockdir;
 static char sockself[MAXPGPATH];
 static char socklock[MAXPGPATH];
-#endif
 
 static _resultmap *resultmap = NULL;
 
@@ -285,7 +283,6 @@ stop_postmaster(void)
 	}
 }
 
-#ifdef HAVE_UNIX_SOCKETS
 /*
  * Remove the socket temporary directory.  pg_regress never waits for a
  * postmaster exit, so it is indeterminate whether the postmaster has yet to
@@ -360,7 +357,6 @@ make_temp_sockdir(void)
 
 	return temp_sockdir;
 }
-#endif							/* HAVE_UNIX_SOCKETS */
 
 /*
  * Check whether string matches pattern
@@ -683,7 +679,6 @@ initialize_environment(void)
 		/* PGPORT, see below */
 		/* PGHOST, see below */
 
-#ifdef HAVE_UNIX_SOCKETS
 		if (hostname != NULL)
 			setenv("PGHOST", hostname, 1);
 		else
@@ -693,10 +688,6 @@ initialize_environment(void)
 				sockdir = make_temp_sockdir();
 			setenv("PGHOST", sockdir, 1);
 		}
-#else
-		Assert(hostname != NULL);
-		setenv("PGHOST", hostname, 1);
-#endif
 		unsetenv("PGHOSTADDR");
 		if (port != -1)
 		{
@@ -746,11 +737,9 @@ initialize_environment(void)
 		if (!pghost)
 		{
 			/* Keep this bit in sync with libpq's default host location: */
-#ifdef HAVE_UNIX_SOCKETS
 			if (DEFAULT_PGSOCKET_DIR[0])
 				 /* do nothing, we'll print "Unix socket" below */ ;
 			else
-#endif
 				pghost = "localhost";	/* DefaultHost in fe-connect.c */
 		}
 
@@ -2068,14 +2057,11 @@ regression_main(int argc, char *argv[],
 
 	atexit(stop_postmaster);
 
-#if !defined(HAVE_UNIX_SOCKETS)
-	use_unix_sockets = false;
-#elif defined(WIN32)
+#if defined(WIN32)
 
 	/*
-	 * We don't use Unix-domain sockets on Windows by default, even if the
-	 * build supports them.  (See comment at remove_temp() for a reason.)
-	 * Override at your own risk.
+	 * We don't use Unix-domain sockets on Windows by default (see comment at
+	 * remove_temp() for a reason).  Override at your own risk.
 	 */
 	use_unix_sockets = getenv("PG_TEST_USE_UNIX_SOCKETS") ? true : false;
 #else
@@ -2209,7 +2195,7 @@ regression_main(int argc, char *argv[],
 		/*
 		 * To reduce chances of interference with parallel installations, use
 		 * a port number starting in the private range (49152-65535)
-		 * calculated from the version number.  This aids !HAVE_UNIX_SOCKETS
+		 * calculated from the version number.  This aids non-Unix socket mode
 		 * systems; elsewhere, the use of a private socket directory already
 		 * prevents interference.
 		 */
@@ -2329,8 +2315,6 @@ regression_main(int argc, char *argv[],
 			snprintf(buf, sizeof(buf), "%s/data", temp_instance);
 			config_sspi_auth(buf, NULL);
 		}
-#elif !defined(HAVE_UNIX_SOCKETS)
-#error Platform has no means to secure the test installation.
 #endif
 
 		/*

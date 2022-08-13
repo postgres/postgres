@@ -1070,9 +1070,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
         specified, or is empty, is to connect to a Unix-domain
         socket<indexterm><primary>Unix domain socket</primary></indexterm> in
         <filename>/tmp</filename> (or whatever socket directory was specified
-        when <productname>PostgreSQL</productname> was built).  On Windows and
-        on machines without Unix-domain sockets, the default is to connect to
-        <literal>localhost</literal>.
+        when <productname>PostgreSQL</productname> was built).  On Windows,
+        the default is to connect to <literal>localhost</literal>.
        </para>
        <para>
         A comma-separated list of host names is also accepted, in which case
@@ -1152,8 +1151,8 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
        <para>
         Without either a host name or host address,
         <application>libpq</application> will connect using a local
-        Unix-domain socket; or on Windows and on machines without Unix-domain
-        sockets, it will attempt to connect to <literal>localhost</literal>.
+        Unix-domain socket; or on Windows, it will attempt to connect to
+        <literal>localhost</literal>.
        </para>
        </listitem>
       </varlistentry>

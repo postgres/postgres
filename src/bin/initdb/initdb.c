@@ -242,9 +242,6 @@ static char backend_exec[MAXPGPATH];
 static char **replace_token(char **lines,
 							const char *token, const char *replacement);
 
-#ifndef HAVE_UNIX_SOCKETS
-static char **filter_lines_with_token(char **lines, const char *token);
-#endif
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
@@ -417,36 +414,6 @@ replace_token(char **lines, const char *token, const char *replacement)
 
 	return result;
 }
-
-/*
- * make a copy of lines without any that contain the token
- *
- * a sort of poor man's grep -v
- */
-#ifndef HAVE_UNIX_SOCKETS
-static char **
-filter_lines_with_token(char **lines, const char *token)
-{
-	int			numlines = 1;
-	int			i,
-				src,
-				dst;
-	char	  **result;
-
-	for (i = 0; lines[i]; i++)
-		numlines++;
-
-	result = (char **) pg_malloc(numlines * sizeof(char *));
-
-	for (src = 0, dst = 0; src < numlines; src++)
-	{
-		if (lines[src] == NULL || strstr(lines[src], token) == NULL)
-			result[dst++] = lines[src];
-	}
-
-	return result;
-}
-#endif
 
 /*
  * get the lines from a text file
@@ -1045,12 +1012,8 @@ setup_config(void)
 				 n_buffers * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#shared_buffers = 128MB", repltok);
 
-#ifdef HAVE_UNIX_SOCKETS
 	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
 			 DEFAULT_PGSOCKET_DIR);
-#else
-	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = ''");
-#endif
 	conflines = replace_token(conflines, "#unix_socket_directories = '/tmp'",
 							  repltok);
 
@@ -1210,11 +1173,7 @@ setup_config(void)
 
 	conflines = readfile(hba_file);
 
-#ifndef HAVE_UNIX_SOCKETS
-	conflines = filter_lines_with_token(conflines, "@remove-line-for-nolocal@");
-#else
 	conflines = replace_token(conflines, "@remove-line-for-nolocal@", "");
-#endif
 
 #ifdef HAVE_IPV6
 
