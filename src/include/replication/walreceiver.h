@@ -12,9 +12,11 @@
 #ifndef _WALRECEIVER_H
 #define _WALRECEIVER_H
 
+#include <netdb.h>
+#include <sys/socket.h>
+
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
-#include "getaddrinfo.h"		/* for NI_MAXHOST */
 #include "pgtime.h"
 #include "port/atomics.h"
 #include "replication/logicalproto.h"

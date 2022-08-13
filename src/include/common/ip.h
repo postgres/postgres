@@ -14,7 +14,9 @@
 #ifndef IP_H
 #define IP_H
 
-#include "getaddrinfo.h"		/* pgrminclude ignore */
+#include <netdb.h>
+#include <sys/socket.h>
+
 #include "libpq/pqcomm.h"		/* pgrminclude ignore */
 
 

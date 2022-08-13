@@ -15121,20 +15121,6 @@ _ACEOF
 
 fi
 
-ac_fn_c_check_type "$LINENO" "struct addrinfo" "ac_cv_type_struct_addrinfo" "#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-
-"
-if test "x$ac_cv_type_struct_addrinfo" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_ADDRINFO 1
-_ACEOF
-
-
-fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for locale_t" >&5
 $as_echo_n "checking for locale_t... " >&6; }
@@ -16531,34 +16517,6 @@ esac
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: On $host_os we will use our strtof wrapper." >&5
 $as_echo "$as_me: On $host_os we will use our strtof wrapper." >&6;}
-fi
-
-# System's version of getaddrinfo(), if any, may be used only if we found
-# a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
-# We use only our own getaddrinfo.c on Windows, but it's time to revisit that.
-if test x"$ac_cv_type_struct_addrinfo" = xyes && \
-   test "$PORTNAME" != "win32"; then
-  ac_fn_c_check_func "$LINENO" "getaddrinfo" "ac_cv_func_getaddrinfo"
-if test "x$ac_cv_func_getaddrinfo" = xyes; then :
-  $as_echo "#define HAVE_GETADDRINFO 1" >>confdefs.h
-
-else
-  case " $LIBOBJS " in
-  *" getaddrinfo.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getaddrinfo.$ac_objext"
- ;;
-esac
-
-fi
-
-
-else
-  case " $LIBOBJS " in
-  *" getaddrinfo.$ac_objext "* ) ;;
-  *) LIBOBJS="$LIBOBJS getaddrinfo.$ac_objext"
- ;;
-esac
-
 fi
 
 # Similarly, use system's getopt_long() only if system provides struct option.

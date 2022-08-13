@@ -101,7 +101,7 @@ sub mkvcbuild
 	our @pgportfiles = qw(
 	  chklocale.c explicit_bzero.c
 	  getpeereid.c inet_aton.c
-	  getaddrinfo.c inet_net_ntop.c kill.c open.c
+	  inet_net_ntop.c kill.c open.c
 	  snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
 	  dirent.c getopt.c getopt_long.c
 	  preadv.c pwritev.c pg_bitutils.c

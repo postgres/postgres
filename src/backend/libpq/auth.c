@@ -19,6 +19,7 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <unistd.h>
 

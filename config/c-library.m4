@@ -89,17 +89,6 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 
 
-# PGAC_STRUCT_ADDRINFO
-# -----------------------
-# If `struct addrinfo' exists, define HAVE_STRUCT_ADDRINFO.
-AC_DEFUN([PGAC_STRUCT_ADDRINFO],
-[AC_CHECK_TYPES([struct addrinfo], [], [],
-[#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-])])# PGAC_STRUCT_ADDRINFO
-
-
 # PGAC_TYPE_LOCALE_T
 # ------------------
 # Check for the locale_t type and find the right header file.  macOS

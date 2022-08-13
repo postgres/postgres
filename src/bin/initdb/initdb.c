@@ -50,6 +50,8 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
@@ -72,7 +74,6 @@
 #include "common/string.h"
 #include "common/username.h"
 #include "fe_utils/string_utils.h"
-#include "getaddrinfo.h"
 #include "getopt_long.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"

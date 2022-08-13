@@ -1619,7 +1619,6 @@ PGAC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
 AC_CHECK_TYPES(socklen_t, [], [], [#include <sys/socket.h>])
 PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
-PGAC_STRUCT_ADDRINFO
 
 PGAC_TYPE_LOCALE_T
 
@@ -1847,16 +1846,6 @@ if test "$PORTNAME" = "win32" -o "$PORTNAME" = "cygwin"; then
 	# but we have no better options.
 	AC_LIBOBJ([strtof])
 	AC_MSG_NOTICE([On $host_os we will use our strtof wrapper.])
-fi
-
-# System's version of getaddrinfo(), if any, may be used only if we found
-# a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
-# We use only our own getaddrinfo.c on Windows, but it's time to revisit that.
-if test x"$ac_cv_type_struct_addrinfo" = xyes && \
-   test "$PORTNAME" != "win32"; then
-  AC_REPLACE_FUNCS([getaddrinfo])
-else
-  AC_LIBOBJ(getaddrinfo)
 fi
 
 # Similarly, use system's getopt_long() only if system provides struct option.

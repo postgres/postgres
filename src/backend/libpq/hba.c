@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>

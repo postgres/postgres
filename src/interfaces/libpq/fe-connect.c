@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <netdb.h>
 #include <time.h>
 #include <unistd.h>
 

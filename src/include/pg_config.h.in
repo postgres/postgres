@@ -178,9 +178,6 @@
    */
 #undef HAVE_GCC__SYNC_INT64_CAS
 
-/* Define to 1 if you have the `getaddrinfo' function. */
-#undef HAVE_GETADDRINFO
-
 /* Define to 1 if you have the `gethostbyname_r' function. */
 #undef HAVE_GETHOSTBYNAME_R
 
@@ -447,9 +444,6 @@
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
-
-/* Define to 1 if the system has the type `struct addrinfo'. */
-#undef HAVE_STRUCT_ADDRINFO
 
 /* Define to 1 if the system has the type `struct cmsgcred'. */
 #undef HAVE_STRUCT_CMSGCRED

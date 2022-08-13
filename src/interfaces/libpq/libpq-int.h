@@ -23,6 +23,8 @@
 /* We assume libpq-fe.h has already been included. */
 #include "libpq-events.h"
 
+#include <netdb.h>
+#include <sys/socket.h>
 #include <time.h>
 #ifndef WIN32
 #include <sys/time.h>
@@ -38,7 +40,6 @@
 #endif
 
 /* include stuff common to fe and be */
-#include "getaddrinfo.h"
 #include "libpq/pqcomm.h"
 /* include stuff found in fe only */
 #include "fe-auth-sasl.h"
