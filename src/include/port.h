@@ -503,4 +503,7 @@ extern bool wait_result_is_any_signal(int exit_status, bool include_command_not_
 #define HAVE_SYMLINK 1
 #endif
 
+/* Interfaces that we assume that all systems have. */
+#define HAVE_UNIX_SOCKETS 1
+
 #endif							/* PG_PORT_H */

@@ -55,14 +55,3 @@
 #ifdef _MSC_VER
 #define PGDLLEXPORT __declspec (dllexport)
 #endif
-
-/*
- * Windows headers don't define this structure, but you can define it yourself
- * to use the functionality.
- */
-struct sockaddr_un
-{
-	unsigned short sun_family;
-	char		sun_path[108];
-};
-#define HAVE_STRUCT_SOCKADDR_UN 1

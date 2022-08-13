@@ -1467,7 +1467,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/signalfd.h
 	sys/sockio.h
 	sys/ucred.h
-	sys/un.h
 	termios.h
 	ucred.h
 ]))
@@ -1625,7 +1624,6 @@ PGAC_C_COMPUTED_GOTO
 PGAC_STRUCT_TIMEZONE
 PGAC_UNION_SEMUN
 AC_CHECK_TYPES(socklen_t, [], [], [#include <sys/socket.h>])
-PGAC_STRUCT_SOCKADDR_UN
 PGAC_STRUCT_SOCKADDR_STORAGE
 PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 PGAC_STRUCT_ADDRINFO

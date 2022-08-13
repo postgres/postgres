@@ -17,10 +17,8 @@
 #define PQCOMM_H
 
 #include <sys/socket.h>
-#include <netdb.h>
-#ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
-#endif
+#include <netdb.h>
 #include <netinet/in.h>
 
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE

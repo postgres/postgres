@@ -76,20 +76,6 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 #endif])])# PGAC_UNION_SEMUN
 
 
-# PGAC_STRUCT_SOCKADDR_UN
-# -----------------------
-# If `struct sockaddr_un' exists, define HAVE_STRUCT_SOCKADDR_UN.
-# If it is missing then one could define it.
-# (Requires test for <sys/un.h>!)
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
-[AC_CHECK_TYPES([struct sockaddr_un], [], [],
-[#include <sys/types.h>
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-])])# PGAC_STRUCT_SOCKADDR_UN
-
-
 # PGAC_STRUCT_SOCKADDR_STORAGE
 # ----------------------------
 # If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE.
