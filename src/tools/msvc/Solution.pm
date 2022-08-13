@@ -375,7 +375,6 @@ sub GenerateFiles
 		HAVE_SYS_STAT_H                          => 1,
 		HAVE_SYS_TYPES_H                         => 1,
 		HAVE_SYS_UCRED_H                         => undef,
-		HAVE_SYS_UIO_H                           => undef,
 		HAVE_SYS_UN_H                            => undef,
 		HAVE_TERMIOS_H                           => undef,
 		HAVE_TYPEOF                              => undef,

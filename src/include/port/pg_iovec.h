@@ -13,27 +13,23 @@
 #ifndef PG_IOVEC_H
 #define PG_IOVEC_H
 
+#ifndef WIN32
+
 #include <limits.h>
-
-#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
-#endif
 
-/* If <sys/uio.h> is missing, define our own POSIX-compatible iovec struct. */
-#ifndef HAVE_SYS_UIO_H
+#else
+
+/* POSIX requires at least 16 as a maximum iovcnt. */
+#define IOV_MAX 16
+
+/* Define our own POSIX-compatible iovec struct. */
 struct iovec
 {
 	void	   *iov_base;
 	size_t		iov_len;
 };
-#endif
 
-/*
- * If <limits.h> didn't define IOV_MAX, define our own.  POSIX requires at
- * least 16.
- */
-#ifndef IOV_MAX
-#define IOV_MAX 16
 #endif
 
 /* Define a reasonable maximum that is safe to use on the stack. */

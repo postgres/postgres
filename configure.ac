@@ -1467,7 +1467,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/signalfd.h
 	sys/sockio.h
 	sys/ucred.h
-	sys/uio.h
 	sys/un.h
 	termios.h
 	ucred.h
