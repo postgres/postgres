@@ -19,15 +19,12 @@
 #include "postgres_fe.h"
 
 #include <ctype.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
-
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
 
 #include "common/logging.h"
 #include "common/restricted_token.h"

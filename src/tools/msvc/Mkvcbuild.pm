@@ -100,7 +100,7 @@ sub mkvcbuild
 
 	our @pgportfiles = qw(
 	  chklocale.c explicit_bzero.c
-	  getpeereid.c getrusage.c inet_aton.c
+	  getpeereid.c inet_aton.c
 	  getaddrinfo.c inet_net_ntop.c kill.c open.c
 	  snprintf.c strlcat.c strlcpy.c dirmod.c noblock.c path.c
 	  dirent.c getopt.c getopt_long.c
@@ -111,6 +111,7 @@ sub mkvcbuild
 	  win32dlopen.c
 	  win32env.c win32error.c
 	  win32fdatasync.c
+	  win32getrusage.c
 	  win32gettimeofday.c
 	  win32link.c
 	  win32pread.c

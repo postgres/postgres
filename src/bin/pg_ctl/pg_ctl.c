@@ -14,14 +14,12 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-#ifdef HAVE_SYS_RESOURCE_H
-#include <sys/time.h>
-#include <sys/resource.h>
-#endif
 
 #include "catalog/pg_control.h"
 #include "common/controldata_utils.h"

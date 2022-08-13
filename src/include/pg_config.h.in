@@ -505,9 +505,6 @@
 /* Define to 1 if you have the <sys/procctl.h> header file. */
 #undef HAVE_SYS_PROCCTL_H
 
-/* Define to 1 if you have the <sys/resource.h> header file. */
-#undef HAVE_SYS_RESOURCE_H
-
 /* Define to 1 if you have the <sys/signalfd.h> header file. */
 #undef HAVE_SYS_SIGNALFD_H
 

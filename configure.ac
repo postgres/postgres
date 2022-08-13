@@ -1459,7 +1459,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/personality.h
 	sys/prctl.h
 	sys/procctl.h
-	sys/resource.h
 	sys/signalfd.h
 	sys/sockio.h
 	sys/ucred.h
@@ -1897,7 +1896,6 @@ fi
 if test "$PORTNAME" = "win32"; then
   AC_CHECK_FUNCS(_configthreadlocale)
   AC_LIBOBJ(dirmod)
-  AC_LIBOBJ(getrusage)
   AC_LIBOBJ(kill)
   AC_LIBOBJ(open)
   AC_LIBOBJ(system)
@@ -1905,6 +1903,7 @@ if test "$PORTNAME" = "win32"; then
   AC_LIBOBJ(win32env)
   AC_LIBOBJ(win32error)
   AC_LIBOBJ(win32fdatasync)
+  AC_LIBOBJ(win32getrusage)
   AC_LIBOBJ(win32link)
   AC_LIBOBJ(win32ntdll)
   AC_LIBOBJ(win32pread)

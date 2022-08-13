@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * getrusage.c
+ * win32getrusage.c
  *	  get information about resource utilisation
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
@@ -8,19 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  src/port/getrusage.c
+ *	  src/port/win32getrusage.c
  *
  *-------------------------------------------------------------------------
  */
 
 #include "c.h"
 
-#include "rusagestub.h"
-
-/*
- * This code works on Windows, which is the only supported platform without a
- * native version of getrusage().
- */
+#include <sys/resource.h>
 
 int
 getrusage(int who, struct rusage *rusage)

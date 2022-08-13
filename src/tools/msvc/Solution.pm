@@ -364,7 +364,6 @@ sub GenerateFiles
 		HAVE_SYS_PERSONALITY_H                   => undef,
 		HAVE_SYS_PRCTL_H                         => undef,
 		HAVE_SYS_PROCCTL_H                       => undef,
-		HAVE_SYS_RESOURCE_H                      => undef,
 		HAVE_SYS_SIGNALFD_H                      => undef,
 		HAVE_SYS_SOCKIO_H                        => undef,
 		HAVE_SYS_STAT_H                          => 1,

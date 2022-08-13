@@ -23,16 +23,10 @@
 #include <limits.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/time.h>
-#include <sys/resource.h>
-#endif
-
-#ifdef WIN32
-#include "rusagestub.h"
-#endif
 
 #include "access/parallel.h"
 #include "access/printtup.h"
@@ -4860,7 +4854,7 @@ ShowUsage(const char *title)
 	 * The following rusage fields are not defined by POSIX, but they're
 	 * present on all current Unix-like systems so we use them without any
 	 * special checks.  Some of these could be provided in our Windows
-	 * emulation in src/port/getrusage.c with more work.
+	 * emulation in src/port/win32getrusage.c with more work.
 	 */
 	appendStringInfo(&str,
 					 "!\t%ld kB max resident size\n",

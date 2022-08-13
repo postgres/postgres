@@ -71,6 +71,7 @@ do
 
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
+	test "$f" = src/include/port/win32/sys/resource.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
@@ -89,10 +90,6 @@ do
 	test "$f" = src/include/port/atomics/generic-gcc.h && continue
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
 	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
-
-	# rusagestub.h is also platform-specific, and will be included
-	# by utils/pg_rusage.h if necessary.
-	test "$f" = src/include/rusagestub.h && continue
 
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue
