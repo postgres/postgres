@@ -349,7 +349,6 @@ sub GenerateFiles
 		HAVE_STRUCT_CMSGCRED                     => undef,
 		HAVE_STRUCT_OPTION                       => undef,
 		HAVE_STRUCT_SOCKADDR_SA_LEN              => undef,
-		HAVE_STRUCT_SOCKADDR_STORAGE             => 1,
 		HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY   => 1,
 		HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN      => undef,
 		HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY => undef,

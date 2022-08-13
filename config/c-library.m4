@@ -73,23 +73,11 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 ])])# PGAC_UNION_SEMUN
 
 
-# PGAC_STRUCT_SOCKADDR_STORAGE
-# ----------------------------
-# If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE.
-# If it is missing then one could define it.
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
-[AC_CHECK_TYPES([struct sockaddr_storage], [], [],
-[#include <sys/types.h>
-#include <sys/socket.h>
-])])# PGAC_STRUCT_SOCKADDR_STORAGE
-
 # PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
 # --------------------------------------
 # Check the members of `struct sockaddr_storage'.  We need to know about
 # ss_family and ss_len.  (Some platforms follow RFC 2553 and call them
-# __ss_family and __ss_len.)  We also check struct sockaddr's sa_len;
-# if we have to define our own `struct sockaddr_storage', this tells us
-# whether we need to provide an ss_len field.
+# __ss_family and __ss_len.)  We also check struct sockaddr's sa_len.
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
 [AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
 		   struct sockaddr_storage.__ss_family,

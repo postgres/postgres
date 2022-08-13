@@ -21,8 +21,6 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#ifdef HAVE_STRUCT_SOCKADDR_STORAGE
-
 #ifndef HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY
 #ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
 #define ss_family __ss_family
@@ -35,27 +33,6 @@
 #define ss_len __ss_len
 #define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
 #endif
-#else							/* !HAVE_STRUCT_SOCKADDR_STORAGE */
-
-/* Define a struct sockaddr_storage if we don't have one. */
-
-struct sockaddr_storage
-{
-	union
-	{
-		struct sockaddr sa;		/* get the system-dependent fields */
-		int64		ss_align;	/* ensures struct is properly aligned */
-		char		ss_pad[128];	/* ensures struct has desired size */
-	}			ss_stuff;
-};
-
-#define ss_family	ss_stuff.sa.sa_family
-/* It should have an ss_len field if sockaddr has sa_len. */
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-#define ss_len		ss_stuff.sa.sa_len
-#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
-#endif
-#endif							/* HAVE_STRUCT_SOCKADDR_STORAGE */
 
 typedef struct
 {
