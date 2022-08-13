@@ -14,11 +14,9 @@
 
 #include <dirent.h>
 #include <limits.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"

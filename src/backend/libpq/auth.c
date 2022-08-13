@@ -16,13 +16,11 @@
 #include "postgres.h"
 
 #include <sys/param.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pwd.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "commands/user.h"
 #include "common/ip.h"

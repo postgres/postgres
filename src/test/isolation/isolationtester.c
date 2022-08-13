@@ -7,10 +7,8 @@
 
 #include "postgres_fe.h"
 
-#include <sys/time.h>
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
+#include <sys/time.h>
 
 #include "datatype/timestamp.h"
 #include "isolationtester.h"

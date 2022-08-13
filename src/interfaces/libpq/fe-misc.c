@@ -37,14 +37,12 @@
 #include "win32.h"
 #else
 #include <unistd.h>
+#include <sys/select.h>
 #include <sys/time.h>
 #endif
 
 #ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
 #endif
 
 #include "libpq-fe.h"

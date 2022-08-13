@@ -16,13 +16,11 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <limits.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <time.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif

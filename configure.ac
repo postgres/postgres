@@ -1461,7 +1461,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	sys/prctl.h
 	sys/procctl.h
 	sys/resource.h
-	sys/select.h
 	sys/sem.h
 	sys/shm.h
 	sys/signalfd.h

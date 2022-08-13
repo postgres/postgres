@@ -15,10 +15,8 @@
 
 #include "postgres_fe.h"
 
-#include <sys/time.h>
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
+#include <sys/time.h>
 
 #include "catalog/pg_type_d.h"
 #include "common/fe_memutils.h"

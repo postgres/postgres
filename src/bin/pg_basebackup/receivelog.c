@@ -14,11 +14,9 @@
 
 #include "postgres_fe.h"
 
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "access/xlog_internal.h"
 #include "common/file_utils.h"
