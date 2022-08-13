@@ -53,13 +53,9 @@
 #include <unistd.h>
 #ifndef WIN32
 #include <sys/mman.h>
-#endif
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
+#include <sys/stat.h>
 #endif
 
 #include "common/file_perm.h"

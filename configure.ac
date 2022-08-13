@@ -1456,13 +1456,10 @@ AC_CHECK_HEADERS(m4_normalize([
 	netinet/tcp.h
 	sys/epoll.h
 	sys/event.h
-	sys/ipc.h
 	sys/personality.h
 	sys/prctl.h
 	sys/procctl.h
 	sys/resource.h
-	sys/sem.h
-	sys/shm.h
 	sys/signalfd.h
 	sys/sockio.h
 	sys/ucred.h

@@ -496,9 +496,6 @@
 /* Define to 1 if you have the <sys/event.h> header file. */
 #undef HAVE_SYS_EVENT_H
 
-/* Define to 1 if you have the <sys/ipc.h> header file. */
-#undef HAVE_SYS_IPC_H
-
 /* Define to 1 if you have the <sys/personality.h> header file. */
 #undef HAVE_SYS_PERSONALITY_H
 
@@ -510,12 +507,6 @@
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
-
-/* Define to 1 if you have the <sys/sem.h> header file. */
-#undef HAVE_SYS_SEM_H
-
-/* Define to 1 if you have the <sys/shm.h> header file. */
-#undef HAVE_SYS_SHM_H
 
 /* Define to 1 if you have the <sys/signalfd.h> header file. */
 #undef HAVE_SYS_SIGNALFD_H

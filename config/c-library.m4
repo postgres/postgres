@@ -68,12 +68,9 @@ fi
 AC_DEFUN([PGAC_UNION_SEMUN],
 [AC_CHECK_TYPES([union semun], [], [],
 [#include <sys/types.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
-#endif])])# PGAC_UNION_SEMUN
+])])# PGAC_UNION_SEMUN
 
 
 # PGAC_STRUCT_SOCKADDR_STORAGE
