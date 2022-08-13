@@ -228,32 +228,6 @@
 #define DEFAULT_EVENT_SOURCE  "PostgreSQL"
 
 /*
- * On PPC machines, decide whether to use the mutex hint bit in LWARX
- * instructions.  Setting the hint bit will slightly improve spinlock
- * performance on POWER6 and later machines, but does nothing before that,
- * and will result in illegal-instruction failures on some pre-POWER4
- * machines.  By default we use the hint bit when building for 64-bit PPC,
- * which should be safe in nearly all cases.  You might want to override
- * this if you are building 32-bit code for a known-recent PPC machine.
- */
-#ifdef HAVE_PPC_LWARX_MUTEX_HINT	/* must have assembler support in any case */
-#if defined(__ppc64__) || defined(__powerpc64__)
-#define USE_PPC_LWARX_MUTEX_HINT
-#endif
-#endif
-
-/*
- * On PPC machines, decide whether to use LWSYNC instructions in place of
- * ISYNC and SYNC.  This provides slightly better performance, but will
- * result in illegal-instruction failures on some pre-POWER4 machines.
- * By default we use LWSYNC when building for 64-bit PPC, which should be
- * safe in nearly all cases.
- */
-#if defined(__ppc64__) || defined(__powerpc64__)
-#define USE_PPC_LWSYNC
-#endif
-
-/*
  * Assumed cache line size. This doesn't affect correctness, but can be used
  * for low-level optimizations. Currently, this is used to pad some data
  * structures in xlog.c, to ensure that highly-contended fields are on

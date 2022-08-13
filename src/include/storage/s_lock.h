@@ -435,7 +435,8 @@ typedef unsigned int slock_t;
  *
  * NOTE: per the Enhanced PowerPC Architecture manual, v1.0 dated 7-May-2002,
  * an isync is a sufficient synchronization barrier after a lwarx/stwcx loop.
- * On newer machines, we can use lwsync instead for better performance.
+ * But if the spinlock is in ordinary memory, we can use lwsync instead for
+ * better performance.
  *
  * Ordinarily, we'd code the branches here using GNU-style local symbols, that
  * is "1f" referencing "1:" and so on.  But some people run gcc on AIX with
@@ -450,23 +451,15 @@ tas(volatile slock_t *lock)
 	int _res;
 
 	__asm__ __volatile__(
-#ifdef USE_PPC_LWARX_MUTEX_HINT
 "	lwarx   %0,0,%3,1	\n"
-#else
-"	lwarx   %0,0,%3		\n"
-#endif
 "	cmpwi   %0,0		\n"
 "	bne     $+16		\n"		/* branch to li %1,1 */
 "	addi    %0,%0,1		\n"
 "	stwcx.  %0,0,%3		\n"
-"	beq     $+12		\n"		/* branch to lwsync/isync */
+"	beq     $+12		\n"		/* branch to lwsync */
 "	li      %1,1		\n"
 "	b       $+12		\n"		/* branch to end of asm sequence */
-#ifdef USE_PPC_LWSYNC
 "	lwsync				\n"
-#else
-"	isync				\n"
-#endif
 "	li      %1,0		\n"
 
 :	"=&b"(_t), "=r"(_res), "+m"(*lock)
@@ -477,23 +470,14 @@ tas(volatile slock_t *lock)
 
 /*
  * PowerPC S_UNLOCK is almost standard but requires a "sync" instruction.
- * On newer machines, we can use lwsync instead for better performance.
+ * But we can use lwsync instead for better performance.
  */
-#ifdef USE_PPC_LWSYNC
 #define S_UNLOCK(lock)	\
 do \
 { \
 	__asm__ __volatile__ ("	lwsync \n" ::: "memory"); \
 	*((volatile slock_t *) (lock)) = 0; \
 } while (0)
-#else
-#define S_UNLOCK(lock)	\
-do \
-{ \
-	__asm__ __volatile__ ("	sync \n" ::: "memory"); \
-	*((volatile slock_t *) (lock)) = 0; \
-} while (0)
-#endif /* USE_PPC_LWSYNC */
 
 #endif /* powerpc */
 
