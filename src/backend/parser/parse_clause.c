@@ -1054,6 +1054,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 						ParseNamespaceItem **top_nsitem,
 						List **namespace)
 {
+	/* Guard against stack overflow due to overly deep subtree */
+	check_stack_depth();
+
 	if (IsA(n, RangeVar))
 	{
 		/* Plain relation reference, or perhaps a CTE reference */
