@@ -1214,7 +1214,7 @@ LIBS="$LIBS $PTHREAD_LIBS"
 AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([
 pthread.h not found;  use --disable-thread-safety to disable thread safety])])
 
-AC_CHECK_FUNCS([strerror_r gethostbyname_r])
+AC_CHECK_FUNCS([strerror_r])
 
 # Do test here with the proper thread flags
 PGAC_FUNC_STRERROR_R_INT
@@ -1260,7 +1260,6 @@ AC_SEARCH_LIBS(shmget, cygipc)
 AC_SEARCH_LIBS(backtrace_symbols, execinfo)
 
 if test "$enable_thread_safety" = yes; then
-  AC_SEARCH_LIBS(gethostbyname_r, nsl)
   AC_SEARCH_LIBS(pthread_barrier_wait, pthread)
 fi
 

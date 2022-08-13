@@ -256,7 +256,6 @@ sub GenerateFiles
 		HAVE_GCC__SYNC_INT32_CAS                    => undef,
 		HAVE_GCC__SYNC_INT32_TAS                    => undef,
 		HAVE_GCC__SYNC_INT64_CAS                    => undef,
-		HAVE_GETHOSTBYNAME_R                        => undef,
 		HAVE_GETIFADDRS                             => undef,
 		HAVE_GETOPT                                 => undef,
 		HAVE_GETOPT_H                               => undef,

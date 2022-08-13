@@ -178,9 +178,6 @@
    */
 #undef HAVE_GCC__SYNC_INT64_CAS
 
-/* Define to 1 if you have the `gethostbyname_r' function. */
-#undef HAVE_GETHOSTBYNAME_R
-
 /* Define to 1 if you have the `getifaddrs' function. */
 #undef HAVE_GETIFADDRS
 
