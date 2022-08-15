@@ -545,61 +545,58 @@ _outA_Expr(StringInfo str, const A_Expr *node)
 	switch (node->kind)
 	{
 		case AEXPR_OP:
-			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_OP_ANY:
-			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);
-			appendStringInfoString(str, " ANY ");
+			appendStringInfoString(str, " ANY");
 			break;
 		case AEXPR_OP_ALL:
-			appendStringInfoChar(str, ' ');
 			WRITE_NODE_FIELD(name);
-			appendStringInfoString(str, " ALL ");
+			appendStringInfoString(str, " ALL");
 			break;
 		case AEXPR_DISTINCT:
-			appendStringInfoString(str, " DISTINCT ");
+			appendStringInfoString(str, " DISTINCT");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_NOT_DISTINCT:
-			appendStringInfoString(str, " NOT_DISTINCT ");
+			appendStringInfoString(str, " NOT_DISTINCT");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_NULLIF:
-			appendStringInfoString(str, " NULLIF ");
+			appendStringInfoString(str, " NULLIF");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_IN:
-			appendStringInfoString(str, " IN ");
+			appendStringInfoString(str, " IN");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_LIKE:
-			appendStringInfoString(str, " LIKE ");
+			appendStringInfoString(str, " LIKE");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_ILIKE:
-			appendStringInfoString(str, " ILIKE ");
+			appendStringInfoString(str, " ILIKE");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_SIMILAR:
-			appendStringInfoString(str, " SIMILAR ");
+			appendStringInfoString(str, " SIMILAR");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_BETWEEN:
-			appendStringInfoString(str, " BETWEEN ");
+			appendStringInfoString(str, " BETWEEN");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_NOT_BETWEEN:
-			appendStringInfoString(str, " NOT_BETWEEN ");
+			appendStringInfoString(str, " NOT_BETWEEN");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_BETWEEN_SYM:
-			appendStringInfoString(str, " BETWEEN_SYM ");
+			appendStringInfoString(str, " BETWEEN_SYM");
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_NOT_BETWEEN_SYM:
-			appendStringInfoString(str, " NOT_BETWEEN_SYM ");
+			appendStringInfoString(str, " NOT_BETWEEN_SYM");
 			WRITE_NODE_FIELD(name);
 			break;
 		default:
