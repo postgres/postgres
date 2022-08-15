@@ -48,6 +48,8 @@ tmp=`mktemp -d /tmp/$me.XXXXXX`
 
 trap 'rm -rf $tmp' 0 1 2 3 15
 
+exit_status=0
+
 # Scan all of src/ and contrib/ for header files.
 for f in `cd "$srcdir" && find src contrib -name '*.h' -print`
 do
@@ -150,9 +152,13 @@ do
 	esac
 
 	# Run the test.
-	${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
+	if ! ${CC:-gcc} $CPPFLAGS $CFLAGS -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
 		$EXTRAINCLUDES $EXTRAFLAGS -c $tmp/test.c -o $tmp/test.o
-
+	then
+		exit_status=1
+	fi
 done
+
+exit $exit_status
