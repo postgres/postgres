@@ -3829,6 +3829,8 @@ PQsetnonblocking(PGconn *conn, int arg)
 int
 PQisnonblocking(const PGconn *conn)
 {
+	if (!conn || conn->status == CONNECTION_BAD)
+		return false;
 	return pqIsnonblocking(conn);
 }
 
@@ -3848,6 +3850,8 @@ PQisthreadsafe(void)
 int
 PQflush(PGconn *conn)
 {
+	if (!conn || conn->status == CONNECTION_BAD)
+		return -1;
 	return pqFlush(conn);
 }
 
