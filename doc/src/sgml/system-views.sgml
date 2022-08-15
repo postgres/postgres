@@ -3485,7 +3485,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>size</structfield> <type>int8</type>
       </para>
       <para>
-       Size of the allocation
+       Size of the allocation in bytes
       </para></entry>
      </row>
 
@@ -3494,7 +3494,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
        <structfield>allocated_size</structfield> <type>int8</type>
       </para>
       <para>
-       Size of the allocation including padding. For anonymous
+       Size of the allocation in bytes including padding. For anonymous
        allocations, no information about padding is available, so the
        <literal>size</literal> and <literal>allocated_size</literal> columns
        will always be equal. Padding is not meaningful for free memory, so
