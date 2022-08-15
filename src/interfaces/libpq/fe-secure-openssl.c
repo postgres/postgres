@@ -1938,7 +1938,7 @@ err:
 int
 PQdefaultSSLKeyPassHook_OpenSSL(char *buf, int size, PGconn *conn)
 {
-	if (conn->sslpassword)
+	if (conn && conn->sslpassword)
 	{
 		if (strlen(conn->sslpassword) + 1 > size)
 			fprintf(stderr, libpq_gettext("WARNING: sslpassword truncated\n"));
