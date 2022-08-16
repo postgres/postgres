@@ -569,6 +569,13 @@ CheckCmdReplicaIdentity(Relation rel, CmdType cmd)
 {
 	PublicationDesc pubdesc;
 
+	/*
+	 * Skip checking the replica identity for partitioned tables, because the
+	 * operations are actually performed on the leaf partitions.
+	 */
+	if (rel->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
+		return;
+
 	/* We only need to do checks for UPDATE and DELETE. */
 	if (cmd != CMD_UPDATE && cmd != CMD_DELETE)
 		return;
