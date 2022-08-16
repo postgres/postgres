@@ -28,7 +28,7 @@ logicalmsg_desc(StringInfo buf, XLogReaderState *record)
 		char	   *message = xlrec->message + xlrec->prefix_size;
 		char	   *sep = "";
 
-		Assert(prefix[xlrec->prefix_size] != '\0');
+		Assert(prefix[xlrec->prefix_size - 1] == '\0');
 
 		appendStringInfo(buf, "%s, prefix \"%s\"; payload (%zu bytes): ",
 						 xlrec->transactional ? "transactional" : "non-transactional",
