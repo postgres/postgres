@@ -1388,15 +1388,6 @@ postgresql://%2Fvar%2Flib%2Fpostgresql/dbname
       </listitem>
      </varlistentry>
 
-     <varlistentry id="libpq-connect-tty" xreflabel="tty">
-      <term><literal>tty</literal></term>
-      <listitem>
-      <para>
-       Ignored (formerly, this specified where to send server debug output).
-      </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="libpq-connect-replication" xreflabel="replication">
       <term><literal>replication</literal></term>
       <listitem>
