@@ -119,6 +119,8 @@ UPDATE testpub_parted1 SET a = 1;
 -- only parent is listed as being in publication, not the partition
 ALTER PUBLICATION testpub_forparted ADD TABLE testpub_parted;
 \dRp+ testpub_forparted
+-- works despite missing REPLICA IDENTITY, because no actual update happened
+UPDATE testpub_parted SET a = 1 WHERE false;
 -- should now fail, because parent's publication replicates updates
 UPDATE testpub_parted1 SET a = 1;
 ALTER TABLE testpub_parted DETACH PARTITION testpub_parted1;
