@@ -288,7 +288,7 @@ SELECT * FROM <replaceable>name</replaceable>;
    session A might reserve values 1..10 and return
    <function>nextval</function>=1, then session B might reserve values
    11..20 and return <function>nextval</function>=11 before session A
-   has generated <literal>nextval</literal>=2.  Thus, with a
+   has generated <function>nextval</function>=2.  Thus, with a
    <replaceable class="parameter">cache</replaceable> setting of one
    it is safe to assume that <function>nextval</function> values are generated
    sequentially; with a <replaceable
