@@ -47,11 +47,13 @@
 
 #include "dumputils.h"
 #include "fe_utils/option_utils.h"
+#include "filter.h"
 #include "getopt_long.h"
 #include "parallel.h"
 #include "pg_backup_utils.h"
 
 static void usage(const char *progname);
+static void getFiltersFromFile(const char *filename, RestoreOptions *dopt);
 
 int
 main(int argc, char **argv)
@@ -123,6 +125,7 @@ main(int argc, char **argv)
 		{"no-publications", no_argument, &no_publications, 1},
 		{"no-security-labels", no_argument, &no_security_labels, 1},
 		{"no-subscriptions", no_argument, &no_subscriptions, 1},
+		{"filter", required_argument, NULL, 4},
 
 		{NULL, 0, NULL, 0}
 	};
@@ -284,6 +287,10 @@ main(int argc, char **argv)
 
 			case 3:				/* section */
 				set_dump_section(optarg, &(opts->dumpSections));
+				break;
+
+			case 4:
+				getFiltersFromFile(optarg, opts);
 				break;
 
 			default:
@@ -463,6 +470,7 @@ usage(const char *progname)
 	printf(_("  -1, --single-transaction     restore as a single transaction\n"));
 	printf(_("  --disable-triggers           disable triggers during data-only restore\n"));
 	printf(_("  --enable-row-security        enable row security\n"));
+	printf(_("  --filter=FILE                restore objects based on filter expressions\n"));
 	printf(_("  --if-exists                  use IF EXISTS when dropping objects\n"));
 	printf(_("  --no-comments                do not restore comments\n"));
 	printf(_("  --no-data-for-failed-tables  do not restore data of tables that could not be\n"
@@ -493,4 +501,110 @@ usage(const char *progname)
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <%s>.\n"), PACKAGE_BUGREPORT);
 	printf(_("%s home page: <%s>\n"), PACKAGE_NAME, PACKAGE_URL);
+}
+
+/*
+ * getFiltersFromFile - retrieve object identifer patterns from file
+ *
+ * Parse the specified filter file for include and exclude patterns, and add
+ * them to the relevant lists.  If the filename is "-" then filters will be
+ * read from STDIN rather than a file.
+ */
+static void
+getFiltersFromFile(const char *filename, RestoreOptions *opts)
+{
+	FilterStateData fstate;
+	bool		is_include;
+	char	   *objname;
+	FilterObjectType objtype;
+
+	if (!filter_init(&fstate, filename))
+		exit_nicely(1);
+
+	while (filter_read_item(&fstate, &is_include, &objname, &objtype))
+	{
+		/* ignore comments or empty lines */
+		if (objtype == FILTER_OBJECT_TYPE_NONE)
+			continue;
+
+		if (objtype == FILTER_OBJECT_TYPE_FUNCTION)
+		{
+			if (is_include)
+			{
+				opts->selTypes = 1;
+				opts->selFunction = 1;
+				simple_string_list_append(&opts->functionNames, objname);
+			}
+			else
+			{
+				log_invalid_filter_format(&fstate,
+										   "exclude filter is not allowed for this type of object");
+				break;
+			}
+		}
+		else if (objtype == FILTER_OBJECT_TYPE_INDEX)
+		{
+			if (is_include)
+			{
+				opts->selTypes = 1;
+				opts->selIndex = 1;
+				simple_string_list_append(&opts->indexNames, objname);
+			}
+			else
+			{
+				log_invalid_filter_format(&fstate,
+										   "exclude filter is not allowed for this type of object");
+				break;
+			}
+		}
+		else if (objtype == FILTER_OBJECT_TYPE_SCHEMA)
+		{
+			if (is_include)
+				simple_string_list_append(&opts->schemaNames, objname);
+			else
+				simple_string_list_append(&opts->schemaExcludeNames, objname);
+		}
+		else if (objtype == FILTER_OBJECT_TYPE_TABLE)
+		{
+			if (is_include)
+			{
+				opts->selTypes = 1;
+				opts->selTable = 1;
+				simple_string_list_append(&opts->tableNames, objname);
+			}
+			else
+			{
+				log_invalid_filter_format(&fstate,
+										   "exclude filter is not allowed for this type of object");
+				break;
+			}
+		}
+		else if (objtype == FILTER_OBJECT_TYPE_TRIGGER)
+		{
+			if (is_include)
+			{
+				opts->selTypes = 1;
+				opts->selTrigger = 1;
+				simple_string_list_append(&opts->triggerNames, optarg);
+			}
+			else
+			{
+				log_invalid_filter_format(&fstate,
+										   "exclude filter is not allowed for this type of object");
+				break;
+			}
+		}
+		else
+		{
+			log_unsupported_filter_object_type(&fstate, "pg_restore", objtype);
+			break;
+		}
+
+		if (objname)
+			free(objname);
+	}
+
+	filter_free_sources(&fstate);
+	if (fstate.is_error)
+		exit_nicely(1);
 }

@@ -1,0 +1,28 @@
+{
+    "files.associations": {
+        "file_utils.h": "c",
+        "math.h": "c",
+        "postgres_fe.h": "c",
+        "masking.h": "c",
+        "stdio.h": "c",
+        "dumputils.h": "c",
+        "pg_backup.h": "c",
+        "simple_list.h": "c",
+        "string_utils.h": "c",
+        "block.h": "c",
+        "parallel.h": "c",
+        "unistd.h": "c",
+        "limits.h": "c",
+        "attnum.h": "c",
+        "libpq-fs.h": "c",
+        "pg_dump.h": "c",
+        "option_utils.h": "c",
+        "logging.h": "c",
+        "c.h": "c",
+        "stringinfo.h": "c",
+        "fe_memutils.h": "c",
+        "string.h": "c",
+        "file.h": "c",
+        "fcntl.h": "c"
+    }
+}

@@ -1,0 +1,1 @@
+{"buildTargets":["all","check","check-world","clean","dist","distcheck","distclean","install","install-world","installcheck","installcheck-parallel","installcheck-world","installdirs","maintainer-clean","uninstall","world"],"launchTargets":[],"customConfigurationProvider":{"workspaceBrowse":{"browsePath":[],"compilerArgs":[]},"fileIndex":[]}}

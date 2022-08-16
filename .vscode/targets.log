@@ -1,0 +1,856 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 4.2.1
+# Built for x86_64-pc-linux-gnu
+# Copyright (C) 1988-2016 Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+
+# Make data base, printed on Tue Aug  9 16:35:50 2022
+
+# Variables
+
+# 'override' directive
+GNUMAKEFLAGS := 
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# environment
+PAPERSIZE = a4
+# environment
+DESKTOP_SESSION = ubuntu
+# default
+.SHELLFLAGS := -c
+# environment
+XDG_SESSION_CLASS = user
+# environment
+XDG_SESSION_TYPE = x11
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# environment
+IM_CONFIG_PHASE = 1
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# environment
+XAUTHORITY = /run/user/1000/gdm/Xauthority
+# environment
+GDMSESSION = ubuntu
+# environment
+XMODIFIERS = @im=ibus
+# makefile
+CURDIR := /home/vika/Desktop/workspace/code4all/vs/postgres
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en-us","availableLanguages":{},"_languagePackSupport":true}
+# environment
+_ = /usr/share/code/code
+# environment
+JOURNAL_STREAM = 8:54404
+# environment
+XDG_CONFIG_DIRS = /etc/xdg/xdg-ubuntu:/etc/xdg
+# makefile (from 'Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# automatic
+@F = $(notdir $@)
+# environment
+GIO_LAUNCHED_DESKTOP_FILE = /usr/share/applications/code.desktop
+# environment
+USERNAME = vika
+# environment
+MAKELEVEL := 0
+# environment
+XDG_DATA_DIRS = /usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop
+# environment
+DBUS_SESSION_BUS_ADDRESS = unix:path=/run/user/1000/bus
+# environment
+MANAGERPID = 2068
+# environment
+LESSOPEN = | /usr/bin/lesspipe %s
+# environment
+LC_NAME = en_GB.UTF-8
+# environment
+VSCODE_CWD = /home/vika
+# default
+MAKE_HOST := x86_64-pc-linux-gnu
+# environment
+PATH = /home/vika/.local/bin:/home/vika/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+# environment
+GPG_AGENT_INFO = /run/user/1000/gnupg/S.gpg-agent:0:1
+# environment
+GJS_DEBUG_OUTPUT = stderr
+# environment
+SESSION_MANAGER = local/vika-Legion-Y545:@/tmp/.ICE-unix/2317,unix/vika-Legion-Y545:/tmp/.ICE-unix/2317
+# environment
+XDG_RUNTIME_DIR = /run/user/1000
+# environment
+XDG_MENU_PREFIX = gnome-
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# environment
+INVOCATION_ID = a390ea9edff34663bfec8adc5a415e8d
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver output-sync check-symlink load
+# environment
+LS_COLORS = 
+# environment
+XDG_SESSION_DESKTOP = ubuntu
+# environment
+SSH_AUTH_SOCK = /run/user/1000/keyring/ssh
+# environment
+GIO_LAUNCHED_DESKTOP_FILE_PID = 9561
+# automatic
+%F = $(notdir $%)
+# environment
+DISPLAY = :1
+# environment
+PWD = /home/vika/Desktop/workspace/code4all/vs/postgres
+# default
+.LOADED := 
+# environment
+SSH_AGENT_PID = 2282
+# environment
+ORIGINAL_XDG_CURRENT_DESKTOP = ubuntu:GNOME
+# environment
+GTK_MODULES = gail:atk-bridge
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+HOME = /home/vika
+# environment
+LESSCLOSE = /usr/bin/lesspipe %s %s
+# environment
+VSCODE_CODE_CACHE_PATH = /home/vika/.config/Code/CachedData/b06ae3b2d2dbfe28bca3134cc6be65935cdfea6a
+# environment
+LOGNAME = vika
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = 1
+# automatic
++F = $(notdir $+)
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# environment
+GNOME_DESKTOP_SESSION_ID = this-is-deprecated
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+LC_TIME = en_GB.UTF-8
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+QT_IM_MODULE = ibus
+# environment
+SHLVL = 0
+# environment
+GNOME_SHELL_SESSION_MODE = ubuntu
+# default
+MAKE_VERSION := 4.2.1
+# environment
+USER = vika
+# environment
+LC_MONETARY = en_GB.UTF-8
+# makefile
+.DEFAULT_GOAL := all
+# environment
+XDG_CURRENT_DESKTOP = Unity
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+LC_TELEPHONE = en_GB.UTF-8
+# default
+MAKE_COMMAND := make
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# environment
+VSCODE_IPC_HOOK = /run/user/1000/vscode-5b26ddc0-1.69.1-main.sock
+# makefile
+MAKEFLAGS = pqrR
+# environment
+MFLAGS = -pqrR
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+GDK_BACKEND = x11
+# environment
+LC_PAPER = en_GB.UTF-8
+# environment
+QT_ACCESSIBILITY = 1
+# default
+MAKEFILES := 
+# environment
+LC_NUMERIC = en_GB.UTF-8
+# automatic
+<F = $(notdir $<)
+# environment
+LC_MEASUREMENT = en_GB.UTF-8
+# environment
+LC_ALL = C
+# environment
+GJS_DEBUG_TOPICS = JS ERROR;JS LOG
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# environment
+CHROME_DESKTOP = code-url-handler.desktop
+# environment
+WINDOWPATH = 2
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# environment
+LC_IDENTIFICATION = en_GB.UTF-8
+# default
+.RECIPEPREFIX := 
+# environment
+LC_ADDRESS = en_GB.UTF-8
+# environment
+LANG = C
+# environment
+VSCODE_PID = 9561
+# environment
+FIFTPATH = /usr/src/ton/crypto/fift/lib/:/usr/src/ton/crypto/smartcont/
+# variable set hash-table stats:
+# Load=103/1024=10%, Rehash=0, Collisions=17/131=13%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 2052, inode 9970546): 24 files, no impossibilities.
+
+# 24 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+maintainer-clean:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+all:
+#  Command line target.
+#  Implicit rule search has not been done.
+#  Implicit/static pattern stem: ''
+#  File does not exist.
+#  File has been updated.
+#  Needs to be updated (-q is set).
+# automatic
+# @ := all
+# automatic
+# % := 
+# automatic
+# * := 
+# automatic
+# + := 
+# automatic
+# | := 
+# automatic
+# < := 
+# automatic
+# ^ := 
+# automatic
+# ? := 
+# variable set hash-table stats:
+# Load=8/32=25%, Rehash=0, Collisions=1/12=8%
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+distclean:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+world:
+#  Implicit rule search has not been done.
+ 
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+uninstall:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-08-03 00:49:46.884137
+#  File has been updated.
+#  Successfully updated.
+
+installcheck-world:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+distcheck:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+installcheck:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+check-world:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+clean:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+install-world:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+dist:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+installcheck-parallel:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+check:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+installdirs:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+install:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from 'Makefile', line 19):
+	@if [ ! -f GNUmakefile ] ; then \
+	   if [ -f INSTALL ] ; then \
+	     INSTRUCTIONS="INSTALL"; \
+	   else \
+	     INSTRUCTIONS="README.git"; \
+	   fi; \
+	   echo "You need to run the 'configure' program first. See the file"; \
+	   echo "'$$INSTRUCTIONS' for installation instructions, or visit: " ; \
+	   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+	   false ; \
+	 fi
+	@IFS=':' ; \
+	 for dir in $$PATH; do \
+	   for prog in gmake gnumake make; do \
+	     if [ -f $$dir/$$prog ] && ( $$dir/$$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+	       GMAKE=$$dir/$$prog; \
+	       break 2; \
+	     fi; \
+	   done; \
+	 done; \
+	\
+	 if [ x"$${GMAKE+set}" = xset ]; then \
+	   echo "Using GNU make found at $${GMAKE}"; \
+	   unset MAKELEVEL; \
+	   $${GMAKE} $@ ; \
+	 else \
+	   echo "You must use GNU make to build PostgreSQL." ; \
+	   false; \
+	 fi
+
+# files hash-table stats:
+# Load=19/1024=2%, Rehash=0, Collisions=1/32=3%
+# VPATH Search Paths
+
+# No 'vpath' search paths.
+
+# No general ('VPATH' variable) search path.
+
+# strcache buffers: 1 (0) / strings = 44 / storage = 456 B / avg = 10 B
+# current buf: size = 8162 B / used = 456 B / count = 44 / avg = 10 B
+
+ 
+# strcache performance: lookups = 68 / hit rate = 35%
+# hash-table stats:
+# Load=44/8192=1%, Rehash=0, Collisions=1/68=1%
+# Finished Make data base on Tue Aug  9 16:35:50 2022
+
+ 

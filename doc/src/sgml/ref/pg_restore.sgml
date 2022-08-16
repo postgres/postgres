@@ -189,6 +189,31 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--filter=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify a filename from which to read patterns for objects excluded
+        or included from restore. The patterns are interpretted according to the
+        same rules as <option>--schema</option>, <option>--exclude-schema</option>,
+        <option>--function</option>, <option>--index</option>, <option>--table</option>
+        or <option>--trigger</option>.
+        To read from <literal>STDIN</literal>, use <filename>-</filename> as the
+        filename.  The <option>--filter</option> option can be specified in
+        conjunction with the above listed options for including or excluding
+        objects, and can also be specified more than once for multiple filter
+        files.
+       </para>
+
+       <para>
+        The file lists one database pattern per row, with the following format:
+<synopsis>
+{ include | exclude } { function | index | schema | table | trigger } <replaceable class="parameter">PATTERN</replaceable>
+</synopsis>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-F <replaceable class="parameter">format</replaceable></option></term>
       <term><option>--format=<replaceable class="parameter">format</replaceable></option></term>
       <listitem>

@@ -1,0 +1,33 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/vika/Desktop/workspace/code4all/vs/postgres'
+if [ ! -f GNUmakefile ] ; then \
+   if [ -f INSTALL ] ; then \
+     INSTRUCTIONS="INSTALL"; \
+   else \
+     INSTRUCTIONS="README.git"; \
+   fi; \
+   echo "You need to run the 'configure' program first. See the file"; \
+   echo "'$INSTRUCTIONS' for installation instructions, or visit: " ; \
+   echo "<https://www.postgresql.org/docs/devel/installation.html>" ; \
+   false ; \
+ fi
+IFS=':' ; \
+ for dir in $PATH; do \
+   for prog in gmake gnumake make; do \
+     if [ -f $dir/$prog ] && ( $dir/$prog -f /dev/null --version 2>/dev/null | grep GNU >/dev/null 2>&1 ) ; then \
+       GMAKE=$dir/$prog; \
+       break 2; \
+     fi; \
+   done; \
+ done; \
+\
+ if [ x"${GMAKE+set}" = xset ]; then \
+   echo "Using GNU make found at ${GMAKE}"; \
+   unset MAKELEVEL; \
+   ${GMAKE} all ; \
+ else \
+   echo "You must use GNU make to build PostgreSQL." ; \
+   false; \
+ fi
+make: Leaving directory '/home/vika/Desktop/workspace/code4all/vs/postgres'
+ 
