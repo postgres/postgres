@@ -263,7 +263,7 @@ PostgreSQL documentation
        <para>
         If <application>pg_waldump</application> is terminated by signal
         <systemitem>SIGINT</systemitem>
-        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>,
+        (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>),
         the summary of the statistics computed is displayed up to the
         termination point. This operation is not supported on
         <productname>Windows</productname>.
