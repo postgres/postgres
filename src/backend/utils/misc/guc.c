@@ -57,6 +57,7 @@
 #include "commands/variable.h"
 #include "common/string.h"
 #include "funcapi.h"
+#include "guc_internal.h"
 #include "jit/jit.h"
 #include "libpq/auth.h"
 #include "libpq/libpq.h"

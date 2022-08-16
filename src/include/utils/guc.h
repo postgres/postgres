@@ -442,16 +442,6 @@ extern void GUC_check_errcode(int sqlerrcode);
 	pre_format_elog_string(errno, TEXTDOMAIN), \
 	GUC_check_errhint_string = format_elog_string
 
-/* functions shared between guc.c and guc-file.l */
-extern int	guc_name_compare(const char *namea, const char *nameb);
-extern ConfigVariable *ProcessConfigFileInternal(GucContext context,
-												 bool applySettings, int elevel);
-extern void record_config_file_error(const char *errmsg,
-									 const char *config_file,
-									 int lineno,
-									 ConfigVariable **head_p,
-									 ConfigVariable **tail_p);
-
 /*
  * The following functions are not in guc.c, but are declared here to avoid
  * having to include guc.h in some widely used headers that it really doesn't

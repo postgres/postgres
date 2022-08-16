@@ -15,10 +15,10 @@
 #include <unistd.h>
 
 #include "common/file_utils.h"
+#include "guc_internal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
-#include "utils/guc.h"
 
 
 /*
