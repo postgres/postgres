@@ -210,15 +210,8 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 
 			if (phv->phlevelsup == 0)
 			{
-				ListCell   *lc;
-
-				foreach(lc, context->root->placeholder_list)
-				{
-					phinfo = (PlaceHolderInfo *) lfirst(lc);
-					if (phinfo->phid == phv->phid)
-						break;
-					phinfo = NULL;
-				}
+				if (phv->phid < context->root->placeholder_array_size)
+					phinfo = context->root->placeholder_array[phv->phid];
 			}
 			if (phinfo == NULL)
 			{

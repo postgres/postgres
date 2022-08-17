@@ -357,6 +357,11 @@ struct PlannerInfo
 	/* list of PlaceHolderInfos */
 	List	   *placeholder_list;
 
+	/* array of PlaceHolderInfos indexed by phid */
+	struct PlaceHolderInfo **placeholder_array pg_node_attr(read_write_ignore, array_size(placeholder_array_size));
+	/* allocated size of array */
+	int			placeholder_array_size pg_node_attr(read_write_ignore);
+
 	/* list of ForeignKeyOptInfos */
 	List	   *fkey_list;
 

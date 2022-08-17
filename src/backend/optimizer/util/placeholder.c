@@ -71,16 +71,19 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 {
 	PlaceHolderInfo *phinfo;
 	Relids		rels_used;
-	ListCell   *lc;
 
 	/* if this ever isn't true, we'd need to be able to look in parent lists */
 	Assert(phv->phlevelsup == 0);
 
-	foreach(lc, root->placeholder_list)
+	/* Use placeholder_array to look up existing PlaceHolderInfo quickly */
+	if (phv->phid < root->placeholder_array_size)
+		phinfo = root->placeholder_array[phv->phid];
+	else
+		phinfo = NULL;
+	if (phinfo != NULL)
 	{
-		phinfo = (PlaceHolderInfo *) lfirst(lc);
-		if (phinfo->phid == phv->phid)
-			return phinfo;
+		Assert(phinfo->phid == phv->phid);
+		return phinfo;
 	}
 
 	/* Not found, so create it */
@@ -115,7 +118,37 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv,
 	phinfo->ph_width = get_typavgwidth(exprType((Node *) phv->phexpr),
 									   exprTypmod((Node *) phv->phexpr));
 
+	/*
+	 * Add to both placeholder_list and placeholder_array.  Note: because we
+	 * store pointers to the PlaceHolderInfos in two data structures, it'd be
+	 * unsafe to pass the whole placeholder_list structure through
+	 * expression_tree_mutator or the like --- or at least, you'd have to
+	 * rebuild the placeholder_array afterwards.
+	 */
 	root->placeholder_list = lappend(root->placeholder_list, phinfo);
+
+	if (phinfo->phid >= root->placeholder_array_size)
+	{
+		/* Must allocate or enlarge placeholder_array */
+		int			new_size;
+
+		new_size = root->placeholder_array_size ? root->placeholder_array_size * 2 : 8;
+		while (phinfo->phid >= new_size)
+			new_size *= 2;
+		if (root->placeholder_array)
+		{
+			root->placeholder_array = (PlaceHolderInfo **)
+				repalloc(root->placeholder_array,
+						 sizeof(PlaceHolderInfo *) * new_size);
+			MemSet(root->placeholder_array + root->placeholder_array_size, 0,
+				   sizeof(PlaceHolderInfo *) * (new_size - root->placeholder_array_size));
+		}
+		else
+			root->placeholder_array = (PlaceHolderInfo **)
+				palloc0(new_size * sizeof(PlaceHolderInfo *));
+		root->placeholder_array_size = new_size;
+	}
+	root->placeholder_array[phinfo->phid] = phinfo;
 
 	/*
 	 * The PHV's contained expression may contain other, lower-level PHVs.  We

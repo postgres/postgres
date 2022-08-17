@@ -75,6 +75,8 @@ query_planner(PlannerInfo *root,
 	root->full_join_clauses = NIL;
 	root->join_info_list = NIL;
 	root->placeholder_list = NIL;
+	root->placeholder_array = NULL;
+	root->placeholder_array_size = 0;
 	root->fkey_list = NIL;
 	root->initial_rels = NIL;
 
