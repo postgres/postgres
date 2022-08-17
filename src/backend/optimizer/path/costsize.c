@@ -1957,7 +1957,7 @@ compute_cpu_sort_cost(PlannerInfo *root, List *pathkeys, int nPresortedKeys,
 	List	   *cache_varinfos = NIL;
 
 	/* fallback if pathkeys is unknown */
-	if (list_length(pathkeys) == 0)
+	if (pathkeys == NIL)
 	{
 		/*
 		 * If we'll use a bounded heap-sort keeping just K tuples in memory,

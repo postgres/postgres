@@ -313,7 +313,7 @@ DefineQueryRewrite(const char *rulename,
 		 *
 		 * So there cannot be INSTEAD NOTHING, ...
 		 */
-		if (list_length(action) == 0)
+		if (action == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),

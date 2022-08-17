@@ -383,7 +383,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	 * immediate restarts.  We don't need it if there are no tables that need
 	 * syncing.
 	 */
-	if (table_states_not_ready && !last_start_times)
+	if (table_states_not_ready != NIL && !last_start_times)
 	{
 		HASHCTL		ctl;
 
@@ -397,7 +397,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	 * Clean up the hash table when we're done with all tables (just to
 	 * release the bit of memory).
 	 */
-	else if (!table_states_not_ready && last_start_times)
+	else if (table_states_not_ready == NIL && last_start_times)
 	{
 		hash_destroy(last_start_times);
 		last_start_times = NULL;
@@ -1498,7 +1498,7 @@ FetchTableStates(bool *started_tx)
 		 * if table_state_not_ready was empty we still need to check again to
 		 * see if there are 0 tables.
 		 */
-		has_subrels = (list_length(table_states_not_ready) > 0) ||
+		has_subrels = (table_states_not_ready != NIL) ||
 			HasSubscriptionRelations(MySubscription->oid);
 
 		table_states_valid = true;
@@ -1534,7 +1534,7 @@ AllTablesyncsReady(void)
 	 * Return false when there are no tables in subscription or not all tables
 	 * are in ready state; true otherwise.
 	 */
-	return has_subrels && list_length(table_states_not_ready) == 0;
+	return has_subrels && (table_states_not_ready == NIL);
 }
 
 /*

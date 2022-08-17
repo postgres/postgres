@@ -3503,7 +3503,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * Domains don't allow variables (this is probably dead code now that
 	 * add_missing_from is history, but let's be sure).
 	 */
-	if (list_length(pstate->p_rtable) != 0 ||
+	if (pstate->p_rtable != NIL ||
 		contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),

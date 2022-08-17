@@ -1143,9 +1143,9 @@ trackDroppedObjectsNeeded(void)
 	 * true if any sql_drop, table_rewrite, ddl_command_end event trigger
 	 * exists
 	 */
-	return list_length(EventCacheLookup(EVT_SQLDrop)) > 0 ||
-		list_length(EventCacheLookup(EVT_TableRewrite)) > 0 ||
-		list_length(EventCacheLookup(EVT_DDLCommandEnd)) > 0;
+	return (EventCacheLookup(EVT_SQLDrop) != NIL) ||
+		(EventCacheLookup(EVT_TableRewrite) != NIL) ||
+		(EventCacheLookup(EVT_DDLCommandEnd) != NIL);
 }
 
 /*
@@ -1616,7 +1616,7 @@ EventTriggerAlterTableEnd(void)
 	parent = currentEventTriggerState->currentCommand->parent;
 
 	/* If no subcommands, don't collect */
-	if (list_length(currentEventTriggerState->currentCommand->d.alterTable.subcmds) != 0)
+	if (currentEventTriggerState->currentCommand->d.alterTable.subcmds != NIL)
 	{
 		MemoryContext oldcxt;
 

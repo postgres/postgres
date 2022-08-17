@@ -685,7 +685,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		 * list and searching for ancestry relationships to each index in the
 		 * ancestor table.
 		 */
-		if (list_length(rootResultRelInfo->ri_onConflictArbiterIndexes) > 0)
+		if (rootResultRelInfo->ri_onConflictArbiterIndexes != NIL)
 		{
 			List	   *childIdxs;
 

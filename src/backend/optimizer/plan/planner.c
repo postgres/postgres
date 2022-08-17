@@ -3097,7 +3097,7 @@ reorder_grouping_sets(List *groupingsets, List *sortclause)
 		GroupingSetData *gs = makeNode(GroupingSetData);
 
 		while (list_length(sortclause) > list_length(previous) &&
-			   list_length(new_elems) > 0)
+			   new_elems != NIL)
 		{
 			SortGroupClause *sc = list_nth(sortclause, list_length(previous));
 			int			ref = sc->tleSortGroupRef;
@@ -4120,7 +4120,7 @@ consider_groupingsets_paths(PlannerInfo *root,
 	/*
 	 * If we have sorted input but nothing we can do with it, bail.
 	 */
-	if (list_length(gd->rollups) == 0)
+	if (gd->rollups == NIL)
 		return;
 
 	/*
@@ -6477,7 +6477,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 																group_clauses,
 																orderAggPathkeys);
 
-			Assert(list_length(pathkey_orderings) > 0);
+			Assert(pathkey_orderings != NIL);
 
 			/* process all potentially interesting grouping reorderings */
 			foreach(lc2, pathkey_orderings)
@@ -6650,7 +6650,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 																	group_clauses,
 																	orderAggPathkeys);
 
-				Assert(list_length(pathkey_orderings) > 0);
+				Assert(pathkey_orderings != NIL);
 
 				/* process all potentially interesting grouping reorderings */
 				foreach(lc2, pathkey_orderings)
@@ -6994,7 +6994,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 																group_clauses,
 																orderAggPathkeys);
 
-			Assert(list_length(pathkey_orderings) > 0);
+			Assert(pathkey_orderings != NIL);
 
 			/* process all potentially interesting grouping reorderings */
 			foreach(lc2, pathkey_orderings)
@@ -7145,7 +7145,7 @@ create_partial_grouping_paths(PlannerInfo *root,
 																group_clauses,
 																orderAggPathkeys);
 
-			Assert(list_length(pathkey_orderings) > 0);
+			Assert(pathkey_orderings != NIL);
 
 			/* process all potentially interesting grouping reorderings */
 			foreach(lc2, pathkey_orderings)

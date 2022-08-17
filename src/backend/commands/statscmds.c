@@ -339,7 +339,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	if ((list_length(stmt->exprs) == 1) && (list_length(stxexprs) == 1))
 	{
 		/* statistics kinds not specified */
-		if (list_length(stmt->stat_types) > 0)
+		if (stmt->stat_types != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("when building statistics on a single expression, statistics kinds may not be specified")));
@@ -391,7 +391,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 	 * automatically. This allows calculating good estimates for stats that
 	 * consider per-clause estimates (e.g. functional dependencies).
 	 */
-	build_expressions = (list_length(stxexprs) > 0);
+	build_expressions = (stxexprs != NIL);
 
 	/*
 	 * Check that at least two columns were specified in the statement, or

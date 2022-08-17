@@ -1564,7 +1564,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 		MANDATORY_AUTH_ARG(parsedline->radiusservers, "radiusservers", "radius");
 		MANDATORY_AUTH_ARG(parsedline->radiussecrets, "radiussecrets", "radius");
 
-		if (list_length(parsedline->radiusservers) < 1)
+		if (parsedline->radiusservers == NIL)
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1575,7 +1575,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 			return NULL;
 		}
 
-		if (list_length(parsedline->radiussecrets) < 1)
+		if (parsedline->radiussecrets == NIL)
 		{
 			ereport(elevel,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),

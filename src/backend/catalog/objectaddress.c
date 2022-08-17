@@ -2186,7 +2186,7 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	else
 	{
 		name = textarray_to_strvaluelist(namearr);
-		if (list_length(name) < 1)
+		if (name == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("name list length must be at least %d", 1)));

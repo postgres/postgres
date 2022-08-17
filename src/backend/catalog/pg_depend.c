@@ -947,7 +947,7 @@ getIdentitySequence(Oid relid, AttrNumber attnum, bool missing_ok)
 
 	if (list_length(seqlist) > 1)
 		elog(ERROR, "more than one owned sequence found");
-	else if (list_length(seqlist) < 1)
+	else if (seqlist == NIL)
 	{
 		if (missing_ok)
 			return InvalidOid;

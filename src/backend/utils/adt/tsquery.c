@@ -829,7 +829,7 @@ parse_tsquery(char *buf,
 
 	close_tsvector_parser(state.valstate);
 
-	if (list_length(state.polstr) == 0)
+	if (state.polstr == NIL)
 	{
 		ereport(NOTICE,
 				(errmsg("text-search query doesn't contain lexemes: \"%s\"",

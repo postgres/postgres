@@ -913,7 +913,7 @@ WaitForLockersMultiple(List *locktags, LOCKMODE lockmode, bool progress)
 	int			done = 0;
 
 	/* Done if no locks to wait for */
-	if (list_length(locktags) == 0)
+	if (locktags == NIL)
 		return;
 
 	/* Collect the transactions we need to wait on */

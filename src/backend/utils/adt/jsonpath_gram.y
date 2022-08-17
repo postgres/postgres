@@ -459,7 +459,7 @@ makeIndexArray(List *list)
 	ListCell   *cell;
 	int			i = 0;
 
-	Assert(list_length(list) > 0);
+	Assert(list != NIL);
 	v->value.array.nelems = list_length(list);
 
 	v->value.array.elems = palloc(sizeof(v->value.array.elems[0]) *

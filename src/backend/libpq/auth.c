@@ -2915,14 +2915,14 @@ CheckRADIUSAuth(Port *port)
 	Assert(offsetof(radius_packet, vector) == 4);
 
 	/* Verify parameters */
-	if (list_length(port->hba->radiusservers) < 1)
+	if (port->hba->radiusservers == NIL)
 	{
 		ereport(LOG,
 				(errmsg("RADIUS server not specified")));
 		return STATUS_ERROR;
 	}
 
-	if (list_length(port->hba->radiussecrets) < 1)
+	if (port->hba->radiussecrets == NIL)
 	{
 		ereport(LOG,
 				(errmsg("RADIUS secret not specified")));

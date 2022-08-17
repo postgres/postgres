@@ -567,7 +567,7 @@ extract_jsp_path_expr(JsonPathGinContext *cxt, JsonPathGinPath path,
 	/* extract a list of nodes to be AND-ed */
 	List	   *nodes = extract_jsp_path_expr_nodes(cxt, path, jsp, scalar);
 
-	if (list_length(nodes) <= 0)
+	if (nodes == NIL)
 		/* no nodes were extracted => full scan is needed for this path */
 		return NULL;
 

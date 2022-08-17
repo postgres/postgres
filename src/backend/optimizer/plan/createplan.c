@@ -2462,7 +2462,7 @@ create_groupingsets_plan(PlannerInfo *root, GroupingSetsPath *best_path)
 
 			if (rollup->is_hashed)
 				strat = AGG_HASHED;
-			else if (list_length(linitial(rollup->gsets)) == 0)
+			else if (linitial(rollup->gsets) == NIL)
 				strat = AGG_PLAIN;
 			else
 				strat = AGG_SORTED;

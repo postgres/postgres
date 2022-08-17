@@ -848,12 +848,12 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 								   &schemaidlist);
 
 		/* FOR ALL TABLES IN SCHEMA requires superuser */
-		if (list_length(schemaidlist) > 0 && !superuser())
+		if (schemaidlist != NIL && !superuser())
 			ereport(ERROR,
 					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					errmsg("must be superuser to create FOR ALL TABLES IN SCHEMA publication"));
 
-		if (list_length(relations) > 0)
+		if (relations != NIL)
 		{
 			List	   *rels;
 
@@ -871,7 +871,7 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 			CloseTableList(rels);
 		}
 
-		if (list_length(schemaidlist) > 0)
+		if (schemaidlist != NIL)
 		{
 			/*
 			 * Schema lock is held until the publication is created to prevent

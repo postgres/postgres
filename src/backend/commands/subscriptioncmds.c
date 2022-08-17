@@ -410,7 +410,7 @@ get_publications_str(List *publications, StringInfo dest, bool quote_literal)
 	ListCell   *lc;
 	bool		first = true;
 
-	Assert(list_length(publications) > 0);
+	Assert(publications != NIL);
 
 	foreach(lc, publications)
 	{
