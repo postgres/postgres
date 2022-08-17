@@ -6637,10 +6637,7 @@ add_paths_to_grouping_rel(PlannerInfo *root, RelOptInfo *input_rel,
 				ListCell   *lc2;
 				Path	   *path = (Path *) lfirst(lc);
 				Path	   *path_original = path;
-
 				List	   *pathkey_orderings = NIL;
-
-				List	   *group_pathkeys = root->group_pathkeys;
 				List	   *group_clauses = parse->groupClause;
 
 				/* generate alternative group orderings that might be useful */
