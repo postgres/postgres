@@ -379,6 +379,11 @@ alter table rewriteme
  add column another int default -1,
  alter column foo type numeric(10,4);
 
+-- matview rewrite when changing access method
+CREATE MATERIALIZED VIEW heapmv USING heap AS SELECT 1 AS a;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+DROP MATERIALIZED VIEW heapmv;
+
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);
 begin;
