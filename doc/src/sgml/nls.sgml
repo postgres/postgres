@@ -203,7 +203,9 @@ make update-po
    <title>Editing the PO Files</title>
 
    <para>
-    The PO files can be edited with a regular text editor.  The
+    The PO files can be edited with a regular text editor. There are also
+    several specialized editors for PO files which can help the process with
+    translation specific features.  The
     translator should only change the area between the quotes after
     the msgstr directive, add comments, and alter the fuzzy flag.
     There is (unsurprisingly) a PO mode for Emacs, which I find quite
