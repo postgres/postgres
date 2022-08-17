@@ -4501,9 +4501,7 @@ BootStrapXLOG(void)
 	pg_crc32c	crc;
 
 	/* allow ordinary WAL segment creation, like StartupXLOG() would */
-	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	XLogCtl->InstallXLogFileSegmentActive = true;
-	LWLockRelease(ControlFileLock);
+	SetInstallXLogFileSegmentActive();
 
 	/*
 	 * Select a hopefully-unique system identifier code for this installation.
@@ -5368,9 +5366,7 @@ StartupXLOG(void)
 	 * Allow ordinary WAL segment creation before possibly switching to a new
 	 * timeline, which creates a new segment, and after the last ReadRecord().
 	 */
-	LWLockAcquire(ControlFileLock, LW_EXCLUSIVE);
-	XLogCtl->InstallXLogFileSegmentActive = true;
-	LWLockRelease(ControlFileLock);
+	SetInstallXLogFileSegmentActive();
 
 	/*
 	 * Consider whether we need to assign a new timeline ID.
