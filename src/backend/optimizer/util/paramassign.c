@@ -470,7 +470,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 			ListCell   *lc;
 
 			/* If not from a nestloop outer rel, complain */
-			if (!bms_is_subset(find_placeholder_info(root, phv, false)->ph_eval_at,
+			if (!bms_is_subset(find_placeholder_info(root, phv)->ph_eval_at,
 							   root->curOuterRels))
 				elog(ERROR, "non-LATERAL parameter required by subquery");
 
@@ -517,8 +517,7 @@ identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
 
 		/*
 		 * We are looking for Vars and PHVs that can be supplied by the
-		 * lefthand rels.  The "bms_overlap" test is just an optimization to
-		 * allow skipping find_placeholder_info() if the PHV couldn't match.
+		 * lefthand rels.
 		 */
 		if (IsA(nlp->paramval, Var) &&
 			bms_is_member(nlp->paramval->varno, leftrelids))
@@ -528,11 +527,8 @@ identify_current_nestloop_params(PlannerInfo *root, Relids leftrelids)
 			result = lappend(result, nlp);
 		}
 		else if (IsA(nlp->paramval, PlaceHolderVar) &&
-				 bms_overlap(((PlaceHolderVar *) nlp->paramval)->phrels,
-							 leftrelids) &&
 				 bms_is_subset(find_placeholder_info(root,
-													 (PlaceHolderVar *) nlp->paramval,
-													 false)->ph_eval_at,
+													 (PlaceHolderVar *) nlp->paramval)->ph_eval_at,
 							   leftrelids))
 		{
 			root->curOuterParams = foreach_delete_current(root->curOuterParams,

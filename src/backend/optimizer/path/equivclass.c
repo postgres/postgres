@@ -1323,7 +1323,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, ec->ec_relids, false);
+		add_vars_to_targetlist(root, vars, ec->ec_relids);
 		list_free(vars);
 	}
 }

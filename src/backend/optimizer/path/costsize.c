@@ -6245,7 +6245,7 @@ set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 			 * scanning this rel, so be sure to include it in reltarget->cost.
 			 */
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
-			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv, false);
+			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
 			QualCost	cost;
 
 			tuple_width += phinfo->ph_width;

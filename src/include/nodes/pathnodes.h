@@ -454,6 +454,8 @@ struct PlannerInfo
 	bool		hasPseudoConstantQuals;
 	/* true if we've made any of those */
 	bool		hasAlternativeSubPlans;
+	/* true once we're no longer allowed to add PlaceHolderInfos */
+	bool		placeholdersFrozen;
 	/* true if planning a recursive WITH item */
 	bool		hasRecursion;
 

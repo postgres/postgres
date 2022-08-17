@@ -189,7 +189,7 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 
 	if (tlist_vars != NIL)
 	{
-		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0), true);
+		add_vars_to_targetlist(root, tlist_vars, bms_make_singleton(0));
 		list_free(tlist_vars);
 	}
 
@@ -206,7 +206,7 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 		if (having_vars != NIL)
 		{
 			add_vars_to_targetlist(root, having_vars,
-								   bms_make_singleton(0), true);
+								   bms_make_singleton(0));
 			list_free(having_vars);
 		}
 	}
@@ -221,14 +221,12 @@ build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
  *
  *	  The list may also contain PlaceHolderVars.  These don't necessarily
  *	  have a single owning relation; we keep their attr_needed info in
- *	  root->placeholder_list instead.  If create_new_ph is true, it's OK
- *	  to create new PlaceHolderInfos; otherwise, the PlaceHolderInfos must
- *	  already exist, and we should only update their ph_needed.  (This should
- *	  be true before deconstruct_jointree begins, and false after that.)
+ *	  root->placeholder_list instead.  Find or create the associated
+ *	  PlaceHolderInfo entry, and update its ph_needed.
  */
 void
 add_vars_to_targetlist(PlannerInfo *root, List *vars,
-					   Relids where_needed, bool create_new_ph)
+					   Relids where_needed)
 {
 	ListCell   *temp;
 
@@ -262,8 +260,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars,
 		else if (IsA(node, PlaceHolderVar))
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) node;
-			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
-															create_new_ph);
+			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
 
 			phinfo->ph_needed = bms_add_members(phinfo->ph_needed,
 												where_needed);
@@ -432,7 +429,7 @@ extract_lateral_references(PlannerInfo *root, RelOptInfo *brel, Index rtindex)
 	 * Push Vars into their source relations' targetlists, and PHVs into
 	 * root->placeholder_list.
 	 */
-	add_vars_to_targetlist(root, newvars, where_needed, true);
+	add_vars_to_targetlist(root, newvars, where_needed);
 
 	/* Remember the lateral references for create_lateral_join_info */
 	brel->lateral_vars = newvars;
@@ -493,8 +490,7 @@ create_lateral_join_info(PlannerInfo *root)
 			else if (IsA(node, PlaceHolderVar))
 			{
 				PlaceHolderVar *phv = (PlaceHolderVar *) node;
-				PlaceHolderInfo *phinfo = find_placeholder_info(root, phv,
-																false);
+				PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
 
 				found_laterals = true;
 				lateral_relids = bms_add_members(lateral_relids,
@@ -690,6 +686,14 @@ deconstruct_jointree(PlannerInfo *root)
 	Relids		qualscope;
 	Relids		inner_join_rels;
 	List	   *postponed_qual_list = NIL;
+
+	/*
+	 * After this point, no more PlaceHolderInfos may be made, because
+	 * make_outerjoininfo and update_placeholder_eval_levels require all
+	 * active placeholders to be present in root->placeholder_list while we
+	 * crawl up the join tree.
+	 */
+	root->placeholdersFrozen = true;
 
 	/* Start recursion at top of jointree */
 	Assert(root->parse->jointree != NULL &&
@@ -1866,7 +1870,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, relids, false);
+		add_vars_to_targetlist(root, vars, relids);
 		list_free(vars);
 	}
 
@@ -2380,7 +2384,7 @@ process_implied_equality(PlannerInfo *root,
 										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, relids, false);
+		add_vars_to_targetlist(root, vars, relids);
 		list_free(vars);
 	}
 

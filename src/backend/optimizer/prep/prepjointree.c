@@ -1011,6 +1011,7 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	subroot->grouping_map = NULL;
 	subroot->minmax_aggs = NIL;
 	subroot->qual_security_level = 0;
+	subroot->placeholdersFrozen = false;
 	subroot->hasRecursion = false;
 	subroot->wt_param_id = -1;
 	subroot->non_recursive_path = NULL;
