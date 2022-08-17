@@ -679,8 +679,9 @@ build_join_rel(PlannerInfo *root,
 	set_foreign_rel_properties(joinrel, outer_rel, inner_rel);
 
 	/*
-	 * Create a new tlist containing just the vars that need to be output from
-	 * this join (ie, are needed for higher joinclauses or final output).
+	 * Fill the joinrel's tlist with just the Vars and PHVs that need to be
+	 * output from this join (ie, are needed for higher joinclauses or final
+	 * output).
 	 *
 	 * NOTE: the tlist order for a join rel will depend on which pair of outer
 	 * and inner rels we first try to build it from.  But the contents should
@@ -966,6 +967,7 @@ min_join_parameterization(PlannerInfo *root,
  * The join's targetlist includes all Vars of its member relations that
  * will still be needed above the join.  This subroutine adds all such
  * Vars from the specified input rel's tlist to the join rel's tlist.
+ * Likewise for any PlaceHolderVars emitted by the input rel.
  *
  * We also compute the expected width of the join's output, making use
  * of data that was cached at the baserel level by set_rel_width().
@@ -982,11 +984,24 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 		Var		   *var = (Var *) lfirst(vars);
 
 		/*
-		 * Ignore PlaceHolderVars in the input tlists; we'll make our own
-		 * decisions about whether to copy them.
+		 * For a PlaceHolderVar, we have to look up the PlaceHolderInfo.
 		 */
 		if (IsA(var, PlaceHolderVar))
+		{
+			PlaceHolderVar *phv = (PlaceHolderVar *) var;
+			PlaceHolderInfo *phinfo = find_placeholder_info(root, phv);
+
+			/* Is it still needed above this joinrel? */
+			if (bms_nonempty_difference(phinfo->ph_needed, relids))
+			{
+				/* Yup, add it to the output */
+				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
+													phv);
+				/* Bubbling up the precomputed result has cost zero */
+				joinrel->reltarget->width += phinfo->ph_width;
+			}
 			continue;
+		}
 
 		/*
 		 * Otherwise, anything in a baserel or joinrel targetlist ought to be

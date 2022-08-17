@@ -427,14 +427,16 @@ add_placeholders_to_base_rels(PlannerInfo *root)
 
 /*
  * add_placeholders_to_joinrel
- *		Add any required PlaceHolderVars to a join rel's targetlist;
- *		and if they contain lateral references, add those references to the
- *		joinrel's direct_lateral_relids.
+ *		Add any newly-computable PlaceHolderVars to a join rel's targetlist;
+ *		and if computable PHVs contain lateral references, add those
+ *		references to the joinrel's direct_lateral_relids.
  *
  * A join rel should emit a PlaceHolderVar if (a) the PHV can be computed
  * at or below this join level and (b) the PHV is needed above this level.
- * However, condition (a) is sufficient to add to direct_lateral_relids,
- * as explained below.
+ * Our caller build_join_rel() has already added any PHVs that were computed
+ * in either join input rel, so we need add only newly-computable ones to
+ * the targetlist.  However, direct_lateral_relids must be updated for every
+ * PHV computable at or below this join, as explained below.
  */
 void
 add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
@@ -453,13 +455,10 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 			/* Is it still needed above this joinrel? */
 			if (bms_nonempty_difference(phinfo->ph_needed, relids))
 			{
-				/* Yup, add it to the output */
-				joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
-													phinfo->ph_var);
-				joinrel->reltarget->width += phinfo->ph_width;
-
 				/*
-				 * Charge the cost of evaluating the contained expression if
+				 * Yes, but only add to tlist if it wasn't computed in either
+				 * input; otherwise it should be there already.  Also, we
+				 * charge the cost of evaluating the contained expression if
 				 * the PHV can be computed here but not in either input.  This
 				 * is a bit bogus because we make the decision based on the
 				 * first pair of possible input relations considered for the
@@ -472,12 +471,15 @@ add_placeholders_to_joinrel(PlannerInfo *root, RelOptInfo *joinrel,
 				if (!bms_is_subset(phinfo->ph_eval_at, outer_rel->relids) &&
 					!bms_is_subset(phinfo->ph_eval_at, inner_rel->relids))
 				{
+					PlaceHolderVar *phv = phinfo->ph_var;
 					QualCost	cost;
 
-					cost_qual_eval_node(&cost, (Node *) phinfo->ph_var->phexpr,
-										root);
+					joinrel->reltarget->exprs = lappend(joinrel->reltarget->exprs,
+														phv);
+					cost_qual_eval_node(&cost, (Node *) phv->phexpr, root);
 					joinrel->reltarget->cost.startup += cost.startup;
 					joinrel->reltarget->cost.per_tuple += cost.per_tuple;
+					joinrel->reltarget->width += phinfo->ph_width;
 				}
 			}
 
