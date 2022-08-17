@@ -144,7 +144,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
      <primary>case sensitivity</primary>
      <secondary>of SQL commands</secondary>
     </indexterm>
-    Key words and unquoted identifiers are case insensitive.  Therefore:
+    Key words and unquoted identifiers are case-insensitive.  Therefore:
 <programlisting>
 UPDATE MY_TABLE SET A = 5;
 </programlisting>

@@ -5604,7 +5604,7 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        String matches regular expression, case insensitively
+        String matches regular expression, case-insensitively
        </para>
        <para>
         <literal>'thomas' ~* 'T.*ma'</literal>
@@ -5632,7 +5632,7 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        String does not match regular expression, case insensitively
+        String does not match regular expression, case-insensitively
        </para>
        <para>
         <literal>'thomas' !~* 'T.*ma'</literal>

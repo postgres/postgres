@@ -134,7 +134,7 @@ CREATE TABLE weather (
     differently than above, or even all on one line.  Two dashes
     (<quote><literal>--</literal></quote>) introduce comments.
     Whatever follows them is ignored up to the end of the line.  SQL
-    is case insensitive about key words and identifiers, except
+    is case-insensitive about key words and identifiers, except
     when identifiers are double-quoted to preserve the case (not done
     above).
    </para>
