@@ -634,7 +634,6 @@ DBTOEPUB
 FOP
 XSLTPROC
 XMLLINT
-TCL_SHLIB_LD_LIBS
 TCL_SHARED_BUILD
 TCL_LIB_SPEC
 TCL_LIBS
@@ -18818,7 +18817,7 @@ eval TCL_LIBS=\"$TCL_LIBS\"
 eval TCL_LIB_SPEC=\"$TCL_LIB_SPEC\"
 eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
 
-        if test "$TCL_SHARED_BUILD" != 1; then
+    if test "$TCL_SHARED_BUILD" != 1; then
       as_fn_error $? "cannot build PL/Tcl because Tcl is not a shared library
 Use --without-tcl to disable building PL/Tcl." "$LINENO" 5
     fi
