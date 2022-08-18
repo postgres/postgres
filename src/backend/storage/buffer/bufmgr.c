@@ -3713,6 +3713,7 @@ RelationCopyStorageUsingBuffer(RelFileNode srcnode,
 	bool		use_wal;
 	BlockNumber nblocks;
 	BlockNumber blkno;
+	PGAlignedBlock buf;
 	BufferAccessStrategy bstrategy_src;
 	BufferAccessStrategy bstrategy_dst;
 
@@ -3731,6 +3732,14 @@ RelationCopyStorageUsingBuffer(RelFileNode srcnode,
 	if (nblocks == 0)
 		return;
 
+	/*
+	 * Bulk extend the destination relation of the same size as the source
+	 * relation before starting to copy block by block.
+	 */
+	memset(buf.data, 0, BLCKSZ);
+	smgrextend(smgropen(dstnode, InvalidBackendId), forkNum, nblocks - 1,
+			   buf.data, true);
+
 	/* This is a bulk operation, so use buffer access strategies. */
 	bstrategy_src = GetAccessStrategy(BAS_BULKREAD);
 	bstrategy_dst = GetAccessStrategy(BAS_BULKWRITE);
@@ -3748,7 +3757,7 @@ RelationCopyStorageUsingBuffer(RelFileNode srcnode,
 		srcPage = BufferGetPage(srcBuf);
 
 		/* Use P_NEW to extend the destination relation. */
-		dstBuf = ReadBufferWithoutRelcache(dstnode, forkNum, P_NEW,
+		dstBuf = ReadBufferWithoutRelcache(dstnode, forkNum, blkno,
 										   RBM_NORMAL, bstrategy_dst,
 										   permanent);
 		LockBuffer(dstBuf, BUFFER_LOCK_EXCLUSIVE);
