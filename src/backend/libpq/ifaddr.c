@@ -302,7 +302,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
  * for each one.  Returns 0 if successful, -1 if trouble.
  *
  * This version uses the getifaddrs() interface, which is available on
- * BSDs, AIX, and modern Linux.
+ * BSDs, macOS, Solaris, illumos and Linux.
  */
 int
 pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
@@ -332,115 +332,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 #include <sys/sockio.h>
 #endif
 
-/*
- * SIOCGIFCONF does not return IPv6 addresses on Solaris.
- * So we prefer SIOCGLIFCONF if it's available.
- */
-
-#if defined(SIOCGLIFCONF)
-
-/*
- * Enumerate the system's network interface addresses and call the callback
- * for each one.  Returns 0 if successful, -1 if trouble.
- *
- * This version uses ioctl(SIOCGLIFCONF).
- */
-int
-pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
-{
-	struct lifconf lifc;
-	struct lifreq *lifr,
-				lmask;
-	struct sockaddr *addr,
-			   *mask;
-	char	   *ptr,
-			   *buffer = NULL;
-	size_t		n_buffer = 1024;
-	pgsocket	sock,
-				fd;
-
-#ifdef HAVE_IPV6
-	pgsocket	sock6;
-#endif
-	int			i,
-				total;
-
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock == PGINVALID_SOCKET)
-		return -1;
-
-	while (n_buffer < 1024 * 100)
-	{
-		n_buffer += 1024;
-		ptr = realloc(buffer, n_buffer);
-		if (!ptr)
-		{
-			free(buffer);
-			close(sock);
-			errno = ENOMEM;
-			return -1;
-		}
-
-		memset(&lifc, 0, sizeof(lifc));
-		lifc.lifc_family = AF_UNSPEC;
-		lifc.lifc_buf = buffer = ptr;
-		lifc.lifc_len = n_buffer;
-
-		if (ioctl(sock, SIOCGLIFCONF, &lifc) < 0)
-		{
-			if (errno == EINVAL)
-				continue;
-			free(buffer);
-			close(sock);
-			return -1;
-		}
-
-		/*
-		 * Some Unixes try to return as much data as possible, with no
-		 * indication of whether enough space allocated. Don't believe we have
-		 * it all unless there's lots of slop.
-		 */
-		if (lifc.lifc_len < n_buffer - 1024)
-			break;
-	}
-
-#ifdef HAVE_IPV6
-	/* We'll need an IPv6 socket too for the SIOCGLIFNETMASK ioctls */
-	sock6 = socket(AF_INET6, SOCK_DGRAM, 0);
-	if (sock6 == PGINVALID_SOCKET)
-	{
-		free(buffer);
-		close(sock);
-		return -1;
-	}
-#endif
-
-	total = lifc.lifc_len / sizeof(struct lifreq);
-	lifr = lifc.lifc_req;
-	for (i = 0; i < total; ++i)
-	{
-		addr = (struct sockaddr *) &lifr[i].lifr_addr;
-		memcpy(&lmask, &lifr[i], sizeof(struct lifreq));
-#ifdef HAVE_IPV6
-		fd = (addr->sa_family == AF_INET6) ? sock6 : sock;
-#else
-		fd = sock;
-#endif
-		if (ioctl(fd, SIOCGLIFNETMASK, &lmask) < 0)
-			mask = NULL;
-		else
-			mask = (struct sockaddr *) &lmask.lifr_addr;
-		run_ifaddr_callback(callback, cb_data, addr, mask);
-	}
-
-	free(buffer);
-	close(sock);
-#ifdef HAVE_IPV6
-	close(sock6);
-#endif
-	return 0;
-}
-#elif defined(SIOCGIFCONF)
+#if defined(SIOCGIFCONF)
 
 /*
  * Remaining Unixes use SIOCGIFCONF. Some only return IPv4 information
