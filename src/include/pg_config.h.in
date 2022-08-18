@@ -325,9 +325,6 @@
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
 
-/* Define to 1 if you have the <net/if.h> header file. */
-#undef HAVE_NET_IF_H
-
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #undef HAVE_OPENSSL_INIT_SSL
 
