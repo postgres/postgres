@@ -1222,18 +1222,27 @@ DefineIndex(Oid relationId,
 			int			nparts = partdesc->nparts;
 			Oid		   *part_oids = palloc(sizeof(Oid) * nparts);
 			bool		invalidate_parent = false;
+			Relation	parentIndex;
 			TupleDesc	parentDesc;
-			Oid		   *opfamOids;
 
 			pgstat_progress_update_param(PROGRESS_CREATEIDX_PARTITIONS_TOTAL,
 										 nparts);
 
+			/* Make a local copy of partdesc->oids[], just for safety */
 			memcpy(part_oids, partdesc->oids, sizeof(Oid) * nparts);
 
+			/*
+			 * We'll need an IndexInfo describing the parent index.  The one
+			 * built above is almost good enough, but not quite, because (for
+			 * example) its predicate expression if any hasn't been through
+			 * expression preprocessing.  The most reliable way to get an
+			 * IndexInfo that will match those for child indexes is to build
+			 * it the same way, using BuildIndexInfo().
+			 */
+			parentIndex = index_open(indexRelationId, lockmode);
+			indexInfo = BuildIndexInfo(parentIndex);
+
 			parentDesc = RelationGetDescr(rel);
-			opfamOids = palloc(sizeof(Oid) * numberOfKeyAttributes);
-			for (i = 0; i < numberOfKeyAttributes; i++)
-				opfamOids[i] = get_opclass_family(classObjectId[i]);
 
 			/*
 			 * For each partition, scan all existing indexes; if one matches
@@ -1304,9 +1313,9 @@ DefineIndex(Oid relationId,
 					cldIdxInfo = BuildIndexInfo(cldidx);
 					if (CompareIndexInfo(cldIdxInfo, indexInfo,
 										 cldidx->rd_indcollation,
-										 collationObjectId,
+										 parentIndex->rd_indcollation,
 										 cldidx->rd_opfamily,
-										 opfamOids,
+										 parentIndex->rd_opfamily,
 										 attmap))
 					{
 						Oid			cldConstrOid = InvalidOid;
@@ -1432,6 +1441,8 @@ DefineIndex(Oid relationId,
 											 i + 1);
 				free_attrmap(attmap);
 			}
+
+			index_close(parentIndex, lockmode);
 
 			/*
 			 * The pg_index row we inserted for this index was marked
