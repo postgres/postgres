@@ -4,6 +4,4 @@
 
 #include <ws2tcpip.h>
 
-#define gai_strerror gai_strerrorA
-
 #endif

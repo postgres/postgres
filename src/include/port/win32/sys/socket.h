@@ -23,11 +23,4 @@
 #define ERROR PGERROR
 #endif
 
-/*
- * we can't use the windows gai_strerror{AW} functions because
- * they are defined inline in the MS header files. So we'll use our
- * own
- */
-#undef gai_strerror
-
 #endif							/* WIN32_SYS_SOCKET_H */
