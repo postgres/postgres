@@ -14197,19 +14197,13 @@ fi
 
 if test "$with_ldap" = yes ; then
   if test "$PORTNAME" != "win32"; then
-     for ac_header in ldap.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "ldap.h" "ac_cv_header_ldap_h" "$ac_includes_default"
+     ac_fn_c_check_header_mongrel "$LINENO" "ldap.h" "ac_cv_header_ldap_h" "$ac_includes_default"
 if test "x$ac_cv_header_ldap_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LDAP_H 1
-_ACEOF
 
 else
   as_fn_error $? "header file <ldap.h> is required for LDAP" "$LINENO" 5
 fi
 
-done
 
      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compatible LDAP implementation" >&5
 $as_echo_n "checking for compatible LDAP implementation... " >&6; }
@@ -14253,22 +14247,16 @@ $as_echo "$as_me: WARNING:
 *** also uses LDAP will crash on exit." >&2;}
 fi
   else
-     for ac_header in winldap.h
-do :
-  ac_fn_c_check_header_compile "$LINENO" "winldap.h" "ac_cv_header_winldap_h" "$ac_includes_default
+     ac_fn_c_check_header_compile "$LINENO" "winldap.h" "ac_cv_header_winldap_h" "$ac_includes_default
 #include <windows.h>
 
 "
 if test "x$ac_cv_header_winldap_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_WINLDAP_H 1
-_ACEOF
 
 else
   as_fn_error $? "header file <winldap.h> is required for LDAP" "$LINENO" 5
 fi
 
-done
 
   fi
 fi
