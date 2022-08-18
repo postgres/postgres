@@ -782,7 +782,7 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 			if (fldct != list_length(cstate->attnumlist))
 				ereport(ERROR,
 						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("wrong number of fields in header line: field count is %d, expected %d",
+						 errmsg("wrong number of fields in header line: got %d, expected %d",
 								fldct, list_length(cstate->attnumlist))));
 
 			fldnum = 0;
