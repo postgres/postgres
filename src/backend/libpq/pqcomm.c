@@ -69,7 +69,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <utime.h>
-#ifdef _MSC_VER					/* mstcpip.h is missing on mingw */
+#ifdef WIN32
 #include <mstcpip.h>
 #endif
 
