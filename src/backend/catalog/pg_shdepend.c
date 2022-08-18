@@ -22,6 +22,7 @@
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
@@ -1364,11 +1365,6 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 				case SHARED_DEPENDENCY_INVALID:
 					elog(ERROR, "unexpected dependency type");
 					break;
-				case SHARED_DEPENDENCY_ACL:
-					RemoveRoleFromObjectACL(roleid,
-											sdepForm->classid,
-											sdepForm->objid);
-					break;
 				case SHARED_DEPENDENCY_POLICY:
 
 					/*
@@ -1398,22 +1394,37 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						add_exact_object_address(&obj, deleteobjs);
 					}
 					break;
-				case SHARED_DEPENDENCY_OWNER:
-					/* If a local object, save it for deletion below */
-					if (sdepForm->dbid == MyDatabaseId)
+				case SHARED_DEPENDENCY_ACL:
+
+					/*
+					 * Dependencies on role grants are recorded using
+					 * SHARED_DEPENDENCY_ACL, but unlike a regular ACL list
+					 * which stores all permissions for a particular object in
+					 * a single ACL array, there's a separate catalog row for
+					 * each grant - so removing the grant just means removing
+					 * the entire row.
+					 */
+					if (sdepForm->classid != AuthMemRelationId)
 					{
-						obj.classId = sdepForm->classid;
-						obj.objectId = sdepForm->objid;
-						obj.objectSubId = sdepForm->objsubid;
-						/* as above */
-						AcquireDeletionLock(&obj, 0);
-						if (!systable_recheck_tuple(scan, tuple))
-						{
-							ReleaseDeletionLock(&obj);
-							break;
-						}
-						add_exact_object_address(&obj, deleteobjs);
+						RemoveRoleFromObjectACL(roleid,
+												sdepForm->classid,
+												sdepForm->objid);
+						break;
 					}
+					/* FALLTHROUGH */
+				case SHARED_DEPENDENCY_OWNER:
+					/* Save it for deletion below */
+					obj.classId = sdepForm->classid;
+					obj.objectId = sdepForm->objid;
+					obj.objectSubId = sdepForm->objsubid;
+					/* as above */
+					AcquireDeletionLock(&obj, 0);
+					if (!systable_recheck_tuple(scan, tuple))
+					{
+						ReleaseDeletionLock(&obj);
+						break;
+					}
+					add_exact_object_address(&obj, deleteobjs);
 					break;
 			}
 		}

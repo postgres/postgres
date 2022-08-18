@@ -262,6 +262,8 @@ IsSharedRelation(Oid relationId)
 		relationId == AuthIdRolnameIndexId ||
 		relationId == AuthMemMemRoleIndexId ||
 		relationId == AuthMemRoleMemIndexId ||
+		relationId == AuthMemOidIndexId ||
+		relationId == AuthMemGrantorIndexId ||
 		relationId == DatabaseNameIndexId ||
 		relationId == DatabaseOidIndexId ||
 		relationId == DbRoleSettingDatidRolidIndexId ||

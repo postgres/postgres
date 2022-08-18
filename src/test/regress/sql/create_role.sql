@@ -98,9 +98,11 @@ DROP ROLE regress_nosuch_recursive;
 DROP ROLE regress_nosuch_admin_recursive;
 DROP ROLE regress_plainrole;
 
+-- fail, can't drop regress_createrole yet, due to outstanding grants
+DROP ROLE regress_createrole;
+
 -- ok, should be able to drop non-superuser roles we created
 DROP ROLE regress_createdb;
-DROP ROLE regress_createrole;
 DROP ROLE regress_login;
 DROP ROLE regress_inherit;
 DROP ROLE regress_connection_limit;
@@ -120,6 +122,9 @@ DROP ROLE regress_read_server_files;
 DROP ROLE regress_write_server_files;
 DROP ROLE regress_execute_server_program;
 DROP ROLE regress_signal_backend;
+
+-- ok, dropped the other roles first so this is ok now
+DROP ROLE regress_createrole;
 
 -- fail, role still owns database objects
 DROP ROLE regress_tenant;

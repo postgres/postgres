@@ -112,6 +112,7 @@ typedef enum ObjectClass
 	OCLASS_TSTEMPLATE,			/* pg_ts_template */
 	OCLASS_TSCONFIG,			/* pg_ts_config */
 	OCLASS_ROLE,				/* pg_authid */
+	OCLASS_ROLE_MEMBERSHIP,		/* pg_auth_members */
 	OCLASS_DATABASE,			/* pg_database */
 	OCLASS_TBLSPACE,			/* pg_tablespace */
 	OCLASS_FDW,					/* pg_foreign_data_wrapper */

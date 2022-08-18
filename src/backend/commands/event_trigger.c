@@ -1015,6 +1015,7 @@ EventTriggerSupportsObjectClass(ObjectClass objclass)
 		case OCLASS_DATABASE:
 		case OCLASS_TBLSPACE:
 		case OCLASS_ROLE:
+		case OCLASS_ROLE_MEMBERSHIP:
 		case OCLASS_PARAMETER_ACL:
 			/* no support for global objects */
 			return false;

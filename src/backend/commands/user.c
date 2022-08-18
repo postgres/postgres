@@ -911,6 +911,7 @@ DropRole(DropRoleStmt *stmt)
 	Relation	pg_authid_rel,
 				pg_auth_members_rel;
 	ListCell   *item;
+	List	   *role_addresses = NIL;
 
 	if (!have_createrole_privilege())
 		ereport(ERROR,
@@ -919,7 +920,7 @@ DropRole(DropRoleStmt *stmt)
 
 	/*
 	 * Scan the pg_authid relation to find the Oid of the role(s) to be
-	 * deleted.
+	 * deleted and perform preliminary permissions and sanity checks.
 	 */
 	pg_authid_rel = table_open(AuthIdRelationId, RowExclusiveLock);
 	pg_auth_members_rel = table_open(AuthMemRelationId, RowExclusiveLock);
@@ -932,10 +933,9 @@ DropRole(DropRoleStmt *stmt)
 					tmp_tuple;
 		Form_pg_authid roleform;
 		ScanKeyData scankey;
-		char	   *detail;
-		char	   *detail_log;
 		SysScanDesc sscan;
 		Oid			roleid;
+		ObjectAddress *role_address;
 
 		if (rolspec->roletype != ROLESPEC_CSTRING)
 			ereport(ERROR,
@@ -991,34 +991,31 @@ DropRole(DropRoleStmt *stmt)
 		/* DROP hook for the role being removed */
 		InvokeObjectDropHook(AuthIdRelationId, roleid, 0);
 
+		/* Don't leak the syscache tuple */
+		ReleaseSysCache(tuple);
+
 		/*
 		 * Lock the role, so nobody can add dependencies to her while we drop
 		 * her.  We keep the lock until the end of transaction.
 		 */
 		LockSharedObject(AuthIdRelationId, roleid, 0, AccessExclusiveLock);
 
-		/* Check for pg_shdepend entries depending on this role */
-		if (checkSharedDependencies(AuthIdRelationId, roleid,
-									&detail, &detail_log))
-			ereport(ERROR,
-					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
-					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
-							role),
-					 errdetail_internal("%s", detail),
-					 errdetail_log("%s", detail_log)));
-
 		/*
-		 * Remove the role from the pg_authid table
-		 */
-		CatalogTupleDelete(pg_authid_rel, &tuple->t_self);
-
-		ReleaseSysCache(tuple);
-
-		/*
-		 * Remove role from the pg_auth_members table.  We have to remove all
-		 * tuples that show it as either a role or a member.
+		 * If there is a pg_auth_members entry that has one of the roles to be
+		 * dropped as the roleid or member, it should be silently removed, but
+		 * if there is a pg_auth_members entry that has one of the roles to be
+		 * dropped as the grantor, the operation should fail.
 		 *
-		 * XXX what about grantor entries?	Maybe we should do one heap scan.
+		 * It's possible, however, that a single pg_auth_members entry could
+		 * fall into multiple categories - e.g. the user could do "GRANT foo
+		 * TO bar GRANTED BY baz" and then "DROP ROLE baz, bar". We want such
+		 * an operation to succeed regardless of the order in which the
+		 * to-be-dropped roles are passed to DROP ROLE.
+		 *
+		 * To make that work, we remove all pg_auth_members entries that can
+		 * be silently removed in this loop, and then below we'll make a
+		 * second pass over the list of roles to be removed and check for any
+		 * remaining dependencies.
 		 */
 		ScanKeyInit(&scankey,
 					Anum_pg_auth_members_roleid,
@@ -1030,6 +1027,11 @@ DropRole(DropRoleStmt *stmt)
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
 		{
+			Form_pg_auth_members authmem_form;
+
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(tmp_tuple);
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_auth_members_rel, &tmp_tuple->t_self);
 		}
 
@@ -1045,21 +1047,15 @@ DropRole(DropRoleStmt *stmt)
 
 		while (HeapTupleIsValid(tmp_tuple = systable_getnext(sscan)))
 		{
+			Form_pg_auth_members authmem_form;
+
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(tmp_tuple);
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_auth_members_rel, &tmp_tuple->t_self);
 		}
 
 		systable_endscan(sscan);
-
-		/*
-		 * Remove any comments or security labels on this role.
-		 */
-		DeleteSharedComments(roleid, AuthIdRelationId);
-		DeleteSharedSecurityLabel(roleid, AuthIdRelationId);
-
-		/*
-		 * Remove settings for this role.
-		 */
-		DropSetting(InvalidOid, roleid);
 
 		/*
 		 * Advance command counter so that later iterations of this loop will
@@ -1071,6 +1067,72 @@ DropRole(DropRoleStmt *stmt)
 		 * itself.)
 		 */
 		CommandCounterIncrement();
+
+		/* Looks tentatively OK, add it to the list. */
+		role_address = palloc(sizeof(ObjectAddress));
+		role_address->classId = AuthIdRelationId;
+		role_address->objectId = roleid;
+		role_address->objectSubId = 0;
+		role_addresses = lappend(role_addresses, role_address);
+	}
+
+	/*
+	 * Second pass over the roles to be removed.
+	 */
+	foreach(item, role_addresses)
+	{
+		ObjectAddress *role_address = lfirst(item);
+		Oid			roleid = role_address->objectId;
+		HeapTuple	tuple;
+		Form_pg_authid roleform;
+		char	   *detail;
+		char	   *detail_log;
+
+		/*
+		 * Re-find the pg_authid tuple.
+		 *
+		 * Since we've taken a lock on the role OID, it shouldn't be possible
+		 * for the tuple to have been deleted -- or for that matter updated --
+		 * unless the user is manually modifying the system catalogs.
+		 */
+		tuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "could not find tuple for role %u", roleid);
+		roleform = (Form_pg_authid) GETSTRUCT(tuple);
+
+		/*
+		 * Check for pg_shdepend entries depending on this role.
+		 *
+		 * This needs to happen after we've completed removing any
+		 * pg_auth_members entries that can be removed silently, in order to
+		 * avoid spurious failures. See notes above for more details.
+		 */
+		if (checkSharedDependencies(AuthIdRelationId, roleid,
+									&detail, &detail_log))
+			ereport(ERROR,
+					(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+					 errmsg("role \"%s\" cannot be dropped because some objects depend on it",
+							NameStr(roleform->rolname)),
+					 errdetail_internal("%s", detail),
+					 errdetail_log("%s", detail_log)));
+
+		/*
+		 * Remove the role from the pg_authid table
+		 */
+		CatalogTupleDelete(pg_authid_rel, &tuple->t_self);
+
+		ReleaseSysCache(tuple);
+
+		/*
+		 * Remove any comments or security labels on this role.
+		 */
+		DeleteSharedComments(roleid, AuthIdRelationId);
+		DeleteSharedSecurityLabel(roleid, AuthIdRelationId);
+
+		/*
+		 * Remove settings for this role.
+		 */
+		DropSetting(InvalidOid, roleid);
 	}
 
 	/*
@@ -1443,6 +1505,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 		Datum		new_record[Natts_pg_auth_members] = {0};
 		bool		new_record_nulls[Natts_pg_auth_members] = {0};
 		bool		new_record_repl[Natts_pg_auth_members] = {0};
+		Form_pg_auth_members authmem_form;
 
 		/*
 		 * pg_database_owner is never a role member.  Lifting this restriction
@@ -1488,15 +1551,22 @@ AddRoleMems(const char *rolename, Oid roleid,
 		authmem_tuple = SearchSysCache2(AUTHMEMROLEMEM,
 										ObjectIdGetDatum(roleid),
 										ObjectIdGetDatum(memberid));
-		if (HeapTupleIsValid(authmem_tuple) &&
-			(!admin_opt ||
-			 ((Form_pg_auth_members) GETSTRUCT(authmem_tuple))->admin_option))
+		if (!HeapTupleIsValid(authmem_tuple))
 		{
-			ereport(NOTICE,
-					(errmsg("role \"%s\" is already a member of role \"%s\"",
-							get_rolespec_name(memberRole), rolename)));
-			ReleaseSysCache(authmem_tuple);
-			continue;
+			authmem_form = NULL;
+		}
+		else
+		{
+			authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
+			if (!admin_opt || authmem_form->admin_option)
+			{
+				ereport(NOTICE,
+						(errmsg("role \"%s\" is already a member of role \"%s\"",
+								get_rolespec_name(memberRole), rolename)));
+				ReleaseSysCache(authmem_tuple);
+				continue;
+			}
 		}
 
 		/* Build a tuple to insert or update */
@@ -1513,13 +1583,41 @@ AddRoleMems(const char *rolename, Oid roleid,
 									  new_record,
 									  new_record_nulls, new_record_repl);
 			CatalogTupleUpdate(pg_authmem_rel, &tuple->t_self, tuple);
+
+			if (authmem_form->grantor != grantorId)
+			{
+				Oid		   *oldmembers = palloc(sizeof(Oid));
+				Oid		   *newmembers = palloc(sizeof(Oid));
+
+				/* updateAclDependencies wants to pfree array inputs */
+				oldmembers[0] = authmem_form->grantor;
+				newmembers[0] = grantorId;
+
+				updateAclDependencies(AuthMemRelationId, authmem_form->oid,
+									  0, InvalidOid,
+									  1, oldmembers,
+									  1, newmembers);
+			}
+
 			ReleaseSysCache(authmem_tuple);
 		}
 		else
 		{
+			Oid			objectId;
+			Oid		   *newmembers = palloc(sizeof(Oid));
+
+			objectId = GetNewObjectId();
+			new_record[Anum_pg_auth_members_oid - 1] = objectId;
 			tuple = heap_form_tuple(pg_authmem_dsc,
 									new_record, new_record_nulls);
 			CatalogTupleInsert(pg_authmem_rel, tuple);
+
+			/* updateAclDependencies wants to pfree array inputs */
+			newmembers[0] = grantorId;
+			updateAclDependencies(AuthMemRelationId, objectId,
+								  0, InvalidOid,
+								  0, NULL,
+								  1, newmembers);
 		}
 
 		/* CCI after each change, in case there are duplicates in list */
@@ -1586,6 +1684,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 		RoleSpec   *memberRole = lfirst(specitem);
 		Oid			memberid = lfirst_oid(iditem);
 		HeapTuple	authmem_tuple;
+		Form_pg_auth_members authmem_form;
 
 		/*
 		 * Find entry for this role/member
@@ -1601,9 +1700,16 @@ DelRoleMems(const char *rolename, Oid roleid,
 			continue;
 		}
 
+		authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
+
 		if (!admin_opt)
 		{
-			/* Remove the entry altogether */
+			/*
+			 * Remove the entry altogether, after first removing its
+			 * dependencies
+			 */
+			deleteSharedDependencyRecordsFor(AuthMemRelationId,
+											 authmem_form->oid, 0);
 			CatalogTupleDelete(pg_authmem_rel, &authmem_tuple->t_self);
 		}
 		else

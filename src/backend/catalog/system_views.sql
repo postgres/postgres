@@ -53,7 +53,7 @@ CREATE VIEW pg_group AS
     SELECT
         rolname AS groname,
         oid AS grosysid,
-        ARRAY(SELECT member FROM pg_auth_members WHERE roleid = oid) AS grolist
+        ARRAY(SELECT member FROM pg_auth_members WHERE roleid = pg_authid.oid) AS grolist
     FROM pg_authid
     WHERE NOT rolcanlogin;
 

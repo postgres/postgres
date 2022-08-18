@@ -37,6 +37,33 @@ CREATE USER regress_priv_user9;
 CREATE USER regress_priv_user10;
 CREATE ROLE regress_priv_role;
 
+-- test GRANTED BY with DROP OWNED and REASSIGN OWNED
+GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user3 GRANTED BY regress_priv_user2;
+DROP ROLE regress_priv_user2; -- fail, dependency
+REASSIGN OWNED BY regress_priv_user2 TO regress_priv_user4;
+DROP ROLE regress_priv_user2; -- still fail, REASSIGN OWNED doesn't help
+DROP OWNED BY regress_priv_user2;
+DROP ROLE regress_priv_user2; -- ok now, DROP OWNED does the job
+
+-- test that removing granted role or grantee role removes dependency
+GRANT regress_priv_user1 TO regress_priv_user3 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user4 GRANTED BY regress_priv_user3;
+DROP ROLE regress_priv_user3; -- should fail, dependency
+DROP ROLE regress_priv_user4; -- ok
+DROP ROLE regress_priv_user3; -- ok now
+GRANT regress_priv_user1 TO regress_priv_user5 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user6 GRANTED BY regress_priv_user5;
+DROP ROLE regress_priv_user5; -- should fail, dependency
+DROP ROLE regress_priv_user1, regress_priv_user5; -- ok, despite order
+
+-- recreate the roles we just dropped
+CREATE USER regress_priv_user1;
+CREATE USER regress_priv_user2;
+CREATE USER regress_priv_user3;
+CREATE USER regress_priv_user4;
+CREATE USER regress_priv_user5;
+
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
 GRANT pg_read_all_settings TO regress_priv_user8 WITH ADMIN OPTION;

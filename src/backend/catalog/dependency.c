@@ -28,6 +28,7 @@
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_auth_members.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_constraint.h"
@@ -172,6 +173,7 @@ static const Oid object_classes[] = {
 	TSTemplateRelationId,		/* OCLASS_TSTEMPLATE */
 	TSConfigRelationId,			/* OCLASS_TSCONFIG */
 	AuthIdRelationId,			/* OCLASS_ROLE */
+	AuthMemRelationId,			/* OCLASS_ROLE_MEMBERSHIP */
 	DatabaseRelationId,			/* OCLASS_DATABASE */
 	TableSpaceRelationId,		/* OCLASS_TBLSPACE */
 	ForeignDataWrapperRelationId,	/* OCLASS_FDW */
@@ -1502,6 +1504,7 @@ doDeletion(const ObjectAddress *object, int flags)
 		case OCLASS_DEFACL:
 		case OCLASS_EVENT_TRIGGER:
 		case OCLASS_TRANSFORM:
+		case OCLASS_ROLE_MEMBERSHIP:
 			DropObjectById(object);
 			break;
 
@@ -1529,9 +1532,8 @@ doDeletion(const ObjectAddress *object, int flags)
  * Accepts the same flags as performDeletion (though currently only
  * PERFORM_DELETION_CONCURRENTLY does anything).
  *
- * We use LockRelation for relations, LockDatabaseObject for everything
- * else.  Shared-across-databases objects are not currently supported
- * because no caller cares, but could be modified to use LockSharedObject.
+ * We use LockRelation for relations, and otherwise LockSharedObject or
+ * LockDatabaseObject as appropriate for the object type.
  */
 void
 AcquireDeletionLock(const ObjectAddress *object, int flags)
@@ -1549,6 +1551,9 @@ AcquireDeletionLock(const ObjectAddress *object, int flags)
 		else
 			LockRelationOid(object->objectId, AccessExclusiveLock);
 	}
+	else if (object->classId == AuthMemRelationId)
+		LockSharedObject(object->classId, object->objectId, 0,
+						 AccessExclusiveLock);
 	else
 	{
 		/* assume we should lock the whole object not a sub-object */
@@ -2913,6 +2918,9 @@ getObjectClass(const ObjectAddress *object)
 
 		case AuthIdRelationId:
 			return OCLASS_ROLE;
+
+		case AuthMemRelationId:
+			return OCLASS_ROLE_MEMBERSHIP;
 
 		case DatabaseRelationId:
 			return OCLASS_DATABASE;
