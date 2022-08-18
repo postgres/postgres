@@ -4,7 +4,7 @@
  *		Shared definitions for the "raw" parser (flex and bison phases only)
  *
  * NOTE: this file is only meant to be included in the core parsing files,
- * ie, parser.c, gram.y, scan.l, and src/common/keywords.c.
+ * i.e., parser.c, gram.y, and scan.l.
  * Definitions that are needed outside the core parser should be in parser.h.
  *
  *
