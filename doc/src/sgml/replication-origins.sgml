@@ -27,12 +27,12 @@
  </para>
 
  <para>
-  Replication origins have just two properties, a name and an OID. The name,
+  Replication origins have just two properties, a name and an ID. The name,
   which is what should be used to refer to the origin across systems, is
   free-form <type>text</type>. It should be used in a way that makes conflicts
   between replication origins created by different replication solutions
   unlikely; e.g., by prefixing the replication solution's name to it.
-  The OID is used only to avoid having to store the long version
+  The ID is used only to avoid having to store the long version
   in situations where space efficiency is important. It should never be shared
   across systems.
  </para>
