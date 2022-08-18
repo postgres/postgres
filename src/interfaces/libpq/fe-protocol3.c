@@ -21,9 +21,7 @@
 #include "win32.h"
 #else
 #include <unistd.h>
-#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
-#endif
 #endif
 
 #include "libpq-fe.h"

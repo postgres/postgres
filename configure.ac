@@ -1450,7 +1450,6 @@ AC_CHECK_HEADERS(m4_normalize([
 	ifaddrs.h
 	langinfo.h
 	mbarrier.h
-	netinet/tcp.h
 	sys/epoll.h
 	sys/event.h
 	sys/personality.h

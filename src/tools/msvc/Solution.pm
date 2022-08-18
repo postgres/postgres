@@ -304,7 +304,6 @@ sub GenerateFiles
 		HAVE_MEMORY_H               => 1,
 		HAVE_MEMSET_S               => undef,
 		HAVE_MKDTEMP                => undef,
-		HAVE_NETINET_TCP_H          => undef,
 		HAVE_OPENSSL_INIT_SSL       => undef,
 		HAVE_OSSP_UUID_H            => undef,
 		HAVE_PAM_PAM_APPL_H         => undef,
