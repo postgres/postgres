@@ -479,39 +479,34 @@ adjust_appendrel_attrs_mutator(Node *node,
 
 /*
  * adjust_appendrel_attrs_multilevel
- *	  Apply Var translations from a toplevel appendrel parent down to a child.
+ *	  Apply Var translations from an appendrel parent down to a child.
  *
- * In some cases we need to translate expressions referencing a parent relation
- * to reference an appendrel child that's multiple levels removed from it.
+ * Replace Vars in the "node" expression that reference "parentrel" with
+ * the appropriate Vars for "childrel".  childrel can be more than one
+ * inheritance level removed from parentrel.
  */
 Node *
 adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-								  Relids child_relids,
-								  Relids top_parent_relids)
+								  RelOptInfo *childrel,
+								  RelOptInfo *parentrel)
 {
 	AppendRelInfo **appinfos;
-	Bitmapset  *parent_relids = NULL;
 	int			nappinfos;
-	int			cnt;
-
-	Assert(bms_num_members(child_relids) == bms_num_members(top_parent_relids));
-
-	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
-
-	/* Construct relids set for the immediate parent of given child. */
-	for (cnt = 0; cnt < nappinfos; cnt++)
-	{
-		AppendRelInfo *appinfo = appinfos[cnt];
-
-		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
-	}
 
 	/* Recurse if immediate parent is not the top parent. */
-	if (!bms_equal(parent_relids, top_parent_relids))
-		node = adjust_appendrel_attrs_multilevel(root, node, parent_relids,
-												 top_parent_relids);
+	if (childrel->parent != parentrel)
+	{
+		if (childrel->parent)
+			node = adjust_appendrel_attrs_multilevel(root, node,
+													 childrel->parent,
+													 parentrel);
+		else
+			elog(ERROR, "childrel is not a child of parentrel");
+	}
 
-	/* Now translate for this child */
+	/* Now translate for this child. */
+	appinfos = find_appinfos_by_relids(root, childrel->relids, &nappinfos);
+
 	node = adjust_appendrel_attrs(root, node, nappinfos, appinfos);
 
 	pfree(appinfos);
@@ -554,56 +549,43 @@ adjust_child_relids(Relids relids, int nappinfos, AppendRelInfo **appinfos)
 }
 
 /*
- * Replace any relid present in top_parent_relids with its child in
- * child_relids. Members of child_relids can be multiple levels below top
- * parent in the partition hierarchy.
+ * Substitute child's relids for parent's relids in a Relid set.
+ * The childrel can be multiple inheritance levels below the parent.
  */
 Relids
 adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
-							   Relids child_relids, Relids top_parent_relids)
+							   RelOptInfo *childrel,
+							   RelOptInfo *parentrel)
 {
 	AppendRelInfo **appinfos;
 	int			nappinfos;
-	Relids		parent_relids = NULL;
-	Relids		result;
-	Relids		tmp_result = NULL;
-	int			cnt;
 
 	/*
-	 * If the given relids set doesn't contain any of the top parent relids,
-	 * it will remain unchanged.
+	 * If the given relids set doesn't contain any of the parent relids, it
+	 * will remain unchanged.
 	 */
-	if (!bms_overlap(relids, top_parent_relids))
+	if (!bms_overlap(relids, parentrel->relids))
 		return relids;
 
-	appinfos = find_appinfos_by_relids(root, child_relids, &nappinfos);
-
-	/* Construct relids set for the immediate parent of the given child. */
-	for (cnt = 0; cnt < nappinfos; cnt++)
-	{
-		AppendRelInfo *appinfo = appinfos[cnt];
-
-		parent_relids = bms_add_member(parent_relids, appinfo->parent_relid);
-	}
-
 	/* Recurse if immediate parent is not the top parent. */
-	if (!bms_equal(parent_relids, top_parent_relids))
+	if (childrel->parent != parentrel)
 	{
-		tmp_result = adjust_child_relids_multilevel(root, relids,
-													parent_relids,
-													top_parent_relids);
-		relids = tmp_result;
+		if (childrel->parent)
+			relids = adjust_child_relids_multilevel(root, relids,
+													childrel->parent,
+													parentrel);
+		else
+			elog(ERROR, "childrel is not a child of parentrel");
 	}
 
-	result = adjust_child_relids(relids, nappinfos, appinfos);
+	/* Now translate for this child. */
+	appinfos = find_appinfos_by_relids(root, childrel->relids, &nappinfos);
 
-	/* Free memory consumed by any intermediate result. */
-	if (tmp_result)
-		bms_free(tmp_result);
-	bms_free(parent_relids);
+	relids = adjust_child_relids(relids, nappinfos, appinfos);
+
 	pfree(appinfos);
 
-	return result;
+	return relids;
 }
 
 /*
@@ -694,8 +676,8 @@ get_translated_update_targetlist(PlannerInfo *root, Index relid,
 		*processed_tlist = (List *)
 			adjust_appendrel_attrs_multilevel(root,
 											  (Node *) root->processed_tlist,
-											  bms_make_singleton(relid),
-											  bms_make_singleton(root->parse->resultRelation));
+											  find_base_rel(root, relid),
+											  find_base_rel(root, root->parse->resultRelation));
 		if (update_colnos)
 			*update_colnos =
 				adjust_inherited_attnums_multilevel(root, root->update_colnos,

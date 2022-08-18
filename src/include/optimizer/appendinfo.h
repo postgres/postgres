@@ -23,13 +23,13 @@ extern AppendRelInfo *make_append_rel_info(Relation parentrel,
 extern Node *adjust_appendrel_attrs(PlannerInfo *root, Node *node,
 									int nappinfos, AppendRelInfo **appinfos);
 extern Node *adjust_appendrel_attrs_multilevel(PlannerInfo *root, Node *node,
-											   Relids child_relids,
-											   Relids top_parent_relids);
+											   RelOptInfo *childrel,
+											   RelOptInfo *parentrel);
 extern Relids adjust_child_relids(Relids relids, int nappinfos,
 								  AppendRelInfo **appinfos);
 extern Relids adjust_child_relids_multilevel(PlannerInfo *root, Relids relids,
-											 Relids child_relids,
-											 Relids top_parent_relids);
+											 RelOptInfo *childrel,
+											 RelOptInfo *parentrel);
 extern List *adjust_inherited_attnums(List *attnums, AppendRelInfo *context);
 extern List *adjust_inherited_attnums_multilevel(PlannerInfo *root,
 												 List *attnums,

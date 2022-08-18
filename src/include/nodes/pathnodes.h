@@ -938,7 +938,15 @@ typedef struct RelOptInfo
 	 */
 	/* consider partitionwise join paths? (if partitioned rel) */
 	bool		consider_partitionwise_join;
-	/* Relids of topmost parents (if "other" rel) */
+
+	/*
+	 * inheritance links, if this is an otherrel (otherwise NULL):
+	 */
+	/* Immediate parent relation (dumping it would be too verbose) */
+	struct RelOptInfo *parent pg_node_attr(read_write_ignore);
+	/* Topmost parent relation (dumping it would be too verbose) */
+	struct RelOptInfo *top_parent pg_node_attr(read_write_ignore);
+	/* Relids of topmost parent (redundant, but handy) */
 	Relids		top_parent_relids;
 
 	/*

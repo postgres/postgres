@@ -1760,8 +1760,8 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	if (IS_OTHER_REL(inner_rel) && result != NIL)
 		result = (List *) adjust_appendrel_attrs_multilevel(root,
 															(Node *) result,
-															inner_rel->relids,
-															inner_rel->top_parent_relids);
+															inner_rel,
+															inner_rel->top_parent);
 
 	return result;
 }
@@ -2626,8 +2626,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 					child_expr = (Expr *)
 						adjust_appendrel_attrs_multilevel(root,
 														  (Node *) cur_em->em_expr,
-														  child_relids,
-														  top_parent_relids);
+														  child_rel,
+														  child_rel->top_parent);
 				}
 
 				/*
@@ -2768,8 +2768,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 					child_expr = (Expr *)
 						adjust_appendrel_attrs_multilevel(root,
 														  (Node *) cur_em->em_expr,
-														  child_relids,
-														  top_parent_relids);
+														  child_joinrel,
+														  child_joinrel->top_parent);
 				}
 
 				/*
@@ -2791,8 +2791,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 					new_nullable_relids =
 						adjust_child_relids_multilevel(root,
 													   new_nullable_relids,
-													   child_relids,
-													   top_parent_relids);
+													   child_joinrel,
+													   child_joinrel->top_parent);
 
 				(void) add_eq_member(cur_ec, child_expr,
 									 new_relids, new_nullable_relids,
