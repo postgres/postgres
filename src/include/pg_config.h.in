@@ -490,9 +490,6 @@
 /* Define to 1 if you have the <sys/signalfd.h> header file. */
 #undef HAVE_SYS_SIGNALFD_H
 
-/* Define to 1 if you have the <sys/sockio.h> header file. */
-#undef HAVE_SYS_SOCKIO_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 

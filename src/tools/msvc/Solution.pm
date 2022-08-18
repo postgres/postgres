@@ -359,7 +359,6 @@ sub GenerateFiles
 		HAVE_SYS_PRCTL_H                         => undef,
 		HAVE_SYS_PROCCTL_H                       => undef,
 		HAVE_SYS_SIGNALFD_H                      => undef,
-		HAVE_SYS_SOCKIO_H                        => undef,
 		HAVE_SYS_STAT_H                          => 1,
 		HAVE_SYS_TYPES_H                         => 1,
 		HAVE_SYS_UCRED_H                         => undef,

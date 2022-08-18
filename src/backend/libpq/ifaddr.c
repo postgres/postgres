@@ -325,10 +325,6 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 #include <sys/ioctl.h>
 #include <net/if.h>
 
-#ifdef HAVE_SYS_SOCKIO_H
-#include <sys/sockio.h>
-#endif
-
 #if defined(SIOCGIFCONF)
 
 /*
