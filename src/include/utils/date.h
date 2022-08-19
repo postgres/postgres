@@ -42,14 +42,14 @@ typedef struct
 #define DATE_IS_NOEND(j)	((j) == DATEVAL_NOEND)
 #define DATE_NOT_FINITE(j)	(DATE_IS_NOBEGIN(j) || DATE_IS_NOEND(j))
 
+#define MAX_TIME_PRECISION 6
+
 /*
  * Macros for fmgr-callable functions.
  *
  * For TimeADT, we make use of the same support routines as for int64.
  * Therefore TimeADT is pass-by-reference if and only if int64 is!
  */
-#define MAX_TIME_PRECISION 6
-
 #define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
 #define DatumGetTimeADT(X)	  ((TimeADT) DatumGetInt64(X))
 #define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
