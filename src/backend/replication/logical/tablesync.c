@@ -707,7 +707,6 @@ fetch_remote_table_info(char *nspname, char *relname,
 	bool		isnull;
 	int			natt;
 	ListCell   *lc;
-	bool		first;
 	Bitmapset  *included_cols = NULL;
 
 	lrel->nspname = nspname;
@@ -759,18 +758,15 @@ fetch_remote_table_info(char *nspname, char *relname,
 	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
 	{
 		WalRcvExecResult *pubres;
-		TupleTableSlot *slot;
+		TupleTableSlot *tslot;
 		Oid			attrsRow[] = {INT2VECTOROID};
 		StringInfoData pub_names;
-		bool		first = true;
-
 		initStringInfo(&pub_names);
 		foreach(lc, MySubscription->publications)
 		{
-			if (!first)
+			if (foreach_current_index(lc) > 0)
 				appendStringInfo(&pub_names, ", ");
 			appendStringInfoString(&pub_names, quote_literal_cstr(strVal(lfirst(lc))));
-			first = false;
 		}
 
 		/*
@@ -819,10 +815,10 @@ fetch_remote_table_info(char *nspname, char *relname,
 		 * If we find a NULL value, it means all the columns should be
 		 * replicated.
 		 */
-		slot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
-		if (tuplestore_gettupleslot(pubres->tuplestore, true, false, slot))
+		tslot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
+		if (tuplestore_gettupleslot(pubres->tuplestore, true, false, tslot))
 		{
-			Datum		cfval = slot_getattr(slot, 1, &isnull);
+			Datum		cfval = slot_getattr(tslot, 1, &isnull);
 
 			if (!isnull)
 			{
@@ -838,9 +834,9 @@ fetch_remote_table_info(char *nspname, char *relname,
 					included_cols = bms_add_member(included_cols, elems[natt]);
 			}
 
-			ExecClearTuple(slot);
+			ExecClearTuple(tslot);
 		}
-		ExecDropSingleTupleTableSlot(slot);
+		ExecDropSingleTupleTableSlot(tslot);
 
 		walrcv_clear_result(pubres);
 
@@ -950,14 +946,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 		/* Build the pubname list. */
 		initStringInfo(&pub_names);
-		first = true;
 		foreach(lc, MySubscription->publications)
 		{
 			char	   *pubname = strVal(lfirst(lc));
 
-			if (first)
-				first = false;
-			else
+			if (foreach_current_index(lc) > 0)
 				appendStringInfoString(&pub_names, ", ");
 
 			appendStringInfoString(&pub_names, quote_literal_cstr(pubname));
