@@ -341,13 +341,13 @@ transformJsonTableChildPlan(JsonTableContext *cxt, JsonTablePlan *plan,
 		/* transform all nested columns into cross/union join */
 		foreach(lc, columns)
 		{
-			JsonTableColumn *jtc = castNode(JsonTableColumn, lfirst(lc));
+			JsonTableColumn *col = castNode(JsonTableColumn, lfirst(lc));
 			Node	   *node;
 
-			if (jtc->coltype != JTC_NESTED)
+			if (col->coltype != JTC_NESTED)
 				continue;
 
-			node = transformNestedJsonTableColumn(cxt, jtc, plan);
+			node = transformNestedJsonTableColumn(cxt, col, plan);
 
 			/* join transformed node with previous sibling nodes */
 			res = res ? makeJsonTableSiblingJoin(cross, res, node) : node;
