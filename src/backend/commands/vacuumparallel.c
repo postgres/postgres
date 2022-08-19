@@ -317,6 +317,7 @@ parallel_vacuum_init(Relation rel, Relation *indrels, int nindexes,
 
 	/* Prepare index vacuum stats */
 	indstats = (PVIndStats *) shm_toc_allocate(pcxt->toc, est_indstats_len);
+	MemSet(indstats, 0, est_indstats_len);
 	for (int i = 0; i < nindexes; i++)
 	{
 		Relation	indrel = indrels[i];
