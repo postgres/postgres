@@ -1235,29 +1235,23 @@ vac_estimate_reltuples(Relation relation,
 		return scanned_tuples;
 
 	/*
-	 * If scanned_pages is zero but total_pages isn't, keep the existing value
-	 * of reltuples.  (Note: we might be returning -1 in this case.)
-	 */
-	if (scanned_pages == 0)
-		return old_rel_tuples;
-
-	/*
 	 * When successive VACUUM commands scan the same few pages again and
 	 * again, without anything from the table really changing, there is a risk
 	 * that our beliefs about tuple density will gradually become distorted.
-	 * It's particularly important to avoid becoming confused in this way due
-	 * to vacuumlazy.c implementation details.  For example, the tendency for
-	 * our caller to always scan the last heap page should not ever cause us
-	 * to believe that every page in the table must be just like the last
-	 * page.
+	 * This might be caused by vacuumlazy.c implementation details, such as
+	 * its tendency to always scan the last heap page.  Handle that here.
 	 *
-	 * We apply a heuristic to avoid these problems: if the relation is
-	 * exactly the same size as it was at the end of the last VACUUM, and only
-	 * a few of its pages (less than a quasi-arbitrary threshold of 2%) were
-	 * scanned by this VACUUM, assume that reltuples has not changed at all.
+	 * If the relation is _exactly_ the same size according to the existing
+	 * pg_class entry, and only a few of its pages (less than 2%) were
+	 * scanned, keep the existing value of reltuples.  Also keep the existing
+	 * value when only a subset of rel's pages <= a single page were scanned.
+	 *
+	 * (Note: we might be returning -1 here.)
 	 */
 	if (old_rel_pages == total_pages &&
 		scanned_pages < (double) total_pages * 0.02)
+		return old_rel_tuples;
+	if (scanned_pages <= 1)
 		return old_rel_tuples;
 
 	/*
