@@ -112,9 +112,9 @@ typedef bool (*ArchiveFileCB) (const char *file, const char *path);
     was successfully archived, which may include recycling or removing the
     original WAL file.  If <literal>false</literal> is returned, the server will
     keep the original WAL file and retry archiving later.
-    <literal>file</literal> will contain just the file name of the WAL file to
-    archive, while <literal>path</literal> contains the full path of the WAL
-    file (including the file name).
+    <replaceable>file</replaceable> will contain just the file name of the WAL
+    file to archive, while <replaceable>path</replaceable> contains the full
+    path of the WAL file (including the file name).
    </para>
   </sect2>
 

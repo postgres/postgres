@@ -668,9 +668,10 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    <para>
     If the archive function emits an <literal>ERROR</literal> or
     <literal>FATAL</literal>, the archiver process aborts and gets restarted by
-    the postmaster.  If you are archiving via shell command, FATAL is emitted if
-    the command is terminated by a signal (other than
-    <systemitem>SIGTERM</systemitem> that is used as part of a server shutdown)
+    the postmaster.  If you are archiving via shell command,
+    <literal>FATAL</literal> is emitted if the command is terminated by a signal
+    (other than <systemitem>SIGTERM</systemitem>
+    that is used as part of a server shutdown)
     or an error by the shell with an exit status greater than 125 (such as
     command not found).  In such cases, the failure is not reported in
     <xref linkend="pg-stat-archiver-view"/>.
@@ -885,8 +886,9 @@ test ! -f /mnt/server/archivedir/00000001000000A900000065 &amp;&amp; cp pg_wal/0
    <listitem>
     <para>
      Connect to the server (it does not matter which database) as a user with
-     rights to run pg_backup_start (superuser, or a user who has been granted
-     EXECUTE on the function) and issue the command:
+     rights to run <function>pg_backup_start</function> (superuser,
+     or a user who has been granted <literal>EXECUTE</literal> on the
+     function) and issue the command:
 <programlisting>
 SELECT pg_backup_start(label => 'label', fast => false);
 </programlisting>
@@ -958,11 +960,12 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      On a standby, <varname>archive_mode</varname> must be <literal>always</literal> in order
      for <function>pg_backup_stop</function> to wait.
      Archiving of these files happens automatically since you have
-     already configured <varname>archive_library</varname>. In most cases this
-     happens quickly, but you are advised to monitor your archive
-     system to ensure there are no delays.
-     If the archive process has fallen behind
-     because of failures of the archive library, it will keep retrying
+     already configured <varname>archive_library</varname> or
+     <varname>archive_command</varname>.
+     In most cases this happens quickly, but you are advised to monitor your
+     archive system to ensure there are no delays.
+     If the archive process has fallen behind because of failures of the
+     archive library or archive command, it will keep retrying
      until the archive succeeds and the backup is complete.
      If you wish to place a time limit on the execution of
      <function>pg_backup_stop</function>, set an appropriate
