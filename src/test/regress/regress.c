@@ -56,22 +56,22 @@
 
 #define EXPECT_EQ_U32(result_expr, expected_expr)	\
 	do { \
-		uint32		result = (result_expr); \
-		uint32		expected = (expected_expr); \
-		if (result != expected) \
+		uint32		actual_result = (result_expr); \
+		uint32		expected_result = (expected_expr); \
+		if (actual_result != expected_result) \
 			elog(ERROR, \
 				 "%s yielded %u, expected %s in file \"%s\" line %u", \
-				 #result_expr, result, #expected_expr, __FILE__, __LINE__); \
+				 #result_expr, actual_result, #expected_expr, __FILE__, __LINE__); \
 	} while (0)
 
 #define EXPECT_EQ_U64(result_expr, expected_expr)	\
 	do { \
-		uint64		result = (result_expr); \
-		uint64		expected = (expected_expr); \
-		if (result != expected) \
+		uint64		actual_result = (result_expr); \
+		uint64		expected_result = (expected_expr); \
+		if (actual_result != expected_result) \
 			elog(ERROR, \
 				 "%s yielded " UINT64_FORMAT ", expected %s in file \"%s\" line %u", \
-				 #result_expr, result, #expected_expr, __FILE__, __LINE__); \
+				 #result_expr, actual_result, #expected_expr, __FILE__, __LINE__); \
 	} while (0)
 
 #define LDELIM			'('
