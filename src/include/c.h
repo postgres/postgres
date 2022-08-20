@@ -334,16 +334,6 @@
 	(N)
 
 /*
- * dummyret is used to set return values in macros that use ?: to make
- * assignments.  gcc wants these to be void, other compilers like char
- */
-#ifdef __GNUC__					/* GNU cc */
-#define dummyret	void
-#else
-#define dummyret	char
-#endif
-
-/*
  * Generic function pointer.  This can be used in the rare cases where it's
  * necessary to cast a function pointer to a seemingly incompatible function
  * pointer type while avoiding gcc's -Wcast-function-type warnings.
