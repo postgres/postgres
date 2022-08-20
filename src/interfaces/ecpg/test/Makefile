@@ -59,24 +59,16 @@ pg_regress_ecpg.o: pg_regress_ecpg.c $(top_builddir)/src/port/pg_config_paths.h
 $(top_builddir)/src/port/pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	$(MAKE) -C $(top_builddir)/src/port pg_config_paths.h
 
-# When doing a VPATH build, copy over the .pgc, .stdout and .stderr
-# files so that the driver script can find them.  We have to use an
-# absolute path for the targets, because otherwise make will try to
-# locate the missing files using VPATH, and will find them in
-# $(srcdir), but the point here is that we want to copy them from
-# $(srcdir) to the build directory.
-
-ifdef VPATH
-remaining_files_src := $(wildcard $(srcdir)/*/*.pgc) $(wildcard $(srcdir)/expected/*.c) $(wildcard $(srcdir)/expected/*.stdout) $(wildcard $(srcdir)/expected/*.stderr)
-remaining_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(remaining_files_src))
-
-all: $(remaining_files_build)
-$(remaining_files_build): $(abs_builddir)/%: $(srcdir)/%
-	ln -s $< $@
-endif
-
-# Common options for tests. Also pick up anything passed in EXTRA_REGRESS_OPTS
-REGRESS_OPTS = --dbname=ecpg1_regression,ecpg2_regression --create-role=regress_ecpg_user1,regress_ecpg_user2 $(EXTRA_REGRESS_OPTS)
+# Common options for tests
+#
+# Need to specify expecteddir explicitly, as the inputdir is located in the
+# build directory, because the files need to be compiled. Other pg_regress
+# style tests have the expecteddir in the source directory.
+#
+# Also pick up anything passed in EXTRA_REGRESS_OPTS.
+REGRESS_OPTS =  --expecteddir=$(srcdir) \
+  --dbname=ecpg1_regression,ecpg2_regression --create-role=regress_ecpg_user1,regress_ecpg_user2 \
+  $(EXTRA_REGRESS_OPTS)
 
 check: all
 	$(with_temp_install) ./pg_regress $(REGRESS_OPTS) --temp-instance=./tmp_check $(TEMP_CONF) --bindir= $(pg_regress_locale_flags) $(THREAD) --schedule=$(srcdir)/ecpg_schedule sql/twophase

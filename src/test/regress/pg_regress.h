@@ -53,6 +53,7 @@ extern _stringlist *dblist;
 extern bool debug;
 extern char *inputdir;
 extern char *outputdir;
+extern char *expecteddir;
 extern char *launcher;
 
 extern const char *basic_diff_opts;
