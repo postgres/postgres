@@ -4,9 +4,21 @@ CREATE EXTENSION test_lfind;
 -- the operations complete without crashing or hanging and that none of their
 -- internal sanity tests fail.
 --
-SELECT test_lfind();
- test_lfind 
-------------
+SELECT test_lfind8();
+ test_lfind8 
+-------------
+ 
+(1 row)
+
+SELECT test_lfind8_le();
+ test_lfind8_le 
+----------------
+ 
+(1 row)
+
+SELECT test_lfind32();
+ test_lfind32 
+--------------
  
 (1 row)
 

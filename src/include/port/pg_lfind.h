@@ -1,7 +1,8 @@
 /*-------------------------------------------------------------------------
  *
  * pg_lfind.h
- *	  Optimized linear search routines.
+ *	  Optimized linear search routines using SIMD intrinsics where
+ *	  available.
  *
  * Copyright (c) 2022, PostgreSQL Global Development Group
  *
@@ -16,6 +17,70 @@
 #include "port/simd.h"
 
 /*
+ * pg_lfind8
+ *
+ * Return true if there is an element in 'base' that equals 'key', otherwise
+ * return false.
+ */
+static inline bool
+pg_lfind8(uint8 key, uint8 *base, uint32 nelem)
+{
+	uint32		i;
+
+	/* round down to multiple of vector length */
+	uint32		tail_idx = nelem & ~(sizeof(Vector8) - 1);
+	Vector8		chunk;
+
+	for (i = 0; i < tail_idx; i += sizeof(Vector8))
+	{
+		vector8_load(&chunk, &base[i]);
+		if (vector8_has(chunk, key))
+			return true;
+	}
+
+	/* Process the remaining elements one at a time. */
+	for (; i < nelem; i++)
+	{
+		if (key == base[i])
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * pg_lfind8_le
+ *
+ * Return true if there is an element in 'base' that is less than or equal to
+ * 'key', otherwise return false.
+ */
+static inline bool
+pg_lfind8_le(uint8 key, uint8 *base, uint32 nelem)
+{
+	uint32		i;
+
+	/* round down to multiple of vector length */
+	uint32		tail_idx = nelem & ~(sizeof(Vector8) - 1);
+	Vector8		chunk;
+
+	for (i = 0; i < tail_idx; i += sizeof(Vector8))
+	{
+		vector8_load(&chunk, &base[i]);
+		if (vector8_has_le(chunk, key))
+			return true;
+	}
+
+	/* Process the remaining elements one at a time. */
+	for (; i < nelem; i++)
+	{
+		if (base[i] <= key)
+			return true;
+	}
+
+	return false;
+}
+
+/*
  * pg_lfind32
  *
  * Return true if there is an element in 'base' that equals 'key', otherwise
@@ -26,7 +91,6 @@ pg_lfind32(uint32 key, uint32 *base, uint32 nelem)
 {
 	uint32		i = 0;
 
-	/* Use SIMD intrinsics where available. */
 #ifdef USE_SSE2
 
 	/*
