@@ -65,7 +65,7 @@ typedef struct WalSnd
 	 */
 	int			sync_standby_priority;
 
-	/* Protects shared variables shown above. */
+	/* Protects shared variables in this structure. */
 	slock_t		mutex;
 
 	/*
