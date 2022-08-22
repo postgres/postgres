@@ -612,7 +612,7 @@ parallel_vacuum_process_all_indexes(ParallelVacuumState *pvs, int num_index_scan
 		Assert(indstats->status == PARALLEL_INDVAC_STATUS_INITIAL);
 		indstats->status = new_status;
 		indstats->parallel_workers_can_process =
-			(pvs->will_parallel_vacuum[i] &
+			(pvs->will_parallel_vacuum[i] &&
 			 parallel_vacuum_index_is_parallel_safe(pvs->indrels[i],
 													num_index_scans,
 													vacuum));
