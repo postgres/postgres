@@ -73,20 +73,14 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 ])])# PGAC_UNION_SEMUN
 
 
-# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
-# --------------------------------------
-# Check the members of `struct sockaddr_storage'.  We need to know about
-# ss_family and ss_len.  (Some platforms follow RFC 2553 and call them
-# __ss_family and __ss_len.)  We also check struct sockaddr's sa_len.
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
-[AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
-		   struct sockaddr_storage.__ss_family,
-		   struct sockaddr_storage.ss_len,
-		   struct sockaddr_storage.__ss_len,
-		   struct sockaddr.sa_len], [], [],
+# PGAC_STRUCT_SOCKADDR_MEMBERS
+# ----------------------------
+# Check if struct sockaddr and subtypes have 4.4BSD-style length.
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_SA_LEN],
+[AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [],
 [#include <sys/types.h>
 #include <sys/socket.h>
-])])# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
+])])# PGAC_STRUCT_SOCKADDR_MEMBERS
 
 
 # PGAC_TYPE_LOCALE_T

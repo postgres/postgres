@@ -227,7 +227,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 	 * something with it.  To suppress the warning, clamp the struct size to
 	 * what will fit in sun_len.
 	 */
-#ifdef HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 	unp->sun_len = Min(sizeof(struct sockaddr_un),
 					   ((size_t) 1 << (sizeof(unp->sun_len) * BITS_PER_BYTE)) - 1);
 #endif

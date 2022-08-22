@@ -14990,54 +14990,6 @@ _ACEOF
 
 fi
 
-ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "ss_family" "ac_cv_member_struct_sockaddr_storage_ss_family" "#include <sys/types.h>
-#include <sys/socket.h>
-
-"
-if test "x$ac_cv_member_struct_sockaddr_storage_ss_family" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "__ss_family" "ac_cv_member_struct_sockaddr_storage___ss_family" "#include <sys/types.h>
-#include <sys/socket.h>
-
-"
-if test "x$ac_cv_member_struct_sockaddr_storage___ss_family" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "ss_len" "ac_cv_member_struct_sockaddr_storage_ss_len" "#include <sys/types.h>
-#include <sys/socket.h>
-
-"
-if test "x$ac_cv_member_struct_sockaddr_storage_ss_len" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN 1
-_ACEOF
-
-
-fi
-ac_fn_c_check_member "$LINENO" "struct sockaddr_storage" "__ss_len" "ac_cv_member_struct_sockaddr_storage___ss_len" "#include <sys/types.h>
-#include <sys/socket.h>
-
-"
-if test "x$ac_cv_member_struct_sockaddr_storage___ss_len" = xyes; then :
-
-cat >>confdefs.h <<_ACEOF
-#define HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN 1
-_ACEOF
-
-
-fi
 ac_fn_c_check_member "$LINENO" "struct sockaddr" "sa_len" "ac_cv_member_struct_sockaddr_sa_len" "#include <sys/types.h>
 #include <sys/socket.h>
 
