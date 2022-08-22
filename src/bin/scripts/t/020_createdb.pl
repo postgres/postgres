@@ -49,6 +49,15 @@ if ($ENV{with_icu} eq 'yes')
 			'--icu-locale=@colNumeric=lower', 'foobarX'
 		],
 		'fails for invalid ICU locale');
+
+	# additional node, which uses the icu provider
+	my $node2 = PostgreSQL::Test::Cluster->new('icu');
+	$node2->init(extra => ['--locale-provider=icu', '--icu-locale=en']);
+	$node2->start;
+
+	$node2->command_ok(
+		[ 'createdb', '-T', 'template0', '--locale-provider=libc', 'foobar55' ],
+		'create database with libc provider from template database with icu provider');
 }
 else
 {
