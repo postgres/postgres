@@ -21,6 +21,7 @@
 #include "catalog/pg_authid_d.h"
 #include "common/connect.h"
 #include "common/file_utils.h"
+#include "common/hashfn.h"
 #include "common/logging.h"
 #include "common/string.h"
 #include "dumputils.h"
@@ -31,6 +32,28 @@
 /* version string we expect back from pg_dump */
 #define PGDUMP_VERSIONSTR "pg_dump (PostgreSQL) " PG_VERSION "\n"
 
+static uint32 hash_string_pointer(char *s);
+
+typedef struct
+{
+	uint32		status;
+	uint32		hashval;
+	char	   *rolename;
+} RoleNameEntry;
+
+#define SH_PREFIX	rolename
+#define SH_ELEMENT_TYPE	RoleNameEntry
+#define SH_KEY_TYPE	char *
+#define SH_KEY		rolename
+#define SH_HASH_KEY(tb, key)	hash_string_pointer(key)
+#define SH_EQUAL(tb, a, b)		(strcmp(a, b) == 0)
+#define SH_STORE_HASH
+#define SH_GET_HASH(tb, a)		(a)->hashval
+#define SH_SCOPE	static inline
+#define SH_RAW_ALLOCATOR	pg_malloc0
+#define SH_DECLARE
+#define SH_DEFINE
+#include "lib/simplehash.h"
 
 static void help(void);
 
@@ -925,45 +948,150 @@ dumpRoleMembership(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
 	PGresult   *res;
-	int			i;
+	int			start = 0,
+				end,
+				total;
+	bool		dump_grantors;
 
-	printfPQExpBuffer(buf, "SELECT ur.rolname AS roleid, "
+	/*
+	 * Previous versions of PostgreSQL didn't used to track the grantor very
+	 * carefully in the backend, and the grantor could be any user even if
+	 * they didn't have ADMIN OPTION on the role, or a user that no longer
+	 * existed. To avoid dump and restore failures, don't dump the grantor
+	 * when talking to an old server version.
+	 */
+	dump_grantors = (PQserverVersion(conn) >= 160000);
+
+	/* Generate and execute query. */
+	printfPQExpBuffer(buf, "SELECT ur.rolname AS role, "
 					  "um.rolname AS member, "
-					  "a.admin_option, "
-					  "ug.rolname AS grantor "
+					  "ug.oid AS grantorid, "
+					  "ug.rolname AS grantor, "
+					  "a.admin_option "
 					  "FROM pg_auth_members a "
 					  "LEFT JOIN %s ur on ur.oid = a.roleid "
 					  "LEFT JOIN %s um on um.oid = a.member "
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
 					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
-					  "ORDER BY 1,2,3", role_catalog, role_catalog, role_catalog);
+					  "ORDER BY 1,2,4", role_catalog, role_catalog, role_catalog);
 	res = executeQuery(conn, buf->data);
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
 
-	for (i = 0; i < PQntuples(res); i++)
+	/*
+	 * We can't dump these GRANT commands in arbitary order, because a role
+	 * that is named as a grantor must already have ADMIN OPTION on the
+	 * role for which it is granting permissions, except for the boostrap
+	 * superuser, who can always be named as the grantor.
+	 *
+	 * We handle this by considering these grants role by role. For each role,
+	 * we initially consider the only allowable grantor to be the boostrap
+	 * superuser. Every time we grant ADMIN OPTION on the role to some user,
+	 * that user also becomes an allowable grantor. We make repeated passes
+	 * over the grants for the role, each time dumping those whose grantors
+	 * are allowable and which we haven't done yet. Eventually this should
+	 * let us dump all the grants.
+	 */
+	total = PQntuples(res);
+	while (start < total)
 	{
-		char	   *roleid = PQgetvalue(res, i, 0);
-		char	   *member = PQgetvalue(res, i, 1);
-		char	   *option = PQgetvalue(res, i, 2);
+		char	   *role = PQgetvalue(res, start, 0);
+		int			i;
+		bool	   *done;
+		int			remaining;
+		int			prev_remaining = 0;
+		rolename_hash *ht;
 
-		fprintf(OPF, "GRANT %s", fmtId(roleid));
-		fprintf(OPF, " TO %s", fmtId(member));
-		if (*option == 't')
-			fprintf(OPF, " WITH ADMIN OPTION");
+		/* All memberships for a single role should be adjacent. */
+		for (end = start; end < total; ++end)
+		{
+			char   *otherrole;
+
+			otherrole = PQgetvalue(res, end, 0);
+			if (strcmp(role, otherrole) != 0)
+				break;
+		}
+
+		role = PQgetvalue(res, start, 0);
+		remaining = end - start;
+		done = pg_malloc0(remaining * sizeof(bool));
+		ht = rolename_create(remaining, NULL);
 
 		/*
-		 * We don't track the grantor very carefully in the backend, so cope
-		 * with the possibility that it has been dropped.
+		 * Make repeated passses over the grants for this role until all have
+		 * been dumped.
 		 */
-		if (!PQgetisnull(res, i, 3))
+		while (remaining > 0)
 		{
-			char	   *grantor = PQgetvalue(res, i, 3);
+			/*
+			 * We should make progress on every iteration, because a notional
+			 * graph whose vertices are grants and whose edges point from
+			 * grantors to members should be connected and acyclic. If we fail
+			 * to make progress, either we or the server have messed up.
+			 */
+			if (remaining == prev_remaining)
+			{
+				pg_log_error("could not find a legal dump ordering for memberships in role \"%s\"",
+							 role);
+				PQfinish(conn);
+				exit_nicely(1);
+			}
 
-			fprintf(OPF, " GRANTED BY %s", fmtId(grantor));
+			/* Make one pass over the grants for this role. */
+			for (i = start; i < end; ++i)
+			{
+				char	   *member;
+				char	   *admin_option;
+				char	   *grantorid;
+				char	   *grantor;
+				bool		found;
+
+				/* If we already did this grant, don't do it again. */
+				if (done[i - start])
+					continue;
+
+				member = PQgetvalue(res, i, 1);
+				grantorid = PQgetvalue(res, i, 2);
+				grantor = PQgetvalue(res, i, 3);
+				admin_option = PQgetvalue(res, i, 4);
+
+				/*
+				 * If we're not dumping grantors or if the grantor is the
+				 * bootstrap superuser, it's fine to dump this now. Otherwise,
+				 * it's got to be someone who has already been granted ADMIN
+				 * OPTION.
+				 */
+				if (dump_grantors &&
+					atooid(grantorid) != BOOTSTRAP_SUPERUSERID &&
+					rolename_lookup(ht, grantor) == NULL)
+					continue;
+
+				/* Remember that we did this so that we don't do it again. */
+				done[i - start] = true;
+				--remaining;
+
+				/*
+				 * If ADMIN OPTION is being granted, remember that grants
+				 * listing this member as the grantor can now be dumped.
+				 */
+				if (*admin_option == 't')
+					rolename_insert(ht, member, &found);
+
+				/* Generate the actual GRANT statement. */
+				fprintf(OPF, "GRANT %s", fmtId(role));
+				fprintf(OPF, " TO %s", fmtId(member));
+				if (*admin_option == 't')
+					fprintf(OPF, " WITH ADMIN OPTION");
+				if (dump_grantors)
+					fprintf(OPF, " GRANTED BY %s", fmtId(grantor));
+				fprintf(OPF, ";\n");
+			}
 		}
-		fprintf(OPF, ";\n");
+
+		rolename_destroy(ht);
+		pg_free(done);
+		start = end;
 	}
 
 	PQclear(res);
@@ -1747,4 +1875,15 @@ dumpTimestamp(const char *msg)
 
 	if (strftime(buf, sizeof(buf), PGDUMP_STRFTIME_FMT, localtime(&now)) != 0)
 		fprintf(OPF, "-- %s %s\n\n", msg, buf);
+}
+
+/*
+ * Helper function for rolenamehash hash table.
+ */
+static uint32
+hash_string_pointer(char *s)
+{
+	unsigned char *ss = (unsigned char *) s;
+
+	return hash_bytes(ss, strlen(s));
 }

@@ -103,21 +103,9 @@ ERROR:  role "regress_nosuch_recursive" does not exist
 DROP ROLE regress_nosuch_admin_recursive;
 ERROR:  role "regress_nosuch_admin_recursive" does not exist
 DROP ROLE regress_plainrole;
--- fail, can't drop regress_createrole yet, due to outstanding grants
-DROP ROLE regress_createrole;
-ERROR:  role "regress_createrole" cannot be dropped because some objects depend on it
-DETAIL:  privileges for membership of role regress_read_all_data in role pg_read_all_data
-privileges for membership of role regress_write_all_data in role pg_write_all_data
-privileges for membership of role regress_monitor in role pg_monitor
-privileges for membership of role regress_read_all_settings in role pg_read_all_settings
-privileges for membership of role regress_read_all_stats in role pg_read_all_stats
-privileges for membership of role regress_stat_scan_tables in role pg_stat_scan_tables
-privileges for membership of role regress_read_server_files in role pg_read_server_files
-privileges for membership of role regress_write_server_files in role pg_write_server_files
-privileges for membership of role regress_execute_server_program in role pg_execute_server_program
-privileges for membership of role regress_signal_backend in role pg_signal_backend
 -- ok, should be able to drop non-superuser roles we created
 DROP ROLE regress_createdb;
+DROP ROLE regress_createrole;
 DROP ROLE regress_login;
 DROP ROLE regress_inherit;
 DROP ROLE regress_connection_limit;
@@ -137,8 +125,6 @@ DROP ROLE regress_read_server_files;
 DROP ROLE regress_write_server_files;
 DROP ROLE regress_execute_server_program;
 DROP ROLE regress_signal_backend;
--- ok, dropped the other roles first so this is ok now
-DROP ROLE regress_createrole;
 -- fail, role still owns database objects
 DROP ROLE regress_tenant;
 ERROR:  role "regress_tenant" cannot be dropped because some objects depend on it

@@ -267,8 +267,14 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
 
   <para>
    If <literal>GRANTED BY</literal> is specified, the grant is recorded as
-   having been done by the specified role.  Only database superusers may
-   use this option, except when it names the same role executing the command.
+   having been done by the specified role. A user can only attribute a grant
+   to another role if they possess the privileges of that role. The role
+   recorded as the grantor must have <literal>ADMIN OPTION</literal> on the
+   target role, unless it is the bootstrap superuser. When a grant is recorded
+   as having a grantor other than the bootstrap superuser, it depends on the
+   grantor continuing to posess <literal>ADMIN OPTION</literal> on the role;
+   so, if <literal>ADMIN OPTION</literal> is revoked, dependent grants must
+   be revoked as well.
   </para>
 
   <para>
@@ -333,7 +339,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
     owner of the affected object.  In particular, privileges granted via
     such a command will appear to have been granted by the object owner.
     (For role membership, the membership appears to have been granted
-    by the containing role itself.)
+    by the bootstrap superuser.)
    </para>
 
    <para>

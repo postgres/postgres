@@ -4791,9 +4791,7 @@ has_rolinherit(Oid roleid)
  * Get a list of roles that the specified roleid is a member of
  *
  * Type ROLERECURSE_PRIVS recurses only through roles that have rolinherit
- * set, while ROLERECURSE_MEMBERS recurses through all roles.  This sets
- * *is_admin==true if and only if role "roleid" has an ADMIN OPTION membership
- * in role "admin_of".
+ * set, while ROLERECURSE_MEMBERS recurses through all roles.
  *
  * Since indirect membership testing is relatively expensive, we cache
  * a list of memberships.  Hence, the result is only guaranteed good until
@@ -4801,10 +4799,15 @@ has_rolinherit(Oid roleid)
  *
  * For the benefit of select_best_grantor, the result is defined to be
  * in breadth-first order, ie, closer relationships earlier.
+ *
+ * If admin_of is not InvalidOid, this function sets *admin_role, either
+ * to the OID of the first role in the result list that directly possesses
+ * ADMIN OPTION on the role corresponding to admin_of, or to InvalidOid if
+ * there is no such role.
  */
 static List *
 roles_is_member_of(Oid roleid, enum RoleRecurseType type,
-				   Oid admin_of, bool *is_admin)
+				   Oid admin_of, Oid *admin_role)
 {
 	Oid			dba;
 	List	   *roles_list;
@@ -4812,7 +4815,9 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 	List	   *new_cached_roles;
 	MemoryContext oldctx;
 
-	Assert(OidIsValid(admin_of) == PointerIsValid(is_admin));
+	Assert(OidIsValid(admin_of) == PointerIsValid(admin_role));
+	if (admin_role != NULL)
+		*admin_role = InvalidOid;
 
 	/* If cache is valid and ADMIN OPTION not sought, just return the list */
 	if (cached_role[type] == roleid && !OidIsValid(admin_of) &&
@@ -4873,8 +4878,8 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 			 */
 			if (otherid == admin_of &&
 				((Form_pg_auth_members) GETSTRUCT(tup))->admin_option &&
-				OidIsValid(admin_of))
-				*is_admin = true;
+				OidIsValid(admin_of) && !OidIsValid(*admin_role))
+				*admin_role = memberid;
 
 			/*
 			 * Even though there shouldn't be any loops in the membership
@@ -5014,7 +5019,7 @@ is_member_of_role_nosuper(Oid member, Oid role)
 bool
 is_admin_of_role(Oid member, Oid role)
 {
-	bool		result = false;
+	Oid			admin_role;
 
 	if (superuser_arg(member))
 		return true;
@@ -5023,8 +5028,30 @@ is_admin_of_role(Oid member, Oid role)
 	if (member == role)
 		return false;
 
-	(void) roles_is_member_of(member, ROLERECURSE_MEMBERS, role, &result);
-	return result;
+	(void) roles_is_member_of(member, ROLERECURSE_MEMBERS, role, &admin_role);
+	return OidIsValid(admin_role);
+}
+
+/*
+ * Find a role whose privileges "member" inherits which has ADMIN OPTION
+ * on "role", ignoring super-userness.
+ *
+ * There might be more than one such role; prefer one which involves fewer
+ * hops. That is, if member has ADMIN OPTION, prefer that over all other
+ * options; if not, prefer a role from which member inherits more directly
+ * over more indirect inheritance.
+ */
+Oid
+select_best_admin(Oid member, Oid role)
+{
+	Oid			admin_role;
+
+	/* By policy, a role cannot have WITH ADMIN OPTION on itself. */
+	if (member == role)
+		return InvalidOid;
+
+	(void) roles_is_member_of(member, ROLERECURSE_PRIVS, role, &admin_role);
+	return admin_role;
 }
 
 
