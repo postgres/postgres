@@ -319,7 +319,7 @@ get_db_infos(ClusterInfo *cluster)
 
 	snprintf(query, sizeof(query),
 			 "SELECT d.oid, d.datname, d.encoding, d.datcollate, d.datctype, ");
-	if (GET_MAJOR_VERSION(old_cluster.major_version) < 1500)
+	if (GET_MAJOR_VERSION(cluster->major_version) < 1500)
 		snprintf(query + strlen(query), sizeof(query) - strlen(query),
 				 "'c' AS datlocprovider, NULL AS daticulocale, ");
 	else
