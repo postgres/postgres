@@ -263,7 +263,6 @@ sub mkvcbuild
 
 	$libpq = $solution->AddProject('libpq', 'dll', 'interfaces',
 		'src/interfaces/libpq');
-	$libpq->AddDefine('FRONTEND');
 	$libpq->AddIncludeDir('src/port');
 	$libpq->AddLibrary('secur32.lib');
 	$libpq->AddLibrary('ws2_32.lib');
