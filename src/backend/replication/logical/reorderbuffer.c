@@ -2078,6 +2078,8 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 			Relation	relation = NULL;
 			Oid			reloid;
 
+			CHECK_FOR_INTERRUPTS();
+
 			/*
 			 * We can't call start stream callback before processing first
 			 * change.
