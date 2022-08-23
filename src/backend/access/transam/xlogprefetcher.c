@@ -656,7 +656,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			if (!block->in_use)
 				continue;
 
-			Assert(!BufferIsValid(block->prefetch_buffer));;
+			Assert(!BufferIsValid(block->prefetch_buffer));
 
 			/*
 			 * Record the LSN of this record.  When it's replayed,
