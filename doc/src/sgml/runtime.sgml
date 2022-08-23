@@ -1318,6 +1318,22 @@ default:\
     linkend="guc-max-files-per-process"/> configuration parameter to
     limit the consumption of open files.
    </para>
+
+   <para>
+    Another kernel limit that may be of concern when supporting large
+    numbers of client connections is the maximum socket connection queue
+    length.  If more than that many connection requests arrive within a very
+    short period, some may get rejected before the postmaster can service
+    the requests, with those clients receiving unhelpful connection failure
+    errors such as <quote>Resource temporarily unavailable</quote> or
+    <quote>Connection refused</quote>.  The default queue length limit is 128
+    on many platforms.  To raise it, adjust the appropriate kernel parameter
+    via <application>sysctl</application>, then restart the postmaster.
+    The parameter is variously named <varname>net.core.somaxconn</varname>
+    on Linux, <varname>kern.ipc.soacceptqueue</varname> on newer FreeBSD,
+    and <varname>kern.ipc.somaxconn</varname> on macOS and other BSD
+    variants.
+   </para>
   </sect2>
 
   <sect2 id="linux-memory-overcommit">
