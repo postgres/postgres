@@ -30,7 +30,7 @@
  *		2)		bool, true, false
  *		3)		standard system types
  *		4)		IsValid macros for system types
- *		5)		offsetof, lengthof, alignment
+ *		5)		lengthof, alignment
  *		6)		assertions
  *		7)		widely useful macros
  *		8)		random stuff
@@ -703,20 +703,9 @@ typedef NameData *Name;
 
 
 /* ----------------------------------------------------------------
- *				Section 5:	offsetof, lengthof, alignment
+ *				Section 5:	lengthof, alignment
  * ----------------------------------------------------------------
  */
-/*
- * offsetof
- *		Offset of a structure/union field within that structure/union.
- *
- *		XXX This is supposed to be part of stddef.h, but isn't on
- *		some systems (like SunOS 4).
- */
-#ifndef offsetof
-#define offsetof(type, field)	((long) &((type *)0)->field)
-#endif							/* offsetof */
-
 /*
  * lengthof
  *		Number of elements in an array.
