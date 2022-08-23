@@ -293,18 +293,7 @@ HandleWalWriterInterrupts(void)
 	}
 
 	if (ShutdownRequestPending)
-	{
-		/*
-		 * Force reporting remaining WAL statistics at process exit.
-		 *
-		 * Since pgstat_report_wal is invoked with 'force' is false in main
-		 * loop to avoid overloading the cumulative stats system, there may
-		 * exist unreported stats counters for the WAL writer.
-		 */
-		pgstat_report_wal(true);
-
 		proc_exit(0);
-	}
 
 	/* Perform logging of memory contexts of this process */
 	if (LogMemoryContextPending)
