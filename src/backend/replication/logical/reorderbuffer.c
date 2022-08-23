@@ -1517,6 +1517,8 @@ ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 			Relation	relation = NULL;
 			Oid			reloid;
 
+			CHECK_FOR_INTERRUPTS();
+
 			switch (change->action)
 			{
 				case REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM:
