@@ -315,14 +315,12 @@ sub mkvcbuild
 	my $pgtypes = $solution->AddProject(
 		'libpgtypes', 'dll',
 		'interfaces', 'src/interfaces/ecpg/pgtypeslib');
-	$pgtypes->AddDefine('FRONTEND');
 	$pgtypes->AddReference($libpgcommon, $libpgport);
 	$pgtypes->UseDef('src/interfaces/ecpg/pgtypeslib/pgtypeslib.def');
 	$pgtypes->AddIncludeDir('src/interfaces/ecpg/include');
 
 	my $libecpg = $solution->AddProject('libecpg', 'dll', 'interfaces',
 		'src/interfaces/ecpg/ecpglib');
-	$libecpg->AddDefine('FRONTEND');
 	$libecpg->AddIncludeDir('src/interfaces/ecpg/include');
 	$libecpg->AddIncludeDir('src/interfaces/libpq');
 	$libecpg->AddIncludeDir('src/port');
@@ -333,7 +331,6 @@ sub mkvcbuild
 	my $libecpgcompat = $solution->AddProject(
 		'libecpg_compat', 'dll',
 		'interfaces',     'src/interfaces/ecpg/compatlib');
-	$libecpgcompat->AddDefine('FRONTEND');
 	$libecpgcompat->AddIncludeDir('src/interfaces/ecpg/include');
 	$libecpgcompat->AddIncludeDir('src/interfaces/libpq');
 	$libecpgcompat->UseDef('src/interfaces/ecpg/compatlib/compatlib.def');
