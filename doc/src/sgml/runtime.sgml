@@ -1277,11 +1277,12 @@ default:\
     <itemizedlist>
      <listitem>
       <para>
-      On <productname>Linux</productname>
-      <filename>/proc/sys/fs/file-max</filename> determines the
-      maximum number of open files that the kernel will support.  It can
-      be changed by writing a different number into the file or by
-      adding an assignment in <filename>/etc/sysctl.conf</filename>.
+      On <productname>Linux</productname> the kernel parameter
+      <varname>fs.file-max</varname> determines the maximum number of open
+      files that the kernel will support.  It can be changed with
+      <literal>sysctl -w fs.file-max=<replaceable>N</replaceable></literal>.
+      To make the setting persist across reboots, add an assignment
+      in <filename>/etc/sysctl.conf</filename>.
       The maximum limit of files per process is fixed at the time the
       kernel is compiled; see
       <filename>/usr/src/linux/Documentation/proc.txt</filename> for
