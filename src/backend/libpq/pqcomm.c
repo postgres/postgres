@@ -537,13 +537,11 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 		}
 
 		/*
-		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
-		 * intended to provide a clamp on the request on platforms where an
-		 * overly large request provokes a kernel error (are there any?).
+		 * Select appropriate accept-queue length limit.  It seems reasonable
+		 * to use a value similar to the maximum number of child processes
+		 * that the postmaster will permit.
 		 */
-		maxconn = MaxBackends * 2;
-		if (maxconn > PG_SOMAXCONN)
-			maxconn = PG_SOMAXCONN;
+		maxconn = MaxConnections * 2;
 
 		err = listen(fd, maxconn);
 		if (err < 0)

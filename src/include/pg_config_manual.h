@@ -115,17 +115,6 @@
 #define MAXPGPATH		1024
 
 /*
- * PG_SOMAXCONN: maximum accept-queue length limit passed to
- * listen(2).  You'd think we should use SOMAXCONN from
- * <sys/socket.h>, but on many systems that symbol is much smaller
- * than the kernel's actual limit.  In any case, this symbol need be
- * twiddled only if you have a kernel that refuses large limit values,
- * rather than silently reducing the value to what it can handle
- * (which is what most if not all Unixen do).
- */
-#define PG_SOMAXCONN	10000
-
-/*
  * You can try changing this if you have a machine with bytes of
  * another size, but no guarantee...
  */
