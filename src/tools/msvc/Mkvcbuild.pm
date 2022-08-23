@@ -35,7 +35,6 @@ my $libpq;
 my @unlink_on_exit;
 
 # Set of variables for modules in contrib/ and src/test/modules/
-my $contrib_defines        = {};
 my @contrib_uselibpq       = ();
 my @contrib_uselibpgport   = ();
 my @contrib_uselibpgcommon = ();
@@ -53,7 +52,6 @@ my @contrib_excludes       = (
 	'unsafe_tests');
 
 # Set of variables for frontend modules
-my $frontend_defines = { 'initdb' => 'FRONTEND' };
 my @frontend_uselibpq =
   ('pg_amcheck', 'pg_ctl', 'pg_upgrade', 'pgbench', 'psql', 'initdb');
 my @frontend_uselibpgport = (
@@ -1126,10 +1124,10 @@ sub AdjustContribProj
 {
 	my $proj = shift;
 	AdjustModule(
-		$proj,                    $contrib_defines,
-		\@contrib_uselibpq,       \@contrib_uselibpgport,
-		\@contrib_uselibpgcommon, $contrib_extralibs,
-		$contrib_extrasource,     $contrib_extraincludes);
+		$proj,                  \@contrib_uselibpq,
+		\@contrib_uselibpgport, \@contrib_uselibpgcommon,
+		$contrib_extralibs,     $contrib_extrasource,
+		$contrib_extraincludes);
 	return;
 }
 
@@ -1137,17 +1135,16 @@ sub AdjustFrontendProj
 {
 	my $proj = shift;
 	AdjustModule(
-		$proj,                     $frontend_defines,
-		\@frontend_uselibpq,       \@frontend_uselibpgport,
-		\@frontend_uselibpgcommon, $frontend_extralibs,
-		$frontend_extrasource,     $frontend_extraincludes);
+		$proj,                   \@frontend_uselibpq,
+		\@frontend_uselibpgport, \@frontend_uselibpgcommon,
+		$frontend_extralibs,     $frontend_extrasource,
+		$frontend_extraincludes);
 	return;
 }
 
 sub AdjustModule
 {
 	my $proj                  = shift;
-	my $module_defines        = shift;
 	my $module_uselibpq       = shift;
 	my $module_uselibpgport   = shift;
 	my $module_uselibpgcommon = shift;
@@ -1156,13 +1153,6 @@ sub AdjustModule
 	my $module_extraincludes  = shift;
 	my $n                     = $proj->{name};
 
-	if ($module_defines->{$n})
-	{
-		foreach my $d ($module_defines->{$n})
-		{
-			$proj->AddDefine($d);
-		}
-	}
 	if (grep { /^$n$/ } @{$module_uselibpq})
 	{
 		$proj->AddIncludeDir('src\interfaces\libpq');

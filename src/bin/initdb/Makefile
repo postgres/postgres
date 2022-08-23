@@ -16,7 +16,7 @@ subdir = src/bin/initdb
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
+override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/timezone $(CPPFLAGS)
 
 # Note: it's important that we link to encnames.o from libpgcommon, not
 # from libpq, else we have risks of version skew if we run with a libpq
