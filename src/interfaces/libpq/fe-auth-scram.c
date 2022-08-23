@@ -931,7 +931,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 	/* Generate a random salt */
 	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
-		*errstr = _("failed to generate random salt");
+		*errstr = _("could not generate random salt");
 		free(prep_password);
 		return NULL;
 	}
