@@ -630,10 +630,12 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 		if (buf_state & BM_TAG_VALID &&
 			((buf_state & BM_PERMANENT) || dump_unlogged))
 		{
-			block_info_array[num_blocks].database = bufHdr->tag.rlocator.dbOid;
-			block_info_array[num_blocks].tablespace = bufHdr->tag.rlocator.spcOid;
-			block_info_array[num_blocks].filenumber = bufHdr->tag.rlocator.relNumber;
-			block_info_array[num_blocks].forknum = bufHdr->tag.forkNum;
+			block_info_array[num_blocks].database = bufHdr->tag.dbOid;
+			block_info_array[num_blocks].tablespace = bufHdr->tag.spcOid;
+			block_info_array[num_blocks].filenumber =
+				BufTagGetRelNumber(&bufHdr->tag);
+			block_info_array[num_blocks].forknum =
+				BufTagGetForkNum(&bufHdr->tag);
 			block_info_array[num_blocks].blocknum = bufHdr->tag.blockNum;
 			++num_blocks;
 		}

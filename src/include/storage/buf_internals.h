@@ -90,18 +90,51 @@
  */
 typedef struct buftag
 {
-	RelFileLocator rlocator;	/* physical relation identifier */
-	ForkNumber	forkNum;
+	Oid			spcOid;			/* tablespace oid */
+	Oid			dbOid;			/* database oid */
+	RelFileNumber relNumber;	/* relation file number */
+	ForkNumber	forkNum;		/* fork number */
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
+
+static inline RelFileNumber
+BufTagGetRelNumber(const BufferTag *tag)
+{
+	return tag->relNumber;
+}
+
+static inline ForkNumber
+BufTagGetForkNum(const BufferTag *tag)
+{
+	return tag->forkNum;
+}
+
+static inline void
+BufTagSetRelForkDetails(BufferTag *tag, RelFileNumber relnumber,
+						ForkNumber forknum)
+{
+	tag->relNumber = relnumber;
+	tag->forkNum = forknum;
+}
+
+static inline RelFileLocator
+BufTagGetRelFileLocator(const BufferTag *tag)
+{
+	RelFileLocator rlocator;
+
+	rlocator.spcOid = tag->spcOid;
+	rlocator.dbOid = tag->dbOid;
+	rlocator.relNumber = BufTagGetRelNumber(tag);
+
+	return rlocator;
+}
 
 static inline void
 ClearBufferTag(BufferTag *tag)
 {
-	tag->rlocator.spcOid = InvalidOid;
-	tag->rlocator.dbOid = InvalidOid;
-	tag->rlocator.relNumber = InvalidRelFileNumber;
-	tag->forkNum = InvalidForkNumber;
+	tag->spcOid = InvalidOid;
+	tag->dbOid = InvalidOid;
+	BufTagSetRelForkDetails(tag, InvalidRelFileNumber, InvalidForkNumber);
 	tag->blockNum = InvalidBlockNumber;
 }
 
@@ -109,18 +142,31 @@ static inline void
 InitBufferTag(BufferTag *tag, const RelFileLocator *rlocator,
 			  ForkNumber forkNum, BlockNumber blockNum)
 {
-	tag->rlocator = *rlocator;
-	tag->forkNum = forkNum;
+	tag->spcOid = rlocator->spcOid;
+	tag->dbOid = rlocator->dbOid;
+	BufTagSetRelForkDetails(tag, rlocator->relNumber, forkNum);
 	tag->blockNum = blockNum;
 }
 
 static inline bool
 BufferTagsEqual(const BufferTag *tag1, const BufferTag *tag2)
 {
-	return RelFileLocatorEquals(tag1->rlocator, tag2->rlocator) &&
+	return (tag1->spcOid == tag2->spcOid) &&
+		(tag1->dbOid == tag2->dbOid) &&
+		(tag1->relNumber == tag2->relNumber) &&
 		(tag1->blockNum == tag2->blockNum) &&
 		(tag1->forkNum == tag2->forkNum);
 }
+
+static inline bool
+BufTagMatchesRelFileLocator(const BufferTag *tag,
+							const RelFileLocator *rlocator)
+{
+	return (tag->spcOid == rlocator->spcOid) &&
+		(tag->dbOid == rlocator->dbOid) &&
+		(BufTagGetRelNumber(tag) == rlocator->relNumber);
+}
+
 
 /*
  * The shared buffer mapping table is partitioned to reduce contention.

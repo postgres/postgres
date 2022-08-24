@@ -153,10 +153,10 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			buf_state = LockBufHdr(bufHdr);
 
 			fctx->record[i].bufferid = BufferDescriptorGetBuffer(bufHdr);
-			fctx->record[i].relfilenumber = bufHdr->tag.rlocator.relNumber;
-			fctx->record[i].reltablespace = bufHdr->tag.rlocator.spcOid;
-			fctx->record[i].reldatabase = bufHdr->tag.rlocator.dbOid;
-			fctx->record[i].forknum = bufHdr->tag.forkNum;
+			fctx->record[i].relfilenumber = BufTagGetRelNumber(&bufHdr->tag);
+			fctx->record[i].reltablespace = bufHdr->tag.spcOid;
+			fctx->record[i].reldatabase = bufHdr->tag.dbOid;
+			fctx->record[i].forknum = BufTagGetForkNum(&bufHdr->tag);
 			fctx->record[i].blocknum = bufHdr->tag.blockNum;
 			fctx->record[i].usagecount = BUF_STATE_GET_USAGECOUNT(buf_state);
 			fctx->record[i].pinning_backends = BUF_STATE_GET_REFCOUNT(buf_state);
