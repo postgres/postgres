@@ -6417,6 +6417,9 @@ regex_selectivity_sub(const char *patt, int pattlen, bool case_insensitive)
 	int			paren_pos = 0;	/* dummy init to keep compiler quiet */
 	int			pos;
 
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	for (pos = 0; pos < pattlen; pos++)
 	{
 		if (patt[pos] == '(')
