@@ -122,7 +122,7 @@ ifeq ($(PORTNAME), darwin)
       version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     endif
     LINK.shared		= $(COMPILER) -dynamiclib -install_name '$(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)' $(version_link) $(exported_symbols_list) -multiply_defined suppress
-    shlib		= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
+    shlib		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
     shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
   else
     # loadable module
