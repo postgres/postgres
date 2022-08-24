@@ -1981,7 +1981,6 @@ preprocess_grouping_sets(PlannerInfo *root)
 	Query	   *parse = root->parse;
 	List	   *sets;
 	int			maxref = 0;
-	ListCell   *lc;
 	ListCell   *lc_set;
 	grouping_sets_data *gd = palloc0(sizeof(grouping_sets_data));
 
@@ -2024,6 +2023,7 @@ preprocess_grouping_sets(PlannerInfo *root)
 	if (!bms_is_empty(gd->unsortable_refs))
 	{
 		List	   *sortable_sets = NIL;
+		ListCell   *lc;
 
 		foreach(lc, parse->groupingSets)
 		{

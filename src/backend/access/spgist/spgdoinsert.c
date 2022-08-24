@@ -395,7 +395,6 @@ moveLeafs(Relation index, SpGistState *state,
 				size;
 	Buffer		nbuf;
 	Page		npage;
-	SpGistLeafTuple it;
 	OffsetNumber r = InvalidOffsetNumber,
 				startOffset = InvalidOffsetNumber;
 	bool		replaceDead = false;
@@ -467,6 +466,8 @@ moveLeafs(Relation index, SpGistState *state,
 	{
 		for (i = 0; i < nDelete; i++)
 		{
+			SpGistLeafTuple it;
+
 			it = (SpGistLeafTuple) PageGetItem(current->page,
 											   PageGetItemId(current->page, toDelete[i]));
 			Assert(it->tupstate == SPGIST_LIVE);

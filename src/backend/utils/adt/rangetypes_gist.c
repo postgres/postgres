@@ -1322,8 +1322,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 	ConsiderSplitContext context;
 	OffsetNumber i,
 				maxoff;
-	RangeType  *range,
-			   *left_range = NULL,
+	RangeType  *left_range = NULL,
 			   *right_range = NULL;
 	int			common_entries_count;
 	NonEmptyRange *by_lower,
@@ -1518,6 +1517,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 	 */
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
 	{
+		RangeType  *range;
 		RangeBound	lower,
 					upper;
 		bool		empty;
@@ -1593,6 +1593,7 @@ range_gist_double_sorting_split(TypeCacheEntry *typcache,
 		 */
 		for (i = 0; i < common_entries_count; i++)
 		{
+			RangeType  *range;
 			int			idx = common_entries[i].index;
 
 			range = DatumGetRangeTypeP(entryvec->vector[idx].key);

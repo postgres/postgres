@@ -1080,7 +1080,6 @@ static void
 ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 {
 	ParallelHashJoinState *pstate = hashtable->parallel_state;
-	int			i;
 
 	Assert(BarrierPhase(&pstate->build_barrier) == PHJ_BUILD_HASHING_INNER);
 
@@ -1244,7 +1243,7 @@ ExecParallelHashIncreaseNumBatches(HashJoinTable hashtable)
 				ExecParallelHashTableSetCurrentBatch(hashtable, 0);
 
 				/* Are any of the new generation of batches exhausted? */
-				for (i = 0; i < hashtable->nbatch; ++i)
+				for (int i = 0; i < hashtable->nbatch; ++i)
 				{
 					ParallelHashJoinBatch *batch = hashtable->batches[i].shared;
 
