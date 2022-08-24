@@ -13083,9 +13083,11 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	int			i_collisdeterministic;
 	int			i_collcollate;
 	int			i_collctype;
+	int			i_colliculocale;
 	const char *collprovider;
 	const char *collcollate;
 	const char *collctype;
+	const char *colliculocale;
 
 	/* Do nothing in data-only dump */
 	if (dopt->dataOnly)
@@ -13116,6 +13118,13 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 		appendPQExpBufferStr(query,
 							 "true AS collisdeterministic, ");
 
+	if (fout->remoteVersion >= 150000)
+		appendPQExpBufferStr(query,
+							 "colliculocale, ");
+	else
+		appendPQExpBufferStr(query,
+							 "NULL AS colliculocale, ");
+
 	appendPQExpBuffer(query,
 					  "collcollate, "
 					  "collctype "
@@ -13129,10 +13138,24 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	i_collisdeterministic = PQfnumber(res, "collisdeterministic");
 	i_collcollate = PQfnumber(res, "collcollate");
 	i_collctype = PQfnumber(res, "collctype");
+	i_colliculocale = PQfnumber(res, "colliculocale");
 
 	collprovider = PQgetvalue(res, 0, i_collprovider);
-	collcollate = PQgetvalue(res, 0, i_collcollate);
-	collctype = PQgetvalue(res, 0, i_collctype);
+
+	if (!PQgetisnull(res, 0, i_collcollate))
+		collcollate = PQgetvalue(res, 0, i_collcollate);
+	else
+		collcollate = NULL;
+
+	if (!PQgetisnull(res, 0, i_collctype))
+		collctype = PQgetvalue(res, 0, i_collctype);
+	else
+		collctype = NULL;
+
+	if (!PQgetisnull(res, 0, i_colliculocale))
+		colliculocale = PQgetvalue(res, 0, i_colliculocale);
+	else
+		colliculocale = NULL;
 
 	appendPQExpBuffer(delq, "DROP COLLATION %s;\n",
 					  fmtQualifiedDumpable(collinfo));
@@ -13155,17 +13178,28 @@ dumpCollation(Archive *fout, const CollInfo *collinfo)
 	if (strcmp(PQgetvalue(res, 0, i_collisdeterministic), "f") == 0)
 		appendPQExpBufferStr(q, ", deterministic = false");
 
-	if (strcmp(collcollate, collctype) == 0)
+	if (colliculocale != NULL)
 	{
 		appendPQExpBufferStr(q, ", locale = ");
-		appendStringLiteralAH(q, collcollate, fout);
+		appendStringLiteralAH(q, colliculocale, fout);
 	}
 	else
 	{
-		appendPQExpBufferStr(q, ", lc_collate = ");
-		appendStringLiteralAH(q, collcollate, fout);
-		appendPQExpBufferStr(q, ", lc_ctype = ");
-		appendStringLiteralAH(q, collctype, fout);
+		Assert(collcollate != NULL);
+		Assert(collctype != NULL);
+
+		if (strcmp(collcollate, collctype) == 0)
+		{
+			appendPQExpBufferStr(q, ", locale = ");
+			appendStringLiteralAH(q, collcollate, fout);
+		}
+		else
+		{
+			appendPQExpBufferStr(q, ", lc_collate = ");
+			appendStringLiteralAH(q, collcollate, fout);
+			appendPQExpBufferStr(q, ", lc_ctype = ");
+			appendStringLiteralAH(q, collctype, fout);
+		}
 	}
 
 	/*
