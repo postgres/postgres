@@ -1593,6 +1593,15 @@ my %tests = (
 		like      => { %full_runs, section_pre_data => 1, },
 	},
 
+	'CREATE COLLATION icu_collation' => {
+		create_order => 76,
+		create_sql   => "CREATE COLLATION icu_collation (PROVIDER = icu, LOCALE = 'C');",
+		regexp =>
+		  qr/CREATE COLLATION public.icu_collation \(provider = icu, locale = 'C'(, version = '[^']*')?\);/m,
+		icu => 1,
+		like      => { %full_runs, section_pre_data => 1, },
+	},
+
 	'CREATE CAST FOR timestamptz' => {
 		create_order => 51,
 		create_sql =>
@@ -3868,7 +3877,7 @@ if ($collation_check_stderr !~ /ERROR: /)
 	$collation_support = 1;
 }
 
-# Determine whether build supports LZ4 and gzip.
+my $supports_icu  = ($ENV{with_icu} eq 'yes');
 my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
 my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
 
@@ -3909,11 +3918,22 @@ foreach my $test (
 		$test_db = $tests{$test}->{database};
 	}
 
+	if (defined($tests{$test}->{icu}))
+	{
+		$tests{$test}->{collation} = 1;
+	}
+
 	if ($tests{$test}->{create_sql})
 	{
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip any icu-related collation commands if build was without icu
+		if (!$supports_icu && defined($tests{$test}->{icu}))
 		{
 			next;
 		}
@@ -4115,6 +4135,12 @@ foreach my $run (sort keys %pgdump_runs)
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip any icu-related collation commands if build was without icu
+		if (!$supports_icu && defined($tests{$test}->{icu}))
 		{
 			next;
 		}
