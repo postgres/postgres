@@ -3183,7 +3183,6 @@ void
 DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 {
 	int			i;
-	int			j;
 	int			n = 0;
 	SMgrRelation *rels;
 	BlockNumber (*block)[MAX_FORKNUM + 1];
@@ -3232,7 +3231,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	 */
 	for (i = 0; i < n && cached; i++)
 	{
-		for (j = 0; j <= MAX_FORKNUM; j++)
+		for (int j = 0; j <= MAX_FORKNUM; j++)
 		{
 			/* Get the number of blocks for a relation's fork. */
 			block[i][j] = smgrnblocks_cached(rels[i], j);
@@ -3259,7 +3258,7 @@ DropRelationsAllBuffers(SMgrRelation *smgr_reln, int nlocators)
 	{
 		for (i = 0; i < n; i++)
 		{
-			for (j = 0; j <= MAX_FORKNUM; j++)
+			for (int j = 0; j <= MAX_FORKNUM; j++)
 			{
 				/* ignore relation forks that doesn't exist */
 				if (!BlockNumberIsValid(block[i][j]))

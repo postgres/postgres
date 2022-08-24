@@ -372,7 +372,6 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 			  **nullkeys;
 	int		   *nkeys,
 			   *nnullkeys;
-	int			keyno;
 	char	   *ptr;
 	Size		len;
 	char	   *tmp PG_USED_FOR_ASSERTS_ONLY;
@@ -454,7 +453,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	memset(nnullkeys, 0, sizeof(int) * bdesc->bd_tupdesc->natts);
 
 	/* Preprocess the scan keys - split them into per-attribute arrays. */
-	for (keyno = 0; keyno < scan->numberOfKeys; keyno++)
+	for (int keyno = 0; keyno < scan->numberOfKeys; keyno++)
 	{
 		ScanKey		key = &scan->keyData[keyno];
 		AttrNumber	keyattno = key->sk_attno;

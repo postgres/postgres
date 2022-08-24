@@ -1202,7 +1202,6 @@ BeginCopyFrom(ParseState *pstate,
 				num_defaults;
 	FmgrInfo   *in_functions;
 	Oid		   *typioparams;
-	int			attnum;
 	Oid			in_func_oid;
 	int		   *defmap;
 	ExprState **defexprs;
@@ -1401,7 +1400,7 @@ BeginCopyFrom(ParseState *pstate,
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
 	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
 
-	for (attnum = 1; attnum <= num_phys_attrs; attnum++)
+	for (int attnum = 1; attnum <= num_phys_attrs; attnum++)
 	{
 		Form_pg_attribute att = TupleDescAttr(tupDesc, attnum - 1);
 

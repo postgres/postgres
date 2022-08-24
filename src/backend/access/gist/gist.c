@@ -234,7 +234,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	Page		page = BufferGetPage(buffer);
 	bool		is_leaf = (GistPageIsLeaf(page)) ? true : false;
 	XLogRecPtr	recptr;
-	int			i;
 	bool		is_split;
 
 	/*
@@ -420,7 +419,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		{
 			char	   *data = (char *) (ptr->list);
 
-			for (i = 0; i < ptr->block.num; i++)
+			for (int i = 0; i < ptr->block.num; i++)
 			{
 				IndexTuple	thistup = (IndexTuple) data;
 
