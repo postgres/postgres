@@ -482,6 +482,10 @@ extern bool has_rolreplication(Oid roleid);
 typedef void (*shmem_request_hook_type) (void);
 extern PGDLLIMPORT shmem_request_hook_type shmem_request_hook;
 
+extern Size EstimateClientConnectionInfoSpace(void);
+extern void SerializeClientConnectionInfo(Size maxsize, char *start_address);
+extern void RestoreClientConnectionInfo(char *conninfo);
+
 /* in executor/nodeHash.c */
 extern size_t get_hash_memory_limit(void);
 
