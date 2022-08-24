@@ -18033,7 +18033,7 @@ FROM
         or array, but if it is <literal>CONDITIONAL</literal> it will not be
         applied to a single array or object. <literal>UNCONDITIONAL</literal>
         is the default.
-        If the result is a a scalar string, by default the value returned will have
+        If the result is a scalar string, by default the value returned will have
         surrounding quotes making it a valid JSON value. However, this behavior
         is reversed if <literal>OMIT QUOTES</literal> is specified.
         The <literal>ON ERROR</literal> and <literal>ON EMPTY</literal>
