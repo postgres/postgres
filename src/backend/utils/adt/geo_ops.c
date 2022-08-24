@@ -3919,6 +3919,9 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 	bool		res = true,
 				intersection = false;
 
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	t.p[0] = *a;
 	t.p[1] = *b;
 	s.p[0] = poly->p[(start == 0) ? (poly->npts - 1) : (start - 1)];
