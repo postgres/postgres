@@ -3881,6 +3881,10 @@ my $supports_icu  = ($ENV{with_icu} eq 'yes');
 my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
 my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
 
+# ICU doesn't work with some encodings
+my $encoding = $node->safe_psql('postgres', 'show server_encoding');
+$supports_icu = 0 if $encoding eq 'SQL_ASCII';
+
 # Create additional databases for mutations of schema public
 $node->psql('postgres', 'create database regress_pg_dump_test;');
 $node->psql('postgres', 'create database regress_public_owner;');
