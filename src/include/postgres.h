@@ -25,6 +25,7 @@
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
  *		2)		Datum type + support macros
+ *		3)		miscellaneous
  *
  *	 NOTES
  *
@@ -803,6 +804,25 @@ extern Datum Float8GetDatum(float8 X);
 #else
 #define Int64GetDatumFast(X)  PointerGetDatum(&(X))
 #define Float8GetDatumFast(X) PointerGetDatum(&(X))
+#endif
+
+
+/* ----------------------------------------------------------------
+ *				Section 3:	miscellaneous
+ * ----------------------------------------------------------------
+ */
+
+/*
+ * NON_EXEC_STATIC: It's sometimes useful to define a variable or function
+ * that is normally static but extern when using EXEC_BACKEND (see
+ * pg_config_manual.h).  There would then typically be some code in
+ * postmaster.c that uses those extern symbols to transfer state between
+ * processes or do whatever other things it needs to do in EXEC_BACKEND mode.
+ */
+#ifdef EXEC_BACKEND
+#define NON_EXEC_STATIC
+#else
+#define NON_EXEC_STATIC static
 #endif
 
 #endif							/* POSTGRES_H */
