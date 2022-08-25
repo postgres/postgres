@@ -17,9 +17,6 @@ ifneq ($(subdir), src/backend)
 all: $(subsysfilename)
 endif
 
-SUBSYS.o: $(SUBDIROBJS) $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) $@ $^
-
 objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 # Don't rebuild the list if only the OBJS have changed.
 	$(if $(filter-out $(OBJS),$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
