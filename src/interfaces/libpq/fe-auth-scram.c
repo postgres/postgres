@@ -922,7 +922,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 	rc = pg_saslprep(password, &prep_password);
 	if (rc == SASLPREP_OOM)
 	{
-		*errstr = _("out of memory");
+		*errstr = libpq_gettext("out of memory");
 		return NULL;
 	}
 	if (rc == SASLPREP_SUCCESS)
@@ -931,7 +931,7 @@ pg_fe_scram_build_secret(const char *password, const char **errstr)
 	/* Generate a random salt */
 	if (!pg_strong_random(saltbuf, SCRAM_DEFAULT_SALT_LEN))
 	{
-		*errstr = _("could not generate random salt");
+		*errstr = libpq_gettext("could not generate random salt");
 		free(prep_password);
 		return NULL;
 	}
