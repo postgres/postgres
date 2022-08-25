@@ -543,8 +543,7 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	GISTNodeBuffer *nodeBuffer;
 	BlockNumber blocknum;
 	IndexTuple	itup;
-	int			splitPagesCount = 0,
-				i;
+	int			splitPagesCount = 0;
 	GISTENTRY	entry[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 	GISTNodeBuffer oldBuf;
@@ -595,11 +594,11 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 	 * Fill relocation buffers information for node buffers of pages produced
 	 * by split.
 	 */
-	i = 0;
 	foreach(lc, splitinfo)
 	{
 		GISTPageSplitInfo *si = (GISTPageSplitInfo *) lfirst(lc);
 		GISTNodeBuffer *newNodeBuffer;
+		int				i = foreach_current_index(lc);
 
 		/* Decompress parent index tuple of node buffer page. */
 		gistDeCompressAtt(giststate, r,
@@ -618,8 +617,6 @@ gistRelocateBuildBuffersOnSplit(GISTBuildBuffers *gfbb, GISTSTATE *giststate,
 
 		relocationBuffersInfos[i].nodeBuffer = newNodeBuffer;
 		relocationBuffersInfos[i].splitinfo = si;
-
-		i++;
 	}
 
 	/*
