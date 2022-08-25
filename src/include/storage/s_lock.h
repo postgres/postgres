@@ -256,7 +256,7 @@ spin_delay(void)
  * We use the int-width variant of the builtin because it works on more chips
  * than other widths.
  */
-#if defined(__arm__) || defined(__arm) || defined(__aarch64__) || defined(__aarch64)
+#if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 #ifdef HAVE_GCC__SYNC_INT32_TAS
 #define HAS_TEST_AND_SET
 
@@ -277,7 +277,7 @@ tas(volatile slock_t *lock)
  * high-core-count ARM64 processors.  It seems mostly a wash for smaller gear,
  * and ISB doesn't exist at all on pre-v7 ARM chips.
  */
-#if defined(__aarch64__) || defined(__aarch64)
+#if defined(__aarch64__)
 
 #define SPIN_DELAY() spin_delay()
 
@@ -288,9 +288,9 @@ spin_delay(void)
 		" isb;				\n");
 }
 
-#endif	 /* __aarch64__ || __aarch64 */
+#endif	 /* __aarch64__ */
 #endif	 /* HAVE_GCC__SYNC_INT32_TAS */
-#endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
+#endif	 /* __arm__ || __arm || __aarch64__ */
 
 
 /*
