@@ -307,7 +307,7 @@ $(shlib): $(OBJS) | $(SHLIB_PREREQS)
 ifeq (,$(SHLIB_EXPORTS))
 	$(MKLDEXPORT) $(stlib) $(shlib) >$(exports_file)
 else
-	( echo '#! $(shlib)'; $(AWK) '/^[^#]/ {printf "%s\n",$$1}' $(SHLIB_EXPORTS) ) >$(exports_file)
+	( echo '#! $(shlib)'; $(AWK) '/^[^#]/ {printf "%s\n",$$1}' ${srcdir}/$(SHLIB_EXPORTS) ) >$(exports_file)
 endif
 	$(COMPILER) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
 	rm -f $(stlib)
