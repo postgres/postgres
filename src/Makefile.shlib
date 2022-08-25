@@ -188,9 +188,14 @@ ifeq ($(PORTNAME), linux)
 endif
 
 ifeq ($(PORTNAME), solaris)
-  LINK.shared		= $(COMPILER) -shared -Wl,-Bsymbolic
+  LINK.shared		= $(COMPILER) -shared
   ifdef soname
     LINK.shared	+= -Wl,-soname,$(soname)
+  endif
+  BUILD.exports		= ( echo '{ global:'; $(AWK) '/^[^\#]/ {printf "%s;\n",$$1}' $<; echo ' local: *; };' ) >$@
+  exports_file		= $(SHLIB_EXPORTS:%.txt=%.list)
+  ifneq (,$(exports_file))
+    LINK.shared		+= -Wl,-M$(exports_file)
   endif
 endif
 
