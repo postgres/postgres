@@ -272,7 +272,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    recorded as the grantor must have <literal>ADMIN OPTION</literal> on the
    target role, unless it is the bootstrap superuser. When a grant is recorded
    as having a grantor other than the bootstrap superuser, it depends on the
-   grantor continuing to posess <literal>ADMIN OPTION</literal> on the role;
+   grantor continuing to possess <literal>ADMIN OPTION</literal> on the role;
    so, if <literal>ADMIN OPTION</literal> is revoked, dependent grants must
    be revoked as well.
   </para>
