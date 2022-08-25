@@ -110,12 +110,6 @@ endif # aix
 $(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
 
 
-# The postgres.o target is needed by the rule in Makefile.global that
-# creates the exports file when MAKE_EXPORTS = true.
-postgres.o: $(OBJS)
-	$(CC) $(LDREL) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
-
-
 # The following targets are specified in make commands that appear in
 # the make files in our subdirectories. Note that it's important we
 # match the dependencies shown in the subdirectory makefiles!
