@@ -880,6 +880,11 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
 #define libpq_gettext(x) (x)
 #define libpq_ngettext(s, p, n) ((n) == 1 ? (s) : (p))
 #endif
+/*
+ * libpq code should use the above, not _(), since that would use the
+ * surrounding programs's message catalog.
+ */
+#undef _
 
 /*
  * These macros are needed to let error-handling code be portable between
