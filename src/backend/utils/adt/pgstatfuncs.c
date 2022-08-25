@@ -735,11 +735,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if (beentry->st_clientaddr.addr.ss_family == AF_INET
-#ifdef HAVE_IPV6
-					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
-#endif
-					)
+				if (beentry->st_clientaddr.addr.ss_family == AF_INET ||
+					beentry->st_clientaddr.addr.ss_family == AF_INET6)
 				{
 					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
@@ -1105,9 +1102,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	switch (beentry->st_clientaddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1152,9 +1147,7 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	switch (beentry->st_clientaddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		case AF_UNIX:
 			PG_RETURN_INT32(-1);

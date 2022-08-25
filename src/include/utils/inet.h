@@ -31,8 +31,8 @@ typedef struct
  * We use these values for the "family" field.
  *
  * Referencing all of the non-AF_INET types to AF_INET lets us work on
- * machines which may not have the appropriate address family (like
- * inet6 addresses when AF_INET6 isn't present) but doesn't cause a
+ * machines which did not have the appropriate address family (like
+ * inet6 addresses when AF_INET6 wasn't present) but didn't cause a
  * dump/reload requirement.  Pre-7.4 databases used AF_INET for the family
  * type on disk.
  */

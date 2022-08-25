@@ -3015,13 +3015,8 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 	int			packetlength;
 	pgsocket	sock;
 
-#ifdef HAVE_IPV6
 	struct sockaddr_in6 localaddr;
 	struct sockaddr_in6 remoteaddr;
-#else
-	struct sockaddr_in localaddr;
-	struct sockaddr_in remoteaddr;
-#endif
 	struct addrinfo hint;
 	struct addrinfo *serveraddrs;
 	int			port;
@@ -3131,18 +3126,12 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 	}
 
 	memset(&localaddr, 0, sizeof(localaddr));
-#ifdef HAVE_IPV6
 	localaddr.sin6_family = serveraddrs[0].ai_family;
 	localaddr.sin6_addr = in6addr_any;
 	if (localaddr.sin6_family == AF_INET6)
 		addrsize = sizeof(struct sockaddr_in6);
 	else
 		addrsize = sizeof(struct sockaddr_in);
-#else
-	localaddr.sin_family = serveraddrs[0].ai_family;
-	localaddr.sin_addr.s_addr = INADDR_ANY;
-	addrsize = sizeof(struct sockaddr_in);
-#endif
 
 	if (bind(sock, (struct sockaddr *) &localaddr, addrsize))
 	{
@@ -3245,21 +3234,11 @@ PerformRadiusTransaction(const char *server, const char *secret, const char *por
 			return STATUS_ERROR;
 		}
 
-#ifdef HAVE_IPV6
 		if (remoteaddr.sin6_port != pg_hton16(port))
-#else
-		if (remoteaddr.sin_port != pg_hton16(port))
-#endif
 		{
-#ifdef HAVE_IPV6
 			ereport(LOG,
 					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
 							server, pg_ntoh16(remoteaddr.sin6_port))));
-#else
-			ereport(LOG,
-					(errmsg("RADIUS response from %s was sent from incorrect port: %d",
-							server, pg_ntoh16(remoteaddr.sin_port))));
-#endif
 			continue;
 		}
 

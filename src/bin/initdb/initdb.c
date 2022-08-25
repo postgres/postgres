@@ -1176,7 +1176,6 @@ setup_config(void)
 
 	conflines = replace_token(conflines, "@remove-line-for-nolocal@", "");
 
-#ifdef HAVE_IPV6
 
 	/*
 	 * Probe to see if there is really any platform support for IPv6, and
@@ -1218,15 +1217,6 @@ setup_config(void)
 									  "#host    replication     all             ::1");
 		}
 	}
-#else							/* !HAVE_IPV6 */
-	/* If we didn't compile IPV6 support at all, always comment it out */
-	conflines = replace_token(conflines,
-							  "host    all             all             ::1",
-							  "#host    all             all             ::1");
-	conflines = replace_token(conflines,
-							  "host    replication     all             ::1",
-							  "#host    replication     all             ::1");
-#endif							/* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,

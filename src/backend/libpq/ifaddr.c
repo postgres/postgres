@@ -34,11 +34,9 @@ static int	range_sockaddr_AF_INET(const struct sockaddr_in *addr,
 								   const struct sockaddr_in *netaddr,
 								   const struct sockaddr_in *netmask);
 
-#ifdef HAVE_IPV6
 static int	range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
 									const struct sockaddr_in6 *netaddr,
 									const struct sockaddr_in6 *netmask);
-#endif
 
 
 /*
@@ -56,12 +54,10 @@ pg_range_sockaddr(const struct sockaddr_storage *addr,
 		return range_sockaddr_AF_INET((const struct sockaddr_in *) addr,
 									  (const struct sockaddr_in *) netaddr,
 									  (const struct sockaddr_in *) netmask);
-#ifdef HAVE_IPV6
 	else if (addr->ss_family == AF_INET6)
 		return range_sockaddr_AF_INET6((const struct sockaddr_in6 *) addr,
 									   (const struct sockaddr_in6 *) netaddr,
 									   (const struct sockaddr_in6 *) netmask);
-#endif
 	else
 		return 0;
 }
@@ -77,9 +73,6 @@ range_sockaddr_AF_INET(const struct sockaddr_in *addr,
 	else
 		return 0;
 }
-
-
-#ifdef HAVE_IPV6
 
 static int
 range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
@@ -97,7 +90,6 @@ range_sockaddr_AF_INET6(const struct sockaddr_in6 *addr,
 
 	return 1;
 }
-#endif							/* HAVE_IPV6 */
 
 /*
  *	pg_sockaddr_cidr_mask - make a network mask of the appropriate family
@@ -147,7 +139,6 @@ pg_sockaddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 				break;
 			}
 
-#ifdef HAVE_IPV6
 		case AF_INET6:
 			{
 				struct sockaddr_in6 mask6;
@@ -172,7 +163,7 @@ pg_sockaddr_cidr_mask(struct sockaddr_storage *mask, char *numbits, int family)
 				memcpy(mask, &mask6, sizeof(mask6));
 				break;
 			}
-#endif
+
 		default:
 			return -1;
 	}
@@ -207,13 +198,11 @@ run_ifaddr_callback(PgIfAddrCallback callback, void *cb_data,
 			if (((struct sockaddr_in *) mask)->sin_addr.s_addr == INADDR_ANY)
 				mask = NULL;
 		}
-#ifdef HAVE_IPV6
 		else if (mask->sa_family == AF_INET6)
 		{
 			if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *) mask)->sin6_addr))
 				mask = NULL;
 		}
-#endif
 	}
 
 	/* If mask is invalid, generate our own fully-set mask */
@@ -437,10 +426,7 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 {
 	struct sockaddr_in addr;
 	struct sockaddr_storage mask;
-
-#ifdef HAVE_IPV6
 	struct sockaddr_in6 addr6;
-#endif
 
 	/* addr 127.0.0.1/8 */
 	memset(&addr, 0, sizeof(addr));
@@ -452,7 +438,6 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 						(struct sockaddr *) &addr,
 						(struct sockaddr *) &mask);
 
-#ifdef HAVE_IPV6
 	/* addr ::1/128 */
 	memset(&addr6, 0, sizeof(addr6));
 	addr6.sin6_family = AF_INET6;
@@ -462,7 +447,6 @@ pg_foreach_ifaddr(PgIfAddrCallback callback, void *cb_data)
 	run_ifaddr_callback(callback, cb_data,
 						(struct sockaddr *) &addr6,
 						(struct sockaddr *) &mask);
-#endif
 
 	return 0;
 }

@@ -1725,9 +1725,7 @@ inet_client_addr(PG_FUNCTION_ARGS)
 	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1764,9 +1762,7 @@ inet_client_port(PG_FUNCTION_ARGS)
 	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1801,9 +1797,7 @@ inet_server_addr(PG_FUNCTION_ARGS)
 	switch (port->laddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1840,9 +1834,7 @@ inet_server_port(PG_FUNCTION_ARGS)
 	switch (port->laddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -2102,7 +2094,6 @@ inetmi(PG_FUNCTION_ARGS)
 void
 clean_ipv6_addr(int addr_family, char *addr)
 {
-#ifdef HAVE_IPV6
 	if (addr_family == AF_INET6)
 	{
 		char	   *pct = strchr(addr, '%');
@@ -2110,5 +2101,4 @@ clean_ipv6_addr(int addr_family, char *addr)
 		if (pct)
 			*pct = '\0';
 	}
-#endif
 }

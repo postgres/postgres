@@ -16218,16 +16218,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-ac_fn_c_check_type "$LINENO" "struct sockaddr_in6" "ac_cv_type_struct_sockaddr_in6" "$ac_includes_default
-#include <netinet/in.h>
-"
-if test "x$ac_cv_type_struct_sockaddr_in6" = xyes; then :
-
-$as_echo "#define HAVE_IPV6 1" >>confdefs.h
-
-fi
-
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PS_STRINGS" >&5
 $as_echo_n "checking for PS_STRINGS... " >&6; }
 if ${pgac_cv_var_PS_STRINGS+:} false; then :

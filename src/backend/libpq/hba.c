@@ -645,8 +645,6 @@ ipv4eq(struct sockaddr_in *a, struct sockaddr_in *b)
 	return (a->sin_addr.s_addr == b->sin_addr.s_addr);
 }
 
-#ifdef HAVE_IPV6
-
 static bool
 ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 {
@@ -658,7 +656,6 @@ ipv6eq(struct sockaddr_in6 *a, struct sockaddr_in6 *b)
 
 	return true;
 }
-#endif							/* HAVE_IPV6 */
 
 /*
  * Check whether host name matches pattern.
@@ -747,7 +744,6 @@ check_hostname(hbaPort *port, const char *hostname)
 					break;
 				}
 			}
-#ifdef HAVE_IPV6
 			else if (gai->ai_addr->sa_family == AF_INET6)
 			{
 				if (ipv6eq((struct sockaddr_in6 *) gai->ai_addr,
@@ -757,7 +753,6 @@ check_hostname(hbaPort *port, const char *hostname)
 					break;
 				}
 			}
-#endif
 		}
 	}
 

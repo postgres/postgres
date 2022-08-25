@@ -277,7 +277,6 @@ sub GenerateFiles
 		HAVE_INTTYPES_H                             => undef,
 		HAVE_INT_OPTERR                             => undef,
 		HAVE_INT_OPTRESET                           => undef,
-		HAVE_IPV6                                   => 1,
 		HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P       => undef,
 		HAVE_KQUEUE                                 => undef,
 		HAVE_LANGINFO_H                             => undef,

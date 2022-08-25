@@ -413,11 +413,9 @@ StreamServerPort(int family, const char *hostName, unsigned short portNumber,
 			case AF_INET:
 				familyDesc = _("IPv4");
 				break;
-#ifdef HAVE_IPV6
 			case AF_INET6:
 				familyDesc = _("IPv6");
 				break;
-#endif
 			case AF_UNIX:
 				familyDesc = _("Unix");
 				break;

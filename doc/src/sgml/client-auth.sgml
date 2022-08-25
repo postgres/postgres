@@ -305,8 +305,6 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        An entry given in IPv4 format will match only IPv4 connections,
        and an entry given in IPv6 format will match only IPv6 connections,
        even if the represented address is in the IPv4-in-IPv6 range.
-       Note that entries in IPv6 format will be rejected if the system's
-       C library does not have support for IPv6 addresses.
       </para>
 
       <para>
