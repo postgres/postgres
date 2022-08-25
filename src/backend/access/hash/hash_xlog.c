@@ -240,7 +240,6 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 		{
 			Page		mappage = (Page) BufferGetPage(mapbuffer);
 			uint32	   *freep = NULL;
-			char	   *data;
 			uint32	   *bitmap_page_bit;
 
 			freep = HashPageGetBitmap(mappage);

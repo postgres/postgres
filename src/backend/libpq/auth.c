@@ -1652,8 +1652,6 @@ interpret_ident_response(const char *ident_response,
 						return false;
 					else
 					{
-						int			i;	/* Index into *ident_user */
-
 						cursor++;	/* Go over colon */
 						while (pg_isblank(*cursor))
 							cursor++;	/* skip blanks */

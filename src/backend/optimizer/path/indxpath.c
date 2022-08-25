@@ -361,7 +361,6 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	if (bitjoinpaths != NIL)
 	{
 		List	   *all_path_outers;
-		ListCell   *lc;
 
 		/* Identify each distinct parameterization seen in bitjoinpaths */
 		all_path_outers = NIL;
@@ -2188,7 +2187,7 @@ match_clause_to_index(PlannerInfo *root,
 		/* Ignore duplicates */
 		foreach(lc, clauseset->indexclauses[indexcol])
 		{
-			IndexClause *iclause = (IndexClause *) lfirst(lc);
+			iclause = (IndexClause *) lfirst(lc);
 
 			if (iclause->rinfo == rinfo)
 				return;

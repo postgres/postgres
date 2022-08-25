@@ -2062,11 +2062,12 @@ ExecWindowAgg(PlanState *pstate)
 	if (winstate->all_first)
 	{
 		int			frameOptions = winstate->frameOptions;
-		ExprContext *econtext = winstate->ss.ps.ps_ExprContext;
 		Datum		value;
 		bool		isnull;
 		int16		len;
 		bool		byval;
+
+		econtext = winstate->ss.ps.ps_ExprContext;
 
 		if (frameOptions & FRAMEOPTION_START_OFFSET)
 		{

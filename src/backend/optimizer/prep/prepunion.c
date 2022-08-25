@@ -653,7 +653,6 @@ generate_union_paths(SetOperationStmt *op, PlannerInfo *root,
 	if (partial_paths_valid)
 	{
 		Path	   *ppath;
-		ListCell   *lc;
 		int			parallel_workers = 0;
 
 		/* Find the highest number of workers requested for any subpath. */

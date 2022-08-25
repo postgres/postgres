@@ -233,8 +233,6 @@ ExecVacuum(ParseState *pstate, VacuumStmt *vacstmt, bool isTopLevel)
 	 */
 	if (!(params.options & VACOPT_ANALYZE))
 	{
-		ListCell   *lc;
-
 		foreach(lc, vacstmt->rels)
 		{
 			VacuumRelation *vrel = lfirst_node(VacuumRelation, lc);

@@ -1614,7 +1614,6 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 	if (MXactCacheMembers++ >= MAX_CACHE_ENTRIES)
 	{
 		dlist_node *node;
-		mXactCacheEnt *entry;
 
 		node = dlist_tail_node(&MXactCache);
 		dlist_delete(node);

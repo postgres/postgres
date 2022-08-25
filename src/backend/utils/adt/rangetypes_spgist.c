@@ -693,7 +693,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
 				cmp = range_cmp_bounds(typcache, &centroidLower, maxLower);
 				if (cmp > 0 || (!inclusive && cmp == 0))
@@ -721,7 +720,6 @@ spg_range_quad_inner_consistent(PG_FUNCTION_ARGS)
 				 * quadrants if we're looking for a value strictly greater
 				 * than the maximum.
 				 */
-				int			cmp;
 
 				cmp = range_cmp_bounds(typcache, &centroidUpper, maxUpper);
 				if (cmp > 0 || (!inclusive && cmp == 0))

@@ -768,7 +768,6 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			{
 				List	   *onconflset;
 				List	   *onconflcols;
-				bool		found_whole_row;
 
 				/*
 				 * Translate expressions in onConflictSet to account for

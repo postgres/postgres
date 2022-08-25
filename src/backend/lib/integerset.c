@@ -565,8 +565,6 @@ intset_is_member(IntegerSet *intset, uint64 x)
 	 */
 	if (intset->num_buffered_values > 0 && x >= intset->buffered_values[0])
 	{
-		int			itemno;
-
 		itemno = intset_binsrch_uint64(x,
 									   intset->buffered_values,
 									   intset->num_buffered_values,
