@@ -51,6 +51,9 @@
  * RRG_REMOVE_ADMIN_OPTION indicates a grant that would need to have
  * admin_option set to false by the operation.
  *
+ * RRG_REMOVE_INHERIT_OPTION indicates a grant that would need to have
+ * inherit_option set to false by the operation.
+ *
  * RRG_DELETE_GRANT indicates a grant that would need to be removed entirely
  * by the operation.
  */
@@ -58,12 +61,22 @@ typedef enum
 {
 	RRG_NOOP,
 	RRG_REMOVE_ADMIN_OPTION,
+	RRG_REMOVE_INHERIT_OPTION,
 	RRG_DELETE_GRANT
 } RevokeRoleGrantAction;
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_pg_authid_oid = InvalidOid;
 
+typedef struct
+{
+	unsigned	specified;
+	bool		admin;
+	bool		inherit;
+} GrantRoleOptions;
+
+#define GRANT_ROLE_SPECIFIED_ADMIN			0x0001
+#define GRANT_ROLE_SPECIFIED_INHERIT		0x0002
 
 /* GUC parameter */
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
@@ -73,17 +86,18 @@ check_password_hook_type check_password_hook = NULL;
 
 static void AddRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						Oid grantorId, bool admin_opt);
+						Oid grantorId, GrantRoleOptions *popt);
 static void DelRoleMems(const char *rolename, Oid roleid,
 						List *memberSpecs, List *memberIds,
-						Oid grantorId, bool admin_opt, DropBehavior behavior);
+						Oid grantorId, GrantRoleOptions *popt,
+						DropBehavior behavior);
 static Oid	check_role_grantor(Oid currentUserId, Oid roleid, Oid grantorId,
 							   bool is_grant);
 static RevokeRoleGrantAction *initialize_revoke_actions(CatCList *memlist);
 static bool plan_single_revoke(CatCList *memlist,
 							   RevokeRoleGrantAction *actions,
 							   Oid member, Oid grantor,
-							   bool revoke_admin_option_only,
+							   GrantRoleOptions *popt,
 							   DropBehavior behavior);
 static void plan_member_revoke(CatCList *memlist,
 							   RevokeRoleGrantAction *actions, Oid member);
@@ -92,6 +106,7 @@ static void plan_recursive_revoke(CatCList *memlist,
 								  int index,
 								  bool revoke_admin_option_only,
 								  DropBehavior behavior);
+static void InitGrantRoleOptions(GrantRoleOptions *popt);
 
 
 /* Check if current user has createrole privileges */
@@ -144,6 +159,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	DefElem    *dadminmembers = NULL;
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
+	GrantRoleOptions	popt;
 
 	/* The defaults can vary depending on the original statement type */
 	switch (stmt->stmt_type)
@@ -462,6 +478,9 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	if (addroleto || adminmembers || rolemembers)
 		CommandCounterIncrement();
 
+	/* Default grant. */
+	InitGrantRoleOptions(&popt);
+
 	/*
 	 * Add the new role to the specified existing roles.
 	 */
@@ -486,7 +505,7 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 			AddRoleMems(oldrolename, oldroleid,
 						thisrole_list,
 						thisrole_oidlist,
-						InvalidOid, false);
+						InvalidOid, &popt);
 
 			ReleaseSysCache(oldroletup);
 		}
@@ -497,11 +516,13 @@ CreateRole(ParseState *pstate, CreateRoleStmt *stmt)
 	 * option, rolemembers don't.
 	 */
 	AddRoleMems(stmt->role, roleid,
-				adminmembers, roleSpecsToIds(adminmembers),
-				InvalidOid, true);
-	AddRoleMems(stmt->role, roleid,
 				rolemembers, roleSpecsToIds(rolemembers),
-				InvalidOid, false);
+				InvalidOid, &popt);
+	popt.specified |= GRANT_ROLE_SPECIFIED_ADMIN;
+	popt.admin = true;
+	AddRoleMems(stmt->role, roleid,
+				adminmembers, roleSpecsToIds(adminmembers),
+				InvalidOid, &popt);
 
 	/* Post creation hook for new role */
 	InvokeObjectPostCreateHook(AuthIdRelationId, roleid, 0);
@@ -552,6 +573,7 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	DefElem    *dvalidUntil = NULL;
 	DefElem    *dbypassRLS = NULL;
 	Oid			roleid;
+	GrantRoleOptions	popt;
 
 	check_rolespec_name(stmt->role,
 						"Cannot alter reserved roles.");
@@ -843,6 +865,8 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 	ReleaseSysCache(tuple);
 	heap_freetuple(new_tuple);
 
+	InitGrantRoleOptions(&popt);
+
 	/*
 	 * Advance command counter so we can see new record; else tests in
 	 * AddRoleMems may fail.
@@ -856,11 +880,11 @@ AlterRole(ParseState *pstate, AlterRoleStmt *stmt)
 		if (stmt->action == +1) /* add members to role */
 			AddRoleMems(rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
-						InvalidOid, false);
+						InvalidOid, &popt);
 		else if (stmt->action == -1)	/* drop members from role */
 			DelRoleMems(rolename, roleid,
 						rolemembers, roleSpecsToIds(rolemembers),
-						InvalidOid, false, DROP_RESTRICT);
+						InvalidOid, &popt, DROP_RESTRICT);
 	}
 
 	/*
@@ -1337,13 +1361,48 @@ RenameRole(const char *oldname, const char *newname)
  * Grant/Revoke roles to/from roles
  */
 void
-GrantRole(GrantRoleStmt *stmt)
+GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 {
 	Relation	pg_authid_rel;
 	Oid			grantor;
 	List	   *grantee_ids;
 	ListCell   *item;
+	GrantRoleOptions	popt;
 
+	/* Parse options list. */
+	InitGrantRoleOptions(&popt);
+	foreach(item, stmt->opt)
+	{
+		DefElem	   *opt = (DefElem *) lfirst(item);
+		char	   *optval = defGetString(opt);
+
+		if (strcmp(opt->defname, "admin") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_ADMIN;
+
+			if (parse_bool(optval, &popt.admin))
+				continue;
+		}
+		else if (strcmp(opt->defname, "inherit") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_INHERIT;
+			if (parse_bool(optval, &popt.inherit))
+				continue;
+		}
+		else
+			ereport(ERROR,
+					errcode(ERRCODE_SYNTAX_ERROR),
+					errmsg("unrecognized role option \"%s\"", opt->defname),
+					parser_errposition(pstate, opt->location));
+
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("unrecognized value for role option \"%s\": \"%s\"",
+						opt->defname, optval),
+				 parser_errposition(pstate, opt->location)));
+	}
+
+	/* Lookup OID of grantor, if specified. */
 	if (stmt->grantor)
 		grantor = get_rolespec_oid(stmt->grantor, false);
 	else
@@ -1355,11 +1414,11 @@ GrantRole(GrantRoleStmt *stmt)
 	pg_authid_rel = table_open(AuthIdRelationId, AccessShareLock);
 
 	/*
-	 * Step through all of the granted roles and add/remove entries for the
-	 * grantees, or, if admin_opt is set, then just add/remove the admin
-	 * option.
-	 *
-	 * Note: Permissions checking is done by AddRoleMems/DelRoleMems
+	 * Step through all of the granted roles and add, update, or remove
+	 * entries in pg_auth_members as appropriate. If stmt->is_grant is true,
+	 * we are adding new grants or, if they already exist, updating options
+	 * on those grants. If stmt->is_grant is false, we are revoking grants or
+	 * removing options from them.
 	 */
 	foreach(item, stmt->granted_roles)
 	{
@@ -1377,11 +1436,11 @@ GrantRole(GrantRoleStmt *stmt)
 		if (stmt->is_grant)
 			AddRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						grantor, stmt->admin_opt);
+						grantor, &popt);
 		else
 			DelRoleMems(rolename, roleid,
 						stmt->grantee_roles, grantee_ids,
-						grantor, stmt->admin_opt, stmt->behavior);
+						grantor, &popt, stmt->behavior);
 	}
 
 	/*
@@ -1483,12 +1542,12 @@ roleSpecsToIds(List *memberNames)
  * memberSpecs: list of RoleSpec of roles to add (used only for error messages)
  * memberIds: OIDs of roles to add
  * grantorId: who is granting the membership (InvalidOid if not set explicitly)
- * admin_opt: granting admin option?
+ * popt: information about grant options
  */
 static void
 AddRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			Oid grantorId, bool admin_opt)
+			Oid grantorId, GrantRoleOptions *popt)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
@@ -1607,7 +1666,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	 * has no other source of ADMIN OPTION on X, tries to give ADMIN OPTION on
 	 * X back to A).
 	 */
-	if (admin_opt && grantorId != BOOTSTRAP_SUPERUSERID)
+	if (popt->admin && grantorId != BOOTSTRAP_SUPERUSERID)
 	{
 		CatCList   *memlist;
 		RevokeRoleGrantAction *actions;
@@ -1669,25 +1728,55 @@ AddRoleMems(const char *rolename, Oid roleid,
 		Datum		new_record[Natts_pg_auth_members] = {0};
 		bool		new_record_nulls[Natts_pg_auth_members] = {0};
 		bool		new_record_repl[Natts_pg_auth_members] = {0};
-		Form_pg_auth_members authmem_form;
 
-		/*
-		 * Check if entry for this role/member already exists; if so, give
-		 * warning unless we are adding admin option.
-		 */
+		/* Common initialization for possible insert or update */
+		new_record[Anum_pg_auth_members_roleid - 1] =
+			ObjectIdGetDatum(roleid);
+		new_record[Anum_pg_auth_members_member - 1] =
+			ObjectIdGetDatum(memberid);
+		new_record[Anum_pg_auth_members_grantor - 1] =
+			ObjectIdGetDatum(grantorId);
+
+		/* Find any existing tuple */
 		authmem_tuple = SearchSysCache3(AUTHMEMROLEMEM,
 										ObjectIdGetDatum(roleid),
 										ObjectIdGetDatum(memberid),
 										ObjectIdGetDatum(grantorId));
-		if (!HeapTupleIsValid(authmem_tuple))
+
+		/*
+		 * If we found a tuple, update it with new option values, unless
+		 * there are no changes, in which case issue a WARNING.
+		 *
+		 * If we didn't find a tuple, just insert one.
+		 */
+		if (HeapTupleIsValid(authmem_tuple))
 		{
-			authmem_form = NULL;
-		}
-		else
-		{
+			Form_pg_auth_members authmem_form;
+			bool		at_least_one_change = false;
+
 			authmem_form = (Form_pg_auth_members) GETSTRUCT(authmem_tuple);
 
-			if (!admin_opt || authmem_form->admin_option)
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_ADMIN) != 0
+				&& authmem_form->admin_option != popt->admin)
+			{
+				new_record[Anum_pg_auth_members_admin_option - 1] =
+					BoolGetDatum(popt->admin);
+				new_record_repl[Anum_pg_auth_members_admin_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0
+				&& authmem_form->inherit_option != popt->inherit)
+			{
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					BoolGetDatum(popt->inherit);
+				new_record_repl[Anum_pg_auth_members_inherit_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
+			if (!at_least_one_change)
 			{
 				ereport(NOTICE,
 						(errmsg("role \"%s\" has already been granted membership in role \"%s\" by role \"%s\"",
@@ -1696,17 +1785,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 				ReleaseSysCache(authmem_tuple);
 				continue;
 			}
-		}
 
-		/* Build a tuple to insert or update */
-		new_record[Anum_pg_auth_members_roleid - 1] = ObjectIdGetDatum(roleid);
-		new_record[Anum_pg_auth_members_member - 1] = ObjectIdGetDatum(memberid);
-		new_record[Anum_pg_auth_members_grantor - 1] = ObjectIdGetDatum(grantorId);
-		new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(admin_opt);
-
-		if (HeapTupleIsValid(authmem_tuple))
-		{
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									  new_record,
 									  new_record_nulls, new_record_repl);
@@ -1719,6 +1798,33 @@ AddRoleMems(const char *rolename, Oid roleid,
 			Oid			objectId;
 			Oid		   *newmembers = palloc(sizeof(Oid));
 
+			/* Set admin option if user set it to true, otherwise not. */
+			new_record[Anum_pg_auth_members_admin_option - 1] =
+				BoolGetDatum(popt->admin);
+
+			/*
+			 * If the user specified a value for the inherit option, use
+			 * whatever was specified. Otherwise, set the default value based
+			 * on the role-level property.
+			 */
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0)
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					popt->inherit;
+			else
+			{
+				HeapTuple		mrtup;
+				Form_pg_authid	mrform;
+
+				mrtup = SearchSysCache1(AUTHOID, memberid);
+				if (!HeapTupleIsValid(mrtup))
+					elog(ERROR, "cache lookup failed for role %u", memberid);
+				mrform = (Form_pg_authid) GETSTRUCT(mrtup);
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					mrform->rolinherit;
+				ReleaseSysCache(mrtup);
+			}
+
+			/* get an OID for the new row and insert it */
 			objectId = GetNewObjectId();
 			new_record[Anum_pg_auth_members_oid - 1] = objectId;
 			tuple = heap_form_tuple(pg_authmem_dsc,
@@ -1751,13 +1857,13 @@ AddRoleMems(const char *rolename, Oid roleid,
  * memberSpecs: list of RoleSpec of roles to del (used only for error messages)
  * memberIds: OIDs of roles to del
  * grantorId: who is revoking the membership
- * admin_opt: remove admin option only?
+ * popt: information about grant options
  * behavior: RESTRICT or CASCADE behavior for recursive removal
  */
 static void
 DelRoleMems(const char *rolename, Oid roleid,
 			List *memberSpecs, List *memberIds,
-			Oid grantorId, bool admin_opt, DropBehavior behavior)
+			Oid grantorId, GrantRoleOptions *popt, DropBehavior behavior)
 {
 	Relation	pg_authmem_rel;
 	TupleDesc	pg_authmem_dsc;
@@ -1824,7 +1930,7 @@ DelRoleMems(const char *rolename, Oid roleid,
 		Oid			memberid = lfirst_oid(iditem);
 
 		if (!plan_single_revoke(memlist, actions, memberid, grantorId,
-								admin_opt, behavior))
+								popt, behavior))
 		{
 			ereport(WARNING,
 					(errmsg("role \"%s\" has not been granted membership in role \"%s\" by role \"%s\"",
@@ -1862,15 +1968,29 @@ DelRoleMems(const char *rolename, Oid roleid,
 		}
 		else
 		{
-			/* Just turn off the admin option */
+			/* Just turn off the specified option */
 			HeapTuple	tuple;
 			Datum		new_record[Natts_pg_auth_members] = {0};
 			bool		new_record_nulls[Natts_pg_auth_members] = {0};
 			bool		new_record_repl[Natts_pg_auth_members] = {0};
 
 			/* Build a tuple to update with */
-			new_record[Anum_pg_auth_members_admin_option - 1] = BoolGetDatum(false);
-			new_record_repl[Anum_pg_auth_members_admin_option - 1] = true;
+			if (actions[i] == RRG_REMOVE_ADMIN_OPTION)
+			{
+				new_record[Anum_pg_auth_members_admin_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_admin_option - 1] =
+					true;
+			}
+			else if (actions[i] == RRG_REMOVE_INHERIT_OPTION)
+			{
+				new_record[Anum_pg_auth_members_inherit_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_inherit_option - 1] =
+					true;
+			}
+			else
+				elog(ERROR, "unknown role revoke action");
 
 			tuple = heap_modify_tuple(authmem_tuple, pg_authmem_dsc,
 									  new_record,
@@ -2028,10 +2148,20 @@ initialize_revoke_actions(CatCList *memlist)
  */
 static bool
 plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
-				   Oid member, Oid grantor, bool revoke_admin_option_only,
+				   Oid member, Oid grantor, GrantRoleOptions *popt,
 				   DropBehavior behavior)
 {
 	int			i;
+
+	/*
+	 * If popt.specified == 0, we're revoking the grant entirely; otherwise,
+	 * we expect just one bit to be set, and we're revoking the corresponding
+	 * option. As of this writing, there's no syntax that would allow for
+	 * an attempt to revoke multiple options at once, and the logic below
+	 * wouldn't work properly if such syntax were added, so assert that our
+	 * caller isn't trying to do that.
+	 */
+	Assert(pg_popcount32(popt->specified) <= 1);
 
 	for (i = 0; i < memlist->n_members; ++i)
 	{
@@ -2044,8 +2174,27 @@ plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
 		if (authmem_form->member == member &&
 			authmem_form->grantor == grantor)
 		{
-			plan_recursive_revoke(memlist, actions, i,
-								  revoke_admin_option_only, behavior);
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_INHERIT) != 0)
+			{
+				/*
+				 * Revoking the INHERIT option doesn't change anything for
+				 * dependent privileges, so we don't need to recurse.
+				 */
+				actions[i] = RRG_REMOVE_INHERIT_OPTION;
+			}
+			else
+			{
+				bool	revoke_admin_option_only;
+
+				/*
+				 * Revoking the grant entirely, or ADMIN option on a grant,
+				 * implicates dependent privileges, so we may need to recurse.
+				 */
+				revoke_admin_option_only =
+					(popt->specified & GRANT_ROLE_SPECIFIED_ADMIN) != 0;
+				plan_recursive_revoke(memlist, actions, i,
+									  revoke_admin_option_only, behavior);
+			}
 			return true;
 		}
 	}
@@ -2171,4 +2320,15 @@ plan_recursive_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
 			plan_recursive_revoke(memlist, actions, i, false, behavior);
 		}
 	}
+}
+
+/*
+ * Initialize a GrantRoleOptions object with default values.
+ */
+static void
+InitGrantRoleOptions(GrantRoleOptions *popt)
+{
+	popt->specified = 0;
+	popt->admin = false;
+	popt->inherit = false;
 }

@@ -947,11 +947,14 @@ static void
 dumpRoleMembership(PGconn *conn)
 {
 	PQExpBuffer buf = createPQExpBuffer();
+	PQExpBuffer	optbuf = createPQExpBuffer();
 	PGresult   *res;
 	int			start = 0,
 				end,
 				total;
 	bool		dump_grantors;
+	bool		dump_inherit_option;
+	int			i_inherit_option;
 
 	/*
 	 * Previous versions of PostgreSQL didn't used to track the grantor very
@@ -962,19 +965,28 @@ dumpRoleMembership(PGconn *conn)
 	 */
 	dump_grantors = (PQserverVersion(conn) >= 160000);
 
+	/*
+	 * Previous versions of PostgreSQL also did not have a grant-level
+	 * INHERIT option.
+	 */
+	dump_inherit_option = (server_version >= 160000);
+
 	/* Generate and execute query. */
 	printfPQExpBuffer(buf, "SELECT ur.rolname AS role, "
 					  "um.rolname AS member, "
 					  "ug.oid AS grantorid, "
 					  "ug.rolname AS grantor, "
-					  "a.admin_option "
-					  "FROM pg_auth_members a "
+					  "a.admin_option");
+	if (dump_inherit_option)
+		appendPQExpBuffer(buf, ", a.inherit_option");
+	appendPQExpBuffer(buf, " FROM pg_auth_members a "
 					  "LEFT JOIN %s ur on ur.oid = a.roleid "
 					  "LEFT JOIN %s um on um.oid = a.member "
 					  "LEFT JOIN %s ug on ug.oid = a.grantor "
 					  "WHERE NOT (ur.rolname ~ '^pg_' AND um.rolname ~ '^pg_')"
 					  "ORDER BY 1,2,4", role_catalog, role_catalog, role_catalog);
 	res = executeQuery(conn, buf->data);
+	i_inherit_option = PQfnumber(res, "inherit_option");
 
 	if (PQntuples(res) > 0)
 		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
@@ -1079,10 +1091,24 @@ dumpRoleMembership(PGconn *conn)
 					rolename_insert(ht, member, &found);
 
 				/* Generate the actual GRANT statement. */
+				resetPQExpBuffer(optbuf);
 				fprintf(OPF, "GRANT %s", fmtId(role));
 				fprintf(OPF, " TO %s", fmtId(member));
 				if (*admin_option == 't')
-					fprintf(OPF, " WITH ADMIN OPTION");
+					appendPQExpBufferStr(optbuf, "ADMIN OPTION");
+				if (dump_inherit_option)
+				{
+					char   *inherit_option;
+
+					if (optbuf->data[0] != '\0')
+						appendPQExpBufferStr(optbuf, ", ");
+					inherit_option = PQgetvalue(res, i, i_inherit_option);
+					appendPQExpBuffer(optbuf, "INHERIT %s",
+									  *inherit_option == 't' ?
+									  "TRUE" : "FALSE");
+				}
+				if (optbuf->data[0] != '\0')
+					fprintf(OPF, " WITH %s", optbuf->data);
 				if (dump_grantors)
 					fprintf(OPF, " GRANTED BY %s", fmtId(grantor));
 				fprintf(OPF, ";\n");

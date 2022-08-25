@@ -767,7 +767,7 @@ standard_ProcessUtility(PlannedStmt *pstmt,
 
 		case T_GrantRoleStmt:
 			/* no event triggers for global objects */
-			GrantRole((GrantRoleStmt *) parsetree);
+			GrantRole(pstate, (GrantRoleStmt *) parsetree);
 			break;
 
 		case T_CreatedbStmt:

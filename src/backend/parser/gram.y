@@ -362,9 +362,12 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 %type <node>	utility_option_arg
 %type <defelt>	drop_option
 %type <boolean>	opt_or_replace opt_no
-				opt_grant_grant_option opt_grant_admin_option
+				opt_grant_grant_option
 				opt_nowait opt_if_exists opt_with_data
 				opt_transaction_chain
+%type <list>	grant_role_opt_list
+%type <defelt>	grant_role_opt
+%type <node>	grant_role_opt_value
 %type <ival>	opt_nowait_or_skip
 
 %type <list>	OptRoleList AlterOptRoleList
@@ -7848,15 +7851,26 @@ opt_grant_grant_option:
  *****************************************************************************/
 
 GrantRoleStmt:
-			GRANT privilege_list TO role_list opt_grant_admin_option opt_granted_by
+			GRANT privilege_list TO role_list opt_granted_by
 				{
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 
 					n->is_grant = true;
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
-					n->admin_opt = $5;
-					n->grantor = $6;
+					n->opt = NIL;
+					n->grantor = $5;
+					$$ = (Node *) n;
+				}
+		  | GRANT privilege_list TO role_list WITH grant_role_opt_list opt_granted_by
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+
+					n->is_grant = true;
+					n->granted_roles = $2;
+					n->grantee_roles = $4;
+					n->opt = $6;
+					n->grantor = $7;
 					$$ = (Node *) n;
 				}
 		;
@@ -7867,19 +7881,22 @@ RevokeRoleStmt:
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
 
 					n->is_grant = false;
-					n->admin_opt = false;
+					n->opt = NIL;
 					n->granted_roles = $2;
 					n->grantee_roles = $4;
 					n->grantor = $5;
 					n->behavior = $6;
 					$$ = (Node *) n;
 				}
-			| REVOKE ADMIN OPTION FOR privilege_list FROM role_list opt_granted_by opt_drop_behavior
+			| REVOKE ColId OPTION FOR privilege_list FROM role_list opt_granted_by opt_drop_behavior
 				{
 					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					DefElem *opt;
 
+					opt = makeDefElem(pstrdup($2),
+									  (Node *) makeBoolean(false), @2);
 					n->is_grant = false;
-					n->admin_opt = true;
+					n->opt = list_make1(opt);
 					n->granted_roles = $5;
 					n->grantee_roles = $7;
 					n->grantor = $8;
@@ -7888,8 +7905,22 @@ RevokeRoleStmt:
 				}
 		;
 
-opt_grant_admin_option: WITH ADMIN OPTION				{ $$ = true; }
-			| /*EMPTY*/									{ $$ = false; }
+grant_role_opt_list:
+			grant_role_opt_list ',' grant_role_opt	{ $$ = lappend($1, $3); }
+			| grant_role_opt						{ $$ = list_make1($1); }
+		;
+
+grant_role_opt:
+		ColLabel grant_role_opt_value
+			{
+				$$ = makeDefElem(pstrdup($1), $2, @1);
+			}
+		;
+
+grant_role_opt_value:
+		OPTION			{ $$ = (Node *) makeBoolean(true); }
+		| TRUE_P		{ $$ = (Node *) makeBoolean(true); }
+		| FALSE_P		{ $$ = (Node *) makeBoolean(false); }
 		;
 
 opt_granted_by: GRANTED BY RoleSpec						{ $$ = $3; }

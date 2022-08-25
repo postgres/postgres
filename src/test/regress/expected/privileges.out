@@ -517,7 +517,19 @@ BEGIN;
 RESET SESSION AUTHORIZATION;
 ALTER ROLE regress_priv_user1 NOINHERIT;
 SET SESSION AUTHORIZATION regress_priv_user1;
-DELETE FROM atest3;
+SAVEPOINT s1;
+DELETE FROM atest3; -- ok because grant-level option is unchanged
+ROLLBACK TO s1;
+RESET SESSION AUTHORIZATION;
+GRANT regress_priv_group2 TO regress_priv_user1 WITH INHERIT FALSE;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3; -- fail
+ERROR:  permission denied for table atest3
+ROLLBACK TO s1;
+RESET SESSION AUTHORIZATION;
+REVOKE INHERIT OPTION FOR regress_priv_group2 FROM regress_priv_user1;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3; -- also fail
 ERROR:  permission denied for table atest3
 ROLLBACK;
 -- views

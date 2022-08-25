@@ -28,7 +28,7 @@ extern Oid	CreateRole(ParseState *pstate, CreateRoleStmt *stmt);
 extern Oid	AlterRole(ParseState *pstate, AlterRoleStmt *stmt);
 extern Oid	AlterRoleSet(AlterRoleSetStmt *stmt);
 extern void DropRole(DropRoleStmt *stmt);
-extern void GrantRole(GrantRoleStmt *stmt);
+extern void GrantRole(ParseState *pstate, GrantRoleStmt *stmt);
 extern ObjectAddress RenameRole(const char *oldname, const char *newname);
 extern void DropOwnedObjects(DropOwnedStmt *stmt);
 extern void ReassignOwnedObjects(ReassignOwnedStmt *stmt);

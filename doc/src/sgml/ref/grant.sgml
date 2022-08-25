@@ -98,7 +98,7 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replaceable class="parameter">role_specification</replaceable> [, ...]
-    [ WITH ADMIN OPTION ]
+    [ WITH { ADMIN | INHERIT } { OPTION | TRUE | FALSE } ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
 
 <phrase>where <replaceable class="parameter">role_specification</replaceable> can be:</phrase>
@@ -255,7 +255,17 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
   </para>
 
   <para>
-   If <literal>WITH ADMIN OPTION</literal> is specified, the member can
+   The effect of membership in a role can be modified by specifying the
+   <literal>ADMIN</literal> or <literal>INHERIT</literal> option, each
+   of which can be set to either <literal>TRUE</literal> or
+   <literal>FALSE</literal>. The keyword <literal>OPTION</literal> is accepted
+   as a synonym for <literal>TRUE</literal>, so that
+   <literal>WITH ADMIN OPTION</literal>
+   is a synonym for <literal>WITH ADMIN TRUE</literal>.
+  </para>
+
+  <para>
+   The <literal>ADMIN</literal> option allows the member to
    in turn grant membership in the role to others, and revoke membership
    in the role as well.  Without the admin option, ordinary users cannot
    do that.  A role is not considered to hold <literal>WITH ADMIN
@@ -263,6 +273,18 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    membership in any role to anyone.  Roles having
    <literal>CREATEROLE</literal> privilege can grant or revoke membership
    in any role that is not a superuser.
+  </para>
+
+  <para>
+   The <literal>INHERIT</literal> option, if it is set to
+   <literal>TRUE</literal>, causes the member to inherit the privileges of
+   the granted role. That is, it can automatically use whatever database
+   privileges have been granted to that role. If set to
+   <literal>FALSE</literal>, the member does not inherit the privileges
+   of the granted role. If this clause is not specified, it defaults to
+   true if the member role is set to <literal>INHERIT</literal> and to false
+   if the member role is set to <literal>NOINHERIT</literal>.
+   See <link linkend="sql-createrole"><command>CREATE ROLE</command></link>.
   </para>
 
   <para>
