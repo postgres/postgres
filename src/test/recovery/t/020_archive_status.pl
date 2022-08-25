@@ -74,7 +74,7 @@ $primary->stop('immediate');
 
 # Recovery tests for the archiving with a standby partially check
 # the recovery behavior when restoring a backup taken using a
-# snapshot with no pg_start/stop_backup.  In this situation,
+# snapshot with no pg_backup_start/stop.  In this situation,
 # the recovered standby should enter first crash recovery then
 # switch to regular archive recovery.  Note that the base backup
 # is taken here so as archive_command will fail.  This is necessary
