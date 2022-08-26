@@ -858,8 +858,7 @@ HandleCopyStream(PGconn *conn, StreamCtl *stream,
 	}
 
 error:
-	if (copybuf != NULL)
-		PQfreemem(copybuf);
+	PQfreemem(copybuf);
 	return NULL;
 }
 
@@ -940,8 +939,7 @@ CopyStreamReceive(PGconn *conn, long timeout, pgsocket stop_socket,
 	char	   *copybuf = NULL;
 	int			rawlen;
 
-	if (*buffer != NULL)
-		PQfreemem(*buffer);
+	PQfreemem(*buffer);
 	*buffer = NULL;
 
 	/* Try to receive a CopyData message */
@@ -1204,8 +1202,7 @@ HandleEndOfCopyStream(PGconn *conn, StreamCtl *stream, char *copybuf,
 		}
 		still_sending = false;
 	}
-	if (copybuf != NULL)
-		PQfreemem(copybuf);
+	PQfreemem(copybuf);
 	*stoppos = blockpos;
 	return res;
 }

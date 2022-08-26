@@ -741,8 +741,7 @@ static void
 libpqrcv_disconnect(WalReceiverConn *conn)
 {
 	PQfinish(conn->streamConn);
-	if (conn->recvBuf != NULL)
-		PQfreemem(conn->recvBuf);
+	PQfreemem(conn->recvBuf);
 	pfree(conn);
 }
 
@@ -768,8 +767,7 @@ libpqrcv_receive(WalReceiverConn *conn, char **buffer,
 {
 	int			rawlen;
 
-	if (conn->recvBuf != NULL)
-		PQfreemem(conn->recvBuf);
+	PQfreemem(conn->recvBuf);
 	conn->recvBuf = NULL;
 
 	/* Try to receive a CopyData message */
