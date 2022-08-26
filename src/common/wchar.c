@@ -1919,10 +1919,11 @@ pg_utf8_verifystr(const unsigned char *s, int len)
 	uint32		state = BGN;
 
 /*
- * Sixteen seems to give the best balance of performance across different
- * byte distributions.
+ * With a stride of two vector widths, gcc will unroll the loop. Even if
+ * the compiler can unroll a longer loop, it's not worth it because we
+ * must fall back to the byte-wise algorithm if we find any non-ASCII.
  */
-#define STRIDE_LENGTH 16
+#define STRIDE_LENGTH (2 * sizeof(Vector8))
 
 	if (len >= STRIDE_LENGTH)
 	{

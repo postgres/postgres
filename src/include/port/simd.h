@@ -52,7 +52,18 @@ static inline Vector8 vector8_broadcast(const uint8 c);
 static inline bool vector8_has(const Vector8 v, const uint8 c);
 static inline bool vector8_has_zero(const Vector8 v);
 static inline bool vector8_has_le(const Vector8 v, const uint8 c);
+static inline bool vector8_is_highbit_set(const Vector8 v);
 
+/* arithmetic operations */
+static inline Vector8 vector8_or(const Vector8 v1, const Vector8 v2);
+
+/* Different semantics for SIMD architectures. */
+#ifndef USE_NO_SIMD
+
+/* comparisons between vectors */
+static inline Vector8 vector8_eq(const Vector8 v1, const Vector8 v2);
+
+#endif							/* ! USE_NO_SIMD */
 
 /*
  * Load a chunk of memory into the given vector.
@@ -192,5 +203,49 @@ vector8_has_le(const Vector8 v, const uint8 c)
 	Assert(assert_result == result);
 	return result;
 }
+
+/*
+ * Return true if the high bit of any element is set
+ */
+static inline bool
+vector8_is_highbit_set(const Vector8 v)
+{
+#ifdef USE_SSE2
+	return _mm_movemask_epi8(v) != 0;
+#else
+	return v & vector8_broadcast(0x80);
+#endif
+}
+
+/*
+ * Return the bitwise OR of the inputs
+ */
+static inline Vector8
+vector8_or(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_or_si128(v1, v2);
+#else
+	return v1 | v2;
+#endif
+}
+
+
+/* Different semantics for SIMD architectures. */
+#ifndef USE_NO_SIMD
+
+/*
+ * Return a vector with all bits set in each lane where the the corresponding
+ * lanes in the inputs are equal.
+ */
+static inline Vector8
+vector8_eq(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_cmpeq_epi8(v1, v2);
+#endif
+}
+
+#endif							/* ! USE_NO_SIMD */
 
 #endif							/* SIMD_H */
