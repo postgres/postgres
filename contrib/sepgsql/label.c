@@ -662,28 +662,28 @@ quote_object_name(const char *src1, const char *src2,
 		temp = quote_identifier(src1);
 		appendStringInfoString(&result, temp);
 		if (src1 != temp)
-			pfree((void *) temp);
+			pfree(temp);
 	}
 	if (src2)
 	{
 		temp = quote_identifier(src2);
 		appendStringInfo(&result, ".%s", temp);
 		if (src2 != temp)
-			pfree((void *) temp);
+			pfree(temp);
 	}
 	if (src3)
 	{
 		temp = quote_identifier(src3);
 		appendStringInfo(&result, ".%s", temp);
 		if (src3 != temp)
-			pfree((void *) temp);
+			pfree(temp);
 	}
 	if (src4)
 	{
 		temp = quote_identifier(src4);
 		appendStringInfo(&result, ".%s", temp);
 		if (src4 != temp)
-			pfree((void *) temp);
+			pfree(temp);
 	}
 	return result.data;
 }
