@@ -793,7 +793,7 @@ NextCopyFromRawFields(CopyFromState cstate, char ***fields, int *nfields)
 /*
  * Read next tuple from file for COPY FROM. Return false if no more tuples.
  *
- * 'econtext' is used to evaluate default expression for each columns not
+ * 'econtext' is used to evaluate default expression for each column not
  * read from the file. It can be NULL when no default values are used, i.e.
  * when all columns are read from the file.
  *
