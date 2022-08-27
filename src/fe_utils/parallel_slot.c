@@ -237,7 +237,7 @@ wait_on_slots(ParallelSlotArray *sa)
 	if (cancelconn == NULL)
 		return false;
 
-	SetCancelConn(sa->slots->connection);
+	SetCancelConn(cancelconn);
 	i = select_loop(maxFd, &slotset);
 	ResetCancelConn();
 
