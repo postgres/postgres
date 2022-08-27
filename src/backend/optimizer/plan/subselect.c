@@ -851,6 +851,101 @@ hash_ok_operator(OpExpr *expr)
 	}
 }
 
+/*
+ * SS_make_multiexprs_unique
+ *
+ * After cloning an UPDATE targetlist that contains MULTIEXPR_SUBLINK
+ * SubPlans, inheritance_planner() must call this to assign new, unique Param
+ * IDs to the cloned MULTIEXPR_SUBLINKs' output parameters.  See notes in
+ * ExecScanSubPlan.
+ */
+void
+SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot)
+{
+	List	   *new_multiexpr_params = NIL;
+	int			offset;
+	ListCell   *lc;
+
+	/*
+	 * Find MULTIEXPR SubPlans in the cloned query.  We need only look at the
+	 * top level of the targetlist.
+	 */
+	foreach(lc, subroot->parse->targetList)
+	{
+		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		SubPlan    *splan;
+		Plan	   *plan;
+		List	   *params;
+
+		if (!IsA(tent->expr, SubPlan))
+			continue;
+		splan = (SubPlan *) tent->expr;
+		if (splan->subLinkType != MULTIEXPR_SUBLINK)
+			continue;
+
+		/* Found one, get the associated subplan */
+		plan = (Plan *) list_nth(root->glob->subplans, splan->plan_id - 1);
+
+		/*
+		 * Generate new PARAM_EXEC Param nodes, and overwrite splan->setParam
+		 * with their IDs.  This is just like what build_subplan did when it
+		 * made the SubPlan node we're cloning.  But because the param IDs are
+		 * assigned globally, we'll get new IDs.  (We assume here that the
+		 * subroot's tlist is a clone we can scribble on.)
+		 */
+		params = generate_subquery_params(root,
+										  plan->targetlist,
+										  &splan->setParam);
+
+		/*
+		 * We will append the replacement-Params lists to
+		 * root->multiexpr_params, but for the moment just make a local list.
+		 * Since we lack easy access here to the original subLinkId, we have
+		 * to fall back on the slightly shaky assumption that the MULTIEXPR
+		 * SubPlans appear in the targetlist in subLinkId order.  This should
+		 * be safe enough given the way that the parser builds the targetlist
+		 * today.  I wouldn't want to rely on it going forward, but since this
+		 * code has a limited lifespan it should be fine.  We can partially
+		 * protect against problems with assertions below.
+		 */
+		new_multiexpr_params = lappend(new_multiexpr_params, params);
+	}
+
+	/*
+	 * Now we must find the Param nodes that reference the MULTIEXPR outputs
+	 * and update their sublink IDs so they'll reference the new outputs.
+	 * Fortunately, those too must be at top level of the cloned targetlist.
+	 */
+	offset = list_length(root->multiexpr_params);
+
+	foreach(lc, subroot->parse->targetList)
+	{
+		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		Param	   *p;
+		int			subqueryid;
+		int			colno;
+
+		if (!IsA(tent->expr, Param))
+			continue;
+		p = (Param *) tent->expr;
+		if (p->paramkind != PARAM_MULTIEXPR)
+			continue;
+		subqueryid = p->paramid >> 16;
+		colno = p->paramid & 0xFFFF;
+		Assert(subqueryid > 0 &&
+			   subqueryid <= list_length(new_multiexpr_params));
+		Assert(colno > 0 &&
+			   colno <= list_length((List *) list_nth(new_multiexpr_params,
+													  subqueryid - 1)));
+		subqueryid += offset;
+		p->paramid = (subqueryid << 16) + colno;
+	}
+
+	/* Finally, attach new replacement lists to the global list */
+	root->multiexpr_params = list_concat(root->multiexpr_params,
+										 new_multiexpr_params);
+}
+
 
 /*
  * SS_process_ctes: process a query's WITH list
