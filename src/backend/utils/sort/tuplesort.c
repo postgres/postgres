@@ -1340,7 +1340,7 @@ tuplesort_puttuple_common(Tuplesortstate *state, SortTuple *tuple, bool useAbbre
 }
 
 /*
- * Write a stored tuple onto tape.tuple.  Unless the slab allocator is
+ * Write a stored tuple onto tape.  Unless the slab allocator is
  * used, after writing the tuple, pfree() the out-of-line data (not the
  * SortTuple struct!), and increase state->availMem by the amount of
  * memory space thereby released.
