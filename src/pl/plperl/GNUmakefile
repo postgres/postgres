@@ -72,7 +72,7 @@ XSUBPPDIR = $(shell $(PERL) -e 'use List::Util qw(first); print first { -r "$$_/
 
 include $(top_srcdir)/src/Makefile.shlib
 
-plperl.o: perlchunks.h plperl_opmask.h plperl_helpers.h
+plperl.o: perlchunks.h plperl_opmask.h
 
 plperl_opmask.h: plperl_opmask.pl
 	@if [ x"$(perl_privlibexp)" = x"" ]; then echo "configure switch --with-perl was not specified."; exit 1; fi
@@ -103,7 +103,7 @@ uninstall: uninstall-lib uninstall-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(addprefix $(srcdir)/, $(DATA)) '$(DESTDIR)$(datadir)/extension/'
-	$(INSTALL_DATA) $(srcdir)/plperl.h $(srcdir)/ppport.h $(srcdir)/plperl_helpers.h '$(DESTDIR)$(includedir_server)'
+	$(INSTALL_DATA) $(srcdir)/plperl.h $(srcdir)/ppport.h '$(DESTDIR)$(includedir_server)'
 
 uninstall-data:
 	rm -f $(addprefix '$(DESTDIR)$(datadir)/extension'/, $(notdir $(DATA)))

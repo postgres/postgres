@@ -3,7 +3,6 @@
 #include "fmgr.h"
 #include "hstore/hstore.h"
 #include "plperl.h"
-#include "plperl_helpers.h"
 
 PG_MODULE_MAGIC;
 

@@ -20,7 +20,6 @@
 /* perl stuff */
 #define PG_NEED_PERL_XSUB_H
 #include "plperl.h"
-#include "plperl_helpers.h"
 
 
 static text *
