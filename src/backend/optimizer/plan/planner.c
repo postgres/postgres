@@ -1286,6 +1286,10 @@ inheritance_planner(PlannerInfo *root)
 		/* hack to mark target relation as an inheritance partition */
 		subroot->hasInheritedTarget = true;
 
+		/* Fix MULTIEXPR_SUBLINK params if any */
+		if (root->multiexpr_params)
+			SS_make_multiexprs_unique(root, subroot);
+
 		/* Generate Path(s) for accessing this result relation */
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
 

@@ -246,6 +246,21 @@ ExecScanSubPlan(SubPlanState *node,
 	 * ones, so this should be safe.)  Unlike ExecReScanSetParamPlan, we do
 	 * *not* set bits in the parent plan node's chgParam, because we don't
 	 * want to cause a rescan of the parent.
+	 *
+	 * Note: we are also relying on MULTIEXPR SubPlans not sharing any output
+	 * parameters with other SubPlans, because if one does then it is unclear
+	 * which SubPlanState node the parameter's execPlan field will be pointing
+	 * to when we come to evaluate the parameter.  We can allow plain initplan
+	 * SubPlans to share output parameters, because it doesn't actually matter
+	 * which initplan SubPlan we reference as long as they all point to the
+	 * same underlying subplan.  However, that fails to hold for MULTIEXPRs
+	 * because they can have non-empty args lists, and the "same" args might
+	 * have mutated into different forms in different parts of a plan tree.
+	 * There is not a problem in ordinary queries because MULTIEXPR will
+	 * appear only in an UPDATE's top-level target list, so it won't get
+	 * duplicated anyplace.  However, when inheritance_planner clones a
+	 * partially-planned targetlist it must take care to assign non-duplicate
+	 * param IDs to the cloned copy.
 	 */
 	if (subLinkType == MULTIEXPR_SUBLINK)
 	{
