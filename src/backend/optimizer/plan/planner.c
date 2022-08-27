@@ -1597,6 +1597,10 @@ inheritance_planner(PlannerInfo *root)
 		/* and we haven't created PlaceHolderInfos, either */
 		Assert(subroot->placeholder_list == NIL);
 
+		/* Fix MULTIEXPR_SUBLINK params if any */
+		if (root->multiexpr_params)
+			SS_make_multiexprs_unique(root, subroot);
+
 		/* Generate Path(s) for accessing this result relation */
 		grouping_planner(subroot, true, 0.0 /* retrieve all tuples */ );
 
