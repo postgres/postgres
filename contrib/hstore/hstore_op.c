@@ -1064,7 +1064,7 @@ hstore_each(PG_FUNCTION_ARGS)
 		tuple = heap_form_tuple(funcctx->tuple_desc, dvalues, nulls);
 		res = HeapTupleGetDatum(tuple);
 
-		SRF_RETURN_NEXT(funcctx, PointerGetDatum(res));
+		SRF_RETURN_NEXT(funcctx, res);
 	}
 
 	SRF_RETURN_DONE(funcctx);

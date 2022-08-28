@@ -4174,7 +4174,7 @@ xpath(PG_FUNCTION_ARGS)
 	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
 	xpath_internal(xpath_expr_text, data, namespaces,
 				   NULL, astate);
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 #else
 	NO_XML_SUPPORT();
 	return 0;

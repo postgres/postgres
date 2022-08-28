@@ -1757,7 +1757,7 @@ regexp_split_to_array(PG_FUNCTION_ARGS)
 		splitctx->next_match++;
 	}
 
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 }
 
 /* This is separate to keep the opr_sanity regression test from complaining */

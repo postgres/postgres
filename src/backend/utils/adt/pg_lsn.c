@@ -271,7 +271,7 @@ pg_lsn_pli(PG_FUNCTION_ARGS)
 
 	/* Add two numerics */
 	res = DirectFunctionCall2(numeric_add,
-							  NumericGetDatum(num),
+							  num,
 							  NumericGetDatum(nbytes));
 
 	/* Convert to pg_lsn */
@@ -305,7 +305,7 @@ pg_lsn_mii(PG_FUNCTION_ARGS)
 
 	/* Subtract two numerics */
 	res = DirectFunctionCall2(numeric_sub,
-							  NumericGetDatum(num),
+							  num,
 							  NumericGetDatum(nbytes));
 
 	/* Convert to pg_lsn */

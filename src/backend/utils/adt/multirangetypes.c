@@ -1491,7 +1491,7 @@ multirange_intersect_agg_transfn(PG_FUNCTION_ARGS)
 										   ranges1,
 										   range_count2,
 										   ranges2);
-	PG_RETURN_RANGE_P(result);
+	PG_RETURN_MULTIRANGE_P(result);
 }
 
 

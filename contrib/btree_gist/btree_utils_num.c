@@ -153,7 +153,7 @@ gbt_num_fetch(GISTENTRY *entry, const gbtree_ninfo *tinfo)
 			datum = CashGetDatum(*(Cash *) entry->key);
 			break;
 		default:
-			datum = PointerGetDatum(entry->key);
+			datum = entry->key;
 	}
 
 	retval = palloc(sizeof(GISTENTRY));

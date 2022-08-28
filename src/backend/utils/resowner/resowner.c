@@ -557,7 +557,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Ditto for JIT contexts */
 		while (ResourceArrayGetAny(&(owner->jitarr), &foundres))
 		{
-			JitContext *context = (JitContext *) PointerGetDatum(foundres);
+			JitContext *context = (JitContext *) DatumGetPointer(foundres);
 
 			jit_release_context(context);
 		}
@@ -566,7 +566,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		while (ResourceArrayGetAny(&(owner->cryptohasharr), &foundres))
 		{
 			pg_cryptohash_ctx *context =
-			(pg_cryptohash_ctx *) PointerGetDatum(foundres);
+			(pg_cryptohash_ctx *) DatumGetPointer(foundres);
 
 			if (isCommit)
 				PrintCryptoHashLeakWarning(foundres);
@@ -576,7 +576,7 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 		/* Ditto for HMAC contexts */
 		while (ResourceArrayGetAny(&(owner->hmacarr), &foundres))
 		{
-			pg_hmac_ctx *context = (pg_hmac_ctx *) PointerGetDatum(foundres);
+			pg_hmac_ctx *context = (pg_hmac_ctx *) DatumGetPointer(foundres);
 
 			if (isCommit)
 				PrintHMACLeakWarning(foundres);

@@ -555,7 +555,7 @@ pg_wal_lsn_diff(PG_FUNCTION_ARGS)
 								 PG_GETARG_DATUM(0),
 								 PG_GETARG_DATUM(1));
 
-	PG_RETURN_NUMERIC(result);
+	PG_RETURN_DATUM(result);
 }
 
 /*

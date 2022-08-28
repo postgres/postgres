@@ -1444,8 +1444,8 @@ pg_stats_ext_mcvlist_items(PG_FUNCTION_ARGS)
 		}
 
 		values[0] = Int32GetDatum(funcctx->call_cntr);
-		values[1] = PointerGetDatum(makeArrayResult(astate_values, CurrentMemoryContext));
-		values[2] = PointerGetDatum(makeArrayResult(astate_nulls, CurrentMemoryContext));
+		values[1] = makeArrayResult(astate_values, CurrentMemoryContext);
+		values[2] = makeArrayResult(astate_nulls, CurrentMemoryContext);
 		values[3] = Float8GetDatum(item->frequency);
 		values[4] = Float8GetDatum(item->base_frequency);
 

@@ -1848,7 +1848,7 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	{
 		current_call_data = &this_call_data;
 		if (CALLED_AS_TRIGGER(fcinfo))
-			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
+			retval = plperl_trigger_handler(fcinfo);
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			plperl_event_trigger_handler(fcinfo);

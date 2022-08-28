@@ -1119,7 +1119,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 
 	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 
-	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
+	PG_RETURN_DATUM(DirectFunctionCall1(inet_in,
 										 CStringGetDatum(remote_host)));
 }
 
