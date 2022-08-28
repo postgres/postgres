@@ -67,6 +67,12 @@ chunk might later be repalloc'd larger; it can also be pfree'd without
 error.  Similarly, repalloc allows realloc'ing to zero size.
 
 * pfree and repalloc do not accept a NULL pointer.  This is intentional.
+(For repalloc, this is necessary: As mentioned above, repalloc does
+not depend on the current memory context.  But then it needs to know
+which memory context to do the allocation in.  So the first allocation
+has to be done outside of repalloc.  For pfree, this behavior is
+mostly historical and partially because the extra check would impact
+performance.)
 
 
 The Current Memory Context
