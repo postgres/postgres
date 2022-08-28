@@ -2195,7 +2195,7 @@ SELECT sum(n) FROM t;
 WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
     SELECT sub_part, part, quantity FROM parts WHERE part = 'our_product'
   UNION ALL
-    SELECT p.sub_part, p.part, p.quantity
+    SELECT p.sub_part, p.part, p.quantity * pr.quantity
     FROM included_parts pr, parts p
     WHERE p.part = pr.sub_part
 )
