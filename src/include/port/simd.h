@@ -33,6 +33,20 @@
 typedef __m128i Vector8;
 typedef __m128i Vector32;
 
+#elif defined(__aarch64__) && defined(__ARM_NEON)
+/*
+ * We use the Neon instructions if the compiler provides access to them (as
+ * indicated by __ARM_NEON) and we are on aarch64.  While Neon support is
+ * technically optional for aarch64, it appears that all available 64-bit
+ * hardware does have it.  Neon exists in some 32-bit hardware too, but we
+ * could not realistically use it there without a run-time check, which seems
+ * not worth the trouble for now.
+ */
+#include <arm_neon.h>
+#define USE_NEON
+typedef uint8x16_t Vector8;
+typedef uint32x4_t Vector32;
+
 #else
 /*
  * If no SIMD instructions are available, we can in some cases emulate vector
@@ -90,6 +104,8 @@ vector8_load(Vector8 *v, const uint8 *s)
 {
 #if defined(USE_SSE2)
 	*v = _mm_loadu_si128((const __m128i *) s);
+#elif defined(USE_NEON)
+	*v = vld1q_u8(s);
 #else
 	memcpy(v, s, sizeof(Vector8));
 #endif
@@ -101,6 +117,8 @@ vector32_load(Vector32 *v, const uint32 *s)
 {
 #ifdef USE_SSE2
 	*v = _mm_loadu_si128((const __m128i *) s);
+#elif defined(USE_NEON)
+	*v = vld1q_u32(s);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -113,6 +131,8 @@ vector8_broadcast(const uint8 c)
 {
 #if defined(USE_SSE2)
 	return _mm_set1_epi8(c);
+#elif defined(USE_NEON)
+	return vdupq_n_u8(c);
 #else
 	return ~UINT64CONST(0) / 0xFF * c;
 #endif
@@ -124,6 +144,8 @@ vector32_broadcast(const uint32 c)
 {
 #ifdef USE_SSE2
 	return _mm_set1_epi32(c);
+#elif defined(USE_NEON)
+	return vdupq_n_u32(c);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -153,7 +175,7 @@ vector8_has(const Vector8 v, const uint8 c)
 #if defined(USE_NO_SIMD)
 	/* any bytes in v equal to c will evaluate to zero via XOR */
 	result = vector8_has_zero(v ^ vector8_broadcast(c));
-#elif defined(USE_SSE2)
+#else
 	result = vector8_is_highbit_set(vector8_eq(v, vector8_broadcast(c)));
 #endif
 
@@ -173,7 +195,7 @@ vector8_has_zero(const Vector8 v)
 	 * circular definition.
 	 */
 	return vector8_has_le(v, 0);
-#elif defined(USE_SSE2)
+#else
 	return vector8_has(v, 0);
 #endif
 }
@@ -223,7 +245,7 @@ vector8_has_le(const Vector8 v, const uint8 c)
 			}
 		}
 	}
-#elif defined(USE_SSE2)
+#else
 
 	/*
 	 * Use saturating subtraction to find bytes <= c, which will present as
@@ -245,6 +267,8 @@ vector8_is_highbit_set(const Vector8 v)
 {
 #ifdef USE_SSE2
 	return _mm_movemask_epi8(v) != 0;
+#elif defined(USE_NEON)
+	return vmaxvq_u8(v) > 0x7F;
 #else
 	return v & vector8_broadcast(0x80);
 #endif
@@ -258,6 +282,8 @@ vector8_or(const Vector8 v1, const Vector8 v2)
 {
 #ifdef USE_SSE2
 	return _mm_or_si128(v1, v2);
+#elif defined(USE_NEON)
+	return vorrq_u8(v1, v2);
 #else
 	return v1 | v2;
 #endif
@@ -269,6 +295,8 @@ vector32_or(const Vector32 v1, const Vector32 v2)
 {
 #ifdef USE_SSE2
 	return _mm_or_si128(v1, v2);
+#elif defined(USE_NEON)
+	return vorrq_u32(v1, v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -285,6 +313,8 @@ vector8_ssub(const Vector8 v1, const Vector8 v2)
 {
 #ifdef USE_SSE2
 	return _mm_subs_epu8(v1, v2);
+#elif defined(USE_NEON)
+	return vqsubq_u8(v1, v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -299,6 +329,8 @@ vector8_eq(const Vector8 v1, const Vector8 v2)
 {
 #ifdef USE_SSE2
 	return _mm_cmpeq_epi8(v1, v2);
+#elif defined(USE_NEON)
+	return vceqq_u8(v1, v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
@@ -309,6 +341,8 @@ vector32_eq(const Vector32 v1, const Vector32 v2)
 {
 #ifdef USE_SSE2
 	return _mm_cmpeq_epi32(v1, v2);
+#elif defined(USE_NEON)
+	return vceqq_u32(v1, v2);
 #endif
 }
 #endif							/* ! USE_NO_SIMD */
