@@ -56,7 +56,7 @@ AggregateInstrumentation
 AlenState
 Alias
 AllocBlock
-AllocChunk
+AllocFreeListLink
 AllocPointer
 AllocSet
 AllocSetContext
@@ -947,7 +947,6 @@ GatherState
 Gene
 GeneratePruningStepsContext
 GenerationBlock
-GenerationChunk
 GenerationContext
 GenerationPointer
 GenericCosts
@@ -1522,12 +1521,14 @@ MemoizeKey
 MemoizePath
 MemoizeState
 MemoizeTuple
+MemoryChunk
 MemoryContext
 MemoryContextCallback
 MemoryContextCallbackFunction
 MemoryContextCounters
 MemoryContextData
 MemoryContextMethods
+MemoryContextMethodID
 MemoryStatsPrintFunc
 MergeAction
 MergeActionState
@@ -2530,7 +2531,6 @@ SingleBoundSortItem
 Size
 SkipPages
 SlabBlock
-SlabChunk
 SlabContext
 SlabSlot
 SlotNumber
