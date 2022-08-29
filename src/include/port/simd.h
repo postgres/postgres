@@ -31,22 +31,32 @@
 #include <emmintrin.h>
 #define USE_SSE2
 typedef __m128i Vector8;
+typedef __m128i Vector32;
 
 #else
 /*
  * If no SIMD instructions are available, we can in some cases emulate vector
- * operations using bitwise operations on unsigned integers.
+ * operations using bitwise operations on unsigned integers.  Note that many
+ * of the functions in this file presently do not have non-SIMD
+ * implementations.  In particular, none of the functions involving Vector32
+ * are implemented without SIMD since it's likely not worthwhile to represent
+ * two 32-bit integers using a uint64.
  */
 #define USE_NO_SIMD
 typedef uint64 Vector8;
 #endif
 
-
 /* load/store operations */
 static inline void vector8_load(Vector8 *v, const uint8 *s);
+#ifndef USE_NO_SIMD
+static inline void vector32_load(Vector32 *v, const uint32 *s);
+#endif
 
 /* assignment operations */
 static inline Vector8 vector8_broadcast(const uint8 c);
+#ifndef USE_NO_SIMD
+static inline Vector32 vector32_broadcast(const uint32 c);
+#endif
 
 /* element-wise comparisons to a scalar */
 static inline bool vector8_has(const Vector8 v, const uint8 c);
@@ -56,14 +66,21 @@ static inline bool vector8_is_highbit_set(const Vector8 v);
 
 /* arithmetic operations */
 static inline Vector8 vector8_or(const Vector8 v1, const Vector8 v2);
-
-/* Different semantics for SIMD architectures. */
 #ifndef USE_NO_SIMD
+static inline Vector32 vector32_or(const Vector32 v1, const Vector32 v2);
+static inline Vector8 vector8_ssub(const Vector8 v1, const Vector8 v2);
+#endif
 
-/* comparisons between vectors */
+/*
+ * comparisons between vectors
+ *
+ * Note: These return a vector rather than booloan, which is why we don't
+ * have non-SIMD implementations.
+ */
+#ifndef USE_NO_SIMD
 static inline Vector8 vector8_eq(const Vector8 v1, const Vector8 v2);
-
-#endif							/* ! USE_NO_SIMD */
+static inline Vector32 vector32_eq(const Vector32 v1, const Vector32 v2);
+#endif
 
 /*
  * Load a chunk of memory into the given vector.
@@ -78,6 +95,15 @@ vector8_load(Vector8 *v, const uint8 *s)
 #endif
 }
 
+#ifndef USE_NO_SIMD
+static inline void
+vector32_load(Vector32 *v, const uint32 *s)
+{
+#ifdef USE_SSE2
+	*v = _mm_loadu_si128((const __m128i *) s);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
 
 /*
  * Create a vector with all elements set to the same value.
@@ -91,6 +117,16 @@ vector8_broadcast(const uint8 c)
 	return ~UINT64CONST(0) / 0xFF * c;
 #endif
 }
+
+#ifndef USE_NO_SIMD
+static inline Vector32
+vector32_broadcast(const uint32 c)
+{
+#ifdef USE_SSE2
+	return _mm_set1_epi32(c);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
 
 /*
  * Return true if any elements in the vector are equal to the given scalar.
@@ -118,7 +154,7 @@ vector8_has(const Vector8 v, const uint8 c)
 	/* any bytes in v equal to c will evaluate to zero via XOR */
 	result = vector8_has_zero(v ^ vector8_broadcast(c));
 #elif defined(USE_SSE2)
-	result = _mm_movemask_epi8(_mm_cmpeq_epi8(v, vector8_broadcast(c)));
+	result = vector8_is_highbit_set(vector8_eq(v, vector8_broadcast(c)));
 #endif
 
 	Assert(assert_result == result);
@@ -133,8 +169,8 @@ vector8_has_zero(const Vector8 v)
 {
 #if defined(USE_NO_SIMD)
 	/*
-	 * We cannot call vector8_has() here, because that would lead to a circular
-	 * definition.
+	 * We cannot call vector8_has() here, because that would lead to a
+	 * circular definition.
 	 */
 	return vector8_has_le(v, 0);
 #elif defined(USE_SSE2)
@@ -150,9 +186,6 @@ static inline bool
 vector8_has_le(const Vector8 v, const uint8 c)
 {
 	bool		result = false;
-#if defined(USE_SSE2)
-	__m128i		sub;
-#endif
 
 	/* pre-compute the result for assert checking */
 #ifdef USE_ASSERT_CHECKING
@@ -194,10 +227,10 @@ vector8_has_le(const Vector8 v, const uint8 c)
 
 	/*
 	 * Use saturating subtraction to find bytes <= c, which will present as
-	 * NUL bytes in 'sub'.
+	 * NUL bytes.  This approach is a workaround for the lack of unsigned
+	 * comparison instructions on some architectures.
 	 */
-	sub = _mm_subs_epu8(v, vector8_broadcast(c));
-	result = vector8_has_zero(sub);
+	result = vector8_has_zero(vector8_ssub(v, vector8_broadcast(c)));
 #endif
 
 	Assert(assert_result == result);
@@ -230,14 +263,37 @@ vector8_or(const Vector8 v1, const Vector8 v2)
 #endif
 }
 
-
-/* Different semantics for SIMD architectures. */
 #ifndef USE_NO_SIMD
+static inline Vector32
+vector32_or(const Vector32 v1, const Vector32 v2)
+{
+#ifdef USE_SSE2
+	return _mm_or_si128(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
+ * Return the result of subtracting the respective elements of the input
+ * vectors using saturation (i.e., if the operation would yield a value less
+ * than zero, zero is returned instead).  For more information on saturation
+ * arithmetic, see https://en.wikipedia.org/wiki/Saturation_arithmetic
+ */
+#ifndef USE_NO_SIMD
+static inline Vector8
+vector8_ssub(const Vector8 v1, const Vector8 v2)
+{
+#ifdef USE_SSE2
+	return _mm_subs_epu8(v1, v2);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
 
 /*
  * Return a vector with all bits set in each lane where the the corresponding
  * lanes in the inputs are equal.
  */
+#ifndef USE_NO_SIMD
 static inline Vector8
 vector8_eq(const Vector8 v1, const Vector8 v2)
 {
@@ -245,7 +301,16 @@ vector8_eq(const Vector8 v1, const Vector8 v2)
 	return _mm_cmpeq_epi8(v1, v2);
 #endif
 }
+#endif							/* ! USE_NO_SIMD */
 
+#ifndef USE_NO_SIMD
+static inline Vector32
+vector32_eq(const Vector32 v1, const Vector32 v2)
+{
+#ifdef USE_SSE2
+	return _mm_cmpeq_epi32(v1, v2);
+#endif
+}
 #endif							/* ! USE_NO_SIMD */
 
 #endif							/* SIMD_H */
