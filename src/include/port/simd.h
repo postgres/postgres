@@ -275,6 +275,28 @@ vector8_is_highbit_set(const Vector8 v)
 }
 
 /*
+ * Exactly like vector32_is_highbit_set except for the input type, so it
+ * looks at each byte separately.
+ *
+ * XXX x86 uses the same underlying type for 8-bit, 16-bit, and 32-bit
+ * integer elements, but Arm does not, hence the need for a separate
+ * function. We could instead adopt the behavior of Arm's vmaxvq_u32(), i.e.
+ * check each 32-bit element, but that would require an additional mask
+ * operation on x86.
+ */
+#ifndef USE_NO_SIMD
+static inline bool
+vector32_is_highbit_set(const Vector32 v)
+{
+#if defined(USE_NEON)
+	return vector8_is_highbit_set((Vector8) v);
+#else
+	return vector8_is_highbit_set(v);
+#endif
+}
+#endif							/* ! USE_NO_SIMD */
+
+/*
  * Return the bitwise OR of the inputs
  */
 static inline Vector8
