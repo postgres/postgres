@@ -39,6 +39,7 @@ get_bin_version(ClusterInfo *cluster)
 				v2 = 0;
 
 	snprintf(cmd, sizeof(cmd), "\"%s/pg_ctl\" --version", cluster->bindir);
+	fflush(NULL);
 
 	if ((output = popen(cmd, "r")) == NULL ||
 		fgets(cmd_output, sizeof(cmd_output), output) == NULL)
@@ -125,7 +126,10 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 	 * the file do not see to help.
 	 */
 	if (mainThreadId != GetCurrentThreadId())
+	{
+		fflush(NULL);
 		result = system(cmd);
+	}
 #endif
 
 	log = fopen(log_file, "a");
@@ -174,7 +178,10 @@ exec_prog(const char *log_filename, const char *opt_log_file,
 	/* see comment above */
 	if (mainThreadId == GetCurrentThreadId())
 #endif
+	{
+		fflush(NULL);
 		result = system(cmd);
+	}
 
 	if (result != 0 && report_error)
 	{

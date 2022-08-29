@@ -489,8 +489,7 @@ popen_check(const char *command, const char *mode)
 {
 	FILE	   *cmdfd;
 
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 	errno = 0;
 	cmdfd = popen(command, mode);
 	if (cmdfd == NULL)
@@ -914,6 +913,7 @@ test_config_settings(void)
 				 test_conns, test_buffs,
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
+		fflush(NULL);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -950,6 +950,7 @@ test_config_settings(void)
 				 n_connections, test_buffs,
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
+		fflush(NULL);
 		status = system(cmd);
 		if (status == 0)
 			break;

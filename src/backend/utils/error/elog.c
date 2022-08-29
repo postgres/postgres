@@ -643,8 +643,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * Any other code you might be tempted to add here should probably be
 		 * in an on_proc_exit or on_shmem_exit callback instead.
 		 */
-		fflush(stdout);
-		fflush(stderr);
+		fflush(NULL);
 
 		/*
 		 * Let the cumulative stats system know. Only mark the session as
@@ -670,8 +669,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
 		 * children...
 		 */
-		fflush(stdout);
-		fflush(stderr);
+		fflush(NULL);
 		abort();
 	}
 

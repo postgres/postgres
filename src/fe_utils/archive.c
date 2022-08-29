@@ -55,6 +55,7 @@ RestoreArchivedFile(const char *path, const char *xlogfname,
 	 * Execute restore_command, which should copy the missing file from
 	 * archival storage.
 	 */
+	fflush(NULL);
 	rc = system(xlogRestoreCmd);
 	pfree(xlogRestoreCmd);
 

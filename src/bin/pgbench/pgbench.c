@@ -2973,6 +2973,8 @@ runShellCommand(Variables *variables, char *variable, char **argv, int argc)
 
 	command[len] = '\0';
 
+	fflush(NULL);				/* needed before either system() or popen() */
+
 	/* Fast path for non-assignment case */
 	if (variable == NULL)
 	{

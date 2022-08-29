@@ -123,8 +123,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		/* only pg_controldata outputs the cluster state */
 		snprintf(cmd, sizeof(cmd), "\"%s/pg_controldata\" \"%s\"",
 				 cluster->bindir, cluster->pgdata);
-		fflush(stdout);
-		fflush(stderr);
+		fflush(NULL);
 
 		if ((output = popen(cmd, "r")) == NULL)
 			pg_fatal("could not get control data using %s: %s",
@@ -191,8 +190,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			 cluster->bindir,
 			 live_check ? "pg_controldata\"" : resetwal_bin,
 			 cluster->pgdata);
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 
 	if ((output = popen(cmd, "r")) == NULL)
 		pg_fatal("could not get control data using %s: %s",

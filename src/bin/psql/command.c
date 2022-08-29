@@ -2661,6 +2661,7 @@ exec_command_write(PsqlScanState scan_state, bool active_branch,
 				if (fname[0] == '|')
 				{
 					is_pipe = true;
+					fflush(NULL);
 					disable_sigpipe_trap();
 					fd = popen(&fname[1], "w");
 				}
@@ -3834,6 +3835,7 @@ editFile(const char *fname, int lineno)
 		sys = psprintf("\"%s\" \"%s\"",
 					   editorName, fname);
 #endif
+	fflush(NULL);
 	result = system(sys);
 	if (result == -1)
 		pg_log_error("could not start editor \"%s\"", editorName);
@@ -4956,6 +4958,7 @@ do_shell(const char *command)
 {
 	int			result;
 
+	fflush(NULL);
 	if (!command)
 	{
 		char	   *sys;
@@ -5065,6 +5068,7 @@ do_watch(PQExpBuffer query_buf, double sleep)
 #endif
 	if (pagerprog && myopt.topt.pager)
 	{
+		fflush(NULL);
 		disable_sigpipe_trap();
 		pagerpipe = popen(pagerprog, "w");
 

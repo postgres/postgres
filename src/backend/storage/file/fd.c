@@ -2503,8 +2503,7 @@ OpenPipeStream(const char *command, const char *mode)
 	ReleaseLruFiles();
 
 TryAgain:
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 	pqsignal(SIGPIPE, SIG_DFL);
 	errno = 0;
 	file = popen(command, mode);

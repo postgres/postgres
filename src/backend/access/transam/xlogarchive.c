@@ -169,6 +169,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	/*
 	 * Copy xlog from archival storage to XLOGDIR
 	 */
+	fflush(NULL);
 	pgstat_report_wait_start(WAIT_EVENT_RESTORE_COMMAND);
 	rc = system(xlogRestoreCmd);
 	pgstat_report_wait_end();
@@ -358,6 +359,7 @@ ExecuteRecoveryCommand(const char *command, const char *commandName,
 	/*
 	 * execute the constructed command
 	 */
+	fflush(NULL);
 	pgstat_report_wait_start(wait_event_info);
 	rc = system(xlogRecoveryCmd);
 	pgstat_report_wait_end();

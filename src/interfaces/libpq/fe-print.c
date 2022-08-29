@@ -180,6 +180,7 @@ PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 				  - (po->header != 0) * 2	/* row count and newline */
 				  )))
 			{
+				fflush(NULL);
 				fout = popen(pagerenv, "w");
 				if (fout)
 				{

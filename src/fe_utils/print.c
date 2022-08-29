@@ -3118,6 +3118,7 @@ PageOutput(int lines, const printTableOpt *topt)
 				if (strspn(pagerprog, " \t\r\n") == strlen(pagerprog))
 					return stdout;
 			}
+			fflush(NULL);
 			disable_sigpipe_trap();
 			pagerpipe = popen(pagerprog, "w");
 			if (pagerpipe)

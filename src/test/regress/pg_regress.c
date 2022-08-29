@@ -263,15 +263,12 @@ stop_postmaster(void)
 		char		buf[MAXPGPATH * 2];
 		int			r;
 
-		/* On Windows, system() seems not to force fflush, so... */
-		fflush(stdout);
-		fflush(stderr);
-
 		snprintf(buf, sizeof(buf),
 				 "\"%s%spg_ctl\" stop -D \"%s/data\" -s",
 				 bindir ? bindir : "",
 				 bindir ? "/" : "",
 				 temp_instance);
+		fflush(NULL);
 		r = system(buf);
 		if (r != 0)
 		{
@@ -1029,6 +1026,7 @@ psql_end_command(StringInfo buf, const char *database)
 					 database);
 
 	/* And now we can execute the shell command */
+	fflush(NULL);
 	if (system(buf->data) != 0)
 	{
 		/* psql probably already reported the error */
@@ -1063,13 +1061,9 @@ spawn_process(const char *cmdline)
 	pid_t		pid;
 
 	/*
-	 * Must flush I/O buffers before fork.  Ideally we'd use fflush(NULL) here
-	 * ... does anyone still care about systems where that doesn't work?
+	 * Must flush I/O buffers before fork.
 	 */
-	fflush(stdout);
-	fflush(stderr);
-	if (logfile)
-		fflush(logfile);
+	fflush(NULL);
 
 #ifdef EXEC_BACKEND
 	pg_disable_aslr();
@@ -1247,6 +1241,7 @@ run_diff(const char *cmd, const char *filename)
 {
 	int			r;
 
+	fflush(NULL);
 	r = system(cmd);
 	if (!WIFEXITED(r) || WEXITSTATUS(r) > 1)
 	{
@@ -2264,6 +2259,7 @@ regression_main(int argc, char *argv[],
 				 debug ? " --debug" : "",
 				 nolocale ? " --no-locale" : "",
 				 outputdir);
+		fflush(NULL);
 		if (system(buf))
 		{
 			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
@@ -2335,6 +2331,7 @@ regression_main(int argc, char *argv[],
 
 		for (i = 0; i < 16; i++)
 		{
+			fflush(NULL);
 			if (system(buf2) == 0)
 			{
 				char		s[16];
@@ -2398,6 +2395,7 @@ regression_main(int argc, char *argv[],
 		for (i = 0; i < wait_seconds; i++)
 		{
 			/* Done if psql succeeds */
+			fflush(NULL);
 			if (system(buf2) == 0)
 				break;
 

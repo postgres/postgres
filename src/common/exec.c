@@ -388,9 +388,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 {
 	FILE	   *pgver;
 
-	/* flush output buffers in case popen does not... */
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 
 	errno = 0;
 	if ((pgver = popen(cmd, "r")) == NULL)

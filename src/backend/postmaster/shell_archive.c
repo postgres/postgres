@@ -99,6 +99,7 @@ shell_archive_file(const char *file, const char *path)
 			(errmsg_internal("executing archive command \"%s\"",
 							 xlogarchcmd)));
 
+	fflush(NULL);
 	pgstat_report_wait_start(WAIT_EVENT_ARCHIVE_COMMAND);
 	rc = system(xlogarchcmd);
 	pgstat_report_wait_end();

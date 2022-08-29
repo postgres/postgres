@@ -448,8 +448,7 @@ start_postmaster(void)
 	pgpid_t		pm_pid;
 
 	/* Flush stdio channels just before fork, to avoid double-output problems */
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 
 #ifdef EXEC_BACKEND
 	pg_disable_aslr();
@@ -916,6 +915,7 @@ do_init(void)
 		cmd = psprintf("\"%s\" %s%s > \"%s\"",
 					   exec_path, pgdata_opt, post_opts, DEVNULL);
 
+	fflush(NULL);
 	if (system(cmd) != 0)
 	{
 		write_stderr(_("%s: database system initialization failed\n"), progname);
@@ -2222,6 +2222,7 @@ adjust_data_dir(void)
 				   my_exec_path,
 				   pgdata_opt ? pgdata_opt : "",
 				   post_opts ? post_opts : "");
+	fflush(NULL);
 
 	fd = popen(cmd, "r");
 	if (fd == NULL || fgets(filename, sizeof(filename), fd) == NULL)

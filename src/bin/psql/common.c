@@ -59,6 +59,7 @@ openQueryOutputFile(const char *fname, FILE **fout, bool *is_pipe)
 	}
 	else if (*fname == '|')
 	{
+		fflush(NULL);
 		*fout = popen(fname + 1, "w");
 		*is_pipe = true;
 	}
