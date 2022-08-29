@@ -241,9 +241,12 @@ CREATE USER <replaceable>name</replaceable>;
       <term>inheritance of privileges<indexterm><primary>role</primary><secondary>privilege to inherit</secondary></indexterm></term>
       <listitem>
        <para>
-        A role is given permission to inherit the privileges of roles it is a
-        member of, by default. However, to create a role without the permission,
-        use <literal>CREATE ROLE <replaceable>name</replaceable> NOINHERIT</literal>.
+        A role inherits the privileges of roles it is a member of, by default.
+        However, to create a role which does not inherit privileges by
+        default, use <literal>CREATE ROLE <replaceable>name</replaceable>
+        NOINHERIT</literal>.  Alternatively, inheritance can be overriden
+        for individual grants by using <literal>WITH INHERIT TRUE</literal>
+        or <literal>WITH INHERIT FALSE</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -357,16 +360,17 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    database session has access to the privileges of the group role rather
    than the original login role, and any database objects created are
    considered owned by the group role not the login role.  Second, member
-   roles that have the <literal>INHERIT</literal> attribute automatically have use
-   of the privileges of roles of which they are members, including any
+   roles that have the been granted membership with the
+   <literal>INHERIT</literal> option automatically have use
+   of the privileges of those roles, including any
    privileges inherited by those roles.
    As an example, suppose we have done:
 <programlisting>
-CREATE ROLE joe LOGIN INHERIT;
-CREATE ROLE admin NOINHERIT;
-CREATE ROLE wheel NOINHERIT;
-GRANT admin TO joe;
-GRANT wheel TO admin;
+CREATE ROLE joe LOGIN;
+CREATE ROLE admin;
+CREATE ROLE wheel;
+GRANT admin TO joe WITH INHERIT TRUE;
+GRANT wheel TO admin WITH INHERIT FALSE;
 </programlisting>
    Immediately after connecting as role <literal>joe</literal>, a database
    session will have use of privileges granted directly to <literal>joe</literal>
@@ -374,8 +378,8 @@ GRANT wheel TO admin;
    <quote>inherits</quote> <literal>admin</literal>'s privileges.  However, privileges
    granted to <literal>wheel</literal> are not available, because even though
    <literal>joe</literal> is indirectly a member of <literal>wheel</literal>, the
-   membership is via <literal>admin</literal> which has the <literal>NOINHERIT</literal>
-   attribute.  After:
+   membership is via <literal>admin</literal> which was granted using
+   <literal>WITH INHERIT FALSE</literal>. After:
 <programlisting>
 SET ROLE admin;
 </programlisting>
