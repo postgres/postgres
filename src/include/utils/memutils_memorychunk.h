@@ -159,7 +159,7 @@ MemoryChunkSetHdrMask(MemoryChunk *chunk, void *block,
 	Assert((char *) chunk > (char *) block);
 	Assert(blockoffset <= MEMORYCHUNK_MAX_BLOCKOFFSET);
 	Assert(value <= MEMORYCHUNK_MAX_VALUE);
-	Assert(methodid <= MEMORY_CONTEXT_METHODID_MASK);
+	Assert((int) methodid <= MEMORY_CONTEXT_METHODID_MASK);
 
 	chunk->hdrmask = (((uint64) blockoffset) << MEMORYCHUNK_BLOCKOFFSET_BASEBIT) |
 		(((uint64) value) << MEMORYCHUNK_VALUE_BASEBIT) |
@@ -175,7 +175,7 @@ static inline void
 MemoryChunkSetHdrMaskExternal(MemoryChunk *chunk,
 							  MemoryContextMethodID methodid)
 {
-	Assert(methodid <= MEMORY_CONTEXT_METHODID_MASK);
+	Assert((int) methodid <= MEMORY_CONTEXT_METHODID_MASK);
 
 	chunk->hdrmask = MEMORYCHUNK_MAGIC | (((uint64) 1) << MEMORYCHUNK_EXTERNAL_BASEBIT) |
 		methodid;

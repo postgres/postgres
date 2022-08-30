@@ -74,6 +74,9 @@ extern void SlabCheck(MemoryContext context);
  * MemoryContextMethodID
  *		A unique identifier for each MemoryContext implementation which
  *		indicates the index into the mcxt_methods[] array. See mcxt.c.
+ *		The maximum value for this enum is constrained by
+ *		MEMORY_CONTEXT_METHODID_MASK.  If an enum value higher than that is
+ *		required then MEMORY_CONTEXT_METHODID_BITS will need to be increased.
  */
 typedef enum MemoryContextMethodID
 {
@@ -88,7 +91,7 @@ typedef enum MemoryContextMethodID
  */
 #define MEMORY_CONTEXT_METHODID_BITS 3
 #define MEMORY_CONTEXT_METHODID_MASK \
-	UINT64CONST((1 << MEMORY_CONTEXT_METHODID_BITS) - 1)
+	((((uint64) 1) << MEMORY_CONTEXT_METHODID_BITS) - 1)
 
 /*
  * This routine handles the context-type-independent part of memory
