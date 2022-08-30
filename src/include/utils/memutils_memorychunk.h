@@ -111,14 +111,6 @@ typedef struct MemoryChunk
 {
 #ifdef MEMORY_CONTEXT_CHECKING
 	Size		requested_size;
-#define MEMORYCHUNK_RAWSIZE		(SIZEOF_SIZE_T + 8)
-#else
-#define MEMORYCHUNK_RAWSIZE		8
-#endif							/* MEMORY_CONTEXT_CHECKING */
-
-	/* ensure proper alignment by adding padding if needed */
-#if (MEMORYCHUNK_RAWSIZE % MAXIMUM_ALIGNOF) != 0
-	char		padding[MAXIMUM_ALIGNOF - MEMORYCHUNK_RAWSIZE % MAXIMUM_ALIGNOF];
 #endif
 
 	/* bitfield for storing details about the chunk */
