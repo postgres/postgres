@@ -1726,9 +1726,7 @@ pgwin32_doRunAsService(void)
 
 /*
  * Mingw headers are incomplete, and so are the libraries. So we have to load
- * a whole lot of API functions dynamically. Since we have to do this anyway,
- * also load the couple of functions that *do* exist in mingw headers but not
- * on NT4. That way, we don't break on NT4.
+ * a whole lot of API functions dynamically.
  */
 typedef BOOL (WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
 typedef BOOL (WINAPI * __IsProcessInJob) (HANDLE, HANDLE, PBOOL);
@@ -1767,9 +1765,6 @@ InheritStdHandles(STARTUPINFO *si)
  * process with it.
  *
  * Returns 0 on success, non-zero on failure, same as CreateProcess().
- *
- * On NT4, or any other system not containing the required functions, will
- * launch the process under the current token without doing any modifications.
  *
  * NOTE! Job object will only work when running as a service, because it's
  * automatically destroyed when pg_ctl exits.
@@ -1815,14 +1810,10 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, bool as_ser
 
 	if (_CreateRestrictedToken == NULL)
 	{
-		/*
-		 * NT4 doesn't have CreateRestrictedToken, so just call ordinary
-		 * CreateProcess
-		 */
-		write_stderr(_("%s: WARNING: cannot create restricted tokens on this platform\n"), progname);
-		if (Advapi32Handle != NULL)
-			FreeLibrary(Advapi32Handle);
-		return CreateProcess(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, processInfo);
+		/* Log error if we cannot get the function */
+		write_stderr(_("%s: could not locate object function to create restricted token: error code %lu\n"),
+					 progname, (unsigned long) GetLastError());
+		return 0;
 	}
 
 	/* Open the current token to use as a base for the restricted one */

@@ -495,7 +495,7 @@ pgwin32_send(SOCKET s, const void *buf, int len, int flags)
 			return -1;
 		}
 
-		/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
+		/* No error, zero bytes */
 
 		if (pgwin32_waitforsinglesocket(s, FD_WRITE | FD_CLOSE, INFINITE) == 0)
 			return -1;

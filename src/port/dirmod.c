@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *	This includes replacement versions of functions that work on
- *	Win32 (NT4 and newer).
+ *	Windows.
  *
  * IDENTIFICATION
  *	  src/port/dirmod.c
