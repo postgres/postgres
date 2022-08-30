@@ -77,6 +77,9 @@ static inline bool vector8_has(const Vector8 v, const uint8 c);
 static inline bool vector8_has_zero(const Vector8 v);
 static inline bool vector8_has_le(const Vector8 v, const uint8 c);
 static inline bool vector8_is_highbit_set(const Vector8 v);
+#ifndef USE_NO_SIMD
+static inline bool vector32_is_highbit_set(const Vector32 v);
+#endif
 
 /* arithmetic operations */
 static inline Vector8 vector8_or(const Vector8 v1, const Vector8 v2);
@@ -88,7 +91,7 @@ static inline Vector8 vector8_ssub(const Vector8 v1, const Vector8 v2);
 /*
  * comparisons between vectors
  *
- * Note: These return a vector rather than booloan, which is why we don't
+ * Note: These return a vector rather than boolean, which is why we don't
  * have non-SIMD implementations.
  */
 #ifndef USE_NO_SIMD
@@ -275,7 +278,7 @@ vector8_is_highbit_set(const Vector8 v)
 }
 
 /*
- * Exactly like vector32_is_highbit_set except for the input type, so it
+ * Exactly like vector8_is_highbit_set except for the input type, so it
  * looks at each byte separately.
  *
  * XXX x86 uses the same underlying type for 8-bit, 16-bit, and 32-bit
