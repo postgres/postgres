@@ -127,7 +127,7 @@ permutation
 #
 # This provides test coverage for code paths that are only hit when we need to
 # freeze, but inability to acquire a cleanup lock on a heap page makes
-# freezing some XIDs/XMIDs < FreezeLimit/MultiXactCutoff impossible (without
+# freezing some XIDs/MXIDs < FreezeLimit/MultiXactCutoff impossible (without
 # waiting for a cleanup lock, which non-aggressive VACUUM is unwilling to do).
 permutation
     dml_begin

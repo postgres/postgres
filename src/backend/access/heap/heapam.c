@@ -7218,7 +7218,7 @@ heap_tuple_needs_eventual_freeze(HeapTupleHeader tuple)
  * heap_tuple_would_freeze
  *
  * Return value indicates if heap_prepare_freeze_tuple sibling function would
- * freeze any of the XID/XMID fields from the tuple, given the same cutoffs.
+ * freeze any of the XID/MXID fields from the tuple, given the same cutoffs.
  * We must also deal with dead tuples here, since (xmin, xmax, xvac) fields
  * could be processed by pruning away the whole tuple instead of freezing.
  *

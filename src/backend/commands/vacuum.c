@@ -951,7 +951,7 @@ get_all_vacuum_rels(int options)
  * oldestXmin and oldestMxact are the most recent values that can ever be
  * passed to vac_update_relstats() as frozenxid and minmulti arguments by our
  * vacuumlazy.c caller later on.  These values should be passed when it turns
- * out that VACUUM will leave no unfrozen XIDs/XMIDs behind in the table.
+ * out that VACUUM will leave no unfrozen XIDs/MXIDs behind in the table.
  */
 bool
 vacuum_set_xid_limits(Relation rel,
