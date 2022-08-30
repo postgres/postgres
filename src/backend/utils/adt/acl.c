@@ -4852,10 +4852,6 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 			Form_pg_auth_members form = (Form_pg_auth_members) GETSTRUCT(tup);
 			Oid			otherid = form->roleid;
 
-			/* If we're supposed to ignore non-heritable grants, do so. */
-			if (type == ROLERECURSE_PRIVS && !form->inherit_option)
-				continue;
-
 			/*
 			 * While otherid==InvalidOid shouldn't appear in the catalog, the
 			 * OidIsValid() avoids crashing if that arises.
@@ -4863,6 +4859,10 @@ roles_is_member_of(Oid roleid, enum RoleRecurseType type,
 			if (otherid == admin_of && form->admin_option &&
 				OidIsValid(admin_of) && !OidIsValid(*admin_role))
 				*admin_role = memberid;
+
+			/* If we're supposed to ignore non-heritable grants, do so. */
+			if (type == ROLERECURSE_PRIVS && !form->inherit_option)
+				continue;
 
 			/*
 			 * Even though there shouldn't be any loops in the membership

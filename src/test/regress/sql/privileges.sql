@@ -1788,3 +1788,28 @@ RESET ROLE;
 
 -- clean up
 DROP ROLE regress_readallstats;
+
+-- test role grantor machinery
+CREATE ROLE regress_group;
+CREATE ROLE regress_group_direct_manager;
+CREATE ROLE regress_group_indirect_manager;
+CREATE ROLE regress_group_member;
+
+GRANT regress_group TO regress_group_direct_manager WITH INHERIT FALSE, ADMIN TRUE;
+GRANT regress_group_direct_manager TO regress_group_indirect_manager;
+
+SET SESSION AUTHORIZATION regress_group_direct_manager;
+GRANT regress_group TO regress_group_member;
+SELECT member::regrole::text, CASE WHEN grantor = 10 THEN 'BOOTSTRAP SUPERUSER' ELSE grantor::regrole::text END FROM pg_auth_members WHERE roleid = 'regress_group'::regrole ORDER BY 1, 2;
+REVOKE regress_group FROM regress_group_member;
+
+SET SESSION AUTHORIZATION regress_group_indirect_manager;
+GRANT regress_group TO regress_group_member;
+SELECT member::regrole::text, CASE WHEN grantor = 10 THEN 'BOOTSTRAP SUPERUSER' ELSE grantor::regrole::text END FROM pg_auth_members WHERE roleid = 'regress_group'::regrole ORDER BY 1, 2;
+REVOKE regress_group FROM regress_group_member;
+
+RESET SESSION AUTHORIZATION;
+DROP ROLE regress_group;
+DROP ROLE regress_group_direct_manager;
+DROP ROLE regress_group_indirect_manager;
+DROP ROLE regress_group_member;
