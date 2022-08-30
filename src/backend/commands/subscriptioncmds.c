@@ -919,10 +919,10 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 				logicalrep_worker_stop(sub->oid, relid);
 
 				/*
-				 * For READY state, we would have already dropped the
-				 * tablesync origin.
+				 * For READY state and SYNCDONE state, we would have already
+				 * dropped the tablesync origin.
 				 */
-				if (state != SUBREL_STATE_READY)
+				if (state != SUBREL_STATE_READY && state != SUBREL_STATE_SYNCDONE)
 				{
 					char		originname[NAMEDATALEN];
 
@@ -930,11 +930,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 					 * Drop the tablesync's origin tracking if exists.
 					 *
 					 * It is possible that the origin is not yet created for
-					 * tablesync worker, this can happen for the states before
-					 * SUBREL_STATE_FINISHEDCOPY. The apply worker can also
-					 * concurrently try to drop the origin and by this time
-					 * the origin might be already removed. For these reasons,
-					 * passing missing_ok = true.
+					 * tablesync worker so passing missing_ok = true. This can
+					 * happen for the states before SUBREL_STATE_FINISHEDCOPY.
 					 */
 					ReplicationOriginNameForTablesync(sub->oid, relid, originname,
 													  sizeof(originname));
@@ -1507,13 +1504,19 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		/*
 		 * Drop the tablesync's origin tracking if exists.
 		 *
+		 * For SYNCDONE/READY states, the tablesync origin tracking is known
+		 * to have already been dropped by the tablesync worker.
+		 *
 		 * It is possible that the origin is not yet created for tablesync
 		 * worker so passing missing_ok = true. This can happen for the states
 		 * before SUBREL_STATE_FINISHEDCOPY.
 		 */
-		ReplicationOriginNameForTablesync(subid, relid, originname,
-										  sizeof(originname));
-		replorigin_drop_by_name(originname, true, false);
+		if (rstate->state != SUBREL_STATE_SYNCDONE)
+		{
+			ReplicationOriginNameForTablesync(subid, relid, originname,
+											  sizeof(originname));
+			replorigin_drop_by_name(originname, true, false);
+		}
 	}
 
 	/* Clean up dependencies */
