@@ -711,7 +711,6 @@ check_proper_datallowconn(ClusterInfo *cluster)
 	int			i_datallowconn;
 	FILE	   *script = NULL;
 	char		output_path[MAXPGPATH];
-	bool		found = false;
 
 	prep_status("Checking database connection settings");
 
@@ -750,7 +749,6 @@ check_proper_datallowconn(ClusterInfo *cluster)
 			 */
 			if (strcmp(datallowconn, "f") == 0)
 			{
-				found = true;
 				if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 					pg_fatal("could not open file \"%s\": %s",
 							 output_path, strerror(errno));
@@ -765,10 +763,8 @@ check_proper_datallowconn(ClusterInfo *cluster)
 	PQfinish(conn_template1);
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("All non-template0 databases must allow connections, i.e. their\n"
 				 "pg_database.datallowconn must be true.  Your installation contains\n"
@@ -829,7 +825,6 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 {
 	int			dbnum;
 	FILE	   *script = NULL;
-	bool		found = false;
 	char		output_path[MAXPGPATH];
 
 	prep_status("Checking for contrib/isn with bigint-passing mismatch");
@@ -870,7 +865,6 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 		i_proname = PQfnumber(res, "proname");
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
-			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("could not open file \"%s\": %s",
 						 output_path, strerror(errno));
@@ -890,10 +884,8 @@ check_for_isn_and_int8_passing_mismatch(ClusterInfo *cluster)
 	}
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains \"contrib/isn\" functions which rely on the\n"
 				 "bigint data type.  Your old and new clusters pass bigint values\n"
@@ -915,7 +907,6 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 {
 	int			dbnum;
 	FILE	   *script = NULL;
-	bool		found = false;
 	char		output_path[MAXPGPATH];
 
 	prep_status("Checking for user-defined postfix operators");
@@ -968,7 +959,6 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 		i_typname = PQfnumber(res, "typname");
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
-			found = true;
 			if (script == NULL &&
 				(script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("could not open file \"%s\": %s",
@@ -992,10 +982,8 @@ check_for_user_defined_postfix_ops(ClusterInfo *cluster)
 	}
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains user-defined postfix operators, which are not\n"
 				 "supported anymore.  Consider dropping the postfix operators and replacing\n"
@@ -1145,7 +1133,6 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 {
 	int			dbnum;
 	FILE	   *script = NULL;
-	bool		found = false;
 	char		output_path[MAXPGPATH];
 
 	prep_status("Checking for tables WITH OIDS");
@@ -1179,7 +1166,6 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 		i_relname = PQfnumber(res, "relname");
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
-			found = true;
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("could not open file \"%s\": %s",
 						 output_path, strerror(errno));
@@ -1199,10 +1185,8 @@ check_for_tables_with_oids(ClusterInfo *cluster)
 	}
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains tables declared WITH OIDS, which is not\n"
 				 "supported anymore.  Consider removing the oid column using\n"
@@ -1401,7 +1385,6 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 {
 	int			dbnum;
 	FILE	   *script = NULL;
-	bool		found = false;
 	char		output_path[MAXPGPATH];
 
 	prep_status("Checking for user-defined encoding conversions");
@@ -1441,7 +1424,6 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 		i_nspname = PQfnumber(res, "nspname");
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
-			found = true;
 			if (script == NULL &&
 				(script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("could not open file \"%s\": %s",
@@ -1463,10 +1445,8 @@ check_for_user_defined_encoding_conversions(ClusterInfo *cluster)
 	}
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		pg_log(PG_REPORT, "fatal");
 		pg_fatal("Your installation contains user-defined encoding conversions.\n"
 				 "The conversion function parameters changed in PostgreSQL version 14\n"

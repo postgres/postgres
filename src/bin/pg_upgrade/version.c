@@ -391,7 +391,6 @@ report_extension_updates(ClusterInfo *cluster)
 {
 	int			dbnum;
 	FILE	   *script = NULL;
-	bool		found = false;
 	char	   *output_path = "update_extensions.sql";
 
 	prep_status("Checking for extension updates");
@@ -417,8 +416,6 @@ report_extension_updates(ClusterInfo *cluster)
 		i_name = PQfnumber(res, "name");
 		for (rowno = 0; rowno < ntups; rowno++)
 		{
-			found = true;
-
 			if (script == NULL && (script = fopen_priv(output_path, "w")) == NULL)
 				pg_fatal("could not open file \"%s\": %s", output_path,
 						 strerror(errno));
@@ -442,10 +439,8 @@ report_extension_updates(ClusterInfo *cluster)
 	}
 
 	if (script)
-		fclose(script);
-
-	if (found)
 	{
+		fclose(script);
 		report_status(PG_REPORT, "notice");
 		pg_log(PG_REPORT, "\n"
 			   "Your installation contains extensions that should be updated\n"
