@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE DATABASE <replaceable class="parameter">name</replaceable>
-    [ [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
+    [ WITH ] [ OWNER [=] <replaceable class="parameter">user_name</replaceable> ]
            [ TEMPLATE [=] <replaceable class="parameter">template</replaceable> ]
            [ ENCODING [=] <replaceable class="parameter">encoding</replaceable> ]
            [ LC_COLLATE [=] <replaceable class="parameter">lc_collate</replaceable> ]
@@ -30,7 +30,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
            [ TABLESPACE [=] <replaceable class="parameter">tablespace_name</replaceable> ]
            [ ALLOW_CONNECTIONS [=] <replaceable class="parameter">allowconn</replaceable> ]
            [ CONNECTION LIMIT [=] <replaceable class="parameter">connlimit</replaceable> ]
-           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ] ]
+           [ IS_TEMPLATE [=] <replaceable class="parameter">istemplate</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
