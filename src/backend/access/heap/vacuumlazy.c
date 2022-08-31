@@ -360,8 +360,8 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 */
 	aggressive = vacuum_set_xid_limits(rel,
 									   params->freeze_min_age,
-									   params->freeze_table_age,
 									   params->multixact_freeze_min_age,
+									   params->freeze_table_age,
 									   params->multixact_freeze_table_age,
 									   &OldestXmin, &OldestMxact,
 									   &FreezeLimit, &MultiXactCutoff);
