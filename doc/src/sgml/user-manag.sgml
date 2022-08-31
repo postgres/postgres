@@ -244,7 +244,7 @@ CREATE USER <replaceable>name</replaceable>;
         A role inherits the privileges of roles it is a member of, by default.
         However, to create a role which does not inherit privileges by
         default, use <literal>CREATE ROLE <replaceable>name</replaceable>
-        NOINHERIT</literal>.  Alternatively, inheritance can be overriden
+        NOINHERIT</literal>.  Alternatively, inheritance can be overridden
         for individual grants by using <literal>WITH INHERIT TRUE</literal>
         or <literal>WITH INHERIT FALSE</literal>.
        </para>
