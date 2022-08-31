@@ -395,7 +395,7 @@ struct Sharedsort
 
 #define REMOVEABBREV(state,stup,count)	((*(state)->base.removeabbrev) (state, stup, count))
 #define COMPARETUP(state,a,b)	((*(state)->base.comparetup) (a, b, state))
-#define WRITETUP(state,tape,stup)	(writetuple(state, tape, stup))
+#define WRITETUP(state,tape,stup)	((*(state)->base.writetup) (state, tape, stup))
 #define READTUP(state,stup,tape,len) ((*(state)->base.readtup) (state, stup, tape, len))
 #define FREESTATE(state)	((state)->base.freestate ? (*(state)->base.freestate) (state) : (void) 0)
 #define LACKMEM(state)		((state)->availMem < 0 && !(state)->slabAllocatorUsed)
@@ -453,8 +453,6 @@ struct Sharedsort
 
 
 static void tuplesort_begin_batch(Tuplesortstate *state);
-static void writetuple(Tuplesortstate *state, LogicalTape *tape,
-					   SortTuple *stup);
 static bool consider_abort_common(Tuplesortstate *state);
 static void inittapes(Tuplesortstate *state, bool mergeruns);
 static void inittapestate(Tuplesortstate *state, int maxTapes);
@@ -1337,24 +1335,6 @@ tuplesort_puttuple_common(Tuplesortstate *state, SortTuple *tuple, bool useAbbre
 			break;
 	}
 	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * Write a stored tuple onto tape.  Unless the slab allocator is
- * used, after writing the tuple, pfree() the out-of-line data (not the
- * SortTuple struct!), and increase state->availMem by the amount of
- * memory space thereby released.
- */
-static void
-writetuple(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
-{
-	state->base.writetup(state, tape, stup);
-
-	if (!state->slabAllocatorUsed && stup->tuple)
-	{
-		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
-		pfree(stup->tuple);
-	}
 }
 
 static bool
@@ -2260,6 +2240,8 @@ mergeonerun(Tuplesortstate *state)
 	 */
 	beginmerge(state);
 
+	Assert(state->slabAllocatorUsed);
+
 	/*
 	 * Execute merge by repeatedly extracting lowest tuple in heap, writing it
 	 * out, and replacing it with next tuple from same tape (if there is
@@ -2418,9 +2400,19 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	memtupwrite = state->memtupcount;
 	for (i = 0; i < memtupwrite; i++)
 	{
-		WRITETUP(state, state->destTape, &state->memtuples[i]);
-		state->memtupcount--;
+		SortTuple  *stup = &state->memtuples[i];
+
+		WRITETUP(state, state->destTape, stup);
+
+		/*
+		 * Account for freeing the tuple, but no need to do the actual pfree
+		 * since the tuplecontext is being reset after the loop.
+		 */
+		if (stup->tuple != NULL)
+			FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
 	}
+
+	state->memtupcount = 0;
 
 	/*
 	 * Reset tuple memory.  We've freed all of the tuples that we previously
