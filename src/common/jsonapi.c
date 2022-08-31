@@ -19,6 +19,7 @@
 
 #include "common/jsonapi.h"
 #include "mb/pg_wchar.h"
+#include "port/pg_lfind.h"
 
 #ifndef FRONTEND
 #include "miscadmin.h"
@@ -844,7 +845,7 @@ json_lex_string(JsonLexContext *lex)
 		}
 		else
 		{
-			char	   *p;
+			char	   *p = s;
 
 			if (hi_surrogate != -1)
 				return JSON_UNICODE_LOW_SURROGATE;
@@ -853,11 +854,17 @@ json_lex_string(JsonLexContext *lex)
 			 * Skip to the first byte that requires special handling, so we
 			 * can batch calls to appendBinaryStringInfo.
 			 */
-			for (p = s; p < end; p++)
+			while (p < end - sizeof(Vector8) &&
+				   !pg_lfind8('\\', (uint8 *) p, sizeof(Vector8)) &&
+				   !pg_lfind8('"', (uint8 *) p, sizeof(Vector8)) &&
+				   !pg_lfind8_le(31, (uint8 *) p, sizeof(Vector8)))
+				p += sizeof(Vector8);
+
+			for (; p < end; p++)
 			{
 				if (*p == '\\' || *p == '"')
 					break;
-				else if ((unsigned char) *p < 32)
+				else if ((unsigned char) *p <= 31)
 				{
 					/* Per RFC4627, these characters MUST be escaped. */
 					/*

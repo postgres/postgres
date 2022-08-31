@@ -42,6 +42,19 @@ LINE 1: SELECT '"\v"'::json;
                ^
 DETAIL:  Escape sequence "\v" is invalid.
 CONTEXT:  JSON data, line 1: "\v...
+-- Check fast path for longer strings (at least 16 bytes long)
+SELECT ('"'||repeat('.', 12)||'abc"')::json; -- OK
+       json        
+-------------------
+ "............abc"
+(1 row)
+
+SELECT ('"'||repeat('.', 12)||'abc\n"')::json; -- OK, legal escapes
+        json         
+---------------------
+ "............abc\n"
+(1 row)
+
 -- see json_encoding test for input with unicode escapes
 -- Numbers.
 SELECT '1'::json;				-- OK
