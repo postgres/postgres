@@ -1177,6 +1177,8 @@ SELECT '52093.89'::money::numeric::float8;
     <type>char(<replaceable>n</replaceable>)</type> are aliases for <type>character
     varying(<replaceable>n</replaceable>)</type> and
     <type>character(<replaceable>n</replaceable>)</type>, respectively.
+    If specified, the length must be greater than zero and cannot exceed
+    10485760.
     <type>character</type> without length specifier is equivalent to
     <type>character(1)</type>. If <type>character varying</type> is used
     without length specifier, the type accepts strings of any size. The
