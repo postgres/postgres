@@ -1933,6 +1933,9 @@ get_database_list(void)
 
 	CommitTransactionCommand();
 
+	/* Be sure to restore caller's memory context */
+	MemoryContextSwitchTo(resultcxt);
+
 	return dblist;
 }
 
