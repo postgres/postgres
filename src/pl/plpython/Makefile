@@ -110,7 +110,7 @@ $(OBJS): | submake-generated-headers
 install: all install-lib install-data
 
 installdirs: installdirs-lib
-	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension' '$(DESTDIR)$(includedir_server)' '$(DESTDIR)$(pgxsdir)/src/pl/plpython'
+	$(MKDIR_P) '$(DESTDIR)$(datadir)/extension' '$(DESTDIR)$(includedir_server)'
 
 uninstall: uninstall-lib uninstall-data
 
