@@ -779,7 +779,10 @@ SELECT * FROM dup(42);
    <para>
     Because a <literal>SECURITY DEFINER</literal> function is executed
     with the privileges of the user that owns it, care is needed to
-    ensure that the function cannot be misused.  For security,
+    ensure that the function cannot be misused.  This is particularly
+    important for non-<replaceable>sql_body</replaceable> functions because
+    their function bodies are evaluated at run-time, not creation time.
+    For security,
     <xref linkend="guc-search-path"/> should be set to exclude any schemas
     writable by untrusted users.  This prevents
     malicious users from creating objects (e.g., tables, functions, and
