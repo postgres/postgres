@@ -7,6 +7,7 @@ DATA = tcn--1.0.sql
 PGFILEDESC = "tcn - trigger function notifying listeners"
 
 ISOLATION = tcn
+ISOLATION_OPTS = --load-extension=tcn
 
 ifdef USE_PGXS
 PG_CONFIG = pg_config

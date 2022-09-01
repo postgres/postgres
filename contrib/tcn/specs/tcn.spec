@@ -7,7 +7,6 @@
 
 setup
 {
-  CREATE EXTENSION tcn;
   CREATE TABLE mytable (key int PRIMARY KEY, value text);
   CREATE TRIGGER tcntrig AFTER INSERT OR UPDATE OR DELETE ON mytable
     FOR EACH ROW EXECUTE FUNCTION triggered_change_notification(mychannel);
