@@ -22,7 +22,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 SET [ SESSION | LOCAL ] <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | DEFAULT }
-SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">timezone</replaceable> | LOCAL | DEFAULT }
+SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="parameter">value</replaceable> | '<replaceable class="parameter">value</replaceable>' | LOCAL | DEFAULT }
 </synopsis>
  </refsynopsisdiv>
 
@@ -192,8 +192,8 @@ SELECT setseed(<replaceable>value</replaceable>);
     <varlistentry>
      <term><literal>TIME ZONE</literal></term>
      <listitem>
-      <para><literal>SET TIME ZONE <replaceable>value</replaceable></literal> is an alias
-       for <literal>SET timezone TO <replaceable>value</replaceable></literal>.  The
+      <para><literal>SET TIME ZONE '<replaceable>value</replaceable>'</literal> is an alias
+       for <literal>SET timezone TO '<replaceable>value</replaceable>'</literal>.  The
        syntax <literal>SET TIME ZONE</literal> allows special syntax
        for the time zone specification.  Here are examples of valid
        values:
@@ -254,7 +254,8 @@ SELECT setseed(<replaceable>value</replaceable>);
       </para>
 
       <para>
-       See <xref linkend="datatype-timezones"/> for more information
+       Time zone abbreviations are not supported by <command>SET</command>;
+       see <xref linkend="datatype-timezones"/> for more information
        about time zones.
       </para>
      </listitem>
