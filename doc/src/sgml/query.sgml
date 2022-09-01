@@ -726,19 +726,20 @@ SELECT city, max(temp_lo)
     which gives us one output row per city.  Each aggregate result is
     computed over the table rows matching that city.
     We can filter these grouped
-    rows using <literal>HAVING</literal>:
+    rows using <literal>HAVING</literal> and the output count using
+    <literal>FILTER</literal>:
 
 <programlisting>
-SELECT city, max(temp_lo)
+SELECT city, max(temp_lo), count(*) FILTER (WHERE temp_lo &lt; 30)
     FROM weather
     GROUP BY city
     HAVING max(temp_lo) &lt; 40;
 </programlisting>
 
 <screen>
-  city   | max
----------+-----
- Hayward |  37
+  city   | max | count
+---------+-----+-------
+ Hayward |  37 |     5
 (1 row)
 </screen>
 
@@ -748,7 +749,7 @@ SELECT city, max(temp_lo)
     names begin with <quote><literal>S</literal></quote>, we might do:
 
 <programlisting>
-SELECT city, max(temp_lo)
+SELECT city, max(temp_lo), count(*) FILTER (WHERE temp_lo &lt; 30)
     FROM weather
     WHERE city LIKE 'S%'            -- <co id="co.tutorial-agg-like"/>
     GROUP BY city
