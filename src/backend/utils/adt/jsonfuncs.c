@@ -2656,10 +2656,10 @@ populate_array_dim_jsonb(PopulateArrayContext *ctx, /* context */
 
 	check_stack_depth();
 
-	if (jbv->type != jbvBinary ||
-		!JsonContainerIsArray(jbc) ||
-		JsonContainerIsScalar(jbc))
+	if (jbv->type != jbvBinary || !JsonContainerIsArray(jbc))
 		populate_array_report_expected_array(ctx, ndim - 1);
+
+	Assert(!JsonContainerIsScalar(jbc));
 
 	it = JsonbIteratorInit(jbc);
 
@@ -3130,51 +3130,6 @@ populate_record_field(ColumnIOData *col,
 			elog(ERROR, "unrecognized type category '%c'", typcat);
 			return (Datum) 0;
 	}
-}
-
-/* recursively populate specified type from a json/jsonb value */
-Datum
-json_populate_type(Datum json_val, Oid json_type, Oid typid, int32 typmod,
-				   void **cache, MemoryContext mcxt, bool *isnull)
-{
-	JsValue		jsv = {0};
-	JsonbValue	jbv;
-
-	jsv.is_json = json_type == JSONOID;
-
-	if (*isnull)
-	{
-		if (jsv.is_json)
-			jsv.val.json.str = NULL;
-		else
-			jsv.val.jsonb = NULL;
-	}
-	else if (jsv.is_json)
-	{
-		text	   *json = DatumGetTextPP(json_val);
-
-		jsv.val.json.str = VARDATA_ANY(json);
-		jsv.val.json.len = VARSIZE_ANY_EXHDR(json);
-		jsv.val.json.type = JSON_TOKEN_INVALID; /* not used in
-												 * populate_composite() */
-	}
-	else
-	{
-		Jsonb	   *jsonb = DatumGetJsonbP(json_val);
-
-		jsv.val.jsonb = &jbv;
-
-		/* fill binary jsonb value pointing to jb */
-		jbv.type = jbvBinary;
-		jbv.val.binary.data = &jsonb->root;
-		jbv.val.binary.len = VARSIZE(jsonb) - VARHDRSZ;
-	}
-
-	if (!*cache)
-		*cache = MemoryContextAllocZero(mcxt, sizeof(ColumnIOData));
-
-	return populate_record_field(*cache, typid, typmod, NULL, mcxt,
-								 PointerGetDatum(NULL), &jsv, isnull);
 }
 
 static RecordIOData *
@@ -5565,24 +5520,4 @@ transform_string_values_scalar(void *state, char *token, JsonTokenType tokentype
 	}
 	else
 		appendStringInfoString(_state->strval, token);
-}
-
-JsonTokenType
-json_get_first_token(text *json, bool throw_error)
-{
-	JsonLexContext *lex;
-	JsonParseErrorType result;
-
-	lex = makeJsonLexContext(json, false);
-
-	/* Lex exactly one token from the input and check its type. */
-	result = json_lex(lex);
-
-	if (result == JSON_SUCCESS)
-		return lex->token_type;
-
-	if (throw_error)
-		json_ereport_error(result, lex);
-
-	return JSON_TOKEN_INVALID;	/* invalid json */
 }

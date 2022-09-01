@@ -691,13 +691,6 @@ assign_collations_walker(Node *node, assign_collations_context *context)
 															&loccontext);
 						}
 						break;
-					case T_JsonExpr:
-
-						/*
-						 * Context item and PASSING arguments are already
-						 * marked with collations in parse_expr.c.
-						 */
-						break;
 					default:
 
 						/*

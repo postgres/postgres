@@ -64,8 +64,7 @@ static int	lengthCompareJsonbStringValue(const void *a, const void *b);
 static int	lengthCompareJsonbString(const char *val1, int len1,
 									 const char *val2, int len2);
 static int	lengthCompareJsonbPair(const void *a, const void *b, void *arg);
-static void uniqueifyJsonbObject(JsonbValue *object, bool unique_keys,
-								 bool skip_nulls);
+static void uniqueifyJsonbObject(JsonbValue *object);
 static JsonbValue *pushJsonbValueScalar(JsonbParseState **pstate,
 										JsonbIteratorToken seq,
 										JsonbValue *scalarVal);
@@ -690,9 +689,7 @@ pushJsonbValueScalar(JsonbParseState **pstate, JsonbIteratorToken seq,
 			appendElement(*pstate, scalarVal);
 			break;
 		case WJB_END_OBJECT:
-			uniqueifyJsonbObject(&(*pstate)->contVal,
-								 (*pstate)->unique_keys,
-								 (*pstate)->skip_nulls);
+			uniqueifyJsonbObject(&(*pstate)->contVal);
 			/* fall through! */
 		case WJB_END_ARRAY:
 			/* Steps here common to WJB_END_OBJECT case */
@@ -735,9 +732,6 @@ pushState(JsonbParseState **pstate)
 	JsonbParseState *ns = palloc(sizeof(JsonbParseState));
 
 	ns->next = *pstate;
-	ns->unique_keys = false;
-	ns->skip_nulls = false;
-
 	return ns;
 }
 
@@ -1942,7 +1936,7 @@ lengthCompareJsonbPair(const void *a, const void *b, void *binequal)
  * Sort and unique-ify pairs in JsonbValue object
  */
 static void
-uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
+uniqueifyJsonbObject(JsonbValue *object)
 {
 	bool		hasNonUniq = false;
 
@@ -1952,32 +1946,15 @@ uniqueifyJsonbObject(JsonbValue *object, bool unique_keys, bool skip_nulls)
 		qsort_arg(object->val.object.pairs, object->val.object.nPairs, sizeof(JsonbPair),
 				  lengthCompareJsonbPair, &hasNonUniq);
 
-	if (hasNonUniq && unique_keys)
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_JSON_OBJECT_KEY_VALUE),
-				 errmsg("duplicate JSON object key value")));
-
-	if (hasNonUniq || skip_nulls)
+	if (hasNonUniq)
 	{
-		JsonbPair  *ptr,
-				   *res;
-
-		while (skip_nulls && object->val.object.nPairs > 0 &&
-			   object->val.object.pairs->value.type == jbvNull)
-		{
-			/* If skip_nulls is true, remove leading items with null */
-			object->val.object.pairs++;
-			object->val.object.nPairs--;
-		}
-
-		ptr = object->val.object.pairs + 1;
-		res = object->val.object.pairs;
+		JsonbPair  *ptr = object->val.object.pairs + 1,
+				   *res = object->val.object.pairs;
 
 		while (ptr - object->val.object.pairs < object->val.object.nPairs)
 		{
-			/* Avoid copying over duplicate or null */
-			if (lengthCompareJsonbStringValue(ptr, res) != 0 &&
-				(!skip_nulls || ptr->value.type != jbvNull))
+			/* Avoid copying over duplicate */
+			if (lengthCompareJsonbStringValue(ptr, res) != 0)
 			{
 				res++;
 				if (ptr != res)

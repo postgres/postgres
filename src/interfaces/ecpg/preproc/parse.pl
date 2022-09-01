@@ -58,8 +58,6 @@ my %replace_string = (
 	'NOT_LA'         => 'not',
 	'NULLS_LA'       => 'nulls',
 	'WITH_LA'        => 'with',
-	'WITH_LA_UNIQUE' => 'with',
-	'WITHOUT_LA'     => 'without',
 	'TYPECAST'       => '::',
 	'DOT_DOT'        => '..',
 	'COLON_EQUALS'   => ':=',
