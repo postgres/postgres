@@ -146,7 +146,9 @@ CREATE STATISTICS [ [ IF NOT EXISTS ] <replaceable class="parameter">statistics_
     <listitem>
      <para>
       The name (optionally schema-qualified) of the table containing the
-      column(s) the statistics are computed on.
+      column(s) the statistics are computed on;  see <xref
+      linkend="sql-analyze"/> for an explanation of the handling of
+      inheritance and partitions.
      </para>
     </listitem>
    </varlistentry>
