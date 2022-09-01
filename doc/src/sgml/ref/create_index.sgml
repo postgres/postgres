@@ -149,18 +149,6 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
      </varlistentry>
 
      <varlistentry>
-      <term><literal>USING</literal></term>
-      <listitem>
-       <para>
-        The optional <literal>USING</literal> clause specifies an index
-        type as described in <xref linkend="indexes-types"/>.  If not
-        specified, a default index type will be used based on the
-        data types of the columns.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>INCLUDE</literal></term>
       <listitem>
        <para>
@@ -246,8 +234,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>, and
-        <literal>brin</literal>.
+        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>,
+        <literal>brin</literal>, or user-installed access methods like
+        <link linkend="bloom">bloom</link>.
         The default method is <literal>btree</literal>.
        </para>
       </listitem>
