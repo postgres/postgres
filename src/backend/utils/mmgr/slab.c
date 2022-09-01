@@ -57,6 +57,8 @@
 #include "lib/ilist.h"
 
 
+#define Slab_BLOCKHDRSZ	MAXALIGN(sizeof(SlabBlock))
+
 /*
  * SlabContext is a specialized implementation of MemoryContext.
  */
@@ -117,10 +119,10 @@ typedef struct SlabChunk
 #define SlabChunkGetPointer(chk)	\
 	((void *)(((char *)(chk)) + sizeof(SlabChunk)))
 #define SlabBlockGetChunk(slab, block, idx) \
-	((SlabChunk *) ((char *) (block) + sizeof(SlabBlock)	\
+	((SlabChunk *) ((char *) (block) + Slab_BLOCKHDRSZ	\
 					+ (idx * slab->fullChunkSize)))
 #define SlabBlockStart(block)	\
-	((char *) block + sizeof(SlabBlock))
+	((char *) block + Slab_BLOCKHDRSZ)
 #define SlabChunkIndex(slab, block, chunk)	\
 	(((char *) chunk - SlabBlockStart(block)) / slab->fullChunkSize)
 
@@ -185,7 +187,7 @@ static const MemoryContextMethods SlabMethods = {
  * chunkSize: allocation chunk size
  *
  * The chunkSize may not exceed:
- *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(sizeof(SlabBlock)) - SLAB_CHUNKHDRSZ
+ *		MAXALIGN_DOWN(SIZE_MAX) - MAXALIGN(Slab_BLOCKHDRSZ) - sizeof(SlabChunk)
  */
 MemoryContext
 SlabContextCreate(MemoryContext parent,
@@ -215,12 +217,12 @@ SlabContextCreate(MemoryContext parent,
 	fullChunkSize = sizeof(SlabChunk) + MAXALIGN(chunkSize);
 
 	/* Make sure the block can store at least one chunk. */
-	if (blockSize < fullChunkSize + sizeof(SlabBlock))
+	if (blockSize < fullChunkSize + Slab_BLOCKHDRSZ)
 		elog(ERROR, "block size %zu for slab is too small for %zu chunks",
 			 blockSize, chunkSize);
 
 	/* Compute maximum number of chunks per block */
-	chunksPerBlock = (blockSize - sizeof(SlabBlock)) / fullChunkSize;
+	chunksPerBlock = (blockSize - Slab_BLOCKHDRSZ) / fullChunkSize;
 
 	/* The freelist starts with 0, ends with chunksPerBlock. */
 	freelistSize = sizeof(dlist_head) * (chunksPerBlock + 1);
@@ -781,7 +783,7 @@ SlabCheck(MemoryContext context)
 
 					/* there might be sentinel (thanks to alignment) */
 					if (slab->chunkSize < (slab->fullChunkSize - sizeof(SlabChunk)))
-						if (!sentinel_ok(chunk, slab->chunkSize))
+						if (!sentinel_ok(chunk, sizeof(SlabChunk) + slab->chunkSize))
 							elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
 								 name, block, chunk);
 				}
