@@ -527,20 +527,20 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			YES	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			YES	
-T811	Basic SQL/JSON constructor functions			YES	
-T812	SQL/JSON: JSON_OBJECTAGG			YES	
-T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			YES	
-T814	Colon in JSON_OBJECT or JSON_OBJECTAGG			YES	
-T821	Basic SQL/JSON query operators			YES	
-T822	SQL/JSON: IS JSON WITH UNIQUE KEYS predicate			YES	
-T823	SQL/JSON: PASSING clause			YES	
-T824	JSON_TABLE: specific PLAN clause			YES	
-T825	SQL/JSON: ON EMPTY and ON ERROR clauses			YES	
-T826	General value expression in ON ERROR or ON EMPTY clauses			YES	
-T827	JSON_TABLE: sibling NESTED COLUMNS clauses			YES	
-T828	JSON_QUERY			YES	
-T829	JSON_QUERY: array wrapper options			YES	
-T830	Enforcing unique keys in SQL/JSON constructor functions			YES	
+T811	Basic SQL/JSON constructor functions			NO	
+T812	SQL/JSON: JSON_OBJECTAGG			NO	
+T813	SQL/JSON: JSON_ARRAYAGG with ORDER BY			NO	
+T814	Colon in JSON_OBJECT or JSON_OBJECTAGG			NO	
+T821	Basic SQL/JSON query operators			NO	
+T822	SQL/JSON: IS JSON WITH UNIQUE KEYS predicate			NO	
+T823	SQL/JSON: PASSING clause			NO	
+T824	JSON_TABLE: specific PLAN clause			NO	
+T825	SQL/JSON: ON EMPTY and ON ERROR clauses			NO	
+T826	General value expression in ON ERROR or ON EMPTY clauses			NO	
+T827	JSON_TABLE: sibling NESTED COLUMNS clauses			NO	
+T828	JSON_QUERY			NO	
+T829	JSON_QUERY: array wrapper options			NO	
+T830	Enforcing unique keys in SQL/JSON constructor functions			NO	
 T831	SQL/JSON path language: strict mode			YES	
 T832	SQL/JSON path language: item method			YES	
 T833	SQL/JSON path language: multiple subscripts			YES	
@@ -548,7 +548,7 @@ T834	SQL/JSON path language: wildcard member accessor			YES
 T835	SQL/JSON path language: filter expressions			YES	
 T836	SQL/JSON path language: starts with predicate			YES	
 T837	SQL/JSON path language: regex_like predicate			YES	
-T838	JSON_TABLE: PLAN DEFAULT clause			YES	
+T838	JSON_TABLE: PLAN DEFAULT clause			NO	
 T839	Formatted cast of datetimes to/from character strings			NO	
 M001	Datalinks			NO	
 M002	Datalinks via SQL/CLI			NO	
