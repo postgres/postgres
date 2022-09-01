@@ -59,7 +59,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ LATERAL ] <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] )
     [ LATERAL ] ROWS FROM( <replaceable class="parameter">function_name</replaceable> ( [ <replaceable class="parameter">argument</replaceable> [, ...] ] ) [ AS ( <replaceable class="parameter">column_definition</replaceable> [, ...] ) ] [, ...] )
                 [ WITH ORDINALITY ] [ [ AS ] <replaceable class="parameter">alias</replaceable> [ ( <replaceable class="parameter">column_alias</replaceable> [, ...] ) ] ]
-    <replaceable class="parameter">from_item</replaceable> [ NATURAL ] <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> [ ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) [ AS <replaceable class="parameter">join_using_alias</replaceable> ] ]
+    <replaceable class="parameter">from_item</replaceable> <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable> { ON <replaceable class="parameter">join_condition</replaceable> | USING ( <replaceable class="parameter">join_column</replaceable> [, ...] ) [ AS <replaceable class="parameter">join_using_alias</replaceable> ] }
+    <replaceable class="parameter">from_item</replaceable> NATURAL <replaceable class="parameter">join_type</replaceable> <replaceable class="parameter">from_item</replaceable>
+    <replaceable class="parameter">from_item</replaceable> CROSS JOIN <replaceable class="parameter">from_item</replaceable>
 
 <phrase>and <replaceable class="parameter">grouping_element</replaceable> can be one of:</phrase>
 
@@ -600,19 +602,15 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
          <listitem>
           <para><literal>FULL [ OUTER ] JOIN</literal></para>
          </listitem>
-         <listitem>
-          <para><literal>CROSS JOIN</literal></para>
-         </listitem>
         </itemizedlist>
 
         For the <literal>INNER</literal> and <literal>OUTER</literal> join types, a
         join condition must be specified, namely exactly one of
-        <literal>NATURAL</literal>, <literal>ON <replaceable
-        class="parameter">join_condition</replaceable></literal>, or
+        <literal>ON <replaceable
+        class="parameter">join_condition</replaceable></literal>,
         <literal>USING (<replaceable
-        class="parameter">join_column</replaceable> [, ...])</literal>.
-        See below for the meaning.  For <literal>CROSS JOIN</literal>,
-        none of these clauses can appear.
+        class="parameter">join_column</replaceable> [, ...])</literal>,
+        or <literal>NATURAL</literal>.  See below for the meaning.
        </para>
 
        <para>
@@ -623,17 +621,9 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         In the absence of parentheses, <literal>JOIN</literal>s nest
         left-to-right.  In any case <literal>JOIN</literal> binds more
         tightly than the commas separating <literal>FROM</literal>-list items.
-       </para>
-
-       <para><literal>CROSS JOIN</literal> and <literal>INNER JOIN</literal>
-        produce a simple Cartesian product, the same result as you get from
-        listing the two tables at the top level of <literal>FROM</literal>,
-        but restricted by the join condition (if any).
-        <literal>CROSS JOIN</literal> is equivalent to <literal>INNER JOIN ON
-        (TRUE)</literal>, that is, no rows are removed by qualification.
-        These join types are just a notational convenience, since they
-        do nothing you couldn't do with plain <literal>FROM</literal> and
-        <literal>WHERE</literal>.
+        All the <literal>JOIN</literal> options are just a notational
+        convenience, since they do nothing you couldn't do with plain
+        <literal>FROM</literal> and <literal>WHERE</literal>.
        </para>
 
        <para><literal>LEFT OUTER JOIN</literal> returns all rows in the qualified
@@ -710,6 +700,19 @@ TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ]
         tables that have matching names.  If there are no common
         column names, <literal>NATURAL</literal> is equivalent
         to <literal>ON TRUE</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CROSS JOIN</literal></term>
+      <listitem>
+       <para>
+        <literal>CROSS JOIN</literal> is equivalent to <literal>INNER JOIN ON
+        (TRUE)</literal>, that is, no rows are removed by qualification.
+        They produce a simple Cartesian product, the same result as you get from
+        listing the two tables at the top level of <literal>FROM</literal>,
+        but restricted by the join condition (if any).
        </para>
       </listitem>
      </varlistentry>
@@ -1754,8 +1757,7 @@ SELECT * FROM <replaceable class="parameter">name</replaceable>
 
 <programlisting>
 SELECT f.title, f.did, d.name, f.date_prod, f.kind
-    FROM distributors d, films f
-    WHERE f.did = d.did
+    FROM distributors d JOIN films f USING (did);
 
        title       | did |     name     | date_prod  |   kind
 -------------------+-----+--------------+------------+----------
