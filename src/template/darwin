@@ -3,41 +3,12 @@
 # Note: Darwin is the original code name for macOS, also known as OS X.
 # We still use "darwin" as the port name, partly because config.guess does.
 
-# Select where system include files should be sought, if user didn't say.
-if test x"$PG_SYSROOT" = x"" ; then
-  # This is far more complicated than it ought to be.  We first ask
-  # "xcrun --show-sdk-path", which seems to match the default -isysroot
-  # setting of Apple's compilers.
-  PG_SYSROOT=`xcrun --show-sdk-path 2>/dev/null`
-  # That may fail, or produce a result that is not version-specific (i.e.,
-  # just ".../SDKs/MacOSX.sdk").  Using a version-specific sysroot seems
-  # desirable, so if the path is a non-version-specific symlink, expand it.
-  if test -L "$PG_SYSROOT"; then
-    if expr x"$PG_SYSROOT" : '.*[0-9]\.[0-9][^/]*$' >/dev/null ; then : okay
-    else
-      PG_SYSROOT=`expr "$PG_SYSROOT" : '\(.*\)/'`/`readlink "$PG_SYSROOT"`
-    fi
-  fi
-  # If there are still not digits in the directory name, try
-  # "xcrun --sdk macosx --show-sdk-path"; and if that still doesn't work,
-  # fall back to asking xcodebuild, which is often a good deal slower.
-  if expr x"$PG_SYSROOT" : '.*[0-9]\.[0-9][^/]*$' >/dev/null ; then : okay
-  else
-    PG_SYSROOT=`xcrun --sdk macosx --show-sdk-path 2>/dev/null`
-    if expr x"$PG_SYSROOT" : '.*[0-9]\.[0-9][^/]*$' >/dev/null ; then : okay
-    else
-      PG_SYSROOT=`xcodebuild -version -sdk macosx Path 2>/dev/null`
-    fi
-  fi
-fi
-# Validate the result: if it doesn't point at a directory, ignore it.
-if test x"$PG_SYSROOT" != x"" ; then
-  if test -d "$PG_SYSROOT" ; then
-    CPPFLAGS="-isysroot $PG_SYSROOT $CPPFLAGS"
-    LDFLAGS="-isysroot $PG_SYSROOT $LDFLAGS"
-  else
-    PG_SYSROOT=""
-  fi
+# Select where system include files should be sought
+PG_SYSROOT=`${srcdir}/src/tools/darwin_sysroot $PG_SYSROOT`
+
+if test -d "$PG_SYSROOT" ; then
+  CPPFLAGS="-isysroot $PG_SYSROOT $CPPFLAGS"
+  LDFLAGS="-isysroot $PG_SYSROOT $LDFLAGS"
 fi
 
 # Extra CFLAGS for code that will go into a shared library
