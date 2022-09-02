@@ -90,8 +90,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      <para>
       When a column list is specified, only the named columns are replicated.
       If no column list is specified, all columns of the table are replicated
-      through this publication, including any columns added later.  If a column
-      list is specified, it must include the replica identity columns.
+      through this publication, including any columns added later. It has no
+      effect on <literal>TRUNCATE</literal> commands.
      </para>
 
      <para>
@@ -250,6 +250,13 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    and/or <command>DELETE</command> operations must have
    <literal>REPLICA IDENTITY</literal> defined.  Otherwise those operations will be
    disallowed on those tables.
+  </para>
+
+  <para>
+   Any column list must include the <literal>REPLICA IDENTITY</literal> columns
+   in order for <command>UPDATE</command> or <command>DELETE</command>
+   operations to be published. There are no column list restrictions if the
+   publication publishes only <command>INSERT</command> operations.
   </para>
 
   <para>
