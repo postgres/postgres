@@ -1717,49 +1717,49 @@ reset enable_bitmapscan;
 --
 -- Check handling of MULTIEXPR SubPlans in inherited updates
 --
-create table inhpar(f1 int, f2 name);
+create table inhpar(f1 int, f2 text[]);
 insert into inhpar select generate_series(1,10);
 create table inhcld() inherits(inhpar);
 insert into inhcld select generate_series(11,10000);
 vacuum analyze inhcld;
 vacuum analyze inhpar;
 explain (verbose, costs off)
-update inhpar set (f1, f2) = (select p2.unique2, p2.stringu1
-                              from int4_tbl limit 1)
+update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
+                                 from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
-                                 QUERY PLAN                                  
------------------------------------------------------------------------------
+                                          QUERY PLAN                                           
+-----------------------------------------------------------------------------------------------
  Update on public.inhpar
    Update on public.inhpar
    Update on public.inhcld inhpar_1
    ->  Merge Join
-         Output: $4, $5, (SubPlan 1 (returns $2,$3)), inhpar.ctid, p2.ctid
+         Output: $4, inhpar.f2[1] := $5, (SubPlan 1 (returns $2,$3)), inhpar.ctid, p2.ctid
          Merge Cond: (p2.unique1 = inhpar.f1)
          ->  Index Scan using onek_unique1 on public.onek p2
                Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
          ->  Sort
-               Output: inhpar.ctid, inhpar.f1
+               Output: inhpar.f2, inhpar.ctid, inhpar.f1
                Sort Key: inhpar.f1
                ->  Seq Scan on public.inhpar
-                     Output: inhpar.ctid, inhpar.f1
+                     Output: inhpar.f2, inhpar.ctid, inhpar.f1
          SubPlan 1 (returns $2,$3)
            ->  Limit
                  Output: (p2.unique2), (p2.stringu1)
                  ->  Seq Scan on public.int4_tbl
                        Output: p2.unique2, p2.stringu1
    ->  Hash Join
-         Output: $6, $7, (SubPlan 1 (returns $2,$3)), inhpar_1.ctid, p2.ctid
+         Output: $6, inhpar_1.f2[1] := $7, (SubPlan 1 (returns $2,$3)), inhpar_1.ctid, p2.ctid
          Hash Cond: (inhpar_1.f1 = p2.unique1)
          ->  Seq Scan on public.inhcld inhpar_1
-               Output: inhpar_1.ctid, inhpar_1.f1
+               Output: inhpar_1.f2, inhpar_1.ctid, inhpar_1.f1
          ->  Hash
                Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
                ->  Seq Scan on public.onek p2
                      Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
 (27 rows)
 
-update inhpar set (f1, f2) = (select p2.unique2, p2.stringu1
-                              from int4_tbl limit 1)
+update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
+                                 from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
 drop table inhpar cascade;
 NOTICE:  drop cascades to table inhcld

@@ -914,20 +914,54 @@ SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot)
 	/*
 	 * Now we must find the Param nodes that reference the MULTIEXPR outputs
 	 * and update their sublink IDs so they'll reference the new outputs.
-	 * Fortunately, those too must be at top level of the cloned targetlist.
+	 * Fortunately, those too must be in the cloned targetlist, but they could
+	 * be buried under FieldStores and SubscriptingRefs and CoerceToDomains
+	 * (cf processIndirection()), and underneath those there could be an
+	 * implicit type coercion.
 	 */
 	offset = list_length(root->multiexpr_params);
 
 	foreach(lc, subroot->parse->targetList)
 	{
 		TargetEntry *tent = (TargetEntry *) lfirst(lc);
+		Node	   *expr;
 		Param	   *p;
 		int			subqueryid;
 		int			colno;
 
-		if (!IsA(tent->expr, Param))
+		expr = (Node *) tent->expr;
+		while (expr)
+		{
+			if (IsA(expr, FieldStore))
+			{
+				FieldStore *fstore = (FieldStore *) expr;
+
+				expr = (Node *) linitial(fstore->newvals);
+			}
+			else if (IsA(expr, SubscriptingRef))
+			{
+				SubscriptingRef *sbsref = (SubscriptingRef *) expr;
+
+				if (sbsref->refassgnexpr == NULL)
+					break;
+
+				expr = (Node *) sbsref->refassgnexpr;
+			}
+			else if (IsA(expr, CoerceToDomain))
+			{
+				CoerceToDomain *cdomain = (CoerceToDomain *) expr;
+
+				if (cdomain->coercionformat != COERCE_IMPLICIT_CAST)
+					break;
+				expr = (Node *) cdomain->arg;
+			}
+			else
+				break;
+		}
+		expr = strip_implicit_coercions(expr);
+		if (expr == NULL || !IsA(expr, Param))
 			continue;
-		p = (Param *) tent->expr;
+		p = (Param *) expr;
 		if (p->paramkind != PARAM_MULTIEXPR)
 			continue;
 		subqueryid = p->paramid >> 16;
