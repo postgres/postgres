@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#include "common/file_utils.h"
 #include "datatype/timestamp.h"
 #include "miscadmin.h"
 #include "pgtz.h"
@@ -429,7 +430,6 @@ pg_tzenumerate_next(pg_tzenum *dir)
 	{
 		struct dirent *direntry;
 		char		fullname[MAXPGPATH * 2];
-		struct stat statbuf;
 
 		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
 
@@ -447,12 +447,8 @@ pg_tzenumerate_next(pg_tzenum *dir)
 
 		snprintf(fullname, sizeof(fullname), "%s/%s",
 				 dir->dirname[dir->depth], direntry->d_name);
-		if (stat(fullname, &statbuf) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m", fullname)));
 
-		if (S_ISDIR(statbuf.st_mode))
+		if (get_dirent_type(fullname, direntry, true, ERROR) == PGFILETYPE_DIR)
 		{
 			/* Step into the subdirectory */
 			if (dir->depth >= MAX_TZDIR_DEPTH - 1)

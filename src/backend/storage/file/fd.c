@@ -3156,17 +3156,11 @@ RemovePgTempFilesInDir(const char *tmpdirname, bool missing_ok, bool unlink_all)
 					PG_TEMP_FILE_PREFIX,
 					strlen(PG_TEMP_FILE_PREFIX)) == 0)
 		{
-			struct stat statbuf;
+			PGFileType	type = get_dirent_type(rm_path, temp_de, false, LOG);
 
-			if (lstat(rm_path, &statbuf) < 0)
-			{
-				ereport(LOG,
-						(errcode_for_file_access(),
-						 errmsg("could not stat file \"%s\": %m", rm_path)));
+			if (type == PGFILETYPE_ERROR)
 				continue;
-			}
-
-			if (S_ISDIR(statbuf.st_mode))
+			else if (type == PGFILETYPE_DIR)
 			{
 				/* recursively remove contents, then directory itself */
 				RemovePgTempFilesInDir(rm_path, false, true);

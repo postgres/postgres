@@ -113,6 +113,7 @@
 #include "access/xact.h"
 #include "access/xloginsert.h"
 #include "catalog/catalog.h"
+#include "common/file_utils.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -1213,7 +1214,6 @@ CheckPointLogicalRewriteHeap(void)
 	mappings_dir = AllocateDir("pg_logical/mappings");
 	while ((mapping_de = ReadDir(mappings_dir, "pg_logical/mappings")) != NULL)
 	{
-		struct stat statbuf;
 		Oid			dboid;
 		Oid			relid;
 		XLogRecPtr	lsn;
@@ -1221,13 +1221,16 @@ CheckPointLogicalRewriteHeap(void)
 		TransactionId create_xid;
 		uint32		hi,
 					lo;
+		PGFileType	de_type;
 
 		if (strcmp(mapping_de->d_name, ".") == 0 ||
 			strcmp(mapping_de->d_name, "..") == 0)
 			continue;
 
 		snprintf(path, sizeof(path), "pg_logical/mappings/%s", mapping_de->d_name);
-		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
+		de_type = get_dirent_type(path, mapping_de, false, DEBUG1);
+
+		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_REG)
 			continue;
 
 		/* Skip over files that cannot be ours. */

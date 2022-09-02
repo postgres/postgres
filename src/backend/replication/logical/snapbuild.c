@@ -123,6 +123,7 @@
 #include "access/heapam_xlog.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "common/file_utils.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "replication/logical.h"
@@ -2061,15 +2062,16 @@ CheckPointSnapBuild(void)
 		uint32		hi;
 		uint32		lo;
 		XLogRecPtr	lsn;
-		struct stat statbuf;
+		PGFileType	de_type;
 
 		if (strcmp(snap_de->d_name, ".") == 0 ||
 			strcmp(snap_de->d_name, "..") == 0)
 			continue;
 
 		snprintf(path, sizeof(path), "pg_logical/snapshots/%s", snap_de->d_name);
+		de_type = get_dirent_type(path, snap_de, false, DEBUG1);
 
-		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
+		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_REG)
 		{
 			elog(DEBUG1, "only regular files expected: %s", path);
 			continue;

@@ -14,6 +14,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include "common/file_utils.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
@@ -1017,7 +1018,7 @@ ParseConfigDirectory(const char *includedir,
 
 	while ((de = ReadDir(d, directory)) != NULL)
 	{
-		struct stat st;
+		PGFileType	de_type;
 		char		filename[MAXPGPATH];
 
 		/*
@@ -1034,38 +1035,27 @@ ParseConfigDirectory(const char *includedir,
 
 		join_path_components(filename, directory, de->d_name);
 		canonicalize_path(filename);
-		if (stat(filename, &st) == 0)
+		de_type = get_dirent_type(filename, de, true, elevel);
+		if (de_type == PGFILETYPE_ERROR)
 		{
-			if (!S_ISDIR(st.st_mode))
-			{
-				/* Add file to array, increasing its size in blocks of 32 */
-				if (num_filenames >= size_filenames)
-				{
-					size_filenames += 32;
-					filenames = (char **) repalloc(filenames,
-											size_filenames * sizeof(char *));
-				}
-				filenames[num_filenames] = pstrdup(filename);
-				num_filenames++;
-			}
-		}
-		else
-		{
-			/*
-			 * stat does not care about permissions, so the most likely reason
-			 * a file can't be accessed now is if it was removed between the
-			 * directory listing and now.
-			 */
-			ereport(elevel,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m",
-							filename)));
 			record_config_file_error(psprintf("could not stat file \"%s\"",
 											  filename),
 									 calling_file, calling_lineno,
 									 head_p, tail_p);
 			status = false;
 			goto cleanup;
+		}
+		else if (de_type != PGFILETYPE_DIR)
+		{
+			/* Add file to array, increasing its size in blocks of 32 */
+			if (num_filenames >= size_filenames)
+			{
+				size_filenames += 32;
+				filenames = (char **) repalloc(filenames,
+											   size_filenames * sizeof(char *));
+			}
+			filenames[num_filenames] = pstrdup(filename);
+			num_filenames++;
 		}
 	}
 

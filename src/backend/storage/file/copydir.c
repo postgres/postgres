@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+#include "common/file_utils.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/copydir.h"
@@ -50,7 +51,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 	while ((xlde = ReadDir(xldir, fromdir)) != NULL)
 	{
-		struct stat fst;
+		PGFileType	xlde_type;
 
 		/* If we got a cancel signal during the copy of the directory, quit */
 		CHECK_FOR_INTERRUPTS();
@@ -62,18 +63,15 @@ copydir(char *fromdir, char *todir, bool recurse)
 		snprintf(fromfile, sizeof(fromfile), "%s/%s", fromdir, xlde->d_name);
 		snprintf(tofile, sizeof(tofile), "%s/%s", todir, xlde->d_name);
 
-		if (lstat(fromfile, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", fromfile)));
+		xlde_type = get_dirent_type(fromfile, xlde, false, ERROR);
 
-		if (S_ISDIR(fst.st_mode))
+		if (xlde_type == PGFILETYPE_DIR)
 		{
 			/* recurse to handle subdirectories */
 			if (recurse)
 				copydir(fromfile, tofile, true);
 		}
-		else if (S_ISREG(fst.st_mode))
+		else if (xlde_type == PGFILETYPE_REG)
 			copy_file(fromfile, tofile);
 	}
 	FreeDir(xldir);
@@ -89,8 +87,6 @@ copydir(char *fromdir, char *todir, bool recurse)
 
 	while ((xlde = ReadDir(xldir, todir)) != NULL)
 	{
-		struct stat fst;
-
 		if (strcmp(xlde->d_name, ".") == 0 ||
 			strcmp(xlde->d_name, "..") == 0)
 			continue;
@@ -101,12 +97,7 @@ copydir(char *fromdir, char *todir, bool recurse)
 		 * We don't need to sync subdirectories here since the recursive
 		 * copydir will do it before it returns
 		 */
-		if (lstat(tofile, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", tofile)));
-
-		if (S_ISREG(fst.st_mode))
+		if (get_dirent_type(tofile, xlde, false, ERROR) == PGFILETYPE_REG)
 			fsync_fname(tofile, false);
 	}
 	FreeDir(xldir);

@@ -657,8 +657,9 @@ static void PreallocXlogFiles(XLogRecPtr endptr, TimeLineID tli);
 static void RemoveTempXlogFiles(void);
 static void RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr lastredoptr,
 							   XLogRecPtr endptr, TimeLineID insertTLI);
-static void RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
-						   XLogSegNo *endlogSegNo, TimeLineID insertTLI);
+static void RemoveXlogFile(const struct dirent *segment_de,
+						   XLogSegNo recycleSegNo, XLogSegNo *endlogSegNo,
+						   TimeLineID insertTLI);
 static void UpdateLastRemovedPtr(char *filename);
 static void ValidateXLOGDirectoryStructure(void);
 static void CleanupBackupHistory(void);
@@ -3596,8 +3597,7 @@ RemoveOldXlogFiles(XLogSegNo segno, XLogRecPtr lastredoptr, XLogRecPtr endptr,
 				/* Update the last removed location in shared memory first */
 				UpdateLastRemovedPtr(xlde->d_name);
 
-				RemoveXlogFile(xlde->d_name, recycleSegNo, &endlogSegNo,
-							   insertTLI);
+				RemoveXlogFile(xlde, recycleSegNo, &endlogSegNo, insertTLI);
 			}
 		}
 	}
@@ -3669,8 +3669,7 @@ RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
 			 * - but seems safer to let them be archived and removed later.
 			 */
 			if (!XLogArchiveIsReady(xlde->d_name))
-				RemoveXlogFile(xlde->d_name, recycleSegNo, &endLogSegNo,
-							   newTLI);
+				RemoveXlogFile(xlde, recycleSegNo, &endLogSegNo, newTLI);
 		}
 	}
 
@@ -3680,9 +3679,9 @@ RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
 /*
  * Recycle or remove a log file that's no longer needed.
  *
- * segname is the name of the segment to recycle or remove.  recycleSegNo
- * is the segment number to recycle up to.  endlogSegNo is the segment
- * number of the current (or recent) end of WAL.
+ * segment_de is the dirent structure of the segment to recycle or remove.
+ * recycleSegNo is the segment number to recycle up to.  endlogSegNo is
+ * the segment number of the current (or recent) end of WAL.
  *
  * endlogSegNo gets incremented if the segment is recycled so as it is not
  * checked again with future callers of this function.
@@ -3691,14 +3690,15 @@ RemoveNonParentXlogFiles(XLogRecPtr switchpoint, TimeLineID newTLI)
  * should be used for this timeline.
  */
 static void
-RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
-			   XLogSegNo *endlogSegNo, TimeLineID insertTLI)
+RemoveXlogFile(const struct dirent *segment_de,
+			   XLogSegNo recycleSegNo, XLogSegNo *endlogSegNo,
+			   TimeLineID insertTLI)
 {
 	char		path[MAXPGPATH];
 #ifdef WIN32
 	char		newpath[MAXPGPATH];
 #endif
-	struct stat statbuf;
+	const char *segname = segment_de->d_name;
 
 	snprintf(path, MAXPGPATH, XLOGDIR "/%s", segname);
 
@@ -3710,7 +3710,7 @@ RemoveXlogFile(const char *segname, XLogSegNo recycleSegNo,
 	if (wal_recycle &&
 		*endlogSegNo <= recycleSegNo &&
 		XLogCtl->InstallXLogFileSegmentActive &&	/* callee rechecks this */
-		lstat(path, &statbuf) == 0 && S_ISREG(statbuf.st_mode) &&
+		get_dirent_type(path, segment_de, false, DEBUG2) == PGFILETYPE_REG &&
 		InstallXLogFileSegment(endlogSegNo, path,
 							   true, recycleSegNo, insertTLI))
 	{
