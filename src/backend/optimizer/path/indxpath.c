@@ -153,6 +153,7 @@ static IndexClause *match_clause_to_indexcol(PlannerInfo *root,
 											 RestrictInfo *rinfo,
 											 int indexcol,
 											 IndexOptInfo *index);
+static bool IsBooleanOpfamily(Oid opfamily);
 static IndexClause *match_boolean_index_clause(PlannerInfo *root,
 											   RestrictInfo *rinfo,
 											   int indexcol, IndexOptInfo *index);
@@ -2340,6 +2341,23 @@ match_clause_to_indexcol(PlannerInfo *root,
 	}
 
 	return NULL;
+}
+
+/*
+ * IsBooleanOpfamily
+ *	  Detect whether an opfamily supports boolean equality as an operator.
+ *
+ * If the opfamily OID is in the range of built-in objects, we can rely
+ * on hard-wired knowledge of which built-in opfamilies support this.
+ * For extension opfamilies, there's no choice but to do a catcache lookup.
+ */
+static bool
+IsBooleanOpfamily(Oid opfamily)
+{
+	if (opfamily < FirstNormalObjectId)
+		return IsBuiltinBooleanOpfamily(opfamily);
+	else
+		return op_in_opfamily(BooleanEqualOperator, opfamily);
 }
 
 /*

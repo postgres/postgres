@@ -3596,7 +3596,11 @@ match_boolean_partition_clause(Oid partopfamily, Expr *clause, Expr *partkey,
 
 	*outconst = NULL;
 
-	if (!IsBooleanOpfamily(partopfamily))
+	/*
+	 * Partitioning currently can only use built-in AMs, so checking for
+	 * built-in boolean opfamilies is good enough.
+	 */
+	if (!IsBuiltinBooleanOpfamily(partopfamily))
 		return PARTCLAUSE_UNSUPPORTED;
 
 	if (IsA(clause, BooleanTest))

@@ -1191,8 +1191,13 @@ partkey_is_bool_constant_for_query(RelOptInfo *partrel, int partkeycol)
 	PartitionScheme partscheme = partrel->part_scheme;
 	ListCell   *lc;
 
-	/* If the partkey isn't boolean, we can't possibly get a match */
-	if (!IsBooleanOpfamily(partscheme->partopfamily[partkeycol]))
+	/*
+	 * If the partkey isn't boolean, we can't possibly get a match.
+	 *
+	 * Partitioning currently can only use built-in AMs, so checking for
+	 * built-in boolean opfamilies is good enough.
+	 */
+	if (!IsBuiltinBooleanOpfamily(partscheme->partopfamily[partkeycol]))
 		return false;
 
 	/* Check each restriction clause for the partitioned rel */

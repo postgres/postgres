@@ -71,7 +71,7 @@ SELECT * FROM booltmp WHERE a;
                 QUERY PLAN                
 ------------------------------------------
  Index Only Scan using boolidx on booltmp
-   Filter: a
+   Index Cond: (a = true)
 (2 rows)
 
 SELECT * FROM booltmp WHERE a;
@@ -85,7 +85,7 @@ SELECT * FROM booltmp WHERE NOT a;
                 QUERY PLAN                
 ------------------------------------------
  Index Only Scan using boolidx on booltmp
-   Filter: (NOT a)
+   Index Cond: (a = false)
 (2 rows)
 
 SELECT * FROM booltmp WHERE NOT a;

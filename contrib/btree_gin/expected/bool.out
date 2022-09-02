@@ -87,13 +87,15 @@ EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i<=true ORDER BY i;
 (6 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i=true ORDER BY i;
-         QUERY PLAN          
------------------------------
+                QUERY PLAN                 
+-------------------------------------------
  Sort
    Sort Key: i
-   ->  Seq Scan on test_bool
+   ->  Bitmap Heap Scan on test_bool
          Filter: i
-(4 rows)
+         ->  Bitmap Index Scan on idx_bool
+               Index Cond: (i = true)
+(6 rows)
 
 EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i>=true ORDER BY i;
                 QUERY PLAN                 
