@@ -244,13 +244,6 @@ extern char *sepgsql_compute_create(const char *scontext,
 									uint16 tclass,
 									const char *objname);
 
-extern bool sepgsql_check_perms(const char *scontext,
-								const char *tcontext,
-								uint16 tclass,
-								uint32 required,
-								const char *audit_name,
-								bool abort_on_violation);
-
 /*
  * uavc.c
  */
