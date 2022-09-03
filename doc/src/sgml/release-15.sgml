@@ -578,17 +578,17 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
      <listitem>
       <para>
-       Record and check the collation of each <link
+       Record and check the collation version of each <link
        linkend="sql-createdatabase">database</link> (Peter Eisentraut)
       </para>
 
       <para>
-       This is designed to detect collation
+       This is designed to detect collation version
        mismatches to avoid data corruption.  Function
        <function>pg_database_collation_actual_version()</function>
        reports the underlying operating system collation version, and
        <command>ALTER DATABASE ...  REFRESH</command> sets the database
-       to match the operating system collation version.  DETAILS?
+       to match the operating system collation version.
       </para>
      </listitem>
 
@@ -605,9 +605,11 @@ Author: Peter Eisentraut <peter@eisentraut.org>
       </para>
 
       <para>
-       Previously, <acronym>ICU</acronym> collations could only be
-       specified in <link linkend="sql-createcollation"><command>CREATE
-       COLLATION</command></link> and used with the
+       Previously, only <application>libc</application>-based
+       collations could be set at the cluster and database levels.
+       <acronym>ICU</acronym> collations were previously limited
+       to <link linkend="sql-createcollation"><command>CREATE
+       COLLATION</command></link> and referenced by the
        <literal>COLLATE</literal> clause.
       </para>
      </listitem>
