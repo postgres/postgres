@@ -373,6 +373,9 @@ extern DecodedXLogRecord *XLogReadAhead(XLogReaderState *state,
 extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
 										 XLogRecPtr recptr, char *phdr);
 
+/* Forget error produced by XLogReaderValidatePageHeader(). */
+extern void XLogReaderResetError(XLogReaderState *state);
+
 /*
  * Error information from WALRead that both backend and frontend caller can
  * process.  Currently only errors from pread can be reported.
