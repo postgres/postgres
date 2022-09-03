@@ -2172,9 +2172,8 @@ SELECT sum(n) FROM t;
 
   <note>
    <para>
-    Strictly speaking, this process is iteration not recursion, but
-    <literal>RECURSIVE</literal> is the terminology chosen by the SQL standards
-    committee.
+    While <literal>RECURSIVE</literal> allows queries to be specified
+    recursively, internally all queries are evaluated iteratively.
    </para>
   </note>
 
