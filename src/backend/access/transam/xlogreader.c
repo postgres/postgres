@@ -987,6 +987,13 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 		return state->readLen;
 
 	/*
+	 * Invalidate contents of internal buffer before read attempt.  Just set
+	 * the length to 0, rather than a full XLogReaderInvalReadState(), so we
+	 * don't forget the segment we last successfully read.
+	 */
+	state->readLen = 0;
+
+	/*
 	 * Data is not in our buffer.
 	 *
 	 * Every time we actually read the segment, even if we looked at parts of
@@ -1066,11 +1073,8 @@ ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr, int reqLen)
 	return readLen;
 
 err:
-	if (state->errormsg_buf[0] != '\0')
-	{
-		state->errormsg_deferred = true;
-		XLogReaderInvalReadState(state);
-	}
+	XLogReaderInvalReadState(state);
+
 	return XLREAD_FAIL;
 }
 
@@ -1320,6 +1324,16 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	state->latestPageTLI = hdr->xlp_tli;
 
 	return true;
+}
+
+/*
+ * Forget about an error produced by XLogReaderValidatePageHeader().
+ */
+void
+XLogReaderResetError(XLogReaderState *state)
+{
+	state->errormsg_buf[0] = '\0';
+	state->errormsg_deferred = false;
 }
 
 /*
