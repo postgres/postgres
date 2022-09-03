@@ -15873,7 +15873,7 @@ table2-mapping
        </para>
        <para>
         <literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', null)</literal>
-        <returnvalue>[{"f1":null,"f2":null},2,null,3]</returnvalue>
+        <returnvalue>[{"f1": null, "f2": null}, 2, null, 3]</returnvalue>
        </para>
        <para>
         <literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}', null, true, 'return_target')</literal>
@@ -16112,7 +16112,7 @@ table2-mapping
         comparisons.
        </para>
        <para>
-        <literal>jsonb_path_exists_tz('["2015-08-01 12:00:00 -05"]', '$[*] ? (@.datetime() &lt; "2015-08-02".datetime())')</literal>
+        <literal>jsonb_path_exists_tz('["2015-08-01 12:00:00-05"]', '$[*] ? (@.datetime() &lt; "2015-08-02".datetime())')</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
