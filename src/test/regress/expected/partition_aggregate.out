@@ -942,6 +942,7 @@ INSERT INTO pagg_tab_ml SELECT i % 30, i % 10, to_char(i % 4, 'FM0000') FROM gen
 ANALYZE pagg_tab_ml;
 -- For Parallel Append
 SET max_parallel_workers_per_gather TO 2;
+SET parallel_setup_cost = 0;
 -- Full aggregation at level 1 as GROUP BY clause matches with PARTITION KEY
 -- for level 1 only. For subpartitions, GROUP BY clause does not match with
 -- PARTITION KEY, but still we do not see a partial aggregation as array_agg()
@@ -1025,6 +1026,7 @@ SELECT a, sum(b), array_agg(distinct c), count(*) FROM pagg_tab_ml GROUP BY a HA
                            ->  Seq Scan on pagg_tab_ml_p2_s2 pagg_tab_ml_3
 (25 rows)
 
+RESET parallel_setup_cost;
 -- Full aggregation at level 1 as GROUP BY clause matches with PARTITION KEY
 -- for level 1 only. For subpartitions, GROUP BY clause does not match with
 -- PARTITION KEY, thus we will have a partial aggregation for them.
