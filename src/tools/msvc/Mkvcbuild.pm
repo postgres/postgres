@@ -362,6 +362,7 @@ sub mkvcbuild
 	$isolation_tester->AddFile('src/test/isolation/specparse.y');
 	$isolation_tester->AddFile('src/test/isolation/specscanner.l');
 	$isolation_tester->AddFile('src/test/isolation/specparse.c');
+	$isolation_tester->AddFile('src/test/isolation/specscanner.c');
 	$isolation_tester->AddIncludeDir('src/test/isolation');
 	$isolation_tester->AddIncludeDir('src/port');
 	$isolation_tester->AddIncludeDir('src/test/regress');
