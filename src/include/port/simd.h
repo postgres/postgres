@@ -165,7 +165,7 @@ vector8_has(const Vector8 v, const uint8 c)
 #ifdef USE_ASSERT_CHECKING
 	bool		assert_result = false;
 
-	for (int i = 0; i < sizeof(Vector8); i++)
+	for (Size i = 0; i < sizeof(Vector8); i++)
 	{
 		if (((const uint8 *) &v)[i] == c)
 		{
@@ -216,7 +216,7 @@ vector8_has_le(const Vector8 v, const uint8 c)
 #ifdef USE_ASSERT_CHECKING
 	bool		assert_result = false;
 
-	for (int i = 0; i < sizeof(Vector8); i++)
+	for (Size i = 0; i < sizeof(Vector8); i++)
 	{
 		if (((const uint8 *) &v)[i] <= c)
 		{
@@ -239,7 +239,7 @@ vector8_has_le(const Vector8 v, const uint8 c)
 	else
 	{
 		/* one byte at a time */
-		for (int i = 0; i < sizeof(Vector8); i++)
+		for (Size i = 0; i < sizeof(Vector8); i++)
 		{
 			if (((const uint8 *) &v)[i] <= c)
 			{
