@@ -10,6 +10,7 @@ include $(top_builddir)/src/Makefile.global
 OBJS = \
 	$(WIN32RES) \
 	exprparse.o \
+	exprscan.o \
 	pgbench.o
 
 override CPPFLAGS := -I. -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
@@ -26,8 +27,14 @@ all: pgbench
 pgbench: $(OBJS) | submake-libpq submake-libpgport submake-libpgfeutils
 	$(CC) $(CFLAGS) $^ $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@$(X)
 
-# exprscan is compiled as part of exprparse
-exprparse.o: exprscan.c
+# See notes in src/backend/parser/Makefile about the following two rules
+exprparse.h: exprparse.c
+	touch $@
+
+exprparse.c: BISONFLAGS += -d
+
+# Force these dependencies to be known even without dependency info built:
+exprparse.o exprscan.o: exprparse.h
 
 distprep: exprparse.c exprscan.c
 
@@ -45,7 +52,7 @@ clean distclean:
 	rm -rf tmp_check
 
 maintainer-clean: distclean
-	rm -f exprparse.c exprscan.c
+	rm -f exprparse.h exprparse.c exprscan.c
 
 check:
 	$(prove_check)

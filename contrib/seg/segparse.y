@@ -160,6 +160,3 @@ seg_atof(const char *value)
 	datum = DirectFunctionCall1(float4in, CStringGetDatum(value));
 	return DatumGetFloat4(datum);
 }
-
-
-#include "segscan.c"

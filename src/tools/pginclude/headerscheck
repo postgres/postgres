@@ -117,10 +117,18 @@ do
 	# We can't make these Bison output files compilable standalone
 	# without using "%code require", which old Bison versions lack.
 	# parser/gram.h will be included by parser/gramparse.h anyway.
+	test "$f" = contrib/cube/cubeparse.h && continue
+	test "$f" = contrib/seg/segparse.h && continue
+	test "$f" = src/backend/bootstrap/bootparse.h && continue
 	test "$f" = src/include/parser/gram.h && continue
 	test "$f" = src/backend/parser/gram.h && continue
+	test "$f" = src/backend/replication/repl_gram.h && continue
+	test "$f" = src/backend/replication/syncrep_gram.h && continue
+	test "$f" = src/backend/utils/adt/jsonpath_gram.h && continue
+	test "$f" = src/bin/pgbench/exprparse.h && continue
 	test "$f" = src/pl/plpgsql/src/pl_gram.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/preproc.h && continue
+	test "$f" = src/test/isolation/specparse.h && continue
 
 	# This produces a "no previous prototype" warning.
 	test "$f" = src/include/storage/checksum_impl.h && continue

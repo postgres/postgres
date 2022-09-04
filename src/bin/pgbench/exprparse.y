@@ -526,18 +526,3 @@ make_case(yyscan_t yyscanner, PgBenchExprList *when_then_list, PgBenchExpr *else
 					 find_func(yyscanner, "!case_end"),
 					 make_elist(else_part, when_then_list));
 }
-
-/*
- * exprscan.l is compiled as part of exprparse.y.  Currently, this is
- * unavoidable because exprparse does not create a .h file to export
- * its token symbols.  If these files ever grow large enough to be
- * worth compiling separately, that could be fixed; but for now it
- * seems like useless complication.
- */
-
-/* First, get rid of "#define yyscan_t" from pgbench.h */
-#undef yyscan_t
-/* ... and the yylval macro, which flex will have its own definition for */
-#undef yylval
-
-#include "exprscan.c"

@@ -416,5 +416,3 @@ ident_or_keyword:
 		;
 
 %%
-
-#include "repl_scanner.c"

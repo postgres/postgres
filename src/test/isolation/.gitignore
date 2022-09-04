@@ -3,6 +3,7 @@
 /pg_isolation_regress
 
 # Local generated source files
+/specparse.h
 /specparse.c
 /specscanner.c
 

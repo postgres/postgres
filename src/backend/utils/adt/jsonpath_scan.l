@@ -1,4 +1,4 @@
-%{
+%top{
 /*-------------------------------------------------------------------------
  *
  * jsonpath_scan.l
@@ -17,9 +17,18 @@
 
 #include "postgres.h"
 
+/*
+ * NB: include jsonpath_gram.h only AFTER including jsonpath_internal.h,
+ * because jsonpath_internal.h contains the declaration for JsonPathString.
+ */
+#include "jsonpath_internal.h"
+#include "jsonpath_gram.h"
+
 #include "mb/pg_wchar.h"
 #include "nodes/pg_list.h"
+}
 
+%{
 static JsonPathString scanstring;
 
 /* Handles to the buffer that the lexer uses internally */
@@ -142,9 +151,9 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xnq,xq,xvq>{hex_char}		{ parseHexChar(yytext); }
 
-<xnq,xq,xvq>{unicode}*{unicodefail}	{ yyerror(NULL, "invalid unicode sequence"); }
+<xnq,xq,xvq>{unicode}*{unicodefail}	{ jsonpath_yyerror(NULL, "invalid unicode sequence"); }
 
-<xnq,xq,xvq>{hex_fail}		{ yyerror(NULL, "invalid hex character sequence"); }
+<xnq,xq,xvq>{hex_fail}		{ jsonpath_yyerror(NULL, "invalid hex character sequence"); }
 
 <xnq,xq,xvq>{unicode}+\\	{
 								/* throw back the \\, and treat as unicode */
@@ -154,9 +163,9 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xnq,xq,xvq>\\.				{ addchar(false, yytext[1]); }
 
-<xnq,xq,xvq>\\				{ yyerror(NULL, "unexpected end after backslash"); }
+<xnq,xq,xvq>\\				{ jsonpath_yyerror(NULL, "unexpected end after backslash"); }
 
-<xq,xvq><<EOF>>				{ yyerror(NULL, "unexpected end of quoted string"); }
+<xq,xvq><<EOF>>				{ jsonpath_yyerror(NULL, "unexpected end of quoted string"); }
 
 <xq>\"							{
 									yylval->str = scanstring;
@@ -178,7 +187,7 @@ hex_fail	\\x{hex_dig}{0,1}
 
 <xc>\*							{ }
 
-<xc><<EOF>>						{ yyerror(NULL, "unexpected end of comment"); }
+<xc><<EOF>>						{ jsonpath_yyerror(NULL, "unexpected end of comment"); }
 
 \&\&							{ return AND_P; }
 
@@ -244,10 +253,10 @@ hex_fail	\\x{hex_dig}{0,1}
 									return INT_P;
 								}
 
-{realfail}						{ yyerror(NULL, "invalid numeric literal"); }
-{integer_junk}					{ yyerror(NULL, "trailing junk after numeric literal"); }
-{decimal_junk}					{ yyerror(NULL, "trailing junk after numeric literal"); }
-{real_junk}						{ yyerror(NULL, "trailing junk after numeric literal"); }
+{realfail}						{ jsonpath_yyerror(NULL, "invalid numeric literal"); }
+{integer_junk}					{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
+{decimal_junk}					{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
+{real_junk}						{ jsonpath_yyerror(NULL, "trailing junk after numeric literal"); }
 
 \"								{
 									addchar(true, '\0');

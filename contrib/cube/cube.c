@@ -119,11 +119,11 @@ cube_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	NDBOX	   *result;
+	Size		scanbuflen;
 
-	cube_scanner_init(str);
+	cube_scanner_init(str, &scanbuflen);
 
-	if (cube_yyparse(&result) != 0)
-		cube_yyerror(&result, "cube parser failed");
+	cube_yyparse(&result, scanbuflen);
 
 	cube_scanner_finish();
 

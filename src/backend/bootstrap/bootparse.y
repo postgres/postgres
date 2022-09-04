@@ -488,5 +488,3 @@ boot_ident:
 		| XNULL			{ $$ = pstrdup($1); }
 		;
 %%
-
-#include "bootscanner.c"

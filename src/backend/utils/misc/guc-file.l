@@ -1,4 +1,4 @@
-/* -*-pgsql-c-*- */
+%top{
 /*
  * Scanner for the configuration file
  *
@@ -6,8 +6,6 @@
  *
  * src/backend/utils/misc/guc-file.l
  */
-
-%{
 
 #include "postgres.h"
 
@@ -19,8 +17,12 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
+#include <sys/stat.h>
+#include "utils/memutils.h"
+}
 
 
+%{
 /*
  * flex emits a yy_fatal_error() function that it calls in response to
  * critical errors like malloc failure, file I/O errors, and detection of

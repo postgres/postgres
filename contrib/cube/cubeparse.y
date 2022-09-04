@@ -23,9 +23,6 @@
 #define YYMALLOC palloc
 #define YYFREE   pfree
 
-static char *scanbuf;
-static int	scanbuflen;
-
 static int item_count(const char *s, char delim);
 static NDBOX *write_box(int dim, char *str1, char *str2);
 static NDBOX *write_point_as_box(int dim, char *str);
@@ -34,6 +31,7 @@ static NDBOX *write_point_as_box(int dim, char *str);
 
 /* BISON Declarations */
 %parse-param {NDBOX **result}
+%parse-param {Size scanbuflen}
 %expect 0
 %name-prefix="cube_yy"
 
@@ -265,5 +263,3 @@ write_point_as_box(int dim, char *str)
 
 	return bp;
 }
-
-#include "cubescan.c"

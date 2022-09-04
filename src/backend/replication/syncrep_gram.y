@@ -112,5 +112,3 @@ create_syncrep_config(const char *num_sync, List *members, uint8 syncrep_method)
 
 	return config;
 }
-
-#include "syncrep_scanner.c"
