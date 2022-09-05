@@ -7,6 +7,7 @@
 
 #include "catalog/pg_type.h"
 #include "lib/qunique.h"
+#include "miscadmin.h"
 #include "trgm.h"
 #include "tsearch/ts_locale.h"
 #include "utils/lsyscache.h"
@@ -492,8 +493,12 @@ iterate_word_similarity(int *trg2indexes,
 
 	for (i = 0; i < len2; i++)
 	{
+		int			trgindex;
+
+		CHECK_FOR_INTERRUPTS();
+
 		/* Get index of next trigram */
-		int			trgindex = trg2indexes[i];
+		trgindex = trg2indexes[i];
 
 		/* Update last position of this trigram */
 		if (lower >= 0 || found[trgindex])
