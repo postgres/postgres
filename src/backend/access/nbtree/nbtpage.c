@@ -1198,8 +1198,25 @@ _bt_lock_branch_parent(Relation rel, BlockNumber child, BTStack stack,
 	stack->bts_btentry = child;
 	pbuf = _bt_getstackbuf(rel, stack);
 	if (pbuf == InvalidBuffer)
-		elog(ERROR, "failed to re-find parent key in index \"%s\" for deletion target page %u",
-			 RelationGetRelationName(rel), child);
+	{
+		/*
+		 * Failed to "re-find" a pivot tuple whose downlink matched our child
+		 * block number on the parent level -- the index must be corrupt.
+		 * Don't even try to delete the leafbuf subtree.  Just report the
+		 * issue and press on with vacuuming the index.
+		 *
+		 * Note: _bt_getstackbuf() recovers from concurrent page splits that
+		 * take place on the parent level.  Its approach is a near-exhaustive
+		 * linear search.  This also gives it a surprisingly good chance of
+		 * recovering in the event of a buggy or inconsistent opclass.  But we
+		 * don't rely on that here.
+		 */
+		ereport(LOG,
+				(errcode(ERRCODE_INDEX_CORRUPTED),
+				 errmsg_internal("failed to re-find parent key in index \"%s\" for deletion target page %u",
+								 RelationGetRelationName(rel), child)));
+		return false;
+	}
 	parent = stack->bts_blkno;
 	poffset = stack->bts_offset;
 
