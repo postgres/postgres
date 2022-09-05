@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:21+0000\n"
-"PO-Revision-Date: 2021-05-21 23:23-0500\n"
+"PO-Revision-Date: 2022-09-03 16:49+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -34,12 +34,12 @@ msgstr "precaución: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr ""
+msgstr "detalle: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr ""
+msgstr "consejo: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -412,7 +412,7 @@ msgstr "no se pudo abrir el archivo de origen «%s»: %m"
 #: local_source.c:117
 #, c-format
 msgid "size of source file \"%s\" changed concurrently: %d bytes expected, %d copied"
-msgstr ""
+msgstr "el tamaño del archivo de origen «%s» cambió concurrentemente: se esperaban %d bytes, se copiaron %d"
 
 #: local_source.c:121 local_source.c:172
 #, c-format
@@ -430,10 +430,9 @@ msgid "unexpected EOF while reading file \"%s\""
 msgstr "EOF inesperado mientras se leía el archivo «%s»"
 
 #: parsexlog.c:80 parsexlog.c:139 parsexlog.c:199
-#, fuzzy, c-format
-#| msgid "Failed while allocating a WAL reading processor."
+#, c-format
 msgid "out of memory while allocating a WAL reading processor"
-msgstr "Falló mientras se emplazaba un procesador de lectura de WAL."
+msgstr "memoria agotada mientras se emplazaba un procesador de lectura de WAL"
 
 #: parsexlog.c:92 parsexlog.c:146
 #, c-format
@@ -448,7 +447,7 @@ msgstr "no se pudo leer el registro WAL en %X/%X"
 #: parsexlog.c:108
 #, c-format
 msgid "end pointer %X/%X is not a valid end point; expected %X/%X"
-msgstr ""
+msgstr "el puntero de término %X/%X no es un punto válido; se esperaba %X/%X"
 
 #: parsexlog.c:212
 #, c-format
@@ -466,10 +465,9 @@ msgid "could not seek in file \"%s\": %m"
 msgstr "no se pudo posicionar (seek) el archivo «%s»: %m"
 
 #: parsexlog.c:440
-#, fuzzy, c-format
-#| msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
+#, c-format
 msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
-msgstr "el registro WAL modifica una relación, pero el tipo de registro no es reconocido lsn: %X/%X, rmgr: %s, info: %02X"
+msgstr "el registro WAL modifica una relación, pero el tipo de registro no es reconocido: lsn: %X/%X, rmid: %d, rmgr: %s, info: %02X"
 
 #: pg_rewind.c:86
 #, c-format
@@ -547,16 +545,13 @@ msgstr ""
 "                                 (requiere --source-server)\n"
 
 #: pg_rewind.c:100
-#, fuzzy, c-format
-#| msgid ""
-#| "  -c, --restore-target-wal       use restore_command in target configuration to\n"
-#| "                                 retrieve WAL files from archives\n"
+#, c-format
 msgid ""
 "      --config-file=FILENAME     use specified main server configuration\n"
 "                                 file when running target cluster\n"
 msgstr ""
-"  -c, --restore-target-wal       utilizar restore_command de la configuración\n"
-"                                 de destino para obtener archivos WAL\n"
+"      --config-file=ARCHIVO      utilizar el archivo de configuración del servidor\n"
+"                                 principal especificado al ejecutar el clúster de destino\n"
 
 #: pg_rewind.c:102
 #, c-format
@@ -783,28 +778,14 @@ msgstr[0] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 M
 msgstr[1] "El tamaño del segmento de WAL debe ser una potencia de dos entre 1 MB y 1 GB, pero el archivo de control especifica %d bytes"
 
 #: pg_rewind.c:1042 pg_rewind.c:1112
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
-msgstr ""
-"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-"directorio que «%s».\n"
-"Verifique su instalación."
+msgstr "el programa «%s» es requerido por %s, pero no se encontró en el mismo directorio que «%s»"
 
 #: pg_rewind.c:1045 pg_rewind.c:1115
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
-msgstr ""
-"El programa «%s» fue encontrado por «%s»,\n"
-"pero no es de la misma versión que %s.\n"
-"Verifique su instalación."
+msgstr "el programa «%s» fue encontrado por «%s» pero no es de la misma versión que %s"
 
 #: pg_rewind.c:1078
 #, c-format
@@ -879,7 +860,7 @@ msgstr "largo de registro no válido en %X/%X: se esperaba %u, se obtuvo %u"
 #: xlogreader.c:699
 #, c-format
 msgid "out of memory while trying to decode a record of length %u"
-msgstr ""
+msgstr "memoria agotada mientras se intentaba decodificar un registro de largo %u"
 
 #: xlogreader.c:721
 #, c-format
@@ -972,16 +953,14 @@ msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLE no está definido, pero posición del agujero es %u largo %u en %X/%X"
 
 #: xlogreader.c:1803
-#, fuzzy, c-format
-#| msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
+#, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_IS_COMPRESSED definido, pero largo de imagen de bloque es %u en %X/%X"
+msgstr "BKPIMAGE_COMPRESSED definido, pero largo de imagen de bloque es %u en %X/%X"
 
 #: xlogreader.c:1818
-#, fuzzy, c-format
-#| msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
+#, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "ni BKPIMAGE_HAS_HOLE ni BKPIMAGE_IS_COMPRESSED está definido, pero largo de imagen de bloque es %u en %X/%X"
+msgstr "ni BKPIMAGE_HAS_HOLE ni BKPIMAGE_COMPRESSED están definidos, pero el largo de imagen de bloque es %u en %X/%X"
 
 #: xlogreader.c:1834
 #, c-format
@@ -1001,51 +980,19 @@ msgstr "registro con largo no válido en %X/%X"
 #: xlogreader.c:1938
 #, c-format
 msgid "failed to locate backup block with ID %d in WAL record"
-msgstr ""
+msgstr "no se pudo localizar un bloque de respaldo con ID %d en el registro WAL"
 
 #: xlogreader.c:2044 xlogreader.c:2061
 #, c-format
 msgid "image at %X/%X compressed with %s not supported by build, block %d"
-msgstr ""
+msgstr "imagen en %X/%X comprimida con %s que no está soportado por esta instalación, bloque %d"
 
 #: xlogreader.c:2070
 #, c-format
 msgid "image at %X/%X compressed with unknown method, block %d"
-msgstr ""
+msgstr "imagen %X/%X comprimida con un método desconocido, bloque %d"
 
 #: xlogreader.c:2078
 #, c-format
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "imagen comprimida no válida en %X/%X, bloque %d"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Pruebe «%s --help» para mayor información.\n"
-
-#, c-format
-#~ msgid "You must run %s as the PostgreSQL superuser.\n"
-#~ msgstr "Debe ejecutar %s con el superusuario de PostgreSQL.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-#~ "directorio que «%s».\n"
-#~ "Verifique su instalación."
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "El programa «%s» fue encontrado por «%s»,\n"
-#~ "pero no es de la misma versión que %s.\n"
-#~ "Verifique su instalación."

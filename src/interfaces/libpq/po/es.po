@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:10+0000\n"
+"POT-Creation-Date: 2022-09-04 15:40+0000\n"
 "PO-Revision-Date: 2022-08-08 11:48+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -77,7 +77,7 @@ msgstr "no se pudo generar nonce\n"
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
 #: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3215 fe-exec.c:3399
-#: fe-exec.c:4177 fe-exec.c:4342 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-exec.c:4181 fe-exec.c:4346 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
 #: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
@@ -132,8 +132,8 @@ msgid "out of memory"
 msgstr "memoria agotada"
 
 #: fe-auth-scram.c:943
-msgid "failed to generate random salt"
-msgstr "falló la generación de una sal aleatoria"
+msgid "could not generate random salt"
+msgstr "no se pudo generar una sal aleatoria"
 
 #: fe-auth.c:76
 #, c-format
@@ -778,7 +778,7 @@ msgstr "el número de parámetro %d está fuera del rango 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:4068 fe-exec.c:4159
+#: fe-exec.c:4072 fe-exec.c:4163
 msgid "incomplete multibyte character\n"
 msgstr "carácter multibyte incompleto\n"
 
@@ -1207,7 +1207,6 @@ msgstr "el archivo de llave privada «%s» no es un archivo regular\n"
 
 #: fe-secure-openssl.c:1403
 #, c-format
-#| msgid "File must have permissions u=rw (0600) or less if owned by the database user, or permissions u=rw,g=r (0640) or less if owned by root."
 msgid "private key file \"%s\" has group or world access; file must have permissions u=rw (0600) or less if owned by the current user, or permissions u=rw,g=r (0640) or less if owned by root\n"
 msgstr "el archivo de llave privada «%s» tiene acceso de grupo o para todos; debe tener permisos u=rw (0600) o menos si es de propiedad del usuario de base de datos, o permisos u=rw,g=r (0640) o menos si es de root\n"
 
@@ -1260,3 +1259,6 @@ msgstr "no se pudo enviar datos al servidor: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "código de error de socket no reconocido: 0x%08X/%d"
+
+#~ msgid "failed to generate random salt"
+#~ msgstr "falló la generación de una sal aleatoria"

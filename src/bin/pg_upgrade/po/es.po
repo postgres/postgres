@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:19+0000\n"
-"PO-Revision-Date: 2021-10-14 10:14-0500\n"
+"PO-Revision-Date: 2022-09-03 16:45+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -99,10 +99,9 @@ msgid "Checking cluster versions"
 msgstr "Verificando las versiones de los clústers"
 
 #: check.c:302
-#, fuzzy, c-format
-#| msgid "This utility can only upgrade from PostgreSQL version 8.4 and later.\n"
+#, c-format
 msgid "This utility can only upgrade from PostgreSQL version %s and later.\n"
-msgstr "Este programa sólo puede actualizar desde PostgreSQL versión 8.4 y posterior.\n"
+msgstr "Este programa sólo puede actualizar desde PostgreSQL versión %s y posterior.\n"
 
 #: check.c:307
 #, c-format
@@ -149,16 +148,14 @@ msgid "lc_ctype values for database \"%s\" do not match:  old \"%s\", new \"%s\"
 msgstr "valores lc_ctype de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
 #: check.c:365
-#, fuzzy, c-format
-#| msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+#, c-format
 msgid "locale providers for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-msgstr "valores lc_collate de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
+msgstr "proveedores de configuración regional de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
 #: check.c:372
-#, fuzzy, c-format
-#| msgid "lc_collate values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
+#, c-format
 msgid "ICU locale values for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
-msgstr "valores lc_collate de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
+msgstr "valores de configuración regional ICU de la base de datos «%s» no coinciden: antigua «%s», nueva «%s»\n"
 
 #: check.c:447
 #, c-format
@@ -176,23 +173,17 @@ msgid "new cluster tablespace directory already exists: \"%s\"\n"
 msgstr "directorio de tablespace para el nuevo clúster ya existe: «%s»\n"
 
 #: check.c:543
-#, fuzzy, c-format
-#| msgid ""
-#| "\n"
-#| "WARNING:  new data directory should not be inside the old data directory, e.g. %s\n"
+#, c-format
 msgid ""
 "\n"
 "WARNING:  new data directory should not be inside the old data directory, i.e. %s\n"
 msgstr ""
 "\n"
 "ADVERTENCIA: el directorio de datos nuevo no debería estar dentro del directorio antiguo,\n"
-"por ej. %s\n"
+"esto es, %s\n"
 
 #: check.c:567
-#, fuzzy, c-format
-#| msgid ""
-#| "\n"
-#| "WARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n"
+#, c-format
 msgid ""
 "\n"
 "WARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s\n"
@@ -200,7 +191,7 @@ msgstr ""
 "\n"
 "ADVERTENCIA: las ubicaciones de tablespaces definidos por el usuario\n"
 "no deberían estar dentro del directorio de datos,\n"
-"por ej. %s\n"
+"esto es, %s\n"
 
 #: check.c:577
 #, c-format
@@ -268,6 +259,14 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
+"Todas las bases de datos que no son template0 deben permitir conexiones,\n"
+"es decir, pg_database.datallowconn debe ser true. Su instalación contiene\n"
+"bases de datos que no son template0 que tienen pg_database.datallowconn\n"
+"definido a false. Considere permitir conexiones para todas las bases de\n"
+"datos que no son template0 o eliminar las bases de datos que no permiten\n"
+"conexión. Un listado de las bases de datos con el problema se encuentra en:\n"
+"    %s\n"
+"\n"
 
 #: check.c:798
 #, c-format
@@ -333,10 +332,9 @@ msgstr ""
 "\n"
 
 #: check.c:1024
-#, fuzzy, c-format
-#| msgid "Checking for incompatible \"line\" data type"
+#, c-format
 msgid "Checking for incompatible polymorphic functions"
-msgstr "Verificando datos de usuario de tipo «line» incompatible"
+msgstr "Verificando funciones polimórficas incompatibles"
 
 #: check.c:1126
 #, c-format
@@ -350,6 +348,14 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
+"Su instalación contiene objetos definidos por el usuario que hacen referencia\n"
+"a funciones polimórficas con argumentos de tipo «anyarray» o «anyelement».\n"
+"Esos objetos definidos por el usuario deben eliminarse antes de actualizar\n"
+"y se pueden restaurar después, cambiándolos para que hagan referencia a las nuevas\n"
+"funciones correspondientes con argumentos de tipo «anycompatiblearray» y\n"
+"«anycompatible». Una lista de los objetos problemáticos está en el archivo:\n"
+"    %s\n"
+"\n"
 
 #: check.c:1151
 #, c-format
@@ -773,10 +779,9 @@ msgid "Creating dump of global objects"
 msgstr "Creando el volcado de objetos globales"
 
 #: dump.c:32
-#, fuzzy, c-format
-#| msgid "Creating dump of database schemas\n"
+#, c-format
 msgid "Creating dump of database schemas"
-msgstr "Creando el volcado de esquemas de bases de datos\n"
+msgstr "Creando el volcado de esquemas de bases de datos"
 
 #: exec.c:45
 #, c-format
@@ -1200,10 +1205,9 @@ msgid "  -k, --link                    link instead of copying files to new clus
 msgstr "  -k, --link                    enlazar (link) archivos en vez de copiarlos\n"
 
 #: option.c:275
-#, fuzzy, c-format
-#| msgid "  -N, --no-sync             do not wait for changes to be written safely to disk\n"
+#, c-format
 msgid "  -N, --no-sync                 do not wait for changes to be written safely to disk\n"
-msgstr "  -N, --no-sync             no esperar que los cambios se sincronicen a disco\n"
+msgstr "  -N, --no-sync                 no esperar que los cambios se sincronicen a disco\n"
 
 #: option.c:276
 #, c-format
@@ -1447,16 +1451,14 @@ msgstr ""
 
 #: pg_upgrade.c:231 pg_upgrade.c:244 pg_upgrade.c:251 pg_upgrade.c:258
 #: pg_upgrade.c:276 pg_upgrade.c:287
-#, fuzzy, c-format
-#| msgid "directory name too long"
+#, c-format
 msgid "directory path for new cluster is too long\n"
-msgstr "nombre de directorio demasiado largo"
+msgstr "nombre de directorio para el nuevo clúster es demasiado largo\n"
 
 #: pg_upgrade.c:265 pg_upgrade.c:267 pg_upgrade.c:269 pg_upgrade.c:271
-#, fuzzy, c-format
-#| msgid "could not create directory \"%s\": %m"
+#, c-format
 msgid "could not create directory \"%s\": %m\n"
-msgstr "no se pudo crear el directorio «%s»: %m"
+msgstr "no se pudo crear el directorio «%s»: %m\n"
 
 #: pg_upgrade.c:320
 #, c-format
@@ -1497,10 +1499,9 @@ msgid "Restoring global objects in the new cluster"
 msgstr "Restaurando objetos globales en el nuevo clúster"
 
 #: pg_upgrade.c:422
-#, fuzzy, c-format
-#| msgid "Restoring database schemas in the new cluster\n"
+#, c-format
 msgid "Restoring database schemas in the new cluster"
-msgstr "Restaurando esquemas de bases de datos en el clúster nuevo\n"
+msgstr "Restaurando esquemas de bases de datos en el clúster nuevo"
 
 #: pg_upgrade.c:528
 #, c-format
@@ -1553,22 +1554,19 @@ msgid "Setting minmxid counter in new cluster"
 msgstr "Seteando contador minmxid en el clúster nuevo"
 
 #: relfilenode.c:35
-#, fuzzy, c-format
-#| msgid "Cloning user relation files\n"
+#, c-format
 msgid "Cloning user relation files"
-msgstr "Clonando archivos de relaciones de usuario\n"
+msgstr "Clonando archivos de relaciones de usuario"
 
 #: relfilenode.c:38
-#, fuzzy, c-format
-#| msgid "Copying user relation files\n"
+#, c-format
 msgid "Copying user relation files"
-msgstr "Copiando archivos de relaciones de usuario\n"
+msgstr "Copiando archivos de relaciones de usuario"
 
 #: relfilenode.c:41
-#, fuzzy, c-format
-#| msgid "Linking user relation files\n"
+#, c-format
 msgid "Linking user relation files"
-msgstr "Enlazando archivos de relaciones de usuario\n"
+msgstr "Enlazando archivos de relaciones de usuario"
 
 #: relfilenode.c:115
 #, c-format
@@ -1708,16 +1706,14 @@ msgid "%-*s"
 msgstr "%-*s"
 
 #: util.c:95
-#, fuzzy, c-format
-#| msgid "could not access directory \"%s\": %m"
+#, c-format
 msgid "could not access directory \"%s\": %m\n"
-msgstr "no se pudo acceder al directorio «%s»: %m"
+msgstr "no se pudo acceder al directorio «%s»: %m\n"
 
 #: util.c:158
-#, fuzzy, c-format
-#| msgid "%-*s"
+#, c-format
 msgid "%-*s\n"
-msgstr "%-*s"
+msgstr "%-*s\n"
 
 #: util.c:259
 #, c-format
@@ -1874,110 +1870,3 @@ msgstr ""
 "cuando se ejecute en psql con el superusuario de la base de datos\n"
 "actualizará estas extensiones.\n"
 "\n"
-
-#, c-format
-#~ msgid "When checking a pre-PG 9.1 live old server, you must specify the old server's port number.\n"
-#~ msgstr "Al verificar un servidor antiguo anterior a 9.1, debe especificar el port de éste.\n"
-
-#, c-format
-#~ msgid "All non-template0 databases must allow connections, i.e. their pg_database.datallowconn must be true\n"
-#~ msgstr "Todas las bases de datos no-template0 deben permitir conexiones, es decir su pg_database.datallowconn debe ser «true»\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "The old cluster has a \"plpython_call_handler\" function defined\n"
-#~ "in the \"public\" schema which is a duplicate of the one defined\n"
-#~ "in the \"pg_catalog\" schema.  You can confirm this by executing\n"
-#~ "in psql:\n"
-#~ "\n"
-#~ "    \\df *.plpython_call_handler\n"
-#~ "\n"
-#~ "The \"public\" schema version of this function was created by a\n"
-#~ "pre-8.1 install of plpython, and must be removed for pg_upgrade\n"
-#~ "to complete because it references a now-obsolete \"plpython\"\n"
-#~ "shared object file.  You can remove the \"public\" schema version\n"
-#~ "of this function by running the following command:\n"
-#~ "\n"
-#~ "    DROP FUNCTION public.plpython_call_handler()\n"
-#~ "\n"
-#~ "in each affected database:\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "El clúster antiguo tiene la función «plpython_call_handler» definida\n"
-#~ "en el esquema «public» que es un duplicado de la que está definida en\n"
-#~ "el esquema «pg_catalog». Puede confirmar esto ejecutando lo siguiente\n"
-#~ "en psql:\n"
-#~ "\n"
-#~ "    \\df *.plpython_call_handler\n"
-#~ "\n"
-#~ "La versión del esquema «public» de esta función fue creada por una\n"
-#~ "instalación pre-8.1 de plpython, y debe eliminarse para que pg_upgrade\n"
-#~ "pueda completar puesto que hace referencia a un archivo objeto compartido\n"
-#~ "«plpython» ahora obsoleto.\n"
-#~ "Puede eliminar la versión del esquema «public» de esta función ejecutando\n"
-#~ "la siguiente orden:\n"
-#~ "\n"
-#~ "    DROP FUNCTION public.plpython_call_handler()\n"
-#~ "\n"
-#~ "en cada base de datos afectada:\n"
-#~ "\n"
-
-#, c-format
-#~ msgid "    %s\n"
-#~ msgstr "    %s\n"
-
-#, c-format
-#~ msgid "Remove the problem functions from the old cluster to continue.\n"
-#~ msgstr "Elimine las funciones problemáticas del clúster antiguo para continuar.\n"
-
-#, c-format
-#~ msgid "mappings for database \"%s\":\n"
-#~ msgstr "mapeos para la base de datos «%s»:\n"
-
-#, c-format
-#~ msgid "%s.%s: %u to %u\n"
-#~ msgstr "%s.%s: %u a %u\n"
-
-#, c-format
-#~ msgid " "
-#~ msgstr " "
-
-#, c-format
-#~ msgid "Checking for large objects"
-#~ msgstr "Buscando objetos grandes"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "Your installation contains large objects.  The new database has an\n"
-#~ "additional large object permission table.  After upgrading, you will be\n"
-#~ "given a command to populate the pg_largeobject_metadata table with\n"
-#~ "default permissions.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Su instalación contiene objetos grandes.  La base de datos nueva\n"
-#~ "tiene una tabla adicional de permisos de objetos grandes.  Después de\n"
-#~ "actualizar, se le dará una instrucción para poblar la tabla\n"
-#~ "pg_largeobject_metadata con privilegios por omisión.\n"
-
-#, c-format
-#~ msgid ""
-#~ "\n"
-#~ "Your installation contains large objects.  The new database has an\n"
-#~ "additional large object permission table, so default permissions must be\n"
-#~ "defined for all large objects.  The file\n"
-#~ "    %s\n"
-#~ "when executed by psql by the database superuser will set the default\n"
-#~ "permissions.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Su instalación contiene objetos grandes.  La base de datos nueva tiene\n"
-#~ "una tabla adicional de permisos de objetos grandes, por lo que deben ser\n"
-#~ "definidos permisos por omisión para todos los objetos grandes. El archivo\n"
-#~ "    %s\n"
-#~ "cuando se ejecute en psql con el superusuario de la base de datos\n"
-#~ "establecerá los privilegios por omisión.\n"

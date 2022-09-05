@@ -531,19 +531,3 @@ msgstr "no hay bases de datos a las que se pueda conectar que coincidan con «%s
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "error interno: se recibió pattern_id de relación inesperado (%d)"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "number of parallel jobs must be at least 1"
-#~ msgstr "número de trabajos en paralelo debe ser al menos 1"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Pruebe «%s --help» para mayor información.\n"
-
-#, c-format
-#~ msgid "command was: %s"
-#~ msgstr "la orden era: %s"

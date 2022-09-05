@@ -513,7 +513,3 @@ msgstr "Versión de sumas de verificación de datos:  %u\n"
 #, c-format
 msgid "Mock authentication nonce:            %s\n"
 msgstr "Nonce para autentificación simulada:        %s\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Intente «%s --help» para mayor información.\n"

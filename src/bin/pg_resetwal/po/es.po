@@ -679,11 +679,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Prueba con «%s --help» para más información\n"

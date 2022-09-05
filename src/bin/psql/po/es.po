@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: psql (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:17+0000\n"
-"PO-Revision-Date: 2022-01-12 17:40-0500\n"
+"PO-Revision-Date: 2022-09-03 17:02+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -36,12 +36,12 @@ msgstr "precaución: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr ""
+msgstr "detalle: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr ""
+msgstr "consejo: "
 
 #: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
@@ -181,16 +181,14 @@ msgid "skipping recursive expansion of variable \"%s\""
 msgstr "saltando expansión recursiva de la variable «%s»"
 
 #: ../../port/thread.c:100 ../../port/thread.c:136
-#, fuzzy, c-format
-#| msgid "could not look up local user ID %d: %s\n"
+#, c-format
 msgid "could not look up local user ID %d: %s"
-msgstr "no se pudo buscar el usuario local de ID %d: %s\n"
+msgstr "no se pudo buscar el usuario local de ID %d: %s"
 
 #: ../../port/thread.c:105 ../../port/thread.c:141
-#, fuzzy, c-format
-#| msgid "local user with ID %d does not exist\n"
+#, c-format
 msgid "local user with ID %d does not exist"
-msgstr "no existe un usuario local con ID %d\n"
+msgstr "no existe un usuario local con ID %d"
 
 #: command.c:233
 #, c-format
@@ -447,10 +445,9 @@ msgstr ""
 "          Algunas características de psql podrían no funcionar.\n"
 
 #: command.c:3686
-#, fuzzy, c-format
-#| msgid "SSL connection (protocol: %s, cipher: %s, bits: %s, compression: %s)\n"
+#, c-format
 msgid "SSL connection (protocol: %s, cipher: %s, compression: %s)\n"
-msgstr "Conexión SSL (protocolo: %s, cifrado: %s, bits: %s, compresión: %s)\n"
+msgstr "Conexión SSL (protocolo: %s, cifrado: %s, compresión: %s)\n"
 
 #: command.c:3687 command.c:3688
 msgid "unknown"
@@ -725,10 +722,9 @@ msgid "\\watch cannot be used with an empty query"
 msgstr "\\watch no puede ser usado con una consulta vacía"
 
 #: command.c:5022
-#, fuzzy, c-format
-#| msgid "could not set environment: %m"
+#, c-format
 msgid "could not set timer: %m"
-msgstr "no se pudo establecer el ambiente: %m"
+msgstr "no se pudo establecer un temporizador: %m"
 
 #: command.c:5084
 #, c-format
@@ -741,10 +737,9 @@ msgid "%s (every %gs)\n"
 msgstr "%s (cada %gs)\n"
 
 #: command.c:5148
-#, fuzzy, c-format
-#| msgid "could not wait for child process: %m"
+#, c-format
 msgid "could not wait for signals: %m"
-msgstr "no se pudo esperar al proceso hijo: %m"
+msgstr "no se pudo esperar señales: %m"
 
 #: command.c:5206 command.c:5213 common.c:568 common.c:575 common.c:1118
 #, c-format
@@ -1235,16 +1230,12 @@ msgid "Ctype"
 msgstr "Ctype"
 
 #: describe.c:945 describe.c:951 describe.c:4874 describe.c:4878
-#, fuzzy
-#| msgid "locale"
 msgid "ICU Locale"
-msgstr "configuración regional"
+msgstr "configuración ICU"
 
 #: describe.c:946 describe.c:952
-#, fuzzy
-#| msgid "Provider"
 msgid "Locale Provider"
-msgstr "Proveedor"
+msgstr "Proveedor de locale"
 
 #: describe.c:964
 msgid "Tablespace"
@@ -1394,10 +1385,9 @@ msgid "Sequence for identity column: %s"
 msgstr "Secuencia para columna identidad: %s"
 
 #: describe.c:1810
-#, fuzzy, c-format
-#| msgid "Unlogged index \"%s.%s\""
+#, c-format
 msgid "Unlogged sequence \"%s.%s\""
-msgstr "Índice unlogged «%s.%s»"
+msgstr "Secuencia unlogged «%s.%s»"
 
 #: describe.c:1813
 #, c-format
@@ -1540,20 +1530,16 @@ msgid "primary key, "
 msgstr "llave primaria, "
 
 #: describe.c:2312
-#, fuzzy
-#| msgid "unique, "
 msgid "unique"
-msgstr "único, "
+msgstr "único"
 
 #: describe.c:2314
 msgid " nulls not distinct"
-msgstr ""
+msgstr " nulls no distintos"
 
 #: describe.c:2315
-#, fuzzy
-#| msgid " "
 msgid ", "
-msgstr " "
+msgstr ", "
 
 #: describe.c:2322
 #, c-format
@@ -1940,40 +1926,29 @@ msgid "List of conversions"
 msgstr "Listado de conversiones"
 
 #: describe.c:4497
-#, fuzzy
-#| msgid "parameter"
 msgid "Parameter"
-msgstr "parámetro"
+msgstr "Parámetro"
 
 #: describe.c:4498
-#, fuzzy
-#| msgid "value"
 msgid "Value"
-msgstr "valor"
+msgstr "Valor"
 
 #: describe.c:4505
-#, fuzzy
-#| msgid "text"
 msgid "Context"
-msgstr "texto"
+msgstr "Contexto"
 
 #: describe.c:4538
-#, fuzzy
-#| msgid "configuration_parameter"
 msgid "List of configuration parameters"
-msgstr "parámetro_de_configuración"
+msgstr "Listado de parámetro de configuración"
 
 #: describe.c:4540
-#, fuzzy
-#| msgid "invalid configuration parameter name \"%s\""
 msgid "List of non-default configuration parameters"
-msgstr "nombre de parámetro de configuración «%s» no válido"
+msgstr "Listado de parámetros de configuración no-default"
 
 #: describe.c:4567
-#, fuzzy, c-format
-#| msgid "The server (version %s) does not support extensions."
+#, c-format
 msgid "The server (version %s) does not support event triggers."
-msgstr "El servidor (versión %s) no soporta extensiones."
+msgstr "El servidor (versión %s) no soporta triggers por eventos."
 
 #: describe.c:4587
 msgid "Event"
@@ -2318,10 +2293,8 @@ msgid "Tables:"
 msgstr "Tablas:"
 
 #: describe.c:6437
-#, fuzzy
-#| msgid "List of schemas"
 msgid "Tables from schemas:"
-msgstr "Listado de esquemas"
+msgstr "Tablas de esquemas:"
 
 #: describe.c:6481
 #, c-format
@@ -2342,13 +2315,11 @@ msgstr "De flujo"
 
 #: describe.c:6514
 msgid "Two-phase commit"
-msgstr ""
+msgstr "Commit 2-fases"
 
 #: describe.c:6515
-#, fuzzy
-#| msgid "Disabled user triggers:"
 msgid "Disable on error"
-msgstr "Disparadores de usuario deshabilitados:"
+msgstr "Desactivar en error"
 
 #: describe.c:6520
 msgid "Synchronous commit"
@@ -2360,7 +2331,7 @@ msgstr "Conninfo"
 
 #: describe.c:6527
 msgid "Skip LSN"
-msgstr ""
+msgstr "Saltar LSN"
 
 #: describe.c:6554
 msgid "List of subscriptions"
@@ -2724,8 +2695,6 @@ msgid "  \\copyright             show PostgreSQL usage and distribution terms\n"
 msgstr "  \\copyright      mostrar términos de uso y distribución de PostgreSQL\n"
 
 #: help.c:193
-#, fuzzy
-#| msgid "  \\crosstabview [COLUMNS] execute query and display results in crosstab\n"
 msgid "  \\crosstabview [COLUMNS] execute query and display result in crosstab\n"
 msgstr "  \\crosstabview [COLUMNAS] ejecutar la consulta y desplegar en «crosstab»\n"
 
@@ -2734,10 +2703,6 @@ msgid "  \\errverbose            show most recent error message at maximum verbo
 msgstr "  \\errverbose     mostrar error más reciente en máxima verbosidad\n"
 
 #: help.c:195
-#, fuzzy
-#| msgid ""
-#| "  \\g [(OPTIONS)] [FILE]  execute query (and send results to file or |pipe);\n"
-#| "                         \\g with no arguments is equivalent to a semicolon\n"
 msgid ""
 "  \\g [(OPTIONS)] [FILE]  execute query (and send result to file or |pipe);\n"
 "                         \\g with no arguments is equivalent to a semicolon\n"
@@ -2754,11 +2719,9 @@ msgid "  \\gexec                 execute query, then execute each value in its r
 msgstr "  \\gexec          ejecutar la consulta, luego ejecuta cada valor del resultado\n"
 
 #: help.c:199
-#, fuzzy
-#| msgid "  \\gset [PREFIX]         execute query and store results in psql variables\n"
 msgid "  \\gset [PREFIX]         execute query and store result in psql variables\n"
 msgstr ""
-"  \\gset [PREFIJO] ejecutar la consulta y almacenar los resultados en variables\n"
+"  \\gset [PREFIJO] ejecutar la consulta y almacenar el resultado en variables\n"
 "                  de psql\n"
 
 #: help.c:200
@@ -2775,14 +2738,8 @@ msgstr "  \\watch [SEGS]   ejecutar consulta cada SEGS segundos\n"
 
 #: help.c:203 help.c:211 help.c:223 help.c:233 help.c:240 help.c:296 help.c:304
 #: help.c:324 help.c:337 help.c:346
-#, fuzzy
-#| msgid ""
-#| "\n"
-#| "\n"
 msgid "\n"
-msgstr ""
-"\n"
-"\n"
+msgstr "\n"
 
 #: help.c:205
 msgid "Help\n"
@@ -2945,10 +2902,8 @@ msgid "  \\dc[S+] [PATTERN]      list conversions\n"
 msgstr "  \\dc[S+] [PATRÓN]  listar conversiones\n"
 
 #: help.c:254
-#, fuzzy
-#| msgid "  \\dc[S+] [PATTERN]      list conversions\n"
 msgid "  \\dconfig[+] [PATTERN]  list configuration parameters\n"
-msgstr "  \\dc[S+] [PATRÓN]  listar conversiones\n"
+msgstr "  \\dconfig[+] [PATRÓN]  listar parámetros de configuración\n"
 
 #: help.c:255
 msgid "  \\dC[+]  [PATTERN]      list casts\n"
@@ -3019,10 +2974,8 @@ msgid "  \\di[S+] [PATTERN]      list indexes\n"
 msgstr "  \\di[S+] [PATRÓN]  listar índices\n"
 
 #: help.c:272
-#, fuzzy
-#| msgid "  \\dl                    list large objects, same as \\lo_list\n"
 msgid "  \\dl[+]                 list large objects, same as \\lo_list\n"
-msgstr "  \\dl               listar objetos grandes, lo mismo que \\lo_list\n"
+msgstr "  \\dl[+]            listar objetos grandes, lo mismo que \\lo_list\n"
 
 #: help.c:273
 msgid "  \\dL[S+] [PATTERN]      list procedural languages\n"
@@ -3122,25 +3075,23 @@ msgstr "Objetos Grandes\n"
 
 #: help.c:299
 msgid "  \\lo_export LOBOID FILE write large object to file\n"
-msgstr ""
+msgstr "  \\lo_export LOBOID ARCHIVO escribir objto grande a archivo\n"
 
 #: help.c:300
-#, fuzzy
-#| msgid "  \\i FILE                execute commands from file\n"
 msgid ""
 "  \\lo_import FILE [COMMENT]\n"
 "                         read large object from file\n"
-msgstr "  \\i ARCHIVO      ejecutar órdenes desde archivo\n"
+msgstr ""
+"  \\lo_import ARCHIVO [COMENTARIO]\n"
+"                         leer objeto grande desde archivo\n"
 
 #: help.c:302
-#, fuzzy
-#| msgid "  \\dl                    list large objects, same as \\lo_list\n"
 msgid "  \\lo_list[+]            list large objects\n"
-msgstr "  \\dl               listar objetos grandes, lo mismo que \\lo_list\n"
+msgstr "  \\lo_list[+]       listar objetos grandes\n"
 
 #: help.c:303
 msgid "  \\lo_unlink LOBOID      delete a large object\n"
-msgstr ""
+msgstr "  \\lo_unlink LOBOID borrar un objeto grande\n"
 
 #: help.c:306
 msgid "Formatting\n"
@@ -3198,7 +3149,7 @@ msgstr "  \\x [on|off|auto] cambiar modo expandido (actualmente %s)\n"
 
 #: help.c:323
 msgid "auto"
-msgstr ""
+msgstr "auto"
 
 #: help.c:326
 msgid "Connection\n"
@@ -3246,12 +3197,8 @@ msgid "  \\cd [DIR]              change the current working directory\n"
 msgstr "  \\cd [DIR]        cambiar el directorio de trabajo actual\n"
 
 #: help.c:341
-#, fuzzy
-#| msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
 msgid "  \\getenv PSQLVAR ENVVAR fetch environment variable\n"
-msgstr ""
-"  \\setenv NOMBRE [VALOR]\n"
-"                   definir o indefinir variable de ambiente\n"
+msgstr "  \\getenv PSQLVAR ENVVAR obtener variable de ambiente\n"
 
 #: help.c:342
 msgid "  \\setenv NAME [VALUE]   set or unset environment variable\n"
@@ -3508,6 +3455,9 @@ msgid ""
 "  SHOW_ALL_RESULTS\n"
 "    show all results of a combined query (\\;) instead of only the last\n"
 msgstr ""
+"  SHOW_ALL_RESULTS\n"
+"    mostrar todos los resultados de una consulta combinada (\\;) en lugar\n"
+"    de sólo mostrar el último\n"
 
 #: help.c:455
 msgid ""
@@ -3802,14 +3752,10 @@ msgid ""
 msgstr "  PSQL_PAGER, PAGER  nombre de programa paginador externo\n"
 
 #: help.c:549
-#, fuzzy
-#| msgid ""
-#| "  PSQL_PAGER, PAGER\n"
-#| "    name of external pager program\n"
 msgid ""
 "  PSQL_WATCH_PAGER\n"
 "    name of external pager program used for \\watch\n"
-msgstr "  PSQL_PAGER, PAGER  nombre de programa paginador externo\n"
+msgstr "  PSQL_WATCH_PAGER   paginador externo para usar con \\watch\n"
 
 #: help.c:552
 msgid ""
@@ -4513,10 +4459,8 @@ msgid "compression_method"
 msgstr "método_de_compresión"
 
 #: sql_help.c:692 sql_help.c:1373
-#, fuzzy
-#| msgid "access_method_type"
 msgid "new_access_method"
-msgstr "tipo_de_método_de_acceso"
+msgstr "nuevo_método_de_acceso"
 
 #: sql_help.c:725 sql_help.c:2523
 msgid "res_proc"
@@ -4575,20 +4519,16 @@ msgid "check_expression"
 msgstr "expresión_check"
 
 #: sql_help.c:897 sql_help.c:899 sql_help.c:901 sql_help.c:2624
-#, fuzzy
-#| msgid "publication_option"
 msgid "publication_object"
-msgstr "opción_de_publicación"
+msgstr "objeto_de_publicación"
 
 #: sql_help.c:903 sql_help.c:2625
 msgid "publication_parameter"
 msgstr "parámetro_de_publicación"
 
 #: sql_help.c:909 sql_help.c:2627
-#, fuzzy
-#| msgid "where action is one of:"
 msgid "where publication_object is one of:"
-msgstr "donde acción es una de:"
+msgstr "donde objeto_de_publicación es uno de:"
 
 #: sql_help.c:952 sql_help.c:1637 sql_help.c:2435 sql_help.c:2662
 #: sql_help.c:3228
@@ -4656,10 +4596,8 @@ msgid "subscription_parameter"
 msgstr "parámetro_de_suscripción"
 
 #: sql_help.c:1164
-#, fuzzy
-#| msgid "like_option"
 msgid "skip_option"
-msgstr "opción_de_like"
+msgstr "opción_skip"
 
 #: sql_help.c:1324 sql_help.c:1327
 msgid "partition_name"
@@ -4768,7 +4706,7 @@ msgstr "clase_de_ops"
 
 #: sql_help.c:1430 sql_help.c:2976
 msgid "referential_action in a FOREIGN KEY/REFERENCES constraint is:"
-msgstr ""
+msgstr "acción_referencial en una restricción FOREIGN KEY/REFERENCES es:"
 
 #: sql_help.c:1448 sql_help.c:1451 sql_help.c:3013
 msgid "tablespace_option"
@@ -5052,34 +4990,24 @@ msgid "encoding"
 msgstr "codificación"
 
 #: sql_help.c:2201
-#, fuzzy
-#| msgid "Strategy"
 msgid "strategy"
-msgstr "Estrategia"
+msgstr "estrategia"
 
 #: sql_help.c:2205
-#, fuzzy
-#| msgid "locale"
 msgid "icu_locale"
-msgstr "configuración regional"
+msgstr "locale_icu"
 
 #: sql_help.c:2206
-#, fuzzy
-#| msgid "provider"
 msgid "locale_provider"
-msgstr "proveedor"
+msgstr "proveedor_locale"
 
 #: sql_help.c:2207
-#, fuzzy
-#| msgid "collation"
 msgid "collation_version"
-msgstr "ordenamiento"
+msgstr "versión_ordenamiento"
 
 #: sql_help.c:2212
-#, fuzzy
-#| msgid "loid"
 msgid "oid"
-msgstr "loid"
+msgstr "oid"
 
 #: sql_help.c:2232
 msgid "constraint"
@@ -5500,22 +5428,16 @@ msgid "where lockmode is one of:"
 msgstr "donde modo_bloqueo es uno de:"
 
 #: sql_help.c:4068
-#, fuzzy
-#| msgid "table_name"
 msgid "target_table_name"
-msgstr "nombre_de_tabla"
+msgstr "nombre_de_tabla_destino"
 
 #: sql_help.c:4069
-#, fuzzy
-#| msgid "target_role"
 msgid "target_alias"
-msgstr "rol_destino"
+msgstr "alias_de_destino"
 
 #: sql_help.c:4070
-#, fuzzy
-#| msgid "data_type"
 msgid "data_source"
-msgstr "tipo_de_dato"
+msgstr "origin_de_datos"
 
 #: sql_help.c:4071 sql_help.c:4594 sql_help.c:4843 sql_help.c:5074
 msgid "join_condition"
@@ -5523,71 +5445,51 @@ msgstr "condición_de_join"
 
 #: sql_help.c:4072
 msgid "when_clause"
-msgstr ""
+msgstr "cláusula_when"
 
 #: sql_help.c:4073
-#, fuzzy
-#| msgid "where aggregate_signature is:"
 msgid "where data_source is:"
-msgstr "donde signatura_func_agregación es:"
+msgstr "donde origen_de_datos es:"
 
 #: sql_help.c:4074
-#, fuzzy
-#| msgid "source_table"
 msgid "source_table_name"
-msgstr "tabla_origen"
+msgstr "nombre_tabla_origen"
 
 #: sql_help.c:4075
-#, fuzzy
-#| msgid "source_type"
 msgid "source_query"
-msgstr "tipo_fuente"
+msgstr "consulta_origen"
 
 #: sql_help.c:4076
-#, fuzzy
-#| msgid "source_table"
 msgid "source_alias"
-msgstr "tabla_origen"
+msgstr "alias_origen"
 
 #: sql_help.c:4077
-#, fuzzy
-#| msgid "and with_query is:"
 msgid "and when_clause is:"
-msgstr "y consulta_with es:"
+msgstr "y cláusula_when es:"
 
 #: sql_help.c:4079
-#, fuzzy
-#| msgid "update"
 msgid "merge_update"
-msgstr "update"
+msgstr "update_de_merge"
 
 #: sql_help.c:4080
-#, fuzzy
-#| msgid "delete"
 msgid "merge_delete"
-msgstr "delete"
+msgstr "delete_de_merge"
 
 #: sql_help.c:4082
-#, fuzzy
-#| msgid "insert"
 msgid "merge_insert"
-msgstr "insert"
+msgstr "insert_de_merge"
 
 #: sql_help.c:4083
-#, fuzzy
-#| msgid "and aggregate_signature is:"
 msgid "and merge_insert is:"
-msgstr "y signatura_func_agregación es:"
+msgstr "y insert_de_merge es:"
 
 #: sql_help.c:4086
-#, fuzzy
-#| msgid "and aggregate_signature is:"
 msgid "and merge_update is:"
-msgstr "y signatura_func_agregación es:"
+msgstr "y update_de_merge es:"
 
 #: sql_help.c:4091
 msgid "and merge_delete is:"
-msgstr ""
+msgstr "y delete_de_merge es:"
 
 #: sql_help.c:4132
 msgid "payload"
@@ -6315,10 +6217,8 @@ msgid "lock a table"
 msgstr "bloquea una tabla"
 
 #: sql_help.c:6024
-#, fuzzy
-#| msgid "Minimum number of tuple inserts, updates, or deletes prior to analyze."
 msgid "conditionally insert, update, or delete rows of a table"
-msgstr "Número mínimo de inserciones, actualizaciones y eliminaciones de tuplas antes de ejecutar analyze."
+msgstr "condicionalmente inserta, actualiza o elimina filas de una tabla"
 
 #: sql_help.c:6030
 msgid "position a cursor"
@@ -6499,93 +6399,3 @@ msgid ""
 msgstr ""
 "valor «%s» no reconocido para «%s»\n"
 "Los valores disponibles son: %s."
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "The server (version %s) does not support editing function source."
-#~ msgstr "El servidor (versión %s) no soporta la edición del código fuente de funciones."
-
-#, c-format
-#~ msgid "The server (version %s) does not support editing view definitions."
-#~ msgstr "El servidor (versión %s) no soporta la edición de vistas."
-
-#, c-format
-#~ msgid "The server (version %s) does not support showing function source."
-#~ msgstr "El servidor (versión %s) no soporta el despliegue del código fuente de funciones."
-
-#, c-format
-#~ msgid "The server (version %s) does not support showing view definitions."
-#~ msgstr "El servidor (versión %s) no soporta el despliegue de definiciones de vistas."
-
-#, c-format
-#~ msgid "unexpected result status for \\watch"
-#~ msgstr "estado de resultado inesperado de \\watch"
-
-#, c-format
-#~ msgid "The server (version %s) does not support savepoints for ON_ERROR_ROLLBACK."
-#~ msgstr "El servidor (versión %s) no soporta savepoints para ON_ERROR_ROLLBACK."
-
-#, c-format
-#~ msgid "The server (version %s) does not support tablespaces."
-#~ msgstr "El servidor (versión %s) no soporta tablespaces."
-
-#, c-format
-#~ msgid "The server (version %s) does not support altering default privileges."
-#~ msgstr "El servidor (versión %s) no soporta la alteración de privilegios por omisión."
-
-#, c-format
-#~ msgid "Special relation \"%s.%s\""
-#~ msgstr "Relación especial «%s.%s»"
-
-#~ msgid "Disabled triggers:"
-#~ msgstr "Disparadores deshabilitados:"
-
-#, c-format
-#~ msgid "The server (version %s) does not support per-database role settings."
-#~ msgstr "El servidor (versión %s) no soporta parámetros por base de datos y rol."
-
-#~ msgid "special"
-#~ msgstr "especial"
-
-#, c-format
-#~ msgid "The server (version %s) does not support collations."
-#~ msgstr "El servidor (versión %s) no soporta «collations»."
-
-#, c-format
-#~ msgid "The server (version %s) does not support full text search."
-#~ msgstr "El servidor (versión %s) no soporta búsqueda en texto."
-
-#, c-format
-#~ msgid "The server (version %s) does not support foreign-data wrappers."
-#~ msgstr "El servidor (versión %s) no soporta conectores de datos externos."
-
-#, c-format
-#~ msgid "The server (version %s) does not support foreign servers."
-#~ msgstr "El servidor (versión %s) no soporta servidores foráneos."
-
-#, c-format
-#~ msgid "The server (version %s) does not support user mappings."
-#~ msgstr "El servidor (versión %s) no soporta mapeos de usuario."
-
-#, c-format
-#~ msgid "The server (version %s) does not support foreign tables."
-#~ msgstr "El servidor (versión %s) no soporta tablas foráneas."
-
-#, c-format
-#~ msgid ""
-#~ "  \\lo_export LOBOID FILE\n"
-#~ "  \\lo_import FILE [COMMENT]\n"
-#~ "  \\lo_list\n"
-#~ "  \\lo_unlink LOBOID      large object operations\n"
-#~ msgstr ""
-#~ "  \\lo_export LOBOID ARCHIVO\n"
-#~ "  \\lo_import ARCHIVO [COMENTARIO]\n"
-#~ "  \\lo_list\n"
-#~ "  \\lo_unlink LOBOID   operaciones con objetos grandes\n"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Use «%s --help» para obtener más información.\n"

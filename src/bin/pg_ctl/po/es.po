@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:18+0000\n"
-"PO-Revision-Date: 2021-05-20 23:12-0500\n"
+"PO-Revision-Date: 2022-09-03 15:55+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -180,28 +180,14 @@ msgid "%s: could not send stop signal (PID: %ld): %s\n"
 msgstr "%s: falló la señal de detención (PID: %ld): %s\n"
 
 #: pg_ctl.c:889
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n"
-msgstr ""
-"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-"directorio que «%s».\n"
-"Verifique su instalación."
+msgstr "el programa «%s» es requerido por %s, pero no fue encontrado en el mismo directorio que «%s»\n"
 
 #: pg_ctl.c:892
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s\n"
-msgstr ""
-"El programa «%s» fue encontrado por «%s»,\n"
-"pero no es de la misma versión que %s.\n"
-"Verifique su instalación."
+msgstr "El programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s\n"
 
 #: pg_ctl.c:923
 #, c-format
@@ -894,32 +880,3 @@ msgstr "%s: no se especificó operación\n"
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: no se especificó directorio de datos y la variable PGDATA no está definida\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-#~ "directorio que «%s».\n"
-#~ "Verifique su instalación.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "El programa «%s» fue encontrado por «%s», pero no es\n"
-#~ "de la misma versión que «%s».\n"
-#~ "Verifique su instalación.\n"
-
-#~ msgid ""
-#~ "WARNING: online backup mode is active\n"
-#~ "Shutdown will not complete until pg_stop_backup() is called.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "ATENCIÓN: el modo de respaldo en línea está activo\n"
-#~ "El apagado no se completará hasta que se invoque la función pg_stop_backup().\n"
-#~ "\n"

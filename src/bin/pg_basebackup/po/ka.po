@@ -1,0 +1,1910 @@
+# Georgian message translation file for pg_basebackup
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_basebackup (PostgreSQL) package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_basebackup (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-07-02 04:48+0000\n"
+"PO-Revision-Date: 2022-08-12 12:13+0200\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <nothing>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1.1\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "შეცდომა: "
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "გაფრთხილება: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "დეტალები: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "მინიშნება: "
+
+#: ../../common/compression.c:157
+msgid "found empty string where a compression option was expected"
+msgstr "შეკუმშვის პარამეტრების მაგიერ მოწოდებული სტრიქონი ცარიელია"
+
+#: ../../common/compression.c:187
+#, c-format
+msgid "unknown compression option \"%s\""
+msgstr "შეკუმშვის უცნობი პარამეტრი: \"%s\""
+
+#: ../../common/compression.c:226
+#, c-format
+msgid "compression option \"%s\" requires a value"
+msgstr "შეკუმშვის პარამეტრ \"%s\"-ს მნიშვნელობა სჭირდება"
+
+#: ../../common/compression.c:235
+#, c-format
+msgid "value for compression option \"%s\" must be an integer"
+msgstr "შემუმშვის პარამეტრ \"%s\"-ის ნიშვნელობა მთელი რიცხვი უნდა იყოს"
+
+#: ../../common/compression.c:273
+#, c-format
+msgid "compression algorithm \"%s\" does not accept a compression level"
+msgstr "შეკუმშვის ალგორითმს \"%s\" შეკუმშვის დონე არ მიეთითება"
+
+#: ../../common/compression.c:277
+#, c-format
+msgid ""
+"compression algorithm \"%s\" expects a compression level between %d and %d"
+msgstr ""
+"შეკუმშვის ალგორითმს \"%s\" შეკუმშვის დონე %d-სა და %d-ს შორის უნდა იყოს"
+
+#: ../../common/compression.c:289
+#, c-format
+msgid "compression algorithm \"%s\" does not accept a worker count"
+msgstr "შეკუმშვის ალგორითმს \"%s\" დამხმარე პროცესების რაოდენობა არ მიეთითება"
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "არასაკმარისი მეხსიერება\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "ნულოვანი მაჩვენებლის დუბლირება შეუძლებელია (შიდა შეცდომა)\n"
+
+#: ../../common/file_utils.c:87 ../../common/file_utils.c:451
+#: pg_receivewal.c:380 pg_recvlogical.c:341
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "ფაილი \"%s\" არ არსებობს: %m"
+
+#: ../../common/file_utils.c:166 pg_receivewal.c:303
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "საქაღალდის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:200 pg_receivewal.c:534
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წაკითხვის შეცდომა: %m"
+
+#: ../../common/file_utils.c:232 ../../common/file_utils.c:291
+#: ../../common/file_utils.c:365 ../../fe_utils/recovery_gen.c:121
+#: pg_receivewal.c:447
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "ფაილის (%s) გახსნის შეცდომა: %m"
+
+#: ../../common/file_utils.c:303 ../../common/file_utils.c:373
+#: pg_recvlogical.c:196
+#, c-format
+msgid "could not fsync file \"%s\": %m"
+msgstr "ფაილის (%s) fsync-ის შეცდომა: %m"
+
+#: ../../common/file_utils.c:383 pg_basebackup.c:2264 walmethods.c:459
+#, c-format
+msgid "could not rename file \"%s\" to \"%s\": %m"
+msgstr "გადარქმევის შეცდომა %s - %s: %m"
+
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "არასწორი მნიშვნელობა \"%s\" პარამეტრისთვის %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "%s არაა საზღვრებში %d-დან %d-მდე"
+
+#: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
+#: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
+#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1643
+#, c-format
+msgid "out of memory"
+msgstr "არასაკმარისი მეხსიერება"
+
+#: ../../fe_utils/recovery_gen.c:124 bbstreamer_file.c:121
+#: bbstreamer_file.c:258 pg_basebackup.c:1440 pg_basebackup.c:1734
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "ფაილში (%s) ჩაწერის შეცდომა: %m"
+
+#: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:339
+#: pg_basebackup.c:1504 pg_basebackup.c:1713
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "ფაილის (%s) შექმნის შეცდომა: %m"
+
+#: bbstreamer_file.c:138 pg_recvlogical.c:635
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "ფაილის (%s) დახურვის შეცდომა: %m"
+
+#: bbstreamer_file.c:275
+#, c-format
+msgid "unexpected state while extracting archive"
+msgstr "არქივის გაშლის მოულოდნელი მდგომარეობა"
+
+#: bbstreamer_file.c:298 pg_basebackup.c:686 pg_basebackup.c:738
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "საქაღალდის (%s) შექმნის შეცდომა: %m"
+
+#: bbstreamer_file.c:304
+#, c-format
+msgid "could not set permissions on directory \"%s\": %m"
+msgstr "საქაღალდეზე \"%s\" წვდომების დაყენების შეცდომა: %m"
+
+#: bbstreamer_file.c:323
+#, c-format
+msgid "could not create symbolic link from \"%s\" to \"%s\": %m"
+msgstr "%s-დან %s-მდე სიმბმულის შექმნა შეუძლებელია: %m"
+
+#: bbstreamer_file.c:343
+#, c-format
+msgid "could not set permissions on file \"%s\": %m"
+msgstr "ფაილზე \"%s\" წვდომების დაყენების შეცდომა: %m"
+
+#: bbstreamer_gzip.c:95
+#, c-format
+msgid "could not create compressed file \"%s\": %m"
+msgstr "ვერ შექმნა შეკუმშული ფაილი \"%s\": %m"
+
+#: bbstreamer_gzip.c:103
+#, c-format
+msgid "could not duplicate stdout: %m"
+msgstr "stdout-ის დუბლირების შეცდომა: %m"
+
+#: bbstreamer_gzip.c:107
+#, c-format
+msgid "could not open output file: %m"
+msgstr "გამოტანის ფაილის გახსნის შეცდომა: %m"
+
+#: bbstreamer_gzip.c:113
+#, c-format
+msgid "could not set compression level %d: %s"
+msgstr "შეკუმშვის დონის დაყენების შეცდომა %d: %s"
+
+#: bbstreamer_gzip.c:118 bbstreamer_gzip.c:251
+#, c-format
+msgid "this build does not support gzip compression"
+msgstr "ამ აგებაში gzip შეკუმშვის მხარდაჭერა არ არსებობს"
+
+#: bbstreamer_gzip.c:145
+#, c-format
+msgid "could not write to compressed file \"%s\": %s"
+msgstr "შეკუმშული ფაილში (\"%s\") ჩაწერის შეცდომა: %s"
+
+#: bbstreamer_gzip.c:169
+#, c-format
+msgid "could not close compressed file \"%s\": %m"
+msgstr "შეკუმშული ფაილის (\"%s\") დახურვის შეცდომა: %m"
+
+#: bbstreamer_gzip.c:247 walmethods.c:869
+#, c-format
+msgid "could not initialize compression library"
+msgstr "შეკუმშვის ბიბლიოთეკის ინიციალიზაციის შეცდომა"
+
+#: bbstreamer_gzip.c:298 bbstreamer_lz4.c:355 bbstreamer_zstd.c:319
+#, c-format
+msgid "could not decompress data: %s"
+msgstr "მონაცემების გაშლის შეცდომა: %s"
+
+#: bbstreamer_inject.c:189
+#, c-format
+msgid "unexpected state while injecting recovery settings"
+msgstr "უცნობი მდგომარეობა აღდგენის ინფორმაციის ჩასმისას"
+
+#: bbstreamer_lz4.c:96
+#, c-format
+msgid "could not create lz4 compression context: %s"
+msgstr "lz4 შეკუმშვის კონტექსტის შექმნის შეცდომა: %s"
+
+#: bbstreamer_lz4.c:101 bbstreamer_lz4.c:299
+#, c-format
+msgid "this build does not support lz4 compression"
+msgstr "ამ აგებაში lz4 შეკუმშვის მხარდაჭერა არ არსებობს"
+
+#: bbstreamer_lz4.c:141
+#, c-format
+msgid "could not write lz4 header: %s"
+msgstr "lz4 თავსართის ჩაწერის შეცდოა: %s"
+
+#: bbstreamer_lz4.c:190 bbstreamer_zstd.c:171 bbstreamer_zstd.c:213
+#, c-format
+msgid "could not compress data: %s"
+msgstr "მონაცემების შეკუმშვა შეუძლებელია: %s"
+
+#: bbstreamer_lz4.c:242
+#, c-format
+msgid "could not end lz4 compression: %s"
+msgstr "lz4 შეკუმშვის დასრულების შეცდომა: %s"
+
+#: bbstreamer_lz4.c:294
+#, c-format
+msgid "could not initialize compression library: %s"
+msgstr "შეკუმშვის ბიბლიოთეკის ინიციალიზება ვერ მოხერხდა: %s"
+
+#: bbstreamer_tar.c:244
+#, c-format
+msgid "tar file trailer exceeds 2 blocks"
+msgstr "tar ფაილის ბოლოსართი 2 ბლოკს სცდება"
+
+#: bbstreamer_tar.c:249
+#, c-format
+msgid "unexpected state while parsing tar archive"
+msgstr "მოულოდნელი მდგომარეობა tar არქივის დამუშავებისას"
+
+#: bbstreamer_tar.c:296
+#, c-format
+msgid "tar member has empty name"
+msgstr "tar-ის წევრს ცარიელი სახელი აქვს"
+
+#: bbstreamer_tar.c:328
+#, c-format
+msgid "COPY stream ended before last file was finished"
+msgstr "COPY-ის ნაკადი ბოლო ფაილის დასრულებამდე დასრულდა"
+
+#: bbstreamer_zstd.c:85
+#, c-format
+msgid "could not create zstd compression context"
+msgstr "zstd შეკუმშვის კონტექსტის შექმნის შეცდომა"
+
+#: bbstreamer_zstd.c:93
+#, c-format
+msgid "could not set zstd compression level to %d: %s"
+msgstr "zstd შეკუმშვის დონის %d-ზე დაყენების შეცდომა: %s"
+
+#: bbstreamer_zstd.c:108
+#, c-format
+msgid "could not set compression worker count to %d: %s"
+msgstr "შეკუმშვის დამხმარე პროცესების რიცხვის %d-ზე დაყენების შეცდომა: %s"
+
+#: bbstreamer_zstd.c:119 bbstreamer_zstd.c:274
+#, c-format
+msgid "this build does not support zstd compression"
+msgstr "ამ აგებაში zstd შეკუმშვის მხარდაჭერა არ არსებობს"
+
+#: bbstreamer_zstd.c:265
+#, c-format
+msgid "could not create zstd decompression context"
+msgstr "zstd გაშლის კონტექსტის შექმნის შეცდომა"
+
+#: pg_basebackup.c:240
+#, c-format
+msgid "removing data directory \"%s\""
+msgstr "მონაცემების საქაღალდის წაშლა \"%s\""
+
+#: pg_basebackup.c:242
+#, c-format
+msgid "failed to remove data directory"
+msgstr "მონაცემების საქაღალდის წაშლის შეცდომა"
+
+#: pg_basebackup.c:246
+#, c-format
+msgid "removing contents of data directory \"%s\""
+msgstr "მონაცემების საქაღალდის შემცველობის წაშლა \"%s\""
+
+#: pg_basebackup.c:248
+#, c-format
+msgid "failed to remove contents of data directory"
+msgstr "მონაცემების საქაღალდის შემცველობის წაშლის შეცდომა"
+
+#: pg_basebackup.c:253
+#, c-format
+msgid "removing WAL directory \"%s\""
+msgstr "მიმდინარეობს WAL საქაღალდის წაშლა \"%s\""
+
+#: pg_basebackup.c:255
+#, c-format
+msgid "failed to remove WAL directory"
+msgstr "შეცდომა WAL საქაღალდის წაშლისას"
+
+#: pg_basebackup.c:259
+#, c-format
+msgid "removing contents of WAL directory \"%s\""
+msgstr "მიმდინარეობს WAL საქაღალდის (\"%s\") შემცველობის წაშლა"
+
+#: pg_basebackup.c:261
+#, c-format
+msgid "failed to remove contents of WAL directory"
+msgstr "შეცდომა WAL საქაღალდის შემცველობის წაშლისას"
+
+#: pg_basebackup.c:267
+#, c-format
+msgid "data directory \"%s\" not removed at user's request"
+msgstr "მონაცემების საქაღალდე \"%s\" მომხმარებლის მოთხოვნისას არ წაიშლება"
+
+#: pg_basebackup.c:270
+#, c-format
+msgid "WAL directory \"%s\" not removed at user's request"
+msgstr "WAL საქაღალდე \"%s\" მომხმარებლის მოთხოვნისას არ წაიშლება"
+
+#: pg_basebackup.c:274
+#, c-format
+msgid "changes to tablespace directories will not be undone"
+msgstr "ცხრილების სივრცის საქაღალდეების ცვლილებების დაბრუნება შეუძლებელია"
+
+#: pg_basebackup.c:326
+#, c-format
+msgid "directory name too long"
+msgstr "საქაღალდის სახელი ძალიან გრძელია"
+
+#: pg_basebackup.c:333
+#, c-format
+msgid "multiple \"=\" signs in tablespace mapping"
+msgstr "ცხრილების სივრცის მიბმაში ერთზე მეტი \"=\" ნიშანია"
+
+#: pg_basebackup.c:342
+#, c-format
+msgid "invalid tablespace mapping format \"%s\", must be \"OLDDIR=NEWDIR\""
+msgstr "ცხრილების მიბმის არასწორი ფორმატი \"%s\", უნდა იყოს \"OLDDIR=NEWDIR\""
+
+#: pg_basebackup.c:351
+#, c-format
+msgid "old directory is not an absolute path in tablespace mapping: %s"
+msgstr "ძველი საქაღალდის ბილიკი ცხრილის სივრცის მიბმაში აბსოლუტური არაა: %s"
+
+#: pg_basebackup.c:355
+#, c-format
+msgid "new directory is not an absolute path in tablespace mapping: %s"
+msgstr "ახალი საქაღალდის ბილიკი ცხრილის სივრცის მიბმაში აბსოლუტური არაა: %s"
+
+#: pg_basebackup.c:377
+#, c-format
+msgid ""
+"%s takes a base backup of a running PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s გაშვებული PostgreSQL სერვერის მარქაფს იღებს.\n"
+"\n"
+
+#: pg_basebackup.c:379 pg_receivewal.c:81 pg_recvlogical.c:78
+#, c-format
+msgid "Usage:\n"
+msgstr "გამოყენება:\n"
+
+#: pg_basebackup.c:380 pg_receivewal.c:82 pg_recvlogical.c:79
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [პარამეტრი]...\n"
+
+#: pg_basebackup.c:381
+#, c-format
+msgid ""
+"\n"
+"Options controlling the output:\n"
+msgstr ""
+"\n"
+"პარამეტრები, რომლებიც აკონტროლებენ გამოტანას:\n"
+
+#: pg_basebackup.c:382
+#, c-format
+msgid "  -D, --pgdata=DIRECTORY receive base backup into directory\n"
+msgstr "  -D, --pgdata=საქაღლდე იღებს ბაზის სარეზერვო ასლს საქაღალდეში\n"
+
+#: pg_basebackup.c:383
+#, c-format
+msgid "  -F, --format=p|t       output format (plain (default), tar)\n"
+msgstr ""
+"  -F, --format=p|t       გამოტანის ფორმატი (plain (ნაგულისხმები), tar)\n"
+
+#: pg_basebackup.c:384
+#, c-format
+msgid ""
+"  -r, --max-rate=RATE    maximum transfer rate to transfer data directory\n"
+"                         (in kB/s, or use suffix \"k\" or \"M\")\n"
+msgstr ""
+"  -r, --max-rate=RATE მაქსიმალური სიჩქარე მონაცემთა საქაღალდის "
+"გადასაცემისას\n"
+"                         (kB/s-ში, ან გამოიყენეთ სუფიქსი \"k\" ან \"M\")\n"
+
+#: pg_basebackup.c:386
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf\n"
+"                         write configuration for replication\n"
+msgstr ""
+"  -R, --write-recovery-conf\n"
+"                         რეპლიკაციის კონფიგურაციის ჩაწერა \n"
+
+#: pg_basebackup.c:388
+#, c-format
+msgid ""
+"  -t, --target=TARGET[:DETAIL]\n"
+"                         backup target (if other than client)\n"
+msgstr ""
+"  -t, --target=TARGET[:DETAIL]\n"
+"                         სამიზნის მარქაფი(თუ კლიენტისგან განსხვავებულია)\n"
+
+#: pg_basebackup.c:390
+#, c-format
+msgid ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         relocate tablespace in OLDDIR to NEWDIR\n"
+msgstr ""
+"  -T, --tablespace-mapping=OLDDIR=NEWDIR\n"
+"                         ცხრილების სივრცის OLDDIR -დან NEWDIR-ში გადატანა\n"
+
+#: pg_basebackup.c:392
+#, c-format
+msgid "      --waldir=WALDIR    location for the write-ahead log directory\n"
+msgstr ""
+"      --waldir=WALDIR       წინასწარ ჩაწერადი ჟურნალის (WAL) საქაღალდის "
+"მდებარეობა\n"
+
+#: pg_basebackup.c:393
+#, c-format
+msgid ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         include required WAL files with specified method\n"
+msgstr ""
+"  -X, --wal-method=none|fetch|stream\n"
+"                         საჭირო WAL ფაილების მითითებული მეთოდით ჩასმა\n"
+
+#: pg_basebackup.c:395
+#, c-format
+msgid "  -z, --gzip             compress tar output\n"
+msgstr "  -z, --gzip             შექნილი tar ფაილის შეკუმშვა\n"
+
+#: pg_basebackup.c:396
+#, c-format
+msgid ""
+"  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
+"                         compress on client or server as specified\n"
+msgstr ""
+"  -Z, --compress=[{client|server}-]METHOD[:DETAIL]\n"
+"                         შეკუმშვის ჩართვა სერვერზე ან კლიენტზე, "
+"მითითებისამებრ\n"
+
+#: pg_basebackup.c:398
+#, c-format
+msgid "  -Z, --compress=none    do not compress tar output\n"
+msgstr "  -Z, --compress=none    შექმნილი tar არქივი არ შეიკუმშება\n"
+
+#: pg_basebackup.c:399
+#, c-format
+msgid ""
+"\n"
+"General options:\n"
+msgstr ""
+"\n"
+"ზოგადი პარამეტრები:\n"
+
+#: pg_basebackup.c:400
+#, c-format
+msgid ""
+"  -c, --checkpoint=fast|spread\n"
+"                         set fast or spread checkpointing\n"
+msgstr ""
+"  -c, --checkpoint=fast|spread\n"
+"                         სწრაფი ან გაფანტული საკონტროლო წერტილები\n"
+
+#: pg_basebackup.c:402
+#, c-format
+msgid "  -C, --create-slot      create replication slot\n"
+msgstr "  -C, --create-slot      რეპლიკაციის სლოტის შექმნა\n"
+
+#: pg_basebackup.c:403
+#, c-format
+msgid "  -l, --label=LABEL      set backup label\n"
+msgstr "  -l, --label=LABEL      მარქაფის ჭდის შექმნა\n"
+
+#: pg_basebackup.c:404
+#, c-format
+msgid "  -n, --no-clean         do not clean up after errors\n"
+msgstr "  -n, --no-clean            შეცდომის შემთხვევაში არ გაასუფთავო\n"
+
+#: pg_basebackup.c:405
+#, c-format
+msgid ""
+"  -N, --no-sync          do not wait for changes to be written safely to "
+"disk\n"
+msgstr ""
+"  -N, --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ "
+"ჩაწერას\n"
+
+#: pg_basebackup.c:406
+#, c-format
+msgid "  -P, --progress         show progress information\n"
+msgstr "  -P, --progress                  მიმდინარეობის ინფორმაციის ჩვენება\n"
+
+#: pg_basebackup.c:407 pg_receivewal.c:91
+#, c-format
+msgid "  -S, --slot=SLOTNAME    replication slot to use\n"
+msgstr "  -S, --slot=SLOTNAME    გამოსაყენებელი სლოტი\n"
+
+#: pg_basebackup.c:408 pg_receivewal.c:93 pg_recvlogical.c:100
+#, c-format
+msgid "  -v, --verbose          output verbose messages\n"
+msgstr "  -v, --verbose                   დამატებითი ინფორმაციის გამოტანა\n"
+
+#: pg_basebackup.c:409 pg_receivewal.c:94 pg_recvlogical.c:101
+#, c-format
+msgid "  -V, --version          output version information, then exit\n"
+msgstr "  -V, --version            ვერსიის ინფორმაციის გამოტანა და გასვლა\n"
+
+#: pg_basebackup.c:410
+#, c-format
+msgid ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                         use algorithm for manifest checksums\n"
+msgstr ""
+"      --manifest-checksums=SHA{224,256,384,512}|CRC32C|NONE\n"
+"                         მანიფესტების საკონტროლო ჯამის გამოსათვლელი "
+"ალფორითმი\n"
+
+#: pg_basebackup.c:412
+#, c-format
+msgid ""
+"      --manifest-force-encode\n"
+"                         hex encode all file names in manifest\n"
+msgstr ""
+"      --manifest-force-encode\n"
+"                         მანიფესტში ყველა ფაილის სახელის თექვსმეტობითში "
+"კოდირება\n"
+
+#: pg_basebackup.c:414
+#, c-format
+msgid "      --no-estimate-size do not estimate backup size in server side\n"
+msgstr "      --no-estimate-size მარქაფის ზომა სერვერის მხარეს არ გაიზომება\n"
+
+#: pg_basebackup.c:415
+#, c-format
+msgid "      --no-manifest      suppress generation of backup manifest\n"
+msgstr "      --no-manifest      მარქაფის მანიფესტი არ შეიქმნება\n"
+
+#: pg_basebackup.c:416
+#, c-format
+msgid ""
+"      --no-slot          prevent creation of temporary replication slot\n"
+msgstr ""
+"      --no-slot          რეპლიკაციის დროებითი სლოტის შექმნის თავიდან "
+"აცილება\n"
+
+#: pg_basebackup.c:417
+#, c-format
+msgid ""
+"      --no-verify-checksums\n"
+"                         do not verify checksums\n"
+msgstr ""
+"      --no-verify-checksums\n"
+"                         საკონტროლო ჯამები არ შემოწმდება\n"
+
+#: pg_basebackup.c:419 pg_receivewal.c:97 pg_recvlogical.c:102
+#, c-format
+msgid "  -?, --help             show this help, then exit\n"
+msgstr "  -?, --help                   ამ დახმარების ჩვენება და გასვლა\n"
+
+#: pg_basebackup.c:420 pg_receivewal.c:98 pg_recvlogical.c:103
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"შეერთების პარამეტრები:\n"
+
+#: pg_basebackup.c:421 pg_receivewal.c:99
+#, c-format
+msgid "  -d, --dbname=CONNSTR   connection string\n"
+msgstr "  -d, --dbname=CONNSTR   კავშირის სტრიქონი\n"
+
+#: pg_basebackup.c:422 pg_receivewal.c:100 pg_recvlogical.c:105
+#, c-format
+msgid "  -h, --host=HOSTNAME    database server host or socket directory\n"
+msgstr ""
+"  -h, --host=HOSTNAME      მონაცემთა ბაზის სერვერის ჰოსტის ან სოკეტის "
+"საქაღალდე\n"
+
+#: pg_basebackup.c:423 pg_receivewal.c:101 pg_recvlogical.c:106
+#, c-format
+msgid "  -p, --port=PORT        database server port number\n"
+msgstr "  -p, --port=PORT          მონაცემთა ბაზის სერვერის პორტი\n"
+
+#: pg_basebackup.c:424
+#, c-format
+msgid ""
+"  -s, --status-interval=INTERVAL\n"
+"                         time between status packets sent to server (in "
+"seconds)\n"
+msgstr ""
+"  -s, --status-interval=INTERVAL=INTERVAL\n"
+"                          სერვერზე გაგზავნილ სტატუსის პაკეტებს შორის "
+"დაყოვნება(წამებში)\n"
+
+#: pg_basebackup.c:426 pg_receivewal.c:102 pg_recvlogical.c:107
+#, c-format
+msgid "  -U, --username=NAME    connect as specified database user\n"
+msgstr "  -U, --username=მომხმარებელი  ბაზის მომხმარებლის სახელი\n"
+
+#: pg_basebackup.c:427 pg_receivewal.c:103 pg_recvlogical.c:108
+#, c-format
+msgid "  -w, --no-password      never prompt for password\n"
+msgstr "  -w, --no-password        არასოდეს მკითხო პაროლი\n"
+
+#: pg_basebackup.c:428 pg_receivewal.c:104 pg_recvlogical.c:109
+#, c-format
+msgid ""
+"  -W, --password         force password prompt (should happen "
+"automatically)\n"
+msgstr ""
+"  -W, --password           პაროლის ყოველთვის კითხვა (ავტომატურად უნდა "
+"ხდებოდეს)\n"
+
+#: pg_basebackup.c:429 pg_receivewal.c:108 pg_recvlogical.c:110
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"შეცდომების შესახებ მიწერეთ: %s\n"
+
+#: pg_basebackup.c:430 pg_receivewal.c:109 pg_recvlogical.c:111
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s-ის საწყისი გვერდია: <%s>\n"
+
+#: pg_basebackup.c:472
+#, c-format
+msgid "could not read from ready pipe: %m"
+msgstr "მზა ფაიფიდან წაკითხვის შეცდომა: %m"
+
+#: pg_basebackup.c:475 pg_basebackup.c:622 pg_basebackup.c:2178
+#: streamutil.c:444
+#, c-format
+msgid "could not parse write-ahead log location \"%s\""
+msgstr "წინასწარ-ჩაწერადი ჟურნალის მდებარეობის დამუშავების შეცდომა: %s"
+
+#: pg_basebackup.c:581 pg_receivewal.c:665
+#, c-format
+msgid "could not finish writing WAL files: %m"
+msgstr "\"WAL\" ფაილების ჩაწერის დასრულების შეცდომა: %m"
+
+#: pg_basebackup.c:631
+#, c-format
+msgid "could not create pipe for background process: %m"
+msgstr "ფონური პროცესისთვის ფაიფის შექმნის შეცდომა: %m"
+
+#: pg_basebackup.c:664
+#, c-format
+msgid "created temporary replication slot \"%s\""
+msgstr "შექმნილია რეპლიკაციის დროებითი სლოტი %s"
+
+#: pg_basebackup.c:667
+#, c-format
+msgid "created replication slot \"%s\""
+msgstr "შექმნილია რეპლიკაციის სლოტი %s"
+
+#: pg_basebackup.c:704
+#, c-format
+msgid "log streamer with pid %d exiting"
+msgstr "ჟურნალის ნაკადის პროცესი pid-ით %d ასრულებს მუშაობას"
+
+#: pg_basebackup.c:709
+#, c-format
+msgid "could not create background process: %m"
+msgstr "ფონური პროცესის შექმნის შეცდომა: %m"
+
+#: pg_basebackup.c:718
+#, c-format
+msgid "could not create background thread: %m"
+msgstr "ფონური ნაკადის შექმნის შეცდომა: %m"
+
+#: pg_basebackup.c:757
+#, c-format
+msgid "directory \"%s\" exists but is not empty"
+msgstr "საქაღალდე \"%s\" არსებობს, მაგრამ ცარიელი არაა"
+
+#: pg_basebackup.c:763
+#, c-format
+msgid "could not access directory \"%s\": %m"
+msgstr "საქაღალდის (%s) წვდომის შეცდომა: %m"
+
+#: pg_basebackup.c:840
+#, c-format
+msgid "%*s/%s kB (100%%), %d/%d tablespace %*s"
+msgid_plural "%*s/%s kB (100%%), %d/%d tablespaces %*s"
+msgstr[0] "%*s/%s კბ (100%%), %d/%d ცხრილების სივრცე %*s"
+msgstr[1] "%*s/%s კბ (100%%), %d/%d ცხრილების სივრცე %*s"
+
+#: pg_basebackup.c:852
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace (%s%-*.*s)"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces (%s%-*.*s)"
+msgstr[0] "%*s/%s კბ (%d%%), %d/%d ცხრილების სივრცე (%s%-*.*s)"
+msgstr[1] "%*s/%s კბ (%d%%), %d/%d ცხრილების სივრცე (%s%-*.*s)"
+
+#: pg_basebackup.c:868
+#, c-format
+msgid "%*s/%s kB (%d%%), %d/%d tablespace"
+msgid_plural "%*s/%s kB (%d%%), %d/%d tablespaces"
+msgstr[0] "%*s/%s კბ (%d%%), %d/%d ცხრილების სივრცე"
+msgstr[1] "%*s/%s კბ (%d%%), %d/%d ცხრილების სივრცე"
+
+#: pg_basebackup.c:892
+#, c-format
+msgid "transfer rate \"%s\" is not a valid value"
+msgstr "გადაცემის სიჩქარის არასწორი მნიშვნელობა: %s"
+
+#: pg_basebackup.c:894
+#, c-format
+msgid "invalid transfer rate \"%s\": %m"
+msgstr "გადაცემის არასწორი სიჩქარე \"%s\": %m"
+
+#: pg_basebackup.c:901
+#, c-format
+msgid "transfer rate must be greater than zero"
+msgstr "გადაცემის სიჩქარე ნულზე მეტი უნდა იყოს"
+
+#: pg_basebackup.c:931
+#, c-format
+msgid "invalid --max-rate unit: \"%s\""
+msgstr "--max-rate -ის არასწორი ერთეული: \"%s\""
+
+#: pg_basebackup.c:935
+#, c-format
+msgid "transfer rate \"%s\" exceeds integer range"
+msgstr "გადაცემის სიჩქარე მთელი რიცხვის დიაპაზონს აღემატება: %s"
+
+#: pg_basebackup.c:942
+#, c-format
+msgid "transfer rate \"%s\" is out of range"
+msgstr "გადაცემის სიჩქარის მნიშვნელობა დიაპაზონს გარეთაა: %s"
+
+#: pg_basebackup.c:1038
+#, c-format
+msgid "could not get COPY data stream: %s"
+msgstr "\"COPY\"-ის მონაცემების ნაკადის მიღების შეცდომა: %s"
+
+#: pg_basebackup.c:1055 pg_recvlogical.c:438 pg_recvlogical.c:610
+#: receivelog.c:981
+#, c-format
+msgid "could not read COPY data: %s"
+msgstr "\"COPY\"-ის მონაცემების წაკითხვის შეცდომა: %s"
+
+#: pg_basebackup.c:1059
+#, c-format
+msgid "background process terminated unexpectedly"
+msgstr "ფონური პროცესი მოულოდნელად დასრულდა"
+
+#: pg_basebackup.c:1130
+#, c-format
+msgid "cannot inject manifest into a compressed tarfile"
+msgstr "შეკუმშულ tar ფაილში მანიფესტის შეჩურთვა შეუძლებელია"
+
+#: pg_basebackup.c:1131
+#, c-format
+msgid ""
+"use client-side compression, send the output to a directory rather than "
+"standard output, or use --no-manifest"
+msgstr ""
+"გამოიყენეთ კლიენტის მხარეს შეკუმშვა და გააგზავნეთ გამონატანი საქაღალდეში "
+"stdout-ის მაგიერ არ გამოიყენეთ --no-manifest"
+
+#: pg_basebackup.c:1146
+#, c-format
+msgid "unable to parse archive: %s"
+msgstr "არქივის დამშავების შეცდომა: %s"
+
+#: pg_basebackup.c:1147
+#, c-format
+msgid "Only tar archives can be parsed."
+msgstr "შესაძლებელია მხოლოდ tar არქივების დამუშავება."
+
+#: pg_basebackup.c:1149
+#, c-format
+msgid "Plain format requires pg_basebackup to parse the archive."
+msgstr "Plain-ის ფორმატი არქივის დასამუშავებლად pg_basebackup-ს მოითხოვს."
+
+#: pg_basebackup.c:1151
+#, c-format
+msgid ""
+"Using - as the output directory requires pg_basebackup to parse the archive."
+msgstr ""
+"გამოსატან საქაღალდედ - -ის მითითება არქივის დასამუშავებლად pg_basebackup-ს "
+"მოითხოვს."
+
+#: pg_basebackup.c:1153
+#, c-format
+msgid "The -R option requires pg_basebackup to parse the archive."
+msgstr "-R პარამეტრს არქივის დასამუშავებლად pg_basebackup-ს მოითხოვს."
+
+#: pg_basebackup.c:1364
+#, c-format
+msgid "archives should precede manifest"
+msgstr "არქივები წინ უნდა უსწრებდეს მანიფესტს"
+
+#: pg_basebackup.c:1379
+#, c-format
+msgid "invalid archive name: \"%s\""
+msgstr "არქივის არასწორი სახელი: \"%s\""
+
+#: pg_basebackup.c:1451
+#, c-format
+msgid "unexpected payload data"
+msgstr "მოულოდნელი შიგთავსი"
+
+#: pg_basebackup.c:1594
+#, c-format
+msgid "empty COPY message"
+msgstr "შეტყობინება COPY ცარიელია"
+
+#: pg_basebackup.c:1596
+#, c-format
+msgid "malformed COPY message of type %d, length %zu"
+msgstr "არასწორი COPY შეტყობინება ტიპით %d, სიგრძე %zu"
+
+#: pg_basebackup.c:1794
+#, c-format
+msgid "incompatible server version %s"
+msgstr "სერვერის შეუთავსებელი ვერსია %s"
+
+#: pg_basebackup.c:1810
+#, c-format
+msgid "HINT: use -X none or -X fetch to disable log streaming"
+msgstr "მინიშნება: ჟურნალის ნაკადის გასათიშად -X none ან -X fetch გამოიყენეთ"
+
+#: pg_basebackup.c:1878
+#, c-format
+msgid "backup targets are not supported by this server version"
+msgstr "სერვერის ამ ვერსიას მარქაფის სამიზნის მხარდაჭერა არ გააჩნია"
+
+#: pg_basebackup.c:1881
+#, c-format
+msgid "recovery configuration cannot be written when a backup target is used"
+msgstr ""
+
+#: pg_basebackup.c:1908
+#, c-format
+msgid "server does not support server-side compression"
+msgstr "სერვერს თავის მხარეს შეკუმშვის მხარდაჭერა არ გააჩნია"
+
+#: pg_basebackup.c:1918
+#, c-format
+msgid "initiating base backup, waiting for checkpoint to complete"
+msgstr "ბაზის მარქაფის პროფესი დაიწყო. ველოდები საკონტროლო წერტილის დასასრულს"
+
+#: pg_basebackup.c:1935 pg_recvlogical.c:262 receivelog.c:549 receivelog.c:588
+#: streamutil.c:291 streamutil.c:364 streamutil.c:416 streamutil.c:504
+#: streamutil.c:656 streamutil.c:701
+#, c-format
+msgid "could not send replication command \"%s\": %s"
+msgstr "რეპლიკაციის ბრძანების (\"%s\") გაგზავნის შეცდომა: %s"
+
+#: pg_basebackup.c:1943
+#, c-format
+msgid "could not initiate base backup: %s"
+msgstr "ბაზის მარქაფის ინიციალიზაციის შეცდომა: %s"
+
+#: pg_basebackup.c:1946
+#, c-format
+msgid ""
+"server returned unexpected response to BASE_BACKUP command; got %d rows and "
+"%d fields, expected %d rows and %d fields"
+msgstr ""
+
+#: pg_basebackup.c:1952
+#, c-format
+msgid "checkpoint completed"
+msgstr "საკონტროლო წერტილი დასრულებულია"
+
+#: pg_basebackup.c:1967
+#, c-format
+msgid "write-ahead log start point: %s on timeline %u"
+msgstr "წინასწარ-ჩაწერადი ჟურნალის საწყისი წერტილი: %s დროს ხაზზე %u"
+
+#: pg_basebackup.c:1975
+#, c-format
+msgid "could not get backup header: %s"
+msgstr "მარქაფის თავსართის მიღების შეცდომა: %s"
+
+#: pg_basebackup.c:1978
+#, c-format
+msgid "no data returned from server"
+msgstr "სერვერიდან მონაცემები არ დაბრუნებულა"
+
+#: pg_basebackup.c:2013
+#, c-format
+msgid "can only write single tablespace to stdout, database has %d"
+msgstr ""
+"stdout-ში მხოლოდ ერთი ცხრილების სივრცის ჩაწერა შეუძლია. ბაზას კი %d აქვს"
+
+#: pg_basebackup.c:2026
+#, c-format
+msgid "starting background WAL receiver"
+msgstr "ფონური WAL მიმღების გაშვება"
+
+#: pg_basebackup.c:2109
+#, c-format
+msgid "backup failed: %s"
+msgstr "მარქაფის შეცდომა: %s"
+
+#: pg_basebackup.c:2112
+#, c-format
+msgid "no write-ahead log end position returned from server"
+msgstr "სერვერიდან წინასწარ-ჩაწერადი ჟურნალის ბოლო პოზიცია არ დაბრუნებულა"
+
+#: pg_basebackup.c:2115
+#, c-format
+msgid "write-ahead log end point: %s"
+msgstr "წინასწარ-ჩაწერადი ჟურნალის ბოლო წერტილი: %s"
+
+#: pg_basebackup.c:2126
+#, c-format
+msgid "checksum error occurred"
+msgstr "საკონტროლო ჯამის შეცდომა"
+
+#: pg_basebackup.c:2131
+#, c-format
+msgid "final receive failed: %s"
+msgstr "მიღების დასრულების შეცდომა: %s"
+
+#: pg_basebackup.c:2155
+#, c-format
+msgid "waiting for background process to finish streaming ..."
+msgstr "ფონური პროცესის მიერ ნაკადის დასრულების მოლოდინი ..."
+
+#: pg_basebackup.c:2159
+#, c-format
+msgid "could not send command to background pipe: %m"
+msgstr ""
+
+#: pg_basebackup.c:2164
+#, c-format
+msgid "could not wait for child process: %m"
+msgstr "შვულეულ პროცესს ვერ დაველოდები: %m"
+
+#: pg_basebackup.c:2166
+#, c-format
+msgid "child %d died, expected %d"
+msgstr "%d შვილი მოკვდა, მოველოდი %d"
+
+#: pg_basebackup.c:2168 streamutil.c:91 streamutil.c:197
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_basebackup.c:2188
+#, c-format
+msgid "could not wait for child thread: %m"
+msgstr "შვილეულ ნაკადს ვერ დაველოდები %m"
+
+#: pg_basebackup.c:2193
+#, c-format
+msgid "could not get child thread exit status: %m"
+msgstr "შვილეული ნაკადის გამოსვლის სტატუსის მიღების შეცდომა: %m"
+
+#: pg_basebackup.c:2196
+#, c-format
+msgid "child thread exited with error %u"
+msgstr "შვილეული ნაკადის შეცდომა: %u"
+
+#: pg_basebackup.c:2225
+#, c-format
+msgid "syncing data to disk ..."
+msgstr "მონაცემების სინქრონიზაცია დისკზე ..."
+
+#: pg_basebackup.c:2250
+#, c-format
+msgid "renaming backup_manifest.tmp to backup_manifest"
+msgstr "backup_manifest.tmp -ის სახელის გადარქმევა backup_manifest"
+
+#: pg_basebackup.c:2270
+#, c-format
+msgid "base backup completed"
+msgstr "ბაზის მარქაფი დასრულდა"
+
+#: pg_basebackup.c:2359
+#, c-format
+msgid "invalid output format \"%s\", must be \"plain\" or \"tar\""
+msgstr "\"%s\"-ის არასწორი გამოტანის ფორმატი. უნდა იყოს: \"plain\" ან \"tar\""
+
+#: pg_basebackup.c:2403
+#, c-format
+msgid ""
+"invalid wal-method option \"%s\", must be \"fetch\", \"stream\", or \"none\""
+msgstr ""
+"wal-method-ის არასწორი მნიშვნელობა: %s. უნდა იყოს \"fetch\", \"stream\" ან "
+"\"none\""
+
+#: pg_basebackup.c:2433
+#, c-format
+msgid "invalid checkpoint argument \"%s\", must be \"fast\" or \"spread\""
+msgstr ""
+"საკონტროლო წერტილის არასწორი არგუმენტი %s: უნდა იყოს \"fast\" an \"spread\""
+
+#: pg_basebackup.c:2484 pg_basebackup.c:2496 pg_basebackup.c:2518
+#: pg_basebackup.c:2530 pg_basebackup.c:2536 pg_basebackup.c:2588
+#: pg_basebackup.c:2599 pg_basebackup.c:2609 pg_basebackup.c:2615
+#: pg_basebackup.c:2622 pg_basebackup.c:2634 pg_basebackup.c:2646
+#: pg_basebackup.c:2654 pg_basebackup.c:2667 pg_basebackup.c:2673
+#: pg_basebackup.c:2682 pg_basebackup.c:2694 pg_basebackup.c:2705
+#: pg_basebackup.c:2713 pg_receivewal.c:816 pg_receivewal.c:828
+#: pg_receivewal.c:835 pg_receivewal.c:844 pg_receivewal.c:851
+#: pg_receivewal.c:861 pg_recvlogical.c:837 pg_recvlogical.c:849
+#: pg_recvlogical.c:859 pg_recvlogical.c:866 pg_recvlogical.c:873
+#: pg_recvlogical.c:880 pg_recvlogical.c:887 pg_recvlogical.c:894
+#: pg_recvlogical.c:901 pg_recvlogical.c:908
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "მეტი ინფორმაციისთვის სცადეთ '%s --help'."
+
+#: pg_basebackup.c:2494 pg_receivewal.c:826 pg_recvlogical.c:847
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "მეტისმეტად ბევრი ბრძანების-სტრიქონის არგუმენტი (პირველია \"%s\")"
+
+#: pg_basebackup.c:2517
+#, c-format
+msgid "cannot specify both format and backup target"
+msgstr "ერთდროულად შეუძლებელია ორივე, ფორმატის და მარქაფის სამიზნის მითითება"
+
+#: pg_basebackup.c:2529
+#, c-format
+msgid "must specify output directory or backup target"
+msgstr ""
+
+#: pg_basebackup.c:2535
+#, c-format
+msgid "cannot specify both output directory and backup target"
+msgstr ""
+
+#: pg_basebackup.c:2565 pg_receivewal.c:870
+#, c-format
+msgid "unrecognized compression algorithm \"%s\""
+msgstr "შეკუმშვის უცხო ალგორითმი %s"
+
+#: pg_basebackup.c:2571 pg_receivewal.c:877
+#, c-format
+msgid "invalid compression specification: %s"
+msgstr "შეკუმშვის არასწორი სპეციფიკაცია: %s"
+
+#: pg_basebackup.c:2587
+#, c-format
+msgid ""
+"client-side compression is not possible when a backup target is specified"
+msgstr ""
+
+#: pg_basebackup.c:2598
+#, c-format
+msgid "only tar mode backups can be compressed"
+msgstr "შესაძლებელია მხოლოდ tar რეჟიმის მარქაფების შეკუმშვა"
+
+#: pg_basebackup.c:2608
+#, c-format
+msgid "WAL cannot be streamed when a backup target is specified"
+msgstr ""
+
+#: pg_basebackup.c:2614
+#, c-format
+msgid "cannot stream write-ahead logs in tar mode to stdout"
+msgstr ""
+
+#: pg_basebackup.c:2621
+#, c-format
+msgid "replication slots can only be used with WAL streaming"
+msgstr ""
+
+#: pg_basebackup.c:2633
+#, c-format
+msgid "--no-slot cannot be used with slot name"
+msgstr "--no-slot სლოტის სახელთან ერთად არ გამოიყენება"
+
+#. translator: second %s is an option name
+#: pg_basebackup.c:2644 pg_receivewal.c:842
+#, c-format
+msgid "%s needs a slot to be specified using --slot"
+msgstr ""
+
+#: pg_basebackup.c:2652 pg_basebackup.c:2692 pg_basebackup.c:2703
+#: pg_basebackup.c:2711
+#, c-format
+msgid "%s and %s are incompatible options"
+msgstr "პარამეტრები %s და %s შეუთავსებელია"
+
+#: pg_basebackup.c:2666
+#, c-format
+msgid "WAL directory location cannot be specified along with a backup target"
+msgstr ""
+"WAL საქაღალდის მდებარეობა მარქაფის სამიზნესთან ერთად მითითებული არ შეიძლება "
+"იყოს"
+
+#: pg_basebackup.c:2672
+#, c-format
+msgid "WAL directory location can only be specified in plain mode"
+msgstr ""
+
+#: pg_basebackup.c:2681
+#, c-format
+msgid "WAL directory location must be an absolute path"
+msgstr "WAL საქაღალდის მდებარეობა აბსოლუტური ბილიკი უნდა იყოს"
+
+#: pg_basebackup.c:2782
+#, c-format
+msgid "could not create symbolic link \"%s\": %m"
+msgstr "სიმბმულის შექმნის შეცდომა %s: %m"
+
+#: pg_basebackup.c:2784
+#, c-format
+msgid "symlinks are not supported on this platform"
+msgstr "სიმბმულები ამ პლატფორმაზე მხარდაჭერილი არაა"
+
+#: pg_receivewal.c:79
+#, c-format
+msgid ""
+"%s receives PostgreSQL streaming write-ahead logs.\n"
+"\n"
+msgstr ""
+
+#: pg_receivewal.c:83 pg_recvlogical.c:84
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"პარამეტრები:\n"
+
+#: pg_receivewal.c:84
+#, c-format
+msgid ""
+"  -D, --directory=DIR    receive write-ahead log files into this directory\n"
+msgstr ""
+"  -D, --directory=DIR    წინასწარ-ჩაწერადი ჟურნალის ფაილების მითითებულ "
+"საქაღალდეში ჩაწერა\n"
+
+#: pg_receivewal.c:85 pg_recvlogical.c:85
+#, c-format
+msgid "  -E, --endpos=LSN       exit after receiving the specified LSN\n"
+msgstr "  -E, --endpos=LSN       გამოსვლა მითითებული LSN-ის მიღების შემდეგ\n"
+
+#: pg_receivewal.c:86 pg_recvlogical.c:89
+#, c-format
+msgid ""
+"      --if-not-exists    do not error if slot already exists when creating a "
+"slot\n"
+msgstr ""
+"      --if-not-exists    სლოტის შექმნისას მისი არსებობის შემთხვევაში ფაქტი "
+"შეცდომად არ ჩაითვლება\n"
+
+#: pg_receivewal.c:87 pg_recvlogical.c:91
+#, c-format
+msgid "  -n, --no-loop          do not loop on connection lost\n"
+msgstr "  -n, --no-loop          შეერთების დაკარგვისას თავიდან არ ცდა\n"
+
+#: pg_receivewal.c:88
+#, c-format
+msgid ""
+"      --no-sync          do not wait for changes to be written safely to "
+"disk\n"
+msgstr ""
+"            --no-sync             არ დაველოდო ცვლილებების დისკზე უსაფრთხოდ "
+"ჩაწერას\n"
+
+#: pg_receivewal.c:89 pg_recvlogical.c:96
+#, c-format
+msgid ""
+"  -s, --status-interval=SECS\n"
+"                         time between status packets sent to server "
+"(default: %d)\n"
+msgstr ""
+"  -s, --status-interval=SECS\n"
+"                         შუალედი სერვერზე სტატუსის პაკეტების გაგზავნებს "
+"შორის (ნაგულისხმები: %d)\n"
+
+#: pg_receivewal.c:92
+#, c-format
+msgid ""
+"      --synchronous      flush write-ahead log immediately after writing\n"
+msgstr ""
+
+#: pg_receivewal.c:95
+#, c-format
+msgid ""
+"  -Z, --compress=METHOD[:DETAIL]\n"
+"                         compress as specified\n"
+msgstr ""
+
+#: pg_receivewal.c:105
+#, c-format
+msgid ""
+"\n"
+"Optional actions:\n"
+msgstr ""
+"\n"
+"არასავალდებულო ქმედებები:\n"
+
+#: pg_receivewal.c:106 pg_recvlogical.c:81
+#, c-format
+msgid ""
+"      --create-slot      create a new replication slot (for the slot's name "
+"see --slot)\n"
+msgstr ""
+
+#: pg_receivewal.c:107 pg_recvlogical.c:82
+#, c-format
+msgid ""
+"      --drop-slot        drop the replication slot (for the slot's name see "
+"--slot)\n"
+msgstr ""
+
+#: pg_receivewal.c:252
+#, c-format
+msgid "finished segment at %X/%X (timeline %u)"
+msgstr "სეგმენტის დასრულების მისამართია %X/%X (დროის ხაზი %u)"
+
+#: pg_receivewal.c:259
+#, c-format
+msgid "stopped log streaming at %X/%X (timeline %u)"
+msgstr "ჟურნალის ნაკადი შეჩერდა მისამართზე %X/%X (დროის ხაზი %u)"
+
+#: pg_receivewal.c:275
+#, c-format
+msgid "switched to timeline %u at %X/%X"
+msgstr "გადავერთე %u-ე დროის ხაზზე მისამართით %X/%X"
+
+#: pg_receivewal.c:285
+#, c-format
+msgid "received interrupt signal, exiting"
+msgstr "მიღებულია შეწყვეტის სიგნალი. გამოსვლა"
+
+#: pg_receivewal.c:317
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "საქაღალდის %s-ზე დახურვის შეცდომა: %m"
+
+#: pg_receivewal.c:384
+#, c-format
+msgid "segment file \"%s\" has incorrect size %lld, skipping"
+msgstr "სეგმენტის ფაილის \"%s\" არასწორი ზომა %lld, გამოტოვება"
+
+#: pg_receivewal.c:401
+#, c-format
+msgid "could not open compressed file \"%s\": %m"
+msgstr "შეკუმშული ფაილის (\"%s\") გახსნის შეცდომა: %m"
+
+#: pg_receivewal.c:404
+#, c-format
+msgid "could not seek in compressed file \"%s\": %m"
+msgstr "შეკუმშული ფაილში (\"%s\") გადახვევის შეცდომა: %m"
+
+#: pg_receivewal.c:410
+#, c-format
+msgid "could not read compressed file \"%s\": %m"
+msgstr "შეკუმშული ფაილის (\"%s\") წაკითხვის შეცდომა: %m"
+
+#: pg_receivewal.c:413
+#, c-format
+msgid "could not read compressed file \"%s\": read %d of %zu"
+msgstr "შეკუმშული ფაილის (\"%s\") წაკითხვის შეცდომა: წაკითხულია %d %zu-დან"
+
+#: pg_receivewal.c:423
+#, c-format
+msgid ""
+"compressed segment file \"%s\" has incorrect uncompressed size %d, skipping"
+msgstr "შეკუმშული სეგმენტის ფაილის \"%s\" არასწორი გაშლილი ზომა %d, გამოტოვება"
+
+#: pg_receivewal.c:451
+#, c-format
+msgid "could not create LZ4 decompression context: %s"
+msgstr "lz4 შეკუმშვის კონტექსტის შექმნის შეცდომა: %s"
+
+#: pg_receivewal.c:463
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "ფაილის (%s) წაკითხვის შეცდომა: %m"
+
+#: pg_receivewal.c:481
+#, c-format
+msgid "could not decompress file \"%s\": %s"
+msgstr "ფაილის (\"%s\") გაშლის შეცდომა: %s"
+
+#: pg_receivewal.c:504
+#, c-format
+msgid "could not free LZ4 decompression context: %s"
+msgstr "lz4 შეკუმშვის კონტექსტის გასუფთავების შეცდომა: %s"
+
+#: pg_receivewal.c:509
+#, c-format
+msgid ""
+"compressed segment file \"%s\" has incorrect uncompressed size %zu, skipping"
+msgstr ""
+"შეკუმშული სეგმენტის ფაილის \"%s\" არასწორი გაშლილი ზომა %zu, გამოტოვება"
+
+#: pg_receivewal.c:514
+#, c-format
+msgid "could not check file \"%s\""
+msgstr "ფაილის შემოწმება შეუძლებელია: %s"
+
+#: pg_receivewal.c:516
+#, c-format
+msgid "This build does not support compression with %s."
+msgstr "ამ აგებაში %s-ით შეკუმშვის მხარდაჭრა არ არსებობს."
+
+#: pg_receivewal.c:643
+#, c-format
+msgid "starting log streaming at %X/%X (timeline %u)"
+msgstr "ჟურნალის ნაკადი დაიწყო მისამართზე %X/%X (დროის ხაზი %u)"
+
+#: pg_receivewal.c:785 pg_recvlogical.c:785
+#, c-format
+msgid "could not parse end position \"%s\""
+msgstr "ბოლო პოზიციის დამუშავების შეცდომა: %s"
+
+#: pg_receivewal.c:834
+#, c-format
+msgid "cannot use --create-slot together with --drop-slot"
+msgstr "--create-slot -ს და --drop-slot -ს ერთად ვერ გამოიყენებთ"
+
+#: pg_receivewal.c:850
+#, c-format
+msgid "cannot use --synchronous together with --no-sync"
+msgstr "--synchronous -ს --no-sync -თან ერთად ვერ გამოიყენებთ"
+
+#: pg_receivewal.c:860
+#, c-format
+msgid "no target directory specified"
+msgstr "სამიზნე საქაღალდე მითითებული არაა"
+
+#: pg_receivewal.c:893
+#, c-format
+msgid "no value specified for --compress, switching to default"
+msgstr "--compress -ის მნიშვნელობა მითითებული არაა. გამოიყენება ნაგულისხმები"
+
+#: pg_receivewal.c:897 pg_receivewal.c:903
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "ამ აგებაში %s-ით შეკუმშვის მხარდაჭრა არ არსებობს"
+
+#: pg_receivewal.c:908
+#, c-format
+msgid "compression with %s is not yet supported"
+msgstr "%s-სთან დაკავშირების მხარდაჭერა ჯერ არ არსებობს"
+
+#: pg_receivewal.c:953
+#, c-format
+msgid ""
+"replication connection using slot \"%s\" is unexpectedly database specific"
+msgstr ""
+
+#: pg_receivewal.c:972 pg_recvlogical.c:955
+#, c-format
+msgid "dropping replication slot \"%s\""
+msgstr "რეპლიკაციის სლოტის წაშლა: %s"
+
+#: pg_receivewal.c:983 pg_recvlogical.c:965
+#, c-format
+msgid "creating replication slot \"%s\""
+msgstr "რეპლიკაციის სლოტის შექმნა \"%s\""
+
+#: pg_receivewal.c:1012 pg_recvlogical.c:989
+#, c-format
+msgid "disconnected"
+msgstr "გათიშულია"
+
+#. translator: check source for value for %d
+#: pg_receivewal.c:1016 pg_recvlogical.c:993
+#, c-format
+msgid "disconnected; waiting %d seconds to try again"
+msgstr "გათიშულია; თავიდან ცდამდე დაყოვნება %d წამია"
+
+#: pg_recvlogical.c:76
+#, c-format
+msgid ""
+"%s controls PostgreSQL logical decoding streams.\n"
+"\n"
+msgstr ""
+"%s PostgreSQL_ის ლოგიკური გაშიფვრის ნაკადებს აკონტროლებს.\n"
+"\n"
+" \n"
+
+#: pg_recvlogical.c:80
+#, c-format
+msgid ""
+"\n"
+"Action to be performed:\n"
+msgstr ""
+"\n"
+"შესასრულებელი ქმედებები:\n"
+
+#: pg_recvlogical.c:83
+#, c-format
+msgid ""
+"      --start            start streaming in a replication slot (for the "
+"slot's name see --slot)\n"
+msgstr ""
+
+#: pg_recvlogical.c:86
+#, c-format
+msgid "  -f, --file=FILE        receive log into this file, - for stdout\n"
+msgstr ""
+"  -f, --file=FILE        ჟურნალის მითითებულ ფაილში მიღება. stdout-ისთვის -\n"
+
+#: pg_recvlogical.c:87
+#, c-format
+msgid ""
+"  -F  --fsync-interval=SECS\n"
+"                         time between fsyncs to the output file (default: "
+"%d)\n"
+msgstr ""
+"  -F  --fsync-interval=SECS\n"
+"                         შუალედი გამოსატანი ფაილის fsync-ებს შორის "
+"(ნაგულისხმები: %d)\n"
+
+#: pg_recvlogical.c:90
+#, c-format
+msgid ""
+"  -I, --startpos=LSN     where in an existing slot should the streaming "
+"start\n"
+msgstr ""
+
+#: pg_recvlogical.c:92
+#, c-format
+msgid ""
+"  -o, --option=NAME[=VALUE]\n"
+"                         pass option NAME with optional value VALUE to the\n"
+"                         output plugin\n"
+msgstr ""
+
+#: pg_recvlogical.c:95
+#, c-format
+msgid "  -P, --plugin=PLUGIN    use output plugin PLUGIN (default: %s)\n"
+msgstr ""
+"  -P, --plugin=PLUGIN    გამოტანის მითითებული დამატების გამოყენება "
+"(ნაგულისხმები: %s)\n"
+
+#: pg_recvlogical.c:98
+#, c-format
+msgid "  -S, --slot=SLOTNAME    name of the logical replication slot\n"
+msgstr "  -S, --slot=SLOTNAME    ლოგიკური რეპლიკაციის სლოტის სახელი\n"
+
+#: pg_recvlogical.c:99
+#, c-format
+msgid ""
+"  -t, --two-phase        enable two-phase decoding when creating a slot\n"
+msgstr "  -t, --two-phase        სლოტის შექმნისას ორფაზანი დეკოდერის ჩართვა\n"
+
+#: pg_recvlogical.c:104
+#, c-format
+msgid "  -d, --dbname=DBNAME    database to connect to\n"
+msgstr "  -d, --dbname=DBNAME    მისაერთებელი ბაზის სახელი\n"
+
+#: pg_recvlogical.c:137
+#, c-format
+msgid "confirming write up to %X/%X, flush to %X/%X (slot %s)"
+msgstr ""
+
+#: pg_recvlogical.c:161 receivelog.c:366
+#, c-format
+msgid "could not send feedback packet: %s"
+msgstr "უკუკავშირის პაკეტის გაგზავნის შეცდომა: %s"
+
+#: pg_recvlogical.c:229
+#, c-format
+msgid "starting log streaming at %X/%X (slot %s)"
+msgstr ""
+
+#: pg_recvlogical.c:271
+#, c-format
+msgid "streaming initiated"
+msgstr "ნაკადი ინიცირებულია"
+
+#: pg_recvlogical.c:335
+#, c-format
+msgid "could not open log file \"%s\": %m"
+msgstr "ჟურნალის ფაილის გახსნის შეცდომა \"%s\": %m"
+
+#: pg_recvlogical.c:364 receivelog.c:889
+#, c-format
+msgid "invalid socket: %s"
+msgstr "არასწორი სოკეტი: %s"
+
+#: pg_recvlogical.c:417 receivelog.c:917
+#, c-format
+msgid "%s() failed: %m"
+msgstr "%s()-ის შეცდომა: %m"
+
+#: pg_recvlogical.c:424 receivelog.c:967
+#, c-format
+msgid "could not receive data from WAL stream: %s"
+msgstr "\"WAL\" ნაკადიდან მონაცემების მიღების შეცდომა: %s"
+
+#: pg_recvlogical.c:466 pg_recvlogical.c:517 receivelog.c:1011
+#: receivelog.c:1074
+#, c-format
+msgid "streaming header too small: %d"
+msgstr "ნაკადის თავსართი ძალიან პატარაა: %d"
+
+#: pg_recvlogical.c:501 receivelog.c:849
+#, c-format
+msgid "unrecognized streaming header: \"%c\""
+msgstr "ნაკადის უცნობი თავსართი: \"%c\""
+
+#: pg_recvlogical.c:555 pg_recvlogical.c:567
+#, c-format
+msgid "could not write %d bytes to log file \"%s\": %m"
+msgstr ""
+
+#: pg_recvlogical.c:621 receivelog.c:648 receivelog.c:685
+#, c-format
+msgid "unexpected termination of replication stream: %s"
+msgstr ""
+
+#: pg_recvlogical.c:780
+#, c-format
+msgid "could not parse start position \"%s\""
+msgstr "საწყისი მდებარეობის დამუშავების შეცდომა: %s"
+
+#: pg_recvlogical.c:858
+#, c-format
+msgid "no slot specified"
+msgstr "სლოტი მითითებული არაა"
+
+#: pg_recvlogical.c:865
+#, c-format
+msgid "no target file specified"
+msgstr "სამიზნე ფაილი მითითებული არაა"
+
+#: pg_recvlogical.c:872
+#, c-format
+msgid "no database specified"
+msgstr "ბაზა მითითებული არაა"
+
+#: pg_recvlogical.c:879
+#, c-format
+msgid "at least one action needs to be specified"
+msgstr ""
+
+#: pg_recvlogical.c:886
+#, c-format
+msgid "cannot use --create-slot or --start together with --drop-slot"
+msgstr "--create-slot -ს და ---start-ს -drop-slot -თან ერთად ვერ გამოიყენებთ"
+
+#: pg_recvlogical.c:893
+#, c-format
+msgid "cannot use --create-slot or --drop-slot together with --startpos"
+msgstr ""
+"--create-slot -ს და --drop-slot-ს --startpos -თან ერთად ვერ გამოიყენებთ"
+
+#: pg_recvlogical.c:900
+#, c-format
+msgid "--endpos may only be specified with --start"
+msgstr "--endpos -ის მითითება მხოლოდ --start -თან ერთად შეიძლება"
+
+#: pg_recvlogical.c:907
+#, c-format
+msgid "--two-phase may only be specified with --create-slot"
+msgstr "--two-phase -ის მითითება მხოლოდ --create-slot -თან ერთად შეიძლება"
+
+#: pg_recvlogical.c:939
+#, c-format
+msgid "could not establish database-specific replication connection"
+msgstr ""
+
+#: pg_recvlogical.c:1033
+#, c-format
+msgid "end position %X/%X reached by keepalive"
+msgstr ""
+
+#: pg_recvlogical.c:1036
+#, c-format
+msgid "end position %X/%X reached by WAL record at %X/%X"
+msgstr ""
+
+#: receivelog.c:68
+#, c-format
+msgid "could not create archive status file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:75
+#, c-format
+msgid "could not close archive status file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:123
+#, c-format
+msgid "could not get size of write-ahead log file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:134
+#, c-format
+msgid "could not open existing write-ahead log file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:143
+#, c-format
+msgid "could not fsync existing write-ahead log file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:158
+#, c-format
+msgid "write-ahead log file \"%s\" has %zd byte, should be 0 or %d"
+msgid_plural "write-ahead log file \"%s\" has %zd bytes, should be 0 or %d"
+msgstr[0] ""
+msgstr[1] ""
+
+#: receivelog.c:174
+#, c-format
+msgid "could not open write-ahead log file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:208
+#, c-format
+msgid "could not determine seek position in file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:223
+#, c-format
+msgid "not renaming \"%s\", segment is not complete"
+msgstr ""
+
+#: receivelog.c:234 receivelog.c:323 receivelog.c:694
+#, c-format
+msgid "could not close file \"%s\": %s"
+msgstr "ფაილის (\"%s\") დახურვის შეცდომა: %s"
+
+#: receivelog.c:295
+#, c-format
+msgid "server reported unexpected history file name for timeline %u: %s"
+msgstr ""
+
+#: receivelog.c:303
+#, c-format
+msgid "could not create timeline history file \"%s\": %s"
+msgstr "დროის ხაზის ისტორიის ფაილის (%s) შექმნის შეცდომა: %s"
+
+#: receivelog.c:310
+#, c-format
+msgid "could not write timeline history file \"%s\": %s"
+msgstr "დროის ხაზის ისტორიის ფაილის (%s) ჩაწერის შეცდომა: %s"
+
+#: receivelog.c:400
+#, c-format
+msgid ""
+"incompatible server version %s; client does not support streaming from "
+"server versions older than %s"
+msgstr ""
+
+#: receivelog.c:409
+#, c-format
+msgid ""
+"incompatible server version %s; client does not support streaming from "
+"server versions newer than %s"
+msgstr ""
+
+#: receivelog.c:514
+#, c-format
+msgid ""
+"system identifier does not match between base backup and streaming connection"
+msgstr ""
+
+#: receivelog.c:522
+#, c-format
+msgid "starting timeline %u is not present in the server"
+msgstr ""
+
+#: receivelog.c:561
+#, c-format
+msgid ""
+"unexpected response to TIMELINE_HISTORY command: got %d rows and %d fields, "
+"expected %d rows and %d fields"
+msgstr ""
+
+#: receivelog.c:632
+#, c-format
+msgid "server reported unexpected next timeline %u, following timeline %u"
+msgstr ""
+
+#: receivelog.c:638
+#, c-format
+msgid ""
+"server stopped streaming timeline %u at %X/%X, but reported next timeline %u "
+"to begin at %X/%X"
+msgstr ""
+
+#: receivelog.c:678
+#, c-format
+msgid "replication stream was terminated before stop point"
+msgstr ""
+
+#: receivelog.c:724
+#, c-format
+msgid ""
+"unexpected result set after end-of-timeline: got %d rows and %d fields, "
+"expected %d rows and %d fields"
+msgstr ""
+
+#: receivelog.c:733
+#, c-format
+msgid "could not parse next timeline's starting point \"%s\""
+msgstr ""
+
+#: receivelog.c:781 receivelog.c:1030 walmethods.c:1203
+#, c-format
+msgid "could not fsync file \"%s\": %s"
+msgstr "ფაილის (\"%s\") fsync-ის შეცდომა: %s"
+
+#: receivelog.c:1091
+#, c-format
+msgid "received write-ahead log record for offset %u with no file open"
+msgstr ""
+
+#: receivelog.c:1101
+#, c-format
+msgid "got WAL data offset %08x, expected %08x"
+msgstr ""
+
+#: receivelog.c:1135
+#, c-format
+msgid "could not write %d bytes to WAL file \"%s\": %s"
+msgstr ""
+
+#: receivelog.c:1160 receivelog.c:1200 receivelog.c:1230
+#, c-format
+msgid "could not send copy-end packet: %s"
+msgstr ""
+
+#: streamutil.c:159
+msgid "Password: "
+msgstr "პაროლი: "
+
+#: streamutil.c:182
+#, c-format
+msgid "could not connect to server"
+msgstr "სერვერთან მიერთების პრობლემა"
+
+#: streamutil.c:225
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "search_path-ის გასუფთავების პრობლემა: %s"
+
+#: streamutil.c:241
+#, c-format
+msgid "could not determine server setting for integer_datetimes"
+msgstr ""
+
+#: streamutil.c:248
+#, c-format
+msgid "integer_datetimes compile flag does not match server"
+msgstr ""
+
+#: streamutil.c:299
+#, c-format
+msgid ""
+"could not fetch WAL segment size: got %d rows and %d fields, expected %d "
+"rows and %d or more fields"
+msgstr ""
+
+#: streamutil.c:309
+#, c-format
+msgid "WAL segment size could not be parsed"
+msgstr "WAL სეგმენტის ზომის დამუშავების შეცდომა"
+
+#: streamutil.c:327
+#, c-format
+msgid ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"remote server reported a value of %d byte"
+msgid_plural ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the "
+"remote server reported a value of %d bytes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: streamutil.c:372
+#, c-format
+msgid ""
+"could not fetch group access flag: got %d rows and %d fields, expected %d "
+"rows and %d or more fields"
+msgstr ""
+
+#: streamutil.c:381
+#, c-format
+msgid "group access flag could not be parsed: %s"
+msgstr "ჯგუფის წვდომის ალმის დამუშავების შეცდომა: %s"
+
+#: streamutil.c:424 streamutil.c:461
+#, c-format
+msgid ""
+"could not identify system: got %d rows and %d fields, expected %d rows and "
+"%d or more fields"
+msgstr ""
+
+#: streamutil.c:513
+#, c-format
+msgid ""
+"could not read replication slot \"%s\": got %d rows and %d fields, expected "
+"%d rows and %d fields"
+msgstr ""
+
+#: streamutil.c:525
+#, c-format
+msgid "could not find replication slot \"%s\""
+msgstr "რეპლიკაციის სლოტი არ არსებობს: %s"
+
+#: streamutil.c:536
+#, c-format
+msgid "expected a physical replication slot, got type \"%s\" instead"
+msgstr "მოველოდი ფიზიკური რეპლიკაციის სლოტს. მივიღე: %s"
+
+#: streamutil.c:550
+#, c-format
+msgid "could not parse restart_lsn \"%s\" for replication slot \"%s\""
+msgstr ""
+
+#: streamutil.c:667
+#, c-format
+msgid ""
+"could not create replication slot \"%s\": got %d rows and %d fields, "
+"expected %d rows and %d fields"
+msgstr ""
+
+#: streamutil.c:711
+#, c-format
+msgid ""
+"could not drop replication slot \"%s\": got %d rows and %d fields, expected "
+"%d rows and %d fields"
+msgstr ""
+
+#: walmethods.c:720 walmethods.c:1265
+msgid "could not compress data"
+msgstr "მონაცემების შეკუმშვის შეცდომა"
+
+#: walmethods.c:749
+msgid "could not reset compression stream"
+msgstr "შეკუმშვის ნაკადის თავიდან დაწყების შეცდომა"
+
+#: walmethods.c:880
+msgid "implementation error: tar files can't have more than one open file"
+msgstr "განხორციელების შეცდომა: tar ფაილებს ერთზე მეტი ღია ფაილი ვერ ექნებათ"
+
+#: walmethods.c:894
+msgid "could not create tar header"
+msgstr "tar-ის თავსართის შექმნის შეცდომა"
+
+#: walmethods.c:910 walmethods.c:950 walmethods.c:1169 walmethods.c:1181
+msgid "could not change compression parameters"
+msgstr "შეკუმშვის პარამეტრების შეცვლა შეუძლებელა"
+
+#: walmethods.c:1054
+msgid "unlink not supported with compression"
+msgstr "წაშლა შეკუმშვით მხარდაუჭერელია"
+
+#: walmethods.c:1289
+msgid "could not close compression stream"
+msgstr "შეკუმშვის ნაკადის დახურვის შეცდომა"

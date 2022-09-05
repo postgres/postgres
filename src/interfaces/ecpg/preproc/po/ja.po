@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ecpg (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-06-14 20:17+0900\n"
+"POT-Creation-Date: 2022-08-09 12:00+0900\n"
 "PO-Revision-Date: 2022-05-11 14:50+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
@@ -88,8 +88,8 @@ msgid ""
 "  -c             automatically generate C code from embedded SQL code;\n"
 "                 this affects EXEC SQL TYPE\n"
 msgstr ""
-"  -c             埋め込まれたSQLコードを元にC言語コードを自動的に生成します\n"
-"                 これはEXEC SQL TYPEに影響を与えます\n"
+"  -c             埋め込まれたSQLコードを元にC言語コードを自動的に生成\n"
+"                 これはEXEC SQL TYPEに影響を与える\n"
 
 #: ecpg.c:44
 #, c-format
@@ -98,39 +98,39 @@ msgid ""
 "                 \"INFORMIX\", \"INFORMIX_SE\", \"ORACLE\"\n"
 msgstr ""
 "  -C MODE        互換モードを設定; MODEは\"INFORMIX\"、 \"INFORMIX_SE\"、\n"
-"                 \"ORACLE\"のいずれかです\n"
+"                 \"ORACLE\"のいずれか\n"
 
 #: ecpg.c:47
 #, c-format
 msgid "  -d             generate parser debug output\n"
-msgstr "  -d             パーサのデバッグ出力を有効にします\n"
+msgstr "  -d             パーサのデバッグ出力を有効にする\n"
 
 #: ecpg.c:49
 #, c-format
 msgid "  -D SYMBOL      define SYMBOL\n"
-msgstr "  -D SYMBOL      シンボル SYMBOL を定義します\n"
+msgstr "  -D SYMBOL      シンボル SYMBOL を定義する\n"
 
 #: ecpg.c:50
 #, c-format
 msgid "  -h             parse a header file, this option includes option \"-c\"\n"
 msgstr ""
-"  -h             ヘッダファイルをパースします。このオプションには\"-c\"オプション\n"
-"              が含まれます\n"
+"  -h             ヘッダファイルをパースする。このオプションには\"-c\"オプション\n"
+"                 が含まれる\n"
 
 #: ecpg.c:51
 #, c-format
 msgid "  -i             parse system include files as well\n"
-msgstr "  -i             システムインクルードファイルもパースします\n"
+msgstr "  -i             システムインクルードファイルもパースする\n"
 
 #: ecpg.c:52
 #, c-format
 msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
-msgstr "  -I DIRECTORY   DIRECTORYからインクルードファイルを検索します\n"
+msgstr "  -I DIRECTORY   DIRECTORYからインクルードファイルを検索する\n"
 
 #: ecpg.c:53
 #, c-format
 msgid "  -o OUTFILE     write result to OUTFILE\n"
-msgstr "  -o OUTFILE     結果をOUTFILEに出力します\n"
+msgstr "  -o OUTFILE     結果をOUTFILEに出力する\n"
 
 #: ecpg.c:54
 #, c-format
@@ -138,28 +138,28 @@ msgid ""
 "  -r OPTION      specify run-time behavior; OPTION can be:\n"
 "                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
 msgstr ""
-"  -r OPTION      実行時の動作を指定します。オプションは次のいずれかです\n"
+"  -r OPTION      実行時の動作を指定する。オプションは次のいずれか\n"
 "                 \"no_indicator\"、\"prepare\"、\"questionmarks\"\n"
 
 #: ecpg.c:56
 #, c-format
 msgid "  --regression   run in regression testing mode\n"
-msgstr "  --regression   リグレッション試験モードで実行します\n"
+msgstr "  --regression   リグレッション試験モードで実行\n"
 
 #: ecpg.c:57
 #, c-format
 msgid "  -t             turn on autocommit of transactions\n"
-msgstr "  -t             トランザクションの自動コミットを有効にします\n"
+msgstr "  -t             トランザクションの自動コミットを有効にする\n"
 
 #: ecpg.c:58
 #, c-format
 msgid "  -V, --version  output version information, then exit\n"
-msgstr "  -V, --version  バージョン情報を出力して、終了します\n"
+msgstr "  -V, --version  バージョン情報を出力して終了\n"
 
 #: ecpg.c:59
 #, c-format
 msgid "  -?, --help     show this help, then exit\n"
-msgstr "  -?, --help     このヘルプを表示して、終了します\n"
+msgstr "  -?, --help     このヘルプを表示して終了\n"
 
 #: ecpg.c:60
 #, c-format
@@ -445,7 +445,7 @@ msgstr "WHENEVER文ではATオプションは許されません"
 #: preproc.y:7687 preproc.y:9288 preproc.y:9293 preproc.y:12272
 #, c-format
 msgid "unsupported feature will be passed to server"
-msgstr "非サポートの機能がサーバに渡されます"
+msgstr "非サポートの機能がサーバーに渡されます"
 
 #: preproc.y:2890
 #, c-format
@@ -475,7 +475,7 @@ msgstr "カーソル\"%s\"はすでに定義されています"
 #: preproc.y:10818
 #, c-format
 msgid "no longer supported LIMIT #,# syntax passed to server"
-msgstr "サーバに渡されるLIMIT #,#構文はもはやサポートされていません"
+msgstr "サーバーに渡されるLIMIT #,#構文はもはやサポートされていません"
 
 #: preproc.y:11151 preproc.y:11158
 #, c-format
@@ -711,17 +711,17 @@ msgstr "構造体の多次元配列はサポートされていません"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "不具合は<pgsql-bugs@postgresql.org>に報告してください。\n"
+#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
 
 #~ msgid "using unsupported DESCRIBE statement"
 #~ msgstr "未サポートのDESCRIBE文の使用"
 
 #~ msgid ""
 #~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 #~ msgstr ""
 #~ "\n"
-#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
+#~ "不具合は<pgsql-bugs@postgresql.org>に報告してください。\n"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-06-14 20:17+0900\n"
+"POT-Creation-Date: 2022-08-09 12:00+0900\n"
 "PO-Revision-Date: 2022-05-10 11:31+0900\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -453,7 +453,7 @@ msgstr ""
 #: pg_amcheck.c:1174
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
-msgstr "  -e, --echo                      サーバに送られるコマンドを表示\n"
+msgstr "  -e, --echo                      サーバーに送られるコマンドを表示\n"
 
 #: pg_amcheck.c:1175
 #, c-format

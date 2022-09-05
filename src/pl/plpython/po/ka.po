@@ -1,16 +1,16 @@
-# LANGUAGE message translation file for plpython
+# Georgian message translation file for plpython
 # Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the plpython (PostgreSQL) package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-02 04:38+0000\n"
-"PO-Revision-Date: 2022-07-17 11:16+0200\n"
+"PO-Revision-Date: 2022-08-12 12:41+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
-"Language-Team: \n"
+"Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -171,6 +171,8 @@ msgstr "TD[\"new\"] ლექსიკონი არაა"
 #, c-format
 msgid "TD[\"new\"] dictionary key at ordinal position %d is not a string"
 msgstr ""
+"TD[\"new\"] ლექსიკონის გასაღები ორდინალურ მდებარეობაზე %d სტრიქონს არ "
+"წარმოადგენს"
 
 #: plpy_exec.c:945
 #, c-format
@@ -325,6 +327,7 @@ msgstr "plpy.prepare -ის მეორე არგუმენტი მი�
 #, c-format
 msgid "plpy.prepare: type name at ordinal position %d is not a string"
 msgstr ""
+"plpy.prepare: ტიპის სახელი ორდინალურ მდგომარეობაში %d სტრიქონს არ წარმოადგენს"
 
 #: plpy_spi.c:170
 #, c-format

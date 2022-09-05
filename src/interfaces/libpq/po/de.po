@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-13 11:10+0000\n"
-"PO-Revision-Date: 2022-07-13 18:13+0200\n"
+"POT-Creation-Date: 2022-08-23 20:40+0000\n"
+"PO-Revision-Date: 2022-08-24 14:21+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -71,7 +71,7 @@ msgstr "konnte Nonce nicht erzeugen\n"
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
 #: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3215 fe-exec.c:3399
-#: fe-exec.c:4177 fe-exec.c:4342 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-exec.c:4181 fe-exec.c:4346 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
 #: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
@@ -126,7 +126,7 @@ msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
 #: fe-auth-scram.c:943
-msgid "failed to generate random salt"
+msgid "could not generate random salt"
 msgstr "konnte zufälliges Salt nicht erzeugen"
 
 #: fe-auth.c:76
@@ -772,7 +772,7 @@ msgstr "Parameternummer %d ist außerhalb des zulässigen Bereichs 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
 
-#: fe-exec.c:4068 fe-exec.c:4159
+#: fe-exec.c:4072 fe-exec.c:4163
 msgid "incomplete multibyte character\n"
 msgstr "unvollständiges Mehrbyte-Zeichen\n"
 

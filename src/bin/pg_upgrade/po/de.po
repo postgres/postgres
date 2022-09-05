@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-19 05:18+0000\n"
-"PO-Revision-Date: 2022-07-19 08:39+0200\n"
+"POT-Creation-Date: 2022-08-17 06:48+0000\n"
+"PO-Revision-Date: 2022-08-17 16:42+0200\n"
 "Last-Translator: Peter Eisentraut <peter@eisentraut.org>\n"
 "Language-Team: German <pgsql-translators@postgresql.org>\n"
 "Language: de\n"
@@ -168,19 +168,15 @@ msgstr "Tablespace-Verzeichnis für neuen Cluster existiert bereits: »%s«\n"
 #, c-format
 msgid ""
 "\n"
-"WARNING:  new data directory should not be inside the old data directory, e.g. %s\n"
-msgstr ""
-"\n"
-"WARNUNG:  das neue Datenverzeichnis sollte nicht im alten Datenverzeichnis liegen, z.B. %s\n"
+"WARNING:  new data directory should not be inside the old data directory, i.e. %s\n"
+msgstr "\nWARNUNG:  das neue Datenverzeichnis sollte nicht im alten Datenverzeichnis, d.h. %s, liegen\n"
 
 #: check.c:567
 #, c-format
 msgid ""
 "\n"
-"WARNING:  user-defined tablespace locations should not be inside the data directory, e.g. %s\n"
-msgstr ""
-"\n"
-"WARNUNG:  benutzerdefinierte Tablespace-Pfade sollten nicht im Datenverzeichnis liegen, z.B. %s\n"
+"WARNING:  user-defined tablespace locations should not be inside the data directory, i.e. %s\n"
+msgstr "\nWARNUNG:  benutzerdefinierte Tablespace-Pfade sollten nicht im Datenverzeichnis, d.h. %s, liegen\n"
 
 #: check.c:577
 #, c-format
@@ -188,7 +184,7 @@ msgid "Creating script to delete old cluster"
 msgstr "Erzeuge Skript zum Löschen des alten Clusters"
 
 #: check.c:580 check.c:755 check.c:875 check.c:974 check.c:1105 check.c:1184
-#: check.c:1447 file.c:336 function.c:165 option.c:465 version.c:116
+#: check.c:1447 file.c:338 function.c:165 option.c:465 version.c:116
 #: version.c:288 version.c:423
 #, c-format
 msgid "could not open file \"%s\": %s\n"
@@ -564,117 +560,117 @@ msgstr "%d: Problem mit pg_resetwal\n"
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: Problem beim Ermitteln der Kontrolldaten\n"
 
-#: controldata.c:572
+#: controldata.c:571
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "Im alten Cluster fehlen einige notwendige Kontrollinformationen:\n"
 
-#: controldata.c:575
+#: controldata.c:574
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "Im neuen Cluster fehlen einige notwendige Kontrollinformationen:\n"
 
-#: controldata.c:578
+#: controldata.c:577
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  Checkpoint nächste XID\n"
 
-#: controldata.c:581
+#: controldata.c:580
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  NextOID des letzten Checkpoints\n"
 
-#: controldata.c:584
+#: controldata.c:583
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  NextMultiXactId des letzten Checkpoints\n"
 
-#: controldata.c:588
+#: controldata.c:587
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  oldestMultiXid des letzten Checkpoints\n"
 
-#: controldata.c:591
+#: controldata.c:590
 #, c-format
 msgid "  latest checkpoint oldestXID\n"
 msgstr "  oldestXID des letzten Checkpoints\n"
 
-#: controldata.c:594
+#: controldata.c:593
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  NextMultiOffset des letzten Checkpoints\n"
 
-#: controldata.c:597
+#: controldata.c:596
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  erstes WAL-Segment nach dem Reset\n"
 
-#: controldata.c:600
+#: controldata.c:599
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  Übergabe von Float8-Argumenten\n"
 
-#: controldata.c:603
+#: controldata.c:602
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  maximale Ausrichtung (Alignment)\n"
 
-#: controldata.c:606
+#: controldata.c:605
 #, c-format
 msgid "  block size\n"
 msgstr "  Blockgröße\n"
 
-#: controldata.c:609
+#: controldata.c:608
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  Segmentgröße für große Relationen\n"
 
-#: controldata.c:612
+#: controldata.c:611
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  WAL-Blockgröße\n"
 
-#: controldata.c:615
+#: controldata.c:614
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  WAL-Segmentgröße\n"
 
-#: controldata.c:618
+#: controldata.c:617
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  maximale Bezeichnerlänge\n"
 
-#: controldata.c:621
+#: controldata.c:620
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  maximale Anzahl indizierter Spalten\n"
 
-#: controldata.c:624
+#: controldata.c:623
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  maximale TOAST-Chunk-Größe\n"
 
-#: controldata.c:628
+#: controldata.c:627
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  Large-Object-Chunk-Größe\n"
 
-#: controldata.c:631
+#: controldata.c:630
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  Datum/Zeit sind Ganzzahlen?\n"
 
-#: controldata.c:635
+#: controldata.c:634
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  Datenprüfsummenversion\n"
 
-#: controldata.c:637
+#: controldata.c:636
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr "Kann ohne die benötigten Kontrollinformationen nicht fortsetzen, Programm wird beendet\n"
 
-#: controldata.c:652
+#: controldata.c:651
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match\n"
@@ -683,77 +679,77 @@ msgstr ""
 "altes und neues Alignment in pg_controldata ist ungültig oder stimmt nicht überein\n"
 "Wahrscheinlich ist ein Cluster eine 32-Bit-Installation und der andere 64-Bit\n"
 
-#: controldata.c:656
+#: controldata.c:655
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr "alte und neue Blockgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:659
+#: controldata.c:658
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
 msgstr "alte und neue maximale Relationssegmentgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:662
+#: controldata.c:661
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
 msgstr "alte und neue WAL-Blockgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:665
+#: controldata.c:664
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
 msgstr "alte und neue WAL-Segmentgrößen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:668
+#: controldata.c:667
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
 msgstr "alte und neue maximale Bezeichnerlängen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:671
+#: controldata.c:670
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
 msgstr "alte und neue Maximalzahlen indizierter Spalten von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:674
+#: controldata.c:673
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
 msgstr "alte und neue maximale TOAST-Chunk-Größen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:679
+#: controldata.c:678
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
 msgstr "alte und neue Large-Object-Chunk-Größen von pg_controldata sind ungültig oder stimmen nicht überein\n"
 
-#: controldata.c:682
+#: controldata.c:681
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr "alte und neue Speicherung von Datums- und Zeittypen von pg_controldata ist ungültig oder stimmt nicht überein\n"
 
-#: controldata.c:695
+#: controldata.c:694
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr "der alte Cluster verwendet keine Datenprüfsummen, aber der neue verwendet sie\n"
 
-#: controldata.c:698
+#: controldata.c:697
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr "die alte Cluster verwendet Datenprüfsummen, aber der neue nicht\n"
 
-#: controldata.c:700
+#: controldata.c:699
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr "Prüfsummenversionen im alten und neuen Cluster stimmen nicht überein\n"
 
-#: controldata.c:711
+#: controldata.c:710
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Füge Endung ».old« an altes global/pg_control an"
 
-#: controldata.c:716
+#: controldata.c:715
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "Konnte %s nicht in %s umbenennen.\n"
 
-#: controldata.c:719
+#: controldata.c:718
 #, c-format
 msgid ""
 "\n"
@@ -882,7 +878,7 @@ msgstr "Prüfen von »%s« fehlgeschlagen: kann nicht ausgeführt werden\n"
 msgid "check for \"%s\" failed: incorrect version: found \"%s\", expected \"%s\"\n"
 msgstr "Prüfen von »%s« fehlgeschlagen: falsche Version: gefunden »%s«, erwartet »%s«\n"
 
-#: file.c:43 file.c:61
+#: file.c:43 file.c:63
 #, c-format
 msgid "error while cloning relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
 msgstr "Fehler beim Klonen von Relation »%s.%s« (»%s« nach »%s«): %s\n"
@@ -897,62 +893,62 @@ msgstr "Fehler beim Klonen von Relation »%s.%s«: konnte Datei »%s« nicht öf
 msgid "error while cloning relation \"%s.%s\": could not create file \"%s\": %s\n"
 msgstr "Fehler beim Klonen von Relation »%s.%s«: konnte Datei »%s« nicht erzeugen: %s\n"
 
-#: file.c:87 file.c:190
+#: file.c:89 file.c:192
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not open file \"%s\": %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Datei »%s« nicht öffnen: %s\n"
 
-#: file.c:92 file.c:199
+#: file.c:94 file.c:201
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not create file \"%s\": %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Datei »%s« nicht erzeugen: %s\n"
 
-#: file.c:106 file.c:223
+#: file.c:108 file.c:225
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Datei »%s« nicht lesen: %s\n"
 
-#: file.c:118 file.c:301
+#: file.c:120 file.c:303
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte Datei »%s« nicht schreiben: %s\n"
 
-#: file.c:132
+#: file.c:134
 #, c-format
 msgid "error while copying relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s« (»%s« nach »%s«): %s\n"
 
-#: file.c:151
+#: file.c:153
 #, c-format
 msgid "error while creating link for relation \"%s.%s\" (\"%s\" to \"%s\"): %s\n"
 msgstr "Fehler beim Erzeugen einer Verknüpfung für Relation »%s.%s« (»%s« nach »%s«): %s\n"
 
-#: file.c:194
+#: file.c:196
 #, c-format
 msgid "error while copying relation \"%s.%s\": could not stat file \"%s\": %s\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: konnte »stat« für Datei »%s« nicht ausführen: %s\n"
 
-#: file.c:226
+#: file.c:228
 #, c-format
 msgid "error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
 msgstr "Fehler beim Kopieren von Relation »%s.%s«: unvollständige Seite gefunden in Datei »%s«\n"
 
-#: file.c:328 file.c:345
+#: file.c:330 file.c:347
 #, c-format
 msgid "could not clone file between old and new data directories: %s\n"
 msgstr "konnte Datei nicht vom alten in das neue Datenverzeichnis klonen: %s\n"
 
-#: file.c:341
+#: file.c:343
 #, c-format
 msgid "could not create file \"%s\": %s\n"
 msgstr "konnte Datei »%s« nicht erstellen: %s\n"
 
-#: file.c:352
+#: file.c:354
 #, c-format
 msgid "file cloning not supported on this platform\n"
 msgstr "Klonen von Dateien wird auf dieser Plattform nicht unterstützt\n"
 
-#: file.c:369
+#: file.c:371
 #, c-format
 msgid ""
 "could not create hard link between old and new data directories: %s\n"

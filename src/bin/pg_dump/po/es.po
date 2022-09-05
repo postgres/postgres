@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:20+0000\n"
-"PO-Revision-Date: 2022-01-12 17:37-0500\n"
+"PO-Revision-Date: 2022-09-03 16:48+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -35,12 +35,12 @@ msgstr "precaución: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr ""
+msgstr "detalle: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr ""
+msgstr "consejo: "
 
 #: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
@@ -123,16 +123,14 @@ msgid "child process exited with unrecognized status %d"
 msgstr "el proceso hijo terminó con código no reconocido %d"
 
 #: ../../fe_utils/option_utils.c:69
-#, fuzzy, c-format
-#| msgid "invalid value \"%s\" for \"%s\""
+#, c-format
 msgid "invalid value \"%s\" for option %s"
-msgstr "el valor «%s» no es válido para «%s»"
+msgstr "el valor «%s» no es válido para la opción %s"
 
 #: ../../fe_utils/option_utils.c:76
-#, fuzzy, c-format
-#| msgid "%s: %s must be in range %u..%u\n"
+#, c-format
 msgid "%s must be in range %d..%d"
-msgstr "%s: %s debe estar en el rango %u..%u\n"
+msgstr "%s debe estar en el rango %d..%d"
 
 #: common.c:134
 #, c-format
@@ -320,16 +318,14 @@ msgid "reading publications"
 msgstr "leyendo publicaciones"
 
 #: common.c:257
-#, fuzzy, c-format
-#| msgid "reading publication membership"
+#, c-format
 msgid "reading publication membership of tables"
-msgstr "leyendo membresía en publicaciones"
+msgstr "leyendo membresía de tablas en publicaciones"
 
 #: common.c:260
-#, fuzzy, c-format
-#| msgid "reading publication membership"
+#, c-format
 msgid "reading publication membership of schemas"
-msgstr "leyendo membresía en publicaciones"
+msgstr "leyendo membresía de esquemas en publicaciones"
 
 #: common.c:263
 #, c-format
@@ -1037,10 +1033,9 @@ msgid "query failed: %s"
 msgstr "la consulta falló: %s"
 
 #: pg_backup_db.c:274 pg_dumpall.c:1710 pg_dumpall.c:1733
-#, fuzzy, c-format
-#| msgid "query was: %s"
+#, c-format
 msgid "Query was: %s"
-msgstr "la consulta era: %s"
+msgstr "La consulta era: %s"
 
 #: pg_backup_db.c:316
 #, c-format
@@ -1219,10 +1214,9 @@ msgid "could not close temporary file: %m"
 msgstr "no se pudo abrir archivo temporal: %m"
 
 #: pg_backup_tar.c:1038
-#, fuzzy, c-format
-#| msgid "actual file length (%s) does not match expected (%s)"
+#, c-format
 msgid "actual file length (%lld) does not match expected (%lld)"
-msgstr "el tamaño real del archivo (%s) no coincide con el esperado (%s)"
+msgstr "el tamaño real del archivo (%lld) no coincide con el esperado (%lld)"
 
 #: pg_backup_tar.c:1084 pg_backup_tar.c:1115
 #, c-format
@@ -1242,10 +1236,9 @@ msgstr[0] "se encontró un encabezado incompleto (%lu byte)"
 msgstr[1] "se encontró un encabezado incompleto (%lu bytes)"
 
 #: pg_backup_tar.c:1188
-#, fuzzy, c-format
-#| msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s"
+#, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %llu"
-msgstr "se encontró un encabezado corrupto en %s (esperado %d, calculado %d) en la posición %s"
+msgstr "se encontró un encabezado corrupto en %s (esperado %d, calculado %d) en la posición %llu"
 
 #: pg_backup_utils.c:54
 #, c-format
@@ -1589,10 +1582,9 @@ msgid "  --no-subscriptions           do not dump subscriptions\n"
 msgstr "  --no-subscriptions           no volcar las suscripciones\n"
 
 #: pg_dump.c:1040 pg_dumpall.c:640
-#, fuzzy, c-format
-#| msgid "  --no-tablespaces             do not dump tablespace assignments\n"
+#, c-format
 msgid "  --no-table-access-method     do not dump table access methods\n"
-msgstr "  --no-tablespaces             no volcar asignaciones de tablespace\n"
+msgstr "  --no-tablespaces             no volcar métodos de acceso de tablas\n"
 
 #: pg_dump.c:1041 pg_dumpall.c:641
 #, c-format
@@ -1742,10 +1734,9 @@ msgid "invalid client encoding \"%s\" specified"
 msgstr "la codificación de cliente especificada «%s» no es válida"
 
 #: pg_dump.c:1225
-#, fuzzy, c-format
-#| msgid "Exported snapshots are not supported by this server version."
+#, c-format
 msgid "parallel dumps from standby servers are not supported by this server version"
-msgstr "Los snapshot exportados no están soportados por esta versión de servidor."
+msgstr "Los volcados en paralelo desde servidores standby no están soportados por esta versión de servidor."
 
 #: pg_dump.c:1290
 #, c-format
@@ -1828,10 +1819,9 @@ msgid "saving database definition"
 msgstr "salvando las definiciones de la base de datos"
 
 #: pg_dump.c:2932
-#, fuzzy, c-format
-#| msgid "unrecognized collation provider: %s"
+#, c-format
 msgid "unrecognized locale provider: %s"
-msgstr "proveedor de ordenamiento no reconocido: %s"
+msgstr "proveedor de configuración regional no reconocido: %s"
 
 #: pg_dump.c:3278
 #, c-format
@@ -1880,10 +1870,9 @@ msgstr "tipo de orden inesperada en política: %c"
 
 #: pg_dump.c:4275 pg_dump.c:4593 pg_dump.c:11724 pg_dump.c:17541
 #: pg_dump.c:17543 pg_dump.c:18164
-#, fuzzy, c-format
-#| msgid "could not parse reloptions array"
+#, c-format
 msgid "could not parse %s array"
-msgstr "no se pudo interpretar el arreglo reloptions"
+msgstr "no se pudo interpretar el arreglo %s"
 
 #: pg_dump.c:4461
 #, c-format
@@ -1907,16 +1896,14 @@ msgstr "falló la revisión de integridad, no se encontró la tabla padre con OI
 
 #: pg_dump.c:6878 pg_dump.c:7145 pg_dump.c:7616 pg_dump.c:8283 pg_dump.c:8404
 #: pg_dump.c:8558
-#, fuzzy, c-format
-#| msgid "unrecognized token \"%s\""
+#, c-format
 msgid "unrecognized table OID %u"
-msgstr "elemento «%s» no reconocido"
+msgstr "OID de tabla %u no reconocido"
 
 #: pg_dump.c:6882
-#, fuzzy, c-format
-#| msgid "processing data for table \"%s.%s\""
+#, c-format
 msgid "unexpected index data for table \"%s\""
-msgstr "procesando datos de la tabla «%s.%s»"
+msgstr "datos de índice inesperados para la tabla «%s»"
 
 #: pg_dump.c:7377
 #, c-format
@@ -1929,10 +1916,9 @@ msgid "query produced null referenced table name for foreign key trigger \"%s\" 
 msgstr "la consulta produjo un nombre de tabla nulo para la llave foránea del disparador \"%s\" en la tabla «%s» (OID de la tabla: %u)"
 
 #: pg_dump.c:8287
-#, fuzzy, c-format
-#| msgid "unexpected empty file \"%s\""
+#, c-format
 msgid "unexpected column data for table \"%s\""
-msgstr "archivo vacío inesperado «%s»"
+msgstr "información de columnas para la tabla «%s» inesperada"
 
 #: pg_dump.c:8317
 #, c-format
@@ -1940,10 +1926,9 @@ msgid "invalid column numbering in table \"%s\""
 msgstr "numeración de columnas no válida en la tabla «%s»"
 
 #: pg_dump.c:8366
-#, fuzzy, c-format
-#| msgid "multiple default expressions"
+#, c-format
 msgid "finding table default expressions"
-msgstr "múltiples expresiones default"
+msgstr "encontrando expresiones default de tablas"
 
 #: pg_dump.c:8408
 #, c-format
@@ -1951,10 +1936,9 @@ msgid "invalid adnum value %d for table \"%s\""
 msgstr "el valor de adnum %d para la tabla «%s» no es válido"
 
 #: pg_dump.c:8508
-#, fuzzy, c-format
-#| msgid "and table_constraint is:"
+#, c-format
 msgid "finding table check constraints"
-msgstr "y restricción_de_tabla es:"
+msgstr "encontrando restricciones CHECK de tablas"
 
 #: pg_dump.c:8562
 #, c-format
@@ -1964,10 +1948,9 @@ msgstr[0] "se esperaban %d restricciones CHECK en la tabla «%s» pero se encont
 msgstr[1] "se esperaban %d restricciones CHECK en la tabla «%s» pero se encontraron %d"
 
 #: pg_dump.c:8566
-#, fuzzy, c-format
-#| msgid "(The system catalogs might be corrupted.)"
+#, c-format
 msgid "The system catalogs might be corrupted."
-msgstr "(Los catálogos del sistema podrían estar corruptos)"
+msgstr "Los catálogos del sistema podrían estar corruptos."
 
 #: pg_dump.c:9256
 #, c-format
@@ -1977,7 +1960,7 @@ msgstr "no existe el rol con OID %u"
 #: pg_dump.c:9368 pg_dump.c:9397
 #, c-format
 msgid "unsupported pg_init_privs entry: %u %u %d"
-msgstr ""
+msgstr "entrada en pg_init_privs no soportada: %u %u %d"
 
 #: pg_dump.c:10218
 #, c-format
@@ -2065,16 +2048,14 @@ msgid "could not parse default ACL list (%s)"
 msgstr "no se pudo interpretar la lista de ACL (%s)"
 
 #: pg_dump.c:14425
-#, fuzzy, c-format
-#| msgid "could not parse initial GRANT ACL list (%s) or initial REVOKE ACL list (%s) for object \"%s\" (%s)"
+#, c-format
 msgid "could not parse initial ACL list (%s) or default (%s) for object \"%s\" (%s)"
-msgstr "no se pudo interpretar la lista inicial de GRANT ACL (%s) o la lista inicial de REVOKE ACL (%s) para el objeto «%s» (%s)"
+msgstr "no se pudo interpretar la lista ACL inicial (%s) o por defecto (%s) para el objeto «%s» (%s)"
 
 #: pg_dump.c:14450
-#, fuzzy, c-format
-#| msgid "could not parse GRANT ACL list (%s) or REVOKE ACL list (%s) for object \"%s\" (%s)"
+#, c-format
 msgid "could not parse ACL list (%s) or default (%s) for object \"%s\" (%s)"
-msgstr "no se pudo interpretar la lista de GRANT ACL (%s) o la lista de REVOKE ACL (%s) para el objeto «%s» (%s)"
+msgstr "no se pudo interpretar la lista de ACL (%s) o por defecto (%s) para el objeto «%s» (%s)"
 
 #: pg_dump.c:14988
 #, c-format
@@ -2221,28 +2202,14 @@ msgid "could not resolve dependency loop among these items:"
 msgstr "no se pudo resolver el bucle de dependencias entre los siguientes elementos:"
 
 #: pg_dumpall.c:205
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" is needed by %s but was not found in the\n"
-#| "same directory as \"%s\".\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
-msgstr ""
-"%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-"directorio que «%s».\n"
-"Verifique su instalación."
+msgstr "el programa «%s» es requerido por %s, pero no fue encontrado en el mismo directorio que «%s»"
 
 #: pg_dumpall.c:208
-#, fuzzy, c-format
-#| msgid ""
-#| "The program \"%s\" was found by \"%s\"\n"
-#| "but was not the same version as %s.\n"
-#| "Check your installation."
+#, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
-msgstr ""
-"El programa «%s» fue encontrado por «%s»,\n"
-"pero no es de la misma versión que %s.\n"
-"Verifique su instalación."
+msgstr "el programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s"
 
 #: pg_dumpall.c:357
 #, c-format
@@ -2372,10 +2339,9 @@ msgid "role name starting with \"pg_\" skipped (%s)"
 msgstr "omitido nombre de rol que empieza con «pg_» (%s)"
 
 #: pg_dumpall.c:1018
-#, fuzzy, c-format
-#| msgid "could not parse ACL list (%s) for tablespace \"%s\""
+#, c-format
 msgid "could not parse ACL list (%s) for parameter \"%s\""
-msgstr "no se pudo interpretar la lista de control de acceso (%s) del tablespace «%s»"
+msgstr "no se pudo interpretar la lista de control de acceso (%s) del parámetro «%s»"
 
 #: pg_dumpall.c:1136
 #, c-format
@@ -2631,15 +2597,14 @@ msgid "  --no-subscriptions           do not restore subscriptions\n"
 msgstr "  --no-subscriptions           no restaurar suscripciones\n"
 
 #: pg_restore.c:473
-#, fuzzy, c-format
-#| msgid "  --no-tablespaces             do not restore tablespace assignments\n"
+#, c-format
 msgid "  --no-table-access-method     do not restore table access methods\n"
-msgstr "  --no-tablespaces             no vuelca asignaciones de tablespace\n"
+msgstr "  --no-table-access-method     no restaura métodos de acceso de tablas\n"
 
 #: pg_restore.c:474
 #, c-format
 msgid "  --no-tablespaces             do not restore tablespace assignments\n"
-msgstr "  --no-tablespaces             no vuelca asignaciones de tablespace\n"
+msgstr "  --no-tablespaces             no restaura asignaciones de tablespace\n"
 
 #: pg_restore.c:475
 #, c-format
@@ -2674,191 +2639,3 @@ msgstr ""
 "\n"
 "Si no se especifica un archivo de entrada, se usa la entrada estándar.\n"
 "\n"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "query was: %s"
-#~ msgstr "la consulta era: %s"
-
-#, c-format
-#~ msgid "could not open temporary file"
-#~ msgstr "no se pudo abrir archivo temporal"
-
-#, c-format
-#~ msgid "could not close tar member: %m"
-#~ msgstr "no se pudo cerrar miembro del archivo tar: %m"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Prueba «%s --help» para más información.\n"
-
-#, c-format
-#~ msgid "compression level must be in range 0..9"
-#~ msgstr "nivel de compresión debe estar en el rango 0..9"
-
-#, c-format
-#~ msgid "extra_float_digits must be in range -15..3"
-#~ msgstr "extra_floats_digits debe estar en el rango -15..3"
-
-#, c-format
-#~ msgid "rows-per-insert must be in range %d..%d"
-#~ msgstr "rows-per-insert debe estar en el rango %d..%d"
-
-#, c-format
-#~ msgid "invalid number of parallel jobs"
-#~ msgstr "número no válido de trabajos paralelos"
-
-#, c-format
-#~ msgid ""
-#~ "Synchronized snapshots are not supported by this server version.\n"
-#~ "Run with --no-synchronized-snapshots instead if you do not need\n"
-#~ "synchronized snapshots."
-#~ msgstr ""
-#~ "Los snapshots sincronizados no están soportados por esta versión del servidor.\n"
-#~ "Ejecute con --no-synchronized-snapshots si no los necesita."
-
-#, c-format
-#~ msgid "Exported snapshots are not supported by this server version."
-#~ msgstr "Los snapshot exportados no están soportados por esta versión de servidor."
-
-#, c-format
-#~ msgid "  --no-synchronized-snapshots  do not use synchronized snapshots in parallel jobs\n"
-#~ msgstr ""
-#~ "  --no-synchronized-snapshots  no usar snapshots sincronizados en trabajos\n"
-#~ "                               en paralelo\n"
-
-#, c-format
-#~ msgid ""
-#~ "Synchronized snapshots on standby servers are not supported by this server version.\n"
-#~ "Run with --no-synchronized-snapshots instead if you do not need\n"
-#~ "synchronized snapshots."
-#~ msgstr ""
-#~ "Los snapshots sincronizados en servidores standby no están soportados por esta versión del servidor.\n"
-#~ "Ejecute con --no-synchronized-snapshots si no los necesita."
-
-#, c-format
-#~ msgid "The command was: %s"
-#~ msgstr "La orden era: %s"
-
-#, c-format
-#~ msgid "owner of publication \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la publicación «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of subscription \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la suscripción «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "could not parse subpublications array"
-#~ msgstr "no se pudo interpretar el arreglo subpublications"
-
-#, c-format
-#~ msgid "owner of schema \"%s\" appears to be invalid"
-#~ msgstr "el dueño del esquema «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of data type \"%s\" appears to be invalid"
-#~ msgstr "el dueño del tipo «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of operator \"%s\" appears to be invalid"
-#~ msgstr "el dueño del operador «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of operator class \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la clase de operadores «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of operator family \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la familia de operadores «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of aggregate function \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la función de agregación «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of function \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la función «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "owner of table \"%s\" appears to be invalid"
-#~ msgstr "el dueño de la tabla «%s» parece no ser válido"
-
-#, c-format
-#~ msgid "reading indexes for table \"%s.%s\""
-#~ msgstr "extrayendo los índices para la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "reading foreign key constraints for table \"%s.%s\""
-#~ msgstr "extrayendo restricciones de llave foránea para la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "reading triggers for table \"%s.%s\""
-#~ msgstr "extrayendo los disparadores (triggers) para la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "finding the columns and types of table \"%s.%s\""
-#~ msgstr "buscando las columnas y tipos de la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "finding default expressions of table \"%s.%s\""
-#~ msgstr "buscando expresiones por omisión de la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "finding check constraints for table \"%s.%s\""
-#~ msgstr "buscando restricciones de revisión (check) para la tabla «%s.%s»"
-
-#, c-format
-#~ msgid "bogus value in proargmodes array"
-#~ msgstr "valor no válido en el arreglo proargmodes"
-
-#, c-format
-#~ msgid "could not parse proallargtypes array"
-#~ msgstr "no se pudo interpretar el arreglo proallargtypes"
-
-#, c-format
-#~ msgid "could not parse proargmodes array"
-#~ msgstr "no se pudo interpretar el arreglo proargmodes"
-
-#, c-format
-#~ msgid "could not parse proargnames array"
-#~ msgstr "no se pudo interpretar el arreglo proargnames"
-
-#, c-format
-#~ msgid "could not parse proconfig array"
-#~ msgstr "no se pudo interpretar el arreglo proconfig"
-
-#, c-format
-#~ msgid "could not parse extension configuration array"
-#~ msgstr "no se pudo interpretar el arreglo de configuración de extensión"
-
-#, c-format
-#~ msgid "could not parse extension condition array"
-#~ msgstr "no se pudo interpretar el arreglo de condición de extensión"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "%s necesita el programa «%s» pero no fue encontrado en el\n"
-#~ "mismo directorio que «%s».\n"
-#~ "Verifique su instalación."
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "El programa «%s» fue encontrado por «%s»\n"
-#~ "but no era de la misma versión que %s.\n"
-#~ "Verifique su instalación."
-
-#, c-format
-#~ msgid "maximum number of parallel jobs is %d"
-#~ msgstr "el número máximo de trabajos en paralelo es %d"

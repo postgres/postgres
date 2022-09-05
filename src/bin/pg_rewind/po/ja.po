@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-06-14 20:17+0900\n"
+"POT-Creation-Date: 2022-08-09 12:01+0900\n"
 "PO-Revision-Date: 2022-05-11 14:42+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
@@ -291,7 +291,7 @@ msgstr "search_pathを消去できませんでした: %s"
 #: libpq_source.c:141
 #, c-format
 msgid "full_page_writes must be enabled in the source server"
-msgstr "ソースサーバではfull_pate_writesは有効でなければなりません"
+msgstr "ソースサーバーではfull_pate_writesは有効でなければなりません"
 
 #: libpq_source.c:152
 #, c-format
@@ -301,7 +301,7 @@ msgstr "ファイル内容を取得するための文を準備できませんで
 #: libpq_source.c:171
 #, c-format
 msgid "error running query (%s) on source server: %s"
-msgstr "ソースサーバで実行中のクエリ(%s)でエラー: %s"
+msgstr "ソースサーバーで実行中のクエリ(%s)でエラー: %s"
 
 #: libpq_source.c:176
 #, c-format
@@ -311,7 +311,7 @@ msgstr "クエリから想定外の結果セット"
 #: libpq_source.c:198
 #, c-format
 msgid "error running query (%s) in source server: %s"
-msgstr "ソースサーバの実行中のクエリ(%s)でエラー: %s"
+msgstr "ソースサーバーの実行中のクエリ(%s)でエラー: %s"
 
 #: libpq_source.c:219
 #, c-format
@@ -515,7 +515,7 @@ msgstr "      --source-pgdata=DIRECTORY 同期元とするデータディレク�
 #: pg_rewind.c:93
 #, c-format
 msgid "      --source-server=CONNSTR    source server to synchronize with\n"
-msgstr "      --source-server=CONNSTR   同期元とするサーバ\n"
+msgstr "      --source-server=CONNSTR   同期元とするサーバー\n"
 
 #: pg_rewind.c:94
 #, c-format
@@ -549,8 +549,8 @@ msgid ""
 "      --config-file=FILENAME     use specified main server configuration\n"
 "                                 file when running target cluster\n"
 msgstr ""
-"      --config-file=FILENAME     ターゲットのクラスタの実行時に指定した\n"
-"                                 主サーバー設定ファイルを使用する\n"
+"      --config-file=FILENAME    ターゲットのクラスタの実行時に指定した\n"
+"                                主サーバー設定ファイルを使用する\n"
 
 #: pg_rewind.c:102
 #, c-format
@@ -610,7 +610,7 @@ msgstr "ターゲットデータディレクトリが指定されていません
 #: pg_rewind.c:243
 #, c-format
 msgid "no source server information (--source-server) specified for --write-recovery-conf"
-msgstr "--write-recovery-confにソースサーバ情報(--source-server)が指定されていません"
+msgstr "--write-recovery-confにソースサーバー情報(--source-server)が指定されていません"
 
 #: pg_rewind.c:250
 #, c-format
@@ -625,7 +625,7 @@ msgstr "\"root\"では実行できません"
 #: pg_rewind.c:266
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
-msgstr "PostgreSQLのスーパユーザで%sを実行しなければなりません"
+msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません"
 
 #: pg_rewind.c:276
 #, c-format
@@ -640,7 +640,7 @@ msgstr "%s"
 #: pg_rewind.c:297
 #, c-format
 msgid "connected to server"
-msgstr "サーバへ接続しました"
+msgstr "サーバーへ接続しました"
 
 #: pg_rewind.c:344
 #, c-format
@@ -650,7 +650,7 @@ msgstr "ソースとターゲットのクラスタが同一タイムライン上
 #: pg_rewind.c:353
 #, c-format
 msgid "servers diverged at WAL location %X/%X on timeline %u"
-msgstr "タイムライン%3$uのWAL位置%1$X/%2$Xで両サーバが分岐しています"
+msgstr "タイムライン%3$uのWAL位置%1$X/%2$Xで両サーバーが分岐しています"
 
 #: pg_rewind.c:401
 #, c-format
@@ -725,12 +725,12 @@ msgstr "クラスタは、このバージョンのpg_rewindとの互換性があ
 #: pg_rewind.c:703
 #, c-format
 msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
-msgstr "ターゲットサーバはデータチェックサムを利用している、または\"wal_log_hints = on\"である必要があります"
+msgstr "ターゲットサーバーはデータチェックサムを利用している、または\"wal_log_hints = on\"である必要があります"
 
 #: pg_rewind.c:714
 #, c-format
 msgid "target server must be shut down cleanly"
-msgstr "ターゲットサーバはきれいにシャットダウンされていなければなりません"
+msgstr "ターゲットサーバーはきれいにシャットダウンされていなければなりません"
 
 #: pg_rewind.c:724
 #, c-format
@@ -791,12 +791,12 @@ msgstr "ターゲットクラスタでrestore_commandが設定されていませ
 #: pg_rewind.c:1119
 #, c-format
 msgid "executing \"%s\" for target server to complete crash recovery"
-msgstr "ターゲットサーバに対して\"%s\"を実行してクラッシュリカバリを完了させます"
+msgstr "ターゲットサーバーに対して\"%s\"を実行してクラッシュリカバリを完了させます"
 
 #: pg_rewind.c:1156
 #, c-format
 msgid "postgres single-user mode in target cluster failed"
-msgstr "ターゲットクラスタでのpostgresコマンドのシングルユーザモード実行に失敗しました"
+msgstr "ターゲットクラスタでのpostgresコマンドのシングルユーザーモード実行に失敗しました"
 
 #: pg_rewind.c:1157
 #, c-format
@@ -993,105 +993,80 @@ msgstr "%X%Xのイメージは不明な方式で圧縮されています、ブ�
 msgid "invalid compressed image at %X/%X, block %d"
 msgstr "%X/%X、ブロック %d での圧縮イメージが無効です"
 
-#~ msgid "cannot create restricted tokens on this platform"
-#~ msgstr "このプラットフォームでは制限付きトークンを作成できません"
+#~ msgid "fatal: "
+#~ msgstr "致命的エラー: "
 
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
+#~ msgid "\"%s\" is not a directory"
+#~ msgstr "\"%s\"はディレクトリではありません"
 
-#~ msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
-#~ msgstr "WAL ファイルは異なるデータベースシステム由来ものです: WAL ファイルにおけるデータベースシステムの識別子は %s で、pg_control におけるデータベースシステムの識別子は %s です。"
+#~ msgid "\"%s\" is not a symbolic link"
+#~ msgstr "\"%s\"はシンボリックリンクではありません"
 
-#~ msgid "could not open directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %s\n"
+#~ msgid "\"%s\" is not a regular file"
+#~ msgstr "\"%s\" は通常のファイルではありません"
 
-#~ msgid "could not stat file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"のstatができませんでした: %s\n"
+#~ msgid "source file list is empty"
+#~ msgstr "ソースファイルリストが空です"
 
-#~ msgid "could not read symbolic link \"%s\": %s\n"
-#~ msgstr "シンボリックリンク \"%s\" を読み込めませんでした: %s\n"
+#~ msgid "could not connect to server: %s"
+#~ msgstr "サーバーに接続できませんでした: %s"
 
-#~ msgid "symbolic link \"%s\" target is too long\n"
-#~ msgstr "シンボリックリンク\"%s\"の参照先は長すぎます\n"
+#~ msgid "source server must not be in recovery mode"
+#~ msgstr "ソースサーバーはリカバリモードであってはなりません"
 
-#~ msgid "could not read directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を読み取れませんでした: %s\n"
+#~ msgid "could not send COPY data: %s"
+#~ msgstr "COPY 対象データを送信できませんでした: %s"
 
-#~ msgid "could not read file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" を読み込めませんでした: %s\n"
+#~ msgid "could not send file list: %s"
+#~ msgstr "ファイルリストを送信できませんでした: %s"
 
-#~ msgid "could not close file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" をクローズできませんでした: %s\n"
+#~ msgid "could not send end-of-COPY: %s"
+#~ msgstr "コピー終端を送信できませんでした: %s"
 
-#~ msgid "  block %u\n"
-#~ msgstr "ブロック数 %u\n"
+#~ msgid "unexpected result while sending file list: %s"
+#~ msgstr "ファイルリストを送信中に想定外の結果: %s"
 
-#~ msgid "could not write file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"に書き込めませんでした: %s\n"
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
 
-#~ msgid "could not remove file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"を削除できませんでした: %s\n"
+#~ msgid "You must run %s as the PostgreSQL superuser.\n"
+#~ msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません\n"
 
-#~ msgid "could not truncate file \"%s\" to %u: %s\n"
-#~ msgstr "ファイル \"%s\" を%uに切り詰められませんでした: %s\n"
+#~ msgid "invalid contrecord length %u at %X/%X"
+#~ msgstr "%2$X/%3$Xのcontrecordの長さ %1$u が無効です"
 
-#~ msgid "could not create directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を作成できませんでした: %s\n"
+#~ msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
+#~ msgstr "BKPIMAGE_IS_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
 
-#~ msgid "could not remove directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を削除できませんでした: %s\n"
+#~ msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
+#~ msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_IS_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
 
-#~ msgid "could not remove symbolic link \"%s\": %s\n"
-#~ msgstr "シンボリックリンク \"%s\" を削除できませんでした: %s\n"
+#~ msgid "could not create temporary table: %s"
+#~ msgstr "一時テーブルを作成できませんでした: %s"
 
-#~ msgid "could not open file \"%s\" for reading: %s\n"
-#~ msgstr "読み取り用のファイル\"%s\"をオープンできませんでした:%s\n"
+#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
+#~ msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_SEG_SIZEが正しくありません"
 
-#~ msgid "%s (%s)\n"
-#~ msgstr "%s (%s)\n"
+#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
+#~ msgstr "時系列IDは副時系列IDより小さくなければなりません。\n"
 
-#~ msgid "getting file chunks\n"
-#~ msgstr "ファイルチャンクの取得\n"
+#~ msgid "Timeline IDs must be in increasing sequence.\n"
+#~ msgstr "時系列IDは昇順の並びでなければなりません\n"
 
-#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-#~ msgstr "ファイル\"%s\"のNULL値のチャンクを受け取りました。ファイルは削除されました。\n"
+#~ msgid "invalid data in history file: %s\n"
+#~ msgstr "履歴ファイル内の無効なデータ: %s\n"
 
-#~ msgid "fetched file \"%s\", length %d\n"
-#~ msgstr "フェッチしたファイル \"%s\",長さ %d\n"
+#~ msgid "Expected a transaction log switchpoint location.\n"
+#~ msgstr "トランザクションログの切替えポイントを想定しています。\n"
 
-#~ msgid "Failure, exiting\n"
-#~ msgstr "失敗しました、終了します\n"
+#~ msgid "Expected a numeric timeline ID.\n"
+#~ msgstr "数字の時系列IDを想定しました。\n"
 
-#~ msgid "could not open file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
+#~ msgid "syntax error in history file: %s\n"
+#~ msgstr "履歴ファイル内の構文エラー: %s\n"
 
-#~ msgid "could not seek in file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"をシークできませんでした: %s\n"
-
-#~ msgid "could not read from file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"を読み込めませんでした: %s\n"
-
-#~ msgid "Source timeline history:\n"
-#~ msgstr "ソースタイムラインの履歴\n"
-
-#~ msgid "Target timeline history:\n"
-#~ msgstr "ターゲットタイムラインの履歴:\n"
-
-#~ msgid "%d: %X/%X - %X/%X\n"
-#~ msgstr "%d: %X/%X - %X/%X\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" is needed by %s but was\n"
-#~ "not found in the same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "%sには \"initdb\" プログラムが必要ですが、\"%s\"と同じディレクトリ\n"
-#~ "にありませんでした。\n"
-#~ "インストール状況を確認してください。\n"
+#~ msgid "sync of target directory failed\n"
+#~ msgstr "ターゲットディレクトリの同期が失敗しました\n"
 
 #~ msgid ""
 #~ "The program \"initdb\" was found by \"%s\"\n"
@@ -1102,77 +1077,102 @@ msgstr "%X/%X、ブロック %d での圧縮イメージが無効です"
 #~ "バージョンではありませんでした。\n"
 #~ "インストレーションを検査してください。\n"
 
-#~ msgid "sync of target directory failed\n"
-#~ msgstr "ターゲットディレクトリの同期が失敗しました\n"
+#~ msgid ""
+#~ "The program \"initdb\" is needed by %s but was\n"
+#~ "not found in the same directory as \"%s\".\n"
+#~ "Check your installation.\n"
+#~ msgstr ""
+#~ "%sには \"initdb\" プログラムが必要ですが、\"%s\"と同じディレクトリ\n"
+#~ "にありませんでした。\n"
+#~ "インストール状況を確認してください。\n"
 
-#~ msgid "syntax error in history file: %s\n"
-#~ msgstr "履歴ファイル内の構文エラー: %s\n"
+#~ msgid "%d: %X/%X - %X/%X\n"
+#~ msgstr "%d: %X/%X - %X/%X\n"
 
-#~ msgid "Expected a numeric timeline ID.\n"
-#~ msgstr "数字の時系列IDを想定しました。\n"
+#~ msgid "Target timeline history:\n"
+#~ msgstr "ターゲットタイムラインの履歴:\n"
 
-#~ msgid "Expected a transaction log switchpoint location.\n"
-#~ msgstr "トランザクションログの切替えポイントを想定しています。\n"
+#~ msgid "Source timeline history:\n"
+#~ msgstr "ソースタイムラインの履歴\n"
 
-#~ msgid "invalid data in history file: %s\n"
-#~ msgstr "履歴ファイル内の無効なデータ: %s\n"
+#~ msgid "could not read from file \"%s\": %s\n"
+#~ msgstr "ファイル\"%s\"を読み込めませんでした: %s\n"
 
-#~ msgid "Timeline IDs must be in increasing sequence.\n"
-#~ msgstr "時系列IDは昇順の並びでなければなりません\n"
+#~ msgid "could not seek in file \"%s\": %s\n"
+#~ msgstr "ファイル\"%s\"をシークできませんでした: %s\n"
 
-#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
-#~ msgstr "時系列IDは副時系列IDより小さくなければなりません。\n"
+#~ msgid "could not open file \"%s\": %s\n"
+#~ msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
 
-#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
-#~ msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_SEG_SIZEが正しくありません"
+#~ msgid "Failure, exiting\n"
+#~ msgstr "失敗しました、終了します\n"
 
-#~ msgid "could not create temporary table: %s"
-#~ msgstr "一時テーブルを作成できませんでした: %s"
+#~ msgid "fetched file \"%s\", length %d\n"
+#~ msgstr "フェッチしたファイル \"%s\",長さ %d\n"
 
-#~ msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
-#~ msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_IS_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
+#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
+#~ msgstr "ファイル\"%s\"のNULL値のチャンクを受け取りました。ファイルは削除されました。\n"
 
-#~ msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
-#~ msgstr "BKPIMAGE_IS_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
+#~ msgid "getting file chunks\n"
+#~ msgstr "ファイルチャンクの取得\n"
 
-#~ msgid "invalid contrecord length %u at %X/%X"
-#~ msgstr "%2$X/%3$Xのcontrecordの長さ %1$u が無効です"
+#~ msgid "%s (%s)\n"
+#~ msgstr "%s (%s)\n"
 
-#~ msgid "You must run %s as the PostgreSQL superuser.\n"
-#~ msgstr "PostgreSQLのスーパユーザで%sを実行しなければなりません\n"
+#~ msgid "could not open file \"%s\" for reading: %s\n"
+#~ msgstr "読み取り用のファイル\"%s\"をオープンできませんでした:%s\n"
 
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
+#~ msgid "could not remove symbolic link \"%s\": %s\n"
+#~ msgstr "シンボリックリンク \"%s\" を削除できませんでした: %s\n"
 
-#~ msgid "unexpected result while sending file list: %s"
-#~ msgstr "ファイルリストを送信中に想定外の結果: %s"
+#~ msgid "could not remove directory \"%s\": %s\n"
+#~ msgstr "ディレクトリ\"%s\"を削除できませんでした: %s\n"
 
-#~ msgid "could not send end-of-COPY: %s"
-#~ msgstr "コピー終端を送信できませんでした: %s"
+#~ msgid "could not create directory \"%s\": %s\n"
+#~ msgstr "ディレクトリ\"%s\"を作成できませんでした: %s\n"
 
-#~ msgid "could not send file list: %s"
-#~ msgstr "ファイルリストを送信できませんでした: %s"
+#~ msgid "could not truncate file \"%s\" to %u: %s\n"
+#~ msgstr "ファイル \"%s\" を%uに切り詰められませんでした: %s\n"
 
-#~ msgid "could not send COPY data: %s"
-#~ msgstr "COPY 対象データを送信できませんでした: %s"
+#~ msgid "could not remove file \"%s\": %s\n"
+#~ msgstr "ファイル\"%s\"を削除できませんでした: %s\n"
 
-#~ msgid "source server must not be in recovery mode"
-#~ msgstr "ソースサーバはリカバリモードであってはなりません"
+#~ msgid "could not write file \"%s\": %s\n"
+#~ msgstr "ファイル\"%s\"に書き込めませんでした: %s\n"
 
-#~ msgid "could not connect to server: %s"
-#~ msgstr "サーバに接続できませんでした: %s"
+#~ msgid "  block %u\n"
+#~ msgstr "ブロック数 %u\n"
 
-#~ msgid "source file list is empty"
-#~ msgstr "ソースファイルリストが空です"
+#~ msgid "could not close file \"%s\": %s\n"
+#~ msgstr "ファイル \"%s\" をクローズできませんでした: %s\n"
 
-#~ msgid "\"%s\" is not a regular file"
-#~ msgstr "\"%s\" は通常のファイルではありません"
+#~ msgid "could not read file \"%s\": %s\n"
+#~ msgstr "ファイル \"%s\" を読み込めませんでした: %s\n"
 
-#~ msgid "\"%s\" is not a symbolic link"
-#~ msgstr "\"%s\"はシンボリックリンクではありません"
+#~ msgid "could not read directory \"%s\": %s\n"
+#~ msgstr "ディレクトリ\"%s\"を読み取れませんでした: %s\n"
 
-#~ msgid "\"%s\" is not a directory"
-#~ msgstr "\"%s\"はディレクトリではありません"
+#~ msgid "symbolic link \"%s\" target is too long\n"
+#~ msgstr "シンボリックリンク\"%s\"の参照先は長すぎます\n"
 
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
+#~ msgid "could not read symbolic link \"%s\": %s\n"
+#~ msgstr "シンボリックリンク \"%s\" を読み込めませんでした: %s\n"
+
+#~ msgid "could not stat file \"%s\": %s\n"
+#~ msgstr "ファイル\"%s\"のstatができませんでした: %s\n"
+
+#~ msgid "could not open directory \"%s\": %s\n"
+#~ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %s\n"
+
+#~ msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
+#~ msgstr "WAL ファイルは異なるデータベースシステム由来ものです: WAL ファイルにおけるデータベースシステムの識別子は %s で、pg_control におけるデータベースシステムの識別子は %s です。"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
+
+#~ msgid "cannot create restricted tokens on this platform"
+#~ msgstr "このプラットフォームでは制限付きトークンを作成できません"

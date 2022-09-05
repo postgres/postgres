@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: pg_verifybackup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-08-07 20:17+0000\n"
-"PO-Revision-Date: 2022-08-08 11:30+0200\n"
+"PO-Revision-Date: 2022-09-03 16:24+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -32,12 +32,12 @@ msgstr "precaución: "
 #: ../../../src/common/logging.c:294
 #, c-format
 msgid "detail: "
-msgstr ""
+msgstr "detalle: "
 
 #: ../../../src/common/logging.c:301
 #, c-format
 msgid "hint: "
-msgstr ""
+msgstr "consejo: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -131,10 +131,8 @@ msgstr "Un «low-surrogate» Unicode debe seguir a un «high-surrogate»."
 
 # XXX change upstream message
 #: parse_manifest.c:150
-#, fuzzy
-#| msgid "assertion failed"
 msgid "parsing failed"
-msgstr "aseveración falló"
+msgstr "procesamiento falló"
 
 #: parse_manifest.c:152
 msgid "manifest ended unexpectedly"
@@ -308,14 +306,12 @@ msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
 #: pg_verifybackup.c:297
 #, c-format
 msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
-msgstr ""
-"el programa «%s» es requerido por %s, pero no pudo encontrarlo en el mismo directorio que «%s»"
+msgstr "el programa «%s» es requerido por %s, pero no pudo encontrarlo en el mismo directorio que «%s»"
 
 #: pg_verifybackup.c:300
 #, c-format
 msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
-msgstr ""
-"el programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s"
+msgstr "el programa «%s» fue encontrado por «%s», pero no es de la misma versión que %s"
 
 #: pg_verifybackup.c:356
 #, c-format
@@ -505,31 +501,3 @@ msgstr ""
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Sitio web de %s: <%s>\n"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Pruebe «%s --help» para mayor información.\n"
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" is needed by %s but was not found in the\n"
-#~ "same directory as \"%s\".\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "%s necesita el programa «%s», pero no pudo encontrarlo en el mismo\n"
-#~ "directorio que «%s».\n"
-#~ "Verifique su instalación."
-
-#, c-format
-#~ msgid ""
-#~ "The program \"%s\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation."
-#~ msgstr ""
-#~ "El programa «%s» fue encontrado por «%s»,\n"
-#~ "pero no es de la misma versión que %s.\n"
-#~ "Verifique su instalación."

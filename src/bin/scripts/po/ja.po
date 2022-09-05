@@ -54,16 +54,16 @@ msgstr "nullポインタを複製できません(内部エラー)。\n"
 #: ../../common/username.c:43
 #, c-format
 msgid "could not look up effective user ID %ld: %s"
-msgstr "実効ユーザID %ldが見つかりませんでした: %s"
+msgstr "実効ユーザーID %ldが見つかりませんでした: %s"
 
 #: ../../common/username.c:45
 msgid "user does not exist"
-msgstr "ユーザが存在しません"
+msgstr "ユーザーが存在しません"
 
 #: ../../common/username.c:60
 #, c-format
 msgid "user name lookup failure: error code %lu"
-msgstr "ユーザ名の検索に失敗: エラーコード%lu"
+msgstr "ユーザー名の検索に失敗: エラーコード%lu"
 
 #: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
@@ -263,17 +263,18 @@ msgstr ""
 #: clusterdb.c:275 createuser.c:371 dropdb.c:182 dropuser.c:180 vacuumdb.c:992
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME       データベースサーバのホストまたはソケットディレクトリ\n"
+msgstr "  -h, --host=HOSTNAME       データベースサーバーのホストまたはソケット\n"
+"                            ディレクトリ\n"
 
 #: clusterdb.c:276 createuser.c:372 dropdb.c:183 dropuser.c:181 vacuumdb.c:993
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
-msgstr "  -p, --port=PORT           データベースサーバのポート番号\n"
+msgstr "  -p, --port=PORT           データベースサーバーのポート番号\n"
 
 #: clusterdb.c:277 dropdb.c:184 vacuumdb.c:994
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
-msgstr "  -U, --username=USERNAME   このユーザ名で接続する\n"
+msgstr "  -U, --username=USERNAME   このユーザー名で接続する\n"
 
 #: clusterdb.c:278 createuser.c:374 dropdb.c:185 dropuser.c:183 vacuumdb.c:995
 #, c-format
@@ -430,7 +431,7 @@ msgstr ""
 #: createdb.c:295
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
-msgstr "  -O, --owner=OWNER            新しいデータベースを所有するデータベースユーザ\n"
+msgstr "  -O, --owner=OWNER            新しいデータベースを所有するデータベースユーザー\n"
 
 #: createdb.c:296
 #, c-format
@@ -456,18 +457,18 @@ msgstr "  -?, --help                   このヘルプを表示して終了\n"
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
-"  -h, --host=HOSTNAME          データベースサーバホストまたはソケット\n"
+"  -h, --host=HOSTNAME          データベースサーバーホストまたはソケット\n"
 "                               ディレクトリ\n"
 
 #: createdb.c:302 reindexdb.c:779
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
-msgstr "  -p, --port=PORT              データベースサーバのポート番号\n"
+msgstr "  -p, --port=PORT              データベースサーバーのポート番号\n"
 
 #: createdb.c:303 reindexdb.c:780
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
-msgstr "  -U, --username=USERNAME      接続する際のユーザ名\n"
+msgstr "  -U, --username=USERNAME      接続する際のユーザー名\n"
 
 #: createdb.c:304 reindexdb.c:781
 #, c-format
@@ -491,7 +492,7 @@ msgid ""
 "By default, a database with the same name as the current user is created.\n"
 msgstr ""
 "\n"
-"デフォルトでは、現在のユーザ名と同名のデータベースが生成されます\n"
+"デフォルトでは、現在のユーザー名と同名のデータベースが生成されます\n"
 
 #: createuser.c:193
 msgid "Enter name of role to add: "
@@ -512,7 +513,7 @@ msgstr "パスワードがマッチしません。\n"
 
 #: createuser.c:220
 msgid "Shall the new role be a superuser?"
-msgstr "新しいロールをスーパユーザにしますか？"
+msgstr "新しいロールをスーパーユーザーにしますか？"
 
 #: createuser.c:235
 msgid "Shall the new role be allowed to create databases?"
@@ -608,12 +609,12 @@ msgstr "  -R, --no-createrole       ロールは別のロールを作成不可(�
 #: createuser.c:362
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
-msgstr "  -s, --superuser           ロールをスーパユーザにする\n"
+msgstr "  -s, --superuser           ロールをスーパーユーザーにする\n"
 
 #: createuser.c:363
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser (default)\n"
-msgstr "  -S, --no-superuser        ロールをスーパユーザにしない(デフォルト)\n"
+msgstr "  -S, --no-superuser        ロールをスーパーユーザーにしない(デフォルト)\n"
 
 #: createuser.c:365
 #, c-format
@@ -635,7 +636,8 @@ msgstr "  --no-replication          ロールはレプリケーションを初�
 #: createuser.c:373
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
-msgstr "  -U, --username=ユーザ名   このユーザとして接続(作成対象ユーザではありません)\n"
+msgstr "  -U, --username=USERNAME   このユーザーとして接続(作成対象ユーザーでは\n"
+"                            ありません)\n"
 
 #: dropdb.c:112
 #, c-format
@@ -725,12 +727,13 @@ msgstr ""
 #: dropuser.c:177
 #, c-format
 msgid "  --if-exists               don't report error if user doesn't exist\n"
-msgstr "  --if-exists               ユーザが存在しない場合にエラーを報告しない\n"
+msgstr "  --if-exists               ユーザーが存在しない場合にエラーを報告しない\n"
 
 #: dropuser.c:182
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
-msgstr "  -U, --username=ユーザ名   このユーザとして接続(削除対象ユーザではありません)\n"
+msgstr "  -U, --username=USERNAME   このユーザーとして接続(削除対象ユーザーでは\n"
+"                            ありません)\n"
 
 #: pg_isready.c:154
 #, c-format
@@ -799,12 +802,13 @@ msgstr "  -?, --help               このヘルプを表示して終了\n"
 #: pg_isready.c:236
 #, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
-msgstr "  -h, --host=HOSTNAME      データベースサーバのホストまたはソケットディレクトリ\n"
+msgstr "  -h, --host=HOSTNAME      データベースサーバーのホストまたはソケット\n"
+       "                           ディレクトリ\n"
 
 #: pg_isready.c:237
 #, c-format
 msgid "  -p, --port=PORT          database server port\n"
-msgstr "  -p, --port=PORT          データベースサーバのポート番号\n"
+msgstr "  -p, --port=PORT          データベースサーバーのポート番号\n"
 
 #: pg_isready.c:238
 #, c-format
@@ -814,7 +818,7 @@ msgstr "  -t, --timeout=SECS       接続試行時の待機秒数、ゼロで無
 #: pg_isready.c:239
 #, c-format
 msgid "  -U, --username=USERNAME  user name to connect as\n"
-msgstr "  -U, --username=USERNAME  このユーザ名で接続する\n"
+msgstr "  -U, --username=USERNAME  このユーザー名で接続する\n"
 
 #: reindexdb.c:209
 #, c-format
@@ -1225,10 +1229,10 @@ msgstr ""
 #~ msgstr "%s: analyze のみを実行する場合 \"freeze\" は使えません\n"
 
 #~ msgid "%s: could not get current user name: %s\n"
-#~ msgstr "%s: 現在のユーザ名を取得できませんでした: %s\n"
+#~ msgstr "%s: 現在のユーザー名を取得できませんでした: %s\n"
 
 #~ msgid "%s: could not obtain information about current user: %s\n"
-#~ msgstr "%s: 現在のユーザに関する情報を取得できませんでした: %s\n"
+#~ msgstr "%s: 現在のユーザーに関する情報を取得できませんでした: %s\n"
 
 #~ msgid "minimum multixact ID age must be at least 1"
 #~ msgstr "最小マルチトランザクションID差分は1以上でなくてはなりません"

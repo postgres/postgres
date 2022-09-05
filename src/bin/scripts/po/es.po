@@ -422,7 +422,6 @@ msgstr "      --lc-ctype=LOCALE     configuración LC_CTYPE para la base de dato
 
 #: createdb.c:292
 #, c-format
-#| msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
 msgstr "      --icu-locale=LOCALE   configuración regional ICU para la base de datos\n"
 
@@ -1200,35 +1199,3 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción de la orden VACUUM de SQL para obtener mayores detalles.\n"
-
-#, c-format
-#~ msgid "fatal: "
-#~ msgstr "fatal: "
-
-#, c-format
-#~ msgid "query was: %s"
-#~ msgstr "la consulta era: %s"
-
-#, c-format
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "Use «%s --help» para mayor información.\n"
-
-#, c-format
-#~ msgid "invalid value for --connection-limit: %s"
-#~ msgstr "valor para --connection-limit no válido: %s"
-
-#, c-format
-#~ msgid "number of parallel jobs must be at least 1"
-#~ msgstr "número de trabajos en paralelo debe ser al menos 1"
-
-#, c-format
-#~ msgid "parallel workers for vacuum must be greater than or equal to zero"
-#~ msgstr "el número de procesos paralelos para vacuum debe ser mayor o igual que cero"
-
-#, c-format
-#~ msgid "minimum transaction ID age must be at least 1"
-#~ msgstr "edad mínima del ID de transacción debe ser al menos 1"
-
-#, c-format
-#~ msgid "minimum multixact ID age must be at least 1"
-#~ msgstr "edad mínima del ID de multixact debe ser al menos 1"
