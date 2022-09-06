@@ -155,6 +155,8 @@ do
 		EXTRAINCLUDES="$python_includespec" ;;
 	    src/interfaces/ecpg/*)
 		EXTRAINCLUDES="-I $builddir/src/interfaces/ecpg/include -I $srcdir/src/interfaces/ecpg/include" ;;
+		src/backend/utils/adt/*)
+		EXTRAINCLUDES="-I $builddir/src/backend/utils/adt/" ;;
 	    *)
 		EXTRAINCLUDES="" ;;
 	esac
