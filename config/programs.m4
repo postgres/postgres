@@ -65,10 +65,8 @@ AC_SUBST(BISONFLAGS)
 # PGAC_PATH_FLEX
 # --------------
 # Look for Flex, set the output variable FLEX to its path if found.
-# Reject versions before 2.5.31, as we need a reasonably non-buggy reentrant
-# scanner.  (Note: the well-publicized security problem in 2.5.31 does not
-# affect Postgres, and there are still distros shipping patched 2.5.31,
-# so allow it.)  Also find Flex if its installed under `lex', but do not
+# Reject versions before 2.5.35 (the earliest version in the buildfarm
+# as of 2022). Also find Flex if its installed under `lex', but do not
 # accept other Lex programs.
 
 AC_DEFUN([PGAC_PATH_FLEX],
@@ -92,14 +90,14 @@ else
         echo '%%'  > conftest.l
         if $pgac_candidate -t conftest.l 2>/dev/null | grep FLEX_SCANNER >/dev/null 2>&1; then
           pgac_flex_version=`$pgac_candidate --version 2>/dev/null`
-          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 31))) exit 0; else exit 1;}'
+          if echo "$pgac_flex_version" | sed ['s/[.a-z]/ /g'] | $AWK '{ if ([$]1 == 2 && ([$]2 > 5 || ([$]2 == 5 && [$]3 >= 35))) exit 0; else exit 1;}'
           then
             pgac_cv_path_flex=$pgac_candidate
             break 2
           else
             AC_MSG_WARN([
 *** The installed version of Flex, $pgac_candidate, is too old to use with PostgreSQL.
-*** Flex version 2.5.31 or later is required, but this is $pgac_flex_version.])
+*** Flex version 2.5.35 or later is required, but this is $pgac_flex_version.])
           fi
         fi
       fi
