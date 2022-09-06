@@ -1509,7 +1509,7 @@ append_db_pattern_cte(PQExpBuffer buf, const PatternInfoArray *pia,
 			have_values = true;
 			appendPQExpBuffer(buf, "%s\n(%d, ", comma, pattern_id);
 			appendStringLiteralConn(buf, info->db_regex, conn);
-			appendPQExpBufferStr(buf, ")");
+			appendPQExpBufferChar(buf, ')');
 			comma = ",";
 		}
 	}
@@ -1765,7 +1765,7 @@ append_rel_pattern_raw_cte(PQExpBuffer buf, const PatternInfoArray *pia,
 			appendPQExpBufferStr(buf, ", true::BOOLEAN");
 		else
 			appendPQExpBufferStr(buf, ", false::BOOLEAN");
-		appendPQExpBufferStr(buf, ")");
+		appendPQExpBufferChar(buf, ')');
 		comma = ",";
 	}
 
@@ -1972,15 +1972,15 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 		 * selected above, filtering by exclusion patterns (if any) that match
 		 * btree index names.
 		 */
-		appendPQExpBuffer(&sql,
-						  ", index (oid, nspname, relname, relpages) AS ("
-						  "\nSELECT c.oid, r.nspname, c.relname, c.relpages "
-						  "FROM relation r"
-						  "\nINNER JOIN pg_catalog.pg_index i "
-						  "ON r.oid = i.indrelid "
-						  "INNER JOIN pg_catalog.pg_class c "
-						  "ON i.indexrelid = c.oid "
-						  "AND c.relpersistence != 't'");
+		appendPQExpBufferStr(&sql,
+							 ", index (oid, nspname, relname, relpages) AS ("
+							 "\nSELECT c.oid, r.nspname, c.relname, c.relpages "
+							 "FROM relation r"
+							 "\nINNER JOIN pg_catalog.pg_index i "
+							 "ON r.oid = i.indrelid "
+							 "INNER JOIN pg_catalog.pg_class c "
+							 "ON i.indexrelid = c.oid "
+							 "AND c.relpersistence != 't'");
 		if (opts.excludeidx || opts.excludensp)
 			appendPQExpBufferStr(&sql,
 								 "\nINNER JOIN pg_catalog.pg_namespace n "
@@ -2011,15 +2011,15 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 		 * primary heap tables selected above, filtering by exclusion patterns
 		 * (if any) that match the toast index names.
 		 */
-		appendPQExpBuffer(&sql,
-						  ", toast_index (oid, nspname, relname, relpages) AS ("
-						  "\nSELECT c.oid, 'pg_toast', c.relname, c.relpages "
-						  "FROM toast t "
-						  "INNER JOIN pg_catalog.pg_index i "
-						  "ON t.oid = i.indrelid"
-						  "\nINNER JOIN pg_catalog.pg_class c "
-						  "ON i.indexrelid = c.oid "
-						  "AND c.relpersistence != 't'");
+		appendPQExpBufferStr(&sql,
+							 ", toast_index (oid, nspname, relname, relpages) AS ("
+							 "\nSELECT c.oid, 'pg_toast', c.relname, c.relpages "
+							 "FROM toast t "
+							 "INNER JOIN pg_catalog.pg_index i "
+							 "ON t.oid = i.indrelid"
+							 "\nINNER JOIN pg_catalog.pg_class c "
+							 "ON i.indexrelid = c.oid "
+							 "AND c.relpersistence != 't'");
 		if (opts.excludeidx)
 			appendPQExpBufferStr(&sql,
 								 "\nLEFT OUTER JOIN exclude_pat ep "
@@ -2044,9 +2044,9 @@ compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
 	 * matched in their own right, so we rely on UNION to deduplicate the
 	 * list.
 	 */
-	appendPQExpBuffer(&sql,
-					  "\nSELECT pattern_id, is_heap, is_btree, oid, nspname, relname, relpages "
-					  "FROM (");
+	appendPQExpBufferStr(&sql,
+						 "\nSELECT pattern_id, is_heap, is_btree, oid, nspname, relname, relpages "
+						 "FROM (");
 	appendPQExpBufferStr(&sql,
 	/* Inclusion patterns that failed to match */
 						 "\nSELECT pattern_id, is_heap, is_btree, "

@@ -514,7 +514,7 @@ llvm_function_reference(LLVMJitContext *context,
 	else if (basename != NULL)
 	{
 		/* internal function */
-		funcname = psprintf("%s", basename);
+		funcname = pstrdup(basename);
 	}
 	else
 	{

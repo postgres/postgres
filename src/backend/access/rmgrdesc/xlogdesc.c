@@ -319,9 +319,9 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 					*fpi_len += XLogRecGetBlock(record, block_id)->bimg_len;
 
 				if (XLogRecBlockImageApply(record, block_id))
-					appendStringInfo(buf, " FPW");
+					appendStringInfoString(buf, " FPW");
 				else
-					appendStringInfo(buf, " FPW for WAL verification");
+					appendStringInfoString(buf, " FPW for WAL verification");
 			}
 		}
 	}

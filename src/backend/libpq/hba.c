@@ -899,7 +899,7 @@ do { \
 				 errmsg("missing entry at end of line"), \
 				 errcontext("line %d of configuration file \"%s\"", \
 							line_num, IdentFileName))); \
-		*err_msg = psprintf("missing entry at end of line"); \
+		*err_msg = pstrdup("missing entry at end of line"); \
 		return NULL; \
 	} \
 } while (0)
@@ -912,7 +912,7 @@ do { \
 				 errmsg("multiple values in ident field"), \
 				 errcontext("line %d of configuration file \"%s\"", \
 							line_num, IdentFileName))); \
-		*err_msg = psprintf("multiple values in ident field"); \
+		*err_msg = pstrdup("multiple values in ident field"); \
 		return NULL; \
 	} \
 } while (0)

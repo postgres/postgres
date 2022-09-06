@@ -219,7 +219,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	}
 
 	if (tablespaceOid == DEFAULTTABLESPACE_OID)
-		location = psprintf("base");
+		location = "base";
 	else
 		location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
 							TABLESPACE_VERSION_DIRECTORY);

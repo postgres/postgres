@@ -769,7 +769,7 @@ fetch_remote_table_info(char *nspname, char *relname,
 		foreach(lc, MySubscription->publications)
 		{
 			if (foreach_current_index(lc) > 0)
-				appendStringInfo(&pub_names, ", ");
+				appendStringInfoString(&pub_names, ", ");
 			appendStringInfoString(&pub_names, quote_literal_cstr(strVal(lfirst(lc))));
 		}
 
@@ -1062,7 +1062,7 @@ copy_table(Relation rel)
 			appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));
 		}
 
-		appendStringInfo(&cmd, ") TO STDOUT");
+		appendStringInfoString(&cmd, ") TO STDOUT");
 	}
 	else
 	{

@@ -1325,7 +1325,7 @@ hstore_to_json_loose(PG_FUNCTION_ARGS)
 	}
 	appendStringInfoChar(&dst, '}');
 
-	PG_RETURN_TEXT_P(cstring_to_text(dst.data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(dst.data, dst.len));
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_json);
@@ -1370,7 +1370,7 @@ hstore_to_json(PG_FUNCTION_ARGS)
 	}
 	appendStringInfoChar(&dst, '}');
 
-	PG_RETURN_TEXT_P(cstring_to_text(dst.data));
+	PG_RETURN_TEXT_P(cstring_to_text_with_len(dst.data, dst.len));
 }
 
 PG_FUNCTION_INFO_V1(hstore_to_jsonb);
