@@ -451,6 +451,7 @@ _equalSubPlan(const SubPlan *a, const SubPlan *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(startup_cost);
 	COMPARE_SCALAR_FIELD(per_call_cost);
+	COMPARE_SCALAR_FIELD(subLinkId);
 
 	return true;
 }

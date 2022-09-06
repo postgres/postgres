@@ -632,7 +632,7 @@ reset enable_bitmapscan;
 --
 -- Check handling of MULTIEXPR SubPlans in inherited updates
 --
-create table inhpar(f1 int, f2 text[]);
+create table inhpar(f1 int, f2 text[], f3 int);
 insert into inhpar select generate_series(1,10);
 create table inhcld() inherits(inhpar);
 insert into inhcld select generate_series(11,10000);
@@ -640,11 +640,17 @@ vacuum analyze inhcld;
 vacuum analyze inhpar;
 
 explain (verbose, costs off)
-update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
-                                 from int4_tbl limit 1)
+update inhpar set
+  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
+  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
-update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
-                                 from int4_tbl limit 1)
+update inhpar set
+  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
+  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
 
 drop table inhpar cascade;

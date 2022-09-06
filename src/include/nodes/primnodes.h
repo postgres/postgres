@@ -717,6 +717,8 @@ typedef struct SubPlan
 	/* Estimated execution costs: */
 	Cost		startup_cost;	/* one-time setup cost */
 	Cost		per_call_cost;	/* cost for each subplan evaluation */
+	/* Copied from original SubLink, but placed at end for ABI stability */
+	int			subLinkId;		/* ID (1..n); 0 if not MULTIEXPR */
 } SubPlan;
 
 /*

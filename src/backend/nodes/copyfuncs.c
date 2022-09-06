@@ -1676,6 +1676,7 @@ _copySubPlan(const SubPlan *from)
 	COPY_NODE_FIELD(args);
 	COPY_SCALAR_FIELD(startup_cost);
 	COPY_SCALAR_FIELD(per_call_cost);
+	COPY_SCALAR_FIELD(subLinkId);
 
 	return newnode;
 }
