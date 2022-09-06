@@ -1157,7 +1157,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 
 		/*
 		 * We don't currently expect to be called with a valid indexOid.  If
-		 * that ever changes then we'll need to quite code here to find the
+		 * that ever changes then we'll need to write code here to find the
 		 * corresponding child index.
 		 */
 		Assert(!OidIsValid(indexOid));
