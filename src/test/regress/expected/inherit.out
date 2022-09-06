@@ -1717,23 +1717,36 @@ reset enable_bitmapscan;
 --
 -- Check handling of MULTIEXPR SubPlans in inherited updates
 --
-create table inhpar(f1 int, f2 text[]);
+create table inhpar(f1 int, f2 text[], f3 int);
 insert into inhpar select generate_series(1,10);
 create table inhcld() inherits(inhpar);
 insert into inhcld select generate_series(11,10000);
 vacuum analyze inhcld;
 vacuum analyze inhpar;
 explain (verbose, costs off)
-update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
-                                 from int4_tbl limit 1)
+update inhpar set
+  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
+  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
-                                          QUERY PLAN                                           
------------------------------------------------------------------------------------------------
+                                                                                                       QUERY PLAN                                                                                                        
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  Update on public.inhpar
    Update on public.inhpar
    Update on public.inhcld inhpar_1
+   InitPlan 2 (returns $4,$5)
+     ->  Limit
+           Output: 'x'::text, 'y'::text
+           ->  Seq Scan on public.int4_tbl int4_tbl_1
+                 Output: 'x'::text, 'y'::text
+   InitPlan 4 (returns $10,$11)
+     ->  Limit
+           Output: 'x'::text, 'y'::text
+           ->  Seq Scan on public.int4_tbl int4_tbl_3
+                 Output: 'x'::text, 'y'::text
    ->  Merge Join
-         Output: $4, inhpar.f2[1] := $5, (SubPlan 1 (returns $2,$3)), inhpar.ctid, p2.ctid
+         Output: $12, (((((inhpar.f2[1] := $13)[2] := $4)[3] := $5)[4] := $15)[5] := $10)[6] := $11, $14, (SubPlan 1 (returns $2,$3)), NULL::record, (SubPlan 3 (returns $8,$9)), NULL::record, inhpar.ctid, p2.ctid
          Merge Cond: (p2.unique1 = inhpar.f1)
          ->  Index Scan using onek_unique1 on public.onek p2
                Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
@@ -1747,8 +1760,13 @@ from onek p2 where inhpar.f1 = p2.unique1;
                  Output: (p2.unique2), (p2.stringu1)
                  ->  Seq Scan on public.int4_tbl
                        Output: p2.unique2, p2.stringu1
+         SubPlan 3 (returns $8,$9)
+           ->  Limit
+                 Output: (p2.unique2), (p2.stringu1)
+                 ->  Seq Scan on public.int4_tbl int4_tbl_2
+                       Output: p2.unique2, p2.stringu1
    ->  Hash Join
-         Output: $6, inhpar_1.f2[1] := $7, (SubPlan 1 (returns $2,$3)), inhpar_1.ctid, p2.ctid
+         Output: $16, (((((inhpar_1.f2[1] := $17)[2] := $4)[3] := $5)[4] := $19)[5] := $10)[6] := $11, $18, (SubPlan 1 (returns $2,$3)), NULL::record, (SubPlan 3 (returns $8,$9)), NULL::record, inhpar_1.ctid, p2.ctid
          Hash Cond: (inhpar_1.f1 = p2.unique1)
          ->  Seq Scan on public.inhcld inhpar_1
                Output: inhpar_1.f2, inhpar_1.ctid, inhpar_1.f1
@@ -1756,10 +1774,13 @@ from onek p2 where inhpar.f1 = p2.unique1;
                Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
                ->  Seq Scan on public.onek p2
                      Output: p2.unique2, p2.stringu1, p2.ctid, p2.unique1
-(27 rows)
+(42 rows)
 
-update inhpar set (f1, f2[1]) = (select p2.unique2, p2.stringu1
-                                 from int4_tbl limit 1)
+update inhpar set
+  (f1, f2[1])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[2], f2[3]) = (select 'x', 'y' from int4_tbl limit 1),
+  (f3, f2[4])    = (select p2.unique2, p2.stringu1 from int4_tbl limit 1),
+  (f2[5], f2[6]) = (select 'x', 'y' from int4_tbl limit 1)
 from onek p2 where inhpar.f1 = p2.unique1;
 drop table inhpar cascade;
 NOTICE:  drop cascades to table inhcld

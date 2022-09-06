@@ -86,6 +86,7 @@ static bool subplan_is_hashable(Plan *plan);
 static bool testexpr_is_hashable(Node *testexpr, List *param_ids);
 static bool test_opexpr_is_hashable(OpExpr *testexpr, List *param_ids);
 static bool hash_ok_operator(OpExpr *expr);
+static bool SS_make_multiexprs_unique_walker(Node *node, void *context);
 static bool contain_dml(Node *node);
 static bool contain_dml_walker(Node *node, void *context);
 static bool contain_outer_selfref(Node *node);
@@ -335,6 +336,7 @@ build_subplan(PlannerInfo *root, Plan *plan, PlannerInfo *subroot,
 	 */
 	splan = makeNode(SubPlan);
 	splan->subLinkType = subLinkType;
+	splan->subLinkId = subLinkId;
 	splan->testexpr = NULL;
 	splan->paramIds = NIL;
 	get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
@@ -858,12 +860,17 @@ hash_ok_operator(OpExpr *expr)
  * SubPlans, inheritance_planner() must call this to assign new, unique Param
  * IDs to the cloned MULTIEXPR_SUBLINKs' output parameters.  See notes in
  * ExecScanSubPlan.
+ *
+ * We do not need to renumber Param IDs for MULTIEXPR_SUBLINK plans that are
+ * initplans, because those don't have input parameters that could cause
+ * confusion.  Such initplans will not appear in the targetlist anyway, but
+ * they still complicate matters because the surviving regular subplans might
+ * not have consecutive subLinkIds.
  */
 void
 SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot)
 {
-	List	   *new_multiexpr_params = NIL;
-	int			offset;
+	List	   *param_mapping = NIL;
 	ListCell   *lc;
 
 	/*
@@ -876,6 +883,9 @@ SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot)
 		SubPlan    *splan;
 		Plan	   *plan;
 		List	   *params;
+		int			oldId,
+					newId;
+		ListCell   *lc2;
 
 		if (!IsA(tent->expr, SubPlan))
 			continue;
@@ -898,86 +908,77 @@ SS_make_multiexprs_unique(PlannerInfo *root, PlannerInfo *subroot)
 										  &splan->setParam);
 
 		/*
-		 * We will append the replacement-Params lists to
-		 * root->multiexpr_params, but for the moment just make a local list.
-		 * Since we lack easy access here to the original subLinkId, we have
-		 * to fall back on the slightly shaky assumption that the MULTIEXPR
-		 * SubPlans appear in the targetlist in subLinkId order.  This should
-		 * be safe enough given the way that the parser builds the targetlist
-		 * today.  I wouldn't want to rely on it going forward, but since this
-		 * code has a limited lifespan it should be fine.  We can partially
-		 * protect against problems with assertions below.
+		 * Append the new replacement-Params list to root->multiexpr_params.
+		 * Then its index in that list becomes the new subLinkId of the
+		 * SubPlan.
 		 */
-		new_multiexpr_params = lappend(new_multiexpr_params, params);
+		root->multiexpr_params = lappend(root->multiexpr_params, params);
+		oldId = splan->subLinkId;
+		newId = list_length(root->multiexpr_params);
+		Assert(newId > oldId);
+		splan->subLinkId = newId;
+
+		/*
+		 * Add a mapping entry to param_mapping so that we can update the
+		 * associated Params below.  Leave zeroes in the list for any
+		 * subLinkIds we don't encounter; those must have been converted to
+		 * initplans.
+		 */
+		while (list_length(param_mapping) < oldId)
+			param_mapping = lappend_int(param_mapping, 0);
+		lc2 = list_nth_cell(param_mapping, oldId - 1);
+		lfirst_int(lc2) = newId;
 	}
 
 	/*
-	 * Now we must find the Param nodes that reference the MULTIEXPR outputs
-	 * and update their sublink IDs so they'll reference the new outputs.
-	 * Fortunately, those too must be in the cloned targetlist, but they could
-	 * be buried under FieldStores and SubscriptingRefs and CoerceToDomains
-	 * (cf processIndirection()), and underneath those there could be an
-	 * implicit type coercion.
+	 * Unless all the MULTIEXPRs were converted to initplans, we must now find
+	 * the Param nodes that reference the MULTIEXPR outputs and update their
+	 * sublink IDs so they'll reference the new outputs.  While such Params
+	 * must be in the cloned targetlist, they could be buried under stuff such
+	 * as FieldStores and SubscriptingRefs and type coercions.
 	 */
-	offset = list_length(root->multiexpr_params);
+	if (param_mapping != NIL)
+		SS_make_multiexprs_unique_walker((Node *) subroot->parse->targetList,
+										 (void *) param_mapping);
+}
 
-	foreach(lc, subroot->parse->targetList)
+/*
+ * Locate PARAM_MULTIEXPR Params in an expression tree, and update as needed.
+ * (We can update-in-place because the tree was already copied.)
+ */
+static bool
+SS_make_multiexprs_unique_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
 	{
-		TargetEntry *tent = (TargetEntry *) lfirst(lc);
-		Node	   *expr;
-		Param	   *p;
+		Param	   *p = (Param *) node;
+		List	   *param_mapping = (List *) context;
 		int			subqueryid;
 		int			colno;
+		int			newId;
 
-		expr = (Node *) tent->expr;
-		while (expr)
-		{
-			if (IsA(expr, FieldStore))
-			{
-				FieldStore *fstore = (FieldStore *) expr;
-
-				expr = (Node *) linitial(fstore->newvals);
-			}
-			else if (IsA(expr, SubscriptingRef))
-			{
-				SubscriptingRef *sbsref = (SubscriptingRef *) expr;
-
-				if (sbsref->refassgnexpr == NULL)
-					break;
-
-				expr = (Node *) sbsref->refassgnexpr;
-			}
-			else if (IsA(expr, CoerceToDomain))
-			{
-				CoerceToDomain *cdomain = (CoerceToDomain *) expr;
-
-				if (cdomain->coercionformat != COERCE_IMPLICIT_CAST)
-					break;
-				expr = (Node *) cdomain->arg;
-			}
-			else
-				break;
-		}
-		expr = strip_implicit_coercions(expr);
-		if (expr == NULL || !IsA(expr, Param))
-			continue;
-		p = (Param *) expr;
 		if (p->paramkind != PARAM_MULTIEXPR)
-			continue;
+			return false;
 		subqueryid = p->paramid >> 16;
 		colno = p->paramid & 0xFFFF;
-		Assert(subqueryid > 0 &&
-			   subqueryid <= list_length(new_multiexpr_params));
-		Assert(colno > 0 &&
-			   colno <= list_length((List *) list_nth(new_multiexpr_params,
-													  subqueryid - 1)));
-		subqueryid += offset;
-		p->paramid = (subqueryid << 16) + colno;
-	}
 
-	/* Finally, attach new replacement lists to the global list */
-	root->multiexpr_params = list_concat(root->multiexpr_params,
-										 new_multiexpr_params);
+		/*
+		 * If subqueryid doesn't have a mapping entry, it must refer to an
+		 * initplan, so don't change the Param.
+		 */
+		Assert(subqueryid > 0);
+		if (subqueryid > list_length(param_mapping))
+			return false;
+		newId = list_nth_int(param_mapping, subqueryid - 1);
+		if (newId == 0)
+			return false;
+		p->paramid = (newId << 16) + colno;
+		return false;
+	}
+	return expression_tree_walker(node, SS_make_multiexprs_unique_walker,
+								  context);
 }
 
 
@@ -1110,6 +1111,7 @@ SS_process_ctes(PlannerInfo *root)
 		 */
 		splan = makeNode(SubPlan);
 		splan->subLinkType = CTE_SUBLINK;
+		splan->subLinkId = 0;
 		splan->testexpr = NULL;
 		splan->paramIds = NIL;
 		get_first_col_type(plan, &splan->firstColType, &splan->firstColTypmod,
@@ -3075,6 +3077,7 @@ SS_make_initplan_from_plan(PlannerInfo *root,
 	 */
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
+	node->subLinkId = 0;
 	node->plan_id = list_length(root->glob->subplans);
 	node->plan_name = psprintf("InitPlan %d (returns $%d)",
 							   node->plan_id, prm->paramid);
