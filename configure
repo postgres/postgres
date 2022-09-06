@@ -10218,14 +10218,14 @@ if test "$BISON"; then
   pgac_bison_version=`$BISON --version 2>/dev/null | sed q`
   { $as_echo "$as_me:${as_lineno-$LINENO}: using $pgac_bison_version" >&5
 $as_echo "$as_me: using $pgac_bison_version" >&6;}
-  if echo "$pgac_bison_version" | $AWK '{ if ($4 < 1.875) exit 0; else exit 1;}'
+  if echo "$pgac_bison_version" | $AWK '{ if ($4 < 2.3) exit 0; else exit 1;}'
   then
     { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING:
 *** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required, but this is $pgac_bison_version." >&5
+*** Bison version 2.3 or later is required, but this is $pgac_bison_version." >&5
 $as_echo "$as_me: WARNING:
 *** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required, but this is $pgac_bison_version." >&2;}
+*** Bison version 2.3 or later is required, but this is $pgac_bison_version." >&2;}
     BISON=""
   fi
   # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead

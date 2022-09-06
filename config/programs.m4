@@ -22,8 +22,8 @@ fi
 # PGAC_PATH_BISON
 # ---------------
 # Look for Bison, set the output variable BISON to its path if found.
-# Reject versions before 1.875 (they have bugs or capacity limits).
-# Note we do not accept other implementations of yacc.
+# Reject versions before 2.3 (the earliest version in the buildfarm
+# as of 2022). Note we do not accept other implementations of yacc.
 
 AC_DEFUN([PGAC_PATH_BISON],
 [PGAC_PATH_PROGS(BISON, bison)
@@ -31,11 +31,11 @@ AC_DEFUN([PGAC_PATH_BISON],
 if test "$BISON"; then
   pgac_bison_version=`$BISON --version 2>/dev/null | sed q`
   AC_MSG_NOTICE([using $pgac_bison_version])
-  if echo "$pgac_bison_version" | $AWK '{ if ([$]4 < 1.875) exit 0; else exit 1;}'
+  if echo "$pgac_bison_version" | $AWK '{ if ([$]4 < 2.3) exit 0; else exit 1;}'
   then
     AC_MSG_WARN([
 *** The installed version of Bison, $BISON, is too old to use with PostgreSQL.
-*** Bison version 1.875 or later is required, but this is $pgac_bison_version.])
+*** Bison version 2.3 or later is required, but this is $pgac_bison_version.])
     BISON=""
   fi
   # Bison >=3.0 issues warnings about %name-prefix="base_yy", instead
