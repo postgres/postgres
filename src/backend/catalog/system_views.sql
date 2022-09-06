@@ -370,11 +370,10 @@ CREATE VIEW pg_publication_tables AS
         N.nspname AS schemaname,
         C.relname AS tablename,
         ( SELECT array_agg(a.attname ORDER BY a.attnum)
-          FROM unnest(CASE WHEN GPT.attrs IS NOT NULL THEN GPT.attrs
-                      ELSE (SELECT array_agg(g) FROM generate_series(1, C.relnatts) g)
-                      END) k
-               JOIN pg_attribute a
-                    ON (a.attrelid = GPT.relid AND a.attnum = k)
+          FROM pg_attribute a
+          WHERE a.attrelid = GPT.relid AND a.attnum > 0 AND
+                NOT a.attisdropped AND
+                (a.attnum = ANY(GPT.attrs) OR GPT.attrs IS NULL)
         ) AS attnames,
         pg_get_expr(GPT.qual, GPT.relid) AS rowfilter
     FROM pg_publication P,
