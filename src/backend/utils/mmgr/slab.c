@@ -145,7 +145,12 @@ SlabContextCreate(MemoryContext parent,
 		chunkSize = sizeof(int);
 
 	/* chunk, including SLAB header (both addresses nicely aligned) */
+#ifdef MEMORY_CONTEXT_CHECKING
+	/* ensure there's always space for the sentinel byte */
+	fullChunkSize = Slab_CHUNKHDRSZ + MAXALIGN(chunkSize + 1);
+#else
 	fullChunkSize = Slab_CHUNKHDRSZ + MAXALIGN(chunkSize);
+#endif
 
 	/* Make sure the block can store at least one chunk. */
 	if (blockSize < fullChunkSize + Slab_BLOCKHDRSZ)
@@ -420,14 +425,12 @@ SlabAlloc(MemoryContext context, Size size)
 						  MCTX_SLAB_ID);
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* slab mark to catch clobber of "unused" space */
-	if (slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ))
-	{
-		set_sentinel(MemoryChunkGetPointer(chunk), size);
-		VALGRIND_MAKE_MEM_NOACCESS(((char *) chunk) +
-								   Slab_CHUNKHDRSZ + slab->chunkSize,
-								   slab->fullChunkSize -
-								   (slab->chunkSize + Slab_CHUNKHDRSZ));
-	}
+	Assert(slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ));
+	set_sentinel(MemoryChunkGetPointer(chunk), size);
+	VALGRIND_MAKE_MEM_NOACCESS(((char *) chunk) +
+							   Slab_CHUNKHDRSZ + slab->chunkSize,
+							   slab->fullChunkSize -
+							   (slab->chunkSize + Slab_CHUNKHDRSZ));
 #endif
 
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
@@ -454,10 +457,10 @@ SlabFree(void *pointer)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
-	if (slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ))
-		if (!sentinel_ok(pointer, slab->chunkSize))
-			elog(WARNING, "detected write past chunk end in %s %p",
-				 slab->header.name, chunk);
+	Assert(slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ));
+	if (!sentinel_ok(pointer, slab->chunkSize))
+		elog(WARNING, "detected write past chunk end in %s %p",
+			 slab->header.name, chunk);
 #endif
 
 	/* compute index of the chunk with respect to block start */
@@ -744,11 +747,11 @@ SlabCheck(MemoryContext context)
 						elog(WARNING, "problem in slab %s: bogus block link in block %p, chunk %p",
 							 name, block, chunk);
 
-					/* there might be sentinel (thanks to alignment) */
-					if (slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ))
-						if (!sentinel_ok(chunk, Slab_CHUNKHDRSZ + slab->chunkSize))
-							elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
-								 name, block, chunk);
+					/* check the sentinel byte is intact */
+					Assert(slab->chunkSize < (slab->fullChunkSize - Slab_CHUNKHDRSZ));
+					if (!sentinel_ok(chunk, Slab_CHUNKHDRSZ + slab->chunkSize))
+						elog(WARNING, "problem in slab %s: detected write past chunk end in block %p, chunk %p",
+							 name, block, chunk);
 				}
 			}
 

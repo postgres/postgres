@@ -342,8 +342,16 @@ GenerationAlloc(MemoryContext context, Size size)
 	GenerationContext *set = (GenerationContext *) context;
 	GenerationBlock *block;
 	MemoryChunk *chunk;
-	Size		chunk_size = MAXALIGN(size);
-	Size		required_size = chunk_size + Generation_CHUNKHDRSZ;
+	Size		chunk_size;
+	Size		required_size;
+
+#ifdef MEMORY_CONTEXT_CHECKING
+	/* ensure there's always space for the sentinel byte */
+	chunk_size = MAXALIGN(size + 1);
+#else
+	chunk_size = MAXALIGN(size);
+#endif
+	required_size = chunk_size + Generation_CHUNKHDRSZ;
 
 	/* is it an over-sized chunk? if yes, allocate special block */
 	if (chunk_size > set->allocChunkLimit)
@@ -373,8 +381,8 @@ GenerationAlloc(MemoryContext context, Size size)
 #ifdef MEMORY_CONTEXT_CHECKING
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
-		if (size < chunk_size)
-			set_sentinel(MemoryChunkGetPointer(chunk), size);
+		Assert(size < chunk_size);
+		set_sentinel(MemoryChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -491,8 +499,8 @@ GenerationAlloc(MemoryContext context, Size size)
 #ifdef MEMORY_CONTEXT_CHECKING
 	chunk->requested_size = size;
 	/* set mark to catch clobber of "unused" space */
-	if (size < chunk_size)
-		set_sentinel(MemoryChunkGetPointer(chunk), size);
+	Assert(size < chunk_size);
+	set_sentinel(MemoryChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 	/* fill the allocated space with junk */
@@ -634,10 +642,10 @@ GenerationFree(void *pointer)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
-	if (chunk->requested_size < chunksize)
-		if (!sentinel_ok(pointer, chunk->requested_size))
-			elog(WARNING, "detected write past chunk end in %s %p",
-				 ((MemoryContext) block->context)->name, chunk);
+	Assert(chunk->requested_size < chunksize);
+	if (!sentinel_ok(pointer, chunk->requested_size))
+		elog(WARNING, "detected write past chunk end in %s %p",
+			 ((MemoryContext) block->context)->name, chunk);
 #endif
 
 #ifdef CLOBBER_FREED_MEMORY
@@ -727,10 +735,10 @@ GenerationRealloc(void *pointer, Size size)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
-	if (chunk->requested_size < oldsize)
-		if (!sentinel_ok(pointer, chunk->requested_size))
-			elog(WARNING, "detected write past chunk end in %s %p",
-				 ((MemoryContext) set)->name, chunk);
+	Assert(chunk->requested_size < oldsize);
+	if (!sentinel_ok(pointer, chunk->requested_size))
+		elog(WARNING, "detected write past chunk end in %s %p",
+			 ((MemoryContext) set)->name, chunk);
 #endif
 
 	/*
@@ -769,8 +777,7 @@ GenerationRealloc(void *pointer, Size size)
 									   oldsize - size);
 
 		/* set mark to catch clobber of "unused" space */
-		if (size < oldsize)
-			set_sentinel(pointer, size);
+		set_sentinel(pointer, size);
 #else							/* !MEMORY_CONTEXT_CHECKING */
 
 		/*
@@ -1034,8 +1041,8 @@ GenerationCheck(MemoryContext context)
 						 name, block, chunk);
 
 				/* check sentinel */
-				if (chunk->requested_size < chunksize &&
-					!sentinel_ok(chunk, Generation_CHUNKHDRSZ + chunk->requested_size))
+				Assert(chunk->requested_size < chunksize);
+				if (!sentinel_ok(chunk, Generation_CHUNKHDRSZ + chunk->requested_size))
 					elog(WARNING, "problem in Generation %s: detected write past chunk end in block %p, chunk %p",
 						 name, block, chunk);
 			}

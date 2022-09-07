@@ -705,7 +705,13 @@ AllocSetAlloc(MemoryContext context, Size size)
 	 */
 	if (size > set->allocChunkLimit)
 	{
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* ensure there's always space for the sentinel byte */
+		chunk_size = MAXALIGN(size + 1);
+#else
 		chunk_size = MAXALIGN(size);
+#endif
+
 		blksize = chunk_size + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
 		block = (AllocBlock) malloc(blksize);
 		if (block == NULL)
@@ -724,8 +730,8 @@ AllocSetAlloc(MemoryContext context, Size size)
 #ifdef MEMORY_CONTEXT_CHECKING
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
-		if (size < chunk_size)
-			set_sentinel(MemoryChunkGetPointer(chunk), size);
+		Assert(size < chunk_size);
+		set_sentinel(MemoryChunkGetPointer(chunk), size);
 #endif
 #ifdef RANDOMIZE_ALLOCATED_MEMORY
 		/* fill the allocated space with junk */
@@ -766,6 +772,12 @@ AllocSetAlloc(MemoryContext context, Size size)
 	 * corresponding free list to see if there is a free chunk we could reuse.
 	 * If one is found, remove it from the free list, make it again a member
 	 * of the alloc set and return its data address.
+	 *
+	 * Note that we don't attempt to ensure there's space for the sentinel
+	 * byte here.  We expect a large proportion of allocations to be for sizes
+	 * which are already a power of 2.  If we were to always make space for a
+	 * sentinel byte in MEMORY_CONTEXT_CHECKING builds, then we'd end up
+	 * doubling the memory requirements for such allocations.
 	 */
 	fidx = AllocSetFreeIndex(size);
 	chunk = set->freelist[fidx];
@@ -992,10 +1004,10 @@ AllocSetFree(void *pointer)
 			Size		chunk_size = block->endptr - (char *) pointer;
 
 			/* Test for someone scribbling on unused space in chunk */
-			if (chunk->requested_size < chunk_size)
-				if (!sentinel_ok(pointer, chunk->requested_size))
-					elog(WARNING, "detected write past chunk end in %s %p",
-						 set->header.name, chunk);
+			Assert(chunk->requested_size < chunk_size);
+			if (!sentinel_ok(pointer, chunk->requested_size))
+				elog(WARNING, "detected write past chunk end in %s %p",
+					 set->header.name, chunk);
 		}
 #endif
 
@@ -1098,10 +1110,10 @@ AllocSetRealloc(void *pointer, Size size)
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* Test for someone scribbling on unused space in chunk */
-		if (chunk->requested_size < oldsize)
-			if (!sentinel_ok(pointer, chunk->requested_size))
-				elog(WARNING, "detected write past chunk end in %s %p",
-					 set->header.name, chunk);
+		Assert(chunk->requested_size < oldsize);
+		if (!sentinel_ok(pointer, chunk->requested_size))
+			elog(WARNING, "detected write past chunk end in %s %p",
+				 set->header.name, chunk);
 #endif
 
 		/*
@@ -1111,7 +1123,12 @@ AllocSetRealloc(void *pointer, Size size)
 		if (block->freeptr != block->endptr)
 			elog(ERROR, "could not find block containing chunk %p", chunk);
 
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* ensure there's always space for the sentinel byte */
+		chksize = MAXALIGN(size + 1);
+#else
 		chksize = MAXALIGN(size);
+#endif
 
 		/* Do the realloc */
 		blksize = chksize + ALLOC_BLOCKHDRSZ + ALLOC_CHUNKHDRSZ;
@@ -1162,8 +1179,8 @@ AllocSetRealloc(void *pointer, Size size)
 
 		chunk->requested_size = size;
 		/* set mark to catch clobber of "unused" space */
-		if (size < chksize)
-			set_sentinel(pointer, size);
+		Assert(size < chksize);
+		set_sentinel(pointer, size);
 #else							/* !MEMORY_CONTEXT_CHECKING */
 
 		/*
