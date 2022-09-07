@@ -1089,6 +1089,223 @@ test_sub=# SELECT * FROM child ORDER BY a;
 
  </sect1>
 
+ <sect1 id="logical-replication-col-lists">
+  <title>Column Lists</title>
+
+  <para>
+   By default, all columns of a published table will be replicated to the
+   appropriate subscribers. The subscriber table must have at least all the
+   columns of the published table. However, if a
+   <firstterm>column list</firstterm> is specified then only the columns named
+   in the list will be replicated. This means the subscriber-side table only
+   needs to have those columns named by the column list. A user might choose to
+   use column lists for behavioral, security or performance reasons.
+  </para>
+
+  <sect2 id="logical-replication-col-list-rules">
+   <title>Column List Rules</title>
+
+   <para>
+    A column list is specified per table following the table name, and enclosed
+    by parentheses. See <xref linkend="sql-createpublication"/> for details.
+   </para>
+
+   <para>
+    When specifying a column list, the order of columns is not important. If no
+    column list is specified, all columns of the table are replicated through
+    this publication, including any columns added later. This means a column
+    list which names all columns is not quite the same as having no column list
+    at all. For example, if additional columns are added to the table then only
+    those named columns mentioned in the column list will continue to be
+    replicated.
+   </para>
+
+   <para>
+    Column lists have no effect for <literal>TRUNCATE</literal> command.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-col-list-restrictions">
+   <title>Column List Restrictions</title>
+
+   <para>
+    A column list can contain only simple column references.
+   </para>
+
+   <para>
+    If a publication publishes <command>UPDATE</command> or
+    <command>DELETE</command> operations, any column list must include the
+    table's replica identity columns (see
+    <xref linkend="sql-altertable-replica-identity"/>).
+    If a publication publishes only <command>INSERT</command> operations, then
+    the column list is arbitrary and may omit some replica identity columns.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-col-list-partitioned">
+   <title>Partitioned Tables</title>
+
+   <para>
+    For partitioned tables, the publication parameter
+    <literal>publish_via_partition_root</literal> determines which column list
+    is used. If <literal>publish_via_partition_root</literal> is
+    <literal>true</literal>, the root partitioned table's column list is used.
+    Otherwise, if <literal>publish_via_partition_root</literal> is
+    <literal>false</literal> (default), each partition's column list is used.
+   </para>
+
+  </sect2>
+
+  <sect2 id="logical-replication-col-list-initial-data-sync">
+   <title>Initial Data Synchronization</title>
+
+   <para>
+    If the subscription requires copying pre-existing table data and a
+    publication specifies a column list, only data from those columns will be
+    copied.
+   </para>
+
+   <note>
+    <para>
+     If the subscriber is in a release prior to 15, copy pre-existing data
+     doesn't use column lists even if they are defined in the publication.
+     This is because old releases can only copy the entire table data.
+    </para>
+   </note>
+
+  </sect2>
+
+  <sect2 id="logical-replication-col-list-combining">
+   <title>Combining Multiple Column Lists</title>
+
+   <warning>
+    <para>
+     It is not supported to have a subscription comprising several publications
+     where the same table has been published with different column lists.
+     This means changing the column lists of the tables being subscribed could
+     cause inconsistency of column lists among publications, in which case
+     the <xref linkend="sql-alterpublication"/> will be successful but later
+     the walsender on the publisher, or the subscriber may throw an error. In
+     this scenario, the user needs to recreate the subscription after adjusting
+     the column list or drop the problematic publication using
+     <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> and then add it
+     back after adjusting the column list.
+    </para>
+    <para>
+     Background: The main purpose of the column list feature is to allow
+     statically different table shapes on publisher and subscriber, or hide
+     sensitive column data. In both cases, it doesn't seem to make sense to
+     combine column lists.
+    </para>
+   </warning>
+
+  </sect2>
+
+  <sect2 id="logical-replication-col-list-examples">
+   <title>Examples</title>
+
+   <para>
+    Create a table <literal>t1</literal> to be used in the following example.
+<programlisting>
+test_pub=# CREATE TABLE t1(id int, a text, b text, c text, d text, e text, PRIMARY KEY(id));
+CREATE TABLE
+</programlisting></para>
+
+   <para>
+    Create a publication <literal>p1</literal>. A column list is defined for
+    table <literal>t1</literal> to reduce the number of columns that will be
+    replicated. Notice that the order of column names in the column list does
+    not matter.
+<programlisting>
+test_pub=# CREATE PUBLICATION p1 FOR TABLE t1 (id, b, a, d);
+CREATE PUBLICATION
+</programlisting></para>
+
+    <para>
+     <literal>psql</literal> can be used to show the column lists (if defined)
+     for each publication.
+<programlisting>
+test_pub=# \dRp+
+                               Publication p1
+  Owner   | All tables | Inserts | Updates | Deletes | Truncates | Via root
+----------+------------+---------+---------+---------+-----------+----------
+ postgres | f          | t       | t       | t       | t         | f
+Tables:
+    "public.t1" (id, a, b, d)
+</programlisting></para>
+
+    <para>
+     <literal>psql</literal> can be used to show the column lists (if defined)
+     for each table.
+<programlisting>
+test_pub=# \d t1
+                 Table "public.t1"
+ Column |  Type   | Collation | Nullable | Default
+--------+---------+-----------+----------+---------
+ id     | integer |           | not null |
+ a      | text    |           |          |
+ b      | text    |           |          |
+ c      | text    |           |          |
+ d      | text    |           |          |
+ e      | text    |           |          |
+Indexes:
+    "t1_pkey" PRIMARY KEY, btree (id)
+Publications:
+    "p1" (id, a, b, d)
+</programlisting></para>
+
+    <para>
+     On the subscriber node, create a table <literal>t1</literal> which now
+     only needs a subset of the columns that were on the publisher table
+     <literal>t1</literal>, and also create the subscription
+     <literal>s1</literal> that subscribes to the publication
+     <literal>p1</literal>.
+<programlisting>
+test_sub=# CREATE TABLE t1(id int, b text, a text, d text, PRIMARY KEY(id));
+CREATE TABLE
+test_sub=# CREATE SUBSCRIPTION s1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub application_name=s1'
+test_sub-# PUBLICATION p1;
+CREATE SUBSCRIPTION
+</programlisting></para>
+
+    <para>
+     On the publisher node, insert some rows to table <literal>t1</literal>.
+<programlisting>
+test_pub=# INSERT INTO t1 VALUES(1, 'a-1', 'b-1', 'c-1', 'd-1', 'e-1');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES(2, 'a-2', 'b-2', 'c-2', 'd-2', 'e-2');
+INSERT 0 1
+test_pub=# INSERT INTO t1 VALUES(3, 'a-3', 'b-3', 'c-3', 'd-3', 'e-3');
+INSERT 0 1
+test_pub=# SELECT * FROM t1 ORDER BY id;
+ id |  a  |  b  |  c  |  d  |  e
+----+-----+-----+-----+-----+-----
+  1 | a-1 | b-1 | c-1 | d-1 | e-1
+  2 | a-2 | b-2 | c-2 | d-2 | e-2
+  3 | a-3 | b-3 | c-3 | d-3 | e-3
+(3 rows)
+</programlisting></para>
+
+    <para>
+     Only data from the column list of publication <literal>p1</literal> is
+     replicated.
+<programlisting>
+test_sub=# SELECT * FROM t1 ORDER BY id;
+ id |  b  |  a  |  d
+----+-----+-----+-----
+  1 | b-1 | a-1 | d-1
+  2 | b-2 | a-2 | d-2
+  3 | b-3 | a-3 | d-3
+(3 rows)
+</programlisting></para>
+
+  </sect2>
+
+ </sect1>
+
  <sect1 id="logical-replication-conflicts">
   <title>Conflicts</title>
 
