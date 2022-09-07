@@ -454,9 +454,10 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 		actual_versionstr = get_collation_actual_version(dbform->datlocprovider, dbform->datlocprovider == COLLPROVIDER_ICU ? iculocale : collate);
 		if (!actual_versionstr)
-			ereport(WARNING,
-					(errmsg("database \"%s\" has no actual collation version, but a version was recorded",
-							name)));
+			/* should not happen */
+			elog(WARNING,
+				 "database \"%s\" has no actual collation version, but a version was recorded",
+				 name);
 		else if (strcmp(actual_versionstr, collversionstr) != 0)
 			ereport(WARNING,
 					(errmsg("database \"%s\" has a collation version mismatch",

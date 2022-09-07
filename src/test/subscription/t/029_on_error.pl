@@ -48,7 +48,7 @@ sub test_skip_lsn
 	# Check the log to ensure that the transaction is skipped, and advance the
 	# offset of the log file for the next test.
 	$offset = $node_subscriber->wait_for_log(
-		qr/LOG: ( [A-Z0-9]+:)? done skipping logical replication transaction finished at $lsn/,
+		qr/LOG: ( [A-Z0-9]+:)? logical replication completed skipping transaction at LSN $lsn/,
 		$offset);
 
 	# Insert non-conflict data

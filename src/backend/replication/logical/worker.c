@@ -3878,7 +3878,7 @@ maybe_start_skipping_changes(XLogRecPtr finish_lsn)
 	skip_xact_finish_lsn = finish_lsn;
 
 	ereport(LOG,
-			errmsg("start skipping logical replication transaction finished at %X/%X",
+			errmsg("logical replication starts skipping transaction at LSN %X/%X",
 				   LSN_FORMAT_ARGS(skip_xact_finish_lsn)));
 }
 
@@ -3892,7 +3892,7 @@ stop_skipping_changes(void)
 		return;
 
 	ereport(LOG,
-			(errmsg("done skipping logical replication transaction finished at %X/%X",
+			(errmsg("logical replication completed skipping transaction at LSN %X/%X",
 					LSN_FORMAT_ARGS(skip_xact_finish_lsn))));
 
 	/* Stop skipping changes */
@@ -3975,7 +3975,7 @@ clear_subscription_skip_lsn(XLogRecPtr finish_lsn)
 		if (myskiplsn != finish_lsn)
 			ereport(WARNING,
 					errmsg("skip-LSN of logical replication subscription \"%s\" cleared", MySubscription->name),
-					errdetail("Remote transaction's finish WAL location (LSN) %X/%X did not match skip-LSN %X/%X",
+					errdetail("Remote transaction's finish WAL location (LSN) %X/%X did not match skip-LSN %X/%X.",
 							  LSN_FORMAT_ARGS(finish_lsn),
 							  LSN_FORMAT_ARGS(myskiplsn)));
 	}
