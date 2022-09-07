@@ -91,8 +91,10 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       When a column list is specified, only the named columns are replicated.
       If no column list is specified, all columns of the table are replicated
       through this publication, including any columns added later. It has no
-      effect on <literal>TRUNCATE</literal> commands.
-     </para>
+      effect on <literal>TRUNCATE</literal> commands. See
+      <xref linkend="logical-replication-col-lists"/> for details about column
+      lists.
+</para>
 
      <para>
       Only persistent base tables and partitioned tables can be part of a
