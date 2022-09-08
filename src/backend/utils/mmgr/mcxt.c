@@ -826,6 +826,14 @@ MemoryContextCheck(MemoryContext context)
 bool
 MemoryContextContains(MemoryContext context, void *pointer)
 {
+	/*
+	 * Temporarily make this always return false as we don't yet have a fully
+	 * baked idea on how to make it work correctly with the new MemoryChunk
+	 * code.
+	 */
+	return false;
+
+#ifdef NOT_USED
 	MemoryContext ptr_context;
 
 	/*
@@ -845,6 +853,7 @@ MemoryContextContains(MemoryContext context, void *pointer)
 	ptr_context = GetMemoryChunkContext(pointer);
 
 	return ptr_context == context;
+#endif
 }
 
 /*
@@ -960,8 +969,6 @@ MemoryContextAlloc(MemoryContext context, Size size)
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
-	Assert(MemoryContextContains(context, ret));
-
 	return ret;
 }
 
@@ -1000,8 +1007,6 @@ MemoryContextAllocZero(MemoryContext context, Size size)
 
 	MemSetAligned(ret, 0, size);
 
-	Assert(MemoryContextContains(context, ret));
-
 	return ret;
 }
 
@@ -1039,8 +1044,6 @@ MemoryContextAllocZeroAligned(MemoryContext context, Size size)
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetLoop(ret, 0, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
@@ -1082,8 +1085,6 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 
 	if ((flags & MCXT_ALLOC_ZERO) != 0)
 		MemSetAligned(ret, 0, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
@@ -1168,8 +1169,6 @@ palloc(Size size)
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
-	Assert(MemoryContextContains(context, ret));
-
 	return ret;
 }
 
@@ -1202,8 +1201,6 @@ palloc0(Size size)
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
 
 	MemSetAligned(ret, 0, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
@@ -1243,8 +1240,6 @@ palloc_extended(Size size, int flags)
 
 	if ((flags & MCXT_ALLOC_ZERO) != 0)
 		MemSetAligned(ret, 0, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
@@ -1299,8 +1294,6 @@ repalloc(void *pointer, Size size)
 
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
 
-	Assert(MemoryContextContains(context, ret));
-
 	return ret;
 }
 
@@ -1335,8 +1328,6 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 	}
 
 	VALGRIND_MEMPOOL_ALLOC(context, ret, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
@@ -1376,8 +1367,6 @@ repalloc_huge(void *pointer, Size size)
 	}
 
 	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
-
-	Assert(MemoryContextContains(context, ret));
 
 	return ret;
 }
