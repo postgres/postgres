@@ -14,6 +14,9 @@
 #
 # $ git log --pretty=format:"%H # %cd%n# %s" $PGINDENTGITHASH -1 --date=iso
 
+b2e6e768230be334b12dae536ba4c147fba4e9c9 # 2022-09-08 14:01:13 +0700
+# Run perltidy over Catalog.pm
+
 82d0ffae3219e4bc153a1306ce23013d168e04a2 # 2022-06-30 11:03:03 -0400
 # pgindent run prior to branching v15.
 
