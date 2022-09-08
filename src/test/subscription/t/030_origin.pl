@@ -195,7 +195,13 @@ like(
 	"Refresh publication when the publisher has subscribed for the new table, but the subscriber-side wants origin = none"
 );
 
-$node_A->wait_for_subscription_sync($node_B, $subname_AB2);
+# Ensure that relation has reached 'ready' state before we try to drop it
+my $synced_query =
+  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r');";
+$node_A->poll_query_until('postgres', $synced_query)
+  or die "Timed out while waiting for subscriber to synchronize data";
+
+$node_B->wait_for_catchup($subname_AB2);
 
 # clear the operations done by this test
 $node_A->safe_psql('postgres', "DROP TABLE tab_new");
