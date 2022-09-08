@@ -172,6 +172,11 @@ ALTER SUBSCRIPTION <replaceable class="parameter">name</replaceable> RENAME TO <
           Previously subscribed tables are not copied, even if a table's row
           filter <literal>WHERE</literal> clause has since been modified.
          </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of
+          how <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
+         </para>
         </listitem>
        </varlistentry>
       </variablelist></para>

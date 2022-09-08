@@ -213,6 +213,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           will affect what data is copied. Refer to the
           <xref linkend="sql-createsubscription-notes" /> for details.
          </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of how
+          <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
+         </para>
         </listitem>
        </varlistentry>
 
@@ -315,6 +320,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           to <literal>any</literal> means that the publisher sends changes
           regardless of their origin. The default is <literal>any</literal>.
          </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of how
+          <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
+         </para>
         </listitem>
        </varlistentry>
       </variablelist></para>
@@ -385,6 +395,31 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    <link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>
    can have non-existent publications.
   </para>
+
+  <para>
+   When using a subscription parameter combination of
+   <literal>copy_data = true</literal> and <literal>origin = NONE</literal>,
+   the initial sync table data is copied directly from the publisher, meaning
+   that knowledge of the true origin of that data is not possible. If the
+   publisher also has subscriptions then the copied table data might have
+   originated from further upstream. This scenario is detected and a WARNING is
+   logged to the user, but the warning is only an indication of a potential
+   problem; it is the user's responsibility to make the necessary checks to
+   ensure the copied data origins are really as wanted or not.
+  </para>
+
+  <para>
+   To find which tables might potentially include non-local origins (due to
+   other subscriptions created on the publisher) try this SQL query:
+<programlisting>
+# substitute &lt;pub-names&gt; below with your publication name(s) to be queried
+SELECT DISTINCT N.nspname AS schemaname, C.relname AS tablename
+FROM pg_publication P,
+     LATERAL pg_get_publication_tables(P.pubname) GPT
+     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),
+     pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE C.oid = GPT.relid AND P.pubname IN (&lt;pub-names&gt;);
+</programlisting></para>
 
  </refsect1>
 

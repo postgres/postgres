@@ -1,12 +1,22 @@
 
 # Copyright (c) 2021-2022, PostgreSQL Global Development Group
 
-# Test the CREATE SUBSCRIPTION 'origin' parameter.
+# Test the CREATE SUBSCRIPTION 'origin' parameter and its interaction with
+# 'copy_data' parameter.
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
+
+my $subname_AB  = 'tap_sub_A_B';
+my $subname_AB2 = 'tap_sub_A_B_2';
+my $subname_BA  = 'tap_sub_B_A';
+my $subname_BC  = 'tap_sub_B_C';
+
+my $result;
+my $stdout;
+my $stderr;
 
 ###############################################################################
 # Setup a bidirectional logical replication between node_A & node_B
@@ -32,32 +42,28 @@ $node_B->safe_psql('postgres', "CREATE TABLE tab (a int PRIMARY KEY)");
 # node_A (pub) -> node_B (sub)
 my $node_A_connstr = $node_A->connstr . ' dbname=postgres';
 $node_A->safe_psql('postgres', "CREATE PUBLICATION tap_pub_A FOR TABLE tab");
-my $appname_B1 = 'tap_sub_B1';
 $node_B->safe_psql(
 	'postgres', "
-	CREATE SUBSCRIPTION tap_sub_B1
-	CONNECTION '$node_A_connstr application_name=$appname_B1'
+	CREATE SUBSCRIPTION $subname_BA
+	CONNECTION '$node_A_connstr application_name=$subname_BA'
 	PUBLICATION tap_pub_A
 	WITH (origin = none)");
 
 # node_B (pub) -> node_A (sub)
 my $node_B_connstr = $node_B->connstr . ' dbname=postgres';
 $node_B->safe_psql('postgres', "CREATE PUBLICATION tap_pub_B FOR TABLE tab");
-my $appname_A = 'tap_sub_A';
 $node_A->safe_psql(
 	'postgres', "
-	CREATE SUBSCRIPTION tap_sub_A
-	CONNECTION '$node_B_connstr application_name=$appname_A'
+	CREATE SUBSCRIPTION $subname_AB
+	CONNECTION '$node_B_connstr application_name=$subname_AB'
 	PUBLICATION tap_pub_B
 	WITH (origin = none, copy_data = off)");
 
 # Wait for initial table sync to finish
-$node_A->wait_for_subscription_sync($node_B, $appname_A);
-$node_B->wait_for_subscription_sync($node_A, $appname_B1);
+$node_A->wait_for_subscription_sync($node_B, $subname_AB);
+$node_B->wait_for_subscription_sync($node_A, $subname_BA);
 
 is(1, 1, 'Bidirectional replication setup is complete');
-
-my $result;
 
 ###############################################################################
 # Check that bidirectional logical replication setup does not cause infinite
@@ -68,8 +74,8 @@ my $result;
 $node_A->safe_psql('postgres', "INSERT INTO tab VALUES (11);");
 $node_B->safe_psql('postgres', "INSERT INTO tab VALUES (21);");
 
-$node_A->wait_for_catchup($appname_B1);
-$node_B->wait_for_catchup($appname_A);
+$node_A->wait_for_catchup($subname_BA);
+$node_B->wait_for_catchup($subname_AB);
 
 # check that transaction was committed on subscriber(s)
 $result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
@@ -85,8 +91,8 @@ is( $result, qq(11
 
 $node_A->safe_psql('postgres', "DELETE FROM tab;");
 
-$node_A->wait_for_catchup($appname_B1);
-$node_B->wait_for_catchup($appname_A);
+$node_A->wait_for_catchup($subname_BA);
+$node_B->wait_for_catchup($subname_AB);
 
 ###############################################################################
 # Check that remote data of node_B (that originated from node_C) is not
@@ -109,23 +115,20 @@ $node_C->safe_psql('postgres', "CREATE TABLE tab (a int PRIMARY KEY)");
 # node_C (pub) -> node_B (sub)
 my $node_C_connstr = $node_C->connstr . ' dbname=postgres';
 $node_C->safe_psql('postgres', "CREATE PUBLICATION tap_pub_C FOR TABLE tab");
-
-my $appname_B2 = 'tap_sub_B2';
 $node_B->safe_psql(
 	'postgres', "
-	CREATE SUBSCRIPTION tap_sub_B2
-	CONNECTION '$node_C_connstr application_name=$appname_B2'
+	CREATE SUBSCRIPTION $subname_BC
+	CONNECTION '$node_C_connstr application_name=$subname_BC'
 	PUBLICATION tap_pub_C
 	WITH (origin = none)");
-
-$node_B->wait_for_subscription_sync($node_C, $appname_B2);
+$node_B->wait_for_subscription_sync($node_C, $subname_BC);
 
 # insert a record
 $node_C->safe_psql('postgres', "INSERT INTO tab VALUES (32);");
 
-$node_C->wait_for_catchup($appname_B2);
-$node_B->wait_for_catchup($appname_A);
-$node_A->wait_for_catchup($appname_B1);
+$node_C->wait_for_catchup($subname_BC);
+$node_B->wait_for_catchup($subname_AB);
+$node_A->wait_for_catchup($subname_BA);
 
 $result = $node_B->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
 is($result, qq(32), 'The node_C data replicated to node_B');
@@ -135,6 +138,69 @@ $result = $node_A->safe_psql('postgres', "SELECT * FROM tab ORDER BY 1;");
 is($result, qq(),
 	'Remote data originating from another node (not the publisher) is not replicated when origin parameter is none'
 );
+
+###############################################################################
+# Specifying origin = NONE indicates that the publisher should only replicate the
+# changes that are generated locally from node_B, but in this case since the
+# node_B is also subscribing data from node_A, node_B can have remotely
+# originated data from node_A. We log a warning, in this case, to draw
+# attention to there being possible remote data.
+###############################################################################
+($result, $stdout, $stderr) = $node_A->psql(
+	'postgres', "
+        CREATE SUBSCRIPTION $subname_AB2
+        CONNECTION '$node_B_connstr application_name=$subname_AB2'
+        PUBLICATION tap_pub_B
+        WITH (origin = none, copy_data = on)");
+like(
+	$stderr,
+	qr/WARNING: ( [A-Z0-9]+:)? subscription "tap_sub_a_b_2" requested copy_data with origin = NONE but might copy data that had a different origin/,
+	"Create subscription with origin = none and copy_data when the publisher has subscribed same table"
+);
+
+$node_A->wait_for_subscription_sync($node_B, $subname_AB2);
+
+# Alter subscription ... refresh publication should be successful when no new
+# table is added
+$node_A->safe_psql(
+	'postgres', "
+        ALTER SUBSCRIPTION $subname_AB2 REFRESH PUBLICATION");
+
+# Check Alter subscription ... refresh publication when there is a new
+# table that is subscribing data from a different publication
+$node_A->safe_psql('postgres', "CREATE TABLE tab_new (a int PRIMARY KEY)");
+$node_B->safe_psql('postgres', "CREATE TABLE tab_new (a int PRIMARY KEY)");
+
+# add a new table to the publication
+$node_A->safe_psql('postgres',
+	"ALTER PUBLICATION tap_pub_A ADD TABLE tab_new");
+$node_B->safe_psql(
+	'postgres', "
+        ALTER SUBSCRIPTION $subname_BA REFRESH PUBLICATION");
+
+$node_B->wait_for_subscription_sync($node_A, $subname_BA);
+
+# add a new table to the publication
+$node_B->safe_psql('postgres',
+	"ALTER PUBLICATION tap_pub_B ADD TABLE tab_new");
+
+# Alter subscription ... refresh publication should log a warning when a new
+# table in the publisher is subscribing data from a different publication
+($result, $stdout, $stderr) = $node_A->psql(
+	'postgres', "
+        ALTER SUBSCRIPTION $subname_AB2 REFRESH PUBLICATION");
+like(
+	$stderr,
+	qr/WARNING: ( [A-Z0-9]+:)? subscription "tap_sub_a_b_2" requested copy_data with origin = NONE but might copy data that had a different origin/,
+	"Refresh publication when the publisher has subscribed for the new table, but the subscriber-side wants origin = none"
+);
+
+$node_A->wait_for_subscription_sync($node_B, $subname_AB2);
+
+# clear the operations done by this test
+$node_A->safe_psql('postgres', "DROP TABLE tab_new");
+$node_B->safe_psql('postgres', "DROP TABLE tab_new");
+$node_A->safe_psql('postgres', "DROP SUBSCRIPTION $subname_AB2");
 
 # shutdown
 $node_B->stop('fast');
