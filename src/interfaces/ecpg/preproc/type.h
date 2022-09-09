@@ -114,6 +114,7 @@ struct exec
 
 struct this_type
 {
+	char	   *type_storage;
 	enum ECPGttype type_enum;
 	char	   *type_str;
 	char	   *type_dimension;
