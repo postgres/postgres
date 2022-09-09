@@ -952,7 +952,7 @@ su - postgres
         <itemizedlist>
          <listitem>
           <para>
-           <option>bsd</option> to use the UUID functions found in FreeBSD, NetBSD,
+           <option>bsd</option> to use the UUID functions found in FreeBSD
            and some other BSD-derived systems
           </para>
          </listitem>
