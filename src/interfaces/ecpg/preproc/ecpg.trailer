@@ -425,9 +425,10 @@ type_declaration: S_TYPEDEF
 		$$ = mm_strdup("");
 	};
 
-var_declaration: storage_declaration
-		var_type
+var_declaration:
+		storage_declaration var_type
 		{
+			actual_type[struct_level].type_storage = $1;
 			actual_type[struct_level].type_enum = $2.type_enum;
 			actual_type[struct_level].type_str = $2.type_str;
 			actual_type[struct_level].type_dimension = $2.type_dimension;
@@ -442,6 +443,7 @@ var_declaration: storage_declaration
 		}
 		| var_type
 		{
+			actual_type[struct_level].type_storage = EMPTY;
 			actual_type[struct_level].type_enum = $1.type_enum;
 			actual_type[struct_level].type_str = $1.type_str;
 			actual_type[struct_level].type_dimension = $1.type_dimension;
@@ -850,7 +852,7 @@ variable_list: variable
 		| variable_list ',' variable
 		{
 			if (actual_type[struct_level].type_enum == ECPGt_varchar || actual_type[struct_level].type_enum == ECPGt_bytea)
-				$$ = cat_str(3, $1, mm_strdup(";"), $3);
+				$$ = cat_str(4, $1, mm_strdup(";"), mm_strdup(actual_type[struct_level].type_storage), $3);
 			else
 				$$ = cat_str(3, $1, mm_strdup(","), $3);
 		}
