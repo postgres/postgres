@@ -180,7 +180,7 @@ distprep:
 	$(MAKE) -C replication	repl_gram.c repl_gram.h repl_scanner.c syncrep_gram.c syncrep_gram.h syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h lwlocknames.c
 	$(MAKE) -C utils	distprep
-	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_scan.c
+	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_gram.h jsonpath_scan.c
 	$(MAKE) -C utils/misc	guc-file.c
 
 
