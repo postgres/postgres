@@ -393,7 +393,9 @@ XLogReadBufferForRedoExtended(XLogReaderState *record,
 									  prefetch_buffer);
 		page = BufferGetPage(*buf);
 		if (!RestoreBlockImage(record, block_id, page))
-			elog(ERROR, "failed to restore block image");
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg_internal("%s", record->errormsg_buf)));
 
 		/*
 		 * The page may be uninitialized. If so, we can't set the LSN because
