@@ -1201,10 +1201,7 @@ pg_SSPI_recvauth(Port *port)
 	DWORD		accountnamesize = sizeof(accountname);
 	DWORD		domainnamesize = sizeof(domainname);
 	SID_NAME_USE accountnameuse;
-	HMODULE		secur32;
 	char	   *authn_id;
-
-	QUERY_SECURITY_CONTEXT_TOKEN_FN _QuerySecurityContextToken;
 
 	/*
 	 * Acquire a handle to the server credentials.
@@ -1358,36 +1355,12 @@ pg_SSPI_recvauth(Port *port)
 	 *
 	 * Get the name of the user that authenticated, and compare it to the pg
 	 * username that was specified for the connection.
-	 *
-	 * MingW is missing the export for QuerySecurityContextToken in the
-	 * secur32 library, so we have to load it dynamically.
 	 */
 
-	secur32 = LoadLibrary("SECUR32.DLL");
-	if (secur32 == NULL)
-		ereport(ERROR,
-				(errmsg("could not load library \"%s\": error code %lu",
-						"SECUR32.DLL", GetLastError())));
-
-	_QuerySecurityContextToken = (QUERY_SECURITY_CONTEXT_TOKEN_FN) (pg_funcptr_t)
-		GetProcAddress(secur32, "QuerySecurityContextToken");
-	if (_QuerySecurityContextToken == NULL)
-	{
-		FreeLibrary(secur32);
-		ereport(ERROR,
-				(errmsg_internal("could not locate QuerySecurityContextToken in secur32.dll: error code %lu",
-								 GetLastError())));
-	}
-
-	r = (_QuerySecurityContextToken) (sspictx, &token);
+	r = QuerySecurityContextToken(sspictx, &token);
 	if (r != SEC_E_OK)
-	{
-		FreeLibrary(secur32);
 		pg_SSPI_error(ERROR,
 					  _("could not get token from SSPI security context"), r);
-	}
-
-	FreeLibrary(secur32);
 
 	/*
 	 * No longer need the security context, everything from here on uses the
