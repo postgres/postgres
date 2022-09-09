@@ -2410,7 +2410,9 @@ verifyBackupPageConsistency(XLogReaderState *record)
 		 * can be directly applied on it.
 		 */
 		if (!RestoreBlockImage(record, block_id, primary_image_masked))
-			elog(ERROR, "failed to restore block image");
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg_internal("%s", record->errormsg_buf)));
 
 		/*
 		 * If masking function is defined, mask both the primary and replay

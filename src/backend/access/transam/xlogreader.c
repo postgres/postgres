@@ -2034,7 +2034,8 @@ XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len)
 /*
  * Restore a full-page image from a backup block attached to an XLOG record.
  *
- * Returns true if a full-page image is restored.
+ * Returns true if a full-page image is restored, and false on failure with
+ * an error to be consumed by the caller.
  */
 bool
 RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
@@ -2045,9 +2046,20 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 
 	if (block_id > record->record->max_block_id ||
 		!record->record->blocks[block_id].in_use)
+	{
+		report_invalid_record(record,
+							  "could not restore image at %X/%X with invalid block %d specified",
+							  LSN_FORMAT_ARGS(record->ReadRecPtr),
+							  block_id);
 		return false;
+	}
 	if (!record->record->blocks[block_id].has_image)
+	{
+		report_invalid_record(record, "could not restore image at %X/%X with invalid state, block %d",
+							  LSN_FORMAT_ARGS(record->ReadRecPtr),
+							  block_id);
 		return false;
+	}
 
 	bkpb = &record->record->blocks[block_id];
 	ptr = bkpb->bkp_image;
@@ -2070,7 +2082,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 									bkpb->bimg_len, BLCKSZ - bkpb->hole_length) <= 0)
 				decomp_success = false;
 #else
-			report_invalid_record(record, "image at %X/%X compressed with %s not supported by build, block %d",
+			report_invalid_record(record, "could not restore image at %X/%X compressed with %s not supported by build, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  "LZ4",
 								  block_id);
@@ -2087,7 +2099,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 			if (ZSTD_isError(decomp_result))
 				decomp_success = false;
 #else
-			report_invalid_record(record, "image at %X/%X compressed with %s not supported by build, block %d",
+			report_invalid_record(record, "could not restore image at %X/%X compressed with %s not supported by build, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  "zstd",
 								  block_id);
@@ -2096,7 +2108,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 		}
 		else
 		{
-			report_invalid_record(record, "image at %X/%X compressed with unknown method, block %d",
+			report_invalid_record(record, "could not restore image at %X/%X compressed with unknown method, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  block_id);
 			return false;
@@ -2104,7 +2116,7 @@ RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page)
 
 		if (!decomp_success)
 		{
-			report_invalid_record(record, "invalid compressed image at %X/%X, block %d",
+			report_invalid_record(record, "could not decompress image at %X/%X, block %d",
 								  LSN_FORMAT_ARGS(record->ReadRecPtr),
 								  block_id);
 			return false;
