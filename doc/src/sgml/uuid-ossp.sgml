@@ -167,7 +167,7 @@ SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');
    at <ulink url="http://www.ossp.org/pkg/lib/uuid/"></ulink>, it is not well
    maintained, and is becoming increasingly difficult to port to newer
    platforms.  <filename>uuid-ossp</filename> can now be built without the OSSP
-   library on some platforms.  On FreeBSD, NetBSD, and some other BSD-derived
+   library on some platforms.  On FreeBSD and some other BSD-derived
    platforms, suitable UUID creation functions are included in the
    core <filename>libc</filename> library.  On Linux, macOS, and some other
    platforms, suitable functions are provided in the <filename>libuuid</filename>
