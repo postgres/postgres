@@ -4892,32 +4892,36 @@ PSQL_EDITOR_LINENUMBER_ARG='--line '
      commands.
     </para>
     <para>
-     The system-wide startup file is named <filename>psqlrc</filename> and is
+     The system-wide startup file is named <filename>psqlrc</filename>.
+     By default it is
      sought in the installation's <quote>system configuration</quote> directory,
      which is most reliably identified by running <literal>pg_config
-     --sysconfdir</literal>.  By default this directory will be <filename>../etc/</filename>
+     --sysconfdir</literal>.
+     Typically this directory will be <filename>../etc/</filename>
      relative to the directory containing
-     the <productname>PostgreSQL</productname> executables.  The name of this
-     directory can be set explicitly via the <envar>PGSYSCONFDIR</envar>
-     environment variable.
+     the <productname>PostgreSQL</productname> executables.
+     The directory to look in can be set explicitly via
+     the <envar>PGSYSCONFDIR</envar> environment variable.
     </para>
     <para>
      The user's personal startup file is named <filename>.psqlrc</filename>
-     and is sought in the invoking user's home directory.  On Windows, which
-     lacks such a concept, the personal startup file is named
+     and is sought in the invoking user's home directory.
+     On Windows the personal startup file is instead named
      <filename>%APPDATA%\postgresql\psqlrc.conf</filename>.
-     The location of the user's startup file can be set explicitly via
+     In either case, this default file path can be overridden by setting
      the <envar>PSQLRC</envar> environment variable.
     </para>
     <para>
      Both the system-wide startup file and the user's personal startup file
      can be made <application>psql</application>-version-specific
      by appending a dash and the <productname>PostgreSQL</productname>
-     major or minor release number to the file name,
-     for example <filename>~/.psqlrc-9.2</filename> or
-     <filename>~/.psqlrc-9.2.5</filename>.  The most specific
-     version-matching file will be read in preference to a
-     non-version-specific file.
+     major or minor release identifier to the file name,
+     for example <filename>~/.psqlrc-&majorversion;</filename> or
+     <filename>~/.psqlrc-&version;</filename>.
+     The most specific version-matching file will be read in preference
+     to a non-version-specific file.
+     These version suffixes are added after determining the file path
+     as explained above.
     </para>
    </listitem>
   </varlistentry>
