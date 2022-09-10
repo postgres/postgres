@@ -3274,11 +3274,6 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
   </para>
 
   <para>
-   This view does not display <link linkend="runtime-config-custom">customized options</link>
-   until the extension module that defines them has been loaded.
-  </para>
-
-  <para>
    This view cannot be inserted into or deleted from, but it can be updated.  An
    <command>UPDATE</command> applied to a row of <structname>pg_settings</structname>
    is equivalent to executing the <command>SET</command> command on that named
@@ -3289,6 +3284,21 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    transaction is committed, the effects will persist until the end of the
    session, unless overridden by another <command>UPDATE</command> or
    <command>SET</command>.
+  </para>
+
+  <para>
+   This view does not
+   display <link linkend="runtime-config-custom">customized options</link>
+   unless the extension module that defines them has been loaded by the
+   backend process executing the query (e.g., via a mention in
+   <xref linkend="guc-shared-preload-libraries"/>,
+   a call to a C function in the extension, or the
+   <link linkend="sql-load"><command>LOAD</command></link> command).
+   For example, since <link linkend="archive-modules">archive modules</link>
+   are normally loaded only by the archiver process not regular sessions,
+   this view will not display any customized options defined by such modules
+   unless special action is taken to load them into the backend process
+   executing the query.
   </para>
 
  </sect1>
