@@ -107,12 +107,17 @@ override CPPFLAGS += -DSO_MAJOR_VERSION=$(SO_MAJOR_VERSION)
 endif
 
 ifeq ($(PORTNAME), aix)
+  LINK.shared		= $(COMPILER)
   ifdef SO_MAJOR_VERSION
     shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   endif
   haslibarule   = yes
   # $(exports_file) is also usable as an import file
   exports_file		= lib$(NAME).exp
+  BUILD.exports		= ( echo '\#! $(shlib)'; $(AWK) '/^[^\#]/ {printf "%s\n",$$1}' $< ) > $@
+  ifneq (,$(SHLIB_EXPORTS))
+    LINK.shared		+= -Wl,-bE:$(exports_file)
+  endif
 endif
 
 ifeq ($(PORTNAME), darwin)
@@ -259,9 +264,15 @@ $(stlib): $(OBJS) | $(SHLIB_PREREQS)
 	touch $@
 endif #haslibarule
 
+# AIX wraps shared libraries inside a static library, can be used both
+# for static and shared linking
+ifeq ($(PORTNAME), aix)
+$(stlib): $(shlib)
+	rm -f $(stlib)
+	$(AR) $(AROPT) $(stlib) $(shlib)
+endif # aix
 
 ifeq (,$(filter cygwin win32,$(PORTNAME)))
-ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS) | $(SHLIB_PREREQS)
@@ -274,9 +285,12 @@ ifneq ($(shlib), $(shlib_major))
 endif
 # Make sure we have a link to a name without any version numbers
 ifneq ($(shlib), $(shlib_bare))
+# except on AIX, where that's not a thing
+ifneq ($(PORTNAME), aix)
 	rm -f $(shlib_bare)
 	$(LN_S) $(shlib) $(shlib_bare)
-endif
+endif # aix
+endif # shlib_bare
 endif # shlib_major
 
 # Where possible, restrict the symbols exported by the library to just the
@@ -285,35 +299,12 @@ endif # shlib_major
 # libpgport along with libpq.
 ifneq (,$(SHLIB_EXPORTS))
 ifdef BUILD.exports
-$(shlib): $(SHLIB_EXPORTS:%.txt=%.list)
+$(shlib): $(exports_file)
 
-$(SHLIB_EXPORTS:%.txt=%.list): %.list: %.txt
+$(exports_file): $(SHLIB_EXPORTS)
 	$(BUILD.exports)
 endif
 endif
-
-else # PORTNAME == aix
-
-# AIX case
-
-# See notes in src/backend/parser/Makefile about the following two rules
-$(stlib): $(shlib)
-	touch $@
-
-$(shlib): $(OBJS) | $(SHLIB_PREREQS)
-	rm -f $(stlib)
-	$(LINK.static) $(stlib) $^
-	$(RANLIB) $(stlib)
-ifeq (,$(SHLIB_EXPORTS))
-	$(MKLDEXPORT) $(stlib) $(shlib) >$(exports_file)
-else
-	( echo '#! $(shlib)'; $(AWK) '/^[^#]/ {printf "%s\n",$$1}' ${srcdir}/$(SHLIB_EXPORTS) ) >$(exports_file)
-endif
-	$(COMPILER) -o $(shlib) $(stlib) -Wl,-bE:$(exports_file) $(LDFLAGS) $(LDFLAGS_SL) $(SHLIB_LINK)
-	rm -f $(stlib)
-	$(AR) $(AROPT) $(stlib) $(shlib)
-
-endif # PORTNAME == aix
 
 else # PORTNAME == cygwin || PORTNAME == win32
 
