@@ -80,13 +80,13 @@ CREATE FUNCTION pg_get_wal_stats(IN start_lsn pg_lsn,
     IN  per_record boolean DEFAULT false,
     OUT "resource_manager/record_type" text,
     OUT count int8,
-    OUT count_percentage float4,
+    OUT count_percentage float8,
     OUT record_size int8,
-    OUT record_size_percentage float4,
+    OUT record_size_percentage float8,
     OUT fpi_size int8,
-    OUT fpi_size_percentage float4,
+    OUT fpi_size_percentage float8,
     OUT combined_size int8,
-    OUT combined_size_percentage float4
+    OUT combined_size_percentage float8
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_get_wal_stats'
@@ -102,13 +102,13 @@ CREATE FUNCTION pg_get_wal_stats_till_end_of_wal(IN start_lsn pg_lsn,
     IN  per_record boolean DEFAULT false,
     OUT "resource_manager/record_type" text,
     OUT count int8,
-    OUT count_percentage float4,
+    OUT count_percentage float8,
     OUT record_size int8,
-    OUT record_size_percentage float4,
+    OUT record_size_percentage float8,
     OUT fpi_size int8,
-    OUT fpi_size_percentage float4,
+    OUT fpi_size_percentage float8,
     OUT combined_size int8,
-    OUT combined_size_percentage float4
+    OUT combined_size_percentage float8
 )
 RETURNS SETOF record
 AS 'MODULE_PATHNAME', 'pg_get_wal_stats_till_end_of_wal'

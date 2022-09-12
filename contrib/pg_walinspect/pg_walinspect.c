@@ -430,13 +430,13 @@ FillXLogStatsRow(const char *name,
 
 	values[i++] = CStringGetTextDatum(name);
 	values[i++] = Int64GetDatum(n);
-	values[i++] = Float4GetDatum(n_pct);
+	values[i++] = Float8GetDatum(n_pct);
 	values[i++] = Int64GetDatum(rec_len);
-	values[i++] = Float4GetDatum(rec_len_pct);
+	values[i++] = Float8GetDatum(rec_len_pct);
 	values[i++] = Int64GetDatum(fpi_len);
-	values[i++] = Float4GetDatum(fpi_len_pct);
+	values[i++] = Float8GetDatum(fpi_len_pct);
 	values[i++] = Int64GetDatum(tot_len);
-	values[i++] = Float4GetDatum(tot_len_pct);
+	values[i++] = Float8GetDatum(tot_len_pct);
 
 	Assert(i == ncols);
 }
