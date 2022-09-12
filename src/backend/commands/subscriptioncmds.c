@@ -931,10 +931,10 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 				logicalrep_worker_stop(sub->oid, relid);
 
 				/*
-				 * For READY state and SYNCDONE state, we would have already
-				 * dropped the tablesync origin.
+				 * For READY state, we would have already dropped the
+				 * tablesync origin.
 				 */
-				if (state != SUBREL_STATE_READY && state != SUBREL_STATE_SYNCDONE)
+				if (state != SUBREL_STATE_READY)
 				{
 					char		originname[NAMEDATALEN];
 
@@ -942,8 +942,11 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 					 * Drop the tablesync's origin tracking if exists.
 					 *
 					 * It is possible that the origin is not yet created for
-					 * tablesync worker so passing missing_ok = true. This can
-					 * happen for the states before SUBREL_STATE_FINISHEDCOPY.
+					 * tablesync worker, this can happen for the states before
+					 * SUBREL_STATE_FINISHEDCOPY. The tablesync worker or
+					 * apply worker can also concurrently try to drop the
+					 * origin and by this time the origin might be already
+					 * removed. For these reasons, passing missing_ok = true.
 					 */
 					ReplicationOriginNameForTablesync(sub->oid, relid, originname,
 													  sizeof(originname));
@@ -1516,19 +1519,13 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		/*
 		 * Drop the tablesync's origin tracking if exists.
 		 *
-		 * For SYNCDONE/READY states, the tablesync origin tracking is known
-		 * to have already been dropped by the tablesync worker.
-		 *
 		 * It is possible that the origin is not yet created for tablesync
 		 * worker so passing missing_ok = true. This can happen for the states
 		 * before SUBREL_STATE_FINISHEDCOPY.
 		 */
-		if (rstate->state != SUBREL_STATE_SYNCDONE)
-		{
-			ReplicationOriginNameForTablesync(subid, relid, originname,
-											  sizeof(originname));
-			replorigin_drop_by_name(originname, true, false);
-		}
+		ReplicationOriginNameForTablesync(subid, relid, originname,
+										  sizeof(originname));
+		replorigin_drop_by_name(originname, true, false);
 	}
 
 	/* Clean up dependencies */
