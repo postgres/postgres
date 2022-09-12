@@ -4763,7 +4763,7 @@ circle_same(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(((isnan(circle1->radius) && isnan(circle1->radius)) ||
+	PG_RETURN_BOOL(((isnan(circle1->radius) && isnan(circle2->radius)) ||
 					FPeq(circle1->radius, circle2->radius)) &&
 				   point_eq_point(&circle1->center, &circle2->center));
 }
