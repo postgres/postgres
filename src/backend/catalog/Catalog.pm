@@ -315,10 +315,7 @@ sub ParseData
 					# We're treating the input line as a piece of Perl, so we
 					# need to use string eval here. Tell perlcritic we know what
 					# we're doing.
-					#<<< protect next line from perltidy
-					# so perlcritic annotation works
-					eval '$hash_ref = ' . $_;    ## no critic (ProhibitStringyEval)
-					#>>>
+					eval "\$hash_ref = $_"; ## no critic (ProhibitStringyEval)
 					if (!ref $hash_ref)
 					{
 						die "$input_file: error parsing line $.:\n$_\n";
@@ -364,7 +361,7 @@ sub ParseData
 		# the whole file at once.
 		local $/;
 		my $full_file = <$ifd>;
-		eval '$data = ' . $full_file    ## no critic (ProhibitStringyEval)
+		eval "\$data = $full_file"    ## no critic (ProhibitStringyEval)
 		  or die "error parsing $input_file\n";
 		foreach my $hash_ref (@{$data})
 		{
