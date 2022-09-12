@@ -67,14 +67,6 @@ typedef enum
 #define JGINFLAG_HASHED 0x10	/* OR'd into flag if value was hashed */
 #define JGIN_MAXLENGTH	125		/* max length of text part before hashing */
 
-/* Convenience macros */
-#define DatumGetJsonbP(d)	((Jsonb *) PG_DETOAST_DATUM(d))
-#define DatumGetJsonbPCopy(d)	((Jsonb *) PG_DETOAST_DATUM_COPY(d))
-#define JsonbPGetDatum(p)	PointerGetDatum(p)
-#define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
-#define PG_GETARG_JSONB_P_COPY(x)	DatumGetJsonbPCopy(PG_GETARG_DATUM(x))
-#define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
-
 typedef struct JsonbPair JsonbPair;
 typedef struct JsonbValue JsonbValue;
 
@@ -374,6 +366,29 @@ typedef struct JsonbIterator
 	struct JsonbIterator *parent;
 } JsonbIterator;
 
+
+/* Convenience macros */
+static inline Jsonb *
+DatumGetJsonbP(Datum d)
+{
+	return (Jsonb *) PG_DETOAST_DATUM(d);
+}
+
+static inline Jsonb *
+DatumGetJsonbPCopy(Datum d)
+{
+	return (Jsonb *) PG_DETOAST_DATUM_COPY(d);
+}
+
+static inline Datum
+JsonbPGetDatum(const Jsonb *p)
+{
+	return PointerGetDatum(p);
+}
+
+#define PG_GETARG_JSONB_P(x)	DatumGetJsonbP(PG_GETARG_DATUM(x))
+#define PG_GETARG_JSONB_P_COPY(x)	DatumGetJsonbPCopy(PG_GETARG_DATUM(x))
+#define PG_RETURN_JSONB_P(x)	PG_RETURN_POINTER(x)
 
 /* Support functions */
 extern uint32 getJsonbOffset(const JsonbContainer *jc, int index);
