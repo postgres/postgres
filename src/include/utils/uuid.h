@@ -23,20 +23,9 @@ typedef struct pg_uuid_t
 } pg_uuid_t;
 
 /* fmgr interface macros */
-static inline Datum
-UUIDPGetDatum(const pg_uuid_t *X)
-{
-	return PointerGetDatum(X);
-}
-
+#define UUIDPGetDatum(X)		PointerGetDatum(X)
 #define PG_RETURN_UUID_P(X)		return UUIDPGetDatum(X)
-
-static inline pg_uuid_t *
-DatumGetUUIDP(Datum X)
-{
-	return (pg_uuid_t *) DatumGetPointer(X);
-}
-
+#define DatumGetUUIDP(X)		((pg_uuid_t *) DatumGetPointer(X))
 #define PG_GETARG_UUID_P(X)		DatumGetUUIDP(PG_GETARG_DATUM(X))
 
 #endif							/* UUID_H */

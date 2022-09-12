@@ -18,17 +18,8 @@
 #include "access/xlogdefs.h"
 #include "fmgr.h"
 
-static inline XLogRecPtr
-DatumGetLSN(Datum X)
-{
-	return (XLogRecPtr) DatumGetInt64(X);
-}
-
-static inline Datum
-LSNGetDatum(XLogRecPtr X)
-{
-	return Int64GetDatum((int64) X);
-}
+#define DatumGetLSN(X) ((XLogRecPtr) DatumGetInt64(X))
+#define LSNGetDatum(X) (Int64GetDatum((int64) (X)))
 
 #define PG_GETARG_LSN(n)	 DatumGetLSN(PG_GETARG_DATUM(n))
 #define PG_RETURN_LSN(x)	 return LSNGetDatum(x)

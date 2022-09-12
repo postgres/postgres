@@ -204,7 +204,7 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  * Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple) - convert a
  *		HeapTupleHeader to a Datum.
  *
- * Inline declarations:
+ * Macro declarations:
  * HeapTupleGetDatum(HeapTuple tuple) - convert a HeapTuple to a Datum.
  *
  * Obsolete routines and macros:
@@ -217,6 +217,10 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  *----------
  */
 
+#define HeapTupleGetDatum(tuple)		HeapTupleHeaderGetDatum((tuple)->t_data)
+/* obsolete version of above */
+#define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
+
 extern TupleDesc RelationNameGetTupleDesc(const char *relname);
 extern TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases);
 
@@ -225,14 +229,6 @@ extern TupleDesc BlessTupleDesc(TupleDesc tupdesc);
 extern AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc);
 extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values);
 extern Datum HeapTupleHeaderGetDatum(HeapTupleHeader tuple);
-
-static inline Datum
-HeapTupleGetDatum(const HeapTupleData *tuple)
-{
-	return HeapTupleHeaderGetDatum(tuple->t_data);
-}
-/* obsolete version of above */
-#define TupleGetDatum(_slot, _tuple)	HeapTupleGetDatum(_tuple)
 
 
 /*----------

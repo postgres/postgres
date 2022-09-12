@@ -68,26 +68,11 @@ typedef struct
 } RangeBound;
 
 /*
- * fmgr functions for range type objects
+ * fmgr macros for range type objects
  */
-static inline RangeType *
-DatumGetRangeTypeP(Datum X)
-{
-	return (RangeType *) PG_DETOAST_DATUM(X);
-}
-
-static inline RangeType *
-DatumGetRangeTypePCopy(Datum X)
-{
-	return (RangeType *) PG_DETOAST_DATUM_COPY(X);
-}
-
-static inline Datum
-RangeTypePGetDatum(const RangeType *X)
-{
-	return PointerGetDatum(X);
-}
-
+#define DatumGetRangeTypeP(X)		((RangeType *) PG_DETOAST_DATUM(X))
+#define DatumGetRangeTypePCopy(X)	((RangeType *) PG_DETOAST_DATUM_COPY(X))
+#define RangeTypePGetDatum(X)		PointerGetDatum(X)
 #define PG_GETARG_RANGE_P(n)		DatumGetRangeTypeP(PG_GETARG_DATUM(n))
 #define PG_GETARG_RANGE_P_COPY(n)	DatumGetRangeTypePCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_RANGE_P(x)		return RangeTypePGetDatum(x)

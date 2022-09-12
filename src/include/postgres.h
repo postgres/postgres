@@ -24,7 +24,7 @@
  *	  section	description
  *	  -------	------------------------------------------------
  *		1)		variable-length datatypes (TOAST support)
- *		2)		Datum type + support functions
+ *		2)		Datum type + support macros
  *		3)		miscellaneous
  *
  *	 NOTES
@@ -395,7 +395,7 @@ typedef struct
 
 
 /* ----------------------------------------------------------------
- *				Section 2:	Datum type + support functions
+ *				Section 2:	Datum type + support macros
  * ----------------------------------------------------------------
  */
 
@@ -405,7 +405,7 @@ typedef struct
  *
  * sizeof(Datum) == sizeof(void *) == 4 or 8
  *
- * The functions below and the analogous functions for other types should be used to
+ * The macros below and the analogous macros for other types should be used to
  * convert between a Datum and the appropriate C type.
  */
 
@@ -434,11 +434,8 @@ typedef struct NullableDatum
  *
  * Note: any nonzero value will be considered true.
  */
-static inline bool
-DatumGetBool(Datum X)
-{
-	return (X != 0);
-}
+
+#define DatumGetBool(X) ((bool) ((X) != 0))
 
 /*
  * BoolGetDatum
@@ -446,231 +443,162 @@ DatumGetBool(Datum X)
  *
  * Note: any nonzero value will be considered true.
  */
-static inline Datum
-BoolGetDatum(bool X)
-{
-	return (Datum) (X ? 1 : 0);
-}
+
+#define BoolGetDatum(X) ((Datum) ((X) ? 1 : 0))
 
 /*
  * DatumGetChar
  *		Returns character value of a datum.
  */
-static inline char
-DatumGetChar(Datum X)
-{
-	return (char) X;
-}
+
+#define DatumGetChar(X) ((char) (X))
 
 /*
  * CharGetDatum
  *		Returns datum representation for a character.
  */
-static inline Datum
-CharGetDatum(char X)
-{
-	return (Datum) X;
-}
+
+#define CharGetDatum(X) ((Datum) (X))
 
 /*
  * Int8GetDatum
  *		Returns datum representation for an 8-bit integer.
  */
-static inline Datum
-Int8GetDatum(int8 X)
-{
-	return (Datum) X;
-}
+
+#define Int8GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt8
  *		Returns 8-bit unsigned integer value of a datum.
  */
-static inline uint8
-DatumGetUInt8(Datum X)
-{
-	return (uint8) X;
-}
+
+#define DatumGetUInt8(X) ((uint8) (X))
 
 /*
  * UInt8GetDatum
  *		Returns datum representation for an 8-bit unsigned integer.
  */
-static inline Datum
-UInt8GetDatum(uint8 X)
-{
-	return (Datum) X;
-}
+
+#define UInt8GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetInt16
  *		Returns 16-bit integer value of a datum.
  */
-static inline int16
-DatumGetInt16(Datum X)
-{
-	return (int16) X;
-}
+
+#define DatumGetInt16(X) ((int16) (X))
 
 /*
  * Int16GetDatum
  *		Returns datum representation for a 16-bit integer.
  */
-static inline Datum
-Int16GetDatum(int16 X)
-{
-	return (Datum) X;
-}
+
+#define Int16GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt16
  *		Returns 16-bit unsigned integer value of a datum.
  */
-static inline uint16
-DatumGetUInt16(Datum X)
-{
-	return (uint16) X;
-}
+
+#define DatumGetUInt16(X) ((uint16) (X))
 
 /*
  * UInt16GetDatum
  *		Returns datum representation for a 16-bit unsigned integer.
  */
-static inline Datum
-UInt16GetDatum(uint16 X)
-{
-	return (Datum) X;
-}
+
+#define UInt16GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetInt32
  *		Returns 32-bit integer value of a datum.
  */
-static inline int32
-DatumGetInt32(Datum X)
-{
-	return (int32) X;
-}
+
+#define DatumGetInt32(X) ((int32) (X))
 
 /*
  * Int32GetDatum
  *		Returns datum representation for a 32-bit integer.
  */
-static inline Datum
-Int32GetDatum(int32 X)
-{
-	return (Datum) X;
-}
+
+#define Int32GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetUInt32
  *		Returns 32-bit unsigned integer value of a datum.
  */
-static inline uint32
-DatumGetUInt32(Datum X)
-{
-	return (uint32) X;
-}
+
+#define DatumGetUInt32(X) ((uint32) (X))
 
 /*
  * UInt32GetDatum
  *		Returns datum representation for a 32-bit unsigned integer.
  */
-static inline Datum
-UInt32GetDatum(uint32 X)
-{
-	return (Datum) X;
-}
+
+#define UInt32GetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetObjectId
  *		Returns object identifier value of a datum.
  */
-static inline Oid
-DatumGetObjectId(Datum X)
-{
-	return (Oid) X;
-}
+
+#define DatumGetObjectId(X) ((Oid) (X))
 
 /*
  * ObjectIdGetDatum
  *		Returns datum representation for an object identifier.
  */
-static inline Datum
-ObjectIdGetDatum(Oid X)
-{
-	return (Datum) X;
-}
+
+#define ObjectIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetTransactionId
  *		Returns transaction identifier value of a datum.
  */
-static inline TransactionId
-DatumGetTransactionId(Datum X)
-{
-	return (TransactionId) X;
-}
+
+#define DatumGetTransactionId(X) ((TransactionId) (X))
 
 /*
  * TransactionIdGetDatum
  *		Returns datum representation for a transaction identifier.
  */
-static inline Datum
-TransactionIdGetDatum(TransactionId X)
-{
-	return (Datum) X;
-}
+
+#define TransactionIdGetDatum(X) ((Datum) (X))
 
 /*
  * MultiXactIdGetDatum
  *		Returns datum representation for a multixact identifier.
  */
-static inline Datum
-MultiXactIdGetDatum(MultiXactId X)
-{
-	return (Datum) X;
-}
+
+#define MultiXactIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetCommandId
  *		Returns command identifier value of a datum.
  */
-static inline CommandId
-DatumGetCommandId(Datum X)
-{
-	return (CommandId) X;
-}
+
+#define DatumGetCommandId(X) ((CommandId) (X))
 
 /*
  * CommandIdGetDatum
  *		Returns datum representation for a command identifier.
  */
-static inline Datum
-CommandIdGetDatum(CommandId X)
-{
-	return (Datum) X;
-}
+
+#define CommandIdGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetPointer
  *		Returns pointer value of a datum.
  */
-static inline Pointer
-DatumGetPointer(Datum X)
-{
-	return (Pointer) X;
-}
+
+#define DatumGetPointer(X) ((Pointer) (X))
 
 /*
  * PointerGetDatum
  *		Returns datum representation for a pointer.
  */
-static inline Datum
-PointerGetDatum(const void *X)
-{
-	return (Datum) X;
-}
+
+#define PointerGetDatum(X) ((Datum) (X))
 
 /*
  * DatumGetCString
@@ -679,11 +607,8 @@ PointerGetDatum(const void *X)
  * Note: C string is not a full-fledged Postgres type at present,
  * but type input functions use this conversion for their inputs.
  */
-static inline char *
-DatumGetCString(Datum X)
-{
-	return (char *) DatumGetPointer(X);
-}
+
+#define DatumGetCString(X) ((char *) DatumGetPointer(X))
 
 /*
  * CStringGetDatum
@@ -694,21 +619,15 @@ DatumGetCString(Datum X)
  * Note: CString is pass-by-reference; caller must ensure the pointed-to
  * value has adequate lifetime.
  */
-static inline Datum
-CStringGetDatum(const char *X)
-{
-	return PointerGetDatum(X);
-}
+
+#define CStringGetDatum(X) PointerGetDatum(X)
 
 /*
  * DatumGetName
  *		Returns name value of a datum.
  */
-static inline Name
-DatumGetName(Datum X)
-{
-	return (Name) DatumGetPointer(X);
-}
+
+#define DatumGetName(X) ((Name) DatumGetPointer(X))
 
 /*
  * NameGetDatum
@@ -717,27 +636,21 @@ DatumGetName(Datum X)
  * Note: Name is pass-by-reference; caller must ensure the pointed-to
  * value has adequate lifetime.
  */
-static inline Datum
-NameGetDatum(const NameData *X)
-{
-	return CStringGetDatum(NameStr(*X));
-}
+
+#define NameGetDatum(X) CStringGetDatum(NameStr(*(X)))
 
 /*
  * DatumGetInt64
  *		Returns 64-bit integer value of a datum.
  *
- * Note: this function hides whether int64 is pass by value or by reference.
+ * Note: this macro hides whether int64 is pass by value or by reference.
  */
-static inline int64
-DatumGetInt64(Datum X)
-{
+
 #ifdef USE_FLOAT8_BYVAL
-	return (int64) X;
+#define DatumGetInt64(X) ((int64) (X))
 #else
-	return *((int64 *) DatumGetPointer(X));
+#define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
 #endif
-}
 
 /*
  * Int64GetDatum
@@ -746,32 +659,25 @@ DatumGetInt64(Datum X)
  * Note: if int64 is pass by reference, this function returns a reference
  * to palloc'd space.
  */
+
 #ifdef USE_FLOAT8_BYVAL
-static inline Datum
-Int64GetDatum(int64 X)
-{
-	return (Datum) X;
-}
+#define Int64GetDatum(X) ((Datum) (X))
 #else
 extern Datum Int64GetDatum(int64 X);
 #endif
-
 
 /*
  * DatumGetUInt64
  *		Returns 64-bit unsigned integer value of a datum.
  *
- * Note: this function hides whether int64 is pass by value or by reference.
+ * Note: this macro hides whether int64 is pass by value or by reference.
  */
-static inline uint64
-DatumGetUInt64(Datum X)
-{
+
 #ifdef USE_FLOAT8_BYVAL
-	return (uint64) X;
+#define DatumGetUInt64(X) ((uint64) (X))
 #else
-	return *((uint64 *) DatumGetPointer(X));
+#define DatumGetUInt64(X) (* ((uint64 *) DatumGetPointer(X)))
 #endif
-}
 
 /*
  * UInt64GetDatum
@@ -780,15 +686,12 @@ DatumGetUInt64(Datum X)
  * Note: if int64 is pass by reference, this function returns a reference
  * to palloc'd space.
  */
-static inline Datum
-UInt64GetDatum(uint64 X)
-{
+
 #ifdef USE_FLOAT8_BYVAL
-	return (Datum) X;
+#define UInt64GetDatum(X) ((Datum) (X))
 #else
-	return Int64GetDatum((int64) X);
+#define UInt64GetDatum(X) Int64GetDatum((int64) (X))
 #endif
-}
 
 /*
  * Float <-> Datum conversions
@@ -836,12 +739,13 @@ Float4GetDatum(float4 X)
  * DatumGetFloat8
  *		Returns 8-byte floating point value of a datum.
  *
- * Note: this function hides whether float8 is pass by value or by reference.
+ * Note: this macro hides whether float8 is pass by value or by reference.
  */
+
+#ifdef USE_FLOAT8_BYVAL
 static inline float8
 DatumGetFloat8(Datum X)
 {
-#ifdef USE_FLOAT8_BYVAL
 	union
 	{
 		int64		value;
@@ -850,10 +754,10 @@ DatumGetFloat8(Datum X)
 
 	myunion.value = DatumGetInt64(X);
 	return myunion.retval;
-#else
-	return *((float8 *) DatumGetPointer(X));
-#endif
 }
+#else
+#define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
+#endif
 
 /*
  * Float8GetDatum
@@ -862,6 +766,7 @@ DatumGetFloat8(Datum X)
  * Note: if float8 is pass by reference, this function returns a reference
  * to palloc'd space.
  */
+
 #ifdef USE_FLOAT8_BYVAL
 static inline Datum
 Float8GetDatum(float8 X)
@@ -884,34 +789,22 @@ extern Datum Float8GetDatum(float8 X);
  * Int64GetDatumFast
  * Float8GetDatumFast
  *
- * These functions are intended to allow writing code that does not depend on
+ * These macros are intended to allow writing code that does not depend on
  * whether int64 and float8 are pass-by-reference types, while not
  * sacrificing performance when they are.  The argument must be a variable
  * that will exist and have the same value for as long as the Datum is needed.
  * In the pass-by-ref case, the address of the variable is taken to use as
  * the Datum.  In the pass-by-val case, these will be the same as the non-Fast
- * functions.
+ * macros.
  */
 
-static inline Datum
-Int64GetDatumFast(int64 X)
-{
 #ifdef USE_FLOAT8_BYVAL
-	return Int64GetDatum(X);
+#define Int64GetDatumFast(X)  Int64GetDatum(X)
+#define Float8GetDatumFast(X) Float8GetDatum(X)
 #else
-	return PointerGetDatum(&X);
+#define Int64GetDatumFast(X)  PointerGetDatum(&(X))
+#define Float8GetDatumFast(X) PointerGetDatum(&(X))
 #endif
-}
-
-static inline Datum
-Float8GetDatumFast(float8 X)
-{
-#ifdef USE_FLOAT8_BYVAL
-	return Float8GetDatum(X);
-#else
-	return PointerGetDatum(&X);
-#endif
-}
 
 
 /* ----------------------------------------------------------------

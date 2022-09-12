@@ -56,24 +56,9 @@ typedef struct NumericData *Numeric;
  * fmgr interface macros
  */
 
-static inline Numeric
-DatumGetNumeric(Datum X)
-{
-	return (Numeric) PG_DETOAST_DATUM(X);
-}
-
-static inline Numeric
-DatumGetNumericCopy(Datum X)
-{
-	return (Numeric) PG_DETOAST_DATUM_COPY(X);
-}
-
-static inline Datum
-NumericGetDatum(Numeric X)
-{
-	return PointerGetDatum(X);
-}
-
+#define DatumGetNumeric(X)		  ((Numeric) PG_DETOAST_DATUM(X))
+#define DatumGetNumericCopy(X)	  ((Numeric) PG_DETOAST_DATUM_COPY(X))
+#define NumericGetDatum(X)		  PointerGetDatum(X)
 #define PG_GETARG_NUMERIC(n)	  DatumGetNumeric(PG_GETARG_DATUM(n))
 #define PG_GETARG_NUMERIC_COPY(n) DatumGetNumericCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_NUMERIC(x)	  return NumericGetDatum(x)

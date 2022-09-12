@@ -133,17 +133,8 @@ struct ExpandedObjectHeader
  * (More of these might be worth inlining later.)
  */
 
-static inline Datum
-EOHPGetRWDatum(const struct ExpandedObjectHeader *eohptr)
-{
-	return PointerGetDatum(eohptr->eoh_rw_ptr);
-}
-
-static inline Datum
-EOHPGetRODatum(const struct ExpandedObjectHeader *eohptr)
-{
-	return PointerGetDatum(eohptr->eoh_ro_ptr);
-}
+#define EOHPGetRWDatum(eohptr)	PointerGetDatum((eohptr)->eoh_rw_ptr)
+#define EOHPGetRODatum(eohptr)	PointerGetDatum((eohptr)->eoh_ro_ptr)
 
 /* Does the Datum represent a writable expanded object? */
 #define DatumIsReadWriteExpandedObject(d, isnull, typlen) \

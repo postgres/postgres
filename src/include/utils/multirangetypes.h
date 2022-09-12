@@ -42,26 +42,11 @@ typedef struct
 #define MultirangeIsEmpty(mr)  ((mr)->rangeCount == 0)
 
 /*
- * fmgr functions for multirange type objects
+ * fmgr macros for multirange type objects
  */
-static inline MultirangeType *
-DatumGetMultirangeTypeP(Datum X)
-{
-	return (MultirangeType *) PG_DETOAST_DATUM(X);
-}
-
-static inline MultirangeType *
-DatumGetMultirangeTypePCopy(Datum X)
-{
-	return (MultirangeType *) PG_DETOAST_DATUM_COPY(X);
-}
-
-static inline Datum
-MultirangeTypePGetDatum(const MultirangeType *X)
-{
-	return PointerGetDatum(X);
-}
-
+#define DatumGetMultirangeTypeP(X)		((MultirangeType *) PG_DETOAST_DATUM(X))
+#define DatumGetMultirangeTypePCopy(X)	((MultirangeType *) PG_DETOAST_DATUM_COPY(X))
+#define MultirangeTypePGetDatum(X)		PointerGetDatum(X)
 #define PG_GETARG_MULTIRANGE_P(n)		DatumGetMultirangeTypeP(PG_GETARG_DATUM(n))
 #define PG_GETARG_MULTIRANGE_P_COPY(n)	DatumGetMultirangeTypePCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_MULTIRANGE_P(x)		return MultirangeTypePGetDatum(x)
