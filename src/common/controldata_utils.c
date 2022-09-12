@@ -59,7 +59,7 @@ get_controlfile(const char *DataDir, bool *crc_ok_p)
 
 	AssertArg(crc_ok_p);
 
-	ControlFile = palloc(sizeof(ControlFileData));
+	ControlFile = palloc_object(ControlFileData);
 	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
 
 #ifndef FRONTEND

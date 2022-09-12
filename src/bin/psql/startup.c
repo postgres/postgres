@@ -247,8 +247,8 @@ main(int argc, char *argv[])
 	do
 	{
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char **keywords = pg_malloc_array(const char *, PARAMS_ARRAY_SIZE);
+		const char **values = pg_malloc_array(const char *, PARAMS_ARRAY_SIZE);
 
 		keywords[0] = "host";
 		values[0] = options.host;
@@ -750,7 +750,7 @@ simple_action_list_append(SimpleActionList *list,
 {
 	SimpleActionListCell *cell;
 
-	cell = (SimpleActionListCell *) pg_malloc(sizeof(SimpleActionListCell));
+	cell = pg_malloc_object(SimpleActionListCell);
 
 	cell->next = NULL;
 	cell->action = action;

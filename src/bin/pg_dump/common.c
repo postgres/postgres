@@ -400,7 +400,7 @@ flagInhIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 			if (parentidx == NULL)
 				continue;
 
-			attachinfo = (IndexAttachInfo *) pg_malloc(sizeof(IndexAttachInfo));
+			attachinfo = pg_malloc_object(IndexAttachInfo);
 
 			attachinfo->dobj.objType = DO_INDEX_ATTACH;
 			attachinfo->dobj.catId.tableoid = 0;
@@ -530,7 +530,7 @@ flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables)
 			{
 				AttrDefInfo *attrDef;
 
-				attrDef = (AttrDefInfo *) pg_malloc(sizeof(AttrDefInfo));
+				attrDef = pg_malloc_object(AttrDefInfo);
 				attrDef->dobj.objType = DO_ATTRDEF;
 				attrDef->dobj.catId.tableoid = 0;
 				attrDef->dobj.catId.oid = 0;
@@ -600,14 +600,12 @@ AssignDumpId(DumpableObject *dobj)
 		if (allocedDumpIds <= 0)
 		{
 			newAlloc = 256;
-			dumpIdMap = (DumpableObject **)
-				pg_malloc(newAlloc * sizeof(DumpableObject *));
+			dumpIdMap = pg_malloc_array(DumpableObject *, newAlloc);
 		}
 		else
 		{
 			newAlloc = allocedDumpIds * 2;
-			dumpIdMap = (DumpableObject **)
-				pg_realloc(dumpIdMap, newAlloc * sizeof(DumpableObject *));
+			dumpIdMap = pg_realloc_array(dumpIdMap, DumpableObject *, newAlloc);
 		}
 		memset(dumpIdMap + allocedDumpIds, 0,
 			   (newAlloc - allocedDumpIds) * sizeof(DumpableObject *));
@@ -700,8 +698,7 @@ getDumpableObjects(DumpableObject ***objs, int *numObjs)
 	int			i,
 				j;
 
-	*objs = (DumpableObject **)
-		pg_malloc(allocedDumpIds * sizeof(DumpableObject *));
+	*objs = pg_malloc_array(DumpableObject *, allocedDumpIds);
 	j = 0;
 	for (i = 1; i < allocedDumpIds; i++)
 	{
@@ -724,15 +721,13 @@ addObjectDependency(DumpableObject *dobj, DumpId refId)
 		if (dobj->allocDeps <= 0)
 		{
 			dobj->allocDeps = 16;
-			dobj->dependencies = (DumpId *)
-				pg_malloc(dobj->allocDeps * sizeof(DumpId));
+			dobj->dependencies = pg_malloc_array(DumpId, dobj->allocDeps);
 		}
 		else
 		{
 			dobj->allocDeps *= 2;
-			dobj->dependencies = (DumpId *)
-				pg_realloc(dobj->dependencies,
-						   dobj->allocDeps * sizeof(DumpId));
+			dobj->dependencies = pg_realloc_array(dobj->dependencies,
+												  DumpId, dobj->allocDeps);
 		}
 	}
 	dobj->dependencies[dobj->nDeps++] = refId;
@@ -990,8 +985,7 @@ findParentsByOid(TableInfo *self,
 
 	if (numParents > 0)
 	{
-		self->parents = (TableInfo **)
-			pg_malloc(sizeof(TableInfo *) * numParents);
+		self->parents = pg_malloc_array(TableInfo *, numParents);
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{

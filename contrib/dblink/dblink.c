@@ -972,7 +972,7 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 			rsinfo->setDesc = tupdesc;
 			MemoryContextSwitchTo(oldcontext);
 
-			values = (char **) palloc(nfields * sizeof(char *));
+			values = palloc_array(char *, nfields);
 
 			/* put all tuples into the tuplestore */
 			for (row = 0; row < ntuples; row++)
@@ -1276,7 +1276,7 @@ storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
 		 */
 		if (sinfo->cstrs)
 			pfree(sinfo->cstrs);
-		sinfo->cstrs = (char **) palloc(nfields * sizeof(char *));
+		sinfo->cstrs = palloc_array(char *, nfields);
 	}
 
 	/* Should have a single-row result if we get here */
@@ -1618,7 +1618,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 		Datum		result;
 
-		values = (char **) palloc(2 * sizeof(char *));
+		values = palloc_array(char *, 2);
 		values[0] = psprintf("%d", call_cntr + 1);
 		values[1] = results[call_cntr];
 
@@ -2083,7 +2083,7 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 			*indnkeyatts = index->indnkeyatts;
 			if (*indnkeyatts > 0)
 			{
-				result = (char **) palloc(*indnkeyatts * sizeof(char *));
+				result = palloc_array(char *, *indnkeyatts);
 
 				for (i = 0; i < *indnkeyatts; i++)
 					result[i] = SPI_fname(tupdesc, index->indkey.values[i]);
@@ -2124,7 +2124,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 	get_typlenbyvalalign(ARR_ELEMTYPE(array),
 						 &typlen, &typbyval, &typalign);
 
-	values = (char **) palloc(nitems * sizeof(char *));
+	values = palloc_array(char *, nitems);
 
 	ptr = ARR_DATA_PTR(array);
 	bitmap = ARR_NULLBITMAP(array);
@@ -2928,7 +2928,7 @@ validate_pkattnums(Relation rel,
 				 errmsg("number of key attributes must be > 0")));
 
 	/* Allocate output array */
-	*pkattnums = (int *) palloc(pknumatts_arg * sizeof(int));
+	*pkattnums = palloc_array(int, pknumatts_arg);
 	*pknumatts = pknumatts_arg;
 
 	/* Validate attnums and convert to internal form */

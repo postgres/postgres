@@ -505,7 +505,7 @@ ginHeapTupleFastCollect(GinState *ginstate,
 		 * resizing (since palloc likes powers of 2).
 		 */
 		collector->lentuples = pg_nextpower2_32(Max(16, nentries));
-		collector->tuples = (IndexTuple *) palloc(sizeof(IndexTuple) * collector->lentuples);
+		collector->tuples = palloc_array(IndexTuple, collector->lentuples);
 	}
 	else if (collector->lentuples < collector->ntuples + nentries)
 	{
@@ -515,8 +515,8 @@ ginHeapTupleFastCollect(GinState *ginstate,
 		 * MaxAllocSize/sizeof(IndexTuple), causing an error in repalloc.
 		 */
 		collector->lentuples = pg_nextpower2_32(collector->ntuples + nentries);
-		collector->tuples = (IndexTuple *) repalloc(collector->tuples,
-													sizeof(IndexTuple) * collector->lentuples);
+		collector->tuples = repalloc_array(collector->tuples,
+										   IndexTuple, collector->lentuples);
 	}
 
 	/*
@@ -665,9 +665,8 @@ shiftList(Relation index, Buffer metabuffer, BlockNumber newHead,
 static void
 initKeyArray(KeyArray *keys, int32 maxvalues)
 {
-	keys->keys = (Datum *) palloc(sizeof(Datum) * maxvalues);
-	keys->categories = (GinNullCategory *)
-		palloc(sizeof(GinNullCategory) * maxvalues);
+	keys->keys = palloc_array(Datum, maxvalues);
+	keys->categories = palloc_array(GinNullCategory, maxvalues);
 	keys->nvalues = 0;
 	keys->maxvalues = maxvalues;
 }
@@ -679,10 +678,8 @@ addDatum(KeyArray *keys, Datum datum, GinNullCategory category)
 	if (keys->nvalues >= keys->maxvalues)
 	{
 		keys->maxvalues *= 2;
-		keys->keys = (Datum *)
-			repalloc(keys->keys, sizeof(Datum) * keys->maxvalues);
-		keys->categories = (GinNullCategory *)
-			repalloc(keys->categories, sizeof(GinNullCategory) * keys->maxvalues);
+		keys->keys = repalloc_array(keys->keys, Datum, keys->maxvalues);
+		keys->categories = repalloc_array(keys->categories, GinNullCategory, keys->maxvalues);
 	}
 
 	keys->keys[keys->nvalues] = datum;

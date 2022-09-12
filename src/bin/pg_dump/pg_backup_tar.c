@@ -151,7 +151,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	ctx = pg_malloc0_object(lclContext);
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
@@ -240,7 +240,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	ctx = pg_malloc0_object(lclTocEntry);
 	if (te->dataDumper != NULL)
 	{
 		snprintf(fn, sizeof(fn), "%d.dat", te->dumpId);
@@ -272,7 +272,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+		ctx = pg_malloc0_object(lclTocEntry);
 		te->formatData = (void *) ctx;
 	}
 
@@ -337,7 +337,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	{
 		int			old_umask;
 
-		tm = pg_malloc0(sizeof(TAR_MEMBER));
+		tm = pg_malloc0_object(TAR_MEMBER);
 
 		/*
 		 * POSIX does not require, but permits, tmpfile() to restrict file
@@ -1052,7 +1052,7 @@ static TAR_MEMBER *
 _tarPositionTo(ArchiveHandle *AH, const char *filename)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	TAR_MEMBER *th = pg_malloc0(sizeof(TAR_MEMBER));
+	TAR_MEMBER *th = pg_malloc0_object(TAR_MEMBER);
 	char		c;
 	char		header[TAR_BLOCK_SIZE];
 	size_t		i,

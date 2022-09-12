@@ -1660,7 +1660,7 @@ exec_bind_message(StringInfo input_message)
 	numPFormats = pq_getmsgint(input_message, 2);
 	if (numPFormats > 0)
 	{
-		pformats = (int16 *) palloc(numPFormats * sizeof(int16));
+		pformats = palloc_array(int16, numPFormats);
 		for (int i = 0; i < numPFormats; i++)
 			pformats[i] = pq_getmsgint(input_message, 2);
 	}
@@ -1848,8 +1848,7 @@ exec_bind_message(StringInfo input_message)
 						oldcxt = MemoryContextSwitchTo(MessageContext);
 
 						if (knownTextValues == NULL)
-							knownTextValues =
-								palloc0(numParams * sizeof(char *));
+							knownTextValues = palloc0_array(char *, numParams);
 
 						if (log_parameter_max_length_on_error < 0)
 							knownTextValues[paramno] = pstrdup(pstring);
@@ -1958,7 +1957,7 @@ exec_bind_message(StringInfo input_message)
 	numRFormats = pq_getmsgint(input_message, 2);
 	if (numRFormats > 0)
 	{
-		rformats = (int16 *) palloc(numRFormats * sizeof(int16));
+		rformats = palloc_array(int16, numRFormats);
 		for (int i = 0; i < numRFormats; i++)
 			rformats[i] = pq_getmsgint(input_message, 2);
 	}
@@ -4517,7 +4516,7 @@ PostgresMain(const char *dbname, const char *username)
 					numParams = pq_getmsgint(&input_message, 2);
 					if (numParams > 0)
 					{
-						paramTypes = (Oid *) palloc(numParams * sizeof(Oid));
+						paramTypes = palloc_array(Oid, numParams);
 						for (int i = 0; i < numParams; i++)
 							paramTypes[i] = pq_getmsgint(&input_message, 4);
 					}

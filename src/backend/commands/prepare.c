@@ -98,7 +98,7 @@ PrepareQuery(ParseState *pstate, PrepareStmt *stmt,
 		int			i;
 		ListCell   *l;
 
-		argtypes = (Oid *) palloc(nargs * sizeof(Oid));
+		argtypes = palloc_array(Oid, nargs);
 		i = 0;
 
 		foreach(l, stmt->argtypes)
@@ -698,7 +698,7 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 			{
 				Oid		   *result_types;
 
-				result_types = (Oid *) palloc(result_desc->natts * sizeof(Oid));
+				result_types = palloc_array(Oid, result_desc->natts);
 				for (int i = 0; i < result_desc->natts; i++)
 					result_types[i] = result_desc->attrs[i].atttypid;
 				values[4] = build_regtype_array(result_types, result_desc->natts);
@@ -732,7 +732,7 @@ build_regtype_array(Oid *param_types, int num_params)
 	ArrayType  *result;
 	int			i;
 
-	tmp_ary = (Datum *) palloc(num_params * sizeof(Datum));
+	tmp_ary = palloc_array(Datum, num_params);
 
 	for (i = 0; i < num_params; i++)
 		tmp_ary[i] = ObjectIdGetDatum(param_types[i]);
