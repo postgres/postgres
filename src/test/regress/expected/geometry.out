@@ -4056,9 +4056,8 @@ SELECT c1.f1, c2.f1 FROM CIRCLE_TBL c1, CIRCLE_TBL c2 WHERE c1.f1 ~= c2.f1;
  <(100,200),10> | <(100,200),10>
  <(100,1),115>  | <(100,1),115>
  <(3,5),0>      | <(3,5),0>
- <(3,5),NaN>    | <(3,5),0>
  <(3,5),NaN>    | <(3,5),NaN>
-(9 rows)
+(8 rows)
 
 -- Overlap with circle
 SELECT c1.f1, c2.f1 FROM CIRCLE_TBL c1, CIRCLE_TBL c2 WHERE c1.f1 && c2.f1;
