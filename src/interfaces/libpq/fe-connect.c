@@ -123,6 +123,7 @@ static int	ldapServiceLookup(const char *purl, PQconninfoOption *options,
 #define DefaultChannelBinding	"disable"
 #endif
 #define DefaultTargetSessionAttrs	"any"
+#define DefaultLoadBalanceHosts	"disable"
 #ifdef USE_SSL
 #define DefaultSSLMode "prefer"
 #else
@@ -341,6 +342,15 @@ static const internalPQconninfoOption PQconninfoOptions[] = {
 		"Target-Session-Attrs", "", 15, /* sizeof("prefer-standby") = 15 */
 	offsetof(struct pg_conn, target_session_attrs)},
 
+	{"load_balance_hosts", "PGLOADBALANCEHOSTS",
+		DefaultLoadBalanceHosts, NULL,
+		"Load-Balance-Hosts", "", 8,	/* sizeof("disable") = 8 */
+	offsetof(struct pg_conn, load_balance_hosts)},
+
+	{"random_seed", NULL, NULL, NULL,
+		"Random-Seed", "", 10,	/* strlen(INT32_MAX) == 10 */
+	offsetof(struct pg_conn, randomseed)},
+
 	/* Terminating entry --- MUST BE LAST */
 	{NULL, NULL, NULL, NULL,
 	NULL, NULL, 0}
@@ -425,6 +435,8 @@ static void pgpassfileWarning(PGconn *conn);
 static void default_threadlock(int acquire);
 static bool sslVerifyProtocolVersion(const char *version);
 static bool sslVerifyProtocolRange(const char *min, const char *max);
+static bool parse_int_param(const char *value, int *result, PGconn *conn,
+							const char *context);
 
 
 /* global variable because fe-auth.c needs to access it */
@@ -1009,6 +1021,40 @@ parse_comma_separated_list(char **startptr, bool *more)
 }
 
 /*
+ * Initializes the prng_state field of the connection. We want something
+ * unpredictable, so if possible, use high-quality random bits for the
+ * seed. Otherwise, fall back to a seed based on timestamp and PID.
+ */
+static bool
+libpq_prng_init(PGconn *conn)
+{
+	if (unlikely(conn->randomseed))
+	{
+		int			rseed;
+
+		if (!parse_int_param(conn->randomseed, &rseed, conn, "random_seed"))
+			return false;
+
+		pg_prng_seed(&conn->prng_state, rseed);
+	}
+	else if (unlikely(!pg_prng_strong_seed(&conn->prng_state)))
+	{
+		uint64		rseed;
+		struct timeval tval = {0};
+
+		gettimeofday(&tval, NULL);
+
+		rseed = ((uint64) conn) ^
+			((uint64) getpid()) ^
+			((uint64) tval.tv_usec) ^
+			((uint64) tval.tv_sec);
+
+		pg_prng_seed(&conn->prng_state, rseed);
+	}
+	return true;
+}
+
+/*
  *		connectOptions2
  *
  * Compute derived connection options after absorbing all user-supplied info.
@@ -1400,6 +1446,51 @@ connectOptions2(PGconn *conn)
 	}
 	else
 		conn->target_server_type = SERVER_TYPE_ANY;
+
+	/*
+	 * validate load_balance_hosts option, and set load_balance_type
+	 */
+	if (conn->load_balance_hosts)
+	{
+		if (strcmp(conn->load_balance_hosts, "disable") == 0)
+			conn->load_balance_type = LOAD_BALANCE_DISABLE;
+		else if (strcmp(conn->load_balance_hosts, "random") == 0)
+			conn->load_balance_type = LOAD_BALANCE_RANDOM;
+		else
+		{
+			conn->status = CONNECTION_BAD;
+			libpq_append_conn_error(conn, "invalid %s value: \"%s\"",
+									"load_balance_hosts",
+									conn->load_balance_hosts);
+			return false;
+		}
+	}
+	else
+		conn->load_balance_type = LOAD_BALANCE_DISABLE;
+
+	if (conn->load_balance_type == LOAD_BALANCE_RANDOM)
+	{
+		if (!libpq_prng_init(conn))
+			return false;
+
+		/*
+		 * This is the "inside-out" variant of the Fisher-Yates shuffle
+		 * algorithm. Notionally, we append each new value to the array and
+		 * then swap it with a randomly-chosen array element (possibly
+		 * including itself, else we fail to generate permutations with the
+		 * last integer last).  The swap step can be optimized by combining it
+		 * with the insertion.
+		 */
+		for (i = 1; i < conn->nconnhost; i++)
+		{
+			int			j = pg_prng_uint64_range(&conn->prng_state, 0, i);
+			pg_conn_host temp = conn->connhost[j];
+
+			if (j < i)			/* avoid fetching undefined data if j=i */
+				conn->connhost[j] = conn->connhost[i];
+			conn->connhost[i] = temp;
+		}
+	}
 
 	/*
 	 * Resolve special "auto" client_encoding from the locale
@@ -2406,6 +2497,33 @@ keep_going:						/* We will come back to here until there is
 			goto error_return;
 		}
 		pg_freeaddrinfo_all(hint.ai_family, addrlist);
+
+		/*
+		 * If random load balancing is enabled we shuffle the addresses.
+		 */
+		if (conn->load_balance_type == LOAD_BALANCE_RANDOM)
+		{
+			/*
+			 * This is the "inside-out" variant of the Fisher-Yates shuffle
+			 * algorithm. Notionally, we append each new value to the array
+			 * and then swap it with a randomly-chosen array element (possibly
+			 * including itself, else we fail to generate permutations with
+			 * the last integer last).  The swap step can be optimized by
+			 * combining it with the insertion.
+			 *
+			 * We don't need to initialize conn->prng_state here, because that
+			 * already happened in connectOptions2.
+			 */
+			for (int i = 1; i < conn->naddr; i++)
+			{
+				int			j = pg_prng_uint64_range(&conn->prng_state, 0, i);
+				AddrInfo	temp = conn->addr[j];
+
+				if (j < i)		/* avoid fetching undefined data if j=i */
+					conn->addr[j] = conn->addr[i];
+				conn->addr[i] = temp;
+			}
+		}
 
 		reset_connection_state_machine = true;
 		conn->try_next_host = false;
@@ -4042,6 +4160,8 @@ freePGconn(PGconn *conn)
 	free(conn->outBuffer);
 	free(conn->rowBuf);
 	free(conn->target_session_attrs);
+	free(conn->load_balance_hosts);
+	free(conn->randomseed);
 	termPQExpBuffer(&conn->errorMessage);
 	termPQExpBuffer(&conn->workBuffer);
 

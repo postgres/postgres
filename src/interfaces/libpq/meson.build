@@ -116,6 +116,8 @@ tests += {
     'tests': [
       't/001_uri.pl',
       't/002_api.pl',
+      't/003_loadbalance_host_list.pl',
+      't/004_loadbalance_dns.pl',
     ],
     'env': {'with_ssl': get_option('ssl')},
   },
