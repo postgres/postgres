@@ -63,7 +63,7 @@
    a complete O'Reilly book for your online reading pleasure.  The
    <ulink url="http://newbiedoc.sourceforge.net/metadoc/docbook-guide.html">
    NewbieDoc Docbook Guide</ulink> is very helpful for beginners.
-   The <ulink url="https://www.freebsd.org/docproj/docproj.html">
+   The <ulink url="https://www.freebsd.org/docproj/">
    FreeBSD Documentation Project</ulink> also uses DocBook and has some good
    information, including a number of style guidelines that might be
    worth considering.
