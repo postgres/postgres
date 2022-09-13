@@ -44,7 +44,7 @@
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
 
 /*

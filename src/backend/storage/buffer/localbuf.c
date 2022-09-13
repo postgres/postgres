@@ -20,7 +20,7 @@
 #include "executor/instrument.h"
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/resowner_private.h"
 
@@ -481,6 +481,24 @@ InitLocalBuffers(void)
 
 	/* Initialization done, mark buffers allocated */
 	NLocBuffer = nbufs;
+}
+
+/*
+ * GUC check_hook for temp_buffers
+ */
+bool
+check_temp_buffers(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * Once local buffers have been initialized, it's too late to change this.
+	 * However, if this is only a test call, allow it.
+	 */
+	if (source != PGC_S_TEST && NLocBuffer && NLocBuffer != *newval)
+	{
+		GUC_check_errdetail("\"temp_buffers\" cannot be changed after any temporary tables have been accessed in the session.");
+		return false;
+	}
+	return true;
 }
 
 /*

@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "nodes/parsenodes.h"
 #include "utils/builtins.h"
 #include "parser/scansup.h"
 

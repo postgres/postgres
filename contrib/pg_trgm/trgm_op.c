@@ -10,6 +10,7 @@
 #include "miscadmin.h"
 #include "trgm.h"
 #include "tsearch/ts_locale.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"

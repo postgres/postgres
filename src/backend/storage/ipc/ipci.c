@@ -47,6 +47,7 @@
 #include "storage/procsignal.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
+#include "utils/guc.h"
 #include "utils/snapmgr.h"
 
 /* GUCs */

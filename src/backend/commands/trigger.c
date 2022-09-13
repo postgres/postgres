@@ -55,9 +55,11 @@
 #include "utils/builtins.h"
 #include "utils/bytea.h"
 #include "utils/fmgroids.h"
+#include "utils/guc_hooks.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/plancache.h"
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
@@ -6497,6 +6499,20 @@ done:
 	/* In any case, save current insertion point for next time */
 	table->after_trig_done = true;
 	table->after_trig_events = qs->events;
+}
+
+/*
+ * GUC assign_hook for session_replication_role
+ */
+void
+assign_session_replication_role(int newval, void *extra)
+{
+	/*
+	 * Must flush the plan cache when changing replication role; but don't
+	 * flush unnecessarily.
+	 */
+	if (SessionReplicationRole != newval)
+		ResetPlanCache();
 }
 
 /*

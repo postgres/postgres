@@ -49,6 +49,7 @@
 #include "storage/predicate.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"

@@ -1,8 +1,7 @@
 /*--------------------------------------------------------------------
  * guc.h
  *
- * External declarations pertaining to backend/utils/misc/guc.c and
- * backend/utils/misc/guc-file.l
+ * External declarations pertaining to Grand Unified Configuration.
  *
  * Copyright (c) 2000-2022, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -242,7 +241,7 @@ typedef enum
 #define GUC_UNIT				(GUC_UNIT_MEMORY | GUC_UNIT_TIME)
 
 
-/* GUC vars that are actually declared in guc.c, rather than elsewhere */
+/* GUC vars that are actually defined in guc_tables.c, rather than elsewhere */
 extern PGDLLIMPORT bool Debug_print_plan;
 extern PGDLLIMPORT bool Debug_print_parse;
 extern PGDLLIMPORT bool Debug_print_rewritten;
@@ -269,7 +268,6 @@ extern PGDLLIMPORT int log_temp_files;
 extern PGDLLIMPORT double log_statement_sample_rate;
 extern PGDLLIMPORT double log_xact_sample_rate;
 extern PGDLLIMPORT char *backtrace_functions;
-extern PGDLLIMPORT char *backtrace_symbol_list;
 
 extern PGDLLIMPORT int temp_file_limit;
 
@@ -371,7 +369,6 @@ extern void ProcessConfigFile(GucContext context);
 extern char *convert_GUC_name_for_parameter_acl(const char *name);
 extern bool check_GUC_name_for_parameter_acl(const char *name);
 extern void InitializeGUCOptions(void);
-extern void InitializeWalConsistencyChecking(void);
 extern bool SelectConfigFiles(const char *userDoption, const char *progname);
 extern void ResetAllOptions(void);
 extern void AtStart_GUC(void);
@@ -380,6 +377,7 @@ extern void AtEOXact_GUC(bool isCommit, int nestLevel);
 extern void BeginReportingGUCOptions(void);
 extern void ReportChangedGUCOptions(void);
 extern void ParseLongOption(const char *string, char **name, char **value);
+extern const char *get_config_unit_name(int flags);
 extern bool parse_int(const char *value, int *result, int flags,
 					  const char **hintmsg);
 extern bool parse_real(const char *value, double *result, int flags,
@@ -396,21 +394,17 @@ extern int	set_config_option_ext(const char *name, const char *value,
 extern void AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt);
 extern char *GetConfigOptionByName(const char *name, const char **varname,
 								   bool missing_ok);
-extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);
-
-extern void SetPGVariable(const char *name, List *args, bool is_local);
-extern void GetPGVariable(const char *name, DestReceiver *dest);
-extern TupleDesc GetPGVariableResultDesc(const char *name);
-
-extern void ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel);
-extern char *ExtractSetVariableArgs(VariableSetStmt *stmt);
 
 extern void ProcessGUCArray(ArrayType *array,
 							GucContext context, GucSource source, GucAction action);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 extern ArrayType *GUCArrayReset(ArrayType *array);
+
+extern void *guc_malloc(int elevel, size_t size);
+extern pg_nodiscard void *guc_realloc(int elevel, void *old, size_t size);
+extern char *guc_strdup(int elevel, const char *src);
 
 #ifdef EXEC_BACKEND
 extern void write_nondefault_variables(GucContext context);
@@ -421,6 +415,13 @@ extern void read_nondefault_variables(void);
 extern Size EstimateGUCStateSpace(void);
 extern void SerializeGUCState(Size maxsize, char *start_address);
 extern void RestoreGUCState(void *gucstate);
+
+/* Functions exported by guc_funcs.c */
+extern void ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel);
+extern char *ExtractSetVariableArgs(VariableSetStmt *stmt);
+extern void SetPGVariable(const char *name, List *args, bool is_local);
+extern void GetPGVariable(const char *name, DestReceiver *dest);
+extern TupleDesc GetPGVariableResultDesc(const char *name);
 
 /* Support for messages reported from GUC check hooks */
 
@@ -441,28 +442,5 @@ extern void GUC_check_errcode(int sqlerrcode);
 #define GUC_check_errhint \
 	pre_format_elog_string(errno, TEXTDOMAIN), \
 	GUC_check_errhint_string = format_elog_string
-
-/*
- * The following functions are not in guc.c, but are declared here to avoid
- * having to include guc.h in some widely used headers that it really doesn't
- * belong in.
- */
-
-/* in commands/tablespace.c */
-extern bool check_default_tablespace(char **newval, void **extra, GucSource source);
-extern bool check_temp_tablespaces(char **newval, void **extra, GucSource source);
-extern void assign_temp_tablespaces(const char *newval, void *extra);
-
-/* in catalog/namespace.c */
-extern bool check_search_path(char **newval, void **extra, GucSource source);
-extern void assign_search_path(const char *newval, void *extra);
-
-/* in access/transam/xlog.c */
-extern bool check_wal_buffers(int *newval, void **extra, GucSource source);
-extern void assign_xlog_sync_method(int new_sync_method, void *extra);
-
-/* in access/transam/xlogprefetcher.c */
-extern bool check_recovery_prefetch(int *new_value, void **extra, GucSource source);
-extern void assign_recovery_prefetch(int new_value, void *extra);
 
 #endif							/* GUC_H */

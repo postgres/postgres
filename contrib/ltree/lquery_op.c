@@ -10,6 +10,7 @@
 #include "catalog/pg_collation.h"
 #include "ltree.h"
 #include "miscadmin.h"
+#include "utils/array.h"
 #include "utils/formatting.h"
 
 PG_FUNCTION_INFO_V1(ltq_regex);

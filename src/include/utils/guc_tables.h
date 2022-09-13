@@ -263,6 +263,23 @@ extern PGDLLIMPORT const char *const config_type_names[];
 extern PGDLLIMPORT const char *const GucContext_Names[];
 extern PGDLLIMPORT const char *const GucSource_Names[];
 
+/* data arrays defining all the built-in GUC variables */
+extern PGDLLIMPORT struct config_bool ConfigureNamesBool[];
+extern PGDLLIMPORT struct config_int ConfigureNamesInt[];
+extern PGDLLIMPORT struct config_real ConfigureNamesReal[];
+extern PGDLLIMPORT struct config_string ConfigureNamesString[];
+extern PGDLLIMPORT struct config_enum ConfigureNamesEnum[];
+
+/* lookup GUC variables, returning config_generic pointers */
+extern struct config_generic *find_option(const char *name,
+										  bool create_placeholders,
+										  bool skip_errors,
+										  int elevel);
+extern struct config_generic **get_explain_guc_options(int *num);
+
+/* get string value of variable */
+extern char *ShowGUCOption(struct config_generic *record, bool use_units);
+
 /* get the current set of variables */
 extern struct config_generic **get_guc_variables(void);
 
@@ -272,6 +289,9 @@ extern void build_guc_variables(void);
 extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
 extern bool config_enum_lookup_by_name(struct config_enum *record,
 									   const char *value, int *retval);
-extern struct config_generic **get_explain_guc_options(int *num);
+extern char *config_enum_get_options(struct config_enum *record,
+									 const char *prefix,
+									 const char *suffix,
+									 const char *separator);
 
 #endif							/* GUC_TABLES_H */

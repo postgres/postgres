@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "lib/stringinfo.h"
+#include "nodes/pg_list.h"
 
 /*
  * NB: include syncrep_gram.h only AFTER including syncrep.h, because syncrep.h

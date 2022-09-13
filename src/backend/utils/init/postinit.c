@@ -58,7 +58,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/portal.h"
@@ -561,6 +561,54 @@ InitializeMaxBackends(void)
 	/* internal error because the values were all checked previously */
 	if (MaxBackends > MAX_BACKENDS)
 		elog(ERROR, "too many backends configured");
+}
+
+/*
+ * GUC check_hook for max_connections
+ */
+bool
+check_max_connections(int *newval, void **extra, GucSource source)
+{
+	if (*newval + autovacuum_max_workers + 1 +
+		max_worker_processes + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for autovacuum_max_workers
+ */
+bool
+check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + *newval + 1 +
+		max_worker_processes + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for max_worker_processes
+ */
+bool
+check_max_worker_processes(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + autovacuum_max_workers + 1 +
+		*newval + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for max_wal_senders
+ */
+bool
+check_max_wal_senders(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + autovacuum_max_workers + 1 +
+		max_worker_processes + *newval > MAX_BACKENDS)
+		return false;
+	return true;
 }
 
 /*

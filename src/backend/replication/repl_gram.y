@@ -17,6 +17,7 @@
 
 #include "access/xlogdefs.h"
 #include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
 #include "nodes/replnodes.h"
 #include "replication/walsender.h"
 #include "replication/walsender_private.h"

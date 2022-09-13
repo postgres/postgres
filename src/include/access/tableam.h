@@ -20,7 +20,7 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/xact.h"
-#include "utils/guc.h"
+#include "executor/tuptable.h"
 #include "utils/rel.h"
 #include "utils/snapshot.h"
 
@@ -2072,7 +2072,5 @@ extern void table_block_relation_estimate_size(Relation rel,
 
 extern const TableAmRoutine *GetTableAmRoutine(Oid amhandler);
 extern const TableAmRoutine *GetHeapamTableAmRoutine(void);
-extern bool check_default_table_access_method(char **newval, void **extra,
-											  GucSource source);
 
 #endif							/* TABLEAM_H */

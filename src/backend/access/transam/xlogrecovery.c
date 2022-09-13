@@ -48,6 +48,7 @@
 #include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "postmaster/startup.h"
+#include "replication/slot.h"
 #include "replication/walreceiver.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -57,7 +58,9 @@
 #include "storage/procarray.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-#include "utils/guc.h"
+#include "utils/datetime.h"
+#include "utils/guc_hooks.h"
+#include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
 #include "utils/pg_rusage.h"
 
@@ -4615,4 +4618,316 @@ RecoveryRequiresIntParameter(const char *param_name, int currValue, int minValue
 						   minValue),
 				 errhint("You can restart the server after making the necessary configuration changes.")));
 	}
+}
+
+
+/*
+ * GUC check_hook for primary_slot_name
+ */
+bool
+check_primary_slot_name(char **newval, void **extra, GucSource source)
+{
+	if (*newval && strcmp(*newval, "") != 0 &&
+		!ReplicationSlotValidateName(*newval, WARNING))
+		return false;
+
+	return true;
+}
+
+/*
+ * Recovery target settings: Only one of the several recovery_target* settings
+ * may be set.  Setting a second one results in an error.  The global variable
+ * recoveryTarget tracks which kind of recovery target was chosen.  Other
+ * variables store the actual target value (for example a string or a xid).
+ * The assign functions of the parameters check whether a competing parameter
+ * was already set.  But we want to allow setting the same parameter multiple
+ * times.  We also want to allow unsetting a parameter and setting a different
+ * one, so we unset recoveryTarget when the parameter is set to an empty
+ * string.
+ *
+ * XXX this code is broken by design.  Throwing an error from a GUC assign
+ * hook breaks fundamental assumptions of guc.c.  So long as all the variables
+ * for which this can happen are PGC_POSTMASTER, the consequences are limited,
+ * since we'd just abort postmaster startup anyway.  Nonetheless it's likely
+ * that we have odd behaviors such as unexpected GUC ordering dependencies.
+ */
+
+static void
+pg_attribute_noreturn()
+error_multiple_recovery_targets(void)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("multiple recovery targets specified"),
+			 errdetail("At most one of recovery_target, recovery_target_lsn, recovery_target_name, recovery_target_time, recovery_target_xid may be set.")));
+}
+
+/*
+ * GUC check_hook for recovery_target
+ */
+bool
+check_recovery_target(char **newval, void **extra, GucSource source)
+{
+	if (strcmp(*newval, "immediate") != 0 && strcmp(*newval, "") != 0)
+	{
+		GUC_check_errdetail("The only allowed value is \"immediate\".");
+		return false;
+	}
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target
+ */
+void
+assign_recovery_target(const char *newval, void *extra)
+{
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_IMMEDIATE)
+		error_multiple_recovery_targets();
+
+	if (newval && strcmp(newval, "") != 0)
+		recoveryTarget = RECOVERY_TARGET_IMMEDIATE;
+	else
+		recoveryTarget = RECOVERY_TARGET_UNSET;
+}
+
+/*
+ * GUC check_hook for recovery_target_lsn
+ */
+bool
+check_recovery_target_lsn(char **newval, void **extra, GucSource source)
+{
+	if (strcmp(*newval, "") != 0)
+	{
+		XLogRecPtr	lsn;
+		XLogRecPtr *myextra;
+		bool		have_error = false;
+
+		lsn = pg_lsn_in_internal(*newval, &have_error);
+		if (have_error)
+			return false;
+
+		myextra = (XLogRecPtr *) guc_malloc(ERROR, sizeof(XLogRecPtr));
+		*myextra = lsn;
+		*extra = (void *) myextra;
+	}
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target_lsn
+ */
+void
+assign_recovery_target_lsn(const char *newval, void *extra)
+{
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_LSN)
+		error_multiple_recovery_targets();
+
+	if (newval && strcmp(newval, "") != 0)
+	{
+		recoveryTarget = RECOVERY_TARGET_LSN;
+		recoveryTargetLSN = *((XLogRecPtr *) extra);
+	}
+	else
+		recoveryTarget = RECOVERY_TARGET_UNSET;
+}
+
+/*
+ * GUC check_hook for recovery_target_name
+ */
+bool
+check_recovery_target_name(char **newval, void **extra, GucSource source)
+{
+	/* Use the value of newval directly */
+	if (strlen(*newval) >= MAXFNAMELEN)
+	{
+		GUC_check_errdetail("%s is too long (maximum %d characters).",
+							"recovery_target_name", MAXFNAMELEN - 1);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target_name
+ */
+void
+assign_recovery_target_name(const char *newval, void *extra)
+{
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_NAME)
+		error_multiple_recovery_targets();
+
+	if (newval && strcmp(newval, "") != 0)
+	{
+		recoveryTarget = RECOVERY_TARGET_NAME;
+		recoveryTargetName = newval;
+	}
+	else
+		recoveryTarget = RECOVERY_TARGET_UNSET;
+}
+
+/*
+ * GUC check_hook for recovery_target_time
+ *
+ * The interpretation of the recovery_target_time string can depend on the
+ * time zone setting, so we need to wait until after all GUC processing is
+ * done before we can do the final parsing of the string.  This check function
+ * only does a parsing pass to catch syntax errors, but we store the string
+ * and parse it again when we need to use it.
+ */
+bool
+check_recovery_target_time(char **newval, void **extra, GucSource source)
+{
+	if (strcmp(*newval, "") != 0)
+	{
+		/* reject some special values */
+		if (strcmp(*newval, "now") == 0 ||
+			strcmp(*newval, "today") == 0 ||
+			strcmp(*newval, "tomorrow") == 0 ||
+			strcmp(*newval, "yesterday") == 0)
+		{
+			return false;
+		}
+
+		/*
+		 * parse timestamp value (see also timestamptz_in())
+		 */
+		{
+			char	   *str = *newval;
+			fsec_t		fsec;
+			struct pg_tm tt,
+					   *tm = &tt;
+			int			tz;
+			int			dtype;
+			int			nf;
+			int			dterr;
+			char	   *field[MAXDATEFIELDS];
+			int			ftype[MAXDATEFIELDS];
+			char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+			TimestampTz timestamp;
+
+			dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+								  field, ftype, MAXDATEFIELDS, &nf);
+			if (dterr == 0)
+				dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+			if (dterr != 0)
+				return false;
+			if (dtype != DTK_DATE)
+				return false;
+
+			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
+			{
+				GUC_check_errdetail("timestamp out of range: \"%s\"", str);
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target_time
+ */
+void
+assign_recovery_target_time(const char *newval, void *extra)
+{
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_TIME)
+		error_multiple_recovery_targets();
+
+	if (newval && strcmp(newval, "") != 0)
+		recoveryTarget = RECOVERY_TARGET_TIME;
+	else
+		recoveryTarget = RECOVERY_TARGET_UNSET;
+}
+
+/*
+ * GUC check_hook for recovery_target_timeline
+ */
+bool
+check_recovery_target_timeline(char **newval, void **extra, GucSource source)
+{
+	RecoveryTargetTimeLineGoal rttg;
+	RecoveryTargetTimeLineGoal *myextra;
+
+	if (strcmp(*newval, "current") == 0)
+		rttg = RECOVERY_TARGET_TIMELINE_CONTROLFILE;
+	else if (strcmp(*newval, "latest") == 0)
+		rttg = RECOVERY_TARGET_TIMELINE_LATEST;
+	else
+	{
+		rttg = RECOVERY_TARGET_TIMELINE_NUMERIC;
+
+		errno = 0;
+		strtoul(*newval, NULL, 0);
+		if (errno == EINVAL || errno == ERANGE)
+		{
+			GUC_check_errdetail("recovery_target_timeline is not a valid number.");
+			return false;
+		}
+	}
+
+	myextra = (RecoveryTargetTimeLineGoal *) guc_malloc(ERROR, sizeof(RecoveryTargetTimeLineGoal));
+	*myextra = rttg;
+	*extra = (void *) myextra;
+
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target_timeline
+ */
+void
+assign_recovery_target_timeline(const char *newval, void *extra)
+{
+	recoveryTargetTimeLineGoal = *((RecoveryTargetTimeLineGoal *) extra);
+	if (recoveryTargetTimeLineGoal == RECOVERY_TARGET_TIMELINE_NUMERIC)
+		recoveryTargetTLIRequested = (TimeLineID) strtoul(newval, NULL, 0);
+	else
+		recoveryTargetTLIRequested = 0;
+}
+
+/*
+ * GUC check_hook for recovery_target_xid
+ */
+bool
+check_recovery_target_xid(char **newval, void **extra, GucSource source)
+{
+	if (strcmp(*newval, "") != 0)
+	{
+		TransactionId xid;
+		TransactionId *myextra;
+
+		errno = 0;
+		xid = (TransactionId) strtou64(*newval, NULL, 0);
+		if (errno == EINVAL || errno == ERANGE)
+			return false;
+
+		myextra = (TransactionId *) guc_malloc(ERROR, sizeof(TransactionId));
+		*myextra = xid;
+		*extra = (void *) myextra;
+	}
+	return true;
+}
+
+/*
+ * GUC assign_hook for recovery_target_xid
+ */
+void
+assign_recovery_target_xid(const char *newval, void *extra)
+{
+	if (recoveryTarget != RECOVERY_TARGET_UNSET &&
+		recoveryTarget != RECOVERY_TARGET_XID)
+		error_multiple_recovery_targets();
+
+	if (newval && strcmp(newval, "") != 0)
+	{
+		recoveryTarget = RECOVERY_TARGET_XID;
+		recoveryTargetXid = *((TransactionId *) extra);
+	}
+	else
+		recoveryTarget = RECOVERY_TARGET_UNSET;
 }

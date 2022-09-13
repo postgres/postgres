@@ -14,7 +14,6 @@
 #define _SYNCREP_H
 
 #include "access/xlogdefs.h"
-#include "utils/guc.h"
 
 #define SyncRepRequested() \
 	(max_wal_senders > 0 && synchronous_commit > SYNCHRONOUS_COMMIT_LOCAL_FLUSH)
@@ -96,11 +95,6 @@ extern int	SyncRepGetCandidateStandbys(SyncRepStandbyData **standbys);
 
 /* called by checkpointer */
 extern void SyncRepUpdateSyncStandbysDefined(void);
-
-/* GUC infrastructure */
-extern bool check_synchronous_standby_names(char **newval, void **extra, GucSource source);
-extern void assign_synchronous_standby_names(const char *newval, void *extra);
-extern void assign_synchronous_commit(int newval, void *extra);
 
 /*
  * Internal functions for parsing synchronous_standby_names grammar,

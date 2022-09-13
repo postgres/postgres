@@ -14,6 +14,7 @@
  */
 #include "postgres.h"
 
+#include "nodes/pg_list.h"
 #include "replication/syncrep.h"
 
 /* Result of parsing is returned in one of these two variables */

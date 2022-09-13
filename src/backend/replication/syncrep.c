@@ -84,6 +84,7 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/guc_hooks.h"
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */

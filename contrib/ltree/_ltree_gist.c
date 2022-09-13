@@ -13,6 +13,7 @@
 #include "crc32.h"
 #include "ltree.h"
 #include "port/pg_bitutils.h"
+#include "utils/array.h"
 
 PG_FUNCTION_INFO_V1(_ltree_compress);
 PG_FUNCTION_INFO_V1(_ltree_same);

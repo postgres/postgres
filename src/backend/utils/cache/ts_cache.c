@@ -42,6 +42,7 @@
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/guc_hooks.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -584,7 +585,7 @@ getTSCurrentConfig(bool emitError)
 
 /* GUC check_hook for default_text_search_config */
 bool
-check_TSCurrentConfig(char **newval, void **extra, GucSource source)
+check_default_text_search_config(char **newval, void **extra, GucSource source)
 {
 	/*
 	 * If we aren't inside a transaction, or connected to a database, we
@@ -645,7 +646,7 @@ check_TSCurrentConfig(char **newval, void **extra, GucSource source)
 
 /* GUC assign_hook for default_text_search_config */
 void
-assign_TSCurrentConfig(const char *newval, void *extra)
+assign_default_text_search_config(const char *newval, void *extra)
 {
 	/* Just reset the cache to force a lookup on first use */
 	TSCurrentConfigCache = InvalidOid;

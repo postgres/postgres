@@ -20,6 +20,7 @@
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 

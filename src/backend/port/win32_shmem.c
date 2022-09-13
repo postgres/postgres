@@ -16,6 +16,8 @@
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
+#include "utils/guc_hooks.h"
+
 
 /*
  * Early in a process's life, Windows asynchronously creates threads for the
@@ -618,4 +620,18 @@ GetHugePageSize(Size *hugepagesize, int *mmap_flags)
 		*hugepagesize = 0;
 	if (mmap_flags)
 		*mmap_flags = 0;
+}
+
+/*
+ * GUC check_hook for huge_page_size
+ */
+bool
+check_huge_page_size(int *newval, void **extra, GucSource source)
+{
+	if (*newval != 0)
+	{
+		GUC_check_errdetail("huge_page_size must be 0 on this platform.");
+		return false;
+	}
+	return true;
 }

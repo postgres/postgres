@@ -227,6 +227,7 @@ extern XLogRecPtr GetFakeLSNForUnloggedRel(void);
 extern Size XLOGShmemSize(void);
 extern void XLOGShmemInit(void);
 extern void BootStrapXLOG(void);
+extern void InitializeWalConsistencyChecking(void);
 extern void LocalProcessControlFile(bool reset);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);
@@ -244,9 +245,6 @@ extern TimeLineID GetWALInsertionTimeLine(void);
 extern XLogRecPtr GetLastImportantRecPtr(void);
 
 extern void SetWalWriterSleeping(bool sleeping);
-
-extern void assign_max_wal_size(int newval, void *extra);
-extern void assign_checkpoint_completion_target(double newval, void *extra);
 
 /*
  * Routines used by xlogrecovery.c to call back into xlog.c during recovery.

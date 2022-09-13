@@ -78,7 +78,7 @@
 #include "miscadmin.h"
 #include "port/pg_bswap.h"
 #include "storage/ipc.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 
 /*
@@ -1912,6 +1912,108 @@ pq_settcpusertimeout(int timeout, Port *port)
 #endif
 
 	return STATUS_OK;
+}
+
+/*
+ * GUC assign_hook for tcp_keepalives_idle
+ */
+void
+assign_tcp_keepalives_idle(int newval, void *extra)
+{
+	/*
+	 * The kernel API provides no way to test a value without setting it; and
+	 * once we set it we might fail to unset it.  So there seems little point
+	 * in fully implementing the check-then-assign GUC API for these
+	 * variables.  Instead we just do the assignment on demand.
+	 * pq_setkeepalivesidle reports any problems via ereport(LOG).
+	 *
+	 * This approach means that the GUC value might have little to do with the
+	 * actual kernel value, so we use a show_hook that retrieves the kernel
+	 * value rather than trusting GUC's copy.
+	 */
+	(void) pq_setkeepalivesidle(newval, MyProcPort);
+}
+
+/*
+ * GUC show_hook for tcp_keepalives_idle
+ */
+const char *
+show_tcp_keepalives_idle(void)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesidle(MyProcPort));
+	return nbuf;
+}
+
+/*
+ * GUC assign_hook for tcp_keepalives_interval
+ */
+void
+assign_tcp_keepalives_interval(int newval, void *extra)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	(void) pq_setkeepalivesinterval(newval, MyProcPort);
+}
+
+/*
+ * GUC show_hook for tcp_keepalives_interval
+ */
+const char *
+show_tcp_keepalives_interval(void)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivesinterval(MyProcPort));
+	return nbuf;
+}
+
+/*
+ * GUC assign_hook for tcp_keepalives_count
+ */
+void
+assign_tcp_keepalives_count(int newval, void *extra)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	(void) pq_setkeepalivescount(newval, MyProcPort);
+}
+
+/*
+ * GUC show_hook for tcp_keepalives_count
+ */
+const char *
+show_tcp_keepalives_count(void)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_getkeepalivescount(MyProcPort));
+	return nbuf;
+}
+
+/*
+ * GUC assign_hook for tcp_user_timeout
+ */
+void
+assign_tcp_user_timeout(int newval, void *extra)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	(void) pq_settcpusertimeout(newval, MyProcPort);
+}
+
+/*
+ * GUC show_hook for tcp_user_timeout
+ */
+const char *
+show_tcp_user_timeout(void)
+{
+	/* See comments in assign_tcp_keepalives_idle */
+	static char nbuf[16];
+
+	snprintf(nbuf, sizeof(nbuf), "%d", pq_gettcpusertimeout(MyProcPort));
+	return nbuf;
 }
 
 /*

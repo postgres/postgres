@@ -40,6 +40,7 @@
 #include "storage/ipc.h"
 #include "storage/reinit.h"
 #include "utils/builtins.h"
+#include "utils/guc.h"
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 #include "utils/resowner.h"

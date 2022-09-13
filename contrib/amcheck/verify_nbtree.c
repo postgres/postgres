@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 

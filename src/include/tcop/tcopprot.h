@@ -66,9 +66,6 @@ extern List *pg_plan_queries(List *querytrees, const char *query_string,
 							 int cursorOptions,
 							 ParamListInfo boundParams);
 
-extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
-extern void assign_max_stack_depth(int newval, void *extra);
-
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();
 extern void StatementCancelHandler(SIGNAL_ARGS);

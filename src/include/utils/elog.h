@@ -460,10 +460,6 @@ extern void write_pipe_chunks(char *data, int len, int dest);
 extern void write_csvlog(ErrorData *edata);
 extern void write_jsonlog(ErrorData *edata);
 
-#ifdef HAVE_SYSLOG
-extern void set_syslog_parameters(const char *ident, int facility);
-#endif
-
 /*
  * Write errors to stderr (or by equal means when stderr is
  * not available). Used before ereport/elog can be used
