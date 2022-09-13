@@ -145,8 +145,7 @@ CREATE DATABASE <replaceable class="parameter">name</replaceable>
       <listitem>
        <para>
         This is a shortcut for setting <symbol>LC_COLLATE</symbol>
-        and <symbol>LC_CTYPE</symbol> at once.  If you specify this,
-        you cannot specify either of those parameters.
+        and <symbol>LC_CTYPE</symbol> at once.
        </para>
        <tip>
         <para>

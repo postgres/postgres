@@ -161,12 +161,10 @@ main(int argc, char *argv[])
 
 	if (locale)
 	{
-		if (lc_ctype)
-			pg_fatal("only one of --locale and --lc-ctype can be specified");
-		if (lc_collate)
-			pg_fatal("only one of --locale and --lc-collate can be specified");
-		lc_ctype = locale;
-		lc_collate = locale;
+		if (!lc_ctype)
+			lc_ctype = locale;
+		if (!lc_collate)
+			lc_collate = locale;
 	}
 
 	if (encoding)
