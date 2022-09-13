@@ -7101,6 +7101,11 @@ if test x"$pgac_cv_prog_CXX_cxxflags__qvisibility_hidden" = x"yes"; then
 fi
 
   have_visibility_attribute=$pgac_cv_prog_CC_cflags__qvisibility_hidden
+  # Old xlc versions (<13.1) don't have support for -qvisibility. Use expfull to force
+  # all extension module symbols to be exported.
+  if test "$pgac_cv_prog_CC_cflags__qvisibility_hidden" != "yes"; then
+    CFLAGS_SL_MODULE="$CFLAGS_SL_MODULE -Wl,-b,expfull"
+  fi
 fi
 
 if test "$have_visibility_attribute" = "yes"; then
