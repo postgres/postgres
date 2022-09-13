@@ -12921,9 +12921,18 @@ assign_maintenance_io_concurrency(int newval, void *extra)
 static bool
 check_application_name(char **newval, void **extra, GucSource source)
 {
-	/* Only allow clean ASCII chars in the application name */
-	pg_clean_ascii(*newval);
+	char	   *clean;
 
+	/* Only allow clean ASCII chars in the application name */
+	clean = pg_clean_ascii(*newval, MCXT_ALLOC_NO_OOM);
+	if (!clean)
+		return false;
+
+	clean = guc_strdup(WARNING, clean);
+	if (!clean)
+		return false;
+
+	*newval = clean;
 	return true;
 }
 
@@ -12937,9 +12946,18 @@ assign_application_name(const char *newval, void *extra)
 static bool
 check_cluster_name(char **newval, void **extra, GucSource source)
 {
-	/* Only allow clean ASCII chars in the cluster name */
-	pg_clean_ascii(*newval);
+	char	   *clean;
 
+	/* Only allow clean ASCII chars in the cluster name */
+	clean = pg_clean_ascii(*newval, MCXT_ALLOC_NO_OOM);
+	if (!clean)
+		return false;
+
+	clean = guc_strdup(WARNING, clean);
+	if (!clean)
+		return false;
+
+	*newval = clean;
 	return true;
 }
 

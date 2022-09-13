@@ -2280,11 +2280,7 @@ retry1:
 				 */
 				if (strcmp(nameptr, "application_name") == 0)
 				{
-					char	   *tmp_app_name = pstrdup(valptr);
-
-					pg_clean_ascii(tmp_app_name);
-
-					port->application_name = tmp_app_name;
+					port->application_name = pg_clean_ascii(valptr, 0);
 				}
 			}
 			offset = valoffset + strlen(valptr) + 1;

@@ -22,6 +22,7 @@
 #endif
 
 #include "common/string.h"
+#include "lib/stringinfo.h"
 
 
 /*
@@ -59,9 +60,12 @@ strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
 
 
 /*
- * pg_clean_ascii -- Replace any non-ASCII chars with a '?' char
+ * pg_clean_ascii -- Replace any non-ASCII chars with a "\xXX" string
  *
- * Modifies the string passed in which must be '\0'-terminated.
+ * Makes a newly allocated copy of the string passed in, which must be
+ * '\0'-terminated. In the backend, additional alloc_flags may be provided and
+ * will be passed as-is to palloc_extended(); in the frontend, alloc_flags is
+ * ignored and the copy is malloc'd.
  *
  * This function exists specifically to deal with filtering out
  * non-ASCII characters in a few places where the client can provide an almost
@@ -73,22 +77,52 @@ strtoint(const char *pg_restrict str, char **pg_restrict endptr, int base)
  * In general, this function should NOT be used- instead, consider how to handle
  * the string without needing to filter out the non-ASCII characters.
  *
- * Ultimately, we'd like to improve the situation to not require stripping out
- * all non-ASCII but perform more intelligent filtering which would allow UTF or
+ * Ultimately, we'd like to improve the situation to not require replacing all
+ * non-ASCII but perform more intelligent filtering which would allow UTF or
  * similar, but it's unclear exactly what we should allow, so stick to ASCII only
  * for now.
  */
-void
-pg_clean_ascii(char *str)
+char *
+pg_clean_ascii(const char *str, int alloc_flags)
 {
-	/* Only allow clean ASCII chars in the string */
-	char	   *p;
+	size_t		dstlen;
+	char	   *dst;
+	const char *p;
+	size_t		i = 0;
+
+	/* Worst case, each byte can become four bytes, plus a null terminator. */
+	dstlen = strlen(str) * 4 + 1;
+
+#ifdef FRONTEND
+	dst = malloc(dstlen);
+#else
+	dst = palloc_extended(dstlen, alloc_flags);
+#endif
+
+	if (!dst)
+		return NULL;
 
 	for (p = str; *p != '\0'; p++)
 	{
+
+		/* Only allow clean ASCII chars in the string */
 		if (*p < 32 || *p > 126)
-			*p = '?';
+		{
+			Assert(i < (dstlen - 3));
+			snprintf(&dst[i], dstlen - i, "\\x%02x", (unsigned char) *p);
+			i += 4;
+		}
+		else
+		{
+			Assert(i < dstlen);
+			dst[i] = *p;
+			i++;
+		}
 	}
+
+	Assert(i < dstlen);
+	dst[i] = '\0';
+	return dst;
 }
 
 
