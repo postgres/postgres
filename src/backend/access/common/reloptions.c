@@ -1357,9 +1357,9 @@ untransformRelOptions(Datum options)
 		if (p)
 		{
 			*p++ = '\0';
-			val = (Node *) makeString(pstrdup(p));
+			val = (Node *) makeString(p);
 		}
-		result = lappend(result, makeDefElem(pstrdup(s), val, -1));
+		result = lappend(result, makeDefElem(s, val, -1));
 	}
 
 	return result;
