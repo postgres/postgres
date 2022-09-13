@@ -793,4 +793,17 @@ $node->connect_fails(
 #	]
 );
 
+# revoked client cert, non-ASCII subject
+$node->connect_fails(
+	"$common_connstr user=ssltestuser sslcert=ssl/client-revoked-utf8.crt "
+	  . sslkey('client-revoked-utf8.key'),
+	"certificate authorization fails with revoked UTF-8 client cert with server-side CRL directory",
+	expected_stderr => qr/SSL error: sslv3 alert certificate revoked/,
+	# temporarily(?) skip this check due to timing issue
+#	log_like => [
+#		qr{Client certificate verification failed at depth 0: certificate revoked},
+#		qr{Failed certificate data \(unverified\): subject "/CN=\\xce\\x9f\\xce\\xb4\\xcf\\x85\\xcf\\x83\\xcf\\x83\\xce\\xad\\xce\\xb1\\xcf\\x82", serial number 2315420958437414144, issuer "/CN=Test CA for PostgreSQL SSL regression test client certs"},
+#	]
+);
+
 done_testing();

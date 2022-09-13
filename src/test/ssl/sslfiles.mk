@@ -33,7 +33,8 @@ SERVERS := server-cn-and-alt-names \
 	server-multiple-alt-names \
 	server-no-names \
 	server-revoked
-CLIENTS := client client-dn client-revoked client_ext client-long
+CLIENTS := client client-dn client-revoked client_ext client-long \
+	client-revoked-utf8
 
 #
 # To add a new non-standard key, add it to SPECIAL_KEYS and then add a recipe
@@ -175,7 +176,7 @@ $(CLIENT_CERTS): ssl/%.crt: ssl/%.csr conf/%.config conf/cas.config ssl/client_c
 # The CSRs don't need to persist after a build.
 .INTERMEDIATE: $(CERTIFICATES:%=ssl/%.csr)
 ssl/%.csr: ssl/%.key conf/%.config
-	openssl req -new -key $< -out $@ -config conf/$*.config
+	openssl req -new -utf8 -key $< -out $@ -config conf/$*.config
 
 #
 # CA State
@@ -215,8 +216,9 @@ ssl/server.crl: ssl/server-revoked.crt ssl/server_ca.crt | $(server_ca_state_fil
 	openssl ca -config conf/cas.config -name server_ca -revoke $<
 	openssl ca -config conf/cas.config -name server_ca -gencrl -out $@
 
-ssl/client.crl: ssl/client-revoked.crt ssl/client_ca.crt | $(client_ca_state_files)
-	openssl ca -config conf/cas.config -name client_ca -revoke $<
+ssl/client.crl: ssl/client-revoked.crt ssl/client-revoked-utf8.crt ssl/client_ca.crt | $(client_ca_state_files)
+	openssl ca -config conf/cas.config -name client_ca -revoke ssl/client-revoked.crt
+	openssl ca -config conf/cas.config -name client_ca -revoke ssl/client-revoked-utf8.crt
 	openssl ca -config conf/cas.config -name client_ca -gencrl -out $@
 
 #
