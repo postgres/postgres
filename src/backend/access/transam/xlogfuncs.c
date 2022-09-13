@@ -104,10 +104,10 @@ pg_backup_start(PG_FUNCTION_ARGS)
 Datum
 pg_backup_stop(PG_FUNCTION_ARGS)
 {
-#define PG_STOP_BACKUP_V2_COLS 3
+#define PG_BACKUP_STOP_V2_COLS 3
 	TupleDesc	tupdesc;
-	Datum		values[PG_STOP_BACKUP_V2_COLS] = {0};
-	bool		nulls[PG_STOP_BACKUP_V2_COLS] = {0};
+	Datum		values[PG_BACKUP_STOP_V2_COLS] = {0};
+	bool		nulls[PG_BACKUP_STOP_V2_COLS] = {0};
 
 	bool		waitforarchive = PG_GETARG_BOOL(0);
 	XLogRecPtr	stoppoint;
