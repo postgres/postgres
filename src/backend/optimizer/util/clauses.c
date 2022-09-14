@@ -2117,7 +2117,8 @@ eval_const_expressions(PlannerInfo *root, Node *node)
  *
  * We'll use a hash table if all of the following conditions are met:
  * 1. The 2nd argument of the array contain only Consts.
- * 2. useOr is true.
+ * 2. useOr is true or there is a valid negator operator for the
+ *	  ScalarArrayOpExpr's opno.
  * 3. There's valid hash function for both left and righthand operands and
  *	  these hash functions are the same.
  * 4. If the array contains enough elements for us to consider it to be
