@@ -580,6 +580,24 @@ SELECT * FROM ft1, ft2, ft4, ft5 WHERE ft1.c1 = ft2.c1 AND ft1.c2 = ft4.c1
 RESET enable_nestloop;
 RESET enable_hashjoin;
 
+-- test that add_paths_with_pathkeys_for_rel() arranges for the epq_path to
+-- return columns needed by the parent ForeignScan node
+CREATE TABLE local_tbl (c1 int NOT NULL, c2 int NOT NULL, c3 text, CONSTRAINT local_tbl_pkey PRIMARY KEY (c1));
+INSERT INTO local_tbl SELECT id, id % 10, to_char(id, 'FM0000') FROM generate_series(1, 1000) id;
+ANALYZE local_tbl;
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM local_tbl LEFT JOIN (SELECT ft1.*, COALESCE(ft1.c3 || ft2.c3, 'foobar') FROM ft1 INNER JOIN ft2 ON (ft1.c1 = ft2.c1 AND ft1.c1 < 100)) ss ON (local_tbl.c1 = ss.c1) ORDER BY local_tbl.c1 FOR UPDATE OF local_tbl;
+
+ALTER SERVER loopback OPTIONS (DROP extensions);
+ALTER SERVER loopback OPTIONS (ADD fdw_startup_cost '10000.0');
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT * FROM local_tbl LEFT JOIN (SELECT ft1.* FROM ft1 INNER JOIN ft2 ON (ft1.c1 = ft2.c1 AND ft1.c1 < 100 AND ft1.c1 = postgres_fdw_abs(ft2.c2))) ss ON (local_tbl.c3 = ss.c3) ORDER BY local_tbl.c1 FOR UPDATE OF local_tbl;
+ALTER SERVER loopback OPTIONS (DROP fdw_startup_cost);
+ALTER SERVER loopback OPTIONS (ADD extensions 'postgres_fdw');
+
+DROP TABLE local_tbl;
+
 -- check join pushdown in situations where multiple userids are involved
 CREATE ROLE regress_view_owner;
 CREATE USER MAPPING FOR regress_view_owner SERVER loopback;
