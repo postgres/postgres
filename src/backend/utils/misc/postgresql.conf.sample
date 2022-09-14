@@ -251,21 +251,21 @@
 
 #archive_mode = off		# enables archiving; off, on, or always
 				# (change requires restart)
-#archive_library = ''		# library to use to archive a logfile segment
+#archive_library = ''		# library to use to archive a WAL file
 				# (empty string indicates archive_command should
 				# be used)
-#archive_command = ''		# command to use to archive a logfile segment
+#archive_command = ''		# command to use to archive a WAL file
 				# placeholders: %p = path of file to archive
 				#               %f = file name only
 				# e.g. 'test ! -f /mnt/server/archivedir/%f && cp %p /mnt/server/archivedir/%f'
-#archive_timeout = 0		# force a logfile segment switch after this
+#archive_timeout = 0		# force a WAL file switch after this
 				# number of seconds; 0 disables
 
 # - Archive Recovery -
 
 # These are only used in recovery mode.
 
-#restore_command = ''		# command to use to restore an archived logfile segment
+#restore_command = ''		# command to use to restore an archived WAL file
 				# placeholders: %p = path of file to restore
 				#               %f = file name only
 				# e.g. 'cp /mnt/server/archivedir/%f %p'

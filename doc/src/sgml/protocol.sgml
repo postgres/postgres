@@ -2717,7 +2717,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
          <listitem>
           <para>
            If set to true, the backup will wait until the last required WAL
-           segment has been archived, or emit a warning if log archiving is
+           segment has been archived, or emit a warning if WAL archiving is
            not enabled. If false, the backup will neither wait nor warn,
            leaving the client responsible for ensuring the required log is
            available. The default is true.

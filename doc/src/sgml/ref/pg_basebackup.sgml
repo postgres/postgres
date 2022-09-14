@@ -316,7 +316,7 @@ PostgreSQL documentation
         backup. This will include all write-ahead logs generated during
         the backup. Unless the method <literal>none</literal> is specified,
         it is possible to start a postmaster in the target
-        directory without the need to consult the log archive, thus
+        directory without the need to consult the WAL archive, thus
         making the output a completely standalone backup.
        </para>
        <para>

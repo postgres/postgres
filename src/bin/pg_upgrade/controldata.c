@@ -348,7 +348,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			cluster->controldata.chkpnt_nxtmxoff = str2uint(p);
 			got_mxoff = true;
 		}
-		else if ((p = strstr(bufin, "First log segment after reset:")) != NULL)
+		else if ((p = strstr(bufin, "First WAL segment after reset:")) != NULL)
 		{
 			/* Skip the colon and any whitespace after it */
 			p = strchr(p, ':');

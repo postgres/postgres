@@ -53,7 +53,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">startseg</replaceable></term>
       <listitem>
        <para>
-        Start reading at the specified log segment file.  This implicitly determines
+        Start reading at the specified WAL segment file.  This implicitly determines
         the path in which files will be searched for, and the timeline to use.
        </para>
       </listitem>
@@ -63,7 +63,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">endseg</replaceable></term>
       <listitem>
        <para>
-        Stop after reading the specified log segment file.
+        Stop after reading the specified WAL segment file.
        </para>
       </listitem>
      </varlistentry>
@@ -141,7 +141,7 @@ PostgreSQL documentation
       <term><option>--path=<replaceable>path</replaceable></option></term>
       <listitem>
        <para>
-        Specifies a directory to search for log segment files or a
+        Specifies a directory to search for WAL segment files or a
         directory with a <literal>pg_wal</literal> subdirectory that
         contains such files.  The default is to search in the current
         directory, the <literal>pg_wal</literal> subdirectory of the
@@ -203,7 +203,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         WAL location at which to start reading. The default is to start reading
-        the first valid log record found in the earliest file found.
+        the first valid WAL record found in the earliest file found.
        </para>
       </listitem>
      </varlistentry>
@@ -213,7 +213,7 @@ PostgreSQL documentation
       <term><option>--timeline=<replaceable>timeline</replaceable></option></term>
       <listitem>
        <para>
-        Timeline from which to read log records. The default is to use the
+        Timeline from which to read WAL records. The default is to use the
         value in <replaceable>startseg</replaceable>, if that is specified; otherwise, the
         default is 1.
        </para>

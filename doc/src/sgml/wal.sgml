@@ -297,12 +297,12 @@
     transaction processing. Briefly, <acronym>WAL</acronym>'s central
     concept is that changes to data files (where tables and indexes
     reside) must be written only after those changes have been logged,
-    that is, after log records describing the changes have been flushed
+    that is, after WAL records describing the changes have been flushed
     to permanent storage. If we follow this procedure, we do not need
     to flush data pages to disk on every transaction commit, because we
     know that in the event of a crash we will be able to recover the
     database using the log: any changes that have not been applied to
-    the data pages can be redone from the log records.  (This is
+    the data pages can be redone from the WAL records.  (This is
     roll-forward recovery, also known as REDO.)
    </para>
 
@@ -323,15 +323,15 @@
 
    <para>
     Using <acronym>WAL</acronym> results in a
-    significantly reduced number of disk writes, because only the log
+    significantly reduced number of disk writes, because only the WAL
     file needs to be flushed to disk to guarantee that a transaction is
     committed, rather than every data file changed by the transaction.
-    The log file is written sequentially,
-    and so the cost of syncing the log is much less than the cost of
+    The WAL file is written sequentially,
+    and so the cost of syncing the WAL is much less than the cost of
     flushing the data pages.  This is especially true for servers
     handling many small transactions touching different parts of the data
     store.  Furthermore, when the server is processing many small concurrent
-    transactions, one <function>fsync</function> of the log file may
+    transactions, one <function>fsync</function> of the WAL file may
     suffice to commit many transactions.
    </para>
 
@@ -341,10 +341,10 @@
     linkend="continuous-archiving"/>.  By archiving the WAL data we can support
     reverting to any time instant covered by the available WAL data:
     we simply install a prior physical backup of the database, and
-    replay the WAL log just as far as the desired time.  What's more,
+    replay the WAL just as far as the desired time.  What's more,
     the physical backup doesn't have to be an instantaneous snapshot
     of the database state &mdash; if it is made over some period of time,
-    then replaying the WAL log for that period will fix any internal
+    then replaying the WAL for that period will fix any internal
     inconsistencies.
    </para>
   </sect1>
@@ -497,15 +497,15 @@
    that the heap and index data files have been updated with all
    information written before that checkpoint.  At checkpoint time, all
    dirty data pages are flushed to disk and a special checkpoint record is
-   written to the log file.  (The change records were previously flushed
+   written to the WAL file.  (The change records were previously flushed
    to the <acronym>WAL</acronym> files.)
    In the event of a crash, the crash recovery procedure looks at the latest
-   checkpoint record to determine the point in the log (known as the redo
+   checkpoint record to determine the point in the WAL (known as the redo
    record) from which it should start the REDO operation.  Any changes made to
    data files before that point are guaranteed to be already on disk.
-   Hence, after a checkpoint, log segments preceding the one containing
+   Hence, after a checkpoint, WAL segments preceding the one containing
    the redo record are no longer needed and can be recycled or removed. (When
-   <acronym>WAL</acronym> archiving is being done, the log segments must be
+   <acronym>WAL</acronym> archiving is being done, the WAL segments must be
    archived before being recycled or removed.)
   </para>
 
@@ -544,7 +544,7 @@
    another factor to consider. To ensure data page consistency,
    the first modification of a data page after each checkpoint results in
    logging the entire page content. In that case,
-   a smaller checkpoint interval increases the volume of output to the WAL log,
+   a smaller checkpoint interval increases the volume of output to the WAL,
    partially negating the goal of using a smaller interval,
    and in any case causing more disk I/O.
   </para>
@@ -614,10 +614,10 @@
   <para>
    The number of WAL segment files in <filename>pg_wal</filename> directory depends on
    <varname>min_wal_size</varname>, <varname>max_wal_size</varname> and
-   the amount of WAL generated in previous checkpoint cycles. When old log
+   the amount of WAL generated in previous checkpoint cycles. When old WAL
    segment files are no longer needed, they are removed or recycled (that is,
    renamed to become future segments in the numbered sequence). If, due to a
-   short-term peak of log output rate, <varname>max_wal_size</varname> is
+   short-term peak of WAL output rate, <varname>max_wal_size</varname> is
    exceeded, the unneeded segment files will be removed until the system
    gets back under this limit. Below that limit, the system recycles enough
    WAL files to cover the estimated need until the next checkpoint, and
@@ -650,7 +650,7 @@
    which are similar to checkpoints in normal operation: the server forces
    all its state to disk, updates the <filename>pg_control</filename> file to
    indicate that the already-processed WAL data need not be scanned again,
-   and then recycles any old log segment files in the <filename>pg_wal</filename>
+   and then recycles any old WAL segment files in the <filename>pg_wal</filename>
    directory.
    Restartpoints can't be performed more frequently than checkpoints on the
    primary because restartpoints can only be performed at checkpoint records.
@@ -676,12 +676,12 @@
    insertion) at a time when an exclusive lock is held on affected
    data pages, so the operation needs to be as fast as possible.  What
    is worse, writing <acronym>WAL</acronym> buffers might also force the
-   creation of a new log segment, which takes even more
+   creation of a new WAL segment, which takes even more
    time. Normally, <acronym>WAL</acronym> buffers should be written
    and flushed by an <function>XLogFlush</function> request, which is
    made, for the most part, at transaction commit time to ensure that
    transaction records are flushed to permanent storage. On systems
-   with high log output, <function>XLogFlush</function> requests might
+   with high WAL output, <function>XLogFlush</function> requests might
    not occur often enough to prevent <function>XLogInsertRecord</function>
    from having to do writes.  On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
@@ -724,7 +724,7 @@
    <varname>commit_delay</varname>, so this value is recommended as the
    starting point to use when optimizing for a particular workload.  While
    tuning <varname>commit_delay</varname> is particularly useful when the
-   WAL log is stored on high-latency rotating disks, benefits can be
+   WAL is stored on high-latency rotating disks, benefits can be
    significant even on storage media with very fast sync times, such as
    solid-state drives or RAID arrays with a battery-backed write cache;
    but this should definitely be tested against a representative workload.
@@ -828,16 +828,16 @@
   <para>
    <acronym>WAL</acronym> is automatically enabled; no action is
    required from the administrator except ensuring that the
-   disk-space requirements for the <acronym>WAL</acronym> logs are met,
+   disk-space requirements for the <acronym>WAL</acronym> files are met,
    and that any necessary tuning is done (see <xref
    linkend="wal-configuration"/>).
   </para>
 
   <para>
    <acronym>WAL</acronym> records are appended to the <acronym>WAL</acronym>
-   logs as each new record is written. The insert position is described by
+   files as each new record is written. The insert position is described by
    a Log Sequence Number (<acronym>LSN</acronym>) that is a byte offset into
-   the logs, increasing monotonically with each new record.
+   the WAL, increasing monotonically with each new record.
    <acronym>LSN</acronym> values are returned as the datatype
    <link linkend="datatype-pg-lsn"><type>pg_lsn</type></link>. Values can be
    compared to calculate the volume of <acronym>WAL</acronym> data that
@@ -846,12 +846,12 @@
   </para>
 
   <para>
-   <acronym>WAL</acronym> logs are stored in the directory
+   <acronym>WAL</acronym> files are stored in the directory
    <filename>pg_wal</filename> under the data directory, as a set of
    segment files, normally each 16 MB in size (but the size can be changed
    by altering the <option>--wal-segsize</option> <application>initdb</application> option).  Each segment is
    divided into pages, normally 8 kB each (this size can be changed via the
-   <option>--with-wal-blocksize</option> configure option).  The log record headers
+   <option>--with-wal-blocksize</option> configure option).  The WAL record headers
    are described in <filename>access/xlogrecord.h</filename>; the record
    content is dependent on the type of event that is being logged.  Segment
    files are given ever-increasing numbers as names, starting at
@@ -861,7 +861,7 @@
   </para>
 
   <para>
-   It is advantageous if the log is located on a different disk from the
+   It is advantageous if the WAL is located on a different disk from the
    main database files.  This can be achieved by moving the
    <filename>pg_wal</filename> directory to another location (while the server
    is shut down, of course) and creating a symbolic link from the
@@ -877,19 +877,19 @@
    on the disk.  A power failure in such a situation might lead to
    irrecoverable data corruption.  Administrators should try to ensure
    that disks holding <productname>PostgreSQL</productname>'s
-   <acronym>WAL</acronym> log files do not make such false reports.
+   <acronym>WAL</acronym> files do not make such false reports.
    (See <xref linkend="wal-reliability"/>.)
   </para>
 
   <para>
-   After a checkpoint has been made and the log flushed, the
+   After a checkpoint has been made and the WAL flushed, the
    checkpoint's position is saved in the file
    <filename>pg_control</filename>. Therefore, at the start of recovery,
    the server first reads <filename>pg_control</filename> and
    then the checkpoint record; then it performs the REDO operation by
-   scanning forward from the log location indicated in the checkpoint
+   scanning forward from the WAL location indicated in the checkpoint
    record.  Because the entire content of data pages is saved in the
-   log on the first page modification after a checkpoint (assuming
+   WAL on the first page modification after a checkpoint (assuming
    <xref linkend="guc-full-page-writes"/> is not disabled), all pages
    changed since the checkpoint will be restored to a consistent
    state.
@@ -897,7 +897,7 @@
 
   <para>
    To deal with the case where <filename>pg_control</filename> is
-   corrupt, we should support the possibility of scanning existing log
+   corrupt, we should support the possibility of scanning existing WAL
    segments in reverse order &mdash; newest to oldest &mdash; in order to find the
    latest checkpoint.  This has not been implemented yet.
    <filename>pg_control</filename> is small enough (less than one disk page)

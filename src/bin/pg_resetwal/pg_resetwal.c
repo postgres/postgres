@@ -788,7 +788,7 @@ PrintNewControlValues(void)
 
 	XLogFileName(fname, ControlFile.checkPointCopy.ThisTimeLineID,
 				 newXlogSegNo, WalSegSz);
-	printf(_("First log segment after reset:        %s\n"), fname);
+	printf(_("First WAL segment after reset:        %s\n"), fname);
 
 	if (set_mxid != 0)
 	{

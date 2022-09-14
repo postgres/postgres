@@ -667,7 +667,7 @@ usage(void)
 	printf(_("  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 			 "                         valid names are main, fsm, vm, init\n"));
 	printf(_("  -n, --limit=N          number of records to display\n"));
-	printf(_("  -p, --path=PATH        directory in which to find log segment files or a\n"
+	printf(_("  -p, --path=PATH        directory in which to find WAL segment files or a\n"
 			 "                         directory with a ./pg_wal that contains such files\n"
 			 "                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"));
 	printf(_("  -q, --quiet            do not print any output, except for errors\n"));
@@ -675,7 +675,7 @@ usage(void)
 			 "                         use --rmgr=list to list valid resource manager names\n"));
 	printf(_("  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"));
 	printf(_("  -s, --start=RECPTR     start reading at WAL location RECPTR\n"));
-	printf(_("  -t, --timeline=TLI     timeline from which to read log records\n"
+	printf(_("  -t, --timeline=TLI     timeline from which to read WAL records\n"
 			 "                         (default: 1 or the value used in STARTSEG)\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -w, --fullpage         only show records with a full page write\n"));

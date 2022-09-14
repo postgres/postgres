@@ -1111,7 +1111,7 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
      require that you have enough free space on your system to hold two
      copies of your existing database. If you do not have enough space,
      you should at least save the contents of the cluster's <filename>pg_wal</filename>
-     subdirectory, as it might contain logs which
+     subdirectory, as it might contain WAL files which
      were not archived before the system went down.
     </para>
    </listitem>
@@ -1189,8 +1189,8 @@ SELECT * FROM pg_backup_stop(wait_for_archive => true);
     which tells <productname>PostgreSQL</productname> how to retrieve archived
     WAL file segments.  Like the <varname>archive_command</varname>, this is
     a shell command string.  It can contain <literal>%f</literal>, which is
-    replaced by the name of the desired log file, and <literal>%p</literal>,
-    which is replaced by the path name to copy the log file to.
+    replaced by the name of the desired WAL file, and <literal>%p</literal>,
+    which is replaced by the path name to copy the WAL file to.
     (The path name is relative to the current working directory,
     i.e., the cluster's data directory.)
     Write <literal>%%</literal> if you need to embed an actual <literal>%</literal>
@@ -1478,9 +1478,9 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
      <link linkend="sql-createtablespace"><command>CREATE TABLESPACE</command></link>
      commands are WAL-logged with the literal absolute path, and will
      therefore be replayed as tablespace creations with the same
-     absolute path.  This might be undesirable if the log is being
+     absolute path.  This might be undesirable if the WAL is being
      replayed on a different machine.  It can be dangerous even if the
-     log is being replayed on the same machine, but into a new data
+     WAL is being replayed on the same machine, but into a new data
      directory: the replay will still overwrite the contents of the
      original tablespace.  To avoid potential gotchas of this sort,
      the best practice is to take a new base backup after creating or
@@ -1497,11 +1497,11 @@ archive_command = 'local_backup_script.sh "%p" "%f"'
     we might need to fix partially-written disk pages.  Depending on
     your system hardware and software, the risk of partial writes might
     be small enough to ignore, in which case you can significantly
-    reduce the total volume of archived logs by turning off page
+    reduce the total volume of archived WAL files by turning off page
     snapshots using the <xref linkend="guc-full-page-writes"/>
     parameter.  (Read the notes and warnings in <xref linkend="wal"/>
     before you do so.)  Turning off page snapshots does not prevent
-    use of the logs for PITR operations.  An area for future
+    use of the WAL for PITR operations.  An area for future
     development is to compress archived WAL data by removing
     unnecessary page copies even when <varname>full_page_writes</varname> is
     on.  In the meantime, administrators might wish to reduce the number

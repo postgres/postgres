@@ -4237,7 +4237,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </term>
        <listitem>
        <para>
-        Specifies the minimum size of past log file segments kept in the
+        Specifies the minimum size of past WAL files kept in the
         <filename>pg_wal</filename>
         directory, in case a standby server needs to fetch them for streaming
         replication. If a standby
@@ -4831,7 +4831,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         needs to control the amount of time to wait for new WAL data to be
         available. For example, in archive recovery, it is possible to
         make the recovery more responsive in the detection of a new WAL
-        log file by reducing the value of this parameter. On a system with
+        file by reducing the value of this parameter. On a system with
         low WAL activity, increasing it reduces the amount of requests necessary
         to access WAL archives, something useful for example in cloud
         environments where the number of times an infrastructure is accessed

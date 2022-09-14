@@ -616,7 +616,7 @@ WalReceiverMain(void)
 			if (close(recvFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("could not close log segment %s: %m",
+						 errmsg("could not close WAL segment %s: %m",
 								xlogfname)));
 
 			/*
@@ -930,7 +930,7 @@ XLogWalRcvWrite(char *buf, Size nbytes, XLogRecPtr recptr, TimeLineID tli)
 			errno = save_errno;
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("could not write to log segment %s "
+					 errmsg("could not write to WAL segment %s "
 							"at offset %u, length %lu: %m",
 							xlogfname, startoff, (unsigned long) segbytes)));
 		}
@@ -1042,7 +1042,7 @@ XLogWalRcvClose(XLogRecPtr recptr, TimeLineID tli)
 	if (close(recvFile) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("could not close log segment %s: %m",
+				 errmsg("could not close WAL segment %s: %m",
 						xlogfname)));
 
 	/*

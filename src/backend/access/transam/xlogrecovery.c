@@ -3079,7 +3079,7 @@ ReadRecord(XLogPrefetcher *xlogprefetcher, int emode,
 			XLogFileName(fname, xlogreader->seg.ws_tli, segno,
 						 wal_segment_size);
 			ereport(emode_for_corrupt_record(emode, xlogreader->EndRecPtr),
-					(errmsg("unexpected timeline ID %u in log segment %s, offset %u",
+					(errmsg("unexpected timeline ID %u in WAL segment %s, offset %u",
 							xlogreader->latestPageTLI,
 							fname,
 							offset)));
@@ -3284,13 +3284,13 @@ retry:
 			errno = save_errno;
 			ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
 					(errcode_for_file_access(),
-					 errmsg("could not read from log segment %s, offset %u: %m",
+					 errmsg("could not read from WAL segment %s, offset %u: %m",
 							fname, readOff)));
 		}
 		else
 			ereport(emode_for_corrupt_record(emode, targetPagePtr + reqLen),
 					(errcode(ERRCODE_DATA_CORRUPTED),
-					 errmsg("could not read from log segment %s, offset %u: read %d of %zu",
+					 errmsg("could not read from WAL segment %s, offset %u: read %d of %zu",
 							fname, readOff, r, (Size) XLOG_BLCKSZ)));
 		goto next_record_is_invalid;
 	}
