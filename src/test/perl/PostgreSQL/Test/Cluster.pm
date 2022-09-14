@@ -2780,7 +2780,7 @@ all values '' if not found. Does not differentiate between null and empty string
 for fields, no field is ever undef.
 
 The restart_lsn and confirmed_flush_lsn fields are returned verbatim, and also
-as a 2-list of [highword, lowword] integer. Since we rely on Perl 5.8.8 we can't
+as a 2-list of [highword, lowword] integer. Since we rely on Perl 5.14 we can't
 "use bigint", it's from 5.20, and we can't assume we have Math::Bigint from CPAN
 either.
 

@@ -4,7 +4,6 @@
 
 use strict;
 use warnings;
-use 5.008001;
 
 use Cwd qw(abs_path getcwd);
 use File::Find;
