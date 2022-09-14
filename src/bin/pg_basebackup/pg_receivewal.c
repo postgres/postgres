@@ -45,7 +45,7 @@ static int	verbose = 0;
 static int	compresslevel = 0;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
-static volatile bool time_to_stop = false;
+static volatile sig_atomic_t time_to_stop = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
@@ -673,13 +673,13 @@ StreamLog(void)
 }
 
 /*
- * When sigint is called, just tell the system to exit at the next possible
- * moment.
+ * When SIGINT/SIGTERM are caught, just tell the system to exit at the next
+ * possible moment.
  */
 #ifndef WIN32
 
 static void
-sigint_handler(int signum)
+sigexit_handler(int signum)
 {
 	time_to_stop = true;
 }
@@ -905,7 +905,8 @@ main(int argc, char **argv)
 	 * if one is needed, in GetConnection.)
 	 */
 #ifndef WIN32
-	pqsignal(SIGINT, sigint_handler);
+	pqsignal(SIGINT, sigexit_handler);
+	pqsignal(SIGTERM, sigexit_handler);
 #endif
 
 	/*
