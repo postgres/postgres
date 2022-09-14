@@ -2012,9 +2012,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		if (client_compress->algorithm == PG_COMPRESSION_GZIP)
 		{
 			wal_compress_algorithm = PG_COMPRESSION_GZIP;
-			wal_compress_level =
-				(client_compress->options & PG_COMPRESSION_OPTION_LEVEL)
-				!= 0 ? client_compress->level : 0;
+			wal_compress_level = client_compress->level;
 		}
 		else
 		{
@@ -2023,7 +2021,8 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		}
 
 		StartLogStreamer(xlogstart, starttli, sysidentifier,
-						 wal_compress_algorithm, wal_compress_level);
+						 wal_compress_algorithm,
+						 wal_compress_level);
 	}
 
 	if (serverMajor >= 1500)

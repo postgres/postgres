@@ -22,8 +22,7 @@ typedef enum pg_compress_algorithm
 	PG_COMPRESSION_ZSTD
 } pg_compress_algorithm;
 
-#define PG_COMPRESSION_OPTION_LEVEL			(1 << 0)
-#define PG_COMPRESSION_OPTION_WORKERS		(1 << 1)
+#define PG_COMPRESSION_OPTION_WORKERS		(1 << 0)
 
 typedef struct pg_compress_specification
 {
