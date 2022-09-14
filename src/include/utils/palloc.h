@@ -81,6 +81,28 @@ extern void *repalloc(void *pointer, Size size);
 extern void pfree(void *pointer);
 
 /*
+ * Variants with easier notation and more type safety
+ */
+
+/*
+ * Allocate space for one object of type "type"
+ */
+#define palloc_object(type) ((type *) palloc(sizeof(type)))
+#define palloc0_object(type) ((type *) palloc0(sizeof(type)))
+
+/*
+ * Allocate space for "count" objects of type "type"
+ */
+#define palloc_array(type, count) ((type *) palloc(sizeof(type) * (count)))
+#define palloc0_array(type, count) ((type *) palloc0(sizeof(type) * (count)))
+
+/*
+ * Change size of allocation pointed to by "pointer" to have space for "count"
+ * objects of type "type"
+ */
+#define repalloc_array(pointer, type, count) ((type *) repalloc(pointer, sizeof(type) * (count)))
+
+/*
  * The result of palloc() is always word-aligned, so we can skip testing
  * alignment of the pointer when deciding which MemSet variant to use.
  * Note that this variant does not offer any advantage, and should not be
