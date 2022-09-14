@@ -78,13 +78,11 @@ struct PullFilterOps
  */
 MBuf	   *mbuf_create(int len);
 MBuf	   *mbuf_create_from_data(uint8 *data, int len);
-int			mbuf_tell(MBuf *mbuf);
 int			mbuf_avail(MBuf *mbuf);
 int			mbuf_size(MBuf *mbuf);
 int			mbuf_grab(MBuf *mbuf, int len, uint8 **data_p);
 int			mbuf_steal_data(MBuf *mbuf, uint8 **data_p);
 int			mbuf_append(MBuf *dst, const uint8 *buf, int cnt);
-int			mbuf_rewind(MBuf *mbuf);
 int			mbuf_free(MBuf *mbuf);
 
 /*

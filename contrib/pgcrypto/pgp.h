@@ -244,7 +244,6 @@ int			pgp_free(PGP_Context *ctx);
 int			pgp_get_digest_code(const char *name);
 int			pgp_get_cipher_code(const char *name);
 const char *pgp_get_digest_name(int code);
-const char *pgp_get_cipher_name(int code);
 
 int			pgp_set_cipher_algo(PGP_Context *ctx, const char *name);
 int			pgp_set_s2k_mode(PGP_Context *ctx, int type);
