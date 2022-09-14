@@ -107,9 +107,7 @@ bbstreamer_gzip_writer_new(char *pathname, FILE *file,
 			pg_fatal("could not open output file: %m");
 	}
 
-	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0 &&
-		gzsetparams(streamer->gzfile, compress->level,
-					Z_DEFAULT_STRATEGY) != Z_OK)
+	if (gzsetparams(streamer->gzfile, compress->level, Z_DEFAULT_STRATEGY) != Z_OK)
 		pg_fatal("could not set compression level %d: %s",
 				 compress->level, get_gz_error(streamer->gzfile));
 

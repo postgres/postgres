@@ -2752,9 +2752,13 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
           <para>
            The <literal>level</literal> keyword sets the compression level.
            For <literal>gzip</literal> the compression level should be an
-           integer between 1 and 9, for <literal>lz4</literal> an integer
-           between 1 and 12, and for <literal>zstd</literal> an integer
-           between 1 and 22.
+           integer between <literal>1</literal> and <literal>9</literal>
+           (default <literal>Z_DEFAULT_COMPRESSION</literal> or
+           <literal>-1</literal>), for <literal>lz4</literal> an integer
+           between 1 and 12 (default <literal>0</literal> for fast compression
+           mode), and for <literal>zstd</literal> an integer between
+           <literal>1</literal> and <literal>22</literal> (default
+           <literal>ZSTD_CLEVEL_DEFAULT</literal> or <literal>3</literal>).
           </para>
 
           <para>

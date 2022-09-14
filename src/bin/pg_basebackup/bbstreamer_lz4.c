@@ -88,8 +88,7 @@ bbstreamer_lz4_compressor_new(bbstreamer *next, pg_compress_specification *compr
 	prefs = &streamer->prefs;
 	memset(prefs, 0, sizeof(LZ4F_preferences_t));
 	prefs->frameInfo.blockSizeID = LZ4F_max256KB;
-	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
-		prefs->compressionLevel = compress->level;
+	prefs->compressionLevel = compress->level;
 
 	ctxError = LZ4F_createCompressionContext(&streamer->cctx, LZ4F_VERSION);
 	if (LZ4F_isError(ctxError))

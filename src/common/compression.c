@@ -27,6 +27,13 @@
 #include "postgres_fe.h"
 #endif
 
+#ifdef USE_ZSTD
+#include <zstd.h>
+#endif
+#ifdef HAVE_LIBZ
+#include <zlib.h>
+#endif
+
 #include "common/compression.h"
 
 static int	expect_integer_value(char *keyword, char *value,
@@ -88,6 +95,9 @@ get_compress_algorithm_name(pg_compress_algorithm algorithm)
  * Note, however, even if there's no parse error, the string might not make
  * sense: e.g. for gzip, level=12 is not sensible, but it does parse OK.
  *
+ * The compression level is assigned by default if not directly specified
+ * by the specification.
+ *
  * Use validate_compress_specification() to find out whether a compression
  * specification is semantically sensible.
  */
@@ -101,8 +111,45 @@ parse_compress_specification(pg_compress_algorithm algorithm, char *specificatio
 	/* Initial setup of result object. */
 	result->algorithm = algorithm;
 	result->options = 0;
-	result->level = -1;
 	result->parse_error = NULL;
+
+	/*
+	 * Assign a default level depending on the compression method.  This may
+	 * be enforced later.
+	 */
+	switch (result->algorithm)
+	{
+		case PG_COMPRESSION_NONE:
+			result->level = 0;
+			break;
+		case PG_COMPRESSION_LZ4:
+#ifdef USE_LZ4
+			result->level = 0;	/* fast compression mode */
+#else
+			result->parse_error =
+				psprintf(_("this build does not support compression with %s"),
+						 "LZ4");
+#endif
+			break;
+		case PG_COMPRESSION_ZSTD:
+#ifdef USE_ZSTD
+			result->level = ZSTD_CLEVEL_DEFAULT;
+#else
+			result->parse_error =
+				psprintf(_("this build does not support compression with %s"),
+						 "ZSTD");
+#endif
+			break;
+		case PG_COMPRESSION_GZIP:
+#ifdef HAVE_LIBZ
+			result->level = Z_DEFAULT_COMPRESSION;
+#else
+			result->parse_error =
+				psprintf(_("this build does not support compression with %s"),
+						 "gzip");
+#endif
+			break;
+	}
 
 	/* If there is no specification, we're done already. */
 	if (specification == NULL)
@@ -113,7 +160,6 @@ parse_compress_specification(pg_compress_algorithm algorithm, char *specificatio
 	if (specification != bare_level_endp && *bare_level_endp == '\0')
 	{
 		result->level = bare_level;
-		result->options |= PG_COMPRESSION_OPTION_LEVEL;
 		return;
 	}
 
@@ -175,7 +221,11 @@ parse_compress_specification(pg_compress_algorithm algorithm, char *specificatio
 		if (strcmp(keyword, "level") == 0)
 		{
 			result->level = expect_integer_value(keyword, value, result);
-			result->options |= PG_COMPRESSION_OPTION_LEVEL;
+
+			/*
+			 * No need to set a flag in "options", there is a default level
+			 * set at least thanks to the logic above.
+			 */
 		}
 		else if (strcmp(keyword, "workers") == 0)
 		{
@@ -249,35 +299,48 @@ expect_integer_value(char *keyword, char *value, pg_compress_specification *resu
 char *
 validate_compress_specification(pg_compress_specification *spec)
 {
+	int			min_level = 1;
+	int			max_level = 1;
+	int			default_level = 0;
+
 	/* If it didn't even parse OK, it's definitely no good. */
 	if (spec->parse_error != NULL)
 		return spec->parse_error;
 
 	/*
-	 * If a compression level was specified, check that the algorithm expects
-	 * a compression level and that the level is within the legal range for
-	 * the algorithm.
+	 * Check that the algorithm expects a compression level and it is within
+	 * the legal range for the algorithm.
 	 */
-	if ((spec->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
+	switch (spec->algorithm)
 	{
-		int			min_level = 1;
-		int			max_level;
-
-		if (spec->algorithm == PG_COMPRESSION_GZIP)
+		case PG_COMPRESSION_GZIP:
 			max_level = 9;
-		else if (spec->algorithm == PG_COMPRESSION_LZ4)
+#ifdef HAVE_LIBZ
+			default_level = Z_DEFAULT_COMPRESSION;
+#endif
+			break;
+		case PG_COMPRESSION_LZ4:
 			max_level = 12;
-		else if (spec->algorithm == PG_COMPRESSION_ZSTD)
+			default_level = 0;	/* fast mode */
+			break;
+		case PG_COMPRESSION_ZSTD:
 			max_level = 22;
-		else
-			return psprintf(_("compression algorithm \"%s\" does not accept a compression level"),
-							get_compress_algorithm_name(spec->algorithm));
-
-		if (spec->level < min_level || spec->level > max_level)
-			return psprintf(_("compression algorithm \"%s\" expects a compression level between %d and %d"),
-							get_compress_algorithm_name(spec->algorithm),
-							min_level, max_level);
+#ifdef USE_ZSTD
+			default_level = ZSTD_CLEVEL_DEFAULT;
+#endif
+			break;
+		case PG_COMPRESSION_NONE:
+			if (spec->level != 0)
+				return psprintf(_("compression algorithm \"%s\" does not accept a compression level"),
+								get_compress_algorithm_name(spec->algorithm));
+			break;
 	}
+
+	if ((spec->level < min_level || spec->level > max_level) &&
+		spec->level != default_level)
+		return psprintf(_("compression algorithm \"%s\" expects a compression level between %d and %d (default at %d)"),
+						get_compress_algorithm_name(spec->algorithm),
+						min_level, max_level, default_level);
 
 	/*
 	 * Of the compression algorithms that we currently support, only zstd

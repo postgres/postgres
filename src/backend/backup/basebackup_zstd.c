@@ -96,14 +96,11 @@ bbsink_zstd_begin_backup(bbsink *sink)
 	if (!mysink->cctx)
 		elog(ERROR, "could not create zstd compression context");
 
-	if ((compress->options & PG_COMPRESSION_OPTION_LEVEL) != 0)
-	{
-		ret = ZSTD_CCtx_setParameter(mysink->cctx, ZSTD_c_compressionLevel,
-									 compress->level);
-		if (ZSTD_isError(ret))
-			elog(ERROR, "could not set zstd compression level to %d: %s",
-				 compress->level, ZSTD_getErrorName(ret));
-	}
+	ret = ZSTD_CCtx_setParameter(mysink->cctx, ZSTD_c_compressionLevel,
+								 compress->level);
+	if (ZSTD_isError(ret))
+		elog(ERROR, "could not set zstd compression level to %d: %s",
+			 compress->level, ZSTD_getErrorName(ret));
 
 	if ((compress->options & PG_COMPRESSION_OPTION_WORKERS) != 0)
 	{

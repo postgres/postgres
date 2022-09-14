@@ -86,71 +86,81 @@ $node->restart;
 # Now that we have a server that supports replication commands, test whether
 # certain invalid compression commands fail on the client side with client-side
 # compression and on the server side with server-side compression.
-my $client_fails = 'pg_basebackup: error: ';
-my $server_fails =
-  'pg_basebackup: error: could not initiate base backup: ERROR:  ';
-my @compression_failure_tests = (
-	[
-		'extrasquishy',
-		'unrecognized compression algorithm "extrasquishy"',
-		'failure on invalid compression algorithm'
-	],
-	[
-		'gzip:',
-		'invalid compression specification: found empty string where a compression option was expected',
-		'failure on empty compression options list'
-	],
-	[
-		'gzip:thunk',
-		'invalid compression specification: unknown compression option "thunk"',
-		'failure on unknown compression option'
-	],
-	[
-		'gzip:level',
-		'invalid compression specification: compression option "level" requires a value',
-		'failure on missing compression level'
-	],
-	[
-		'gzip:level=',
-		'invalid compression specification: value for compression option "level" must be an integer',
-		'failure on empty compression level'
-	],
-	[
-		'gzip:level=high',
-		'invalid compression specification: value for compression option "level" must be an integer',
-		'failure on non-numeric compression level'
-	],
-	[
-		'gzip:level=236',
-		'invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9',
-		'failure on out-of-range compression level'
-	],
-	[
-		'gzip:level=9,',
-		'invalid compression specification: found empty string where a compression option was expected',
-		'failure on extra, empty compression option'
-	],
-	[
-		'gzip:workers=3',
-		'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
-		'failure on worker count for gzip'
-	],);
-for my $cft (@compression_failure_tests)
+SKIP:
 {
-	my $cfail = quotemeta($client_fails . $cft->[1]);
-	my $sfail = quotemeta($server_fails . $cft->[1]);
-	$node->command_fails_like(
-		[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', $cft->[0] ],
-		qr/$cfail/,
-		'client ' . $cft->[2]);
-	$node->command_fails_like(
+	skip "postgres was not built with ZLIB support", 6
+	  if (!check_pg_config("#define HAVE_LIBZ 1"));
+
+	my $client_fails = 'pg_basebackup: error: ';
+	my $server_fails =
+	  'pg_basebackup: error: could not initiate base backup: ERROR:  ';
+	my @compression_failure_tests = (
 		[
-			'pg_basebackup',   '-D',
-			"$tempdir/backup", '--compress',
-			'server-' . $cft->[0]
+			'extrasquishy',
+			'unrecognized compression algorithm "extrasquishy"',
+			'failure on invalid compression algorithm'
 		],
-		qr/$sfail/,
-		'server ' . $cft->[2]);
+		[
+			'gzip:',
+			'invalid compression specification: found empty string where a compression option was expected',
+			'failure on empty compression options list'
+		],
+		[
+			'gzip:thunk',
+			'invalid compression specification: unknown compression option "thunk"',
+			'failure on unknown compression option'
+		],
+		[
+			'gzip:level',
+			'invalid compression specification: compression option "level" requires a value',
+			'failure on missing compression level'
+		],
+		[
+			'gzip:level=',
+			'invalid compression specification: value for compression option "level" must be an integer',
+			'failure on empty compression level'
+		],
+		[
+			'gzip:level=high',
+			'invalid compression specification: value for compression option "level" must be an integer',
+			'failure on non-numeric compression level'
+		],
+		[
+			'gzip:level=236',
+			'invalid compression specification: compression algorithm "gzip" expects a compression level between 1 and 9',
+			'failure on out-of-range compression level'
+		],
+		[
+			'gzip:level=9,',
+			'invalid compression specification: found empty string where a compression option was expected',
+			'failure on extra, empty compression option'
+		],
+		[
+			'gzip:workers=3',
+			'invalid compression specification: compression algorithm "gzip" does not accept a worker count',
+			'failure on worker count for gzip'
+		],);
+	for my $cft (@compression_failure_tests)
+	{
+		my $cfail = quotemeta($client_fails . $cft->[1]);
+		my $sfail = quotemeta($server_fails . $cft->[1]);
+		$node->command_fails_like(
+			[
+				'pg_basebackup',   '-D',
+				"$tempdir/backup", '--compress',
+				$cft->[0]
+			],
+			qr/$cfail/,
+			'client ' . $cft->[2]);
+		$node->command_fails_like(
+			[
+				'pg_basebackup',   '-D',
+				"$tempdir/backup", '--compress',
+				'server-' . $cft->[0]
+			],
+			qr/$sfail/,
+			'server ' . $cft->[2]);
+	}
 }
 
 # Write some files to test that they are not copied.
