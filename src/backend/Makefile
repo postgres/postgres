@@ -153,12 +153,7 @@ submake-utils-headers:
 
 .PHONY: generated-headers
 
-generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-nodes-headers submake-utils-headers
-
-$(top_builddir)/src/include/parser/gram.h: parser/gram.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
+generated-headers: $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-nodes-headers submake-utils-headers
 
 $(top_builddir)/src/include/storage/lwlocknames.h: storage/lmgr/lwlocknames.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \

@@ -22,7 +22,7 @@
 #include "postgres.h"
 
 #include "mb/pg_wchar.h"
-#include "parser/gramparse.h"
+#include "gramparse.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
 

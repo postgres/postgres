@@ -125,7 +125,6 @@ do
 	test "$f" = contrib/cube/cubeparse.h && continue
 	test "$f" = contrib/seg/segparse.h && continue
 	test "$f" = src/backend/bootstrap/bootparse.h && continue
-	test "$f" = src/include/parser/gram.h && continue
 	test "$f" = src/backend/parser/gram.h && continue
 	test "$f" = src/backend/replication/repl_gram.h && continue
 	test "$f" = src/backend/replication/syncrep_gram.h && continue

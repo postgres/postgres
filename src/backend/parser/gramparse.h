@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * src/include/parser/gramparse.h
+ * src/backend/parser/gramparse.h
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * NB: include gram.h only AFTER including scanner.h, because scanner.h
  * is what #defines YYLTYPE.
  */
-#include "parser/gram.h"
+#include "gram.h"
 
 /*
  * The YY_EXTRA data that a flex scanner allows us to pass around.  Private
