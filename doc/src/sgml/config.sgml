@@ -5056,7 +5056,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </term>
       <listitem>
        <para>
-        Enables or disables reordering of keys in <literal>GROUP BY</literal>
+        Enables or disables reordering of keys in a <literal>GROUP BY</literal>
         clause. The default is <literal>on</literal>.
        </para>
       </listitem>
