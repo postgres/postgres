@@ -34,6 +34,7 @@ test: fk-deadlock2
 test: fk-partitioned-1
 test: fk-partitioned-2
 test: fk-snapshot
+test: subxid-overflow
 test: eval-plan-qual
 test: eval-plan-qual-trigger
 test: lock-update-delete
