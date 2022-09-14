@@ -850,7 +850,7 @@ read_post_opts(void)
  * waiting for the server to start up, the server launch is aborted.
  */
 static void
-trap_sigint_during_startup(int sig)
+trap_sigint_during_startup(SIGNAL_ARGS)
 {
 	if (postmasterPID != -1)
 	{
@@ -863,8 +863,8 @@ trap_sigint_during_startup(int sig)
 	 * Clear the signal handler, and send the signal again, to terminate the
 	 * process as normal.
 	 */
-	pqsignal(SIGINT, SIG_DFL);
-	raise(SIGINT);
+	pqsignal(postgres_signal_arg, SIG_DFL);
+	raise(postgres_signal_arg);
 }
 
 static char *

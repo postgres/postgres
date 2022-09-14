@@ -80,7 +80,7 @@ typedef struct XLogDumpConfig
 #ifndef WIN32
 
 static void
-sigint_handler(int signum)
+sigint_handler(SIGNAL_ARGS)
 {
 	time_to_stop = true;
 }

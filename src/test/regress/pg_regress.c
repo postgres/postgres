@@ -303,12 +303,12 @@ remove_temp(void)
  * Signal handler that calls remove_temp() and reraises the signal.
  */
 static void
-signal_remove_temp(int signum)
+signal_remove_temp(SIGNAL_ARGS)
 {
 	remove_temp();
 
-	pqsignal(signum, SIG_DFL);
-	raise(signum);
+	pqsignal(postgres_signal_arg, SIG_DFL);
+	raise(postgres_signal_arg);
 }
 
 /*

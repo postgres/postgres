@@ -268,7 +268,7 @@ static void load_plpgsql(FILE *cmdfd);
 static void vacuum_db(FILE *cmdfd);
 static void make_template0(FILE *cmdfd);
 static void make_postgres(FILE *cmdfd);
-static void trapsig(int signum);
+static void trapsig(SIGNAL_ARGS);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
 static char *escape_quotes_bki(const char *src);
@@ -1848,10 +1848,10 @@ make_postgres(FILE *cmdfd)
  * So this will need some testing on Windows.
  */
 static void
-trapsig(int signum)
+trapsig(SIGNAL_ARGS)
 {
 	/* handle systems that reset the handler, like Windows (grr) */
-	pqsignal(signum, trapsig);
+	pqsignal(postgres_signal_arg, trapsig);
 	caught_signal = true;
 }
 

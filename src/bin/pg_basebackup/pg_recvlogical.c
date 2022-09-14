@@ -654,7 +654,7 @@ error:
  * possible moment.
  */
 static void
-sigexit_handler(int signum)
+sigexit_handler(SIGNAL_ARGS)
 {
 	time_to_abort = true;
 }
@@ -663,7 +663,7 @@ sigexit_handler(int signum)
  * Trigger the output file to be reopened.
  */
 static void
-sighup_handler(int signum)
+sighup_handler(SIGNAL_ARGS)
 {
 	output_reopen = true;
 }

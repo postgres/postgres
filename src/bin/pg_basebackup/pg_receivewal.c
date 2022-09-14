@@ -679,7 +679,7 @@ StreamLog(void)
 #ifndef WIN32
 
 static void
-sigexit_handler(int signum)
+sigexit_handler(SIGNAL_ARGS)
 {
 	time_to_stop = true;
 }
