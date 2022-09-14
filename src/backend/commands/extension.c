@@ -1215,13 +1215,20 @@ identify_update_path(ExtensionControlFile *control,
 	/* Find shortest path */
 	result = find_update_path(evi_list, evi_start, evi_target, false, false);
 
-	if (result == NIL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("extension \"%s\" has no update path from version \"%s\" to version \"%s\"",
-						control->name, oldVersion, newVersion)));
+	if (result != NIL)
+		return result;
 
-	return result;
+	/* Find wildcard path (TODO: if allowed by control file) */
+	evi_start = get_ext_ver_info("%", &evi_list);
+	result = find_update_path(evi_list, evi_start, evi_target, false, false);
+
+	if (result != NIL)
+		return result;
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("extension \"%s\" has no update path from version \"%s\" to version \"%s\"",
+					control->name, oldVersion, newVersion)));
 }
 
 /*
