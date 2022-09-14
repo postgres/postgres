@@ -703,7 +703,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 			return NULL;
 
 		/* Turn off compression for header */
-		if (deflateParams(tar_data->zp, 0, 0) != Z_OK)
+		if (deflateParams(tar_data->zp, 0, Z_DEFAULT_STRATEGY) != Z_OK)
 		{
 			tar_set_error("could not change compression parameters");
 			return NULL;
@@ -741,7 +741,8 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 			return NULL;
 
 		/* Re-enable compression for the rest of the file */
-		if (deflateParams(tar_data->zp, tar_data->compression, 0) != Z_OK)
+		if (deflateParams(tar_data->zp, tar_data->compression,
+						  Z_DEFAULT_STRATEGY) != Z_OK)
 		{
 			tar_set_error("could not change compression parameters");
 			return NULL;
@@ -955,7 +956,7 @@ tar_close(Walfile f, WalCloseMethod method)
 	else
 	{
 		/* Turn off compression */
-		if (deflateParams(tar_data->zp, 0, 0) != Z_OK)
+		if (deflateParams(tar_data->zp, 0, Z_DEFAULT_STRATEGY) != Z_OK)
 		{
 			tar_set_error("could not change compression parameters");
 			return -1;
@@ -966,7 +967,8 @@ tar_close(Walfile f, WalCloseMethod method)
 			return -1;
 
 		/* Turn compression back on */
-		if (deflateParams(tar_data->zp, tar_data->compression, 0) != Z_OK)
+		if (deflateParams(tar_data->zp, tar_data->compression,
+						  Z_DEFAULT_STRATEGY) != Z_OK)
 		{
 			tar_set_error("could not change compression parameters");
 			return -1;
