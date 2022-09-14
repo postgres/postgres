@@ -61,15 +61,22 @@ ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
 ALL_IMAGES := $(wildcard $(srcdir)/images/*.svg)
 
 
+# Run validation only once, common to all subsequent targets.  While
+# we're at it, also resolve all entities (that is, copy all included
+# files into one big file).  This helps tools that don't understand
+# vpath builds (such as dbtoepub).
+postgres-full.xml: postgres.sgml $(ALLSGML)
+	$(XMLLINT) $(XMLINCLUDE) --output $@ --noent --valid $<
+
+
 ##
 ## Man pages
 ##
 
 man distprep-man: man-stamp
 
-man-stamp: stylesheet-man.xsl postgres.sgml $(ALLSGML)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
-	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $(wordlist 1,2,$^)
+man-stamp: stylesheet-man.xsl postgres-full.xml
+	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_MAN_FLAGS) $^
 	touch $@
 
 
@@ -117,7 +124,7 @@ INSTALL.html: %.html : stylesheet-text.xsl %.xml
 	$(XMLLINT) --noout --valid $*.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $^ >$@
 
-INSTALL.xml: standalone-profile.xsl standalone-install.xml postgres.sgml $(ALLSGML)
+INSTALL.xml: standalone-profile.xsl standalone-install.xml postgres-full.xml
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) --xinclude $(wordlist 1,2,$^) >$@
 
 
@@ -131,8 +138,7 @@ endif
 
 html: html-stamp
 
-html-stamp: stylesheet.xsl postgres.sgml $(ALLSGML) $(ALL_IMAGES)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
+html-stamp: stylesheet.xsl postgres-full.xml $(ALL_IMAGES)
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) $(wordlist 1,2,$^)
 	cp $(ALL_IMAGES) html/
 	cp $(srcdir)/stylesheet.css html/
@@ -140,16 +146,14 @@ html-stamp: stylesheet.xsl postgres.sgml $(ALLSGML) $(ALL_IMAGES)
 
 htmlhelp: htmlhelp-stamp
 
-htmlhelp-stamp: stylesheet-hh.xsl postgres.sgml $(ALLSGML) $(ALL_IMAGES)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
+htmlhelp-stamp: stylesheet-hh.xsl postgres-full.xml $(ALL_IMAGES)
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(wordlist 1,2,$^)
 	cp $(ALL_IMAGES) htmlhelp/
 	cp $(srcdir)/stylesheet.css htmlhelp/
 	touch $@
 
 # single-page HTML
-postgres.html: stylesheet-html-nochunk.xsl postgres.sgml $(ALLSGML) $(ALL_IMAGES)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
+postgres.html: stylesheet-html-nochunk.xsl postgres-full.xml $(ALL_IMAGES)
 	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_HTML_FLAGS) -o $@ $(wordlist 1,2,$^)
 
 # single-page text
@@ -166,13 +170,11 @@ postgres.pdf:
 
 XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 
-%-A4.fo: stylesheet-fo.xsl %.sgml $(ALLSGML)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
-	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type A4 -o $@ $(wordlist 1,2,$^)
+%-A4.fo: stylesheet-fo.xsl %-full.xml
+	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type A4 -o $@ $^
 
-%-US.fo: stylesheet-fo.xsl %.sgml $(ALLSGML)
-	$(XMLLINT) $(XMLINCLUDE) --noout --valid $(word 2,$^)
-	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type USletter -o $@ $(wordlist 1,2,$^)
+%-US.fo: stylesheet-fo.xsl %-full.xml
+	$(XSLTPROC) $(XMLINCLUDE) $(XSLTPROCFLAGS) $(XSLTPROC_FO_FLAGS) --stringparam paper.type USletter -o $@ $^
 
 %.pdf: %.fo $(ALL_IMAGES)
 	$(FOP) -fo $< -pdf $@
@@ -183,8 +185,11 @@ XSLTPROC_FO_FLAGS += --stringparam img.src.path '$(srcdir)/'
 ##
 
 epub: postgres.epub
-postgres.epub: postgres.sgml $(ALLSGML) $(ALL_IMAGES)
-	$(XMLLINT) --noout --valid $<
+postgres.epub: postgres-full.xml $(ALL_IMAGES)
+ifeq ($(vpath_build),yes)
+	$(MKDIR_P) images
+	cp $(ALL_IMAGES) images/
+endif
 	$(DBTOEPUB) -o $@ $<
 
 
@@ -196,8 +201,7 @@ DB2X_TEXIXML = db2x_texixml
 DB2X_XSLTPROC = db2x_xsltproc
 MAKEINFO = makeinfo
 
-%.texixml: %.sgml $(ALLSGML)
-	$(XMLLINT) --noout --valid $<
+%.texixml: %-full.xml
 	$(DB2X_XSLTPROC) -s texi -g output-file=$(basename $@) $< -o $@
 
 %.texi: %.texixml
@@ -284,6 +288,7 @@ check-tabs:
 # This allows removing some files from the distribution tarballs while
 # keeping the dependencies satisfied.
 .SECONDARY: $(GENERATED_SGML)
+.SECONDARY: postgres-full.xml
 .SECONDARY: INSTALL.html INSTALL.xml
 .SECONDARY: postgres-A4.fo postgres-US.fo
 
@@ -297,6 +302,7 @@ clean:
 	rm -f *.fo *.pdf
 # generated SGML files
 	rm -f $(GENERATED_SGML)
+	rm -f postgres-full.xml
 # HTML Help
 	rm -rf htmlhelp/ htmlhelp-stamp
 # EPUB
