@@ -578,7 +578,7 @@ rewriteRuleAction(Query *parsetree,
 		if (sub_action->hasModifyingCTE && rule_action != sub_action)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("INSERT...SELECT rule actions are not supported for queries having data-modifying statements in WITH")));
+					 errmsg("INSERT ... SELECT rule actions are not supported for queries having data-modifying statements in WITH")));
 	}
 
 	/*
