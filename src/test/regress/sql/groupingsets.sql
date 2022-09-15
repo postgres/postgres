@@ -477,4 +477,11 @@ explain (costs off)
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
 select (select grouping(v1)) from (values ((select 1))) v(v1) group by v1;
 
+-- check that we don't pull up when a phrel-less PHV would result
+explain (verbose, costs off)
+select ss.f from int4_tbl as i4 cross join lateral (select i4.f1 as f) as ss
+group by cube(ss.f) order by 1;
+select ss.f from int4_tbl as i4 cross join lateral (select i4.f1 as f) as ss
+group by cube(ss.f) order by 1;
+
 -- end
