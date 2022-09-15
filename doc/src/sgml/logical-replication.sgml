@@ -1093,89 +1093,60 @@ test_sub=# SELECT * FROM child ORDER BY a;
   <title>Column Lists</title>
 
   <para>
-   By default, all columns of a published table will be replicated to the
-   appropriate subscribers. The subscriber table must have at least all the
-   columns of the published table. However, if a
-   <firstterm>column list</firstterm> is specified then only the columns named
-   in the list will be replicated. This means the subscriber-side table only
-   needs to have those columns named by the column list. A user might choose to
-   use column lists for behavioral, security or performance reasons.
+   Each publication can optionally specify which columns of each table are
+   replicated to subscribers. The table on the subscriber side must have at
+   least all the columns that are published. If no column list is specified,
+   then all columns in the publisher are replicated.
+   See <xref linkend="sql-createpublication"/> for details on the syntax.
   </para>
 
-  <sect2 id="logical-replication-col-list-rules">
-   <title>Column List Rules</title>
+  <para>
+   The choice of columns can be based on behavioral or performance reasons.
+   However, do not rely on this feature for security: a malicious subscriber
+   is able to obtain data from columns that are not specifically
+   published.  If security is a consideration, protections can be applied
+   at the publisher side.
+  </para>
 
-   <para>
-    A column list is specified per table following the table name, and enclosed
-    by parentheses. See <xref linkend="sql-createpublication"/> for details.
-   </para>
+  <para>
+   If no column list is specified, any columns added later are automatically
+   replicated. This means that having a column list which names all columns
+   is not the same as having no column list at all.
+  </para>
 
-   <para>
-    When specifying a column list, the order of columns is not important. If no
-    column list is specified, all columns of the table are replicated through
-    this publication, including any columns added later. This means a column
-    list which names all columns is not quite the same as having no column list
-    at all. For example, if additional columns are added to the table then only
-    those named columns mentioned in the column list will continue to be
-    replicated.
-   </para>
+  <para>
+   A column list can contain only simple column references.  The order
+   of columns in the list is not preserved.
+  </para>
 
-   <para>
-    Column lists have no effect for <literal>TRUNCATE</literal> command.
-   </para>
+  <para>
+   For partitioned tables, the publication parameter
+   <literal>publish_via_partition_root</literal> determines which column list
+   is used. If <literal>publish_via_partition_root</literal> is
+   <literal>true</literal>, the root partitioned table's column list is used.
+   Otherwise, if <literal>publish_via_partition_root</literal> is
+   <literal>false</literal> (the default), each partition's column list is used.
+  </para>
 
-  </sect2>
+  <para>
+   If a publication publishes <command>UPDATE</command> or
+   <command>DELETE</command> operations, any column list must include the
+   table's replica identity columns (see
+   <xref linkend="sql-altertable-replica-identity"/>).
+   If a publication publishes only <command>INSERT</command> operations, then
+   the column list may omit replica identity columns.
+  </para>
 
-  <sect2 id="logical-replication-col-list-restrictions">
-   <title>Column List Restrictions</title>
+  <para>
+   Column lists have no effect for the <literal>TRUNCATE</literal> command.
+  </para>
 
-   <para>
-    A column list can contain only simple column references.
-   </para>
-
-   <para>
-    If a publication publishes <command>UPDATE</command> or
-    <command>DELETE</command> operations, any column list must include the
-    table's replica identity columns (see
-    <xref linkend="sql-altertable-replica-identity"/>).
-    If a publication publishes only <command>INSERT</command> operations, then
-    the column list is arbitrary and may omit some replica identity columns.
-   </para>
-
-  </sect2>
-
-  <sect2 id="logical-replication-col-list-partitioned">
-   <title>Partitioned Tables</title>
-
-   <para>
-    For partitioned tables, the publication parameter
-    <literal>publish_via_partition_root</literal> determines which column list
-    is used. If <literal>publish_via_partition_root</literal> is
-    <literal>true</literal>, the root partitioned table's column list is used.
-    Otherwise, if <literal>publish_via_partition_root</literal> is
-    <literal>false</literal> (default), each partition's column list is used.
-   </para>
-
-  </sect2>
-
-  <sect2 id="logical-replication-col-list-initial-data-sync">
-   <title>Initial Data Synchronization</title>
-
-   <para>
-    If the subscription requires copying pre-existing table data and a
-    publication specifies a column list, only data from those columns will be
-    copied.
-   </para>
-
-   <note>
-    <para>
-     If the subscriber is in a release prior to 15, copy pre-existing data
-     doesn't use column lists even if they are defined in the publication.
-     This is because old releases can only copy the entire table data.
-    </para>
-   </note>
-
-  </sect2>
+  <para>
+   During initial data synchronization, only the published columns are
+   copied.  However, if the subscriber is from a release prior to 15, then
+   all the columns in the table are copied during initial data synchronization,
+   ignoring any column lists.
+  </para>
 
   <sect2 id="logical-replication-col-list-combining">
    <title>Combining Multiple Column Lists</title>
@@ -1192,12 +1163,6 @@ test_sub=# SELECT * FROM child ORDER BY a;
      the column list or drop the problematic publication using
      <literal>ALTER SUBSCRIPTION ... DROP PUBLICATION</literal> and then add it
      back after adjusting the column list.
-    </para>
-    <para>
-     Background: The main purpose of the column list feature is to allow
-     statically different table shapes on publisher and subscriber, or hide
-     sensitive column data. In both cases, it doesn't seem to make sense to
-     combine column lists.
     </para>
    </warning>
 
