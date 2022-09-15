@@ -23,6 +23,7 @@ objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 
 ifeq ($(with_llvm), yes)
 objfiles.txt: $(patsubst %.o,%.bc, $(OBJS))
+$(patsubst %.o,%.bc, $(OBJS)): $(OBJS)
 endif
 
 # make function to expand objfiles.txt contents
