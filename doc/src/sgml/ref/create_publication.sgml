@@ -94,7 +94,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
       effect on <literal>TRUNCATE</literal> commands. See
       <xref linkend="logical-replication-col-lists"/> for details about column
       lists.
-</para>
+     </para>
 
      <para>
       Only persistent base tables and partitioned tables can be part of a
