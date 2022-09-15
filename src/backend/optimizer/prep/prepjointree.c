@@ -83,6 +83,7 @@ static void make_setop_translation_list(Query *query, Index newvarno,
 							List **translated_vars);
 static bool is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 				   JoinExpr *lowest_outer_join,
+				   bool will_need_phvs,
 				   bool deletion_ok);
 static Node *pull_up_simple_values(PlannerInfo *root, Node *jtnode,
 					  RangeTblEntry *rte);
@@ -691,7 +692,11 @@ pull_up_subqueries_recurse(PlannerInfo *root, Node *jtnode,
 		 */
 		if (rte->rtekind == RTE_SUBQUERY &&
 			is_simple_subquery(rte->subquery, rte,
-							   lowest_outer_join, deletion_ok) &&
+							   lowest_outer_join,
+							   (lowest_nulling_outer_join != NULL ||
+								containing_appendrel != NULL ||
+								root->parse->groupingSets),
+							   deletion_ok) &&
 			(containing_appendrel == NULL ||
 			 is_safe_append_member(rte->subquery)))
 			return pull_up_simple_subquery(root, jtnode, rte,
@@ -955,7 +960,11 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 * pull_up_subqueries_recurse.
 	 */
 	if (is_simple_subquery(subquery, rte,
-						   lowest_outer_join, deletion_ok) &&
+						   lowest_outer_join,
+						   (lowest_nulling_outer_join != NULL ||
+							containing_appendrel != NULL ||
+							parse->groupingSets),
+						   deletion_ok) &&
 		(containing_appendrel == NULL || is_safe_append_member(subquery)))
 	{
 		/* good to go */
@@ -1022,6 +1031,14 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	/* initialize cache array with indexes 0 .. length(tlist) */
 	rvcontext.rv_cache = palloc0((list_length(subquery->targetList) + 1) *
 								 sizeof(Node *));
+
+	/*
+	 * The next few stanzas identify cases where we might need to insert
+	 * PlaceHolderVars.  These same conditions must be checked by callers of
+	 * is_simple_subquery(): pass will_need_phvs = true if anything below
+	 * would set rvcontext.need_phvs = true.  Else we can find ourselves
+	 * trying to generate a PHV with empty phrels.
+	 */
 
 	/*
 	 * If we are under an outer join then non-nullable items and lateral
@@ -1433,11 +1450,14 @@ make_setop_translation_list(Query *query, Index newvarno,
  * (Note subquery is not necessarily equal to rte->subquery; it could be a
  * processed copy of that.)
  * lowest_outer_join is the lowest outer join above the subquery, or NULL.
+ * will_need_phvs is true if we might need to wrap the subquery outputs
+ * with PlaceHolderVars; see comments within.
  * deletion_ok is true if it'd be okay to delete the subquery entirely.
  */
 static bool
 is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 				   JoinExpr *lowest_outer_join,
+				   bool will_need_phvs,
 				   bool deletion_ok)
 {
 	/*
@@ -1489,7 +1509,7 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 
 	/*
 	 * Don't pull up a subquery with an empty jointree, unless it has no quals
-	 * and deletion_ok is true and we're not underneath an outer join.
+	 * and deletion_ok is true and will_need_phvs is false.
 	 *
 	 * query_planner() will correctly generate a Result plan for a jointree
 	 * that's totally empty, but we can't cope with an empty FromExpr
@@ -1504,15 +1524,17 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 	 * But even in a safe context, we must keep the subquery if it has any
 	 * quals, because it's unclear where to put them in the upper query.
 	 *
-	 * Also, we must forbid pullup if such a subquery is underneath an outer
-	 * join, because then we might need to wrap its output columns with
-	 * PlaceHolderVars, and the PHVs would then have empty relid sets meaning
+	 * Also, we must forbid pullup if the subquery outputs would need
+	 * PlaceHolderVar wrappers; the PHVs would then have empty relids meaning
 	 * we couldn't tell where to evaluate them.  (This test is separate from
 	 * the deletion_ok flag for possible future expansion: deletion_ok tells
 	 * whether the immediate parent site in the jointree could cope, not
 	 * whether we'd have PHV issues.  It's possible this restriction could be
 	 * fixed by letting the PHVs use the relids of the parent jointree item,
 	 * but that complication is for another day.)
+	 *
+	 * The caller must pass will_need_phvs = true under the same conditions
+	 * that would cause pull_up_simple_subquery to set need_phvs = true.
 	 *
 	 * Note that deletion of a subquery is also dependent on the check below
 	 * that its targetlist contains no set-returning functions.  Deletion from
@@ -1522,7 +1544,7 @@ is_simple_subquery(Query *subquery, RangeTblEntry *rte,
 	if (subquery->jointree->fromlist == NIL &&
 		(subquery->jointree->quals != NULL ||
 		 !deletion_ok ||
-		 lowest_outer_join != NULL))
+		 will_need_phvs))
 		return false;
 
 	/*
