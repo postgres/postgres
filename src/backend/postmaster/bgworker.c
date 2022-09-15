@@ -663,7 +663,7 @@ SanityCheckBackgroundWorker(BackgroundWorker *worker, int elevel)
 	{
 		ereport(elevel,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("background worker \"%s\": background worker without shared memory access are not supported",
+				 errmsg("background worker \"%s\": background workers without shared memory access are not supported",
 						worker->bgw_name)));
 		return false;
 	}
