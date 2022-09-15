@@ -28,6 +28,8 @@
 
 
 static void exit_nicely(PGconn *conn);
+static void pg_attribute_noreturn() pg_fatal_impl(int line, const char *fmt,...)
+			pg_attribute_printf(2, 3);
 static bool process_result(PGconn *conn, PGresult *res, int results,
 						   int numsent);
 
@@ -916,7 +918,7 @@ test_prepared(PGconn *conn)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("expected COMMAND_OK, got %s", PQresStatus(PQresultStatus(res)));
 	if (PQnfields(res) != lengthof(expected_oids))
-		pg_fatal("expected %d columns, got %d",
+		pg_fatal("expected %zd columns, got %d",
 				 lengthof(expected_oids), PQnfields(res));
 	for (int i = 0; i < PQnfields(res); i++)
 	{
