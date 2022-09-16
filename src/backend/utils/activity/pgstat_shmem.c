@@ -992,12 +992,12 @@ pgstat_setup_memcxt(void)
 {
 	if (unlikely(!pgStatSharedRefContext))
 		pgStatSharedRefContext =
-			AllocSetContextCreate(CacheMemoryContext,
+			AllocSetContextCreate(TopMemoryContext,
 								  "PgStat Shared Ref",
 								  ALLOCSET_SMALL_SIZES);
 	if (unlikely(!pgStatEntryRefHashContext))
 		pgStatEntryRefHashContext =
-			AllocSetContextCreate(CacheMemoryContext,
+			AllocSetContextCreate(TopMemoryContext,
 								  "PgStat Shared Ref Hash",
 								  ALLOCSET_SMALL_SIZES);
 }
