@@ -2504,9 +2504,15 @@ compute_function_hashkey(FunctionCallInfo fcinfo,
 
 /*
  * This is the same as the standard resolve_polymorphic_argtypes() function,
- * but with a special case for validation: assume that polymorphic arguments
- * are integer, integer-array or integer-range.  Also, we go ahead and report
- * the error if we can't resolve the types.
+ * except that:
+ * 1. We go ahead and report the error if we can't resolve the types.
+ * 2. We treat RECORD-type input arguments (not output arguments) as if
+ *    they were polymorphic, replacing their types with the actual input
+ *    types if we can determine those.  This allows us to create a separate
+ *    function cache entry for each named composite type passed to such an
+ *    argument.
+ * 3. In validation mode, we have no inputs to look at, so assume that
+ *    polymorphic arguments are integer, integer-array or integer-range.
  */
 static void
 plpgsql_resolve_polymorphic_argtypes(int numargs,
@@ -2518,6 +2524,8 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 
 	if (!forValidator)
 	{
+		int			inargno;
+
 		/* normal case, pass to standard routine */
 		if (!resolve_polymorphic_argtypes(numargs, argtypes, argmodes,
 										  call_expr))
@@ -2526,10 +2534,28 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 					 errmsg("could not determine actual argument "
 							"type for polymorphic function \"%s\"",
 							proname)));
+		/* also, treat RECORD inputs (but not outputs) as polymorphic */
+		inargno = 0;
+		for (i = 0; i < numargs; i++)
+		{
+			char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+
+			if (argmode == PROARGMODE_OUT || argmode == PROARGMODE_TABLE)
+				continue;
+			if (argtypes[i] == RECORDOID || argtypes[i] == RECORDARRAYOID)
+			{
+				Oid			resolvedtype = get_call_expr_argtype(call_expr,
+																 inargno);
+
+				if (OidIsValid(resolvedtype))
+					argtypes[i] = resolvedtype;
+			}
+			inargno++;
+		}
 	}
 	else
 	{
-		/* special validation case */
+		/* special validation case (no need to do anything for RECORD) */
 		for (i = 0; i < numargs; i++)
 		{
 			switch (argtypes[i])
