@@ -41,7 +41,7 @@ $node_publisher->wait_for_catchup('tap_sub');
 # Ensure a transactional logical decoding message shows up on the slot
 $node_subscriber->safe_psql('postgres', "ALTER SUBSCRIPTION tap_sub DISABLE");
 
-# wait for the replication slot to become inactive in the publisher
+# wait for the replication slot to become inactive on the publisher
 $node_publisher->poll_query_until(
 	'postgres',
 	"SELECT COUNT(*) FROM pg_catalog.pg_replication_slots WHERE slot_name = 'tap_sub' AND active='f'",

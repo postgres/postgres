@@ -185,7 +185,7 @@ $node_B->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_B ADD TABLE tab_new");
 
 # Alter subscription ... refresh publication should log a warning when a new
-# table in the publisher is subscribing data from a different publication
+# table on the publisher is subscribing data from a different publication
 ($result, $stdout, $stderr) = $node_A->psql(
 	'postgres', "
         ALTER SUBSCRIPTION $subname_AB2 REFRESH PUBLICATION");
