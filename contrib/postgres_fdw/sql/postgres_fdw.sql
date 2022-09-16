@@ -2899,11 +2899,7 @@ SELECT 1 FROM ft1_nopw LIMIT 1;
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
 -- in connstrs only in user mappings.
 
-DO $d$
-    BEGIN
-        EXECUTE $$ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')$$;
-    END;
-$d$;
+ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
 
 -- If we add a password for our user mapping instead, we should get a different
 -- error because the password wasn't actually *used* when we run with trust auth.

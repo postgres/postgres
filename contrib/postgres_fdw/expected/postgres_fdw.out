@@ -9699,15 +9699,9 @@ ERROR:  password is required
 DETAIL:  Non-superusers must provide a password in the user mapping.
 -- If we add a password to the connstr it'll fail, because we don't allow passwords
 -- in connstrs only in user mappings.
-DO $d$
-    BEGIN
-        EXECUTE $$ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')$$;
-    END;
-$d$;
+ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw');
 ERROR:  invalid option "password"
 HINT:  Perhaps you meant the option "passfile".
-CONTEXT:  SQL statement "ALTER SERVER loopback_nopw OPTIONS (ADD password 'dummypw')"
-PL/pgSQL function inline_code_block line 3 at EXECUTE
 -- If we add a password for our user mapping instead, we should get a different
 -- error because the password wasn't actually *used* when we run with trust auth.
 --
