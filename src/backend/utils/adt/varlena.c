@@ -6198,6 +6198,88 @@ rest_of_char_same(const char *s1, const char *s2, int len)
 
 
 /*
+ * The following *ClosestMatch() functions can be used to determine whether a
+ * user-provided string resembles any known valid values, which is useful for
+ * providing hints in log messages, among other things.  Use these functions
+ * like so:
+ *
+ *		initClosestMatch(&state, source_string, max_distance);
+ *
+ *		for (int i = 0; i < num_valid_strings; i++)
+ *			updateClosestMatch(&state, valid_strings[i]);
+ *
+ *		closestMatch = getClosestMatch(&state);
+ */
+
+/*
+ * Initialize the given state with the source string and maximum Levenshtein
+ * distance to consider.
+ */
+void
+initClosestMatch(ClosestMatchState *state, const char *source, int max_d)
+{
+	Assert(state);
+	Assert(max_d >= 0);
+
+	state->source = source;
+	state->min_d = -1;
+	state->max_d = max_d;
+	state->match = NULL;
+}
+
+/*
+ * If the candidate string is a closer match than the current one saved (or
+ * there is no match saved), save it as the closest match.
+ *
+ * If the source or candidate string is NULL, empty, or too long, this function
+ * takes no action.  Likewise, if the Levenshtein distance exceeds the maximum
+ * allowed or more than half the characters are different, no action is taken.
+ */
+void
+updateClosestMatch(ClosestMatchState *state, const char *candidate)
+{
+	int			dist;
+
+	Assert(state);
+
+	if (state->source == NULL || state->source[0] == '\0' ||
+		candidate == NULL || candidate[0] == '\0')
+		return;
+
+	/*
+	 * To avoid ERROR-ing, we check the lengths here instead of setting
+	 * 'trusted' to false in the call to varstr_levenshtein_less_equal().
+	 */
+	if (strlen(state->source) > MAX_LEVENSHTEIN_STRLEN ||
+		strlen(candidate) > MAX_LEVENSHTEIN_STRLEN)
+		return;
+
+	dist = varstr_levenshtein_less_equal(state->source, strlen(state->source),
+										 candidate, strlen(candidate), 1, 1, 1,
+										 state->max_d, true);
+	if (dist <= state->max_d &&
+		dist <= strlen(state->source) / 2 &&
+		(state->min_d == -1 || dist < state->min_d))
+	{
+		state->min_d = dist;
+		state->match = candidate;
+	}
+}
+
+/*
+ * Return the closest match.  If no suitable candidates were provided via
+ * updateClosestMatch(), return NULL.
+ */
+const char *
+getClosestMatch(ClosestMatchState *state)
+{
+	Assert(state);
+
+	return state->match;
+}
+
+
+/*
  * Unicode support
  */
 

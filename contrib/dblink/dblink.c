@@ -2008,27 +2008,32 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * Unknown option, or invalid option for the context specified, so
-			 * complain about it.  Provide a hint with list of valid options
-			 * for the context.
+			 * complain about it.  Provide a hint with a valid option that
+			 * looks similar, if there is one.
 			 */
-			StringInfoData buf;
 			const PQconninfoOption *opt;
+			const char *closest_match;
+			ClosestMatchState match_state;
+			bool		has_valid_options = false;
 
-			initStringInfo(&buf);
+			initClosestMatch(&match_state, def->defname, 4);
 			for (opt = options; opt->keyword; opt++)
 			{
 				if (is_valid_dblink_option(options, opt->keyword, context))
-					appendStringInfo(&buf, "%s%s",
-									 (buf.len > 0) ? ", " : "",
-									 opt->keyword);
+				{
+					has_valid_options = true;
+					updateClosestMatch(&match_state, opt->keyword);
+				}
 			}
+
+			closest_match = getClosestMatch(&match_state);
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_OPTION_NAME_NOT_FOUND),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 buf.len > 0
-					 ? errhint("Valid options in this context are: %s",
-							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+					 has_valid_options ? closest_match ?
+					 errhint("Perhaps you meant the option \"%s\".",
+							 closest_match) : 0 :
+					 errhint("There are no valid options in this context.")));
 		}
 	}
 
