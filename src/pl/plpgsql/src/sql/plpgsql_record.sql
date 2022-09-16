@@ -3,6 +3,7 @@
 --
 
 create type two_int4s as (f1 int4, f2 int4);
+create type more_int4s as (f0 text, f1 int4, f2 int4);
 create type two_int8s as (q1 int8, q2 int8);
 
 -- base-case return of a composite type
@@ -215,12 +216,22 @@ create function getf1(x record) returns int language plpgsql as
 $$ begin return x.f1; end $$;
 select getf1(1);
 select getf1(row(1,2));
+select getf1(row(1,2)::two_int4s);
+select getf1(row('foo',123,456)::more_int4s);
 -- a CLOBBER_CACHE_ALWAYS build will report this error with a different
 -- context stack than other builds, so suppress context output
 \set SHOW_CONTEXT never
 select getf1(row(1,2)::two_int8s);
 \set SHOW_CONTEXT errors
 select getf1(row(1,2));
+
+-- this seemingly-equivalent case behaves a bit differently,
+-- because the core parser's handling of $N symbols is simplistic
+create function getf2(record) returns int language plpgsql as
+$$ begin return $1.f2; end $$;
+select getf2(row(1,2));  -- ideally would work, but does not
+select getf2(row(1,2)::two_int4s);
+select getf2(row('foo',123,456)::more_int4s);
 
 -- check behavior when assignment to FOR-loop variable requires coercion
 do $$
