@@ -209,8 +209,9 @@ PostgreSQL documentation
        <para>
         Selects the encoding of the template databases. This will also
         be the default encoding of any database you create later,
-        unless you override it then.  The default is derived from the locale, or
-        <literal>SQL_ASCII</literal> if that does not work. The character sets supported by
+        unless you override it then.  The default is derived from the locale,
+        if the libc locale provider is used, or <literal>UTF8</literal> if the
+        ICU locale provider is used.  The character sets supported by
         the <productname>PostgreSQL</productname> server are described
         in <xref linkend="multibyte-charset-supported"/>.
        </para>
