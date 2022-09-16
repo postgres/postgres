@@ -294,6 +294,7 @@ DROP TABLE prevstats;
 -- Test that sessions is incremented when a new session is started in pg_stat_database
 SELECT sessions AS db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database()) \gset
 \c
+SELECT pg_stat_force_next_flush();
 SELECT sessions > :db_stat_sessions FROM pg_stat_database WHERE datname = (SELECT current_database());
 
 -- Test pg_stat_bgwriter checkpointer-related stats, together with pg_stat_wal
