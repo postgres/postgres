@@ -31,13 +31,16 @@ if ($ENV{with_icu} eq 'yes')
 	# locale set.  It would succeed if template0 used the icu
 	# provider.  XXX Maybe split into multiple tests?
 	$node->command_fails(
-		[ 'createdb', '-T', 'template0', '--locale-provider=icu', 'foobar4' ],
+		[
+			'createdb', '-T', 'template0', '-E', 'UTF8',
+			'--locale-provider=icu', 'foobar4'
+		],
 		'create database with ICU fails without ICU locale specified');
 
 	$node->issues_sql_like(
 		[
 			'createdb',        '-T',
-			'template0',       '--locale-provider=icu',
+			'template0',       '-E', 'UTF8', '--locale-provider=icu',
 			'--icu-locale=en', 'foobar5'
 		],
 		qr/statement: CREATE DATABASE foobar5 .* LOCALE_PROVIDER icu ICU_LOCALE 'en'/,
@@ -45,7 +48,8 @@ if ($ENV{with_icu} eq 'yes')
 
 	$node->command_fails(
 		[
-			'createdb', '-T', 'template0', '--locale-provider=icu',
+			'createdb', '-T', 'template0', '-E', 'UTF8',
+			'--locale-provider=icu',
 			'--icu-locale=@colNumeric=lower', 'foobarX'
 		],
 		'fails for invalid ICU locale');
