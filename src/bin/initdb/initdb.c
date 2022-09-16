@@ -2092,6 +2092,27 @@ check_locale_encoding(const char *locale, int user_enc)
 }
 
 /*
+ * check if the chosen encoding matches is supported by ICU
+ *
+ * this should match the similar check in the backend createdb() function
+ */
+static bool
+check_icu_locale_encoding(int user_enc)
+{
+	if (!(is_encoding_supported_by_icu(user_enc)))
+	{
+		pg_log_error("encoding mismatch");
+		pg_log_error_detail("The encoding you selected (%s) is not supported with the ICU provider.",
+							pg_encoding_to_char(user_enc));
+		pg_log_error_hint("Rerun %s and either do not specify an encoding explicitly, "
+						  "or choose a matching combination.",
+						  progname);
+		return false;
+	}
+	return true;
+}
+
+/*
  * set up the locale variables
  *
  * assumes we have called setlocale(LC_ALL, "") -- see set_pglocale_pgservice
@@ -2359,7 +2380,11 @@ setup_locale_encoding(void)
 	}
 
 	if (!encoding && locale_provider == COLLPROVIDER_ICU)
+	{
 		encodingid = PG_UTF8;
+		printf(_("The default database encoding has been set to \"%s\".\n"),
+			   pg_encoding_to_char(encodingid));
+	}
 	else if (!encoding)
 	{
 		int			ctype_enc;
@@ -2411,6 +2436,10 @@ setup_locale_encoding(void)
 	if (!check_locale_encoding(lc_ctype, encodingid) ||
 		!check_locale_encoding(lc_collate, encodingid))
 		exit(1);				/* check_locale_encoding printed the error */
+
+	if (locale_provider == COLLPROVIDER_ICU &&
+		!check_icu_locale_encoding(encodingid))
+		exit(1);
 }
 
 

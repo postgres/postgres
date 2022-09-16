@@ -50,6 +50,15 @@ if ($ENV{with_icu} eq 'yes')
 		],
 		'fails for invalid ICU locale');
 
+	$node->command_fails_like(
+		[
+			'createdb',             '-T',
+			'template0',            '--locale-provider=icu',
+			'--encoding=SQL_ASCII', 'foobarX'
+		],
+		qr/ERROR:  encoding "SQL_ASCII" is not supported with ICU provider/,
+		'fails for encoding not supported by ICU');
+
 	# additional node, which uses the icu provider
 	my $node2 = PostgreSQL::Test::Cluster->new('icu');
 	$node2->init(extra => ['--locale-provider=icu', '--icu-locale=en']);
