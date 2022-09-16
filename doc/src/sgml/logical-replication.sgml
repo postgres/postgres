@@ -1096,7 +1096,7 @@ test_sub=# SELECT * FROM child ORDER BY a;
    Each publication can optionally specify which columns of each table are
    replicated to subscribers. The table on the subscriber side must have at
    least all the columns that are published. If no column list is specified,
-   then all columns in the publisher are replicated.
+   then all columns on the publisher are replicated.
    See <xref linkend="sql-createpublication"/> for details on the syntax.
   </para>
 

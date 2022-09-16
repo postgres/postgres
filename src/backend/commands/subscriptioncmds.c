@@ -406,7 +406,7 @@ get_publications_str(List *publications, StringInfo dest, bool quote_literal)
 }
 
 /*
- * Check the specified publication(s) is(are) present in the publisher.
+ * Check that the specified publications are present on the publisher.
  */
 static void
 check_publications(WalReceiverConn *wrconn, List *publications)
@@ -464,8 +464,8 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 		get_publications_str(publicationsCopy, pubnames, false);
 		ereport(WARNING,
 				errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg_plural("publication %s does not exist in the publisher",
-							  "publications %s do not exist in the publisher",
+				errmsg_plural("publication %s does not exist on the publisher",
+							  "publications %s do not exist on the publisher",
 							  list_length(publicationsCopy),
 							  pubnames->data));
 	}
