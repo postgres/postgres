@@ -1133,8 +1133,6 @@ AC_PROG_RANLIB
 PGAC_CHECK_STRIP
 AC_CHECK_TOOL(AR, ar, ar)
 if test "$PORTNAME" = "win32"; then
-  AC_CHECK_TOOL(DLLTOOL, dlltool, dlltool)
-  AC_CHECK_TOOL(DLLWRAP, dllwrap, dllwrap)
   AC_CHECK_TOOL(WINDRES, windres, windres)
 fi
 
