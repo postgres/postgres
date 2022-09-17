@@ -169,7 +169,7 @@ extern const char *hba_authname(UserAuth auth_method);
 extern void hba_getauthmethod(hbaPort *port);
 extern int	check_usermap(const char *usermap_name,
 						  const char *pg_role, const char *auth_user,
-						  bool case_sensitive);
+						  bool case_insensitive);
 extern HbaLine *parse_hba_line(TokenizedAuthLine *tok_line, int elevel);
 extern IdentLine *parse_ident_line(TokenizedAuthLine *tok_line, int elevel);
 extern bool pg_isblank(const char c);
