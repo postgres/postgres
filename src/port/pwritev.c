@@ -12,7 +12,7 @@
  */
 
 
-#include "postgres.h"
+#include "c.h"
 
 #include <unistd.h>
 
