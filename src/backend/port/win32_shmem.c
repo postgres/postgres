@@ -218,6 +218,7 @@ PGSharedMemoryCreate(Size size,
 	SIZE_T		largePageSize = 0;
 	Size		orig_size = size;
 	DWORD		flProtect = PAGE_READWRITE;
+	DWORD		desiredAccess;
 
 	ShmemProtectiveRegion = VirtualAlloc(NULL, PROTECTIVE_REGION_SIZE,
 										 MEM_RESERVE, PAGE_NOACCESS);
@@ -355,12 +356,19 @@ retry:
 	if (!CloseHandle(hmap))
 		elog(LOG, "could not close handle to shared memory: error code %lu", GetLastError());
 
+	desiredAccess = FILE_MAP_WRITE | FILE_MAP_READ;
+
+#ifdef FILE_MAP_LARGE_PAGES
+	/* Set large pages if wanted. */
+	if ((flProtect & SEC_LARGE_PAGES) != 0)
+		desiredAccess |= FILE_MAP_LARGE_PAGES;
+#endif
 
 	/*
 	 * Get a pointer to the new shared memory segment. Map the whole segment
 	 * at once, and let the system decide on the initial address.
 	 */
-	memAddress = MapViewOfFileEx(hmap2, FILE_MAP_WRITE | FILE_MAP_READ, 0, 0, 0, NULL);
+	memAddress = MapViewOfFileEx(hmap2, desiredAccess, 0, 0, 0, NULL);
 	if (!memAddress)
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: error code %lu", GetLastError()),
