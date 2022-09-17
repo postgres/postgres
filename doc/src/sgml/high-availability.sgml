@@ -935,7 +935,7 @@ primary_conninfo = 'host=192.168.1.50 port=5432 user=foo password=foopass'
     In lieu of using replication slots, it is possible to prevent the removal
     of old WAL segments using <xref linkend="guc-wal-keep-size"/>, or by
     storing the segments in an archive using
-    <xref linkend="guc-archive-library"/>.
+    <xref linkend="guc-archive-command"/> or <xref linkend="guc-archive-library"/>.
     However, these methods often result in retaining more WAL segments than
     required, whereas replication slots retain only the number of segments
     known to be needed.  On the other hand, replication slots can retain so
@@ -1386,10 +1386,10 @@ synchronous_standby_names = 'ANY 2 (s1, s2, s3)'
      to <literal>always</literal>, and the standby will call the archive
      command for every WAL segment it receives, whether it's by restoring
      from the archive or by streaming replication. The shared archive can
-     be handled similarly, but the <varname>archive_library</varname> must
+     be handled similarly, but the <varname>archive_command</varname> or <varname>archive_library</varname> must
      test if the file being archived exists already, and if the existing file
      has identical contents. This requires more care in the
-     <varname>archive_library</varname>, as it must
+     <varname>archive_command</varname> or <varname>archive_library</varname>, as it must
      be careful to not overwrite an existing file with different contents,
      but return success if the exactly same file is archived twice. And
      all that must be done free of race conditions, if two servers attempt

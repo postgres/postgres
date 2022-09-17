@@ -3496,7 +3496,7 @@ include_dir 'conf.d'
         Maximum size to let the WAL grow during automatic
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</varname> under special circumstances, such as
-        heavy load, a failing <varname>archive_library</varname>, or a high
+        heavy load, a failing <varname>archive_command</varname> or <varname>archive_library</varname>, or a high
         <varname>wal_keep_size</varname> setting.
         If this value is specified without units, it is taken as megabytes.
         The default is 1 GB.
@@ -3545,6 +3545,7 @@ include_dir 'conf.d'
        <para>
         When <varname>archive_mode</varname> is enabled, completed WAL segments
         are sent to archive storage by setting
+        <xref linkend="guc-archive-command"/> or
         <xref linkend="guc-archive-library"/>. In addition to <literal>off</literal>,
         to disable, there are two modes: <literal>on</literal>, and
         <literal>always</literal>. During normal operation, there is no
@@ -3555,31 +3556,15 @@ include_dir 'conf.d'
         <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
+        <varname>archive_mode</varname> is a separate setting from
+        <varname>archive_command</varname> and
+        <varname>archive_library</varname> so that
+        <varname>archive_command</varname> and
+        <varname>archive_library</varname> can be changed without leaving
+        archiving mode.
         This parameter can only be set at server start.
         <varname>archive_mode</varname> cannot be enabled when
         <varname>wal_level</varname> is set to <literal>minimal</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-archive-library" xreflabel="archive_library">
-      <term><varname>archive_library</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>archive_library</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        The library to use for archiving completed WAL file segments.  If set to
-        an empty string (the default), archiving via shell is enabled, and
-        <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
-        shared library is used for archiving.  For more information, see
-        <xref linkend="backup-archiving-wal"/> and
-        <xref linkend="archive-modules"/>.
-       </para>
-       <para>
-        This parameter can only be set in the
-        <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3607,10 +3592,10 @@ include_dir 'conf.d'
         This parameter can only be set in the <filename>postgresql.conf</filename>
         file or on the server command line.  It is ignored unless
         <varname>archive_mode</varname> was enabled at server start and
-        <varname>archive_library</varname> specifies to archive via shell command.
+        <varname>archive_library</varname> is set to an empty string.
         If <varname>archive_command</varname> is an empty string (the default) while
-        <varname>archive_mode</varname> is enabled and <varname>archive_library</varname>
-        specifies archiving via shell, WAL archiving is temporarily
+        <varname>archive_mode</varname> is enabled (and <varname>archive_library</varname>
+        is set to an empty string), WAL archiving is temporarily
         disabled, but the server continues to accumulate WAL segment files in
         the expectation that a command will soon be provided.  Setting
         <varname>archive_command</varname> to a command that does nothing but
@@ -3618,6 +3603,28 @@ include_dir 'conf.d'
         Windows), effectively disables
         archiving, but also breaks the chain of WAL files needed for
         archive recovery, so it should only be used in unusual circumstances.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-archive-library" xreflabel="archive_library">
+      <term><varname>archive_library</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>archive_library</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        The library to use for archiving completed WAL file segments.  If set to
+        an empty string (the default), archiving via shell is enabled, and
+        <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
+        shared library is used for archiving.  For more information, see
+        <xref linkend="backup-archiving-wal"/> and
+        <xref linkend="archive-modules"/>.
+       </para>
+       <para>
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3630,7 +3637,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The <xref linkend="guc-archive-library"/> is only invoked for
+        The <xref linkend="guc-archive-command"/> or <xref linkend="guc-archive-library"/> is only invoked for
         completed WAL segments. Hence, if your server generates little WAL
         traffic (or has slack periods where it does so), there could be a
         long delay between the completion of a transaction and its safe
