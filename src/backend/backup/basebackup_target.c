@@ -215,7 +215,7 @@ reject_target_detail(char *target, char *target_detail)
 	if (target_detail != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("target '%s' does not accept a target detail",
+				 errmsg("target \"%s\" does not accept a target detail",
 						target)));
 
 	return NULL;
@@ -234,7 +234,7 @@ server_check_detail(char *target, char *target_detail)
 	if (target_detail == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("target '%s' requires a target detail",
+				 errmsg("target \"%s\" requires a target detail",
 						target)));
 
 	return target_detail;

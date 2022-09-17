@@ -907,7 +907,7 @@ parse_basebackup_options(List *options, basebackup_options *opt)
 		if (target_detail_str != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("target '%s' does not accept a target detail",
+					 errmsg("target \"%s\" does not accept a target detail",
 							target_str)));
 		opt->send_to_client = true;
 	}
