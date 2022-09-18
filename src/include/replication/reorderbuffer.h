@@ -630,23 +630,27 @@ struct ReorderBuffer
 
 
 extern ReorderBuffer *ReorderBufferAllocate(void);
-extern void ReorderBufferFree(ReorderBuffer *);
+extern void ReorderBufferFree(ReorderBuffer *rb);
 
-extern ReorderBufferTupleBuf *ReorderBufferGetTupleBuf(ReorderBuffer *, Size tuple_len);
-extern void ReorderBufferReturnTupleBuf(ReorderBuffer *, ReorderBufferTupleBuf *tuple);
-extern ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *);
-extern void ReorderBufferReturnChange(ReorderBuffer *, ReorderBufferChange *, bool);
+extern ReorderBufferTupleBuf *ReorderBufferGetTupleBuf(ReorderBuffer *rb,
+													   Size tuple_len);
+extern void ReorderBufferReturnTupleBuf(ReorderBuffer *rb,
+										ReorderBufferTupleBuf *tuple);
+extern ReorderBufferChange *ReorderBufferGetChange(ReorderBuffer *rb);
+extern void ReorderBufferReturnChange(ReorderBuffer *rb,
+									  ReorderBufferChange *change, bool upd_mem);
 
-extern Oid *ReorderBufferGetRelids(ReorderBuffer *, int nrelids);
-extern void ReorderBufferReturnRelids(ReorderBuffer *, Oid *relids);
+extern Oid *ReorderBufferGetRelids(ReorderBuffer *rb, int nrelids);
+extern void ReorderBufferReturnRelids(ReorderBuffer *rb, Oid *relids);
 
-extern void ReorderBufferQueueChange(ReorderBuffer *, TransactionId,
-									 XLogRecPtr lsn, ReorderBufferChange *,
+extern void ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid,
+									 XLogRecPtr lsn, ReorderBufferChange *change,
 									 bool toast_insert);
-extern void ReorderBufferQueueMessage(ReorderBuffer *, TransactionId, Snapshot snapshot, XLogRecPtr lsn,
+extern void ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
+									  Snapshot snap, XLogRecPtr lsn,
 									  bool transactional, const char *prefix,
 									  Size message_size, const char *message);
-extern void ReorderBufferCommit(ReorderBuffer *, TransactionId,
+extern void ReorderBufferCommit(ReorderBuffer *rb, TransactionId xid,
 								XLogRecPtr commit_lsn, XLogRecPtr end_lsn,
 								TimestampTz commit_time, RepOriginId origin_id, XLogRecPtr origin_lsn);
 extern void ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
@@ -655,30 +659,34 @@ extern void ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 										TimestampTz commit_time,
 										RepOriginId origin_id, XLogRecPtr origin_lsn,
 										char *gid, bool is_commit);
-extern void ReorderBufferAssignChild(ReorderBuffer *, TransactionId, TransactionId, XLogRecPtr commit_lsn);
-extern void ReorderBufferCommitChild(ReorderBuffer *, TransactionId, TransactionId,
+extern void ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
+									 TransactionId subxid, XLogRecPtr lsn);
+extern void ReorderBufferCommitChild(ReorderBuffer *rb, TransactionId, TransactionId,
 									 XLogRecPtr commit_lsn, XLogRecPtr end_lsn);
-extern void ReorderBufferAbort(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
-extern void ReorderBufferAbortOld(ReorderBuffer *, TransactionId xid);
-extern void ReorderBufferForget(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
-extern void ReorderBufferInvalidate(ReorderBuffer *, TransactionId, XLogRecPtr lsn);
+extern void ReorderBufferAbort(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
+extern void ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid);
+extern void ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
+extern void ReorderBufferInvalidate(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
 
-extern void ReorderBufferSetBaseSnapshot(ReorderBuffer *, TransactionId, XLogRecPtr lsn, struct SnapshotData *snap);
-extern void ReorderBufferAddSnapshot(ReorderBuffer *, TransactionId, XLogRecPtr lsn, struct SnapshotData *snap);
-extern void ReorderBufferAddNewCommandId(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
-										 CommandId cid);
-extern void ReorderBufferAddNewTupleCids(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
-										 RelFileLocator locator, ItemPointerData pt,
+extern void ReorderBufferSetBaseSnapshot(ReorderBuffer *rb, TransactionId xid,
+										 XLogRecPtr lsn, Snapshot snap);
+extern void ReorderBufferAddSnapshot(ReorderBuffer *rb, TransactionId xid,
+									 XLogRecPtr lsn, Snapshot snap);
+extern void ReorderBufferAddNewCommandId(ReorderBuffer *rb, TransactionId xid,
+										 XLogRecPtr lsn, CommandId cid);
+extern void ReorderBufferAddNewTupleCids(ReorderBuffer *rb, TransactionId xid,
+										 XLogRecPtr lsn, RelFileLocator locator,
+										 ItemPointerData tid,
 										 CommandId cmin, CommandId cmax, CommandId combocid);
-extern void ReorderBufferAddInvalidations(ReorderBuffer *, TransactionId, XLogRecPtr lsn,
+extern void ReorderBufferAddInvalidations(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
 										  Size nmsgs, SharedInvalidationMessage *msgs);
-extern void ReorderBufferImmediateInvalidation(ReorderBuffer *, uint32 ninvalidations,
+extern void ReorderBufferImmediateInvalidation(ReorderBuffer *rb, uint32 ninvalidations,
 											   SharedInvalidationMessage *invalidations);
-extern void ReorderBufferProcessXid(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
+extern void ReorderBufferProcessXid(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
 
-extern void ReorderBufferXidSetCatalogChanges(ReorderBuffer *, TransactionId xid, XLogRecPtr lsn);
-extern bool ReorderBufferXidHasCatalogChanges(ReorderBuffer *, TransactionId xid);
-extern bool ReorderBufferXidHasBaseSnapshot(ReorderBuffer *, TransactionId xid);
+extern void ReorderBufferXidSetCatalogChanges(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
+extern bool ReorderBufferXidHasCatalogChanges(ReorderBuffer *rb, TransactionId xid);
+extern bool ReorderBufferXidHasBaseSnapshot(ReorderBuffer *rb, TransactionId xid);
 
 extern bool ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xid,
 											 XLogRecPtr prepare_lsn, XLogRecPtr end_lsn,
@@ -686,11 +694,11 @@ extern bool ReorderBufferRememberPrepareInfo(ReorderBuffer *rb, TransactionId xi
 											 RepOriginId origin_id, XLogRecPtr origin_lsn);
 extern void ReorderBufferSkipPrepare(ReorderBuffer *rb, TransactionId xid);
 extern void ReorderBufferPrepare(ReorderBuffer *rb, TransactionId xid, char *gid);
-extern ReorderBufferTXN *ReorderBufferGetOldestTXN(ReorderBuffer *);
+extern ReorderBufferTXN *ReorderBufferGetOldestTXN(ReorderBuffer *rb);
 extern TransactionId ReorderBufferGetOldestXmin(ReorderBuffer *rb);
 extern TransactionId *ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb);
 
-extern void ReorderBufferSetRestartPoint(ReorderBuffer *, XLogRecPtr ptr);
+extern void ReorderBufferSetRestartPoint(ReorderBuffer *rb, XLogRecPtr ptr);
 
 extern void StartupReorderBuffer(void);
 

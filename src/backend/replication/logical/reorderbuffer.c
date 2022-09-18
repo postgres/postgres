@@ -250,7 +250,7 @@ static void ReorderBufferSerializeChange(ReorderBuffer *rb, ReorderBufferTXN *tx
 static Size ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 										TXNEntryFile *file, XLogSegNo *segno);
 static void ReorderBufferRestoreChange(ReorderBuffer *rb, ReorderBufferTXN *txn,
-									   char *change);
+									   char *data);
 static void ReorderBufferRestoreCleanup(ReorderBuffer *rb, ReorderBufferTXN *txn);
 static void ReorderBufferTruncateTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 									 bool txn_prepared);
@@ -820,7 +820,7 @@ ReorderBufferQueueChange(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn,
  */
 void
 ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
-						  Snapshot snapshot, XLogRecPtr lsn,
+						  Snapshot snap, XLogRecPtr lsn,
 						  bool transactional, const char *prefix,
 						  Size message_size, const char *message)
 {
@@ -847,7 +847,7 @@ ReorderBufferQueueMessage(ReorderBuffer *rb, TransactionId xid,
 	else
 	{
 		ReorderBufferTXN *txn = NULL;
-		volatile Snapshot snapshot_now = snapshot;
+		volatile Snapshot snapshot_now = snap;
 
 		if (xid != InvalidTransactionId)
 			txn = ReorderBufferTXNByXid(rb, xid, true, NULL, lsn, true);
