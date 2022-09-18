@@ -661,8 +661,9 @@ extern void ReorderBufferFinishPrepared(ReorderBuffer *rb, TransactionId xid,
 										char *gid, bool is_commit);
 extern void ReorderBufferAssignChild(ReorderBuffer *rb, TransactionId xid,
 									 TransactionId subxid, XLogRecPtr lsn);
-extern void ReorderBufferCommitChild(ReorderBuffer *rb, TransactionId, TransactionId,
-									 XLogRecPtr commit_lsn, XLogRecPtr end_lsn);
+extern void ReorderBufferCommitChild(ReorderBuffer *rb, TransactionId xid,
+									 TransactionId subxid, XLogRecPtr commit_lsn,
+									 XLogRecPtr end_lsn);
 extern void ReorderBufferAbort(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
 extern void ReorderBufferAbortOld(ReorderBuffer *rb, TransactionId oldestRunningXid);
 extern void ReorderBufferForget(ReorderBuffer *rb, TransactionId xid, XLogRecPtr lsn);
