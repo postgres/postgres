@@ -41,7 +41,6 @@ static Node *transformAssignmentSubscripts(ParseState *pstate,
 										   int32 targetTypMod,
 										   Oid targetCollation,
 										   List *subscripts,
-										   bool isSlice,
 										   List *indirection,
 										   ListCell *next_indirection,
 										   Node *rhs,
@@ -697,7 +696,6 @@ transformAssignmentIndirection(ParseState *pstate,
 {
 	Node	   *result;
 	List	   *subscripts = NIL;
-	bool		isSlice = false;
 	ListCell   *i;
 
 	if (indirection_cell && !basenode)
@@ -727,11 +725,7 @@ transformAssignmentIndirection(ParseState *pstate,
 		Node	   *n = lfirst(i);
 
 		if (IsA(n, A_Indices))
-		{
 			subscripts = lappend(subscripts, n);
-			if (((A_Indices *) n)->is_slice)
-				isSlice = true;
-		}
 		else if (IsA(n, A_Star))
 		{
 			ereport(ERROR,
@@ -763,7 +757,6 @@ transformAssignmentIndirection(ParseState *pstate,
 													 targetTypMod,
 													 targetCollation,
 													 subscripts,
-													 isSlice,
 													 indirection,
 													 i,
 													 rhs,
@@ -853,7 +846,6 @@ transformAssignmentIndirection(ParseState *pstate,
 											 targetTypMod,
 											 targetCollation,
 											 subscripts,
-											 isSlice,
 											 indirection,
 											 NULL,
 											 rhs,
@@ -907,7 +899,6 @@ transformAssignmentSubscripts(ParseState *pstate,
 							  int32 targetTypMod,
 							  Oid targetCollation,
 							  List *subscripts,
-							  bool isSlice,
 							  List *indirection,
 							  ListCell *next_indirection,
 							  Node *rhs,
