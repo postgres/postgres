@@ -2756,8 +2756,9 @@ remove_useless_groupby_columns(PlannerInfo *root)
  *
  * In principle it might be interesting to consider other orderings of the
  * GROUP BY elements, which could match the sort ordering of other
- * possible plans (eg an indexscan) and thereby reduce cost.  We don't
- * bother with that, though.  Hashed grouping will frequently win anyway.
+ * possible plans (eg an indexscan) and thereby reduce cost.  However, we
+ * don't yet have sufficient information to do that here, so that's left until
+ * later in planning.  See get_useful_group_keys_orderings().
  *
  * Note: we need no comparable processing of the distinctClause because
  * the parser already enforced that that matches ORDER BY.
