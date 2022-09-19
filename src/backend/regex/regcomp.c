@@ -234,11 +234,11 @@ static void freecnfa(struct cnfa *cnfa);
 static void dumpnfa(struct nfa *nfa, FILE *f);
 
 #ifdef REG_DEBUG
-static void dumpstate(struct state *, FILE *);
-static void dumparcs(struct state *, FILE *);
-static void dumparc(struct arc *, struct state *, FILE *);
-static void dumpcnfa(struct cnfa *, FILE *);
-static void dumpcstate(int, struct cnfa *, FILE *);
+static void dumpstate(struct state *s, FILE *f);
+static void dumparcs(struct state *s, FILE *f);
+static void dumparc(struct arc *a, struct state *s, FILE *f);
+static void dumpcnfa(struct cnfa *cnfa, FILE *f);
+static void dumpcstate(int st, struct cnfa *cnfa, FILE *f);
 #endif
 /* === regc_cvec.c === */
 static struct cvec *newcvec(int nchrs, int nranges);
