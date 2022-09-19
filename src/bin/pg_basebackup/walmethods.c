@@ -62,9 +62,8 @@ static DirectoryMethodData *dir_data = NULL;
  */
 typedef struct DirectoryMethodFile
 {
+	Walfile		base;
 	int			fd;
-	off_t		currpos;
-	char	   *pathname;
 	char	   *fullpath;
 	char	   *temp_suffix;
 #ifdef HAVE_LIBZ
@@ -104,7 +103,7 @@ dir_get_file_name(const char *pathname, const char *temp_suffix)
 	return filename;
 }
 
-static Walfile
+static Walfile *
 dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_size)
 {
 	char		tmppath[MAXPGPATH];
@@ -279,18 +278,18 @@ dir_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 	}
 #endif
 
+	f->base.currpos = 0;
+	f->base.pathname = pg_strdup(pathname);
 	f->fd = fd;
-	f->currpos = 0;
-	f->pathname = pg_strdup(pathname);
 	f->fullpath = pg_strdup(tmppath);
 	if (temp_suffix)
 		f->temp_suffix = pg_strdup(temp_suffix);
 
-	return f;
+	return &f->base;
 }
 
 static ssize_t
-dir_write(Walfile f, const void *buf, size_t count)
+dir_write(Walfile *f, const void *buf, size_t count)
 {
 	ssize_t		r;
 	DirectoryMethodFile *df = (DirectoryMethodFile *) f;
@@ -366,22 +365,12 @@ dir_write(Walfile f, const void *buf, size_t count)
 		}
 	}
 	if (r > 0)
-		df->currpos += r;
+		df->base.currpos += r;
 	return r;
 }
 
-static off_t
-dir_get_current_pos(Walfile f)
-{
-	Assert(f != NULL);
-	dir_clear_error();
-
-	/* Use a cached value to prevent lots of reseeks */
-	return ((DirectoryMethodFile *) f)->currpos;
-}
-
 static int
-dir_close(Walfile f, WalCloseMethod method)
+dir_close(Walfile *f, WalCloseMethod method)
 {
 	int			r;
 	DirectoryMethodFile *df = (DirectoryMethodFile *) f;
@@ -440,13 +429,13 @@ dir_close(Walfile f, WalCloseMethod method)
 			 * If we have a temp prefix, normal operation is to rename the
 			 * file.
 			 */
-			filename = dir_get_file_name(df->pathname, df->temp_suffix);
+			filename = dir_get_file_name(df->base.pathname, df->temp_suffix);
 			snprintf(tmppath, sizeof(tmppath), "%s/%s",
 					 dir_data->basedir, filename);
 			pg_free(filename);
 
 			/* permanent name, so no need for the prefix */
-			filename2 = dir_get_file_name(df->pathname, NULL);
+			filename2 = dir_get_file_name(df->base.pathname, NULL);
 			snprintf(tmppath2, sizeof(tmppath2), "%s/%s",
 					 dir_data->basedir, filename2);
 			pg_free(filename2);
@@ -467,7 +456,7 @@ dir_close(Walfile f, WalCloseMethod method)
 			char	   *filename;
 
 			/* Unlink the file once it's closed */
-			filename = dir_get_file_name(df->pathname, df->temp_suffix);
+			filename = dir_get_file_name(df->base.pathname, df->temp_suffix);
 			snprintf(tmppath, sizeof(tmppath), "%s/%s",
 					 dir_data->basedir, filename);
 			pg_free(filename);
@@ -498,7 +487,7 @@ dir_close(Walfile f, WalCloseMethod method)
 	LZ4F_freeCompressionContext(df->ctx);
 #endif
 
-	pg_free(df->pathname);
+	pg_free(df->base.pathname);
 	pg_free(df->fullpath);
 	pg_free(df->temp_suffix);
 	pg_free(df);
@@ -507,7 +496,7 @@ dir_close(Walfile f, WalCloseMethod method)
 }
 
 static int
-dir_sync(Walfile f)
+dir_sync(Walfile *f)
 {
 	int			r;
 
@@ -630,7 +619,6 @@ CreateWalDirectoryMethod(const char *basedir,
 	method = pg_malloc0(sizeof(WalWriteMethod));
 	method->open_for_write = dir_open_for_write;
 	method->write = dir_write;
-	method->get_current_pos = dir_get_current_pos;
 	method->get_file_size = dir_get_file_size;
 	method->get_file_name = dir_get_file_name;
 	method->compression_algorithm = dir_compression_algorithm;
@@ -665,10 +653,9 @@ FreeWalDirectoryMethod(void)
 
 typedef struct TarMethodFile
 {
+	Walfile		base;
 	off_t		ofs_start;		/* Where does the *header* for this file start */
-	off_t		currpos;
 	char		header[TAR_BLOCK_SIZE];
-	char	   *pathname;
 	size_t		pad_to_size;
 } TarMethodFile;
 
@@ -755,7 +742,7 @@ tar_write_compressed_data(void *buf, size_t count, bool flush)
 #endif
 
 static ssize_t
-tar_write(Walfile f, const void *buf, size_t count)
+tar_write(Walfile *f, const void *buf, size_t count)
 {
 	ssize_t		r;
 
@@ -773,7 +760,7 @@ tar_write(Walfile f, const void *buf, size_t count)
 			tar_data->lasterrno = errno ? errno : ENOSPC;
 			return -1;
 		}
-		((TarMethodFile *) f)->currpos += r;
+		f->currpos += r;
 		return r;
 	}
 #ifdef HAVE_LIBZ
@@ -781,7 +768,7 @@ tar_write(Walfile f, const void *buf, size_t count)
 	{
 		if (!tar_write_compressed_data(unconstify(void *, buf), count, false))
 			return -1;
-		((TarMethodFile *) f)->currpos += count;
+		f->currpos += count;
 		return count;
 	}
 #endif
@@ -803,7 +790,7 @@ tar_write_padding_data(TarMethodFile *f, size_t bytes)
 	while (bytesleft)
 	{
 		size_t		bytestowrite = Min(bytesleft, XLOG_BLCKSZ);
-		ssize_t		r = tar_write(f, zerobuf.data, bytestowrite);
+		ssize_t		r = tar_write(&f->base, zerobuf.data, bytestowrite);
 
 		if (r < 0)
 			return false;
@@ -824,7 +811,7 @@ tar_get_file_name(const char *pathname, const char *temp_suffix)
 	return filename;
 }
 
-static Walfile
+static Walfile *
 tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_size)
 {
 	char	   *tmppath;
@@ -920,7 +907,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		tar_data->currentfile = NULL;
 		return NULL;
 	}
-	tar_data->currentfile->currpos = 0;
+	tar_data->currentfile->base.currpos = 0;
 
 	if (tar_data->compression_algorithm == PG_COMPRESSION_NONE)
 	{
@@ -958,7 +945,7 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 		Assert(false);
 	}
 
-	tar_data->currentfile->pathname = pg_strdup(pathname);
+	tar_data->currentfile->base.pathname = pg_strdup(pathname);
 
 	/*
 	 * Uncompressed files are padded on creation, but for compression we can't
@@ -981,11 +968,11 @@ tar_open_for_write(const char *pathname, const char *temp_suffix, size_t pad_to_
 				return NULL;
 			}
 
-			tar_data->currentfile->currpos = 0;
+			tar_data->currentfile->base.currpos = 0;
 		}
 	}
 
-	return tar_data->currentfile;
+	return &tar_data->currentfile->base;
 }
 
 static ssize_t
@@ -1004,17 +991,8 @@ tar_compression_algorithm(void)
 	return tar_data->compression_algorithm;
 }
 
-static off_t
-tar_get_current_pos(Walfile f)
-{
-	Assert(f != NULL);
-	tar_clear_error();
-
-	return ((TarMethodFile *) f)->currpos;
-}
-
 static int
-tar_sync(Walfile f)
+tar_sync(Walfile *f)
 {
 	int			r;
 
@@ -1038,7 +1016,7 @@ tar_sync(Walfile f)
 }
 
 static int
-tar_close(Walfile f, WalCloseMethod method)
+tar_close(Walfile *f, WalCloseMethod method)
 {
 	ssize_t		filesize;
 	int			padding;
@@ -1066,7 +1044,7 @@ tar_close(Walfile f, WalCloseMethod method)
 			return -1;
 		}
 
-		pg_free(tf->pathname);
+		pg_free(tf->base.pathname);
 		pg_free(tf);
 		tar_data->currentfile = NULL;
 
@@ -1086,7 +1064,7 @@ tar_close(Walfile f, WalCloseMethod method)
 			 * A compressed tarfile is padded on close since we cannot know
 			 * the size of the compressed output until the end.
 			 */
-			size_t		sizeleft = tf->pad_to_size - tf->currpos;
+			size_t		sizeleft = tf->pad_to_size - tf->base.currpos;
 
 			if (sizeleft)
 			{
@@ -1100,7 +1078,7 @@ tar_close(Walfile f, WalCloseMethod method)
 			 * An uncompressed tarfile was padded on creation, so just adjust
 			 * the current position as if we seeked to the end.
 			 */
-			tf->currpos = tf->pad_to_size;
+			tf->base.currpos = tf->pad_to_size;
 		}
 	}
 
@@ -1108,7 +1086,7 @@ tar_close(Walfile f, WalCloseMethod method)
 	 * Get the size of the file, and pad out to a multiple of the tar block
 	 * size.
 	 */
-	filesize = tar_get_current_pos(f);
+	filesize = f->currpos;
 	padding = tarPaddingBytesRequired(filesize);
 	if (padding)
 	{
@@ -1141,7 +1119,7 @@ tar_close(Walfile f, WalCloseMethod method)
 		 * We overwrite it with what it was before if we have no tempname,
 		 * since we're going to write the buffer anyway.
 		 */
-		strlcpy(&(tf->header[0]), tf->pathname, 100);
+		strlcpy(&(tf->header[0]), tf->base.pathname, 100);
 
 	print_tar_number(&(tf->header[148]), 8, tarChecksum(((TarMethodFile *) f)->header));
 	if (lseek(tar_data->fd, tf->ofs_start, SEEK_SET) != ((TarMethodFile *) f)->ofs_start)
@@ -1201,11 +1179,11 @@ tar_close(Walfile f, WalCloseMethod method)
 	{
 		/* XXX this seems pretty bogus; why is only this case fatal? */
 		pg_fatal("could not fsync file \"%s\": %s",
-				 tf->pathname, tar_getlasterror());
+				 tf->base.pathname, tar_getlasterror());
 	}
 
 	/* Clean up and done */
-	pg_free(tf->pathname);
+	pg_free(tf->base.pathname);
 	pg_free(tf);
 	tar_data->currentfile = NULL;
 
@@ -1229,7 +1207,7 @@ tar_finish(void)
 
 	if (tar_data->currentfile)
 	{
-		if (tar_close(tar_data->currentfile, CLOSE_NORMAL) != 0)
+		if (tar_close(&tar_data->currentfile->base, CLOSE_NORMAL) != 0)
 			return false;
 	}
 
@@ -1345,7 +1323,6 @@ CreateWalTarMethod(const char *tarbase,
 	method = pg_malloc0(sizeof(WalWriteMethod));
 	method->open_for_write = tar_open_for_write;
 	method->write = tar_write;
-	method->get_current_pos = tar_get_current_pos;
 	method->get_file_size = tar_get_file_size;
 	method->get_file_name = tar_get_file_name;
 	method->compression_algorithm = tar_compression_algorithm;

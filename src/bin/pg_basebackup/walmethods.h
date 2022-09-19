@@ -11,7 +11,20 @@
 
 #include "common/compression.h"
 
-typedef void *Walfile;
+struct WalWriteMethod;
+typedef struct WalWriteMethod WalWriteMethod;
+
+typedef struct
+{
+	off_t		currpos;
+	char	   *pathname;
+	/*
+	 * MORE DATA FOLLOWS AT END OF STRUCT
+	 *
+	 * Each WalWriteMethod is expected to embed this as the first member of
+	 * a larger struct with method-specific fields following.
+	 */
+} Walfile;
 
 typedef enum
 {
@@ -30,7 +43,6 @@ typedef enum
  * care not to clobber errno between a failed method call and use of
  * getlasterror() to retrieve the message.
  */
-typedef struct WalWriteMethod WalWriteMethod;
 struct WalWriteMethod
 {
 	/*
@@ -39,13 +51,13 @@ struct WalWriteMethod
 	 * automatically renamed in close(). If pad_to_size is specified, the file
 	 * will be padded with NUL up to that size, if supported by the Walmethod.
 	 */
-	Walfile		(*open_for_write) (const char *pathname, const char *temp_suffix, size_t pad_to_size);
+	Walfile	   *(*open_for_write) (const char *pathname, const char *temp_suffix, size_t pad_to_size);
 
 	/*
 	 * Close an open Walfile, using one or more methods for handling automatic
 	 * unlinking etc. Returns 0 on success, other values for error.
 	 */
-	int			(*close) (Walfile f, WalCloseMethod method);
+	int			(*close) (Walfile *f, WalCloseMethod method);
 
 	/* Check if a file exist */
 	bool		(*existsfile) (const char *pathname);
@@ -66,15 +78,12 @@ struct WalWriteMethod
 	 * Write count number of bytes to the file, and return the number of bytes
 	 * actually written or -1 for error.
 	 */
-	ssize_t		(*write) (Walfile f, const void *buf, size_t count);
-
-	/* Return the current position in a file or -1 on error */
-	off_t		(*get_current_pos) (Walfile f);
+	ssize_t		(*write) (Walfile *f, const void *buf, size_t count);
 
 	/*
 	 * fsync the contents of the specified file. Returns 0 on success.
 	 */
-	int			(*sync) (Walfile f);
+	int			(*sync) (Walfile *f);
 
 	/*
 	 * Clean up the Walmethod, closing any shared resources. For methods like
