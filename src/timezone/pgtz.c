@@ -232,7 +232,7 @@ init_timezone_hashtable(void)
  * default timezone setting is later overridden from postgresql.conf.
  */
 pg_tz *
-pg_tzset(const char *name)
+pg_tzset(const char *tzname)
 {
 	pg_tz_cache *tzp;
 	struct state tzstate;
@@ -240,7 +240,7 @@ pg_tzset(const char *name)
 	char		canonname[TZ_STRLEN_MAX + 1];
 	char	   *p;
 
-	if (strlen(name) > TZ_STRLEN_MAX)
+	if (strlen(tzname) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
 
 	if (!timezone_cache)
@@ -254,8 +254,8 @@ pg_tzset(const char *name)
 	 * a POSIX-style timezone spec.)
 	 */
 	p = uppername;
-	while (*name)
-		*p++ = pg_toupper((unsigned char) *name++);
+	while (*tzname)
+		*p++ = pg_toupper((unsigned char) *tzname++);
 	*p = '\0';
 
 	tzp = (pg_tz_cache *) hash_search(timezone_cache,
