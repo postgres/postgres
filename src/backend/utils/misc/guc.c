@@ -4953,7 +4953,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"stats_fetch_consistency", PGC_USERSET, STATS_CUMULATIVE,
-			gettext_noop("Sets the consistency of accesses to statistics data"),
+			gettext_noop("Sets the consistency of accesses to statistics data."),
 			NULL
 		},
 		&pgstat_fetch_consistency,
@@ -5044,7 +5044,7 @@ static struct config_enum ConfigureNamesEnum[] =
 
 	{
 		{"recovery_prefetch", PGC_SIGHUP, WAL_RECOVERY,
-			gettext_noop("Prefetch referenced blocks during recovery"),
+			gettext_noop("Prefetch referenced blocks during recovery."),
 			gettext_noop("Look ahead in the WAL to find references to uncached data.")
 		},
 		&recovery_prefetch,
