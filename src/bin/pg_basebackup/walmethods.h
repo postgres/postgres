@@ -16,6 +16,7 @@ typedef struct WalWriteMethod WalWriteMethod;
 
 typedef struct
 {
+	WalWriteMethod *wwmethod;
 	off_t		currpos;
 	char	   *pathname;
 	/*
@@ -34,16 +35,9 @@ typedef enum
 } WalCloseMethod;
 
 /*
- * A WalWriteMethod structure represents the different methods used
- * to write the streaming WAL as it's received.
- *
- * All methods that have a failure return indicator will set state
- * allowing the getlasterror() method to return a suitable message.
- * Commonly, errno is this state (or part of it); so callers must take
- * care not to clobber errno between a failed method call and use of
- * getlasterror() to retrieve the message.
+ * Table of callbacks for a WalWriteMethod.
  */
-struct WalWriteMethod
+typedef struct WalWriteMethodOps
 {
 	/*
 	 * Open a target file. Returns Walfile, or NULL if open failed. If a temp
@@ -51,7 +45,7 @@ struct WalWriteMethod
 	 * automatically renamed in close(). If pad_to_size is specified, the file
 	 * will be padded with NUL up to that size, if supported by the Walmethod.
 	 */
-	Walfile	   *(*open_for_write) (const char *pathname, const char *temp_suffix, size_t pad_to_size);
+	Walfile	   *(*open_for_write) (WalWriteMethod *wwmethod, const char *pathname, const char *temp_suffix, size_t pad_to_size);
 
 	/*
 	 * Close an open Walfile, using one or more methods for handling automatic
@@ -60,19 +54,16 @@ struct WalWriteMethod
 	int			(*close) (Walfile *f, WalCloseMethod method);
 
 	/* Check if a file exist */
-	bool		(*existsfile) (const char *pathname);
+	bool		(*existsfile) (WalWriteMethod *wwmethod, const char *pathname);
 
 	/* Return the size of a file, or -1 on failure. */
-	ssize_t		(*get_file_size) (const char *pathname);
+	ssize_t		(*get_file_size) (WalWriteMethod *wwmethod, const char *pathname);
 
 	/*
 	 * Return the name of the current file to work on in pg_malloc()'d string,
 	 * without the base directory.  This is useful for logging.
 	 */
-	char	   *(*get_file_name) (const char *pathname, const char *temp_suffix);
-
-	/* Returns the compression method */
-	pg_compress_algorithm (*compression_algorithm) (void);
+	char	   *(*get_file_name) (WalWriteMethod *wwmethod, const char *pathname, const char *temp_suffix);
 
 	/*
 	 * Write count number of bytes to the file, and return the number of bytes
@@ -91,10 +82,37 @@ struct WalWriteMethod
 	 * close/write/sync of shared resources succeeded, otherwise returns false
 	 * (but the resources are still closed).
 	 */
-	bool		(*finish) (void);
+	bool		(*finish) (WalWriteMethod *wwmethod);
 
-	/* Return a text for the last error in this Walfile */
-	const char *(*getlasterror) (void);
+	/*
+	 * Free subsidiary data associated with the WalWriteMethod, and the
+	 * WalWriteMethod itself.
+	 */
+	void		(*free) (WalWriteMethod *wwmethod);
+} WalWriteMethodOps;
+
+/*
+ * A WalWriteMethod structure represents a way of writing streaming WAL as
+ * it's received.
+ *
+ * All methods that have a failure return indicator will set lasterrstring
+ * or lasterrno (the former takes precedence) so that the caller can signal
+ * a suitable error.
+ */
+struct WalWriteMethod
+{
+	const WalWriteMethodOps *ops;
+	pg_compress_algorithm compression_algorithm;
+	int			compression_level;
+	bool		sync;
+	const char *lasterrstring;	/* if set, takes precedence over lasterrno */
+	int			lasterrno;
+	/*
+	 * MORE DATA FOLLOWS AT END OF STRUCT
+	 *
+	 * Each WalWriteMethod is expected to embed this as the first member of
+	 * a larger struct with method-specific fields following.
+	 */
 };
 
 /*
@@ -111,6 +129,4 @@ WalWriteMethod *CreateWalTarMethod(const char *tarbase,
 								   pg_compress_algorithm compression_algo,
 								   int compression, bool sync);
 
-/* Cleanup routines for previously-created methods */
-void		FreeWalDirectoryMethod(void);
-void		FreeWalTarMethod(void);
+const char *GetLastWalMethodError(WalWriteMethod *wwmethod);

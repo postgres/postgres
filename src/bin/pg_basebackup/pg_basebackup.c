@@ -570,7 +570,7 @@ LogStreamerMain(logstreamer_param *param)
 		return 1;
 	}
 
-	if (!stream.walmethod->finish())
+	if (!stream.walmethod->ops->finish(stream.walmethod))
 	{
 		pg_log_error("could not finish writing WAL files: %m");
 #ifdef WIN32
@@ -581,11 +581,7 @@ LogStreamerMain(logstreamer_param *param)
 
 	PQfinish(param->bgconn);
 
-	if (format == 'p')
-		FreeWalDirectoryMethod();
-	else
-		FreeWalTarMethod();
-	pg_free(stream.walmethod);
+	stream.walmethod->ops->free(stream.walmethod);
 
 	return 0;
 }

@@ -658,7 +658,7 @@ StreamLog(void)
 
 	ReceiveXlogStream(conn, &stream);
 
-	if (!stream.walmethod->finish())
+	if (!stream.walmethod->ops->finish(stream.walmethod))
 	{
 		pg_log_info("could not finish writing WAL files: %m");
 		return;
@@ -667,9 +667,7 @@ StreamLog(void)
 	PQfinish(conn);
 	conn = NULL;
 
-	FreeWalDirectoryMethod();
-	pg_free(stream.walmethod);
-	pg_free(stream.sysidentifier);
+	stream.walmethod->ops->free(stream.walmethod);
 }
 
 /*
