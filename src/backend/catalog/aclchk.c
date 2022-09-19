@@ -1117,13 +1117,10 @@ ExecAlterDefaultPrivilegesStmt(ParseState *pstate, AlterDefaultPrivilegesStmt *s
 
 			iacls.roleid = get_rolespec_oid(rolespec, false);
 
-			/*
-			 * We insist that calling user be a member of each target role. If
-			 * he has that, he could become that role anyway via SET ROLE, so
-			 * FOR ROLE is just a syntactic convenience and doesn't give any
-			 * special privileges.
-			 */
-			check_is_member_of_role(GetUserId(), iacls.roleid);
+			if (!has_privs_of_role(GetUserId(), iacls.roleid))
+				ereport(ERROR,
+						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+						 errmsg("permission denied to change default privileges")));
 
 			SetDefaultACLsInSchemas(&iacls, nspnames);
 		}
