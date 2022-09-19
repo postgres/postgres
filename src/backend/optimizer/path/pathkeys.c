@@ -587,22 +587,25 @@ pathkey_sort_cost_comparator(const void *_a, const void *_b)
 
 /*
  * get_cheapest_group_keys_order
- *		Reorders the group pathkeys/clauses to minimize the comparison cost.
+ *		Reorders the group pathkeys / clauses to minimize the comparison cost.
  *
- * Given a list of pathkeys, we try to reorder them in a way that minimizes
- * the CPU cost of sorting. This depends mainly on the cost of comparator
- * function (the pathkeys may use different data types) and the number of
- * distinct values in each column (which affects the number of comparator
- * calls for the following pathkeys).
+ * Given the list of pathkeys in '*group_pathkeys', we try to arrange these
+ * in an order that minimizes the sort costs that will be incurred by the
+ * GROUP BY.  The costs mainly depend on the cost of the sort comparator
+ * function(s) and the number of distinct values in each column of the GROUP
+ * BY clause (*group_clauses).  Sorting on subsequent columns is only required
+ * for tiebreak situations where two values sort equally.
  *
  * In case the input is partially sorted, only the remaining pathkeys are
- * considered.
+ * considered.  'n_preordered' denotes how many of the leading *group_pathkeys
+ * the input is presorted by.
  *
- * Returns true if the keys/clauses have been reordered (or might have been),
- * and a new list is returned through an argument. The list is a new copy
- * and may be freed using list_free.
- *
- * Returns false if no reordering was possible.
+ * Returns true and sets *group_pathkeys and *group_clauses to the newly
+ * ordered versions of the lists that were passed in via these parameters.
+ * If no reordering was deemed necessary then we return false, in which case
+ * the *group_pathkeys and *group_clauses lists are left untouched. The
+ * original *group_pathkeys and *group_clauses parameter values are never
+ * destructively modified in place.
  */
 static bool
 get_cheapest_group_keys_order(PlannerInfo *root, double nrows,
