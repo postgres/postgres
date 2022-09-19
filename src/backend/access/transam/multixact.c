@@ -1214,14 +1214,14 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * range, that is, greater to or equal than oldestMultiXactId, and less than
  * nextMXact.  Otherwise, an error is raised.
  *
- * onlyLock must be set to true if caller is certain that the given multi
+ * isLockOnly must be set to true if caller is certain that the given multi
  * is used only to lock tuples; can be false without loss of correctness,
  * but passing a true means we can return quickly without checking for
  * old updates.
  */
 int
 GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool from_pgupgrade, bool onlyLock)
+					  bool from_pgupgrade, bool isLockOnly)
 {
 	int			pageno;
 	int			prev_pageno;
@@ -1263,7 +1263,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 * we can skip checking if the value is older than our oldest visible
 	 * multi.  It cannot possibly still be running.
 	 */
-	if (onlyLock &&
+	if (isLockOnly &&
 		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyBackendId]))
 	{
 		debug_elog2(DEBUG2, "GetMembers: a locker-only multi is too old");

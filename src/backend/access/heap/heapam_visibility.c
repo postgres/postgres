@@ -1763,30 +1763,30 @@ HeapTupleSatisfiesHistoricMVCC(HeapTuple htup, Snapshot snapshot,
  *	if so, the indicated buffer is marked dirty.
  */
 bool
-HeapTupleSatisfiesVisibility(HeapTuple tup, Snapshot snapshot, Buffer buffer)
+HeapTupleSatisfiesVisibility(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 {
 	switch (snapshot->snapshot_type)
 	{
 		case SNAPSHOT_MVCC:
-			return HeapTupleSatisfiesMVCC(tup, snapshot, buffer);
+			return HeapTupleSatisfiesMVCC(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_SELF:
-			return HeapTupleSatisfiesSelf(tup, snapshot, buffer);
+			return HeapTupleSatisfiesSelf(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_ANY:
-			return HeapTupleSatisfiesAny(tup, snapshot, buffer);
+			return HeapTupleSatisfiesAny(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_TOAST:
-			return HeapTupleSatisfiesToast(tup, snapshot, buffer);
+			return HeapTupleSatisfiesToast(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_DIRTY:
-			return HeapTupleSatisfiesDirty(tup, snapshot, buffer);
+			return HeapTupleSatisfiesDirty(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_HISTORIC_MVCC:
-			return HeapTupleSatisfiesHistoricMVCC(tup, snapshot, buffer);
+			return HeapTupleSatisfiesHistoricMVCC(htup, snapshot, buffer);
 			break;
 		case SNAPSHOT_NON_VACUUMABLE:
-			return HeapTupleSatisfiesNonVacuumable(tup, snapshot, buffer);
+			return HeapTupleSatisfiesNonVacuumable(htup, snapshot, buffer);
 			break;
 	}
 
