@@ -2204,7 +2204,7 @@ pg_dumpall -p 5432 | psql -d postgres -p 5433
    With <acronym>SSL</acronym> support compiled in, the
    <productname>PostgreSQL</productname> server can be started with
    support for encrypted connections using <acronym>TLS</acronym> protocols
-   enabled by by setting the parameter
+   enabled by setting the parameter
    <xref linkend="guc-ssl"/> to <literal>on</literal> in
    <filename>postgresql.conf</filename>.  The server will listen for both normal
    and <acronym>SSL</acronym> connections on the same TCP port, and will negotiate

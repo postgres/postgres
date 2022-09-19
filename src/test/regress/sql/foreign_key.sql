@@ -1742,7 +1742,7 @@ DELETE FROM pt;
 DELETE FROM ref;
 ABORT;
 DROP TABLE pt, ref;
--- Multi-level partitioning at at referenced end
+-- Multi-level partitioning at referenced end
 CREATE TABLE pt(f1 int, f2 int, f3 int, PRIMARY KEY(f1,f2))
   PARTITION BY LIST(f1);
 CREATE TABLE pt1_2 PARTITION OF pt FOR VALUES IN (1, 2) PARTITION BY LIST (f1);

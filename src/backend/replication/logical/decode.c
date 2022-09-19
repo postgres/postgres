@@ -126,7 +126,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 }
 
 /*
- * Handle rmgr XLOG_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr XLOG_ID records for LogicalDecodingProcessRecord().
  */
 void
 xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -169,7 +169,7 @@ xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr XACT_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr XACT_ID records for LogicalDecodingProcessRecord().
  */
 void
 xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -326,7 +326,7 @@ xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr STANDBY_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr STANDBY_ID records for LogicalDecodingProcessRecord().
  */
 void
 standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -372,7 +372,7 @@ standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr HEAP2_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr HEAP2_ID records for LogicalDecodingProcessRecord().
  */
 void
 heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -432,7 +432,7 @@ heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr HEAP_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr HEAP_ID records for LogicalDecodingProcessRecord().
  */
 void
 heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -554,7 +554,7 @@ FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
 }
 
 /*
- * Handle rmgr LOGICALMSG_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr LOGICALMSG_ID records for LogicalDecodingProcessRecord().
  */
 void
 logicalmsg_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)

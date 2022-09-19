@@ -331,7 +331,7 @@ RemoveAttrDefaultById(Oid attrdefId)
 
 /*
  * Get the pg_attrdef OID of the default expression for a column
- * identified by relation OID and and column number.
+ * identified by relation OID and column number.
  *
  * Returns InvalidOid if there is no such pg_attrdef entry.
  */
