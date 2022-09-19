@@ -112,7 +112,7 @@ static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
 /* Local functions */
 static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
-												pg_re_flags *flags,
+												pg_re_flags *re_flags,
 												int start_search,
 												Oid collation,
 												bool use_subpatterns,
