@@ -556,7 +556,7 @@ pgstat_initialize(void)
  * suggested idle timeout is returned. Currently this is always
  * PGSTAT_IDLE_INTERVAL (10000ms). Callers can use the returned time to set up
  * a timeout after which to call pgstat_report_stat(true), but are not
- * required to to do so.
+ * required to do so.
  *
  * Note that this is called only when not within a transaction, so it is fair
  * to use transaction stop time as an approximation of current time.

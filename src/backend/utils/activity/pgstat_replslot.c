@@ -8,13 +8,13 @@
  * storage implementation and the details about individual types of
  * statistics.
  *
- * Replication slot stats work a bit different than other other
- * variable-numbered stats. Slots do not have oids (so they can be created on
- * physical replicas). Use the slot index as object id while running. However,
- * the slot index can change when restarting. That is addressed by using the
- * name when (de-)serializing. After a restart it is possible for slots to
- * have been dropped while shut down, which is addressed by not restoring
- * stats for slots that cannot be found by name when starting up.
+ * Replication slot stats work a bit different than other variable-numbered
+ * stats. Slots do not have oids (so they can be created on physical
+ * replicas). Use the slot index as object id while running. However, the slot
+ * index can change when restarting. That is addressed by using the name when
+ * (de-)serializing. After a restart it is possible for slots to have been
+ * dropped while shut down, which is addressed by not restoring stats for
+ * slots that cannot be found by name when starting up.
  *
  * Copyright (c) 2001-2022, PostgreSQL Global Development Group
  *

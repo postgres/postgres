@@ -2155,8 +2155,8 @@ InitPartitionPruneContext(PartitionPruneContext *context,
  * Current values of the indexes present in PartitionPruneState count all the
  * subplans that would be present before initial pruning was done.  If initial
  * pruning got rid of some of the subplans, any subsequent pruning passes will
- * will be looking at a different set of target subplans to choose from than
- * those in the pre-initial-pruning set, so the maps in PartitionPruneState
+ * be looking at a different set of target subplans to choose from than those
+ * in the pre-initial-pruning set, so the maps in PartitionPruneState
  * containing those indexes must be updated to reflect the new indexes of
  * subplans in the post-initial-pruning set.
  */
