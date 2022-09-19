@@ -636,7 +636,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Report the following statistics for each command after the benchmark
         finishes: the average per-statement latency (execution time from the
-        perspective of the client), the number of failures and the number of
+        perspective of the client), the number of failures, and the number of
         retries after serialization or deadlock errors in this command.  The
         report displays retry statistics only if the
         <option>--max-tries</option> option is not equal to 1.
