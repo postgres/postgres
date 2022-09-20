@@ -70,9 +70,9 @@ delete $ENV{LS_COLORS};
 # to run in the build directory so that we can use relative paths to
 # access the tab_comp_dir subdirectory; otherwise the output from filename
 # completion tests is too variable.
-if ($ENV{TESTDIR})
+if ($ENV{TESTDATADIR})
 {
-	chdir $ENV{TESTDIR} or die "could not chdir to \"$ENV{TESTDIR}\": $!";
+	chdir $ENV{TESTDATADIR} or die "could not chdir to \"$ENV{TESTDATADIR}\": $!";
 }
 
 # Create some junk files for filename completion testing.

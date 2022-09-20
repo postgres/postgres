@@ -189,11 +189,11 @@ INIT
 	# test may still fail, but it's more likely to report useful facts.
 	$SIG{PIPE} = 'IGNORE';
 
-	# Determine output directories, and create them.  The base path is the
-	# TESTDIR environment variable, which is normally set by the invoking
-	# Makefile.
-	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}" : "tmp_check";
-	$log_path = "$tmp_check/log";
+	# Determine output directories, and create them.  The base paths are the
+	# TESTDATADIR / TESTLOGDIR environment variables, which are normally set
+	# by the invoking Makefile.
+	$tmp_check = $ENV{TESTDATADIR} ? "$ENV{TESTDATADIR}" : "tmp_check";
+	$log_path = $ENV{TESTLOGDIR} ? "$ENV{TESTLOGDIR}" : "log";
 
 	mkdir $tmp_check;
 	mkdir $log_path;

@@ -451,7 +451,9 @@ echo "+++ tap install-check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
-   TESTDIR='$(CURDIR)/tmp_check' PATH="$(bindir):$(CURDIR):$$PATH" \
+   TESTLOGDIR='$(CURDIR)/tmp_check/log' \
+   TESTDATADIR='$(CURDIR)/tmp_check' \
+   PATH="$(bindir):$(CURDIR):$$PATH" \
    PGPORT='6$(DEF_PGPORT)' top_builddir='$(CURDIR)/$(top_builddir)' \
    PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' \
    $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
@@ -462,7 +464,9 @@ echo "+++ tap install-check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
-   TESTDIR='$(CURDIR)/tmp_check' PATH="$(bindir):$(CURDIR):$$PATH" \
+   TESTLOGDIR='$(CURDIR)/tmp_check/log' \
+   TESTDATADIR='$(CURDIR)/tmp_check' \
+   PATH="$(bindir):$(CURDIR):$$PATH" \
    PGPORT='6$(DEF_PGPORT)' top_builddir='$(top_builddir)' \
    PG_REGRESS='$(top_builddir)/src/test/regress/pg_regress' \
    $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
@@ -474,7 +478,10 @@ echo "+++ tap check in $(subdir) +++" && \
 rm -rf '$(CURDIR)'/tmp_check && \
 $(MKDIR_P) '$(CURDIR)'/tmp_check && \
 cd $(srcdir) && \
-   TESTDIR='$(CURDIR)/tmp_check' $(with_temp_install) PGPORT='6$(DEF_PGPORT)' \
+   TESTLOGDIR='$(CURDIR)/tmp_check/log' \
+   TESTDATADIR='$(CURDIR)/tmp_check' \
+   $(with_temp_install) \
+   PGPORT='6$(DEF_PGPORT)' \
    PG_REGRESS='$(CURDIR)/$(top_builddir)/src/test/regress/pg_regress' \
    $(PROVE) $(PG_PROVE_FLAGS) $(PROVE_FLAGS) $(if $(PROVE_TESTS),$(PROVE_TESTS),t/*.pl)
 endef
