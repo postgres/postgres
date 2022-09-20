@@ -281,11 +281,11 @@ ginCompressPostingList(const ItemPointer ipd, int nipd, int maxsize,
  * The number of items is returned in *ndecoded.
  */
 ItemPointer
-ginPostingListDecode(GinPostingList *plist, int *ndecoded)
+ginPostingListDecode(GinPostingList *plist, int *ndecoded_out)
 {
 	return ginPostingListDecodeAllSegments(plist,
 										   SizeOfGinPostingList(plist),
-										   ndecoded);
+										   ndecoded_out);
 }
 
 /*

@@ -3644,7 +3644,7 @@ PopOverrideSearchPath(void)
  * database's encoding.
  */
 Oid
-get_collation_oid(List *name, bool missing_ok)
+get_collation_oid(List *collname, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *collation_name;
@@ -3654,7 +3654,7 @@ get_collation_oid(List *name, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(name, &schemaname, &collation_name);
+	DeconstructQualifiedName(collname, &schemaname, &collation_name);
 
 	if (schemaname)
 	{
@@ -3690,7 +3690,7 @@ get_collation_oid(List *name, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("collation \"%s\" for encoding \"%s\" does not exist",
-						NameListToString(name), GetDatabaseEncodingName())));
+						NameListToString(collname), GetDatabaseEncodingName())));
 	return InvalidOid;
 }
 
@@ -3698,7 +3698,7 @@ get_collation_oid(List *name, bool missing_ok)
  * get_conversion_oid - find a conversion by possibly qualified name
  */
 Oid
-get_conversion_oid(List *name, bool missing_ok)
+get_conversion_oid(List *conname, bool missing_ok)
 {
 	char	   *schemaname;
 	char	   *conversion_name;
@@ -3707,7 +3707,7 @@ get_conversion_oid(List *name, bool missing_ok)
 	ListCell   *l;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(name, &schemaname, &conversion_name);
+	DeconstructQualifiedName(conname, &schemaname, &conversion_name);
 
 	if (schemaname)
 	{
@@ -3745,7 +3745,7 @@ get_conversion_oid(List *name, bool missing_ok)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("conversion \"%s\" does not exist",
-						NameListToString(name))));
+						NameListToString(conname))));
 	return conoid;
 }
 

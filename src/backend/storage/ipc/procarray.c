@@ -343,7 +343,7 @@ static bool KnownAssignedXidExists(TransactionId xid);
 static void KnownAssignedXidsRemove(TransactionId xid);
 static void KnownAssignedXidsRemoveTree(TransactionId xid, int nsubxids,
 										TransactionId *subxids);
-static void KnownAssignedXidsRemovePreceding(TransactionId xid);
+static void KnownAssignedXidsRemovePreceding(TransactionId removeXid);
 static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int	KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 										   TransactionId *xmin,

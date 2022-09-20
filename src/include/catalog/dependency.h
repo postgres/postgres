@@ -249,7 +249,7 @@ extern void recordDependencyOnTablespace(Oid classId, Oid objectId,
 extern void changeDependencyOnTablespace(Oid classId, Oid objectId,
 										 Oid newTablespaceId);
 
-extern void updateAclDependencies(Oid classId, Oid objectId, int32 objectSubId,
+extern void updateAclDependencies(Oid classId, Oid objectId, int32 objsubId,
 								  Oid ownerId,
 								  int noldmembers, Oid *oldmembers,
 								  int nnewmembers, Oid *newmembers);
@@ -263,8 +263,8 @@ extern void copyTemplateDependencies(Oid templateDbId, Oid newDbId);
 
 extern void dropDatabaseDependencies(Oid databaseId);
 
-extern void shdepDropOwned(List *relids, DropBehavior behavior);
+extern void shdepDropOwned(List *roleids, DropBehavior behavior);
 
-extern void shdepReassignOwned(List *relids, Oid newrole);
+extern void shdepReassignOwned(List *roleids, Oid newrole);
 
 #endif							/* DEPENDENCY_H */

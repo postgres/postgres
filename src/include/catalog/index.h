@@ -149,7 +149,7 @@ extern void index_set_state_flags(Oid indexId, IndexStateFlagsAction action);
 extern Oid	IndexGetRelation(Oid indexId, bool missing_ok);
 
 extern void reindex_index(Oid indexId, bool skip_constraint_checks,
-						  char relpersistence, ReindexParams *params);
+						  char persistence, ReindexParams *params);
 
 /* Flag bits for reindex_relation(): */
 #define REINDEX_REL_PROCESS_TOAST			0x01
@@ -168,7 +168,7 @@ extern Size EstimateReindexStateSpace(void);
 extern void SerializeReindexState(Size maxsize, char *start_address);
 extern void RestoreReindexState(void *reindexstate);
 
-extern void IndexSetParentIndex(Relation idx, Oid parentOid);
+extern void IndexSetParentIndex(Relation partitionIdx, Oid parentOid);
 
 
 /*

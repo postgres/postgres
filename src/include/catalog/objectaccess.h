@@ -151,15 +151,15 @@ extern bool RunNamespaceSearchHook(Oid objectId, bool ereport_on_violation);
 extern void RunFunctionExecuteHook(Oid objectId);
 
 /* String versions */
-extern void RunObjectPostCreateHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectPostCreateHookStr(Oid classId, const char *objectName, int subId,
 									   bool is_internal);
-extern void RunObjectDropHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectDropHookStr(Oid classId, const char *objectName, int subId,
 								 int dropflags);
-extern void RunObjectTruncateHookStr(const char *objectStr);
-extern void RunObjectPostAlterHookStr(Oid classId, const char *objectStr, int subId,
+extern void RunObjectTruncateHookStr(const char *objectName);
+extern void RunObjectPostAlterHookStr(Oid classId, const char *objectName, int subId,
 									  Oid auxiliaryId, bool is_internal);
-extern bool RunNamespaceSearchHookStr(const char *objectStr, bool ereport_on_violation);
-extern void RunFunctionExecuteHookStr(const char *objectStr);
+extern bool RunNamespaceSearchHookStr(const char *objectName, bool ereport_on_violation);
+extern void RunFunctionExecuteHookStr(const char *objectName);
 
 
 /*

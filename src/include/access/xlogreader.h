@@ -400,7 +400,7 @@ extern bool DecodeXLogRecord(XLogReaderState *state,
 							 DecodedXLogRecord *decoded,
 							 XLogRecord *record,
 							 XLogRecPtr lsn,
-							 char **errmsg);
+							 char **errormsg);
 
 /*
  * Macros that provide access to parts of the record most recently returned by

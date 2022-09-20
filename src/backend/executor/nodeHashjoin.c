@@ -145,7 +145,7 @@ static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 												 TupleTableSlot *tupleSlot);
 static bool ExecHashJoinNewBatch(HashJoinState *hjstate);
 static bool ExecParallelHashJoinNewBatch(HashJoinState *hjstate);
-static void ExecParallelHashJoinPartitionOuter(HashJoinState *node);
+static void ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate);
 
 
 /* ----------------------------------------------------------------
@@ -1502,11 +1502,11 @@ ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
  * ----------------------------------------------------------------
  */
 void
-ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *cxt)
+ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 {
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
 	ParallelHashJoinState *pstate =
-	shm_toc_lookup(cxt->toc, plan_node_id, false);
+	shm_toc_lookup(pcxt->toc, plan_node_id, false);
 
 	/*
 	 * It would be possible to reuse the shared hash table in single-batch

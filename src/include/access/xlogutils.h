@@ -82,10 +82,10 @@ typedef struct ReadLocalXLogPageNoWaitPrivate
 } ReadLocalXLogPageNoWaitPrivate;
 
 extern XLogRedoAction XLogReadBufferForRedo(XLogReaderState *record,
-											uint8 buffer_id, Buffer *buf);
+											uint8 block_id, Buffer *buf);
 extern Buffer XLogInitBufferForRedo(XLogReaderState *record, uint8 block_id);
 extern XLogRedoAction XLogReadBufferForRedoExtended(XLogReaderState *record,
-													uint8 buffer_id,
+													uint8 block_id,
 													ReadBufferMode mode, bool get_cleanup_lock,
 													Buffer *buf);
 

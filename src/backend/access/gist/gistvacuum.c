@@ -49,7 +49,7 @@ static void gistvacuumpage(GistVacState *vstate, BlockNumber blkno,
 static void gistvacuum_delete_empty_pages(IndexVacuumInfo *info,
 										  GistVacState *vstate);
 static bool gistdeletepage(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
-						   Buffer buffer, OffsetNumber downlink,
+						   Buffer parentBuffer, OffsetNumber downlink,
 						   Buffer leafBuffer);
 
 /*

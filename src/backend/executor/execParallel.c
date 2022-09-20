@@ -126,9 +126,9 @@ typedef struct ExecParallelInitializeDSMContext
 
 /* Helper functions that run in the parallel leader. */
 static char *ExecSerializePlan(Plan *plan, EState *estate);
-static bool ExecParallelEstimate(PlanState *node,
+static bool ExecParallelEstimate(PlanState *planstate,
 								 ExecParallelEstimateContext *e);
-static bool ExecParallelInitializeDSM(PlanState *node,
+static bool ExecParallelInitializeDSM(PlanState *planstate,
 									  ExecParallelInitializeDSMContext *d);
 static shm_mq_handle **ExecParallelSetupTupleQueues(ParallelContext *pcxt,
 													bool reinitialize);

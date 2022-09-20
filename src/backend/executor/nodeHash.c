@@ -62,9 +62,9 @@ static HashJoinTuple ExecParallelHashTupleAlloc(HashJoinTable hashtable,
 												dsa_pointer *shared);
 static void MultiExecPrivateHash(HashState *node);
 static void MultiExecParallelHash(HashState *node);
-static inline HashJoinTuple ExecParallelHashFirstTuple(HashJoinTable table,
+static inline HashJoinTuple ExecParallelHashFirstTuple(HashJoinTable hashtable,
 													   int bucketno);
-static inline HashJoinTuple ExecParallelHashNextTuple(HashJoinTable table,
+static inline HashJoinTuple ExecParallelHashNextTuple(HashJoinTable hashtable,
 													  HashJoinTuple tuple);
 static inline void ExecParallelHashPushTuple(dsa_pointer_atomic *head,
 											 HashJoinTuple tuple,
@@ -73,7 +73,7 @@ static void ExecParallelHashJoinSetUpBatches(HashJoinTable hashtable, int nbatch
 static void ExecParallelHashEnsureBatchAccessors(HashJoinTable hashtable);
 static void ExecParallelHashRepartitionFirst(HashJoinTable hashtable);
 static void ExecParallelHashRepartitionRest(HashJoinTable hashtable);
-static HashMemoryChunk ExecParallelHashPopChunkQueue(HashJoinTable table,
+static HashMemoryChunk ExecParallelHashPopChunkQueue(HashJoinTable hashtable,
 													 dsa_pointer *shared);
 static bool ExecParallelHashTuplePrealloc(HashJoinTable hashtable,
 										  int batchno,

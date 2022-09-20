@@ -733,11 +733,11 @@ add_reloption(relopt_gen *newoption)
  * 		'relopt_struct_size'.
  */
 void
-init_local_reloptions(local_relopts *opts, Size relopt_struct_size)
+init_local_reloptions(local_relopts *relopts, Size relopt_struct_size)
 {
-	opts->options = NIL;
-	opts->validators = NIL;
-	opts->relopt_struct_size = relopt_struct_size;
+	relopts->options = NIL;
+	relopts->validators = NIL;
+	relopts->relopt_struct_size = relopt_struct_size;
 }
 
 /*
@@ -746,9 +746,9 @@ init_local_reloptions(local_relopts *opts, Size relopt_struct_size)
  *		build_local_reloptions().
  */
 void
-register_reloptions_validator(local_relopts *opts, relopts_validator validator)
+register_reloptions_validator(local_relopts *relopts, relopts_validator validator)
 {
-	opts->validators = lappend(opts->validators, validator);
+	relopts->validators = lappend(relopts->validators, validator);
 }
 
 /*

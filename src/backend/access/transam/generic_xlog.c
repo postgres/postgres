@@ -69,7 +69,7 @@ struct GenericXLogState
 };
 
 static void writeFragment(PageData *pageData, OffsetNumber offset,
-						  OffsetNumber len, const char *data);
+						  OffsetNumber length, const char *data);
 static void computeRegionDelta(PageData *pageData,
 							   const char *curpage, const char *targetpage,
 							   int targetStart, int targetEnd,

@@ -31,9 +31,9 @@ static void gistLoadNodeBuffer(GISTBuildBuffers *gfbb,
 static void gistUnloadNodeBuffer(GISTBuildBuffers *gfbb,
 								 GISTNodeBuffer *nodeBuffer);
 static void gistPlaceItupToPage(GISTNodeBufferPage *pageBuffer,
-								IndexTuple item);
+								IndexTuple itup);
 static void gistGetItupFromPage(GISTNodeBufferPage *pageBuffer,
-								IndexTuple *item);
+								IndexTuple *itup);
 static long gistBuffersGetFreeBlock(GISTBuildBuffers *gfbb);
 static void gistBuffersReleaseBlock(GISTBuildBuffers *gfbb, long blocknum);
 

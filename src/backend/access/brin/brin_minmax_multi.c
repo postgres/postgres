@@ -223,7 +223,8 @@ typedef struct SerializedRanges
 
 static SerializedRanges *brin_range_serialize(Ranges *range);
 
-static Ranges *brin_range_deserialize(int maxvalues, SerializedRanges *range);
+static Ranges *brin_range_deserialize(int maxvalues,
+									  SerializedRanges *serialized);
 
 
 /*

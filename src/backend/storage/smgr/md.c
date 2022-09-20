@@ -121,7 +121,7 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /* local routines */
-static void mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum,
+static void mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum,
 						 bool isRedo);
 static MdfdVec *mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
@@ -135,9 +135,9 @@ static void _fdvec_resize(SMgrRelation reln,
 						  int nseg);
 static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
 						   BlockNumber segno);
-static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
+static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forknum,
 							  BlockNumber segno, int oflags);
-static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
+static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forknum,
 							 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 							  MdfdVec *seg);
@@ -160,7 +160,7 @@ mdinit(void)
  * Note: this will return true for lingering files, with pending deletions
  */
 bool
-mdexists(SMgrRelation reln, ForkNumber forkNum)
+mdexists(SMgrRelation reln, ForkNumber forknum)
 {
 	/*
 	 * Close it first, to ensure that we notice if the fork has been unlinked
@@ -168,9 +168,9 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 	 * which already closes relations when dropping them.
 	 */
 	if (!InRecovery)
-		mdclose(reln, forkNum);
+		mdclose(reln, forknum);
 
-	return (mdopenfork(reln, forkNum, EXTENSION_RETURN_NULL) != NULL);
+	return (mdopenfork(reln, forknum, EXTENSION_RETURN_NULL) != NULL);
 }
 
 /*
@@ -179,16 +179,16 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
  * If isRedo is true, it's okay for the relation to exist already.
  */
 void
-mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
+mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
 	File		fd;
 
-	if (isRedo && reln->md_num_open_segs[forkNum] > 0)
+	if (isRedo && reln->md_num_open_segs[forknum] > 0)
 		return;					/* created and opened already... */
 
-	Assert(reln->md_num_open_segs[forkNum] == 0);
+	Assert(reln->md_num_open_segs[forknum] == 0);
 
 	/*
 	 * We may be using the target table space for the first time in this
@@ -203,7 +203,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 							reln->smgr_rlocator.locator.dbOid,
 							isRedo);
 
-	path = relpath(reln->smgr_rlocator, forkNum);
+	path = relpath(reln->smgr_rlocator, forknum);
 
 	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
 
@@ -225,8 +225,8 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	pfree(path);
 
-	_fdvec_resize(reln, forkNum, 1);
-	mdfd = &reln->md_seg_fds[forkNum][0];
+	_fdvec_resize(reln, forknum, 1);
+	mdfd = &reln->md_seg_fds[forknum][0];
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
 }
@@ -237,7 +237,7 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * Note that we're passed a RelFileLocatorBackend --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
- * forkNum can be a fork number to delete a specific fork, or InvalidForkNumber
+ * forknum can be a fork number to delete a specific fork, or InvalidForkNumber
  * to delete all forks.
  *
  * For regular relations, we don't unlink the first segment file of the rel,
@@ -278,16 +278,16 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * we are usually not in a transaction anymore when this is called.
  */
 void
-mdunlink(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
+mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
 	/* Now do the per-fork work */
-	if (forkNum == InvalidForkNumber)
+	if (forknum == InvalidForkNumber)
 	{
-		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			mdunlinkfork(rlocator, forkNum, isRedo);
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+			mdunlinkfork(rlocator, forknum, isRedo);
 	}
 	else
-		mdunlinkfork(rlocator, forkNum, isRedo);
+		mdunlinkfork(rlocator, forknum, isRedo);
 }
 
 /*
@@ -315,18 +315,18 @@ do_truncate(const char *path)
 }
 
 static void
-mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
+mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
 	char	   *path;
 	int			ret;
 	BlockNumber segno = 0;
 
-	path = relpath(rlocator, forkNum);
+	path = relpath(rlocator, forknum);
 
 	/*
 	 * Delete or truncate the first segment.
 	 */
-	if (isRedo || forkNum != MAIN_FORKNUM || RelFileLocatorBackendIsTemp(rlocator))
+	if (isRedo || forknum != MAIN_FORKNUM || RelFileLocatorBackendIsTemp(rlocator))
 	{
 		if (!RelFileLocatorBackendIsTemp(rlocator))
 		{
@@ -334,7 +334,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 			ret = do_truncate(path);
 
 			/* Forget any pending sync requests for the first segment */
-			register_forget_request(rlocator, forkNum, 0 /* first seg */ );
+			register_forget_request(rlocator, forknum, 0 /* first seg */ );
 		}
 		else
 			ret = 0;
@@ -367,7 +367,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 		 */
 		if (!IsBinaryUpgrade)
 		{
-			register_unlink_segment(rlocator, forkNum, 0 /* first seg */ );
+			register_unlink_segment(rlocator, forknum, 0 /* first seg */ );
 			++segno;
 		}
 	}
@@ -403,7 +403,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forkNum, bool isRedo)
 				 * Forget any pending sync requests for this segment before we
 				 * try to unlink.
 				 */
-				register_forget_request(rlocator, forkNum, segno);
+				register_forget_request(rlocator, forknum, segno);
 			}
 
 			if (unlink(segpath) < 0)

@@ -104,17 +104,17 @@ typedef struct
 bool		binary_upgrade_record_init_privs = false;
 
 static void ExecGrantStmt_oids(InternalGrant *istmt);
-static void ExecGrant_Relation(InternalGrant *grantStmt);
-static void ExecGrant_Database(InternalGrant *grantStmt);
-static void ExecGrant_Fdw(InternalGrant *grantStmt);
-static void ExecGrant_ForeignServer(InternalGrant *grantStmt);
-static void ExecGrant_Function(InternalGrant *grantStmt);
-static void ExecGrant_Language(InternalGrant *grantStmt);
-static void ExecGrant_Largeobject(InternalGrant *grantStmt);
-static void ExecGrant_Namespace(InternalGrant *grantStmt);
-static void ExecGrant_Tablespace(InternalGrant *grantStmt);
-static void ExecGrant_Type(InternalGrant *grantStmt);
-static void ExecGrant_Parameter(InternalGrant *grantStmt);
+static void ExecGrant_Relation(InternalGrant *istmt);
+static void ExecGrant_Database(InternalGrant *istmt);
+static void ExecGrant_Fdw(InternalGrant *istmt);
+static void ExecGrant_ForeignServer(InternalGrant *istmt);
+static void ExecGrant_Function(InternalGrant *istmt);
+static void ExecGrant_Language(InternalGrant *istmt);
+static void ExecGrant_Largeobject(InternalGrant *istmt);
+static void ExecGrant_Namespace(InternalGrant *istmt);
+static void ExecGrant_Tablespace(InternalGrant *istmt);
+static void ExecGrant_Type(InternalGrant *istmt);
+static void ExecGrant_Parameter(InternalGrant *istmt);
 
 static void SetDefaultACLsInSchemas(InternalDefaultACL *iacls, List *nspnames);
 static void SetDefaultACL(InternalDefaultACL *iacls);

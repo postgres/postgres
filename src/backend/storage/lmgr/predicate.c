@@ -446,7 +446,7 @@ static void SerialSetActiveSerXmin(TransactionId xid);
 
 static uint32 predicatelock_hash(const void *key, Size keysize);
 static void SummarizeOldestCommittedSxact(void);
-static Snapshot GetSafeSnapshot(Snapshot snapshot);
+static Snapshot GetSafeSnapshot(Snapshot origSnapshot);
 static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 													  VirtualTransactionId *sourcevxid,
 													  int sourcepid);

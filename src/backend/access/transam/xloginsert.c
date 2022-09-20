@@ -1094,7 +1094,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
  * the unused space to be left out from the WAL record, making it smaller.
  */
 XLogRecPtr
-log_newpage(RelFileLocator *rlocator, ForkNumber forkNum, BlockNumber blkno,
+log_newpage(RelFileLocator *rlocator, ForkNumber forknum, BlockNumber blkno,
 			Page page, bool page_std)
 {
 	int			flags;
@@ -1105,7 +1105,7 @@ log_newpage(RelFileLocator *rlocator, ForkNumber forkNum, BlockNumber blkno,
 		flags |= REGBUF_STANDARD;
 
 	XLogBeginInsert();
-	XLogRegisterBlock(0, rlocator, forkNum, blkno, page, flags);
+	XLogRegisterBlock(0, rlocator, forknum, blkno, page, flags);
 	recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI);
 
 	/*
@@ -1126,7 +1126,7 @@ log_newpage(RelFileLocator *rlocator, ForkNumber forkNum, BlockNumber blkno,
  * because we can write multiple pages in a single WAL record.
  */
 void
-log_newpages(RelFileLocator *rlocator, ForkNumber forkNum, int num_pages,
+log_newpages(RelFileLocator *rlocator, ForkNumber forknum, int num_pages,
 			 BlockNumber *blknos, Page *pages, bool page_std)
 {
 	int			flags;
@@ -1156,7 +1156,7 @@ log_newpages(RelFileLocator *rlocator, ForkNumber forkNum, int num_pages,
 		nbatch = 0;
 		while (nbatch < XLR_MAX_BLOCK_ID && i < num_pages)
 		{
-			XLogRegisterBlock(nbatch, rlocator, forkNum, blknos[i], pages[i], flags);
+			XLogRegisterBlock(nbatch, rlocator, forknum, blknos[i], pages[i], flags);
 			i++;
 			nbatch++;
 		}
@@ -1192,15 +1192,15 @@ log_newpage_buffer(Buffer buffer, bool page_std)
 {
 	Page		page = BufferGetPage(buffer);
 	RelFileLocator rlocator;
-	ForkNumber	forkNum;
+	ForkNumber	forknum;
 	BlockNumber blkno;
 
 	/* Shared buffers should be modified in a critical section. */
 	Assert(CritSectionCount > 0);
 
-	BufferGetTag(buffer, &rlocator, &forkNum, &blkno);
+	BufferGetTag(buffer, &rlocator, &forknum, &blkno);
 
-	return log_newpage(&rlocator, forkNum, blkno, page, page_std);
+	return log_newpage(&rlocator, forknum, blkno, page, page_std);
 }
 
 /*
@@ -1221,7 +1221,7 @@ log_newpage_buffer(Buffer buffer, bool page_std)
  * cause a deadlock through some other means.
  */
 void
-log_newpage_range(Relation rel, ForkNumber forkNum,
+log_newpage_range(Relation rel, ForkNumber forknum,
 				  BlockNumber startblk, BlockNumber endblk,
 				  bool page_std)
 {
@@ -1253,7 +1253,7 @@ log_newpage_range(Relation rel, ForkNumber forkNum,
 		nbufs = 0;
 		while (nbufs < XLR_MAX_BLOCK_ID && blkno < endblk)
 		{
-			Buffer		buf = ReadBufferExtended(rel, forkNum, blkno,
+			Buffer		buf = ReadBufferExtended(rel, forknum, blkno,
 												 RBM_NORMAL, NULL);
 
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);

@@ -218,7 +218,7 @@ extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti, bool missing_ok);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EPQState *epqstate, Relation relation,
-									Index rti, TupleTableSlot *testslot);
+									Index rti, TupleTableSlot *inputslot);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 							 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
@@ -432,7 +432,7 @@ ExecQualAndReset(ExprState *state, ExprContext *econtext)
 }
 #endif
 
-extern bool ExecCheck(ExprState *state, ExprContext *context);
+extern bool ExecCheck(ExprState *state, ExprContext *econtext);
 
 /*
  * prototypes from functions in execSRF.c
@@ -473,7 +473,7 @@ extern void ExecInitResultSlot(PlanState *planstate,
 extern void ExecInitResultTupleSlotTL(PlanState *planstate,
 									  const TupleTableSlotOps *tts_ops);
 extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate,
-								  TupleDesc tupleDesc,
+								  TupleDesc tupledesc,
 								  const TupleTableSlotOps *tts_ops);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate,
 											  TupleDesc tupledesc,

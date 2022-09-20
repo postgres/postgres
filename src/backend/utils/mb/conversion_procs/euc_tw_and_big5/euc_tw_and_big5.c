@@ -41,7 +41,7 @@ PG_FUNCTION_INFO_V1(mic_to_big5);
  */
 
 static int	euc_tw2big5(const unsigned char *euc, unsigned char *p, int len, bool noError);
-static int	big52euc_tw(const unsigned char *euc, unsigned char *p, int len, bool noError);
+static int	big52euc_tw(const unsigned char *big5, unsigned char *p, int len, bool noError);
 static int	big52mic(const unsigned char *big5, unsigned char *p, int len, bool noError);
 static int	mic2big5(const unsigned char *mic, unsigned char *p, int len, bool noError);
 static int	euc_tw2mic(const unsigned char *euc, unsigned char *p, int len, bool noError);

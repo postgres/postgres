@@ -648,7 +648,7 @@ static void XLogReportParameters(void);
 static int	LocalSetXLogInsertAllowed(void);
 static void CreateEndOfRecoveryRecord(void);
 static XLogRecPtr CreateOverwriteContrecordRecord(XLogRecPtr aborted_lsn,
-												  XLogRecPtr missingContrecPtr,
+												  XLogRecPtr pagePtr,
 												  TimeLineID newTLI);
 static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 static void KeepLogSeg(XLogRecPtr recptr, XLogSegNo *logSegNo);

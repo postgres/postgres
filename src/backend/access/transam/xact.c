@@ -354,7 +354,7 @@ static void AtSubStart_Memory(void);
 static void AtSubStart_ResourceOwner(void);
 
 static void ShowTransactionState(const char *str);
-static void ShowTransactionStateRec(const char *str, TransactionState state);
+static void ShowTransactionStateRec(const char *str, TransactionState s);
 static const char *BlockStateAsString(TBlockState blockState);
 static const char *TransStateAsString(TransState state);
 

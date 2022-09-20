@@ -62,13 +62,13 @@ static void DecodePrepare(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 
 
 /* common function to decode tuples */
-static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tup);
+static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple);
 
 /* helper functions for decoding transactions */
 static inline bool FilterPrepare(LogicalDecodingContext *ctx,
 								 TransactionId xid, const char *gid);
 static bool DecodeTXNNeedSkip(LogicalDecodingContext *ctx,
-							  XLogRecordBuffer *buf, Oid dbId,
+							  XLogRecordBuffer *buf, Oid txn_dbid,
 							  RepOriginId origin_id);
 
 /*

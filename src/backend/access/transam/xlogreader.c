@@ -47,7 +47,7 @@ static bool allocate_recordbuf(XLogReaderState *state, uint32 reclength);
 static int	ReadPageInternal(XLogReaderState *state, XLogRecPtr pageptr,
 							 int reqLen);
 static void XLogReaderInvalReadState(XLogReaderState *state);
-static XLogPageReadResult XLogDecodeNextRecord(XLogReaderState *state, bool non_blocking);
+static XLogPageReadResult XLogDecodeNextRecord(XLogReaderState *state, bool nonblocking);
 static bool ValidXLogRecordHeader(XLogReaderState *state, XLogRecPtr RecPtr,
 								  XLogRecPtr PrevRecPtr, XLogRecord *record, bool randAccess);
 static bool ValidXLogRecord(XLogReaderState *state, XLogRecord *record,

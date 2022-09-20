@@ -606,11 +606,11 @@ extern int	pg_encoding_wchar2mb_with_len(int encoding,
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
-extern size_t pg_wchar_strlen(const pg_wchar *wstr);
+extern size_t pg_wchar_strlen(const pg_wchar *str);
 extern int	pg_mblen(const char *mbstr);
 extern int	pg_dsplen(const char *mbstr);
 extern int	pg_mbstrlen(const char *mbstr);
-extern int	pg_mbstrlen_with_len(const char *mbstr, int len);
+extern int	pg_mbstrlen_with_len(const char *mbstr, int limit);
 extern int	pg_mbcliplen(const char *mbstr, int len, int limit);
 extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
 								  int len, int limit);
@@ -641,7 +641,7 @@ extern int	pg_do_encoding_conversion_buf(Oid proc,
 										  int src_encoding,
 										  int dest_encoding,
 										  unsigned char *src, int srclen,
-										  unsigned char *dst, int dstlen,
+										  unsigned char *dest, int destlen,
 										  bool noError);
 
 extern char *pg_client_to_server(const char *s, int len);

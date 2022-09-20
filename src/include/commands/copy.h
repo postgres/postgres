@@ -67,11 +67,11 @@ typedef struct CopyToStateData *CopyToState;
 
 typedef int (*copy_data_source_cb) (void *outbuf, int minread, int maxread);
 
-extern void DoCopy(ParseState *state, const CopyStmt *stmt,
+extern void DoCopy(ParseState *pstate, const CopyStmt *stmt,
 				   int stmt_location, int stmt_len,
 				   uint64 *processed);
 
-extern void ProcessCopyOptions(ParseState *pstate, CopyFormatOptions *ops_out, bool is_from, List *options);
+extern void ProcessCopyOptions(ParseState *pstate, CopyFormatOptions *opts_out, bool is_from, List *options);
 extern CopyFromState BeginCopyFrom(ParseState *pstate, Relation rel, Node *whereClause,
 								   const char *filename,
 								   bool is_program, copy_data_source_cb data_source_cb, List *attnamelist, List *options);
@@ -89,7 +89,7 @@ extern DestReceiver *CreateCopyDestReceiver(void);
 /*
  * internal prototypes
  */
-extern CopyToState BeginCopyTo(ParseState *pstate, Relation rel, RawStmt *query,
+extern CopyToState BeginCopyTo(ParseState *pstate, Relation rel, RawStmt *raw_query,
 							   Oid queryRelId, const char *filename, bool is_program,
 							   List *attnamelist, List *options);
 extern void EndCopyTo(CopyToState cstate);

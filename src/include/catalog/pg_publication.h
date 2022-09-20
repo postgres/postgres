@@ -137,7 +137,7 @@ extern List *GetPublicationSchemas(Oid pubid);
 extern List *GetSchemaPublications(Oid schemaid);
 extern List *GetSchemaPublicationRelations(Oid schemaid,
 										   PublicationPartOpt pub_partopt);
-extern List *GetAllSchemaPublicationRelations(Oid puboid,
+extern List *GetAllSchemaPublicationRelations(Oid pubid,
 											  PublicationPartOpt pub_partopt);
 extern List *GetPubPartitionOptionRelations(List *result,
 											PublicationPartOpt pub_partopt,

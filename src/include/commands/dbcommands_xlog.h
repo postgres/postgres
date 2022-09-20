@@ -53,8 +53,8 @@ typedef struct xl_dbase_drop_rec
 } xl_dbase_drop_rec;
 #define MinSizeOfDbaseDropRec offsetof(xl_dbase_drop_rec, tablespace_ids)
 
-extern void dbase_redo(XLogReaderState *rptr);
-extern void dbase_desc(StringInfo buf, XLogReaderState *rptr);
+extern void dbase_redo(XLogReaderState *record);
+extern void dbase_desc(StringInfo buf, XLogReaderState *record);
 extern const char *dbase_identify(uint8 info);
 
 #endif							/* DBCOMMANDS_XLOG_H */

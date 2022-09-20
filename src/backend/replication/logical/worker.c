@@ -312,7 +312,8 @@ static inline void cleanup_subxact_info(void);
  * Serialize and deserialize changes for a toplevel transaction.
  */
 static void stream_cleanup_files(Oid subid, TransactionId xid);
-static void stream_open_file(Oid subid, TransactionId xid, bool first);
+static void stream_open_file(Oid subid, TransactionId xid,
+							 bool first_segment);
 static void stream_write_change(char action, StringInfo s);
 static void stream_close_file(void);
 

@@ -133,8 +133,8 @@ typedef struct MemoizeEntry
 static uint32 MemoizeHash_hash(struct memoize_hash *tb,
 							   const MemoizeKey *key);
 static bool MemoizeHash_equal(struct memoize_hash *tb,
-							  const MemoizeKey *params1,
-							  const MemoizeKey *params2);
+							  const MemoizeKey *key1,
+							  const MemoizeKey *key2);
 
 #define SH_PREFIX memoize
 #define SH_ELEMENT_TYPE MemoizeEntry

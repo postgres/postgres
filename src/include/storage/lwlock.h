@@ -124,7 +124,7 @@ extern bool LWLockAnyHeldByMe(LWLock *lock, int nlocks, size_t stride);
 extern bool LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode);
 
 extern bool LWLockWaitForVar(LWLock *lock, uint64 *valptr, uint64 oldval, uint64 *newval);
-extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 value);
+extern void LWLockUpdateVar(LWLock *lock, uint64 *valptr, uint64 val);
 
 extern Size LWLockShmemSize(void);
 extern void CreateLWLocks(void);

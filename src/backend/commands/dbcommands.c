@@ -125,9 +125,9 @@ static bool have_createdb_privilege(void);
 static void remove_dbtablespaces(Oid db_id);
 static bool check_db_file_conflict(Oid db_id);
 static int	errdetail_busy_db(int notherbackends, int npreparedxacts);
-static void CreateDatabaseUsingWalLog(Oid src_dboid, Oid dboid, Oid src_tsid,
+static void CreateDatabaseUsingWalLog(Oid src_dboid, Oid dst_dboid, Oid src_tsid,
 									  Oid dst_tsid);
-static List *ScanSourceDatabasePgClass(Oid srctbid, Oid srcdbid, char *srcpath);
+static List *ScanSourceDatabasePgClass(Oid tbid, Oid dbid, char *srcpath);
 static List *ScanSourceDatabasePgClassPage(Page page, Buffer buf, Oid tbid,
 										   Oid dbid, char *srcpath,
 										   List *rlocatorlist, Snapshot snapshot);
@@ -136,8 +136,8 @@ static CreateDBRelInfo *ScanSourceDatabasePgClassTuple(HeapTupleData *tuple,
 													   char *srcpath);
 static void CreateDirAndVersionFile(char *dbpath, Oid dbid, Oid tsid,
 									bool isRedo);
-static void CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dboid, Oid src_tsid,
-										Oid dst_tsid);
+static void CreateDatabaseUsingFileCopy(Oid src_dboid, Oid dst_dboid,
+										Oid src_tsid, Oid dst_tsid);
 static void recovery_create_dbdir(char *path, bool only_tblspc);
 
 /*

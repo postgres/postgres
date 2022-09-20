@@ -108,7 +108,7 @@ static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 /* internal persistency functions */
 static void RestoreSlotFromDisk(const char *name);
 static void CreateSlotOnDisk(ReplicationSlot *slot);
-static void SaveSlotToPath(ReplicationSlot *slot, const char *path, int elevel);
+static void SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel);
 
 /*
  * Report shared-memory space needed by ReplicationSlotsShmemInit.

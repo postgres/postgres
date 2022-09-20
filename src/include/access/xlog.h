@@ -197,15 +197,15 @@ extern XLogRecPtr XLogInsertRecord(struct XLogRecData *rdata,
 								   uint8 flags,
 								   int num_fpi,
 								   bool topxid_included);
-extern void XLogFlush(XLogRecPtr RecPtr);
+extern void XLogFlush(XLogRecPtr record);
 extern bool XLogBackgroundFlush(void);
-extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
-extern int	XLogFileInit(XLogSegNo segno, TimeLineID tli);
+extern bool XLogNeedsFlush(XLogRecPtr record);
+extern int	XLogFileInit(XLogSegNo logsegno, TimeLineID logtli);
 extern int	XLogFileOpen(XLogSegNo segno, TimeLineID tli);
 
 extern void CheckXLogRemoved(XLogSegNo segno, TimeLineID tli);
 extern XLogSegNo XLogGetLastRemovedSegno(void);
-extern void XLogSetAsyncXactLSN(XLogRecPtr record);
+extern void XLogSetAsyncXactLSN(XLogRecPtr asyncXactLSN);
 extern void XLogSetReplicationSlotMinimumLSN(XLogRecPtr lsn);
 
 extern void xlog_redo(XLogReaderState *record);

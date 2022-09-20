@@ -52,12 +52,12 @@ extern void XLogRegisterBufData(uint8 block_id, char *data, uint32 len);
 extern void XLogResetInsertion(void);
 extern bool XLogCheckBufferNeedsBackup(Buffer buffer);
 
-extern XLogRecPtr log_newpage(RelFileLocator *rlocator, ForkNumber forkNum,
-							  BlockNumber blk, char *page, bool page_std);
-extern void log_newpages(RelFileLocator *rlocator, ForkNumber forkNum, int num_pages,
+extern XLogRecPtr log_newpage(RelFileLocator *rlocator, ForkNumber forknum,
+							  BlockNumber blkno, char *page, bool page_std);
+extern void log_newpages(RelFileLocator *rlocator, ForkNumber forknum, int num_pages,
 						 BlockNumber *blknos, char **pages, bool page_std);
 extern XLogRecPtr log_newpage_buffer(Buffer buffer, bool page_std);
-extern void log_newpage_range(Relation rel, ForkNumber forkNum,
+extern void log_newpage_range(Relation rel, ForkNumber forknum,
 							  BlockNumber startblk, BlockNumber endblk, bool page_std);
 extern XLogRecPtr XLogSaveBufferForHint(Buffer buffer, bool buffer_std);
 

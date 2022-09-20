@@ -111,7 +111,7 @@ static int	fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
 							 BlockNumber start, BlockNumber end,
-							 bool *eof);
+							 bool *eof_p);
 
 
 /******** Public API ********/

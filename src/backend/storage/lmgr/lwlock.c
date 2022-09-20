@@ -1913,13 +1913,13 @@ LWLockReleaseAll(void)
  * This is meant as debug support only.
  */
 bool
-LWLockHeldByMe(LWLock *l)
+LWLockHeldByMe(LWLock *lock)
 {
 	int			i;
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (held_lwlocks[i].lock == l)
+		if (held_lwlocks[i].lock == lock)
 			return true;
 	}
 	return false;
@@ -1931,14 +1931,14 @@ LWLockHeldByMe(LWLock *l)
  * This is meant as debug support only.
  */
 bool
-LWLockAnyHeldByMe(LWLock *l, int nlocks, size_t stride)
+LWLockAnyHeldByMe(LWLock *lock, int nlocks, size_t stride)
 {
 	char	   *held_lock_addr;
 	char	   *begin;
 	char	   *end;
 	int			i;
 
-	begin = (char *) l;
+	begin = (char *) lock;
 	end = begin + nlocks * stride;
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
@@ -1957,13 +1957,13 @@ LWLockAnyHeldByMe(LWLock *l, int nlocks, size_t stride)
  * This is meant as debug support only.
  */
 bool
-LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
+LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode)
 {
 	int			i;
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (held_lwlocks[i].lock == l && held_lwlocks[i].mode == mode)
+		if (held_lwlocks[i].lock == lock && held_lwlocks[i].mode == mode)
 			return true;
 	}
 	return false;

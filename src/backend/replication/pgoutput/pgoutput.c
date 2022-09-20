@@ -44,7 +44,7 @@ static void pgoutput_begin_txn(LogicalDecodingContext *ctx,
 static void pgoutput_commit_txn(LogicalDecodingContext *ctx,
 								ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pgoutput_change(LogicalDecodingContext *ctx,
-							ReorderBufferTXN *txn, Relation rel,
+							ReorderBufferTXN *txn, Relation relation,
 							ReorderBufferChange *change);
 static void pgoutput_truncate(LogicalDecodingContext *ctx,
 							  ReorderBufferTXN *txn, int nrelations, Relation relations[],
@@ -212,7 +212,7 @@ typedef struct PGOutputTxnData
 /* Map used to remember which relation schemas we sent. */
 static HTAB *RelationSyncCache = NULL;
 
-static void init_rel_sync_cache(MemoryContext decoding_context);
+static void init_rel_sync_cache(MemoryContext cachectx);
 static void cleanup_rel_sync_cache(TransactionId xid, bool is_commit);
 static RelationSyncEntry *get_rel_sync_entry(PGOutputData *data,
 											 Relation relation);

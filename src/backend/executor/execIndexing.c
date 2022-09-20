@@ -130,7 +130,7 @@ static bool check_exclusion_or_unique_constraint(Relation heap, Relation index,
 												 Datum *values, bool *isnull,
 												 EState *estate, bool newIndex,
 												 CEOUC_WAIT_MODE waitMode,
-												 bool errorOK,
+												 bool violationOK,
 												 ItemPointer conflictTid);
 
 static bool index_recheck_constraint(Relation index, Oid *constr_procs,

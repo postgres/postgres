@@ -396,7 +396,7 @@ static void prepare_projection_slot(AggState *aggstate,
 									TupleTableSlot *slot,
 									int currentSet);
 static void finalize_aggregates(AggState *aggstate,
-								AggStatePerAgg peragg,
+								AggStatePerAgg peraggs,
 								AggStatePerGroup pergroup);
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static void find_cols(AggState *aggstate, Bitmapset **aggregated,
@@ -407,12 +407,11 @@ static void build_hash_table(AggState *aggstate, int setno, long nbuckets);
 static void hashagg_recompile_expressions(AggState *aggstate, bool minslot,
 										  bool nullcheck);
 static long hash_choose_num_buckets(double hashentrysize,
-									long estimated_nbuckets,
-									Size memory);
+									long ngroups, Size memory);
 static int	hash_choose_num_partitions(double input_groups,
 									   double hashentrysize,
 									   int used_bits,
-									   int *log2_npartittions);
+									   int *log2_npartitions);
 static void initialize_hash_entry(AggState *aggstate,
 								  TupleHashTable hashtable,
 								  TupleHashEntry entry);
@@ -432,11 +431,11 @@ static HashAggBatch *hashagg_batch_new(LogicalTape *input_tape, int setno,
 									   int64 input_tuples, double input_card,
 									   int used_bits);
 static MinimalTuple hashagg_batch_read(HashAggBatch *batch, uint32 *hashp);
-static void hashagg_spill_init(HashAggSpill *spill, LogicalTapeSet *lts,
+static void hashagg_spill_init(HashAggSpill *spill, LogicalTapeSet *tapeset,
 							   int used_bits, double input_groups,
 							   double hashentrysize);
 static Size hashagg_spill_tuple(AggState *aggstate, HashAggSpill *spill,
-								TupleTableSlot *slot, uint32 hash);
+								TupleTableSlot *inputslot, uint32 hash);
 static void hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill,
 								 int setno);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);

@@ -85,7 +85,7 @@ extern Oid	RangeVarGetRelidExtended(const RangeVar *relation,
 									 RangeVarGetRelidCallback callback,
 									 void *callback_arg);
 extern Oid	RangeVarGetCreationNamespace(const RangeVar *newRelation);
-extern Oid	RangeVarGetAndCheckCreationNamespace(RangeVar *newRelation,
+extern Oid	RangeVarGetAndCheckCreationNamespace(RangeVar *relation,
 												 LOCKMODE lockmode,
 												 Oid *existing_relation_id);
 extern void RangeVarAdjustRelationPersistence(RangeVar *newRelation, Oid nspid);

@@ -459,7 +459,7 @@ ForgetPrivateRefCountEntry(PrivateRefCountEntry *ref)
 )
 
 
-static Buffer ReadBuffer_common(SMgrRelation reln, char relpersistence,
+static Buffer ReadBuffer_common(SMgrRelation smgr, char relpersistence,
 								ForkNumber forkNum, BlockNumber blockNum,
 								ReadBufferMode mode, BufferAccessStrategy strategy,
 								bool *hit);
@@ -493,7 +493,7 @@ static void RelationCopyStorageUsingBuffer(RelFileLocator srclocator,
 static void AtProcExit_Buffers(int code, Datum arg);
 static void CheckForBufferLeaks(void);
 static int	rlocator_comparator(const void *p1, const void *p2);
-static inline int buffertag_comparator(const BufferTag *a, const BufferTag *b);
+static inline int buffertag_comparator(const BufferTag *ba, const BufferTag *bb);
 static inline int ckpt_buforder_comparator(const CkptSortItem *a, const CkptSortItem *b);
 static int	ts_ckpt_progress_comparator(Datum a, Datum b, void *arg);
 
