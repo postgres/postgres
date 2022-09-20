@@ -60,7 +60,10 @@ static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *
 
 %%
 
-result: expr				{ expr_parse_result = $1; }
+result: expr				{
+								expr_parse_result = $1;
+								(void) yynerrs; /* suppress compiler warning */
+							}
 
 elist:                  	{ $$ = NULL; }
 	| expr 					{ $$ = make_elist($1, NULL); }

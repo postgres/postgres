@@ -217,7 +217,6 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 {
 	ArrayAnalyzeExtraData *extra_data;
 	int			num_mcelem;
-	int			null_cnt = 0;
 	int			null_elem_cnt = 0;
 	int			analyzed_rows = 0;
 
@@ -321,8 +320,7 @@ compute_array_stats(VacAttrStats *stats, AnalyzeAttrFetchFunc fetchfunc,
 		value = fetchfunc(stats, array_no, &isnull);
 		if (isnull)
 		{
-			/* array is null, just count that */
-			null_cnt++;
+			/* ignore arrays that are null overall */
 			continue;
 		}
 
