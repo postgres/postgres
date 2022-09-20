@@ -192,7 +192,7 @@ INIT
 	# Determine output directories, and create them.  The base path is the
 	# TESTDIR environment variable, which is normally set by the invoking
 	# Makefile.
-	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}/tmp_check" : "tmp_check";
+	$tmp_check = $ENV{TESTDIR} ? "$ENV{TESTDIR}" : "tmp_check";
 	$log_path = "$tmp_check/log";
 
 	mkdir $tmp_check;
