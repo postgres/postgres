@@ -14,7 +14,7 @@ MAKE="make"
 
 [ ! -d src ] && echo "This must be run from the top of the PostgreSQL source tree" 1>&2 && exit 1
 
-trap "rm -rf /tmp/$$" 0 1 2 3 15
+trap "ret=$?; rm -rf /tmp/$$; exit $ret" 0 1 2 3 15
 mkdir /tmp/$$
 TMP="/tmp/$$"
 

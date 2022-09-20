@@ -46,7 +46,7 @@ CPPFLAGS=`echo "$CPPFLAGS" | sed "s|\\\$(PG_SYSROOT)|$PG_SYSROOT|g"`
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
 
-trap 'rm -rf $tmp' 0 1 2 3 15
+trap "ret=$?; rm -rf $tmp; exit $ret" 0 1 2 3 15
 
 exit_status=0
 
@@ -154,9 +154,9 @@ do
 		EXTRAINCLUDES="$python_includespec" ;;
 	    src/interfaces/ecpg/*)
 		EXTRAINCLUDES="-I $builddir/src/interfaces/ecpg/include -I $srcdir/src/interfaces/ecpg/include" ;;
-		src/backend/parser/*)
+	    src/backend/parser/*)
 		EXTRAINCLUDES="-I $builddir/src/backend/parser/" ;;
-		src/backend/utils/adt/*)
+	    src/backend/utils/adt/*)
 		EXTRAINCLUDES="-I $builddir/src/backend/utils/adt/" ;;
 	    *)
 		EXTRAINCLUDES="" ;;
