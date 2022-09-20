@@ -16,6 +16,10 @@ if ($ENV{with_ldap} ne 'yes')
 {
 	plan skip_all => 'LDAP not supported by this build';
 }
+elsif ($ENV{PG_TEST_EXTRA} !~ /\bldap\b/)
+{
+	plan skip_all => 'Potentially unsafe test LDAP not enabled in PG_TEST_EXTRA';
+}
 elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
 {
 	# typical paths for Homebrew

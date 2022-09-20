@@ -25,6 +25,10 @@ if ($ENV{with_gssapi} ne 'yes')
 {
 	plan skip_all => 'GSSAPI/Kerberos not supported by this build';
 }
+elsif ($ENV{PG_TEST_EXTRA} !~ /\bkerberos\b/)
+{
+	plan skip_all => 'Potentially unsafe test GSSAPI/Kerberos not enabled in PG_TEST_EXTRA';
+}
 
 my ($krb5_bin_dir, $krb5_sbin_dir);
 
