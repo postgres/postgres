@@ -81,7 +81,7 @@ gistRedoPageUpdateRecord(XLogReaderState *record)
 		char	   *begin;
 		char	   *data;
 		Size		datalen;
-		int			ninserted = 0;
+		int			ninserted PG_USED_FOR_ASSERTS_ONLY = 0;
 
 		data = begin = XLogRecGetBlockData(record, 0, &datalen);
 

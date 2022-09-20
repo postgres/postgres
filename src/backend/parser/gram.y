@@ -804,6 +804,7 @@ static Node *makeRecursiveViewSelect(char *relname, List *aliases, Node *query);
 stmtblock:	stmtmulti
 			{
 				pg_yyget_extra(yyscanner)->parsetree = $1;
+				(void) yynerrs;		/* suppress compiler warning */
 			}
 		;
 

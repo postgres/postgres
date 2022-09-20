@@ -79,7 +79,10 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 
 %%
 
-result: expr				{ expr_parse_result = $1; }
+result: expr				{
+								expr_parse_result = $1;
+								(void) yynerrs; /* suppress compiler warning */
+							}
 
 elist:						{ $$ = NULL; }
 	| expr					{ $$ = make_elist($1, NULL); }
