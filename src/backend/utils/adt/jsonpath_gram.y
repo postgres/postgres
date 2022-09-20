@@ -130,6 +130,7 @@ result:
 										*result = palloc(sizeof(JsonPathParseResult));
 										(*result)->expr = $2;
 										(*result)->lax = $1;
+										(void) yynerrs;
 									}
 	| /* EMPTY */					{ *result = NULL; }
 	;
