@@ -290,7 +290,7 @@ eqsel_internal(PG_FUNCTION_ARGS, bool negate)
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
+var_eq_const(VariableStatData *vardata, Oid oproid, Oid collation,
 			 Datum constval, bool constisnull,
 			 bool varonleft, bool negate)
 {
@@ -331,7 +331,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 	}
 	else if (HeapTupleIsValid(vardata->statsTuple) &&
 			 statistic_proc_security_check(vardata,
-										   (opfuncoid = get_opcode(operator))))
+										   (opfuncoid = get_opcode(oproid))))
 	{
 		AttStatsSlot sslot;
 		bool		match = false;
@@ -461,7 +461,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_non_const(VariableStatData *vardata, Oid operator, Oid collation,
+var_eq_non_const(VariableStatData *vardata, Oid oproid, Oid collation,
 				 Node *other,
 				 bool varonleft, bool negate)
 {
