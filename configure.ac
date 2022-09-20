@@ -542,6 +542,13 @@ if test "$GCC" = yes -a "$ICC" = no; then
   if test -n "$NOT_THE_CFLAGS"; then
     CFLAGS="$CFLAGS -Wno-compound-token-split-by-macro"
   fi
+  # Similarly remove clang 15+'s deprecated-non-prototype, as it warns about
+  # tree-walking APIs that we can't reasonably change in the back branches.
+  NOT_THE_CFLAGS=""
+  PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wdeprecated-non-prototype])
+  if test -n "$NOT_THE_CFLAGS"; then
+    CFLAGS="$CFLAGS -Wno-deprecated-non-prototype"
+  fi
   # Similarly disable useless truncation warnings from gcc 8+
   NOT_THE_CFLAGS=""
   PGAC_PROG_CC_VAR_OPT(NOT_THE_CFLAGS, [-Wformat-truncation])
@@ -602,6 +609,11 @@ if test "$with_llvm" = yes ; then
   PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, NOT_THE_CFLAGS, [-Wcompound-token-split-by-macro])
   if test -n "$NOT_THE_CFLAGS"; then
     BITCODE_CFLAGS="$BITCODE_CFLAGS -Wno-compound-token-split-by-macro"
+  fi
+  NOT_THE_CFLAGS=""
+  PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, NOT_THE_CFLAGS, [-Wdeprecated-non-prototype])
+  if test -n "$NOT_THE_CFLAGS"; then
+    BITCODE_CFLAGS="$BITCODE_CFLAGS -Wno-deprecated-non-prototype"
   fi
   NOT_THE_CFLAGS=""
   PGAC_PROG_VARCC_VARFLAGS_OPT(CLANG, NOT_THE_CFLAGS, [-Wformat-truncation])
