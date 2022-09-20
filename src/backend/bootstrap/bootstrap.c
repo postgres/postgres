@@ -463,19 +463,19 @@ boot_openrel(char *relname)
  * ----------------
  */
 void
-closerel(char *name)
+closerel(char *relname)
 {
-	if (name)
+	if (relname)
 	{
 		if (boot_reldesc)
 		{
-			if (strcmp(RelationGetRelationName(boot_reldesc), name) != 0)
+			if (strcmp(RelationGetRelationName(boot_reldesc), relname) != 0)
 				elog(ERROR, "close of %s when %s was expected",
-					 name, RelationGetRelationName(boot_reldesc));
+					 relname, RelationGetRelationName(boot_reldesc));
 		}
 		else
 			elog(ERROR, "close of %s before any relation was opened",
-				 name);
+				 relname);
 	}
 
 	if (boot_reldesc == NULL)

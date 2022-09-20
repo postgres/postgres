@@ -417,7 +417,7 @@ extern long pgstat_report_stat(bool force);
 extern void pgstat_force_next_flush(void);
 
 extern void pgstat_reset_counters(void);
-extern void pgstat_reset(PgStat_Kind kind, Oid dboid, Oid objectid);
+extern void pgstat_reset(PgStat_Kind kind, Oid dboid, Oid objoid);
 extern void pgstat_reset_of_kind(PgStat_Kind kind);
 
 /* stats accessors */
@@ -474,7 +474,7 @@ extern void pgstat_report_connect(Oid dboid);
 #define pgstat_count_conn_txn_idle_time(n)							\
 	(pgStatTransactionIdleTime += (n))
 
-extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
+extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dboid);
 
 /*
  * Functions in pgstat_function.c
@@ -489,7 +489,7 @@ extern void pgstat_init_function_usage(struct FunctionCallInfoBaseData *fcinfo,
 extern void pgstat_end_function_usage(PgStat_FunctionCallUsage *fcu,
 									  bool finalize);
 
-extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid funcid);
+extern PgStat_StatFuncEntry *pgstat_fetch_stat_funcentry(Oid func_id);
 extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 
@@ -499,7 +499,7 @@ extern PgStat_BackendFunctionEntry *find_funcstat_entry(Oid func_id);
 
 extern void pgstat_create_relation(Relation rel);
 extern void pgstat_drop_relation(Relation rel);
-extern void pgstat_copy_relation_stats(Relation dstrel, Relation srcrel);
+extern void pgstat_copy_relation_stats(Relation dst, Relation src);
 
 extern void pgstat_init_relation(Relation rel);
 extern void pgstat_assoc_relation(Relation rel);
@@ -571,7 +571,7 @@ extern void pgstat_twophase_postabort(TransactionId xid, uint16 info,
 
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry_ext(bool shared,
-														   Oid relid);
+														   Oid reloid);
 extern PgStat_TableStatus *find_tabstat_entry(Oid rel_id);
 
 

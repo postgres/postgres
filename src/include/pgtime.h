@@ -75,8 +75,8 @@ extern bool pg_tz_acceptable(pg_tz *tz);
 
 /* these functions are in strftime.c */
 
-extern size_t pg_strftime(char *s, size_t max, const char *format,
-						  const struct pg_tm *tm);
+extern size_t pg_strftime(char *s, size_t maxsize, const char *format,
+						  const struct pg_tm *t);
 
 /* these functions and variables are in pgtz.c */
 

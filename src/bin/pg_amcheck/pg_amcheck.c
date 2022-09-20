@@ -197,7 +197,7 @@ static void append_btree_pattern(PatternInfoArray *pia, const char *pattern,
 static void compile_database_list(PGconn *conn, SimplePtrList *databases,
 								  const char *initial_dbname);
 static void compile_relation_list_one_db(PGconn *conn, SimplePtrList *relations,
-										 const DatabaseInfo *datinfo,
+										 const DatabaseInfo *dat,
 										 uint64 *pagecount);
 
 #define log_no_match(...) do { \

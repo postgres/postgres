@@ -18,7 +18,7 @@
 extern void splitTableColumnsSpec(const char *spec, int encoding,
 								  char **table, const char **columns);
 
-extern void appendQualifiedRelation(PQExpBuffer buf, const char *name,
+extern void appendQualifiedRelation(PQExpBuffer buf, const char *spec,
 									PGconn *conn, bool echo);
 
 extern bool yesno_prompt(const char *question);

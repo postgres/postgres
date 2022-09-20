@@ -46,14 +46,14 @@ extern bool pg_set_block(pgsocket sock);
 
 /* Portable path handling for Unix/Win32 (in path.c) */
 
-extern bool has_drive_prefix(const char *filename);
+extern bool has_drive_prefix(const char *path);
 extern char *first_dir_separator(const char *filename);
 extern char *last_dir_separator(const char *filename);
 extern char *first_path_var_separator(const char *pathlist);
 extern void join_path_components(char *ret_path,
 								 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
-extern void make_native_path(char *path);
+extern void make_native_path(char *filename);
 extern void cleanup_path(char *path);
 extern bool path_contains_parent_reference(const char *path);
 extern bool path_is_relative_and_below_cwd(const char *path);
@@ -439,7 +439,7 @@ extern void qsort_arg(void *base, size_t nel, size_t elsize,
 extern void qsort_interruptible(void *base, size_t nel, size_t elsize,
 								qsort_arg_comparator cmp, void *arg);
 
-extern void *bsearch_arg(const void *key, const void *base,
+extern void *bsearch_arg(const void *key, const void *base0,
 						 size_t nmemb, size_t size,
 						 int (*compar) (const void *, const void *, void *),
 						 void *arg);
@@ -479,7 +479,7 @@ extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 extern char *escape_single_quotes_ascii(const char *src);
 
 /* common/wait_error.c */
-extern char *wait_result_to_str(int exit_status);
+extern char *wait_result_to_str(int exitstatus);
 extern bool wait_result_is_signal(int exit_status, int signum);
 extern bool wait_result_is_any_signal(int exit_status, bool include_command_not_found);
 

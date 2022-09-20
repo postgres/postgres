@@ -26,8 +26,8 @@ extern char *pg_strdup(const char *in);
 extern void *pg_malloc(size_t size);
 extern void *pg_malloc0(size_t size);
 extern void *pg_malloc_extended(size_t size, int flags);
-extern void *pg_realloc(void *pointer, size_t size);
-extern void pg_free(void *pointer);
+extern void *pg_realloc(void *ptr, size_t size);
+extern void pg_free(void *ptr);
 
 /*
  * Variants with easier notation and more type safety

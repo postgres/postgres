@@ -2808,12 +2808,12 @@ PQgetCopyData(PGconn *conn, char **buffer, int async)
  * PQgetline - gets a newline-terminated string from the backend.
  *
  * Chiefly here so that applications can use "COPY <rel> to stdout"
- * and read the output string.  Returns a null-terminated string in s.
+ * and read the output string.  Returns a null-terminated string in `buffer`.
  *
  * XXX this routine is now deprecated, because it can't handle binary data.
  * If called during a COPY BINARY we return EOF.
  *
- * PQgetline reads up to maxlen-1 characters (like fgets(3)) but strips
+ * PQgetline reads up to `length`-1 characters (like fgets(3)) but strips
  * the terminating \n (like gets(3)).
  *
  * CAUTION: the caller is responsible for detecting the end-of-copy signal
@@ -2824,23 +2824,23 @@ PQgetCopyData(PGconn *conn, char **buffer, int async)
  *		0 if EOL is reached (i.e., \n has been read)
  *				(this is required for backward-compatibility -- this
  *				 routine used to always return EOF or 0, assuming that
- *				 the line ended within maxlen bytes.)
+ *				 the line ended within `length` bytes.)
  *		1 in other cases (i.e., the buffer was filled before \n is reached)
  */
 int
-PQgetline(PGconn *conn, char *s, int maxlen)
+PQgetline(PGconn *conn, char *buffer, int length)
 {
-	if (!s || maxlen <= 0)
+	if (!buffer || length <= 0)
 		return EOF;
-	*s = '\0';
-	/* maxlen must be at least 3 to hold the \. terminator! */
-	if (maxlen < 3)
+	*buffer = '\0';
+	/* length must be at least 3 to hold the \. terminator! */
+	if (length < 3)
 		return EOF;
 
 	if (!conn)
 		return EOF;
 
-	return pqGetline3(conn, s, maxlen);
+	return pqGetline3(conn, buffer, length);
 }
 
 /*
@@ -2892,9 +2892,9 @@ PQgetlineAsync(PGconn *conn, char *buffer, int bufsize)
  * send failure.
  */
 int
-PQputline(PGconn *conn, const char *s)
+PQputline(PGconn *conn, const char *string)
 {
-	return PQputnbytes(conn, s, strlen(s));
+	return PQputnbytes(conn, string, strlen(string));
 }
 
 /*

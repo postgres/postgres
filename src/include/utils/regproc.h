@@ -28,7 +28,7 @@ extern char *format_operator_extended(Oid operator_oid, bits16 flags);
 extern List *stringToQualifiedNameList(const char *string);
 extern char *format_procedure(Oid procedure_oid);
 extern char *format_procedure_qualified(Oid procedure_oid);
-extern void format_procedure_parts(Oid operator_oid, List **objnames,
+extern void format_procedure_parts(Oid procedure_oid, List **objnames,
 								   List **objargs, bool missing_ok);
 
 extern char *format_operator(Oid operator_oid);

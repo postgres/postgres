@@ -49,7 +49,7 @@
 extern int	scram_SaltedPassword(const char *password, const char *salt,
 								 int saltlen, int iterations, uint8 *result,
 								 const char **errstr);
-extern int	scram_H(const uint8 *str, int len, uint8 *result,
+extern int	scram_H(const uint8 *input, int len, uint8 *result,
 					const char **errstr);
 extern int	scram_ClientKey(const uint8 *salted_password, uint8 *result,
 							const char **errstr);

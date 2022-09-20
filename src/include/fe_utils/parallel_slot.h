@@ -58,7 +58,7 @@ ParallelSlotClearHandler(ParallelSlot *slot)
 	slot->handler_context = NULL;
 }
 
-extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *slots,
+extern ParallelSlot *ParallelSlotsGetIdle(ParallelSlotArray *sa,
 										  const char *dbname);
 
 extern ParallelSlotArray *ParallelSlotsSetup(int numslots, ConnParams *cparams,

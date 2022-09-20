@@ -32,8 +32,8 @@ typedef struct TSVectorParseStateData *TSVectorParseState;
 extern TSVectorParseState init_tsvector_parser(char *input, int flags);
 extern void reset_tsvector_parser(TSVectorParseState state, char *input);
 extern bool gettoken_tsvector(TSVectorParseState state,
-							  char **token, int *len,
-							  WordEntryPos **pos, int *poslen,
+							  char **strval, int *lenval,
+							  WordEntryPos **pos_ptr, int *poslen,
 							  char **endptr);
 extern void close_tsvector_parser(TSVectorParseState state);
 

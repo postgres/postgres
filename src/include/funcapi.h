@@ -348,7 +348,7 @@ extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);
  * "VARIADIC NULL".
  */
 extern int	extract_variadic_args(FunctionCallInfo fcinfo, int variadic_start,
-								  bool convert_unknown, Datum **values,
+								  bool convert_unknown, Datum **args,
 								  Oid **types, bool **nulls);
 
 #endif							/* FUNCAPI_H */

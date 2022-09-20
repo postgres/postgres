@@ -37,7 +37,7 @@ typedef struct xl_relmap_update
 
 extern RelFileNumber RelationMapOidToFilenumber(Oid relationId, bool shared);
 
-extern Oid	RelationMapFilenumberToOid(RelFileNumber relationId, bool shared);
+extern Oid	RelationMapFilenumberToOid(RelFileNumber filenumber, bool shared);
 extern RelFileNumber RelationMapOidToFilenumberForDatabase(char *dbpath,
 														   Oid relationId);
 extern void RelationMapCopy(Oid dbid, Oid tsid, char *srcdbpath,

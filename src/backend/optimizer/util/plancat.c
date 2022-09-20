@@ -75,7 +75,8 @@ static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
 static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 										Relation relation);
-static PartitionScheme find_partition_scheme(PlannerInfo *root, Relation rel);
+static PartitionScheme find_partition_scheme(PlannerInfo *root,
+											 Relation relation);
 static void set_baserel_partition_key_exprs(Relation relation,
 											RelOptInfo *rel);
 static void set_baserel_partition_constraint(Relation relation,

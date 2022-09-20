@@ -3086,13 +3086,13 @@ extract_rollup_sets(List *groupingSets)
  * gets implemented in one pass.)
  */
 static List *
-reorder_grouping_sets(List *groupingsets, List *sortclause)
+reorder_grouping_sets(List *groupingSets, List *sortclause)
 {
 	ListCell   *lc;
 	List	   *previous = NIL;
 	List	   *result = NIL;
 
-	foreach(lc, groupingsets)
+	foreach(lc, groupingSets)
 	{
 		List	   *candidate = (List *) lfirst(lc);
 		List	   *new_elems = list_difference_int(candidate, previous);

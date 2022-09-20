@@ -33,11 +33,11 @@
 
 static int	SB_MatchText(const char *t, int tlen, const char *p, int plen,
 						 pg_locale_t locale, bool locale_is_c);
-static text *SB_do_like_escape(text *, text *);
+static text *SB_do_like_escape(text *pat, text *esc);
 
 static int	MB_MatchText(const char *t, int tlen, const char *p, int plen,
 						 pg_locale_t locale, bool locale_is_c);
-static text *MB_do_like_escape(text *, text *);
+static text *MB_do_like_escape(text *pat, text *esc);
 
 static int	UTF8_MatchText(const char *t, int tlen, const char *p, int plen,
 						   pg_locale_t locale, bool locale_is_c);

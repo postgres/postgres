@@ -32,7 +32,7 @@ typedef struct ScanKeywordList
 } ScanKeywordList;
 
 
-extern int	ScanKeywordLookup(const char *text, const ScanKeywordList *keywords);
+extern int	ScanKeywordLookup(const char *str, const ScanKeywordList *keywords);
 
 /* Code that wants to retrieve the text of the N'th keyword should use this. */
 static inline const char *

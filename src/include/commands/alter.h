@@ -29,7 +29,7 @@ extern Oid	AlterObjectNamespace_oid(Oid classId, Oid objid, Oid nspOid,
 									 ObjectAddresses *objsMoved);
 
 extern ObjectAddress ExecAlterOwnerStmt(AlterOwnerStmt *stmt);
-extern void AlterObjectOwner_internal(Relation catalog, Oid objectId,
+extern void AlterObjectOwner_internal(Relation rel, Oid objectId,
 									  Oid new_ownerId);
 
 #endif							/* ALTER_H */

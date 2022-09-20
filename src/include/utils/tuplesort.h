@@ -372,7 +372,7 @@ extern const char *tuplesort_space_type_name(TuplesortSpaceType t);
 
 extern int	tuplesort_merge_order(int64 allowedMem);
 
-extern Size tuplesort_estimate_shared(int nworkers);
+extern Size tuplesort_estimate_shared(int nWorkers);
 extern void tuplesort_initialize_shared(Sharedsort *shared, int nWorkers,
 										dsm_segment *seg);
 extern void tuplesort_attach_shared(Sharedsort *shared, dsm_segment *seg);

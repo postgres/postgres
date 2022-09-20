@@ -567,7 +567,7 @@ extern void pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref);
  */
 
 extern void pgstat_replslot_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
-extern void pgstat_replslot_to_serialized_name_cb(const PgStatShared_Common *tmp, NameData *name);
+extern void pgstat_replslot_to_serialized_name_cb(const PgStatShared_Common *header, NameData *name);
 extern bool pgstat_replslot_from_serialized_name_cb(const NameData *name, PgStat_HashKey *key);
 
 
@@ -579,7 +579,7 @@ extern void pgstat_attach_shmem(void);
 extern void pgstat_detach_shmem(void);
 
 extern PgStat_EntryRef *pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid,
-											 bool create, bool *found);
+											 bool create, bool *created_entry);
 extern bool pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait);
 extern bool pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_unlock_entry(PgStat_EntryRef *entry_ref);

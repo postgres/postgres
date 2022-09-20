@@ -104,7 +104,7 @@ static PartitionBoundInfo create_list_bounds(PartitionBoundSpec **boundspecs,
 static PartitionBoundInfo create_range_bounds(PartitionBoundSpec **boundspecs,
 											  int nparts, PartitionKey key, int **mapping);
 static PartitionBoundInfo merge_list_bounds(FmgrInfo *partsupfunc,
-											Oid *collations,
+											Oid *partcollation,
 											RelOptInfo *outer_rel,
 											RelOptInfo *inner_rel,
 											JoinType jointype,
@@ -123,8 +123,8 @@ static void free_partition_map(PartitionMap *map);
 static bool is_dummy_partition(RelOptInfo *rel, int part_index);
 static int	merge_matching_partitions(PartitionMap *outer_map,
 									  PartitionMap *inner_map,
-									  int outer_part,
-									  int inner_part,
+									  int outer_index,
+									  int inner_index,
 									  int *next_index);
 static int	process_outer_partition(PartitionMap *outer_map,
 									PartitionMap *inner_map,

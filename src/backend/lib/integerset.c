@@ -264,9 +264,9 @@ static void intset_update_upper(IntegerSet *intset, int level,
 								intset_node *child, uint64 child_key);
 static void intset_flush_buffered_values(IntegerSet *intset);
 
-static int	intset_binsrch_uint64(uint64 value, uint64 *arr, int arr_elems,
+static int	intset_binsrch_uint64(uint64 item, uint64 *arr, int arr_elems,
 								  bool nextkey);
-static int	intset_binsrch_leaf(uint64 value, leaf_item *arr, int arr_elems,
+static int	intset_binsrch_leaf(uint64 item, leaf_item *arr, int arr_elems,
 								bool nextkey);
 
 static uint64 simple8b_encode(const uint64 *ints, int *num_encoded, uint64 base);

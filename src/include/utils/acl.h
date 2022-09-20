@@ -214,8 +214,8 @@ extern bool is_member_of_role_nosuper(Oid member, Oid role);
 extern bool is_admin_of_role(Oid member, Oid role);
 extern Oid	select_best_admin(Oid member, Oid role);
 extern void check_is_member_of_role(Oid member, Oid role);
-extern Oid	get_role_oid(const char *rolename, bool missing_ok);
-extern Oid	get_role_oid_or_public(const char *rolename);
+extern Oid	get_role_oid(const char *rolname, bool missing_ok);
+extern Oid	get_role_oid_or_public(const char *rolname);
 extern Oid	get_rolespec_oid(const RoleSpec *role, bool missing_ok);
 extern void check_rolespec_name(const RoleSpec *role, const char *detail_msg);
 extern HeapTuple get_rolespec_tuple(const RoleSpec *role);
@@ -285,7 +285,7 @@ extern AclResult pg_parameter_acl_aclcheck(Oid acl_oid, Oid roleid,
 										   AclMode mode);
 extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode);
 extern AclResult pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode);
-extern AclResult pg_largeobject_aclcheck_snapshot(Oid lang_oid, Oid roleid,
+extern AclResult pg_largeobject_aclcheck_snapshot(Oid lobj_oid, Oid roleid,
 												  AclMode mode, Snapshot snapshot);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode);
 extern AclResult pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode);

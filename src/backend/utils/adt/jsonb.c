@@ -188,12 +188,12 @@ JsonbContainerTypeName(JsonbContainer *jbc)
  * Get the type name of a jsonb value.
  */
 const char *
-JsonbTypeName(JsonbValue *jbv)
+JsonbTypeName(JsonbValue *val)
 {
-	switch (jbv->type)
+	switch (val->type)
 	{
 		case jbvBinary:
-			return JsonbContainerTypeName(jbv->val.binary.data);
+			return JsonbContainerTypeName(val->val.binary.data);
 		case jbvObject:
 			return "object";
 		case jbvArray:
@@ -207,7 +207,7 @@ JsonbTypeName(JsonbValue *jbv)
 		case jbvNull:
 			return "null";
 		case jbvDatetime:
-			switch (jbv->val.datetime.typid)
+			switch (val->val.datetime.typid)
 			{
 				case DATEOID:
 					return "date";
@@ -221,11 +221,11 @@ JsonbTypeName(JsonbValue *jbv)
 					return "timestamp with time zone";
 				default:
 					elog(ERROR, "unrecognized jsonb value datetime type: %d",
-						 jbv->val.datetime.typid);
+						 val->val.datetime.typid);
 			}
 			return "unknown";
 		default:
-			elog(ERROR, "unrecognized jsonb value type: %d", jbv->type);
+			elog(ERROR, "unrecognized jsonb value type: %d", val->type);
 			return "unknown";
 	}
 }

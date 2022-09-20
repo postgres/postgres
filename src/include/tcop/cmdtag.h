@@ -53,6 +53,6 @@ extern const char *GetCommandTagName(CommandTag commandTag);
 extern bool command_tag_display_rowcount(CommandTag commandTag);
 extern bool command_tag_event_trigger_ok(CommandTag commandTag);
 extern bool command_tag_table_rewrite_ok(CommandTag commandTag);
-extern CommandTag GetCommandTagEnum(const char *tagname);
+extern CommandTag GetCommandTagEnum(const char *commandname);
 
 #endif							/* CMDTAG_H */

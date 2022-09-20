@@ -45,7 +45,8 @@ int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
 /* True when compute_query_id is ON, or AUTO and a module requests them */
 bool		query_id_enabled = false;
 
-static uint64 compute_utility_query_id(const char *str, int query_location, int query_len);
+static uint64 compute_utility_query_id(const char *query_text,
+									   int query_location, int query_len);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
 static void JumbleQueryInternal(JumbleState *jstate, Query *query);

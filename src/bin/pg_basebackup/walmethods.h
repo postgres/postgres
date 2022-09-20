@@ -123,10 +123,10 @@ struct WalWriteMethod
  *						   not all those required for pg_receivewal)
  */
 WalWriteMethod *CreateWalDirectoryMethod(const char *basedir,
-										 pg_compress_algorithm compression_algo,
-										 int compression, bool sync);
+										 pg_compress_algorithm compression_algorithm,
+										 int compression_level, bool sync);
 WalWriteMethod *CreateWalTarMethod(const char *tarbase,
-								   pg_compress_algorithm compression_algo,
-								   int compression, bool sync);
+								   pg_compress_algorithm compression_algorithm,
+								   int compression_level, bool sync);
 
 const char *GetLastWalMethodError(WalWriteMethod *wwmethod);

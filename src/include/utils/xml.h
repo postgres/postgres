@@ -64,7 +64,7 @@ extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExpr *xexpr,
 						   Datum *named_argvalue, bool *named_argnull,
 						   Datum *argvalue, bool *argnull);
-extern xmltype *xmlparse(text *data, XmlOptionType xmloption, bool preserve_whitespace);
+extern xmltype *xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace);
 extern xmltype *xmlpi(const char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);
 extern bool xml_is_document(xmltype *arg);

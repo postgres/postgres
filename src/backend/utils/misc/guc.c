@@ -225,7 +225,7 @@ static void reapply_stacked_values(struct config_generic *variable,
 								   Oid cursrole);
 static bool validate_option_array_item(const char *name, const char *value,
 									   bool skipIfNoPermissions);
-static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head_p);
+static void write_auto_conf_file(int fd, const char *filename, ConfigVariable *head);
 static void replace_auto_config_value(ConfigVariable **head_p, ConfigVariable **tail_p,
 									  const char *name, const char *value);
 static bool valid_custom_variable_name(const char *name);

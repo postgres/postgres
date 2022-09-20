@@ -98,7 +98,7 @@ typedef struct PartitionBoundInfoData
 #define partition_bound_accepts_nulls(bi) ((bi)->null_index != -1)
 #define partition_bound_has_default(bi) ((bi)->default_index != -1)
 
-extern int	get_hash_partition_greatest_modulus(PartitionBoundInfo b);
+extern int	get_hash_partition_greatest_modulus(PartitionBoundInfo bound);
 extern uint64 compute_partition_hash_value(int partnatts, FmgrInfo *partsupfunc,
 										   Oid *partcollation,
 										   Datum *values, bool *isnull);
@@ -125,7 +125,7 @@ extern void check_new_partition_bound(char *relname, Relation parent,
 									  PartitionBoundSpec *spec,
 									  ParseState *pstate);
 extern void check_default_partition_contents(Relation parent,
-											 Relation defaultRel,
+											 Relation default_rel,
 											 PartitionBoundSpec *new_spec);
 
 extern int32 partition_rbound_datum_cmp(FmgrInfo *partsupfunc,

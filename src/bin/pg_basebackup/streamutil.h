@@ -44,7 +44,7 @@ extern bool RunIdentifySystem(PGconn *conn, char **sysid,
 
 extern void AppendPlainCommandOption(PQExpBuffer buf,
 									 bool use_new_option_syntax,
-									 char *option_value);
+									 char *option_name);
 extern void AppendStringCommandOption(PQExpBuffer buf,
 									  bool use_new_option_syntax,
 									  char *option_name, char *option_value);

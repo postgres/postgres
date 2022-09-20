@@ -64,7 +64,7 @@ extern bool multirange_ne_internal(TypeCacheEntry *rangetyp,
 								   const MultirangeType *mr2);
 extern bool multirange_contains_elem_internal(TypeCacheEntry *rangetyp,
 											  const MultirangeType *mr,
-											  Datum elem);
+											  Datum val);
 extern bool multirange_contains_range_internal(TypeCacheEntry *rangetyp,
 											   const MultirangeType *mr,
 											   const RangeType *r);
@@ -115,11 +115,11 @@ extern MultirangeType *multirange_intersect_internal(Oid mltrngtypoid,
 extern TypeCacheEntry *multirange_get_typcache(FunctionCallInfo fcinfo,
 											   Oid mltrngtypid);
 extern void multirange_deserialize(TypeCacheEntry *rangetyp,
-								   const MultirangeType *range,
+								   const MultirangeType *multirange,
 								   int32 *range_count,
 								   RangeType ***ranges);
 extern MultirangeType *make_multirange(Oid mltrngtypoid,
-									   TypeCacheEntry *typcache,
+									   TypeCacheEntry *rangetyp,
 									   int32 range_count, RangeType **ranges);
 extern MultirangeType *make_empty_multirange(Oid mltrngtypoid,
 											 TypeCacheEntry *rangetyp);

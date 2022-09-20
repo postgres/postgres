@@ -28,7 +28,7 @@ extern ObjectAddress ExecSecLabelStmt(SecLabelStmt *stmt);
 
 typedef void (*check_object_relabel_type) (const ObjectAddress *object,
 										   const char *seclabel);
-extern void register_label_provider(const char *provider,
+extern void register_label_provider(const char *provider_name,
 									check_object_relabel_type hook);
 
 #endif							/* SECLABEL_H */

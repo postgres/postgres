@@ -115,6 +115,6 @@ extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
 extern bool trivial_subqueryscan(SubqueryScan *plan);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void record_plan_type_dependency(PlannerInfo *root, Oid typid);
-extern bool extract_query_dependencies_walker(Node *node, PlannerInfo *root);
+extern bool extract_query_dependencies_walker(Node *node, PlannerInfo *context);
 
 #endif							/* PLANMAIN_H */

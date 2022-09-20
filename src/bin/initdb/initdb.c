@@ -275,7 +275,7 @@ static char *escape_quotes_bki(const char *src);
 static int	locale_date_order(const char *locale);
 static void check_locale_name(int category, const char *locale,
 							  char **canonname);
-static bool check_locale_encoding(const char *locale, int encoding);
+static bool check_locale_encoding(const char *locale, int user_enc);
 static void setlocales(void);
 static void usage(const char *progname);
 void		setup_pgdata(void);

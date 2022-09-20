@@ -27,6 +27,6 @@ extern void ResetCancelConn(void);
  * A callback can be optionally set up to be called at cancellation
  * time.
  */
-extern void setup_cancel_handler(void (*cancel_callback) (void));
+extern void setup_cancel_handler(void (*query_cancel_callback) (void));
 
 #endif							/* CANCEL_H */

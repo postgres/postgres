@@ -619,9 +619,9 @@ extern void list_deduplicate_oid(List *list);
 extern void list_free(List *list);
 extern void list_free_deep(List *list);
 
-extern pg_nodiscard List *list_copy(const List *list);
+extern pg_nodiscard List *list_copy(const List *oldlist);
 extern pg_nodiscard List *list_copy_head(const List *oldlist, int len);
-extern pg_nodiscard List *list_copy_tail(const List *list, int nskip);
+extern pg_nodiscard List *list_copy_tail(const List *oldlist, int nskip);
 extern pg_nodiscard List *list_copy_deep(const List *oldlist);
 
 typedef int (*list_sort_comparator) (const ListCell *a, const ListCell *b);

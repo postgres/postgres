@@ -170,8 +170,8 @@ extern void add_child_rel_equivalences(PlannerInfo *root,
 extern void add_child_join_rel_equivalences(PlannerInfo *root,
 											int nappinfos,
 											AppendRelInfo **appinfos,
-											RelOptInfo *parent_rel,
-											RelOptInfo *child_rel);
+											RelOptInfo *parent_joinrel,
+											RelOptInfo *child_joinrel);
 extern List *generate_implied_equalities_for_column(PlannerInfo *root,
 													RelOptInfo *rel,
 													ec_matches_callback_type callback,

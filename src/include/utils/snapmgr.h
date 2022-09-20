@@ -169,7 +169,7 @@ extern bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 /* Support for catalog timetravel for logical decoding */
 struct HTAB;
 extern struct HTAB *HistoricSnapshotGetTupleCids(void);
-extern void SetupHistoricSnapshot(Snapshot snapshot_now, struct HTAB *tuplecids);
+extern void SetupHistoricSnapshot(Snapshot historic_snapshot, struct HTAB *tuplecids);
 extern void TeardownHistoricSnapshot(bool is_error);
 extern bool HistoricSnapshotActive(void);
 

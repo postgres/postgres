@@ -499,7 +499,7 @@ static void zero_var(NumericVar *var);
 
 static const char *set_var_from_str(const char *str, const char *cp,
 									NumericVar *dest);
-static void set_var_from_num(Numeric value, NumericVar *dest);
+static void set_var_from_num(Numeric num, NumericVar *dest);
 static void init_var_from_num(Numeric num, NumericVar *dest);
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
 static char *get_str_from_var(const NumericVar *var);
@@ -510,7 +510,7 @@ static void numericvar_deserialize(StringInfo buf, NumericVar *var);
 
 static Numeric duplicate_numeric(Numeric num);
 static Numeric make_result(const NumericVar *var);
-static Numeric make_result_opt_error(const NumericVar *var, bool *error);
+static Numeric make_result_opt_error(const NumericVar *var, bool *have_error);
 
 static void apply_typmod(NumericVar *var, int32 typmod);
 static void apply_typmod_special(Numeric num, int32 typmod);
@@ -591,7 +591,7 @@ static void compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 						   const NumericVar *count_var, bool reversed_bounds,
 						   NumericVar *result_var);
 
-static void accum_sum_add(NumericSumAccum *accum, const NumericVar *var1);
+static void accum_sum_add(NumericSumAccum *accum, const NumericVar *val);
 static void accum_sum_rescale(NumericSumAccum *accum, const NumericVar *val);
 static void accum_sum_carry(NumericSumAccum *accum);
 static void accum_sum_reset(NumericSumAccum *accum);

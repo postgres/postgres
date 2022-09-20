@@ -181,11 +181,11 @@ extern double ineq_histogram_selectivity(PlannerInfo *root,
 										 Oid collation,
 										 Datum constval, Oid consttype);
 extern double var_eq_const(VariableStatData *vardata,
-						   Oid oproid, Oid collation,
+						   Oid operator, Oid collation,
 						   Datum constval, bool constisnull,
 						   bool varonleft, bool negate);
 extern double var_eq_non_const(VariableStatData *vardata,
-							   Oid oproid, Oid collation,
+							   Oid operator, Oid collation,
 							   Node *other,
 							   bool varonleft, bool negate);
 

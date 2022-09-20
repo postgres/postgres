@@ -67,7 +67,7 @@ static ParseNamespaceItem *transformRangeSubselect(ParseState *pstate,
 static ParseNamespaceItem *transformRangeFunction(ParseState *pstate,
 												  RangeFunction *r);
 static ParseNamespaceItem *transformRangeTableFunc(ParseState *pstate,
-												   RangeTableFunc *t);
+												   RangeTableFunc *rtf);
 static TableSampleClause *transformRangeTableSample(ParseState *pstate,
 													RangeTableSample *rts);
 static ParseNamespaceItem *getNSItemForSpecialRelationTypes(ParseState *pstate,

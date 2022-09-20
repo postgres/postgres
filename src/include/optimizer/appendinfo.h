@@ -40,7 +40,7 @@ extern void get_translated_update_targetlist(PlannerInfo *root, Index relid,
 											 List **update_colnos);
 extern AppendRelInfo **find_appinfos_by_relids(PlannerInfo *root,
 											   Relids relids, int *nappinfos);
-extern void add_row_identity_var(PlannerInfo *root, Var *rowid_var,
+extern void add_row_identity_var(PlannerInfo *root, Var *orig_var,
 								 Index rtindex, const char *rowid_name);
 extern void add_row_identity_columns(PlannerInfo *root, Index rtindex,
 									 RangeTblEntry *target_rte,

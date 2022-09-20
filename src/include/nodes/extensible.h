@@ -72,8 +72,8 @@ typedef struct ExtensibleNodeMethods
 	void		(*nodeRead) (struct ExtensibleNode *node);
 } ExtensibleNodeMethods;
 
-extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *method);
-extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *name,
+extern void RegisterExtensibleNodeMethods(const ExtensibleNodeMethods *methods);
+extern const ExtensibleNodeMethods *GetExtensibleNodeMethods(const char *extnodename,
 															 bool missing_ok);
 
 /*

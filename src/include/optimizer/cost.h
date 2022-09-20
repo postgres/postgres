@@ -117,7 +117,7 @@ extern void cost_incremental_sort(Path *path,
 								  double limit_tuples);
 extern Cost cost_sort_estimate(PlannerInfo *root, List *pathkeys,
 							   int nPresortedKeys, double tuples);
-extern void cost_append(AppendPath *path, PlannerInfo *root);
+extern void cost_append(AppendPath *apath, PlannerInfo *root);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,
@@ -169,7 +169,7 @@ extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 								JoinCostWorkspace *workspace,
 								JoinPathExtraData *extra);
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
-						RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
+						RelOptInfo *rel, ParamPathInfo *param_info, double *rows);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
 							  RelOptInfo *rel, ParamPathInfo *param_info,
 							  Cost input_startup_cost, Cost input_total_cost,

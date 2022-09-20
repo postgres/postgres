@@ -32,7 +32,7 @@
 #include "utils/memutils.h"
 #include "utils/tzparser.h"
 
-static int	DecodeNumber(int flen, char *field, bool haveTextMonth,
+static int	DecodeNumber(int flen, char *str, bool haveTextMonth,
 						 int fmask, int *tmask,
 						 struct pg_tm *tm, fsec_t *fsec, bool *is2digits);
 static int	DecodeNumberField(int len, char *str,
@@ -281,26 +281,26 @@ static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
  */
 
 int
-date2j(int y, int m, int d)
+date2j(int year, int month, int day)
 {
 	int			julian;
 	int			century;
 
-	if (m > 2)
+	if (month > 2)
 	{
-		m += 1;
-		y += 4800;
+		month += 1;
+		year += 4800;
 	}
 	else
 	{
-		m += 13;
-		y += 4799;
+		month += 13;
+		year += 4799;
 	}
 
-	century = y / 100;
-	julian = y * 365 - 32167;
-	julian += y / 4 - century + century / 4;
-	julian += 7834 * m / 256 + d;
+	century = year / 100;
+	julian = year * 365 - 32167;
+	julian += year / 4 - century + century / 4;
+	julian += 7834 * month / 256 + day;
 
 	return julian;
 }								/* date2j() */

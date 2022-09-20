@@ -42,7 +42,7 @@
 #include "optimizer/geqo_random.h"
 #include "optimizer/geqo_selection.h"
 
-static int	linear_rand(PlannerInfo *root, int max, double bias);
+static int	linear_rand(PlannerInfo *root, int pool_size, double bias);
 
 
 /*

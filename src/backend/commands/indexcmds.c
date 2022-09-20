@@ -98,7 +98,7 @@ static Oid	ReindexTable(RangeVar *relation, ReindexParams *params,
 						 bool isTopLevel);
 static void ReindexMultipleTables(const char *objectName,
 								  ReindexObjectType objectKind, ReindexParams *params);
-static void reindex_error_callback(void *args);
+static void reindex_error_callback(void *arg);
 static void ReindexPartitions(Oid relid, ReindexParams *params,
 							  bool isTopLevel);
 static void ReindexMultipleInternal(List *relids,
