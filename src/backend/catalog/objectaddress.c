@@ -2254,10 +2254,16 @@ pg_get_object_address(PG_FUNCTION_ARGS)
 	 */
 	switch (type)
 	{
+		case OBJECT_PUBLICATION_NAMESPACE:
+		case OBJECT_USER_MAPPING:
+			if (list_length(name) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("name list length must be exactly %d", 1)));
+			/* fall through to check args length */
+			/* FALLTHROUGH */
 		case OBJECT_DOMCONSTRAINT:
 		case OBJECT_CAST:
-		case OBJECT_USER_MAPPING:
-		case OBJECT_PUBLICATION_NAMESPACE:
 		case OBJECT_PUBLICATION_REL:
 		case OBJECT_DEFACL:
 		case OBJECT_TRANSFORM:

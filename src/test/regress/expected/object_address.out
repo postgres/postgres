@@ -105,7 +105,7 @@ BEGIN
 		('text search template'), ('text search configuration'),
 		('policy'), ('user mapping'), ('default acl'), ('transform'),
 		('operator of access method'), ('function of access method'),
-		('publication relation')
+		('publication namespace'), ('publication relation')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
@@ -285,10 +285,10 @@ WARNING:  error for policy,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for policy,{eins,zwei,drei},{integer}: schema "eins" does not exist
 WARNING:  error for user mapping,{eins},{}: argument list length must be exactly 1
 WARNING:  error for user mapping,{eins},{integer}: user mapping for user "eins" on server "integer" does not exist
-WARNING:  error for user mapping,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" on server "integer" does not exist
-WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" on server "integer" does not exist
+WARNING:  error for user mapping,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for user mapping,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for user mapping,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for default acl,{eins},{}: argument list length must be exactly 1
 WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type "i"
 WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be exactly 1
@@ -313,6 +313,12 @@ WARNING:  error for function of access method,{addr_nsp,zwei},{}: name list leng
 WARNING:  error for function of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
 WARNING:  error for function of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
 WARNING:  error for function of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for publication namespace,{eins},{}: argument list length must be exactly 1
+WARNING:  error for publication namespace,{eins},{integer}: schema "eins" does not exist
+WARNING:  error for publication namespace,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for publication namespace,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for publication namespace,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for publication namespace,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for publication relation,{eins},{}: argument list length must be exactly 1
 WARNING:  error for publication relation,{eins},{integer}: relation "eins" does not exist
 WARNING:  error for publication relation,{addr_nsp,zwei},{}: argument list length must be exactly 1
