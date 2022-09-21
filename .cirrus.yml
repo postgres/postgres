@@ -55,7 +55,7 @@ task:
     image: family/pg-ci-freebsd-13
     platform: freebsd
     cpu: $CPUS
-    memory: 2G
+    memory: 4G
     disk: 50
 
   sysinfo_script: |
@@ -166,7 +166,7 @@ task:
     image: family/pg-ci-bullseye
     platform: linux
     cpu: $CPUS
-    memory: 2G
+    memory: 4G
 
   ccache_cache:
     folder: ${CCACHE_DIR}
