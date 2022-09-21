@@ -98,7 +98,7 @@ BEGIN
 		('text search template'), ('text search configuration'),
 		('policy'), ('user mapping'), ('default acl'), ('transform'),
 		('operator of access method'), ('function of access method'),
-		('publication relation')
+		('publication namespace'), ('publication relation')
 	LOOP
 		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
 		LOOP
