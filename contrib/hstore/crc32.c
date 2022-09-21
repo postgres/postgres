@@ -95,12 +95,10 @@ crc32_sz(char *buf, int size)
 {
 	unsigned int crc = ~((unsigned int) 0);
 	char	   *p;
-	int			len,
-				nr;
+	int			nr;
 
-	len = 0;
 	nr = size;
-	for (len += nr, p = buf; nr--; ++p)
+	for (p = buf; nr--; ++p)
 		_CRC32_(crc, *p);
 	return ~crc;
 }
