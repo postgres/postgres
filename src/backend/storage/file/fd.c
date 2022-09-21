@@ -978,7 +978,7 @@ set_max_safe_fds(void)
 		ereport(FATAL,
 				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
 				 errmsg("insufficient file descriptors available to start server process"),
-				 errdetail("System allows %d, we need at least %d.",
+				 errdetail("System allows %d, server needs at least %d.",
 						   max_safe_fds + NUM_RESERVED_FDS,
 						   FD_MINFREE + NUM_RESERVED_FDS)));
 
