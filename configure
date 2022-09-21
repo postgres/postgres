@@ -21068,7 +21068,157 @@ esac
 # posix_fadvise() is a no-op on Solaris, so don't incur function overhead
 # by calling it, 2009-04-02
 # http://src.opensolaris.org/source/xref/onnv/onnv-gate/usr/src/lib/libc/port/gen/posix_fadvise.c
+# The Clang compiler raises a warning for an undeclared identifier that matches
+# a compiler builtin function.  All extant Clang versions are affected, as of
+# Clang 3.6.0.  Test a builtin known to every version.  This problem affects the
+# C and Objective C languages, but Clang does report an error under C++ and
+# Objective C++.
+#
+# Passing -fno-builtin to the compiler would suppress this problem.  That
+# strategy would have the advantage of being insensitive to stray warnings, but
+# it would make tests less realistic.
+{ $as_echo "$as_me:$LINENO: checking how $CC reports undeclared, standard C functions" >&5
+$as_echo_n "checking how $CC reports undeclared, standard C functions... " >&6; }
+if test "${ac_cv_c_decl_report+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+(void) strchr;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  if test -s conftest.err; then
+      # For AC_CHECK_DECL to react to warnings, the compiler must be silent on
+    # valid AC_CHECK_DECL input.  No library function is consistently available
+    # on freestanding implementations, so test against a dummy declaration.
+    # Include always-available headers on the off chance that they somehow
+    # elicit warnings.
+    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <float.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stddef.h>
+extern void ac_decl (int, char *);
+int
+main ()
+{
+#ifdef __cplusplus
+  (void) ac_decl ((int) 0, (char *) 0);
+  (void) ac_decl;
+#else
+  (void) ac_decl;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  if test -s conftest.err; then
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cannot detect from compiler exit status or warnings
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cannot detect from compiler exit status or warnings
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+else
+  ac_cv_c_decl_report=warning
+fi
+
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	{ { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: cannot compile a simple declaration test
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: cannot compile a simple declaration test
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  { { $as_echo "$as_me:$LINENO: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+{ { $as_echo "$as_me:$LINENO: error: compiler does not report undeclared identifiers
+See \`config.log' for more details." >&5
+$as_echo "$as_me: error: compiler does not report undeclared identifiers
+See \`config.log' for more details." >&2;}
+   { (exit 1); exit 1; }; }; }
+fi
+
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_c_decl_report=error
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_c_decl_report" >&5
+$as_echo "$ac_cv_c_decl_report" >&6; }
+
+case $ac_cv_c_decl_report in
+  warning) ac_c_decl_warn_flag=yes ;;
+  *) ac_c_decl_warn_flag= ;;
+esac
+
 if test "$PORTNAME" != "solaris"; then
+
 
 for ac_func in posix_fadvise
 do
@@ -21175,7 +21325,9 @@ $as_echo_n "checking whether posix_fadvise is declared... " >&6; }
 if test "${ac_cv_have_decl_posix_fadvise+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21221,6 +21373,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_posix_fadvise" >&5
 $as_echo "$ac_cv_have_decl_posix_fadvise" >&6; }
@@ -21240,14 +21393,18 @@ _ACEOF
 fi
 
 
+
 fi
+ # fi
 
 { $as_echo "$as_me:$LINENO: checking whether fdatasync is declared" >&5
 $as_echo_n "checking whether fdatasync is declared... " >&6; }
 if test "${ac_cv_have_decl_fdatasync+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21293,6 +21450,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_fdatasync" >&5
 $as_echo "$ac_cv_have_decl_fdatasync" >&6; }
@@ -21317,7 +21475,9 @@ $as_echo_n "checking whether strlcat is declared... " >&6; }
 if test "${ac_cv_have_decl_strlcat+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21362,6 +21522,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_strlcat" >&5
 $as_echo "$ac_cv_have_decl_strlcat" >&6; }
@@ -21384,7 +21545,9 @@ $as_echo_n "checking whether strlcpy is declared... " >&6; }
 if test "${ac_cv_have_decl_strlcpy+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21429,6 +21592,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_strlcpy" >&5
 $as_echo "$ac_cv_have_decl_strlcpy" >&6; }
@@ -21454,7 +21618,9 @@ $as_echo_n "checking whether F_FULLFSYNC is declared... " >&6; }
 if test "${ac_cv_have_decl_F_FULLFSYNC+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21500,6 +21666,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_F_FULLFSYNC" >&5
 $as_echo "$ac_cv_have_decl_F_FULLFSYNC" >&6; }
@@ -21950,7 +22117,9 @@ $as_echo_n "checking whether snprintf is declared... " >&6; }
 if test "${ac_cv_have_decl_snprintf+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -21995,6 +22164,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_snprintf" >&5
 $as_echo "$ac_cv_have_decl_snprintf" >&6; }
@@ -22017,7 +22187,9 @@ $as_echo_n "checking whether vsnprintf is declared... " >&6; }
 if test "${ac_cv_have_decl_vsnprintf+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -22062,6 +22234,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_vsnprintf" >&5
 $as_echo "$ac_cv_have_decl_vsnprintf" >&6; }
@@ -23125,7 +23298,9 @@ $as_echo_n "checking whether sys_siglist is declared... " >&6; }
 if test "${ac_cv_have_decl_sys_siglist+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -23176,6 +23351,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_sys_siglist" >&5
 $as_echo "$ac_cv_have_decl_sys_siglist" >&6; }
@@ -23765,7 +23941,9 @@ $as_echo_n "checking whether strtoll is declared... " >&6; }
 if test "${ac_cv_have_decl_strtoll+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -23810,6 +23988,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_strtoll" >&5
 $as_echo "$ac_cv_have_decl_strtoll" >&6; }
@@ -23832,7 +24011,9 @@ $as_echo_n "checking whether strtoull is declared... " >&6; }
 if test "${ac_cv_have_decl_strtoull+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_save_werror_flag=$ac_c_werror_flag
+ac_c_werror_flag="$ac_c_decl_warn_flag$ac_c_werror_flag"
+cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
@@ -23877,6 +24058,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+ac_c_werror_flag=$ac_save_werror_flag
 fi
 { $as_echo "$as_me:$LINENO: result: $ac_cv_have_decl_strtoull" >&5
 $as_echo "$ac_cv_have_decl_strtoull" >&6; }
