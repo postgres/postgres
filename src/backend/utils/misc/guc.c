@@ -2838,7 +2838,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"wal_decode_buffer_size", PGC_POSTMASTER, WAL_RECOVERY,
 			gettext_noop("Buffer size for reading ahead in the WAL during recovery."),
-			gettext_noop("This controls the maximum distance we can read ahead in the WAL to prefetch referenced data blocks."),
+			gettext_noop("Maximum distance to read ahead in the WAL to prefetch referenced data blocks."),
 			GUC_UNIT_BYTE
 		},
 		&wal_decode_buffer_size,
@@ -3495,7 +3495,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"tcp_keepalives_count", PGC_USERSET, CONN_AUTH_SETTINGS,
 			gettext_noop("Maximum number of TCP keepalive retransmits."),
-			gettext_noop("This controls the number of consecutive keepalive retransmits that can be "
+			gettext_noop("Number of consecutive keepalive retransmits that can be "
 						 "lost before a connection is considered dead. A value of 0 uses the "
 						 "system default."),
 		},
