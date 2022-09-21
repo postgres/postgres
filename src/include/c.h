@@ -181,6 +181,17 @@
 #define pg_attribute_noreturn() __attribute__((noreturn))
 #define pg_attribute_packed() __attribute__((packed))
 #define HAVE_PG_ATTRIBUTE_NORETURN 1
+#elif defined(_MSC_VER)
+/*
+ * MSVC supports aligned.  noreturn is also possible but in MSVC it is
+ * declared before the definition while pg_attribute_noreturn() macro
+ * is currently used after the definition.
+ *
+ * Packing is also possible but only by wrapping the entire struct definition
+ * which doesn't fit into our current macro declarations.
+ */
+#define pg_attribute_aligned(a) __declspec(align(a))
+#define pg_attribute_noreturn()
 #else
 /*
  * NB: aligned and packed are not given default definitions because they

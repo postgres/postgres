@@ -139,6 +139,8 @@ if test x"$pgac_cv__128bit_int" = xyes ; then
 /* This must match the corresponding code in c.h: */
 #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
+#elif defined(_MSC_VER)
+#define pg_attribute_aligned(a) __declspec(align(a))
 #endif
 typedef __int128 int128a
 #if defined(pg_attribute_aligned)
