@@ -71,6 +71,10 @@ if ($ENV{with_icu} eq 'yes')
 	$node2->command_ok(
 		[ 'createdb', '-T', 'template0', '--locale-provider=libc', 'foobar55' ],
 		'create database with libc provider from template database with icu provider');
+
+	$node2->command_ok(
+		[ 'createdb', '-T', 'template0', '--icu-locale', 'en-US', 'foobar56' ],
+		'create database with icu locale from template database with icu provider');
 }
 else
 {
