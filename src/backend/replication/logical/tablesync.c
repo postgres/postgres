@@ -1187,7 +1187,7 @@ copy_table(Relation rel)
  */
 void
 ReplicationSlotNameForTablesync(Oid suboid, Oid relid,
-								char *syncslotname, int szslot)
+								char *syncslotname, Size szslot)
 {
 	snprintf(syncslotname, szslot, "pg_%u_sync_%u_" UINT64_FORMAT, suboid,
 			 relid, GetSystemIdentifier());
@@ -1200,7 +1200,7 @@ ReplicationSlotNameForTablesync(Oid suboid, Oid relid,
  */
 void
 ReplicationOriginNameForTablesync(Oid suboid, Oid relid,
-								  char *originname, int szorgname)
+								  char *originname, Size szorgname)
 {
 	snprintf(originname, szorgname, "pg_%u_%u", suboid, relid);
 }
