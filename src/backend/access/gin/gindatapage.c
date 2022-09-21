@@ -465,7 +465,6 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 	Page		rpage = BufferGetPage(rbuf);
 	Size		pageSize = PageGetPageSize(lpage);
 	Size		freeSpace;
-	uint32		nCopied = 1;
 
 	/* these must be static so they can be returned to caller */
 	static ginxlogSplit data;
@@ -485,7 +484,6 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 
 	if (GinPageIsLeaf(lpage) && GinPageRightMost(lpage) && off > GinPageGetOpaque(lpage)->maxoff)
 	{
-		nCopied = 0;
 		while (btree->curitem < btree->nitem &&
 			   maxoff * sizeof(ItemPointerData) < 2 * (freeSpace - sizeof(ItemPointerData)))
 		{
@@ -493,7 +491,6 @@ dataSplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogRe
 				   btree->items + btree->curitem,
 				   sizeof(ItemPointerData));
 			maxoff++;
-			nCopied++;
 			btree->curitem++;
 		}
 	}

@@ -653,6 +653,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 stmtblock:	stmtmulti
 			{
 				pg_yyget_extra(yyscanner)->parsetree = $1;
+				(void) yynerrs;		/* suppress compiler warning */
 			}
 		;
 
