@@ -2711,6 +2711,15 @@ heap_delete(Relation relation, ItemPointer tid,
 
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 
+	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
+	Assert(ItemIdIsNormal(lp));
+
+	tp.t_tableOid = RelationGetRelid(relation);
+	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
+	tp.t_len = ItemIdGetLength(lp);
+	tp.t_self = *tid;
+
+l1:
 	/*
 	 * If we didn't pin the visibility map page and the page has become all
 	 * visible while we were busy locking the buffer, we'll have to unlock and
@@ -2724,15 +2733,6 @@ heap_delete(Relation relation, ItemPointer tid,
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	}
 
-	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(tid));
-	Assert(ItemIdIsNormal(lp));
-
-	tp.t_tableOid = RelationGetRelid(relation);
-	tp.t_data = (HeapTupleHeader) PageGetItem(page, lp);
-	tp.t_len = ItemIdGetLength(lp);
-	tp.t_self = *tid;
-
-l1:
 	result = HeapTupleSatisfiesUpdate(&tp, cid, buffer);
 
 	if (result == TM_Invisible)
@@ -2791,8 +2791,12 @@ l1:
 				 * If xwait had just locked the tuple then some other xact
 				 * could update this tuple before we get to this point.  Check
 				 * for xmax change, and start over if so.
+				 *
+				 * We also must start over if we didn't pin the VM page, and
+				 * the page has become all visible.
 				 */
-				if (xmax_infomask_changed(tp.t_data->t_infomask, infomask) ||
+				if ((vmbuffer == InvalidBuffer && PageIsAllVisible(page)) ||
+					xmax_infomask_changed(tp.t_data->t_infomask, infomask) ||
 					!TransactionIdEquals(HeapTupleHeaderGetRawXmax(tp.t_data),
 										 xwait))
 					goto l1;
@@ -2824,8 +2828,12 @@ l1:
 			 * xwait is done, but if xwait had just locked the tuple then some
 			 * other xact could update this tuple before we get to this point.
 			 * Check for xmax change, and start over if so.
+			 *
+			 * We also must start over if we didn't pin the VM page, and the
+			 * page has become all visible.
 			 */
-			if (xmax_infomask_changed(tp.t_data->t_infomask, infomask) ||
+			if ((vmbuffer == InvalidBuffer && PageIsAllVisible(page)) ||
+				xmax_infomask_changed(tp.t_data->t_infomask, infomask) ||
 				!TransactionIdEquals(HeapTupleHeaderGetRawXmax(tp.t_data),
 									 xwait))
 				goto l1;
