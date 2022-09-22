@@ -5313,6 +5313,12 @@ StartupXLOG(void)
 	missingContrecPtr = endOfRecoveryInfo->missingContrecPtr;
 
 	/*
+	 * Reset ps status display, so as no information related to recovery
+	 * shows up.
+	 */
+	set_ps_display("");
+
+	/*
 	 * When recovering from a backup (we are in recovery, and archive recovery
 	 * was requested), complain if we did not roll forward far enough to reach
 	 * the point where the database is consistent.  For regular online
