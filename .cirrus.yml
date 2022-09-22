@@ -386,6 +386,15 @@ task:
     # currently have a tool for that...
     CIRRUS_ESCAPING_PROCESSES: 1
 
+    # Cirrus defaults to SetErrorMode(SEM_NOGPFAULTERRORBOX | ...). That
+    # prevents crash reporting from working unless binaries do SetErrorMode()
+    # themselves. Furthermore, it appears that either python or, more likely,
+    # the C runtime has a bug where SEM_NOGPFAULTERRORBOX can very
+    # occasionally *trigger* a crash on process exit - which is hard to debug,
+    # given that it explicitly prevents crash dumps from working...
+    # 0x8001 is SEM_FAILCRITICALERRORS | SEM_NOOPENFILEERRORBOX
+    CIRRUS_WINDOWS_ERROR_MODE: 0x8001
+
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*windows.*'
 
   windows_container:
