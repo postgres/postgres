@@ -18,7 +18,7 @@ my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
-# Test replication with publications created using FOR ALL TABLES IN SCHEMA
+# Test replication with publications created using FOR TABLES IN SCHEMA
 # option.
 # Create schemas and tables on publisher
 $node_publisher->safe_psql('postgres', "CREATE SCHEMA sch1");
@@ -56,7 +56,7 @@ $node_subscriber->safe_psql('postgres',
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_schema FOR ALL TABLES IN SCHEMA sch1");
+	"CREATE PUBLICATION tap_pub_schema FOR TABLES IN SCHEMA sch1");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub_schema CONNECTION '$publisher_connstr' PUBLICATION tap_pub_schema"
@@ -190,7 +190,7 @@ is($result, qq(3),
 $node_publisher->safe_psql(
 	'postgres', "
 	INSERT INTO sch1.tab1 VALUES(21);
-	ALTER PUBLICATION tap_pub_schema DROP ALL TABLES IN SCHEMA sch1;
+	ALTER PUBLICATION tap_pub_schema DROP TABLES IN SCHEMA sch1;
 	INSERT INTO sch1.tab1 values(22);"
 );
 

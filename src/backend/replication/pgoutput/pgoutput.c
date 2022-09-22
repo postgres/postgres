@@ -995,8 +995,7 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 	 * need to check all the given publication-table mappings and report an
 	 * error if any publications have a different column list.
 	 *
-	 * FOR ALL TABLES and FOR ALL TABLES IN SCHEMA implies "don't use column
-	 * list".
+	 * FOR ALL TABLES and FOR TABLES IN SCHEMA imply "don't use column list".
 	 */
 	foreach(lc, publications)
 	{

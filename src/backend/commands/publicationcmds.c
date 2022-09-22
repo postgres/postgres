@@ -847,11 +847,11 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 		ObjectsInPublicationToOids(stmt->pubobjects, pstate, &relations,
 								   &schemaidlist);
 
-		/* FOR ALL TABLES IN SCHEMA requires superuser */
-		if (list_length(schemaidlist) > 0 && !superuser())
+		/* FOR TABLES IN SCHEMA requires superuser */
+		if (schemaidlist != NIL && !superuser())
 			ereport(ERROR,
 					errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-					errmsg("must be superuser to create FOR ALL TABLES IN SCHEMA publication"));
+					errmsg("must be superuser to create FOR TABLES IN SCHEMA publication"));
 
 		if (list_length(relations) > 0)
 		{
@@ -1979,7 +1979,7 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 					 errmsg("permission denied to change owner of publication \"%s\"",
 							NameStr(form->pubname)),
-					 errhint("The owner of a FOR ALL TABLES IN SCHEMA publication must be a superuser.")));
+					 errhint("The owner of a FOR TABLES IN SCHEMA publication must be a superuser.")));
 	}
 
 	form->pubowner = newOwnerId;

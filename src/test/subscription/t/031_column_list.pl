@@ -913,7 +913,7 @@ $node_publisher->safe_psql(
 	DROP TABLE test_mix_2;
 	CREATE TABLE test_mix_3 (a int PRIMARY KEY, b int, c int);
 	CREATE PUBLICATION pub_mix_5 FOR TABLE test_mix_3 (a, b, c);
-	CREATE PUBLICATION pub_mix_6 FOR ALL TABLES IN SCHEMA public;
+	CREATE PUBLICATION pub_mix_6 FOR TABLES IN SCHEMA public;
 
 	-- initial data
 	INSERT INTO test_mix_3 VALUES (1, 2, 3);
@@ -1004,7 +1004,7 @@ $node_publisher->safe_psql(
 	CREATE TABLE s1.t (a int, b int, c int) PARTITION BY RANGE (a);
 	CREATE TABLE t_1 PARTITION OF s1.t FOR VALUES FROM (1) TO (10);
 
-	CREATE PUBLICATION pub1 FOR ALL TABLES IN SCHEMA s1;
+	CREATE PUBLICATION pub1 FOR TABLES IN SCHEMA s1;
 	CREATE PUBLICATION pub2 FOR TABLE t_1(a, b, c);
 
 	-- initial data

@@ -1820,7 +1820,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH("ADD", "DROP", "OWNER TO", "RENAME TO", "SET");
 	/* ALTER PUBLICATION <name> ADD */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD"))
-		COMPLETE_WITH("ALL TABLES IN SCHEMA", "TABLE");
+		COMPLETE_WITH("TABLES IN SCHEMA", "TABLE");
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") ||
 			 (HeadMatches("ALTER", "PUBLICATION", MatchAny, "ADD|SET", "TABLE") &&
 			  ends_with(prev_wd, ',')))
@@ -1844,10 +1844,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH(",");
 	/* ALTER PUBLICATION <name> DROP */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "DROP"))
-		COMPLETE_WITH("ALL TABLES IN SCHEMA", "TABLE");
+		COMPLETE_WITH("TABLES IN SCHEMA", "TABLE");
 	/* ALTER PUBLICATION <name> SET */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET"))
-		COMPLETE_WITH("(", "ALL TABLES IN SCHEMA", "TABLE");
+		COMPLETE_WITH("(", "TABLES IN SCHEMA", "TABLE");
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|DROP|SET", "ALL", "TABLES", "IN", "SCHEMA"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_schemas
 								 " AND nspname NOT LIKE E'pg\\\\_%%'",
@@ -2975,9 +2975,9 @@ psql_completion(const char *text, int start, int end)
 
 /* CREATE PUBLICATION */
 	else if (Matches("CREATE", "PUBLICATION", MatchAny))
-		COMPLETE_WITH("FOR TABLE", "FOR ALL TABLES", "FOR ALL TABLES IN SCHEMA", "WITH (");
+		COMPLETE_WITH("FOR TABLE", "FOR ALL TABLES", "FOR TABLES IN SCHEMA", "WITH (");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR"))
-		COMPLETE_WITH("TABLE", "ALL TABLES", "ALL TABLES IN SCHEMA");
+		COMPLETE_WITH("TABLE", "ALL TABLES", "TABLES IN SCHEMA");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL"))
 		COMPLETE_WITH("TABLES", "TABLES IN SCHEMA");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES"))
@@ -3000,8 +3000,7 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH(" WITH (");
 
 	/*
-	 * Complete "CREATE PUBLICATION <name> FOR ALL TABLES IN SCHEMA <schema>,
-	 * ..."
+	 * Complete "CREATE PUBLICATION <name> FOR TABLES IN SCHEMA <schema>, ..."
 	 */
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "IN", "SCHEMA"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_schemas
@@ -3821,7 +3820,7 @@ psql_completion(const char *text, int start, int end)
 											"ALL PROCEDURES IN SCHEMA",
 											"ALL ROUTINES IN SCHEMA",
 											"ALL SEQUENCES IN SCHEMA",
-											"ALL TABLES IN SCHEMA",
+											"TABLES IN SCHEMA",
 											"DATABASE",
 											"DOMAIN",
 											"FOREIGN DATA WRAPPER",
