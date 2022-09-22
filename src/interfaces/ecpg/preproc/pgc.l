@@ -56,7 +56,7 @@ static bool		include_next;
 
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
-static void addlitchar(unsigned char);
+static void addlitchar(unsigned char ychar);
 static int	process_integer_literal(const char *token, YYSTYPE *lval);
 static void parse_include(void);
 static bool ecpg_isspace(char ch);

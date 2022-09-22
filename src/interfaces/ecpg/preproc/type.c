@@ -233,7 +233,7 @@ get_type(enum ECPGttype type)
  */
 static void ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 							  char *varcharsize,
-							  char *arrsize, const char *size, const char *prefix, int);
+							  char *arrsize, const char *size, const char *prefix, int counter);
 static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, char *arrsize,
 							  struct ECPGtype *type, struct ECPGtype *ind_type, const char *prefix, const char *ind_prefix);
 

@@ -172,52 +172,68 @@ bool		ecpg_get_data(const PGresult *, int, int, int, enum ECPGttype type,
 #ifdef ENABLE_THREAD_SAFETY
 void		ecpg_pthreads_init(void);
 #endif
-struct connection *ecpg_get_connection(const char *);
-char	   *ecpg_alloc(long, int);
-char	   *ecpg_auto_alloc(long, int);
-char	   *ecpg_realloc(void *, long, int);
-void		ecpg_free(void *);
-bool		ecpg_init(const struct connection *, const char *, const int);
-char	   *ecpg_strdup(const char *, int);
-const char *ecpg_type_name(enum ECPGttype);
-int			ecpg_dynamic_type(Oid);
-int			sqlda_dynamic_type(Oid, enum COMPAT_MODE);
+struct connection *ecpg_get_connection(const char *connection_name);
+char	   *ecpg_alloc(long size, int lineno);
+char	   *ecpg_auto_alloc(long size, int lineno);
+char	   *ecpg_realloc(void *ptr, long size, int lineno);
+void		ecpg_free(void *ptr);
+bool		ecpg_init(const struct connection *con,
+					  const char *connection_name,
+					  const int lineno);
+char	   *ecpg_strdup(const char *string, int lineno);
+const char *ecpg_type_name(enum ECPGttype typ);
+int			ecpg_dynamic_type(Oid type);
+int			sqlda_dynamic_type(Oid type, enum COMPAT_MODE compat);
 void		ecpg_clear_auto_mem(void);
 
 struct descriptor *ecpg_find_desc(int line, const char *name);
 
-struct prepared_statement *ecpg_find_prepared_statement(const char *,
-														struct connection *, struct prepared_statement **);
+struct prepared_statement *ecpg_find_prepared_statement(const char *name,
+														struct connection *con,
+														struct prepared_statement **prev_);
 
 bool		ecpg_store_result(const PGresult *results, int act_field,
 							  const struct statement *stmt, struct variable *var);
-bool		ecpg_store_input(const int, const bool, const struct variable *, char **, bool);
+bool		ecpg_store_input(const int lineno, const bool force_indicator,
+							 const struct variable *var,
+							 char **tobeinserted_p, bool quote);
 void		ecpg_free_params(struct statement *stmt, bool print);
-bool		ecpg_do_prologue(int, const int, const int, const char *, const bool,
-							 enum ECPG_statement_type, const char *, va_list,
-							 struct statement **);
-bool		ecpg_build_params(struct statement *);
+bool		ecpg_do_prologue(int lineno, const int compat,
+							 const int force_indicator, const char *connection_name,
+							 const bool questionmarks, enum ECPG_statement_type statement_type,
+							 const char *query, va_list args,
+							 struct statement **stmt_out);
+bool		ecpg_build_params(struct statement *stmt);
 bool		ecpg_autostart_transaction(struct statement *stmt);
 bool		ecpg_execute(struct statement *stmt);
-bool		ecpg_process_output(struct statement *, bool);
-void		ecpg_do_epilogue(struct statement *);
-bool		ecpg_do(const int, const int, const int, const char *, const bool,
-					const int, const char *, va_list);
+bool		ecpg_process_output(struct statement *stmt, bool clear_result);
+void		ecpg_do_epilogue(struct statement *stmt);
+bool		ecpg_do(const int lineno, const int compat,
+					const int force_indicator, const char *connection_name,
+					const bool questionmarks, const int st, const char *query,
+					va_list args);
 
-bool		ecpg_check_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
+bool		ecpg_check_PQresult(PGresult *results, int lineno,
+								PGconn *connection, enum COMPAT_MODE compat);
 void		ecpg_raise(int line, int code, const char *sqlstate, const char *str);
 void		ecpg_raise_backend(int line, PGresult *result, PGconn *conn, int compat);
-char	   *ecpg_prepared(const char *, struct connection *);
-bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *conn);
+char	   *ecpg_prepared(const char *name, struct connection *con);
+bool		ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con);
 void		ecpg_log(const char *format,...) pg_attribute_printf(1, 2);
-bool		ecpg_auto_prepare(int, const char *, const int, char **, const char *);
-bool		ecpg_register_prepared_stmt(struct statement *);
+bool		ecpg_auto_prepare(int lineno, const char *connection_name,
+							  const int compat, char **name, const char *query);
+bool		ecpg_register_prepared_stmt(struct statement *stmt);
 void		ecpg_init_sqlca(struct sqlca_t *sqlca);
 
-struct sqlda_compat *ecpg_build_compat_sqlda(int, PGresult *, int, enum COMPAT_MODE);
-void		ecpg_set_compat_sqlda(int, struct sqlda_compat **, const PGresult *, int, enum COMPAT_MODE);
-struct sqlda_struct *ecpg_build_native_sqlda(int, PGresult *, int, enum COMPAT_MODE);
-void		ecpg_set_native_sqlda(int, struct sqlda_struct **, const PGresult *, int, enum COMPAT_MODE);
+struct sqlda_compat *ecpg_build_compat_sqlda(int line, PGresult *res, int row,
+											 enum COMPAT_MODE compat);
+void		ecpg_set_compat_sqlda(int lineno, struct sqlda_compat **_sqlda,
+								  const PGresult *res, int row,
+								  enum COMPAT_MODE compat);
+struct sqlda_struct *ecpg_build_native_sqlda(int line, PGresult *res, int row,
+											 enum COMPAT_MODE compat);
+void		ecpg_set_native_sqlda(int lineno, struct sqlda_struct **_sqlda,
+								  const PGresult *res, int row, enum COMPAT_MODE compat);
 unsigned	ecpg_hex_dec_len(unsigned srclen);
 unsigned	ecpg_hex_enc_len(unsigned srclen);
 unsigned	ecpg_hex_encode(const char *src, unsigned len, char *dst);

@@ -33,9 +33,11 @@ union un_fmt_comb
 	int64		int64_val;
 };
 
-int			pgtypes_fmt_replace(union un_fmt_comb, int, char **, int *);
+int			pgtypes_fmt_replace(union un_fmt_comb replace_val,
+								int replace_type, char **output,
+								int *pstr_len);
 
-char	   *pgtypes_alloc(long);
-char	   *pgtypes_strdup(const char *);
+char	   *pgtypes_alloc(long size);
+char	   *pgtypes_strdup(const char *str);
 
 #endif							/* _ECPG_PGTYPESLIB_EXTERN_H */
