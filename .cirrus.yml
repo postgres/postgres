@@ -22,13 +22,14 @@ env:
   CHECK: check-world PROVE_FLAGS=$PROVE_FLAGS
   CHECKFLAGS: -Otarget
   PROVE_FLAGS: --timer
+  MTEST_ARGS: --print-errorlogs --no-rebuild -C build
   PGCTLTIMEOUT: 120 # avoids spurious failures during parallel tests
   TEMP_CONFIG: ${CIRRUS_WORKING_DIR}/src/tools/ci/pg_ci_base.conf
   PG_TEST_EXTRA: kerberos ldap ssl
 
 
 # What files to preserve in case tests fail
-on_failure: &on_failure
+on_failure_ac: &on_failure_ac
   log_artifacts:
     paths:
       - "**/*.log"
@@ -36,8 +37,26 @@ on_failure: &on_failure
       - "**/regress_log_*"
     type: text/plain
 
+on_failure_meson: &on_failure_meson
+  testrun_artifacts:
+    paths:
+      - "build/testrun/**/*.log"
+      - "build/testrun/**/*.diffs"
+      - "build/testrun/**/regress_log_*"
+    type: text/plain
+
+  # In theory it'd be nice to upload the junit files meson generates, so that
+  # cirrus will nicely annotate the commit. Unfortunately the files don't
+  # contain identifieable file + line numbers right now, so the annotations
+  # don't end up useful. We could probably improve on that with a some custom
+  # conversion script, but ...
+  meson_log_artifacts:
+    path: "build/meson-logs/*.txt"
+    type: text/plain
+
+
 task:
-  name: FreeBSD - 13
+  name: FreeBSD - 13 - Meson
 
   env:
     # FreeBSD on GCP is slow when running with larger number of CPUS /
@@ -47,6 +66,7 @@ task:
     TEST_JOBS: 3
 
     CCACHE_DIR: /tmp/ccache_dir
+    CFLAGS: -Og -ggdb
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
 
@@ -80,48 +100,28 @@ task:
   setup_additional_packages_script: |
     #pkg install -y ...
 
-  # NB: Intentionally build without --with-llvm. The freebsd image size is
-  # already large enough to make VM startup slow, and even without llvm
-  # freebsd already takes longer than other platforms except for windows.
+  # NB: Intentionally build without -Dllvm. The freebsd image size is already
+  # large enough to make VM startup slow, and even without llvm freebsd
+  # already takes longer than other platforms except for windows.
   configure_script: |
     su postgres <<-EOF
-      ./configure \
-        --enable-cassert --enable-debug --enable-tap-tests \
-        --enable-nls \
-        \
-        --with-gssapi \
-        --with-icu \
-        --with-ldap \
-        --with-libxml \
-        --with-libxslt \
-        --with-lz4 \
-        --with-pam \
-        --with-perl \
-        --with-python \
-        --with-ssl=openssl \
-        --with-tcl --with-tclconfig=/usr/local/lib/tcl8.6/ \
-        --with-uuid=bsd \
-        --with-zstd \
-        \
-        --with-includes=/usr/local/include \
-        --with-libs=/usr/local/lib \
-        \
-        CC="ccache cc" \
-        CXX="ccache c++" \
-        CFLAGS="-Og -ggdb"
+      meson setup \
+        --buildtype=debug \
+        -Dcassert=true -Dssl=openssl -Duuid=bsd -Dtcl_version=tcl86 -Ddtrace=auto \
+        -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
+        build
     EOF
-  build_script: su postgres -c "gmake -s -j${BUILD_JOBS} world-bin"
+  build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
   upload_caches: ccache
 
-  # The use of script avoids make -Otarget complaints about fcntl() on
-  # platforms without support for locking pipes. See also
-  # https://savannah.gnu.org/bugs/?60774
-  # script uses pseudo-ttys, which do support locking.
-  test_world_script:
-    - su postgres -c "time script test.log gmake -s -j${TEST_JOBS} ${CHECK} ${CHECKFLAGS}"
+  test_world_script: |
+    su postgres <<-EOF
+      ulimit -c unlimited
+      meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
+    EOF
 
   on_failure:
-    <<: *on_failure
+    <<: *on_failure_meson
     cores_script: src/tools/ci/cores_backtrace.sh freebsd /tmp/cores
 
 
@@ -145,10 +145,13 @@ LINUX_CONFIGURE_FEATURES: &LINUX_CONFIGURE_FEATURES >-
   --with-uuid=ossp
   --with-zstd
 
+LINUX_MESON_FEATURES: &LINUX_MESON_FEATURES >-
+  -Dllvm=enabled
+  -Dssl=openssl
+  -Duuid=e2fs
+
 
 task:
-  name: Linux - Debian Bullseye
-
   env:
     CPUS: 4
     BUILD_JOBS: 4
@@ -157,7 +160,13 @@ task:
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
 
+    CFLAGS: -Og -ggdb
+    CXXFLAGS: -Og -ggdb
+    CC: ccache gcc
+    CXX: ccache g++
+
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
+    LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*linux.*'
 
@@ -192,36 +201,61 @@ task:
     #apt-get update
     #DEBIAN_FRONTEND=noninteractive apt-get -y install ...
 
-  configure_script: |
-    su postgres <<-EOF
-      ./configure \
-        --enable-cassert --enable-debug --enable-tap-tests \
-        --enable-nls \
-        \
-        ${LINUX_CONFIGURE_FEATURES} \
-        \
-        CC="ccache gcc" \
-        CXX="ccache g++" \
-        CLANG="ccache clang" \
-        CFLAGS="-Og -ggdb" \
-        CXXFLAGS="-Og -ggdb"
-    EOF
-  build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
-  upload_caches: ccache
+  matrix:
+    - name: Linux - Debian Bullseye - Autoconf
 
-  test_world_script: |
-    su postgres <<-EOF
-      ulimit -c unlimited # default is 0
-      make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
-    EOF
+      configure_script: |
+        su postgres <<-EOF
+          ./configure \
+            --enable-cassert --enable-debug --enable-tap-tests \
+            --enable-nls \
+            \
+            ${LINUX_CONFIGURE_FEATURES} \
+            \
+            CLANG="ccache clang"
+        EOF
+      build_script: su postgres -c "make -s -j${BUILD_JOBS} world-bin"
+      upload_caches: ccache
+
+      test_world_script: |
+        su postgres <<-EOF
+          ulimit -c unlimited # default is 0
+          make -s ${CHECK} ${CHECKFLAGS} -j${TEST_JOBS}
+        EOF
+
+      on_failure:
+        <<: *on_failure_ac
+
+    - name: Linux - Debian Bullseye - Meson
+
+      configure_script: |
+        su postgres <<-EOF
+          meson setup \
+            --buildtype=debug \
+            -Dcassert=true \
+            ${LINUX_MESON_FEATURES} \
+            -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
+            build
+        EOF
+
+      build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
+      upload_caches: ccache
+
+      test_world_script: |
+        su postgres <<-EOF
+          ulimit -c unlimited
+          meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
+        EOF
+
+      on_failure:
+        <<: *on_failure_meson
 
   on_failure:
-    <<: *on_failure
     cores_script: src/tools/ci/cores_backtrace.sh linux /tmp/cores
 
 
 task:
-  name: macOS - Monterey
+  name: macOS - Monterey - Meson
 
   env:
     CPUS: 12 # always get that much for cirrusci macOS instances
@@ -232,6 +266,11 @@ task:
     CCACHE_DIR: ${HOME}/ccache
     HOMEBREW_CACHE: ${HOME}/homebrew-cache
     PERL5LIB: ${HOME}/perl5/lib/perl5
+
+    CC: ccache cc
+    CXX: ccache c++
+    CFLAGS: -Og -ggdb
+    CXXFLAGS: -Og -ggdb
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*(macos|darwin|osx).*'
 
@@ -269,6 +308,7 @@ task:
       llvm \
       lz4 \
       make \
+      meson \
       openldap \
       openssl \
       python \
@@ -282,77 +322,45 @@ task:
     folder: $CCACHE_DIR
   configure_script: |
     brewpath="/usr/local"
-    INCLUDES="${brewpath}/include:${INCLUDES}"
-    LIBS="${brewpath}/lib:${LIBS}"
+    PKG_CONFIG_PATH="${brewpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
     for pkg in icu4c krb5 openldap openssl zstd ; do
       pkgpath="${brewpath}/opt/${pkg}"
-      INCLUDES="${pkgpath}/include:${INCLUDES}"
-      LIBS="${pkgpath}/lib:${LIBS}"
       PKG_CONFIG_PATH="${pkgpath}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+      PATH="${pkgpath}/bin:${pkgpath}/sbin:$PATH"
     done
 
-    export PKG_CONFIG_PATH
+    export PKG_CONFIG_PATH PATH
 
-    ./configure \
-      --enable-cassert --enable-debug --enable-tap-tests \
-      --enable-nls \
-      \
-      --with-bonjour \
-      --with-gssapi \
-      --with-icu \
-      --with-ldap \
-      --with-libxml \
-      --with-libxslt \
-      --with-lz4 \
-      --with-perl \
-      --with-python \
-      --with-ssl=openssl \
-      --with-tcl --with-tclconfig=${brewpath}/opt/tcl-tk/lib/ \
-      --with-uuid=e2fs \
-      --with-zstd \
-      \
-      --prefix=${HOME}/install \
-      --with-includes="${INCLUDES}" \
-      --with-libs="${LIBS}" \
-      \
-      CC="ccache cc" \
-      CXX="ccache c++" \
-      CLANG="ccache ${brewpath}/llvm/bin/ccache" \
-      CFLAGS="-Og -ggdb" \
-      CXXFLAGS="-Og -ggdb" \
-      \
-      LLVM_CONFIG=${brewpath}/llvm/bin/llvm-config \
-      PYTHON=python3
-  build_script: gmake -s -j${BUILD_JOBS} world-bin
+    meson setup \
+      --buildtype=debug \
+      -Dextra_include_dirs=${brewpath}/include \
+      -Dextra_lib_dirs=${brewpath}/lib \
+      -Dcassert=true \
+      -Dssl=openssl -Duuid=e2fs -Ddtrace=auto \
+      -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
+      build
+
+  build_script: ninja -C build -j${BUILD_JOBS}
   upload_caches: ccache
 
   test_world_script: |
     ulimit -c unlimited # default is 0
     ulimit -n 1024 # default is 256, pretty low
-    # See freebsd use of script for explanation
-    script test.log gmake -s -j${TEST_JOBS} ${CHECK} ${CHECKFLAGS}
+    meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
 
   on_failure:
-    <<: *on_failure
+    <<: *on_failure_meson
     cores_script: src/tools/ci/cores_backtrace.sh macos "${HOME}/cores"
 
 
 task:
-  name: Windows - Server 2019, VS 2019
+  name: Windows - Server 2019, VS 2019 - Meson & ninja
 
   env:
     # Half the allowed per-user CPU cores
     CPUS: 4
-
-    # Our windows infrastructure doesn't have test concurrency above the level
-    # of a single vcregress test target. Due to that, it's useful to run prove
-    # with multiple jobs. For the other tasks it isn't, because two sources
-    # (make and prove) of concurrency can overload machines.
-    #
-    # The concrete choice of 10 is based on a small bit of experimentation and
-    # likely can be improved upon further.
-    PROVE_FLAGS: -j10 --timer
+    TEST_JOBS: 8 # wild guess, data based value welcome
 
     # The default cirrus working dir is in a directory msbuild complains about
     CIRRUS_WORKING_DIR: "c:/cirrus"
@@ -364,20 +372,6 @@ task:
     # Avoids port conflicts between concurrent tap test runs
     PG_TEST_USE_UNIX_SOCKETS: 1
     PG_REGRESS_SOCK_DIR: "c:/cirrus/"
-    # -m enables parallelism
-    # verbosity:minimal + Summary reduce verbosity, while keeping a summary of
-    #   errors/warnings
-    # ForceNoAlign prevents msbuild from introducing line-breaks for long lines
-    # disable file tracker, we're never going to rebuild, and it slows down the
-    #   build
-    MSBFLAGS: -m -verbosity:minimal "-consoleLoggerParameters:Summary;ForceNoAlign" /p:TrackFileAccess=false -nologo
-
-    # If tests hang forever, cirrus eventually times out. In that case log
-    # output etc is not uploaded, making the problem hard to debug. Of course
-    # tests internally should have shorter timeouts, but that's proven to not
-    # be sufficient. 15min currently is fast enough to finish individual test
-    # "suites".
-    T_C: "\"C:/Program Files/Git/usr/bin/timeout.exe\" -v -k60s 15m"
 
     # startcreate_script starts a postgres instance that we don't want to get
     # killed at the end of that script (it's stopped in stop_script). Can't
@@ -411,56 +405,21 @@ task:
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
 
-  configure_script:
-    # copy errors out when using forward slashes
-    - copy src\tools\ci\windows_build_config.pl src\tools\msvc\config.pl
-    - vcvarsall x64
-    - perl src/tools/msvc/mkvcbuild.pl
-  build_script:
-    - vcvarsall x64
-    - msbuild %MSBFLAGS% pgsql.sln
-  tempinstall_script:
-    # Installation on windows currently only completely works from src/tools/msvc
-    - cd src/tools/msvc && perl install.pl %CIRRUS_WORKING_DIR%/tmp_install
-
-  test_regress_parallel_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl check parallel
-  startcreate_script: |
-    rem paths to binaries need backslashes
-    tmp_install\bin\pg_ctl.exe initdb -D tmp_check/db -l tmp_check/initdb.log --options=--no-sync
-    echo include '%TEMP_CONFIG%' >> tmp_check/db/postgresql.conf
-    tmp_install\bin\pg_ctl.exe start -D tmp_check/db -l tmp_check/postmaster.log
-
-  test_pl_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl plcheck
-  test_isolation_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl isolationcheck
-  test_modules_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl modulescheck
-  test_contrib_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl contribcheck
-  stop_script: |
-    tmp_install\bin\pg_ctl.exe stop -D tmp_check/db -l tmp_check/postmaster.log
-  test_ssl_script: |
-    set with_ssl=openssl
-    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/ssl/
-  test_subscription_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/subscription/
-  test_authentication_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl taptest ./src/test/authentication/
-  test_recovery_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl recoverycheck
-  test_bin_script: |
-    %T_C% perl src/tools/msvc/vcregress.pl bincheck
-  test_ecpg_script: |
-    rem tries to build additional stuff
+  # Use /DEBUG:FASTLINK to avoid high memory usage during linking
+  configure_script: |
     vcvarsall x64
-    rem References ecpg_regression.proj in the current dir
-    cd src/tools/msvc
-    %T_C% perl vcregress.pl ecpgcheck
+    meson setup --backend ninja --buildtype debug -Dc_link_args=/DEBUG:FASTLINK -Dcassert=true -Dssl=openssl -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=c:/windows/system32/tar.exe -DPG_TEST_EXTRA="%PG_TEST_EXTRA%" build
+
+  build_script: |
+    vcvarsall x64
+    ninja -C build
+
+  check_world_script: |
+    vcvarsall x64
+    meson test %MTEST_ARGS% --num-processes %TEST_JOBS%
 
   on_failure:
-    <<: *on_failure
+    <<: *on_failure_meson
     crashlog_artifacts:
       path: "crashlog-*.txt"
       type: text/plain
@@ -471,7 +430,7 @@ task:
 
   # To limit unnecessary work only run this once the normal linux test succeeds
   depends_on:
-    - Linux - Debian Bullseye
+    - Linux - Debian Bullseye - Meson
 
   env:
     CPUS: 4
@@ -483,6 +442,7 @@ task:
     CCACHE_DIR: "/tmp/ccache_dir"
 
     LINUX_CONFIGURE_FEATURES: *LINUX_CONFIGURE_FEATURES
+    LINUX_MESON_FEATURES: *LINUX_MESON_FEATURES
 
   # task that did not run, count as a success, so we need to recheck Linux'
   # condition here ...
