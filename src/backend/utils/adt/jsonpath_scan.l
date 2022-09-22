@@ -37,7 +37,7 @@ static char *scanbuf;
 static int	scanbuflen;
 
 static void addstring(bool init, char *s, int l);
-static void addchar(bool init, char s);
+static void addchar(bool init, char c);
 static enum yytokentype checkKeyword(void);
 static void parseUnicode(char *s, int l);
 static void parseHexChar(char *s);
