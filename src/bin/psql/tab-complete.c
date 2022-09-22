@@ -1669,7 +1669,7 @@ psql_completion(const char *text, int start, int end)
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
 		"DELETE FROM", "DISCARD", "DO", "DROP", "END", "EXECUTE", "EXPLAIN",
 		"FETCH", "GRANT", "IMPORT FOREIGN SCHEMA", "INSERT INTO", "LISTEN", "LOAD", "LOCK",
-		"MERGE", "MOVE", "NOTIFY", "PREPARE",
+		"MERGE INTO", "MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REFRESH MATERIALIZED VIEW", "REINDEX", "RELEASE",
 		"RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SECURITY LABEL", "SELECT", "SET", "SHOW", "START",
@@ -3626,7 +3626,7 @@ psql_completion(const char *text, int start, int end)
  */
 	else if (Matches("EXPLAIN"))
 		COMPLETE_WITH("SELECT", "INSERT INTO", "DELETE FROM", "UPDATE", "DECLARE",
-					  "MERGE", "EXECUTE", "ANALYZE", "VERBOSE");
+					  "MERGE INTO", "EXECUTE", "ANALYZE", "VERBOSE");
 	else if (HeadMatches("EXPLAIN", "(*") &&
 			 !HeadMatches("EXPLAIN", "(*)"))
 	{
@@ -3645,12 +3645,12 @@ psql_completion(const char *text, int start, int end)
 	}
 	else if (Matches("EXPLAIN", "ANALYZE"))
 		COMPLETE_WITH("SELECT", "INSERT INTO", "DELETE FROM", "UPDATE", "DECLARE",
-					  "MERGE", "EXECUTE", "VERBOSE");
+					  "MERGE INTO", "EXECUTE", "VERBOSE");
 	else if (Matches("EXPLAIN", "(*)") ||
 			 Matches("EXPLAIN", "VERBOSE") ||
 			 Matches("EXPLAIN", "ANALYZE", "VERBOSE"))
 		COMPLETE_WITH("SELECT", "INSERT INTO", "DELETE FROM", "UPDATE", "DECLARE",
-					  "MERGE", "EXECUTE");
+					  "MERGE INTO", "EXECUTE");
 
 /* FETCH && MOVE */
 
@@ -4050,57 +4050,89 @@ psql_completion(const char *text, int start, int end)
 	else if (HeadMatches("LOCK") && TailMatches("IN", "SHARE"))
 		COMPLETE_WITH("MODE", "ROW EXCLUSIVE MODE",
 					  "UPDATE EXCLUSIVE MODE");
+
+	/* Complete LOCK [TABLE] [ONLY] <table> [IN lockmode MODE] with "NOWAIT" */
+	else if (HeadMatches("LOCK") && TailMatches("MODE"))
+		COMPLETE_WITH("NOWAIT");
+
 /* MERGE --- can be inside EXPLAIN */
 	else if (TailMatches("MERGE"))
 		COMPLETE_WITH("INTO");
 	else if (TailMatches("MERGE", "INTO"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_mergetargets);
+
+	/* Complete MERGE INTO <table> [[AS] <alias>] with USING */
 	else if (TailMatches("MERGE", "INTO", MatchAny))
 		COMPLETE_WITH("USING", "AS");
-	else if (TailMatches("MERGE", "INTO", MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
-	/* with [AS] alias */
-	else if (TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny))
+	else if (TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, MatchAnyExcept("USING|AS")))
 		COMPLETE_WITH("USING");
-	else if (TailMatches("MERGE", "INTO", MatchAny, MatchAny))
-		COMPLETE_WITH("USING");
-	else if (TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
-	else if (TailMatches("MERGE", "INTO", MatchAny, MatchAny, "USING"))
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables);
-	/* ON */
-	else if (TailMatches("MERGE", "INTO", MatchAny, "USING", MatchAny))
+
+	/*
+	 * Complete MERGE INTO ... USING with a list of relations supporting
+	 * SELECT
+	 */
+	else if (TailMatches("MERGE", "INTO", MatchAny, "USING") ||
+			 TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING") ||
+			 TailMatches("MERGE", "INTO", MatchAny, MatchAny, "USING"))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_selectables);
+
+	/*
+	 * Complete MERGE INTO <table> [[AS] <alias>] USING <relations> [[AS]
+	 * alias] with ON
+	 */
+	else if (TailMatches("MERGE", "INTO", MatchAny, "USING", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, MatchAny, "USING", MatchAny))
+		COMPLETE_WITH("AS", "ON");
+	else if (TailMatches("MERGE", "INTO", MatchAny, "USING", MatchAny, "AS", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, "AS", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, MatchAny, "USING", MatchAny, "AS", MatchAny) ||
+			 TailMatches("MERGE", "INTO", MatchAny, "USING", MatchAny, MatchAnyExcept("ON|AS")) ||
+			 TailMatches("MERGE", "INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, MatchAnyExcept("ON|AS")) ||
+			 TailMatches("MERGE", "INTO", MatchAny, MatchAny, "USING", MatchAny, MatchAnyExcept("ON|AS")))
 		COMPLETE_WITH("ON");
-	else if (TailMatches("INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, "AS", MatchAny))
-		COMPLETE_WITH("ON");
-	else if (TailMatches("INTO", MatchAny, MatchAny, "USING", MatchAny, MatchAny))
-		COMPLETE_WITH("ON");
-	/* ON condition */
+
+	/* Complete MERGE INTO ... ON with target table attributes */
 	else if (TailMatches("INTO", MatchAny, "USING", MatchAny, "ON"))
 		COMPLETE_WITH_ATTR(prev4_wd);
 	else if (TailMatches("INTO", MatchAny, "AS", MatchAny, "USING", MatchAny, "AS", MatchAny, "ON"))
 		COMPLETE_WITH_ATTR(prev8_wd);
 	else if (TailMatches("INTO", MatchAny, MatchAny, "USING", MatchAny, MatchAny, "ON"))
 		COMPLETE_WITH_ATTR(prev6_wd);
-	/* WHEN [NOT] MATCHED */
-	else if (TailMatches("USING", MatchAny, "ON", MatchAny))
+
+	/*
+	 * Complete ... USING <relation> [[AS] alias] ON join condition
+	 * (consisting of one or three words typically used) with WHEN [NOT]
+	 * MATCHED
+	 */
+	else if (TailMatches("USING", MatchAny, "ON", MatchAny) ||
+			 TailMatches("USING", MatchAny, "AS", MatchAny, "ON", MatchAny) ||
+			 TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny) ||
+			 TailMatches("USING", MatchAny, "ON", MatchAny, MatchAnyExcept("WHEN"), MatchAnyExcept("WHEN")) ||
+			 TailMatches("USING", MatchAny, "AS", MatchAny, "ON", MatchAny, MatchAnyExcept("WHEN"), MatchAnyExcept("WHEN")) ||
+			 TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny, MatchAnyExcept("WHEN"), MatchAnyExcept("WHEN")))
 		COMPLETE_WITH("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches("USING", MatchAny, "AS", MatchAny, "ON", MatchAny))
-		COMPLETE_WITH("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny))
-		COMPLETE_WITH("WHEN MATCHED", "WHEN NOT MATCHED");
-	else if (TailMatches("WHEN", "MATCHED"))
+	else if (TailMatches("USING", MatchAny, "ON", MatchAny, "WHEN") ||
+			 TailMatches("USING", MatchAny, "AS", MatchAny, "ON", MatchAny, "WHEN") ||
+			 TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny, "WHEN") ||
+			 TailMatches("USING", MatchAny, "ON", MatchAny, MatchAny, MatchAny, "WHEN") ||
+			 TailMatches("USING", MatchAny, "AS", MatchAny, "ON", MatchAny, MatchAny, MatchAny, "WHEN") ||
+			 TailMatches("USING", MatchAny, MatchAny, "ON", MatchAny, MatchAny, MatchAny, "WHEN"))
+		COMPLETE_WITH("MATCHED", "NOT MATCHED");
+
+	/* Complete ... WHEN [NOT] MATCHED with THEN/AND */
+	else if (TailMatches("WHEN", "MATCHED") ||
+			 TailMatches("WHEN", "NOT", "MATCHED"))
 		COMPLETE_WITH("THEN", "AND");
-	else if (TailMatches("WHEN", "NOT", "MATCHED"))
-		COMPLETE_WITH("THEN", "AND");
+
+	/* Complete ... WHEN MATCHED THEN with UPDATE SET/DELETE/DO NOTHING */
 	else if (TailMatches("WHEN", "MATCHED", "THEN"))
-		COMPLETE_WITH("UPDATE", "DELETE");
+		COMPLETE_WITH("UPDATE SET", "DELETE", "DO NOTHING");
+
+	/* Complete ... WHEN NOT MATCHED THEN with INSERT/DO NOTHING */
 	else if (TailMatches("WHEN", "NOT", "MATCHED", "THEN"))
 		COMPLETE_WITH("INSERT", "DO NOTHING");
-
-	/* Complete LOCK [TABLE] [ONLY] <table> [IN lockmode MODE] with "NOWAIT" */
-	else if (HeadMatches("LOCK") && TailMatches("MODE"))
-		COMPLETE_WITH("NOWAIT");
 
 /* NOTIFY --- can be inside EXPLAIN, RULE, etc */
 	else if (TailMatches("NOTIFY"))
