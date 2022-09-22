@@ -2757,8 +2757,10 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
            <literal>-1</literal>), for <literal>lz4</literal> an integer
            between 1 and 12 (default <literal>0</literal> for fast compression
            mode), and for <literal>zstd</literal> an integer between
-           <literal>1</literal> and <literal>22</literal> (default
-           <literal>ZSTD_CLEVEL_DEFAULT</literal> or <literal>3</literal>).
+           <literal>ZSTD_minCLevel()</literal> (usually <literal>-131072</literal>)
+           and <literal>ZSTD_maxCLevel()</literal> (usually <literal>22</literal>),
+           (default <literal>ZSTD_CLEVEL_DEFAULT</literal> or
+           <literal>3</literal>).
           </para>
 
           <para>
