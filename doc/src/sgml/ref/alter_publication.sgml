@@ -31,7 +31,7 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
-    ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
+    TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -71,19 +71,19 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   <para>
    You must own the publication to use <command>ALTER PUBLICATION</command>.
    Adding a table to a publication additionally requires owning that table.
-   The <literal>ADD ALL TABLES IN SCHEMA</literal> and
-   <literal>SET ALL TABLES IN SCHEMA</literal> to a publication requires the
+   The <literal>ADD TABLES IN SCHEMA</literal> and
+   <literal>SET TABLES IN SCHEMA</literal> to a publication requires the
    invoking user to be a superuser.  To alter the owner, you must also be a
    direct or indirect member of the new owning role. The new owner must have
    <literal>CREATE</literal> privilege on the database.  Also, the new owner
-   of a <literal>FOR ALL TABLES</literal> or <literal>FOR ALL TABLES IN
-   SCHEMA</literal> publication must be a superuser. However, a superuser can
+   of a <literal>FOR ALL TABLES</literal> or <literal>FOR TABLES IN SCHEMA</literal>
+   publication must be a superuser. However, a superuser can
    change the ownership of a publication regardless of these restrictions.
   </para>
 
   <para>
    Adding/Setting a table that is part of schema specified in
-   <literal>ALL TABLES IN SCHEMA</literal>, adding/setting a schema to a
+   <literal>TABLES IN SCHEMA</literal>, adding/setting a schema to a
    publication that already has a table that is part of the specified schema or
    adding/setting a table to a publication that already has a table's schema as
    part of the specified schema is not supported.
@@ -200,7 +200,7 @@ ALTER PUBLICATION mypublication SET TABLE users (user_id, firstname, lastname), 
    <structname>sales</structname> to the publication
    <structname>sales_publication</structname>:
 <programlisting>
-ALTER PUBLICATION sales_publication ADD ALL TABLES IN SCHEMA marketing, sales;
+ALTER PUBLICATION sales_publication ADD TABLES IN SCHEMA marketing, sales;
 </programlisting>
   </para>
 
@@ -210,7 +210,7 @@ ALTER PUBLICATION sales_publication ADD ALL TABLES IN SCHEMA marketing, sales;
    <structname>production</structname> to the publication
    <structname>production_publication</structname>:
 <programlisting>
-ALTER PUBLICATION production_publication ADD TABLE users, departments, ALL TABLES IN SCHEMA production;
+ALTER PUBLICATION production_publication ADD TABLE users, departments, TABLES IN SCHEMA production;
 </programlisting></para>
  </refsect1>
 

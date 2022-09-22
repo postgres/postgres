@@ -77,9 +77,9 @@ $node_subscriber->safe_psql('postgres', "DROP TABLE tab_rf_x");
 # ====================================================================
 
 # ====================================================================
-# Testcase start: ALL TABLES IN SCHEMA
+# Testcase start: TABLES IN SCHEMA
 #
-# The ALL TABLES IN SCHEMA test is independent of all other test cases so it
+# The TABLES IN SCHEMA test is independent of all other test cases so it
 # cleans up after itself.
 
 # create tables pub and sub
@@ -119,7 +119,7 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_x FOR TABLE schema_rf_x.tab_rf_x WHERE (x > 10)"
 );
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_allinschema FOR ALL TABLES IN SCHEMA schema_rf_x"
+	"CREATE PUBLICATION tap_pub_allinschema FOR TABLES IN SCHEMA schema_rf_x"
 );
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_allinschema ADD TABLE public.tab_rf_partition WHERE (x > 10)"
@@ -131,7 +131,7 @@ $node_subscriber->safe_psql('postgres',
 # wait for initial table synchronization to finish
 $node_subscriber->wait_for_subscription_sync($node_publisher, $appname);
 
-# The subscription of the ALL TABLES IN SCHEMA publication means there should be
+# The subscription of the TABLES IN SCHEMA publication means there should be
 # no filtering on the tablesync COPY, so expect all 5 will be present.
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(x) FROM schema_rf_x.tab_rf_x");
@@ -139,7 +139,7 @@ is($result, qq(5),
 	'check initial data copy from table tab_rf_x should not be filtered');
 
 # Similarly, the table filter for tab_rf_x (after the initial phase) has no
-# effect when combined with the ALL TABLES IN SCHEMA. Meanwhile, the filter for
+# effect when combined with the TABLES IN SCHEMA. Meanwhile, the filter for
 # the tab_rf_partition does work because that partition belongs to a different
 # schema (and publish_via_partition_root = false).
 # Expected:
@@ -175,7 +175,7 @@ $node_subscriber->safe_psql('postgres',
 $node_subscriber->safe_psql('postgres', "DROP TABLE schema_rf_x.tab_rf_x");
 $node_subscriber->safe_psql('postgres', "DROP SCHEMA schema_rf_x");
 
-# Testcase end: ALL TABLES IN SCHEMA
+# Testcase end: TABLES IN SCHEMA
 # ====================================================================
 
 # ======================================================

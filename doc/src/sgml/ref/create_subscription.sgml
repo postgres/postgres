@@ -372,7 +372,7 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    publications has no <literal>WHERE</literal> clause (referring to that
    publish operation) or the publication is declared as
    <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal>, rows are always published
+   <literal>FOR TABLES IN SCHEMA</literal>, rows are always published
    regardless of the definition of the other expressions.
    If the subscriber is a <productname>PostgreSQL</productname> version before
    15 then any row filtering is ignored during the initial data synchronization

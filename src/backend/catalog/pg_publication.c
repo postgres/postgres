@@ -837,7 +837,7 @@ GetAllTablesPublicationRelations(bool pubviaroot)
 /*
  * Gets the list of schema oids for a publication.
  *
- * This should only be used FOR ALL TABLES IN SCHEMA publications.
+ * This should only be used FOR TABLES IN SCHEMA publications.
  */
 List *
 GetPublicationSchemas(Oid pubid)
@@ -957,7 +957,7 @@ GetSchemaPublicationRelations(Oid schemaid, PublicationPartOpt pub_partopt)
 }
 
 /*
- * Gets the list of all relations published by FOR ALL TABLES IN SCHEMA
+ * Gets the list of all relations published by FOR TABLES IN SCHEMA
  * publication.
  */
 List *

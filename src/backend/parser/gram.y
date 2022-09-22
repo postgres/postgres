@@ -10340,7 +10340,7 @@ AlterOwnerStmt: ALTER AGGREGATE aggregate_with_argtypes OWNER TO RoleSpec
  * pub_obj is one of:
  *
  *		TABLE table [, ...]
- *		ALL TABLES IN SCHEMA schema [, ...]
+ *		TABLES IN SCHEMA schema [, ...]
  *
  *****************************************************************************/
 
@@ -10375,7 +10375,7 @@ CreatePublicationStmt:
 		;
 
 /*
- * FOR TABLE and FOR ALL TABLES IN SCHEMA specifications
+ * FOR TABLE and FOR TABLES IN SCHEMA specifications
  *
  * This rule parses publication objects with and without keyword prefixes.
  *
@@ -10397,18 +10397,18 @@ PublicationObjSpec:
 					$$->pubtable->columns = $3;
 					$$->pubtable->whereClause = $4;
 				}
-			| ALL TABLES IN_P SCHEMA ColId
+			| TABLES IN_P SCHEMA ColId
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_TABLES_IN_SCHEMA;
-					$$->name = $5;
-					$$->location = @5;
+					$$->name = $4;
+					$$->location = @4;
 				}
-			| ALL TABLES IN_P SCHEMA CURRENT_SCHEMA
+			| TABLES IN_P SCHEMA CURRENT_SCHEMA
 				{
 					$$ = makeNode(PublicationObjSpec);
 					$$->pubobjtype = PUBLICATIONOBJ_TABLES_IN_CUR_SCHEMA;
-					$$->location = @5;
+					$$->location = @4;
 				}
 			| ColId opt_column_list OptWhereClause
 				{
@@ -10484,7 +10484,7 @@ pub_obj_list:	PublicationObjSpec
  * pub_obj is one of:
  *
  *		TABLE table_name [, ...]
- *		ALL TABLES IN SCHEMA schema_name [, ...]
+ *		TABLES IN SCHEMA schema_name [, ...]
  *
  *****************************************************************************/
 
@@ -18424,7 +18424,7 @@ preprocess_pubobj_list(List *pubobjspec_list, core_yyscan_t yyscanner)
 		ereport(ERROR,
 				errcode(ERRCODE_SYNTAX_ERROR),
 				errmsg("invalid publication object list"),
-				errdetail("One of TABLE or ALL TABLES IN SCHEMA must be specified before a standalone table or schema name."),
+				errdetail("One of TABLE or TABLES IN SCHEMA must be specified before a standalone table or schema name."),
 				parser_errposition(pubobj->location));
 
 	foreach(cell, pubobjspec_list)

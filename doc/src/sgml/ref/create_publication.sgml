@@ -29,7 +29,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 <phrase>where <replaceable class="parameter">publication_object</replaceable> is one of:</phrase>
 
     TABLE [ ONLY ] <replaceable class="parameter">table_name</replaceable> [ * ] [ ( <replaceable class="parameter">column_name</replaceable> [, ... ] ) ] [ WHERE ( <replaceable class="parameter">expression</replaceable> ) ] [, ... ]
-    ALL TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
+    TABLES IN SCHEMA { <replaceable class="parameter">schema_name</replaceable> | CURRENT_SCHEMA } [, ... ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -112,7 +112,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
      <para>
       Specifying a table that is part of a schema specified by
-      <literal>FOR ALL TABLES IN SCHEMA</literal> is not supported.
+      <literal>FOR TABLES IN SCHEMA</literal> is not supported.
      </para>
     </listitem>
    </varlistentry>
@@ -128,7 +128,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><literal>FOR ALL TABLES IN SCHEMA</literal></term>
+    <term><literal>FOR TABLES IN SCHEMA</literal></term>
     <listitem>
      <para>
       Marks the publication as one that replicates changes for all tables in
@@ -224,7 +224,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
   <para>
    If <literal>FOR TABLE</literal>, <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal> are not specified, then the
+   <literal>FOR TABLES IN SCHEMA</literal> are not specified, then the
    publication starts out with an empty set of tables.  That is useful if
    tables or schemas are to be added later.
   </para>
@@ -243,7 +243,7 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
   <para>
    To add a table to a publication, the invoking user must have ownership
    rights on the table.  The <command>FOR ALL TABLES</command> and
-   <command>FOR ALL TABLES IN SCHEMA</command> clauses require the invoking
+   <command>FOR TABLES IN SCHEMA</command> clauses require the invoking
    user to be a superuser.
   </para>
 
@@ -354,7 +354,7 @@ CREATE PUBLICATION insert_only FOR TABLE mydata
    all changes for all the tables present in the schema
    <structname>production</structname>:
 <programlisting>
-CREATE PUBLICATION production_publication FOR TABLE users, departments, ALL TABLES IN SCHEMA production;
+CREATE PUBLICATION production_publication FOR TABLE users, departments, TABLES IN SCHEMA production;
 </programlisting>
   </para>
 
@@ -363,7 +363,7 @@ CREATE PUBLICATION production_publication FOR TABLE users, departments, ALL TABL
    the schemas <structname>marketing</structname> and
    <structname>sales</structname>:
 <programlisting>
-CREATE PUBLICATION sales_publication FOR ALL TABLES IN SCHEMA marketing, sales;
+CREATE PUBLICATION sales_publication FOR TABLES IN SCHEMA marketing, sales;
 </programlisting></para>
 
   <para>

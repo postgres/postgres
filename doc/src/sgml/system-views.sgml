@@ -2090,7 +2090,7 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
    tables they contain.  Unlike the underlying catalog
    <link linkend="catalog-pg-publication-rel"><structname>pg_publication_rel</structname></link>,
    this view expands publications defined as <literal>FOR ALL TABLES</literal>
-   and <literal>FOR ALL TABLES IN SCHEMA</literal>, so for such publications
+   and <literal>FOR TABLES IN SCHEMA</literal>, so for such publications
    there will be a row for each eligible table.
   </para>
 

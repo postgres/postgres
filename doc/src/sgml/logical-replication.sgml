@@ -700,7 +700,7 @@ test_sub=# SELECT * FROM t3;
      <listitem>
       <para>
        one of the publications was created using
-       <literal>FOR ALL TABLES IN SCHEMA</literal> and the table belongs to
+       <literal>FOR TABLES IN SCHEMA</literal> and the table belongs to
        the referred schema. This clause does not allow row filters.
       </para>
      </listitem>
@@ -1530,7 +1530,7 @@ CONTEXT:  processing remote data for replication origin "pg_16395" during "INSER
    Moreover, if untrusted users can create tables, use only
    publications that list tables explicitly.  That is to say, create a
    subscription <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal> only when superusers trust
+   <literal>FOR TABLES IN SCHEMA</literal> only when superusers trust
    every user permitted to create a non-temp table on the publisher or the
    subscriber.
   </para>
