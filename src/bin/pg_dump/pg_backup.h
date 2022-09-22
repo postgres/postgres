@@ -285,18 +285,18 @@ extern void DisconnectDatabase(Archive *AHX);
 extern PGconn *GetConnection(Archive *AHX);
 
 /* Called to write *data* to the archive */
-extern void WriteData(Archive *AH, const void *data, size_t dLen);
+extern void WriteData(Archive *AHX, const void *data, size_t dLen);
 
-extern int	StartBlob(Archive *AH, Oid oid);
-extern int	EndBlob(Archive *AH, Oid oid);
+extern int	StartBlob(Archive *AHX, Oid oid);
+extern int	EndBlob(Archive *AHX, Oid oid);
 
-extern void CloseArchive(Archive *AH);
+extern void CloseArchive(Archive *AHX);
 
 extern void SetArchiveOptions(Archive *AH, DumpOptions *dopt, RestoreOptions *ropt);
 
-extern void ProcessArchiveRestoreOptions(Archive *AH);
+extern void ProcessArchiveRestoreOptions(Archive *AHX);
 
-extern void RestoreArchive(Archive *AH);
+extern void RestoreArchive(Archive *AHX);
 
 /* Open an existing archive */
 extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
@@ -307,7 +307,7 @@ extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
 							  SetupWorkerPtrType setupDumpWorker);
 
 /* The --list option */
-extern void PrintTOCSummary(Archive *AH);
+extern void PrintTOCSummary(Archive *AHX);
 
 extern RestoreOptions *NewRestoreOptions(void);
 

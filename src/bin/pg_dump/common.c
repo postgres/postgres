@@ -79,7 +79,7 @@ typedef struct _catalogIdMapEntry
 
 static catalogid_hash *catalogIdHash = NULL;
 
-static void flagInhTables(Archive *fout, TableInfo *tbinfo, int numTables,
+static void flagInhTables(Archive *fout, TableInfo *tblinfo, int numTables,
 						  InhInfo *inhinfo, int numInherits);
 static void flagInhIndexes(Archive *fout, TableInfo *tblinfo, int numTables);
 static void flagInhAttrs(DumpOptions *dopt, TableInfo *tblinfo, int numTables);

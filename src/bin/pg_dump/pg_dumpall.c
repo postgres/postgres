@@ -72,8 +72,10 @@ static void buildShSecLabels(PGconn *conn,
 							 const char *catalog_name, Oid objectId,
 							 const char *objtype, const char *objname,
 							 PQExpBuffer buffer);
-static PGconn *connectDatabase(const char *dbname, const char *connstr, const char *pghost, const char *pgport,
-							   const char *pguser, trivalue prompt_password, bool fail_on_error);
+static PGconn *connectDatabase(const char *dbname,
+							   const char *connection_string, const char *pghost,
+							   const char *pgport, const char *pguser,
+							   trivalue prompt_password, bool fail_on_error);
 static char *constructConnStr(const char **keywords, const char **values);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static void executeCommand(PGconn *conn, const char *query);
