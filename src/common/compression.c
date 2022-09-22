@@ -324,8 +324,9 @@ validate_compress_specification(pg_compress_specification *spec)
 			default_level = 0;	/* fast mode */
 			break;
 		case PG_COMPRESSION_ZSTD:
-			max_level = 22;
 #ifdef USE_ZSTD
+			max_level = ZSTD_maxCLevel();
+			min_level = ZSTD_minCLevel();
 			default_level = ZSTD_CLEVEL_DEFAULT;
 #endif
 			break;
