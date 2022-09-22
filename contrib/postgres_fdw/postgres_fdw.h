@@ -226,7 +226,7 @@ extern EquivalenceMember *find_em_for_rel_target(PlannerInfo *root,
 												 RelOptInfo *rel);
 extern List *build_tlist_to_deparse(RelOptInfo *foreignrel);
 extern void deparseSelectStmtForRel(StringInfo buf, PlannerInfo *root,
-									RelOptInfo *foreignrel, List *tlist,
+									RelOptInfo *rel, List *tlist,
 									List *remote_conds, List *pathkeys,
 									bool has_final_sort, bool has_limit,
 									bool is_subquery,

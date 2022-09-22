@@ -92,7 +92,7 @@ PG_FUNCTION_INFO_V1(seg_different);
 /*
 ** Auxiliary functions
 */
-static int	restore(char *s, float val, int n);
+static int	restore(char *result, float val, int n);
 
 
 /*****************************************************************************

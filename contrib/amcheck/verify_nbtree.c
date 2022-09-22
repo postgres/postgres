@@ -159,7 +159,7 @@ static void bt_child_highkey_check(BtreeCheckState *state,
 								   Page loaded_child,
 								   uint32 target_level);
 static void bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
-									  BlockNumber targetblock, Page target);
+									  BlockNumber blkno, Page page);
 static void bt_tuple_present_callback(Relation index, ItemPointer tid,
 									  Datum *values, bool *isnull,
 									  bool tupleIsAlive, void *checkstate);

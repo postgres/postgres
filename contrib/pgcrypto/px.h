@@ -176,7 +176,7 @@ int			px_find_combo(const char *name, PX_Combo **res);
 void		px_THROW_ERROR(int err) pg_attribute_noreturn();
 const char *px_strerror(int err);
 
-const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
+const char *px_resolve_alias(const PX_Alias *list, const char *name);
 
 void		px_set_debug_handler(void (*handler) (const char *));
 

@@ -12,7 +12,7 @@ typedef struct SEG
 } SEG;
 
 /* in seg.c */
-extern int	significant_digits(const char *str);
+extern int	significant_digits(const char *s);
 
 /* in segscan.l */
 extern int	seg_yylex(void);

@@ -457,7 +457,7 @@ static PgFdwModifyState *create_foreign_modify(EState *estate,
 											   Plan *subplan,
 											   char *query,
 											   List *target_attrs,
-											   int len,
+											   int values_end,
 											   bool has_returning,
 											   List *retrieved_attrs);
 static TupleTableSlot **execute_foreign_modify(EState *estate,
