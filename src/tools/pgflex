@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+
+#
+# Wrapper around flex that:
+# - ensures lex.backup is created in a private directory
+# - can error out if lex.backup is created (--no-backup)
+# - can fix warnings (--fix-warnings)
+# - works around concurrency issues with win_flex.exe:
+#   https://github.com/lexxmark/winflexbison/issues/86
+
+import argparse
+import os
+import subprocess
+import sys
+from os.path import abspath
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--flex', type=abspath, required=True)
+parser.add_argument('--perl', type=abspath, required=True)
+parser.add_argument('--builddir', type=abspath, required=True)
+parser.add_argument('--srcdir', type=abspath, required=True)
+parser.add_argument('--privatedir', type=abspath, required=True,
+                    help='private directory for target')
+
+parser.add_argument('-o', dest='output_file', type=abspath, required=True,
+                    help='output file')
+parser.add_argument('-i', dest='input_file', type=abspath, help='input file')
+
+
+parser.add_argument('--fix-warnings', action='store_true',
+                    help='whether to fix warnings in generated file')
+parser.add_argument('--no-backup', action='store_true',
+                    help='whether no_backup is enabled or not')
+
+parser.add_argument('flex_flags', nargs='*', help='flags passed on to flex')
+
+args = parser.parse_args()
+
+# Since 'lex.backup' is always named that and ninja uses the top level build
+# directory as current directory for all commands, change directory to
+# temporary directory to avoid conflicts between concurrent flex
+# invocations. Only unreleased versions of flex have an argument to change
+# lex.filename to be named differently.
+if not os.path.isdir(args.privatedir):
+    os.mkdir(args.privatedir)
+os.chdir(args.privatedir)
+
+# win_flex.exe generates names in a racy way, sometimes leading to random
+# "error deleting file" failures and sometimes to intermingled file
+# contents. Set FLEX_TMP_DIR to the target private directory to avoid
+# that. That environment variable isn't consulted on other platforms, so we
+# don't even need to make this conditional.
+env = {'FLEX_TMP_DIR': args.privatedir}
+
+# build flex invocation
+command = [args.flex, '-o', args.output_file]
+if args.no_backup:
+    command += ['-b']
+command += args.flex_flags
+command += [args.input_file]
+
+# create .c file from .l file
+sp = subprocess.run(command, env=env)
+if sp.returncode != 0:
+    sys.exit(sp.returncode)
+
+# check lex.backup
+if args.no_backup:
+    with open('lex.backup') as lex:
+        if len(lex.readlines()) != 1:
+            sys.exit('Scanner requires backup; see lex.backup.')
+    os.remove('lex.backup')
+
+# fix warnings
+if args.fix_warnings:
+    fix_warning_script = os.path.join(args.srcdir,
+                                      'src/tools/fix-old-flex-code.pl')
+
+    command = [args.perl, fix_warning_script, args.output_file]
+    sp = subprocess.run(command)
+    if sp.returncode != 0:
+        sys.exit(sp.returncode)
+
+sys.exit(0)

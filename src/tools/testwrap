@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+import argparse
+import shutil
+import subprocess
+import os
+import sys
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--srcdir', help='source directory of test', type=str)
+parser.add_argument('--basedir', help='base directory of test', type=str)
+parser.add_argument('--testgroup', help='test group', type=str)
+parser.add_argument('--testname', help='test name', type=str)
+parser.add_argument('test_command', nargs='*')
+
+args = parser.parse_args()
+
+testdir = '{}/testrun/{}/{}'.format(
+    args.basedir, args.testgroup, args.testname)
+
+print('# executing test in {} group {} test {}'.format(
+    testdir, args.testgroup, args.testname))
+sys.stdout.flush()
+
+if os.path.exists(testdir) and os.path.isdir(testdir):
+    shutil.rmtree(testdir)
+os.makedirs(testdir)
+
+os.chdir(args.srcdir)
+
+# mark test as having started
+open(os.path.join(testdir, 'test.start'), 'x')
+
+env_dict = {**os.environ,
+            'TESTDATADIR': os.path.join(testdir, 'data'),
+            'TESTLOGDIR': os.path.join(testdir, 'log')}
+
+sp = subprocess.run(args.test_command, env=env_dict)
+
+if sp.returncode == 0:
+    print('# test succeeded')
+    open(os.path.join(testdir, 'test.success'), 'x')
+else:
+    print('# test failed')
+    open(os.path.join(testdir, 'test.fail'), 'x')
+sys.exit(sp.returncode)

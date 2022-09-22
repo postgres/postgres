@@ -1,0 +1,34 @@
+if not selinux.found()
+  subdir_done()
+endif
+
+sepgsql_sources = files(
+  'database.c',
+  'dml.c',
+  'hooks.c',
+  'label.c',
+  'proc.c',
+  'relation.c',
+  'schema.c',
+  'selinux.c',
+  'uavc.c',
+)
+
+sepgsql = shared_module('sepgsql',
+  sepgsql_sources,
+  kwargs: contrib_mod_args + {
+    'dependencies': [selinux, contrib_mod_args['dependencies']],
+  }
+)
+contrib_targets += sepgsql
+
+custom_target('sepgsql.sql',
+  input: 'sepgsql.sql.in',
+  output: 'sepgsql.sql',
+  command: [sed, '-e', 's,MODULE_PATHNAME,$libdir/sepgsql,g', '@INPUT@'],
+  capture: true,
+  install: true,
+  install_dir: contrib_data_args['install_dir'],
+)
+
+# TODO: implement sepgsql tests

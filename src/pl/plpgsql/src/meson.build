@@ -1,0 +1,84 @@
+plpgsql_sources = files(
+  'pl_comp.c',
+  'pl_exec.c',
+  'pl_funcs.c',
+  'pl_handler.c',
+  'pl_scanner.c',
+)
+
+pl_gram = custom_target('gram',
+  input: 'pl_gram.y',
+  kwargs: bison_kw,
+)
+generated_sources += pl_gram.to_list()
+plpgsql_sources += pl_gram
+
+gen_plerrcodes = files('generate-plerrcodes.pl')
+pl_errcodes = custom_target('plerrcodes',
+  input: ['../../../../src/backend/utils/errcodes.txt'],
+  output: ['plerrcodes.h'],
+  command: [perl, gen_plerrcodes, '@INPUT0@'],
+  capture: true,
+)
+generated_sources += pl_errcodes
+plpgsql_sources += pl_errcodes
+
+gen_keywordlist = files('../../../../src/tools/gen_keywordlist.pl')
+pl_reserved = custom_target('pl_reserved_kwlist',
+  input: ['pl_reserved_kwlist.h'],
+  output: ['pl_reserved_kwlist_d.h'],
+  command: [perl, '-I', '@SOURCE_ROOT@/src/tools', gen_keywordlist, '--output', '@OUTDIR@', '--varname', 'ReservedPLKeywords', '@INPUT@']
+)
+generated_sources += pl_reserved
+plpgsql_sources += pl_reserved
+
+pl_unreserved = custom_target('pl_unreserved_kwlist',
+  input: ['pl_unreserved_kwlist.h'],
+  output: ['pl_unreserved_kwlist_d.h'],
+  command: [perl, '-I', '@SOURCE_ROOT@/src/tools', gen_keywordlist, '--output', '@OUTDIR@', '--varname', 'UnreservedPLKeywords', '@INPUT@']
+)
+generated_sources += pl_unreserved
+plpgsql_sources += pl_unreserved
+
+plpgsql = shared_module('plpgsql',
+  plpgsql_sources,
+  include_directories: include_directories('.'),
+  kwargs: pg_mod_args,
+)
+pl_targets += plpgsql
+
+install_data(
+  'plpgsql.control',
+  'plpgsql--1.0.sql',
+  install_dir: dir_data_extension,
+)
+
+install_headers(
+  'plpgsql.h',
+  install_dir: dir_include_server
+)
+
+
+tests += {
+  'name': 'plpgsql',
+  'sd': meson.current_source_dir(),
+  'bd': meson.current_build_dir(),
+  'regress': {
+    'sql': [
+      'plpgsql_array',
+      'plpgsql_call',
+      'plpgsql_control',
+      'plpgsql_copy',
+      'plpgsql_domain',
+      'plpgsql_record',
+      'plpgsql_cache',
+      'plpgsql_simple',
+      'plpgsql_transaction',
+      'plpgsql_trap',
+      'plpgsql_trigger',
+      'plpgsql_varprops',
+    ],
+  },
+}
+
+subdir('po', if_found: libintl)

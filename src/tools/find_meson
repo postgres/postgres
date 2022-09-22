@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+#
+# Returns the path to the meson binary, for cases where we need to call it as
+# part of the build, e.g. to install into tmp_install/ for the tests.
+
+import os
+import shlex
+import sys
+
+to_print = []
+
+if 'MUON_PATH' in os.environ:
+    to_print += ['muon', os.environ['MUON_PATH']]
+else:
+    mesonintrospect = os.environ['MESONINTROSPECT']
+    components = shlex.split(mesonintrospect)
+
+    if len(components) < 2:
+        print('expected more than two components, got: %s' % components)
+        sys.exit(1)
+
+    if components[-1] != 'introspect':
+        print('expected introspection at the end')
+        sys.exit(1)
+
+    to_print += ['meson'] + components[:-1]
+
+print('\n'.join(to_print), end='')
+
+sys.exit(0)

@@ -1,0 +1,18 @@
+backend_sources += files(
+  'attmap.c',
+  'bufmask.c',
+  'detoast.c',
+  'heaptuple.c',
+  'indextuple.c',
+  'printsimple.c',
+  'printtup.c',
+  'relation.c',
+  'reloptions.c',
+  'scankey.c',
+  'session.c',
+  'syncscan.c',
+  'toast_compression.c',
+  'toast_internals.c',
+  'tupconvert.c',
+  'tupdesc.c',
+)
