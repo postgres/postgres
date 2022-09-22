@@ -164,7 +164,7 @@ SET SESSION CHARACTERISTICS AS TRANSACTION <replaceable class="parameter">transa
    snapshot identifier, which must be given to <literal>SET TRANSACTION
    SNAPSHOT</literal> to specify which snapshot is to be imported.  The
    identifier must be written as a string literal in this command, for example
-   <literal>'000003A1-1'</literal>.
+   <literal>'00000003-0000001B-1'</literal>.
    <literal>SET TRANSACTION SNAPSHOT</literal> can only be executed at the
    start of a transaction, before the first query or
    data-modification statement (<command>SELECT</command>,
