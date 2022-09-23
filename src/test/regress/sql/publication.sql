@@ -73,11 +73,20 @@ ALTER PUBLICATION testpub_fortable SET TABLES IN SCHEMA pub_test;
 
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub_forschema FOR TABLES IN SCHEMA pub_test;
-RESET client_min_messages;
--- fail - can't create publication with schema and table of the same schema
+-- should be able to create publication with schema and table of the same
+-- schema
 CREATE PUBLICATION testpub_for_tbl_schema FOR TABLES IN SCHEMA pub_test, TABLE pub_test.testpub_nopk;
--- fail - can't add a table of the same schema to the schema publication
+RESET client_min_messages;
+\dRp+ testpub_for_tbl_schema
+
+-- should be able to add a table of the same schema to the schema publication
 ALTER PUBLICATION testpub_forschema ADD TABLE pub_test.testpub_nopk;
+\dRp+ testpub_forschema
+
+-- should be able to drop the table
+ALTER PUBLICATION testpub_forschema DROP TABLE pub_test.testpub_nopk;
+\dRp+ testpub_forschema
+
 -- fail - can't drop a table from the schema publication which isn't in the
 -- publication
 ALTER PUBLICATION testpub_forschema DROP TABLE pub_test.testpub_nopk;
@@ -90,7 +99,7 @@ SELECT pubname, puballtables FROM pg_publication WHERE pubname = 'testpub_forall
 \dRp+ testpub_foralltables
 
 DROP TABLE testpub_tbl2;
-DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema;
+DROP PUBLICATION testpub_foralltables, testpub_fortable, testpub_forschema, testpub_for_tbl_schema;
 
 CREATE TABLE testpub_tbl3 (a int);
 CREATE TABLE testpub_tbl3a (b text) INHERITS (testpub_tbl3);
@@ -242,8 +251,10 @@ ALTER PUBLICATION testpub5 DROP TABLE testpub_rf_tbl1 WHERE (e < 27);
 -- fail - cannot ALTER SET table which is a member of a pre-existing schema
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION testpub6 FOR TABLES IN SCHEMA testpub_rf_schema2;
+-- should be able to set publication with schema and table of the same schema
 ALTER PUBLICATION testpub6 SET TABLES IN SCHEMA testpub_rf_schema2, TABLE testpub_rf_schema2.testpub_rf_tbl6 WHERE (i < 99);
 RESET client_min_messages;
+\dRp+ testpub6
 
 DROP TABLE testpub_rf_tbl1;
 DROP TABLE testpub_rf_tbl2;
@@ -525,8 +536,31 @@ UPDATE testpub_tbl8 SET a = 1;
 ALTER TABLE testpub_tbl8_0 REPLICA IDENTITY FULL;
 UPDATE testpub_tbl8 SET a = 1;
 
+-- test that using column list for table is disallowed if any schemas are
+-- part of the publication
+SET client_min_messages = 'ERROR';
+-- failure - cannot use column list and schema together
+CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+-- ok - only publish schema
+CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public;
+-- failure - add a table with column list when there is already a schema in the
+-- publication
+ALTER PUBLICATION testpub_tbl9 ADD TABLE public.testpub_tbl7(a);
+-- ok - only publish table with column list
+ALTER PUBLICATION testpub_tbl9 SET TABLE public.testpub_tbl7(a);
+-- failure - specify a schema when there is already a column list in the
+-- publication
+ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public;
+-- failure - cannot SET column list and schema together
+ALTER PUBLICATION testpub_tbl9 SET TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+-- ok - drop table
+ALTER PUBLICATION testpub_tbl9 DROP TABLE public.testpub_tbl7;
+-- failure - cannot ADD column list and schema together
+ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
+RESET client_min_messages;
+
 DROP TABLE testpub_tbl5, testpub_tbl6, testpub_tbl7, testpub_tbl8, testpub_tbl8_1;
-DROP PUBLICATION testpub_table_ins, testpub_fortable, testpub_fortable_insert, testpub_col_list;
+DROP PUBLICATION testpub_table_ins, testpub_fortable, testpub_fortable_insert, testpub_col_list, testpub_tbl9;
 -- ======================================================
 
 -- Test combination of column list and row filter

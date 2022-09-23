@@ -52,9 +52,11 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
    remove one or more tables/schemas from the publication.  Note that adding
    tables/schemas to a publication that is already subscribed to will require an
    <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal> action on the
-   subscribing side in order to become effective. Note also that the combination
-   of <literal>DROP</literal> with a <literal>WHERE</literal> clause is not
-   allowed.
+   subscribing side in order to become effective. Note also that
+   <literal>DROP TABLES IN SCHEMA</literal> will not drop any schema tables
+   that were specified using <literal>FOR TABLE</literal>/
+   <literal>ADD TABLE</literal>, and the combination of <literal>DROP</literal>
+   with a <literal>WHERE</literal> clause is not allowed.
   </para>
 
   <para>
@@ -82,11 +84,8 @@ ALTER PUBLICATION <replaceable class="parameter">name</replaceable> RENAME TO <r
   </para>
 
   <para>
-   Adding/Setting a table that is part of schema specified in
-   <literal>TABLES IN SCHEMA</literal>, adding/setting a schema to a
-   publication that already has a table that is part of the specified schema or
-   adding/setting a table to a publication that already has a table's schema as
-   part of the specified schema is not supported.
+   Adding/Setting any schema when the publication also publishes a table with a
+   column list, and vice versa is not supported.
   </para>
  </refsect1>
 

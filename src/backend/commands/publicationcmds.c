@@ -66,7 +66,6 @@ typedef struct rf_context
 	Oid			parentid;		/* relid of the parent relation */
 } rf_context;
 
-static List *OpenRelIdList(List *relids);
 static List *OpenTableList(List *tables);
 static void CloseTableList(List *rels);
 static void LockSchemaList(List *schemalist);
@@ -210,44 +209,6 @@ ObjectsInPublicationToOids(List *pubobjspec_list, ParseState *pstate,
 				/* shouldn't happen */
 				elog(ERROR, "invalid publication object type %d", pubobj->pubobjtype);
 				break;
-		}
-	}
-}
-
-/*
- * Check if any of the given relation's schema is a member of the given schema
- * list.
- */
-static void
-CheckObjSchemaNotAlreadyInPublication(List *rels, List *schemaidlist,
-									  PublicationObjSpecType checkobjtype)
-{
-	ListCell   *lc;
-
-	foreach(lc, rels)
-	{
-		PublicationRelInfo *pub_rel = (PublicationRelInfo *) lfirst(lc);
-		Relation	rel = pub_rel->relation;
-		Oid			relSchemaId = RelationGetNamespace(rel);
-
-		if (list_member_oid(schemaidlist, relSchemaId))
-		{
-			if (checkobjtype == PUBLICATIONOBJ_TABLES_IN_SCHEMA)
-				ereport(ERROR,
-						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("cannot add schema \"%s\" to publication",
-							   get_namespace_name(relSchemaId)),
-						errdetail("Table \"%s\" in schema \"%s\" is already part of the publication, adding the same schema is not supported.",
-								  RelationGetRelationName(rel),
-								  get_namespace_name(relSchemaId)));
-			else if (checkobjtype == PUBLICATIONOBJ_TABLE)
-				ereport(ERROR,
-						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						errmsg("cannot add relation \"%s.%s\" to publication",
-							   get_namespace_name(relSchemaId),
-							   RelationGetRelationName(rel)),
-						errdetail("Table's schema \"%s\" is already part of the publication or part of the specified schema list.",
-								  get_namespace_name(relSchemaId)));
 		}
 	}
 }
@@ -721,7 +682,7 @@ TransformPubWhereClauses(List *tables, const char *queryString,
  */
 static void
 CheckPubRelationColumnList(List *tables, const char *queryString,
-						   bool pubviaroot)
+						   bool publish_schema, bool pubviaroot)
 {
 	ListCell   *lc;
 
@@ -731,6 +692,24 @@ CheckPubRelationColumnList(List *tables, const char *queryString,
 
 		if (pri->columns == NIL)
 			continue;
+
+		/*
+		 * Disallow specifying column list if any schema is in the
+		 * publication.
+		 *
+		 * XXX We could instead just forbid the case when the publication
+		 * tries to publish the table with a column list and a schema for that
+		 * table. However, if we do that then we need a restriction during
+		 * ALTER TABLE ... SET SCHEMA to prevent such a case which doesn't
+		 * seem to be a good idea.
+		 */
+		if (publish_schema)
+			ereport(ERROR,
+					errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("cannot use publication column list for relation \"%s.%s\"",
+						   get_namespace_name(RelationGetNamespace(pri->relation)),
+						   RelationGetRelationName(pri->relation)),
+					errdetail("Column list cannot be specified if any schema is part of the publication or specified in the list."));
 
 		/*
 		 * If the publication doesn't publish changes via the root partitioned
@@ -858,13 +837,11 @@ CreatePublication(ParseState *pstate, CreatePublicationStmt *stmt)
 			List	   *rels;
 
 			rels = OpenTableList(relations);
-			CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
-												  PUBLICATIONOBJ_TABLE);
-
 			TransformPubWhereClauses(rels, pstate->p_sourcetext,
 									 publish_via_partition_root);
 
 			CheckPubRelationColumnList(rels, pstate->p_sourcetext,
+									   schemaidlist != NIL,
 									   publish_via_partition_root);
 
 			PublicationAddTables(puboid, rels, true, NULL);
@@ -1110,8 +1087,8 @@ InvalidatePublicationRels(List *relids)
  */
 static void
 AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
-					   List *tables, List *schemaidlist,
-					   const char *queryString)
+					   List *tables, const char *queryString,
+					   bool publish_schema)
 {
 	List	   *rels = NIL;
 	Form_pg_publication pubform = (Form_pg_publication) GETSTRUCT(tup);
@@ -1129,19 +1106,12 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 
 	if (stmt->action == AP_AddObjects)
 	{
-		List	   *schemas = NIL;
-
-		/*
-		 * Check if the relation is member of the existing schema in the
-		 * publication or member of the schema list specified.
-		 */
-		schemas = list_concat_copy(schemaidlist, GetPublicationSchemas(pubid));
-		CheckObjSchemaNotAlreadyInPublication(rels, schemas,
-											  PUBLICATIONOBJ_TABLE);
-
 		TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
 
-		CheckPubRelationColumnList(rels, queryString, pubform->pubviaroot);
+		publish_schema |= is_schema_publication(pubid);
+
+		CheckPubRelationColumnList(rels, queryString, publish_schema,
+								   pubform->pubviaroot);
 
 		PublicationAddTables(pubid, rels, false, stmt);
 	}
@@ -1154,12 +1124,10 @@ AlterPublicationTables(AlterPublicationStmt *stmt, HeapTuple tup,
 		List	   *delrels = NIL;
 		ListCell   *oldlc;
 
-		CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
-											  PUBLICATIONOBJ_TABLE);
-
 		TransformPubWhereClauses(rels, queryString, pubform->pubviaroot);
 
-		CheckPubRelationColumnList(rels, queryString, pubform->pubviaroot);
+		CheckPubRelationColumnList(rels, queryString, publish_schema,
+								   pubform->pubviaroot);
 
 		/*
 		 * To recreate the relation list for the publication, look for
@@ -1308,16 +1276,35 @@ AlterPublicationSchemas(AlterPublicationStmt *stmt,
 	LockSchemaList(schemaidlist);
 	if (stmt->action == AP_AddObjects)
 	{
-		List	   *rels;
+		ListCell   *lc;
 		List	   *reloids;
 
 		reloids = GetPublicationRelations(pubform->oid, PUBLICATION_PART_ROOT);
-		rels = OpenRelIdList(reloids);
 
-		CheckObjSchemaNotAlreadyInPublication(rels, schemaidlist,
-											  PUBLICATIONOBJ_TABLES_IN_SCHEMA);
+		foreach(lc, reloids)
+		{
+			HeapTuple	coltuple;
 
-		CloseTableList(rels);
+			coltuple = SearchSysCache2(PUBLICATIONRELMAP,
+									   ObjectIdGetDatum(lfirst_oid(lc)),
+									   ObjectIdGetDatum(pubform->oid));
+
+			if (!HeapTupleIsValid(coltuple))
+				continue;
+
+			/*
+			 * Disallow adding schema if column list is already part of the
+			 * publication. See CheckPubRelationColumnList.
+			 */
+			if (!heap_attisnull(coltuple, Anum_pg_publication_rel_prattrs, NULL))
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("cannot add schema to the publication"),
+						errdetail("Schema cannot be added if any table that specifies column list is already part of the publication."));
+
+			ReleaseSysCache(coltuple);
+		}
+
 		PublicationAddSchemas(pubform->oid, schemaidlist, false, stmt);
 	}
 	else if (stmt->action == AP_DropObjects)
@@ -1429,14 +1416,7 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 
 		heap_freetuple(tup);
 
-		/*
-		 * Lock the publication so nobody else can do anything with it. This
-		 * prevents concurrent alter to add table(s) that were already going
-		 * to become part of the publication by adding corresponding schema(s)
-		 * via this command and similarly it will prevent the concurrent
-		 * addition of schema(s) for which there is any corresponding table
-		 * being added by this command.
-		 */
+		/* Lock the publication so nobody else can do anything with it. */
 		LockDatabaseObject(PublicationRelationId, pubid, 0,
 						   AccessExclusiveLock);
 
@@ -1453,8 +1433,8 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 					errmsg("publication \"%s\" does not exist",
 						   stmt->pubname));
 
-		AlterPublicationTables(stmt, tup, relations, schemaidlist,
-							   pstate->p_sourcetext);
+		AlterPublicationTables(stmt, tup, relations, pstate->p_sourcetext,
+							   schemaidlist != NIL);
 		AlterPublicationSchemas(stmt, tup, schemaidlist);
 	}
 
@@ -1567,32 +1547,6 @@ RemovePublicationSchemaById(Oid psoid)
 	ReleaseSysCache(tup);
 
 	table_close(rel, RowExclusiveLock);
-}
-
-/*
- * Open relations specified by a relid list.
- * The returned tables are locked in ShareUpdateExclusiveLock mode in order to
- * add them to a publication.
- */
-static List *
-OpenRelIdList(List *relids)
-{
-	ListCell   *lc;
-	List	   *rels = NIL;
-
-	foreach(lc, relids)
-	{
-		PublicationRelInfo *pub_rel;
-		Oid			relid = lfirst_oid(lc);
-		Relation	rel = table_open(relid,
-									 ShareUpdateExclusiveLock);
-
-		pub_rel = palloc(sizeof(PublicationRelInfo));
-		pub_rel->relation = rel;
-		rels = lappend(rels, pub_rel);
-	}
-
-	return rels;
 }
 
 /*

@@ -2542,6 +2542,20 @@ my %tests = (
 		like => { %full_runs, section_post_data => 1, },
 	},
 
+	'ALTER PUBLICATION pub3 ADD TABLE test_table' => {
+		create_order => 51,
+		create_sql =>
+		  'ALTER PUBLICATION pub3 ADD TABLE dump_test.test_table;',
+		regexp => qr/^
+			\QALTER PUBLICATION pub3 ADD TABLE ONLY dump_test.test_table;\E
+			/xm,
+		like   => { %full_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+		},
+	},
+
 	'ALTER PUBLICATION pub4 ADD TABLE test_table WHERE (col1 > 0);' => {
 		create_order => 51,
 		create_sql =>

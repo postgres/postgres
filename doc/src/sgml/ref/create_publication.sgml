@@ -103,16 +103,16 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
+      Specifying a column list when the publication also publishes
+      <literal>FOR TABLES IN SCHEMA</literal> is not supported.
+     </para>
+
+     <para>
       When a partitioned table is added to a publication, all of its existing
       and future partitions are implicitly considered to be part of the
       publication.  So, even operations that are performed directly on a
       partition are also published via publications that its ancestors are
       part of.
-     </para>
-
-     <para>
-      Specifying a table that is part of a schema specified by
-      <literal>FOR TABLES IN SCHEMA</literal> is not supported.
      </para>
     </listitem>
    </varlistentry>
@@ -136,8 +136,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
      </para>
 
      <para>
-      Specifying a schema along with a table which belongs to the specified
-      schema using <literal>FOR TABLE</literal> is not supported.
+      Specifying a schema when the publication also publishes a table with a
+      column list is not supported.
      </para>
 
      <para>
@@ -271,6 +271,12 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
    user-defined functions, user-defined operators, user-defined types,
    user-defined collations, non-immutable built-in functions, or references to
    system columns.
+  </para>
+
+  <para>
+   The row filter on a table becomes redundant if
+   <literal>FOR TABLES IN SCHEMA</literal> is specified and the table
+   belongs to the referred schema.
   </para>
 
   <para>

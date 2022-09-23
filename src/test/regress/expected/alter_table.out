@@ -4591,10 +4591,16 @@ create table alter1.t1 (a int);
 set client_min_messages = 'ERROR';
 create publication pub1 for table alter1.t1, tables in schema alter2;
 reset client_min_messages;
-alter table alter1.t1 set schema alter2; -- should fail
-ERROR:  cannot move table "t1" to schema "alter2"
-DETAIL:  The schema "alter2" and same schema's table "t1" cannot be part of the same publication "pub1".
+alter table alter1.t1 set schema alter2;
+\d+ alter2.t1
+                                    Table "alter2.t1"
+ Column |  Type   | Collation | Nullable | Default | Storage | Stats target | Description 
+--------+---------+-----------+----------+---------+---------+--------------+-------------
+ a      | integer |           |          |         | plain   |              | 
+Publications:
+    "pub1"
+
 drop publication pub1;
 drop schema alter1 cascade;
-NOTICE:  drop cascades to table alter1.t1
 drop schema alter2 cascade;
+NOTICE:  drop cascades to table alter2.t1

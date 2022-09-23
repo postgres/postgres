@@ -1120,6 +1120,11 @@ test_sub=# SELECT * FROM child ORDER BY a;
   </para>
 
   <para>
+   Specifying a column list when the publication also publishes
+   <literal>FOR TABLES IN SCHEMA</literal> is not supported.
+  </para>
+
+  <para>
    For partitioned tables, the publication parameter
    <literal>publish_via_partition_root</literal> determines which column list
    is used. If <literal>publish_via_partition_root</literal> is

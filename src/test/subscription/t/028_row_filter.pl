@@ -119,7 +119,7 @@ $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_x FOR TABLE schema_rf_x.tab_rf_x WHERE (x > 10)"
 );
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_allinschema FOR TABLES IN SCHEMA schema_rf_x"
+	"CREATE PUBLICATION tap_pub_allinschema FOR TABLES IN SCHEMA schema_rf_x, TABLE schema_rf_x.tab_rf_x WHERE (x > 10)"
 );
 $node_publisher->safe_psql('postgres',
 	"ALTER PUBLICATION tap_pub_allinschema ADD TABLE public.tab_rf_partition WHERE (x > 10)"

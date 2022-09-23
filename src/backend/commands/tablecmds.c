@@ -16449,33 +16449,6 @@ AlterTableNamespace(AlterObjectSchemaStmt *stmt, Oid *oldschema)
 	newrv = makeRangeVar(stmt->newschema, RelationGetRelationName(rel), -1);
 	nspOid = RangeVarGetAndCheckCreationNamespace(newrv, NoLock, NULL);
 
-	/*
-	 * Check that setting the relation to a different schema won't result in a
-	 * publication having both a schema and the same schema's table, as this
-	 * is not supported.
-	 */
-	if (stmt->objectType == OBJECT_TABLE)
-	{
-		ListCell   *lc;
-		List	   *schemaPubids = GetSchemaPublications(nspOid);
-		List	   *relPubids = GetRelationPublications(RelationGetRelid(rel));
-
-		foreach(lc, relPubids)
-		{
-			Oid			pubid = lfirst_oid(lc);
-
-			if (list_member_oid(schemaPubids, pubid))
-				ereport(ERROR,
-						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("cannot move table \"%s\" to schema \"%s\"",
-							   RelationGetRelationName(rel), stmt->newschema),
-						errdetail("The schema \"%s\" and same schema's table \"%s\" cannot be part of the same publication \"%s\".",
-								  stmt->newschema,
-								  RelationGetRelationName(rel),
-								  get_publication_name(pubid, false)));
-		}
-	}
-
 	/* common checks on switching namespaces */
 	CheckSetNamespace(oldNspOid, nspOid);
 

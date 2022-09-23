@@ -3028,7 +3028,8 @@ create table alter1.t1 (a int);
 set client_min_messages = 'ERROR';
 create publication pub1 for table alter1.t1, tables in schema alter2;
 reset client_min_messages;
-alter table alter1.t1 set schema alter2; -- should fail
+alter table alter1.t1 set schema alter2;
+\d+ alter2.t1
 drop publication pub1;
 drop schema alter1 cascade;
 drop schema alter2 cascade;

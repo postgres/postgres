@@ -835,6 +835,7 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	MemoryContext oldctx;
 	int			idx;
 	bool		has_filter = true;
+	Oid			schemaid = get_rel_namespace(entry->publish_as_relid);
 
 	/*
 	 * Find if there are any row filters for this relation. If there are, then
@@ -848,26 +849,26 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	 * are multiple lists (one for each operation) to which row filters will
 	 * be appended.
 	 *
-	 * FOR ALL TABLES implies "don't use row filter expression" so it takes
-	 * precedence.
+	 * FOR ALL TABLES and FOR TABLES IN SCHEMA implies "don't use row
+	 * filter expression" so it takes precedence.
 	 */
 	foreach(lc, publications)
 	{
 		Publication *pub = lfirst(lc);
 		HeapTuple	rftuple = NULL;
 		Datum		rfdatum = 0;
-		bool		pub_no_filter = false;
+		bool		pub_no_filter = true;
 
-		if (pub->alltables)
-		{
-			/*
-			 * If the publication is FOR ALL TABLES then it is treated the
-			 * same as if this table has no row filters (even if for other
-			 * publications it does).
-			 */
-			pub_no_filter = true;
-		}
-		else
+		/*
+		 * If the publication is FOR ALL TABLES, or the publication includes a
+		 * FOR TABLES IN SCHEMA where the table belongs to the referred
+		 * schema, then it is treated the same as if there are no row filters
+		 * (even if other publications have a row filter).
+		 */
+		if (!pub->alltables &&
+			!SearchSysCacheExists2(PUBLICATIONNAMESPACEMAP,
+								   ObjectIdGetDatum(schemaid),
+								   ObjectIdGetDatum(pub->oid)))
 		{
 			/*
 			 * Check for the presence of a row filter in this publication.
@@ -882,10 +883,6 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 				rfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, rftuple,
 										  Anum_pg_publication_rel_prqual,
 										  &pub_no_filter);
-			}
-			else
-			{
-				pub_no_filter = true;
 			}
 		}
 
