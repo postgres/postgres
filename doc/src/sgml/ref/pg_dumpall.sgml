@@ -301,7 +301,7 @@ PostgreSQL documentation
         <replaceable class="parameter">pattern</replaceable> parameter is
         interpreted as a pattern according to the same rules used by
         <application>psql</application>'s <literal>\d</literal>
-        commands (see <xref linkend="app-psql-patterns"/> below),
+        commands (see <xref linkend="app-psql-patterns"/>),
         so multiple databases can also be excluded by writing wildcard
         characters in the pattern.  When using wildcards, be careful to
         quote the pattern if needed to prevent shell wildcard expansion.
