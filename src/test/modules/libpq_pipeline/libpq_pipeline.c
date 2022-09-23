@@ -108,6 +108,18 @@ test_disallowed_in_pipeline(PGconn *conn)
 	res = PQexec(conn, "SELECT 1");
 	if (PQresultStatus(res) != PGRES_FATAL_ERROR)
 		pg_fatal("PQexec should fail in pipeline mode but succeeded");
+	if (strcmp(PQerrorMessage(conn),
+			   "synchronous command execution functions are not allowed in pipeline mode\n") != 0)
+		pg_fatal("did not get expected error message; got: \"%s\"",
+				 PQerrorMessage(conn));
+
+	/* PQsendQuery should fail in pipeline mode */
+	if (PQsendQuery(conn, "SELECT 1") != 0)
+		pg_fatal("PQsendQuery should fail in pipeline mode but succeeded");
+	if (strcmp(PQerrorMessage(conn),
+			   "PQsendQuery not allowed in pipeline mode\n") != 0)
+		pg_fatal("did not get expected error message; got: \"%s\"",
+				 PQerrorMessage(conn));
 
 	/* Entering pipeline mode when already in pipeline mode is OK */
 	if (PQenterPipelineMode(conn) != 1)

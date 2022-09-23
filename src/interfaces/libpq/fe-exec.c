@@ -1437,7 +1437,6 @@ static int
 PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 {
 	PGcmdQueueEntry *entry = NULL;
-	PGcmdQueueEntry *entry2 = NULL;
 
 	if (!PQsendQueryStart(conn, newQuery))
 		return 0;
@@ -1450,103 +1449,48 @@ PQsendQueryInternal(PGconn *conn, const char *query, bool newQuery)
 		return 0;
 	}
 
+	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
+	{
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("%s not allowed in pipeline mode\n"),
+						  "PQsendQuery");
+		return 0;
+	}
+
 	entry = pqAllocCmdQueueEntry(conn);
 	if (entry == NULL)
 		return 0;				/* error msg already set */
-	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
-	{
-		entry2 = pqAllocCmdQueueEntry(conn);
-		if (entry2 == NULL)
-			goto sendFailed;
-	}
 
 	/* Send the query message(s) */
-	if (conn->pipelineStatus == PQ_PIPELINE_OFF)
+	/* construct the outgoing Query message */
+	if (pqPutMsgStart('Q', conn) < 0 ||
+		pqPuts(query, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
 	{
-		/* construct the outgoing Query message */
-		if (pqPutMsgStart('Q', conn) < 0 ||
-			pqPuts(query, conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-		{
-			/* error message should be set up already */
-			pqRecycleCmdQueueEntry(conn, entry);
-			return 0;
-		}
-
-		/* remember we are using simple query protocol */
-		entry->queryclass = PGQUERY_SIMPLE;
-		/* and remember the query text too, if possible */
-		entry->query = strdup(query);
+		/* error message should be set up already */
+		pqRecycleCmdQueueEntry(conn, entry);
+		return 0;
 	}
-	else
-	{
-		/*
-		 * In pipeline mode we cannot use the simple protocol, so we send
-		 * Parse, Bind, Describe Portal, Execute, Close Portal (with the
-		 * unnamed portal).
-		 */
-		if (pqPutMsgStart('P', conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPuts(query, conn) < 0 ||
-			pqPutInt(0, 2, conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-			goto sendFailed;
-		if (pqPutMsgStart('B', conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPutInt(0, 2, conn) < 0 ||
-			pqPutInt(0, 2, conn) < 0 ||
-			pqPutInt(0, 2, conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-			goto sendFailed;
-		if (pqPutMsgStart('D', conn) < 0 ||
-			pqPutc('P', conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-			goto sendFailed;
-		if (pqPutMsgStart('E', conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPutInt(0, 4, conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-			goto sendFailed;
-		if (pqPutMsgStart('C', conn) < 0 ||
-			pqPutc('P', conn) < 0 ||
-			pqPuts("", conn) < 0 ||
-			pqPutMsgEnd(conn) < 0)
-			goto sendFailed;
 
-		entry->queryclass = PGQUERY_EXTENDED;
-		entry->query = strdup(query);
-	}
+	/* remember we are using simple query protocol */
+	entry->queryclass = PGQUERY_SIMPLE;
+	/* and remember the query text too, if possible */
+	entry->query = strdup(query);
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're unable
 	 * to send it all; PQgetResult() will do any additional flushing needed.
 	 */
-	if (pqPipelineFlush(conn) < 0)
+	if (pqFlush(conn) < 0)
 		goto sendFailed;
 
 	/* OK, it's launched! */
 	pqAppendCmdQueueEntry(conn, entry);
 
-	/*
-	 * When pipeline mode is in use, we need a second entry in the command
-	 * queue to represent Close Portal message.  This allows us later to wait
-	 * for the CloseComplete message to be received before getting in IDLE
-	 * state.
-	 */
-	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
-	{
-		entry2->queryclass = PGQUERY_CLOSE;
-		entry2->query = NULL;
-		pqAppendCmdQueueEntry(conn, entry2);
-	}
-
 	return 1;
 
 sendFailed:
 	pqRecycleCmdQueueEntry(conn, entry);
-	pqRecycleCmdQueueEntry(conn, entry2);
 	/* error message should be set up already */
 	return 0;
 }
@@ -2248,22 +2192,6 @@ PQgetResult(PGconn *conn)
 			conn->asyncStatus = PGASYNC_IDLE;	/* try to restore valid state */
 			res = pqPrepareAsyncResult(conn);
 			break;
-	}
-
-	/* If the next command we expect is CLOSE, read and consume it */
-	if (conn->asyncStatus == PGASYNC_PIPELINE_IDLE &&
-		conn->cmd_queue_head &&
-		conn->cmd_queue_head->queryclass == PGQUERY_CLOSE)
-	{
-		if (res && res->resultStatus != PGRES_FATAL_ERROR)
-		{
-			conn->asyncStatus = PGASYNC_BUSY;
-			parseInput(conn);
-			conn->asyncStatus = PGASYNC_PIPELINE_IDLE;
-		}
-		else
-			/* we won't ever see the Close */
-			pqCommandQueueAdvance(conn);
 	}
 
 	/* Time to fire PGEVT_RESULTCREATE events, if there are any */
@@ -2982,8 +2910,9 @@ PQfn(PGconn *conn,
 
 	if (conn->pipelineStatus != PQ_PIPELINE_OFF)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("PQfn not allowed in pipeline mode\n"));
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("%s not allowed in pipeline mode\n"),
+						  "PQfn");
 		return NULL;
 	}
 
