@@ -15,7 +15,40 @@
    </para>
 
    <itemizedlist>
-    <listitem><para></para></listitem>
+    <listitem>
+     <para>
+      Support for the <acronym>SQL</acronym>
+      <link linkend="sql-merge"><command>MERGE</command></link> command.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Selective publication of tables' contents within
+      <link linkend="logical-replication">logical replication</link>
+      publications, through the ability to specify column lists and
+      row filter conditions.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      More options for compression, including support for Zstandard (zstd)
+      compression.  This includes support for performing compression on
+      the server side during
+      <link linkend="app-pgbasebackup"><application>pg_basebackup</application></link>.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Support for structured <link linkend="guc-log-destination">server
+      log output</link> using the <acronym>JSON</acronym> format.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Performance improvements, particularly for in-memory and on-disk
+      sorting.
+     </para>
+    </listitem>
    </itemizedlist>
 
    <para>
