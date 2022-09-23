@@ -109,6 +109,7 @@ task:
         --buildtype=debug \
         -Dcassert=true -Dssl=openssl -Duuid=bsd -Dtcl_version=tcl86 -Ddtrace=auto \
         -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
+        -Dextra_lib_dirs=/usr/local/lib -Dextra_include_dirs=/usr/local/include/ \
         build
     EOF
   build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
