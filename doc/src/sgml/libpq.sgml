@@ -4601,8 +4601,7 @@ int PQsendQuery(PGconn *conn, const char *command);
       </para>
 
       <para>
-       In pipeline mode, command strings containing more than one SQL command
-       are disallowed.
+       In pipeline mode, this function is disallowed.
       </para>
      </listitem>
     </varlistentry>
@@ -5056,6 +5055,7 @@ int PQflush(PGconn *conn);
     <xref linkend="libpq-PQpipelineStatus"/> can be used
     to test whether pipeline mode is active.
     In pipeline mode, only <link linkend="libpq-async">asynchronous operations</link>
+    that utilize the extended query protocol
     are permitted, command strings containing multiple SQL commands are
     disallowed, and so is <literal>COPY</literal>.
     Using synchronous command execution functions
@@ -5067,6 +5067,8 @@ int PQflush(PGconn *conn);
     <function>PQdescribePrepared</function>,
     <function>PQdescribePortal</function>,
     is an error condition.
+    <function>PQsendQuery</function> is
+    also disallowed, because it uses the simple query protocol.
     Once all dispatched commands have had their results processed, and
     the end pipeline result has been consumed, the application may return
     to non-pipelined mode with <xref linkend="libpq-PQexitPipelineMode"/>.
@@ -5095,8 +5097,7 @@ int PQflush(PGconn *conn);
 
     <para>
      After entering pipeline mode, the application dispatches requests using
-     <xref linkend="libpq-PQsendQuery"/>,
-     <xref linkend="libpq-PQsendQueryParams"/>,
+     <xref linkend="libpq-PQsendQueryParams"/>
      or its prepared-query sibling
      <xref linkend="libpq-PQsendQueryPrepared"/>.
      These requests are queued on the client-side until flushed to the server;
