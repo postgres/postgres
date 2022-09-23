@@ -3,7 +3,7 @@
 
   <formalpara>
    <title>Release date:</title>
-   <para>AS OF 2022-06-11</para>
+   <para>AS OF 2022-09-23</para>
   </formalpara>
 
   <sect2>
@@ -254,20 +254,6 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
-2021-12-15 [2a712066d] Remove pg_dump's - -no-synchronized-snapshots switch.
--->
-
-    <listitem>
-     <para>
-      Remove <link
-      linkend="sql-syntax-identifiers"><application>pg_dump</application></link>'s
-      <option>--no-synchronized-snapshots</option> option since all
-      supported server versions support synchronized snapshots (Tom Lane)
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-02-15 [2523928b2] Reject change of output-column collation in CREATE OR RE
 -->
 
@@ -371,6 +357,23 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
     </listitem>
 
 <!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-08-02 [c034b629c] Change type "char"'s I/O format for non-ASCII characters
+-->
+
+    <listitem>
+     <para>
+      Change the I/O format of type <type>"char"</type> for non-ASCII
+      characters (Tom Lane)
+     </para>
+
+     <para>
+      Bytes with the high bit set are now output as a backslash and three
+      octal digits, to avoid encoding issues.
+     </para>
+    </listitem>
+
+<!--
 Author: Robert Haas <rhaas@postgresql.org>
 2022-03-28 [79de9842a] Remove the ability of a role to administer itself.
 -->
@@ -440,24 +443,6 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <para>
       Previously the actual schema name was used.
-     </para>
-    </listitem>
-
-<!--
-Author: Tom Lane <tgl@sss.pgh.pa.us>
-2022-02-28 [2e517818f] Fix SPI's handling of errors during transaction commit.
--->
-
-    <listitem>
-     <para>
-      Modify <link linkend="spi"><acronym>SPI</acronym></link>'s
-      <function>SPI_commit()</function> and
-      <function>SPI_commit_and_chain()</function> to automatically start
-      a new transaction at completion (Peter Eisentraut, Tom Lane)
-     </para>
-
-     <para>
-      BACKPATCHED?
      </para>
     </listitem>
 
@@ -533,6 +518,40 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
       was emitted by prior versions for the same seed values.
      </para>
     </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2021-12-15 [2a712066d] Remove pg_dump's - -no-synchronized-snapshots switch.
+-->
+
+    <listitem>
+     <para>
+      Remove <link
+      linkend="app-pgdump"><application>pg_dump</application></link>'s
+      <option>--no-synchronized-snapshots</option> option (Tom Lane)
+     </para>
+
+     <para>
+      All still-supported server versions support synchronized snapshots,
+      so there's no longer a need for this option.
+     </para>
+    </listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
+2022-06-15 [a3ff08e0b] Tweak behavior of psql - -single-transaction depending
+-->
+
+      <listitem>
+       <para>
+        After an error is detected in <link
+        linkend="app-psql"><application>psql</application></link>'s
+        <option>--single-transaction</option> mode, change the
+        final <command>COMMIT</command> command
+        to <command>ROLLBACK</command> only
+        if <varname>ON_ERROR_STOP</varname> is set (Michael Paquier)
+       </para>
+      </listitem>
 
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
@@ -1264,6 +1283,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 <!--
 Author: Tom Lane <tgl@sss.pgh.pa.us>
 2022-04-06 [a0ffa885e] Allow granting SET and ALTER SYSTEM privileges on GUC pa
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-07-19 [a2944d872] Fix missed corner cases for grantable permissions on GUC
 -->
 
       <listitem>
@@ -1283,12 +1304,14 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 <!--
 Author: Jeff Davis <jdavis@postgresql.org>
 2021-11-09 [4168a4745] Add pg_checkpointer predefined role for CHECKPOINT comma
+Author: Robert Haas <rhaas@postgresql.org>
+2022-07-05 [d3526e59f] Rename pg_checkpointer predefined role to pg_checkpoint.
 -->
 
       <listitem>
        <para>
         Add predefined role <link
-        linkend="predefined-roles-table"><literal>pg_checkpointer</literal></link>
+        linkend="predefined-roles-table"><literal>pg_checkpoint</literal></link>
         that allows members to run <command>CHECKPOINT</command>
         (Jeff Davis)
        </para>
@@ -1377,6 +1400,44 @@ Author: Michael Paquier <michael@paquier.xyz>
 
        <para>
         This is only supported on Linux.
+       </para>
+      </listitem>
+
+<!--
+Author: Jeff Davis <jdavis@postgresql.org>
+2022-07-20 [2103266a3] Process shared_preload_libraries in single-user mode.
+-->
+
+      <listitem>
+       <para>
+        Honor server variable <link
+        linkend="guc-shared-preload-libraries"><varname>shared_preload_libraries</varname></link>
+        in single-user mode (Jeff Davis)
+       </para>
+
+       <para>
+        This change supports use
+        of <varname>shared_preload_libraries</varname> to load custom
+        access methods and WAL resource managers, which would be essential
+        for database access even in single-user mode.
+       </para>
+      </listitem>
+
+<!--
+Author: Thomas Munro <tmunro@postgresql.org>
+2022-07-02 [a2b0719cc] Default to dynamic_shared_memory_type=sysv on Solaris.
+-->
+
+      <listitem>
+       <para>
+        On Solaris, make the default setting of <link
+        linkend="guc-dynamic-shared-memory-type"><varname>dynamic_shared_memory_type</varname></link>
+        be <literal>sysv</literal> (Thomas Munro)
+       </para>
+
+       <para>
+        The previous default choice, <literal>posix</literal>, can result
+        in spurious failures on this platform.
        </para>
       </listitem>
 
@@ -1502,6 +1563,8 @@ Author: Amit Kapila <akapila@postgresql.org>
 2021-10-27 [5a2832465] Allow publishing the tables of schema.
 Author: Amit Kapila <akapila@postgresql.org>
 2021-12-08 [1a2aaeb0d] Fix changing the ownership of ALL TABLES IN SCHEMA publi
+Author: Alvaro Herrera <alvherre@alvh.no-ip.org>
+2022-09-22 [f256236fb] Remove ALL keyword from TABLES IN SCHEMA for publication
 -->
 
       <listitem>
@@ -1513,7 +1576,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        <para>
         For example, this syntax is now supported:  <link
         linkend="sql-createpublication"><command>CREATE PUBLICATION pub1
-        FOR ALL TABLES IN SCHEMA s1,s2;</command></link>  <command>ALTER
+        FOR TABLES IN SCHEMA s1,s2;</command></link>  <command>ALTER
         PUBLICATION</command> supports a similar syntax.  Tables added
         later to the listed schemas will also be replicated.
        </para>
@@ -1864,6 +1927,29 @@ Author: Michael Paquier <michael@paquier.xyz>
       </para>
      </listitem>
 
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-07-22 [c2fa113dd] Close old gap in dependency checks for functions returni
+-->
+
+     <listitem>
+      <para>
+       Track dependencies on individual columns in the results of
+       functions returning composite types (Tom Lane)
+      </para>
+
+      <para>
+       Previously, if a view or rule contained a reference to a specific
+       column within the result of a composite-returning function, that
+       was not noted as a dependency; the view or rule was only considered
+       to depend on the composite type as a whole.  This meant that
+       dropping the individual column would be allowed, causing problems
+       in later use of the view or rule.  The column-level dependency is
+       now also noted, so that dropping such a column will be rejected
+       unless the view is changed or dropped.
+      </para>
+     </listitem>
+
     </itemizedlist>
 
    </sect3>
@@ -1902,6 +1988,18 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        linkend="datatype-datetime">interval</link> (Joe Koshakow)
       </para>
      </listitem>
+
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-08-02 [c034b629c] Change type "char"'s I/O format for non-ASCII characters
+-->
+
+    <listitem>
+     <para>
+      Change the I/O format of type <type>"char"</type> for non-ASCII
+      characters (Tom Lane)
+     </para>
+    </listitem>
 
 <!--
 Author: Peter Eisentraut <peter@eisentraut.org>
@@ -2343,6 +2441,28 @@ Author: Peter Eisentraut <peter@eisentraut.org>
 
 <!--
 Author: Michael Paquier <michael@paquier.xyz>
+2022-06-15 [a3ff08e0b] Tweak behavior of psql - -single-transaction depending
+-->
+
+      <listitem>
+       <para>
+        After an error is detected
+        in <option>--single-transaction</option> mode, change the
+        final <command>COMMIT</command> command
+        to <command>ROLLBACK</command> only
+        if <varname>ON_ERROR_STOP</varname> is set (Michael Paquier)
+       </para>
+
+       <para>
+        Previously, detection of an error in a <option>-c</option> command
+        or <option>-f</option> script file would lead to
+        issuing <command>ROLLBACK</command> at the end, regardless of the
+        value of <varname>ON_ERROR_STOP</varname>.
+       </para>
+      </listitem>
+
+<!--
+Author: Michael Paquier <michael@paquier.xyz>
 2021-08-10 [e2ce88b58] Add tab completion for DECLARE .. ASENSITIVE in psql
 Author: Michael Paquier <michael@paquier.xyz>
 2021-08-25 [346511313] Add tab completion for EXPLAIN .. EXECUTE in psql
@@ -2714,17 +2834,20 @@ Author: Michael Paquier <michael@paquier.xyz>
 2022-02-06 [38bfae365] pg_upgrade: Move all the files generated internally to a
 Author: Michael Paquier <michael@paquier.xyz>
 2022-02-15 [a00849630] Fix thinko with subdirectories generated by pg_upgrade f
+Author: Michael Paquier <michael@paquier.xyz>
+2022-09-13 [f5047c129] Move any remaining files generated by pg_upgrade into an
 -->
 
       <listitem>
        <para>
-        Store <application>pg_upgrade</application>
-        temporary files in a new cluster subdirectory called
+        Store <application>pg_upgrade</application>'s log and
+        temporary files in a subdirectory of the new cluster called
         <filename>pg_upgrade_output.d</filename> (Justin Pryzby)
        </para>
 
        <para>
-        Previously temporary files were stored in the current directory.
+        Previously such files were left in the current directory,
+        requiring manual cleanup.
        </para>
       </listitem>
 
@@ -2733,6 +2856,8 @@ Author: Robert Haas <rhaas@postgresql.org>
 2022-01-17 [9a974cbcb] pg_upgrade: Preserve relfilenodes and tablespace OIDs.
 Author: Robert Haas <rhaas@postgresql.org>
 2022-01-24 [aa0105141] pg_upgrade: Preserve database OIDs.
+Author: Robert Haas <rhaas@postgresql.org>
+2022-07-28 [4ab5dae94] Use TRUNCATE to preserve relfilenode for pg_largeobject
 -->
 
       <listitem>
@@ -3068,14 +3193,14 @@ Author: Peter Eisentraut <peter@eisentraut.org>
      </listitem>
 
 <!--
-Author: Andres Freund <andres@anarazel.de>
-2022-02-16 [19252e8ec] plpython: Reject Python 2 during build configuration.
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+2022-07-23 [3b474a2e6] Increase minimum supported GNU make version to 3.81.
 -->
 
      <listitem>
       <para>
-       Disallow building with <application>Python 2</application>
-       (Andres Freund)
+       Require GNU <application>make</application> version 3.81 or later
+       to build <productname>PostgreSQL</productname> (Tom Lane)
       </para>
      </listitem>
 
@@ -3086,8 +3211,20 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
      <listitem>
       <para>
-       Adjust configure to require <application>Perl</application>
+       Require <application>Perl</application>
        version 5.8.3 or later (Dagfinn Ilmari Mannsåker)
+      </para>
+     </listitem>
+
+<!--
+Author: Andres Freund <andres@anarazel.de>
+2022-02-16 [19252e8ec] plpython: Reject Python 2 during build configuration.
+-->
+
+     <listitem>
+      <para>
+       Require <application>Python</application>
+       version 3.2 or later (Andres Freund)
       </para>
      </listitem>
 
