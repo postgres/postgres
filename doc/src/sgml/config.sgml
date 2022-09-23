@@ -10831,9 +10831,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      will accept a setting for any two-part parameter name.  Such variables
      are treated as placeholders and have no function until the module that
      defines them is loaded. When an extension module is loaded, it will add
-     its variable definitions, convert any placeholder values according to
-     those definitions, and issue warnings for any unrecognized placeholders
-     that begin with its extension name.
+     its variable definitions and convert any placeholder values according to
+     those definitions.  If there are any unrecognized placeholders
+     that begin with its extension name, warnings are issued and those
+     placeholders are removed.
     </para>
    </sect1>
 
