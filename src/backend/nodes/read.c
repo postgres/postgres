@@ -288,7 +288,7 @@ nodeTokenType(const char *token, int length)
 		retval = T_Boolean;
 	else if (*token == '"' && length > 1 && token[length - 1] == '"')
 		retval = T_String;
-	else if (*token == 'b')
+	else if (*token == 'b' || *token == 'x')
 		retval = T_BitString;
 	else
 		retval = OTHER_TOKEN;
@@ -471,11 +471,10 @@ nodeRead(const char *token, int tok_len)
 			break;
 		case T_BitString:
 			{
-				char	   *val = palloc(tok_len);
+				char	   *val = palloc(tok_len + 1);
 
-				/* skip leading 'b' */
-				memcpy(val, token + 1, tok_len - 1);
-				val[tok_len - 1] = '\0';
+				memcpy(val, token, tok_len);
+				val[tok_len] = '\0';
 				result = (Node *) makeBitString(val);
 				break;
 			}
