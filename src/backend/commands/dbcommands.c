@@ -991,7 +991,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid create database strategy %s", strategy),
+					 errmsg("invalid create database strategy \"%s\"", strategy),
 					 errhint("Valid strategies are \"wal_log\", and \"file_copy\".")));
 	}
 

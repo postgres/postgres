@@ -1119,8 +1119,9 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	 */
 	if (inject_manifest && is_compressed_tar)
 	{
-		pg_log_error("cannot inject manifest into a compressed tarfile");
-		pg_log_info("use client-side compression, send the output to a directory rather than standard output, or use --no-manifest");
+		pg_log_error("cannot inject manifest into a compressed tar file");
+		pg_log_error_hint("Use client-side compression, send the output to a directory rather than standard output, or use %s.",
+						  "--no-manifest");
 		exit(1);
 	}
 
@@ -1135,7 +1136,7 @@ CreateBackupStreamer(char *archive_name, char *spclocation,
 	/* At present, we only know how to parse tar archives. */
 	if (must_parse_archive && !is_tar && !is_compressed_tar)
 	{
-		pg_log_error("unable to parse archive: %s", archive_name);
+		pg_log_error("cannot parse archive \"%s\"", archive_name);
 		pg_log_error_detail("Only tar archives can be parsed.");
 		if (format == 'p')
 			pg_log_error_detail("Plain format requires pg_basebackup to parse the archive.");
@@ -1353,7 +1354,7 @@ ReceiveArchiveStreamChunk(size_t r, char *copybuf, void *callback_data)
 				/* Sanity check. */
 				if (state->manifest_buffer != NULL ||
 					state->manifest_file !=NULL)
-					pg_fatal("archives should precede manifest");
+					pg_fatal("archives must precede manifest");
 
 				/* Parse the rest of the CopyData message. */
 				archive_name = GetCopyDataString(r, copybuf, &cursor);
@@ -1799,7 +1800,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 		 * Error message already written in CheckServerVersionForStreaming(),
 		 * but add a hint about using -X none.
 		 */
-		pg_log_info("HINT: use -X none or -X fetch to disable log streaming");
+		pg_log_error_hint("Use -X none or -X fetch to disable log streaming.");
 		exit(1);
 	}
 
@@ -1911,7 +1912,7 @@ BaseBackup(char *compression_algorithm, char *compression_detail,
 
 	if (showprogress && !verbose)
 	{
-		fprintf(stderr, "waiting for checkpoint");
+		fprintf(stderr, _("waiting for checkpoint"));
 		if (isatty(fileno(stderr)))
 			fprintf(stderr, "\r");
 		else
@@ -2553,7 +2554,7 @@ main(int argc, char **argv)
 		char	   *error_detail;
 
 		if (!parse_compress_algorithm(compression_algorithm, &alg))
-			pg_fatal("unrecognized compression algorithm \"%s\"",
+			pg_fatal("unrecognized compression algorithm: \"%s\"",
 					 compression_algorithm);
 
 		parse_compress_specification(alg, compression_detail, &client_compress);

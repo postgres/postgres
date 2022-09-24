@@ -511,10 +511,8 @@ FindStreamingStart(uint32 *tli)
 				continue;
 			}
 #else
-			pg_log_error("could not check file \"%s\"",
-						 dirent->d_name);
-			pg_log_error_detail("This build does not support compression with %s.",
-								"LZ4");
+			pg_log_error("cannot check file \"%s\": compression with %s not supported by this build",
+						 dirent->d_name, "LZ4");
 			exit(1);
 #endif
 		}
@@ -867,7 +865,7 @@ main(int argc, char **argv)
 	 */
 	if (!parse_compress_algorithm(compression_algorithm_str,
 								  &compression_algorithm))
-		pg_fatal("unrecognized compression algorithm \"%s\"",
+		pg_fatal("unrecognized compression algorithm: \"%s\"",
 				 compression_algorithm_str);
 
 	parse_compress_specification(compression_algorithm, compression_detail,

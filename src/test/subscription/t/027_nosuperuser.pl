@@ -260,7 +260,7 @@ expect_failure(
 	2,
 	11,
 	13,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin fails to replicate insert into rls enabled table");
 grant_superuser("regress_admin");
 expect_replication("alice.unpartitioned", 3, 11, 15,
@@ -274,7 +274,7 @@ expect_failure(
 	3,
 	11,
 	15,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin fails to replicate update into rls enabled unpartitioned"
 );
 
@@ -289,7 +289,7 @@ expect_failure(
 	3,
 	13,
 	17,
-	qr/ERROR: ( [A-Z0-9]+:)? "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
+	qr/ERROR: ( [A-Z0-9]+:)? user "regress_admin" cannot replicate into relation with row-level security enabled: "unpartitioned\w*"/msi,
 	"non-superuser admin without bypassrls fails to replicate delete into rls enabled unpartitioned"
 );
 grant_bypassrls("regress_admin");

@@ -430,10 +430,8 @@ check_publications(WalReceiverConn *wrconn, List *publications)
 
 	if (res->status != WALRCV_OK_TUPLES)
 		ereport(ERROR,
-				errmsg_plural("could not receive publication from the publisher: %s",
-							  "could not receive list of publications from the publisher: %s",
-							  list_length(publications),
-							  res->err));
+				errmsg("could not receive list of publications from the publisher: %s",
+					   res->err));
 
 	publicationsCopy = list_copy(publications);
 

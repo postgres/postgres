@@ -513,13 +513,13 @@ publication_translate_columns(Relation targetrel, List *columns,
 		if (!AttrNumberIsForUserDefinedAttr(attnum))
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("cannot reference system column \"%s\" in publication column list",
+					errmsg("cannot use system column \"%s\" in publication column list",
 						   colname));
 
 		if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated)
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("cannot reference generated column \"%s\" in publication column list",
+					errmsg("cannot use generated column \"%s\" in publication column list",
 						   colname));
 
 		if (bms_is_member(attnum, set))
