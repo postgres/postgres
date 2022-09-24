@@ -68,7 +68,7 @@ PostgreSQL documentation
 
        <para>
         The <option>--two-phase</option> can be specified with
-        <option>--create-slot</option> to enable two-phase decoding.
+        <option>--create-slot</option> to enable decoding of prepared transactions.
        </para>
       </listitem>
      </varlistentry>
@@ -266,7 +266,7 @@ PostgreSQL documentation
        <term><option>--two-phase</option></term>
        <listitem>
        <para>
-        Enables two-phase decoding. This option should only be specified with
+        Enables decoding of prepared transactions. This option may only be specified with
         <option>--create-slot</option>
        </para>
        </listitem>
