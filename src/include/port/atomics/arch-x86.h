@@ -140,7 +140,7 @@ pg_spin_delay_impl(void)
 static inline bool
 pg_atomic_test_set_flag_impl(volatile pg_atomic_flag *ptr)
 {
-	register char _res = 1;
+	char		_res = 1;
 
 	__asm__ __volatile__(
 		"	lock			\n"
