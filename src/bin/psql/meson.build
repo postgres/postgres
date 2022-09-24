@@ -21,7 +21,6 @@ psqlscanslash = custom_target('psqlscanslash',
   command: [flex_cmd, '--no-backup', '--fix-warnings', '--', '-Cfe', '-p', '-p'])
 generated_sources += psqlscanslash
 psql_sources += psqlscanslash
-bin_targets += psqlscanslash
 
 sql_help = custom_target('psql_help',
   output: ['sql_help.c', 'sql_help.h'],
@@ -36,7 +35,6 @@ sql_help = custom_target('psql_help',
 )
 generated_sources += sql_help.to_list()
 psql_sources += sql_help
-bin_targets += sql_help
 
 psql = executable('psql',
   psql_sources,
