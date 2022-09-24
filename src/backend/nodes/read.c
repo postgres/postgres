@@ -267,7 +267,7 @@ nodeTokenType(const char *token, int length)
 		char	   *endptr;
 
 		errno = 0;
-		(void) strtoint(token, &endptr, 10);
+		(void) strtoint(numptr, &endptr, 10);
 		if (endptr != token + length || errno == ERANGE)
 			return T_Float;
 		return T_Integer;
