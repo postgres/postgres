@@ -291,7 +291,7 @@ typedef enum A_Expr_Kind
 
 typedef struct A_Expr
 {
-	pg_node_attr(custom_read_write, no_read)
+	pg_node_attr(custom_read_write)
 
 	NodeTag		type;
 	A_Expr_Kind kind;			/* see above */
@@ -319,7 +319,7 @@ union ValUnion
 
 typedef struct A_Const
 {
-	pg_node_attr(custom_copy_equal, custom_read_write, no_read)
+	pg_node_attr(custom_copy_equal, custom_read_write)
 
 	NodeTag		type;
 	union ValUnion val;
@@ -2332,7 +2332,7 @@ typedef enum ConstrType			/* types of constraints */
 
 typedef struct Constraint
 {
-	pg_node_attr(custom_read_write, no_read)
+	pg_node_attr(custom_read_write)
 
 	NodeTag		type;
 	ConstrType	contype;		/* see above */

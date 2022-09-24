@@ -548,12 +548,12 @@ _outA_Expr(StringInfo str, const A_Expr *node)
 			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_OP_ANY:
-			WRITE_NODE_FIELD(name);
 			appendStringInfoString(str, " ANY");
+			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_OP_ALL:
-			WRITE_NODE_FIELD(name);
 			appendStringInfoString(str, " ALL");
+			WRITE_NODE_FIELD(name);
 			break;
 		case AEXPR_DISTINCT:
 			appendStringInfoString(str, " DISTINCT");
@@ -600,7 +600,7 @@ _outA_Expr(StringInfo str, const A_Expr *node)
 			WRITE_NODE_FIELD(name);
 			break;
 		default:
-			appendStringInfoString(str, " ??");
+			elog(ERROR, "unrecognized A_Expr_Kind: %d", (int) node->kind);
 			break;
 	}
 
@@ -782,8 +782,7 @@ _outConstraint(StringInfo str, const Constraint *node)
 			break;
 
 		default:
-			appendStringInfo(str, "<unrecognized_constraint %d>",
-							 (int) node->contype);
+			elog(ERROR, "unrecognized ConstrType: %d", (int) node->contype);
 			break;
 	}
 }

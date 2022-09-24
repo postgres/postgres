@@ -270,17 +270,173 @@ _readBoolExpr(void)
 	/* do-it-yourself enum representation */
 	token = pg_strtok(&length); /* skip :boolop */
 	token = pg_strtok(&length); /* get field value */
-	if (strncmp(token, "and", 3) == 0)
+	if (length == 3 && strncmp(token, "and", 3) == 0)
 		local_node->boolop = AND_EXPR;
-	else if (strncmp(token, "or", 2) == 0)
+	else if (length == 2 && strncmp(token, "or", 2) == 0)
 		local_node->boolop = OR_EXPR;
-	else if (strncmp(token, "not", 3) == 0)
+	else if (length == 3 && strncmp(token, "not", 3) == 0)
 		local_node->boolop = NOT_EXPR;
 	else
 		elog(ERROR, "unrecognized boolop \"%.*s\"", length, token);
 
 	READ_NODE_FIELD(args);
 	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+static A_Const *
+_readA_Const(void)
+{
+	READ_LOCALS(A_Const);
+
+	token = pg_strtok(&length);
+	if (length == 4 && strncmp(token, "NULL", 4) == 0)
+		local_node->isnull = true;
+	else
+	{
+		union ValUnion *tmp = nodeRead(NULL, 0);
+
+		memcpy(&local_node->val, tmp, sizeof(*tmp));
+	}
+
+	READ_LOCATION_FIELD(location);
+
+	READ_DONE();
+}
+
+/*
+ * _readConstraint
+ */
+static Constraint *
+_readConstraint(void)
+{
+	READ_LOCALS(Constraint);
+
+	READ_STRING_FIELD(conname);
+	READ_BOOL_FIELD(deferrable);
+	READ_BOOL_FIELD(initdeferred);
+	READ_LOCATION_FIELD(location);
+
+	token = pg_strtok(&length); /* skip :contype */
+	token = pg_strtok(&length); /* get field value */
+	if (length == 4 && strncmp(token, "NULL", 4) == 0)
+		local_node->contype = CONSTR_NULL;
+	else if (length == 8 && strncmp(token, "NOT_NULL", 8) == 0)
+		local_node->contype = CONSTR_NOTNULL;
+	else if (length == 7 && strncmp(token, "DEFAULT", 7) == 0)
+		local_node->contype = CONSTR_DEFAULT;
+	else if (length == 8 && strncmp(token, "IDENTITY", 8) == 0)
+		local_node->contype = CONSTR_IDENTITY;
+	else if (length == 9 && strncmp(token, "GENERATED", 9) == 0)
+		local_node->contype = CONSTR_GENERATED;
+	else if (length == 5 && strncmp(token, "CHECK", 5) == 0)
+		local_node->contype = CONSTR_CHECK;
+	else if (length == 11 && strncmp(token, "PRIMARY_KEY", 11) == 0)
+		local_node->contype = CONSTR_PRIMARY;
+	else if (length == 6 && strncmp(token, "UNIQUE", 6) == 0)
+		local_node->contype = CONSTR_UNIQUE;
+	else if (length == 9 && strncmp(token, "EXCLUSION", 9) == 0)
+		local_node->contype = CONSTR_EXCLUSION;
+	else if (length == 11 && strncmp(token, "FOREIGN_KEY", 11) == 0)
+		local_node->contype = CONSTR_FOREIGN;
+	else if (length == 15 && strncmp(token, "ATTR_DEFERRABLE", 15) == 0)
+		local_node->contype = CONSTR_ATTR_DEFERRABLE;
+	else if (length == 19 && strncmp(token, "ATTR_NOT_DEFERRABLE", 19) == 0)
+		local_node->contype = CONSTR_ATTR_NOT_DEFERRABLE;
+	else if (length == 13 && strncmp(token, "ATTR_DEFERRED", 13) == 0)
+		local_node->contype = CONSTR_ATTR_DEFERRED;
+	else if (length == 14 && strncmp(token, "ATTR_IMMEDIATE", 14) == 0)
+		local_node->contype = CONSTR_ATTR_IMMEDIATE;
+
+	switch (local_node->contype)
+	{
+		case CONSTR_NULL:
+		case CONSTR_NOTNULL:
+			/* no extra fields */
+			break;
+
+		case CONSTR_DEFAULT:
+			READ_NODE_FIELD(raw_expr);
+			READ_STRING_FIELD(cooked_expr);
+			break;
+
+		case CONSTR_IDENTITY:
+			READ_NODE_FIELD(options);
+			READ_CHAR_FIELD(generated_when);
+			break;
+
+		case CONSTR_GENERATED:
+			READ_NODE_FIELD(raw_expr);
+			READ_STRING_FIELD(cooked_expr);
+			READ_CHAR_FIELD(generated_when);
+			break;
+
+		case CONSTR_CHECK:
+			READ_BOOL_FIELD(is_no_inherit);
+			READ_NODE_FIELD(raw_expr);
+			READ_STRING_FIELD(cooked_expr);
+			READ_BOOL_FIELD(skip_validation);
+			READ_BOOL_FIELD(initially_valid);
+			break;
+
+		case CONSTR_PRIMARY:
+			READ_NODE_FIELD(keys);
+			READ_NODE_FIELD(including);
+			READ_NODE_FIELD(options);
+			READ_STRING_FIELD(indexname);
+			READ_STRING_FIELD(indexspace);
+			READ_BOOL_FIELD(reset_default_tblspc);
+			/* access_method and where_clause not currently used */
+			break;
+
+		case CONSTR_UNIQUE:
+			READ_BOOL_FIELD(nulls_not_distinct);
+			READ_NODE_FIELD(keys);
+			READ_NODE_FIELD(including);
+			READ_NODE_FIELD(options);
+			READ_STRING_FIELD(indexname);
+			READ_STRING_FIELD(indexspace);
+			READ_BOOL_FIELD(reset_default_tblspc);
+			/* access_method and where_clause not currently used */
+			break;
+
+		case CONSTR_EXCLUSION:
+			READ_NODE_FIELD(exclusions);
+			READ_NODE_FIELD(including);
+			READ_NODE_FIELD(options);
+			READ_STRING_FIELD(indexname);
+			READ_STRING_FIELD(indexspace);
+			READ_BOOL_FIELD(reset_default_tblspc);
+			READ_STRING_FIELD(access_method);
+			READ_NODE_FIELD(where_clause);
+			break;
+
+		case CONSTR_FOREIGN:
+			READ_NODE_FIELD(pktable);
+			READ_NODE_FIELD(fk_attrs);
+			READ_NODE_FIELD(pk_attrs);
+			READ_CHAR_FIELD(fk_matchtype);
+			READ_CHAR_FIELD(fk_upd_action);
+			READ_CHAR_FIELD(fk_del_action);
+			READ_NODE_FIELD(fk_del_set_cols);
+			READ_NODE_FIELD(old_conpfeqop);
+			READ_OID_FIELD(old_pktable_oid);
+			READ_BOOL_FIELD(skip_validation);
+			READ_BOOL_FIELD(initially_valid);
+			break;
+
+		case CONSTR_ATTR_DEFERRABLE:
+		case CONSTR_ATTR_NOT_DEFERRABLE:
+		case CONSTR_ATTR_DEFERRED:
+		case CONSTR_ATTR_IMMEDIATE:
+			/* no extra fields */
+			break;
+
+		default:
+			elog(ERROR, "unrecognized ConstrType: %d", (int) local_node->contype);
+			break;
+	}
 
 	READ_DONE();
 }
@@ -372,6 +528,93 @@ _readRangeTblEntry(void)
 	READ_BITMAPSET_FIELD(updatedCols);
 	READ_BITMAPSET_FIELD(extraUpdatedCols);
 	READ_NODE_FIELD(securityQuals);
+
+	READ_DONE();
+}
+
+static A_Expr *
+_readA_Expr(void)
+{
+	READ_LOCALS(A_Expr);
+
+	token = pg_strtok(&length);
+
+	if (length == 3 && strncmp(token, "ANY", 3) == 0)
+	{
+		local_node->kind = AEXPR_OP_ANY;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 3 && strncmp(token, "ALL", 3) == 0)
+	{
+		local_node->kind = AEXPR_OP_ALL;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 8 && strncmp(token, "DISTINCT", 8) == 0)
+	{
+		local_node->kind = AEXPR_DISTINCT;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 12 && strncmp(token, "NOT_DISTINCT", 12) == 0)
+	{
+		local_node->kind = AEXPR_NOT_DISTINCT;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 6 && strncmp(token, "NULLIF", 6) == 0)
+	{
+		local_node->kind = AEXPR_NULLIF;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 2 && strncmp(token, "IN", 2) == 0)
+	{
+		local_node->kind = AEXPR_IN;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 4 && strncmp(token, "LIKE", 4) == 0)
+	{
+		local_node->kind = AEXPR_LIKE;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 5 && strncmp(token, "ILIKE", 5) == 0)
+	{
+		local_node->kind = AEXPR_ILIKE;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 7 && strncmp(token, "SIMILAR", 7) == 0)
+	{
+		local_node->kind = AEXPR_SIMILAR;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 7 && strncmp(token, "BETWEEN", 7) == 0)
+	{
+		local_node->kind = AEXPR_BETWEEN;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 11 && strncmp(token, "NOT_BETWEEN", 11) == 0)
+	{
+		local_node->kind = AEXPR_NOT_BETWEEN;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 11 && strncmp(token, "BETWEEN_SYM", 11) == 0)
+	{
+		local_node->kind = AEXPR_BETWEEN_SYM;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 15 && strncmp(token, "NOT_BETWEEN_SYM", 15) == 0)
+	{
+		local_node->kind = AEXPR_NOT_BETWEEN_SYM;
+		READ_NODE_FIELD(name);
+	}
+	else if (length == 5 && strncmp(token, ":name", 5) == 0)
+	{
+		local_node->kind = AEXPR_OP;
+		local_node->name = nodeRead(NULL, 0);
+	}
+	else
+		elog(ERROR, "unrecognized A_Expr kind: \"%.*s\"", length, token);
+
+	READ_NODE_FIELD(lexpr);
+	READ_NODE_FIELD(rexpr);
+	READ_LOCATION_FIELD(location);
 
 	READ_DONE();
 }
