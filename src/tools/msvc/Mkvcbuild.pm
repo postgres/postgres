@@ -425,7 +425,6 @@ sub mkvcbuild
 	$pgevent->AddFiles('src/bin/pgevent', 'pgevent.c', 'pgmsgevent.rc');
 	$pgevent->AddResourceFile('src/bin/pgevent', 'Eventlog message formatter',
 		'win32');
-	$pgevent->RemoveFile('src/bin/pgevent/win32ver.rc');
 	$pgevent->UseDef('src/bin/pgevent/pgevent.def');
 	$pgevent->DisableLinkerWarnings('4104');
 
