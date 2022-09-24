@@ -2761,8 +2761,8 @@ DELETE FROM fkpart11.fk WHERE a = 4;
 ALTER TABLE fkpart11.fk ADD CONSTRAINT fkey FOREIGN KEY (a) REFERENCES fkpart11.pk1 (a) ON UPDATE CASCADE ON DELETE CASCADE;
 UPDATE fkpart11.pk SET a = a - 1;
 ERROR:  cannot move tuple across partitions when a non-root ancestor of the source partition is directly referenced in a foreign key
-DETAIL:  A foreign key points to ancestor "pk1", but not the root ancestor "pk".
-HINT:  Consider defining the foreign key on "pk".
+DETAIL:  A foreign key points to ancestor "pk1" but not the root ancestor "pk".
+HINT:  Consider defining the foreign key on table "pk".
 -- it's okay though if the non-leaf partition is updated directly
 UPDATE fkpart11.pk1 SET a = a - 1;
 SELECT tableoid::pg_catalog.regclass, * FROM fkpart11.pk;

@@ -1963,10 +1963,10 @@ XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
 									blknum, NULL))
 	{
 #ifndef FRONTEND
-		elog(ERROR, "failed to locate backup block with ID %d in WAL record",
+		elog(ERROR, "could not locate backup block with ID %d in WAL record",
 			 block_id);
 #else
-		pg_fatal("failed to locate backup block with ID %d in WAL record",
+		pg_fatal("could not locate backup block with ID %d in WAL record",
 				 block_id);
 #endif
 	}

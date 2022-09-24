@@ -425,7 +425,7 @@ pgstat_discard_stats(void)
 	{
 		ereport(DEBUG2,
 				(errcode_for_file_access(),
-				 errmsg("unlinked permanent statistics file \"%s\"",
+				 errmsg_internal("unlinked permanent statistics file \"%s\"",
 						PGSTAT_STAT_PERMANENT_FILENAME)));
 	}
 

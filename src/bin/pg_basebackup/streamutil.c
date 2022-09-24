@@ -519,7 +519,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 	 */
 	if (PQgetisnull(res, 0, 0))
 	{
-		pg_log_error("could not find replication slot \"%s\"", slot_name);
+		pg_log_error("replication slot \"%s\" does not exist", slot_name);
 		PQclear(res);
 		return false;
 	}

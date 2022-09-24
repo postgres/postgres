@@ -1632,7 +1632,7 @@ TargetPrivilegesCheck(Relation rel, AclMode mode)
 	if (check_enable_rls(relid, InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("\"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
+				 errmsg("user \"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
 						GetUserNameFromId(GetUserId(), true),
 						RelationGetRelationName(rel))));
 }
@@ -3791,7 +3791,7 @@ ApplyWorkerMain(Datum main_arg)
 		}
 
 		ereport(DEBUG1,
-				(errmsg("logical replication apply worker for subscription \"%s\" two_phase is %s",
+				(errmsg_internal("logical replication apply worker for subscription \"%s\" two_phase is %s",
 						MySubscription->name,
 						MySubscription->twophasestate == LOGICALREP_TWOPHASE_STATE_DISABLED ? "DISABLED" :
 						MySubscription->twophasestate == LOGICALREP_TWOPHASE_STATE_PENDING ? "PENDING" :
@@ -3840,7 +3840,7 @@ DisableSubscriptionAndExit(void)
 
 	/* Notify the subscription has been disabled and exit */
 	ereport(LOG,
-			errmsg("logical replication subscription \"%s\" has been disabled due to an error",
+			errmsg("subscription \"%s\" has been disabled because of an error",
 				   MySubscription->name));
 
 	proc_exit(0);
@@ -3975,7 +3975,7 @@ clear_subscription_skip_lsn(XLogRecPtr finish_lsn)
 
 		if (myskiplsn != finish_lsn)
 			ereport(WARNING,
-					errmsg("skip-LSN of logical replication subscription \"%s\" cleared", MySubscription->name),
+					errmsg("skip-LSN of subscription \"%s\" cleared", MySubscription->name),
 					errdetail("Remote transaction's finish WAL location (LSN) %X/%X did not match skip-LSN %X/%X.",
 							  LSN_FORMAT_ARGS(finish_lsn),
 							  LSN_FORMAT_ARGS(myskiplsn)));
@@ -4002,23 +4002,23 @@ apply_error_callback(void *arg)
 	if (errarg->rel == NULL)
 	{
 		if (!TransactionIdIsValid(errarg->remote_xid))
-			errcontext("processing remote data for replication origin \"%s\" during \"%s\"",
+			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\"",
 					   errarg->origin_name,
 					   logicalrep_message_type(errarg->command));
 		else if (XLogRecPtrIsInvalid(errarg->finish_lsn))
-			errcontext("processing remote data for replication origin \"%s\" during \"%s\" in transaction %u",
+			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u",
 					   errarg->origin_name,
 					   logicalrep_message_type(errarg->command),
 					   errarg->remote_xid);
 		else
-			errcontext("processing remote data for replication origin \"%s\" during \"%s\" in transaction %u finished at %X/%X",
+			errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" in transaction %u, finished at %X/%X",
 					   errarg->origin_name,
 					   logicalrep_message_type(errarg->command),
 					   errarg->remote_xid,
 					   LSN_FORMAT_ARGS(errarg->finish_lsn));
 	}
 	else if (errarg->remote_attnum < 0)
-		errcontext("processing remote data for replication origin \"%s\" during \"%s\" for replication target relation \"%s.%s\" in transaction %u finished at %X/%X",
+		errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" in transaction %u, finished at %X/%X",
 				   errarg->origin_name,
 				   logicalrep_message_type(errarg->command),
 				   errarg->rel->remoterel.nspname,
@@ -4026,7 +4026,7 @@ apply_error_callback(void *arg)
 				   errarg->remote_xid,
 				   LSN_FORMAT_ARGS(errarg->finish_lsn));
 	else
-		errcontext("processing remote data for replication origin \"%s\" during \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u finished at %X/%X",
+		errcontext("processing remote data for replication origin \"%s\" during message type \"%s\" for replication target relation \"%s.%s\" column \"%s\" in transaction %u, finished at %X/%X",
 				   errarg->origin_name,
 				   logicalrep_message_type(errarg->command),
 				   errarg->rel->remoterel.nspname,

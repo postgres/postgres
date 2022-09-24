@@ -1532,7 +1532,7 @@ renametrig(RenameStmt *stmt)
 			ereport(ERROR,
 					errmsg("cannot rename trigger \"%s\" on table \"%s\"",
 						   stmt->subname, RelationGetRelationName(targetrel)),
-					errhint("Rename trigger on partitioned table \"%s\" instead.",
+					errhint("Rename the trigger on the partitioned table \"%s\" instead.",
 							get_rel_name(get_partition_parent(relid, false))));
 
 

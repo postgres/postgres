@@ -3546,7 +3546,7 @@ LINE 1: alter trigger a on only grandparent rename to b;
                            ^
 alter trigger b on middle rename to c;	-- can't rename trigger on partition
 ERROR:  cannot rename trigger "b" on table "middle"
-HINT:  Rename trigger on partitioned table "grandparent" instead.
+HINT:  Rename the trigger on the partitioned table "grandparent" instead.
 create trigger c after insert on middle
 for each row execute procedure f();
 alter trigger b on grandparent rename to c;

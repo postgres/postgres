@@ -234,7 +234,7 @@ parse_compress_specification(pg_compress_algorithm algorithm, char *specificatio
 		}
 		else
 			result->parse_error =
-				psprintf(_("unknown compression option \"%s\""), keyword);
+				psprintf(_("unrecognized compression option: \"%s\""), keyword);
 
 		/* Release memory, just to be tidy. */
 		pfree(keyword);

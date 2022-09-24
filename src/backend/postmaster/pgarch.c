@@ -851,7 +851,7 @@ LoadArchiveLibrary(void)
 
 	if (archive_init == NULL)
 		ereport(ERROR,
-				(errmsg("archive modules have to declare the _PG_archive_module_init symbol")));
+				(errmsg("archive modules have to define the symbol %s", "_PG_archive_module_init")));
 
 	(*archive_init) (&ArchiveContext);
 

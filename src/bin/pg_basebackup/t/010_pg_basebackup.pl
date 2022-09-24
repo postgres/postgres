@@ -44,7 +44,7 @@ $node->command_fails_like(
 	'failure if method "none" specified with compression level');
 $node->command_fails_like(
 	[ 'pg_basebackup', '-D', "$tempdir/backup", '--compress', 'none+' ],
-	qr/\Qunrecognized compression algorithm "none+"/,
+	qr/\Qunrecognized compression algorithm: "none+"/,
 	'failure on incorrect separator to define compression level');
 
 # Some Windows ANSI code pages may reject this filename, in which case we
@@ -97,7 +97,7 @@ SKIP:
 	my @compression_failure_tests = (
 		[
 			'extrasquishy',
-			'unrecognized compression algorithm "extrasquishy"',
+			'unrecognized compression algorithm: "extrasquishy"',
 			'failure on invalid compression algorithm'
 		],
 		[
@@ -107,7 +107,7 @@ SKIP:
 		],
 		[
 			'gzip:thunk',
-			'invalid compression specification: unknown compression option "thunk"',
+			'invalid compression specification: unrecognized compression option: "thunk"',
 			'failure on unknown compression option'
 		],
 		[

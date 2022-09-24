@@ -575,7 +575,7 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 			/* OK, supported */
 			break;
 		default:
-			errdetail_msg = _("Expressions only allow columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions.");
+			errdetail_msg = _("Only columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions are allowed.");
 			break;
 	}
 
@@ -1359,7 +1359,7 @@ CheckAlterPublication(AlterPublicationStmt *stmt, HeapTuple tup,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("publication \"%s\" is defined as FOR ALL TABLES",
 						NameStr(pubform->pubname)),
-				 errdetail("Tables from schema cannot be added to, dropped from, or set on FOR ALL TABLES publications.")));
+				 errdetail("Schemas cannot be added to or dropped from FOR ALL TABLES publications.")));
 
 	/* Check that user is allowed to manipulate the publication tables. */
 	if (tables && pubform->puballtables)

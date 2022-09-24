@@ -2082,10 +2082,10 @@ ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot move tuple across partitions when a non-root ancestor of the source partition is directly referenced in a foreign key"),
-					 errdetail("A foreign key points to ancestor \"%s\", but not the root ancestor \"%s\".",
+					 errdetail("A foreign key points to ancestor \"%s\" but not the root ancestor \"%s\".",
 							   RelationGetRelationName(rInfo->ri_RelationDesc),
 							   RelationGetRelationName(rootRelInfo->ri_RelationDesc)),
-					 errhint("Consider defining the foreign key on \"%s\".",
+					 errhint("Consider defining the foreign key on table \"%s\".",
 							 RelationGetRelationName(rootRelInfo->ri_RelationDesc))));
 	}
 
