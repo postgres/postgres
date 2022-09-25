@@ -3305,7 +3305,7 @@ insert into convslot_test_parent(col1) values ('1');
 insert into convslot_test_child(col1) values ('1');
 insert into convslot_test_parent(col1) values ('3');
 insert into convslot_test_child(col1) values ('3');
-create or replace function trigger_function1()
+create function convslot_trig1()
 returns trigger
 language plpgsql
 AS $$
@@ -3315,7 +3315,7 @@ raise notice 'trigger = %, old_table = %',
           (select string_agg(old_table::text, ', ' order by col1) from old_table);
 return null;
 end; $$;
-create or replace function trigger_function2()
+create function convslot_trig2()
 returns trigger
 language plpgsql
 AS $$
@@ -3327,10 +3327,10 @@ return null;
 end; $$;
 create trigger but_trigger after update on convslot_test_child
 referencing new table as new_table
-for each statement execute function trigger_function2();
+for each statement execute function convslot_trig2();
 update convslot_test_parent set col1 = col1 || '1';
 NOTICE:  trigger = but_trigger, new table = (11,tutu), (31,tutu)
-create or replace function trigger_function3()
+create function convslot_trig3()
 returns trigger
 language plpgsql
 AS $$
@@ -3343,13 +3343,39 @@ return null;
 end; $$;
 create trigger but_trigger2 after update on convslot_test_child
 referencing old table as old_table new table as new_table
-for each statement execute function trigger_function3();
+for each statement execute function convslot_trig3();
 update convslot_test_parent set col1 = col1 || '1';
 NOTICE:  trigger = but_trigger, new table = (111,tutu), (311,tutu)
 NOTICE:  trigger = but_trigger2, old_table = (11,tutu), (31,tutu), new table = (111,tutu), (311,tutu)
 create trigger bdt_trigger after delete on convslot_test_child
 referencing old table as old_table
-for each statement execute function trigger_function1();
+for each statement execute function convslot_trig1();
 delete from convslot_test_parent;
 NOTICE:  trigger = bdt_trigger, old_table = (111,tutu), (311,tutu)
 drop table convslot_test_child, convslot_test_parent;
+drop function convslot_trig1();
+drop function convslot_trig2();
+drop function convslot_trig3();
+-- Bug #17607: variant of above in which trigger function raises an error;
+-- we don't see any ill effects unless trigger tuple requires mapping
+create table convslot_test_parent (id int primary key, val int)
+partition by range (id);
+create table convslot_test_part (val int, id int not null);
+alter table convslot_test_parent
+  attach partition convslot_test_part for values from (1) to (1000);
+create function convslot_trig4() returns trigger as
+$$begin raise exception 'BOOM!'; end$$ language plpgsql;
+create trigger convslot_test_parent_update
+    after update on convslot_test_parent
+    referencing old table as old_rows new table as new_rows
+    for each statement execute procedure convslot_trig4();
+insert into convslot_test_parent (id, val) values (1, 2);
+begin;
+savepoint svp;
+update convslot_test_parent set val = 3;  -- error expected
+ERROR:  BOOM!
+CONTEXT:  PL/pgSQL function convslot_trig4() line 1 at RAISE
+rollback to savepoint svp;
+rollback;
+drop table convslot_test_parent;
+drop function convslot_trig4();
