@@ -449,7 +449,7 @@ SELECT brin_summarize_range('brin_summarize_idx', -1);
 SELECT brin_summarize_range('brin_summarize_idx', 4294967296);
 
 -- test value merging in add_value
-CREATE UNLOGGED TABLE brintest_2 (n numrange);
+CREATE TABLE brintest_2 (n numrange);
 CREATE INDEX brinidx_2 ON brintest_2 USING brin (n);
 INSERT INTO brintest_2 VALUES ('empty');
 INSERT INTO brintest_2 VALUES (numrange(0, 2^1000::numeric));
@@ -509,3 +509,9 @@ SELECT * FROM brintest_3 WHERE b < '0';
 
 DROP TABLE brintest_3;
 RESET enable_seqscan;
+
+-- test an unlogged table, mostly to get coverage of brinbuildempty
+CREATE UNLOGGED TABLE brintest_unlogged (n numrange);
+CREATE INDEX brinidx_unlogged ON brintest_unlogged USING brin (n);
+INSERT INTO brintest_unlogged VALUES (numrange(0, 2^1000::numeric));
+DROP TABLE brintest_unlogged;
