@@ -41,7 +41,7 @@ reindex index gist_pointidx;
 -- Test Index-only plans on GiST indexes
 --
 
-create unlogged table gist_tbl (b box, p point, c circle);
+create table gist_tbl (b box, p point, c circle);
 
 insert into gist_tbl
 select box(point(0.05*i, 0.05*i), point(0.05*i, 0.05*i)),
@@ -178,4 +178,11 @@ reset enable_seqscan;
 reset enable_bitmapscan;
 reset enable_indexonlyscan;
 
+drop table gist_tbl;
+
+-- test an unlogged table, mostly to get coverage of gistbuildempty
+create unlogged table gist_tbl (b box);
+create index gist_tbl_box_index on gist_tbl using gist (b);
+insert into gist_tbl
+  select box(point(0.05*i, 0.05*i)) from generate_series(0,10) as i;
 drop table gist_tbl;
