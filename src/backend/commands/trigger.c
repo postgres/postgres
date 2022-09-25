@@ -4711,11 +4711,13 @@ GetAfterTriggersStoreSlot(AfterTriggersTableData *table,
 		MemoryContext	oldcxt;
 
 		/*
-		 * We only need this slot only until AfterTriggerEndQuery, but making
-		 * it last till end-of-subxact is good enough.  It'll be freed by
-		 * AfterTriggerFreeQuery().
+		 * We need this slot only until AfterTriggerEndQuery, but making it
+		 * last till end-of-subxact is good enough.  It'll be freed by
+		 * AfterTriggerFreeQuery().  However, the passed-in tupdesc might have
+		 * a different lifespan, so we'd better make a copy of that.
 		 */
 		oldcxt = MemoryContextSwitchTo(CurTransactionContext);
+		tupdesc = CreateTupleDescCopy(tupdesc);
 		table->storeslot = MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual);
 		MemoryContextSwitchTo(oldcxt);
 	}
@@ -5011,7 +5013,12 @@ AfterTriggerFreeQuery(AfterTriggersQueryData *qs)
 		if (ts)
 			tuplestore_end(ts);
 		if (table->storeslot)
-			ExecDropSingleTupleTableSlot(table->storeslot);
+		{
+			TupleTableSlot *slot = table->storeslot;
+
+			table->storeslot = NULL;
+			ExecDropSingleTupleTableSlot(slot);
+		}
 	}
 
 	/*
