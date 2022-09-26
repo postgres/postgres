@@ -367,10 +367,6 @@ sub AddResourceFile
 {
 	my ($self, $dir, $desc, $ico) = @_;
 
-	my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) =
-	  localtime(time);
-	my $d = sprintf("%02d%03d", ($year - 100), $yday);
-
 	if (Solution::IsNewer("$dir/win32ver.rc", 'src/port/win32ver.rc'))
 	{
 		print "Generating win32ver.rc for $dir\n";
@@ -383,7 +379,6 @@ sub AddResourceFile
 		{
 			s/FILEDESC/"$desc"/gm;
 			s/_ICO_/$icostr/gm;
-			s/(VERSION.*),0/$1,$d/;
 			if ($self->{type} eq "dll")
 			{
 				s/VFT_APP/VFT_DLL/gm;
