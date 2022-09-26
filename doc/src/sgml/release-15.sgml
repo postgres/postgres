@@ -3572,6 +3572,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Andrew Kesper</member>
     <member>Andrey Borodin</member>
     <member>Andrey Lepikhov</member>
+    <member>Andrey Sokolov</member>
     <member>Andy Fan</member>
     <member>Anton Melnikov</member>
     <member>Anton Voloshin</member>
@@ -3587,6 +3588,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Atsushi Torikoshi</member>
     <member>Aya Iwata</member>
     <member>Bauyrzhan Sakhariyev</member>
+    <member>Benoit Lobréau</member>
     <member>Bernd Dorn</member>
     <member>Bertrand Drouvot</member>
     <member>Bharath Rupireddy</member>
@@ -3667,6 +3669,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Floris Van Nee</member>
     <member>Frédéric Yhuel</member>
     <member>Gabriela Serventi</member>
+    <member>Gabriele Varrazzo</member>
     <member>Gaurab Dey</member>
     <member>Geoff Winkless</member>
     <member>Geoffrey Blake</member>
@@ -3711,6 +3714,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Jeevan Ladhe</member>
     <member>Jeff Davis</member>
     <member>Jeff Janes</member>
+    <member>Jehan-Guillaume de Rorthais</member>
     <member>Jelte Fennema</member>
     <member>Jeremy Evans</member>
     <member>Jeremy Schneider</member>
@@ -3746,6 +3750,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Konstantin Knizhnik</member>
     <member>Konstantina Skovola</member>
     <member>Kosei Masumura</member>
+    <member>Kotaro Kawamoto</member>
     <member>Koyu Tanigawa</member>
     <member>Kuntal Ghosh</member>
     <member>Kyotaro Horiguchi</member>
@@ -3776,6 +3781,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Markus Wanner</member>
     <member>Markus Winand</member>
     <member>Martijn van Oosterhout</member>
+    <member>Martin Jurca</member>
     <member>Martin Kalcher</member>
     <member>Martín Marqués</member>
     <member>Masahiko Sawada</member>
@@ -3855,6 +3861,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Robert Haas</member>
     <member>Robert Treat</member>
     <member>Roberto Mello</member>
+    <member>Robins Tharakan</member>
     <member>Roger Mason</member>
     <member>Roman Zharkov</member>
     <member>Ronan Dunklau</member>
@@ -3899,6 +3906,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Teodor Sigaev</member>
     <member>Thibaud Walkowiak</member>
     <member>Thom Brown</member>
+    <member>Thomas McKay</member>
     <member>Thomas Munro</member>
     <member>Tim McNamara</member>
     <member>Timo Stolz</member>
@@ -3914,6 +3922,7 @@ Author: Etsuro Fujita <efujita@postgresql.org>
     <member>Vignesh C</member>
     <member>Vik Fearing</member>
     <member>Vincas Dargis</member>
+    <member>Vitaly Burovoy</member>
     <member>Vitaly Voronov</member>
     <member>Vladimir Sitnikov</member>
     <member>Wang Ke</member>
