@@ -801,7 +801,7 @@ pg_rewrite_query(Query *query)
 		new_list = copyObject(querytree_list);
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_list, querytree_list))
-			elog(WARNING, "copyObject() failed to produce equal parse tree");
+			elog(WARNING, "copyObject() failed to produce an equal rewritten parse tree");
 		else
 			querytree_list = new_list;
 	}
@@ -813,35 +813,25 @@ pg_rewrite_query(Query *query)
 		List	   *new_list = NIL;
 		ListCell   *lc;
 
-		/*
-		 * We currently lack outfuncs/readfuncs support for most utility
-		 * statement types, so only attempt to write/read non-utility queries.
-		 */
 		foreach(lc, querytree_list)
 		{
 			Query	   *query = lfirst_node(Query, lc);
+			char	   *str = nodeToString(query);
+			Query	   *new_query = stringToNodeWithLocations(str);
 
-			if (query->commandType != CMD_UTILITY)
-			{
-				char	   *str = nodeToString(query);
-				Query	   *new_query = stringToNodeWithLocations(str);
+			/*
+			 * queryId is not saved in stored rules, but we must preserve it
+			 * here to avoid breaking pg_stat_statements.
+			 */
+			new_query->queryId = query->queryId;
 
-				/*
-				 * queryId is not saved in stored rules, but we must preserve
-				 * it here to avoid breaking pg_stat_statements.
-				 */
-				new_query->queryId = query->queryId;
-
-				new_list = lappend(new_list, new_query);
-				pfree(str);
-			}
-			else
-				new_list = lappend(new_list, query);
+			new_list = lappend(new_list, new_query);
+			pfree(str);
 		}
 
 		/* This checks both outfuncs/readfuncs and the equal() routines... */
 		if (!equal(new_list, querytree_list))
-			elog(WARNING, "outfuncs/readfuncs failed to produce equal parse tree");
+			elog(WARNING, "outfuncs/readfuncs failed to produce an equal rewritten parse tree");
 		else
 			querytree_list = new_list;
 	}
