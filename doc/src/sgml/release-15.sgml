@@ -1137,7 +1137,8 @@ Author: David Rowley <drowley@postgresql.org>
        <para>
         Improve the performance of <link linkend="functions-window">window
         functions</link> that use <function>row_number()</function>,
-        <function>rank()</function>, and <function>count()</function>
+        <function>rank()</function>, <function>dense_rank()</function> and
+        <function>count()</function>
         (David Rowley)
        </para>
       </listitem>
