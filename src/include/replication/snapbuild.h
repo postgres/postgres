@@ -73,8 +73,7 @@ extern void SnapBuildClearExportedSnapshot(void);
 extern void SnapBuildResetExportedSnapshotState(void);
 
 extern SnapBuildState SnapBuildCurrentState(SnapBuild *builder);
-extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder,
-											TransactionId xid);
+extern Snapshot SnapBuildGetOrBuildSnapshot(SnapBuild *builder);
 
 extern bool SnapBuildXactNeedsSkip(SnapBuild *builder, XLogRecPtr ptr);
 extern XLogRecPtr SnapBuildGetTwoPhaseAt(SnapBuild *builder);

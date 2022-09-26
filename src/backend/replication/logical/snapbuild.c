@@ -694,7 +694,7 @@ SnapBuildExportSnapshot(SnapBuild *builder)
  * Ensure there is a snapshot and if not build one for current transaction.
  */
 Snapshot
-SnapBuildGetOrBuildSnapshot(SnapBuild *builder, TransactionId xid)
+SnapBuildGetOrBuildSnapshot(SnapBuild *builder)
 {
 	Assert(builder->state == SNAPBUILD_CONSISTENT);
 
