@@ -135,14 +135,21 @@ static void outChar(StringInfo str, char c);
  *	  Convert an ordinary string (eg, an identifier) into a form that
  *	  will be decoded back to a plain token by read.c's functions.
  *
- *	  If a null or empty string is given, it is encoded as "<>".
+ *	  If a null string pointer is given, it is encoded as '<>'.
+ *	  An empty string is encoded as '""'.  To avoid ambiguity, input
+ *	  strings beginning with '<' or '"' receive a leading backslash.
  */
 void
 outToken(StringInfo str, const char *s)
 {
-	if (s == NULL || *s == '\0')
+	if (s == NULL)
 	{
 		appendStringInfoString(str, "<>");
+		return;
+	}
+	if (*s == '\0')
+	{
+		appendStringInfoString(str, "\"\"");
 		return;
 	}
 
@@ -177,6 +184,13 @@ static void
 outChar(StringInfo str, char c)
 {
 	char		in[2];
+
+	/* Traditionally, we've represented \0 as <>, so keep doing that */
+	if (c == '\0')
+	{
+		appendStringInfoString(str, "<>");
+		return;
+	}
 
 	in[0] = c;
 	in[1] = '\0';
@@ -636,7 +650,8 @@ _outString(StringInfo str, const String *node)
 {
 	/*
 	 * We use outToken to provide escaping of the string's content, but we
-	 * don't want it to do anything with an empty string.
+	 * don't want it to convert an empty string to '""', because we're putting
+	 * double quotes around the string already.
 	 */
 	appendStringInfoChar(str, '"');
 	if (node->sval[0] != '\0')

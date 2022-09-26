@@ -178,8 +178,18 @@
 
 #define strtobool(x)  ((*(x) == 't') ? true : false)
 
-#define nullable_string(token,length)  \
-	((length) == 0 ? NULL : debackslash(token, length))
+static char *
+nullable_string(const char *token, int length)
+{
+	/* outToken emits <> for NULL, and pg_strtok makes that an empty string */
+	if (length == 0)
+		return NULL;
+	/* outToken emits "" for empty string */
+	if (length == 2 && token[0] == '"' && token[1] == '"')
+		return pstrdup("");
+	/* otherwise, we must remove protective backslashes added by outToken */
+	return debackslash(token, length);
+}
 
 
 /*
