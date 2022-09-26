@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: plpython (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-02 04:38+0000\n"
-"PO-Revision-Date: 2022-08-12 12:41+0200\n"
+"PO-Revision-Date: 2022-09-25 19:18+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -400,6 +400,8 @@ msgid ""
 "could not convert Python object into cstring: Python string representation "
 "appears to contain null bytes"
 msgstr ""
+"შეცდომა Python-ის ობიექტის cstring-ში გადაყვანისას: Python-ის სტრიქონის "
+"გამოხატულება ნულოვან ბაიტებს შეიცავს"
 
 #: plpy_typeio.c:1170
 #, c-format
@@ -422,6 +424,8 @@ msgstr "მასივის ზომა მაქსიმალურ და
 msgid ""
 "return value of function with array return type is not a Python sequence"
 msgstr ""
+"ფუნქციის დაბრულების მნიშვნელობა მასივის დაბრუნების ტიპით Python-ის "
+"მიმდევრობა არაა"
 
 #: plpy_typeio.c:1261
 #, c-format
@@ -453,6 +457,8 @@ msgid ""
 "To return a composite type in an array, return the composite type as a "
 "Python tuple, e.g., \"[('foo',)]\"."
 msgstr ""
+"მასივში კომპოზიტური ტიპის დასაბრუნებლად კომპოზიტური ტიპი, როგორც Python-ის "
+"კოლაჟი, ისე დააბრუნეთ. მაგ: \"[('foo',)]\"."
 
 #: plpy_typeio.c:1391
 #, c-format
@@ -465,6 +471,8 @@ msgid ""
 "To return null in a column, add the value None to the mapping with the key "
 "named after the column."
 msgstr ""
+"სვეტში ნულის დასაბრუნებლად ამ სვეტის სახელის მქონე გასაღების მიბმას "
+"მნიშვნელობა None დაამატეთ."
 
 #: plpy_typeio.c:1445
 #, c-format
@@ -483,6 +491,8 @@ msgid ""
 "To return null in a column, let the returned object have an attribute named "
 "after column with value None."
 msgstr ""
+"სვეტში ნულის დასაბრუნებლად დასაბრუნებელ ობიექტს მიანიჭეთ სვეტის სახელის "
+"მქონე ატრიბუტი , მნიშვნელობით \"None\"."
 
 #: plpy_util.c:31
 #, c-format

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-02 04:48+0000\n"
-"PO-Revision-Date: 2022-08-12 15:57+0200\n"
+"PO-Revision-Date: 2022-09-25 19:03+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -52,6 +52,9 @@ msgid ""
 "If pg_upgrade fails after this point, you must re-initdb the\n"
 "new cluster before continuing.\n"
 msgstr ""
+"\n"
+"თუ ამ წერტილის შემდეგ pg_upgrade ავარიულად დასრულდება, გაგრძელებამდე\n"
+"ახალი კლასტერის init-db-ის გაკეთება შეიძლება თავიდან მოგიწიოთ.\n"
 
 #: check.c:259
 #, c-format
@@ -914,6 +917,8 @@ msgstr ""
 msgid ""
 "error while copying relation \"%s.%s\": partial page found in file \"%s\"\n"
 msgstr ""
+"შეცდომა ურთიერთობის \"%s.%s\" კოპირებისას: ფაილში \"%s\" ნაპოვნია "
+"ნაწილობრივი გვერდი\n"
 
 #: file.c:328 file.c:345
 #, c-format
@@ -1107,6 +1112,8 @@ msgstr "მიმდინარე საქაღალდის იდენ�
 msgid ""
 "cannot run pg_upgrade from inside the new cluster data directory on Windows\n"
 msgstr ""
+"pg_upgrade-ის გაშვება Windows-ზე ახალი კლასტერის მონაცემების საქაღალდიდან "
+"შეუძლებელია\n"
 
 #: option.c:263
 #, c-format
@@ -1313,6 +1320,11 @@ msgid ""
 "  $ export PGBINNEW=newCluster/bin\n"
 "  $ pg_upgrade\n"
 msgstr ""
+"  $ export PGDATAOLD=oldCluster/data\n"
+"  $ export PGDATANEW=newCluster/data\n"
+"  $ export PGBINOLD=oldCluster/bin\n"
+"  $ export PGBINNEW=newCluster/bin\n"
+"  $ pg_upgrade\n"
 
 #: option.c:309
 #, c-format
@@ -1323,6 +1335,11 @@ msgid ""
 "  C:\\> set PGBINNEW=newCluster/bin\n"
 "  C:\\> pg_upgrade\n"
 msgstr ""
+"  C:\\> set PGDATAOLD=oldCluster/data\n"
+"  C:\\> set PGDATANEW=newCluster/data\n"
+"  C:\\> set PGBINOLD=oldCluster/bin\n"
+"  C:\\> set PGBINNEW=newCluster/bin\n"
+"  C:\\> pg_upgrade\n"
 
 #: option.c:315
 #, c-format
@@ -1657,6 +1674,7 @@ msgstr "არასაკმარისი მეხსიერება\n"
 #, c-format
 msgid "libpq environment variable %s has a non-local server value: %s\n"
 msgstr ""
+"libpq-ის გარემოს ცვლად %s-ს არალოკალური სერვერის მნიშვნელობა: %s გააჩნია\n"
 
 #: tablespace.c:28
 #, c-format

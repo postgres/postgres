@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-09 12:01+0900\n"
-"PO-Revision-Date: 2022-05-11 14:42+0900\n"
+"POT-Creation-Date: 2022-09-26 11:14+0900\n"
+"PO-Revision-Date: 2022-09-26 14:53+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -838,341 +838,172 @@ msgstr "履歴ファイル内の無効なデータ"
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "タイムラインIDは子のタイムラインIDより小さくなければなりません。"
 
-#: xlogreader.c:621
+#: xlogreader.c:625
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "%X/%Xのレコードオフセットが無効です"
 
-#: xlogreader.c:629
+#: xlogreader.c:633
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "%X/%Xではcontrecordが必要です"
 
-#: xlogreader.c:670 xlogreader.c:1102
+#: xlogreader.c:674 xlogreader.c:1121
 #, c-format
 msgid "invalid record length at %X/%X: wanted %u, got %u"
 msgstr "%X/%Xのレコード長が無効です:長さは%uである必要がありますが、長さは%uでした"
 
-#: xlogreader.c:699
+#: xlogreader.c:703
 #, c-format
 msgid "out of memory while trying to decode a record of length %u"
 msgstr "長さ%uのレコードのデコード中のメモリ不足"
 
-#: xlogreader.c:721
+#: xlogreader.c:725
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "%2$X/%3$Xのレコード長%1$uが大きすぎます"
 
-#: xlogreader.c:770
+#: xlogreader.c:774
 #, c-format
 msgid "there is no contrecord flag at %X/%X"
 msgstr "%X/%Xで contrecord フラグがありません"
 
-#: xlogreader.c:783
+#: xlogreader.c:787
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "%3$X/%4$Xの継続レコードの長さ%1$u(正しくは%2$lld)は不正です"
 
-#: xlogreader.c:1110
+#: xlogreader.c:922
+#, c-format
+msgid "missing contrecord at %X/%X"
+msgstr "%X/%Xに継続レコードがありません"
+
+#: xlogreader.c:1129
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "%2$X/%3$XのリソースマネージャID %1$uが無効です"
 
-#: xlogreader.c:1123 xlogreader.c:1139
+#: xlogreader.c:1142 xlogreader.c:1158
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "直前のリンク%1$X/%2$Xが不正なレコードが%3$X/%4$Xにあります"
 
-#: xlogreader.c:1175
+#: xlogreader.c:1194
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "%X/%Xのレコード内のリソースマネージャデータのチェックサムが不正です"
 
-#: xlogreader.c:1212
+#: xlogreader.c:1231
 #, c-format
 msgid "invalid magic number %04X in log segment %s, offset %u"
 msgstr "ログセグメント%2$s、オフセット%3$uのマジックナンバー%1$04Xは無効です"
 
-#: xlogreader.c:1226 xlogreader.c:1267
+#: xlogreader.c:1245 xlogreader.c:1286
 #, c-format
 msgid "invalid info bits %04X in log segment %s, offset %u"
 msgstr "ログセグメント %2$s、オフセット %3$u の情報ビット %1$04X は無効です"
 
-#: xlogreader.c:1241
+#: xlogreader.c:1260
 #, c-format
 msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
 msgstr "WALファイルは異なるデータベースシステム由来のものです: WALファイルのデータベースシステム識別子は %lluで、pg_control におけるデータベースシステム識別子は %lluです"
 
-#: xlogreader.c:1249
+#: xlogreader.c:1268
 #, c-format
 msgid "WAL file is from different database system: incorrect segment size in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのセグメントサイズが正しくありません"
 
-#: xlogreader.c:1255
+#: xlogreader.c:1274
 #, c-format
 msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
 msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_BLCKSZが正しくありません"
 
-#: xlogreader.c:1286
+#: xlogreader.c:1305
 #, c-format
 msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
 msgstr "ログセグメント%3$s、オフセット%4$uのページアドレス%1$X/%2$Xは想定外です"
 
-#: xlogreader.c:1311
+#: xlogreader.c:1330
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
 msgstr "ログセグメント%3$s、オフセット%4$uの時系列ID %1$u(%2$uの後)は順序に従っていません"
 
-#: xlogreader.c:1706
+#: xlogreader.c:1735
 #, c-format
 msgid "out-of-order block_id %u at %X/%X"
 msgstr "block_id %uが%X/%Xで無効です"
 
-#: xlogreader.c:1730
+#: xlogreader.c:1759
 #, c-format
 msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
 msgstr "BKPBLOCK_HAS_DATAが設定されていますが、%X/%Xにデータがありません"
 
-#: xlogreader.c:1737
+#: xlogreader.c:1766
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
 msgstr "BKPBLOCK_HAS_DATAが設定されていませんが、%2$X/%3$Xのデータ長は%1$u"
 
-#: xlogreader.c:1773
+#: xlogreader.c:1802
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていますが、%4$X/%5$Xでホールオフセット%1$u、長さ%2$u、ブロックイメージ長%3$u"
 
-#: xlogreader.c:1789
+#: xlogreader.c:1818
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEが設定されていませんが、%3$X/%4$Xにホールオフセット%1$u、長さ%2$u"
 
-#: xlogreader.c:1803
+#: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
 msgstr "BKPIMAGE_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
-#: xlogreader.c:1818
+#: xlogreader.c:1847
 #, c-format
 msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
 msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$uです"
 
-#: xlogreader.c:1834
+#: xlogreader.c:1863
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
 msgstr "BKPBLOCK_SAME_RELが設定されていますが、%X/%Xにおいて以前のリレーションがありません"
 
-#: xlogreader.c:1846
+#: xlogreader.c:1875
 #, c-format
 msgid "invalid block_id %u at %X/%X"
 msgstr "%2$X/%3$Xにおけるblock_id %1$uが無効です"
 
-#: xlogreader.c:1913
+#: xlogreader.c:1942
 #, c-format
 msgid "record with invalid length at %X/%X"
 msgstr "%X/%Xのレコードのサイズが無効です"
 
-#: xlogreader.c:1938
+#: xlogreader.c:1967
 #, c-format
-msgid "failed to locate backup block with ID %d in WAL record"
-msgstr "WALレコード中ID %dのバックアップブロックを特定できません"
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "WALレコード中のID %dのバックアップブロックを特定できませんでした"
 
-#: xlogreader.c:2044 xlogreader.c:2061
+#: xlogreader.c:2051
 #, c-format
-msgid "image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "%X/%Xのイメージはこのビルドではサポートされていない%sで圧縮されています、ブロック%d"
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "%X/%Xで不正なブロック%dが指定されているためイメージが復元できませんでした"
 
-#: xlogreader.c:2070
+#: xlogreader.c:2058
 #, c-format
-msgid "image at %X/%X compressed with unknown method, block %d"
-msgstr "%X%Xのイメージは不明な方式で圧縮されています、ブロック%d"
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "%X/%Xでブロック%dのイメージが不正な状態であるため復元できませんでした"
 
-#: xlogreader.c:2078
+#: xlogreader.c:2085 xlogreader.c:2102
 #, c-format
-msgid "invalid compressed image at %X/%X, block %d"
-msgstr "%X/%X、ブロック %d での圧縮イメージが無効です"
+msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
+msgstr "%1$X/%2$Xで、ブロック%4$dがこのビルドでサポートされない圧縮方式%3$sで圧縮されているため復元できませんでした"
 
-#~ msgid "fatal: "
-#~ msgstr "致命的エラー: "
+#: xlogreader.c:2111
+#, c-format
+msgid "could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "%X/%Xでブロック%dのイメージが不明な方式で圧縮されているため復元できませんでした"
 
-#~ msgid "\"%s\" is not a directory"
-#~ msgstr "\"%s\"はディレクトリではありません"
-
-#~ msgid "\"%s\" is not a symbolic link"
-#~ msgstr "\"%s\"はシンボリックリンクではありません"
-
-#~ msgid "\"%s\" is not a regular file"
-#~ msgstr "\"%s\" は通常のファイルではありません"
-
-#~ msgid "source file list is empty"
-#~ msgstr "ソースファイルリストが空です"
-
-#~ msgid "could not connect to server: %s"
-#~ msgstr "サーバーに接続できませんでした: %s"
-
-#~ msgid "source server must not be in recovery mode"
-#~ msgstr "ソースサーバーはリカバリモードであってはなりません"
-
-#~ msgid "could not send COPY data: %s"
-#~ msgstr "COPY 対象データを送信できませんでした: %s"
-
-#~ msgid "could not send file list: %s"
-#~ msgstr "ファイルリストを送信できませんでした: %s"
-
-#~ msgid "could not send end-of-COPY: %s"
-#~ msgstr "コピー終端を送信できませんでした: %s"
-
-#~ msgid "unexpected result while sending file list: %s"
-#~ msgstr "ファイルリストを送信中に想定外の結果: %s"
-
-#~ msgid "Try \"%s --help\" for more information.\n"
-#~ msgstr "詳細は\"%s --help\"を実行してください。\n"
-
-#~ msgid "You must run %s as the PostgreSQL superuser.\n"
-#~ msgstr "PostgreSQLのスーパーユーザーで%sを実行しなければなりません\n"
-
-#~ msgid "invalid contrecord length %u at %X/%X"
-#~ msgstr "%2$X/%3$Xのcontrecordの長さ %1$u が無効です"
-
-#~ msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
-#~ msgstr "BKPIMAGE_IS_COMPRESSEDが設定されていますが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
-
-#~ msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
-#~ msgstr "BKPIMAGE_HAS_HOLEもBKPIMAGE_IS_COMPRESSEDも設定されていませんが、%2$X/%3$Xにおいてブロックイメージ長が%1$u"
-
-#~ msgid "could not create temporary table: %s"
-#~ msgstr "一時テーブルを作成できませんでした: %s"
-
-#~ msgid "WAL file is from different database system: incorrect XLOG_SEG_SIZE in page header"
-#~ msgstr "WAL ファイルは異なるデータベースシステム由来のものです: ページヘッダーのXLOG_SEG_SIZEが正しくありません"
-
-#~ msgid "Timeline IDs must be less than child timeline's ID.\n"
-#~ msgstr "時系列IDは副時系列IDより小さくなければなりません。\n"
-
-#~ msgid "Timeline IDs must be in increasing sequence.\n"
-#~ msgstr "時系列IDは昇順の並びでなければなりません\n"
-
-#~ msgid "invalid data in history file: %s\n"
-#~ msgstr "履歴ファイル内の無効なデータ: %s\n"
-
-#~ msgid "Expected a transaction log switchpoint location.\n"
-#~ msgstr "トランザクションログの切替えポイントを想定しています。\n"
-
-#~ msgid "Expected a numeric timeline ID.\n"
-#~ msgstr "数字の時系列IDを想定しました。\n"
-
-#~ msgid "syntax error in history file: %s\n"
-#~ msgstr "履歴ファイル内の構文エラー: %s\n"
-
-#~ msgid "sync of target directory failed\n"
-#~ msgstr "ターゲットディレクトリの同期が失敗しました\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" was found by \"%s\"\n"
-#~ "but was not the same version as %s.\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "\"%s\"がプログラム \"initdb\" を見つけましたが、これは%sと同じ\n"
-#~ "バージョンではありませんでした。\n"
-#~ "インストレーションを検査してください。\n"
-
-#~ msgid ""
-#~ "The program \"initdb\" is needed by %s but was\n"
-#~ "not found in the same directory as \"%s\".\n"
-#~ "Check your installation.\n"
-#~ msgstr ""
-#~ "%sには \"initdb\" プログラムが必要ですが、\"%s\"と同じディレクトリ\n"
-#~ "にありませんでした。\n"
-#~ "インストール状況を確認してください。\n"
-
-#~ msgid "%d: %X/%X - %X/%X\n"
-#~ msgstr "%d: %X/%X - %X/%X\n"
-
-#~ msgid "Target timeline history:\n"
-#~ msgstr "ターゲットタイムラインの履歴:\n"
-
-#~ msgid "Source timeline history:\n"
-#~ msgstr "ソースタイムラインの履歴\n"
-
-#~ msgid "could not read from file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"を読み込めませんでした: %s\n"
-
-#~ msgid "could not seek in file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"をシークできませんでした: %s\n"
-
-#~ msgid "could not open file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" をオープンできませんでした: %s\n"
-
-#~ msgid "Failure, exiting\n"
-#~ msgstr "失敗しました、終了します\n"
-
-#~ msgid "fetched file \"%s\", length %d\n"
-#~ msgstr "フェッチしたファイル \"%s\",長さ %d\n"
-
-#~ msgid "received null value for chunk for file \"%s\", file has been deleted\n"
-#~ msgstr "ファイル\"%s\"のNULL値のチャンクを受け取りました。ファイルは削除されました。\n"
-
-#~ msgid "getting file chunks\n"
-#~ msgstr "ファイルチャンクの取得\n"
-
-#~ msgid "%s (%s)\n"
-#~ msgstr "%s (%s)\n"
-
-#~ msgid "could not open file \"%s\" for reading: %s\n"
-#~ msgstr "読み取り用のファイル\"%s\"をオープンできませんでした:%s\n"
-
-#~ msgid "could not remove symbolic link \"%s\": %s\n"
-#~ msgstr "シンボリックリンク \"%s\" を削除できませんでした: %s\n"
-
-#~ msgid "could not remove directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を削除できませんでした: %s\n"
-
-#~ msgid "could not create directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を作成できませんでした: %s\n"
-
-#~ msgid "could not truncate file \"%s\" to %u: %s\n"
-#~ msgstr "ファイル \"%s\" を%uに切り詰められませんでした: %s\n"
-
-#~ msgid "could not remove file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"を削除できませんでした: %s\n"
-
-#~ msgid "could not write file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"に書き込めませんでした: %s\n"
-
-#~ msgid "  block %u\n"
-#~ msgstr "ブロック数 %u\n"
-
-#~ msgid "could not close file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" をクローズできませんでした: %s\n"
-
-#~ msgid "could not read file \"%s\": %s\n"
-#~ msgstr "ファイル \"%s\" を読み込めませんでした: %s\n"
-
-#~ msgid "could not read directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"を読み取れませんでした: %s\n"
-
-#~ msgid "symbolic link \"%s\" target is too long\n"
-#~ msgstr "シンボリックリンク\"%s\"の参照先は長すぎます\n"
-
-#~ msgid "could not read symbolic link \"%s\": %s\n"
-#~ msgstr "シンボリックリンク \"%s\" を読み込めませんでした: %s\n"
-
-#~ msgid "could not stat file \"%s\": %s\n"
-#~ msgstr "ファイル\"%s\"のstatができませんでした: %s\n"
-
-#~ msgid "could not open directory \"%s\": %s\n"
-#~ msgstr "ディレクトリ\"%s\"をオープンできませんでした: %s\n"
-
-#~ msgid "WAL file is from different database system: WAL file database system identifier is %s, pg_control database system identifier is %s"
-#~ msgstr "WAL ファイルは異なるデータベースシステム由来ものです: WAL ファイルにおけるデータベースシステムの識別子は %s で、pg_control におけるデータベースシステムの識別子は %s です。"
-
-#~ msgid ""
-#~ "\n"
-#~ "Report bugs to <pgsql-bugs@lists.postgresql.org>.\n"
-#~ msgstr ""
-#~ "\n"
-#~ "不具合は<pgsql-bugs@lists.postgresql.org>まで報告してください。\n"
-
-#~ msgid "cannot create restricted tokens on this platform"
-#~ msgstr "このプラットフォームでは制限付きトークンを作成できません"
+#: xlogreader.c:2119
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "%X/%Xのブロック%dが伸張できませんでした"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-04 22:48+0000\n"
+"POT-Creation-Date: 2022-09-26 06:47+0000\n"
 "PO-Revision-Date: 2022-08-05 06:43+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
@@ -361,6 +361,178 @@ msgstr "fel i WAL-post vid %X/%X: %s"
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Försök med \"%s --help\" för mer information."
+
+#: xlogreader.c:625
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "ogiltig postoffset vid %X/%X"
+
+#: xlogreader.c:633
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "contrecord är begärd vid %X/%X"
+
+#: xlogreader.c:674 xlogreader.c:1121
+#, c-format
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "ogiltig postlängd vid %X/%X: förväntade %u, fick %u"
+
+#: xlogreader.c:703
+#, c-format
+msgid "out of memory while trying to decode a record of length %u"
+msgstr "slut på minne vid avkodning av post med längden %u"
+
+#: xlogreader.c:725
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "postlängd %u vid %X/%X är för lång"
+
+#: xlogreader.c:774
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "det finns ingen contrecord-flagga vid %X/%X"
+
+#: xlogreader.c:787
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "ogiltig contrecord-längd %u (förväntade %lld) vid %X/%X"
+
+#: xlogreader.c:922
+#, c-format
+msgid "missing contrecord at %X/%X"
+msgstr "det saknas en contrecord vid %X/%X"
+
+#: xlogreader.c:1129
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "ogiltigt resurshanterar-ID %u vid %X/%X"
+
+#: xlogreader.c:1142 xlogreader.c:1158
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "post med inkorrekt prev-link %X/%X vid %X/%X"
+
+#: xlogreader.c:1194
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "felaktig resurshanterardatakontrollsumma i post vid %X/%X"
+
+#: xlogreader.c:1231
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "felaktigt magiskt nummer %04X i loggsegment %s, offset %u"
+
+#: xlogreader.c:1245 xlogreader.c:1286
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "ogiltiga infobitar %04X i loggsegment %s, offset %u"
+
+#: xlogreader.c:1260
+#, c-format
+msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+msgstr "WAL-fil är från ett annat databassystem: WAL-filens databassystemidentifierare är %llu, pg_control databassystemidentifierare är %llu"
+
+#: xlogreader.c:1268
+#, c-format
+msgid "WAL file is from different database system: incorrect segment size in page header"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt segmentstorlek i sidhuvuid"
+
+#: xlogreader.c:1274
+#, c-format
+msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
+msgstr "WAL-fil är från ett annat databassystem: inkorrekt XLOG_BLCKSZ i sidhuvuid"
+
+#: xlogreader.c:1305
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "oväntad sidadress %X/%X i loggsegment %s, offset %u"
+
+# FIXME
+#: xlogreader.c:1330
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr "\"ej i sekvens\"-fel på tidslinje-ID %u (efter %u) i loggsegment %s, offset %u"
+
+#: xlogreader.c:1735
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "\"ej i sekvens\"-block_id %u vid %X/%X"
+
+#: xlogreader.c:1759
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA är satt men ingen data inkluderad vid %X/%X"
+
+#: xlogreader.c:1766
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA är ej satt men datalängden är %u vid %X/%X"
+
+#: xlogreader.c:1802
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är satt men håloffset %u längd %u block-image-längd %u vid %X/%X"
+
+#: xlogreader.c:1818
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE är inte satt men håloffset %u längd %u vid %X/%X"
+
+#: xlogreader.c:1832
+#, c-format
+msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "BKPIMAGE_COMPRESSED är satt men block-image-längd %u vid %X/%X"
+
+#: xlogreader.c:1847
+#, c-format
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
+msgstr "varken BKPIMAGE_HAS_HOLE eller BKPIMAGE_COMPRESSED är satt men block-image-längd är %u vid %X/%X"
+
+#: xlogreader.c:1863
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "BKPBLOCK_SAME_REL är satt men ingen tidigare rel vid %X/%X"
+
+#: xlogreader.c:1875
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "ogiltig block_id %u vid %X/%X"
+
+#: xlogreader.c:1942
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "post med ogiltig längd vid %X/%X"
+
+#: xlogreader.c:1967
+#, fuzzy, c-format
+#| msgid "failed to locate backup block with ID %d in WAL record"
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "misslyckades med att hitta backupblock med ID %d i WAL-post"
+
+#: xlogreader.c:2051
+#, c-format
+msgid "could not restore image at %X/%X with invalid block %d specified"
+msgstr "kunde inte återställa avbild vid %X/%X med ogiltigt block %d angivet"
+
+#: xlogreader.c:2058
+#, c-format
+msgid "could not restore image at %X/%X with invalid state, block %d"
+msgstr "kunde inte återställa image vid %X/%X med ogiltigt state, block %d"
+
+#: xlogreader.c:2085 xlogreader.c:2102
+#, c-format
+msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
+msgstr "kunde inte återställa image vid %X/%X, komprimerad med %s stöds inte av bygget, block %d"
+
+#: xlogreader.c:2111
+#, c-format
+msgid "could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr "kunde inte återställa image vid %X/%X, komprimerad med okänd metod, block %d"
+
+#: xlogreader.c:2119
+#, c-format
+msgid "could not decompress image at %X/%X, block %d"
+msgstr "kunde inte packa upp image vid %X/%X, block %d"
 
 #, c-format
 #~ msgid "could not parse \"%s\" as a transaction ID"

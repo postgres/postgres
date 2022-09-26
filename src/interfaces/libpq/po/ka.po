@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-07-06 16:40+0000\n"
-"PO-Revision-Date: 2022-07-06 19:45+0200\n"
+"POT-Creation-Date: 2022-09-25 19:40+0000\n"
+"PO-Revision-Date: 2022-09-25 22:01+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../../port/thread.c:100 ../../port/thread.c:136
 #, c-format
@@ -74,10 +74,10 @@ msgstr "ერთჯერადი კოდის გენერაციი�
 #: fe-connect.c:5537 fe-connect.c:5636 fe-connect.c:5892 fe-connect.c:5921
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
-#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3214 fe-exec.c:3398
-#: fe-exec.c:4176 fe-exec.c:4341 fe-gssapi-common.c:111 fe-lobj.c:884
-#: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
-#: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
+#: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3144 fe-exec.c:3328
+#: fe-exec.c:4110 fe-exec.c:4275 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-protocol3.c:973 fe-protocol3.c:988 fe-protocol3.c:1021
+#: fe-protocol3.c:1729 fe-protocol3.c:2132 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
 msgid "out of memory\n"
 msgstr "არასაკმარისი მეხსიერება\n"
@@ -129,12 +129,12 @@ msgid "malformed SCRAM message (invalid server signature)\n"
 msgstr "დამახინჯებული SCRAM-ის შეტყობინება (სერვერის არასწორი ხელმოწერა)\n"
 
 #: fe-auth-scram.c:934 fe-exec.c:527 fe-protocol3.c:207 fe-protocol3.c:232
-#: fe-protocol3.c:261 fe-protocol3.c:279 fe-protocol3.c:376 fe-protocol3.c:749
+#: fe-protocol3.c:261 fe-protocol3.c:279 fe-protocol3.c:360 fe-protocol3.c:733
 msgid "out of memory"
 msgstr "მეხსიერებას გარეთ"
 
 #: fe-auth-scram.c:943
-msgid "failed to generate random salt"
+msgid "could not generate random salt"
 msgstr "შემთხვევითი მარილის გენერაციის შეცდომა"
 
 #: fe-auth.c:76
@@ -711,12 +711,12 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "პაროლი მიღებულია ფაილიდან \"%s\"\n"
 
-#: fe-exec.c:466 fe-exec.c:3472
+#: fe-exec.c:466 fe-exec.c:3402
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "მწკრივების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:528 fe-protocol3.c:1953
+#: fe-exec.c:528 fe-protocol3.c:1937
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -741,116 +741,117 @@ msgstr "PGresult-ს INT_MAX-ზე მეტი სტრუქტურის 
 msgid "size_t overflow"
 msgstr "size_t -ის გადავსება"
 
-#: fe-exec.c:1449 fe-exec.c:1574 fe-exec.c:1623
+#: fe-exec.c:1448 fe-exec.c:1519 fe-exec.c:1568
 msgid "command string is a null pointer\n"
 msgstr "ბრძანების სრიქონი ნულოვანი მაჩვენებელია\n"
 
-#: fe-exec.c:1580 fe-exec.c:1629 fe-exec.c:1725
+#: fe-exec.c:1455 fe-exec.c:2914
+#, c-format
+msgid "%s not allowed in pipeline mode\n"
+msgstr "კომუნიკაციის არხის რეჟიმში %s დაუშვებელია\n"
+
+#: fe-exec.c:1525 fe-exec.c:1574 fe-exec.c:1670
 #, c-format
 msgid "number of parameters must be between 0 and %d\n"
 msgstr "პარამეტრების რაოდენობა 0-სა და %d-ს შორის შეიძლება იყოს\n"
 
-#: fe-exec.c:1617 fe-exec.c:1719
+#: fe-exec.c:1562 fe-exec.c:1664
 msgid "statement name is a null pointer\n"
 msgstr "პირობის სახელი ნულოვანი მაჩვენებელია\n"
 
-#: fe-exec.c:1763 fe-exec.c:3325
+#: fe-exec.c:1708 fe-exec.c:3255
 msgid "no connection to the server\n"
 msgstr "სერვერთან შეერთება არ არსებობს\n"
 
-#: fe-exec.c:1772 fe-exec.c:3334
+#: fe-exec.c:1717 fe-exec.c:3264
 msgid "another command is already in progress\n"
 msgstr "უკვე გაშვებულია სხვა ბრძანება\n"
 
-#: fe-exec.c:1803
+#: fe-exec.c:1748
 msgid "cannot queue commands during COPY\n"
 msgstr "როცა გაშვებულია ბრძანება COPY, სხვა ბრძანებებს ვერ გაუშვებთ\n"
 
-#: fe-exec.c:1921
+#: fe-exec.c:1866
 msgid "length must be given for binary parameter\n"
 msgstr "ბინარული პარამეტრისთვის საჭიროა სიგრძის მითითება\n"
 
-#: fe-exec.c:2244
+#: fe-exec.c:2189
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "მოულოდნელი asyncStatus: %d\n"
 
-#: fe-exec.c:2418
+#: fe-exec.c:2347
 msgid ""
 "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr ""
 "კომუნიკაციის არხის რეჟიმში ბრძანების სინქრონული შესრულების ფუნქციები "
 "მუწვდომელია\n"
 
-#: fe-exec.c:2435
+#: fe-exec.c:2364
 msgid "COPY terminated by new PQexec"
 msgstr "COPY შეწყვეტილია ახალი PQexec-ის მიერ"
 
-#: fe-exec.c:2452
+#: fe-exec.c:2381
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "COPY BOTH-ის დროს PQexec დაუშვებელია\n"
 
-#: fe-exec.c:2680 fe-exec.c:2736 fe-exec.c:2805 fe-protocol3.c:1884
+#: fe-exec.c:2609 fe-exec.c:2665 fe-exec.c:2734 fe-protocol3.c:1868
 msgid "no COPY in progress\n"
 msgstr "ბრძანება COPY გაშვებული არაა\n"
 
-#: fe-exec.c:2985
-msgid "PQfn not allowed in pipeline mode\n"
-msgstr "კომუნიკაციის არხის რეჟიმში PQfn დაუშვებელია\n"
-
-#: fe-exec.c:2993
+#: fe-exec.c:2923
 msgid "connection in wrong state\n"
 msgstr "შეერთების მდგომარეობა არასწორია\n"
 
-#: fe-exec.c:3037
+#: fe-exec.c:2967
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr "კომუნიკაციის არხის რეჟიმზე გადართვის შეცდომა. შეერთება უქმე არაა\n"
 
-#: fe-exec.c:3074 fe-exec.c:3098
+#: fe-exec.c:3004 fe-exec.c:3028
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr ""
 "მოგროვებული შედეგების გარეშე კომუნიკაციის არხის რეჟიმიდან ვერ გახვალთ\n"
 
-#: fe-exec.c:3079
+#: fe-exec.c:3009
 msgid "cannot exit pipeline mode while busy\n"
 msgstr ""
 "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია\n"
 
-#: fe-exec.c:3091
+#: fe-exec.c:3021
 msgid "cannot exit pipeline mode while in COPY\n"
 msgstr ""
 "კომუნიკაციის არხის რეჟიმიდან გასვლა მაშინ, როცა ის დაკავებულია, შეუძლებელია\n"
 
-#: fe-exec.c:3258
+#: fe-exec.c:3188
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr ""
 "კომუნიკაციის არხის გაგზავნა, როცა კომუნიკაციის არხის რეჟიმში არ ხართ, "
 "შეუძლებელია\n"
 
-#: fe-exec.c:3361
+#: fe-exec.c:3291
 msgid "invalid ExecStatusType code"
 msgstr "ExecStatusType-ის არასწორი კოდი"
 
-#: fe-exec.c:3388
+#: fe-exec.c:3318
 msgid "PGresult is not an error result\n"
 msgstr "PGresult შეცდომითი შედეგი არაა\n"
 
-#: fe-exec.c:3456 fe-exec.c:3479
+#: fe-exec.c:3386 fe-exec.c:3409
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "სვეტების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3494
+#: fe-exec.c:3424
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "პარამეტრების რაოდენობა %d ზღვარს (0..%d) გარეთაა"
 
-#: fe-exec.c:3805
+#: fe-exec.c:3735
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "სერვერის პასუხის გაურკვეველია: %s"
 
-#: fe-exec.c:4067 fe-exec.c:4158
+#: fe-exec.c:4001 fe-exec.c:4092
 msgid "incomplete multibyte character\n"
 msgstr "დაუსრულებელი მრავალბაიტიანი სიმბოლო\n"
 
@@ -941,7 +942,7 @@ msgstr "%s()-ის შეცდომა: %s\n"
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "შეტყობინების ტიპი 0x%02x მოვიდა სერვერიდან, როცა უქმე ვიყავი"
 
-#: fe-protocol3.c:409
+#: fe-protocol3.c:393
 msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)\n"
@@ -949,125 +950,125 @@ msgstr ""
 "სერვერმა მონაცემები (\"D\" შეტყობინება) მწკრივების წინასწარი აღწერის (\"T\" "
 "შეტყობინება) გარეშე გამოაგზავნა\n"
 
-#: fe-protocol3.c:452
+#: fe-protocol3.c:436
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "სერვერის მოულოდნელი პასუხი; პირველი მიღებული სიმბოლოა \"%c\"\n"
 
-#: fe-protocol3.c:477
+#: fe-protocol3.c:461
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "შეტყობინების შიგთავსი შეტყობინების ამ ტიპის (%c) სიგრძეს არ ემთხვევა\n"
 
-#: fe-protocol3.c:497
+#: fe-protocol3.c:481
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr ""
 "სერვერთან სინქრონიზაციის შეცდომა: შეტყობინების ტიპი: \"%c\",  სიგრძე %d\n"
 
-#: fe-protocol3.c:549 fe-protocol3.c:589
+#: fe-protocol3.c:533 fe-protocol3.c:573
 msgid "insufficient data in \"T\" message"
 msgstr "არასაკმარისი მონაცემები \"T\" შეტყობინებაში"
 
-#: fe-protocol3.c:660 fe-protocol3.c:866
+#: fe-protocol3.c:644 fe-protocol3.c:850
 msgid "out of memory for query result"
 msgstr "არასაკმარისი მეხსიერება მოთხოვნის შედეგისთვის"
 
-#: fe-protocol3.c:729
+#: fe-protocol3.c:713
 msgid "insufficient data in \"t\" message"
 msgstr "არასაკმარისი მონაცემები \"t\" შეტყობინებაში"
 
-#: fe-protocol3.c:788 fe-protocol3.c:820 fe-protocol3.c:838
+#: fe-protocol3.c:772 fe-protocol3.c:804 fe-protocol3.c:822
 msgid "insufficient data in \"D\" message"
 msgstr "არასაკმარისი მონაცემები \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:794
+#: fe-protocol3.c:778
 msgid "unexpected field count in \"D\" message"
 msgstr "ველების მოულოდნელი რაოდენობა \"D\" შეტყობინებაში"
 
-#: fe-protocol3.c:1050
+#: fe-protocol3.c:1034
 msgid "no error message available\n"
 msgstr "შეცდომის შეტყობინების გარეშე\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1098 fe-protocol3.c:1117
+#: fe-protocol3.c:1082 fe-protocol3.c:1101
 #, c-format
 msgid " at character %s"
 msgstr " სიმბოლოსთან %s"
 
-#: fe-protocol3.c:1130
+#: fe-protocol3.c:1114
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "დეტალი:  %s\n"
 
-#: fe-protocol3.c:1133
+#: fe-protocol3.c:1117
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "მინიშნება:  %s\n"
 
-#: fe-protocol3.c:1136
+#: fe-protocol3.c:1120
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "მოთხოვნა:  %s\n"
 
-#: fe-protocol3.c:1143
+#: fe-protocol3.c:1127
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "კონტექსტი:  %s\n"
 
-#: fe-protocol3.c:1152
+#: fe-protocol3.c:1136
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "სქემის სახელი:  %s\n"
 
-#: fe-protocol3.c:1156
+#: fe-protocol3.c:1140
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ცხრილის სახელი:  %s\n"
 
-#: fe-protocol3.c:1160
+#: fe-protocol3.c:1144
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "სვეტის სახელი:  %s\n"
 
-#: fe-protocol3.c:1164
+#: fe-protocol3.c:1148
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "მონ. ტიპის სახელი:  %s\n"
 
-#: fe-protocol3.c:1168
+#: fe-protocol3.c:1152
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "შეზღუდვის სახელი:  %s\n"
 
-#: fe-protocol3.c:1180
+#: fe-protocol3.c:1164
 msgid "LOCATION:  "
 msgstr "მდებარეობა:  "
 
-#: fe-protocol3.c:1182
+#: fe-protocol3.c:1166
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1184
+#: fe-protocol3.c:1168
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1379
+#: fe-protocol3.c:1363
 #, c-format
 msgid "LINE %d: "
 msgstr "ხაზი %d: "
 
-#: fe-protocol3.c:1778
+#: fe-protocol3.c:1762
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline: ტექსტის COPY OUT-ს არ გავაკეთებ\n"
 
-#: fe-protocol3.c:2155
+#: fe-protocol3.c:2139
 msgid "protocol error: no function result\n"
 msgstr "პროტოკოლის შეცდომა: ფუნქციის შედეგის გარეშე\n"
 
-#: fe-protocol3.c:2167
+#: fe-protocol3.c:2151
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "პროტოკოლის შეცდომა: id=0x%x\n"

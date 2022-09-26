@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:20+0000\n"
+"POT-Creation-Date: 2022-09-24 23:20+0000\n"
 "PO-Revision-Date: 2022-08-08 11:35+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -196,7 +196,7 @@ msgstr ""
 "en una base de datos.\n"
 "\n"
 
-#: clusterdb.c:263 createdb.c:283 createuser.c:346 dropdb.c:172 dropuser.c:170
+#: clusterdb.c:263 createdb.c:281 createuser.c:346 dropdb.c:172 dropuser.c:170
 #: pg_isready.c:226 reindexdb.c:760 vacuumdb.c:964
 #, c-format
 msgid "Usage:\n"
@@ -207,7 +207,7 @@ msgstr "Empleo:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPCIÓN]... [BASE-DE-DATOS]\n"
 
-#: clusterdb.c:265 createdb.c:285 createuser.c:348 dropdb.c:174 dropuser.c:172
+#: clusterdb.c:265 createdb.c:283 createuser.c:348 dropdb.c:174 dropuser.c:172
 #: pg_isready.c:229 reindexdb.c:762 vacuumdb.c:966
 #, c-format
 msgid ""
@@ -257,7 +257,7 @@ msgstr "  -V, --version             mostrar información de versión y salir\n"
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                mostrar esta ayuda y salir\n"
 
-#: clusterdb.c:274 createdb.c:300 createuser.c:370 dropdb.c:181 dropuser.c:179
+#: clusterdb.c:274 createdb.c:298 createuser.c:370 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:235 reindexdb.c:777 vacuumdb.c:991
 #, c-format
 msgid ""
@@ -306,7 +306,7 @@ msgstr ""
 "\n"
 "Lea la descripción de la orden CLUSTER de SQL para obtener mayores detalles.\n"
 
-#: clusterdb.c:282 createdb.c:308 createuser.c:376 dropdb.c:188 dropuser.c:185
+#: clusterdb.c:282 createdb.c:306 createuser.c:376 dropdb.c:188 dropuser.c:185
 #: pg_isready.c:240 reindexdb.c:785 vacuumdb.c:999
 #, c-format
 msgid ""
@@ -316,7 +316,7 @@ msgstr ""
 "\n"
 "Reporte errores a <%s>.\n"
 
-#: clusterdb.c:283 createdb.c:309 createuser.c:377 dropdb.c:189 dropuser.c:186
+#: clusterdb.c:283 createdb.c:307 createuser.c:377 dropdb.c:189 dropuser.c:186
 #: pg_isready.c:241 reindexdb.c:786 vacuumdb.c:1000
 #, c-format
 msgid "%s home page: <%s>\n"
@@ -351,32 +351,22 @@ msgstr "%s (%s/%s) "
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Por favor conteste «%s» o «%s».\n"
 
-#: createdb.c:165
-#, c-format
-msgid "only one of --locale and --lc-ctype can be specified"
-msgstr "sólo uno de --locale y --lc-ctype puede ser especificado"
-
-#: createdb.c:167
-#, c-format
-msgid "only one of --locale and --lc-collate can be specified"
-msgstr "sólo uno de --locale y --lc-collate puede ser especificado"
-
-#: createdb.c:175
+#: createdb.c:173
 #, c-format
 msgid "\"%s\" is not a valid encoding name"
 msgstr "«%s» no es un nombre válido de codificación"
 
-#: createdb.c:245
+#: createdb.c:243
 #, c-format
 msgid "database creation failed: %s"
 msgstr "falló la creación de la base de datos: %s"
 
-#: createdb.c:264
+#: createdb.c:262
 #, c-format
 msgid "comment creation failed (database was created): %s"
 msgstr "falló la creación del comentario (la base de datos fue creada): %s"
 
-#: createdb.c:282
+#: createdb.c:280
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -385,47 +375,47 @@ msgstr ""
 "%s crea una base de datos PostgreSQL.\n"
 "\n"
 
-#: createdb.c:284
+#: createdb.c:282
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPCIÓN]... [NOMBRE] [DESCRIPCIÓN]\n"
 
-#: createdb.c:286
+#: createdb.c:284
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr "  -D, --tablespace=TBLSPC   tablespace por omisión de la base de datos\n"
 
-#: createdb.c:287 reindexdb.c:766
+#: createdb.c:285 reindexdb.c:766
 #, c-format
 msgid "  -e, --echo                   show the commands being sent to the server\n"
 msgstr "  -e, --echo                mostrar las órdenes enviadas al servidor\n"
 
-#: createdb.c:288
+#: createdb.c:286
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=CODIF      codificación para la base de datos\n"
 
-#: createdb.c:289
+#: createdb.c:287
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=LOCALE       configuración regional para la base de datos\n"
 
-#: createdb.c:290
+#: createdb.c:288
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=LOCALE   configuración LC_COLLATE para la base de datos\n"
 
-#: createdb.c:291
+#: createdb.c:289
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=LOCALE     configuración LC_CTYPE para la base de datos\n"
 
-#: createdb.c:292
+#: createdb.c:290
 #, c-format
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
 msgstr "      --icu-locale=LOCALE   configuración regional ICU para la base de datos\n"
 
-#: createdb.c:293
+#: createdb.c:291
 #, c-format
 msgid ""
 "      --locale-provider={libc|icu}\n"
@@ -435,64 +425,64 @@ msgstr ""
 "                            proveedor de configuración regional para el ordenamiento\n"
 "                            por omisión de las bases de datos\n"
 
-#: createdb.c:295
+#: createdb.c:293
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr "  -O, --owner=DUEÑO         usuario que será dueño de la base de datos\n"
 
-#: createdb.c:296
+#: createdb.c:294
 #, c-format
 msgid "  -S, --strategy=STRATEGY      database creation strategy wal_log or file_copy\n"
 msgstr ""
 "  -S, --strategy=ESTRATEGIA estrategia de creación de bases de datos\n"
 "                           wal_log o file_copy\n"
 
-#: createdb.c:297
+#: createdb.c:295
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=PATRÓN     base de datos patrón a copiar\n"
 
-#: createdb.c:298 reindexdb.c:775
+#: createdb.c:296 reindexdb.c:775
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version             mostrar información de versión y salir\n"
 
-#: createdb.c:299 reindexdb.c:776
+#: createdb.c:297 reindexdb.c:776
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                mostrar esta ayuda y salir\n"
 
-#: createdb.c:301 reindexdb.c:778
+#: createdb.c:299 reindexdb.c:778
 #, c-format
 msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr "  -h, --host=ANFITRIÓN      nombre del servidor o directorio del socket\n"
 
-#: createdb.c:302 reindexdb.c:779
+#: createdb.c:300 reindexdb.c:779
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=PUERTO         puerto del servidor\n"
 
-#: createdb.c:303 reindexdb.c:780
+#: createdb.c:301 reindexdb.c:780
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr "  -U, --username=USUARIO    nombre de usuario para la conexión\n"
 
-#: createdb.c:304 reindexdb.c:781
+#: createdb.c:302 reindexdb.c:781
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password         nunca pedir contraseña\n"
 
-#: createdb.c:305 reindexdb.c:782
+#: createdb.c:303 reindexdb.c:782
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password            forzar la petición de contraseña\n"
 
-#: createdb.c:306 reindexdb.c:783
+#: createdb.c:304 reindexdb.c:783
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=BASE     base de datos de mantención alternativa\n"
 
-#: createdb.c:307
+#: createdb.c:305
 #, c-format
 msgid ""
 "\n"
@@ -1199,3 +1189,11 @@ msgid ""
 msgstr ""
 "\n"
 "Lea la descripción de la orden VACUUM de SQL para obtener mayores detalles.\n"
+
+#, c-format
+#~ msgid "only one of --locale and --lc-ctype can be specified"
+#~ msgstr "sólo uno de --locale y --lc-ctype puede ser especificado"
+
+#, c-format
+#~ msgid "only one of --locale and --lc-collate can be specified"
+#~ msgstr "sólo uno de --locale y --lc-collate puede ser especificado"

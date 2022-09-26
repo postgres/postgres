@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_basebackup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:19+0000\n"
-"PO-Revision-Date: 2022-09-03 15:30+0200\n"
+"POT-Creation-Date: 2022-09-24 23:18+0000\n"
+"PO-Revision-Date: 2022-09-25 16:52+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -41,36 +41,44 @@ msgstr "detalle: "
 msgid "hint: "
 msgstr "consejo: "
 
-#: ../../common/compression.c:157
+#: ../../common/compression.c:130 ../../common/compression.c:139
+#: ../../common/compression.c:148
+#, c-format
+msgid "this build does not support compression with %s"
+msgstr "esta instalación no soporta compresión con %s"
+
+#: ../../common/compression.c:203
 msgid "found empty string where a compression option was expected"
 msgstr "se encontró una cadena vacía donde se esperaba una opción de compresión"
 
-#: ../../common/compression.c:187
+#: ../../common/compression.c:237
 #, c-format
-msgid "unknown compression option \"%s\""
-msgstr "opción de compresión «%s» no válida"
+#| msgid "unrecognized column option \"%s\""
+msgid "unrecognized compression option: \"%s\""
+msgstr "opción de compresión no reconocida: «%s»"
 
-#: ../../common/compression.c:226
+#: ../../common/compression.c:276
 #, c-format
 msgid "compression option \"%s\" requires a value"
 msgstr "la opción de compresión «%s» requiere un valor"
 
-#: ../../common/compression.c:235
+#: ../../common/compression.c:285
 #, c-format
 msgid "value for compression option \"%s\" must be an integer"
 msgstr "el valor para la opción de compresión «%s» debe ser un entero"
 
-#: ../../common/compression.c:273
+#: ../../common/compression.c:335
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a compression level"
 msgstr "el algoritmo de compresión «%s» no acepta un nivel de compresión"
 
-#: ../../common/compression.c:277
+#: ../../common/compression.c:342
 #, c-format
-msgid "compression algorithm \"%s\" expects a compression level between %d and %d"
-msgstr "el algoritmo de compresión «%s» espera un nivel de compresión entre %d y %d"
+#| msgid "compression algorithm \"%s\" expects a compression level between %d and %d"
+msgid "compression algorithm \"%s\" expects a compression level between %d and %d (default at %d)"
+msgstr "el algoritmo de compresión «%s» espera un nivel de compresión entre %d y %d (por omisión %d)"
 
-#: ../../common/compression.c:289
+#: ../../common/compression.c:353
 #, c-format
 msgid "compression algorithm \"%s\" does not accept a worker count"
 msgstr "el algoritmo de compresión «%s» no acepta una cantidad de procesos ayudantes"
@@ -97,7 +105,7 @@ msgstr "no se pudo hacer stat al archivo «%s»: %m"
 msgid "could not open directory \"%s\": %m"
 msgstr "no se pudo abrir el directorio «%s»: %m"
 
-#: ../../common/file_utils.c:200 pg_receivewal.c:534
+#: ../../common/file_utils.c:200 pg_receivewal.c:532
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "no se pudo leer el directorio «%s»: %m"
@@ -132,19 +140,19 @@ msgstr "%s debe estar en el rango %d..%d"
 
 #: ../../fe_utils/recovery_gen.c:34 ../../fe_utils/recovery_gen.c:45
 #: ../../fe_utils/recovery_gen.c:70 ../../fe_utils/recovery_gen.c:90
-#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1635
+#: ../../fe_utils/recovery_gen.c:149 pg_basebackup.c:1636
 #, c-format
 msgid "out of memory"
 msgstr "memoria agotada"
 
 #: ../../fe_utils/recovery_gen.c:124 bbstreamer_file.c:121
-#: bbstreamer_file.c:258 pg_basebackup.c:1432 pg_basebackup.c:1726
+#: bbstreamer_file.c:258 pg_basebackup.c:1433 pg_basebackup.c:1727
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "no se pudo escribir a archivo «%s»: %m"
 
 #: ../../fe_utils/recovery_gen.c:133 bbstreamer_file.c:93 bbstreamer_file.c:339
-#: pg_basebackup.c:1496 pg_basebackup.c:1705
+#: pg_basebackup.c:1497 pg_basebackup.c:1706
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "no se pudo crear archivo «%s»: %m"
@@ -194,32 +202,32 @@ msgstr "no se pudo duplicar stdout: %m"
 msgid "could not open output file: %m"
 msgstr "no se pudo abrir el archivo de salida: %m"
 
-#: bbstreamer_gzip.c:113
+#: bbstreamer_gzip.c:111
 #, c-format
 msgid "could not set compression level %d: %s"
 msgstr "no se pudo definir el nivel de compresión %d: %s"
 
-#: bbstreamer_gzip.c:118 bbstreamer_gzip.c:251
+#: bbstreamer_gzip.c:116 bbstreamer_gzip.c:249
 #, c-format
 msgid "this build does not support gzip compression"
 msgstr "esta instalación no soporta compresión gzip"
 
-#: bbstreamer_gzip.c:145
+#: bbstreamer_gzip.c:143
 #, c-format
 msgid "could not write to compressed file \"%s\": %s"
 msgstr "no se pudo escribir al archivo comprimido «%s»: %s"
 
-#: bbstreamer_gzip.c:169
+#: bbstreamer_gzip.c:167
 #, c-format
 msgid "could not close compressed file \"%s\": %m"
 msgstr "no se pudo cerrar el archivo comprimido «%s»: %m"
 
-#: bbstreamer_gzip.c:247 walmethods.c:869
+#: bbstreamer_gzip.c:245 walmethods.c:869
 #, c-format
 msgid "could not initialize compression library"
 msgstr "no se pudo inicializar la biblioteca de compresión"
 
-#: bbstreamer_gzip.c:298 bbstreamer_lz4.c:355 bbstreamer_zstd.c:319
+#: bbstreamer_gzip.c:296 bbstreamer_lz4.c:354 bbstreamer_zstd.c:316
 #, c-format
 msgid "could not decompress data: %s"
 msgstr "no se pudo descomprimir datos: %s"
@@ -229,32 +237,32 @@ msgstr "no se pudo descomprimir datos: %s"
 msgid "unexpected state while injecting recovery settings"
 msgstr "formato de resultados inesperado mientras se inyectaban los parámetros de recuperación"
 
-#: bbstreamer_lz4.c:96
+#: bbstreamer_lz4.c:95
 #, c-format
 msgid "could not create lz4 compression context: %s"
 msgstr "no se pudo crear un contexto de compresión lz4: %s"
 
-#: bbstreamer_lz4.c:101 bbstreamer_lz4.c:299
+#: bbstreamer_lz4.c:100 bbstreamer_lz4.c:298
 #, c-format
 msgid "this build does not support lz4 compression"
 msgstr "esta instalación no soporta compresión lz4"
 
-#: bbstreamer_lz4.c:141
+#: bbstreamer_lz4.c:140
 #, c-format
 msgid "could not write lz4 header: %s"
 msgstr "no se pudo escribir la cabecera lz4: %s"
 
-#: bbstreamer_lz4.c:190 bbstreamer_zstd.c:171 bbstreamer_zstd.c:213
+#: bbstreamer_lz4.c:189 bbstreamer_zstd.c:168 bbstreamer_zstd.c:210
 #, c-format
 msgid "could not compress data: %s"
 msgstr "no se pudo comprimir datos: %s"
 
-#: bbstreamer_lz4.c:242
+#: bbstreamer_lz4.c:241
 #, c-format
 msgid "could not end lz4 compression: %s"
 msgstr "no se pudo terminar la compresión lz4: %s"
 
-#: bbstreamer_lz4.c:294
+#: bbstreamer_lz4.c:293
 #, c-format
 msgid "could not initialize compression library: %s"
 msgstr "no se pudo inicializar la biblioteca de compresión: %s"
@@ -284,22 +292,22 @@ msgstr "el flujo COPY terminó antes que el último archivo estuviera completo"
 msgid "could not create zstd compression context"
 msgstr "no se pudo restablecer el contexto de compresión zstd"
 
-#: bbstreamer_zstd.c:93
+#: bbstreamer_zstd.c:91
 #, c-format
 msgid "could not set zstd compression level to %d: %s"
 msgstr "no se pudo definir el nivel de compresión zstd a %d: %s"
 
-#: bbstreamer_zstd.c:108
+#: bbstreamer_zstd.c:105
 #, c-format
 msgid "could not set compression worker count to %d: %s"
 msgstr "no se pudo definir la cantidad de procesos ayudantes de compresión a %d: %s"
 
-#: bbstreamer_zstd.c:119 bbstreamer_zstd.c:274
+#: bbstreamer_zstd.c:116 bbstreamer_zstd.c:271
 #, c-format
 msgid "this build does not support zstd compression"
 msgstr "esta instalación no soporta compresión zstd"
 
-#: bbstreamer_zstd.c:265
+#: bbstreamer_zstd.c:262
 #, c-format
 msgid "could not create zstd decompression context"
 msgstr "no se pudo crear el contexto de descompresión zstd"
@@ -672,7 +680,7 @@ msgstr "no se pudo leer desde la tubería: %m"
 msgid "could not parse write-ahead log location \"%s\""
 msgstr "no se pudo interpretar la ubicación del WAL «%s»"
 
-#: pg_basebackup.c:581 pg_receivewal.c:665
+#: pg_basebackup.c:581 pg_receivewal.c:663
 #, c-format
 msgid "could not finish writing WAL files: %m"
 msgstr "no se pudo completar la escritura de archivos WAL: %m"
@@ -781,137 +789,148 @@ msgstr "un proceso en segundo plano terminó inesperadamente"
 
 #: pg_basebackup.c:1122
 #, c-format
-msgid "cannot inject manifest into a compressed tarfile"
+#| msgid "cannot inject manifest into a compressed tarfile"
+msgid "cannot inject manifest into a compressed tar file"
 msgstr "no se pueden inyectar un manifiesto en un archivo tar comprimido"
 
 #: pg_basebackup.c:1123
 #, c-format
-msgid "use client-side compression, send the output to a directory rather than standard output, or use --no-manifest"
-msgstr "use compresión del lado del cliente, envíe la salida a un directorio en lugar de a salida estándar, o use --no-manifest"
-
-#: pg_basebackup.c:1138
-#, c-format
-msgid "unable to parse archive: %s"
-msgstr "no se pudo interpretar el archivo: %s"
+#| msgid "use client-side compression, send the output to a directory rather than standard output, or use --no-manifest"
+msgid "Use client-side compression, send the output to a directory rather than standard output, or use %s."
+msgstr "Use compresión del lado del cliente, envíe la salida a un directorio en lugar de a salida estándar, o use %s."
 
 #: pg_basebackup.c:1139
+#, c-format
+#| msgid "unable to parse archive: %s"
+msgid "cannot parse archive \"%s\""
+msgstr "no se pudo interpretar el archivo «%s»"
+
+#: pg_basebackup.c:1140
 #, c-format
 msgid "Only tar archives can be parsed."
 msgstr "Sólo los archivos tar pueden ser interpretados."
 
-#: pg_basebackup.c:1141
+#: pg_basebackup.c:1142
 #, c-format
 msgid "Plain format requires pg_basebackup to parse the archive."
 msgstr "El formato plano requiere que pg_basebackup interprete el archivo."
 
-#: pg_basebackup.c:1143
+#: pg_basebackup.c:1144
 #, c-format
 msgid "Using - as the output directory requires pg_basebackup to parse the archive."
 msgstr "Usar - como directorio de salida requiere que pg_basebackup interprete el archivo."
 
-#: pg_basebackup.c:1145
+#: pg_basebackup.c:1146
 #, c-format
 msgid "The -R option requires pg_basebackup to parse the archive."
 msgstr "La opción -R requiere que pg_basebackup interprete el archivo."
 
-#: pg_basebackup.c:1356
+#: pg_basebackup.c:1357
 #, c-format
-msgid "archives should precede manifest"
-msgstr "los archivos deberían preceder al manifiesto"
+#| msgid "archives should precede manifest"
+msgid "archives must precede manifest"
+msgstr "los archivos deben preceder al manifiesto"
 
-#: pg_basebackup.c:1371
+#: pg_basebackup.c:1372
 #, c-format
 msgid "invalid archive name: \"%s\""
 msgstr "nombre de archivo no válido: «%s»"
 
-#: pg_basebackup.c:1443
+#: pg_basebackup.c:1444
 #, c-format
 msgid "unexpected payload data"
 msgstr "datos inesperados"
 
-#: pg_basebackup.c:1586
+#: pg_basebackup.c:1587
 #, c-format
 msgid "empty COPY message"
 msgstr "mensaje COPY vacío"
 
-#: pg_basebackup.c:1588
+#: pg_basebackup.c:1589
 #, c-format
 msgid "malformed COPY message of type %d, length %zu"
 msgstr "mensaje COPY mal formado de tipo %d, largo %zu"
 
-#: pg_basebackup.c:1786
+#: pg_basebackup.c:1787
 #, c-format
 msgid "incompatible server version %s"
 msgstr "versión del servidor %s incompatible"
 
-#: pg_basebackup.c:1802
+#: pg_basebackup.c:1803
 #, c-format
-msgid "HINT: use -X none or -X fetch to disable log streaming"
-msgstr "SUGERENCIA: use -X none o -X fetch para deshabilitar el flujo de log"
+#| msgid "HINT: use -X none or -X fetch to disable log streaming"
+msgid "Use -X none or -X fetch to disable log streaming."
+msgstr "Use -X none o -X fetch para deshabilitar el flujo de log."
 
-#: pg_basebackup.c:1870
+#: pg_basebackup.c:1871
 #, c-format
 msgid "backup targets are not supported by this server version"
 msgstr "los destinos de respaldo no están soportados por esta versión de servidor"
 
-#: pg_basebackup.c:1873
+#: pg_basebackup.c:1874
 #, c-format
 msgid "recovery configuration cannot be written when a backup target is used"
 msgstr "la configuración de recuperación no puede ser escrita cuando se usa un destino de respaldo base"
 
-#: pg_basebackup.c:1900
+#: pg_basebackup.c:1901
 #, c-format
 msgid "server does not support server-side compression"
 msgstr "el servidor no soporta compresión del lado del servidor"
 
-#: pg_basebackup.c:1910
+#: pg_basebackup.c:1911
 #, c-format
 msgid "initiating base backup, waiting for checkpoint to complete"
 msgstr "iniciando el respaldo base, esperando que el checkpoint se complete"
 
-#: pg_basebackup.c:1927 pg_recvlogical.c:262 receivelog.c:549 receivelog.c:588
+#: pg_basebackup.c:1915
+#, c-format
+#| msgid "Logs each checkpoint."
+msgid "waiting for checkpoint"
+msgstr "esperando al checkpoint"
+
+#: pg_basebackup.c:1928 pg_recvlogical.c:262 receivelog.c:549 receivelog.c:588
 #: streamutil.c:291 streamutil.c:364 streamutil.c:416 streamutil.c:504
 #: streamutil.c:656 streamutil.c:701
 #, c-format
 msgid "could not send replication command \"%s\": %s"
 msgstr "no se pudo ejecutar la orden de replicación «%s»: %s"
 
-#: pg_basebackup.c:1935
+#: pg_basebackup.c:1936
 #, c-format
 msgid "could not initiate base backup: %s"
 msgstr "no se pudo iniciar el respaldo base: %s"
 
-#: pg_basebackup.c:1938
+#: pg_basebackup.c:1939
 #, c-format
 msgid "server returned unexpected response to BASE_BACKUP command; got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "el servidor envió una respuesta inesperada a la orden BASE_BACKUP; se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
 
-#: pg_basebackup.c:1944
+#: pg_basebackup.c:1945
 #, c-format
 msgid "checkpoint completed"
 msgstr "el checkpoint se ha completado"
 
-#: pg_basebackup.c:1959
+#: pg_basebackup.c:1960
 #, c-format
 msgid "write-ahead log start point: %s on timeline %u"
 msgstr "punto de inicio del WAL: %s en el timeline %u"
 
-#: pg_basebackup.c:1967
+#: pg_basebackup.c:1968
 #, c-format
 msgid "could not get backup header: %s"
 msgstr "no se pudo obtener la cabecera de respaldo: %s"
 
-#: pg_basebackup.c:1970
+#: pg_basebackup.c:1971
 #, c-format
 msgid "no data returned from server"
 msgstr "el servidor no retornó datos"
 
-#: pg_basebackup.c:2005
+#: pg_basebackup.c:2006
 #, c-format
 msgid "can only write single tablespace to stdout, database has %d"
 msgstr "sólo se puede escribir un tablespace a stdout, la base de datos tiene %d"
 
-#: pg_basebackup.c:2018
+#: pg_basebackup.c:2019
 #, c-format
 msgid "starting background WAL receiver"
 msgstr "iniciando el receptor de WAL en segundo plano"
@@ -1017,9 +1036,9 @@ msgstr "argumento de checkpoint «%s» no válido, debe ser «fast» o «spread�
 #: pg_basebackup.c:2614 pg_basebackup.c:2626 pg_basebackup.c:2638
 #: pg_basebackup.c:2646 pg_basebackup.c:2659 pg_basebackup.c:2665
 #: pg_basebackup.c:2674 pg_basebackup.c:2686 pg_basebackup.c:2697
-#: pg_basebackup.c:2705 pg_receivewal.c:816 pg_receivewal.c:828
-#: pg_receivewal.c:835 pg_receivewal.c:844 pg_receivewal.c:851
-#: pg_receivewal.c:861 pg_recvlogical.c:837 pg_recvlogical.c:849
+#: pg_basebackup.c:2705 pg_receivewal.c:814 pg_receivewal.c:826
+#: pg_receivewal.c:833 pg_receivewal.c:842 pg_receivewal.c:849
+#: pg_receivewal.c:859 pg_recvlogical.c:837 pg_recvlogical.c:849
 #: pg_recvlogical.c:859 pg_recvlogical.c:866 pg_recvlogical.c:873
 #: pg_recvlogical.c:880 pg_recvlogical.c:887 pg_recvlogical.c:894
 #: pg_recvlogical.c:901 pg_recvlogical.c:908
@@ -1027,7 +1046,7 @@ msgstr "argumento de checkpoint «%s» no válido, debe ser «fast» o «spread�
 msgid "Try \"%s --help\" for more information."
 msgstr "Pruebe «%s --help» para mayor información."
 
-#: pg_basebackup.c:2486 pg_receivewal.c:826 pg_recvlogical.c:847
+#: pg_basebackup.c:2486 pg_receivewal.c:824 pg_recvlogical.c:847
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "demasiados argumentos en la línea de órdenes (el primero es «%s»)"
@@ -1047,12 +1066,13 @@ msgstr "debe especificar un directorio de salida o destino de respaldo base"
 msgid "cannot specify both output directory and backup target"
 msgstr "no se puede especificar un directorio de salida junto con un destino de respaldo"
 
-#: pg_basebackup.c:2557 pg_receivewal.c:870
+#: pg_basebackup.c:2557 pg_receivewal.c:868
 #, c-format
-msgid "unrecognized compression algorithm \"%s\""
-msgstr "algoritmo de compresión no reconocido: \"%s\""
+#| msgid "unrecognized compression algorithm \"%s\""
+msgid "unrecognized compression algorithm: \"%s\""
+msgstr "algoritmo de compresión no reconocido: «%s»"
 
-#: pg_basebackup.c:2563 pg_receivewal.c:877
+#: pg_basebackup.c:2563 pg_receivewal.c:875
 #, c-format
 msgid "invalid compression specification: %s"
 msgstr "especificación de compresión no válida: %s"
@@ -1088,7 +1108,7 @@ msgid "--no-slot cannot be used with slot name"
 msgstr "no se puede usar --no-slot junto con nombre de slot"
 
 #. translator: second %s is an option name
-#: pg_basebackup.c:2636 pg_receivewal.c:842
+#: pg_basebackup.c:2636 pg_receivewal.c:840
 #, c-format
 msgid "%s needs a slot to be specified using --slot"
 msgstr "la opcón %s necesita que se especifique un slot con --slot"
@@ -1292,76 +1312,62 @@ msgstr "el archivo de segmento «%s» tiene tamaño incorrecto %zu al descomprim
 
 #: pg_receivewal.c:514
 #, c-format
-msgid "could not check file \"%s\""
-msgstr "no se pudo verificar el archivo «%s»"
+#| msgid "Bonjour is not supported by this build"
+msgid "cannot check file \"%s\": compression with %s not supported by this build"
+msgstr "no se puede verificar el archivo «%s»: la compresión con %s no está soportada en este servidor"
 
-#: pg_receivewal.c:516
-#, c-format
-msgid "This build does not support compression with %s."
-msgstr "Esta instalación no soporta compresión con %s."
-
-#: pg_receivewal.c:643
+#: pg_receivewal.c:641
 #, c-format
 msgid "starting log streaming at %X/%X (timeline %u)"
 msgstr "iniciando el flujo de log en %X/%X (timeline %u)"
 
-#: pg_receivewal.c:785 pg_recvlogical.c:785
+#: pg_receivewal.c:783 pg_recvlogical.c:785
 #, c-format
 msgid "could not parse end position \"%s\""
 msgstr "no se pudo interpretar la posición final «%s»"
 
-#: pg_receivewal.c:834
+#: pg_receivewal.c:832
 #, c-format
 msgid "cannot use --create-slot together with --drop-slot"
 msgstr "no puede usarse --create-slot junto con --drop-slot"
 
-#: pg_receivewal.c:850
+#: pg_receivewal.c:848
 #, c-format
 msgid "cannot use --synchronous together with --no-sync"
 msgstr "no puede usarse --synchronous junto con --no-sync"
 
-#: pg_receivewal.c:860
+#: pg_receivewal.c:858
 #, c-format
 msgid "no target directory specified"
 msgstr "no se especificó un directorio de salida"
 
-#: pg_receivewal.c:893
-#, c-format
-msgid "no value specified for --compress, switching to default"
-msgstr "no se especificó valor para --compress, usando el valor por omisión"
-
-#: pg_receivewal.c:897 pg_receivewal.c:903
-#, c-format
-msgid "this build does not support compression with %s"
-msgstr "esta instalación no soporta compresión con %s"
-
-#: pg_receivewal.c:908
+#: pg_receivewal.c:882
 #, c-format
 msgid "compression with %s is not yet supported"
 msgstr "el método de compresión %s no está soportado aún"
 
-#: pg_receivewal.c:953
+#: pg_receivewal.c:924
 #, c-format
 msgid "replication connection using slot \"%s\" is unexpectedly database specific"
 msgstr "la conexión de replicación usando el slot «%s» es inesperadamente específica a una base de datos"
 
-#: pg_receivewal.c:972 pg_recvlogical.c:955
+#: pg_receivewal.c:943 pg_recvlogical.c:955
 #, c-format
 msgid "dropping replication slot \"%s\""
 msgstr "eliminando el slot de replicación «%s»"
 
-#: pg_receivewal.c:983 pg_recvlogical.c:965
+#: pg_receivewal.c:954 pg_recvlogical.c:965
 #, c-format
 msgid "creating replication slot \"%s\""
 msgstr "creando el slot de replicación «%s»"
 
-#: pg_receivewal.c:1012 pg_recvlogical.c:989
+#: pg_receivewal.c:983 pg_recvlogical.c:989
 #, c-format
 msgid "disconnected"
 msgstr "desconectado"
 
 #. translator: check source for value for %d
-#: pg_receivewal.c:1016 pg_recvlogical.c:993
+#: pg_receivewal.c:987 pg_recvlogical.c:993
 #, c-format
 msgid "disconnected; waiting %d seconds to try again"
 msgstr "desconectado; esperando %d segundos para intentar nuevamente"
@@ -1431,8 +1437,9 @@ msgstr "  -S, --slot=NOMBRE-SLOT nombre del slot de replicación lógica\n"
 
 #: pg_recvlogical.c:99
 #, c-format
-msgid "  -t, --two-phase        enable two-phase decoding when creating a slot\n"
-msgstr "  -t, --two-phase        activa decodificación de dos fases al crear un slot\n"
+#| msgid "  -t, --two-phase        enable two-phase decoding when creating a slot\n"
+msgid "  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"
+msgstr "  -t, --two-phase        activa decodificación de transacciones preparadas al crear un slot\n"
 
 #: pg_recvlogical.c:104
 #, c-format
@@ -1677,7 +1684,7 @@ msgstr "respuesta inesperada después del fin-de-timeline: se obtuvieron %d fila
 msgid "could not parse next timeline's starting point \"%s\""
 msgstr "no se pudo interpretar el punto de inicio del siguiente timeline «%s»"
 
-#: receivelog.c:781 receivelog.c:1030 walmethods.c:1203
+#: receivelog.c:781 receivelog.c:1030 walmethods.c:1205
 #, c-format
 msgid "could not fsync file \"%s\": %s"
 msgstr "no se pudo sincronizar (fsync) archivo «%s»: %s"
@@ -1765,8 +1772,8 @@ msgstr "no se pudo leer el slot de replicación «%s»: se obtuvieron %d filas y
 
 #: streamutil.c:525
 #, c-format
-msgid "could not find replication slot \"%s\""
-msgstr "no se pudo encontrar el slot de replicación «%s»"
+msgid "replication slot \"%s\" does not exist"
+msgstr "no existe el slot de replicación «%s»"
 
 #: streamutil.c:536
 #, c-format
@@ -1788,7 +1795,7 @@ msgstr "no se pudo create el slot de replicación «%s»: se obtuvieron %d filas
 msgid "could not drop replication slot \"%s\": got %d rows and %d fields, expected %d rows and %d fields"
 msgstr "no se pudo eliminar el slot de replicación «%s»: se obtuvieron %d filas y %d campos, se esperaban %d filas y %d campos"
 
-#: walmethods.c:720 walmethods.c:1265
+#: walmethods.c:720 walmethods.c:1267
 msgid "could not compress data"
 msgstr "no se pudo comprimir datos"
 
@@ -1804,14 +1811,34 @@ msgstr "error de implementación: los archivos tar no pueden tener abierto más 
 msgid "could not create tar header"
 msgstr "no se pudo crear la cabecera del archivo tar"
 
-#: walmethods.c:910 walmethods.c:950 walmethods.c:1169 walmethods.c:1181
+#: walmethods.c:910 walmethods.c:951 walmethods.c:1170 walmethods.c:1183
 msgid "could not change compression parameters"
 msgstr "no se pudo cambiar los parámetros de compresión"
 
-#: walmethods.c:1054
+#: walmethods.c:1055
 msgid "unlink not supported with compression"
 msgstr "unlink no soportado con compresión"
 
-#: walmethods.c:1289
+#: walmethods.c:1291
 msgid "could not close compression stream"
 msgstr "no se pudo cerrar el flujo comprimido"
+
+#, c-format
+#~ msgid "unknown compression option \"%s\""
+#~ msgstr "opción de compresión «%s» no válida"
+
+#, c-format
+#~ msgid "could not check file \"%s\""
+#~ msgstr "no se pudo verificar el archivo «%s»"
+
+#, c-format
+#~ msgid "This build does not support compression with %s."
+#~ msgstr "Esta instalación no soporta compresión con %s."
+
+#, c-format
+#~ msgid "no value specified for --compress, switching to default"
+#~ msgstr "no se especificó valor para --compress, usando el valor por omisión"
+
+#, c-format
+#~ msgid "could not find replication slot \"%s\""
+#~ msgstr "no se pudo encontrar el slot de replicación «%s»"

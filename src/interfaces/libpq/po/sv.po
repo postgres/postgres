@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-04 09:10+0000\n"
+"POT-Creation-Date: 2022-09-12 15:10+0000\n"
 "PO-Revision-Date: 2022-08-04 12:19+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
@@ -73,7 +73,7 @@ msgstr "kunde inte skapa engångsnummer\n"
 #: fe-connect.c:5993 fe-connect.c:6017 fe-connect.c:6035 fe-connect.c:6136
 #: fe-connect.c:6145 fe-connect.c:6503 fe-connect.c:6653 fe-connect.c:6919
 #: fe-exec.c:710 fe-exec.c:976 fe-exec.c:1324 fe-exec.c:3215 fe-exec.c:3399
-#: fe-exec.c:4177 fe-exec.c:4342 fe-gssapi-common.c:111 fe-lobj.c:884
+#: fe-exec.c:4181 fe-exec.c:4346 fe-gssapi-common.c:111 fe-lobj.c:884
 #: fe-protocol3.c:989 fe-protocol3.c:1004 fe-protocol3.c:1037
 #: fe-protocol3.c:1745 fe-protocol3.c:2148 fe-secure-common.c:112
 #: fe-secure-gssapi.c:504 fe-secure-openssl.c:449 fe-secure-openssl.c:1261
@@ -128,8 +128,8 @@ msgid "out of memory"
 msgstr "slut på minne"
 
 #: fe-auth-scram.c:943
-msgid "failed to generate random salt"
-msgstr "misslyckades att generera slumpat salt"
+msgid "could not generate random salt"
+msgstr "kunde inte generera slumpat salt"
 
 #: fe-auth.c:76
 #, c-format
@@ -776,7 +776,7 @@ msgstr "parameter nummer %d är utanför giltigt intervall 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "kunde inte tolka svaret från servern: %s"
 
-#: fe-exec.c:4068 fe-exec.c:4159
+#: fe-exec.c:4072 fe-exec.c:4163
 msgid "incomplete multibyte character\n"
 msgstr "ofullständigt multibyte-tecken\n"
 
@@ -1257,7 +1257,3 @@ msgstr "kan inte skicka data till servern: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "okänt uttagsfel: 0x%08X/%d"
-
-#, c-format
-#~ msgid "private key file \"%s\" must be owned by the current user or root\n"
-#~ msgstr "privat nyckelfilen \"%s\" måste ägas av databasanvändaren eller root\n"

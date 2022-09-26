@@ -1,10 +1,10 @@
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-02-07 11:21+0300\n"
-"PO-Revision-Date: 2021-09-06 10:51+0300\n"
+"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"PO-Revision-Date: 2022-09-05 13:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -12,20 +12,25 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../../src/common/logging.c:259
-#, c-format
-msgid "fatal: "
-msgstr "важно: "
-
-#: ../../../src/common/logging.c:266
+#: ../../../src/common/logging.c:276
 #, c-format
 msgid "error: "
 msgstr "ошибка: "
 
-#: ../../../src/common/logging.c:273
+#: ../../../src/common/logging.c:283
 #, c-format
 msgid "warning: "
 msgstr "предупреждение: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "подробности: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "подсказка: "
 
 #: ../../fe_utils/cancel.c:189 ../../fe_utils/cancel.c:238
 msgid "Cancel request sent\n"
@@ -35,175 +40,180 @@ msgstr "Сигнал отмены отправлен\n"
 msgid "Could not send cancel request: "
 msgstr "Отправить сигнал отмены не удалось: "
 
-#: ../../fe_utils/connect_utils.c:92
+#: ../../fe_utils/connect_utils.c:91
 #, c-format
 msgid "could not connect to database %s: out of memory"
 msgstr "не удалось подключиться к базе %s (нехватка памяти)"
 
-#: ../../fe_utils/connect_utils.c:120
+#: ../../fe_utils/connect_utils.c:117
 #, c-format
 msgid "%s"
 msgstr "%s"
 
+#: ../../fe_utils/option_utils.c:69
+#, c-format
+msgid "invalid value \"%s\" for option %s"
+msgstr "неверное значение \"%s\" для параметра %s"
+
+#: ../../fe_utils/option_utils.c:76
+#, c-format
+msgid "%s must be in range %d..%d"
+msgstr "значение %s должно быть в диапазоне %d..%d"
+
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1657 pg_amcheck.c:2105
+#: pg_amcheck.c:1647 pg_amcheck.c:2092
 #, c-format
 msgid "query failed: %s"
 msgstr "ошибка при выполнении запроса: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:598 pg_amcheck.c:1128 pg_amcheck.c:1658 pg_amcheck.c:2106
+#: pg_amcheck.c:571 pg_amcheck.c:1102 pg_amcheck.c:1648 pg_amcheck.c:2093
 #, c-format
-msgid "query was: %s"
-msgstr "запрос: %s"
+msgid "Query was: %s"
+msgstr "Выполнялся запрос: %s"
 
-#: pg_amcheck.c:330
-#, c-format
-msgid "number of parallel jobs must be at least 1"
-msgstr "число параллельных заданий должно быть не меньше 1"
-
-#: pg_amcheck.c:402
+#: pg_amcheck.c:399
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "недопустимый аргумент параметра %s"
 
-#: pg_amcheck.c:411
+#: pg_amcheck.c:405
 #, c-format
 msgid "invalid start block"
 msgstr "неверный начальный блок"
 
-#: pg_amcheck.c:416
+#: pg_amcheck.c:407
 #, c-format
 msgid "start block out of bounds"
 msgstr "начальный блок вне допустимых пределов"
 
-#: pg_amcheck.c:426
+#: pg_amcheck.c:414
 #, c-format
 msgid "invalid end block"
 msgstr "неверный конечный блок"
 
-#: pg_amcheck.c:431
+#: pg_amcheck.c:416
 #, c-format
 msgid "end block out of bounds"
 msgstr "конечный блок вне допустимых пределов"
 
-#: pg_amcheck.c:456 pg_amcheck.c:482
+#: pg_amcheck.c:439 pg_amcheck.c:461
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Для дополнительной информации попробуйте \"%s --help\"."
 
-#: pg_amcheck.c:464
+#: pg_amcheck.c:445
 #, c-format
 msgid "end block precedes start block"
 msgstr "конечный блок предшествует начальному"
 
-#: pg_amcheck.c:480
+#: pg_amcheck.c:459
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "слишком много аргументов командной строки (первый: \"%s\")"
 
-#: pg_amcheck.c:501
+#: pg_amcheck.c:479
 #, c-format
 msgid "cannot specify a database name with --all"
 msgstr "имя базы данных нельзя задавать с --all"
 
-#: pg_amcheck.c:510
+#: pg_amcheck.c:485
 #, c-format
 msgid "cannot specify both a database name and database patterns"
 msgstr "нельзя задавать одновременно имя базы данных и шаблоны имён"
 
-#: pg_amcheck.c:540
+#: pg_amcheck.c:513
 #, c-format
 msgid "no databases to check"
 msgstr "не указаны базы для проверки"
 
-#: pg_amcheck.c:596
+#: pg_amcheck.c:569
 #, c-format
 msgid "database \"%s\": %s"
 msgstr "база данных \"%s\": %s"
 
-#: pg_amcheck.c:607
+#: pg_amcheck.c:580
 #, c-format
 msgid "skipping database \"%s\": amcheck is not installed"
 msgstr "база \"%s\" пропускается: расширение amcheck не установлено"
 
-#: pg_amcheck.c:615
+#: pg_amcheck.c:588
 #, c-format
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "база \"%s\": используется amcheck версии \"%s\" в схеме \"%s\""
 
-#: pg_amcheck.c:637
+#: pg_amcheck.c:610
 #, c-format
 msgid "no heap tables to check matching \"%s\""
 msgstr "не найдены подлежащие проверке базовые таблицы, соответствующие \"%s\""
 
-#: pg_amcheck.c:640
+#: pg_amcheck.c:613
 #, c-format
 msgid "no btree indexes to check matching \"%s\""
 msgstr "не найдены подлежащие проверке индексы btree, соответствующие \"%s\""
 
-#: pg_amcheck.c:643
+#: pg_amcheck.c:616
 #, c-format
 msgid "no relations to check in schemas matching \"%s\""
 msgstr ""
 "не найдены подлежащие проверке отношения в схемах, соответствующих \"%s\""
 
-#: pg_amcheck.c:646
+#: pg_amcheck.c:619
 #, c-format
 msgid "no relations to check matching \"%s\""
 msgstr "не найдены подлежащие проверке отношения, соответствующие \"%s\""
 
-#: pg_amcheck.c:674
+#: pg_amcheck.c:647
 #, c-format
 msgid "no relations to check"
 msgstr "не найдены отношения для проверки"
 
-#: pg_amcheck.c:758
+#: pg_amcheck.c:730
 #, c-format
 msgid "checking heap table \"%s.%s.%s\""
 msgstr "проверка базовой таблицы \"%s.%s.%s\""
 
-#: pg_amcheck.c:774
+#: pg_amcheck.c:746
 #, c-format
 msgid "checking btree index \"%s.%s.%s\""
 msgstr "проверка индекса btree \"%s.%s.%s\""
 
-#: pg_amcheck.c:921
+#: pg_amcheck.c:893
 #, c-format
 msgid "error sending command to database \"%s\": %s"
 msgstr "ошибка передачи команды базе \"%s\": %s"
 
-#: pg_amcheck.c:924
+#: pg_amcheck.c:896
 #, c-format
-msgid "command was: %s"
-msgstr "команда: %s"
+msgid "Command was: %s"
+msgstr "Выполнялась команда: %s"
 
-#: pg_amcheck.c:1041
+#: pg_amcheck.c:1015
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
 msgstr "базовая таблица \"%s.%s.%s\", блок %s, смещение %s, атрибут %s:\n"
 
-#: pg_amcheck.c:1048
+#: pg_amcheck.c:1022
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
 msgstr "базовая таблица \"%s.%s.%s\", блок %s, смещение %s:\n"
 
-#: pg_amcheck.c:1054
+#: pg_amcheck.c:1028
 #, c-format
 msgid "heap table \"%s.%s.%s\", block %s:\n"
 msgstr "базовая таблица \"%s.%s.%s\", блок %s:\n"
 
-#: pg_amcheck.c:1059 pg_amcheck.c:1070
+#: pg_amcheck.c:1033 pg_amcheck.c:1044
 #, c-format
 msgid "heap table \"%s.%s.%s\":\n"
 msgstr "базовая таблица \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1074 pg_amcheck.c:1143
+#: pg_amcheck.c:1048 pg_amcheck.c:1117
 #, c-format
 msgid "query was: %s\n"
 msgstr "запрос: %s\n"
 
-#: pg_amcheck.c:1125
+#: pg_amcheck.c:1099
 #, c-format
 msgid ""
 "btree index \"%s.%s.%s\": btree checking function returned unexpected number "
@@ -212,17 +222,17 @@ msgstr ""
 "индекс btree \"%s.%s.%s\": функция проверки btree выдала неожиданное "
 "количество строк: %d"
 
-#: pg_amcheck.c:1129
+#: pg_amcheck.c:1103
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "Совместимы ли версии %s и amcheck?"
 
-#: pg_amcheck.c:1139
+#: pg_amcheck.c:1113
 #, c-format
 msgid "btree index \"%s.%s.%s\":\n"
 msgstr "индекс btree \"%s.%s.%s\":\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1138
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
@@ -231,17 +241,17 @@ msgstr ""
 "%s проверяет объекты в базе данных PostgreSQL на предмет повреждений.\n"
 "\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1139
 #, c-format
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1140
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1141
 #, c-format
 msgid ""
 "\n"
@@ -250,77 +260,77 @@ msgstr ""
 "\n"
 "Параметры выбора объектов:\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1142
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       проверить все базы\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1143
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr ""
 "  -d, --database=ШАБЛОН           проверить соответствующие шаблону базы\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1144
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr ""
 "  -D, --exclude-database=ШАБЛОН   не проверять соответствующие шаблону базы\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1145
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr ""
 "  -i, --index=ШАБЛОН              проверить соответствующие шаблону индексы\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1146
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr ""
 "  -I, --exclude-index=ШАБЛОН      не проверять соответствующие шаблону "
 "индексы\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1147
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr ""
 "  -r, --relation=ШАБЛОН           проверить соответствующие шаблону "
 "отношения\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1148
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr ""
 "  -R, --exclude-relation=ШАБЛОН   не проверять соответствующие шаблону "
 "отношения\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1149
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr ""
 "  -s, --schema=ШАБЛОН             проверить соответствующие шаблону схемы\n"
 
-#: pg_amcheck.c:1176
+#: pg_amcheck.c:1150
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
 msgstr ""
 "  -S, --exclude-schema=ШАБЛОН     не проверять соответствующие шаблону "
 "схемы\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1151
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr ""
 "  -t, --table=ШАБЛОН              проверить соответствующие шаблону таблицы\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1152
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
 msgstr ""
 "  -T, --exclude-table=ШАБЛОН      не проверять соответствующие шаблону "
 "таблицы\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1153
 #, c-format
 msgid ""
 "      --no-dependent-indexes      do NOT expand list of relations to include "
@@ -329,7 +339,7 @@ msgstr ""
 "      --no-dependent-indexes      не включать в список проверяемых отношений "
 "индексы\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1154
 #, c-format
 msgid ""
 "      --no-dependent-toast        do NOT expand list of relations to include "
@@ -338,7 +348,7 @@ msgstr ""
 "      --no-dependent-toast        не включать в список проверяемых отношений "
 "TOAST-таблицы\n"
 
-#: pg_amcheck.c:1181
+#: pg_amcheck.c:1155
 #, c-format
 msgid ""
 "      --no-strict-names           do NOT require patterns to match objects\n"
@@ -346,7 +356,7 @@ msgstr ""
 "      --no-strict-names           не требовать наличия объектов, "
 "соответствующих шаблонам\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1156
 #, c-format
 msgid ""
 "\n"
@@ -355,14 +365,14 @@ msgstr ""
 "\n"
 "Параметры проверки таблиц:\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1157
 #, c-format
 msgid ""
 "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
 msgstr ""
 "      --exclude-toast-pointers    не переходить по указателям в TOAST\n"
 
-#: pg_amcheck.c:1184
+#: pg_amcheck.c:1158
 #, c-format
 msgid ""
 "      --on-error-stop             stop checking at end of first corrupt "
@@ -371,7 +381,7 @@ msgstr ""
 "      --on-error-stop             прекратить проверку по достижении конца "
 "первой повреждённой страницы\n"
 
-#: pg_amcheck.c:1185
+#: pg_amcheck.c:1159
 #, c-format
 msgid ""
 "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-"
@@ -380,7 +390,7 @@ msgstr ""
 "      --skip=ТИП_БЛОКА            не проверять блоки типа \"all-frozen\" или "
 "\"all-visible\"\n"
 
-#: pg_amcheck.c:1186
+#: pg_amcheck.c:1160
 #, c-format
 msgid ""
 "      --startblock=BLOCK          begin checking table(s) at the given block "
@@ -390,7 +400,7 @@ msgstr ""
 "заданным номером\n"
 
 # skip-rule: no-space-before-parentheses
-#: pg_amcheck.c:1187
+#: pg_amcheck.c:1161
 #, c-format
 msgid ""
 "      --endblock=BLOCK            check table(s) only up to the given block "
@@ -399,7 +409,7 @@ msgstr ""
 "      --endblock=БЛОК             проверить таблицы(у) до блока с заданным "
 "номером\n"
 
-#: pg_amcheck.c:1188
+#: pg_amcheck.c:1162
 #, c-format
 msgid ""
 "\n"
@@ -408,7 +418,7 @@ msgstr ""
 "\n"
 "Параметры проверки индексов-B-деревьев:\n"
 
-#: pg_amcheck.c:1189
+#: pg_amcheck.c:1163
 #, c-format
 msgid ""
 "      --heapallindexed            check that all heap tuples are found "
@@ -417,7 +427,7 @@ msgstr ""
 "      --heapallindexed            проверить, что всем кортежам кучи "
 "находится соответствие в индексах\n"
 
-#: pg_amcheck.c:1190
+#: pg_amcheck.c:1164
 #, c-format
 msgid ""
 "      --parent-check              check index parent/child relationships\n"
@@ -425,7 +435,7 @@ msgstr ""
 "      --parent-check              проверить связи родитель/потомок в "
 "индексах\n"
 
-#: pg_amcheck.c:1191
+#: pg_amcheck.c:1165
 #, c-format
 msgid ""
 "      --rootdescend               search from root page to refind tuples\n"
@@ -433,7 +443,7 @@ msgstr ""
 "      --rootdescend               перепроверять поиск кортежей от корневой "
 "страницы\n"
 
-#: pg_amcheck.c:1192
+#: pg_amcheck.c:1166
 #, c-format
 msgid ""
 "\n"
@@ -442,7 +452,7 @@ msgstr ""
 "\n"
 "Параметры подключения:\n"
 
-#: pg_amcheck.c:1193
+#: pg_amcheck.c:1167
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME             database server host or socket directory\n"
@@ -450,34 +460,34 @@ msgstr ""
 "  -h, --host=ИМЯ                  имя сервера баз данных или каталог "
 "сокетов\n"
 
-#: pg_amcheck.c:1194
+#: pg_amcheck.c:1168
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=ПОРТ                 порт сервера баз данных\n"
 
-#: pg_amcheck.c:1195
+#: pg_amcheck.c:1169
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ              имя пользователя для подключения к "
 "серверу\n"
 
-#: pg_amcheck.c:1196
+#: pg_amcheck.c:1170
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
 msgstr "  -w, --no-password               не запрашивать пароль\n"
 
-#: pg_amcheck.c:1197
+#: pg_amcheck.c:1171
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
 msgstr "  -W, --password                  запросить пароль\n"
 
-#: pg_amcheck.c:1198
+#: pg_amcheck.c:1172
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
 msgstr "      --maintenance-db=ИМЯ_БД     другая опорная база данных\n"
 
-#: pg_amcheck.c:1199
+#: pg_amcheck.c:1173
 #, c-format
 msgid ""
 "\n"
@@ -486,7 +496,7 @@ msgstr ""
 "\n"
 "Другие параметры:\n"
 
-#: pg_amcheck.c:1200
+#: pg_amcheck.c:1174
 #, c-format
 msgid ""
 "  -e, --echo                      show the commands being sent to the "
@@ -494,7 +504,7 @@ msgid ""
 msgstr ""
 "  -e, --echo                      отображать команды, отправляемые серверу\n"
 
-#: pg_amcheck.c:1201
+#: pg_amcheck.c:1175
 #, c-format
 msgid ""
 "  -j, --jobs=NUM                  use this many concurrent connections to "
@@ -503,33 +513,33 @@ msgstr ""
 "  -j, --jobs=ЧИСЛО                устанавливать заданное число подключений к "
 "серверу\n"
 
-#: pg_amcheck.c:1202
+#: pg_amcheck.c:1176
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  показывать прогресс операции\n"
 
-#: pg_amcheck.c:1203
+#: pg_amcheck.c:1177
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   выводить исчерпывающие сообщения\n"
 
-#: pg_amcheck.c:1204
+#: pg_amcheck.c:1178
 #, c-format
 msgid ""
 "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   показать версию и выйти\n"
 
-#: pg_amcheck.c:1205
+#: pg_amcheck.c:1179
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           установить недостающие расширения\n"
 
-#: pg_amcheck.c:1206
+#: pg_amcheck.c:1180
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      показать эту справку и выйти\n"
 
-#: pg_amcheck.c:1208
+#: pg_amcheck.c:1182
 #, c-format
 msgid ""
 "\n"
@@ -538,44 +548,60 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <%s>.\n"
 
-#: pg_amcheck.c:1209
+#: pg_amcheck.c:1183
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "Домашняя страница %s: <%s>\n"
 
-#: pg_amcheck.c:1267
+#: pg_amcheck.c:1236
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
 msgstr "отношений: %*s/%s (%d%%), страниц: %*s/%s (%d%%) %*s"
 
-#: pg_amcheck.c:1278
+#: pg_amcheck.c:1247
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
 msgstr "отношений: %*s/%s (%d%%), страниц: %*s/%s (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1293
+#: pg_amcheck.c:1262
 #, c-format
 msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
 msgstr "отношений: %*s/%s (%d%%), страниц: %*s/%s (%d%%)"
 
-#: pg_amcheck.c:1562 pg_amcheck.c:1704
+#: pg_amcheck.c:1321 pg_amcheck.c:1354
+#, c-format
+msgid "improper qualified name (too many dotted names): %s"
+msgstr "неверное полное имя (слишком много компонентов): %s"
+
+#: pg_amcheck.c:1399
+#, c-format
+msgid "improper relation name (too many dotted names): %s"
+msgstr "неверное имя отношения (слишком много компонентов): %s"
+
+#: pg_amcheck.c:1552 pg_amcheck.c:1691
 #, c-format
 msgid "including database \"%s\""
 msgstr "выбирается база \"%s\""
 
-#: pg_amcheck.c:1684
+#: pg_amcheck.c:1673
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "внутренняя ошибка: получен неожиданный идентификатор шаблона базы %d"
 
-#: pg_amcheck.c:1688
+#: pg_amcheck.c:1675
 #, c-format
 msgid "no connectable databases to check matching \"%s\""
 msgstr ""
 "не найдены подлежащие проверке доступные базы, соответствующие шаблону \"%s\""
 
-#: pg_amcheck.c:2147
+#: pg_amcheck.c:2133
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr ""
 "внутренняя ошибка: получен неожиданный идентификатор шаблона отношения %d"
+
+#~ msgid "fatal: "
+#~ msgstr "важно: "
+
+#~ msgid "number of parallel jobs must be at least 1"
+#~ msgstr "число параллельных заданий должно быть не меньше 1"
