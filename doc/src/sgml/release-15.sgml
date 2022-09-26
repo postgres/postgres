@@ -1096,8 +1096,8 @@ Author: Thomas Munro <tmunro@postgresql.org>
        </para>
 
        <para>
-        This only works if <literal>max_wal_senders=0</literal>
-        and <literal>wal_level=minimal</literal>.
+        This only works if <literal>max_wal_senders = 0</literal>
+        and <literal>wal_level = minimal</literal>.
        </para>
       </listitem>
 
@@ -1837,7 +1837,7 @@ Author: Amit Kapila <akapila@postgresql.org>
        </para>
 
        <para>
-        In some cases a partition child table could appear more than once.
+        In some cases a partition could appear more than once.
        </para>
       </listitem>
 
@@ -2186,8 +2186,8 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
        When applying <link
        linkend="functions-datetime-zoneconvert"><literal>AT
        TIME ZONE</literal></link> to a <type>time with time zone</type>
-       value, use the transaction start time not wall clock time to
-       determine whether DST applies (Aleksander Alekseev, Tom Lane)
+       value, use the transaction start time rather than wall clock time
+       to determine whether DST applies (Aleksander Alekseev, Tom Lane)
       </para>
 
       <para>
@@ -2480,14 +2480,15 @@ Author: Tom Lane <tgl@sss.pgh.pa.us>
 
       <listitem>
        <para>
-        Adjust <application>psql</application> so that Readline's
+        Adjust <application>psql</application> so
+        that <application>Readline</application>'s
         meta-<literal>#</literal> command will insert a double-hyphen
         comment marker (Tom Lane)
        </para>
 
        <para>
-        Previously a pound marker was inserted, but that's pretty
-        unhelpful in SQL.
+        Previously a pound marker was inserted, unless the user had taken
+        the trouble to configure a non-default comment marker.
        </para>
       </listitem>
 
@@ -2712,7 +2713,7 @@ Author: Robert Haas <rhaas@postgresql.org>
       </para>
 
       <para>
-       New options are <literal>server</literal> to write the
+       The new options are <literal>server</literal> to write the
        backup locally and <literal>blackhole</literal> to discard the
        backup (for testing).
       </para>
@@ -2873,9 +2874,8 @@ Author: Michael Paquier <michael@paquier.xyz>
 
        <para>
         Previously such files were left in the current directory,
-        requiring manual cleanup.  It's still necessary to remove them
-        manually afterwards, but now one can just remove that whole
-        subdirectory.
+        requiring manual cleanup.  Now they are automatically removed on
+        successful completion of <application>pg_upgrade</application>.
        </para>
       </listitem>
 
@@ -2926,7 +2926,7 @@ Author: Robert Haas <rhaas@postgresql.org>
       <listitem>
        <para>
         Make <application>pg_upgrade</application> preserve tablespace
-        and database OIDs, as well as table relfilenode numbers
+        and database OIDs, as well as relation relfilenode numbers
         (Shruthi KC, Antonin Houska)
        </para>
       </listitem>
