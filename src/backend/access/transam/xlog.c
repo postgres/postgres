@@ -8242,24 +8242,23 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
 /*
  * do_pg_backup_start is the workhorse of the user-visible pg_backup_start()
  * function. It creates the necessary starting checkpoint and constructs the
- * backup label and tablespace map.
+ * backup state and tablespace map.
  *
- * Input parameters are "backupidstr" (the backup label string) and "fast"
- * (if true, we do the checkpoint in immediate mode to make it faster).
+ * Input parameters are "state" (the backup state), "fast" (if true, we do
+ * the checkpoint in immediate mode to make it faster), and "tablespaces"
+ * (if non-NULL, indicates a list of tablespaceinfo structs describing the
+ * cluster's tablespaces.).
  *
- * The backup label and tablespace map contents are appended to *labelfile and
- * *tblspcmapfile, and the caller is responsible for including them in the
- * backup archive as 'backup_label' and 'tablespace_map'.
- * tblspcmapfile is required mainly for tar format in windows as native windows
- * utilities are not able to create symlinks while extracting files from tar.
- * However for consistency and platform-independence, we do it the same way
- * everywhere.
+ * The tablespace map contents are appended to passed-in parameter
+ * tablespace_map and the caller is responsible for including it in the backup
+ * archive as 'tablespace_map'. The tablespace_map file is required mainly for
+ * tar format in windows as native windows utilities are not able to create
+ * symlinks while extracting files from tar. However for consistency and
+ * platform-independence, we do it the same way everywhere.
  *
- * If "tablespaces" isn't NULL, it receives a list of tablespaceinfo structs
- * describing the cluster's tablespaces.
- *
- * Returns the minimum WAL location that must be present to restore from this
- * backup, and the corresponding timeline ID in *starttli_p.
+ * It fills in backup_state with the information required for the backup,
+ * such as the minimum WAL location that must be present to restore from
+ * this backup (starttli) and the corresponding timeline ID (starttli).
  *
  * Every successfully started backup must be stopped by calling
  * do_pg_backup_stop() or do_pg_abort_backup(). There can be many
@@ -8268,20 +8267,13 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
  * It is the responsibility of the caller of this function to verify the
  * permissions of the calling user!
  */
-XLogRecPtr
-do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
-				   StringInfo labelfile, List **tablespaces,
-				   StringInfo tblspcmapfile)
+void
+do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
+				   BackupState *state, StringInfo tblspcmapfile)
 {
 	bool		backup_started_in_recovery = false;
-	XLogRecPtr	checkpointloc;
-	XLogRecPtr	startpoint;
-	TimeLineID	starttli;
-	pg_time_t	stamp_time;
-	char		strfbuf[128];
-	char		xlogfilename[MAXFNAMELEN];
-	XLogSegNo	_logSegNo;
 
+	Assert(state != NULL);
 	backup_started_in_recovery = RecoveryInProgress();
 
 	/*
@@ -8299,6 +8291,8 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("backup label too long (max %d bytes)",
 						MAXPGPATH)));
+
+	memcpy(state->name, backupidstr, strlen(backupidstr));
 
 	/*
 	 * Mark backup active in shared memory.  We must do full-page WAL writes
@@ -8391,9 +8385,9 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			 * pointer.
 			 */
 			LWLockAcquire(ControlFileLock, LW_SHARED);
-			checkpointloc = ControlFile->checkPoint;
-			startpoint = ControlFile->checkPointCopy.redo;
-			starttli = ControlFile->checkPointCopy.ThisTimeLineID;
+			state->checkpointloc = ControlFile->checkPoint;
+			state->startpoint = ControlFile->checkPointCopy.redo;
+			state->starttli = ControlFile->checkPointCopy.ThisTimeLineID;
 			checkpointfpw = ControlFile->checkPointCopy.fullPageWrites;
 			LWLockRelease(ControlFileLock);
 
@@ -8410,7 +8404,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 				recptr = XLogCtl->lastFpwDisableRecPtr;
 				SpinLockRelease(&XLogCtl->info_lck);
 
-				if (!checkpointfpw || startpoint <= recptr)
+				if (!checkpointfpw || state->startpoint <= recptr)
 					ereport(ERROR,
 							(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 							 errmsg("WAL generated with full_page_writes=off was replayed "
@@ -8442,16 +8436,13 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 			 * either because only few buffers have been dirtied yet.
 			 */
 			WALInsertLockAcquireExclusive();
-			if (XLogCtl->Insert.lastBackupStart < startpoint)
+			if (XLogCtl->Insert.lastBackupStart < state->startpoint)
 			{
-				XLogCtl->Insert.lastBackupStart = startpoint;
+				XLogCtl->Insert.lastBackupStart = state->startpoint;
 				gotUniqueStartpoint = true;
 			}
 			WALInsertLockRelease();
 		} while (!gotUniqueStartpoint);
-
-		XLByteToSeg(startpoint, _logSegNo, wal_segment_size);
-		XLogFileName(xlogfilename, starttli, _logSegNo, wal_segment_size);
 
 		/*
 		 * Construct tablespace_map file.
@@ -8538,39 +8529,16 @@ do_pg_backup_start(const char *backupidstr, bool fast, TimeLineID *starttli_p,
 		}
 		FreeDir(tblspcdir);
 
-		/*
-		 * Construct backup label file.
-		 */
-
-		/* Use the log timezone here, not the session timezone */
-		stamp_time = (pg_time_t) time(NULL);
-		pg_strftime(strfbuf, sizeof(strfbuf),
-					"%Y-%m-%d %H:%M:%S %Z",
-					pg_localtime(&stamp_time, log_timezone));
-		appendStringInfo(labelfile, "START WAL LOCATION: %X/%X (file %s)\n",
-						 LSN_FORMAT_ARGS(startpoint), xlogfilename);
-		appendStringInfo(labelfile, "CHECKPOINT LOCATION: %X/%X\n",
-						 LSN_FORMAT_ARGS(checkpointloc));
-		appendStringInfo(labelfile, "BACKUP METHOD: streamed\n");
-		appendStringInfo(labelfile, "BACKUP FROM: %s\n",
-						 backup_started_in_recovery ? "standby" : "primary");
-		appendStringInfo(labelfile, "START TIME: %s\n", strfbuf);
-		appendStringInfo(labelfile, "LABEL: %s\n", backupidstr);
-		appendStringInfo(labelfile, "START TIMELINE: %u\n", starttli);
+		state->starttime = (pg_time_t) time(NULL);
 	}
 	PG_END_ENSURE_ERROR_CLEANUP(pg_backup_start_callback, (Datum) 0);
+
+	state->started_in_recovery = backup_started_in_recovery;
 
 	/*
 	 * Mark that the start phase has correctly finished for the backup.
 	 */
 	sessionBackupState = SESSION_BACKUP_RUNNING;
-
-	/*
-	 * We're done.  As a convenience, return the starting WAL location.
-	 */
-	if (starttli_p)
-		*starttli_p = starttli;
-	return startpoint;
 }
 
 /* Error cleanup callback for pg_backup_start */
@@ -8602,48 +8570,38 @@ get_backup_status(void)
 /*
  * do_pg_backup_stop
  *
- * Utility function called at the end of an online backup. It cleans up the
- * backup state and can optionally wait for WAL segments to be archived.
+ * Utility function called at the end of an online backup.  It creates history
+ * file (if required), resets sessionBackupState and so on.  It can optionally
+ * wait for WAL segments to be archived.
  *
- * Returns the last WAL location that must be present to restore from this
- * backup, and the corresponding timeline ID in *stoptli_p.
+ * backup_state is filled with the information necessary to restore from this
+ * backup with its stop LSN (stoppoint), its timeline ID (stoptli), etc.
  *
  * It is the responsibility of the caller of this function to verify the
  * permissions of the calling user!
  */
-XLogRecPtr
-do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
+void
+do_pg_backup_stop(BackupState *state, bool waitforarchive)
 {
-	bool		backup_started_in_recovery = false;
-	XLogRecPtr	startpoint;
-	XLogRecPtr	stoppoint;
-	TimeLineID	stoptli;
-	pg_time_t	stamp_time;
-	char		strfbuf[128];
+	bool		backup_stopped_in_recovery = false;
 	char		histfilepath[MAXPGPATH];
-	char		startxlogfilename[MAXFNAMELEN];
-	char		stopxlogfilename[MAXFNAMELEN];
 	char		lastxlogfilename[MAXFNAMELEN];
 	char		histfilename[MAXFNAMELEN];
-	char		backupfrom[20];
 	XLogSegNo	_logSegNo;
 	FILE	   *fp;
-	char		ch;
 	int			seconds_before_warning;
 	int			waits = 0;
 	bool		reported_waiting = false;
-	char	   *remaining;
-	char	   *ptr;
-	uint32		hi,
-				lo;
 
-	backup_started_in_recovery = RecoveryInProgress();
+	Assert(state != NULL);
+
+	backup_stopped_in_recovery = RecoveryInProgress();
 
 	/*
 	 * During recovery, we don't need to check WAL level. Because, if WAL
 	 * level is not sufficient, it's impossible to get here during recovery.
 	 */
-	if (!backup_started_in_recovery && !XLogIsNeeded())
+	if (!backup_stopped_in_recovery && !XLogIsNeeded())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("WAL level not sufficient for making an online backup"),
@@ -8684,29 +8642,10 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	WALInsertLockRelease();
 
 	/*
-	 * Read and parse the START WAL LOCATION line (this code is pretty crude,
-	 * but we are not expecting any variability in the file format).
+	 * If we are taking an online backup from the standby, we confirm that the
+	 * standby has not been promoted during the backup.
 	 */
-	if (sscanf(labelfile, "START WAL LOCATION: %X/%X (file %24s)%c",
-			   &hi, &lo, startxlogfilename,
-			   &ch) != 4 || ch != '\n')
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
-	startpoint = ((uint64) hi) << 32 | lo;
-	remaining = strchr(labelfile, '\n') + 1;	/* %n is not portable enough */
-
-	/*
-	 * Parse the BACKUP FROM line. If we are taking an online backup from the
-	 * standby, we confirm that the standby has not been promoted during the
-	 * backup.
-	 */
-	ptr = strstr(remaining, "BACKUP FROM:");
-	if (!ptr || sscanf(ptr, "BACKUP FROM: %19s\n", backupfrom) != 1)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("invalid data in file \"%s\"", BACKUP_LABEL_FILE)));
-	if (strcmp(backupfrom, "standby") == 0 && !backup_started_in_recovery)
+	if (state->started_in_recovery && !backup_stopped_in_recovery)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("the standby was promoted during online backup"),
@@ -8742,7 +8681,7 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 * an archiver is not invoked. So it doesn't seem worthwhile to write a
 	 * backup history file during recovery.
 	 */
-	if (backup_started_in_recovery)
+	if (backup_stopped_in_recovery)
 	{
 		XLogRecPtr	recptr;
 
@@ -8754,7 +8693,7 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		recptr = XLogCtl->lastFpwDisableRecPtr;
 		SpinLockRelease(&XLogCtl->info_lck);
 
-		if (startpoint <= recptr)
+		if (state->startpoint <= recptr)
 			ereport(ERROR,
 					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 					 errmsg("WAL generated with full_page_writes=off was replayed "
@@ -8766,24 +8705,27 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 
 
 		LWLockAcquire(ControlFileLock, LW_SHARED);
-		stoppoint = ControlFile->minRecoveryPoint;
-		stoptli = ControlFile->minRecoveryPointTLI;
+		state->stoppoint = ControlFile->minRecoveryPoint;
+		state->stoptli = ControlFile->minRecoveryPointTLI;
 		LWLockRelease(ControlFileLock);
 	}
 	else
 	{
+		StringInfo	history_file;
+
 		/*
 		 * Write the backup-end xlog record
 		 */
 		XLogBeginInsert();
-		XLogRegisterData((char *) (&startpoint), sizeof(startpoint));
-		stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END);
+		XLogRegisterData((char *) (&state->startpoint),
+						 sizeof(state->startpoint));
+		state->stoppoint = XLogInsert(RM_XLOG_ID, XLOG_BACKUP_END);
 
 		/*
 		 * Given that we're not in recovery, InsertTimeLineID is set and can't
 		 * change, so we can read it without a lock.
 		 */
-		stoptli = XLogCtl->InsertTimeLineID;
+		state->stoptli = XLogCtl->InsertTimeLineID;
 
 		/*
 		 * Force a switch to a new xlog segment file, so that the backup is
@@ -8791,39 +8733,28 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 		 */
 		RequestXLogSwitch(false);
 
-		XLByteToPrevSeg(stoppoint, _logSegNo, wal_segment_size);
-		XLogFileName(stopxlogfilename, stoptli, _logSegNo, wal_segment_size);
-
-		/* Use the log timezone here, not the session timezone */
-		stamp_time = (pg_time_t) time(NULL);
-		pg_strftime(strfbuf, sizeof(strfbuf),
-					"%Y-%m-%d %H:%M:%S %Z",
-					pg_localtime(&stamp_time, log_timezone));
+		XLByteToPrevSeg(state->stoppoint, _logSegNo, wal_segment_size);
+		state->stoptime = (pg_time_t) time(NULL);
 
 		/*
 		 * Write the backup history file
 		 */
-		XLByteToSeg(startpoint, _logSegNo, wal_segment_size);
-		BackupHistoryFilePath(histfilepath, stoptli, _logSegNo,
-							  startpoint, wal_segment_size);
+		XLByteToSeg(state->startpoint, _logSegNo, wal_segment_size);
+		BackupHistoryFilePath(histfilepath, state->stoptli, _logSegNo,
+							  state->startpoint, wal_segment_size);
 		fp = AllocateFile(histfilepath, "w");
 		if (!fp)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not create file \"%s\": %m",
 							histfilepath)));
-		fprintf(fp, "START WAL LOCATION: %X/%X (file %s)\n",
-				LSN_FORMAT_ARGS(startpoint), startxlogfilename);
-		fprintf(fp, "STOP WAL LOCATION: %X/%X (file %s)\n",
-				LSN_FORMAT_ARGS(stoppoint), stopxlogfilename);
 
-		/*
-		 * Transfer remaining lines including label and start timeline to
-		 * history file.
-		 */
-		fprintf(fp, "%s", remaining);
-		fprintf(fp, "STOP TIME: %s\n", strfbuf);
-		fprintf(fp, "STOP TIMELINE: %u\n", stoptli);
+		/* Build and save the contents of the backup history file */
+		history_file = build_backup_content(state, true);
+		fprintf(fp, "%s", history_file->data);
+		pfree(history_file->data);
+		pfree(history_file);
+
 		if (fflush(fp) || ferror(fp) || FreeFile(fp))
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -8861,15 +8792,16 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	 */
 
 	if (waitforarchive &&
-		((!backup_started_in_recovery && XLogArchivingActive()) ||
-		 (backup_started_in_recovery && XLogArchivingAlways())))
+		((!backup_stopped_in_recovery && XLogArchivingActive()) ||
+		 (backup_stopped_in_recovery && XLogArchivingAlways())))
 	{
-		XLByteToPrevSeg(stoppoint, _logSegNo, wal_segment_size);
-		XLogFileName(lastxlogfilename, stoptli, _logSegNo, wal_segment_size);
+		XLByteToPrevSeg(state->stoppoint, _logSegNo, wal_segment_size);
+		XLogFileName(lastxlogfilename, state->stoptli, _logSegNo,
+					 wal_segment_size);
 
-		XLByteToSeg(startpoint, _logSegNo, wal_segment_size);
-		BackupHistoryFileName(histfilename, stoptli, _logSegNo,
-							  startpoint, wal_segment_size);
+		XLByteToSeg(state->startpoint, _logSegNo, wal_segment_size);
+		BackupHistoryFileName(histfilename, state->stoptli, _logSegNo,
+							  state->startpoint, wal_segment_size);
 
 		seconds_before_warning = 60;
 		waits = 0;
@@ -8910,13 +8842,6 @@ do_pg_backup_stop(char *labelfile, bool waitforarchive, TimeLineID *stoptli_p)
 	else if (waitforarchive)
 		ereport(NOTICE,
 				(errmsg("WAL archiving is not enabled; you must ensure that all required WAL segments are copied through other means to complete the backup")));
-
-	/*
-	 * We're done.  As a convenience, return the ending WAL location.
-	 */
-	if (stoptli_p)
-		*stoptli_p = stoptli;
-	return stoppoint;
 }
 
 

@@ -233,6 +233,7 @@ BackgroundWorker
 BackgroundWorkerArray
 BackgroundWorkerHandle
 BackgroundWorkerSlot
+BackupState
 Barrier
 BaseBackupCmd
 BaseBackupTargetHandle

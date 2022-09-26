@@ -11,6 +11,7 @@
 #ifndef XLOG_H
 #define XLOG_H
 
+#include "access/xlogbackup.h"
 #include "access/xlogdefs.h"
 #include "access/xlogreader.h"
 #include "datatype/timestamp.h"
@@ -277,11 +278,10 @@ typedef enum SessionBackupState
 	SESSION_BACKUP_RUNNING,
 } SessionBackupState;
 
-extern XLogRecPtr do_pg_backup_start(const char *backupidstr, bool fast,
-									 TimeLineID *starttli_p, StringInfo labelfile,
-									 List **tablespaces, StringInfo tblspcmapfile);
-extern XLogRecPtr do_pg_backup_stop(char *labelfile, bool waitforarchive,
-									TimeLineID *stoptli_p);
+extern void do_pg_backup_start(const char *backupidstr, bool fast,
+							   List **tablespaces, BackupState *state,
+							   StringInfo tblspcmapfile);
+extern void do_pg_backup_stop(BackupState *state, bool waitforarchive);
 extern void do_pg_abort_backup(int code, Datum arg);
 extern void register_persistent_abort_backup_handler(void);
 extern SessionBackupState get_backup_status(void);

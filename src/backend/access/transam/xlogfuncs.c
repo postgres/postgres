@@ -20,6 +20,7 @@
 
 #include "access/htup_details.h"
 #include "access/xlog_internal.h"
+#include "access/xlogbackup.h"
 #include "access/xlogrecovery.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_type.h"
@@ -39,19 +40,16 @@
 #include "utils/tuplestore.h"
 
 /*
- * Store label file and tablespace map during backups.
+ * Backup-related variables.
  */
-static StringInfo label_file;
-static StringInfo tblspc_map_file;
+static BackupState *backup_state = NULL;
+static StringInfo tablespace_map = NULL;
 
 /*
  * pg_backup_start: set up for taking an on-line backup dump
  *
- * Essentially what this does is to create a backup label file in $PGDATA,
- * where it will be archived as part of the backup dump.  The label file
- * contains the user-supplied label string (typically this would be used
- * to tell where the backup dump will be stored) and the starting time and
- * starting WAL location for the dump.
+ * Essentially what this does is to create the contents required for the
+ * backup_label file and the tablespace map.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -62,7 +60,6 @@ pg_backup_start(PG_FUNCTION_ARGS)
 	text	   *backupid = PG_GETARG_TEXT_PP(0);
 	bool		fast = PG_GETARG_BOOL(1);
 	char	   *backupidstr;
-	XLogRecPtr	startpoint;
 	SessionBackupState status = get_backup_status();
 	MemoryContext oldcontext;
 
@@ -74,20 +71,35 @@ pg_backup_start(PG_FUNCTION_ARGS)
 				 errmsg("a backup is already in progress in this session")));
 
 	/*
-	 * Label file and tablespace map file need to be long-lived, since they
-	 * are read in pg_backup_stop.
+	 * backup_state and tablespace_map need to be long-lived as they are used
+	 * in pg_backup_stop().
 	 */
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-	label_file = makeStringInfo();
-	tblspc_map_file = makeStringInfo();
+
+	/* Allocate backup state or reset it, if it comes from a previous run */
+	if (backup_state == NULL)
+		backup_state = (BackupState *) palloc0(sizeof(BackupState));
+	else
+		MemSet(backup_state, 0, sizeof(BackupState));
+
+	/*
+	 * tablespace_map may have been created in a previous backup, so take this
+	 * occasion to clean it.
+	 */
+	if (tablespace_map != NULL)
+	{
+		pfree(tablespace_map->data);
+		pfree(tablespace_map);
+		tablespace_map = NULL;
+	}
+
+	tablespace_map = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
 
 	register_persistent_abort_backup_handler();
+	do_pg_backup_start(backupidstr, fast, NULL, backup_state, tablespace_map);
 
-	startpoint = do_pg_backup_start(backupidstr, fast, NULL, label_file,
-									NULL, tblspc_map_file);
-
-	PG_RETURN_LSN(startpoint);
+	PG_RETURN_LSN(backup_state->startpoint);
 }
 
 
@@ -97,6 +109,15 @@ pg_backup_start(PG_FUNCTION_ARGS)
  * The first parameter (variable 'waitforarchive'), which is optional,
  * allows the user to choose if they want to wait for the WAL to be archived
  * or if we should just return as soon as the WAL record is written.
+ *
+ * This function stops an in-progress backup, creates backup_label contents and
+ * it returns the backup stop LSN, backup_label and tablespace_map contents.
+ *
+ * The backup_label contains the user-supplied label string (typically this
+ * would be used to tell where the backup dump will be stored), the starting
+ * time, starting WAL location for the dump and so on.  It is the caller's
+ * responsibility to write the backup_label and tablespace_map files in the
+ * data folder that will be restored from this backup.
  *
  * Permission checking for this function is managed through the normal
  * GRANT system.
@@ -108,9 +129,8 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	Datum		values[PG_BACKUP_STOP_V2_COLS] = {0};
 	bool		nulls[PG_BACKUP_STOP_V2_COLS] = {0};
-
 	bool		waitforarchive = PG_GETARG_BOOL(0);
-	XLogRecPtr	stoppoint;
+	StringInfo	backup_label;
 	SessionBackupState status = get_backup_status();
 
 	/* Initialize attributes information in the tuple descriptor */
@@ -123,23 +143,27 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 				 errmsg("backup is not in progress"),
 				 errhint("Did you call pg_backup_start()?")));
 
-	/*
-	 * Stop the backup. Return a copy of the backup label and tablespace map
-	 * so they can be written to disk by the caller.
-	 */
-	stoppoint = do_pg_backup_stop(label_file->data, waitforarchive, NULL);
+	Assert(backup_state != NULL);
+	Assert(tablespace_map != NULL);
 
-	values[0] = LSNGetDatum(stoppoint);
-	values[1] = CStringGetTextDatum(label_file->data);
-	values[2] = CStringGetTextDatum(tblspc_map_file->data);
+	/* Stop the backup */
+	do_pg_backup_stop(backup_state, waitforarchive);
 
-	/* Free structures allocated in TopMemoryContext */
-	pfree(label_file->data);
-	pfree(label_file);
-	label_file = NULL;
-	pfree(tblspc_map_file->data);
-	pfree(tblspc_map_file);
-	tblspc_map_file = NULL;
+	/* Build the contents of backup_label */
+	backup_label = build_backup_content(backup_state, false);
+
+	values[0] = LSNGetDatum(backup_state->stoppoint);
+	values[1] = CStringGetTextDatum(backup_label->data);
+	values[2] = CStringGetTextDatum(tablespace_map->data);
+
+	/* Deallocate backup-related variables */
+	pfree(backup_state);
+	backup_state = NULL;
+	pfree(tablespace_map->data);
+	pfree(tablespace_map);
+	tablespace_map = NULL;
+	pfree(backup_label->data);
+	pfree(backup_label);
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
