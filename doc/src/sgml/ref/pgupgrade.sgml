@@ -773,8 +773,10 @@ psql --username=postgres --file=script.sql postgres
    with a timestamp formatted as per ISO 8601
    (<literal>%Y%m%dT%H%M%S</literal>), where all its generated files are
    stored.
-   <filename>pg_upgrade_output.d</filename> and all its contained files may be
-   removed once the upgrade is successfully completed.
+   <filename>pg_upgrade_output.d</filename> and its contained files will be
+   removed automatically if <application>pg_upgrade</application> completes
+   successfully; but in the event of trouble, the files there may provide
+   useful debugging information.
   </para>
 
   <para>
