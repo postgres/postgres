@@ -17,6 +17,7 @@
 #include <ctype.h>
 
 #include "access/attnum.h"
+#include "common/shortest_dec.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
@@ -25,6 +26,7 @@
 #include "utils/datum.h"
 
 static void outChar(StringInfo str, char c);
+static void outDouble(StringInfo str, double d);
 
 
 /*
@@ -69,9 +71,10 @@ static void outChar(StringInfo str, char c);
 	appendStringInfo(str, " :" CppAsString(fldname) " %d", \
 					 (int) node->fldname)
 
-/* Write a float field --- caller must give format to define precision */
-#define WRITE_FLOAT_FIELD(fldname,format) \
-	appendStringInfo(str, " :" CppAsString(fldname) " " format, node->fldname)
+/* Write a float field (actually, they're double) */
+#define WRITE_FLOAT_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 outDouble(str, node->fldname))
 
 /* Write a boolean field */
 #define WRITE_BOOL_FIELD(fldname) \
@@ -196,6 +199,18 @@ outChar(StringInfo str, char c)
 	in[1] = '\0';
 
 	outToken(str, in);
+}
+
+/*
+ * Convert a double value, attempting to ensure the value is preserved exactly.
+ */
+static void
+outDouble(StringInfo str, double d)
+{
+	char		buf[DOUBLE_SHORTEST_DECIMAL_LEN];
+
+	double_to_shortest_decimal_buf(d, buf);
+	appendStringInfoString(str, buf);
 }
 
 /*
@@ -525,7 +540,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			break;
 		case RTE_NAMEDTUPLESTORE:
 			WRITE_STRING_FIELD(enrname);
-			WRITE_FLOAT_FIELD(enrtuples, "%.0f");
+			WRITE_FLOAT_FIELD(enrtuples);
 			WRITE_OID_FIELD(relid);
 			WRITE_NODE_FIELD(coltypes);
 			WRITE_NODE_FIELD(coltypmods);
