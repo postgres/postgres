@@ -603,10 +603,22 @@ pg_parse_query(const char *query_string)
 #endif
 
 	/*
-	 * Currently, outfuncs/readfuncs support is missing for many raw parse
-	 * tree nodes, so we don't try to implement WRITE_READ_PARSE_PLAN_TREES
-	 * here.
+	 * Optional debugging check: pass raw parsetrees through
+	 * outfuncs/readfuncs
 	 */
+#ifdef WRITE_READ_PARSE_PLAN_TREES
+	{
+		char	   *str = nodeToString(raw_parsetree_list);
+		List	   *new_list = stringToNodeWithLocations(str);
+
+		pfree(str);
+		/* This checks both outfuncs/readfuncs and the equal() routines... */
+		if (!equal(new_list, raw_parsetree_list))
+			elog(WARNING, "outfuncs/readfuncs failed to produce an equal raw parse tree");
+		else
+			raw_parsetree_list = new_list;
+	}
+#endif
 
 	TRACE_POSTGRESQL_QUERY_PARSE_DONE(query_string);
 
