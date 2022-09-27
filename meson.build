@@ -2966,6 +2966,9 @@ if meson.version().version_compare('>=0.57')
       'CPP FLAGS': ' '.join(cppflags),
       'C FLAGS, functional': ' '.join(cflags),
       'C FLAGS, warnings': ' '.join(cflags_warn),
+      'C FLAGS, modules': ' '.join(cflags_mod),
+      'C FLAGS, user specified': ' '.join(get_option('c_args')),
+      'LD FLAGS': ' '.join(ldflags + get_option('c_link_args')),
     },
     section: 'Compiler Flags',
   )
@@ -2982,6 +2985,7 @@ if meson.version().version_compare('>=0.57')
       {
         'C++ FLAGS, functional': ' '.join(cxxflags),
         'C++ FLAGS, warnings': ' '.join(cxxflags_warn),
+        'C++ FLAGS, user specified': ' '.join(get_option('cpp_args')),
       },
       section: 'Compiler Flags',
     )

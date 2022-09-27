@@ -42,11 +42,15 @@ config_paths_data.set_quoted('MANDIR', dir_prefix / dir_man)
 
 var_cc = ' '.join(cc.cmd_array())
 var_cpp = ' '.join(cc.cmd_array() + ['-E'])
-var_cflags = ' '.join(cflags + cflags_warn)
-var_cxxflags = ' '.join(cxxflags + cxxflags_warn)
+var_cflags = ' '.join(cflags + cflags_warn + get_option('c_args'))
+if llvm.found()
+  var_cxxflags = ' '.join(cxxflags + cxxflags_warn + get_option('cpp_args'))
+else
+  var_cxxflags = ''
+endif
 var_cppflags = ' '.join(cppflags)
 var_cflags_sl = '-fPIC' #FIXME
-var_ldflags = ' '.join(ldflags)
+var_ldflags = ' '.join(ldflags + get_option('c_link_args'))
 var_ldflags_sl = ''.join(ldflags_sl)
 var_ldflags_ex = '' # FIXME
 # FIXME - some extensions might directly use symbols from one of libs. If
