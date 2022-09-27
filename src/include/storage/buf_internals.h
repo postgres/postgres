@@ -137,7 +137,7 @@ BufTagGetForkNum(const BufferTag *tag)
 	StaticAssertStmt(MAX_FORKNUM <= INT8_MAX,
 					 "MAX_FORKNUM can't be greater than INT8_MAX");
 
-	ret = (int8) (tag->relForkDetails[0] >> BUFTAG_RELNUM_HIGH_BITS);
+	ret = (ForkNumber) (tag->relForkDetails[0] >> BUFTAG_RELNUM_HIGH_BITS);
 	return ret;
 }
 
