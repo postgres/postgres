@@ -2733,15 +2733,15 @@ endif
 
 prefix = get_option('prefix')
 
-test_prefix = prefix
+test_prefix = fs.as_posix(prefix)
 
 if fs.is_absolute(get_option('prefix'))
   if host_system == 'windows'
-    if prefix.split(':\\').length() == 1
+    if prefix.split(':/').length() == 1
       # just a drive
       test_prefix = ''
     else
-      test_prefix = prefix.split(':\\')[1]
+      test_prefix = prefix.split(':/')[1]
     endif
   else
     assert(prefix.startswith('/'))
