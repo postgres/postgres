@@ -207,6 +207,7 @@ typedef enum
 #define GUC_LIST_INPUT			0x0001	/* input can be list format */
 #define GUC_LIST_QUOTE			0x0002	/* double-quote list elements */
 #define GUC_NO_SHOW_ALL			0x0004	/* exclude from SHOW ALL */
+#define GUC_NO_RESET		  0x400000	/* disallow RESET and SAVE */
 #define GUC_NO_RESET_ALL		0x0008	/* exclude from RESET ALL */
 #define GUC_REPORT				0x0010	/* auto-report changes to client */
 #define GUC_NOT_IN_SAMPLE		0x0020	/* not in postgresql.conf.sample */

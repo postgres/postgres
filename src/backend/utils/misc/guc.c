@@ -3243,6 +3243,26 @@ set_config_option_ext(const char *name, const char *value,
 		}
 	}
 
+	/* Disallow resetting and saving GUC_NO_RESET values */
+	if (record->flags & GUC_NO_RESET)
+	{
+		if (value == NULL)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("parameter \"%s\" cannot be reset", name)));
+			return 0;
+		}
+		if (action == GUC_ACTION_SAVE)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("parameter \"%s\" cannot be set locally in functions",
+							name)));
+			return 0;
+		}
+	}
+
 	/*
 	 * Should we set reset/stacked values?	(If so, the behavior is not
 	 * transactional.)	This is done either when we get a default value from

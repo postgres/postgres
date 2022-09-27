@@ -35,6 +35,24 @@ SELECT oid FROM pg_class WHERE relname = 'disappear';
 -- should have members again
 SELECT * FROM xacttest;
 
+-- Test that transaction characteristics cannot be reset.
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT COUNT(*) FROM xacttest;
+RESET transaction_isolation; -- error
+END;
+
+BEGIN TRANSACTION READ ONLY;
+SELECT COUNT(*) FROM xacttest;
+RESET transaction_read_only; -- error
+END;
+
+BEGIN TRANSACTION DEFERRABLE;
+SELECT COUNT(*) FROM xacttest;
+RESET transaction_deferrable; -- error
+END;
+
+CREATE FUNCTION errfunc() RETURNS int LANGUAGE SQL AS 'SELECT 1'
+SET transaction_read_only = on; -- error
 
 -- Read-only tests
 

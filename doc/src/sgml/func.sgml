@@ -24354,6 +24354,12 @@ SELECT collation for ('foo' COLLATE "de_DE");
       </entry>
      </row>
      <row>
+      <entry><literal>NO_RESET</literal></entry>
+      <entry>Parameters with this flag do not support
+      <command>RESET</command> commands.
+      </entry>
+     </row>
+     <row>
       <entry><literal>NO_RESET_ALL</literal></entry>
       <entry>Parameters with this flag are excluded from
        <command>RESET ALL</command> commands.

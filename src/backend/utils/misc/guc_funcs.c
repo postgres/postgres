@@ -141,9 +141,6 @@ ExecSetVariableStmt(VariableSetStmt *stmt, bool isTopLevel)
 				WarnNoTransactionBlock(isTopLevel, "SET LOCAL");
 			/* fall through */
 		case VAR_RESET:
-			if (strcmp(stmt->name, "transaction_isolation") == 0)
-				WarnNoTransactionBlock(isTopLevel, "RESET TRANSACTION");
-
 			(void) set_config_option(stmt->name,
 									 NULL,
 									 (superuser() ? PGC_SUSET : PGC_USERSET),
@@ -539,7 +536,7 @@ ShowAllGUCConfig(DestReceiver *dest)
 Datum
 pg_settings_get_flags(PG_FUNCTION_ARGS)
 {
-#define MAX_GUC_FLAGS	5
+#define MAX_GUC_FLAGS	6
 	char	   *varname = TextDatumGetCString(PG_GETARG_DATUM(0));
 	struct config_generic *record;
 	int			cnt = 0;
@@ -554,6 +551,8 @@ pg_settings_get_flags(PG_FUNCTION_ARGS)
 
 	if (record->flags & GUC_EXPLAIN)
 		flags[cnt++] = CStringGetTextDatum("EXPLAIN");
+	if (record->flags & GUC_NO_RESET)
+		flags[cnt++] = CStringGetTextDatum("NO_RESET");
 	if (record->flags & GUC_NO_RESET_ALL)
 		flags[cnt++] = CStringGetTextDatum("NO_RESET_ALL");
 	if (record->flags & GUC_NO_SHOW_ALL)
