@@ -487,7 +487,7 @@
 
   <para>
    Plannable queries (that is, <command>SELECT</command>, <command>INSERT</command>,
-   <command>UPDATE</command>, and <command>DELETE</command>) are combined into a single
+   <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>) are combined into a single
    <structname>pg_stat_statements</structname> entry whenever they have identical query
    structures according to an internal hash calculation.  Typically, two
    queries will be considered the same for this purpose if they are
@@ -783,7 +783,7 @@
       <varname>pg_stat_statements.track_utility</varname> controls whether
       utility commands are tracked by the module.  Utility commands are
       all those other than <command>SELECT</command>, <command>INSERT</command>,
-      <command>UPDATE</command> and <command>DELETE</command>.
+      <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>.
       The default value is <literal>on</literal>.
       Only superusers can change this setting.
      </para>
