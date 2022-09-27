@@ -19,18 +19,46 @@
 
 
 /*
- * Macros for fmgr-callable functions.
+ * Functions for fmgr-callable functions.
  *
  * For Timestamp, we make use of the same support routines as for int64.
  * Therefore Timestamp is pass-by-reference if and only if int64 is!
  */
-#define DatumGetTimestamp(X)  ((Timestamp) DatumGetInt64(X))
-#define DatumGetTimestampTz(X)	((TimestampTz) DatumGetInt64(X))
-#define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
+static inline Timestamp
+DatumGetTimestamp(Datum X)
+{
+	return (Timestamp) DatumGetInt64(X);
+}
 
-#define TimestampGetDatum(X) Int64GetDatum(X)
-#define TimestampTzGetDatum(X) Int64GetDatum(X)
-#define IntervalPGetDatum(X) PointerGetDatum(X)
+static inline TimestampTz
+DatumGetTimestampTz(Datum X)
+{
+	return (TimestampTz) DatumGetInt64(X);
+}
+
+static inline Interval *
+DatumGetIntervalP(Datum X)
+{
+	return (Interval *) DatumGetPointer(X);
+}
+
+static inline Datum
+TimestampGetDatum(Timestamp X)
+{
+	return Int64GetDatum(X);
+}
+
+static inline Datum
+TimestampTzGetDatum(TimestampTz X)
+{
+	return Int64GetDatum(X);
+}
+
+static inline Datum
+IntervalPGetDatum(const Interval *X)
+{
+	return PointerGetDatum(X);
+}
 
 #define PG_GETARG_TIMESTAMP(n) DatumGetTimestamp(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMESTAMPTZ(n) DatumGetTimestampTz(PG_GETARG_DATUM(n))

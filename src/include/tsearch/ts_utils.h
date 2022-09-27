@@ -243,8 +243,18 @@ typedef uint64 TSQuerySign;
 
 #define TSQS_SIGLEN  (sizeof(TSQuerySign)*BITS_PER_BYTE)
 
-#define TSQuerySignGetDatum(X)		Int64GetDatum((int64) (X))
-#define DatumGetTSQuerySign(X)		((TSQuerySign) DatumGetInt64(X))
+static inline Datum
+TSQuerySignGetDatum(TSQuerySign X)
+{
+	return Int64GetDatum((int64) X);
+}
+
+static inline TSQuerySign
+DatumGetTSQuerySign(Datum X)
+{
+	return (TSQuerySign) DatumGetInt64(X);
+}
+
 #define PG_RETURN_TSQUERYSIGN(X)	return TSQuerySignGetDatum(X)
 #define PG_GETARG_TSQUERYSIGN(n)	DatumGetTSQuerySign(PG_GETARG_DATUM(n))
 

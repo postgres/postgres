@@ -45,18 +45,46 @@ typedef struct
 #define MAX_TIME_PRECISION 6
 
 /*
- * Macros for fmgr-callable functions.
+ * Functions for fmgr-callable functions.
  *
  * For TimeADT, we make use of the same support routines as for int64.
  * Therefore TimeADT is pass-by-reference if and only if int64 is!
  */
-#define DatumGetDateADT(X)	  ((DateADT) DatumGetInt32(X))
-#define DatumGetTimeADT(X)	  ((TimeADT) DatumGetInt64(X))
-#define DatumGetTimeTzADTP(X) ((TimeTzADT *) DatumGetPointer(X))
+static inline DateADT
+DatumGetDateADT(Datum X)
+{
+	return (DateADT) DatumGetInt32(X);
+}
 
-#define DateADTGetDatum(X)	  Int32GetDatum(X)
-#define TimeADTGetDatum(X)	  Int64GetDatum(X)
-#define TimeTzADTPGetDatum(X) PointerGetDatum(X)
+static inline TimeADT
+DatumGetTimeADT(Datum X)
+{
+	return (TimeADT) DatumGetInt64(X);
+}
+
+static inline TimeTzADT *
+DatumGetTimeTzADTP(Datum X)
+{
+	return (TimeTzADT *) DatumGetPointer(X);
+}
+
+static inline Datum
+DateADTGetDatum(DateADT X)
+{
+	return Int32GetDatum(X);
+}
+
+static inline Datum
+TimeADTGetDatum(TimeADT X)
+{
+	return Int64GetDatum(X);
+}
+
+static inline Datum
+TimeTzADTPGetDatum(const TimeTzADT *X)
+{
+	return PointerGetDatum(X);
+}
 
 #define PG_GETARG_DATEADT(n)	 DatumGetDateADT(PG_GETARG_DATUM(n))
 #define PG_GETARG_TIMEADT(n)	 DatumGetTimeADT(PG_GETARG_DATUM(n))

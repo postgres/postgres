@@ -2763,7 +2763,7 @@ c_overpaid(PG_FUNCTION_ARGS)
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
      value that you can convert to the proper data type by using the
      appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function>
-     macro.  Note that the return value is meaningless if the null flag is
+     function.  Note that the return value is meaningless if the null flag is
      set; always check the null flag before trying to do anything with the
      result.
     </para>

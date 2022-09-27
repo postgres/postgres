@@ -47,8 +47,17 @@ typedef enum
 /* struct PgXmlErrorContext is private to xml.c */
 typedef struct PgXmlErrorContext PgXmlErrorContext;
 
-#define DatumGetXmlP(X)		((xmltype *) PG_DETOAST_DATUM(X))
-#define XmlPGetDatum(X)		PointerGetDatum(X)
+static inline xmltype *
+DatumGetXmlP(Datum X)
+{
+	return (xmltype *) PG_DETOAST_DATUM(X);
+}
+
+static inline Datum
+XmlPGetDatum(const xmltype *X)
+{
+	return PointerGetDatum(X);
+}
 
 #define PG_GETARG_XML_P(n)	DatumGetXmlP(PG_GETARG_DATUM(n))
 #define PG_RETURN_XML_P(x)	PG_RETURN_POINTER(x)

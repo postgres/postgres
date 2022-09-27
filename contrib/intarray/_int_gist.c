@@ -51,7 +51,7 @@ g_int_consistent(PG_FUNCTION_ARGS)
 
 	/* Oid		subtype = PG_GETARG_OID(3); */
 	bool	   *recheck = (bool *) PG_GETARG_POINTER(4);
-	bool		retval;
+	bool		retval = false; /* silence compiler warning */
 
 	/* this is exact except for RTSameStrategyNumber */
 	*recheck = (strategy == RTSameStrategyNumber);

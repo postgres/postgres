@@ -280,7 +280,7 @@ gistMakeUnionKey(GISTSTATE *giststate, int attno,
 bool
 gistKeyIsEQ(GISTSTATE *giststate, int attno, Datum a, Datum b)
 {
-	bool		result;
+	bool		result = false; /* silence compiler warning */
 
 	FunctionCall3Coll(&giststate->equalFn[attno],
 					  giststate->supportCollation[attno],

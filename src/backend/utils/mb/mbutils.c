@@ -409,8 +409,8 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 	(void) OidFunctionCall6(proc,
 							Int32GetDatum(src_encoding),
 							Int32GetDatum(dest_encoding),
-							CStringGetDatum(src),
-							CStringGetDatum(result),
+							CStringGetDatum((char *) src),
+							CStringGetDatum((char *) result),
 							Int32GetDatum(len),
 							BoolGetDatum(false));
 
@@ -485,8 +485,8 @@ pg_do_encoding_conversion_buf(Oid proc,
 	result = OidFunctionCall6(proc,
 							  Int32GetDatum(src_encoding),
 							  Int32GetDatum(dest_encoding),
-							  CStringGetDatum(src),
-							  CStringGetDatum(dest),
+							  CStringGetDatum((char *) src),
+							  CStringGetDatum((char *) dest),
 							  Int32GetDatum(srclen),
 							  BoolGetDatum(noError));
 	return DatumGetInt32(result);
@@ -910,8 +910,8 @@ pg_unicode_to_server(pg_wchar c, unsigned char *s)
 	FunctionCall6(Utf8ToServerConvProc,
 				  Int32GetDatum(PG_UTF8),
 				  Int32GetDatum(server_encoding),
-				  CStringGetDatum(c_as_utf8),
-				  CStringGetDatum(s),
+				  CStringGetDatum((char *) c_as_utf8),
+				  CStringGetDatum((char *) s),
 				  Int32GetDatum(c_as_utf8_len),
 				  BoolGetDatum(false));
 }
