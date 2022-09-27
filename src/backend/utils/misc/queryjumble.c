@@ -247,6 +247,7 @@ JumbleQueryInternal(JumbleState *jstate, Query *query)
 	JumbleExpr(jstate, (Node *) query->cteList);
 	JumbleRangeTable(jstate, query->rtable);
 	JumbleExpr(jstate, (Node *) query->jointree);
+	JumbleExpr(jstate, (Node *) query->mergeActionList);
 	JumbleExpr(jstate, (Node *) query->targetList);
 	JumbleExpr(jstate, (Node *) query->onConflict);
 	JumbleExpr(jstate, (Node *) query->returningList);
@@ -735,6 +736,16 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				APP_JUMB(conf->constraint);
 				APP_JUMB(conf->exclRelIndex);
 				JumbleExpr(jstate, (Node *) conf->exclRelTlist);
+			}
+			break;
+		case T_MergeAction:
+			{
+				MergeAction *mergeaction = (MergeAction *) node;
+
+				APP_JUMB(mergeaction->matched);
+				APP_JUMB(mergeaction->commandType);
+				JumbleExpr(jstate, mergeaction->qual);
+				JumbleExpr(jstate, (Node *) mergeaction->targetList);
 			}
 			break;
 		case T_List:

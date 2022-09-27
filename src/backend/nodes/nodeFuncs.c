@@ -2266,9 +2266,9 @@ expression_tree_walker(Node *node,
 			{
 				MergeAction *action = (MergeAction *) node;
 
-				if (walker(action->targetList, context))
-					return true;
 				if (walker(action->qual, context))
+					return true;
+				if (walker(action->targetList, context))
 					return true;
 			}
 			break;
