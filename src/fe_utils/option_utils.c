@@ -88,7 +88,7 @@ option_parse_int(const char *optarg, const char *optname,
  * option_parse_relfilenumber
  *
  * Parse relfilenumber value for an option.  If the parsing is successful,
- * returns; if parsing fails, returns false.
+ * returns true; if parsing fails, returns false.
  */
 bool
 option_parse_relfilenumber(const char *optarg, const char *optname)

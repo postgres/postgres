@@ -796,7 +796,7 @@ SetNextRelFileNumber(RelFileNumber relnumber)
 	 * (This is less efficient than GetNewRelFileNumber, which arranges to
 	 * log some new relfilenumbers before the old batch is exhausted in the
 	 * hope that a flush will happen in the background before any values are
-	 * needed from the new batch. However, since thais is only used during
+	 * needed from the new batch. However, since this is only used during
 	 * binary upgrade, it shouldn't really matter.)
 	 */
 	if (relnumber >= ShmemVariableCache->flushedRelFileNumber)
