@@ -47,14 +47,6 @@ typedef unsigned int Oid;
 typedef PG_INT64_TYPE pg_int64;
 
 /*
- * RelFileNumber data type identifies the specific relation file name.
- */
-typedef Oid RelFileNumber;
-#define InvalidRelFileNumber		((RelFileNumber) InvalidOid)
-#define RelFileNumberIsValid(relnumber) \
-				((bool) ((relnumber) != InvalidRelFileNumber))
-
-/*
  * Identifiers of error message fields.  Kept here to keep common
  * between frontend and backend, and also to export them to libpq
  * applications.

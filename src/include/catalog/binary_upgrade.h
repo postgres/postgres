@@ -14,6 +14,8 @@
 #ifndef BINARY_UPGRADE_H
 #define BINARY_UPGRADE_H
 
+#include "common/relpath.h"
+
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_tablespace_oid;
 
 extern PGDLLIMPORT Oid binary_upgrade_next_pg_type_oid;

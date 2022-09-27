@@ -16,6 +16,7 @@
 
 #include "access/sdir.h"
 #include "access/stratnum.h"
+#include "common/relpath.h"
 #include "lib/stringinfo.h"
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"

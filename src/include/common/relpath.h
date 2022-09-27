@@ -19,6 +19,13 @@
  */
 #include "catalog/catversion.h" /* pgrminclude ignore */
 
+/*
+ * RelFileNumber data type identifies the specific relation file name.
+ */
+typedef Oid RelFileNumber;
+#define InvalidRelFileNumber		((RelFileNumber) InvalidOid)
+#define RelFileNumberIsValid(relnumber) \
+				((bool) ((relnumber) != InvalidRelFileNumber))
 
 /*
  * Name of major-version-specific tablespace subdirectories

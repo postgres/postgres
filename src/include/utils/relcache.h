@@ -15,6 +15,7 @@
 #define RELCACHE_H
 
 #include "access/tupdesc.h"
+#include "common/relpath.h"
 #include "nodes/bitmapset.h"
 
 

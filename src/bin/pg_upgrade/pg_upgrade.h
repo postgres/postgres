@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include "common/relpath.h"
 #include "libpq-fe.h"
 
 /* For now, pg_upgrade does not use common/logging.c; use our own pg_fatal */
