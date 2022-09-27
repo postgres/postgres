@@ -6,7 +6,16 @@ regress_sources = pg_regress_c + files(
   'pg_regress_main.c'
 )
 
-pg_regress_cflags = ['-DHOST_TUPLE="frak"', '-DSHELLPROG="/bin/sh"']
+# Need make up something roughly like x86_64-pc-mingw64. resultmap matches on
+# patterns like ".*-.*-mingw.*". We probably can do better, but for now just
+# replace 'gcc' with 'mingw' on windows.
+host_tuple_cc = cc.get_id()
+if host_system == 'windows' and host_tuple_cc == 'gcc'
+  host_tuple_cc = 'mingw'
+endif
+host_tuple = '@0@-@1@-@2@'.format(host_cpu, host_system, host_tuple_cc)
+
+pg_regress_cflags = ['-DHOST_TUPLE="@0@"'.format(host_tuple), '-DSHELLPROG="/bin/sh"']
 
 pg_regress = executable('pg_regress',
   regress_sources,
