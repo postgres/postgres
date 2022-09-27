@@ -24,7 +24,7 @@ ALTER PUBLICATION testpub_default SET (publish = update);
 CREATE PUBLICATION testpub_xxx WITH (foo);
 ERROR:  unrecognized publication parameter: "foo"
 CREATE PUBLICATION testpub_xxx WITH (publish = 'cluster, vacuum');
-ERROR:  unrecognized "publish" value: "cluster"
+ERROR:  unrecognized value for publication option "publish": "cluster"
 CREATE PUBLICATION testpub_xxx WITH (publish_via_partition_root = 'true', publish_via_partition_root = '0');
 ERROR:  conflicting or redundant options
 LINE 1: ...ub_xxx WITH (publish_via_partition_root = 'true', publish_vi...
@@ -853,32 +853,32 @@ DETAIL:  Column list used by the publication does not cover the replica identity
 SET client_min_messages = 'ERROR';
 -- failure - cannot use column list and schema together
 CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
-ERROR:  cannot use publication column list for relation "public.testpub_tbl7"
-DETAIL:  Column list cannot be specified if any schema is part of the publication or specified in the list.
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
 -- ok - only publish schema
 CREATE PUBLICATION testpub_tbl9 FOR TABLES IN SCHEMA public;
 -- failure - add a table with column list when there is already a schema in the
 -- publication
 ALTER PUBLICATION testpub_tbl9 ADD TABLE public.testpub_tbl7(a);
-ERROR:  cannot use publication column list for relation "public.testpub_tbl7"
-DETAIL:  Column list cannot be specified if any schema is part of the publication or specified in the list.
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
 -- ok - only publish table with column list
 ALTER PUBLICATION testpub_tbl9 SET TABLE public.testpub_tbl7(a);
 -- failure - specify a schema when there is already a column list in the
 -- publication
 ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public;
-ERROR:  cannot add schema to the publication
-DETAIL:  Schema cannot be added if any table that specifies column list is already part of the publication.
+ERROR:  cannot add schema to publication "testpub_tbl9"
+DETAIL:  Schemas cannot be added if any tables that specify a column list are already part of the publication.
 -- failure - cannot SET column list and schema together
 ALTER PUBLICATION testpub_tbl9 SET TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
-ERROR:  cannot use publication column list for relation "public.testpub_tbl7"
-DETAIL:  Column list cannot be specified if any schema is part of the publication or specified in the list.
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
 -- ok - drop table
 ALTER PUBLICATION testpub_tbl9 DROP TABLE public.testpub_tbl7;
 -- failure - cannot ADD column list and schema together
 ALTER PUBLICATION testpub_tbl9 ADD TABLES IN SCHEMA public, TABLE public.testpub_tbl7(a);
-ERROR:  cannot use publication column list for relation "public.testpub_tbl7"
-DETAIL:  Column list cannot be specified if any schema is part of the publication or specified in the list.
+ERROR:  cannot use column list for relation "public.testpub_tbl7" in publication "testpub_tbl9"
+DETAIL:  Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements.
 RESET client_min_messages;
 DROP TABLE testpub_tbl5, testpub_tbl6, testpub_tbl7, testpub_tbl8, testpub_tbl8_1;
 DROP PUBLICATION testpub_table_ins, testpub_fortable, testpub_fortable_insert, testpub_col_list, testpub_tbl9;
@@ -1009,8 +1009,8 @@ UPDATE rf_tbl_abcd_nopk SET a = 1;
 ALTER PUBLICATION testpub6 SET (PUBLISH_VIA_PARTITION_ROOT=0);
 -- fail - cannot use column list for partitioned table
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk (a);
-ERROR:  cannot use publication column list for relation "rf_tbl_abcd_part_pk"
-DETAIL:  Column list cannot be used for a partitioned table when publish_via_partition_root is false.
+ERROR:  cannot use column list for relation "public.rf_tbl_abcd_part_pk" in publication "testpub6"
+DETAIL:  Column lists cannot be specified for partitioned tables when publish_via_partition_root is false.
 -- ok - can use column list for partition
 ALTER PUBLICATION testpub6 SET TABLE rf_tbl_abcd_part_pk_1 (a);
 -- ok - "a" is a PK col
