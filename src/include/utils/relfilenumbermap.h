@@ -13,6 +13,8 @@
 #ifndef RELFILENUMBERMAP_H
 #define RELFILENUMBERMAP_H
 
+#include "common/relpath.h"
+
 extern Oid	RelidByRelfilenumber(Oid reltablespace,
 								 RelFileNumber relfilenumber);
 
