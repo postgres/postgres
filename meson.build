@@ -2471,9 +2471,22 @@ bin_install_rpaths = []
 lib_install_rpaths = []
 mod_install_rpaths = []
 
-# Add extra_lib_dirs to rpath. Not needed on darwin, as the install_name of
-# libraries in extra_lib_dirs will be used anyway.
+
+# Don't add rpaths on darwin for now - as long as only absolute references to
+# libraries are needed, absolute LC_ID_DYLIB ensures libraries can be found in
+# their final destination.
 if host_system != 'darwin'
+  # Add absolute path to libdir to rpath. This ensures installed binaries /
+  # libraries find our libraries (mainly libpq).
+  bin_install_rpaths += dir_prefix / dir_lib
+  lib_install_rpaths += dir_prefix / dir_lib
+  mod_install_rpaths += dir_prefix / dir_lib
+
+  # Add extra_lib_dirs to rpath. This ensures we find libraries we depend on.
+  #
+  # Not needed on darwin even if we use relative rpaths for our own libraries,
+  # as the install_name of libraries in extra_lib_dirs will point to their
+  # location anyway.
   bin_install_rpaths += postgres_lib_d
   lib_install_rpaths += postgres_lib_d
   mod_install_rpaths += postgres_lib_d
