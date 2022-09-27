@@ -878,7 +878,7 @@ pg_relation_filenode(PG_FUNCTION_ARGS)
 	if (!RelFileNumberIsValid(result))
 		PG_RETURN_NULL();
 
-	PG_RETURN_OID(result);
+	PG_RETURN_INT64(result);
 }
 
 /*
@@ -898,8 +898,11 @@ Datum
 pg_filenode_relation(PG_FUNCTION_ARGS)
 {
 	Oid			reltablespace = PG_GETARG_OID(0);
-	RelFileNumber relfilenumber = PG_GETARG_OID(1);
+	RelFileNumber relfilenumber = PG_GETARG_INT64(1);
 	Oid			heaprel;
+
+	/* check whether the relfilenumber is within a valid range */
+	CHECK_RELFILENUMBER_RANGE(relfilenumber);
 
 	/* test needed so RelidByRelfilenumber doesn't misbehave */
 	if (!RelFileNumberIsValid(relfilenumber))

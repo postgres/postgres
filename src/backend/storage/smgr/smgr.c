@@ -154,7 +154,7 @@ smgropen(RelFileLocator rlocator, BackendId backend)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		ctl.keysize = sizeof(RelFileLocatorBackend);
+		ctl.keysize = SizeOfRelFileLocatorBackend;
 		ctl.entrysize = sizeof(SMgrRelationData);
 		SMgrRelationHash = hash_create("smgr relation table", 400,
 									   &ctl, HASH_ELEM | HASH_BLOBS);

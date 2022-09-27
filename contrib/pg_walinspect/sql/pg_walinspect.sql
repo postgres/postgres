@@ -39,10 +39,10 @@ SELECT COUNT(*) >= 0 AS ok FROM pg_get_wal_stats_till_end_of_wal(:'wal_lsn1');
 -- Test for filtering out WAL records of a particular table
 -- ===================================================================
 
-SELECT oid AS sample_tbl_oid FROM pg_class WHERE relname = 'sample_tbl' \gset
+SELECT relfilenode AS sample_tbl_relfilenode FROM pg_class WHERE relname = 'sample_tbl' \gset
 
 SELECT COUNT(*) >= 1 AS ok FROM pg_get_wal_records_info(:'wal_lsn1', :'wal_lsn2')
-			WHERE block_ref LIKE concat('%', :'sample_tbl_oid', '%') AND resource_manager = 'Heap';
+			WHERE block_ref LIKE concat('%', :'sample_tbl_relfilenode', '%') AND resource_manager = 'Heap';
 
 -- ===================================================================
 -- Test for filtering out WAL records based on resource_manager and

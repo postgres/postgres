@@ -40,7 +40,7 @@ my $toast_index = $node->safe_psql('postgres',
 # REINDEX operations.  A set of relfilenodes is saved from the catalogs
 # and then compared with pg_class.
 $node->safe_psql('postgres',
-	'CREATE TABLE index_relfilenodes (parent regclass, indname text, indoid oid, relfilenode oid);'
+	'CREATE TABLE index_relfilenodes (parent regclass, indname text, indoid oid, relfilenode int8);'
 );
 # Save the relfilenode of a set of toast indexes, one from the catalog
 # pg_constraint and one from the test table.

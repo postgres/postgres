@@ -41,6 +41,7 @@ typedef struct CheckPoint
 								 * timeline (equals ThisTimeLineID otherwise) */
 	bool		fullPageWrites; /* current full_page_writes */
 	FullTransactionId nextXid;	/* next free transaction ID */
+	RelFileNumber nextRelFileNumber;	/* next relfilenumber */
 	Oid			nextOid;		/* next free OID */
 	MultiXactId nextMulti;		/* next free MultiXactId */
 	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
@@ -78,6 +79,7 @@ typedef struct CheckPoint
 #define XLOG_FPI						0xB0
 /* 0xC0 is used in Postgres 9.5-11 */
 #define XLOG_OVERWRITE_CONTRECORD		0xD0
+#define XLOG_NEXT_RELFILENUMBER			0xE0
 
 
 /*

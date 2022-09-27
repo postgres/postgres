@@ -62,7 +62,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>relfilenode</structfield> <type>oid</type>
+       <structfield>relfilenode</structfield> <type>int8</type>
        (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>relfilenode</structfield>)
       </para>
       <para>

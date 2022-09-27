@@ -100,7 +100,7 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
 
-				appendStringInfo(buf, "rel %u/%u/%u; latestRemovedXid %u:%u",
+				appendStringInfo(buf, "rel %u/%u/" UINT64_FORMAT "; latestRemovedXid %u:%u",
 								 xlrec->locator.spcOid, xlrec->locator.dbOid,
 								 xlrec->locator.relNumber,
 								 EpochFromFullTransactionId(xlrec->latestRemovedFullXid),

@@ -196,7 +196,7 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 
 		/* set scan arguments */
 		skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
-		skey[1].sk_argument = ObjectIdGetDatum(relfilenumber);
+		skey[1].sk_argument = Int64GetDatum((int64) relfilenumber);
 
 		scandesc = systable_beginscan(relation,
 									  ClassTblspcRelfilenodeIndexId,
@@ -213,7 +213,7 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 
 			if (found)
 				elog(ERROR,
-					 "unexpected duplicate for tablespace %u, relfilenumber %u",
+					 "unexpected duplicate for tablespace %u, relfilenumber " UINT64_FORMAT,
 					 reltablespace, relfilenumber);
 			found = true;
 

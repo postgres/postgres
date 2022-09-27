@@ -3712,7 +3712,7 @@ RelationSetNewRelfilenumber(Relation relation, char persistence)
 	{
 		/* Allocate a new relfilenumber */
 		newrelfilenumber = GetNewRelFileNumber(relation->rd_rel->reltablespace,
-											   NULL, persistence);
+											   persistence);
 	}
 	else if (relation->rd_rel->relkind == RELKIND_INDEX)
 	{

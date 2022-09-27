@@ -45,8 +45,8 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		appendStringInfo(buf, "redo %X/%X; "
-						 "tli %u; prev tli %u; fpw %s; xid %u:%u; oid %u; multi %u; offset %u; "
-						 "oldest xid %u in DB %u; oldest multi %u in DB %u; "
+						 "tli %u; prev tli %u; fpw %s; xid %u:%u; relfilenumber " UINT64_FORMAT ";oid %u; "
+						 "multi %u; offset %u; oldest xid %u in DB %u; oldest multi %u in DB %u; "
 						 "oldest/newest commit timestamp xid: %u/%u; "
 						 "oldest running xid %u; %s",
 						 LSN_FORMAT_ARGS(checkpoint->redo),
@@ -55,6 +55,7 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 						 checkpoint->fullPageWrites ? "true" : "false",
 						 EpochFromFullTransactionId(checkpoint->nextXid),
 						 XidFromFullTransactionId(checkpoint->nextXid),
+						 checkpoint->nextRelFileNumber,
 						 checkpoint->nextOid,
 						 checkpoint->nextMulti,
 						 checkpoint->nextMultiOffset,
@@ -73,6 +74,13 @@ xlog_desc(StringInfo buf, XLogReaderState *record)
 
 		memcpy(&nextOid, rec, sizeof(Oid));
 		appendStringInfo(buf, "%u", nextOid);
+	}
+	else if (info == XLOG_NEXT_RELFILENUMBER)
+	{
+		RelFileNumber nextRelFileNumber;
+
+		memcpy(&nextRelFileNumber, rec, sizeof(RelFileNumber));
+		appendStringInfo(buf, UINT64_FORMAT, nextRelFileNumber);
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
@@ -169,6 +177,9 @@ xlog_identify(uint8 info)
 		case XLOG_NEXTOID:
 			id = "NEXTOID";
 			break;
+		case XLOG_NEXT_RELFILENUMBER:
+			id = "NEXT_RELFILENUMBER";
+			break;
 		case XLOG_SWITCH:
 			id = "SWITCH";
 			break;
@@ -237,7 +248,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 				appendStringInfoChar(buf, ' ');
 
 			appendStringInfo(buf,
-							 "blkref #%d: rel %u/%u/%u fork %s blk %u",
+							 "blkref #%d: rel %u/%u/" UINT64_FORMAT " fork %s blk %u",
 							 block_id,
 							 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 							 forkNames[forknum],
@@ -297,7 +308,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 			if (forknum != MAIN_FORKNUM)
 			{
 				appendStringInfo(buf,
-								 ", blkref #%d: rel %u/%u/%u fork %s blk %u",
+								 ", blkref #%d: rel %u/%u/" UINT64_FORMAT " fork %s blk %u",
 								 block_id,
 								 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 								 forkNames[forknum],
@@ -306,7 +317,7 @@ XLogRecGetBlockRefInfo(XLogReaderState *record, bool pretty,
 			else
 			{
 				appendStringInfo(buf,
-								 ", blkref #%d: rel %u/%u/%u blk %u",
+								 ", blkref #%d: rel %u/%u/" UINT64_FORMAT " blk %u",
 								 block_id,
 								 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber,
 								 blk);

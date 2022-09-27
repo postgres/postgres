@@ -485,9 +485,7 @@ main(int argc, char *argv[])
 				mode = PG_MODE_ENABLE;
 				break;
 			case 'f':
-				if (!option_parse_int(optarg, "-f/--filenode", 0,
-									  INT_MAX,
-									  NULL))
+				if (!option_parse_relfilenumber(optarg, "-f/--filenode"))
 					exit(1);
 				only_filenode = pstrdup(optarg);
 				break;

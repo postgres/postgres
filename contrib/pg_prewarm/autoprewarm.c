@@ -345,7 +345,7 @@ apw_load_buffers(void)
 	{
 		unsigned	forknum;
 
-		if (fscanf(file, "%u,%u,%u,%u,%u\n", &blkinfo[i].database,
+		if (fscanf(file, "%u,%u," UINT64_FORMAT ",%u,%u\n", &blkinfo[i].database,
 				   &blkinfo[i].tablespace, &blkinfo[i].filenumber,
 				   &forknum, &blkinfo[i].blocknum) != 5)
 			ereport(ERROR,
@@ -669,7 +669,7 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 	{
 		CHECK_FOR_INTERRUPTS();
 
-		ret = fprintf(file, "%u,%u,%u,%u,%u\n",
+		ret = fprintf(file, "%u,%u," UINT64_FORMAT ",%u,%u\n",
 					  block_info_array[i].database,
 					  block_info_array[i].tablespace,
 					  block_info_array[i].filenumber,

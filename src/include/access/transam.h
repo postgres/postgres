@@ -15,6 +15,7 @@
 #define TRANSAM_H
 
 #include "access/xlogdefs.h"
+#include "common/relpath.h"
 
 
 /* ----------------
@@ -196,6 +197,33 @@ FullTransactionIdAdvance(FullTransactionId *dest)
 #define FirstUnpinnedObjectId	12000
 #define FirstNormalObjectId		16384
 
+/* ----------
+ * RelFileNumbers are normally assigned sequentially beginning with
+ * FirstNormalRelFileNumber, but for system tables the initial RelFileNumber
+ * is equal to the table OID. This scheme allows pg_upgrade to work: we expect
+ * that the new cluster will contain only system tables, and that none of those
+ * will have previously been rewritten, so any RelFileNumber which is in use
+ * in both the old and new clusters will be used for the same relation in both
+ * places.
+ *
+ * This is important because pg_upgrade can't reactively move conflicting
+ * relations out of the way. If it tries to set the RelFileNumber for a
+ * relation to some value that's already in use by a different relation, the
+ * upgrade will just fail. It's OK if the same RelFileNumber is used for the
+ * same relation, though, since then nothing needs to be changed.
+ * ----------
+ */
+#define FirstNormalRelFileNumber	((RelFileNumber) 100000)
+
+#define CHECK_RELFILENUMBER_RANGE(relfilenumber)				\
+do {																\
+	if ((relfilenumber) < 0 || (relfilenumber) > MAX_RELFILENUMBER)	\
+		ereport(ERROR,												\
+				errcode(ERRCODE_INVALID_PARAMETER_VALUE),			\
+				errmsg("relfilenumber %llu is out of range",	\
+						(unsigned long long) (relfilenumber))); \
+} while (0)
+
 /*
  * VariableCache is a data structure in shared memory that is used to track
  * OID and XID assignment state.  For largely historical reasons, there is
@@ -213,6 +241,15 @@ typedef struct VariableCacheData
 	 */
 	Oid			nextOid;		/* next OID to assign */
 	uint32		oidCount;		/* OIDs available before must do XLOG work */
+
+	/*
+	 * These fields are protected by RelFileNumberGenLock.
+	 */
+	RelFileNumber nextRelFileNumber;	/* next relfilenumber to assign */
+	RelFileNumber loggedRelFileNumber;	/* last logged relfilenumber */
+	RelFileNumber flushedRelFileNumber;	/* last flushed relfilenumber */
+	XLogRecPtr	loggedRelFileNumberRecPtr;	/* xlog record pointer w.r.t.
+											 * loggedRelFileNumber */
 
 	/*
 	 * These fields are protected by XidGenLock.
@@ -293,6 +330,9 @@ extern void SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
 extern void AdvanceOldestClogXid(TransactionId oldest_datfrozenxid);
 extern bool ForceTransactionIdLimitUpdate(void);
 extern Oid	GetNewObjectId(void);
+extern RelFileNumber GetNewRelFileNumber(Oid reltablespace,
+										 char relpersistence);
+extern void SetNextRelFileNumber(RelFileNumber relnumber);
 extern void StopGeneratingPinnedObjectIds(void);
 
 #ifdef USE_ASSERT_CHECKING

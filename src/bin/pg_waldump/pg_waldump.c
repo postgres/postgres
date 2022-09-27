@@ -884,7 +884,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'R':
-				if (sscanf(optarg, "%u/%u/%u",
+				if (sscanf(optarg, "%u/%u/" UINT64_FORMAT,
 						   &config.filter_by_relation.spcOid,
 						   &config.filter_by_relation.dbOid,
 						   &config.filter_by_relation.relNumber) != 3 ||
