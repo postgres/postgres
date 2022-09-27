@@ -23,15 +23,16 @@
  * When ishistoryfile is true, it creates the contents for a backup history
  * file, otherwise it creates contents for a backup_label file.
  *
- * Returns the result generated as a palloc'd StringInfo.
+ * Returns the result generated as a palloc'd string.
  */
-StringInfo
+char *
 build_backup_content(BackupState *state, bool ishistoryfile)
 {
 	char		startstrbuf[128];
 	char		startxlogfile[MAXFNAMELEN]; /* backup start WAL file */
 	XLogSegNo	startsegno;
 	StringInfo	result = makeStringInfo();
+	char	   *data;
 
 	Assert(state != NULL);
 
@@ -76,5 +77,8 @@ build_backup_content(BackupState *state, bool ishistoryfile)
 		appendStringInfo(result, "STOP TIMELINE: %u\n", state->stoptli);
 	}
 
-	return result;
+	data = result->data;
+	pfree(result);
+
+	return data;
 }

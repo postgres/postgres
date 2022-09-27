@@ -130,7 +130,7 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	Datum		values[PG_BACKUP_STOP_V2_COLS] = {0};
 	bool		nulls[PG_BACKUP_STOP_V2_COLS] = {0};
 	bool		waitforarchive = PG_GETARG_BOOL(0);
-	StringInfo	backup_label;
+	char	   *backup_label;
 	SessionBackupState status = get_backup_status();
 
 	/* Initialize attributes information in the tuple descriptor */
@@ -153,7 +153,7 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	backup_label = build_backup_content(backup_state, false);
 
 	values[0] = LSNGetDatum(backup_state->stoppoint);
-	values[1] = CStringGetTextDatum(backup_label->data);
+	values[1] = CStringGetTextDatum(backup_label);
 	values[2] = CStringGetTextDatum(tablespace_map->data);
 
 	/* Deallocate backup-related variables */
@@ -162,7 +162,6 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	pfree(tablespace_map->data);
 	pfree(tablespace_map);
 	tablespace_map = NULL;
-	pfree(backup_label->data);
 	pfree(backup_label);
 
 	/* Returns the record as Datum */

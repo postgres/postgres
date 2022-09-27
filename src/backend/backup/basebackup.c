@@ -317,15 +317,14 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 			{
 				struct stat statbuf;
 				bool		sendtblspclinks = true;
-				StringInfo	backup_label;
+				char	   *backup_label;
 
 				bbsink_begin_archive(sink, "base.tar");
 
 				/* In the main tar, include the backup_label first... */
 				backup_label = build_backup_content(backup_state, false);
 				sendFileWithContent(sink, BACKUP_LABEL_FILE,
-									backup_label->data, &manifest);
-				pfree(backup_label->data);
+									backup_label, &manifest);
 				pfree(backup_label);
 
 				/* Then the tablespace_map file, if required... */

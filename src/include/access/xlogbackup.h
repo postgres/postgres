@@ -15,7 +15,6 @@
 #define XLOG_BACKUP_H
 
 #include "access/xlogdefs.h"
-#include "lib/stringinfo.h"
 #include "pgtime.h"
 
 /* Structure to hold backup state. */
@@ -36,7 +35,7 @@ typedef struct BackupState
 	pg_time_t	stoptime;		/* backup stop time */
 } BackupState;
 
-extern StringInfo build_backup_content(BackupState *state,
-									   bool ishistoryfile);
+extern char *build_backup_content(BackupState *state,
+								  bool ishistoryfile);
 
 #endif							/* XLOG_BACKUP_H */
