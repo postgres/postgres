@@ -615,13 +615,13 @@ json_ereport_error(JsonParseErrorType error, JsonLexContext *lex)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNTRANSLATABLE_CHARACTER),
 				 errmsg("unsupported Unicode escape sequence"),
-				 errdetail("%s", json_errdetail(error, lex)),
+				 errdetail_internal("%s", json_errdetail(error, lex)),
 				 report_json_context(lex)));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type %s", "json"),
-				 errdetail("%s", json_errdetail(error, lex)),
+				 errdetail_internal("%s", json_errdetail(error, lex)),
 				 report_json_context(lex)));
 }
 
