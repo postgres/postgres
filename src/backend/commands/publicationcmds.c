@@ -448,36 +448,6 @@ contain_mutable_or_user_functions_checker(Oid func_id, void *context)
 }
 
 /*
- * Check if the node contains any disallowed object. Subroutine for
- * check_simple_rowfilter_expr_walker.
- *
- * If a disallowed object is found, *errdetail_msg is set to a (possibly
- * translated) message to use as errdetail.  If none, *errdetail_msg is not
- * modified.
- */
-static void
-expr_allowed_in_node(Node *node, ParseState *pstate, char **errdetail_msg)
-{
-	if (IsA(node, List))
-	{
-		/*
-		 * OK, we don't need to perform other expr checks for List nodes
-		 * because those are undefined for List.
-		 */
-		return;
-	}
-
-	if (exprType(node) >= FirstNormalObjectId)
-		*errdetail_msg = _("User-defined types are not allowed.");
-	else if (check_functions_in_node(node, contain_mutable_or_user_functions_checker,
-									 (void *) pstate))
-		*errdetail_msg = _("User-defined or built-in mutable functions are not allowed.");
-	else if (exprCollation(node) >= FirstNormalObjectId ||
-			 exprInputCollation(node) >= FirstNormalObjectId)
-		*errdetail_msg = _("User-defined collations are not allowed.");
-}
-
-/*
  * The row filter walker checks if the row filter expression is a "simple
  * expression".
  *
@@ -586,12 +556,26 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 	}
 
 	/*
-	 * For all the supported nodes, check the types, functions, and collations
-	 * used in the nodes.
+	 * For all the supported nodes, if we haven't already found a problem,
+	 * check the types, functions, and collations used in it.  We check List
+	 * by walking through each element.
 	 */
-	if (!errdetail_msg)
-		expr_allowed_in_node(node, pstate, &errdetail_msg);
+	if (!errdetail_msg && !IsA(node, List))
+	{
+		if (exprType(node) >= FirstNormalObjectId)
+			errdetail_msg = _("User-defined types are not allowed.");
+		else if (check_functions_in_node(node, contain_mutable_or_user_functions_checker,
+										 (void *) pstate))
+			errdetail_msg = _("User-defined or built-in mutable functions are not allowed.");
+		else if (exprCollation(node) >= FirstNormalObjectId ||
+				 exprInputCollation(node) >= FirstNormalObjectId)
+			errdetail_msg = _("User-defined collations are not allowed.");
+	}
 
+	/*
+	 * If we found a problem in this node, throw error now. Otherwise keep
+	 * going.
+	 */
 	if (errdetail_msg)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -653,13 +637,15 @@ TransformPubWhereClauses(List *tables, const char *queryString,
 					 errdetail("WHERE clause cannot be used for a partitioned table when %s is false.",
 							   "publish_via_partition_root")));
 
+		/*
+		 * A fresh pstate is required so that we only have "this" table in its
+		 * rangetable
+		 */
 		pstate = make_parsestate(NULL);
 		pstate->p_sourcetext = queryString;
-
 		nsitem = addRangeTableEntryForRelation(pstate, pri->relation,
 											   AccessShareLock, NULL,
 											   false, false);
-
 		addNSItemToQuery(pstate, nsitem, false, true, true);
 
 		whereclause = transformWhereClause(pstate,
