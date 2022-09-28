@@ -552,7 +552,7 @@ AlterRole(AlterRoleStmt *stmt)
 	Oid			roleid;
 
 	check_rolespec_name(stmt->role,
-						"Cannot alter reserved roles.");
+						_("Cannot alter reserved roles."));
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -906,7 +906,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	if (stmt->role)
 	{
 		check_rolespec_name(stmt->role,
-							"Cannot alter reserved roles.");
+							_("Cannot alter reserved roles."));
 
 		roletuple = get_rolespec_tuple(stmt->role);
 		roleid = HeapTupleGetOid(roletuple);
