@@ -663,7 +663,9 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 		 */
 		RelFileLocatorBackend rlocator;
 
-		rlocator.locator = msg->sm.rlocator;
+		rlocator.locator.dbOid = msg->sm.dbOid;
+		rlocator.locator.spcOid = msg->sm.spcOid;
+		rlocator.locator.relNumber = (((uint64) msg->sm.relNumber_hi) << 32) | msg->sm.relNumber_lo;
 		rlocator.backend = (msg->sm.backend_hi << 16) | (int) msg->sm.backend_lo;
 		smgrcloserellocator(rlocator);
 	}
@@ -1466,7 +1468,10 @@ CacheInvalidateSmgr(RelFileLocatorBackend rlocator)
 	msg.sm.id = SHAREDINVALSMGR_ID;
 	msg.sm.backend_hi = rlocator.backend >> 16;
 	msg.sm.backend_lo = rlocator.backend & 0xffff;
-	msg.sm.rlocator = rlocator.locator;
+	msg.sm.dbOid = rlocator.locator.dbOid;
+	msg.sm.spcOid = rlocator.locator.spcOid;
+	msg.sm.relNumber_hi = rlocator.locator.relNumber >> 32;
+	msg.sm.relNumber_lo = rlocator.locator.relNumber & 0xffffffff;
 	/* check AddCatcacheInvalidationMessage() for an explanation */
 	VALGRIND_MAKE_MEM_DEFINED(&msg, sizeof(msg));
 
