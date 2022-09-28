@@ -220,6 +220,7 @@ SortState *
 ExecInitSort(Sort *node, EState *estate, int eflags)
 {
 	SortState  *sortstate;
+	TupleDesc	outerTupDesc;
 
 	SO1_printf("ExecInitSort: %s\n",
 			   "initializing sort node");
@@ -274,11 +275,13 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	ExecInitResultTupleSlotTL(&sortstate->ss.ps, &TTSOpsMinimalTuple);
 	sortstate->ss.ps.ps_ProjInfo = NULL;
 
+	outerTupDesc = ExecGetResultType(outerPlanState(sortstate));
+
 	/*
-	 * We perform a Datum sort when we're sorting just a single column,
+	 * We perform a Datum sort when we're sorting just a single byval column,
 	 * otherwise we perform a tuple sort.
 	 */
-	if (ExecGetResultType(outerPlanState(sortstate))->natts == 1)
+	if (outerTupDesc->natts == 1 && TupleDescAttr(outerTupDesc, 0)->attbyval)
 		sortstate->datumSort = true;
 	else
 		sortstate->datumSort = false;
