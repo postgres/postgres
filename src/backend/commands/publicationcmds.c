@@ -580,7 +580,7 @@ check_simple_rowfilter_expr_walker(Node *node, ParseState *pstate)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("invalid publication WHERE expression"),
-				 errdetail("%s", errdetail_msg),
+				 errdetail_internal("%s", errdetail_msg),
 				 parser_errposition(pstate, exprLocation(node))));
 
 	return expression_tree_walker(node, check_simple_rowfilter_expr_walker,
