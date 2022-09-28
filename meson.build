@@ -2265,6 +2265,15 @@ posix4_dep = cc.find_library('posix4', required: false)
 
 getopt_dep = cc.find_library('getopt', required: false)
 gnugetopt_dep = cc.find_library('gnugetopt', required: false)
+# Check if we want to replace getopt/getopt_long even if provided by the system
+# - Mingw has adopted a GNU-centric interpretation of optind/optreset,
+#   so always use our version on Windows
+# - On OpenBSD and Solaris, getopt() doesn't do what we want for long options
+#   (i.e., allow '-' as a flag character), so use our version on those platforms
+# - We want to use system's getopt_long() only if the system provides struct
+#   option
+always_replace_getopt = host_system in ['windows', 'openbsd', 'solaris']
+always_replace_getopt_long = host_system == 'windows' or not cdata.has('HAVE_STRUCT_OPTION')
 
 # Required on BSDs
 execinfo_dep = cc.find_library('execinfo', required: false)
@@ -2295,8 +2304,8 @@ func_checks = [
   ['explicit_bzero'],
   ['fdatasync', {'dependencies': [rt_dep, posix4_dep], 'define': false}], # Solaris
   ['getifaddrs'],
-  ['getopt', {'dependencies': [getopt_dep, gnugetopt_dep]}],
-  ['getopt_long', {'dependencies': [getopt_dep, gnugetopt_dep]}],
+  ['getopt', {'dependencies': [getopt_dep, gnugetopt_dep], 'skip': always_replace_getopt}],
+  ['getopt_long', {'dependencies': [getopt_dep, gnugetopt_dep], 'skip': always_replace_getopt_long}],
   ['getpeereid'],
   ['getpeerucred'],
   ['inet_aton'],
