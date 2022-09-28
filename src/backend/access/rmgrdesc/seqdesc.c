@@ -25,7 +25,7 @@ seq_desc(StringInfo buf, XLogReaderState *record)
 	xl_seq_rec *xlrec = (xl_seq_rec *) rec;
 
 	if (info == XLOG_SEQ_LOG)
-		appendStringInfo(buf, "rel %u/%u/" UINT64_FORMAT,
+		appendStringInfo(buf, "rel %u/%u/%u",
 						 xlrec->locator.spcOid, xlrec->locator.dbOid,
 						 xlrec->locator.relNumber);
 }

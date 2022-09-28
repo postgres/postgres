@@ -169,7 +169,7 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_new_cid *xlrec = (xl_heap_new_cid *) rec;
 
-		appendStringInfo(buf, "rel %u/%u/" UINT64_FORMAT "; tid %u/%u",
+		appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
 						 xlrec->target_locator.spcOid,
 						 xlrec->target_locator.dbOid,
 						 xlrec->target_locator.relNumber,

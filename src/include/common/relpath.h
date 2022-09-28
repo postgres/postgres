@@ -22,12 +22,10 @@
 /*
  * RelFileNumber data type identifies the specific relation file name.
  */
-typedef uint64 RelFileNumber;
-#define InvalidRelFileNumber		((RelFileNumber) 0)
+typedef Oid RelFileNumber;
+#define InvalidRelFileNumber		((RelFileNumber) InvalidOid)
 #define RelFileNumberIsValid(relnumber) \
 				((bool) ((relnumber) != InvalidRelFileNumber))
-#define atorelnumber(x) ((RelFileNumber) strtou64((x), NULL, 10))
-#define MAX_RELFILENUMBER	UINT64CONST(0x00FFFFFFFFFFFFFF)
 
 /*
  * Name of major-version-specific tablespace subdirectories
@@ -37,7 +35,6 @@ typedef uint64 RelFileNumber;
 
 /* Characters to allow for an OID in a relation path */
 #define OIDCHARS		10		/* max chars printed by %u */
-#define RELNUMBERCHARS	20		/* max chars printed by UINT64_FORMAT */
 
 /*
  * Stuff for fork names.

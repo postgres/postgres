@@ -32,11 +32,10 @@
  * Nonzero dbOid values correspond to pg_database.oid.
  *
  * relNumber identifies the specific relation.  relNumber corresponds to
- * pg_class.relfilenode.  Notice that relNumber values are assigned by
- * GetNewRelFileNumber(), which will only ever assign the same value once
- * during the lifetime of a cluster.  However, since CREATE DATABASE duplicates
- * the relfilenumbers of the template database, the values are in practice only
- * unique within a database, not globally.
+ * pg_class.relfilenode (NOT pg_class.oid, because we need to be able
+ * to assign new physical files to relations in some situations).
+ * Notice that relNumber is only unique within a database in a particular
+ * tablespace.
  *
  * Note: spcOid must be GLOBALTABLESPACE_OID if and only if dbOid is
  * zero.  We support shared relations only in the "global" tablespace.
@@ -75,9 +74,6 @@ typedef struct RelFileLocatorBackend
 	RelFileLocator locator;
 	BackendId	backend;
 } RelFileLocatorBackend;
-
-#define SizeOfRelFileLocatorBackend \
-	(offsetof(RelFileLocatorBackend, backend) + sizeof(BackendId))
 
 #define RelFileLocatorBackendIsTemp(rlocator) \
 	((rlocator).backend != InvalidBackendId)

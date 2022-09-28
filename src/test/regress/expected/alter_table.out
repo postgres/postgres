@@ -2164,8 +2164,9 @@ select relname,
   c.oid = oldoid as orig_oid,
   case relfilenode
     when 0 then 'none'
+    when c.oid then 'own'
     when oldfilenode then 'orig'
-    else 'new'
+    else 'OTHER'
     end as storage,
   obj_description(c.oid, 'pg_class') as desc
   from pg_class c left join old_oids using (relname)
@@ -2174,10 +2175,10 @@ select relname,
            relname            | orig_oid | storage |     desc      
 ------------------------------+----------+---------+---------------
  at_partitioned               | t        | none    | 
- at_partitioned_0             | t        | orig    | 
- at_partitioned_0_id_name_key | t        | orig    | child 0 index
- at_partitioned_1             | t        | orig    | 
- at_partitioned_1_id_name_key | t        | orig    | child 1 index
+ at_partitioned_0             | t        | own     | 
+ at_partitioned_0_id_name_key | t        | own     | child 0 index
+ at_partitioned_1             | t        | own     | 
+ at_partitioned_1_id_name_key | t        | own     | child 1 index
  at_partitioned_id_name_key   | t        | none    | parent index
 (6 rows)
 
@@ -2197,8 +2198,9 @@ select relname,
   c.oid = oldoid as orig_oid,
   case relfilenode
     when 0 then 'none'
+    when c.oid then 'own'
     when oldfilenode then 'orig'
-    else 'new'
+    else 'OTHER'
     end as storage,
   obj_description(c.oid, 'pg_class') as desc
   from pg_class c left join old_oids using (relname)
@@ -2207,10 +2209,10 @@ select relname,
            relname            | orig_oid | storage |     desc     
 ------------------------------+----------+---------+--------------
  at_partitioned               | t        | none    | 
- at_partitioned_0             | t        | orig    | 
- at_partitioned_0_id_name_key | f        | new     | parent index
- at_partitioned_1             | t        | orig    | 
- at_partitioned_1_id_name_key | f        | new     | parent index
+ at_partitioned_0             | t        | own     | 
+ at_partitioned_0_id_name_key | f        | own     | parent index
+ at_partitioned_1             | t        | own     | 
+ at_partitioned_1_id_name_key | f        | own     | parent index
  at_partitioned_id_name_key   | f        | none    | parent index
 (6 rows)
 
@@ -2558,7 +2560,7 @@ CREATE FUNCTION check_ddl_rewrite(p_tablename regclass, p_ddl text)
 RETURNS boolean
 LANGUAGE plpgsql AS $$
 DECLARE
-    v_relfilenode int8;
+    v_relfilenode oid;
 BEGIN
     v_relfilenode := relfilenode FROM pg_class WHERE oid = p_tablename;
 

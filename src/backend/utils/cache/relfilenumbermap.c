@@ -88,6 +88,7 @@ static void
 InitializeRelfilenumberMap(void)
 {
 	HASHCTL		ctl;
+	int			i;
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (CacheMemoryContext == NULL)
@@ -96,20 +97,17 @@ InitializeRelfilenumberMap(void)
 	/* build skey */
 	MemSet(&relfilenumber_skey, 0, sizeof(relfilenumber_skey));
 
-	fmgr_info_cxt(F_OIDEQ,
-				  &relfilenumber_skey[0].sk_func,
-				  CacheMemoryContext);
-	relfilenumber_skey[0].sk_strategy = BTEqualStrategyNumber;
-	relfilenumber_skey[0].sk_subtype = InvalidOid;
-	relfilenumber_skey[0].sk_collation = InvalidOid;
-	relfilenumber_skey[0].sk_attno = Anum_pg_class_reltablespace;
+	for (i = 0; i < 2; i++)
+	{
+		fmgr_info_cxt(F_OIDEQ,
+					  &relfilenumber_skey[i].sk_func,
+					  CacheMemoryContext);
+		relfilenumber_skey[i].sk_strategy = BTEqualStrategyNumber;
+		relfilenumber_skey[i].sk_subtype = InvalidOid;
+		relfilenumber_skey[i].sk_collation = InvalidOid;
+	}
 
-	fmgr_info_cxt(F_INT8EQ,
-				  &relfilenumber_skey[1].sk_func,
-				  CacheMemoryContext);
-	relfilenumber_skey[1].sk_strategy = BTEqualStrategyNumber;
-	relfilenumber_skey[1].sk_subtype = InvalidOid;
-	relfilenumber_skey[1].sk_collation = InvalidOid;
+	relfilenumber_skey[0].sk_attno = Anum_pg_class_reltablespace;
 	relfilenumber_skey[1].sk_attno = Anum_pg_class_relfilenode;
 
 	/*
@@ -198,7 +196,7 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 
 		/* set scan arguments */
 		skey[0].sk_argument = ObjectIdGetDatum(reltablespace);
-		skey[1].sk_argument = Int64GetDatum((int64) relfilenumber);
+		skey[1].sk_argument = ObjectIdGetDatum(relfilenumber);
 
 		scandesc = systable_beginscan(relation,
 									  ClassTblspcRelfilenodeIndexId,
@@ -215,7 +213,7 @@ RelidByRelfilenumber(Oid reltablespace, RelFileNumber relfilenumber)
 
 			if (found)
 				elog(ERROR,
-					 "unexpected duplicate for tablespace %u, relfilenumber " UINT64_FORMAT,
+					 "unexpected duplicate for tablespace %u, relfilenumber %u",
 					 reltablespace, relfilenumber);
 			found = true;
 

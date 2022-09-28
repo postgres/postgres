@@ -14375,14 +14375,10 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	}
 
 	/*
-	 * Generate a new relfilenumber.  We cannot reuse the old relfilenumber
-	 * because of the possibility that that relation will be moved back to the
-	 * original tablespace before the next checkpoint. At that point, the
-	 * first segment of the main fork won't have been unlinked yet, and an
-	 * attempt to create new relation storage with that same relfilenumber
-	 * will fail.
+	 * Relfilenumbers are not unique in databases across tablespaces, so we
+	 * need to allocate a new one in the new tablespace.
 	 */
-	newrelfilenumber = GetNewRelFileNumber(newTableSpace,
+	newrelfilenumber = GetNewRelFileNumber(newTableSpace, NULL,
 										   rel->rd_rel->relpersistence);
 
 	/* Open old and new relation */

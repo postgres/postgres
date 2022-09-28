@@ -273,7 +273,7 @@ restart:
 			BlockNumber blknum;
 
 			BufferGetTag(buf, &rlocator, &forknum, &blknum);
-			elog(DEBUG1, "fixing corrupt FSM block %u, relation %u/%u/" UINT64_FORMAT,
+			elog(DEBUG1, "fixing corrupt FSM block %u, relation %u/%u/%u",
 				 blknum, rlocator.spcOid, rlocator.dbOid, rlocator.relNumber);
 
 			/* make sure we hold an exclusive lock */

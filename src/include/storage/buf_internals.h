@@ -92,66 +92,29 @@ typedef struct buftag
 {
 	Oid			spcOid;			/* tablespace oid */
 	Oid			dbOid;			/* database oid */
-
-	/*
-	 * relForkDetails[] stores the fork number in the high 8 bits of the first
-	 * integer; the remaining 56 bits are used to store the relfilenmber.
-	 * Expanding the relfilenumber to a full 64 bits would require widening
-	 * the BufferTag, which is undesirable for performance reasons. We use
-	 * two 32-bit values here rather than a single 64-bit value to avoid
-	 * padding the struct out to a multiple of 8 bytes.
-	 */
-	uint32		relForkDetails[2];
+	RelFileNumber relNumber;	/* relation file number */
+	ForkNumber	forkNum;		/* fork number */
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
-
-/* High relNumber bits in relForkDetails[0] */
-#define	BUFTAG_RELNUM_HIGH_BITS	24
-
-/* Low relNumber bits in relForkDetails[1] */
-#define	BUFTAG_RELNUM_LOW_BITS	32
-
-/* Mask to fetch high bits of relNumber from relForkDetails[0] */
-#define	BUFTAG_RELNUM_HIGH_MASK	((1U << BUFTAG_RELNUM_HIGH_BITS) - 1)
-
-/* Mask to fetch low bits of relNumber from relForkDetails[1] */
-#define	BUFTAG_RELNUM_LOW_MASK	0XFFFFFFFF
 
 static inline RelFileNumber
 BufTagGetRelNumber(const BufferTag *tag)
 {
-	uint64		relnum;
-
-	relnum = ((uint64) tag->relForkDetails[0]) & BUFTAG_RELNUM_HIGH_MASK;
-	relnum = (relnum << BUFTAG_RELNUM_LOW_BITS) | tag->relForkDetails[1];
-
-	Assert(relnum <= MAX_RELFILENUMBER);
-	return (RelFileNumber) relnum;
+	return tag->relNumber;
 }
 
 static inline ForkNumber
 BufTagGetForkNum(const BufferTag *tag)
 {
-	ForkNumber		ret;
-
-	StaticAssertStmt(MAX_FORKNUM <= INT8_MAX,
-					 "MAX_FORKNUM can't be greater than INT8_MAX");
-
-	ret = (ForkNumber) (tag->relForkDetails[0] >> BUFTAG_RELNUM_HIGH_BITS);
-	return ret;
+	return tag->forkNum;
 }
 
 static inline void
 BufTagSetRelForkDetails(BufferTag *tag, RelFileNumber relnumber,
 						ForkNumber forknum)
 {
-	Assert(relnumber <= MAX_RELFILENUMBER);
-	Assert(forknum <= MAX_FORKNUM);
-
-	tag->relForkDetails[0] = (relnumber >> BUFTAG_RELNUM_LOW_BITS) &
-		BUFTAG_RELNUM_HIGH_MASK;
-	tag->relForkDetails[0] |= (forknum << BUFTAG_RELNUM_HIGH_BITS);
-	tag->relForkDetails[1] = relnumber & BUFTAG_RELNUM_LOW_MASK;
+	tag->relNumber = relnumber;
+	tag->forkNum = forknum;
 }
 
 static inline RelFileLocator
@@ -190,9 +153,9 @@ BufferTagsEqual(const BufferTag *tag1, const BufferTag *tag2)
 {
 	return (tag1->spcOid == tag2->spcOid) &&
 		(tag1->dbOid == tag2->dbOid) &&
-		(tag1->relForkDetails[0] == tag2->relForkDetails[0]) &&
-		(tag1->relForkDetails[1] == tag2->relForkDetails[1]) &&
-		(tag1->blockNum == tag2->blockNum);
+		(tag1->relNumber == tag2->relNumber) &&
+		(tag1->blockNum == tag2->blockNum) &&
+		(tag1->forkNum == tag2->forkNum);
 }
 
 static inline bool

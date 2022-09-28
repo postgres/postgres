@@ -341,19 +341,11 @@ heap_create(const char *relname,
 	else
 	{
 		/*
-		 * If relfilenumber is unspecified by the caller then allocate a new
-		 * one, except for system tables, for which we make the initial
-		 * relfilenumber the same as the table OID. See the comments for
-		 * FirstNormalRelFileNumber for an explanation of why we do this.
+		 * If relfilenumber is unspecified by the caller then create storage
+		 * with oid same as relid.
 		 */
 		if (!RelFileNumberIsValid(relfilenumber))
-		{
-			if (relid < FirstNormalObjectId)
-				relfilenumber = relid;
-			else
-				relfilenumber = GetNewRelFileNumber(reltablespace,
-													relpersistence);
-		}
+			relfilenumber = relid;
 	}
 
 	/*
@@ -909,7 +901,7 @@ InsertPgClassTuple(Relation pg_class_desc,
 	values[Anum_pg_class_reloftype - 1] = ObjectIdGetDatum(rd_rel->reloftype);
 	values[Anum_pg_class_relowner - 1] = ObjectIdGetDatum(rd_rel->relowner);
 	values[Anum_pg_class_relam - 1] = ObjectIdGetDatum(rd_rel->relam);
-	values[Anum_pg_class_relfilenode - 1] = Int64GetDatum(rd_rel->relfilenode);
+	values[Anum_pg_class_relfilenode - 1] = ObjectIdGetDatum(rd_rel->relfilenode);
 	values[Anum_pg_class_reltablespace - 1] = ObjectIdGetDatum(rd_rel->reltablespace);
 	values[Anum_pg_class_relpages - 1] = Int32GetDatum(rd_rel->relpages);
 	values[Anum_pg_class_reltuples - 1] = Float4GetDatum(rd_rel->reltuples);
@@ -1181,7 +1173,12 @@ heap_create_with_catalog(const char *relname,
 	if (shared_relation && reltablespace != GLOBALTABLESPACE_OID)
 		elog(ERROR, "shared relations must be placed in pg_global tablespace");
 
-	/* Allocate an OID for the relation, unless we were told what to use. */
+	/*
+	 * Allocate an OID for the relation, unless we were told what to use.
+	 *
+	 * The OID will be the relfilenumber as well, so make sure it doesn't
+	 * collide with either pg_class OIDs or existing physical files.
+	 */
 	if (!OidIsValid(relid))
 	{
 		/* Use binary-upgrade override for pg_class.oid and relfilenumber */
@@ -1235,8 +1232,8 @@ heap_create_with_catalog(const char *relname,
 		}
 
 		if (!OidIsValid(relid))
-			relid = GetNewOidWithIndex(pg_class_desc, ClassOidIndexId,
-									   Anum_pg_class_oid);
+			relid = GetNewRelFileNumber(reltablespace, pg_class_desc,
+										relpersistence);
 	}
 
 	/*

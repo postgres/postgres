@@ -86,14 +86,11 @@ typedef struct
 
 typedef struct
 {
-	/* note: field layout chosen to pack into 20 bytes */
+	/* note: field layout chosen to pack into 16 bytes */
 	int8		id;				/* type field --- must be first */
 	int8		backend_hi;		/* high bits of backend ID, if temprel */
 	uint16		backend_lo;		/* low bits of backend ID, if temprel */
-	Oid			dbOid;
-	Oid			spcOid;
-	uint32		relNumber_hi;	/* avoid 8 byte alignment requirement */
-	uint32		relNumber_lo;
+	RelFileLocator rlocator;	/* spcOid, dbOid, relNumber */
 } SharedInvalSmgrMsg;
 
 #define SHAREDINVALRELMAP_ID	(-4)

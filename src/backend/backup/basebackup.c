@@ -1246,7 +1246,7 @@ sendDir(bbsink *sink, const char *path, int basepathlen, bool sizeonly,
 			if (relForkNum != INIT_FORKNUM)
 			{
 				char		initForkFile[MAXPGPATH];
-				char		relNumber[RELNUMBERCHARS + 1];
+				char		relNumber[OIDCHARS + 1];
 
 				/*
 				 * If any other type of fork, check if there is an init fork

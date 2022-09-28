@@ -15,8 +15,10 @@
  *	oids are the same between old and new clusters.  This is important
  *	because toast oids are stored as toast pointers in user tables.
  *
- *	We control assignments of pg_class.relfilenode because we want the
- *	filenames to match between the old and new cluster.
+ *	While pg_class.oid and pg_class.relfilenode are initially the same in a
+ *	cluster, they can diverge due to CLUSTER, REINDEX, or VACUUM FULL. We
+ *	control assignments of pg_class.relfilenode because we want the filenames
+ *	to match between the old and new cluster.
  *
  *	We control assignment of pg_tablespace.oid because we want the oid to match
  *	between the old and new cluster.

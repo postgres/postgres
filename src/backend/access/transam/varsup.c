@@ -13,16 +13,12 @@
 
 #include "postgres.h"
 
-#include <unistd.h>
-
 #include "access/clog.h"
 #include "access/commit_ts.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
 #include "access/xact.h"
 #include "access/xlogutils.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "postmaster/autovacuum.h"
@@ -33,15 +29,6 @@
 
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
-
-/* Number of RelFileNumbers to be logged per XLOG write */
-#define VAR_RELNUMBER_PER_XLOG				512
-
-/*
- * Need to log more if remaining logged RelFileNumbers are less than the
- * threshold.  Valid range could be between 0 to VAR_RELNUMBER_PER_XLOG - 1.
- */
-#define VAR_RELNUMBER_NEW_XLOG_THRESHOLD	256
 
 /* pointer to "variable cache" in shared memory (set up by shmem.c) */
 VariableCache ShmemVariableCache = NULL;
@@ -534,7 +521,8 @@ ForceTransactionIdLimitUpdate(void)
  * wide, counter wraparound will occur eventually, and therefore it is unwise
  * to assume they are unique unless precautions are taken to make them so.
  * Hence, this routine should generally not be used directly.  The only direct
- * caller should be GetNewOidWithIndex() in catalog/catalog.c.
+ * callers should be GetNewOidWithIndex() and GetNewRelFileNumber() in
+ * catalog/catalog.c.
  */
 Oid
 GetNewObjectId(void)
@@ -622,199 +610,6 @@ SetNextObjectId(Oid nextOid)
 	ShmemVariableCache->oidCount = 0;
 
 	LWLockRelease(OidGenLock);
-}
-
-/*
- * GetNewRelFileNumber
- *
- * Similar to GetNewObjectId but instead of new Oid it generates new
- * relfilenumber.
- */
-RelFileNumber
-GetNewRelFileNumber(Oid reltablespace, char relpersistence)
-{
-	RelFileNumber result;
-	RelFileNumber nextRelFileNumber,
-				  loggedRelFileNumber,
-				  flushedRelFileNumber;
-
-	StaticAssertStmt(VAR_RELNUMBER_NEW_XLOG_THRESHOLD < VAR_RELNUMBER_PER_XLOG,
-					 "VAR_RELNUMBER_NEW_XLOG_THRESHOLD must be smaller than VAR_RELNUMBER_PER_XLOG");
-
-	/* safety check, we should never get this far in a HS standby */
-	if (RecoveryInProgress())
-		elog(ERROR, "cannot assign RelFileNumber during recovery");
-
-	if (IsBinaryUpgrade)
-		elog(ERROR, "cannot assign RelFileNumber during binary upgrade");
-
-	LWLockAcquire(RelFileNumberGenLock, LW_EXCLUSIVE);
-
-	nextRelFileNumber = ShmemVariableCache->nextRelFileNumber;
-	loggedRelFileNumber = ShmemVariableCache->loggedRelFileNumber;
-	flushedRelFileNumber = ShmemVariableCache->flushedRelFileNumber;
-
-	Assert(nextRelFileNumber <= flushedRelFileNumber);
-	Assert(flushedRelFileNumber <= loggedRelFileNumber);
-
-	/* check for the wraparound for the relfilenumber counter */
-	if (unlikely(nextRelFileNumber > MAX_RELFILENUMBER))
-		elog(ERROR, "relfilenumber is too large");
-
-	/*
-	 * If the remaining logged relfilenumbers values are less than the
-	 * threshold value then log more.  Ideally, we can wait until all
-	 * relfilenumbers have been consumed before logging more.  Nevertheless, if
-	 * we do that, we must immediately flush the logged wal record because we
-	 * want to ensure that the nextRelFileNumber is always larger than any
-	 * relfilenumber already in use on disk.  And, to maintain that invariant,
-	 * we must make sure that the record we log reaches the disk before any new
-	 * files are created with the newly logged range.
-	 *
-	 * So in order to avoid flushing the wal immediately, we always log before
-	 * consuming all the relfilenumber, and now we only have to flush the newly
-	 * logged relfilenumber wal before consuming the relfilenumber from this
-	 * new range.  By the time we need to flush this wal, hopefully, those have
-	 * already been flushed with some other XLogFlush operation.
-	 */
-	if (loggedRelFileNumber - nextRelFileNumber <=
-		VAR_RELNUMBER_NEW_XLOG_THRESHOLD)
-	{
-		XLogRecPtr	recptr;
-
-		loggedRelFileNumber = loggedRelFileNumber + VAR_RELNUMBER_PER_XLOG;
-		recptr = LogNextRelFileNumber(loggedRelFileNumber);
-		ShmemVariableCache->loggedRelFileNumber = loggedRelFileNumber;
-
-		/* remember for the future flush */
-		ShmemVariableCache->loggedRelFileNumberRecPtr = recptr;
-	}
-
-	/*
-	 * If the nextRelFileNumber is already reached to the already flushed
-	 * relfilenumber then flush the WAL for previously logged relfilenumber.
-	 */
-	if (nextRelFileNumber >= flushedRelFileNumber)
-	{
-		XLogFlush(ShmemVariableCache->loggedRelFileNumberRecPtr);
-		ShmemVariableCache->flushedRelFileNumber = loggedRelFileNumber;
-	}
-
-	result = ShmemVariableCache->nextRelFileNumber;
-
-	/* we should never be using any relfilenumber outside the flushed range */
-	Assert(result <= ShmemVariableCache->flushedRelFileNumber);
-
-	(ShmemVariableCache->nextRelFileNumber)++;
-
-	LWLockRelease(RelFileNumberGenLock);
-
-	/*
-	 * Because the RelFileNumber counter only ever increases and never wraps
-	 * around, it should be impossible for the newly-allocated RelFileNumber to
-	 * already be in use.  But, if Asserts are enabled, double check that
-	 * there's no main-fork relation file with the new RelFileNumber already on
-	 * disk.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	{
-		RelFileLocatorBackend rlocator;
-		char	   *rpath;
-		BackendId	backend;
-
-		switch (relpersistence)
-		{
-			case RELPERSISTENCE_TEMP:
-				backend = BackendIdForTempRelations();
-				break;
-			case RELPERSISTENCE_UNLOGGED:
-			case RELPERSISTENCE_PERMANENT:
-				backend = InvalidBackendId;
-				break;
-			default:
-				elog(ERROR, "invalid relpersistence: %c", relpersistence);
-		}
-
-		/* this logic should match RelationInitPhysicalAddr */
-		rlocator.locator.spcOid =
-			reltablespace ? reltablespace : MyDatabaseTableSpace;
-		rlocator.locator.dbOid = (reltablespace == GLOBALTABLESPACE_OID) ?
-			InvalidOid : MyDatabaseId;
-		rlocator.locator.relNumber = result;
-
-		/*
-		 * The relpath will vary based on the backend ID, so we must
-		 * initialize that properly here to make sure that any collisions
-		 * based on filename are properly detected.
-		 */
-		rlocator.backend = backend;
-
-		/* check for existing file of same name. */
-		rpath = relpath(rlocator, MAIN_FORKNUM);
-		Assert(access(rpath, F_OK) != 0);
-	}
-#endif
-
-	return result;
-}
-
-/*
- * SetNextRelFileNumber
- *
- * This may only be called during pg_upgrade; it advances the RelFileNumber
- * counter to the specified value if the current value is smaller than the
- * input value.
- */
-void
-SetNextRelFileNumber(RelFileNumber relnumber)
-{
-	/* safety check, we should never get this far in a HS standby */
-	if (RecoveryInProgress())
-		elog(ERROR, "cannot set RelFileNumber during recovery");
-
-	if (!IsBinaryUpgrade)
-		elog(ERROR, "RelFileNumber can be set only during binary upgrade");
-
-	LWLockAcquire(RelFileNumberGenLock, LW_EXCLUSIVE);
-
-	/*
-	 * If previous assigned value of the nextRelFileNumber is already higher
-	 * than the current value then nothing to be done.  This is possible
-	 * because during upgrade the objects are not created in relfilenumber
-	 * order.
-	 */
-	if (relnumber <= ShmemVariableCache->nextRelFileNumber)
-	{
-		LWLockRelease(RelFileNumberGenLock);
-		return;
-	}
-
-	/*
-	 * If the new relfilenumber to be set is greater than or equal to already
-	 * flushed relfilenumber then log more and flush immediately.
-	 *
-	 * (This is less efficient than GetNewRelFileNumber, which arranges to
-	 * log some new relfilenumbers before the old batch is exhausted in the
-	 * hope that a flush will happen in the background before any values are
-	 * needed from the new batch. However, since this is only used during
-	 * binary upgrade, it shouldn't really matter.)
-	 */
-	if (relnumber >= ShmemVariableCache->flushedRelFileNumber)
-	{
-		RelFileNumber newlogrelnum;
-
-		newlogrelnum = relnumber + VAR_RELNUMBER_PER_XLOG;
-		XLogFlush(LogNextRelFileNumber(newlogrelnum));
-
-		/* we have flushed whatever we have logged so no pending flush */
-		ShmemVariableCache->loggedRelFileNumber = newlogrelnum;
-		ShmemVariableCache->flushedRelFileNumber = newlogrelnum;
-		ShmemVariableCache->loggedRelFileNumberRecPtr = InvalidXLogRecPtr;
-	}
-
-	ShmemVariableCache->nextRelFileNumber = relnumber;
-
-	LWLockRelease(RelFileNumberGenLock);
 }
 
 /*

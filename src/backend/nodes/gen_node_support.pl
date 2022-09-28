@@ -961,12 +961,12 @@ _read${n}(void)
 			print $off "\tWRITE_UINT_FIELD($f);\n";
 			print $rff "\tREAD_UINT_FIELD($f);\n" unless $no_read;
 		}
-		elsif ($t eq 'uint64' || $t eq 'RelFileNumber')
+		elsif ($t eq 'uint64')
 		{
 			print $off "\tWRITE_UINT64_FIELD($f);\n";
 			print $rff "\tREAD_UINT64_FIELD($f);\n" unless $no_read;
 		}
-		elsif ($t eq 'Oid')
+		elsif ($t eq 'Oid' || $t eq 'RelFileNumber')
 		{
 			print $off "\tWRITE_OID_FIELD($f);\n";
 			print $rff "\tREAD_OID_FIELD($f);\n" unless $no_read;

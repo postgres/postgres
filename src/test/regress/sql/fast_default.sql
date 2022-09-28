@@ -4,8 +4,8 @@
 
 SET search_path = fast_default;
 CREATE SCHEMA fast_default;
-CREATE TABLE m(id BIGINT);
-INSERT INTO m VALUES (NULL::BIGINT);
+CREATE TABLE m(id OID);
+INSERT INTO m VALUES (NULL::OID);
 
 CREATE FUNCTION set(tabname name) RETURNS VOID
 AS $$

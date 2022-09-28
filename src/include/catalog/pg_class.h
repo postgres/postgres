@@ -34,13 +34,6 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 	/* oid */
 	Oid			oid;
 
-	/* access method; 0 if not a table / index */
-	Oid			relam BKI_DEFAULT(heap) BKI_LOOKUP_OPT(pg_am);
-
-	/* identifier of physical storage file */
-	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
-	int64		relfilenode BKI_DEFAULT(0);
-
 	/* class name */
 	NameData	relname;
 
@@ -55,6 +48,13 @@ CATALOG(pg_class,1259,RelationRelationId) BKI_BOOTSTRAP BKI_ROWTYPE_OID(83,Relat
 
 	/* class owner */
 	Oid			relowner BKI_DEFAULT(POSTGRES) BKI_LOOKUP(pg_authid);
+
+	/* access method; 0 if not a table / index */
+	Oid			relam BKI_DEFAULT(heap) BKI_LOOKUP_OPT(pg_am);
+
+	/* identifier of physical storage file */
+	/* relfilenode == 0 means it is a "mapped" relation, see relmapper.c */
+	Oid			relfilenode BKI_DEFAULT(0);
 
 	/* identifier of table space for relation (0 means default for database) */
 	Oid			reltablespace BKI_DEFAULT(0) BKI_LOOKUP_OPT(pg_tablespace);
@@ -154,7 +154,7 @@ typedef FormData_pg_class *Form_pg_class;
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_class_oid_index, 2662, ClassOidIndexId, on pg_class using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index, 2663, ClassNameNspIndexId, on pg_class using btree(relname name_ops, relnamespace oid_ops));
-DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeIndexId, on pg_class using btree(reltablespace oid_ops, relfilenode int8_ops));
+DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeIndexId, on pg_class using btree(reltablespace oid_ops, relfilenode oid_ops));
 
 #ifdef EXPOSE_TO_CLIENT_CODE
 

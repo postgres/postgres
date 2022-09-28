@@ -38,5 +38,8 @@ extern bool IsPinnedObject(Oid classId, Oid objectId);
 
 extern Oid	GetNewOidWithIndex(Relation relation, Oid indexId,
 							   AttrNumber oidcolumn);
+extern RelFileNumber GetNewRelFileNumber(Oid reltablespace,
+										 Relation pg_class,
+										 char relpersistence);
 
 #endif							/* CATALOG_H */

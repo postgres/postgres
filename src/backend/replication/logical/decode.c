@@ -154,7 +154,6 @@ xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			break;
 		case XLOG_NOOP:
 		case XLOG_NEXTOID:
-		case XLOG_NEXT_RELFILENUMBER:
 		case XLOG_SWITCH:
 		case XLOG_BACKUP_END:
 		case XLOG_PARAMETER_CHANGE:

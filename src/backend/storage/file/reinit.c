@@ -31,7 +31,7 @@ static void ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname,
 
 typedef struct
 {
-	RelFileNumber		relnumber;			/* hash key */
+	Oid			reloid;			/* hash key */
 } unlogged_relation_entry;
 
 /*
@@ -184,10 +184,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		 * need to be reset.  Otherwise, this cleanup operation would be
 		 * O(n^2).
 		 */
-		ctl.keysize = sizeof(RelFileNumber);
+		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(unlogged_relation_entry);
 		ctl.hcxt = CurrentMemoryContext;
-		hash = hash_create("unlogged relation RelFileNumbers", 32, &ctl,
+		hash = hash_create("unlogged relation OIDs", 32, &ctl,
 						   HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 		/* Scan the directory. */
@@ -208,10 +208,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 				continue;
 
 			/*
-			 * Put the RELFILENUMBER portion of the name into the hash table,
-			 * if it isn't already.
+			 * Put the OID portion of the name into the hash table, if it
+			 * isn't already.
 			 */
-			ent.relnumber = atorelnumber(de->d_name);
+			ent.reloid = atooid(de->d_name);
 			(void) hash_search(hash, &ent, HASH_ENTER, NULL);
 		}
 
@@ -248,10 +248,10 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 				continue;
 
 			/*
-			 * See whether the RELFILENUMBER portion of the name shows up in
-			 * the hash table.  If so, nuke it!
+			 * See whether the OID portion of the name shows up in the hash
+			 * table.  If so, nuke it!
 			 */
-			ent.relnumber = atorelnumber(de->d_name);
+			ent.reloid = atooid(de->d_name);
 			if (hash_search(hash, &ent, HASH_FIND, NULL))
 			{
 				snprintf(rm_path, sizeof(rm_path), "%s/%s",
@@ -286,7 +286,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		{
 			ForkNumber	forkNum;
 			int			relnumchars;
-			char		relnumbuf[RELNUMBERCHARS + 1];
+			char		relnumbuf[OIDCHARS + 1];
 			char		srcpath[MAXPGPATH * 2];
 			char		dstpath[MAXPGPATH];
 
@@ -329,7 +329,7 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
 		{
 			ForkNumber	forkNum;
 			int			relnumchars;
-			char		relnumbuf[RELNUMBERCHARS + 1];
+			char		relnumbuf[OIDCHARS + 1];
 			char		mainpath[MAXPGPATH];
 
 			/* Skip anything that doesn't look like a relation data file. */
@@ -372,8 +372,8 @@ ResetUnloggedRelationsInDbspaceDir(const char *dbspacedirname, int op)
  * for a non-temporary relation and false otherwise.
  *
  * NB: If this function returns true, the caller is entitled to assume that
- * *relnumchars has been set to a value no more than RELNUMBERCHARS, and thus
- * that a buffer of RELNUMBERCHARS+1 characters is sufficient to hold the
+ * *relnumchars has been set to a value no more than OIDCHARS, and thus
+ * that a buffer of OIDCHARS+1 characters is sufficient to hold the
  * RelFileNumber portion of the filename.  This is critical to protect against
  * a possible buffer overrun.
  */
@@ -386,7 +386,7 @@ parse_filename_for_nontemp_relation(const char *name, int *relnumchars,
 	/* Look for a non-empty string of digits (that isn't too long). */
 	for (pos = 0; isdigit((unsigned char) name[pos]); ++pos)
 		;
-	if (pos == 0 || pos > RELNUMBERCHARS)
+	if (pos == 0 || pos > OIDCHARS)
 		return false;
 	*relnumchars = pos;
 

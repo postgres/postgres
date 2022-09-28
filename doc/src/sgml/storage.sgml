@@ -217,12 +217,11 @@ with the suffix <literal>_init</literal> (see <xref linkend="storage-init"/>).
 
 <caution>
 <para>
-Note that a table's filenode will normally be different than the OID. For
-system tables, the initial filenode will be equal to the table OID, but it will
-be different if the table has ever been subjected to a rewriting operation,
-such as <command>TRUNCATE</command>, <command>REINDEX</command>,
-<command>CLUSTER</command> or some forms of <command>ALTER TABLE</command>.
-For user tables, even the initial filenode will be different than the table OID.
+Note that while a table's filenode often matches its OID, this is
+<emphasis>not</emphasis> necessarily the case; some operations, like
+<command>TRUNCATE</command>, <command>REINDEX</command>, <command>CLUSTER</command> and some forms
+of <command>ALTER TABLE</command>, can change the filenode while preserving the OID.
+Avoid assuming that filenode and table OID are the same.
 Also, for certain system catalogs including <structname>pg_class</structname> itself,
 <structname>pg_class</structname>.<structfield>relfilenode</structfield> contains zero.  The
 actual filenode number of these catalogs is stored in a lower-level data

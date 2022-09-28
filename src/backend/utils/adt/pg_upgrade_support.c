@@ -17,7 +17,6 @@
 #include "catalog/pg_type.h"
 #include "commands/extension.h"
 #include "miscadmin.h"
-#include "storage/relfilelocator.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -99,12 +98,10 @@ binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_heap_relfilenode(PG_FUNCTION_ARGS)
 {
-	RelFileNumber relfilenumber = PG_GETARG_INT64(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	CHECK_RELFILENUMBER_RANGE(relfilenumber);
 	binary_upgrade_next_heap_pg_class_relfilenumber = relfilenumber;
-	SetNextRelFileNumber(relfilenumber + 1);
 
 	PG_RETURN_VOID();
 }
@@ -123,12 +120,10 @@ binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_index_relfilenode(PG_FUNCTION_ARGS)
 {
-	RelFileNumber relfilenumber = PG_GETARG_INT64(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	CHECK_RELFILENUMBER_RANGE(relfilenumber);
 	binary_upgrade_next_index_pg_class_relfilenumber = relfilenumber;
-	SetNextRelFileNumber(relfilenumber + 1);
 
 	PG_RETURN_VOID();
 }
@@ -147,12 +142,10 @@ binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_toast_relfilenode(PG_FUNCTION_ARGS)
 {
-	RelFileNumber relfilenumber = PG_GETARG_INT64(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	CHECK_RELFILENUMBER_RANGE(relfilenumber);
 	binary_upgrade_next_toast_pg_class_relfilenumber = relfilenumber;
-	SetNextRelFileNumber(relfilenumber + 1);
 
 	PG_RETURN_VOID();
 }
