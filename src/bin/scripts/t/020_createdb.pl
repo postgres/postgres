@@ -158,4 +158,22 @@ $node->issues_sql_like(
 	qr/statement: CREATE DATABASE foobar7 STRATEGY file_copy TEMPLATE foobar2/,
 	'create database with FILE_COPY strategy');
 
+# Create database owned by role_foobar.
+$node->issues_sql_like(
+	[ 'createdb', '-T', 'foobar2', '-O', 'role_foobar', 'foobar8' ],
+	qr/statement: CREATE DATABASE foobar8 OWNER role_foobar TEMPLATE foobar2/,
+	'create database with owner role_foobar');
+($ret, $stdout, $stderr) = $node->psql(
+	'foobar2',
+	'DROP OWNED BY role_foobar;',
+	on_error_die => 1,
+);
+ok($ret == 0, "DROP OWNED BY role_foobar");
+($ret, $stdout, $stderr) = $node->psql(
+	'foobar2',
+	'DROP DATABASE foobar8;',
+	on_error_die => 1,
+);
+ok($ret == 0, "DROP DATABASE foobar8");
+
 done_testing();

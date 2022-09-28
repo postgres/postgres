@@ -1412,19 +1412,28 @@ shdepDropOwned(List *roleids, DropBehavior behavior)
 						break;
 					}
 					/* FALLTHROUGH */
+
 				case SHARED_DEPENDENCY_OWNER:
-					/* Save it for deletion below */
-					obj.classId = sdepForm->classid;
-					obj.objectId = sdepForm->objid;
-					obj.objectSubId = sdepForm->objsubid;
-					/* as above */
-					AcquireDeletionLock(&obj, 0);
-					if (!systable_recheck_tuple(scan, tuple))
+					/*
+					 * Save it for deletion below, if it's a local object or a
+					 * role grant. Other shared objects, such as databases,
+					 * should not be removed here.
+					 */
+					if (sdepForm->dbid == MyDatabaseId ||
+						sdepForm->classid == AuthMemRelationId)
 					{
-						ReleaseDeletionLock(&obj);
-						break;
+						obj.classId = sdepForm->classid;
+						obj.objectId = sdepForm->objid;
+						obj.objectSubId = sdepForm->objsubid;
+						/* as above */
+						AcquireDeletionLock(&obj, 0);
+						if (!systable_recheck_tuple(scan, tuple))
+						{
+							ReleaseDeletionLock(&obj);
+							break;
+						}
+						add_exact_object_address(&obj, deleteobjs);
 					}
-					add_exact_object_address(&obj, deleteobjs);
 					break;
 			}
 		}
