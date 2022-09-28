@@ -8316,9 +8316,9 @@ issue_xlog_fsync(int fd, XLogSegNo segno, TimeLineID tli)
  * symlinks while extracting files from tar. However for consistency and
  * platform-independence, we do it the same way everywhere.
  *
- * It fills in backup_state with the information required for the backup,
- * such as the minimum WAL location that must be present to restore from
- * this backup (starttli) and the corresponding timeline ID (starttli).
+ * It fills in "state" with the information required for the backup, such
+ * as the minimum WAL location that must be present to restore from this
+ * backup (starttli) and the corresponding timeline ID (starttli).
  *
  * Every successfully started backup must be stopped by calling
  * do_pg_backup_stop() or do_pg_abort_backup(). There can be many
@@ -8634,7 +8634,7 @@ get_backup_status(void)
  * file (if required), resets sessionBackupState and so on.  It can optionally
  * wait for WAL segments to be archived.
  *
- * backup_state is filled with the information necessary to restore from this
+ * "state" is filled with the information necessary to restore from this
  * backup with its stop LSN (stoppoint), its timeline ID (stoptli), etc.
  *
  * It is the responsibility of the caller of this function to verify the
