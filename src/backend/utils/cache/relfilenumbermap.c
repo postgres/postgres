@@ -88,7 +88,6 @@ static void
 InitializeRelfilenumberMap(void)
 {
 	HASHCTL		ctl;
-	int			i;
 
 	/* Make sure we've initialized CacheMemoryContext. */
 	if (CacheMemoryContext == NULL)
@@ -97,17 +96,20 @@ InitializeRelfilenumberMap(void)
 	/* build skey */
 	MemSet(&relfilenumber_skey, 0, sizeof(relfilenumber_skey));
 
-	for (i = 0; i < 2; i++)
-	{
-		fmgr_info_cxt(F_OIDEQ,
-					  &relfilenumber_skey[i].sk_func,
-					  CacheMemoryContext);
-		relfilenumber_skey[i].sk_strategy = BTEqualStrategyNumber;
-		relfilenumber_skey[i].sk_subtype = InvalidOid;
-		relfilenumber_skey[i].sk_collation = InvalidOid;
-	}
-
+	fmgr_info_cxt(F_OIDEQ,
+				  &relfilenumber_skey[0].sk_func,
+				  CacheMemoryContext);
+	relfilenumber_skey[0].sk_strategy = BTEqualStrategyNumber;
+	relfilenumber_skey[0].sk_subtype = InvalidOid;
+	relfilenumber_skey[0].sk_collation = InvalidOid;
 	relfilenumber_skey[0].sk_attno = Anum_pg_class_reltablespace;
+
+	fmgr_info_cxt(F_INT8EQ,
+				  &relfilenumber_skey[1].sk_func,
+				  CacheMemoryContext);
+	relfilenumber_skey[1].sk_strategy = BTEqualStrategyNumber;
+	relfilenumber_skey[1].sk_subtype = InvalidOid;
+	relfilenumber_skey[1].sk_collation = InvalidOid;
 	relfilenumber_skey[1].sk_attno = Anum_pg_class_relfilenode;
 
 	/*
