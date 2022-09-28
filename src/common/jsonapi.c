@@ -1052,7 +1052,7 @@ report_parse_error(JsonParseContext ctx, JsonLexContext *lex)
 }
 
 /*
- * Construct a detail message for a JSON error.
+ * Construct an (already translated) detail message for a JSON error.
  */
 char *
 json_errdetail(JsonParseErrorType error, JsonLexContext *lex)
