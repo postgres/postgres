@@ -1154,6 +1154,10 @@ SELECT '52093.89'::money::numeric::float8;
     <primary>varchar</primary>
    </indexterm>
 
+   <indexterm zone="datatype-character">
+    <primary>bpchar</primary>
+   </indexterm>
+
     <table id="datatype-character-table">
      <title>Character Types</title>
      <tgroup cols="2">
@@ -1169,7 +1173,7 @@ SELECT '52093.89'::money::numeric::float8;
         <entry>variable-length with limit</entry>
        </row>
        <row>
-        <entry><type>character(<replaceable>n</replaceable>)</type>, <type>char(<replaceable>n</replaceable>)</type></entry>
+        <entry><type>character(<replaceable>n</replaceable>)</type>, <type>char(<replaceable>n</replaceable>)</type>, <type>bpchar(<replaceable>n</replaceable>)</type></entry>
         <entry>fixed-length, blank padded</entry>
        </row>
        <row>
@@ -1196,7 +1200,14 @@ SELECT '52093.89'::money::numeric::float8;
     error, unless the excess characters are all spaces, in which case
     the string will be truncated to the maximum length. (This somewhat
     bizarre exception is required by the <acronym>SQL</acronym>
-    standard.) If the string to be stored is shorter than the declared
+    standard.)
+    However, if one explicitly casts a value to <type>character
+    varying(<replaceable>n</replaceable>)</type> or
+    <type>character(<replaceable>n</replaceable>)</type>, then an over-length
+    value will be truncated to <replaceable>n</replaceable> characters without
+    raising an error. (This too is required by the
+    <acronym>SQL</acronym> standard.)
+    If the string to be stored is shorter than the declared
     length, values of type <type>character</type> will be space-padded;
     values of type <type>character varying</type> will simply store the
     shorter
@@ -1204,33 +1215,35 @@ SELECT '52093.89'::money::numeric::float8;
    </para>
 
    <para>
-    If one explicitly casts a value to <type>character
-    varying(<replaceable>n</replaceable>)</type> or
-    <type>character(<replaceable>n</replaceable>)</type>, then an over-length
-    value will be truncated to <replaceable>n</replaceable> characters without
-    raising an error. (This too is required by the
-    <acronym>SQL</acronym> standard.)
+    In addition, <productname>PostgreSQL</productname> provides the
+    <type>text</type> type, which stores strings of any length.
+    Although the <type>text</type> type is not in the
+    <acronym>SQL</acronym> standard, several other SQL database
+    management systems have it as well.
+    <type>text</type> is <productname>PostgreSQL</productname>'s native
+    string data type, in that most built-in functions operating on strings
+    are declared to take or return <type>text</type> not <type>character
+    varying</type>.  For many purposes, <type>character varying</type>
+    acts as though it were a <link linkend="domains">domain</link>
+    over <type>text</type>.
    </para>
 
    <para>
-    The notations <type>varchar(<replaceable>n</replaceable>)</type> and
-    <type>char(<replaceable>n</replaceable>)</type> are aliases for <type>character
-    varying(<replaceable>n</replaceable>)</type> and
-    <type>character(<replaceable>n</replaceable>)</type>, respectively.
-    If specified, the length must be greater than zero and cannot exceed
-    10485760.
+    The type name <type>varchar</type> is an alias for <type>character
+    varying</type>, while <type>char</type> and <type>bpchar</type> are
+    aliases for <type>character</type>.
+    The <type>varchar</type> and <type>char</type> aliases are defined in
+    the <acronym>SQL</acronym> standard, but <type>bpchar</type> is
+    a <productname>PostgreSQL</productname> extension.
+   </para>
+
+   <para>
+    If specified, the length <replaceable>n</replaceable> must be greater
+    than zero and cannot exceed 10485760.
     <type>character</type> without length specifier is equivalent to
     <type>character(1)</type>. If <type>character varying</type> is used
     without length specifier, the type accepts strings of any size. The
-    latter is a <productname>PostgreSQL</productname> extension.
-   </para>
-
-   <para>
-    In addition, <productname>PostgreSQL</productname> provides the
-    <type>text</type> type, which stores strings of any length.
-    Although the type <type>text</type> is not in the
-    <acronym>SQL</acronym> standard, several other SQL database
-    management systems have it as well.
+    latter behavior is a <productname>PostgreSQL</productname> extension.
    </para>
 
    <para>
