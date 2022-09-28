@@ -2173,7 +2173,7 @@ SELECT sum(n) FROM t;
   <note>
    <para>
     While <literal>RECURSIVE</literal> allows queries to be specified
-    recursively, internally all queries are evaluated iteratively.
+    recursively, internally such queries are evaluated iteratively.
    </para>
   </note>
 
