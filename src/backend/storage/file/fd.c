@@ -2053,7 +2053,7 @@ FileRead(File file, char *buffer, int amount, off_t offset,
 
 retry:
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = pread(vfdP->fd, buffer, amount, offset);
+	returnCode = pg_pread(vfdP->fd, buffer, amount, offset);
 	pgstat_report_wait_end();
 
 	if (returnCode < 0)
@@ -2135,7 +2135,7 @@ FileWrite(File file, char *buffer, int amount, off_t offset,
 retry:
 	errno = 0;
 	pgstat_report_wait_start(wait_event_info);
-	returnCode = pwrite(VfdCache[file].fd, buffer, amount, offset);
+	returnCode = pg_pwrite(VfdCache[file].fd, buffer, amount, offset);
 	pgstat_report_wait_end();
 
 	/* if write didn't set errno, assume problem is no disk space */
@@ -3740,7 +3740,7 @@ data_sync_elevel(int elevel)
 }
 
 /*
- * A convenience wrapper for pwritev() that retries on partial write.  If an
+ * A convenience wrapper for pg_pwritev() that retries on partial write.  If an
  * error is returned, it is unspecified how much has been written.
  */
 ssize_t
@@ -3760,7 +3760,7 @@ pg_pwritev_with_retry(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 	for (;;)
 	{
 		/* Write as much as we can. */
-		part = pwritev(fd, iov, iovcnt, offset);
+		part = pg_pwritev(fd, iov, iovcnt, offset);
 		if (part < 0)
 			return -1;
 

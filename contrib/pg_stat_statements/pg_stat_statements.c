@@ -2103,9 +2103,9 @@ qtext_store(const char *query, int query_len,
 	if (fd < 0)
 		goto error;
 
-	if (pwrite(fd, query, query_len, off) != query_len)
+	if (pg_pwrite(fd, query, query_len, off) != query_len)
 		goto error;
-	if (pwrite(fd, "\0", 1, off + query_len) != 1)
+	if (pg_pwrite(fd, "\0", 1, off + query_len) != 1)
 		goto error;
 
 	CloseTransientFile(fd);

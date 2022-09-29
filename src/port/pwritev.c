@@ -19,14 +19,14 @@
 #include "port/pg_iovec.h"
 
 ssize_t
-pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
+pg_pwritev(int fd, const struct iovec *iov, int iovcnt, off_t offset)
 {
 	ssize_t		sum = 0;
 	ssize_t		part;
 
 	for (int i = 0; i < iovcnt; ++i)
 	{
-		part = pwrite(fd, iov[i].iov_base, iov[i].iov_len, offset);
+		part = pg_pwrite(fd, iov[i].iov_base, iov[i].iov_len, offset);
 		if (part < 0)
 		{
 			if (i == 0)

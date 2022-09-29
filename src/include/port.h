@@ -213,6 +213,15 @@ extern int	pg_fprintf(FILE *stream, const char *fmt,...) pg_attribute_printf(2, 
 extern int	pg_vprintf(const char *fmt, va_list args) pg_attribute_printf(1, 0);
 extern int	pg_printf(const char *fmt,...) pg_attribute_printf(1, 2);
 
+#ifndef WIN32
+/*
+ * We add a pg_ prefix as a warning that the Windows implementations have the
+ * non-standard side-effect of changing the current file position.
+ */
+#define pg_pread pread
+#define pg_pwrite pwrite
+#endif
+
 /*
  * We use __VA_ARGS__ for printf to prevent replacing references to
  * the "printf" format archetype in format() attribute declarations.
