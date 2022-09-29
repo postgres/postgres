@@ -415,7 +415,6 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	int		   *fctx;
-	int32		result;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -424,11 +423,10 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		fctx = MemoryContextAlloc(funcctx->multi_call_memory_ctx,
-								  2 * sizeof(int));
+								  sizeof(int));
 		funcctx->user_fctx = fctx;
 
 		fctx[0] = 0;
-		fctx[1] = pgstat_fetch_stat_numbackends();
 	}
 
 	/* stuff done on every call of the function */
@@ -436,12 +434,22 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 	fctx = funcctx->user_fctx;
 
 	fctx[0] += 1;
-	result = fctx[0];
 
-	if (result <= fctx[1])
+	/*
+	 * We recheck pgstat_fetch_stat_numbackends() each time through, just in
+	 * case the local status data has been refreshed since we started.  It's
+	 * plenty cheap enough if not.  If a refresh does happen, we'll likely
+	 * miss or duplicate some backend IDs, but we're content not to crash.
+	 * (Refreshing midway through such a query would be problematic usage
+	 * anyway, since the backend IDs we've already returned might no longer
+	 * refer to extant sessions.)
+	 */
+	if (fctx[0] <= pgstat_fetch_stat_numbackends())
 	{
 		/* do when there is more left to send */
-		SRF_RETURN_NEXT(funcctx, Int32GetDatum(result));
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(fctx[0]);
+
+		SRF_RETURN_NEXT(funcctx, Int32GetDatum(local_beentry->backend_id));
 	}
 	else
 	{
@@ -493,17 +501,13 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 		int			i;
 
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
-
-		if (!local_beentry)
-			continue;
-
 		beentry = &local_beentry->backendStatus;
 
 		/*
 		 * Report values for only those backends which are running the given
 		 * command.
 		 */
-		if (!beentry || beentry->st_progress_command != cmdtype)
+		if (beentry->st_progress_command != cmdtype)
 			continue;
 
 		/* Value available to all callers */
@@ -558,24 +562,6 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 
 		/* Get the next one in the list */
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
-		if (!local_beentry)
-		{
-			int			i;
-
-			/* Ignore missing entries if looking for specific PID */
-			if (pid != -1)
-				continue;
-
-			for (i = 0; i < lengthof(nulls); i++)
-				nulls[i] = true;
-
-			nulls[5] = false;
-			values[5] = CStringGetTextDatum("<backend information not available>");
-
-			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
-			continue;
-		}
-
 		beentry = &local_beentry->backendStatus;
 
 		/* If looking for specific PID, ignore all the others */
@@ -1180,9 +1166,9 @@ pg_stat_get_db_numbackends(PG_FUNCTION_ARGS)
 	result = 0;
 	for (beid = 1; beid <= tot_backends; beid++)
 	{
-		PgBackendStatus *beentry = pgstat_fetch_stat_beentry(beid);
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(beid);
 
-		if (beentry && beentry->st_databaseid == dbid)
+		if (local_beentry->backendStatus.st_databaseid == dbid)
 			result++;
 	}
 

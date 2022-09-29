@@ -5485,20 +5485,23 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
    the <structname>pg_stat_activity</structname> view, returns a set of records
    containing all the available information about each backend process.
    Sometimes it may be more convenient to obtain just a subset of this
-   information.  In such cases, an older set of per-backend statistics
+   information.  In such cases, another set of per-backend statistics
    access functions can be used; these are shown in <xref
    linkend="monitoring-stats-backend-funcs-table"/>.
-   These access functions use a backend ID number, which ranges from one
-   to the number of currently active backends.
+   These access functions use the session's backend ID number, which is a
+   small positive integer that is distinct from the backend ID of any
+   concurrent session, although a session's ID can be recycled as soon as
+   it exits.  The backend ID is used, among other things, to identify the
+   session's temporary schema if it has one.
    The function <function>pg_stat_get_backend_idset</function> provides a
-   convenient way to generate one row for each active backend for
+   convenient way to list all the active backends' ID numbers for
    invoking these functions.  For example, to show the <acronym>PID</acronym>s and
    current queries of all backends:
 
 <programlisting>
-SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
-       pg_stat_get_backend_activity(s.backendid) AS query
-    FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
+SELECT pg_stat_get_backend_pid(backendid) AS pid,
+       pg_stat_get_backend_activity(backendid) AS query
+FROM pg_stat_get_backend_idset() AS backendid;
 </programlisting>
   </para>
 
@@ -5526,8 +5529,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
         <returnvalue>setof integer</returnvalue>
        </para>
        <para>
-        Returns the set of currently active backend ID numbers (from 1 to the
-        number of active backends).
+        Returns the set of currently active backend ID numbers.
        </para></entry>
       </row>
 
