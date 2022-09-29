@@ -185,8 +185,7 @@ my $invalidated = 0;
 for (my $i = 0; $i < 10000; $i++)
 {
 	if (find_in_log(
-			$node_primary,
-			"invalidating slot \"rep1\" because its restart_lsn [0-9A-F/]+ exceeds max_slot_wal_keep_size",
+			$node_primary, 'invalidating obsolete replication slot "rep1"',
 			$logstart))
 	{
 		$invalidated = 1;
@@ -379,6 +378,7 @@ $logstart = get_log_size($node_primary3);
 kill 'STOP', $senderpid, $receiverpid;
 advance_wal($node_primary3, 2);
 
+my $msg_logged   = 0;
 my $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
@@ -387,11 +387,12 @@ while ($max_attempts-- >= 0)
 			"terminating process $senderpid to release replication slot \"rep3\"",
 			$logstart))
 	{
-		ok(1, "walsender termination logged");
+		$msg_logged = 1;
 		last;
 	}
 	sleep 1;
 }
+ok($msg_logged, "walsender termination logged");
 
 # Now let the walsender continue; slot should be killed now.
 # (Must not let walreceiver run yet; otherwise the standby could start another
@@ -402,18 +403,20 @@ $node_primary3->poll_query_until('postgres',
 	"lost")
   or die "timed out waiting for slot to be lost";
 
+$msg_logged   = 0;
 $max_attempts = $PostgreSQL::Test::Utils::timeout_default;
 while ($max_attempts-- >= 0)
 {
 	if (find_in_log(
-			$node_primary3,
-			'invalidating slot "rep3" because its restart_lsn', $logstart))
+			$node_primary3, 'invalidating obsolete replication slot "rep3"',
+			$logstart))
 	{
-		ok(1, "slot invalidation logged");
+		$msg_logged = 1;
 		last;
 	}
 	sleep 1;
 }
+ok($msg_logged, "slot invalidation logged");
 
 # Now let the walreceiver continue, so that the node can be stopped cleanly
 kill 'CONT', $receiverpid;

@@ -1293,8 +1293,12 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 			if (last_signaled_pid != active_pid)
 			{
 				ereport(LOG,
-						(errmsg("terminating process %d to release replication slot \"%s\"",
-								active_pid, NameStr(slotname))));
+						errmsg("terminating process %d to release replication slot \"%s\"",
+							   active_pid, NameStr(slotname)),
+						errdetail("The slot's restart_lsn %X/%X exceeds the limit by %llu bytes.",
+								  LSN_FORMAT_ARGS(restart_lsn),
+								  (unsigned long long) (oldestLSN - restart_lsn)),
+						errhint("You might need to increase max_slot_wal_keep_size."));
 
 				(void) kill(active_pid, SIGTERM);
 				last_signaled_pid = active_pid;
@@ -1331,9 +1335,12 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 			ReplicationSlotRelease();
 
 			ereport(LOG,
-					(errmsg("invalidating slot \"%s\" because its restart_lsn %X/%X exceeds max_slot_wal_keep_size",
-							NameStr(slotname),
-							LSN_FORMAT_ARGS(restart_lsn))));
+					errmsg("invalidating obsolete replication slot \"%s\"",
+						   NameStr(slotname)),
+					errdetail("The slot's restart_lsn %X/%X exceeds the limit by %llu bytes.",
+							  LSN_FORMAT_ARGS(restart_lsn),
+							  (unsigned long long) (oldestLSN - restart_lsn)),
+					errhint("You might need to increase max_slot_wal_keep_size."));
 
 			/* done with this slot for now */
 			break;
