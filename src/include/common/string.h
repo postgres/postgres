@@ -10,13 +10,15 @@
 #ifndef COMMON_STRING_H
 #define COMMON_STRING_H
 
+#include <signal.h>
+
 struct StringInfoData;			/* avoid including stringinfo.h here */
 
 typedef struct PromptInterruptContext
 {
 	/* To avoid including <setjmp.h> here, jmpbuf is declared "void *" */
 	void	   *jmpbuf;			/* existing longjmp buffer */
-	volatile bool *enabled;		/* flag that enables longjmp-on-interrupt */
+	volatile sig_atomic_t *enabled; /* flag that enables longjmp-on-interrupt */
 	bool		canceled;		/* indicates whether cancellation occurred */
 } PromptInterruptContext;
 

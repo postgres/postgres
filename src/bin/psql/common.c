@@ -246,7 +246,7 @@ NoticeProcessor(void *arg, const char *message)
  * On Windows, currently this does not work, so control-C is less useful
  * there.
  */
-volatile bool sigint_interrupt_enabled = false;
+volatile sig_atomic_t sigint_interrupt_enabled = false;
 
 sigjmp_buf	sigint_interrupt_jmp;
 
