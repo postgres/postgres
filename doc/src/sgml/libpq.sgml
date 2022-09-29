@@ -2515,8 +2515,9 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
 
       <para>
        The list of available attributes varies depending on the SSL library
-       being used, and the type of connection. If an attribute is not
-       available, returns NULL.
+       being used and the type of connection.  Returns NULL if the connection
+       does not use SSL or the specified attribute name is not defined for the
+       library in use.
       </para>
 
       <para>
@@ -2575,12 +2576,15 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
 
       <para>
        As a special case, the <literal>library</literal> attribute may be
-       queried without an existing connection by passing NULL as the
-       <literal>conn</literal> argument. The historical behavior was to return
-       NULL for any attribute when a NULL <literal>conn</literal> was provided;
-       client programs needing to differentiate between the newer and older
-       implementations may check the
-       <literal>LIBPQ_HAS_SSL_LIBRARY_DETECTION</literal> feature macro.
+       queried without a connection by passing NULL as
+       the <literal>conn</literal> argument.  The result will be the default
+       SSL library name, or NULL if <application>libpq</application> was
+       compiled without any SSL support.  (Prior
+       to <productname>PostgreSQL</productname> version 15, passing NULL as
+       the <literal>conn</literal> argument always resulted in NULL.
+       Client programs needing to differentiate between the newer and older
+       implementations of this case may check the
+       <literal>LIBPQ_HAS_SSL_LIBRARY_DETECTION</literal> feature macro.)
       </para>
      </listitem>
     </varlistentry>
@@ -2589,7 +2593,8 @@ const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);
      <term><function>PQsslAttributeNames</function><indexterm><primary>PQsslAttributeNames</primary></indexterm></term>
      <listitem>
       <para>
-       Return an array of SSL attribute names available. The array is terminated by a NULL pointer.
+       Returns an array of SSL attribute names available.
+       The array is terminated by a NULL pointer.
 <synopsis>
 const char * const * PQsslAttributeNames(const PGconn *conn);
 </synopsis>
@@ -2601,8 +2606,10 @@ const char * const * PQsslAttributeNames(const PGconn *conn);
      <term><function>PQsslStruct</function><indexterm><primary>PQsslStruct</primary></indexterm></term>
      <listitem>
       <para>
-       Return a pointer to an SSL-implementation-specific object describing
-       the connection.
+       Returns a pointer to an SSL-implementation-specific object describing
+       the connection.  Returns NULL if the connection is not encrypted
+       or the requested type of object is not available from the connection's
+       SSL implementation.
 <synopsis>
 void *PQsslStruct(const PGconn *conn, const char *struct_name);
 </synopsis>
@@ -2610,8 +2617,9 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
       <para>
        The struct(s) available depend on the SSL implementation in use.
        For <productname>OpenSSL</productname>, there is one struct,
-       available under the name "OpenSSL", and it returns a pointer to the
-       <productname>OpenSSL</productname> <literal>SSL</literal> struct.
+       available under the name <literal>OpenSSL</literal>,
+       and it returns a pointer to
+       <productname>OpenSSL</productname>'s <literal>SSL</literal> struct.
        To use this function, code along the following lines could be used:
 <programlisting><![CDATA[
 #include <libpq-fe.h>
@@ -2644,7 +2652,7 @@ void *PQsslStruct(const PGconn *conn, const char *struct_name);
      <listitem>
       <para>
        <indexterm><primary>SSL</primary><secondary sortas="libpq">in libpq</secondary></indexterm>
-       Returns the SSL structure used in the connection, or null
+       Returns the SSL structure used in the connection, or NULL
        if SSL is not in use.
 
 <synopsis>
