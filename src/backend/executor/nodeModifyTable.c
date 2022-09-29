@@ -795,9 +795,8 @@ ExecInsert(ModifyTableContext *context,
 		if (resultRelInfo->ri_BatchSize > 1)
 		{
 			/*
-			 * If a certain number of tuples have already been accumulated, or
-			 * a tuple has come for a different relation than that for the
-			 * accumulated tuples, perform the batch insert
+			 * When we've reached the desired batch size, perform the
+			 * insertion.
 			 */
 			if (resultRelInfo->ri_NumSlots == resultRelInfo->ri_BatchSize)
 			{
