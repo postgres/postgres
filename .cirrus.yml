@@ -40,9 +40,9 @@ on_failure_ac: &on_failure_ac
 on_failure_meson: &on_failure_meson
   testrun_artifacts:
     paths:
-      - "build/testrun/**/*.log"
-      - "build/testrun/**/*.diffs"
-      - "build/testrun/**/regress_log_*"
+      - "build*/testrun/**/*.log"
+      - "build*/testrun/**/*.diffs"
+      - "build*/testrun/**/regress_log_*"
     type: text/plain
 
   # In theory it'd be nice to upload the junit files meson generates, so that
@@ -51,7 +51,7 @@ on_failure_meson: &on_failure_meson
   # don't end up useful. We could probably improve on that with a some custom
   # conversion script, but ...
   meson_log_artifacts:
-    path: "build/meson-logs/*.txt"
+    path: "build*/meson-logs/*.txt"
     type: text/plain
 
 
@@ -229,6 +229,9 @@ task:
 
     - name: Linux - Debian Bullseye - Meson
 
+      env:
+        CCACHE_MAXSIZE: "400M" # tests two different builds
+
       configure_script: |
         su postgres <<-EOF
           meson setup \
@@ -239,13 +242,43 @@ task:
             build
         EOF
 
+      # Also build & test in a 32bit build - it's gotten rare to test that
+      # locally.
+      configure_32_script: |
+        su postgres <<-EOF
+          export CC='ccache gcc -m32'
+          meson setup \
+            --buildtype=debug \
+            -Dcassert=true \
+            ${LINUX_MESON_FEATURES} \
+            -Dllvm=disabled \
+            --pkg-config-path /usr/lib/i386-linux-gnu/pkgconfig/ \
+            -DPERL=perl5.32-i386-linux-gnu \
+            -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
+            build-32
+        EOF
+
       build_script: su postgres -c 'ninja -C build -j${BUILD_JOBS}'
+      build_32_script: su postgres -c 'ninja -C build-32 -j${BUILD_JOBS}'
+
       upload_caches: ccache
 
       test_world_script: |
         su postgres <<-EOF
           ulimit -c unlimited
           meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
+        EOF
+        # so that we don't upload 64bit logs if 32bit fails
+        rm -rf build/
+
+      # There's currently no coverage of icu with LANG=C in the buildfarm. We
+      # can easily provide some here by running one of the sets of tests that
+      # way. Newer versions of python insist on changing the LC_CTYPE away
+      # from C, prevent that with PYTHONCOERCECLOCALE.
+      test_world_32_script: |
+        su postgres <<-EOF
+          ulimit -c unlimited
+          PYTHONCOERCECLOCALE=0 LANG=C meson test $MTEST_ARGS -C build-32 --num-processes ${TEST_JOBS}
         EOF
 
       on_failure:
