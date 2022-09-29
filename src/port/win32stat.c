@@ -15,8 +15,6 @@
 
 #ifdef WIN32
 
-#define UMDF_USING_NTSTATUS
-
 #include "c.h"
 #include "port/win32ntdll.h"
 

@@ -11,8 +11,6 @@
  *-------------------------------------------------------------------------
  */
 
-#define UMDF_USING_NTSTATUS
-
 #ifdef FRONTEND
 #include "postgres_fe.h"
 #else
