@@ -1940,7 +1940,8 @@ select
   trim(trailing ' foo ') as rt,
   trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea) as btb,
   trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea) as ltb,
-  trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea) as rtb;
+  trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea) as rtb,
+  SYSTEM_USER as su;
 select pg_get_viewdef('tt201v', true);
                                         pg_get_viewdef                                         
 -----------------------------------------------------------------------------------------------
@@ -1961,7 +1962,8 @@ select pg_get_viewdef('tt201v', true);
      TRIM(TRAILING FROM ' foo '::text) AS rt,                                                 +
      TRIM(BOTH '\x00'::bytea FROM '\x00546f6d00'::bytea) AS btb,                              +
      TRIM(LEADING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS ltb,                           +
-     TRIM(TRAILING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS rtb;
+     TRIM(TRAILING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS rtb,                          +
+     SYSTEM_USER AS su;
 (1 row)
 
 -- corner cases with empty join conditions

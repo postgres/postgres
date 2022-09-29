@@ -1508,6 +1508,9 @@
 { oid => '746', descr => 'session user name',
   proname => 'session_user', provolatile => 's', prorettype => 'name',
   proargtypes => '', prosrc => 'session_user' },
+{ oid => '9977', descr => 'system user name',
+  proname => 'system_user', provolatile => 's', prorettype => 'text',
+  proargtypes => '', prosrc => 'system_user' },
 
 { oid => '744',
   proname => 'array_eq', prorettype => 'bool',

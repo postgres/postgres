@@ -904,6 +904,10 @@ InitPostgres(const char *in_dbname, Oid dboid,
 		Assert(MyProcPort != NULL);
 		PerformAuthentication(MyProcPort);
 		InitializeSessionUserId(username, useroid);
+		/* ensure that auth_method is actually valid, aka authn_id is not NULL */
+		if (MyClientConnectionInfo.authn_id)
+			InitializeSystemUser(MyClientConnectionInfo.authn_id,
+								 hba_authname(MyClientConnectionInfo.auth_method));
 		am_superuser = superuser();
 	}
 

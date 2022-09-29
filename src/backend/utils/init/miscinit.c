@@ -477,6 +477,7 @@ static Oid	AuthenticatedUserId = InvalidOid;
 static Oid	SessionUserId = InvalidOid;
 static Oid	OuterUserId = InvalidOid;
 static Oid	CurrentUserId = InvalidOid;
+static const char *SystemUser = NULL;
 
 /* We also have to remember the superuser state of some of these levels */
 static bool AuthenticatedUserIsSuperuser = false;
@@ -546,6 +547,16 @@ SetSessionUserId(Oid userid, bool is_superuser)
 	/* We force the effective user IDs to match, too */
 	OuterUserId = userid;
 	CurrentUserId = userid;
+}
+
+/*
+ * Return the system user representing the authenticated identity.
+ * It is defined in InitializeSystemUser() as auth_method:authn_id.
+ */
+const char *
+GetSystemUser(void)
+{
+	return SystemUser;
 }
 
 /*
@@ -818,6 +829,45 @@ InitializeSessionUserIdStandalone(void)
 	SetSessionUserId(BOOTSTRAP_SUPERUSERID, true);
 }
 
+/*
+ * Initialize the system user.
+ *
+ * This is built as auth_method:authn_id.
+ */
+void
+InitializeSystemUser(const char *authn_id, const char *auth_method)
+{
+	char	   *system_user;
+
+	/* call only once */
+	Assert(SystemUser == NULL);
+
+	/*
+	 * InitializeSystemUser should be called only when authn_id is not NULL,
+	 * meaning that auth_method is valid.
+	 */
+	Assert(authn_id != NULL);
+
+	system_user = psprintf("%s:%s", auth_method, authn_id);
+
+	/* Store SystemUser in long-lived storage */
+	SystemUser = MemoryContextStrdup(TopMemoryContext, system_user);
+	pfree(system_user);
+}
+
+/*
+ * SQL-function SYSTEM_USER
+ */
+Datum
+system_user(PG_FUNCTION_ARGS)
+{
+	const char *sysuser = GetSystemUser();
+
+	if (sysuser)
+		PG_RETURN_DATUM(CStringGetTextDatum(sysuser));
+	else
+		PG_RETURN_NULL();
+}
 
 /*
  * Change session auth ID while running

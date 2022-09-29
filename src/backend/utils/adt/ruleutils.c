@@ -10317,6 +10317,10 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoChar(buf, ')');
 			return true;
 
+		case F_SYSTEM_USER:
+			appendStringInfoString(buf, "SYSTEM_USER");
+			return true;
+
 		case F_XMLEXISTS:
 			/* XMLEXISTS ... extra parens because args are c_expr */
 			appendStringInfoString(buf, "XMLEXISTS((");

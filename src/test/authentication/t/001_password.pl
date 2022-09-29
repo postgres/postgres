@@ -72,6 +72,11 @@ $node->safe_psql('postgres',
 $node->safe_psql('postgres',
 	"SET password_encryption='md5'; CREATE ROLE md5_role LOGIN PASSWORD 'pass';"
 );
+# Set up a table for tests of SYSTEM_USER.
+$node->safe_psql(
+	'postgres',
+	"CREATE TABLE sysuser_data (n) AS SELECT NULL FROM generate_series(1, 10);
+	 GRANT ALL ON sysuser_data TO md5_role;");
 $ENV{"PGPASSWORD"} = 'pass';
 
 # For "trust" method, all users should be able to connect. These users are not
@@ -81,6 +86,24 @@ test_role($node, 'scram_role', 'trust', 0,
 	log_unlike => [qr/connection authenticated:/]);
 test_role($node, 'md5_role', 'trust', 0,
 	log_unlike => [qr/connection authenticated:/]);
+
+# SYSTEM_USER is null when not authenticated.
+my $res = $node->safe_psql('postgres', "SELECT SYSTEM_USER IS NULL;");
+is($res, 't', "users with trust authentication use SYSTEM_USER = NULL");
+
+# Test SYSTEM_USER with parallel workers when not authenticated.
+$res = $node->safe_psql(
+	'postgres', qq(
+        SET min_parallel_table_scan_size TO 0;
+        SET parallel_setup_cost TO 0;
+        SET parallel_tuple_cost TO 0;
+        SET max_parallel_workers_per_gather TO 2;
+
+        SELECT bool_and(SYSTEM_USER IS NOT DISTINCT FROM n) FROM sysuser_data;),
+	connstr => "user=md5_role");
+is($res, 't',
+	"users with trust authentication use SYSTEM_USER = NULL in parallel workers"
+);
 
 # For plain "password" method, all users should also be able to connect.
 reset_pg_hba($node, 'password');
@@ -119,6 +142,25 @@ test_role($node, 'scram_role', 'md5', 0,
 test_role($node, 'md5_role', 'md5', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="md5_role" method=md5/]);
+
+# Test SYSTEM_USER <> NULL with parallel workers.
+$node->safe_psql(
+	'postgres',
+	"TRUNCATE sysuser_data;
+INSERT INTO sysuser_data SELECT 'md5:md5_role' FROM generate_series(1, 10);",
+	connstr => "user=md5_role");
+$res = $node->safe_psql(
+	'postgres', qq(
+        SET min_parallel_table_scan_size TO 0;
+        SET parallel_setup_cost TO 0;
+        SET parallel_tuple_cost TO 0;
+        SET max_parallel_workers_per_gather TO 2;
+
+        SELECT bool_and(SYSTEM_USER IS NOT DISTINCT FROM n) FROM sysuser_data;),
+	connstr => "user=md5_role");
+is($res, 't',
+	"users with md5 authentication use SYSTEM_USER = md5:role in parallel workers"
+);
 
 # Tests for channel binding without SSL.
 # Using the password authentication method; channel binding can't work
