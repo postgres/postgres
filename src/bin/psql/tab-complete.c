@@ -1848,7 +1848,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER PUBLICATION <name> SET */
 	else if (Matches("ALTER", "PUBLICATION", MatchAny, "SET"))
 		COMPLETE_WITH("(", "TABLES IN SCHEMA", "TABLE");
-	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|DROP|SET", "ALL", "TABLES", "IN", "SCHEMA"))
+	else if (Matches("ALTER", "PUBLICATION", MatchAny, "ADD|DROP|SET", "TABLES", "IN", "SCHEMA"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_schemas
 								 " AND nspname NOT LIKE E'pg\\\\_%%'",
 								 "CURRENT_SCHEMA");
@@ -2994,9 +2994,11 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR"))
 		COMPLETE_WITH("TABLE", "ALL TABLES", "TABLES IN SCHEMA");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL"))
-		COMPLETE_WITH("TABLES", "TABLES IN SCHEMA");
+		COMPLETE_WITH("TABLES");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES"))
-		COMPLETE_WITH("IN SCHEMA", "WITH (");
+		COMPLETE_WITH("WITH (");
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLES"))
+		COMPLETE_WITH("IN SCHEMA");
 	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLE", MatchAny) && !ends_with(prev_wd, ','))
 		COMPLETE_WITH("WHERE (", "WITH (");
 	/* Complete "CREATE PUBLICATION <name> FOR TABLE" with "<table>, ..." */
@@ -3017,11 +3019,11 @@ psql_completion(const char *text, int start, int end)
 	/*
 	 * Complete "CREATE PUBLICATION <name> FOR TABLES IN SCHEMA <schema>, ..."
 	 */
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "IN", "SCHEMA"))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLES", "IN", "SCHEMA"))
 		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_schemas
 								 " AND nspname NOT LIKE E'pg\\\\_%%'",
 								 "CURRENT_SCHEMA");
-	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "ALL", "TABLES", "IN", "SCHEMA", MatchAny) && (!ends_with(prev_wd, ',')))
+	else if (Matches("CREATE", "PUBLICATION", MatchAny, "FOR", "TABLES", "IN", "SCHEMA", MatchAny) && (!ends_with(prev_wd, ',')))
 		COMPLETE_WITH("WITH (");
 	/* Complete "CREATE PUBLICATION <name> [...] WITH" */
 	else if (HeadMatches("CREATE", "PUBLICATION") && TailMatches("WITH", "("))
@@ -3835,7 +3837,7 @@ psql_completion(const char *text, int start, int end)
 											"ALL PROCEDURES IN SCHEMA",
 											"ALL ROUTINES IN SCHEMA",
 											"ALL SEQUENCES IN SCHEMA",
-											"TABLES IN SCHEMA",
+											"ALL TABLES IN SCHEMA",
 											"DATABASE",
 											"DOMAIN",
 											"FOREIGN DATA WRAPPER",

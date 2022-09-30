@@ -978,8 +978,8 @@ fetch_remote_table_info(char *nspname, char *relname,
 	 *
 	 * 2) one of the subscribed publications has puballtables set to true
 	 *
-	 * 3) one of the subscribed publications is declared as ALL TABLES IN
-	 * SCHEMA that includes this relation
+	 * 3) one of the subscribed publications is declared as TABLES IN SCHEMA
+	 * that includes this relation
 	 */
 	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
 	{
