@@ -899,8 +899,8 @@ is( $node_subscriber->safe_psql('postgres', "SELECT * FROM test_mix_2"),
 	'all columns should be replicated');
 
 
-# TEST: With a table included in the publication which is FOR ALL TABLES
-# IN SCHEMA, it means replicate all columns.
+# TEST: With a table included in the publication which is FOR TABLES IN
+# SCHEMA, it means replicate all columns.
 
 $node_subscriber->safe_psql(
 	'postgres', qq(
