@@ -465,7 +465,7 @@ static Buffer ReadBuffer_common(SMgrRelation smgr, char relpersistence,
 								bool *hit);
 static bool PinBuffer(BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(BufferDesc *buf);
-static void UnpinBuffer(BufferDesc *buf, bool fixOwner);
+static void UnpinBuffer(BufferDesc *buf);
 static void BufferSync(int flags);
 static uint32 WaitBufHdrUnlocked(BufferDesc *buf);
 static int	SyncOneBuffer(int buf_id, bool skip_recently_used,
@@ -1258,7 +1258,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 					{
 						/* Drop lock/pin and loop around for another buffer */
 						LWLockRelease(BufferDescriptorGetContentLock(buf));
-						UnpinBuffer(buf, true);
+						UnpinBuffer(buf);
 						continue;
 					}
 				}
@@ -1286,7 +1286,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 				 * Someone else has locked the buffer, so give it up and loop
 				 * back to get another one.
 				 */
-				UnpinBuffer(buf, true);
+				UnpinBuffer(buf);
 				continue;
 			}
 		}
@@ -1353,7 +1353,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			 * pool in the first place.  First, give up the buffer we were
 			 * planning to use.
 			 */
-			UnpinBuffer(buf, true);
+			UnpinBuffer(buf);
 
 			/* Can give up that buffer's mapping partition lock now */
 			if (oldPartitionLock != NULL &&
@@ -1414,7 +1414,7 @@ BufferAlloc(SMgrRelation smgr, char relpersistence, ForkNumber forkNum,
 			oldPartitionLock != newPartitionLock)
 			LWLockRelease(oldPartitionLock);
 		LWLockRelease(newPartitionLock);
-		UnpinBuffer(buf, true);
+		UnpinBuffer(buf);
 	}
 
 	/*
@@ -1671,7 +1671,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 				BufTagMatchesRelFileLocator(&bufHdr->tag, &relation->rd_locator) &&
 				BufTagGetForkNum(&bufHdr->tag) == forkNum)
 				return buffer;
-			UnpinBuffer(bufHdr, true);
+			UnpinBuffer(bufHdr);
 		}
 	}
 
@@ -1843,13 +1843,11 @@ PinBuffer_Locked(BufferDesc *buf)
 /*
  * UnpinBuffer -- make buffer available for replacement.
  *
- * This should be applied only to shared buffers, never local ones.
- *
- * Most but not all callers want CurrentResourceOwner to be adjusted.
- * Those that don't should pass fixOwner = false.
+ * This should be applied only to shared buffers, never local ones.  This
+ * always adjusts CurrentResourceOwner.
  */
 static void
-UnpinBuffer(BufferDesc *buf, bool fixOwner)
+UnpinBuffer(BufferDesc *buf)
 {
 	PrivateRefCountEntry *ref;
 	Buffer		b = BufferDescriptorGetBuffer(buf);
@@ -1858,8 +1856,7 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner)
 	ref = GetPrivateRefCountEntry(b, false);
 	Assert(ref != NULL);
 
-	if (fixOwner)
-		ResourceOwnerForgetBuffer(CurrentResourceOwner, b);
+	ResourceOwnerForgetBuffer(CurrentResourceOwner, b);
 
 	Assert(ref->refcount > 0);
 	ref->refcount--;
@@ -2579,7 +2576,7 @@ SyncOneBuffer(int buf_id, bool skip_recently_used, WritebackContext *wb_context)
 
 	tag = bufHdr->tag;
 
-	UnpinBuffer(bufHdr, true);
+	UnpinBuffer(bufHdr);
 
 	ScheduleBufferTagForWriteback(wb_context, &tag);
 
@@ -3591,7 +3588,7 @@ FlushRelationBuffers(Relation rel)
 			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 			FlushBuffer(bufHdr, RelationGetSmgr(rel));
 			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
-			UnpinBuffer(bufHdr, true);
+			UnpinBuffer(bufHdr);
 		}
 		else
 			UnlockBufHdr(bufHdr, buf_state);
@@ -3689,7 +3686,7 @@ FlushRelationsAllBuffers(SMgrRelation *smgrs, int nrels)
 			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 			FlushBuffer(bufHdr, srelent->srel);
 			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
-			UnpinBuffer(bufHdr, true);
+			UnpinBuffer(bufHdr);
 		}
 		else
 			UnlockBufHdr(bufHdr, buf_state);
@@ -3899,7 +3896,7 @@ FlushDatabaseBuffers(Oid dbid)
 			LWLockAcquire(BufferDescriptorGetContentLock(bufHdr), LW_SHARED);
 			FlushBuffer(bufHdr, NULL);
 			LWLockRelease(BufferDescriptorGetContentLock(bufHdr));
-			UnpinBuffer(bufHdr, true);
+			UnpinBuffer(bufHdr);
 		}
 		else
 			UnlockBufHdr(bufHdr, buf_state);
@@ -3945,7 +3942,7 @@ ReleaseBuffer(Buffer buffer)
 		return;
 	}
 
-	UnpinBuffer(GetBufferDescriptor(buffer - 1), true);
+	UnpinBuffer(GetBufferDescriptor(buffer - 1));
 }
 
 /*
