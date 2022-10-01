@@ -25502,7 +25502,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         will be logged at
         <literal>LOG</literal> message level. They will appear in
         the server log based on the log configuration set
-        (See <xref linkend="runtime-config-logging"/> for more information),
+        (see <xref linkend="runtime-config-logging"/> for more information),
         but will not be sent to the client regardless of
         <xref linkend="guc-client-min-messages"/>.
        </para></entry>
