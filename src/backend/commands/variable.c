@@ -1025,17 +1025,22 @@ bool
 check_application_name(char **newval, void **extra, GucSource source)
 {
 	char	   *clean;
+	char	   *ret;
 
 	/* Only allow clean ASCII chars in the application name */
 	clean = pg_clean_ascii(*newval, MCXT_ALLOC_NO_OOM);
 	if (!clean)
 		return false;
 
-	clean = guc_strdup(WARNING, clean);
-	if (!clean)
+	ret = guc_strdup(WARNING, clean);
+	if (!ret)
+	{
+		pfree(clean);
 		return false;
+	}
 
-	*newval = clean;
+	pfree(clean);
+	*newval = ret;
 	return true;
 }
 
@@ -1056,17 +1061,22 @@ bool
 check_cluster_name(char **newval, void **extra, GucSource source)
 {
 	char	   *clean;
+	char	   *ret;
 
 	/* Only allow clean ASCII chars in the cluster name */
 	clean = pg_clean_ascii(*newval, MCXT_ALLOC_NO_OOM);
 	if (!clean)
 		return false;
 
-	clean = guc_strdup(WARNING, clean);
-	if (!clean)
+	ret = guc_strdup(WARNING, clean);
+	if (!ret)
+	{
+		pfree(clean);
 		return false;
+	}
 
-	*newval = clean;
+	pfree(clean);
+	*newval = ret;
 	return true;
 }
 
