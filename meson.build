@@ -16,6 +16,10 @@ project('postgresql',
   default_options: [
     'warning_level=1', #-Wall equivalent
     'buildtype=release',
+    # For compatibility with the autoconf build, set a default prefix. This
+    # works even on windows, where it's a drive-relative path (i.e. when on
+    # d:/sompath it'll install to d:/usr/local/pgsql)
+    'prefix=/usr/local/pgsql',
   ]
 )
 
