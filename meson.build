@@ -29,6 +29,7 @@ fs = import('fs')
 pkgconfig = import('pkgconfig')
 
 host_system = host_machine.system()
+build_system = build_machine.system()
 host_cpu = host_machine.cpu_family()
 
 cc = meson.get_compiler('c')
@@ -2748,32 +2749,23 @@ endif
 # Test prep
 ###############################################################
 
-# The determination of where a DESTDIR install points to is ugly, it's somewhat hard
-# to combine two absolute paths portably...
-
-prefix = get_option('prefix')
-
-test_prefix = fs.as_posix(prefix)
-
-if fs.is_absolute(get_option('prefix'))
-  if host_system == 'windows'
-    if prefix.split(':/').length() == 1
-      # just a drive
-      test_prefix = ''
-    else
-      test_prefix = prefix.split(':/')[1]
-    endif
-  else
-    assert(prefix.startswith('/'))
-    test_prefix = './@0@'.format(prefix)
-  endif
-endif
-
-# DESTDIR for the installation used to run tests in
+# DESTDIR for the installation we'll run tests in
 test_install_destdir = meson.build_root() / 'tmp_install/'
-# DESTDIR + prefix appropriately munged
-test_install_location = test_install_destdir / test_prefix
 
+# DESTDIR + prefix appropriately munged
+if build_system != 'windows'
+  # On unixoid systems this is trivial, we just prepend the destdir
+  assert(dir_prefix.startswith('/')) # enforced by meson
+  test_install_location = '@0@@1@'.format(test_install_destdir, dir_prefix)
+else
+  # drives, drive-relative paths, etc make this complicated on windows, call
+  # meson's logic for it
+  command = [
+    meson_bin, meson_args, 'runpython', '-c',
+    'import sys; from mesonbuild.scripts import destdir_join; print(destdir_join(sys.argv[4], sys.argv[5]))',
+    test_install_destdir, dir_prefix]
+  test_install_location = run_command(command, check: true).stdout().strip()
+endif
 
 meson_install_args = meson_args + ['install'] + {
     'meson': ['--quiet', '--only-changed', '--no-rebuild'],
