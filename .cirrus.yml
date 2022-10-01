@@ -226,7 +226,10 @@ task:
   env:
     CPUS: 12 # always get that much for cirrusci macOS instances
     BUILD_JOBS: $CPUS
-    TEST_JOBS: $CPUS # already fast enough to not be worth tuning
+    # Test performance regresses noticably when using all cores. 8 seems to
+    # work OK. See
+    # https://postgr.es/m/20220927040208.l3shfcidovpzqxfh%40awork3.anarazel.de
+    TEST_JOBS: 8
 
     CIRRUS_WORKING_DIR: ${HOME}/pgsql/
     CCACHE_DIR: ${HOME}/ccache
