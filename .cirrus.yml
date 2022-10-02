@@ -66,6 +66,7 @@ task:
     TEST_JOBS: 3
 
     CCACHE_DIR: /tmp/ccache_dir
+    CPPFLAGS: -DRELCACHE_FORCE_RELEASE -DCOPY_PARSE_PLAN_TREES -DWRITE_READ_PARSE_PLAN_TREES -DRAW_EXPRESSION_COVERAGE_TEST
     CFLAGS: -Og -ggdb
 
   only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*freebsd.*'
@@ -306,6 +307,7 @@ task:
 
     CC: ccache cc
     CXX: ccache c++
+    CPPFLAGS: -DRANDOMIZE_ALLOCATED_MEMORY
     CFLAGS: -Og -ggdb
     CXXFLAGS: -Og -ggdb
 
