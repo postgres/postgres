@@ -584,7 +584,10 @@ endif
 ###############################################################
 
 ldapopt = get_option('ldap')
-if host_system == 'windows'
+if ldapopt.disabled()
+  ldap = not_found_dep
+  ldap_r = not_found_dep
+elif host_system == 'windows'
   ldap = cc.find_library('wldap32', required: ldapopt)
   ldap_r = ldap
 else
