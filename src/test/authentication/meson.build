@@ -6,6 +6,7 @@ tests += {
     'tests': [
       't/001_password.pl',
       't/002_saslprep.pl',
+      't/003_peer.pl',
     ],
   },
 }
