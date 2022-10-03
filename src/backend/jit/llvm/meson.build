@@ -24,6 +24,7 @@ llvmjit = shared_module('llvmjit',
   llvmjit_sources,
   kwargs: pg_mod_args + {
     'dependencies': pg_mod_args['dependencies'] + [llvm],
+    'cpp_args': pg_mod_args['cpp_args'] + llvm.get_variable(configtool: 'cxxflags').split(),
   }
 )
 
