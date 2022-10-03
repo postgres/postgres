@@ -1460,15 +1460,18 @@ WHEN MATCHED AND t.a < 10 THEN
                            explain_merge                            
 --------------------------------------------------------------------
  Merge on ex_mtarget t (actual rows=0 loops=1)
-   ->  Hash Join (actual rows=0 loops=1)
-         Hash Cond: (s.a = t.a)
-         ->  Seq Scan on ex_msource s (actual rows=1 loops=1)
-         ->  Hash (actual rows=0 loops=1)
-               Buckets: xxx  Batches: xxx  Memory Usage: xxx
+   ->  Merge Join (actual rows=0 loops=1)
+         Merge Cond: (t.a = s.a)
+         ->  Sort (actual rows=0 loops=1)
+               Sort Key: t.a
+               Sort Method: quicksort  Memory: xxx
                ->  Seq Scan on ex_mtarget t (actual rows=0 loops=1)
                      Filter: (a < '-1000'::integer)
                      Rows Removed by Filter: 54
-(9 rows)
+         ->  Sort (never executed)
+               Sort Key: s.a
+               ->  Seq Scan on ex_msource s (never executed)
+(12 rows)
 
 DROP TABLE ex_msource, ex_mtarget;
 DROP FUNCTION explain_merge(text);

@@ -5062,20 +5062,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-enable-groupby-reordering" xreflabel="enable_group_by_reordering">
-      <term><varname>enable_group_by_reordering</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>enable_group_by_reordering</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables or disables reordering of keys in a <literal>GROUP BY</literal>
-        clause. The default is <literal>on</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
       <term><varname>enable_hashagg</varname> (<type>boolean</type>)
       <indexterm>

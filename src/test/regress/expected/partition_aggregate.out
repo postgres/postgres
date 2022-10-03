@@ -949,12 +949,12 @@ SET parallel_setup_cost = 0;
 -- is not partial agg safe.
 EXPLAIN (COSTS OFF)
 SELECT a, sum(b), array_agg(distinct c), count(*) FROM pagg_tab_ml GROUP BY a HAVING avg(b) < 3 ORDER BY 1, 2, 3;
-                                         QUERY PLAN                                         
---------------------------------------------------------------------------------------------
- Gather Merge
-   Workers Planned: 2
-   ->  Sort
-         Sort Key: pagg_tab_ml.a, (sum(pagg_tab_ml.b)), (array_agg(DISTINCT pagg_tab_ml.c))
+                                      QUERY PLAN                                      
+--------------------------------------------------------------------------------------
+ Sort
+   Sort Key: pagg_tab_ml.a, (sum(pagg_tab_ml.b)), (array_agg(DISTINCT pagg_tab_ml.c))
+   ->  Gather
+         Workers Planned: 2
          ->  Parallel Append
                ->  GroupAggregate
                      Group Key: pagg_tab_ml.a
@@ -1381,26 +1381,28 @@ SELECT x, sum(y), avg(y), count(*) FROM pagg_tab_para GROUP BY x HAVING avg(y) <
 -- When GROUP BY clause does not match; partial aggregation is performed for each partition.
 EXPLAIN (COSTS OFF)
 SELECT y, sum(x), avg(x), count(*) FROM pagg_tab_para GROUP BY y HAVING avg(x) < 12 ORDER BY 1, 2, 3;
-                                     QUERY PLAN                                      
--------------------------------------------------------------------------------------
+                                        QUERY PLAN                                         
+-------------------------------------------------------------------------------------------
  Sort
    Sort Key: pagg_tab_para.y, (sum(pagg_tab_para.x)), (avg(pagg_tab_para.x))
-   ->  Finalize HashAggregate
+   ->  Finalize GroupAggregate
          Group Key: pagg_tab_para.y
          Filter: (avg(pagg_tab_para.x) < '12'::numeric)
-         ->  Gather
+         ->  Gather Merge
                Workers Planned: 2
-               ->  Parallel Append
-                     ->  Partial HashAggregate
-                           Group Key: pagg_tab_para.y
-                           ->  Parallel Seq Scan on pagg_tab_para_p1 pagg_tab_para
-                     ->  Partial HashAggregate
-                           Group Key: pagg_tab_para_1.y
-                           ->  Parallel Seq Scan on pagg_tab_para_p2 pagg_tab_para_1
-                     ->  Partial HashAggregate
-                           Group Key: pagg_tab_para_2.y
-                           ->  Parallel Seq Scan on pagg_tab_para_p3 pagg_tab_para_2
-(17 rows)
+               ->  Sort
+                     Sort Key: pagg_tab_para.y
+                     ->  Parallel Append
+                           ->  Partial HashAggregate
+                                 Group Key: pagg_tab_para.y
+                                 ->  Parallel Seq Scan on pagg_tab_para_p1 pagg_tab_para
+                           ->  Partial HashAggregate
+                                 Group Key: pagg_tab_para_1.y
+                                 ->  Parallel Seq Scan on pagg_tab_para_p2 pagg_tab_para_1
+                           ->  Partial HashAggregate
+                                 Group Key: pagg_tab_para_2.y
+                                 ->  Parallel Seq Scan on pagg_tab_para_p3 pagg_tab_para_2
+(19 rows)
 
 SELECT y, sum(x), avg(x), count(*) FROM pagg_tab_para GROUP BY y HAVING avg(x) < 12 ORDER BY 1, 2, 3;
  y  |  sum  |         avg         | count 
