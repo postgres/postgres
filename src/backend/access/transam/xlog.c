@@ -8733,7 +8733,6 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 		 */
 		RequestXLogSwitch(false);
 
-		XLByteToPrevSeg(state->stoppoint, _logSegNo, wal_segment_size);
 		state->stoptime = (pg_time_t) time(NULL);
 
 		/*
