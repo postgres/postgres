@@ -703,7 +703,7 @@ const char *const config_group_names[] =
 	gettext_noop("Version and Platform Compatibility / Previous PostgreSQL Versions"),
 	/* COMPAT_OPTIONS_CLIENT */
 	gettext_noop("Version and Platform Compatibility / Other Platforms and Clients"),
-	/* ERROR_HANDLING */
+	/* ERROR_HANDLING_OPTIONS */
 	gettext_noop("Error Handling"),
 	/* PRESET_OPTIONS */
 	gettext_noop("Preset Options"),
