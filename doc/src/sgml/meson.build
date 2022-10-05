@@ -2,7 +2,7 @@ docs = []
 alldocs = []
 doc_generated = []
 
-xmllint = find_program(get_option('XMLLINT'), native: true, required: false)
+xmllint_bin = find_program(get_option('XMLLINT'), native: true, required: false)
 
 
 version_sgml = configure_file(
@@ -60,13 +60,22 @@ doc_generated += custom_target('keywords-table.sgml',
 )
 
 # For everything else we need at least xmllint
-if not xmllint.found()
+if not xmllint_bin.found()
   subdir_done()
 endif
 
 pandoc = find_program('pandoc', native: true, required: false)
-xsltproc = find_program(get_option('XSLTPROC'), native: true, required: false)
+xsltproc_bin = find_program(get_option('XSLTPROC'), native: true, required: false)
 fop = find_program('fop', native: true, required: false)
+
+xmltools_wrapper = [
+  python, files('xmltools_dep_wrapper'),
+  '--targetname', '@OUTPUT@', '--depfile', '@DEPFILE@'
+]
+
+xmllint = xmltools_wrapper + [
+  '--tool', xmllint_bin, '--',
+]
 
 # Run validation only once, common to all subsequent targets.  While
 # we're at it, also resolve all entities (that is, copy all included
@@ -75,6 +84,7 @@ fop = find_program('fop', native: true, required: false)
 postgres_full_xml = custom_target('postgres-full.xml',
   input: 'postgres.sgml',
   output: 'postgres-full.xml',
+  depfile: 'postgres-full.xml.d',
   command: [xmllint, '--noent', '--valid', '--path', '@OUTDIR@', '-o', '@OUTPUT@', '@INPUT@'],
   depends: doc_generated,
   build_by_default: false,
@@ -86,18 +96,20 @@ alldocs += postgres_full_xml
 #
 # Full documentation as html, text
 #
-if xsltproc.found()
+if xsltproc_bin.found()
   xsltproc_flags = [
     '--stringparam', 'pg.version', pg_version,
     '--param', 'website.stylesheet', '1'
   ]
 
+  xsltproc = xmltools_wrapper + [
+    '--tool', xsltproc_bin, '--',
+  ]
 
-  # FIXME: Should use a wrapper around xsltproc --load-trace to compute a
-  # depfile
   html = custom_target('html',
     input: ['stylesheet.xsl', postgres_full_xml],
     output: 'html',
+    depfile: 'html.d',
     depends: doc_generated,
     command: [xsltproc, '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
@@ -110,6 +122,7 @@ if xsltproc.found()
   html_help = custom_target('html_help',
     input: ['stylesheet-hh.xsl', postgres_full_xml],
     output: 'htmlhelp',
+    depfile: 'htmlhelp.d',
     depends: doc_generated,
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
@@ -121,6 +134,7 @@ if xsltproc.found()
   postgres_html = custom_target('postgres.html',
     input: ['stylesheet-html-nochunk.xsl', postgres_full_xml],
     output: 'postgres.html',
+    depfile: 'postgres.html.d',
     depends: doc_generated,
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
@@ -144,10 +158,11 @@ endif
 #
 # INSTALL in html, text
 #
-if xsltproc.found()
+if xsltproc_bin.found()
   install_xml = custom_target('INSTALL.xml',
     input: ['standalone-profile.xsl', 'standalone-install.xml'],
     output: 'INSTALL.xml',
+    depfile: 'INSTALL.xml.d',
     depends: doc_generated + [postgres_full_xml],
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '--xinclude', '@INPUT@'],
     build_by_default: false,
@@ -155,6 +170,7 @@ if xsltproc.found()
   install_html = custom_target('INSTALL.html',
     input: ['stylesheet-text.xsl', install_xml],
     output: 'INSTALL.html',
+    depfile: 'INSTALL.html.d',
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTPUT@', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
   )
@@ -177,11 +193,12 @@ endif
 #
 # Man pages
 #
-if xsltproc.found()
+if xsltproc_bin.found()
   # FIXME: implement / consider sqlmansectnum logic
   man = custom_target('man',
     input: ['stylesheet-man.xsl', postgres_full_xml],
     output: ['man1', 'man3', 'man7'],
+    depfile: 'man.d',
     depends: doc_generated,
     command: [xsltproc, '--path', '@OUTDIR@', '-o', '@OUTDIR@/', xsltproc_flags, '@INPUT@'],
     build_by_default: false,
@@ -195,17 +212,19 @@ endif
 #
 # Full documentation as PDF
 #
-if fop.found() and xsltproc.found()
+if fop.found() and xsltproc_bin.found()
   xsltproc_fo_flags = xsltproc_flags + ['--stringparam', 'img.src.path', meson.current_source_dir() + '/']
 
   foreach format, detail: {'A4': 'A4', 'US': 'USletter'}
     postgres_x_fo_f = 'postgres-@0@.fo'.format(format)
+    postgres_x_fo_dep = 'postgres-@0@.fo.d'.format(format)
     postgres_x_pdf_f = 'postgres-@0@.pdf'.format(format)
 
     postgres_x_fo = custom_target(postgres_x_fo_f,
       input: ['stylesheet-fo.xsl', postgres_full_xml],
-      output: [postgres_x_fo_f],
+      output: postgres_x_fo_f,
       depends: doc_generated,
+      depfile: postgres_x_fo_dep,
       command: [xsltproc, '--path', '@OUTDIR@/', xsltproc_fo_flags,
                 '--stringparam', 'paper.type', detail,
                 '-o', '@OUTPUT@', '@INPUT@'],
@@ -230,7 +249,7 @@ endif
 # This was previously implemented using dbtoepub - but that doesn't seem to
 # support running in build != source directory (i.e. VPATH builds already
 # weren't supported).
-if pandoc.found() and xsltproc.found()
+if pandoc.found() and xsltproc_bin.found()
   postgres_epub = custom_target('postgres.epub',
     input: postgres_full_xml,
     output: 'postgres.epub',
