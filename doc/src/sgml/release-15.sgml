@@ -1266,7 +1266,7 @@ Author: Fujii Masao <fujii@postgresql.org>
         Allow <link
         linkend="monitoring-stats-funcs-table"><function>pg_stat_reset_single_table_counters()</function></link>
         to reset the counters of relations shared across all databases
-        (B Sadhu, Prasad Patro)
+        (Sadhuprasad Patro)
        </para>
       </listitem>
 
@@ -1902,7 +1902,7 @@ Author: Robert Haas <rhaas@postgresql.org>
       <para>
        Allow <link linkend="sql-createdatabase"><command>CREATE
        DATABASE</command></link> to set the database <acronym>OID</acronym>
-       (Shruthi KC, Antonin Houska)
+       (Shruthi Gowda, Antonin Houska)
       </para>
      </listitem>
 
@@ -2430,7 +2430,7 @@ Author: Thomas Munro <tmunro@postgresql.org>
        </para>
 
        <para>
-        This is only supported on Unix, and is controlled by the
+        This is only supported on Unix and is controlled by the
         <envar>PSQL_WATCH_PAGER</envar> environment variable.
        </para>
       </listitem>
@@ -2910,7 +2910,7 @@ Author: Robert Haas <rhaas@postgresql.org>
        <para>
         Make <application>pg_upgrade</application> preserve tablespace
         and database OIDs, as well as relation relfilenode numbers
-        (Shruthi KC, Antonin Houska)
+        (Shruthi Gowda, Antonin Houska)
        </para>
       </listitem>
 
