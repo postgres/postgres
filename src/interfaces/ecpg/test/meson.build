@@ -22,7 +22,7 @@ testprep_targets += pg_regress_ecpg
 ecpg_test_exec_kw = {
   'dependencies': [frontend_code, libpq],
   'include_directories': [ecpg_inc],
-  'link_with': [ecpglib, ecpg_compat, ecpg_pgtypes],
+  'link_with': [ecpglib_so, ecpg_compat_so, ecpg_pgtypes_so],
   'build_by_default': false,
   'install': false,
 }
