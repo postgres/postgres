@@ -13,6 +13,12 @@ ltree_sources = files(
 # .. so that includes of ltree/ltree.h work
 ltree_inc = include_directories('.', '../')
 
+if host_system == 'windows'
+  ltree_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'ltree',
+    '--FILEDESC', 'ltree - hierarchical label data type',])
+endif
+
 ltree = shared_module('ltree',
   ltree_sources,
   kwargs: contrib_mod_args,

@@ -1,7 +1,15 @@
+tsm_system_time_sources = files(
+  'tsm_system_time.c',
+)
+
+if host_system == 'windows'
+  tsm_system_time_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'tsm_system_time',
+    '--FILEDESC', 'tsm_system_time - TABLESAMPLE method which accepts time in milliseconds as a limit',])
+endif
+
 tsm_system_time = shared_module('tsm_system_time',
-  files(
-    'tsm_system_time.c',
-  ),
+  tsm_system_time_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += tsm_system_time

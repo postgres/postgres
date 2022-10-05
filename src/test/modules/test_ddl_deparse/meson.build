@@ -1,6 +1,17 @@
 # FIXME: prevent install during main install, but not during test :/
+
+test_ddl_deparse_sources = files(
+  'test_ddl_deparse.c',
+)
+
+if host_system == 'windows'
+  test_ddl_deparse_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'test_ddl_deparse',
+    '--FILEDESC', 'test_ddl_deparse - regression testing for DDL deparsing',])
+endif
+
 test_ddl_deparse = shared_module('test_ddl_deparse',
-  ['test_ddl_deparse.c'],
+  test_ddl_deparse_sources,
   kwargs: pg_mod_args,
 )
 testprep_targets += test_ddl_deparse

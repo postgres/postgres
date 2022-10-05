@@ -1,8 +1,17 @@
 # FIXME: prevent install during main install, but not during test :/
+
+test_worker_spi_sources = files(
+  'worker_spi.c',
+)
+
+if host_system == 'windows'
+  test_worker_spi_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'worker_spi',
+    '--FILEDESC', 'worker_spi - background worker example',])
+endif
+
 test_worker_spi = shared_module('worker_spi',
-  files(
-    'worker_spi.c',
-  ),
+  test_worker_spi_sources,
   kwargs: pg_mod_args,
 )
 testprep_targets += test_worker_spi

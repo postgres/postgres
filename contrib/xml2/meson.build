@@ -2,11 +2,19 @@ if not libxml.found()
   subdir_done()
 endif
 
+xml2_sources = files(
+  'xpath.c',
+  'xslt_proc.c',
+)
+
+if host_system == 'windows'
+  xml2_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pgxml',
+    '--FILEDESC', 'xml2 - XPath querying and XSLT',])
+endif
+
 xml2 = shared_module('pgxml',
-  files(
-    'xpath.c',
-    'xslt_proc.c',
-  ),
+  xml2_sources,
   kwargs: contrib_mod_args + {
     'dependencies': [libxml, libxslt, contrib_mod_args['dependencies']],
   },

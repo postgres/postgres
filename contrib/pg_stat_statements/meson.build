@@ -1,5 +1,15 @@
+pg_stat_statements_sources = files(
+  'pg_stat_statements.c',
+)
+
+if host_system == 'windows'
+  pg_stat_statements_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_stat_statements',
+    '--FILEDESC', 'pg_stat_statements - execution statistics of SQL statements',])
+endif
+
 pg_stat_statements = shared_module('pg_stat_statements',
-  files('pg_stat_statements.c'),
+  pg_stat_statements_sources,
   kwargs: contrib_mod_args + {
     'dependencies': contrib_mod_args['dependencies'],
   },

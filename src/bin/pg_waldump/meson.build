@@ -8,6 +8,12 @@ pg_waldump_sources += rmgr_desc_sources
 pg_waldump_sources += xlogreader_sources
 pg_waldump_sources += files('../../backend/access/transam/xlogstats.c')
 
+if host_system == 'windows'
+  pg_waldump_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_waldump',
+    '--FILEDESC', 'pg_waldump - decode and display WA'])
+endif
+
 pg_waldump = executable('pg_waldump',
   pg_waldump_sources,
   dependencies: [frontend_code, lz4, zstd],

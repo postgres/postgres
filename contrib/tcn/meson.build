@@ -1,7 +1,15 @@
+tcn_sources = files(
+  'tcn.c',
+)
+
+if host_system == 'windows'
+  tcn_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'tcn',
+    '--FILEDESC', 'tcn - trigger function notifying listeners',])
+endif
+
 tcn = shared_module('tcn',
-  files(
-    'tcn.c',
-  ),
+  tcn_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += tcn

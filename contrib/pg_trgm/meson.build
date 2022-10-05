@@ -1,10 +1,18 @@
+pg_trgm_sources = files(
+  'trgm_gin.c',
+  'trgm_gist.c',
+  'trgm_op.c',
+  'trgm_regexp.c',
+)
+
+if host_system == 'windows'
+  pg_trgm_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_trgm',
+    '--FILEDESC', 'pg_trgm - trigram matching',])
+endif
+
 pg_trgm = shared_module('pg_trgm',
-  files(
-    'trgm_gin.c',
-    'trgm_gist.c',
-    'trgm_op.c',
-    'trgm_regexp.c',
-  ),
+  pg_trgm_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pg_trgm

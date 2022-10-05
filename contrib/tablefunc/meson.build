@@ -1,7 +1,15 @@
+tablefunc_sources = files(
+  'tablefunc.c',
+)
+
+if host_system == 'windows'
+  tablefunc_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'tablefunc',
+    '--FILEDESC', 'tablefunc - various functions that return tables',])
+endif
+
 tablefunc = shared_module('tablefunc',
-  files(
-    'tablefunc.c',
-  ),
+  tablefunc_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += tablefunc

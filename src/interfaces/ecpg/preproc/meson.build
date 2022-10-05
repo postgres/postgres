@@ -93,6 +93,12 @@ ecpg_kwlist = custom_target('ecpg_kwlist_d.h',
 generated_sources += ecpg_kwlist
 ecpg_sources += ecpg_kwlist
 
+if host_system == 'windows'
+  ecpg_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'ecpg',
+    '--FILEDESC', 'ecpg - embedded SQL precompiler for C',])
+endif
+
 ecpg_exe = executable('ecpg',
   ecpg_sources,
   include_directories: ['.', ecpg_inc, postgres_inc, libpq_inc],

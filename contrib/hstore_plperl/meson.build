@@ -6,6 +6,12 @@ hstore_plperl_sources = files(
   'hstore_plperl.c',
 )
 
+if host_system == 'windows'
+  hstore_plperl_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'hstore_plperl',
+    '--FILEDESC', 'hstore_plperl - hstore transform for plperl',])
+endif
+
 hstore_plperl = shared_module('hstore_plperl',
   hstore_plperl_sources,
   include_directories: [plperl_inc, hstore_inc],

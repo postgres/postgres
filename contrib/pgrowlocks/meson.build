@@ -1,7 +1,15 @@
+pgrowlocks_sources = files(
+  'pgrowlocks.c',
+)
+
+if host_system == 'windows'
+  pgrowlocks_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pgrowlocks',
+    '--FILEDESC', 'pgrowlocks - display row locking information',])
+endif
+
 pgrowlocks = shared_module('pgrowlocks',
-  files(
-    'pgrowlocks.c',
-  ),
+  pgrowlocks_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pgrowlocks

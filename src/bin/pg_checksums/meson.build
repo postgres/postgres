@@ -1,5 +1,15 @@
+pg_checksums_sources = files(
+  'pg_checksums.c',
+)
+
+if host_system == 'windows'
+  pg_checksums_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_checksums',
+    '--FILEDESC', 'pg_checksums - verify data checksums in an offline cluster',])
+endif
+
 pg_checksums = executable('pg_checksums',
-  ['pg_checksums.c'],
+  pg_checksums_sources,
   include_directories: [timezone_inc],
   dependencies: [frontend_code],
   kwargs: default_bin_args,

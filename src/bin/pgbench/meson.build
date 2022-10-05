@@ -17,6 +17,12 @@ exprparse = custom_target('exprparse',
 generated_sources += exprparse.to_list()
 pgbench_sources += exprparse
 
+if host_system == 'windows'
+  pgbench_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pgbench',
+    '--FILEDESC', 'pgbench - a simple program for running benchmark tests'])
+endif
+
 pgbench = executable('pgbench',
   pgbench_sources,
   dependencies: [frontend_code, libpq, thread_dep],

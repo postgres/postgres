@@ -1,7 +1,15 @@
+pg_freespacemap_sources = files(
+  'pg_freespacemap.c',
+)
+
+if host_system == 'windows'
+  pg_freespacemap_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_freespacemap',
+    '--FILEDESC', 'pg_freespacemap - monitoring of free space map',])
+endif
+
 pg_freespacemap = shared_module('pg_freespacemap',
-  files(
-    'pg_freespacemap.c',
-  ),
+  pg_freespacemap_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pg_freespacemap

@@ -3,8 +3,19 @@ if not ssl.found()
 endif
 
 # FIXME: prevent install during main install, but not during test :/
+
+ssl_passphrase_callback_sources = files(
+  'ssl_passphrase_func.c',
+)
+
+if host_system == 'windows'
+  ssl_passphrase_callback_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'ssl_passphrase_func',
+    '--FILEDESC', 'callback function to provide a passphrase',])
+endif
+
 ssl_passphrase_callback = shared_module('ssl_passphrase_func',
-  ['ssl_passphrase_func.c'],
+  ssl_passphrase_callback_sources,
   kwargs: pg_mod_args + {
     'dependencies': [ssl, pg_mod_args['dependencies']],
   },

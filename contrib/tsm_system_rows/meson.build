@@ -1,7 +1,15 @@
+tsm_system_rows_sources = files(
+  'tsm_system_rows.c',
+)
+
+if host_system == 'windows'
+  tsm_system_rows_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'tsm_system_rows',
+    '--FILEDESC', 'tsm_system_rows - TABLESAMPLE method which accepts number of rows as a limit',])
+endif
+
 tsm_system_rows = shared_module('tsm_system_rows',
-  files(
-    'tsm_system_rows.c',
-  ),
+  tsm_system_rows_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += tsm_system_rows

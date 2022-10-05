@@ -1,15 +1,23 @@
 # .. so that includes of hstore/hstore.h work
 hstore_inc = include_directories('.', '../')
 
+hstore_sources = files(
+  'hstore_compat.c',
+  'hstore_gin.c',
+  'hstore_gist.c',
+  'hstore_io.c',
+  'hstore_op.c',
+  'hstore_subs.c',
+)
+
+if host_system == 'windows'
+  hstore_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'hstore',
+    '--FILEDESC', 'hstore - key/value pair data type',])
+endif
+
 hstore = shared_module('hstore',
-  files(
-    'hstore_compat.c',
-    'hstore_gin.c',
-    'hstore_gist.c',
-    'hstore_io.c',
-    'hstore_op.c',
-    'hstore_subs.c',
-  ),
+  hstore_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += hstore

@@ -25,6 +25,12 @@ btree_gist_sources = files(
   'btree_uuid.c',
 )
 
+if host_system == 'windows'
+  btree_gist_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'btree_gist',
+    '--FILEDESC', 'btree_gist - B-tree equivalent GiST operator classes',])
+endif
+
 btree_gist = shared_module('btree_gist',
   btree_gist_sources,
   kwargs: contrib_mod_args,

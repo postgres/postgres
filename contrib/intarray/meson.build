@@ -8,6 +8,12 @@ intarray_sources = files(
   '_intbig_gist.c',
 )
 
+if host_system == 'windows'
+  intarray_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', '_int',
+    '--FILEDESC', 'intarray - functions and operators for arrays of integers',])
+endif
+
 intarray = shared_module('_int',
   intarray_sources,
   kwargs: contrib_mod_args,

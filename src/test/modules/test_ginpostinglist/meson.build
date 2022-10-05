@@ -1,6 +1,17 @@
 # FIXME: prevent install during main install, but not during test :/
+
+test_ginpostinglist_sources = files(
+  'test_ginpostinglist.c',
+)
+
+if host_system == 'windows'
+  test_ginpostinglist_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'test_ginpostinglist',
+    '--FILEDESC', 'test_ginpostinglist - test code for src/backend/access/gin//ginpostinglist.c',])
+endif
+
 test_ginpostinglist = shared_module('test_ginpostinglist',
-  ['test_ginpostinglist.c'],
+  test_ginpostinglist_sources,
   kwargs: pg_mod_args,
 )
 testprep_targets += test_ginpostinglist

@@ -6,6 +6,12 @@ jsonb_plpython_sources = files(
   'jsonb_plpython.c',
 )
 
+if host_system == 'windows'
+  jsonb_plpython_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'jsonb_plpython3',
+    '--FILEDESC', 'jsonb_plpython - jsonb transform for plpython',])
+endif
+
 jsonb_plpython = shared_module('jsonb_plpython3',
   jsonb_plpython_sources,
   include_directories: [plpython_inc],

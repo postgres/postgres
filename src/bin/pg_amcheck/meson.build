@@ -1,6 +1,12 @@
 pg_amcheck_sources = files(
-  'pg_amcheck.c'
+  'pg_amcheck.c',
 )
+
+if host_system == 'windows'
+  pg_amcheck_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_amcheck',
+    '--FILEDESC', 'pg_amcheck - detect corruption within database relations',])
+endif
 
 pg_amcheck = executable('pg_amcheck',
   pg_amcheck_sources,

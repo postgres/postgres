@@ -17,6 +17,12 @@ host_tuple = '@0@-@1@-@2@'.format(host_cpu, host_system, host_tuple_cc)
 
 pg_regress_cflags = ['-DHOST_TUPLE="@0@"'.format(host_tuple), '-DSHELLPROG="/bin/sh"']
 
+if host_system == 'windows'
+  regress_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_regress',
+    '--FILEDESC', 'pg_regress - test driver',])
+endif
+
 pg_regress = executable('pg_regress',
   regress_sources,
   c_args: pg_regress_cflags,

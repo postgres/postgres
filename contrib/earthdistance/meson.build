@@ -1,5 +1,15 @@
+earthdistance_sources = files(
+  'earthdistance.c',
+)
+
+if host_system == 'windows'
+  earthdistance_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'earthdistance',
+    '--FILEDESC', 'earthdistance - calculate distances on the surface of the Earth',])
+endif
+
 earthdistance = shared_module('earthdistance',
-  files('earthdistance.c'),
+  earthdistance_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += earthdistance

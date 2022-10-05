@@ -2,10 +2,18 @@ if not ssl.found()
   subdir_done()
 endif
 
+sslinfo_sources = files(
+  'sslinfo.c',
+)
+
+if host_system == 'windows'
+  sslinfo_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'sslinfo',
+    '--FILEDESC', 'sslinfo - information about client SSL certificate',])
+endif
+
 sslinfo = shared_module('sslinfo',
-  files(
-    'sslinfo.c',
-  ),
+  sslinfo_sources,
   kwargs: contrib_mod_args + {
     'dependencies': [ssl, contrib_mod_args['dependencies']],
   }

@@ -58,6 +58,12 @@ dict_snowball_sources += files(
 # see comment in src/include/snowball/header.h
 stemmer_inc = include_directories('../../include/snowball')
 
+if host_system == 'windows'
+  dict_snowball_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'dict_snowball',
+    '--FILEDESC', 'snowball - natural language stemmers',])
+endif
+
 dict_snowball = shared_module('dict_snowball',
   dict_snowball_sources,
   kwargs: pg_mod_args + {

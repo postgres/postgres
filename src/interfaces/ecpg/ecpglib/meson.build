@@ -16,6 +16,12 @@ ecpglib_inc = [include_directories('.'), ecpg_inc]
 ecpglib_c_args = ['-DSO_MAJOR_VERSION=6']
 export_file = custom_target('libecpg.exports', kwargs: gen_export_kwargs)
 
+if host_system == 'windows'
+  ecpglib_so_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'libecpg',
+    '--FILEDESC', 'ECPG - embedded SQL in C',])
+endif
+
 # see src/interfaces/libpq/meson.build
 ecpglib_st = static_library('libecpg',
   ecpglib_sources,

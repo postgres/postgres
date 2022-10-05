@@ -1,5 +1,15 @@
+dict_xsyn_sources = files(
+  'dict_xsyn.c',
+)
+
+if host_system == 'windows'
+  dict_xsyn_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'dict_xsyn',
+    '--FILEDESC', 'dict_xsyn - add-on dictionary template for full-text search',])
+endif
+
 dict_xsyn = shared_module('dict_xsyn',
-  files('dict_xsyn.c'),
+  dict_xsyn_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += dict_xsyn

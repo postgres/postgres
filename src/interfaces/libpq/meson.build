@@ -16,9 +16,13 @@ libpq_sources = files(
   'libpq-events.c',
   'pqexpbuffer.c',
 )
+libpq_so_sources = [] # for shared lib, in addition to the above
 
 if host_system == 'windows'
   libpq_sources += files('pthread-win32.c', 'win32.c')
+  libpq_so_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'libpq',
+    '--FILEDESC', 'PostgreSQL Access Library',])
 endif
 
 if ssl.found()
@@ -59,7 +63,7 @@ libpq_st = static_library('libpq',
 )
 
 libpq_so = shared_library('libpq',
-  libpq_sources,
+  libpq_sources + libpq_so_sources,
   include_directories: [libpq_inc, postgres_inc],
   c_args: libpq_c_args,
   version: '5.' + pg_version_major.to_string(),

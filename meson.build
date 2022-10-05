@@ -2564,6 +2564,65 @@ gen_export_kwargs = {
 
 
 
+###
+### windows resources related stuff
+###
+
+if host_system == 'windows'
+  pg_ico = meson.source_root() / 'src' / 'port' / 'win32.ico'
+  win32ver_rc = files('src/port/win32ver.rc')
+  rcgen = find_program('src/tools/rcgen', native: true)
+
+  rcgen_base_args = [
+    '--srcdir', '@SOURCE_DIR@',
+    '--builddir', meson.build_root(),
+    '--rcout', '@OUTPUT0@',
+    '--out', '@OUTPUT1@',
+    '--input', '@INPUT@',
+    '@EXTRA_ARGS@',
+  ]
+
+  if cc.get_argument_syntax() == 'msvc'
+    rc = find_program('rc', required: true)
+    rcgen_base_args += ['--rc', rc.path()]
+    rcgen_outputs = ['@BASENAME@.rc', '@BASENAME@.res']
+  else
+    windres = find_program('windres', required: true)
+    rcgen_base_args += ['--windres', windres.path()]
+    rcgen_outputs = ['@BASENAME@.rc', '@BASENAME@.obj']
+  endif
+
+  # msbuild backend doesn't support this atm
+  if meson.backend() == 'ninja'
+    rcgen_base_args += ['--depfile', '@DEPFILE@']
+  endif
+
+  rcgen_bin_args = rcgen_base_args + [
+    '--VFT_TYPE', 'VFT_APP',
+    '--FILEENDING', 'exe',
+    '--ICO', pg_ico
+  ]
+
+  rcgen_lib_args = rcgen_base_args + [
+    '--VFT_TYPE', 'VFT_DLL',
+    '--FILEENDING', 'dll',
+  ]
+
+  rc_bin_gen = generator(rcgen,
+    depfile: '@BASENAME@.d',
+    arguments: rcgen_bin_args,
+    output: rcgen_outputs,
+  )
+
+  rc_lib_gen = generator(rcgen,
+    depfile: '@BASENAME@.d',
+    arguments: rcgen_lib_args,
+    output: rcgen_outputs,
+  )
+endif
+
+
+
 # headers that the whole build tree depends on
 generated_headers = []
 # headers that the backend build depends on

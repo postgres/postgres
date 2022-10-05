@@ -16,6 +16,12 @@ pg_upgrade_sources = files(
   'version.c',
 )
 
+if host_system == 'windows'
+  pg_upgrade_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_upgrade',
+    '--FILEDESC', 'pg_upgrade - an in-place binary upgrade utility'])
+endif
+
 pg_upgrade = executable('pg_upgrade',
   pg_upgrade_sources,
   dependencies: [frontend_code, libpq],

@@ -14,6 +14,12 @@ pltcl_sources += custom_target('pltclerrcodes.h',
   command: [perl, gen_pltclerrcodes, '@INPUT@']
 )
 
+if host_system == 'windows'
+  pltcl_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pltcl',
+    '--FILEDESC', 'PL/Tcl - procedural language',])
+endif
+
 pltcl = shared_module('pltcl',
   pltcl_sources,
   include_directories: [include_directories('.'), postgres_inc],

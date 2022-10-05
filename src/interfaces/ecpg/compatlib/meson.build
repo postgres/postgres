@@ -7,6 +7,12 @@ ecpg_compat_inc = [include_directories('.'), ecpg_inc, libpq_inc]
 ecpg_compat_c_args = ['-DSO_MAJOR_VERSION=3']
 export_file = custom_target('libecpg_compat.exports', kwargs: gen_export_kwargs)
 
+if host_system == 'windows'
+  ecpg_compat_so_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'libecpg_compat',
+    '--FILEDESC', 'ECPG compat - compatibility library for ECPG',])
+endif
+
 # see src/interfaces/libpq/meson.build
 ecpg_compat_st = static_library('libecpg_compat',
   ecpg_compat_sources,

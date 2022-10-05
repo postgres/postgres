@@ -29,8 +29,15 @@ encodings = {
 }
 
 foreach encoding, sources : encodings
+  source_files = files(sources)
+
+  if host_system == 'windows'
+    source_files += rc_lib_gen.process(win32ver_rc, extra_args: [
+      '--NAME', encoding])
+  endif
+
   backend_targets += shared_module(encoding,
-    sources,
+    source_files,
     kwargs: pg_mod_args,
   )
 endforeach

@@ -7,6 +7,11 @@ pg_regress_ecpg_sources = pg_regress_c + files(
   'pg_regress_ecpg.c',
 )
 
+if host_system == 'windows'
+  pg_regress_ecpg_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_regress_ecpg',])
+endif
+
 pg_regress_ecpg = executable('pg_regress_ecpg',
   pg_regress_ecpg_sources,
   c_args: pg_regress_cflags,

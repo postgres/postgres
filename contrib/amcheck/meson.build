@@ -1,7 +1,16 @@
-amcheck = shared_module('amcheck', [
-    'verify_heapam.c',
-    'verify_nbtree.c',
-  ],
+amcheck_sources = files(
+  'verify_heapam.c',
+  'verify_nbtree.c',
+)
+
+if host_system == 'windows'
+  amcheck_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'amcheck',
+    '--FILEDESC', 'amcheck - function for verifying relation integrity',])
+endif
+
+amcheck = shared_module('amcheck',
+  amcheck_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += amcheck

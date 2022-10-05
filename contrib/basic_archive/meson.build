@@ -2,6 +2,12 @@ basic_archive_sources = files(
   'basic_archive.c',
 )
 
+if host_system == 'windows'
+  basic_archive_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'basic_archive',
+    '--FILEDESC', 'basic_archive - basic archive module',])
+endif
+
 basic_archive = shared_module('basic_archive',
   basic_archive_sources,
   kwargs: contrib_mod_args,

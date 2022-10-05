@@ -1,5 +1,15 @@
+file_fdw_sources = files(
+  'file_fdw.c',
+)
+
+if host_system == 'windows'
+  file_fdw_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'file_fdw',
+    '--FILEDESC', 'file_fdw - foreign data wrapper for files',])
+endif
+
 file_fdw = shared_module('file_fdw',
-  files('file_fdw.c'),
+  file_fdw_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += file_fdw

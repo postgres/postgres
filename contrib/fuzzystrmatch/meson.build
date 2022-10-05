@@ -1,8 +1,16 @@
+fuzzystrmatch_sources = files(
+  'fuzzystrmatch.c',
+  'dmetaphone.c',
+)
+
+if host_system == 'windows'
+  fuzzystrmatch_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'fuzzystrmatch',
+    '--FILEDESC', 'fuzzystrmatch - similarities and distance between strings',])
+endif
+
 fuzzystrmatch = shared_module('fuzzystrmatch',
-  files(
-    'fuzzystrmatch.c',
-    'dmetaphone.c'
-  ),
+  fuzzystrmatch_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += fuzzystrmatch

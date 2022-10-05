@@ -2,6 +2,12 @@ isn_sources = files(
   'isn.c',
 )
 
+if host_system == 'windows'
+  isn_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'isn',
+    '--FILEDESC', 'isn - data types for international product numbering standards',])
+endif
+
 isn = shared_module('isn',
   isn_sources,
   kwargs: contrib_mod_args,

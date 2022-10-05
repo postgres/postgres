@@ -16,8 +16,16 @@ binaries = [
 ]
 
 foreach binary : binaries
+  binary_sources = files('@0@.c'.format(binary))
+
+  if host_system == 'windows'
+    binary_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+      '--NAME', binary,
+      '--FILEDESC', '@0@ - PostgreSQL utility'.format(binary),])
+  endif
+
   binary = executable(binary,
-    files(binary + '.c'),
+    binary_sources,
     link_with: [scripts_common],
     dependencies: [frontend_code, libpq],
     kwargs: default_bin_args,

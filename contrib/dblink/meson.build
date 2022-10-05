@@ -2,6 +2,12 @@ dblink_sources = files(
   'dblink.c',
 )
 
+if host_system == 'windows'
+  dblink_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'dblink',
+    '--FILEDESC', 'dblink - connect to other PostgreSQL databases',])
+endif
+
 dblink = shared_module('dblink',
   dblink_sources,
   kwargs: contrib_mod_args + {

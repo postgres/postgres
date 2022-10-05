@@ -40,6 +40,12 @@ pl_unreserved = custom_target('pl_unreserved_kwlist',
 generated_sources += pl_unreserved
 plpgsql_sources += pl_unreserved
 
+if host_system == 'windows'
+  plpgsql_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'plpgsql',
+    '--FILEDESC', 'PL/pgSQL - procedural language',])
+endif
+
 plpgsql = shared_module('plpgsql',
   plpgsql_sources,
   include_directories: include_directories('.'),

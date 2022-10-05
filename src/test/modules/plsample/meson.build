@@ -1,6 +1,17 @@
 # FIXME: prevent install during main install, but not during test :/
+
+plsample_sources = files(
+  'plsample.c',
+)
+
+if host_system == 'windows'
+  plsample_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'plsample',
+    '--FILEDESC', 'PL/Sample - template for procedural language',])
+endif
+
 plsample = shared_module('plsample',
-  ['plsample.c'],
+  plsample_sources,
   kwargs: pg_mod_args,
 )
 testprep_targets += plsample

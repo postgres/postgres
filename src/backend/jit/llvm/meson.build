@@ -20,6 +20,12 @@ llvmjit_sources += files(
   'llvmjit_expr.c',
 )
 
+if host_system == 'windows'
+  llvmjit_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'llvmjit',
+    '--FILEDESC', 'llvmjit - JIT using LLVM',])
+endif
+
 llvmjit = shared_module('llvmjit',
   llvmjit_sources,
   kwargs: pg_mod_args + {

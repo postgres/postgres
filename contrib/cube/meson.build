@@ -17,6 +17,12 @@ cube_parse = custom_target('cubeparse',
 generated_sources += cube_parse.to_list()
 cube_sources += cube_parse
 
+if host_system == 'windows'
+  cube_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'cube',
+    '--FILEDESC', 'cube - multidimensional cube data type',])
+endif
+
 cube = shared_module('cube',
   cube_sources,
   include_directories: include_directories('.'),
