@@ -2320,17 +2320,17 @@ ReorderBufferProcessTXN(ReorderBuffer *rb, ReorderBufferTXN *txn,
 						for (i = 0; i < nrelids; i++)
 						{
 							Oid			relid = change->data.truncate.relids[i];
-							Relation	relation;
+							Relation	rel;
 
-							relation = RelationIdGetRelation(relid);
+							rel = RelationIdGetRelation(relid);
 
-							if (!RelationIsValid(relation))
+							if (!RelationIsValid(rel))
 								elog(ERROR, "could not open relation with OID %u", relid);
 
-							if (!RelationIsLogicallyLogged(relation))
+							if (!RelationIsLogicallyLogged(rel))
 								continue;
 
-							relations[nrelations++] = relation;
+							relations[nrelations++] = rel;
 						}
 
 						/* Apply the truncate. */

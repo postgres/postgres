@@ -1019,17 +1019,17 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype == DTK_JULIAN)
 				{
 					char	   *cp;
-					int			val;
+					int			jday;
 
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
-					if (errno == ERANGE || val < 0)
+					jday = strtoint(field[i], &cp, 10);
+					if (errno == ERANGE || jday < 0)
 						return DTERR_FIELD_OVERFLOW;
 
-					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+					j2date(jday, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 					isjulian = true;
 
 					/* Get the time zone from the end of the string */
@@ -1181,10 +1181,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
+					int			value;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -1209,7 +1209,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					switch (ptype)
 					{
 						case DTK_YEAR:
-							tm->tm_year = val;
+							tm->tm_year = value;
 							tmask = DTK_M(YEAR);
 							break;
 
@@ -1222,33 +1222,33 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							if ((fmask & DTK_M(MONTH)) != 0 &&
 								(fmask & DTK_M(HOUR)) != 0)
 							{
-								tm->tm_min = val;
+								tm->tm_min = value;
 								tmask = DTK_M(MINUTE);
 							}
 							else
 							{
-								tm->tm_mon = val;
+								tm->tm_mon = value;
 								tmask = DTK_M(MONTH);
 							}
 							break;
 
 						case DTK_DAY:
-							tm->tm_mday = val;
+							tm->tm_mday = value;
 							tmask = DTK_M(DAY);
 							break;
 
 						case DTK_HOUR:
-							tm->tm_hour = val;
+							tm->tm_hour = value;
 							tmask = DTK_M(HOUR);
 							break;
 
 						case DTK_MINUTE:
-							tm->tm_min = val;
+							tm->tm_min = value;
 							tmask = DTK_M(MINUTE);
 							break;
 
 						case DTK_SECOND:
-							tm->tm_sec = val;
+							tm->tm_sec = value;
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
@@ -1268,10 +1268,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
-							if (val < 0)
+							if (value < 0)
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
-							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							j2date(value, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 							isjulian = true;
 
 							/* fractional Julian Day? */
@@ -2066,7 +2066,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
+					int			value;
 
 					/* Only accept a date under limited circumstances */
 					switch (ptype)
@@ -2082,7 +2082,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					}
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -2107,7 +2107,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					switch (ptype)
 					{
 						case DTK_YEAR:
-							tm->tm_year = val;
+							tm->tm_year = value;
 							tmask = DTK_M(YEAR);
 							break;
 
@@ -2120,33 +2120,33 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							if ((fmask & DTK_M(MONTH)) != 0 &&
 								(fmask & DTK_M(HOUR)) != 0)
 							{
-								tm->tm_min = val;
+								tm->tm_min = value;
 								tmask = DTK_M(MINUTE);
 							}
 							else
 							{
-								tm->tm_mon = val;
+								tm->tm_mon = value;
 								tmask = DTK_M(MONTH);
 							}
 							break;
 
 						case DTK_DAY:
-							tm->tm_mday = val;
+							tm->tm_mday = value;
 							tmask = DTK_M(DAY);
 							break;
 
 						case DTK_HOUR:
-							tm->tm_hour = val;
+							tm->tm_hour = value;
 							tmask = DTK_M(HOUR);
 							break;
 
 						case DTK_MINUTE:
-							tm->tm_min = val;
+							tm->tm_min = value;
 							tmask = DTK_M(MINUTE);
 							break;
 
 						case DTK_SECOND:
-							tm->tm_sec = val;
+							tm->tm_sec = value;
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
@@ -2166,10 +2166,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
-							if (val < 0)
+							if (value < 0)
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
-							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							j2date(value, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 							isjulian = true;
 
 							if (*cp == '.')

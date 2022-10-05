@@ -437,16 +437,16 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 		{
 			Var		   *var = (Var *) pitem->item;
 			NestLoopParam *nlp;
-			ListCell   *lc;
+			ListCell   *lc2;
 
 			/* If not from a nestloop outer rel, complain */
 			if (!bms_is_member(var->varno, root->curOuterRels))
 				elog(ERROR, "non-LATERAL parameter required by subquery");
 
 			/* Is this param already listed in root->curOuterParams? */
-			foreach(lc, root->curOuterParams)
+			foreach(lc2, root->curOuterParams)
 			{
-				nlp = (NestLoopParam *) lfirst(lc);
+				nlp = (NestLoopParam *) lfirst(lc2);
 				if (nlp->paramno == pitem->paramId)
 				{
 					Assert(equal(var, nlp->paramval));
@@ -454,7 +454,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 					break;
 				}
 			}
-			if (lc == NULL)
+			if (lc2 == NULL)
 			{
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);
@@ -467,7 +467,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 		{
 			PlaceHolderVar *phv = (PlaceHolderVar *) pitem->item;
 			NestLoopParam *nlp;
-			ListCell   *lc;
+			ListCell   *lc2;
 
 			/* If not from a nestloop outer rel, complain */
 			if (!bms_is_subset(find_placeholder_info(root, phv)->ph_eval_at,
@@ -475,9 +475,9 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 				elog(ERROR, "non-LATERAL parameter required by subquery");
 
 			/* Is this param already listed in root->curOuterParams? */
-			foreach(lc, root->curOuterParams)
+			foreach(lc2, root->curOuterParams)
 			{
-				nlp = (NestLoopParam *) lfirst(lc);
+				nlp = (NestLoopParam *) lfirst(lc2);
 				if (nlp->paramno == pitem->paramId)
 				{
 					Assert(equal(phv, nlp->paramval));
@@ -485,7 +485,7 @@ process_subquery_nestloop_params(PlannerInfo *root, List *subplan_params)
 					break;
 				}
 			}
-			if (lc == NULL)
+			if (lc2 == NULL)
 			{
 				/* No, so add it */
 				nlp = makeNode(NestLoopParam);

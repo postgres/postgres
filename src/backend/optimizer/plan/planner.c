@@ -3449,7 +3449,6 @@ get_number_of_groups(PlannerInfo *root,
 		{
 			/* Add up the estimates for each grouping set */
 			ListCell   *lc;
-			ListCell   *lc2;
 
 			Assert(gd);			/* keep Coverity happy */
 
@@ -3458,17 +3457,18 @@ get_number_of_groups(PlannerInfo *root,
 			foreach(lc, gd->rollups)
 			{
 				RollupData *rollup = lfirst_node(RollupData, lc);
-				ListCell   *lc;
+				ListCell   *lc2;
+				ListCell   *lc3;
 
 				groupExprs = get_sortgrouplist_exprs(rollup->groupClause,
 													 target_list);
 
 				rollup->numGroups = 0.0;
 
-				forboth(lc, rollup->gsets, lc2, rollup->gsets_data)
+				forboth(lc2, rollup->gsets, lc3, rollup->gsets_data)
 				{
-					List	   *gset = (List *) lfirst(lc);
-					GroupingSetData *gs = lfirst_node(GroupingSetData, lc2);
+					List	   *gset = (List *) lfirst(lc2);
+					GroupingSetData *gs = lfirst_node(GroupingSetData, lc3);
 					double		numGroups = estimate_num_groups(root,
 																groupExprs,
 																path_rows,
@@ -3484,6 +3484,8 @@ get_number_of_groups(PlannerInfo *root,
 
 			if (gd->hash_sets_idx)
 			{
+				ListCell   *lc2;
+
 				gd->dNumHashGroups = 0;
 
 				groupExprs = get_sortgrouplist_exprs(parse->groupClause,

@@ -275,12 +275,12 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, BoolGetDatum(false));
 	{
 		ListCell   *lc;
-		tablespaceinfo *ti;
+		tablespaceinfo *newti;
 
 		/* Add a node for the base directory at the end */
-		ti = palloc0(sizeof(tablespaceinfo));
-		ti->size = -1;
-		state.tablespaces = lappend(state.tablespaces, ti);
+		newti = palloc0(sizeof(tablespaceinfo));
+		newti->size = -1;
+		state.tablespaces = lappend(state.tablespaces, newti);
 
 		/*
 		 * Calculate the total backup size by summing up the size of each

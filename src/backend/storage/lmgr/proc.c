@@ -1450,7 +1450,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			int			usecs;
 			long		msecs;
 			SHM_QUEUE  *procLocks;
-			PROCLOCK   *proclock;
+			PROCLOCK   *curproclock;
 			bool		first_holder = true,
 						first_waiter = true;
 			int			lockHoldersNum = 0;
@@ -1480,44 +1480,45 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 			LWLockAcquire(partitionLock, LW_SHARED);
 
 			procLocks = &(lock->procLocks);
-			proclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
-												 offsetof(PROCLOCK, lockLink));
+			curproclock = (PROCLOCK *) SHMQueueNext(procLocks, procLocks,
+													offsetof(PROCLOCK, lockLink));
 
-			while (proclock)
+			while (curproclock)
 			{
 				/*
-				 * we are a waiter if myProc->waitProcLock == proclock; we are
-				 * a holder if it is NULL or something different
+				 * we are a waiter if myProc->waitProcLock == curproclock; we
+				 * are a holder if it is NULL or something different
 				 */
-				if (proclock->tag.myProc->waitProcLock == proclock)
+				if (curproclock->tag.myProc->waitProcLock == curproclock)
 				{
 					if (first_waiter)
 					{
 						appendStringInfo(&lock_waiters_sbuf, "%d",
-										 proclock->tag.myProc->pid);
+										 curproclock->tag.myProc->pid);
 						first_waiter = false;
 					}
 					else
 						appendStringInfo(&lock_waiters_sbuf, ", %d",
-										 proclock->tag.myProc->pid);
+										 curproclock->tag.myProc->pid);
 				}
 				else
 				{
 					if (first_holder)
 					{
 						appendStringInfo(&lock_holders_sbuf, "%d",
-										 proclock->tag.myProc->pid);
+										 curproclock->tag.myProc->pid);
 						first_holder = false;
 					}
 					else
 						appendStringInfo(&lock_holders_sbuf, ", %d",
-										 proclock->tag.myProc->pid);
+										 curproclock->tag.myProc->pid);
 
 					lockHoldersNum++;
 				}
 
-				proclock = (PROCLOCK *) SHMQueueNext(procLocks, &proclock->lockLink,
-													 offsetof(PROCLOCK, lockLink));
+				curproclock = (PROCLOCK *) SHMQueueNext(procLocks,
+														&curproclock->lockLink,
+														offsetof(PROCLOCK, lockLink));
 			}
 
 			LWLockRelease(partitionLock);

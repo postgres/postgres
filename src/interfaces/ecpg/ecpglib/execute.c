@@ -367,10 +367,10 @@ ecpg_store_result(const PGresult *results, int act_field,
 						/* check strlen for each tuple */
 						for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 						{
-							int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+							int			slen = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 
-							if (len > var->varcharsize)
-								var->varcharsize = len;
+							if (slen > var->varcharsize)
+								var->varcharsize = slen;
 						}
 						var->offset *= var->varcharsize;
 						len = var->offset * ntuples;

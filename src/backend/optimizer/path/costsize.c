@@ -2217,13 +2217,13 @@ cost_append(AppendPath *apath)
 
 		if (pathkeys == NIL)
 		{
-			Path	   *subpath = (Path *) linitial(apath->subpaths);
+			Path	   *firstsubpath = (Path *) linitial(apath->subpaths);
 
 			/*
 			 * For an unordered, non-parallel-aware Append we take the startup
 			 * cost as the startup cost of the first subpath.
 			 */
-			apath->path.startup_cost = subpath->startup_cost;
+			apath->path.startup_cost = firstsubpath->startup_cost;
 
 			/* Compute rows and costs as sums of subplan rows and costs. */
 			foreach(l, apath->subpaths)

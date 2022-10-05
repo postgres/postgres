@@ -3483,8 +3483,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			if (aggnode->aggstrategy == AGG_SORTED)
 			{
-				int			i = 0;
-
 				Assert(aggnode->numCols > 0);
 
 				/*
@@ -3495,9 +3493,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 					(ExprState **) palloc0(aggnode->numCols * sizeof(ExprState *));
 
 				/* for each grouping set */
-				for (i = 0; i < phasedata->numsets; i++)
+				for (int k = 0; k < phasedata->numsets; k++)
 				{
-					int			length = phasedata->gset_lengths[i];
+					int			length = phasedata->gset_lengths[k];
 
 					if (phasedata->eqfunctions[length - 1] != NULL)
 						continue;
@@ -3576,7 +3574,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	{
 		Plan	   *outerplan = outerPlan(node);
 		uint64		totalGroups = 0;
-		int			i;
 
 		aggstate->hash_metacxt = AllocSetContextCreate(aggstate->ss.ps.state->es_query_cxt,
 													   "HashAgg meta context",
@@ -3599,8 +3596,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * when there is more than one grouping set, but should still be
 		 * reasonable.
 		 */
-		for (i = 0; i < aggstate->num_hashes; i++)
-			totalGroups += aggstate->perhash[i].aggnode->numGroups;
+		for (int k = 0; k < aggstate->num_hashes; k++)
+			totalGroups += aggstate->perhash[k].aggnode->numGroups;
 
 		hash_agg_set_limits(aggstate->hashentrysize, totalGroups, 0,
 							&aggstate->hash_mem_limit,

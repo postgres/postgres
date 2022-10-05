@@ -448,10 +448,10 @@ pg_ulltoa_n(uint64 value, char *a)
 	while (value >= 100000000)
 	{
 		const uint64 q = value / 100000000;
-		uint32		value2 = (uint32) (value - 100000000 * q);
+		uint32		value3 = (uint32) (value - 100000000 * q);
 
-		const uint32 c = value2 % 10000;
-		const uint32 d = value2 / 10000;
+		const uint32 c = value3 % 10000;
+		const uint32 d = value3 / 10000;
 		const uint32 c0 = (c % 100) << 1;
 		const uint32 c1 = (c / 100) << 1;
 		const uint32 d0 = (d % 100) << 1;

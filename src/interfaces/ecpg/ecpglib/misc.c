@@ -558,7 +558,7 @@ ECPGset_var(int number, void *pointer, int lineno)
 	ptr = (struct var_list *) calloc(1L, sizeof(struct var_list));
 	if (!ptr)
 	{
-		struct sqlca_t *sqlca = ECPGget_sqlca();
+		sqlca = ECPGget_sqlca();
 
 		if (sqlca == NULL)
 		{

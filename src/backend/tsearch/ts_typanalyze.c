@@ -405,12 +405,12 @@ compute_tsvector_stats(VacAttrStats *stats,
 			 */
 			for (i = 0; i < num_mcelem; i++)
 			{
-				TrackItem  *item = sort_table[i];
+				TrackItem  *titem = sort_table[i];
 
 				mcelem_values[i] =
-					PointerGetDatum(cstring_to_text_with_len(item->key.lexeme,
-															 item->key.length));
-				mcelem_freqs[i] = (double) item->frequency / (double) nonnull_cnt;
+					PointerGetDatum(cstring_to_text_with_len(titem->key.lexeme,
+															 titem->key.length));
+				mcelem_freqs[i] = (double) titem->frequency / (double) nonnull_cnt;
 			}
 			mcelem_freqs[i++] = (double) minfreq / (double) nonnull_cnt;
 			mcelem_freqs[i] = (double) maxfreq / (double) nonnull_cnt;

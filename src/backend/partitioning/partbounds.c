@@ -4321,11 +4321,11 @@ get_qual_for_range(Relation parent, PartitionBoundSpec *spec,
 		PartitionDesc pdesc = RelationGetPartitionDesc(parent, false);
 		Oid		   *inhoids = pdesc->oids;
 		int			nparts = pdesc->nparts,
-					i;
+					k;
 
-		for (i = 0; i < nparts; i++)
+		for (k = 0; k < nparts; k++)
 		{
-			Oid			inhrelid = inhoids[i];
+			Oid			inhrelid = inhoids[k];
 			HeapTuple	tuple;
 			Datum		datum;
 			bool		isnull;

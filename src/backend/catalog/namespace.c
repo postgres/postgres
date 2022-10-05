@@ -1151,10 +1151,8 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		if (argnumbers)
 		{
 			/* Re-order the argument types into call's logical order */
-			int			i;
-
-			for (i = 0; i < pronargs; i++)
-				newResult->args[i] = proargtypes[argnumbers[i]];
+			for (int j = 0; j < pronargs; j++)
+				newResult->args[j] = proargtypes[argnumbers[j]];
 		}
 		else
 		{
@@ -1163,12 +1161,10 @@ FuncnameGetCandidates(List *names, int nargs, List *argnames,
 		}
 		if (variadic)
 		{
-			int			i;
-
 			newResult->nvargs = effective_nargs - pronargs + 1;
 			/* Expand variadic argument into N copies of element type */
-			for (i = pronargs - 1; i < effective_nargs; i++)
-				newResult->args[i] = va_elem_type;
+			for (int j = pronargs - 1; j < effective_nargs; j++)
+				newResult->args[j] = va_elem_type;
 		}
 		else
 			newResult->nvargs = 0;
