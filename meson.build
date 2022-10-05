@@ -2619,17 +2619,29 @@ backend_common_code = declare_dependency(
 
 subdir('src/common')
 
-frontend_shlib_code = declare_dependency(
-  compile_args: ['-DFRONTEND'],
-  include_directories: [postgres_inc],
+# all shared libraries should depend on shlib_code
+shlib_code = declare_dependency(
   link_args: ldflags_sl,
-  link_with: [pgport_shlib, common_shlib],
+)
+
+# all static libraries not part of the backend should depend on this
+frontend_stlib_code = declare_dependency(
+  include_directories: [postgres_inc],
+  link_with: [common_static, pgport_static],
   sources: generated_headers,
   dependencies: [os_deps, libintl],
 )
 
+# all shared libraries not part of the backend should depend on this
+frontend_shlib_code = declare_dependency(
+  include_directories: [postgres_inc],
+  link_with: [common_shlib, pgport_shlib],
+  sources: generated_headers,
+  dependencies: [shlib_code, os_deps, libintl],
+)
+
+# Dependencies both for static and shared libpq
 libpq_deps += [
-  frontend_shlib_code,
   thread_dep,
 
   gssapi,
@@ -2642,6 +2654,7 @@ subdir('src/interfaces/libpq')
 # fe_utils depends on libpq
 subdir('src/fe_utils')
 
+# for frontend binaries
 frontend_code = declare_dependency(
   include_directories: [postgres_inc],
   link_with: [fe_utils, common_static, pgport_static],

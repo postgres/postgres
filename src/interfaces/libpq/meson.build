@@ -39,26 +39,33 @@ export_file = custom_target('libpq.exports',
 
 # port needs to be in include path due to pthread-win32.h
 libpq_inc = include_directories('.', '../../port')
+libpq_c_args = ['-DSO_MAJOR_VERSION=5']
 
+# Not using both_libraries() here as
+# 1) resource files should only be in the shared library
+# 2) we want the .pc file to include a dependency to {pgport,common}_static for
+#    libpq_st, and {pgport,common}_shlib for libpq_sh
+#
+# We could try to avoid building the source files twice, but it probably adds
+# more complexity than its worth (AIX doesn't support link_whole yet, reusing
+# object files requires also linking to the library on windows or breaks
+# precompiled headers).
 libpq_st = static_library('libpq',
   libpq_sources,
-  pic: true,
-  include_directories: [libpq_inc, postgres_inc],
-  c_args: ['-DSO_MAJOR_VERSION=5'],
-  dependencies: libpq_deps,
+  include_directories: [libpq_inc],
+  c_args: libpq_c_args,
+  dependencies: [frontend_stlib_code, libpq_deps],
   kwargs: default_lib_args,
 )
 
-# not using both_libraries here, causes problems with precompiled headers and
-# resource files with msbuild
 libpq_so = shared_library('libpq',
-  dependencies: libpq_deps,
+  libpq_sources,
   include_directories: [libpq_inc, postgres_inc],
-  c_args: ['-DSO_MAJOR_VERSION=5'],
-  link_whole: libpq_st,
+  c_args: libpq_c_args,
   version: '5.' + pg_version_major.to_string(),
   soversion: host_system != 'windows' ? '5' : '',
   darwin_versions: ['5', '5.' + pg_version_major.to_string()],
+  dependencies: [frontend_shlib_code, libpq_deps],
   link_depends: export_file,
   link_args: export_fmt.format(export_file.full_path()),
   kwargs: default_lib_args,
@@ -70,10 +77,11 @@ libpq = declare_dependency(
 )
 
 pkgconfig.generate(
-  libpq_so,
   name: 'libpq',
   description: 'PostgreSQL libpq library',
   url: pg_url,
+  libraries: libpq,
+  libraries_private: [frontend_stlib_code, libpq_deps],
 )
 
 install_headers(
