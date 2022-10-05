@@ -1,0 +1,7 @@
+schema2
+{
+	table2 {
+		field2: function2
+	}
+}
+

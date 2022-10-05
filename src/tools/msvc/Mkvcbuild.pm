@@ -454,6 +454,7 @@ sub mkvcbuild
 	$pgrestore->{name} = 'pg_restore';
 	$pgrestore->AddIncludeDir('src/backend');
 	$pgrestore->AddFile('src/bin/pg_dump/pg_restore.c');
+	$pgdumpall->AddFile('src/bin/pg_dump/masking.c');
 	$pgrestore->AddLibrary('ws2_32.lib');
 
 	my $zic = $solution->AddProject('zic', 'exe', 'utils');

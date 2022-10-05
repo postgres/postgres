@@ -882,6 +882,58 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>--masking=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify a filename from which to read masking patterns for using masking functions
+        to fields. You have ability to use user-defined functions from file, functions that
+        already defined in the cluster and default functions.
+        Here is an example of masking pattern file:
+
+        masking_file.txt
+        <programlisting>
+        Schema1 {
+            Table1 {
+                  field11 : function_name11
+                , field12 : function_name12
+                , field13 : function_name13
+            }
+
+            Table2 {
+                  field21 : function_name21
+                , field22 : function_name22
+                /* This function will be created by script from the path 'path_to_file_with_function'
+                   and used for 'field23' */
+                , field23 : "path_to_file_with_function"
+            }
+        }
+
+        /* Functions inside this block will be used for all schemes */
+        default {
+            /* Functions inside this block will be used for all tables */
+            default {
+                  /* Function 'for_all_fields' will be used for all fields
+                     did not covered by exact functions */
+                  default: for_all_fields,
+                  field1: value1,
+                  field2: value2
+            }
+
+            /* Functions inside this block will be used for tables with name 'Table'
+               in the all schemes */
+            Table {
+                   field : function_name
+            }
+        }
+        </programlisting>
+
+        Masking using only with <command>INSERT</command> command. You can't use it with
+        <command>COPY</command> command.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>--no-comments</option></term>
       <listitem>
        <para>

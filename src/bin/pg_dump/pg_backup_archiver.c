@@ -374,7 +374,7 @@ RestoreArchive(Archive *AHX)
 			pg_fatal("parallel restore is not supported with archives made by pre-8.0 pg_dump");
 
 		/*
-		 * It's also not gonna work if we can't reopen the input file, so
+		 * It's also not going to work if we can't reopen the input file, so
 		 * let's try that immediately.
 		 */
 		AH->ReopenPtr(AH);
@@ -430,7 +430,7 @@ RestoreArchive(Archive *AHX)
 	/*
 	 * Work out if we have an implied data-only restore. This can happen if
 	 * the dump was data only or if the user has used a toc list to exclude
-	 * all of the schema data. All we do is look for schema entries - if none
+	 * all the schema data. All we do is look for schema entries - if none
 	 * are found then we set the dataOnly flag.
 	 *
 	 * We could scan for wanted TABLE entries, but that is not the same as
@@ -456,7 +456,7 @@ RestoreArchive(Archive *AHX)
 	}
 
 	/*
-	 * Setup the output file if necessary.
+	 * Set up the output file if necessary.
 	 */
 	sav = SaveOutput(AH);
 	if (ropt->filename || ropt->compression)
@@ -956,7 +956,7 @@ restore_toc_entry(ArchiveHandle *AH, TocEntry *te, bool is_parallel)
 
 /*
  * Allocate a new RestoreOptions block.
- * This is mainly so we can initialize it, but also for future expansion,
+ * This is mainly, so we can initialize it, but also for future expansion,
  */
 RestoreOptions *
 NewRestoreOptions(void)
@@ -1415,12 +1415,12 @@ SortTocFromFile(Archive *AHX)
 		/*
 		 * Move each item to the end of the list as it is selected, so that
 		 * they are placed in the desired order.  Any unwanted items will end
-		 * up at the front of the list, which may seem unintuitive but it's
+		 * up at the front of the list, which may seem unintuitive, but it's
 		 * what we need.  In an ordinary serial restore that makes no
 		 * difference, but in a parallel restore we need to mark unrestored
 		 * items' dependencies as satisfied before we start examining
-		 * restorable items.  Otherwise they could have surprising
-		 * side-effects on the order in which restorable items actually get
+		 * restorable items.  Otherwise, they could have surprising
+		 * side effects on the order in which restorable items actually get
 		 * restored.
 		 */
 		_moveBefore(AH->toc, te);

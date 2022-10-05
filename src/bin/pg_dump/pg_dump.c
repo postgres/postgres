@@ -59,13 +59,18 @@
 #include "dumputils.h"
 #include "fe_utils/option_utils.h"
 #include "fe_utils/string_utils.h"
+#include "fe_utils/query_utils.h"
+#include "fe_utils/simple_list.h"
 #include "getopt_long.h"
 #include "libpq/libpq-fs.h"
+#include "masking.h"
 #include "parallel.h"
 #include "pg_backup_db.h"
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 #include "storage/block.h"
+#include "postgres.h"
+#include "fmgr.h"
 
 typedef struct
 {
@@ -127,6 +132,7 @@ static SimpleOidList foreign_servers_include_oids = {NULL, NULL};
 
 static SimpleStringList extension_include_patterns = {NULL, NULL};
 static SimpleOidList extension_include_oids = {NULL, NULL};
+static SimpleStringList masking_func_query_path = {NULL, NULL}; /* List of path to query with masking functions, that must be created before starting dump */
 
 static const CatalogId nilCatalogId = {0, 0};
 
@@ -318,7 +324,8 @@ static void appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 static char *get_synchronized_snapshot(Archive *fout);
 static void setupDumpWorker(Archive *AH);
 static TableInfo *getRootTableInfo(const TableInfo *tbinfo);
-
+static int getMaskingPatternFromFile(const char *filename, DumpOptions *dopt);
+static int createMaskingFunctions(Archive *AH, SimpleStringList *masking_func_query_path);
 
 int
 main(int argc, char **argv)
@@ -397,7 +404,8 @@ main(int argc, char **argv)
 		{"no-tablespaces", no_argument, &dopt.outputNoTablespaces, 1},
 		{"quote-all-identifiers", no_argument, &quote_all_identifiers, 1},
 		{"load-via-partition-root", no_argument, &dopt.load_via_partition_root, 1},
-		{"role", required_argument, NULL, 3},
+        {"masking", required_argument, NULL, 13},
+        {"role", required_argument, NULL, 3},
 		{"section", required_argument, NULL, 5},
 		{"serializable-deferrable", no_argument, &dopt.serializable_deferrable, 1},
 		{"snapshot", required_argument, NULL, 6},
@@ -414,7 +422,7 @@ main(int argc, char **argv)
 		{"rows-per-insert", required_argument, NULL, 10},
 		{"include-foreign-data", required_argument, NULL, 11},
 
-		{NULL, 0, NULL, 0}
+        {NULL, 0, NULL, 0}
 	};
 
 	pg_logging_init(argv[0]);
@@ -623,6 +631,12 @@ main(int argc, char **argv)
 										  optarg);
 				break;
 
+            case 13:			/* masking */
+                getMaskingPatternFromFile(optarg, &dopt);
+                if (dopt.dump_inserts == 0) /* Masking works only with inserts */
+                    dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
+                break;
+
 			default:
 				/* getopt_long already emitted a complaint */
 				pg_log_error_hint("Try \"%s --help\" for more information.", progname);
@@ -672,6 +686,11 @@ main(int argc, char **argv)
 
 	if (dopt.if_exists && !dopt.outputClean)
 		pg_fatal("option --if-exists requires option -c/--clean");
+
+    // TODO check which options can't work with masking
+    if (dopt.cant_be_masked)
+        pg_fatal("option --masking doesn't work with options: --section");
+
 
 	/*
 	 * --inserts are already implied above if --column-inserts or
@@ -743,7 +762,12 @@ main(int argc, char **argv)
 	 * death.
 	 */
 	ConnectDatabase(fout, &dopt.cparams, false);
+    if (dopt.masking_map)
+    {
+        createMaskingFunctions(fout, &masking_func_query_path);
+    }
 	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
+
 
 	/*
 	 * On hot standbys, never try to dump unlogged table data, since it will
@@ -820,7 +844,7 @@ main(int argc, char **argv)
 		dopt.outputBlobs = true;
 
 	/*
-	 * Collect role names so we can map object owner OIDs to names.
+	 * Collect role names, so we can map object owner OIDs to names.
 	 */
 	collectRoleNames(fout);
 
@@ -1035,6 +1059,7 @@ help(const char *progname)
 	printf(_("  --inserts                    dump data as INSERT commands, rather than COPY\n"));
 	printf(_("  --load-via-partition-root    load partitions via the root table\n"));
 	printf(_("  --no-comments                do not dump comments\n"));
+    printf(_("  --masking    				 data masking, help with hiding sensitive data\n"));
 	printf(_("  --no-publications            do not dump publications\n"));
 	printf(_("  --no-security-labels         do not dump security label assignments\n"));
 	printf(_("  --no-subscriptions           do not dump subscriptions\n"));
@@ -1777,7 +1802,7 @@ selectDumpableType(TypeInfo *tyinfo, Archive *fout)
  *		Mark a default ACL as to be dumped or not
  *
  * For per-schema default ACLs, dump if the schema is to be dumped.
- * Otherwise dump if we are dumping "everything".  Note that dataOnly
+ * Otherwise, dump if we are dumping "everything".  Note that dataOnly
  * and aclsSkip are checked separately.
  */
 static void
@@ -1918,7 +1943,7 @@ selectDumpableExtension(ExtensionInfo *extinfo, DumpOptions *dopt)
  *		Mark a publication object as to be dumped or not
  *
  * A publication can have schemas and tables which have schemas, but those are
- * ignored in decision making, because publications are only dumped when we are
+ * ignored in decision-making, because publications are only dumped when we are
  * dumping everything.
  */
 static void
@@ -2010,13 +2035,13 @@ dumpTableData_copy(Archive *fout, const void *dcontext)
 						  fmtQualifiedDumpable(tbinfo),
 						  tdinfo->filtercond ? tdinfo->filtercond : "");
 	}
-	else
-	{
-		appendPQExpBuffer(q, "COPY %s %s TO stdout;",
-						  fmtQualifiedDumpable(tbinfo),
-						  column_list);
-	}
-	res = ExecuteSqlQuery(fout, q->data, PGRES_COPY_OUT);
+    else
+    {
+        appendPQExpBuffer(q, "COPY %s %s TO stdout;",
+                          fmtQualifiedDumpable(tbinfo),
+                          column_list);
+    }
+    res = ExecuteSqlQuery(fout, q->data, PGRES_COPY_OUT);
 	PQclear(res);
 	destroyPQExpBuffer(clistBuf);
 
@@ -2036,9 +2061,9 @@ dumpTableData_copy(Archive *fout, const void *dcontext)
 		/* ----------
 		 * THROTTLE:
 		 *
-		 * There was considerable discussion in late July, 2000 regarding
+		 * There was considerable discussion in late July 2000 regarding
 		 * slowing down pg_dump when backing up large tables. Users with both
-		 * slow & fast (multi-processor) machines experienced performance
+		 * slow & fast (multiprocessor) machines experienced performance
 		 * degradation when doing a backup.
 		 *
 		 * Initial attempts based on sleeping for a number of ms for each ms
@@ -2061,7 +2086,7 @@ dumpTableData_copy(Archive *fout, const void *dcontext)
 		 * Most of the hard work is done in the backend, and this solution
 		 * still did not work particularly well: on slow machines, the ratio
 		 * was 50:1, and on medium paced machines, 1:1, and on fast
-		 * multi-processor machines, it had little or no effect, for reasons
+		 * multiprocessor machines, it had little or no effect, for reasons
 		 * that were unclear.
 		 *
 		 * Further discussion ensued, and the proposal was dropped.
@@ -2154,7 +2179,27 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 		if (tbinfo->attgenerated[i])
 			appendPQExpBufferStr(q, "NULL");
 		else
-			appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+        {
+            if (dopt->masking_map) /* If we read masking options successfully, we can use masking functions */
+            {
+                char *column_with_fun;
+                column_with_fun=addFunctionToColumn(tbinfo->dobj.namespace->dobj.name, tbinfo->dobj.name,
+                                                    tbinfo->attnames[i], dopt->masking_map);
+                if (column_with_fun[0] == ' ')
+                {
+                    pg_log_warning("Function\"%s\" was not found", column_with_fun);
+                }
+                if (column_with_fun[0] != '\0')
+                {
+                    appendPQExpBufferStr(q, column_with_fun);
+                }
+                else
+                {
+                    appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+                }
+                free(column_with_fun);
+            }
+        }
 		attgenerated[nfields] = tbinfo->attgenerated[i];
 		nfields++;
 	}
@@ -2292,7 +2337,7 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 							 * strtod() and friends might accept NaN, so we
 							 * can't use that to test.
 							 *
-							 * In reality we only need to defend against
+							 * In reality, we only need to defend against
 							 * infinity and NaN, so we need not get too crazy
 							 * about pattern matching here.
 							 */
@@ -5978,7 +6023,7 @@ getFuncs(Archive *fout, int *numFuncs)
 	 * otherwise we might not get creation ordering correct.
 	 *
 	 * 3. Otherwise, we normally exclude functions in pg_catalog.  However, if
-	 * they're members of extensions and we are in binary-upgrade mode then
+	 * they're members of extensions, and we are in binary-upgrade mode then
 	 * include them, since we want to dump extension members individually in
 	 * that mode.  Also, if they are used by casts or transforms then we need
 	 * to gather the information about them, though they won't be dumped if
@@ -6707,7 +6752,7 @@ getIndexes(Archive *fout, TableInfo tblinfo[], int numTables)
 	/*
 	 * We want to perform just one query against pg_index.  However, we
 	 * mustn't try to select every row of the catalog and then sort it out on
-	 * the client side, because some of the server-side functions we need
+	 * the client side, because some server-side functions we need
 	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
 	 * build an array of the OIDs of tables we care about (and now have lock
 	 * on!), and use a WHERE clause to constrain which rows are selected.
@@ -7049,7 +7094,7 @@ getExtendedStatistics(Archive *fout)
  *
  * Get info about constraints on dumpable tables.
  *
- * Currently handles foreign keys only.
+ * Currently, handles foreign keys only.
  * Unique and primary key constraints are handled with indexes,
  * while check constraints are processed in getTableAttrs().
  */
@@ -7074,7 +7119,7 @@ getConstraints(Archive *fout, TableInfo tblinfo[], int numTables)
 	/*
 	 * We want to perform just one query against pg_constraint.  However, we
 	 * mustn't try to select every row of the catalog and then sort it out on
-	 * the client side, because some of the server-side functions we need
+	 * the client side, because some server-side functions we need
 	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
 	 * build an array of the OIDs of tables we care about (and now have lock
 	 * on!), and use a WHERE clause to constrain which rows are selected.
@@ -7464,7 +7509,7 @@ getTriggers(Archive *fout, TableInfo tblinfo[], int numTables)
 	/*
 	 * We want to perform just one query against pg_trigger.  However, we
 	 * mustn't try to select every row of the catalog and then sort it out on
-	 * the client side, because some of the server-side functions we need
+	 * the client side, because some server-side functions we need
 	 * would be unsafe to apply to tables we don't have lock on.  Hence, we
 	 * build an array of the OIDs of tables we care about (and now have lock
 	 * on!), and use a WHERE clause to constrain which rows are selected.
@@ -8084,7 +8129,7 @@ getTransforms(Archive *fout, int *numTransforms)
 /*
  * getTableAttrs -
  *	  for each interesting table, read info about its attributes
- *	  (names, types, default values, CHECK constraints, etc)
+ *	  (names, types, default values, CHECK constraints, etc.)
  *
  *	modifies tblinfo
  */
@@ -9426,7 +9471,7 @@ getAdditionalACLs(Archive *fout)
  * If a matching pg_description entry is found, it is dumped.
  *
  * Note: in some cases, such as comments for triggers and rules, the "type"
- * string really looks like, e.g., "TRIGGER name ON".  This is a bit of a hack
+ * string really looks like, e.g., "TRIGGER name ON".  This is a bit of a hack,
  * but it doesn't seem worth complicating the API for all callers to make
  * it cleaner.
  *
@@ -11138,7 +11183,7 @@ dumpCompositeType(Archive *fout, const TypeInfo *tyinfo)
 		else
 		{
 			/*
-			 * This is a dropped attribute and we're in binary_upgrade mode.
+			 * This is a dropped attribute, and we're in binary_upgrade mode.
 			 * Insert a placeholder for it in the CREATE TYPE command, and set
 			 * length and alignment with direct UPDATE to the catalogs
 			 * afterwards. See similar code in dumpTableSchema().
@@ -11746,6 +11791,7 @@ dumpFunc(Archive *fout, const FuncInfo *finfo)
 	qual_funcsig = psprintf("%s.%s",
 							fmtId(finfo->dobj.namespace->dobj.name),
 							funcsig);
+
 
 	if (prokind[0] == PROKIND_PROCEDURE)
 		keyword = "PROCEDURE";
@@ -14921,7 +14967,7 @@ dumpTable(Archive *fout, const TableInfo *tbinfo)
 			if (fout->remoteVersion >= 90600)
 			{
 				/*
-				 * In principle we should call acldefault('c', relowner) to
+				 * In principle, we should call acldefault('c', relowner) to
 				 * get the default ACL for a column.  However, we don't
 				 * currently store the numeric OID of the relowner in
 				 * TableInfo.  We could convert the owner name using regrole,
@@ -15284,7 +15330,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 
 					/*
 					 * Not Null constraint --- suppress if inherited, except
-					 * if partition, or in binary-upgrade case where that
+					 * if partitioned, or in binary-upgrade case where that
 					 * won't work.
 					 */
 					print_notnull = (tbinfo->notnull[j] &&
@@ -15514,7 +15560,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		 *
 		 * We process foreign and partitioned tables here, even though they
 		 * lack heap storage, because they can participate in inheritance
-		 * relationships and we want this stuff to be consistent across the
+		 * relationships, and we want this stuff to be consistent across the
 		 * inheritance tree.  We can exclude indexes, toast tables, sequences
 		 * and matviews, even though they have storage, because we don't
 		 * support altering or dropping columns in them, nor can they be part
@@ -17517,9 +17563,9 @@ getExtensionMembership(Archive *fout, ExtensionInfo extinfo[],
  *	  Due to the FKs being created at CREATE EXTENSION time and therefore before
  *	  the data is loaded, we have to work out what the best order for reloading
  *	  the data is, to avoid FK violations when the tables are restored.  This is
- *	  not perfect- we can't handle circular dependencies and if any exist they
- *	  will cause an invalid dump to be produced (though at least all of the data
- *	  is included for a user to manually restore).  This is currently documented
+ *	  not perfect - we can't handle circular dependencies and if any exist they
+ *	  will cause an invalid dump to be produced (though at least all the data
+ *	  is included for a user to manually restore).  This is currently documented,
  *	  but perhaps we can provide a better solution in the future.
  */
 void
@@ -18197,4 +18243,97 @@ appendReloptionsArrayAH(PQExpBuffer buffer, const char *reloptions,
 								fout->std_strings);
 	if (!res)
 		pg_log_warning("could not parse %s array", "reloptions");
+}
+
+/**
+ * getMaskingPatternFromFile
+ *
+ * Parse the specified masking file with description of what we need to mask
+ * If the filename is "-" then filters will be
+ * read from STDIN rather than a file.
+ */
+int
+getMaskingPatternFromFile(const char *filename, DumpOptions *dopt)
+{
+    FILE *fin;
+    int exit_result;
+    if (filename[0]=='\0')
+    {
+        pg_log_error("--masking filename shouldn't be empty");
+        exit_nicely(1);
+    }
+
+    fin = fopen(filename, "r");
+
+    if (fin == NULL)
+    {
+        exit_nicely(1);
+    }
+
+    dopt->masking_map = newMaskingMap();
+
+    exit_result = readMaskingPatternFromFile(fin, dopt->masking_map, &masking_func_query_path);
+    fclose(fin);
+    return exit_result;
+}
+
+/**
+ * Read paths to functions from `masking_func_query_path`,
+ * read query inside the files and run them. We checked them
+ * in function masking.c:extractFunctionNameFromQueryFile.
+ *
+ *
+ */
+int
+createMaskingFunctions(Archive *AH, SimpleStringList *masking_func_query_path)
+{
+    int exit_result;
+    PGconn *conn = GetConnection(AH);
+    char *filename;
+    char *query;
+    bool result;
+    char *full_path;
+    char *pg_root;
+
+    exit_result=0;
+    result = false;
+    /* Read all custom masking functions and create them */
+    for (SimpleStringListCell *cell = masking_func_query_path->head; cell; cell = cell->next)
+    {
+        filename=cell->val;
+        query = readQueryForCreatingFunction(filename);
+        if (query[0]=='\0')
+        {
+            pg_log_warning("Query is empty. Check file `%s`", filename);
+            exit_result++;
+        }
+        else
+        {
+            result = executeMaintenanceCommand(conn, query, true);
+        }
+
+        if (!result)
+        {
+            pg_log_warning("Failed execution of query from file \"%s\"", filename);
+            exit_result++;
+        }
+    }
+    /* Read all default functions and create them */
+    full_path = malloc(PATH_MAX);
+
+    pg_root = "{$libdir}"; // path to postgres project (Dynamic_library_path)
+    filename = "postgres/src/bin/pg_dump/masking_functions/default_functions.sql";
+
+    strcpy(full_path, pg_root);
+    strcat(full_path, filename);
+    query = readQueryForCreatingFunction(full_path);
+    result = executeMaintenanceCommand(conn, query, true);
+    if (!result)
+    {
+        pg_log_warning("Problem during creating default functions query from file \"%s\"", filename);
+        exit_result++;
+    }
+    free(query);
+    free(full_path);
+    return exit_result;
 }

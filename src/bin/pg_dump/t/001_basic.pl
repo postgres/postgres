@@ -152,6 +152,11 @@ command_fails_like(
 	'pg_dump: --rows-per-insert must be in range');
 
 command_fails_like(
+	[ 'pg_dump', '--masking', '' ],
+	qr/\Qpg_dump: error: --masking filename shouldn't be empty\E/,
+	'pg_dump: --masking filename shouldn\'t be empty');
+
+command_fails_like(
 	[ 'pg_restore', '--if-exists', '-f -' ],
 	qr/\Qpg_restore: error: option --if-exists requires option -c\/--clean\E/,
 	'pg_restore: option --if-exists requires option -c/--clean');

@@ -42,3 +42,5 @@ lib*.pc
 /Debug/
 /Release/
 /tmp_install/
+/.idea/*
+/.vscode/*
