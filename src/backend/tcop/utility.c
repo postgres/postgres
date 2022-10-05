@@ -1678,16 +1678,16 @@ ProcessUtilitySlow(ParseState *pstate,
 				 * command itself is queued, which is enough.
 				 */
 				EventTriggerInhibitCommandCollection();
-				PG_TRY();
+				PG_TRY(2);
 				{
 					address = ExecRefreshMatView((RefreshMatViewStmt *) parsetree,
 												 queryString, params, qc);
 				}
-				PG_FINALLY();
+				PG_FINALLY(2);
 				{
 					EventTriggerUndoInhibitCommandCollection();
 				}
-				PG_END_TRY();
+				PG_END_TRY(2);
 				break;
 
 			case T_CreateTrigStmt:
