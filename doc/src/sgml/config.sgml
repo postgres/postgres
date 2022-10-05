@@ -6745,7 +6745,7 @@ local0.*    /var/log/postgresql
          setting has the default value of 10 seconds, then a messages will be
          logged for syncing the data directory after it has been in progress
          for 10 seconds and again after it has been in progress for 20 seconds,
-         but nothing will be logged for resetting unlogged operations.
+         but nothing will be logged for resetting unlogged relations.
         </para>
        </listitem>
      </varlistentry>
