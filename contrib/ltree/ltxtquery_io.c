@@ -64,13 +64,13 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 		switch (state->state)
 		{
 			case WAITOPERAND:
-				if (charlen == 1 && t_iseq(state->buf, '!'))
+				if (t_iseq(state->buf, '!'))
 				{
 					(state->buf)++;
 					*val = (int32) '!';
 					return OPR;
 				}
-				else if (charlen == 1 && t_iseq(state->buf, '('))
+				else if (t_iseq(state->buf, '('))
 				{
 					state->count++;
 					(state->buf)++;
@@ -97,11 +97,11 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 								 errmsg("modifiers syntax error")));
 					*lenval += charlen;
 				}
-				else if (charlen == 1 && t_iseq(state->buf, '%'))
+				else if (t_iseq(state->buf, '%'))
 					*flag |= LVAR_SUBLEXEME;
-				else if (charlen == 1 && t_iseq(state->buf, '@'))
+				else if (t_iseq(state->buf, '@'))
 					*flag |= LVAR_INCASE;
-				else if (charlen == 1 && t_iseq(state->buf, '*'))
+				else if (t_iseq(state->buf, '*'))
 					*flag |= LVAR_ANYEND;
 				else
 				{
@@ -110,14 +110,14 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 				}
 				break;
 			case WAITOPERATOR:
-				if (charlen == 1 && (t_iseq(state->buf, '&') || t_iseq(state->buf, '|')))
+				if (t_iseq(state->buf, '&') || t_iseq(state->buf, '|'))
 				{
 					state->state = WAITOPERAND;
 					*val = (int32) *(state->buf);
 					(state->buf)++;
 					return OPR;
 				}
-				else if (charlen == 1 && t_iseq(state->buf, ')'))
+				else if (t_iseq(state->buf, ')'))
 				{
 					(state->buf)++;
 					state->count--;
@@ -125,7 +125,7 @@ gettoken_query(QPRS_STATE *state, int32 *val, int32 *lenval, char **strval, uint
 				}
 				else if (*(state->buf) == '\0')
 					return (state->count) ? ERR : END;
-				else if (charlen == 1 && !t_iseq(state->buf, ' '))
+				else if (!t_iseq(state->buf, ' '))
 					return ERR;
 				break;
 			default:

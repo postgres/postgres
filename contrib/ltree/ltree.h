@@ -126,7 +126,7 @@ typedef struct
 
 #define LQUERY_HASNOT		0x01
 
-#define ISALNUM(x)	( t_isalnum(x) || ( pg_mblen(x) == 1 && t_iseq((x), '_') ) )
+#define ISALNUM(x)	( t_isalnum(x) || t_iseq(x, '_') )
 
 /* full text query */
 
