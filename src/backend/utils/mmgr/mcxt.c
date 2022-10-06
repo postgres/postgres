@@ -224,10 +224,8 @@ MemoryContextResetOnly(MemoryContext context)
 		 * If context->ident points into the context's memory, it will become
 		 * a dangling pointer.  We could prevent that by setting it to NULL
 		 * here, but that would break valid coding patterns that keep the
-		 * ident elsewhere, e.g. in a parent context.  Another idea is to use
-		 * MemoryContextContains(), but we don't require ident strings to be
-		 * in separately-palloc'd chunks, so that risks false positives.  So
-		 * for now we assume the programmer got it right.
+		 * ident elsewhere, e.g. in a parent context.  So for now we assume
+		 * the programmer got it right.
 		 */
 
 		context->methods->reset(context);
@@ -482,15 +480,6 @@ MemoryContextAllowInCriticalSection(MemoryContext context, bool allow)
 MemoryContext
 GetMemoryChunkContext(void *pointer)
 {
-	/*
-	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-	 * allocated chunk.
-	 */
-	Assert(pointer != NULL);
-	Assert(pointer == (void *) MAXALIGN(pointer));
-	/* adding further Asserts here? See pre-checks in MemoryContextContains */
-
 	return MCXT_METHOD(pointer, get_chunk_context) (pointer);
 }
 
@@ -812,49 +801,6 @@ MemoryContextCheck(MemoryContext context)
 		MemoryContextCheck(child);
 }
 #endif
-
-/*
- * MemoryContextContains
- *		Detect whether an allocated chunk of memory belongs to a given
- *		context or not.
- *
- * Caution: 'pointer' must point to a pointer which was allocated by a
- * MemoryContext.  It's not safe or valid to use this function on arbitrary
- * pointers as obtaining the MemoryContext which 'pointer' belongs to requires
- * possibly several pointer dereferences.
- */
-bool
-MemoryContextContains(MemoryContext context, void *pointer)
-{
-	/*
-	 * Temporarily make this always return false as we don't yet have a fully
-	 * baked idea on how to make it work correctly with the new MemoryChunk
-	 * code.
-	 */
-	return false;
-
-#ifdef NOT_USED
-	MemoryContext ptr_context;
-
-	/*
-	 * NB: We must perform run-time checks here which GetMemoryChunkContext()
-	 * does as assertions before calling GetMemoryChunkContext().
-	 *
-	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-	 * allocated chunk.
-	 */
-	if (pointer == NULL || pointer != (void *) MAXALIGN(pointer))
-		return false;
-
-	/*
-	 * OK, it's probably safe to look at the context.
-	 */
-	ptr_context = GetMemoryChunkContext(pointer);
-
-	return ptr_context == context;
-#endif
-}
 
 /*
  * MemoryContextCreate
