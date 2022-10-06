@@ -42,6 +42,7 @@ typedef struct
 extern int	t_isdigit(const char *ptr);
 extern int	t_isspace(const char *ptr);
 extern int	t_isalpha(const char *ptr);
+extern int	t_isalnum(const char *ptr);
 extern int	t_isprint(const char *ptr);
 
 extern char *lowerstr(const char *str);

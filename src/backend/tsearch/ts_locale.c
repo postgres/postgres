@@ -82,6 +82,22 @@ t_isalpha(const char *ptr)
 }
 
 int
+t_isalnum(const char *ptr)
+{
+	int			clen = pg_mblen(ptr);
+	wchar_t		character[WC_BUF_LEN];
+	Oid			collation = DEFAULT_COLLATION_OID;	/* TODO */
+	pg_locale_t mylocale = 0;	/* TODO */
+
+	if (clen == 1 || lc_ctype_is_c(collation))
+		return isalnum(TOUCHAR(ptr));
+
+	char2wchar(character, WC_BUF_LEN, ptr, clen, mylocale);
+
+	return iswalnum((wint_t) character[0]);
+}
+
+int
 t_isprint(const char *ptr)
 {
 	int			clen = pg_mblen(ptr);

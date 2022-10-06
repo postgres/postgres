@@ -248,7 +248,7 @@ parse_or_operator(TSQueryParserState pstate)
 		return false;
 
 	/* it shouldn't be a part of any word */
-	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
+	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalnum(ptr))
 		return false;
 
 	for (;;)
