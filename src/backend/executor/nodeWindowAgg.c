@@ -630,20 +630,13 @@ finalize_windowaggregate(WindowAggState *winstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*result = peraggstate->transValue;
+		*result =
+			MakeExpandedObjectReadOnly(peraggstate->transValue,
+									   peraggstate->transValueIsNull,
+									   peraggstate->transtypeLen);
 		*isnull = peraggstate->transValueIsNull;
 	}
 
-	/*
-	 * If result is pass-by-ref, make sure it is in the right context.
-	 */
-	if (!peraggstate->resulttypeByVal && !*isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*result)))
-		*result = datumCopy(*result,
-							peraggstate->resulttypeByVal,
-							peraggstate->resulttypeLen);
 	MemoryContextSwitchTo(oldContext);
 }
 
@@ -1057,13 +1050,14 @@ eval_windowfunction(WindowAggState *winstate, WindowStatePerFunc perfuncstate,
 	*isnull = fcinfo->isnull;
 
 	/*
-	 * Make sure pass-by-ref data is allocated in the appropriate context. (We
-	 * need this in case the function returns a pointer into some short-lived
-	 * tuple, as is entirely possible.)
+	 * The window function might have returned a pass-by-ref result that's
+	 * just a pointer into one of the WindowObject's temporary slots.  That's
+	 * not a problem if it's the only window function using the WindowObject;
+	 * but if there's more than one function, we'd better copy the result to
+	 * ensure it's not clobbered by later window functions.
 	 */
 	if (!perfuncstate->resulttypeByVal && !fcinfo->isnull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*result)))
+		winstate->numfuncs > 1)
 		*result = datumCopy(*result,
 							perfuncstate->resulttypeByVal,
 							perfuncstate->resulttypeLen);
@@ -3111,6 +3105,10 @@ window_gettupleslot(WindowObject winobj, int64 pos, TupleTableSlot *slot)
 	/*
 	 * Now we should be on the tuple immediately before or after the one we
 	 * want, so just fetch forwards or backwards as appropriate.
+	 *
+	 * Notice that we tell tuplestore_gettupleslot to make a physical copy of
+	 * the fetched tuple.  This ensures that the slot's contents remain valid
+	 * through manipulations of the tuplestore, which some callers depend on.
 	 */
 	if (winobj->seekpos > pos)
 	{

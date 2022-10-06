@@ -1028,6 +1028,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
  *
  * The finalfn will be run, and the result delivered, in the
  * output-tuple context; caller's CurrentMemoryContext does not matter.
+ * (But note that in some cases, such as when there is no finalfn, the
+ * result might be a pointer to or into the agg's transition value.)
  *
  * The finalfn uses the state as set in the transno. This also might be
  * being used by another aggregate function, so it's important that we do
@@ -1112,20 +1114,12 @@ finalize_aggregate(AggState *aggstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*resultVal = pergroupstate->transValue;
+		*resultVal =
+			MakeExpandedObjectReadOnly(pergroupstate->transValue,
+									   pergroupstate->transValueIsNull,
+									   pertrans->transtypeLen);
 		*resultIsNull = pergroupstate->transValueIsNull;
 	}
-
-	/*
-	 * If result is pass-by-ref, make sure it is in the right context.
-	 */
-	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*resultVal)))
-		*resultVal = datumCopy(*resultVal,
-							   peragg->resulttypeByVal,
-							   peragg->resulttypeLen);
 
 	MemoryContextSwitchTo(oldContext);
 }
@@ -1176,18 +1170,12 @@ finalize_partialaggregate(AggState *aggstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*resultVal = pergroupstate->transValue;
+		*resultVal =
+			MakeExpandedObjectReadOnly(pergroupstate->transValue,
+									   pergroupstate->transValueIsNull,
+									   pertrans->transtypeLen);
 		*resultIsNull = pergroupstate->transValueIsNull;
 	}
-
-	/* If result is pass-by-ref, make sure it is in the right context. */
-	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*resultVal)))
-		*resultVal = datumCopy(*resultVal,
-							   peragg->resulttypeByVal,
-							   peragg->resulttypeLen);
 
 	MemoryContextSwitchTo(oldContext);
 }
