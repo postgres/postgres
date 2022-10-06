@@ -27,6 +27,7 @@ pgbench = executable('pgbench',
   pgbench_sources,
   dependencies: [frontend_code, libpq, thread_dep],
   include_directories: include_directories('.'),
+  c_args: host_system == 'windows' ? ['-DFD_SETSIZE=1024'] : [],
   kwargs: default_bin_args,
 )
 bin_targets += pgbench

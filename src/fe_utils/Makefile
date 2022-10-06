@@ -34,6 +34,10 @@ OBJS = \
 	simple_list.o \
 	string_utils.o
 
+ifeq ($(PORTNAME), win32)
+override CPPFLAGS += -DFD_SETSIZE=1024
+endif
+
 all: libpgfeutils.a
 
 libpgfeutils.a: $(OBJS)

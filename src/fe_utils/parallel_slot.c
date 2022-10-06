@@ -12,8 +12,8 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef WIN32
-#define FD_SETSIZE 1024			/* must set before winsock2.h is included */
+#if defined(WIN32) && FD_SETSIZE < 1024
+#error FD_SETSIZE needs to have been increased
 #endif
 
 #include "postgres_fe.h"
