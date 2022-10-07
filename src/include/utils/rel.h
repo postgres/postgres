@@ -572,22 +572,21 @@ RelationGetSmgr(Relation rel)
 		smgrsetowner(&(rel->rd_smgr), smgropen(rel->rd_locator, rel->rd_backend));
 	return rel->rd_smgr;
 }
-#endif
 
 /*
  * RelationCloseSmgr
  *		Close the relation at the smgr level, if not already done.
- *
- * Note: smgrclose should unhook from owner pointer, hence the Assert.
  */
-#define RelationCloseSmgr(relation) \
-	do { \
-		if ((relation)->rd_smgr != NULL) \
-		{ \
-			smgrclose((relation)->rd_smgr); \
-			Assert((relation)->rd_smgr == NULL); \
-		} \
-	} while (0)
+static inline void
+RelationCloseSmgr(Relation relation)
+{
+	if (relation->rd_smgr != NULL)
+		smgrclose(relation->rd_smgr);
+
+	/* smgrclose should unhook from owner pointer */
+	Assert(relation->rd_smgr == NULL);
+}
+#endif							/* !FRONTEND */
 
 /*
  * RelationGetTargetBlock
