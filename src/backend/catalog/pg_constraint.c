@@ -974,8 +974,12 @@ get_relation_constraint_attnos(Oid relid, const char *conname,
 }
 
 /*
- * Return the OID of the constraint associated with the given index in the
+ * Return the OID of the constraint enforced by the given index in the
  * given relation; or InvalidOid if no such index is catalogued.
+ *
+ * Much like get_constraint_index, this function is concerned only with the
+ * one constraint that "owns" the given index.  Therefore, constraints of
+ * types other than unique, primary-key, and exclusion are ignored.
  */
 Oid
 get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
@@ -1000,6 +1004,13 @@ get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
 		Form_pg_constraint constrForm;
 
 		constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		/* See above */
+		if (constrForm->contype != CONSTRAINT_PRIMARY &&
+			constrForm->contype != CONSTRAINT_UNIQUE &&
+			constrForm->contype != CONSTRAINT_EXCLUSION)
+			continue;
+
 		if (constrForm->conindid == indexId)
 		{
 			constraintId = constrForm->oid;
