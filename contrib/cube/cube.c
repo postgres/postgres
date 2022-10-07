@@ -925,7 +925,7 @@ rt_cube_size(NDBOX *a, double *size)
 	{
 		result = 1.0;
 		for (i = 0; i < DIM(a); i++)
-			result *= Abs(UR_COORD(a, i) - LL_COORD(a, i));
+			result *= fabs(UR_COORD(a, i) - LL_COORD(a, i));
 	}
 	*size = result;
 }

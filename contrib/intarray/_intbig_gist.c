@@ -3,6 +3,8 @@
  */
 #include "postgres.h"
 
+#include <math.h>
+
 #include "_int.h"
 #include "access/gist.h"
 #include "access/reloptions.h"
@@ -389,7 +391,7 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 		_j = GETENTRY(entryvec, j);
 		size_alpha = hemdist(datum_l, _j, siglen);
 		size_beta = hemdist(datum_r, _j, siglen);
-		costvector[j - 1].cost = Abs(size_alpha - size_beta);
+		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 

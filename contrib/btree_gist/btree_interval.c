@@ -83,7 +83,7 @@ intr2num(const Interval *i)
 static float8
 gbt_intv_dist(const void *a, const void *b, FmgrInfo *flinfo)
 {
-	return (float8) Abs(intr2num((const Interval *) a) - intr2num((const Interval *) b));
+	return fabs(intr2num((const Interval *) a) - intr2num((const Interval *) b));
 }
 
 /*

@@ -257,7 +257,7 @@ calc_rank_and(const float *w, TSVector t, TSQuery q)
 				{
 					for (p = 0; p < lenct; p++)
 					{
-						dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
+						dist = abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
 						if (dist || (dist == 0 && (pos[i] == POSNULL || pos[k] == POSNULL)))
 						{
 							float		curw;

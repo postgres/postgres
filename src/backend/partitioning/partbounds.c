@@ -3206,7 +3206,7 @@ check_new_partition_bound(char *relname, Relation parent,
 								 * datums list.
 								 */
 								PartitionRangeDatum *datum =
-								list_nth(spec->upperdatums, Abs(cmpval) - 1);
+								list_nth(spec->upperdatums, abs(cmpval) - 1);
 
 								/*
 								 * The new partition overlaps with the
@@ -3232,7 +3232,7 @@ check_new_partition_bound(char *relname, Relation parent,
 						 * if we have equality, point to the first one.
 						 */
 						datum = cmpval == 0 ? linitial(spec->lowerdatums) :
-							list_nth(spec->lowerdatums, Abs(cmpval) - 1);
+							list_nth(spec->lowerdatums, abs(cmpval) - 1);
 						overlap = true;
 						overlap_location = datum->location;
 						with = boundinfo->indexes[offset + 1];

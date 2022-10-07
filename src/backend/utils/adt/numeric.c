@@ -8870,7 +8870,7 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 		if (qdigit != 0)
 		{
 			/* Do we need to normalize now? */
-			maxdiv += Abs(qdigit);
+			maxdiv += abs(qdigit);
 			if (maxdiv > (INT_MAX - INT_MAX / NBASE - 1) / (NBASE - 1))
 			{
 				/*
@@ -8923,7 +8923,7 @@ div_var_fast(const NumericVar *var1, const NumericVar *var2,
 				fquotient = fdividend * fdivisorinverse;
 				qdigit = (fquotient >= 0.0) ? ((int) fquotient) :
 					(((int) fquotient) - 1);	/* truncate towards -infinity */
-				maxdiv += Abs(qdigit);
+				maxdiv += abs(qdigit);
 			}
 
 			/*
@@ -9107,7 +9107,7 @@ div_var_int(const NumericVar *var, int ival, int ival_weight,
 	 * become as large as divisor * NBASE - 1, and so it requires a 64-bit
 	 * integer if this exceeds UINT_MAX.
 	 */
-	divisor = Abs(ival);
+	divisor = abs(ival);
 
 	if (divisor <= UINT_MAX / NBASE)
 	{
@@ -9948,7 +9948,7 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 
 	/* Guard against overflow/underflow */
 	/* If you change this limit, see also power_var()'s limit */
-	if (Abs(val) >= NUMERIC_MAX_RESULT_SCALE * 3)
+	if (fabs(val) >= NUMERIC_MAX_RESULT_SCALE * 3)
 	{
 		if (val > 0)
 			ereport(ERROR,
@@ -9966,15 +9966,15 @@ exp_var(const NumericVar *arg, NumericVar *result, int rscale)
 	 * Reduce x to the range -0.01 <= x <= 0.01 (approximately) by dividing by
 	 * 2^ndiv2, to improve the convergence rate of the Taylor series.
 	 *
-	 * Note that the overflow check above ensures that Abs(x) < 6000, which
+	 * Note that the overflow check above ensures that fabs(x) < 6000, which
 	 * means that ndiv2 <= 20 here.
 	 */
-	if (Abs(val) > 0.01)
+	if (fabs(val) > 0.01)
 	{
 		ndiv2 = 1;
 		val /= 2;
 
-		while (Abs(val) > 0.01)
+		while (fabs(val) > 0.01)
 		{
 			ndiv2++;
 			val /= 2;
@@ -10116,7 +10116,7 @@ estimate_ln_dweight(const NumericVar *var)
 			 *----------
 			 */
 			ln_var = log((double) digits) + dweight * 2.302585092994046;
-			ln_dweight = (int) log10(Abs(ln_var));
+			ln_dweight = (int) log10(fabs(ln_var));
 		}
 		else
 		{
@@ -10427,7 +10427,7 @@ power_var(const NumericVar *base, const NumericVar *exp, NumericVar *result)
 	val = numericvar_to_double_no_overflow(&ln_num);
 
 	/* initial overflow/underflow test with fuzz factor */
-	if (Abs(val) > NUMERIC_MAX_RESULT_SCALE * 3.01)
+	if (fabs(val) > NUMERIC_MAX_RESULT_SCALE * 3.01)
 	{
 		if (val > 0)
 			ereport(ERROR,
@@ -10583,7 +10583,7 @@ power_var_int(const NumericVar *base, int exp, NumericVar *result, int rscale)
 	 * Now we can proceed with the multiplications.
 	 */
 	neg = (exp < 0);
-	mask = Abs(exp);
+	mask = abs(exp);
 
 	init_var(&base_prod);
 	set_var_from_var(base, &base_prod);

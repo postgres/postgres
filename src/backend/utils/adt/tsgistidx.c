@@ -700,7 +700,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 		costvector[j - 1].pos = j;
 		size_alpha = hemdistcache(&(cache[seed_1]), &(cache[j]), siglen);
 		size_beta = hemdistcache(&(cache[seed_2]), &(cache[j]), siglen);
-		costvector[j - 1].cost = Abs(size_alpha - size_beta);
+		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 

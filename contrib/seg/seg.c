@@ -952,7 +952,7 @@ restore(char *result, float val, int n)
 	}
 	else
 	{
-		if (Abs(exp) <= 4)
+		if (abs(exp) <= 4)
 		{
 			/*
 			 * remove the decimal point from the mantissa and write the digits
@@ -1039,7 +1039,7 @@ restore(char *result, float val, int n)
 			}
 		}
 
-		/* do nothing for Abs(exp) > 4; %e must be OK */
+		/* do nothing for abs(exp) > 4; %e must be OK */
 		/* just get rid of zeroes after [eE]- and +zeroes after [Ee]. */
 
 		/* ... this is not done yet. */

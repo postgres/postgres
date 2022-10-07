@@ -743,8 +743,8 @@ range_gist_picksplit(PG_FUNCTION_ARGS)
 			emptyCount = total_count - nonEmptyCount;
 
 			if (infCount > 0 && nonInfCount > 0 &&
-				(Abs(infCount - nonInfCount) <=
-				 Abs(emptyCount - nonEmptyCount)))
+				(abs(infCount - nonInfCount) <=
+				 abs(emptyCount - nonEmptyCount)))
 			{
 				classes_groups[CLS_NORMAL] = SPLIT_RIGHT;
 				classes_groups[CLS_CONTAIN_EMPTY] = SPLIT_RIGHT;

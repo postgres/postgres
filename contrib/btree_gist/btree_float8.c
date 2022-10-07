@@ -79,7 +79,7 @@ gbt_float8_dist(const void *a, const void *b, FmgrInfo *flinfo)
 	r = arg1 - arg2;
 	if (unlikely(isinf(r)) && !isinf(arg1) && !isinf(arg2))
 		float_overflow_error();
-	return Abs(r);
+	return fabs(r);
 }
 
 
@@ -110,7 +110,7 @@ float8_dist(PG_FUNCTION_ARGS)
 	if (unlikely(isinf(r)) && !isinf(a) && !isinf(b))
 		float_overflow_error();
 
-	PG_RETURN_FLOAT8(Abs(r));
+	PG_RETURN_FLOAT8(fabs(r));
 }
 
 /**************************************************

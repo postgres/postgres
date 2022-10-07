@@ -5378,7 +5378,7 @@ estimate_variable_size(struct config_generic *gconf)
 				 * small values.  Maximum value is 2147483647, i.e. 10 chars.
 				 * Include one byte for sign.
 				 */
-				if (Abs(*conf->variable) < 1000)
+				if (abs(*conf->variable) < 1000)
 					valsize = 3 + 1;
 				else
 					valsize = 10 + 1;

@@ -7835,7 +7835,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double		varCorrelation = 0.0;
 
 				if (sslot.nnumbers > 0)
-					varCorrelation = Abs(sslot.numbers[0]);
+					varCorrelation = fabs(sslot.numbers[0]);
 
 				if (varCorrelation > *indexCorrelation)
 					*indexCorrelation = varCorrelation;
