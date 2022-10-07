@@ -78,6 +78,7 @@ endif
 pgcrypto = shared_module('pgcrypto',
   pgcrypto_sources,
   link_with: pgcrypto_link_with,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args + {
     'dependencies': [pgcrypto_deps, contrib_mod_args['dependencies']]
   },

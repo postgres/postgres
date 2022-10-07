@@ -62,6 +62,7 @@ postgres_lib = static_library('postgres_lib',
   backend_sources + timezone_sources + generated_backend_sources,
   link_whole: backend_link_with,
   dependencies: backend_build_deps,
+  c_pch: pch_postgres_h,
   kwargs: internal_lib_args,
 )
 
@@ -81,6 +82,10 @@ if cc.get_id() == 'msvc'
 
   backend_link_args += '/DEF:@0@'.format(postgres_def.full_path())
   backend_link_depends += postgres_def
+  # Due to the way msvc and meson's precompiled headers implementation
+  # interact, we need to have symbols from the full library available. Could
+  # be restricted to b_pch=true.
+  backend_link_with += postgres_lib
 
 elif host_system == 'aix'
   # The '.' argument leads mkldexport.sh to emit "#! .", which refers to the

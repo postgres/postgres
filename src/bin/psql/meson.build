@@ -44,6 +44,7 @@ endif
 
 psql = executable('psql',
   psql_sources,
+  c_pch: pch_postgres_fe_h,
   include_directories: include_directories('.'),
   dependencies: [frontend_code, libpq, readline],
   kwargs: default_bin_args,

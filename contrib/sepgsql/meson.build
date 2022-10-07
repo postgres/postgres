@@ -22,6 +22,7 @@ endif
 
 sepgsql = shared_module('sepgsql',
   sepgsql_sources,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args + {
     'dependencies': [selinux, contrib_mod_args['dependencies']],
   }

@@ -33,6 +33,7 @@ endif
 
 btree_gist = shared_module('btree_gist',
   btree_gist_sources,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
 contrib_targets += btree_gist

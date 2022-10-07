@@ -161,6 +161,7 @@ foreach name, opts : pgport_variants
     c_args = opts.get('c_args', []) + pgport_cflags[cflagname]
     cflag_libs += static_library('libpgport@0@_@1@'.format(name, cflagname),
       sources,
+      c_pch: pch_c_h,
       kwargs: opts + {
         'c_args': c_args,
         'build_by_default': false,
@@ -172,6 +173,7 @@ foreach name, opts : pgport_variants
   lib = static_library('libpgport@0@'.format(name),
       pgport_sources,
       link_with: cflag_libs,
+      c_pch: pch_c_h,
       kwargs: opts + {
         'dependencies': opts['dependencies'] + [ssl],
       }

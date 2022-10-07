@@ -102,6 +102,7 @@ endif
 ecpg_exe = executable('ecpg',
   ecpg_sources,
   include_directories: ['.', ecpg_inc, postgres_inc, libpq_inc],
+  c_pch: pch_postgres_fe_h,
   dependencies: [frontend_code],
   kwargs: default_bin_args,
 )

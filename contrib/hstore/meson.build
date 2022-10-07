@@ -18,6 +18,7 @@ endif
 
 hstore = shared_module('hstore',
   hstore_sources,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
 contrib_targets += hstore

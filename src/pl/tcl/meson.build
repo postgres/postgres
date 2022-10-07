@@ -22,6 +22,7 @@ endif
 
 pltcl = shared_module('pltcl',
   pltcl_sources,
+  c_pch: pch_postgres_h,
   include_directories: [include_directories('.'), postgres_inc],
   kwargs: pg_mod_args + {
     'dependencies': [tcl_dep, pg_mod_args['dependencies']],

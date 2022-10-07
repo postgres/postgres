@@ -48,6 +48,7 @@ endif
 
 plpgsql = shared_module('plpgsql',
   plpgsql_sources,
+  c_pch: pch_postgres_h,
   include_directories: include_directories('.'),
   kwargs: pg_mod_args,
 )

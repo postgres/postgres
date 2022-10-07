@@ -12,6 +12,7 @@ endif
 
 pgstattuple = shared_module('pgstattuple',
   pgstattuple_sources,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pgstattuple

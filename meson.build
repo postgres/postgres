@@ -15,6 +15,7 @@ project('postgresql',
   meson_version: '>=0.54',
   default_options: [
     'warning_level=1', #-Wall equivalent
+    'b_pch=false',
     'buildtype=release',
     # For compatibility with the autoconf build, set a default prefix. This
     # works even on windows, where it's a drive-relative path (i.e. when on

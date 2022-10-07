@@ -13,6 +13,7 @@ endif
 
 pg_trgm = shared_module('pg_trgm',
   pg_trgm_sources,
+  c_pch: pch_postgres_h,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pg_trgm
