@@ -112,9 +112,9 @@ backend_objs = [postgres_lib.extract_all_objects(recursive: false)]
 # On at least linux we don't actually need to pass in all the objects, but
 # at least on FreeBSD and Solaris we have to.
 #
-# XXX: The reason we don't use the objects for generated sources is that
-# hits a meson bug. Luckily we don't don't have probes in generated
-# sources...
+# XXX: The reason we don't use the objects for generated sources is that doing
+# so is not supported in older meson versions. Luckily we don't have probes in
+# generated sources...
 if dtrace.found() and host_system != 'darwin'
   backend_input += custom_target(
     'probes.o',
@@ -148,7 +148,7 @@ pg_mod_link_depend = []
 # or a [import] library derived from it. Set up the link flags for that.
 if mod_link_args_fmt.length() > 0
   # To avoid unnecessary build-time dependencies on other operating systems,
-  # only the dependency when it when necessary.
+  # only add the dependency when necessary.
   pg_mod_link_depend += postgres
 
   name = mod_link_with_name.format('postgres')

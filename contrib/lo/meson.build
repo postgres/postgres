@@ -2,6 +2,12 @@ lo_sources = files(
   'lo.c',
 )
 
+if host_system == 'windows'
+  lo_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'lo',
+    '--FILEDESC', 'lo - management for large objects',])
+endif
+
 lo = shared_module('lo',
   lo_sources,
   kwargs: contrib_mod_args,

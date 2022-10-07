@@ -1303,11 +1303,11 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 			}
 			else
 			{
-				RestrictInfo *rinfo = castNode(RestrictInfo, orarg);
+				RestrictInfo *ri = castNode(RestrictInfo, orarg);
 				List	   *orargs;
 
-				Assert(!restriction_is_or_clause(rinfo));
-				orargs = list_make1(rinfo);
+				Assert(!restriction_is_or_clause(ri));
+				orargs = list_make1(ri);
 
 				indlist = build_paths_for_OR(root, rel,
 											 orargs,

@@ -7,6 +7,12 @@ bloom_sources = files(
   'blvalidate.c',
 )
 
+if host_system == 'windows'
+  bloom_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'bloom',
+    '--FILEDESC', 'bloom access method - signature file based index',])
+endif
+
 bloom = shared_module('bloom',
   bloom_sources,
   kwargs: contrib_mod_args,

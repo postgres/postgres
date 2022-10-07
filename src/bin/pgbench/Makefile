@@ -18,6 +18,8 @@ LDFLAGS_INTERNAL += -L$(top_builddir)/src/fe_utils -lpgfeutils $(libpq_pgport)
 
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
+else
+override CPPFLAGS += -DFD_SETSIZE=1024
 endif
 LIBS += $(PTHREAD_LIBS)
 

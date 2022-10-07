@@ -657,6 +657,23 @@ select first_value(max(x)) over (), y
          ->  Seq Scan on tenk1
 (4 rows)
 
+-- window functions returning pass-by-ref values from different rows
+select x, lag(x, 1) over (order by x), lead(x, 3) over (order by x)
+from (select x::numeric as x from generate_series(1,10) x);
+ x  | lag | lead 
+----+-----+------
+  1 |     |    4
+  2 |   1 |    5
+  3 |   2 |    6
+  4 |   3 |    7
+  5 |   4 |    8
+  6 |   5 |    9
+  7 |   6 |   10
+  8 |   7 |     
+  9 |   8 |     
+ 10 |   9 |     
+(10 rows)
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),

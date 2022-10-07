@@ -2,10 +2,18 @@ if not uuid.found()
   subdir_done()
 endif
 
+uuid_ossp_sources = files(
+  'uuid-ossp.c',
+)
+
+if host_system == 'windows'
+  uuid_ossp_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'uuid-ossp',
+    '--FILEDESC', 'uuid-ossp - UUID generation',])
+endif
+
 uuid_ossp = shared_module('uuid-ossp',
-  files(
-    'uuid-ossp.c',
-  ),
+  uuid_ossp_sources,
   kwargs: contrib_mod_args + {
     'dependencies': [uuid, contrib_mod_args['dependencies']],
   },

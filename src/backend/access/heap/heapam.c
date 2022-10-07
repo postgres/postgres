@@ -6283,14 +6283,14 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 		 */
 		if (ISUPDATE_from_mxstatus(members[i].status))
 		{
-			TransactionId xid = members[i].xid;
+			TransactionId txid = members[i].xid;
 
-			Assert(TransactionIdIsValid(xid));
-			if (TransactionIdPrecedes(xid, relfrozenxid))
+			Assert(TransactionIdIsValid(txid));
+			if (TransactionIdPrecedes(txid, relfrozenxid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
 						 errmsg_internal("found update xid %u from before relfrozenxid %u",
-										 xid, relfrozenxid)));
+										 txid, relfrozenxid)));
 
 			/*
 			 * It's an update; should we keep it?  If the transaction is known
@@ -6304,13 +6304,13 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 			 * because of race conditions explained in detail in
 			 * heapam_visibility.c.
 			 */
-			if (TransactionIdIsCurrentTransactionId(xid) ||
-				TransactionIdIsInProgress(xid))
+			if (TransactionIdIsCurrentTransactionId(txid) ||
+				TransactionIdIsInProgress(txid))
 			{
 				Assert(!TransactionIdIsValid(update_xid));
-				update_xid = xid;
+				update_xid = txid;
 			}
-			else if (TransactionIdDidCommit(xid))
+			else if (TransactionIdDidCommit(txid))
 			{
 				/*
 				 * The transaction committed, so we can tell caller to set
@@ -6319,7 +6319,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
 				 */
 				Assert(!TransactionIdIsValid(update_xid));
 				update_committed = true;
-				update_xid = xid;
+				update_xid = txid;
 			}
 			else
 			{

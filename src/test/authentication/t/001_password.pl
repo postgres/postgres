@@ -24,28 +24,30 @@ if (!$use_unix_sockets)
 sub reset_pg_hba
 {
 	my $node       = shift;
+	my $database   = shift;
+	my $role       = shift;
 	my $hba_method = shift;
 
 	unlink($node->data_dir . '/pg_hba.conf');
 	# just for testing purposes, use a continuation line
-	$node->append_conf('pg_hba.conf', "local all all\\\n $hba_method");
+	$node->append_conf('pg_hba.conf',
+		"local $database $role\\\n $hba_method");
 	$node->reload;
 	return;
 }
 
-# Test access for a single role, useful to wrap all tests into one.  Extra
-# named parameters are passed to connect_ok/fails as-is.
-sub test_role
+# Test access for a connection string, useful to wrap all tests into one.
+# Extra named parameters are passed to connect_ok/fails as-is.
+sub test_conn
 {
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-	my ($node, $role, $method, $expected_res, %params) = @_;
+	my ($node, $connstr, $method, $expected_res, %params) = @_;
 	my $status_string = 'failed';
 	$status_string = 'success' if ($expected_res eq 0);
 
-	my $connstr = "user=$role";
 	my $testname =
-	  "authentication $status_string for method $method, role $role";
+	  "authentication $status_string for method $method, connstr $connstr";
 
 	if ($expected_res eq 0)
 	{
@@ -81,10 +83,10 @@ $ENV{"PGPASSWORD"} = 'pass';
 
 # For "trust" method, all users should be able to connect. These users are not
 # considered to be authenticated.
-reset_pg_hba($node, 'trust');
-test_role($node, 'scram_role', 'trust', 0,
+reset_pg_hba($node, 'all', 'all', 'trust');
+test_conn($node, 'user=scram_role', 'trust', 0,
 	log_unlike => [qr/connection authenticated:/]);
-test_role($node, 'md5_role', 'trust', 0,
+test_conn($node, 'user=md5_role', 'trust', 0,
 	log_unlike => [qr/connection authenticated:/]);
 
 # SYSTEM_USER is null when not authenticated.
@@ -106,40 +108,40 @@ is($res, 't',
 );
 
 # For plain "password" method, all users should also be able to connect.
-reset_pg_hba($node, 'password');
-test_role($node, 'scram_role', 'password', 0,
+reset_pg_hba($node, 'all', 'all', 'password');
+test_conn($node, 'user=scram_role', 'password', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="scram_role" method=password/]);
-test_role($node, 'md5_role', 'password', 0,
+test_conn($node, 'user=md5_role', 'password', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="md5_role" method=password/]);
 
 # For "scram-sha-256" method, user "scram_role" should be able to connect.
-reset_pg_hba($node, 'scram-sha-256');
-test_role(
+reset_pg_hba($node, 'all', 'all', 'scram-sha-256');
+test_conn(
 	$node,
-	'scram_role',
+	'user=scram_role',
 	'scram-sha-256',
 	0,
 	log_like => [
 		qr/connection authenticated: identity="scram_role" method=scram-sha-256/
 	]);
-test_role($node, 'md5_role', 'scram-sha-256', 2,
+test_conn($node, 'user=md5_role', 'scram-sha-256', 2,
 	log_unlike => [qr/connection authenticated:/]);
 
 # Test that bad passwords are rejected.
 $ENV{"PGPASSWORD"} = 'badpass';
-test_role($node, 'scram_role', 'scram-sha-256', 2,
+test_conn($node, 'user=scram_role', 'scram-sha-256', 2,
 	log_unlike => [qr/connection authenticated:/]);
 $ENV{"PGPASSWORD"} = 'pass';
 
 # For "md5" method, all users should be able to connect (SCRAM
 # authentication will be performed for the user with a SCRAM secret.)
-reset_pg_hba($node, 'md5');
-test_role($node, 'scram_role', 'md5', 0,
+reset_pg_hba($node, 'all', 'all', 'md5');
+test_conn($node, 'user=scram_role', 'md5', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="scram_role" method=md5/]);
-test_role($node, 'md5_role', 'md5', 0,
+test_conn($node, 'user=md5_role', 'md5', 0,
 	log_like =>
 	  [qr/connection authenticated: identity="md5_role" method=md5/]);
 
@@ -164,13 +166,13 @@ is($res, 't',
 
 # Tests for channel binding without SSL.
 # Using the password authentication method; channel binding can't work
-reset_pg_hba($node, 'password');
+reset_pg_hba($node, 'all', 'all', 'password');
 $ENV{"PGCHANNELBINDING"} = 'require';
-test_role($node, 'scram_role', 'scram-sha-256', 2);
+test_conn($node, 'user=scram_role', 'scram-sha-256', 2);
 # SSL not in use; channel binding still can't work
-reset_pg_hba($node, 'scram-sha-256');
+reset_pg_hba($node, 'all', 'all', 'scram-sha-256');
 $ENV{"PGCHANNELBINDING"} = 'require';
-test_role($node, 'scram_role', 'scram-sha-256', 2);
+test_conn($node, 'user=scram_role', 'scram-sha-256', 2);
 
 # Test .pgpass processing; but use a temp file, don't overwrite the real one!
 my $pgpassfile = "${PostgreSQL::Test::Utils::tmp_check}/pgpass";
@@ -187,15 +189,15 @@ append_to_file(
 !);
 chmod 0600, $pgpassfile or die;
 
-reset_pg_hba($node, 'password');
-test_role($node, 'scram_role', 'password from pgpass', 0);
-test_role($node, 'md5_role',   'password from pgpass', 2);
+reset_pg_hba($node, 'all', 'all', 'password');
+test_conn($node, 'user=scram_role', 'password from pgpass', 0);
+test_conn($node, 'user=md5_role',   'password from pgpass', 2);
 
 append_to_file(
 	$pgpassfile, qq!
 *:*:*:md5_role:p\\ass
 !);
 
-test_role($node, 'md5_role', 'password from pgpass', 0);
+test_conn($node, 'user=md5_role', 'password from pgpass', 0);
 
 done_testing();

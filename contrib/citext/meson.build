@@ -2,6 +2,12 @@ citext_sources = files(
   'citext.c',
 )
 
+if host_system == 'windows'
+  citext_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'citext',
+    '--FILEDESC', 'citext - case-insensitive character string data type',])
+endif
+
 citext = shared_module('citext',
   citext_sources,
   kwargs: contrib_mod_args,

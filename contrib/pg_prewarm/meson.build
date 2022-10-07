@@ -1,8 +1,16 @@
+pg_prewarm_sources = files(
+  'autoprewarm.c',
+  'pg_prewarm.c',
+)
+
+if host_system == 'windows'
+  pg_prewarm_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_prewarm',
+    '--FILEDESC', 'pg_prewarm - preload relation data into system buffer cache',])
+endif
+
 pg_prewarm = shared_module('pg_prewarm',
-  files(
-    'autoprewarm.c',
-    'pg_prewarm.c',
-  ),
+  pg_prewarm_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pg_prewarm

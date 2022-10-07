@@ -14,6 +14,12 @@ sepgsql_sources = files(
   'uavc.c',
 )
 
+if host_system == 'windows'
+  sepgsql_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'sepgsql',
+    '--FILEDESC', 'sepgsql - SELinux integration',])
+endif
+
 sepgsql = shared_module('sepgsql',
   sepgsql_sources,
   kwargs: contrib_mod_args + {

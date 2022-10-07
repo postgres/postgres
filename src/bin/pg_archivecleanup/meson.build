@@ -1,5 +1,15 @@
+pg_archivecleanup_sources = files(
+  'pg_archivecleanup.c',
+)
+
+if host_system == 'windows'
+  pg_archivecleanup_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_archivecleanup',
+    '--FILEDESC', 'pg_archivecleanup - cleans archive when used with streaming replication',])
+endif
+
 pg_archivecleanup = executable('pg_archivecleanup',
-  ['pg_archivecleanup.c'],
+  pg_archivecleanup_sources,
   dependencies: [frontend_code],
   kwargs: default_bin_args,
 )

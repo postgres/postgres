@@ -1,7 +1,15 @@
+unaccent_sources = files(
+  'unaccent.c',
+)
+
+if host_system == 'windows'
+  unaccent_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'unaccent',
+    '--FILEDESC', 'unaccent - text search dictionary that removes accents',])
+endif
+
 unaccent = shared_module('unaccent',
-  files(
-    'unaccent.c',
-  ),
+  unaccent_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += unaccent

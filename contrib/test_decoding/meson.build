@@ -2,6 +2,12 @@ test_decoding_sources = files(
   'test_decoding.c',
 )
 
+if host_system == 'windows'
+  test_decoding_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'test_decoding',
+    '--FILEDESC', 'test_decoding - example of a logical decoding output plugin',])
+endif
+
 test_decoding = shared_module('test_decoding',
   test_decoding_sources,
   kwargs: contrib_mod_args,

@@ -6,6 +6,12 @@ postgres_fdw_sources = files(
   'shippable.c',
 )
 
+if host_system == 'windows'
+  postgres_fdw_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'postgres_fdw',
+    '--FILEDESC', 'postgres_fdw - foreign data wrapper for PostgreSQL',])
+endif
+
 postgres_fdw = shared_module('postgres_fdw',
   postgres_fdw_sources,
   kwargs: contrib_mod_args + {

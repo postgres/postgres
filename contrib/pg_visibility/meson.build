@@ -1,7 +1,15 @@
+pg_visibility_sources = files(
+  'pg_visibility.c',
+)
+
+if host_system == 'windows'
+  pg_visibility_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_visibility',
+    '--FILEDESC', 'pg_visibility - page visibility information',])
+endif
+
 pg_visibility = shared_module('pg_visibility',
-  files(
-    'pg_visibility.c',
-  ),
+  pg_visibility_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pg_visibility

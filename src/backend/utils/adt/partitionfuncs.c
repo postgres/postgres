@@ -238,9 +238,9 @@ pg_partition_ancestors(PG_FUNCTION_ARGS)
 
 	if (funcctx->call_cntr < list_length(ancestors))
 	{
-		Oid			relid = list_nth_oid(ancestors, funcctx->call_cntr);
+		Oid			resultrel = list_nth_oid(ancestors, funcctx->call_cntr);
 
-		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
+		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(resultrel));
 	}
 
 	SRF_RETURN_DONE(funcctx);

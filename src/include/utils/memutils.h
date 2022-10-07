@@ -96,7 +96,6 @@ extern void MemoryContextAllowInCriticalSection(MemoryContext context,
 #ifdef MEMORY_CONTEXT_CHECKING
 extern void MemoryContextCheck(MemoryContext context);
 #endif
-extern bool MemoryContextContains(MemoryContext context, void *pointer);
 
 /* Handy macro for copying and assigning context ID ... but note double eval */
 #define MemoryContextCopyAndSetIdentifier(cxt, id) \

@@ -6,6 +6,12 @@ hstore_plpython_sources = files(
   'hstore_plpython.c',
 )
 
+if host_system == 'windows'
+  hstore_plpython_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'hstore_plpython3',
+    '--FILEDESC', 'hstore_plpython - hstore transform for plpython',])
+endif
+
 hstore_plpython = shared_module('hstore_plpython3',
   hstore_plpython_sources,
   include_directories: [plpython_inc, hstore_inc, ],

@@ -310,39 +310,47 @@ extern PGDLLIMPORT ErrorContextCallback *error_context_stack;
  * pedantry; we have seen bugs from compilers improperly optimizing code
  * away when such a variable was not marked.  Beware that gcc's -Wclobbered
  * warnings are just about entirely useless for catching such oversights.
+ *
+ * Each of these macros accepts an optional argument which can be specified
+ * to apply a suffix to the variables declared within the macros.  This suffix
+ * can be used to avoid the compiler emitting warnings about shadowed
+ * variables when compiling with -Wshadow in situations where nested PG_TRY()
+ * statements are required.  The optional suffix may contain any character
+ * that's allowed in a variable name.  The suffix, if specified, must be the
+ * same within each component macro of the given PG_TRY() statement.
  *----------
  */
-#define PG_TRY()  \
+#define PG_TRY(...)  \
 	do { \
-		sigjmp_buf *_save_exception_stack = PG_exception_stack; \
-		ErrorContextCallback *_save_context_stack = error_context_stack; \
-		sigjmp_buf _local_sigjmp_buf; \
-		bool _do_rethrow = false; \
-		if (sigsetjmp(_local_sigjmp_buf, 0) == 0) \
+		sigjmp_buf *_save_exception_stack##__VA_ARGS__ = PG_exception_stack; \
+		ErrorContextCallback *_save_context_stack##__VA_ARGS__ = error_context_stack; \
+		sigjmp_buf _local_sigjmp_buf##__VA_ARGS__; \
+		bool _do_rethrow##__VA_ARGS__ = false; \
+		if (sigsetjmp(_local_sigjmp_buf##__VA_ARGS__, 0) == 0) \
 		{ \
-			PG_exception_stack = &_local_sigjmp_buf
+			PG_exception_stack = &_local_sigjmp_buf##__VA_ARGS__
 
-#define PG_CATCH()	\
+#define PG_CATCH(...)	\
 		} \
 		else \
 		{ \
-			PG_exception_stack = _save_exception_stack; \
-			error_context_stack = _save_context_stack
+			PG_exception_stack = _save_exception_stack##__VA_ARGS__; \
+			error_context_stack = _save_context_stack##__VA_ARGS__
 
-#define PG_FINALLY() \
+#define PG_FINALLY(...) \
 		} \
 		else \
-			_do_rethrow = true; \
+			_do_rethrow##__VA_ARGS__ = true; \
 		{ \
-			PG_exception_stack = _save_exception_stack; \
-			error_context_stack = _save_context_stack
+			PG_exception_stack = _save_exception_stack##__VA_ARGS__; \
+			error_context_stack = _save_context_stack##__VA_ARGS__
 
-#define PG_END_TRY()  \
+#define PG_END_TRY(...)  \
 		} \
-		if (_do_rethrow) \
+		if (_do_rethrow##__VA_ARGS__) \
 				PG_RE_THROW(); \
-		PG_exception_stack = _save_exception_stack; \
-		error_context_stack = _save_context_stack; \
+		PG_exception_stack = _save_exception_stack##__VA_ARGS__; \
+		error_context_stack = _save_context_stack##__VA_ARGS__; \
 	} while (0)
 
 /*

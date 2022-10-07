@@ -1,5 +1,15 @@
+btree_gin_sources = files(
+  'btree_gin.c',
+)
+
+if host_system == 'windows'
+  btree_gin_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'btree_gin',
+    '--FILEDESC', 'btree_gin - B-tree equivalent GIN operator classes',])
+endif
+
 btree_gin = shared_module('btree_gin',
-  files('btree_gin.c'),
+  btree_gin_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += btree_gin

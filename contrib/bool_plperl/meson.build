@@ -6,6 +6,12 @@ bool_plperl_sources = files(
   'bool_plperl.c',
 )
 
+if host_system == 'windows'
+  bool_plperl_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'bool_plperl',
+    '--FILEDESC', 'bool_plperl - bool transform for plperl',])
+endif
+
 bool_plperl = shared_module('bool_plperl',
   bool_plperl_sources,
   include_directories: [plperl_inc, include_directories('.')],

@@ -1,9 +1,17 @@
+pgstattuple_sources = files(
+  'pgstatapprox.c',
+  'pgstatindex.c',
+  'pgstattuple.c',
+)
+
+if host_system == 'windows'
+  pgstattuple_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pgstattuple',
+    '--FILEDESC', 'pgstattuple - tuple-level statistics',])
+endif
+
 pgstattuple = shared_module('pgstattuple',
-  files(
-    'pgstatapprox.c',
-    'pgstatindex.c',
-    'pgstattuple.c',
-  ),
+  pgstattuple_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += pgstattuple

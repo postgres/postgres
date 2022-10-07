@@ -1,5 +1,15 @@
+adminpack_sources = files(
+  'adminpack.c',
+)
+
+if host_system == 'windows'
+  adminpack_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'adminpack',
+    '--FILEDESC', 'adminpack - support functions for pgAdmin',])
+endif
+
 adminpack = shared_module('adminpack',
-  ['adminpack.c'],
+  adminpack_sources,
   kwargs: contrib_mod_args,
 )
 contrib_targets += adminpack

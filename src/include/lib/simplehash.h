@@ -546,13 +546,13 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 		if (oldentry->status == SH_STATUS_IN_USE)
 		{
 			uint32		hash;
-			uint32		startelem;
+			uint32		startelem2;
 			uint32		curelem;
 			SH_ELEMENT_TYPE *newentry;
 
 			hash = SH_ENTRY_HASH(tb, oldentry);
-			startelem = SH_INITIAL_BUCKET(tb, hash);
-			curelem = startelem;
+			startelem2 = SH_INITIAL_BUCKET(tb, hash);
+			curelem = startelem2;
 
 			/* find empty element to put data into */
 			while (true)
@@ -564,7 +564,7 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 					break;
 				}
 
-				curelem = SH_NEXT(tb, curelem, startelem);
+				curelem = SH_NEXT(tb, curelem, startelem2);
 			}
 
 			/* copy entry to new slot */

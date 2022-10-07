@@ -24,6 +24,7 @@ fe_utils_sources += psqlscan
 fe_utils = static_library('libpgfeutils',
   fe_utils_sources + generated_headers,
   include_directories: [postgres_inc, libpq_inc],
+  c_args: host_system == 'windows' ? ['-DFD_SETSIZE=1024'] : [],
   dependencies: frontend_common_code,
   kwargs: default_lib_args,
 )

@@ -107,7 +107,7 @@ parse_publication_options(ParseState *pstate,
 		{
 			char	   *publish;
 			List	   *publish_list;
-			ListCell   *lc;
+			ListCell   *lc2;
 
 			if (*publish_given)
 				errorConflictingDefElem(defel, pstate);
@@ -131,9 +131,9 @@ parse_publication_options(ParseState *pstate,
 								"publish")));
 
 			/* Process the option list. */
-			foreach(lc, publish_list)
+			foreach(lc2, publish_list)
 			{
-				char	   *publish_opt = (char *) lfirst(lc);
+				char	   *publish_opt = (char *) lfirst(lc2);
 
 				if (strcmp(publish_opt, "insert") == 0)
 					pubactions->pubinsert = true;

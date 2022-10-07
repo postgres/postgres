@@ -23,6 +23,12 @@ spec_parser = custom_target('specparse',
 isolationtester_sources += spec_parser
 generated_sources += spec_parser.to_list()
 
+if host_system == 'windows'
+  isolation_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pg_isolation_regress',
+    '--FILEDESC', 'pg_isolation_regress - multi-client test driver',])
+endif
+
 pg_isolation_regress = executable('pg_isolation_regress',
   isolation_sources,
   c_args: pg_regress_cflags,
@@ -33,6 +39,13 @@ pg_isolation_regress = executable('pg_isolation_regress',
   },
 )
 bin_targets += pg_isolation_regress
+
+
+if host_system == 'windows'
+  isolationtester_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'isolationtester',
+    '--FILEDESC', 'isolationtester - multi-client test driver',])
+endif
 
 isolationtester = executable('isolationtester',
   isolationtester_sources,

@@ -25,17 +25,16 @@ static char *
 getlexeme(char *start, char *end, int *len)
 {
 	char	   *ptr;
-	int			charlen;
 
-	while (start < end && (charlen = pg_mblen(start)) == 1 && t_iseq(start, '_'))
-		start += charlen;
+	while (start < end && t_iseq(start, '_'))
+		start += pg_mblen(start);
 
 	ptr = start;
 	if (ptr >= end)
 		return NULL;
 
-	while (ptr < end && !((charlen = pg_mblen(ptr)) == 1 && t_iseq(ptr, '_')))
-		ptr += charlen;
+	while (ptr < end && !t_iseq(ptr, '_'))
+		ptr += pg_mblen(ptr);
 
 	*len = ptr - start;
 	return start;

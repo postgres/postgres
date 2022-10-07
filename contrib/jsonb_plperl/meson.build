@@ -6,6 +6,12 @@ jsonb_plperl_sources = files(
   'jsonb_plperl.c',
 )
 
+if host_system == 'windows'
+  jsonb_plperl_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'jsonb_plperl',
+    '--FILEDESC', 'jsonb_plperl - jsonb transform for plperl',])
+endif
+
 jsonb_plperl = shared_module('jsonb_plperl',
   jsonb_plperl_sources,
   include_directories: [plperl_inc],

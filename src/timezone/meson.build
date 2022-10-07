@@ -28,6 +28,12 @@ if get_option('system_tzdata') == ''
   if meson.is_cross_build()
     zic = find_program(get_option('ZIC'), native: true, required: true)
   else
+    if host_system == 'windows'
+      zic_sources += rc_bin_gen.process(win32ver_rc, extra_args: [
+        '--NAME', 'zic',
+        '--FILEDESC', 'zic - time zone compiler',])
+    endif
+
     zic = executable('zic', zic_sources,
                      dependencies: [frontend_code],
                      kwargs: default_bin_args + {'install': false}

@@ -69,6 +69,12 @@ else
   pgcrypto_regress += 'pgp-zlib-DISABLED'
 endif
 
+if host_system == 'windows'
+  pgcrypto_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'pgcrypto',
+    '--FILEDESC', 'pgcrypto - cryptographic functions',])
+endif
+
 pgcrypto = shared_module('pgcrypto',
   pgcrypto_sources,
   link_with: pgcrypto_link_with,

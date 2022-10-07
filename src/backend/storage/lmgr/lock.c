@@ -3922,7 +3922,7 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 	SHM_QUEUE  *procLocks;
 	PROCLOCK   *proclock;
 	PROC_QUEUE *waitQueue;
-	PGPROC	   *proc;
+	PGPROC	   *queued_proc;
 	int			queue_size;
 	int			i;
 
@@ -3989,13 +3989,13 @@ GetSingleProcBlockerStatusData(PGPROC *blocked_proc, BlockedProcsData *data)
 	}
 
 	/* Collect PIDs from the lock's wait queue, stopping at blocked_proc */
-	proc = (PGPROC *) waitQueue->links.next;
+	queued_proc = (PGPROC *) waitQueue->links.next;
 	for (i = 0; i < queue_size; i++)
 	{
-		if (proc == blocked_proc)
+		if (queued_proc == blocked_proc)
 			break;
-		data->waiter_pids[data->npids++] = proc->pid;
-		proc = (PGPROC *) proc->links.next;
+		data->waiter_pids[data->npids++] = queued_proc->pid;
+		queued_proc = (PGPROC *) queued_proc->links.next;
 	}
 
 	bproc->num_locks = data->nlocks - bproc->first_lock;

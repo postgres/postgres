@@ -16,8 +16,6 @@
 
 #include "nodes/parsenodes.h"
 
-#define JUMBLE_SIZE				1024	/* query serialization buffer size */
-
 /*
  * Struct for tracking locations/lengths of constants during normalization
  */

@@ -539,11 +539,11 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 				!fc->func_variadic &&
 				coldeflist == NIL)
 			{
-				ListCell   *lc;
+				ListCell   *lc2;
 
-				foreach(lc, fc->args)
+				foreach(lc2, fc->args)
 				{
-					Node	   *arg = (Node *) lfirst(lc);
+					Node	   *arg = (Node *) lfirst(lc2);
 					FuncCall   *newfc;
 
 					last_srf = pstate->p_last_srf;

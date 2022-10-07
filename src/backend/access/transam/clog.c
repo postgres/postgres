@@ -516,23 +516,23 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	/* Walk the list and update the status of all XIDs. */
 	while (nextidx != INVALID_PGPROCNO)
 	{
-		PGPROC	   *proc = &ProcGlobal->allProcs[nextidx];
+		PGPROC	   *nextproc = &ProcGlobal->allProcs[nextidx];
 
 		/*
 		 * Transactions with more than THRESHOLD_SUBTRANS_CLOG_OPT sub-XIDs
 		 * should not use group XID status update mechanism.
 		 */
-		Assert(proc->subxidStatus.count <= THRESHOLD_SUBTRANS_CLOG_OPT);
+		Assert(nextproc->subxidStatus.count <= THRESHOLD_SUBTRANS_CLOG_OPT);
 
-		TransactionIdSetPageStatusInternal(proc->clogGroupMemberXid,
-										   proc->subxidStatus.count,
-										   proc->subxids.xids,
-										   proc->clogGroupMemberXidStatus,
-										   proc->clogGroupMemberLsn,
-										   proc->clogGroupMemberPage);
+		TransactionIdSetPageStatusInternal(nextproc->clogGroupMemberXid,
+										   nextproc->subxidStatus.count,
+										   nextproc->subxids.xids,
+										   nextproc->clogGroupMemberXidStatus,
+										   nextproc->clogGroupMemberLsn,
+										   nextproc->clogGroupMemberPage);
 
 		/* Move to next proc in list. */
-		nextidx = pg_atomic_read_u32(&proc->clogGroupNext);
+		nextidx = pg_atomic_read_u32(&nextproc->clogGroupNext);
 	}
 
 	/* We're done with the lock now. */
@@ -545,18 +545,18 @@ TransactionGroupUpdateXidStatus(TransactionId xid, XidStatus status,
 	 */
 	while (wakeidx != INVALID_PGPROCNO)
 	{
-		PGPROC	   *proc = &ProcGlobal->allProcs[wakeidx];
+		PGPROC	   *wakeproc = &ProcGlobal->allProcs[wakeidx];
 
-		wakeidx = pg_atomic_read_u32(&proc->clogGroupNext);
-		pg_atomic_write_u32(&proc->clogGroupNext, INVALID_PGPROCNO);
+		wakeidx = pg_atomic_read_u32(&wakeproc->clogGroupNext);
+		pg_atomic_write_u32(&wakeproc->clogGroupNext, INVALID_PGPROCNO);
 
 		/* ensure all previous writes are visible before follower continues. */
 		pg_write_barrier();
 
-		proc->clogGroupMember = false;
+		wakeproc->clogGroupMember = false;
 
-		if (proc != MyProc)
-			PGSemaphoreUnlock(proc->sem);
+		if (wakeproc != MyProc)
+			PGSemaphoreUnlock(wakeproc->sem);
 	}
 
 	return true;

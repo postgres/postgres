@@ -17,6 +17,12 @@ seg_parse = custom_target('segparse',
 generated_sources += seg_parse.to_list()
 seg_sources += seg_parse
 
+if host_system == 'windows'
+  seg_sources += rc_lib_gen.process(win32ver_rc, extra_args: [
+    '--NAME', 'seg',
+    '--FILEDESC', 'seg - line segment data type',])
+endif
+
 seg = shared_module('seg',
   seg_sources,
   include_directories: include_directories('.'),

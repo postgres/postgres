@@ -4160,7 +4160,10 @@ psql_completion(const char *text, int start, int end)
 
 /* OWNER TO  - complete with available roles */
 	else if (TailMatches("OWNER", "TO"))
-		COMPLETE_WITH_QUERY(Query_for_list_of_roles);
+		COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
+								 "CURRENT_ROLE",
+								 "CURRENT_USER",
+								 "SESSION_USER");
 
 /* ORDER BY */
 	else if (TailMatches("FROM", MatchAny, "ORDER"))
@@ -4614,6 +4617,10 @@ psql_completion(const char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_partitioned_tables);
 	else if (TailMatchesCS("\\dP*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_partitioned_relations);
+	else if (TailMatchesCS("\\dRp*"))
+		COMPLETE_WITH_VERSIONED_QUERY(Query_for_list_of_publications);
+	else if (TailMatchesCS("\\dRs*"))
+		COMPLETE_WITH_VERSIONED_QUERY(Query_for_list_of_subscriptions);
 	else if (TailMatchesCS("\\ds*"))
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_sequences);
 	else if (TailMatchesCS("\\dt*"))

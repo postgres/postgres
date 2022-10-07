@@ -19,7 +19,7 @@
  * avoid a second buffer mapping table lookup.
  *
  * Currently, only the main fork is considered for prefetching.  Currently,
- * prefetching is only effective on systems where BufferPrefetch() does
+ * prefetching is only effective on systems where PrefetchBuffer() does
  * something useful (mainly Linux).
  *
  *-------------------------------------------------------------------------

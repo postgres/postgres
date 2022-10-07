@@ -4463,16 +4463,16 @@ inline_function(Oid funcid, Oid result_type, Oid result_collid,
 	if (!isNull)
 	{
 		Node	   *n;
-		List	   *querytree_list;
+		List	   *query_list;
 
 		n = stringToNode(TextDatumGetCString(tmp));
 		if (IsA(n, List))
-			querytree_list = linitial_node(List, castNode(List, n));
+			query_list = linitial_node(List, castNode(List, n));
 		else
-			querytree_list = list_make1(n);
-		if (list_length(querytree_list) != 1)
+			query_list = list_make1(n);
+		if (list_length(query_list) != 1)
 			goto fail;
-		querytree = linitial(querytree_list);
+		querytree = linitial(query_list);
 
 		/*
 		 * Because we'll insist below that the querytree have an empty rtable

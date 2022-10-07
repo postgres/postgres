@@ -8099,9 +8099,9 @@ get_parameter(Param *param, deparse_context *context)
 				 */
 				foreach(lc, context->namespaces)
 				{
-					deparse_namespace *dpns = lfirst(lc);
+					deparse_namespace *depns = lfirst(lc);
 
-					if (dpns->rtable_names != NIL)
+					if (depns->rtable_names != NIL)
 					{
 						should_qualify = true;
 						break;
