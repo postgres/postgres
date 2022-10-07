@@ -135,11 +135,11 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 		 */
 		if (PqGSSSendLength)
 		{
-			ssize_t		ret;
+			ssize_t		retval;
 			ssize_t		amount = PqGSSSendLength - PqGSSSendNext;
 
-			ret = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
-			if (ret <= 0)
+			retval = pqsecure_raw_write(conn, PqGSSSendBuffer + PqGSSSendNext, amount);
+			if (retval <= 0)
 			{
 				/*
 				 * Report any previously-sent data; if there was none, reflect
@@ -149,16 +149,16 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 				 */
 				if (bytes_sent)
 					return bytes_sent;
-				return ret;
+				return retval;
 			}
 
 			/*
 			 * Check if this was a partial write, and if so, move forward that
 			 * far in our buffer and try again.
 			 */
-			if (ret != amount)
+			if (retval != amount)
 			{
-				PqGSSSendNext += ret;
+				PqGSSSendNext += retval;
 				continue;
 			}
 

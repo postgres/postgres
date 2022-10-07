@@ -450,15 +450,15 @@ get_file_fdw_attribute_options(Oid relid)
 	for (attnum = 1; attnum <= natts; attnum++)
 	{
 		Form_pg_attribute attr = TupleDescAttr(tupleDesc, attnum - 1);
-		List	   *options;
+		List	   *column_options;
 		ListCell   *lc;
 
 		/* Skip dropped attributes. */
 		if (attr->attisdropped)
 			continue;
 
-		options = GetForeignColumnOptions(relid, attnum);
-		foreach(lc, options)
+		column_options = GetForeignColumnOptions(relid, attnum);
+		foreach(lc, column_options)
 		{
 			DefElem    *def = (DefElem *) lfirst(lc);
 
@@ -480,7 +480,7 @@ get_file_fdw_attribute_options(Oid relid)
 					fncolumns = lappend(fncolumns, makeString(attname));
 				}
 			}
-			/* maybe in future handle other options here */
+			/* maybe in future handle other column options here */
 		}
 	}
 

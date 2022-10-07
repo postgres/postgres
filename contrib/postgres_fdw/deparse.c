@@ -943,8 +943,6 @@ foreign_expr_walker(Node *node,
 				 */
 				if (agg->aggorder)
 				{
-					ListCell   *lc;
-
 					foreach(lc, agg->aggorder)
 					{
 						SortGroupClause *srt = (SortGroupClause *) lfirst(lc);

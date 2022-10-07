@@ -128,15 +128,15 @@ typedef struct
 /* finalize a newly-constructed hstore */
 #define HS_FINALIZE(hsp_,count_,buf_,ptr_)							\
 	do {															\
-		int buflen = (ptr_) - (buf_);								\
+		int _buflen = (ptr_) - (buf_);								\
 		if ((count_))												\
 			ARRPTR(hsp_)[0].entry |= HENTRY_ISFIRST;				\
 		if ((count_) != HS_COUNT((hsp_)))							\
 		{															\
 			HS_SETCOUNT((hsp_),(count_));							\
-			memmove(STRPTR(hsp_), (buf_), buflen);					\
+			memmove(STRPTR(hsp_), (buf_), _buflen);					\
 		}															\
-		SET_VARSIZE((hsp_), CALCDATASIZE((count_), buflen));		\
+		SET_VARSIZE((hsp_), CALCDATASIZE((count_), _buflen));		\
 	} while (0)
 
 /* ensure the varlena size of an existing hstore is correct */
