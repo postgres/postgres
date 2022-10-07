@@ -1,6 +1,4 @@
 # src/makefiles/Makefile.solaris
-
-AROPT = crs
 rpath = -Wl,-rpath,'$(rpathdir)'
 
 ifeq ($(with_gnu_ld), yes)

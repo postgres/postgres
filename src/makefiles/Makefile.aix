@@ -2,9 +2,6 @@
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
-RANLIB= touch
-AROPT = crs
-
 # -blibpath must contain ALL directories where we should look for libraries
 libpath := $(shell echo $(subst -L,:,$(filter -L/%,$(LDFLAGS))) | sed -e's/ //g'):/usr/lib:/lib
 
