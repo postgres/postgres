@@ -9968,6 +9968,8 @@ CloneForeignKeyConstraints(List **wqueue, Relation parentRel,
  * clone those constraints to the given partition.  This is to be called
  * when the partition is being created or attached.
  *
+ * This ignores self-referencing FKs; those are handled by CloneFkReferencing.
+ *
  * This recurses to partitions, if the relation being attached is partitioned.
  * Recursion is done by calling addFkRecurseReferenced.
  */
@@ -10051,6 +10053,17 @@ CloneFkReferenced(Relation parentRel, Relation partitionRel)
 		 * going to clone the parent.
 		 */
 		if (list_member_oid(clone, constrForm->conparentid))
+		{
+			ReleaseSysCache(tuple);
+			continue;
+		}
+
+		/*
+		 * Don't clone self-referencing foreign keys, which can be in the
+		 * partitioned table or in the partition-to-be.
+		 */
+		if (constrForm->conrelid == RelationGetRelid(parentRel) ||
+			constrForm->conrelid == RelationGetRelid(partitionRel))
 		{
 			ReleaseSysCache(tuple);
 			continue;
