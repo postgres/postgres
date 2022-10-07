@@ -74,15 +74,26 @@ extern void SlabCheck(MemoryContext context);
  * MemoryContextMethodID
  *		A unique identifier for each MemoryContext implementation which
  *		indicates the index into the mcxt_methods[] array. See mcxt.c.
- *		The maximum value for this enum is constrained by
- *		MEMORY_CONTEXT_METHODID_MASK.  If an enum value higher than that is
- *		required then MEMORY_CONTEXT_METHODID_BITS will need to be increased.
+ *
+ * For robust error detection, ensure that MemoryContextMethodID has a value
+ * for each possible bit-pattern of MEMORY_CONTEXT_METHODID_MASK, and make
+ * dummy entries for unused IDs in the mcxt_methods[] array.  We also try
+ * to avoid using bit-patterns as valid IDs if they are likely to occur in
+ * garbage data, or if they could falsely match on chunks that are really from
+ * malloc not palloc.  (We can't tell that for most malloc implementations,
+ * but it happens that glibc stores flag bits in the same place where we put
+ * the MemoryContextMethodID, so the possible values are predictable for it.)
  */
 typedef enum MemoryContextMethodID
 {
+	MCTX_UNUSED1_ID,			/* 000 occurs in never-used memory */
+	MCTX_UNUSED2_ID,			/* glibc malloc'd chunks usually match 001 */
+	MCTX_UNUSED3_ID,			/* glibc malloc'd chunks > 128kB match 010 */
 	MCTX_ASET_ID,
 	MCTX_GENERATION_ID,
 	MCTX_SLAB_ID,
+	MCTX_UNUSED4_ID,			/* available */
+	MCTX_UNUSED5_ID				/* 111 occurs in wipe_mem'd memory */
 } MemoryContextMethodID;
 
 /*
@@ -103,28 +114,5 @@ extern void MemoryContextCreate(MemoryContext node,
 								MemoryContextMethodID method_id,
 								MemoryContext parent,
 								const char *name);
-
-/*
- * GetMemoryChunkMethodID
- *		Return the MemoryContextMethodID from the uint64 chunk header which
- *		directly precedes 'pointer'.
- */
-static inline MemoryContextMethodID
-GetMemoryChunkMethodID(void *pointer)
-{
-	uint64		header;
-
-	/*
-	 * Try to detect bogus pointers handed to us, poorly though we can.
-	 * Presumably, a pointer that isn't MAXALIGNED isn't pointing at an
-	 * allocated chunk.
-	 */
-	Assert(pointer != NULL);
-	Assert(pointer == (void *) MAXALIGN(pointer));
-
-	header = *((uint64 *) ((char *) pointer - sizeof(uint64)));
-
-	return (MemoryContextMethodID) (header & MEMORY_CONTEXT_METHODID_MASK);
-}
 
 #endif							/* MEMUTILS_INTERNAL_H */
