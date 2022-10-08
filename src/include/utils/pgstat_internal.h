@@ -242,7 +242,8 @@ typedef struct PgStat_KindInfo
 	/*
 	 * For variable-numbered stats with named_on_disk. Optional.
 	 */
-	void		(*to_serialized_name) (const PgStatShared_Common *header, NameData *name);
+	void		(*to_serialized_name) (const PgStat_HashKey *key,
+									   const PgStatShared_Common *header, NameData *name);
 	bool		(*from_serialized_name) (const NameData *name, PgStat_HashKey *key);
 
 	/*
@@ -567,7 +568,7 @@ extern void pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref);
  */
 
 extern void pgstat_replslot_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
-extern void pgstat_replslot_to_serialized_name_cb(const PgStatShared_Common *header, NameData *name);
+extern void pgstat_replslot_to_serialized_name_cb(const PgStat_HashKey *key, const PgStatShared_Common *header, NameData *name);
 extern bool pgstat_replslot_from_serialized_name_cb(const NameData *name, PgStat_HashKey *key);
 
 

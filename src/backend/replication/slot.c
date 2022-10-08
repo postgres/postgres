@@ -413,6 +413,34 @@ ReplicationSlotIndex(ReplicationSlot *slot)
 }
 
 /*
+ * If the slot at 'index' is unused, return false. Otherwise 'name' is set to
+ * the slot's name and true is returned.
+ *
+ * This likely is only useful for pgstat_replslot.c during shutdown, in other
+ * cases there are obvious TOCTOU issues.
+ */
+bool
+ReplicationSlotName(int index, Name name)
+{
+	ReplicationSlot *slot;
+	bool		found;
+
+	slot = &ReplicationSlotCtl->replication_slots[index];
+
+	/*
+	 * Ensure that the slot cannot be dropped while we copy the name. Don't
+	 * need the spinlock as the name of an existing slot cannot change.
+	 */
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+	found = slot->in_use;
+	if (slot->in_use)
+		namestrcpy(name, NameStr(slot->data.name));
+	LWLockRelease(ReplicationSlotControlLock);
+
+	return found;
+}
+
+/*
  * Find a previously created slot and mark it as used by this process.
  *
  * An error is raised if nowait is true and the slot is currently in use. If
