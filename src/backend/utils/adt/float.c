@@ -593,7 +593,7 @@ float4abs(PG_FUNCTION_ARGS)
 {
 	float4		arg1 = PG_GETARG_FLOAT4(0);
 
-	PG_RETURN_FLOAT4((float4) fabs(arg1));
+	PG_RETURN_FLOAT4(fabsf(arg1));
 }
 
 /*

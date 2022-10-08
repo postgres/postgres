@@ -10,6 +10,7 @@
 #include "postgres.h"
 
 #include <float.h>
+#include <math.h>
 
 #include "access/gist.h"
 #include "access/stratnum.h"
@@ -706,7 +707,7 @@ rt_seg_size(SEG *a, float *size)
 	if (a == (SEG *) NULL || a->upper <= a->lower)
 		*size = 0.0;
 	else
-		*size = (float) Abs(a->upper - a->lower);
+		*size = fabsf(a->upper - a->lower);
 }
 
 Datum
@@ -714,7 +715,7 @@ seg_size(PG_FUNCTION_ARGS)
 {
 	SEG		   *seg = PG_GETARG_SEG_P(0);
 
-	PG_RETURN_FLOAT4((float) Abs(seg->upper - seg->lower));
+	PG_RETURN_FLOAT4(fabsf(seg->upper - seg->lower));
 }
 
 
