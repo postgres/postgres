@@ -69,6 +69,10 @@ pgstat_reset_replslot(const char *name)
 
 /*
  * Report replication slot statistics.
+ *
+ * We can rely on the stats for the slot to exist and to belong to this
+ * slot. We can only get here if pgstat_create_replslot() or
+ * pgstat_acquire_replslot() have already been called.
  */
 void
 pgstat_report_replslot(ReplicationSlot *slot, const PgStat_StatReplSlotEntry *repSlotStat)
@@ -81,12 +85,6 @@ pgstat_report_replslot(ReplicationSlot *slot, const PgStat_StatReplSlotEntry *re
 											ReplicationSlotIndex(slot), false);
 	shstatent = (PgStatShared_ReplSlot *) entry_ref->shared_stats;
 	statent = &shstatent->stats;
-
-	/*
-	 * Any mismatch should have been fixed in pgstat_create_replslot() or
-	 * pgstat_acquire_replslot().
-	 */
-	Assert(namestrcmp(&statent->slotname, NameStr(slot->data.name)) == 0);
 
 	/* Update the replication slot statistics */
 #define REPLSLOT_ACC(fld) statent->fld += repSlotStat->fld
@@ -124,38 +122,29 @@ pgstat_create_replslot(ReplicationSlot *slot)
 	 * if we previously crashed after dropping a slot.
 	 */
 	memset(&shstatent->stats, 0, sizeof(shstatent->stats));
-	namestrcpy(&shstatent->stats.slotname, NameStr(slot->data.name));
 
 	pgstat_unlock_entry(entry_ref);
 }
 
 /*
  * Report replication slot has been acquired.
+ *
+ * This guarantees that a stats entry exists during later
+ * pgstat_report_replslot() calls.
+ *
+ * If we previously crashed, no stats data exists. But if we did not crash,
+ * the stats do belong to this slot:
+ * - the stats cannot belong to a dropped slot, pgstat_drop_replslot() would
+ *   have been called
+ * - if the slot was removed while shut down,
+ *   pgstat_replslot_from_serialized_name_cb() returning false would have
+ *   caused the stats to be dropped
  */
 void
 pgstat_acquire_replslot(ReplicationSlot *slot)
 {
-	PgStat_EntryRef *entry_ref;
-	PgStatShared_ReplSlot *shstatent;
-	PgStat_StatReplSlotEntry *statent;
-
-	entry_ref = pgstat_get_entry_ref_locked(PGSTAT_KIND_REPLSLOT, InvalidOid,
-											ReplicationSlotIndex(slot), false);
-	shstatent = (PgStatShared_ReplSlot *) entry_ref->shared_stats;
-	statent = &shstatent->stats;
-
-	/*
-	 * NB: need to accept that there might be stats from an older slot, e.g.
-	 * if we previously crashed after dropping a slot.
-	 */
-	if (NameStr(statent->slotname)[0] == 0 ||
-		namestrcmp(&statent->slotname, NameStr(slot->data.name)) != 0)
-	{
-		memset(statent, 0, sizeof(*statent));
-		namestrcpy(&statent->slotname, NameStr(slot->data.name));
-	}
-
-	pgstat_unlock_entry(entry_ref);
+	pgstat_get_entry_ref(PGSTAT_KIND_REPLSLOT, InvalidOid,
+						 ReplicationSlotIndex(slot), true, NULL);
 }
 
 /*
@@ -185,9 +174,16 @@ pgstat_fetch_replslot(NameData slotname)
 }
 
 void
-pgstat_replslot_to_serialized_name_cb(const PgStatShared_Common *header, NameData *name)
+pgstat_replslot_to_serialized_name_cb(const PgStat_HashKey *key, const PgStatShared_Common *header, NameData *name)
 {
-	namestrcpy(name, NameStr(((PgStatShared_ReplSlot *) header)->stats.slotname));
+	/*
+	 * This is only called late during shutdown. The set of existing slots
+	 * isn't allowed to change at this point, we can assume that a slot exists
+	 * at the offset.
+	 */
+	if (!ReplicationSlotName(key->objoid, name))
+		elog(ERROR, "could not find name for replication slot index %u",
+			 key->objoid);
 }
 
 bool

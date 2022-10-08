@@ -321,7 +321,11 @@ typedef struct PgStat_StatFuncEntry
 
 typedef struct PgStat_StatReplSlotEntry
 {
-	NameData	slotname;
+	/*
+	 * In PG 15 this field is unused, but not removed, to avoid changing
+	 * PGSTAT_FILE_FORMAT_ID.
+	 */
+	NameData	slotname_unused;
 	PgStat_Counter spill_txns;
 	PgStat_Counter spill_count;
 	PgStat_Counter spill_bytes;

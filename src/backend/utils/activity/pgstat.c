@@ -1367,7 +1367,7 @@ pgstat_write_statsfile(void)
 			/* stats entry identified by name on disk (e.g. slots) */
 			NameData	name;
 
-			kind_info->to_serialized_name(shstats, &name);
+			kind_info->to_serialized_name(&ps->key, shstats, &name);
 
 			fputc('N', fpout);
 			write_chunk_s(fpout, &ps->key.kind);
