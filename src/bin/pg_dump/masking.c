@@ -398,8 +398,14 @@ readMaskingPatternFromFile(FILE *fin, MaskingMap *map, SimpleStringList *masking
 void
 concatFunctionAndColumn(char *col_with_func, char *schema_name, char *column_name, char *function_name)
 {
-    /* Function name already contains schema name. If not, then add the same scheme*/
-    if (strrchr(function_name, '.') != NULL)
+    /* Default function */
+    if (strcmp(function_name, DEFAULT_NAME)==0)
+	{
+	  strcpy(col_with_func, "_masking_function.");
+	  strcat(col_with_func, function_name);
+	}
+	/* Function name already contains schema name. If not, then add the same scheme */
+	else if (strrchr(function_name, '.') != NULL)
     {
         strcpy(col_with_func, function_name);
     }
@@ -603,4 +609,17 @@ readQueryForCreatingFunction(char *filename)
         fclose(fin);
     }
     return query;
+}
+
+char *
+default_functions()
+{
+  return "CREATE SCHEMA IF NOT EXISTS _masking_function;\n"
+		 "CREATE OR REPLACE FUNCTION _masking_function.default(in text, out text)\n"
+		 "    AS $$ SELECT $1 || ' default' $$\n"
+		 "              LANGUAGE SQL;\n"
+		 "\n"
+		 "CREATE OR REPLACE FUNCTION _masking_function.default(in int, out text)\n"
+		 "    AS $$ SELECT $1 || ' default' $$\n"
+		 "              LANGUAGE SQL;";
 }

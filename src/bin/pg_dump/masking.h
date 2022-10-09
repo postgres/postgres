@@ -74,5 +74,6 @@ extern void extractFuncNameIfPath(char *func_path, SimpleStringList *masking_fun
 void removeQuotes(char *func_name);
 char *readWord(FILE *fin, char *word);
 int extractFunctionNameFromQueryFile(char *filename, char *func_name);
+char *default_functions(void);
 
 #endif                            /* MASKING_H */

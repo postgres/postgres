@@ -69,8 +69,6 @@
 #include "pg_backup_utils.h"
 #include "pg_dump.h"
 #include "storage/block.h"
-#include "postgres.h"
-#include "fmgr.h"
 
 typedef struct
 {
@@ -632,6 +630,7 @@ main(int argc, char **argv)
 				break;
 
             case 13:			/* masking */
+				dopt.masking = true;
                 getMaskingPatternFromFile(optarg, &dopt);
                 if (dopt.dump_inserts == 0) /* Masking works only with inserts */
                     dopt.dump_inserts = DUMP_DEFAULT_ROWS_PER_INSERT;
@@ -686,11 +685,6 @@ main(int argc, char **argv)
 
 	if (dopt.if_exists && !dopt.outputClean)
 		pg_fatal("option --if-exists requires option -c/--clean");
-
-    // TODO check which options can't work with masking
-    if (dopt.cant_be_masked)
-        pg_fatal("option --masking doesn't work with options: --section");
-
 
 	/*
 	 * --inserts are already implied above if --column-inserts or
@@ -762,12 +756,11 @@ main(int argc, char **argv)
 	 * death.
 	 */
 	ConnectDatabase(fout, &dopt.cparams, false);
-    if (dopt.masking_map)
+    if (dopt.masking)
     {
         createMaskingFunctions(fout, &masking_func_query_path);
     }
 	setup_connection(fout, dumpencoding, dumpsnapshot, use_role);
-
 
 	/*
 	 * On hot standbys, never try to dump unlogged table data, since it will
@@ -2178,28 +2171,28 @@ dumpTableData_insert(Archive *fout, const void *dcontext)
 			appendPQExpBufferStr(q, ", ");
 		if (tbinfo->attgenerated[i])
 			appendPQExpBufferStr(q, "NULL");
-		else
-        {
-            if (dopt->masking_map) /* If we read masking options successfully, we can use masking functions */
-            {
-                char *column_with_fun;
-                column_with_fun=addFunctionToColumn(tbinfo->dobj.namespace->dobj.name, tbinfo->dobj.name,
-                                                    tbinfo->attnames[i], dopt->masking_map);
-                if (column_with_fun[0] == ' ')
-                {
-                    pg_log_warning("Function\"%s\" was not found", column_with_fun);
-                }
-                if (column_with_fun[0] != '\0')
-                {
-                    appendPQExpBufferStr(q, column_with_fun);
-                }
-                else
-                {
-                    appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
-                }
-                free(column_with_fun);
-            }
+		else if (dopt->masking) /* If we read masking options successfully, we can use masking functions */
+		{
+			char *column_with_fun;
+			column_with_fun=addFunctionToColumn(tbinfo->dobj.namespace->dobj.name, tbinfo->dobj.name,
+												tbinfo->attnames[i], dopt->masking_map);
+			if (column_with_fun[0] == ' ')
+			{
+				pg_log_warning("Function\"%s\" was not found", column_with_fun);
+			}
+			if (column_with_fun[0] != '\0')
+			{
+				appendPQExpBufferStr(q, column_with_fun);
+			}
+			else
+			{
+				appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+			}
+			free(column_with_fun);
         }
+		else
+		  appendPQExpBufferStr(q, fmtId(tbinfo->attnames[i]));
+
 		attgenerated[nfields] = tbinfo->attgenerated[i];
 		nfields++;
 	}
@@ -18281,8 +18274,6 @@ getMaskingPatternFromFile(const char *filename, DumpOptions *dopt)
  * Read paths to functions from `masking_func_query_path`,
  * read query inside the files and run them. We checked them
  * in function masking.c:extractFunctionNameFromQueryFile.
- *
- *
  */
 int
 createMaskingFunctions(Archive *AH, SimpleStringList *masking_func_query_path)
@@ -18292,8 +18283,6 @@ createMaskingFunctions(Archive *AH, SimpleStringList *masking_func_query_path)
     char *filename;
     char *query;
     bool result;
-    char *full_path;
-    char *pg_root;
 
     exit_result=0;
     result = false;
@@ -18317,23 +18306,14 @@ createMaskingFunctions(Archive *AH, SimpleStringList *masking_func_query_path)
             pg_log_warning("Failed execution of query from file \"%s\"", filename);
             exit_result++;
         }
+	  	free(query);
     }
     /* Read all default functions and create them */
-    full_path = malloc(PATH_MAX);
-
-    pg_root = "{$libdir}"; // path to postgres project (Dynamic_library_path)
-    filename = "postgres/src/bin/pg_dump/masking_functions/default_functions.sql";
-
-    strcpy(full_path, pg_root);
-    strcat(full_path, filename);
-    query = readQueryForCreatingFunction(full_path);
-    result = executeMaintenanceCommand(conn, query, true);
+    result = executeMaintenanceCommand(conn, default_functions(), true);
     if (!result)
     {
-        pg_log_warning("Problem during creating default functions query from file \"%s\"", filename);
+        pg_log_warning("Problem during creating default functions from method `masking.c:default_functions`");
         exit_result++;
     }
-    free(query);
-    free(full_path);
     return exit_result;
 }
