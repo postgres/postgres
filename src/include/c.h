@@ -1283,6 +1283,15 @@ extern int	fdatasync(int fildes);
 #endif
 
 /*
+ * Similarly, wrappers around labs()/llabs() matching our int64.
+ */
+#ifdef HAVE_LONG_INT_64
+#define i64abs(i) labs(i)
+#else
+#define i64abs(i) llabs(i)
+#endif
+
+/*
  * Use "extern PGDLLIMPORT ..." to declare variables that are defined
  * in the core backend and need to be accessible by loadable modules.
  * No special marking is required on most ports.

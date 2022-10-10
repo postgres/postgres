@@ -4468,7 +4468,7 @@ AddVerboseIntPart(char *cp, int64 value, const char *units,
 	if (*is_zero)
 	{
 		*is_before = (value < 0);
-		value = Abs(value);
+		value = i64abs(value);
 	}
 	else if (*is_before)
 		value = -value;
@@ -4569,8 +4569,8 @@ EncodeInterval(struct pg_itm *itm, int style, char *str)
 
 					sprintf(cp, "%c%d-%d %c%lld %c%lld:%02d:",
 							year_sign, abs(year), abs(mon),
-							day_sign, (long long) Abs(mday),
-							sec_sign, (long long) Abs(hour), abs(min));
+							day_sign, (long long) i64abs(mday),
+							sec_sign, (long long) i64abs(hour), abs(min));
 					cp += strlen(cp);
 					cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 					*cp = '\0';
@@ -4642,7 +4642,7 @@ EncodeInterval(struct pg_itm *itm, int style, char *str)
 				sprintf(cp, "%s%s%02lld:%02d:",
 						is_zero ? "" : " ",
 						(minus ? "-" : (is_before ? "+" : "")),
-						(long long) Abs(hour), abs(min));
+						(long long) i64abs(hour), abs(min));
 				cp += strlen(cp);
 				cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 				*cp = '\0';
