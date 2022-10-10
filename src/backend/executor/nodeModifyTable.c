@@ -1373,7 +1373,7 @@ ExecDelete(ModifyTableContext *context,
 		 * special-case behavior needed for referential integrity updates in
 		 * transaction-snapshot mode transactions.
 		 */
-ldelete:;
+ldelete:
 		result = ExecDeleteAct(context, resultRelInfo, tupleid, changingPart);
 
 		switch (result)
@@ -1855,7 +1855,7 @@ ExecUpdateAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 * then trigger.c will have done table_tuple_lock to lock the correct
 	 * tuple, so there's no need to do them again.)
 	 */
-lreplace:;
+lreplace:
 
 	/* ensure slot is independent, consider e.g. EPQ */
 	ExecMaterializeSlot(slot);
@@ -2686,7 +2686,7 @@ ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	econtext->ecxt_innertuple = context->planSlot;
 	econtext->ecxt_outertuple = NULL;
 
-lmerge_matched:;
+lmerge_matched:
 
 	/*
 	 * This routine is only invoked for matched rows, and we must have found

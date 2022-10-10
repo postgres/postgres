@@ -1239,7 +1239,7 @@ SimpleLruTruncate(SlruCtl ctl, int cutoffPage)
 	 */
 	LWLockAcquire(shared->ControlLock, LW_EXCLUSIVE);
 
-restart:;
+restart:
 
 	/*
 	 * While we are holding the lock, make an important safety check: the
