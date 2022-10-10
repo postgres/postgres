@@ -1,31 +1,33 @@
 # Brazilian Portuguese message translation file for ecpglib
-# Copyright (C) 2009 PostgreSQL Global Development Group
+#
+# Copyright (C) 2009-2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
+#
 # Fernando Ike de Oliveira <fike@midstorm.org>, 2009.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2010-2014.
+# Euler Taveira <euler@eulerto.com>, 2010-2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.5\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2015-09-17 22:32-0300\n"
+"Project-Id-Version: PostgreSQL 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-10 18:24-0300\n"
 "PO-Revision-Date: 2009-02-09 13:00-0200\n"
 "Last-Translator: Fernando Ike de Oliveira <fike@midstorm.org>\n"
-"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: connect.c:237
+#: connect.c:243
 msgid "empty message text"
 msgstr "mensagem vazia"
 
-#: connect.c:401 connect.c:430 connect.c:638
+#: connect.c:410 connect.c:675
 msgid "<DEFAULT>"
 msgstr "<PADRÃO>"
 
-#: descriptor.c:833 misc.c:120
+#: descriptor.c:876 misc.c:119
 msgid "NULL"
 msgstr "NULL"
 
@@ -185,15 +187,15 @@ msgstr "não pôde connectar  ao banco de dados \"%s\" na linha %d"
 msgid "SQL error %d on line %d"
 msgstr "Erro SQL %d na linha %d"
 
-#: error.c:254
+#: error.c:253
 msgid "the connection to the server was lost"
 msgstr "a conexão com servidor foi perdida"
 
-#: error.c:347
+#: error.c:345
 #, c-format
 msgid "SQL error: %s\n"
 msgstr "Erro SQL: %s\n"
 
-#: execute.c:1972
+#: execute.c:2189 execute.c:2196
 msgid "<empty>"
 msgstr "<vazio>"

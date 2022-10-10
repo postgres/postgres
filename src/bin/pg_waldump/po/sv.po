@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 06:47+0000\n"
-"PO-Revision-Date: 2022-08-05 06:43+0200\n"
+"POT-Creation-Date: 2022-09-29 11:47+0000\n"
+"PO-Revision-Date: 2022-09-29 21:43+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -504,10 +504,9 @@ msgid "record with invalid length at %X/%X"
 msgstr "post med ogiltig längd vid %X/%X"
 
 #: xlogreader.c:1967
-#, fuzzy, c-format
-#| msgid "failed to locate backup block with ID %d in WAL record"
+#, c-format
 msgid "could not locate backup block with ID %d in WAL record"
-msgstr "misslyckades med att hitta backupblock med ID %d i WAL-post"
+msgstr "kunde inte hitta backup-block med ID %d i WAL-post"
 
 #: xlogreader.c:2051
 #, c-format
@@ -533,35 +532,3 @@ msgstr "kunde inte återställa image vid %X/%X, komprimerad med okänd metod, b
 #, c-format
 msgid "could not decompress image at %X/%X, block %d"
 msgstr "kunde inte packa upp image vid %X/%X, block %d"
-
-#, c-format
-#~ msgid "could not parse \"%s\" as a transaction ID"
-#~ msgstr "kunde inte parsa \"%s\" som ett transaktions-ID"
-
-#, c-format
-#~ msgid "could not parse end WAL location \"%s\""
-#~ msgstr "kunde inte parsa slut-WAL-position \"%s\""
-
-#, c-format
-#~ msgid "could not parse fork \"%s\""
-#~ msgstr "kunde inte parsa grenen \"%s\""
-
-#, c-format
-#~ msgid "could not parse limit \"%s\""
-#~ msgstr "kunde inte parsa gränsen \"%s\""
-
-#, c-format
-#~ msgid "could not parse start WAL location \"%s\""
-#~ msgstr "kunde inte parsa start-WAL-position \"%s\""
-
-#, c-format
-#~ msgid "could not parse timeline \"%s\""
-#~ msgstr "kunde inte parsa tidlinjen \"%s\""
-
-#, c-format
-#~ msgid "could not parse valid block number \"%s\""
-#~ msgstr "kunde inte parsa giltigt blocknummer \"%s\""
-
-#, c-format
-#~ msgid "unrecognized argument to --stats: %s"
-#~ msgstr "okänt argument till --stats: %s"

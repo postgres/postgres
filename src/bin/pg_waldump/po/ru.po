@@ -6,15 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 06:47+0000\n"
-"PO-Revision-Date: 2022-09-05 13:37+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
+"PO-Revision-Date: 2022-09-29 14:17+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -43,11 +44,21 @@ msgstr "не удалось открыть файл \"%s\": %m"
 
 #: pg_waldump.c:216
 #, c-format
-msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d byte"
-msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL file \"%s\" header specifies %d bytes"
-msgstr[0] "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
-msgstr[1] "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
-msgstr[2] "Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
+msgid ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
+"file \"%s\" header specifies %d byte"
+msgid_plural ""
+"WAL segment size must be a power of two between 1 MB and 1 GB, but the WAL "
+"file \"%s\" header specifies %d bytes"
+msgstr[0] ""
+"Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
+"ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
+msgstr[1] ""
+"Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
+"ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
+msgstr[2] ""
+"Размер сегмента WAL должен задаваться степенью 2 в интервале от 1 МБ до 1 "
+"ГБ, но в заголовке файла WAL \"%s\" указано значение: %d"
 
 #: pg_waldump.c:222
 #, c-format
@@ -82,7 +93,8 @@ msgstr "не удалось прочитать из файла %s по смещ�
 #: pg_waldump.c:382
 #, c-format
 msgid "could not read from file %s, offset %d: read %d of %d"
-msgstr "не удалось прочитать из файла %s по смещению %d (прочитано байт: %d из %d)"
+msgstr ""
+"не удалось прочитать из файла %s по смещению %d (прочитано байт: %d из %d)"
 
 #: pg_waldump.c:658
 #, c-format
@@ -114,12 +126,16 @@ msgstr ""
 
 #: pg_waldump.c:663
 #, c-format
-msgid "  -b, --bkp-details      output detailed information about backup blocks\n"
-msgstr "  -b, --bkp-details      вывести подробную информацию о копиях страниц\n"
+msgid ""
+"  -b, --bkp-details      output detailed information about backup blocks\n"
+msgstr ""
+"  -b, --bkp-details      вывести подробную информацию о копиях страниц\n"
 
 #: pg_waldump.c:664
 #, c-format
-msgid "  -B, --block=N          with --relation, only show records that modify block N\n"
+msgid ""
+"  -B, --block=N          with --relation, only show records that modify "
+"block N\n"
 msgstr ""
 "  -B, --block=N          в сочетании с --relation указывает выводить только\n"
 "                         записи, в которых меняется блок N\n"
@@ -128,12 +144,14 @@ msgstr ""
 #: pg_waldump.c:665
 #, c-format
 msgid "  -e, --end=RECPTR       stop reading at WAL location RECPTR\n"
-msgstr "  -e, --end=ПОЗЗАП       прекратить чтение в заданной позиции записи в WAL\n"
+msgstr ""
+"  -e, --end=ПОЗЗАП       прекратить чтение в заданной позиции записи в WAL\n"
 
 #: pg_waldump.c:666
 #, c-format
 msgid "  -f, --follow           keep retrying after reaching end of WAL\n"
-msgstr "  -f, --follow           повторять попытки чтения по достижении конца WAL\n"
+msgstr ""
+"  -f, --follow           повторять попытки чтения по достижении конца WAL\n"
 
 # well-spelled: МНГР
 #: pg_waldump.c:667
@@ -142,7 +160,8 @@ msgid ""
 "  -F, --fork=FORK        only show records that modify blocks in fork FORK;\n"
 "                         valid names are main, fsm, vm, init\n"
 msgstr ""
-"  -F, --fork=СЛОЙ        выводить только записи, в которых меняются блоки в СЛОЕ\n"
+"  -F, --fork=СЛОЙ        выводить только записи, в которых меняются блоки в "
+"СЛОЕ\n"
 "                         с именем из списка: main, fsm, vm, init\n"
 
 #: pg_waldump.c:669
@@ -156,10 +175,13 @@ msgstr "  -n, --limit=N          число выводимых записей\n"
 msgid ""
 "  -p, --path=PATH        directory in which to find log segment files or a\n"
 "                         directory with a ./pg_wal that contains such files\n"
-"                         (default: current directory, ./pg_wal, $PGDATA/pg_wal)\n"
+"                         (default: current directory, ./pg_wal, $PGDATA/"
+"pg_wal)\n"
 msgstr ""
-"  -p, --path=ПУТЬ        каталог, где нужно искать файлы сегментов журнала, или\n"
-"                         каталог с подкаталогом ./pg_wal, содержащим такие файлы\n"
+"  -p, --path=ПУТЬ        каталог, где нужно искать файлы сегментов журнала, "
+"или\n"
+"                         каталог с подкаталогом ./pg_wal, содержащим такие "
+"файлы\n"
 "                         (по умолчанию: текущий каталог,\n"
 "                         ./pg_wal, $PGDATA/pg_wal)\n"
 
@@ -172,8 +194,10 @@ msgstr "  -q, --quiet            не выводить никаких сообщ
 #: pg_waldump.c:674
 #, c-format
 msgid ""
-"  -r, --rmgr=RMGR        only show records generated by resource manager RMGR;\n"
-"                         use --rmgr=list to list valid resource manager names\n"
+"  -r, --rmgr=RMGR        only show records generated by resource manager "
+"RMGR;\n"
+"                         use --rmgr=list to list valid resource manager "
+"names\n"
 msgstr ""
 "  -r, --rmgr=МНГР        выводить записи только менеджера ресурсов МНГР;\n"
 "                         для просмотра списка доступных менеджеров ресурсов\n"
@@ -181,7 +205,9 @@ msgstr ""
 
 #: pg_waldump.c:676
 #, c-format
-msgid "  -R, --relation=T/D/R   only show records that modify blocks in relation T/D/R\n"
+msgid ""
+"  -R, --relation=T/D/R   only show records that modify blocks in relation T/"
+"D/R\n"
 msgstr ""
 "  -R, --relation=T/D/R   выводить только записи, в которых меняются блоки\n"
 "                         в отношении T/D/R\n"
@@ -190,7 +216,8 @@ msgstr ""
 #: pg_waldump.c:677
 #, c-format
 msgid "  -s, --start=RECPTR     start reading at WAL location RECPTR\n"
-msgstr "  -s, --start=ПОЗЗАП     начать чтение с заданной позиции записи в WAL\n"
+msgstr ""
+"  -s, --start=ПОЗЗАП     начать чтение с заданной позиции записи в WAL\n"
 
 # well-spelled: ЛВР
 #: pg_waldump.c:678
@@ -200,7 +227,8 @@ msgid ""
 "                         (default: 1 or the value used in STARTSEG)\n"
 msgstr ""
 "  -t, --timeline=ЛВР     линия времени, записи которой будут прочитаны\n"
-"                         (по умолчанию: 1 или линия, определяемая аргументом\n"
+"                         (по умолчанию: 1 или линия, определяемая "
+"аргументом\n"
 "                         НАЧАЛЬНЫЙ_СЕГМЕНТ)\n"
 
 #: pg_waldump.c:680
@@ -211,7 +239,8 @@ msgstr "  -V, --version          показать версию и выйти\n"
 #: pg_waldump.c:681
 #, c-format
 msgid "  -w, --fullpage         only show records with a full page write\n"
-msgstr "  -w, --fullpage         выводить только записи, содержащие полные страницы\n"
+msgstr ""
+"  -w, --fullpage         выводить только записи, содержащие полные страницы\n"
 
 #: pg_waldump.c:682
 #, c-format
@@ -291,7 +320,8 @@ msgstr "неверное указание отношения: \"%s\""
 #: pg_waldump.c:895
 #, c-format
 msgid "Expecting \"tablespace OID/database OID/relation filenode\"."
-msgstr "Ожидается \"OID табл. пространства/OID базы данных/файловый узел отношения\"."
+msgstr ""
+"Ожидается \"OID табл. пространства/OID базы данных/файловый узел отношения\"."
 
 #: pg_waldump.c:914
 #, c-format
@@ -362,9 +392,12 @@ msgstr "не удалось найти действительную запись
 #, c-format
 msgid "first record is after %X/%X, at %X/%X, skipping over %u byte\n"
 msgid_plural "first record is after %X/%X, at %X/%X, skipping over %u bytes\n"
-msgstr[0] "первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
-msgstr[1] "первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
-msgstr[2] "первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
+msgstr[0] ""
+"первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
+msgstr[1] ""
+"первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
+msgstr[2] ""
+"первая запись обнаружена после %X/%X, в позиции %X/%X, пропускается %u Б\n"
 
 #: pg_waldump.c:1171
 #, c-format
@@ -409,13 +442,12 @@ msgstr "нет флага contrecord в позиции %X/%X"
 #: xlogreader.c:787
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "неверная длина contrecord: %u (ожидалось %lld) в позиции %X/%X"
+msgstr "неверная длина contrecord: %u (ожидалась %lld) в позиции %X/%X"
 
 #: xlogreader.c:922
-#, fuzzy, c-format
-#| msgid "there is no contrecord flag at %X/%X"
+#, c-format
 msgid "missing contrecord at %X/%X"
-msgstr "нет флага contrecord в позиции %X/%X"
+msgstr "нет записи contrecord в %X/%X"
 
 #: xlogreader.c:1129
 #, c-format
@@ -430,7 +462,9 @@ msgstr "запись с неверной ссылкой назад %X/%X по с
 #: xlogreader.c:1194
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr "некорректная контрольная сумма данных менеджера ресурсов в записи по смещению %X/%X"
+msgstr ""
+"некорректная контрольная сумма данных менеджера ресурсов в записи по "
+"смещению %X/%X"
 
 #: xlogreader.c:1231
 #, c-format
@@ -444,18 +478,30 @@ msgstr "неверные информационные биты %04X в сегм�
 
 #: xlogreader.c:1260
 #, c-format
-msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
-msgstr "файл WAL принадлежит другой СУБД: в нём указан идентификатор системы БД %llu, а идентификатор системы pg_control: %llu"
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %llu, pg_control database system identifier is %llu"
+msgstr ""
+"файл WAL принадлежит другой СУБД: в нём указан идентификатор системы БД "
+"%llu, а идентификатор системы pg_control: %llu"
 
 #: xlogreader.c:1268
 #, c-format
-msgid "WAL file is from different database system: incorrect segment size in page header"
-msgstr "файл WAL принадлежит другой СУБД: некорректный размер сегмента в заголовке страницы"
+msgid ""
+"WAL file is from different database system: incorrect segment size in page "
+"header"
+msgstr ""
+"файл WAL принадлежит другой СУБД: некорректный размер сегмента в заголовке "
+"страницы"
 
 #: xlogreader.c:1274
 #, c-format
-msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
-msgstr "файл WAL принадлежит другой СУБД: некорректный XLOG_BLCKSZ в заголовке страницы"
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr ""
+"файл WAL принадлежит другой СУБД: некорректный XLOG_BLCKSZ в заголовке "
+"страницы"
 
 #: xlogreader.c:1305
 #, c-format
@@ -465,7 +511,9 @@ msgstr "неожиданный pageaddr %X/%X в сегменте журнала
 #: xlogreader.c:1330
 #, c-format
 msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
-msgstr "нарушение последовательности ID линии времени %u (после %u) в сегменте журнала %s, смещение %u"
+msgstr ""
+"нарушение последовательности ID линии времени %u (после %u) в сегменте "
+"журнала %s, смещение %u"
 
 #: xlogreader.c:1735
 #, c-format
@@ -480,32 +528,47 @@ msgstr "BKPBLOCK_HAS_DATA установлен, но данных в позиц�
 #: xlogreader.c:1766
 #, c-format
 msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
-msgstr "BKPBLOCK_HAS_DATA не установлен, но длина данных равна %u в позиции %X/%X"
+msgstr ""
+"BKPBLOCK_HAS_DATA не установлен, но длина данных равна %u в позиции %X/%X"
 
 #: xlogreader.c:1802
 #, c-format
-msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE установлен, но для пропуска заданы смещение %u и длина %u при длине образа блока %u в позиции %X/%X"
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE установлен, но для пропуска заданы смещение %u и длина %u "
+"при длине образа блока %u в позиции %X/%X"
 
 #: xlogreader.c:1818
 #, c-format
 msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
-msgstr "BKPIMAGE_HAS_HOLE не установлен, но для пропуска заданы смещение %u и длина %u в позиции %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE не установлен, но для пропуска заданы смещение %u и длина "
+"%u в позиции %X/%X"
 
 #: xlogreader.c:1832
 #, c-format
 msgid "BKPIMAGE_COMPRESSED set, but block image length %u at %X/%X"
-msgstr "BKPIMAGE_COMPRESSED установлен, но длина образа блока равна %u в позиции %X/%X"
+msgstr ""
+"BKPIMAGE_COMPRESSED установлен, но длина образа блока равна %u в позиции %X/"
+"%X"
 
 #: xlogreader.c:1847
 #, c-format
-msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image length is %u at %X/%X"
-msgstr "ни BKPIMAGE_HAS_HOLE, ни BKPIMAGE_COMPRESSED не установлены, но длина образа блока равна %u в позиции %X/%X"
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"ни BKPIMAGE_HAS_HOLE, ни BKPIMAGE_COMPRESSED не установлены, но длина образа "
+"блока равна %u в позиции %X/%X"
 
 #: xlogreader.c:1863
 #, c-format
 msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
-msgstr "BKPBLOCK_SAME_REL установлен, но предыдущее значение не задано в позиции %X/%X"
+msgstr ""
+"BKPBLOCK_SAME_REL установлен, но предыдущее значение не задано в позиции %X/"
+"%X"
 
 #: xlogreader.c:1875
 #, c-format
@@ -518,8 +581,7 @@ msgid "record with invalid length at %X/%X"
 msgstr "запись с неверной длиной в позиции %X/%X"
 
 #: xlogreader.c:1967
-#, fuzzy, c-format
-#| msgid "failed to locate backup block with ID %d in WAL record"
+#, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "не удалось найти копию блока с ID %d в записи журнала WAL"
 
@@ -527,30 +589,35 @@ msgstr "не удалось найти копию блока с ID %d в зап�
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
 msgstr ""
+"не удалось восстановить образ в позиции %X/%X с указанным неверным блоком %d"
 
 #: xlogreader.c:2058
-#, fuzzy, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
+#, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
+msgstr ""
+"не удалось восстановить образ в позиции %X/%X с неверным состоянием, блок %d"
 
 #: xlogreader.c:2085 xlogreader.c:2102
-#, fuzzy, c-format
-#| msgid "image at %X/%X compressed with %s not supported by build, block %d"
-msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "образ в позиции %X/%X сжат методом %s, не поддерживаемым этой сборкой, блок %d"
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with %s not supported by build, "
+"block %d"
+msgstr ""
+"не удалось восстановить образ в позиции %X/%X, сжатый методом %s, который не "
+"поддерживается этой сборкой, блок %d"
 
 #: xlogreader.c:2111
-#, fuzzy, c-format
-#| msgid "image at %X/%X compressed with unknown method, block %d"
-msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "образ в позиции %X/%X сжат неизвестным методом, блок %d"
+#, c-format
+msgid ""
+"could not restore image at %X/%X compressed with unknown method, block %d"
+msgstr ""
+"не удалось восстановить образ в позиции %X/%X, сжатый неизвестным методом, "
+"блок %d"
 
 #: xlogreader.c:2119
-#, fuzzy, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
+#, c-format
 msgid "could not decompress image at %X/%X, block %d"
-msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
+msgstr "не удалось развернуть образ в позиции %X/%X, блок %d"
 
 #~ msgid ""
 #~ "\n"

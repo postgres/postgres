@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres (PostgreSQL 15)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 11:13+0900\n"
-"PO-Revision-Date: 2022-09-26 14:46+0900\n"
+"POT-Creation-Date: 2022-09-29 10:04+0900\n"
+"PO-Revision-Date: 2022-09-29 10:16+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: jpug-doc <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -3946,7 +3946,7 @@ msgstr "OID %uの関数は存在しません"
 msgid "language with OID %u does not exist"
 msgstr "OID %uの言語は存在しません"
 
-#: catalog/aclchk.c:4571 catalog/aclchk.c:5360 commands/collationcmds.c:595 commands/publicationcmds.c:1748
+#: catalog/aclchk.c:4571 catalog/aclchk.c:5360 commands/collationcmds.c:595 commands/publicationcmds.c:1745
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "OID %uのスキーマは存在しません"
@@ -4016,7 +4016,7 @@ msgstr "OID %uの変換は存在しません"
 msgid "extension with OID %u does not exist"
 msgstr "OID %uの機能拡張は存在しません"
 
-#: catalog/aclchk.c:5722 commands/publicationcmds.c:2002
+#: catalog/aclchk.c:5722 commands/publicationcmds.c:1999
 #, c-format
 msgid "publication with OID %u does not exist"
 msgstr "OID %uのパブリケーションは存在しません"
@@ -4115,8 +4115,8 @@ msgstr[0] ""
 msgid "cannot drop %s because other objects depend on it"
 msgstr "他のオブジェクトが依存しているため%sを削除できません"
 
-#: catalog/dependency.c:1193 catalog/dependency.c:1194 catalog/dependency.c:1200 catalog/dependency.c:1201 catalog/dependency.c:1211 catalog/dependency.c:1212 commands/publicationcmds.c:593 commands/tablecmds.c:1328 commands/tablecmds.c:14282 commands/tablespace.c:476 commands/user.c:1008 commands/view.c:522 libpq/auth.c:329 replication/syncrep.c:1043 storage/lmgr/deadlock.c:1152 storage/lmgr/proc.c:1409 utils/adt/acl.c:5333 utils/adt/jsonfuncs.c:618
-#: utils/adt/jsonfuncs.c:624 utils/misc/guc.c:7412 utils/misc/guc.c:7448 utils/misc/guc.c:7518 utils/misc/guc.c:11874 utils/misc/guc.c:11908 utils/misc/guc.c:11942 utils/misc/guc.c:11985 utils/misc/guc.c:12027
+#: catalog/dependency.c:1194 catalog/dependency.c:1201 catalog/dependency.c:1212 commands/tablecmds.c:1328 commands/tablecmds.c:14282 commands/tablespace.c:476 commands/user.c:1008 commands/view.c:522 libpq/auth.c:329 replication/syncrep.c:1043 storage/lmgr/deadlock.c:1152 storage/lmgr/proc.c:1409 utils/misc/guc.c:7412 utils/misc/guc.c:7448 utils/misc/guc.c:7518 utils/misc/guc.c:11874 utils/misc/guc.c:11908 utils/misc/guc.c:11942 utils/misc/guc.c:11985
+#: utils/misc/guc.c:12027
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -5551,7 +5551,7 @@ msgstr "発行列リスト内に重複した列 \"%s\""
 msgid "schema \"%s\" is already member of publication \"%s\""
 msgstr "スキーマ\"%s\"はすでにパブリケーション\"%s\"のメンバです"
 
-#: catalog/pg_publication.c:1045 commands/publicationcmds.c:1394 commands/publicationcmds.c:1433 commands/publicationcmds.c:1970
+#: catalog/pg_publication.c:1045 commands/publicationcmds.c:1391 commands/publicationcmds.c:1430 commands/publicationcmds.c:1967
 #, c-format
 msgid "publication \"%s\" does not exist"
 msgstr "パブリケーション\"%s\"は存在しません"
@@ -5803,7 +5803,7 @@ msgstr "サーバー\"%s\"はすでに存在します"
 msgid "language \"%s\" already exists"
 msgstr "言語\"%s\"はすでに存在します"
 
-#: commands/alter.c:96 commands/publicationcmds.c:771
+#: commands/alter.c:96 commands/publicationcmds.c:770
 #, c-format
 msgid "publication \"%s\" already exists"
 msgstr "パブリケーション\"%s\"はすでに存在します"
@@ -8750,83 +8750,78 @@ msgstr "準備された文\"%s\"は存在しません"
 msgid "must be superuser to create custom procedural language"
 msgstr "手続き言語を生成するためにはスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:128
+#: commands/publicationcmds.c:130 postmaster/postmaster.c:1219 postmaster/postmaster.c:1318 utils/init/miscinit.c:1651
 #, c-format
-msgid "invalid list syntax for \"publish\" option"
-msgstr "\"publish\"オプションのリスト構文が不正です"
+msgid "invalid list syntax in parameter \"%s\""
+msgstr "パラメータ\"%s\"のリスト構文が不正です"
 
-#: commands/publicationcmds.c:146
+#: commands/publicationcmds.c:149
 #, c-format
-msgid "unrecognized \"publish\" value: \"%s\""
-msgstr "識別できない\"publish\"の値: \"%s\""
+msgid "unrecognized value for publication option \"%s\": \"%s\""
+msgstr "パブリケーションオプション\"%s\"に対する認識できない値: \"%s\""
 
-#: commands/publicationcmds.c:159
+#: commands/publicationcmds.c:163
 #, c-format
 msgid "unrecognized publication parameter: \"%s\""
 msgstr "識別できないパブリケーションのパラメータ: \"%s\""
 
-#: commands/publicationcmds.c:200
+#: commands/publicationcmds.c:204
 #, c-format
 msgid "no schema has been selected for CURRENT_SCHEMA"
 msgstr "SURRENT_SCHEMAでスキーマの選択ができませんでした"
 
-#: commands/publicationcmds.c:465
-msgid "User-defined types are not allowed."
-msgstr "ユーザー定義型は使用できません。"
-
-#: commands/publicationcmds.c:468
-msgid "User-defined or built-in mutable functions are not allowed."
-msgstr "ユーザー定義または組み込みの不変関数は使用できません。"
-
-#: commands/publicationcmds.c:471
-msgid "User-defined collations are not allowed."
-msgstr "ユーザー定義照合順序は使用できません。"
-
-#: commands/publicationcmds.c:525
+#: commands/publicationcmds.c:501
 msgid "System columns are not allowed."
 msgstr "システム列は使用できません。"
 
-#: commands/publicationcmds.c:532 commands/publicationcmds.c:537 commands/publicationcmds.c:554
+#: commands/publicationcmds.c:508 commands/publicationcmds.c:513 commands/publicationcmds.c:530
 msgid "User-defined operators are not allowed."
 msgstr "ユーザー定義演算子は使用できません。"
 
-#: commands/publicationcmds.c:578
+#: commands/publicationcmds.c:554
 msgid "Only columns, constants, built-in operators, built-in data types, built-in collations, and immutable built-in functions are allowed."
 msgstr "列、定数、組み込み演算子、組み込みデータ型、組み込み照合順序、そして不変組み込み関数のみ使用可能です。"
 
-#: commands/publicationcmds.c:592
+#: commands/publicationcmds.c:566
+msgid "User-defined types are not allowed."
+msgstr "ユーザー定義型は使用できません。"
+
+#: commands/publicationcmds.c:569
+msgid "User-defined or built-in mutable functions are not allowed."
+msgstr "ユーザー定義または組み込みの不変関数は使用できません。"
+
+#: commands/publicationcmds.c:572
+msgid "User-defined collations are not allowed."
+msgstr "ユーザー定義照合順序は使用できません。"
+
+#: commands/publicationcmds.c:582
 #, c-format
 msgid "invalid publication WHERE expression"
 msgstr "パブリケーションのWHERE式が不正です"
 
-#: commands/publicationcmds.c:645
+#: commands/publicationcmds.c:635
 #, c-format
 msgid "cannot use publication WHERE clause for relation \"%s\""
 msgstr "リレーション\"%s\"に対してはパブリケーションのWHERE句は使用できません"
 
-#: commands/publicationcmds.c:647
+#: commands/publicationcmds.c:637
 #, c-format
 msgid "WHERE clause cannot be used for a partitioned table when %s is false."
 msgstr "%sが偽のときはWHERE句をパーティション親テーブルに対して使用することはできません。"
 
-#: commands/publicationcmds.c:709
+#: commands/publicationcmds.c:708 commands/publicationcmds.c:722
 #, c-format
-msgid "cannot use publication column list for relation \"%s.%s\""
-msgstr "リレーション\"%s.%s\"に対して発行列リストは使用できません"
+msgid "cannot use column list for relation \"%s.%s\" in publication \"%s\""
+msgstr "パブリケーション\"%3$s\"のリレーション\"%1$s.%2$s\"に対して列リストを使用することはできません"
 
-#: commands/publicationcmds.c:712
+#: commands/publicationcmds.c:711
 #, c-format
-msgid "Column list cannot be specified if any schema is part of the publication or specified in the list."
-msgstr "スキーマが対象のパブリケーションに含まれているか、コマンドで同時に指定されている場合は、列リストを指定できません"
-
-#: commands/publicationcmds.c:723
-#, c-format
-msgid "cannot use publication column list for relation \"%s\""
-msgstr "リレーション\"%s\"に対して発行列リストは使用できません"
+msgid "Column lists cannot be specified in publications containing FOR TABLES IN SCHEMA elements."
+msgstr "FOR TABLES IN SCHEMA要素を含むパブリケーションで列リストは指定できません。"
 
 #: commands/publicationcmds.c:725
 #, c-format
-msgid "Column list cannot be used for a partitioned table when %s is false."
+msgid "Column lists cannot be specified for partitioned tables when %s is false."
 msgstr "%sが偽のときはパーティション親テーブルに対して列リストを使用できません。"
 
 #: commands/publicationcmds.c:760
@@ -8834,107 +8829,107 @@ msgstr "%sが偽のときはパーティション親テーブルに対して列�
 msgid "must be superuser to create FOR ALL TABLES publication"
 msgstr "FOR ALL TABLE 指定のパブリケーションを生成するためにはスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:833
+#: commands/publicationcmds.c:831
 #, c-format
 msgid "must be superuser to create FOR TABLES IN SCHEMA publication"
 msgstr "FOR TABLES IN SCHEMA設定のパブリケーションを作成するにはスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:870
+#: commands/publicationcmds.c:867
 #, c-format
 msgid "wal_level is insufficient to publish logical changes"
 msgstr "wal_level が論理更新情報のパブリッシュには不十分です"
 
-#: commands/publicationcmds.c:871
+#: commands/publicationcmds.c:868
 #, c-format
-msgid "Set wal_level to logical before creating subscriptions."
-msgstr "wal_levelをlogicalに設定にしてからサブスクリプションを作成してください。"
+msgid "Set wal_level to \"logical\" before creating subscriptions."
+msgstr "サブスクリプションを作成する前にwal_levelを\"logical\"に設定にしてください。"
 
-#: commands/publicationcmds.c:968 commands/publicationcmds.c:976
+#: commands/publicationcmds.c:964 commands/publicationcmds.c:972
 #, c-format
 msgid "cannot set parameter \"%s\" to false for publication \"%s\""
 msgstr "パブリケーション\"%2$s\"に対してパラメーター\"%1$s\"を偽に設定することはできません"
 
-#: commands/publicationcmds.c:971
+#: commands/publicationcmds.c:967
 #, c-format
 msgid "The publication contains a WHERE clause for partitioned table \"%s\", which is not allowed when \"%s\" is false."
 msgstr "このパブリケーションはパーティション親テーブル\"%s\"に対するWHERE句を含んでいますが、これは\"%s\" が偽の場合は許可されません。"
 
-#: commands/publicationcmds.c:979
+#: commands/publicationcmds.c:975
 #, c-format
 msgid "The publication contains a column list for partitioned table \"%s\", which is not allowed when \"%s\" is false."
 msgstr "このパブリケーションはパーティション親テーブルに\"%s\"対する列リストを含んでいますが、これは\"%s\" が偽の場合は許可されません。"
 
-#: commands/publicationcmds.c:1302
+#: commands/publicationcmds.c:1298
 #, c-format
-msgid "cannot add schema to the publication"
-msgstr "このパブリケーションにはスキーマは追加できません"
+msgid "cannot add schema to publication \"%s\""
+msgstr "パブリケーション\"%s\"にはスキーマは追加できません"
 
-#: commands/publicationcmds.c:1303
+#: commands/publicationcmds.c:1300
 #, c-format
-msgid "Schema cannot be added if any table that specifies column list is already part of the publication."
+msgid "Schemas cannot be added if any tables that specify a column list are already part of the publication."
 msgstr "カラムリストが指定されているテーブルがパブリケーションに含まれている場合はスキーマの追加ができません。"
 
-#: commands/publicationcmds.c:1351
+#: commands/publicationcmds.c:1348
 #, c-format
 msgid "must be superuser to add or set schemas"
 msgstr "スキーマを追加または設定するにはスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:1360 commands/publicationcmds.c:1368
+#: commands/publicationcmds.c:1357 commands/publicationcmds.c:1365
 #, c-format
 msgid "publication \"%s\" is defined as FOR ALL TABLES"
 msgstr "パブリケーション\"%s\"は　FOR ALL TABLES と定義されています"
 
-#: commands/publicationcmds.c:1362
+#: commands/publicationcmds.c:1359
 #, c-format
 msgid "Schemas cannot be added to or dropped from FOR ALL TABLES publications."
 msgstr "FOR ALL TABLES指定のパブリケーションではスキーマの追加や削除はできません。"
 
-#: commands/publicationcmds.c:1370
+#: commands/publicationcmds.c:1367
 #, c-format
 msgid "Tables cannot be added to or dropped from FOR ALL TABLES publications."
 msgstr "FOR ALL TABLES指定のパブリケーションではテーブルの追加や削除はできません。"
 
-#: commands/publicationcmds.c:1596 commands/publicationcmds.c:1659
+#: commands/publicationcmds.c:1593 commands/publicationcmds.c:1656
 #, c-format
 msgid "conflicting or redundant WHERE clauses for table \"%s\""
 msgstr "テーブル\"%s\"でWHERE句が衝突しているか重複しています"
 
-#: commands/publicationcmds.c:1603 commands/publicationcmds.c:1671
+#: commands/publicationcmds.c:1600 commands/publicationcmds.c:1668
 #, c-format
 msgid "conflicting or redundant column lists for table \"%s\""
 msgstr "テーブル\"%s\"で列リストが衝突しているか重複しています"
 
-#: commands/publicationcmds.c:1805
+#: commands/publicationcmds.c:1802
 #, c-format
 msgid "column list must not be specified in ALTER PUBLICATION ... DROP"
 msgstr "ALTER PUBLICATION ... DROPでは、列リストは指定できません"
 
-#: commands/publicationcmds.c:1817
+#: commands/publicationcmds.c:1814
 #, c-format
 msgid "relation \"%s\" is not part of the publication"
 msgstr "リレーション\"%s\"はパブリケーションの一部ではありません"
 
-#: commands/publicationcmds.c:1824
+#: commands/publicationcmds.c:1821
 #, c-format
 msgid "cannot use a WHERE clause when removing a table from a publication"
 msgstr "テーブルをパブリケーションから削除する際にはWHERE句を指定できません"
 
-#: commands/publicationcmds.c:1884
+#: commands/publicationcmds.c:1881
 #, c-format
 msgid "tables from schema \"%s\" are not part of the publication"
 msgstr "スキーマ\"%s\"のテーブルはこのパブリケーションに含まれてません"
 
-#: commands/publicationcmds.c:1927 commands/publicationcmds.c:1934
+#: commands/publicationcmds.c:1924 commands/publicationcmds.c:1931
 #, c-format
 msgid "permission denied to change owner of publication \"%s\""
 msgstr "パブリケーション\"%s\"の所有者を変更する権限がありません"
 
-#: commands/publicationcmds.c:1929
+#: commands/publicationcmds.c:1926
 #, c-format
 msgid "The owner of a FOR ALL TABLES publication must be a superuser."
 msgstr "FOR ALL TABLES設定のパブリケーションの所有者はスーパーユーザーである必要があります"
 
-#: commands/publicationcmds.c:1936
+#: commands/publicationcmds.c:1933
 #, c-format
 msgid "The owner of a FOR TABLES IN SCHEMA publication must be a superuser."
 msgstr "FOR TABLES IN SCHEMA設定のパブリケーションの所有者はスーパーユーザーでなければなりません。"
@@ -11661,6 +11656,10 @@ msgstr "空の文字列はパスワードとして使えません、パスワー
 #, c-format
 msgid "pg_authid OID value not set when in binary upgrade mode"
 msgstr "バイナリアップグレードモード中にpg_authidのOIDが設定されていません"
+
+#: commands/user.c:524 commands/user.c:838
+msgid "Cannot alter reserved roles."
+msgstr "予約ロールは変更できません。"
 
 #: commands/user.c:638
 #, c-format
@@ -18452,11 +18451,6 @@ msgstr "この後のログ出力はログ配送先\"%s\"に出力されます。
 #, c-format
 msgid "starting %s"
 msgstr "%s を起動しています"
-
-#: postmaster/postmaster.c:1219 postmaster/postmaster.c:1318 utils/init/miscinit.c:1651
-#, c-format
-msgid "invalid list syntax in parameter \"%s\""
-msgstr "パラメータ\"%s\"のリスト構文が不正です"
 
 #: postmaster/postmaster.c:1250
 #, c-format

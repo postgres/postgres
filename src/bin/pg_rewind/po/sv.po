@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-12 15:21+0000\n"
-"PO-Revision-Date: 2022-09-12 21:04+0200\n"
+"POT-Creation-Date: 2022-09-29 11:51+0000\n"
+"PO-Revision-Date: 2022-09-29 21:42+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -981,8 +981,8 @@ msgstr "post med ogiltig längd vid %X/%X"
 
 #: xlogreader.c:1967
 #, c-format
-msgid "failed to locate backup block with ID %d in WAL record"
-msgstr "misslyckades med att hitta backupblock med ID %d i WAL-post"
+msgid "could not locate backup block with ID %d in WAL record"
+msgstr "kunde inte hitta backup-block med ID %d i WAL-post"
 
 #: xlogreader.c:2051
 #, c-format

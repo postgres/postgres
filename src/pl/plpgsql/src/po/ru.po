@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
 "PO-Revision-Date: 2022-09-05 13:38+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -26,8 +26,8 @@ msgstr "функции PL/pgSQL не могут принимать тип %s"
 #, c-format
 msgid "could not determine actual return type for polymorphic function \"%s\""
 msgstr ""
-"не удалось определить фактический тип результата для полиморфной функции \""
-"%s\""
+"не удалось определить фактический тип результата для полиморфной функции \"%s"
+"\""
 
 #: pl_comp.c:560
 #, c-format
@@ -114,13 +114,13 @@ msgstr "тип %s не является составным"
 msgid "unrecognized exception condition \"%s\""
 msgstr "нераспознанное условие исключения \"%s\""
 
-#: pl_comp.c:2526
+#: pl_comp.c:2534
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
 msgstr ""
-"не удалось определить фактический тип аргумента для полиморфной функции \""
-"%s\""
+"не удалось определить фактический тип аргумента для полиморфной функции \"%s"
+"\""
 
 #: pl_exec.c:501 pl_exec.c:940 pl_exec.c:1175
 msgid "during initialization of execution state"
@@ -438,8 +438,8 @@ msgid ""
 "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
 "instead."
 msgstr ""
-"Альтернативой может стать EXECUTE ... INTO или EXECUTE CREATE TABLE ... AS "
-"..."
+"Альтернативой может стать EXECUTE ... INTO или EXECUTE CREATE TABLE ... "
+"AS ..."
 
 #: pl_exec.c:4512
 #, c-format
@@ -514,8 +514,8 @@ msgstr "запрос - не SELECT"
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr ""
-"тип параметра %d (%s) не соответствует тому, с которым подготавливался план ("
-"%s)"
+"тип параметра %d (%s) не соответствует тому, с которым подготавливался план "
+"(%s)"
 
 #: pl_exec.c:7111 pl_exec.c:7145 pl_exec.c:7219 pl_exec.c:7245
 #, c-format

@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-26 06:47+0000\n"
-"PO-Revision-Date: 2022-07-18 17:28+0200\n"
+"POT-Creation-Date: 2022-09-26 08:17+0000\n"
+"PO-Revision-Date: 2022-09-26 14:37+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 3.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../../../src/common/logging.c:276
 #, c-format
@@ -424,10 +424,9 @@ msgid "invalid contrecord length %u (expected %lld) at %X/%X"
 msgstr "longueur %u invalide du contrecord (%lld attendu) à %X/%X"
 
 #: xlogreader.c:922
-#, fuzzy, c-format
-#| msgid "there is no contrecord flag at %X/%X"
+#, c-format
 msgid "missing contrecord at %X/%X"
-msgstr "il n'existe pas de drapeau contrecord à %X/%X"
+msgstr "contrecord manquant à %X/%X"
 
 #: xlogreader.c:1129
 #, c-format
@@ -532,39 +531,34 @@ msgid "record with invalid length at %X/%X"
 msgstr "enregistrement de longueur invalide à %X/%X"
 
 #: xlogreader.c:1967
-#, fuzzy, c-format
-#| msgid "failed to locate backup block with ID %d in WAL record"
+#, c-format
 msgid "could not locate backup block with ID %d in WAL record"
 msgstr "échec de localisation du bloc de sauvegarde d'ID %d dans l'enregistrement WAL"
 
 #: xlogreader.c:2051
 #, c-format
 msgid "could not restore image at %X/%X with invalid block %d specified"
-msgstr ""
+msgstr "n'a pas pu restaurer l'image à %X/%X avec le bloc invalide %d indiqué"
 
 #: xlogreader.c:2058
-#, fuzzy, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
+#, c-format
 msgid "could not restore image at %X/%X with invalid state, block %d"
-msgstr "image compressée invalide à %X/%X, bloc %d"
+msgstr "n'a pas pu restaurer l'image à %X/%X avec l'état invalide, bloc %d"
 
 #: xlogreader.c:2085 xlogreader.c:2102
-#, fuzzy, c-format
-#| msgid "image at %X/%X compressed with %s not supported by build, block %d"
+#, c-format
 msgid "could not restore image at %X/%X compressed with %s not supported by build, block %d"
-msgstr "image à %X/%X compressé avec %s, non supporté, bloc %d"
+msgstr "n'a pas pu restaurer l'image à %X/%X compressé avec %s, non supporté par le serveur, bloc %d"
 
 #: xlogreader.c:2111
-#, fuzzy, c-format
-#| msgid "image at %X/%X compressed with unknown method, block %d"
+#, c-format
 msgid "could not restore image at %X/%X compressed with unknown method, block %d"
-msgstr "image à %X/%X compressé avec une méthode inconnue, bloc %d"
+msgstr "n'a pas pu restaurer l'image à %X/%X compressé avec une méthode inconnue, bloc %d"
 
 #: xlogreader.c:2119
-#, fuzzy, c-format
-#| msgid "invalid compressed image at %X/%X, block %d"
+#, c-format
 msgid "could not decompress image at %X/%X, block %d"
-msgstr "image compressée invalide à %X/%X, bloc %d"
+msgstr "n'a pas pu décompresser l'image à %X/%X, bloc %d"
 
 #~ msgid ""
 #~ "\n"

@@ -1,63 +1,68 @@
 # Brazilian Portuguese message translation file for pg_config
-# Copyright (C) 2009 PostgreSQL Global Development Group
+#
+# Copyright (C) 2004-2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Euler Taveira de Oliveira <euler@timbira.com>, 2004-2016.
+#
+# Euler Taveira <euler@eulerto.com>, 2004-2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 9.6\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2016-08-09 22:53-0300\n"
+"Project-Id-Version: PostgreSQL 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-10 18:27-0300\n"
 "PO-Revision-Date: 2005-10-04 22:15-0300\n"
-"Last-Translator: Euler Taveira de Oliveira <euler@timbira.com>\n"
-"Language-Team: Brazilian Portuguese <pgbr-dev@listas.postgresql.org.br>\n"
+"Last-Translator: Euler Taveira <euler@eulerto.com>\n"
+"Language-Team: Brazilian Portuguese <pgsql-translators@postgresql.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../common/config_info.c:131 ../../common/config_info.c:139
-#: ../../common/config_info.c:147 ../../common/config_info.c:155
-#: ../../common/config_info.c:163 ../../common/config_info.c:171
-#: ../../common/config_info.c:179 ../../common/config_info.c:187
-#: ../../common/config_info.c:195
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
 msgstr "não informado"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "não pôde identificar diretório atual: %s"
+msgid "could not identify current directory: %m"
+msgstr "não pôde identificar diretório atual: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:168
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binário \"%s\" é inválido"
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "não pôde ler o binário \"%s\""
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "não pôde encontrar o \"%s\" para executá-lo"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:282 ../../common/exec.c:321
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "não pôde mudar diretório para \"%s\": %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "não pôde mudar diretório para \"%s\": %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:299
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "não pôde ler link simbólico \"%s\""
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "não pôde ler link simbólico \"%s\": %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:422
 #, c-format
-msgid "pclose failed: %s"
-msgstr "pclose falhou: %s"
+msgid "%s() failed: %m"
+msgstr "%s() falhou: %m"
+
+#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
+msgid "out of memory"
+msgstr "sem memória"
 
 #: pg_config.c:74
 #, c-format
@@ -230,20 +235,25 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Relate erros a <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Relate erros a <%s>.\n"
 
-#: pg_config.c:111
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Página web do %s: <%s>\n"
+
+#: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Tente \"%s --help\" para obter informações adicionais.\n"
 
-#: pg_config.c:153
+#: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: não pôde encontrar executável\n"
 
-#: pg_config.c:180
+#: pg_config.c:181
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: argumento inválido: %s\n"

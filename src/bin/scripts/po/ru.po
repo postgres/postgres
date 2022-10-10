@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
 "PO-Revision-Date: 2022-09-05 13:37+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -148,9 +148,8 @@ msgstr "Выполнялся запрос: %s"
 
 #: clusterdb.c:113 clusterdb.c:132 createdb.c:139 createdb.c:158
 #: createuser.c:170 createuser.c:185 dropdb.c:104 dropdb.c:113 dropdb.c:121
-#: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97
-#: pg_isready.c:111 reindexdb.c:174 reindexdb.c:193 vacuumdb.c:241
-#: vacuumdb.c:260
+#: dropuser.c:95 dropuser.c:110 dropuser.c:123 pg_isready.c:97 pg_isready.c:111
+#: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:241 vacuumdb.c:260
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Для дополнительной информации попробуйте \"%s --help\"."
@@ -195,7 +194,7 @@ msgstr ""
 "%s упорядочивает данные всех кластеризованных таблиц в базе данных.\n"
 "\n"
 
-#: clusterdb.c:263 createdb.c:283 createuser.c:346 dropdb.c:172 dropuser.c:170
+#: clusterdb.c:263 createdb.c:281 createuser.c:346 dropdb.c:172 dropuser.c:170
 #: pg_isready.c:226 reindexdb.c:760 vacuumdb.c:964
 #, c-format
 msgid "Usage:\n"
@@ -206,7 +205,7 @@ msgstr "Использование:\n"
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД]\n"
 
-#: clusterdb.c:265 createdb.c:285 createuser.c:348 dropdb.c:174 dropuser.c:172
+#: clusterdb.c:265 createdb.c:283 createuser.c:348 dropdb.c:174 dropuser.c:172
 #: pg_isready.c:229 reindexdb.c:762 vacuumdb.c:966
 #, c-format
 msgid ""
@@ -258,7 +257,7 @@ msgstr "  -V, --version             показать версию и выйти\
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту справку и выйти\n"
 
-#: clusterdb.c:274 createdb.c:300 createuser.c:370 dropdb.c:181 dropuser.c:179
+#: clusterdb.c:274 createdb.c:298 createuser.c:370 dropdb.c:181 dropuser.c:179
 #: pg_isready.c:235 reindexdb.c:777 vacuumdb.c:991
 #, c-format
 msgid ""
@@ -309,7 +308,7 @@ msgstr ""
 "\n"
 "Подробнее о кластеризации вы можете узнать в описании SQL-команды CLUSTER.\n"
 
-#: clusterdb.c:282 createdb.c:308 createuser.c:376 dropdb.c:188 dropuser.c:185
+#: clusterdb.c:282 createdb.c:306 createuser.c:376 dropdb.c:188 dropuser.c:185
 #: pg_isready.c:240 reindexdb.c:785 vacuumdb.c:999
 #, c-format
 msgid ""
@@ -319,7 +318,7 @@ msgstr ""
 "\n"
 "Об ошибках сообщайте по адресу <%s>.\n"
 
-#: clusterdb.c:283 createdb.c:309 createuser.c:377 dropdb.c:189 dropuser.c:186
+#: clusterdb.c:283 createdb.c:307 createuser.c:377 dropdb.c:189 dropuser.c:186
 #: pg_isready.c:241 reindexdb.c:786 vacuumdb.c:1000
 #, c-format
 msgid "%s home page: <%s>\n"
@@ -355,32 +354,22 @@ msgstr "%s (%s - да/%s - нет) "
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Пожалуйста, введите \"%s\" или \"%s\".\n"
 
-#: createdb.c:165
-#, c-format
-msgid "only one of --locale and --lc-ctype can be specified"
-msgstr "можно указать только --locale или --lc-ctype"
-
-#: createdb.c:167
-#, c-format
-msgid "only one of --locale and --lc-collate can be specified"
-msgstr "можно указать только --locale и --lc-collate"
-
-#: createdb.c:175
+#: createdb.c:173
 #, c-format
 msgid "\"%s\" is not a valid encoding name"
 msgstr "\"%s\" не является верным названием кодировки"
 
-#: createdb.c:245
+#: createdb.c:243
 #, c-format
 msgid "database creation failed: %s"
 msgstr "создать базу данных не удалось: %s"
 
-#: createdb.c:264
+#: createdb.c:262
 #, c-format
 msgid "comment creation failed (database was created): %s"
 msgstr "создать комментарий не удалось (база данных была создана): %s"
 
-#: createdb.c:282
+#: createdb.c:280
 #, c-format
 msgid ""
 "%s creates a PostgreSQL database.\n"
@@ -389,52 +378,52 @@ msgstr ""
 "%s создаёт базу данных PostgreSQL.\n"
 "\n"
 
-#: createdb.c:284
+#: createdb.c:282
 #, c-format
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [ПАРАМЕТР]... [ИМЯ_БД] [ОПИСАНИЕ]\n"
 
 # well-spelled: ПРОСТР
-#: createdb.c:286
+#: createdb.c:284
 #, c-format
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
 "  -D, --tablespace=ТАБЛ_ПРОСТР табличное пространство по умолчанию для базы "
 "данных\n"
 
-#: createdb.c:287 reindexdb.c:766
+#: createdb.c:285 reindexdb.c:766
 #, c-format
 msgid ""
 "  -e, --echo                   show the commands being sent to the server\n"
 msgstr ""
 "  -e, --echo                   отображать команды, отправляемые серверу\n"
 
-#: createdb.c:288
+#: createdb.c:286
 #, c-format
 msgid "  -E, --encoding=ENCODING      encoding for the database\n"
 msgstr "  -E, --encoding=КОДИРОВКА     кодировка базы данных\n"
 
-#: createdb.c:289
+#: createdb.c:287
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
 msgstr "  -l, --locale=ЛОКАЛЬ          локаль для базы данных\n"
 
-#: createdb.c:290
+#: createdb.c:288
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
 msgstr "      --lc-collate=ЛОКАЛЬ      параметр LC_COLLATE для базы данных\n"
 
-#: createdb.c:291
+#: createdb.c:289
 #, c-format
 msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
 msgstr "      --lc-ctype=ЛОКАЛЬ        параметр LC_CTYPE для базы данных\n"
 
-#: createdb.c:292
+#: createdb.c:290
 #, c-format
 msgid "      --icu-locale=LOCALE      ICU locale setting for the database\n"
 msgstr "      --icu-locale=ЛОКАЛЬ      локаль ICU для базы данных\n"
 
-#: createdb.c:293
+#: createdb.c:291
 #, c-format
 msgid ""
 "      --locale-provider={libc|icu}\n"
@@ -445,13 +434,13 @@ msgstr ""
 "                               провайдер локали для основного правила "
 "сортировки БД\n"
 
-#: createdb.c:295
+#: createdb.c:293
 #, c-format
 msgid "  -O, --owner=OWNER            database user to own the new database\n"
 msgstr ""
 "  -O, --owner=ВЛАДЕЛЕЦ         пользователь-владелец новой базы данных\n"
 
-#: createdb.c:296
+#: createdb.c:294
 #, c-format
 msgid ""
 "  -S, --strategy=STRATEGY      database creation strategy wal_log or "
@@ -460,55 +449,55 @@ msgstr ""
 "  -S, --strategy=STRATEGY      стратегия создания базы данных: wal_log или "
 "file_copy\n"
 
-#: createdb.c:297
+#: createdb.c:295
 #, c-format
 msgid "  -T, --template=TEMPLATE      template database to copy\n"
 msgstr "  -T, --template=ШАБЛОН        исходная база данных для копирования\n"
 
-#: createdb.c:298 reindexdb.c:775
+#: createdb.c:296 reindexdb.c:775
 #, c-format
 msgid "  -V, --version                output version information, then exit\n"
 msgstr "  -V, --version                показать версию и выйти\n"
 
-#: createdb.c:299 reindexdb.c:776
+#: createdb.c:297 reindexdb.c:776
 #, c-format
 msgid "  -?, --help                   show this help, then exit\n"
 msgstr "  -?, --help                   показать эту справку и выйти\n"
 
-#: createdb.c:301 reindexdb.c:778
+#: createdb.c:299 reindexdb.c:778
 #, c-format
 msgid ""
 "  -h, --host=HOSTNAME          database server host or socket directory\n"
 msgstr ""
 "  -h, --host=ИМЯ               имя сервера баз данных или каталог сокетов\n"
 
-#: createdb.c:302 reindexdb.c:779
+#: createdb.c:300 reindexdb.c:779
 #, c-format
 msgid "  -p, --port=PORT              database server port\n"
 msgstr "  -p, --port=ПОРТ              порт сервера баз данных\n"
 
-#: createdb.c:303 reindexdb.c:780
+#: createdb.c:301 reindexdb.c:780
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
 msgstr ""
 "  -U, --username=ИМЯ           имя пользователя для подключения к серверу\n"
 
-#: createdb.c:304 reindexdb.c:781
+#: createdb.c:302 reindexdb.c:781
 #, c-format
 msgid "  -w, --no-password            never prompt for password\n"
 msgstr "  -w, --no-password            не запрашивать пароль\n"
 
-#: createdb.c:305 reindexdb.c:782
+#: createdb.c:303 reindexdb.c:782
 #, c-format
 msgid "  -W, --password               force password prompt\n"
 msgstr "  -W, --password               запросить пароль\n"
 
-#: createdb.c:306 reindexdb.c:783
+#: createdb.c:304 reindexdb.c:783
 #, c-format
 msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
 msgstr "  --maintenance-db=ИМЯ_БД      сменить опорную базу данных\n"
 
-#: createdb.c:307
+#: createdb.c:305
 #, c-format
 msgid ""
 "\n"
@@ -587,8 +576,8 @@ msgstr "  -d, --createdb            роль с правом создания б
 #, c-format
 msgid "  -D, --no-createdb         role cannot create databases (default)\n"
 msgstr ""
-"  -D, --no-createdb         роль без права создания баз данных (по умолчанию)"
-"\n"
+"  -D, --no-createdb         роль без права создания баз данных (по "
+"умолчанию)\n"
 
 #: createuser.c:353
 #, c-format
@@ -932,9 +921,9 @@ msgstr ""
 msgid "cannot use multiple jobs to reindex indexes"
 msgstr "нельзя задействовать несколько заданий для перестроения индексов"
 
-#: reindexdb.c:323 reindexdb.c:330 vacuumdb.c:425 vacuumdb.c:432
-#: vacuumdb.c:439 vacuumdb.c:446 vacuumdb.c:453 vacuumdb.c:460 vacuumdb.c:465
-#: vacuumdb.c:469 vacuumdb.c:473
+#: reindexdb.c:323 reindexdb.c:330 vacuumdb.c:425 vacuumdb.c:432 vacuumdb.c:439
+#: vacuumdb.c:446 vacuumdb.c:453 vacuumdb.c:460 vacuumdb.c:465 vacuumdb.c:469
+#: vacuumdb.c:473
 #, c-format
 msgid ""
 "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
@@ -1039,8 +1028,8 @@ msgstr ""
 #, c-format
 msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
 msgstr ""
-"  -t, --table=ТАБЛИЦА          переиндексировать только указанную таблицу(ы)"
-"\n"
+"  -t, --table=ТАБЛИЦА          переиндексировать только указанную "
+"таблицу(ы)\n"
 
 # well-spelled: ПРОСТР
 #: reindexdb.c:773
@@ -1201,8 +1190,8 @@ msgid ""
 "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to "
 "vacuum\n"
 msgstr ""
-"      --min-xid-age=ВОЗРАСТ       минимальный возраст транзакций для таблиц,"
-"\n"
+"      --min-xid-age=ВОЗРАСТ       минимальный возраст транзакций для "
+"таблиц,\n"
 "                                  подлежащих очистке\n"
 
 #: vacuumdb.c:977
@@ -1312,6 +1301,12 @@ msgid ""
 msgstr ""
 "\n"
 "Подробнее об очистке вы можете узнать в описании SQL-команды VACUUM.\n"
+
+#~ msgid "only one of --locale and --lc-ctype can be specified"
+#~ msgstr "можно указать только --locale или --lc-ctype"
+
+#~ msgid "only one of --locale and --lc-collate can be specified"
+#~ msgstr "можно указать только --locale и --lc-collate"
 
 #~ msgid "fatal: "
 #~ msgstr "важно: "

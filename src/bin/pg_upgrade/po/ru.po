@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-27 14:52+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
 "PO-Revision-Date: 2022-09-05 13:37+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -112,8 +112,8 @@ msgstr "Эта утилита может только повышать верс�
 #: check.c:316
 #, c-format
 msgid ""
-"This utility cannot be used to downgrade to older major PostgreSQL versions."
-"\n"
+"This utility cannot be used to downgrade to older major PostgreSQL "
+"versions.\n"
 msgstr ""
 "Эта утилита не может понижать версию до более старой основной версии "
 "PostgreSQL.\n"
@@ -137,8 +137,8 @@ msgstr ""
 #: check.c:339
 #, c-format
 msgid ""
-"When checking a live server, the old and new port numbers must be different."
-"\n"
+"When checking a live server, the old and new port numbers must be "
+"different.\n"
 msgstr ""
 "Для проверки работающего сервера новый номер порта должен отличаться от "
 "старого.\n"
@@ -147,8 +147,8 @@ msgstr ""
 #, c-format
 msgid "encodings for database \"%s\" do not match:  old \"%s\", new \"%s\"\n"
 msgstr ""
-"кодировки в базе данных \"%s\" различаются:  старая - \"%s\", новая - \""
-"%s\"\n"
+"кодировки в базе данных \"%s\" различаются:  старая - \"%s\", новая - \"%s"
+"\"\n"
 
 #: check.c:359
 #, c-format
@@ -227,8 +227,8 @@ msgid "Creating script to delete old cluster"
 msgstr "Создание скрипта для удаления старого кластера"
 
 #: check.c:580 check.c:755 check.c:875 check.c:974 check.c:1105 check.c:1184
-#: check.c:1447 file.c:338 function.c:165 option.c:465 version.c:116
-#: version.c:288 version.c:423
+#: check.c:1453 file.c:338 function.c:165 option.c:465 version.c:116
+#: version.c:292 version.c:429
 #, c-format
 msgid "could not open file \"%s\": %s\n"
 msgstr "не удалось открыть файл \"%s\": %s\n"
@@ -272,9 +272,9 @@ msgstr ""
 "База template0 не должна допускать подключения, то есть её свойство "
 "pg_database.datallowconn должно быть false\n"
 
-#: check.c:772 check.c:897 check.c:999 check.c:1125 check.c:1206 check.c:1263
-#: check.c:1322 check.c:1351 check.c:1470 function.c:187 version.c:190
-#: version.c:228 version.c:372
+#: check.c:772 check.c:897 check.c:999 check.c:1125 check.c:1206 check.c:1265
+#: check.c:1326 check.c:1357 check.c:1476 function.c:187 version.c:192
+#: version.c:232 version.c:378
 #, c-format
 msgid "fatal\n"
 msgstr "сбой\n"
@@ -375,8 +375,8 @@ msgstr "Проверка несовместимых полиморфных фу�
 #, c-format
 msgid ""
 "Your installation contains user-defined objects that refer to internal\n"
-"polymorphic functions with arguments of type \"anyarray\" or \"anyelement\"."
-"\n"
+"polymorphic functions with arguments of type \"anyarray\" or \"anyelement"
+"\".\n"
 "These user-defined objects must be dropped before upgrading and restored\n"
 "afterwards, changing them to refer to the new corresponding functions with\n"
 "arguments of type \"anycompatiblearray\" and \"anycompatible\".\n"
@@ -422,7 +422,7 @@ msgstr ""
 msgid "Checking for system-defined composite types in user tables"
 msgstr "Проверка системных составных типов в пользовательских таблицах"
 
-#: check.c:1264
+#: check.c:1266
 #, c-format
 msgid ""
 "Your installation contains system-defined composite type(s) in user tables.\n"
@@ -441,12 +441,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1292
+#: check.c:1294
 #, c-format
 msgid "Checking for reg* data types in user tables"
 msgstr "Проверка типов данных reg* в пользовательских таблицах"
 
-#: check.c:1323
+#: check.c:1327
 #, c-format
 msgid ""
 "Your installation contains one of the reg* data types in user tables.\n"
@@ -466,12 +466,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1345
+#: check.c:1349
 #, c-format
 msgid "Checking for incompatible \"jsonb\" data type"
 msgstr "Проверка несовместимого типа данных \"jsonb\""
 
-#: check.c:1352
+#: check.c:1358
 #, c-format
 msgid ""
 "Your installation contains the \"jsonb\" data type in user tables.\n"
@@ -490,27 +490,27 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1374
+#: check.c:1380
 #, c-format
 msgid "Checking for roles starting with \"pg_\""
 msgstr "Проверка ролей с именами, начинающимися с \"pg_\""
 
-#: check.c:1384
+#: check.c:1390
 #, c-format
 msgid "The source cluster contains roles starting with \"pg_\"\n"
 msgstr "В исходном кластере есть роли, имена которых начинаются с \"pg_\"\n"
 
-#: check.c:1386
+#: check.c:1392
 #, c-format
 msgid "The target cluster contains roles starting with \"pg_\"\n"
 msgstr "В целевом кластере есть роли, имена которых начинаются с \"pg_\"\n"
 
-#: check.c:1407
+#: check.c:1413
 #, c-format
 msgid "Checking for user-defined encoding conversions"
 msgstr "Проверка пользовательских перекодировок"
 
-#: check.c:1471
+#: check.c:1477
 #, c-format
 msgid ""
 "Your installation contains user-defined encoding conversions.\n"
@@ -529,17 +529,17 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: check.c:1498
+#: check.c:1504
 #, c-format
 msgid "failed to get the current locale\n"
 msgstr "не удалось получить текущую локаль\n"
 
-#: check.c:1507
+#: check.c:1513
 #, c-format
 msgid "failed to get system locale name for \"%s\"\n"
 msgstr "не удалось получить системное имя локали для \"%s\"\n"
 
-#: check.c:1513
+#: check.c:1519
 #, c-format
 msgid "failed to restore old locale \"%s\"\n"
 msgstr "не удалось восстановить старую локаль \"%s\"\n"
@@ -1020,16 +1020,16 @@ msgstr ""
 msgid ""
 "error while copying relation \"%s.%s\": could not read file \"%s\": %s\n"
 msgstr ""
-"ошибка при копировании отношения \"%s.%s\": не удалось прочитать файл \""
-"%s\": %s\n"
+"ошибка при копировании отношения \"%s.%s\": не удалось прочитать файл \"%s"
+"\": %s\n"
 
 #: file.c:120 file.c:303
 #, c-format
 msgid ""
 "error while copying relation \"%s.%s\": could not write file \"%s\": %s\n"
 msgstr ""
-"ошибка при копировании отношения \"%s.%s\": не удалось записать в файл \""
-"%s\": %s\n"
+"ошибка при копировании отношения \"%s.%s\": не удалось записать в файл \"%s"
+"\": %s\n"
 
 #: file.c:134
 #, c-format
@@ -1121,8 +1121,8 @@ msgstr ""
 #: info.c:125
 #, c-format
 msgid ""
-"Relation names for OID %u in database \"%s\" do not match: old name \"%s."
-"%s\", new name \"%s.%s\"\n"
+"Relation names for OID %u in database \"%s\" do not match: old name \"%s.%s"
+"\", new name \"%s.%s\"\n"
 msgstr ""
 "Имена отношения с OID %u в базе данных \"%s\" различаются: старое имя - \"%s."
 "%s\", новое - \"%s.%s\"\n"
@@ -1155,8 +1155,8 @@ msgstr " это TOAST-таблица для отношения с OID %u"
 #: info.c:260
 #, c-format
 msgid ""
-"No match found in old cluster for new relation with OID %u in database \""
-"%s\": %s\n"
+"No match found in old cluster for new relation with OID %u in database \"%s"
+"\": %s\n"
 msgstr ""
 "В старом кластере не нашлось соответствия для нового отношения с OID %u в "
 "базе данных \"%s\": %s\n"
@@ -1164,8 +1164,8 @@ msgstr ""
 #: info.c:263
 #, c-format
 msgid ""
-"No match found in new cluster for old relation with OID %u in database \""
-"%s\": %s\n"
+"No match found in new cluster for old relation with OID %u in database \"%s"
+"\": %s\n"
 msgstr ""
 "В новом кластере не нашлось соответствия для старого отношения с OID %u в "
 "базе данных \"%s\": %s\n"
@@ -1387,8 +1387,8 @@ msgstr ""
 #, c-format
 msgid "  -P, --new-port=PORT           new cluster port number (default %d)\n"
 msgstr ""
-"  -P, --new-port=ПОРТ           номер порта нового кластера (по умолчанию %d)"
-"\n"
+"  -P, --new-port=ПОРТ           номер порта нового кластера (по умолчанию "
+"%d)\n"
 
 #: option.c:280
 #, c-format
@@ -1410,8 +1410,8 @@ msgstr ""
 #, c-format
 msgid "  -U, --username=NAME           cluster superuser (default \"%s\")\n"
 msgstr ""
-"  -U, --username=ИМЯ            суперпользователь кластера (по умолчанию \""
-"%s\")\n"
+"  -U, --username=ИМЯ            суперпользователь кластера (по умолчанию \"%s"
+"\")\n"
 
 #: option.c:283
 #, c-format
@@ -1918,7 +1918,7 @@ msgstr "ок"
 msgid "Checking for incompatible \"line\" data type"
 msgstr "Проверка несовместимого типа данных \"line\""
 
-#: version.c:191
+#: version.c:193
 #, c-format
 msgid ""
 "Your installation contains the \"line\" data type in user tables.\n"
@@ -1930,8 +1930,8 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"В вашей инсталляции пользовательские таблицы используют тип данных \"line\"."
-"\n"
+"В вашей инсталляции пользовательские таблицы используют тип данных \"line"
+"\".\n"
 "В старом кластере внутренний формат и формат ввода/вывода этого типа "
 "отличается\n"
 "от нового, поэтому в настоящем состоянии обновить кластер невозможно. Вы "
@@ -1941,12 +1941,12 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:222
+#: version.c:224
 #, c-format
 msgid "Checking for invalid \"unknown\" user columns"
 msgstr "Проверка неправильных пользовательских столбцов типа \"unknown\""
 
-#: version.c:229
+#: version.c:233
 #, c-format
 msgid ""
 "Your installation contains the \"unknown\" data type in user tables.\n"
@@ -1957,8 +1957,8 @@ msgid ""
 "    %s\n"
 "\n"
 msgstr ""
-"В вашей инсталляции пользовательские таблицы используют тип данных "
-"\"unknown\".\n"
+"В вашей инсталляции пользовательские таблицы используют тип данных \"unknown"
+"\".\n"
 "Теперь использование этого типа данных в таблицах не допускается, поэтому\n"
 "в настоящем состоянии обновить кластер невозможно. Вы можете удалить "
 "проблемные\n"
@@ -1967,17 +1967,17 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:253
+#: version.c:257
 #, c-format
 msgid "Checking for hash indexes"
 msgstr "Проверка хеш-индексов"
 
-#: version.c:331
+#: version.c:335
 #, c-format
 msgid "warning"
 msgstr "предупреждение"
 
-#: version.c:333
+#: version.c:337
 #, c-format
 msgid ""
 "\n"
@@ -1994,7 +1994,7 @@ msgstr ""
 "инструкции по выполнению REINDEX.\n"
 "\n"
 
-#: version.c:339
+#: version.c:343
 #, c-format
 msgid ""
 "\n"
@@ -2015,13 +2015,13 @@ msgstr ""
 "индексы; до этого никакие хеш-индексы не будут использоваться.\n"
 "\n"
 
-#: version.c:365
+#: version.c:369
 #, c-format
 msgid "Checking for invalid \"sql_identifier\" user columns"
 msgstr ""
 "Проверка неправильных пользовательских столбцов типа \"sql_identifier\""
 
-#: version.c:373
+#: version.c:379
 #, c-format
 msgid ""
 "Your installation contains the \"sql_identifier\" data type in user tables.\n"
@@ -2040,17 +2040,17 @@ msgstr ""
 "    %s\n"
 "\n"
 
-#: version.c:397
+#: version.c:403
 #, c-format
 msgid "Checking for extension updates"
 msgstr "Проверка обновлённых расширений"
 
-#: version.c:449
+#: version.c:455
 #, c-format
 msgid "notice"
 msgstr "замечание"
 
-#: version.c:450
+#: version.c:456
 #, c-format
 msgid ""
 "\n"
@@ -2181,8 +2181,8 @@ msgstr ""
 
 #~ msgid "check for \"%s\" failed: cannot read file (permission denied)\n"
 #~ msgstr ""
-#~ "проверка файла \"%s\" не пройдена: не удаётся прочитать файл (нет доступа)"
-#~ "\n"
+#~ "проверка файла \"%s\" не пройдена: не удаётся прочитать файл (нет "
+#~ "доступа)\n"
 
 #~ msgid "connection to database failed: %s"
 #~ msgstr "не удалось подключиться к базе: %s"
@@ -2219,8 +2219,8 @@ msgstr ""
 #~ "This utility can only upgrade to PostgreSQL version 9.0 after 2010-01-11\n"
 #~ "because of backend API changes made during development.\n"
 #~ msgstr ""
-#~ "Эта утилита поддерживает обновление только до версии 9.0 после 2010-01-11,"
-#~ "\n"
+#~ "Эта утилита поддерживает обновление только до версии 9.0 после "
+#~ "2010-01-11,\n"
 #~ "так как в API серверной части были внесены изменения.\n"
 
 #~ msgid "Cannot open file %s: %m\n"
