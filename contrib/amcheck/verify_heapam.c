@@ -1319,7 +1319,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	 */
 
 	/*
-	 * Check that VARTAG_SIZE won't hit a TrapMacro on a corrupt va_tag before
+	 * Check that VARTAG_SIZE won't hit an Assert on a corrupt va_tag before
 	 * risking a call into att_addlength_pointer
 	 */
 	if (VARATT_IS_EXTERNAL(tp + ctx->offset))

@@ -1832,8 +1832,7 @@ pg_re_throw(void)
 	}
 
 	/* Doesn't return ... */
-	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
-						 __FILE__, __LINE__);
+	ExceptionalCondition("pg_re_throw tried to return", __FILE__, __LINE__);
 }
 
 

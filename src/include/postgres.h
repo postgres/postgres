@@ -135,7 +135,7 @@ typedef enum vartag_external
 	((tag) == VARTAG_INDIRECT ? sizeof(varatt_indirect) : \
 	 VARTAG_IS_EXPANDED(tag) ? sizeof(varatt_expanded) : \
 	 (tag) == VARTAG_ONDISK ? sizeof(varatt_external) : \
-	 TrapMacro(true, "unrecognized TOAST vartag"))
+	 (AssertMacro(false), 0))
 
 /*
  * These structs describe the header of a varlena object that may have been

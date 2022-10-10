@@ -796,8 +796,6 @@ typedef NameData *Name;
 #define AssertArg(condition)	((void)true)
 #define AssertState(condition)	((void)true)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
-#define Trap(condition, errorType)	((void)true)
-#define TrapMacro(condition, errorType) (true)
 
 #elif defined(FRONTEND)
 
@@ -811,60 +809,38 @@ typedef NameData *Name;
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
 
 /*
- * Trap
- *		Generates an exception if the given condition is true.
+ * Assert
+ *		Generates a fatal exception if the given condition is false.
  */
-#define Trap(condition, errorType) \
-	do { \
-		if (condition) \
-			ExceptionalCondition(#condition, (errorType), \
-								 __FILE__, __LINE__); \
-	} while (0)
-
-/*
- *	TrapMacro is the same as Trap but it's intended for use in macros:
- *
- *		#define foo(x) (AssertMacro(x != 0), bar(x))
- *
- *	Isn't CPP fun?
- */
-#define TrapMacro(condition, errorType) \
-	((bool) (! (condition) || \
-			 (ExceptionalCondition(#condition, (errorType), \
-								   __FILE__, __LINE__), 0)))
-
 #define Assert(condition) \
 	do { \
 		if (!(condition)) \
-			ExceptionalCondition(#condition, "FailedAssertion", \
-								 __FILE__, __LINE__); \
+			ExceptionalCondition(#condition, __FILE__, __LINE__); \
 	} while (0)
 
+/*
+ * AssertMacro is the same as Assert but it's suitable for use in
+ * expression-like macros, for example:
+ *
+ *		#define foo(x) (AssertMacro(x != 0), bar(x))
+ */
 #define AssertMacro(condition) \
 	((void) ((condition) || \
-			 (ExceptionalCondition(#condition, "FailedAssertion", \
-								   __FILE__, __LINE__), 0)))
+			 (ExceptionalCondition(#condition, __FILE__, __LINE__), 0)))
 
-#define AssertArg(condition) \
-	do { \
-		if (!(condition)) \
-			ExceptionalCondition(#condition, "BadArgument", \
-								 __FILE__, __LINE__); \
-	} while (0)
-
-#define AssertState(condition) \
-	do { \
-		if (!(condition)) \
-			ExceptionalCondition(#condition, "BadState", \
-								 __FILE__, __LINE__); \
-	} while (0)
+/*
+ * AssertArg and AssertState are identical to Assert.  Some places use them
+ * to indicate that the complaint is specifically about a bad argument or
+ * unexpected state, but this usage is largely obsolescent.
+ */
+#define AssertArg(condition) Assert(condition)
+#define AssertState(condition) Assert(condition)
 
 /*
  * Check that `ptr' is `bndr' aligned.
  */
 #define AssertPointerAlignment(ptr, bndr) \
-	Trap(TYPEALIGN(bndr, (uintptr_t)(ptr)) != (uintptr_t)(ptr), \
-		 "UnalignedPointer")
+	Assert(TYPEALIGN(bndr, (uintptr_t)(ptr)) == (uintptr_t)(ptr))
 
 #endif							/* USE_ASSERT_CHECKING && !FRONTEND */
 
@@ -876,7 +852,6 @@ typedef NameData *Name;
  */
 #ifndef FRONTEND
 extern void ExceptionalCondition(const char *conditionName,
-								 const char *errorType,
 								 const char *fileName, int lineNumber) pg_attribute_noreturn();
 #endif
 
