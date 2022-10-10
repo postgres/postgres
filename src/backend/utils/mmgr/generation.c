@@ -105,11 +105,20 @@ struct GenerationBlock
  * simplicity.
  */
 #define GENERATIONCHUNK_PRIVATE_LEN	offsetof(MemoryChunk, hdrmask)
+
 /*
  * GenerationIsValid
- *		True iff set is valid allocation set.
+ *		True iff set is valid generation set.
  */
-#define GenerationIsValid(set) PointerIsValid(set)
+#define GenerationIsValid(set) \
+	(PointerIsValid(set) && IsA(set, GenerationContext))
+
+/*
+ * GenerationBlockIsValid
+ *		True iff block is valid block of generation set.
+ */
+#define GenerationBlockIsValid(block) \
+	(PointerIsValid(block) && GenerationIsValid((block)->context))
 
 /*
  * We always store external chunks on a dedicated block.  This makes fetching
@@ -344,6 +353,8 @@ GenerationAlloc(MemoryContext context, Size size)
 	MemoryChunk *chunk;
 	Size		chunk_size;
 	Size		required_size;
+
+	AssertArg(GenerationIsValid(set));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* ensure there's always space for the sentinel byte */
@@ -625,6 +636,14 @@ GenerationFree(void *pointer)
 	if (MemoryChunkIsExternal(chunk))
 	{
 		block = ExternalChunkGetBlock(chunk);
+
+		/*
+		 * Try to verify that we have a sane block pointer: the block header
+		 * should reference a generation context.
+		 */
+		if (!GenerationBlockIsValid(block))
+			elog(ERROR, "could not find block containing chunk %p", chunk);
+
 #if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
 		chunksize = block->endptr - (char *) pointer;
 #endif
@@ -632,6 +651,14 @@ GenerationFree(void *pointer)
 	else
 	{
 		block = MemoryChunkGetBlock(chunk);
+
+		/*
+		 * In this path, for speed reasons we just Assert that the referenced
+		 * block is good.  Future field experience may show that this Assert
+		 * had better become a regular runtime test-and-elog check.
+		 */
+		AssertArg(GenerationBlockIsValid(block));
+
 #if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
 		chunksize = MemoryChunkGetValue(chunk);
 #endif
@@ -723,11 +750,27 @@ GenerationRealloc(void *pointer, Size size)
 	if (MemoryChunkIsExternal(chunk))
 	{
 		block = ExternalChunkGetBlock(chunk);
+
+		/*
+		 * Try to verify that we have a sane block pointer: the block header
+		 * should reference a generation context.
+		 */
+		if (!GenerationBlockIsValid(block))
+			elog(ERROR, "could not find block containing chunk %p", chunk);
+
 		oldsize = block->endptr - (char *) pointer;
 	}
 	else
 	{
 		block = MemoryChunkGetBlock(chunk);
+
+		/*
+		 * In this path, for speed reasons we just Assert that the referenced
+		 * block is good.  Future field experience may show that this Assert
+		 * had better become a regular runtime test-and-elog check.
+		 */
+		AssertArg(GenerationBlockIsValid(block));
+
 		oldsize = MemoryChunkGetValue(chunk);
 	}
 
@@ -845,6 +888,7 @@ GenerationGetChunkContext(void *pointer)
 	else
 		block = (GenerationBlock *) MemoryChunkGetBlock(chunk);
 
+	AssertArg(GenerationBlockIsValid(block));
 	return &block->context->header;
 }
 
@@ -863,6 +907,7 @@ GenerationGetChunkSpace(void *pointer)
 	{
 		GenerationBlock *block = ExternalChunkGetBlock(chunk);
 
+		AssertArg(GenerationBlockIsValid(block));
 		chunksize = block->endptr - (char *) pointer;
 	}
 	else
@@ -880,6 +925,8 @@ GenerationIsEmpty(MemoryContext context)
 {
 	GenerationContext *set = (GenerationContext *) context;
 	dlist_iter	iter;
+
+	AssertArg(GenerationIsValid(set));
 
 	dlist_foreach(iter, &set->blocks)
 	{
@@ -916,6 +963,8 @@ GenerationStats(MemoryContext context,
 	Size		totalspace;
 	Size		freespace = 0;
 	dlist_iter	iter;
+
+	AssertArg(GenerationIsValid(set));
 
 	/* Include context header in totalspace */
 	totalspace = MAXALIGN(sizeof(GenerationContext));

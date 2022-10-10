@@ -132,6 +132,10 @@ typedef struct AllocFreeListLink
 #define GetFreeListLink(chkptr) \
 	(AllocFreeListLink *) ((char *) (chkptr) + ALLOC_CHUNKHDRSZ)
 
+/* Validate a freelist index retrieved from a chunk header */
+#define FreeListIdxIsValid(fidx) \
+	((fidx) >= 0 && (fidx) < ALLOCSET_NUM_FREELISTS)
+
 /* Determine the size of the chunk based on the freelist index */
 #define GetChunkSizeFromFreeListIdx(fidx) \
 	((((Size) 1) << ALLOC_MINBITS) << (fidx))
@@ -202,7 +206,15 @@ typedef struct AllocBlockData
  * AllocSetIsValid
  *		True iff set is valid allocation set.
  */
-#define AllocSetIsValid(set) PointerIsValid(set)
+#define AllocSetIsValid(set) \
+	(PointerIsValid(set) && IsA(set, AllocSetContext))
+
+/*
+ * AllocBlockIsValid
+ *		True iff block is valid block of allocation set.
+ */
+#define AllocBlockIsValid(block) \
+	(PointerIsValid(block) && AllocSetIsValid((block)->aset))
 
 /*
  * We always store external chunks on a dedicated block.  This makes fetching
@@ -530,8 +542,7 @@ AllocSetReset(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block;
-	Size		keepersize PG_USED_FOR_ASSERTS_ONLY
-	= set->keeper->endptr - ((char *) set);
+	Size		keepersize PG_USED_FOR_ASSERTS_ONLY;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -539,6 +550,9 @@ AllocSetReset(MemoryContext context)
 	/* Check for corruption and leaks before freeing */
 	AllocSetCheck(context);
 #endif
+
+	/* Remember keeper block size for Assert below */
+	keepersize = set->keeper->endptr - ((char *) set);
 
 	/* Clear chunk freelists */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
@@ -598,8 +612,7 @@ AllocSetDelete(MemoryContext context)
 {
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block = set->blocks;
-	Size		keepersize PG_USED_FOR_ASSERTS_ONLY
-	= set->keeper->endptr - ((char *) set);
+	Size		keepersize PG_USED_FOR_ASSERTS_ONLY;
 
 	AssertArg(AllocSetIsValid(set));
 
@@ -607,6 +620,9 @@ AllocSetDelete(MemoryContext context)
 	/* Check for corruption and leaks before freeing */
 	AllocSetCheck(context);
 #endif
+
+	/* Remember keeper block size for Assert below */
+	keepersize = set->keeper->endptr - ((char *) set);
 
 	/*
 	 * If the context is a candidate for a freelist, put it into that freelist
@@ -994,8 +1010,15 @@ AllocSetFree(void *pointer)
 
 	if (MemoryChunkIsExternal(chunk))
 	{
-
+		/* Release single-chunk block. */
 		AllocBlock	block = ExternalChunkGetBlock(chunk);
+
+		/*
+		 * Try to verify that we have a sane block pointer: the block header
+		 * should reference an aset and the freeptr should match the endptr.
+		 */
+		if (!AllocBlockIsValid(block) || block->freeptr != block->endptr)
+			elog(ERROR, "could not find block containing chunk %p", chunk);
 
 		set = block->aset;
 
@@ -1010,14 +1033,6 @@ AllocSetFree(void *pointer)
 					 set->header.name, chunk);
 		}
 #endif
-
-
-		/*
-		 * Try to verify that we have a sane block pointer, the freeptr should
-		 * match the endptr.
-		 */
-		if (block->freeptr != block->endptr)
-			elog(ERROR, "could not find block containing chunk %p", chunk);
 
 		/* OK, remove block from aset's list and free it */
 		if (block->prev)
@@ -1036,11 +1051,22 @@ AllocSetFree(void *pointer)
 	}
 	else
 	{
-		int			fidx = MemoryChunkGetValue(chunk);
 		AllocBlock	block = MemoryChunkGetBlock(chunk);
-		AllocFreeListLink *link = GetFreeListLink(chunk);
+		int			fidx;
+		AllocFreeListLink *link;
 
+		/*
+		 * In this path, for speed reasons we just Assert that the referenced
+		 * block is good.  We can also Assert that the value field is sane.
+		 * Future field experience may show that these Asserts had better
+		 * become regular runtime test-and-elog checks.
+		 */
+		AssertArg(AllocBlockIsValid(block));
 		set = block->aset;
+
+		fidx = MemoryChunkGetValue(chunk);
+		Assert(FreeListIdxIsValid(fidx));
+		link = GetFreeListLink(chunk);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* Test for someone scribbling on unused space in chunk */
@@ -1089,6 +1115,7 @@ AllocSetRealloc(void *pointer, Size size)
 	AllocSet	set;
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	Size		oldsize;
+	int			fidx;
 
 	/* Allow access to private part of chunk header. */
 	VALGRIND_MAKE_MEM_DEFINED(chunk, ALLOCCHUNK_PRIVATE_LEN);
@@ -1105,8 +1132,17 @@ AllocSetRealloc(void *pointer, Size size)
 		Size		oldblksize;
 
 		block = ExternalChunkGetBlock(chunk);
-		oldsize = block->endptr - (char *) pointer;
+
+		/*
+		 * Try to verify that we have a sane block pointer: the block header
+		 * should reference an aset and the freeptr should match the endptr.
+		 */
+		if (!AllocBlockIsValid(block) || block->freeptr != block->endptr)
+			elog(ERROR, "could not find block containing chunk %p", chunk);
+
 		set = block->aset;
+
+		oldsize = block->endptr - (char *) pointer;
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* Test for someone scribbling on unused space in chunk */
@@ -1115,13 +1151,6 @@ AllocSetRealloc(void *pointer, Size size)
 			elog(WARNING, "detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
-
-		/*
-		 * Try to verify that we have a sane block pointer, the freeptr should
-		 * match the endptr.
-		 */
-		if (block->freeptr != block->endptr)
-			elog(ERROR, "could not find block containing chunk %p", chunk);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 		/* ensure there's always space for the sentinel byte */
@@ -1201,8 +1230,19 @@ AllocSetRealloc(void *pointer, Size size)
 	}
 
 	block = MemoryChunkGetBlock(chunk);
-	oldsize = GetChunkSizeFromFreeListIdx(MemoryChunkGetValue(chunk));
+
+	/*
+	 * In this path, for speed reasons we just Assert that the referenced
+	 * block is good. We can also Assert that the value field is sane. Future
+	 * field experience may show that these Asserts had better become regular
+	 * runtime test-and-elog checks.
+	 */
+	AssertArg(AllocBlockIsValid(block));
 	set = block->aset;
+
+	fidx = MemoryChunkGetValue(chunk);
+	Assert(FreeListIdxIsValid(fidx));
+	oldsize = GetChunkSizeFromFreeListIdx(fidx);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Test for someone scribbling on unused space in chunk */
@@ -1328,6 +1368,7 @@ AllocSetGetChunkContext(void *pointer)
 	else
 		block = (AllocBlock) MemoryChunkGetBlock(chunk);
 
+	AssertArg(AllocBlockIsValid(block));
 	set = block->aset;
 
 	return &set->header;
@@ -1342,16 +1383,19 @@ Size
 AllocSetGetChunkSpace(void *pointer)
 {
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
+	int			fidx;
 
 	if (MemoryChunkIsExternal(chunk))
 	{
 		AllocBlock	block = ExternalChunkGetBlock(chunk);
 
+		AssertArg(AllocBlockIsValid(block));
 		return block->endptr - (char *) chunk;
 	}
 
-	return GetChunkSizeFromFreeListIdx(MemoryChunkGetValue(chunk)) +
-		ALLOC_CHUNKHDRSZ;
+	fidx = MemoryChunkGetValue(chunk);
+	Assert(FreeListIdxIsValid(fidx));
+	return GetChunkSizeFromFreeListIdx(fidx) + ALLOC_CHUNKHDRSZ;
 }
 
 /*
@@ -1361,6 +1405,8 @@ AllocSetGetChunkSpace(void *pointer)
 bool
 AllocSetIsEmpty(MemoryContext context)
 {
+	AssertArg(AllocSetIsValid(context));
+
 	/*
 	 * For now, we say "empty" only if the context is new or just reset. We
 	 * could examine the freelists to determine if all space has been freed,
@@ -1394,6 +1440,8 @@ AllocSetStats(MemoryContext context,
 	AllocBlock	block;
 	int			fidx;
 
+	AssertArg(AllocSetIsValid(set));
+
 	/* Include context header in totalspace */
 	totalspace = MAXALIGN(sizeof(AllocSetContext));
 
@@ -1405,14 +1453,14 @@ AllocSetStats(MemoryContext context,
 	}
 	for (fidx = 0; fidx < ALLOCSET_NUM_FREELISTS; fidx++)
 	{
+		Size		chksz = GetChunkSizeFromFreeListIdx(fidx);
 		MemoryChunk *chunk = set->freelist[fidx];
 
 		while (chunk != NULL)
 		{
-			Size		chksz = GetChunkSizeFromFreeListIdx(MemoryChunkGetValue(chunk));
 			AllocFreeListLink *link = GetFreeListLink(chunk);
 
-			Assert(GetChunkSizeFromFreeListIdx(fidx) == chksz);
+			Assert(MemoryChunkGetValue(chunk) == fidx);
 
 			freechunks++;
 			freespace += chksz + ALLOC_CHUNKHDRSZ;
@@ -1522,7 +1570,13 @@ AllocSetCheck(MemoryContext context)
 			}
 			else
 			{
-				chsize = GetChunkSizeFromFreeListIdx(MemoryChunkGetValue(chunk));	/* aligned chunk size */
+				int			fidx = MemoryChunkGetValue(chunk);
+
+				if (!FreeListIdxIsValid(fidx))
+					elog(WARNING, "problem in alloc set %s: bad chunk size for chunk %p in block %p",
+						 name, chunk, block);
+
+				chsize = GetChunkSizeFromFreeListIdx(fidx); /* aligned chunk size */
 
 				/*
 				 * Check the stored block offset correctly references this
