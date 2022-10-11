@@ -200,4 +200,130 @@ append_to_file(
 
 test_conn($node, 'user=md5_role', 'password from pgpass', 0);
 
+unlink($pgpassfile);
+delete $ENV{"PGPASSFILE"};
+
+note "Authentication tests with specific HBA policies on roles";
+
+# Create database and roles for membership tests
+reset_pg_hba($node, 'all', 'all', 'trust');
+# Database and root role names match for "samerole" and "samegroup".
+$node->safe_psql('postgres', "CREATE DATABASE regress_regression_group;");
+$node->safe_psql(
+	'postgres',
+	qq{CREATE ROLE regress_regression_group LOGIN PASSWORD 'pass';
+CREATE ROLE regress_member LOGIN SUPERUSER IN ROLE regress_regression_group PASSWORD 'pass';
+CREATE ROLE regress_not_member LOGIN SUPERUSER PASSWORD 'pass';});
+
+# Test role with exact matching, no members allowed.
+$ENV{"PGPASSWORD"} = 'pass';
+reset_pg_hba($node, 'all', 'regress_regression_group', 'scram-sha-256');
+test_conn(
+	$node,
+	'user=regress_regression_group',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_regression_group" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_member',
+	'scram-sha-256',
+	2,
+	log_unlike => [
+		qr/connection authenticated: identity="regress_member" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_not_member',
+	'scram-sha-256',
+	2,
+	log_unlike => [
+		qr/connection authenticated: identity="regress_not_member" method=scram-sha-256/
+	]);
+
+# Test role membership with '+', where all the members are allowed
+# to connect.
+reset_pg_hba($node, 'all', '+regress_regression_group', 'scram-sha-256');
+test_conn(
+	$node,
+	'user=regress_regression_group',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_regression_group" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_member',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_member" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_not_member',
+	'scram-sha-256',
+	2,
+	log_unlike => [
+		qr/connection authenticated: identity="regress_not_member" method=scram-sha-256/
+	]);
+
+# Test role membership is respected for samerole
+$ENV{"PGDATABASE"} = 'regress_regression_group';
+reset_pg_hba($node, 'samerole', 'all', 'scram-sha-256');
+test_conn(
+	$node,
+	'user=regress_regression_group',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_regression_group" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_member',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_member" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_not_member',
+	'scram-sha-256',
+	2,
+	log_unlike => [
+		qr/connection authenticated: identity="regress_not_member" method=scram-sha-256/
+	]);
+
+# Test role membership is respected for samegroup
+reset_pg_hba($node, 'samegroup', 'all', 'scram-sha-256');
+test_conn(
+	$node,
+	'user=regress_regression_group',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_regression_group" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_member',
+	'scram-sha-256',
+	0,
+	log_like => [
+		qr/connection authenticated: identity="regress_member" method=scram-sha-256/
+	]);
+test_conn(
+	$node,
+	'user=regress_not_member',
+	'scram-sha-256',
+	2,
+	log_unlike => [
+		qr/connection authenticated: identity="regress_not_member" method=scram-sha-256/
+	]);
+
 done_testing();
