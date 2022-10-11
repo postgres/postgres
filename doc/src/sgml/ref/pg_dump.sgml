@@ -888,6 +888,12 @@ PostgreSQL documentation
         Specify a filename from which to read masking patterns for using masking functions
         to fields. You have ability to use user-defined functions from file, functions that
         already defined in the cluster and default functions.
+
+        Default masking functions - are full masking according to the data types.
+        Returns 'XXXX' for string data types [text, varchar, character].
+        Returns 0 for numeric data types [int, numeric, real, smallint, bigint].
+        Returns '1900-01-01' for date and '1900-01-01 00:00:00' for timestamp.
+
         Here is an example of masking pattern file:
 
         masking_file.txt
@@ -916,7 +922,8 @@ PostgreSQL documentation
                      did not covered by exact functions */
                   default: for_all_fields,
                   field1: value1,
-                  field2: value2
+                  /* Using default masking function for field2 */
+                  field2: default
             }
 
             /* Functions inside this block will be used for tables with name 'Table'

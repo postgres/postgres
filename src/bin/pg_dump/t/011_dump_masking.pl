@@ -5,7 +5,7 @@ use warnings;
 
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
-use Test::More tests => 64;
+use Test::More tests => 65;
 
 my $tempdir = PostgreSQL::Test::Utils::tempdir;
 my $inputfile;
@@ -15,7 +15,8 @@ my $port      = $node->port;
 my $backupdir = $node->backup_dir;
 my $plainfile = "$backupdir/plain.sql";
 my $dumpfile = "$backupdir/options_plain.sql";
-my $dumpjobs = "$backupdir/jobs_plain.sql";
+my $dumpdir = "$backupdir/parallel";
+my $dumpjobfile = "$backupdir/parallel/toc.dat'";
 
 $node->init;
 $node->start;
@@ -110,7 +111,7 @@ print $inputfile "schema1
                     table4
                     {
                         field41:  schema3.custom_function,
-                        field42:  schema3.custom_function
+                        field42:  \"$tempdir/custom_function_file.txt\"
                     }
                   }
                   default
@@ -136,7 +137,7 @@ command_ok(
 	"1. Run masking without options");
 
 my $dump = slurp_file($plainfile);
-ok($dump !~ qr/^INSERT INTO schema1\.table1 VALUES \(\'value1\'\)/m, "2. [Default function] Field1 was masked");
+ok($dump =~ qr/^INSERT INTO schema1\.table1 VALUES \(\'XXXX\'\)/m, "2. [Default function] Field1 was masked");
 ok($dump =~ qr/^CREATE FUNCTION _masking_function\.\"default\"\(text\, OUT text\) RETURNS text/m, "3. [Default function] Default functions were created");
 ok($dump =~ qr/^INSERT INTO schema2\.table2 VALUES \(\'value2\'\)/m, "4. Field2 was not masked");
 ok($dump =~ qr/^CREATE FUNCTION schema3\.custom_function\(text\, OUT text\) RETURNS text/m, "5. [Function from file] Custom function was created");
@@ -189,14 +190,14 @@ command_ok(
 	"20. Run masking with option --encoding");
 ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m, "21. Check dump after running masking with option --encoding");
 
-command_fails(
+command_ok(
 	[
-		'pg_dump', '-p', $port, '-f', $dumpfile,
+		'pg_dump', '-p', $port, '-f', $dumpdir,
 		"--masking=$tempdir/masking_file.txt",
+		"--format=directory",
 		"--jobs=2"
 	],
 	"22. Run masking with option --jobs");
-ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m, "23. Check dump after running masking with option --jobs");
 
 command_ok(
 	[
@@ -204,28 +205,28 @@ command_ok(
 		"--masking=$tempdir/masking_file.txt",
 		"--schema=schema6"
 	],
-	"24. Run masking with option --schema");
-ok(slurp_file($dumpfile) !~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m, "25. Check dump after running masking with option --schema");
-ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622 email\'\)/m, "26. Check dump after running masking with option --schema");
+	"23. Run masking with option --schema");
+ok(slurp_file($dumpfile) !~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m, "24. Check dump after running masking with option --schema");
+ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622 email\'\)/m, "25. Check dump after running masking with option --schema");
 
-command_fails(
-	[
-		'pg_dump', '-p', $port, '-f', $dumpfile,
-		"--masking=$tempdir/masking_file.txt",
-		"--table=table"
-	],
-	"27. Run masking with option --table");
-ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622 email\'\)/m, "28. Check dump after running masking with option --table");
-
-# Doesn't exclude with masking
 command_ok(
 	[
 		'pg_dump', '-p', $port, '-f', $dumpfile,
 		"--masking=$tempdir/masking_file.txt",
-		"--exclude-table=table62"
+		"--table=schema6.table62"
+	],
+	"26. Run masking with option --table");
+ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622 email\'\)/m, "27. Check dump after running masking with option --table");
+ok(slurp_file($dumpfile) !~ qr/^INSERT INTO schema6\.table61 VALUES \(\'value611 email\'\, \'value612\'\)/m, "28. Check dump after running masking with option --table");
+
+command_ok(
+	[
+		'pg_dump', '-p', $port, '-f', $dumpfile,
+		"--masking=$tempdir/masking_file.txt",
+		"--exclude-table=schema6.table62"
 	],
 	"29. Run masking with option --exclude-table");
-ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m, "30. Check dump after running masking with option --exclude-table");
+ok(slurp_file($dumpfile) !~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622\'\)/m, "30. Check dump after running masking with option --exclude-table");
 
 command_ok(
 	[
@@ -247,19 +248,11 @@ command_ok(
 	[
 		'pg_dump', '-p', $port, '-f', $dumpfile,
 		"--masking=$tempdir/masking_file.txt",
-		"--compress=9"
-	],
-	"33. Run masking with option --compress");
-
-command_ok(
-	[
-		'pg_dump', '-p', $port, '-f', $dumpfile,
-		"--masking=$tempdir/masking_file.txt",
 		"--binary-upgrade"
 	],
-	"34. Run masking with option --binary-upgrade");
+	"33. Run masking with option --binary-upgrade");
 ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m,
-"35. Check dump after running masking with option --binary-upgrade");
+"34. Check dump after running masking with option --binary-upgrade");
 
 command_ok(
 	[
@@ -267,9 +260,9 @@ command_ok(
 		"--masking=$tempdir/masking_file.txt",
 		"--column-inserts"
 	],
-	"36. Run masking with option --column-inserts");
+	"35. Run masking with option --column-inserts");
 ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 \(field71\, mask_phone\) VALUES \(\'value71\'\, \'value72 phone\'\)/m,
-"37. Check dump after running masking with option --column-inserts");
+"36. Check dump after running masking with option --column-inserts");
 
 command_ok(
 	[
@@ -277,25 +270,28 @@ command_ok(
 		"--masking=$tempdir/masking_file.txt",
 		"--disable-dollar-quoting"
 	],
-	"38. Run masking with option --column-inserts");
+	"37. Run masking with option --column-inserts");
 ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m,
-"39. Check dump after running masking with option --disable-dollar-quoting");
+"38. Check dump after running masking with option --disable-dollar-quoting");
 
-command_fails(
+command_ok(
 	[
 		'pg_dump', '-p', $port, '-f', $dumpfile,
-		"--masking=$tempdir/masking_file.txt",
-		"-a --disable-triggers"
+		"--disable-triggers",
+		"--masking=$tempdir/masking_file.txt"
 	],
-	"40. Run masking with option --disable-triggers");
+	"39. Run masking with option --disable-triggers");
 
-command_fails(
+command_ok(
 	[
 		'pg_dump', '-p', $port, '-f', $dumpfile,
  		"--masking=$tempdir/masking_file.txt",
-		"--if-exists"
+		"--if-exists",
+		"--clean",
 	],
-	"41. Run masking with option --if-exists");
+	"40. Run masking with option --if-exists");
+ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema6\.table62 VALUES \(\'value621\'\, \'value622 email\'\)/m,
+"41. Check dump after running masking with option --if-exists");
 
 command_ok(
 	[
@@ -402,6 +398,14 @@ command_ok(
 ok(slurp_file($dumpfile) =~ qr/^INSERT INTO schema7\.table7 VALUES \(\'value71\'\, \'value72 phone\'\)/m,
 "60. Check dump after running masking with option --use-set-session-authorization");
 
+command_ok(
+	[
+		'pg_dump', '-p', $port, '-f', $dumpfile,
+		"--masking=$tempdir/masking_file.txt",
+		"--compress=9"
+	],
+	"61. Run masking with option --compress");
+
 open $inputfile, '>>', "$tempdir/drop_table_script.sql"
   or die "unable to open mask_phone.sql for writing";
 print $inputfile "DROP TABLE schema1.table1;";
@@ -426,7 +430,7 @@ command_fails_like(
 		"--masking=$tempdir/masking_file_2.txt"
 	],
 	qr/pg_dump: warning: Keyword 'create' was expected, but found 'drop'. Check query for creating a function/,
-	"61, 62. Run masking with wrong query");
+	"62, 63. Run masking with wrong query");
 
 open $inputfile, '>>', "$tempdir/masking_file_2.txt"
   or die "unable to open masking file for writing";
@@ -446,7 +450,7 @@ command_fails_like(
 		"--masking=$tempdir/masking_file_2.txt"
 	],
 	qr/\Qpg_dump: error: Error position (symbol ','): line: 12 pos: 31. Waiting symbol ':'\E/,
-	"63, 64. Run masking with wrong masking file");
+	"64, 65. Run masking with wrong masking file");
 
 done_testing();
 
