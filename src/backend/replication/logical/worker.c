@@ -365,6 +365,30 @@ static inline void set_apply_error_context_xact(TransactionId xid, XLogRecPtr ls
 static inline void reset_apply_error_context_info(void);
 
 /*
+ * Form the origin name for the subscription.
+ *
+ * This is a common function for tablesync and other workers. Tablesync workers
+ * must pass a valid relid. Other callers must pass relid = InvalidOid.
+ *
+ * Return the name in the supplied buffer.
+ */
+void
+ReplicationOriginNameForLogicalRep(Oid suboid, Oid relid,
+								   char *originname, Size szoriginname)
+{
+	if (OidIsValid(relid))
+	{
+		/* Replication origin name for tablesync workers. */
+		snprintf(originname, szoriginname, "pg_%u_%u", suboid, relid);
+	}
+	else
+	{
+		/* Replication origin name for non-tablesync workers. */
+		snprintf(originname, szoriginname, "pg_%u", suboid);
+	}
+}
+
+/*
  * Should this worker apply changes for given relation.
  *
  * This is mainly needed for initial relation data sync as that runs in
@@ -3679,10 +3703,10 @@ ApplyWorkerMain(Datum main_arg)
 		 * Allocate the origin name in long-lived context for error context
 		 * message.
 		 */
-		ReplicationOriginNameForTablesync(MySubscription->oid,
-										  MyLogicalRepWorker->relid,
-										  originname,
-										  sizeof(originname));
+		ReplicationOriginNameForLogicalRep(MySubscription->oid,
+										   MyLogicalRepWorker->relid,
+										   originname,
+										   sizeof(originname));
 		apply_error_callback_arg.origin_name = MemoryContextStrdup(ApplyContext,
 																   originname);
 	}
@@ -3707,7 +3731,8 @@ ApplyWorkerMain(Datum main_arg)
 
 		/* Setup replication origin tracking. */
 		StartTransactionCommand();
-		snprintf(originname, sizeof(originname), "pg_%u", MySubscription->oid);
+		ReplicationOriginNameForLogicalRep(MySubscription->oid, InvalidOid,
+										   originname, sizeof(originname));
 		originid = replorigin_by_name(originname, true);
 		if (!OidIsValid(originid))
 			originid = replorigin_create(originname);

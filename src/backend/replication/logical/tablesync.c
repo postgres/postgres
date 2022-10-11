@@ -353,10 +353,10 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 		 */
 		StartTransactionCommand();
 
-		ReplicationOriginNameForTablesync(MyLogicalRepWorker->subid,
-										  MyLogicalRepWorker->relid,
-										  originname,
-										  sizeof(originname));
+		ReplicationOriginNameForLogicalRep(MyLogicalRepWorker->subid,
+										   MyLogicalRepWorker->relid,
+										   originname,
+										   sizeof(originname));
 
 		/*
 		 * Resetting the origin session removes the ownership of the slot.
@@ -505,10 +505,10 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 				 * error while dropping we won't restart it to drop the
 				 * origin. So passing missing_ok = true.
 				 */
-				ReplicationOriginNameForTablesync(MyLogicalRepWorker->subid,
-												  rstate->relid,
-												  originname,
-												  sizeof(originname));
+				ReplicationOriginNameForLogicalRep(MyLogicalRepWorker->subid,
+												   rstate->relid,
+												   originname,
+												   sizeof(originname));
 				replorigin_drop_by_name(originname, true, false);
 
 				/*
@@ -1194,18 +1194,6 @@ ReplicationSlotNameForTablesync(Oid suboid, Oid relid,
 }
 
 /*
- * Form the origin name for tablesync.
- *
- * Return the name in the supplied buffer.
- */
-void
-ReplicationOriginNameForTablesync(Oid suboid, Oid relid,
-								  char *originname, Size szorgname)
-{
-	snprintf(originname, szorgname, "pg_%u_%u", suboid, relid);
-}
-
-/*
  * Start syncing the table in the sync worker.
  *
  * If nothing needs to be done to sync the table, we exit the worker without
@@ -1274,10 +1262,10 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 		   MyLogicalRepWorker->relstate == SUBREL_STATE_FINISHEDCOPY);
 
 	/* Assign the origin tracking record name. */
-	ReplicationOriginNameForTablesync(MySubscription->oid,
-									  MyLogicalRepWorker->relid,
-									  originname,
-									  sizeof(originname));
+	ReplicationOriginNameForLogicalRep(MySubscription->oid,
+									   MyLogicalRepWorker->relid,
+									   originname,
+									   sizeof(originname));
 
 	if (MyLogicalRepWorker->relstate == SUBREL_STATE_DATASYNC)
 	{

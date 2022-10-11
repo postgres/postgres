@@ -657,7 +657,7 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 
 	recordDependencyOnOwner(SubscriptionRelationId, subid, owner);
 
-	snprintf(originname, sizeof(originname), "pg_%u", subid);
+	ReplicationOriginNameForLogicalRep(subid, InvalidOid, originname, sizeof(originname));
 	replorigin_create(originname);
 
 	/*
@@ -946,8 +946,8 @@ AlterSubscription_refresh(Subscription *sub, bool copy_data,
 					 * origin and by this time the origin might be already
 					 * removed. For these reasons, passing missing_ok = true.
 					 */
-					ReplicationOriginNameForTablesync(sub->oid, relid, originname,
-													  sizeof(originname));
+					ReplicationOriginNameForLogicalRep(sub->oid, relid, originname,
+													   sizeof(originname));
 					replorigin_drop_by_name(originname, true, false);
 				}
 
@@ -1315,7 +1315,8 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					char		originname[NAMEDATALEN];
 					XLogRecPtr	remote_lsn;
 
-					snprintf(originname, sizeof(originname), "pg_%u", subid);
+					ReplicationOriginNameForLogicalRep(subid, InvalidOid,
+													   originname, sizeof(originname));
 					originid = replorigin_by_name(originname, false);
 					remote_lsn = replorigin_get_progress(originid, false);
 
@@ -1521,8 +1522,8 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 		 * worker so passing missing_ok = true. This can happen for the states
 		 * before SUBREL_STATE_FINISHEDCOPY.
 		 */
-		ReplicationOriginNameForTablesync(subid, relid, originname,
-										  sizeof(originname));
+		ReplicationOriginNameForLogicalRep(subid, relid, originname,
+										   sizeof(originname));
 		replorigin_drop_by_name(originname, true, false);
 	}
 
@@ -1533,7 +1534,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	RemoveSubscriptionRel(subid, InvalidOid);
 
 	/* Remove the origin tracking if exists. */
-	snprintf(originname, sizeof(originname), "pg_%u", subid);
+	ReplicationOriginNameForLogicalRep(subid, InvalidOid, originname, sizeof(originname));
 	replorigin_drop_by_name(originname, true, false);
 
 	/*

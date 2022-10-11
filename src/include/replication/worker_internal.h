@@ -92,8 +92,8 @@ extern void logicalrep_worker_wakeup_ptr(LogicalRepWorker *worker);
 
 extern int	logicalrep_sync_worker_count(Oid subid);
 
-extern void ReplicationOriginNameForTablesync(Oid suboid, Oid relid,
-											  char *originname, Size szorgname);
+extern void ReplicationOriginNameForLogicalRep(Oid suboid, Oid relid,
+											   char *originname, Size szoriginname);
 extern char *LogicalRepSyncTableStart(XLogRecPtr *origin_startpos);
 
 extern bool AllTablesyncsReady(void);
