@@ -193,7 +193,11 @@ struct PGPROC
 
 	int			pgxactoff;		/* offset into various ProcGlobal->arrays with
 								 * data mirrored from this PGPROC */
-	int			pgprocno;
+
+	int			pgprocno;		/* Number of this PGPROC in
+								 * ProcGlobal->allProcs array. This is set
+								 * once by InitProcGlobal().
+								 * ProcGlobal->allProcs[n].pgprocno == n */
 
 	/* These fields are zero while a backend is still starting up: */
 	BackendId	backendId;		/* This backend's backend ID (if assigned) */
