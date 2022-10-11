@@ -148,7 +148,24 @@ SELECT * FROM base_tbl;
 EXPLAIN (costs off) UPDATE rw_view1 SET a=6 WHERE a=5;
 EXPLAIN (costs off) DELETE FROM rw_view1 WHERE a=5;
 
+-- it's still updatable if we add a DO ALSO rule
+
+CREATE TABLE base_tbl_hist(ts timestamptz default now(), a int, b text);
+
+CREATE RULE base_tbl_log AS ON INSERT TO rw_view1 DO ALSO
+  INSERT INTO base_tbl_hist(a,b) VALUES(new.a, new.b);
+
+SELECT table_name, is_updatable, is_insertable_into
+  FROM information_schema.views
+ WHERE table_name = 'rw_view1';
+
+-- Check behavior with DEFAULTs (bug #17633)
+
+INSERT INTO rw_view1 VALUES (9, DEFAULT), (10, DEFAULT);
+SELECT a, b FROM base_tbl_hist;
+
 DROP TABLE base_tbl CASCADE;
+DROP TABLE base_tbl_hist;
 
 -- view on top of view
 
