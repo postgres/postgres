@@ -23721,6 +23721,23 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_partkeydef</primary>
+        </indexterm>
+        <function>pg_get_partkeydef</function> ( <parameter>table</parameter> <type>oid</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the definition of a partitioned table's partition
+        key, in the form it would have in the <literal>PARTITION
+        BY</literal> clause of <command>CREATE TABLE</command>.
+        (This is a decompiled reconstruction, not the original text
+        of the command.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_get_ruledef</primary>
         </indexterm>
         <function>pg_get_ruledef</function> ( <parameter>rule</parameter> <type>oid</type> <optional>, <parameter>pretty</parameter> <type>boolean</type> </optional> )
