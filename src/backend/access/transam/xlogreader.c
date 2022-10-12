@@ -1210,7 +1210,6 @@ bool
 XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 							 char *phdr)
 {
-	XLogRecPtr	recaddr;
 	XLogSegNo	segno;
 	int32		offset;
 	XLogPageHeader hdr = (XLogPageHeader) phdr;
@@ -1219,8 +1218,6 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 
 	XLByteToSeg(recptr, segno, state->segcxt.ws_segsize);
 	offset = XLogSegmentOffset(recptr, state->segcxt.ws_segsize);
-
-	XLogSegNoOffsetToRecPtr(segno, offset, state->segcxt.ws_segsize, recaddr);
 
 	if (hdr->xlp_magic != XLOG_PAGE_MAGIC)
 	{
@@ -1296,7 +1293,7 @@ XLogReaderValidatePageHeader(XLogReaderState *state, XLogRecPtr recptr,
 	 * check typically fails when an old WAL segment is recycled, and hasn't
 	 * yet been overwritten with new data yet.
 	 */
-	if (hdr->xlp_pageaddr != recaddr)
+	if (hdr->xlp_pageaddr != recptr)
 	{
 		char		fname[MAXFNAMELEN];
 
