@@ -950,12 +950,6 @@ extern void ExceptionalCondition(const char *conditionName,
  */
 #define Min(x, y)		((x) < (y) ? (x) : (y))
 
-/*
- * Abs
- *		Return the absolute value of the argument.
- */
-#define Abs(x)			((x) >= 0 ? (x) : -(x))
-
 
 /* Get a bit mask of the bits set in non-long aligned addresses */
 #define LONG_ALIGN_MASK (sizeof(long) - 1)
