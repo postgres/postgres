@@ -172,7 +172,7 @@ base_backup:
 			;
 
 create_replication_slot:
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY PHYSICAL [options] */
+			/* CREATE_REPLICATION_SLOT slot [TEMPORARY] PHYSICAL [options] */
 			K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_PHYSICAL create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;
@@ -183,7 +183,7 @@ create_replication_slot:
 					cmd->options = $5;
 					$$ = (Node *) cmd;
 				}
-			/* CREATE_REPLICATION_SLOT slot TEMPORARY LOGICAL plugin [options] */
+			/* CREATE_REPLICATION_SLOT slot [TEMPORARY] LOGICAL plugin [options] */
 			| K_CREATE_REPLICATION_SLOT IDENT opt_temporary K_LOGICAL IDENT create_slot_options
 				{
 					CreateReplicationSlotCmd *cmd;

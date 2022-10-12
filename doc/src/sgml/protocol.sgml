@@ -1987,7 +1987,7 @@ psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"
     </varlistentry>
 
     <varlistentry id="protocol-replication-create-replication-slot" xreflabel="CREATE_REPLICATION_SLOT">
-     <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
+     <term><literal>CREATE_REPLICATION_SLOT</literal> <replaceable class="parameter">slot_name</replaceable> [ <literal>TEMPORARY</literal> ] { <literal>PHYSICAL</literal> | <literal>LOGICAL</literal> <replaceable class="parameter">output_plugin</replaceable> } [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ]
       <indexterm><primary>CREATE_REPLICATION_SLOT</primary></indexterm>
      </term>
      <listitem>
