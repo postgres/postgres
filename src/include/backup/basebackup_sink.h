@@ -26,7 +26,7 @@
 #ifndef BASEBACKUP_SINK_H
 #define BASEBACKUP_SINK_H
 
-#include "access/xlog_internal.h"
+#include "access/xlogdefs.h"
 #include "common/compression.h"
 #include "nodes/pg_list.h"
 
