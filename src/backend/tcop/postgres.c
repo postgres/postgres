@@ -815,15 +815,15 @@ pg_rewrite_query(Query *query)
 
 		foreach(lc, querytree_list)
 		{
-			Query	   *query = lfirst_node(Query, lc);
-			char	   *str = nodeToString(query);
+			Query	   *curr_query = lfirst_node(Query, lc);
+			char	   *str = nodeToString(curr_query);
 			Query	   *new_query = stringToNodeWithLocations(str);
 
 			/*
 			 * queryId is not saved in stored rules, but we must preserve it
 			 * here to avoid breaking pg_stat_statements.
 			 */
-			new_query->queryId = query->queryId;
+			new_query->queryId = curr_query->queryId;
 
 			new_list = lappend(new_list, new_query);
 			pfree(str);
