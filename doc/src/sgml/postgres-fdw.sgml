@@ -398,6 +398,10 @@ OPTIONS (ADD password_required 'false');
        exceeds the limit, the <literal>batch_size</literal> will be adjusted to
        avoid an error.
       </para>
+
+      <para>
+       This option also applies when copying into foreign tables.
+      </para>
      </listitem>
     </varlistentry>
 
