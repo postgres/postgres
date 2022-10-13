@@ -203,7 +203,6 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 	if (klen > ks)
 		klen = ks;
 	keybuf = palloc0(ks);
-	memset(keybuf, 0, ks);
 	memcpy(keybuf, key, klen);
 
 	err = px_cipher_init(c, keybuf, klen, ivbuf);
