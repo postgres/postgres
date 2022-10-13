@@ -184,8 +184,8 @@ CREATE PUBLICATION <replaceable class="parameter">name</replaceable>
 
   <para>
    For an <command>INSERT ... ON CONFLICT</command> command, the publication will
-   publish the operation that actually results from the command.  So depending
-   of the outcome, it may be published as either <command>INSERT</command> or
+   publish the operation that results from the command.  Depending
+   on the outcome, it may be published as either <command>INSERT</command> or
    <command>UPDATE</command>, or it may not be published at all.
   </para>
 
