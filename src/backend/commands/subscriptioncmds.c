@@ -760,9 +760,8 @@ CreateSubscription(ParseState *pstate, CreateSubscriptionStmt *stmt,
 	}
 	else
 		ereport(WARNING,
-		/* translator: %s is an SQL ALTER statement */
-				(errmsg("tables were not subscribed, you will have to run %s to subscribe the tables",
-						"ALTER SUBSCRIPTION ... REFRESH PUBLICATION")));
+				(errmsg("subscription was created, but is not connected"),
+				 errhint("To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.")));
 
 	table_close(rel, RowExclusiveLock);
 
