@@ -49,6 +49,7 @@ tests += {
       'mxact',
       'delayed_startup',
       'ondisk_startup',
+      'catalog_change_snapshot',
       'concurrent_ddl_dml',
       'oldest_xmin',
       'snapshot_transfer',
