@@ -193,8 +193,8 @@ autoprewarm_main(Datum main_arg)
 	{
 		LWLockRelease(&apw_state->lock);
 		ereport(LOG,
-				(errmsg("autoprewarm worker is already running under PID %lu",
-						(unsigned long) apw_state->bgworker_pid)));
+				(errmsg("autoprewarm worker is already running under PID %d",
+						(int) apw_state->bgworker_pid)));
 		return;
 	}
 	apw_state->bgworker_pid = MyProcPid;
@@ -303,8 +303,8 @@ apw_load_buffers(void)
 	{
 		LWLockRelease(&apw_state->lock);
 		ereport(LOG,
-				(errmsg("skipping prewarm because block dump file is being written by PID %lu",
-						(unsigned long) apw_state->pid_using_dumpfile)));
+				(errmsg("skipping prewarm because block dump file is being written by PID %d",
+						(int) apw_state->pid_using_dumpfile)));
 		return;
 	}
 	LWLockRelease(&apw_state->lock);
@@ -599,12 +599,12 @@ apw_dump_now(bool is_bgworker, bool dump_unlogged)
 	{
 		if (!is_bgworker)
 			ereport(ERROR,
-					(errmsg("could not perform block dump because dump file is being used by PID %lu",
-							(unsigned long) apw_state->pid_using_dumpfile)));
+					(errmsg("could not perform block dump because dump file is being used by PID %d",
+							(int) apw_state->pid_using_dumpfile)));
 
 		ereport(LOG,
-				(errmsg("skipping block dump because it is already being performed by PID %lu",
-						(unsigned long) apw_state->pid_using_dumpfile)));
+				(errmsg("skipping block dump because it is already being performed by PID %d",
+						(int) apw_state->pid_using_dumpfile)));
 		return 0;
 	}
 
@@ -737,8 +737,8 @@ autoprewarm_start_worker(PG_FUNCTION_ARGS)
 	if (pid != InvalidPid)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("autoprewarm worker is already running under PID %lu",
-						(unsigned long) pid)));
+				 errmsg("autoprewarm worker is already running under PID %d",
+						(int) pid)));
 
 	apw_start_leader_worker();
 
