@@ -40,7 +40,7 @@
  */
 static void
 hstore_subscript_transform(SubscriptingRef *sbsref,
-						   List *indirection,
+						   List **indirection,
 						   ParseState *pstate,
 						   bool isSlice,
 						   bool isAssignment)
@@ -49,15 +49,15 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 	Node	   *subexpr;
 
 	/* We support only single-subscript, non-slice cases */
-	if (isSlice || list_length(indirection) != 1)
+	if (isSlice || list_length(*indirection) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("hstore allows only one subscript"),
 				 parser_errposition(pstate,
-									exprLocation((Node *) indirection))));
+									exprLocation((Node *) *indirection))));
 
 	/* Transform the subscript expression to type text */
-	ai = linitial_node(A_Indices, indirection);
+	ai = linitial_node(A_Indices, *indirection);
 	Assert(ai->uidx != NULL && ai->lidx == NULL && !ai->is_slice);
 
 	subexpr = transformExpr(pstate, ai->uidx, pstate->p_expr_kind);
@@ -81,6 +81,8 @@ hstore_subscript_transform(SubscriptingRef *sbsref,
 	/* Determine the result type of the subscripting operation; always text */
 	sbsref->refrestype = TEXTOID;
 	sbsref->reftypmod = -1;
+
+	*indirection = NIL;
 }
 
 /*

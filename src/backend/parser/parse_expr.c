@@ -466,14 +466,13 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 			Assert(IsA(n, String));
 
 			/* process subscripts before this field selection */
-			if (subscripts)
+			while (subscripts)
 				result = (Node *) transformContainerSubscripts(pstate,
 															   result,
 															   exprType(result),
 															   exprTypmod(result),
-															   subscripts,
+															   &subscripts,
 															   false);
-			subscripts = NIL;
 
 			newresult = ParseFuncOrColumn(pstate,
 										  list_make1(n),
@@ -488,12 +487,12 @@ transformIndirection(ParseState *pstate, A_Indirection *ind)
 		}
 	}
 	/* process trailing subscripts, if any */
-	if (subscripts)
+	while (subscripts)
 		result = (Node *) transformContainerSubscripts(pstate,
 													   result,
 													   exprType(result),
 													   exprTypmod(result),
-													   subscripts,
+													   &subscripts,
 													   false);
 
 	return result;

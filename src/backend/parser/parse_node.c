@@ -244,7 +244,7 @@ transformContainerSubscripts(ParseState *pstate,
 							 Node *containerBase,
 							 Oid containerType,
 							 int32 containerTypMod,
-							 List *indirection,
+							 List **indirection,
 							 bool isAssignment)
 {
 	SubscriptingRef *sbsref;
@@ -280,7 +280,7 @@ transformContainerSubscripts(ParseState *pstate,
 	 * element.  If any of the items are slice specifiers (lower:upper), then
 	 * the subscript expression means a container slice operation.
 	 */
-	foreach(idx, indirection)
+	foreach(idx, *indirection)
 	{
 		A_Indices  *ai = lfirst_node(A_Indices, idx);
 

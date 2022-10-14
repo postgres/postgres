@@ -936,7 +936,7 @@ transformAssignmentSubscripts(ParseState *pstate,
 										  basenode,
 										  containerType,
 										  containerTypMod,
-										  subscripts,
+										  &subscripts,
 										  true);
 
 	typeNeeded = sbsref->refrestype;

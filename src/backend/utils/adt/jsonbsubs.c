@@ -41,7 +41,7 @@ typedef struct JsonbSubWorkspace
  */
 static void
 jsonb_subscript_transform(SubscriptingRef *sbsref,
-						  List *indirection,
+						  List **indirection,
 						  ParseState *pstate,
 						  bool isSlice,
 						  bool isAssignment)
@@ -53,7 +53,7 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	 * Transform and convert the subscript expressions. Jsonb subscripting
 	 * does not support slices, look only and the upper index.
 	 */
-	foreach(idx, indirection)
+	foreach(idx, *indirection)
 	{
 		A_Indices  *ai = lfirst_node(A_Indices, idx);
 		Node	   *subExpr;
@@ -159,6 +159,8 @@ jsonb_subscript_transform(SubscriptingRef *sbsref,
 	/* Determine the result type of the subscripting operation; always jsonb */
 	sbsref->refrestype = JSONBOID;
 	sbsref->reftypmod = -1;
+
+	*indirection = NIL;
 }
 
 /*

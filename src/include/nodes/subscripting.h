@@ -71,6 +71,11 @@ struct SubscriptExecSteps;
  * does not care to support slicing, it can just throw an error if isSlice.)
  * See array_subscript_transform() for sample code.
  *
+ * The transform method receives a pointer to a list of raw indirections.
+ * This allows the method to parse a sublist of the indirections (typically
+ * the prefix) and modify the original list in place, enabling the caller to
+ * either process the remaining indirections differently or raise an error.
+ *
  * The transform method is also responsible for identifying the result type
  * of the subscripting operation.  At call, refcontainertype and reftypmod
  * describe the container type (this will be a base type not a domain), and
@@ -93,7 +98,7 @@ struct SubscriptExecSteps;
  * assignment must return.
  */
 typedef void (*SubscriptTransform) (SubscriptingRef *sbsref,
-									List *indirection,
+									List **indirection,
 									struct ParseState *pstate,
 									bool isSlice,
 									bool isAssignment);

@@ -377,7 +377,7 @@ extern SubscriptingRef *transformContainerSubscripts(ParseState *pstate,
 													 Node *containerBase,
 													 Oid containerType,
 													 int32 containerTypMod,
-													 List *indirection,
+													 List **indirection,
 													 bool isAssignment);
 extern Const *make_const(ParseState *pstate, A_Const *aconst);
 
