@@ -439,7 +439,7 @@ ParseTzFile(const char *filename, int depth,
  * load_tzoffsets --- read and parse the specified timezone offset file
  *
  * On success, return a filled-in TimeZoneAbbrevTable, which must have been
- * malloc'd not palloc'd.  On failure, return NULL, using GUC_check_errmsg
+ * guc_malloc'd not palloc'd.  On failure, return NULL, using GUC_check_errmsg
  * and friends to give details of the problem.
  */
 TimeZoneAbbrevTable *

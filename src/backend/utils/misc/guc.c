@@ -188,6 +188,9 @@ static const char *const map_old_guc_names[] = {
 };
 
 
+/* Memory context holding all GUC-related data */
+static MemoryContext GUCMemoryContext;
+
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
@@ -595,19 +598,22 @@ bail_out:
 	return head;
 }
 
+
 /*
- * Some infrastructure for checking malloc/strdup/realloc calls
+ * Some infrastructure for GUC-related memory allocation
+ *
+ * These functions are generally modeled on libc's malloc/realloc/etc,
+ * but any OOM issue is reported at the specified elevel.
+ * (Thus, control returns only if that's less than ERROR.)
  */
 void *
 guc_malloc(int elevel, size_t size)
 {
 	void	   *data;
 
-	/* Avoid unportable behavior of malloc(0) */
-	if (size == 0)
-		size = 1;
-	data = malloc(size);
-	if (data == NULL)
+	data = MemoryContextAllocExtended(GUCMemoryContext, size,
+									  MCXT_ALLOC_NO_OOM);
+	if (unlikely(data == NULL))
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
@@ -619,11 +625,20 @@ guc_realloc(int elevel, void *old, size_t size)
 {
 	void	   *data;
 
-	/* Avoid unportable behavior of realloc(NULL, 0) */
-	if (old == NULL && size == 0)
-		size = 1;
-	data = realloc(old, size);
-	if (data == NULL)
+	if (old != NULL)
+	{
+		/* This is to help catch old code that malloc's GUC data. */
+		Assert(GetMemoryChunkContext(old) == GUCMemoryContext);
+		data = repalloc_extended(old, size,
+								 MCXT_ALLOC_NO_OOM);
+	}
+	else
+	{
+		/* Like realloc(3), but not like repalloc(), we allow old == NULL. */
+		data = MemoryContextAllocExtended(GUCMemoryContext, size,
+										  MCXT_ALLOC_NO_OOM);
+	}
+	if (unlikely(data == NULL))
 		ereport(elevel,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
@@ -634,13 +649,27 @@ char *
 guc_strdup(int elevel, const char *src)
 {
 	char	   *data;
+	size_t		len = strlen(src) + 1;
 
-	data = strdup(src);
-	if (data == NULL)
-		ereport(elevel,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+	data = guc_malloc(elevel, len);
+	if (likely(data != NULL))
+		memcpy(data, src, len);
 	return data;
+}
+
+void
+guc_free(void *ptr)
+{
+	/*
+	 * Historically, GUC-related code has relied heavily on the ability to do
+	 * free(NULL), so we allow that here even though pfree() doesn't.
+	 */
+	if (ptr != NULL)
+	{
+		/* This is to help catch old code that malloc's GUC data. */
+		Assert(GetMemoryChunkContext(ptr) == GUCMemoryContext);
+		pfree(ptr);
+	}
 }
 
 
@@ -680,7 +709,7 @@ set_string_field(struct config_string *conf, char **field, char *newval)
 
 	/* Free old value if it's not NULL and isn't referenced anymore */
 	if (oldval && !string_field_used(conf, oldval))
-		free(oldval);
+		guc_free(oldval);
 }
 
 /*
@@ -741,7 +770,7 @@ set_extra_field(struct config_generic *gconf, void **field, void *newval)
 
 	/* Free old value if it's not NULL and isn't referenced anymore */
 	if (oldval && !extra_field_used(gconf, oldval))
-		free(oldval);
+		guc_free(oldval);
 }
 
 /*
@@ -749,7 +778,7 @@ set_extra_field(struct config_generic *gconf, void **field, void *newval)
  * The "extra" field associated with the active value is copied, too.
  *
  * NB: be sure stringval and extra fields of a new stack entry are
- * initialized to NULL before this is used, else we'll try to free() them.
+ * initialized to NULL before this is used, else we'll try to guc_free() them.
  */
 static void
 set_stack_value(struct config_generic *gconf, config_var_value *val)
@@ -817,9 +846,9 @@ get_guc_variables(void)
 
 
 /*
- * Build the sorted array.  This is split out so that it could be
- * re-executed after startup (e.g., we could allow loadable modules to
- * add vars, and then we'd need to re-sort).
+ * Build the sorted array.  This is split out so that help_config.c can
+ * extract all the variables without running all of InitializeGUCOptions.
+ * It's not meant for use anyplace else.
  */
 void
 build_guc_variables(void)
@@ -829,6 +858,17 @@ build_guc_variables(void)
 	struct config_generic **guc_vars;
 	int			i;
 
+	/*
+	 * Create the memory context that will hold all GUC-related data.
+	 */
+	Assert(GUCMemoryContext == NULL);
+	GUCMemoryContext = AllocSetContextCreate(TopMemoryContext,
+											 "GUCMemoryContext",
+											 ALLOCSET_DEFAULT_SIZES);
+
+	/*
+	 * Count all the built-in variables, and set their vartypes correctly.
+	 */
 	for (i = 0; ConfigureNamesBool[i].gen.name; i++)
 	{
 		struct config_bool *conf = &ConfigureNamesBool[i];
@@ -895,7 +935,7 @@ build_guc_variables(void)
 	for (i = 0; ConfigureNamesEnum[i].gen.name; i++)
 		guc_vars[num_vars++] = &ConfigureNamesEnum[i].gen;
 
-	free(guc_variables);
+	guc_free(guc_variables);
 	guc_variables = guc_vars;
 	num_guc_variables = num_vars;
 	size_guc_variables = size_vars;
@@ -1001,7 +1041,7 @@ add_placeholder_variable(const char *name, int elevel)
 	gen->name = guc_strdup(elevel, name);
 	if (gen->name == NULL)
 	{
-		free(var);
+		guc_free(var);
 		return NULL;
 	}
 
@@ -1020,8 +1060,8 @@ add_placeholder_variable(const char *name, int elevel)
 
 	if (!add_guc_variable((struct config_generic *) var, elevel))
 	{
-		free(unconstify(char *, gen->name));
-		free(var);
+		guc_free(unconstify(char *, gen->name));
+		guc_free(var);
 		return NULL;
 	}
 
@@ -1255,7 +1295,7 @@ InitializeGUCOptions(void)
 	pg_timezone_initialize();
 
 	/*
-	 * Build sorted array of all GUC variables.
+	 * Create GUCMemoryContext and build sorted array of all GUC variables.
 	 */
 	build_guc_variables();
 
@@ -1482,6 +1522,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 {
 	char	   *configdir;
 	char	   *fname;
+	bool		fname_is_malloced;
 	struct stat stat_buf;
 	struct config_string *data_directory_rec;
 
@@ -1509,12 +1550,16 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * the same way by future backends.
 	 */
 	if (ConfigFileName)
+	{
 		fname = make_absolute_path(ConfigFileName);
+		fname_is_malloced = true;
+	}
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
 						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2);
 		sprintf(fname, "%s/%s", configdir, CONFIG_FILENAME);
+		fname_is_malloced = false;
 	}
 	else
 	{
@@ -1530,7 +1575,11 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * it can't be overridden later.
 	 */
 	SetConfigOption("config_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+
+	if (fname_is_malloced)
+		free(fname);
+	else
+		guc_free(fname);
 
 	/*
 	 * Now read the config file for the first time.
@@ -1604,12 +1653,16 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
 	 */
 	if (HbaFileName)
+	{
 		fname = make_absolute_path(HbaFileName);
+		fname_is_malloced = true;
+	}
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
 						   strlen(configdir) + strlen(HBA_FILENAME) + 2);
 		sprintf(fname, "%s/%s", configdir, HBA_FILENAME);
+		fname_is_malloced = false;
 	}
 	else
 	{
@@ -1621,18 +1674,26 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		return false;
 	}
 	SetConfigOption("hba_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+
+	if (fname_is_malloced)
+		free(fname);
+	else
+		guc_free(fname);
 
 	/*
 	 * Likewise for pg_ident.conf.
 	 */
 	if (IdentFileName)
+	{
 		fname = make_absolute_path(IdentFileName);
+		fname_is_malloced = true;
+	}
 	else if (configdir)
 	{
 		fname = guc_malloc(FATAL,
 						   strlen(configdir) + strlen(IDENT_FILENAME) + 2);
 		sprintf(fname, "%s/%s", configdir, IDENT_FILENAME);
+		fname_is_malloced = false;
 	}
 	else
 	{
@@ -1644,7 +1705,11 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 		return false;
 	}
 	SetConfigOption("ident_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
-	free(fname);
+
+	if (fname_is_malloced)
+		free(fname);
+	else
+		guc_free(fname);
 
 	free(configdir);
 
@@ -2289,12 +2354,12 @@ ReportGUCOption(struct config_generic *record)
 		pq_endmessage(&msgbuf);
 
 		/*
-		 * We need a long-lifespan copy.  If strdup() fails due to OOM, we'll
-		 * set last_reported to NULL and thereby possibly make a duplicate
-		 * report later.
+		 * We need a long-lifespan copy.  If guc_strdup() fails due to OOM,
+		 * we'll set last_reported to NULL and thereby possibly make a
+		 * duplicate report later.
 		 */
-		free(record->last_reported);
-		record->last_reported = strdup(val);
+		guc_free(record->last_reported);
+		record->last_reported = guc_strdup(LOG, val);
 	}
 
 	pfree(val);
@@ -2893,7 +2958,7 @@ parse_and_validate_value(struct config_generic *record,
 				if (!call_string_check_hook(conf, &newval->stringval, newextra,
 											source, elevel))
 				{
-					free(newval->stringval);
+					guc_free(newval->stringval);
 					newval->stringval = NULL;
 					return false;
 				}
@@ -3328,7 +3393,7 @@ set_config_option_ext(const char *name, const char *value,
 				{
 					/* Release newextra, unless it's reset_extra */
 					if (newextra && !extra_field_used(&conf->gen, newextra))
-						free(newextra);
+						guc_free(newextra);
 
 					if (*conf->variable != newval)
 					{
@@ -3387,7 +3452,7 @@ set_config_option_ext(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					guc_free(newextra);
 				break;
 
 #undef newval
@@ -3426,7 +3491,7 @@ set_config_option_ext(const char *name, const char *value,
 				{
 					/* Release newextra, unless it's reset_extra */
 					if (newextra && !extra_field_used(&conf->gen, newextra))
-						free(newextra);
+						guc_free(newextra);
 
 					if (*conf->variable != newval)
 					{
@@ -3485,7 +3550,7 @@ set_config_option_ext(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					guc_free(newextra);
 				break;
 
 #undef newval
@@ -3524,7 +3589,7 @@ set_config_option_ext(const char *name, const char *value,
 				{
 					/* Release newextra, unless it's reset_extra */
 					if (newextra && !extra_field_used(&conf->gen, newextra))
-						free(newextra);
+						guc_free(newextra);
 
 					if (*conf->variable != newval)
 					{
@@ -3583,7 +3648,7 @@ set_config_option_ext(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					guc_free(newextra);
 				break;
 
 #undef newval
@@ -3617,7 +3682,7 @@ set_config_option_ext(const char *name, const char *value,
 					if (!call_string_check_hook(conf, &newval, &newextra,
 												source, elevel))
 					{
-						free(newval);
+						guc_free(newval);
 						return 0;
 					}
 				}
@@ -3645,10 +3710,10 @@ set_config_option_ext(const char *name, const char *value,
 
 					/* Release newval, unless it's reset_val */
 					if (newval && !string_field_used(conf, newval))
-						free(newval);
+						guc_free(newval);
 					/* Release newextra, unless it's reset_extra */
 					if (newextra && !extra_field_used(&conf->gen, newextra))
-						free(newextra);
+						guc_free(newextra);
 
 					if (newval_different)
 					{
@@ -3709,10 +3774,10 @@ set_config_option_ext(const char *name, const char *value,
 
 				/* Perhaps we didn't install newval anywhere */
 				if (newval && !string_field_used(conf, newval))
-					free(newval);
+					guc_free(newval);
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					guc_free(newextra);
 				break;
 
 #undef newval
@@ -3751,7 +3816,7 @@ set_config_option_ext(const char *name, const char *value,
 				{
 					/* Release newextra, unless it's reset_extra */
 					if (newextra && !extra_field_used(&conf->gen, newextra))
-						free(newextra);
+						guc_free(newextra);
 
 					if (*conf->variable != newval)
 					{
@@ -3810,7 +3875,7 @@ set_config_option_ext(const char *name, const char *value,
 
 				/* Perhaps we didn't install newextra anywhere */
 				if (newextra && !extra_field_used(&conf->gen, newextra))
-					free(newextra);
+					guc_free(newextra);
 				break;
 
 #undef newval
@@ -3848,7 +3913,7 @@ set_config_sourcefile(const char *name, char *sourcefile, int sourceline)
 		return;
 
 	sourcefile = guc_strdup(elevel, sourcefile);
-	free(record->sourcefile);
+	guc_free(record->sourcefile);
 	record->sourcefile = sourcefile;
 	record->sourceline = sourceline;
 }
@@ -4239,8 +4304,8 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 								name, value)));
 
 			if (record->vartype == PGC_STRING && newval.stringval != NULL)
-				free(newval.stringval);
-			free(newextra);
+				guc_free(newval.stringval);
+			guc_free(newextra);
 
 			/*
 			 * We must also reject values containing newlines, because the
@@ -4535,7 +4600,7 @@ define_custom_variable(struct config_generic *variable)
 	set_string_field(pHolder, pHolder->variable, NULL);
 	set_string_field(pHolder, &pHolder->reset_val, NULL);
 
-	free(pHolder);
+	guc_free(pHolder);
 }
 
 /*
@@ -4814,7 +4879,7 @@ MarkGUCPrefixReserved(const char *className)
 	}
 
 	/* And remember the name so we can prevent future mistakes. */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	oldcontext = MemoryContextSwitchTo(GUCMemoryContext);
 	reserved_class_prefix = lappend(reserved_class_prefix, pstrdup(className));
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -5287,9 +5352,9 @@ read_nondefault_variables(void)
 		if (varsourcefile[0])
 			set_config_sourcefile(varname, varsourcefile, varsourceline);
 
-		free(varname);
-		free(varvalue);
-		free(varsourcefile);
+		guc_free(varname);
+		guc_free(varvalue);
+		guc_free(varsourcefile);
 	}
 
 	FreeFile(fp);
@@ -5731,9 +5796,9 @@ RestoreGUCState(void *gucstate)
 		 * pointers.
 		 */
 		Assert(gconf->stack == NULL);
-		free(gconf->extra);
-		free(gconf->last_reported);
-		free(gconf->sourcefile);
+		guc_free(gconf->extra);
+		guc_free(gconf->last_reported);
+		guc_free(gconf->sourcefile);
 		switch (gconf->vartype)
 		{
 			case PGC_BOOL:
@@ -5741,7 +5806,7 @@ RestoreGUCState(void *gucstate)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						free(conf->reset_extra);
+						guc_free(conf->reset_extra);
 					break;
 				}
 			case PGC_INT:
@@ -5749,7 +5814,7 @@ RestoreGUCState(void *gucstate)
 					struct config_int *conf = (struct config_int *) gconf;
 
 					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						free(conf->reset_extra);
+						guc_free(conf->reset_extra);
 					break;
 				}
 			case PGC_REAL:
@@ -5757,18 +5822,18 @@ RestoreGUCState(void *gucstate)
 					struct config_real *conf = (struct config_real *) gconf;
 
 					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						free(conf->reset_extra);
+						guc_free(conf->reset_extra);
 					break;
 				}
 			case PGC_STRING:
 				{
 					struct config_string *conf = (struct config_string *) gconf;
 
-					free(*conf->variable);
+					guc_free(*conf->variable);
 					if (conf->reset_val && conf->reset_val != *conf->variable)
-						free(conf->reset_val);
+						guc_free(conf->reset_val);
 					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						free(conf->reset_extra);
+						guc_free(conf->reset_extra);
 					break;
 				}
 			case PGC_ENUM:
@@ -5776,7 +5841,7 @@ RestoreGUCState(void *gucstate)
 					struct config_enum *conf = (struct config_enum *) gconf;
 
 					if (conf->reset_extra && conf->reset_extra != gconf->extra)
-						free(conf->reset_extra);
+						guc_free(conf->reset_extra);
 					break;
 				}
 		}
@@ -5838,7 +5903,7 @@ RestoreGUCState(void *gucstate)
 /*
  * A little "long argument" simulation, although not quite GNU
  * compliant. Takes a string of the form "some-option=some value" and
- * returns name = "some_option" and value = "some value" in malloc'ed
+ * returns name = "some_option" and value = "some value" in palloc'ed
  * storage. Note that '-' is converted to '_' in the option name. If
  * there is no '=' in the input string then value will be NULL.
  */
@@ -5856,15 +5921,15 @@ ParseLongOption(const char *string, char **name, char **value)
 
 	if (string[equal_pos] == '=')
 	{
-		*name = guc_malloc(FATAL, equal_pos + 1);
+		*name = palloc(equal_pos + 1);
 		strlcpy(*name, string, equal_pos + 1);
 
-		*value = guc_strdup(FATAL, &string[equal_pos + 1]);
+		*value = pstrdup(&string[equal_pos + 1]);
 	}
 	else
 	{
 		/* no equal sign in string */
-		*name = guc_strdup(FATAL, string);
+		*name = pstrdup(string);
 		*value = NULL;
 	}
 
@@ -5898,8 +5963,6 @@ ProcessGUCArray(ArrayType *array,
 		char	   *s;
 		char	   *name;
 		char	   *value;
-		char	   *namecopy;
-		char	   *valuecopy;
 
 		d = array_ref(array, 1, &i,
 					  -1 /* varlenarray */ ,
@@ -5920,22 +5983,16 @@ ProcessGUCArray(ArrayType *array,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("could not parse setting for parameter \"%s\"",
 							name)));
-			free(name);
+			pfree(name);
 			continue;
 		}
 
-		/* free malloc'd strings immediately to avoid leak upon error */
-		namecopy = pstrdup(name);
-		free(name);
-		valuecopy = pstrdup(value);
-		free(value);
-
-		(void) set_config_option(namecopy, valuecopy,
+		(void) set_config_option(name, value,
 								 context, source,
 								 action, true, 0, false);
 
-		pfree(namecopy);
-		pfree(valuecopy);
+		pfree(name);
+		pfree(value);
 		pfree(s);
 	}
 }
@@ -6399,7 +6456,7 @@ call_string_check_hook(struct config_string *conf, char **newval, void **extra,
 	}
 	PG_CATCH();
 	{
-		free(*newval);
+		guc_free(*newval);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();

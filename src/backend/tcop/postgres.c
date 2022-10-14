@@ -3871,8 +3871,8 @@ process_postgres_switches(int argc, char *argv[], GucContext ctx,
 											optarg)));
 					}
 					SetConfigOption(name, value, ctx, gucsource);
-					free(name);
-					free(value);
+					pfree(name);
+					pfree(value);
 					break;
 				}
 
