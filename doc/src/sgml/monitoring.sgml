@@ -4387,6 +4387,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_seq_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last sequential scan on this table, based on the
+       most recent transaction stop time
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>seq_tup_read</structfield> <type>bigint</type>
       </para>
       <para>
@@ -4400,6 +4410,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Number of index scans initiated on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last index scan on this table, based on the
+       most recent transaction stop time
       </para></entry>
      </row>
 
@@ -4651,6 +4671,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Number of index scans initiated on this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last scan on this index, based on the
+       most recent transaction stop time
       </para></entry>
      </row>
 

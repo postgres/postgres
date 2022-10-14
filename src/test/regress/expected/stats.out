@@ -557,6 +557,208 @@ SELECT pg_stat_get_live_tuples(:drop_stats_test_subxact_oid);
 DROP TABLE trunc_stats_test, trunc_stats_test1, trunc_stats_test2, trunc_stats_test3, trunc_stats_test4;
 DROP TABLE prevstats;
 -----
+-- Test that last_seq_scan, last_idx_scan are correctly maintained
+--
+-- Perform test using a temporary table. That way autovacuum etc won't
+-- interfere. To be able to check that timestamps increase, we sleep for 100ms
+-- between tests, assuming that there aren't systems with a coarser timestamp
+-- granularity.
+-----
+BEGIN;
+CREATE TEMPORARY TABLE test_last_scan(idx_col int primary key, noidx_col int);
+INSERT INTO test_last_scan(idx_col, noidx_col) VALUES(1, 1);
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+COMMIT;
+SELECT pg_stat_reset_single_table_counters('test_last_scan'::regclass);
+ pg_stat_reset_single_table_counters 
+-------------------------------------
+ 
+(1 row)
+
+SELECT seq_scan, idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ seq_scan | idx_scan 
+----------+----------
+        0 |        0
+(1 row)
+
+-- ensure we start out with exactly one index and sequential scan
+BEGIN;
+SET LOCAL enable_seqscan TO on;
+SET LOCAL enable_indexscan TO on;
+SET LOCAL enable_bitmapscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_last_scan WHERE noidx_col = 1;
+            QUERY PLAN            
+----------------------------------
+ Aggregate
+   ->  Seq Scan on test_last_scan
+         Filter: (noidx_col = 1)
+(3 rows)
+
+SELECT count(*) FROM test_last_scan WHERE noidx_col = 1;
+ count 
+-------
+     1
+(1 row)
+
+SET LOCAL enable_seqscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Aggregate
+   ->  Index Scan using test_last_scan_pkey on test_last_scan
+         Index Cond: (idx_col = 1)
+(3 rows)
+
+SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+ count 
+-------
+     1
+(1 row)
+
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+COMMIT;
+-- fetch timestamps from before the next test
+SELECT last_seq_scan AS test_last_seq, last_idx_scan AS test_last_idx
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass \gset
+SELECT pg_sleep(0.1); -- assume a minimum timestamp granularity of 100ms
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- cause one sequential scan
+BEGIN;
+SET LOCAL enable_seqscan TO on;
+SET LOCAL enable_indexscan TO off;
+SET LOCAL enable_bitmapscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_last_scan WHERE noidx_col = 1;
+            QUERY PLAN            
+----------------------------------
+ Aggregate
+   ->  Seq Scan on test_last_scan
+         Filter: (noidx_col = 1)
+(3 rows)
+
+SELECT count(*) FROM test_last_scan WHERE noidx_col = 1;
+ count 
+-------
+     1
+(1 row)
+
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+COMMIT;
+-- check that just sequential scan stats were incremented
+SELECT seq_scan, :'test_last_seq' < last_seq_scan AS seq_ok, idx_scan, :'test_last_idx' = last_idx_scan AS idx_ok
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ seq_scan | seq_ok | idx_scan | idx_ok 
+----------+--------+----------+--------
+        2 | t      |        1 | t
+(1 row)
+
+-- fetch timestamps from before the next test
+SELECT last_seq_scan AS test_last_seq, last_idx_scan AS test_last_idx
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass \gset
+SELECT pg_sleep(0.1);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- cause one index scan
+BEGIN;
+SET LOCAL enable_seqscan TO off;
+SET LOCAL enable_indexscan TO on;
+SET LOCAL enable_bitmapscan TO off;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+                          QUERY PLAN                          
+--------------------------------------------------------------
+ Aggregate
+   ->  Index Scan using test_last_scan_pkey on test_last_scan
+         Index Cond: (idx_col = 1)
+(3 rows)
+
+SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+ count 
+-------
+     1
+(1 row)
+
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+COMMIT;
+-- check that just index scan stats were incremented
+SELECT seq_scan, :'test_last_seq' = last_seq_scan AS seq_ok, idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ seq_scan | seq_ok | idx_scan | idx_ok 
+----------+--------+----------+--------
+        2 | t      |        2 | t
+(1 row)
+
+-- fetch timestamps from before the next test
+SELECT last_seq_scan AS test_last_seq, last_idx_scan AS test_last_idx
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass \gset
+SELECT pg_sleep(0.1);
+ pg_sleep 
+----------
+ 
+(1 row)
+
+-- cause one bitmap index scan
+BEGIN;
+SET LOCAL enable_seqscan TO off;
+SET LOCAL enable_indexscan TO off;
+SET LOCAL enable_bitmapscan TO on;
+EXPLAIN (COSTS off) SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+                      QUERY PLAN                      
+------------------------------------------------------
+ Aggregate
+   ->  Bitmap Heap Scan on test_last_scan
+         Recheck Cond: (idx_col = 1)
+         ->  Bitmap Index Scan on test_last_scan_pkey
+               Index Cond: (idx_col = 1)
+(5 rows)
+
+SELECT count(*) FROM test_last_scan WHERE idx_col = 1;
+ count 
+-------
+     1
+(1 row)
+
+SELECT pg_stat_force_next_flush();
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+COMMIT;
+-- check that just index scan stats were incremented
+SELECT seq_scan, :'test_last_seq' = last_seq_scan AS seq_ok, idx_scan, :'test_last_idx' < last_idx_scan AS idx_ok
+FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ seq_scan | seq_ok | idx_scan | idx_ok 
+----------+--------+----------+--------
+        2 | t      |        3 | t
+(1 row)
+
+-----
 -- Test that various stats views are being properly populated
 -----
 -- Test that sessions is incremented when a new session is started in pg_stat_database
