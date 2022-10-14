@@ -14,6 +14,7 @@
 #ifndef GUC_TABLES_H
 #define GUC_TABLES_H 1
 
+#include "lib/ilist.h"
 #include "utils/guc.h"
 
 /*
@@ -138,6 +139,11 @@ typedef struct guc_stack
  * if the value came from an internal source or the config file.  Similarly
  * for reset_srole (which is usually BOOTSTRAP_SUPERUSERID, but not always).
  *
+ * Variables that are currently of active interest for maintenance
+ * operations are linked into various lists using the xxx_link fields.
+ * The link fields are unused/garbage in variables not currently having
+ * the specified properties.
+ *
  * Note that sourcefile/sourceline are kept here, and not pushed into stacked
  * values, although in principle they belong with some stacked value if the
  * active value is session- or transaction-local.  This is to avoid bloating
@@ -163,6 +169,12 @@ struct config_generic
 	Oid			reset_srole;	/* role that set the reset value */
 	GucStack   *stack;			/* stacked prior values */
 	void	   *extra;			/* "extra" pointer for current actual value */
+	dlist_node	nondef_link;	/* list link for variables that have source
+								 * different from PGC_S_DEFAULT */
+	slist_node	stack_link;		/* list link for variables that have non-NULL
+								 * stack */
+	slist_node	report_link;	/* list link for variables that have the
+								 * GUC_NEEDS_REPORT bit set in status */
 	char	   *last_reported;	/* if variable is GUC_REPORT, value last sent
 								 * to client (NULL if not yet sent) */
 	char	   *sourcefile;		/* file current setting is from (NULL if not

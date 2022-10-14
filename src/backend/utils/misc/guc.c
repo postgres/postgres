@@ -205,11 +205,22 @@ typedef struct
 
 static HTAB *guc_hashtab;		/* entries are GUCHashEntrys */
 
-static bool guc_dirty;			/* true if need to do commit/abort work */
+/*
+ * In addition to the hash table, variables having certain properties are
+ * linked into these lists, so that we can find them without scanning the
+ * whole hash table.  In most applications, only a small fraction of the
+ * GUCs appear in these lists at any given time.  The usage of the stack
+ * and report lists is stylized enough that they can be slists, but the
+ * nondef list has to be a dlist to avoid O(N) deletes in common cases.
+ */
+static dlist_head guc_nondef_list;	/* list of variables that have source
+									 * different from PGC_S_DEFAULT */
+static slist_head guc_stack_list;	/* list of variables that have non-NULL
+									 * stack */
+static slist_head guc_report_list;	/* list of variables that have the
+									 * GUC_NEEDS_REPORT bit set in status */
 
 static bool reporting_enabled;	/* true to enable GUC_REPORT */
-
-static bool report_needed;		/* true if any GUC_REPORT reports are needed */
 
 static int	GUCNestLevel = 0;	/* 1 when in main transaction */
 
@@ -219,6 +230,8 @@ static uint32 guc_name_hash(const void *key, Size keysize);
 static int	guc_name_match(const void *key1, const void *key2, Size keysize);
 static void InitializeGUCOptionsFromEnvironment(void);
 static void InitializeOneGUCOption(struct config_generic *gconf);
+static void RemoveGUCFromLists(struct config_generic *gconf);
+static void set_guc_source(struct config_generic *gconf, GucSource newsource);
 static void pg_timezone_abbrev_initialize(void);
 static void push_old_value(struct config_generic *gconf, GucAction action);
 static void ReportGUCOption(struct config_generic *record);
@@ -465,7 +478,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 		if (gconf->reset_source == PGC_S_FILE)
 			gconf->reset_source = PGC_S_DEFAULT;
 		if (gconf->source == PGC_S_FILE)
-			gconf->source = PGC_S_DEFAULT;
+			set_guc_source(gconf, PGC_S_DEFAULT);
 		for (stack = gconf->stack; stack; stack = stack->prev)
 		{
 			if (stack->source == PGC_S_FILE)
@@ -1403,8 +1416,6 @@ InitializeGUCOptions(void)
 		InitializeOneGUCOption(hentry->gucvar);
 	}
 
-	guc_dirty = false;
-
 	reporting_enabled = false;
 
 	/*
@@ -1598,6 +1609,23 @@ InitializeOneGUCOption(struct config_generic *gconf)
 				break;
 			}
 	}
+}
+
+/*
+ * Summarily remove a GUC variable from any linked lists it's in.
+ *
+ * We use this in cases where the variable is about to be deleted or reset.
+ * These aren't common operations, so it's okay if this is a bit slow.
+ */
+static void
+RemoveGUCFromLists(struct config_generic *gconf)
+{
+	if (gconf->source != PGC_S_DEFAULT)
+		dlist_delete(&gconf->nondef_link);
+	if (gconf->stack != NULL)
+		slist_delete(&guc_stack_list, &gconf->stack_link);
+	if (gconf->status & GUC_NEEDS_REPORT)
+		slist_delete(&guc_report_list, &gconf->report_link);
 }
 
 
@@ -1835,13 +1863,13 @@ pg_timezone_abbrev_initialize(void)
 void
 ResetAllOptions(void)
 {
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_mutable_iter iter;
 
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
+	/* We need only consider GUCs not already at PGC_S_DEFAULT */
+	dlist_foreach_modify(iter, &guc_nondef_list)
 	{
-		struct config_generic *gconf = hentry->gucvar;
+		struct config_generic *gconf = dlist_container(struct config_generic,
+													   nondef_link, iter.cur);
 
 		/* Don't reset non-SET-able values */
 		if (gconf->context != PGC_SUSET &&
@@ -1921,16 +1949,41 @@ ResetAllOptions(void)
 				}
 		}
 
-		gconf->source = gconf->reset_source;
+		set_guc_source(gconf, gconf->reset_source);
 		gconf->scontext = gconf->reset_scontext;
 		gconf->srole = gconf->reset_srole;
 
-		if (gconf->flags & GUC_REPORT)
+		if ((gconf->flags & GUC_REPORT) && !(gconf->status & GUC_NEEDS_REPORT))
 		{
 			gconf->status |= GUC_NEEDS_REPORT;
-			report_needed = true;
+			slist_push_head(&guc_report_list, &gconf->report_link);
 		}
 	}
+}
+
+
+/*
+ * Apply a change to a GUC variable's "source" field.
+ *
+ * Use this rather than just assigning, to ensure that the variable's
+ * membership in guc_nondef_list is updated correctly.
+ */
+static void
+set_guc_source(struct config_generic *gconf, GucSource newsource)
+{
+	/* Adjust nondef list membership if appropriate for change */
+	if (gconf->source == PGC_S_DEFAULT)
+	{
+		if (newsource != PGC_S_DEFAULT)
+			dlist_push_tail(&guc_nondef_list, &gconf->nondef_link);
+	}
+	else
+	{
+		if (newsource == PGC_S_DEFAULT)
+			dlist_delete(&gconf->nondef_link);
+	}
+	/* Now update the source field */
+	gconf->source = newsource;
 }
 
 
@@ -1980,7 +2033,6 @@ push_old_value(struct config_generic *gconf, GucAction action)
 				Assert(stack->state == GUC_SAVE);
 				break;
 		}
-		Assert(guc_dirty);		/* must be set already */
 		return;
 	}
 
@@ -2011,10 +2063,9 @@ push_old_value(struct config_generic *gconf, GucAction action)
 	stack->srole = gconf->srole;
 	set_stack_value(gconf, &stack->prior);
 
+	if (gconf->stack == NULL)
+		slist_push_head(&guc_stack_list, &gconf->stack_link);
 	gconf->stack = stack;
-
-	/* Ensure we remember to pop at end of xact */
-	guc_dirty = true;
 }
 
 
@@ -2058,9 +2109,7 @@ NewGUCNestLevel(void)
 void
 AtEOXact_GUC(bool isCommit, int nestLevel)
 {
-	bool		still_dirty;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	slist_mutable_iter iter;
 
 	/*
 	 * Note: it's possible to get here with GUCNestLevel == nestLevel-1 during
@@ -2071,18 +2120,11 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		   (nestLevel <= GUCNestLevel ||
 			(nestLevel == GUCNestLevel + 1 && !isCommit)));
 
-	/* Quick exit if nothing's changed in this transaction */
-	if (!guc_dirty)
+	/* We need only process GUCs having nonempty stacks */
+	slist_foreach_modify(iter, &guc_stack_list)
 	{
-		GUCNestLevel = nestLevel - 1;
-		return;
-	}
-
-	still_dirty = false;
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
-	{
-		struct config_generic *gconf = hentry->gucvar;
+		struct config_generic *gconf = slist_container(struct config_generic,
+													   stack_link, iter.cur);
 		GucStack   *stack;
 
 		/*
@@ -2315,29 +2357,29 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 				set_extra_field(gconf, &(stack->masked.extra), NULL);
 
 				/* And restore source information */
-				gconf->source = newsource;
+				set_guc_source(gconf, newsource);
 				gconf->scontext = newscontext;
 				gconf->srole = newsrole;
 			}
 
-			/* Finish popping the state stack */
+			/*
+			 * Pop the GUC's state stack; if it's now empty, remove the GUC
+			 * from guc_stack_list.
+			 */
 			gconf->stack = prev;
+			if (prev == NULL)
+				slist_delete_current(&iter);
 			pfree(stack);
 
 			/* Report new value if we changed it */
-			if (changed && (gconf->flags & GUC_REPORT))
+			if (changed && (gconf->flags & GUC_REPORT) &&
+				!(gconf->status & GUC_NEEDS_REPORT))
 			{
 				gconf->status |= GUC_NEEDS_REPORT;
-				report_needed = true;
+				slist_push_head(&guc_report_list, &gconf->report_link);
 			}
 		}						/* end of stack-popping loop */
-
-		if (stack != NULL)
-			still_dirty = true;
 	}
-
-	/* If there are no remaining stack entries, we can reset guc_dirty */
-	guc_dirty = still_dirty;
 
 	/* Update nesting level */
 	GUCNestLevel = nestLevel - 1;
@@ -2383,8 +2425,6 @@ BeginReportingGUCOptions(void)
 		if (conf->flags & GUC_REPORT)
 			ReportGUCOption(conf);
 	}
-
-	report_needed = false;
 }
 
 /*
@@ -2403,8 +2443,7 @@ BeginReportingGUCOptions(void)
 void
 ReportChangedGUCOptions(void)
 {
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	slist_mutable_iter iter;
 
 	/* Quick exit if not (yet) enabled */
 	if (!reporting_enabled)
@@ -2420,28 +2459,24 @@ ReportChangedGUCOptions(void)
 		SetConfigOption("in_hot_standby", "false",
 						PGC_INTERNAL, PGC_S_OVERRIDE);
 
-	/* Quick exit if no values have been changed */
-	if (!report_needed)
-		return;
-
 	/* Transmit new values of interesting variables */
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
+	slist_foreach_modify(iter, &guc_report_list)
 	{
-		struct config_generic *conf = hentry->gucvar;
+		struct config_generic *conf = slist_container(struct config_generic,
+													  report_link, iter.cur);
 
-		if ((conf->flags & GUC_REPORT) && (conf->status & GUC_NEEDS_REPORT))
-			ReportGUCOption(conf);
+		Assert((conf->flags & GUC_REPORT) && (conf->status & GUC_NEEDS_REPORT));
+		ReportGUCOption(conf);
+		conf->status &= ~GUC_NEEDS_REPORT;
+		slist_delete_current(&iter);
 	}
-
-	report_needed = false;
 }
 
 /*
  * ReportGUCOption: if appropriate, transmit option value to frontend
  *
  * We need not transmit the value if it's the same as what we last
- * transmitted.  However, clear the NEEDS_REPORT flag in any case.
+ * transmitted.
  */
 static void
 ReportGUCOption(struct config_generic *record)
@@ -2468,8 +2503,6 @@ ReportGUCOption(struct config_generic *record)
 	}
 
 	pfree(val);
-
-	record->status &= ~GUC_NEEDS_REPORT;
 }
 
 /*
@@ -3524,7 +3557,7 @@ set_config_option_ext(const char *name, const char *value,
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
-					conf->gen.source = source;
+					set_guc_source(&conf->gen, source);
 					conf->gen.scontext = context;
 					conf->gen.srole = srole;
 				}
@@ -3622,7 +3655,7 @@ set_config_option_ext(const char *name, const char *value,
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
-					conf->gen.source = source;
+					set_guc_source(&conf->gen, source);
 					conf->gen.scontext = context;
 					conf->gen.srole = srole;
 				}
@@ -3720,7 +3753,7 @@ set_config_option_ext(const char *name, const char *value,
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
-					conf->gen.source = source;
+					set_guc_source(&conf->gen, source);
 					conf->gen.scontext = context;
 					conf->gen.srole = srole;
 				}
@@ -3844,7 +3877,7 @@ set_config_option_ext(const char *name, const char *value,
 					set_string_field(conf, conf->variable, newval);
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
-					conf->gen.source = source;
+					set_guc_source(&conf->gen, source);
 					conf->gen.scontext = context;
 					conf->gen.srole = srole;
 				}
@@ -3947,7 +3980,7 @@ set_config_option_ext(const char *name, const char *value,
 					*conf->variable = newval;
 					set_extra_field(&conf->gen, &conf->gen.extra,
 									newextra);
-					conf->gen.source = source;
+					set_guc_source(&conf->gen, source);
 					conf->gen.scontext = context;
 					conf->gen.srole = srole;
 				}
@@ -3987,10 +4020,11 @@ set_config_option_ext(const char *name, const char *value,
 			}
 	}
 
-	if (changeVal && (record->flags & GUC_REPORT))
+	if (changeVal && (record->flags & GUC_REPORT) &&
+		!(record->status & GUC_NEEDS_REPORT))
 	{
 		record->status |= GUC_NEEDS_REPORT;
-		report_needed = true;
+		slist_push_head(&guc_report_list, &record->report_link);
 	}
 
 	return changeVal ? 1 : -1;
@@ -4664,6 +4698,11 @@ define_custom_variable(struct config_generic *variable)
 	hentry->gucvar = variable;
 
 	/*
+	 * Remove the placeholder from any lists it's in, too.
+	 */
+	RemoveGUCFromLists(&pHolder->gen);
+
+	/*
 	 * Assign the string value(s) stored in the placeholder to the real
 	 * variable.  Essentially, we need to duplicate all the active and stacked
 	 * values, but with appropriate validation and datatype adjustment.
@@ -4794,7 +4833,11 @@ reapply_stacked_values(struct config_generic *variable,
 			(void) set_config_option_ext(name, curvalue,
 										 curscontext, cursource, cursrole,
 										 GUC_ACTION_SET, true, WARNING, false);
-			variable->stack = NULL;
+			if (variable->stack != NULL)
+			{
+				slist_delete(&guc_stack_list, &variable->stack_link);
+				variable->stack = NULL;
+			}
 		}
 	}
 }
@@ -4978,10 +5021,13 @@ MarkGUCPrefixReserved(const char *className)
 							var->name),
 					 errdetail("\"%s\" is now a reserved prefix.",
 							   className)));
+			/* Remove it from the hash table */
 			hash_search(guc_hashtab,
 						&var->name,
 						HASH_REMOVE,
 						NULL);
+			/* Remove it from any lists it's in, too */
+			RemoveGUCFromLists(var);
 		}
 	}
 
@@ -5002,8 +5048,7 @@ struct config_generic **
 get_explain_guc_options(int *num)
 {
 	struct config_generic **result;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_iter	iter;
 
 	*num = 0;
 
@@ -5013,10 +5058,11 @@ get_explain_guc_options(int *num)
 	 */
 	result = palloc(sizeof(struct config_generic *) * hash_get_num_entries(guc_hashtab));
 
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
+	/* We need only consider GUCs with source not PGC_S_DEFAULT */
+	dlist_foreach(iter, &guc_nondef_list)
 	{
-		struct config_generic *conf = hentry->gucvar;
+		struct config_generic *conf = dlist_container(struct config_generic,
+													  nondef_link, iter.cur);
 		bool		modified;
 
 		/* return only parameters marked for inclusion in explain */
@@ -5251,8 +5297,7 @@ ShowGUCOption(struct config_generic *record, bool use_units)
 static void
 write_one_nondefault_variable(FILE *fp, struct config_generic *gconf)
 {
-	if (gconf->source == PGC_S_DEFAULT)
-		return;
+	Assert(gconf->source != PGC_S_DEFAULT);
 
 	fprintf(fp, "%s", gconf->name);
 	fputc(0, fp);
@@ -5321,8 +5366,7 @@ write_nondefault_variables(GucContext context)
 {
 	int			elevel;
 	FILE	   *fp;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_iter	iter;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -5341,10 +5385,13 @@ write_nondefault_variables(GucContext context)
 		return;
 	}
 
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
+	/* We need only consider GUCs with source not PGC_S_DEFAULT */
+	dlist_foreach(iter, &guc_nondef_list)
 	{
-		write_one_nondefault_variable(fp, hentry->gucvar);
+		struct config_generic *gconf = dlist_container(struct config_generic,
+													   nondef_link, iter.cur);
+
+		write_one_nondefault_variable(fp, gconf);
 	}
 
 	if (FreeFile(fp))
@@ -5618,17 +5665,23 @@ Size
 EstimateGUCStateSpace(void)
 {
 	Size		size;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_iter	iter;
 
 	/* Add space reqd for saving the data size of the guc state */
 	size = sizeof(Size);
 
-	/* Add up the space needed for each GUC variable */
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
-		size = add_size(size,
-						estimate_variable_size(hentry->gucvar));
+	/*
+	 * Add up the space needed for each GUC variable.
+	 *
+	 * We need only process non-default GUCs.
+	 */
+	dlist_foreach(iter, &guc_nondef_list)
+	{
+		struct config_generic *gconf = dlist_container(struct config_generic,
+													   nondef_link, iter.cur);
+
+		size = add_size(size, estimate_variable_size(gconf));
+	}
 
 	return size;
 }
@@ -5767,17 +5820,21 @@ SerializeGUCState(Size maxsize, char *start_address)
 	char	   *curptr;
 	Size		actual_size;
 	Size		bytes_left;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_iter	iter;
 
 	/* Reserve space for saving the actual size of the guc state */
 	Assert(maxsize > sizeof(actual_size));
 	curptr = start_address + sizeof(actual_size);
 	bytes_left = maxsize - sizeof(actual_size);
 
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
-		serialize_variable(&curptr, &bytes_left, hentry->gucvar);
+	/* We need only consider GUCs with source not PGC_S_DEFAULT */
+	dlist_foreach(iter, &guc_nondef_list)
+	{
+		struct config_generic *gconf = dlist_container(struct config_generic,
+													   nondef_link, iter.cur);
+
+		serialize_variable(&curptr, &bytes_left, gconf);
+	}
 
 	/* Store actual size without assuming alignment of start_address. */
 	actual_size = maxsize - bytes_left - sizeof(actual_size);
@@ -5862,8 +5919,7 @@ RestoreGUCState(void *gucstate)
 	char	   *srcptr = (char *) gucstate;
 	char	   *srcend;
 	Size		len;
-	HASH_SEQ_STATUS status;
-	GUCHashEntry *hentry;
+	dlist_mutable_iter iter;
 	ErrorContextCallback error_context_callback;
 
 	/*
@@ -5888,10 +5944,10 @@ RestoreGUCState(void *gucstate)
 	 * also ensures that set_config_option won't refuse to set them because of
 	 * source-priority comparisons.
 	 */
-	hash_seq_init(&status, guc_hashtab);
-	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
+	dlist_foreach_modify(iter, &guc_nondef_list)
 	{
-		struct config_generic *gconf = hentry->gucvar;
+		struct config_generic *gconf = dlist_container(struct config_generic,
+													   nondef_link, iter.cur);
 
 		/* Do nothing if non-shippable or if already at PGC_S_DEFAULT. */
 		if (can_skip_gucvar(gconf))
@@ -5902,7 +5958,8 @@ RestoreGUCState(void *gucstate)
 		 * first we must free any existing subsidiary data to avoid leaking
 		 * memory.  The stack must be empty, but we have to clean up all other
 		 * fields.  Beware that there might be duplicate value or "extra"
-		 * pointers.
+		 * pointers.  We also have to be sure to take it out of any lists it's
+		 * in.
 		 */
 		Assert(gconf->stack == NULL);
 		guc_free(gconf->extra);
@@ -5954,6 +6011,8 @@ RestoreGUCState(void *gucstate)
 					break;
 				}
 		}
+		/* Remove it from any lists it's in. */
+		RemoveGUCFromLists(gconf);
 		/* Now we can reset the struct to PGS_S_DEFAULT state. */
 		InitializeOneGUCOption(gconf);
 	}
