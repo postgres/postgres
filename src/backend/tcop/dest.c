@@ -178,17 +178,18 @@ EndCommand(const QueryCompletion *qc, CommandDest dest, bool force_undecorated_o
 			/*
 			 * We assume the tagname is plain ASCII and therefore requires no
 			 * encoding conversion.
-			 *
-			 * We no longer display LastOid, but to preserve the wire
-			 * protocol, we write InvalidOid where the LastOid used to be
-			 * written.
-			 *
-			 * All cases where LastOid was written also write nprocessed
-			 * count, so just Assert that rather than having an extra test.
 			 */
 			tag = qc->commandTag;
 			tagname = GetCommandTagName(tag);
 
+			/*
+			 * In PostgreSQL versions 11 and earlier, it was possible to
+			 * create a table WITH OIDS.  When inserting into such a table,
+			 * INSERT used to include the Oid of the inserted record in the
+			 * completion tag.  To maintain compatibility in the wire
+			 * protocol, we now write a "0" (for InvalidOid) in the location
+			 * where we once wrote the new record's Oid.
+			 */
 			if (command_tag_display_rowcount(tag) && !force_undecorated_output)
 				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 						 tag == CMDTAG_INSERT ?
