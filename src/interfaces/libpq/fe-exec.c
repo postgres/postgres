@@ -3089,6 +3089,12 @@ pqPipelineProcessQueue(PGconn *conn)
 	}
 
 	/*
+	 * Reset single-row processing mode.  (Client has to set it up for each
+	 * query, if desired.)
+	 */
+	conn->singleRowMode = false;
+
+	/*
 	 * If there are no further commands to process in the queue, get us in
 	 * "real idle" mode now.
 	 */
@@ -3100,12 +3106,6 @@ pqPipelineProcessQueue(PGconn *conn)
 
 	/* Initialize async result-accumulation state */
 	pqClearAsyncResult(conn);
-
-	/*
-	 * Reset single-row processing mode.  (Client has to set it up for each
-	 * query, if desired.)
-	 */
-	conn->singleRowMode = false;
 
 	if (conn->pipelineStatus == PQ_PIPELINE_ABORTED &&
 		conn->cmd_queue_head->queryclass != PGQUERY_SYNC)

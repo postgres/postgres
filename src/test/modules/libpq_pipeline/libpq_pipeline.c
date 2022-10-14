@@ -1143,11 +1143,11 @@ test_singlerowmode(PGconn *conn)
 	int			i;
 	bool		pipeline_ended = false;
 
-	/* 1 pipeline, 3 queries in it */
 	if (PQenterPipelineMode(conn) != 1)
 		pg_fatal("failed to enter pipeline mode: %s",
 				 PQerrorMessage(conn));
 
+	/* One series of three commands, using single-row mode for the first two. */
 	for (i = 0; i < 3; i++)
 	{
 		char	   *param[1];
@@ -1238,6 +1238,49 @@ test_singlerowmode(PGconn *conn)
 		if (!pipeline_ended && !saw_ending_tuplesok)
 			pg_fatal("didn't get expected terminating TUPLES_OK");
 	}
+
+	/*
+	 * Now issue one command, get its results in with single-row mode, then
+	 * issue another command, and get its results in normal mode; make sure
+	 * the single-row mode flag is reset as expected.
+	 */
+	if (PQsendQueryParams(conn, "SELECT generate_series(0, 0)",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s",
+				 PQerrorMessage(conn));
+	if (PQsendFlushRequest(conn) != 1)
+		pg_fatal("failed to send flush request");
+	if (PQsetSingleRowMode(conn) != 1)
+		pg_fatal("PQsetSingleRowMode() failed");
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_SINGLE_TUPLE)
+		pg_fatal("Expected PGRES_SINGLE_TUPLE, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Expected PGRES_TUPLES_OK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("expected NULL result");
+
+	if (PQsendQueryParams(conn, "SELECT 1",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s",
+				 PQerrorMessage(conn));
+	if (PQsendFlushRequest(conn) != 1)
+		pg_fatal("failed to send flush request");
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Expected PGRES_TUPLES_OK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("expected NULL result");
 
 	if (PQexitPipelineMode(conn) != 1)
 		pg_fatal("failed to end pipeline mode: %s", PQerrorMessage(conn));
