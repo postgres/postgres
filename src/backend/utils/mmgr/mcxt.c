@@ -1114,8 +1114,8 @@ MemoryContextAllocExtended(MemoryContext context, Size size, int flags)
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
-		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+	if (!((flags & MCXT_ALLOC_HUGE) != 0 ? AllocHugeSizeIsValid(size) :
+		  AllocSizeIsValid(size)))
 		elog(ERROR, "invalid memory alloc request size %zu", size);
 
 	context->isReset = false;
@@ -1269,8 +1269,8 @@ palloc_extended(Size size, int flags)
 	AssertArg(MemoryContextIsValid(context));
 	AssertNotInCriticalSection(context);
 
-	if (((flags & MCXT_ALLOC_HUGE) != 0 && !AllocHugeSizeIsValid(size)) ||
-		((flags & MCXT_ALLOC_HUGE) == 0 && !AllocSizeIsValid(size)))
+	if (!((flags & MCXT_ALLOC_HUGE) != 0 ? AllocHugeSizeIsValid(size) :
+		  AllocSizeIsValid(size)))
 		elog(ERROR, "invalid memory alloc request size %zu", size);
 
 	context->isReset = false;
@@ -1352,6 +1352,50 @@ repalloc(void *pointer, Size size)
 }
 
 /*
+ * repalloc_extended
+ *		Adjust the size of a previously allocated chunk,
+ *		with HUGE and NO_OOM options.
+ */
+void *
+repalloc_extended(void *pointer, Size size, int flags)
+{
+#if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
+	MemoryContext context = GetMemoryChunkContext(pointer);
+#endif
+	void	   *ret;
+
+	if (!((flags & MCXT_ALLOC_HUGE) != 0 ? AllocHugeSizeIsValid(size) :
+		  AllocSizeIsValid(size)))
+		elog(ERROR, "invalid memory alloc request size %zu", size);
+
+	AssertNotInCriticalSection(context);
+
+	/* isReset must be false already */
+	Assert(!context->isReset);
+
+	ret = MCXT_METHOD(pointer, realloc) (pointer, size);
+	if (unlikely(ret == NULL))
+	{
+		if ((flags & MCXT_ALLOC_NO_OOM) == 0)
+		{
+			MemoryContext cxt = GetMemoryChunkContext(pointer);
+
+			MemoryContextStats(TopMemoryContext);
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory"),
+					 errdetail("Failed on request of size %zu in memory context \"%s\".",
+							   size, cxt->name)));
+		}
+		return NULL;
+	}
+
+	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
+
+	return ret;
+}
+
+/*
  * MemoryContextAllocHuge
  *		Allocate (possibly-expansive) space within the specified context.
  *
@@ -1394,35 +1438,8 @@ MemoryContextAllocHuge(MemoryContext context, Size size)
 void *
 repalloc_huge(void *pointer, Size size)
 {
-#if defined(USE_ASSERT_CHECKING) || defined(USE_VALGRIND)
-	MemoryContext context = GetMemoryChunkContext(pointer);
-#endif
-	void	   *ret;
-
-	if (!AllocHugeSizeIsValid(size))
-		elog(ERROR, "invalid memory alloc request size %zu", size);
-
-	AssertNotInCriticalSection(context);
-
-	/* isReset must be false already */
-	Assert(!context->isReset);
-
-	ret = MCXT_METHOD(pointer, realloc) (pointer, size);
-	if (unlikely(ret == NULL))
-	{
-		MemoryContext cxt = GetMemoryChunkContext(pointer);
-
-		MemoryContextStats(TopMemoryContext);
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory"),
-				 errdetail("Failed on request of size %zu in memory context \"%s\".",
-						   size, cxt->name)));
-	}
-
-	VALGRIND_MEMPOOL_CHANGE(context, pointer, ret, size);
-
-	return ret;
+	/* this one seems not worth its own implementation */
+	return repalloc_extended(pointer, size, MCXT_ALLOC_HUGE);
 }
 
 /*

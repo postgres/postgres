@@ -78,6 +78,8 @@ extern void *palloc(Size size);
 extern void *palloc0(Size size);
 extern void *palloc_extended(Size size, int flags);
 extern pg_nodiscard void *repalloc(void *pointer, Size size);
+extern pg_nodiscard void *repalloc_extended(void *pointer,
+											Size size, int flags);
 extern void pfree(void *pointer);
 
 /*
