@@ -63,7 +63,7 @@ typedef struct BackgroundWorker
     char        bgw_function_name[BGW_MAXLEN];
     Datum       bgw_main_arg;
     char        bgw_extra[BGW_EXTRALEN];
-    int         bgw_notify_pid;
+    pid_t       bgw_notify_pid;
 } BackgroundWorker;
 </programlisting>
   </para>
