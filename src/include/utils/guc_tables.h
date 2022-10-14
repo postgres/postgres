@@ -281,7 +281,7 @@ extern struct config_generic **get_explain_guc_options(int *num);
 extern char *ShowGUCOption(struct config_generic *record, bool use_units);
 
 /* get the current set of variables */
-extern struct config_generic **get_guc_variables(void);
+extern struct config_generic **get_guc_variables(int *num_vars);
 
 extern void build_guc_variables(void);
 

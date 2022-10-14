@@ -390,7 +390,6 @@ extern int	set_config_option_ext(const char *name, const char *value,
 extern void AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt);
 extern char *GetConfigOptionByName(const char *name, const char **varname,
 								   bool missing_ok);
-extern int	GetNumConfigOptions(void);
 
 extern void ProcessGUCArray(ArrayType *array,
 							GucContext context, GucSource source, GucAction action);
