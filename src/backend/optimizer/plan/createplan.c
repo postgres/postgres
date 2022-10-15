@@ -7078,12 +7078,32 @@ make_modifytable(PlannerInfo *root, Plan *subplan,
 			RelOptInfo *resultRel = root->simple_rel_array[rti];
 
 			fdwroutine = resultRel->fdwroutine;
+
+			/*
+			 * MERGE is not currently supported for foreign tables and we
+			 * already checked when the table mentioned in the query is
+			 * foreign; but we can still get here if a partitioned table has a
+			 * foreign table as partition.  Disallow that now, to avoid an
+			 * uglier error message later.
+			 */
+			if (operation == CMD_MERGE && fdwroutine != NULL)
+			{
+				RangeTblEntry *rte = root->simple_rte_array[rti];
+
+				ereport(ERROR,
+						errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("cannot execute MERGE on relation \"%s\"",
+							   get_rel_name(rte->relid)),
+						errdetail_relkind_not_supported(rte->relkind));
+			}
+
 		}
 		else
 		{
 			RangeTblEntry *rte = planner_rt_fetch(rti, root);
 
 			Assert(rte->rtekind == RTE_RELATION);
+			Assert(operation != CMD_MERGE);
 			if (rte->relkind == RELKIND_FOREIGN_TABLE)
 				fdwroutine = GetFdwRoutineByRelId(rte->relid);
 			else

@@ -8284,6 +8284,11 @@ select tableoid::regclass, * FROM remp2;
 (3 rows)
 
 delete from itrtest;
+-- MERGE ought to fail cleanly
+merge into itrtest using (select 1, 'foo') as source on (true)
+  when matched then do nothing;
+ERROR:  cannot execute MERGE on relation "remp1"
+DETAIL:  This operation is not supported for foreign tables.
 create unique index loct1_idx on loct1 (a);
 -- DO NOTHING without an inference specification is supported
 insert into itrtest values (1, 'foo') on conflict do nothing returning *;
