@@ -316,8 +316,8 @@ endif
 # External programs
 perl = find_program(get_option('PERL'), required: true, native: true)
 python = find_program(get_option('PYTHON'), required: true, native: true)
-flex = find_program(get_option('FLEX'), native: true, version: '>= 2.5.31')
-bison = find_program(get_option('BISON'), native: true, version: '>= 1.875')
+flex = find_program(get_option('FLEX'), native: true, version: '>= 2.5.35')
+bison = find_program(get_option('BISON'), native: true, version: '>= 2.3')
 sed = find_program(get_option('SED'), 'sed', native: true)
 prove = find_program(get_option('PROVE'), native: true)
 tar = find_program(get_option('TAR'), native: true)
@@ -864,7 +864,10 @@ if not perlopt.disabled()
 
     perl_inc_dir = '@0@/CORE'.format(archlibexp)
 
-    if useshrplib != 'true'
+    if perlversion.version_compare('< 5.14')
+      perl_may_work = false
+      perl_msg = 'Perl version 5.14 or later is required, but this is @0@'.format(perlversion)
+    elif useshrplib != 'true'
       perl_may_work = false
       perl_msg = 'need a shared perl'
     endif
@@ -1458,6 +1461,8 @@ if cc.links('''
     /* This must match the corresponding code in c.h: */
     #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
     #define pg_attribute_aligned(a) __attribute__((aligned(a)))
+    #elif defined(_MSC_VER)
+    #define pg_attribute_aligned(a) __declspec(align(a))
     #endif
     typedef __int128 int128a
     #if defined(pg_attribute_aligned)
