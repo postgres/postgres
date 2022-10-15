@@ -91,7 +91,7 @@ struct XidCache
 #define INVALID_PGPROCNO		PG_INT32_MAX
 
 /*
- * Flags for PGPROC.delayChkpt
+ * Flags for PGPROC.delayChkptFlags
  *
  * These flags can be used to delay the start or completion of a checkpoint
  * for short periods. A flag is in effect if the corresponding bit is set in
@@ -118,7 +118,7 @@ struct XidCache
  * to phase 3. This is useful if we are performing a WAL-logged operation that
  * might invalidate buffers, such as relation truncation. In this case, we need
  * to ensure that any buffers which were invalidated and thus not flushed by
- * the checkpoint are actaully destroyed on disk. Replay can cope with a file
+ * the checkpoint are actually destroyed on disk. Replay can cope with a file
  * or block that doesn't exist, but not with a block that has the wrong
  * contents.
  */
@@ -149,7 +149,7 @@ typedef enum
  * but its myProcLocks[] lists are valid.
  *
  * We allow many fields of this struct to be accessed without locks, such as
- * delayChkpt and isBackgroundWorker. However, keep in mind that writing
+ * delayChkptFlags and isBackgroundWorker. However, keep in mind that writing
  * mirrored ones (see below) requires holding ProcArrayLock or XidGenLock in
  * at least shared mode, so that pgxactoff does not change concurrently.
  *
