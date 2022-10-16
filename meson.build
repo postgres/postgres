@@ -228,6 +228,10 @@ elif host_system == 'darwin'
   message('darwin sysroot: @0@'.format(pg_sysroot))
   cflags += ['-isysroot', pg_sysroot]
   ldflags += ['-isysroot', pg_sysroot]
+  # meson defaults to -Wl,-undefined,dynamic_lookup for modules, which we
+  # don't want because a) it's different from what we do for autoconf, b) it
+  # causes warnings starting in macOS Ventura
+  ldflags_mod += ['-Wl,-undefined,error']
 
 elif host_system == 'freebsd'
   sema_kind = 'unnamed_posix'
