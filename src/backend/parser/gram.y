@@ -544,7 +544,7 @@ static void processCASbits(int cas_bits, int location, const char *constrType,
 
 	QUOTE
 
-	RANGE READ REAL REASSIGN RECHECK RECURSIVE REF REFERENCES REINDEX
+	RANGE READ REAL REASSIGN RECHECK RECURSIVE REF_P REFERENCES REINDEX
 	RELATIVE_P RELEASE RENAME REPEATABLE REPLACE REPLICA
 	RESET RESTART RESTRICT RETURNING RETURNS REVOKE RIGHT ROLE ROLLBACK
 	ROW ROWS RULE
@@ -11355,15 +11355,15 @@ xmlexists_argument:
 				{
 					$$ = $2;
 				}
-			| PASSING c_expr BY REF
+			| PASSING c_expr BY REF_P
 				{
 					$$ = $2;
 				}
-			| PASSING BY REF c_expr
+			| PASSING BY REF_P c_expr
 				{
 					$$ = $4;
 				}
-			| PASSING BY REF c_expr BY REF
+			| PASSING BY REF_P c_expr BY REF_P
 				{
 					$$ = $4;
 				}
@@ -12461,7 +12461,7 @@ unreserved_keyword:
 			| REASSIGN
 			| RECHECK
 			| RECURSIVE
-			| REF
+			| REF_P
 			| REINDEX
 			| RELATIVE_P
 			| RELEASE
