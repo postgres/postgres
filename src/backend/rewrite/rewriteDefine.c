@@ -531,6 +531,18 @@ DefineQueryRewrite(const char *rulename,
 								RelationGetDescr(event_relation),
 								false, false);
 		}
+
+		/*
+		 * And finally, if it's not an ON SELECT rule then it must *not* be
+		 * named _RETURN.  This prevents accidentally or maliciously replacing
+		 * a view's ON SELECT rule with some other kind of rule.
+		 */
+		if (strcmp(rulename, ViewSelectRuleName) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("non-view rule for \"%s\" must not be named \"%s\"",
+							RelationGetRelationName(event_relation),
+							ViewSelectRuleName)));
 	}
 
 	/*
