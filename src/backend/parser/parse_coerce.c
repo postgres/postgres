@@ -2994,9 +2994,27 @@ IsPreferredType(TYPCATEGORY category, Oid type)
 bool
 IsBinaryCoercible(Oid srctype, Oid targettype)
 {
+	Oid			castoid;
+
+	return IsBinaryCoercibleWithCast(srctype, targettype, &castoid);
+}
+
+/* IsBinaryCoercibleWithCast()
+ *		Check if srctype is binary-coercible to targettype.
+ *
+ * This variant also returns the OID of the pg_cast entry if one is involved.
+ * *castoid is set to InvalidOid if no binary-coercible cast exists, or if
+ * there is a hard-wired rule for it rather than a pg_cast entry.
+ */
+bool
+IsBinaryCoercibleWithCast(Oid srctype, Oid targettype,
+						  Oid *castoid)
+{
 	HeapTuple	tuple;
 	Form_pg_cast castForm;
 	bool		result;
+
+	*castoid = InvalidOid;
 
 	/* Fast path if same type */
 	if (srctype == targettype)
@@ -3060,6 +3078,9 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 
 	result = (castForm->castmethod == COERCION_METHOD_BINARY &&
 			  castForm->castcontext == COERCION_CODE_IMPLICIT);
+
+	if (result)
+		*castoid = castForm->oid;
 
 	ReleaseSysCache(tuple);
 

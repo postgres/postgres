@@ -35,13 +35,20 @@
  * Caller must have already checked privileges, and done consistency
  * checks on the given datatypes and cast function (if applicable).
  *
+ * Since we allow binary coercibility of the datatypes to the cast
+ * function's input and result, there could be one or two WITHOUT FUNCTION
+ * casts that this one depends on.  We don't record that explicitly
+ * in pg_cast, but we still need to make dependencies on those casts.
+ *
  * 'behavior' indicates the types of the dependencies that the new
- * cast will have on its input and output types and the cast function.
+ * cast will have on its input and output types, the cast function,
+ * and the other casts if any.
  * ----------------------------------------------------------------
  */
 ObjectAddress
-CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
-		   char castmethod, DependencyType behavior)
+CastCreate(Oid sourcetypeid, Oid targettypeid,
+		   Oid funcid, Oid incastid, Oid outcastid,
+		   char castcontext, char castmethod, DependencyType behavior)
 {
 	Relation	relation;
 	HeapTuple	tuple;
@@ -99,6 +106,18 @@ CastCreate(Oid sourcetypeid, Oid targettypeid, Oid funcid, char castcontext,
 	if (OidIsValid(funcid))
 	{
 		ObjectAddressSet(referenced, ProcedureRelationId, funcid);
+		add_exact_object_address(&referenced, addrs);
+	}
+
+	/* dependencies on casts required for function */
+	if (OidIsValid(incastid))
+	{
+		ObjectAddressSet(referenced, CastRelationId, incastid);
+		add_exact_object_address(&referenced, addrs);
+	}
+	if (OidIsValid(outcastid))
+	{
+		ObjectAddressSet(referenced, CastRelationId, outcastid);
 		add_exact_object_address(&referenced, addrs);
 	}
 

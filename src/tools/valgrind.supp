@@ -113,7 +113,7 @@
 	overread_tuplestruct_pg_cast
 	Memcheck:Addr4
 
-	fun:IsBinaryCoercible
+	fun:IsBinaryCoercibleWithCast
 }
 
 # Python's allocator does some low-level tricks for efficiency. Those

@@ -1705,7 +1705,9 @@ DefineRange(ParseState *pstate, CreateRangeStmt *stmt)
 							   &castFuncOid);
 
 	/* Create cast from the range type to its multirange type */
-	CastCreate(typoid, multirangeOid, castFuncOid, 'e', 'f', DEPENDENCY_INTERNAL);
+	CastCreate(typoid, multirangeOid, castFuncOid, InvalidOid, InvalidOid,
+			   COERCION_CODE_EXPLICIT, COERCION_METHOD_FUNCTION,
+			   DEPENDENCY_INTERNAL);
 
 	pfree(multirangeArrayName);
 
