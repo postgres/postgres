@@ -125,6 +125,22 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 */
 	relation = table_open(relationObjectId, NoLock);
 
+	/*
+	 * Relations without a table AM can be used in a query only if they are of
+	 * special-cased relkinds.  This check prevents us from crashing later if,
+	 * for example, a view's ON SELECT rule has gone missing.  Note that
+	 * table_open() already rejected indexes and composite types.
+	 */
+	if (!relation->rd_tableam)
+	{
+		if (!(relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
+			  relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot open relation \"%s\"",
+							RelationGetRelationName(relation))));
+	}
+
 	/* Temporary and unlogged relations are inaccessible during recovery. */
 	if (!RelationIsPermanent(relation) && RecoveryInProgress())
 		ereport(ERROR,
