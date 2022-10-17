@@ -218,7 +218,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	char		temp[MAXPGPATH + 256];
 	struct stat st;
 	struct timeval tv;
-	uint64		epoch;
+	uint64		epoch;			/* milliseconds */
 
 	ereport(DEBUG3,
 			(errmsg("archiving \"%s\" via basic_archive", file)));
@@ -265,7 +265,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	 */
 	gettimeofday(&tv, NULL);
 	if (pg_mul_u64_overflow((uint64) 1000, (uint64) tv.tv_sec, &epoch) ||
-		pg_add_u64_overflow(epoch, (uint64) tv.tv_usec, &epoch))
+		pg_add_u64_overflow(epoch, (uint64) (tv.tv_usec / 1000), &epoch))
 		elog(ERROR, "could not generate temporary file name for archiving");
 
 	snprintf(temp, sizeof(temp), "%s/%s.%s.%d." UINT64_FORMAT,
