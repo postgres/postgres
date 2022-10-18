@@ -1182,10 +1182,9 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase is enabled"),
-								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with copy_data = false"
-										 ", or use DROP/CREATE SUBSCRIPTION.")));
+								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
@@ -1226,7 +1225,11 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 						ereport(ERROR,
 								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh is not allowed for disabled subscriptions"),
-								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION ... WITH (refresh = false).")));
+						/* translator: %s is an SQL ALTER command */
+								 errhint("Use %s instead.",
+										 isadd ?
+										 "ALTER SUBSCRIPTION ... ADD PUBLICATION ... WITH (refresh = false)" :
+										 "ALTER SUBSCRIPTION ... DROP PUBLICATION ... WITH (refresh = false)")));
 
 					/*
 					 * See ALTER_SUBSCRIPTION_REFRESH for details why this is
@@ -1234,10 +1237,13 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					 */
 					if (sub->twophasestate == LOGICALREP_TWOPHASE_STATE_ENABLED && opts.copy_data)
 						ereport(ERROR,
-								(errcode(ERRCODE_SYNTAX_ERROR),
+								(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 								 errmsg("ALTER SUBSCRIPTION with refresh and copy_data is not allowed when two_phase is enabled"),
-								 errhint("Use ALTER SUBSCRIPTION ... SET PUBLICATION with refresh = false, or with copy_data = false"
-										 ", or use DROP/CREATE SUBSCRIPTION.")));
+						/* translator: %s is an SQL ALTER command */
+								 errhint("Use %s with refresh = false, or with copy_data = false, or use DROP/CREATE SUBSCRIPTION.",
+										 isadd ?
+										 "ALTER SUBSCRIPTION ... ADD PUBLICATION" :
+										 "ALTER SUBSCRIPTION ... DROP PUBLICATION")));
 
 					PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION with refresh");
 
@@ -1282,8 +1288,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("ALTER SUBSCRIPTION ... REFRESH with copy_data is not allowed when two_phase is enabled"),
-							 errhint("Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false"
-									 ", or use DROP/CREATE SUBSCRIPTION.")));
+							 errhint("Use ALTER SUBSCRIPTION ... REFRESH with copy_data = false, or use DROP/CREATE SUBSCRIPTION.")));
 
 				PreventInTransactionBlock(isTopLevel, "ALTER SUBSCRIPTION ... REFRESH");
 
@@ -2011,8 +2016,8 @@ ReportSlotConnectionError(List *rstates, Oid subid, char *slotname, char *err)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_CONNECTION_FAILURE),
-			 errmsg("could not connect to publisher when attempting to "
-					"drop replication slot \"%s\": %s", slotname, err),
+			 errmsg("could not connect to publisher when attempting to drop replication slot \"%s\": %s",
+					slotname, err),
 	/* translator: %s is an SQL ALTER command */
 			 errhint("Use %s to disassociate the subscription from the slot.",
 					 "ALTER SUBSCRIPTION ... SET (slot_name = NONE)")));
