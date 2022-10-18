@@ -491,7 +491,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 			include_dot_dirs = PG_GETARG_BOOL(2);
 	}
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	dirdesc = AllocateDir(location);
 	if (!dirdesc)
@@ -549,7 +549,7 @@ pg_ls_dir_files(FunctionCallInfo fcinfo, const char *dir, bool missing_ok)
 	DIR		   *dirdesc;
 	struct dirent *de;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/*
 	 * Now walk the directory.  Note that we must do this within a single SRF

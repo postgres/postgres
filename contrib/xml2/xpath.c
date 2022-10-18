@@ -511,7 +511,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	PgXmlErrorContext *xmlerrcxt;
 	volatile xmlDocPtr doctree = NULL;
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	/* must have at least one output column (for the pkey) */
 	if (rsinfo->setDesc->natts < 1)

@@ -242,7 +242,7 @@ pg_get_replication_slots(PG_FUNCTION_ARGS)
 	 * name, which shouldn't contain anything particularly sensitive.
 	 */
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	currlsn = GetXLogWriteRecPtr();
 

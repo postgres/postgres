@@ -930,7 +930,7 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 	int			i;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Make sure we get consistent view of the workers. */
 	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);

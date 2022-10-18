@@ -1941,7 +1941,7 @@ pg_available_extensions(PG_FUNCTION_ARGS)
 	struct dirent *de;
 
 	/* Build tuplestore to hold the result rows */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	location = get_extension_control_directory();
 	dir = AllocateDir(location);
@@ -2021,7 +2021,7 @@ pg_available_extension_versions(PG_FUNCTION_ARGS)
 	struct dirent *de;
 
 	/* Build tuplestore to hold the result rows */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	location = get_extension_control_directory();
 	dir = AllocateDir(location);
@@ -2278,7 +2278,7 @@ pg_extension_update_paths(PG_FUNCTION_ARGS)
 	check_valid_extension_name(NameStr(*extname));
 
 	/* Build tuplestore to hold the result rows */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Read the extension's control file */
 	control = read_extension_control_file(NameStr(*extname));
