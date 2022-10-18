@@ -330,7 +330,7 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	xlogreader = InitXLogReaderState(start_lsn);
 
@@ -548,7 +548,7 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 	Datum		values[PG_GET_WAL_STATS_COLS] = {0};
 	bool		nulls[PG_GET_WAL_STATS_COLS] = {0};
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	xlogreader = InitXLogReaderState(start_lsn);
 

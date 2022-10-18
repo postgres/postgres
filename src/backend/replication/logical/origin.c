@@ -1503,7 +1503,7 @@ pg_show_replication_origin_status(PG_FUNCTION_ARGS)
 	/* we want to return 0 rows if slot is set to zero */
 	replorigin_check_prerequisites(false, true);
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* prevent slots from being concurrently dropped */
 	LWLockAcquire(ReplicationOriginLock, LW_SHARED);

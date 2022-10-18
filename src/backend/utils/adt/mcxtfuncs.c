@@ -121,7 +121,7 @@ pg_get_backend_memory_contexts(PG_FUNCTION_ARGS)
 {
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	PutMemoryContextsStatsTupleStore(rsinfo->setResult, rsinfo->setDesc,
 									 TopMemoryContext, NULL, 0);
 

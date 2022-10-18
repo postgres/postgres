@@ -1921,7 +1921,7 @@ each_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 						funcname)));
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_BLESS);
+	InitMaterializedSRF(fcinfo, MAT_SRF_BLESS);
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"jsonb_each temporary cxt",
@@ -2001,7 +2001,7 @@ each_worker(FunctionCallInfo fcinfo, bool as_text)
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_BLESS);
+	InitMaterializedSRF(fcinfo, MAT_SRF_BLESS);
 	state->tuple_store = rsi->setResult;
 	state->ret_tdesc = rsi->setDesc;
 
@@ -2164,8 +2164,7 @@ elements_worker_jsonb(FunctionCallInfo fcinfo, const char *funcname,
 
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo,
-					  SRF_SINGLE_USE_EXPECTED | SRF_SINGLE_BLESS);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 
 	tmp_cxt = AllocSetContextCreate(CurrentMemoryContext,
 									"jsonb_array_elements temporary cxt",
@@ -2243,7 +2242,7 @@ elements_worker(FunctionCallInfo fcinfo, const char *funcname, bool as_text)
 	state = palloc0(sizeof(ElementsState));
 	sem = palloc0(sizeof(JsonSemAction));
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED | SRF_SINGLE_BLESS);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC | MAT_SRF_BLESS);
 	rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 	state->tuple_store = rsi->setResult;
 	state->ret_tdesc = rsi->setDesc;

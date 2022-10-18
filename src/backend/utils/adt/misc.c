@@ -208,7 +208,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	DIR		   *dirdesc;
 	struct dirent *de;
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	if (tablespaceOid == GLOBALTABLESPACE_OID)
 	{

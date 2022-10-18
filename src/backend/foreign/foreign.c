@@ -517,7 +517,7 @@ pg_options_to_table(PG_FUNCTION_ARGS)
 	rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	/* prepare the result set */
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	foreach(cell, options)
 	{

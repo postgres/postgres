@@ -4810,7 +4810,7 @@ text_to_table(PG_FUNCTION_ARGS)
 	SplitTextOutputData tstate;
 
 	tstate.astate = NULL;
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 	tstate.tupstore = rsi->setResult;
 	tstate.tupdesc = rsi->setDesc;
 

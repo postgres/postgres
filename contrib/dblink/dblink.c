@@ -1933,7 +1933,7 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 	else
 		conn = pconn->conn;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	PQconsumeInput(conn);
 	while ((notify = PQnotifies(conn)) != NULL)

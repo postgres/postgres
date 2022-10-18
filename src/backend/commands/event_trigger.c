@@ -1305,7 +1305,7 @@ pg_event_trigger_dropped_objects(PG_FUNCTION_ARGS)
 						"pg_event_trigger_dropped_objects()")));
 
 	/* Build tuplestore to hold the result rows */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	slist_foreach(iter, &(currentEventTriggerState->SQLDropList))
 	{
@@ -1832,7 +1832,7 @@ pg_event_trigger_ddl_commands(PG_FUNCTION_ARGS)
 						"pg_event_trigger_ddl_commands()")));
 
 	/* Build tuplestore to hold the result rows */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	foreach(lc, currentEventTriggerState->commandList)
 	{

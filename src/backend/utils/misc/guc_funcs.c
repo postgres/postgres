@@ -996,7 +996,7 @@ show_all_file_settings(PG_FUNCTION_ARGS)
 	conf = ProcessConfigFileInternal(PGC_SIGHUP, false, DEBUG3);
 
 	/* Build a tuplestore to return our results in */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Process the results and create a tuplestore */
 	for (seqno = 1; conf != NULL; conf = conf->next, seqno++)

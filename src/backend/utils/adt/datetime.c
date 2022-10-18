@@ -5058,7 +5058,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	Interval   *resInterval;
 	struct pg_itm_in itm_in;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* initialize timezone scanning code */
 	tzenum = pg_tzenumerate_start();

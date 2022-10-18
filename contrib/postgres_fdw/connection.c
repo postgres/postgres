@@ -1668,7 +1668,7 @@ postgres_fdw_get_connections(PG_FUNCTION_ARGS)
 	HASH_SEQ_STATUS scan;
 	ConnCacheEntry *entry;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* If cache doesn't exist, we return no records */
 	if (!ConnectionHash)

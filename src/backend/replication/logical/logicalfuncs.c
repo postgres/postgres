@@ -188,7 +188,7 @@ pg_logical_slot_get_changes_guts(FunctionCallInfo fcinfo, bool confirm, bool bin
 		}
 	}
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	p->tupstore = rsinfo->setResult;
 	p->tupdesc = rsinfo->setDesc;
 

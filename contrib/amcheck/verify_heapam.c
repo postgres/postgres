@@ -278,7 +278,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	ctx.attnum = -1;
 
 	/* Construct the tuplestore and tuple descriptor */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	ctx.tupdesc = rsinfo->setDesc;
 	ctx.tupstore = rsinfo->setResult;
 

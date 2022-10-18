@@ -834,7 +834,7 @@ pg_stat_get_recovery_prefetch(PG_FUNCTION_ARGS)
 	Datum		values[PG_STAT_GET_RECOVERY_PREFETCH_COLS];
 	bool		nulls[PG_STAT_GET_RECOVERY_PREFETCH_COLS];
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	for (int i = 0; i < PG_STAT_GET_RECOVERY_PREFETCH_COLS; ++i)
 		nulls[i] = false;
