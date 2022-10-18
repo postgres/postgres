@@ -2575,7 +2575,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	if (parse->hasAggs ||
 		parse->groupClause ||
 		parse->groupingSets ||
-		parse->havingQual ||
+		root->hasHavingQual ||
 		parse->distinctClause ||
 		parse->sortClause ||
 		has_multiple_baserels(root))
