@@ -297,11 +297,6 @@ HeapTupleGetDatum(const HeapTupleData *tuple)
 											 * BlessTupleDesc(). */
 extern void InitMaterializedSRF(FunctionCallInfo fcinfo, bits32 flags);
 
-/* Compatibility declarations, for v15 */
-#define SRF_SINGLE_USE_EXPECTED MAT_SRF_USE_EXPECTED_DESC
-#define SRF_SINGLE_BLESS		MAT_SRF_BLESS
-extern void SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags);
-
 extern FuncCallContext *init_MultiFuncCall(PG_FUNCTION_ARGS);
 extern FuncCallContext *per_MultiFuncCall(PG_FUNCTION_ARGS);
 extern void end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx);

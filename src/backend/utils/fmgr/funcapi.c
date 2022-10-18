@@ -57,15 +57,6 @@ static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
 
 
 /*
- * Compatibility function for v15.
- */
-void
-SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
-{
-	InitMaterializedSRF(fcinfo, flags);
-}
-
-/*
  * InitMaterializedSRF
  *
  * Helper function to build the state of a set-returning function used
