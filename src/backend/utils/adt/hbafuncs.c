@@ -467,7 +467,7 @@ fill_ident_line(Tuplestorestate *tuple_store, TupleDesc tupdesc,
 	if (ident != NULL)
 	{
 		values[index++] = CStringGetTextDatum(ident->usermap);
-		values[index++] = CStringGetTextDatum(ident->ident_user);
+		values[index++] = CStringGetTextDatum(ident->token->string);
 		values[index++] = CStringGetTextDatum(ident->pg_role);
 	}
 	else

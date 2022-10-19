@@ -77,6 +77,20 @@ typedef enum ClientCertName
 	clientCertDN
 } ClientCertName;
 
+/*
+ * A single string token lexed from an authentication configuration file
+ * (pg_ident.conf or pg_hba.conf), together with whether the token has
+ * been quoted.  If "string" begins with a slash, it may optionally
+ * contain a regular expression (currently used for pg_ident.conf when
+ * building IdentLines).
+ */
+typedef struct AuthToken
+{
+	char	   *string;
+	bool		quoted;
+	regex_t    *regex;
+} AuthToken;
+
 typedef struct HbaLine
 {
 	int			linenumber;
@@ -127,21 +141,9 @@ typedef struct IdentLine
 	int			linenumber;
 
 	char	   *usermap;
-	char	   *ident_user;
 	char	   *pg_role;
-	regex_t		re;
+	AuthToken  *token;
 } IdentLine;
-
-/*
- * A single string token lexed from an authentication configuration file
- * (pg_ident.conf or pg_hba.conf), together with whether the token has
- * been quoted.
- */
-typedef struct AuthToken
-{
-	char	   *string;
-	bool		quoted;
-} AuthToken;
 
 /*
  * TokenizedAuthLine represents one line lexed from an authentication
