@@ -235,8 +235,8 @@ logicalrep_worker_find(Oid subid, Oid relid, bool only_running)
 }
 
 /*
- * Similar to logicalrep_worker_find(), but returns list of all workers for
- * the subscription, instead just one.
+ * Similar to logicalrep_worker_find(), but returns a list of all workers for
+ * the subscription, instead of just one.
  */
 List *
 logicalrep_workers_find(Oid subid, bool only_running)
