@@ -23,6 +23,7 @@
 
 static bool shell_archive_configured(void);
 static bool shell_archive_file(const char *file, const char *path);
+static void shell_archive_shutdown(void);
 
 void
 shell_archive_init(ArchiveModuleCallbacks *cb)
@@ -31,6 +32,7 @@ shell_archive_init(ArchiveModuleCallbacks *cb)
 
 	cb->check_configured_cb = shell_archive_configured;
 	cb->archive_file_cb = shell_archive_file;
+	cb->shutdown_cb = shell_archive_shutdown;
 }
 
 static bool
@@ -155,4 +157,10 @@ shell_archive_file(const char *file, const char *path)
 
 	elog(DEBUG1, "archived write-ahead log file \"%s\"", file);
 	return true;
+}
+
+static void
+shell_archive_shutdown(void)
+{
+	elog(DEBUG1, "archiver process shutting down");
 }

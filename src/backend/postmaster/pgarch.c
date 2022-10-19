@@ -144,7 +144,7 @@ static void pgarch_die(int code, Datum arg);
 static void HandlePgArchInterrupts(void);
 static int	ready_file_comparator(Datum a, Datum b, void *arg);
 static void LoadArchiveLibrary(void);
-static void call_archive_module_shutdown_callback(int code, Datum arg);
+static void pgarch_call_module_shutdown_cb(int code, Datum arg);
 
 /* Report shared memory space needed by PgArchShmemInit */
 Size
@@ -252,13 +252,7 @@ PgArchiverMain(void)
 	/* Load the archive_library. */
 	LoadArchiveLibrary();
 
-	PG_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-	{
-		pgarch_MainLoop();
-	}
-	PG_END_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-
-	call_archive_module_shutdown_callback(0, 0);
+	pgarch_MainLoop();
 
 	proc_exit(0);
 }
@@ -804,18 +798,13 @@ HandlePgArchInterrupts(void)
 		if (archiveLibChanged)
 		{
 			/*
-			 * Call the currently loaded archive module's shutdown callback,
-			 * if one is defined.
-			 */
-			call_archive_module_shutdown_callback(0, 0);
-
-			/*
 			 * Ideally, we would simply unload the previous archive module and
 			 * load the new one, but there is presently no mechanism for
 			 * unloading a library (see the comment above
 			 * internal_load_library()).  To deal with this, we simply restart
 			 * the archiver.  The new archive module will be loaded when the
-			 * new archiver process starts up.
+			 * new archiver process starts up.  Note that this triggers the
+			 * module's shutdown callback, if defined.
 			 */
 			ereport(LOG,
 					(errmsg("restarting archiver process because value of "
@@ -858,15 +847,15 @@ LoadArchiveLibrary(void)
 	if (ArchiveContext.archive_file_cb == NULL)
 		ereport(ERROR,
 				(errmsg("archive modules must register an archive callback")));
+
+	before_shmem_exit(pgarch_call_module_shutdown_cb, 0);
 }
 
 /*
- * call_archive_module_shutdown_callback
- *
- * Calls the loaded archive module's shutdown callback, if one is defined.
+ * Call the shutdown callback of the loaded archive module, if defined.
  */
 static void
-call_archive_module_shutdown_callback(int code, Datum arg)
+pgarch_call_module_shutdown_cb(int code, Datum arg)
 {
 	if (ArchiveContext.shutdown_cb != NULL)
 		ArchiveContext.shutdown_cb();

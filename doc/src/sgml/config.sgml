@@ -3625,8 +3625,9 @@ include_dir 'conf.d'
         The library to use for archiving completed WAL file segments.  If set to
         an empty string (the default), archiving via shell is enabled, and
         <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
-        shared library is used for archiving.  For more information, see
-        <xref linkend="backup-archiving-wal"/> and
+        shared library is used for archiving. The WAL archiver process is
+        restarted by the postmaster when this parameter changes. For more
+        information, see <xref linkend="backup-archiving-wal"/> and
         <xref linkend="archive-modules"/>.
        </para>
        <para>
