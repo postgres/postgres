@@ -62,6 +62,7 @@ extern "C"
 #include <llvm/IR/ModuleSummaryIndex.h>
 #include <llvm/Linker/IRMover.h>
 #include <llvm/Support/ManagedStatic.h>
+#include <llvm/Support/MemoryBuffer.h>
 
 
 /*
