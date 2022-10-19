@@ -234,4 +234,18 @@ ok( -f "$standby2_data/$segment_path_1_done"
 	".done files created after archive success with archive_mode=always on standby"
 );
 
+# Check that the archiver process calls the shell archive module's shutdown
+# callback.
+$standby2->append_conf('postgresql.conf', "log_min_messages = debug1");
+$standby2->reload;
+
+# Run a query to make sure that the reload has taken effect.
+$standby2->safe_psql('postgres', q{SELECT 1});
+my $log_location = -s $standby2->logfile;
+
+$standby2->stop;
+my $logfile = slurp_file($standby2->logfile, $log_location);
+ok( $logfile =~ qr/archiver process shutting down/,
+	'check shutdown callback of shell archive module');
+
 done_testing();
