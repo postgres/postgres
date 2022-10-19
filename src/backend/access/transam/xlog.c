@@ -679,8 +679,6 @@ static void ReadControlFile(void);
 static void UpdateControlFile(void);
 static char *str_time(pg_time_t tnow);
 
-static void pg_backup_start_callback(int code, Datum arg);
-
 static int	get_sync_bit(int method);
 
 static void CopyXLogRecordToWAL(int write_len, bool isLogSwitch,
@@ -8271,7 +8269,7 @@ void
 do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 				   BackupState *state, StringInfo tblspcmapfile)
 {
-	bool		backup_started_in_recovery = false;
+	bool		backup_started_in_recovery;
 
 	Assert(state != NULL);
 	backup_started_in_recovery = RecoveryInProgress();
@@ -8320,8 +8318,12 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 	XLogCtl->Insert.forcePageWrites = true;
 	WALInsertLockRelease();
 
-	/* Ensure we release forcePageWrites if fail below */
-	PG_ENSURE_ERROR_CLEANUP(pg_backup_start_callback, (Datum) 0);
+	/*
+	 * Ensure we release forcePageWrites if fail below. NB -- for this to work
+	 * correctly, it is critical that sessionBackupState is only updated after
+	 * this block is over.
+	 */
+	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, DatumGetBool(true));
 	{
 		bool		gotUniqueStartpoint = false;
 		DIR		   *tblspcdir;
@@ -8531,7 +8533,7 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 
 		state->starttime = (pg_time_t) time(NULL);
 	}
-	PG_END_ENSURE_ERROR_CLEANUP(pg_backup_start_callback, (Datum) 0);
+	PG_END_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, DatumGetBool(true));
 
 	state->started_in_recovery = backup_started_in_recovery;
 
@@ -8539,23 +8541,6 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 	 * Mark that the start phase has correctly finished for the backup.
 	 */
 	sessionBackupState = SESSION_BACKUP_RUNNING;
-}
-
-/* Error cleanup callback for pg_backup_start */
-static void
-pg_backup_start_callback(int code, Datum arg)
-{
-	/* Update backup counters and forcePageWrites on failure */
-	WALInsertLockAcquireExclusive();
-
-	Assert(XLogCtl->Insert.runningBackups > 0);
-	XLogCtl->Insert.runningBackups--;
-
-	if (XLogCtl->Insert.runningBackups == 0)
-	{
-		XLogCtl->Insert.forcePageWrites = false;
-	}
-	WALInsertLockRelease();
 }
 
 /*
@@ -8850,38 +8835,42 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
  * system out of backup mode, thus making it a lot more safe to call from
  * an error handler.
  *
- * The caller can pass 'arg' as 'true' or 'false' to control whether a warning
- * is emitted.
+ * 'arg' indicates that it's being called during backup setup; so
+ * sessionBackupState has not been modified yet, but runningBackups has
+ * already been incremented.  When it's false, then it's invoked as a
+ * before_shmem_exit handler, and therefore we must not change state
+ * unless sessionBackupState indicates that a backup is actually running.
  *
- * NB: This gets used as a before_shmem_exit handler, hence the odd-looking
- * signature.
+ * NB: This gets used as a PG_ENSURE_ERROR_CLEANUP callback and
+ * before_shmem_exit handler, hence the odd-looking signature.
  */
 void
 do_pg_abort_backup(int code, Datum arg)
 {
-	bool		emit_warning = DatumGetBool(arg);
+	bool		during_backup_start = DatumGetBool(arg);
 
-	/*
-	 * Quick exit if session does not have a running backup.
-	 */
-	if (sessionBackupState != SESSION_BACKUP_RUNNING)
-		return;
+	/* Only one of these conditions can be true */
+	Assert(during_backup_start ^
+		   (sessionBackupState == SESSION_BACKUP_RUNNING));
 
-	WALInsertLockAcquireExclusive();
-	Assert(XLogCtl->Insert.runningBackups > 0);
-	XLogCtl->Insert.runningBackups--;
-
-	if (XLogCtl->Insert.runningBackups == 0)
+	if (during_backup_start || sessionBackupState != SESSION_BACKUP_NONE)
 	{
-		XLogCtl->Insert.forcePageWrites = false;
+		WALInsertLockAcquireExclusive();
+		Assert(XLogCtl->Insert.runningBackups > 0);
+		XLogCtl->Insert.runningBackups--;
+
+		if (XLogCtl->Insert.runningBackups == 0)
+		{
+			XLogCtl->Insert.forcePageWrites = false;
+		}
+
+		sessionBackupState = SESSION_BACKUP_NONE;
+		WALInsertLockRelease();
+
+		if (!during_backup_start)
+			ereport(WARNING,
+					errmsg("aborting backup due to backend exiting before pg_backup_stop was called"));
 	}
-
-	sessionBackupState = SESSION_BACKUP_NONE;
-	WALInsertLockRelease();
-
-	if (emit_warning)
-		ereport(WARNING,
-				(errmsg("aborting backup due to backend exiting before pg_backup_stop was called")));
 }
 
 /*
@@ -8895,7 +8884,7 @@ register_persistent_abort_backup_handler(void)
 
 	if (already_done)
 		return;
-	before_shmem_exit(do_pg_abort_backup, DatumGetBool(true));
+	before_shmem_exit(do_pg_abort_backup, DatumGetBool(false));
 	already_done = true;
 }
 
