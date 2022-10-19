@@ -276,8 +276,8 @@ XLogRecPtr	XactLastCommitEnd = InvalidXLogRecPtr;
 static XLogRecPtr RedoRecPtr;
 
 /*
- * doPageWrites is this backend's local copy of (forcePageWrites ||
- * fullPageWrites).  It is used together with RedoRecPtr to decide whether
+ * doPageWrites is this backend's local copy of (fullPageWrites ||
+ * runningBackups > 0).  It is used together with RedoRecPtr to decide whether
  * a full-page image of a page need to be taken.
  *
  * NB: Initially this is false, and there's no guarantee that it will be
@@ -437,14 +437,12 @@ typedef struct XLogCtlInsert
 	 * you must hold ALL the locks.
 	 */
 	XLogRecPtr	RedoRecPtr;		/* current redo point for insertions */
-	bool		forcePageWrites;	/* forcing full-page writes for PITR? */
 	bool		fullPageWrites;
 
 	/*
 	 * runningBackups is a counter indicating the number of backups currently
-	 * in progress. forcePageWrites is set to true when runningBackups is
-	 * non-zero. lastBackupStart is the latest checkpoint redo location used
-	 * as a starting point for an online backup.
+	 * in progress. lastBackupStart is the latest checkpoint redo location
+	 * used as a starting point for an online backup.
 	 */
 	int			runningBackups;
 	XLogRecPtr	lastBackupStart;
@@ -805,9 +803,9 @@ XLogInsertRecord(XLogRecData *rdata,
 	 * happen just after a checkpoint, so it's better to be slow in this case
 	 * and fast otherwise.
 	 *
-	 * Also check to see if fullPageWrites or forcePageWrites was just turned
-	 * on; if we weren't already doing full-page writes then go back and
-	 * recompute.
+	 * Also check to see if fullPageWrites was just turned on or there's a
+	 * running backup (which forces full-page writes); if we weren't already
+	 * doing full-page writes then go back and recompute.
 	 *
 	 * If we aren't doing full-page writes then RedoRecPtr doesn't actually
 	 * affect the contents of the XLOG record, so we'll update our local copy
@@ -820,7 +818,7 @@ XLogInsertRecord(XLogRecData *rdata,
 		Assert(RedoRecPtr < Insert->RedoRecPtr);
 		RedoRecPtr = Insert->RedoRecPtr;
 	}
-	doPageWrites = (Insert->fullPageWrites || Insert->forcePageWrites);
+	doPageWrites = (Insert->fullPageWrites || Insert->runningBackups > 0);
 
 	if (doPageWrites &&
 		(!prevDoPageWrites ||
@@ -1899,7 +1897,7 @@ AdvanceXLInsertBuffer(XLogRecPtr upto, TimeLineID tli, bool opportunistic)
 		 * is unsafe, but at worst the archiver would miss the opportunity to
 		 * compress a few records.
 		 */
-		if (!Insert->forcePageWrites)
+		if (Insert->runningBackups == 0)
 			NewPage->xlp_info |= XLP_BKP_REMOVABLE;
 
 		/*
@@ -8299,29 +8297,28 @@ do_pg_backup_start(const char *backupidstr, bool fast, List **tablespaces,
 	 * written) copy of a database page if it reads the page concurrently with
 	 * our write to the same page.  This can be fixed as long as the first
 	 * write to the page in the WAL sequence is a full-page write. Hence, we
-	 * turn on forcePageWrites and then force a CHECKPOINT, to ensure there
-	 * are no dirty pages in shared memory that might get dumped while the
-	 * backup is in progress without having a corresponding WAL record.  (Once
-	 * the backup is complete, we need not force full-page writes anymore,
-	 * since we expect that any pages not modified during the backup interval
-	 * must have been correctly captured by the backup.)
+	 * increment runningBackups then force a CHECKPOINT, to ensure there are
+	 * no dirty pages in shared memory that might get dumped while the backup
+	 * is in progress without having a corresponding WAL record.  (Once the
+	 * backup is complete, we need not force full-page writes anymore, since
+	 * we expect that any pages not modified during the backup interval must
+	 * have been correctly captured by the backup.)
 	 *
-	 * Note that forcePageWrites has no effect during an online backup from
-	 * the standby.
+	 * Note that forcing full-page writes has no effect during an online
+	 * backup from the standby.
 	 *
 	 * We must hold all the insertion locks to change the value of
-	 * forcePageWrites, to ensure adequate interlocking against
+	 * runningBackups, to ensure adequate interlocking against
 	 * XLogInsertRecord().
 	 */
 	WALInsertLockAcquireExclusive();
 	XLogCtl->Insert.runningBackups++;
-	XLogCtl->Insert.forcePageWrites = true;
 	WALInsertLockRelease();
 
 	/*
-	 * Ensure we release forcePageWrites if fail below. NB -- for this to work
-	 * correctly, it is critical that sessionBackupState is only updated after
-	 * this block is over.
+	 * Ensure we decrement runningBackups if we fail below. NB -- for this to
+	 * work correctly, it is critical that sessionBackupState is only updated
+	 * after this block is over.
 	 */
 	PG_ENSURE_ERROR_CLEANUP(do_pg_abort_backup, DatumGetBool(true));
 	{
@@ -8593,10 +8590,10 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 				 errhint("wal_level must be set to \"replica\" or \"logical\" at server start.")));
 
 	/*
-	 * OK to update backup counters, forcePageWrites, and session-level lock.
+	 * OK to update backup counter and session-level lock.
 	 *
-	 * Note that CHECK_FOR_INTERRUPTS() must not occur while updating them.
-	 * Otherwise they can be updated inconsistently, and which might cause
+	 * Note that CHECK_FOR_INTERRUPTS() must not occur while updating them,
+	 * otherwise they can be updated inconsistently, which might cause
 	 * do_pg_abort_backup() to fail.
 	 */
 	WALInsertLockAcquireExclusive();
@@ -8607,11 +8604,6 @@ do_pg_backup_stop(BackupState *state, bool waitforarchive)
 	 */
 	Assert(XLogCtl->Insert.runningBackups > 0);
 	XLogCtl->Insert.runningBackups--;
-
-	if (XLogCtl->Insert.runningBackups == 0)
-	{
-		XLogCtl->Insert.forcePageWrites = false;
-	}
 
 	/*
 	 * Clean up session-level lock.
@@ -8858,11 +8850,6 @@ do_pg_abort_backup(int code, Datum arg)
 		WALInsertLockAcquireExclusive();
 		Assert(XLogCtl->Insert.runningBackups > 0);
 		XLogCtl->Insert.runningBackups--;
-
-		if (XLogCtl->Insert.runningBackups == 0)
-		{
-			XLogCtl->Insert.forcePageWrites = false;
-		}
 
 		sessionBackupState = SESSION_BACKUP_NONE;
 		WALInsertLockRelease();

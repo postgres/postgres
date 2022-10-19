@@ -973,9 +973,9 @@ XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 /*
  * Determine whether the buffer referenced has to be backed up.
  *
- * Since we don't yet have the insert lock, fullPageWrites and forcePageWrites
- * could change later, so the result should be used for optimization purposes
- * only.
+ * Since we don't yet have the insert lock, fullPageWrites and runningBackups
+ * (which forces full-page writes) could change later, so the result should
+ * be used for optimization purposes only.
  */
 bool
 XLogCheckBufferNeedsBackup(Buffer buffer)
