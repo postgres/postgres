@@ -1545,7 +1545,14 @@ END
 
 	foreach my $node (@all_nodes)
 	{
-		$node->teardown_node;
+		# During unclean termination (which could be a signal or some
+		# other failure), we're not sure that the status of our nodes
+		# has been correctly set up already, so try and update it to
+		# improve our chances of shutting them down.
+		$node->_update_pid(-1) if $exit_code != 0;
+
+		# If that fails, don't let that foil other nodes' shutdown
+		$node->teardown_node(fail_ok => 1);
 
 		# skip clean if we are requested to retain the basedir
 		next if defined $ENV{'PG_TEST_NOCLEAN'};
@@ -1564,13 +1571,15 @@ END
 
 Do an immediate stop of the node
 
+Any optional extra parameter is passed to ->stop.
+
 =cut
 
 sub teardown_node
 {
-	my $self = shift;
+	my ($self, %params) = @_;
 
-	$self->stop('immediate');
+	$self->stop('immediate', %params);
 	return;
 }
 
@@ -2921,6 +2930,13 @@ sub corrupt_page_checksum
 
 	return;
 }
+
+#
+# Signal handlers
+#
+$SIG{TERM} = $SIG{INT} = sub {
+	die "death by signal";
+};
 
 =pod
 
