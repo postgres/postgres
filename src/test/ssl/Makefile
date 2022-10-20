@@ -15,7 +15,7 @@ subdir = src/test/ssl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-export with_ssl
+export OPENSSL with_ssl
 
 # The sslfiles targets are separated into their own file due to interactions
 # with settings in Makefile.global.

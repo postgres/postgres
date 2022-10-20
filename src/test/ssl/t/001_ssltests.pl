@@ -611,7 +611,7 @@ TODO:
 
 # pg_stat_ssl
 
-my $serialno = `openssl x509 -serial -noout -in ssl/client.crt`;
+my $serialno = `$ENV{OPENSSL} x509 -serial -noout -in ssl/client.crt`;
 if ($? == 0)
 {
 	# OpenSSL prints serial numbers in hexadecimal and converting the serial
@@ -633,7 +633,7 @@ else
 {
 	# OpenSSL isn't functioning on the user's PATH. This probably isn't worth
 	# skipping the test over, so just fall back to a generic integer match.
-	warn 'couldn\'t run `openssl x509` to get client cert serialno';
+	warn "couldn't run \"$ENV{OPENSSL} x509\" to get client cert serialno";
 	$serialno = '\d+';
 }
 

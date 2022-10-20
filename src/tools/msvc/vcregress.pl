@@ -146,6 +146,7 @@ sub set_command_env
 {
 	set_single_env('GZIP_PROGRAM', 'gzip');
 	set_single_env('LZ4',          'lz4');
+	set_single_env('OPENSSL',      'openssl');
 	set_single_env('ZSTD',         'zstd');
 }
 

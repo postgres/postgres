@@ -25,8 +25,6 @@ testprep_targets += ssl_passphrase_callback
 # Targets to generate or remove the ssl certificate and key. Need to be copied
 # to the source afterwards. Normally not needed.
 
-openssl = find_program('openssl', native: true, required: false)
-
 if openssl.found()
   cert = custom_target('server.crt',
     output: ['server.crt', 'server.ckey'],

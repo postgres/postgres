@@ -157,6 +157,9 @@ option('GZIP', type : 'string', value: 'gzip',
 option('LZ4', type : 'string', value: 'lz4',
   description: 'path to lz4 binary')
 
+option('OPENSSL', type : 'string', value: 'openssl',
+  description: 'path to openssl binary')
+
 option('PERL', type : 'string', value: 'perl',
   description: 'path to perl binary')
 

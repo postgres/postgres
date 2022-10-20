@@ -3,7 +3,10 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
-    'env': {'with_ssl': get_option('ssl')},
+    'env': {
+      'with_ssl': get_option('ssl'),
+      'OPENSSL': openssl.path(),
+    },
     'tests': [
       't/001_ssltests.pl',
       't/002_scram.pl',
