@@ -747,7 +747,7 @@ list_member_xid(const List *list, TransactionId datum)
 
 	foreach(cell, list)
 	{
-		if (lfirst_oid(cell) == datum)
+		if (lfirst_xid(cell) == datum)
 			return true;
 	}
 
