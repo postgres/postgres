@@ -2595,6 +2595,8 @@ ReorderBufferRestoreChanges(ReorderBuffer *rb, ReorderBufferTXN *txn,
 		int			readBytes;
 		ReorderBufferDiskChange *ondisk;
 
+		CHECK_FOR_INTERRUPTS();
+
 		if (*fd == -1)
 		{
 			char		path[MAXPGPATH];
