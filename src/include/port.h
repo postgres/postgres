@@ -75,28 +75,32 @@ extern void get_parent_directory(char *path);
 extern char **pgfnames(const char *path);
 extern void pgfnames_cleanup(char **filenames);
 
+#define IS_NONWINDOWS_DIR_SEP(ch)	((ch) == '/')
+#define is_nonwindows_absolute_path(filename) \
+( \
+	IS_NONWINDOWS_DIR_SEP((filename)[0]) \
+)
+
+#define IS_WINDOWS_DIR_SEP(ch)	((ch) == '/' || (ch) == '\\')
+/* See path_is_relative_and_below_cwd() for how we handle 'E:abc'. */
+#define is_windows_absolute_path(filename) \
+( \
+	IS_WINDOWS_DIR_SEP((filename)[0]) || \
+	(isalpha((unsigned char) ((filename)[0])) && (filename)[1] == ':' && \
+	 IS_WINDOWS_DIR_SEP((filename)[2])) \
+)
+
 /*
- *	is_absolute_path
+ *	is_absolute_path and IS_DIR_SEP
  *
- *	By making this a macro we avoid needing to include path.c in libpq.
+ *	By using macros here we avoid needing to include path.c in libpq.
  */
 #ifndef WIN32
-#define IS_DIR_SEP(ch)	((ch) == '/')
-
-#define is_absolute_path(filename) \
-( \
-	IS_DIR_SEP((filename)[0]) \
-)
+#define IS_DIR_SEP(ch) IS_NONWINDOWS_DIR_SEP(ch)
+#define is_absolute_path(filename) is_nonwindows_absolute_path(filename)
 #else
-#define IS_DIR_SEP(ch)	((ch) == '/' || (ch) == '\\')
-
-/* See path_is_relative_and_below_cwd() for how we handle 'E:abc'. */
-#define is_absolute_path(filename) \
-( \
-	IS_DIR_SEP((filename)[0]) || \
-	(isalpha((unsigned char) ((filename)[0])) && (filename)[1] == ':' && \
-	 IS_DIR_SEP((filename)[2])) \
-)
+#define IS_DIR_SEP(ch) IS_WINDOWS_DIR_SEP(ch)
+#define is_absolute_path(filename) is_windows_absolute_path(filename)
 #endif
 
 /* Portable locale initialization (in exec.c) */
