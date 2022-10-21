@@ -119,7 +119,8 @@ static List *tokenize_inc_file(List *tokens, const char *outer_filename,
 							   const char *inc_filename, int elevel, char **err_msg);
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 							   int elevel, char **err_msg);
-static int	regcomp_auth_token(AuthToken *token);
+static int	regcomp_auth_token(AuthToken *token, char *filename, int line_num,
+							   char **err_msg, int elevel);
 static int	regexec_auth_token(const char *match, AuthToken *token,
 							   size_t nmatch, regmatch_t pmatch[]);
 
@@ -305,10 +306,12 @@ copy_auth_token(AuthToken *in)
 
 /*
  * Compile the regular expression and store it in the AuthToken given in
- * input.  Returns the result of pg_regcomp().
+ * input.  Returns the result of pg_regcomp().  On error, the details are
+ * stored in "err_msg".
  */
 static int
-regcomp_auth_token(AuthToken *token)
+regcomp_auth_token(AuthToken *token, char *filename, int line_num,
+				   char **err_msg, int elevel)
 {
 	pg_wchar   *wstr;
 	int			wlen;
@@ -325,6 +328,22 @@ regcomp_auth_token(AuthToken *token)
 								wstr, strlen(token->string + 1));
 
 	rc = pg_regcomp(token->regex, wstr, wlen, REG_ADVANCED, C_COLLATION_OID);
+
+	if (rc)
+	{
+		char		errstr[100];
+
+		pg_regerror(rc, token->regex, errstr, sizeof(errstr));
+		ereport(elevel,
+				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
+				 errmsg("invalid regular expression \"%s\": %s",
+						token->string + 1, errstr),
+				 errcontext("line %d of configuration file \"%s\"",
+							line_num, filename)));
+
+		*err_msg = psprintf("invalid regular expression \"%s\": %s",
+							token->string + 1, errstr);
+	}
 
 	pfree(wstr);
 	return rc;
@@ -2374,7 +2393,6 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	List	   *tokens;
 	AuthToken  *token;
 	IdentLine  *parsedline;
-	int			rc;
 
 	Assert(tok_line->fields != NIL);
 	field = list_head(tok_line->fields);
@@ -2410,22 +2428,10 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	 * Now that the field validation is done, compile a regex from the user
 	 * token, if necessary.
 	 */
-	rc = regcomp_auth_token(parsedline->token);
-	if (rc)
+	if (regcomp_auth_token(parsedline->token, IdentFileName, line_num,
+						   err_msg, elevel))
 	{
-		char		errstr[100];
-
-		pg_regerror(rc, parsedline->token->regex, errstr, sizeof(errstr));
-		ereport(elevel,
-				(errcode(ERRCODE_INVALID_REGULAR_EXPRESSION),
-				 errmsg("invalid regular expression \"%s\": %s",
-						parsedline->token->string + 1, errstr),
-				 errcontext("line %d of configuration file \"%s\"",
-							line_num, IdentFileName)));
-
-		*err_msg = psprintf("invalid regular expression \"%s\": %s",
-							parsedline->token->string + 1, errstr);
-
+		/* err_msg includes the error to report */
 		return NULL;
 	}
 
