@@ -2113,9 +2113,6 @@ SnapBuildXidSetCatalogChanges(SnapBuild *builder, TransactionId xid, int subxcnt
 		ReorderBufferXidSetCatalogChanges(builder->reorder, xid, lsn);
 
 		for (int i = 0; i < subxcnt; i++)
-		{
-			ReorderBufferAssignChild(builder->reorder, xid, subxacts[i], lsn);
 			ReorderBufferXidSetCatalogChanges(builder->reorder, subxacts[i], lsn);
-		}
 	}
 }
