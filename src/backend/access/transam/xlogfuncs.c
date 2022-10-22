@@ -45,6 +45,9 @@
 static BackupState *backup_state = NULL;
 static StringInfo tablespace_map = NULL;
 
+/* Session-level context for the SQL-callable backup functions */
+static MemoryContext backupcontext = NULL;
+
 /*
  * pg_backup_start: set up for taking an on-line backup dump
  *
@@ -72,27 +75,26 @@ pg_backup_start(PG_FUNCTION_ARGS)
 
 	/*
 	 * backup_state and tablespace_map need to be long-lived as they are used
-	 * in pg_backup_stop().
+	 * in pg_backup_stop().  These are allocated in a dedicated memory context
+	 * child of TopMemoryContext, deleted at the end of pg_backup_stop().  If
+	 * an error happens before ending the backup, memory would be leaked in
+	 * this context until pg_backup_start() is called again.
 	 */
-	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
-
-	/* Allocate backup state or reset it, if it comes from a previous run */
-	if (backup_state == NULL)
-		backup_state = (BackupState *) palloc0(sizeof(BackupState));
-	else
-		MemSet(backup_state, 0, sizeof(BackupState));
-
-	/*
-	 * tablespace_map may have been created in a previous backup, so take this
-	 * occasion to clean it.
-	 */
-	if (tablespace_map != NULL)
+	if (backupcontext == NULL)
 	{
-		pfree(tablespace_map->data);
-		pfree(tablespace_map);
+		backupcontext = AllocSetContextCreate(TopMemoryContext,
+											  "on-line backup context",
+											  ALLOCSET_START_SMALL_SIZES);
+	}
+	else
+	{
+		backup_state = NULL;
 		tablespace_map = NULL;
+		MemoryContextReset(backupcontext);
 	}
 
+	oldcontext = MemoryContextSwitchTo(backupcontext);
+	backup_state = (BackupState *) palloc0(sizeof(BackupState));
 	tablespace_map = makeStringInfo();
 	MemoryContextSwitchTo(oldcontext);
 
@@ -157,12 +159,13 @@ pg_backup_stop(PG_FUNCTION_ARGS)
 	values[2] = CStringGetTextDatum(tablespace_map->data);
 
 	/* Deallocate backup-related variables */
-	pfree(backup_state);
-	backup_state = NULL;
-	pfree(tablespace_map->data);
-	pfree(tablespace_map);
-	tablespace_map = NULL;
 	pfree(backup_label);
+
+	/* Clean up the session-level state and its memory context */
+	backup_state = NULL;
+	tablespace_map = NULL;
+	MemoryContextDelete(backupcontext);
+	backupcontext = NULL;
 
 	/* Returns the record as Datum */
 	PG_RETURN_DATUM(HeapTupleGetDatum(heap_form_tuple(tupdesc, values, nulls)));
