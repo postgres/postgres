@@ -33,9 +33,6 @@
 #include "pqexpbuffer.h"
 #endif
 
-/* PID can be negative for standalone backend */
-typedef long pgpid_t;
-
 
 typedef enum
 {
@@ -103,7 +100,7 @@ static char backup_file[MAXPGPATH];
 static char promote_file[MAXPGPATH];
 static char logrotate_file[MAXPGPATH];
 
-static volatile pgpid_t postmasterPID = -1;
+static volatile pid_t postmasterPID = -1;
 
 #ifdef WIN32
 static DWORD pgctl_start_type = SERVICE_AUTO_START;
@@ -129,7 +126,7 @@ static void do_reload(void);
 static void do_status(void);
 static void do_promote(void);
 static void do_logrotate(void);
-static void do_kill(pgpid_t pid);
+static void do_kill(pid_t pid);
 static void print_msg(const char *msg);
 static void adjust_data_dir(void);
 
@@ -147,13 +144,13 @@ static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION *processInfo, 
 static PTOKEN_PRIVILEGES GetPrivilegesToDelete(HANDLE hToken);
 #endif
 
-static pgpid_t get_pgpid(bool is_status_request);
+static pid_t get_pgpid(bool is_status_request);
 static char **readfile(const char *path, int *numlines);
 static void free_readfile(char **optlines);
-static pgpid_t start_postmaster(void);
+static pid_t start_postmaster(void);
 static void read_post_opts(void);
 
-static WaitPMResult wait_for_postmaster_start(pgpid_t pm_pid, bool do_checkpoint);
+static WaitPMResult wait_for_postmaster_start(pid_t pm_pid, bool do_checkpoint);
 static bool wait_for_postmaster_stop(void);
 static bool wait_for_postmaster_promote(void);
 static bool postmaster_is_alive(pid_t pid);
@@ -245,11 +242,11 @@ print_msg(const char *msg)
 	}
 }
 
-static pgpid_t
+static pid_t
 get_pgpid(bool is_status_request)
 {
 	FILE	   *pidf;
-	long		pid;
+	int			pid;
 	struct stat statbuf;
 
 	if (stat(pg_data, &statbuf) != 0)
@@ -289,7 +286,7 @@ get_pgpid(bool is_status_request)
 			exit(1);
 		}
 	}
-	if (fscanf(pidf, "%ld", &pid) != 1)
+	if (fscanf(pidf, "%d", &pid) != 1)
 	{
 		/* Is the file empty? */
 		if (ftell(pidf) == 0 && feof(pidf))
@@ -301,7 +298,7 @@ get_pgpid(bool is_status_request)
 		exit(1);
 	}
 	fclose(pidf);
-	return (pgpid_t) pid;
+	return (pid_t) pid;
 }
 
 
@@ -439,13 +436,13 @@ free_readfile(char **optlines)
  * On Windows, we also save aside a handle to the shell process in
  * "postmasterProcess", which the caller should close when done with it.
  */
-static pgpid_t
+static pid_t
 start_postmaster(void)
 {
 	char	   *cmd;
 
 #ifndef WIN32
-	pgpid_t		pm_pid;
+	pid_t		pm_pid;
 
 	/* Flush stdio channels just before fork, to avoid double-output problems */
 	fflush(NULL);
@@ -593,7 +590,7 @@ start_postmaster(void)
  * manager checkpoint, it's got nothing to do with database checkpoints!!
  */
 static WaitPMResult
-wait_for_postmaster_start(pgpid_t pm_pid, bool do_checkpoint)
+wait_for_postmaster_start(pid_t pm_pid, bool do_checkpoint)
 {
 	int			i;
 
@@ -610,7 +607,7 @@ wait_for_postmaster_start(pgpid_t pm_pid, bool do_checkpoint)
 			numlines >= LOCK_FILE_LINE_PM_STATUS)
 		{
 			/* File is complete enough for us, parse it */
-			pgpid_t		pmpid;
+			pid_t		pmpid;
 			time_t		pmstart;
 
 			/*
@@ -665,7 +662,7 @@ wait_for_postmaster_start(pgpid_t pm_pid, bool do_checkpoint)
 		{
 			int			exitstatus;
 
-			if (waitpid((pid_t) pm_pid, &exitstatus, WNOHANG) == (pid_t) pm_pid)
+			if (waitpid(pm_pid, &exitstatus, WNOHANG) == pm_pid)
 				return POSTMASTER_FAILED;
 		}
 #else
@@ -716,12 +713,12 @@ wait_for_postmaster_stop(void)
 
 	for (cnt = 0; cnt < wait_seconds * WAITS_PER_SEC; cnt++)
 	{
-		pgpid_t		pid;
+		pid_t		pid;
 
 		if ((pid = get_pgpid(false)) == 0)
 			return true;		/* pid file is gone */
 
-		if (kill((pid_t) pid, 0) != 0)
+		if (kill(pid, 0) != 0)
 		{
 			/*
 			 * Postmaster seems to have died.  Check the pid file once more to
@@ -753,12 +750,12 @@ wait_for_postmaster_promote(void)
 
 	for (cnt = 0; cnt < wait_seconds * WAITS_PER_SEC; cnt++)
 	{
-		pgpid_t		pid;
+		pid_t		pid;
 		DBState		state;
 
 		if ((pid = get_pgpid(false)) == 0)
 			return false;		/* pid file is gone */
-		if (kill((pid_t) pid, 0) != 0)
+		if (kill(pid, 0) != 0)
 			return false;		/* postmaster died */
 
 		state = get_control_dbstate();
@@ -855,8 +852,8 @@ trap_sigint_during_startup(SIGNAL_ARGS)
 	if (postmasterPID != -1)
 	{
 		if (kill(postmasterPID, SIGINT) != 0)
-			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"),
-						 progname, (pgpid_t) postmasterPID, strerror(errno));
+			write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"),
+						 progname, (int) postmasterPID, strerror(errno));
 	}
 
 	/*
@@ -926,8 +923,8 @@ do_init(void)
 static void
 do_start(void)
 {
-	pgpid_t		old_pid = 0;
-	pgpid_t		pm_pid;
+	pid_t		old_pid = 0;
+	pid_t		pm_pid;
 
 	if (ctl_command != RESTART_COMMAND)
 	{
@@ -1018,7 +1015,7 @@ do_start(void)
 static void
 do_stop(void)
 {
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(false);
 
@@ -1032,14 +1029,14 @@ do_stop(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot stop server; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
+					   "single-user server is running (PID: %d)\n"),
+					 progname, (int) pid);
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
+		write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, (int) pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -1077,7 +1074,7 @@ do_stop(void)
 static void
 do_restart(void)
 {
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(false);
 
@@ -1093,21 +1090,21 @@ do_restart(void)
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		if (postmaster_is_alive((pid_t) pid))
+		if (postmaster_is_alive(pid))
 		{
 			write_stderr(_("%s: cannot restart server; "
-						   "single-user server is running (PID: %ld)\n"),
-						 progname, pid);
+						   "single-user server is running (PID: %d)\n"),
+						 progname, (int) pid);
 			write_stderr(_("Please terminate the single-user server and try again.\n"));
 			exit(1);
 		}
 	}
 
-	if (postmaster_is_alive((pid_t) pid))
+	if (postmaster_is_alive(pid))
 	{
-		if (kill((pid_t) pid, sig) != 0)
+		if (kill(pid, sig) != 0)
 		{
-			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
+			write_stderr(_("%s: could not send stop signal (PID: %d): %s\n"), progname, (int) pid,
 						 strerror(errno));
 			exit(1);
 		}
@@ -1131,8 +1128,8 @@ do_restart(void)
 	}
 	else
 	{
-		write_stderr(_("%s: old server process (PID: %ld) seems to be gone\n"),
-					 progname, pid);
+		write_stderr(_("%s: old server process (PID: %d) seems to be gone\n"),
+					 progname, (int) pid);
 		write_stderr(_("starting server anyway\n"));
 	}
 
@@ -1142,7 +1139,7 @@ do_restart(void)
 static void
 do_reload(void)
 {
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(false);
 	if (pid == 0)				/* no pid file */
@@ -1155,16 +1152,16 @@ do_reload(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot reload server; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
+					   "single-user server is running (PID: %d)\n"),
+					 progname, (int) pid);
 		write_stderr(_("Please terminate the single-user server and try again.\n"));
 		exit(1);
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send reload signal (PID: %ld): %s\n"),
-					 progname, pid, strerror(errno));
+		write_stderr(_("%s: could not send reload signal (PID: %d): %s\n"),
+					 progname, (int) pid, strerror(errno));
 		exit(1);
 	}
 
@@ -1180,7 +1177,7 @@ static void
 do_promote(void)
 {
 	FILE	   *prmfile;
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(false);
 
@@ -1194,8 +1191,8 @@ do_promote(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot promote server; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
+					   "single-user server is running (PID: %d)\n"),
+					 progname, (int) pid);
 		exit(1);
 	}
 
@@ -1223,10 +1220,10 @@ do_promote(void)
 	}
 
 	sig = SIGUSR1;
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send promote signal (PID: %ld): %s\n"),
-					 progname, pid, strerror(errno));
+		write_stderr(_("%s: could not send promote signal (PID: %d): %s\n"),
+					 progname, (int) pid, strerror(errno));
 		if (unlink(promote_file) != 0)
 			write_stderr(_("%s: could not remove promote signal file \"%s\": %s\n"),
 						 progname, promote_file, strerror(errno));
@@ -1261,7 +1258,7 @@ static void
 do_logrotate(void)
 {
 	FILE	   *logrotatefile;
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(false);
 
@@ -1275,8 +1272,8 @@ do_logrotate(void)
 	{
 		pid = -pid;
 		write_stderr(_("%s: cannot rotate log file; "
-					   "single-user server is running (PID: %ld)\n"),
-					 progname, pid);
+					   "single-user server is running (PID: %d)\n"),
+					 progname, (int) pid);
 		exit(1);
 	}
 
@@ -1296,10 +1293,10 @@ do_logrotate(void)
 	}
 
 	sig = SIGUSR1;
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send log rotation signal (PID: %ld): %s\n"),
-					 progname, pid, strerror(errno));
+		write_stderr(_("%s: could not send log rotation signal (PID: %d): %s\n"),
+					 progname, (int) pid, strerror(errno));
 		if (unlink(logrotate_file) != 0)
 			write_stderr(_("%s: could not remove log rotation signal file \"%s\": %s\n"),
 						 progname, logrotate_file, strerror(errno));
@@ -1341,7 +1338,7 @@ postmaster_is_alive(pid_t pid)
 static void
 do_status(void)
 {
-	pgpid_t		pid;
+	pid_t		pid;
 
 	pid = get_pgpid(true);
 	/* Is there a pid file? */
@@ -1351,24 +1348,24 @@ do_status(void)
 		if (pid < 0)
 		{
 			pid = -pid;
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
-				printf(_("%s: single-user server is running (PID: %ld)\n"),
-					   progname, pid);
+				printf(_("%s: single-user server is running (PID: %d)\n"),
+					   progname, (int) pid);
 				return;
 			}
 		}
 		else
 			/* must be a postmaster */
 		{
-			if (postmaster_is_alive((pid_t) pid))
+			if (postmaster_is_alive(pid))
 			{
 				char	  **optlines;
 				char	  **curr_line;
 				int			numlines;
 
-				printf(_("%s: server is running (PID: %ld)\n"),
-					   progname, pid);
+				printf(_("%s: server is running (PID: %d)\n"),
+					   progname, (int) pid);
 
 				optlines = readfile(postopts_file, &numlines);
 				if (optlines != NULL)
@@ -1396,12 +1393,12 @@ do_status(void)
 
 
 static void
-do_kill(pgpid_t pid)
+do_kill(pid_t pid)
 {
-	if (kill((pid_t) pid, sig) != 0)
+	if (kill(pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"),
-					 progname, sig, pid, strerror(errno));
+		write_stderr(_("%s: could not send signal %d (PID: %d): %s\n"),
+					 progname, sig, (int) pid, strerror(errno));
 		exit(1);
 	}
 }
@@ -2214,7 +2211,7 @@ main(int argc, char **argv)
 	char	   *env_wait;
 	int			option_index;
 	int			c;
-	pgpid_t		killproc = 0;
+	pid_t		killproc = 0;
 
 	pg_logging_init(argv[0]);
 	progname = get_progname(argv[0]);
