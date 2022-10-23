@@ -436,6 +436,7 @@ sub mkvcbuild
 	$pgdump->AddFile('src/bin/pg_dump/pg_dump.c');
 	$pgdump->AddFile('src/bin/pg_dump/common.c');
 	$pgdump->AddFile('src/bin/pg_dump/pg_dump_sort.c');
+	$pgdump->AddFile('src/bin/pg_dump/masking.c');
 	$pgdump->AddLibrary('ws2_32.lib');
 
 	my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
