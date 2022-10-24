@@ -233,11 +233,20 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        doesn't match with logical replication connections. Note that physical
        replication connections do not specify any particular database whereas
        logical replication connections do specify it.
-       Otherwise, this is the name of
-       a specific <productname>PostgreSQL</productname> database.
-       Multiple database names can be supplied by separating them with
-       commas.  A separate file containing database names can be specified by
-       preceding the file name with <literal>@</literal>.
+       Otherwise, this is the name of a specific
+       <productname>PostgreSQL</productname> database or a regular expression.
+       Multiple database names and/or regular expressions can be supplied by
+       separating them with commas.
+      </para>
+      <para>
+       If the database name starts with a slash (<literal>/</literal>), the
+       remainder of the name is treated as a regular expression.
+       (See <xref linkend="posix-syntax-details"/> for details of
+       <productname>PostgreSQL</productname>'s regular expression syntax.)
+      </para>
+      <para>
+       A separate file containing database names and/or regular expressions
+       can be specified by preceding the file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -249,7 +258,8 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        Specifies which database user name(s) this record
        matches. The value <literal>all</literal> specifies that it
        matches all users.  Otherwise, this is either the name of a specific
-       database user, or a group name preceded by <literal>+</literal>.
+       database user, a regular expression (when starting with a slash
+       (<literal>/</literal>), or a group name preceded by <literal>+</literal>.
        (Recall that there is no real distinction between users and groups
        in <productname>PostgreSQL</productname>; a <literal>+</literal> mark really means
        <quote>match any of the roles that are directly or indirectly members
@@ -258,9 +268,18 @@ hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceabl
        considered to be a member of a role if they are explicitly a member
        of the role, directly or indirectly, and not just by virtue of
        being a superuser.
-       Multiple user names can be supplied by separating them with commas.
-       A separate file containing user names can be specified by preceding the
-       file name with <literal>@</literal>.
+       Multiple user names and/or regular expressions can be supplied by
+       separating them with commas.
+      </para>
+      <para>
+       If the user name starts with a slash (<literal>/</literal>), the
+       remainder of the name is treated as a regular expression.
+       (See <xref linkend="posix-syntax-details"/> for details of
+       <productname>PostgreSQL</productname>'s regular expression syntax.)
+      </para>
+      <para>
+       A separate file containing user names and/or regular expressions can
+       be specified by preceding the file name with <literal>@</literal>.
       </para>
      </listitem>
     </varlistentry>
@@ -739,6 +758,14 @@ host    all             all             ::1/128                 trust
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             localhost               trust
 
+# The same using a regular expression for DATABASE, that allows connection
+# to the database db1, db2 and any databases with a name beginning by "db"
+# and finishing with a number using two to four digits (like "db1234" or
+# "db12").
+#
+# TYPE  DATABASE                   USER            ADDRESS          METHOD
+local   db1,"/^db\d{2,4}$",db2     all             localhost        trust
+
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "postgres" as the same user name that ident reports for
 # the connection (typically the operating system user name).
@@ -785,15 +812,16 @@ host    all             all             192.168.12.10/32        gss
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 host    all             all             192.168.0.0/16          ident map=omicron
 
-# If these are the only three lines for local connections, they will
+# If these are the only four lines for local connections, they will
 # allow local users to connect only to their own databases (databases
-# with the same name as their database user name) except for administrators
-# and members of role "support", who can connect to all databases.  The file
-# $PGDATA/admins contains a list of names of administrators.  Passwords
-# are required in all cases.
+# with the same name as their database user name) except for users whose
+# name end with "helpdesk", administrators and members of role "support",
+# who can connect to all databases.  The file $PGDATA/admins contains a
+# list of names of administrators.  Passwords are required in all cases.
 #
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   sameuser        all                                     md5
+local   all             /^.*helpdesk$                           md5
 local   all             @admins                                 md5
 local   all             +support                                md5
 

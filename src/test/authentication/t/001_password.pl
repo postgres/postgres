@@ -81,6 +81,14 @@ $node->safe_psql(
 	 GRANT ALL ON sysuser_data TO md5_role;");
 $ENV{"PGPASSWORD"} = 'pass';
 
+# Create a role that contains a comma to stress the parsing.
+$node->safe_psql('postgres',
+	q{SET password_encryption='md5'; CREATE ROLE "md5,role" LOGIN PASSWORD 'pass';}
+);
+
+# Create a database to test regular expression.
+$node->safe_psql('postgres', "CREATE database regex_testdb;");
+
 # For "trust" method, all users should be able to connect. These users are not
 # considered to be authenticated.
 reset_pg_hba($node, 'all', 'all', 'trust');
@@ -199,6 +207,40 @@ append_to_file(
 !);
 
 test_conn($node, 'user=md5_role', 'password from pgpass', 0);
+
+# Testing with regular expression for username.  The third regexp matches.
+reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^md.*$', 'password');
+test_conn($node, 'user=md5_role', 'password, matching regexp for username',
+	0);
+
+# The third regex does not match anymore.
+reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^m_d.*$', 'password');
+test_conn($node, 'user=md5_role',
+	'password, non matching regexp for username',
+	2, log_unlike => [qr/connection authenticated:/]);
+
+# Test with a comma in the regular expression.  In this case, the use of
+# double quotes is mandatory so as this is not considered as two elements
+# of the user name list when parsing pg_hba.conf.
+reset_pg_hba($node, 'all', '"/^.*5,.*e$"', 'password');
+test_conn($node, 'user=md5,role', 'password', 'matching regexp for username',
+	0);
+
+# Testing with regular expression for dbname. The third regex matches.
+reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*b$', 'all',
+	'password');
+test_conn(
+	$node, 'user=md5_role dbname=regex_testdb', 'password,
+   matching regexp for dbname', 0);
+
+# The third regexp does not match anymore.
+reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*ba$',
+	'all', 'password');
+test_conn(
+	$node,
+	'user=md5_role dbname=regex_testdb',
+	'password, non matching regexp for dbname',
+	2, log_unlike => [qr/connection authenticated:/]);
 
 unlink($pgpassfile);
 delete $ENV{"PGPASSFILE"};

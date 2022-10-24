@@ -294,6 +294,30 @@ free_auth_token(AuthToken *token)
 }
 
 /*
+ * Free a HbaLine.  Its list of AuthTokens for databases and roles may include
+ * regular expressions that need to be cleaned up explicitly.
+ */
+static void
+free_hba_line(HbaLine *line)
+{
+	ListCell   *cell;
+
+	foreach(cell, line->roles)
+	{
+		AuthToken  *tok = lfirst(cell);
+
+		free_auth_token(tok);
+	}
+
+	foreach(cell, line->databases)
+	{
+		AuthToken  *tok = lfirst(cell);
+
+		free_auth_token(tok);
+	}
+}
+
+/*
  * Copy a AuthToken struct into freshly palloc'd memory.
  */
 static AuthToken *
@@ -661,6 +685,10 @@ is_member(Oid userid, const char *role)
 
 /*
  * Check AuthToken list for a match to role, allowing group names.
+ *
+ * Each AuthToken listed is checked one-by-one.  Keywords are processed
+ * first (these cannot have regular expressions), followed by regular
+ * expressions (if any) and the exact match.
  */
 static bool
 check_role(const char *role, Oid roleid, List *tokens)
@@ -676,8 +704,14 @@ check_role(const char *role, Oid roleid, List *tokens)
 			if (is_member(roleid, tok->string + 1))
 				return true;
 		}
-		else if (token_matches(tok, role) ||
-				 token_is_keyword(tok, "all"))
+		else if (token_is_keyword(tok, "all"))
+			return true;
+		else if (token_has_regexp(tok))
+		{
+			if (regexec_auth_token(role, tok, 0, NULL) == REG_OKAY)
+				return true;
+		}
+		else if (token_matches(tok, role))
 			return true;
 	}
 	return false;
@@ -685,6 +719,10 @@ check_role(const char *role, Oid roleid, List *tokens)
 
 /*
  * Check to see if db/role combination matches AuthToken list.
+ *
+ * Each AuthToken listed is checked one-by-one.  Keywords are checked
+ * first (these cannot have regular expressions), followed by regular
+ * expressions (if any) and the exact match.
  */
 static bool
 check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
@@ -719,6 +757,11 @@ check_db(const char *dbname, const char *role, Oid roleid, List *tokens)
 		}
 		else if (token_is_keyword(tok, "replication"))
 			continue;			/* never match this if not walsender */
+		else if (token_has_regexp(tok))
+		{
+			if (regexec_auth_token(dbname, tok, 0, NULL) == REG_OKAY)
+				return true;
+		}
 		else if (token_matches(tok, dbname))
 			return true;
 	}
@@ -1138,8 +1181,13 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 	tokens = lfirst(field);
 	foreach(tokencell, tokens)
 	{
-		parsedline->databases = lappend(parsedline->databases,
-										copy_auth_token(lfirst(tokencell)));
+		AuthToken  *tok = copy_auth_token(lfirst(tokencell));
+
+		/* Compile a regexp for the database token, if necessary */
+		if (regcomp_auth_token(tok, HbaFileName, line_num, err_msg, elevel))
+			return NULL;
+
+		parsedline->databases = lappend(parsedline->databases, tok);
 	}
 
 	/* Get the roles. */
@@ -1158,8 +1206,13 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 	tokens = lfirst(field);
 	foreach(tokencell, tokens)
 	{
-		parsedline->roles = lappend(parsedline->roles,
-									copy_auth_token(lfirst(tokencell)));
+		AuthToken  *tok = copy_auth_token(lfirst(tokencell));
+
+		/* Compile a regexp from the role token, if necessary */
+		if (regcomp_auth_token(tok, HbaFileName, line_num, err_msg, elevel))
+			return NULL;
+
+		parsedline->roles = lappend(parsedline->roles, tok);
 	}
 
 	if (parsedline->conntype != ctLocal)
@@ -2355,12 +2408,31 @@ load_hba(void)
 
 	if (!ok)
 	{
-		/* File contained one or more errors, so bail out */
+		/*
+		 * File contained one or more errors, so bail out, first being careful
+		 * to clean up whatever we allocated.  Most stuff will go away via
+		 * MemoryContextDelete, but we have to clean up regexes explicitly.
+		 */
+		foreach(line, new_parsed_lines)
+		{
+			HbaLine    *newline = (HbaLine *) lfirst(line);
+
+			free_hba_line(newline);
+		}
 		MemoryContextDelete(hbacxt);
 		return false;
 	}
 
 	/* Loaded new file successfully, replace the one we use */
+	if (parsed_hba_lines != NIL)
+	{
+		foreach(line, parsed_hba_lines)
+		{
+			HbaLine    *newline = (HbaLine *) lfirst(line);
+
+			free_hba_line(newline);
+		}
+	}
 	if (parsed_hba_context != NULL)
 		MemoryContextDelete(parsed_hba_context);
 	parsed_hba_context = hbacxt;
