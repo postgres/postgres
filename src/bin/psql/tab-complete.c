@@ -2216,6 +2216,9 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER STATISTICS <name> */
 	else if (Matches("ALTER", "STATISTICS", MatchAny))
 		COMPLETE_WITH("OWNER TO", "RENAME TO", "SET SCHEMA", "SET STATISTICS");
+	/* ALTER STATISTICS <name> SET */
+	else if (Matches("ALTER", "STATISTICS", MatchAny, "SET"))
+		COMPLETE_WITH("SCHEMA", "STATISTICS");
 
 	/* ALTER TRIGGER <name>, add ON */
 	else if (Matches("ALTER", "TRIGGER", MatchAny))
