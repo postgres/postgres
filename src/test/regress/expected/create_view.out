@@ -1941,7 +1941,38 @@ select
   trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea) as btb,
   trim(leading E'\\000'::bytea from E'\\000Tom\\000'::bytea) as ltb,
   trim(trailing E'\\000'::bytea from E'\\000Tom\\000'::bytea) as rtb,
-  SYSTEM_USER as su;
+  CURRENT_DATE as cd,
+  (select * from CURRENT_DATE) as cd2,
+  CURRENT_TIME as ct,
+  (select * from CURRENT_TIME) as ct2,
+  CURRENT_TIME (1) as ct3,
+  (select * from CURRENT_TIME (1)) as ct4,
+  CURRENT_TIMESTAMP as ct5,
+  (select * from CURRENT_TIMESTAMP) as ct6,
+  CURRENT_TIMESTAMP (1) as ct7,
+  (select * from CURRENT_TIMESTAMP (1)) as ct8,
+  LOCALTIME as lt1,
+  (select * from LOCALTIME) as lt2,
+  LOCALTIME (1) as lt3,
+  (select * from LOCALTIME (1)) as lt4,
+  LOCALTIMESTAMP as lt5,
+  (select * from LOCALTIMESTAMP) as lt6,
+  LOCALTIMESTAMP (1) as lt7,
+  (select * from LOCALTIMESTAMP (1)) as lt8,
+  CURRENT_CATALOG as ca,
+  (select * from CURRENT_CATALOG) as ca2,
+  CURRENT_ROLE as cr,
+  (select * from CURRENT_ROLE) as cr2,
+  CURRENT_SCHEMA as cs,
+  (select * from CURRENT_SCHEMA) as cs2,
+  CURRENT_USER as cu,
+  (select * from CURRENT_USER) as cu2,
+  USER as us,
+  (select * from USER) as us2,
+  SESSION_USER seu,
+  (select * from SESSION_USER) as seu2,
+  SYSTEM_USER as su,
+  (select * from SYSTEM_USER) as su2;
 select pg_get_viewdef('tt201v', true);
                                         pg_get_viewdef                                         
 -----------------------------------------------------------------------------------------------
@@ -1963,7 +1994,54 @@ select pg_get_viewdef('tt201v', true);
      TRIM(BOTH '\x00'::bytea FROM '\x00546f6d00'::bytea) AS btb,                              +
      TRIM(LEADING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS ltb,                           +
      TRIM(TRAILING '\x00'::bytea FROM '\x00546f6d00'::bytea) AS rtb,                          +
-     SYSTEM_USER AS su;
+     CURRENT_DATE AS cd,                                                                      +
+     ( SELECT "current_date"."current_date"                                                   +
+            FROM CURRENT_DATE "current_date"("current_date")) AS cd2,                         +
+     CURRENT_TIME AS ct,                                                                      +
+     ( SELECT "current_time"."current_time"                                                   +
+            FROM CURRENT_TIME "current_time"("current_time")) AS ct2,                         +
+     CURRENT_TIME(1) AS ct3,                                                                  +
+     ( SELECT "current_time"."current_time"                                                   +
+            FROM CURRENT_TIME(1) "current_time"("current_time")) AS ct4,                      +
+     CURRENT_TIMESTAMP AS ct5,                                                                +
+     ( SELECT "current_timestamp"."current_timestamp"                                         +
+            FROM CURRENT_TIMESTAMP "current_timestamp"("current_timestamp")) AS ct6,          +
+     CURRENT_TIMESTAMP(1) AS ct7,                                                             +
+     ( SELECT "current_timestamp"."current_timestamp"                                         +
+            FROM CURRENT_TIMESTAMP(1) "current_timestamp"("current_timestamp")) AS ct8,       +
+     LOCALTIME AS lt1,                                                                        +
+     ( SELECT "localtime"."localtime"                                                         +
+            FROM LOCALTIME "localtime"("localtime")) AS lt2,                                  +
+     LOCALTIME(1) AS lt3,                                                                     +
+     ( SELECT "localtime"."localtime"                                                         +
+            FROM LOCALTIME(1) "localtime"("localtime")) AS lt4,                               +
+     LOCALTIMESTAMP AS lt5,                                                                   +
+     ( SELECT "localtimestamp"."localtimestamp"                                               +
+            FROM LOCALTIMESTAMP "localtimestamp"("localtimestamp")) AS lt6,                   +
+     LOCALTIMESTAMP(1) AS lt7,                                                                +
+     ( SELECT "localtimestamp"."localtimestamp"                                               +
+            FROM LOCALTIMESTAMP(1) "localtimestamp"("localtimestamp")) AS lt8,                +
+     CURRENT_CATALOG AS ca,                                                                   +
+     ( SELECT "current_catalog"."current_catalog"                                             +
+            FROM CURRENT_CATALOG "current_catalog"("current_catalog")) AS ca2,                +
+     CURRENT_ROLE AS cr,                                                                      +
+     ( SELECT "current_role"."current_role"                                                   +
+            FROM CURRENT_ROLE "current_role"("current_role")) AS cr2,                         +
+     CURRENT_SCHEMA AS cs,                                                                    +
+     ( SELECT "current_schema"."current_schema"                                               +
+            FROM CURRENT_SCHEMA "current_schema"("current_schema")) AS cs2,                   +
+     CURRENT_USER AS cu,                                                                      +
+     ( SELECT "current_user"."current_user"                                                   +
+            FROM CURRENT_USER "current_user"("current_user")) AS cu2,                         +
+     USER AS us,                                                                              +
+     ( SELECT "user"."user"                                                                   +
+            FROM USER "user"("user")) AS us2,                                                 +
+     SESSION_USER AS seu,                                                                     +
+     ( SELECT "session_user"."session_user"                                                   +
+            FROM SESSION_USER "session_user"("session_user")) AS seu2,                        +
+     SYSTEM_USER AS su,                                                                       +
+     ( SELECT "system_user"."system_user"                                                     +
+            FROM SYSTEM_USER "system_user"("system_user")) AS su2;
 (1 row)
 
 -- corner cases with empty join conditions
