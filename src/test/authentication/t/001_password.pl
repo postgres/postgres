@@ -204,14 +204,16 @@ test_conn($node, 'user=md5_role',   'password from pgpass', 2);
 append_to_file(
 	$pgpassfile, qq!
 *:*:*:md5_role:p\\ass
+*:*:*:md5,role:p\\ass
 !);
 
 test_conn($node, 'user=md5_role', 'password from pgpass', 0);
 
 # Testing with regular expression for username.  The third regexp matches.
 reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^md.*$', 'password');
-test_conn($node, 'user=md5_role', 'password, matching regexp for username',
-	0);
+test_conn($node, 'user=md5_role', 'password, matching regexp for username', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="md5_role" method=password/]);
 
 # The third regex does not match anymore.
 reset_pg_hba($node, 'all', '/^.*nomatch.*$, baduser, /^m_d.*$', 'password');
@@ -223,15 +225,20 @@ test_conn($node, 'user=md5_role',
 # double quotes is mandatory so as this is not considered as two elements
 # of the user name list when parsing pg_hba.conf.
 reset_pg_hba($node, 'all', '"/^.*5,.*e$"', 'password');
-test_conn($node, 'user=md5,role', 'password', 'matching regexp for username',
-	0);
+test_conn($node, 'user=md5,role', 'password, matching regexp for username', 0,
+	log_like =>
+	  [qr/connection authenticated: identity="md5,role" method=password/]);
 
 # Testing with regular expression for dbname. The third regex matches.
 reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*b$', 'all',
 	'password');
 test_conn(
-	$node, 'user=md5_role dbname=regex_testdb', 'password,
-   matching regexp for dbname', 0);
+	$node,
+	'user=md5_role dbname=regex_testdb',
+	'password, matching regexp for dbname',
+	0,
+	log_like =>
+	  [qr/connection authenticated: identity="md5_role" method=password/]);
 
 # The third regexp does not match anymore.
 reset_pg_hba($node, '/^.*nomatch.*$, baddb, /^regex_t.*ba$',
