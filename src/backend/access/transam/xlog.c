@@ -8841,9 +8841,8 @@ do_pg_abort_backup(int code, Datum arg)
 {
 	bool		during_backup_start = DatumGetBool(arg);
 
-	/* Only one of these conditions can be true */
-	Assert(during_backup_start ^
-		   (sessionBackupState == SESSION_BACKUP_RUNNING));
+	/* If called during backup start, there shouldn't be one already running */
+	Assert(!during_backup_start || sessionBackupState == SESSION_BACKUP_NONE);
 
 	if (during_backup_start || sessionBackupState != SESSION_BACKUP_NONE)
 	{
