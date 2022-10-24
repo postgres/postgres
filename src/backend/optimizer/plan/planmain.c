@@ -264,7 +264,7 @@ query_planner(PlannerInfo *root,
 	add_other_rels_to_query(root);
 
 	/*
-	 * Distribute any UPDATE/DELETE row identity variables to the target
+	 * Distribute any UPDATE/DELETE/MERGE row identity variables to the target
 	 * relations.  This can't be done till we've finished expansion of
 	 * appendrels.
 	 */
