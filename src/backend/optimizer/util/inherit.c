@@ -609,7 +609,7 @@ expand_single_inheritance_child(PlannerInfo *root, RangeTblEntry *parentrte,
 
 	/*
 	 * If we are creating a child of the query target relation (only possible
-	 * in UPDATE/DELETE), add it to all_result_relids, as well as
+	 * in UPDATE/DELETE/MERGE), add it to all_result_relids, as well as
 	 * leaf_result_relids if appropriate, and make sure that we generate
 	 * required row-identity data.
 	 */

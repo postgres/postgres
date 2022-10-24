@@ -1749,7 +1749,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 			if (bms_membership(root->all_result_relids) == BMS_MULTIPLE)
 			{
-				/* Inherited UPDATE/DELETE */
+				/* Inherited UPDATE/DELETE/MERGE */
 				RelOptInfo *top_result_rel = find_base_rel(root,
 														   parse->resultRelation);
 				int			resultRelation = -1;
@@ -1876,7 +1876,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			}
 			else
 			{
-				/* Single-relation INSERT/UPDATE/DELETE. */
+				/* Single-relation INSERT/UPDATE/DELETE/MERGE. */
 				resultRelations = list_make1_int(parse->resultRelation);
 				if (parse->commandType == CMD_UPDATE)
 					updateColnosLists = list_make1(root->update_colnos);

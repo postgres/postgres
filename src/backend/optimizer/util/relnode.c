@@ -1013,7 +1013,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
 
 		if (var->varno == ROWID_VAR)
 		{
-			/* UPDATE/DELETE row identity vars are always needed */
+			/* UPDATE/DELETE/MERGE row identity vars are always needed */
 			RowIdentityVarInfo *ridinfo = (RowIdentityVarInfo *)
 			list_nth(root->row_identity_vars, var->varattno - 1);
 

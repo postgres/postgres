@@ -72,7 +72,7 @@ typedef struct PlannedStmt
 
 	List	   *rtable;			/* list of RangeTblEntry nodes */
 
-	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
+	/* rtable indexes of target relations for INSERT/UPDATE/DELETE/MERGE */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	List	   *appendRelations;	/* list of AppendRelInfo nodes */
@@ -217,7 +217,7 @@ typedef struct ProjectSet
  * nominalRelation and rootRelation contain the RT index of the partition
  * root, which is not otherwise mentioned in the plan.  Otherwise rootRelation
  * is zero.  However, nominalRelation will always be set, as it's the rel that
- * EXPLAIN should claim is the INSERT/UPDATE/DELETE target.
+ * EXPLAIN should claim is the INSERT/UPDATE/DELETE/MERGE target.
  *
  * Note that rowMarks and epqParam are presumed to be valid for all the
  * table(s); they can't contain any info that varies across tables.
