@@ -146,9 +146,7 @@ static void TransactionIdSetPageStatusInternal(TransactionId xid, int nsubxids,
  *					page2: set t2,t3 as sub-committed
  *					page3: set t4 as sub-committed
  *		2. update page1:
- *					set t1 as sub-committed,
- *					then set t as committed,
-					then set t1 as committed
+ *					page1: set t,t1 as committed
  *		3. update pages2-3:
  *					page2: set t2,t3 as committed
  *					page3: set t4 as committed
