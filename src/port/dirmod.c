@@ -359,6 +359,9 @@ pgreadlink(const char *path, char *buf, size_t size)
 		return -1;
 	}
 
+	/* r includes the null terminator */
+	r -= 1;
+
 	/*
 	 * If the path starts with "\??\", which it will do in most (all?) cases,
 	 * strip those out.
