@@ -167,6 +167,9 @@ static const struct
 	},
 	{
 		ERROR_INVALID_NAME, ENOENT
+	},
+	{
+		ERROR_CANT_RESOLVE_FILENAME, ENOENT
 	}
 };
 
