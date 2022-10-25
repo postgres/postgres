@@ -35,11 +35,16 @@
 #include "utils/rel.h"
 
 
+/*
+ * It's sufficient to check varattno to identify the CTID variable, as any
+ * Var in the relation scan qual must be for our table.  (Even if it's a
+ * parameterized scan referencing some other table's CTID, the other table's
+ * Var would have become a Param by the time it gets here.)
+ */
 #define IsCTIDVar(node)  \
 	((node) != NULL && \
 	 IsA((node), Var) && \
-	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber && \
-	 ((Var *) (node))->varlevelsup == 0)
+	 ((Var *) (node))->varattno == SelfItemPointerAttributeNumber)
 
 /* one element in tss_tidexprs */
 typedef struct TidExpr
