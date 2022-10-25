@@ -127,15 +127,30 @@ _pglstat64(const char *name, struct stat *buf)
 
 	hFile = pgwin32_open_handle(name, O_RDONLY, true);
 	if (hFile == INVALID_HANDLE_VALUE)
-		return -1;
-
-	ret = fileinfo_to_stat(hFile, buf);
+	{
+		if (errno == ENOENT)
+		{
+			/*
+			 * If it's a junction point pointing to a non-existent path, we'll
+			 * have ENOENT here (because pgwin32_open_handle does not use
+			 * FILE_FLAG_OPEN_REPARSE_POINT).  In that case, we'll try again
+			 * with readlink() below, which will distinguish true ENOENT from
+			 * pseudo-symlink.
+			 */
+			memset(buf, 0, sizeof(*buf));
+			ret = 0;
+		}
+		else
+			return -1;
+	}
+	else
+		ret = fileinfo_to_stat(hFile, buf);
 
 	/*
 	 * Junction points appear as directories to fileinfo_to_stat(), so we'll
 	 * need to do a bit more work to distinguish them.
 	 */
-	if (ret == 0 && S_ISDIR(buf->st_mode))
+	if ((ret == 0 && S_ISDIR(buf->st_mode)) || hFile == INVALID_HANDLE_VALUE)
 	{
 		char		next[MAXPGPATH];
 		ssize_t		size;
@@ -171,10 +186,12 @@ _pglstat64(const char *name, struct stat *buf)
 			buf->st_mode &= ~S_IFDIR;
 			buf->st_mode |= S_IFLNK;
 			buf->st_size = size;
+			ret = 0;
 		}
 	}
 
-	CloseHandle(hFile);
+	if (hFile != INVALID_HANDLE_VALUE)
+		CloseHandle(hFile);
 	return ret;
 }
 
