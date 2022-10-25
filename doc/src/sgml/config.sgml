@@ -7801,7 +7801,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </row>
         <row>
          <entry><literal>cursor_position</literal></entry>
-         <entry>string</entry>
+         <entry>number</entry>
          <entry>Cursor index into query string</entry>
         </row>
         <row>
