@@ -39,6 +39,10 @@
 #endif
 #endif
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+#include "port/win32ntdll.h"
+#endif
+
 #if defined(WIN32) || defined(__CYGWIN__)
 
 /*
@@ -91,6 +95,22 @@ pgrename(const char *from, const char *to)
 	return 0;
 }
 
+/*
+ * Check if _pglstat64()'s reason for failure was STATUS_DELETE_PENDING.
+ * This doesn't apply to Cygwin, which has its own lstat() that would report
+ * the case as EACCES.
+*/
+static bool
+lstat_error_was_status_delete_pending(void)
+{
+	if (errno != ENOENT)
+		return false;
+#if defined(WIN32) && !defined(__CYGWIN__)
+	if (pg_RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+		return true;
+#endif
+	return false;
+}
 
 /*
  *	pgunlink
@@ -98,6 +118,7 @@ pgrename(const char *from, const char *to)
 int
 pgunlink(const char *path)
 {
+	bool		is_lnk;
 	int			loops = 0;
 	struct stat st;
 
@@ -122,9 +143,22 @@ pgunlink(const char *path)
 	 * due to sharing violations, but that seems unlikely.  We could perhaps
 	 * prevent that by holding a file handle ourselves across the lstat() and
 	 * the retry loop, but that seems like over-engineering for now.
+	 *
+	 * In the special case of a STATUS_DELETE_PENDING error (file already
+	 * unlinked, but someone still has it open), we don't want to report ENOENT
+	 * to the caller immediately, because rmdir(parent) would probably fail.
+	 * We want to wait until the file truly goes away so that simple recursive
+	 * directory unlink algorithms work.
 	 */
 	if (lstat(path, &st) < 0)
-		return -1;
+	{
+		if (lstat_error_was_status_delete_pending())
+			is_lnk = false;
+		else
+			return -1;
+	}
+	else
+		is_lnk = S_ISLNK(st.st_mode);
 
 	/*
 	 * We need to loop because even though PostgreSQL uses flags that allow
@@ -133,7 +167,7 @@ pgunlink(const char *path)
 	 * someone else to close the file, as the caller might be holding locks
 	 * and blocking other backends.
 	 */
-	while ((S_ISLNK(st.st_mode) ? rmdir(path) : unlink(path)) < 0)
+	while ((is_lnk ? rmdir(path) : unlink(path)) < 0)
 	{
 		if (errno != EACCES)
 			return -1;
