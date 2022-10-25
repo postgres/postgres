@@ -197,7 +197,10 @@ pgsymlink(const char *oldpath, const char *newpath)
 						   FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS, 0);
 
 	if (dirhandle == INVALID_HANDLE_VALUE)
+	{
+		_dosmaperr(GetLastError());
 		return -1;
+	}
 
 	/* make sure we have an unparsed native win32 path */
 	if (memcmp("\\??\\", oldpath, 4) != 0)
@@ -230,8 +233,11 @@ pgsymlink(const char *oldpath, const char *newpath)
 						 0, 0, &len, 0))
 	{
 		LPSTR		msg;
+		int			save_errno;
 
-		errno = 0;
+		_dosmaperr(GetLastError());
+		save_errno = errno;
+
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 					  FORMAT_MESSAGE_IGNORE_INSERTS |
 					  FORMAT_MESSAGE_FROM_SYSTEM,
@@ -251,6 +257,9 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 		CloseHandle(dirhandle);
 		RemoveDirectory(newpath);
+
+		errno = save_errno;
+
 		return -1;
 	}
 
