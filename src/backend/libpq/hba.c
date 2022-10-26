@@ -1079,7 +1079,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 	HbaLine    *parsedline;
 
 	parsedline = palloc0(sizeof(HbaLine));
-	parsedline->sourcefile = pstrdup(tok_line->file_name);
+	parsedline->sourcefile = pstrdup(file_name);
 	parsedline->linenumber = line_num;
 	parsedline->rawline = pstrdup(tok_line->raw_line);
 
