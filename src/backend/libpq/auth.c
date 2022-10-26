@@ -307,8 +307,9 @@ auth_failed(Port *port, int status, const char *logdetail)
 			break;
 	}
 
-	cdetail = psprintf(_("Connection matched pg_hba.conf line %d: \"%s\""),
-					   port->hba->linenumber, port->hba->rawline);
+	cdetail = psprintf(_("Connection matched %s line %d: \"%s\""),
+					   port->hba->sourcefile, port->hba->linenumber,
+					   port->hba->rawline);
 	if (logdetail)
 		logdetail = psprintf("%s\n%s", logdetail, cdetail);
 	else
@@ -365,7 +366,7 @@ set_authn_id(Port *port, const char *id)
 					   "(%s:%d)",
 					   MyClientConnectionInfo.authn_id,
 					   hba_authname(MyClientConnectionInfo.auth_method),
-					   HbaFileName, port->hba->linenumber));
+					   port->hba->sourcefile, port->hba->linenumber));
 	}
 }
 

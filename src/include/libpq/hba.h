@@ -93,6 +93,7 @@ typedef struct AuthToken
 
 typedef struct HbaLine
 {
+	char	   *sourcefile;
 	int			linenumber;
 	char	   *rawline;
 	ConnType	conntype;
@@ -157,6 +158,7 @@ typedef struct IdentLine
 typedef struct TokenizedAuthLine
 {
 	List	   *fields;			/* List of lists of AuthTokens */
+	char	   *file_name;		/* File name of origin */
 	int			line_num;		/* Line number */
 	char	   *raw_line;		/* Raw line text */
 	char	   *err_msg;		/* Error message if any */

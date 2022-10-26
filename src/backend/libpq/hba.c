@@ -641,6 +641,7 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 
 			tok_line = (TokenizedAuthLine *) palloc(sizeof(TokenizedAuthLine));
 			tok_line->fields = current_line;
+			tok_line->file_name = pstrdup(filename);
 			tok_line->line_num = line_number;
 			tok_line->raw_line = pstrdup(buf.data);
 			tok_line->err_msg = err_msg;
@@ -984,7 +985,7 @@ do { \
 			 errmsg("authentication option \"%s\" is only valid for authentication methods %s", \
 					optname, _(validmethods)), \
 			 errcontext("line %d of configuration file \"%s\"", \
-					line_num, HbaFileName))); \
+					line_num, file_name))); \
 	*err_msg = psprintf("authentication option \"%s\" is only valid for authentication methods %s", \
 						optname, validmethods); \
 	return false; \
@@ -1004,7 +1005,7 @@ do { \
 				 errmsg("authentication method \"%s\" requires argument \"%s\" to be set", \
 						authname, argname), \
 				 errcontext("line %d of configuration file \"%s\"", \
-						line_num, HbaFileName))); \
+						line_num, file_name))); \
 		*err_msg = psprintf("authentication method \"%s\" requires argument \"%s\" to be set", \
 							authname, argname); \
 		return NULL; \
@@ -1027,7 +1028,7 @@ do { \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("missing entry at end of line"), \
 				 errcontext("line %d of configuration file \"%s\"", \
-							line_num, IdentFileName))); \
+							line_num, file_name))); \
 		*err_msg = pstrdup("missing entry at end of line"); \
 		return NULL; \
 	} \
@@ -1040,7 +1041,7 @@ do { \
 				(errcode(ERRCODE_CONFIG_FILE_ERROR), \
 				 errmsg("multiple values in ident field"), \
 				 errcontext("line %d of configuration file \"%s\"", \
-							line_num, IdentFileName))); \
+							line_num, file_name))); \
 		*err_msg = pstrdup("multiple values in ident field"); \
 		return NULL; \
 	} \
@@ -1063,6 +1064,7 @@ HbaLine *
 parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 {
 	int			line_num = tok_line->line_num;
+	char	   *file_name = tok_line->file_name;
 	char	  **err_msg = &tok_line->err_msg;
 	char	   *str;
 	struct addrinfo *gai_result;
@@ -1077,6 +1079,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 	HbaLine    *parsedline;
 
 	parsedline = palloc0(sizeof(HbaLine));
+	parsedline->sourcefile = pstrdup(tok_line->file_name);
 	parsedline->linenumber = line_num;
 	parsedline->rawline = pstrdup(tok_line->raw_line);
 
@@ -1091,7 +1094,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				 errmsg("multiple values specified for connection type"),
 				 errhint("Specify exactly one connection type per line."),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "multiple values specified for connection type";
 		return NULL;
 	}
@@ -1119,7 +1122,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 						 errmsg("hostssl record cannot match because SSL is disabled"),
 						 errhint("Set ssl = on in postgresql.conf."),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				*err_msg = "hostssl record cannot match because SSL is disabled";
 			}
 #else
@@ -1127,7 +1130,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostssl record cannot match because SSL is not supported by this build"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "hostssl record cannot match because SSL is not supported by this build";
 #endif
 		}
@@ -1139,7 +1142,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("hostgssenc record cannot match because GSSAPI is not supported by this build"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "hostgssenc record cannot match because GSSAPI is not supported by this build";
 #endif
 		}
@@ -1160,7 +1163,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				 errmsg("invalid connection type \"%s\"",
 						token->string),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = psprintf("invalid connection type \"%s\"", token->string);
 		return NULL;
 	}
@@ -1173,7 +1176,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before database specification"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "end-of-line before database specification";
 		return NULL;
 	}
@@ -1184,7 +1187,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 		AuthToken  *tok = copy_auth_token(lfirst(tokencell));
 
 		/* Compile a regexp for the database token, if necessary */
-		if (regcomp_auth_token(tok, HbaFileName, line_num, err_msg, elevel))
+		if (regcomp_auth_token(tok, file_name, line_num, err_msg, elevel))
 			return NULL;
 
 		parsedline->databases = lappend(parsedline->databases, tok);
@@ -1198,7 +1201,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before role specification"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "end-of-line before role specification";
 		return NULL;
 	}
@@ -1209,7 +1212,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 		AuthToken  *tok = copy_auth_token(lfirst(tokencell));
 
 		/* Compile a regexp from the role token, if necessary */
-		if (regcomp_auth_token(tok, HbaFileName, line_num, err_msg, elevel))
+		if (regcomp_auth_token(tok, file_name, line_num, err_msg, elevel))
 			return NULL;
 
 		parsedline->roles = lappend(parsedline->roles, tok);
@@ -1225,7 +1228,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("end-of-line before IP address specification"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "end-of-line before IP address specification";
 			return NULL;
 		}
@@ -1237,7 +1240,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					 errmsg("multiple values specified for host address"),
 					 errhint("Specify one address range per line."),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "multiple values specified for host address";
 			return NULL;
 		}
@@ -1296,7 +1299,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 						 errmsg("invalid IP address \"%s\": %s",
 								str, gai_strerror(ret)),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				*err_msg = psprintf("invalid IP address \"%s\": %s",
 									str, gai_strerror(ret));
 				if (gai_result)
@@ -1316,7 +1319,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							 errmsg("specifying both host name and CIDR mask is invalid: \"%s\"",
 									token->string),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = psprintf("specifying both host name and CIDR mask is invalid: \"%s\"",
 										token->string);
 					return NULL;
@@ -1330,7 +1333,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							 errmsg("invalid CIDR mask in address \"%s\"",
 									token->string),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = psprintf("invalid CIDR mask in address \"%s\"",
 										token->string);
 					return NULL;
@@ -1350,7 +1353,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							 errmsg("end-of-line before netmask specification"),
 							 errhint("Specify an address range in CIDR notation, or provide a separate netmask."),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = "end-of-line before netmask specification";
 					return NULL;
 				}
@@ -1361,7 +1364,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("multiple values specified for netmask"),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = "multiple values specified for netmask";
 					return NULL;
 				}
@@ -1376,7 +1379,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							 errmsg("invalid IP mask \"%s\": %s",
 									token->string, gai_strerror(ret)),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = psprintf("invalid IP mask \"%s\": %s",
 										token->string, gai_strerror(ret));
 					if (gai_result)
@@ -1395,7 +1398,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							(errcode(ERRCODE_CONFIG_FILE_ERROR),
 							 errmsg("IP address and mask do not match"),
 							 errcontext("line %d of configuration file \"%s\"",
-										line_num, HbaFileName)));
+										line_num, file_name)));
 					*err_msg = "IP address and mask do not match";
 					return NULL;
 				}
@@ -1411,7 +1414,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("end-of-line before authentication method"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "end-of-line before authentication method";
 		return NULL;
 	}
@@ -1423,7 +1426,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				 errmsg("multiple values specified for authentication type"),
 				 errhint("Specify exactly one authentication type per line."),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "multiple values specified for authentication type";
 		return NULL;
 	}
@@ -1460,7 +1463,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("MD5 authentication is not supported when \"db_user_namespace\" is enabled"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "MD5 authentication is not supported when \"db_user_namespace\" is enabled";
 			return NULL;
 		}
@@ -1501,7 +1504,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				 errmsg("invalid authentication method \"%s\"",
 						token->string),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = psprintf("invalid authentication method \"%s\"",
 							token->string);
 		return NULL;
@@ -1514,7 +1517,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				 errmsg("invalid authentication method \"%s\": not supported by this build",
 						token->string),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = psprintf("invalid authentication method \"%s\": not supported by this build",
 							token->string);
 		return NULL;
@@ -1536,7 +1539,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("gssapi authentication is not supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "gssapi authentication is not supported on local sockets";
 		return NULL;
 	}
@@ -1548,7 +1551,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("peer authentication is only supported on local sockets"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "peer authentication is only supported on local sockets";
 		return NULL;
 	}
@@ -1566,7 +1569,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("cert authentication is only supported on hostssl connections"),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = "cert authentication is only supported on hostssl connections";
 		return NULL;
 	}
@@ -1616,7 +1619,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("authentication option not in name=value format: %s", token->string),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				*err_msg = psprintf("authentication option not in name=value format: %s",
 									token->string);
 				return NULL;
@@ -1660,7 +1663,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix"),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				*err_msg = "cannot use ldapbasedn, ldapbinddn, ldapbindpasswd, ldapsearchattribute, ldapsearchfilter, or ldapurl together with ldapprefix";
 				return NULL;
 			}
@@ -1671,7 +1674,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "authentication method \"ldap\" requires argument \"ldapbasedn\", \"ldapprefix\", or \"ldapsuffix\" to be set";
 			return NULL;
 		}
@@ -1687,7 +1690,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("cannot use ldapsearchattribute together with ldapsearchfilter"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "cannot use ldapsearchattribute together with ldapsearchfilter";
 			return NULL;
 		}
@@ -1704,7 +1707,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("list of RADIUS servers cannot be empty"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "list of RADIUS servers cannot be empty";
 			return NULL;
 		}
@@ -1715,7 +1718,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("list of RADIUS secrets cannot be empty"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "list of RADIUS secrets cannot be empty";
 			return NULL;
 		}
@@ -1734,7 +1737,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							list_length(parsedline->radiussecrets),
 							list_length(parsedline->radiusservers)),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = psprintf("the number of RADIUS secrets (%d) must be 1 or the same as the number of RADIUS servers (%d)",
 								list_length(parsedline->radiussecrets),
 								list_length(parsedline->radiusservers));
@@ -1750,7 +1753,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							list_length(parsedline->radiusports),
 							list_length(parsedline->radiusservers)),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = psprintf("the number of RADIUS ports (%d) must be 1 or the same as the number of RADIUS servers (%d)",
 								list_length(parsedline->radiusports),
 								list_length(parsedline->radiusservers));
@@ -1766,7 +1769,7 @@ parse_hba_line(TokenizedAuthLine *tok_line, int elevel)
 							list_length(parsedline->radiusidentifiers),
 							list_length(parsedline->radiusservers)),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = psprintf("the number of RADIUS identifiers (%d) must be 1 or the same as the number of RADIUS servers (%d)",
 								list_length(parsedline->radiusidentifiers),
 								list_length(parsedline->radiusservers));
@@ -1801,6 +1804,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 				   int elevel, char **err_msg)
 {
 	int			line_num = hbaline->linenumber;
+	char	   *file_name = hbaline->sourcefile;
 
 #ifdef USE_LDAP
 	hbaline->ldapscope = LDAP_SCOPE_SUBTREE;
@@ -1824,7 +1828,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("clientcert can only be configured for \"hostssl\" rows"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "clientcert can only be configured for \"hostssl\" rows";
 			return false;
 		}
@@ -1841,7 +1845,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("clientcert only accepts \"verify-full\" when using \"cert\" authentication"),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				*err_msg = "clientcert can only be set to \"verify-full\" when using \"cert\" authentication";
 				return false;
 			}
@@ -1854,7 +1858,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid value for clientcert: \"%s\"", val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			return false;
 		}
 	}
@@ -1866,7 +1870,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("clientname can only be configured for \"hostssl\" rows"),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = "clientname can only be configured for \"hostssl\" rows";
 			return false;
 		}
@@ -1885,7 +1889,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid value for clientname: \"%s\"", val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			return false;
 		}
 	}
@@ -1971,7 +1975,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid ldapscheme value: \"%s\"", val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 		hbaline->ldapscheme = pstrdup(val);
 	}
 	else if (strcmp(name, "ldapserver") == 0)
@@ -1989,7 +1993,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid LDAP port number: \"%s\"", val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = psprintf("invalid LDAP port number: \"%s\"", val);
 			return false;
 		}
@@ -2083,7 +2087,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					 errmsg("could not parse RADIUS server list \"%s\"",
 							val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			return false;
 		}
 
@@ -2102,7 +2106,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 						 errmsg("could not translate RADIUS server name \"%s\" to address: %s",
 								(char *) lfirst(l), gai_strerror(ret)),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 				if (gai_result)
 					pg_freeaddrinfo_all(hints.ai_family, gai_result);
 
@@ -2131,7 +2135,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					 errmsg("could not parse RADIUS port list \"%s\"",
 							val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			*err_msg = psprintf("invalid RADIUS port number: \"%s\"", val);
 			return false;
 		}
@@ -2144,7 +2148,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("invalid RADIUS port number: \"%s\"", val),
 						 errcontext("line %d of configuration file \"%s\"",
-									line_num, HbaFileName)));
+									line_num, file_name)));
 
 				return false;
 			}
@@ -2167,7 +2171,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					 errmsg("could not parse RADIUS secret list \"%s\"",
 							val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			return false;
 		}
 
@@ -2189,7 +2193,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 					 errmsg("could not parse RADIUS identifiers list \"%s\"",
 							val),
 					 errcontext("line %d of configuration file \"%s\"",
-								line_num, HbaFileName)));
+								line_num, file_name)));
 			return false;
 		}
 
@@ -2203,7 +2207,7 @@ parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 				 errmsg("unrecognized authentication option name: \"%s\"",
 						name),
 				 errcontext("line %d of configuration file \"%s\"",
-							line_num, HbaFileName)));
+							line_num, file_name)));
 		*err_msg = psprintf("unrecognized authentication option name: \"%s\"",
 							name);
 		return false;
@@ -2460,6 +2464,7 @@ IdentLine *
 parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 {
 	int			line_num = tok_line->line_num;
+	char	   *file_name = tok_line->file_name;
 	char	  **err_msg = &tok_line->err_msg;
 	ListCell   *field;
 	List	   *tokens;
@@ -2500,7 +2505,7 @@ parse_ident_line(TokenizedAuthLine *tok_line, int elevel)
 	 * Now that the field validation is done, compile a regex from the user
 	 * token, if necessary.
 	 */
-	if (regcomp_auth_token(parsedline->token, IdentFileName, line_num,
+	if (regcomp_auth_token(parsedline->token, file_name, line_num,
 						   err_msg, elevel))
 	{
 		/* err_msg includes the error to report */
