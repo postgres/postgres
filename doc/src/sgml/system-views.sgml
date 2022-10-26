@@ -993,6 +993,17 @@
     <tbody>
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>rule_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of this rule, if valid, otherwise <literal>NULL</literal>.
+       This indicates the order in which each rule is considered
+       until a match is found during authentication.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>line_number</structfield> <type>int4</type>
       </para>
       <para>
@@ -1131,6 +1142,16 @@
     </thead>
 
     <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>map_number</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of this map, in priority order, if valid, otherwise
+       <literal>NULL</literal>
+      </para></entry>
+     </row>
+
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>line_number</structfield> <type>int4</type>

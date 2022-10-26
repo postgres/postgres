@@ -1337,7 +1337,8 @@ pg_group| SELECT pg_authid.rolname AS groname,
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
   WHERE (NOT pg_authid.rolcanlogin);
-pg_hba_file_rules| SELECT a.line_number,
+pg_hba_file_rules| SELECT a.rule_number,
+    a.line_number,
     a.type,
     a.database,
     a.user_name,
@@ -1346,13 +1347,14 @@ pg_hba_file_rules| SELECT a.line_number,
     a.auth_method,
     a.options,
     a.error
-   FROM pg_hba_file_rules() a(line_number, type, database, user_name, address, netmask, auth_method, options, error);
-pg_ident_file_mappings| SELECT a.line_number,
+   FROM pg_hba_file_rules() a(rule_number, line_number, type, database, user_name, address, netmask, auth_method, options, error);
+pg_ident_file_mappings| SELECT a.map_number,
+    a.line_number,
     a.map_name,
     a.sys_name,
     a.pg_username,
     a.error
-   FROM pg_ident_file_mappings() a(line_number, map_name, sys_name, pg_username, error);
+   FROM pg_ident_file_mappings() a(map_number, line_number, map_name, sys_name, pg_username, error);
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     i.relname AS indexname,
