@@ -848,9 +848,19 @@ tuplesort_getindextuple(Tuplesortstate *state, bool forward)
  * determination of "non-equal tuple" based on simple binary inequality.  A
  * NULL value will have a zeroed abbreviated value representation, which caller
  * may rely on in abbreviated inequality check.
+ *
+ * For byref Datums, if copy is true, *val is set to a copy of the Datum
+ * copied into the caller's memory context, so that it will stay valid
+ * regardless of future manipulations of the tuplesort's state (up to and
+ * including deleting the tuplesort).  If copy is false, *val will just be
+ * set to a pointer to the Datum held within the tuplesort, which is more
+ * efficient, but only safe for callers that are prepared to have any
+ * subsequent manipulation of the tuplesort's state invalidate slot contents.
+ * For byval Datums, the value of the 'copy' parameter has no effect.
+
  */
 bool
-tuplesort_getdatum(Tuplesortstate *state, bool forward,
+tuplesort_getdatum(Tuplesortstate *state, bool forward, bool copy,
 				   Datum *val, bool *isNull, Datum *abbrev)
 {
 	TuplesortPublic *base = TuplesortstateGetPublic(state);
@@ -879,7 +889,11 @@ tuplesort_getdatum(Tuplesortstate *state, bool forward,
 	else
 	{
 		/* use stup.tuple because stup.datum1 may be an abbreviation */
-		*val = datumCopy(PointerGetDatum(stup.tuple), false, arg->datumTypeLen);
+		if (copy)
+			*val = datumCopy(PointerGetDatum(stup.tuple), false,
+							 arg->datumTypeLen);
+		else
+			*val = PointerGetDatum(stup.tuple);
 		*isNull = false;
 	}
 

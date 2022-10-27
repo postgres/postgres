@@ -1879,17 +1879,13 @@ heapam_index_validate_scan(Relation heapRelation,
 			}
 
 			tuplesort_empty = !tuplesort_getdatum(state->tuplesort, true,
-												  &ts_val, &ts_isnull, NULL);
+												  false, &ts_val, &ts_isnull,
+												  NULL);
 			Assert(tuplesort_empty || !ts_isnull);
 			if (!tuplesort_empty)
 			{
 				itemptr_decode(&decoded, DatumGetInt64(ts_val));
 				indexcursor = &decoded;
-
-				/* If int8 is pass-by-ref, free (encoded) TID Datum memory */
-#ifndef USE_FLOAT8_BYVAL
-				pfree(DatumGetPointer(ts_val));
-#endif
 			}
 			else
 			{

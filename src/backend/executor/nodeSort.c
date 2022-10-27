@@ -198,7 +198,8 @@ ExecSort(PlanState *pstate)
 	{
 		ExecClearTuple(slot);
 		if (tuplesort_getdatum(tuplesortstate, ScanDirectionIsForward(dir),
-							   &(slot->tts_values[0]), &(slot->tts_isnull[0]), NULL))
+							   false, &(slot->tts_values[0]),
+							   &(slot->tts_isnull[0]), NULL))
 			ExecStoreVirtualTuple(slot);
 	}
 	else
@@ -278,10 +279,10 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 	outerTupDesc = ExecGetResultType(outerPlanState(sortstate));
 
 	/*
-	 * We perform a Datum sort when we're sorting just a single byval column,
+	 * We perform a Datum sort when we're sorting just a single column,
 	 * otherwise we perform a tuple sort.
 	 */
-	if (outerTupDesc->natts == 1 && TupleDescAttr(outerTupDesc, 0)->attbyval)
+	if (outerTupDesc->natts == 1)
 		sortstate->datumSort = true;
 	else
 		sortstate->datumSort = false;

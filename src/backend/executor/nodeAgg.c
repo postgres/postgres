@@ -879,7 +879,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 	 */
 
 	while (tuplesort_getdatum(pertrans->sortstates[aggstate->current_set],
-							  true, newVal, isNull, &newAbbrevVal))
+							  true, false, newVal, isNull, &newAbbrevVal))
 	{
 		/*
 		 * Clear and select the working context for evaluation of the equality
@@ -900,24 +900,33 @@ process_ordered_aggregate_single(AggState *aggstate,
 											 pertrans->aggCollation,
 											 oldVal, *newVal)))))
 		{
-			/* equal to prior, so forget this one */
-			if (!pertrans->inputtypeByVal && !*isNull)
-				pfree(DatumGetPointer(*newVal));
+			MemoryContextSwitchTo(oldContext);
+			continue;
 		}
 		else
 		{
 			advance_transition_function(aggstate, pertrans, pergroupstate);
-			/* forget the old value, if any */
-			if (!oldIsNull && !pertrans->inputtypeByVal)
-				pfree(DatumGetPointer(oldVal));
-			/* and remember the new one for subsequent equality checks */
-			oldVal = *newVal;
+
+			MemoryContextSwitchTo(oldContext);
+
+			/*
+			 * Forget the old value, if any, and remember the new one for
+			 * subsequent equality checks.
+			 */
+			if (!pertrans->inputtypeByVal)
+			{
+				if (!oldIsNull)
+					pfree(DatumGetPointer(oldVal));
+				if (!*isNull)
+					oldVal = datumCopy(*newVal, pertrans->inputtypeByVal,
+									   pertrans->inputtypeLen);
+			}
+			else
+				oldVal = *newVal;
 			oldAbbrevVal = newAbbrevVal;
 			oldIsNull = *isNull;
 			haveOldVal = true;
 		}
-
-		MemoryContextSwitchTo(oldContext);
 	}
 
 	if (!oldIsNull && !pertrans->inputtypeByVal)
