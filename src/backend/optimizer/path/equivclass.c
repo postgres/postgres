@@ -1382,7 +1382,9 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * whenever we select a particular pair of EquivalenceMembers to join,
  * we check to see if the pair matches any original clause (in ec_sources)
  * or previously-built clause (in ec_derives).  This saves memory and allows
- * re-use of information cached in RestrictInfos.
+ * re-use of information cached in RestrictInfos.  We also avoid generating
+ * commutative duplicates, i.e. if the algorithm selects "a.x = b.y" but
+ * we already have "b.y = a.x", we return the existing clause.
  *
  * join_relids should always equal bms_union(outer_relids, inner_rel->relids).
  * We could simplify this function's API by computing it internally, but in
@@ -1790,7 +1792,8 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 /*
  * create_join_clause
  *	  Find or make a RestrictInfo comparing the two given EC members
- *	  with the given operator.
+ *	  with the given operator (or, possibly, its commutator, because
+ *	  the ordering of the operands in the result is not guaranteed).
  *
  * parent_ec is either equal to ec (if the clause is a potentially-redundant
  * join clause) or NULL (if not).  We have to treat this as part of the
@@ -1811,16 +1814,22 @@ create_join_clause(PlannerInfo *root,
 	/*
 	 * Search to see if we already built a RestrictInfo for this pair of
 	 * EquivalenceMembers.  We can use either original source clauses or
-	 * previously-derived clauses.  The check on opno is probably redundant,
-	 * but be safe ...
+	 * previously-derived clauses, and a commutator clause is acceptable.
+	 *
+	 * We used to verify that opno matches, but that seems redundant: even if
+	 * it's not identical, it'd better have the same effects, or the operator
+	 * families we're using are broken.
 	 */
 	foreach(lc, ec->ec_sources)
 	{
 		rinfo = (RestrictInfo *) lfirst(lc);
 		if (rinfo->left_em == leftem &&
 			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
+			rinfo->parent_ec == parent_ec)
+			return rinfo;
+		if (rinfo->left_em == rightem &&
+			rinfo->right_em == leftem &&
+			rinfo->parent_ec == parent_ec)
 			return rinfo;
 	}
 
@@ -1829,8 +1838,11 @@ create_join_clause(PlannerInfo *root,
 		rinfo = (RestrictInfo *) lfirst(lc);
 		if (rinfo->left_em == leftem &&
 			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
+			rinfo->parent_ec == parent_ec)
+			return rinfo;
+		if (rinfo->left_em == rightem &&
+			rinfo->right_em == leftem &&
+			rinfo->parent_ec == parent_ec)
 			return rinfo;
 	}
 
