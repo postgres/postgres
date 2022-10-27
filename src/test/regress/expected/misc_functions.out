@@ -594,3 +594,28 @@ SELECT * FROM tenk1 a JOIN my_gen_series(1,10) g ON a.unique1 = g;
          Index Cond: (unique1 = g.g)
 (4 rows)
 
+-- Test functions for control data
+SELECT count(*) > 0 AS ok FROM pg_control_checkpoint();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_init();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_recovery();
+ ok 
+----
+ t
+(1 row)
+
+SELECT count(*) > 0 AS ok FROM pg_control_system();
+ ok 
+----
+ t
+(1 row)
+
