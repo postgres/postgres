@@ -3001,8 +3001,8 @@ relation_needs_vacanalyze(Oid relid,
 	TransactionId xidForceLimit;
 	MultiXactId multiForceLimit;
 
-	AssertArg(classForm != NULL);
-	AssertArg(OidIsValid(relid));
+	Assert(classForm != NULL);
+	Assert(OidIsValid(relid));
 
 	/*
 	 * Determine vacuum/analyze equation parameters.  We have two possible

@@ -648,7 +648,7 @@ InsertOneValue(char *value, int i)
 	Oid			typinput;
 	Oid			typoutput;
 
-	AssertArg(i >= 0 && i < MAXATTR);
+	Assert(i >= 0 && i < MAXATTR);
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 

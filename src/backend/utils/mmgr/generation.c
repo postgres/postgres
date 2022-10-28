@@ -284,7 +284,7 @@ GenerationReset(MemoryContext context)
 	GenerationContext *set = (GenerationContext *) context;
 	dlist_mutable_iter miter;
 
-	AssertArg(GenerationIsValid(set));
+	Assert(GenerationIsValid(set));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
@@ -354,7 +354,7 @@ GenerationAlloc(MemoryContext context, Size size)
 	Size		chunk_size;
 	Size		required_size;
 
-	AssertArg(GenerationIsValid(set));
+	Assert(GenerationIsValid(set));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* ensure there's always space for the sentinel byte */
@@ -657,7 +657,7 @@ GenerationFree(void *pointer)
 		 * block is good.  Future field experience may show that this Assert
 		 * had better become a regular runtime test-and-elog check.
 		 */
-		AssertArg(GenerationBlockIsValid(block));
+		Assert(GenerationBlockIsValid(block));
 
 #if defined(MEMORY_CONTEXT_CHECKING) || defined(CLOBBER_FREED_MEMORY)
 		chunksize = MemoryChunkGetValue(chunk);
@@ -769,7 +769,7 @@ GenerationRealloc(void *pointer, Size size)
 		 * block is good.  Future field experience may show that this Assert
 		 * had better become a regular runtime test-and-elog check.
 		 */
-		AssertArg(GenerationBlockIsValid(block));
+		Assert(GenerationBlockIsValid(block));
 
 		oldsize = MemoryChunkGetValue(chunk);
 	}
@@ -888,7 +888,7 @@ GenerationGetChunkContext(void *pointer)
 	else
 		block = (GenerationBlock *) MemoryChunkGetBlock(chunk);
 
-	AssertArg(GenerationBlockIsValid(block));
+	Assert(GenerationBlockIsValid(block));
 	return &block->context->header;
 }
 
@@ -907,7 +907,7 @@ GenerationGetChunkSpace(void *pointer)
 	{
 		GenerationBlock *block = ExternalChunkGetBlock(chunk);
 
-		AssertArg(GenerationBlockIsValid(block));
+		Assert(GenerationBlockIsValid(block));
 		chunksize = block->endptr - (char *) pointer;
 	}
 	else
@@ -926,7 +926,7 @@ GenerationIsEmpty(MemoryContext context)
 	GenerationContext *set = (GenerationContext *) context;
 	dlist_iter	iter;
 
-	AssertArg(GenerationIsValid(set));
+	Assert(GenerationIsValid(set));
 
 	dlist_foreach(iter, &set->blocks)
 	{
@@ -964,7 +964,7 @@ GenerationStats(MemoryContext context,
 	Size		freespace = 0;
 	dlist_iter	iter;
 
-	AssertArg(GenerationIsValid(set));
+	Assert(GenerationIsValid(set));
 
 	/* Include context header in totalspace */
 	totalspace = MAXALIGN(sizeof(GenerationContext));

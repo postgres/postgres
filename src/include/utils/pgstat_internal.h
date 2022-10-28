@@ -739,7 +739,7 @@ pgstat_copy_changecounted_stats(void *dst, void *src, size_t len,
 static inline int
 pgstat_cmp_hash_key(const void *a, const void *b, size_t size, void *arg)
 {
-	AssertArg(size == sizeof(PgStat_HashKey) && arg == NULL);
+	Assert(size == sizeof(PgStat_HashKey) && arg == NULL);
 	return memcmp(a, b, sizeof(PgStat_HashKey));
 }
 
@@ -749,7 +749,7 @@ pgstat_hash_hash_key(const void *d, size_t size, void *arg)
 	const PgStat_HashKey *key = (PgStat_HashKey *) d;
 	uint32		hash;
 
-	AssertArg(size == sizeof(PgStat_HashKey) && arg == NULL);
+	Assert(size == sizeof(PgStat_HashKey) && arg == NULL);
 
 	hash = murmurhash32(key->kind);
 	hash = hash_combine(hash, murmurhash32(key->dboid));

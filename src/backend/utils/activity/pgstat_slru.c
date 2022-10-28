@@ -46,7 +46,7 @@ pgstat_reset_slru(const char *name)
 {
 	TimestampTz ts = GetCurrentTimestamp();
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	pgstat_reset_slru_counter_internal(pgstat_get_slru_index(name), ts);
 }

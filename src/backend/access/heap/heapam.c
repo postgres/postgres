@@ -2281,7 +2281,7 @@ heap_multi_insert(Relation relation, TupleTableSlot **slots, int ntuples,
 	bool		need_cids = RelationIsAccessibleInLogicalDecoding(relation);
 
 	/* currently not needed (thus unsupported) for heap_multi_insert() */
-	AssertArg(!(options & HEAP_INSERT_NO_LOGICAL));
+	Assert(!(options & HEAP_INSERT_NO_LOGICAL));
 
 	needwal = RelationNeedsWAL(relation);
 	saveFreeSpace = RelationGetTargetPageFreeSpace(relation,

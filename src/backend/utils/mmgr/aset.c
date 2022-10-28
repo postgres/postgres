@@ -544,7 +544,7 @@ AllocSetReset(MemoryContext context)
 	AllocBlock	block;
 	Size		keepersize PG_USED_FOR_ASSERTS_ONLY;
 
-	AssertArg(AllocSetIsValid(set));
+	Assert(AllocSetIsValid(set));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
@@ -614,7 +614,7 @@ AllocSetDelete(MemoryContext context)
 	AllocBlock	block = set->blocks;
 	Size		keepersize PG_USED_FOR_ASSERTS_ONLY;
 
-	AssertArg(AllocSetIsValid(set));
+	Assert(AllocSetIsValid(set));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
@@ -713,7 +713,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 	Size		chunk_size;
 	Size		blksize;
 
-	AssertArg(AllocSetIsValid(set));
+	Assert(AllocSetIsValid(set));
 
 	/*
 	 * If requested size exceeds maximum for chunks, allocate an entire block
@@ -1061,7 +1061,7 @@ AllocSetFree(void *pointer)
 		 * Future field experience may show that these Asserts had better
 		 * become regular runtime test-and-elog checks.
 		 */
-		AssertArg(AllocBlockIsValid(block));
+		Assert(AllocBlockIsValid(block));
 		set = block->aset;
 
 		fidx = MemoryChunkGetValue(chunk);
@@ -1237,7 +1237,7 @@ AllocSetRealloc(void *pointer, Size size)
 	 * field experience may show that these Asserts had better become regular
 	 * runtime test-and-elog checks.
 	 */
-	AssertArg(AllocBlockIsValid(block));
+	Assert(AllocBlockIsValid(block));
 	set = block->aset;
 
 	fidx = MemoryChunkGetValue(chunk);
@@ -1368,7 +1368,7 @@ AllocSetGetChunkContext(void *pointer)
 	else
 		block = (AllocBlock) MemoryChunkGetBlock(chunk);
 
-	AssertArg(AllocBlockIsValid(block));
+	Assert(AllocBlockIsValid(block));
 	set = block->aset;
 
 	return &set->header;
@@ -1389,7 +1389,7 @@ AllocSetGetChunkSpace(void *pointer)
 	{
 		AllocBlock	block = ExternalChunkGetBlock(chunk);
 
-		AssertArg(AllocBlockIsValid(block));
+		Assert(AllocBlockIsValid(block));
 		return block->endptr - (char *) chunk;
 	}
 
@@ -1405,7 +1405,7 @@ AllocSetGetChunkSpace(void *pointer)
 bool
 AllocSetIsEmpty(MemoryContext context)
 {
-	AssertArg(AllocSetIsValid(context));
+	Assert(AllocSetIsValid(context));
 
 	/*
 	 * For now, we say "empty" only if the context is new or just reset. We
@@ -1440,7 +1440,7 @@ AllocSetStats(MemoryContext context,
 	AllocBlock	block;
 	int			fidx;
 
-	AssertArg(AllocSetIsValid(set));
+	Assert(AllocSetIsValid(set));
 
 	/* Include context header in totalspace */
 	totalspace = MAXALIGN(sizeof(AllocSetContext));

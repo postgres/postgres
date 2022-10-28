@@ -49,7 +49,7 @@ CreateTemplateTupleDesc(int natts)
 	/*
 	 * sanity checks
 	 */
-	AssertArg(natts >= 0);
+	Assert(natts >= 0);
 
 	/*
 	 * Allocate enough memory for the tuple descriptor, including the
@@ -273,12 +273,12 @@ TupleDescCopyEntry(TupleDesc dst, AttrNumber dstAttno,
 	/*
 	 * sanity checks
 	 */
-	AssertArg(PointerIsValid(src));
-	AssertArg(PointerIsValid(dst));
-	AssertArg(srcAttno >= 1);
-	AssertArg(srcAttno <= src->natts);
-	AssertArg(dstAttno >= 1);
-	AssertArg(dstAttno <= dst->natts);
+	Assert(PointerIsValid(src));
+	Assert(PointerIsValid(dst));
+	Assert(srcAttno >= 1);
+	Assert(srcAttno <= src->natts);
+	Assert(dstAttno >= 1);
+	Assert(dstAttno <= dst->natts);
 
 	memcpy(dstAtt, srcAtt, ATTRIBUTE_FIXED_PART_SIZE);
 
@@ -594,9 +594,9 @@ TupleDescInitEntry(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	AssertArg(PointerIsValid(desc));
-	AssertArg(attributeNumber >= 1);
-	AssertArg(attributeNumber <= desc->natts);
+	Assert(PointerIsValid(desc));
+	Assert(attributeNumber >= 1);
+	Assert(attributeNumber <= desc->natts);
 
 	/*
 	 * initialize the attribute fields
@@ -664,9 +664,9 @@ TupleDescInitBuiltinEntry(TupleDesc desc,
 	Form_pg_attribute att;
 
 	/* sanity checks */
-	AssertArg(PointerIsValid(desc));
-	AssertArg(attributeNumber >= 1);
-	AssertArg(attributeNumber <= desc->natts);
+	Assert(PointerIsValid(desc));
+	Assert(attributeNumber >= 1);
+	Assert(attributeNumber <= desc->natts);
 
 	/* initialize the attribute fields */
 	att = TupleDescAttr(desc, attributeNumber - 1);
@@ -767,9 +767,9 @@ TupleDescInitEntryCollation(TupleDesc desc,
 	/*
 	 * sanity checks
 	 */
-	AssertArg(PointerIsValid(desc));
-	AssertArg(attributeNumber >= 1);
-	AssertArg(attributeNumber <= desc->natts);
+	Assert(PointerIsValid(desc));
+	Assert(attributeNumber >= 1);
+	Assert(attributeNumber <= desc->natts);
 
 	TupleDescAttr(desc, attributeNumber - 1)->attcollation = collationid;
 }

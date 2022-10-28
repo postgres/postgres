@@ -374,7 +374,7 @@ slot_getallattrs(TupleTableSlot *slot)
 static inline bool
 slot_attisnull(TupleTableSlot *slot, int attnum)
 {
-	AssertArg(attnum > 0);
+	Assert(attnum > 0);
 
 	if (attnum > slot->tts_nvalid)
 		slot_getsomeattrs(slot, attnum);
@@ -389,7 +389,7 @@ static inline Datum
 slot_getattr(TupleTableSlot *slot, int attnum,
 			 bool *isnull)
 {
-	AssertArg(attnum > 0);
+	Assert(attnum > 0);
 
 	if (attnum > slot->tts_nvalid)
 		slot_getsomeattrs(slot, attnum);
@@ -409,7 +409,7 @@ slot_getattr(TupleTableSlot *slot, int attnum,
 static inline Datum
 slot_getsysattr(TupleTableSlot *slot, int attnum, bool *isnull)
 {
-	AssertArg(attnum < 0);		/* caller error */
+	Assert(attnum < 0);		/* caller error */
 
 	if (attnum == TableOidAttributeNumber)
 	{
@@ -483,7 +483,7 @@ static inline TupleTableSlot *
 ExecCopySlot(TupleTableSlot *dstslot, TupleTableSlot *srcslot)
 {
 	Assert(!TTS_EMPTY(srcslot));
-	AssertArg(srcslot != dstslot);
+	Assert(srcslot != dstslot);
 
 	dstslot->tts_ops->copyslot(dstslot, srcslot);
 

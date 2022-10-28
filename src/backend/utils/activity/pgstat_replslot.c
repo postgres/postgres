@@ -44,7 +44,7 @@ pgstat_reset_replslot(const char *name)
 {
 	ReplicationSlot *slot;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	/* Check if the slot exits with the given name. */
 	slot = SearchNamedReplicationSlot(name, true);
@@ -213,7 +213,7 @@ get_replslot_index(const char *name)
 {
 	ReplicationSlot *slot;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	slot = SearchNamedReplicationSlot(name, true);
 

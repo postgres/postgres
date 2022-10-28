@@ -4093,7 +4093,7 @@ InitTempTableNamespace(void)
 	MyProc->tempNamespaceId = namespaceId;
 
 	/* It should not be done already. */
-	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
+	Assert(myTempNamespaceSubID == InvalidSubTransactionId);
 	myTempNamespaceSubID = GetCurrentSubTransactionId();
 
 	baseSearchPathValid = false;	/* need to rebuild list */

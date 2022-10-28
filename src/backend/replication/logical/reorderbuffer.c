@@ -3084,7 +3084,7 @@ ReorderBufferSetBaseSnapshot(ReorderBuffer *rb, TransactionId xid,
 	ReorderBufferTXN *txn;
 	bool		is_new;
 
-	AssertArg(snap != NULL);
+	Assert(snap != NULL);
 
 	/*
 	 * Fetch the transaction to operate on.  If we know it's a subtransaction,

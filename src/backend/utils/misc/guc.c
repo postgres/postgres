@@ -6081,9 +6081,9 @@ ParseLongOption(const char *string, char **name, char **value)
 	size_t		equal_pos;
 	char	   *cp;
 
-	AssertArg(string);
-	AssertArg(name);
-	AssertArg(value);
+	Assert(string);
+	Assert(name);
+	Assert(value);
 
 	equal_pos = strcspn(string, "=");
 

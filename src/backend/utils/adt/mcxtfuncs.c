@@ -46,7 +46,7 @@ PutMemoryContextsStatsTupleStore(Tuplestorestate *tupstore,
 	const char *name;
 	const char *ident;
 
-	AssertArg(MemoryContextIsValid(context));
+	Assert(MemoryContextIsValid(context));
 
 	name = context->name;
 	ident = context->ident;

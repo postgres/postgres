@@ -1226,7 +1226,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			/* Abbreviation is not supported here */
 			sortKey->abbreviate = false;
 
-			AssertState(sortKey->ssup_attno != 0);
+			Assert(sortKey->ssup_attno != 0);
 
 			strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
 				BTGreaterStrategyNumber : BTLessStrategyNumber;

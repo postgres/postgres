@@ -793,8 +793,6 @@ typedef NameData *Name;
 
 #define Assert(condition)	((void)true)
 #define AssertMacro(condition)	((void)true)
-#define AssertArg(condition)	((void)true)
-#define AssertState(condition)	((void)true)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
 
 #elif defined(FRONTEND)
@@ -802,8 +800,6 @@ typedef NameData *Name;
 #include <assert.h>
 #define Assert(p) assert(p)
 #define AssertMacro(p)	((void) assert(p))
-#define AssertArg(condition) assert(condition)
-#define AssertState(condition) assert(condition)
 #define AssertPointerAlignment(ptr, bndr)	((void)true)
 
 #else							/* USE_ASSERT_CHECKING && !FRONTEND */
@@ -827,14 +823,6 @@ typedef NameData *Name;
 #define AssertMacro(condition) \
 	((void) ((condition) || \
 			 (ExceptionalCondition(#condition, __FILE__, __LINE__), 0)))
-
-/*
- * AssertArg and AssertState are identical to Assert.  Some places use them
- * to indicate that the complaint is specifically about a bad argument or
- * unexpected state, but this usage is largely obsolescent.
- */
-#define AssertArg(condition) Assert(condition)
-#define AssertState(condition) Assert(condition)
 
 /*
  * Check that `ptr' is `bndr' aligned.

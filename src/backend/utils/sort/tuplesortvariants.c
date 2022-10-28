@@ -145,7 +145,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	oldcontext = MemoryContextSwitchTo(base->maincontext);
 
-	AssertArg(nkeys > 0);
+	Assert(nkeys > 0);
 
 #ifdef TRACE_SORT
 	if (trace_sort)
@@ -177,8 +177,8 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	{
 		SortSupport sortKey = base->sortKeys + i;
 
-		AssertArg(attNums[i] != 0);
-		AssertArg(sortOperators[i] != 0);
+		Assert(attNums[i] != 0);
+		Assert(sortOperators[i] != 0);
 
 		sortKey->ssup_cxt = CurrentMemoryContext;
 		sortKey->ssup_collation = sortCollations[i];
@@ -297,7 +297,7 @@ tuplesort_begin_cluster(TupleDesc tupDesc,
 		/* Convey if abbreviation optimization is applicable in principle */
 		sortKey->abbreviate = (i == 0 && base->haveDatum1);
 
-		AssertState(sortKey->ssup_attno != 0);
+		Assert(sortKey->ssup_attno != 0);
 
 		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
 			BTGreaterStrategyNumber : BTLessStrategyNumber;
@@ -381,7 +381,7 @@ tuplesort_begin_index_btree(Relation heapRel,
 		/* Convey if abbreviation optimization is applicable in principle */
 		sortKey->abbreviate = (i == 0 && base->haveDatum1);
 
-		AssertState(sortKey->ssup_attno != 0);
+		Assert(sortKey->ssup_attno != 0);
 
 		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
 			BTGreaterStrategyNumber : BTLessStrategyNumber;
@@ -501,7 +501,7 @@ tuplesort_begin_index_gist(Relation heapRel,
 		/* Convey if abbreviation optimization is applicable in principle */
 		sortKey->abbreviate = (i == 0 && base->haveDatum1);
 
-		AssertState(sortKey->ssup_attno != 0);
+		Assert(sortKey->ssup_attno != 0);
 
 		/* Look for a sort support function */
 		PrepareSortSupportFromGistIndexRel(indexRel, sortKey);

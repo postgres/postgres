@@ -2896,7 +2896,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	 * This matches the options enforced by the grammar, where the object name
 	 * is optional for DATABASE and SYSTEM.
 	 */
-	AssertArg(objectName || objectKind != REINDEX_OBJECT_SCHEMA);
+	Assert(objectName || objectKind != REINDEX_OBJECT_SCHEMA);
 
 	if (objectKind == REINDEX_OBJECT_SYSTEM &&
 		(params->options & REINDEXOPT_CONCURRENTLY) != 0)

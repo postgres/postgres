@@ -389,8 +389,8 @@ MultiXactIdCreate(TransactionId xid1, MultiXactStatus status1,
 	MultiXactId newMulti;
 	MultiXactMember members[2];
 
-	AssertArg(TransactionIdIsValid(xid1));
-	AssertArg(TransactionIdIsValid(xid2));
+	Assert(TransactionIdIsValid(xid1));
+	Assert(TransactionIdIsValid(xid2));
 
 	Assert(!TransactionIdEquals(xid1, xid2) || (status1 != status2));
 
@@ -445,8 +445,8 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	int			i;
 	int			j;
 
-	AssertArg(MultiXactIdIsValid(multi));
-	AssertArg(TransactionIdIsValid(xid));
+	Assert(MultiXactIdIsValid(multi));
+	Assert(TransactionIdIsValid(xid));
 
 	/* MultiXactIdSetOldestMember() must have been called already. */
 	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]));

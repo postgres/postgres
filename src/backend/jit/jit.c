@@ -195,7 +195,7 @@ file_exists(const char *name)
 {
 	struct stat st;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	if (stat(name, &st) == 0)
 		return !S_ISDIR(st.st_mode);

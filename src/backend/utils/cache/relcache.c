@@ -3474,7 +3474,7 @@ RelationBuildLocalRelation(const char *relname,
 	bool		has_not_null;
 	bool		nailit;
 
-	AssertArg(natts >= 0);
+	Assert(natts >= 0);
 
 	/*
 	 * check for creation of a rel that must be nailed in cache.

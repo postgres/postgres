@@ -407,7 +407,7 @@ extern PGDLLIMPORT ProcessingMode Mode;
 
 #define SetProcessingMode(mode) \
 	do { \
-		AssertArg((mode) == BootstrapProcessing || \
+		Assert((mode) == BootstrapProcessing || \
 				  (mode) == InitProcessing || \
 				  (mode) == NormalProcessing); \
 		Mode = (mode); \

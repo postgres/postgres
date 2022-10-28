@@ -785,7 +785,7 @@ pgstat_fetch_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 
 	/* should be called from backends */
 	Assert(IsUnderPostmaster || !IsPostmasterEnvironment);
-	AssertArg(!kind_info->fixed_amount);
+	Assert(!kind_info->fixed_amount);
 
 	pgstat_prep_snapshot();
 
@@ -901,8 +901,8 @@ pgstat_have_entry(PgStat_Kind kind, Oid dboid, Oid objoid)
 void
 pgstat_snapshot_fixed(PgStat_Kind kind)
 {
-	AssertArg(pgstat_is_kind_valid(kind));
-	AssertArg(pgstat_get_kind_info(kind)->fixed_amount);
+	Assert(pgstat_is_kind_valid(kind));
+	Assert(pgstat_get_kind_info(kind)->fixed_amount);
 
 	if (pgstat_fetch_consistency == PGSTAT_FETCH_CONSISTENCY_SNAPSHOT)
 		pgstat_build_snapshot();
@@ -1219,7 +1219,7 @@ pgstat_is_kind_valid(int ikind)
 const PgStat_KindInfo *
 pgstat_get_kind_info(PgStat_Kind kind)
 {
-	AssertArg(pgstat_is_kind_valid(kind));
+	Assert(pgstat_is_kind_valid(kind));
 
 	return &pgstat_kind_infos[kind];
 }

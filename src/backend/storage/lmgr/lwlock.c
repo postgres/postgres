@@ -816,7 +816,7 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 {
 	uint32		old_state;
 
-	AssertArg(mode == LW_EXCLUSIVE || mode == LW_SHARED);
+	Assert(mode == LW_EXCLUSIVE || mode == LW_SHARED);
 
 	/*
 	 * Read once outside the loop, later iterations will get the newer value
@@ -1204,7 +1204,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	lwstats = get_lwlock_stats_entry(lock);
 #endif
 
-	AssertArg(mode == LW_SHARED || mode == LW_EXCLUSIVE);
+	Assert(mode == LW_SHARED || mode == LW_EXCLUSIVE);
 
 	PRINT_LWDEBUG("LWLockAcquire", lock, mode);
 
@@ -1368,7 +1368,7 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
 {
 	bool		mustwait;
 
-	AssertArg(mode == LW_SHARED || mode == LW_EXCLUSIVE);
+	Assert(mode == LW_SHARED || mode == LW_EXCLUSIVE);
 
 	PRINT_LWDEBUG("LWLockConditionalAcquire", lock, mode);
 

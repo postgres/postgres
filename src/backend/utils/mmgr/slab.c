@@ -254,7 +254,7 @@ SlabReset(MemoryContext context)
 	SlabContext *slab = (SlabContext *) context;
 	int			i;
 
-	AssertArg(SlabIsValid(slab));
+	Assert(SlabIsValid(slab));
 
 #ifdef MEMORY_CONTEXT_CHECKING
 	/* Check for corruption and leaks before freeing */
@@ -313,7 +313,7 @@ SlabAlloc(MemoryContext context, Size size)
 	MemoryChunk *chunk;
 	int			idx;
 
-	AssertArg(SlabIsValid(slab));
+	Assert(SlabIsValid(slab));
 
 	Assert((slab->minFreeChunks >= 0) &&
 		   (slab->minFreeChunks < slab->chunksPerBlock));
@@ -475,7 +475,7 @@ SlabFree(void *pointer)
 	 * Future field experience may show that this Assert had better become a
 	 * regular runtime test-and-elog check.
 	 */
-	AssertArg(SlabBlockIsValid(block));
+	Assert(SlabBlockIsValid(block));
 	slab = block->slab;
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -593,7 +593,7 @@ SlabGetChunkContext(void *pointer)
 	MemoryChunk *chunk = PointerGetMemoryChunk(pointer);
 	SlabBlock  *block = MemoryChunkGetBlock(chunk);
 
-	AssertArg(SlabBlockIsValid(block));
+	Assert(SlabBlockIsValid(block));
 	return &block->slab->header;
 }
 
@@ -609,7 +609,7 @@ SlabGetChunkSpace(void *pointer)
 	SlabBlock  *block = MemoryChunkGetBlock(chunk);
 	SlabContext *slab;
 
-	AssertArg(SlabBlockIsValid(block));
+	Assert(SlabBlockIsValid(block));
 	slab = block->slab;
 
 	return slab->fullChunkSize;
@@ -624,7 +624,7 @@ SlabIsEmpty(MemoryContext context)
 {
 	SlabContext *slab = (SlabContext *) context;
 
-	AssertArg(SlabIsValid(slab));
+	Assert(SlabIsValid(slab));
 
 	return (slab->nblocks == 0);
 }
@@ -651,7 +651,7 @@ SlabStats(MemoryContext context,
 	Size		freespace = 0;
 	int			i;
 
-	AssertArg(SlabIsValid(slab));
+	Assert(SlabIsValid(slab));
 
 	/* Include context header in totalspace */
 	totalspace = slab->headerSize;
@@ -709,7 +709,7 @@ SlabCheck(MemoryContext context)
 	int			i;
 	const char *name = slab->header.name;
 
-	AssertArg(SlabIsValid(slab));
+	Assert(SlabIsValid(slab));
 	Assert(slab->chunksPerBlock > 0);
 
 	/* walk all the freelists */

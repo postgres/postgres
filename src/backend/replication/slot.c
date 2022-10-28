@@ -452,7 +452,7 @@ ReplicationSlotAcquire(const char *name, bool nowait)
 	ReplicationSlot *s;
 	int			active_pid;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 retry:
 	Assert(MyReplicationSlot == NULL);

@@ -417,7 +417,7 @@ SetDataDir(const char *dir)
 {
 	char	   *new;
 
-	AssertArg(dir);
+	Assert(dir);
 
 	/* If presented path is relative, convert to absolute */
 	new = make_absolute_path(dir);
@@ -435,7 +435,7 @@ SetDataDir(const char *dir)
 void
 ChangeToDataDir(void)
 {
-	AssertState(DataDir);
+	Assert(DataDir);
 
 	if (chdir(DataDir) < 0)
 		ereport(FATAL,
@@ -496,7 +496,7 @@ static bool SetRoleIsActive = false;
 Oid
 GetUserId(void)
 {
-	AssertState(OidIsValid(CurrentUserId));
+	Assert(OidIsValid(CurrentUserId));
 	return CurrentUserId;
 }
 
@@ -507,7 +507,7 @@ GetUserId(void)
 Oid
 GetOuterUserId(void)
 {
-	AssertState(OidIsValid(OuterUserId));
+	Assert(OidIsValid(OuterUserId));
 	return OuterUserId;
 }
 
@@ -515,8 +515,8 @@ GetOuterUserId(void)
 static void
 SetOuterUserId(Oid userid)
 {
-	AssertState(SecurityRestrictionContext == 0);
-	AssertArg(OidIsValid(userid));
+	Assert(SecurityRestrictionContext == 0);
+	Assert(OidIsValid(userid));
 	OuterUserId = userid;
 
 	/* We force the effective user ID to match, too */
@@ -530,7 +530,7 @@ SetOuterUserId(Oid userid)
 Oid
 GetSessionUserId(void)
 {
-	AssertState(OidIsValid(SessionUserId));
+	Assert(OidIsValid(SessionUserId));
 	return SessionUserId;
 }
 
@@ -538,8 +538,8 @@ GetSessionUserId(void)
 static void
 SetSessionUserId(Oid userid, bool is_superuser)
 {
-	AssertState(SecurityRestrictionContext == 0);
-	AssertArg(OidIsValid(userid));
+	Assert(SecurityRestrictionContext == 0);
+	Assert(OidIsValid(userid));
 	SessionUserId = userid;
 	SessionUserIsSuperuser = is_superuser;
 	SetRoleIsActive = false;
@@ -565,7 +565,7 @@ GetSystemUser(void)
 Oid
 GetAuthenticatedUserId(void)
 {
-	AssertState(OidIsValid(AuthenticatedUserId));
+	Assert(OidIsValid(AuthenticatedUserId));
 	return AuthenticatedUserId;
 }
 
@@ -719,10 +719,10 @@ InitializeSessionUserId(const char *rolename, Oid roleid)
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
 	 * exist yet, and they should be owned by postgres anyway.
 	 */
-	AssertState(!IsBootstrapProcessingMode());
+	Assert(!IsBootstrapProcessingMode());
 
 	/* call only once */
-	AssertState(!OidIsValid(AuthenticatedUserId));
+	Assert(!OidIsValid(AuthenticatedUserId));
 
 	/*
 	 * Make sure syscache entries are flushed for recent catalog changes. This
@@ -818,10 +818,10 @@ InitializeSessionUserIdStandalone(void)
 	 * This function should only be called in single-user mode, in autovacuum
 	 * workers, and in background workers.
 	 */
-	AssertState(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker);
+	Assert(!IsUnderPostmaster || IsAutoVacuumWorkerProcess() || IsBackgroundWorker);
 
 	/* call only once */
-	AssertState(!OidIsValid(AuthenticatedUserId));
+	Assert(!OidIsValid(AuthenticatedUserId));
 
 	AuthenticatedUserId = BOOTSTRAP_SUPERUSERID;
 	AuthenticatedUserIsSuperuser = true;
@@ -886,7 +886,7 @@ void
 SetSessionAuthorization(Oid userid, bool is_superuser)
 {
 	/* Must have authenticated already, else can't make permission check */
-	AssertState(OidIsValid(AuthenticatedUserId));
+	Assert(OidIsValid(AuthenticatedUserId));
 
 	if (userid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)

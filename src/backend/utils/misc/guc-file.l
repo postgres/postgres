@@ -179,7 +179,7 @@ AbsoluteConfigLocation(const char *location, const char *calling_file)
 		}
 		else
 		{
-			AssertState(DataDir);
+			Assert(DataDir);
 			join_path_components(abs_path, DataDir, location);
 			canonicalize_path(abs_path);
 		}

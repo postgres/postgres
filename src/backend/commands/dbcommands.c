@@ -2606,7 +2606,7 @@ get_db_info(const char *name, LOCKMODE lockmode,
 	bool		result = false;
 	Relation	relation;
 
-	AssertArg(name);
+	Assert(name);
 
 	/* Caller may wish to grab a better lock on pg_database beforehand... */
 	relation = table_open(DatabaseRelationId, AccessShareLock);

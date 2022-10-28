@@ -402,7 +402,7 @@ pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid, bool create,
 	 * passing in created_entry only makes sense if we possibly could create
 	 * entry.
 	 */
-	AssertArg(create || created_entry == NULL);
+	Assert(create || created_entry == NULL);
 	pgstat_assert_is_up();
 	Assert(pgStatLocal.shared_hash != NULL);
 	Assert(!pgStatLocal.shmem->is_shutdown);

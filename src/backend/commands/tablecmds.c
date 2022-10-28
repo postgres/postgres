@@ -3134,7 +3134,7 @@ StoreCatalogInheritance(Oid relationId, List *supers,
 	/*
 	 * sanity checks
 	 */
-	AssertArg(OidIsValid(relationId));
+	Assert(OidIsValid(relationId));
 
 	if (supers == NIL)
 		return;
@@ -3651,7 +3651,7 @@ rename_constraint_internal(Oid myrelid,
 	Form_pg_constraint con;
 	ObjectAddress address;
 
-	AssertArg(!myrelid || !mytypid);
+	Assert(!myrelid || !mytypid);
 
 	if (mytypid)
 	{
@@ -9731,7 +9731,7 @@ addFkRecurseReferencing(List **wqueue, Constraint *fkconstraint, Relation rel,
 	Oid			insertTriggerOid,
 				updateTriggerOid;
 
-	AssertArg(OidIsValid(parentConstr));
+	Assert(OidIsValid(parentConstr));
 
 	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 		ereport(ERROR,

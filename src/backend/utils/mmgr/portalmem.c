@@ -177,7 +177,7 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 {
 	Portal		portal;
 
-	AssertArg(PointerIsValid(name));
+	Assert(PointerIsValid(name));
 
 	portal = GetPortalByName(name);
 	if (PortalIsValid(portal))
@@ -287,11 +287,11 @@ PortalDefineQuery(Portal portal,
 				  List *stmts,
 				  CachedPlan *cplan)
 {
-	AssertArg(PortalIsValid(portal));
-	AssertState(portal->status == PORTAL_NEW);
+	Assert(PortalIsValid(portal));
+	Assert(portal->status == PORTAL_NEW);
 
-	AssertArg(sourceText != NULL);
-	AssertArg(commandTag != CMDTAG_UNKNOWN || stmts == NIL);
+	Assert(sourceText != NULL);
+	Assert(commandTag != CMDTAG_UNKNOWN || stmts == NIL);
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
@@ -468,7 +468,7 @@ MarkPortalFailed(Portal portal)
 void
 PortalDrop(Portal portal, bool isTopCommit)
 {
-	AssertArg(PortalIsValid(portal));
+	Assert(PortalIsValid(portal));
 
 	/*
 	 * Don't allow dropping a pinned portal, it's still needed by whoever
