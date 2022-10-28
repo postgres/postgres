@@ -4780,11 +4780,46 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 
 			if (pathkeys_contained_in(needed_pathkeys, path->pathkeys))
 			{
-				add_path(distinct_rel, (Path *)
-						 create_upper_unique_path(root, distinct_rel,
-												  path,
-												  list_length(root->distinct_pathkeys),
-												  numDistinctRows));
+				/*
+				 * distinct_pathkeys may have become empty if all of the
+				 * pathkeys were determined to be redundant.  If all of the
+				 * pathkeys are redundant then each DISTINCT target must only
+				 * allow a single value, therefore all resulting tuples must
+				 * be identical (or at least indistinguishable by an equality
+				 * check).  We can uniquify these tuples simply by just taking
+				 * the first tuple.  All we do here is add a path to do "LIMIT
+				 * 1" atop of 'path'.  When doing a DISTINCT ON we may still
+				 * have a non-NIL sort_pathkeys list, so we must still only do
+				 * this with paths which are correctly sorted by
+				 * sort_pathkeys.
+				 */
+				if (root->distinct_pathkeys == NIL)
+				{
+					Node	   *limitCount;
+
+					limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+													sizeof(int64),
+													Int64GetDatum(1), false,
+													FLOAT8PASSBYVAL);
+
+					/*
+					 * If the query already has a LIMIT clause, then we could
+					 * end up with a duplicate LimitPath in the final plan.
+					 * That does not seem worth troubling over too much.
+					 */
+					add_path(distinct_rel, (Path *)
+							 create_limit_path(root, distinct_rel, path, NULL,
+											   limitCount, LIMIT_OPTION_COUNT,
+											   0, 1));
+				}
+				else
+				{
+					add_path(distinct_rel, (Path *)
+							 create_upper_unique_path(root, distinct_rel,
+													  path,
+													  list_length(root->distinct_pathkeys),
+													  numDistinctRows));
+				}
 			}
 		}
 
@@ -4805,13 +4840,33 @@ create_final_distinct_paths(PlannerInfo *root, RelOptInfo *input_rel,
 			path = (Path *) create_sort_path(root, distinct_rel,
 											 path,
 											 needed_pathkeys,
-											 -1.0);
+											 root->distinct_pathkeys == NIL ?
+											 1.0 : -1.0);
 
-		add_path(distinct_rel, (Path *)
-				 create_upper_unique_path(root, distinct_rel,
-										  path,
-										  list_length(root->distinct_pathkeys),
-										  numDistinctRows));
+		/*
+		 * As above, use a LimitPath instead of a UniquePath when all of the
+		 * distinct_pathkeys are redundant and we're only going to get a
+		 * series of tuples all with the same values anyway.
+		 */
+		if (root->distinct_pathkeys == NIL)
+		{
+			Node	   *limitCount = (Node *) makeConst(INT8OID, -1, InvalidOid,
+														sizeof(int64),
+														Int64GetDatum(1), false,
+														FLOAT8PASSBYVAL);
+
+			add_path(distinct_rel, (Path *)
+					 create_limit_path(root, distinct_rel, path, NULL,
+									   limitCount, LIMIT_OPTION_COUNT, 0, 1));
+		}
+		else
+		{
+			add_path(distinct_rel, (Path *)
+					 create_upper_unique_path(root, distinct_rel,
+											  path,
+											  list_length(root->distinct_pathkeys),
+											  numDistinctRows));
+		}
 	}
 
 	/*
