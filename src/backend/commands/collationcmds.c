@@ -22,6 +22,7 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
 #include "commands/alter.h"
 #include "commands/collationcmds.h"
 #include "commands/comment.h"
@@ -425,33 +426,61 @@ AlterCollation(AlterCollationStmt *stmt)
 Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
-	Oid			collid = PG_GETARG_OID(0);
-	HeapTuple	tp;
-	char		collprovider;
-	Datum		datum;
-	bool		isnull;
-	char	   *version;
+	Oid		 collid = PG_GETARG_OID(0);
+	char	 provider;
+	char	*locale;
+	char	*version;
+	Datum	 datum;
+	bool	 isnull;
 
-	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
-	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("collation with OID %u does not exist", collid)));
-
-	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
-
-	if (collprovider != COLLPROVIDER_DEFAULT)
+	if (collid == DEFAULT_COLLATION_OID)
 	{
-		datum = SysCacheGetAttr(COLLOID, tp, collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate, &isnull);
+		/* retrieve from pg_database */
+
+		HeapTuple	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+		if (!HeapTupleIsValid(dbtup))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("database with OID %u does not exist", MyDatabaseId)));
+
+		provider = ((Form_pg_database) GETSTRUCT(dbtup))->datlocprovider;
+
+		datum = SysCacheGetAttr(DATABASEOID, dbtup,
+								provider == COLLPROVIDER_ICU ?
+								Anum_pg_database_daticulocale : Anum_pg_database_datcollate,
+								&isnull);
 		if (isnull)
-			elog(ERROR, "unexpected null in pg_collation");
-		version = get_collation_actual_version(collprovider, TextDatumGetCString(datum));
+			elog(ERROR, "unexpected null in pg_database");
+
+		locale = TextDatumGetCString(datum);
+
+		ReleaseSysCache(dbtup);
 	}
 	else
-		version = NULL;
+	{
+		/* retrieve from pg_collation */
 
-	ReleaseSysCache(tp);
+		HeapTuple	colltp		= SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+		if (!HeapTupleIsValid(colltp))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("collation with OID %u does not exist", collid)));
 
+		provider = ((Form_pg_collation) GETSTRUCT(colltp))->collprovider;
+		Assert(provider != COLLPROVIDER_DEFAULT);
+		datum = SysCacheGetAttr(COLLOID, colltp,
+								provider == COLLPROVIDER_ICU ?
+								Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate,
+								&isnull);
+		if (isnull)
+			elog(ERROR, "unexpected null in pg_collation");
+
+		locale = TextDatumGetCString(datum);
+
+		ReleaseSysCache(colltp);
+	}
+
+	version = get_collation_actual_version(provider, locale);
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
 	else
