@@ -366,6 +366,11 @@ AlterCollation(AlterCollationStmt *stmt)
 	rel = table_open(CollationRelationId, RowExclusiveLock);
 	collOid = get_collation_oid(stmt->collname, false);
 
+	if (collOid == DEFAULT_COLLATION_OID)
+		ereport(ERROR,
+				(errmsg("cannot refresh version of default collation"),
+				 errhint("Use ALTER DATABASE ... REFRESH COLLATION VERSION instead.")));
+
 	if (!pg_collation_ownercheck(collOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
 					   NameListToString(stmt->collname));
