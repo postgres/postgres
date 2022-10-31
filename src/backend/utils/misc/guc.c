@@ -1382,6 +1382,89 @@ check_GUC_name_for_parameter_acl(const char *name)
 	return false;
 }
 
+/*
+ * Routine in charge of checking that the initial value of a GUC is the
+ * same when declared and when loaded to prevent anybody looking at the
+ * C declarations of these GUCS from being fooled by mismatched values.
+ *
+ * The following validation rules apply:
+ * bool - can be false, otherwise must be same as the boot_val
+ * int  - can be 0, otherwise must be same as the boot_val
+ * real - can be 0.0, otherwise must be same as the boot_val
+ * string - can be NULL, otherwise must be strcmp equal to the boot_val
+ * enum - must be same as the boot_val
+ */
+#ifdef USE_ASSERT_CHECKING
+static bool
+check_GUC_init(struct config_generic *gconf)
+{
+	switch (gconf->vartype)
+	{
+		case PGC_BOOL:
+			{
+				struct config_bool *conf = (struct config_bool *) gconf;
+
+				if (*conf->variable && !conf->boot_val)
+				{
+					elog(LOG, "GUC (PGC_BOOL) %s, boot_val=%d, C-var=%d",
+						 conf->gen.name, conf->boot_val, *conf->variable);
+					return false;
+				}
+				break;
+			}
+		case PGC_INT:
+			{
+				struct config_int *conf = (struct config_int *) gconf;
+
+				if (*conf->variable != 0 && *conf->variable != conf->boot_val)
+				{
+					elog(LOG, "GUC (PGC_INT) %s, boot_val=%d, C-var=%d",
+						 conf->gen.name, conf->boot_val, *conf->variable);
+					return false;
+				}
+				break;
+			}
+		case PGC_REAL:
+			{
+				struct config_real *conf = (struct config_real *) gconf;
+
+				if (*conf->variable != 0.0 && *conf->variable != conf->boot_val)
+				{
+					elog(LOG, "GUC (PGC_REAL) %s, boot_val=%g, C-var=%g",
+						 conf->gen.name, conf->boot_val, *conf->variable);
+					return false;
+				}
+				break;
+			}
+		case PGC_STRING:
+			{
+				struct config_string *conf = (struct config_string *) gconf;
+
+				if (*conf->variable != NULL && strcmp(*conf->variable, conf->boot_val) != 0)
+				{
+					elog(LOG, "GUC (PGC_STRING) %s, boot_val=%s, C-var=%s",
+						 conf->gen.name, conf->boot_val ? conf->boot_val : "<null>", *conf->variable);
+					return false;
+				}
+				break;
+			}
+		case PGC_ENUM:
+			{
+				struct config_enum *conf = (struct config_enum *) gconf;
+
+				if (*conf->variable != conf->boot_val)
+				{
+					elog(LOG, "GUC (PGC_ENUM) %s, boot_val=%d, C-var=%d",
+						 conf->gen.name, conf->boot_val, *conf->variable);
+					return false;
+				}
+				break;
+			}
+	}
+
+	return true;
+}
+#endif
 
 /*
  * Initialize GUC options during program startup.
@@ -1413,6 +1496,9 @@ InitializeGUCOptions(void)
 	hash_seq_init(&status, guc_hashtab);
 	while ((hentry = (GUCHashEntry *) hash_seq_search(&status)) != NULL)
 	{
+		/* Check mapping between initial and default value */
+		Assert(check_GUC_init(hentry->gucvar));
+
 		InitializeOneGUCOption(hentry->gucvar);
 	}
 
@@ -4653,6 +4739,9 @@ define_custom_variable(struct config_generic *variable)
 	const char *name = variable->name;
 	GUCHashEntry *hentry;
 	struct config_string *pHolder;
+
+	/* Check mapping between initial and default value */
+	Assert(check_GUC_init(variable));
 
 	/*
 	 * See if there's a placeholder by the same name.
