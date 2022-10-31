@@ -3984,8 +3984,12 @@ foreach my $test (
 			next;
 		}
 
-		# Add terminating semicolon
-		$create_sql{$test_db} .= $tests{$test}->{create_sql} . ";";
+		# Normalize command ending: strip all line endings, add
+		# semicolon if missing, add two newlines.
+		my $create_sql = $tests{$test}->{create_sql};
+		chomp $create_sql;
+		$create_sql .= ';' unless substr($create_sql, -1) eq ';';
+		$create_sql{$test_db} .= $create_sql . "\n\n";
 	}
 }
 
