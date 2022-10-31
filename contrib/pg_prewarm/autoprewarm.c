@@ -103,7 +103,7 @@ static AutoPrewarmSharedState *apw_state = NULL;
 
 /* GUC variables. */
 static bool autoprewarm = true; /* start worker? */
-static int	autoprewarm_interval;	/* dump interval */
+static int	autoprewarm_interval = 300; /* dump interval */
 
 /*
  * Module load callback.

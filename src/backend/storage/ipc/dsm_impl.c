@@ -109,7 +109,7 @@ const struct config_enum_entry dynamic_shared_memory_options[] = {
 };
 
 /* Implementation selector. */
-int			dynamic_shared_memory_type;
+int			dynamic_shared_memory_type = DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE;
 
 /* Amount of space reserved for DSM segments in the main area. */
 int			min_dynamic_shared_memory;

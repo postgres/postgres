@@ -57,7 +57,7 @@ static sepgsql_context_info_t sepgsql_context_info;
 /*
  * GUC: sepgsql.permissive = (on|off)
  */
-static bool sepgsql_permissive;
+static bool sepgsql_permissive = false;
 
 bool
 sepgsql_get_permissive(void)
@@ -68,7 +68,7 @@ sepgsql_get_permissive(void)
 /*
  * GUC: sepgsql.debug_audit = (on|off)
  */
-static bool sepgsql_debug_audit;
+static bool sepgsql_debug_audit = false;
 
 bool
 sepgsql_get_debug_audit(void)

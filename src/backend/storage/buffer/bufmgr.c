@@ -142,22 +142,22 @@ bool		track_io_timing = false;
  * for buffers not belonging to tablespaces that have their
  * effective_io_concurrency parameter set.
  */
-int			effective_io_concurrency = 0;
+int			effective_io_concurrency = DEFAULT_EFFECTIVE_IO_CONCURRENCY;
 
 /*
  * Like effective_io_concurrency, but used by maintenance code paths that might
  * benefit from a higher setting because they work on behalf of many sessions.
  * Overridden by the tablespace setting of the same name.
  */
-int			maintenance_io_concurrency = 0;
+int			maintenance_io_concurrency = DEFAULT_MAINTENANCE_IO_CONCURRENCY;
 
 /*
  * GUC variables about triggering kernel writeback for buffers written; OS
  * dependent defaults are set via the GUC mechanism.
  */
-int			checkpoint_flush_after = 0;
-int			bgwriter_flush_after = 0;
-int			backend_flush_after = 0;
+int			checkpoint_flush_after = DEFAULT_CHECKPOINT_FLUSH_AFTER;
+int			bgwriter_flush_after = DEFAULT_BGWRITER_FLUSH_AFTER;
+int			backend_flush_after = DEFAULT_BACKEND_FLUSH_AFTER;
 
 /* local state for StartBufferIO and related functions */
 static BufferDesc *InProgressBuf = NULL;

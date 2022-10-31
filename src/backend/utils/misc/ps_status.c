@@ -30,8 +30,9 @@
 #include "utils/ps_status.h"
 
 extern char **environ;
-bool		update_process_title = true;
 
+/* GUC variable */
+bool		update_process_title = DEFAULT_UPDATE_PROCESS_TITLE;
 
 /*
  * Alternative ways of updating ps display:
