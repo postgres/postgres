@@ -966,6 +966,8 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 					DestReceiver *dest, char *completionTag)
 {
 	Node	   *parsetree = pstmt->utilityStmt;
+	int			saved_stmt_location = pstmt->stmt_location;
+	int			saved_stmt_len = pstmt->stmt_len;
 
 	/*
 	 * If it's an EXECUTE statement, we don't track it and don't increment the
@@ -1015,6 +1017,13 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		}
 		PG_END_TRY();
 
+		/*
+		 * CAUTION: do not access the *pstmt data structure again below here.
+		 * If it was a ROLLBACK or similar, that data structure may have been
+		 * freed.  We must copy everything we still need into local variables,
+		 * which we did above.
+		 */
+
 		INSTR_TIME_SET_CURRENT(duration);
 		INSTR_TIME_SUBTRACT(duration, start);
 
@@ -1053,8 +1062,8 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 
 		pgss_store(queryString,
 				   0,			/* signal that it's a utility stmt */
-				   pstmt->stmt_location,
-				   pstmt->stmt_len,
+				   saved_stmt_location,
+				   saved_stmt_len,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   rows,
 				   &bufusage,
