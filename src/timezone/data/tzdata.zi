@@ -1,4 +1,4 @@
-# version 2022a
+# version 2022f
 # This zic input file is in the public domain.
 R d 1916 o - Jun 14 23s 1 S
 R d 1916 1919 - O Su>=1 23s 0 -
@@ -43,16 +43,6 @@ Z Africa/Ndjamena 1:0:12 - LMT 1912
 1 - WAT
 Z Africa/Abidjan -0:16:8 - LMT 1912
 0 - GMT
-L Africa/Abidjan Africa/Accra
-L Africa/Abidjan Africa/Bamako
-L Africa/Abidjan Africa/Banjul
-L Africa/Abidjan Africa/Conakry
-L Africa/Abidjan Africa/Dakar
-L Africa/Abidjan Africa/Freetown
-L Africa/Abidjan Africa/Lome
-L Africa/Abidjan Africa/Nouakchott
-L Africa/Abidjan Africa/Ouagadougou
-L Africa/Abidjan Atlantic/St_Helena
 R K 1940 o - Jul 15 0 1 S
 R K 1940 o - O 1 0 0 -
 R K 1941 o - Ap 15 0 1 S
@@ -96,15 +86,6 @@ Z Africa/Nairobi 2:27:16 - LMT 1908 May
 2:30 - +0230 1936 D 31 24
 2:45 - +0245 1942 Jul 31 24
 3 - EAT
-L Africa/Nairobi Africa/Addis_Ababa
-L Africa/Nairobi Africa/Asmara
-L Africa/Nairobi Africa/Dar_es_Salaam
-L Africa/Nairobi Africa/Djibouti
-L Africa/Nairobi Africa/Kampala
-L Africa/Nairobi Africa/Mogadishu
-L Africa/Nairobi Indian/Antananarivo
-L Africa/Nairobi Indian/Comoro
-L Africa/Nairobi Indian/Mayotte
 Z Africa/Monrovia -0:43:8 - LMT 1882
 -0:43:8 - MMT 1919 Mar
 -0:44:30 - MMT 1972 Ja 7
@@ -335,13 +316,6 @@ Z Africa/El_Aaiun -0:52:48 - LMT 1934
 1 M +01/+00
 Z Africa/Maputo 2:10:20 - LMT 1903 Mar
 2 - CAT
-L Africa/Maputo Africa/Blantyre
-L Africa/Maputo Africa/Bujumbura
-L Africa/Maputo Africa/Gaborone
-L Africa/Maputo Africa/Harare
-L Africa/Maputo Africa/Kigali
-L Africa/Maputo Africa/Lubumbashi
-L Africa/Maputo Africa/Lusaka
 R NA 1994 o - Mar 21 0 -1 WAT
 R NA 1994 2017 - S Su>=1 2 0 CAT
 R NA 1995 2017 - Ap Su>=1 2 -1 WAT
@@ -356,31 +330,16 @@ Z Africa/Lagos 0:13:35 - LMT 1905 Jul
 0:13:35 - LMT 1914
 0:30 - +0030 1919 S
 1 - WAT
-L Africa/Lagos Africa/Bangui
-L Africa/Lagos Africa/Brazzaville
-L Africa/Lagos Africa/Douala
-L Africa/Lagos Africa/Kinshasa
-L Africa/Lagos Africa/Libreville
-L Africa/Lagos Africa/Luanda
-L Africa/Lagos Africa/Malabo
-L Africa/Lagos Africa/Niamey
-L Africa/Lagos Africa/Porto-Novo
-Z Indian/Reunion 3:41:52 - LMT 1911 Jun
-4 - +04
 Z Africa/Sao_Tome 0:26:56 - LMT 1884
 -0:36:45 - LMT 1912 Ja 1 0u
 0 - GMT 2018 Ja 1 1
 1 - WAT 2019 Ja 1 2
 0 - GMT
-Z Indian/Mahe 3:41:48 - LMT 1907
-4 - +04
 R SA 1942 1943 - S Su>=15 2 1 -
 R SA 1943 1944 - Mar Su>=15 2 0 -
 Z Africa/Johannesburg 1:52 - LMT 1892 F 8
 1:30 - SAST 1903 Mar
 2 SA SAST
-L Africa/Johannesburg Africa/Maseru
-L Africa/Johannesburg Africa/Mbabane
 R SD 1970 o - May 1 0 1 S
 R SD 1970 1985 - O 15 0 0 -
 R SD 1971 o - Ap 30 0 1 S
@@ -445,14 +404,10 @@ Z Antarctica/Davis 0 - -00 1957 Ja 13
 Z Antarctica/Mawson 0 - -00 1954 F 13
 6 - +06 2009 O 18 2
 5 - +05
-Z Indian/Kerguelen 0 - -00 1950
-5 - +05
 R Tr 2005 ma - Mar lastSu 1u 2 +02
 R Tr 2004 ma - O lastSu 1u 0 +00
 Z Antarctica/Troll 0 - -00 2005 F 12
 0 Tr %s
-Z Antarctica/Vostok 0 - -00 1957 D 16
-6 - +06
 Z Antarctica/Rothera 0 - -00 1976 D
 -3 - -03
 Z Asia/Kabul 4:36:48 - LMT 1890
@@ -491,9 +446,6 @@ Z Asia/Thimphu 5:58:36 - LMT 1947 Au 15
 Z Indian/Chagos 4:49:40 - LMT 1907
 5 - +05 1996
 6 - +06
-Z Asia/Brunei 7:39:40 - LMT 1926 Mar
-7:30 - +0730 1933
-8 - +08
 Z Asia/Yangon 6:24:47 - LMT 1880
 6:24:47 - RMT 1920
 6:30 - +0630 1942 May
@@ -535,7 +487,7 @@ R HK 1965 1976 - O Su>=16 3:30 0 -
 R HK 1973 o - D 30 3:30 1 S
 R HK 1979 o - May 13 3:30 1 S
 R HK 1979 o - O 21 3:30 0 -
-Z Asia/Hong_Kong 7:36:42 - LMT 1904 O 30 0:36:42
+Z Asia/Hong_Kong 7:36:42 - LMT 1904 O 29 17u
 8 - HKT 1941 Jun 15 3
 8 1 HKST 1941 O 1 4
 8 0:30 HKWT 1941 D 25
@@ -608,7 +560,6 @@ Z Asia/Famagusta 2:15:48 - LMT 1921 N 14
 2 E EE%sT 2016 S 8
 3 - +03 2017 O 29 1u
 2 E EE%sT
-L Asia/Nicosia Europe/Nicosia
 Z Asia/Tbilisi 2:59:11 - LMT 1880
 2:59:11 - TBMT 1924 May 2
 3 - +03 1957 Mar
@@ -634,7 +585,7 @@ Z Asia/Kolkata 5:53:28 - LMT 1854 Jun 28
 5:30 1 +0630 1945 O 15
 5:30 - IST
 Z Asia/Jakarta 7:7:12 - LMT 1867 Au 10
-7:7:12 - BMT 1923 D 31 23:47:12
+7:7:12 - BMT 1923 D 31 16:40u
 7:20 - +0720 1932 N
 7:30 - +0730 1942 Mar 23
 9 - +09 1945 S 23
@@ -660,9 +611,14 @@ Z Asia/Jayapura 9:22:48 - LMT 1932 N
 9 - +09 1944 S
 9:30 - +0930 1964
 9 - WIT
-R i 1978 1980 - Mar 20 24 1 -
-R i 1978 o - O 20 24 0 -
+R i 1910 o - Ja 1 0 0 -
+R i 1977 o - Mar 21 23 1 -
+R i 1977 o - O 20 24 0 -
+R i 1978 o - Mar 24 24 1 -
+R i 1978 o - Au 5 1 0 -
+R i 1979 o - May 26 24 1 -
 R i 1979 o - S 18 24 0 -
+R i 1980 o - Mar 20 24 1 -
 R i 1980 o - S 22 24 0 -
 R i 1991 o - May 2 24 1 -
 R i 1992 1995 - Mar 21 24 1 -
@@ -693,77 +649,11 @@ R i 2017 2019 - Mar 21 24 1 -
 R i 2017 2019 - S 21 24 0 -
 R i 2020 o - Mar 20 24 1 -
 R i 2020 o - S 20 24 0 -
-R i 2021 2023 - Mar 21 24 1 -
-R i 2021 2023 - S 21 24 0 -
-R i 2024 o - Mar 20 24 1 -
-R i 2024 o - S 20 24 0 -
-R i 2025 2027 - Mar 21 24 1 -
-R i 2025 2027 - S 21 24 0 -
-R i 2028 2029 - Mar 20 24 1 -
-R i 2028 2029 - S 20 24 0 -
-R i 2030 2031 - Mar 21 24 1 -
-R i 2030 2031 - S 21 24 0 -
-R i 2032 2033 - Mar 20 24 1 -
-R i 2032 2033 - S 20 24 0 -
-R i 2034 2035 - Mar 21 24 1 -
-R i 2034 2035 - S 21 24 0 -
-R i 2036 2037 - Mar 20 24 1 -
-R i 2036 2037 - S 20 24 0 -
-R i 2038 2039 - Mar 21 24 1 -
-R i 2038 2039 - S 21 24 0 -
-R i 2040 2041 - Mar 20 24 1 -
-R i 2040 2041 - S 20 24 0 -
-R i 2042 2043 - Mar 21 24 1 -
-R i 2042 2043 - S 21 24 0 -
-R i 2044 2045 - Mar 20 24 1 -
-R i 2044 2045 - S 20 24 0 -
-R i 2046 2047 - Mar 21 24 1 -
-R i 2046 2047 - S 21 24 0 -
-R i 2048 2049 - Mar 20 24 1 -
-R i 2048 2049 - S 20 24 0 -
-R i 2050 2051 - Mar 21 24 1 -
-R i 2050 2051 - S 21 24 0 -
-R i 2052 2053 - Mar 20 24 1 -
-R i 2052 2053 - S 20 24 0 -
-R i 2054 2055 - Mar 21 24 1 -
-R i 2054 2055 - S 21 24 0 -
-R i 2056 2057 - Mar 20 24 1 -
-R i 2056 2057 - S 20 24 0 -
-R i 2058 2059 - Mar 21 24 1 -
-R i 2058 2059 - S 21 24 0 -
-R i 2060 2062 - Mar 20 24 1 -
-R i 2060 2062 - S 20 24 0 -
-R i 2063 o - Mar 21 24 1 -
-R i 2063 o - S 21 24 0 -
-R i 2064 2066 - Mar 20 24 1 -
-R i 2064 2066 - S 20 24 0 -
-R i 2067 o - Mar 21 24 1 -
-R i 2067 o - S 21 24 0 -
-R i 2068 2070 - Mar 20 24 1 -
-R i 2068 2070 - S 20 24 0 -
-R i 2071 o - Mar 21 24 1 -
-R i 2071 o - S 21 24 0 -
-R i 2072 2074 - Mar 20 24 1 -
-R i 2072 2074 - S 20 24 0 -
-R i 2075 o - Mar 21 24 1 -
-R i 2075 o - S 21 24 0 -
-R i 2076 2078 - Mar 20 24 1 -
-R i 2076 2078 - S 20 24 0 -
-R i 2079 o - Mar 21 24 1 -
-R i 2079 o - S 21 24 0 -
-R i 2080 2082 - Mar 20 24 1 -
-R i 2080 2082 - S 20 24 0 -
-R i 2083 o - Mar 21 24 1 -
-R i 2083 o - S 21 24 0 -
-R i 2084 2086 - Mar 20 24 1 -
-R i 2084 2086 - S 20 24 0 -
-R i 2087 o - Mar 21 24 1 -
-R i 2087 o - S 21 24 0 -
-R i 2088 ma - Mar 20 24 1 -
-R i 2088 ma - S 20 24 0 -
+R i 2021 2022 - Mar 21 24 1 -
+R i 2021 2022 - S 21 24 0 -
 Z Asia/Tehran 3:25:44 - LMT 1916
-3:25:44 - TMT 1946
-3:30 - +0330 1977 N
+3:25:44 - TMT 1935 Jun 13
+3:30 i +0330/+0430 1977 O 20 24
 4 i +04/+05 1979
 3:30 i +0330/+0430
 R IQ 1982 o - May 1 0 1 -
@@ -902,10 +792,11 @@ R J 2005 o - S lastF 0s 0 -
 R J 2006 2011 - O lastF 0s 0 -
 R J 2013 o - D 20 0 0 -
 R J 2014 2021 - Mar lastTh 24 1 S
-R J 2014 ma - O lastF 0s 0 -
-R J 2022 ma - F lastTh 24 1 S
+R J 2014 2022 - O lastF 0s 0 -
+R J 2022 o - F lastTh 24 1 S
 Z Asia/Amman 2:23:44 - LMT 1931
-2 J EE%sT
+2 J EE%sT 2022 O 28 0s
+3 - +03
 Z Asia/Almaty 5:7:48 - LMT 1924 May 2
 5 - +05 1930 Jun 21
 6 R +06/+07 1991 Mar 31 2s
@@ -1034,15 +925,6 @@ Z Asia/Beirut 2:22 - LMT 1880
 2 l EE%sT
 R NB 1935 1941 - S 14 0 0:20 -
 R NB 1935 1941 - D 14 0 0 -
-Z Asia/Kuala_Lumpur 6:46:46 - LMT 1901
-6:55:25 - SMT 1905 Jun
-7 - +07 1933
-7 0:20 +0720 1936
-7:20 - +0720 1941 S
-7:30 - +0730 1942 F 16
-9 - +09 1945 S 12
-7:30 - +0730 1982
-8 - +08
 Z Asia/Kuching 7:21:20 - LMT 1926 Mar
 7:30 - +0730 1933
 8 NB +08/+0820 1942 F 16
@@ -1107,14 +989,16 @@ R P 2013 o - S 27 0 0 -
 R P 2014 o - O 24 0 0 -
 R P 2015 o - Mar 28 0 1 S
 R P 2015 o - O 23 1 0 -
-R P 2016 2018 - Mar Sa>=24 1 1 S
-R P 2016 2018 - O Sa>=24 1 0 -
+R P 2016 2018 - Mar Sa<=30 1 1 S
+R P 2016 2018 - O Sa<=30 1 0 -
 R P 2019 o - Mar 29 0 1 S
-R P 2019 o - O Sa>=24 0 0 -
-R P 2020 2021 - Mar Sa>=24 0 1 S
+R P 2019 o - O Sa<=30 0 0 -
+R P 2020 2021 - Mar Sa<=30 0 1 S
 R P 2020 o - O 24 1 0 -
-R P 2021 ma - O F>=23 1 0 -
-R P 2022 ma - Mar Su>=25 0 1 S
+R P 2021 o - O 29 1 0 -
+R P 2022 o - Mar 27 0 1 S
+R P 2022 ma - O Sa<=30 2 0 -
+R P 2023 ma - Mar Sa<=30 2 1 S
 Z Asia/Gaza 2:17:52 - LMT 1900 O
 2 Z EET/EEST 1948 May 15
 2 K EE%sT 1967 Jun 5
@@ -1147,12 +1031,8 @@ Z Asia/Manila -15:56 - LMT 1844 D 31
 Z Asia/Qatar 3:26:8 - LMT 1920
 4 - +04 1972 Jun
 3 - +03
-L Asia/Qatar Asia/Bahrain
 Z Asia/Riyadh 3:6:52 - LMT 1947 Mar 14
 3 - +03
-L Asia/Riyadh Antarctica/Syowa
-L Asia/Riyadh Asia/Aden
-L Asia/Riyadh Asia/Kuwait
 Z Asia/Singapore 6:55:25 - LMT 1901
 6:55:25 - SMT 1905 Jun
 7 - +07 1933
@@ -1210,20 +1090,19 @@ R S 2008 o - Ap F>=1 0 1 S
 R S 2008 o - N 1 0 0 -
 R S 2009 o - Mar lastF 0 1 S
 R S 2010 2011 - Ap F>=1 0 1 S
-R S 2012 ma - Mar lastF 0 1 S
-R S 2009 ma - O lastF 0 0 -
+R S 2012 2022 - Mar lastF 0 1 S
+R S 2009 2022 - O lastF 0 0 -
 Z Asia/Damascus 2:25:12 - LMT 1920
-2 S EE%sT
+2 S EE%sT 2022 O 28
+3 - +03
 Z Asia/Dushanbe 4:35:12 - LMT 1924 May 2
 5 - +05 1930 Jun 21
 6 R +06/+07 1991 Mar 31 2s
-5 1 +05/+06 1991 S 9 2s
+5 1 +06 1991 S 9 2s
 5 - +05
 Z Asia/Bangkok 6:42:4 - LMT 1880
 6:42:4 - BMT 1920 Ap
 7 - +07
-L Asia/Bangkok Asia/Phnom_Penh
-L Asia/Bangkok Asia/Vientiane
 Z Asia/Ashgabat 3:53:32 - LMT 1924 May 2
 4 - +04 1930 Jun 21
 5 R +05/+06 1991 Mar 31 2
@@ -1231,7 +1110,6 @@ Z Asia/Ashgabat 3:53:32 - LMT 1924 May 2
 5 - +05
 Z Asia/Dubai 3:41:12 - LMT 1920
 4 - +04
-L Asia/Dubai Asia/Muscat
 Z Asia/Samarkand 4:27:53 - LMT 1924 May 2
 4 - +04 1930 Jun 21
 5 - +05 1981 Ap
@@ -1244,7 +1122,7 @@ Z Asia/Tashkent 4:37:11 - LMT 1924 May 2
 6 R +06/+07 1991 Mar 31 2
 5 R +05/+06 1992
 5 - +05
-Z Asia/Ho_Chi_Minh 7:6:40 - LMT 1906 Jul
+Z Asia/Ho_Chi_Minh 7:6:30 - LMT 1906 Jul
 7:6:30 - PLMT 1911 May
 7 - +07 1942 D 31 23
 8 - +08 1945 Mar 14 23
@@ -1407,10 +1285,6 @@ Z Antarctica/Macquarie 0 - -00 1899 N
 10 AT AE%sT 2010
 10 1 AEDT 2011
 10 AT AE%sT
-Z Indian/Christmas 7:2:52 - LMT 1895 F
-7 - +07
-Z Indian/Cocos 6:27:40 - LMT 1900
-6:30 - +0630
 R FJ 1998 1999 - N Su>=1 2 1 -
 R FJ 1999 2000 - F lastSu 3 0 -
 R FJ 2009 o - N 29 2 1 -
@@ -1423,8 +1297,6 @@ R FJ 2014 2018 - N Su>=1 2 1 -
 R FJ 2015 2021 - Ja Su>=12 3 0 -
 R FJ 2019 o - N Su>=8 2 1 -
 R FJ 2020 o - D 20 2 1 -
-R FJ 2022 ma - N Su>=8 2 1 -
-R FJ 2023 ma - Ja Su>=12 3 0 -
 Z Pacific/Fiji 11:55:44 - LMT 1915 O 26
 12 FJ +12/+13
 Z Pacific/Gambier -8:59:48 - LMT 1912 O
@@ -1453,7 +1325,6 @@ Z Pacific/Guam -14:21 - LMT 1844 D 31
 9 - +09 1944 Jul 31
 10 Gu G%sT 2000 D 23
 10 - ChST
-L Pacific/Guam Pacific/Saipan
 Z Pacific/Tarawa 11:32:4 - LMT 1901
 12 - +12
 Z Pacific/Kanton 0 - -00 1937 Au 31
@@ -1464,14 +1335,6 @@ Z Pacific/Kiritimati -10:29:20 - LMT 1901
 -10:40 - -1040 1979 O
 -10 - -10 1994 D 31
 14 - +14
-Z Pacific/Majuro 11:24:48 - LMT 1901
-11 - +11 1914 O
-9 - +09 1919 F
-11 - +11 1937
-10 - +10 1941 Ap
-9 - +09 1944 Ja 30
-11 - +11 1969 O
-12 - +12
 Z Pacific/Kwajalein 11:9:20 - LMT 1901
 11 - +11 1937
 10 - +10 1941 Ap
@@ -1479,21 +1342,6 @@ Z Pacific/Kwajalein 11:9:20 - LMT 1901
 11 - +11 1969 O
 -12 - -12 1993 Au 20 24
 12 - +12
-Z Pacific/Chuuk -13:52:52 - LMT 1844 D 31
-10:7:8 - LMT 1901
-10 - +10 1914 O
-9 - +09 1919 F
-10 - +10 1941 Ap
-9 - +09 1945 Au
-10 - +10
-Z Pacific/Pohnpei -13:27:8 - LMT 1844 D 31
-10:32:52 - LMT 1901
-11 - +11 1914 O
-9 - +09 1919 F
-11 - +11 1937
-10 - +10 1941 Ap
-9 - +09 1945 Au
-11 - +11
 Z Pacific/Kosrae -13:8:4 - LMT 1844 D 31
 10:51:56 - LMT 1901
 11 - +11 1914 O
@@ -1546,7 +1394,6 @@ Z Pacific/Auckland 11:39:4 - LMT 1868 N 2
 Z Pacific/Chatham 12:13:48 - LMT 1868 N 2
 12:15 - +1215 1946
 12:45 k +1245/+1345
-L Pacific/Auckland Antarctica/McMurdo
 R CK 1978 o - N 12 0 0:30 -
 R CK 1979 1991 - Mar Su>=1 0 0 -
 R CK 1979 1990 - O lastSu 0 0:30 -
@@ -1570,7 +1417,6 @@ Z Pacific/Palau -15:2:4 - LMT 1844 D 31
 Z Pacific/Port_Moresby 9:48:40 - LMT 1880
 9:48:32 - PMMT 1895
 10 - +10
-L Pacific/Port_Moresby Antarctica/DumontDUrville
 Z Pacific/Bougainville 10:22:16 - LMT 1880
 9:48:32 - PMMT 1895
 10 - +10 1942 Jul
@@ -1583,7 +1429,6 @@ Z Pacific/Pitcairn -8:40:20 - LMT 1901
 Z Pacific/Pago_Pago 12:37:12 - LMT 1892 Jul 5
 -11:22:48 - LMT 1911
 -11 - SST
-L Pacific/Pago_Pago Pacific/Midway
 R WS 2010 o - S lastSu 0 1 -
 R WS 2011 o - Ap Sa>=1 4 0 -
 R WS 2011 o - S lastSa 3 1 -
@@ -1609,10 +1454,6 @@ Z Pacific/Tongatapu 12:19:12 - LMT 1945 S 10
 12:20 - +1220 1961
 13 - +13 1999
 13 TO +13/+14
-Z Pacific/Funafuti 11:56:52 - LMT 1901
-12 - +12
-Z Pacific/Wake 11:6:28 - LMT 1901
-12 - +12
 R VU 1973 o - D 22 12u 1 -
 R VU 1974 o - Mar 30 12u 0 -
 R VU 1983 1991 - S Sa>=22 24 1 -
@@ -1621,8 +1462,6 @@ R VU 1992 1993 - Ja Sa>=22 24 0 -
 R VU 1992 o - O Sa>=22 24 1 -
 Z Pacific/Efate 11:13:16 - LMT 1912 Ja 13
 11 VU +11/+12
-Z Pacific/Wallis 12:15:20 - LMT 1901
-12 - +12
 R G 1916 o - May 21 2s 1 BST
 R G 1916 o - O 1 2s 0 GMT
 R G 1917 o - Ap 8 2s 1 BST
@@ -1688,14 +1527,11 @@ R G 1972 1980 - O Su>=23 2s 0 GMT
 R G 1981 1995 - Mar lastSu 1u 1 BST
 R G 1981 1989 - O Su>=23 1u 0 GMT
 R G 1990 1995 - O Su>=22 1u 0 GMT
-Z Europe/London -0:1:15 - LMT 1847 D 1 0s
+Z Europe/London -0:1:15 - LMT 1847 D
 0 G %s 1968 O 27
 1 - BST 1971 O 31 2u
 0 G %s 1996
 0 E GMT/BST
-L Europe/London Europe/Jersey
-L Europe/London Europe/Guernsey
-L Europe/London Europe/Isle_of_Man
 R IE 1971 o - O 31 2u -1 -
 R IE 1972 1980 - Mar Su>=16 2u 0 -
 R IE 1972 1980 - O Su>=23 2u -1 -
@@ -1703,7 +1539,7 @@ R IE 1981 ma - Mar lastSu 1u 0 -
 R IE 1981 1989 - O Su>=23 1u -1 -
 R IE 1990 1995 - O Su>=22 1u -1 -
 R IE 1996 ma - O lastSu 1u -1 -
-Z Europe/Dublin -0:25 - LMT 1880 Au 2
+Z Europe/Dublin -0:25:21 - LMT 1880 Au 2
 -0:25:21 - DMT 1916 May 21 2s
 -0:25:21 1 IST 1916 O 1 2s
 0 G %s 1921 D 6
@@ -1899,23 +1735,6 @@ Z Europe/Prague 0:57:44 - LMT 1850
 1 -1 GMT 1947 F 23 2
 1 CZ CE%sT 1979
 1 E CE%sT
-R D 1916 o - May 14 23 1 S
-R D 1916 o - S 30 23 0 -
-R D 1940 o - May 15 0 1 S
-R D 1945 o - Ap 2 2s 1 S
-R D 1945 o - Au 15 2s 0 -
-R D 1946 o - May 1 2s 1 S
-R D 1946 o - S 1 2s 0 -
-R D 1947 o - May 4 2s 1 S
-R D 1947 o - Au 10 2s 0 -
-R D 1948 o - May 9 2s 1 S
-R D 1948 o - Au 8 2s 0 -
-Z Europe/Copenhagen 0:50:20 - LMT 1890
-0:50:20 - CMT 1894
-1 D CE%sT 1942 N 2 2s
-1 c CE%sT 1945 Ap 2 2
-1 D CE%sT 1980
-1 E CE%sT
 Z Atlantic/Faroe -0:27:4 - LMT 1908 Ja 11
 0 - WET 1981
 0 E WE%sT
@@ -1959,7 +1778,6 @@ Z Europe/Helsinki 1:39:49 - LMT 1878 May 31
 1:39:49 - HMT 1921 May
 2 FI EE%sT 1983
 2 E EE%sT
-L Europe/Helsinki Europe/Mariehamn
 R F 1916 o - Jun 14 23s 1 S
 R F 1916 1919 - O Su>=1 23s 0 -
 R F 1917 o - Mar 24 23s 1 S
@@ -2025,8 +1843,7 @@ Z Europe/Berlin 0:53:28 - LMT 1893 Ap
 1 So CE%sT 1946
 1 DE CE%sT 1980
 1 E CE%sT
-L Europe/Zurich Europe/Busingen
-Z Europe/Gibraltar -0:21:24 - LMT 1880 Au 2 0s
+Z Europe/Gibraltar -0:21:24 - LMT 1880 Au 2
 0 G %s 1957 Ap 14 2
 1 - CET 1982
 1 E CE%sT
@@ -2080,25 +1897,6 @@ Z Europe/Budapest 1:16:20 - LMT 1890 N
 1 c CE%sT 1945
 1 h CE%sT 1984
 1 E CE%sT
-R w 1917 1919 - F 19 23 1 -
-R w 1917 o - O 21 1 0 -
-R w 1918 1919 - N 16 1 0 -
-R w 1921 o - Mar 19 23 1 -
-R w 1921 o - Jun 23 1 0 -
-R w 1939 o - Ap 29 23 1 -
-R w 1939 o - O 29 2 0 -
-R w 1940 o - F 25 2 1 -
-R w 1940 1941 - N Su>=2 1s 0 -
-R w 1941 1942 - Mar Su>=2 1s 1 -
-R w 1943 1946 - Mar Su>=1 1s 1 -
-R w 1942 1948 - O Su>=22 1s 0 -
-R w 1947 1967 - Ap Su>=1 1s 1 -
-R w 1949 o - O 30 1s 0 -
-R w 1950 1966 - O Su>=22 1s 0 -
-R w 1967 o - O 29 1s 0 -
-Z Atlantic/Reykjavik -1:28 - LMT 1908
--1 w -01/+00 1968 Ap 7 1s
-0 - GMT
 R I 1916 o - Jun 3 24 1 S
 R I 1916 1917 - S 30 24 0 -
 R I 1917 o - Mar 31 24 1 S
@@ -2141,13 +1939,11 @@ R I 1977 1979 - May Su>=22 0s 1 S
 R I 1978 o - O 1 0s 0 -
 R I 1979 o - S 30 0s 0 -
 Z Europe/Rome 0:49:56 - LMT 1866 D 12
-0:49:56 - RMT 1893 O 31 23:49:56
+0:49:56 - RMT 1893 O 31 23u
 1 I CE%sT 1943 S 10
 1 c CE%sT 1944 Jun 4
 1 I CE%sT 1980
 1 E CE%sT
-L Europe/Rome Europe/Vatican
-L Europe/Rome Europe/San_Marino
 R LV 1989 1996 - Mar lastSu 2s 1 S
 R LV 1989 1996 - S lastSu 2s 0 -
 Z Europe/Riga 1:36:34 - LMT 1880
@@ -2165,7 +1961,6 @@ Z Europe/Riga 1:36:34 - LMT 1880
 2 E EE%sT 2000 F 29
 2 - EET 2001 Ja 2
 2 E EE%sT
-L Europe/Zurich Europe/Vaduz
 Z Europe/Vilnius 1:41:16 - LMT 1880
 1:24 - WMT 1917
 1:35:36 - KMT 1919 O 10
@@ -2181,36 +1976,6 @@ Z Europe/Vilnius 1:41:16 - LMT 1880
 1 E CE%sT 1999 O 31 1u
 2 - EET 2003
 2 E EE%sT
-R LX 1916 o - May 14 23 1 S
-R LX 1916 o - O 1 1 0 -
-R LX 1917 o - Ap 28 23 1 S
-R LX 1917 o - S 17 1 0 -
-R LX 1918 o - Ap M>=15 2s 1 S
-R LX 1918 o - S M>=15 2s 0 -
-R LX 1919 o - Mar 1 23 1 S
-R LX 1919 o - O 5 3 0 -
-R LX 1920 o - F 14 23 1 S
-R LX 1920 o - O 24 2 0 -
-R LX 1921 o - Mar 14 23 1 S
-R LX 1921 o - O 26 2 0 -
-R LX 1922 o - Mar 25 23 1 S
-R LX 1922 o - O Su>=2 1 0 -
-R LX 1923 o - Ap 21 23 1 S
-R LX 1923 o - O Su>=2 2 0 -
-R LX 1924 o - Mar 29 23 1 S
-R LX 1924 1928 - O Su>=2 1 0 -
-R LX 1925 o - Ap 5 23 1 S
-R LX 1926 o - Ap 17 23 1 S
-R LX 1927 o - Ap 9 23 1 S
-R LX 1928 o - Ap 14 23 1 S
-R LX 1929 o - Ap 20 23 1 S
-Z Europe/Luxembourg 0:24:36 - LMT 1904 Jun
-1 LX CE%sT 1918 N 25
-0 LX WE%sT 1929 O 6 2s
-0 b WE%sT 1940 May 14 3
-1 c WE%sT 1944 S 18 3
-1 b CE%sT 1977
-1 E CE%sT
 R MT 1973 o - Mar 31 0s 1 S
 R MT 1973 o - S 29 0s 0 -
 R MT 1974 o - Ap 21 0s 1 S
@@ -2218,7 +1983,7 @@ R MT 1974 o - S 16 0s 0 -
 R MT 1975 1979 - Ap Su>=15 2 1 S
 R MT 1975 1980 - S Su>=15 2 0 -
 R MT 1980 o - Mar 31 2 1 S
-Z Europe/Malta 0:58:4 - LMT 1893 N 2 0s
+Z Europe/Malta 0:58:4 - LMT 1893 N 2
 1 I CE%sT 1973 Mar 31
 1 MT CE%sT 1981
 1 E CE%sT
@@ -2234,50 +1999,6 @@ Z Europe/Chisinau 1:55:20 - LMT 1880
 2 R EE%sT 1992
 2 e EE%sT 1997
 2 MD EE%sT
-Z Europe/Monaco 0:29:32 - LMT 1892 Jun
-0:9:21 - PMT 1911 Mar 29
-0 F WE%sT 1945 S 16 3
-1 F CE%sT 1977
-1 E CE%sT
-R N 1916 o - May 1 0 1 NST
-R N 1916 o - O 1 0 0 AMT
-R N 1917 o - Ap 16 2s 1 NST
-R N 1917 o - S 17 2s 0 AMT
-R N 1918 1921 - Ap M>=1 2s 1 NST
-R N 1918 1921 - S lastM 2s 0 AMT
-R N 1922 o - Mar lastSu 2s 1 NST
-R N 1922 1936 - O Su>=2 2s 0 AMT
-R N 1923 o - Jun F>=1 2s 1 NST
-R N 1924 o - Mar lastSu 2s 1 NST
-R N 1925 o - Jun F>=1 2s 1 NST
-R N 1926 1931 - May 15 2s 1 NST
-R N 1932 o - May 22 2s 1 NST
-R N 1933 1936 - May 15 2s 1 NST
-R N 1937 o - May 22 2s 1 NST
-R N 1937 o - Jul 1 0 1 S
-R N 1937 1939 - O Su>=2 2s 0 -
-R N 1938 1939 - May 15 2s 1 S
-R N 1945 o - Ap 2 2s 1 S
-R N 1945 o - S 16 2s 0 -
-Z Europe/Amsterdam 0:19:32 - LMT 1835
-0:19:32 N %s 1937 Jul
-0:20 N +0020/+0120 1940 May 16
-1 c CE%sT 1945 Ap 2 2
-1 N CE%sT 1977
-1 E CE%sT
-R NO 1916 o - May 22 1 1 S
-R NO 1916 o - S 30 0 0 -
-R NO 1945 o - Ap 2 2s 1 S
-R NO 1945 o - O 1 2s 0 -
-R NO 1959 1964 - Mar Su>=15 2s 1 S
-R NO 1959 1965 - S Su>=15 2s 0 -
-R NO 1965 o - Ap 25 2s 1 S
-Z Europe/Oslo 0:43 - LMT 1895
-1 NO CE%sT 1940 Au 10 23
-1 c CE%sT 1945 Ap 2 2
-1 NO CE%sT 1980
-1 E CE%sT
-L Europe/Oslo Arctic/Longyearbyen
 R O 1918 1919 - S 16 2s 0 -
 R O 1919 o - Ap 15 2s 1 S
 R O 1944 o - Ap 3 2s 1 S
@@ -2434,9 +2155,8 @@ Z Europe/Simferopol 2:16:24 - LMT 1880
 3 - MSK 1990 Jul 1 2
 2 - EET 1992 Mar 20
 2 c EE%sT 1994 May
-3 e MSK/MSD 1996 Mar 31 0s
+3 c MSK/MSD 1996 Mar 31 0s
 3 1 MSD 1996 O 27 3s
-3 R MSK/MSD 1997
 3 - MSK 1997 Mar lastSu 1u
 2 E EE%sT 2014 Mar 30 2
 4 - MSK 2014 O 26 2s
@@ -2647,12 +2367,6 @@ Z Europe/Belgrade 1:22 - LMT 1884
 1 1 CEST 1945 S 16 2s
 1 - CET 1982 N 27
 1 E CE%sT
-L Europe/Belgrade Europe/Ljubljana
-L Europe/Belgrade Europe/Podgorica
-L Europe/Belgrade Europe/Sarajevo
-L Europe/Belgrade Europe/Skopje
-L Europe/Belgrade Europe/Zagreb
-L Europe/Prague Europe/Bratislava
 R s 1918 o - Ap 15 23 1 S
 R s 1918 1919 - O 6 24s 0 -
 R s 1919 o - Ap 6 23 1 S
@@ -2692,11 +2406,11 @@ R Sp 1976 o - Au 1 0 0 -
 R Sp 1977 o - S 28 0 0 -
 R Sp 1978 o - Jun 1 0 1 S
 R Sp 1978 o - Au 4 0 0 -
-Z Europe/Madrid -0:14:44 - LMT 1900 D 31 23:45:16
+Z Europe/Madrid -0:14:44 - LMT 1901 Ja 1 0u
 0 s WE%sT 1940 Mar 16 23
 1 s CE%sT 1979
 1 E CE%sT
-Z Africa/Ceuta -0:21:16 - LMT 1900 D 31 23:38:44
+Z Africa/Ceuta -0:21:16 - LMT 1901 Ja 1 0u
 0 - WET 1918 May 6 23
 0 1 WEST 1918 O 7 23
 0 - WET 1924
@@ -2710,12 +2424,6 @@ Z Atlantic/Canary -1:1:36 - LMT 1922 Mar
 0 - WET 1980 Ap 6 0s
 0 1 WEST 1980 S 28 1u
 0 E WE%sT
-Z Europe/Stockholm 1:12:12 - LMT 1879
-1:0:14 - SET 1900
-1 - CET 1916 May 14 23
-1 1 CEST 1916 O 1 1
-1 - CET 1980
-1 E CE%sT
 R CH 1941 1942 - May M>=1 1 1 S
 R CH 1941 1942 - O M>=1 2 0 -
 Z Europe/Zurich 0:34:8 - LMT 1853 Jul 16
@@ -2780,34 +2488,13 @@ Z Europe/Istanbul 1:55:52 - LMT 1880
 2 1 EEST 2015 N 8 1u
 2 E EE%sT 2016 S 7
 3 - +03
-L Europe/Istanbul Asia/Istanbul
-Z Europe/Kiev 2:2:4 - LMT 1880
+Z Europe/Kyiv 2:2:4 - LMT 1880
 2:2:4 - KMT 1924 May 2
 2 - EET 1930 Jun 21
 3 - MSK 1941 S 20
 1 c CE%sT 1943 N 6
 3 R MSK/MSD 1990 Jul 1 2
 2 1 EEST 1991 S 29 3
-2 c EE%sT 1996 May 13
-2 E EE%sT
-Z Europe/Uzhgorod 1:29:12 - LMT 1890 O
-1 - CET 1940
-1 c CE%sT 1944 O
-1 1 CEST 1944 O 26
-1 - CET 1945 Jun 29
-3 R MSK/MSD 1990
-3 - MSK 1990 Jul 1 2
-1 - CET 1991 Mar 31 3
-2 - EET 1992 Mar 20
-2 c EE%sT 1996 May 13
-2 E EE%sT
-Z Europe/Zaporozhye 2:20:40 - LMT 1880
-2:20 - +0220 1924 May 2
-2 - EET 1930 Jun 21
-3 - MSK 1941 Au 25
-1 c CE%sT 1943 O 25
-3 R MSK/MSD 1991 Mar 31 2
-2 e EE%sT 1992 Mar 20
 2 c EE%sT 1996 May 13
 2 E EE%sT
 R u 1918 1919 - Mar lastSu 2 1 D
@@ -2835,7 +2522,7 @@ R NY 1920 o - O lastSu 2 0 S
 R NY 1921 1966 - Ap lastSu 2 1 D
 R NY 1921 1954 - S lastSu 2 0 S
 R NY 1955 1966 - O lastSu 2 0 S
-Z America/New_York -4:56:2 - LMT 1883 N 18 12:3:58
+Z America/New_York -4:56:2 - LMT 1883 N 18 17u
 -5 u E%sT 1920
 -5 NY E%sT 1942
 -5 u E%sT 1946
@@ -2847,7 +2534,7 @@ R Ch 1921 o - Mar lastSu 2 1 D
 R Ch 1922 1966 - Ap lastSu 2 1 D
 R Ch 1922 1954 - S lastSu 2 0 S
 R Ch 1955 1966 - O lastSu 2 0 S
-Z America/Chicago -5:50:36 - LMT 1883 N 18 12:9:24
+Z America/Chicago -5:50:36 - LMT 1883 N 18 18u
 -6 u C%sT 1920
 -6 Ch C%sT 1936 Mar 1 2
 -5 - EST 1936 N 15 2
@@ -2855,13 +2542,13 @@ Z America/Chicago -5:50:36 - LMT 1883 N 18 12:9:24
 -6 u C%sT 1946
 -6 Ch C%sT 1967
 -6 u C%sT
-Z America/North_Dakota/Center -6:45:12 - LMT 1883 N 18 12:14:48
+Z America/North_Dakota/Center -6:45:12 - LMT 1883 N 18 19u
 -7 u M%sT 1992 O 25 2
 -6 u C%sT
-Z America/North_Dakota/New_Salem -6:45:39 - LMT 1883 N 18 12:14:21
+Z America/North_Dakota/New_Salem -6:45:39 - LMT 1883 N 18 19u
 -7 u M%sT 2003 O 26 2
 -6 u C%sT
-Z America/North_Dakota/Beulah -6:47:7 - LMT 1883 N 18 12:12:53
+Z America/North_Dakota/Beulah -6:47:7 - LMT 1883 N 18 19u
 -7 u M%sT 2010 N 7 2
 -6 u C%sT
 R De 1920 1921 - Mar lastSu 2 1 D
@@ -2869,7 +2556,7 @@ R De 1920 o - O lastSu 2 0 S
 R De 1921 o - May 22 2 0 S
 R De 1965 1966 - Ap lastSu 2 1 D
 R De 1965 1966 - O lastSu 2 0 S
-Z America/Denver -6:59:56 - LMT 1883 N 18 12:0:4
+Z America/Denver -6:59:56 - LMT 1883 N 18 19u
 -7 u M%sT 1920
 -7 De M%sT 1942
 -7 u M%sT 1946
@@ -2880,7 +2567,7 @@ R CA 1949 o - Ja 1 2 0 S
 R CA 1950 1966 - Ap lastSu 1 1 D
 R CA 1950 1961 - S lastSu 2 0 S
 R CA 1962 1966 - O lastSu 2 0 S
-Z America/Los_Angeles -7:52:58 - LMT 1883 N 18 12:7:2
+Z America/Los_Angeles -7:52:58 - LMT 1883 N 18 20u
 -8 u P%sT 1946
 -8 CA P%sT 1967
 -8 u P%sT
@@ -2950,15 +2637,14 @@ Z Pacific/Honolulu -10:31:26 - LMT 1896 Ja 13 12
 -10:30 1 HDT 1933 May 21 12
 -10:30 u H%sT 1947 Jun 8 2
 -10 - HST
-Z America/Phoenix -7:28:18 - LMT 1883 N 18 11:31:42
+Z America/Phoenix -7:28:18 - LMT 1883 N 18 19u
 -7 u M%sT 1944 Ja 1 0:1
 -7 - MST 1944 Ap 1 0:1
 -7 u M%sT 1944 O 1 0:1
 -7 - MST 1967
 -7 u M%sT 1968 Mar 21
 -7 - MST
-L America/Phoenix America/Creston
-Z America/Boise -7:44:49 - LMT 1883 N 18 12:15:11
+Z America/Boise -7:44:49 - LMT 1883 N 18 20u
 -8 u P%sT 1923 May 13 2
 -7 u M%sT 1974
 -7 - MST 1974 F 3 2
@@ -2966,7 +2652,7 @@ Z America/Boise -7:44:49 - LMT 1883 N 18 12:15:11
 R In 1941 o - Jun 22 2 1 D
 R In 1941 1954 - S lastSu 2 0 S
 R In 1946 1954 - Ap lastSu 2 1 D
-Z America/Indiana/Indianapolis -5:44:38 - LMT 1883 N 18 12:15:22
+Z America/Indiana/Indianapolis -5:44:38 - LMT 1883 N 18 18u
 -6 u C%sT 1920
 -6 In C%sT 1942
 -6 u C%sT 1946
@@ -2981,7 +2667,7 @@ R Ma 1951 o - Ap lastSu 2 1 D
 R Ma 1951 o - S lastSu 2 0 S
 R Ma 1954 1960 - Ap lastSu 2 1 D
 R Ma 1954 1960 - S lastSu 2 0 S
-Z America/Indiana/Marengo -5:45:23 - LMT 1883 N 18 12:14:37
+Z America/Indiana/Marengo -5:45:23 - LMT 1883 N 18 18u
 -6 u C%sT 1951
 -6 Ma C%sT 1961 Ap 30 2
 -5 - EST 1969
@@ -2999,7 +2685,7 @@ R V 1956 1963 - Ap lastSu 2 1 D
 R V 1960 o - O lastSu 2 0 S
 R V 1961 o - S lastSu 2 0 S
 R V 1962 1963 - O lastSu 2 0 S
-Z America/Indiana/Vincennes -5:50:7 - LMT 1883 N 18 12:9:53
+Z America/Indiana/Vincennes -5:50:7 - LMT 1883 N 18 18u
 -6 u C%sT 1946
 -6 V C%sT 1964 Ap 26 2
 -5 - EST 1969
@@ -3011,7 +2697,7 @@ R Pe 1955 o - May 1 0 1 D
 R Pe 1955 1960 - S lastSu 2 0 S
 R Pe 1956 1963 - Ap lastSu 2 1 D
 R Pe 1961 1963 - O lastSu 2 0 S
-Z America/Indiana/Tell_City -5:47:3 - LMT 1883 N 18 12:12:57
+Z America/Indiana/Tell_City -5:47:3 - LMT 1883 N 18 18u
 -6 u C%sT 1946
 -6 Pe C%sT 1964 Ap 26 2
 -5 - EST 1967 O 29 2
@@ -3023,7 +2709,7 @@ R Pi 1955 o - May 1 0 1 D
 R Pi 1955 1960 - S lastSu 2 0 S
 R Pi 1956 1964 - Ap lastSu 2 1 D
 R Pi 1961 1964 - O lastSu 2 0 S
-Z America/Indiana/Petersburg -5:49:7 - LMT 1883 N 18 12:10:53
+Z America/Indiana/Petersburg -5:49:7 - LMT 1883 N 18 18u
 -6 u C%sT 1955
 -6 Pi C%sT 1965 Ap 25 2
 -5 - EST 1966 O 30 2
@@ -3036,7 +2722,7 @@ R St 1947 1954 - S lastSu 2 0 S
 R St 1955 1956 - O lastSu 2 0 S
 R St 1957 1958 - S lastSu 2 0 S
 R St 1959 1961 - O lastSu 2 0 S
-Z America/Indiana/Knox -5:46:30 - LMT 1883 N 18 12:13:30
+Z America/Indiana/Knox -5:46:30 - LMT 1883 N 18 18u
 -6 u C%sT 1947
 -6 St C%sT 1962 Ap 29 2
 -5 - EST 1963 O 27 2
@@ -3047,7 +2733,7 @@ R Pu 1946 1960 - Ap lastSu 2 1 D
 R Pu 1946 1954 - S lastSu 2 0 S
 R Pu 1955 1956 - O lastSu 2 0 S
 R Pu 1957 1960 - S lastSu 2 0 S
-Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 12:13:35
+Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 18u
 -6 u C%sT 1946
 -6 Pu C%sT 1961 Ap 30 2
 -5 - EST 1969
@@ -3055,7 +2741,7 @@ Z America/Indiana/Winamac -5:46:25 - LMT 1883 N 18 12:13:35
 -5 - EST 2006 Ap 2 2
 -6 u C%sT 2007 Mar 11 2
 -5 u E%sT
-Z America/Indiana/Vevay -5:40:16 - LMT 1883 N 18 12:19:44
+Z America/Indiana/Vevay -5:40:16 - LMT 1883 N 18 18u
 -6 u C%sT 1954 Ap 25 2
 -5 - EST 1969
 -5 u E%sT 1973
@@ -3070,7 +2756,7 @@ R v 1946 o - Jun 2 2 0 S
 R v 1950 1961 - Ap lastSu 2 1 D
 R v 1950 1955 - S lastSu 2 0 S
 R v 1956 1961 - O lastSu 2 0 S
-Z America/Kentucky/Louisville -5:43:2 - LMT 1883 N 18 12:16:58
+Z America/Kentucky/Louisville -5:43:2 - LMT 1883 N 18 18u
 -6 u C%sT 1921
 -6 v C%sT 1942
 -6 u C%sT 1946
@@ -3079,7 +2765,7 @@ Z America/Kentucky/Louisville -5:43:2 - LMT 1883 N 18 12:16:58
 -5 u E%sT 1974 Ja 6 2
 -6 1 CDT 1974 O 27 2
 -5 u E%sT
-Z America/Kentucky/Monticello -5:39:24 - LMT 1883 N 18 12:20:36
+Z America/Kentucky/Monticello -5:39:24 - LMT 1883 N 18 18u
 -6 u C%sT 1946
 -6 - CST 1968
 -6 u C%sT 2000 O 29 2
@@ -3256,22 +2942,6 @@ Z America/Toronto -5:17:32 - LMT 1895
 -5 C E%sT 1946
 -5 t E%sT 1974
 -5 C E%sT
-L America/Toronto America/Nassau
-Z America/Thunder_Bay -5:57 - LMT 1895
--6 - CST 1910
--5 - EST 1942
--5 C E%sT 1970
--5 t E%sT 1973
--5 - EST 1974
--5 C E%sT
-Z America/Nipigon -5:53:4 - LMT 1895
--5 C E%sT 1940 S 29
--5 1 EDT 1942 F 9 2s
--5 C E%sT
-Z America/Rainy_River -6:18:16 - LMT 1895
--6 C C%sT 1940 S 29
--6 1 CDT 1942 F 9 2s
--6 C C%sT
 R W 1916 o - Ap 23 0 1 D
 R W 1916 o - S 17 0 0 S
 R W 1918 o - Ap 14 2 1 D
@@ -3421,6 +3091,8 @@ Z America/Dawson -9:17:40 - LMT 1900 Au 20
 -8 Y P%sT 1980
 -8 C P%sT 2020 N
 -7 - MST
+R m 1931 o - May 1 23 1 D
+R m 1931 o - O 1 0 0 S
 R m 1939 o - F 5 0 1 D
 R m 1939 o - Jun 25 0 0 S
 R m 1940 o - D 9 0 1 D
@@ -3433,89 +3105,79 @@ R m 1996 2000 - Ap Su>=1 2 1 D
 R m 1996 2000 - O lastSu 2 0 S
 R m 2001 o - May Su>=1 2 1 D
 R m 2001 o - S lastSu 2 0 S
-R m 2002 ma - Ap Su>=1 2 1 D
-R m 2002 ma - O lastSu 2 0 S
-Z America/Cancun -5:47:4 - LMT 1922 Ja 1 0:12:56
+R m 2002 2022 - Ap Su>=1 2 1 D
+R m 2002 2022 - O lastSu 2 0 S
+Z America/Cancun -5:47:4 - LMT 1922 Ja 1 6u
 -6 - CST 1981 D 23
 -5 m E%sT 1998 Au 2 2
 -6 m C%sT 2015 F 1 2
 -5 - EST
-Z America/Merida -5:58:28 - LMT 1922 Ja 1 0:1:32
+Z America/Merida -5:58:28 - LMT 1922 Ja 1 6u
 -6 - CST 1981 D 23
 -5 - EST 1982 D 2
 -6 m C%sT
-Z America/Matamoros -6:40 - LMT 1921 D 31 23:20
+Z America/Matamoros -6:30 - LMT 1922 Ja 1 6u
 -6 - CST 1988
 -6 u C%sT 1989
 -6 m C%sT 2010
 -6 u C%sT
-Z America/Monterrey -6:41:16 - LMT 1921 D 31 23:18:44
+Z America/Monterrey -6:41:16 - LMT 1922 Ja 1 6u
 -6 - CST 1988
 -6 u C%sT 1989
 -6 m C%sT
-Z America/Mexico_City -6:36:36 - LMT 1922 Ja 1 0:23:24
+Z America/Mexico_City -6:36:36 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 m C%sT 2001 S 30 2
 -6 - CST 2002 F 20
 -6 m C%sT
-Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 0:2:20
+Z America/Ojinaga -6:57:40 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 - CST 1996
 -6 m C%sT 1998
 -6 - CST 1998 Ap Su>=1 3
 -7 m M%sT 2010
--7 u M%sT
-Z America/Chihuahua -7:4:20 - LMT 1921 D 31 23:55:40
+-7 u M%sT 2022 O 30 2
+-6 - CST
+Z America/Chihuahua -7:4:20 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 - CST 1996
 -6 m C%sT 1998
 -6 - CST 1998 Ap Su>=1 3
--7 m M%sT
-Z America/Hermosillo -7:23:52 - LMT 1921 D 31 23:36:8
+-7 m M%sT 2022 O 30 2
+-6 - CST
+Z America/Hermosillo -7:23:52 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
 -7 m M%sT 1999
 -7 - MST
-Z America/Mazatlan -7:5:40 - LMT 1921 D 31 23:54:20
+Z America/Mazatlan -7:5:40 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
 -7 m M%sT
-Z America/Bahia_Banderas -7:1 - LMT 1921 D 31 23:59
+Z America/Bahia_Banderas -7:1 - LMT 1922 Ja 1 7u
 -7 - MST 1927 Jun 10 23
 -6 - CST 1930 N 15
--7 - MST 1931 May 1 23
--6 - CST 1931 O
--7 - MST 1932 Ap
+-7 m M%sT 1932 Ap
 -6 - CST 1942 Ap 24
 -7 - MST 1949 Ja 14
 -8 - PST 1970
 -7 m M%sT 2010 Ap 4 2
 -6 m C%sT
-Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 0:11:56
+Z America/Tijuana -7:48:4 - LMT 1922 Ja 1 7u
 -7 - MST 1924
 -8 - PST 1927 Jun 10 23
 -7 - MST 1930 N 15
@@ -3707,31 +3369,10 @@ Z America/Managua -5:45:8 - LMT 1890
 Z America/Panama -5:18:8 - LMT 1890
 -5:19:36 - CMT 1908 Ap 22
 -5 - EST
-L America/Panama America/Atikokan
-L America/Panama America/Cayman
 Z America/Puerto_Rico -4:24:25 - LMT 1899 Mar 28 12
 -4 - AST 1942 May 3
 -4 u A%sT 1946
 -4 - AST
-L America/Puerto_Rico America/Anguilla
-L America/Puerto_Rico America/Antigua
-L America/Puerto_Rico America/Aruba
-L America/Puerto_Rico America/Curacao
-L America/Puerto_Rico America/Blanc-Sablon
-L America/Puerto_Rico America/Dominica
-L America/Puerto_Rico America/Grenada
-L America/Puerto_Rico America/Guadeloupe
-L America/Puerto_Rico America/Kralendijk
-L America/Puerto_Rico America/Lower_Princes
-L America/Puerto_Rico America/Marigot
-L America/Puerto_Rico America/Montserrat
-L America/Puerto_Rico America/Port_of_Spain
-L America/Puerto_Rico America/St_Barthelemy
-L America/Puerto_Rico America/St_Kitts
-L America/Puerto_Rico America/St_Lucia
-L America/Puerto_Rico America/St_Thomas
-L America/Puerto_Rico America/St_Vincent
-L America/Puerto_Rico America/Tortola
 Z America/Miquelon -3:44:40 - LMT 1911 May 15
 -4 - AST 1980 May
 -3 - -03 1987
@@ -4089,7 +3730,9 @@ R x 2012 2014 - S Su>=2 4u 1 -
 R x 2016 2018 - May Su>=9 3u 0 -
 R x 2016 2018 - Au Su>=9 4u 1 -
 R x 2019 ma - Ap Su>=2 3u 0 -
-R x 2019 ma - S Su>=2 4u 1 -
+R x 2019 2021 - S Su>=2 4u 1 -
+R x 2022 o - S Su>=9 4u 1 -
+R x 2023 ma - S Su>=2 4u 1 -
 Z America/Santiago -4:42:45 - LMT 1890
 -4:42:45 - SMT 1910 Ja 10
 -5 - -05 1916 Jul
@@ -4099,9 +3742,9 @@ Z America/Santiago -4:42:45 - LMT 1890
 -5 x -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
--4 - -04 1946 Jul 15
--4 1 -03 1946 S
--4 - -04 1947 Ap
+-4 - -04 1946 Jul 14 24
+-4 1 -03 1946 Au 28 24
+-5 1 -04 1947 Mar 31 24
 -5 - -05 1947 May 21 23
 -4 x -04/-03
 Z America/Punta_Arenas -4:43:40 - LMT 1890
@@ -4113,7 +3756,8 @@ Z America/Punta_Arenas -4:43:40 - LMT 1890
 -5 x -05/-04 1932 S
 -4 - -04 1942 Jun
 -5 - -05 1942 Au
--4 - -04 1947 Ap
+-4 - -04 1946 Au 28 24
+-5 1 -04 1947 Mar 31 24
 -5 - -05 1947 May 21 23
 -4 x -04/-03 2016 D 4
 -3 - -03
@@ -4277,15 +3921,9 @@ Z America/Caracas -4:27:44 - LMT 1890
 -4 - -04 2007 D 9 3
 -4:30 - -0430 2016 May 1 2:30
 -4 - -04
-Z Etc/GMT 0 - GMT
 Z Etc/UTC 0 - UTC
+Z Etc/GMT 0 - GMT
 L Etc/GMT GMT
-L Etc/UTC Etc/Universal
-L Etc/UTC Etc/Zulu
-L Etc/GMT Etc/Greenwich
-L Etc/GMT Etc/GMT-0
-L Etc/GMT Etc/GMT+0
-L Etc/GMT Etc/GMT0
 Z Etc/GMT-14 14 - +14
 Z Etc/GMT-13 13 - +13
 Z Etc/GMT-12 12 - +12
@@ -4313,49 +3951,7 @@ Z Etc/GMT+10 -10 - -10
 Z Etc/GMT+11 -11 - -11
 Z Etc/GMT+12 -12 - -12
 Z Factory 0 - -00
-L Africa/Nairobi Africa/Asmera
-L Africa/Abidjan Africa/Timbuktu
-L America/Argentina/Catamarca America/Argentina/ComodRivadavia
-L America/Adak America/Atka
-L America/Argentina/Buenos_Aires America/Buenos_Aires
-L America/Argentina/Catamarca America/Catamarca
-L America/Panama America/Coral_Harbour
-L America/Argentina/Cordoba America/Cordoba
-L America/Tijuana America/Ensenada
-L America/Indiana/Indianapolis America/Fort_Wayne
-L America/Nuuk America/Godthab
-L America/Indiana/Indianapolis America/Indianapolis
-L America/Argentina/Jujuy America/Jujuy
-L America/Indiana/Knox America/Knox_IN
-L America/Kentucky/Louisville America/Louisville
-L America/Argentina/Mendoza America/Mendoza
-L America/Toronto America/Montreal
-L America/Rio_Branco America/Porto_Acre
-L America/Argentina/Cordoba America/Rosario
-L America/Tijuana America/Santa_Isabel
-L America/Denver America/Shiprock
-L America/Puerto_Rico America/Virgin
-L Pacific/Auckland Antarctica/South_Pole
-L Asia/Ashgabat Asia/Ashkhabad
-L Asia/Kolkata Asia/Calcutta
-L Asia/Shanghai Asia/Chongqing
-L Asia/Shanghai Asia/Chungking
-L Asia/Dhaka Asia/Dacca
-L Asia/Shanghai Asia/Harbin
-L Asia/Urumqi Asia/Kashgar
-L Asia/Kathmandu Asia/Katmandu
-L Asia/Macau Asia/Macao
-L Asia/Yangon Asia/Rangoon
-L Asia/Ho_Chi_Minh Asia/Saigon
-L Asia/Jerusalem Asia/Tel_Aviv
-L Asia/Thimphu Asia/Thimbu
-L Asia/Makassar Asia/Ujung_Pandang
-L Asia/Ulaanbaatar Asia/Ulan_Bator
-L Atlantic/Faroe Atlantic/Faeroe
-L Europe/Oslo Atlantic/Jan_Mayen
 L Australia/Sydney Australia/ACT
-L Australia/Sydney Australia/Canberra
-L Australia/Hobart Australia/Currie
 L Australia/Lord_Howe Australia/LHI
 L Australia/Sydney Australia/NSW
 L Australia/Darwin Australia/North
@@ -4382,9 +3978,13 @@ L Pacific/Easter Chile/EasterIsland
 L America/Havana Cuba
 L Africa/Cairo Egypt
 L Europe/Dublin Eire
+L Etc/GMT Etc/GMT+0
+L Etc/GMT Etc/GMT-0
+L Etc/GMT Etc/GMT0
+L Etc/GMT Etc/Greenwich
 L Etc/UTC Etc/UCT
-L Europe/London Europe/Belfast
-L Europe/Chisinau Europe/Tiraspol
+L Etc/UTC Etc/Universal
+L Etc/UTC Etc/Zulu
 L Europe/London GB
 L Europe/London GB-Eire
 L Etc/GMT GMT+0
@@ -4392,7 +3992,7 @@ L Etc/GMT GMT-0
 L Etc/GMT GMT0
 L Etc/GMT Greenwich
 L Asia/Hong_Kong Hongkong
-L Atlantic/Reykjavik Iceland
+L Africa/Abidjan Iceland
 L Asia/Tehran Iran
 L Asia/Jerusalem Israel
 L America/Jamaica Jamaica
@@ -4406,12 +4006,6 @@ L Pacific/Auckland NZ
 L Pacific/Chatham NZ-CHAT
 L America/Denver Navajo
 L Asia/Shanghai PRC
-L Pacific/Kanton Pacific/Enderbury
-L Pacific/Honolulu Pacific/Johnston
-L Pacific/Pohnpei Pacific/Ponape
-L Pacific/Pago_Pago Pacific/Samoa
-L Pacific/Chuuk Pacific/Truk
-L Pacific/Chuuk Pacific/Yap
 L Europe/Warsaw Poland
 L Europe/Lisbon Portugal
 L Asia/Taipei ROC
@@ -4435,3 +4029,168 @@ L Etc/UTC UTC
 L Etc/UTC Universal
 L Europe/Moscow W-SU
 L Etc/UTC Zulu
+L America/Argentina/Buenos_Aires America/Buenos_Aires
+L America/Argentina/Catamarca America/Catamarca
+L America/Argentina/Cordoba America/Cordoba
+L America/Indiana/Indianapolis America/Indianapolis
+L America/Argentina/Jujuy America/Jujuy
+L America/Indiana/Knox America/Knox_IN
+L America/Kentucky/Louisville America/Louisville
+L America/Argentina/Mendoza America/Mendoza
+L America/Puerto_Rico America/Virgin
+L Pacific/Pago_Pago Pacific/Samoa
+L Africa/Abidjan Africa/Accra
+L Africa/Nairobi Africa/Addis_Ababa
+L Africa/Nairobi Africa/Asmara
+L Africa/Abidjan Africa/Bamako
+L Africa/Lagos Africa/Bangui
+L Africa/Abidjan Africa/Banjul
+L Africa/Maputo Africa/Blantyre
+L Africa/Lagos Africa/Brazzaville
+L Africa/Maputo Africa/Bujumbura
+L Africa/Abidjan Africa/Conakry
+L Africa/Abidjan Africa/Dakar
+L Africa/Nairobi Africa/Dar_es_Salaam
+L Africa/Nairobi Africa/Djibouti
+L Africa/Lagos Africa/Douala
+L Africa/Abidjan Africa/Freetown
+L Africa/Maputo Africa/Gaborone
+L Africa/Maputo Africa/Harare
+L Africa/Nairobi Africa/Kampala
+L Africa/Maputo Africa/Kigali
+L Africa/Lagos Africa/Kinshasa
+L Africa/Lagos Africa/Libreville
+L Africa/Abidjan Africa/Lome
+L Africa/Lagos Africa/Luanda
+L Africa/Maputo Africa/Lubumbashi
+L Africa/Maputo Africa/Lusaka
+L Africa/Lagos Africa/Malabo
+L Africa/Johannesburg Africa/Maseru
+L Africa/Johannesburg Africa/Mbabane
+L Africa/Nairobi Africa/Mogadishu
+L Africa/Lagos Africa/Niamey
+L Africa/Abidjan Africa/Nouakchott
+L Africa/Abidjan Africa/Ouagadougou
+L Africa/Lagos Africa/Porto-Novo
+L America/Puerto_Rico America/Anguilla
+L America/Puerto_Rico America/Antigua
+L America/Puerto_Rico America/Aruba
+L America/Panama America/Atikokan
+L America/Puerto_Rico America/Blanc-Sablon
+L America/Panama America/Cayman
+L America/Phoenix America/Creston
+L America/Puerto_Rico America/Curacao
+L America/Puerto_Rico America/Dominica
+L America/Puerto_Rico America/Grenada
+L America/Puerto_Rico America/Guadeloupe
+L America/Puerto_Rico America/Kralendijk
+L America/Puerto_Rico America/Lower_Princes
+L America/Puerto_Rico America/Marigot
+L America/Puerto_Rico America/Montserrat
+L America/Toronto America/Nassau
+L America/Puerto_Rico America/Port_of_Spain
+L America/Puerto_Rico America/St_Barthelemy
+L America/Puerto_Rico America/St_Kitts
+L America/Puerto_Rico America/St_Lucia
+L America/Puerto_Rico America/St_Thomas
+L America/Puerto_Rico America/St_Vincent
+L America/Puerto_Rico America/Tortola
+L Pacific/Port_Moresby Antarctica/DumontDUrville
+L Pacific/Auckland Antarctica/McMurdo
+L Asia/Riyadh Antarctica/Syowa
+L Asia/Urumqi Antarctica/Vostok
+L Europe/Berlin Arctic/Longyearbyen
+L Asia/Riyadh Asia/Aden
+L Asia/Qatar Asia/Bahrain
+L Asia/Kuching Asia/Brunei
+L Asia/Singapore Asia/Kuala_Lumpur
+L Asia/Riyadh Asia/Kuwait
+L Asia/Dubai Asia/Muscat
+L Asia/Bangkok Asia/Phnom_Penh
+L Asia/Bangkok Asia/Vientiane
+L Africa/Abidjan Atlantic/Reykjavik
+L Africa/Abidjan Atlantic/St_Helena
+L Europe/Brussels Europe/Amsterdam
+L Europe/Prague Europe/Bratislava
+L Europe/Zurich Europe/Busingen
+L Europe/Berlin Europe/Copenhagen
+L Europe/London Europe/Guernsey
+L Europe/London Europe/Isle_of_Man
+L Europe/London Europe/Jersey
+L Europe/Belgrade Europe/Ljubljana
+L Europe/Brussels Europe/Luxembourg
+L Europe/Helsinki Europe/Mariehamn
+L Europe/Paris Europe/Monaco
+L Europe/Berlin Europe/Oslo
+L Europe/Belgrade Europe/Podgorica
+L Europe/Rome Europe/San_Marino
+L Europe/Belgrade Europe/Sarajevo
+L Europe/Belgrade Europe/Skopje
+L Europe/Berlin Europe/Stockholm
+L Europe/Zurich Europe/Vaduz
+L Europe/Rome Europe/Vatican
+L Europe/Belgrade Europe/Zagreb
+L Africa/Nairobi Indian/Antananarivo
+L Asia/Bangkok Indian/Christmas
+L Asia/Yangon Indian/Cocos
+L Africa/Nairobi Indian/Comoro
+L Indian/Maldives Indian/Kerguelen
+L Asia/Dubai Indian/Mahe
+L Africa/Nairobi Indian/Mayotte
+L Asia/Dubai Indian/Reunion
+L Pacific/Port_Moresby Pacific/Chuuk
+L Pacific/Tarawa Pacific/Funafuti
+L Pacific/Tarawa Pacific/Majuro
+L Pacific/Pago_Pago Pacific/Midway
+L Pacific/Guadalcanal Pacific/Pohnpei
+L Pacific/Guam Pacific/Saipan
+L Pacific/Tarawa Pacific/Wake
+L Pacific/Tarawa Pacific/Wallis
+L Africa/Abidjan Africa/Timbuktu
+L America/Argentina/Catamarca America/Argentina/ComodRivadavia
+L America/Adak America/Atka
+L America/Panama America/Coral_Harbour
+L America/Tijuana America/Ensenada
+L America/Indiana/Indianapolis America/Fort_Wayne
+L America/Toronto America/Montreal
+L America/Toronto America/Nipigon
+L America/Rio_Branco America/Porto_Acre
+L America/Winnipeg America/Rainy_River
+L America/Argentina/Cordoba America/Rosario
+L America/Tijuana America/Santa_Isabel
+L America/Denver America/Shiprock
+L America/Toronto America/Thunder_Bay
+L Pacific/Auckland Antarctica/South_Pole
+L Asia/Shanghai Asia/Chongqing
+L Asia/Shanghai Asia/Harbin
+L Asia/Urumqi Asia/Kashgar
+L Asia/Jerusalem Asia/Tel_Aviv
+L Europe/Berlin Atlantic/Jan_Mayen
+L Australia/Sydney Australia/Canberra
+L Australia/Hobart Australia/Currie
+L Europe/London Europe/Belfast
+L Europe/Chisinau Europe/Tiraspol
+L Europe/Kyiv Europe/Uzhgorod
+L Europe/Kyiv Europe/Zaporozhye
+L Pacific/Kanton Pacific/Enderbury
+L Pacific/Honolulu Pacific/Johnston
+L Pacific/Port_Moresby Pacific/Yap
+L Africa/Nairobi Africa/Asmera
+L America/Nuuk America/Godthab
+L Asia/Ashgabat Asia/Ashkhabad
+L Asia/Kolkata Asia/Calcutta
+L Asia/Shanghai Asia/Chungking
+L Asia/Dhaka Asia/Dacca
+L Europe/Istanbul Asia/Istanbul
+L Asia/Kathmandu Asia/Katmandu
+L Asia/Macau Asia/Macao
+L Asia/Yangon Asia/Rangoon
+L Asia/Ho_Chi_Minh Asia/Saigon
+L Asia/Thimphu Asia/Thimbu
+L Asia/Makassar Asia/Ujung_Pandang
+L Asia/Ulaanbaatar Asia/Ulan_Bator
+L Atlantic/Faroe Atlantic/Faeroe
+L Europe/Kyiv Europe/Kiev
+L Asia/Nicosia Europe/Nicosia
+L Pacific/Guadalcanal Pacific/Ponape
+L Pacific/Port_Moresby Pacific/Truk
