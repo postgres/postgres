@@ -3912,7 +3912,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	Oid			statOid = InvalidOid;
 	MVNDistinct *stats;
 	StatisticExtInfo *matched_info = NULL;
-	RangeTblEntry *rte;
+	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
 
 	/* bail out immediately if the table has no extended statistics */
 	if (!rel->statlist)
@@ -3930,6 +3930,10 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 		/* skip statistics of other kinds */
 		if (info->kind != STATS_EXT_NDISTINCT)
+			continue;
+
+		/* skip statistics with mismatching stxdinherit value */
+		if (info->inherit != rte->inh)
 			continue;
 
 		/*
@@ -4003,7 +4007,6 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 	Assert(nmatches_vars + nmatches_exprs > 1);
 
-	rte = planner_rt_fetch(rel->relid, root);
 	stats = statext_ndistinct_load(statOid, rte->inh);
 
 	/*
@@ -5238,6 +5241,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 			/* skip stats without per-expression stats */
 			if (info->kind != STATS_EXT_EXPRESSIONS)
+				continue;
+
+			/* skip stats with mismatching stxdinherit value */
+			if (info->inherit != rte->inh)
 				continue;
 
 			pos = 0;
