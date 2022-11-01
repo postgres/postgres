@@ -2104,7 +2104,7 @@ psql_completion(const char *text, int start, int end)
 	/* ALTER SEQUENCE <name> */
 	else if (Matches("ALTER", "SEQUENCE", MatchAny))
 		COMPLETE_WITH("AS", "INCREMENT", "MINVALUE", "MAXVALUE", "RESTART",
-					  "NO", "CACHE", "CYCLE", "SET", "OWNED BY",
+					  "START", "NO", "CACHE", "CYCLE", "SET", "OWNED BY",
 					  "OWNER TO", "RENAME TO");
 	/* ALTER SEQUENCE <name> AS */
 	else if (TailMatches("ALTER", "SEQUENCE", MatchAny, "AS"))
@@ -2381,10 +2381,26 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny) ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny))
 		COMPLETE_WITH("TYPE", "SET", "RESET", "RESTART", "ADD", "DROP");
+	/* ALTER TABLE ALTER [COLUMN] <foo> ADD */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "ADD") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "ADD"))
+		COMPLETE_WITH("GENERATED");
+	/* ALTER TABLE ALTER [COLUMN] <foo> ADD GENERATED */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "ADD", "GENERATED") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "ADD", "GENERATED"))
+		COMPLETE_WITH("ALWAYS", "BY DEFAULT");
+	/* ALTER TABLE ALTER [COLUMN] <foo> ADD GENERATED */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "ADD", "GENERATED", "ALWAYS") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "ADD", "GENERATED", "ALWAYS") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "ADD", "GENERATED", "BY", "DEFAULT") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "ADD", "GENERATED", "BY", "DEFAULT"))
+		COMPLETE_WITH("AS IDENTITY");
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET"))
-		COMPLETE_WITH("(", "COMPRESSION", "DEFAULT", "NOT NULL", "STATISTICS", "STORAGE");
+		COMPLETE_WITH("(", "COMPRESSION", "DEFAULT", "GENERATED", "NOT NULL", "STATISTICS", "STORAGE",
+		/* a subset of ALTER SEQUENCE options */
+					  "INCREMENT", "MINVALUE", "MAXVALUE", "START", "NO", "CACHE", "CYCLE");
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET ( */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "(") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "("))
@@ -2393,6 +2409,14 @@ psql_completion(const char *text, int start, int end)
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "COMPRESSION") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "COMPRESSION"))
 		COMPLETE_WITH("DEFAULT", "PGLZ", "LZ4");
+	/* ALTER TABLE ALTER [COLUMN] <foo> SET GENERATED */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "GENERATED") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "GENERATED"))
+		COMPLETE_WITH("ALWAYS", "BY DEFAULT");
+	/* ALTER TABLE ALTER [COLUMN] <foo> SET NO */
+	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "NO") ||
+			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "NO"))
+		COMPLETE_WITH("MINVALUE", "MAXVALUE", "CYCLE");
 	/* ALTER TABLE ALTER [COLUMN] <foo> SET STORAGE */
 	else if (Matches("ALTER", "TABLE", MatchAny, "ALTER", "COLUMN", MatchAny, "SET", "STORAGE") ||
 			 Matches("ALTER", "TABLE", MatchAny, "ALTER", MatchAny, "SET", "STORAGE"))
