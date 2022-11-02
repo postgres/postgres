@@ -72,7 +72,7 @@ typedef struct _parallelReadyList
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 							   const int compression, bool dosync, ArchiveMode mode,
 							   SetupWorkerPtrType setupWorkerPtr);
-static void _getObjectDescription(PQExpBuffer buf, TocEntry *te);
+static void _getObjectDescription(PQExpBuffer buf, const TocEntry *te);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
 static char *sanitize_line(const char *str, bool want_hyphen);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
@@ -3398,27 +3398,27 @@ _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
  * Extract an object description for a TOC entry, and append it to buf.
  *
  * This is used for ALTER ... OWNER TO.
+ *
+ * If the object type has no owner, do nothing.
  */
 static void
-_getObjectDescription(PQExpBuffer buf, TocEntry *te)
+_getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 {
 	const char *type = te->desc;
-
-	/* Use ALTER TABLE for views and sequences */
-	if (strcmp(type, "VIEW") == 0 || strcmp(type, "SEQUENCE") == 0 ||
-		strcmp(type, "MATERIALIZED VIEW") == 0)
-		type = "TABLE";
 
 	/* objects that don't require special decoration */
 	if (strcmp(type, "COLLATION") == 0 ||
 		strcmp(type, "CONVERSION") == 0 ||
 		strcmp(type, "DOMAIN") == 0 ||
-		strcmp(type, "TABLE") == 0 ||
-		strcmp(type, "TYPE") == 0 ||
 		strcmp(type, "FOREIGN TABLE") == 0 ||
+		strcmp(type, "MATERIALIZED VIEW") == 0 ||
+		strcmp(type, "SEQUENCE") == 0 ||
+		strcmp(type, "STATISTICS") == 0 ||
+		strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "TEXT SEARCH DICTIONARY") == 0 ||
 		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0 ||
-		strcmp(type, "STATISTICS") == 0 ||
+		strcmp(type, "TYPE") == 0 ||
+		strcmp(type, "VIEW") == 0 ||
 	/* non-schema-specified objects */
 		strcmp(type, "DATABASE") == 0 ||
 		strcmp(type, "PROCEDURAL LANGUAGE") == 0 ||
@@ -3427,33 +3427,28 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te)
 		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||
 		strcmp(type, "SERVER") == 0 ||
 		strcmp(type, "PUBLICATION") == 0 ||
-		strcmp(type, "SUBSCRIPTION") == 0 ||
-		strcmp(type, "USER MAPPING") == 0)
+		strcmp(type, "SUBSCRIPTION") == 0)
 	{
 		appendPQExpBuffer(buf, "%s ", type);
 		if (te->namespace && *te->namespace)
 			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
 		appendPQExpBufferStr(buf, fmtId(te->tag));
-		return;
 	}
-
 	/* BLOBs just have a name, but it's numeric so must not use fmtId */
-	if (strcmp(type, "BLOB") == 0)
+	else if (strcmp(type, "BLOB") == 0)
 	{
 		appendPQExpBuffer(buf, "LARGE OBJECT %s", te->tag);
-		return;
 	}
-
 	/*
 	 * These object types require additional decoration.  Fortunately, the
 	 * information needed is exactly what's in the DROP command.
 	 */
-	if (strcmp(type, "AGGREGATE") == 0 ||
-		strcmp(type, "FUNCTION") == 0 ||
-		strcmp(type, "OPERATOR") == 0 ||
-		strcmp(type, "OPERATOR CLASS") == 0 ||
-		strcmp(type, "OPERATOR FAMILY") == 0 ||
-		strcmp(type, "PROCEDURE") == 0)
+	else if (strcmp(type, "AGGREGATE") == 0 ||
+			 strcmp(type, "FUNCTION") == 0 ||
+			 strcmp(type, "OPERATOR") == 0 ||
+			 strcmp(type, "OPERATOR CLASS") == 0 ||
+			 strcmp(type, "OPERATOR FAMILY") == 0 ||
+			 strcmp(type, "PROCEDURE") == 0)
 	{
 		/* Chop "DROP " off the front and make a modifiable copy */
 		char	   *first = pg_strdup(te->dropStmt + 5);
@@ -3472,9 +3467,24 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te)
 		free(first);
 		return;
 	}
-
-	pg_log_warning("don't know how to set owner for object type \"%s\"",
-				   type);
+	/* these object types don't have separate owners */
+	else if (strcmp(type, "CAST") == 0 ||
+			 strcmp(type, "CHECK CONSTRAINT") == 0 ||
+			 strcmp(type, "CONSTRAINT") == 0 ||
+			 strcmp(type, "DATABASE PROPERTIES") == 0 ||
+			 strcmp(type, "DEFAULT") == 0 ||
+			 strcmp(type, "FK CONSTRAINT") == 0 ||
+			 strcmp(type, "INDEX") == 0 ||
+			 strcmp(type, "RULE") == 0 ||
+			 strcmp(type, "TRIGGER") == 0 ||
+			 strcmp(type, "ROW SECURITY") == 0 ||
+			 strcmp(type, "POLICY") == 0 ||
+			 strcmp(type, "USER MAPPING") == 0)
+	{
+		/* do nothing */
+	}
+	else
+		pg_fatal("don't know how to set owner for object type \"%s\"", type);
 }
 
 /*
@@ -3575,8 +3585,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 * instead issue an ALTER OWNER command.  Schema "public" is special; when
 	 * a dump emits a comment in lieu of creating it, we use ALTER OWNER even
 	 * when using SET SESSION for all other objects.  We assume that anything
-	 * without a DROP command is not a separately ownable object.  All the
-	 * categories with DROP commands must appear in one list or the other.
+	 * without a DROP command is not a separately ownable object.
 	 */
 	if (!ropt->noOwner &&
 		(!ropt->use_setsessauth ||
@@ -3585,62 +3594,17 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		te->owner && strlen(te->owner) > 0 &&
 		te->dropStmt && strlen(te->dropStmt) > 0)
 	{
-		if (strcmp(te->desc, "AGGREGATE") == 0 ||
-			strcmp(te->desc, "BLOB") == 0 ||
-			strcmp(te->desc, "COLLATION") == 0 ||
-			strcmp(te->desc, "CONVERSION") == 0 ||
-			strcmp(te->desc, "DATABASE") == 0 ||
-			strcmp(te->desc, "DOMAIN") == 0 ||
-			strcmp(te->desc, "FUNCTION") == 0 ||
-			strcmp(te->desc, "OPERATOR") == 0 ||
-			strcmp(te->desc, "OPERATOR CLASS") == 0 ||
-			strcmp(te->desc, "OPERATOR FAMILY") == 0 ||
-			strcmp(te->desc, "PROCEDURE") == 0 ||
-			strcmp(te->desc, "PROCEDURAL LANGUAGE") == 0 ||
-			strcmp(te->desc, "SCHEMA") == 0 ||
-			strcmp(te->desc, "EVENT TRIGGER") == 0 ||
-			strcmp(te->desc, "TABLE") == 0 ||
-			strcmp(te->desc, "TYPE") == 0 ||
-			strcmp(te->desc, "VIEW") == 0 ||
-			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
-			strcmp(te->desc, "SEQUENCE") == 0 ||
-			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
-			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||
-			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
-			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
-			strcmp(te->desc, "SERVER") == 0 ||
-			strcmp(te->desc, "STATISTICS") == 0 ||
-			strcmp(te->desc, "PUBLICATION") == 0 ||
-			strcmp(te->desc, "SUBSCRIPTION") == 0)
-		{
-			PQExpBuffer temp = createPQExpBuffer();
+		PQExpBufferData temp;
 
-			appendPQExpBufferStr(temp, "ALTER ");
-			_getObjectDescription(temp, te);
-			appendPQExpBuffer(temp, " OWNER TO %s;", fmtId(te->owner));
-			ahprintf(AH, "%s\n\n", temp->data);
-			destroyPQExpBuffer(temp);
-		}
-		else if (strcmp(te->desc, "CAST") == 0 ||
-				 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
-				 strcmp(te->desc, "DEFAULT") == 0 ||
-				 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "INDEX") == 0 ||
-				 strcmp(te->desc, "RULE") == 0 ||
-				 strcmp(te->desc, "TRIGGER") == 0 ||
-				 strcmp(te->desc, "ROW SECURITY") == 0 ||
-				 strcmp(te->desc, "POLICY") == 0 ||
-				 strcmp(te->desc, "USER MAPPING") == 0)
-		{
-			/* these object types don't have separate owners */
-		}
-		else
-		{
-			pg_log_warning("don't know how to set owner for object type \"%s\"",
-						   te->desc);
-		}
+		initPQExpBuffer(&temp);
+		_getObjectDescription(&temp, te);
+		/*
+		 * If _getObjectDescription() didn't fill the buffer, then there is no
+		 * owner.
+		 */
+		if (temp.data[0])
+			ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp.data, fmtId(te->owner));
+		termPQExpBuffer(&temp);
 	}
 
 	/*
