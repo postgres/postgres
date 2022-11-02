@@ -1027,7 +1027,7 @@ ldelete:;
 							 mtstate->mt_transition_capture);
 
 		/*
-		 * We've already captured the NEW TABLE row, so make sure any AR
+		 * We've already captured the OLD TABLE row, so make sure any AR
 		 * DELETE trigger fired below doesn't capture it again.
 		 */
 		ar_delete_trig_tcs = NULL;
