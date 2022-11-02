@@ -10996,7 +10996,7 @@ dumpDomain(Archive *fout, const TypeInfo *tyinfo)
 		appendPQExpBuffer(conprefix, "CONSTRAINT %s ON DOMAIN",
 						  fmtId(domcheck->dobj.name));
 
-		if (tyinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		if (domcheck->dobj.dump & DUMP_COMPONENT_COMMENT)
 			dumpComment(fout, conprefix->data, qtypname,
 						tyinfo->dobj.namespace->dobj.name,
 						tyinfo->rolname,
@@ -15868,7 +15868,7 @@ dumpTableSchema(Archive *fout, const TableInfo *tbinfo)
 		if (constr->separate || !constr->conislocal)
 			continue;
 
-		if (tbinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		if (constr->dobj.dump & DUMP_COMPONENT_COMMENT)
 			dumpTableConstraintComment(fout, constr);
 	}
 

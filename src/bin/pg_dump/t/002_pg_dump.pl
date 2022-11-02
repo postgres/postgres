@@ -1690,13 +1690,16 @@ my %tests = (
 		               COLLATE "C"
 					   DEFAULT \'10014\'
 					   CHECK(VALUE ~ \'^\d{5}$\' OR
-							 VALUE ~ \'^\d{5}-\d{4}$\');',
+							 VALUE ~ \'^\d{5}-\d{4}$\');
+					   COMMENT ON CONSTRAINT us_postal_code_check
+						 ON DOMAIN dump_test.us_postal_code IS \'check it\';',
 		regexp => qr/^
 			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
 			\QCONSTRAINT us_postal_code_check CHECK \E
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
-			\Q'::text)));\E
+			\Q'::text)));\E(.|\n)*
+			\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
@@ -2639,7 +2642,9 @@ my %tests = (
 						   col3 text,
 						   col4 text,
 						   CHECK (col1 <= 1000)
-					   ) WITH (autovacuum_enabled = false, fillfactor=80);',
+					   ) WITH (autovacuum_enabled = false, fillfactor=80);
+					   COMMENT ON CONSTRAINT test_table_col1_check
+						 ON dump_test.test_table IS \'bounds check\';',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
@@ -2648,7 +2653,9 @@ my %tests = (
 			\s+\Qcol4 text,\E\n
 			\s+\QCONSTRAINT test_table_col1_check CHECK ((col1 <= 1000))\E\n
 			\Q)\E\n
-			\QWITH (autovacuum_enabled='false', fillfactor='80');\E\n/xm,
+			\QWITH (autovacuum_enabled='false', fillfactor='80');\E\n(.|\n)*
+			\QCOMMENT ON CONSTRAINT test_table_col1_check ON dump_test.test_table IS 'bounds check';\E
+			/xm,
 		like => {
 			%full_runs,
 			%dump_test_schema_runs,
