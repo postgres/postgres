@@ -120,11 +120,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           Since no connection is made when this option is
-          <literal>false</literal>, no tables are subscribed, and so
-          after you enable the subscription nothing will be replicated.
-          You will need to then run
-          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal>
-          for tables to be subscribed.
+          <literal>false</literal>, no tables are subscribed. To initiate
+          replication, you must manually create the replication slot, enable
+          the subscription, and refresh the subscription. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -135,8 +135,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          <para>
           Specifies whether the command should create the replication slot on
           the publisher.  The default is <literal>true</literal>.
+         </para>
+         <para>
           If set to <literal>false</literal>, you are responsible for
-          creating the publisher's slot in some other way.
+          creating the publisher's slot in some other way. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -162,11 +166,13 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           Setting <literal>slot_name</literal> to <literal>NONE</literal>
-          means there will be no replication slot
-          associated with the subscription.  Use this when you will be
-          creating the replication slot later manually.  Such
-          subscriptions must also have both <literal>enabled</literal> and
-          <literal>create_slot</literal> set to <literal>false</literal>.
+          means there will be no replication slot associated with the
+          subscription. Such subscriptions must also have both
+          <literal>enabled</literal> and <literal>create_slot</literal> set to
+          <literal>false</literal>.  Use this when you will be creating the
+          replication slot later manually. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -357,8 +363,10 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    replication slot separately (using the
    function <function>pg_create_logical_replication_slot</function> with the
    plugin name <literal>pgoutput</literal>) and create the subscription using
-   the parameter <literal>create_slot = false</literal>.  This is an
-   implementation restriction that might be lifted in a future release.
+   the parameter <literal>create_slot = false</literal>.  See
+   <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+   for examples. This is an implementation restriction that might be lifted in a
+   future release.
   </para>
 
   <para>

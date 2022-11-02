@@ -320,7 +320,7 @@
   </sect2>
 
   <sect2 id="logical-replication-subscription-examples">
-    <title>Examples</title>
+    <title>Examples - Setup Logical Replication</title>
 
     <para>
      Create some test tables on the publisher.
@@ -510,6 +510,163 @@ test_sub=# SELECT * FROM t3;
  6 | vi
 (4 rows)
 </programlisting></para>
+  </sect2>
+
+  <sect2 id="logical-replication-subscription-examples-deferred-slot">
+   <title>Examples - Deferred Replication Slot Creation</title>
+
+   <para>
+    There are some cases (e.g.
+    <xref linkend="logical-replication-subscription-slot"/>) where, if the
+    remote replication slot was not created automatically, the user must create
+    it manually before the subscription can be activated. The steps to create
+    the slot and activate the subscription are shown in the following examples.
+    These examples specify the standard logical decoding plugin
+    (<literal>pgoutput</literal>), which is what the built-in logical
+    replication uses.
+   </para>
+   <para>
+    First, create a publication for the examples to use.
+<programlisting>
+test_pub=# CREATE PUBLICATION pub1 FOR ALL TABLES;
+CREATE PUBLICATION
+</programlisting></para>
+   <para>
+    Example 1: Where the subscription says <literal>connect = false</literal>
+   </para>
+   <para>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (connect=false);
+WARNING:  subscription was created, but is not connected
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot. Because the name was not
+       specified during <literal>CREATE SUBSCRIPTION</literal>, the name of the
+       slot to create is same as the subscription name, e.g. "sub1".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('sub1', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ sub1      | 0/19404D0
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, complete the activation of the subscription. After
+       this the tables of <literal>pub1</literal> will start replicating.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Example 2: Where the subscription says <literal>connect = false</literal>,
+    but also specifies the <literal>slot_name</literal>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (connect=false, slot_name='myslot');
+WARNING:  subscription was created, but is not connected
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot using the same name that was
+       specified during <literal>CREATE SUBSCRIPTION</literal>, e.g. "myslot".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ myslot    | 0/19059A0
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, the remaining subscription activation steps are the
+       same as before.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    Example 3: Where the subscription specifies <literal>slot_name = NONE</literal>
+    <itemizedlist>
+     <listitem>
+      <para>
+       Create the subscription. When <literal>slot_name = NONE</literal> then
+       <literal>enabled = false</literal>, and
+       <literal>create_slot = false</literal> are also needed.
+<programlisting>
+test_sub=# CREATE SUBSCRIPTION sub1
+test_sub-# CONNECTION 'host=localhost dbname=test_pub'
+test_sub-# PUBLICATION pub1
+test_sub-# WITH (slot_name=NONE, enabled=false, create_slot=false);
+CREATE SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the publisher, manually create a slot using any name, e.g. "myslot".
+<programlisting>
+test_pub=# SELECT * FROM pg_create_logical_replication_slot('myslot', 'pgoutput');
+ slot_name |    lsn
+-----------+-----------
+ myslot    | 0/1905930
+(1 row)
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       On the subscriber, associate the subscription with the slot name just
+       created.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 SET (slot_name='myslot');
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+     <listitem>
+      <para>
+       The remaining subscription activation steps are same as before.
+<programlisting>
+test_sub=# ALTER SUBSCRIPTION sub1 ENABLE;
+ALTER SUBSCRIPTION
+test_sub=# ALTER SUBSCRIPTION sub1 REFRESH PUBLICATION;
+ALTER SUBSCRIPTION
+</programlisting></para>
+     </listitem>
+    </itemizedlist>
+   </para>
   </sect2>
 
  </sect1>
