@@ -534,8 +534,7 @@ struct ReorderBuffer
 	/*
 	 * Transactions and subtransactions that have modified system catalogs.
 	 */
-	dlist_head	catchange_txns;
-	int			catchange_ntxns;
+	dclist_head catchange_txns;
 
 	/*
 	 * one-entry sized cache for by_txn. Very frequently the same txn gets

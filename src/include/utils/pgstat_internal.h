@@ -162,8 +162,7 @@ typedef struct PgStat_SubXactStatus
 	 * if the transaction commits/aborts. To handle replicas and crashes,
 	 * stats drops are included in commit / abort records.
 	 */
-	dlist_head	pending_drops;
-	int			pending_drops_count;
+	dclist_head pending_drops;
 
 	/*
 	 * Tuple insertion/deletion counts for an open transaction can't be

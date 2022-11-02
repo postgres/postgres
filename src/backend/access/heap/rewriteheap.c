@@ -196,8 +196,7 @@ typedef struct RewriteMappingFile
 	TransactionId xid;			/* xid that might need to see the row */
 	int			vfd;			/* fd of mappings file */
 	off_t		off;			/* how far have we written yet */
-	uint32		num_mappings;	/* number of in-memory mappings */
-	dlist_head	mappings;		/* list of in-memory mappings */
+	dclist_head mappings;		/* list of in-memory mappings */
 	char		path[MAXPGPATH];	/* path, for error messages */
 } RewriteMappingFile;
 
@@ -864,9 +863,10 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		Oid			dboid;
 		uint32		len;
 		int			written;
+		uint32		num_mappings = dclist_count(&src->mappings);
 
 		/* this file hasn't got any new mappings */
-		if (src->num_mappings == 0)
+		if (num_mappings == 0)
 			continue;
 
 		if (state->rs_old_rel->rd_rel->relisshared)
@@ -874,7 +874,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		else
 			dboid = MyDatabaseId;
 
-		xlrec.num_mappings = src->num_mappings;
+		xlrec.num_mappings = num_mappings;
 		xlrec.mapped_rel = RelationGetRelid(state->rs_old_rel);
 		xlrec.mapped_xid = src->xid;
 		xlrec.mapped_db = dboid;
@@ -882,31 +882,30 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		xlrec.start_lsn = state->rs_begin_lsn;
 
 		/* write all mappings consecutively */
-		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
+		len = num_mappings * sizeof(LogicalRewriteMappingData);
 		waldata_start = waldata = palloc(len);
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet
 		 */
-		dlist_foreach_modify(iter, &src->mappings)
+		dclist_foreach_modify(iter, &src->mappings)
 		{
 			RewriteMappingDataEntry *pmap;
 
-			pmap = dlist_container(RewriteMappingDataEntry, node, iter.cur);
+			pmap = dclist_container(RewriteMappingDataEntry, node, iter.cur);
 
 			memcpy(waldata, &pmap->map, sizeof(pmap->map));
 			waldata += sizeof(pmap->map);
 
 			/* remove from the list and free */
-			dlist_delete(&pmap->node);
+			dclist_delete_from(&src->mappings, &pmap->node);
 			pfree(pmap);
 
 			/* update bookkeeping */
 			state->rs_num_rewrite_mappings--;
-			src->num_mappings--;
 		}
 
-		Assert(src->num_mappings == 0);
+		Assert(dclist_count(&src->mappings) == 0);
 		Assert(waldata == waldata_start + len);
 
 		/*
@@ -1002,8 +1001,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 				 LSN_FORMAT_ARGS(state->rs_begin_lsn),
 				 xid, GetCurrentTransactionId());
 
-		dlist_init(&src->mappings);
-		src->num_mappings = 0;
+		dclist_init(&src->mappings);
 		src->off = 0;
 		memcpy(src->path, path, sizeof(path));
 		src->vfd = PathNameOpenFile(path,
@@ -1017,8 +1015,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 	pmap = MemoryContextAlloc(state->rs_cxt,
 							  sizeof(RewriteMappingDataEntry));
 	memcpy(&pmap->map, map, sizeof(LogicalRewriteMappingData));
-	dlist_push_tail(&src->mappings, &pmap->node);
-	src->num_mappings++;
+	dclist_push_tail(&src->mappings, &pmap->node);
 	state->rs_num_rewrite_mappings++;
 
 	/*

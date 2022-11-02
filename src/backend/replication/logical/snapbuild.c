@@ -1688,7 +1688,7 @@ SnapBuildSerialize(SnapBuild *builder, XLogRecPtr lsn)
 
 	/* Get the catalog modifying transactions that are yet not committed */
 	catchange_xip = ReorderBufferGetCatalogChangesXacts(builder->reorder);
-	catchange_xcnt = builder->reorder->catchange_ntxns;
+	catchange_xcnt = dclist_count(&builder->reorder->catchange_txns);
 
 	needed_length = sizeof(SnapBuildOnDisk) +
 		sizeof(TransactionId) * (builder->committed.xcnt + catchange_xcnt);

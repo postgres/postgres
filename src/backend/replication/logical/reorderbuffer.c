@@ -349,8 +349,6 @@ ReorderBufferAllocate(void)
 	buffer->by_txn_last_xid = InvalidTransactionId;
 	buffer->by_txn_last_txn = NULL;
 
-	buffer->catchange_ntxns = 0;
-
 	buffer->outbuf = NULL;
 	buffer->outbufsize = 0;
 	buffer->size = 0;
@@ -368,7 +366,7 @@ ReorderBufferAllocate(void)
 
 	dlist_init(&buffer->toplevel_by_lsn);
 	dlist_init(&buffer->txns_by_base_snapshot_lsn);
-	dlist_init(&buffer->catchange_txns);
+	dclist_init(&buffer->catchange_txns);
 
 	/*
 	 * Ensure there's no stale data from prior uses of this slot, in case some
@@ -1553,12 +1551,7 @@ ReorderBufferCleanupTXN(ReorderBuffer *rb, ReorderBufferTXN *txn)
 	 */
 	dlist_delete(&txn->node);
 	if (rbtxn_has_catalog_changes(txn))
-	{
-		dlist_delete(&txn->catchange_node);
-		rb->catchange_ntxns--;
-
-		Assert(rb->catchange_ntxns >= 0);
-	}
+		dclist_delete_from(&rb->catchange_txns, &txn->catchange_node);
 
 	/* now remove reference from buffer */
 	hash_search(rb->by_txn,
@@ -3309,8 +3302,7 @@ ReorderBufferXidSetCatalogChanges(ReorderBuffer *rb, TransactionId xid,
 	if (!rbtxn_has_catalog_changes(txn))
 	{
 		txn->txn_flags |= RBTXN_HAS_CATALOG_CHANGES;
-		dlist_push_tail(&rb->catchange_txns, &txn->catchange_node);
-		rb->catchange_ntxns++;
+		dclist_push_tail(&rb->catchange_txns, &txn->catchange_node);
 	}
 
 	/*
@@ -3323,8 +3315,7 @@ ReorderBufferXidSetCatalogChanges(ReorderBuffer *rb, TransactionId xid,
 	if (toptxn != NULL && !rbtxn_has_catalog_changes(toptxn))
 	{
 		toptxn->txn_flags |= RBTXN_HAS_CATALOG_CHANGES;
-		dlist_push_tail(&rb->catchange_txns, &toptxn->catchange_node);
-		rb->catchange_ntxns++;
+		dclist_push_tail(&rb->catchange_txns, &toptxn->catchange_node);
 	}
 }
 
@@ -3342,19 +3333,17 @@ ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb)
 	size_t		xcnt = 0;
 
 	/* Quick return if the list is empty */
-	if (rb->catchange_ntxns == 0)
-	{
-		Assert(dlist_is_empty(&rb->catchange_txns));
+	if (dclist_count(&rb->catchange_txns) == 0)
 		return NULL;
-	}
 
 	/* Initialize XID array */
-	xids = (TransactionId *) palloc(sizeof(TransactionId) * rb->catchange_ntxns);
-	dlist_foreach(iter, &rb->catchange_txns)
+	xids = (TransactionId *) palloc(sizeof(TransactionId) *
+									dclist_count(&rb->catchange_txns));
+	dclist_foreach(iter, &rb->catchange_txns)
 	{
-		ReorderBufferTXN *txn = dlist_container(ReorderBufferTXN,
-												catchange_node,
-												iter.cur);
+		ReorderBufferTXN *txn = dclist_container(ReorderBufferTXN,
+												 catchange_node,
+												 iter.cur);
 
 		Assert(rbtxn_has_catalog_changes(txn));
 
@@ -3363,7 +3352,7 @@ ReorderBufferGetCatalogChangesXacts(ReorderBuffer *rb)
 
 	qsort(xids, xcnt, sizeof(TransactionId), xidComparator);
 
-	Assert(xcnt == rb->catchange_ntxns);
+	Assert(xcnt == dclist_count(&rb->catchange_txns));
 	return xids;
 }
 
