@@ -33,7 +33,14 @@ standby_desc_running_xacts(StringInfo buf, xl_running_xacts *xlrec)
 	}
 
 	if (xlrec->subxid_overflow)
-		appendStringInfoString(buf, "; subxid ovf");
+		appendStringInfoString(buf, "; subxid overflowed");
+
+	if (xlrec->subxcnt > 0)
+	{
+		appendStringInfo(buf, "; %d subxacts:", xlrec->subxcnt);
+		for (i = 0; i < xlrec->subxcnt; i++)
+			appendStringInfo(buf, " %u", xlrec->xids[xlrec->xcnt + i]);
+	}
 }
 
 void
