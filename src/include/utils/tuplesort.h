@@ -378,12 +378,11 @@ extern void tuplesort_initialize_shared(Sharedsort *shared, int nWorkers,
 extern void tuplesort_attach_shared(Sharedsort *shared, dsm_segment *seg);
 
 /*
- * These routines may only be called if randomAccess was specified 'true'.
- * Likewise, backwards scan in gettuple/getdatum is only allowed if
- * randomAccess was specified.  Note that parallel sorts do not support
- * randomAccess.
+ * These routines may only be called if TUPLESORT_RANDOMACCESS was specified
+ * during tuplesort_begin_*.  Additionally backwards scan in gettuple/getdatum
+ * also require TUPLESORT_RANDOMACCESS.  Note that parallel sorts do not
+ * support random access.
  */
-
 extern void tuplesort_rescan(Tuplesortstate *state);
 extern void tuplesort_markpos(Tuplesortstate *state);
 extern void tuplesort_restorepos(Tuplesortstate *state);
