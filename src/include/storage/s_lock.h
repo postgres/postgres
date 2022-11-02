@@ -341,29 +341,6 @@ tas(volatile slock_t *lock)
 #endif	 /* __arm__ || __arm || __aarch64__ || __aarch64 */
 
 
-/*
- * RISC-V likewise uses __sync_lock_test_and_set(int *, int) if available.
- */
-#if defined(__riscv)
-#ifdef HAVE_GCC__SYNC_INT32_TAS
-#define HAS_TEST_AND_SET
-
-#define TAS(lock) tas(lock)
-
-typedef int slock_t;
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	return __sync_lock_test_and_set(lock, 1);
-}
-
-#define S_UNLOCK(lock) __sync_lock_release(lock)
-
-#endif	 /* HAVE_GCC__SYNC_INT32_TAS */
-#endif	 /* __riscv */
-
-
 /* S/390 and S/390x Linux (32- and 64-bit zSeries) */
 #if defined(__s390__) || defined(__s390x__)
 #define HAS_TEST_AND_SET
@@ -747,6 +724,51 @@ tas(volatile slock_t *lock)
 
 typedef unsigned char slock_t;
 #endif
+
+
+/*
+ * If we have no platform-specific knowledge, but we found that the compiler
+ * provides __sync_lock_test_and_set(), use that.  Prefer the int-width
+ * version over the char-width version if we have both, on the rather dubious
+ * grounds that that's known to be more likely to work in the ARM ecosystem.
+ * (But we dealt with ARM above.)
+ */
+#if !defined(HAS_TEST_AND_SET)
+
+#if defined(HAVE_GCC__SYNC_INT32_TAS)
+#define HAS_TEST_AND_SET
+
+#define TAS(lock) tas(lock)
+
+typedef int slock_t;
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	return __sync_lock_test_and_set(lock, 1);
+}
+
+#define S_UNLOCK(lock) __sync_lock_release(lock)
+
+#elif defined(HAVE_GCC__SYNC_CHAR_TAS)
+#define HAS_TEST_AND_SET
+
+#define TAS(lock) tas(lock)
+
+typedef char slock_t;
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+	return __sync_lock_test_and_set(lock, 1);
+}
+
+#define S_UNLOCK(lock) __sync_lock_release(lock)
+
+#endif	 /* HAVE_GCC__SYNC_INT32_TAS */
+
+#endif	/* !defined(HAS_TEST_AND_SET) */
+
 
 /*
  * Default implementation of S_UNLOCK() for gcc/icc.
