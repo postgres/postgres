@@ -436,9 +436,9 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 	uint64		size;
 
 #ifdef SH_RAW_ALLOCATOR
-	tb = SH_RAW_ALLOCATOR(sizeof(SH_TYPE));
+	tb = (SH_TYPE *) SH_RAW_ALLOCATOR(sizeof(SH_TYPE));
 #else
-	tb = MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
+	tb = (SH_TYPE *) MemoryContextAllocZero(ctx, sizeof(SH_TYPE));
 	tb->ctx = ctx;
 #endif
 	tb->private_data = private_data;
@@ -448,7 +448,7 @@ SH_CREATE(MemoryContext ctx, uint32 nelements, void *private_data)
 
 	SH_COMPUTE_PARAMETERS(tb, size);
 
-	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
+	tb->data = (SH_ELEMENT_TYPE *) SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	return tb;
 }
@@ -493,7 +493,7 @@ SH_GROW(SH_TYPE * tb, uint64 newsize)
 	/* compute parameters for new table */
 	SH_COMPUTE_PARAMETERS(tb, newsize);
 
-	tb->data = SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
+	tb->data = (SH_ELEMENT_TYPE *) SH_ALLOCATE(tb, sizeof(SH_ELEMENT_TYPE) * tb->size);
 
 	newdata = tb->data;
 
@@ -1059,7 +1059,7 @@ SH_STAT(SH_TYPE * tb)
 	double		fillfactor;
 	uint32		i;
 
-	uint32	   *collisions = palloc0(tb->size * sizeof(uint32));
+	uint32	   *collisions = (uint32 *) palloc0(tb->size * sizeof(uint32));
 	uint32		total_collisions = 0;
 	uint32		max_collisions = 0;
 	double		avg_collisions;
