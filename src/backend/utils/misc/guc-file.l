@@ -10,6 +10,7 @@
 #include "postgres.h"
 
 #include <ctype.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "common/file_utils.h"
@@ -17,7 +18,6 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
-#include <sys/stat.h>
 #include "utils/memutils.h"
 }
 
