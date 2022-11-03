@@ -115,6 +115,12 @@ RelationBuildPartitionKey(Relation relation)
 	key->strategy = form->partstrat;
 	key->partnatts = form->partnatts;
 
+	/* Validate partition strategy code */
+	if (key->strategy != PARTITION_STRATEGY_LIST &&
+		key->strategy != PARTITION_STRATEGY_RANGE &&
+		key->strategy != PARTITION_STRATEGY_HASH)
+		elog(ERROR, "invalid partition strategy \"%c\"", key->strategy);
+
 	/*
 	 * We can rely on the first variable-length attribute being mapped to the
 	 * relevant field of the catalog's C struct, because all previous

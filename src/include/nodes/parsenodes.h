@@ -827,6 +827,13 @@ typedef struct PartitionElem
 	int			location;		/* token location, or -1 if unknown */
 } PartitionElem;
 
+typedef enum PartitionStrategy
+{
+	PARTITION_STRATEGY_LIST = 'l',
+	PARTITION_STRATEGY_RANGE = 'r',
+	PARTITION_STRATEGY_HASH = 'h'
+} PartitionStrategy;
+
 /*
  * PartitionSpec - parse-time representation of a partition key specification
  *
@@ -835,16 +842,10 @@ typedef struct PartitionElem
 typedef struct PartitionSpec
 {
 	NodeTag		type;
-	char	   *strategy;		/* partitioning strategy ('hash', 'list' or
-								 * 'range') */
+	PartitionStrategy strategy;
 	List	   *partParams;		/* List of PartitionElems */
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
-
-/* Internal codes for partitioning strategies */
-#define PARTITION_STRATEGY_HASH		'h'
-#define PARTITION_STRATEGY_LIST		'l'
-#define PARTITION_STRATEGY_RANGE	'r'
 
 /*
  * PartitionBoundSpec - a partition bound specification

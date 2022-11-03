@@ -270,10 +270,6 @@ get_qual_from_partbound(Relation parent, PartitionBoundSpec *spec)
 			Assert(spec->strategy == PARTITION_STRATEGY_RANGE);
 			my_qual = get_qual_for_range(parent, spec, false);
 			break;
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) key->strategy);
 	}
 
 	return my_qual;
@@ -338,11 +334,6 @@ partition_bounds_create(PartitionBoundSpec **boundspecs, int nparts,
 
 		case PARTITION_STRATEGY_RANGE:
 			return create_range_bounds(boundspecs, nparts, key, mapping);
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) key->strategy);
-			break;
 	}
 
 	Assert(false);
@@ -1181,12 +1172,9 @@ partition_bounds_merge(int partnatts,
 									  jointype,
 									  outer_parts,
 									  inner_parts);
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) outer_rel->boundinfo->strategy);
-			return NULL;		/* keep compiler quiet */
 	}
+
+	return NULL;
 }
 
 /*
@@ -2892,8 +2880,7 @@ partitions_are_ordered(PartitionBoundInfo boundinfo, Bitmapset *live_parts)
 				return true;
 
 			break;
-		default:
-			/* HASH, or some other strategy */
+		case PARTITION_STRATEGY_HASH:
 			break;
 	}
 
@@ -3241,10 +3228,6 @@ check_new_partition_bound(char *relname, Relation parent,
 
 				break;
 			}
-
-		default:
-			elog(ERROR, "unexpected partition strategy: %d",
-				 (int) key->strategy);
 	}
 
 	if (overlap)
@@ -3980,8 +3963,8 @@ make_partition_op_expr(PartitionKey key, int keynum,
 								   key->partcollation[keynum]);
 			break;
 
-		default:
-			elog(ERROR, "invalid partitioning strategy");
+		case PARTITION_STRATEGY_HASH:
+			Assert(false);
 			break;
 	}
 

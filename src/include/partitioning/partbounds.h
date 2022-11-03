@@ -78,7 +78,7 @@ struct RelOptInfo;				/* avoid including pathnodes.h here */
  */
 typedef struct PartitionBoundInfoData
 {
-	char		strategy;		/* hash, list or range? */
+	PartitionStrategy strategy; /* hash, list or range? */
 	int			ndatums;		/* Length of the datums[] array */
 	Datum	  **datums;
 	PartitionRangeDatumKind **kind; /* The kind of each range bound datum;
