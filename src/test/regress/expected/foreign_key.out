@@ -1960,7 +1960,7 @@ ORDER BY co.contype, cr.relname, co.conname, p.conname;
 ----------------+----------------------------+---------+--------------+----------------------------+--------------+----------------
  part1_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part2_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
- part32_self_fk | parted_self_fk_id_abc_fkey | f       | f            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
+ part32_self_fk | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part33_self_fk | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part3_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  parted_self_fk | parted_self_fk_id_abc_fkey | f       | t            |                            |              | parted_self_fk
@@ -1989,7 +1989,7 @@ ORDER BY co.contype, cr.relname, co.conname, p.conname;
 ----------------+----------------------------+---------+--------------+----------------------------+--------------+----------------
  part1_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part2_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
- part32_self_fk | parted_self_fk_id_abc_fkey | f       | f            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
+ part32_self_fk | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part33_self_fk | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  part3_self_fk  | parted_self_fk_id_abc_fkey | f       | t            | parted_self_fk_id_abc_fkey | t            | parted_self_fk
  parted_self_fk | parted_self_fk_id_abc_fkey | f       | t            |                            |              | parted_self_fk

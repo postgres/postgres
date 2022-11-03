@@ -9858,14 +9858,21 @@ CloneFkReferenced(Relation parentRel, Relation partitionRel)
 			mapped_confkey[i] = attmap->attnums[confkey[i] - 1];
 
 		fkconstraint = makeNode(Constraint);
-		/* for now this is all we need */
+		fkconstraint->contype = CONSTRAINT_FOREIGN;
 		fkconstraint->conname = NameStr(constrForm->conname);
-		fkconstraint->fk_upd_action = constrForm->confupdtype;
-		fkconstraint->fk_del_action = constrForm->confdeltype;
 		fkconstraint->deferrable = constrForm->condeferrable;
 		fkconstraint->initdeferred = constrForm->condeferred;
-		fkconstraint->initially_valid = true;
+		fkconstraint->location = -1;
+		fkconstraint->pktable = NULL;
+		/* ->fk_attrs determined below */
+		fkconstraint->pk_attrs = NIL;
 		fkconstraint->fk_matchtype = constrForm->confmatchtype;
+		fkconstraint->fk_upd_action = constrForm->confupdtype;
+		fkconstraint->fk_del_action = constrForm->confdeltype;
+		fkconstraint->old_conpfeqop = NIL;
+		fkconstraint->old_pktable_oid = InvalidOid;
+		fkconstraint->skip_validation = false;
+		fkconstraint->initially_valid = true;
 
 		/* set up colnames that are used to generate the constraint name */
 		for (int i = 0; i < numfks; i++)
@@ -10037,11 +10044,21 @@ CloneFkReferencing(List **wqueue, Relation parentRel, Relation partRel)
 
 		/* No dice.  Set up to create our own constraint */
 		fkconstraint = makeNode(Constraint);
-		fkconstraint->fk_upd_action = constrForm->confupdtype;
-		fkconstraint->fk_del_action = constrForm->confdeltype;
+		fkconstraint->contype = CONSTRAINT_FOREIGN;
+		/* ->conname determined below */
 		fkconstraint->deferrable = constrForm->condeferrable;
 		fkconstraint->initdeferred = constrForm->condeferred;
+		fkconstraint->location = -1;
+		fkconstraint->pktable = NULL;
+		/* ->fk_attrs determined below */
+		fkconstraint->pk_attrs = NIL;
 		fkconstraint->fk_matchtype = constrForm->confmatchtype;
+		fkconstraint->fk_upd_action = constrForm->confupdtype;
+		fkconstraint->fk_del_action = constrForm->confdeltype;
+		fkconstraint->old_conpfeqop = NIL;
+		fkconstraint->old_pktable_oid = InvalidOid;
+		fkconstraint->skip_validation = false;
+		fkconstraint->initially_valid = true;
 		for (int i = 0; i < numfks; i++)
 		{
 			Form_pg_attribute att;
@@ -18019,11 +18036,21 @@ DetachPartitionFinalize(Relation rel, Relation partRel, bool concurrent,
 		 * still do), but now we need separate ones of our own.
 		 */
 		fkconstraint = makeNode(Constraint);
+		fkconstraint->contype = CONSTRAINT_FOREIGN;
 		fkconstraint->conname = pstrdup(NameStr(conform->conname));
-		fkconstraint->fk_upd_action = conform->confupdtype;
-		fkconstraint->fk_del_action = conform->confdeltype;
 		fkconstraint->deferrable = conform->condeferrable;
 		fkconstraint->initdeferred = conform->condeferred;
+		fkconstraint->location = -1;
+		fkconstraint->pktable = NULL;
+		fkconstraint->fk_attrs = NIL;
+		fkconstraint->pk_attrs = NIL;
+		fkconstraint->fk_matchtype = conform->confmatchtype;
+		fkconstraint->fk_upd_action = conform->confupdtype;
+		fkconstraint->fk_del_action = conform->confdeltype;
+		fkconstraint->old_conpfeqop = NIL;
+		fkconstraint->old_pktable_oid = InvalidOid;
+		fkconstraint->skip_validation = false;
+		fkconstraint->initially_valid = true;
 
 		createForeignKeyActionTriggers(partRel, conform->confrelid,
 									   fkconstraint, fk->conoid,
