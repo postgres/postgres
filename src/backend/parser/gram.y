@@ -11067,9 +11067,9 @@ createdb_opt_items:
 		;
 
 createdb_opt_item:
-			createdb_opt_name opt_equal SignedIconst
+			createdb_opt_name opt_equal NumericOnly
 				{
-					$$ = makeDefElem($1, (Node *) makeInteger($3), @1);
+					$$ = makeDefElem($1, $3, @1);
 				}
 			| createdb_opt_name opt_equal opt_boolean_or_string
 				{
