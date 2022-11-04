@@ -2413,8 +2413,9 @@ SELECT * FROM pg_locks pl LEFT JOIN pg_prepared_xacts ppx
       </para>
       <para>
        The address (<literal>LSN</literal>) up to which the logical
-       slot's consumer has confirmed receiving data. Data older than this is
-       not available anymore. <literal>NULL</literal> for physical slots.
+       slot's consumer has confirmed receiving data. Data corresponding to the
+       transactions committed before this <literal>LSN</literal> is not
+       available anymore. <literal>NULL</literal> for physical slots.
       </para></entry>
      </row>
 
