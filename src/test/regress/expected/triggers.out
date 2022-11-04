@@ -2020,7 +2020,7 @@ create trigger failed after update on parted_trig
   referencing old table as old_table
   for each row execute procedure trigger_nothing();
 ERROR:  "parted_trig" is a partitioned table
-DETAIL:  Triggers on partitioned tables cannot have transition tables.
+DETAIL:  ROW triggers with transition tables are not supported on partitioned tables.
 drop table parted_trig;
 --
 -- Verify trigger creation for partitioned tables, and drop behavior
