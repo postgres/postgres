@@ -571,7 +571,6 @@ ExecSupportsBackwardScan(Plan *node)
 		case T_SeqScan:
 		case T_TidScan:
 		case T_TidRangeScan:
-		case T_FunctionScan:
 		case T_ValuesScan:
 		case T_CteScan:
 		case T_Material:
@@ -639,7 +638,6 @@ ExecMaterializesOutput(NodeTag plantype)
 	switch (plantype)
 	{
 		case T_Material:
-		case T_FunctionScan:
 		case T_TableFuncScan:
 		case T_CteScan:
 		case T_NamedTuplestoreScan:

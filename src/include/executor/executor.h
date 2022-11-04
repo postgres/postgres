@@ -451,6 +451,8 @@ extern Datum ExecMakeFunctionResultSet(SetExprState *fcache,
 									   MemoryContext argContext,
 									   bool *isNull,
 									   ExprDoneCond *isDone);
+extern void ExecEvalFuncArgs(FunctionCallInfo fcinfo,
+							 List *argList, ExprContext *econtext);
 
 /*
  * prototypes from functions in execScan.c
