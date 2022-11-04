@@ -261,7 +261,7 @@ CreateTriggerFiringOn(CreateTrigStmt *stmt, const char *queryString,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("\"%s\" is a partitioned table",
 								RelationGetRelationName(rel)),
-						 errdetail("Triggers on partitioned tables cannot have transition tables.")));
+						 errdetail("ROW triggers with transition tables are not supported on partitioned tables.")));
 		}
 	}
 	else if (rel->rd_rel->relkind == RELKIND_VIEW)
