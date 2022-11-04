@@ -10,7 +10,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include "common/file_utils.h"
