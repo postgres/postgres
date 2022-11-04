@@ -816,7 +816,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 		}
 		else if (strcmp(defel->defname, "oid") == 0)
 		{
-			dboid = defGetInt32(defel);
+			dboid = defGetObjectId(defel);
 
 			/*
 			 * We don't normally permit new databases to be created with
