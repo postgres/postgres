@@ -1769,25 +1769,18 @@ HeapTupleSatisfiesVisibility(HeapTuple htup, Snapshot snapshot, Buffer buffer)
 	{
 		case SNAPSHOT_MVCC:
 			return HeapTupleSatisfiesMVCC(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_SELF:
 			return HeapTupleSatisfiesSelf(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_ANY:
 			return HeapTupleSatisfiesAny(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_TOAST:
 			return HeapTupleSatisfiesToast(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_DIRTY:
 			return HeapTupleSatisfiesDirty(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_HISTORIC_MVCC:
 			return HeapTupleSatisfiesHistoricMVCC(htup, snapshot, buffer);
-			break;
 		case SNAPSHOT_NON_VACUUMABLE:
 			return HeapTupleSatisfiesNonVacuumable(htup, snapshot, buffer);
-			break;
 	}
 
 	return false;				/* keep compiler quiet */
