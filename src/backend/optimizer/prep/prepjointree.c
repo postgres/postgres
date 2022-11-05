@@ -117,7 +117,6 @@ static void reduce_outer_joins_pass2(Node *jtnode,
 									 reduce_outer_joins_state *state,
 									 PlannerInfo *root,
 									 Relids nonnullable_rels,
-									 List *nonnullable_vars,
 									 List *forced_null_vars);
 static Node *remove_useless_results_recurse(PlannerInfo *root, Node *jtnode);
 static int	get_result_relid(PlannerInfo *root, Node *jtnode);
@@ -2693,7 +2692,7 @@ reduce_outer_joins(PlannerInfo *root)
 		elog(ERROR, "so where are the outer joins?");
 
 	reduce_outer_joins_pass2((Node *) root->parse->jointree,
-							 state, root, NULL, NIL, NIL);
+							 state, root, NULL, NIL);
 }
 
 /*
@@ -2770,7 +2769,6 @@ reduce_outer_joins_pass1(Node *jtnode)
  *	state: state data collected by phase 1 for this node
  *	root: toplevel planner state
  *	nonnullable_rels: set of base relids forced non-null by upper quals
- *	nonnullable_vars: list of Vars forced non-null by upper quals
  *	forced_null_vars: list of Vars forced null by upper quals
  */
 static void
@@ -2778,7 +2776,6 @@ reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
 						 PlannerInfo *root,
 						 Relids nonnullable_rels,
-						 List *nonnullable_vars,
 						 List *forced_null_vars)
 {
 	/*
@@ -2795,16 +2792,12 @@ reduce_outer_joins_pass2(Node *jtnode,
 		ListCell   *l;
 		ListCell   *s;
 		Relids		pass_nonnullable_rels;
-		List	   *pass_nonnullable_vars;
 		List	   *pass_forced_null_vars;
 
 		/* Scan quals to see if we can add any constraints */
 		pass_nonnullable_rels = find_nonnullable_rels(f->quals);
 		pass_nonnullable_rels = bms_add_members(pass_nonnullable_rels,
 												nonnullable_rels);
-		pass_nonnullable_vars = find_nonnullable_vars(f->quals);
-		pass_nonnullable_vars = list_concat(pass_nonnullable_vars,
-											nonnullable_vars);
 		pass_forced_null_vars = find_forced_null_vars(f->quals);
 		pass_forced_null_vars = list_concat(pass_forced_null_vars,
 											forced_null_vars);
@@ -2817,7 +2810,6 @@ reduce_outer_joins_pass2(Node *jtnode,
 			if (sub_state->contains_outer)
 				reduce_outer_joins_pass2(lfirst(l), sub_state, root,
 										 pass_nonnullable_rels,
-										 pass_nonnullable_vars,
 										 pass_forced_null_vars);
 		}
 		bms_free(pass_nonnullable_rels);
@@ -2830,8 +2822,6 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinType	jointype = j->jointype;
 		reduce_outer_joins_state *left_state = linitial(state->sub_states);
 		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
-		List	   *local_nonnullable_vars = NIL;
-		bool		computed_local_nonnullable_vars = false;
 
 		/* Can we simplify this join? */
 		switch (jointype)
@@ -2906,17 +2896,18 @@ reduce_outer_joins_pass2(Node *jtnode,
 		 */
 		if (jointype == JOIN_LEFT)
 		{
+			List	   *nonnullable_vars;
 			List	   *overlap;
 
-			local_nonnullable_vars = find_nonnullable_vars(j->quals);
-			computed_local_nonnullable_vars = true;
+			/* Find Vars in j->quals that must be non-null in joined rows */
+			nonnullable_vars = find_nonnullable_vars(j->quals);
 
 			/*
-			 * It's not sufficient to check whether local_nonnullable_vars and
+			 * It's not sufficient to check whether nonnullable_vars and
 			 * forced_null_vars overlap: we need to know if the overlap
 			 * includes any RHS variables.
 			 */
-			overlap = list_intersection(local_nonnullable_vars,
+			overlap = list_intersection(nonnullable_vars,
 										forced_null_vars);
 			if (overlap != NIL &&
 				bms_overlap(pull_varnos(root, (Node *) overlap),
@@ -2941,7 +2932,6 @@ reduce_outer_joins_pass2(Node *jtnode,
 			Relids		local_nonnullable_rels;
 			List	   *local_forced_null_vars;
 			Relids		pass_nonnullable_rels;
-			List	   *pass_nonnullable_vars;
 			List	   *pass_forced_null_vars;
 
 			/*
@@ -2968,16 +2958,12 @@ reduce_outer_joins_pass2(Node *jtnode,
 			if (jointype != JOIN_FULL)
 			{
 				local_nonnullable_rels = find_nonnullable_rels(j->quals);
-				if (!computed_local_nonnullable_vars)
-					local_nonnullable_vars = find_nonnullable_vars(j->quals);
 				local_forced_null_vars = find_forced_null_vars(j->quals);
 				if (jointype == JOIN_INNER || jointype == JOIN_SEMI)
 				{
 					/* OK to merge upper and local constraints */
 					local_nonnullable_rels = bms_add_members(local_nonnullable_rels,
 															 nonnullable_rels);
-					local_nonnullable_vars = list_concat(local_nonnullable_vars,
-														 nonnullable_vars);
 					local_forced_null_vars = list_concat(local_forced_null_vars,
 														 forced_null_vars);
 				}
@@ -2995,26 +2981,22 @@ reduce_outer_joins_pass2(Node *jtnode,
 				{
 					/* pass union of local and upper constraints */
 					pass_nonnullable_rels = local_nonnullable_rels;
-					pass_nonnullable_vars = local_nonnullable_vars;
 					pass_forced_null_vars = local_forced_null_vars;
 				}
 				else if (jointype != JOIN_FULL) /* ie, LEFT or ANTI */
 				{
 					/* can't pass local constraints to non-nullable side */
 					pass_nonnullable_rels = nonnullable_rels;
-					pass_nonnullable_vars = nonnullable_vars;
 					pass_forced_null_vars = forced_null_vars;
 				}
 				else
 				{
 					/* no constraints pass through JOIN_FULL */
 					pass_nonnullable_rels = NULL;
-					pass_nonnullable_vars = NIL;
 					pass_forced_null_vars = NIL;
 				}
 				reduce_outer_joins_pass2(j->larg, left_state, root,
 										 pass_nonnullable_rels,
-										 pass_nonnullable_vars,
 										 pass_forced_null_vars);
 			}
 
@@ -3024,19 +3006,16 @@ reduce_outer_joins_pass2(Node *jtnode,
 				{
 					/* pass appropriate constraints, per comment above */
 					pass_nonnullable_rels = local_nonnullable_rels;
-					pass_nonnullable_vars = local_nonnullable_vars;
 					pass_forced_null_vars = local_forced_null_vars;
 				}
 				else
 				{
 					/* no constraints pass through JOIN_FULL */
 					pass_nonnullable_rels = NULL;
-					pass_nonnullable_vars = NIL;
 					pass_forced_null_vars = NIL;
 				}
 				reduce_outer_joins_pass2(j->rarg, right_state, root,
 										 pass_nonnullable_rels,
-										 pass_nonnullable_vars,
 										 pass_forced_null_vars);
 			}
 			bms_free(local_nonnullable_rels);
