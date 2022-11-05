@@ -58,7 +58,7 @@ isolationtester = executable('isolationtester',
 bin_targets += isolationtester
 
 tests += {
-  'name': 'main',
+  'name': 'isolation',
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'isolation': {
