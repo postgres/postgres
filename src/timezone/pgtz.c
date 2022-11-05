@@ -14,7 +14,6 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <time.h>
 
 #include "common/file_utils.h"

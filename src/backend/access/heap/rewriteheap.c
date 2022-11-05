@@ -102,7 +102,6 @@
  */
 #include "postgres.h"
 
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include "access/heapam.h"

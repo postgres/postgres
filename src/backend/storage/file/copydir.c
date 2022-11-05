@@ -20,7 +20,6 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 #include "common/file_utils.h"
 #include "miscadmin.h"
