@@ -1511,6 +1511,31 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
+	else if (IsA(node, SubPlan))
+	{
+		SubPlan    *splan = (SubPlan *) node;
+
+		/*
+		 * For some types of SubPlan, we can infer strictness from Vars in the
+		 * testexpr (the LHS of the original SubLink).
+		 *
+		 * For ANY_SUBLINK, if the subquery produces zero rows, the result is
+		 * always FALSE.  If the subquery produces more than one row, the
+		 * per-row results of the testexpr are combined using OR semantics.
+		 * Hence ANY_SUBLINK can be strict only at top level, but there it's
+		 * as strict as the testexpr is.
+		 *
+		 * For ROWCOMPARE_SUBLINK, if the subquery produces zero rows, the
+		 * result is always NULL.  Otherwise, the result is as strict as the
+		 * testexpr is.  So we can check regardless of top_level.
+		 *
+		 * We can't prove anything for other sublink types (in particular,
+		 * note that ALL_SUBLINK will return TRUE if the subquery is empty).
+		 */
+		if ((top_level && splan->subLinkType == ANY_SUBLINK) ||
+			splan->subLinkType == ROWCOMPARE_SUBLINK)
+			result = find_nonnullable_rels_walker(splan->testexpr, top_level);
+	}
 	else if (IsA(node, PlaceHolderVar))
 	{
 		PlaceHolderVar *phv = (PlaceHolderVar *) node;
@@ -1735,6 +1760,15 @@ find_nonnullable_vars_walker(Node *node, bool top_level)
 			 expr->booltesttype == IS_FALSE ||
 			 expr->booltesttype == IS_NOT_UNKNOWN))
 			result = find_nonnullable_vars_walker((Node *) expr->arg, false);
+	}
+	else if (IsA(node, SubPlan))
+	{
+		SubPlan    *splan = (SubPlan *) node;
+
+		/* See analysis in find_nonnullable_rels_walker */
+		if ((top_level && splan->subLinkType == ANY_SUBLINK) ||
+			splan->subLinkType == ROWCOMPARE_SUBLINK)
+			result = find_nonnullable_vars_walker(splan->testexpr, top_level);
 	}
 	else if (IsA(node, PlaceHolderVar))
 	{

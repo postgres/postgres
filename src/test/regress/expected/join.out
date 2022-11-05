@@ -4651,6 +4651,34 @@ select a.q2, b.q1
 reset enable_hashjoin;
 reset enable_nestloop;
 --
+-- test join strength reduction with a SubPlan providing the proof
+--
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Hash Join
+   Hash Cond: (b.unique2 = a.unique1)
+   ->  Seq Scan on onek b
+         Filter: (SubPlan 1)
+         SubPlan 1
+           ->  Seq Scan on int8_tbl c
+                 Filter: (q1 < b.unique1)
+   ->  Hash
+         ->  Index Only Scan using onek_unique1 on onek a
+(9 rows)
+
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+ unique1 | unique2 
+---------+---------
+     123 |     123
+(1 row)
+
+--
 -- test join removal
 --
 begin;
