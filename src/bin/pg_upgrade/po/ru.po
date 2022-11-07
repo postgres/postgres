@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2021-08-09 23:07+0300\n"
+"POT-Creation-Date: 2022-08-17 12:26+0300\n"
 "PO-Revision-Date: 2022-01-19 16:26+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -502,124 +502,124 @@ msgstr "%d: проблема с выводом pg_resetwal\n"
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: проблема с получением управляющих данных\n"
 
-#: controldata.c:558
+#: controldata.c:557
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "В исходном кластере не хватает необходимой управляющей информации:\n"
 
-#: controldata.c:561
+#: controldata.c:560
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "В целевом кластере не хватает необходимой управляющей информации:\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:564
+#: controldata.c:563
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  следующий XID последней конт. точки\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:567
+#: controldata.c:566
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  следующий OID последней конт. точки\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:570
+#: controldata.c:569
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  следующий MultiXactId последней конт. точки\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:574
+#: controldata.c:573
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  старейший MultiXactId последней конт. точки\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:577
+#: controldata.c:576
 #, c-format
 msgid "  latest checkpoint oldestXID\n"
 msgstr "  oldestXID последней конт. точки\n"
 
 # skip-rule: capital-letter-first
-#: controldata.c:580
+#: controldata.c:579
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  следующий MultiXactOffset последней конт. точки\n"
 
-#: controldata.c:583
+#: controldata.c:582
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  первый сегмент WAL после сброса\n"
 
-#: controldata.c:586
+#: controldata.c:585
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  метод передачи аргумента float8\n"
 
-#: controldata.c:589
+#: controldata.c:588
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  максимальное выравнивание\n"
 
-#: controldata.c:592
+#: controldata.c:591
 #, c-format
 msgid "  block size\n"
 msgstr "  размер блока\n"
 
-#: controldata.c:595
+#: controldata.c:594
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  размер сегмента большого отношения\n"
 
-#: controldata.c:598
+#: controldata.c:597
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  размер блока WAL\n"
 
-#: controldata.c:601
+#: controldata.c:600
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  размер сегмента WAL\n"
 
-#: controldata.c:604
+#: controldata.c:603
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  максимальная длина идентификатора\n"
 
-#: controldata.c:607
+#: controldata.c:606
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  максимальное число столбцов в индексе\n"
 
-#: controldata.c:610
+#: controldata.c:609
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  максимальный размер порции TOAST\n"
 
-#: controldata.c:614
+#: controldata.c:613
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  размер порции большого объекта\n"
 
-#: controldata.c:617
+#: controldata.c:616
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  дата/время представлены целыми числами?\n"
 
-#: controldata.c:621
+#: controldata.c:620
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  версия контрольных сумм данных\n"
 
-#: controldata.c:623
+#: controldata.c:622
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr ""
 "Нет необходимой управляющей информации для продолжения, работа прерывается\n"
 
-#: controldata.c:638
+#: controldata.c:637
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match\n"
@@ -629,13 +629,13 @@ msgstr ""
 "Вероятно, один кластер установлен в 32-битной системе, а другой ~ в 64-"
 "битной\n"
 
-#: controldata.c:642
+#: controldata.c:641
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr ""
 "старый и новый размер блоков в pg_controldata различаются или некорректны\n"
 
-#: controldata.c:645
+#: controldata.c:644
 #, c-format
 msgid ""
 "old and new pg_controldata maximum relation segment sizes are invalid or do "
@@ -644,7 +644,7 @@ msgstr ""
 "старый и новый максимальный размер сегментов отношений в pg_controldata "
 "различаются или некорректны\n"
 
-#: controldata.c:648
+#: controldata.c:647
 #, c-format
 msgid ""
 "old and new pg_controldata WAL block sizes are invalid or do not match\n"
@@ -652,7 +652,7 @@ msgstr ""
 "старый и новый размер блоков WAL в pg_controldata различаются или "
 "некорректны\n"
 
-#: controldata.c:651
+#: controldata.c:650
 #, c-format
 msgid ""
 "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
@@ -660,7 +660,7 @@ msgstr ""
 "старый и новый размер сегментов WAL в pg_controldata различаются или "
 "некорректны\n"
 
-#: controldata.c:654
+#: controldata.c:653
 #, c-format
 msgid ""
 "old and new pg_controldata maximum identifier lengths are invalid or do not "
@@ -669,7 +669,7 @@ msgstr ""
 "старая и новая максимальная длина идентификаторов в pg_controldata "
 "различаются или некорректны\n"
 
-#: controldata.c:657
+#: controldata.c:656
 #, c-format
 msgid ""
 "old and new pg_controldata maximum indexed columns are invalid or do not "
@@ -678,7 +678,7 @@ msgstr ""
 "старый и новый максимум числа столбцов, составляющих индексы, в "
 "pg_controldata различаются или некорректны\n"
 
-#: controldata.c:660
+#: controldata.c:659
 #, c-format
 msgid ""
 "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not "
@@ -687,7 +687,7 @@ msgstr ""
 "старый и новый максимальный размер порции TOAST в pg_controldata различаются "
 "или некорректны\n"
 
-#: controldata.c:665
+#: controldata.c:664
 #, c-format
 msgid ""
 "old and new pg_controldata large-object chunk sizes are invalid or do not "
@@ -695,44 +695,44 @@ msgid ""
 msgstr ""
 "старый и новый размер порции большого объекта различаются или некорректны\n"
 
-#: controldata.c:668
+#: controldata.c:667
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr ""
 "старый и новый тип хранения даты/времени в pg_controldata различаются или "
 "некорректны\n"
 
-#: controldata.c:681
+#: controldata.c:680
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr ""
 "в старом кластере не применялись контрольные суммы данных, но в новом они "
 "есть\n"
 
-#: controldata.c:684
+#: controldata.c:683
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr ""
 "в старом кластере применялись контрольные суммы данных, но в новом их нет\n"
 
-#: controldata.c:686
+#: controldata.c:685
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr ""
 "старая и новая версия контрольных сумм кластера в pg_controldata "
 "различаются\n"
 
-#: controldata.c:697
+#: controldata.c:696
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Добавление расширения \".old\" к старому файлу global/pg_control"
 
-#: controldata.c:702
+#: controldata.c:701
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "Не удалось переименовать %s в %s.\n"
 
-#: controldata.c:705
+#: controldata.c:704
 #, c-format
 msgid ""
 "\n"

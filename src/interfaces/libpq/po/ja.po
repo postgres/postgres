@@ -835,7 +835,7 @@ msgstr "問い合わせ結果用のメモリが不足しています"
 #: fe-protocol2.c:1415
 #, c-format
 msgid "lost synchronization with server, resetting connection"
-msgstr "サーバとの動機が失われました。接続をリセットしています"
+msgstr "サーバとの同期が失われました。接続をリセットしています"
 
 #: fe-protocol2.c:1549 fe-protocol2.c:1581 fe-protocol3.c:2065
 #, c-format
