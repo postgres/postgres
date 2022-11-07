@@ -21,12 +21,54 @@
    <para>
     A dump/restore is not required for those running 15.X.
    </para>
+
+   <para>
+    However, if you regularly create and drop tables exceeding 1GB,
+    see the first changelog entry below.
+   </para>
   </sect2>
 
   <sect2>
    <title>Changes</title>
 
    <itemizedlist>
+
+    <listitem>
+<!--
+Author: Tom Lane <tgl@sss.pgh.pa.us>
+Branch: master [0e758ae89] 2022-11-07 11:36:45 -0500
+Branch: REL_15_STABLE [5fe0ab420] 2022-11-07 11:36:45 -0500
+-->
+     <para>
+      Fix failure to remove non-first segments of large tables
+      (Tom Lane)
+     </para>
+
+     <para>
+      <productname>PostgreSQL</productname> splits large tables into
+      multiple files (normally with 1GB per file).  The logic for dropping
+      a table was broken and would miss removing all but the first such
+      file, in two cases: drops of temporary tables and WAL replay of
+      drops of regular tables.  Applications that routinely create
+      multi-gigabyte temporary tables could suffer significant disk space
+      leakage.
+     </para>
+
+     <para>
+      Orphaned temporary-table files are removed during postmaster start,
+      so the mere act of updating to 15.1 is sufficient to clear any
+      leaked temporary-table storage.  However, if you suffered any
+      database crashes while using 15.0, and there might have been
+      large tables dropped just before such crashes, it's advisable
+      to check the database directories for files named according to the
+      pattern
+      <literal><replaceable>NNNN</replaceable>.<replaceable>NN</replaceable></literal>.
+      If there is no matching file named
+      just <literal><replaceable>NNNN</replaceable></literal> (without
+      the <literal>.<replaceable>NN</replaceable></literal> suffix), these
+      files should be removed manually.
+     </para>
+    </listitem>
 
     <listitem>
 <!--
