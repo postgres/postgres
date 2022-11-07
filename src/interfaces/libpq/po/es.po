@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:52+0000\n"
+"POT-Creation-Date: 2022-09-03 04:22+0000\n"
 "PO-Revision-Date: 2019-09-29 22:11-0300\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -61,7 +61,7 @@ msgstr "no se pude generar nonce\n"
 #: fe-connect.c:4937 fe-connect.c:5191 fe-connect.c:5271 fe-connect.c:5370
 #: fe-connect.c:5626 fe-connect.c:5655 fe-connect.c:5727 fe-connect.c:5751
 #: fe-connect.c:5769 fe-connect.c:5870 fe-connect.c:5879 fe-connect.c:6235
-#: fe-connect.c:6385 fe-exec.c:2752 fe-exec.c:3499 fe-exec.c:3664
+#: fe-connect.c:6385 fe-exec.c:2752 fe-exec.c:3503 fe-exec.c:3668
 #: fe-gssapi-common.c:112 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
 #: fe-protocol3.c:1671 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:438 fe-secure-openssl.c:1025
@@ -716,7 +716,7 @@ msgstr "el número de parámetro %d está fuera del rango 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "no se pudo interpretar el resultado del servidor: %s"
 
-#: fe-exec.c:3397 fe-exec.c:3481
+#: fe-exec.c:3401 fe-exec.c:3485
 msgid "incomplete multibyte character\n"
 msgstr "carácter multibyte incompleto\n"
 

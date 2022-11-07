@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:21+0300\n"
+"POT-Creation-Date: 2022-08-10 11:59+0300\n"
 "PO-Revision-Date: 2019-08-29 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
 
-#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:553
+#: plpy_elog.c:129 plpy_elog.c:130 plpy_plpymodule.c:551
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -240,46 +240,46 @@ msgstr "функция PL/Python \"%s\""
 msgid "PL/Python anonymous code block"
 msgstr "анонимный блок кода PL/Python"
 
-#: plpy_plpymodule.c:186 plpy_plpymodule.c:189
+#: plpy_plpymodule.c:184 plpy_plpymodule.c:187
 #, c-format
 msgid "could not import \"plpy\" module"
 msgstr "не удалось импортировать модуль \"plpy\""
 
-#: plpy_plpymodule.c:204
+#: plpy_plpymodule.c:202
 #, c-format
 msgid "could not create the spiexceptions module"
 msgstr "не удалось создать модуль spiexceptions"
 
-#: plpy_plpymodule.c:212
+#: plpy_plpymodule.c:210
 #, c-format
 msgid "could not add the spiexceptions module"
 msgstr "не удалось добавить модуль spiexceptions"
 
-#: plpy_plpymodule.c:280
+#: plpy_plpymodule.c:278
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "не удалось сгенерировать исключения SPI"
 
-#: plpy_plpymodule.c:448
+#: plpy_plpymodule.c:446
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не удалось распаковать аргументы в plpy.elog"
 
-#: plpy_plpymodule.c:457
+#: plpy_plpymodule.c:455
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_plpymodule.c:474
+#: plpy_plpymodule.c:472
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "аргумент 'message' задан и по имени, и по позиции"
 
-#: plpy_plpymodule.c:501
+#: plpy_plpymodule.c:499
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' - недопустимое ключевое слово (аргумент) для этой функции"
 
-#: plpy_plpymodule.c:512 plpy_plpymodule.c:518
+#: plpy_plpymodule.c:510 plpy_plpymodule.c:516
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неверный код SQLSTATE"

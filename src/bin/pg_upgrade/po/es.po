@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_upgrade (PostgreSQL) 12\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-08-07 20:58+0000\n"
+"POT-Creation-Date: 2022-09-03 04:28+0000\n"
 "PO-Revision-Date: 2020-05-17 02:26-0400\n"
 "Last-Translator: Álvaro Herrera <alvherre@alvh.no-ip.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
@@ -473,117 +473,117 @@ msgstr "%d: problema en pg_resetwal\n"
 msgid "%d: controldata retrieval problem\n"
 msgstr "%d: problema de extracción de controldata\n"
 
-#: controldata.c:558
+#: controldata.c:557
 #, c-format
 msgid "The source cluster lacks some required control information:\n"
 msgstr "Al clúster de origen le falta información de control requerida:\n"
 
-#: controldata.c:561
+#: controldata.c:560
 #, c-format
 msgid "The target cluster lacks some required control information:\n"
 msgstr "Al clúster de destino le falta información de control requerida:\n"
 
-#: controldata.c:564
+#: controldata.c:563
 #, c-format
 msgid "  checkpoint next XID\n"
 msgstr "  siguiente XID del último checkpoint\n"
 
-#: controldata.c:567
+#: controldata.c:566
 #, c-format
 msgid "  latest checkpoint next OID\n"
 msgstr "  siguiente OID del último checkpoint\n"
 
-#: controldata.c:570
+#: controldata.c:569
 #, c-format
 msgid "  latest checkpoint next MultiXactId\n"
 msgstr "  siguiente MultiXactId del último checkpoint\n"
 
-#: controldata.c:574
+#: controldata.c:573
 #, c-format
 msgid "  latest checkpoint oldest MultiXactId\n"
 msgstr "  MultiXactId más antiguo del último checkpoint\n"
 
-#: controldata.c:577
+#: controldata.c:576
 #, c-format
 msgid "  latest checkpoint oldestXID\n"
 msgstr "  XID más antiguo del último checkpoint\n"
 
-#: controldata.c:580
+#: controldata.c:579
 #, c-format
 msgid "  latest checkpoint next MultiXactOffset\n"
 msgstr "  siguiente MultiXactOffset del siguiente checkpoint\n"
 
-#: controldata.c:583
+#: controldata.c:582
 #, c-format
 msgid "  first WAL segment after reset\n"
 msgstr "  primer segmento de WAL después del reinicio\n"
 
-#: controldata.c:586
+#: controldata.c:585
 #, c-format
 msgid "  float8 argument passing method\n"
 msgstr "  método de paso de argumentos float8\n"
 
-#: controldata.c:589
+#: controldata.c:588
 #, c-format
 msgid "  maximum alignment\n"
 msgstr "  alineamiento máximo\n"
 
-#: controldata.c:592
+#: controldata.c:591
 #, c-format
 msgid "  block size\n"
 msgstr "  tamaño de bloques\n"
 
-#: controldata.c:595
+#: controldata.c:594
 #, c-format
 msgid "  large relation segment size\n"
 msgstr "  tamaño de segmento de relación grande\n"
 
-#: controldata.c:598
+#: controldata.c:597
 #, c-format
 msgid "  WAL block size\n"
 msgstr "  tamaño de bloque de WAL\n"
 
-#: controldata.c:601
+#: controldata.c:600
 #, c-format
 msgid "  WAL segment size\n"
 msgstr "  tamaño de segmento de WAL\n"
 
-#: controldata.c:604
+#: controldata.c:603
 #, c-format
 msgid "  maximum identifier length\n"
 msgstr "  máximo largo de identificadores\n"
 
-#: controldata.c:607
+#: controldata.c:606
 #, c-format
 msgid "  maximum number of indexed columns\n"
 msgstr "  máximo número de columnas indexadas\n"
 
-#: controldata.c:610
+#: controldata.c:609
 #, c-format
 msgid "  maximum TOAST chunk size\n"
 msgstr "  tamaño máximo de trozos TOAST\n"
 
-#: controldata.c:614
+#: controldata.c:613
 #, c-format
 msgid "  large-object chunk size\n"
 msgstr "  tamaño de trozos de objetos grandes\n"
 
-#: controldata.c:617
+#: controldata.c:616
 #, c-format
 msgid "  dates/times are integers?\n"
 msgstr "  fechas/horas son enteros?\n"
 
-#: controldata.c:621
+#: controldata.c:620
 #, c-format
 msgid "  data checksum version\n"
 msgstr "  versión del checksum de datos\n"
 
-#: controldata.c:623
+#: controldata.c:622
 #, c-format
 msgid "Cannot continue without required control information, terminating\n"
 msgstr "No se puede continuar sin la información de control requerida. Terminando\n"
 
-#: controldata.c:638
+#: controldata.c:637
 #, c-format
 msgid ""
 "old and new pg_controldata alignments are invalid or do not match\n"
@@ -592,77 +592,77 @@ msgstr ""
 "Alineamientos de pg_controldata antiguo y nuevo no son válidos o no coinciden\n"
 "Seguramente un clúster es 32-bit y el otro es 64-bit\n"
 
-#: controldata.c:642
+#: controldata.c:641
 #, c-format
 msgid "old and new pg_controldata block sizes are invalid or do not match\n"
 msgstr "Los tamaños de bloque antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:645
+#: controldata.c:644
 #, c-format
 msgid "old and new pg_controldata maximum relation segment sizes are invalid or do not match\n"
 msgstr "El tamaño máximo de segmento de relación antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:648
+#: controldata.c:647
 #, c-format
 msgid "old and new pg_controldata WAL block sizes are invalid or do not match\n"
 msgstr "El tamaño de bloques de WAL antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:651
+#: controldata.c:650
 #, c-format
 msgid "old and new pg_controldata WAL segment sizes are invalid or do not match\n"
 msgstr "El tamaño de segmentos de WAL antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:654
+#: controldata.c:653
 #, c-format
 msgid "old and new pg_controldata maximum identifier lengths are invalid or do not match\n"
 msgstr "Los máximos largos de identificador antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:657
+#: controldata.c:656
 #, c-format
 msgid "old and new pg_controldata maximum indexed columns are invalid or do not match\n"
 msgstr "La cantidad máxima de columnas indexadas antigua y nueva no son válidos o no coinciden\n"
 
-#: controldata.c:660
+#: controldata.c:659
 #, c-format
 msgid "old and new pg_controldata maximum TOAST chunk sizes are invalid or do not match\n"
 msgstr "Los máximos de trozos TOAST antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:665
+#: controldata.c:664
 #, c-format
 msgid "old and new pg_controldata large-object chunk sizes are invalid or do not match\n"
 msgstr "Los tamaños de trozos de objetos grandes antiguo y nuevo no son válidos o no coinciden\n"
 
-#: controldata.c:668
+#: controldata.c:667
 #, c-format
 msgid "old and new pg_controldata date/time storage types do not match\n"
 msgstr "Los tipos de almacenamiento de fecha/hora antiguo y nuevo no coinciden\n"
 
-#: controldata.c:681
+#: controldata.c:680
 #, c-format
 msgid "old cluster does not use data checksums but the new one does\n"
 msgstr "El clúster antiguo no usa checksums de datos pero el nuevo sí\n"
 
-#: controldata.c:684
+#: controldata.c:683
 #, c-format
 msgid "old cluster uses data checksums but the new one does not\n"
 msgstr "El clúster antiguo usa checksums de datos pero el nuevo no\n"
 
-#: controldata.c:686
+#: controldata.c:685
 #, c-format
 msgid "old and new cluster pg_controldata checksum versions do not match\n"
 msgstr "Las versiones de checksum de datos antigua y nueva no coinciden\n"
 
-#: controldata.c:697
+#: controldata.c:696
 #, c-format
 msgid "Adding \".old\" suffix to old global/pg_control"
 msgstr "Agregando el sufijo «.old» a global/pg_control"
 
-#: controldata.c:702
+#: controldata.c:701
 #, c-format
 msgid "Unable to rename %s to %s.\n"
 msgstr "No se pudo renombrar %s a %s.\n"
 
-#: controldata.c:705
+#: controldata.c:704
 #, c-format
 msgid ""
 "\n"

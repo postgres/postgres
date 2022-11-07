@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-04-26 13:45+0300\n"
+"POT-Creation-Date: 2022-08-17 12:24+0300\n"
 "PO-Revision-Date: 2022-05-07 06:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -62,7 +62,7 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:4937 fe-connect.c:5191 fe-connect.c:5271 fe-connect.c:5370
 #: fe-connect.c:5626 fe-connect.c:5655 fe-connect.c:5727 fe-connect.c:5751
 #: fe-connect.c:5769 fe-connect.c:5870 fe-connect.c:5879 fe-connect.c:6235
-#: fe-connect.c:6385 fe-exec.c:2752 fe-exec.c:3499 fe-exec.c:3664
+#: fe-connect.c:6385 fe-exec.c:2752 fe-exec.c:3503 fe-exec.c:3668
 #: fe-gssapi-common.c:112 fe-lobj.c:895 fe-protocol2.c:1213 fe-protocol3.c:967
 #: fe-protocol3.c:1671 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:438 fe-secure-openssl.c:1025
@@ -756,7 +756,7 @@ msgstr "номер параметра %d вне диапазона 0..%d"
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3397 fe-exec.c:3481
+#: fe-exec.c:3401 fe-exec.c:3485
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
@@ -1232,13 +1232,6 @@ msgstr "сертификат присутствует, но файла закр�
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "файл закрытого ключа \"%s\" - не обычный файл\n"
 
-#: fe-secure-openssl.c:1153
-#, c-format
-msgid "private key file \"%s\" must be owned by the current user or root\n"
-msgstr ""
-"файл закрытого ключа \"%s\" должен принадлежать root или текущему "
-"пользователю\n"
-
 #: fe-secure-openssl.c:1162
 #, c-format
 msgid ""
@@ -1290,6 +1283,11 @@ msgstr "не удалось передать данные серверу: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
+
+#~ msgid "private key file \"%s\" must be owned by the current user or root\n"
+#~ msgstr ""
+#~ "файл закрытого ключа \"%s\" должен принадлежать root или текущему "
+#~ "пользователю\n"
 
 #~ msgid "extraneous data in \"T\" message"
 #~ msgstr "лишние данные в сообщении \"T\""
