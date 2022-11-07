@@ -1964,6 +1964,8 @@ assignVariables(Variables *variables, char *sql)
 		}
 
 		val = getVariable(variables, name);
+		pg_log_debug("stored variable (\"%s\") returns as string (\"%s\")", 
+			name, val);
 		free(name);
 		if (val == NULL)
 		{
@@ -3012,8 +3014,12 @@ runShellCommand(Variables *variables, char *variable, char **argv, int argc)
 		endptr++;
 	if (*res == '\0' || *endptr != '\0')
 	{
-		pg_log_error("%s: shell command must return an integer (not \"%s\")", argv[0], res);
-		return false;
+		pg_log_debug("%s: shell command returns a string (\"%s\") for variable (\"%s\")", argv[0], res, variable);
+
+		if (!putVariable(variables, "setshell", variable, res))
+			return false;
+		else
+			return true;
 	}
 	if (!putVariableInt(variables, "setshell", variable, retval))
 		return false;
