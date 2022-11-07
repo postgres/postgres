@@ -330,11 +330,15 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 	{
 		if (!RelFileLocatorBackendIsTemp(rlocator))
 		{
+			int			save_errno;
+
 			/* Prevent other backends' fds from holding on to the disk space */
 			ret = do_truncate(path);
 
 			/* Forget any pending sync requests for the first segment */
+			save_errno = errno;
 			register_forget_request(rlocator, forknum, 0 /* first seg */ );
+			errno = save_errno;
 		}
 		else
 			ret = 0;
@@ -347,6 +351,7 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 				ereport(WARNING,
 						(errcode_for_file_access(),
 						 errmsg("could not remove file \"%s\": %m", path)));
+			segno++;
 		}
 	}
 	else
@@ -359,21 +364,22 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 		 * segment later, rather than now.
 		 *
 		 * If we're performing a binary upgrade, the dangers described in the
-		 * header comments for mdunlink() do not exist, since after a crash
-		 * or even a simple ERROR, the upgrade fails and the whole new cluster
+		 * header comments for mdunlink() do not exist, since after a crash or
+		 * even a simple ERROR, the upgrade fails and the whole new cluster
 		 * must be recreated from scratch. And, on the other hand, it is
-		 * important to remove the files from disk immediately, because we
-		 * may be about to reuse the same relfilenumber.
+		 * important to remove the files from disk immediately, because we may
+		 * be about to reuse the same relfilenumber.
 		 */
 		if (!IsBinaryUpgrade)
 		{
 			register_unlink_segment(rlocator, forknum, 0 /* first seg */ );
-			++segno;
+			segno++;
 		}
 	}
 
 	/*
-	 * Delete any additional segments.
+	 * Delete any remaining segments (we might or might not have dealt with
+	 * the first one above).
 	 */
 	if (ret >= 0)
 	{
