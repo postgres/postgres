@@ -1,0 +1,184 @@
+# LANGUAGE message translation file for pg_archivecleanup
+# Copyright (C) 2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_archivecleanup (PostgreSQL) package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 15\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-26 08:20+0000\n"
+"PO-Revision-Date: 2022-09-30 14:18+0200\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Domenico Sgarbossa <sgarbossa.domenico@gmail.com>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.3\n"
+
+#: ../../../src/common/logging.c:276
+#, c-format
+msgid "error: "
+msgstr "errore:"
+
+#: ../../../src/common/logging.c:283
+#, c-format
+msgid "warning: "
+msgstr "avvertimento: "
+
+#: ../../../src/common/logging.c:294
+#, c-format
+msgid "detail: "
+msgstr "dettaglio: "
+
+#: ../../../src/common/logging.c:301
+#, c-format
+msgid "hint: "
+msgstr "suggerimento: "
+
+#: pg_archivecleanup.c:66
+#, c-format
+msgid "archive location \"%s\" does not exist"
+msgstr "il percorso di archiviazione \"%s\" non esiste"
+
+#: pg_archivecleanup.c:151
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "rimozione del file \"%s\" fallita: %m"
+
+#: pg_archivecleanup.c:157
+#, c-format
+msgid "could not read archive location \"%s\": %m"
+msgstr "impossibile leggere la posizione dell'archivio \"%s\": %m"
+
+#: pg_archivecleanup.c:160
+#, c-format
+msgid "could not close archive location \"%s\": %m"
+msgstr "impossibile chiudere la posizione dell'archivio \"%s\": %m"
+
+#: pg_archivecleanup.c:164
+#, c-format
+msgid "could not open archive location \"%s\": %m"
+msgstr "impossibile aprire la posizione dell'archivio \"%s\": %m"
+
+#: pg_archivecleanup.c:237
+#, c-format
+msgid "invalid file name argument"
+msgstr "argomento nome file non valido"
+
+#: pg_archivecleanup.c:238 pg_archivecleanup.c:313 pg_archivecleanup.c:333
+#: pg_archivecleanup.c:345 pg_archivecleanup.c:352
+#, c-format
+msgid "Try \"%s --help\" for more information."
+msgstr "Prova \"%s --help\" per maggiori informazioni."
+
+#: pg_archivecleanup.c:251
+#, c-format
+msgid ""
+"%s removes older WAL files from PostgreSQL archives.\n"
+"\n"
+msgstr ""
+"%s rimuove i file WAL meno recenti dagli archivi PostgreSQL.\n"
+"\n"
+
+#: pg_archivecleanup.c:252
+#, c-format
+msgid "Usage:\n"
+msgstr "Utilizzo:\n"
+
+#: pg_archivecleanup.c:253
+#, c-format
+msgid "  %s [OPTION]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+msgstr "%s [OPZIONE]... ARCHIVELOCATION OLDESTKEPTWALFILE\n"
+
+#: pg_archivecleanup.c:254
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Opzioni:\n"
+
+#: pg_archivecleanup.c:255
+#, c-format
+msgid "  -d             generate debug output (verbose mode)\n"
+msgstr " -d genera output di debug (modalità dettagliata)\n"
+
+#: pg_archivecleanup.c:256
+#, c-format
+msgid "  -n             dry run, show the names of the files that would be removed\n"
+msgstr " -n dry run, mostra i nomi dei file che verrebbero rimossi\n"
+
+#: pg_archivecleanup.c:257
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V --version   mostra informazioni sulla versione ed esci\n"
+
+#: pg_archivecleanup.c:258
+#, c-format
+msgid "  -x EXT         clean up files if they have this extension\n"
+msgstr " -x EXT ripulisce i file se hanno questa estensione\n"
+
+#: pg_archivecleanup.c:259
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     mostra questo aiuto ed esci\n"
+
+#: pg_archivecleanup.c:260
+#, c-format
+msgid ""
+"\n"
+"For use as archive_cleanup_command in postgresql.conf:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPTION]... ARCHIVELOCATION %%r'\n"
+"e.g.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+msgstr ""
+"\n"
+"Da utilizzare come archive_cleanup_command in postgresql.conf:\n"
+"  archive_cleanup_command = 'pg_archivecleanup [OPZIONE]... ARCHIVELOCATION %%r'\n"
+"per esempio.\n"
+"  archive_cleanup_command = 'pg_archivecleanup /mnt/server/archiverdir %%r'\n"
+
+#: pg_archivecleanup.c:265
+#, c-format
+msgid ""
+"\n"
+"Or for use as a standalone archive cleaner:\n"
+"e.g.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 000000010000000000000010.00000020.backup\n"
+msgstr ""
+"\n"
+"O per l'uso come pulitore di archivi autonomo:\n"
+"per esempio.\n"
+"  pg_archivecleanup /mnt/server/archiverdir 0000000100000000000000010.00000020.backup\n"
+
+#: pg_archivecleanup.c:269
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Segnala i bug a <%s>.\n"
+
+#: pg_archivecleanup.c:270
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "Pagina iniziale di %s: <%s>\n"
+
+#: pg_archivecleanup.c:332
+#, c-format
+msgid "must specify archive location"
+msgstr "deve specificare la posizione dell'archivio"
+
+#: pg_archivecleanup.c:344
+#, c-format
+msgid "must specify oldest kept WAL file"
+msgstr "deve specificare il file WAL più vecchio conservato"
+
+#: pg_archivecleanup.c:351
+#, c-format
+msgid "too many command-line arguments"
+msgstr "troppi argomenti della riga di comando"

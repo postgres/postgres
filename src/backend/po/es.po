@@ -63,7 +63,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL server 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-24 23:10+0000\n"
-"PO-Revision-Date: 2022-10-20 09:06+0200\n"
+"PO-Revision-Date: 2022-11-04 13:18+0100\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -15597,7 +15597,7 @@ msgstr "  --boot          selecciona modo de inicio (debe ser el primer argument
 #, fuzzy, c-format
 #| msgid "  --single           selects single-user mode (must be first argument)\n"
 msgid "  --check            selects check mode (must be first argument)\n"
-msgstr "  --single        selecciona modo mono-usuario (debe ser el primer argumento)\n"
+msgstr "  --check        selecciona modo de verificación (debe ser el primer argumento)\n"
 
 #: main/main.c:395
 #, c-format
