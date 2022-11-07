@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: pg_rewind (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-07 06:06+0300\n"
-"PO-Revision-Date: 2022-05-07 06:27+0300\n"
+"PO-Revision-Date: 2022-09-29 14:17+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -914,7 +914,7 @@ msgstr "нет флага contrecord в позиции %X/%X"
 #: xlogreader.c:490
 #, c-format
 msgid "invalid contrecord length %u (expected %lld) at %X/%X"
-msgstr "неверная длина contrecord: %u (ожидалось %lld) в позиции %X/%X"
+msgstr "неверная длина contrecord: %u (ожидалась %lld) в позиции %X/%X"
 
 #: xlogreader.c:741
 #, c-format

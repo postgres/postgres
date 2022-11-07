@@ -1,12 +1,12 @@
 # Russian message translation file for plpgsql
 # Copyright (C) 2012-2016 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-11-08 05:22+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
 "PO-Revision-Date: 2021-09-04 12:39+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -78,8 +78,8 @@ msgstr "неоднозначная ссылка на столбец \"%s\""
 msgid "It could refer to either a PL/pgSQL variable or a table column."
 msgstr "Подразумевается ссылка на переменную PL/pgSQL или столбец таблицы."
 
-#: pl_comp.c:1324 pl_exec.c:5190 pl_exec.c:5363 pl_exec.c:5450 pl_exec.c:5541
-#: pl_exec.c:6562
+#: pl_comp.c:1324 pl_exec.c:5184 pl_exec.c:5357 pl_exec.c:5444 pl_exec.c:5535
+#: pl_exec.c:6556
 #, c-format
 msgid "record \"%s\" has no field \"%s\""
 msgstr "в записи \"%s\" нет поля \"%s\""
@@ -104,7 +104,7 @@ msgstr "переменная \"%s\" имеет псевдотип %s"
 msgid "type \"%s\" is only a shell"
 msgstr "тип \"%s\" является пустышкой"
 
-#: pl_comp.c:2204 pl_exec.c:6863
+#: pl_comp.c:2204 pl_exec.c:6857
 #, c-format
 msgid "type %s is not composite"
 msgstr "тип %s не является составным"
@@ -114,7 +114,7 @@ msgstr "тип %s не является составным"
 msgid "unrecognized exception condition \"%s\""
 msgstr "нераспознанное условие исключения \"%s\""
 
-#: pl_comp.c:2526
+#: pl_comp.c:2534
 #, c-format
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
@@ -349,7 +349,7 @@ msgstr ""
 msgid "structure of query does not match function result type"
 msgstr "структура запроса не соответствует типу результата функции"
 
-#: pl_exec.c:3584 pl_exec.c:4404 pl_exec.c:8604
+#: pl_exec.c:3584 pl_exec.c:4404 pl_exec.c:8598
 #, c-format
 msgid "query string argument of EXECUTE is null"
 msgstr "в качестве текста запроса в EXECUTE передан NULL"
@@ -400,7 +400,7 @@ msgstr "INTO с командой не может возвращать данны
 msgid "query returned no rows"
 msgstr "запрос не вернул строк"
 
-#: pl_exec.c:4351 pl_exec.c:4536 pl_exec.c:5685
+#: pl_exec.c:4351 pl_exec.c:4536 pl_exec.c:5679
 #, c-format
 msgid "query returned more than one row"
 msgstr "запрос вернул несколько строк"
@@ -456,37 +456,37 @@ msgstr "курсор \"%s\" не существует"
 msgid "relative or absolute cursor position is null"
 msgstr "относительная или абсолютная позиция курсора равна NULL"
 
-#: pl_exec.c:5040 pl_exec.c:5135
+#: pl_exec.c:5034 pl_exec.c:5129
 #, c-format
 msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
 msgstr "значение NULL нельзя присвоить переменной \"%s\", объявленной NOT NULL"
 
-#: pl_exec.c:5116
+#: pl_exec.c:5110
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
 msgstr "переменной типа кортеж можно присвоить только составное значение"
 
-#: pl_exec.c:5148
+#: pl_exec.c:5142
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
 msgstr "переменной типа запись можно присвоить только составное значение"
 
-#: pl_exec.c:5199
+#: pl_exec.c:5193
 #, c-format
 msgid "cannot assign to system column \"%s\""
 msgstr "присвоить значение системному столбцу \"%s\" нельзя"
 
-#: pl_exec.c:5648
+#: pl_exec.c:5642
 #, c-format
 msgid "query did not return data"
 msgstr "запрос не вернул данные"
 
-#: pl_exec.c:5649 pl_exec.c:5661 pl_exec.c:5686 pl_exec.c:5762 pl_exec.c:5767
+#: pl_exec.c:5643 pl_exec.c:5655 pl_exec.c:5680 pl_exec.c:5756 pl_exec.c:5761
 #, c-format
 msgid "query: %s"
 msgstr "запрос: %s"
 
-#: pl_exec.c:5657
+#: pl_exec.c:5651
 #, c-format
 msgid "query returned %d column"
 msgid_plural "query returned %d columns"
@@ -494,17 +494,17 @@ msgstr[0] "запрос вернул %d столбец"
 msgstr[1] "запрос вернул %d столбца"
 msgstr[2] "запрос вернул %d столбцов"
 
-#: pl_exec.c:5761
+#: pl_exec.c:5755
 #, c-format
 msgid "query is SELECT INTO, but it should be plain SELECT"
 msgstr "запрос - не просто SELECT, а SELECT INTO"
 
-#: pl_exec.c:5766
+#: pl_exec.c:5760
 #, c-format
 msgid "query is not a SELECT"
 msgstr "запрос - не SELECT"
 
-#: pl_exec.c:6576 pl_exec.c:6616 pl_exec.c:6656
+#: pl_exec.c:6570 pl_exec.c:6610 pl_exec.c:6650
 #, c-format
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
@@ -512,29 +512,29 @@ msgstr ""
 "тип параметра %d (%s) не соответствует тому, с которым подготавливался план "
 "(%s)"
 
-#: pl_exec.c:7067 pl_exec.c:7101 pl_exec.c:7175 pl_exec.c:7201
+#: pl_exec.c:7061 pl_exec.c:7095 pl_exec.c:7169 pl_exec.c:7195
 #, c-format
 msgid "number of source and target fields in assignment does not match"
 msgstr "в левой и правой части присваивания разное количество полей"
 
 #. translator: %s represents a name of an extra check
-#: pl_exec.c:7069 pl_exec.c:7103 pl_exec.c:7177 pl_exec.c:7203
+#: pl_exec.c:7063 pl_exec.c:7097 pl_exec.c:7171 pl_exec.c:7197
 #, c-format
 msgid "%s check of %s is active."
 msgstr "Включена проверка %s (с %s)."
 
-#: pl_exec.c:7073 pl_exec.c:7107 pl_exec.c:7181 pl_exec.c:7207
+#: pl_exec.c:7067 pl_exec.c:7101 pl_exec.c:7175 pl_exec.c:7201
 #, c-format
 msgid "Make sure the query returns the exact list of columns."
 msgstr ""
 "Измените запрос, чтобы он возвращал в точности требуемый список столбцов."
 
-#: pl_exec.c:7594
+#: pl_exec.c:7588
 #, c-format
 msgid "record \"%s\" is not assigned yet"
 msgstr "записи \"%s\" не присвоено значение"
 
-#: pl_exec.c:7595
+#: pl_exec.c:7589
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""

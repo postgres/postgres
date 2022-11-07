@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-07 06:06+0300\n"
-"PO-Revision-Date: 2022-05-07 06:33+0300\n"
+"POT-Creation-Date: 2022-08-17 12:22+0300\n"
+"PO-Revision-Date: 2022-09-05 13:33+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -66,10 +66,10 @@ msgstr "не удалось сгенерировать разовый код\n"
 #: fe-connect.c:5424 fe-connect.c:5523 fe-connect.c:5779 fe-connect.c:5808
 #: fe-connect.c:5880 fe-connect.c:5904 fe-connect.c:5922 fe-connect.c:6023
 #: fe-connect.c:6032 fe-connect.c:6390 fe-connect.c:6540 fe-connect.c:6806
-#: fe-exec.c:686 fe-exec.c:876 fe-exec.c:1223 fe-exec.c:3047 fe-exec.c:3230
-#: fe-exec.c:4003 fe-exec.c:4168 fe-gssapi-common.c:111 fe-lobj.c:881
-#: fe-protocol3.c:975 fe-protocol3.c:990 fe-protocol3.c:1023
-#: fe-protocol3.c:1731 fe-secure-common.c:110 fe-secure-gssapi.c:504
+#: fe-exec.c:686 fe-exec.c:876 fe-exec.c:1223 fe-exec.c:3125 fe-exec.c:3309
+#: fe-exec.c:4086 fe-exec.c:4251 fe-gssapi-common.c:111 fe-lobj.c:881
+#: fe-protocol3.c:979 fe-protocol3.c:994 fe-protocol3.c:1027
+#: fe-protocol3.c:1735 fe-secure-common.c:110 fe-secure-gssapi.c:504
 #: fe-secure-openssl.c:440 fe-secure-openssl.c:1133
 msgid "out of memory\n"
 msgstr "нехватка памяти\n"
@@ -686,17 +686,17 @@ msgstr ""
 msgid "password retrieved from file \"%s\"\n"
 msgstr "пароль получен из файла \"%s\"\n"
 
-#: fe-exec.c:449 fe-exec.c:3304
+#: fe-exec.c:449 fe-exec.c:3383
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "номер записи %d вне диапазона 0..%d"
 
-#: fe-exec.c:510 fe-protocol3.c:219 fe-protocol3.c:244 fe-protocol3.c:273
-#: fe-protocol3.c:291 fe-protocol3.c:371 fe-protocol3.c:743
+#: fe-exec.c:510 fe-protocol3.c:207 fe-protocol3.c:232 fe-protocol3.c:261
+#: fe-protocol3.c:279 fe-protocol3.c:375 fe-protocol3.c:747
 msgid "out of memory"
 msgstr "нехватка памяти"
 
-#: fe-exec.c:511 fe-protocol3.c:1939
+#: fe-exec.c:511 fe-protocol3.c:1943
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -717,111 +717,115 @@ msgstr "PGresult не может вместить больше чем INT_MAX к
 msgid "size_t overflow"
 msgstr "переполнение size_t"
 
-#: fe-exec.c:1349 fe-exec.c:1454 fe-exec.c:1503
+#: fe-exec.c:1351 fe-exec.c:1477 fe-exec.c:1526
 msgid "command string is a null pointer\n"
 msgstr "указатель на командную строку нулевой\n"
 
-#: fe-exec.c:1460 fe-exec.c:1509 fe-exec.c:1605
+#: fe-exec.c:1483 fe-exec.c:1532 fe-exec.c:1628
 #, c-format
 msgid "number of parameters must be between 0 and %d\n"
 msgstr "число параметров должно быть от 0 до %d\n"
 
-#: fe-exec.c:1497 fe-exec.c:1599
+#: fe-exec.c:1520 fe-exec.c:1622
 msgid "statement name is a null pointer\n"
 msgstr "указатель на имя оператора нулевой\n"
 
-#: fe-exec.c:1641 fe-exec.c:3157
+#: fe-exec.c:1664 fe-exec.c:3236
 msgid "no connection to the server\n"
 msgstr "нет соединения с сервером\n"
 
-#: fe-exec.c:1650 fe-exec.c:3166
+#: fe-exec.c:1673 fe-exec.c:3245
 msgid "another command is already in progress\n"
 msgstr "уже выполняется другая команда\n"
 
-#: fe-exec.c:1679
+#: fe-exec.c:1704
 msgid "cannot queue commands during COPY\n"
 msgstr "во время COPY нельзя добавлять команды в очередь\n"
 
-#: fe-exec.c:1797
+#: fe-exec.c:1822
 msgid "length must be given for binary parameter\n"
 msgstr "для двоичного параметра должна быть указана длина\n"
 
-#: fe-exec.c:2121
+#: fe-exec.c:2149
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "неожиданный asyncStatus: %d\n"
 
-#: fe-exec.c:2141
+#: fe-exec.c:2185
 #, c-format
 msgid "PGEventProc \"%s\" failed during PGEVT_RESULTCREATE event\n"
 msgstr "ошибка в PGEventProc \"%s\" при обработке события PGEVT_RESULTCREATE\n"
 
-#: fe-exec.c:2289
+#: fe-exec.c:2333
 msgid ""
 "synchronous command execution functions are not allowed in pipeline mode\n"
 msgstr ""
 "функции синхронного выполнения команд не допускаются в конвейерном режиме\n"
 
-#: fe-exec.c:2311
+#: fe-exec.c:2355
 msgid "COPY terminated by new PQexec"
 msgstr "операция COPY прервана вызовом PQexec"
 
-#: fe-exec.c:2328
+#: fe-exec.c:2372
 msgid "PQexec not allowed during COPY BOTH\n"
 msgstr "вызов PQexec не допускается в процессе COPY BOTH\n"
 
-#: fe-exec.c:2556 fe-exec.c:2612 fe-exec.c:2681 fe-protocol3.c:1870
+#: fe-exec.c:2600 fe-exec.c:2656 fe-exec.c:2725 fe-protocol3.c:1874
 msgid "no COPY in progress\n"
 msgstr "операция COPY не выполняется\n"
 
-#: fe-exec.c:2858
+#: fe-exec.c:2902
 msgid "PQfn not allowed in pipeline mode\n"
 msgstr "PQfn не допускается в конвейерном режиме\n"
 
-#: fe-exec.c:2866
+#: fe-exec.c:2910
 msgid "connection in wrong state\n"
 msgstr "соединение в неправильном состоянии\n"
 
-#: fe-exec.c:2910
+#: fe-exec.c:2954
 msgid "cannot enter pipeline mode, connection not idle\n"
 msgstr "перейти в конвейерный режиме нельзя, соединение не простаивает\n"
 
-#: fe-exec.c:2944 fe-exec.c:2961
+#: fe-exec.c:2991 fe-exec.c:3015
 msgid "cannot exit pipeline mode with uncollected results\n"
 msgstr "выйти из конвейерного режима нельзя, не собрав все результаты\n"
 
-#: fe-exec.c:2949
+#: fe-exec.c:2996
 msgid "cannot exit pipeline mode while busy\n"
 msgstr "выйти из конвейерного режима в занятом состоянии нельзя\n"
 
-#: fe-exec.c:3091
+#: fe-exec.c:3008
+msgid "cannot exit pipeline mode while in COPY\n"
+msgstr "выйти из конвейерного режима во время COPY нельзя\n"
+
+#: fe-exec.c:3169
 msgid "cannot send pipeline when not in pipeline mode\n"
 msgstr "отправить конвейер, не перейдя в конвейерный режим, нельзя\n"
 
-#: fe-exec.c:3193
+#: fe-exec.c:3272
 msgid "invalid ExecStatusType code"
 msgstr "неверный код ExecStatusType"
 
-#: fe-exec.c:3220
+#: fe-exec.c:3299
 msgid "PGresult is not an error result\n"
 msgstr "В PGresult не передан результат ошибки\n"
 
-#: fe-exec.c:3288 fe-exec.c:3311
+#: fe-exec.c:3367 fe-exec.c:3390
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "номер столбца %d вне диапазона 0..%d"
 
-#: fe-exec.c:3326
+#: fe-exec.c:3405
 #, c-format
 msgid "parameter number %d is out of range 0..%d"
 msgstr "номер параметра %d вне диапазона 0..%d"
 
-#: fe-exec.c:3636
+#: fe-exec.c:3715
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "не удалось интерпретировать ответ сервера: %s"
 
-#: fe-exec.c:3896 fe-exec.c:3985
+#: fe-exec.c:3979 fe-exec.c:4068
 msgid "incomplete multibyte character\n"
 msgstr "неполный многобайтный символ\n"
 
@@ -905,12 +909,12 @@ msgstr "неверный сокет\n"
 msgid "%s() failed: %s\n"
 msgstr "ошибка в %s(): %s\n"
 
-#: fe-protocol3.c:196
+#: fe-protocol3.c:184
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
 msgstr "от сервера во время простоя получено сообщение типа 0x%02x"
 
-#: fe-protocol3.c:403
+#: fe-protocol3.c:407
 msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)\n"
@@ -918,121 +922,121 @@ msgstr ""
 "сервер отправил данные (сообщение \"D\") без предварительного описания "
 "строки (сообщение \"T\")\n"
 
-#: fe-protocol3.c:446
+#: fe-protocol3.c:450
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
 msgstr "неожиданный ответ сервера; первый полученный символ: \"%c\"\n"
 
-#: fe-protocol3.c:471
+#: fe-protocol3.c:475
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
 msgstr "содержимое не соответствует длине в сообщении типа \"%c\"\n"
 
-#: fe-protocol3.c:491
+#: fe-protocol3.c:495
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
 msgstr ""
 "потеряна синхронизация с сервером: получено сообщение типа \"%c\", длина %d\n"
 
-#: fe-protocol3.c:543 fe-protocol3.c:583
+#: fe-protocol3.c:547 fe-protocol3.c:587
 msgid "insufficient data in \"T\" message"
 msgstr "недостаточно данных в сообщении \"T\""
 
-#: fe-protocol3.c:654 fe-protocol3.c:860
+#: fe-protocol3.c:658 fe-protocol3.c:864
 msgid "out of memory for query result"
 msgstr "недостаточно памяти для результата запроса"
 
-#: fe-protocol3.c:723
+#: fe-protocol3.c:727
 msgid "insufficient data in \"t\" message"
 msgstr "недостаточно данных в сообщении \"t\""
 
-#: fe-protocol3.c:782 fe-protocol3.c:814 fe-protocol3.c:832
+#: fe-protocol3.c:786 fe-protocol3.c:818 fe-protocol3.c:836
 msgid "insufficient data in \"D\" message"
 msgstr "недостаточно данных в сообщении \"D\""
 
-#: fe-protocol3.c:788
+#: fe-protocol3.c:792
 msgid "unexpected field count in \"D\" message"
 msgstr "неверное число полей в сообщении \"D\""
 
-#: fe-protocol3.c:1036
+#: fe-protocol3.c:1040
 msgid "no error message available\n"
 msgstr "нет сообщения об ошибке\n"
 
 #. translator: %s represents a digit string
-#: fe-protocol3.c:1084 fe-protocol3.c:1103
+#: fe-protocol3.c:1088 fe-protocol3.c:1107
 #, c-format
 msgid " at character %s"
 msgstr " символ %s"
 
-#: fe-protocol3.c:1116
+#: fe-protocol3.c:1120
 #, c-format
 msgid "DETAIL:  %s\n"
 msgstr "ПОДРОБНОСТИ:  %s\n"
 
-#: fe-protocol3.c:1119
+#: fe-protocol3.c:1123
 #, c-format
 msgid "HINT:  %s\n"
 msgstr "ПОДСКАЗКА:  %s\n"
 
-#: fe-protocol3.c:1122
+#: fe-protocol3.c:1126
 #, c-format
 msgid "QUERY:  %s\n"
 msgstr "ЗАПРОС:  %s\n"
 
-#: fe-protocol3.c:1129
+#: fe-protocol3.c:1133
 #, c-format
 msgid "CONTEXT:  %s\n"
 msgstr "КОНТЕКСТ:  %s\n"
 
-#: fe-protocol3.c:1138
+#: fe-protocol3.c:1142
 #, c-format
 msgid "SCHEMA NAME:  %s\n"
 msgstr "СХЕМА:  %s\n"
 
-#: fe-protocol3.c:1142
+#: fe-protocol3.c:1146
 #, c-format
 msgid "TABLE NAME:  %s\n"
 msgstr "ТАБЛИЦА:  %s\n"
 
-#: fe-protocol3.c:1146
+#: fe-protocol3.c:1150
 #, c-format
 msgid "COLUMN NAME:  %s\n"
 msgstr "СТОЛБЕЦ:  %s\n"
 
-#: fe-protocol3.c:1150
+#: fe-protocol3.c:1154
 #, c-format
 msgid "DATATYPE NAME:  %s\n"
 msgstr "ТИП ДАННЫХ:  %s\n"
 
-#: fe-protocol3.c:1154
+#: fe-protocol3.c:1158
 #, c-format
 msgid "CONSTRAINT NAME:  %s\n"
 msgstr "ОГРАНИЧЕНИЕ:  %s\n"
 
-#: fe-protocol3.c:1166
+#: fe-protocol3.c:1170
 msgid "LOCATION:  "
 msgstr "ПОЛОЖЕНИЕ:  "
 
-#: fe-protocol3.c:1168
+#: fe-protocol3.c:1172
 #, c-format
 msgid "%s, "
 msgstr "%s, "
 
-#: fe-protocol3.c:1170
+#: fe-protocol3.c:1174
 #, c-format
 msgid "%s:%s"
 msgstr "%s:%s"
 
-#: fe-protocol3.c:1365
+#: fe-protocol3.c:1369
 #, c-format
 msgid "LINE %d: "
 msgstr "СТРОКА %d: "
 
-#: fe-protocol3.c:1764
+#: fe-protocol3.c:1768
 msgid "PQgetline: not doing text COPY OUT\n"
 msgstr "PQgetline можно вызывать только во время COPY OUT с текстом\n"
 
-#: fe-protocol3.c:2130
+#: fe-protocol3.c:2134
 #, c-format
 msgid "protocol error: id=0x%x\n"
 msgstr "ошибка протокола: id=0x%x\n"
@@ -1235,13 +1239,6 @@ msgstr "сертификат присутствует, но файла закр�
 msgid "private key file \"%s\" is not a regular file\n"
 msgstr "файл закрытого ключа \"%s\" - не обычный файл\n"
 
-#: fe-secure-openssl.c:1261
-#, c-format
-msgid "private key file \"%s\" must be owned by the current user or root\n"
-msgstr ""
-"файл закрытого ключа \"%s\" должен принадлежать root или текущему "
-"пользователю\n"
-
 #: fe-secure-openssl.c:1270
 #, c-format
 msgid ""
@@ -1307,6 +1304,11 @@ msgstr "не удалось передать данные серверу: %s\n"
 #, c-format
 msgid "unrecognized socket error: 0x%08X/%d"
 msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
+
+#~ msgid "private key file \"%s\" must be owned by the current user or root\n"
+#~ msgstr ""
+#~ "файл закрытого ключа \"%s\" должен принадлежать root или текущему "
+#~ "пользователю\n"
 
 #~ msgid "invalid channel_binding value: \"%s\"\n"
 #~ msgstr "неверное значение channel_binding: \"%s\"\n"

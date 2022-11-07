@@ -1,13 +1,13 @@
 # Russian message translation file for pg_waldump
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2018, 2019, 2020, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_waldump (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-05-07 06:06+0300\n"
-"PO-Revision-Date: 2020-09-03 15:07+0300\n"
+"POT-Creation-Date: 2022-09-29 10:17+0300\n"
+"PO-Revision-Date: 2022-09-29 14:17+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -342,6 +342,172 @@ msgstr "ошибка в записи WAL в позиции %X/%X: %s"
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
+
+#: xlogreader.c:354
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "неверное смещение записи: %X/%X"
+
+#: xlogreader.c:362
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "по смещению %X/%X запрошено продолжение записи"
+
+#: xlogreader.c:403 xlogreader.c:733
+#, c-format
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "неверная длина записи по смещению %X/%X: ожидалось %u, получено %u"
+
+#: xlogreader.c:429
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "длина записи %u по смещению %X/%X слишком велика"
+
+#: xlogreader.c:477
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "нет флага contrecord в позиции %X/%X"
+
+#: xlogreader.c:490
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "неверная длина contrecord: %u (ожидалась %lld) в позиции %X/%X"
+
+#: xlogreader.c:741
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "неверный ID менеджера ресурсов %u по смещению %X/%X"
+
+#: xlogreader.c:754 xlogreader.c:770
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "запись с неверной ссылкой назад %X/%X по смещению %X/%X"
+
+#: xlogreader.c:806
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr ""
+"некорректная контрольная сумма данных менеджера ресурсов в записи по "
+"смещению %X/%X"
+
+#: xlogreader.c:843
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "неверное магическое число %04X в сегменте журнала %s, смещение %u"
+
+#: xlogreader.c:857 xlogreader.c:898
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "неверные информационные биты %04X в сегменте журнала %s, смещение %u"
+
+#: xlogreader.c:872
+#, c-format
+msgid ""
+"WAL file is from different database system: WAL file database system "
+"identifier is %llu, pg_control database system identifier is %llu"
+msgstr ""
+"файл WAL принадлежит другой СУБД: в нём указан идентификатор системы БД "
+"%llu, а идентификатор системы pg_control: %llu"
+
+#: xlogreader.c:880
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect segment size in page "
+"header"
+msgstr ""
+"файл WAL принадлежит другой СУБД: некорректный размер сегмента в заголовке "
+"страницы"
+
+#: xlogreader.c:886
+#, c-format
+msgid ""
+"WAL file is from different database system: incorrect XLOG_BLCKSZ in page "
+"header"
+msgstr ""
+"файл WAL принадлежит другой СУБД: некорректный XLOG_BLCKSZ в заголовке "
+"страницы"
+
+#: xlogreader.c:917
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "неожиданный pageaddr %X/%X в сегменте журнала %s, смещение %u"
+
+#: xlogreader.c:942
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr ""
+"нарушение последовательности ID линии времени %u (после %u) в сегменте "
+"журнала %s, смещение %u"
+
+#: xlogreader.c:1287
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "идентификатор блока %u идёт не по порядку в позиции %X/%X"
+
+#: xlogreader.c:1309
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA установлен, но данных в позиции %X/%X нет"
+
+#: xlogreader.c:1316
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr ""
+"BKPBLOCK_HAS_DATA не установлен, но длина данных равна %u в позиции %X/%X"
+
+#: xlogreader.c:1352
+#, c-format
+msgid ""
+"BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at "
+"%X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE установлен, но для пропуска заданы смещение %u и длина %u "
+"при длине образа блока %u в позиции %X/%X"
+
+#: xlogreader.c:1368
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr ""
+"BKPIMAGE_HAS_HOLE не установлен, но для пропуска заданы смещение %u и длина "
+"%u в позиции %X/%X"
+
+#: xlogreader.c:1383
+#, c-format
+msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
+msgstr ""
+"BKPIMAGE_IS_COMPRESSED установлен, но длина образа блока равна %u в позиции "
+"%X/%X"
+
+#: xlogreader.c:1398
+#, c-format
+msgid ""
+"neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image "
+"length is %u at %X/%X"
+msgstr ""
+"ни BKPIMAGE_HAS_HOLE, ни BKPIMAGE_IS_COMPRESSED не установлены, но длина "
+"образа блока равна %u в позиции %X/%X"
+
+#: xlogreader.c:1414
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr ""
+"BKPBLOCK_SAME_REL установлен, но предыдущее значение не задано в позиции %X/"
+"%X"
+
+#: xlogreader.c:1426
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "неверный идентификатор блока %u в позиции %X/%X"
+
+#: xlogreader.c:1513
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "запись с неверной длиной в позиции %X/%X"
+
+#: xlogreader.c:1602
+#, c-format
+msgid "invalid compressed image at %X/%X, block %d"
+msgstr "неверный сжатый образ в позиции %X/%X, блок %d"
 
 #~ msgid "could not seek in log file %s to offset %u: %s"
 #~ msgstr "не удалось переместиться в файле журнала %s к смещению %u: %s"

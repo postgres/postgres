@@ -6,13 +6,13 @@
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009.
 # Andrey Sudnik <sudnikand@yandex.ru>, 2010.
 # Dmitriy Olshevskiy <olshevskiy87@bk.ru>, 2014.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2017, 2018, 2019, 2020, 2021, 2022.
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-05-07 06:06+0300\n"
-"PO-Revision-Date: 2021-09-04 11:38+0300\n"
+"PO-Revision-Date: 2022-09-05 13:51+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -931,13 +931,13 @@ msgid ""
 "It contains a dot-prefixed/invisible file, perhaps due to it being a mount "
 "point.\n"
 msgstr ""
-"Он содержит файл с точкой (невидимый), возможно это точка монтирования.\n"
+"Он содержит файл с точкой (невидимый), возможно, это точка монтирования.\n"
 
 #: initdb.c:2791
 #, c-format
 msgid ""
 "It contains a lost+found directory, perhaps due to it being a mount point.\n"
-msgstr "Он содержит подкаталог lost+found, возможно это точка монтирования.\n"
+msgstr "Он содержит подкаталог lost+found, возможно, это точка монтирования.\n"
 
 #: initdb.c:2794
 #, c-format

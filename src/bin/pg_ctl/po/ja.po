@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl (PostgreSQL 14)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2021-08-25 17:21+0900\n"
-"PO-Revision-Date: 2021-08-19 17:35+0900\n"
+"PO-Revision-Date: 2022-08-09 09:47+0900\n"
 "Last-Translator: Kyotaro Horiguchi <horikyota.ntt@gmail.com>\n"
 "Language-Team: Japan PostgreSQL Users Group <jpug-doc@ml.postgresql.jp>\n"
 "Language: ja\n"
@@ -229,7 +229,7 @@ msgstr " 待機処理が停止されました\n"
 #: pg_ctl.c:924
 #, c-format
 msgid "%s: server did not start in time\n"
-msgstr "%s: サーバーは時間内に停止しませんでした\n"
+msgstr "%s: サーバーは時間内に起動しませんでした\n"
 
 #: pg_ctl.c:930
 #, c-format
