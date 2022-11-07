@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pg_dump (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-02 04:50+0000\n"
-"PO-Revision-Date: 2022-09-25 18:52+0200\n"
+"PO-Revision-Date: 2022-10-15 17:15+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -1763,6 +1763,9 @@ msgid ""
 "to\n"
 "                               match at least one entity each\n"
 msgstr ""
+"  --strict-names               მოთხოვნა, რომ ცხრილი ან/და სქემა შეიცავდეს "
+"შაბლონებს, რომლებიც\n"
+"                               ერთ ელემენტს მაინც ემთხვევა\n"
 
 #: pg_dump.c:1052 pg_dumpall.c:647 pg_restore.c:478
 #, c-format
@@ -1772,6 +1775,10 @@ msgid ""
 "instead of\n"
 "                               ALTER OWNER commands to set ownership\n"
 msgstr ""
+"  --use-set-session-authorization\n"
+"                               მფლობელობის დასაყენებლად ALTER OWNER "
+"ბრძანებების მაგიერ\n"
+"                               SET SESSION AUTHORIZATION -ის გამოყენება\n"
 
 #: pg_dump.c:1056 pg_dumpall.c:651 pg_restore.c:482
 #, c-format
@@ -2045,6 +2052,8 @@ msgid ""
 "query produced null referenced table name for foreign key trigger \"%s\" on "
 "table \"%s\" (OID of table: %u)"
 msgstr ""
+"მოთხოვნის შედეგია ნულოვანი ბმის ცხრილის სახელის უცხო გასაღების ტრიგერი \"%s"
+"\" ცხრილზე \"%s\" (ცხრილის OID: %u)"
 
 #: pg_dump.c:8257
 #, c-format
@@ -2101,12 +2110,12 @@ msgstr "მონაცემის ტიპი %s-ის typetype თურმ
 #: pg_dump.c:11763
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\""
-msgstr ""
+msgstr "უცნობი provolatile მნიშვნელობა ფუნქციისთვის \"%s\""
 
 #: pg_dump.c:11813 pg_dump.c:13604
 #, c-format
 msgid "unrecognized proparallel value for function \"%s\""
-msgstr ""
+msgstr "უცნობი proparallel მნიშვნელობა ფუნქციისთვის \"%s\""
 
 #: pg_dump.c:11944 pg_dump.c:12050 pg_dump.c:12057
 #, c-format
@@ -2145,7 +2154,7 @@ msgstr "pg_transform.trftosql ველის არასწორი მნი
 #: pg_dump.c:12259
 #, c-format
 msgid "postfix operators are not supported anymore (operator \"%s\")"
-msgstr ""
+msgstr "postfix ოპერატორები მხარდაჭერილი აღარაა (ოპერატორი \"%s\")"
 
 #: pg_dump.c:12429
 #, c-format
@@ -2255,7 +2264,11 @@ msgid "query to get data of sequence \"%s\" returned %d row (expected 1)"
 msgid_plural ""
 "query to get data of sequence \"%s\" returned %d rows (expected 1)"
 msgstr[0] ""
+"მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი "
+"დააბრუნა. (მოველოდი: 1)"
 msgstr[1] ""
+"მოთხოვნამ, რომელსაც მონაცემები მიმდევრობიდან (%s) უნდა მიეღო, %d მწკრივი "
+"დააბრუნა. (მოველოდი: 1)"
 
 #: pg_dump.c:16642
 #, c-format
@@ -2278,11 +2291,13 @@ msgid ""
 "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows "
 "returned"
 msgstr ""
+"მოთხოვნის შეცდომა, რომელსაც ცხრილისთვის \"%2$s\" წესი \"%1$s\" უნდა მიეღო: "
+"დაბრუნებულია მწკრივების არასწორი რაოდენობა"
 
 #: pg_dump.c:17425
 #, c-format
 msgid "could not find referenced extension %u"
-msgstr ""
+msgstr "მიბმული გაფართოება (%u) ვერ ვიპოვე"
 
 #: pg_dump.c:17515
 #, c-format
@@ -2297,12 +2312,12 @@ msgstr "დემოკიდებულების მონაცემე�
 #: pg_dump.c:17733
 #, c-format
 msgid "no referencing object %u %u"
-msgstr ""
+msgstr "მიბმადი ობიექტის გარეშე %u %u"
 
 #: pg_dump.c:17744
 #, c-format
 msgid "no referenced object %u %u"
-msgstr ""
+msgstr "მიბმული ობიექტის გარეშე %u %u"
 
 #: pg_dump_sort.c:422
 #, c-format
@@ -2689,6 +2704,8 @@ msgid ""
 "  -L, --use-list=FILENAME      use table of contents from this file for\n"
 "                               selecting/ordering output\n"
 msgstr ""
+"  -L, --use-list=FILENAME      გამოტანის ასარჩევად/დასალაგებლად მითითებული\n"
+"                               ფაილის შემცველობის გამოყენება\n"
 
 #: pg_restore.c:454
 #, c-format

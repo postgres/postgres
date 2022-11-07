@@ -16,9 +16,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2017-04-22 22:45+0000\n"
-"PO-Revision-Date: 2017-04-23 03:04+0100\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-09-26 08:17+0000\n"
+"PO-Revision-Date: 2022-09-26 15:09+0200\n"
 "Last-Translator: Daniele Varrazzo <daniele.varrazzo@gmail.com>\n"
 "Language-Team: https://github.com/dvarrazzo/postgresql-it\n"
 "Language: it\n"
@@ -27,50 +27,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: ../../common/config_info.c:131 ../../common/config_info.c:139
-#: ../../common/config_info.c:147 ../../common/config_info.c:155
-#: ../../common/config_info.c:163 ../../common/config_info.c:171
-#: ../../common/config_info.c:179 ../../common/config_info.c:187
-#: ../../common/config_info.c:195
+#: ../../common/config_info.c:134 ../../common/config_info.c:142
+#: ../../common/config_info.c:150 ../../common/config_info.c:158
+#: ../../common/config_info.c:166 ../../common/config_info.c:174
+#: ../../common/config_info.c:182 ../../common/config_info.c:190
 msgid "not recorded"
 msgstr "non registrato"
 
-#: ../../common/exec.c:127 ../../common/exec.c:241 ../../common/exec.c:284
+#: ../../common/exec.c:149 ../../common/exec.c:266 ../../common/exec.c:312
 #, c-format
-msgid "could not identify current directory: %s"
-msgstr "identificazione della directory corrente fallita: %s"
+msgid "could not identify current directory: %m"
+msgstr "identificazione della directory corrente fallita: %m"
 
-#: ../../common/exec.c:146
+#: ../../common/exec.c:168
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binario non valido \"%s\""
 
-#: ../../common/exec.c:195
+#: ../../common/exec.c:218
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "lettura del binario \"%s\" fallita"
 
-#: ../../common/exec.c:202
+#: ../../common/exec.c:226
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "programma \"%s\" da eseguire non trovato"
 
-#: ../../common/exec.c:257 ../../common/exec.c:293
+#: ../../common/exec.c:282 ../../common/exec.c:321
 #, c-format
-msgid "could not change directory to \"%s\": %s"
-msgstr "spostamento nella directory \"%s\" fallito: %s"
+msgid "could not change directory to \"%s\": %m"
+msgstr "spostamento nella directory \"%s\" fallito: %m"
 
-#: ../../common/exec.c:272
+#: ../../common/exec.c:299
 #, c-format
-msgid "could not read symbolic link \"%s\""
-msgstr "lettura del link simbolico \"%s\" fallita"
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "lettura del link simbolico \"%s\" fallita: %m"
 
-#: ../../common/exec.c:523
+#: ../../common/exec.c:422
 #, c-format
-msgid "pclose failed: %s"
-msgstr "pclose fallita: %s"
+msgid "%s() failed: %m"
+msgstr "%s() non riuscito: %m"
+
+#: ../../common/exec.c:560 ../../common/exec.c:605 ../../common/exec.c:697
+msgid "out of memory"
+msgstr "memoria esaurita"
 
 #: pg_config.c:74
 #, c-format
@@ -261,20 +264,34 @@ msgstr ""
 
 #: pg_config.c:105
 #, c-format
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Puoi segnalare eventuali bug a <pgsql-bugs@postgresql.org>.\n"
+msgid "Report bugs to <%s>.\n"
+msgstr "Segnala i bug a <%s>.\n"
 
-#: pg_config.c:111
+#: pg_config.c:106
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s pagina iniziale: <%s>\n"
+
+#: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Prova \"%s --help\" per maggiori informazioni.\n"
 
-#: pg_config.c:153
+#: pg_config.c:154
 #, c-format
 msgid "%s: could not find own program executable\n"
 msgstr "%s: il proprio programma eseguibile non è stato trovato\n"
 
-#: pg_config.c:180
+#: pg_config.c:181
 #, c-format
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: parametro non valido: %s\n"
+
+#~ msgid "could not change directory to \"%s\": %s"
+#~ msgstr "spostamento nella directory \"%s\" fallito: %s"
+
+#~ msgid "could not read symbolic link \"%s\""
+#~ msgstr "lettura del link simbolico \"%s\" fallita"
+
+#~ msgid "pclose failed: %s"
+#~ msgstr "pclose fallita: %s"

@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-29 10:17+0300\n"
+"POT-Creation-Date: 2022-11-01 14:40+0300\n"
 "PO-Revision-Date: 2022-09-29 11:40+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -625,8 +625,8 @@ msgstr "синтаксическая ошибка в файле определе
 msgid ""
 "nested service specifications not supported in service file \"%s\", line %d\n"
 msgstr ""
-"рекурсивные определения служб не поддерживаются (файл определения служб \""
-"%s\", строка %d)\n"
+"рекурсивные определения служб не поддерживаются (файл определения служб \"%s"
+"\", строка %d)\n"
 
 #: fe-connect.c:6156
 #, c-format
@@ -651,8 +651,8 @@ msgid ""
 "unexpected character \"%c\" at position %d in URI (expected \":\" or \"/\"): "
 "\"%s\"\n"
 msgstr ""
-"неожиданный символ \"%c\" в позиции %d в URI (ожидалось \":\" или \"/\"): \""
-"%s\"\n"
+"неожиданный символ \"%c\" в позиции %d в URI (ожидалось \":\" или \"/\"): "
+"\"%s\"\n"
 
 #: fe-connect.c:6385
 #, c-format
@@ -1320,7 +1320,7 @@ msgstr "нет сообщения об ошибке SSL"
 msgid "SSL error code %lu"
 msgstr "код ошибки SSL: %lu"
 
-#: fe-secure-openssl.c:1944
+#: fe-secure-openssl.c:1951
 #, c-format
 msgid "WARNING: sslpassword truncated\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: значение sslpassword усечено\n"
@@ -1445,8 +1445,8 @@ msgstr "нераспознанная ошибка сокета: 0x%08X/%d"
 #~ "строки (сообщение \"T\")"
 
 #~ msgid ""
-#~ "server sent binary data (\"B\" message) without prior row description "
-#~ "(\"T\" message)"
+#~ "server sent binary data (\"B\" message) without prior row description (\"T"
+#~ "\" message)"
 #~ msgstr ""
 #~ "сервер отправил двоичные данные (сообщение \"B\") без предварительного "
 #~ "описания строки (сообщение \"T\")"

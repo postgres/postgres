@@ -60,10 +60,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL server 14\n"
+"Project-Id-Version: PostgreSQL server 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-09-24 23:10+0000\n"
-"PO-Revision-Date: 2022-09-25 17:32+0200\n"
+"PO-Revision-Date: 2022-10-20 09:06+0200\n"
 "Last-Translator: Carlos Chapi <carloswaldo@babelruins.org>\n"
 "Language-Team: PgSQL-es-Ayuda <pgsql-es-ayuda@lists.postgresql.org>\n"
 "Language: es\n"
@@ -3447,7 +3447,7 @@ msgstr "no se pudo leer del archivo de segmento %s, posición %d: leídos %d de 
 #: backup/backup_manifest.c:253
 #, c-format
 msgid "expected end timeline %u but found timeline %u"
-msgstr "se esperaba el timeline de término %u pero se encontró el tieneline %u"
+msgstr "se esperaba el timeline de término %u pero se encontró el timeline %u"
 
 #: backup/backup_manifest.c:277
 #, c-format
@@ -5217,7 +5217,7 @@ msgstr "esquema %s"
 #: catalog/objectaddress.c:3516
 #, c-format
 msgid "statistics object %s"
-msgstr "object de estadísticas %s"
+msgstr "objeto de estadísticas %s"
 
 #: catalog/objectaddress.c:3547
 #, c-format
@@ -7295,7 +7295,7 @@ msgstr "nombre de configuración regional no válido: «%s»"
 #, fuzzy, c-format
 #| msgid "encoding \"%s\" not supported by ICU"
 msgid "encoding \"%s\" is not supported with ICU provider"
-msgstr "la codificación «%s» no estæ soportada por ICU"
+msgstr "la codificación «%s» no está soportada por ICU"
 
 #: commands/dbcommands.c:1045
 #, c-format
@@ -7770,7 +7770,7 @@ msgstr "Debe ser superusuario para crear un disparador por eventos."
 #: commands/event_trigger.c:136
 #, c-format
 msgid "unrecognized event name \"%s\""
-msgstr "nomre de evento «%s» no reconocido"
+msgstr "nommre de evento «%s» no reconocido"
 
 #: commands/event_trigger.c:153
 #, c-format
@@ -9496,7 +9496,7 @@ msgstr "El dueño de una publicación FOR ALL TABLES debe ser un superusuario."
 #: commands/schemacmds.c:105 commands/schemacmds.c:270
 #, c-format
 msgid "unacceptable schema name \"%s\""
-msgstr "el nombre de schema «%s» es inaceptable"
+msgstr "el nombre de esquema «%s» es inaceptable"
 
 #: commands/schemacmds.c:106 commands/schemacmds.c:271
 #, c-format
@@ -10738,7 +10738,7 @@ msgstr "no existe la restricción «%s» en la relación «%s»"
 #: commands/tablecmds.c:10768
 #, c-format
 msgid "constraint \"%s\" of relation \"%s\" is not a foreign key constraint"
-msgstr "la restricción «%s» de la relación «%s» no es una restriccion de llave foránea"
+msgstr "la restricción «%s» de la relación «%s» no es una restricción de llave foránea"
 
 #: commands/tablecmds.c:10806
 #, c-format
@@ -13357,7 +13357,7 @@ msgstr "función SQL «%s» durante el inicio"
 #: executor/functions.c:1568
 #, c-format
 msgid "calling procedures with output arguments is not supported in SQL functions"
-msgstr "no está permitido invocar procedimientos con arguments de salida en funciones SQL"
+msgstr "no está permitido invocar procedimientos con argumentos de salida en funciones SQL"
 
 #: executor/functions.c:1701 executor/functions.c:1739
 #: executor/functions.c:1753 executor/functions.c:1843
@@ -14678,7 +14678,7 @@ msgstr "no se pudo aceptar una conexión SSL: %s"
 #: libpq/be-secure-openssl.c:545
 #, c-format
 msgid "This may indicate that the client does not support any SSL protocol version between %s and %s."
-msgstr "Esto puede indicar que el cliente no soporta ninguna versión del protocolo SSL entre %s and %s."
+msgstr "Esto puede indicar que el cliente no soporta ninguna versión del protocolo SSL entre %s y %s."
 
 #: libpq/be-secure-openssl.c:561 libpq/be-secure-openssl.c:741
 #: libpq/be-secure-openssl.c:805
@@ -15133,7 +15133,7 @@ msgstr "no se pudo interpretar la lista de secretos RADIUS «%s»"
 #: libpq/hba.c:2063
 #, c-format
 msgid "could not parse RADIUS identifiers list \"%s\""
-msgstr "no se pudo interpretar la lista de identificadoes RADIUS «%s»"
+msgstr "no se pudo interpretar la lista de identificadores RADIUS «%s»"
 
 #: libpq/hba.c:2077
 #, c-format
@@ -15359,7 +15359,7 @@ msgstr "los datos restantes del mensaje son insuficientes"
 #: libpq/pqformat.c:597 libpq/pqformat.c:626
 #, c-format
 msgid "invalid string in message"
-msgstr "cadena inválida en el mensaje"
+msgstr "cadena no válida en el mensaje"
 
 #: libpq/pqformat.c:642
 #, c-format
@@ -16165,7 +16165,7 @@ msgstr "no se permiten operaciones «grouping» en borde de partición"
 
 #: parser/parse_agg.c:532
 msgid "aggregate functions are not allowed in partition key expressions"
-msgstr "no se permiten funciones de agregación en una expresión de llave de particionaiento"
+msgstr "no se permiten funciones de agregación en una expresión de llave de particionamiento"
 
 #: parser/parse_agg.c:534
 msgid "grouping operations are not allowed in partition key expressions"
@@ -20217,7 +20217,7 @@ msgstr "el archivo de slot de replicación «%s» tiene largo corrupto %u"
 #: replication/slot.c:1835
 #, c-format
 msgid "checksum mismatch for replication slot file \"%s\": is %u, should be %u"
-msgstr "suma de verificación no coincidenete en archivo de slot de replicación «%s»: es %u, debería ser %u"
+msgstr "suma de verificación no coincidente en archivo de slot de replicación «%s»: es %u, debería ser %u"
 
 # FIXME see slot.c:779.  See also  postmaster.c:835
 #: replication/slot.c:1869
@@ -20245,7 +20245,7 @@ msgstr "Cambie wal_level a replica o superior."
 #: replication/slot.c:1911
 #, c-format
 msgid "too many replication slots active before shutdown"
-msgstr "demasiados slots de replicacion activos antes del apagado"
+msgstr "demasiados slots de replicación activos antes del apagado"
 
 #: replication/slotfuncs.c:592
 #, c-format
@@ -23489,7 +23489,7 @@ msgstr "no se pudo determinar qué ordenamiento usar para la función %s"
 #: utils/adt/formatting.c:2314
 #, c-format
 msgid "invalid combination of date conventions"
-msgstr "combinacion invalida de convenciones de fecha"
+msgstr "combinación no válida de convenciones de fecha"
 
 #: utils/adt/formatting.c:2315
 #, c-format
@@ -24215,7 +24215,7 @@ msgstr "el método de ítem jsonpath .%s() sólo puede aplicarse a un valor num�
 #: utils/adt/jsonpath_exec.c:1579
 #, c-format
 msgid "left operand of jsonpath operator %s is not a single numeric value"
-msgstr "el operando izquiero del operador jsonpath %s no es un valor numérico escalar"
+msgstr "el operando izquierdo del operador jsonpath %s no es un valor numérico escalar"
 
 #: utils/adt/jsonpath_exec.c:1586
 #, c-format
@@ -28619,7 +28619,7 @@ msgstr "no se puede definir el parámetro «%s» dentro una función security-de
 #, fuzzy, c-format
 #| msgid "must be superuser or a member of pg_read_all_settings to examine \"%s\""
 msgid "must be superuser or have privileges of pg_read_all_settings to examine \"%s\""
-msgstr "debe ser superusuario o miembro del rol pg_read_all settings para examinar «%s»"
+msgstr "debe ser superusuario o miembro del rol pg_read_all_settings para examinar «%s»"
 
 #: utils/misc/guc.c:8616
 #, c-format
@@ -29079,7 +29079,7 @@ msgstr "el módulo para partición de hash fue especificado más de una vez"
 #: gram.y:3037
 #, c-format
 msgid "remainder for hash partition provided more than once"
-msgstr "el remanentde para partición de hash fue especificado más de una vez"
+msgstr "el remanente para partición de hash fue especificado más de una vez"
 
 #: gram.y:3044
 #, c-format

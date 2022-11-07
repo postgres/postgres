@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2022-09-29 10:17+0300\n"
+"POT-Creation-Date: 2022-11-01 14:40+0300\n"
 "PO-Revision-Date: 2022-09-05 13:41+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -286,8 +286,8 @@ msgstr ""
 "перекодировки"
 
 #: command.c:1316 command.c:2119 command.c:3312 command.c:3511 command.c:5599
-#: common.c:177 common.c:226 common.c:395 common.c:1137 common.c:1155
-#: common.c:1229 common.c:1336 common.c:1374 common.c:1459 common.c:1495
+#: common.c:181 common.c:230 common.c:399 common.c:1082 common.c:1100
+#: common.c:1174 common.c:1281 common.c:1319 common.c:1407 common.c:1443
 #: copy.c:488 copy.c:722 help.c:66 large_obj.c:157 large_obj.c:192
 #: large_obj.c:254 startup.c:304
 #, c-format
@@ -391,7 +391,7 @@ msgstr "Секундомер выключен."
 
 #: command.c:2686 command.c:2714 command.c:3952 command.c:3955 command.c:3958
 #: command.c:3964 command.c:3966 command.c:3992 command.c:4002 command.c:4014
-#: command.c:4028 command.c:4055 command.c:4113 common.c:73 copy.c:331
+#: command.c:4028 command.c:4055 command.c:4113 common.c:77 copy.c:331
 #: copy.c:403 psqlscanslash.l:784 psqlscanslash.l:795 psqlscanslash.l:805
 #, c-format
 msgid "%s: %m"
@@ -796,7 +796,7 @@ msgstr "%s (обновление: %g с)\n"
 msgid "could not wait for signals: %m"
 msgstr "сбой при ожидании сигналов: %m"
 
-#: command.c:5206 command.c:5213 common.c:568 common.c:575 common.c:1118
+#: command.c:5206 command.c:5213 common.c:572 common.c:579 common.c:1063
 #, c-format
 msgid ""
 "********* QUERY **********\n"
@@ -819,69 +819,69 @@ msgstr "\"%s.%s\" — не представление"
 msgid "could not parse reloptions array"
 msgstr "не удалось разобрать массив reloptions"
 
-#: common.c:162
+#: common.c:166
 #, c-format
 msgid "cannot escape without active connection"
 msgstr "экранирование строк не работает без подключения к БД"
 
-#: common.c:203
+#: common.c:207
 #, c-format
 msgid "shell command argument contains a newline or carriage return: \"%s\""
 msgstr ""
 "аргумент команды оболочки содержит символ новой строки или перевода каретки: "
 "\"%s\""
 
-#: common.c:307
+#: common.c:311
 #, c-format
 msgid "connection to server was lost"
 msgstr "подключение к серверу было потеряно"
 
-#: common.c:311
+#: common.c:315
 #, c-format
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Подключение к серверу потеряно. Попытка восстановления "
 
-#: common.c:316
+#: common.c:320
 #, c-format
 msgid "Failed.\n"
 msgstr "неудачна.\n"
 
-#: common.c:333
+#: common.c:337
 #, c-format
 msgid "Succeeded.\n"
 msgstr "удачна.\n"
 
-#: common.c:385 common.c:1054
+#: common.c:389 common.c:1001
 #, c-format
 msgid "unexpected PQresultStatus: %d"
 msgstr "неожиданное значение PQresultStatus: %d"
 
-#: common.c:507
+#: common.c:511
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Время: %.3f мс\n"
 
-#: common.c:522
+#: common.c:526
 #, c-format
 msgid "Time: %.3f ms (%02d:%06.3f)\n"
 msgstr "Время: %.3f мс (%02d:%06.3f)\n"
 
-#: common.c:531
+#: common.c:535
 #, c-format
 msgid "Time: %.3f ms (%02d:%02d:%06.3f)\n"
 msgstr "Время: %.3f мс (%02d:%02d:%06.3f)\n"
 
-#: common.c:538
+#: common.c:542
 #, c-format
 msgid "Time: %.3f ms (%.0f d %02d:%02d:%06.3f)\n"
 msgstr "Время: %.3f мс (%.0f д. %02d:%02d:%06.3f)\n"
 
-#: common.c:562 common.c:619 common.c:1089 describe.c:6135
+#: common.c:566 common.c:623 common.c:1034 describe.c:6135
 #, c-format
 msgid "You are currently not connected to a database."
 msgstr "В данный момент вы не подключены к базе данных."
 
-#: common.c:650
+#: common.c:654
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" with payload \"%s\" received from server "
@@ -890,34 +890,34 @@ msgstr ""
 "Получено асинхронное уведомление \"%s\" с сообщением-нагрузкой \"%s\" от "
 "серверного процесса с PID %d.\n"
 
-#: common.c:653
+#: common.c:657
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Получено асинхронное уведомление \"%s\" от серверного процесса с PID %d.\n"
 
-#: common.c:686 common.c:705
+#: common.c:688
 #, c-format
 msgid "could not print result table: %m"
 msgstr "не удалось вывести таблицу результатов: %m"
 
-#: common.c:726
+#: common.c:708
 #, c-format
 msgid "no rows returned for \\gset"
 msgstr "сервер не возвратил строк для \\gset"
 
-#: common.c:731
+#: common.c:713
 #, c-format
 msgid "more than one row returned for \\gset"
 msgstr "сервер возвратил больше одной строки для \\gset"
 
-#: common.c:749
+#: common.c:731
 #, c-format
 msgid "attempt to \\gset into specially treated variable \"%s\" ignored"
 msgstr "попытка выполнить \\gset со специальной переменной \"%s\" игнорируется"
 
-#: common.c:1098
+#: common.c:1043
 #, c-format
 msgid ""
 "***(Single step mode: verify "
@@ -931,36 +931,31 @@ msgstr ""
 "%s\n"
 "***(Enter - выполнение; x и Enter - отмена)**************\n"
 
-#: common.c:1181
+#: common.c:1126
 #, c-format
 msgid "STATEMENT:  %s"
 msgstr "ОПЕРАТОР:  %s"
 
-#: common.c:1217
+#: common.c:1162
 #, c-format
 msgid "unexpected transaction status (%d)"
 msgstr "неожиданное состояние транзакции (%d)"
 
-#: common.c:1358 describe.c:2020
+#: common.c:1303 describe.c:2020
 msgid "Column"
 msgstr "Столбец"
 
-#: common.c:1359 describe.c:170 describe.c:358 describe.c:376 describe.c:1037
+#: common.c:1304 describe.c:170 describe.c:358 describe.c:376 describe.c:1037
 #: describe.c:1193 describe.c:1725 describe.c:1749 describe.c:2021
 #: describe.c:3891 describe.c:4103 describe.c:4342 describe.c:4504
 #: describe.c:5767
 msgid "Type"
 msgstr "Тип"
 
-#: common.c:1408
+#: common.c:1353
 #, c-format
 msgid "The command has no result, or the result has no columns.\n"
 msgstr "Команда не выдала результат, либо в результате нет столбцов.\n"
-
-#: common.c:1561
-#, c-format
-msgid "\\watch cannot be used with COPY"
-msgstr "\\watch нельзя использовать с COPY"
 
 #: copy.c:98
 #, c-format
@@ -6712,7 +6707,7 @@ msgstr "лишний аргумент \"%s\" проигнорирован"
 msgid "could not find own program executable"
 msgstr "не удалось найти свой исполняемый файл"
 
-#: tab-complete.c:5952
+#: tab-complete.c:5954
 #, c-format
 msgid ""
 "tab completion query failed: %s\n"
@@ -6747,6 +6742,9 @@ msgid ""
 msgstr ""
 "нераспознанное значение \"%s\" для \"%s\"\n"
 "Допустимые значения: %s."
+
+#~ msgid "\\watch cannot be used with COPY"
+#~ msgstr "\\watch нельзя использовать с COPY"
 
 #~ msgid "where direction can be empty or one of:"
 #~ msgstr "где допустимое направление пустое или:"

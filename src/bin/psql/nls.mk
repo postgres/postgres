@@ -1,6 +1,6 @@
 # src/bin/psql/nls.mk
 CATALOG_NAME     = psql
-AVAIL_LANGUAGES  = cs de el es fr ja ka ko ru sv uk zh_CN
+AVAIL_LANGUAGES  = cs de el es fr it ja ka ko ru sv uk zh_CN
 GETTEXT_FILES    = $(FRONTEND_COMMON_GETTEXT_FILES) \
                    command.c common.c copy.c crosstabview.c help.c input.c large_obj.c \
                    mainloop.c psqlscanslash.c startup.c \

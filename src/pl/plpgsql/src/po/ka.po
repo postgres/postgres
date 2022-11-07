@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: plpgsql (PostgreSQL) 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2022-07-02 04:39+0000\n"
-"PO-Revision-Date: 2022-08-12 13:35+0200\n"
+"PO-Revision-Date: 2022-10-15 20:11+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
 "Language-Team: Georgian <nothing>\n"
 "Language: ka\n"
@@ -75,7 +75,7 @@ msgstr "სვეტის მითითება \"%s\" ორაზროვ
 #: pl_comp.c:1141
 #, c-format
 msgid "It could refer to either a PL/pgSQL variable or a table column."
-msgstr ""
+msgstr "შეიძლება მიბმული იყოს PL/pgSQL ცვლადზე ან ცხრილის სვეტზე."
 
 #: pl_comp.c:1324 pl_exec.c:5234 pl_exec.c:5407 pl_exec.c:5494 pl_exec.c:5585
 #: pl_exec.c:6606
@@ -118,6 +118,7 @@ msgstr "გამონაკლისის უცნობი პირობ�
 msgid ""
 "could not determine actual argument type for polymorphic function \"%s\""
 msgstr ""
+"პოლიმორფული ფუნქციისთვის (%s) მიმდინარე არგუმენტის ტიპის დადგენა შეუძლებელია"
 
 #: pl_exec.c:501 pl_exec.c:940 pl_exec.c:1175
 msgid "during initialization of execution state"
@@ -138,7 +139,7 @@ msgstr "კონტროლმა ფუნქციის დასასრ�
 
 #: pl_exec.c:624
 msgid "while casting return value to function's return type"
-msgstr ""
+msgstr "დაბრუნებული მნიშვნელობის ფუნქციის დაბრუნების ტიპში კასტისას"
 
 #: pl_exec.c:636 pl_exec.c:3665
 #, c-format
@@ -163,7 +164,7 @@ msgstr "დაბრუნებული ჩანაწერის ტიპ�
 #: pl_exec.c:1036 pl_exec.c:1194
 #, c-format
 msgid "control reached end of trigger procedure without RETURN"
-msgstr ""
+msgstr "კონტროლმა ტრიგერის პროცედურის დასასრულს RETURN-ის გარეშე მიაღწია"
 
 #: pl_exec.c:1044
 #, c-format
@@ -173,7 +174,7 @@ msgstr "ტრიგერი პროცედურა სეტს ვერ
 #: pl_exec.c:1083 pl_exec.c:1111
 msgid ""
 "returned row structure does not match the structure of the triggering table"
-msgstr ""
+msgstr "დაბრუნებული მწკრივის სტრუქტურა ტრიგერი ცხრილის სტრუქტურას არ ემთხვევა"
 
 #. translator: last %s is a phrase such as "during statement block
 #. local variable initialization"
@@ -224,6 +225,8 @@ msgid ""
 "procedure parameter \"%s\" is an output parameter but corresponding argument "
 "is not writable"
 msgstr ""
+"პროცედურის პარამეტრი \"%s\" გამოტანის პარამეტრია, მაგრამ შესაბამისი "
+"არგუმენტი ჩაწერადი არაა"
 
 #: pl_exec.c:2365
 #, c-format
@@ -231,11 +234,15 @@ msgid ""
 "procedure parameter %d is an output parameter but corresponding argument is "
 "not writable"
 msgstr ""
+"პროცედურის პარამეტრი %d გამოტანის პარამეტრია, მაგრამ შესაბამისი არგუმენტი "
+"ჩაწერადი არაა"
 
 #: pl_exec.c:2399
 #, c-format
 msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
 msgstr ""
+"GET STACKED DIAGNOSTICS -ის გამოყენება გამონაკლისის დამმუშავებლის გარეთ "
+"შეუძლებელია"
 
 #: pl_exec.c:2599
 #, c-format
@@ -295,7 +302,7 @@ msgstr "FOREACH გამოხატულების გამოტანა
 #: pl_exec.c:3032
 #, c-format
 msgid "slice dimension (%d) is out of the valid range 0..%d"
-msgstr ""
+msgstr "ჭრილის განზომილება (%d) დასაშვებ დიაპაზონს (0.. %d) გარეთაა"
 
 #: pl_exec.c:3059
 #, c-format
@@ -312,6 +319,7 @@ msgstr "FOREACH მარყუჟის ცვლადი მასივი�
 msgid ""
 "cannot return non-composite value from function returning composite type"
 msgstr ""
+"ფუნქცია, რომელიც კომპოზიტურ ტიპს აბრუნებს, არაკომპოზიტურ ტიპს ვერ დააბრუნებს"
 
 #: pl_exec.c:3321 pl_gram.y:3319
 #, c-format
@@ -428,6 +436,8 @@ msgid ""
 "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS "
 "instead."
 msgstr ""
+"შეიძლება სამაგიეროდ ამჯობინოთ EXECUTE … INTO ან EXECUTE CREATE TABLE .. AS -"
+"ის გამოყენება."
 
 #: pl_exec.c:4512
 #, c-format
@@ -457,12 +467,12 @@ msgstr "ცვლადი \"%s\", აღწერილი, როგორც 
 #: pl_exec.c:5160
 #, c-format
 msgid "cannot assign non-composite value to a row variable"
-msgstr ""
+msgstr "მწკრივის ცვლადისთვის არაკომპოზიტური მნიშვნელობის მინიჭება შეუძლებელია"
 
 #: pl_exec.c:5192
 #, c-format
 msgid "cannot assign non-composite value to a record variable"
-msgstr ""
+msgstr "ჩანაწერის ცვლადისთვის არაკომპოზიტური მნიშვნელობის მინიჭება შეუძლებელია"
 
 #: pl_exec.c:5243
 #, c-format
@@ -501,11 +511,12 @@ msgstr "მოთხოვნა SELECT-ი არაა"
 msgid ""
 "type of parameter %d (%s) does not match that when preparing the plan (%s)"
 msgstr ""
+"პარამეტრის %d (%s) ტიპი არ ემთხვევა იმას, რომლითაც გეგმა მზადდებოდა (%s)"
 
 #: pl_exec.c:7111 pl_exec.c:7145 pl_exec.c:7219 pl_exec.c:7245
 #, c-format
 msgid "number of source and target fields in assignment does not match"
-msgstr ""
+msgstr "ტოლობაში საწყისი და სამიზნე ველების რაოდენობა არ ემთხვევა"
 
 #. translator: %s represents a name of an extra check
 #: pl_exec.c:7113 pl_exec.c:7147 pl_exec.c:7221 pl_exec.c:7247
@@ -527,6 +538,8 @@ msgstr "ჩანაწერი %s ჯერ მიუნიჭებელი�
 #, c-format
 msgid "The tuple structure of a not-yet-assigned record is indeterminate."
 msgstr ""
+"ჩანაწერის , რომელსაც მნიშვნელობა ჯერ მინიჭებული არ აქვს, კორტეჟის სტრუქტურა "
+"გაურკვეველია."
 
 #: pl_exec.c:8283 pl_gram.y:3442
 #, c-format
@@ -579,6 +592,8 @@ msgstr "ტიპს \"%s\" კოლაციების მხარდაჭ
 #, c-format
 msgid "variable \"%s\" must have a default value, since it's declared NOT NULL"
 msgstr ""
+"ცვლადისთვის \"%s\" ნაგულისხმები მნიშვნელობის ქონა აუცილებელია, რადგან ის "
+"აღწერილია, როგორც NOT NULL"
 
 #: pl_gram.y:674 pl_gram.y:689 pl_gram.y:715
 #, c-format
@@ -619,6 +634,8 @@ msgid ""
 "loop variable of loop over rows must be a record variable or list of scalar "
 "variables"
 msgstr ""
+"კორტეჟის მარყუჟი ცვლადი ჩანაწერის ცვლადის ან სკალარული ცვლადების სიის ტიპის "
+"უნდა იყოს"
 
 #: pl_gram.y:1438
 #, c-format
@@ -644,6 +661,8 @@ msgstr "მოთხოვნის FOR მარყუჟში REVERSE-ს ვ
 #, c-format
 msgid "loop variable of FOREACH must be a known variable or list of variables"
 msgstr ""
+"\"FOREACH\"-ის მარყუჟი ცვლადი ცნობილი ცვლადს ან ცვლადების სიას უნდა "
+"წარმოადგენდეს"
 
 #: pl_gram.y:1742
 #, c-format
@@ -651,6 +670,7 @@ msgid ""
 "there is no label \"%s\" attached to any block or loop enclosing this "
 "statement"
 msgstr ""
+"ბლოკში ან მარყუჟში, რომელიც ამ ოპერატორს შემოფარგლავს, ჭდე \"%s\" არ არსებობს"
 
 #: pl_gram.y:1750
 #, c-format
@@ -773,11 +793,13 @@ msgstr "RETURN-ს OUT პარამეტრების მქონე ფ�
 #, c-format
 msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
 msgstr ""
+"RETURN NEXT-ს პარამეტრი ფუნქციაში, რომელსაც OUT პარამეტრები აქვს, ვერ ექნება"
 
 #: pl_gram.y:3500
 #, c-format
 msgid "record variable cannot be part of multiple-item INTO list"
 msgstr ""
+"ჩანაწერის ცვლადი მრავალე-ლემენტიანი INTO ჩამონათვალის ნაწილი ვერ იქნება"
 
 #: pl_gram.y:3546
 #, c-format
@@ -787,12 +809,12 @@ msgstr "მითითებულია მეტისმეტი INTO ც�
 #: pl_gram.y:3754
 #, c-format
 msgid "end label \"%s\" specified for unlabeled block"
-msgstr ""
+msgstr "უჭდეო ბლოკისთვის მითითებულია საბოლოო ჭდე \"%s\""
 
 #: pl_gram.y:3761
 #, c-format
 msgid "end label \"%s\" differs from block's label \"%s\""
-msgstr ""
+msgstr "საბოლოო ჭდე \"%s\" განსხვავდება ბლოკის ჭდისგან \"%s\""
 
 #: pl_gram.y:3795
 #, c-format
@@ -813,6 +835,7 @@ msgstr "კურსორს %s არგუმენტი სახელა�
 #, c-format
 msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
 msgstr ""
+"კურსორის \"%2$s\" პარამეტრის \"%1$s\" მნიშვნელობა ერთზე მეტჯერაა მითითებული"
 
 #: pl_gram.y:3896
 #, c-format
@@ -847,24 +870,28 @@ msgid ""
 "Sets handling of conflicts between PL/pgSQL variable names and table column "
 "names."
 msgstr ""
+"PL/pgSQL-ის ცვლადების სახელებსა და ცხრილის სვეტის სახელებს შორის "
+"კონფლიქტების გადაწყვეტის რეჟიმი."
 
 #: pl_handler.c:165
 msgid ""
 "Print information about parameters in the DETAIL part of the error messages "
 "generated on INTO ... STRICT failures."
 msgstr ""
+"INTO … STRICT ავარიებზე გენერირებული შეცდომის შეტყობინებებში პარამეტრების "
+"შესახებ ინფორმაციის DETAIL ნაწილში დამატება."
 
 #: pl_handler.c:173
 msgid "Perform checks given in ASSERT statements."
-msgstr ""
+msgstr "ASSERT ოპერატორებში მითითებული შემოწმებების შესრულება."
 
 #: pl_handler.c:181
 msgid "List of programming constructs that should produce a warning."
-msgstr ""
+msgstr "პროგრამული კონსტრუქციების სია, რომლებიც გაფრთხილებებს გამოაგდებს."
 
 #: pl_handler.c:191
 msgid "List of programming constructs that should produce an error."
-msgstr ""
+msgstr "პროგრამული კონსტრუქციების სია, შეცდომას გაფრთხილებებს გამოაგდებს."
 
 #. translator: %s is typically the translation of "syntax error"
 #: pl_scanner.c:508
