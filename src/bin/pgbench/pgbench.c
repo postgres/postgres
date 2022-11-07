@@ -1964,8 +1964,6 @@ assignVariables(Variables *variables, char *sql)
 		}
 
 		val = getVariable(variables, name);
-		pg_log_debug("stored variable (\"%s\") returns as string (\"%s\")", 
-			name, val);
 		free(name);
 		if (val == NULL)
 		{
