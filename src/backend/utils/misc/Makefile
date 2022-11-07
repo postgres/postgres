@@ -15,6 +15,7 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 OBJS = \
+	conffiles.o \
 	guc.o \
 	guc-file.o \
 	guc_funcs.o \
