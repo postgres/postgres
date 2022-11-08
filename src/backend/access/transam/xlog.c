@@ -2921,7 +2921,6 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 					 bool *added, char *path)
 {
 	char		tmppath[MAXPGPATH];
-	PGAlignedXLogBlock zbuffer;
 	XLogSegNo	installed_segno;
 	XLogSegNo	max_segno;
 	int			fd;
@@ -2965,14 +2964,11 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
-	memset(zbuffer.data, 0, XLOG_BLCKSZ);
-
 	pgstat_report_wait_start(WAIT_EVENT_WAL_INIT_WRITE);
 	save_errno = 0;
 	if (wal_init_zero)
 	{
-		struct iovec iov[PG_IOV_MAX];
-		int			blocks;
+		ssize_t		rc;
 
 		/*
 		 * Zero-fill the file.  With this setting, we do this the hard way to
@@ -2983,29 +2979,10 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 		 * indirect blocks are down on disk.  Therefore, fdatasync(2) or
 		 * O_DSYNC will be sufficient to sync future writes to the log file.
 		 */
+		rc = pg_pwrite_zeros(fd, wal_segment_size);
 
-		/* Prepare to write out a lot of copies of our zero buffer at once. */
-		for (int i = 0; i < lengthof(iov); ++i)
-		{
-			iov[i].iov_base = zbuffer.data;
-			iov[i].iov_len = XLOG_BLCKSZ;
-		}
-
-		/* Loop, writing as many blocks as we can for each system call. */
-		blocks = wal_segment_size / XLOG_BLCKSZ;
-		for (int i = 0; i < blocks;)
-		{
-			int			iovcnt = Min(blocks - i, lengthof(iov));
-			off_t		offset = i * XLOG_BLCKSZ;
-
-			if (pg_pwritev_with_retry(fd, iov, iovcnt, offset) < 0)
-			{
-				save_errno = errno;
-				break;
-			}
-
-			i += iovcnt;
-		}
+		if (rc < 0)
+			save_errno = errno;
 	}
 	else
 	{
@@ -3014,7 +2991,7 @@ XLogFileInitInternal(XLogSegNo logsegno, TimeLineID logtli,
 		 * enough.
 		 */
 		errno = 0;
-		if (pg_pwrite(fd, zbuffer.data, 1, wal_segment_size - 1) != 1)
+		if (pg_pwrite(fd, "\0", 1, wal_segment_size - 1) != 1)
 		{
 			/* if write didn't set errno, assume no disk space */
 			save_errno = errno ? errno : ENOSPC;
