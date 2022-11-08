@@ -35,12 +35,12 @@
 char *
 AbsoluteConfigLocation(const char *location, const char *calling_file)
 {
-	char		abs_path[MAXPGPATH];
-
 	if (is_absolute_path(location))
 		return pstrdup(location);
 	else
 	{
+		char		abs_path[MAXPGPATH];
+
 		if (calling_file != NULL)
 		{
 			strlcpy(abs_path, calling_file, sizeof(abs_path));

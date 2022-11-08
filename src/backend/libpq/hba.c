@@ -41,6 +41,7 @@
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/conffiles.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -466,21 +467,7 @@ tokenize_inc_file(List *tokens,
 	ListCell   *inc_line;
 	MemoryContext linecxt;
 
-	if (is_absolute_path(inc_filename))
-	{
-		/* absolute path is taken as-is */
-		inc_fullname = pstrdup(inc_filename);
-	}
-	else
-	{
-		/* relative path is relative to dir of calling file */
-		inc_fullname = (char *) palloc(strlen(outer_filename) + 1 +
-									   strlen(inc_filename) + 1);
-		strcpy(inc_fullname, outer_filename);
-		get_parent_directory(inc_fullname);
-		join_path_components(inc_fullname, inc_fullname, inc_filename);
-		canonicalize_path(inc_fullname);
-	}
+	inc_fullname = AbsoluteConfigLocation(inc_filename, outer_filename);
 
 	inc_file = AllocateFile(inc_fullname, "r");
 	if (inc_file == NULL)
