@@ -1164,7 +1164,7 @@ get_object_address(ObjectType objtype, Node *object,
 				address.objectSubId = 0;
 				break;
 			default:
-				elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+				elog(ERROR, "unrecognized object type: %d", (int) objtype);
 				/* placate compiler, in case it thinks elog might return */
 				address.classId = InvalidOid;
 				address.objectId = InvalidOid;
@@ -1355,7 +1355,7 @@ get_object_address_unqualified(ObjectType objtype,
 			address.objectSubId = 0;
 			break;
 		default:
-			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 			/* placate compiler, which doesn't know elog won't return */
 			address.classId = InvalidOid;
 			address.objectId = InvalidOid;
@@ -1432,7 +1432,7 @@ get_relation_by_qualified_name(ObjectType objtype, List *object,
 								RelationGetRelationName(relation))));
 			break;
 		default:
-			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 			break;
 	}
 
@@ -1508,7 +1508,7 @@ get_object_address_relobject(ObjectType objtype, List *object,
 			address.objectSubId = 0;
 			break;
 		default:
-			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 	}
 
 	/* Avoid relcache leak when object not found. */
@@ -1700,7 +1700,7 @@ get_object_address_opcf(ObjectType objtype, List *object, bool missing_ok)
 			address.objectSubId = 0;
 			break;
 		default:
-			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 			/* placate compiler, which doesn't know elog won't return */
 			address.classId = InvalidOid;
 			address.objectId = InvalidOid;
@@ -1818,7 +1818,7 @@ get_object_address_opf_member(ObjectType objtype,
 			}
 			break;
 		default:
-			elog(ERROR, "unrecognized objtype: %d", (int) objtype);
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 	}
 
 	return address;
