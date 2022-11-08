@@ -25,3 +25,5 @@ EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i<=true ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i=true ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i>=true ORDER BY i;
 EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i>true ORDER BY i;
+-- probably sufficient to check just this one:
+EXPLAIN (COSTS OFF) SELECT * FROM test_bool WHERE i=false ORDER BY i;
