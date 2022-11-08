@@ -3445,6 +3445,8 @@ describeOneTableDetails(const char *schemaname,
 				if (child_relkind == RELKIND_PARTITIONED_TABLE ||
 					child_relkind == RELKIND_PARTITIONED_INDEX)
 					appendPQExpBufferStr(&buf, ", PARTITIONED");
+				else if (child_relkind == RELKIND_FOREIGN_TABLE)
+					appendPQExpBufferStr(&buf, ", FOREIGN");
 				if (strcmp(PQgetvalue(result, i, 2), "t") == 0)
 					appendPQExpBufferStr(&buf, " (DETACH PENDING)");
 				if (i < tuples - 1)
