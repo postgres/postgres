@@ -303,6 +303,7 @@ BEGIN;
 CREATE TEMPORARY TABLE test_last_scan(idx_col int primary key, noidx_col int);
 INSERT INTO test_last_scan(idx_col, noidx_col) VALUES(1, 1);
 SELECT pg_stat_force_next_flush();
+SELECT last_seq_scan, last_idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
 COMMIT;
 
 SELECT pg_stat_reset_single_table_counters('test_last_scan'::regclass);

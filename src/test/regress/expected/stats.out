@@ -573,6 +573,12 @@ SELECT pg_stat_force_next_flush();
  
 (1 row)
 
+SELECT last_seq_scan, last_idx_scan FROM pg_stat_all_tables WHERE relid = 'test_last_scan'::regclass;
+ last_seq_scan | last_idx_scan 
+---------------+---------------
+               | 
+(1 row)
+
 COMMIT;
 SELECT pg_stat_reset_single_table_counters('test_last_scan'::regclass);
  pg_stat_reset_single_table_counters 
