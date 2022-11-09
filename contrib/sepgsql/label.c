@@ -121,7 +121,7 @@ sepgsql_set_client_label(const char *new_label)
 		tcontext = client_label_peer;
 	else
 	{
-		if (security_check_context_raw((security_context_t) new_label) < 0)
+		if (security_check_context_raw(new_label) < 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
 					 errmsg("SELinux: invalid security label: \"%s\"",
@@ -461,9 +461,9 @@ sepgsql_get_label(Oid classId, Oid objectId, int32 subId)
 	object.objectSubId = subId;
 
 	label = GetSecurityLabel(&object, SEPGSQL_LABEL_TAG);
-	if (!label || security_check_context_raw((security_context_t) label))
+	if (!label || security_check_context_raw(label))
 	{
-		security_context_t unlabeled;
+		char	   *unlabeled;
 
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
@@ -498,7 +498,7 @@ sepgsql_object_relabel(const ObjectAddress *object, const char *seclabel)
 	 * context of selinux.
 	 */
 	if (seclabel &&
-		security_check_context_raw((security_context_t) seclabel) < 0)
+		security_check_context_raw(seclabel) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("SELinux: invalid security label: \"%s\"", seclabel)));
@@ -740,7 +740,7 @@ exec_object_restorecon(struct selabel_handle *sehnd, Oid catalogId)
 		char	   *objname;
 		int			objtype = 1234;
 		ObjectAddress object;
-		security_context_t context;
+		char	   *context;
 
 		/*
 		 * The way to determine object name depends on object classes. So, any
