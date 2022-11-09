@@ -110,16 +110,10 @@ pqinitmask(void)
  * postmaster ever unblocks signals.
  *
  * pqinitmask() must have been invoked previously.
- *
- * On Windows, this function is just an alias for pqsignal()
- * (and note that it's calling the code in src/backend/port/win32/signal.c,
- * not src/port/pqsignal.c).  On that platform, the postmaster's signal
- * handlers still have to block signals for themselves.
  */
 pqsigfunc
 pqsignal_pm(int signo, pqsigfunc func)
 {
-#ifndef WIN32
 	struct sigaction act,
 				oact;
 
@@ -142,7 +136,4 @@ pqsignal_pm(int signo, pqsigfunc func)
 	if (sigaction(signo, &act, &oact) < 0)
 		return SIG_ERR;
 	return oact.sa_handler;
-#else							/* WIN32 */
-	return pqsignal(signo, func);
-#endif
 }

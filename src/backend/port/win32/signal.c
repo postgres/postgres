@@ -34,7 +34,7 @@ HANDLE		pgwin32_initial_signal_pipe = INVALID_HANDLE_VALUE;
 static CRITICAL_SECTION pg_signal_crit_sec;
 
 /* Note that array elements 0 are unused since they correspond to signal 0 */
-static pqsigfunc pg_signal_array[PG_SIGNAL_COUNT];
+static struct sigaction pg_signal_array[PG_SIGNAL_COUNT];
 static pqsigfunc pg_signal_defaults[PG_SIGNAL_COUNT];
 
 
@@ -85,7 +85,9 @@ pgwin32_signal_initialize(void)
 
 	for (i = 0; i < PG_SIGNAL_COUNT; i++)
 	{
-		pg_signal_array[i] = SIG_DFL;
+		pg_signal_array[i].sa_handler = SIG_DFL;
+		pg_signal_array[i].sa_mask = 0;
+		pg_signal_array[i].sa_flags = 0;
 		pg_signal_defaults[i] = SIG_IGN;
 	}
 	pg_signal_mask = 0;
@@ -131,15 +133,27 @@ pgwin32_dispatch_queued_signals(void)
 			if (exec_mask & sigmask(i))
 			{
 				/* Execute this signal */
-				pqsigfunc	sig = pg_signal_array[i];
+				struct sigaction *act = &pg_signal_array[i];
+				pqsigfunc	sig = act->sa_handler;
 
 				if (sig == SIG_DFL)
 					sig = pg_signal_defaults[i];
 				pg_signal_queue &= ~sigmask(i);
 				if (sig != SIG_ERR && sig != SIG_IGN && sig != SIG_DFL)
 				{
+					sigset_t	block_mask;
+					sigset_t	save_mask;
+
 					LeaveCriticalSection(&pg_signal_crit_sec);
+
+					block_mask = act->sa_mask;
+					if ((act->sa_flags & SA_NODEFER) == 0)
+						block_mask |= sigmask(i);
+
+					sigprocmask(SIG_BLOCK, &block_mask, &save_mask);
 					sig(i);
+					sigprocmask(SIG_SETMASK, &save_mask, NULL);
+
 					EnterCriticalSection(&pg_signal_crit_sec);
 					break;		/* Restart outer loop, in case signal mask or
 								 * queue has been modified inside signal
@@ -187,22 +201,25 @@ pqsigprocmask(int how, const sigset_t *set, sigset_t *oset)
 	return 0;
 }
 
-
 /*
  * Unix-like signal handler installation
  *
  * Only called on main thread, no sync required
  */
-pqsigfunc
-pqsignal(int signum, pqsigfunc handler)
+int
+pqsigaction(int signum, const struct sigaction *act,
+			struct sigaction *oldact)
 {
-	pqsigfunc	prevfunc;
-
 	if (signum >= PG_SIGNAL_COUNT || signum < 0)
-		return SIG_ERR;
-	prevfunc = pg_signal_array[signum];
-	pg_signal_array[signum] = handler;
-	return prevfunc;
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	if (oldact)
+		*oldact = pg_signal_array[signum];
+	if (act)
+		pg_signal_array[signum] = *act;
+	return 0;
 }
 
 /* Create the signal listener pipe for specified PID */
