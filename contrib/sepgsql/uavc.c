@@ -177,7 +177,7 @@ sepgsql_avc_unlabeled(void)
 {
 	if (!avc_unlabeled)
 	{
-		security_context_t unlabeled;
+		char	   *unlabeled;
 
 		if (security_get_initial_context_raw("unlabeled", &unlabeled) < 0)
 			ereport(ERROR,
@@ -225,7 +225,7 @@ sepgsql_avc_compute(const char *scontext, const char *tcontext, uint16 tclass)
 	 * policy is reloaded, validation status shall be kept, so we also cache
 	 * whether the supplied security context was valid, or not.
 	 */
-	if (security_check_context_raw((security_context_t) tcontext) != 0)
+	if (security_check_context_raw(tcontext) != 0)
 		ucontext = sepgsql_avc_unlabeled();
 
 	/*
