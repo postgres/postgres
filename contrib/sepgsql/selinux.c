@@ -767,8 +767,8 @@ sepgsql_compute_avd(const char *scontext,
 	 * Ask SELinux what is allowed set of permissions on a pair of the
 	 * security contexts and the given object class.
 	 */
-	if (security_compute_av_flags_raw((security_context_t) scontext,
-									  (security_context_t) tcontext,
+	if (security_compute_av_flags_raw(scontext,
+									  tcontext,
 									  tclass_ex, 0, &avd_ex) < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
@@ -839,7 +839,7 @@ sepgsql_compute_create(const char *scontext,
 					   uint16 tclass,
 					   const char *objname)
 {
-	security_context_t ncontext;
+	char	   *ncontext;
 	security_class_t tclass_ex;
 	const char *tclass_name;
 	char	   *result;
@@ -854,8 +854,8 @@ sepgsql_compute_create(const char *scontext,
 	 * Ask SELinux what is the default context for the given object class on a
 	 * pair of security contexts
 	 */
-	if (security_compute_create_name_raw((security_context_t) scontext,
-										 (security_context_t) tcontext,
+	if (security_compute_create_name_raw(scontext,
+										 tcontext,
 										 tclass_ex,
 										 objname,
 										 &ncontext) < 0)
