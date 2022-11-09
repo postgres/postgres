@@ -3386,6 +3386,10 @@ AbortCurrentTransaction(void)
  *	a transaction block, typically because they have non-rollback-able
  *	side effects or do internal commits.
  *
+ *	If this routine completes successfully, then the calling statement is
+ *	guaranteed that if it completes without error, its results will be
+ *	committed immediately.
+ *
  *	If we have already started a transaction block, issue an error; also issue
  *	an error if we appear to be running inside a user-defined function (which
  *	could issue more commands and possibly cause a failure after the statement
@@ -3510,6 +3514,10 @@ CheckTransactionBlock(bool isTopLevel, bool throwError, const char *stmtType)
  *	This routine is for statements that need to behave differently inside
  *	a transaction block than when running as single commands.  ANALYZE is
  *	currently the only example.
+ *
+ *	If this routine returns "false", then the calling statement is
+ *	guaranteed that if it completes without error, its results will be
+ *	committed immediately.
  *
  *	isTopLevel: passed down from ProcessUtility to determine whether we are
  *	inside a function.
