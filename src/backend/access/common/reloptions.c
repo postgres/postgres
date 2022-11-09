@@ -1984,13 +1984,12 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 bytea *
 partitioned_table_reloptions(Datum reloptions, bool validate)
 {
-	/*
-	 * There are no options for partitioned tables yet, but this is able to do
-	 * some validation.
-	 */
-	return (bytea *) build_reloptions(reloptions, validate,
-									  RELOPT_KIND_PARTITIONED,
-									  0, NULL, 0);
+	if (validate && reloptions)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("cannot specify storage parameters for a partitioned table"),
+				errhint("Specify storage parameters for its leaf partitions, instead."));
+	return NULL;
 }
 
 /*
