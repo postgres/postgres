@@ -257,11 +257,23 @@ mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  * next checkpoint, we prevent reassignment of the relfilenumber until it's
  * safe, because relfilenumber assignment skips over any existing file.
  *
+ * Additional segments, if any, are truncated and then unlinked.  The reason
+ * for truncating is that other backends may still hold open FDs for these at
+ * the smgr level, so that the kernel can't remove the file yet.  We want to
+ * reclaim the disk space right away despite that.
+ *
  * We do not need to go through this dance for temp relations, though, because
  * we never make WAL entries for temp rels, and so a temp rel poses no threat
  * to the health of a regular rel that has taken over its relfilenumber.
  * The fact that temp rels and regular rels have different file naming
- * patterns provides additional safety.
+ * patterns provides additional safety.  Other backends shouldn't have open
+ * FDs for them, either.
+ *
+ * We also don't do it while performing a binary upgrade.  There is no reuse
+ * hazard in that case, since after a crash or even a simple ERROR, the
+ * upgrade fails and the whole cluster must be recreated from scratch.
+ * Furthermore, it is important to remove the files from disk immediately,
+ * because we may be about to reuse the same relfilenumber.
  *
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
@@ -273,6 +285,9 @@ mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
  * Also, we should remove the file immediately instead of queuing a request
  * for later, since during redo there's no possibility of creating a
  * conflicting relation.
+ *
+ * Note: we currently just never warn about ENOENT at all.  We could warn in
+ * the main-fork, non-isRedo case, but it doesn't seem worth the trouble.
  *
  * Note: any failure should be reported as WARNING not ERROR, because
  * we are usually not in a transaction anymore when this is called.
@@ -319,19 +334,19 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
 	char	   *path;
 	int			ret;
-	BlockNumber segno = 0;
+	int			save_errno;
 
 	path = relpath(rlocator, forknum);
 
 	/*
-	 * Delete or truncate the first segment.
+	 * Truncate and then unlink the first segment, or just register a request
+	 * to unlink it later, as described in the comments for mdunlink().
 	 */
-	if (isRedo || forknum != MAIN_FORKNUM || RelFileLocatorBackendIsTemp(rlocator))
+	if (isRedo || IsBinaryUpgrade || forknum != MAIN_FORKNUM ||
+		RelFileLocatorBackendIsTemp(rlocator))
 	{
 		if (!RelFileLocatorBackendIsTemp(rlocator))
 		{
-			int			save_errno;
-
 			/* Prevent other backends' fds from holding on to the disk space */
 			ret = do_truncate(path);
 
@@ -344,14 +359,17 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 			ret = 0;
 
 		/* Next unlink the file, unless it was already found to be missing */
-		if (ret == 0 || errno != ENOENT)
+		if (ret >= 0 || errno != ENOENT)
 		{
 			ret = unlink(path);
 			if (ret < 0 && errno != ENOENT)
+			{
+				save_errno = errno;
 				ereport(WARNING,
 						(errcode_for_file_access(),
 						 errmsg("could not remove file \"%s\": %m", path)));
-			segno++;
+				errno = save_errno;
+			}
 		}
 	}
 	else
@@ -359,48 +377,38 @@ mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 		/* Prevent other backends' fds from holding on to the disk space */
 		ret = do_truncate(path);
 
-		/*
-		 * Except during a binary upgrade, register request to unlink first
-		 * segment later, rather than now.
-		 *
-		 * If we're performing a binary upgrade, the dangers described in the
-		 * header comments for mdunlink() do not exist, since after a crash or
-		 * even a simple ERROR, the upgrade fails and the whole new cluster
-		 * must be recreated from scratch. And, on the other hand, it is
-		 * important to remove the files from disk immediately, because we may
-		 * be about to reuse the same relfilenumber.
-		 */
-		if (!IsBinaryUpgrade)
-		{
-			register_unlink_segment(rlocator, forknum, 0 /* first seg */ );
-			segno++;
-		}
+		/* Register request to unlink first segment later */
+		save_errno = errno;
+		register_unlink_segment(rlocator, forknum, 0 /* first seg */ );
+		errno = save_errno;
 	}
 
 	/*
-	 * Delete any remaining segments (we might or might not have dealt with
-	 * the first one above).
+	 * Delete any additional segments.
+	 *
+	 * Note that because we loop until getting ENOENT, we will correctly
+	 * remove all inactive segments as well as active ones.  Ideally we'd
+	 * continue the loop until getting exactly that errno, but that risks an
+	 * infinite loop if the problem is directory-wide (for instance, if we
+	 * suddenly can't read the data directory itself).  We compromise by
+	 * continuing after a non-ENOENT truncate error, but stopping after any
+	 * unlink error.  If there is indeed a directory-wide problem, additional
+	 * unlink attempts wouldn't work anyway.
 	 */
-	if (ret >= 0)
+	if (ret >= 0 || errno != ENOENT)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
+		BlockNumber segno;
 
-		/*
-		 * Note that because we loop until getting ENOENT, we will correctly
-		 * remove all inactive segments as well as active ones.
-		 */
-		for (;; segno++)
+		for (segno = 1;; segno++)
 		{
-			if (segno == 0)
-				strcpy(segpath, path);
-			else
-				sprintf(segpath, "%s.%u", path, segno);
+			sprintf(segpath, "%s.%u", path, segno);
 
 			if (!RelFileLocatorBackendIsTemp(rlocator))
 			{
 				/*
 				 * Prevent other backends' fds from holding on to the disk
-				 * space.
+				 * space.  We're done if we see ENOENT, though.
 				 */
 				if (do_truncate(segpath) < 0 && errno == ENOENT)
 					break;
