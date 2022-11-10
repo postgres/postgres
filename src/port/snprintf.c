@@ -110,6 +110,16 @@
 #undef	printf
 
 /*
+ * We use the platform's native snprintf() for some machine-dependent cases.
+ * While that's required by C99, Microsoft Visual Studio lacks it before
+ * VS2015.  Fortunately, we don't really need the length check in practice,
+ * so just fall back to native sprintf() on that platform.
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1900	/* pre-VS2015 */
+#define snprintf(str,size,...) sprintf(str,__VA_ARGS__)
+#endif
+
+/*
  * Info about where the formatted output is going.
  *
  * dopr and subroutines will not write at/past bufend, but snprintf
