@@ -2193,12 +2193,15 @@ endif
 
 # Check for the locale_t type and find the right header file.  macOS
 # needs xlocale.h; standard is locale.h, but glibc also has an
-# xlocale.h file that we should not use.
+# xlocale.h file that we should not use.  MSVC has a replacement
+# defined in src/include/port/win32_port.h.
 if cc.has_type('locale_t', prefix: '#include <locale.h>')
   cdata.set('HAVE_LOCALE_T', 1)
 elif cc.has_type('locale_t', prefix: '#include <xlocale.h>')
   cdata.set('HAVE_LOCALE_T', 1)
   cdata.set('LOCALE_T_IN_XLOCALE', 1)
+elif cc.get_id() == 'msvc'
+  cdata.set('HAVE_LOCALE_T', 1)
 endif
 
 # Check if the C compiler understands typeof or a variant.  Define
@@ -2408,6 +2411,13 @@ endforeach
 if cc.has_function('syslog', args: test_c_args) and \
     cc.check_header('syslog.h', args: test_c_args)
   cdata.set('HAVE_SYSLOG', 1)
+endif
+
+
+# MSVC has replacements defined in src/include/port/win32_port.h.
+if cc.get_id() == 'msvc'
+  cdata.set('HAVE_WCSTOMBS_L', 1)
+  cdata.set('HAVE_MBSTOWCS_L', 1)
 endif
 
 
