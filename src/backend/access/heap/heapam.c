@@ -8827,12 +8827,6 @@ heap_xlog_visible(XLogReaderState *record)
 		 * full-page writes.  This exposes us to torn page hazards, but since
 		 * we're not inspecting the existing page contents in any way, we
 		 * don't care.
-		 *
-		 * However, all operations that clear the visibility map bit *do* bump
-		 * the LSN, and those operations will only be replayed if the XLOG LSN
-		 * follows the page LSN.  Thus, if the page LSN has advanced past our
-		 * XLOG record's LSN, we mustn't mark the page all-visible, because
-		 * the subsequent update won't be replayed to clear the flag.
 		 */
 		page = BufferGetPage(buffer);
 
@@ -8901,20 +8895,8 @@ heap_xlog_visible(XLogReaderState *record)
 		reln = CreateFakeRelcacheEntry(rlocator);
 		visibilitymap_pin(reln, blkno, &vmbuffer);
 
-		/*
-		 * Don't set the bit if replay has already passed this point.
-		 *
-		 * It might be safe to do this unconditionally; if replay has passed
-		 * this point, we'll replay at least as far this time as we did
-		 * before, and if this bit needs to be cleared, the record responsible
-		 * for doing so should be again replayed, and clear it.  For right
-		 * now, out of an abundance of conservatism, we use the same test here
-		 * we did for the heap page.  If this results in a dropped bit, no
-		 * real harm is done; and the next VACUUM will fix it.
-		 */
-		if (lsn > PageGetLSN(vmpage))
-			visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
-							  xlrec->cutoff_xid, xlrec->flags);
+		visibilitymap_set(reln, blkno, InvalidBuffer, lsn, vmbuffer,
+						  xlrec->cutoff_xid, xlrec->flags);
 
 		ReleaseBuffer(vmbuffer);
 		FreeFakeRelcacheEntry(reln);
