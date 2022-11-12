@@ -645,6 +645,23 @@ If you do decide to optimise away a WAL record, then any calls to
 MarkBufferDirty() must be replaced by MarkBufferDirtyHint(),
 otherwise you will expose the risk of partial page writes.
 
+The all-visible hint in a heap page (PD_ALL_VISIBLE) is a special
+case, because it is treated like a durable change in some respects and
+a hint in other respects. It must satisfy the invariant that, if a
+heap page's associated visibilitymap (VM) bit is set, then
+PD_ALL_VISIBLE is set on the heap page itself. Clearing of
+PD_ALL_VISIBLE is always treated like a fully-durable change to
+maintain this invariant. Additionally, if checksums or wal_log_hints
+are enabled, setting PD_ALL_VISIBLE is also treated like a
+fully-durable change to protect against torn pages.
+
+But, if neither checksums nor wal_log_hints are enabled, torn pages
+are of no consequence if the only change is to PD_ALL_VISIBLE; so no
+full heap page image is taken, and the heap page's LSN is not
+updated. NB: it would be incorrect to update the heap page's LSN when
+applying this optimization, even though there is an associated WAL
+record, because subsequent modifiers (e.g. an unrelated UPDATE) of the
+page may falsely believe that a full page image is not required.
 
 Write-Ahead Logging for Filesystem Actions
 ------------------------------------------

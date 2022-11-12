@@ -223,13 +223,13 @@ visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf)
  *	visibilitymap_set - set bit(s) on a previously pinned page
  *
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
- * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
+ * or InvalidXLogRecPtr in normal running.  The VM page LSN is advanced to the
  * one provided; in normal running, we generate a new XLOG record and set the
- * page LSN to that value.  cutoff_xid is the largest xmin on the page being
- * marked all-visible; it is needed for Hot Standby, and can be
- * InvalidTransactionId if the page contains no tuples.  It can also be set
- * to InvalidTransactionId when a page that is already all-visible is being
- * marked all-frozen.
+ * page LSN to that value (though the heap page's LSN may *not* be updated;
+ * see below).  cutoff_xid is the largest xmin on the page being marked
+ * all-visible; it is needed for Hot Standby, and can be InvalidTransactionId
+ * if the page contains no tuples.  It can also be set to InvalidTransactionId
+ * when a page that is already all-visible is being marked all-frozen.
  *
  * Caller is expected to set the heap page's PD_ALL_VISIBLE bit before calling
  * this function. Except in recovery, caller should also pass the heap
@@ -289,6 +289,11 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 				/*
 				 * If data checksums are enabled (or wal_log_hints=on), we
 				 * need to protect the heap page from being torn.
+				 *
+				 * If not, then we must *not* update the heap page's LSN. In
+				 * this case, the FPI for the heap page was omitted from the
+				 * WAL record inserted above, so it would be incorrect to
+				 * update the heap page's LSN.
 				 */
 				if (XLogHintBitIsNeeded())
 				{

@@ -8193,8 +8193,10 @@ log_heap_freeze(Relation reln, Buffer buffer, TransactionId cutoff_xid,
  * corresponding visibility map block.  Both should have already been modified
  * and dirtied.
  *
- * If checksums are enabled, we also generate a full-page image of
- * heap_buffer, if necessary.
+ * If checksums or wal_log_hints are enabled, we may also generate a full-page
+ * image of heap_buffer. Otherwise, we optimize away the FPI (by specifying
+ * REGBUF_NO_IMAGE for the heap buffer), in which case the caller should *not*
+ * update the heap page's LSN.
  */
 XLogRecPtr
 log_heap_visible(RelFileLocator rlocator, Buffer heap_buffer, Buffer vm_buffer,
