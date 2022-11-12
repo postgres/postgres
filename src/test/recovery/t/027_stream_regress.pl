@@ -6,13 +6,6 @@ use PostgreSQL::Test::Utils;
 use Test::More;
 use File::Basename;
 
-if (PostgreSQL::Test::Utils::has_wal_read_bug)
-{
-	# We'd prefer to use Test::More->builder->todo_start, but the bug causes
-	# this test file to die(), not merely to fail.
-	plan skip_all => 'filesystem bug';
-}
-
 # Initialize primary node
 my $node_primary = PostgreSQL::Test::Cluster->new('primary');
 $node_primary->init(allows_streaming => 1);
