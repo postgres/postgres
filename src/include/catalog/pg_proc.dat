@@ -2432,7 +2432,7 @@
   proargtypes => 'text timestamptz', prosrc => 'timestamptz_trunc' },
 { oid => '1284',
   descr => 'truncate timestamp with time zone to specified units in specified time zone',
-  proname => 'date_trunc', provolatile => 's', prorettype => 'timestamptz',
+  proname => 'date_trunc', prorettype => 'timestamptz',
   proargtypes => 'text timestamptz text', prosrc => 'timestamptz_trunc_zone' },
 { oid => '1218', descr => 'truncate interval to specified units',
   proname => 'date_trunc', prorettype => 'interval',
