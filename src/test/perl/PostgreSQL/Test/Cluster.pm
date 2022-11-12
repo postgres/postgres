@@ -2606,8 +2606,23 @@ sub wait_for_catchup
 	my $query = qq[SELECT '$target_lsn' <= ${mode}_lsn AND state = 'streaming'
          FROM pg_catalog.pg_stat_replication
          WHERE application_name IN ('$standby_name', 'walreceiver')];
-	$self->poll_query_until('postgres', $query)
-	  or croak "timed out waiting for catchup";
+	if (!$self->poll_query_until('postgres', $query))
+	{
+		if (PostgreSQL::Test::Utils::has_wal_read_bug)
+		{
+			# Mimic having skipped the test file.  If >0 tests have run, the
+			# harness won't accept a skip; otherwise, it won't accept
+			# done_testing().  Force a nonzero count by running one test.
+			ok(1, 'dummy test before skip for filesystem bug');
+			carp "skip rest: timed out waiting for catchup & filesystem bug";
+			done_testing();
+			exit 0;
+		}
+		else
+		{
+			croak "timed out waiting for catchup";
+		}
+	}
 	print "done\n";
 	return;
 }
