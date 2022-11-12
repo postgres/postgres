@@ -940,12 +940,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 	else
 	{
 		/* enlarge arrays and zero out added entries */
-		hashtable->innerBatchFile = repalloc_array(hashtable->innerBatchFile, BufFile *, nbatch);
-		hashtable->outerBatchFile = repalloc_array(hashtable->outerBatchFile, BufFile *, nbatch);
-		MemSet(hashtable->innerBatchFile + oldnbatch, 0,
-			   (nbatch - oldnbatch) * sizeof(BufFile *));
-		MemSet(hashtable->outerBatchFile + oldnbatch, 0,
-			   (nbatch - oldnbatch) * sizeof(BufFile *));
+		hashtable->innerBatchFile = repalloc0_array(hashtable->innerBatchFile, BufFile *, oldnbatch, nbatch);
+		hashtable->outerBatchFile = repalloc0_array(hashtable->outerBatchFile, BufFile *, oldnbatch, nbatch);
 	}
 
 	MemoryContextSwitchTo(oldcxt);

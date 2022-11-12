@@ -696,19 +696,16 @@ newLOfd(void)
 		newsize = 64;
 		cookies = (LargeObjectDesc **)
 			MemoryContextAllocZero(fscxt, newsize * sizeof(LargeObjectDesc *));
-		cookies_size = newsize;
 	}
 	else
 	{
 		/* Double size of array */
 		i = cookies_size;
 		newsize = cookies_size * 2;
-		cookies = (LargeObjectDesc **)
-			repalloc(cookies, newsize * sizeof(LargeObjectDesc *));
-		MemSet(cookies + cookies_size, 0,
-			   (newsize - cookies_size) * sizeof(LargeObjectDesc *));
-		cookies_size = newsize;
+		cookies =
+			repalloc0_array(cookies, LargeObjectDesc *, cookies_size, newsize);
 	}
+	cookies_size = newsize;
 
 	return i;
 }

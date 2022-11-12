@@ -80,6 +80,7 @@ extern void *palloc_extended(Size size, int flags);
 extern pg_nodiscard void *repalloc(void *pointer, Size size);
 extern pg_nodiscard void *repalloc_extended(void *pointer,
 											Size size, int flags);
+extern pg_nodiscard void *repalloc0(void *pointer, Size oldsize, Size size);
 extern void pfree(void *pointer);
 
 /*
@@ -103,6 +104,7 @@ extern void pfree(void *pointer);
  * objects of type "type"
  */
 #define repalloc_array(pointer, type, count) ((type *) repalloc(pointer, sizeof(type) * (count)))
+#define repalloc0_array(pointer, type, oldcount, count) ((type *) repalloc0(pointer, sizeof(type) * (oldcount), sizeof(type) * (count)))
 
 /*
  * The result of palloc() is always word-aligned, so we can skip testing

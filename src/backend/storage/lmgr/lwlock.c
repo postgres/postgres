@@ -668,13 +668,8 @@ LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 				MemoryContextAllocZero(TopMemoryContext,
 									   newalloc * sizeof(char *));
 		else
-		{
-			LWLockTrancheNames = (const char **)
-				repalloc(LWLockTrancheNames, newalloc * sizeof(char *));
-			memset(LWLockTrancheNames + LWLockTrancheNamesAllocated,
-				   0,
-				   (newalloc - LWLockTrancheNamesAllocated) * sizeof(char *));
-		}
+			LWLockTrancheNames =
+				repalloc0_array(LWLockTrancheNames, const char *, LWLockTrancheNamesAllocated, newalloc);
 		LWLockTrancheNamesAllocated = newalloc;
 	}
 

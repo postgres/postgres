@@ -133,16 +133,11 @@ find_placeholder_info(PlannerInfo *root, PlaceHolderVar *phv)
 		while (phinfo->phid >= new_size)
 			new_size *= 2;
 		if (root->placeholder_array)
-		{
-			root->placeholder_array = (PlaceHolderInfo **)
-				repalloc(root->placeholder_array,
-						 sizeof(PlaceHolderInfo *) * new_size);
-			MemSet(root->placeholder_array + root->placeholder_array_size, 0,
-				   sizeof(PlaceHolderInfo *) * (new_size - root->placeholder_array_size));
-		}
+			root->placeholder_array =
+				repalloc0_array(root->placeholder_array, PlaceHolderInfo *, root->placeholder_array_size, new_size);
 		else
-			root->placeholder_array = (PlaceHolderInfo **)
-				palloc0(new_size * sizeof(PlaceHolderInfo *));
+			root->placeholder_array =
+				palloc0_array(PlaceHolderInfo *, new_size);
 		root->placeholder_array_size = new_size;
 	}
 	root->placeholder_array[phinfo->phid] = phinfo;

@@ -157,31 +157,18 @@ expand_planner_arrays(PlannerInfo *root, int add_size)
 
 	new_size = root->simple_rel_array_size + add_size;
 
-	root->simple_rel_array = (RelOptInfo **)
-		repalloc(root->simple_rel_array,
-				 sizeof(RelOptInfo *) * new_size);
-	MemSet(root->simple_rel_array + root->simple_rel_array_size,
-		   0, sizeof(RelOptInfo *) * add_size);
+	root->simple_rel_array =
+		repalloc0_array(root->simple_rel_array, RelOptInfo *, root->simple_rel_array_size, new_size);
 
-	root->simple_rte_array = (RangeTblEntry **)
-		repalloc(root->simple_rte_array,
-				 sizeof(RangeTblEntry *) * new_size);
-	MemSet(root->simple_rte_array + root->simple_rel_array_size,
-		   0, sizeof(RangeTblEntry *) * add_size);
+	root->simple_rte_array =
+		repalloc0_array(root->simple_rte_array, RangeTblEntry *, root->simple_rel_array_size, new_size);
 
 	if (root->append_rel_array)
-	{
-		root->append_rel_array = (AppendRelInfo **)
-			repalloc(root->append_rel_array,
-					 sizeof(AppendRelInfo *) * new_size);
-		MemSet(root->append_rel_array + root->simple_rel_array_size,
-			   0, sizeof(AppendRelInfo *) * add_size);
-	}
+		root->append_rel_array =
+			repalloc0_array(root->append_rel_array, AppendRelInfo *, root->simple_rel_array_size, new_size);
 	else
-	{
-		root->append_rel_array = (AppendRelInfo **)
-			palloc0(sizeof(AppendRelInfo *) * new_size);
-	}
+		root->append_rel_array =
+			palloc0_array(AppendRelInfo *, new_size);
 
 	root->simple_rel_array_size = new_size;
 }
