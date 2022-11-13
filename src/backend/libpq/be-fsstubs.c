@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include "access/xact.h"
+#include "catalog/pg_largeobject_metadata.h"
 #include "libpq/be-fsstubs.h"
 #include "libpq/libpq-fs.h"
 #include "miscadmin.h"
@@ -321,7 +322,7 @@ be_lo_unlink(PG_FUNCTION_ARGS)
 	 * relevant FDs.
 	 */
 	if (!lo_compat_privileges &&
-		!pg_largeobject_ownercheck(lobjId, GetUserId()))
+		!object_ownercheck(LargeObjectMetadataRelationId, lobjId, GetUserId()))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be owner of large object %u", lobjId)));

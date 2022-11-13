@@ -32,6 +32,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_class.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
@@ -5111,618 +5112,74 @@ pg_type_aclcheck(Oid type_oid, Oid roleid, AclMode mode)
 }
 
 /*
- * Ownership check for a relation (specified by OID).
+ * Generic ownership check for an object
  */
 bool
-pg_class_ownercheck(Oid class_oid, Oid roleid)
+object_ownercheck(Oid classid, Oid objectid, Oid roleid)
 {
-	HeapTuple	tuple;
+	int			cacheid;
 	Oid			ownerId;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(class_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_TABLE),
-				 errmsg("relation with OID %u does not exist", class_oid)));
-
-	ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a type (specified by OID).
- */
-bool
-pg_type_ownercheck(Oid type_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(type_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("type with OID %u does not exist", type_oid)));
-
-	ownerId = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for an operator (specified by OID).
- */
-bool
-pg_oper_ownercheck(Oid oper_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(OPEROID, ObjectIdGetDatum(oper_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("operator with OID %u does not exist", oper_oid)));
-
-	ownerId = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a function (specified by OID).
- */
-bool
-pg_proc_ownercheck(Oid proc_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function with OID %u does not exist", proc_oid)));
-
-	ownerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a procedural language (specified by OID)
- */
-bool
-pg_language_ownercheck(Oid lan_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(lan_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("language with OID %u does not exist", lan_oid)));
-
-	ownerId = ((Form_pg_language) GETSTRUCT(tuple))->lanowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a largeobject (specified by OID)
- *
- * This is only used for operations like ALTER LARGE OBJECT that are always
- * relative to an up-to-date snapshot.
- */
-bool
-pg_largeobject_ownercheck(Oid lobj_oid, Oid roleid)
-{
-	Relation	pg_lo_meta;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	/* There's no syscache for pg_largeobject_metadata */
-	pg_lo_meta = table_open(LargeObjectMetadataRelationId,
-							AccessShareLock);
-
-	ScanKeyInit(&entry[0],
-				Anum_pg_largeobject_metadata_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(lobj_oid));
-
-	scan = systable_beginscan(pg_lo_meta,
-							  LargeObjectMetadataOidIndexId, true,
-							  NULL, 1, entry);
-
-	tuple = systable_getnext(scan);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("large object %u does not exist", lobj_oid)));
-
-	ownerId = ((Form_pg_largeobject_metadata) GETSTRUCT(tuple))->lomowner;
-
-	systable_endscan(scan);
-	table_close(pg_lo_meta, AccessShareLock);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a namespace (specified by OID).
- */
-bool
-pg_namespace_ownercheck(Oid nsp_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(NAMESPACEOID, ObjectIdGetDatum(nsp_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_SCHEMA),
-				 errmsg("schema with OID %u does not exist", nsp_oid)));
-
-	ownerId = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a tablespace (specified by OID).
- */
-bool
-pg_tablespace_ownercheck(Oid spc_oid, Oid roleid)
-{
-	HeapTuple	spctuple;
-	Oid			spcowner;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	/* Search syscache for pg_tablespace */
-	spctuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spc_oid));
-	if (!HeapTupleIsValid(spctuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace with OID %u does not exist", spc_oid)));
-
-	spcowner = ((Form_pg_tablespace) GETSTRUCT(spctuple))->spcowner;
-
-	ReleaseSysCache(spctuple);
-
-	return has_privs_of_role(roleid, spcowner);
-}
-
-/*
- * Ownership check for an operator class (specified by OID).
- */
-bool
-pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opc_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator class with OID %u does not exist",
-						opc_oid)));
-
-	ownerId = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for an operator family (specified by OID).
- */
-bool
-pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(OPFAMILYOID, ObjectIdGetDatum(opf_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("operator family with OID %u does not exist",
-						opf_oid)));
-
-	ownerId = ((Form_pg_opfamily) GETSTRUCT(tuple))->opfowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a text search dictionary (specified by OID).
- */
-bool
-pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(TSDICTOID, ObjectIdGetDatum(dict_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("text search dictionary with OID %u does not exist",
-						dict_oid)));
-
-	ownerId = ((Form_pg_ts_dict) GETSTRUCT(tuple))->dictowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a text search configuration (specified by OID).
- */
-bool
-pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(TSCONFIGOID, ObjectIdGetDatum(cfg_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("text search configuration with OID %u does not exist",
-						cfg_oid)));
-
-	ownerId = ((Form_pg_ts_config) GETSTRUCT(tuple))->cfgowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a foreign-data wrapper (specified by OID).
- */
-bool
-pg_foreign_data_wrapper_ownercheck(Oid srv_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(srv_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper with OID %u does not exist",
-						srv_oid)));
-
-	ownerId = ((Form_pg_foreign_data_wrapper) GETSTRUCT(tuple))->fdwowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a foreign server (specified by OID).
- */
-bool
-pg_foreign_server_ownercheck(Oid srv_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign server with OID %u does not exist",
-						srv_oid)));
-
-	ownerId = ((Form_pg_foreign_server) GETSTRUCT(tuple))->srvowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for an event trigger (specified by OID).
- */
-bool
-pg_event_trigger_ownercheck(Oid et_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(EVENTTRIGGEROID, ObjectIdGetDatum(et_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("event trigger with OID %u does not exist",
-						et_oid)));
-
-	ownerId = ((Form_pg_event_trigger) GETSTRUCT(tuple))->evtowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a database (specified by OID).
- */
-bool
-pg_database_ownercheck(Oid db_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			dba;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(db_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database with OID %u does not exist", db_oid)));
-
-	dba = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, dba);
-}
-
-/*
- * Ownership check for a collation (specified by OID).
- */
-bool
-pg_collation_ownercheck(Oid coll_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(coll_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("collation with OID %u does not exist", coll_oid)));
-
-	ownerId = ((Form_pg_collation) GETSTRUCT(tuple))->collowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a conversion (specified by OID).
- */
-bool
-pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(CONVOID, ObjectIdGetDatum(conv_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("conversion with OID %u does not exist", conv_oid)));
-
-	ownerId = ((Form_pg_conversion) GETSTRUCT(tuple))->conowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for an extension (specified by OID).
- */
-bool
-pg_extension_ownercheck(Oid ext_oid, Oid roleid)
-{
-	Relation	pg_extension;
-	ScanKeyData entry[1];
-	SysScanDesc scan;
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	/* There's no syscache for pg_extension, so do it the hard way */
-	pg_extension = table_open(ExtensionRelationId, AccessShareLock);
-
-	ScanKeyInit(&entry[0],
-				Anum_pg_extension_oid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(ext_oid));
-
-	scan = systable_beginscan(pg_extension,
-							  ExtensionOidIndexId, true,
-							  NULL, 1, entry);
-
-	tuple = systable_getnext(scan);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("extension with OID %u does not exist", ext_oid)));
-
-	ownerId = ((Form_pg_extension) GETSTRUCT(tuple))->extowner;
-
-	systable_endscan(scan);
-	table_close(pg_extension, AccessShareLock);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a publication (specified by OID).
- */
-bool
-pg_publication_ownercheck(Oid pub_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pub_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("publication with OID %u does not exist", pub_oid)));
-
-	ownerId = ((Form_pg_publication) GETSTRUCT(tuple))->pubowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a subscription (specified by OID).
- */
-bool
-pg_subscription_ownercheck(Oid sub_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(sub_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("subscription with OID %u does not exist", sub_oid)));
-
-	ownerId = ((Form_pg_subscription) GETSTRUCT(tuple))->subowner;
-
-	ReleaseSysCache(tuple);
-
-	return has_privs_of_role(roleid, ownerId);
-}
-
-/*
- * Ownership check for a statistics object (specified by OID).
- */
-bool
-pg_statistics_object_ownercheck(Oid stat_oid, Oid roleid)
-{
-	HeapTuple	tuple;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return true;
-
-	tuple = SearchSysCache1(STATEXTOID, ObjectIdGetDatum(stat_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("statistics object with OID %u does not exist",
-						stat_oid)));
-
-	ownerId = ((Form_pg_statistic_ext) GETSTRUCT(tuple))->stxowner;
-
-	ReleaseSysCache(tuple);
+	cacheid = get_object_catcache_oid(classid);
+	if (cacheid != -1)
+	{
+		HeapTuple	tuple;
+		bool		isnull;
+
+		tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objectid));
+		if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
+
+		ownerId = DatumGetObjectId(SysCacheGetAttr(cacheid,
+												   tuple,
+												   get_object_attnum_owner(classid),
+												   &isnull));
+		Assert(!isnull);
+
+		ReleaseSysCache(tuple);
+	}
+	else
+	{
+		/* for catalogs without an appropriate syscache */
+
+		Relation	rel;
+		ScanKeyData entry[1];
+		SysScanDesc scan;
+		HeapTuple	tuple;
+		bool		isnull;
+
+		rel = table_open(classid, AccessShareLock);
+
+		ScanKeyInit(&entry[0],
+					get_object_attnum_oid(classid),
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(objectid));
+
+		scan = systable_beginscan(rel,
+								  get_object_oid_index(classid), true,
+								  NULL, 1, entry);
+
+		tuple = systable_getnext(scan);
+		if (!HeapTupleIsValid(tuple))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
+
+		ownerId = DatumGetObjectId(heap_getattr(tuple,
+												get_object_attnum_owner(classid),
+												RelationGetDescr(rel),
+												&isnull));
+		Assert(!isnull);
+
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+	}
 
 	return has_privs_of_role(roleid, ownerId);
 }

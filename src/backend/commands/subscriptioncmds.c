@@ -1032,7 +1032,7 @@ AlterSubscription(ParseState *pstate, AlterSubscriptionStmt *stmt,
 	subid = form->oid;
 
 	/* must be owner */
-	if (!pg_subscription_ownercheck(subid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, subid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
@@ -1418,7 +1418,7 @@ DropSubscription(DropSubscriptionStmt *stmt, bool isTopLevel)
 	subid = form->oid;
 
 	/* must be owner */
-	if (!pg_subscription_ownercheck(subid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, subid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   stmt->subname);
 
@@ -1709,7 +1709,7 @@ AlterSubscriptionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 	if (form->subowner == newOwnerId)
 		return;
 
-	if (!pg_subscription_ownercheck(form->oid, GetUserId()))
+	if (!object_ownercheck(SubscriptionRelationId, form->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SUBSCRIPTION,
 					   NameStr(form->subname));
 

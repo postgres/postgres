@@ -427,7 +427,7 @@ OperatorCreate(const char *operatorName,
 	 * such shell.
 	 */
 	if (OidIsValid(operatorObjectId) &&
-		!pg_oper_ownercheck(operatorObjectId, GetUserId()))
+		!object_ownercheck(OperatorRelationId, operatorObjectId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 					   operatorName);
 
@@ -447,7 +447,7 @@ OperatorCreate(const char *operatorName,
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(commutatorId) &&
-			!pg_oper_ownercheck(commutatorId, GetUserId()))
+			!object_ownercheck(OperatorRelationId, commutatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 						   NameListToString(commutatorName));
 
@@ -472,7 +472,7 @@ OperatorCreate(const char *operatorName,
 
 		/* Permission check: must own other operator */
 		if (OidIsValid(negatorId) &&
-			!pg_oper_ownercheck(negatorId, GetUserId()))
+			!object_ownercheck(OperatorRelationId, negatorId, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 						   NameListToString(negatorName));
 	}

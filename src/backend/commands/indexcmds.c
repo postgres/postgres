@@ -27,7 +27,9 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_tablespace.h"
@@ -2790,7 +2792,7 @@ RangeVarCallbackForReindexIndex(const RangeVar *relation,
 				 errmsg("\"%s\" is not an index", relation->relname)));
 
 	/* Check permissions */
-	if (!pg_class_ownercheck(relId, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, relId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX, relation->relname);
 
 	/* Lock heap before index to avoid deadlock. */
@@ -2914,7 +2916,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 	{
 		objectOid = get_namespace_oid(objectName, false);
 
-		if (!pg_namespace_ownercheck(objectOid, GetUserId()))
+		if (!object_ownercheck(NamespaceRelationId, objectOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_SCHEMA,
 						   objectName);
 	}
@@ -2926,7 +2928,7 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("can only reindex the currently open database")));
-		if (!pg_database_ownercheck(objectOid, GetUserId()))
+		if (!object_ownercheck(DatabaseRelationId, objectOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   get_database_name(objectOid));
 	}
@@ -3000,13 +3002,13 @@ ReindexMultipleTables(const char *objectName, ReindexObjectType objectKind,
 		/*
 		 * The table can be reindexed if the user is superuser, the table
 		 * owner, or the database/schema owner (but in the latter case, only
-		 * if it's not a shared relation).  pg_class_ownercheck includes the
+		 * if it's not a shared relation).  object_ownercheck includes the
 		 * superuser case, and depending on objectKind we already know that
 		 * the user has permission to run REINDEX on this database or schema
 		 * per the permission checks at the beginning of this routine.
 		 */
 		if (classtuple->relisshared &&
-			!pg_class_ownercheck(relid, GetUserId()))
+			!object_ownercheck(RelationRelationId, relid, GetUserId()))
 			continue;
 
 		/*

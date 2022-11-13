@@ -95,7 +95,7 @@ check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 	 * Return RLS_NONE_ENV to indicate that this decision depends on the
 	 * environment (in this case, the user_id).
 	 */
-	amowner = pg_class_ownercheck(relid, user_id);
+	amowner = object_ownercheck(RelationRelationId, relid, user_id);
 	if (amowner)
 	{
 		/*

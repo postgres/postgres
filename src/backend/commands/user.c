@@ -956,7 +956,7 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 			 * If no role is specified, then this is effectively the same as
 			 * ALTER DATABASE ... SET, so use the same permission check.
 			 */
-			if (!pg_database_ownercheck(databaseid, GetUserId()))
+			if (!object_ownercheck(DatabaseRelationId, databaseid, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 							   stmt->database);
 		}
@@ -1586,7 +1586,7 @@ AddRoleMems(const char *rolename, Oid roleid,
 	 * The charter of pg_database_owner is to have exactly one, implicit,
 	 * situation-dependent member.  There's no technical need for this
 	 * restriction.  (One could lift it and take the further step of making
-	 * pg_database_ownercheck() equivalent to has_privs_of_role(roleid,
+	 * object_ownercheck(DatabaseRelationId, ...) equivalent to has_privs_of_role(roleid,
 	 * ROLE_PG_DATABASE_OWNER), in which case explicit, situation-independent
 	 * members could act as the owner of any database.)
 	 */

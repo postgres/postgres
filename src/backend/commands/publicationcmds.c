@@ -1394,7 +1394,7 @@ AlterPublication(ParseState *pstate, AlterPublicationStmt *stmt)
 	pubform = (Form_pg_publication) GETSTRUCT(tup);
 
 	/* must be owner */
-	if (!pg_publication_ownercheck(pubform->oid, GetUserId()))
+	if (!object_ownercheck(PublicationRelationId, pubform->oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_PUBLICATION,
 					   stmt->pubname);
 
@@ -1764,7 +1764,7 @@ PublicationAddTables(Oid pubid, List *rels, bool if_not_exists,
 		ObjectAddress obj;
 
 		/* Must be owner of the table or superuser. */
-		if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
 
@@ -1905,7 +1905,7 @@ AlterPublicationOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 		AclResult	aclresult;
 
 		/* Must be owner */
-		if (!pg_publication_ownercheck(form->oid, GetUserId()))
+		if (!object_ownercheck(PublicationRelationId, form->oid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_PUBLICATION,
 						   NameStr(form->pubname));
 

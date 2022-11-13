@@ -1054,7 +1054,7 @@ gin_clean_pending_list(PG_FUNCTION_ARGS)
 				 errmsg("cannot access temporary indexes of other sessions")));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
-	if (!pg_class_ownercheck(indexoid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, indexoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
 					   RelationGetRelationName(indexRel));
 

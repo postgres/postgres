@@ -371,7 +371,7 @@ AlterCollation(AlterCollationStmt *stmt)
 				(errmsg("cannot refresh version of default collation"),
 				 errhint("Use ALTER DATABASE ... REFRESH COLLATION VERSION instead.")));
 
-	if (!pg_collation_ownercheck(collOid, GetUserId()))
+	if (!object_ownercheck(CollationRelationId, collOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
 					   NameListToString(stmt->collname));
 

@@ -21,6 +21,7 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaddress.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
@@ -105,7 +106,7 @@ RemoveObjects(DropStmt *stmt)
 		/* Check permissions. */
 		namespaceId = get_object_namespace(&address);
 		if (!OidIsValid(namespaceId) ||
-			!pg_namespace_ownercheck(namespaceId, GetUserId()))
+			!object_ownercheck(NamespaceRelationId, namespaceId, GetUserId()))
 			check_object_ownership(GetUserId(), stmt->removeType, address,
 								   object, relation);
 

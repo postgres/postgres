@@ -34,6 +34,7 @@
 #include "catalog/objectaccess.h"
 #include "catalog/partition.h"
 #include "catalog/pg_am.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
@@ -364,7 +365,7 @@ cluster_rel(Oid tableOid, Oid indexOid, ClusterParams *params)
 	if (recheck)
 	{
 		/* Check that the user still owns the relation */
-		if (!pg_class_ownercheck(tableOid, save_userid))
+		if (!object_ownercheck(RelationRelationId, tableOid, save_userid))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			goto out;
@@ -1641,7 +1642,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (!pg_class_ownercheck(index->indrelid, GetUserId()))
+		if (!object_ownercheck(RelationRelationId, index->indrelid, GetUserId()))
 			continue;
 
 		/* Use a permanent memory context for the result list */
@@ -1690,8 +1691,8 @@ get_tables_to_cluster_partitioned(MemoryContext cluster_context, Oid indexOid)
 			continue;
 
 		/* Silently skip partitions which the user has no access to. */
-		if (!pg_class_ownercheck(relid, GetUserId()) &&
-			(!pg_database_ownercheck(MyDatabaseId, GetUserId()) ||
+		if (!object_ownercheck(RelationRelationId, relid, GetUserId()) &&
+			(!object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) ||
 			 IsSharedRelation(relid)))
 			continue;
 

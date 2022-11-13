@@ -138,7 +138,7 @@ CreateStatistics(CreateStatsStmt *stmt)
 					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 
 		/* You must own the relation to create stats on it */
-		if (!pg_class_ownercheck(RelationGetRelid(rel), stxowner))
+		if (!object_ownercheck(RelationRelationId, RelationGetRelid(rel), stxowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(rel->rd_rel->relkind),
 						   RelationGetRelationName(rel));
 
@@ -665,7 +665,7 @@ AlterStatistics(AlterStatsStmt *stmt)
 		elog(ERROR, "cache lookup failed for extended statistics object %u", stxoid);
 
 	/* Must be owner of the existing statistics object */
-	if (!pg_statistics_object_ownercheck(stxoid, GetUserId()))
+	if (!object_ownercheck(StatisticExtRelationId, stxoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_STATISTIC_EXT,
 					   NameListToString(stmt->defnames));
 

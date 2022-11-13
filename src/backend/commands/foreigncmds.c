@@ -358,7 +358,7 @@ AlterForeignServerOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId)
 			srvId = form->oid;
 
 			/* Must be owner */
-			if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
+			if (!object_ownercheck(ForeignServerRelationId, srvId, GetUserId()))
 				aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 							   NameStr(form->srvname));
 
@@ -998,7 +998,7 @@ AlterForeignServer(AlterForeignServerStmt *stmt)
 	/*
 	 * Only owner or a superuser can ALTER a SERVER.
 	 */
-	if (!pg_foreign_server_ownercheck(srvId, GetUserId()))
+	if (!object_ownercheck(ForeignServerRelationId, srvId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FOREIGN_SERVER,
 					   stmt->servername);
 
@@ -1076,7 +1076,7 @@ user_mapping_ddl_aclcheck(Oid umuserid, Oid serverid, const char *servername)
 {
 	Oid			curuserid = GetUserId();
 
-	if (!pg_foreign_server_ownercheck(serverid, curuserid))
+	if (!object_ownercheck(ForeignServerRelationId, serverid, curuserid))
 	{
 		if (umuserid == curuserid)
 		{

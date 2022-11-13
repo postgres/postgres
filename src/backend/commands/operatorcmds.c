@@ -481,7 +481,7 @@ AlterOperator(AlterOperatorStmt *stmt)
 	}
 
 	/* Check permissions. Must be owner. */
-	if (!pg_oper_ownercheck(oprId, GetUserId()))
+	if (!object_ownercheck(OperatorRelationId, oprId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 					   NameStr(oprForm->oprname));
 

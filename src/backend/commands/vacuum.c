@@ -565,14 +565,14 @@ vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
 	 *
 	 * We allow the user to vacuum or analyze a table if he is superuser, the
 	 * table owner, or the database owner (but in the latter case, only if
-	 * it's not a shared relation).  pg_class_ownercheck includes the
+	 * it's not a shared relation).  object_ownercheck includes the
 	 * superuser case.
 	 *
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum or analyze the rest of the DB --- is this appropriate?
 	 */
-	if (pg_class_ownercheck(relid, GetUserId()) ||
-		(pg_database_ownercheck(MyDatabaseId, GetUserId()) && !reltuple->relisshared))
+	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
+		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared))
 		return true;
 
 	relname = NameStr(reltuple->relname);

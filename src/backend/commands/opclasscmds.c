@@ -421,7 +421,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 #ifdef NOT_USED
 	/* XXX this is unnecessary given the superuser check above */
 	/* Check we have ownership of the datatype */
-	if (!pg_type_ownercheck(typeoid, GetUserId()))
+	if (!object_ownercheck(TypeRelationId, typeoid, GetUserId()))
 		aclcheck_error_type(ACLCHECK_NOT_OWNER, typeoid);
 #endif
 
@@ -513,11 +513,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own operator and its underlying function */
-				if (!pg_oper_ownercheck(operOid, GetUserId()))
+				if (!object_ownercheck(OperatorRelationId, operOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 								   get_opname(operOid));
 				funcOid = get_opcode(operOid);
-				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+				if (!object_ownercheck(ProcedureRelationId, funcOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 								   get_func_name(funcOid));
 #endif
@@ -542,7 +542,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
-				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+				if (!object_ownercheck(ProcedureRelationId, funcOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 								   get_func_name(funcOid));
 #endif
@@ -570,7 +570,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Check we have ownership of the datatype */
-				if (!pg_type_ownercheck(storageoid, GetUserId()))
+				if (!object_ownercheck(TypeRelationId, storageoid, GetUserId()))
 					aclcheck_error_type(ACLCHECK_NOT_OWNER, storageoid);
 #endif
 				break;
@@ -930,11 +930,11 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own operator and its underlying function */
-				if (!pg_oper_ownercheck(operOid, GetUserId()))
+				if (!object_ownercheck(OperatorRelationId, operOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_OPERATOR,
 								   get_opname(operOid));
 				funcOid = get_opcode(operOid);
-				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+				if (!object_ownercheck(ProcedureRelationId, funcOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 								   get_func_name(funcOid));
 #endif
@@ -964,7 +964,7 @@ AlterOpFamilyAdd(AlterOpFamilyStmt *stmt, Oid amoid, Oid opfamilyoid,
 #ifdef NOT_USED
 				/* XXX this is unnecessary given the superuser check above */
 				/* Caller must own function */
-				if (!pg_proc_ownercheck(funcOid, GetUserId()))
+				if (!object_ownercheck(ProcedureRelationId, funcOid, GetUserId()))
 					aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 								   get_func_name(funcOid));
 #endif
