@@ -26,6 +26,14 @@ PostgreSQL::Test::Cluster - class representing PostgreSQL server instance
   # Modify or delete an existing setting
   $node->adjust_conf('postgresql.conf', 'max_wal_senders', '10');
 
+  # get pg_config settings
+  # all the settings in one string
+  $pgconfig = $node->config_data;
+  # all the settings as a map
+  %config_map = ($node->config_data);
+  # specified settings
+  ($incdir, $sharedir) = $node->config_data(qw(--includedir --sharedir));
+
   # run a query with psql, like:
   #   echo 'SELECT 1' | psql -qAXt postgres -v ON_ERROR_STOP=1
   $psql_stdout = $node->safe_psql('postgres', 'SELECT 1');
@@ -345,27 +353,46 @@ sub pg_version
 
 =pod
 
-=item $node->config_data($option)
+=item $node->config_data( option ...)
 
-Return a string holding configuration data from pg_config, with $option
-being the option switch used with the pg_config command.
+Return configuration data from pg_config, using options (if supplied).
+The options will be things like '--sharedir'.
+
+If no options are supplied, return a string in scalar context or a map in
+array context.
+
+If options are supplied, return the list of values.
 
 =cut
 
 sub config_data
 {
-	my ($self, $option) = @_;
+	my ($self, @options) = @_;
 	local %ENV = $self->_get_env();
 
 	my ($stdout, $stderr);
 	my $result =
-	  IPC::Run::run [ $self->installed_command('pg_config'), $option ],
+	  IPC::Run::run [ $self->installed_command('pg_config'), @options ],
 	  '>', \$stdout, '2>', \$stderr
 	  or die "could not execute pg_config";
+	# standardize line endings
+	$stdout =~ s/\r(?=\n)//g;
+	# no options, scalar context: just hand back the output
+	return $stdout unless (wantarray || @options);
 	chomp($stdout);
-	$stdout =~ s/\r$//;
-
-	return $stdout;
+	# exactly one option: hand back the output (minus LF)
+	return $stdout if (@options == 1);
+	my @lines = split(/\n/, $stdout);
+	# more than one option: hand back the list of values;
+	return @lines if (@options);
+	# no options, array context: return a map
+	my @map;
+	foreach my $line (@lines)
+	{
+		my ($k,$v) = split (/ = /,$line,2);
+		push(@map, $k, $v);
+	}
+	return @map;
 }
 
 =pod
