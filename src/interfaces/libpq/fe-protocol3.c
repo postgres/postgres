@@ -202,7 +202,7 @@ pqParseInput3(PGconn *conn)
 						if (!conn->result)
 						{
 							appendPQExpBufferStr(&conn->errorMessage,
-												 libpq_gettext("out of memory"));
+												 libpq_gettext("out of memory\n"));
 							pqSaveErrorResult(conn);
 						}
 					}
@@ -227,7 +227,7 @@ pqParseInput3(PGconn *conn)
 						if (!conn->result)
 						{
 							appendPQExpBufferStr(&conn->errorMessage,
-												 libpq_gettext("out of memory"));
+												 libpq_gettext("out of memory\n"));
 							pqSaveErrorResult(conn);
 						}
 						else
@@ -256,7 +256,7 @@ pqParseInput3(PGconn *conn)
 						if (!conn->result)
 						{
 							appendPQExpBufferStr(&conn->errorMessage,
-												 libpq_gettext("out of memory"));
+												 libpq_gettext("out of memory\n"));
 							pqSaveErrorResult(conn);
 						}
 					}
@@ -274,7 +274,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								appendPQExpBufferStr(&conn->errorMessage,
-													 libpq_gettext("out of memory"));
+													 libpq_gettext("out of memory\n"));
 								pqSaveErrorResult(conn);
 							}
 						}
@@ -355,7 +355,7 @@ pqParseInput3(PGconn *conn)
 							if (!conn->result)
 							{
 								appendPQExpBufferStr(&conn->errorMessage,
-													 libpq_gettext("out of memory"));
+													 libpq_gettext("out of memory\n"));
 								pqSaveErrorResult(conn);
 							}
 						}
