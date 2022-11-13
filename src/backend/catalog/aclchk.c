@@ -139,8 +139,26 @@ static AclMode restrict_and_check_grant(bool is_grant, AclMode avail_goptions,
 										Oid objectId, Oid grantorId,
 										ObjectType objtype, const char *objname,
 										AttrNumber att_number, const char *colname);
-static AclMode pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum,
+static AclMode pg_aclmask(ObjectType objtype, Oid object_oid, AttrNumber attnum,
 						  Oid roleid, AclMode mask, AclMaskHow how);
+static AclMode object_aclmask(Oid classid, Oid objectid, Oid roleid,
+							  AclMode mask, AclMaskHow how);
+static AclMode pg_attribute_aclmask(Oid table_oid, AttrNumber attnum,
+									Oid roleid, AclMode mask, AclMaskHow how);
+static AclMode pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum,
+										Oid roleid, AclMode mask,
+										AclMaskHow how, bool *is_missing);
+static AclMode pg_class_aclmask_ext(Oid table_oid, Oid roleid,
+									AclMode mask, AclMaskHow how,
+									bool *is_missing);
+static AclMode pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid,
+										AclMode mask, AclMaskHow how);
+static AclMode pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
+											   AclMode mask, AclMaskHow how, Snapshot snapshot);
+static AclMode pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
+									AclMode mask, AclMaskHow how);
+static AclMode pg_type_aclmask(Oid type_oid, Oid roleid,
+							   AclMode mask, AclMaskHow how);
 static void recordExtensionInitPriv(Oid objoid, Oid classoid, int objsubid,
 									Acl *new_acl);
 static void recordExtensionInitPrivWorker(Oid objoid, Oid classoid, int objsubid,
@@ -3787,47 +3805,47 @@ aclcheck_error_type(AclResult aclerr, Oid typeOid)
  * Relay for the various pg_*_mask routines depending on object kind
  */
 static AclMode
-pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum, Oid roleid,
+pg_aclmask(ObjectType objtype, Oid object_oid, AttrNumber attnum, Oid roleid,
 		   AclMode mask, AclMaskHow how)
 {
 	switch (objtype)
 	{
 		case OBJECT_COLUMN:
 			return
-				pg_class_aclmask(table_oid, roleid, mask, how) |
-				pg_attribute_aclmask(table_oid, attnum, roleid, mask, how);
+				pg_class_aclmask(object_oid, roleid, mask, how) |
+				pg_attribute_aclmask(object_oid, attnum, roleid, mask, how);
 		case OBJECT_TABLE:
 		case OBJECT_SEQUENCE:
-			return pg_class_aclmask(table_oid, roleid, mask, how);
+			return pg_class_aclmask(object_oid, roleid, mask, how);
 		case OBJECT_DATABASE:
-			return pg_database_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(DatabaseRelationId, object_oid, roleid, mask, how);
 		case OBJECT_FUNCTION:
-			return pg_proc_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(ProcedureRelationId, object_oid, roleid, mask, how);
 		case OBJECT_LANGUAGE:
-			return pg_language_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(LanguageRelationId, object_oid, roleid, mask, how);
 		case OBJECT_LARGEOBJECT:
-			return pg_largeobject_aclmask_snapshot(table_oid, roleid,
+			return pg_largeobject_aclmask_snapshot(object_oid, roleid,
 												   mask, how, NULL);
 		case OBJECT_PARAMETER_ACL:
-			return pg_parameter_acl_aclmask(table_oid, roleid, mask, how);
+			return pg_parameter_acl_aclmask(object_oid, roleid, mask, how);
 		case OBJECT_SCHEMA:
-			return pg_namespace_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(NamespaceRelationId, object_oid, roleid, mask, how);
 		case OBJECT_STATISTIC_EXT:
 			elog(ERROR, "grantable rights not supported for statistics objects");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 		case OBJECT_TABLESPACE:
-			return pg_tablespace_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(TableSpaceRelationId, object_oid, roleid, mask, how);
 		case OBJECT_FDW:
-			return pg_foreign_data_wrapper_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(ForeignDataWrapperRelationId, object_oid, roleid, mask, how);
 		case OBJECT_FOREIGN_SERVER:
-			return pg_foreign_server_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(ForeignServerRelationId, object_oid, roleid, mask, how);
 		case OBJECT_EVENT_TRIGGER:
 			elog(ERROR, "grantable rights not supported for event triggers");
 			/* not reached, but keep compiler quiet */
 			return ACL_NO_RIGHTS;
 		case OBJECT_TYPE:
-			return pg_type_aclmask(table_oid, roleid, mask, how);
+			return object_aclmask(TypeRelationId, object_oid, roleid, mask, how);
 		default:
 			elog(ERROR, "unrecognized object type: %d",
 				 (int) objtype);
@@ -3849,14 +3867,90 @@ pg_aclmask(ObjectType objtype, Oid table_oid, AttrNumber attnum, Oid roleid,
  */
 
 /*
- * Exported routine for examining a user's privileges for a column
+ * Generic routine for examining a user's privileges for an object
+ */
+static AclMode
+object_aclmask(Oid classid, Oid objectid, Oid roleid,
+			   AclMode mask, AclMaskHow how)
+{
+	int			cacheid;
+	AclMode		result;
+	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+	Oid			ownerId;
+
+	/* Special cases */
+	switch (classid)
+	{
+		case NamespaceRelationId:
+			return pg_namespace_aclmask(objectid, roleid, mask, how);
+		case TypeRelationId:
+			return pg_type_aclmask(objectid, roleid, mask, how);
+	}
+
+	/* Even more special cases */
+	Assert(classid != RelationRelationId);	/* should use pg_class_acl* */
+	Assert(classid != LargeObjectMetadataRelationId);	/* should use
+														 * pg_largeobject_acl* */
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return mask;
+
+	/*
+	 * Get the objects's ACL from its catalog
+	 */
+
+	cacheid = get_object_catcache_oid(classid);
+
+	tuple = SearchSysCache1(cacheid, ObjectIdGetDatum(objectid));
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("%s with OID %u does not exist", get_object_class_descr(classid), objectid)));
+
+	ownerId = DatumGetObjectId(SysCacheGetAttr(cacheid,
+											   tuple,
+											   get_object_attnum_owner(classid),
+											   &isNull));
+	Assert(!isNull);
+
+	aclDatum = SysCacheGetAttr(cacheid, tuple, get_object_attnum_acl(classid),
+							   &isNull);
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		acl = acldefault(get_object_type(classid, objectid), ownerId);
+		aclDatum = (Datum) 0;
+	}
+	else
+	{
+		/* detoast ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
+	}
+
+	result = aclmask(acl, roleid, ownerId, mask, how);
+
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
+		pfree(acl);
+
+	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+/*
+ * Routine for examining a user's privileges for a column
  *
  * Note: this considers only privileges granted specifically on the column.
  * It is caller's responsibility to take relation-level privileges into account
  * as appropriate.  (For the same reason, we have no special case for
  * superuser-ness here.)
  */
-AclMode
+static AclMode
 pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 					 AclMode mask, AclMaskHow how)
 {
@@ -3865,12 +3959,12 @@ pg_attribute_aclmask(Oid table_oid, AttrNumber attnum, Oid roleid,
 }
 
 /*
- * Exported routine for examining a user's privileges for a column
+ * Routine for examining a user's privileges for a column
  *
  * Does the bulk of the work for pg_attribute_aclmask(), and allows other
  * callers to avoid the missing attribute ERROR when is_missing is non-NULL.
  */
-AclMode
+static AclMode
 pg_attribute_aclmask_ext(Oid table_oid, AttrNumber attnum, Oid roleid,
 						 AclMode mask, AclMaskHow how, bool *is_missing)
 {
@@ -3983,12 +4077,12 @@ pg_class_aclmask(Oid table_oid, Oid roleid,
 }
 
 /*
- * Exported routine for examining a user's privileges for a table
+ * Routine for examining a user's privileges for a table
  *
  * Does the bulk of the work for pg_class_aclmask(), and allows other
  * callers to avoid the missing relation ERROR when is_missing is non-NULL.
  */
-AclMode
+static AclMode
 pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 					 AclMaskHow how, bool *is_missing)
 {
@@ -4104,64 +4198,10 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 }
 
 /*
- * Exported routine for examining a user's privileges for a database
- */
-AclMode
-pg_database_aclmask(Oid db_oid, Oid roleid,
-					AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Get the database's ACL from pg_database
-	 */
-	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(db_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("database with OID %u does not exist", db_oid)));
-
-	ownerId = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
-
-	aclDatum = SysCacheGetAttr(DATABASEOID, tuple, Anum_pg_database_datacl,
-							   &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_DATABASE, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a configuration
+ * Routine for examining a user's privileges for a configuration
  * parameter (GUC), identified by GUC name.
  */
-AclMode
+static AclMode
 pg_parameter_aclmask(const char *name, Oid roleid, AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
@@ -4222,10 +4262,10 @@ pg_parameter_aclmask(const char *name, Oid roleid, AclMode mask, AclMaskHow how)
 }
 
 /*
- * Exported routine for examining a user's privileges for a configuration
+ * Routine for examining a user's privileges for a configuration
  * parameter (GUC), identified by the OID of its pg_parameter_acl entry.
  */
-AclMode
+static AclMode
 pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid, AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
@@ -4273,115 +4313,7 @@ pg_parameter_acl_aclmask(Oid acl_oid, Oid roleid, AclMode mask, AclMaskHow how)
 }
 
 /*
- * Exported routine for examining a user's privileges for a function
- */
-AclMode
-pg_proc_aclmask(Oid proc_oid, Oid roleid,
-				AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Get the function's ACL from pg_proc
-	 */
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(proc_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function with OID %u does not exist", proc_oid)));
-
-	ownerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-
-	aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
-							   &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_FUNCTION, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a language
- */
-AclMode
-pg_language_aclmask(Oid lang_oid, Oid roleid,
-					AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Get the language's ACL from pg_language
-	 */
-	tuple = SearchSysCache1(LANGOID, ObjectIdGetDatum(lang_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("language with OID %u does not exist", lang_oid)));
-
-	ownerId = ((Form_pg_language) GETSTRUCT(tuple))->lanowner;
-
-	aclDatum = SysCacheGetAttr(LANGOID, tuple, Anum_pg_language_lanacl,
-							   &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_LANGUAGE, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a largeobject
+ * Routine for examining a user's privileges for a largeobject
  *
  * When a large object is opened for reading, it is opened relative to the
  * caller's snapshot, but when it is opened for writing, a current
@@ -4392,7 +4324,7 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
  * snapshot, since all we do with the snapshot argument is pass it through
  * to systable_beginscan().
  */
-AclMode
+static AclMode
 pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 								AclMode mask, AclMaskHow how,
 								Snapshot snapshot)
@@ -4463,9 +4395,9 @@ pg_largeobject_aclmask_snapshot(Oid lobj_oid, Oid roleid,
 }
 
 /*
- * Exported routine for examining a user's privileges for a namespace
+ * Routine for examining a user's privileges for a namespace
  */
-AclMode
+static AclMode
 pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 					 AclMode mask, AclMaskHow how)
 {
@@ -4501,8 +4433,8 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 */
 	if (isTempNamespace(nsp_oid))
 	{
-		if (pg_database_aclcheck(MyDatabaseId, roleid,
-								 ACL_CREATE_TEMP) == ACLCHECK_OK)
+		if (object_aclcheck(DatabaseRelationId, MyDatabaseId, roleid,
+							ACL_CREATE_TEMP) == ACLCHECK_OK)
 			return mask & ACL_ALL_RIGHTS_SCHEMA;
 		else
 			return mask & ACL_USAGE;
@@ -4555,189 +4487,9 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 }
 
 /*
- * Exported routine for examining a user's privileges for a tablespace
+ * Routine for examining a user's privileges for a type.
  */
-AclMode
-pg_tablespace_aclmask(Oid spc_oid, Oid roleid,
-					  AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	/* Superusers bypass all permission checking. */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Get the tablespace's ACL from pg_tablespace
-	 */
-	tuple = SearchSysCache1(TABLESPACEOID, ObjectIdGetDatum(spc_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace with OID %u does not exist", spc_oid)));
-
-	ownerId = ((Form_pg_tablespace) GETSTRUCT(tuple))->spcowner;
-
-	aclDatum = SysCacheGetAttr(TABLESPACEOID, tuple,
-							   Anum_pg_tablespace_spcacl,
-							   &isNull);
-
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_TABLESPACE, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a foreign
- * data wrapper
- */
-AclMode
-pg_foreign_data_wrapper_aclmask(Oid fdw_oid, Oid roleid,
-								AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	Form_pg_foreign_data_wrapper fdwForm;
-
-	/* Bypass permission checks for superusers */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Must get the FDW's tuple from pg_foreign_data_wrapper
-	 */
-	tuple = SearchSysCache1(FOREIGNDATAWRAPPEROID, ObjectIdGetDatum(fdw_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign-data wrapper with OID %u does not exist",
-						fdw_oid)));
-	fdwForm = (Form_pg_foreign_data_wrapper) GETSTRUCT(tuple);
-
-	/*
-	 * Normal case: get the FDW's ACL from pg_foreign_data_wrapper
-	 */
-	ownerId = fdwForm->fdwowner;
-
-	aclDatum = SysCacheGetAttr(FOREIGNDATAWRAPPEROID, tuple,
-							   Anum_pg_foreign_data_wrapper_fdwacl, &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_FDW, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast rel's ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a foreign
- * server.
- */
-AclMode
-pg_foreign_server_aclmask(Oid srv_oid, Oid roleid,
-						  AclMode mask, AclMaskHow how)
-{
-	AclMode		result;
-	HeapTuple	tuple;
-	Datum		aclDatum;
-	bool		isNull;
-	Acl		   *acl;
-	Oid			ownerId;
-
-	Form_pg_foreign_server srvForm;
-
-	/* Bypass permission checks for superusers */
-	if (superuser_arg(roleid))
-		return mask;
-
-	/*
-	 * Must get the FDW's tuple from pg_foreign_data_wrapper
-	 */
-	tuple = SearchSysCache1(FOREIGNSERVEROID, ObjectIdGetDatum(srv_oid));
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("foreign server with OID %u does not exist",
-						srv_oid)));
-	srvForm = (Form_pg_foreign_server) GETSTRUCT(tuple);
-
-	/*
-	 * Normal case: get the foreign server's ACL from pg_foreign_server
-	 */
-	ownerId = srvForm->srvowner;
-
-	aclDatum = SysCacheGetAttr(FOREIGNSERVEROID, tuple,
-							   Anum_pg_foreign_server_srvacl, &isNull);
-	if (isNull)
-	{
-		/* No ACL, so build default ACL */
-		acl = acldefault(OBJECT_FOREIGN_SERVER, ownerId);
-		aclDatum = (Datum) 0;
-	}
-	else
-	{
-		/* detoast rel's ACL if necessary */
-		acl = DatumGetAclP(aclDatum);
-	}
-
-	result = aclmask(acl, roleid, ownerId, mask, how);
-
-	/* if we have a detoasted copy, free it */
-	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
-		pfree(acl);
-
-	ReleaseSysCache(tuple);
-
-	return result;
-}
-
-/*
- * Exported routine for examining a user's privileges for a type.
- */
-AclMode
+static AclMode
 pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
@@ -4809,6 +4561,18 @@ pg_type_aclmask(Oid type_oid, Oid roleid, AclMode mask, AclMaskHow how)
 	ReleaseSysCache(tuple);
 
 	return result;
+}
+
+/*
+ * Exported generic routine for checking a user's access privileges to an object
+ */
+AclResult
+object_aclcheck(Oid classid, Oid objectid, Oid roleid, AclMode mode)
+{
+	if (object_aclmask(classid, objectid, roleid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
 }
 
 /*
@@ -4974,18 +4738,6 @@ pg_class_aclcheck_ext(Oid table_oid, Oid roleid,
 }
 
 /*
- * Exported routine for checking a user's access privileges to a database
- */
-AclResult
-pg_database_aclcheck(Oid db_oid, Oid roleid, AclMode mode)
-{
-	if (pg_database_aclmask(db_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
  * Exported routine for checking a user's access privileges to a configuration
  * parameter (GUC), identified by GUC name.
  */
@@ -4993,43 +4745,6 @@ AclResult
 pg_parameter_aclcheck(const char *name, Oid roleid, AclMode mode)
 {
 	if (pg_parameter_aclmask(name, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a configuration
- * parameter (GUC), identified by the OID of its pg_parameter_acl entry.
- */
-AclResult
-pg_parameter_acl_aclcheck(Oid acl_oid, Oid roleid, AclMode mode)
-{
-	if (pg_parameter_acl_aclmask(acl_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a function
- */
-AclResult
-pg_proc_aclcheck(Oid proc_oid, Oid roleid, AclMode mode)
-{
-	if (pg_proc_aclmask(proc_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a language
- */
-AclResult
-pg_language_aclcheck(Oid lang_oid, Oid roleid, AclMode mode)
-{
-	if (pg_language_aclmask(lang_oid, roleid, mode, ACLMASK_ANY) != 0)
 		return ACLCHECK_OK;
 	else
 		return ACLCHECK_NO_PRIV;
@@ -5044,68 +4759,6 @@ pg_largeobject_aclcheck_snapshot(Oid lobj_oid, Oid roleid, AclMode mode,
 {
 	if (pg_largeobject_aclmask_snapshot(lobj_oid, roleid, mode,
 										ACLMASK_ANY, snapshot) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a namespace
- */
-AclResult
-pg_namespace_aclcheck(Oid nsp_oid, Oid roleid, AclMode mode)
-{
-	if (pg_namespace_aclmask(nsp_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a tablespace
- */
-AclResult
-pg_tablespace_aclcheck(Oid spc_oid, Oid roleid, AclMode mode)
-{
-	if (pg_tablespace_aclmask(spc_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a foreign
- * data wrapper
- */
-AclResult
-pg_foreign_data_wrapper_aclcheck(Oid fdw_oid, Oid roleid, AclMode mode)
-{
-	if (pg_foreign_data_wrapper_aclmask(fdw_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a foreign
- * server
- */
-AclResult
-pg_foreign_server_aclcheck(Oid srv_oid, Oid roleid, AclMode mode)
-{
-	if (pg_foreign_server_aclmask(srv_oid, roleid, mode, ACLMASK_ANY) != 0)
-		return ACLCHECK_OK;
-	else
-		return ACLCHECK_NO_PRIV;
-}
-
-/*
- * Exported routine for checking a user's access privileges to a type
- */
-AclResult
-pg_type_aclcheck(Oid type_oid, Oid roleid, AclMode mode)
-{
-	if (pg_type_aclmask(type_oid, roleid, mode, ACLMASK_ANY) != 0)
 		return ACLCHECK_OK;
 	else
 		return ACLCHECK_NO_PRIV;

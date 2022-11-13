@@ -821,7 +821,7 @@ BuildDescForRelation(List *schema)
 		attname = entry->colname;
 		typenameTypeIdAndMod(NULL, entry->typeName, &atttypid, &atttypmod);
 
-		aclresult = pg_type_aclcheck(atttypid, GetUserId(), ACL_USAGE);
+		aclresult = object_aclcheck(TypeRelationId, atttypid, GetUserId(), ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error_type(aclresult, atttypid);
 

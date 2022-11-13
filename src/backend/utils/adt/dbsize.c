@@ -18,6 +18,7 @@
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/tablespace.h"
@@ -115,7 +116,7 @@ calculate_database_size(Oid dbOid)
 	 * User must have connect privilege for target database or have privileges
 	 * of pg_read_all_stats
 	 */
-	aclresult = pg_database_aclcheck(dbOid, GetUserId(), ACL_CONNECT);
+	aclresult = object_aclcheck(DatabaseRelationId, dbOid, GetUserId(), ACL_CONNECT);
 	if (aclresult != ACLCHECK_OK &&
 		!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
@@ -203,7 +204,7 @@ calculate_tablespace_size(Oid tblspcOid)
 	if (tblspcOid != MyDatabaseTableSpace &&
 		!has_privs_of_role(GetUserId(), ROLE_PG_READ_ALL_STATS))
 	{
-		aclresult = pg_tablespace_aclcheck(tblspcOid, GetUserId(), ACL_CREATE);
+		aclresult = object_aclcheck(TableSpaceRelationId, tblspcOid, GetUserId(), ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
 						   get_tablespace_name(tblspcOid));

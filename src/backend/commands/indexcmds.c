@@ -742,7 +742,7 @@ DefineIndex(Oid relationId,
 	{
 		AclResult	aclresult;
 
-		aclresult = pg_namespace_aclcheck(namespaceId, root_save_userid,
+		aclresult = object_aclcheck(NamespaceRelationId, namespaceId, root_save_userid,
 										  ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_SCHEMA,
@@ -774,7 +774,7 @@ DefineIndex(Oid relationId,
 	{
 		AclResult	aclresult;
 
-		aclresult = pg_tablespace_aclcheck(tablespaceId, root_save_userid,
+		aclresult = object_aclcheck(TableSpaceRelationId, tablespaceId, root_save_userid,
 										   ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_TABLESPACE,
@@ -2648,7 +2648,7 @@ ExecReindex(ParseState *pstate, ReindexStmt *stmt, bool isTopLevel)
 		{
 			AclResult	aclresult;
 
-			aclresult = pg_tablespace_aclcheck(params.tablespaceOid,
+			aclresult = object_aclcheck(TableSpaceRelationId, params.tablespaceOid,
 											   GetUserId(), ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_TABLESPACE,
@@ -3245,7 +3245,7 @@ ReindexMultipleInternal(List *relids, ReindexParams *params)
 		{
 			AclResult	aclresult;
 
-			aclresult = pg_tablespace_aclcheck(params->tablespaceOid,
+			aclresult = object_aclcheck(TableSpaceRelationId, params->tablespaceOid,
 											   GetUserId(), ACL_CREATE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_TABLESPACE,
