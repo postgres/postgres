@@ -230,8 +230,8 @@ pq_verify_peer_name_matches_certificate_ip(PGconn *conn,
 		 * wrong given the subject matter.
 		 */
 		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("certificate contains IP address with invalid length %lu\n"),
-						  (unsigned long) iplen);
+						  libpq_gettext("certificate contains IP address with invalid length %zu\n"),
+						  iplen);
 		return -1;
 	}
 
