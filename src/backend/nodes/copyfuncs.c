@@ -160,6 +160,12 @@ _copyExtensibleNode(const ExtensibleNode *from)
 	return newnode;
 }
 
+static Bitmapset *
+_copyBitmapset(const Bitmapset *from)
+{
+	return bms_copy(from);
+}
+
 
 /*
  * copyObjectImpl -- implementation of copyObject(); see nodes/nodes.h

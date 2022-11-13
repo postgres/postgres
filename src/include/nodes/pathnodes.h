@@ -911,13 +911,11 @@ typedef struct RelOptInfo
 
 	/*
 	 * cache space for remembering if we have proven this relation unique
-	 *
-	 * can't print unique_for_rels/non_unique_for_rels; BMSes aren't Nodes
 	 */
 	/* known unique for these other relid set(s) */
-	List	   *unique_for_rels pg_node_attr(read_write_ignore);
+	List	   *unique_for_rels;
 	/* known not unique for these set(s) */
-	List	   *non_unique_for_rels pg_node_attr(read_write_ignore);
+	List	   *non_unique_for_rels;
 
 	/*
 	 * used by various scans and joins:

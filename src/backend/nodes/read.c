@@ -22,6 +22,7 @@
 #include <ctype.h>
 
 #include "common/string.h"
+#include "nodes/bitmapset.h"
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
 #include "nodes/value.h"
@@ -347,6 +348,7 @@ nodeRead(const char *token, int tok_len)
 				 * Could be an integer list:	(i int int ...)
 				 * or an OID list:				(o int int ...)
 				 * or an XID list:				(x int int ...)
+				 * or a bitmapset:				(b int int ...)
 				 * or a list of nodes/values:	(node node ...)
 				 *----------
 				 */
@@ -372,6 +374,7 @@ nodeRead(const char *token, int tok_len)
 								 tok_len, token);
 						l = lappend_int(l, val);
 					}
+					result = (Node *) l;
 				}
 				else if (tok_len == 1 && token[0] == 'o')
 				{
@@ -392,6 +395,7 @@ nodeRead(const char *token, int tok_len)
 								 tok_len, token);
 						l = lappend_oid(l, val);
 					}
+					result = (Node *) l;
 				}
 				else if (tok_len == 1 && token[0] == 'x')
 				{
@@ -412,6 +416,30 @@ nodeRead(const char *token, int tok_len)
 								 tok_len, token);
 						l = lappend_xid(l, val);
 					}
+					result = (Node *) l;
+				}
+				else if (tok_len == 1 && token[0] == 'b')
+				{
+					/* Bitmapset -- see also _readBitmapset() */
+					Bitmapset  *bms = NULL;
+
+					for (;;)
+					{
+						int			val;
+						char	   *endptr;
+
+						token = pg_strtok(&tok_len);
+						if (token == NULL)
+							elog(ERROR, "unterminated Bitmapset structure");
+						if (tok_len == 1 && token[0] == ')')
+							break;
+						val = (int) strtol(token, &endptr, 10);
+						if (endptr != token + tok_len)
+							elog(ERROR, "unrecognized integer: \"%.*s\"",
+								 tok_len, token);
+						bms = bms_add_member(bms, val);
+					}
+					result = (Node *) bms;
 				}
 				else
 				{
@@ -426,8 +454,8 @@ nodeRead(const char *token, int tok_len)
 						if (token == NULL)
 							elog(ERROR, "unterminated List structure");
 					}
+					result = (Node *) l;
 				}
-				result = (Node *) l;
 				break;
 			}
 		case RIGHT_PAREN:

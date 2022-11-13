@@ -145,6 +145,12 @@ _equalA_Const(const A_Const *a, const A_Const *b)
 	return true;
 }
 
+static bool
+_equalBitmapset(const Bitmapset *a, const Bitmapset *b)
+{
+	return bms_equal(a, b);
+}
+
 /*
  * Lists are handled specially
  */

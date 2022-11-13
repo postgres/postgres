@@ -13,6 +13,7 @@ node_support_input_i = [
   'commands/trigger.h',
   'executor/tuptable.h',
   'foreign/fdwapi.h',
+  'nodes/bitmapset.h',
   'nodes/extensible.h',
   'nodes/lockoptions.h',
   'nodes/replnodes.h',

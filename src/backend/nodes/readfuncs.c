@@ -194,6 +194,10 @@ nullable_string(const char *token, int length)
 
 /*
  * _readBitmapset
+ *
+ * Note: this code is used in contexts where we know that a Bitmapset
+ * is expected.  There is equivalent code in nodeRead() that can read a
+ * Bitmapset when we come across one in other contexts.
  */
 static Bitmapset *
 _readBitmapset(void)
@@ -234,7 +238,8 @@ _readBitmapset(void)
 }
 
 /*
- * for use by extensions which define extensible nodes
+ * We export this function for use by extensions that define extensible nodes.
+ * That's somewhat historical, though, because calling nodeRead() will work.
  */
 Bitmapset *
 readBitmapset(void)

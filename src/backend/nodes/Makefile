@@ -52,6 +52,7 @@ node_headers = \
 	commands/trigger.h \
 	executor/tuptable.h \
 	foreign/fdwapi.h \
+	nodes/bitmapset.h \
 	nodes/extensible.h \
 	nodes/lockoptions.h \
 	nodes/replnodes.h \

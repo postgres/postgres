@@ -99,7 +99,6 @@ static void get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 								 List **considered_relids);
 static bool eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
 								List *indexjoinclauses);
-static bool bms_equal_any(Relids relids, List *relids_list);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 							IndexOptInfo *index, IndexClauseSet *clauses,
 							List **bitindexpaths);
@@ -370,8 +369,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 			Path	   *path = (Path *) lfirst(lc);
 			Relids		required_outer = PATH_REQ_OUTER(path);
 
-			if (!bms_equal_any(required_outer, all_path_outers))
-				all_path_outers = lappend(all_path_outers, required_outer);
+			all_path_outers = list_append_unique(all_path_outers,
+												 required_outer);
 		}
 
 		/* Now, for each distinct parameterization set ... */
@@ -517,7 +516,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 		int			num_considered_relids;
 
 		/* If we already tried its relids set, no need to do so again */
-		if (bms_equal_any(clause_relids, *considered_relids))
+		if (list_member(*considered_relids, clause_relids))
 			continue;
 
 		/*
@@ -612,7 +611,7 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	int			indexcol;
 
 	/* If we already considered this relids set, don't repeat the work */
-	if (bms_equal_any(relids, *considered_relids))
+	if (list_member(*considered_relids, relids))
 		return;
 
 	/* Identify indexclauses usable with this relids set */
@@ -689,25 +688,6 @@ eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
 
 		if (rinfo->parent_ec == parent_ec &&
 			bms_is_subset(rinfo->clause_relids, oldrelids))
-			return true;
-	}
-	return false;
-}
-
-/*
- * bms_equal_any
- *		True if relids is bms_equal to any member of relids_list
- *
- * Perhaps this should be in bitmapset.c someday.
- */
-static bool
-bms_equal_any(Relids relids, List *relids_list)
-{
-	ListCell   *lc;
-
-	foreach(lc, relids_list)
-	{
-		if (bms_equal(relids, (Relids) lfirst(lc)))
 			return true;
 	}
 	return false;
