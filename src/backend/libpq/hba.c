@@ -66,6 +66,11 @@ typedef struct check_network_data
 	bool		result;			/* set to true if match */
 } check_network_data;
 
+typedef struct
+{
+	const char *filename;
+	int			linenum;
+} tokenize_error_callback_arg;
 
 #define token_has_regexp(t)	(t->regex != NULL)
 #define token_is_keyword(t, k)	(!t->quoted && strcmp(t->string, k) == 0)
@@ -125,6 +130,7 @@ static int	regcomp_auth_token(AuthToken *token, char *filename, int line_num,
 							   char **err_msg, int elevel);
 static int	regexec_auth_token(const char *match, AuthToken *token,
 							   size_t nmatch, regmatch_t pmatch[]);
+static void tokenize_error_callback(void *arg);
 
 
 /*
@@ -571,6 +577,18 @@ open_auth_file(const char *filename, int elevel, int depth,
 }
 
 /*
+ * error context callback for tokenize_auth_file()
+ */
+static void
+tokenize_error_callback(void *arg)
+{
+	tokenize_error_callback_arg *callback_arg = (tokenize_error_callback_arg *) arg;
+
+	errcontext("line %d of configuration file \"%s\"",
+			   callback_arg->linenum, callback_arg->filename);
+}
+
+/*
  * tokenize_auth_file
  *		Tokenize the given file.
  *
@@ -598,6 +616,16 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 	StringInfoData buf;
 	MemoryContext linecxt;
 	MemoryContext oldcxt;
+	ErrorContextCallback tokenerrcontext;
+	tokenize_error_callback_arg callback_arg;
+
+	callback_arg.filename = filename;
+	callback_arg.linenum = line_number;
+
+	tokenerrcontext.callback = tokenize_error_callback;
+	tokenerrcontext.arg = (void *) &callback_arg;
+	tokenerrcontext.previous = error_context_stack;
+	error_context_stack = &tokenerrcontext;
 
 	linecxt = AllocSetContextCreate(CurrentMemoryContext,
 									"tokenize_auth_file",
@@ -686,9 +714,12 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 		}
 
 		line_number += continuations + 1;
+		callback_arg.linenum = line_number;
 	}
 
 	MemoryContextSwitchTo(oldcxt);
+
+	error_context_stack = tokenerrcontext.previous;
 
 	return linecxt;
 }
