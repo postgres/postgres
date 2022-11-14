@@ -804,9 +804,13 @@ restart_expand:
 	/*
 	 * Physically allocate the new bucket's primary page.  We want to do this
 	 * before changing the metapage's mapping info, in case we can't get the
-	 * disk space.  Ideally, we don't need to check for cleanup lock on new
-	 * bucket as no other backend could find this bucket unless meta page is
-	 * updated.  However, it is good to be consistent with old bucket locking.
+	 * disk space.
+	 *
+	 * XXX It doesn't make sense to call _hash_getnewbuf first, zeroing the
+	 * buffer, and then only afterwards check whether we have a cleanup lock.
+	 * However, since no scan can be accessing the buffer yet, any concurrent
+	 * accesses will just be from processes like the bgwriter or checkpointer
+	 * which don't care about its contents, so it doesn't really matter.
 	 */
 	buf_nblkno = _hash_getnewbuf(rel, start_nblkno, MAIN_FORKNUM);
 	if (!IsBufferCleanupOK(buf_nblkno))
