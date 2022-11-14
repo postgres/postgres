@@ -177,7 +177,9 @@ extern int	check_usermap(const char *usermap_name,
 extern HbaLine *parse_hba_line(TokenizedAuthLine *tok_line, int elevel);
 extern IdentLine *parse_ident_line(TokenizedAuthLine *tok_line, int elevel);
 extern bool pg_isblank(const char c);
+extern FILE *open_auth_file(const char *filename, int elevel, int depth,
+							char **err_msg);
 extern MemoryContext tokenize_auth_file(const char *filename, FILE *file,
-										List **tok_lines, int elevel);
+										List **tok_lines, int elevel, int depth);
 
 #endif							/* HBA_H */

@@ -380,14 +380,9 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 * (Most other error conditions should result in a message in a view
 	 * entry.)
 	 */
-	file = AllocateFile(HbaFileName, "r");
-	if (file == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open configuration file \"%s\": %m",
-						HbaFileName)));
+	file = open_auth_file(HbaFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3);
+	linecxt = tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3, 0);
 	FreeFile(file);
 
 	/* Now parse all the lines */
@@ -529,14 +524,9 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 * (Most other error conditions should result in a message in a view
 	 * entry.)
 	 */
-	file = AllocateFile(IdentFileName, "r");
-	if (file == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open usermap file \"%s\": %m",
-						IdentFileName)));
+	file = open_auth_file(IdentFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3);
+	linecxt = tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3, 0);
 	FreeFile(file);
 
 	/* Now parse all the lines */
