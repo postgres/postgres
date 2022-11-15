@@ -1566,7 +1566,7 @@ lazy_scan_prune(LVRelState *vacrel,
 	TransactionId NewRelfrozenXid;
 	MultiXactId NewRelminMxid;
 	OffsetNumber deadoffsets[MaxHeapTuplesPerPage];
-	xl_heap_freeze_tuple frozen[MaxHeapTuplesPerPage];
+	HeapTupleFreeze frozen[MaxHeapTuplesPerPage];
 
 	Assert(BufferGetBlockNumber(buf) == blkno);
 
@@ -1776,13 +1776,9 @@ retry:
 				break;
 		}
 
-		/*
-		 * Non-removable tuple (i.e. tuple with storage).
-		 *
-		 * Check tuple left behind after pruning to see if needs to be frozen
-		 * now.
-		 */
 		prunestate->hastup = true;	/* page makes rel truncation unsafe */
+
+		/* Tuple with storage -- consider need to freeze */
 		if (heap_prepare_freeze_tuple(tuple.t_data,
 									  vacrel->relfrozenxid,
 									  vacrel->relminmxid,
@@ -1792,7 +1788,7 @@ retry:
 									  &tuple_totally_frozen,
 									  &NewRelfrozenXid, &NewRelminMxid))
 		{
-			/* Will execute freeze below */
+			/* Save prepared freeze plan for later */
 			frozen[tuples_frozen++].offset = offnum;
 		}
 
@@ -1825,40 +1821,9 @@ retry:
 
 		vacrel->frozen_pages++;
 
-		/*
-		 * At least one tuple with storage needs to be frozen -- execute that
-		 * now.
-		 *
-		 * If we need to freeze any tuples we'll mark the buffer dirty, and
-		 * write a WAL record recording the changes.  We must log the changes
-		 * to be crash-safe against future truncation of CLOG.
-		 */
-		START_CRIT_SECTION();
-
-		MarkBufferDirty(buf);
-
-		/* execute collected freezes */
-		for (int i = 0; i < tuples_frozen; i++)
-		{
-			HeapTupleHeader htup;
-
-			itemid = PageGetItemId(page, frozen[i].offset);
-			htup = (HeapTupleHeader) PageGetItem(page, itemid);
-
-			heap_execute_freeze_tuple(htup, &frozen[i]);
-		}
-
-		/* Now WAL-log freezing if necessary */
-		if (RelationNeedsWAL(vacrel->rel))
-		{
-			XLogRecPtr	recptr;
-
-			recptr = log_heap_freeze(vacrel->rel, buf, vacrel->FreezeLimit,
+		/* Execute all freeze plans for page as a single atomic action */
+		heap_freeze_execute_prepared(vacrel->rel, buf, vacrel->FreezeLimit,
 									 frozen, tuples_frozen);
-			PageSetLSN(page, recptr);
-		}
-
-		END_CRIT_SECTION();
 	}
 
 	/*

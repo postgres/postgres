@@ -99,6 +99,19 @@ typedef enum
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
+/* heap_prepare_freeze_tuple state describing how to freeze a tuple */
+typedef struct HeapTupleFreeze
+{
+	/* Fields describing how to process tuple */
+	TransactionId xmax;
+	uint16		t_infomask2;
+	uint16		t_infomask;
+	uint8		frzflags;
+
+	/* Page offset number for tuple */
+	OffsetNumber offset;
+} HeapTupleFreeze;
+
 /* ----------------
  *		function prototypes for heap access method
  *
@@ -164,6 +177,15 @@ extern TM_Result heap_lock_tuple(Relation relation, HeapTuple tuple,
 								 Buffer *buffer, struct TM_FailureData *tmfd);
 
 extern void heap_inplace_update(Relation relation, HeapTuple tuple);
+extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
+									  TransactionId relfrozenxid, TransactionId relminmxid,
+									  TransactionId cutoff_xid, TransactionId cutoff_multi,
+									  HeapTupleFreeze *frz, bool *totally_frozen,
+									  TransactionId *relfrozenxid_out,
+									  MultiXactId *relminmxid_out);
+extern void heap_freeze_execute_prepared(Relation rel, Buffer buffer,
+										 TransactionId FreezeLimit,
+										 HeapTupleFreeze *tuples, int ntuples);
 extern bool heap_freeze_tuple(HeapTupleHeader tuple,
 							  TransactionId relfrozenxid, TransactionId relminmxid,
 							  TransactionId cutoff_xid, TransactionId cutoff_multi);

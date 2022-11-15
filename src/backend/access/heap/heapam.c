@@ -110,6 +110,9 @@ static int	bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate);
 static XLogRecPtr log_heap_new_cid(Relation relation, HeapTuple tup);
 static HeapTuple ExtractReplicaIdentity(Relation relation, HeapTuple tp, bool key_required,
 										bool *copy);
+static int	heap_xlog_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
+								  xl_heap_freeze_plan *plans_out,
+								  OffsetNumber *offsets_out);
 
 
 /*
@@ -6439,7 +6442,9 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * will be totally frozen after these operations are performed and false if
  * more freezing will eventually be required.
  *
- * Caller must set frz->offset itself, before heap_execute_freeze_tuple call.
+ * VACUUM caller must assemble HeapFreezeTuple entries for every tuple that we
+ * returned true for when called.  A later heap_freeze_execute_prepared call
+ * will execute freezing for caller's page as a whole.
  *
  * It is assumed that the caller has checked the tuple with
  * HeapTupleSatisfiesVacuum() and determined that it is not HEAPTUPLE_DEAD
@@ -6463,15 +6468,12 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * It will be set as tuple's new xmax when our *frz output is processed within
  * heap_execute_freeze_tuple later on.  If the tuple is in a shared buffer
  * then caller had better have an exclusive lock on it already.
- *
- * NB: It is not enough to set hint bits to indicate an XID committed/aborted.
- * The *frz WAL record we output completely removes all old XIDs during REDO.
  */
 bool
 heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 						  TransactionId relfrozenxid, TransactionId relminmxid,
 						  TransactionId cutoff_xid, TransactionId cutoff_multi,
-						  xl_heap_freeze_tuple *frz, bool *totally_frozen,
+						  HeapTupleFreeze *frz, bool *totally_frozen,
 						  TransactionId *relfrozenxid_out,
 						  MultiXactId *relminmxid_out)
 {
@@ -6746,26 +6748,15 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 
 /*
  * heap_execute_freeze_tuple
- *		Execute the prepared freezing of a tuple.
+ *		Execute the prepared freezing of a tuple with caller's freeze plan.
  *
  * Caller is responsible for ensuring that no other backend can access the
  * storage underlying this tuple, either by holding an exclusive lock on the
  * buffer containing it (which is what lazy VACUUM does), or by having it be
  * in private storage (which is what CLUSTER and friends do).
- *
- * Note: it might seem we could make the changes without exclusive lock, since
- * TransactionId read/write is assumed atomic anyway.  However there is a race
- * condition: someone who just fetched an old XID that we overwrite here could
- * conceivably not finish checking the XID against pg_xact before we finish
- * the VACUUM and perhaps truncate off the part of pg_xact he needs.  Getting
- * exclusive lock ensures no other backend is in process of checking the
- * tuple status.  Also, getting exclusive lock makes it safe to adjust the
- * infomask bits.
- *
- * NB: All code in here must be safe to execute during crash recovery!
  */
-void
-heap_execute_freeze_tuple(HeapTupleHeader tuple, xl_heap_freeze_tuple *frz)
+static inline void
+heap_execute_freeze_tuple(HeapTupleHeader tuple, HeapTupleFreeze *frz)
 {
 	HeapTupleHeaderSetXmax(tuple, frz->xmax);
 
@@ -6780,6 +6771,90 @@ heap_execute_freeze_tuple(HeapTupleHeader tuple, xl_heap_freeze_tuple *frz)
 }
 
 /*
+ * heap_freeze_execute_prepared
+ *
+ * Executes freezing of one or more heap tuples on a page on behalf of caller.
+ * Caller passes an array of tuple plans from heap_prepare_freeze_tuple.
+ * Caller must set 'offset' in each plan for us.  Note that we destructively
+ * sort caller's tuples array in-place, so caller had better be done with it.
+ *
+ * WAL-logs the changes so that VACUUM can advance the rel's relfrozenxid
+ * later on without any risk of unsafe pg_xact lookups, even following a hard
+ * crash (or when querying from a standby).  We represent freezing by setting
+ * infomask bits in tuple headers, but this shouldn't be thought of as a hint.
+ * See section on buffer access rules in src/backend/storage/buffer/README.
+ */
+void
+heap_freeze_execute_prepared(Relation rel, Buffer buffer,
+							 TransactionId FreezeLimit,
+							 HeapTupleFreeze *tuples, int ntuples)
+{
+	Page		page = BufferGetPage(buffer);
+
+	Assert(ntuples > 0);
+	Assert(TransactionIdIsValid(FreezeLimit));
+
+	START_CRIT_SECTION();
+
+	MarkBufferDirty(buffer);
+
+	for (int i = 0; i < ntuples; i++)
+	{
+		HeapTupleHeader htup;
+		ItemId		itemid = PageGetItemId(page, tuples[i].offset);
+
+		htup = (HeapTupleHeader) PageGetItem(page, itemid);
+		heap_execute_freeze_tuple(htup, &tuples[i]);
+	}
+
+	/* Now WAL-log freezing if necessary */
+	if (RelationNeedsWAL(rel))
+	{
+		xl_heap_freeze_plan plans[MaxHeapTuplesPerPage];
+		OffsetNumber offsets[MaxHeapTuplesPerPage];
+		int			nplans;
+		xl_heap_freeze_page xlrec;
+		XLogRecPtr	recptr;
+		TransactionId latestRemovedXid;
+
+		/* Prepare deduplicated representation for use in WAL record */
+		nplans = heap_xlog_freeze_plan(tuples, ntuples, plans, offsets);
+
+		/*
+		 * latestRemovedXid describes the latest processed XID, whereas
+		 * FreezeLimit is (approximately) the first XID not frozen by VACUUM.
+		 * Back up caller's FreezeLimit to avoid false conflicts when
+		 * FreezeLimit is precisely equal to VACUUM's OldestXmin cutoff.
+		 */
+		latestRemovedXid = FreezeLimit;
+		TransactionIdRetreat(latestRemovedXid);
+
+		xlrec.latestRemovedXid = latestRemovedXid;
+		xlrec.nplans = nplans;
+
+		XLogBeginInsert();
+		XLogRegisterData((char *) &xlrec, SizeOfHeapFreezePage);
+
+		/*
+		 * The freeze plan array and offset array are not actually in the
+		 * buffer, but pretend that they are.  When XLogInsert stores the
+		 * whole buffer, the arrays need not be stored too.
+		 */
+		XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
+		XLogRegisterBufData(0, (char *) plans,
+							nplans * sizeof(xl_heap_freeze_plan));
+		XLogRegisterBufData(0, (char *) offsets,
+							ntuples * sizeof(OffsetNumber));
+
+		recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_FREEZE_PAGE);
+
+		PageSetLSN(page, recptr);
+	}
+
+	END_CRIT_SECTION();
+}
+
+/*
  * heap_freeze_tuple
  *		Freeze tuple in place, without WAL logging.
  *
@@ -6790,7 +6865,7 @@ heap_freeze_tuple(HeapTupleHeader tuple,
 				  TransactionId relfrozenxid, TransactionId relminmxid,
 				  TransactionId cutoff_xid, TransactionId cutoff_multi)
 {
-	xl_heap_freeze_tuple frz;
+	HeapTupleFreeze frz;
 	bool		do_freeze;
 	bool		tuple_totally_frozen;
 	TransactionId relfrozenxid_out = cutoff_xid;
@@ -8152,42 +8227,6 @@ bottomup_sort_and_shrink(TM_IndexDeleteOp *delstate)
 }
 
 /*
- * Perform XLogInsert for a heap-freeze operation.  Caller must have already
- * modified the buffer and marked it dirty.
- */
-XLogRecPtr
-log_heap_freeze(Relation reln, Buffer buffer, TransactionId cutoff_xid,
-				xl_heap_freeze_tuple *tuples, int ntuples)
-{
-	xl_heap_freeze_page xlrec;
-	XLogRecPtr	recptr;
-
-	/* Caller should not call me on a non-WAL-logged relation */
-	Assert(RelationNeedsWAL(reln));
-	/* nor when there are no tuples to freeze */
-	Assert(ntuples > 0);
-
-	xlrec.cutoff_xid = cutoff_xid;
-	xlrec.ntuples = ntuples;
-
-	XLogBeginInsert();
-	XLogRegisterData((char *) &xlrec, SizeOfHeapFreezePage);
-
-	/*
-	 * The freeze plan array is not actually in the buffer, but pretend that
-	 * it is.  When XLogInsert stores the whole buffer, the freeze plan need
-	 * not be stored too.
-	 */
-	XLogRegisterBuffer(0, buffer, REGBUF_STANDARD);
-	XLogRegisterBufData(0, (char *) tuples,
-						ntuples * sizeof(xl_heap_freeze_tuple));
-
-	recptr = XLogInsert(RM_HEAP2_ID, XLOG_HEAP2_FREEZE_PAGE);
-
-	return recptr;
-}
-
-/*
  * Perform XLogInsert for a heap-visible operation.  'block' is the block
  * being marked all-visible, and vm_buffer is the buffer containing the
  * corresponding visibility map block.  Both should have already been modified
@@ -8910,6 +8949,144 @@ heap_xlog_visible(XLogReaderState *record)
 }
 
 /*
+ * Comparator used to deduplicate XLOG_HEAP2_FREEZE_PAGE freeze plans
+ */
+static int
+heap_xlog_freeze_cmp(const void *arg1, const void *arg2)
+{
+	HeapTupleFreeze *frz1 = (HeapTupleFreeze *) arg1;
+	HeapTupleFreeze *frz2 = (HeapTupleFreeze *) arg2;
+
+	if (frz1->xmax < frz2->xmax)
+		return -1;
+	else if (frz1->xmax > frz2->xmax)
+		return 1;
+
+	if (frz1->t_infomask2 < frz2->t_infomask2)
+		return -1;
+	else if (frz1->t_infomask2 > frz2->t_infomask2)
+		return 1;
+
+	if (frz1->t_infomask < frz2->t_infomask)
+		return -1;
+	else if (frz1->t_infomask > frz2->t_infomask)
+		return 1;
+
+	if (frz1->frzflags < frz2->frzflags)
+		return -1;
+	else if (frz1->frzflags > frz2->frzflags)
+		return 1;
+
+	/*
+	 * heap_xlog_freeze_eq would consider these tuple-wise plans to be equal.
+	 * (So the tuples will share a single canonical freeze plan.)
+	 *
+	 * We tiebreak on page offset number to keep each freeze plan's page
+	 * offset number array individually sorted. (Unnecessary, but be tidy.)
+	 */
+	if (frz1->offset < frz2->offset)
+		return -1;
+	else if (frz1->offset > frz2->offset)
+		return 1;
+
+	Assert(false);
+	return 0;
+}
+
+/*
+ * Compare fields that describe actions required to freeze tuple with caller's
+ * open plan.  If everything matches then the frz tuple plan is equivalent to
+ * caller's plan.
+ */
+static inline bool
+heap_xlog_freeze_eq(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	if (plan->xmax == frz->xmax &&
+		plan->t_infomask2 == frz->t_infomask2 &&
+		plan->t_infomask == frz->t_infomask &&
+		plan->frzflags == frz->frzflags)
+		return true;
+
+	/* Caller must call heap_xlog_new_freeze_plan again for frz */
+	return false;
+}
+
+/*
+ * Start new plan initialized using tuple-level actions.  At least one tuple
+ * will have steps required to freeze described by caller's plan during REDO.
+ */
+static inline void
+heap_xlog_new_freeze_plan(xl_heap_freeze_plan *plan, HeapTupleFreeze *frz)
+{
+	plan->xmax = frz->xmax;
+	plan->t_infomask2 = frz->t_infomask2;
+	plan->t_infomask = frz->t_infomask;
+	plan->frzflags = frz->frzflags;
+	plan->ntuples = 1;			/* for now */
+}
+
+/*
+ * Deduplicate tuple-based freeze plans so that each distinct set of
+ * processing steps is only stored once in XLOG_HEAP2_FREEZE_PAGE records.
+ * Called during original execution of freezing (for logged relations).
+ *
+ * Return value is number of plans set in *plans_out for caller.  Also writes
+ * an array of offset numbers into *offsets_out output argument for caller
+ * (actually there is one array per freeze plan, but that's not of immediate
+ * concern to our caller).
+ */
+static int
+heap_xlog_freeze_plan(HeapTupleFreeze *tuples, int ntuples,
+					  xl_heap_freeze_plan *plans_out,
+					  OffsetNumber *offsets_out)
+{
+	int			nplans = 0;
+
+	/* Sort tuple-based freeze plans in the order required to deduplicate */
+	qsort(tuples, ntuples, sizeof(HeapTupleFreeze), heap_xlog_freeze_cmp);
+
+	for (int i = 0; i < ntuples; i++)
+	{
+		HeapTupleFreeze *frz = tuples + i;
+
+		if (i == 0)
+		{
+			/* New canonical freeze plan starting with first tup */
+			heap_xlog_new_freeze_plan(plans_out, frz);
+			nplans++;
+		}
+		else if (heap_xlog_freeze_eq(plans_out, frz))
+		{
+			/* tup matches open canonical plan -- include tup in it */
+			Assert(offsets_out[i - 1] < frz->offset);
+			plans_out->ntuples++;
+		}
+		else
+		{
+			/* Tup doesn't match current plan -- done with it now */
+			plans_out++;
+
+			/* New canonical freeze plan starting with this tup */
+			heap_xlog_new_freeze_plan(plans_out, frz);
+			nplans++;
+		}
+
+		/*
+		 * Save page offset number in dedicated buffer in passing.
+		 *
+		 * REDO routine relies on the record's offset numbers array grouping
+		 * offset numbers by freeze plan.  The sort order within each grouping
+		 * is ascending offset number order, just to keep things tidy.
+		 */
+		offsets_out[i] = frz->offset;
+	}
+
+	Assert(nplans > 0 && nplans <= ntuples);
+
+	return nplans;
+}
+
+/*
  * Replay XLOG_HEAP2_FREEZE_PAGE records
  */
 static void
@@ -8917,9 +9094,7 @@ heap_xlog_freeze_page(XLogReaderState *record)
 {
 	XLogRecPtr	lsn = record->EndRecPtr;
 	xl_heap_freeze_page *xlrec = (xl_heap_freeze_page *) XLogRecGetData(record);
-	TransactionId cutoff_xid = xlrec->cutoff_xid;
 	Buffer		buffer;
-	int			ntup;
 
 	/*
 	 * In Hot Standby mode, ensure that there's no queries running which still
@@ -8928,33 +9103,48 @@ heap_xlog_freeze_page(XLogReaderState *record)
 	if (InHotStandby)
 	{
 		RelFileLocator rlocator;
-		TransactionId latestRemovedXid = cutoff_xid;
-
-		TransactionIdRetreat(latestRemovedXid);
 
 		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
-		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, rlocator);
+		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, rlocator);
 	}
 
 	if (XLogReadBufferForRedo(record, 0, &buffer) == BLK_NEEDS_REDO)
 	{
 		Page		page = BufferGetPage(buffer);
-		xl_heap_freeze_tuple *tuples;
+		xl_heap_freeze_plan *plans;
+		OffsetNumber *offsets;
+		int			curoff = 0;
 
-		tuples = (xl_heap_freeze_tuple *) XLogRecGetBlockData(record, 0, NULL);
-
-		/* now execute freeze plan for each frozen tuple */
-		for (ntup = 0; ntup < xlrec->ntuples; ntup++)
+		plans = (xl_heap_freeze_plan *) XLogRecGetBlockData(record, 0, NULL);
+		offsets = (OffsetNumber *) ((char *) plans +
+									(xlrec->nplans *
+									 sizeof(xl_heap_freeze_plan)));
+		for (int p = 0; p < xlrec->nplans; p++)
 		{
-			xl_heap_freeze_tuple *xlrec_tp;
-			ItemId		lp;
-			HeapTupleHeader tuple;
+			xl_heap_freeze_plan plan;
+			HeapTupleFreeze frz;
 
-			xlrec_tp = &tuples[ntup];
-			lp = PageGetItemId(page, xlrec_tp->offset); /* offsets are one-based */
-			tuple = (HeapTupleHeader) PageGetItem(page, lp);
+			/*
+			 * Convert freeze plan representation from WAL record into
+			 * per-tuple format used by heap_execute_freeze_tuple
+			 */
+			memcpy(&plan, &plans[p], sizeof(xl_heap_freeze_plan));
+			frz.xmax = plan.xmax;
+			frz.t_infomask2 = plan.t_infomask2;
+			frz.t_infomask = plan.t_infomask;
+			frz.frzflags = plan.frzflags;
+			frz.offset = InvalidOffsetNumber;	/* unused, but be tidy */
 
-			heap_execute_freeze_tuple(tuple, xlrec_tp);
+			for (int i = 0; i < plan.ntuples; i++)
+			{
+				OffsetNumber offset = offsets[curoff++];
+				ItemId		lp;
+				HeapTupleHeader tuple;
+
+				lp = PageGetItemId(page, offset);
+				tuple = (HeapTupleHeader) PageGetItem(page, lp);
+				heap_execute_freeze_tuple(tuple, &frz);
+			}
 		}
 
 		PageSetLSN(page, lsn);

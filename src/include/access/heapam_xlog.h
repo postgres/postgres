@@ -314,35 +314,42 @@ typedef struct xl_heap_inplace
 #define SizeOfHeapInplace	(offsetof(xl_heap_inplace, offnum) + sizeof(OffsetNumber))
 
 /*
- * This struct represents a 'freeze plan', which is what we need to know about
- * a single tuple being frozen during vacuum.
+ * This struct represents a 'freeze plan', which describes how to freeze a
+ * group of one or more heap tuples (appears in xl_heap_freeze_page record)
  */
 /* 0x01 was XLH_FREEZE_XMIN */
 #define		XLH_FREEZE_XVAC		0x02
 #define		XLH_INVALID_XVAC	0x04
 
-typedef struct xl_heap_freeze_tuple
+typedef struct xl_heap_freeze_plan
 {
 	TransactionId xmax;
-	OffsetNumber offset;
 	uint16		t_infomask2;
 	uint16		t_infomask;
 	uint8		frzflags;
-} xl_heap_freeze_tuple;
+
+	/* Length of individual page offset numbers array for this plan */
+	uint16		ntuples;
+} xl_heap_freeze_plan;
 
 /*
  * This is what we need to know about a block being frozen during vacuum
  *
- * Backup block 0's data contains an array of xl_heap_freeze_tuple structs,
- * one for each tuple.
+ * Backup block 0's data contains an array of xl_heap_freeze_plan structs
+ * (with nplans elements), followed by one or more page offset number arrays.
+ * Each such page offset number array corresponds to a single freeze plan
+ * (REDO routine freezes corresponding heap tuples using freeze plan).
  */
 typedef struct xl_heap_freeze_page
 {
-	TransactionId cutoff_xid;
-	uint16		ntuples;
+	TransactionId latestRemovedXid;
+	uint16		nplans;
+
+	/* FREEZE PLANS FOLLOW */
+	/* OFFSET NUMBER ARRAY FOLLOWS */
 } xl_heap_freeze_page;
 
-#define SizeOfHeapFreezePage (offsetof(xl_heap_freeze_page, ntuples) + sizeof(uint16))
+#define SizeOfHeapFreezePage (offsetof(xl_heap_freeze_page, nplans) + sizeof(uint16))
 
 /*
  * This is what we need to know about setting a visibility map bit
@@ -401,20 +408,6 @@ extern void heap2_desc(StringInfo buf, XLogReaderState *record);
 extern const char *heap2_identify(uint8 info);
 extern void heap_xlog_logical_rewrite(XLogReaderState *r);
 
-extern XLogRecPtr log_heap_freeze(Relation reln, Buffer buffer,
-								  TransactionId cutoff_xid, xl_heap_freeze_tuple *tuples,
-								  int ntuples);
-extern bool heap_prepare_freeze_tuple(HeapTupleHeader tuple,
-									  TransactionId relfrozenxid,
-									  TransactionId relminmxid,
-									  TransactionId cutoff_xid,
-									  TransactionId cutoff_multi,
-									  xl_heap_freeze_tuple *frz,
-									  bool *totally_frozen,
-									  TransactionId *relfrozenxid_out,
-									  MultiXactId *relminmxid_out);
-extern void heap_execute_freeze_tuple(HeapTupleHeader tuple,
-									  xl_heap_freeze_tuple *frz);
 extern XLogRecPtr log_heap_visible(RelFileLocator rlocator, Buffer heap_buffer,
 								   Buffer vm_buffer, TransactionId cutoff_xid, uint8 vmflags);
 
