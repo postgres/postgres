@@ -205,16 +205,14 @@ pg_GSS_write(PGconn *conn, const void *ptr, size_t len)
 
 		if (conf_state == 0)
 		{
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("outgoing GSSAPI message would not use confidentiality\n"));
+			libpq_append_conn_error(conn, "outgoing GSSAPI message would not use confidentiality");
 			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
 		}
 
 		if (output.length > PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32))
 		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("client tried to send oversize GSSAPI packet (%zu > %zu)\n"),
+			libpq_append_conn_error(conn, "client tried to send oversize GSSAPI packet (%zu > %zu)",
 							  (size_t) output.length,
 							  PQ_GSS_SEND_BUFFER_SIZE - sizeof(uint32));
 			errno = EIO;		/* for lack of a better idea */
@@ -350,8 +348,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("oversize GSSAPI packet sent by the server (%zu > %zu)\n"),
+			libpq_append_conn_error(conn, "oversize GSSAPI packet sent by the server (%zu > %zu)",
 							  (size_t) input.length,
 							  PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32));
 			errno = EIO;		/* for lack of a better idea */
@@ -399,8 +396,7 @@ pg_GSS_read(PGconn *conn, void *ptr, size_t len)
 
 		if (conf_state == 0)
 		{
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("incoming GSSAPI message did not use confidentiality\n"));
+			libpq_append_conn_error(conn, "incoming GSSAPI message did not use confidentiality");
 			ret = -1;
 			errno = EIO;		/* for lack of a better idea */
 			goto cleanup;
@@ -500,8 +496,7 @@ pqsecure_open_gss(PGconn *conn)
 		PqGSSResultBuffer = malloc(PQ_GSS_RECV_BUFFER_SIZE);
 		if (!PqGSSSendBuffer || !PqGSSRecvBuffer || !PqGSSResultBuffer)
 		{
-			appendPQExpBufferStr(&conn->errorMessage,
-								 libpq_gettext("out of memory\n"));
+			libpq_append_conn_error(conn, "out of memory");
 			return PGRES_POLLING_FAILED;
 		}
 		PqGSSSendLength = PqGSSSendNext = PqGSSSendConsumed = 0;
@@ -592,8 +587,7 @@ pqsecure_open_gss(PGconn *conn)
 		input.length = pg_ntoh32(*(uint32 *) PqGSSRecvBuffer);
 		if (input.length > PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32))
 		{
-			appendPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("oversize GSSAPI packet sent by the server (%zu > %zu)\n"),
+			libpq_append_conn_error(conn, "oversize GSSAPI packet sent by the server (%zu > %zu)",
 							  (size_t) input.length,
 							  PQ_GSS_RECV_BUFFER_SIZE - sizeof(uint32));
 			return PGRES_POLLING_FAILED;

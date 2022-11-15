@@ -570,8 +570,7 @@ pqReadData(PGconn *conn)
 
 	if (conn->sock == PGINVALID_SOCKET)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("connection not open\n"));
+		libpq_append_conn_error(conn, "connection not open");
 		return -1;
 	}
 
@@ -749,10 +748,9 @@ retry4:
 	 * means the connection has been closed.  Cope.
 	 */
 definitelyEOF:
-	appendPQExpBufferStr(&conn->errorMessage,
-						 libpq_gettext("server closed the connection unexpectedly\n"
-									   "\tThis probably means the server terminated abnormally\n"
-									   "\tbefore or while processing the request.\n"));
+	libpq_append_conn_error(conn, "server closed the connection unexpectedly\n"
+					   "\tThis probably means the server terminated abnormally\n"
+					   "\tbefore or while processing the request.");
 
 	/* Come here if lower-level code already set a suitable errorMessage */
 definitelyFailed:
@@ -1002,8 +1000,7 @@ pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 
 	if (result == 0)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("timeout expired\n"));
+		libpq_append_conn_error(conn, "timeout expired");
 		return 1;
 	}
 
@@ -1047,8 +1044,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 		return -1;
 	if (conn->sock == PGINVALID_SOCKET)
 	{
-		appendPQExpBufferStr(&conn->errorMessage,
-							 libpq_gettext("invalid socket\n"));
+		libpq_append_conn_error(conn, "invalid socket");
 		return -1;
 	}
 
@@ -1070,9 +1066,7 @@ pqSocketCheck(PGconn *conn, int forRead, int forWrite, time_t end_time)
 	{
 		char		sebuf[PG_STRERROR_R_BUFLEN];
 
-		appendPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("%s() failed: %s\n"),
-						  "select",
+		libpq_append_conn_error(conn, "%s() failed: %s", "select",
 						  SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 	}
 
