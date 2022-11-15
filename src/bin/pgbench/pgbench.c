@@ -3002,7 +3002,7 @@ runShellCommand(Variables *variables, char *variable, char **argv, int argc)
 	}
 	if (pclose(fp) < 0)
 	{
-		pg_log_error("%s: could not close shell command", argv[0]);
+		pg_log_error("%s: could not run shell command: %m", argv[0]);
 		return false;
 	}
 

@@ -384,6 +384,7 @@ adjust_data_dir(ClusterInfo *cluster)
 				cmd_output[MAX_STRING];
 	FILE	   *fp,
 			   *output;
+	int			rc;
 
 	/* Initially assume config dir and data dir are the same */
 	cluster->pgconfig = pg_strdup(cluster->pgdata);
@@ -423,7 +424,10 @@ adjust_data_dir(ClusterInfo *cluster)
 		pg_fatal("could not get data directory using %s: %s",
 				 cmd, strerror(errno));
 
-	pclose(output);
+	rc = pclose(output);
+	if (rc != 0)
+		pg_fatal("could not get control data directory using %s: %s",
+				 cmd, wait_result_to_str(rc));
 
 	/* strip trailing newline and carriage return */
 	(void) pg_strip_crlf(cmd_output);

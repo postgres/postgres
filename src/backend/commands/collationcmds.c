@@ -640,6 +640,7 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 		int			naliases,
 					maxaliases,
 					i;
+		int			pclose_rc;
 
 		/* expansible array of aliases */
 		maxaliases = 100;
@@ -746,7 +747,15 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			}
 		}
 
-		ClosePipeStream(locale_a_handle);
+		pclose_rc = ClosePipeStream(locale_a_handle);
+		if (pclose_rc != 0)
+		{
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not execute command \"%s\": %s",
+							"locale -a",
+							wait_result_to_str(pclose_rc))));
+		}
 
 		/*
 		 * Before processing the aliases, sort them by locale name.  The point

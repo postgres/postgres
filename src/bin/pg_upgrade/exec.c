@@ -35,6 +35,7 @@ get_bin_version(ClusterInfo *cluster)
 	char		cmd[MAXPGPATH],
 				cmd_output[MAX_STRING];
 	FILE	   *output;
+	int			rc;
 	int			v1 = 0,
 				v2 = 0;
 
@@ -46,7 +47,10 @@ get_bin_version(ClusterInfo *cluster)
 		pg_fatal("could not get pg_ctl version data using %s: %s",
 				 cmd, strerror(errno));
 
-	pclose(output);
+	rc = pclose(output);
+	if (rc != 0)
+		pg_fatal("could not get pg_ctl version data using %s: %s",
+				 cmd, wait_result_to_str(rc));
 
 	if (sscanf(cmd_output, "%*s %*s %d.%d", &v1, &v2) < 1)
 		pg_fatal("could not get pg_ctl version output from %s", cmd);

@@ -75,7 +75,7 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 	uint32		logid = 0;
 	uint32		segno = 0;
 	char	   *resetwal_bin;
-
+	int			rc;
 
 	/*
 	 * Because we test the pg_resetwal output as strings, it has to be in
@@ -170,7 +170,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 			}
 		}
 
-		pclose(output);
+		rc = pclose(output);
+		if (rc != 0)
+			pg_fatal("could not get control data using %s: %s",
+					 cmd, wait_result_to_str(rc));
 
 		if (!got_cluster_state)
 		{
@@ -500,7 +503,10 @@ get_control_data(ClusterInfo *cluster, bool live_check)
 		}
 	}
 
-	pclose(output);
+	rc = pclose(output);
+	if (rc != 0)
+		pg_fatal("could not get control data using %s: %s",
+				 cmd, wait_result_to_str(rc));
 
 	/*
 	 * Restore environment variables.  Note all but LANG and LC_MESSAGES were

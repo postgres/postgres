@@ -2731,14 +2731,24 @@ exec_command_write(PsqlScanState scan_state, bool active_branch,
 				fprintf(fd, "%s\n", previous_buf->data);
 
 			if (is_pipe)
+			{
 				result = pclose(fd);
+
+				if (result != 0)
+				{
+					pg_log_error("%s: %s", fname, wait_result_to_str(result));
+					status = PSQL_CMD_ERROR;
+				}
+			}
 			else
+			{
 				result = fclose(fd);
 
-			if (result == EOF)
-			{
-				pg_log_error("%s: %m", fname);
-				status = PSQL_CMD_ERROR;
+				if (result == EOF)
+				{
+					pg_log_error("%s: %m", fname);
+					status = PSQL_CMD_ERROR;
+				}
 			}
 		}
 
