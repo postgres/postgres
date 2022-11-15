@@ -2345,7 +2345,7 @@ XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 	else
 	{
 		/*
-		 * In recovery we store all xids in the subxact array because it is by
+		 * In recovery we store all xids in the subxip array because it is by
 		 * far the bigger array, and we mostly don't know which xids are
 		 * top-level and which are subxacts. The xip array is empty.
 		 *
