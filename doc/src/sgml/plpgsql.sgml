@@ -4032,11 +4032,10 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
 
    <variablelist>
     <varlistentry>
-     <term><varname>NEW</varname></term>
+     <term><varname>NEW</varname> <type>record</type></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the new
-       database row for <command>INSERT</command>/<command>UPDATE</command> operations in row-level
+       new database row for <command>INSERT</command>/<command>UPDATE</command> operations in row-level
        triggers. This variable is null in statement-level triggers
        and for <command>DELETE</command> operations.
       </para>
@@ -4044,11 +4043,10 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
     </varlistentry>
 
     <varlistentry>
-     <term><varname>OLD</varname></term>
+     <term><varname>OLD</varname> <type>record</type></term>
      <listitem>
       <para>
-       Data type <type>RECORD</type>; variable holding the old
-       database row for <command>UPDATE</command>/<command>DELETE</command> operations in row-level
+       old database row for <command>UPDATE</command>/<command>DELETE</command> operations in row-level
        triggers. This variable is null in statement-level triggers
        and for <command>INSERT</command> operations.
       </para>
@@ -4056,20 +4054,18 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_NAME</varname></term>
+     <term><varname>TG_NAME</varname> <type>name</type></term>
      <listitem>
       <para>
-       Data type <type>name</type>; variable that contains the name of the trigger actually
-       fired.
+       name of the trigger which fired.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_WHEN</varname></term>
+     <term><varname>TG_WHEN</varname> <type>text</type></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of
        <literal>BEFORE</literal>, <literal>AFTER</literal>, or
        <literal>INSTEAD OF</literal>, depending on the trigger's definition.
       </para>
@@ -4077,43 +4073,40 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_LEVEL</varname></term>
+     <term><varname>TG_LEVEL</varname> <type>text</type></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of either
-       <literal>ROW</literal> or <literal>STATEMENT</literal>
+       <literal>ROW</literal> or <literal>STATEMENT</literal>,
        depending on the trigger's definition.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_OP</varname></term>
+     <term><varname>TG_OP</varname> <type>text</type></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string of
+       operation for which the trigger was fired:
        <literal>INSERT</literal>, <literal>UPDATE</literal>,
-       <literal>DELETE</literal>, or <literal>TRUNCATE</literal>
-       telling for which operation the trigger was fired.
+       <literal>DELETE</literal>, or <literal>TRUNCATE</literal>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_RELID</varname></term>
+     <term><varname>TG_RELID</varname> <type>oid</type> (references <link linkend="catalog-pg-class"><structname>pg_class</structname></link>.<structfield>oid</structfield>)</term>
      <listitem>
       <para>
-       Data type <type>oid</type>; the object ID of the table that caused the
-       trigger invocation.
+       object ID of the table that caused the trigger invocation.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_RELNAME</varname></term>
+     <term><varname>TG_RELNAME</varname> <type>name</type></term>
      <listitem>
       <para>
-       Data type <type>name</type>; the name of the table that caused the trigger
+       table that caused the trigger
        invocation. This is now deprecated, and could disappear in a future
        release. Use <literal>TG_TABLE_NAME</literal> instead.
       </para>
@@ -4121,40 +4114,38 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_TABLE_NAME</varname></term>
+     <term><varname>TG_TABLE_NAME</varname> <type>name</type></term>
      <listitem>
       <para>
-       Data type <type>name</type>; the name of the table that
-       caused the trigger invocation.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><varname>TG_TABLE_SCHEMA</varname></term>
-     <listitem>
-      <para>
-       Data type <type>name</type>; the name of the schema of the
        table that caused the trigger invocation.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_NARGS</varname></term>
+     <term><varname>TG_TABLE_SCHEMA</varname> <type>name</type></term>
      <listitem>
       <para>
-       Data type <type>integer</type>; the number of arguments given to the trigger
+       schema of the table that caused the trigger invocation.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>TG_NARGS</varname> <type>integer</type></term>
+     <listitem>
+      <para>
+       number of arguments given to the trigger
        function in the <command>CREATE TRIGGER</command> statement.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_ARGV[]</varname></term>
+     <term><varname>TG_ARGV</varname> <type>text[]</type></term>
      <listitem>
       <para>
-       Data type array of <type>text</type>; the arguments from
+       arguments from
        the <command>CREATE TRIGGER</command> statement.
        The index counts from 0. Invalid
        indexes (less than 0 or greater than or equal to <varname>tg_nargs</varname>)
@@ -4656,21 +4647,19 @@ CREATE TRIGGER emp_audit_del
 
    <variablelist>
     <varlistentry>
-     <term><varname>TG_EVENT</varname></term>
+     <term><varname>TG_EVENT</varname> <type>text</type></term>
      <listitem>
       <para>
-       Data type <type>text</type>; a string representing the event the
-       trigger is fired for.
+       event the trigger is fired for.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term><varname>TG_TAG</varname></term>
+     <term><varname>TG_TAG</varname> <type>text</type></term>
      <listitem>
       <para>
-       Data type <type>text</type>; variable that contains the command tag
-       for which the trigger is fired.
+       command tag for which the trigger is fired.
       </para>
      </listitem>
     </varlistentry>
