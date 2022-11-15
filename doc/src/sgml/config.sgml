@@ -3597,9 +3597,11 @@ include_dir 'conf.d'
        </para>
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.  It is ignored unless
+        file or on the server command line.  It is only used if
         <varname>archive_mode</varname> was enabled at server start and
-        <varname>archive_library</varname> is set to an empty string.
+        <varname>archive_library</varname> is set to an empty string.  If both
+        <varname>archive_command</varname> and <varname>archive_library</varname>
+        are set, an error will be raised.
         If <varname>archive_command</varname> is an empty string (the default) while
         <varname>archive_mode</varname> is enabled (and <varname>archive_library</varname>
         is set to an empty string), WAL archiving is temporarily
@@ -3624,7 +3626,9 @@ include_dir 'conf.d'
        <para>
         The library to use for archiving completed WAL file segments.  If set to
         an empty string (the default), archiving via shell is enabled, and
-        <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
+        <xref linkend="guc-archive-command"/> is used.  If both
+        <varname>archive_command</varname> and <varname>archive_library</varname>
+        are set, an error will be raised.  Otherwise, the specified
         shared library is used for archiving. The WAL archiver process is
         restarted by the postmaster when this parameter changes. For more
         information, see <xref linkend="backup-archiving-wal"/> and

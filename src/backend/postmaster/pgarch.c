@@ -792,6 +792,12 @@ HandlePgArchInterrupts(void)
 		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 
+		if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("both archive_command and archive_library set"),
+					 errdetail("Only one of archive_command, archive_library may be set.")));
+
 		archiveLibChanged = strcmp(XLogArchiveLibrary, archiveLib) != 0;
 		pfree(archiveLib);
 
@@ -824,6 +830,12 @@ static void
 LoadArchiveLibrary(void)
 {
 	ArchiveModuleInit archive_init;
+
+	if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("both archive_command and archive_library set"),
+				 errdetail("Only one of archive_command, archive_library may be set.")));
 
 	memset(&ArchiveContext, 0, sizeof(ArchiveModuleCallbacks));
 
