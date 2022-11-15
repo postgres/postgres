@@ -78,7 +78,7 @@ typedef struct RmgrData
  * developers. During development, use RM_EXPERIMENTAL_ID to avoid needlessly
  * reserving a new ID.
  */
-extern void RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr);
+extern void RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr);
 </programlisting>
   <function>RegisterCustomRmgr</function> must be called from the
   extension module's <link linkend="xfunc-c-dynload">_PG_init</link> function.

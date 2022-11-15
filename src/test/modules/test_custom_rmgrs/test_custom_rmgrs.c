@@ -51,7 +51,7 @@ void		testcustomrmgrs_redo(XLogReaderState *record);
 void		testcustomrmgrs_desc(StringInfo buf, XLogReaderState *record);
 const char *testcustomrmgrs_identify(uint8 info);
 
-static RmgrData testcustomrmgrs_rmgr = {
+static const RmgrData testcustomrmgrs_rmgr = {
 	.rm_name = TESTCUSTOMRMGRS_NAME,
 	.rm_redo = testcustomrmgrs_redo,
 	.rm_desc = testcustomrmgrs_desc,

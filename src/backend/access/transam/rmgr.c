@@ -95,7 +95,7 @@ RmgrNotFound(RmgrId rmid)
  * reserving a new ID.
  */
 void
-RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr)
+RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr)
 {
 	if (rmgr->rm_name == NULL || strlen(rmgr->rm_name) == 0)
 		ereport(ERROR, (errmsg("custom resource manager name is invalid"),

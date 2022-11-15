@@ -362,7 +362,7 @@ extern PGDLLIMPORT RmgrData RmgrTable[];
 extern void RmgrStartup(void);
 extern void RmgrCleanup(void);
 extern void RmgrNotFound(RmgrId rmid);
-extern void RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr);
+extern void RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr);
 
 #ifndef FRONTEND
 static inline bool
