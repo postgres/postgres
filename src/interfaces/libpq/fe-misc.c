@@ -1278,3 +1278,62 @@ libpq_ngettext(const char *msgid, const char *msgid_plural, unsigned long n)
 }
 
 #endif							/* ENABLE_NLS */
+
+
+/*
+ * Append a formatted string to the given buffer, after translating it.  A
+ * newline is automatically appended; the format should not end with a
+ * newline.
+ */
+void
+libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...)
+{
+	int			save_errno = errno;
+	bool		done;
+	va_list		args;
+
+	Assert(fmt[strlen(fmt) - 1] != '\n');
+
+	if (PQExpBufferBroken(errorMessage))
+		return;					/* already failed */
+
+	/* Loop in case we have to retry after enlarging the buffer. */
+	do
+	{
+		errno = save_errno;
+		va_start(args, fmt);
+		done = appendPQExpBufferVA(errorMessage, libpq_gettext(fmt), args);
+		va_end(args);
+	} while (!done);
+
+	appendPQExpBufferChar(errorMessage, '\n');
+}
+
+/*
+ * Append a formatted string to the error message buffer of the given
+ * connection, after translating it.  A newline is automatically appended; the
+ * format should not end with a newline.
+ */
+void
+libpq_append_conn_error(PGconn *conn, const char *fmt, ...)
+{
+	int			save_errno = errno;
+	bool		done;
+	va_list		args;
+
+	Assert(fmt[strlen(fmt) - 1] != '\n');
+
+	if (PQExpBufferBroken(&conn->errorMessage))
+		return;					/* already failed */
+
+	/* Loop in case we have to retry after enlarging the buffer. */
+	do
+	{
+		errno = save_errno;
+		va_start(args, fmt);
+		done = appendPQExpBufferVA(&conn->errorMessage, libpq_gettext(fmt), args);
+		va_end(args);
+	} while (!done);
+
+	appendPQExpBufferChar(&conn->errorMessage, '\n');
+}

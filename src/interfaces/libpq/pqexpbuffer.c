@@ -40,8 +40,6 @@ static const char oom_buffer[1] = "";
 /* Need a char * for unconstify() compatibility */
 static const char *oom_buffer_ptr = oom_buffer;
 
-static bool appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args) pg_attribute_printf(2, 0);
-
 
 /*
  * markPQExpBufferBroken
@@ -292,7 +290,7 @@ appendPQExpBuffer(PQExpBuffer str, const char *fmt,...)
  * Caution: callers must be sure to preserve their entry-time errno
  * when looping, in case the fmt contains "%m".
  */
-static bool
+bool
 appendPQExpBufferVA(PQExpBuffer str, const char *fmt, va_list args)
 {
 	size_t		avail;
