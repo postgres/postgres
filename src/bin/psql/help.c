@@ -189,6 +189,7 @@ slashUsage(unsigned short int pager)
 	initPQExpBuffer(&buf);
 
 	HELP0("General\n");
+	HELP0("  \\bind [PARAM]...       set query parameters\n");
 	HELP0("  \\copyright             show PostgreSQL usage and distribution terms\n");
 	HELP0("  \\crosstabview [COLUMNS] execute query and display result in crosstab\n");
 	HELP0("  \\errverbose            show most recent error message at maximum verbosity\n");

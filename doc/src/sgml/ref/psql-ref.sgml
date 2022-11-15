@@ -880,6 +880,42 @@ testdb=&gt;
       </varlistentry>
 
       <varlistentry>
+       <term><literal>\bind</literal> [ <replaceable class="parameter">parameter</replaceable> ] ... </term>
+
+       <listitem>
+        <para>
+         Sets query parameters for the next query execution, with the
+         specified parameters passed for any parameter placeholders
+         (<literal>$1</literal> etc.).
+        </para>
+
+        <para>
+         Example:
+<programlisting>
+INSERT INTO tbl1 VALUES ($1, $2) \bind 'first value' 'second value' \g
+</programlisting>
+        </para>
+
+        <para>
+         This also works for query-execution commands besides
+         <literal>\g</literal>, such as <literal>\gx</literal> and
+         <literal>\gset</literal>.
+        </para>
+
+        <para>
+         This command causes the extended query protocol (see <xref
+         linkend="protocol-query-concepts"/>) to be used, unlike normal
+         <application>psql</application> operation, which uses the simple
+         query protocol.  So this command can be useful to test the extended
+         query protocol from psql.  (The extended query protocol is used even
+         if the query has no parameters and this command specifies zero
+         parameters.)  This command affects only the next query executed; all
+         subsequent queries will use the simple query protocol by default.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><literal>\c</literal> or <literal>\connect [ -reuse-previous=<replaceable class="parameter">on|off</replaceable> ] [ <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">host</replaceable> ] [ <replaceable class="parameter">port</replaceable> ] | <replaceable class="parameter">conninfo</replaceable> ]</literal></term>
         <listitem>
         <para>

@@ -1220,6 +1220,16 @@ sendquery_cleanup:
 		pset.gsavepopt = NULL;
 	}
 
+	/* clean up after \bind */
+	if (pset.bind_flag)
+	{
+		for (i = 0; i < pset.bind_nparams; i++)
+			free(pset.bind_params[i]);
+		free(pset.bind_params);
+		pset.bind_params = NULL;
+		pset.bind_flag = false;
+	}
+
 	/* reset \gset trigger */
 	if (pset.gset_prefix)
 	{
@@ -1397,7 +1407,10 @@ ExecQueryAndProcessResults(const char *query,
 	if (timing)
 		INSTR_TIME_SET_CURRENT(before);
 
-	success = PQsendQuery(pset.db, query);
+	if (pset.bind_flag)
+		success = PQsendQueryParams(pset.db, query, pset.bind_nparams, NULL, (const char * const *) pset.bind_params, NULL, NULL, 0);
+	else
+		success = PQsendQuery(pset.db, query);
 
 	if (!success)
 	{

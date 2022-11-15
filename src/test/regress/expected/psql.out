@@ -98,6 +98,37 @@ two | 2
    1 |   2
 (1 row)
 
+-- \bind (extended query protocol)
+SELECT 1 \bind \g
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT $1 \bind 'foo' \g
+ ?column? 
+----------
+ foo
+(1 row)
+
+SELECT $1, $2 \bind 'foo' 'bar' \g
+ ?column? | ?column? 
+----------+----------
+ foo      | bar
+(1 row)
+
+-- errors
+-- parse error
+SELECT foo \bind \g
+ERROR:  column "foo" does not exist
+LINE 1: SELECT foo 
+               ^
+-- tcop error
+SELECT 1 \; SELECT 2 \bind \g
+ERROR:  cannot insert multiple commands into a prepared statement
+-- bind error
+SELECT $1, $2 \bind 'foo' \g
+ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 2
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03

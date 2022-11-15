@@ -63,6 +63,7 @@ static backslashResult exec_command(const char *cmd,
 									PQExpBuffer query_buf,
 									PQExpBuffer previous_buf);
 static backslashResult exec_command_a(PsqlScanState scan_state, bool active_branch);
+static backslashResult exec_command_bind(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_C(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_connect(PsqlScanState scan_state, bool active_branch);
 static backslashResult exec_command_cd(PsqlScanState scan_state, bool active_branch,
@@ -308,6 +309,8 @@ exec_command(const char *cmd,
 
 	if (strcmp(cmd, "a") == 0)
 		status = exec_command_a(scan_state, active_branch);
+	else if (strcmp(cmd, "bind") == 0)
+		status = exec_command_bind(scan_state, active_branch);
 	else if (strcmp(cmd, "C") == 0)
 		status = exec_command_C(scan_state, active_branch);
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
@@ -451,6 +454,40 @@ exec_command_a(PsqlScanState scan_state, bool active_branch)
 	}
 
 	return success ? PSQL_CMD_SKIP_LINE : PSQL_CMD_ERROR;
+}
+
+/*
+ * \bind -- set query parameters
+ */
+static backslashResult
+exec_command_bind(PsqlScanState scan_state, bool active_branch)
+{
+	backslashResult status = PSQL_CMD_SKIP_LINE;
+
+	if (active_branch)
+	{
+		char	   *opt;
+		int			nparams = 0;
+		int			nalloc = 0;
+
+		pset.bind_params = NULL;
+
+		while ((opt = psql_scan_slash_option(scan_state, OT_NORMAL, NULL, false)))
+		{
+			nparams++;
+			if (nparams > nalloc)
+			{
+				nalloc = nalloc ? nalloc * 2 : 1;
+				pset.bind_params = pg_realloc_array(pset.bind_params, char *, nalloc);
+			}
+			pset.bind_params[nparams - 1] = pg_strdup(opt);
+		}
+
+		pset.bind_nparams = nparams;
+		pset.bind_flag = true;
+	}
+
+	return status;
 }
 
 /*
