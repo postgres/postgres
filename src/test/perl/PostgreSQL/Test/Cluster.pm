@@ -1826,7 +1826,7 @@ sub psql
 	# and set the flag.  Otherwise, and for any other exception, rethrow.
 	#
 	# For background, see
-	# https://metacpan.org/pod/release/ETHER/Try-Tiny-0.24/lib/Try/Tiny.pm
+	# https://metacpan.org/release/ETHER/Try-Tiny-0.24/view/lib/Try/Tiny.pm
 	do
 	{
 		local $@;
