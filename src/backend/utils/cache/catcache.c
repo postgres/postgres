@@ -19,7 +19,6 @@
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "access/valid.h"
 #include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
