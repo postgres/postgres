@@ -69,6 +69,11 @@ $node_publisher->wait_for_catchup('sub1');
 
 pass('index predicates do not cause crash');
 
+# We'll re-use these nodes below, so drop their replication state.
+# We don't bother to drop the tables though.
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub1");
+
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
 
@@ -81,9 +86,12 @@ $node_subscriber->stop('fast');
 # identity set before accepting updates.  If it did not it would cause
 # an error when an update was attempted.
 
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher2');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+# Although we don't use node_subscriber in this test, keep its logfile
+# name in step with node_publisher for later tests.
+$node_subscriber->rotate_logfile();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub FOR ALL TABLES");
@@ -102,7 +110,11 @@ is( $node_publisher->psql(
 	'update to unlogged table without replica identity with FOR ALL TABLES publication'
 );
 
+# Again, drop replication state but not tables.
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub");
+
 $node_publisher->stop('fast');
+
 
 # Bug #16643 - https://postgr.es/m/16643-eaadeb2a1a58d28c@postgresql.org
 #
@@ -226,13 +238,12 @@ $node_sub->stop('fast');
 # target table's relcache was not being invalidated. This leads to skipping
 # UPDATE/DELETE operations during apply on the subscriber side as the columns
 # required to search corresponding rows won't get logged.
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher3');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
 
-$node_subscriber = PostgreSQL::Test::Cluster->new('subscriber3');
-$node_subscriber->init(allows_streaming => 'logical');
-$node_subscriber->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+$node_subscriber->rotate_logfile();
+$node_subscriber->start();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_replidentity_index(a int not null, b int not null)");
