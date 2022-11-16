@@ -433,6 +433,10 @@ WalReceiverMain(void)
 			for (int i = 0; i < NUM_WALRCV_WAKEUPS; ++i)
 				WalRcvComputeNextWakeup(i, now);
 
+			/* Send initial reply/feedback messages. */
+			XLogWalRcvSendReply(true, false);
+			XLogWalRcvSendHSFeedback(true);
+
 			/* Loop until end-of-streaming or error */
 			for (;;)
 			{
