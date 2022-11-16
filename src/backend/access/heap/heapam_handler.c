@@ -2193,7 +2193,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			lp = PageGetItemId(dp, offnum);
 			if (!ItemIdIsNormal(lp))
 				continue;
-			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+			loctup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 			loctup.t_len = ItemIdGetLength(lp);
 			loctup.t_tableOid = scan->rs_rd->rd_id;
 			ItemPointerSet(&loctup.t_self, page, offnum);
@@ -2238,7 +2238,7 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 	lp = PageGetItemId(dp, targoffset);
 	Assert(ItemIdIsNormal(lp));
 
-	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	hscan->rs_ctup.t_len = ItemIdGetLength(lp);
 	hscan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
 	ItemPointerSet(&hscan->rs_ctup.t_self, hscan->rs_cblock, targoffset);

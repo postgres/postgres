@@ -461,7 +461,7 @@ heapgetpage(TableScanDesc sscan, BlockNumber page)
 			bool		valid;
 
 			loctup.t_tableOid = RelationGetRelid(scan->rs_base.rs_rd);
-			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+			loctup.t_data = (HeapTupleHeader) PageGetItem(dp, lpp);
 			loctup.t_len = ItemIdGetLength(lpp);
 			ItemPointerSet(&(loctup.t_self), page, lineoff);
 
@@ -677,7 +677,7 @@ heapgettup(HeapScanDesc scan,
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
 
-		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+		tuple->t_data = (HeapTupleHeader) PageGetItem(dp, lpp);
 		tuple->t_len = ItemIdGetLength(lpp);
 
 		return;
@@ -703,7 +703,7 @@ heapgettup(HeapScanDesc scan,
 			{
 				bool		valid;
 
-				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+				tuple->t_data = (HeapTupleHeader) PageGetItem(dp, lpp);
 				tuple->t_len = ItemIdGetLength(lpp);
 				ItemPointerSet(&(tuple->t_self), page, lineoff);
 
@@ -1002,7 +1002,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		lpp = PageGetItemId(dp, lineoff);
 		Assert(ItemIdIsNormal(lpp));
 
-		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+		tuple->t_data = (HeapTupleHeader) PageGetItem(dp, lpp);
 		tuple->t_len = ItemIdGetLength(lpp);
 
 		/* check that rs_cindex is in sync */
@@ -1024,7 +1024,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 			lpp = PageGetItemId(dp, lineoff);
 			Assert(ItemIdIsNormal(lpp));
 
-			tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
+			tuple->t_data = (HeapTupleHeader) PageGetItem(dp, lpp);
 			tuple->t_len = ItemIdGetLength(lpp);
 			ItemPointerSet(&(tuple->t_self), page, lineoff);
 
