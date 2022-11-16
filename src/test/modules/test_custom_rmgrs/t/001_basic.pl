@@ -48,10 +48,10 @@ is($row_count, '1',
 );
 
 # check if our custom WAL resource manager has successfully written a WAL record
-my $expected = qq($record_end_lsn|test_custom_rmgrs|TEST_CUSTOM_RMGRS_MESSAGE|44|18|0|payload (10 bytes): payload123);
+my $expected = qq($record_end_lsn|test_custom_rmgrs|TEST_CUSTOM_RMGRS_MESSAGE|0|payload (10 bytes): payload123);
 my $result =
   $node->safe_psql('postgres',
-	qq[SELECT end_lsn, resource_manager, record_type, record_length, main_data_length, fpi_length, description FROM pg_get_wal_records_info('$start_lsn', '$end_lsn')
+	qq[SELECT end_lsn, resource_manager, record_type, fpi_length, description FROM pg_get_wal_records_info('$start_lsn', '$end_lsn')
 		WHERE resource_manager = 'test_custom_rmgrs';]);
 is($result, $expected,
 	'custom WAL resource manager has successfully written a WAL record'
