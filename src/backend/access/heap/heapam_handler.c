@@ -2109,7 +2109,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 							  TBMIterateResult *tbmres)
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
-	BlockNumber page = tbmres->blockno;
+	BlockNumber block = tbmres->blockno;
 	Buffer		buffer;
 	Snapshot	snapshot;
 	int			ntup;
@@ -2123,7 +2123,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	 * only hold an AccessShareLock, and it could be inserts from this
 	 * backend).
 	 */
-	if (page >= hscan->rs_nblocks)
+	if (block >= hscan->rs_nblocks)
 		return false;
 
 	/*
@@ -2131,8 +2131,8 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 	 */
 	hscan->rs_cbuf = ReleaseAndReadBuffer(hscan->rs_cbuf,
 										  scan->rs_rd,
-										  page);
-	hscan->rs_cblock = page;
+										  block);
+	hscan->rs_cblock = block;
 	buffer = hscan->rs_cbuf;
 	snapshot = scan->rs_snapshot;
 
@@ -2168,7 +2168,7 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			ItemPointerData tid;
 			HeapTupleData heapTuple;
 
-			ItemPointerSet(&tid, page, offnum);
+			ItemPointerSet(&tid, block, offnum);
 			if (heap_hot_search_buffer(&tid, scan->rs_rd, buffer, snapshot,
 									   &heapTuple, NULL, true))
 				hscan->rs_vistuples[ntup++] = ItemPointerGetOffsetNumber(&tid);
@@ -2180,8 +2180,8 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 		 * Bitmap is lossy, so we must examine each line pointer on the page.
 		 * But we can ignore HOT chains, since we'll check each tuple anyway.
 		 */
-		Page		dp = (Page) BufferGetPage(buffer);
-		OffsetNumber maxoff = PageGetMaxOffsetNumber(dp);
+		Page		page = BufferGetPage(buffer);
+		OffsetNumber maxoff = PageGetMaxOffsetNumber(page);
 		OffsetNumber offnum;
 
 		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum = OffsetNumberNext(offnum))
@@ -2190,13 +2190,13 @@ heapam_scan_bitmap_next_block(TableScanDesc scan,
 			HeapTupleData loctup;
 			bool		valid;
 
-			lp = PageGetItemId(dp, offnum);
+			lp = PageGetItemId(page, offnum);
 			if (!ItemIdIsNormal(lp))
 				continue;
-			loctup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
+			loctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 			loctup.t_len = ItemIdGetLength(lp);
 			loctup.t_tableOid = scan->rs_rd->rd_id;
-			ItemPointerSet(&loctup.t_self, page, offnum);
+			ItemPointerSet(&loctup.t_self, block, offnum);
 			valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
 			if (valid)
 			{
@@ -2224,7 +2224,7 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 {
 	HeapScanDesc hscan = (HeapScanDesc) scan;
 	OffsetNumber targoffset;
-	Page		dp;
+	Page		page;
 	ItemId		lp;
 
 	/*
@@ -2234,11 +2234,11 @@ heapam_scan_bitmap_next_tuple(TableScanDesc scan,
 		return false;
 
 	targoffset = hscan->rs_vistuples[hscan->rs_cindex];
-	dp = (Page) BufferGetPage(hscan->rs_cbuf);
-	lp = PageGetItemId(dp, targoffset);
+	page = BufferGetPage(hscan->rs_cbuf);
+	lp = PageGetItemId(page, targoffset);
 	Assert(ItemIdIsNormal(lp));
 
-	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
+	hscan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem(page, lp);
 	hscan->rs_ctup.t_len = ItemIdGetLength(lp);
 	hscan->rs_ctup.t_tableOid = scan->rs_rd->rd_id;
 	ItemPointerSet(&hscan->rs_ctup.t_self, hscan->rs_cblock, targoffset);
