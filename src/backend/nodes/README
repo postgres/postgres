@@ -58,6 +58,7 @@ FILES IN THIS DIRECTORY (src/backend/nodes/)
     Specialized manipulation functions:
 	bitmapset.c	- Bitmapset support
 	list.c		- generic list support
+	multibitmapset.c - List-of-Bitmapset support
 	params.c	- Param support
 	tidbitmap.c	- TIDBitmap support
 	value.c		- support for value nodes

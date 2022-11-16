@@ -3,6 +3,7 @@ backend_sources += files(
   'extensible.c',
   'list.c',
   'makefuncs.c',
+  'multibitmapset.c',
   'nodeFuncs.c',
   'nodes.c',
   'params.c',

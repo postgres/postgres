@@ -28,6 +28,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
+#include "nodes/multibitmapset.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
@@ -2769,7 +2770,7 @@ reduce_outer_joins_pass1(Node *jtnode)
  *	state: state data collected by phase 1 for this node
  *	root: toplevel planner state
  *	nonnullable_rels: set of base relids forced non-null by upper quals
- *	forced_null_vars: list of Vars forced null by upper quals
+ *	forced_null_vars: multibitmapset of Vars forced null by upper quals
  */
 static void
 reduce_outer_joins_pass2(Node *jtnode,
@@ -2799,8 +2800,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 		pass_nonnullable_rels = bms_add_members(pass_nonnullable_rels,
 												nonnullable_rels);
 		pass_forced_null_vars = find_forced_null_vars(f->quals);
-		pass_forced_null_vars = list_concat(pass_forced_null_vars,
-											forced_null_vars);
+		pass_forced_null_vars = mbms_add_members(pass_forced_null_vars,
+												 forced_null_vars);
 		/* And recurse --- but only into interesting subtrees */
 		Assert(list_length(f->fromlist) == list_length(state->sub_states));
 		forboth(l, f->fromlist, s, state->sub_states)
@@ -2897,7 +2898,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 		if (jointype == JOIN_LEFT)
 		{
 			List	   *nonnullable_vars;
-			List	   *overlap;
+			Bitmapset  *overlap;
 
 			/* Find Vars in j->quals that must be non-null in joined rows */
 			nonnullable_vars = find_nonnullable_vars(j->quals);
@@ -2907,11 +2908,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 			 * forced_null_vars overlap: we need to know if the overlap
 			 * includes any RHS variables.
 			 */
-			overlap = list_intersection(nonnullable_vars,
-										forced_null_vars);
-			if (overlap != NIL &&
-				bms_overlap(pull_varnos(root, (Node *) overlap),
-							right_state->relids))
+			overlap = mbms_overlap_sets(nonnullable_vars, forced_null_vars);
+			if (bms_overlap(overlap, right_state->relids))
 				jointype = JOIN_ANTI;
 		}
 
@@ -2964,8 +2962,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 					/* OK to merge upper and local constraints */
 					local_nonnullable_rels = bms_add_members(local_nonnullable_rels,
 															 nonnullable_rels);
-					local_forced_null_vars = list_concat(local_forced_null_vars,
-														 forced_null_vars);
+					local_forced_null_vars = mbms_add_members(local_forced_null_vars,
+															  forced_null_vars);
 				}
 			}
 			else
