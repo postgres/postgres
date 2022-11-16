@@ -719,8 +719,8 @@ heapgettup(HeapScanDesc scan,
 													snapshot);
 
 				if (valid && key != NULL)
-					HeapKeyTest(tuple, RelationGetDescr(scan->rs_base.rs_rd),
-								nkeys, key, valid);
+					valid = HeapKeyTest(tuple, RelationGetDescr(scan->rs_base.rs_rd),
+										nkeys, key);
 
 				if (valid)
 				{
@@ -1035,8 +1035,8 @@ heapgettup_pagemode(HeapScanDesc scan,
 			{
 				bool		valid;
 
-				HeapKeyTest(tuple, RelationGetDescr(scan->rs_base.rs_rd),
-							nkeys, key, valid);
+				valid = HeapKeyTest(tuple, RelationGetDescr(scan->rs_base.rs_rd),
+									nkeys, key);
 				if (valid)
 				{
 					scan->rs_cindex = lineindex;
