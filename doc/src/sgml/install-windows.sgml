@@ -487,7 +487,8 @@ $ENV{CONFIG}="Debug";
       As of this writing, <literal>IPC::Run</literal> is not included in the
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
-      <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from CPAN,
+      <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from
+      <acronym>CPAN</acronym>,
       at <ulink url="https://metacpan.org/dist/IPC-Run"></ulink>, and
       uncompress. Edit the <filename>buildenv.pl</filename> file, and add a PERL5LIB
       variable to point to the <filename>lib</filename> subdirectory from the
@@ -516,6 +517,11 @@ set PROVE_TESTS=t/020*.pl t/010*.pl
 $ENV{PROVE_FLAGS}='--timer --jobs 2'
 $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
 </programlisting>
+  </para>
+
+  <para>
+    Additionally, the behavior of TAP tests can be controlled by a set of
+    environment variables, see <xref linkend="regress-tap-vars" />.
   </para>
 
   <para>

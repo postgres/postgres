@@ -765,7 +765,9 @@ make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
 
    <para>
     The TAP tests require the Perl module <literal>IPC::Run</literal>.
-    This module is available from CPAN or an operating system package.
+    This module is available from
+    <ulink url="https://metacpan.org/dist/IPC-Run">CPAN</ulink>
+    or an operating system package.
     They also require <productname>PostgreSQL</productname> to be
     configured with the option <option>--enable-tap-tests</option>.
    </para>
@@ -789,6 +791,30 @@ make check PROVE_TESTS='t/001_test1.pl t/003_test3.pl'
     meaning that <literal>make installcheck</literal> will produce a mix of
     results from temporary servers and the already-running test server.
    </para>
+
+  <sect2 id="regress-tap-vars">
+   <title>Environment variables</title>
+
+   <para>
+    Data directories are named according to the test filename, and will be
+    retained if a test fails.  If the environment variable
+    <varname>PG_TEST_NOCLEAN</varname> is set, data directories will be
+    retained regardless of test status.  For example, retaining the data
+    directory regardless of test results when running the
+    <application>pg_dump</application> tests:
+<programlisting>
+PG_TEST_NOCLEAN=1 make -C src/bin/pg_dump check
+</programlisting>
+   </para>
+
+   <para>
+    Many operations in the test suites use a 180-second timeout, which on slow
+    hosts may lead to load-induced timeouts.  Setting the environment variable
+    <varname>PG_TEST_TIMEOUT_DEFAULT</varname> to a higher number will change
+    the default to avoid this.
+   </para>
+  </sect2>
+
   </sect1>
 
   <sect1 id="regress-coverage">
