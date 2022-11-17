@@ -7896,12 +7896,10 @@ find_param_referent(Param *param, deparse_context *context,
 	{
 		deparse_namespace *dpns;
 		Plan	   *child_plan;
-		bool		in_same_plan_level;
 		ListCell   *lc;
 
 		dpns = (deparse_namespace *) linitial(context->namespaces);
 		child_plan = dpns->plan;
-		in_same_plan_level = true;
 
 		foreach(lc, dpns->ancestors)
 		{
@@ -7909,13 +7907,10 @@ find_param_referent(Param *param, deparse_context *context,
 			ListCell   *lc2;
 
 			/*
-			 * NestLoops transmit params to their inner child only; also, once
-			 * we've crawled up out of a subplan, this couldn't possibly be
-			 * the right match.
+			 * NestLoops transmit params to their inner child only.
 			 */
 			if (IsA(ancestor, NestLoop) &&
-				child_plan == innerPlan(ancestor) &&
-				in_same_plan_level)
+				child_plan == innerPlan(ancestor))
 			{
 				NestLoop   *nl = (NestLoop *) ancestor;
 
@@ -7973,34 +7968,14 @@ find_param_referent(Param *param, deparse_context *context,
 					}
 				}
 
-				/* We have emerged from a subplan. */
-				in_same_plan_level = false;
-
 				/* SubPlan isn't a kind of Plan, so skip the rest */
 				continue;
 			}
 
 			/*
-			 * Check to see if we're emerging from an initplan of the current
-			 * ancestor plan.  Initplans never have any parParams, so no need
-			 * to search that list, but we need to know if we should reset
-			 * in_same_plan_level.
+			 * We need not consider the ancestor's initPlan list, since
+			 * initplans never have any parParams.
 			 */
-			foreach(lc2, ((Plan *) ancestor)->initPlan)
-			{
-				SubPlan    *subplan = lfirst_node(SubPlan, lc2);
-
-				if (child_plan != (Plan *) list_nth(dpns->subplans,
-													subplan->plan_id - 1))
-					continue;
-
-				/* No parameters to be had here. */
-				Assert(subplan->parParam == NIL);
-
-				/* We have emerged from an initplan. */
-				in_same_plan_level = false;
-				break;
-			}
 
 			/* No luck, crawl up to next ancestor */
 			child_plan = (Plan *) ancestor;

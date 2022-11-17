@@ -1155,7 +1155,7 @@ where o.ten = 0;
                SubPlan 1
                  ->  Seq Scan on public.int4_tbl
                        Output: int4_tbl.f1
-                       Filter: (int4_tbl.f1 <= $0)
+                       Filter: (int4_tbl.f1 <= o.hundred)
 (14 rows)
 
 select sum(ss.tst::int) from

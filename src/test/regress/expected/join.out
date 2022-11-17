@@ -6074,8 +6074,8 @@ lateral (select * from int8_tbl t1,
                                      where q2 = (select greatest(t1.q1,t2.q2))
                                        and (select v.id=0)) offset 0) ss2) ss
          where t1.q1 = ss.q2) ss0;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Nested Loop
    Output: "*VALUES*".column1, t1.q1, t1.q2, ss2.q1, ss2.q2
    ->  Seq Scan on public.int8_tbl t1
@@ -6096,10 +6096,10 @@ lateral (select * from int8_tbl t1,
                              One-Time Filter: $4
                              InitPlan 1 (returns $2)
                                ->  Result
-                                     Output: GREATEST($0, t2.q2)
+                                     Output: GREATEST(t1.q1, t2.q2)
                              InitPlan 2 (returns $4)
                                ->  Result
-                                     Output: ($3 = 0)
+                                     Output: ("*VALUES*".column1 = 0)
                              ->  Seq Scan on public.int8_tbl t3
                                    Output: t3.q1, t3.q2
                                    Filter: (t3.q2 = $2)
