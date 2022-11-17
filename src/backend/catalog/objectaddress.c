@@ -960,7 +960,7 @@ ObjectAddress
 get_object_address(ObjectType objtype, Node *object,
 				   Relation *relp, LOCKMODE lockmode, bool missing_ok)
 {
-	ObjectAddress address;
+	ObjectAddress address = {InvalidOid, InvalidOid, 0};
 	ObjectAddress old_address = {InvalidOid, InvalidOid, 0};
 	Relation	relation = NULL;
 	uint64		inval_count;
@@ -991,6 +991,7 @@ get_object_address(ObjectType objtype, Node *object,
 												   &relation, lockmode,
 												   missing_ok);
 				break;
+			case OBJECT_ATTRIBUTE:
 			case OBJECT_COLUMN:
 				address =
 					get_object_address_attribute(objtype, castNode(List, object),
@@ -1163,13 +1164,11 @@ get_object_address(ObjectType objtype, Node *object,
 															 missing_ok);
 				address.objectSubId = 0;
 				break;
-			default:
-				elog(ERROR, "unrecognized object type: %d", (int) objtype);
-				/* placate compiler, in case it thinks elog might return */
-				address.classId = InvalidOid;
-				address.objectId = InvalidOid;
-				address.objectSubId = 0;
+				/* no default, to let compiler warn about missing case */
 		}
+
+		if (!address.classId)
+			elog(ERROR, "unrecognized object type: %d", (int) objtype);
 
 		/*
 		 * If we could not find the supplied object, return without locking.
@@ -2571,9 +2570,16 @@ check_object_ownership(Oid roleid, ObjectType objtype, ObjectAddress address,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("must be superuser")));
 			break;
-		default:
-			elog(ERROR, "unrecognized object type: %d",
-				 (int) objtype);
+		case OBJECT_AMOP:
+		case OBJECT_AMPROC:
+		case OBJECT_DEFAULT:
+		case OBJECT_DEFACL:
+		case OBJECT_PUBLICATION_NAMESPACE:
+		case OBJECT_PUBLICATION_REL:
+		case OBJECT_USER_MAPPING:
+			/* These are currently not supported or don't make sense here. */
+			elog(ERROR, "unsupported object type: %d", (int) objtype);
+			break;
 	}
 }
 
