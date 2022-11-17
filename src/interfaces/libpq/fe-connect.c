@@ -3358,8 +3358,7 @@ keep_going:						/* We will come back to here until there is
 				/* Get the type of request. */
 				if (pqGetInt((int *) &areq, 4, conn))
 				{
-					/* We'll come back when there are more data */
-					return PGRES_POLLING_READING;
+					goto error_return;
 				}
 				msgLength -= 4;
 
