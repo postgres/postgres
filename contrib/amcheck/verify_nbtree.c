@@ -278,8 +278,7 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed)
 
 	if (btree_index_mainfork_expected(indrel))
 	{
-		RelationOpenSmgr(indrel);
-		if (!smgrexists(indrel->rd_smgr, MAIN_FORKNUM))
+		if (!smgrexists(RelationGetSmgr(indrel), MAIN_FORKNUM))
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
 					 errmsg("index \"%s\" lacks a main relation fork",

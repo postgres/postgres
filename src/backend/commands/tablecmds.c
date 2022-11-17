@@ -11955,8 +11955,6 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	newrnode.spcNode = newTableSpace;
 	dstrel = smgropen(newrnode, rel->rd_backend);
 
-	RelationOpenSmgr(rel);
-
 	/*
 	 * Create and copy all forks of the relation, and schedule unlinking of
 	 * old physical files.
@@ -11967,13 +11965,13 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 	RelationCreateStorage(newrnode, rel->rd_rel->relpersistence);
 
 	/* copy main fork */
-	copy_relation_data(rel->rd_smgr, dstrel, MAIN_FORKNUM,
+	copy_relation_data(RelationGetSmgr(rel), dstrel, MAIN_FORKNUM,
 					   rel->rd_rel->relpersistence);
 
 	/* copy those extra forks that exist */
 	for (forkNum = MAIN_FORKNUM + 1; forkNum <= MAX_FORKNUM; forkNum++)
 	{
-		if (smgrexists(rel->rd_smgr, forkNum))
+		if (smgrexists(RelationGetSmgr(rel), forkNum))
 		{
 			smgrcreate(dstrel, forkNum, false);
 
@@ -11985,7 +11983,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace, LOCKMODE lockmode)
 				(rel->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 				 forkNum == INIT_FORKNUM))
 				log_smgrcreate(&newrnode, forkNum);
-			copy_relation_data(rel->rd_smgr, dstrel, forkNum,
+			copy_relation_data(RelationGetSmgr(rel), dstrel, forkNum,
 							   rel->rd_rel->relpersistence);
 		}
 	}

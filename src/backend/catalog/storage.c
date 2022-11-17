@@ -228,24 +228,24 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 {
 	bool		fsm;
 	bool		vm;
-
-	/* Open it at the smgr level if not already done */
-	RelationOpenSmgr(rel);
+	SMgrRelation reln;
 
 	/*
-	 * Make sure smgr_targblock etc aren't pointing somewhere past new end
+	 * Make sure smgr_targblock etc aren't pointing somewhere past new end.
+	 * (Note: don't rely on this reln pointer below here.)
 	 */
-	rel->rd_smgr->smgr_targblock = InvalidBlockNumber;
-	rel->rd_smgr->smgr_fsm_nblocks = InvalidBlockNumber;
-	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
+	reln = RelationGetSmgr(rel);
+	reln->smgr_targblock = InvalidBlockNumber;
+	reln->smgr_fsm_nblocks = InvalidBlockNumber;
+	reln->smgr_vm_nblocks = InvalidBlockNumber;
 
 	/* Truncate the FSM first if it exists */
-	fsm = smgrexists(rel->rd_smgr, FSM_FORKNUM);
+	fsm = smgrexists(reln, FSM_FORKNUM);
 	if (fsm)
 		FreeSpaceMapTruncateRel(rel, nblocks);
 
 	/* Truncate the visibility map too if it exists. */
-	vm = smgrexists(rel->rd_smgr, VISIBILITYMAP_FORKNUM);
+	vm = smgrexists(RelationGetSmgr(rel), VISIBILITYMAP_FORKNUM);
 	if (vm)
 		visibilitymap_truncate(rel, nblocks);
 
@@ -308,7 +308,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	 * longer exist after truncation is complete, and then truncate the
 	 * corresponding files on disk.
 	 */
-	smgrtruncate(rel->rd_smgr, MAIN_FORKNUM, nblocks);
+	smgrtruncate(RelationGetSmgr(rel), MAIN_FORKNUM, nblocks);
 
 	/* We've done all the critical work, so checkpoints are OK now. */
 	MyProc->delayChkptEnd = false;

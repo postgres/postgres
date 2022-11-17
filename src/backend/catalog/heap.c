@@ -371,10 +371,7 @@ heap_create(const char *relname,
 	 * demand.
 	 */
 	if (create_storage)
-	{
-		RelationOpenSmgr(rel);
 		RelationCreateStorage(rel->rd_node, relpersistence);
-	}
 
 	/*
 	 * If a tablespace is specified, removal of that tablespace is normally
@@ -1411,10 +1408,9 @@ heap_create_init_fork(Relation rel)
 	Assert(rel->rd_rel->relkind == RELKIND_RELATION ||
 		   rel->rd_rel->relkind == RELKIND_MATVIEW ||
 		   rel->rd_rel->relkind == RELKIND_TOASTVALUE);
-	RelationOpenSmgr(rel);
-	smgrcreate(rel->rd_smgr, INIT_FORKNUM, false);
-	log_smgrcreate(&rel->rd_smgr->smgr_rnode.node, INIT_FORKNUM);
-	smgrimmedsync(rel->rd_smgr, INIT_FORKNUM);
+	smgrcreate(RelationGetSmgr(rel), INIT_FORKNUM, false);
+	log_smgrcreate(&(RelationGetSmgr(rel)->smgr_rnode.node), INIT_FORKNUM);
+	smgrimmedsync(RelationGetSmgr(rel), INIT_FORKNUM);
 }
 
 /*
