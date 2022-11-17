@@ -3194,10 +3194,11 @@ keep_going:						/* We will come back to here until there is
 
 				/*
 				 * Validate message type: we expect only an authentication
-				 * request or an error here.  Anything else probably means
-				 * it's not Postgres on the other end at all.
+				 * request, NegotiateProtocolVersion, or an error here.
+				 * Anything else probably means it's not Postgres on the other
+				 * end at all.
 				 */
-				if (!(beresp == 'R' || beresp == 'E'))
+				if (!(beresp == 'R' || beresp == 'v' || beresp == 'E'))
 				{
 					libpq_append_conn_error(conn, "expected authentication request from server, but received %c",
 									   beresp);
@@ -3214,14 +3215,15 @@ keep_going:						/* We will come back to here until there is
 				/*
 				 * Try to validate message length before using it.
 				 * Authentication requests can't be very large, although GSS
-				 * auth requests may not be that small.  Errors can be a
+				 * auth requests may not be that small.  Same for
+				 * NegotiateProtocolVersion.  Errors can be a
 				 * little larger, but not huge.  If we see a large apparent
 				 * length in an error, it means we're really talking to a
 				 * pre-3.0-protocol server; cope.  (Before version 14, the
 				 * server also used the old protocol for errors that happened
 				 * before processing the startup packet.)
 				 */
-				if (beresp == 'R' && (msgLength < 8 || msgLength > 2000))
+				if ((beresp == 'R' || beresp == 'v') && (msgLength < 8 || msgLength > 2000))
 				{
 					libpq_append_conn_error(conn, "expected authentication request from server, but received %c",
 									   beresp);
@@ -3349,6 +3351,16 @@ keep_going:						/* We will come back to here until there is
 					}
 #endif
 
+					goto error_return;
+				}
+				else if (beresp == 'v')
+				{
+					if (pqGetNegotiateProtocolVersion3(conn))
+					{
+						goto error_return;
+					}
+					/* OK, we read the message; mark data consumed */
+					conn->inStart = conn->inCursor;
 					goto error_return;
 				}
 

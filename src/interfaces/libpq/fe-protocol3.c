@@ -1386,6 +1386,61 @@ reportErrorPosition(PQExpBuffer msg, const char *query, int loc, int encoding)
 
 
 /*
+ * Attempt to read a NegotiateProtocolVersion message.
+ * Entry: 'v' message type and length have already been consumed.
+ * Exit: returns 0 if successfully consumed message.
+ *		 returns EOF if not enough data.
+ */
+int
+pqGetNegotiateProtocolVersion3(PGconn *conn)
+{
+	int			tmp;
+	ProtocolVersion their_version;
+	int			num;
+	PQExpBufferData buf;
+
+	if (pqGetInt(&tmp, 4, conn) != 0)
+		return EOF;
+	their_version = tmp;
+
+	if (pqGetInt(&num, 4, conn) != 0)
+		return EOF;
+
+	initPQExpBuffer(&buf);
+	for (int i = 0; i < num; i++)
+	{
+		if (pqGets(&conn->workBuffer, conn))
+		{
+			termPQExpBuffer(&buf);
+			return EOF;
+		}
+		if (buf.len > 0)
+			appendPQExpBufferChar(&buf, ' ');
+		appendPQExpBufferStr(&buf, conn->workBuffer.data);
+	}
+
+	if (their_version < conn->pversion)
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("protocol version not supported by server: client uses %u.%u, server supports up to %u.%u\n"),
+						  PG_PROTOCOL_MAJOR(conn->pversion), PG_PROTOCOL_MINOR(conn->pversion),
+						  PG_PROTOCOL_MAJOR(their_version), PG_PROTOCOL_MINOR(their_version));
+	if (num > 0)
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_ngettext("protocol extension not supported by server: %s\n",
+										 "protocol extensions not supported by server: %s\n", num),
+						  buf.data);
+
+	/* neither -- server shouldn't have sent it */
+	if (!(their_version < conn->pversion) && !(num > 0))
+		appendPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("invalid %s message"), "NegotiateProtocolVersion");
+
+	termPQExpBuffer(&buf);
+	return 0;
+}
+
+
+/*
  * Attempt to read a ParameterStatus message.
  * This is possible in several places, so we break it out as a subroutine.
  * Entry: 'S' message type and length have already been consumed.
