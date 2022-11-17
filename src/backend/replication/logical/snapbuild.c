@@ -93,7 +93,7 @@
  * Initially the machinery is in the START stage. When an xl_running_xacts
  * record is read that is sufficiently new (above the safe xmin horizon),
  * there's a state transition. If there were no running xacts when the
- * running_xacts record was generated, we'll directly go into CONSISTENT
+ * xl_running_xacts record was generated, we'll directly go into CONSISTENT
  * state, otherwise we'll switch to the BUILDING_SNAPSHOT state. Having a full
  * snapshot means that all transactions that start henceforth can be decoded
  * in their entirety, but transactions that started previously can't. In
@@ -1331,7 +1331,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 */
 
 	/*
-	 * xl_running_xact record is older than what we can use, we might not have
+	 * xl_running_xacts record is older than what we can use, we might not have
 	 * all necessary catalog rows anymore.
 	 */
 	if (TransactionIdIsNormal(builder->initial_xmin_horizon) &&
@@ -1399,7 +1399,7 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	 * encountered.  In that case, switch to BUILDING_SNAPSHOT state, and
 	 * record xl_running_xacts->nextXid.  Once all running xacts have finished
 	 * (i.e. they're all >= nextXid), we have a complete catalog snapshot.  It
-	 * might look that we could use xl_running_xact's ->xids information to
+	 * might look that we could use xl_running_xacts's ->xids information to
 	 * get there quicker, but that is problematic because transactions marked
 	 * as running, might already have inserted their commit record - it's
 	 * infeasible to change that with locking.
