@@ -2799,7 +2799,7 @@ lmerge_matched:;
 		{
 			case TM_Ok:
 				/* all good; perform final actions */
-				if (canSetTag)
+				if (canSetTag && commandType != CMD_NOTHING)
 					(estate->es_processed)++;
 
 				break;
