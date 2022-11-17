@@ -63,8 +63,9 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_delete *xlrec = (xl_btree_delete *) rec;
 
-				appendStringInfo(buf, "latestRemovedXid %u; ndeleted %u; nupdated %u",
-								 xlrec->latestRemovedXid, xlrec->ndeleted, xlrec->nupdated);
+				appendStringInfo(buf, "snapshotConflictHorizon %u; ndeleted %u; nupdated %u",
+								 xlrec->snapshotConflictHorizon,
+								 xlrec->ndeleted, xlrec->nupdated);
 				break;
 			}
 		case XLOG_BTREE_MARK_PAGE_HALFDEAD:
@@ -100,11 +101,11 @@ btree_desc(StringInfo buf, XLogReaderState *record)
 			{
 				xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) rec;
 
-				appendStringInfo(buf, "rel %u/%u/%u; latestRemovedXid %u:%u",
+				appendStringInfo(buf, "rel %u/%u/%u; snapshotConflictHorizon %u:%u",
 								 xlrec->locator.spcOid, xlrec->locator.dbOid,
 								 xlrec->locator.relNumber,
-								 EpochFromFullTransactionId(xlrec->latestRemovedFullXid),
-								 XidFromFullTransactionId(xlrec->latestRemovedFullXid));
+								 EpochFromFullTransactionId(xlrec->snapshotConflictHorizon),
+								 XidFromFullTransactionId(xlrec->snapshotConflictHorizon));
 				break;
 			}
 		case XLOG_BTREE_META_CLEANUP:

@@ -464,8 +464,18 @@ ResolveRecoveryConflictWithVirtualXIDs(VirtualTransactionId *waitlist,
 	}
 }
 
+/*
+ * Generate whatever recovery conflicts are needed to eliminate snapshots that
+ * might see XIDs <= snapshotConflictHorizon as still running.
+ *
+ * snapshotConflictHorizon cutoffs are our standard approach to generating
+ * granular recovery conflicts.  Note that InvalidTransactionId values are
+ * interpreted as "definitely don't need any conflicts" here, which is a
+ * general convention that WAL records can (and often do) depend on.
+ */
 void
-ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileLocator locator)
+ResolveRecoveryConflictWithSnapshot(TransactionId snapshotConflictHorizon,
+									RelFileLocator locator)
 {
 	VirtualTransactionId *backends;
 
@@ -480,12 +490,11 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileLocat
 	 * which is sufficient for the deletion operation must take place before
 	 * replay of the deletion record itself).
 	 */
-	if (!TransactionIdIsValid(latestRemovedXid))
+	if (!TransactionIdIsValid(snapshotConflictHorizon))
 		return;
 
-	backends = GetConflictingVirtualXIDs(latestRemovedXid,
+	backends = GetConflictingVirtualXIDs(snapshotConflictHorizon,
 										 locator.dbOid);
-
 	ResolveRecoveryConflictWithVirtualXIDs(backends,
 										   PROCSIG_RECOVERY_CONFLICT_SNAPSHOT,
 										   WAIT_EVENT_RECOVERY_CONFLICT_SNAPSHOT,
@@ -497,7 +506,7 @@ ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid, RelFileLocat
  * FullTransactionId values
  */
 void
-ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXid,
+ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId snapshotConflictHorizon,
 										   RelFileLocator locator)
 {
 	/*
@@ -510,13 +519,13 @@ ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXi
 	uint64		diff;
 
 	diff = U64FromFullTransactionId(nextXid) -
-		U64FromFullTransactionId(latestRemovedFullXid);
+		U64FromFullTransactionId(snapshotConflictHorizon);
 	if (diff < MaxTransactionId / 2)
 	{
-		TransactionId latestRemovedXid;
+		TransactionId truncated;
 
-		latestRemovedXid = XidFromFullTransactionId(latestRemovedFullXid);
-		ResolveRecoveryConflictWithSnapshot(latestRemovedXid, locator);
+		truncated = XidFromFullTransactionId(snapshotConflictHorizon);
+		ResolveRecoveryConflictWithSnapshot(truncated, locator);
 	}
 }
 

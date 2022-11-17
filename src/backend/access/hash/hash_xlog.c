@@ -1000,7 +1000,8 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 		RelFileLocator rlocator;
 
 		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
-		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid, rlocator);
+		ResolveRecoveryConflictWithSnapshot(xldata->snapshotConflictHorizon,
+											rlocator);
 	}
 
 	action = XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &buffer);

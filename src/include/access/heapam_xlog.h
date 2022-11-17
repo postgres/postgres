@@ -242,7 +242,7 @@ typedef struct xl_heap_update
  */
 typedef struct xl_heap_prune
 {
-	TransactionId latestRemovedXid;
+	TransactionId snapshotConflictHorizon;
 	uint16		nredirected;
 	uint16		ndead;
 	/* OFFSET NUMBERS are in the block reference 0 */
@@ -342,7 +342,7 @@ typedef struct xl_heap_freeze_plan
  */
 typedef struct xl_heap_freeze_page
 {
-	TransactionId latestRemovedXid;
+	TransactionId snapshotConflictHorizon;
 	uint16		nplans;
 
 	/* FREEZE PLANS FOLLOW */
@@ -359,7 +359,7 @@ typedef struct xl_heap_freeze_page
  */
 typedef struct xl_heap_visible
 {
-	TransactionId cutoff_xid;
+	TransactionId snapshotConflictHorizon;
 	uint8		flags;
 } xl_heap_visible;
 
@@ -396,8 +396,8 @@ typedef struct xl_heap_rewrite_mapping
 	XLogRecPtr	start_lsn;		/* Insert LSN at begin of rewrite */
 } xl_heap_rewrite_mapping;
 
-extern void HeapTupleHeaderAdvanceLatestRemovedXid(HeapTupleHeader tuple,
-												   TransactionId *latestRemovedXid);
+extern void HeapTupleHeaderAdvanceConflictHorizon(HeapTupleHeader tuple,
+												  TransactionId *snapshotConflictHorizon);
 
 extern void heap_redo(XLogReaderState *record);
 extern void heap_desc(StringInfo buf, XLogReaderState *record);
@@ -409,6 +409,8 @@ extern const char *heap2_identify(uint8 info);
 extern void heap_xlog_logical_rewrite(XLogReaderState *r);
 
 extern XLogRecPtr log_heap_visible(RelFileLocator rlocator, Buffer heap_buffer,
-								   Buffer vm_buffer, TransactionId cutoff_xid, uint8 vmflags);
+								   Buffer vm_buffer,
+								   TransactionId snapshotConflictHorizon,
+								   uint8 vmflags);
 
 #endif							/* HEAPAM_XLOG_H */

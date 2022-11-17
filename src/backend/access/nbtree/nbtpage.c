@@ -41,7 +41,7 @@ static BTMetaPageData *_bt_getmeta(Relation rel, Buffer metabuf);
 static void _bt_log_reuse_page(Relation rel, BlockNumber blkno,
 							   FullTransactionId safexid);
 static void _bt_delitems_delete(Relation rel, Buffer buf,
-								TransactionId latestRemovedXid,
+								TransactionId snapshotConflictHorizon,
 								OffsetNumber *deletable, int ndeletable,
 								BTVacuumPosting *updatable, int nupdatable);
 static char *_bt_delitems_update(BTVacuumPosting *updatable, int nupdatable,
@@ -838,7 +838,7 @@ _bt_log_reuse_page(Relation rel, BlockNumber blkno, FullTransactionId safexid)
 	/* XLOG stuff */
 	xlrec_reuse.locator = rel->rd_locator;
 	xlrec_reuse.block = blkno;
-	xlrec_reuse.latestRemovedFullXid = safexid;
+	xlrec_reuse.snapshotConflictHorizon = safexid;
 
 	XLogBeginInsert();
 	XLogRegisterData((char *) &xlrec_reuse, SizeOfBtreeReusePage);
@@ -1156,7 +1156,7 @@ _bt_pageinit(Page page, Size size)
  * (a version that lacks the TIDs that are to be deleted).
  *
  * We record VACUUMs and b-tree deletes differently in WAL.  Deletes must
- * generate their own latestRemovedXid by accessing the table directly,
+ * generate their own snapshotConflictHorizon directly from the tableam,
  * whereas VACUUMs rely on the initial VACUUM table scan performing
  * WAL-logging that takes care of the issue for the table's indexes
  * indirectly.  Also, we remove the VACUUM cycle ID from pages, which b-tree
@@ -1287,13 +1287,14 @@ _bt_delitems_vacuum(Relation rel, Buffer buf,
  * (a version that lacks the TIDs that are to be deleted).
  *
  * This is nearly the same as _bt_delitems_vacuum as far as what it does to
- * the page, but it needs its own latestRemovedXid from caller (caller gets
- * this from tableam).  This is used by the REDO routine to generate recovery
+ * the page, but it needs its own snapshotConflictHorizon (caller gets this
+ * from tableam).  This is used by the REDO routine to generate recovery
  * conflicts.  The other difference is that only _bt_delitems_vacuum will
  * clear page's VACUUM cycle ID.
  */
 static void
-_bt_delitems_delete(Relation rel, Buffer buf, TransactionId latestRemovedXid,
+_bt_delitems_delete(Relation rel, Buffer buf,
+					TransactionId snapshotConflictHorizon,
 					OffsetNumber *deletable, int ndeletable,
 					BTVacuumPosting *updatable, int nupdatable)
 {
@@ -1357,7 +1358,7 @@ _bt_delitems_delete(Relation rel, Buffer buf, TransactionId latestRemovedXid,
 		XLogRecPtr	recptr;
 		xl_btree_delete xlrec_delete;
 
-		xlrec_delete.latestRemovedXid = latestRemovedXid;
+		xlrec_delete.snapshotConflictHorizon = snapshotConflictHorizon;
 		xlrec_delete.ndeleted = ndeletable;
 		xlrec_delete.nupdated = nupdatable;
 
@@ -1529,7 +1530,7 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 						  TM_IndexDeleteOp *delstate)
 {
 	Page		page = BufferGetPage(buf);
-	TransactionId latestRemovedXid;
+	TransactionId snapshotConflictHorizon;
 	OffsetNumber postingidxoffnum = InvalidOffsetNumber;
 	int			ndeletable = 0,
 				nupdatable = 0;
@@ -1537,11 +1538,11 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 	BTVacuumPosting updatable[MaxIndexTuplesPerPage];
 
 	/* Use tableam interface to determine which tuples to delete first */
-	latestRemovedXid = table_index_delete_tuples(heapRel, delstate);
+	snapshotConflictHorizon = table_index_delete_tuples(heapRel, delstate);
 
-	/* Should not WAL-log latestRemovedXid unless it's required */
-	if (!XLogStandbyInfoActive() || !RelationNeedsWAL(rel))
-		latestRemovedXid = InvalidTransactionId;
+	/* Should not WAL-log snapshotConflictHorizon unless it's required */
+	if (!XLogStandbyInfoActive())
+		snapshotConflictHorizon = InvalidTransactionId;
 
 	/*
 	 * Construct a leaf-page-wise description of what _bt_delitems_delete()
@@ -1683,8 +1684,8 @@ _bt_delitems_delete_check(Relation rel, Buffer buf, Relation heapRel,
 	}
 
 	/* Physically delete tuples (or TIDs) using deletable (or updatable) */
-	_bt_delitems_delete(rel, buf, latestRemovedXid, deletable, ndeletable,
-						updatable, nupdatable);
+	_bt_delitems_delete(rel, buf, snapshotConflictHorizon,
+						deletable, ndeletable, updatable, nupdatable);
 
 	/* be tidy */
 	for (int i = 0; i < nupdatable; i++)

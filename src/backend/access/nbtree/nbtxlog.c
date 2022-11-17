@@ -668,7 +668,8 @@ btree_xlog_delete(XLogReaderState *record)
 
 		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
 
-		ResolveRecoveryConflictWithSnapshot(xlrec->latestRemovedXid, rlocator);
+		ResolveRecoveryConflictWithSnapshot(xlrec->snapshotConflictHorizon,
+											rlocator);
 	}
 
 	/*
@@ -991,7 +992,7 @@ btree_xlog_newroot(XLogReaderState *record)
  * xl_btree_reuse_page record at the point that a page is actually recycled
  * and reused for an entirely unrelated page inside _bt_split().  These
  * records include the same safexid value from the original deleted page,
- * stored in the record's latestRemovedFullXid field.
+ * stored in the record's snapshotConflictHorizon field.
  *
  * The GlobalVisCheckRemovableFullXid() test in BTPageIsRecyclable() is used
  * to determine if it's safe to recycle a page.  This mirrors our own test:
@@ -1005,7 +1006,7 @@ btree_xlog_reuse_page(XLogReaderState *record)
 	xl_btree_reuse_page *xlrec = (xl_btree_reuse_page *) XLogRecGetData(record);
 
 	if (InHotStandby)
-		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->latestRemovedFullXid,
+		ResolveRecoveryConflictWithSnapshotFullXid(xlrec->snapshotConflictHorizon,
 												   xlrec->locator);
 }
 

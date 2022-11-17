@@ -187,7 +187,7 @@ typedef struct xl_btree_reuse_page
 {
 	RelFileLocator locator;
 	BlockNumber block;
-	FullTransactionId latestRemovedFullXid;
+	FullTransactionId snapshotConflictHorizon;
 } xl_btree_reuse_page;
 
 #define SizeOfBtreeReusePage	(sizeof(xl_btree_reuse_page))
@@ -199,7 +199,7 @@ typedef struct xl_btree_reuse_page
  * when btinsert() is called.
  *
  * The records are very similar.  The only difference is that xl_btree_delete
- * has to include a latestRemovedXid field to generate recovery conflicts.
+ * has a snapshotConflictHorizon field to generate recovery conflicts.
  * (VACUUM operations can just rely on earlier conflicts generated during
  * pruning of the table whose TIDs the to-be-deleted index tuples point to.
  * There are also small differences between each REDO routine that we don't go
@@ -232,7 +232,7 @@ typedef struct xl_btree_vacuum
 
 typedef struct xl_btree_delete
 {
-	TransactionId latestRemovedXid;
+	TransactionId snapshotConflictHorizon;
 	uint16		ndeleted;
 	uint16		nupdated;
 
