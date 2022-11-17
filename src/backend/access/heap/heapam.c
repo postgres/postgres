@@ -6442,7 +6442,7 @@ FreezeMultiXactId(MultiXactId multi, uint16 t_infomask,
  * will be totally frozen after these operations are performed and false if
  * more freezing will eventually be required.
  *
- * VACUUM caller must assemble HeapFreezeTuple entries for every tuple that we
+ * VACUUM caller must assemble HeapTupleFreeze entries for every tuple that we
  * returned true for when called.  A later heap_freeze_execute_prepared call
  * will execute freezing for caller's page as a whole.
  *
