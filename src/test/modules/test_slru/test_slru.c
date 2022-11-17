@@ -20,7 +20,6 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/shmem.h"
-#include "storage/lwlock.h"
 #include "utils/builtins.h"
 
 PG_MODULE_MAGIC;
