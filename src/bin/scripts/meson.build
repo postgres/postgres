@@ -38,6 +38,7 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
+    'env': {'with_icu': icu.found() ? 'yes' : 'no'},
     'tests': [
       't/010_clusterdb.pl',
       't/011_clusterdb_all.pl',
