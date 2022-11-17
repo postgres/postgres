@@ -389,8 +389,8 @@ pg_truncate_visibility_map(PG_FUNCTION_ARGS)
 	/* Only some relkinds have a visibility map */
 	check_relation_relkind(rel);
 
-	RelationOpenSmgr(rel);
-	rel->rd_smgr->smgr_vm_nblocks = InvalidBlockNumber;
+	/* Forcibly reset cached file size */
+	RelationGetSmgr(rel)->smgr_vm_nblocks = InvalidBlockNumber;
 
 	visibilitymap_truncate(rel, 0);
 

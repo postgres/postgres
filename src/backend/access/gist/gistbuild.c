@@ -514,7 +514,7 @@ gistBuildCallback(Relation index,
 	 */
 	if ((buildstate->bufferingMode == GIST_BUFFERING_AUTO &&
 		 buildstate->indtuples % BUFFERING_MODE_SWITCH_CHECK_STEP == 0 &&
-		 effective_cache_size < smgrnblocks(index->rd_smgr, MAIN_FORKNUM)) ||
+		 effective_cache_size < smgrnblocks(RelationGetSmgr(index), MAIN_FORKNUM)) ||
 		(buildstate->bufferingMode == GIST_BUFFERING_STATS &&
 		 buildstate->indtuples >= BUFFERING_MODE_TUPLE_SIZE_STATS_TARGET))
 	{

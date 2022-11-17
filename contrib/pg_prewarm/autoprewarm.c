@@ -518,15 +518,13 @@ autoprewarm_database_main(Datum main_arg)
 			old_blk->filenode != blk->filenode ||
 			old_blk->forknum != blk->forknum)
 		{
-			RelationOpenSmgr(rel);
-
 			/*
 			 * smgrexists is not safe for illegal forknum, hence check whether
 			 * the passed forknum is valid before using it in smgrexists.
 			 */
 			if (blk->forknum > InvalidForkNumber &&
 				blk->forknum <= MAX_FORKNUM &&
-				smgrexists(rel->rd_smgr, blk->forknum))
+				smgrexists(RelationGetSmgr(rel), blk->forknum))
 				nblocks = RelationGetNumberOfBlocksInFork(rel, blk->forknum);
 			else
 				nblocks = 0;

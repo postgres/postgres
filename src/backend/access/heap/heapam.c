@@ -9098,8 +9098,7 @@ heap_sync(Relation rel)
 
 	/* main heap */
 	FlushRelationBuffers(rel);
-	/* FlushRelationBuffers will have opened rd_smgr */
-	smgrimmedsync(rel->rd_smgr, MAIN_FORKNUM);
+	smgrimmedsync(RelationGetSmgr(rel), MAIN_FORKNUM);
 
 	/* FSM is not critical, don't bother syncing it */
 
@@ -9110,7 +9109,7 @@ heap_sync(Relation rel)
 
 		toastrel = table_open(rel->rd_rel->reltoastrelid, AccessShareLock);
 		FlushRelationBuffers(toastrel);
-		smgrimmedsync(toastrel->rd_smgr, MAIN_FORKNUM);
+		smgrimmedsync(RelationGetSmgr(toastrel), MAIN_FORKNUM);
 		table_close(toastrel, AccessShareLock);
 	}
 }
