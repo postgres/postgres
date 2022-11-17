@@ -415,8 +415,6 @@ heap_create(const char *relname,
 	 */
 	if (create_storage)
 	{
-		RelationOpenSmgr(rel);
-
 		switch (rel->rd_rel->relkind)
 		{
 			case RELKIND_VIEW:
