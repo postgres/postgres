@@ -304,15 +304,13 @@ sub command_exit_is
 	my $h = start $cmd;
 	$h->finish();
 
-	# On Windows, the exit status of the process is returned directly as the
-	# process's exit code, while on Unix, it's returned in the high bits
-	# of the exit code (see WEXITSTATUS macro in the standard <sys/wait.h>
-	# header file). IPC::Run's result function always returns exit code >> 8,
-	# assuming the Unix convention, which will always return 0 on Windows as
-	# long as the process was not terminated by an exception. To work around
-	# that, use $h->full_result on Windows instead.
-	my $result = ($Config{osname} eq "MSWin32") ?
-		($h->full_results)[0] : $h->result(0);
+	# Normally, if the child called exit(N), IPC::Run::result() returns N.  On
+	# Windows, with IPC::Run v20220807.0 and earlier, full_results() is the
+	# method that returns N (https://github.com/toddr/IPC-Run/issues/161).
+	my $result =
+	  ($Config{osname} eq "MSWin32" && $IPC::Run::VERSION <= 20220807.0)
+	  ? ($h->full_results)[0]
+	  : $h->result(0);
 	is($result, $expected, $test_name);
 }
 
