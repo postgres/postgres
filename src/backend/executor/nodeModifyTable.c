@@ -1515,13 +1515,7 @@ ldelete:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent delete")));
-
-				/*
-				 * tuple already deleted; nothing to do. But MERGE might want
-				 * to handle it differently. We've already filled-in
-				 * actionInfo with sufficient information for MERGE to look
-				 * at.
-				 */
+				/* tuple already deleted; nothing to do */
 				return NULL;
 
 			default:
