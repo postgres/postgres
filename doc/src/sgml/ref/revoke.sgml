@@ -125,7 +125,7 @@ REVOKE [ GRANT OPTION FOR ]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
 
-REVOKE [ { ADMIN | INHERIT } OPTION FOR ]
+REVOKE [ { ADMIN | INHERIT | SET } OPTION FOR ]
     <replaceable class="parameter">role_name</replaceable> [, ...] FROM <replaceable class="parameter">role_specification</replaceable> [, ...]
     [ GRANTED BY <replaceable class="parameter">role_specification</replaceable> ]
     [ CASCADE | RESTRICT ]
@@ -209,9 +209,9 @@ REVOKE [ { ADMIN | INHERIT } OPTION FOR ]
 
   <para>
    Just as <literal>ADMIN OPTION</literal> can be removed from an existing
-   role grant, it is also possible to revoke <literal>INHERIT OPTION</literal>.
-   This is equivalent to setting the value of that option to
-   <literal>FALSE</literal>.
+   role grant, it is also possible to revoke <literal>INHERIT OPTION</literal>
+   or <literal>SET OPTION</literal>.  This is equivalent to setting the value
+   of the corresponding option to <literal>FALSE</literal>.
   </para>
  </refsect1>
 

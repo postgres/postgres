@@ -51,8 +51,8 @@
  * RRG_REMOVE_ADMIN_OPTION indicates a grant that would need to have
  * admin_option set to false by the operation.
  *
- * RRG_REMOVE_INHERIT_OPTION indicates a grant that would need to have
- * inherit_option set to false by the operation.
+ * Similarly, RRG_REMOVE_INHERIT_OPTION and RRG_REMOVE_SET_OPTION indicate
+ * grants that would need to have the corresponding options set to false.
  *
  * RRG_DELETE_GRANT indicates a grant that would need to be removed entirely
  * by the operation.
@@ -62,6 +62,7 @@ typedef enum
 	RRG_NOOP,
 	RRG_REMOVE_ADMIN_OPTION,
 	RRG_REMOVE_INHERIT_OPTION,
+	RRG_REMOVE_SET_OPTION,
 	RRG_DELETE_GRANT
 } RevokeRoleGrantAction;
 
@@ -73,10 +74,12 @@ typedef struct
 	unsigned	specified;
 	bool		admin;
 	bool		inherit;
+	bool		set;
 } GrantRoleOptions;
 
 #define GRANT_ROLE_SPECIFIED_ADMIN			0x0001
 #define GRANT_ROLE_SPECIFIED_INHERIT		0x0002
+#define GRANT_ROLE_SPECIFIED_SET			0x0004
 
 /* GUC parameter */
 int			Password_encryption = PASSWORD_TYPE_SCRAM_SHA_256;
@@ -1389,6 +1392,12 @@ GrantRole(ParseState *pstate, GrantRoleStmt *stmt)
 			if (parse_bool(optval, &popt.inherit))
 				continue;
 		}
+		else if (strcmp(opt->defname, "set") == 0)
+		{
+			popt.specified |= GRANT_ROLE_SPECIFIED_SET;
+			if (parse_bool(optval, &popt.set))
+				continue;
+		}
 		else
 			ereport(ERROR,
 					errcode(ERRCODE_SYNTAX_ERROR),
@@ -1776,6 +1785,16 @@ AddRoleMems(const char *rolename, Oid roleid,
 				at_least_one_change = true;
 			}
 
+			if ((popt->specified & GRANT_ROLE_SPECIFIED_SET) != 0
+				&& authmem_form->set_option != popt->set)
+			{
+				new_record[Anum_pg_auth_members_set_option - 1] =
+					BoolGetDatum(popt->set);
+				new_record_repl[Anum_pg_auth_members_set_option - 1] =
+					true;
+				at_least_one_change = true;
+			}
+
 			if (!at_least_one_change)
 			{
 				ereport(NOTICE,
@@ -1798,9 +1817,15 @@ AddRoleMems(const char *rolename, Oid roleid,
 			Oid			objectId;
 			Oid		   *newmembers = palloc(sizeof(Oid));
 
-			/* Set admin option if user set it to true, otherwise not. */
+			/*
+			 * The values for these options can be taken directly from 'popt'.
+			 * Either they were specified, or the defaults as set by
+			 * InitGrantRoleOptions are correct.
+			 */
 			new_record[Anum_pg_auth_members_admin_option - 1] =
 				BoolGetDatum(popt->admin);
+			new_record[Anum_pg_auth_members_set_option - 1] =
+				BoolGetDatum(popt->set);
 
 			/*
 			 * If the user specified a value for the inherit option, use
@@ -1987,6 +2012,13 @@ DelRoleMems(const char *rolename, Oid roleid,
 				new_record[Anum_pg_auth_members_inherit_option - 1] =
 					BoolGetDatum(false);
 				new_record_repl[Anum_pg_auth_members_inherit_option - 1] =
+					true;
+			}
+			else if (actions[i] == RRG_REMOVE_SET_OPTION)
+			{
+				new_record[Anum_pg_auth_members_set_option - 1] =
+					BoolGetDatum(false);
+				new_record_repl[Anum_pg_auth_members_set_option - 1] =
 					true;
 			}
 			else
@@ -2182,6 +2214,11 @@ plan_single_revoke(CatCList *memlist, RevokeRoleGrantAction *actions,
 				 */
 				actions[i] = RRG_REMOVE_INHERIT_OPTION;
 			}
+			else if ((popt->specified & GRANT_ROLE_SPECIFIED_SET) != 0)
+			{
+				/* Here too, no need to recurse. */
+				actions[i] = RRG_REMOVE_SET_OPTION;
+			}
 			else
 			{
 				bool	revoke_admin_option_only;
@@ -2331,4 +2368,5 @@ InitGrantRoleOptions(GrantRoleOptions *popt)
 	popt->specified = 0;
 	popt->admin = false;
 	popt->inherit = false;
+	popt->set = true;
 }

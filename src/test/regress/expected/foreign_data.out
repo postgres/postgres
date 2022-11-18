@@ -442,7 +442,7 @@ ERROR:  invalid option "foo"
 ALTER SERVER s8 OPTIONS (connect_timeout '30', SET dbname 'db1', DROP host);
 SET ROLE regress_test_role;
 ALTER SERVER s1 OWNER TO regress_test_indirect;             -- ERROR
-ERROR:  must be member of role "regress_test_indirect"
+ERROR:  must be able to SET ROLE "regress_test_indirect"
 RESET ROLE;
 GRANT regress_test_indirect TO regress_test_role;
 SET ROLE regress_test_role;

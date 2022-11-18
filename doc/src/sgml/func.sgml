@@ -23033,11 +23033,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
        <para>
         Does user have privilege for role?
         Allowable privilege types are
-        <literal>MEMBER</literal> and <literal>USAGE</literal>.
+        <literal>MEMBER</literal>, <literal>USAGE</literal>,
+        and <literal>SET</literal>.
         <literal>MEMBER</literal> denotes direct or indirect membership in
-        the role (that is, the right to do <command>SET ROLE</command>), while
+        the role without regard to what specific privileges may be conferred.
         <literal>USAGE</literal> denotes whether the privileges of the role
-        are immediately available without doing <command>SET ROLE</command>.
+        are immediately available without doing <command>SET ROLE</command>,
+        while <literal>SET</literal> denotes whether it is possible to change
+        to the role using the <literal>SET ROLE</literal> command.
         This function does not allow the special case of
         setting <parameter>user</parameter> to <literal>public</literal>,
         because the PUBLIC pseudo-role can never be a member of real roles.

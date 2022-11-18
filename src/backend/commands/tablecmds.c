@@ -13833,7 +13833,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing, LOCKMODE lock
 								   RelationGetRelationName(target_rel));
 
 				/* Must be able to become new owner */
-				check_is_member_of_role(GetUserId(), newOwnerId);
+				check_can_set_role(GetUserId(), newOwnerId);
 
 				/* New owner must have CREATE privilege on namespace */
 				aclresult = object_aclcheck(NamespaceRelationId, namespaceOid, newOwnerId,

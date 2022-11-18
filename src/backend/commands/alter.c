@@ -999,7 +999,7 @@ AlterObjectOwner_internal(Relation rel, Oid objectId, Oid new_ownerId)
 							   objname);
 			}
 			/* Must be able to become new owner */
-			check_is_member_of_role(GetUserId(), new_ownerId);
+			check_can_set_role(GetUserId(), new_ownerId);
 
 			/* New owner must have CREATE privilege on namespace */
 			if (OidIsValid(namespaceId))

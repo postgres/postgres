@@ -941,7 +941,7 @@ createdb(ParseState *pstate, const CreatedbStmt *stmt)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to create database")));
 
-	check_is_member_of_role(GetUserId(), datdba);
+	check_can_set_role(GetUserId(), datdba);
 
 	/*
 	 * Lookup database (template) to be cloned, and obtain share lock on it.
@@ -2495,7 +2495,7 @@ AlterDatabaseOwner(const char *dbname, Oid newOwnerId)
 						   dbname);
 
 		/* Must be able to become new owner */
-		check_is_member_of_role(GetUserId(), newOwnerId);
+		check_can_set_role(GetUserId(), newOwnerId);
 
 		/*
 		 * must have createdb rights

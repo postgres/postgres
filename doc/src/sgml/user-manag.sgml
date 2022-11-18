@@ -354,7 +354,8 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
 
   <para>
    The members of a group role can use the privileges of the role in two
-   ways.  First, every member of a group can explicitly do
+   ways.  First, member roles that have been granted membership with the
+   <literal>SET</literal> option can do
    <link linkend="sql-set-role"><command>SET ROLE</command></link> to
    temporarily <quote>become</quote> the group role.  In this state, the
    database session has access to the privileges of the group role rather
@@ -369,13 +370,16 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
 CREATE ROLE joe LOGIN;
 CREATE ROLE admin;
 CREATE ROLE wheel;
+CREATE ROLE island;
 GRANT admin TO joe WITH INHERIT TRUE;
 GRANT wheel TO admin WITH INHERIT FALSE;
+GRANT island TO joe WITH INHERIT TRUE, SET FALSE;
 </programlisting>
    Immediately after connecting as role <literal>joe</literal>, a database
    session will have use of privileges granted directly to <literal>joe</literal>
-   plus any privileges granted to <literal>admin</literal>, because <literal>joe</literal>
-   <quote>inherits</quote> <literal>admin</literal>'s privileges.  However, privileges
+   plus any privileges granted to <literal>admin</literal> and
+   <literal>island</literal>, because <literal>joe</literal>
+   <quote>inherits</quote> those privileges.  However, privileges
    granted to <literal>wheel</literal> are not available, because even though
    <literal>joe</literal> is indirectly a member of <literal>wheel</literal>, the
    membership is via <literal>admin</literal> which was granted using
@@ -384,7 +388,8 @@ GRANT wheel TO admin WITH INHERIT FALSE;
 SET ROLE admin;
 </programlisting>
    the session would have use of only those privileges granted to
-   <literal>admin</literal>, and not those granted to <literal>joe</literal>.  After:
+   <literal>admin</literal>, and not those granted to <literal>joe</literal> or
+   <literal>island</literal>.  After:
 <programlisting>
 SET ROLE wheel;
 </programlisting>
@@ -402,9 +407,14 @@ RESET ROLE;
   <note>
    <para>
     The <command>SET ROLE</command> command always allows selecting any role
-    that the original login role is directly or indirectly a member of.
+    that the original login role is directly or indirectly a member of,
+    provided that there is a chain of membership grants each of which has
+    <literal>SET TRUE</literal> (which is the default).
     Thus, in the above example, it is not necessary to become
     <literal>admin</literal> before becoming <literal>wheel</literal>.
+    On the other hand, it is not possible to become <literal>island</literal>
+    at all; <literal>joe</literal> can only access those privileges via
+    inheritance.
    </para>
   </note>
 

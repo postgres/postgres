@@ -77,14 +77,17 @@ RESET ROLE
    effectively drops all the privileges except for those which the target role
    directly possesses or inherits.  On the other hand, if the session user role
    has been granted memberships <literal>WITH INHERIT FALSE</literal>, the
-   privileges of the granted roles can't be accessed by default. However, the
+   privileges of the granted roles can't be accessed by default. However, if
+   the role was granted <literal>WITH SET TRUE</literal>, the
    session user can use <command>SET ROLE</command> to drop the privileges
    assigned directly to the session user and instead acquire the privileges
-   available to the named role.
+   available to the named role. If the role was granted <literal>WITH INHERIT
+   FALSE, SET FALSE</literal> then the privileges of that role cannot be
+   exercised either with or without <literal>SET ROLE</literal>.
   </para>
 
   <para>
-   In particular, when a superuser chooses to <command>SET ROLE</command> to a
+   Note that when a superuser chooses to <command>SET ROLE</command> to a
    non-superuser role, they lose their superuser privileges.
   </para>
 
