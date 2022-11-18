@@ -4033,7 +4033,7 @@ int PQnparams(const PGresult *res);
 
       <para>
        This function is only useful when inspecting the result of
-       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of queries it
+       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of results it
        will return zero.
       </para>
      </listitem>
@@ -4053,7 +4053,7 @@ Oid PQparamtype(const PGresult *res, int param_number);
 
       <para>
        This function is only useful when inspecting the result of
-       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of queries it
+       <xref linkend="libpq-PQdescribePrepared"/>.  For other types of results it
        will return zero.
       </para>
      </listitem>
