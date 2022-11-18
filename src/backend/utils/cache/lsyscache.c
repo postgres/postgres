@@ -3183,6 +3183,10 @@ get_attavgwidth(Oid relid, AttrNumber attnum)
  *
  * If it's desirable to call free_attstatsslot when get_attstatsslot might
  * not have been called, memset'ing sslot to zeroes will allow that.
+ *
+ * Passing flags=0 can be useful to quickly check if the requested slot type
+ * exists.  In this case no arrays are extracted, so free_attstatsslot need
+ * not be called.
  */
 bool
 get_attstatsslot(AttStatsSlot *sslot, HeapTuple statstuple,

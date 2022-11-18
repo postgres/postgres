@@ -2261,6 +2261,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	Form_pg_statistic stats2 = NULL;
 	bool		have_mcvs1 = false;
 	bool		have_mcvs2 = false;
+	bool		get_mcv_stats;
 	bool		join_is_reversed;
 	RelOptInfo *inner_rel;
 
@@ -2275,11 +2276,25 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	memset(&sslot1, 0, sizeof(sslot1));
 	memset(&sslot2, 0, sizeof(sslot2));
 
+	/*
+	 * There is no use in fetching one side's MCVs if we lack MCVs for the
+	 * other side, so do a quick check to verify that both stats exist.
+	 */
+	get_mcv_stats = (HeapTupleIsValid(vardata1.statsTuple) &&
+					 HeapTupleIsValid(vardata2.statsTuple) &&
+					 get_attstatsslot(&sslot1, vardata1.statsTuple,
+									  STATISTIC_KIND_MCV, InvalidOid,
+									  0) &&
+					 get_attstatsslot(&sslot2, vardata2.statsTuple,
+									  STATISTIC_KIND_MCV, InvalidOid,
+									  0));
+
 	if (HeapTupleIsValid(vardata1.statsTuple))
 	{
 		/* note we allow use of nullfrac regardless of security check */
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1.statsTuple);
-		if (statistic_proc_security_check(&vardata1, opfuncoid))
+		if (get_mcv_stats &&
+			statistic_proc_security_check(&vardata1, opfuncoid))
 			have_mcvs1 = get_attstatsslot(&sslot1, vardata1.statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
 										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
@@ -2289,7 +2304,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	{
 		/* note we allow use of nullfrac regardless of security check */
 		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2.statsTuple);
-		if (statistic_proc_security_check(&vardata2, opfuncoid))
+		if (get_mcv_stats &&
+			statistic_proc_security_check(&vardata2, opfuncoid))
 			have_mcvs2 = get_attstatsslot(&sslot2, vardata2.statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
 										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
