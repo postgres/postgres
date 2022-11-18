@@ -374,7 +374,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Selects the user name of the
-        <glossterm linkend="glossary-bootstrap-superuser">boostrap superuser</glossterm>.
+        <glossterm linkend="glossary-bootstrap-superuser">bootstrap superuser</glossterm>.
         This defaults to the name of the
         <glossterm linkend="glossary-cluster-owner">cluster owner</glossterm>.
        </para>
