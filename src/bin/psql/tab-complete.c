@@ -1143,6 +1143,12 @@ static const SchemaQuery Query_for_trigger_of_table = {
 "  FROM pg_catalog.pg_timezone_names() "\
 " WHERE pg_catalog.quote_literal(pg_catalog.lower(name)) LIKE pg_catalog.lower('%s')"
 
+/* Privilege options shared between GRANT and REVOKE */
+#define Privilege_options_of_grant_and_revoke \
+"SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER", \
+"CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE", "SET", "ALTER SYSTEM", \
+"ALL"
+
 /*
  * These object types were introduced later than our support cutoff of
  * server version 9.2.  We use the VersionedQuery infrastructure so that
@@ -3767,7 +3773,7 @@ psql_completion(const char *text, int start, int end)
  */
 	/* Complete GRANT/REVOKE with a list of roles and privileges */
 	else if (TailMatches("GRANT|REVOKE") ||
-			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR"))
+			 TailMatches("REVOKE", "ADMIN|GRANT|INHERIT", "OPTION", "FOR"))
 	{
 		/*
 		 * With ALTER DEFAULT PRIVILEGES, restrict completion to grantable
@@ -3776,31 +3782,21 @@ psql_completion(const char *text, int start, int end)
 		if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES"))
 			COMPLETE_WITH("SELECT", "INSERT", "UPDATE",
 						  "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER",
-						  "EXECUTE", "USAGE", "ALL");
-		else
+						  "CREATE", "EXECUTE", "USAGE", "ALL");
+		else if (TailMatches("GRANT"))
 			COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
-									 "GRANT",
-									 "SELECT",
-									 "INSERT",
-									 "UPDATE",
-									 "DELETE",
-									 "TRUNCATE",
-									 "REFERENCES",
-									 "TRIGGER",
-									 "CREATE",
-									 "CONNECT",
-									 "TEMPORARY",
-									 "EXECUTE",
-									 "USAGE",
-									 "SET",
-									 "ALTER SYSTEM",
-									 "ALL");
+									 Privilege_options_of_grant_and_revoke);
+		else if (TailMatches("REVOKE"))
+			COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
+									 Privilege_options_of_grant_and_revoke,
+									 "GRANT OPTION FOR",
+									 "ADMIN OPTION FOR",
+									 "INHERIT OPTION FOR");
+		else if (TailMatches("REVOKE", "GRANT", "OPTION", "FOR"))
+			COMPLETE_WITH(Privilege_options_of_grant_and_revoke);
+		else if (TailMatches("REVOKE", "ADMIN|INHERIT", "OPTION", "FOR"))
+			COMPLETE_WITH_QUERY(Query_for_list_of_roles);
 	}
-
-	else if (TailMatches("REVOKE", "GRANT"))
-		COMPLETE_WITH("OPTION FOR");
-	else if (TailMatches("REVOKE", "GRANT", "OPTION"))
-		COMPLETE_WITH("FOR");
 
 	else if (TailMatches("GRANT|REVOKE", "ALTER") ||
 			 TailMatches("REVOKE", "GRANT", "OPTION", "FOR", "ALTER"))
@@ -3943,12 +3939,17 @@ psql_completion(const char *text, int start, int end)
 	 * Offer grant options after that.
 	 */
 	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny))
-		COMPLETE_WITH("WITH ADMIN OPTION",
+		COMPLETE_WITH("WITH ADMIN",
+					  "WITH INHERIT",
 					  "WITH GRANT OPTION",
 					  "GRANTED BY");
 	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH"))
-		COMPLETE_WITH("ADMIN OPTION",
+		COMPLETE_WITH("ADMIN",
+					  "INHERIT",
 					  "GRANT OPTION");
+	else if (HeadMatches("GRANT") &&
+			 (TailMatches("TO", MatchAny, "WITH", "ADMIN|INHERIT")))
+		COMPLETE_WITH("OPTION", "TRUE", "FALSE");
 	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION"))
 		COMPLETE_WITH("GRANTED BY");
 	else if (HeadMatches("GRANT") && TailMatches("TO", MatchAny, "WITH", MatchAny, "OPTION", "GRANTED", "BY"))
