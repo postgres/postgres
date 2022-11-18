@@ -252,7 +252,7 @@ GRANT <replaceable class="parameter">role_name</replaceable> [, ...] TO <replace
    in a role to one or more other roles.  Membership in a role is significant
    because it potentially allows access to the privileges granted to a role
    to each of its members, and potentially also the ability to make changes
-   to the role itself. However, the actualy permisions conferred depend on
+   to the role itself. However, the actual permisions conferred depend on
    the options associated with the grant.
   </para>
 
