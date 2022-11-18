@@ -393,24 +393,35 @@ task:
     cores_script: src/tools/ci/cores_backtrace.sh macos "${HOME}/cores"
 
 
-task:
-  name: Windows - Server 2019, VS 2019 - Meson & ninja
-
+WINDOWS_ENVIRONMENT_BASE: &WINDOWS_ENVIRONMENT_BASE
   env:
     # Half the allowed per-user CPU cores
     CPUS: 4
-    TEST_JOBS: 8 # wild guess, data based value welcome
 
     # The default cirrus working dir is in a directory msbuild complains about
     CIRRUS_WORKING_DIR: "c:/cirrus"
-    # Avoid re-installing over and over
-    NO_TEMP_INSTALL: 1
     # git's tar doesn't deal with drive letters, see
     # https://postgr.es/m/b6782dc3-a7b0-ed56-175f-f8f54cb08d67%40dunslane.net
     TAR: "c:/windows/system32/tar.exe"
     # Avoids port conflicts between concurrent tap test runs
     PG_TEST_USE_UNIX_SOCKETS: 1
     PG_REGRESS_SOCK_DIR: "c:/cirrus/"
+
+  sysinfo_script: |
+    chcp
+    systeminfo
+    powershell -Command get-psdrive -psprovider filesystem
+    set
+
+
+task:
+  name: Windows - Server 2019, VS 2019 - Meson & ninja
+  << : *WINDOWS_ENVIRONMENT_BASE
+
+  env:
+    TEST_JOBS: 8 # wild guess, data based value welcome
+    # Avoid re-installing over and over
+    NO_TEMP_INSTALL: 1
 
     # startcreate_script starts a postgres instance that we don't want to get
     # killed at the end of that script (it's stopped in stop_script). Can't
@@ -435,19 +446,13 @@ task:
     cpu: $CPUS
     memory: 4G
 
-  sysinfo_script: |
-    chcp
-    systeminfo
-    powershell -Command get-psdrive -psprovider filesystem
-    set
-
   setup_additional_packages_script: |
     REM choco install -y --no-progress ...
 
   # Use /DEBUG:FASTLINK to avoid high memory usage during linking
   configure_script: |
     vcvarsall x64
-    meson setup --backend ninja --buildtype debug -Dc_link_args=/DEBUG:FASTLINK -Dcassert=true -Db_pch=true -Dssl=openssl -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=c:/windows/system32/tar.exe -DPG_TEST_EXTRA="%PG_TEST_EXTRA%" build
+    meson setup --backend ninja --buildtype debug -Dc_link_args=/DEBUG:FASTLINK -Dcassert=true -Db_pch=true -Dssl=openssl -Dextra_lib_dirs=c:\openssl\1.1\lib -Dextra_include_dirs=c:\openssl\1.1\include -DTAR=%TAR% -DPG_TEST_EXTRA="%PG_TEST_EXTRA%" build
 
   build_script: |
     vcvarsall x64
@@ -456,6 +461,66 @@ task:
   check_world_script: |
     vcvarsall x64
     meson test %MTEST_ARGS% --num-processes %TEST_JOBS%
+
+  on_failure:
+    <<: *on_failure_meson
+    crashlog_artifacts:
+      path: "crashlog-*.txt"
+      type: text/plain
+
+
+task:
+  << : *WINDOWS_ENVIRONMENT_BASE
+  name: Windows - Server 2019, MinGW64 - Meson
+
+  # due to resource constraints we don't run this task by default for now
+  trigger_type: manual
+  # worth using only_if despite being manual, otherwise this task will show up
+  # when e.g. ci-os-only: linux is used.
+  only_if: $CIRRUS_CHANGE_MESSAGE !=~ '.*\nci-os-only:.*' || $CIRRUS_CHANGE_MESSAGE =~ '.*\nci-os-only:[^\n]*mingw.*'
+
+  windows_container:
+    image: $CONTAINER_REPO/windows_ci_mingw64:latest
+    cpu: $CPUS
+    memory: 4G
+
+  env:
+    TEST_JOBS: 4 # higher concurrency causes occasional failures
+    CCACHE_DIR: C:/msys64/ccache
+    CCACHE_MAXSIZE: "500M"
+    CCACHE_SLOPPINESS: pch_defines,time_macros
+    CCACHE_DEPEND: 1
+    # for some reason mingw plpython cannot find it's installation without this
+    PYTHONHOME: C:/msys64/ucrt64
+    # prevents MSYS bash from resetting error mode
+    MSYS: winjitdebug
+    # Start bash in current working directory
+    CHERE_INVOKING: 1
+    BASH: C:\msys64\usr\bin\bash.exe -l
+
+  ccache_cache:
+    folder: ${CCACHE_DIR}
+
+  setup_additional_packages_script: |
+    REM C:\msys64\usr\bin\pacman.exe -S --noconfirm ...
+
+  mingw_info_script: |
+    %BASH% -c "where gcc"
+    %BASH% -c "gcc --version"
+    %BASH% -c "where perl"
+    %BASH% -c "perl --version"
+
+  # disable -Dnls as the number of files it creates cause a noticable slowdown
+  configure_script: |
+    %BASH% -c "meson setup -Ddebug=true -Doptimization=g -Dcassert=true -Db_pch=true -Dnls=disabled -DTAR=%TAR% build"
+
+  build_script: |
+    %BASH% -c "ninja -C build"
+
+  upload_caches: ccache
+
+  test_world_script: |
+    %BASH% -c "meson test %MTEST_ARGS% --num-processes %TEST_JOBS%"
 
   on_failure:
     <<: *on_failure_meson
