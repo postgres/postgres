@@ -37,14 +37,13 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>initdb</command> creates a new
-   <productname>PostgreSQL</productname> database cluster.  A database
-   cluster is a collection of databases that are managed by a single
-   server instance.
+   <productname>PostgreSQL</productname> <glossterm linkend="glossary-db-cluster">database cluster</glossterm>.
   </para>
 
   <para>
-   Creating a database cluster consists of creating the directories in
-   which the database data will live, generating the shared catalog
+   Creating a database cluster consists of creating the
+   <glossterm linkend="glossary-data-directory">directories</glossterm> in
+   which the cluster data will live, generating the shared catalog
    tables (tables that belong to the whole cluster rather than to any
    particular database), and creating the <literal>postgres</literal>,
    <literal>template1</literal>, and <literal>template0</literal> databases.
@@ -196,7 +195,7 @@ PostgreSQL documentation
         <command>initdb</command>, but you can avoid writing it by
         setting the <envar>PGDATA</envar> environment variable, which
         can be convenient since the database server
-        (<command>postgres</command>) can find the database
+        (<command>postgres</command>) can find the data
         directory later by the same variable.
        </para>
       </listitem>
@@ -338,7 +337,7 @@ PostgreSQL documentation
       <term><option>--pwfile=<replaceable>filename</replaceable></option></term>
       <listitem>
        <para>
-        Makes <command>initdb</command> read the database superuser's password
+        Makes <command>initdb</command> read the bootstrap superuser's password
         from a file.  The first line of the file is taken as the password.
        </para>
       </listitem>
@@ -374,12 +373,10 @@ PostgreSQL documentation
       <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        Selects the user name of the database superuser. This defaults
-        to the name of the effective user running
-        <command>initdb</command>. It is really not important what the
-        superuser's name is, but one might choose to keep the
-        customary name <systemitem>postgres</systemitem>, even if the operating
-        system user's name is different.
+        Selects the user name of the
+        <glossterm linkend="glossary-bootstrap-superuser">boostrap superuser</glossterm>.
+        This defaults to the name of the
+        <glossterm linkend="glossary-cluster-owner">cluster owner</glossterm>.
        </para>
       </listitem>
      </varlistentry>
@@ -390,7 +387,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Makes <command>initdb</command> prompt for a password
-        to give the database superuser. If you don't plan on using password
+        to give the bootstrap superuser. If you don't plan on using password
         authentication, this is not important.  Otherwise you won't be
         able to use password authentication until you have a password
         set up.

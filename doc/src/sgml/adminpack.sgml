@@ -12,7 +12,7 @@
   <application>pgAdmin</application> and other administration and management tools can
   use to provide additional functionality, such as remote management
   of server log files.
-  Use of all these functions is only allowed to the superuser by default but may be
+  Use of all these functions is only allowed to database superusers by default, but may be
   allowed to other users by using the <command>GRANT</command> command.
  </para>
 
