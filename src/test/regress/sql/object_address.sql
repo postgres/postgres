@@ -145,6 +145,13 @@ SELECT pg_get_object_address('publication', '{one,two}', '{}');
 SELECT pg_get_object_address('subscription', '{one}', '{}');
 SELECT pg_get_object_address('subscription', '{one,two}', '{}');
 
+-- Make sure that NULL handling is correct.
+\pset null 'NULL'
+
+-- Temporarily disable fancy output, so as future additions never create
+-- a large amount of diffs.
+\a\t
+
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
     ('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
@@ -230,11 +237,6 @@ DROP USER regress_addr_user;
 --
 -- Checks for invalid objects
 --
--- Make sure that NULL handling is correct.
-\pset null 'NULL'
--- Temporarily disable fancy output, so as future additions never create
--- a large amount of diffs.
-\a\t
 
 -- Keep this list in the same order as getObjectIdentityParts()
 -- in objectaddress.c.
