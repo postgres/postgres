@@ -79,6 +79,11 @@ SELECT *
     WHERE city = 'San Francisco'
         AND prcp > 0.0;
 
+-- You can request that the results of a query be returned in sorted order:
+
+SELECT * FROM weather
+    ORDER BY city, temp_lo;
+
 -- Here is a more complicated one.  Duplicates are removed when DISTINCT is
 -- specified. ORDER BY specifies the column to sort on.  (Just to make sure the
 -- following won't confuse you, DISTINCT and ORDER BY can be used separately.)
@@ -111,7 +116,8 @@ SELECT city, temp_lo, temp_hi, prcp, date, location
 -- table name. If you want to be clear, you can do the following. They give
 -- identical results, of course.
 
-SELECT weather.city, weather.temp_lo, weather.temp_hi, weather.prcp, weather.date, cities.location
+SELECT weather.city, weather.temp_lo, weather.temp_hi,
+       weather.prcp, weather.date, cities.location
     FROM weather, cities
     WHERE cities.name = weather.city;
 
@@ -128,8 +134,8 @@ SELECT *
 -- Suppose we want to find all the records that are in the temperature range
 -- of other records.  W1 and W2 are aliases for weather.
 
-SELECT W1.city, W1.temp_lo, W1.temp_hi,
-       W2.city, W2.temp_lo, W2.temp_hi
+SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
+       W2.city, W2.temp_lo AS low, W2.temp_hi AS high
 FROM weather W1, weather W2
 WHERE W1.temp_lo < W2.temp_lo
    and W1.temp_hi > W2.temp_hi;
@@ -146,15 +152,26 @@ SELECT city FROM weather
     WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
 
 -- Aggregate with GROUP BY
-SELECT city, max(temp_lo)
+SELECT city, count(*), max(temp_lo)
     FROM weather
     GROUP BY city;
 
 -- ... and HAVING
-SELECT city, max(temp_lo)
+SELECT city, count(*), max(temp_lo)
     FROM weather
     GROUP BY city
     HAVING max(temp_lo) < 40;
+
+-- We can filter rows before aggregating them:
+SELECT city, count(*), max(temp_lo)
+    FROM weather
+    WHERE city LIKE 'S%'
+    GROUP BY city;
+
+-- Another way is the FILTER clause, which operates per-aggregate:
+SELECT city, count(*) FILTER (WHERE temp_lo < 45), max(temp_lo)
+    FROM weather
+    GROUP BY city;
 
 
 -----------------------------
