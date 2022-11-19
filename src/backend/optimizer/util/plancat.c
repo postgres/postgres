@@ -75,7 +75,8 @@ static List *build_index_tlist(PlannerInfo *root, IndexOptInfo *index,
 static List *get_relation_statistics(RelOptInfo *rel, Relation relation);
 static void set_relation_partition_info(PlannerInfo *root, RelOptInfo *rel,
 										Relation relation);
-static PartitionScheme find_partition_scheme(PlannerInfo *root, Relation rel);
+static PartitionScheme find_partition_scheme(PlannerInfo *root,
+											 Relation relation);
 static void set_baserel_partition_key_exprs(Relation relation,
 											RelOptInfo *rel);
 static void set_baserel_partition_constraint(Relation relation,
@@ -125,6 +126,24 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 	 * rangetable.
 	 */
 	relation = table_open(relationObjectId, NoLock);
+
+	/*
+	 * Relations without a table AM can be used in a query only if they are of
+	 * special-cased relkinds.  This check prevents us from crashing later if,
+	 * for example, a view's ON SELECT rule has gone missing.  Note that
+	 * table_open() already rejected indexes and composite types; spell the
+	 * error the same way it does.
+	 */
+	if (!relation->rd_tableam)
+	{
+		if (!(relation->rd_rel->relkind == RELKIND_FOREIGN_TABLE ||
+			  relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE))
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot open relation \"%s\"",
+							RelationGetRelationName(relation)),
+					 errdetail_relkind_not_supported(relation->rd_rel->relkind)));
+	}
 
 	/* Temporary and unlogged relations are inaccessible during recovery. */
 	if (!RelationIsPermanent(relation) && RecoveryInProgress())
@@ -968,102 +987,102 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 
 	if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind))
 	{
-			table_relation_estimate_size(rel, attr_widths, pages, tuples,
-										 allvisfrac);
+		table_relation_estimate_size(rel, attr_widths, pages, tuples,
+									 allvisfrac);
 	}
 	else if (rel->rd_rel->relkind == RELKIND_INDEX)
 	{
+		/*
+		 * XXX: It'd probably be good to move this into a callback, individual
+		 * index types e.g. know if they have a metapage.
+		 */
+
+		/* it has storage, ok to call the smgr */
+		curpages = RelationGetNumberOfBlocks(rel);
+
+		/* report estimated # pages */
+		*pages = curpages;
+		/* quick exit if rel is clearly empty */
+		if (curpages == 0)
+		{
+			*tuples = 0;
+			*allvisfrac = 0;
+			return;
+		}
+
+		/* coerce values in pg_class to more desirable types */
+		relpages = (BlockNumber) rel->rd_rel->relpages;
+		reltuples = (double) rel->rd_rel->reltuples;
+		relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
+
+		/*
+		 * Discount the metapage while estimating the number of tuples. This
+		 * is a kluge because it assumes more than it ought to about index
+		 * structure.  Currently it's OK for btree, hash, and GIN indexes but
+		 * suspect for GiST indexes.
+		 */
+		if (relpages > 0)
+		{
+			curpages--;
+			relpages--;
+		}
+
+		/* estimate number of tuples from previous tuple density */
+		if (reltuples >= 0 && relpages > 0)
+			density = reltuples / (double) relpages;
+		else
+		{
 			/*
-			 * XXX: It'd probably be good to move this into a callback,
-			 * individual index types e.g. know if they have a metapage.
+			 * If we have no data because the relation was never vacuumed,
+			 * estimate tuple width from attribute datatypes.  We assume here
+			 * that the pages are completely full, which is OK for tables
+			 * (since they've presumably not been VACUUMed yet) but is
+			 * probably an overestimate for indexes.  Fortunately
+			 * get_relation_info() can clamp the overestimate to the parent
+			 * table's size.
+			 *
+			 * Note: this code intentionally disregards alignment
+			 * considerations, because (a) that would be gilding the lily
+			 * considering how crude the estimate is, and (b) it creates
+			 * platform dependencies in the default plans which are kind of a
+			 * headache for regression testing.
+			 *
+			 * XXX: Should this logic be more index specific?
 			 */
+			int32		tuple_width;
 
-			/* it has storage, ok to call the smgr */
-			curpages = RelationGetNumberOfBlocks(rel);
+			tuple_width = get_rel_data_width(rel, attr_widths);
+			tuple_width += MAXALIGN(SizeofHeapTupleHeader);
+			tuple_width += sizeof(ItemIdData);
+			/* note: integer division is intentional here */
+			density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
+		}
+		*tuples = rint(density * (double) curpages);
 
-			/* report estimated # pages */
-			*pages = curpages;
-			/* quick exit if rel is clearly empty */
-			if (curpages == 0)
-			{
-				*tuples = 0;
-				*allvisfrac = 0;
-				return;
-			}
-
-			/* coerce values in pg_class to more desirable types */
-			relpages = (BlockNumber) rel->rd_rel->relpages;
-			reltuples = (double) rel->rd_rel->reltuples;
-			relallvisible = (BlockNumber) rel->rd_rel->relallvisible;
-
-			/*
-			 * Discount the metapage while estimating the number of tuples.
-			 * This is a kluge because it assumes more than it ought to about
-			 * index structure.  Currently it's OK for btree, hash, and GIN
-			 * indexes but suspect for GiST indexes.
-			 */
-			if (relpages > 0)
-			{
-				curpages--;
-				relpages--;
-			}
-
-			/* estimate number of tuples from previous tuple density */
-			if (reltuples >= 0 && relpages > 0)
-				density = reltuples / (double) relpages;
-			else
-			{
-				/*
-				 * If we have no data because the relation was never vacuumed,
-				 * estimate tuple width from attribute datatypes.  We assume
-				 * here that the pages are completely full, which is OK for
-				 * tables (since they've presumably not been VACUUMed yet) but
-				 * is probably an overestimate for indexes.  Fortunately
-				 * get_relation_info() can clamp the overestimate to the
-				 * parent table's size.
-				 *
-				 * Note: this code intentionally disregards alignment
-				 * considerations, because (a) that would be gilding the lily
-				 * considering how crude the estimate is, and (b) it creates
-				 * platform dependencies in the default plans which are kind
-				 * of a headache for regression testing.
-				 *
-				 * XXX: Should this logic be more index specific?
-				 */
-				int32		tuple_width;
-
-				tuple_width = get_rel_data_width(rel, attr_widths);
-				tuple_width += MAXALIGN(SizeofHeapTupleHeader);
-				tuple_width += sizeof(ItemIdData);
-				/* note: integer division is intentional here */
-				density = (BLCKSZ - SizeOfPageHeaderData) / tuple_width;
-			}
-			*tuples = rint(density * (double) curpages);
-
-			/*
-			 * We use relallvisible as-is, rather than scaling it up like we
-			 * do for the pages and tuples counts, on the theory that any
-			 * pages added since the last VACUUM are most likely not marked
-			 * all-visible.  But costsize.c wants it converted to a fraction.
-			 */
-			if (relallvisible == 0 || curpages <= 0)
-				*allvisfrac = 0;
-			else if ((double) relallvisible >= curpages)
-				*allvisfrac = 1;
-			else
-				*allvisfrac = (double) relallvisible / curpages;
+		/*
+		 * We use relallvisible as-is, rather than scaling it up like we do
+		 * for the pages and tuples counts, on the theory that any pages added
+		 * since the last VACUUM are most likely not marked all-visible.  But
+		 * costsize.c wants it converted to a fraction.
+		 */
+		if (relallvisible == 0 || curpages <= 0)
+			*allvisfrac = 0;
+		else if ((double) relallvisible >= curpages)
+			*allvisfrac = 1;
+		else
+			*allvisfrac = (double) relallvisible / curpages;
 	}
 	else
 	{
-			/*
-			 * Just use whatever's in pg_class.  This covers foreign tables,
-			 * sequences, and also relkinds without storage (shouldn't get
-			 * here?); see initializations in AddNewRelationTuple().  Note
-			 * that FDW must cope if reltuples is -1!
-			 */
-			*pages = rel->rd_rel->relpages;
-			*tuples = rel->rd_rel->reltuples;
-			*allvisfrac = 0;
+		/*
+		 * Just use whatever's in pg_class.  This covers foreign tables,
+		 * sequences, and also relkinds without storage (shouldn't get here?);
+		 * see initializations in AddNewRelationTuple().  Note that FDW must
+		 * cope if reltuples is -1!
+		 */
+		*pages = rel->rd_rel->relpages;
+		*tuples = rel->rd_rel->reltuples;
+		*allvisfrac = 0;
 	}
 }
 

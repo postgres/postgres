@@ -2,7 +2,7 @@
  *	pg_upgrade_support.c
  *
  *	server-side functions to set backend global variables
- *	to control oid and relfilenode assignment, and do other special
+ *	to control oid and relfilenumber assignment, and do other special
  *	hacks needed for pg_upgrade.
  *
  *	Copyright (c) 2010-2022, PostgreSQL Global Development Group
@@ -98,10 +98,10 @@ binary_upgrade_set_next_heap_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_heap_relfilenode(PG_FUNCTION_ARGS)
 {
-	Oid			nodeoid = PG_GETARG_OID(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_next_heap_pg_class_relfilenode = nodeoid;
+	binary_upgrade_next_heap_pg_class_relfilenumber = relfilenumber;
 
 	PG_RETURN_VOID();
 }
@@ -120,10 +120,10 @@ binary_upgrade_set_next_index_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_index_relfilenode(PG_FUNCTION_ARGS)
 {
-	Oid			nodeoid = PG_GETARG_OID(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_next_index_pg_class_relfilenode = nodeoid;
+	binary_upgrade_next_index_pg_class_relfilenumber = relfilenumber;
 
 	PG_RETURN_VOID();
 }
@@ -142,10 +142,10 @@ binary_upgrade_set_next_toast_pg_class_oid(PG_FUNCTION_ARGS)
 Datum
 binary_upgrade_set_next_toast_relfilenode(PG_FUNCTION_ARGS)
 {
-	Oid			nodeoid = PG_GETARG_OID(0);
+	RelFileNumber relfilenumber = PG_GETARG_OID(0);
 
 	CHECK_IS_BINARY_UPGRADE;
-	binary_upgrade_next_toast_pg_class_relfilenode = nodeoid;
+	binary_upgrade_next_toast_pg_class_relfilenumber = relfilenumber;
 
 	PG_RETURN_VOID();
 }
@@ -214,9 +214,7 @@ binary_upgrade_create_empty_extension(PG_FUNCTION_ARGS)
 		int			ndatums;
 		int			i;
 
-		deconstruct_array(textArray,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &textDatums, NULL, &ndatums);
+		deconstruct_array_builtin(textArray, TEXTOID, &textDatums, NULL, &ndatums);
 		for (i = 0; i < ndatums; i++)
 		{
 			char	   *extName = TextDatumGetCString(textDatums[i]);

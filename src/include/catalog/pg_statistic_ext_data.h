@@ -50,7 +50,7 @@ CATALOG(pg_statistic_ext_data,3429,StatisticExtDataRelationId)
  *		the format of pg_statistic_ext_data relation.
  * ----------------
  */
-typedef FormData_pg_statistic_ext_data * Form_pg_statistic_ext_data;
+typedef FormData_pg_statistic_ext_data *Form_pg_statistic_ext_data;
 
 DECLARE_TOAST(pg_statistic_ext_data, 3430, 3431);
 

@@ -140,14 +140,47 @@ foreach my $input_file (@header_files)
 				$changed = 1;
 			}
 		}
-		elsif (
-			$line =~ m/^(DECLARE_(UNIQUE_)?INDEX\(\s*\w+,\s*)(\d+)(,\s*.+)\)/)
+		elsif ($line =~
+			m/^(DECLARE_TOAST_WITH_MACRO\(\s*\w+,\s*)(\d+)(,\s*)(\d+)(,\s*\w+,\s*\w+)\)/
+		  )
 		{
-			if (exists $maphash{$3})
+			my $oid2 = $2;
+			my $oid4 = $4;
+			if (exists $maphash{$oid2})
 			{
-				my $repl = $1 . $maphash{$3} . $4 . ")";
+				$oid2 = $maphash{$oid2};
+				my $repl = $1 . $oid2 . $3 . $oid4 . $5 . ")";
 				$line =~
-				  s/^DECLARE_(UNIQUE_)?INDEX\(\s*\w+,\s*\d+,\s*.+\)/$repl/;
+				  s/^DECLARE_TOAST_WITH_MACRO\(\s*\w+,\s*\d+,\s*\d+,\s*\w+,\s*\w+\)/$repl/;
+				$changed = 1;
+			}
+			if (exists $maphash{$oid4})
+			{
+				$oid4 = $maphash{$oid4};
+				my $repl = $1 . $oid2 . $3 . $oid4 . $5 . ")";
+				$line =~
+				  s/^DECLARE_TOAST_WITH_MACRO\(\s*\w+,\s*\d+,\s*\d+,\s*\w+,\s*\w+\)/$repl/;
+				$changed = 1;
+			}
+		}
+		elsif ($line =~
+			m/^(DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*\w+,\s*)(\d+)(,\s*.+)\)/)
+		{
+			if (exists $maphash{$4})
+			{
+				my $repl = $1 . $maphash{$4} . $5 . ")";
+				$line =~
+				  s/^DECLARE_(UNIQUE_)?INDEX(_PKEY)?\(\s*\w+,\s*\d+,\s*.+\)/$repl/;
+				$changed = 1;
+			}
+		}
+		elsif (/^(DECLARE_OID_DEFINING_MACRO\(\s*\w+,\s*)(\d+)\)/)
+		{
+			if (exists $maphash{$2})
+			{
+				my $repl = $1 . $maphash{$2} . ")";
+				$line =~
+				  s/^DECLARE_OID_DEFINING_MACRO\(\s*\w+,\s*\d+\)/$repl/;
 				$changed = 1;
 			}
 		}

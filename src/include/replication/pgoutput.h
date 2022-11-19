@@ -29,6 +29,7 @@ typedef struct PGOutputData
 	bool		streaming;
 	bool		messages;
 	bool		two_phase;
+	char	   *origin;
 } PGOutputData;
 
 #endif							/* PGOUTPUT_H */

@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgresql\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-21 21:08+0000\n"
-"PO-Revision-Date: 2020-09-22 13:43\n"
+"POT-Creation-Date: 2021-06-10 08:38+0000\n"
+"PO-Revision-Date: 2021-08-17 10:54\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Crowdin-Project: postgresql\n"
 "X-Crowdin-Project-ID: 324573\n"
 "X-Crowdin-Language: uk\n"
-"X-Crowdin-File: /DEV_13/plpython.pot\n"
-"X-Crowdin-File-ID: 520\n"
+"X-Crowdin-File: /REL_14_DEV/plpython.pot\n"
+"X-Crowdin-File-ID: 752\n"
 
 #: plpy_cursorobject.c:72
 #, c-format
@@ -66,7 +66,7 @@ msgstr "результат запиту має забагато рядків д�
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закриття курсора в перерваній транзакції"
 
-#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:549
+#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -241,56 +241,56 @@ msgstr "не вдалося створити spiexceptions модуль"
 msgid "could not add the spiexceptions module"
 msgstr "не вдалося додати spiexceptions модуль"
 
-#: plpy_plpymodule.c:276
+#: plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "не вдається створити винятки SPI"
 
-#: plpy_plpymodule.c:444
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не вдалося розпакувати аргументи в plpy.elog"
 
-#: plpy_plpymodule.c:453
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "не вдалося проаналізувати повідомлення про помилку в plpy.elog"
 
-#: plpy_plpymodule.c:470
+#: plpy_plpymodule.c:469
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "аргумент 'повідомлення' виданий за ім'ям та розташуванням"
 
-#: plpy_plpymodule.c:497
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' є неприпустимим ключовим словом-аргументом для цієї функції"
 
-#: plpy_plpymodule.c:508 plpy_plpymodule.c:514
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неприпустимий код SQLSTATE"
 
-#: plpy_procedure.c:226
+#: plpy_procedure.c:225
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "тригер-функція може викликатися лише як тригер"
 
-#: plpy_procedure.c:230
+#: plpy_procedure.c:229
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "PL/Python функції не можуть повернути тип %s"
 
-#: plpy_procedure.c:308
+#: plpy_procedure.c:307
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "PL/Python функції не можуть прийняти тип %s"
 
-#: plpy_procedure.c:398
+#: plpy_procedure.c:397
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не вдалося скомпілювати функцію PL/Python \"%s\""
 
-#: plpy_procedure.c:401
+#: plpy_procedure.c:400
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не вдалося скомпілювати анонімні коди блоку PL/Python"
@@ -380,72 +380,72 @@ msgstr "не вдалося створити рядкову репрезента
 msgid "could not convert Python object into cstring: Python string representation appears to contain null bytes"
 msgstr "не вдалося перетворити об'єкт Python на cstring: репрезентація рядка Python містить значення null-байти"
 
-#: plpy_typeio.c:1176
+#: plpy_typeio.c:1178
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "кількість вимірів масиву перевищує максимально дозволену (%d)"
 
-#: plpy_typeio.c:1180
+#: plpy_typeio.c:1183
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr "не вдалося визначити довжину послідовності для значення функція"
 
-#: plpy_typeio.c:1183 plpy_typeio.c:1187
+#: plpy_typeio.c:1188 plpy_typeio.c:1194
 #, c-format
 msgid "array size exceeds the maximum allowed"
 msgstr "розмір масиву перевищує максимально дозволений"
 
-#: plpy_typeio.c:1213
+#: plpy_typeio.c:1222
 #, c-format
 msgid "return value of function with array return type is not a Python sequence"
 msgstr "значення функції з масивом в якості результату не є послідовністю Python"
 
-#: plpy_typeio.c:1259
+#: plpy_typeio.c:1269
 #, c-format
 msgid "wrong length of inner sequence: has length %d, but %d was expected"
 msgstr "неправильна довжина внутрішньої послідовності: довжина %d, але очікується %d"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1271
 #, c-format
 msgid "To construct a multidimensional array, the inner sequences must all have the same length."
 msgstr "Щоб побудувати багатовимірний масив, внутрішні послідовності повинні мати однакову довжину."
 
-#: plpy_typeio.c:1340
+#: plpy_typeio.c:1350
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "невірно сформований літерал запису: \"%s\""
 
-#: plpy_typeio.c:1341
+#: plpy_typeio.c:1351
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Відсутня ліва дужка."
 
-#: plpy_typeio.c:1342 plpy_typeio.c:1543
+#: plpy_typeio.c:1352 plpy_typeio.c:1553
 #, c-format
 msgid "To return a composite type in an array, return the composite type as a Python tuple, e.g., \"[('foo',)]\"."
 msgstr "Щоб повернути складений тип в масиві, треба повернути композитний тип як кортеж Python, наприклад, \"[('foo',)]\"."
 
-#: plpy_typeio.c:1389
+#: plpy_typeio.c:1399
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не знайдено в зіставленні"
 
-#: plpy_typeio.c:1390
+#: plpy_typeio.c:1400
 #, c-format
 msgid "To return null in a column, add the value None to the mapping with the key named after the column."
 msgstr "Для повернення значення null в стовпці, додайте значення None з ключом, що дорівнює імені стовпця."
 
-#: plpy_typeio.c:1443
+#: plpy_typeio.c:1453
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "довжина повернутої послідовності не відповідає кількості стовпців у рядку"
 
-#: plpy_typeio.c:1541
+#: plpy_typeio.c:1551
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "атрибут \"%s\" не існує в об'єкті Python"
 
-#: plpy_typeio.c:1544
+#: plpy_typeio.c:1554
 #, c-format
 msgid "To return null in a column, let the returned object have an attribute named after column with value None."
 msgstr "Щоб повернути null в стовпці, результуючий об'єкт має мати атрибут з іменем стовпця зі значенням None."

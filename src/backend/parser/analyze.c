@@ -104,8 +104,8 @@ static bool test_raw_expression_coverage(Node *node, void *context);
  */
 Query *
 parse_analyze_fixedparams(RawStmt *parseTree, const char *sourceText,
-			  const Oid *paramTypes, int numParams,
-			  QueryEnvironment *queryEnv)
+						  const Oid *paramTypes, int numParams,
+						  QueryEnvironment *queryEnv)
 {
 	ParseState *pstate = make_parsestate(NULL);
 	Query	   *query;
@@ -1424,7 +1424,7 @@ static Query *
 transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	List	   *exprsLists;
+	List	   *exprsLists = NIL;
 	List	   *coltypes = NIL;
 	List	   *coltypmods = NIL;
 	List	   *colcollations = NIL;
@@ -1508,6 +1508,9 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 
 		/* Release sub-list's cells to save memory */
 		list_free(sublist);
+
+		/* Prepare an exprsLists element for this row */
+		exprsLists = lappend(exprsLists, NIL);
 	}
 
 	/*
@@ -1551,17 +1554,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Finally, rearrange the coerced expressions into row-organized lists.
 	 */
-	exprsLists = NIL;
-	foreach(lc, colexprs[0])
-	{
-		Node	   *col = (Node *) lfirst(lc);
-		List	   *sublist;
-
-		sublist = list_make1(col);
-		exprsLists = lappend(exprsLists, sublist);
-	}
-	list_free(colexprs[0]);
-	for (i = 1; i < sublist_length; i++)
+	for (i = 0; i < sublist_length; i++)
 	{
 		forboth(lc, colexprs[i], lc2, exprsLists)
 		{
@@ -1569,6 +1562,7 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			List	   *sublist = lfirst(lc2);
 
 			sublist = lappend(sublist, col);
+			lfirst(lc2) = sublist;
 		}
 		list_free(colexprs[i]);
 	}
@@ -2082,8 +2076,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 		ListCell   *ltl;
 		ListCell   *rtl;
 		const char *context;
-		bool recursive = (pstate->p_parent_cte &&
-						  pstate->p_parent_cte->cterecursive);
+		bool		recursive = (pstate->p_parent_cte &&
+								 pstate->p_parent_cte->cterecursive);
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
 				   (stmt->op == SETOP_INTERSECT ? "INTERSECT" :
@@ -2237,7 +2231,10 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt,
 				setup_parser_errposition_callback(&pcbstate, pstate,
 												  bestlocation);
 
-				/* If it's a recursive union, we need to require hashing support. */
+				/*
+				 * If it's a recursive union, we need to require hashing
+				 * support.
+				 */
 				op->groupClauses = lappend(op->groupClauses,
 										   makeSortGroupClauseForSetOp(rescoltype, recursive));
 
@@ -3294,11 +3291,35 @@ transformLockingClause(ParseState *pstate, Query *qry, LockingClause *lc,
 			foreach(rt, qry->rtable)
 			{
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+				char	   *rtename = rte->eref->aliasname;
 
 				++i;
 				if (!rte->inFromCl)
 					continue;
-				if (strcmp(rte->eref->aliasname, thisrel->relname) == 0)
+
+				/*
+				 * A join RTE without an alias is not visible as a relation
+				 * name and needs to be skipped (otherwise it might hide a
+				 * base relation with the same name), except if it has a USING
+				 * alias, which *is* visible.
+				 *
+				 * Subquery and values RTEs without aliases are never visible
+				 * as relation names and must always be skipped.
+				 */
+				if (rte->alias == NULL)
+				{
+					if (rte->rtekind == RTE_JOIN)
+					{
+						if (rte->join_using_alias == NULL)
+							continue;
+						rtename = rte->join_using_alias->aliasname;
+					}
+					else if (rte->rtekind == RTE_SUBQUERY ||
+							 rte->rtekind == RTE_VALUES)
+						continue;
+				}
+
+				if (strcmp(rtename, thisrel->relname) == 0)
 				{
 					switch (rte->rtekind)
 					{

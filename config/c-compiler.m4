@@ -139,6 +139,8 @@ if test x"$pgac_cv__128bit_int" = xyes ; then
 /* This must match the corresponding code in c.h: */
 #if defined(__GNUC__) || defined(__SUNPRO_C) || defined(__IBMC__)
 #define pg_attribute_aligned(a) __attribute__((aligned(a)))
+#elif defined(_MSC_VER)
+#define pg_attribute_aligned(a) __declspec(align(a))
 #endif
 typedef __int128 int128a
 #if defined(pg_attribute_aligned)
@@ -163,32 +165,6 @@ if (q != holder)
     AC_CHECK_ALIGNOF(PG_INT128_TYPE)
   fi
 fi])# PGAC_TYPE_128BIT_INT
-
-
-# PGAC_C_FUNCNAME_SUPPORT
-# -----------------------
-# Check if the C compiler understands __func__ (C99) or __FUNCTION__ (gcc).
-# Define HAVE_FUNCNAME__FUNC or HAVE_FUNCNAME__FUNCTION accordingly.
-AC_DEFUN([PGAC_C_FUNCNAME_SUPPORT],
-[AC_CACHE_CHECK(for __func__, pgac_cv_funcname_func_support,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>],
-[printf("%s\n", __func__);])],
-[pgac_cv_funcname_func_support=yes],
-[pgac_cv_funcname_func_support=no])])
-if test x"$pgac_cv_funcname_func_support" = xyes ; then
-AC_DEFINE(HAVE_FUNCNAME__FUNC, 1,
-          [Define to 1 if your compiler understands __func__.])
-else
-AC_CACHE_CHECK(for __FUNCTION__, pgac_cv_funcname_function_support,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <stdio.h>],
-[printf("%s\n", __FUNCTION__);])],
-[pgac_cv_funcname_function_support=yes],
-[pgac_cv_funcname_function_support=no])])
-if test x"$pgac_cv_funcname_function_support" = xyes ; then
-AC_DEFINE(HAVE_FUNCNAME__FUNCTION, 1,
-          [Define to 1 if your compiler understands __FUNCTION__.])
-fi
-fi])# PGAC_C_FUNCNAME_SUPPORT
 
 
 

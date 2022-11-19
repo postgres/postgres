@@ -171,3 +171,13 @@ reset enable_seqscan;
 reset enable_bitmapscan;
 
 drop table t_gin_test_tbl;
+
+-- test an unlogged table, mostly to get coverage of ginbuildempty
+create unlogged table t_gin_test_tbl(i int4[], j int4[]);
+create index on t_gin_test_tbl using gin (i, j);
+insert into t_gin_test_tbl
+values
+  (null,    null),
+  ('{}',    null),
+  ('{1}',   '{2,3}');
+drop table t_gin_test_tbl;

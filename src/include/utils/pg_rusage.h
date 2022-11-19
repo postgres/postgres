@@ -14,13 +14,8 @@
 #ifndef PG_RUSAGE_H
 #define PG_RUSAGE_H
 
-#include <sys/time.h>
-
-#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#else
-#include "rusagestub.h"
-#endif
+#include <sys/time.h>
 
 
 /* State structure for pg_rusage_init/pg_rusage_show */

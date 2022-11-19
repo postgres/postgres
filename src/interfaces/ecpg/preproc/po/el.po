@@ -1,0 +1,700 @@
+# Greek message translation file for ecpg
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the ecpg (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ecpg (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-11-03 18:09+0000\n"
+"PO-Revision-Date: 2021-11-05 11:17+0100\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.0\n"
+
+#: descriptor.c:64
+#, c-format
+msgid "variable \"%s\" must have a numeric type"
+msgstr "η μεταβλητή «%s» πρέπει να έχει αριθμητικό τύπο"
+
+#: descriptor.c:125 descriptor.c:156
+#, c-format
+msgid "descriptor %s bound to connection %s does not exist"
+msgstr "ο περιγραφέας %s δεσμευμένος στη σύνδεση %s δεν υπάρχει"
+
+#: descriptor.c:127 descriptor.c:158
+#, c-format
+msgid "descriptor %s bound to the default connection does not exist"
+msgstr "ο περιγραφέας %s δεσμευμένος στη προεπιλεγμένη σύνδεση δεν υπάρχει"
+
+#: descriptor.c:173 descriptor.c:225
+#, c-format
+msgid "descriptor header item \"%d\" does not exist"
+msgstr "ο περιγραφέας στοιχείου κεφαλίδας «%d» δεν υπάρχει"
+
+#: descriptor.c:195
+#, c-format
+msgid "nullable is always 1"
+msgstr "nullable είναι πάντα 1"
+
+#: descriptor.c:198
+#, c-format
+msgid "key_member is always 0"
+msgstr "key_member είναι πάντα 0"
+
+#: descriptor.c:292
+#, c-format
+msgid "descriptor item \"%s\" is not implemented"
+msgstr "το στοιχείο περιγραφής «%s» δεν έχει υλοποιηθεί"
+
+#: descriptor.c:302
+#, c-format
+msgid "descriptor item \"%s\" cannot be set"
+msgstr "το στοιχείο περιγραφής «%s» δεν δύναται να οριστεί"
+
+#: ecpg.c:36
+#, c-format
+msgid ""
+"%s is the PostgreSQL embedded SQL preprocessor for C programs.\n"
+"\n"
+msgstr ""
+"%s είναι ο ενσωματωμένος SQL προεπεξεργαστής της PostgreSQL για προγράμματα γραμμένα σε C.\n"
+"\n"
+
+#: ecpg.c:38
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]... FILE...\n"
+"\n"
+msgstr ""
+"Χρήση:\n"
+"  %s [ΕΠΙΛΟΓΗ]... ΑΡΧΕΙΟ...\n"
+"\n"
+
+#: ecpg.c:41
+#, c-format
+msgid "Options:\n"
+msgstr "Επιλογές:\n"
+
+#: ecpg.c:42
+#, c-format
+msgid ""
+"  -c             automatically generate C code from embedded SQL code;\n"
+"                 this affects EXEC SQL TYPE\n"
+msgstr ""
+"  -c             δημιούργησε αυτόματα κώδικα σε C από ενσωματωμένο SQL κώδικα·\n"
+"                 αυτό επηρεάζει την εντολή EXEC SQL TYPE\n"
+
+#: ecpg.c:44
+#, c-format
+msgid ""
+"  -C MODE        set compatibility mode; MODE can be one of\n"
+"                 \"INFORMIX\", \"INFORMIX_SE\", \"ORACLE\"\n"
+msgstr ""
+"  -C MODE        όρισε λειτουργία συμβατότητας; MODE μπορεί να είναι ένα από\n"
+"                 «INFORMIX», «INFORMIX_SE», «ORACLE»\n"
+
+#: ecpg.c:47
+#, c-format
+msgid "  -d             generate parser debug output\n"
+msgstr "  -d             παράξε έξοδο αποσφαλμάτωσης parser\n"
+
+#: ecpg.c:49
+#, c-format
+msgid "  -D SYMBOL      define SYMBOL\n"
+msgstr "  -D SYMBOL      όρισε SYMBOL\n"
+
+#: ecpg.c:50
+#, c-format
+msgid "  -h             parse a header file, this option includes option \"-c\"\n"
+msgstr "  -h             ανάλυσε αρχείο header, αυτή η επιλογή περιλαμβάνει την επιλογή «-c»\n"
+
+#: ecpg.c:51
+#, c-format
+msgid "  -i             parse system include files as well\n"
+msgstr "  -i             ανάλυσε επίσης αρχεία include του συστήματος\n"
+
+#: ecpg.c:52
+#, c-format
+msgid "  -I DIRECTORY   search DIRECTORY for include files\n"
+msgstr "  -I DIRECTORY   ψάξε στο DIRECTORY για αρχεία include\n"
+
+#: ecpg.c:53
+#, c-format
+msgid "  -o OUTFILE     write result to OUTFILE\n"
+msgstr "  -o OUTFILE     γράψε το αποτέλεσμα στο αρχείο OUTFILE\n"
+
+#: ecpg.c:54
+#, c-format
+msgid ""
+"  -r OPTION      specify run-time behavior; OPTION can be:\n"
+"                 \"no_indicator\", \"prepare\", \"questionmarks\"\n"
+msgstr ""
+"  -r OPTION      καθόρισε τη συμπεριφορά χρόνου εκτέλεσης. OPTION μπορεί να είναι:\n"
+"                 «no_indicator», «prepare», «questionmarks»\n"
+
+#: ecpg.c:56
+#, c-format
+msgid "  --regression   run in regression testing mode\n"
+msgstr "  --regression   εκτέλεσε σε λειτουργία ελέγχου αναδρομής\n"
+
+#: ecpg.c:57
+#, c-format
+msgid "  -t             turn on autocommit of transactions\n"
+msgstr "  -t             ενεργοποίησε την αυτόματη ολοκλήρωση συναλλαγών\n"
+
+#: ecpg.c:58
+#, c-format
+msgid "  -V, --version  output version information, then exit\n"
+msgstr "  -V, --version  εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: ecpg.c:59
+#, c-format
+msgid "  -?, --help     show this help, then exit\n"
+msgstr "  -?, --help     εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: ecpg.c:60
+#, c-format
+msgid ""
+"\n"
+"If no output file is specified, the name is formed by adding .c to the\n"
+"input file name, after stripping off .pgc if present.\n"
+msgstr ""
+"\n"
+"Εάν δεν καθοριστεί αρχείο εξόδου, το όνομα σχηματίζεται προσθέτοντας .c στο\n"
+"όνομα αρχείου εισόδου, μετά την αφαίρεση του .pgc, εάν αυτό υπάρχει.\n"
+
+#: ecpg.c:62
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: ecpg.c:63
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: ecpg.c:141
+#, c-format
+msgid "%s: could not locate my own executable path\n"
+msgstr "%s: δεν ήταν δυνατός ο εντοπισμός της ιδίας εκτελέσιμης διαδρομής\n"
+
+#: ecpg.c:176 ecpg.c:333 ecpg.c:344
+#, c-format
+msgid "%s: could not open file \"%s\": %s\n"
+msgstr "%s: δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %s\n"
+
+#: ecpg.c:219 ecpg.c:232 ecpg.c:248 ecpg.c:274
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+
+#: ecpg.c:243
+#, c-format
+msgid "%s: parser debug support (-d) not available\n"
+msgstr "%s: η υποστήριξη εντοπισμού σφαλμάτων (-d) του αναλυτή δεν είναι διαθέσιμη\n"
+
+#: ecpg.c:262
+#, c-format
+msgid "%s, the PostgreSQL embedded C preprocessor, version %s\n"
+msgstr "%s, ο ενσωματωμένος προεπεξεργαστής C της PostgreSQL, έκδοση %s\n"
+
+#: ecpg.c:264
+#, c-format
+msgid "EXEC SQL INCLUDE ... search starts here:\n"
+msgstr "EXEC SQL INCLUDE ... η αναζήτηση ξεκινάει εδώ:\n"
+
+#: ecpg.c:267
+#, c-format
+msgid "end of search list\n"
+msgstr "τέλος της λίστας αναζήτησης\n"
+
+#: ecpg.c:273
+#, c-format
+msgid "%s: no input files specified\n"
+msgstr "%s: δεν καθορίστηκαν αρχεία εισόδου\n"
+
+#: ecpg.c:477
+#, c-format
+msgid "cursor \"%s\" has been declared but not opened"
+msgstr "ο δρομέας «%s» έχει δηλωθεί αλλά δεν έχει ανοιχτεί"
+
+#: ecpg.c:490 preproc.y:130
+#, c-format
+msgid "could not remove output file \"%s\"\n"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου εξόδου «%s»\n"
+
+#: pgc.l:502
+#, c-format
+msgid "unterminated /* comment"
+msgstr "ατερμάτιστο /* σχόλιο"
+
+#: pgc.l:519
+#, c-format
+msgid "unterminated bit string literal"
+msgstr "ατερμάτιστη bit κυριολεκτική συμβολοσειρά"
+
+#: pgc.l:527
+#, c-format
+msgid "unterminated hexadecimal string literal"
+msgstr "ατερμάτιστη δεκαεξαδική κυριολεκτική συμβολοσειρά"
+
+#: pgc.l:602
+#, c-format
+msgid "invalid bit string literal"
+msgstr "μη έγκυρη bit κυριολεκτική συμβολοσειρά"
+
+#: pgc.l:607
+#, c-format
+msgid "invalid hex string literal"
+msgstr "μη έγκυρη hex κυριολεκτική συμβολοσειρά"
+
+#: pgc.l:625
+#, c-format
+msgid "unhandled previous state in xqs\n"
+msgstr "μη χειρισμένη προηγούμενη κατάσταση σε xqs\n"
+
+#: pgc.l:651 pgc.l:760
+#, c-format
+msgid "unterminated quoted string"
+msgstr "ανολοκλήρωτη συμβολοσειρά με εισαγωγικά"
+
+#: pgc.l:702
+#, c-format
+msgid "unterminated dollar-quoted string"
+msgstr "ατερμάτιστη dollar-quoted συμβολοσειρά"
+
+#: pgc.l:720 pgc.l:740
+#, c-format
+msgid "zero-length delimited identifier"
+msgstr "μηδενικού μήκους οριοθετημένο αναγνωριστικό"
+
+#: pgc.l:751
+#, c-format
+msgid "unterminated quoted identifier"
+msgstr "ατερμάτιστο αναγνωριστικό σε εισαγωγικά"
+
+#: pgc.l:1082
+#, c-format
+msgid "nested /* ... */ comments"
+msgstr "ένθετα /* ... */ σχόλια"
+
+#: pgc.l:1175
+#, c-format
+msgid "missing identifier in EXEC SQL UNDEF command"
+msgstr "λείπει αναγνωριστικό στην εντολή EXEC SQL UNDEF"
+
+#: pgc.l:1193 pgc.l:1206 pgc.l:1222 pgc.l:1235
+#, c-format
+msgid "too many nested EXEC SQL IFDEF conditions"
+msgstr "πάρα πολλές ένθετες συνθήκες EXEC SQL IFDEF"
+
+#: pgc.l:1251 pgc.l:1262 pgc.l:1277 pgc.l:1299
+#, c-format
+msgid "missing matching \"EXEC SQL IFDEF\" / \"EXEC SQL IFNDEF\""
+msgstr "λείπει αντιστοίχιση «EXEC SQL IFDEF» / «EXEC SQL IFNDEF»"
+
+#: pgc.l:1253 pgc.l:1264 pgc.l:1445
+#, c-format
+msgid "missing \"EXEC SQL ENDIF;\""
+msgstr "λείπει «EXEC SQL ENDIF;»"
+
+#: pgc.l:1279 pgc.l:1301
+#, c-format
+msgid "more than one EXEC SQL ELSE"
+msgstr "περισσότερες από μία EXEC SQL ELSE"
+
+#: pgc.l:1324 pgc.l:1338
+#, c-format
+msgid "unmatched EXEC SQL ENDIF"
+msgstr "μη αντιστοιχισμένο EXEC SQL ENDIF"
+
+#: pgc.l:1393
+#, c-format
+msgid "missing identifier in EXEC SQL IFDEF command"
+msgstr "λείπει αναγνωριστικό στην εντολή EXEC SQL IFDEF"
+
+#: pgc.l:1402
+#, c-format
+msgid "missing identifier in EXEC SQL DEFINE command"
+msgstr "λείπει αναγνωριστικό στην εντολή EXEC SQL DEFINE"
+
+#: pgc.l:1435
+#, c-format
+msgid "syntax error in EXEC SQL INCLUDE command"
+msgstr "συντακτικό σφάλμα στην εντολή EXEC SQL INCLUDE"
+
+#: pgc.l:1485
+#, c-format
+msgid "internal error: unreachable state; please report this to <%s>"
+msgstr "εσωτερικό σφάλμα: μη δυνατή κατάσταση· Παρακαλούμε όπως το αναφέρετε σε <%s>"
+
+#: pgc.l:1637
+#, c-format
+msgid "Error: include path \"%s/%s\" is too long on line %d, skipping\n"
+msgstr "Σφάλμα: η διαδρομή ενσωμάτωσης «%s/%s» είναι πολύ μακρυά στη γραμμή %d, παρακάμπτεται\n"
+
+#: pgc.l:1660
+#, c-format
+msgid "could not open include file \"%s\" on line %d"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου ενσωμάτωσης «%s» στη γραμμή %d"
+
+#: preproc.y:31
+msgid "syntax error"
+msgstr "συντακτικό σφάλμα"
+
+#: preproc.y:84
+#, c-format
+msgid "WARNING: "
+msgstr "ΠΡΟΕΙΔΟΠΟΙΗΣΗ: "
+
+#: preproc.y:87
+#, c-format
+msgid "ERROR: "
+msgstr "ΣΦΑΛΜΑ: "
+
+#: preproc.y:514
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "ο δρομέας «%s» δεν υπάρχει"
+
+#: preproc.y:543
+#, c-format
+msgid "initializer not allowed in type definition"
+msgstr "δεν επιτρέπεται εκκινητής σε ορισμό τύπου"
+
+#: preproc.y:545
+#, c-format
+msgid "type name \"string\" is reserved in Informix mode"
+msgstr "το όνομα τύπου «string» είναι δεσμευμένο σε λειτουργία Informix"
+
+#: preproc.y:552 preproc.y:17675
+#, c-format
+msgid "type \"%s\" is already defined"
+msgstr "ο τύπος «%s» έχει ήδη οριστεί"
+
+#: preproc.y:577 preproc.y:18310 preproc.y:18635 variable.c:621
+#, c-format
+msgid "multidimensional arrays for simple data types are not supported"
+msgstr "οι πολυδιάστατες συστυχίες για απλούς τύπους δεδομένων δεν υποστηρίζονται"
+
+#: preproc.y:599
+#, c-format
+msgid "connection %s is overwritten with %s by DECLARE statement %s"
+msgstr "η σύνδεση %s αντικαθίσταται με %s από τη δήλωση DECLARE %s"
+
+#: preproc.y:1753
+#, c-format
+msgid "AT option not allowed in CLOSE DATABASE statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση CLOSE DATABASE"
+
+#: preproc.y:2001
+#, c-format
+msgid "AT option not allowed in CONNECT statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση CONNECT"
+
+#: preproc.y:2041
+#, c-format
+msgid "AT option not allowed in DISCONNECT statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση DISCONNECT"
+
+#: preproc.y:2096
+#, c-format
+msgid "AT option not allowed in SET CONNECTION statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση SET CONNECTION"
+
+#: preproc.y:2118
+#, c-format
+msgid "AT option not allowed in TYPE statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση TYPE"
+
+#: preproc.y:2127
+#, c-format
+msgid "AT option not allowed in VAR statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση VAR"
+
+#: preproc.y:2134
+#, c-format
+msgid "AT option not allowed in WHENEVER statement"
+msgstr "η επιλογή AT δεν επιτρέπεται σε δήλωση WHENEVER"
+
+#: preproc.y:2211 preproc.y:2383 preproc.y:2388 preproc.y:2511 preproc.y:4143
+#: preproc.y:4807 preproc.y:5340 preproc.y:5678 preproc.y:5978 preproc.y:7514
+#: preproc.y:9082 preproc.y:9087 preproc.y:11915
+#, c-format
+msgid "unsupported feature will be passed to server"
+msgstr "μη υποστηριζόμενο χαρακτηριστικό που θα προωθηθεί στον διακομιστή"
+
+#: preproc.y:2769
+#, c-format
+msgid "SHOW ALL is not implemented"
+msgstr "SHOW ALL δεν είναι υλοποιημένο"
+
+#: preproc.y:3464
+#, c-format
+msgid "COPY FROM STDIN is not implemented"
+msgstr "COPY FROM STDIN δεν είναι υλοποιημένο"
+
+#: preproc.y:10014 preproc.y:17250
+#, c-format
+msgid "\"database\" cannot be used as cursor name in INFORMIX mode"
+msgstr "το «database» δεν μπορεί να χρησιμοποιηθεί ως όνομα δρομέα σε λειτουργία INFORMIX"
+
+#: preproc.y:10021 preproc.y:17260
+#, c-format
+msgid "using variable \"%s\" in different declare statements is not supported"
+msgstr "η χρήση της μεταβλητής «%s» σε διαφορετικές δηλώσεις προτάσεων δεν υποστηρίζεται"
+
+#: preproc.y:10023 preproc.y:17262
+#, c-format
+msgid "cursor \"%s\" is already defined"
+msgstr "ο δρομέας «%s» έχει ήδη οριστεί"
+
+#: preproc.y:10497
+#, c-format
+msgid "no longer supported LIMIT #,# syntax passed to server"
+msgstr "μη υποστηριζόμενη πλέον σύνταξη LIMIT #,# που θα προωθηθεί στον διακομιστή"
+
+#: preproc.y:10830 preproc.y:10837
+#, c-format
+msgid "subquery in FROM must have an alias"
+msgstr "υποερώτημα σε FROM πρέπει να έχει ένα alias"
+
+#: preproc.y:16942 preproc.y:16949
+#, c-format
+msgid "CREATE TABLE AS cannot specify INTO"
+msgstr "CREATE TABLE AS δεν δύναται να ορίσει INTO"
+
+#: preproc.y:16985
+#, c-format
+msgid "expected \"@\", found \"%s\""
+msgstr "ανέμενε «@», βρήκε «%s»."
+
+#: preproc.y:16997
+#, c-format
+msgid "only protocols \"tcp\" and \"unix\" and database type \"postgresql\" are supported"
+msgstr "μόνο τα πρωτόκολλα \"TCP\" και \"UNIX\" και ο τύπος βάσης δεδομένων «postgresql» υποστηρίζονται"
+
+#: preproc.y:17000
+#, c-format
+msgid "expected \"://\", found \"%s\""
+msgstr "ανέμενε «://», βρήκε «%s»."
+
+#: preproc.y:17005
+#, c-format
+msgid "Unix-domain sockets only work on \"localhost\" but not on \"%s\""
+msgstr "οι υποδοχές πεδίου-Unix λειτουργούν μόνο στο «localhost» αλλά όχι στο «%s»"
+
+#: preproc.y:17031
+#, c-format
+msgid "expected \"postgresql\", found \"%s\""
+msgstr "ανέμενε «postgresql», βρήκε «%s»."
+
+#: preproc.y:17034
+#, c-format
+msgid "invalid connection type: %s"
+msgstr "άκυρη επιλογή σύνδεσης: %s"
+
+#: preproc.y:17043
+#, c-format
+msgid "expected \"@\" or \"://\", found \"%s\""
+msgstr "ανέμενε «@» ή «://», βρήκε «%s»."
+
+#: preproc.y:17118 preproc.y:17136
+#, c-format
+msgid "invalid data type"
+msgstr "μη έγκυρος τύπος δεδομένων"
+
+#: preproc.y:17147 preproc.y:17164
+#, c-format
+msgid "incomplete statement"
+msgstr "ανολοκλήρωτη δήλωση"
+
+#: preproc.y:17150 preproc.y:17167
+#, c-format
+msgid "unrecognized token \"%s\""
+msgstr "μη αναγνωρίσιμο διακριτικό «%s»"
+
+#: preproc.y:17212
+#, c-format
+msgid "name \"%s\" is already declared"
+msgstr "το όνομα «%s» έχει ήδη δηλωθεί"
+
+#: preproc.y:17478
+#, c-format
+msgid "only data types numeric and decimal have precision/scale argument"
+msgstr "μόνο οι αριθμητικοί και δεκαδικοί τύποι δεδομένων έχουν όρισμα ακρίβειας/κλίμακας"
+
+#: preproc.y:17490
+#, c-format
+msgid "interval specification not allowed here"
+msgstr "προδιαγραφές διαστήματος δεν επιτρέπονται εδώ"
+
+#: preproc.y:17650 preproc.y:17702
+#, c-format
+msgid "too many levels in nested structure/union definition"
+msgstr "πάρα πολλά επίπεδα σε ένθετο ορισμό δομής/ένωσης"
+
+#: preproc.y:17825
+#, c-format
+msgid "pointers to varchar are not implemented"
+msgstr "δείκτες σε varchar δεν είναι υλοποιημένοι"
+
+#: preproc.y:18276
+#, c-format
+msgid "initializer not allowed in EXEC SQL VAR command"
+msgstr "δεν επιτρέπεται αρχικοποιητής σε εντολή EXEC SQL VAR"
+
+#: preproc.y:18593
+#, c-format
+msgid "arrays of indicators are not allowed on input"
+msgstr "δεν επιτρέπονται δείκτες συστάδων για είσοδο"
+
+#: preproc.y:18780
+#, c-format
+msgid "operator not allowed in variable definition"
+msgstr "δεν επιτρέπεται χειριστής σε ορισμό μεταβλητής"
+
+#. translator: %s is typically the translation of "syntax error"
+#: preproc.y:18821
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s σε ή κοντά σε «%s»"
+
+#: type.c:18 type.c:30
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: type.c:214 type.c:685
+#, c-format
+msgid "unrecognized variable type code %d"
+msgstr "μη αναγνωρίσιμος κωδικός τύπου μεταβλητής %d"
+
+#: type.c:263
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable of a different type"
+msgstr "η μεταβλητή «%s» αποκρύπτεται από μια τοπική μεταβλητή διαφορετικού τύπου"
+
+#: type.c:265
+#, c-format
+msgid "variable \"%s\" is hidden by a local variable"
+msgstr "η μεταβλητή «%s» αποκρύπτεται από μια τοπική μεταβλητή"
+
+#: type.c:277
+#, c-format
+msgid "indicator variable \"%s\" is hidden by a local variable of a different type"
+msgstr "ο δείκτης μεταβλητής «%s» αποκρύπτεται από μια τοπική μεταβλητή διαφορετικού τύπου"
+
+#: type.c:279
+#, c-format
+msgid "indicator variable \"%s\" is hidden by a local variable"
+msgstr "ο δείκτης μεταβλητής «%s» αποκρύπτεται από μια τοπική μεταβλητή"
+
+#: type.c:287
+#, c-format
+msgid "indicator for array/pointer has to be array/pointer"
+msgstr "ο δείκτης για συστάδα/δείκτη πρέπει να είναι πίνακας/δείκτης"
+
+#: type.c:291
+#, c-format
+msgid "nested arrays are not supported (except strings)"
+msgstr "οι ένθετες συστάδες δεν υποστηρίζονται (εξαιρούνται οι συμβολοσειρές)"
+
+#: type.c:333
+#, c-format
+msgid "indicator for struct has to be a struct"
+msgstr "ο δείκτης για δομή πρέπει να είναι μια δομή"
+
+#: type.c:353 type.c:374 type.c:394
+#, c-format
+msgid "indicator for simple data type has to be simple"
+msgstr "ο δείκτης για απλό τύπο δεδομένων πρέπει να είναι απλός"
+
+#: type.c:625
+#, c-format
+msgid "indicator struct \"%s\" has too few members"
+msgstr "ο δείκτης δομής «%s» έχει πολύ λίγα μέλη"
+
+#: type.c:633
+#, c-format
+msgid "indicator struct \"%s\" has too many members"
+msgstr "ο δείκτης δομής «%s» έχει πάρα πολλά μέλη"
+
+#: type.c:744
+#, c-format
+msgid "unrecognized descriptor item code %d"
+msgstr "μη αναγνωρίσιμος κωδικός στοιχείου περιγραφέα %d"
+
+#: variable.c:89 variable.c:116
+#, c-format
+msgid "incorrectly formed variable \"%s\""
+msgstr "εσφαλμένα σχηματισμένη μεταβλητή «%s»"
+
+#: variable.c:139
+#, c-format
+msgid "variable \"%s\" is not a pointer"
+msgstr "η μεταβλητή «%s» δεν είναι δείκτης"
+
+#: variable.c:142 variable.c:167
+#, c-format
+msgid "variable \"%s\" is not a pointer to a structure or a union"
+msgstr "η μεταβλητή «%s» δεν είναι δείκτης προς μια δομή ή μια ένωση"
+
+#: variable.c:154
+#, c-format
+msgid "variable \"%s\" is neither a structure nor a union"
+msgstr "η μεταβλητή «%s» δεν είναι ούτε δομή ούτε ένωση"
+
+#: variable.c:164
+#, c-format
+msgid "variable \"%s\" is not an array"
+msgstr "η μεταβλητή «%s» δεν είναι μία συστάδα"
+
+#: variable.c:233 variable.c:255
+#, c-format
+msgid "variable \"%s\" is not declared"
+msgstr "η μεταβλητή «%s» δεν έχει δηλωθεί"
+
+#: variable.c:494
+#, c-format
+msgid "indicator variable must have an integer type"
+msgstr "ο δείκτης μεταβλητής πρέπει να έχει ακέραιο τύπο"
+
+#: variable.c:506
+#, c-format
+msgid "unrecognized data type name \"%s\""
+msgstr "μη αναγνωρίσιμο όνομα τύπου δεδομένων «%s»"
+
+#: variable.c:517 variable.c:525 variable.c:542 variable.c:545
+#, c-format
+msgid "multidimensional arrays are not supported"
+msgstr "οι πολυδιάστατες συστάδες δεν υποστηρίζονται"
+
+#: variable.c:534
+#, c-format
+msgid "multilevel pointers (more than 2 levels) are not supported; found %d level"
+msgid_plural "multilevel pointers (more than 2 levels) are not supported; found %d levels"
+msgstr[0] "οι δείκτες πολλαπλών επιπέδων (περισσότερα από 2 επίπεδα) δεν υποστηρίζονται· βρέθηκε %d επίπεδο"
+msgstr[1] "οι δείκτες πολλαπλών επιπέδων (περισσότερα από 2 επίπεδα) δεν υποστηρίζονται· βρέθηκαν %d επίπεδα"
+
+#: variable.c:539
+#, c-format
+msgid "pointer to pointer is not supported for this data type"
+msgstr "δεν υποστηρίζεται δείκτης προς δείκτη για αυτόν τον τύπο δεδομένων"
+
+#: variable.c:559
+#, c-format
+msgid "multidimensional arrays for structures are not supported"
+msgstr "οι πολυδιάστατες συστάδες για δομές δεν υποστηρίζονται"

@@ -84,6 +84,7 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/guc_hooks.h"
 #include "utils/ps_status.h"
 
 /* User-settable parameters for sync rep */
@@ -1053,9 +1054,9 @@ check_synchronous_standby_names(char **newval, void **extra, GucSource source)
 			return false;
 		}
 
-		/* GUC extra value must be malloc'd, not palloc'd */
+		/* GUC extra value must be guc_malloc'd, not palloc'd */
 		pconf = (SyncRepConfigData *)
-			malloc(syncrep_parse_result->config_size);
+			guc_malloc(LOG, syncrep_parse_result->config_size);
 		if (pconf == NULL)
 			return false;
 		memcpy(pconf, syncrep_parse_result, syncrep_parse_result->config_size);

@@ -30,6 +30,8 @@ exec sql begin declare section;
 				  } ind_personal, *i;
 	ind ind_children;
 	struct t1 { str name; }; struct t2 { str name; };
+	static varchar vc1[50], vc2[50], vc3[255];
+	static int i1, i2, i3;
 exec sql end declare section;
 
 	exec sql char *married = NULL;
@@ -96,6 +98,13 @@ exec sql end declare section;
 
 	strcpy(msg, "disconnect");
 	exec sql disconnect;
+
+	/* this just to silence unused-variable warnings: */
+	vc1.len = vc2.len = vc3.len = 0;
+	i1 = i2 = i3 = 0;
+	printf("%d %d %d %d %d %d\n",
+	       vc1.len, vc2.len, vc3.len,
+	       i1, i2, i3);
 
 	return 0;
 }

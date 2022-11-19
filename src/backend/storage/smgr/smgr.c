@@ -41,13 +41,12 @@ typedef struct f_smgr
 {
 	void		(*smgr_init) (void);	/* may be NULL */
 	void		(*smgr_shutdown) (void);	/* may be NULL */
-	void		(*smgr_release) (void); /* may be NULL */
 	void		(*smgr_open) (SMgrRelation reln);
 	void		(*smgr_close) (SMgrRelation reln, ForkNumber forknum);
 	void		(*smgr_create) (SMgrRelation reln, ForkNumber forknum,
 								bool isRedo);
 	bool		(*smgr_exists) (SMgrRelation reln, ForkNumber forknum);
-	void		(*smgr_unlink) (RelFileNodeBackend rnode, ForkNumber forknum,
+	void		(*smgr_unlink) (RelFileLocatorBackend rlocator, ForkNumber forknum,
 								bool isRedo);
 	void		(*smgr_extend) (SMgrRelation reln, ForkNumber forknum,
 								BlockNumber blocknum, char *buffer, bool skipFsync);
@@ -70,7 +69,6 @@ static const f_smgr smgrsw[] = {
 	{
 		.smgr_init = mdinit,
 		.smgr_shutdown = NULL,
-		.smgr_release = mdrelease,
 		.smgr_open = mdopen,
 		.smgr_close = mdclose,
 		.smgr_create = mdcreate,
@@ -145,9 +143,9 @@ smgrshutdown(int code, Datum arg)
  *		This does not attempt to actually open the underlying file.
  */
 SMgrRelation
-smgropen(RelFileNode rnode, BackendId backend)
+smgropen(RelFileLocator rlocator, BackendId backend)
 {
-	RelFileNodeBackend brnode;
+	RelFileLocatorBackend brlocator;
 	SMgrRelation reln;
 	bool		found;
 
@@ -156,7 +154,7 @@ smgropen(RelFileNode rnode, BackendId backend)
 		/* First time through: initialize the hash table */
 		HASHCTL		ctl;
 
-		ctl.keysize = sizeof(RelFileNodeBackend);
+		ctl.keysize = sizeof(RelFileLocatorBackend);
 		ctl.entrysize = sizeof(SMgrRelationData);
 		SMgrRelationHash = hash_create("smgr relation table", 400,
 									   &ctl, HASH_ELEM | HASH_BLOBS);
@@ -164,10 +162,10 @@ smgropen(RelFileNode rnode, BackendId backend)
 	}
 
 	/* Look up or create an entry */
-	brnode.node = rnode;
-	brnode.backend = backend;
+	brlocator.locator = rlocator;
+	brlocator.backend = backend;
 	reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &brnode,
+									  (void *) &brlocator,
 									  HASH_ENTER, &found);
 
 	/* Initialize it if not present before */
@@ -269,7 +267,7 @@ smgrclose(SMgrRelation reln)
 		dlist_delete(&reln->node);
 
 	if (hash_search(SMgrRelationHash,
-					(void *) &(reln->smgr_rnode),
+					(void *) &(reln->smgr_rlocator),
 					HASH_REMOVE, NULL) == NULL)
 		elog(ERROR, "SMgrRelation hashtable corrupted");
 
@@ -279,6 +277,42 @@ smgrclose(SMgrRelation reln)
 	 */
 	if (owner)
 		*owner = NULL;
+}
+
+/*
+ *	smgrrelease() -- Release all resources used by this object.
+ *
+ *	The object remains valid.
+ */
+void
+smgrrelease(SMgrRelation reln)
+{
+	for (ForkNumber forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+	{
+		smgrsw[reln->smgr_which].smgr_close(reln, forknum);
+		reln->smgr_cached_nblocks[forknum] = InvalidBlockNumber;
+	}
+}
+
+/*
+ *	smgrreleaseall() -- Release resources used by all objects.
+ *
+ *	This is called for PROCSIGNAL_BARRIER_SMGRRELEASE.
+ */
+void
+smgrreleaseall(void)
+{
+	HASH_SEQ_STATUS status;
+	SMgrRelation reln;
+
+	/* Nothing to do if hashtable not set up */
+	if (SMgrRelationHash == NULL)
+		return;
+
+	hash_seq_init(&status, SMgrRelationHash);
+
+	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
+		smgrrelease(reln);
 }
 
 /*
@@ -301,15 +335,15 @@ smgrcloseall(void)
 }
 
 /*
- *	smgrclosenode() -- Close SMgrRelation object for given RelFileNode,
+ *	smgrcloserellocator() -- Close SMgrRelation object for given RelFileLocator,
  *					   if one exists.
  *
- * This has the same effects as smgrclose(smgropen(rnode)), but it avoids
+ * This has the same effects as smgrclose(smgropen(rlocator)), but it avoids
  * uselessly creating a hashtable entry only to drop it again when no
  * such entry exists already.
  */
 void
-smgrclosenode(RelFileNodeBackend rnode)
+smgrcloserellocator(RelFileLocatorBackend rlocator)
 {
 	SMgrRelation reln;
 
@@ -318,7 +352,7 @@ smgrclosenode(RelFileNodeBackend rnode)
 		return;
 
 	reln = (SMgrRelation) hash_search(SMgrRelationHash,
-									  (void *) &rnode,
+									  (void *) &rlocator,
 									  HASH_FIND, NULL);
 	if (reln != NULL)
 		smgrclose(reln);
@@ -386,7 +420,7 @@ void
 smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 {
 	int			i = 0;
-	RelFileNodeBackend *rnodes;
+	RelFileLocatorBackend *rlocators;
 	ForkNumber	forknum;
 
 	if (nrels == 0)
@@ -396,19 +430,19 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * Get rid of any remaining buffers for the relations.  bufmgr will just
 	 * drop them without bothering to write the contents.
 	 */
-	DropRelFileNodesAllBuffers(rels, nrels);
+	DropRelationsAllBuffers(rels, nrels);
 
 	/*
 	 * create an array which contains all relations to be dropped, and close
 	 * each relation's forks at the smgr level while at it
 	 */
-	rnodes = palloc(sizeof(RelFileNodeBackend) * nrels);
+	rlocators = palloc(sizeof(RelFileLocatorBackend) * nrels);
 	for (i = 0; i < nrels; i++)
 	{
-		RelFileNodeBackend rnode = rels[i]->smgr_rnode;
+		RelFileLocatorBackend rlocator = rels[i]->smgr_rlocator;
 		int			which = rels[i]->smgr_which;
 
-		rnodes[i] = rnode;
+		rlocators[i] = rlocator;
 
 		/* Close the forks at smgr level */
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
@@ -424,7 +458,7 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 	 * closed our own smgr rel.
 	 */
 	for (i = 0; i < nrels; i++)
-		CacheInvalidateSmgr(rnodes[i]);
+		CacheInvalidateSmgr(rlocators[i]);
 
 	/*
 	 * Delete the physical file(s).
@@ -439,10 +473,10 @@ smgrdounlinkall(SMgrRelation *rels, int nrels, bool isRedo)
 		int			which = rels[i]->smgr_which;
 
 		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
-			smgrsw[which].smgr_unlink(rnodes[i], forknum, isRedo);
+			smgrsw[which].smgr_unlink(rlocators[i], forknum, isRedo);
 	}
 
-	pfree(rnodes);
+	pfree(rlocators);
 }
 
 
@@ -597,7 +631,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
 	 */
-	DropRelFileNodeBuffers(reln, forknum, nforks, nblocks);
+	DropRelationBuffers(reln, forknum, nforks, nblocks);
 
 	/*
 	 * Send a shared-inval message to force other backends to close any smgr
@@ -609,7 +643,7 @@ smgrtruncate(SMgrRelation reln, ForkNumber *forknum, int nforks, BlockNumber *nb
 	 * is a performance-critical path.)  As in the unlink code, we want to be
 	 * sure the message is sent before we start changing things on-disk.
 	 */
-	CacheInvalidateSmgr(reln->smgr_rnode);
+	CacheInvalidateSmgr(reln->smgr_rlocator);
 
 	/* Do the truncation */
 	for (i = 0; i < nforks; i++)
@@ -698,11 +732,6 @@ AtEOXact_SMgr(void)
 bool
 ProcessBarrierSmgrRelease(void)
 {
-	for (int i = 0; i < NSmgr; i++)
-	{
-		if (smgrsw[i].smgr_release)
-			smgrsw[i].smgr_release();
-	}
-
+	smgrreleaseall();
 	return true;
 }

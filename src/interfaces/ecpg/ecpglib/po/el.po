@@ -1,0 +1,200 @@
+# Greek message translation file for ecpglib
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the ecpglib (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ecpglib (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-08-20 09:09+0000\n"
+"PO-Revision-Date: 2021-08-23 10:40+0200\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: el\n"
+
+#: connect.c:237
+msgid "empty message text"
+msgstr "κενό κείμενο μηνύματος"
+
+#: connect.c:405 connect.c:627
+msgid "<DEFAULT>"
+msgstr "<DEFAULT>"
+
+#: descriptor.c:871 misc.c:119
+msgid "NULL"
+msgstr "NULL"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:33
+#, c-format
+msgid "no data found on line %d"
+msgstr "δεν βρέθηκαν δεδομένα στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:40
+#, c-format
+msgid "out of memory on line %d"
+msgstr "έλλειψη μνήμης στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:47
+#, c-format
+msgid "unsupported type \"%s\" on line %d"
+msgstr "μη υποστηριζόμενος τύπος «%s» στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:54
+#, c-format
+msgid "too many arguments on line %d"
+msgstr "πάρα πολλές παράμετροι στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:61
+#, c-format
+msgid "too few arguments on line %d"
+msgstr "πολύ λίγες παράμετροι στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:68
+#, c-format
+msgid "invalid input syntax for type int: \"%s\", on line %d"
+msgstr "μη έγκυρη σύνταξη εισόδου για τύπο int: «%s», στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:75
+#, c-format
+msgid "invalid input syntax for type unsigned int: \"%s\", on line %d"
+msgstr "μη έγκυρη σύνταξη εισόδου για τύπο unsigned int: «%s», στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:82
+#, c-format
+msgid "invalid input syntax for floating-point type: \"%s\", on line %d"
+msgstr "μη έγκυρη σύνταξη εισόδου για τύπο floating-point: «%s», on-line %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:90
+#, c-format
+msgid "invalid syntax for type boolean: \"%s\", on line %d"
+msgstr "μη έγκυρη σύνταξη για τύπο boolean: «%s», στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:95
+#, c-format
+msgid "could not convert boolean value: size mismatch, on line %d"
+msgstr "δεν ήταν δυνατή η μετατροπή της δυαδικής τιμής: αναντιστοιχία μεγέθους, στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:102
+#, c-format
+msgid "empty query on line %d"
+msgstr "άδειο ερώτημα στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:109
+#, c-format
+msgid "null value without indicator on line %d"
+msgstr "τιμή null χωρίς ένδειξη στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:116
+#, c-format
+msgid "variable does not have an array type on line %d"
+msgstr "η μεταβλητή δεν έχει τύπο συστάδας στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:123
+#, c-format
+msgid "data read from server is not an array on line %d"
+msgstr "τα δεδομένα που διαβάζονται από το διακομιστή δεν είναι μία συστάδα στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:130
+#, c-format
+msgid "inserting an array of variables is not supported on line %d"
+msgstr "η εισαγωγή μίας συστάδας μεταβλητών δεν υποστηρίζεται στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:137
+#, c-format
+msgid "connection \"%s\" does not exist on line %d"
+msgstr "η σύνδεση «%s» δεν υπάρχει στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:144
+#, c-format
+msgid "not connected to connection \"%s\" on line %d"
+msgstr "δεν έχει συνδεθεί στη σύνδεση «%s» στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:151
+#, c-format
+msgid "invalid statement name \"%s\" on line %d"
+msgstr "μη έγκυρο όνομα δήλωσης «%s» στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:158
+#, c-format
+msgid "descriptor \"%s\" not found on line %d"
+msgstr "περιγραφέας «%s» δεν βρέθηκε στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:165
+#, c-format
+msgid "descriptor index out of range on line %d"
+msgstr "ευρετήριο περιγραφέα εκτός εύρους στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:172
+#, c-format
+msgid "unrecognized descriptor item \"%s\" on line %d"
+msgstr "μη αναγνωρίσιμο στοιχείο περιγραφέα «%s» στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:179
+#, c-format
+msgid "variable does not have a numeric type on line %d"
+msgstr "η μεταβλητή δεν έχει αριθμητικό τύπο στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:186
+#, c-format
+msgid "variable does not have a character type on line %d"
+msgstr "η μεταβλητή δεν έχει τύπο χαρακτήρα στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:193
+#, c-format
+msgid "error in transaction processing on line %d"
+msgstr "σφάλμα κατά την επεξεργασία συναλλαγής στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:200
+#, c-format
+msgid "could not connect to database \"%s\" on line %d"
+msgstr "δεν ήταν δυνατή η σύνδεση στη βάση δεδομένων «%s» στη γραμμή %d"
+
+#. translator: this string will be truncated at 149 characters expanded.
+#: error.c:207
+#, c-format
+msgid "SQL error %d on line %d"
+msgstr "SQL σφάλμα %d στη γραμμή %d"
+
+#: error.c:254
+msgid "the connection to the server was lost"
+msgstr "η σύνδεση στον διακομιστή χάθηκε"
+
+#: error.c:346
+#, c-format
+msgid "SQL error: %s\n"
+msgstr "SQL σφάλμα: %s\n"
+
+#: execute.c:2196 execute.c:2203
+msgid "<empty>"
+msgstr "<empty>"

@@ -23,6 +23,8 @@
 /* We assume libpq-fe.h has already been included. */
 #include "libpq-events.h"
 
+#include <netdb.h>
+#include <sys/socket.h>
 #include <time.h>
 #ifndef WIN32
 #include <sys/time.h>
@@ -38,7 +40,6 @@
 #endif
 
 /* include stuff common to fe and be */
-#include "getaddrinfo.h"
 #include "libpq/pqcomm.h"
 /* include stuff found in fe only */
 #include "fe-auth-sasl.h"
@@ -225,7 +226,8 @@ typedef enum
 								 * query */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT,			/* Copy Out data transfer in progress */
-	PGASYNC_COPY_BOTH			/* Copy In/Out data transfer in progress */
+	PGASYNC_COPY_BOTH,			/* Copy In/Out data transfer in progress */
+	PGASYNC_PIPELINE_IDLE,		/* "Idle" between commands in pipeline mode */
 } PGAsyncStatusType;
 
 /* Target server type (decoded value of target_session_attrs) */
@@ -311,7 +313,8 @@ typedef enum
 	PGQUERY_EXTENDED,			/* full Extended protocol (PQexecParams) */
 	PGQUERY_PREPARE,			/* Parse only (PQprepare) */
 	PGQUERY_DESCRIBE,			/* Describe Statement or Portal */
-	PGQUERY_SYNC				/* Sync (at end of a pipeline) */
+	PGQUERY_SYNC,				/* Sync (at end of a pipeline) */
+	PGQUERY_CLOSE
 } PGQueryClass;
 
 /*
@@ -682,6 +685,7 @@ extern void pqParseInput3(PGconn *conn);
 extern int	pqGetErrorNotice3(PGconn *conn, bool isError);
 extern void pqBuildErrorMessage3(PQExpBuffer msg, const PGresult *res,
 								 PGVerbosity verbosity, PGContextVisibility show_context);
+extern int	pqGetNegotiateProtocolVersion3(PGconn *conn);
 extern int	pqGetCopyData3(PGconn *conn, char **buffer, int async);
 extern int	pqGetline3(PGconn *conn, char *s, int maxlen);
 extern int	pqGetlineAsync3(PGconn *conn, char *buffer, int bufsize);
@@ -853,6 +857,14 @@ extern void pqTraceOutputNoTypeByteMessage(PGconn *conn, const char *message);
 	 (conn)->errorReported = 0)
 
 /*
+ * Check whether we have a PGresult pending to be returned --- either a
+ * constructed one in conn->result, or a "virtual" error result that we
+ * don't intend to materialize until the end of the query cycle.
+ */
+#define pgHavePendingResult(conn) \
+	((conn)->result != NULL || (conn)->error_result)
+
+/*
  * this is so that we can check if a connection is non-blocking internally
  * without the overhead of a function call
  */
@@ -870,6 +882,14 @@ extern char *libpq_ngettext(const char *msgid, const char *msgid_plural, unsigne
 #define libpq_gettext(x) (x)
 #define libpq_ngettext(s, p, n) ((n) == 1 ? (s) : (p))
 #endif
+/*
+ * libpq code should use the above, not _(), since that would use the
+ * surrounding programs's message catalog.
+ */
+#undef _
+
+extern void libpq_append_error(PQExpBuffer errorMessage, const char *fmt, ...) pg_attribute_printf(2, 3);
+extern void libpq_append_conn_error(PGconn *conn, const char *fmt, ...) pg_attribute_printf(2, 3);
 
 /*
  * These macros are needed to let error-handling code be portable between

@@ -52,7 +52,11 @@ ALTER GROUP <replaceable class="parameter">group_name</replaceable> RENAME TO <r
    equivalent to granting or revoking membership in the role named as the
    <quote>group</quote>; so the preferred way to do this is to use
    <link linkend="sql-grant"><command>GRANT</command></link> or
-   <link linkend="sql-revoke"><command>REVOKE</command></link>.
+   <link linkend="sql-revoke"><command>REVOKE</command></link>. Note that
+   <command>GRANT</command> and <command>REVOKE</command> have additional
+   options which are not available with this command, such as the ability
+   to grant and revoke <literal>ADMIN OPTION</literal>, and the ability to
+   specify the grantor.
   </para>
 
   <para>

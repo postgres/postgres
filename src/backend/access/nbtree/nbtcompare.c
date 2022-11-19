@@ -142,7 +142,7 @@ btint8cmp(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(A_LESS_THAN_B);
 }
 
-#ifndef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM < 8
 static int
 btint8fastcmp(Datum x, Datum y, SortSupport ssup)
 {
@@ -163,7 +163,7 @@ btint8sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-#ifdef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM >= 8
 	ssup->comparator = ssup_datum_signed_cmp;
 #else
 	ssup->comparator = btint8fastcmp;

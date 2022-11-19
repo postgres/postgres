@@ -99,6 +99,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/fmgrprotos.h"
+#include "utils/guc_hooks.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -475,7 +476,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	/* Early initialization */
 	BaseInit();
 
-	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, NULL, false);
+	InitPostgres(NULL, InvalidOid, NULL, InvalidOid, false, false, NULL);
 
 	SetProcessingMode(NormalProcessing);
 
@@ -984,7 +985,8 @@ rebuild_database_list(Oid newdb)
 	hctl.keysize = sizeof(Oid);
 	hctl.entrysize = sizeof(avl_dbase);
 	hctl.hcxt = tmpcxt;
-	dbhash = hash_create("autovacuum db hash", 20, &hctl,	/* magic number here FIXME */
+	dbhash = hash_create("autovacuum db hash", 20, &hctl,	/* magic number here
+															 * FIXME */
 						 HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	/* start by inserting the new database */
@@ -1101,7 +1103,7 @@ rebuild_database_list(Oid newdb)
 		 */
 		for (i = 0; i < nelems; i++)
 		{
-			avl_dbase  *db = &(dbary[i]);
+			db = &(dbary[i]);
 
 			current_time = TimestampTzPlusMilliseconds(current_time,
 													   millis_increment);
@@ -1683,22 +1685,23 @@ AutoVacWorkerMain(int argc, char *argv[])
 		char		dbname[NAMEDATALEN];
 
 		/*
-		 * Report autovac startup to the cumulative stats system.  We deliberately do
-		 * this before InitPostgres, so that the last_autovac_time will get
-		 * updated even if the connection attempt fails.  This is to prevent
-		 * autovac from getting "stuck" repeatedly selecting an unopenable
-		 * database, rather than making any progress on stuff it can connect
-		 * to.
+		 * Report autovac startup to the cumulative stats system.  We
+		 * deliberately do this before InitPostgres, so that the
+		 * last_autovac_time will get updated even if the connection attempt
+		 * fails.  This is to prevent autovac from getting "stuck" repeatedly
+		 * selecting an unopenable database, rather than making any progress
+		 * on stuff it can connect to.
 		 */
 		pgstat_report_autovac(dbid);
 
 		/*
-		 * Connect to the selected database
+		 * Connect to the selected database, specifying no particular user
 		 *
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(NULL, dbid, NULL, InvalidOid, dbname, false);
+		InitPostgres(NULL, dbid, NULL, InvalidOid, false, false,
+					 dbname);
 		SetProcessingMode(NormalProcessing);
 		set_ps_display(dbname);
 		ereport(DEBUG1,
@@ -1938,6 +1941,9 @@ get_database_list(void)
 	table_close(rel, AccessShareLock);
 
 	CommitTransactionCommand();
+
+	/* Be sure to restore caller's memory context */
+	MemoryContextSwitchTo(resultcxt);
 
 	return dblist;
 }
@@ -2995,8 +3001,8 @@ relation_needs_vacanalyze(Oid relid,
 	TransactionId xidForceLimit;
 	MultiXactId multiForceLimit;
 
-	AssertArg(classForm != NULL);
-	AssertArg(OidIsValid(relid));
+	Assert(classForm != NULL);
+	Assert(OidIsValid(relid));
 
 	/*
 	 * Determine vacuum/analyze equation parameters.  We have two possible
@@ -3368,4 +3374,30 @@ AutoVacuumShmemInit(void)
 	}
 	else
 		Assert(found);
+}
+
+/*
+ * GUC check_hook for autovacuum_work_mem
+ */
+bool
+check_autovacuum_work_mem(int *newval, void **extra, GucSource source)
+{
+	/*
+	 * -1 indicates fallback.
+	 *
+	 * If we haven't yet changed the boot_val default of -1, just let it be.
+	 * Autovacuum will look to maintenance_work_mem instead.
+	 */
+	if (*newval == -1)
+		return true;
+
+	/*
+	 * We clamp manually-set values to at least 1MB.  Since
+	 * maintenance_work_mem is always set to at least this value, do the same
+	 * here.
+	 */
+	if (*newval < 1024)
+		*newval = 1024;
+
+	return true;
 }

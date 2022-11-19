@@ -131,7 +131,7 @@ anytimestamp_typmodout(bool istz, int32 typmod)
 	if (typmod >= 0)
 		return psprintf("(%d)%s", (int) typmod, tz);
 	else
-		return psprintf("%s", tz);
+		return pstrdup(tz);
 }
 
 
@@ -2034,9 +2034,9 @@ time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 }
 
 static Timestamp
-dt2local(Timestamp dt, int tz)
+dt2local(Timestamp dt, int timezone)
 {
-	dt -= (tz * USECS_PER_SEC);
+	dt -= (timezone * USECS_PER_SEC);
 	return dt;
 }
 
@@ -2176,7 +2176,7 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
-#ifndef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM < 8
 /* note: this is used for timestamptz also */
 static int
 timestamp_fastcmp(Datum x, Datum y, SortSupport ssup)
@@ -2193,7 +2193,8 @@ timestamp_sortsupport(PG_FUNCTION_ARGS)
 {
 	SortSupport ssup = (SortSupport) PG_GETARG_POINTER(0);
 
-#ifdef USE_FLOAT8_BYVAL
+#if SIZEOF_DATUM >= 8
+
 	/*
 	 * If this build has pass-by-value timestamps, then we can use a standard
 	 * comparator function.
@@ -2402,7 +2403,7 @@ interval_cmp_value(const Interval *interval)
 }
 
 static int
-interval_cmp_internal(Interval *interval1, Interval *interval2)
+interval_cmp_internal(const Interval *interval1, const Interval *interval2)
 {
 	INT128		span1 = interval_cmp_value(interval1);
 	INT128		span2 = interval_cmp_value(interval2);
@@ -3289,7 +3290,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	 * cascade from months and days.  It might still be >24 if the combination
 	 * of cascade and the seconds factor operation itself.
 	 */
-	if (Abs(sec_remainder) >= SECS_PER_DAY)
+	if (fabs(sec_remainder) >= SECS_PER_DAY)
 	{
 		result->day += (int) (sec_remainder / SECS_PER_DAY);
 		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
@@ -3346,7 +3347,7 @@ interval_div(PG_FUNCTION_ARGS)
 	sec_remainder = (orig_day / factor - result->day +
 					 month_remainder_days - (int) month_remainder_days) * SECS_PER_DAY;
 	sec_remainder = TSROUND(sec_remainder);
-	if (Abs(sec_remainder) >= SECS_PER_DAY)
+	if (fabs(sec_remainder) >= SECS_PER_DAY)
 	{
 		result->day += (int) (sec_remainder / SECS_PER_DAY);
 		sec_remainder -= (int) (sec_remainder / SECS_PER_DAY) * SECS_PER_DAY;
@@ -4349,59 +4350,59 @@ interval_trunc(PG_FUNCTION_ARGS)
 	if (type == UNITS)
 	{
 		interval2itm(*interval, tm);
-			switch (val)
-			{
-				case DTK_MILLENNIUM:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 1000) * 1000;
-					/* FALL THRU */
-				case DTK_CENTURY:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 100) * 100;
-					/* FALL THRU */
-				case DTK_DECADE:
-					/* caution: C division may have negative remainder */
-					tm->tm_year = (tm->tm_year / 10) * 10;
-					/* FALL THRU */
-				case DTK_YEAR:
-					tm->tm_mon = 0;
-					/* FALL THRU */
-				case DTK_QUARTER:
-					tm->tm_mon = 3 * (tm->tm_mon / 3);
-					/* FALL THRU */
-				case DTK_MONTH:
-					tm->tm_mday = 0;
-					/* FALL THRU */
-				case DTK_DAY:
-					tm->tm_hour = 0;
-					/* FALL THRU */
-				case DTK_HOUR:
-					tm->tm_min = 0;
-					/* FALL THRU */
-				case DTK_MINUTE:
-					tm->tm_sec = 0;
-					/* FALL THRU */
-				case DTK_SECOND:
-					tm->tm_usec = 0;
-					break;
-				case DTK_MILLISEC:
-					tm->tm_usec = (tm->tm_usec / 1000) * 1000;
-					break;
-				case DTK_MICROSEC:
-					break;
+		switch (val)
+		{
+			case DTK_MILLENNIUM:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 1000) * 1000;
+				/* FALL THRU */
+			case DTK_CENTURY:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 100) * 100;
+				/* FALL THRU */
+			case DTK_DECADE:
+				/* caution: C division may have negative remainder */
+				tm->tm_year = (tm->tm_year / 10) * 10;
+				/* FALL THRU */
+			case DTK_YEAR:
+				tm->tm_mon = 0;
+				/* FALL THRU */
+			case DTK_QUARTER:
+				tm->tm_mon = 3 * (tm->tm_mon / 3);
+				/* FALL THRU */
+			case DTK_MONTH:
+				tm->tm_mday = 0;
+				/* FALL THRU */
+			case DTK_DAY:
+				tm->tm_hour = 0;
+				/* FALL THRU */
+			case DTK_HOUR:
+				tm->tm_min = 0;
+				/* FALL THRU */
+			case DTK_MINUTE:
+				tm->tm_sec = 0;
+				/* FALL THRU */
+			case DTK_SECOND:
+				tm->tm_usec = 0;
+				break;
+			case DTK_MILLISEC:
+				tm->tm_usec = (tm->tm_usec / 1000) * 1000;
+				break;
+			case DTK_MICROSEC:
+				break;
 
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("unit \"%s\" not supported for type %s",
-									lowunits, format_type_be(INTERVALOID)),
-							 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
-			}
-
-			if (itm2interval(tm, result) != 0)
+			default:
 				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("interval out of range")));
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(INTERVALOID)),
+						 (val == DTK_WEEK) ? errdetail("Months usually have fractional weeks.") : 0));
+		}
+
+		if (itm2interval(tm, result) != 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+					 errmsg("interval out of range")));
 	}
 	else
 	{
@@ -5225,80 +5226,80 @@ interval_part_common(PG_FUNCTION_ARGS, bool retnumeric)
 	if (type == UNITS)
 	{
 		interval2itm(*interval, tm);
-			switch (val)
-			{
-				case DTK_MICROSEC:
-					intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
-					break;
+		switch (val)
+		{
+			case DTK_MICROSEC:
+				intresult = tm->tm_sec * INT64CONST(1000000) + tm->tm_usec;
+				break;
 
-				case DTK_MILLISEC:
-					if (retnumeric)
-						/*---
-						 * tm->tm_sec * 1000 + fsec / 1000
-						 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
-						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
-					else
-						PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
-					break;
+			case DTK_MILLISEC:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec * 1000 + fsec / 1000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 3));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec * 1000.0 + tm->tm_usec / 1000.0);
+				break;
 
-				case DTK_SECOND:
-					if (retnumeric)
-						/*---
-						 * tm->tm_sec + fsec / 1'000'000
-						 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
-						 */
-						PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
-					else
-						PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
-					break;
+			case DTK_SECOND:
+				if (retnumeric)
+					/*---
+					 * tm->tm_sec + fsec / 1'000'000
+					 * = (tm->tm_sec * 1'000'000 + fsec) / 1'000'000
+					 */
+					PG_RETURN_NUMERIC(int64_div_fast_to_numeric(tm->tm_sec * INT64CONST(1000000) + tm->tm_usec, 6));
+				else
+					PG_RETURN_FLOAT8(tm->tm_sec + tm->tm_usec / 1000000.0);
+				break;
 
-				case DTK_MINUTE:
-					intresult = tm->tm_min;
-					break;
+			case DTK_MINUTE:
+				intresult = tm->tm_min;
+				break;
 
-				case DTK_HOUR:
-					intresult = tm->tm_hour;
-					break;
+			case DTK_HOUR:
+				intresult = tm->tm_hour;
+				break;
 
-				case DTK_DAY:
-					intresult = tm->tm_mday;
-					break;
+			case DTK_DAY:
+				intresult = tm->tm_mday;
+				break;
 
-				case DTK_MONTH:
-					intresult = tm->tm_mon;
-					break;
+			case DTK_MONTH:
+				intresult = tm->tm_mon;
+				break;
 
-				case DTK_QUARTER:
-					intresult = (tm->tm_mon / 3) + 1;
-					break;
+			case DTK_QUARTER:
+				intresult = (tm->tm_mon / 3) + 1;
+				break;
 
-				case DTK_YEAR:
-					intresult = tm->tm_year;
-					break;
+			case DTK_YEAR:
+				intresult = tm->tm_year;
+				break;
 
-				case DTK_DECADE:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 10;
-					break;
+			case DTK_DECADE:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 10;
+				break;
 
-				case DTK_CENTURY:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 100;
-					break;
+			case DTK_CENTURY:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 100;
+				break;
 
-				case DTK_MILLENNIUM:
-					/* caution: C division may have negative remainder */
-					intresult = tm->tm_year / 1000;
-					break;
+			case DTK_MILLENNIUM:
+				/* caution: C division may have negative remainder */
+				intresult = tm->tm_year / 1000;
+				break;
 
-				default:
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("unit \"%s\" not supported for type %s",
-									lowunits, format_type_be(INTERVALOID))));
-					intresult = 0;
-			}
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("unit \"%s\" not supported for type %s",
+								lowunits, format_type_be(INTERVALOID))));
+				intresult = 0;
+		}
 	}
 	else if (type == RESERV && val == DTK_EPOCH)
 	{
@@ -5776,7 +5777,7 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		Timestamp	finish = PG_GETARG_TIMESTAMP(1);
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval	interval_zero;
+		const Interval interval_zero = {0};
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -5799,7 +5800,6 @@ generate_series_timestamp(PG_FUNCTION_ARGS)
 		fctx->step = *step;
 
 		/* Determine sign of the interval */
-		MemSet(&interval_zero, 0, sizeof(Interval));
 		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
 
 		if (fctx->step_sign == 0)
@@ -5856,7 +5856,7 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		TimestampTz finish = PG_GETARG_TIMESTAMPTZ(1);
 		Interval   *step = PG_GETARG_INTERVAL_P(2);
 		MemoryContext oldcontext;
-		Interval	interval_zero;
+		const Interval interval_zero = {0};
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -5879,7 +5879,6 @@ generate_series_timestamptz(PG_FUNCTION_ARGS)
 		fctx->step = *step;
 
 		/* Determine sign of the interval */
-		MemSet(&interval_zero, 0, sizeof(Interval));
 		fctx->step_sign = interval_cmp_internal(&fctx->step, &interval_zero);
 
 		if (fctx->step_sign == 0)

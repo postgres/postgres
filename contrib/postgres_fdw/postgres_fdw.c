@@ -457,7 +457,7 @@ static PgFdwModifyState *create_foreign_modify(EState *estate,
 											   Plan *subplan,
 											   char *query,
 											   List *target_attrs,
-											   int len,
+											   int values_end,
 											   bool has_returning,
 											   List *retrieved_attrs);
 static TupleTableSlot **execute_foreign_modify(EState *estate,
@@ -1243,9 +1243,9 @@ postgresGetForeignPlan(PlannerInfo *root,
 	if (best_path->fdw_private)
 	{
 		has_final_sort = boolVal(list_nth(best_path->fdw_private,
-										 FdwPathPrivateHasFinalSort));
+										  FdwPathPrivateHasFinalSort));
 		has_limit = boolVal(list_nth(best_path->fdw_private,
-									FdwPathPrivateHasLimit));
+									 FdwPathPrivateHasLimit));
 	}
 
 	if (IS_SIMPLE_REL(foreignrel))
@@ -1341,8 +1341,6 @@ postgresGetForeignPlan(PlannerInfo *root,
 		 */
 		if (outer_plan)
 		{
-			ListCell   *lc;
-
 			/*
 			 * Right now, we only consider grouping and aggregation beyond
 			 * joins. Queries involving aggregates or grouping do not require
@@ -1926,7 +1924,7 @@ postgresBeginForeignModify(ModifyTableState *mtstate,
 	values_end_len = intVal(list_nth(fdw_private,
 									 FdwModifyPrivateLen));
 	has_returning = boolVal(list_nth(fdw_private,
-									FdwModifyPrivateHasReturning));
+									 FdwModifyPrivateHasReturning));
 	retrieved_attrs = (List *) list_nth(fdw_private,
 										FdwModifyPrivateRetrievedAttrs);
 
@@ -2012,8 +2010,8 @@ postgresExecForeignBatchInsert(EState *estate,
  *		Determine the maximum number of tuples that can be inserted in bulk
  *
  * Returns the batch size specified for server or table. When batching is not
- * allowed (e.g. for tables with AFTER ROW triggers or with RETURNING clause),
- * returns 1.
+ * allowed (e.g. for tables with BEFORE/AFTER ROW triggers or with RETURNING
+ * clause), returns 1.
  */
 static int
 postgresGetForeignModifyBatchSize(ResultRelInfo *resultRelInfo)
@@ -2042,10 +2040,30 @@ postgresGetForeignModifyBatchSize(ResultRelInfo *resultRelInfo)
 	else
 		batch_size = get_batch_size_option(resultRelInfo->ri_RelationDesc);
 
-	/* Disable batching when we have to use RETURNING. */
+	/*
+	 * Disable batching when we have to use RETURNING, there are any
+	 * BEFORE/AFTER ROW INSERT triggers on the foreign table, or there are any
+	 * WITH CHECK OPTION constraints from parent views.
+	 *
+	 * When there are any BEFORE ROW INSERT triggers on the table, we can't
+	 * support it, because such triggers might query the table we're inserting
+	 * into and act differently if the tuples that have already been processed
+	 * and prepared for insertion are not there.
+	 */
 	if (resultRelInfo->ri_projectReturning != NULL ||
+		resultRelInfo->ri_WithCheckOptions != NIL ||
 		(resultRelInfo->ri_TrigDesc &&
-		 resultRelInfo->ri_TrigDesc->trig_insert_after_row))
+		 (resultRelInfo->ri_TrigDesc->trig_insert_before_row ||
+		  resultRelInfo->ri_TrigDesc->trig_insert_after_row)))
+		return 1;
+
+	/*
+	 * If the foreign table has no columns, disable batching as the INSERT
+	 * syntax doesn't allow batching multiple empty rows into a zero-column
+	 * table in a single statement.  This is needed for COPY FROM, in which
+	 * case fmstate must be non-NULL.
+	 */
+	if (fmstate && list_length(fmstate->target_attrs) == 0)
 		return 1;
 
 	/*
@@ -2677,11 +2695,11 @@ postgresBeginDirectModify(ForeignScanState *node, int eflags)
 	dmstate->query = strVal(list_nth(fsplan->fdw_private,
 									 FdwDirectModifyPrivateUpdateSql));
 	dmstate->has_returning = boolVal(list_nth(fsplan->fdw_private,
-											 FdwDirectModifyPrivateHasReturning));
+											  FdwDirectModifyPrivateHasReturning));
 	dmstate->retrieved_attrs = (List *) list_nth(fsplan->fdw_private,
 												 FdwDirectModifyPrivateRetrievedAttrs);
 	dmstate->set_processed = boolVal(list_nth(fsplan->fdw_private,
-											 FdwDirectModifyPrivateSetProcessed));
+											  FdwDirectModifyPrivateSetProcessed));
 
 	/* Create context for per-tuple temp workspace. */
 	dmstate->temp_cxt = AllocSetContextCreate(estate->es_query_cxt,
@@ -2781,8 +2799,7 @@ postgresEndDirectModify(ForeignScanState *node)
 		return;
 
 	/* Release PGresult */
-	if (dmstate->result)
-		PQclear(dmstate->result);
+	PQclear(dmstate->result);
 
 	/* Release remote connection */
 	ReleaseConnection(dmstate->conn);
@@ -3340,7 +3357,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			 * Get the retrieved_rows and rows estimates.  If there are HAVING
 			 * quals, account for their selectivity.
 			 */
-			if (root->parse->havingQual)
+			if (root->hasHavingQual)
 			{
 				/* Factor in the selectivity of the remotely-checked quals */
 				retrieved_rows =
@@ -3388,7 +3405,7 @@ estimate_path_cost_size(PlannerInfo *root,
 			run_cost += cpu_tuple_cost * numGroups;
 
 			/* Account for the eval cost of HAVING quals, if any */
-			if (root->parse->havingQual)
+			if (root->hasHavingQual)
 			{
 				QualCost	remote_cost;
 
@@ -3595,8 +3612,7 @@ get_remote_estimate(const char *sql, PGconn *conn,
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 }
@@ -3844,8 +3860,7 @@ fetch_more_data(ForeignScanState *node)
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 
@@ -3889,6 +3904,14 @@ set_transmission_modes(void)
 		(void) set_config_option("extra_float_digits", "3",
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
+
+	/*
+	 * In addition force restrictive search_path, in case there are any
+	 * regproc or similar constants to be printed.
+	 */
+	(void) set_config_option("search_path", "pg_catalog",
+							 PGC_USERSET, PGC_S_SESSION,
+							 GUC_ACTION_SAVE, true, 0, false);
 
 	return nestlevel;
 }
@@ -4329,8 +4352,7 @@ store_returning_result(PgFdwModifyState *fmstate,
 	}
 	PG_CATCH();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -4618,8 +4640,7 @@ get_returning_data(ForeignScanState *node)
 		}
 		PG_CATCH();
 		{
-			if (dmstate->result)
-				PQclear(dmstate->result);
+			PQclear(dmstate->result);
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
@@ -4948,8 +4969,7 @@ postgresAnalyzeForeignTable(Relation relation,
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 
@@ -5105,8 +5125,7 @@ postgresAcquireSampleRowsFunc(Relation relation, int elevel,
 	}
 	PG_CATCH();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -5487,8 +5506,7 @@ postgresImportForeignSchema(ImportForeignSchemaStmt *stmt, Oid serverOid)
 	}
 	PG_FINALLY();
 	{
-		if (res)
-			PQclear(res);
+		PQclear(res);
 	}
 	PG_END_TRY();
 
@@ -5772,6 +5790,55 @@ add_paths_with_pathkeys_for_rel(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *lc;
 
 	useful_pathkeys_list = get_useful_pathkeys_for_relation(root, rel);
+
+	/*
+	 * Before creating sorted paths, arrange for the passed-in EPQ path, if
+	 * any, to return columns needed by the parent ForeignScan node so that
+	 * they will propagate up through Sort nodes injected below, if necessary.
+	 */
+	if (epq_path != NULL && useful_pathkeys_list != NIL)
+	{
+		PgFdwRelationInfo *fpinfo = (PgFdwRelationInfo *) rel->fdw_private;
+		PathTarget *target = copy_pathtarget(epq_path->pathtarget);
+
+		/* Include columns required for evaluating PHVs in the tlist. */
+		add_new_columns_to_pathtarget(target,
+									  pull_var_clause((Node *) target->exprs,
+													  PVC_RECURSE_PLACEHOLDERS));
+
+		/* Include columns required for evaluating the local conditions. */
+		foreach(lc, fpinfo->local_conds)
+		{
+			RestrictInfo *rinfo = lfirst_node(RestrictInfo, lc);
+
+			add_new_columns_to_pathtarget(target,
+										  pull_var_clause((Node *) rinfo->clause,
+														  PVC_RECURSE_PLACEHOLDERS));
+		}
+
+		/*
+		 * If we have added any new columns, adjust the tlist of the EPQ path.
+		 *
+		 * Note: the plan created using this path will only be used to execute
+		 * EPQ checks, where accuracy of the plan cost and width estimates
+		 * would not be important, so we do not do set_pathtarget_cost_width()
+		 * for the new pathtarget here.  See also postgresGetForeignPlan().
+		 */
+		if (list_length(target->exprs) > list_length(epq_path->pathtarget->exprs))
+		{
+			/* The EPQ path is a join path, so it is projection-capable. */
+			Assert(is_projection_capable_path(epq_path));
+
+			/*
+			 * Use create_projection_path() here, so as to avoid modifying it
+			 * in place.
+			 */
+			epq_path = (Path *) create_projection_path(root,
+													   rel,
+													   epq_path,
+													   target);
+		}
+	}
 
 	/* Create one path for each set of pathkeys we found above. */
 	foreach(lc, useful_pathkeys_list)
@@ -6212,10 +6279,10 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 				 */
 				foreach(l, aggvars)
 				{
-					Expr	   *expr = (Expr *) lfirst(l);
+					Expr	   *aggref = (Expr *) lfirst(l);
 
-					if (IsA(expr, Aggref))
-						tlist = add_to_flat_tlist(tlist, list_make1(expr));
+					if (IsA(aggref, Aggref))
+						tlist = add_to_flat_tlist(tlist, list_make1(aggref));
 				}
 			}
 		}
@@ -6229,8 +6296,6 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	 */
 	if (havingQual)
 	{
-		ListCell   *lc;
-
 		foreach(lc, (List *) havingQual)
 		{
 			Expr	   *expr = (Expr *) lfirst(lc);
@@ -6264,7 +6329,6 @@ foreign_grouping_ok(PlannerInfo *root, RelOptInfo *grouped_rel,
 	if (fpinfo->local_conds)
 	{
 		List	   *aggvars = NIL;
-		ListCell   *lc;
 
 		foreach(lc, fpinfo->local_conds)
 		{
@@ -7061,7 +7125,7 @@ fetch_more_data_begin(AsyncRequest *areq)
 	snprintf(sql, sizeof(sql), "FETCH %d FROM c%u",
 			 fsstate->fetch_size, fsstate->cursor_number);
 
-	if (PQsendQuery(fsstate->conn, sql) < 0)
+	if (!PQsendQuery(fsstate->conn, sql))
 		pgfdw_report_error(ERROR, NULL, fsstate->conn, false, fsstate->query);
 
 	/* Remember that the request is in process */

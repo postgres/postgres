@@ -53,6 +53,23 @@ slist_delete(slist_head *head, slist_node *node)
 
 #ifdef ILIST_DEBUG
 /*
+ * dlist_member_check
+ *		Validate that 'node' is a member of 'head'
+ */
+void
+dlist_member_check(dlist_head *head, dlist_node *node)
+{
+	dlist_iter	iter;
+
+	dlist_foreach(iter, head)
+	{
+		if (iter.cur == node)
+			return;
+	}
+	elog(ERROR, "double linked list member check failure");
+}
+
+/*
  * Verify integrity of a doubly linked list
  */
 void

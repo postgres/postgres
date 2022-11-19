@@ -69,7 +69,7 @@ extern ObjectAddress ConversionCreate(const char *conname, Oid connamespace,
 									  Oid conowner,
 									  int32 conforencoding, int32 contoencoding,
 									  Oid conproc, bool def);
-extern Oid	FindDefaultConversion(Oid connamespace, int32 for_encoding,
+extern Oid	FindDefaultConversion(Oid name_space, int32 for_encoding,
 								  int32 to_encoding);
 
 #endif							/* PG_CONVERSION_H */

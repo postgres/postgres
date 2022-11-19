@@ -49,11 +49,10 @@ GucInfoMain(void)
 	int			numOpts,
 				i;
 
-	/* Initialize the guc_variables[] array */
+	/* Initialize the GUC hash table */
 	build_guc_variables();
 
-	guc_vars = get_guc_variables();
-	numOpts = GetNumConfigOptions();
+	guc_vars = get_guc_variables(&numOpts);
 
 	for (i = 0; i < numOpts; i++)
 	{

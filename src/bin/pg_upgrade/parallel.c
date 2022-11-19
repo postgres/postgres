@@ -124,26 +124,23 @@ parallel_exec_prog(const char *log_file, const char *opt_log_file,
 			_exit(!exec_prog(log_file, opt_log_file, true, true, "%s", cmd));
 		else if (child < 0)
 			/* fork failed */
-			pg_fatal("could not create worker process: %s\n", strerror(errno));
+			pg_fatal("could not create worker process: %s", strerror(errno));
 #else
 		/* empty array element are always at the end */
 		new_arg = exec_thread_args[parallel_jobs - 1];
 
 		/* Can only pass one pointer into the function, so use a struct */
-		if (new_arg->log_file)
-			pg_free(new_arg->log_file);
+		pg_free(new_arg->log_file);
 		new_arg->log_file = pg_strdup(log_file);
-		if (new_arg->opt_log_file)
-			pg_free(new_arg->opt_log_file);
+		pg_free(new_arg->opt_log_file);
 		new_arg->opt_log_file = opt_log_file ? pg_strdup(opt_log_file) : NULL;
-		if (new_arg->cmd)
-			pg_free(new_arg->cmd);
+		pg_free(new_arg->cmd);
 		new_arg->cmd = pg_strdup(cmd);
 
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_exec_prog,
 										new_arg, 0, NULL);
 		if (child == 0)
-			pg_fatal("could not create worker thread: %s\n", strerror(errno));
+			pg_fatal("could not create worker thread: %s", strerror(errno));
 
 		thread_handles[parallel_jobs - 1] = child;
 #endif
@@ -235,7 +232,7 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		}
 		else if (child < 0)
 			/* fork failed */
-			pg_fatal("could not create worker process: %s\n", strerror(errno));
+			pg_fatal("could not create worker process: %s", strerror(errno));
 #else
 		/* empty array element are always at the end */
 		new_arg = transfer_thread_args[parallel_jobs - 1];
@@ -243,20 +240,17 @@ parallel_transfer_all_new_dbs(DbInfoArr *old_db_arr, DbInfoArr *new_db_arr,
 		/* Can only pass one pointer into the function, so use a struct */
 		new_arg->old_db_arr = old_db_arr;
 		new_arg->new_db_arr = new_db_arr;
-		if (new_arg->old_pgdata)
-			pg_free(new_arg->old_pgdata);
+		pg_free(new_arg->old_pgdata);
 		new_arg->old_pgdata = pg_strdup(old_pgdata);
-		if (new_arg->new_pgdata)
-			pg_free(new_arg->new_pgdata);
+		pg_free(new_arg->new_pgdata);
 		new_arg->new_pgdata = pg_strdup(new_pgdata);
-		if (new_arg->old_tablespace)
-			pg_free(new_arg->old_tablespace);
+		pg_free(new_arg->old_tablespace);
 		new_arg->old_tablespace = old_tablespace ? pg_strdup(old_tablespace) : NULL;
 
 		child = (HANDLE) _beginthreadex(NULL, 0, (void *) win32_transfer_all_new_dbs,
 										new_arg, 0, NULL);
 		if (child == 0)
-			pg_fatal("could not create worker thread: %s\n", strerror(errno));
+			pg_fatal("could not create worker thread: %s", strerror(errno));
 
 		thread_handles[parallel_jobs - 1] = child;
 #endif
@@ -297,11 +291,11 @@ reap_child(bool wait_for_child)
 #ifndef WIN32
 	child = waitpid(-1, &work_status, wait_for_child ? 0 : WNOHANG);
 	if (child == (pid_t) -1)
-		pg_fatal("%s() failed: %s\n", "waitpid", strerror(errno));
+		pg_fatal("%s() failed: %s", "waitpid", strerror(errno));
 	if (child == 0)
 		return false;			/* no children, or no dead children */
 	if (work_status != 0)
-		pg_fatal("child process exited abnormally: status %d\n", work_status);
+		pg_fatal("child process exited abnormally: status %d", work_status);
 #else
 	/* wait for one to finish */
 	thread_num = WaitForMultipleObjects(parallel_jobs, thread_handles,
@@ -316,7 +310,7 @@ reap_child(bool wait_for_child)
 	/* get the result */
 	GetExitCodeThread(thread_handles[thread_num], &res);
 	if (res != 0)
-		pg_fatal("child worker exited abnormally: %s\n", strerror(errno));
+		pg_fatal("child worker exited abnormally: %s", strerror(errno));
 
 	/* dispose of handle to stop leaks */
 	CloseHandle(thread_handles[thread_num]);

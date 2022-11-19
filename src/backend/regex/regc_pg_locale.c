@@ -234,8 +234,8 @@ pg_set_regex_collation(Oid collation)
 	if (!OidIsValid(collation))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -253,9 +253,9 @@ pg_set_regex_collation(Oid collation)
 	else
 	{
 		/*
-		 * NB: pg_newlocale_from_collation will fail if not HAVE_LOCALE_T;
-		 * the case of pg_regex_locale != 0 but not HAVE_LOCALE_T does not
-		 * have to be considered below.
+		 * NB: pg_newlocale_from_collation will fail if not HAVE_LOCALE_T; the
+		 * case of pg_regex_locale != 0 but not HAVE_LOCALE_T does not have to
+		 * be considered below.
 		 */
 		pg_regex_locale = pg_newlocale_from_collation(collation);
 
@@ -930,10 +930,8 @@ pg_ctype_get_cache(pg_wc_probefunc probefunc, int cclasscode)
 	 * Failure, clean up
 	 */
 out_of_memory:
-	if (pcc->cv.chrs)
-		free(pcc->cv.chrs);
-	if (pcc->cv.ranges)
-		free(pcc->cv.ranges);
+	free(pcc->cv.chrs);
+	free(pcc->cv.ranges);
 	free(pcc);
 
 	return NULL;

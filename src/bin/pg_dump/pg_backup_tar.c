@@ -46,7 +46,7 @@ static void _StartData(ArchiveHandle *AH, TocEntry *te);
 static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
-static int	_ReadByte(ArchiveHandle *);
+static int	_ReadByte(ArchiveHandle *AH);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
@@ -97,7 +97,7 @@ typedef struct
 static void _LoadBlobs(ArchiveHandle *AH);
 
 static TAR_MEMBER *tarOpen(ArchiveHandle *AH, const char *filename, char mode);
-static void tarClose(ArchiveHandle *AH, TAR_MEMBER *TH);
+static void tarClose(ArchiveHandle *AH, TAR_MEMBER *th);
 
 #ifdef __NOT_USED__
 static char *tarGets(char *buf, size_t len, TAR_MEMBER *th);
@@ -151,7 +151,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	/*
 	 * Set up some special context used in compressing data.
 	 */
-	ctx = (lclContext *) pg_malloc0(sizeof(lclContext));
+	ctx = pg_malloc0_object(lclContext);
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
 	ctx->isSpecialScript = 0;
@@ -240,7 +240,7 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	lclTocEntry *ctx;
 	char		fn[K_STD_BUF_SIZE];
 
-	ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+	ctx = pg_malloc0_object(lclTocEntry);
 	if (te->dataDumper != NULL)
 	{
 		snprintf(fn, sizeof(fn), "%d.dat", te->dumpId);
@@ -272,7 +272,7 @@ _ReadExtraToc(ArchiveHandle *AH, TocEntry *te)
 
 	if (ctx == NULL)
 	{
-		ctx = (lclTocEntry *) pg_malloc0(sizeof(lclTocEntry));
+		ctx = pg_malloc0_object(lclTocEntry);
 		te->formatData = (void *) ctx;
 	}
 
@@ -337,7 +337,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 	{
 		int			old_umask;
 
-		tm = pg_malloc0(sizeof(TAR_MEMBER));
+		tm = pg_malloc0_object(TAR_MEMBER);
 
 		/*
 		 * POSIX does not require, but permits, tmpfile() to restrict file
@@ -412,8 +412,7 @@ tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 	 * handle, and we don't use temp files.
 	 */
 
-	if (th->targetFile)
-		free(th->targetFile);
+	free(th->targetFile);
 
 	th->nFH = NULL;
 }
@@ -1053,7 +1052,7 @@ static TAR_MEMBER *
 _tarPositionTo(ArchiveHandle *AH, const char *filename)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	TAR_MEMBER *th = pg_malloc0(sizeof(TAR_MEMBER));
+	TAR_MEMBER *th = pg_malloc0_object(TAR_MEMBER);
 	char		c;
 	char		header[TAR_BLOCK_SIZE];
 	size_t		i,

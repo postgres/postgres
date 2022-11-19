@@ -278,7 +278,7 @@ verify_heapam(PG_FUNCTION_ARGS)
 	ctx.attnum = -1;
 
 	/* Construct the tuplestore and tuple descriptor */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 	ctx.tupdesc = rsinfo->setDesc;
 	ctx.tupstore = rsinfo->setResult;
 
@@ -554,12 +554,10 @@ report_corruption_internal(Tuplestorestate *tupstore, TupleDesc tupdesc,
 						   BlockNumber blkno, OffsetNumber offnum,
 						   AttrNumber attnum, char *msg)
 {
-	Datum		values[HEAPCHECK_RELATION_COLS];
-	bool		nulls[HEAPCHECK_RELATION_COLS];
+	Datum		values[HEAPCHECK_RELATION_COLS] = {0};
+	bool		nulls[HEAPCHECK_RELATION_COLS] = {0};
 	HeapTuple	tuple;
 
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int64GetDatum(blkno);
 	values[1] = Int32GetDatum(offnum);
 	values[2] = Int32GetDatum(attnum);
@@ -1321,7 +1319,7 @@ check_tuple_attribute(HeapCheckContext *ctx)
 	 */
 
 	/*
-	 * Check that VARTAG_SIZE won't hit a TrapMacro on a corrupt va_tag before
+	 * Check that VARTAG_SIZE won't hit an Assert on a corrupt va_tag before
 	 * risking a call into att_addlength_pointer
 	 */
 	if (VARATT_IS_EXTERNAL(tp + ctx->offset))
@@ -1385,34 +1383,26 @@ check_tuple_attribute(HeapCheckContext *ctx)
 								   toast_pointer.va_rawsize,
 								   VARLENA_SIZE_LIMIT));
 
-	if (VARATT_IS_COMPRESSED(&toast_pointer))
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
 	{
 		ToastCompressionId cmid;
 		bool		valid = false;
-
-		/* Compression should never expand the attribute */
-		if (VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer) > toast_pointer.va_rawsize - VARHDRSZ)
-			report_corruption(ctx,
-							  psprintf("toast value %u external size %u exceeds maximum expected for rawsize %d",
-									   toast_pointer.va_valueid,
-									   VARATT_EXTERNAL_GET_EXTSIZE(toast_pointer),
-									   toast_pointer.va_rawsize));
 
 		/* Compressed attributes should have a valid compression method */
 		cmid = TOAST_COMPRESS_METHOD(&toast_pointer);
 		switch (cmid)
 		{
-			/* List of all valid compression method IDs */
+				/* List of all valid compression method IDs */
 			case TOAST_PGLZ_COMPRESSION_ID:
 			case TOAST_LZ4_COMPRESSION_ID:
 				valid = true;
 				break;
 
-			/* Recognized but invalid compression method ID */
+				/* Recognized but invalid compression method ID */
 			case TOAST_INVALID_COMPRESSION_ID:
 				break;
 
-			/* Intentionally no default here */
+				/* Intentionally no default here */
 		}
 		if (!valid)
 			report_corruption(ctx,

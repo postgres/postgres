@@ -68,11 +68,26 @@ typedef struct
 } RangeBound;
 
 /*
- * fmgr macros for range type objects
+ * fmgr functions for range type objects
  */
-#define DatumGetRangeTypeP(X)		((RangeType *) PG_DETOAST_DATUM(X))
-#define DatumGetRangeTypePCopy(X)	((RangeType *) PG_DETOAST_DATUM_COPY(X))
-#define RangeTypePGetDatum(X)		PointerGetDatum(X)
+static inline RangeType *
+DatumGetRangeTypeP(Datum X)
+{
+	return (RangeType *) PG_DETOAST_DATUM(X);
+}
+
+static inline RangeType *
+DatumGetRangeTypePCopy(Datum X)
+{
+	return (RangeType *) PG_DETOAST_DATUM_COPY(X);
+}
+
+static inline Datum
+RangeTypePGetDatum(const RangeType *X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_RANGE_P(n)		DatumGetRangeTypeP(PG_GETARG_DATUM(n))
 #define PG_GETARG_RANGE_P_COPY(n)	DatumGetRangeTypePCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_RANGE_P(x)		return RangeTypePGetDatum(x)
@@ -141,8 +156,8 @@ extern int	range_cmp_bounds(TypeCacheEntry *typcache, const RangeBound *b1,
 extern int	range_cmp_bound_values(TypeCacheEntry *typcache, const RangeBound *b1,
 								   const RangeBound *b2);
 extern int	range_compare(const void *key1, const void *key2, void *arg);
-extern bool bounds_adjacent(TypeCacheEntry *typcache, RangeBound bound1,
-							RangeBound bound2);
+extern bool bounds_adjacent(TypeCacheEntry *typcache, RangeBound boundA,
+							RangeBound boundB);
 extern RangeType *make_empty_range(TypeCacheEntry *typcache);
 extern bool range_split_internal(TypeCacheEntry *typcache, const RangeType *r1,
 								 const RangeType *r2, RangeType **output1,

@@ -1974,7 +1974,7 @@ CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
     explicitly when creating <type>tsvector</type> values inside triggers,
     so that the column's contents will not be affected by changes to
     <varname>default_text_search_config</varname>.  Failure to do this is likely to
-    lead to problems such as search results changing after a dump and reload.
+    lead to problems such as search results changing after a dump and restore.
    </para>
 
   </sect2>

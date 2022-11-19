@@ -39,7 +39,7 @@ get_configdata(const char *my_exec_path, size_t *configdata_len)
 
 	/* Adjust this to match the number of items filled below */
 	*configdata_len = 23;
-	configdata = (ConfigData *) palloc(*configdata_len * sizeof(ConfigData));
+	configdata = palloc_array(ConfigData, *configdata_len);
 
 	configdata[i].name = pstrdup("BINDIR");
 	strlcpy(path, my_exec_path, sizeof(path));

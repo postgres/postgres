@@ -39,18 +39,18 @@ WITH check_columns AS (
    SELECT t.oid
     FROM pg_type t JOIN pg_attribute pa ON t.oid = pa.atttypid
     WHERE pa.attrelid = a.attrelid AND
-          pa.attnum > 0 AND pa.attnum <= a.attnum
+          pa.attnum > 0 AND pa.attnum < a.attnum
     ORDER BY pa.attnum) AS coltypes
  FROM pg_attribute a JOIN pg_class c ON c.oid = attrelid
   JOIN pg_namespace n ON c.relnamespace = n.oid
  WHERE attalign = 'd' AND relkind = 'r' AND
   attnotnull AND attlen <> -1 AND n.nspname = 'pg_catalog'
 )
-SELECT relname, attname, coltypes, get_column_offset(coltypes)
+SELECT relname, attname, coltypes, get_columns_length(coltypes)
  FROM check_columns
- WHERE get_column_offset(coltypes) % 8 != 0 OR
+ WHERE get_columns_length(coltypes) % 8 != 0 OR
        'name'::regtype::oid = ANY(coltypes);
- relname | attname | coltypes | get_column_offset 
----------+---------+----------+-------------------
+ relname | attname | coltypes | get_columns_length 
+---------+---------+----------+--------------------
 (0 rows)
 

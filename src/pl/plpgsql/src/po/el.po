@@ -1,0 +1,850 @@
+# Greek message translation file for plpgsql
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the plpgsql (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: plpgsql (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-11-08 10:09+0000\n"
+"PO-Revision-Date: 2021-11-08 12:19+0100\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.0\n"
+
+#: pl_comp.c:438 pl_handler.c:496
+#, c-format
+msgid "PL/pgSQL functions cannot accept type %s"
+msgstr "οι συναρτήσεις PL/pgSQL δεν μπορούν να δεχθούν τύπο %s"
+
+#: pl_comp.c:530
+#, c-format
+msgid "could not determine actual return type for polymorphic function \"%s\""
+msgstr "δεν ήταν δυνατός ο προσδιορισμός του πραγματικού τύπου επιστροφής για την πολυμορφική συνάρτηση «%s»"
+
+#: pl_comp.c:560
+#, c-format
+msgid "trigger functions can only be called as triggers"
+msgstr "συναρτήσεις εναυσμάτων μπορούν να κληθούν μόνο ως εναύσματα"
+
+#: pl_comp.c:564 pl_handler.c:480
+#, c-format
+msgid "PL/pgSQL functions cannot return type %s"
+msgstr "οι συναρτήσεις PL/pgSQL δεν μπορούν να επιστρέψουν τύπο %s"
+
+#: pl_comp.c:604
+#, c-format
+msgid "trigger functions cannot have declared arguments"
+msgstr "οι συναρτήσεις εναυσμάτων δεν μπορούν να έχουν δηλωμένες παραμέτρους"
+
+#: pl_comp.c:605
+#, c-format
+msgid "The arguments of the trigger can be accessed through TG_NARGS and TG_ARGV instead."
+msgstr "Οι παράμετροι του εναύσματος μπορούν εναλλακτικά να προσπελαστούν μέσω TG_NARGS και TG_ARGV."
+
+#: pl_comp.c:738
+#, c-format
+msgid "event trigger functions cannot have declared arguments"
+msgstr "οι συναρτήσεις εναυσμάτων συμβάντος δεν μπορούν να έχουν δηλωμένες παραμέτρους"
+
+#: pl_comp.c:1002
+#, c-format
+msgid "compilation of PL/pgSQL function \"%s\" near line %d"
+msgstr "μεταγλώτηση της συνάρτησης PL/pgSQL «%s» κοντά στη γραμμή %d"
+
+#: pl_comp.c:1025
+#, c-format
+msgid "parameter name \"%s\" used more than once"
+msgstr "όνομα παραμέτρου «%s» χρησιμοποιείται περισσότερες από μία φορές"
+
+#: pl_comp.c:1139
+#, c-format
+msgid "column reference \"%s\" is ambiguous"
+msgstr "αναφορά στήλης «%s» είναι αμφίσημη"
+
+#: pl_comp.c:1141
+#, c-format
+msgid "It could refer to either a PL/pgSQL variable or a table column."
+msgstr "Θα μπορούσε να αναφέρεται είτε σε μεταβλητή PL/pgSQL είτε σε στήλη πίνακα."
+
+#: pl_comp.c:1324 pl_exec.c:5190 pl_exec.c:5363 pl_exec.c:5450 pl_exec.c:5541
+#: pl_exec.c:6562
+#, c-format
+msgid "record \"%s\" has no field \"%s\""
+msgstr "η εγγραφή «%s» δεν έχει πεδίο «%s»"
+
+#: pl_comp.c:1818
+#, c-format
+msgid "relation \"%s\" does not exist"
+msgstr "η σχέση «%s» δεν υπάρχει"
+
+#: pl_comp.c:1825 pl_comp.c:1867
+#, c-format
+msgid "relation \"%s\" does not have a composite type"
+msgstr "η σχέση «%s» δεν έχει συνθετικό τύπο"
+
+#: pl_comp.c:1933
+#, c-format
+msgid "variable \"%s\" has pseudo-type %s"
+msgstr "η μεταβλητή «%s» έχει ψευδο-τύπο %s"
+
+#: pl_comp.c:2122
+#, c-format
+msgid "type \"%s\" is only a shell"
+msgstr "τύπος «%s» είναι μόνο ένα κέλυφος"
+
+#: pl_comp.c:2204 pl_exec.c:6863
+#, c-format
+msgid "type %s is not composite"
+msgstr "τύπος %s δεν είναι συνθετικός"
+
+#: pl_comp.c:2252 pl_comp.c:2305
+#, c-format
+msgid "unrecognized exception condition \"%s\""
+msgstr "μη αναγνωρίσιμη συνθήκη εξαίρεσης «%s»"
+
+#: pl_comp.c:2526
+#, c-format
+msgid "could not determine actual argument type for polymorphic function \"%s\""
+msgstr "δεν ήταν δυνατός ο προσδιορισμός του πραγματικού τύπου παραμέτρου για την πολυμορφική συνάρτηση «%s»"
+
+#: pl_exec.c:500 pl_exec.c:934 pl_exec.c:1169
+msgid "during initialization of execution state"
+msgstr "κατά την αρχικοποίηση της κατάστασης εκτέλεσης"
+
+#: pl_exec.c:506
+msgid "while storing call arguments into local variables"
+msgstr "κατά την αποθήκευση παραμέτρων κλήσης σε τοπικές μεταβλητές"
+
+#: pl_exec.c:594 pl_exec.c:1007
+msgid "during function entry"
+msgstr "κατά τη διάρκεια εισόδου συνάρτησης"
+
+#: pl_exec.c:617
+#, c-format
+msgid "control reached end of function without RETURN"
+msgstr "ο έλεγχος έφθασε στο τέλος συνάρτησης χωρίς RETURN"
+
+#: pl_exec.c:623
+msgid "while casting return value to function's return type"
+msgstr "κατά τη διάρκεια cast της τιμής επιστροφής στον τύπο επιστροφής της συνάρτησης"
+
+#: pl_exec.c:636 pl_exec.c:3637
+#, c-format
+msgid "set-valued function called in context that cannot accept a set"
+msgstr "set-valued συνάρτηση καλείται σε περιεχόμενο που δεν μπορεί να δεχτεί ένα σύνολο"
+
+#: pl_exec.c:762 pl_exec.c:1033 pl_exec.c:1191
+msgid "during function exit"
+msgstr "κατά τη διάρκεια εξόδου συνάρτησης"
+
+#: pl_exec.c:817 pl_exec.c:881 pl_exec.c:3434
+msgid "returned record type does not match expected record type"
+msgstr "ο επιστρεφόμενος τύπος εγγραφής δεν ταιριάζει με τον αναμενόμενο τύπο εγγραφής"
+
+#: pl_exec.c:1030 pl_exec.c:1188
+#, c-format
+msgid "control reached end of trigger procedure without RETURN"
+msgstr "ο έλεγχος έφτασε στο τέλος της διαδικασίας εναύσματος χωρίς RETURN"
+
+#: pl_exec.c:1038
+#, c-format
+msgid "trigger procedure cannot return a set"
+msgstr "διεργασία εναύσματος δεν δύναται να επιστρέψει ένα σύνολο"
+
+#: pl_exec.c:1077 pl_exec.c:1105
+msgid "returned row structure does not match the structure of the triggering table"
+msgstr "η δομή της σειράς επιστροφής δεν ταιριάζει με τη δομή του πίνακα ενεργοποίησης"
+
+#. translator: last %s is a phrase such as "during statement block
+#. local variable initialization"
+#.
+#: pl_exec.c:1237
+#, c-format
+msgid "PL/pgSQL function %s line %d %s"
+msgstr "συνάρτηση PL/pgSQL %s γραμμή %d %s"
+
+#. translator: last %s is a phrase such as "while storing call
+#. arguments into local variables"
+#.
+#: pl_exec.c:1248
+#, c-format
+msgid "PL/pgSQL function %s %s"
+msgstr "συνάρτηση PL/pgSQL %s %s"
+
+#. translator: last %s is a plpgsql statement type name
+#: pl_exec.c:1256
+#, c-format
+msgid "PL/pgSQL function %s line %d at %s"
+msgstr "συνάρτηση PL/pgSQL %s γραμμή %d στο %s"
+
+#: pl_exec.c:1262
+#, c-format
+msgid "PL/pgSQL function %s"
+msgstr "συνάρτηση PL/pgSQL «%s»"
+
+#: pl_exec.c:1633
+msgid "during statement block local variable initialization"
+msgstr "κατά τη διάρκεια μπλοκ δήλωσης τοπικής αρχικοποίησης μεταβλητής"
+
+#: pl_exec.c:1731
+msgid "during statement block entry"
+msgstr "κατά τη διάρκεια εισόδου μπλοκ δήλωσης"
+
+#: pl_exec.c:1763
+msgid "during statement block exit"
+msgstr "κατά τη διάρκεια εξόδου μπλοκ δήλωσης"
+
+#: pl_exec.c:1801
+msgid "during exception cleanup"
+msgstr "κατά τη διάρκεια καθαρισμού εξαίρεσης"
+
+#: pl_exec.c:2334
+#, c-format
+msgid "procedure parameter \"%s\" is an output parameter but corresponding argument is not writable"
+msgstr "η παράμετρος διαδικασίας «%s» είναι παράμετρος εξόδου, αλλά το αντίστοιχο όρισμα δεν είναι εγγράψιμο"
+
+#: pl_exec.c:2339
+#, c-format
+msgid "procedure parameter %d is an output parameter but corresponding argument is not writable"
+msgstr "η παράμετρος διαδικασίας %d είναι παράμετρος εξόδου, αλλά το αντίστοιχο όρισμα δεν είναι εγγράψιμο"
+
+#: pl_exec.c:2373
+#, c-format
+msgid "GET STACKED DIAGNOSTICS cannot be used outside an exception handler"
+msgstr "GET STACKED DIAGNOSTICS δεν είναι δυνατό να χρησιμοποιηθεί εκτός ενός χειριστή εξαιρέσεων"
+
+#: pl_exec.c:2573
+#, c-format
+msgid "case not found"
+msgstr "υπόθεση δεν βρέθηκε"
+
+#: pl_exec.c:2574
+#, c-format
+msgid "CASE statement is missing ELSE part."
+msgstr "Η δήλωση CASE δεν περιέχει τμήμα ELSE."
+
+#: pl_exec.c:2667
+#, c-format
+msgid "lower bound of FOR loop cannot be null"
+msgstr "το κατώτατο όριο του βρόχου FOR δεν μπορεί να είναι null"
+
+#: pl_exec.c:2683
+#, c-format
+msgid "upper bound of FOR loop cannot be null"
+msgstr "το ανώνοτατο όριο του βρόχου FOR δεν μπορεί να είναι null"
+
+#: pl_exec.c:2701
+#, c-format
+msgid "BY value of FOR loop cannot be null"
+msgstr "η τιμή BY του βρόχου FOR δεν μπορεί να είναι null"
+
+#: pl_exec.c:2707
+#, c-format
+msgid "BY value of FOR loop must be greater than zero"
+msgstr "η τιμή BY του βρόχου FOR πρέπει να είναι μεγαλύτερη του μηδενός"
+
+#: pl_exec.c:2841 pl_exec.c:4626
+#, c-format
+msgid "cursor \"%s\" already in use"
+msgstr "ο δρομέας «%s» βρίσκεται ήδη σε χρήση"
+
+#: pl_exec.c:2864 pl_exec.c:4691
+#, c-format
+msgid "arguments given for cursor without arguments"
+msgstr "δίνονται ορίσματα σε δρομέα χωρίς ορίσματα"
+
+#: pl_exec.c:2883 pl_exec.c:4710
+#, c-format
+msgid "arguments required for cursor"
+msgstr "επιβάλλονται ορίσματα για τον δρομέα"
+
+#: pl_exec.c:2970
+#, c-format
+msgid "FOREACH expression must not be null"
+msgstr "η έκφραση FOREACH πρέπει να μην είναι null"
+
+#: pl_exec.c:2985
+#, c-format
+msgid "FOREACH expression must yield an array, not type %s"
+msgstr "η έκφραση FOREACH πρέπει αποδώσει μία συστοιχία, όχι ένα τύπο %s"
+
+#: pl_exec.c:3002
+#, c-format
+msgid "slice dimension (%d) is out of the valid range 0..%d"
+msgstr "η διάσταση (%d) του slice βρίσκεται εκτός του έγκυρου εύρους 0.. %d"
+
+#: pl_exec.c:3029
+#, c-format
+msgid "FOREACH ... SLICE loop variable must be of an array type"
+msgstr "η μεταβλητή βρόχου FOREACH ... SLICE πρέπει να είναι τύπου συστοιχίας"
+
+#: pl_exec.c:3033
+#, c-format
+msgid "FOREACH loop variable must not be of an array type"
+msgstr "η μεταβλητή βρόχου FOREACH δεν πρέπει να είναι τύπου συστοιχίας"
+
+#: pl_exec.c:3195 pl_exec.c:3252 pl_exec.c:3427
+#, c-format
+msgid "cannot return non-composite value from function returning composite type"
+msgstr "δεν είναι δυνατή η επιστροφή μη-σύνθετης τιμής από σύνθετο τύπο συνάρτησης που επιστρέφει σύνθετο τύπο"
+
+#: pl_exec.c:3291 pl_gram.y:3310
+#, c-format
+msgid "cannot use RETURN NEXT in a non-SETOF function"
+msgstr "δεν είναι δυνατή η χρήση RETURN NEXT σε συνάρτηση non-SETOF"
+
+#: pl_exec.c:3332 pl_exec.c:3464
+#, c-format
+msgid "wrong result type supplied in RETURN NEXT"
+msgstr "εσφαλμένος τύπος αποτελέσματος που παρέχεται στο RETURN NEXT"
+
+#: pl_exec.c:3370 pl_exec.c:3391
+#, c-format
+msgid "wrong record type supplied in RETURN NEXT"
+msgstr "εσφαλμένος τύπος εγγραφής που παρέχεται στο RETURN NEXT"
+
+#: pl_exec.c:3483
+#, c-format
+msgid "RETURN NEXT must have a parameter"
+msgstr "το RETURN NEXT πρέπει να έχει παράμετρο"
+
+#: pl_exec.c:3511 pl_gram.y:3374
+#, c-format
+msgid "cannot use RETURN QUERY in a non-SETOF function"
+msgstr "δεν είναι δυνατή η χρήση RETURN QUERY σε συνάρτηση non-SETOF"
+
+#: pl_exec.c:3529
+msgid "structure of query does not match function result type"
+msgstr "η δομή του ερωτήματος δεν ταιριάζει με τον τύπο αποτελέσματος της συνάρτησης"
+
+#: pl_exec.c:3584 pl_exec.c:4404 pl_exec.c:8604
+#, c-format
+msgid "query string argument of EXECUTE is null"
+msgstr "η παράμετρος συμβολοσειράς ερωτήματος του EXECUTE είναι null"
+
+#: pl_exec.c:3665 pl_exec.c:3803
+#, c-format
+msgid "RAISE option already specified: %s"
+msgstr "επιλογή RAISE που έχει ήδη καθοριστεί: %s"
+
+#: pl_exec.c:3699
+#, c-format
+msgid "RAISE without parameters cannot be used outside an exception handler"
+msgstr "RAISE χωρίς παραμέτρους δεν μπορεί να χρησιμοποιηθεί εκτός ενός δείκτη χειρισμού εξαιρέσεων"
+
+#: pl_exec.c:3793
+#, c-format
+msgid "RAISE statement option cannot be null"
+msgstr "η επιλογή δήλωσης RAISE δεν μπορεί να είναι null"
+
+#: pl_exec.c:3863
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pl_exec.c:3918
+#, c-format
+msgid "assertion failed"
+msgstr "η επιβεβαίωση απέτυχε"
+
+#: pl_exec.c:4277 pl_exec.c:4465
+#, c-format
+msgid "cannot COPY to/from client in PL/pgSQL"
+msgstr "δεν είναι δυνατό το COPY to/from τον πελάτη σε PL/pgSQL"
+
+#: pl_exec.c:4283
+#, c-format
+msgid "unsupported transaction command in PL/pgSQL"
+msgstr "μη υποστηριζόμενη συναλλαγή σε PL/pgSQL"
+
+#: pl_exec.c:4306 pl_exec.c:4494
+#, c-format
+msgid "INTO used with a command that cannot return data"
+msgstr "το INTO χρησιμοποιείται με μια εντολή που δεν μπορεί να επιστρέψει δεδομένα"
+
+#: pl_exec.c:4329 pl_exec.c:4517
+#, c-format
+msgid "query returned no rows"
+msgstr "το ερώτημα επέστρεψε καθόλου γραμμές"
+
+#: pl_exec.c:4351 pl_exec.c:4536 pl_exec.c:5685
+#, c-format
+msgid "query returned more than one row"
+msgstr "ερώτημα επέστρεψε περισσότερες από μία γραμμές"
+
+#: pl_exec.c:4353
+#, c-format
+msgid "Make sure the query returns a single row, or use LIMIT 1."
+msgstr "Βεβαιωθείτε ότι το ερώτημα επιστρέφει μία μόνο γραμμή ή χρησιμοποιήστε το LIMIT 1."
+
+#: pl_exec.c:4369
+#, c-format
+msgid "query has no destination for result data"
+msgstr "το ερώτημα δεν έχει προορισμό για τα δεδομένα αποτελεσμάτων"
+
+#: pl_exec.c:4370
+#, c-format
+msgid "If you want to discard the results of a SELECT, use PERFORM instead."
+msgstr "Εάν θέλετε να απορρίψετε τα αποτελέσματα ενός SELECT, χρησιμοποιήστε την επιλογή PERFORM."
+
+#: pl_exec.c:4457
+#, c-format
+msgid "EXECUTE of SELECT ... INTO is not implemented"
+msgstr "EXECUTE of SELECT ... INTO  δεν έχει υλοποιηθεί"
+
+#: pl_exec.c:4458
+#, c-format
+msgid "You might want to use EXECUTE ... INTO or EXECUTE CREATE TABLE ... AS instead."
+msgstr "Ίσως θέλετε να χρησιμοποιήσετε το EXECUTE ... INTO ή EXECUTE CREATE TABLE ... AS αντ' αυτού."
+
+#: pl_exec.c:4471
+#, c-format
+msgid "EXECUTE of transaction commands is not implemented"
+msgstr "EXECUTE εντολών συναλλαγής δεν έχει εφαρμοσθεί"
+
+#: pl_exec.c:4772 pl_exec.c:4860
+#, c-format
+msgid "cursor variable \"%s\" is null"
+msgstr "η μεταβλήτη «%s» του δρομέα είναι κενή"
+
+#: pl_exec.c:4783 pl_exec.c:4871
+#, c-format
+msgid "cursor \"%s\" does not exist"
+msgstr "ο δρομέας «%s» δεν υπάρχει"
+
+#: pl_exec.c:4796
+#, c-format
+msgid "relative or absolute cursor position is null"
+msgstr "η σχετική ή η απόλυτη θέση δρομέα είναι null"
+
+#: pl_exec.c:5040 pl_exec.c:5135
+#, c-format
+msgid "null value cannot be assigned to variable \"%s\" declared NOT NULL"
+msgstr "δεν είναι δυνατή η αντιστοίχιση τιμής null στη μεταβλητή «%s» δηλωμένης ως NOT NULL"
+
+#: pl_exec.c:5116
+#, c-format
+msgid "cannot assign non-composite value to a row variable"
+msgstr "δεν είναι δυνατή η αντιστοίχιση μη-σύνθετης τιμής σε μεταβλητή σειράς"
+
+#: pl_exec.c:5148
+#, c-format
+msgid "cannot assign non-composite value to a record variable"
+msgstr "δεν είναι δυνατή η αντιστοίχιση μη-σύνθετης τιμής σε μεταβλητή εγγραφής"
+
+#: pl_exec.c:5199
+#, c-format
+msgid "cannot assign to system column \"%s\""
+msgstr "δεν είναι δυνατή η ανάθεση στη στήλη συστήματος «%s»"
+
+#: pl_exec.c:5648
+#, c-format
+msgid "query did not return data"
+msgstr "το ερώτημα δεν επέστρεψε δεδομένα"
+
+#: pl_exec.c:5649 pl_exec.c:5661 pl_exec.c:5686 pl_exec.c:5762 pl_exec.c:5767
+#, c-format
+msgid "query: %s"
+msgstr "ερώτημα: %s"
+
+#: pl_exec.c:5657
+#, c-format
+msgid "query returned %d column"
+msgid_plural "query returned %d columns"
+msgstr[0] "το ερώτημα επέστρεψε %d στήλη"
+msgstr[1] "το ερώτημα επέστρεψε %d στήλες"
+
+#: pl_exec.c:5761
+#, c-format
+msgid "query is SELECT INTO, but it should be plain SELECT"
+msgstr "το ερώτημα είναι SELECT INTO, αλλά θα έπρεπε να είναι απλό SELECT"
+
+#: pl_exec.c:5766
+#, c-format
+msgid "query is not a SELECT"
+msgstr "ερώτημα δεν είναι SELECT"
+
+#: pl_exec.c:6576 pl_exec.c:6616 pl_exec.c:6656
+#, c-format
+msgid "type of parameter %d (%s) does not match that when preparing the plan (%s)"
+msgstr "ο τύπος παραμέτρου %d (%s) δεν συμφωνεί με αυτόν κατά την προετοιμασία του σχεδίου (%s)"
+
+#: pl_exec.c:7067 pl_exec.c:7101 pl_exec.c:7175 pl_exec.c:7201
+#, c-format
+msgid "number of source and target fields in assignment does not match"
+msgstr "ο αριθμός των πεδίων προέλευσης και προορισμού στην ανάθεση δεν συμφωνεί"
+
+#. translator: %s represents a name of an extra check
+#: pl_exec.c:7069 pl_exec.c:7103 pl_exec.c:7177 pl_exec.c:7203
+#, c-format
+msgid "%s check of %s is active."
+msgstr "%s έλεγχος του %s είναι ενεργός."
+
+#: pl_exec.c:7073 pl_exec.c:7107 pl_exec.c:7181 pl_exec.c:7207
+#, c-format
+msgid "Make sure the query returns the exact list of columns."
+msgstr "Βεβαιωθείτε ότι το ερώτημα επιστρέφει την ακριβή λίστα στηλών."
+
+#: pl_exec.c:7594
+#, c-format
+msgid "record \"%s\" is not assigned yet"
+msgstr "η εγγραφή «%s» δεν έχει ανατεθεί ακόμα"
+
+#: pl_exec.c:7595
+#, c-format
+msgid "The tuple structure of a not-yet-assigned record is indeterminate."
+msgstr "Η δομή πλειάδας μίας εγγραφής που δεν έχει ακόμη ανατεθεί είναι απροσδιόριστη."
+
+#: pl_funcs.c:237
+msgid "statement block"
+msgstr "μπλοκ δήλωσης"
+
+#: pl_funcs.c:239
+msgid "assignment"
+msgstr "ανάθεση"
+
+#: pl_funcs.c:249
+msgid "FOR with integer loop variable"
+msgstr "FOR με ακέραια μεταβλητή βρόχου"
+
+#: pl_funcs.c:251
+msgid "FOR over SELECT rows"
+msgstr "FOR σε SELECT rows"
+
+#: pl_funcs.c:253
+msgid "FOR over cursor"
+msgstr "FOR σε ένα δρομέα"
+
+#: pl_funcs.c:255
+msgid "FOREACH over array"
+msgstr "FOREACH σε συστοιχία"
+
+#: pl_funcs.c:269
+msgid "SQL statement"
+msgstr "SQL δήλωση"
+
+#: pl_funcs.c:273
+msgid "FOR over EXECUTE statement"
+msgstr "FOR σε δήλωση EXECUTE"
+
+#: pl_gram.y:485
+#, c-format
+msgid "block label must be placed before DECLARE, not after"
+msgstr "η ετικέτα μπλοκ πρέπει να τοποθετείται πριν από το DECLARE, όχι μετά"
+
+#: pl_gram.y:505
+#, c-format
+msgid "collations are not supported by type %s"
+msgstr "συρραφές δεν υποστηρίζονται από τον τύπο %s"
+
+#: pl_gram.y:524
+#, c-format
+msgid "variable \"%s\" must have a default value, since it's declared NOT NULL"
+msgstr "η μεταβλητή «%s» πρέπει να έχει προεπιλεγμένη τιμή, καθώς έχει δηλωθεί NOT NULL"
+
+#: pl_gram.y:672 pl_gram.y:687 pl_gram.y:713
+#, c-format
+msgid "variable \"%s\" does not exist"
+msgstr "μεταβλητή «%s» δεν υπάρχει"
+
+#: pl_gram.y:731 pl_gram.y:759
+msgid "duplicate declaration"
+msgstr "διπλότυπη δήλωση"
+
+#: pl_gram.y:742 pl_gram.y:770
+#, c-format
+msgid "variable \"%s\" shadows a previously defined variable"
+msgstr "η μεταβλητή «%s» σκιάζει μια προηγουμένως ορισμένη μεταβλητή"
+
+#: pl_gram.y:1042
+#, c-format
+msgid "diagnostics item %s is not allowed in GET STACKED DIAGNOSTICS"
+msgstr "δεν επιτρέπεται το διαγνωστικό στοιχείο %s σε GET STACKED DIAGNOSTICS"
+
+#: pl_gram.y:1060
+#, c-format
+msgid "diagnostics item %s is not allowed in GET CURRENT DIAGNOSTICS"
+msgstr "δεν επιτρέπεται το διαγνωστικό στοιχείο %s σε GET CURRENT DIAGNOSTICS"
+
+#: pl_gram.y:1155
+msgid "unrecognized GET DIAGNOSTICS item"
+msgstr "μη αναγνωρίσιμο στοιχείο GET DIAGNOSTICS"
+
+#: pl_gram.y:1171 pl_gram.y:3549
+#, c-format
+msgid "\"%s\" is not a scalar variable"
+msgstr "«%s» δεν είναι scalar μεταβλητή"
+
+#: pl_gram.y:1401 pl_gram.y:1595
+#, c-format
+msgid "loop variable of loop over rows must be a record variable or list of scalar variables"
+msgstr "η μεταβλητή βρόχου ενός βρόχου πάνω από γραμμές πρέπει να είναι είτε μεταβλητή εγγραφής ή μια λίστα scalar μεταβλητών"
+
+#: pl_gram.y:1436
+#, c-format
+msgid "cursor FOR loop must have only one target variable"
+msgstr "ο δρομέας βρόχου FOR πρέπει να έχει μόνο μία μεταβλητή προορισμού"
+
+#: pl_gram.y:1443
+#, c-format
+msgid "cursor FOR loop must use a bound cursor variable"
+msgstr "ο δρομέας βρόχου FOR πρέπει να χρησιμοποιήσει μια δεσμευμένη μεταβλητή δρομέα"
+
+#: pl_gram.y:1534
+#, c-format
+msgid "integer FOR loop must have only one target variable"
+msgstr "ακέραιος βρόχος FOR πρέπει να έχει μόνο μία μεταβλητή προορισμού"
+
+#: pl_gram.y:1568
+#, c-format
+msgid "cannot specify REVERSE in query FOR loop"
+msgstr "δεν είναι δυνατός ο καθορισμός REVERSE σε ερώτημα βρόχου FOR"
+
+#: pl_gram.y:1698
+#, c-format
+msgid "loop variable of FOREACH must be a known variable or list of variables"
+msgstr "η μεταβλητή του βρόχου FOREACH πρέπει να είναι είτε γνωστή μεταβλητή ή λίστα μεταβλητών"
+
+#: pl_gram.y:1740
+#, c-format
+msgid "there is no label \"%s\" attached to any block or loop enclosing this statement"
+msgstr "δεν υπάρχει ετικέτα «%s» προσαρτημένη σε οποιοδήποτε μπλοκ ή βρόχο που περικλείει αυτήν τη δήλωση"
+
+#: pl_gram.y:1748
+#, c-format
+msgid "block label \"%s\" cannot be used in CONTINUE"
+msgstr "η ετικέτα μπλοκ «%s» δεν μπορεί να χρησιμοποιηθεί σε CONTINUE"
+
+#: pl_gram.y:1763
+#, c-format
+msgid "EXIT cannot be used outside a loop, unless it has a label"
+msgstr "το EXIT δεν μπορεί να χρησιμοποιηθεί εκτός βρόχου, εκτός εάν έχει ετικέτα"
+
+#: pl_gram.y:1764
+#, c-format
+msgid "CONTINUE cannot be used outside a loop"
+msgstr "το CONTINUE δεν μπορεί να χρησιμοποιηθεί εκτός βρόχου"
+
+#: pl_gram.y:1788 pl_gram.y:1826 pl_gram.y:1874 pl_gram.y:2998 pl_gram.y:3084
+#: pl_gram.y:3195 pl_gram.y:3948
+msgid "unexpected end of function definition"
+msgstr "μη αναμενόμενο τέλος ορισμού συνάρτησης"
+
+#: pl_gram.y:1894 pl_gram.y:1918 pl_gram.y:1934 pl_gram.y:1940 pl_gram.y:2061
+#: pl_gram.y:2069 pl_gram.y:2083 pl_gram.y:2178 pl_gram.y:2402 pl_gram.y:2492
+#: pl_gram.y:2649 pl_gram.y:3791 pl_gram.y:3852 pl_gram.y:3929
+msgid "syntax error"
+msgstr "συντακτικό σφάλμα"
+
+#: pl_gram.y:1922 pl_gram.y:1924 pl_gram.y:2406 pl_gram.y:2408
+msgid "invalid SQLSTATE code"
+msgstr "μη έγκυρος κωδικός SQLSTATE"
+
+#: pl_gram.y:2126
+msgid "syntax error, expected \"FOR\""
+msgstr "συντακτικό σφάλμα, αναμενόταν «FOR«"
+
+#: pl_gram.y:2187
+#, c-format
+msgid "FETCH statement cannot return multiple rows"
+msgstr "η δήλωση FETCH δεν είναι δυνατό να επιστρέψει πολλαπλές σειρές"
+
+#: pl_gram.y:2284
+#, c-format
+msgid "cursor variable must be a simple variable"
+msgstr "η μεταβλητή δρομέα πρέπει να είναι απλή μεταβλητή"
+
+#: pl_gram.y:2290
+#, c-format
+msgid "variable \"%s\" must be of type cursor or refcursor"
+msgstr "η μεταβλητή «%s» πρέπει να έχει τύπο δρομέα ή refcursor"
+
+#: pl_gram.y:2620 pl_gram.y:2631
+#, c-format
+msgid "\"%s\" is not a known variable"
+msgstr "«%s» δεν είναι γνωστή μεταβλητή"
+
+#: pl_gram.y:2737 pl_gram.y:2747 pl_gram.y:2903
+msgid "mismatched parentheses"
+msgstr "ασυμφωνία παρενθέσεων"
+
+#: pl_gram.y:2751
+#, c-format
+msgid "missing \"%s\" at end of SQL expression"
+msgstr "λείπει «%s» στο τέλος SQL έκφρασης"
+
+#: pl_gram.y:2757
+#, c-format
+msgid "missing \"%s\" at end of SQL statement"
+msgstr "λείπει «%s» στο τέλος SQL δήλωσης"
+
+#: pl_gram.y:2774
+msgid "missing expression"
+msgstr "λείπει έκφραση"
+
+#: pl_gram.y:2776
+msgid "missing SQL statement"
+msgstr "λείπει SQL δήλωση"
+
+#: pl_gram.y:2905
+msgid "incomplete data type declaration"
+msgstr "ελλιπής δήλωση τύπου δεδομένων"
+
+#: pl_gram.y:2928
+msgid "missing data type declaration"
+msgstr "λείπει δήλωση τύπου δεδομένων"
+
+#: pl_gram.y:3006
+msgid "INTO specified more than once"
+msgstr "INTO ορίστηκε περισσότερο από μία φορά"
+
+#: pl_gram.y:3176
+msgid "expected FROM or IN"
+msgstr "αναμενόταν FROM ή IN"
+
+#: pl_gram.y:3237
+#, c-format
+msgid "RETURN cannot have a parameter in function returning set"
+msgstr "RETURN δεν μπορεί να έχει μία παράμετρο σε συνάρτηση που επιστρέφει σύνολο"
+
+#: pl_gram.y:3238
+#, c-format
+msgid "Use RETURN NEXT or RETURN QUERY."
+msgstr "Χρησιμοποίησε RETURN NEXT ή RETURN QUERY."
+
+#: pl_gram.y:3248
+#, c-format
+msgid "RETURN cannot have a parameter in a procedure"
+msgstr "RETURN δεν μπορεί να έχει μία παράμετρο σε μια διαδικασία"
+
+#: pl_gram.y:3253
+#, c-format
+msgid "RETURN cannot have a parameter in function returning void"
+msgstr "RETURN δεν μπορεί να έχει μία παράμετρο σε συνάρτηση που επιστρέφει κενό"
+
+#: pl_gram.y:3262
+#, c-format
+msgid "RETURN cannot have a parameter in function with OUT parameters"
+msgstr "RETURN δεν μπορεί να έχει μια παράμετρο σε συνάρτηση με παραμέτρους OUT"
+
+#: pl_gram.y:3325
+#, c-format
+msgid "RETURN NEXT cannot have a parameter in function with OUT parameters"
+msgstr "RETURN NEXT δεν μπορεί να έχει μια παράμετρο σε συνάρτηση με παραμέτρους OUT"
+
+#: pl_gram.y:3433
+#, c-format
+msgid "variable \"%s\" is declared CONSTANT"
+msgstr "η μεταβλητή «%s» είναι δηλωμένη ως CONSTANT"
+
+#: pl_gram.y:3491
+#, c-format
+msgid "record variable cannot be part of multiple-item INTO list"
+msgstr "η μεταβλητή εγγραφής δεν μπορεί να είναι μέρος λίστας INTO πολλαπλών στοιχείων"
+
+#: pl_gram.y:3537
+#, c-format
+msgid "too many INTO variables specified"
+msgstr "έχουν οριστεί πάρα πολλές παράμετροι ΙΝΤΟ"
+
+#: pl_gram.y:3745
+#, c-format
+msgid "end label \"%s\" specified for unlabeled block"
+msgstr "ετικέτα τέλους «%s» έχει καθοριστεί για μπλοκ χωρίς ετικέτα"
+
+#: pl_gram.y:3752
+#, c-format
+msgid "end label \"%s\" differs from block's label \"%s\""
+msgstr "η ετικέτα τέλους «%s» διαφέρει από την ετικέτα «%s» του μπλοκ"
+
+#: pl_gram.y:3786
+#, c-format
+msgid "cursor \"%s\" has no arguments"
+msgstr "o δρομέας «%s» δεν έχει παραμέτρους"
+
+#: pl_gram.y:3800
+#, c-format
+msgid "cursor \"%s\" has arguments"
+msgstr "o δρομέας «%s» έχει παραμέτρους"
+
+#: pl_gram.y:3842
+#, c-format
+msgid "cursor \"%s\" has no argument named \"%s\""
+msgstr "ο δρομέας «%s» δεν έχει παράμετρο με όνομα «%s»"
+
+#: pl_gram.y:3862
+#, c-format
+msgid "value for parameter \"%s\" of cursor \"%s\" specified more than once"
+msgstr "τιμή για την παράμετρο «%s» του δρομέα «%s» που καθορίζεται περισσότερες από μία φορές"
+
+#: pl_gram.y:3887
+#, c-format
+msgid "not enough arguments for cursor \"%s\""
+msgstr "λείπουν παράμετροι για τον δρομέα «%s»"
+
+#: pl_gram.y:3894
+#, c-format
+msgid "too many arguments for cursor \"%s\""
+msgstr "πάρα πολλές παράμετροι για δρομέα «%s»"
+
+#: pl_gram.y:3980
+msgid "unrecognized RAISE statement option"
+msgstr "μη αναγνωρίσιμη επιλογή δήλωσης RAISE"
+
+#: pl_gram.y:3984
+msgid "syntax error, expected \"=\""
+msgstr "συντακτικό σφάλμα, αναμενόταν «=«"
+
+#: pl_gram.y:4025
+#, c-format
+msgid "too many parameters specified for RAISE"
+msgstr "έχουν οριστεί πάρα πολλές παράμετροι για RAISE"
+
+#: pl_gram.y:4029
+#, c-format
+msgid "too few parameters specified for RAISE"
+msgstr "έχουν οριστεί πολύ λίγες παράμετροι για RAISE"
+
+#: pl_handler.c:156
+msgid "Sets handling of conflicts between PL/pgSQL variable names and table column names."
+msgstr "Ορίζει το χειρισμό των διενέξεων μεταξύ των ονομάτων μεταβλητών PL/pgSQL και των ονομάτων στηλών πίνακα."
+
+#: pl_handler.c:165
+msgid "Print information about parameters in the DETAIL part of the error messages generated on INTO ... STRICT failures."
+msgstr "Εκτύπωσε πληροφορίες σχετικά με παραμέτρους στο τμήμα DETAIL των μηνυμάτων σφάλματος που δημιουργούνται από αποτυχίες INTO ... STRICT."
+
+#: pl_handler.c:173
+msgid "Perform checks given in ASSERT statements."
+msgstr "Εκτέλεσε ελέγχους που δίνονται σε δηλώσεις ASSERT."
+
+#: pl_handler.c:181
+msgid "List of programming constructs that should produce a warning."
+msgstr "Λίστα προγραμματιστικών κατασκευών που θα πρέπει να παράγουν μια προειδοποίηση."
+
+#: pl_handler.c:191
+msgid "List of programming constructs that should produce an error."
+msgstr "Λίστα προγραμματιστικών κατασκευών που θα πρέπει να παράγουν ένα σφάλμα."
+
+#. translator: %s is typically the translation of "syntax error"
+#: pl_scanner.c:508
+#, c-format
+msgid "%s at end of input"
+msgstr "«%s» στο τέλος εισόδου"
+
+#. translator: first %s is typically the translation of "syntax error"
+#: pl_scanner.c:524
+#, c-format
+msgid "%s at or near \"%s\""
+msgstr "%s σε ή κοντά σε «%s»"
+
+#~ msgid "query \"%s\" returned more than one row"
+#~ msgstr "το ερώτημα «%s» επέστρεψε περισσότερες από μία γραμμές"

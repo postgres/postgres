@@ -107,6 +107,8 @@ typedef struct LogicalDecodingContext
 	bool		prepared_write;
 	XLogRecPtr	write_location;
 	TransactionId write_xid;
+	/* Are we processing the end LSN of a transaction? */
+	bool		end_xact;
 } LogicalDecodingContext;
 
 
@@ -131,7 +133,8 @@ extern void DecodingContextFindStartpoint(LogicalDecodingContext *ctx);
 extern bool DecodingContextReady(LogicalDecodingContext *ctx);
 extern void FreeDecodingContext(LogicalDecodingContext *ctx);
 
-extern void LogicalIncreaseXminForSlot(XLogRecPtr lsn, TransactionId xmin);
+extern void LogicalIncreaseXminForSlot(XLogRecPtr current_lsn,
+									   TransactionId xmin);
 extern void LogicalIncreaseRestartDecodingForSlot(XLogRecPtr current_lsn,
 												  XLogRecPtr restart_lsn);
 extern void LogicalConfirmReceivedLocation(XLogRecPtr lsn);

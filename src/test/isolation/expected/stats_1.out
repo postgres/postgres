@@ -2826,7 +2826,7 @@ seq_scan|seq_tup_read|n_tup_ins|n_tup_upd|n_tup_del|n_live_tup|n_dead_tup|vacuum
 (1 row)
 
 
-starting permutation: s1_table_insert s1_begin s1_table_update_k1 s1_table_update_k1 s1_table_truncate s1_table_insert_k1 s1_table_update_k1 s1_prepare_a s2_commit_prepared_a s1_ff s2_ff s1_table_stats
+starting permutation: s1_table_insert s1_begin s1_table_update_k1 s1_table_update_k1 s1_table_truncate s1_table_insert_k1 s1_table_update_k1 s1_prepare_a s1_ff s2_commit_prepared_a s2_ff s1_table_stats
 pg_stat_force_next_flush
 ------------------------
                         
@@ -2841,14 +2841,14 @@ step s1_table_insert_k1: INSERT INTO test_stat_tab(key, value) VALUES('k1', 1);
 step s1_table_update_k1: UPDATE test_stat_tab SET value = value + 1 WHERE key = 'k1';
 step s1_prepare_a: PREPARE TRANSACTION 'a';
 ERROR:  prepared transactions are disabled
-step s2_commit_prepared_a: COMMIT PREPARED 'a';
-ERROR:  prepared transaction with identifier "a" does not exist
 step s1_ff: SELECT pg_stat_force_next_flush();
 pg_stat_force_next_flush
 ------------------------
                         
 (1 row)
 
+step s2_commit_prepared_a: COMMIT PREPARED 'a';
+ERROR:  prepared transaction with identifier "a" does not exist
 step s2_ff: SELECT pg_stat_force_next_flush();
 pg_stat_force_next_flush
 ------------------------

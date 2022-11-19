@@ -239,7 +239,7 @@ typedef struct spgxlogVacuumRedirect
 {
 	uint16		nToPlaceholder; /* number of redirects to make placeholders */
 	OffsetNumber firstPlaceholder;	/* first placeholder tuple to remove */
-	TransactionId newestRedirectXid;	/* newest XID of removed redirects */
+	TransactionId snapshotConflictHorizon;	/* newest XID of removed redirects */
 
 	/* offsets of redirect tuples to make placeholders follow */
 	OffsetNumber offsets[FLEXIBLE_ARRAY_MEMBER];

@@ -14,11 +14,9 @@
 
 #include <dirent.h>
 #include <limits.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #include "access/xlog_internal.h"
 #include "common/fe_memutils.h"
@@ -96,7 +94,7 @@ usage(void)
 	printf(_("  -s, --status-interval=SECS\n"
 			 "                         time between status packets sent to server (default: %d)\n"), (standby_message_timeout / 1000));
 	printf(_("  -S, --slot=SLOTNAME    name of the logical replication slot\n"));
-	printf(_("  -t, --two-phase        enable two-phase decoding when creating a slot\n"));
+	printf(_("  -t, --two-phase        enable decoding of prepared transactions when creating a slot\n"));
 	printf(_("  -v, --verbose          output verbose messages\n"));
 	printf(_("  -V, --version          output version information, then exit\n"));
 	printf(_("  -?, --help             show this help, then exit\n"));
@@ -652,11 +650,11 @@ error:
 #ifndef WIN32
 
 /*
- * When sigint is called, just tell the system to exit at the next possible
- * moment.
+ * When SIGINT/SIGTERM are caught, just tell the system to exit at the next
+ * possible moment.
  */
 static void
-sigint_handler(int signum)
+sigexit_handler(SIGNAL_ARGS)
 {
 	time_to_abort = true;
 }
@@ -665,7 +663,7 @@ sigint_handler(int signum)
  * Trigger the output file to be reopened.
  */
 static void
-sighup_handler(int signum)
+sighup_handler(SIGNAL_ARGS)
 {
 	output_reopen = true;
 }
@@ -924,7 +922,8 @@ main(int argc, char **argv)
 	 * if one is needed, in GetConnection.)
 	 */
 #ifndef WIN32
-	pqsignal(SIGINT, sigint_handler);
+	pqsignal(SIGINT, sigexit_handler);
+	pqsignal(SIGTERM, sigexit_handler);
 	pqsignal(SIGHUP, sighup_handler);
 #endif
 

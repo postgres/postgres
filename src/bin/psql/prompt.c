@@ -266,8 +266,10 @@ get_prompt(promptStatus_t status, ConditionalStack cstack)
 					{
 						int			cmdend = strcspn(p + 1, "`");
 						char	   *file = pnstrdup(p + 1, cmdend);
-						FILE	   *fd = popen(file, "r");
+						FILE	   *fd;
 
+						fflush(NULL);
+						fd = popen(file, "r");
 						if (fd)
 						{
 							if (fgets(buf, sizeof(buf), fd) == NULL)

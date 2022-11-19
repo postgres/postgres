@@ -790,6 +790,83 @@ select * from search_graph order by seq;
  4 | 5 | arc 4 -> 5 | (1,4,5)
 (7 rows)
 
+-- a constant initial value causes issues for EXPLAIN
+explain (verbose, costs off)
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search depth first by x set y
+select * from test limit 5;
+                                       QUERY PLAN                                        
+-----------------------------------------------------------------------------------------
+ Limit
+   Output: test.x, test.y
+   CTE test
+     ->  Recursive Union
+           ->  Result
+                 Output: 1, '{(1)}'::record[]
+           ->  WorkTable Scan on test test_1
+                 Output: (test_1.x + 1), array_cat(test_1.y, ARRAY[ROW((test_1.x + 1))])
+   ->  CTE Scan on test
+         Output: test.x, test.y
+(10 rows)
+
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search depth first by x set y
+select * from test limit 5;
+ x |           y           
+---+-----------------------
+ 1 | {(1)}
+ 2 | {(1),(2)}
+ 3 | {(1),(2),(3)}
+ 4 | {(1),(2),(3),(4)}
+ 5 | {(1),(2),(3),(4),(5)}
+(5 rows)
+
+explain (verbose, costs off)
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search breadth first by x set y
+select * from test limit 5;
+                                         QUERY PLAN                                         
+--------------------------------------------------------------------------------------------
+ Limit
+   Output: test.x, test.y
+   CTE test
+     ->  Recursive Union
+           ->  Result
+                 Output: 1, '(0,1)'::record
+           ->  WorkTable Scan on test test_1
+                 Output: (test_1.x + 1), ROW(int8inc((test_1.y)."*DEPTH*"), (test_1.x + 1))
+   ->  CTE Scan on test
+         Output: test.x, test.y
+(10 rows)
+
+with recursive test as (
+  select 1 as x
+  union all
+  select x + 1
+  from test
+) search breadth first by x set y
+select * from test limit 5;
+ x |   y   
+---+-------
+ 1 | (0,1)
+ 2 | (1,2)
+ 3 | (2,3)
+ 4 | (3,4)
+ 5 | (4,5)
+(5 rows)
+
 -- various syntax errors
 with recursive search_graph(f, t, label) as (
 	select * from graph0 g
@@ -846,6 +923,16 @@ with recursive search_graph(f, t, label) as (
 ) search depth first by f, t set seq
 select * from search_graph order by seq;
 ERROR:  with a SEARCH or CYCLE clause, the right side of the UNION must be a SELECT
+-- check that we distinguish same CTE name used at different levels
+-- (this case could be supported, perhaps, but it isn't today)
+with recursive x(col) as (
+	select 1
+	union
+	(with x as (select * from x)
+	 select * from x)
+) search depth first by col set seq
+select * from x;
+ERROR:  with a SEARCH or CYCLE clause, the recursive reference to WITH query "x" must be at the top level of its right-hand SELECT
 -- test ruleutils and view expansion
 create temp view v_search as
 with recursive search_graph(f, t, label) as (
@@ -1121,6 +1208,49 @@ select * from search_graph;
  5 | 1 | arc 5 -> 1 | Y        | {"(5,1)","(1,4)","(4,5)","(5,1)"}
  2 | 3 | arc 2 -> 3 | N        | {"(1,4)","(4,5)","(5,1)","(1,2)","(2,3)"}
 (25 rows)
+
+explain (verbose, costs off)
+with recursive test as (
+  select 0 as x
+  union all
+  select (x + 1) % 10
+  from test
+) cycle x set is_cycle using path
+select * from test;
+                                                                                          QUERY PLAN                                                                                           
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ CTE Scan on test
+   Output: test.x, test.is_cycle, test.path
+   CTE test
+     ->  Recursive Union
+           ->  Result
+                 Output: 0, false, '{(0)}'::record[]
+           ->  WorkTable Scan on test test_1
+                 Output: ((test_1.x + 1) % 10), CASE WHEN (ROW(((test_1.x + 1) % 10)) = ANY (test_1.path)) THEN true ELSE false END, array_cat(test_1.path, ARRAY[ROW(((test_1.x + 1) % 10))])
+                 Filter: (NOT test_1.is_cycle)
+(9 rows)
+
+with recursive test as (
+  select 0 as x
+  union all
+  select (x + 1) % 10
+  from test
+) cycle x set is_cycle using path
+select * from test;
+ x | is_cycle |                     path                      
+---+----------+-----------------------------------------------
+ 0 | f        | {(0)}
+ 1 | f        | {(0),(1)}
+ 2 | f        | {(0),(1),(2)}
+ 3 | f        | {(0),(1),(2),(3)}
+ 4 | f        | {(0),(1),(2),(3),(4)}
+ 5 | f        | {(0),(1),(2),(3),(4),(5)}
+ 6 | f        | {(0),(1),(2),(3),(4),(5),(6)}
+ 7 | f        | {(0),(1),(2),(3),(4),(5),(6),(7)}
+ 8 | f        | {(0),(1),(2),(3),(4),(5),(6),(7),(8)}
+ 9 | f        | {(0),(1),(2),(3),(4),(5),(6),(7),(8),(9)}
+ 0 | t        | {(0),(1),(2),(3),(4),(5),(6),(7),(8),(9),(0)}
+(11 rows)
 
 -- multiple CTEs
 with recursive
@@ -1784,6 +1914,11 @@ DROP TABLE y;
 --
 -- error cases
 --
+WITH x(n, b) AS (SELECT 1)
+SELECT * FROM x;
+ERROR:  WITH query "x" has 1 columns available but 2 columns specified
+LINE 1: WITH x(n, b) AS (SELECT 1)
+             ^
 -- INTERSECT
 WITH RECURSIVE x(n) AS (SELECT 1 INTERSECT SELECT n+1 FROM x)
 	SELECT * FROM x;
@@ -2500,14 +2635,14 @@ SELECT * FROM bug6051_2;
  3
 (3 rows)
 
--- check INSERT...SELECT rule actions are disallowed on commands
+-- check INSERT ... SELECT rule actions are disallowed on commands
 -- that have modifyingCTEs
 CREATE OR REPLACE RULE bug6051_ins AS ON INSERT TO bug6051 DO INSTEAD
  INSERT INTO bug6051_2
  SELECT NEW.i;
 WITH t1 AS ( DELETE FROM bug6051 RETURNING * )
 INSERT INTO bug6051 SELECT * FROM t1;
-ERROR:  INSERT...SELECT rule actions are not supported for queries having data-modifying statements in WITH
+ERROR:  INSERT ... SELECT rule actions are not supported for queries having data-modifying statements in WITH
 -- silly example to verify that hasModifyingCTE flag is propagated
 CREATE TEMP TABLE bug6051_3 AS
   SELECT a FROM generate_series(11,13) AS a;
@@ -2534,6 +2669,70 @@ SELECT * FROM bug6051_3;
  a 
 ---
 (0 rows)
+
+-- check case where CTE reference is removed due to optimization
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+              QUERY PLAN              
+--------------------------------------
+ Subquery Scan on ss
+   Output: ss.q1
+   ->  Seq Scan on public.int8_tbl i8
+         Output: i8.q1, NULL::bigint
+(4 rows)
+
+SELECT q1 FROM
+(
+  WITH t_cte AS (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+        q1        
+------------------
+              123
+              123
+ 4567890123456789
+ 4567890123456789
+ 4567890123456789
+(5 rows)
+
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+                 QUERY PLAN                  
+---------------------------------------------
+ Subquery Scan on ss
+   Output: ss.q1
+   ->  Seq Scan on public.int8_tbl i8
+         Output: i8.q1, NULL::bigint
+         CTE t_cte
+           ->  Seq Scan on public.int8_tbl t
+                 Output: t.q1, t.q2
+(7 rows)
+
+SELECT q1 FROM
+(
+  WITH t_cte AS MATERIALIZED (SELECT * FROM int8_tbl t)
+  SELECT q1, (SELECT q2 FROM t_cte WHERE t_cte.q1 = i8.q1) AS t_sub
+  FROM int8_tbl i8
+) ss;
+        q1        
+------------------
+              123
+              123
+ 4567890123456789
+ 4567890123456789
+ 4567890123456789
+(5 rows)
 
 -- a truly recursive CTE in the same list
 WITH RECURSIVE t(a) AS (

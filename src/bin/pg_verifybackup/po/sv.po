@@ -1,14 +1,14 @@
 # Swedish message translation file for pg_verifybackup
 # Copyright (C) 2020 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_verifybackup (PostgreSQL) package.
-# Dennis Björklund <db@zigo.dhs.org>, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2020, 2021, 2022
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_verifybackup (PostgreSQL) 13\n"
+"Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-16 05:14+0000\n"
-"PO-Revision-Date: 2020-09-16 07:55+0200\n"
+"POT-Creation-Date: 2022-04-11 13:46+0000\n"
+"PO-Revision-Date: 2022-04-11 16:11+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,20 +17,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "fatalt: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:268
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:275
 #, c-format
 msgid "warning: "
 msgstr "varning: "
+
+#: ../../../src/common/logging.c:284
+#, c-format
+msgid "detail: "
+msgstr "detalj: "
+
+#: ../../../src/common/logging.c:287
+#, c-format
+msgid "hint: "
+msgstr "tips: "
 
 #: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
 #: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
@@ -43,84 +48,88 @@ msgstr "slut på minne\n"
 msgid "cannot duplicate null pointer (internal error)\n"
 msgstr "kan inte duplicera null-pekare (internt fel)\n"
 
-#: ../../common/jsonapi.c:1064
+#: ../../common/jsonapi.c:1078
 #, c-format
 msgid "Escape sequence \"\\%s\" is invalid."
 msgstr "Escape-sekvens \"\\%s\" är ogiltig."
 
-#: ../../common/jsonapi.c:1067
+#: ../../common/jsonapi.c:1081
 #, c-format
 msgid "Character with value 0x%02x must be escaped."
 msgstr "Tecken med värde 0x%02x måste escape:as."
 
-#: ../../common/jsonapi.c:1070
+#: ../../common/jsonapi.c:1084
 #, c-format
 msgid "Expected end of input, but found \"%s\"."
 msgstr "Förväntade slut på indata, men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1073
+#: ../../common/jsonapi.c:1087
 #, c-format
 msgid "Expected array element or \"]\", but found \"%s\"."
 msgstr "Färväntade array-element eller \"]\", men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1076
+#: ../../common/jsonapi.c:1090
 #, c-format
 msgid "Expected \",\" or \"]\", but found \"%s\"."
 msgstr "Förväntade \",\" eller \"]\", men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1079
+#: ../../common/jsonapi.c:1093
 #, c-format
 msgid "Expected \":\", but found \"%s\"."
 msgstr "Förväntade sig \":\" men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1082
+#: ../../common/jsonapi.c:1096
 #, c-format
 msgid "Expected JSON value, but found \"%s\"."
 msgstr "Förväntade JSON-värde, men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1085
+#: ../../common/jsonapi.c:1099
 msgid "The input string ended unexpectedly."
 msgstr "Indatasträngen avslutades oväntat."
 
-#: ../../common/jsonapi.c:1087
+#: ../../common/jsonapi.c:1101
 #, c-format
 msgid "Expected string or \"}\", but found \"%s\"."
 msgstr "Färväntade sträng eller \"}\", men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1090
+#: ../../common/jsonapi.c:1104
 #, c-format
 msgid "Expected \",\" or \"}\", but found \"%s\"."
 msgstr "Förväntade sig \",\" eller \"}\" men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1093
+#: ../../common/jsonapi.c:1107
 #, c-format
 msgid "Expected string, but found \"%s\"."
 msgstr "Förväntade sträng, men hittade \"%s\"."
 
-#: ../../common/jsonapi.c:1096
+#: ../../common/jsonapi.c:1110
 #, c-format
 msgid "Token \"%s\" is invalid."
 msgstr "Token \"%s\" är ogiltig."
 
-#: ../../common/jsonapi.c:1099
+#: ../../common/jsonapi.c:1113
 msgid "\\u0000 cannot be converted to text."
 msgstr "\\u0000 kan inte konverteras till text."
 
-#: ../../common/jsonapi.c:1101
+#: ../../common/jsonapi.c:1115
 msgid "\"\\u\" must be followed by four hexadecimal digits."
 msgstr "\"\\u\" måste följas av fyra hexdecimala siffror."
 
-#: ../../common/jsonapi.c:1104
+#: ../../common/jsonapi.c:1118
 msgid "Unicode escape values cannot be used for code point values above 007F when the encoding is not UTF8."
 msgstr "Escape-värden för unicode kan inte användas för kodpunkter med värde över 007F när kodningen inte är UTF8."
 
-#: ../../common/jsonapi.c:1106
+#: ../../common/jsonapi.c:1120
 msgid "Unicode high surrogate must not follow a high surrogate."
 msgstr "Unicodes övre surrogathalva får inte komma efter en övre surrogathalva."
 
-#: ../../common/jsonapi.c:1108
+#: ../../common/jsonapi.c:1122
 msgid "Unicode low surrogate must follow a high surrogate."
 msgstr "Unicodes lägre surrogathalva måste följa en övre surrogathalva."
+
+#: parse_manifest.c:150
+msgid "parsing failed"
+msgstr "parsning misslyckades"
 
 #: parse_manifest.c:152
 msgid "manifest ended unexpectedly"
@@ -184,7 +193,7 @@ msgstr "saknar storlek"
 
 #: parse_manifest.c:480
 msgid "checksum without algorithm"
-msgstr "checksumma utan algoritm"
+msgstr "kontrollsumma utan algoritm"
 
 #: parse_manifest.c:494
 msgid "could not decode file name"
@@ -197,12 +206,12 @@ msgstr "filstorlek är inte ett haltal"
 #: parse_manifest.c:510
 #, c-format
 msgid "unrecognized checksum algorithm: \"%s\""
-msgstr "okänd checksum-algoritm: \"%s\""
+msgstr "okänd algoritm för kontrollsumma: \"%s\""
 
 #: parse_manifest.c:529
 #, c-format
 msgid "invalid checksum for file \"%s\": \"%s\""
-msgstr "ogiltig checksumma för fil \"%s\": \"%s\""
+msgstr "ogiltig kontrollsumma för fil \"%s\": \"%s\""
 
 #: parse_manifest.c:572
 msgid "missing timeline"
@@ -236,154 +245,177 @@ msgstr "förväntade minst två rader"
 msgid "last line not newline-terminated"
 msgstr "sista raden är inte nyradsterminerad"
 
+#: parse_manifest.c:657
+#, c-format
+msgid "out of memory"
+msgstr "slut på minne"
+
+#: parse_manifest.c:659
+#, c-format
+msgid "could not initialize checksum of manifest"
+msgstr "kunde inte initiera kontrollsumma för backup-manifest"
+
 #: parse_manifest.c:661
 #, c-format
-msgid "manifest has no checksum"
-msgstr "manifestet har ingen checksumma"
+msgid "could not update checksum of manifest"
+msgstr "kunde inte uppdatera kontrollsumma för backup-manifest"
 
-#: parse_manifest.c:665
+#: parse_manifest.c:664
+#, c-format
+msgid "could not finalize checksum of manifest"
+msgstr "kunde inte göra klart kontrollsumma för backup-manifest"
+
+#: parse_manifest.c:668
+#, c-format
+msgid "manifest has no checksum"
+msgstr "manifestet har ingen kontrollsumma"
+
+#: parse_manifest.c:672
 #, c-format
 msgid "invalid manifest checksum: \"%s\""
-msgstr "ogiltig manifestchecksumma: \"%s\""
+msgstr "ogiltig kontrollsumma för manifest: \"%s\""
 
-#: parse_manifest.c:669
+#: parse_manifest.c:676
 #, c-format
 msgid "manifest checksum mismatch"
-msgstr "manifestchecksumman matchar inte"
+msgstr "kontrollsumma för manifest matchar inte"
 
-#: parse_manifest.c:683
+#: parse_manifest.c:691
 #, c-format
 msgid "could not parse backup manifest: %s"
 msgstr "kunde inte parsa backup-manifest: %s"
 
-#: pg_verifybackup.c:255 pg_verifybackup.c:265 pg_verifybackup.c:277
+#: pg_verifybackup.c:256 pg_verifybackup.c:265 pg_verifybackup.c:276
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Försök med \"%s --help\" för mer information.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Försök med \"%s --help\" för mer information."
 
 #: pg_verifybackup.c:264
 #, c-format
 msgid "no backup directory specified"
 msgstr "ingen backup-katalog angiven"
 
-#: pg_verifybackup.c:275
+#: pg_verifybackup.c:274
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_verifybackup.c:298
+#: pg_verifybackup.c:297
 #, c-format
-msgid ""
-"The program \"%s\" is needed by %s but was not found in the\n"
-"same directory as \"%s\".\n"
-"Check your installation."
-msgstr ""
-"Programmet \"%s\" behövs av %s men hittades inte i samma\n"
-"katalog som \"%s\".\n"
-"Kontrollera din installation."
+msgid "program \"%s\" is needed by %s but was not found in the same directory as \"%s\""
+msgstr "programmet \"%s\" behövs av %s men hittades inte i samma katalog som \"%s\""
 
-#: pg_verifybackup.c:303
+#: pg_verifybackup.c:300
 #, c-format
-msgid ""
-"The program \"%s\" was found by \"%s\"\n"
-"but was not the same version as %s.\n"
-"Check your installation."
-msgstr ""
-"Programmet \"%s\" hittades av \"%s\"\n"
-"men är inte av samma version som %s.\n"
-"Kontrollera din installation."
+msgid "program \"%s\" was found by \"%s\" but was not the same version as %s"
+msgstr "programmet \"%s\" hittades av \"%s\" men är inte av samma version som %s"
 
-#: pg_verifybackup.c:361
+#: pg_verifybackup.c:356
 #, c-format
 msgid "backup successfully verified\n"
 msgstr "korrekt verifierad backup\n"
 
-#: pg_verifybackup.c:387 pg_verifybackup.c:723
+#: pg_verifybackup.c:382 pg_verifybackup.c:718
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: pg_verifybackup.c:391
+#: pg_verifybackup.c:386
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: pg_verifybackup.c:411 pg_verifybackup.c:738
+#: pg_verifybackup.c:406 pg_verifybackup.c:747
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: pg_verifybackup.c:414
+#: pg_verifybackup.c:409
 #, c-format
-msgid "could not read file \"%s\": read %d of %zu"
-msgstr "kunde inte läsa fil \"%s\": läste %d av %zu"
+msgid "could not read file \"%s\": read %d of %lld"
+msgstr "kunde inte läsa fil \"%s\": läste %d av %lld"
 
-#: pg_verifybackup.c:474
+#: pg_verifybackup.c:469
 #, c-format
 msgid "duplicate path name in backup manifest: \"%s\""
 msgstr "duplicerad sökväg i backup-manifest: \"%s\""
 
-#: pg_verifybackup.c:537 pg_verifybackup.c:544
+#: pg_verifybackup.c:532 pg_verifybackup.c:539
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: pg_verifybackup.c:576
+#: pg_verifybackup.c:571
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: pg_verifybackup.c:596
+#: pg_verifybackup.c:591
 #, c-format
 msgid "could not stat file or directory \"%s\": %m"
 msgstr "kunde inte ta status på fil eller katalog \"%s\": %m"
 
-#: pg_verifybackup.c:619
+#: pg_verifybackup.c:614
 #, c-format
 msgid "\"%s\" is not a file or directory"
 msgstr "\"%s\" är inte en fil eller katalog"
 
-#: pg_verifybackup.c:629
+#: pg_verifybackup.c:624
 #, c-format
 msgid "\"%s\" is present on disk but not in the manifest"
 msgstr "\"%s\" finns på disk men är inte i manifestet"
 
-#: pg_verifybackup.c:641
+#: pg_verifybackup.c:636
 #, c-format
-msgid "\"%s\" has size %zu on disk but size %zu in the manifest"
-msgstr "\"%s\" har storlek %zu på disk men storlek %zu i manifestet"
+msgid "\"%s\" has size %lld on disk but size %zu in the manifest"
+msgstr "\"%s\" har storlek %lld på disk men storlek %zu i manifestet"
 
-#: pg_verifybackup.c:668
+#: pg_verifybackup.c:663
 #, c-format
 msgid "\"%s\" is present in the manifest but not on disk"
 msgstr "\"%s\" finns i manifestet men inte på disk"
 
-#: pg_verifybackup.c:744
+#: pg_verifybackup.c:726
+#, c-format
+msgid "could not initialize checksum of file \"%s\""
+msgstr "kunde inte initiera kontrollsumma för filen \"%s\""
+
+#: pg_verifybackup.c:738
+#, c-format
+msgid "could not update checksum of file \"%s\""
+msgstr "kunde inte uppdatera kontrollsumma för filen \"%s\""
+
+#: pg_verifybackup.c:753
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
 
-#: pg_verifybackup.c:763
+#: pg_verifybackup.c:772
 #, c-format
 msgid "file \"%s\" should contain %zu bytes, but read %zu bytes"
 msgstr "filen \"%s\" skall innehålla %zu byte men vi läste %zu byte"
 
-#: pg_verifybackup.c:774
+#: pg_verifybackup.c:782
+#, c-format
+msgid "could not finalize checksum of file \"%s\""
+msgstr "kunde inte göra klart kontrollsumma för filen \"%s\""
+
+#: pg_verifybackup.c:790
 #, c-format
 msgid "file \"%s\" has checksum of length %d, but expected %d"
-msgstr "filen \"%s\" har checksumma med längd %d men förväntade %d"
+msgstr "filen \"%s\" har kontrollsumma med längd %d men förväntade %d"
 
-#: pg_verifybackup.c:778
+#: pg_verifybackup.c:794
 #, c-format
 msgid "checksum mismatch for file \"%s\""
-msgstr "checksumman matchar inte för fil \"%s\""
+msgstr "kontrollsumman matchar inte för fil \"%s\""
 
-#: pg_verifybackup.c:804
+#: pg_verifybackup.c:818
 #, c-format
 msgid "WAL parsing failed for timeline %u"
 msgstr "WAL-parsning misslyckades för tidslinje %u"
 
-#: pg_verifybackup.c:890
+#: pg_verifybackup.c:904
 #, c-format
 msgid ""
 "%s verifies a backup against the backup manifest.\n"
@@ -392,7 +424,7 @@ msgstr ""
 "%s verifierar en backup gentemot backup-manifestet.\n"
 "\n"
 
-#: pg_verifybackup.c:891
+#: pg_verifybackup.c:905
 #, c-format
 msgid ""
 "Usage:\n"
@@ -403,57 +435,57 @@ msgstr ""
 "  %s [FLAGGOR]... BACKUPKAT\n"
 "\n"
 
-#: pg_verifybackup.c:892
+#: pg_verifybackup.c:906
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_verifybackup.c:893
+#: pg_verifybackup.c:907
 #, c-format
 msgid "  -e, --exit-on-error         exit immediately on error\n"
 msgstr "  -e, --exit-on-error         avsluta direkt vid fel\n"
 
-#: pg_verifybackup.c:894
+#: pg_verifybackup.c:908
 #, c-format
 msgid "  -i, --ignore=RELATIVE_PATH  ignore indicated path\n"
 msgstr "  -i, --ignore=RELATIV_SÖKVÄG hoppa över angiven sökväg\n"
 
-#: pg_verifybackup.c:895
+#: pg_verifybackup.c:909
 #, c-format
 msgid "  -m, --manifest-path=PATH    use specified path for manifest\n"
 msgstr "  -m, --manifest-path=SÖKVÄG  använd denna sökväg till manifestet\n"
 
-#: pg_verifybackup.c:896
+#: pg_verifybackup.c:910
 #, c-format
 msgid "  -n, --no-parse-wal          do not try to parse WAL files\n"
 msgstr "  -n, --no-parse-wal          försök inte parsa WAL-filer\n"
 
-#: pg_verifybackup.c:897
+#: pg_verifybackup.c:911
 #, c-format
 msgid "  -q, --quiet                 do not print any output, except for errors\n"
 msgstr "  -q, --quiet                 skriv inte ut några meddelanden förutom fel\n"
 
-#: pg_verifybackup.c:898
+#: pg_verifybackup.c:912
 #, c-format
 msgid "  -s, --skip-checksums        skip checksum verification\n"
-msgstr "  -s, --skip-checksums        hoppa över verifiering av checksummor\n"
+msgstr "  -s, --skip-checksums        hoppa över verifiering av kontrollsummor\n"
 
-#: pg_verifybackup.c:899
+#: pg_verifybackup.c:913
 #, c-format
 msgid "  -w, --wal-directory=PATH    use specified path for WAL files\n"
 msgstr "  -w, --wal-directory=SÖKVÄG  använd denna sökväg till WAL-filer\n"
 
-#: pg_verifybackup.c:900
+#: pg_verifybackup.c:914
 #, c-format
 msgid "  -V, --version               output version information, then exit\n"
 msgstr "  -V, --version               visa versionsinformation, avsluta sedan\n"
 
-#: pg_verifybackup.c:901
+#: pg_verifybackup.c:915
 #, c-format
 msgid "  -?, --help                  show this help, then exit\n"
 msgstr "  -?, --help                  visa denna hjälp, avsluta sedan\n"
 
-#: pg_verifybackup.c:902
+#: pg_verifybackup.c:916
 #, c-format
 msgid ""
 "\n"
@@ -462,25 +494,35 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: pg_verifybackup.c:903
+#: pg_verifybackup.c:917
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
 
+#, c-format
 #~ msgid ""
-#~ "The program \"%s\" is needed by %s but was\n"
-#~ "not found in the same directory as \"%s\".\n"
+#~ "The program \"%s\" is needed by %s but was not found in the\n"
+#~ "same directory as \"%s\".\n"
 #~ "Check your installation."
 #~ msgstr ""
 #~ "Programmet \"%s\" behövs av %s men hittades inte i samma\n"
 #~ "katalog som \"%s\".\n"
 #~ "Kontrollera din installation."
 
+#, c-format
 #~ msgid ""
-#~ "The program \"%s\" was found by \"%s\" but was\n"
-#~ "not the same version as %s.\n"
+#~ "The program \"%s\" was found by \"%s\"\n"
+#~ "but was not the same version as %s.\n"
 #~ "Check your installation."
 #~ msgstr ""
 #~ "Programmet \"%s\" hittades av \"%s\"\n"
 #~ "men är inte av samma version som %s.\n"
 #~ "Kontrollera din installation."
+
+#, c-format
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "Försök med \"%s --help\" för mer information.\n"
+
+#, c-format
+#~ msgid "fatal: "
+#~ msgstr "fatalt: "

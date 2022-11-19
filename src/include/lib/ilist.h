@@ -10,20 +10,36 @@
  * the link fields in the remainder would be wasted space.  But usually,
  * it saves space to not have separately-allocated list nodes.)
  *
+ * The doubly-linked list comes in 2 forms.  dlist_head defines a head of a
+ * doubly-linked list of dlist_nodes, whereas dclist_head defines the head of
+ * a doubly-linked list of dlist_nodes with an additional 'count' field to
+ * keep track of how many items are contained within the given list.  For
+ * simplicity, dlist_head and dclist_head share the same node and iterator
+ * types.  The functions to manipulate a dlist_head always have a name
+ * starting with "dlist", whereas functions to manipulate a dclist_head have a
+ * name starting with "dclist".  dclist_head comes with an additional function
+ * (dclist_count) to return the number of entries in the list.  dclists are
+ * able to store a maximum of PG_UINT32_MAX elements.  It is up to the caller
+ * to ensure no more than this many items are added to a dclist.
+ *
  * None of the functions here allocate any memory; they just manipulate
- * externally managed memory.  The APIs for singly and doubly linked lists
- * are identical as far as capabilities of both allow.
+ * externally managed memory.  With the exception doubly-linked count lists
+ * providing the ability to obtain the number of items in the list, the APIs
+ * for singly and both doubly linked lists are identical as far as
+ * capabilities of both allow.
  *
  * Each list has a list header, which exists even when the list is empty.
  * An empty singly-linked list has a NULL pointer in its header.
- * There are two kinds of empty doubly linked lists: those that have been
- * initialized to NULL, and those that have been initialized to circularity.
+ *
+ * For both doubly-linked list types, there are two valid ways to represent an
+ * empty list.  The head's 'next' pointer can either be NULL or the head's
+ * 'next' and 'prev' links can both point back to the list head (circular).
  * (If a dlist is modified and then all its elements are deleted, it will be
- * in the circular state.)	We prefer circular dlists because there are some
+ * in the circular state.).  We prefer circular dlists because there are some
  * operations that can be done without branches (and thus faster) on lists
  * that use circular representation.  However, it is often convenient to
  * initialize list headers to zeroes rather than setting them up with an
- * explicit initialization function, so we also allow the other case.
+ * explicit initialization function, so we also allow the NULL initalization.
  *
  * EXAMPLES
  *
@@ -146,15 +162,17 @@ typedef struct dlist_head
 
 
 /*
- * Doubly linked list iterator.
+ * Doubly linked list iterator type for dlist_head and and dclist_head types.
  *
- * Used as state in dlist_foreach() and dlist_reverse_foreach(). To get the
- * current element of the iteration use the 'cur' member.
+ * Used as state in dlist_foreach() and dlist_reverse_foreach() (and the
+ * dclist variant thereof).
+ *
+ * To get the current element of the iteration use the 'cur' member.
  *
  * Iterations using this are *not* allowed to change the list while iterating!
  *
  * NB: We use an extra "end" field here to avoid multiple evaluations of
- * arguments in the dlist_foreach() macro.
+ * arguments in the dlist_foreach() and dclist_foreach() macros.
  */
 typedef struct dlist_iter
 {
@@ -163,10 +181,12 @@ typedef struct dlist_iter
 } dlist_iter;
 
 /*
- * Doubly linked list iterator allowing some modifications while iterating.
+ * Doubly linked list iterator for both dlist_head and dclist_head types.
+ * This iterator type allows some modifications while iterating.
  *
- * Used as state in dlist_foreach_modify(). To get the current element of the
- * iteration use the 'cur' member.
+ * Used as state in dlist_foreach_modify() and dclist_foreach_modify().
+ *
+ * To get the current element of the iteration use the 'cur' member.
  *
  * Iterations using this are only allowed to change the list at the current
  * point of iteration. It is fine to delete the current node, but it is *not*
@@ -181,6 +201,19 @@ typedef struct dlist_mutable_iter
 	dlist_node *next;			/* next node we'll iterate to */
 	dlist_node *end;			/* last node we'll iterate to */
 } dlist_mutable_iter;
+
+/*
+ * Head of a doubly linked list with a count of the number of items
+ *
+ * This internally makes use of a dlist to implement the actual list.  When
+ * items are added or removed from the list the count is updated to reflect
+ * the current number of items in the list.
+ */
+typedef struct dclist_head
+{
+	dlist_head	dlist;			/* the actual list header */
+	uint32		count;			/* the number of items in the list */
+} dclist_head;
 
 /*
  * Node of a singly linked list.
@@ -246,6 +279,7 @@ typedef struct slist_mutable_iter
 
 /* Static initializers */
 #define DLIST_STATIC_INIT(name) {{&(name).head, &(name).head}}
+#define DCLIST_STATIC_INIT(name) {{{&(name).dlist.head, &(name).dlist.head}}, 0}
 #define SLIST_STATIC_INIT(name) {{NULL}}
 
 
@@ -255,6 +289,7 @@ typedef struct slist_mutable_iter
 extern void slist_delete(slist_head *head, slist_node *node);
 
 #ifdef ILIST_DEBUG
+extern void dlist_member_check(dlist_head *head, dlist_node *node);
 extern void dlist_check(dlist_head *head);
 extern void slist_check(slist_head *head);
 #else
@@ -264,6 +299,7 @@ extern void slist_check(slist_head *head);
  * in which functions the only point of passing the list head pointer is to be
  * able to run these checks.
  */
+#define dlist_member_check(head, node) ((void) (head))
 #define dlist_check(head)	((void) (head))
 #define slist_check(head)	((void) (head))
 #endif							/* ILIST_DEBUG */
@@ -359,6 +395,17 @@ dlist_delete(dlist_node *node)
 {
 	node->prev->next = node->next;
 	node->next->prev = node->prev;
+}
+
+/*
+ * Same as dlist_delete, but performs checks in ILIST_DEBUG builds to ensure
+ * that 'node' belongs to 'head'.
+ */
+static inline void
+dlist_delete_from(dlist_head *head, dlist_node *node)
+{
+	dlist_member_check(head, node);
+	dlist_delete(node);
 }
 
 /*
@@ -562,6 +609,309 @@ dlist_tail_node(dlist_head *head)
 		 (iter).cur != (iter).end;											\
 		 (iter).cur = (iter).cur->prev)
 
+/* doubly-linked count list implementation */
+
+/*
+ * dclist_init
+ *		Initialize a doubly linked count list.
+ *
+ * Previous state will be thrown away without any cleanup.
+ */
+static inline void
+dclist_init(dclist_head *head)
+{
+	dlist_init(&head->dlist);
+	head->count = 0;
+}
+
+/*
+ * dclist_is_empty
+ *		Returns true if the list is empty, otherwise false.
+ */
+static inline bool
+dclist_is_empty(dclist_head *head)
+{
+	Assert(dlist_is_empty(&head->dlist) == (head->count == 0));
+	return (head->count == 0);
+}
+
+/*
+ * dclist_push_head
+ *		Insert a node at the beginning of the list.
+ */
+static inline void
+dclist_push_head(dclist_head *head, dlist_node *node)
+{
+	if (head->dlist.head.next == NULL)	/* convert NULL header to circular */
+		dclist_init(head);
+
+	dlist_push_head(&head->dlist, node);
+	head->count++;
+
+	Assert(head->count > 0);	/* count overflow check */
+}
+
+/*
+ * dclist_push_tail
+ *		Insert a node at the end of the list.
+ */
+static inline void
+dclist_push_tail(dclist_head *head, dlist_node *node)
+{
+	if (head->dlist.head.next == NULL)	/* convert NULL header to circular */
+		dclist_init(head);
+
+	dlist_push_tail(&head->dlist, node);
+	head->count++;
+
+	Assert(head->count > 0);	/* count overflow check */
+}
+
+/*
+ * dclist_insert_after
+ *		Insert a node after another *in the same list*
+ *
+ * Caution: 'after' must be a member of 'head'.
+ */
+static inline void
+dclist_insert_after(dclist_head *head, dlist_node *after, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, after);
+	Assert(head->count > 0);	/* must be at least 1 already */
+
+	dlist_insert_after(after, node);
+	head->count++;
+
+	Assert(head->count > 0);	/* count overflow check */
+}
+
+/*
+ * dclist_insert_before
+ *		Insert a node before another *in the same list*
+ *
+ * Caution: 'before' must be a member of 'head'.
+ */
+static inline void
+dclist_insert_before(dclist_head *head, dlist_node *before, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, before);
+	Assert(head->count > 0);	/* must be at least 1 already */
+
+	dlist_insert_before(before, node);
+	head->count++;
+
+	Assert(head->count > 0);	/* count overflow check */
+}
+
+/*
+ * dclist_delete_from
+ *		Deletes 'node' from 'head'.
+ *
+ * Caution: 'node' must be a member of 'head'.
+ */
+static inline void
+dclist_delete_from(dclist_head *head, dlist_node *node)
+{
+	Assert(head->count > 0);
+
+	dlist_delete_from(&head->dlist, node);
+	head->count--;
+}
+
+/*
+ * dclist_pop_head_node
+ *		Remove and return the first node from a list (there must be one).
+ */
+static inline dlist_node *
+dclist_pop_head_node(dclist_head *head)
+{
+	dlist_node *node;
+
+	Assert(head->count > 0);
+
+	node = dlist_pop_head_node(&head->dlist);
+	head->count--;
+	return node;
+}
+
+/*
+ * dclist_move_head
+ *		Move 'node' from its current position in the list to the head position
+ *		in 'head'.
+ *
+ * Caution: 'node' must be a member of 'head'.
+ */
+static inline void
+dclist_move_head(dclist_head *head, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, node);
+	Assert(head->count > 0);
+
+	dlist_move_head(&head->dlist, node);
+}
+
+/*
+ * dclist_move_tail
+ *		Move 'node' from its current position in the list to the tail position
+ *		in 'head'.
+ *
+ * Caution: 'node' must be a member of 'head'.
+ */
+static inline void
+dclist_move_tail(dclist_head *head, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, node);
+	Assert(head->count > 0);
+
+	dlist_move_tail(&head->dlist, node);
+}
+
+/*
+ * dclist_has_next
+ *		Check whether 'node' has a following node.
+ *
+ * Caution: 'node' must be a member of 'head'.
+ */
+static inline bool
+dclist_has_next(dclist_head *head, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, node);
+	Assert(head->count > 0);
+
+	return dlist_has_next(&head->dlist, node);
+}
+
+/*
+ * dclist_has_prev
+ *		Check whether 'node' has a preceding node.
+ *
+ * Caution: 'node' must be a member of 'head'.
+ */
+static inline bool
+dclist_has_prev(dclist_head *head, dlist_node *node)
+{
+	dlist_member_check(&head->dlist, node);
+	Assert(head->count > 0);
+
+	return dlist_has_prev(&head->dlist, node);
+}
+
+/*
+ * dclist_next_node
+ *		Return the next node in the list (there must be one).
+ */
+static inline dlist_node *
+dclist_next_node(dclist_head *head, dlist_node *node)
+{
+	Assert(head->count > 0);
+
+	return dlist_next_node(&head->dlist, node);
+}
+
+/*
+ * dclist_prev_node
+ *		Return the prev node in the list (there must be one).
+ */
+static inline dlist_node *
+dclist_prev_node(dclist_head *head, dlist_node *node)
+{
+	Assert(head->count > 0);
+
+	return dlist_prev_node(&head->dlist, node);
+}
+
+/* internal support function to get address of head element's struct */
+static inline void *
+dclist_head_element_off(dclist_head *head, size_t off)
+{
+	Assert(!dclist_is_empty(head));
+
+	return (char *) head->dlist.head.next - off;
+}
+
+/*
+ * dclist_head_node
+ *		Return the first node in the list (there must be one).
+ */
+static inline dlist_node *
+dclist_head_node(dclist_head *head)
+{
+	Assert(head->count > 0);
+
+	return (dlist_node *) dlist_head_element_off(&head->dlist, 0);
+}
+
+/* internal support function to get address of tail element's struct */
+static inline void *
+dclist_tail_element_off(dclist_head *head, size_t off)
+{
+	Assert(!dclist_is_empty(head));
+
+	return (char *) head->dlist.head.prev - off;
+}
+
+/*
+ * Return the last node in the list (there must be one).
+ */
+static inline dlist_node *
+dclist_tail_node(dclist_head *head)
+{
+	Assert(head->count > 0);
+
+	return (dlist_node *) dlist_tail_element_off(&head->dlist, 0);
+}
+
+/*
+ * dclist_count
+ *		Returns the stored number of entries in 'head'
+ */
+static inline uint32
+dclist_count(dclist_head *head)
+{
+	Assert(dlist_is_empty(&head->dlist) == (head->count == 0));
+
+	return head->count;
+}
+
+/*
+ * Return the containing struct of 'type' where 'membername' is the dlist_node
+ * pointed at by 'ptr'.
+ *
+ * This is used to convert a dlist_node * back to its containing struct.
+ *
+ * Note: This is effectively just the same as dlist_container, so reuse that.
+ */
+#define dclist_container(type, membername, ptr) \
+		dlist_container(type, membername, ptr)
+
+ /*
+  * Return the address of the first element in the list.
+  *
+  * The list must not be empty.
+  */
+#define dclist_head_element(type, membername, lhead)							\
+	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	 (type *) dclist_head_element_off(lhead, offsetof(type, membername)))
+
+ /*
+  * Return the address of the last element in the list.
+  *
+  * The list must not be empty.
+  */
+#define dclist_tail_element(type, membername, lhead)							\
+	(AssertVariableIsOfTypeMacro(((type *) NULL)->membername, dlist_node),	\
+	 ((type *) dclist_tail_element_off(lhead, offsetof(type, membername))))
+
+
+/* Iterators for dclists */
+#define dclist_foreach(iter, lhead) \
+	dlist_foreach(iter, &((lhead)->dlist))
+
+#define dclist_foreach_modify(iter, lhead) \
+	dlist_foreach_modify(iter, &((lhead)->dlist))
+
+#define dclist_reverse_foreach(iter, lhead) \
+	dlist_reverse_foreach(iter, &((lhead)->dlist))
 
 /* singly linked list implementation */
 

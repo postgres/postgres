@@ -273,7 +273,7 @@ merge_clump(PlannerInfo *root, List *clumps, Clump *new_clump, int num_gene,
 				 * rel once we know the final targetlist (see
 				 * grouping_planner).
 				 */
-				if (old_clump->size + new_clump->size < num_gene)
+				if (!bms_equal(joinrel->relids, root->all_baserels))
 					generate_useful_gather_paths(root, joinrel, false);
 
 				/* Find and save the cheapest paths for this joinrel */

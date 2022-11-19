@@ -81,7 +81,7 @@ SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version)
 {
 	int			ssl_options = 0;
 
-	AssertArg(version != 0);
+	Assert(version != 0);
 
 	/*
 	 * Some OpenSSL versions define TLS*_VERSION macros but not the

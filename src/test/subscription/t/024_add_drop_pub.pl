@@ -30,21 +30,14 @@ $node_subscriber->safe_psql('postgres', "CREATE TABLE tab_1 (a int)");
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION tap_pub_1 FOR TABLE tab_1");
-$node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_2");
+$node_publisher->safe_psql('postgres', "CREATE PUBLICATION tap_pub_2");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub_1, tap_pub_2"
 );
 
 # Wait for initial table sync to finish
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-
-$node_publisher->wait_for_catchup('tap_sub');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Check the initial data of tab_1 is copied to subscriber
 my $result = $node_subscriber->safe_psql('postgres',
@@ -68,10 +61,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub DROP PUBLICATION tap_pub_1");
 
 # Wait for initial table sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-
-$node_publisher->wait_for_catchup('tap_sub');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Check the initial data of tab_drop_refresh was copied to subscriber
 $result = $node_subscriber->safe_psql('postgres',
@@ -83,10 +73,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub ADD PUBLICATION tap_pub_1");
 
 # Wait for initial table sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
-
-$node_publisher->wait_for_catchup('tap_sub');
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 # Check the initial data of tab_1 was copied to subscriber again
 $result = $node_subscriber->safe_psql('postgres',

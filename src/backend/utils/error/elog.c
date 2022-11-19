@@ -79,9 +79,10 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/varlena.h"
 
 
 /* In this module, access gettext() via err_gettext() */
@@ -106,12 +107,15 @@ extern bool redirection_done;
 emit_log_hook_type emit_log_hook = NULL;
 
 /* GUC parameters */
-int			Log_error_verbosity = PGERROR_VERBOSE;
+int			Log_error_verbosity = PGERROR_DEFAULT;
 char	   *Log_line_prefix = NULL; /* format for extra log line info */
 int			Log_destination = LOG_DESTINATION_STDERR;
 char	   *Log_destination_string = NULL;
 bool		syslog_sequence_numbers = true;
 bool		syslog_split_messages = true;
+
+/* Processed form of backtrace_symbols GUC */
+static char *backtrace_symbol_list;
 
 #ifdef HAVE_SYSLOG
 
@@ -175,7 +179,7 @@ static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
 static pg_noinline void set_backtrace(ErrorData *edata, int num_skip);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
 static void write_console(const char *line, int len);
-static const char *process_log_prefix_padding(const char *p, int *padding);
+static const char *process_log_prefix_padding(const char *p, int *ppadding);
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
 static void send_message_to_server_log(ErrorData *edata);
 static void send_message_to_frontend(ErrorData *edata);
@@ -643,8 +647,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * Any other code you might be tempted to add here should probably be
 		 * in an on_proc_exit or on_shmem_exit callback instead.
 		 */
-		fflush(stdout);
-		fflush(stderr);
+		fflush(NULL);
 
 		/*
 		 * Let the cumulative stats system know. Only mark the session as
@@ -670,8 +673,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 		 * XXX: what if we are *in* the postmaster?  abort() won't kill our
 		 * children...
 		 */
-		fflush(stdout);
-		fflush(stderr);
+		fflush(NULL);
 		abort();
 	}
 
@@ -1830,8 +1832,7 @@ pg_re_throw(void)
 	}
 
 	/* Doesn't return ... */
-	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
-						 __FILE__, __LINE__);
+	ExceptionalCondition("pg_re_throw tried to return", __FILE__, __LINE__);
 }
 
 
@@ -1959,14 +1960,159 @@ DebugFileOpen(void)
 }
 
 
-#ifdef HAVE_SYSLOG
+/*
+ * GUC check_hook for backtrace_functions
+ *
+ * We split the input string, where commas separate function names
+ * and certain whitespace chars are ignored, into a \0-separated (and
+ * \0\0-terminated) list of function names.  This formulation allows
+ * easy scanning when an error is thrown while avoiding the use of
+ * non-reentrant strtok(), as well as keeping the output data in a
+ * single palloc() chunk.
+ */
+bool
+check_backtrace_functions(char **newval, void **extra, GucSource source)
+{
+	int			newvallen = strlen(*newval);
+	char	   *someval;
+	int			validlen;
+	int			i;
+	int			j;
+
+	/*
+	 * Allow characters that can be C identifiers and commas as separators, as
+	 * well as some whitespace for readability.
+	 */
+	validlen = strspn(*newval,
+					  "0123456789_"
+					  "abcdefghijklmnopqrstuvwxyz"
+					  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+					  ", \n\t");
+	if (validlen != newvallen)
+	{
+		GUC_check_errdetail("invalid character");
+		return false;
+	}
+
+	if (*newval[0] == '\0')
+	{
+		*extra = NULL;
+		return true;
+	}
+
+	/*
+	 * Allocate space for the output and create the copy.  We could discount
+	 * whitespace chars to save some memory, but it doesn't seem worth the
+	 * trouble.
+	 */
+	someval = guc_malloc(ERROR, newvallen + 1 + 1);
+	for (i = 0, j = 0; i < newvallen; i++)
+	{
+		if ((*newval)[i] == ',')
+			someval[j++] = '\0';	/* next item */
+		else if ((*newval)[i] == ' ' ||
+				 (*newval)[i] == '\n' ||
+				 (*newval)[i] == '\t')
+			;					/* ignore these */
+		else
+			someval[j++] = (*newval)[i];	/* copy anything else */
+	}
+
+	/* two \0s end the setting */
+	someval[j] = '\0';
+	someval[j + 1] = '\0';
+
+	*extra = someval;
+	return true;
+}
 
 /*
- * Set or update the parameters for syslog logging
+ * GUC assign_hook for backtrace_functions
  */
 void
-set_syslog_parameters(const char *ident, int facility)
+assign_backtrace_functions(const char *newval, void *extra)
 {
+	backtrace_symbol_list = (char *) extra;
+}
+
+/*
+ * GUC check_hook for log_destination
+ */
+bool
+check_log_destination(char **newval, void **extra, GucSource source)
+{
+	char	   *rawstring;
+	List	   *elemlist;
+	ListCell   *l;
+	int			newlogdest = 0;
+	int		   *myextra;
+
+	/* Need a modifiable copy of string */
+	rawstring = pstrdup(*newval);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawstring, ',', &elemlist))
+	{
+		/* syntax error in list */
+		GUC_check_errdetail("List syntax is invalid.");
+		pfree(rawstring);
+		list_free(elemlist);
+		return false;
+	}
+
+	foreach(l, elemlist)
+	{
+		char	   *tok = (char *) lfirst(l);
+
+		if (pg_strcasecmp(tok, "stderr") == 0)
+			newlogdest |= LOG_DESTINATION_STDERR;
+		else if (pg_strcasecmp(tok, "csvlog") == 0)
+			newlogdest |= LOG_DESTINATION_CSVLOG;
+		else if (pg_strcasecmp(tok, "jsonlog") == 0)
+			newlogdest |= LOG_DESTINATION_JSONLOG;
+#ifdef HAVE_SYSLOG
+		else if (pg_strcasecmp(tok, "syslog") == 0)
+			newlogdest |= LOG_DESTINATION_SYSLOG;
+#endif
+#ifdef WIN32
+		else if (pg_strcasecmp(tok, "eventlog") == 0)
+			newlogdest |= LOG_DESTINATION_EVENTLOG;
+#endif
+		else
+		{
+			GUC_check_errdetail("Unrecognized key word: \"%s\".", tok);
+			pfree(rawstring);
+			list_free(elemlist);
+			return false;
+		}
+	}
+
+	pfree(rawstring);
+	list_free(elemlist);
+
+	myextra = (int *) guc_malloc(ERROR, sizeof(int));
+	*myextra = newlogdest;
+	*extra = (void *) myextra;
+
+	return true;
+}
+
+/*
+ * GUC assign_hook for log_destination
+ */
+void
+assign_log_destination(const char *newval, void *extra)
+{
+	Log_destination = *((int *) extra);
+}
+
+/*
+ * GUC assign_hook for syslog_ident
+ */
+void
+assign_syslog_ident(const char *newval, void *extra)
+{
+#ifdef HAVE_SYSLOG
 	/*
 	 * guc.c is likely to call us repeatedly with same parameters, so don't
 	 * thrash the syslog connection unnecessarily.  Also, we do not re-open
@@ -1977,22 +2123,45 @@ set_syslog_parameters(const char *ident, int facility)
 	 * on guc.c's.  This may be overly paranoid, but it ensures that we cannot
 	 * accidentally free a string that syslog is still using.
 	 */
-	if (syslog_ident == NULL || strcmp(syslog_ident, ident) != 0 ||
-		syslog_facility != facility)
+	if (syslog_ident == NULL || strcmp(syslog_ident, newval) != 0)
 	{
 		if (openlog_done)
 		{
 			closelog();
 			openlog_done = false;
 		}
-		if (syslog_ident)
-			free(syslog_ident);
-		syslog_ident = strdup(ident);
+		free(syslog_ident);
+		syslog_ident = strdup(newval);
 		/* if the strdup fails, we will cope in write_syslog() */
-		syslog_facility = facility;
 	}
+#endif
+	/* Without syslog support, just ignore it */
 }
 
+/*
+ * GUC assign_hook for syslog_facility
+ */
+void
+assign_syslog_facility(int newval, void *extra)
+{
+#ifdef HAVE_SYSLOG
+	/*
+	 * As above, don't thrash the syslog connection unnecessarily.
+	 */
+	if (syslog_facility != newval)
+	{
+		if (openlog_done)
+		{
+			closelog();
+			openlog_done = false;
+		}
+		syslog_facility = newval;
+	}
+#endif
+	/* Without syslog support, just ignore it */
+}
+
+#ifdef HAVE_SYSLOG
 
 /*
  * Write a message line to syslog
@@ -2439,10 +2608,19 @@ process_log_prefix_padding(const char *p, int *ppadding)
 }
 
 /*
- * Format tag info for log lines; append to the provided buffer.
+ * Format log status information using Log_line_prefix.
  */
 static void
 log_line_prefix(StringInfo buf, ErrorData *edata)
+{
+	log_status_format(buf, Log_line_prefix, edata);
+}
+
+/*
+ * Format log status info; append to the provided buffer.
+ */
+void
+log_status_format(StringInfo buf, const char *format, ErrorData *edata)
 {
 	/* static counter for line numbers */
 	static long log_line_number = 0;
@@ -2466,10 +2644,10 @@ log_line_prefix(StringInfo buf, ErrorData *edata)
 	}
 	log_line_number++;
 
-	if (Log_line_prefix == NULL)
+	if (format == NULL)
 		return;					/* in case guc hasn't run yet */
 
-	for (p = Log_line_prefix; *p != '\0'; p++)
+	for (p = format; *p != '\0'; p++)
 	{
 		if (*p != '%')
 		{

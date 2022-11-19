@@ -1,6 +1,6 @@
-<!-- doc/src/sgml/obsolete-pgxlogdump.sgml -->
+<!-- doc/src/sgml/appendix-obsolete-pgreceivexlog.sgml -->
 <!--
-  See doc/src/sgml/obsolete.sgml for why this file exists. Do not change the id attribute.
+  See doc/src/sgml/appendix-obsolete.sgml for why this file exists. Do not change the id attribute.
 -->
 
 <sect1 id="app-pgreceivexlog" xreflabel="pg_receivexlog">

@@ -449,12 +449,6 @@ ECPG: into_clauseINTOOptTempTableName block
 						$$= cat2_str(mm_strdup("into"), $2);
 					}
 	| ecpg_into { $$ = EMPTY; }
-ECPG: table_refselect_with_parensopt_alias_clause addon
-	if ($2 == NULL)
-		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
-ECPG: table_refLATERAL_Pselect_with_parensopt_alias_clause addon
-	if ($3 == NULL)
-		mmerror(PARSE_ERROR, ET_ERROR, "subquery in FROM must have an alias");
 ECPG: TypenameSimpleTypenameopt_array_bounds block
 	{	$$ = cat2_str($1, $2.str); }
 ECPG: TypenameSETOFSimpleTypenameopt_array_bounds block

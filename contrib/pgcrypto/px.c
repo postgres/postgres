@@ -41,13 +41,12 @@ struct error_desc
 
 static const struct error_desc px_err_list[] = {
 	{PXE_OK, "Everything ok"},
-	{PXE_ERR_GENERIC, "Some PX error (not specified)"},
 	{PXE_NO_HASH, "No such hash algorithm"},
 	{PXE_NO_CIPHER, "No such cipher algorithm"},
 	{PXE_BAD_OPTION, "Unknown option"},
 	{PXE_BAD_FORMAT, "Badly formatted type"},
 	{PXE_KEY_TOO_BIG, "Key was too big"},
-	{PXE_CIPHER_INIT, "Cipher cannot be initialized ?"},
+	{PXE_CIPHER_INIT, "Cipher cannot be initialized"},
 	{PXE_HASH_UNUSABLE_FOR_HMAC, "This hash algorithm is unusable for HMAC"},
 	{PXE_BUG, "pgcrypto bug"},
 	{PXE_ARGUMENT_ERROR, "Illegal argument to function"},
@@ -204,7 +203,6 @@ combo_init(PX_Combo *cx, const uint8 *key, unsigned klen,
 	if (klen > ks)
 		klen = ks;
 	keybuf = palloc0(ks);
-	memset(keybuf, 0, ks);
 	memcpy(keybuf, key, klen);
 
 	err = px_cipher_init(c, keybuf, klen, ivbuf);

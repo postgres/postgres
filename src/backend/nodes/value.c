@@ -22,7 +22,7 @@
 Integer *
 makeInteger(int i)
 {
-	Integer	   *v = makeNode(Integer);
+	Integer    *v = makeNode(Integer);
 
 	v->ival = i;
 	return v;
@@ -48,7 +48,7 @@ makeFloat(char *numericStr)
 Boolean *
 makeBoolean(bool val)
 {
-	Boolean	   *v = makeNode(Boolean);
+	Boolean    *v = makeNode(Boolean);
 
 	v->boolval = val;
 	return v;

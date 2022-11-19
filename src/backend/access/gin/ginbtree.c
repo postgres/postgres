@@ -470,7 +470,7 @@ ginPlaceToPage(GinBtree btree, GinBtreeStack *stack,
 		savedRightLink = GinPageGetOpaque(page)->rightlink;
 
 		/* Begin setting up WAL record */
-		data.node = btree->index->rd_node;
+		data.locator = btree->index->rd_locator;
 		data.flags = xlflags;
 		if (BufferIsValid(childbuf))
 		{

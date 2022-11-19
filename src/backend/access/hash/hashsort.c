@@ -42,9 +42,10 @@ struct HSpool
 	Relation	index;
 
 	/*
-	 * We sort the hash keys based on the buckets they belong to. Below masks
-	 * are used in _hash_hashkey2bucket to determine the bucket of given hash
-	 * key.
+	 * We sort the hash keys based on the buckets they belong to, then by the
+	 * hash values themselves, to optimize insertions onto hash pages.  The
+	 * masks below are used in _hash_hashkey2bucket to determine the bucket of
+	 * a given hash key.
 	 */
 	uint32		high_mask;
 	uint32		low_mask;

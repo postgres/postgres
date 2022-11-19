@@ -267,8 +267,8 @@ PortalCleanup(Portal portal)
 	/*
 	 * sanity checks
 	 */
-	AssertArg(PortalIsValid(portal));
-	AssertArg(portal->cleanup == PortalCleanup);
+	Assert(PortalIsValid(portal));
+	Assert(portal->cleanup == PortalCleanup);
 
 	/*
 	 * Shut down executor, if still running.  We skip this during error abort,

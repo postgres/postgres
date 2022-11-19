@@ -15,6 +15,7 @@
  */
 #include "postgres.h"
 
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
@@ -1093,13 +1094,19 @@ arrayexpr_cleanup_fn(PredIterInfo info)
  *
  * We return true if able to prove the implication, false if not.
  *
- * We have three strategies for determining whether one simple clause
+ * We have several strategies for determining whether one simple clause
  * implies another:
  *
  * A simple and general way is to see if they are equal(); this works for any
  * kind of expression, and for either implication definition.  (Actually,
  * there is an implied assumption that the functions in the expression are
  * immutable --- but this was checked for the predicate by the caller.)
+ *
+ * Another way that always works is that for boolean x, "x = TRUE" is
+ * equivalent to "x", likewise "x = FALSE" is equivalent to "NOT x".
+ * These can be worth checking because, while we preferentially simplify
+ * boolean comparisons down to "x" and "NOT x", the other form has to be
+ * dealt with anyway in the context of index conditions.
  *
  * If the predicate is of the form "foo IS NOT NULL", and we are considering
  * strong implication, we can conclude that the predicate is implied if the
@@ -1123,6 +1130,43 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause,
 	/* First try the equal() test */
 	if (equal((Node *) predicate, clause))
 		return true;
+
+	/* Next see if clause is boolean equality to a constant */
+	if (is_opclause(clause) &&
+		((OpExpr *) clause)->opno == BooleanEqualOperator)
+	{
+		OpExpr	   *op = (OpExpr *) clause;
+		Node	   *rightop;
+
+		Assert(list_length(op->args) == 2);
+		rightop = lsecond(op->args);
+		/* We might never see a null Const here, but better check anyway */
+		if (rightop && IsA(rightop, Const) &&
+			!((Const *) rightop)->constisnull)
+		{
+			Node	   *leftop = linitial(op->args);
+
+			if (DatumGetBool(((Const *) rightop)->constvalue))
+			{
+				/* X = true implies X */
+				if (equal(predicate, leftop))
+					return true;
+			}
+			else
+			{
+				/* X = false implies NOT X */
+				if (is_notclause(predicate) &&
+					equal(get_notclausearg(predicate), leftop))
+					return true;
+			}
+		}
+	}
+
+	/*
+	 * We could likewise check whether the predicate is boolean equality to a
+	 * constant; but there are no known use-cases for that at the moment,
+	 * assuming that the predicate has been through constant-folding.
+	 */
 
 	/* Next try the IS NOT NULL case */
 	if (!weak &&

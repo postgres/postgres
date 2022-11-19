@@ -69,15 +69,7 @@
 #include <math.h>
 #include <float.h>
 #include <limits.h>
-
-/*
- * towlower() and friends should be in <wctype.h>, but some pre-C99 systems
- * declare them in <wchar.h>, so include that too.
- */
-#include <wchar.h>
-#ifdef HAVE_WCTYPE_H
 #include <wctype.h>
-#endif
 
 #ifdef USE_ICU
 #include <unicode/ustring.h>
@@ -898,7 +890,7 @@ static const KeyWord DCH_keywords[] = {
 	{"month", 5, DCH_month, false, FROM_CHAR_DATE_GREGORIAN},
 	{"mon", 3, DCH_mon, false, FROM_CHAR_DATE_GREGORIAN},
 	{"ms", 2, DCH_MS, true, FROM_CHAR_DATE_NONE},
-	{"of", 2, DCH_OF, false, FROM_CHAR_DATE_NONE},  /* o */
+	{"of", 2, DCH_OF, false, FROM_CHAR_DATE_NONE},	/* o */
 	{"p.m.", 4, DCH_p_m, false, FROM_CHAR_DATE_NONE},	/* p */
 	{"pm", 2, DCH_pm, false, FROM_CHAR_DATE_NONE},
 	{"q", 1, DCH_Q, true, FROM_CHAR_DATE_NONE}, /* q */
@@ -906,7 +898,7 @@ static const KeyWord DCH_keywords[] = {
 	{"sssss", 5, DCH_SSSS, true, FROM_CHAR_DATE_NONE},	/* s */
 	{"ssss", 4, DCH_SSSS, true, FROM_CHAR_DATE_NONE},
 	{"ss", 2, DCH_SS, true, FROM_CHAR_DATE_NONE},
-	{"tzh", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},    /* t */
+	{"tzh", 3, DCH_TZH, false, FROM_CHAR_DATE_NONE},	/* t */
 	{"tzm", 3, DCH_TZM, true, FROM_CHAR_DATE_NONE},
 	{"tz", 2, DCH_tz, false, FROM_CHAR_DATE_NONE},
 	{"us", 2, DCH_US, true, FROM_CHAR_DATE_NONE},	/* u */
@@ -1052,6 +1044,11 @@ typedef struct NUMProc
 			   *L_thousands_sep,
 			   *L_currency_symbol;
 } NUMProc;
+
+/* Return flags for DCH_from_char() */
+#define DCH_DATED	0x01
+#define DCH_TIMED	0x02
+#define DCH_ZONED	0x04
 
 /* ----------
  * Functions
@@ -1675,8 +1672,8 @@ str_tolower(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -1797,8 +1794,8 @@ str_toupper(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -1920,8 +1917,8 @@ str_initcap(const char *buff, size_t nbytes, Oid collid)
 	if (!OidIsValid(collid))
 	{
 		/*
-		 * This typically means that the parser could not resolve a
-		 * conflict of implicit collations, so report it that way.
+		 * This typically means that the parser could not resolve a conflict
+		 * of implicit collations, so report it that way.
 		 */
 		ereport(ERROR,
 				(errcode(ERRCODE_INDETERMINATE_COLLATION),
@@ -6714,44 +6711,4 @@ float8_to_char(PG_FUNCTION_ARGS)
 
 	NUM_TOCHAR_finish;
 	PG_RETURN_TEXT_P(result);
-}
-
-int
-datetime_format_flags(const char *fmt_str, bool *have_error)
-{
-	bool		incache;
-	int			fmt_len = strlen(fmt_str);
-	int			result;
-	FormatNode *format;
-
-	if (fmt_len > DCH_CACHE_SIZE)
-	{
-		/*
-		 * Allocate new memory if format picture is bigger than static cache
-		 * and do not use cache (call parser always)
-		 */
-		incache = false;
-
-		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
-
-		parse_format(format, fmt_str, DCH_keywords,
-					 DCH_suff, DCH_index, DCH_FLAG, NULL);
-	}
-	else
-	{
-		/*
-		 * Use cache buffers
-		 */
-		DCHCacheEntry *ent = DCH_cache_fetch(fmt_str, false);
-
-		incache = true;
-		format = ent->format;
-	}
-
-	result = DCH_datetime_type(format, have_error);
-
-	if (!incache)
-		pfree(format);
-
-	return result;
 }

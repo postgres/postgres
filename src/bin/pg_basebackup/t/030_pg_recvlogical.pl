@@ -78,7 +78,8 @@ $node->command_ok(
 	[
 		'pg_recvlogical',           '-S',
 		'test',                     '-d',
-		$node->connstr('postgres'), '--create-slot', '--two-phase'
+		$node->connstr('postgres'), '--create-slot',
+		'--two-phase'
 	],
 	'slot with two-phase created');
 
@@ -87,16 +88,18 @@ isnt($slot->{'restart_lsn'}, '', 'restart lsn is defined for new slot');
 
 $node->safe_psql('postgres',
 	"BEGIN; INSERT INTO test_table values (11); PREPARE TRANSACTION 'test'");
-$node->safe_psql('postgres',
-	"COMMIT PREPARED 'test'");
-$nextlsn =
-  $node->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn()');
+$node->safe_psql('postgres', "COMMIT PREPARED 'test'");
+$nextlsn = $node->safe_psql('postgres', 'SELECT pg_current_wal_insert_lsn()');
 chomp($nextlsn);
 
 $node->command_fails(
 	[
-		'pg_recvlogical', '-S', 'test', '-d', $node->connstr('postgres'),
-		'--start', '--endpos', "$nextlsn", '--two-phase', '--no-loop', '-f', '-'
+		'pg_recvlogical',           '-S',
+		'test',                     '-d',
+		$node->connstr('postgres'), '--start',
+		'--endpos',                 "$nextlsn",
+		'--two-phase',              '--no-loop',
+		'-f',                       '-'
 	],
 	'incorrect usage');
 

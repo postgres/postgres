@@ -436,7 +436,7 @@ _hash_get_oldblock_from_newbucket(Relation rel, Bucket new_bucket)
 	 * started.  Masking the most significant bit of new bucket would give us
 	 * old bucket.
 	 */
-	mask = (((uint32) 1) << (fls(new_bucket) - 1)) - 1;
+	mask = (((uint32) 1) << pg_leftmost_one_pos32(new_bucket)) - 1;
 	old_bucket = new_bucket & mask;
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);

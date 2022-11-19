@@ -67,8 +67,7 @@ InsertRule(const char *rulname,
 	char	   *evqual = nodeToString(event_qual);
 	char	   *actiontree = nodeToString((Node *) action);
 	Datum		values[Natts_pg_rewrite];
-	bool		nulls[Natts_pg_rewrite];
-	bool		replaces[Natts_pg_rewrite];
+	bool		nulls[Natts_pg_rewrite] = {0};
 	NameData	rname;
 	Relation	pg_rewrite_desc;
 	HeapTuple	tup,
@@ -81,8 +80,6 @@ InsertRule(const char *rulname,
 	/*
 	 * Set up *nulls and *values arrays
 	 */
-	MemSet(nulls, false, sizeof(nulls));
-
 	namestrcpy(&rname, rulname);
 	values[Anum_pg_rewrite_rulename - 1] = NameGetDatum(&rname);
 	values[Anum_pg_rewrite_ev_class - 1] = ObjectIdGetDatum(eventrel_oid);
@@ -106,6 +103,8 @@ InsertRule(const char *rulname,
 
 	if (HeapTupleIsValid(oldtup))
 	{
+		bool		replaces[Natts_pg_rewrite] = {0};
+
 		if (!replace)
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
@@ -115,7 +114,6 @@ InsertRule(const char *rulname,
 		/*
 		 * When replacing, we don't need to replace every attribute
 		 */
-		MemSet(replaces, false, sizeof(replaces));
 		replaces[Anum_pg_rewrite_ev_type - 1] = true;
 		replaces[Anum_pg_rewrite_is_instead - 1] = true;
 		replaces[Anum_pg_rewrite_ev_qual - 1] = true;
@@ -281,7 +279,7 @@ DefineQueryRewrite(const char *rulename,
 	/*
 	 * Check user has permission to apply rules to this relation.
 	 */
-	if (!pg_class_ownercheck(event_relid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, event_relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(event_relation->rd_rel->relkind),
 					   RelationGetRelationName(event_relation));
 
@@ -315,7 +313,7 @@ DefineQueryRewrite(const char *rulename,
 		 *
 		 * So there cannot be INSTEAD NOTHING, ...
 		 */
-		if (list_length(action) == 0)
+		if (action == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("INSTEAD NOTHING rules on SELECT are not implemented"),
@@ -532,6 +530,18 @@ DefineQueryRewrite(const char *rulename,
 								RelationGetDescr(event_relation),
 								false, false);
 		}
+
+		/*
+		 * And finally, if it's not an ON SELECT rule then it must *not* be
+		 * named _RETURN.  This prevents accidentally or maliciously replacing
+		 * a view's ON SELECT rule with some other kind of rule.
+		 */
+		if (strcmp(rulename, ViewSelectRuleName) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+					 errmsg("non-view rule for \"%s\" must not be named \"%s\"",
+							RelationGetRelationName(event_relation),
+							ViewSelectRuleName)));
 	}
 
 	/*
@@ -884,7 +894,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 	 */
 	eventRelationOid = ruleform->ev_class;
 	Assert(eventRelationOid == owningRel);
-	if (!pg_class_ownercheck(eventRelationOid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, eventRelationOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(eventRelationOid)),
 					   get_rel_name(eventRelationOid));
 
@@ -946,7 +956,7 @@ RangeVarCallbackForRenameRule(const RangeVar *rv, Oid relid, Oid oldrelid,
 						rv->relname)));
 
 	/* you must own the table to rename one of its rules */
-	if (!pg_class_ownercheck(relid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, get_relkind_objtype(get_rel_relkind(relid)), rv->relname);
 
 	ReleaseSysCache(tuple);

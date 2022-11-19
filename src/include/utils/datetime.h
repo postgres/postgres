@@ -327,7 +327,7 @@ extern int	DecodeTimezoneAbbrev(int field, char *lowtoken,
 extern int	DecodeSpecial(int field, char *lowtoken, int *val);
 extern int	DecodeUnits(int field, char *lowtoken, int *val);
 
-extern int	j2day(int jd);
+extern int	j2day(int date);
 
 extern Node *TemporalSimplify(int32 max_precis, Node *node);
 

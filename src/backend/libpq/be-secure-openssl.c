@@ -24,17 +24,17 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#endif
 
+#include "common/string.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/fd.h"
 #include "storage/latch.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 /*
@@ -62,10 +62,10 @@ static BIO_METHOD *my_BIO_s_socket(void);
 static int	my_SSL_set_fd(Port *port, int fd);
 
 static DH  *load_dh_file(char *filename, bool isServerStart);
-static DH  *load_dh_buffer(const char *, size_t);
+static DH  *load_dh_buffer(const char *buffer, size_t len);
 static int	ssl_external_passwd_cb(char *buf, int size, int rwflag, void *userdata);
 static int	dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata);
-static int	verify_cb(int, X509_STORE_CTX *);
+static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static void info_cb(const SSL *ssl, int type, int args);
 static bool initialize_dh(SSL_CTX *context, bool isServerStart);
 static bool initialize_ecdh(SSL_CTX *context, bool isServerStart);
@@ -80,6 +80,9 @@ static bool ssl_is_server_start;
 
 static int	ssl_protocol_version_to_openssl(int v);
 static const char *ssl_protocol_version_to_string(int v);
+
+/* for passing data back from verify_cb() */
+static const char *cert_errdetail;
 
 /* ------------------------------------------------------------ */
 /*						 Public interface						*/
@@ -541,6 +544,7 @@ aloop:
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("could not accept SSL connection: %s",
 								SSLerrmessage(ecode)),
+						 cert_errdetail ? errdetail_internal("%s", cert_errdetail) : 0,
 						 give_proto_hint ?
 						 errhint("This may indicate that the client does not support any SSL protocol version between %s and %s.",
 								 ssl_min_protocol_version ?
@@ -549,6 +553,7 @@ aloop:
 								 ssl_max_protocol_version ?
 								 ssl_protocol_version_to_string(ssl_max_protocol_version) :
 								 MAX_OPENSSL_TLS_VERSION) : 0));
+				cert_errdetail = NULL;
 				break;
 			case SSL_ERROR_ZERO_RETURN:
 				ereport(COMMERROR,
@@ -1077,11 +1082,46 @@ dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 }
 
 /*
+ * Examines the provided certificate name, and if it's too long to log or
+ * contains unprintable ASCII, escapes and truncates it. The return value is
+ * always a new palloc'd string. (The input string is still modified in place,
+ * for ease of implementation.)
+ */
+static char *
+prepare_cert_name(char *name)
+{
+	size_t		namelen = strlen(name);
+	char	   *truncated = name;
+
+	/*
+	 * Common Names are 64 chars max, so for a common case where the CN is the
+	 * last field, we can still print the longest possible CN with a
+	 * 7-character prefix (".../CN=[64 chars]"), for a reasonable limit of 71
+	 * characters.
+	 */
+#define MAXLEN 71
+
+	if (namelen > MAXLEN)
+	{
+		/*
+		 * Keep the end of the name, not the beginning, since the most specific
+		 * field is likely to give users the most information.
+		 */
+		truncated = name + namelen - MAXLEN;
+		truncated[0] = truncated[1] = truncated[2] = '.';
+		namelen = MAXLEN;
+	}
+
+#undef MAXLEN
+
+	return pg_clean_ascii(truncated, 0);
+}
+
+/*
  *	Certificate verification callback
  *
- *	This callback allows us to log intermediate problems during
- *	verification, but for now we'll see if the final error message
- *	contains enough information.
+ *	This callback allows us to examine intermediate problems during
+ *	verification, for later logging.
  *
  *	This callback also allows us to override the default acceptance
  *	criteria (e.g., accepting self-signed or expired certs), but
@@ -1090,6 +1130,75 @@ dummy_ssl_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 static int
 verify_cb(int ok, X509_STORE_CTX *ctx)
 {
+	int			depth;
+	int			errcode;
+	const char *errstring;
+	StringInfoData str;
+	X509	   *cert;
+
+	if (ok)
+	{
+		/* Nothing to do for the successful case. */
+		return ok;
+	}
+
+	/* Pull all the information we have on the verification failure. */
+	depth = X509_STORE_CTX_get_error_depth(ctx);
+	errcode = X509_STORE_CTX_get_error(ctx);
+	errstring = X509_verify_cert_error_string(errcode);
+
+	initStringInfo(&str);
+	appendStringInfo(&str,
+					 _("Client certificate verification failed at depth %d: %s."),
+					 depth, errstring);
+
+	cert = X509_STORE_CTX_get_current_cert(ctx);
+	if (cert)
+	{
+		char	   *subject,
+				   *issuer;
+		char	   *sub_prepared,
+				   *iss_prepared;
+		char	   *serialno;
+		ASN1_INTEGER *sn;
+		BIGNUM	   *b;
+
+		/*
+		 * Get the Subject and Issuer for logging, but don't let maliciously
+		 * huge certs flood the logs, and don't reflect non-ASCII bytes into it
+		 * either.
+		 */
+		subject = X509_NAME_to_cstring(X509_get_subject_name(cert));
+		sub_prepared = prepare_cert_name(subject);
+		pfree(subject);
+
+		issuer = X509_NAME_to_cstring(X509_get_issuer_name(cert));
+		iss_prepared = prepare_cert_name(issuer);
+		pfree(issuer);
+
+		/*
+		 * Pull the serial number, too, in case a Subject is still ambiguous.
+		 * This mirrors be_tls_get_peer_serial().
+		 */
+		sn = X509_get_serialNumber(cert);
+		b = ASN1_INTEGER_to_BN(sn, NULL);
+		serialno = BN_bn2dec(b);
+
+		appendStringInfoChar(&str, '\n');
+		appendStringInfo(&str,
+						 _("Failed certificate data (unverified): subject \"%s\", serial number %s, issuer \"%s\"."),
+						 sub_prepared, serialno ? serialno : _("unknown"),
+						 iss_prepared);
+
+		BN_free(b);
+		OPENSSL_free(serialno);
+		pfree(iss_prepared);
+		pfree(sub_prepared);
+	}
+
+	/* Store our detail message to be logged later. */
+	cert_errdetail = str.data;
+
 	return ok;
 }
 

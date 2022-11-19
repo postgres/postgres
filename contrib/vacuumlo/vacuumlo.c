@@ -231,12 +231,9 @@ vacuumlo(const char *database, const struct _param *param)
 			pg_log_error("%s", PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
-			if (schema != NULL)
-				PQfreemem(schema);
-			if (table != NULL)
-				PQfreemem(table);
-			if (field != NULL)
-				PQfreemem(field);
+			PQfreemem(schema);
+			PQfreemem(table);
+			PQfreemem(field);
 			return -1;
 		}
 

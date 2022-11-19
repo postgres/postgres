@@ -16,7 +16,7 @@ int main(void)
 	$short s = 17;
 	$int i = -74874;
 	$bool b = 1;
-	$float f = 3.71;
+	$float f = (float) 3.71;
 	$long l = 487444;
 	$double dbl = 404.404;
 	$decimal dec;

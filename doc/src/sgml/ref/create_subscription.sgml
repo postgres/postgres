@@ -120,11 +120,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           Since no connection is made when this option is
-          <literal>false</literal>, no tables are subscribed, and so
-          after you enable the subscription nothing will be replicated.
-          You will need to then run
-          <literal>ALTER SUBSCRIPTION ... REFRESH PUBLICATION</literal>
-          for tables to be subscribed.
+          <literal>false</literal>, no tables are subscribed. To initiate
+          replication, you must manually create the replication slot, enable
+          the subscription, and refresh the subscription. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -135,8 +135,12 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          <para>
           Specifies whether the command should create the replication slot on
           the publisher.  The default is <literal>true</literal>.
+         </para>
+         <para>
           If set to <literal>false</literal>, you are responsible for
-          creating the publisher's slot in some other way.
+          creating the publisher's slot in some other way. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -162,11 +166,13 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
 
          <para>
           Setting <literal>slot_name</literal> to <literal>NONE</literal>
-          means there will be no replication slot
-          associated with the subscription.  Use this when you will be
-          creating the replication slot later manually.  Such
-          subscriptions must also have both <literal>enabled</literal> and
-          <literal>create_slot</literal> set to <literal>false</literal>.
+          means there will be no replication slot associated with the
+          subscription. Such subscriptions must also have both
+          <literal>enabled</literal> and <literal>create_slot</literal> set to
+          <literal>false</literal>.  Use this when you will be creating the
+          replication slot later manually. See
+          <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+          for examples.
          </para>
         </listitem>
        </varlistentry>
@@ -212,6 +218,11 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
           If the publications contain <literal>WHERE</literal> clauses, it
           will affect what data is copied. Refer to the
           <xref linkend="sql-createsubscription-notes" /> for details.
+         </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of how
+          <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
          </para>
         </listitem>
        </varlistentry>
@@ -302,6 +313,26 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
          </para>
         </listitem>
        </varlistentry>
+
+       <varlistentry>
+        <term><literal>origin</literal> (<type>string</type>)</term>
+        <listitem>
+         <para>
+          Specifies whether the subscription will request the publisher to only
+          send changes that don't have an origin or send changes regardless of
+          origin. Setting <literal>origin</literal> to <literal>none</literal>
+          means that the subscription will request the publisher to only send
+          changes that don't have an origin. Setting <literal>origin</literal>
+          to <literal>any</literal> means that the publisher sends changes
+          regardless of their origin. The default is <literal>any</literal>.
+         </para>
+         <para>
+          See <xref linkend="sql-createsubscription-notes"/> for details of how
+          <literal>copy_data = true</literal> can interact with the
+          <literal>origin</literal> parameter.
+         </para>
+        </listitem>
+       </varlistentry>
       </variablelist></para>
 
     </listitem>
@@ -332,8 +363,10 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    replication slot separately (using the
    function <function>pg_create_logical_replication_slot</function> with the
    plugin name <literal>pgoutput</literal>) and create the subscription using
-   the parameter <literal>create_slot = false</literal>.  This is an
-   implementation restriction that might be lifted in a future release.
+   the parameter <literal>create_slot = false</literal>.  See
+   <xref linkend="logical-replication-subscription-examples-deferred-slot"/>
+   for examples. This is an implementation restriction that might be lifted in a
+   future release.
   </para>
 
   <para>
@@ -347,12 +380,21 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    publications has no <literal>WHERE</literal> clause (referring to that
    publish operation) or the publication is declared as
    <literal>FOR ALL TABLES</literal> or
-   <literal>FOR ALL TABLES IN SCHEMA</literal>, rows are always published
+   <literal>FOR TABLES IN SCHEMA</literal>, rows are always published
    regardless of the definition of the other expressions.
    If the subscriber is a <productname>PostgreSQL</productname> version before
    15 then any row filtering is ignored during the initial data synchronization
    phase. For this case, the user might want to consider deleting any initially
    copied data that would be incompatible with subsequent filtering.
+   Because initial data synchronization does not take into account the publication
+   <literal>publish</literal> parameter when copying existing table data, some rows
+   may be copied that would not be replicated using DML. See
+   <xref linkend="logical-replication-subscription-examples"/> for examples.
+  </para>
+
+  <para>
+   Subscriptions having several publications in which the same table has been
+   published with different column lists are not supported.
   </para>
 
   <para>
@@ -361,6 +403,31 @@ CREATE SUBSCRIPTION <replaceable class="parameter">subscription_name</replaceabl
    <link linkend="catalog-pg-subscription"><structname>pg_subscription</structname></link>
    can have non-existent publications.
   </para>
+
+  <para>
+   When using a subscription parameter combination of
+   <literal>copy_data = true</literal> and <literal>origin = NONE</literal>,
+   the initial sync table data is copied directly from the publisher, meaning
+   that knowledge of the true origin of that data is not possible. If the
+   publisher also has subscriptions then the copied table data might have
+   originated from further upstream. This scenario is detected and a WARNING is
+   logged to the user, but the warning is only an indication of a potential
+   problem; it is the user's responsibility to make the necessary checks to
+   ensure the copied data origins are really as wanted or not.
+  </para>
+
+  <para>
+   To find which tables might potentially include non-local origins (due to
+   other subscriptions created on the publisher) try this SQL query:
+<programlisting>
+# substitute &lt;pub-names&gt; below with your publication name(s) to be queried
+SELECT DISTINCT N.nspname AS schemaname, C.relname AS tablename
+FROM pg_publication P,
+     LATERAL pg_get_publication_tables(P.pubname) GPT
+     JOIN pg_subscription_rel PS ON (GPT.relid = PS.srrelid),
+     pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
+WHERE C.oid = GPT.relid AND P.pubname IN (&lt;pub-names&gt;);
+</programlisting></para>
 
  </refsect1>
 

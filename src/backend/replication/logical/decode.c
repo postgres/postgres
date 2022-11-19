@@ -62,13 +62,13 @@ static void DecodePrepare(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 
 
 /* common function to decode tuples */
-static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tup);
+static void DecodeXLogTuple(char *data, Size len, ReorderBufferTupleBuf *tuple);
 
 /* helper functions for decoding transactions */
 static inline bool FilterPrepare(LogicalDecodingContext *ctx,
 								 TransactionId xid, const char *gid);
 static bool DecodeTXNNeedSkip(LogicalDecodingContext *ctx,
-							  XLogRecordBuffer *buf, Oid dbId,
+							  XLogRecordBuffer *buf, Oid txn_dbid,
 							  RepOriginId origin_id);
 
 /*
@@ -92,7 +92,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 {
 	XLogRecordBuffer buf;
 	TransactionId txid;
-	RmgrData rmgr;
+	RmgrData	rmgr;
 
 	buf.origptr = ctx->reader->ReadRecPtr;
 	buf.endptr = ctx->reader->EndRecPtr;
@@ -126,7 +126,7 @@ LogicalDecodingProcessRecord(LogicalDecodingContext *ctx, XLogReaderState *recor
 }
 
 /*
- * Handle rmgr XLOG_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr XLOG_ID records for LogicalDecodingProcessRecord().
  */
 void
 xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -169,7 +169,7 @@ xlog_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr XACT_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr XACT_ID records for LogicalDecodingProcessRecord().
  */
 void
 xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -326,7 +326,7 @@ xact_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr STANDBY_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr STANDBY_ID records for LogicalDecodingProcessRecord().
  */
 void
 standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -372,7 +372,7 @@ standby_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr HEAP2_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr HEAP2_ID records for LogicalDecodingProcessRecord().
  */
 void
 heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -432,7 +432,7 @@ heap2_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 }
 
 /*
- * Handle rmgr HEAP_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr HEAP_ID records for LogicalDecodingProcessRecord().
  */
 void
 heap_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -554,7 +554,7 @@ FilterByOrigin(LogicalDecodingContext *ctx, RepOriginId origin_id)
 }
 
 /*
- * Handle rmgr LOGICALMSG_ID records for DecodeRecordIntoReorderBuffer().
+ * Handle rmgr LOGICALMSG_ID records for LogicalDecodingProcessRecord().
  */
 void
 logicalmsg_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
@@ -594,7 +594,7 @@ logicalmsg_decode(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 			  SnapBuildXactNeedsSkip(builder, buf->origptr)))
 		return;
 
-	snapshot = SnapBuildGetOrBuildSnapshot(builder, xid);
+	snapshot = SnapBuildGetOrBuildSnapshot(builder);
 	ReorderBufferQueueMessage(ctx->reorder, xid, snapshot, buf->endptr,
 							  message->transactional,
 							  message->message, /* first part of message is
@@ -628,7 +628,8 @@ DecodeCommit(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	}
 
 	SnapBuildCommitTxn(ctx->snapshot_builder, buf->origptr, xid,
-					   parsed->nsubxacts, parsed->subxacts);
+					   parsed->nsubxacts, parsed->subxacts,
+					   parsed->xinfo);
 
 	/* ----
 	 * Check whether we are interested in this specific transaction, and tell
@@ -713,7 +714,7 @@ DecodePrepare(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	SnapBuild  *builder = ctx->snapshot_builder;
 	XLogRecPtr	origin_lsn = parsed->origin_lsn;
 	TimestampTz prepare_time = parsed->xact_time;
-	XLogRecPtr	origin_id = XLogRecGetOrigin(buf->record);
+	RepOriginId	origin_id = XLogRecGetOrigin(buf->record);
 	int			i;
 	TransactionId xid = parsed->twophase_xid;
 
@@ -789,7 +790,7 @@ DecodeAbort(LogicalDecodingContext *ctx, XLogRecordBuffer *buf,
 	int			i;
 	XLogRecPtr	origin_lsn = InvalidXLogRecPtr;
 	TimestampTz abort_time = parsed->xact_time;
-	XLogRecPtr	origin_id = XLogRecGetOrigin(buf->record);
+	RepOriginId	origin_id = XLogRecGetOrigin(buf->record);
 	bool		skip_xact;
 
 	if (parsed->xinfo & XACT_XINFO_HAS_ORIGIN)
@@ -845,7 +846,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	XLogReaderState *r = buf->record;
 	xl_heap_insert *xlrec;
 	ReorderBufferChange *change;
-	RelFileNode target_node;
+	RelFileLocator target_locator;
 
 	xlrec = (xl_heap_insert *) XLogRecGetData(r);
 
@@ -857,8 +858,8 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	/* only interested in our database */
-	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
-	if (target_node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);
+	if (target_locator.dbOid != ctx->slot->data.database)
 		return;
 
 	/* output plugin doesn't look for this origin, no need to queue */
@@ -872,7 +873,7 @@ DecodeInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_INSERT;
 	change->origin_id = XLogRecGetOrigin(r);
 
-	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.rlocator, &target_locator, sizeof(RelFileLocator));
 
 	tupledata = XLogRecGetBlockData(r, 0, &datalen);
 	tuplelen = datalen - SizeOfHeapHeader;
@@ -902,13 +903,13 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	xl_heap_update *xlrec;
 	ReorderBufferChange *change;
 	char	   *data;
-	RelFileNode target_node;
+	RelFileLocator target_locator;
 
 	xlrec = (xl_heap_update *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
-	if (target_node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);
+	if (target_locator.dbOid != ctx->slot->data.database)
 		return;
 
 	/* output plugin doesn't look for this origin, no need to queue */
@@ -918,7 +919,7 @@ DecodeUpdate(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	change = ReorderBufferGetChange(ctx->reorder);
 	change->action = REORDER_BUFFER_CHANGE_UPDATE;
 	change->origin_id = XLogRecGetOrigin(r);
-	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.rlocator, &target_locator, sizeof(RelFileLocator));
 
 	if (xlrec->flags & XLH_UPDATE_CONTAINS_NEW_TUPLE)
 	{
@@ -968,13 +969,13 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	XLogReaderState *r = buf->record;
 	xl_heap_delete *xlrec;
 	ReorderBufferChange *change;
-	RelFileNode target_node;
+	RelFileLocator target_locator;
 
 	xlrec = (xl_heap_delete *) XLogRecGetData(r);
 
 	/* only interested in our database */
-	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
-	if (target_node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);
+	if (target_locator.dbOid != ctx->slot->data.database)
 		return;
 
 	/* output plugin doesn't look for this origin, no need to queue */
@@ -990,7 +991,7 @@ DecodeDelete(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 
 	change->origin_id = XLogRecGetOrigin(r);
 
-	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.rlocator, &target_locator, sizeof(RelFileLocator));
 
 	/* old primary key stored */
 	if (xlrec->flags & XLH_DELETE_CONTAINS_OLD)
@@ -1063,7 +1064,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	char	   *data;
 	char	   *tupledata;
 	Size		tuplelen;
-	RelFileNode rnode;
+	RelFileLocator rlocator;
 
 	xlrec = (xl_heap_multi_insert *) XLogRecGetData(r);
 
@@ -1075,8 +1076,8 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		return;
 
 	/* only interested in our database */
-	XLogRecGetBlockTag(r, 0, &rnode, NULL, NULL);
-	if (rnode.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &rlocator, NULL, NULL);
+	if (rlocator.dbOid != ctx->slot->data.database)
 		return;
 
 	/* output plugin doesn't look for this origin, no need to queue */
@@ -1103,7 +1104,7 @@ DecodeMultiInsert(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 		change->action = REORDER_BUFFER_CHANGE_INSERT;
 		change->origin_id = XLogRecGetOrigin(r);
 
-		memcpy(&change->data.tp.relnode, &rnode, sizeof(RelFileNode));
+		memcpy(&change->data.tp.rlocator, &rlocator, sizeof(RelFileLocator));
 
 		xlhdr = (xl_multi_insert_tuple *) SHORTALIGN(data);
 		data = ((char *) xlhdr) + SizeOfMultiInsertTuple;
@@ -1165,11 +1166,11 @@ DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 {
 	XLogReaderState *r = buf->record;
 	ReorderBufferChange *change;
-	RelFileNode target_node;
+	RelFileLocator target_locator;
 
 	/* only interested in our database */
-	XLogRecGetBlockTag(r, 0, &target_node, NULL, NULL);
-	if (target_node.dbNode != ctx->slot->data.database)
+	XLogRecGetBlockTag(r, 0, &target_locator, NULL, NULL);
+	if (target_locator.dbOid != ctx->slot->data.database)
 		return;
 
 	/* output plugin doesn't look for this origin, no need to queue */
@@ -1180,7 +1181,7 @@ DecodeSpecConfirm(LogicalDecodingContext *ctx, XLogRecordBuffer *buf)
 	change->action = REORDER_BUFFER_CHANGE_INTERNAL_SPEC_CONFIRM;
 	change->origin_id = XLogRecGetOrigin(r);
 
-	memcpy(&change->data.tp.relnode, &target_node, sizeof(RelFileNode));
+	memcpy(&change->data.tp.rlocator, &target_locator, sizeof(RelFileLocator));
 
 	change->data.tp.clear_toast_afterwards = true;
 

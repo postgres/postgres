@@ -123,6 +123,7 @@
 #include "statistics/statistics.h"
 #include "storage/bufmgr.h"
 #include "utils/acl.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
@@ -289,7 +290,7 @@ eqsel_internal(PG_FUNCTION_ARGS, bool negate)
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
+var_eq_const(VariableStatData *vardata, Oid oproid, Oid collation,
 			 Datum constval, bool constisnull,
 			 bool varonleft, bool negate)
 {
@@ -330,7 +331,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
 	}
 	else if (HeapTupleIsValid(vardata->statsTuple) &&
 			 statistic_proc_security_check(vardata,
-										   (opfuncoid = get_opcode(operator))))
+										   (opfuncoid = get_opcode(oproid))))
 	{
 		AttStatsSlot sslot;
 		bool		match = false;
@@ -460,7 +461,7 @@ var_eq_const(VariableStatData *vardata, Oid operator, Oid collation,
  * This is exported so that some other estimation functions can use it.
  */
 double
-var_eq_non_const(VariableStatData *vardata, Oid operator, Oid collation,
+var_eq_non_const(VariableStatData *vardata, Oid oproid, Oid collation,
 				 Node *other,
 				 bool varonleft, bool negate)
 {
@@ -2260,6 +2261,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	Form_pg_statistic stats2 = NULL;
 	bool		have_mcvs1 = false;
 	bool		have_mcvs2 = false;
+	bool		get_mcv_stats;
 	bool		join_is_reversed;
 	RelOptInfo *inner_rel;
 
@@ -2274,11 +2276,25 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	memset(&sslot1, 0, sizeof(sslot1));
 	memset(&sslot2, 0, sizeof(sslot2));
 
+	/*
+	 * There is no use in fetching one side's MCVs if we lack MCVs for the
+	 * other side, so do a quick check to verify that both stats exist.
+	 */
+	get_mcv_stats = (HeapTupleIsValid(vardata1.statsTuple) &&
+					 HeapTupleIsValid(vardata2.statsTuple) &&
+					 get_attstatsslot(&sslot1, vardata1.statsTuple,
+									  STATISTIC_KIND_MCV, InvalidOid,
+									  0) &&
+					 get_attstatsslot(&sslot2, vardata2.statsTuple,
+									  STATISTIC_KIND_MCV, InvalidOid,
+									  0));
+
 	if (HeapTupleIsValid(vardata1.statsTuple))
 	{
 		/* note we allow use of nullfrac regardless of security check */
 		stats1 = (Form_pg_statistic) GETSTRUCT(vardata1.statsTuple);
-		if (statistic_proc_security_check(&vardata1, opfuncoid))
+		if (get_mcv_stats &&
+			statistic_proc_security_check(&vardata1, opfuncoid))
 			have_mcvs1 = get_attstatsslot(&sslot1, vardata1.statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
 										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
@@ -2288,7 +2304,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	{
 		/* note we allow use of nullfrac regardless of security check */
 		stats2 = (Form_pg_statistic) GETSTRUCT(vardata2.statsTuple);
-		if (statistic_proc_security_check(&vardata2, opfuncoid))
+		if (get_mcv_stats &&
+			statistic_proc_security_check(&vardata2, opfuncoid))
 			have_mcvs2 = get_attstatsslot(&sslot2, vardata2.statsTuple,
 										  STATISTIC_KIND_MCV, InvalidOid,
 										  ATTSTATSSLOT_VALUES | ATTSTATSSLOT_NUMBERS);
@@ -3368,28 +3385,11 @@ double
 estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows,
 					List **pgset, EstimationInfo *estinfo)
 {
-	return estimate_num_groups_incremental(root, groupExprs,
-										   input_rows, pgset, estinfo,
-										   NULL, 0);
-}
-
-/*
- * estimate_num_groups_incremental
- *		An estimate_num_groups variant, optimized for cases that are adding the
- *		expressions incrementally (e.g. one by one).
- */
-double
-estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
-					double input_rows,
-					List **pgset, EstimationInfo *estinfo,
-					List **cache_varinfos, int prevNExprs)
-{
-	List	   *varinfos = (cache_varinfos) ? *cache_varinfos : NIL;
+	List	   *varinfos = NIL;
 	double		srf_multiplier = 1.0;
 	double		numdistinct;
 	ListCell   *l;
-	int			i,
-				j;
+	int			i;
 
 	/* Zero the estinfo output parameter, if non-NULL */
 	if (estinfo != NULL)
@@ -3408,7 +3408,7 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 	 * for normal cases with GROUP BY or DISTINCT, but it is possible for
 	 * corner cases with set operations.)
 	 */
-	if (groupExprs == NIL || (pgset && list_length(*pgset) < 1))
+	if (groupExprs == NIL || (pgset && *pgset == NIL))
 		return 1.0;
 
 	/*
@@ -3420,7 +3420,7 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 	 */
 	numdistinct = 1.0;
 
-	i = j = 0;
+	i = 0;
 	foreach(l, groupExprs)
 	{
 		Node	   *groupexpr = (Node *) lfirst(l);
@@ -3428,14 +3428,6 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 		VariableStatData vardata;
 		List	   *varshere;
 		ListCell   *l2;
-
-		/* was done on previous call */
-		if (cache_varinfos && j++ < prevNExprs)
-		{
-			if (pgset)
-				i++; /* to keep in sync with lines below */
-			continue;
-		}
 
 		/* is expression in this grouping set? */
 		if (pgset && !list_member_int(*pgset, i++))
@@ -3506,11 +3498,7 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 		if (varshere == NIL)
 		{
 			if (contain_volatile_functions(groupexpr))
-			{
-				if (cache_varinfos)
-					*cache_varinfos = varinfos;
 				return input_rows;
-			}
 			continue;
 		}
 
@@ -3526,9 +3514,6 @@ estimate_num_groups_incremental(PlannerInfo *root, List *groupExprs,
 			ReleaseVariableStats(vardata);
 		}
 	}
-
-	if (cache_varinfos)
-		*cache_varinfos = varinfos;
 
 	/*
 	 * If now no Vars, we must have an all-constant or all-boolean GROUP BY
@@ -3944,7 +3929,7 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 	Oid			statOid = InvalidOid;
 	MVNDistinct *stats;
 	StatisticExtInfo *matched_info = NULL;
-	RangeTblEntry		*rte;
+	RangeTblEntry *rte = planner_rt_fetch(rel->relid, root);
 
 	/* bail out immediately if the table has no extended statistics */
 	if (!rel->statlist)
@@ -3962,6 +3947,10 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 		/* skip statistics of other kinds */
 		if (info->kind != STATS_EXT_NDISTINCT)
+			continue;
+
+		/* skip statistics with mismatching stxdinherit value */
+		if (info->inherit != rte->inh)
 			continue;
 
 		/*
@@ -4035,7 +4024,6 @@ estimate_multivariate_ndistinct(PlannerInfo *root, RelOptInfo *rel,
 
 	Assert(nmatches_vars + nmatches_exprs > 1);
 
-	rte = planner_rt_fetch(rel->relid, root);
 	stats = statext_ndistinct_load(statOid, rte->inh);
 
 	/*
@@ -4326,6 +4314,7 @@ convert_to_scalar(Datum value, Oid valuetypid, Oid collid, double *scaledvalue,
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
+		case REGCOLLATIONOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 		case REGROLEOID:
@@ -4457,6 +4446,7 @@ convert_numeric_to_scalar(Datum value, Oid typid, bool *failure)
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
+		case REGCOLLATIONOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 		case REGROLEOID:
@@ -5255,7 +5245,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		foreach(slist, onerel->statlist)
 		{
 			StatisticExtInfo *info = (StatisticExtInfo *) lfirst(slist);
-			RangeTblEntry	 *rte = planner_rt_fetch(onerel->relid, root);
+			RangeTblEntry *rte = planner_rt_fetch(onerel->relid, root);
 			ListCell   *expr_item;
 			int			pos;
 
@@ -5268,6 +5258,10 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 
 			/* skip stats without per-expression stats */
 			if (info->kind != STATS_EXT_EXPRESSIONS)
+				continue;
+
+			/* skip stats with mismatching stxdinherit value */
+			if (info->inherit != rte->inh)
 				continue;
 
 			pos = 0;
@@ -6642,10 +6636,10 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 			   double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Oid			relid;
 	AttrNumber	colnum;
-	VariableStatData vardata;
+	VariableStatData vardata = {0};
 	double		numIndexTuples;
 	Cost		descentCost;
 	List	   *indexBoundQuals;
@@ -6797,7 +6791,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	/*
 	 * Now do generic index cost estimation.
 	 */
-	MemSet(&costs, 0, sizeof(costs));
 	costs.numIndexTuples = numIndexTuples;
 
 	genericcostestimate(root, path, loop_count, &costs);
@@ -6842,8 +6835,6 @@ btcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
 	 */
-	MemSet(&vardata, 0, sizeof(vardata));
-
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
@@ -6947,9 +6938,7 @@ hashcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 Selectivity *indexSelectivity, double *indexCorrelation,
 				 double *indexPages)
 {
-	GenericCosts costs;
-
-	MemSet(&costs, 0, sizeof(costs));
+	GenericCosts costs = {0};
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -6992,10 +6981,8 @@ gistcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				 double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Cost		descentCost;
-
-	MemSet(&costs, 0, sizeof(costs));
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -7049,10 +7036,8 @@ spgcostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double *indexPages)
 {
 	IndexOptInfo *index = path->indexinfo;
-	GenericCosts costs;
+	GenericCosts costs = {0};
 	Cost		descentCost;
-
-	MemSet(&costs, 0, sizeof(costs));
 
 	genericcostestimate(root, path, loop_count, &costs);
 
@@ -7873,7 +7858,7 @@ brincostestimate(PlannerInfo *root, IndexPath *path, double loop_count,
 				double		varCorrelation = 0.0;
 
 				if (sslot.nnumbers > 0)
-					varCorrelation = Abs(sslot.numbers[0]);
+					varCorrelation = fabs(sslot.numbers[0]);
 
 				if (varCorrelation > *indexCorrelation)
 					*indexCorrelation = varCorrelation;

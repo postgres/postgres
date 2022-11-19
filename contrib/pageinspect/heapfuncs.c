@@ -383,7 +383,7 @@ tuple_data_split_internal(Oid relid, char *tupdata,
 						 errmsg("unexpected end of tuple data")));
 
 			if (attr->attlen == -1 && do_detoast)
-				attr_data = DatumGetByteaPCopy(tupdata + off);
+				attr_data = pg_detoast_datum_copy((struct varlena *) (tupdata + off));
 			else
 			{
 				attr_data = (bytea *) palloc(len + VARHDRSZ);
@@ -492,7 +492,7 @@ tuple_data_split(PG_FUNCTION_ARGS)
 	if (t_bits)
 		pfree(t_bits);
 
-	PG_RETURN_ARRAYTYPE_P(res);
+	PG_RETURN_DATUM(res);
 }
 
 /*
@@ -507,8 +507,8 @@ Datum
 heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 {
 #define HEAP_TUPLE_INFOMASK_COLS 2
-	Datum		values[HEAP_TUPLE_INFOMASK_COLS];
-	bool		nulls[HEAP_TUPLE_INFOMASK_COLS];
+	Datum		values[HEAP_TUPLE_INFOMASK_COLS] = {0};
+	bool		nulls[HEAP_TUPLE_INFOMASK_COLS] = {0};
 	uint16		t_infomask = PG_GETARG_INT16(0);
 	uint16		t_infomask2 = PG_GETARG_INT16(1);
 	int			cnt = 0;
@@ -529,10 +529,6 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 
 	bitcnt = pg_popcount((const char *) &t_infomask, sizeof(uint16)) +
 		pg_popcount((const char *) &t_infomask2, sizeof(uint16));
-
-	/* Initialize values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* If no flags, return a set of empty arrays */
 	if (bitcnt <= 0)
@@ -590,7 +586,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 
 	/* build value */
 	Assert(cnt <= bitcnt);
-	a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
+	a = construct_array_builtin(flags, cnt, TEXTOID);
 	values[0] = PointerGetDatum(a);
 
 	/*
@@ -612,7 +608,7 @@ heap_tuple_infomask_flags(PG_FUNCTION_ARGS)
 	if (cnt == 0)
 		a = construct_empty_array(TEXTOID);
 	else
-		a = construct_array(flags, cnt, TEXTOID, -1, false, TYPALIGN_INT);
+		a = construct_array_builtin(flags, cnt, TEXTOID);
 	pfree(flags);
 	values[1] = PointerGetDatum(a);
 

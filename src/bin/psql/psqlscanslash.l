@@ -777,6 +777,7 @@ evaluate_backtick(PsqlScanState state)
 
 	initPQExpBuffer(&cmd_output);
 
+	fflush(NULL);
 	fd = popen(cmd, "r");
 	if (!fd)
 	{

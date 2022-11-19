@@ -63,24 +63,34 @@ typedef enum OnCommitAction
 typedef struct RangeVar
 {
 	NodeTag		type;
-	char	   *catalogname;	/* the catalog (database) name, or NULL */
-	char	   *schemaname;		/* the schema name, or NULL */
-	char	   *relname;		/* the relation/sequence name */
-	bool		inh;			/* expand rel by inheritance? recursively act
-								 * on children? */
-	char		relpersistence; /* see RELPERSISTENCE_* in pg_class.h */
-	Alias	   *alias;			/* table alias & optional column aliases */
-	int			location;		/* token location, or -1 if unknown */
+
+	/*
+	 * the catalog (database) name, or NULL; ignored for read/write, since it
+	 * is presently not semantically meaningful
+	 */
+	char	   *catalogname pg_node_attr(read_write_ignore, read_as(NULL));
+
+	/* the schema name, or NULL */
+	char	   *schemaname;
+
+	/* the relation/sequence name */
+	char	   *relname;
+
+	/* expand rel by inheritance? recursively act on children? */
+	bool		inh;
+
+	/* see RELPERSISTENCE_* in pg_class.h */
+	char		relpersistence;
+
+	/* table alias & optional column aliases */
+	Alias	   *alias;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } RangeVar;
 
-typedef enum TableFuncType
-{
-	TFT_XMLTABLE,
-	TFT_JSON_TABLE
-} TableFuncType;
-
 /*
- * TableFunc - node for a table function, such as XMLTABLE or JSON_TABLE.
+ * TableFunc - node for a table function, such as XMLTABLE.
  *
  * Entries in the ns_names list are either String nodes containing
  * literal namespace names, or NULL pointers to represent DEFAULT.
@@ -88,7 +98,6 @@ typedef enum TableFuncType
 typedef struct TableFunc
 {
 	NodeTag		type;
-	TableFuncType functype;		/* XMLTABLE or JSON_TABLE */
 	List	   *ns_uris;		/* list of namespace URI expressions */
 	List	   *ns_names;		/* list of namespace names or NULL */
 	Node	   *docexpr;		/* input document expression */
@@ -99,9 +108,7 @@ typedef struct TableFunc
 	List	   *colcollations;	/* OID list of column collation OIDs */
 	List	   *colexprs;		/* list of column filter expressions */
 	List	   *coldefexprs;	/* list of column default expressions */
-	List	   *colvalexprs;	/* list of column value expressions */
 	Bitmapset  *notnulls;		/* nullability flag for each output column */
-	Node	   *plan;			/* JSON_TABLE plan */
 	int			ordinalitycol;	/* counts from 0; -1 if none specified */
 	int			location;		/* token location, or -1 if unknown */
 } TableFunc;
@@ -144,6 +151,8 @@ typedef struct IntoClause
  */
 typedef struct Expr
 {
+	pg_node_attr(abstract)
+
 	NodeTag		type;
 } Expr;
 
@@ -168,8 +177,8 @@ typedef struct Expr
  * is abused to signify references to columns of a custom scan tuple type.)
  *
  * ROWID_VAR is used in the planner to identify nonce variables that carry
- * row identity information during UPDATE/DELETE.  This value should never
- * be seen outside the planner.
+ * row identity information during UPDATE/DELETE/MERGE.  This value should
+ * never be seen outside the planner.
  *
  * In the parser, varnosyn and varattnosyn are either identical to
  * varno/varattno, or they specify the column's position in an aliased JOIN
@@ -195,19 +204,43 @@ typedef struct Expr
 typedef struct Var
 {
 	Expr		xpr;
-	int			varno;			/* index of this var's relation in the range
-								 * table, or INNER_VAR/OUTER_VAR/etc */
-	AttrNumber	varattno;		/* attribute number of this var, or zero for
-								 * all attrs ("whole-row Var") */
-	Oid			vartype;		/* pg_type OID for the type of this var */
-	int32		vartypmod;		/* pg_attribute typmod value */
-	Oid			varcollid;		/* OID of collation, or InvalidOid if none */
-	Index		varlevelsup;	/* for subquery variables referencing outer
-								 * relations; 0 in a normal var, >0 means N
-								 * levels up */
-	Index		varnosyn;		/* syntactic relation index (0 if unknown) */
-	AttrNumber	varattnosyn;	/* syntactic attribute number */
-	int			location;		/* token location, or -1 if unknown */
+
+	/*
+	 * index of this var's relation in the range table, or
+	 * INNER_VAR/OUTER_VAR/etc
+	 */
+	int			varno;
+
+	/*
+	 * attribute number of this var, or zero for all attrs ("whole-row Var")
+	 */
+	AttrNumber	varattno;
+
+	/* pg_type OID for the type of this var */
+	Oid			vartype;
+	/* pg_attribute typmod value */
+	int32		vartypmod;
+	/* OID of collation, or InvalidOid if none */
+	Oid			varcollid;
+
+	/*
+	 * for subquery variables referencing outer relations; 0 in a normal var,
+	 * >0 means N levels up
+	 */
+	Index		varlevelsup;
+
+	/*
+	 * varnosyn/varattnosyn are ignored for equality, because Vars with
+	 * different syntactic identifiers are semantically the same as long as
+	 * their varno/varattno match.
+	 */
+	/* syntactic relation index (0 if unknown) */
+	Index		varnosyn pg_node_attr(equal_ignore);
+	/* syntactic attribute number */
+	AttrNumber	varattnosyn pg_node_attr(equal_ignore);
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Var;
 
 /*
@@ -220,6 +253,8 @@ typedef struct Var
  */
 typedef struct Const
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	Expr		xpr;
 	Oid			consttype;		/* pg_type OID of the constant's datatype */
 	int32		consttypmod;	/* typmod value, if any */
@@ -313,6 +348,10 @@ typedef struct Param
  * replaced with a single argument representing the partial-aggregate
  * transition values.
  *
+ * aggpresorted is set by the query planner for ORDER BY and DISTINCT
+ * aggregates where the chosen plan provides presorted input for this
+ * aggregate during execution.
+ *
  * aggsplit indicates the expected partial-aggregation mode for the Aggref's
  * parent plan node.  It's always set to AGGSPLIT_SIMPLE in the parser, but
  * the planner might change it to something else.  We use this mainly as
@@ -329,26 +368,72 @@ typedef struct Param
 typedef struct Aggref
 {
 	Expr		xpr;
-	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
-	Oid			aggtype;		/* type Oid of result of the aggregate */
-	Oid			aggcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that function should use */
-	Oid			aggtranstype;	/* type Oid of aggregate's transition value */
-	List	   *aggargtypes;	/* type Oids of direct and aggregated args */
-	List	   *aggdirectargs;	/* direct arguments, if an ordered-set agg */
-	List	   *args;			/* aggregated arguments and sort expressions */
-	List	   *aggorder;		/* ORDER BY (list of SortGroupClause) */
-	List	   *aggdistinct;	/* DISTINCT (list of SortGroupClause) */
-	Expr	   *aggfilter;		/* FILTER expression, if any */
-	bool		aggstar;		/* true if argument list was really '*' */
-	bool		aggvariadic;	/* true if variadic arguments have been
-								 * combined into an array last argument */
-	char		aggkind;		/* aggregate kind (see pg_aggregate.h) */
-	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
-	AggSplit	aggsplit;		/* expected agg-splitting mode of parent Agg */
-	int			aggno;			/* unique ID within the Agg node */
-	int			aggtransno;		/* unique ID of transition state in the Agg */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* pg_proc Oid of the aggregate */
+	Oid			aggfnoid;
+
+	/* type Oid of result of the aggregate */
+	Oid			aggtype;
+
+	/* OID of collation of result */
+	Oid			aggcollid;
+
+	/* OID of collation that function should use */
+	Oid			inputcollid;
+
+	/*
+	 * type Oid of aggregate's transition value; ignored for equal since it
+	 * might not be set yet
+	 */
+	Oid			aggtranstype pg_node_attr(equal_ignore);
+
+	/* type Oids of direct and aggregated args */
+	List	   *aggargtypes;
+
+	/* direct arguments, if an ordered-set agg */
+	List	   *aggdirectargs;
+
+	/* aggregated arguments and sort expressions */
+	List	   *args;
+
+	/* ORDER BY (list of SortGroupClause) */
+	List	   *aggorder;
+
+	/* DISTINCT (list of SortGroupClause) */
+	List	   *aggdistinct;
+
+	/* FILTER expression, if any */
+	Expr	   *aggfilter;
+
+	/* true if argument list was really '*' */
+	bool		aggstar;
+
+	/*
+	 * true if variadic arguments have been combined into an array last
+	 * argument
+	 */
+	bool		aggvariadic;
+
+	/* aggregate kind (see pg_aggregate.h) */
+	char		aggkind;
+
+	/* aggregate input already sorted */
+	bool		aggpresorted pg_node_attr(equal_ignore);
+
+	/* > 0 if agg belongs to outer query */
+	Index		agglevelsup;
+
+	/* expected agg-splitting mode of parent Agg */
+	AggSplit	aggsplit;
+
+	/* unique ID within the Agg node */
+	int			aggno;
+
+	/* unique ID of transition state in the Agg */
+	int			aggtransno;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } Aggref;
 
 /*
@@ -378,12 +463,21 @@ typedef struct Aggref
 typedef struct GroupingFunc
 {
 	Expr		xpr;
-	List	   *args;			/* arguments, not evaluated but kept for
-								 * benefit of EXPLAIN etc. */
-	List	   *refs;			/* ressortgrouprefs of arguments */
-	List	   *cols;			/* actual column positions set by planner */
-	Index		agglevelsup;	/* same as Aggref.agglevelsup */
-	int			location;		/* token location */
+
+	/* arguments, not evaluated but kept for benefit of EXPLAIN etc. */
+	List	   *args;
+
+	/* ressortgrouprefs of arguments */
+	List	   *refs pg_node_attr(equal_ignore);
+
+	/* actual column positions set by planner */
+	List	   *cols pg_node_attr(equal_ignore);
+
+	/* same as Aggref.agglevelsup */
+	Index		agglevelsup;
+
+	/* token location */
+	int			location;
 } GroupingFunc;
 
 /*
@@ -544,18 +638,35 @@ typedef struct NamedArgExpr
  * Note that opfuncid is not necessarily filled in immediately on creation
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opfuncid can be 0.
+ * Therefore, equal() will accept a zero value as being equal to other values.
  */
 typedef struct OpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of underlying function */
-	Oid			opresulttype;	/* PG_TYPE OID of result value */
-	bool		opretset;		/* true if operator returns set */
-	Oid			opcollid;		/* OID of collation of result */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* arguments to the operator (1 or 2) */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of underlying function */
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero);
+
+	/* PG_TYPE OID of result value */
+	Oid			opresulttype;
+
+	/* true if operator returns set */
+	bool		opretset;
+
+	/* OID of collation of result */
+	Oid			opcollid;
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid;
+
+	/* arguments to the operator (1 or 2) */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } OpExpr;
 
 /*
@@ -601,19 +712,38 @@ typedef OpExpr NullIfExpr;
  * corresponding function and won't be used during execution.  For
  * non-hashtable based NOT INs, negfuncid will be set to InvalidOid.  See
  * convert_saop_to_hashed_saop().
+ *
+ * Similar to OpExpr, opfuncid, hashfuncid, and negfuncid are not necessarily
+ * filled in right away, so will be ignored for equality if they are not set
+ * yet.
  */
 typedef struct ScalarArrayOpExpr
 {
 	Expr		xpr;
-	Oid			opno;			/* PG_OPERATOR OID of the operator */
-	Oid			opfuncid;		/* PG_PROC OID of comparison function */
-	Oid			hashfuncid;		/* PG_PROC OID of hash func or InvalidOid */
-	Oid			negfuncid;		/* PG_PROC OID of negator of opfuncid function
-								 * or InvalidOid.  See above */
-	bool		useOr;			/* true for ANY, false for ALL */
-	Oid			inputcollid;	/* OID of collation that operator should use */
-	List	   *args;			/* the scalar and array operands */
-	int			location;		/* token location, or -1 if unknown */
+
+	/* PG_OPERATOR OID of the operator */
+	Oid			opno;
+
+	/* PG_PROC OID of comparison function */
+	Oid			opfuncid pg_node_attr(equal_ignore_if_zero);
+
+	/* PG_PROC OID of hash func or InvalidOid */
+	Oid			hashfuncid pg_node_attr(equal_ignore_if_zero);
+
+	/* PG_PROC OID of negator of opfuncid function or InvalidOid.  See above */
+	Oid			negfuncid pg_node_attr(equal_ignore_if_zero);
+
+	/* true for ANY, false for ALL */
+	bool		useOr;
+
+	/* OID of collation that operator should use */
+	Oid			inputcollid;
+
+	/* the scalar and array operands */
+	List	   *args;
+
+	/* token location, or -1 if unknown */
+	int			location;
 } ScalarArrayOpExpr;
 
 /*
@@ -630,6 +760,8 @@ typedef enum BoolExprType
 
 typedef struct BoolExpr
 {
+	pg_node_attr(custom_read_write)
+
 	Expr		xpr;
 	BoolExprType boolop;
 	List	   *args;			/* arguments to this expression */
@@ -1241,257 +1373,6 @@ typedef struct XmlExpr
 	int32		typmod;
 	int			location;		/* token location, or -1 if unknown */
 } XmlExpr;
-
-/*
- * JsonExprOp -
- *		enumeration of JSON functions using JSON path
- */
-typedef enum JsonExprOp
-{
-	JSON_VALUE_OP,				/* JSON_VALUE() */
-	JSON_QUERY_OP,				/* JSON_QUERY() */
-	JSON_EXISTS_OP,				/* JSON_EXISTS() */
-	JSON_TABLE_OP               /* JSON_TABLE() */
-} JsonExprOp;
-
-/*
- * JsonEncoding -
- *		representation of JSON ENCODING clause
- */
-typedef enum JsonEncoding
-{
-	JS_ENC_DEFAULT,				/* unspecified */
-	JS_ENC_UTF8,
-	JS_ENC_UTF16,
-	JS_ENC_UTF32,
-} JsonEncoding;
-
-/*
- * JsonFormatType -
- *		enumeration of JSON formats used in JSON FORMAT clause
- */
-typedef enum JsonFormatType
-{
-	JS_FORMAT_DEFAULT,			/* unspecified */
-	JS_FORMAT_JSON,				/* FORMAT JSON [ENCODING ...] */
-	JS_FORMAT_JSONB				/* implicit internal format for RETURNING jsonb */
-} JsonFormatType;
-
-/*
- * JsonBehaviorType -
- *		enumeration of behavior types used in JSON ON ... BEHAVIOR clause
- *
- * 		If enum members are reordered, get_json_behavior() from ruleutils.c
- * 		must be updated accordingly.
- */
-typedef enum JsonBehaviorType
-{
-	JSON_BEHAVIOR_NULL = 0,
-	JSON_BEHAVIOR_ERROR,
-	JSON_BEHAVIOR_EMPTY,
-	JSON_BEHAVIOR_TRUE,
-	JSON_BEHAVIOR_FALSE,
-	JSON_BEHAVIOR_UNKNOWN,
-	JSON_BEHAVIOR_EMPTY_ARRAY,
-	JSON_BEHAVIOR_EMPTY_OBJECT,
-	JSON_BEHAVIOR_DEFAULT
-} JsonBehaviorType;
-
-/*
- * JsonWrapper -
- *		representation of WRAPPER clause for JSON_QUERY()
- */
-typedef enum JsonWrapper
-{
-	JSW_NONE,
-	JSW_CONDITIONAL,
-	JSW_UNCONDITIONAL,
-} JsonWrapper;
-
-/*
- * JsonFormat -
- *		representation of JSON FORMAT clause
- */
-typedef struct JsonFormat
-{
-	NodeTag		type;
-	JsonFormatType format_type;	/* format type */
-	JsonEncoding encoding;		/* JSON encoding */
-	int			location;		/* token location, or -1 if unknown */
-} JsonFormat;
-
-/*
- * JsonReturning -
- *		transformed representation of JSON RETURNING clause
- */
-typedef struct JsonReturning
-{
-	NodeTag		type;
-	JsonFormat *format;			/* output JSON format */
-	Oid			typid;			/* target type Oid */
-	int32		typmod;			/* target type modifier */
-} JsonReturning;
-
-/*
- * JsonValueExpr -
- *		representation of JSON value expression (expr [FORMAT json_format])
- */
-typedef struct JsonValueExpr
-{
-	NodeTag		type;
-	Expr	   *raw_expr;		/* raw expression */
-	Expr	   *formatted_expr;	/* formatted expression or NULL */
-	JsonFormat *format;			/* FORMAT clause, if specified */
-} JsonValueExpr;
-
-typedef enum JsonConstructorType
-{
-	JSCTOR_JSON_OBJECT = 1,
-	JSCTOR_JSON_ARRAY = 2,
-	JSCTOR_JSON_OBJECTAGG = 3,
-	JSCTOR_JSON_ARRAYAGG = 4,
-	JSCTOR_JSON_SCALAR = 5,
-	JSCTOR_JSON_SERIALIZE = 6,
-	JSCTOR_JSON_PARSE = 7
-} JsonConstructorType;
-
-/*
- * JsonConstructorExpr -
- *		wrapper over FuncExpr/Aggref/WindowFunc for SQL/JSON constructors
- */
-typedef struct JsonConstructorExpr
-{
-	Expr		xpr;
-	JsonConstructorType type;	/* constructor type */
-	List	   *args;
-	Expr	   *func;			/* underlying json[b]_xxx() function call */
-	Expr	   *coercion;		/* coercion to RETURNING type */
-	JsonReturning *returning;	/* RETURNING clause */
-	bool		absent_on_null;	/* ABSENT ON NULL? */
-	bool		unique;			/* WITH UNIQUE KEYS? (JSON_OBJECT[AGG] only) */
-	int			location;
-} JsonConstructorExpr;
-
-/*
- * JsonValueType -
- *		representation of JSON item type in IS JSON predicate
- */
-typedef enum JsonValueType
-{
-	JS_TYPE_ANY,				/* IS JSON [VALUE] */
-	JS_TYPE_OBJECT,				/* IS JSON OBJECT */
-	JS_TYPE_ARRAY,				/* IS JSON ARRAY*/
-	JS_TYPE_SCALAR				/* IS JSON SCALAR */
-} JsonValueType;
-
-/*
- * JsonIsPredicate -
- *		untransformed representation of IS JSON predicate
- */
-typedef struct JsonIsPredicate
-{
-	NodeTag		type;
-	Node	   *expr;			/* untransformed expression */
-	JsonFormat *format;			/* FORMAT clause, if specified */
-	JsonValueType value_type;	/* JSON item type */
-	bool		unique_keys;	/* check key uniqueness? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonIsPredicate;
-
-/*
- * JsonBehavior -
- *		representation of JSON ON ... BEHAVIOR clause
- */
-typedef struct JsonBehavior
-{
-	NodeTag		type;
-	JsonBehaviorType btype;		/* behavior type */
-	Node	   *default_expr;	/* default expression, if any */
-} JsonBehavior;
-
-/*
- * JsonCoercion -
- *		coercion from SQL/JSON item types to SQL types
- */
-typedef struct JsonCoercion
-{
-	NodeTag		type;
-	Node	   *expr;			/* resulting expression coerced to target type */
-	bool		via_populate;	/* coerce result using json_populate_type()? */
-	bool		via_io;			/* coerce result using type input function? */
-	Oid			collation;		/* collation for coercion via I/O or populate */
-} JsonCoercion;
-
-/*
- * JsonItemCoercions -
- *		expressions for coercion from SQL/JSON item types directly to the
- *		output SQL type
- */
-typedef struct JsonItemCoercions
-{
-	NodeTag		type;
-	JsonCoercion *null;
-	JsonCoercion *string;
-	JsonCoercion *numeric;
-	JsonCoercion *boolean;
-	JsonCoercion *date;
-	JsonCoercion *time;
-	JsonCoercion *timetz;
-	JsonCoercion *timestamp;
-	JsonCoercion *timestamptz;
-	JsonCoercion *composite;	/* arrays and objects */
-} JsonItemCoercions;
-
-/*
- * JsonExpr -
- *		transformed representation of JSON_VALUE(), JSON_QUERY(), JSON_EXISTS()
- */
-typedef struct JsonExpr
-{
-	Expr		xpr;
-	JsonExprOp	op;				/* json function ID */
-	Node	   *formatted_expr;	/* formatted context item expression */
-	JsonCoercion *result_coercion;	/* resulting coercion to RETURNING type */
-	JsonFormat *format;			/* context item format (JSON/JSONB) */
-	Node	   *path_spec;		/* JSON path specification expression */
-	List	   *passing_names;	/* PASSING argument names */
-	List	   *passing_values;	/* PASSING argument values */
-	JsonReturning *returning;	/* RETURNING clause type/format info */
-	JsonBehavior *on_empty;		/* ON EMPTY behavior */
-	JsonBehavior *on_error;		/* ON ERROR behavior */
-	JsonItemCoercions *coercions; /* coercions for JSON_VALUE */
-	JsonWrapper	wrapper;		/* WRAPPER for JSON_QUERY */
-	bool		omit_quotes;	/* KEEP/OMIT QUOTES for JSON_QUERY */
-	int			location;		/* token location, or -1 if unknown */
-} JsonExpr;
-
-/*
- * JsonTableParent -
- *		transformed representation of parent JSON_TABLE plan node
- */
-typedef struct JsonTableParent
-{
-	NodeTag		type;
-	Const	   *path;		/* jsonpath constant */
-	char	   *name;		/* path name */
-	Node	   *child;		/* nested columns, if any */
-	bool		outerJoin;	/* outer or inner join for nested columns? */
-	int			colMin;		/* min column index in the resulting column list */
-	int			colMax;		/* max column index in the resulting column list */
-	bool		errorOnError; /* ERROR/EMPTY ON ERROR behavior */
-} JsonTableParent;
-
-/*
- * JsonTableSibling -
- *		transformed representation of joined sibling JSON_TABLE plan node
- */
-typedef struct JsonTableSibling
-{
-	NodeTag		type;
-	Node	   *larg;		/* left join node */
-	Node	   *rarg;		/* right join node */
-	bool		cross;		/* cross or union join? */
-} JsonTableSibling;
 
 /* ----------------
  * NullTest

@@ -18,8 +18,8 @@
 #include "utils/relcache.h"
 
 extern BlockNumber GetFreeIndexPage(Relation rel);
-extern void RecordFreeIndexPage(Relation rel, BlockNumber page);
-extern void RecordUsedIndexPage(Relation rel, BlockNumber page);
+extern void RecordFreeIndexPage(Relation rel, BlockNumber freeBlock);
+extern void RecordUsedIndexPage(Relation rel, BlockNumber usedBlock);
 
 extern void IndexFreeSpaceMapVacuum(Relation rel);
 

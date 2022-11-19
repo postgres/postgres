@@ -15,10 +15,8 @@
 
 #include "postgres_fe.h"
 
-#include <sys/time.h>
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
+#include <sys/time.h>
 
 #include "catalog/pg_type_d.h"
 #include "common/fe_memutils.h"
@@ -28,6 +26,8 @@
 
 
 static void exit_nicely(PGconn *conn);
+static void pg_attribute_noreturn() pg_fatal_impl(int line, const char *fmt,...)
+			pg_attribute_printf(2, 3);
 static bool process_result(PGconn *conn, PGresult *res, int results,
 						   int numsent);
 
@@ -106,6 +106,18 @@ test_disallowed_in_pipeline(PGconn *conn)
 	res = PQexec(conn, "SELECT 1");
 	if (PQresultStatus(res) != PGRES_FATAL_ERROR)
 		pg_fatal("PQexec should fail in pipeline mode but succeeded");
+	if (strcmp(PQerrorMessage(conn),
+			   "synchronous command execution functions are not allowed in pipeline mode\n") != 0)
+		pg_fatal("did not get expected error message; got: \"%s\"",
+				 PQerrorMessage(conn));
+
+	/* PQsendQuery should fail in pipeline mode */
+	if (PQsendQuery(conn, "SELECT 1") != 0)
+		pg_fatal("PQsendQuery should fail in pipeline mode but succeeded");
+	if (strcmp(PQerrorMessage(conn),
+			   "PQsendQuery not allowed in pipeline mode\n") != 0)
+		pg_fatal("did not get expected error message; got: \"%s\"",
+				 PQerrorMessage(conn));
 
 	/* Entering pipeline mode when already in pipeline mode is OK */
 	if (PQenterPipelineMode(conn) != 1)
@@ -497,7 +509,7 @@ test_pipeline_abort(PGconn *conn)
 				 PQerrorMessage(conn));
 
 	/* Try to send two queries in one command */
-	if (PQsendQuery(conn, "SELECT 1; SELECT 2") != 1)
+	if (PQsendQueryParams(conn, "SELECT 1; SELECT 2", 0, NULL, NULL, NULL, NULL, 0) != 1)
 		pg_fatal("failed to send query: %s", PQerrorMessage(conn));
 	if (PQpipelineSync(conn) != 1)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
@@ -529,7 +541,8 @@ test_pipeline_abort(PGconn *conn)
 	fprintf(stderr, "ok\n");
 
 	/* Test single-row mode with an error partways */
-	if (PQsendQuery(conn, "SELECT 1.0/g FROM generate_series(3, -1, -1) g") != 1)
+	if (PQsendQueryParams(conn, "SELECT 1.0/g FROM generate_series(3, -1, -1) g",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
 		pg_fatal("failed to send query: %s", PQerrorMessage(conn));
 	if (PQpipelineSync(conn) != 1)
 		pg_fatal("pipeline sync failed: %s", PQerrorMessage(conn));
@@ -581,8 +594,6 @@ test_pipeline_abort(PGconn *conn)
 	if (PQpipelineStatus(conn) != PQ_PIPELINE_OFF)
 		pg_fatal("exiting pipeline mode didn't seem to work");
 
-	fprintf(stderr, "ok\n");
-
 	/*-
 	 * Since we fired the pipelines off without a surrounding xact, the results
 	 * should be:
@@ -614,6 +625,8 @@ test_pipeline_abort(PGconn *conn)
 	}
 
 	PQclear(res);
+
+	fprintf(stderr, "ok\n");
 }
 
 /* State machine enum for test_pipelined_insert */
@@ -916,7 +929,7 @@ test_prepared(PGconn *conn)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		pg_fatal("expected COMMAND_OK, got %s", PQresStatus(PQresultStatus(res)));
 	if (PQnfields(res) != lengthof(expected_oids))
-		pg_fatal("expected %d columns, got %d",
+		pg_fatal("expected %zd columns, got %d",
 				 lengthof(expected_oids), PQnfields(res));
 	for (int i = 0; i < PQnfields(res); i++)
 	{
@@ -966,6 +979,84 @@ test_prepared(PGconn *conn)
 		pg_fatal("could not exit pipeline mode: %s", PQerrorMessage(conn));
 
 	fprintf(stderr, "ok\n");
+}
+
+/* Notice processor: print notices, and count how many we got */
+static void
+notice_processor(void *arg, const char *message)
+{
+	int	   *n_notices = (int *) arg;
+
+	(*n_notices)++;
+	fprintf(stderr, "NOTICE %d: %s", *n_notices, message);
+}
+
+/* Verify behavior in "idle" state */
+static void
+test_pipeline_idle(PGconn *conn)
+{
+	PGresult   *res;
+	int			n_notices = 0;
+
+	fprintf(stderr, "\npipeline idle...\n");
+
+	PQsetNoticeProcessor(conn, notice_processor, &n_notices);
+
+	/* Try to exit pipeline mode in pipeline-idle state */
+	if (PQenterPipelineMode(conn) != 1)
+		pg_fatal("failed to enter pipeline mode: %s", PQerrorMessage(conn));
+	if (PQsendQueryParams(conn, "SELECT 1", 0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s", PQerrorMessage(conn));
+	PQsendFlushRequest(conn);
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("PQgetResult returned null when there's a pipeline item: %s",
+				 PQerrorMessage(conn));
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("unexpected result code %s from first pipeline item",
+				 PQresStatus(PQresultStatus(res)));
+	PQclear(res);
+	res = PQgetResult(conn);
+	if (res != NULL)
+		pg_fatal("did not receive terminating NULL");
+	if (PQsendQueryParams(conn, "SELECT 2", 0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s", PQerrorMessage(conn));
+	if (PQexitPipelineMode(conn) == 1)
+		pg_fatal("exiting pipeline succeeded when it shouldn't");
+	if (strncmp(PQerrorMessage(conn), "cannot exit pipeline mode",
+				strlen("cannot exit pipeline mode")) != 0)
+		pg_fatal("did not get expected error; got: %s",
+				 PQerrorMessage(conn));
+	PQsendFlushRequest(conn);
+	res = PQgetResult(conn);
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("unexpected result code %s from second pipeline item",
+				 PQresStatus(PQresultStatus(res)));
+	PQclear(res);
+	res = PQgetResult(conn);
+	if (res != NULL)
+		pg_fatal("did not receive terminating NULL");
+	if (PQexitPipelineMode(conn) != 1)
+		pg_fatal("exiting pipeline failed: %s", PQerrorMessage(conn));
+
+	if (n_notices > 0)
+		pg_fatal("got %d notice(s)", n_notices);
+	fprintf(stderr, "ok - 1\n");
+
+	/* Have a WARNING in the middle of a resultset */
+	if (PQenterPipelineMode(conn) != 1)
+		pg_fatal("entering pipeline mode failed: %s", PQerrorMessage(conn));
+	if (PQsendQueryParams(conn, "SELECT pg_catalog.pg_advisory_unlock(1,1)", 0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s", PQerrorMessage(conn));
+	PQsendFlushRequest(conn);
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL result received");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("unexpected result code %s", PQresStatus(PQresultStatus(res)));
+	if (PQexitPipelineMode(conn) != 1)
+		pg_fatal("failed to exit pipeline mode: %s", PQerrorMessage(conn));
+	fprintf(stderr, "ok - 2\n");
 }
 
 static void
@@ -1062,11 +1153,11 @@ test_singlerowmode(PGconn *conn)
 	int			i;
 	bool		pipeline_ended = false;
 
-	/* 1 pipeline, 3 queries in it */
 	if (PQenterPipelineMode(conn) != 1)
 		pg_fatal("failed to enter pipeline mode: %s",
 				 PQerrorMessage(conn));
 
+	/* One series of three commands, using single-row mode for the first two. */
 	for (i = 0; i < 3; i++)
 	{
 		char	   *param[1];
@@ -1158,8 +1249,53 @@ test_singlerowmode(PGconn *conn)
 			pg_fatal("didn't get expected terminating TUPLES_OK");
 	}
 
+	/*
+	 * Now issue one command, get its results in with single-row mode, then
+	 * issue another command, and get its results in normal mode; make sure
+	 * the single-row mode flag is reset as expected.
+	 */
+	if (PQsendQueryParams(conn, "SELECT generate_series(0, 0)",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s",
+				 PQerrorMessage(conn));
+	if (PQsendFlushRequest(conn) != 1)
+		pg_fatal("failed to send flush request");
+	if (PQsetSingleRowMode(conn) != 1)
+		pg_fatal("PQsetSingleRowMode() failed");
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_SINGLE_TUPLE)
+		pg_fatal("Expected PGRES_SINGLE_TUPLE, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Expected PGRES_TUPLES_OK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("expected NULL result");
+
+	if (PQsendQueryParams(conn, "SELECT 1",
+						  0, NULL, NULL, NULL, NULL, 0) != 1)
+		pg_fatal("failed to send query: %s",
+				 PQerrorMessage(conn));
+	if (PQsendFlushRequest(conn) != 1)
+		pg_fatal("failed to send flush request");
+	res = PQgetResult(conn);
+	if (res == NULL)
+		pg_fatal("unexpected NULL");
+	if (PQresultStatus(res) != PGRES_TUPLES_OK)
+		pg_fatal("Expected PGRES_TUPLES_OK, got %s",
+				 PQresStatus(PQresultStatus(res)));
+	if (PQgetResult(conn) != NULL)
+		pg_fatal("expected NULL result");
+
 	if (PQexitPipelineMode(conn) != 1)
 		pg_fatal("failed to end pipeline mode: %s", PQerrorMessage(conn));
+
+	fprintf(stderr, "ok\n");
 }
 
 /*
@@ -1549,6 +1685,7 @@ print_test_list(void)
 	printf("multi_pipelines\n");
 	printf("nosync\n");
 	printf("pipeline_abort\n");
+	printf("pipeline_idle\n");
 	printf("pipelined_insert\n");
 	printf("prepared\n");
 	printf("simple_pipeline\n");
@@ -1630,7 +1767,10 @@ main(int argc, char **argv)
 	/* Set the trace file, if requested */
 	if (tracefile != NULL)
 	{
-		trace = fopen(tracefile, "w");
+		if (strcmp(tracefile, "-") == 0)
+			trace = stdout;
+		else
+			trace = fopen(tracefile, "w");
 		if (trace == NULL)
 			pg_fatal("could not open file \"%s\": %m", tracefile);
 
@@ -1650,6 +1790,8 @@ main(int argc, char **argv)
 		test_nosync(conn);
 	else if (strcmp(testname, "pipeline_abort") == 0)
 		test_pipeline_abort(conn);
+	else if (strcmp(testname, "pipeline_idle") == 0)
+		test_pipeline_idle(conn);
 	else if (strcmp(testname, "pipelined_insert") == 0)
 		test_pipelined_insert(conn, numrows);
 	else if (strcmp(testname, "prepared") == 0)

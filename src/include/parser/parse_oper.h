@@ -29,8 +29,8 @@ extern Oid	LookupOperWithArgs(ObjectWithArgs *oper, bool noError);
 
 /* Routines to find operators matching a name and given input types */
 /* NB: the selected operator may require coercion of the input types! */
-extern Operator oper(ParseState *pstate, List *op, Oid arg1, Oid arg2,
-					 bool noError, int location);
+extern Operator oper(ParseState *pstate, List *opname, Oid ltypeId,
+					 Oid rtypeId, bool noError, int location);
 extern Operator left_oper(ParseState *pstate, List *op, Oid arg,
 						  bool noError, int location);
 

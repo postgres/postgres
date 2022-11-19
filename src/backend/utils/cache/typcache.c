@@ -1714,14 +1714,8 @@ ensure_record_cache_typmod_slot_exists(int32 typmod)
 	{
 		int32		newlen = pg_nextpower2_32(typmod + 1);
 
-		RecordCacheArray = (TupleDesc *) repalloc(RecordCacheArray,
-												  newlen * sizeof(TupleDesc));
-		memset(RecordCacheArray + RecordCacheArrayLen, 0,
-			   (newlen - RecordCacheArrayLen) * sizeof(TupleDesc));
-		RecordIdentifierArray = (uint64 *) repalloc(RecordIdentifierArray,
-													newlen * sizeof(uint64));
-		memset(RecordIdentifierArray + RecordCacheArrayLen, 0,
-			   (newlen - RecordCacheArrayLen) * sizeof(uint64));
+		RecordCacheArray = repalloc0_array(RecordCacheArray, TupleDesc, RecordCacheArrayLen, newlen);
+		RecordIdentifierArray = repalloc0_array(RecordIdentifierArray, uint64, RecordCacheArrayLen, newlen);
 		RecordCacheArrayLen = newlen;
 	}
 }

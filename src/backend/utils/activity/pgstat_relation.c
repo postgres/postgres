@@ -789,6 +789,12 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 	tabentry = &shtabstats->stats;
 
 	tabentry->numscans += lstats->t_counts.t_numscans;
+	if (lstats->t_counts.t_numscans)
+	{
+		TimestampTz t = GetCurrentTransactionStopTimestamp();
+		if (t > tabentry->lastscan)
+			tabentry->lastscan = t;
+	}
 	tabentry->tuples_returned += lstats->t_counts.t_tuples_returned;
 	tabentry->tuples_fetched += lstats->t_counts.t_tuples_fetched;
 	tabentry->tuples_inserted += lstats->t_counts.t_tuples_inserted;

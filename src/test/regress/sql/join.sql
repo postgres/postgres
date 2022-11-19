@@ -472,6 +472,24 @@ select count(*) from
   (select * from tenk1 y order by y.unique2) y
   on x.thousand = y.unique2 and x.twothousand = y.hundred and x.fivethous = y.unique2;
 
+set enable_hashjoin = 0;
+set enable_nestloop = 0;
+set enable_hashagg = 0;
+
+--
+-- Check that we use the pathkeys from a prefix of the group by / order by
+-- clause for the join pathkeys when that prefix covers all join quals.  We
+-- expect this to lead to an incremental sort for the group by / order by.
+--
+explain (costs off)
+select x.thousand, x.twothousand, count(*)
+from tenk1 x inner join tenk1 y on x.thousand = y.thousand
+group by x.thousand, x.twothousand
+order by x.thousand desc, x.twothousand;
+
+reset enable_hashagg;
+reset enable_nestloop;
+reset enable_hashjoin;
 
 --
 -- Clean up
@@ -519,6 +537,28 @@ select * from t1 left join t2 on (t1.a = t2.a);
 -- Test matching of column name with wrong alias
 
 select t1.x from t1 join t3 on (t1.a = t3.x);
+
+-- Test matching of locking clause with wrong alias
+
+select t1.*, t2.*, unnamed_join.* from
+  t1 join t2 on (t1.a = t2.a), t3 as unnamed_join
+  for update of unnamed_join;
+
+select foo.*, unnamed_join.* from
+  t1 join t2 using (a) as foo, t3 as unnamed_join
+  for update of unnamed_join;
+
+select foo.*, unnamed_join.* from
+  t1 join t2 using (a) as foo, t3 as unnamed_join
+  for update of foo;
+
+select bar.*, unnamed_join.* from
+  (t1 join t2 using (a) as foo) as bar, t3 as unnamed_join
+  for update of foo;
+
+select bar.*, unnamed_join.* from
+  (t1 join t2 using (a) as foo) as bar, t3 as unnamed_join
+  for update of bar;
 
 --
 -- regression test for 8.1 merge right join bug
@@ -583,6 +623,31 @@ LEFT JOIN (
         WHERE c.f1 IS NULL
 ) AS d ON (a.f1 = d.f1)
 WHERE d.f1 IS NULL;
+
+--
+-- basic semijoin and antijoin recognition tests
+--
+
+explain (costs off)
+select a.* from tenk1 a
+where unique1 in (select unique2 from tenk1 b);
+
+-- sadly, this is not an antijoin
+explain (costs off)
+select a.* from tenk1 a
+where unique1 not in (select unique2 from tenk1 b);
+
+explain (costs off)
+select a.* from tenk1 a
+where exists (select 1 from tenk1 b where a.unique1 = b.unique2);
+
+explain (costs off)
+select a.* from tenk1 a
+where not exists (select 1 from tenk1 b where a.unique1 = b.unique2);
+
+explain (costs off)
+select a.* from tenk1 a left join tenk1 b on a.unique1 = b.unique2
+where b.unique2 is null;
 
 --
 -- regression test for proper handling of outer joins within antijoins
@@ -1539,6 +1604,19 @@ reset enable_hashjoin;
 reset enable_nestloop;
 
 --
+-- test join strength reduction with a SubPlan providing the proof
+--
+
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+
+--
 -- test join removal
 --
 
@@ -1984,6 +2062,9 @@ select * from
    union all
    (select q1.v)
   ) as q2;
+
+-- check the number of columns specified
+SELECT * FROM (int8_tbl i cross join int4_tbl j) ss(a,b,c,d);
 
 -- check we don't try to do a unique-ified semijoin with LATERAL
 explain (verbose, costs off)

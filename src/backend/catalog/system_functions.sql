@@ -659,11 +659,15 @@ REVOKE EXECUTE ON FUNCTION pg_ls_tmpdir(oid) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_file(text) FROM public;
 
+REVOKE EXECUTE ON FUNCTION pg_read_file(text,boolean) FROM public;
+
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_file(text,bigint,bigint,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text) FROM public;
+
+REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,boolean) FROM public;
 
 REVOKE EXECUTE ON FUNCTION pg_read_binary_file(text,bigint,bigint) FROM public;
 

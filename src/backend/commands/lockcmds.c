@@ -29,7 +29,7 @@
 #include "utils/syscache.h"
 
 static void LockTableRecurse(Oid reloid, LOCKMODE lockmode, bool nowait);
-static AclResult LockTableAclCheck(Oid relid, LOCKMODE lockmode, Oid userid);
+static AclResult LockTableAclCheck(Oid reloid, LOCKMODE lockmode, Oid userid);
 static void RangeVarCallbackForLockTable(const RangeVar *rv, Oid relid,
 										 Oid oldrelid, void *arg);
 static void LockViewRecurse(Oid reloid, LOCKMODE lockmode, bool nowait,

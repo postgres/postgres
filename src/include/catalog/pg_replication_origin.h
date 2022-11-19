@@ -54,9 +54,7 @@ CATALOG(pg_replication_origin,6000,ReplicationOriginRelationId) BKI_SHARED_RELAT
 
 typedef FormData_pg_replication_origin *Form_pg_replication_origin;
 
-DECLARE_TOAST(pg_replication_origin, 4181, 4182);
-#define PgReplicationOriginToastTable 4181
-#define PgReplicationOriginToastIndex 4182
+DECLARE_TOAST_WITH_MACRO(pg_replication_origin, 4181, 4182, PgReplicationOriginToastTable, PgReplicationOriginToastIndex);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_replication_origin_roiident_index, 6001, ReplicationOriginIdentIndex, on pg_replication_origin using btree(roident oid_ops));
 DECLARE_UNIQUE_INDEX(pg_replication_origin_roname_index, 6002, ReplicationOriginNameIndex, on pg_replication_origin using btree(roname text_ops));

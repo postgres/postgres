@@ -13,6 +13,7 @@
 #include "datatype/timestamp.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"			/* for BackendType */
+#include "storage/backendid.h"
 #include "utils/backend_progress.h"
 
 
@@ -248,6 +249,13 @@ typedef struct LocalPgBackendStatus
 	PgBackendStatus backendStatus;
 
 	/*
+	 * The backend ID.  For auxiliary processes, this will be set to a value
+	 * greater than MaxBackends (since auxiliary processes do not have proper
+	 * backend IDs).
+	 */
+	BackendId	backend_id;
+
+	/*
 	 * The xid of the current transaction if available, InvalidTransactionId
 	 * if not.
 	 */
@@ -313,7 +321,7 @@ extern uint64 pgstat_get_my_query_id(void);
  * ----------
  */
 extern int	pgstat_fetch_stat_numbackends(void);
-extern PgBackendStatus *pgstat_fetch_stat_beentry(int beid);
+extern PgBackendStatus *pgstat_fetch_stat_beentry(BackendId beid);
 extern LocalPgBackendStatus *pgstat_fetch_stat_local_beentry(int beid);
 extern char *pgstat_clip_activity(const char *raw_activity);
 

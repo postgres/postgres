@@ -85,8 +85,7 @@ executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
 
 	r = (res && PQresultStatus(res) == PGRES_COMMAND_OK);
 
-	if (res)
-		PQclear(res);
+	PQclear(res);
 
 	return r;
 }

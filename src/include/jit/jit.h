@@ -63,7 +63,7 @@ typedef struct JitContext
 
 typedef struct JitProviderCallbacks JitProviderCallbacks;
 
-extern void _PG_jit_provider_init(JitProviderCallbacks *cb);
+extern PGDLLEXPORT void _PG_jit_provider_init(JitProviderCallbacks *cb);
 typedef void (*JitProviderInit) (JitProviderCallbacks *cb);
 typedef void (*JitProviderResetAfterErrorCB) (void);
 typedef void (*JitProviderReleaseContextCB) (JitContext *context);

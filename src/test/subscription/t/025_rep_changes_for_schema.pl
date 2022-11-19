@@ -18,7 +18,7 @@ my $node_subscriber = PostgreSQL::Test::Cluster->new('subscriber');
 $node_subscriber->init(allows_streaming => 'logical');
 $node_subscriber->start;
 
-# Test replication with publications created using FOR ALL TABLES IN SCHEMA
+# Test replication with publications created using FOR TABLES IN SCHEMA
 # option.
 # Create schemas and tables on publisher
 $node_publisher->safe_psql('postgres', "CREATE SCHEMA sch1");
@@ -27,11 +27,14 @@ $node_publisher->safe_psql('postgres',
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE sch1.tab2 AS SELECT generate_series(1,10) AS a");
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)");
+	"CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)"
+);
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)");
+	"CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)"
+);
 $node_publisher->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)");
+	"CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)"
+);
 
 $node_publisher->safe_psql('postgres',
 	"INSERT INTO sch1.tab1_parent values (1),(4)");
@@ -41,28 +44,26 @@ $node_subscriber->safe_psql('postgres', "CREATE SCHEMA sch1");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE sch1.tab1 (a int)");
 $node_subscriber->safe_psql('postgres', "CREATE TABLE sch1.tab2 (a int)");
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)");
+	"CREATE TABLE sch1.tab1_parent (a int PRIMARY KEY, b text) PARTITION BY LIST (a)"
+);
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)");
+	"CREATE TABLE public.tab1_child1 PARTITION OF sch1.tab1_parent FOR VALUES IN (1, 2, 3)"
+);
 $node_subscriber->safe_psql('postgres',
-        "CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)");
+	"CREATE TABLE public.tab1_child2 PARTITION OF sch1.tab1_parent FOR VALUES IN (4, 5, 6)"
+);
 
 # Setup logical replication
 my $publisher_connstr = $node_publisher->connstr . ' dbname=postgres';
 $node_publisher->safe_psql('postgres',
-	"CREATE PUBLICATION tap_pub_schema FOR ALL TABLES IN SCHEMA sch1");
+	"CREATE PUBLICATION tap_pub_schema FOR TABLES IN SCHEMA sch1");
 
 $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub_schema CONNECTION '$publisher_connstr' PUBLICATION tap_pub_schema"
 );
 
-$node_publisher->wait_for_catchup('tap_sub_schema');
-
-# Also wait for initial table sync to finish
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub_schema');
 
 # Check the schema table data is synced up
 my $result = $node_subscriber->safe_psql('postgres',
@@ -75,7 +76,7 @@ is($result, qq(10|1|10), 'check rows on subscriber catchup');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT * FROM sch1.tab1_parent order by 1");
-is($result, qq(1|
+is( $result, qq(1|
 4|), 'check rows on subscriber catchup');
 
 # Insert some data into few tables and verify that inserted data is replicated
@@ -93,7 +94,7 @@ is($result, qq(20|1|20), 'check replicated inserts on subscriber');
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT * FROM sch1.tab1_parent order by 1");
-is($result, qq(1|
+is( $result, qq(1|
 2|
 4|
 5|), 'check replicated inserts on subscriber');
@@ -117,8 +118,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_schema REFRESH PUBLICATION");
 
 # Wait for sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync;
 
 $node_publisher->safe_psql('postgres', "INSERT INTO sch1.tab3 VALUES(11)");
 
@@ -152,8 +152,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_schema REFRESH PUBLICATION");
 
 # Wait for sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync;
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*) FROM pg_subscription_rel WHERE srsubid IN (SELECT oid FROM pg_subscription WHERE subname = 'tap_sub_schema')"
@@ -177,8 +176,7 @@ $node_subscriber->safe_psql('postgres',
 	"ALTER SUBSCRIPTION tap_sub_schema REFRESH PUBLICATION");
 
 # Wait for sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync;
 
 $result = $node_subscriber->safe_psql('postgres',
 	"SELECT count(*) FROM pg_subscription_rel WHERE srsubid IN (SELECT oid FROM pg_subscription WHERE subname = 'tap_sub_schema')"
@@ -189,9 +187,10 @@ is($result, qq(3),
 # Drop schema from publication, verify that the inserts are not published after
 # dropping the schema from publication. Here 2nd insert should not be
 # published.
-$node_publisher->safe_psql('postgres', "
+$node_publisher->safe_psql(
+	'postgres', "
 	INSERT INTO sch1.tab1 VALUES(21);
-	ALTER PUBLICATION tap_pub_schema DROP ALL TABLES IN SCHEMA sch1;
+	ALTER PUBLICATION tap_pub_schema DROP TABLES IN SCHEMA sch1;
 	INSERT INTO sch1.tab1 values(22);"
 );
 

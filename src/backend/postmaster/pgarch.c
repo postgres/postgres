@@ -81,15 +81,14 @@ typedef struct PgArchData
 	int			pgprocno;		/* pgprocno of archiver process */
 
 	/*
-	 * Forces a directory scan in pgarch_readyXlog().  Protected by
-	 * arch_lck.
+	 * Forces a directory scan in pgarch_readyXlog().  Protected by arch_lck.
 	 */
 	bool		force_dir_scan;
 
 	slock_t		arch_lck;
 } PgArchData;
 
-char *XLogArchiveLibrary = "";
+char	   *XLogArchiveLibrary = "";
 
 
 /* ----------
@@ -143,9 +142,9 @@ static bool pgarch_readyXlog(char *xlog);
 static void pgarch_archiveDone(char *xlog);
 static void pgarch_die(int code, Datum arg);
 static void HandlePgArchInterrupts(void);
-static int ready_file_comparator(Datum a, Datum b, void *arg);
+static int	ready_file_comparator(Datum a, Datum b, void *arg);
 static void LoadArchiveLibrary(void);
-static void call_archive_module_shutdown_callback(int code, Datum arg);
+static void pgarch_call_module_shutdown_cb(int code, Datum arg);
 
 /* Report shared memory space needed by PgArchShmemInit */
 Size
@@ -253,13 +252,7 @@ PgArchiverMain(void)
 	/* Load the archive_library. */
 	LoadArchiveLibrary();
 
-	PG_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-	{
-		pgarch_MainLoop();
-	}
-	PG_END_ENSURE_ERROR_CLEANUP(call_archive_module_shutdown_callback, 0);
-
-	call_archive_module_shutdown_callback(0, 0);
+	pgarch_MainLoop();
 
 	proc_exit(0);
 }
@@ -579,13 +572,13 @@ pgarch_readyXlog(char *xlog)
 
 	/*
 	 * If we still have stored file names from the previous directory scan,
-	 * try to return one of those.  We check to make sure the status file
-	 * is still present, as the archive_command for a previous file may
-	 * have already marked it done.
+	 * try to return one of those.  We check to make sure the status file is
+	 * still present, as the archive_command for a previous file may have
+	 * already marked it done.
 	 */
 	while (arch_files->arch_files_size > 0)
 	{
-		struct stat	st;
+		struct stat st;
 		char		status_file[MAXPGPATH];
 		char	   *arch_file;
 
@@ -655,8 +648,8 @@ pgarch_readyXlog(char *xlog)
 									   CStringGetDatum(basename), NULL) > 0)
 		{
 			/*
-			 * Remove the lowest priority file and add the current one to
-			 * the heap.
+			 * Remove the lowest priority file and add the current one to the
+			 * heap.
 			 */
 			arch_file = DatumGetCString(binaryheap_remove_first(arch_files->arch_heap));
 			strcpy(arch_file, basename);
@@ -677,8 +670,8 @@ pgarch_readyXlog(char *xlog)
 		binaryheap_build(arch_files->arch_heap);
 
 	/*
-	 * Fill arch_files array with the files to archive in ascending order
-	 * of priority.
+	 * Fill arch_files array with the files to archive in ascending order of
+	 * priority.
 	 */
 	arch_files->arch_files_size = arch_files->arch_heap->bh_size;
 	for (int i = 0; i < arch_files->arch_files_size; i++)
@@ -702,10 +695,10 @@ pgarch_readyXlog(char *xlog)
 static int
 ready_file_comparator(Datum a, Datum b, void *arg)
 {
-	char *a_str = DatumGetCString(a);
-	char *b_str = DatumGetCString(b);
-	bool a_history = IsTLHistoryFileName(a_str);
-	bool b_history = IsTLHistoryFileName(b_str);
+	char	   *a_str = DatumGetCString(a);
+	char	   *b_str = DatumGetCString(b);
+	bool		a_history = IsTLHistoryFileName(a_str);
+	bool		b_history = IsTLHistoryFileName(b_str);
 
 	/* Timeline history files always have the highest priority. */
 	if (a_history != b_history)
@@ -746,7 +739,19 @@ pgarch_archiveDone(char *xlog)
 
 	StatusFilePath(rlogready, xlog, ".ready");
 	StatusFilePath(rlogdone, xlog, ".done");
-	(void) durable_rename(rlogready, rlogdone, WARNING);
+
+	/*
+	 * To avoid extra overhead, we don't durably rename the .ready file to
+	 * .done.  Archive commands and libraries must gracefully handle attempts
+	 * to re-archive files (e.g., if the server crashes just before this
+	 * function is called), so it should be okay if the .ready file reappears
+	 * after a crash.
+	 */
+	if (rename(rlogready, rlogdone) < 0)
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
+						rlogready, rlogdone)));
 }
 
 
@@ -787,24 +792,25 @@ HandlePgArchInterrupts(void)
 		ConfigReloadPending = false;
 		ProcessConfigFile(PGC_SIGHUP);
 
+		if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("both archive_command and archive_library set"),
+					 errdetail("Only one of archive_command, archive_library may be set.")));
+
 		archiveLibChanged = strcmp(XLogArchiveLibrary, archiveLib) != 0;
 		pfree(archiveLib);
 
 		if (archiveLibChanged)
 		{
 			/*
-			 * Call the currently loaded archive module's shutdown callback, if
-			 * one is defined.
-			 */
-			call_archive_module_shutdown_callback(0, 0);
-
-			/*
 			 * Ideally, we would simply unload the previous archive module and
 			 * load the new one, but there is presently no mechanism for
 			 * unloading a library (see the comment above
-			 * internal_unload_library()).  To deal with this, we simply restart
-			 * the archiver.  The new archive module will be loaded when the new
-			 * archiver process starts up.
+			 * internal_load_library()).  To deal with this, we simply restart
+			 * the archiver.  The new archive module will be loaded when the
+			 * new archiver process starts up.  Note that this triggers the
+			 * module's shutdown callback, if defined.
 			 */
 			ereport(LOG,
 					(errmsg("restarting archiver process because value of "
@@ -825,12 +831,17 @@ LoadArchiveLibrary(void)
 {
 	ArchiveModuleInit archive_init;
 
+	if (XLogArchiveLibrary[0] != '\0' && XLogArchiveCommand[0] != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("both archive_command and archive_library set"),
+				 errdetail("Only one of archive_command, archive_library may be set.")));
+
 	memset(&ArchiveContext, 0, sizeof(ArchiveModuleCallbacks));
 
 	/*
-	 * If shell archiving is enabled, use our special initialization
-	 * function.  Otherwise, load the library and call its
-	 * _PG_archive_module_init().
+	 * If shell archiving is enabled, use our special initialization function.
+	 * Otherwise, load the library and call its _PG_archive_module_init().
 	 */
 	if (XLogArchiveLibrary[0] == '\0')
 		archive_init = shell_archive_init;
@@ -841,22 +852,22 @@ LoadArchiveLibrary(void)
 
 	if (archive_init == NULL)
 		ereport(ERROR,
-				(errmsg("archive modules have to declare the _PG_archive_module_init symbol")));
+				(errmsg("archive modules have to define the symbol %s", "_PG_archive_module_init")));
 
 	(*archive_init) (&ArchiveContext);
 
 	if (ArchiveContext.archive_file_cb == NULL)
 		ereport(ERROR,
 				(errmsg("archive modules must register an archive callback")));
+
+	before_shmem_exit(pgarch_call_module_shutdown_cb, 0);
 }
 
 /*
- * call_archive_module_shutdown_callback
- *
- * Calls the loaded archive module's shutdown callback, if one is defined.
+ * Call the shutdown callback of the loaded archive module, if defined.
  */
 static void
-call_archive_module_shutdown_callback(int code, Datum arg)
+pgarch_call_module_shutdown_cb(int code, Datum arg)
 {
 	if (ArchiveContext.shutdown_cb != NULL)
 		ArchiveContext.shutdown_cb();

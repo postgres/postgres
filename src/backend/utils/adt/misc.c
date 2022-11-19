@@ -208,7 +208,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	DIR		   *dirdesc;
 	struct dirent *de;
 
-	SetSingleFuncCall(fcinfo, SRF_SINGLE_USE_EXPECTED);
+	InitMaterializedSRF(fcinfo, MAT_SRF_USE_EXPECTED_DESC);
 
 	if (tablespaceOid == GLOBALTABLESPACE_OID)
 	{
@@ -219,7 +219,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	}
 
 	if (tablespaceOid == DEFAULTTABLESPACE_OID)
-		location = psprintf("base");
+		location = "base";
 	else
 		location = psprintf("pg_tblspc/%u/%s", tablespaceOid,
 							TABLESPACE_VERSION_DIRECTORY);
@@ -283,9 +283,7 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	char		sourcepath[MAXPGPATH];
 	char		targetpath[MAXPGPATH];
 	int			rllen;
-#ifndef WIN32
 	struct stat st;
-#endif
 
 	/*
 	 * It's useful to apply this function to pg_class.reltablespace, wherein
@@ -302,8 +300,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 		tablespaceOid == GLOBALTABLESPACE_OID)
 		PG_RETURN_TEXT_P(cstring_to_text(""));
 
-#if defined(HAVE_READLINK) || defined(WIN32)
-
 	/*
 	 * Find the location of the tablespace by reading the symbolic link that
 	 * is in pg_tblspc/<oid>.
@@ -316,10 +312,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	 * created with allow_in_place_tablespaces enabled.  If a directory is
 	 * found, a relative path to the data directory is returned.
 	 */
-#ifdef WIN32
-	if (!pgwin32_is_junction(sourcepath))
-		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
-#else
 	if (lstat(sourcepath, &st) < 0)
 	{
 		ereport(ERROR,
@@ -330,7 +322,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 
 	if (!S_ISLNK(st.st_mode))
 		PG_RETURN_TEXT_P(cstring_to_text(sourcepath));
-#endif
 
 	/*
 	 * In presence of a link or a junction point, return the path pointing to.
@@ -349,12 +340,6 @@ pg_tablespace_location(PG_FUNCTION_ARGS)
 	targetpath[rllen] = '\0';
 
 	PG_RETURN_TEXT_P(cstring_to_text(targetpath));
-#else
-	ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("tablespaces are not supported on this platform")));
-	PG_RETURN_NULL();
-#endif
 }
 
 /*

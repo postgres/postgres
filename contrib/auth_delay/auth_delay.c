@@ -20,10 +20,8 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* GUC Variables */
-static int	auth_delay_milliseconds;
+static int	auth_delay_milliseconds = 0;
 
 /* Original Hook */
 static ClientAuthentication_hook_type original_client_auth_hook = NULL;

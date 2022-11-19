@@ -47,16 +47,17 @@ mkdir "$standby_pgdata/tst_both_dir";
 append_to_file "$standby_pgdata/tst_both_dir/file1", 'a';
 
 # Run pg_rewind and pipe the output from the run into the extra file we want
-# to copy. This will ensure that the file is continously growing during the
+# to copy. This will ensure that the file is continuously growing during the
 # copy operation and the result will be an error.
 my $ret = run_log(
 	[
-		'pg_rewind', '--debug',
+		'pg_rewind',       '--debug',
 		'--source-pgdata', $standby_pgdata,
 		'--target-pgdata', $primary_pgdata,
 		'--no-sync',
 	],
-	'2>>', "$standby_pgdata/tst_both_dir/file1");
+	'2>>',
+	"$standby_pgdata/tst_both_dir/file1");
 ok(!$ret, 'Error out on copying growing file');
 
 # Ensure that the files are of different size, the final error message should

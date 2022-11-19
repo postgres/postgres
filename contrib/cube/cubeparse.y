@@ -15,16 +15,10 @@
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
- * memory leaks if we error out during parsing.  Note this only works with
- * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
- * if possible, so there's not really much problem anyhow, at least if
- * you're building with gcc.
+ * memory leaks if we error out during parsing.
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
-
-static char *scanbuf;
-static int	scanbuflen;
 
 static int item_count(const char *s, char delim);
 static NDBOX *write_box(int dim, char *str1, char *str2);
@@ -34,6 +28,7 @@ static NDBOX *write_point_as_box(int dim, char *str);
 
 /* BISON Declarations */
 %parse-param {NDBOX **result}
+%parse-param {Size scanbuflen}
 %expect 0
 %name-prefix="cube_yy"
 
@@ -45,7 +40,7 @@ static NDBOX *write_point_as_box(int dim, char *str);
 
 box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($2, ',');
 		if (item_count($4, ',') != dim)
@@ -72,7 +67,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| paren_list COMMA paren_list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (item_count($3, ',') != dim)
@@ -99,7 +94,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| paren_list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (dim > CUBE_MAX_DIM)
@@ -117,7 +112,7 @@ box: O_BRACKET paren_list COMMA paren_list C_BRACKET
 
 	| list
 	{
-		int dim;
+		int			dim;
 
 		dim = item_count($1, ',');
 		if (dim > CUBE_MAX_DIM)
@@ -265,5 +260,3 @@ write_point_as_box(int dim, char *str)
 
 	return bp;
 }
-
-#include "cubescan.c"

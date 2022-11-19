@@ -44,6 +44,40 @@ SELECT * FROM xacttest;
  777 | 777.777
 (5 rows)
 
+-- Test that transaction characteristics cannot be reset.
+BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+SELECT COUNT(*) FROM xacttest;
+ count 
+-------
+     5
+(1 row)
+
+RESET transaction_isolation; -- error
+ERROR:  parameter "transaction_isolation" cannot be reset
+END;
+BEGIN TRANSACTION READ ONLY;
+SELECT COUNT(*) FROM xacttest;
+ count 
+-------
+     5
+(1 row)
+
+RESET transaction_read_only; -- error
+ERROR:  parameter "transaction_read_only" cannot be reset
+END;
+BEGIN TRANSACTION DEFERRABLE;
+SELECT COUNT(*) FROM xacttest;
+ count 
+-------
+     5
+(1 row)
+
+RESET transaction_deferrable; -- error
+ERROR:  parameter "transaction_deferrable" cannot be reset
+END;
+CREATE FUNCTION errfunc() RETURNS int LANGUAGE SQL AS 'SELECT 1'
+SET transaction_read_only = on; -- error
+ERROR:  parameter "transaction_read_only" cannot be set locally in functions
 -- Read-only tests
 CREATE TABLE writetest (a int);
 CREATE TEMPORARY TABLE temptest (a int);

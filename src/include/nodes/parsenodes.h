@@ -22,6 +22,7 @@
 #ifndef PARSENODES_H
 #define PARSENODES_H
 
+#include "common/relpath.h"
 #include "nodes/bitmapset.h"
 #include "nodes/lockoptions.h"
 #include "nodes/primnodes.h"
@@ -123,7 +124,11 @@ typedef struct Query
 
 	QuerySource querySource;	/* where did I come from? */
 
-	uint64		queryId;		/* query identifier (can be set by plugins) */
+	/*
+	 * query identifier (can be set by plugins); ignored for equal, as it
+	 * might not be set; also not stored
+	 */
+	uint64		queryId pg_node_attr(equal_ignore, read_write_ignore, read_as(0));
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
@@ -287,6 +292,8 @@ typedef enum A_Expr_Kind
 
 typedef struct A_Expr
 {
+	pg_node_attr(custom_read_write)
+
 	NodeTag		type;
 	A_Expr_Kind kind;			/* see above */
 	List	   *name;			/* possibly-qualified name of operator */
@@ -297,23 +304,26 @@ typedef struct A_Expr
 
 /*
  * A_Const - a literal constant
+ *
+ * Value nodes are inline for performance.  You can treat 'val' as a node,
+ * as in IsA(&val, Integer).  'val' is not valid if isnull is true.
  */
+union ValUnion
+{
+	Node		node;
+	Integer		ival;
+	Float		fval;
+	Boolean		boolval;
+	String		sval;
+	BitString	bsval;
+};
+
 typedef struct A_Const
 {
+	pg_node_attr(custom_copy_equal, custom_read_write)
+
 	NodeTag		type;
-	/*
-	 * Value nodes are inline for performance.  You can treat 'val' as a node,
-	 * as in IsA(&val, Integer).  'val' is not valid if isnull is true.
-	 */
-	union ValUnion
-	{
-		Node		node;
-		Integer		ival;
-		Float		fval;
-		Boolean		boolval;
-		String		sval;
-		BitString	bsval;
-	}			val;
+	union ValUnion val;
 	bool		isnull;			/* SQL NULL constant */
 	int			location;		/* token location, or -1 if unknown */
 } A_Const;
@@ -682,6 +692,7 @@ typedef struct ColumnDef
 	bool		is_not_null;	/* NOT NULL constraint specified? */
 	bool		is_from_type;	/* column definition came from table type */
 	char		storage;		/* attstorage setting, or 0 for default */
+	char	   *storage_name;	/* attstorage setting name or NULL for default */
 	Node	   *raw_default;	/* default value (untransformed parse tree) */
 	Node	   *cooked_default; /* default value (transformed expr tree) */
 	char		identity;		/* attidentity setting */
@@ -763,7 +774,8 @@ typedef struct DefElem
 	NodeTag		type;
 	char	   *defnamespace;	/* NULL if unqualified name */
 	char	   *defname;
-	Node	   *arg;			/* typically Integer, Float, String, or TypeName */
+	Node	   *arg;			/* typically Integer, Float, String, or
+								 * TypeName */
 	DefElemAction defaction;	/* unspecified action, or SET/ADD/DROP */
 	int			location;		/* token location, or -1 if unknown */
 } DefElem;
@@ -815,6 +827,13 @@ typedef struct PartitionElem
 	int			location;		/* token location, or -1 if unknown */
 } PartitionElem;
 
+typedef enum PartitionStrategy
+{
+	PARTITION_STRATEGY_LIST = 'l',
+	PARTITION_STRATEGY_RANGE = 'r',
+	PARTITION_STRATEGY_HASH = 'h'
+} PartitionStrategy;
+
 /*
  * PartitionSpec - parse-time representation of a partition key specification
  *
@@ -823,16 +842,10 @@ typedef struct PartitionElem
 typedef struct PartitionSpec
 {
 	NodeTag		type;
-	char	   *strategy;		/* partitioning strategy ('hash', 'list' or
-								 * 'range') */
+	PartitionStrategy strategy;
 	List	   *partParams;		/* List of PartitionElems */
 	int			location;		/* token location, or -1 if unknown */
 } PartitionSpec;
-
-/* Internal codes for partitioning strategies */
-#define PARTITION_STRATEGY_HASH		'h'
-#define PARTITION_STRATEGY_LIST		'l'
-#define PARTITION_STRATEGY_RANGE	'r'
 
 /*
  * PartitionBoundSpec - a partition bound specification
@@ -1009,6 +1022,8 @@ typedef enum RTEKind
 
 typedef struct RangeTblEntry
 {
+	pg_node_attr(custom_read_write)
+
 	NodeTag		type;
 
 	RTEKind		rtekind;		/* see above */
@@ -1029,8 +1044,8 @@ typedef struct RangeTblEntry
 	 *
 	 * rellockmode is really LOCKMODE, but it's declared int to avoid having
 	 * to include lock-related headers here.  It must be RowExclusiveLock if
-	 * the RTE is an INSERT/UPDATE/DELETE target, else RowShareLock if the RTE
-	 * is a SELECT FOR UPDATE/FOR SHARE target, else AccessShareLock.
+	 * the RTE is an INSERT/UPDATE/DELETE/MERGE target, else RowShareLock if
+	 * the RTE is a SELECT FOR UPDATE/FOR SHARE target, else AccessShareLock.
 	 *
 	 * Note: in some cases, rule expansion may result in RTEs that are marked
 	 * with RowExclusiveLock even though they are not the target of the
@@ -1151,7 +1166,7 @@ typedef struct RangeTblEntry
 	 * Fields valid for ENR RTEs (else NULL/zero):
 	 */
 	char	   *enrname;		/* name of ephemeral named relation */
-	Cardinality	enrtuples;		/* estimated or actual from caller */
+	Cardinality enrtuples;		/* estimated or actual from caller */
 
 	/*
 	 * Fields valid in all RTEs:
@@ -1593,299 +1608,6 @@ typedef struct TriggerTransition
 	bool		isTable;
 } TriggerTransition;
 
-/* Nodes for SQL/JSON support */
-
-/*
- * JsonQuotes -
- *		representation of [KEEP|OMIT] QUOTES clause for JSON_QUERY()
- */
-typedef enum JsonQuotes
-{
-	JS_QUOTES_UNSPEC,			/* unspecified */
-	JS_QUOTES_KEEP,				/* KEEP QUOTES */
-	JS_QUOTES_OMIT				/* OMIT QUOTES */
-} JsonQuotes;
-
-/*
- * JsonTableColumnType -
- *		enumeration of JSON_TABLE column types
- */
-typedef enum
-{
-	JTC_FOR_ORDINALITY,
-	JTC_REGULAR,
-	JTC_EXISTS,
-	JTC_FORMATTED,
-	JTC_NESTED,
-} JsonTableColumnType;
-
-/*
- * JsonPathSpec -
- *		representation of JSON path constant
- */
-typedef char *JsonPathSpec;
-
-/*
- * JsonOutput -
- *		representation of JSON output clause (RETURNING type [FORMAT format])
- */
-typedef struct JsonOutput
-{
-	NodeTag		type;
-	TypeName   *typeName;		/* RETURNING type name, if specified */
-	JsonReturning *returning;	/* RETURNING FORMAT clause and type Oids */
-} JsonOutput;
-
-/*
- * JsonArgument -
- *		representation of argument from JSON PASSING clause
- */
-typedef struct JsonArgument
-{
-	NodeTag		type;
-	JsonValueExpr *val;			/* argument value expression */
-	char	   *name;			/* argument name */
-} JsonArgument;
-
-/*
- * JsonCommon -
- *		representation of common syntax of functions using JSON path
- */
-typedef struct JsonCommon
-{
-	NodeTag		type;
-	JsonValueExpr *expr;		/* context item expression */
-	Node	   *pathspec;		/* JSON path specification expression */
-	char	   *pathname;		/* path name, if any */
-	List	   *passing;		/* list of PASSING clause arguments, if any */
-	int			location;		/* token location, or -1 if unknown */
-} JsonCommon;
-
-/*
- * JsonFuncExpr -
- *		untransformed representation of JSON function expressions
- */
-typedef struct JsonFuncExpr
-{
-	NodeTag		type;
-	JsonExprOp	op;				/* expression type */
-	JsonCommon *common;			/* common syntax */
-	JsonOutput *output;			/* output clause, if specified */
-	JsonBehavior *on_empty;		/* ON EMPTY behavior, if specified */
-	JsonBehavior *on_error;		/* ON ERROR behavior, if specified */
-	JsonWrapper	wrapper;		/* array wrapper behavior (JSON_QUERY only) */
-	bool		omit_quotes;	/* omit or keep quotes? (JSON_QUERY only) */
-	int			location;		/* token location, or -1 if unknown */
-} JsonFuncExpr;
-
-/*
- * JsonTableColumn -
- *		untransformed representation of JSON_TABLE column
- */
-typedef struct JsonTableColumn
-{
-	NodeTag		type;
-	JsonTableColumnType coltype;	/* column type */
-	char	   *name;				/* column name */
-	TypeName   *typeName;			/* column type name */
-	JsonPathSpec pathspec;			/* path specification, if any */
-	char	   *pathname;			/* path name, if any */
-	JsonFormat *format;				/* JSON format clause, if specified */
-	JsonWrapper	wrapper;			/* WRAPPER behavior for formatted columns */
-	bool		omit_quotes;		/* omit or keep quotes on scalar strings? */
-	List	   *columns;			/* nested columns */
-	JsonBehavior *on_empty;			/* ON EMPTY behavior */
-	JsonBehavior *on_error;			/* ON ERROR behavior */
-	int			location;			/* token location, or -1 if unknown */
-} JsonTableColumn;
-
-/*
- * JsonTablePlanType -
- *		flags for JSON_TABLE plan node types representation
- */
-typedef enum JsonTablePlanType
-{
-	JSTP_DEFAULT,
-	JSTP_SIMPLE,
-	JSTP_JOINED,
-} JsonTablePlanType;
-
-/*
- * JsonTablePlanJoinType -
- *		flags for JSON_TABLE join types representation
- */
-typedef enum JsonTablePlanJoinType
-{
-	JSTPJ_INNER = 0x01,
-	JSTPJ_OUTER = 0x02,
-	JSTPJ_CROSS = 0x04,
-	JSTPJ_UNION = 0x08,
-} JsonTablePlanJoinType;
-
-typedef struct JsonTablePlan JsonTablePlan;
-
-/*
- * JsonTablePlan -
- *		untransformed representation of JSON_TABLE plan node
- */
-struct JsonTablePlan
-{
-	NodeTag		type;
-	JsonTablePlanType plan_type;		/* plan type */
-	JsonTablePlanJoinType join_type;	/* join type (for joined plan only) */
-	JsonTablePlan *plan1;				/* first joined plan */
-	JsonTablePlan *plan2;				/* second joined plan */
-	char	   *pathname;				/* path name (for simple plan only) */
-	int			location;				/* token location, or -1 if unknown */
-};
-
-/*
- * JsonTable -
- *		untransformed representation of JSON_TABLE
- */
-typedef struct JsonTable
-{
-	NodeTag		type;
-	JsonCommon *common;					/* common JSON path syntax fields */
-	List	   *columns;				/* list of JsonTableColumn */
-	JsonTablePlan *plan;				/* join plan, if specified */
-	JsonBehavior *on_error;				/* ON ERROR behavior, if specified */
-	Alias	   *alias;					/* table alias in FROM clause */
-	bool		lateral;				/* does it have LATERAL prefix? */
-	int			location;				/* token location, or -1 if unknown */
-} JsonTable;
-
-/*
- * JsonKeyValue -
- *		untransformed representation of JSON object key-value pair for
- *		JSON_OBJECT() and JSON_OBJECTAGG()
- */
-typedef struct JsonKeyValue
-{
-	NodeTag		type;
-	Expr	   *key;			/* key expression */
-	JsonValueExpr *value;		/* JSON value expression */
-} JsonKeyValue;
-
-/*
- * JsonParseExpr -
- *		untransformed representation of JSON()
- */
-typedef struct JsonParseExpr
-{
-	NodeTag		type;
-	JsonValueExpr *expr;		/* string expression */
-	JsonOutput *output;			/* RETURNING clause, if specified */
-	bool		unique_keys;	/* WITH UNIQUE KEYS? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonParseExpr;
-
-/*
- * JsonScalarExpr -
- *		untransformed representation of JSON_SCALAR()
- */
-typedef struct JsonScalarExpr
-{
-	NodeTag		type;
-	Expr	   *expr;			/* scalar expression */
-	JsonOutput *output;			/* RETURNING clause, if specified */
-	int			location;		/* token location, or -1 if unknown */
-} JsonScalarExpr;
-
-/*
- * JsonSerializeExpr -
- *		untransformed representation of JSON_SERIALIZE() function
- */
-typedef struct JsonSerializeExpr
-{
-	NodeTag		type;
-	JsonValueExpr *expr;		/* json value expression */
-	JsonOutput *output;			/* RETURNING clause, if specified  */
-	int			location;		/* token location, or -1 if unknown */
-} JsonSerializeExpr;
-
-/*
- * JsonObjectConstructor -
- *		untransformed representation of JSON_OBJECT() constructor
- */
-typedef struct JsonObjectConstructor
-{
-	NodeTag		type;
-	List	   *exprs;			/* list of JsonKeyValue pairs */
-	JsonOutput *output;			/* RETURNING clause, if specified  */
-	bool		absent_on_null;	/* skip NULL values? */
-	bool		unique;			/* check key uniqueness? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonObjectConstructor;
-
-/*
- * JsonArrayConstructor -
- *		untransformed representation of JSON_ARRAY(element,...) constructor
- */
-typedef struct JsonArrayConstructor
-{
-	NodeTag		type;
-	List	   *exprs;			/* list of JsonValueExpr elements */
-	JsonOutput *output;			/* RETURNING clause, if specified  */
-	bool		absent_on_null;	/* skip NULL elements? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonArrayConstructor;
-
-/*
- * JsonArrayQueryConstructor -
- *		untransformed representation of JSON_ARRAY(subquery) constructor
- */
-typedef struct JsonArrayQueryConstructor
-{
-	NodeTag		type;
-	Node	   *query;			/* subquery */
-	JsonOutput *output;			/* RETURNING clause, if specified  */
-	JsonFormat *format;			/* FORMAT clause for subquery, if specified */
-	bool		absent_on_null;	/* skip NULL elements? */
-	int			location;		/* token location, or -1 if unknown */
-} JsonArrayQueryConstructor;
-
-/*
- * JsonAggConstructor -
- *		common fields of untransformed representation of
- *		JSON_ARRAYAGG() and JSON_OBJECTAGG()
- */
-typedef struct JsonAggConstructor
-{
-	NodeTag		type;
-	JsonOutput *output;			/* RETURNING clause, if any */
-	Node	   *agg_filter;		/* FILTER clause, if any */
-	List	   *agg_order;		/* ORDER BY clause, if any */
-	struct WindowDef *over;		/* OVER clause, if any */
-	int			location;		/* token location, or -1 if unknown */
-} JsonAggConstructor;
-
-/*
- * JsonObjectAgg -
- *		untransformed representation of JSON_OBJECTAGG()
- */
-typedef struct JsonObjectAgg
-{
-	NodeTag		type;
-	JsonAggConstructor *constructor; /* common fields */
-	JsonKeyValue *arg;			/* object key-value pair */
-	bool		absent_on_null;	/* skip NULL values? */
-	bool		unique;			/* check key uniqueness? */
-} JsonObjectAgg;
-
-/*
- * JsonArrayAgg -
- *		untransformed representation of JSON_ARRRAYAGG()
- */
-typedef struct JsonArrayAgg
-{
-	NodeTag		type;
-	JsonAggConstructor *constructor; /* common fields */
-	JsonValueExpr *arg;			/* array element expression */
-	bool		absent_on_null;	/* skip NULL elements? */
-} JsonArrayAgg;
-
-
 /*****************************************************************************
  *		Raw Grammar Output Statements
  *****************************************************************************/
@@ -2321,6 +2043,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 								 * constraint, or parent table */
 	DropBehavior behavior;		/* RESTRICT or CASCADE for DROP cases */
 	bool		missing_ok;		/* skip error if missing? */
+	bool		recurse;		/* exec-time recursion */
 } AlterTableCmd;
 
 
@@ -2443,7 +2166,7 @@ typedef struct GrantRoleStmt
 	List	   *granted_roles;	/* list of roles to be granted/revoked */
 	List	   *grantee_roles;	/* list of member roles to add/delete */
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
-	bool		admin_opt;		/* with admin option */
+	List	   *opt;			/* options e.g. WITH GRANT OPTION */
 	RoleSpec   *grantor;		/* set grantor to other than current role */
 	DropBehavior behavior;		/* drop behavior (for REVOKE) */
 } GrantRoleStmt;
@@ -2611,6 +2334,8 @@ typedef enum ConstrType			/* types of constraints */
 
 typedef struct Constraint
 {
+	pg_node_attr(custom_read_write)
+
 	NodeTag		type;
 	ConstrType	contype;		/* see above */
 
@@ -2627,7 +2352,7 @@ typedef struct Constraint
 	char		generated_when; /* ALWAYS or BY DEFAULT */
 
 	/* Fields used for unique constraints (UNIQUE and PRIMARY KEY): */
-	bool		nulls_not_distinct;	/* null treatment for UNIQUE constraints */
+	bool		nulls_not_distinct; /* null treatment for UNIQUE constraints */
 	List	   *keys;			/* String nodes naming referenced key
 								 * column(s) */
 	List	   *including;		/* String nodes naming referenced nonkey
@@ -3251,12 +2976,12 @@ typedef struct IndexStmt
 	List	   *excludeOpNames; /* exclusion operator names, or NIL if none */
 	char	   *idxcomment;		/* comment to apply to index, or NULL */
 	Oid			indexOid;		/* OID of an existing index, if any */
-	Oid			oldNode;		/* relfilenode of existing storage, if any */
-	SubTransactionId oldCreateSubid;	/* rd_createSubid of oldNode */
-	SubTransactionId oldFirstRelfilenodeSubid;	/* rd_firstRelfilenodeSubid of
-												 * oldNode */
+	RelFileNumber oldNumber;	/* relfilenumber of existing storage, if any */
+	SubTransactionId oldCreateSubid;	/* rd_createSubid of oldNumber */
+	SubTransactionId oldFirstRelfilelocatorSubid;	/* rd_firstRelfilelocatorSubid
+													 * of oldNumber */
 	bool		unique;			/* is index unique? */
-	bool		nulls_not_distinct;	/* null treatment for UNIQUE constraints */
+	bool		nulls_not_distinct; /* null treatment for UNIQUE constraints */
 	bool		primary;		/* is index a primary key? */
 	bool		isconstraint;	/* is it for a pkey/unique constraint? */
 	bool		deferrable;		/* is the constraint DEFERRABLE? */
@@ -3370,6 +3095,8 @@ typedef struct DoStmt
 
 typedef struct InlineCodeBlock
 {
+	pg_node_attr(nodetag_only)	/* this is not a member of parse trees */
+
 	NodeTag		type;
 	char	   *source_text;	/* source text of anonymous code block */
 	Oid			langOid;		/* OID of selected language */
@@ -3396,6 +3123,8 @@ typedef struct CallStmt
 
 typedef struct CallContext
 {
+	pg_node_attr(nodetag_only)	/* this is not a member of parse trees */
+
 	NodeTag		type;
 	bool		atomic;
 } CallContext;

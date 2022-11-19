@@ -30,7 +30,7 @@ pg_config(PG_FUNCTION_ARGS)
 	int			i = 0;
 
 	/* initialize our tuplestore */
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	configdata = get_configdata(my_exec_path, &configdata_len);
 	for (i = 0; i < configdata_len; i++)

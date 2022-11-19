@@ -60,21 +60,21 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected special size %d, got %d.",
-							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
-							   (int) PageGetSpecialSize(page))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected special size %d, got %d.",
+						   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+						   (int) PageGetSpecialSize(page))));
 
 	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected %08x, got %08x.",
-							   GIST_PAGE_ID,
-							   opaq->gist_page_id)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected %08x, got %08x.",
+						   GIST_PAGE_ID,
+						   opaq->gist_page_id)));
 
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
@@ -104,9 +104,7 @@ gist_page_opaque_info(PG_FUNCTION_ARGS)
 	values[0] = LSNGetDatum(PageGetLSN(page));
 	values[1] = LSNGetDatum(GistPageGetNSN(page));
 	values[2] = Int64GetDatum(opaq->rightlink);
-	values[3] = PointerGetDatum(construct_array(flags, nflags,
-												TEXTOID,
-												-1, false, TYPALIGN_INT));
+	values[3] = PointerGetDatum(construct_array_builtin(flags, nflags, TEXTOID));
 
 	/* Build and return the result tuple. */
 	resultTuple = heap_form_tuple(tupdesc, values, nulls);
@@ -129,7 +127,7 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	page = get_page_from_raw(raw_page);
 
@@ -138,21 +136,21 @@ gist_page_items_bytea(PG_FUNCTION_ARGS)
 
 	/* verify the special space has the expected size */
 	if (PageGetSpecialSize(page) != MAXALIGN(sizeof(GISTPageOpaqueData)))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected special size %d, got %d.",
-							   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
-							   (int) PageGetSpecialSize(page))));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected special size %d, got %d.",
+						   (int) MAXALIGN(sizeof(GISTPageOpaqueData)),
+						   (int) PageGetSpecialSize(page))));
 
 	opaq = GistPageGetOpaque(page);
 	if (opaq->gist_page_id != GIST_PAGE_ID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("input page is not a valid %s page", "GiST"),
-					 errdetail("Expected %08x, got %08x.",
-							   GIST_PAGE_ID,
-							   opaq->gist_page_id)));
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("input page is not a valid %s page", "GiST"),
+				 errdetail("Expected %08x, got %08x.",
+						   GIST_PAGE_ID,
+						   opaq->gist_page_id)));
 
 	/* Avoid bogus PageGetMaxOffsetNumber() call with deleted pages */
 	if (GistPageIsDeleted(page))
@@ -213,7 +211,7 @@ gist_page_items(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("must be superuser to use raw page functions")));
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Open the relation */
 	indexRel = index_open(indexRelid, AccessShareLock);

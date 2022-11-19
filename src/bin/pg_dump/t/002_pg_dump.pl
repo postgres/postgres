@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir       = PostgreSQL::Test::Utils::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 ###############################################################
 # Definition of the pg_dump runs to make.
@@ -1593,6 +1593,15 @@ my %tests = (
 		like      => { %full_runs, section_pre_data => 1, },
 	},
 
+	'CREATE COLLATION icu_collation' => {
+		create_order => 76,
+		create_sql   => "CREATE COLLATION icu_collation (PROVIDER = icu, LOCALE = 'C');",
+		regexp =>
+		  qr/CREATE COLLATION public.icu_collation \(provider = icu, locale = 'C'(, version = '[^']*')?\);/m,
+		icu => 1,
+		like      => { %full_runs, section_pre_data => 1, },
+	},
+
 	'CREATE CAST FOR timestamptz' => {
 		create_order => 51,
 		create_sql =>
@@ -1681,13 +1690,16 @@ my %tests = (
 		               COLLATE "C"
 					   DEFAULT \'10014\'
 					   CHECK(VALUE ~ \'^\d{5}$\' OR
-							 VALUE ~ \'^\d{5}-\d{4}$\');',
+							 VALUE ~ \'^\d{5}-\d{4}$\');
+					   COMMENT ON CONSTRAINT us_postal_code_check
+						 ON DOMAIN dump_test.us_postal_code IS \'check it\';',
 		regexp => qr/^
 			\QCREATE DOMAIN dump_test.us_postal_code AS text COLLATE pg_catalog."C" DEFAULT '10014'::text\E\n\s+
 			\QCONSTRAINT us_postal_code_check CHECK \E
 			\Q(((VALUE ~ '^\d{5}\E
 			\$\Q'::text) OR (VALUE ~ '^\d{5}-\d{4}\E\$
-			\Q'::text)));\E
+			\Q'::text)));\E(.|\n)*
+			\QCOMMENT ON CONSTRAINT us_postal_code_check ON DOMAIN dump_test.us_postal_code IS 'check it';\E
 			/xm,
 		like =>
 		  { %full_runs, %dump_test_schema_runs, section_pre_data => 1, },
@@ -2439,7 +2451,7 @@ my %tests = (
 	'CREATE PUBLICATION pub3' => {
 		create_order => 50,
 		create_sql   => 'CREATE PUBLICATION pub3;',
-		regexp => qr/^
+		regexp       => qr/^
 			\QCREATE PUBLICATION pub3 WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
@@ -2448,7 +2460,7 @@ my %tests = (
 	'CREATE PUBLICATION pub4' => {
 		create_order => 50,
 		create_sql   => 'CREATE PUBLICATION pub4;',
-		regexp => qr/^
+		regexp       => qr/^
 			\QCREATE PUBLICATION pub4 WITH (publish = 'insert, update, delete, truncate');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
@@ -2461,6 +2473,28 @@ my %tests = (
 						 WITH (connect = false);',
 		regexp => qr/^
 			\QCREATE SUBSCRIPTION sub1 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub1');\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'CREATE SUBSCRIPTION sub2' => {
+		create_order => 50,
+		create_sql   => 'CREATE SUBSCRIPTION sub2
+						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
+						 WITH (connect = false, origin = none);',
+		regexp => qr/^
+			\QCREATE SUBSCRIPTION sub2 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub2', origin = none);\E
+			/xm,
+		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'CREATE SUBSCRIPTION sub3' => {
+		create_order => 50,
+		create_sql   => 'CREATE SUBSCRIPTION sub3
+						 CONNECTION \'dbname=doesnotexist\' PUBLICATION pub1
+						 WITH (connect = false, origin = any);',
+		regexp => qr/^
+			\QCREATE SUBSCRIPTION sub3 CONNECTION 'dbname=doesnotexist' PUBLICATION pub1 WITH (connect = false, slot_name = 'sub3');\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 	},
@@ -2501,7 +2535,8 @@ my %tests = (
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
-	'ALTER PUBLICATION pub1 ADD TABLE test_seventh_table (col3, col2) WHERE (col1 = 1)' => {
+	'ALTER PUBLICATION pub1 ADD TABLE test_seventh_table (col3, col2) WHERE (col1 = 1)'
+	  => {
 		create_order => 52,
 		create_sql =>
 		  'ALTER PUBLICATION pub1 ADD TABLE dump_test.test_seventh_table (col3, col2) WHERE (col1 = 1);',
@@ -2510,27 +2545,40 @@ my %tests = (
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, },
-	},
+	  },
 
-	'ALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA dump_test' => {
+	'ALTER PUBLICATION pub3 ADD TABLES IN SCHEMA dump_test' => {
 		create_order => 51,
 		create_sql =>
-		  'ALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA dump_test;',
+		  'ALTER PUBLICATION pub3 ADD TABLES IN SCHEMA dump_test;',
 		regexp => qr/^
-			\QALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA dump_test;\E
+			\QALTER PUBLICATION pub3 ADD TABLES IN SCHEMA dump_test;\E
 			/xm,
-		like   => { %full_runs, section_post_data => 1, },
+		like => { %full_runs, section_post_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, },
 	},
 
-	'ALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA public' => {
+	'ALTER PUBLICATION pub3 ADD TABLES IN SCHEMA public' => {
 		create_order => 52,
-		create_sql =>
-		  'ALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA public;',
-		regexp => qr/^
-			\QALTER PUBLICATION pub3 ADD ALL TABLES IN SCHEMA public;\E
+		create_sql   => 'ALTER PUBLICATION pub3 ADD TABLES IN SCHEMA public;',
+		regexp       => qr/^
+			\QALTER PUBLICATION pub3 ADD TABLES IN SCHEMA public;\E
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
+	},
+
+	'ALTER PUBLICATION pub3 ADD TABLE test_table' => {
+		create_order => 51,
+		create_sql =>
+		  'ALTER PUBLICATION pub3 ADD TABLE dump_test.test_table;',
+		regexp => qr/^
+			\QALTER PUBLICATION pub3 ADD TABLE ONLY dump_test.test_table;\E
+			/xm,
+		like   => { %full_runs, section_post_data => 1, },
+		unlike => {
+			exclude_dump_test_schema => 1,
+			exclude_test_table       => 1,
+		},
 	},
 
 	'ALTER PUBLICATION pub4 ADD TABLE test_table WHERE (col1 > 0);' => {
@@ -2540,14 +2588,15 @@ my %tests = (
 		regexp => qr/^
 			\QALTER PUBLICATION pub4 ADD TABLE ONLY dump_test.test_table WHERE ((col1 > 0));\E
 			/xm,
-		like => { %full_runs, section_post_data => 1, },
+		like   => { %full_runs, section_post_data => 1, },
 		unlike => {
 			exclude_dump_test_schema => 1,
 			exclude_test_table       => 1,
 		},
 	},
 
-	'ALTER PUBLICATION pub4 ADD TABLE test_second_table WHERE (col2 = \'test\');' => {
+	'ALTER PUBLICATION pub4 ADD TABLE test_second_table WHERE (col2 = \'test\');'
+	  => {
 		create_order => 52,
 		create_sql =>
 		  'ALTER PUBLICATION pub4 ADD TABLE dump_test.test_second_table WHERE (col2 = \'test\');',
@@ -2556,7 +2605,7 @@ my %tests = (
 			/xm,
 		like => { %full_runs, section_post_data => 1, },
 		unlike => { exclude_dump_test_schema => 1, },
-	},
+	  },
 
 	'CREATE SCHEMA public' => {
 		regexp => qr/^CREATE SCHEMA public;/m,
@@ -2593,7 +2642,9 @@ my %tests = (
 						   col3 text,
 						   col4 text,
 						   CHECK (col1 <= 1000)
-					   ) WITH (autovacuum_enabled = false, fillfactor=80);',
+					   ) WITH (autovacuum_enabled = false, fillfactor=80);
+					   COMMENT ON CONSTRAINT test_table_col1_check
+						 ON dump_test.test_table IS \'bounds check\';',
 		regexp => qr/^
 			\QCREATE TABLE dump_test.test_table (\E\n
 			\s+\Qcol1 integer NOT NULL,\E\n
@@ -2602,7 +2653,9 @@ my %tests = (
 			\s+\Qcol4 text,\E\n
 			\s+\QCONSTRAINT test_table_col1_check CHECK ((col1 <= 1000))\E\n
 			\Q)\E\n
-			\QWITH (autovacuum_enabled='false', fillfactor='80');\E\n/xm,
+			\QWITH (autovacuum_enabled='false', fillfactor='80');\E\n(.|\n)*
+			\QCOMMENT ON CONSTRAINT test_table_col1_check ON dump_test.test_table IS 'bounds check';\E
+			/xm,
 		like => {
 			%full_runs,
 			%dump_test_schema_runs,
@@ -3866,9 +3919,13 @@ if ($collation_check_stderr !~ /ERROR: /)
 	$collation_support = 1;
 }
 
-# Determine whether build supports LZ4 and gzip.
+my $supports_icu  = ($ENV{with_icu} eq 'yes');
 my $supports_lz4  = check_pg_config("#define USE_LZ4 1");
 my $supports_gzip = check_pg_config("#define HAVE_LIBZ 1");
+
+# ICU doesn't work with some encodings
+my $encoding = $node->safe_psql('postgres', 'show server_encoding');
+$supports_icu = 0 if $encoding eq 'SQL_ASCII';
 
 # Create additional databases for mutations of schema public
 $node->psql('postgres', 'create database regress_pg_dump_test;');
@@ -3907,11 +3964,22 @@ foreach my $test (
 		$test_db = $tests{$test}->{database};
 	}
 
+	if (defined($tests{$test}->{icu}))
+	{
+		$tests{$test}->{collation} = 1;
+	}
+
 	if ($tests{$test}->{create_sql})
 	{
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip any icu-related collation commands if build was without icu
+		if (!$supports_icu && defined($tests{$test}->{icu}))
 		{
 			next;
 		}
@@ -3923,8 +3991,12 @@ foreach my $test (
 			next;
 		}
 
-		# Add terminating semicolon
-		$create_sql{$test_db} .= $tests{$test}->{create_sql} . ";";
+		# Normalize command ending: strip all line endings, add
+		# semicolon if missing, add two newlines.
+		my $create_sql = $tests{$test}->{create_sql};
+		chomp $create_sql;
+		$create_sql .= ';' unless substr($create_sql, -1) eq ';';
+		$create_sql{$test_db} .= $create_sql . "\n\n";
 	}
 }
 
@@ -3979,26 +4051,12 @@ command_fails_like(
 $node->command_fails_like(
 	[ 'pg_dumpall', '--exclude-database', '.' ],
 	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \./,
-	'pg_dumpall: option --exclude-database rejects multipart pattern "."'
-);
-
-$node->command_fails_like(
-	[ 'pg_dumpall', '--exclude-database', '.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern ".*"'
-);
-
-$node->command_fails_like(
-	[ 'pg_dumpall', '--exclude-database', '*.*' ],
-	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): \*\.\*/,
-	'pg_dumpall: option --exclude-database rejects multipart pattern "*.*"'
-);
+	'pg_dumpall: option --exclude-database rejects multipart pattern "."');
 
 $node->command_fails_like(
 	[ 'pg_dumpall', '--exclude-database', 'myhost.mydb' ],
 	qr/pg_dumpall: error: improper qualified name \(too many dotted names\): myhost\.mydb/,
-	'pg_dumpall: option --exclude-database rejects multipart database names'
-);
+	'pg_dumpall: option --exclude-database rejects multipart database names');
 
 #########################################
 # Test valid database exclusion patterns
@@ -4008,32 +4066,23 @@ $node->command_ok(
 	'pg_dumpall: option --exclude-database handles database names with embedded dots'
 );
 
-$node->command_ok(
-	[ 'pg_dumpall', '--exclude-database', '??*' ],
-	'pg_dumpall: option --exclude-database handles database name patterns'
-);
-
-
 #########################################
 # Test invalid multipart schema names
 
 $node->command_fails_like(
 	[ 'pg_dump', '--schema', 'myhost.mydb.myschema' ],
 	qr/pg_dump: error: improper qualified name \(too many dotted names\): myhost\.mydb\.myschema/,
-	'pg_dump: option --schema rejects three-part schema names'
-);
+	'pg_dump: option --schema rejects three-part schema names');
 
 $node->command_fails_like(
 	[ 'pg_dump', '--schema', 'otherdb.myschema' ],
 	qr/pg_dump: error: cross-database references are not implemented: otherdb\.myschema/,
-	'pg_dump: option --schema rejects cross-database multipart schema names'
-);
+	'pg_dump: option --schema rejects cross-database multipart schema names');
 
 $node->command_fails_like(
 	[ 'pg_dump', '--schema', '.' ],
 	qr/pg_dump: error: cross-database references are not implemented: \./,
-	'pg_dump: option --schema rejects degenerate two-part schema name: "."'
-);
+	'pg_dump: option --schema rejects degenerate two-part schema name: "."');
 
 $node->command_fails_like(
 	[ 'pg_dump', '--schema', '"some.other.db".myschema' ],
@@ -4042,21 +4091,9 @@ $node->command_fails_like(
 );
 
 $node->command_fails_like(
-	[ 'pg_dump', '--schema', '.*' ],
-	qr/pg_dump: error: cross-database references are not implemented: \.\*/,
-	'pg_dump: option --schema rejects degenerate two-part schema name: ".*"'
-);
-
-$node->command_fails_like(
 	[ 'pg_dump', '--schema', '..' ],
 	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\./,
 	'pg_dump: option --schema rejects degenerate three-part schema name: ".."'
-);
-
-$node->command_fails_like(
-	[ 'pg_dump', '--schema', '.*.*' ],
-	qr/pg_dump: error: improper qualified name \(too many dotted names\): \.\*\.\*/,
-	'pg_dump: option --schema rejects degenerate three-part schema pattern: ".*.*"'
 );
 
 #########################################
@@ -4065,17 +4102,18 @@ $node->command_fails_like(
 $node->command_fails_like(
 	[ 'pg_dump', '--table', 'myhost.mydb.myschema.mytable' ],
 	qr/pg_dump: error: improper relation name \(too many dotted names\): myhost\.mydb\.myschema\.mytable/,
-	'pg_dump: option --table rejects four-part table names'
-);
+	'pg_dump: option --table rejects four-part table names');
 
 $node->command_fails_like(
 	[ 'pg_dump', '--table', 'otherdb.pg_catalog.pg_class' ],
 	qr/pg_dump: error: cross-database references are not implemented: otherdb\.pg_catalog\.pg_class/,
-	'pg_dump: option --table rejects cross-database three part table names'
-);
+	'pg_dump: option --table rejects cross-database three part table names');
 
 command_fails_like(
-	[ 'pg_dump', '-p', "$port", '--table', '"some.other.db".pg_catalog.pg_class' ],
+	[
+		'pg_dump', '-p', "$port", '--table',
+		'"some.other.db".pg_catalog.pg_class'
+	],
 	qr/pg_dump: error: cross-database references are not implemented: "some\.other\.db"\.pg_catalog\.pg_class/,
 	'pg_dump: option --table rejects cross-database three part table names with embedded dots'
 );
@@ -4147,6 +4185,12 @@ foreach my $run (sort keys %pgdump_runs)
 
 		# Skip any collation-related commands if there is no collation support
 		if (!$collation_support && defined($tests{$test}->{collation}))
+		{
+			next;
+		}
+
+		# Skip any icu-related collation commands if build was without icu
+		if (!$supports_icu && defined($tests{$test}->{icu}))
 		{
 			next;
 		}

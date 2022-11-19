@@ -262,6 +262,7 @@ ApplyUnsignedSortComparator(Datum datum1, bool isNull1,
 	return compare;
 }
 
+#if SIZEOF_DATUM >= 8
 static inline int
 ApplySignedSortComparator(Datum datum1, bool isNull1,
 						  Datum datum2, bool isNull2,
@@ -287,19 +288,15 @@ ApplySignedSortComparator(Datum datum1, bool isNull1,
 	}
 	else
 	{
-#if SIZEOF_DATUM == 8
-		compare = (int64) datum1 < (int64) datum2 ? -1 :
-			(int64) datum1 > (int64) datum2 ? 1 : 0;
-#else
-		compare = (int32) datum1 < (int32) datum2 ? -1 :
-			(int32) datum1 > (int32) datum2 ? 1 : 0;
-#endif
+		compare = DatumGetInt64(datum1) < DatumGetInt64(datum2) ? -1 :
+			DatumGetInt64(datum1) > DatumGetInt64(datum2) ? 1 : 0;
 		if (ssup->ssup_reverse)
 			INVERT_COMPARE_RESULT(compare);
 	}
 
 	return compare;
 }
+#endif
 
 static inline int
 ApplyInt32SortComparator(Datum datum1, bool isNull1,
@@ -326,8 +323,8 @@ ApplyInt32SortComparator(Datum datum1, bool isNull1,
 	}
 	else
 	{
-		compare = (int32) datum1 < (int32) datum2 ? -1 :
-			(int32) datum1 > (int32) datum2 ? 1 : 0;
+		compare = DatumGetInt32(datum1) < DatumGetInt32(datum2) ? -1 :
+			DatumGetInt32(datum1) > DatumGetInt32(datum2) ? 1 : 0;
 		if (ssup->ssup_reverse)
 			INVERT_COMPARE_RESULT(compare);
 	}
@@ -378,9 +375,11 @@ ApplySortAbbrevFullComparator(Datum datum1, bool isNull1,
  * Datatypes that install these as their comparator or abbrevated comparator
  * are eligible for faster sorting.
  */
-extern int ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup);
-extern int ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup);
-extern int ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup);
+extern int	ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup);
+#if SIZEOF_DATUM >= 8
+extern int	ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup);
+#endif
+extern int	ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup);
 
 /* Other functions in utils/sort/sortsupport.c */
 extern void PrepareSortSupportComparisonShim(Oid cmpFunc, SortSupport ssup);

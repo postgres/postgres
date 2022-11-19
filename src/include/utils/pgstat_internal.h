@@ -162,8 +162,7 @@ typedef struct PgStat_SubXactStatus
 	 * if the transaction commits/aborts. To handle replicas and crashes,
 	 * stats drops are included in commit / abort records.
 	 */
-	dlist_head	pending_drops;
-	int			pending_drops_count;
+	dclist_head pending_drops;
 
 	/*
 	 * Tuple insertion/deletion counts for an open transaction can't be
@@ -242,7 +241,8 @@ typedef struct PgStat_KindInfo
 	/*
 	 * For variable-numbered stats with named_on_disk. Optional.
 	 */
-	void		(*to_serialized_name) (const PgStatShared_Common *header, NameData *name);
+	void		(*to_serialized_name) (const PgStat_HashKey *key,
+									   const PgStatShared_Common *header, NameData *name);
 	bool		(*from_serialized_name) (const NameData *name, PgStat_HashKey *key);
 
 	/*
@@ -296,9 +296,9 @@ static const char *const slru_names[] = {
  * values in a copy of the stats data, which is protected by ->lock. See
  * pgstat_fetch_stat_(archiver|bgwriter|checkpointer) for the reader side.
  *
- * The only exception to that is the the stat_reset_timestamp in these
- * structs, which is protected by ->lock, because it has to be written by
- * another backend while resetting
+ * The only exception to that is the stat_reset_timestamp in these structs,
+ * which is protected by ->lock, because it has to be written by another
+ * backend while resetting.
  * ----------
  */
 
@@ -488,7 +488,7 @@ static inline void *pgstat_get_entry_data(PgStat_Kind kind, PgStatShared_Common 
  * Functions in pgstat.c
  */
 
-const PgStat_KindInfo *pgstat_get_kind_info(PgStat_Kind kind);
+extern const PgStat_KindInfo *pgstat_get_kind_info(PgStat_Kind kind);
 
 #ifdef USE_ASSERT_CHECKING
 extern void pgstat_assert_is_up(void);
@@ -567,7 +567,7 @@ extern void pgstat_relation_delete_pending_cb(PgStat_EntryRef *entry_ref);
  */
 
 extern void pgstat_replslot_reset_timestamp_cb(PgStatShared_Common *header, TimestampTz ts);
-extern void pgstat_replslot_to_serialized_name_cb(const PgStatShared_Common *tmp, NameData *name);
+extern void pgstat_replslot_to_serialized_name_cb(const PgStat_HashKey *key, const PgStatShared_Common *header, NameData *name);
 extern bool pgstat_replslot_from_serialized_name_cb(const NameData *name, PgStat_HashKey *key);
 
 
@@ -579,8 +579,9 @@ extern void pgstat_attach_shmem(void);
 extern void pgstat_detach_shmem(void);
 
 extern PgStat_EntryRef *pgstat_get_entry_ref(PgStat_Kind kind, Oid dboid, Oid objoid,
-											 bool create, bool *found);
+											 bool create, bool *created_entry);
 extern bool pgstat_lock_entry(PgStat_EntryRef *entry_ref, bool nowait);
+extern bool pgstat_lock_entry_shared(PgStat_EntryRef *entry_ref, bool nowait);
 extern void pgstat_unlock_entry(PgStat_EntryRef *entry_ref);
 extern bool pgstat_drop_entry(PgStat_Kind kind, Oid dboid, Oid objoid);
 extern void pgstat_drop_all_entries(void);
@@ -737,7 +738,7 @@ pgstat_copy_changecounted_stats(void *dst, void *src, size_t len,
 static inline int
 pgstat_cmp_hash_key(const void *a, const void *b, size_t size, void *arg)
 {
-	AssertArg(size == sizeof(PgStat_HashKey) && arg == NULL);
+	Assert(size == sizeof(PgStat_HashKey) && arg == NULL);
 	return memcmp(a, b, sizeof(PgStat_HashKey));
 }
 
@@ -747,7 +748,7 @@ pgstat_hash_hash_key(const void *d, size_t size, void *arg)
 	const PgStat_HashKey *key = (PgStat_HashKey *) d;
 	uint32		hash;
 
-	AssertArg(size == sizeof(PgStat_HashKey) && arg == NULL);
+	Assert(size == sizeof(PgStat_HashKey) && arg == NULL);
 
 	hash = murmurhash32(key->kind);
 	hash = hash_combine(hash, murmurhash32(key->dboid));

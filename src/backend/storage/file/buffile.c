@@ -104,7 +104,7 @@ static void extendBufFile(BufFile *file);
 static void BufFileLoadBuffer(BufFile *file);
 static void BufFileDumpBuffer(BufFile *file);
 static void BufFileFlush(BufFile *file);
-static File MakeNewFileSetSegment(BufFile *file, int segment);
+static File MakeNewFileSetSegment(BufFile *buffile, int segment);
 
 /*
  * Create BufFile and perform the common initialization.

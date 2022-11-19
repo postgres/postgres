@@ -246,8 +246,11 @@ struct ParseState
  * visible for qualified references) but it does hide their columns
  * (unqualified references to the columns refer to the JOIN, not the member
  * tables, so we must not complain that such a reference is ambiguous).
- * Various special RTEs such as NEW/OLD for rules may also appear with only
- * one flag set.
+ * Conversely, a subquery without an alias does not hide the columns selected
+ * by the subquery, but it does hide the auto-generated relation name (so the
+ * subquery columns are visible for unqualified references only).  Various
+ * special RTEs such as NEW/OLD for rules may also appear with only one flag
+ * set.
  *
  * While processing the FROM clause, namespace items may appear with
  * p_lateral_only set, meaning they are visible only to LATERAL

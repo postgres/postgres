@@ -15,6 +15,7 @@
 #include "postgres.h"
 
 #include "access/detoast.h"
+#include "access/htup_details.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
 #include "common/hashfn.h"
@@ -744,7 +745,7 @@ bpchareq(PG_FUNCTION_ARGS)
 	bool		result;
 	Oid			collid = PG_GET_COLLATION();
 	bool		locale_is_c = false;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 
 	check_collation_set(collid);
 
@@ -789,7 +790,7 @@ bpcharne(PG_FUNCTION_ARGS)
 	bool		result;
 	Oid			collid = PG_GET_COLLATION();
 	bool		locale_is_c = false;
-	pg_locale_t	mylocale = 0;
+	pg_locale_t mylocale = 0;
 
 	check_collation_set(collid);
 

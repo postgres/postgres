@@ -1439,7 +1439,8 @@ multirange_agg_transfn(PG_FUNCTION_ARGS)
 		if (range_count == 0)
 		{
 			/*
-			 * Add an empty range so we get an empty result (not a null result).
+			 * Add an empty range so we get an empty result (not a null
+			 * result).
 			 */
 			accumArrayResult(state,
 							 RangeTypePGetDatum(make_empty_range(rngtypcache)),
@@ -1490,7 +1491,7 @@ multirange_intersect_agg_transfn(PG_FUNCTION_ARGS)
 										   ranges1,
 										   range_count2,
 										   ranges2);
-	PG_RETURN_RANGE_P(result);
+	PG_RETURN_MULTIRANGE_P(result);
 }
 
 

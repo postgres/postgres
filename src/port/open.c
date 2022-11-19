@@ -13,8 +13,6 @@
 
 #ifdef WIN32
 
-#define UMDF_USING_NTSTATUS
-
 #ifndef FRONTEND
 #include "postgres.h"
 #else

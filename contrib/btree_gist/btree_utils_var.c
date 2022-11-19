@@ -426,7 +426,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n,
 			tmp[1] = (unsigned char) (((VARSIZE(uk.lower) - VARHDRSZ) <= ul) ? 0 : (VARDATA(uk.lower)[ul]));
 			tmp[2] = (unsigned char) (((VARSIZE(ok.upper) - VARHDRSZ) <= ul) ? 0 : (VARDATA(ok.upper)[ul]));
 			tmp[3] = (unsigned char) (((VARSIZE(uk.upper) - VARHDRSZ) <= ul) ? 0 : (VARDATA(uk.upper)[ul]));
-			dres = Abs(tmp[0] - tmp[1]) + Abs(tmp[3] - tmp[2]);
+			dres = abs(tmp[0] - tmp[1]) + abs(tmp[3] - tmp[2]);
 			dres /= 256.0;
 		}
 

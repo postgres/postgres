@@ -1,0 +1,13 @@
+Parsed test spec with 1 sessions
+
+starting permutation: listen insert insert2 update delete
+step listen: LISTEN mychannel;
+step insert: INSERT INTO mytable VALUES(1, 'one');
+s1: NOTIFY "mychannel" with payload ""mytable",I,"key"='1'" from s1
+step insert2: INSERT INTO mytable VALUES(2, 'two');
+s1: NOTIFY "mychannel" with payload ""mytable",I,"key"='2'" from s1
+step update: UPDATE mytable SET value = 'foo' WHERE key = 2;
+s1: NOTIFY "mychannel" with payload ""mytable",U,"key"='2'" from s1
+step delete: DELETE FROM mytable;
+s1: NOTIFY "mychannel" with payload ""mytable",D,"key"='1'" from s1
+s1: NOTIFY "mychannel" with payload ""mytable",D,"key"='2'" from s1

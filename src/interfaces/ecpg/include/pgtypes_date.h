@@ -14,16 +14,16 @@ extern "C"
 #endif
 
 extern date * PGTYPESdate_new(void);
-extern void PGTYPESdate_free(date *);
-extern date PGTYPESdate_from_asc(char *, char **);
-extern char *PGTYPESdate_to_asc(date);
-extern date PGTYPESdate_from_timestamp(timestamp);
-extern void PGTYPESdate_julmdy(date, int *);
-extern void PGTYPESdate_mdyjul(int *, date *);
-extern int	PGTYPESdate_dayofweek(date);
-extern void PGTYPESdate_today(date *);
-extern int	PGTYPESdate_defmt_asc(date *, const char *, const char *);
-extern int	PGTYPESdate_fmt_asc(date, const char *, char *);
+extern void PGTYPESdate_free(date * d);
+extern date PGTYPESdate_from_asc(char *str, char **endptr);
+extern char *PGTYPESdate_to_asc(date dDate);
+extern date PGTYPESdate_from_timestamp(timestamp dt);
+extern void PGTYPESdate_julmdy(date jd, int *mdy);
+extern void PGTYPESdate_mdyjul(int *mdy, date * jdate);
+extern int	PGTYPESdate_dayofweek(date dDate);
+extern void PGTYPESdate_today(date * d);
+extern int	PGTYPESdate_defmt_asc(date * d, const char *fmt, const char *str);
+extern int	PGTYPESdate_fmt_asc(date dDate, const char *fmtstring, char *outbuf);
 
 #ifdef __cplusplus
 }

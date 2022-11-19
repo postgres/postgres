@@ -17,7 +17,8 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS = access bootstrap catalog parser commands executor foreign lib libpq \
+SUBDIRS = access backup bootstrap catalog parser commands executor \
+	foreign lib libpq \
 	main nodes optimizer partitioning port postmaster \
 	regex replication rewrite \
 	statistics storage tcop tsearch utils $(top_builddir)/src/timezone \
@@ -101,26 +102,12 @@ postgres: $(POSTGRES_IMP)
 
 $(POSTGRES_IMP): $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
-ifeq ($(host_os), aix3.2.5)
-	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
-else
-ifneq (,$(findstring aix4.1, $(host_os)))
-	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
-else
 	$(MKLDEXPORT) SUBSYS.o . > $@
-endif
-endif
 	@rm -f SUBSYS.o
 
 endif # aix
 
 $(top_builddir)/src/port/libpgport_srv.a: | submake-libpgport
-
-
-# The postgres.o target is needed by the rule in Makefile.global that
-# creates the exports file when MAKE_EXPORTS = true.
-postgres.o: $(OBJS)
-	$(CC) $(LDREL) $(call expand_subsys,$^) $(LDFLAGS) $(LDFLAGS_EX) $(LIBS) -o $@
 
 
 # The following targets are specified in make commands that appear in
@@ -144,10 +131,14 @@ submake-catalog-headers:
 	$(MAKE) -C catalog distprep generated-header-symlinks
 
 # run this unconditionally to avoid needing to know its dependencies here:
+submake-nodes-headers:
+	$(MAKE) -C nodes distprep generated-header-symlinks
+
+# run this unconditionally to avoid needing to know its dependencies here:
 submake-utils-headers:
 	$(MAKE) -C utils distprep generated-header-symlinks
 
-.PHONY: submake-catalog-headers submake-utils-headers
+.PHONY: submake-catalog-headers submake-nodes-headers submake-utils-headers
 
 # Make symlinks for these headers in the include directory. That way
 # we can cut down on the -I options. Also, a symlink is automatically
@@ -162,12 +153,7 @@ submake-utils-headers:
 
 .PHONY: generated-headers
 
-generated-headers: $(top_builddir)/src/include/parser/gram.h $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-utils-headers
-
-$(top_builddir)/src/include/parser/gram.h: parser/gram.h
-	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
-	  cd '$(dir $@)' && rm -f $(notdir $@) && \
-	  $(LN_S) "$$prereqdir/$(notdir $<)" .
+generated-headers: $(top_builddir)/src/include/storage/lwlocknames.h submake-catalog-headers submake-nodes-headers submake-utils-headers
 
 $(top_builddir)/src/include/storage/lwlocknames.h: storage/lmgr/lwlocknames.h
 	prereqdir=`cd '$(dir $<)' >/dev/null && pwd` && \
@@ -183,12 +169,13 @@ utils/probes.o: utils/probes.d $(SUBDIROBJS)
 # Be sure that these files get removed by the maintainer-clean target
 distprep:
 	$(MAKE) -C parser	gram.c gram.h scan.c
-	$(MAKE) -C bootstrap	bootparse.c bootscanner.c
+	$(MAKE) -C bootstrap	bootparse.c bootparse.h bootscanner.c
 	$(MAKE) -C catalog	distprep
-	$(MAKE) -C replication	repl_gram.c repl_scanner.c syncrep_gram.c syncrep_scanner.c
+	$(MAKE) -C nodes	distprep
+	$(MAKE) -C replication	repl_gram.c repl_gram.h repl_scanner.c syncrep_gram.c syncrep_gram.h syncrep_scanner.c
 	$(MAKE) -C storage/lmgr	lwlocknames.h lwlocknames.c
 	$(MAKE) -C utils	distprep
-	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_scan.c
+	$(MAKE) -C utils/adt	jsonpath_gram.c jsonpath_gram.h jsonpath_scan.c
 	$(MAKE) -C utils/misc	guc-file.c
 
 
@@ -297,19 +284,24 @@ distclean: clean
 
 maintainer-clean: distclean
 	$(MAKE) -C catalog $@
+	$(MAKE) -C nodes $@
 	$(MAKE) -C utils $@
 	rm -f bootstrap/bootparse.c \
+	      bootstrap/bootparse.h \
 	      bootstrap/bootscanner.c \
 	      parser/gram.c \
 	      parser/gram.h \
 	      parser/scan.c \
 	      replication/repl_gram.c \
+	      replication/repl_gram.h \
 	      replication/repl_scanner.c \
 	      replication/syncrep_gram.c \
+	      replication/syncrep_gram.h \
 	      replication/syncrep_scanner.c \
 	      storage/lmgr/lwlocknames.c \
 	      storage/lmgr/lwlocknames.h \
 	      utils/adt/jsonpath_gram.c \
+	      utils/adt/jsonpath_gram.h \
 	      utils/adt/jsonpath_scan.c \
 	      utils/misc/guc-file.c
 

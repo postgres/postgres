@@ -1,13 +1,13 @@
 # Russian message translation file for pg_test_timing
 # Copyright (C) 2017 PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
-# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017.
+# Alexander Lakhin <a.lakhin@postgrespro.ru>, 2017, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 10\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-09-09 12:21+0300\n"
-"PO-Revision-Date: 2017-08-23 19:20+0300\n"
+"POT-Creation-Date: 2021-08-14 06:29+0300\n"
+"PO-Revision-Date: 2021-09-04 12:18+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -17,64 +17,72 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: pg_test_timing.c:55
+#: pg_test_timing.c:59
 #, c-format
 msgid "Usage: %s [-d DURATION]\n"
 msgstr "Использование: %s [-d ДЛИТЕЛЬНОСТЬ]\n"
 
-#: pg_test_timing.c:75 pg_test_timing.c:87 pg_test_timing.c:104
+#: pg_test_timing.c:81
+#, c-format
+msgid "%s: invalid argument for option %s\n"
+msgstr "%s: недопустимый аргумент параметра %s\n"
+
+#: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Для дополнительной информации попробуйте \"%s --help\".\n"
 
-#: pg_test_timing.c:85
+#: pg_test_timing.c:90
+#, c-format
+msgid "%s: %s must be in range %u..%u\n"
+msgstr "%s: параметр %s должен быть в диапазоне %u..%u\n"
+
+#: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: pg_test_timing.c:94
+#: pg_test_timing.c:115
 #, c-format
-msgid "Testing timing overhead for %d second.\n"
-msgid_plural "Testing timing overhead for %d seconds.\n"
-msgstr[0] "Оценка издержек замеров времени в течение %d сек.\n"
-msgstr[1] "Оценка издержек замеров времени в течение %d сек.\n"
-msgstr[2] "Оценка издержек замеров времени в течение %d сек.\n"
+msgid "Testing timing overhead for %u second.\n"
+msgid_plural "Testing timing overhead for %u seconds.\n"
+msgstr[0] "Оценка издержек замеров времени в течение %u сек.\n"
+msgstr[1] "Оценка издержек замеров времени в течение %u сек.\n"
+msgstr[2] "Оценка издержек замеров времени в течение %u сек.\n"
 
-#: pg_test_timing.c:102
-#, c-format
-msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
-msgstr ""
-"%s: длительность должна задаваться положительным целым (указано: \"%d\")\n"
-
-#: pg_test_timing.c:140
+#: pg_test_timing.c:151
 #, c-format
 msgid "Detected clock going backwards in time.\n"
 msgstr "Обнаружен обратный ход часов.\n"
 
-#: pg_test_timing.c:141
+#: pg_test_timing.c:152
 #, c-format
 msgid "Time warp: %d ms\n"
 msgstr "Сдвиг времени: %d мс\n"
 
-#: pg_test_timing.c:164
+#: pg_test_timing.c:175
 #, c-format
 msgid "Per loop time including overhead: %0.2f ns\n"
 msgstr "Время одного цикла, включая издержки: %0.2f нс\n"
 
-#: pg_test_timing.c:175
+#: pg_test_timing.c:186
 msgid "< us"
 msgstr "< мкс"
 
-#: pg_test_timing.c:176
+#: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
 msgstr "% от общего"
 
-#: pg_test_timing.c:177
+#: pg_test_timing.c:188
 msgid "count"
 msgstr "число"
 
-#: pg_test_timing.c:186
+#: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
 msgstr "Гистограмма длительности замеров времени:\n"
+
+#~ msgid "%s: duration must be a positive integer (duration is \"%d\")\n"
+#~ msgstr ""
+#~ "%s: длительность должна задаваться положительным целым (указано: \"%d\")\n"

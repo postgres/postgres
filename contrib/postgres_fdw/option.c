@@ -51,8 +51,6 @@ static PQconninfoOption *libpq_options;
  */
 char	   *pgfdw_application_name = NULL;
 
-void		_PG_init(void);
-
 /*
  * Helper functions
  */
@@ -92,26 +90,31 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * Unknown option specified, complain about it. Provide a hint
-			 * with list of valid options for the object.
+			 * with a valid option that looks similar, if there is one.
 			 */
 			PgFdwOption *opt;
-			StringInfoData buf;
+			const char *closest_match;
+			ClosestMatchState match_state;
+			bool		has_valid_options = false;
 
-			initStringInfo(&buf);
+			initClosestMatch(&match_state, def->defname, 4);
 			for (opt = postgres_fdw_options; opt->keyword; opt++)
 			{
 				if (catalog == opt->optcontext)
-					appendStringInfo(&buf, "%s%s", (buf.len > 0) ? ", " : "",
-									 opt->keyword);
+				{
+					has_valid_options = true;
+					updateClosestMatch(&match_state, opt->keyword);
+				}
 			}
 
+			closest_match = getClosestMatch(&match_state);
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_INVALID_OPTION_NAME),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 buf.len > 0
-					 ? errhint("Valid options in this context are: %s",
-							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+					 has_valid_options ? closest_match ?
+					 errhint("Perhaps you meant the option \"%s\".",
+							 closest_match) : 0 :
+					 errhint("There are no valid options in this context.")));
 		}
 
 		/*
@@ -195,7 +198,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("password_required=false is superuser-only"),
-						 errhint("User mappings with the password_required option set to false may only be created or modified by the superuser")));
+						 errhint("User mappings with the password_required option set to false may only be created or modified by the superuser.")));
 		}
 		else if (strcmp(def->defname, "sslcert") == 0 ||
 				 strcmp(def->defname, "sslkey") == 0)
@@ -205,7 +208,7 @@ postgres_fdw_validator(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 						 errmsg("sslcert and sslkey are superuser-only"),
-						 errhint("User mappings with the sslcert or sslkey options set may only be created or modified by the superuser")));
+						 errhint("User mappings with the sslcert or sslkey options set may only be created or modified by the superuser.")));
 		}
 	}
 

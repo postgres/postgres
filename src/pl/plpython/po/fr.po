@@ -1,15 +1,17 @@
-# translation of plpython.po to fr_fr
-# french message translation file for plpython
+# LANGUAGE message translation file for plpython
+# Copyright (C) 2009-2022 PostgreSQL Global Development Group
+# This file is distributed under the same license as the plpython (PostgreSQL) package.
 #
 # Use these quotes: « %s »
-# Guillaume Lelarge <guillaume@lelarge.info>, 2009.
+#
+# Guillaume Lelarge <guillaume@lelarge.info>, 2009-2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 12\n"
+"Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2019-05-17 01:07+0000\n"
-"PO-Revision-Date: 2019-05-17 14:58+0200\n"
+"POT-Creation-Date: 2022-04-12 05:16+0000\n"
+"PO-Revision-Date: 2022-04-12 17:29+0200\n"
 "Last-Translator: Guillaume Lelarge <guillaume@lelarge.info>\n"
 "Language-Team: French <guillaume@lelarge.info>\n"
 "Language: fr\n"
@@ -17,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 3.0.1\n"
 
 #: plpy_cursorobject.c:78
 #, c-format
@@ -455,7 +457,7 @@ msgstr "enregistrement litéral invalide : « %s »"
 #: plpy_typeio.c:1348
 #, c-format
 msgid "Missing left parenthesis."
-msgstr "Parenthèse gauche manquante"
+msgstr "Parenthèse gauche manquante."
 
 #: plpy_typeio.c:1349 plpy_typeio.c:1550
 #, c-format

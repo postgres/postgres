@@ -557,7 +557,7 @@ CREATE TABLE products (
      tests, it cannot guarantee that the database will not reach a state
      in which the constraint condition is false (due to subsequent changes
      of the other row(s) involved).  This would cause a database dump and
-     reload to fail.  The reload could fail even when the complete
+     restore to fail.  The restore could fail even when the complete
      database state is consistent with the constraint, due to rows not
      being loaded in an order that will satisfy the constraint.  If
      possible, use <literal>UNIQUE</literal>, <literal>EXCLUDE</literal>,
@@ -569,10 +569,10 @@ CREATE TABLE products (
      If what you desire is a one-time check against other rows at row
      insertion, rather than a continuously-maintained consistency
      guarantee, a custom <link linkend="triggers">trigger</link> can be used
-     to implement that.  (This approach avoids the dump/reload problem because
+     to implement that.  (This approach avoids the dump/restore problem because
      <application>pg_dump</application> does not reinstall triggers until after
-     reloading data, so that the check will not be enforced during a
-     dump/reload.)
+     restoring data, so that the check will not be enforced during a
+     dump/restore.)
     </para>
    </note>
 
@@ -594,7 +594,7 @@ CREATE TABLE products (
      function.  <productname>PostgreSQL</productname> does not disallow
      that, but it will not notice if there are rows in the table that now
      violate the <literal>CHECK</literal> constraint. That would cause a
-     subsequent database dump and reload to fail.
+     subsequent database dump and restore to fail.
      The recommended way to handle such a change is to drop the constraint
      (using <command>ALTER TABLE</command>), adjust the function definition,
      and re-add the constraint, thereby rechecking it against all table rows.
@@ -1694,7 +1694,7 @@ ALTER TABLE products RENAME TO items;
    <literal>EXECUTE</literal>, <literal>USAGE</literal>, <literal>SET</literal>
    and <literal>ALTER SYSTEM</literal>.
    The privileges applicable to a particular
-   object vary depending on the object's type (table, function, etc).
+   object vary depending on the object's type (table, function, etc.).
    More detail about the meanings of these privileges appears below.
    The following sections and chapters will also show you how
    these privileges are used.
@@ -4174,12 +4174,13 @@ ALTER INDEX measurement_city_id_logdate_key
     <itemizedlist>
      <listitem>
       <para>
-       Unique constraints (and hence primary keys) on partitioned tables must
-       include all the partition key columns.  This limitation exists because
-       the individual indexes making up the constraint can only directly
-       enforce uniqueness within their own partitions; therefore, the
-       partition structure itself must guarantee that there are not
-       duplicates in different partitions.
+       To create a unique or primary key constraint on a partitioned table,
+       the partition keys must not include any expressions or function calls
+       and the constraint's columns must include all of the partition key
+       columns.  This limitation exists because the individual indexes making
+       up the constraint can only directly enforce uniqueness within their own
+       partitions; therefore, the partition structure itself must guarantee
+       that there are not duplicates in different partitions.
       </para>
      </listitem>
 

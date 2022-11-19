@@ -103,6 +103,8 @@ void	   *referenced_functions[] =
 {
 	ExecAggInitGroup,
 	ExecAggTransReparent,
+	ExecEvalPreOrderedDistinctSingle,
+	ExecEvalPreOrderedDistinctMulti,
 	ExecEvalAggOrderedTransDatum,
 	ExecEvalAggOrderedTransTuple,
 	ExecEvalArrayCoerce,
@@ -131,9 +133,6 @@ void	   *referenced_functions[] =
 	ExecEvalSysVar,
 	ExecEvalWholeRowVar,
 	ExecEvalXmlExpr,
-	ExecEvalJsonConstructor,
-	ExecEvalJsonIsPredicate,
-	ExecEvalJson,
 	MakeExpandedObjectReadOnlyInternal,
 	slot_getmissingattrs,
 	slot_getsomeattrs_int,

@@ -5,13 +5,13 @@
 # Serguei A. Mokhov <mokhov@cs.concordia.ca>, 2004-2005.
 # Sergey Burladyan <eshkinkot@gmail.com>, 2009, 2012.
 # Andrey Sudnik <sudnikand@gmail.com>, 2010.
-# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017, 2019, 2020.
+# Alexander Lakhin <exclusion@gmail.com>, 2012-2016, 2017, 2019, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-03 11:22+0300\n"
-"PO-Revision-Date: 2020-09-03 13:28+0300\n"
+"POT-Creation-Date: 2021-08-14 06:29+0300\n"
+"PO-Revision-Date: 2021-09-04 12:15+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
 "Language: ru\n"
@@ -28,42 +28,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "не записано"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "не удалось определить текущий каталог: %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "неверный исполняемый файл \"%s\""
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "не удалось прочитать исполняемый файл \"%s\""
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "не удалось найти запускаемый файл \"%s\""
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "не удалось перейти в каталог \"%s\": %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "не удалось прочитать символическую ссылку \"%s\": %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:409
 #, c-format
-msgid "pclose failed: %m"
-msgstr "ошибка pclose: %m"
+msgid "%s() failed: %m"
+msgstr "ошибка в %s(): %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
 msgstr "нехватка памяти"
 

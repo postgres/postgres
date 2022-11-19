@@ -77,9 +77,9 @@ extern char *getObjectDescriptionOids(Oid classid, Oid objid);
 extern int	read_objtype_from_string(const char *objtype);
 extern char *getObjectTypeDescription(const ObjectAddress *object,
 									  bool missing_ok);
-extern char *getObjectIdentity(const ObjectAddress *address,
+extern char *getObjectIdentity(const ObjectAddress *object,
 							   bool missing_ok);
-extern char *getObjectIdentityParts(const ObjectAddress *address,
+extern char *getObjectIdentityParts(const ObjectAddress *object,
 									List **objname, List **objargs,
 									bool missing_ok);
 extern struct ArrayType *strlist_to_textarray(List *list);

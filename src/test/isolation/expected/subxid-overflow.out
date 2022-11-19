@@ -1,0 +1,82 @@
+Parsed test spec with 3 sessions
+
+starting permutation: ins subxov xmax s2sel s1c
+step ins: TRUNCATE subxids; INSERT INTO subxids VALUES (0, 0);
+step subxov: BEGIN; SELECT gen_subxids(100);
+gen_subxids
+-----------
+           
+(1 row)
+
+step xmax: BEGIN; INSERT INTO subxids VALUES (99, 0); COMMIT;
+step s2sel: SELECT val FROM subxids WHERE subx = 0;
+val
+---
+  0
+(1 row)
+
+step s1c: COMMIT;
+
+starting permutation: ins subxov sub3 xmax s2brr s2s3 s3c s2s3 s2c s1c
+step ins: TRUNCATE subxids; INSERT INTO subxids VALUES (0, 0);
+step subxov: BEGIN; SELECT gen_subxids(100);
+gen_subxids
+-----------
+           
+(1 row)
+
+step sub3: BEGIN; SAVEPOINT s; INSERT INTO subxids VALUES (1, 0);
+step xmax: BEGIN; INSERT INTO subxids VALUES (99, 0); COMMIT;
+step s2brr: BEGIN ISOLATION LEVEL REPEATABLE READ;
+step s2s3: SELECT val FROM subxids WHERE subx = 1;
+val
+---
+(0 rows)
+
+step s3c: COMMIT;
+step s2s3: SELECT val FROM subxids WHERE subx = 1;
+val
+---
+(0 rows)
+
+step s2c: COMMIT;
+step s1c: COMMIT;
+
+starting permutation: ins subxov sub3 xmax s2brc s2s3 s3c s2s3 s2c s1c
+step ins: TRUNCATE subxids; INSERT INTO subxids VALUES (0, 0);
+step subxov: BEGIN; SELECT gen_subxids(100);
+gen_subxids
+-----------
+           
+(1 row)
+
+step sub3: BEGIN; SAVEPOINT s; INSERT INTO subxids VALUES (1, 0);
+step xmax: BEGIN; INSERT INTO subxids VALUES (99, 0); COMMIT;
+step s2brc: BEGIN ISOLATION LEVEL READ COMMITTED;
+step s2s3: SELECT val FROM subxids WHERE subx = 1;
+val
+---
+(0 rows)
+
+step s3c: COMMIT;
+step s2s3: SELECT val FROM subxids WHERE subx = 1;
+val
+---
+  0
+(1 row)
+
+step s2c: COMMIT;
+step s1c: COMMIT;
+
+starting permutation: ins subxov xmax s2upd s1c
+step ins: TRUNCATE subxids; INSERT INTO subxids VALUES (0, 0);
+step subxov: BEGIN; SELECT gen_subxids(100);
+gen_subxids
+-----------
+           
+(1 row)
+
+step xmax: BEGIN; INSERT INTO subxids VALUES (99, 0); COMMIT;
+step s2upd: UPDATE subxids SET val = 1 WHERE subx = 0; <waiting ...>
+step s1c: COMMIT;
+step s2upd: <... completed>

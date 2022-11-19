@@ -1,13 +1,13 @@
 # LANGUAGE message translation file for pg_test_timing
 # Copyright (C) 2019 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
-# FIRST AUTHOR <zhangjie2@cn.fujitsu.com>, 2019.
+# FIRST AUTHOR <zhangjie2@fujitsu.com>, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-09 21:17+0000\n"
+"POT-Creation-Date: 2021-08-14 05:47+0000\n"
 "PO-Revision-Date: 2021-06-10 10:50+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
@@ -23,6 +23,7 @@ msgid "Usage: %s [-d DURATION]\n"
 msgstr "用法: %s [-d 持续时间]\n"
 
 #: pg_test_timing.c:81
+#, c-format
 msgid "%s: invalid argument for option %s\n"
 msgstr "%s: 选项%s的参数无效\n"
 
@@ -32,6 +33,7 @@ msgid "Try \"%s --help\" for more information.\n"
 msgstr "请用 \"%s --help\" 获取更多的信息.\n"
 
 #: pg_test_timing.c:90
+#, c-format
 msgid "%s: %s must be in range %u..%u\n"
 msgstr "%s: %s必须位于%u..%u的范围内\n"
 
@@ -41,6 +43,7 @@ msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: 命令行参数太多 (第一个是 \"%s\")\n"
 
 #: pg_test_timing.c:115
+#, c-format
 msgid "Testing timing overhead for %u second.\n"
 msgid_plural "Testing timing overhead for %u seconds.\n"
 msgstr[0] "测试%u秒的计时开销.\n"

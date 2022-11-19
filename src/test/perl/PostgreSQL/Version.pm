@@ -123,9 +123,12 @@ sub _version_cmp
 
 	for (my $idx = 0;; $idx++)
 	{
-		return 0 unless (defined $an->[$idx] && defined $bn->[$idx]);
-		return $an->[$idx] <=> $bn->[$idx]
-		  if ($an->[$idx] <=> $bn->[$idx]);
+		return 0
+		  if ($idx >= @$an && $idx >= @$bn);
+		# treat a missing number as 0
+		my ($anum, $bnum) = ($an->[$idx] || 0, $bn->[$idx] || 0);
+		return $anum <=> $bnum
+		  if ($anum <=> $bnum);
 	}
 }
 
@@ -151,14 +154,14 @@ a dot unless the separator argument is given.
 
 sub major
 {
-    my ($self, %params) = @_;
-    my $result = $self->{num}->[0];
-    if ($result + 0 < 10)
-    {
-        my $sep = $params{separator} || '.';
-        $result .= "$sep$self->{num}->[1]";
-    }
-    return $result;
+	my ($self, %params) = @_;
+	my $result = $self->{num}->[0];
+	if ($result + 0 < 10)
+	{
+		my $sep = $params{separator} || '.';
+		$result .= "$sep$self->{num}->[1]";
+	}
+	return $result;
 }
 
 1;

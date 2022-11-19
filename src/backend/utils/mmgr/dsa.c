@@ -51,6 +51,7 @@
 #include "postgres.h"
 
 #include "port/atomics.h"
+#include "port/pg_bitutils.h"
 #include "storage/dsm.h"
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
@@ -137,7 +138,18 @@ typedef size_t dsa_segment_index;
  * free pages?	There is no point in looking in segments in lower bins; they
  * definitely can't service a request for n free pages.
  */
-#define contiguous_pages_to_segment_bin(n) Min(fls(n), DSA_NUM_SEGMENT_BINS - 1)
+static inline size_t
+contiguous_pages_to_segment_bin(size_t n)
+{
+	size_t		bin;
+
+	if (n == 0)
+		bin = 0;
+	else
+		bin = pg_leftmost_one_pos_size_t(n) + 1;
+
+	return Min(bin, DSA_NUM_SEGMENT_BINS - 1);
+}
 
 /* Macros for access to locks. */
 #define DSA_AREA_LOCK(area) (&area->control->lock)

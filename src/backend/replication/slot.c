@@ -41,6 +41,7 @@
 
 #include "access/transam.h"
 #include "access/xlog_internal.h"
+#include "common/file_utils.h"
 #include "common/string.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -96,8 +97,8 @@ ReplicationSlotCtlData *ReplicationSlotCtl = NULL;
 /* My backend's replication slot in the shared memory array */
 ReplicationSlot *MyReplicationSlot = NULL;
 
-/* GUCs */
-int			max_replication_slots = 0;	/* the maximum number of replication
+/* GUC variable */
+int			max_replication_slots = 10; /* the maximum number of replication
 										 * slots */
 
 static void ReplicationSlotShmemExit(int code, Datum arg);
@@ -107,7 +108,7 @@ static void ReplicationSlotDropPtr(ReplicationSlot *slot);
 /* internal persistency functions */
 static void RestoreSlotFromDisk(const char *name);
 static void CreateSlotOnDisk(ReplicationSlot *slot);
-static void SaveSlotToPath(ReplicationSlot *slot, const char *path, int elevel);
+static void SaveSlotToPath(ReplicationSlot *slot, const char *dir, int elevel);
 
 /*
  * Report shared-memory space needed by ReplicationSlotsShmemInit.
@@ -177,10 +178,6 @@ ReplicationSlotInitialize(void)
 static void
 ReplicationSlotShmemExit(int code, Datum arg)
 {
-	/* temp debugging aid to analyze 019_replslot_limit failures */
-	elog(DEBUG3, "replication slot exit hook, %s active slot",
-		 MyReplicationSlot != NULL ? "with" : "without");
-
 	/* Make sure active replication slots are released */
 	if (MyReplicationSlot != NULL)
 		ReplicationSlotRelease();
@@ -416,6 +413,34 @@ ReplicationSlotIndex(ReplicationSlot *slot)
 }
 
 /*
+ * If the slot at 'index' is unused, return false. Otherwise 'name' is set to
+ * the slot's name and true is returned.
+ *
+ * This likely is only useful for pgstat_replslot.c during shutdown, in other
+ * cases there are obvious TOCTOU issues.
+ */
+bool
+ReplicationSlotName(int index, Name name)
+{
+	ReplicationSlot *slot;
+	bool		found;
+
+	slot = &ReplicationSlotCtl->replication_slots[index];
+
+	/*
+	 * Ensure that the slot cannot be dropped while we copy the name. Don't
+	 * need the spinlock as the name of an existing slot cannot change.
+	 */
+	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
+	found = slot->in_use;
+	if (slot->in_use)
+		namestrcpy(name, NameStr(slot->data.name));
+	LWLockRelease(ReplicationSlotControlLock);
+
+	return found;
+}
+
+/*
  * Find a previously created slot and mark it as used by this process.
  *
  * An error is raised if nowait is true and the slot is currently in use. If
@@ -427,7 +452,7 @@ ReplicationSlotAcquire(const char *name, bool nowait)
 	ReplicationSlot *s;
 	int			active_pid;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 retry:
 	Assert(MyReplicationSlot == NULL);
@@ -504,8 +529,8 @@ retry:
 	MyReplicationSlot = s;
 
 	/*
-	 * The call to pgstat_acquire_replslot() protects against stats for
-	 * a different slot, from before a restart or such, being present during
+	 * The call to pgstat_acquire_replslot() protects against stats for a
+	 * different slot, from before a restart or such, being present during
 	 * pgstat_report_replslot().
 	 */
 	if (SlotIsLogical(s))
@@ -582,9 +607,6 @@ ReplicationSlotCleanup(void)
 	Assert(MyReplicationSlot == NULL);
 
 restart:
-	/* temp debugging aid to analyze 019_replslot_limit failures */
-	elog(DEBUG3, "temporary replication slot cleanup: begin");
-
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (i = 0; i < max_replication_slots; i++)
 	{
@@ -592,10 +614,6 @@ restart:
 
 		if (!s->in_use)
 			continue;
-
-		/* unlocked read of active_pid is ok for debugging purposes */
-		elog(DEBUG3, "temporary replication slot cleanup: %d in use, active_pid: %d",
-			 i, (int) s->active_pid);
 
 		SpinLockAcquire(&s->mutex);
 		if (s->active_pid == MyProcPid)
@@ -614,8 +632,6 @@ restart:
 	}
 
 	LWLockRelease(ReplicationSlotControlLock);
-
-	elog(DEBUG3, "temporary replication slot cleanup: done");
 }
 
 /*
@@ -656,9 +672,6 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-
-	/* temp debugging aid to analyze 019_replslot_limit failures */
-	elog(DEBUG3, "replication slot drop: %s: begin", NameStr(slot->data.name));
 
 	/*
 	 * If some other backend ran this code concurrently with us, we might try
@@ -710,9 +723,6 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 						path, tmppath)));
 	}
 
-	elog(DEBUG3, "replication slot drop: %s: removed on-disk",
-		 NameStr(slot->data.name));
-
 	/*
 	 * The slot is definitely gone.  Lock out concurrent scans of the array
 	 * long enough to kill it.  It's OK to clear the active PID here without
@@ -726,12 +736,7 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	slot->active_pid = 0;
 	slot->in_use = false;
 	LWLockRelease(ReplicationSlotControlLock);
-
-	elog(DEBUG3, "replication slot drop: %s: marked as not in use", NameStr(slot->data.name));
-
 	ConditionVariableBroadcast(&slot->active_cv);
-
-	elog(DEBUG3, "replication slot drop: %s: notified others", NameStr(slot->data.name));
 
 	/*
 	 * Slot is dead and doesn't prevent resource removal anymore, recompute
@@ -739,8 +744,6 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 */
 	ReplicationSlotsComputeRequiredXmin(false);
 	ReplicationSlotsComputeRequiredLSN();
-
-	elog(DEBUG3, "replication slot drop: %s: computed required", NameStr(slot->data.name));
 
 	/*
 	 * If removing the directory fails, the worst thing that will happen is
@@ -750,8 +753,6 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	if (!rmtree(tmppath, true))
 		ereport(WARNING,
 				(errmsg("could not remove directory \"%s\"", tmppath)));
-
-	elog(DEBUG3, "replication slot drop: %s: removed directory", NameStr(slot->data.name));
 
 	/*
 	 * Drop the statistics entry for the replication slot.  Do this while
@@ -767,9 +768,6 @@ ReplicationSlotDropPtr(ReplicationSlot *slot)
 	 * a slot while we're still cleaning up the detritus of the old one.
 	 */
 	LWLockRelease(ReplicationSlotAllocationLock);
-
-	elog(DEBUG3, "replication slot drop: %s: done",
-		 NameStr(slot->data.name));
 }
 
 /*
@@ -1323,17 +1321,15 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 			if (last_signaled_pid != active_pid)
 			{
 				ereport(LOG,
-						(errmsg("terminating process %d to release replication slot \"%s\"",
-								active_pid, NameStr(slotname))));
+						errmsg("terminating process %d to release replication slot \"%s\"",
+							   active_pid, NameStr(slotname)),
+						errdetail("The slot's restart_lsn %X/%X exceeds the limit by %llu bytes.",
+								  LSN_FORMAT_ARGS(restart_lsn),
+								  (unsigned long long) (oldestLSN - restart_lsn)),
+						errhint("You might need to increase max_slot_wal_keep_size."));
 
 				(void) kill(active_pid, SIGTERM);
 				last_signaled_pid = active_pid;
-			}
-			else
-			{
-				/* temp debugging aid to analyze 019_replslot_limit failures */
-				elog(DEBUG3, "not signalling process %d during invalidation of slot \"%s\"",
-					 active_pid, NameStr(slotname));
 			}
 
 			/* Wait until the slot is released. */
@@ -1367,9 +1363,12 @@ InvalidatePossiblyObsoleteSlot(ReplicationSlot *s, XLogRecPtr oldestLSN,
 			ReplicationSlotRelease();
 
 			ereport(LOG,
-					(errmsg("invalidating slot \"%s\" because its restart_lsn %X/%X exceeds max_slot_wal_keep_size",
-							NameStr(slotname),
-							LSN_FORMAT_ARGS(restart_lsn))));
+					errmsg("invalidating obsolete replication slot \"%s\"",
+						   NameStr(slotname)),
+					errdetail("The slot's restart_lsn %X/%X exceeds the limit by %llu bytes.",
+							  LSN_FORMAT_ARGS(restart_lsn),
+							  (unsigned long long) (oldestLSN - restart_lsn)),
+					errhint("You might need to increase max_slot_wal_keep_size."));
 
 			/* done with this slot for now */
 			break;
@@ -1398,10 +1397,6 @@ InvalidateObsoleteReplicationSlots(XLogSegNo oldestSegno)
 	XLogSegNoOffsetToRecPtr(oldestSegno, 0, wal_segment_size, oldestLSN);
 
 restart:
-	/* temp debugging aid to analyze 019_replslot_limit failures */
-	elog(DEBUG3, "begin invalidating obsolete replication slots older than %X/%X",
-		 LSN_FORMAT_ARGS(oldestLSN));
-
 	LWLockAcquire(ReplicationSlotControlLock, LW_SHARED);
 	for (int i = 0; i < max_replication_slots; i++)
 	{
@@ -1426,8 +1421,6 @@ restart:
 		ReplicationSlotsComputeRequiredXmin(false);
 		ReplicationSlotsComputeRequiredLSN();
 	}
-
-	elog(DEBUG3, "done invalidating obsolete replication slots");
 
 	return invalidated;
 }
@@ -1485,17 +1478,18 @@ StartupReplicationSlots(void)
 	replication_dir = AllocateDir("pg_replslot");
 	while ((replication_de = ReadDir(replication_dir, "pg_replslot")) != NULL)
 	{
-		struct stat statbuf;
 		char		path[MAXPGPATH + 12];
+		PGFileType	de_type;
 
 		if (strcmp(replication_de->d_name, ".") == 0 ||
 			strcmp(replication_de->d_name, "..") == 0)
 			continue;
 
 		snprintf(path, sizeof(path), "pg_replslot/%s", replication_de->d_name);
+		de_type = get_dirent_type(path, replication_de, false, DEBUG1);
 
 		/* we're only creating directories here, skip if it's not our's */
-		if (lstat(path, &statbuf) == 0 && !S_ISDIR(statbuf.st_mode))
+		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_DIR)
 			continue;
 
 		/* we crashed while a slot was being setup or deleted, clean up */

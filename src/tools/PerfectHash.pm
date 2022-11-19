@@ -89,6 +89,7 @@ sub generate_hash_function
   FIND_PARAMS:
 	for ($hash_seed1 = 0; $hash_seed1 < 10; $hash_seed1++)
 	{
+
 		for ($hash_seed2 = 0; $hash_seed2 < 10; $hash_seed2++)
 		{
 			foreach (17, 31, 127, 8191)

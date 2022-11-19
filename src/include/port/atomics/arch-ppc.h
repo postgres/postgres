@@ -90,12 +90,12 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 		(int32) *expected >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	lwarx   %0,0,%5		\n"
+			"	lwarx   %0,0,%5,1	\n"
 			"	cmpwi   %0,%3		\n"
-			"	bne     $+12		\n"		/* branch to isync */
+			"	bne     $+12		\n"		/* branch to lwsync */
 			"	stwcx.  %4,0,%5		\n"
 			"	bne     $-16		\n"		/* branch to lwarx */
-			"	isync				\n"
+			"	lwsync				\n"
 			"	mfcr    %1          \n"
 :			"=&r"(found), "=r"(condition_register), "+m"(ptr->value)
 :			"i"(*expected), "r"(newval), "r"(&ptr->value)
@@ -104,12 +104,12 @@ pg_atomic_compare_exchange_u32_impl(volatile pg_atomic_uint32 *ptr,
 #endif
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	lwarx   %0,0,%5		\n"
+			"	lwarx   %0,0,%5,1	\n"
 			"	cmpw    %0,%3		\n"
-			"	bne     $+12		\n"		/* branch to isync */
+			"	bne     $+12		\n"		/* branch to lwsync */
 			"	stwcx.  %4,0,%5		\n"
 			"	bne     $-16		\n"		/* branch to lwarx */
-			"	isync				\n"
+			"	lwsync				\n"
 			"	mfcr    %1          \n"
 :			"=&r"(found), "=r"(condition_register), "+m"(ptr->value)
 :			"r"(*expected), "r"(newval), "r"(&ptr->value)
@@ -138,11 +138,11 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 		add_ <= PG_INT16_MAX && add_ >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	lwarx   %1,0,%4		\n"
+			"	lwarx   %1,0,%4,1	\n"
 			"	addi    %0,%1,%3	\n"
 			"	stwcx.  %0,0,%4		\n"
 			"	bne     $-12		\n"		/* branch to lwarx */
-			"	isync				\n"
+			"	lwsync				\n"
 :			"=&r"(_t), "=&b"(res), "+m"(ptr->value)
 :			"i"(add_), "r"(&ptr->value)
 :			"memory", "cc");
@@ -150,11 +150,11 @@ pg_atomic_fetch_add_u32_impl(volatile pg_atomic_uint32 *ptr, int32 add_)
 #endif
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	lwarx   %1,0,%4		\n"
+			"	lwarx   %1,0,%4,1	\n"
 			"	add     %0,%1,%3	\n"
 			"	stwcx.  %0,0,%4		\n"
 			"	bne     $-12		\n"		/* branch to lwarx */
-			"	isync				\n"
+			"	lwsync				\n"
 :			"=&r"(_t), "=&r"(res), "+m"(ptr->value)
 :			"r"(add_), "r"(&ptr->value)
 :			"memory", "cc");
@@ -180,12 +180,12 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 		(int64) *expected >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	ldarx   %0,0,%5		\n"
+			"	ldarx   %0,0,%5,1	\n"
 			"	cmpdi   %0,%3		\n"
-			"	bne     $+12		\n"		/* branch to isync */
+			"	bne     $+12		\n"		/* branch to lwsync */
 			"	stdcx.  %4,0,%5		\n"
 			"	bne     $-16		\n"		/* branch to ldarx */
-			"	isync				\n"
+			"	lwsync				\n"
 			"	mfcr    %1          \n"
 :			"=&r"(found), "=r"(condition_register), "+m"(ptr->value)
 :			"i"(*expected), "r"(newval), "r"(&ptr->value)
@@ -194,12 +194,12 @@ pg_atomic_compare_exchange_u64_impl(volatile pg_atomic_uint64 *ptr,
 #endif
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	ldarx   %0,0,%5		\n"
+			"	ldarx   %0,0,%5,1	\n"
 			"	cmpd    %0,%3		\n"
-			"	bne     $+12		\n"		/* branch to isync */
+			"	bne     $+12		\n"		/* branch to lwsync */
 			"	stdcx.  %4,0,%5		\n"
 			"	bne     $-16		\n"		/* branch to ldarx */
-			"	isync				\n"
+			"	lwsync				\n"
 			"	mfcr    %1          \n"
 :			"=&r"(found), "=r"(condition_register), "+m"(ptr->value)
 :			"r"(*expected), "r"(newval), "r"(&ptr->value)
@@ -224,11 +224,11 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 		add_ <= PG_INT16_MAX && add_ >= PG_INT16_MIN)
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	ldarx   %1,0,%4		\n"
+			"	ldarx   %1,0,%4,1	\n"
 			"	addi    %0,%1,%3	\n"
 			"	stdcx.  %0,0,%4		\n"
 			"	bne     $-12		\n"		/* branch to ldarx */
-			"	isync				\n"
+			"	lwsync				\n"
 :			"=&r"(_t), "=&b"(res), "+m"(ptr->value)
 :			"i"(add_), "r"(&ptr->value)
 :			"memory", "cc");
@@ -236,11 +236,11 @@ pg_atomic_fetch_add_u64_impl(volatile pg_atomic_uint64 *ptr, int64 add_)
 #endif
 		__asm__ __volatile__(
 			"	sync				\n"
-			"	ldarx   %1,0,%4		\n"
+			"	ldarx   %1,0,%4,1	\n"
 			"	add     %0,%1,%3	\n"
 			"	stdcx.  %0,0,%4		\n"
 			"	bne     $-12		\n"		/* branch to ldarx */
-			"	isync				\n"
+			"	lwsync				\n"
 :			"=&r"(_t), "=&r"(res), "+m"(ptr->value)
 :			"r"(add_), "r"(&ptr->value)
 :			"memory", "cc");

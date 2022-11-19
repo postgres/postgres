@@ -3,6 +3,21 @@
  * execnodes.h
  *	  definitions for executor state nodes
  *
+ * Most plan node types declared in plannodes.h have a corresponding
+ * execution-state node type declared here.  An exception is that
+ * expression nodes (subtypes of Expr) are usually represented by steps
+ * of an ExprState, and fully handled within execExpr* - but sometimes
+ * their state needs to be shared with other parts of the executor, as
+ * for example with SubPlanState, which nodeSubplan.c has to modify.
+ *
+ * Node types declared in this file do not have any copy/equal/out/read
+ * support.  (That is currently hard-wired in gen_node_support.pl, rather
+ * than being explicitly represented by pg_node_attr decorations here.)
+ * There is no need for copy, equal, or read support for executor trees.
+ * Output support could be useful for debugging; but there are a lot of
+ * specialized fields that would require custom code, so for now it's
+ * not provided.
+ *
  *
  * Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
@@ -47,7 +62,7 @@ struct LogicalTapeSet;
 /* ----------------
  *		ExprState node
  *
- * ExprState is the top-level node for expression evaluation.
+ * ExprState represents the evaluation state for a whole expression tree.
  * It contains instructions (in ->steps) to evaluate the expression.
  * ----------------
  */
@@ -993,6 +1008,8 @@ typedef TupleTableSlot *(*ExecProcNodeMtd) (struct PlanState *pstate);
  */
 typedef struct PlanState
 {
+	pg_node_attr(abstract)
+
 	NodeTag		type;
 
 	Plan	   *plan;			/* associated Plan node */
@@ -2158,8 +2175,8 @@ typedef struct MemoizeState
 								 * by bit, false when using hash equality ops */
 	MemoizeInstrumentation stats;	/* execution statistics */
 	SharedMemoizeInfo *shared_info; /* statistics for parallel workers */
-	Bitmapset	   *keyparamids; /* Param->paramids of expressions belonging to
-								  * param_exprs */
+	Bitmapset  *keyparamids;	/* Param->paramids of expressions belonging to
+								 * param_exprs */
 } MemoizeState;
 
 /* ----------------

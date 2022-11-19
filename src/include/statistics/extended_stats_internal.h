@@ -79,7 +79,7 @@ extern MVDependencies *statext_dependencies_deserialize(bytea *data);
 
 extern MCVList *statext_mcv_build(StatsBuildData *data,
 								  double totalrows, int stattarget);
-extern bytea *statext_mcv_serialize(MCVList *mcv, VacAttrStats **stats);
+extern bytea *statext_mcv_serialize(MCVList *mcvlist, VacAttrStats **stats);
 extern MCVList *statext_mcv_deserialize(bytea *data);
 
 extern MultiSortSupport multi_sort_init(int ndims);

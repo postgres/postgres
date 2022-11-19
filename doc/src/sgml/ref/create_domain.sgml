@@ -94,7 +94,8 @@ CREATE DOMAIN <replaceable class="parameter">name</replaceable> [ AS ] <replacea
       <listitem>
        <para>
         An optional collation for the domain.  If no collation is
-        specified, the underlying data type's default collation is used.
+        specified, the domain has the same collation behavior as its
+        underlying data type.
         The underlying type must be collatable if <literal>COLLATE</literal>
         is specified.
        </para>
@@ -233,7 +234,7 @@ INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM tab WHERE false));
    function.  <productname>PostgreSQL</productname> does not disallow that,
    but it will not notice if there are stored values of the domain type that
    now violate the <literal>CHECK</literal> constraint. That would cause a
-   subsequent database dump and reload to fail.  The recommended way to
+   subsequent database dump and restore to fail.  The recommended way to
    handle such a change is to drop the constraint (using <command>ALTER
    DOMAIN</command>), adjust the function definition, and re-add the
    constraint, thereby rechecking it against stored data.

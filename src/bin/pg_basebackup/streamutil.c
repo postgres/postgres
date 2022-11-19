@@ -154,8 +154,7 @@ GetConnection(void)
 		/* Get a new password if appropriate */
 		if (need_password)
 		{
-			if (password)
-				free(password);
+			free(password);
 			password = simple_prompt("Password: ", false);
 			need_password = false;
 		}
@@ -198,16 +197,14 @@ GetConnection(void)
 		PQfinish(tmpconn);
 		free(values);
 		free(keywords);
-		if (conn_opts)
-			PQconninfoFree(conn_opts);
+		PQconninfoFree(conn_opts);
 		return NULL;
 	}
 
 	/* Connection ok! */
 	free(values);
 	free(keywords);
-	if (conn_opts)
-		PQconninfoFree(conn_opts);
+	PQconninfoFree(conn_opts);
 
 	/*
 	 * Set always-secure search path, so malicious users can't get control.
@@ -522,7 +519,7 @@ GetSlotInformation(PGconn *conn, const char *slot_name,
 	 */
 	if (PQgetisnull(res, 0, 0))
 	{
-		pg_log_error("could not find replication slot \"%s\"", slot_name);
+		pg_log_error("replication slot \"%s\" does not exist", slot_name);
 		PQclear(res);
 		return false;
 	}
@@ -619,7 +616,7 @@ CreateReplicationSlot(PGconn *conn, const char *slot_name, const char *plugin,
 			/* pg_recvlogical doesn't use an exported snapshot, so suppress */
 			if (use_new_option_syntax)
 				AppendStringCommandOption(query, use_new_option_syntax,
-										   "SNAPSHOT", "nothing");
+										  "SNAPSHOT", "nothing");
 			else
 				AppendPlainCommandOption(query, use_new_option_syntax,
 										 "NOEXPORT_SNAPSHOT");

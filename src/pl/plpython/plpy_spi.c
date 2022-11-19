@@ -236,18 +236,18 @@ PLy_spi_execute_plan(PyObject *ob, PyObject *list, long limit)
 			PyObject   *elem;
 
 			elem = PySequence_GetItem(list, j);
-			PG_TRY();
+			PG_TRY(2);
 			{
 				bool		isnull;
 
 				plan->values[j] = PLy_output_convert(arg, elem, &isnull);
 				nulls[j] = isnull ? 'n' : ' ';
 			}
-			PG_FINALLY();
+			PG_FINALLY(2);
 			{
 				Py_DECREF(elem);
 			}
-			PG_END_TRY();
+			PG_END_TRY(2);
 		}
 
 		rv = SPI_execute_plan(plan->plan, plan->values, nulls,

@@ -15,7 +15,7 @@
 #include "access/xlogdefs.h"
 #include "port/pg_crc32c.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /*
  * The overall layout of an XLOG record is:
@@ -97,7 +97,7 @@ typedef struct XLogRecordBlockHeader
 								 * image) */
 
 	/* If BKPBLOCK_HAS_IMAGE, an XLogRecordBlockImageHeader struct follows */
-	/* If BKPBLOCK_SAME_REL is not set, a RelFileNode follows */
+	/* If BKPBLOCK_SAME_REL is not set, a RelFileLocator follows */
 	/* BlockNumber follows */
 } XLogRecordBlockHeader;
 
@@ -175,7 +175,7 @@ typedef struct XLogRecordBlockCompressHeader
 	(SizeOfXLogRecordBlockHeader + \
 	 SizeOfXLogRecordBlockImageHeader + \
 	 SizeOfXLogRecordBlockCompressHeader + \
-	 sizeof(RelFileNode) + \
+	 sizeof(RelFileLocator) + \
 	 sizeof(BlockNumber))
 
 /*
@@ -187,7 +187,8 @@ typedef struct XLogRecordBlockCompressHeader
 #define BKPBLOCK_HAS_IMAGE	0x10	/* block data is an XLogRecordBlockImage */
 #define BKPBLOCK_HAS_DATA	0x20
 #define BKPBLOCK_WILL_INIT	0x40	/* redo will re-init the page */
-#define BKPBLOCK_SAME_REL	0x80	/* RelFileNode omitted, same as previous */
+#define BKPBLOCK_SAME_REL	0x80	/* RelFileLocator omitted, same as
+									 * previous */
 
 /*
  * XLogRecordDataHeaderShort/Long are used for the "main data" portion of

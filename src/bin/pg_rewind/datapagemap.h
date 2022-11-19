@@ -10,7 +10,7 @@
 #define DATAPAGEMAP_H
 
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 struct datapagemap
 {

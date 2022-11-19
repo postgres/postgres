@@ -213,22 +213,22 @@ static const struct cachedesc cacheinfo[] = {
 	},
 	{AuthMemRelationId,			/* AUTHMEMMEMROLE */
 		AuthMemMemRoleIndexId,
-		2,
+		3,
 		{
 			Anum_pg_auth_members_member,
 			Anum_pg_auth_members_roleid,
-			0,
+			Anum_pg_auth_members_grantor,
 			0
 		},
 		8
 	},
 	{AuthMemRelationId,			/* AUTHMEMROLEMEM */
 		AuthMemRoleMemIndexId,
-		2,
+		3,
 		{
 			Anum_pg_auth_members_roleid,
 			Anum_pg_auth_members_member,
-			0,
+			Anum_pg_auth_members_grantor,
 			0
 		},
 		8

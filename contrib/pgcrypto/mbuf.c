@@ -59,12 +59,6 @@ mbuf_size(MBuf *mbuf)
 }
 
 int
-mbuf_tell(MBuf *mbuf)
-{
-	return mbuf->read_pos - mbuf->data;
-}
-
-int
 mbuf_free(MBuf *mbuf)
 {
 	if (mbuf->own_data)
@@ -162,13 +156,6 @@ mbuf_grab(MBuf *mbuf, int len, uint8 **data_p)
 	*data_p = mbuf->read_pos;
 	mbuf->read_pos += len;
 	return len;
-}
-
-int
-mbuf_rewind(MBuf *mbuf)
-{
-	mbuf->read_pos = mbuf->data;
-	return 0;
 }
 
 int

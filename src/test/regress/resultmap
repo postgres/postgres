@@ -1,3 +1,2 @@
 float4:out:.*-.*-cygwin.*=float4-misrounded-input.out
 float4:out:.*-.*-mingw.*=float4-misrounded-input.out
-float4:out:hppa.*-hp-hpux10.*=float4-misrounded-input.out

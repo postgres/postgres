@@ -67,7 +67,7 @@ static ParseNamespaceItem *transformRangeSubselect(ParseState *pstate,
 static ParseNamespaceItem *transformRangeFunction(ParseState *pstate,
 												  RangeFunction *r);
 static ParseNamespaceItem *transformRangeTableFunc(ParseState *pstate,
-												   RangeTableFunc *t);
+												   RangeTableFunc *rtf);
 static TableSampleClause *transformRangeTableSample(ParseState *pstate,
 													RangeTableSample *rts);
 static ParseNamespaceItem *getNSItemForSpecialRelationTypes(ParseState *pstate,
@@ -153,7 +153,7 @@ transformFromClause(ParseState *pstate, List *frmList)
 
 /*
  * setTargetTable
- *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
+ *	  Add the target relation of INSERT/UPDATE/DELETE/MERGE to the range table,
  *	  and make the special links to it in the ParseState.
  *
  *	  We also open the target relation and acquire a write lock on it.
@@ -163,7 +163,9 @@ transformFromClause(ParseState *pstate, List *frmList)
  *
  *	  If alsoSource is true, add the target to the query's joinlist and
  *	  namespace.  For INSERT, we don't want the target to be joined to;
- *	  it's a destination of tuples, not a source.   For UPDATE/DELETE,
+ *	  it's a destination of tuples, not a source.  MERGE is actually
+ *	  both, but we'll add it separately to joinlist and namespace, so
+ *	  doing nothing (like INSERT) is correct here.  For UPDATE/DELETE,
  *	  we do need to scan or join the target.  (NOTE: we do not bother
  *	  to check for namespace conflict; we assume that the namespace was
  *	  initially empty in these cases.)
@@ -404,16 +406,6 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	Query	   *query;
 
 	/*
-	 * We require user to supply an alias for a subselect, per SQL92. To relax
-	 * this, we'd have to be prepared to gin up a unique alias for an
-	 * unlabeled subselect.  (This is just elog, not ereport, because the
-	 * grammar should have enforced it already.  It'd probably be better to
-	 * report the error here, but we don't have a good error location here.)
-	 */
-	if (r->alias == NULL)
-		elog(ERROR, "subquery in FROM must have an alias");
-
-	/*
 	 * Set p_expr_kind to show this parse level is recursing to a subselect.
 	 * We can't be nested within any expression, so don't need save-restore
 	 * logic here.
@@ -430,10 +422,14 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	pstate->p_lateral_active = r->lateral;
 
 	/*
-	 * Analyze and transform the subquery.
+	 * Analyze and transform the subquery.  Note that if the subquery doesn't
+	 * have an alias, it can't be explicitly selected for locking, but locking
+	 * might still be required (if there is an all-tables locking clause).
 	 */
 	query = parse_sub_analyze(r->subquery, pstate, NULL,
-							  isLockedRefname(pstate, r->alias->aliasname),
+							  isLockedRefname(pstate,
+											  r->alias == NULL ? NULL :
+											  r->alias->aliasname),
 							  true);
 
 	/* Restore state */
@@ -545,11 +541,11 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 				!fc->func_variadic &&
 				coldeflist == NIL)
 			{
-				ListCell   *lc;
+				ListCell   *lc2;
 
-				foreach(lc, fc->args)
+				foreach(lc2, fc->args)
 				{
-					Node	   *arg = (Node *) lfirst(lc);
+					Node	   *arg = (Node *) lfirst(lc2);
 					FuncCall   *newfc;
 
 					last_srf = pstate->p_last_srf;
@@ -696,9 +692,7 @@ transformRangeTableFunc(ParseState *pstate, RangeTableFunc *rtf)
 	char	  **names;
 	int			colno;
 
-	/* Currently only XMLTABLE and JSON_TABLE are supported */
-
-	tf->functype = TFT_XMLTABLE;
+	/* Currently only XMLTABLE is supported */
 	constructName = "XMLTABLE";
 	docType = XMLOID;
 
@@ -1056,6 +1050,9 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 						ParseNamespaceItem **top_nsitem,
 						List **namespace)
 {
+	/* Guard against stack overflow due to overly deep subtree */
+	check_stack_depth();
+
 	if (IsA(n, RangeVar))
 	{
 		/* Plain relation reference, or perhaps a CTE reference */
@@ -1102,17 +1099,13 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 		rtr->rtindex = nsitem->p_rtindex;
 		return (Node *) rtr;
 	}
-	else if (IsA(n, RangeTableFunc) || IsA(n, JsonTable))
+	else if (IsA(n, RangeTableFunc))
 	{
 		/* table function is like a plain relation */
 		RangeTblRef *rtr;
 		ParseNamespaceItem *nsitem;
 
-		if (IsA(n, RangeTableFunc))
-			nsitem = transformRangeTableFunc(pstate, (RangeTableFunc *) n);
-		else
-			nsitem = transformJsonTable(pstate, (JsonTable *) n);
-
+		nsitem = transformRangeTableFunc(pstate, (RangeTableFunc *) n);
 		*top_nsitem = nsitem;
 		*namespace = list_make1(nsitem);
 		rtr = makeNode(RangeTblRef);
@@ -1443,21 +1436,6 @@ transformFromClauseItem(ParseState *pstate, Node *n,
 			extractRemainingColumns(r_nscolumns, r_colnames, &r_colnos,
 									&res_colnames, &res_colvars,
 									res_nscolumns + res_colindex);
-
-		/*
-		 * Check alias (AS clause), if any.
-		 */
-		if (j->alias)
-		{
-			if (j->alias->colnames != NIL)
-			{
-				if (list_length(j->alias->colnames) > list_length(res_colnames))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("column alias list for \"%s\" has too many entries",
-									j->alias->aliasname)));
-			}
-		}
 
 		/*
 		 * Now build an RTE and nsitem for the result of the join.
@@ -2004,7 +1982,7 @@ findTargetlistEntrySQL92(ParseState *pstate, Node *node, List **tlist,
 	}
 	if (IsA(node, A_Const))
 	{
-		A_Const	   *aconst = castNode(A_Const, node);
+		A_Const    *aconst = castNode(A_Const, node);
 		int			targetlist_pos = 0;
 		int			target_pos;
 
@@ -2846,6 +2824,7 @@ transformWindowDefinitions(ParseState *pstate,
 											 rangeopfamily, rangeopcintype,
 											 &wc->endInRangeFunc,
 											 windef->endOffset);
+		wc->runCondition = NIL;
 		wc->winref = winref;
 
 		result = lappend(result, wc);

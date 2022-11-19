@@ -42,6 +42,7 @@
 #include "storage/procarray.h"
 #include "storage/procsignal.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_lsn.h"
 #include "utils/ps_status.h"
@@ -51,6 +52,7 @@
 /* max sleep time between cycles (3min) */
 #define DEFAULT_NAPTIME_PER_CYCLE 180000L
 
+/* GUC variables */
 int			max_logical_replication_workers = 4;
 int			max_sync_workers_per_subscription = 2;
 
@@ -65,7 +67,7 @@ typedef struct LogicalRepCtxStruct
 	LogicalRepWorker workers[FLEXIBLE_ARRAY_MEMBER];
 } LogicalRepCtxStruct;
 
-LogicalRepCtxStruct *LogicalRepCtx;
+static LogicalRepCtxStruct *LogicalRepCtx;
 
 static void ApplyLauncherWakeup(void);
 static void logicalrep_launcher_onexit(int code, Datum arg);
@@ -74,8 +76,6 @@ static void logicalrep_worker_detach(void);
 static void logicalrep_worker_cleanup(LogicalRepWorker *worker);
 
 static bool on_commit_launcher_wakeup = false;
-
-Datum		pg_stat_get_subscription(PG_FUNCTION_ARGS);
 
 
 /*
@@ -236,8 +236,8 @@ logicalrep_worker_find(Oid subid, Oid relid, bool only_running)
 }
 
 /*
- * Similar to logicalrep_worker_find(), but returns list of all workers for
- * the subscription, instead just one.
+ * Similar to logicalrep_worker_find(), but returns a list of all workers for
+ * the subscription, instead of just one.
  */
 List *
 logicalrep_workers_find(Oid subid, bool only_running)
@@ -344,9 +344,9 @@ retry:
 	}
 
 	/*
-	 * We don't allow to invoke more sync workers once we have reached the sync
-	 * worker limit per subscription. So, just return silently as we might get
-	 * here because of an otherwise harmless race condition.
+	 * We don't allow to invoke more sync workers once we have reached the
+	 * sync worker limit per subscription. So, just return silently as we
+	 * might get here because of an otherwise harmless race condition.
 	 */
 	if (OidIsValid(relid) && nsyncworkers >= max_sync_workers_per_subscription)
 	{
@@ -931,16 +931,16 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 	int			i;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* Make sure we get consistent view of the workers. */
 	LWLockAcquire(LogicalRepWorkerLock, LW_SHARED);
 
-	for (i = 0; i <= max_logical_replication_workers; i++)
+	for (i = 0; i < max_logical_replication_workers; i++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_SUBSCRIPTION_COLS];
-		bool		nulls[PG_STAT_GET_SUBSCRIPTION_COLS];
+		Datum		values[PG_STAT_GET_SUBSCRIPTION_COLS] = {0};
+		bool		nulls[PG_STAT_GET_SUBSCRIPTION_COLS] = {0};
 		int			worker_pid;
 		LogicalRepWorker worker;
 
@@ -953,9 +953,6 @@ pg_stat_get_subscription(PG_FUNCTION_ARGS)
 			continue;
 
 		worker_pid = worker.proc->pid;
-
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = ObjectIdGetDatum(worker.subid);
 		if (OidIsValid(worker.relid))

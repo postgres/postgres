@@ -7,6 +7,11 @@ SELECT '"abc
 def"'::json;					-- ERROR, unescaped newline in string constant
 SELECT '"\n\"\\"'::json;		-- OK, legal escapes
 SELECT '"\v"'::json;			-- ERROR, not a valid JSON escape
+
+-- Check fast path for longer strings (at least 16 bytes long)
+SELECT ('"'||repeat('.', 12)||'abc"')::json; -- OK
+SELECT ('"'||repeat('.', 12)||'abc\n"')::json; -- OK, legal escapes
+
 -- see json_encoding test for input with unicode escapes
 
 -- Numbers.

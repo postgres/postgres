@@ -56,7 +56,6 @@ ginhandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = true;
-	amroutine->amhotblocking = true;
 	amroutine->amparallelvacuumoptions =
 		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_CLEANUP;
 	amroutine->amkeytype = InvalidOid;
@@ -689,7 +688,7 @@ ginUpdateStats(Relation index, const GinStatsData *stats, bool is_build)
 		XLogRecPtr	recptr;
 		ginxlogUpdateMeta data;
 
-		data.node = index->rd_node;
+		data.locator = index->rd_locator;
 		data.ntuples = 0;
 		data.newRightlink = data.prevTail = InvalidBlockNumber;
 		memcpy(&data.metadata, metadata, sizeof(GinMetaPageData));

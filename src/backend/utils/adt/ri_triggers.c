@@ -113,8 +113,10 @@ typedef struct RI_ConstraintInfo
 	Oid			fk_relid;		/* referencing relation */
 	char		confupdtype;	/* foreign key's ON UPDATE action */
 	char		confdeltype;	/* foreign key's ON DELETE action */
-	int			ndelsetcols;	/* number of columns referenced in ON DELETE SET clause */
-	int16		confdelsetcols[RI_MAX_NUMKEYS]; /* attnums of cols to set on delete */
+	int			ndelsetcols;	/* number of columns referenced in ON DELETE
+								 * SET clause */
+	int16		confdelsetcols[RI_MAX_NUMKEYS]; /* attnums of cols to set on
+												 * delete */
 	char		confmatchtype;	/* foreign key's match type */
 	int			nkeys;			/* number of key columns */
 	int16		pk_attnums[RI_MAX_NUMKEYS]; /* attnums of referenced cols */
@@ -174,8 +176,7 @@ typedef struct RI_CompareHashEntry
 static HTAB *ri_constraint_cache = NULL;
 static HTAB *ri_query_cache = NULL;
 static HTAB *ri_compare_cache = NULL;
-static dlist_head ri_constraint_cache_valid_list;
-static int	ri_constraint_cache_valid_count = 0;
+static dclist_head ri_constraint_cache_valid_list;
 
 
 /*
@@ -194,7 +195,7 @@ static void ri_GenerateQual(StringInfo buf,
 							Oid opoid,
 							const char *rightop, Oid rightoptype);
 static void ri_GenerateQualCollation(StringInfo buf, Oid collation);
-static int	ri_NullCheck(TupleDesc tupdesc, TupleTableSlot *slot,
+static int	ri_NullCheck(TupleDesc tupDesc, TupleTableSlot *slot,
 						 const RI_ConstraintInfo *riinfo, bool rel_is_pk);
 static void ri_BuildQueryKey(RI_QueryKey *key,
 							 const RI_ConstraintInfo *riinfo,
@@ -1059,7 +1060,8 @@ ri_set(TriggerData *trigdata, bool is_set_null, int tgkind)
 	/*
 	 * Fetch or prepare a saved plan for the trigger.
 	 */
-	switch (tgkind) {
+	switch (tgkind)
+	{
 		case RI_TRIGTYPE_UPDATE:
 			queryno = is_set_null
 				? RI_PLAN_SETNULL_ONUPDATE
@@ -1086,25 +1088,29 @@ ri_set(TriggerData *trigdata, bool is_set_null, int tgkind)
 		const char *qualsep;
 		Oid			queryoids[RI_MAX_NUMKEYS];
 		const char *fk_only;
-		int num_cols_to_set;
+		int			num_cols_to_set;
 		const int16 *set_cols;
 
-		switch (tgkind) {
+		switch (tgkind)
+		{
 			case RI_TRIGTYPE_UPDATE:
 				num_cols_to_set = riinfo->nkeys;
 				set_cols = riinfo->fk_attnums;
 				break;
 			case RI_TRIGTYPE_DELETE:
+
 				/*
-				 * If confdelsetcols are present, then we only update
-				 * the columns specified in that array, otherwise we
-				 * update all the referencing columns.
+				 * If confdelsetcols are present, then we only update the
+				 * columns specified in that array, otherwise we update all
+				 * the referencing columns.
 				 */
-				if (riinfo->ndelsetcols != 0) {
+				if (riinfo->ndelsetcols != 0)
+				{
 					num_cols_to_set = riinfo->ndelsetcols;
 					set_cols = riinfo->confdelsetcols;
 				}
-				else {
+				else
+				{
 					num_cols_to_set = riinfo->nkeys;
 					set_cols = riinfo->fk_attnums;
 				}
@@ -1421,9 +1427,9 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	 */
 	if (!has_bypassrls_privilege(GetUserId()) &&
 		((pk_rel->rd_rel->relrowsecurity &&
-		  !pg_class_ownercheck(pkrte->relid, GetUserId())) ||
+		  !object_ownercheck(RelationRelationId, pkrte->relid, GetUserId())) ||
 		 (fk_rel->rd_rel->relrowsecurity &&
-		  !pg_class_ownercheck(fkrte->relid, GetUserId()))))
+		  !object_ownercheck(RelationRelationId, fkrte->relid, GetUserId()))))
 		return false;
 
 	/*----------
@@ -2165,10 +2171,9 @@ ri_LoadConstraintInfo(Oid constraintOid)
 
 	/*
 	 * For efficient processing of invalidation messages below, we keep a
-	 * doubly-linked list, and a count, of all currently valid entries.
+	 * doubly-linked count list of all currently valid entries.
 	 */
-	dlist_push_tail(&ri_constraint_cache_valid_list, &riinfo->valid_link);
-	ri_constraint_cache_valid_count++;
+	dclist_push_tail(&ri_constraint_cache_valid_list, &riinfo->valid_link);
 
 	riinfo->valid = true;
 
@@ -2226,13 +2231,13 @@ InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 	 * O(N^2) behavior in situations where a session touches many foreign keys
 	 * and also does many ALTER TABLEs, such as a restore from pg_dump.
 	 */
-	if (ri_constraint_cache_valid_count > 1000)
+	if (dclist_count(&ri_constraint_cache_valid_list) > 1000)
 		hashvalue = 0;			/* pretend it's a cache reset */
 
-	dlist_foreach_modify(iter, &ri_constraint_cache_valid_list)
+	dclist_foreach_modify(iter, &ri_constraint_cache_valid_list)
 	{
-		RI_ConstraintInfo *riinfo = dlist_container(RI_ConstraintInfo,
-													valid_link, iter.cur);
+		RI_ConstraintInfo *riinfo = dclist_container(RI_ConstraintInfo,
+													 valid_link, iter.cur);
 
 		/*
 		 * We must invalidate not only entries directly matching the given
@@ -2245,8 +2250,7 @@ InvalidateConstraintCacheCallBack(Datum arg, int cacheid, uint32 hashvalue)
 		{
 			riinfo->valid = false;
 			/* Remove invalidated entries from the list, too */
-			dlist_delete(iter.cur);
-			ri_constraint_cache_valid_count--;
+			dclist_delete_from(&ri_constraint_cache_valid_list, iter.cur);
 		}
 	}
 }

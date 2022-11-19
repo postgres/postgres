@@ -16,11 +16,26 @@
   <primary>pg_buffercache_pages</primary>
  </indexterm>
 
+ <indexterm>
+  <primary>pg_buffercache_summary</primary>
+ </indexterm>
+
  <para>
-  The module provides a C function <function>pg_buffercache_pages</function>
-  that returns a set of records, plus a view
-  <structname>pg_buffercache</structname> that wraps the function for
+  The module provides the <function>pg_buffercache_pages()</function>
+  function, wrapped in the <structname>pg_buffercache</structname> view, and
+  the <function>pg_buffercache_summary()</function> function.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_pages()</function> function returns a set of
+  records, each row describing the state of one shared buffer entry. The
+  <structname>pg_buffercache</structname> view wraps the function for
   convenient use.
+ </para>
+
+ <para>
+  The <function>pg_buffercache_summary()</function> function returns a single
+  row summarizing the state of the shared buffer cache.
  </para>
 
  <para>
@@ -165,6 +180,92 @@
  </sect2>
 
  <sect2>
+  <title>The <function>pg_buffercache_summary()</function> Function</title>
+
+  <para>
+   The definitions of the columns exposed by the function are shown in <xref linkend="pgbuffercache_summary-columns"/>.
+  </para>
+
+  <table id="pgbuffercache_summary-columns">
+   <title><function>pg_buffercache_summary()</function> Output Columns</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_used</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of unused shared buffers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_unused</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of unused shared buffers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_dirty</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of dirty shared buffers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>buffers_pinned</structfield> <type>int4</type>
+      </para>
+      <para>
+       Number of pinned shared buffers
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>usagecount_avg</structfield> <type>float8</type>
+      </para>
+      <para>
+       Average usagecount of used shared buffers
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The <function>pg_buffercache_summary()</function> function returns a
+   single row summarizing the state of all shared buffers. Similar and more
+   detailed information is provided by the
+   <structname>pg_buffercache</structname> view, but
+   <function>pg_buffercache_summary()</function> is significantly cheaper.
+  </para>
+
+  <para>
+   Like the <structname>pg_buffercache</structname> view,
+   <function>pg_buffercache_summary()</function> does not acquire buffer
+   manager locks. Therefore concurrent activity can lead to minor inaccuracies
+   in the result.
+  </para>
+ </sect2>
+
+ <sect2>
   <title>Sample Output</title>
 
 <screen>
@@ -191,6 +292,13 @@ regression=# SELECT n.nspname, c.relname, count(*) AS buffers
  public     | gin_test_tbl           |     188
  public     | spgist_text_tbl        |     182
 (10 rows)
+
+
+regression=# SELECT * FROM pg_buffercache_summary();
+ buffers_used | buffers_unused | buffers_dirty | buffers_pinned | usagecount_avg
+--------------+----------------+---------------+----------------+----------------
+          248 |        2096904 |            39 |              0 |       3.141129
+(1 row)
 </screen>
  </sect2>
 

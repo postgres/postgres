@@ -10,6 +10,7 @@
 #include "access/stratnum.h"
 #include "crc32.h"
 #include "ltree.h"
+#include "utils/array.h"
 
 #define NEXTVAL(x) ( (lquery*)( (char*)(x) + INTALIGN( VARSIZE(x) ) ) )
 #define ISEQ(a,b)	( (a)->numlevel == (b)->numlevel && ltree_compare(a,b)==0 )

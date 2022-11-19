@@ -23,14 +23,14 @@
 
 PgBenchExpr *expr_parse_result;
 
-static PgBenchExprList *make_elist(PgBenchExpr *exp, PgBenchExprList *list);
+static PgBenchExprList *make_elist(PgBenchExpr *expr, PgBenchExprList *list);
 static PgBenchExpr *make_null_constant(void);
 static PgBenchExpr *make_boolean_constant(bool bval);
 static PgBenchExpr *make_integer_constant(int64 ival);
 static PgBenchExpr *make_double_constant(double dval);
 static PgBenchExpr *make_variable(char *varname);
 static PgBenchExpr *make_op(yyscan_t yyscanner, const char *operator,
-		PgBenchExpr *lexpr, PgBenchExpr *rexpr);
+							PgBenchExpr *lexpr, PgBenchExpr *rexpr);
 static PgBenchExpr *make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr);
 static int	find_func(yyscan_t yyscanner, const char *fname);
 static PgBenchExpr *make_func(yyscan_t yyscanner, int fnumber, PgBenchExprList *args);
@@ -80,7 +80,10 @@ static PgBenchExpr *make_case(yyscan_t yyscanner, PgBenchExprList *when_then_lis
 
 %%
 
-result: expr				{ expr_parse_result = $1; }
+result: expr				{
+								expr_parse_result = $1;
+								(void) yynerrs; /* suppress compiler warning */
+							}
 
 elist:						{ $$ = NULL; }
 	| expr					{ $$ = make_elist($1, NULL); }
@@ -240,7 +243,7 @@ make_uop(yyscan_t yyscanner, const char *operator, PgBenchExpr *expr)
  *			  meaning #args >= 1;
  *			- PGBENCH_NARGS_CASE is for the "CASE WHEN ..." function, which
  *			  has #args >= 3 and odd;
- * 			- PGBENCH_NARGS_HASH is for hash functions, which have one required
+ *			- PGBENCH_NARGS_HASH is for hash functions, which have one required
  *			  and one optional argument;
  * - tag: function identifier from PgBenchFunction enum
  */
@@ -526,18 +529,3 @@ make_case(yyscan_t yyscanner, PgBenchExprList *when_then_list, PgBenchExpr *else
 					 find_func(yyscanner, "!case_end"),
 					 make_elist(else_part, when_then_list));
 }
-
-/*
- * exprscan.l is compiled as part of exprparse.y.  Currently, this is
- * unavoidable because exprparse does not create a .h file to export
- * its token symbols.  If these files ever grow large enough to be
- * worth compiling separately, that could be fixed; but for now it
- * seems like useless complication.
- */
-
-/* First, get rid of "#define yyscan_t" from pgbench.h */
-#undef yyscan_t
-/* ... and the yylval macro, which flex will have its own definition for */
-#undef yylval
-
-#include "exprscan.c"

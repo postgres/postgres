@@ -47,6 +47,7 @@
 #include "parser/parsetree.h"
 #include "partitioning/partbounds.h"
 #include "partitioning/partprune.h"
+#include "port/pg_bitutils.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/lsyscache.h"
 
@@ -142,7 +143,8 @@ static void subquery_push_qual(Query *subquery,
 							   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
 							  RangeTblEntry *rte, Index rti, Node *qual);
-static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel);
+static void remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel,
+										   Bitmapset *extra_used_attrs);
 
 
 /*
@@ -552,12 +554,11 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * its own pool of workers.  Instead, we'll consider gathering partial
 	 * paths for the parent appendrel.
 	 *
-	 * Also, if this is the topmost scan/join rel (that is, the only baserel),
-	 * we postpone gathering until the final scan/join targetlist is available
-	 * (see grouping_planner).
+	 * Also, if this is the topmost scan/join rel, we postpone gathering until
+	 * the final scan/join targetlist is available (see grouping_planner).
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
-		bms_membership(root->all_baserels) != BMS_SINGLETON)
+		!bms_equal(rel->relids, root->all_baserels))
 		generate_useful_gather_paths(root, rel, false);
 
 	/* Now find the cheapest of the paths for this rel */
@@ -1490,7 +1491,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		if (enable_parallel_append)
 		{
 			parallel_workers = Max(parallel_workers,
-								   fls(list_length(live_childrels)));
+								   pg_leftmost_one_pos32(list_length(live_childrels)) + 1);
 			parallel_workers = Min(parallel_workers,
 								   max_parallel_workers_per_gather);
 		}
@@ -1541,7 +1542,7 @@ add_paths_to_append_rel(PlannerInfo *root, RelOptInfo *rel,
 		 * the planned number of parallel workers.
 		 */
 		parallel_workers = Max(parallel_workers,
-							   fls(list_length(live_childrels)));
+							   pg_leftmost_one_pos32(list_length(live_childrels)) + 1);
 		parallel_workers = Min(parallel_workers,
 							   max_parallel_workers_per_gather);
 		Assert(parallel_workers > 0);
@@ -1777,17 +1778,18 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 			}
 
 			/*
-			 * When building a fractional path, determine a cheapest fractional
-			 * path for each child relation too. Looking at startup and total
-			 * costs is not enough, because the cheapest fractional path may be
-			 * dominated by two separate paths (one for startup, one for total).
+			 * When building a fractional path, determine a cheapest
+			 * fractional path for each child relation too. Looking at startup
+			 * and total costs is not enough, because the cheapest fractional
+			 * path may be dominated by two separate paths (one for startup,
+			 * one for total).
 			 *
 			 * When needed (building fractional path), determine the cheapest
 			 * fractional path too.
 			 */
 			if (root->tuple_fraction > 0)
 			{
-				double	path_fraction = (1.0 / root->tuple_fraction);
+				double		path_fraction = (1.0 / root->tuple_fraction);
 
 				cheapest_fractional =
 					get_cheapest_fractional_path_for_pathkeys(childrel->pathlist,
@@ -1796,8 +1798,8 @@ generate_orderedappend_paths(PlannerInfo *root, RelOptInfo *rel,
 															  path_fraction);
 
 				/*
-				 * If we found no path with matching pathkeys, use the cheapest
-				 * total path instead.
+				 * If we found no path with matching pathkeys, use the
+				 * cheapest total path instead.
 				 *
 				 * XXX We might consider partially sorted paths too (with an
 				 * incremental sort on top). But we'd have to build all the
@@ -2051,9 +2053,8 @@ accumulate_append_subpath(Path *path, List **subpaths, List **special_subpaths)
 			*subpaths = list_concat(*subpaths,
 									list_copy_tail(apath->subpaths,
 												   apath->first_partial_path));
-			new_special_subpaths =
-				list_truncate(list_copy(apath->subpaths),
-							  apath->first_partial_path);
+			new_special_subpaths = list_copy_head(apath->subpaths,
+												  apath->first_partial_path);
 			*special_subpaths = list_concat(*special_subpaths,
 											new_special_subpaths);
 			return;
@@ -2176,14 +2177,16 @@ has_multiple_baserels(PlannerInfo *root)
  * the run condition will handle all of the required filtering.
  *
  * Returns true if 'opexpr' was found to be useful and was added to the
- * WindowClauses runCondition. We also set *keep_original accordingly.
+ * WindowClauses runCondition.  We also set *keep_original accordingly and add
+ * 'attno' to *run_cond_attrs offset by FirstLowInvalidHeapAttributeNumber.
  * If the 'opexpr' cannot be used then we set *keep_original to true and
  * return false.
  */
 static bool
 find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 						   AttrNumber attno, WindowFunc *wfunc, OpExpr *opexpr,
-						   bool wfunc_left, bool *keep_original)
+						   bool wfunc_left, bool *keep_original,
+						   Bitmapset **run_cond_attrs)
 {
 	Oid			prosupport;
 	Expr	   *otherexpr;
@@ -2303,6 +2306,7 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 			{
 				*keep_original = false;
 				runopexpr = opexpr;
+				runoperator = opexpr->opno;
 				break;
 			}
 
@@ -2355,6 +2359,9 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
 
 		wclause->runCondition = lappend(wclause->runCondition, newexpr);
 
+		/* record that this attno was used in a run condition */
+		*run_cond_attrs = bms_add_member(*run_cond_attrs,
+										 attno - FirstLowInvalidHeapAttributeNumber);
 		return true;
 	}
 
@@ -2368,13 +2375,17 @@ find_window_run_conditions(Query *subquery, RangeTblEntry *rte, Index rti,
  *		WindowClause as a 'runCondition' qual.  These, when present, allow
  *		some unnecessary work to be skipped during execution.
  *
+ * 'run_cond_attrs' will be populated with all targetlist resnos of subquery
+ * targets (offset by FirstLowInvalidHeapAttributeNumber) that we pushed
+ * window quals for.
+ *
  * Returns true if the caller still must keep the original qual or false if
  * the caller can safely ignore the original qual because the WindowAgg node
  * will use the runCondition to stop returning tuples.
  */
 static bool
 check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
-							Node *clause)
+							Node *clause, Bitmapset **run_cond_attrs)
 {
 	OpExpr	   *opexpr = (OpExpr *) clause;
 	bool		keep_original = true;
@@ -2402,7 +2413,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
 		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
-									   opexpr, true, &keep_original))
+									   opexpr, true, &keep_original,
+									   run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2414,7 +2426,8 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
 		WindowFunc *wfunc = (WindowFunc *) tle->expr;
 
 		if (find_window_run_conditions(subquery, rte, rti, tle->resno, wfunc,
-									   opexpr, false, &keep_original))
+									   opexpr, false, &keep_original,
+									   run_cond_attrs))
 			return keep_original;
 	}
 
@@ -2439,10 +2452,12 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 {
 	Query	   *parse = root->parse;
 	Query	   *subquery = rte->subquery;
+	bool		trivial_pathtarget;
 	Relids		required_outer;
 	pushdown_safety_info safetyInfo;
 	double		tuple_fraction;
 	RelOptInfo *sub_final_rel;
+	Bitmapset  *run_cond_attrs = NULL;
 	ListCell   *lc;
 
 	/*
@@ -2525,7 +2540,8 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 				 * it might be useful to use for the WindowAgg's runCondition.
 				 */
 				if (!subquery->hasWindowFuncs ||
-					check_and_push_window_quals(subquery, rte, rti, clause))
+					check_and_push_window_quals(subquery, rte, rti, clause,
+												&run_cond_attrs))
 				{
 					/*
 					 * subquery has no window funcs or the clause is not a
@@ -2544,9 +2560,11 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	/*
 	 * The upper query might not use all the subquery's output columns; if
-	 * not, we can simplify.
+	 * not, we can simplify.  Pass the attributes that were pushed down into
+	 * WindowAgg run conditions to ensure we don't accidentally think those
+	 * are unused.
 	 */
-	remove_unused_subquery_outputs(subquery, rel);
+	remove_unused_subquery_outputs(subquery, rel, run_cond_attrs);
 
 	/*
 	 * We can safely pass the outer tuple_fraction down to the subquery if the
@@ -2557,7 +2575,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	if (parse->hasAggs ||
 		parse->groupClause ||
 		parse->groupingSets ||
-		parse->havingQual ||
+		root->hasHavingQual ||
 		parse->distinctClause ||
 		parse->sortClause ||
 		has_multiple_baserels(root))
@@ -2598,6 +2616,36 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	set_subquery_size_estimates(root, rel);
 
 	/*
+	 * Also detect whether the reltarget is trivial, so that we can pass that
+	 * info to cost_subqueryscan (rather than re-deriving it multiple times).
+	 * It's trivial if it fetches all the subplan output columns in order.
+	 */
+	if (list_length(rel->reltarget->exprs) != list_length(subquery->targetList))
+		trivial_pathtarget = false;
+	else
+	{
+		trivial_pathtarget = true;
+		foreach(lc, rel->reltarget->exprs)
+		{
+			Node	   *node = (Node *) lfirst(lc);
+			Var		   *var;
+
+			if (!IsA(node, Var))
+			{
+				trivial_pathtarget = false;
+				break;
+			}
+			var = (Var *) node;
+			if (var->varno != rti ||
+				var->varattno != foreach_current_index(lc) + 1)
+			{
+				trivial_pathtarget = false;
+				break;
+			}
+		}
+	}
+
+	/*
 	 * For each Path that subquery_planner produced, make a SubqueryScanPath
 	 * in the outer query.
 	 */
@@ -2615,6 +2663,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/* Generate outer path using this subpath */
 		add_path(rel, (Path *)
 				 create_subqueryscan_path(root, rel, subpath,
+										  trivial_pathtarget,
 										  pathkeys, required_outer));
 	}
 
@@ -2640,6 +2689,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			/* Generate outer path using this subpath */
 			add_partial_path(rel, (Path *)
 							 create_subqueryscan_path(root, rel, subpath,
+													  trivial_pathtarget,
 													  pathkeys,
 													  required_outer));
 		}
@@ -2804,7 +2854,8 @@ set_cte_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	if (ndx >= list_length(cteroot->cte_plan_ids))
 		elog(ERROR, "could not find plan for CTE \"%s\"", rte->ctename);
 	plan_id = list_nth_int(cteroot->cte_plan_ids, ndx);
-	Assert(plan_id > 0);
+	if (plan_id <= 0)
+		elog(ERROR, "no plan was made for CTE \"%s\"", rte->ctename);
 	cteplan = (Plan *) list_nth(root->glob->subplans, plan_id - 1);
 
 	/* Mark rel with estimated output rows, width, etc */
@@ -3068,8 +3119,8 @@ get_useful_pathkeys_for_relation(PlannerInfo *root, RelOptInfo *rel,
 										   root->query_pathkeys);
 		else if (npathkeys > 0)
 			useful_pathkeys_list = lappend(useful_pathkeys_list,
-										   list_truncate(list_copy(root->query_pathkeys),
-														 npathkeys));
+										   list_copy_head(root->query_pathkeys,
+														  npathkeys));
 	}
 
 	return useful_pathkeys_list;
@@ -3384,7 +3435,7 @@ standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 			 * partial paths.  We'll do the same for the topmost scan/join rel
 			 * once we know the final targetlist (see grouping_planner).
 			 */
-			if (lev < levels_needed)
+			if (!bms_equal(rel->relids, root->all_baserels))
 				generate_useful_gather_paths(root, rel, false);
 
 			/* Find and save the cheapest paths for this rel */
@@ -3943,15 +3994,27 @@ recurse_push_qual(Node *setOp, Query *topquery,
  * compute expressions, but because deletion of output columns might allow
  * optimizations such as join removal to occur within the subquery.
  *
+ * extra_used_attrs can be passed as non-NULL to mark any columns (offset by
+ * FirstLowInvalidHeapAttributeNumber) that we should not remove.  This
+ * parameter is modifed by the function, so callers must make a copy if they
+ * need to use the passed in Bitmapset after calling this function.
+ *
  * To avoid affecting column numbering in the targetlist, we don't physically
  * remove unused tlist entries, but rather replace their expressions with NULL
  * constants.  This is implemented by modifying subquery->targetList.
  */
 static void
-remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel)
+remove_unused_subquery_outputs(Query *subquery, RelOptInfo *rel,
+							   Bitmapset *extra_used_attrs)
 {
-	Bitmapset  *attrs_used = NULL;
+	Bitmapset  *attrs_used;
 	ListCell   *lc;
+
+	/*
+	 * Just point directly to extra_used_attrs. No need to bms_copy as none of
+	 * the current callers use the Bitmapset after calling this function.
+	 */
+	attrs_used = extra_used_attrs;
 
 	/*
 	 * Do nothing if subquery has UNION/INTERSECT/EXCEPT: in principle we

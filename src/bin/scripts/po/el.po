@@ -1,0 +1,1173 @@
+# Greek message translation file for pgscripts
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pgscripts (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pgscripts (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-11-08 10:16+0000\n"
+"PO-Revision-Date: 2021-11-08 12:11+0100\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.0\n"
+
+#: ../../../src/common/logging.c:259
+#, c-format
+msgid "fatal: "
+msgstr "κρίσιμο: "
+
+#: ../../../src/common/logging.c:266
+#, c-format
+msgid "error: "
+msgstr "σφάλμα: "
+
+#: ../../../src/common/logging.c:273
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "έλλειψη μνήμης\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
+
+#: ../../common/username.c:43
+#, c-format
+msgid "could not look up effective user ID %ld: %s"
+msgstr "δεν ήταν δυνατή η αναζήτηση ενεργής ταυτότητας χρήστη %ld: %s"
+
+#: ../../common/username.c:45
+msgid "user does not exist"
+msgstr "ο χρήστης δεν υπάρχει"
+
+#: ../../common/username.c:60
+#, c-format
+msgid "user name lookup failure: error code %lu"
+msgstr "αποτυχία αναζήτησης ονόματος χρήστη: κωδικός σφάλματος % lu"
+
+#: ../../fe_utils/cancel.c:161 ../../fe_utils/cancel.c:206
+msgid "Cancel request sent\n"
+msgstr "Αίτηση ακύρωσης εστάλη\n"
+
+#: ../../fe_utils/cancel.c:165 ../../fe_utils/cancel.c:210
+msgid "Could not send cancel request: "
+msgstr "Δεν ήταν δυνατή η αποστολή αίτησης ακύρωσης: "
+
+#: ../../fe_utils/connect_utils.c:49 ../../fe_utils/connect_utils.c:107
+msgid "Password: "
+msgstr "Κωδικός πρόσβασης: "
+
+#: ../../fe_utils/connect_utils.c:92
+#, c-format
+msgid "could not connect to database %s: out of memory"
+msgstr "δεν ήταν δυνατή η σύνδεση με τη βάσης δεδομένων %s: έλλειψη μνήμης"
+
+#: ../../fe_utils/connect_utils.c:120 pg_isready.c:145
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: ../../fe_utils/parallel_slot.c:302
+#, c-format
+msgid "too many jobs for this platform"
+msgstr "πάρα πολλές εργασίες για την παρούσα πλατφόρμα"
+
+#: ../../fe_utils/parallel_slot.c:522
+#, c-format
+msgid "processing of database \"%s\" failed: %s"
+msgstr "η επεξεργασία της βάσης δεδομένων «%s» απέτυχε: %s"
+
+#: ../../fe_utils/print.c:336
+#, c-format
+msgid "(%lu row)"
+msgid_plural "(%lu rows)"
+msgstr[0] "(%lu σειρά)"
+msgstr[1] "(%lu σειρές)"
+
+#: ../../fe_utils/print.c:3039
+#, c-format
+msgid "Interrupted\n"
+msgstr "Διακόπηκε\n"
+
+#: ../../fe_utils/print.c:3103
+#, c-format
+msgid "Cannot add header to table content: column count of %d exceeded.\n"
+msgstr "Δεν είναι δυνατή η προσθήκη κεφαλίδας σε περιεχόμενο πίνακα: υπέρβαση του πλήθους στηλών %d.\n"
+
+#: ../../fe_utils/print.c:3143
+#, c-format
+msgid "Cannot add cell to table content: total cell count of %d exceeded.\n"
+msgstr "Δεν είναι δυνατή η προσθήκη κελιού σε περιεχόμενο πίνακα: υπέρβαση του συνολικού αριθμού κελιών %d.\n"
+
+#: ../../fe_utils/print.c:3401
+#, c-format
+msgid "invalid output format (internal error): %d"
+msgstr "μη έγκυρη μορφή εξόδου (εσωτερικό σφάλμα): %d"
+
+#: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
+#, c-format
+msgid "query failed: %s"
+msgstr "το ερώτημα απέτυχε: %s"
+
+#: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
+#, c-format
+msgid "query was: %s"
+msgstr "το ερώτημα ήταν: %s"
+
+#: clusterdb.c:112 clusterdb.c:131 createdb.c:123 createdb.c:142
+#: createuser.c:172 createuser.c:187 dropdb.c:103 dropdb.c:112 dropdb.c:120
+#: dropuser.c:94 dropuser.c:109 dropuser.c:122 pg_isready.c:96 pg_isready.c:110
+#: reindexdb.c:174 reindexdb.c:193 vacuumdb.c:251 vacuumdb.c:270
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+
+#: clusterdb.c:129 createdb.c:140 createuser.c:185 dropdb.c:118 dropuser.c:107
+#: pg_isready.c:108 reindexdb.c:191 vacuumdb.c:268
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (ο πρώτη είναι η «%s»)"
+
+#: clusterdb.c:148
+#, c-format
+msgid "cannot cluster all databases and a specific one at the same time"
+msgstr "δεν είναι δυνατή η ομαδοποίηση όλων των βάσεων δεδομένων και μιας συγκεκριμένης ταυτόχρονα"
+
+#: clusterdb.c:154
+#, c-format
+msgid "cannot cluster specific table(s) in all databases"
+msgstr "δεν είναι δυνατή η ομαδοποίηση συγκεκριμένων πινάκων σε όλες τις βάσεις δεδομένων"
+
+#: clusterdb.c:220
+#, c-format
+msgid "clustering of table \"%s\" in database \"%s\" failed: %s"
+msgstr "η ομαδοποίηση του πίνακα «%s» στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: clusterdb.c:223
+#, c-format
+msgid "clustering of database \"%s\" failed: %s"
+msgstr "η ομαδοποίηση της βάσης δεδομένων «%s» απέτυχε: %s"
+
+#: clusterdb.c:251
+#, c-format
+msgid "%s: clustering database \"%s\"\n"
+msgstr "%s: ομαδοποιείται η βάση δεδομένων «%s»\n"
+
+#: clusterdb.c:267
+#, c-format
+msgid ""
+"%s clusters all previously clustered tables in a database.\n"
+"\n"
+msgstr ""
+"%s: ομαδοποιεί όλους του προηγούμενα ομαδοποιημένους πίνακες σε μία βάση δεδομένων\n"
+"\n"
+
+#: clusterdb.c:268 createdb.c:267 createuser.c:351 dropdb.c:171 dropuser.c:169
+#: pg_isready.c:225 reindexdb.c:792 vacuumdb.c:1025
+#, c-format
+msgid "Usage:\n"
+msgstr "Χρήση:\n"
+
+#: clusterdb.c:269 reindexdb.c:793 vacuumdb.c:1026
+#, c-format
+msgid "  %s [OPTION]... [DBNAME]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [DBNAME]\n"
+
+#: clusterdb.c:270 createdb.c:269 createuser.c:353 dropdb.c:173 dropuser.c:171
+#: pg_isready.c:228 reindexdb.c:794 vacuumdb.c:1027
+#, c-format
+msgid ""
+"\n"
+"Options:\n"
+msgstr ""
+"\n"
+"Επιλογές:\n"
+
+#: clusterdb.c:271
+#, c-format
+msgid "  -a, --all                 cluster all databases\n"
+msgstr "  -a, --all                 ομαδοποίησε όλες τις βάσεις δεδομένων\n"
+
+#: clusterdb.c:272
+#, c-format
+msgid "  -d, --dbname=DBNAME       database to cluster\n"
+msgstr "  -d, --dbname=DBNAME       βάση δεδομένων για ομαδοποίηση\n"
+
+#: clusterdb.c:273 createuser.c:357 dropdb.c:174 dropuser.c:172
+#, c-format
+msgid "  -e, --echo                show the commands being sent to the server\n"
+msgstr "  -e, --echo                εμφάνισε τις εντολές που αποστέλλονται στο διακομιστή\n"
+
+#: clusterdb.c:274
+#, c-format
+msgid "  -q, --quiet               don't write any messages\n"
+msgstr "  -q, --quiet               να μην γράψεις κανένα μήνυμα\n"
+
+#: clusterdb.c:275
+#, c-format
+msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
+msgstr "  -t, --table=TABLE         να ομαδοποιήσεις μόνο συγκεκριμένους πίνακες\n"
+
+#: clusterdb.c:276
+#, c-format
+msgid "  -v, --verbose             write a lot of output\n"
+msgstr "  -v, --verbose             γράψε πολλά μηνύματα εξόδου\n"
+
+#: clusterdb.c:277 createuser.c:369 dropdb.c:177 dropuser.c:175
+#, c-format
+msgid "  -V, --version             output version information, then exit\n"
+msgstr "  -V, --version             εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: clusterdb.c:278 createuser.c:374 dropdb.c:179 dropuser.c:177
+#, c-format
+msgid "  -?, --help                show this help, then exit\n"
+msgstr "  -?, --help                εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: clusterdb.c:279 createdb.c:280 createuser.c:375 dropdb.c:180 dropuser.c:178
+#: pg_isready.c:234 reindexdb.c:809 vacuumdb.c:1052
+#, c-format
+msgid ""
+"\n"
+"Connection options:\n"
+msgstr ""
+"\n"
+"Επιλογές σύνδεσης:\n"
+
+#: clusterdb.c:280 createuser.c:376 dropdb.c:181 dropuser.c:179 vacuumdb.c:1053
+#, c-format
+msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME       διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
+
+#: clusterdb.c:281 createuser.c:377 dropdb.c:182 dropuser.c:180 vacuumdb.c:1054
+#, c-format
+msgid "  -p, --port=PORT           database server port\n"
+msgstr "  -p, --port=PORT           θύρα διακομιστή βάσης δεδομένων\n"
+
+#: clusterdb.c:282 dropdb.c:183 vacuumdb.c:1055
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as\n"
+msgstr "  -U, --username=USERNAME   όνομα χρήστη με το οποίο να συνδεθεί\n"
+
+#: clusterdb.c:283 createuser.c:379 dropdb.c:184 dropuser.c:182 vacuumdb.c:1056
+#, c-format
+msgid "  -w, --no-password         never prompt for password\n"
+msgstr "  -w, --no-password         να μην ζητείται ποτέ κωδικός πρόσβασης\n"
+
+#: clusterdb.c:284 createuser.c:380 dropdb.c:185 dropuser.c:183 vacuumdb.c:1057
+#, c-format
+msgid "  -W, --password            force password prompt\n"
+msgstr "  -W, --password            αναγκαστική προτροπή κωδικού πρόσβασης\n"
+
+#: clusterdb.c:285 dropdb.c:186 vacuumdb.c:1058
+#, c-format
+msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
+msgstr "  --maintenance-db=DBNAME   εναλλακτική βάση δεδομένων συντήρησης\n"
+
+#: clusterdb.c:286
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command CLUSTER for details.\n"
+msgstr ""
+"\n"
+"Διαβάστε την περιγραφή της SQL εντολής CLUSTER για λεπτομέρειες.\n"
+
+#: clusterdb.c:287 createdb.c:288 createuser.c:381 dropdb.c:187 dropuser.c:184
+#: pg_isready.c:239 reindexdb.c:817 vacuumdb.c:1060
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: clusterdb.c:288 createdb.c:289 createuser.c:382 dropdb.c:188 dropuser.c:185
+#: pg_isready.c:240 reindexdb.c:818 vacuumdb.c:1061
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: common.c:107
+#, c-format
+msgid "query returned %d row instead of one: %s"
+msgid_plural "query returned %d rows instead of one: %s"
+msgstr[0] "το ερώτημα επέστρεψε %d σειρά αντί μίας: %s"
+msgstr[1] "το ερώτημα επέστρεψε %d σειρές αντί μίας: %s"
+
+#. translator: abbreviation for "yes"
+#: common.c:131
+msgid "y"
+msgstr "y"
+
+#. translator: abbreviation for "no"
+#: common.c:133
+msgid "n"
+msgstr "n"
+
+#. translator: This is a question followed by the translated options for
+#. "yes" and "no".
+#: common.c:143
+#, c-format
+msgid "%s (%s/%s) "
+msgstr "%s (%s/%s) "
+
+#: common.c:164
+#, c-format
+msgid "Please answer \"%s\" or \"%s\".\n"
+msgstr "Παρακαλώ απαντήστε «%s» ή «%s».\n"
+
+#: createdb.c:150
+#, c-format
+msgid "only one of --locale and --lc-ctype can be specified"
+msgstr "μόνο ένα από τα --locale και --lc-ctype μπορεί να καθοριστεί"
+
+#: createdb.c:155
+#, c-format
+msgid "only one of --locale and --lc-collate can be specified"
+msgstr "μόνο ένα από τα --locale και --lc-collate μπορεί να καθοριστεί"
+
+#: createdb.c:166
+#, c-format
+msgid "\"%s\" is not a valid encoding name"
+msgstr "«%s» δεν είναι έγκυρο όνομα κωδικοποίησης"
+
+#: createdb.c:229
+#, c-format
+msgid "database creation failed: %s"
+msgstr "η δημιουργία βάσης δεδομένων απέτυχε: %s"
+
+#: createdb.c:248
+#, c-format
+msgid "comment creation failed (database was created): %s"
+msgstr "η δημιουργία σχολίων απέτυχε (δημιουργήθηκε βάση δεδομένων): %s"
+
+#: createdb.c:266
+#, c-format
+msgid ""
+"%s creates a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s δημιουργεί μια βάση δεδομένων PostgreSQL.\n"
+"\n"
+
+#: createdb.c:268
+#, c-format
+msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [DBNAME] [ΠΕΡΙΓΡΑΦΗ]\n"
+
+#: createdb.c:270
+#, c-format
+msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
+msgstr "  -D, --tablespace=TABLESPACE  προεπιλεγμένος πινακοχώρος για τη βάση δεδομένων\n"
+
+#: createdb.c:271 reindexdb.c:798
+#, c-format
+msgid "  -e, --echo                   show the commands being sent to the server\n"
+msgstr "  -e, --echo                   εμφάνισε τις εντολές που αποστέλλονται στο διακομιστή\n"
+
+#: createdb.c:272
+#, c-format
+msgid "  -E, --encoding=ENCODING      encoding for the database\n"
+msgstr "  -E, --encoding=ENCODING      κωδικοποίηση για την βάση δεδομένων\n"
+
+#: createdb.c:273
+#, c-format
+msgid "  -l, --locale=LOCALE          locale settings for the database\n"
+msgstr "  -l, --locale=LOCALE          ρυθμίσεις εντοπιότητας για τη βάση δεδομένων\n"
+
+#: createdb.c:274
+#, c-format
+msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
+msgstr "      --lc-collate=LOCALE      ρύθμιση LC_COLLATE για την βάση δεδομένων\n"
+
+#: createdb.c:275
+#, c-format
+msgid "      --lc-ctype=LOCALE        LC_CTYPE setting for the database\n"
+msgstr "      --lc-collate=LOCALE      ρύθμιση LC_CTYPE για την βάση δεδομένων\n"
+
+#: createdb.c:276
+#, c-format
+msgid "  -O, --owner=OWNER            database user to own the new database\n"
+msgstr "    -O, --owner=OWNER          όνομα χρήστη που θα κατέχει την νέα βάση δεδομένων\n"
+
+#: createdb.c:277
+#, c-format
+msgid "  -T, --template=TEMPLATE      template database to copy\n"
+msgstr "  -T, --template=TEMPLATE      πρωτότυπη βάση δεδομένων για αντιγραφή\n"
+
+#: createdb.c:278 reindexdb.c:807
+#, c-format
+msgid "  -V, --version                output version information, then exit\n"
+msgstr "  -V, --version                εμφάνισε πληροφορίες έκδοσης και, στη συνέχεια, έξοδος\n"
+
+#: createdb.c:279 reindexdb.c:808
+#, c-format
+msgid "  -?, --help                   show this help, then exit\n"
+msgstr "  -?, --help                   εμφάνισε αυτό το μήνυμα βοήθειας, και μετά έξοδος\n"
+
+#: createdb.c:281 reindexdb.c:810
+#, c-format
+msgid "  -h, --host=HOSTNAME          database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME          διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
+
+#: createdb.c:282 reindexdb.c:811
+#, c-format
+msgid "  -p, --port=PORT              database server port\n"
+msgstr "  -p, --port=PORT              θύρα διακομιστή βάσης δεδομένων\n"
+
+#: createdb.c:283 reindexdb.c:812
+#, c-format
+msgid "  -U, --username=USERNAME      user name to connect as\n"
+msgstr "  -U, --username=USERNAME      όνομα χρήστη με το οποίο να συνδεθεί\n"
+
+#: createdb.c:284 reindexdb.c:813
+#, c-format
+msgid "  -w, --no-password            never prompt for password\n"
+msgstr "  -w, --no-password            να μην ζητείται ποτέ κωδικός πρόσβασης\n"
+
+#: createdb.c:285 reindexdb.c:814
+#, c-format
+msgid "  -W, --password               force password prompt\n"
+msgstr "  -W, --password               αναγκαστική προτροπή κωδικού πρόσβασης\n"
+
+#: createdb.c:286 reindexdb.c:815
+#, c-format
+msgid "  --maintenance-db=DBNAME      alternate maintenance database\n"
+msgstr "      --maintenance-db=DBNAME  εναλλακτική βάση δεδομένων συντήρησης\n"
+
+#: createdb.c:287
+#, c-format
+msgid ""
+"\n"
+"By default, a database with the same name as the current user is created.\n"
+msgstr ""
+"\n"
+"Από προεπιλογή, δημιουργείται μια βάση δεδομένων με το ίδιο όνομα με τον τρέχοντα χρήστη.\n"
+
+#: createuser.c:151
+#, c-format
+msgid "invalid value for --connection-limit: %s"
+msgstr "άκυρη τιμή για --connection-limit: %s"
+
+#: createuser.c:195
+msgid "Enter name of role to add: "
+msgstr "Εισαγάγετε το όνομα του ρόλου για να προσθέσετε: "
+
+#: createuser.c:210
+msgid "Enter password for new role: "
+msgstr "Εισαγάγετε κωδικό πρόσβασης για νέο ρόλο: "
+
+#: createuser.c:211
+msgid "Enter it again: "
+msgstr "Εισάγετε ξανά: "
+
+#: createuser.c:214
+#, c-format
+msgid "Passwords didn't match.\n"
+msgstr "Οι κωδικοί πρόσβασης δεν είναι ίδιοι.\n"
+
+#: createuser.c:222
+msgid "Shall the new role be a superuser?"
+msgstr "Να είναι ο νέος ρόλος υπερχρήστης;"
+
+#: createuser.c:237
+msgid "Shall the new role be allowed to create databases?"
+msgstr "Να επιτραπεί στον νέο ρόλο η δημιουργία βάσεων δεδομένων;"
+
+#: createuser.c:245
+msgid "Shall the new role be allowed to create more new roles?"
+msgstr "Να επιτραπεί στον νέο ρόλο να δημιουργήσει περισσότερους νέους ρόλους;"
+
+#: createuser.c:281
+#, c-format
+msgid "password encryption failed: %s"
+msgstr "η κρυπτογράφηση κωδικού πρόσβασης απέτυχε: %s"
+
+#: createuser.c:336
+#, c-format
+msgid "creation of new role failed: %s"
+msgstr "η δημιουργία νέου ρόλου απέτυχε: %s"
+
+#: createuser.c:350
+#, c-format
+msgid ""
+"%s creates a new PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s δημιουργεί ένα νέο ρόλο PostgreSQL.\n"
+"\n"
+
+#: createuser.c:352 dropuser.c:170
+#, c-format
+msgid "  %s [OPTION]... [ROLENAME]\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [ROLENAME]\n"
+
+#: createuser.c:354
+#, c-format
+msgid "  -c, --connection-limit=N  connection limit for role (default: no limit)\n"
+msgstr "  -c, --connection-limit=N  όριο σύνδεσης για το ρόλο (προεπιλογή: κανένα όριο)\n"
+
+#: createuser.c:355
+#, c-format
+msgid "  -d, --createdb            role can create new databases\n"
+msgstr "  -d, --createdb            ο ρόλος μπορεί να δημιουργήσει νέες βάσεις δεδομένων\n"
+
+#: createuser.c:356
+#, c-format
+msgid "  -D, --no-createdb         role cannot create databases (default)\n"
+msgstr "  -D, --no-createdb         ο ρόλος δεν μπορεί να δημιουργήσει βάσεις δεδομένων (προεπιλογή)\n"
+
+#: createuser.c:358
+#, c-format
+msgid "  -g, --role=ROLE           new role will be a member of this role\n"
+msgstr "  -g, --role=ROLE           ο καινούριος ρόλος να αποτελεί μέλος αυτού του ρόλου\n"
+
+#: createuser.c:359
+#, c-format
+msgid ""
+"  -i, --inherit             role inherits privileges of roles it is a\n"
+"                            member of (default)\n"
+msgstr ""
+"  -i, --inherit             ο ρόλος να κληρονομεί τα προνόμια των ρόλων των\n"
+"                            οποίων είναι μέλος τους (προεπιλογή)\n"
+
+#: createuser.c:361
+#, c-format
+msgid "  -I, --no-inherit          role does not inherit privileges\n"
+msgstr "  -I, --no-inherit          ο ρόλος δεν κληρονομεί προνόμια\n"
+
+#: createuser.c:362
+#, c-format
+msgid "  -l, --login               role can login (default)\n"
+msgstr "  -l, --login               ο ρόλος μπορεί να συνδεθεί (προεπιλογή)\n"
+
+#: createuser.c:363
+#, c-format
+msgid "  -L, --no-login            role cannot login\n"
+msgstr "  -L, --no-login            ο ρόλος δεν μπορεί να συνδεθεί\n"
+
+#: createuser.c:364
+#, c-format
+msgid "  -P, --pwprompt            assign a password to new role\n"
+msgstr "  -P, --pwprompt            αντιστοιχίσε έναν κωδικό πρόσβασης στο νέο ρόλο\n"
+
+#: createuser.c:365
+#, c-format
+msgid "  -r, --createrole          role can create new roles\n"
+msgstr "  -r, --createrole          ο ρόλος μπορεί να δημιουργεί νέους ρόλους\n"
+
+#: createuser.c:366
+#, c-format
+msgid "  -R, --no-createrole       role cannot create roles (default)\n"
+msgstr "  -R, --no-createrole       ο ρόλος δεν μπορεί να δημιουργεί νέους ρόλους (προεπιλογή)\n"
+
+#: createuser.c:367
+#, c-format
+msgid "  -s, --superuser           role will be superuser\n"
+msgstr "  -s, --superuser           ο ρόλος θα είναι υπερχρήστης\n"
+
+#: createuser.c:368
+#, c-format
+msgid "  -S, --no-superuser        role will not be superuser (default)\n"
+msgstr "  -S, --no-superuser        ο ρόλος δεν θα είναι υπερχρήστης (προεπιλογή)\n"
+
+#: createuser.c:370
+#, c-format
+msgid ""
+"  --interactive             prompt for missing role name and attributes rather\n"
+"                            than using defaults\n"
+msgstr ""
+"  --interactive             να προτρέψει για το όνομα ρόλου και τα χαρακτηριστικά αντί\n"
+"                            να χρησιμοποιήσει προεπιλογές\n"
+
+#: createuser.c:372
+#, c-format
+msgid "  --replication             role can initiate replication\n"
+msgstr "  --replication             ο ρόλος μπορεί να εκκινήσει αναπαραγωγή\n"
+
+#: createuser.c:373
+#, c-format
+msgid "  --no-replication          role cannot initiate replication\n"
+msgstr "  --no-replication          ο ρόλος να μην μπορεί να εκκινήσει αναπαραγωγή\n"
+
+#: createuser.c:378
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
+msgstr "  -U, --username=USERNAME   όνομα χρήστη για να συνδεθεί ως (όχι αυτό που θα δημιουργηθεί)\n"
+
+#: dropdb.c:111
+#, c-format
+msgid "missing required argument database name"
+msgstr "λείπει αναγκαία παράμετρος ονόματος βάσης δεδομένων"
+
+#: dropdb.c:126
+#, c-format
+msgid "Database \"%s\" will be permanently removed.\n"
+msgstr "Η βάση δεδομένων «%s» θα αφαιρεθεί οριστικά.\n"
+
+#: dropdb.c:127 dropuser.c:130
+msgid "Are you sure?"
+msgstr "Είστε βέβαιος;"
+
+#: dropdb.c:156
+#, c-format
+msgid "database removal failed: %s"
+msgstr "η αφαίρεση της βάσης δεδομένων απέτυχε: %s"
+
+#: dropdb.c:170
+#, c-format
+msgid ""
+"%s removes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s αφαιρεί μία βάση δεδομένων PostgreSQL.\n"
+"\n"
+
+#: dropdb.c:172
+#, c-format
+msgid "  %s [OPTION]... DBNAME\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]... [DBNAME]\n"
+
+#: dropdb.c:175
+#, c-format
+msgid "  -f, --force               try to terminate other connections before dropping\n"
+msgstr "  -f, --force               να προσπαθήσει να τερματίσει άλλες συνδέσεις πριν την εγκατάληψη\n"
+
+#: dropdb.c:176
+#, c-format
+msgid "  -i, --interactive         prompt before deleting anything\n"
+msgstr "  -i, --interactive         να προτρέψει πριν να διαγράψει οτιδήποτε\n"
+
+#: dropdb.c:178
+#, c-format
+msgid "  --if-exists               don't report error if database doesn't exist\n"
+msgstr "  --if-exists               να μην αναφέρει σφάλμα εάν η βάση δεδομένων δεν υπάρχει\n"
+
+#: dropuser.c:117
+msgid "Enter name of role to drop: "
+msgstr "Εισαγάγετε το όνομα του ρόλου για να απορρίψετε: "
+
+#: dropuser.c:121
+#, c-format
+msgid "missing required argument role name"
+msgstr "λείπει η απαιτούμενη παράμετρος ονόματος ρόλου"
+
+#: dropuser.c:129
+#, c-format
+msgid "Role \"%s\" will be permanently removed.\n"
+msgstr "Ο ρόλος «%s» θα αφαιρεθεί οριστικά.\n"
+
+#: dropuser.c:153
+#, c-format
+msgid "removal of role \"%s\" failed: %s"
+msgstr "η αφαίρεση του ρόλου «%s» απέτυχε: %s"
+
+#: dropuser.c:168
+#, c-format
+msgid ""
+"%s removes a PostgreSQL role.\n"
+"\n"
+msgstr ""
+"%s αφαιρεί ένα ρόλο PostgreSQL.\n"
+"\n"
+
+#: dropuser.c:173
+#, c-format
+msgid ""
+"  -i, --interactive         prompt before deleting anything, and prompt for\n"
+"                            role name if not specified\n"
+msgstr ""
+"  -i, --interactive         να προτρέψει πριν να διαγράψει οτιδήποτε, και να προτρέψει για\n"
+"                            το όνομα του ρόλου, εάν αυτό δεν έχει καθοριστεί\n"
+
+#: dropuser.c:176
+#, c-format
+msgid "  --if-exists               don't report error if user doesn't exist\n"
+msgstr "  --if-exists               να μην αναφέρει σφάλμα εάν ο χρήστης δεν υπάρχει\n"
+
+#: dropuser.c:181
+#, c-format
+msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
+msgstr "  -U, --username=USERNAME   όνομα χρήστη με το οποίο να συνδεθεί (όχι αυτό που θα αφαιρέσει)\n"
+
+#: pg_isready.c:153
+#, c-format
+msgid "could not fetch default options"
+msgstr "δεν ήταν δυνατή η λήψη προεπιλεγμένων ρυθμίσεων"
+
+#: pg_isready.c:202
+#, c-format
+msgid "accepting connections\n"
+msgstr "αποδέχεται συνδέσεις\n"
+
+#: pg_isready.c:205
+#, c-format
+msgid "rejecting connections\n"
+msgstr "απορρίπτει συνδέσεις\n"
+
+#: pg_isready.c:208
+#, c-format
+msgid "no response\n"
+msgstr "καμία απάντηση\n"
+
+#: pg_isready.c:211
+#, c-format
+msgid "no attempt\n"
+msgstr "καμία προσπάθεια\n"
+
+#: pg_isready.c:214
+#, c-format
+msgid "unknown\n"
+msgstr "άγνωστο\n"
+
+#: pg_isready.c:224
+#, c-format
+msgid ""
+"%s issues a connection check to a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s εκτελεί ένα έλεγχο σύνδεσης σε μια βάση δεδομένων PostgreSQL.\n"
+"\n"
+
+#: pg_isready.c:226
+#, c-format
+msgid "  %s [OPTION]...\n"
+msgstr "  %s [ΕΠΙΛΟΓΗ]...\n"
+
+#: pg_isready.c:229
+#, c-format
+msgid "  -d, --dbname=DBNAME      database name\n"
+msgstr "  -d, --dbname=DBNAME      ονομασία βάσης δεδομένων\n"
+
+#: pg_isready.c:230
+#, c-format
+msgid "  -q, --quiet              run quietly\n"
+msgstr "  -q, --quiet              εκτέλεσε σιωπηλά\n"
+
+#: pg_isready.c:231
+#, c-format
+msgid "  -V, --version            output version information, then exit\n"
+msgstr "  -V, --version            εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: pg_isready.c:232
+#, c-format
+msgid "  -?, --help               show this help, then exit\n"
+msgstr "  -?, --help               εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: pg_isready.c:235
+#, c-format
+msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
+msgstr "  -h, --host=HOSTNAME      διακομιστής βάσης δεδομένων ή κατάλογος υποδοχών\n"
+
+#: pg_isready.c:236
+#, c-format
+msgid "  -p, --port=PORT          database server port\n"
+msgstr "  -p, --port=PORT          θύρα διακομιστή βάσης δεδομένων\n"
+
+#: pg_isready.c:237
+#, c-format
+msgid "  -t, --timeout=SECS       seconds to wait when attempting connection, 0 disables (default: %s)\n"
+msgstr ""
+"  -t, --timeout=SECS       πόσα δευτερόλεπτα να περιμένει όταν προσπαθεί να συνδεθεί,\n"
+"                           0 το απενεργοποιεί (προεπιλογή: %s)\n"
+
+#: pg_isready.c:238
+#, c-format
+msgid "  -U, --username=USERNAME  user name to connect as\n"
+msgstr "  -U, --username=USERNAME  όνομα χρήστη με το οποίο να συνδεθεί\n"
+
+#: reindexdb.c:157 vacuumdb.c:198
+#, c-format
+msgid "number of parallel jobs must be at least 1"
+msgstr "ο αριθμός παράλληλων εργασιών πρέπει να είναι τουλάχιστον 1"
+
+#: reindexdb.c:210
+#, c-format
+msgid "cannot reindex all databases and a specific one at the same time"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση όλων των βάσεων δεδομένων και μιας συγκεκριμένης ταυτόχρονα"
+
+#: reindexdb.c:215
+#, c-format
+msgid "cannot reindex all databases and system catalogs at the same time"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση όλων των βάσεων δεδομένων και των καταλόγων συστήματος ταυτόχρονα"
+
+#: reindexdb.c:220
+#, c-format
+msgid "cannot reindex specific schema(s) in all databases"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων σχημάτων σε όλες τις βάσεις δεδομένων"
+
+#: reindexdb.c:225
+#, c-format
+msgid "cannot reindex specific table(s) in all databases"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων πινάκων σε όλες τις βάσεις δεδομένων"
+
+#: reindexdb.c:230
+#, c-format
+msgid "cannot reindex specific index(es) in all databases"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων ευρετηρίων σε όλες τις βάσεις δεδομένων"
+
+#: reindexdb.c:243
+#, c-format
+msgid "cannot reindex specific schema(s) and system catalogs at the same time"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων σχημάτων και καταλόγων συστήματος ταυτόχρονα"
+
+#: reindexdb.c:248
+#, c-format
+msgid "cannot reindex specific table(s) and system catalogs at the same time"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων πινάκων και καταλόγων συστήματος ταυτόχρονα"
+
+#: reindexdb.c:253
+#, c-format
+msgid "cannot reindex specific index(es) and system catalogs at the same time"
+msgstr "δεν είναι δυνατή η επαναευρετηριοποίηση συγκεκριμένων ευρετηρίων και καταλόγων συστήματος ταυτόχρονα"
+
+#: reindexdb.c:259
+#, c-format
+msgid "cannot use multiple jobs to reindex system catalogs"
+msgstr "δεν είναι δυνατή η χρήση πολλαπλών εργασιών για την επαναευρετηριοποίηση καταλόγων συστήματος"
+
+#: reindexdb.c:288
+#, c-format
+msgid "cannot use multiple jobs to reindex indexes"
+msgstr "δεν είναι δυνατή η χρήση πολλαπλών εργασιών για την επαναευρετηριοποίηση ευρετηρίων"
+
+#: reindexdb.c:353 reindexdb.c:361 vacuumdb.c:471 vacuumdb.c:479 vacuumdb.c:487
+#: vacuumdb.c:495 vacuumdb.c:503 vacuumdb.c:511 vacuumdb.c:518 vacuumdb.c:525
+#: vacuumdb.c:532
+#, c-format
+msgid "cannot use the \"%s\" option on server versions older than PostgreSQL %s"
+msgstr "δεν είναι δυνατή η χρήση της επιλογής «%s» σε εκδόσεις διακομιστών παλαιότερες από την PostgreSQL %s"
+
+#: reindexdb.c:401
+#, c-format
+msgid "cannot reindex system catalogs concurrently, skipping all"
+msgstr "δεν είναι δυνατή η ταυτόχρονη επαναευρετηριοποίηση καταλόγων συστήματος, παρακάμπτονται όλοι"
+
+#: reindexdb.c:605
+#, c-format
+msgid "reindexing of database \"%s\" failed: %s"
+msgstr "επαναευρετηριοποίηση της βάσης δεδομένων «%s» απέτυχε: %s"
+
+#: reindexdb.c:609
+#, c-format
+msgid "reindexing of index \"%s\" in database \"%s\" failed: %s"
+msgstr "η επανενεξάγηση του ευρετηρίου «%s» στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: reindexdb.c:613
+#, c-format
+msgid "reindexing of schema \"%s\" in database \"%s\" failed: %s"
+msgstr "η επαναευρετηριοποίηση του σχήματος «%s» στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: reindexdb.c:617
+#, c-format
+msgid "reindexing of system catalogs in database \"%s\" failed: %s"
+msgstr "η επαναευρετηριοποίηση καταλόγων συστήματος στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: reindexdb.c:621
+#, c-format
+msgid "reindexing of table \"%s\" in database \"%s\" failed: %s"
+msgstr "η επαναευρετηριοποίηση του πίνακα «%s» στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: reindexdb.c:774
+#, c-format
+msgid "%s: reindexing database \"%s\"\n"
+msgstr "%s: επαναευρετηριοποίηση της βάσης δεδομένων «%s»\n"
+
+#: reindexdb.c:791
+#, c-format
+msgid ""
+"%s reindexes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s επαναευρετηριοποιεί μια βάση δεδομένων PostgreSQL.\n"
+"\n"
+
+#: reindexdb.c:795
+#, c-format
+msgid "  -a, --all                    reindex all databases\n"
+msgstr "  -a, --all                    επαναευρετηριοποίηση όλων των βάσεων δεδομένων\n"
+
+#: reindexdb.c:796
+#, c-format
+msgid "      --concurrently           reindex concurrently\n"
+msgstr "  -a, --all                    ταυτόχρονη επαναευρετηριοποίηση\n"
+
+#: reindexdb.c:797
+#, c-format
+msgid "  -d, --dbname=DBNAME          database to reindex\n"
+msgstr "  -d, --dbname=DBNAME          βάση δεδομένων για επαναευρετηριοποίηση\n"
+
+#: reindexdb.c:799
+#, c-format
+msgid "  -i, --index=INDEX            recreate specific index(es) only\n"
+msgstr "  -i, --index=INDEX            δημιούργησε συγκεκριμένο(ους) πίνακα(ες) μόνο\n"
+
+#: reindexdb.c:800
+#, c-format
+msgid "  -j, --jobs=NUM               use this many concurrent connections to reindex\n"
+msgstr "  -j, --jobs=NUM               χρησιμοποιήσε τόσες πολλές ταυτόχρονες συνδέσεις με το διακομιστή\n"
+
+#: reindexdb.c:801
+#, c-format
+msgid "  -q, --quiet                  don't write any messages\n"
+msgstr "  -q, --quiet                  να μην γράψεις κανένα μήνυμα\n"
+
+#: reindexdb.c:802
+#, c-format
+msgid "  -s, --system                 reindex system catalogs only\n"
+msgstr "  -s, --system                 επαναευρετηριοποίηση μόνο καταλόγων συστήματος\n"
+
+#: reindexdb.c:803
+#, c-format
+msgid "  -S, --schema=SCHEMA          reindex specific schema(s) only\n"
+msgstr "  -S, --schema=SCHEMA          επαναευρετηριοποίησε συγκεκριμένο(-α) σχήμα(-τα) μόνο\n"
+
+#: reindexdb.c:804
+#, c-format
+msgid "  -t, --table=TABLE            reindex specific table(s) only\n"
+msgstr "  -t, --table=TABLE            επαναευρετηριοποίησε συγκεκριμένο(-ους) πίνακα(-ες) μόνο\n"
+
+#: reindexdb.c:805
+#, c-format
+msgid "      --tablespace=TABLESPACE  tablespace where indexes are rebuilt\n"
+msgstr "      --tablespace=TABLESPACE  πινακοχώρος όπου επαναδημιουργούνται τα ευρετήρια\n"
+
+#: reindexdb.c:806
+#, c-format
+msgid "  -v, --verbose                write a lot of output\n"
+msgstr "  -v, --verbose                γράψε πολλά μηνύματα εξόδου\n"
+
+#: reindexdb.c:816
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command REINDEX for details.\n"
+msgstr ""
+"\n"
+"Διαβάστε την περιγραφή της SQL εντολής REINDEX για λεπτομέρειες.\n"
+
+#: vacuumdb.c:206
+#, c-format
+msgid "parallel workers for vacuum must be greater than or equal to zero"
+msgstr "οι παράλληλοι εργάτες για vacuum πρέπει να είναι περισσότεροι ή ίσοι με μηδέν"
+
+#: vacuumdb.c:226
+#, c-format
+msgid "minimum transaction ID age must be at least 1"
+msgstr "η ελάχιστη ηλικία transaction ID πρέπει να είναι τουλάχιστον 1"
+
+#: vacuumdb.c:234
+#, c-format
+msgid "minimum multixact ID age must be at least 1"
+msgstr "η ελάχιστη ηλικία multixact ID πρέπει να είναι τουλάχιστον 1"
+
+#: vacuumdb.c:278 vacuumdb.c:284 vacuumdb.c:290 vacuumdb.c:296 vacuumdb.c:302
+#: vacuumdb.c:308 vacuumdb.c:314 vacuumdb.c:326
+#, c-format
+msgid "cannot use the \"%s\" option when performing only analyze"
+msgstr "δεν είναι δυνατή η χρήση της επιλογής «%s» κατά την εκτέλεση μόνο της ανάλυσης"
+
+#: vacuumdb.c:332
+#, c-format
+msgid "cannot use the \"%s\" option when performing full vacuum"
+msgstr "δεν είναι δυνατή η χρήση της επιλογής «%s» κατά την εκτέλεση full vacuum"
+
+#: vacuumdb.c:341
+#, c-format
+msgid "cannot use the \"%s\" option with the \"%s\" option"
+msgstr "δεν είναι δυνατή η χρήση της επιλογής «%s» μαζί με την επιλογή«%s»"
+
+#: vacuumdb.c:363
+#, c-format
+msgid "cannot vacuum all databases and a specific one at the same time"
+msgstr "δεν μπορεί να εκτελέσει vacuum σε όλες τις βάσεις δεδομένων και μια συγκεκριμένη ταυτόχρονα"
+
+#: vacuumdb.c:368
+#, c-format
+msgid "cannot vacuum specific table(s) in all databases"
+msgstr "δεν μπορεί να εκτελέσει vacuum συγκεκριμένους πίνακες σε όλες τις βάσεις δεδομένων"
+
+#: vacuumdb.c:458
+msgid "Generating minimal optimizer statistics (1 target)"
+msgstr "Δημιουργία ελάχιστων στατιστικών βελτιστοποιητή (1 στόχος)"
+
+#: vacuumdb.c:459
+msgid "Generating medium optimizer statistics (10 targets)"
+msgstr "Δημιουργία μεσαίων στατιστικών βελτιστοποιητή (10 στόχοι)"
+
+#: vacuumdb.c:460
+msgid "Generating default (full) optimizer statistics"
+msgstr "Δημιουργία προεπιλεγμένων (πλήρων) στατιστικών βελτιστοποιητή"
+
+#: vacuumdb.c:540
+#, c-format
+msgid "%s: processing database \"%s\": %s\n"
+msgstr "%s: επεξεργάζεται τη βάση δεδομένων «%s»: %s\n"
+
+#: vacuumdb.c:543
+#, c-format
+msgid "%s: vacuuming database \"%s\"\n"
+msgstr "%s: εκτελεί vacuum στη βάση δεδομένων «%s»\n"
+
+#: vacuumdb.c:1013
+#, c-format
+msgid "vacuuming of table \"%s\" in database \"%s\" failed: %s"
+msgstr "η εκτέλεση vacuum στον πίνακα «%s» στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: vacuumdb.c:1016
+#, c-format
+msgid "vacuuming of database \"%s\" failed: %s"
+msgstr "η εκτέλεση vacuum στη βάση δεδομένων «%s» απέτυχε: %s"
+
+#: vacuumdb.c:1024
+#, c-format
+msgid ""
+"%s cleans and analyzes a PostgreSQL database.\n"
+"\n"
+msgstr ""
+"%s καθαρίζει και αναλύει μια βάση δεδομένων PostgreSQL.\n"
+"\n"
+
+#: vacuumdb.c:1028
+#, c-format
+msgid "  -a, --all                       vacuum all databases\n"
+msgstr "  -a, --all                       εκτέλεσε vacuum σε όλες τις βάσεις δεδομένων\n"
+
+#: vacuumdb.c:1029
+#, c-format
+msgid "  -d, --dbname=DBNAME             database to vacuum\n"
+msgstr "  -d, --dbname=DBNAME             βάση δεδομένων για vacuum\n"
+
+#: vacuumdb.c:1030
+#, c-format
+msgid "      --disable-page-skipping     disable all page-skipping behavior\n"
+msgstr "      --disable-page-skipping     απενεργοποιήστε κάθε συμπεριφορά παράλειψης σελίδας\n"
+
+#: vacuumdb.c:1031
+#, c-format
+msgid "  -e, --echo                      show the commands being sent to the server\n"
+msgstr "  -e, --echo                      εμφάνισε τις εντολές που αποστέλλονται στο διακομιστή\n"
+
+#: vacuumdb.c:1032
+#, c-format
+msgid "  -f, --full                      do full vacuuming\n"
+msgstr "  -f, --full                      να εκτελέσει πλήρες vacuum\n"
+
+#: vacuumdb.c:1033
+#, c-format
+msgid "  -F, --freeze                    freeze row transaction information\n"
+msgstr "  -F, --freeze                    πάγωσε τις πληροφορίες σειράς συναλλαγής\n"
+
+#: vacuumdb.c:1034
+#, c-format
+msgid "      --force-index-cleanup       always remove index entries that point to dead tuples\n"
+msgstr "      --force-index-cleanup       αφαιρεί πάντα καταχωρήσεις ευρετηρίου που οδηγούν σε νεκρές πλειάδες\n"
+
+#: vacuumdb.c:1035
+#, c-format
+msgid "  -j, --jobs=NUM                  use this many concurrent connections to vacuum\n"
+msgstr "  -j, --jobs=NUM                  χρησιμοποιήσε τόσες πολλές ταυτόχρονες συνδέσεις με το διακομιστή\n"
+
+#: vacuumdb.c:1036
+#, c-format
+msgid "      --min-mxid-age=MXID_AGE     minimum multixact ID age of tables to vacuum\n"
+msgstr "      --min-mxid-age=MXID_AGE     ελάχιστη ηλικία multixact ID πινάκων για vacuum\n"
+
+#: vacuumdb.c:1037
+#, c-format
+msgid "      --min-xid-age=XID_AGE       minimum transaction ID age of tables to vacuum\n"
+msgstr "      --min-xid-age=XID_AGE       ελάχιστη ηλικία transaction ID πινάκων για vacuum\n"
+
+#: vacuumdb.c:1038
+#, c-format
+msgid "      --no-index-cleanup          don't remove index entries that point to dead tuples\n"
+msgstr "      --no-index-cleanup          να μην αφαιρέσει καταχωρήσεις ευρετηρίου που οδηγούν σε νεκρές πλειάδες\n"
+
+#: vacuumdb.c:1039
+#, c-format
+msgid "      --no-process-toast          skip the TOAST table associated with the table to vacuum\n"
+msgstr "      --no-process-toast          παράλειψε τον πίνακα TOAST που σχετίζεται με τον πίνακα που εκτελείται vacuum\n"
+
+#: vacuumdb.c:1040
+#, c-format
+msgid "      --no-truncate               don't truncate empty pages at the end of the table\n"
+msgstr "      --no-truncate               να μην περικόψει άδειες σελίδες από το τέλος του πίνακα\n"
+
+#: vacuumdb.c:1041
+#, c-format
+msgid "  -P, --parallel=PARALLEL_WORKERS use this many background workers for vacuum, if available\n"
+msgstr ""
+"  -P, --parallel=PARALLEL_WORKERS χρησιμοποίησε τόσους πολλούς εργάτες παρασκηνίου\n"
+"                                  για την εκτέλεση vacuum, εάν αυτοί είναι διαθέσιμοι\n"
+
+#: vacuumdb.c:1042
+#, c-format
+msgid "  -q, --quiet                     don't write any messages\n"
+msgstr "  -q, --quiet                     να μην γράψεις κανένα μήνυμα\n"
+
+#: vacuumdb.c:1043
+#, c-format
+msgid "      --skip-locked               skip relations that cannot be immediately locked\n"
+msgstr "      --skip-locked               να παραλείψει σχέσεις που δεν μπορούν να κλειδωθούν άμεσα\n"
+
+#: vacuumdb.c:1044
+#, c-format
+msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table(s) only\n"
+msgstr "  -t, --table=‘TABLE[(COLUMNS)]’  να εκτελέσει vacuum μόνο σε συγκεκριμένους πίνακες\n"
+
+#: vacuumdb.c:1045
+#, c-format
+msgid "  -v, --verbose                   write a lot of output\n"
+msgstr "  -v, --verbose                   γράψε πολλά μηνύματα εξόδου\n"
+
+#: vacuumdb.c:1046
+#, c-format
+msgid "  -V, --version                   output version information, then exit\n"
+msgstr "  -V, --version                   εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: vacuumdb.c:1047
+#, c-format
+msgid "  -z, --analyze                   update optimizer statistics\n"
+msgstr "  -z, --analyze                   ενημέρωσε τα στατιστικά του βελτιστοποιητή\n"
+
+#: vacuumdb.c:1048
+#, c-format
+msgid "  -Z, --analyze-only              only update optimizer statistics; no vacuum\n"
+msgstr "  -z, --analyze                   μόνο ενημέρωσε τα στατιστικά του βελτιστοποιητή· χωρίς vacuum\n"
+
+#: vacuumdb.c:1049
+#, c-format
+msgid ""
+"      --analyze-in-stages         only update optimizer statistics, in multiple\n"
+"                                  stages for faster results; no vacuum\n"
+msgstr ""
+"      --analyze-in-stages         ενημέρωσε μόνο τα στατιστικά στοιχεία βελτιστοποίησης, σε πολλαπλά\n"
+"                                  στάδια για ταχύτερα αποτελέσματα· χωρίς vacuum\n"
+
+#: vacuumdb.c:1051
+#, c-format
+msgid "  -?, --help                      show this help, then exit\n"
+msgstr "  -?, --help                      εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: vacuumdb.c:1059
+#, c-format
+msgid ""
+"\n"
+"Read the description of the SQL command VACUUM for details.\n"
+msgstr ""
+"\n"
+"Διαβάστε την περιγραφή της SQL εντολής VACUUM για λεπτομέρειες.\n"

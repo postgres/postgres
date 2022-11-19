@@ -41,14 +41,18 @@ pgstat_report_subscription_error(Oid subid, bool is_apply_error)
 
 /*
  * Report creating the subscription.
- *
- * Ensures that stats are dropped if transaction rolls back.
  */
 void
 pgstat_create_subscription(Oid subid)
 {
+	/* Ensures that stats are dropped if transaction rolls back */
 	pgstat_create_transactional(PGSTAT_KIND_SUBSCRIPTION,
 								InvalidOid, subid);
+
+	/* Create and initialize the subscription stats entry */
+	pgstat_get_entry_ref(PGSTAT_KIND_SUBSCRIPTION, InvalidOid, subid,
+						 true, NULL);
+	pgstat_reset_entry(PGSTAT_KIND_SUBSCRIPTION, InvalidOid, subid, 0);
 }
 
 /*

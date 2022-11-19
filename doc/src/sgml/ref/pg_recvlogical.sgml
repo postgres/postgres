@@ -46,6 +46,13 @@ PostgreSQL documentation
     a slot without consuming it, use
    <link linkend="functions-replication"><function>pg_logical_slot_peek_changes</function></link>.
   </para>
+
+  <para>
+   In the absence of fatal errors, <application>pg_recvlogical</application>
+   will run until terminated by the <systemitem>SIGINT</systemitem>
+   (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>)
+   or <systemitem>SIGTERM</systemitem> signal.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -68,7 +75,7 @@ PostgreSQL documentation
 
        <para>
         The <option>--two-phase</option> can be specified with
-        <option>--create-slot</option> to enable two-phase decoding.
+        <option>--create-slot</option> to enable decoding of prepared transactions.
        </para>
       </listitem>
      </varlistentry>
@@ -266,7 +273,7 @@ PostgreSQL documentation
        <term><option>--two-phase</option></term>
        <listitem>
        <para>
-        Enables two-phase decoding. This option should only be specified with
+        Enables decoding of prepared transactions. This option may only be specified with
         <option>--create-slot</option>
        </para>
        </listitem>
@@ -405,6 +412,17 @@ PostgreSQL documentation
       </varlistentry>
     </variablelist>
    </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Exit Status</title>
+  <para>
+   <application>pg_recvlogical</application> will exit with status 0 when
+   terminated by the <systemitem>SIGINT</systemitem> or
+   <systemitem>SIGTERM</systemitem> signal.  (That is the
+   normal way to end it.  Hence it is not an error.)  For fatal errors or
+   other signals, the exit status will be nonzero.
+  </para>
  </refsect1>
 
  <refsect1>

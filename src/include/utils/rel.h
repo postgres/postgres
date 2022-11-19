@@ -23,7 +23,7 @@
 #include "partitioning/partdefs.h"
 #include "rewrite/prs2lock.h"
 #include "storage/block.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
 #include "utils/reltrigger.h"
@@ -53,7 +53,7 @@ typedef LockInfoData *LockInfo;
 
 typedef struct RelationData
 {
-	RelFileNode rd_node;		/* relation physical identifier */
+	RelFileLocator rd_locator;	/* relation physical identifier */
 	SMgrRelation rd_smgr;		/* cached file handle, or NULL */
 	int			rd_refcnt;		/* reference count */
 	BackendId	rd_backend;		/* owning backend id, if temporary relation */
@@ -66,44 +66,45 @@ typedef struct RelationData
 
 	/*----------
 	 * rd_createSubid is the ID of the highest subtransaction the rel has
-	 * survived into or zero if the rel or its rd_node was created before the
-	 * current top transaction.  (IndexStmt.oldNode leads to the case of a new
-	 * rel with an old rd_node.)  rd_firstRelfilenodeSubid is the ID of the
-	 * highest subtransaction an rd_node change has survived into or zero if
-	 * rd_node matches the value it had at the start of the current top
+	 * survived into or zero if the rel or its storage was created before the
+	 * current top transaction.  (IndexStmt.oldNumber leads to the case of a new
+	 * rel with an old rd_locator.)  rd_firstRelfilelocatorSubid is the ID of the
+	 * highest subtransaction an rd_locator change has survived into or zero if
+	 * rd_locator matches the value it had at the start of the current top
 	 * transaction.  (Rolling back the subtransaction that
-	 * rd_firstRelfilenodeSubid denotes would restore rd_node to the value it
+	 * rd_firstRelfilelocatorSubid denotes would restore rd_locator to the value it
 	 * had at the start of the current top transaction.  Rolling back any
 	 * lower subtransaction would not.)  Their accuracy is critical to
 	 * RelationNeedsWAL().
 	 *
-	 * rd_newRelfilenodeSubid is the ID of the highest subtransaction the
-	 * most-recent relfilenode change has survived into or zero if not changed
+	 * rd_newRelfilelocatorSubid is the ID of the highest subtransaction the
+	 * most-recent relfilenumber change has survived into or zero if not changed
 	 * in the current transaction (or we have forgotten changing it).  This
 	 * field is accurate when non-zero, but it can be zero when a relation has
-	 * multiple new relfilenodes within a single transaction, with one of them
+	 * multiple new relfilenumbers within a single transaction, with one of them
 	 * occurring in a subsequently aborted subtransaction, e.g.
 	 *		BEGIN;
 	 *		TRUNCATE t;
 	 *		SAVEPOINT save;
 	 *		TRUNCATE t;
 	 *		ROLLBACK TO save;
-	 *		-- rd_newRelfilenodeSubid is now forgotten
+	 *		-- rd_newRelfilelocatorSubid is now forgotten
 	 *
 	 * If every rd_*Subid field is zero, they are read-only outside
-	 * relcache.c.  Files that trigger rd_node changes by updating
+	 * relcache.c.  Files that trigger rd_locator changes by updating
 	 * pg_class.reltablespace and/or pg_class.relfilenode call
-	 * RelationAssumeNewRelfilenode() to update rd_*Subid.
+	 * RelationAssumeNewRelfilelocator() to update rd_*Subid.
 	 *
 	 * rd_droppedSubid is the ID of the highest subtransaction that a drop of
 	 * the rel has survived into.  In entries visible outside relcache.c, this
 	 * is always zero.
 	 */
 	SubTransactionId rd_createSubid;	/* rel was created in current xact */
-	SubTransactionId rd_newRelfilenodeSubid;	/* highest subxact changing
-												 * rd_node to current value */
-	SubTransactionId rd_firstRelfilenodeSubid;	/* highest subxact changing
-												 * rd_node to any value */
+	SubTransactionId rd_newRelfilelocatorSubid; /* highest subxact changing
+												 * rd_locator to current value */
+	SubTransactionId rd_firstRelfilelocatorSubid;	/* highest subxact
+													 * changing rd_locator to
+													 * any value */
 	SubTransactionId rd_droppedSubid;	/* dropped with another Subid set */
 
 	Form_pg_class rd_rel;		/* RELATION tuple */
@@ -155,11 +156,10 @@ typedef struct RelationData
 	List	   *rd_statlist;	/* list of OIDs of extended stats */
 
 	/* data managed by RelationGetIndexAttrBitmap: */
-	bool		rd_attrsvalid;	/* are bitmaps of attrs valid? */
+	Bitmapset  *rd_indexattr;	/* identifies columns used in indexes */
 	Bitmapset  *rd_keyattr;		/* cols that can be ref'd by foreign keys */
 	Bitmapset  *rd_pkattr;		/* cols included in primary key */
 	Bitmapset  *rd_idattr;		/* included in replica identity index */
-	Bitmapset  *rd_hotblockingattr;	/* cols blocking HOT update */
 
 	PublicationDesc *rd_pubdesc;	/* publication descriptor, or NULL */
 
@@ -246,7 +246,7 @@ typedef struct RelationData
 	 */
 	Oid			rd_toastoid;	/* Real TOAST table's OID, or InvalidOid */
 
-	bool		pgstat_enabled;	/* should relation stats be counted */
+	bool		pgstat_enabled; /* should relation stats be counted */
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info; /* statistics collection area */
 } RelationData;
@@ -268,15 +268,27 @@ typedef struct RelationData
  */
 typedef struct ForeignKeyCacheInfo
 {
+	pg_node_attr(no_equal, no_read)
+
 	NodeTag		type;
-	Oid			conoid;			/* oid of the constraint itself */
-	Oid			conrelid;		/* relation constrained by the foreign key */
-	Oid			confrelid;		/* relation referenced by the foreign key */
-	int			nkeys;			/* number of columns in the foreign key */
-	/* these arrays each have nkeys valid entries: */
-	AttrNumber	conkey[INDEX_MAX_KEYS]; /* cols in referencing table */
-	AttrNumber	confkey[INDEX_MAX_KEYS];	/* cols in referenced table */
-	Oid			conpfeqop[INDEX_MAX_KEYS];	/* PK = FK operator OIDs */
+	/* oid of the constraint itself */
+	Oid			conoid;
+	/* relation constrained by the foreign key */
+	Oid			conrelid;
+	/* relation referenced by the foreign key */
+	Oid			confrelid;
+	/* number of columns in the foreign key */
+	int			nkeys;
+
+	/*
+	 * these arrays each have nkeys valid entries:
+	 */
+	/* cols in referencing table */
+	AttrNumber	conkey[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
+	/* cols in referenced table */
+	AttrNumber	confkey[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
+	/* PK = FK operator OIDs */
+	Oid			conpfeqop[INDEX_MAX_KEYS] pg_node_attr(array_size(nkeys));
 } ForeignKeyCacheInfo;
 
 
@@ -532,13 +544,14 @@ typedef struct ViewOptions
 
 /*
  * RelationIsMapped
- *		True if the relation uses the relfilenode map.  Note multiple eval
+ *		True if the relation uses the relfilenumber map.  Note multiple eval
  *		of argument!
  */
 #define RelationIsMapped(relation) \
 	(RELKIND_HAS_STORAGE((relation)->rd_rel->relkind) && \
-	 ((relation)->rd_rel->relfilenode == InvalidOid))
+	 ((relation)->rd_rel->relfilenode == InvalidRelFileNumber))
 
+#ifndef FRONTEND
 /*
  * RelationGetSmgr
  *		Returns smgr file handle for a relation, opening it if needed.
@@ -556,24 +569,24 @@ static inline SMgrRelation
 RelationGetSmgr(Relation rel)
 {
 	if (unlikely(rel->rd_smgr == NULL))
-		smgrsetowner(&(rel->rd_smgr), smgropen(rel->rd_node, rel->rd_backend));
+		smgrsetowner(&(rel->rd_smgr), smgropen(rel->rd_locator, rel->rd_backend));
 	return rel->rd_smgr;
 }
 
 /*
  * RelationCloseSmgr
  *		Close the relation at the smgr level, if not already done.
- *
- * Note: smgrclose should unhook from owner pointer, hence the Assert.
  */
-#define RelationCloseSmgr(relation) \
-	do { \
-		if ((relation)->rd_smgr != NULL) \
-		{ \
-			smgrclose((relation)->rd_smgr); \
-			Assert((relation)->rd_smgr == NULL); \
-		} \
-	} while (0)
+static inline void
+RelationCloseSmgr(Relation relation)
+{
+	if (relation->rd_smgr != NULL)
+		smgrclose(relation->rd_smgr);
+
+	/* smgrclose should unhook from owner pointer */
+	Assert(relation->rd_smgr == NULL);
+}
+#endif							/* !FRONTEND */
 
 /*
  * RelationGetTargetBlock
@@ -608,12 +621,12 @@ RelationGetSmgr(Relation rel)
  *
  * Returns false if wal_level = minimal and this relation is created or
  * truncated in the current transaction.  See "Skipping WAL for New
- * RelFileNode" in src/backend/access/transam/README.
+ * RelFileLocator" in src/backend/access/transam/README.
  */
 #define RelationNeedsWAL(relation)										\
 	(RelationIsPermanent(relation) && (XLogIsNeeded() ||				\
 	  (relation->rd_createSubid == InvalidSubTransactionId &&			\
-	   relation->rd_firstRelfilenodeSubid == InvalidSubTransactionId)))
+	   relation->rd_firstRelfilelocatorSubid == InvalidSubTransactionId)))
 
 /*
  * RelationUsesLocalBuffers

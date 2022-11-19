@@ -1,0 +1,959 @@
+# Greek message translation file for pg_rewind
+# Copyright (C) 2021 PostgreSQL Global Development Group
+# This file is distributed under the same license as the pg_rewind (PostgreSQL) package.
+# Georgios Kokolatos <gkokolatos@pm.me>, 2021.
+#
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_rewind (PostgreSQL) 14\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2021-06-09 21:19+0000\n"
+"PO-Revision-Date: 2021-07-05 15:33+0200\n"
+"Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
+"Language-Team: \n"
+"Language: el\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.0\n"
+
+#: ../../../src/common/logging.c:259
+#, c-format
+msgid "fatal: "
+msgstr "κρίσιμο: "
+
+#: ../../../src/common/logging.c:266
+#, c-format
+msgid "error: "
+msgstr "σφάλμα: "
+
+#: ../../../src/common/logging.c:273
+#, c-format
+msgid "warning: "
+msgstr "προειδοποίηση: "
+
+#: ../../common/fe_memutils.c:35 ../../common/fe_memutils.c:75
+#: ../../common/fe_memutils.c:98 ../../common/fe_memutils.c:162
+#, c-format
+msgid "out of memory\n"
+msgstr "έλλειψη μνήμης\n"
+
+#: ../../common/fe_memutils.c:92 ../../common/fe_memutils.c:154
+#, c-format
+msgid "cannot duplicate null pointer (internal error)\n"
+msgstr "δεν ήταν δυνατή η αντιγραφή δείκτη null (εσωτερικό σφάλμα)\n"
+
+#: ../../common/restricted_token.c:64
+#, c-format
+msgid "could not load library \"%s\": error code %lu"
+msgstr "δεν ήταν δυνατή η φόρτωση της βιβλιοθήκης «%s»: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:73
+#, c-format
+msgid "cannot create restricted tokens on this platform: error code %lu"
+msgstr "δεν ήταν δυνατή η δημιουργία διακριτικών περιορισμού στην παρούσα πλατφόρμα: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:82
+#, c-format
+msgid "could not open process token: error code %lu"
+msgstr "δεν ήταν δυνατό το άνοιγμα διακριτικού διεργασίας: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:97
+#, c-format
+msgid "could not allocate SIDs: error code %lu"
+msgstr "δεν ήταν δυνατή η εκχώρηση SID: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:119
+#, c-format
+msgid "could not create restricted token: error code %lu"
+msgstr "δεν ήταν δυνατή η δημιουργία διακριτικού διεργασίας: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:140
+#, c-format
+msgid "could not start process for command \"%s\": error code %lu"
+msgstr "δεν ήταν δυνατή η εκκίνηση διεργασίας για την εντολή «%s»: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:178
+#, c-format
+msgid "could not re-execute with restricted token: error code %lu"
+msgstr "δεν ήταν δυνατή η επανεκκίνηση με διακριτικό περιορισμού: κωδικός σφάλματος %lu"
+
+#: ../../common/restricted_token.c:194
+#, c-format
+msgid "could not get exit code from subprocess: error code %lu"
+msgstr "δεν ήταν δυνατή η απόκτηση κωδικού εξόδου από την υποδιεργασία: κωδικός σφάλματος %lu"
+
+#: ../../fe_utils/archive.c:53
+#, c-format
+msgid "cannot use restore_command with %%r placeholder"
+msgstr "δεν είναι δυνατή η χρήση restore_command μαζί με %%r placeholder"
+
+#: ../../fe_utils/archive.c:74
+#, c-format
+msgid "unexpected file size for \"%s\": %lld instead of %lld"
+msgstr "μη αναμενόμενο μέγεθος αρχείου για «%s»: %lld αντί για %lld"
+
+#: ../../fe_utils/archive.c:85
+#, c-format
+msgid "could not open file \"%s\" restored from archive: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s» που έχει επαναφερθεί από την αρχειοθήκη: %m"
+
+#: ../../fe_utils/archive.c:97 file_ops.c:417
+#, c-format
+msgid "could not stat file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εκτέλεση stat στο αρχείο «%s»: %m"
+
+#: ../../fe_utils/archive.c:112
+#, c-format
+msgid "restore_command failed: %s"
+msgstr "restore_command απέτυχε: %s"
+
+#: ../../fe_utils/archive.c:121
+#, c-format
+msgid "could not restore file \"%s\" from archive"
+msgstr "δεν ήταν δυνατή η επαναφορά του αρχείου «%s» από την αρχειοθήκη"
+
+#: ../../fe_utils/recovery_gen.c:35 ../../fe_utils/recovery_gen.c:49
+#: ../../fe_utils/recovery_gen.c:77 ../../fe_utils/recovery_gen.c:100
+#: ../../fe_utils/recovery_gen.c:171 parsexlog.c:77 parsexlog.c:135
+#: parsexlog.c:195
+#, c-format
+msgid "out of memory"
+msgstr "έλλειψη μνήμης"
+
+#: ../../fe_utils/recovery_gen.c:134 parsexlog.c:308
+#, c-format
+msgid "could not open file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s»: %m"
+
+#: ../../fe_utils/recovery_gen.c:140
+#, c-format
+msgid "could not write to file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή στο αρχείο «%s»: %m"
+
+#: ../../fe_utils/recovery_gen.c:152
+#, c-format
+msgid "could not create file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία αρχείου «%s»: %m"
+
+#: file_ops.c:67
+#, c-format
+msgid "could not open target file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προορισμού «%s»: %m"
+
+#: file_ops.c:81
+#, c-format
+msgid "could not close target file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου προορισμού «%s»: %m"
+
+#: file_ops.c:101
+#, c-format
+msgid "could not seek in target file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο προορισμού «%s»: %m"
+
+#: file_ops.c:117
+#, c-format
+msgid "could not write file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η εγγραφή αρχείου «%s»: %m"
+
+#: file_ops.c:150 file_ops.c:177
+#, c-format
+msgid "undefined file type for \"%s\""
+msgstr "απροσδιόριστος τύπος αρχείου για το «%s»"
+
+#: file_ops.c:173
+#, c-format
+msgid "invalid action (CREATE) for regular file"
+msgstr "μη έγκυρη ενέργεια (CREATE) για κανονικό αρχείο"
+
+#: file_ops.c:200
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του αρχείου «%s»: %m"
+
+#: file_ops.c:218
+#, c-format
+msgid "could not open file \"%s\" for truncation: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου «%s» για περικοπή: %m"
+
+#: file_ops.c:222
+#, c-format
+msgid "could not truncate file \"%s\" to %u: %m"
+msgstr "δεν ήταν δυνατή η περικοπή του αρχείου «%s» σε %u: %m"
+
+#: file_ops.c:238
+#, c-format
+msgid "could not create directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του καταλόγου «%s»: %m"
+
+#: file_ops.c:252
+#, c-format
+msgid "could not remove directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση του καταλόγου «%s»: %m"
+
+#: file_ops.c:266
+#, c-format
+msgid "could not create symbolic link at \"%s\": %m"
+msgstr "δεν ήταν δυνατή η δημιουργία του συμβολικού συνδέσμου «%s»: %m"
+
+#: file_ops.c:280
+#, c-format
+msgid "could not remove symbolic link \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αφαίρεση της συμβολικής σύνδεσης «%s»: %m"
+
+#: file_ops.c:326 file_ops.c:330
+#, c-format
+msgid "could not open file \"%s\" for reading: %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα αρχείου «%s» για ανάγνωση: %m"
+
+#: file_ops.c:341 local_source.c:107 parsexlog.c:346
+#, c-format
+msgid "could not read file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: %m"
+
+#: file_ops.c:344 parsexlog.c:348
+#, c-format
+msgid "could not read file \"%s\": read %d of %zu"
+msgstr "δεν ήταν δυνατή η ανάγνωση του αρχείου «%s»: ανέγνωσε %d από %zu"
+
+#: file_ops.c:388
+#, c-format
+msgid "could not open directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του καταλόγου «%s»: %m"
+
+#: file_ops.c:446
+#, c-format
+msgid "could not read symbolic link \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
+
+#: file_ops.c:449
+#, c-format
+msgid "symbolic link \"%s\" target is too long"
+msgstr "ο συμβολικός σύνδεσμος «%s» είναι πολύ μακρύς"
+
+#: file_ops.c:464
+#, c-format
+msgid "\"%s\" is a symbolic link, but symbolic links are not supported on this platform"
+msgstr "«%s» είναι ένας συμβολικός σύνδεσμος, αλλά οι συμβολικοί σύνδεσμοι δεν υποστηρίζονται σε αυτήν την πλατφόρμα"
+
+#: file_ops.c:471
+#, c-format
+msgid "could not read directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του καταλόγου «%s»: %m"
+
+#: file_ops.c:475
+#, c-format
+msgid "could not close directory \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του καταλόγου «%s»: %m"
+
+#: filemap.c:237
+#, c-format
+msgid "data file \"%s\" in source is not a regular file"
+msgstr "το αρχείο «%s» δεν είναι ένα κανονικό αρχείο"
+
+#: filemap.c:242 filemap.c:275
+#, c-format
+msgid "duplicate source file \"%s\""
+msgstr "διπλότυπο αρχείο προέλευσης «%s»"
+
+#: filemap.c:330
+#, c-format
+msgid "unexpected page modification for non-regular file \"%s\""
+msgstr "μη αναμενόμενη τροποποίηση σελίδας για μη κανονικό αρχείο «%s»"
+
+#: filemap.c:680 filemap.c:774
+#, c-format
+msgid "unknown file type for \"%s\""
+msgstr "άγνωστος τύπος αρχείου για το «%s»"
+
+#: filemap.c:707
+#, c-format
+msgid "file \"%s\" is of different type in source and target"
+msgstr "το αρχείο «%s» είναι διαφορετικού τύπου στην προέλευση και τον προορισμό"
+
+#: filemap.c:779
+#, c-format
+msgid "could not decide what to do with file \"%s\""
+msgstr "δεν ήταν δυνατή η λήψη του αρχείου «%s»"
+
+#: libpq_source.c:128
+#, c-format
+msgid "could not clear search_path: %s"
+msgstr "δεν ήταν δυνατή η εκκαθάριση του search_path: %s"
+
+#: libpq_source.c:139
+#, c-format
+msgid "full_page_writes must be enabled in the source server"
+msgstr "full_page_writes πρέπει να είναι ενεργοποιημένο στο διακομιστή προέλευσης"
+
+#: libpq_source.c:150
+#, c-format
+msgid "could not prepare statement to fetch file contents: %s"
+msgstr "δεν ήταν δυνατή η προετοιμασία της δήλωσης για τη λήψη περιεχομένων αρχείου: %s"
+
+#: libpq_source.c:169
+#, c-format
+msgid "error running query (%s) on source server: %s"
+msgstr "σφάλμα κατά την εκτέλεση ερωτήματος (%s) στο διακομιστή προέλευσης: %s"
+
+#: libpq_source.c:174
+#, c-format
+msgid "unexpected result set from query"
+msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων από ερώτημα"
+
+#: libpq_source.c:196
+#, c-format
+msgid "error running query (%s) in source server: %s"
+msgstr "σφάλμα κατά την εκτέλεση ερωτήματος (%s) στο διακομιστή προέλευσης: %s"
+
+#: libpq_source.c:217
+#, c-format
+msgid "unrecognized result \"%s\" for current WAL insert location"
+msgstr "μη αναγνωρίσιμο αποτέλεσμα «%s» για την τρέχουσα θέση εισαγωγής WAL"
+
+#: libpq_source.c:268
+#, c-format
+msgid "could not fetch file list: %s"
+msgstr "δεν ήταν δυνατή η λήψη λίστας αρχείων: %s"
+
+#: libpq_source.c:273
+#, c-format
+msgid "unexpected result set while fetching file list"
+msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων κατά τη λήψη λίστας αρχείων"
+
+#: libpq_source.c:435
+#, c-format
+msgid "could not send query: %s"
+msgstr "δεν ήταν δυνατή η αποστολή ερωτήματος: %s"
+
+#: libpq_source.c:438
+#, c-format
+msgid "could not set libpq connection to single row mode"
+msgstr "δεν ήταν δυνατή η ρύθμιση της σύνδεσης libpq σε λειτουργία μονής σειράς"
+
+#: libpq_source.c:468
+#, c-format
+msgid "unexpected result while fetching remote files: %s"
+msgstr "μη αναμενόμενο αποτέλεσμα κατά τη λήψη απομακρυσμένων αρχείων: %s"
+
+#: libpq_source.c:473
+#, c-format
+msgid "received more data chunks than requested"
+msgstr "έλαβε περισσότερα τμήματα δεδομένων από όσα ζητήθηκαν"
+
+#: libpq_source.c:477
+#, c-format
+msgid "unexpected result set size while fetching remote files"
+msgstr "μη αναμενόμενο μέγεθος συνόλου αποτελεσμάτων κατά τη λήψη απομακρυσμένων αρχείων"
+
+#: libpq_source.c:483
+#, c-format
+msgid "unexpected data types in result set while fetching remote files: %u %u %u"
+msgstr "μη αναμενόμενοι τύποι δεδομένων στο σύνολο αποτελεσμάτων κατά τη λήψη απομακρυσμένων αρχείων: %u %u %u"
+
+#: libpq_source.c:491
+#, c-format
+msgid "unexpected result format while fetching remote files"
+msgstr "μη αναμενόμενη μορφή αποτελέσματος κατά τη λήψη απομακρυσμένων αρχείων"
+
+#: libpq_source.c:497
+#, c-format
+msgid "unexpected null values in result while fetching remote files"
+msgstr "μη αναμενόμενες τιμές null κατά τη λήψη απομακρυσμένων αρχείων"
+
+#: libpq_source.c:501
+#, c-format
+msgid "unexpected result length while fetching remote files"
+msgstr "μη αναμενόμενο μήκος αποτελέσματος κατά τη λήψη απομακρυσμένων αρχείων"
+
+#: libpq_source.c:534
+#, c-format
+msgid "received data for file \"%s\", when requested for \"%s\""
+msgstr "έλαβε δεδομένα για το αρχείο «%s», όταν ζητήθηκε το «%s»"
+
+#: libpq_source.c:538
+#, c-format
+msgid "received data at offset %lld of file \"%s\", when requested for offset %lld"
+msgstr "έλαβε δεδομένα σε μετατόπιση %lld του αρχείου «%s», όταν ζητήθηκε μετατόπιση %lld"
+
+#: libpq_source.c:550
+#, c-format
+msgid "received more than requested for file \"%s\""
+msgstr "έλαβε περισσότερα από όσα ζήτησε για το αρχείο «%s»"
+
+#: libpq_source.c:563
+#, c-format
+msgid "unexpected number of data chunks received"
+msgstr "έλαβε μη αναμενόμενο αριθμό τμημάτων δεδομένων"
+
+#: libpq_source.c:606
+#, c-format
+msgid "could not fetch remote file \"%s\": %s"
+msgstr "δεν ήταν δυνατή η λήψη απομακρυσμένου αρχείου «%s»: %s"
+
+#: libpq_source.c:611
+#, c-format
+msgid "unexpected result set while fetching remote file \"%s\""
+msgstr "μη αναμενόμενο σύνολο αποτελεσμάτων κατά τη λήψη απομακρυσμένου αρχείου «%s»"
+
+#: local_source.c:86
+#, c-format
+msgid "could not open source file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το άνοιγμα του αρχείου προέλευσης «%s»: %m"
+
+#: local_source.c:90
+#, c-format
+msgid "could not seek in source file: %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο προέλευσης: %m"
+
+#: local_source.c:109
+#, c-format
+msgid "unexpected EOF while reading file \"%s\""
+msgstr "μη αναμενόμενο EOF κατά την ανάγνωση αρχείου «%s»"
+
+#: local_source.c:116
+#, c-format
+msgid "could not close file \"%s\": %m"
+msgstr "δεν ήταν δυνατό το κλείσιμο του αρχείου «%s»: %m"
+
+#: parsexlog.c:89 parsexlog.c:142
+#, c-format
+msgid "could not read WAL record at %X/%X: %s"
+msgstr "δεν ήταν δυνατή η ανάγνωση WAL εγγραφής στο %X/%X: %s"
+
+#: parsexlog.c:93 parsexlog.c:145
+#, c-format
+msgid "could not read WAL record at %X/%X"
+msgstr "δεν ήταν δυνατή η ανάγνωση WAL εγγραφής στο %X/%X"
+
+#: parsexlog.c:208
+#, c-format
+msgid "could not find previous WAL record at %X/%X: %s"
+msgstr "δεν ήταν δυνατή η εύρεση προηγούμενης WAL εγγραφής σε %X/%X: %s"
+
+#: parsexlog.c:212
+#, c-format
+msgid "could not find previous WAL record at %X/%X"
+msgstr "δεν ήταν δυνατή η εύρεση προηγούμενης WAL εγγραφής σε %X/%X"
+
+#: parsexlog.c:337
+#, c-format
+msgid "could not seek in file \"%s\": %m"
+msgstr "δεν ήταν δυνατή η αναζήτηση στο αρχείο «%s»: %m"
+
+#: parsexlog.c:429
+#, c-format
+msgid "WAL record modifies a relation, but record type is not recognized: lsn: %X/%X, rmgr: %s, info: %02X"
+msgstr "Η εγγραφή WAL τροποποιεί μια σχέση, αλλά ο τύπος εγγραφής δεν αναγνωρίζεται: lsn: %X/%X, rmgr: %s, info: %02X"
+
+#: pg_rewind.c:84
+#, c-format
+msgid ""
+"%s resynchronizes a PostgreSQL cluster with another copy of the cluster.\n"
+"\n"
+msgstr ""
+"%s επανασυγχρονίζει μία συστάδα PostgreSQL με ένα άλλο αντίγραφο της συστάδας.\n"
+"\n"
+
+#: pg_rewind.c:85
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"Χρήση:\n"
+"  %s [ΕΠΙΛΟΓΗ]...\n"
+"\n"
+
+#: pg_rewind.c:86
+#, c-format
+msgid "Options:\n"
+msgstr "Επιλογές:\n"
+
+#: pg_rewind.c:87
+#, c-format
+msgid ""
+"  -c, --restore-target-wal       use restore_command in target configuration to\n"
+"                                 retrieve WAL files from archives\n"
+msgstr ""
+"  -c, --restore-target-wal       χρησιμοποίησε restore_command στη ρύθμιση προορισμού για την\n"
+"                                 ανάκτηση αρχείων WAL από αρχειοθήκες\n"
+
+#: pg_rewind.c:89
+#, c-format
+msgid "  -D, --target-pgdata=DIRECTORY  existing data directory to modify\n"
+msgstr "  -D, --target-pgdata=DIRECTORY  υπάρχον κατάλογος δεδομένων προς τροποποιήση\n"
+
+#: pg_rewind.c:90
+#, c-format
+msgid "      --source-pgdata=DIRECTORY  source data directory to synchronize with\n"
+msgstr "      --source-pgdata=DIRECTORY  κατάλογος δεδομένων προέλευσης για συγχρονισμό\n"
+
+#: pg_rewind.c:91
+#, c-format
+msgid "      --source-server=CONNSTR    source server to synchronize with\n"
+msgstr "      --source-server=CONNSTR    διακομιστής προέλευσης για συγχρονισμό\n"
+
+#: pg_rewind.c:92
+#, c-format
+msgid "  -n, --dry-run                  stop before modifying anything\n"
+msgstr "  -n, --dry-run                  τερματισμός πριν να τροποποιηθεί οτιδήποτε\n"
+
+#: pg_rewind.c:93
+#, c-format
+msgid ""
+"  -N, --no-sync                  do not wait for changes to be written\n"
+"                                 safely to disk\n"
+msgstr "  -N, --no-sync                  να μην αναμένει την ασφαλή εγγραφή αλλαγών στον δίσκο\n"
+
+#: pg_rewind.c:95
+#, c-format
+msgid "  -P, --progress                 write progress messages\n"
+msgstr "  -P, --progress                 εμφάνισε πληροφορίες προόδου\n"
+
+#: pg_rewind.c:96
+#, c-format
+msgid ""
+"  -R, --write-recovery-conf      write configuration for replication\n"
+"                                 (requires --source-server)\n"
+msgstr ""
+"  -R, --write-recovery-conf      εγγραφή των ρυθμίσεων αναπαραγωγής\n"
+"                                 (απαιτεί --source-server)\n"
+
+#: pg_rewind.c:98
+#, c-format
+msgid "      --debug                    write a lot of debug messages\n"
+msgstr "      --debug                    εγγραφή πολλών μηνύματων εντοπισμού σφαλμάτων\n"
+
+#: pg_rewind.c:99
+#, c-format
+msgid "      --no-ensure-shutdown       do not automatically fix unclean shutdown\n"
+msgstr "      --no-ensure-shutdown       να μην διορθώνει αυτόματα ακάθαρτο τερματισμό\n"
+
+#: pg_rewind.c:100
+#, c-format
+msgid "  -V, --version                  output version information, then exit\n"
+msgstr "  -V, --version                  εμφάνισε πληροφορίες έκδοσης, στη συνέχεια έξοδος\n"
+
+#: pg_rewind.c:101
+#, c-format
+msgid "  -?, --help                     show this help, then exit\n"
+msgstr "  -?, --help                     εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+
+#: pg_rewind.c:102
+#, c-format
+msgid ""
+"\n"
+"Report bugs to <%s>.\n"
+msgstr ""
+"\n"
+"Υποβάλετε αναφορές σφάλματων σε <%s>.\n"
+
+#: pg_rewind.c:103
+#, c-format
+msgid "%s home page: <%s>\n"
+msgstr "%s αρχική σελίδα: <%s>\n"
+
+#: pg_rewind.c:164 pg_rewind.c:213 pg_rewind.c:220 pg_rewind.c:227
+#: pg_rewind.c:234 pg_rewind.c:242
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
+
+#: pg_rewind.c:212
+#, c-format
+msgid "no source specified (--source-pgdata or --source-server)"
+msgstr "δεν καθορίστηκε προέλευση (--source-pgdata ή --source-server)"
+
+#: pg_rewind.c:219
+#, c-format
+msgid "only one of --source-pgdata or --source-server can be specified"
+msgstr "μόνο ένα από τα --source-pgdata ή --source-server μπορεί να καθοριστεί"
+
+#: pg_rewind.c:226
+#, c-format
+msgid "no target data directory specified (--target-pgdata)"
+msgstr "δεν καθορίστηκε κατάλογος δεδομένων προορισμού (--target-pgdata)"
+
+#: pg_rewind.c:233
+#, c-format
+msgid "no source server information (--source-server) specified for --write-recovery-conf"
+msgstr "δεν καθορίστηκαν πληροφορίες διακομιστή προέλευσης (--source-server) για --write-recovery-conf"
+
+#: pg_rewind.c:240
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "πάρα πολλές παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)"
+
+#: pg_rewind.c:255
+#, c-format
+msgid "cannot be executed by \"root\""
+msgstr "δεν είναι δυνατή η εκτέλεση από «root»"
+
+#: pg_rewind.c:256
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "Πρέπει να εκτελέσετε %s ως υπερχρήστης PostgreSQL.\n"
+
+#: pg_rewind.c:267
+#, c-format
+msgid "could not read permissions of directory \"%s\": %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση δικαιωμάτων του καταλόγου «%s»: %m"
+
+#: pg_rewind.c:287
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: pg_rewind.c:290
+#, c-format
+msgid "connected to server"
+msgstr "συνδεδεμένος στον διακομιστή"
+
+#: pg_rewind.c:337
+#, c-format
+msgid "source and target cluster are on the same timeline"
+msgstr "συστάδες προορισμού και προέλευσης βρίσκονται στην ίδια χρονογραμμή"
+
+#: pg_rewind.c:346
+#, c-format
+msgid "servers diverged at WAL location %X/%X on timeline %u"
+msgstr "οι διακομιστές αποκλίνουν στην τοποθεσία WAL %X/%X στη χρονογραμμή %u"
+
+#: pg_rewind.c:394
+#, c-format
+msgid "no rewind required"
+msgstr "δεν απαιτείται επαναφορά"
+
+#: pg_rewind.c:403
+#, c-format
+msgid "rewinding from last common checkpoint at %X/%X on timeline %u"
+msgstr "επαναφορά από το τελευταίο κοινό σημείο ελέγχου στο %X/%X στη χρονογραμμή %u"
+
+#: pg_rewind.c:413
+#, c-format
+msgid "reading source file list"
+msgstr "ανάγνωση λίστας αρχείων προέλευσης"
+
+#: pg_rewind.c:417
+#, c-format
+msgid "reading target file list"
+msgstr "ανάγνωση λίστας αρχείων προορισμού"
+
+#: pg_rewind.c:426
+#, c-format
+msgid "reading WAL in target"
+msgstr "ανάγνωση WAL στον προορισμό"
+
+#: pg_rewind.c:447
+#, c-format
+msgid "need to copy %lu MB (total source directory size is %lu MB)"
+msgstr "πρέπει να αντιγραφούν %lu MB (το συνολικό μέγεθος καταλόγου προέλευσης είναι %lu MB)"
+
+#: pg_rewind.c:465
+#, c-format
+msgid "syncing target data directory"
+msgstr "συγχρονισμός καταλόγου δεδομένων προορισμού"
+
+#: pg_rewind.c:481
+#, c-format
+msgid "Done!"
+msgstr "Ολοκληρώθηκε!"
+
+#: pg_rewind.c:564
+#, c-format
+msgid "no action decided for file \"%s\""
+msgstr "καμία ενέργεια δεν αποφασίστηκε για το αρχείο «%s»"
+
+#: pg_rewind.c:596
+#, c-format
+msgid "source system was modified while pg_rewind was running"
+msgstr "το σύστημα προέλευσης τροποποιήθηκε κατά την εκτέλεση του pg_rewind"
+
+#: pg_rewind.c:600
+#, c-format
+msgid "creating backup label and updating control file"
+msgstr "δημιουργία ετικέτας αντιγράφων ασφαλείας και ενημέρωση αρχείου ελέγχου"
+
+#: pg_rewind.c:650
+#, c-format
+msgid "source system was in unexpected state at end of rewind"
+msgstr "το σύστημα προέλευσης βρισκόταν σε μη αναμενόμενη κατάσταση στο τέλος της επαναφοράς"
+
+#: pg_rewind.c:681
+#, c-format
+msgid "source and target clusters are from different systems"
+msgstr "οι συστάδες προέλευσης και προορισμού προέρχονται από διαφορετικά συστήματα"
+
+#: pg_rewind.c:689
+#, c-format
+msgid "clusters are not compatible with this version of pg_rewind"
+msgstr "η συστάδα δεν είναι συμβατή με αυτήν την έκδοση pg_rewind"
+
+#: pg_rewind.c:699
+#, c-format
+msgid "target server needs to use either data checksums or \"wal_log_hints = on\""
+msgstr "ο διακομιστής προορισμού πρέπει να χρησιμοποιεί είτε άθροισμα ελέγχου δεδομένων είτε «wal_log_hints = on»"
+
+#: pg_rewind.c:710
+#, c-format
+msgid "target server must be shut down cleanly"
+msgstr "ο διακομιστής προορισμού πρέπει να τερματιστεί καθαρά"
+
+#: pg_rewind.c:720
+#, c-format
+msgid "source data directory must be shut down cleanly"
+msgstr "ο κατάλογος δεδομένων προέλευσης πρέπει να τερματιστεί καθαρά"
+
+#: pg_rewind.c:772
+#, c-format
+msgid "%*s/%s kB (%d%%) copied"
+msgstr "%*s/%s kB (%d%%) αντιγράφηκαν"
+
+#: pg_rewind.c:835
+#, c-format
+msgid "invalid control file"
+msgstr "μη έγκυρο αρχείο ελέγχου"
+
+#: pg_rewind.c:919
+#, c-format
+msgid "could not find common ancestor of the source and target cluster's timelines"
+msgstr "δεν ήταν δυνατή η εύρεση κοινού προγόνου των χρονογραμμών των συστάδων προέλευσης και προορισμού"
+
+#: pg_rewind.c:960
+#, c-format
+msgid "backup label buffer too small"
+msgstr "ενδιάμεση μνήμη ετικέτας αντιγράφων ασφαλείας πολύ μικρή"
+
+#: pg_rewind.c:983
+#, c-format
+msgid "unexpected control file CRC"
+msgstr "μη αναμενόμενο αρχείο ελέγχου CRC"
+
+#: pg_rewind.c:995
+#, c-format
+msgid "unexpected control file size %d, expected %d"
+msgstr "μη αναμενόμενο μέγεθος αρχείου ελέγχου %d, αναμένεται %d"
+
+#: pg_rewind.c:1004
+#, c-format
+msgid "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d byte"
+msgid_plural "WAL segment size must be a power of two between 1 MB and 1 GB, but the control file specifies %d bytes"
+msgstr[0] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά το αρχείο ελέγχου καθορίζει %d byte"
+msgstr[1] "η τιμή του μεγέθους τμήματος WAL πρέπει να ανήκει σε δύναμη του δύο μεταξύ 1 MB και 1 GB, αλλά το αρχείο ελέγχου καθορίζει %d bytes"
+
+#: pg_rewind.c:1043 pg_rewind.c:1101
+#, c-format
+msgid ""
+"The program \"%s\" is needed by %s but was not found in the\n"
+"same directory as \"%s\".\n"
+"Check your installation."
+msgstr ""
+"Το πρόγραμμα «%s» απαιτείται από %s αλλά δεν βρέθηκε στον\n"
+"ίδιο κατάλογο με το «%s».\n"
+"Ελέγξτε την εγκατάστασή σας."
+
+#: pg_rewind.c:1048 pg_rewind.c:1106
+#, c-format
+msgid ""
+"The program \"%s\" was found by \"%s\"\n"
+"but was not the same version as %s.\n"
+"Check your installation."
+msgstr ""
+"Το πρόγραμμα «%s» βρέθηκε από το \"%s\"\n"
+"αλλά δεν ήταν η ίδια εκδοχή με %s.\n"
+"Ελέγξτε την εγκατάστασή σας."
+
+#: pg_rewind.c:1069
+#, c-format
+msgid "restore_command is not set in the target cluster"
+msgstr "η εντολή restore_command δεν έχει οριστεί στη συστάδα προορισμού"
+
+#: pg_rewind.c:1112
+#, c-format
+msgid "executing \"%s\" for target server to complete crash recovery"
+msgstr "εκτέλεση «%s» για την ολοκλήρωση της αποκατάστασης σφαλμάτων του διακομιστή προορισμού"
+
+#: pg_rewind.c:1132
+#, c-format
+msgid "postgres single-user mode in target cluster failed"
+msgstr "λειτουργία μοναδικού-χρήστη postgres στο σύμπλεγμα προορισμού απέτυχε"
+
+#: pg_rewind.c:1133
+#, c-format
+msgid "Command was: %s"
+msgstr "Η εντολή ήταν: %s"
+
+#: timeline.c:75 timeline.c:81
+#, c-format
+msgid "syntax error in history file: %s"
+msgstr "συντακτικό σφάλμα στο αρχείο ιστορικού: %s"
+
+#: timeline.c:76
+#, c-format
+msgid "Expected a numeric timeline ID."
+msgstr "Αναμένεται αριθμητικό ID χρονογραμμής."
+
+#: timeline.c:82
+#, c-format
+msgid "Expected a write-ahead log switchpoint location."
+msgstr "Αναμένεται μια θέση write-ahead log switchpoint."
+
+#: timeline.c:87
+#, c-format
+msgid "invalid data in history file: %s"
+msgstr "μη έγκυρα δεδομένα στο αρχείο ιστορικού: %s"
+
+#: timeline.c:88
+#, c-format
+msgid "Timeline IDs must be in increasing sequence."
+msgstr "Τα IDs χρονογραμμής πρέπει να βρίσκονται σε αυξάνουσα σειρά."
+
+#: timeline.c:108
+#, c-format
+msgid "invalid data in history file"
+msgstr "μη έγκυρα δεδομένα στο αρχείο ιστορικού"
+
+#: timeline.c:109
+#, c-format
+msgid "Timeline IDs must be less than child timeline's ID."
+msgstr "Τα ID χρονογραμμής πρέπει να είναι λιγότερα από τα ID της χρονογραμμής απογόνου."
+
+#: xlogreader.c:349
+#, c-format
+msgid "invalid record offset at %X/%X"
+msgstr "μη έγκυρη μετατόπιση εγγραφών σε %X/%X"
+
+#: xlogreader.c:357
+#, c-format
+msgid "contrecord is requested by %X/%X"
+msgstr "contrecord ζητείται από %X/%X"
+
+#: xlogreader.c:398 xlogreader.c:695
+#, c-format
+msgid "invalid record length at %X/%X: wanted %u, got %u"
+msgstr "μη έγκυρο μήκος εγγραφής σε %X/%X: χρειαζόταν %u, έλαβε %u"
+
+#: xlogreader.c:422
+#, c-format
+msgid "record length %u at %X/%X too long"
+msgstr "μήκος εγγραφής %u σε %X/%X πολύ μακρύ"
+
+#: xlogreader.c:453
+#, c-format
+msgid "there is no contrecord flag at %X/%X"
+msgstr "δεν υπάρχει σημαία contrecord στο %X/%X"
+
+#: xlogreader.c:466
+#, c-format
+msgid "invalid contrecord length %u (expected %lld) at %X/%X"
+msgstr "μη έγκυρο μήκος contrecord %u (αναμένεται %lld) σε %X/%X"
+
+#: xlogreader.c:703
+#, c-format
+msgid "invalid resource manager ID %u at %X/%X"
+msgstr "μη έγκυρο ID %u διαχειριστή πόρων στο %X/%X"
+
+#: xlogreader.c:716 xlogreader.c:732
+#, c-format
+msgid "record with incorrect prev-link %X/%X at %X/%X"
+msgstr "εγγραφή με εσφαλμένο prev-link %X/%X σε %X/%X"
+
+#: xlogreader.c:768
+#, c-format
+msgid "incorrect resource manager data checksum in record at %X/%X"
+msgstr "εσφαλμένο άθροισμα ελέγχου δεδομένων διαχειριστή πόρων σε εγγραφή στο %X/%X"
+
+#: xlogreader.c:805
+#, c-format
+msgid "invalid magic number %04X in log segment %s, offset %u"
+msgstr "μη έγκυρος μαγικός αριθμός %04X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:819 xlogreader.c:860
+#, c-format
+msgid "invalid info bits %04X in log segment %s, offset %u"
+msgstr "μη έγκυρα info bits %04X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:834
+#, c-format
+msgid "WAL file is from different database system: WAL file database system identifier is %llu, pg_control database system identifier is %llu"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: το WAL αναγνωριστικό συστήματος βάσης δεδομένων αρχείων είναι %llu, το pg_control αναγνωριστικό συστήματος βάσης δεδομένων είναι %llu"
+
+#: xlogreader.c:842
+#, c-format
+msgid "WAL file is from different database system: incorrect segment size in page header"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: εσφαλμένο μέγεθος τμήματος στην κεφαλίδα σελίδας"
+
+#: xlogreader.c:848
+#, c-format
+msgid "WAL file is from different database system: incorrect XLOG_BLCKSZ in page header"
+msgstr "WAL αρχείο προέρχεται από διαφορετικό σύστημα βάσης δεδομένων: εσφαλμένο XLOG_BLCKSZ στην κεφαλίδα σελίδας"
+
+#: xlogreader.c:879
+#, c-format
+msgid "unexpected pageaddr %X/%X in log segment %s, offset %u"
+msgstr "μη αναμενόμενο pageaddr %X/%X στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:904
+#, c-format
+msgid "out-of-sequence timeline ID %u (after %u) in log segment %s, offset %u"
+msgstr "εκτός ακολουθίας ID χρονογραμμής %u (μετά %u) στο τμήμα καταγραφής %s, μετατόπιση %u"
+
+#: xlogreader.c:1249
+#, c-format
+msgid "out-of-order block_id %u at %X/%X"
+msgstr "εκτός ακολουθίας block_id %u στο %X/%X"
+
+#: xlogreader.c:1271
+#, c-format
+msgid "BKPBLOCK_HAS_DATA set, but no data included at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA έχει οριστεί, αλλά δεν περιλαμβάνονται δεδομένα σε %X/%X"
+
+#: xlogreader.c:1278
+#, c-format
+msgid "BKPBLOCK_HAS_DATA not set, but data length is %u at %X/%X"
+msgstr "BKPBLOCK_HAS_DATA δεν έχει οριστεί, αλλά το μήκος των δεδομένων είναι %u σε %X/%X"
+
+#: xlogreader.c:1314
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE set, but hole offset %u length %u block image length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE έχει οριστεί, αλλά οπή με μετατόπιση %u μήκος %u μήκος μπλοκ εικόνας %u σε %X/%X"
+
+#: xlogreader.c:1330
+#, c-format
+msgid "BKPIMAGE_HAS_HOLE not set, but hole offset %u length %u at %X/%X"
+msgstr "BKPIMAGE_HAS_HOLE δεν έχει οριστεί, αλλά οπή με μετατόπιση %u μήκος %u σε %X/%X"
+
+#: xlogreader.c:1345
+#, c-format
+msgid "BKPIMAGE_IS_COMPRESSED set, but block image length %u at %X/%X"
+msgstr "BKPIMAGE_IS_COMPRESSED έχει οριστεί, αλλά μέγεθοσ μπλοκ εικόνας %u σε %X/%X"
+
+#: xlogreader.c:1360
+#, c-format
+msgid "neither BKPIMAGE_HAS_HOLE nor BKPIMAGE_IS_COMPRESSED set, but block image length is %u at %X/%X"
+msgstr "ούτε BKPIMAGE_HAS_HOLE ούτε BKPIMAGE_IS_COMPRESSED είναι ορισμένα, αλλά το μήκος της εικόνας μπλοκ είναι %u στο %X/%X"
+
+#: xlogreader.c:1376
+#, c-format
+msgid "BKPBLOCK_SAME_REL set but no previous rel at %X/%X"
+msgstr "BKPBLOCK_SAME_REL είναι ορισμένο, αλλά καμία προηγούμενη rel στο %X/%X"
+
+#: xlogreader.c:1388
+#, c-format
+msgid "invalid block_id %u at %X/%X"
+msgstr "μη έγκυρο block_id %u στο %X/%X"
+
+#: xlogreader.c:1475
+#, c-format
+msgid "record with invalid length at %X/%X"
+msgstr "εγγραφή με μη έγκυρο μήκος στο %X/%X"
+
+#: xlogreader.c:1564
+#, c-format
+msgid "invalid compressed image at %X/%X, block %d"
+msgstr "μη έγκυρη συμπιεσμένη εικόνα στο %X/%X, μπλοκ %d"

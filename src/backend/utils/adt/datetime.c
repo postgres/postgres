@@ -29,10 +29,11 @@
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/tzparser.h"
 
-static int	DecodeNumber(int flen, char *field, bool haveTextMonth,
+static int	DecodeNumber(int flen, char *str, bool haveTextMonth,
 						 int fmask, int *tmask,
 						 struct pg_tm *tm, fsec_t *fsec, bool *is2digits);
 static int	DecodeNumberField(int len, char *str,
@@ -281,26 +282,26 @@ static const datetkn *abbrevcache[MAXDATEFIELDS] = {NULL};
  */
 
 int
-date2j(int y, int m, int d)
+date2j(int year, int month, int day)
 {
 	int			julian;
 	int			century;
 
-	if (m > 2)
+	if (month > 2)
 	{
-		m += 1;
-		y += 4800;
+		month += 1;
+		year += 4800;
 	}
 	else
 	{
-		m += 13;
-		y += 4799;
+		month += 13;
+		year += 4799;
 	}
 
-	century = y / 100;
-	julian = y * 365 - 32167;
-	julian += y / 4 - century + century / 4;
-	julian += 7834 * m / 256 + d;
+	century = year / 100;
+	julian = year * 365 - 32167;
+	julian += year / 4 - century + century / 4;
+	julian += 7834 * month / 256 + day;
 
 	return julian;
 }								/* date2j() */
@@ -448,14 +449,14 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 	Assert(precision >= 0);
 
 	if (fillzeros)
-		cp = pg_ultostr_zeropad(cp, Abs(sec), 2);
+		cp = pg_ultostr_zeropad(cp, abs(sec), 2);
 	else
-		cp = pg_ultostr(cp, Abs(sec));
+		cp = pg_ultostr(cp, abs(sec));
 
 	/* fsec_t is just an int32 */
 	if (fsec != 0)
 	{
-		int32		value = Abs(fsec);
+		int32		value = abs(fsec);
 		char	   *end = &cp[precision + 1];
 		bool		gotnonzero = false;
 
@@ -490,7 +491,7 @@ AppendSeconds(char *cp, int sec, fsec_t fsec, int precision, bool fillzeros)
 		 * which will generate a correct answer in the minimum valid width.
 		 */
 		if (value)
-			return pg_ultostr(cp, Abs(fsec));
+			return pg_ultostr(cp, abs(fsec));
 
 		return end;
 	}
@@ -1019,17 +1020,17 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype == DTK_JULIAN)
 				{
 					char	   *cp;
-					int			val;
+					int			jday;
 
 					if (tzp == NULL)
 						return DTERR_BAD_FORMAT;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
-					if (errno == ERANGE || val < 0)
+					jday = strtoint(field[i], &cp, 10);
+					if (errno == ERANGE || jday < 0)
 						return DTERR_FIELD_OVERFLOW;
 
-					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+					j2date(jday, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 					isjulian = true;
 
 					/* Get the time zone from the end of the string */
@@ -1181,10 +1182,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
+					int			value;
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -1209,7 +1210,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					switch (ptype)
 					{
 						case DTK_YEAR:
-							tm->tm_year = val;
+							tm->tm_year = value;
 							tmask = DTK_M(YEAR);
 							break;
 
@@ -1222,33 +1223,33 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							if ((fmask & DTK_M(MONTH)) != 0 &&
 								(fmask & DTK_M(HOUR)) != 0)
 							{
-								tm->tm_min = val;
+								tm->tm_min = value;
 								tmask = DTK_M(MINUTE);
 							}
 							else
 							{
-								tm->tm_mon = val;
+								tm->tm_mon = value;
 								tmask = DTK_M(MONTH);
 							}
 							break;
 
 						case DTK_DAY:
-							tm->tm_mday = val;
+							tm->tm_mday = value;
 							tmask = DTK_M(DAY);
 							break;
 
 						case DTK_HOUR:
-							tm->tm_hour = val;
+							tm->tm_hour = value;
 							tmask = DTK_M(HOUR);
 							break;
 
 						case DTK_MINUTE:
-							tm->tm_min = val;
+							tm->tm_min = value;
 							tmask = DTK_M(MINUTE);
 							break;
 
 						case DTK_SECOND:
-							tm->tm_sec = val;
+							tm->tm_sec = value;
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
@@ -1268,10 +1269,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
-							if (val < 0)
+							if (value < 0)
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
-							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							j2date(value, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 							isjulian = true;
 
 							/* fractional Julian Day? */
@@ -2066,7 +2067,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				if (ptype != 0)
 				{
 					char	   *cp;
-					int			val;
+					int			value;
 
 					/* Only accept a date under limited circumstances */
 					switch (ptype)
@@ -2082,7 +2083,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					}
 
 					errno = 0;
-					val = strtoint(field[i], &cp, 10);
+					value = strtoint(field[i], &cp, 10);
 					if (errno == ERANGE)
 						return DTERR_FIELD_OVERFLOW;
 
@@ -2107,7 +2108,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					switch (ptype)
 					{
 						case DTK_YEAR:
-							tm->tm_year = val;
+							tm->tm_year = value;
 							tmask = DTK_M(YEAR);
 							break;
 
@@ -2120,33 +2121,33 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							if ((fmask & DTK_M(MONTH)) != 0 &&
 								(fmask & DTK_M(HOUR)) != 0)
 							{
-								tm->tm_min = val;
+								tm->tm_min = value;
 								tmask = DTK_M(MINUTE);
 							}
 							else
 							{
-								tm->tm_mon = val;
+								tm->tm_mon = value;
 								tmask = DTK_M(MONTH);
 							}
 							break;
 
 						case DTK_DAY:
-							tm->tm_mday = val;
+							tm->tm_mday = value;
 							tmask = DTK_M(DAY);
 							break;
 
 						case DTK_HOUR:
-							tm->tm_hour = val;
+							tm->tm_hour = value;
 							tmask = DTK_M(HOUR);
 							break;
 
 						case DTK_MINUTE:
-							tm->tm_min = val;
+							tm->tm_min = value;
 							tmask = DTK_M(MINUTE);
 							break;
 
 						case DTK_SECOND:
-							tm->tm_sec = val;
+							tm->tm_sec = value;
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
@@ -2166,10 +2167,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						case DTK_JULIAN:
 							/* previous field was a label for "julian date" */
-							if (val < 0)
+							if (value < 0)
 								return DTERR_FIELD_OVERFLOW;
 							tmask = DTK_DATE_M;
-							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+							j2date(value, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 							isjulian = true;
 
 							if (*cp == '.')
@@ -4468,7 +4469,7 @@ AddVerboseIntPart(char *cp, int64 value, const char *units,
 	if (*is_zero)
 	{
 		*is_before = (value < 0);
-		value = Abs(value);
+		value = i64abs(value);
 	}
 	else if (*is_before)
 		value = -value;
@@ -4569,8 +4570,8 @@ EncodeInterval(struct pg_itm *itm, int style, char *str)
 
 					sprintf(cp, "%c%d-%d %c%lld %c%lld:%02d:",
 							year_sign, abs(year), abs(mon),
-							day_sign, (long long) Abs(mday),
-							sec_sign, (long long) Abs(hour), abs(min));
+							day_sign, (long long) i64abs(mday),
+							sec_sign, (long long) i64abs(hour), abs(min));
 					cp += strlen(cp);
 					cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 					*cp = '\0';
@@ -4642,7 +4643,7 @@ EncodeInterval(struct pg_itm *itm, int style, char *str)
 				sprintf(cp, "%s%s%02lld:%02d:",
 						is_zero ? "" : " ",
 						(minus ? "-" : (is_before ? "+" : "")),
-						(long long) Abs(hour), abs(min));
+						(long long) i64abs(hour), abs(min));
 				cp += strlen(cp);
 				cp = AppendSeconds(cp, sec, fsec, MAX_INTERVAL_PRECISION, true);
 				*cp = '\0';
@@ -4782,8 +4783,8 @@ TemporalSimplify(int32 max_precis, Node *node)
  * to create the final array of timezone tokens.  The argument array
  * is already sorted in name order.
  *
- * The result is a TimeZoneAbbrevTable (which must be a single malloc'd chunk)
- * or NULL on malloc failure.  No other error conditions are defined.
+ * The result is a TimeZoneAbbrevTable (which must be a single guc_malloc'd
+ * chunk) or NULL on alloc failure.  No other error conditions are defined.
  */
 TimeZoneAbbrevTable *
 ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
@@ -4812,7 +4813,7 @@ ConvertTimeZoneAbbrevs(struct tzEntry *abbrevs, int n)
 	}
 
 	/* Alloc the result ... */
-	tbl = malloc(tbl_size);
+	tbl = guc_malloc(LOG, tbl_size);
 	if (!tbl)
 		return NULL;
 
@@ -4924,7 +4925,7 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 	Datum		result;
 	HeapTuple	tuple;
 	Datum		values[3];
-	bool		nulls[3];
+	bool		nulls[3] = {0};
 	const datetkn *tp;
 	char		buffer[TOKMAXLEN + 1];
 	int			gmtoffset;
@@ -5011,8 +5012,6 @@ pg_timezone_abbrevs(PG_FUNCTION_ARGS)
 			break;
 	}
 
-	MemSet(nulls, 0, sizeof(nulls));
-
 	/*
 	 * Convert name to text, using upcasing conversion that is the inverse of
 	 * what ParseDateTime() uses.
@@ -5051,7 +5050,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	pg_tzenum  *tzenum;
 	pg_tz	   *tz;
 	Datum		values[4];
-	bool		nulls[4];
+	bool		nulls[4] = {0};
 	int			tzoff;
 	struct pg_tm tm;
 	fsec_t		fsec;
@@ -5059,7 +5058,7 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 	Interval   *resInterval;
 	struct pg_itm_in itm_in;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* initialize timezone scanning code */
 	tzenum = pg_tzenumerate_start();
@@ -5087,8 +5086,6 @@ pg_timezone_names(PG_FUNCTION_ARGS)
 		 */
 		if (tzn && strlen(tzn) > 31)
 			continue;
-
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = CStringGetTextDatum(pg_get_timezone_name(tz));
 		values[1] = CStringGetTextDatum(tzn ? tzn : "");

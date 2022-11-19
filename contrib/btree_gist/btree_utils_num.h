@@ -87,7 +87,7 @@ typedef struct
 	 (ivp)->day * (24.0 * SECS_PER_HOUR) + \
 	 (ivp)->month * (30.0 * SECS_PER_DAY))
 
-#define GET_FLOAT_DISTANCE(t, arg1, arg2)	Abs( ((float8) *((const t *) (arg1))) - ((float8) *((const t *) (arg2))) )
+#define GET_FLOAT_DISTANCE(t, arg1, arg2)	fabs( ((float8) *((const t *) (arg1))) - ((float8) *((const t *) (arg2))) )
 
 
 extern Interval *abs_interval(Interval *a);

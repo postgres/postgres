@@ -125,7 +125,7 @@ my $log_location = -s $node_standby2->logfile;
 $node_standby2->promote;
 
 # Check the logs of the standby to see that the commands have failed.
-my $log_contents       = slurp_file($node_standby2->logfile, $log_location);
+my $log_contents = slurp_file($node_standby2->logfile, $log_location);
 my $node_standby2_data = $node_standby2->data_dir;
 
 like(

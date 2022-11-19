@@ -249,10 +249,7 @@ ArrayGetIntegerTypmods(ArrayType *arr, int *n)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("typmod array must not contain nulls")));
 
-	/* hardwired knowledge about cstring's representation details here */
-	deconstruct_array(arr, CSTRINGOID,
-					  -2, false, TYPALIGN_CHAR,
-					  &elem_values, NULL, n);
+	deconstruct_array_builtin(arr, CSTRINGOID, &elem_values, NULL, n);
 
 	result = (int32 *) palloc(*n * sizeof(int32));
 

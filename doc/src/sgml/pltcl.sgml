@@ -279,7 +279,7 @@ $$ LANGUAGE pltcl;
      functions will share the same global variables if and only if they are
      executed by the same SQL role.  In an application wherein a single
      session executes code under multiple SQL roles (via <literal>SECURITY
-     DEFINER</literal> functions, use of <command>SET ROLE</command>, etc) you may need to
+     DEFINER</literal> functions, use of <command>SET ROLE</command>, etc.) you may need to
      take explicit steps to ensure that PL/Tcl functions can share data.  To
      do that, make sure that functions that should communicate are owned by
      the same user, and mark them <literal>SECURITY DEFINER</literal>.  You must of

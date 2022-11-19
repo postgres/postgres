@@ -45,6 +45,20 @@ SELECT 1 as one, 2 as two \g (format=csv csv_fieldsep='\t')
 SELECT 1 as one, 2 as two \gx (title='foo bar')
 \g
 
+-- \bind (extended query protocol)
+
+SELECT 1 \bind \g
+SELECT $1 \bind 'foo' \g
+SELECT $1, $2 \bind 'foo' 'bar' \g
+
+-- errors
+-- parse error
+SELECT foo \bind \g
+-- tcop error
+SELECT 1 \; SELECT 2 \bind \g
+-- bind error
+SELECT $1, $2 \bind 'foo' \g
+
 -- \gset
 
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
@@ -1432,7 +1446,7 @@ INSERT INTO bla VALUES ('Susie');         -- succeeds
 INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
 SELECT 'before error' AS show \;          -- will show nevertheless!
   SELECT psql_error('boum!') \;           -- failure
-  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+  SELECT 'after error' AS noshow;         -- hidden by preceding error
 INSERT INTO bla(s) VALUES ('Moe') \;      -- will rollback
   SELECT psql_error('bam!');
 INSERT INTO bla VALUES ('Miss Wormwood'); -- succeeds

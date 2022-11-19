@@ -35,7 +35,8 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
   { <replaceable class="parameter">column_name</replaceable> [ WITH OPTIONS ] [ <replaceable class="parameter">column_constraint</replaceable> [ ... ] ]
     | <replaceable>table_constraint</replaceable> }
     [, ... ]
-) ] <replaceable class="parameter">partition_bound_spec</replaceable>
+) ]
+{ FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }
   SERVER <replaceable class="parameter">server_name</replaceable>
 [ OPTIONS ( <replaceable class="parameter">option</replaceable> '<replaceable class="parameter">value</replaceable>' [, ... ] ) ]
 
@@ -52,6 +53,13 @@ CREATE FOREIGN TABLE [ IF NOT EXISTS ] <replaceable class="parameter">table_name
 
 [ CONSTRAINT <replaceable class="parameter">constraint_name</replaceable> ]
 CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
+
+<phrase>and <replaceable class="parameter">partition_bound_spec</replaceable> is:</phrase>
+
+IN ( <replaceable class="parameter">partition_bound_expr</replaceable> [, ...] ) |
+FROM ( { <replaceable class="parameter">partition_bound_expr</replaceable> | MINVALUE | MAXVALUE } [, ...] )
+  TO ( { <replaceable class="parameter">partition_bound_expr</replaceable> | MINVALUE | MAXVALUE } [, ...] ) |
+WITH ( MODULUS <replaceable class="parameter">numeric_literal</replaceable>, REMAINDER <replaceable class="parameter">numeric_literal</replaceable> )
 </synopsis>
  </refsynopsisdiv>
 
@@ -165,7 +173,7 @@ CHECK ( <replaceable class="parameter">expression</replaceable> ) [ NO INHERIT ]
    </varlistentry>
 
    <varlistentry>
-    <term><literal>PARTITION OF <replaceable>parent_table</replaceable> FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable></literal></term>
+    <term><literal>PARTITION OF <replaceable>parent_table</replaceable> { FOR VALUES <replaceable class="parameter">partition_bound_spec</replaceable> | DEFAULT }</literal></term>
     <listitem>
      <para>
       This form can be used to create the foreign table as partition of

@@ -13,7 +13,7 @@
 #ifndef SYNC_H
 #define SYNC_H
 
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 
 /*
  * Type of sync request.  These are used to manage the set of pending
@@ -51,7 +51,7 @@ typedef struct FileTag
 {
 	int16		handler;		/* SyncRequestHandler value, saving space */
 	int16		forknum;		/* ForkNumber, saving space */
-	RelFileNode rnode;
+	RelFileLocator rlocator;
 	uint32		segno;
 } FileTag;
 

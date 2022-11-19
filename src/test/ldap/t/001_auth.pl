@@ -16,6 +16,10 @@ if ($ENV{with_ldap} ne 'yes')
 {
 	plan skip_all => 'LDAP not supported by this build';
 }
+elsif ($ENV{PG_TEST_EXTRA} !~ /\bldap\b/)
+{
+	plan skip_all => 'Potentially unsafe test LDAP not enabled in PG_TEST_EXTRA';
+}
 elsif ($^O eq 'darwin' && -d '/usr/local/opt/openldap')
 {
 	# typical paths for Homebrew
@@ -46,7 +50,8 @@ elsif ($^O eq 'openbsd')
 }
 else
 {
-	plan skip_all => "ldap tests not supported on $^O or dependencies not installed";
+	plan skip_all =>
+	  "ldap tests not supported on $^O or dependencies not installed";
 }
 
 # make your own edits here
@@ -108,13 +113,15 @@ append_to_file(
 mkdir $ldap_datadir or die;
 mkdir $slapd_certs  or die;
 
-system_or_bail "openssl", "req", "-new", "-nodes", "-keyout",
+my $openssl = $ENV{OPENSSL};
+
+system_or_bail $openssl, "req", "-new", "-nodes", "-keyout",
   "$slapd_certs/ca.key", "-x509", "-out", "$slapd_certs/ca.crt", "-subj",
   "/CN=CA";
-system_or_bail "openssl", "req", "-new", "-nodes", "-keyout",
+system_or_bail $openssl, "req", "-new", "-nodes", "-keyout",
   "$slapd_certs/server.key", "-out", "$slapd_certs/server.csr", "-subj",
   "/CN=server";
-system_or_bail "openssl", "x509", "-req", "-in", "$slapd_certs/server.csr",
+system_or_bail $openssl, "x509", "-req", "-in", "$slapd_certs/server.csr",
   "-CA", "$slapd_certs/ca.crt", "-CAkey", "$slapd_certs/ca.key",
   "-CAcreateserial", "-out", "$slapd_certs/server.crt";
 

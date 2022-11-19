@@ -17,15 +17,13 @@ ifneq ($(subdir), src/backend)
 all: $(subsysfilename)
 endif
 
-SUBSYS.o: $(SUBDIROBJS) $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) $@ $^
-
 objfiles.txt: Makefile $(SUBDIROBJS) $(OBJS)
 # Don't rebuild the list if only the OBJS have changed.
 	$(if $(filter-out $(OBJS),$?),( $(if $(SUBDIROBJS),cat $(SUBDIROBJS); )echo $(addprefix $(subdir)/,$(OBJS)) ) >$@,touch $@)
 
 ifeq ($(with_llvm), yes)
 objfiles.txt: $(patsubst %.o,%.bc, $(OBJS))
+$(patsubst %.o,%.bc, $(OBJS)): $(OBJS)
 endif
 
 # make function to expand objfiles.txt contents

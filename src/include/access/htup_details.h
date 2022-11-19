@@ -699,7 +699,7 @@ extern void heap_fill_tuple(TupleDesc tupleDesc,
 							uint16 *infomask, bits8 *bit);
 extern bool heap_attisnull(HeapTuple tup, int attnum, TupleDesc tupleDesc);
 extern Datum nocachegetattr(HeapTuple tup, int attnum,
-							TupleDesc att);
+							TupleDesc tupleDesc);
 extern Datum heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 							 bool *isnull);
 extern Datum getmissingattr(TupleDesc tupleDesc,

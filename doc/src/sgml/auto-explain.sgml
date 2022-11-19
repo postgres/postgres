@@ -65,6 +65,25 @@ LOAD 'auto_explain';
 
    <varlistentry>
     <term>
+     <varname>auto_explain.log_parameter_max_length</varname> (<type>integer</type>)
+     <indexterm>
+      <primary><varname>auto_explain.log_parameter_max_length</varname> configuration parameter</primary>
+     </indexterm>
+    </term>
+    <listitem>
+     <para>
+      <varname>auto_explain.log_parameter_max_length</varname> controls the
+      logging of query parameter values. A value of<literal>-1</literal> (the
+      default) logs the parameter values in full. <literal>0</literal> disables
+      logging of parameter values. A value greater than zero truncates each
+      parameter value to that many bytes. Only superusers can change this
+      setting.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>
      <varname>auto_explain.log_analyze</varname> (<type>boolean</type>)
      <indexterm>
       <primary><varname>auto_explain.log_analyze</varname> configuration parameter</primary>

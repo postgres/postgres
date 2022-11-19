@@ -425,11 +425,7 @@ bt_page_print_tuples(struct user_args *uargs)
 		tids_datum = (Datum *) palloc(nposting * sizeof(Datum));
 		for (int i = 0; i < nposting; i++)
 			tids_datum[i] = ItemPointerGetDatum(&tids[i]);
-		values[j++] = PointerGetDatum(construct_array(tids_datum,
-													  nposting,
-													  TIDOID,
-													  sizeof(ItemPointerData),
-													  false, TYPALIGN_SHORT));
+		values[j++] = PointerGetDatum(construct_array_builtin(tids_datum, nposting, TIDOID));
 		pfree(tids_datum);
 	}
 	else

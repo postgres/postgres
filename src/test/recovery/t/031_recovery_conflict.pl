@@ -4,8 +4,6 @@
 # recovery conflict is detected Also, test that statistics in
 # pg_stat_database_conflicts are populated correctly
 
-# TODO: add a test for deadlock recovery conflicts.
-
 use strict;
 use warnings;
 use PostgreSQL::Test::Cluster;
@@ -23,6 +21,9 @@ $node_primary->append_conf(
 	'postgresql.conf', qq[
 allow_in_place_tablespaces = on
 log_temp_files = 0
+
+# for deadlock test
+max_prepared_transactions = 10
 
 # wait some to test the wait paths as well, but not long for obvious reasons
 max_standby_streaming_delay = 50ms
@@ -55,9 +56,13 @@ $node_primary->safe_psql('postgres', "CREATE DATABASE $test_db");
 
 # test schema / data
 my $table1 = "test_recovery_conflict_table1";
-$node_primary->safe_psql($test_db, qq[CREATE TABLE ${table1}(a int, b int);]);
-$node_primary->safe_psql($test_db,
-	qq[INSERT INTO $table1 SELECT i % 3, 0 FROM generate_series(1,20) i]);
+my $table2 = "test_recovery_conflict_table2";
+$node_primary->safe_psql(
+	$test_db, qq[
+CREATE TABLE ${table1}(a int, b int);
+INSERT INTO $table1 SELECT i % 3, 0 FROM generate_series(1,20) i;
+CREATE TABLE ${table2}(a int, b int);
+]);
 my $primary_lsn = $node_primary->lsn('flush');
 $node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
 
@@ -217,6 +222,81 @@ reconnect_and_clear();
 check_conflict_stat("tablespace");
 
 
+## RECOVERY CONFLICT 5: Deadlock
+$sect = "startup deadlock";
+$expected_conflicts++;
+
+# Want to test recovery deadlock conflicts, not buffer pin conflicts. Without
+# changing max_standby_streaming_delay it'd be timing dependent what we hit
+# first
+$node_standby->adjust_conf(
+	'postgresql.conf',
+	'max_standby_streaming_delay',
+	"${PostgreSQL::Test::Utils::timeout_default}s");
+$node_standby->restart();
+reconnect_and_clear();
+
+# Generate a few dead rows, to later be cleaned up by vacuum. Then acquire a
+# lock on another relation in a prepared xact, so it's held continuously by
+# the startup process. The standby psql will block acquiring that lock while
+# holding a pin that vacuum needs, triggering the deadlock.
+$node_primary->safe_psql(
+	$test_db,
+	qq[
+CREATE TABLE $table1(a int, b int);
+INSERT INTO $table1 VALUES (1);
+BEGIN;
+INSERT INTO $table1(a) SELECT generate_series(1, 100) i;
+ROLLBACK;
+BEGIN;
+LOCK TABLE $table2;
+PREPARE TRANSACTION 'lock';
+INSERT INTO $table1(a) VALUES (170);
+SELECT txid_current();
+]);
+
+$primary_lsn = $node_primary->lsn('flush');
+$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+
+$psql_standby{stdin} .= qq[
+    BEGIN;
+    -- hold pin
+    DECLARE $cursor1 CURSOR FOR SELECT a FROM $table1;
+    FETCH FORWARD FROM $cursor1;
+    -- wait for lock held by prepared transaction
+	SELECT * FROM $table2;
+    ];
+ok( pump_until(
+		$psql_standby{run},     $psql_timeout,
+		\$psql_standby{stdout}, qr/^1$/m,),
+	"$sect: cursor holding conflicting pin, also waiting for lock, established"
+);
+
+# just to make sure we're waiting for lock already
+ok( $node_standby->poll_query_until(
+		'postgres', qq[
+SELECT 'waiting' FROM pg_locks WHERE locktype = 'relation' AND NOT granted;
+], 'waiting'),
+	"$sect: lock acquisition is waiting");
+
+# VACUUM will prune away rows, causing a buffer pin conflict, while standby
+# psql is waiting on lock
+$node_primary->safe_psql($test_db, qq[VACUUM $table1;]);
+$primary_lsn = $node_primary->lsn('flush');
+$node_primary->wait_for_catchup($node_standby, 'replay', $primary_lsn);
+
+check_conflict_log("User transaction caused buffer deadlock with recovery.");
+reconnect_and_clear();
+check_conflict_stat("deadlock");
+
+# clean up for next tests
+$node_primary->safe_psql($test_db, qq[ROLLBACK PREPARED 'lock';]);
+$node_standby->adjust_conf('postgresql.conf', 'max_standby_streaming_delay',
+	'50ms');
+$node_standby->restart();
+reconnect_and_clear();
+
+
 # Check that expected number of conflicts show in pg_stat_database. Needs to
 # be tested before database is dropped, for obvious reasons.
 is( $node_standby->safe_psql(
@@ -226,7 +306,7 @@ is( $node_standby->safe_psql(
 	qq[$expected_conflicts recovery conflicts shown in pg_stat_database]);
 
 
-## RECOVERY CONFLICT 5: Database conflict
+## RECOVERY CONFLICT 6: Database conflict
 $sect = "database conflict";
 
 $node_primary->safe_psql('postgres', qq[DROP DATABASE $test_db;]);
@@ -259,7 +339,13 @@ sub pump_until_standby
 
 sub reconnect_and_clear
 {
-	$psql_standby{stdin} .= "\\q\n";
+	# If psql isn't dead already, tell it to quit as \q, when already dead,
+	# causes IPC::Run to unhelpfully error out with "ack Broken pipe:".
+	$psql_standby{run}->pump_nb();
+	if ($psql_standby{run}->pumpable())
+	{
+		$psql_standby{stdin} .= "\\q\n";
+	}
 	$psql_standby{run}->finish;
 
 	# restart

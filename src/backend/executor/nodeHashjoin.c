@@ -145,7 +145,7 @@ static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 												 TupleTableSlot *tupleSlot);
 static bool ExecHashJoinNewBatch(HashJoinState *hjstate);
 static bool ExecParallelHashJoinNewBatch(HashJoinState *hjstate);
-static void ExecParallelHashJoinPartitionOuter(HashJoinState *node);
+static void ExecParallelHashJoinPartitionOuter(HashJoinState *hjstate);
 
 
 /* ----------------------------------------------------------------
@@ -1290,6 +1290,9 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 void
 ExecReScanHashJoin(HashJoinState *node)
 {
+	PlanState  *outerPlan = outerPlanState(node);
+	PlanState  *innerPlan = innerPlanState(node);
+
 	/*
 	 * In a multi-batch join, we currently have to do rescans the hard way,
 	 * primarily because batch temp files may have already been released. But
@@ -1300,7 +1303,7 @@ ExecReScanHashJoin(HashJoinState *node)
 	if (node->hj_HashTable != NULL)
 	{
 		if (node->hj_HashTable->nbatch == 1 &&
-			node->js.ps.righttree->chgParam == NULL)
+			innerPlan->chgParam == NULL)
 		{
 			/*
 			 * Okay to reuse the hash table; needn't rescan inner, either.
@@ -1328,7 +1331,7 @@ ExecReScanHashJoin(HashJoinState *node)
 		else
 		{
 			/* must destroy and rebuild hash table */
-			HashState  *hashNode = castNode(HashState, innerPlanState(node));
+			HashState  *hashNode = castNode(HashState, innerPlan);
 
 			Assert(hashNode->hashtable == node->hj_HashTable);
 			/* accumulate stats from old hash table, if wanted */
@@ -1350,8 +1353,8 @@ ExecReScanHashJoin(HashJoinState *node)
 			 * if chgParam of subnode is not null then plan will be re-scanned
 			 * by first ExecProcNode.
 			 */
-			if (node->js.ps.righttree->chgParam == NULL)
-				ExecReScan(node->js.ps.righttree);
+			if (innerPlan->chgParam == NULL)
+				ExecReScan(innerPlan);
 		}
 	}
 
@@ -1368,8 +1371,8 @@ ExecReScanHashJoin(HashJoinState *node)
 	 * if chgParam of subnode is not null then plan will be re-scanned by
 	 * first ExecProcNode.
 	 */
-	if (node->js.ps.lefttree->chgParam == NULL)
-		ExecReScan(node->js.ps.lefttree);
+	if (outerPlan->chgParam == NULL)
+		ExecReScan(outerPlan);
 }
 
 void
@@ -1499,11 +1502,11 @@ ExecHashJoinInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
  * ----------------------------------------------------------------
  */
 void
-ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *cxt)
+ExecHashJoinReInitializeDSM(HashJoinState *state, ParallelContext *pcxt)
 {
 	int			plan_node_id = state->js.ps.plan->plan_node_id;
 	ParallelHashJoinState *pstate =
-	shm_toc_lookup(cxt->toc, plan_node_id, false);
+	shm_toc_lookup(pcxt->toc, plan_node_id, false);
 
 	/*
 	 * It would be possible to reuse the shared hash table in single-batch

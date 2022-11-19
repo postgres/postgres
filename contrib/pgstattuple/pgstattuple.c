@@ -255,46 +255,46 @@ pgstat_relation(Relation rel, FunctionCallInfo fcinfo)
 	if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind) ||
 		rel->rd_rel->relkind == RELKIND_SEQUENCE)
 	{
-			return pgstat_heap(rel, fcinfo);
+		return pgstat_heap(rel, fcinfo);
 	}
 	else if (rel->rd_rel->relkind == RELKIND_INDEX)
 	{
-			switch (rel->rd_rel->relam)
-			{
-				case BTREE_AM_OID:
-					return pgstat_index(rel, BTREE_METAPAGE + 1,
-										pgstat_btree_page, fcinfo);
-				case HASH_AM_OID:
-					return pgstat_index(rel, HASH_METAPAGE + 1,
-										pgstat_hash_page, fcinfo);
-				case GIST_AM_OID:
-					return pgstat_index(rel, GIST_ROOT_BLKNO + 1,
-										pgstat_gist_page, fcinfo);
-				case GIN_AM_OID:
-					err = "gin index";
-					break;
-				case SPGIST_AM_OID:
-					err = "spgist index";
-					break;
-				case BRIN_AM_OID:
-					err = "brin index";
-					break;
-				default:
-					err = "unknown index";
-					break;
-			}
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("index \"%s\" (%s) is not supported",
-							RelationGetRelationName(rel), err)));
+		switch (rel->rd_rel->relam)
+		{
+			case BTREE_AM_OID:
+				return pgstat_index(rel, BTREE_METAPAGE + 1,
+									pgstat_btree_page, fcinfo);
+			case HASH_AM_OID:
+				return pgstat_index(rel, HASH_METAPAGE + 1,
+									pgstat_hash_page, fcinfo);
+			case GIST_AM_OID:
+				return pgstat_index(rel, GIST_ROOT_BLKNO + 1,
+									pgstat_gist_page, fcinfo);
+			case GIN_AM_OID:
+				err = "gin index";
+				break;
+			case SPGIST_AM_OID:
+				err = "spgist index";
+				break;
+			case BRIN_AM_OID:
+				err = "brin index";
+				break;
+			default:
+				err = "unknown index";
+				break;
+		}
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("index \"%s\" (%s) is not supported",
+						RelationGetRelationName(rel), err)));
 	}
 	else
 	{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot get tuple-level statistics for relation \"%s\"",
-							RelationGetRelationName(rel)),
-					 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot get tuple-level statistics for relation \"%s\"",
+						RelationGetRelationName(rel)),
+				 errdetail_relkind_not_supported(rel->rd_rel->relkind)));
 	}
 
 	return 0;					/* should not happen */

@@ -2172,9 +2172,8 @@ SELECT sum(n) FROM t;
 
   <note>
    <para>
-    Strictly speaking, this process is iteration not recursion, but
-    <literal>RECURSIVE</literal> is the terminology chosen by the SQL standards
-    committee.
+    While <literal>RECURSIVE</literal> allows queries to be specified
+    recursively, internally such queries are evaluated iteratively.
    </para>
   </note>
 
@@ -2195,7 +2194,7 @@ SELECT sum(n) FROM t;
 WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
     SELECT sub_part, part, quantity FROM parts WHERE part = 'our_product'
   UNION ALL
-    SELECT p.sub_part, p.part, p.quantity
+    SELECT p.sub_part, p.part, p.quantity * pr.quantity
     FROM included_parts pr, parts p
     WHERE p.part = pr.sub_part
 )

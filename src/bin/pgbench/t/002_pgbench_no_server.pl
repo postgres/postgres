@@ -37,7 +37,7 @@ sub pgbench_scripts
 	local $Test::Builder::Level = $Test::Builder::Level + 1;
 
 	my ($opts, $stat, $out, $err, $name, $files) = @_;
-	my @cmd       = ('pgbench', split /\s+/, $opts);
+	my @cmd = ('pgbench', split /\s+/, $opts);
 	my @filenames = ();
 	if (defined $files)
 	{
@@ -196,7 +196,9 @@ my @options = (
 	[
 		'an infinite number of tries',
 		'--max-tries 0',
-		[qr{an unlimited number of transaction tries can only be used with --latency-limit or a duration}]
+		[
+			qr{an unlimited number of transaction tries can only be used with --latency-limit or a duration}
+		]
 	],
 
 	# logging sub-options

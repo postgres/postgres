@@ -50,7 +50,7 @@ test_predtest(PG_FUNCTION_ARGS)
 				strong_refuted_by,
 				weak_refuted_by;
 	Datum		values[8];
-	bool		nulls[8];
+	bool		nulls[8] = {0};
 	int			i;
 
 	/* We use SPI to parse, plan, and execute the test query */
@@ -204,7 +204,6 @@ test_predtest(PG_FUNCTION_ARGS)
 					   "w_r_holds", BOOLOID, -1, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
 
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = BoolGetDatum(strong_implied_by);
 	values[1] = BoolGetDatum(weak_implied_by);
 	values[2] = BoolGetDatum(strong_refuted_by);

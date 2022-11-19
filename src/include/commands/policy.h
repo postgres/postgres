@@ -23,7 +23,7 @@ extern void RelationBuildRowSecurity(Relation relation);
 
 extern void RemovePolicyById(Oid policy_id);
 
-extern bool RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid objid);
+extern bool RemoveRoleFromObjectPolicy(Oid roleid, Oid classid, Oid policy_id);
 
 extern ObjectAddress CreatePolicy(CreatePolicyStmt *stmt);
 extern ObjectAddress AlterPolicy(AlterPolicyStmt *stmt);

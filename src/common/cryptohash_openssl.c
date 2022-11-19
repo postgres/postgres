@@ -117,7 +117,10 @@ pg_cryptohash_create(pg_cryptohash_type type)
 
 	/*
 	 * Initialization takes care of assigning the correct type for OpenSSL.
+	 * Also ensure that there aren't any unconsumed errors in the queue from
+	 * previous runs.
 	 */
+	ERR_clear_error();
 	ctx->evpctx = EVP_MD_CTX_create();
 
 	if (ctx->evpctx == NULL)
@@ -182,6 +185,13 @@ pg_cryptohash_init(pg_cryptohash_ctx *ctx)
 	{
 		ctx->errreason = SSLerrmessage(ERR_get_error());
 		ctx->error = PG_CRYPTOHASH_ERROR_OPENSSL;
+
+		/*
+		 * The OpenSSL error queue should normally be empty since we've
+		 * consumed an error, but cipher initialization can in FIPS-enabled
+		 * OpenSSL builds generate two errors so clear the queue here as well.
+		 */
+		ERR_clear_error();
 		return -1;
 	}
 	return 0;

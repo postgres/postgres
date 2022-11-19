@@ -106,7 +106,7 @@ cash_dist(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("money out of range")));
 
-	ra = Abs(r);
+	ra = i64abs(r);
 
 	PG_RETURN_CASH(ra);
 }

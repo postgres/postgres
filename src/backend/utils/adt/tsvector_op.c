@@ -308,8 +308,7 @@ tsvector_setweight_by_filter(PG_FUNCTION_ARGS)
 	memcpy(tsout, tsin, VARSIZE(tsin));
 	entry = ARRPTR(tsout);
 
-	deconstruct_array(lexemes, TEXTOID, -1, false, TYPALIGN_INT,
-					  &dlexemes, &nulls, &nlexemes);
+	deconstruct_array_builtin(lexemes, TEXTOID, &dlexemes, &nulls, &nlexemes);
 
 	/*
 	 * Assuming that lexemes array is significantly shorter than tsvector we
@@ -586,8 +585,7 @@ tsvector_delete_arr(PG_FUNCTION_ARGS)
 	Datum	   *dlexemes;
 	bool	   *nulls;
 
-	deconstruct_array(lexemes, TEXTOID, -1, false, TYPALIGN_INT,
-					  &dlexemes, &nulls, &nlex);
+	deconstruct_array_builtin(lexemes, TEXTOID, &dlexemes, &nulls, &nlex);
 
 	/*
 	 * In typical use case array of lexemes to delete is relatively small. So
@@ -694,10 +692,8 @@ tsvector_unnest(PG_FUNCTION_ARGS)
 																	  1));
 			}
 
-			values[1] = PointerGetDatum(construct_array(positions, posv->npos,
-														INT2OID, 2, true, TYPALIGN_SHORT));
-			values[2] = PointerGetDatum(construct_array(weights, posv->npos,
-														TEXTOID, -1, false, TYPALIGN_INT));
+			values[1] = PointerGetDatum(construct_array_builtin(positions, posv->npos, INT2OID));
+			values[2] = PointerGetDatum(construct_array_builtin(weights, posv->npos, TEXTOID));
 		}
 		else
 		{
@@ -733,7 +729,7 @@ tsvector_to_array(PG_FUNCTION_ARGS)
 															   arrin[i].len));
 	}
 
-	array = construct_array(elements, tsin->size, TEXTOID, -1, false, TYPALIGN_INT);
+	array = construct_array_builtin(elements, tsin->size, TEXTOID);
 
 	pfree(elements);
 	PG_FREE_IF_COPY(tsin, 0);
@@ -757,7 +753,7 @@ array_to_tsvector(PG_FUNCTION_ARGS)
 				datalen = 0;
 	char	   *cur;
 
-	deconstruct_array(v, TEXTOID, -1, false, TYPALIGN_INT, &dlexemes, &nulls, &nitems);
+	deconstruct_array_builtin(v, TEXTOID, &dlexemes, &nulls, &nitems);
 
 	/*
 	 * Reject nulls and zero length strings (maybe we should just ignore them,
@@ -833,8 +829,7 @@ tsvector_filter(PG_FUNCTION_ARGS)
 	int			cur_pos = 0;
 	char		mask = 0;
 
-	deconstruct_array(weights, CHAROID, 1, true, TYPALIGN_CHAR,
-					  &dweights, &nulls, &nweights);
+	deconstruct_array_builtin(weights, CHAROID, &dweights, &nulls, &nweights);
 
 	for (i = 0; i < nweights; i++)
 	{

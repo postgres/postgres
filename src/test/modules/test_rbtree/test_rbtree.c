@@ -279,6 +279,107 @@ testfind(int size)
 }
 
 /*
+ * Check the correctness of the rbt_find_less() and rbt_find_great() functions
+ * by searching for an equal key and iterating the lesser keys then the greater
+ * keys.
+ */
+static void
+testfindltgt(int size)
+{
+	RBTree	   *tree = create_int_rbtree();
+
+	/*
+	 * Using the size as the random key to search wouldn't allow us to get at
+	 * least one greater match, so we do size - 1
+	 */
+	int			randomKey = pg_prng_uint64_range(&pg_global_prng_state, 0, size - 1);
+	bool		keyDeleted;
+	IntRBTreeNode searchNode = {.key = randomKey};
+	IntRBTreeNode *lteNode;
+	IntRBTreeNode *gteNode;
+	IntRBTreeNode *node;
+
+	/* Insert natural numbers */
+	rbt_populate(tree, size, 1);
+
+	/*
+	 * Since the search key is included in the naturals of the tree, we're
+	 * sure to find an equal match
+	 */
+	lteNode = (IntRBTreeNode *) rbt_find_less(tree, (RBTNode *) &searchNode, true);
+	gteNode = (IntRBTreeNode *) rbt_find_great(tree, (RBTNode *) &searchNode, true);
+
+	if (lteNode == NULL || lteNode->key != searchNode.key)
+		elog(ERROR, "rbt_find_less() didn't find the equal key");
+
+	if (gteNode == NULL || gteNode->key != searchNode.key)
+		elog(ERROR, "rbt_find_great() didn't find the equal key");
+
+	if (lteNode != gteNode)
+		elog(ERROR, "rbt_find_less() and rbt_find_great() found different equal keys");
+
+	/* Find the rest of the naturals lesser than the search key */
+	keyDeleted = false;
+	for (; searchNode.key > 0; searchNode.key--)
+	{
+		/*
+		 * Find the next key.  If the current key is deleted, we can pass
+		 * equal_match == true and still find the next one.
+		 */
+		node = (IntRBTreeNode *) rbt_find_less(tree, (RBTNode *) &searchNode,
+											   keyDeleted);
+
+		/* ensure we find a lesser match */
+		if (!node || !(node->key < searchNode.key))
+			elog(ERROR, "rbt_find_less() didn't find a lesser key");
+
+		/* randomly delete the found key or leave it */
+		keyDeleted = (pg_prng_uint64_range(&pg_global_prng_state, 0, 1) == 1);
+		if (keyDeleted)
+			rbt_delete(tree, (RBTNode *) node);
+	}
+
+	/* Find the rest of the naturals greater than the search key */
+	keyDeleted = false;
+	for (searchNode.key = randomKey; searchNode.key < size - 1; searchNode.key++)
+	{
+		/*
+		 * Find the next key.  If the current key is deleted, we can pass
+		 * equal_match == true and still find the next one.
+		 */
+		node = (IntRBTreeNode *) rbt_find_great(tree, (RBTNode *) &searchNode,
+												keyDeleted);
+
+		/* ensure we find a greater match */
+		if (!node || !(node->key > searchNode.key))
+			elog(ERROR, "rbt_find_great() didn't find a greater key");
+
+		/* randomly delete the found key or leave it */
+		keyDeleted = (pg_prng_uint64_range(&pg_global_prng_state, 0, 1) == 1);
+		if (keyDeleted)
+			rbt_delete(tree, (RBTNode *) node);
+	}
+
+	/* Check out of bounds searches find nothing */
+	searchNode.key = -1;
+	node = (IntRBTreeNode *) rbt_find_less(tree, (RBTNode *) &searchNode, true);
+	if (node != NULL)
+		elog(ERROR, "rbt_find_less() found non-inserted element");
+	searchNode.key = 0;
+	node = (IntRBTreeNode *) rbt_find_less(tree, (RBTNode *) &searchNode, false);
+	if (node != NULL)
+		elog(ERROR, "rbt_find_less() found non-inserted element");
+	searchNode.key = size;
+	node = (IntRBTreeNode *) rbt_find_great(tree, (RBTNode *) &searchNode, true);
+	if (node != NULL)
+		elog(ERROR, "rbt_find_great() found non-inserted element");
+	searchNode.key = size - 1;
+	node = (IntRBTreeNode *) rbt_find_great(tree, (RBTNode *) &searchNode, false);
+	if (node != NULL)
+		elog(ERROR, "rbt_find_great() found non-inserted element");
+}
+
+/*
  * Check the correctness of the rbt_leftmost operation.
  * This operation should always return the smallest element of the tree.
  */
@@ -408,6 +509,7 @@ test_rb_tree(PG_FUNCTION_ARGS)
 	testleftright(size);
 	testrightleft(size);
 	testfind(size);
+	testfindltgt(size);
 	testleftmost(size);
 	testdelete(size, Max(size / 10, 1));
 	PG_RETURN_VOID();

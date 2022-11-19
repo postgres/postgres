@@ -1933,6 +1933,30 @@ $$ language plpgsql;
 select refcursor_test2(20000, 20000) as "Should be false",
        refcursor_test2(20, 20) as "Should be true";
 
+-- should fail
+create function constant_refcursor() returns refcursor as $$
+declare
+    rc constant refcursor;
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language plpgsql;
+
+select constant_refcursor();
+
+-- but it's okay like this
+create or replace function constant_refcursor() returns refcursor as $$
+declare
+    rc constant refcursor := 'my_cursor_name';
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language plpgsql;
+
+select constant_refcursor();
+
 --
 -- tests for cursors with named parameter arguments
 --

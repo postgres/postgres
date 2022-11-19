@@ -742,11 +742,10 @@ ReadArrayStr(char *arrayStr,
 	bool		eoArray = false;
 	bool		hasnull;
 	int32		totbytes;
-	int			indx[MAXDIM],
+	int			indx[MAXDIM] = {0},
 				prod[MAXDIM];
 
 	mda_get_prod(ndim, dim, prod);
-	MemSet(indx, 0, sizeof(indx));
 
 	/* Initialize is-null markers to true */
 	memset(nulls, true, nitems * sizeof(bool));
@@ -3331,6 +3330,92 @@ construct_array(Datum *elems, int nelems,
 }
 
 /*
+ * Like construct_array(), where elmtype must be a built-in type, and
+ * elmlen/elmbyval/elmalign is looked up from hardcoded data.  This is often
+ * useful when manipulating arrays from/for system catalogs.
+ */
+ArrayType *
+construct_array_builtin(Datum *elems, int nelems, Oid elmtype)
+{
+	int			elmlen;
+	bool		elmbyval;
+	char		elmalign;
+
+	switch (elmtype)
+	{
+		case CHAROID:
+			elmlen = 1;
+			elmbyval = true;
+			elmalign = TYPALIGN_CHAR;
+			break;
+
+		case CSTRINGOID:
+			elmlen = -2;
+			elmbyval = false;
+			elmalign = TYPALIGN_CHAR;
+			break;
+
+		case FLOAT4OID:
+			elmlen = sizeof(float4);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case INT2OID:
+			elmlen = sizeof(int16);
+			elmbyval = true;
+			elmalign = TYPALIGN_SHORT;
+			break;
+
+		case INT4OID:
+			elmlen = sizeof(int32);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case INT8OID:
+			elmlen = sizeof(int64);
+			elmbyval = FLOAT8PASSBYVAL;
+			elmalign = TYPALIGN_DOUBLE;
+			break;
+
+		case NAMEOID:
+			elmlen = NAMEDATALEN;
+			elmbyval = false;
+			elmalign = TYPALIGN_CHAR;
+			break;
+
+		case OIDOID:
+		case REGTYPEOID:
+			elmlen = sizeof(Oid);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case TEXTOID:
+			elmlen = -1;
+			elmbyval = false;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case TIDOID:
+			elmlen = sizeof(ItemPointerData);
+			elmbyval = false;
+			elmalign = TYPALIGN_SHORT;
+			break;
+
+		default:
+			elog(ERROR, "type %u not supported by construct_array_builtin()", elmtype);
+			/* keep compiler quiet */
+			elmlen = 0;
+			elmbyval = false;
+			elmalign = 0;
+	}
+
+	return construct_array(elems, nelems, elmtype, elmlen, elmbyval, elmalign);
+}
+
+/*
  * construct_md_array	--- simple method for constructing an array object
  *							with arbitrary dimensions and possible NULLs
  *
@@ -3483,9 +3568,9 @@ construct_empty_expanded_array(Oid element_type,
  * be pointers into the array object.
  *
  * NOTE: it would be cleaner to look up the elmlen/elmbval/elmalign info
- * from the system catalogs, given the elmtype.  However, in most current
- * uses the type is hard-wired into the caller and so we can save a lookup
- * cycle by hard-wiring the type info as well.
+ * from the system catalogs, given the elmtype.  However, the caller is
+ * in a better position to cache this info across multiple uses, or even
+ * to hard-wire values if the element type is hard-wired.
  */
 void
 deconstruct_array(ArrayType *array,
@@ -3546,6 +3631,75 @@ deconstruct_array(ArrayType *array,
 			}
 		}
 	}
+}
+
+/*
+ * Like deconstruct_array(), where elmtype must be a built-in type, and
+ * elmlen/elmbyval/elmalign is looked up from hardcoded data.  This is often
+ * useful when manipulating arrays from/for system catalogs.
+ */
+void
+deconstruct_array_builtin(ArrayType *array,
+						  Oid elmtype,
+						  Datum **elemsp, bool **nullsp, int *nelemsp)
+{
+	int			elmlen;
+	bool		elmbyval;
+	char		elmalign;
+
+	switch (elmtype)
+	{
+		case CHAROID:
+			elmlen = 1;
+			elmbyval = true;
+			elmalign = TYPALIGN_CHAR;
+			break;
+
+		case CSTRINGOID:
+			elmlen = -2;
+			elmbyval = false;
+			elmalign = TYPALIGN_CHAR;
+			break;
+
+		case FLOAT8OID:
+			elmlen = sizeof(float8);
+			elmbyval = FLOAT8PASSBYVAL;
+			elmalign = TYPALIGN_DOUBLE;
+			break;
+
+		case INT2OID:
+			elmlen = sizeof(int16);
+			elmbyval = true;
+			elmalign = TYPALIGN_SHORT;
+			break;
+
+		case OIDOID:
+			elmlen = sizeof(Oid);
+			elmbyval = true;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case TEXTOID:
+			elmlen = -1;
+			elmbyval = false;
+			elmalign = TYPALIGN_INT;
+			break;
+
+		case TIDOID:
+			elmlen = sizeof(ItemPointerData);
+			elmbyval = false;
+			elmalign = TYPALIGN_SHORT;
+			break;
+
+		default:
+			elog(ERROR, "type %u not supported by deconstruct_array_builtin()", elmtype);
+			/* keep compiler quiet */
+			elmlen = 0;
+			elmbyval = false;
+			elmalign = 0;
+	}
+
+	deconstruct_array(array, elmtype, elmlen, elmbyval, elmalign, elemsp, nullsp, nelemsp);
 }
 
 /*
@@ -3996,7 +4150,8 @@ hash_array(PG_FUNCTION_ARGS)
 
 			/*
 			 * Make fake type cache entry structure.  Note that we can't just
-			 * modify typentry, since that points directly into the type cache.
+			 * modify typentry, since that points directly into the type
+			 * cache.
 			 */
 			record_typentry = palloc0(sizeof(*record_typentry));
 			record_typentry->type_id = element_type;
@@ -6684,7 +6839,7 @@ trim_array(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = PG_GETARG_ARRAYTYPE_P(0);
 	int			n = PG_GETARG_INT32(1);
-	int			array_length = ARR_DIMS(v)[0];
+	int			array_length = (ARR_NDIM(v) > 0) ? ARR_DIMS(v)[0] : 0;
 	int16		elmlen;
 	bool		elmbyval;
 	char		elmalign;
@@ -6704,8 +6859,11 @@ trim_array(PG_FUNCTION_ARGS)
 	/* Set all the bounds as unprovided except the first upper bound */
 	memset(lowerProvided, false, sizeof(lowerProvided));
 	memset(upperProvided, false, sizeof(upperProvided));
-	upper[0] = ARR_LBOUND(v)[0] + array_length - n - 1;
-	upperProvided[0] = true;
+	if (ARR_NDIM(v) > 0)
+	{
+		upper[0] = ARR_LBOUND(v)[0] + array_length - n - 1;
+		upperProvided[0] = true;
+	}
 
 	/* Fetch the needed information about the element type */
 	get_typlenbyvalalign(ARR_ELEMTYPE(v), &elmlen, &elmbyval, &elmalign);

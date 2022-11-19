@@ -37,9 +37,63 @@ CREATE USER regress_priv_user9;
 CREATE USER regress_priv_user10;
 CREATE ROLE regress_priv_role;
 
+-- circular ADMIN OPTION grants should be disallowed
+GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user3 WITH ADMIN OPTION GRANTED BY regress_priv_user2;
+GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION GRANTED BY regress_priv_user3;
+
+-- need CASCADE to revoke grant or admin option if dependent grants exist
+REVOKE ADMIN OPTION FOR regress_priv_user1 FROM regress_priv_user2; -- fail
+REVOKE regress_priv_user1 FROM regress_priv_user2; -- fail
+SELECT member::regrole, admin_option FROM pg_auth_members WHERE roleid = 'regress_priv_user1'::regrole;
+BEGIN;
+REVOKE ADMIN OPTION FOR regress_priv_user1 FROM regress_priv_user2 CASCADE;
+SELECT member::regrole, admin_option FROM pg_auth_members WHERE roleid = 'regress_priv_user1'::regrole;
+ROLLBACK;
+REVOKE regress_priv_user1 FROM regress_priv_user2 CASCADE;
+SELECT member::regrole, admin_option FROM pg_auth_members WHERE roleid = 'regress_priv_user1'::regrole;
+
+-- inferred grantor must be a role with ADMIN OPTION
+GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION;
+GRANT regress_priv_user2 TO regress_priv_user3;
+SET ROLE regress_priv_user3;
+GRANT regress_priv_user1 TO regress_priv_user4;
+SELECT grantor::regrole FROM pg_auth_members WHERE roleid = 'regress_priv_user1'::regrole and member = 'regress_priv_user4'::regrole;
+RESET ROLE;
+REVOKE regress_priv_user2 FROM regress_priv_user3;
+REVOKE regress_priv_user1 FROM regress_priv_user2 CASCADE;
+
+-- test GRANTED BY with DROP OWNED and REASSIGN OWNED
+GRANT regress_priv_user1 TO regress_priv_user2 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user3 GRANTED BY regress_priv_user2;
+DROP ROLE regress_priv_user2; -- fail, dependency
+REASSIGN OWNED BY regress_priv_user2 TO regress_priv_user4;
+DROP ROLE regress_priv_user2; -- still fail, REASSIGN OWNED doesn't help
+DROP OWNED BY regress_priv_user2;
+DROP ROLE regress_priv_user2; -- ok now, DROP OWNED does the job
+
+-- test that removing granted role or grantee role removes dependency
+GRANT regress_priv_user1 TO regress_priv_user3 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user4 GRANTED BY regress_priv_user3;
+DROP ROLE regress_priv_user3; -- should fail, dependency
+DROP ROLE regress_priv_user4; -- ok
+DROP ROLE regress_priv_user3; -- ok now
+GRANT regress_priv_user1 TO regress_priv_user5 WITH ADMIN OPTION;
+GRANT regress_priv_user1 TO regress_priv_user6 GRANTED BY regress_priv_user5;
+DROP ROLE regress_priv_user5; -- should fail, dependency
+DROP ROLE regress_priv_user1, regress_priv_user5; -- ok, despite order
+
+-- recreate the roles we just dropped
+CREATE USER regress_priv_user1;
+CREATE USER regress_priv_user2;
+CREATE USER regress_priv_user3;
+CREATE USER regress_priv_user4;
+CREATE USER regress_priv_user5;
+
 GRANT pg_read_all_data TO regress_priv_user6;
 GRANT pg_write_all_data TO regress_priv_user7;
 GRANT pg_read_all_settings TO regress_priv_user8 WITH ADMIN OPTION;
+GRANT regress_priv_user9 TO regress_priv_user8;
 
 SET SESSION AUTHORIZATION regress_priv_user8;
 GRANT pg_read_all_settings TO regress_priv_user9 WITH ADMIN OPTION;
@@ -48,15 +102,25 @@ SET SESSION AUTHORIZATION regress_priv_user9;
 GRANT pg_read_all_settings TO regress_priv_user10;
 
 SET SESSION AUTHORIZATION regress_priv_user8;
-REVOKE pg_read_all_settings FROM regress_priv_user10;
+REVOKE pg_read_all_settings FROM regress_priv_user10 GRANTED BY regress_priv_user9;
 REVOKE ADMIN OPTION FOR pg_read_all_settings FROM regress_priv_user9;
 REVOKE pg_read_all_settings FROM regress_priv_user9;
 
 RESET SESSION AUTHORIZATION;
+REVOKE regress_priv_user9 FROM regress_priv_user8;
 REVOKE ADMIN OPTION FOR pg_read_all_settings FROM regress_priv_user8;
 
 SET SESSION AUTHORIZATION regress_priv_user8;
 SET ROLE pg_read_all_settings;
+RESET ROLE;
+
+RESET SESSION AUTHORIZATION;
+REVOKE SET OPTION FOR pg_read_all_settings FROM regress_priv_user8;
+GRANT pg_read_all_stats TO regress_priv_user8 WITH SET FALSE;
+
+SET SESSION AUTHORIZATION regress_priv_user8;
+SET ROLE pg_read_all_settings;  -- fail, no SET option any more
+SET ROLE pg_read_all_stats;     -- fail, granted without SET option
 RESET ROLE;
 
 RESET SESSION AUTHORIZATION;
@@ -67,12 +131,19 @@ DROP USER regress_priv_user9;
 DROP USER regress_priv_user8;
 
 CREATE GROUP regress_priv_group1;
-CREATE GROUP regress_priv_group2 WITH USER regress_priv_user1, regress_priv_user2;
+CREATE GROUP regress_priv_group2 WITH ADMIN regress_priv_user1 USER regress_priv_user2;
 
 ALTER GROUP regress_priv_group1 ADD USER regress_priv_user4;
 
+GRANT regress_priv_group2 TO regress_priv_user2 GRANTED BY regress_priv_user1;
+SET SESSION AUTHORIZATION regress_priv_user1;
+ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;
 ALTER GROUP regress_priv_group2 ADD USER regress_priv_user2;	-- duplicate
 ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;
+ALTER USER regress_priv_user2 PASSWORD 'verysecret'; -- not permitted
+RESET SESSION AUTHORIZATION;
+ALTER GROUP regress_priv_group2 DROP USER regress_priv_user2;
+REVOKE ADMIN OPTION FOR regress_priv_group2 FROM regress_priv_user1;
 GRANT regress_priv_group2 TO regress_priv_user4 WITH ADMIN OPTION;
 
 -- prepare non-leakproof function for later
@@ -83,9 +154,10 @@ ALTER FUNCTION leak(integer,integer) OWNER TO regress_priv_user1;
 
 -- test owner privileges
 
+GRANT regress_priv_role TO regress_priv_user1 WITH ADMIN OPTION GRANTED BY regress_priv_role; -- error, doesn't have ADMIN OPTION
 GRANT regress_priv_role TO regress_priv_user1 WITH ADMIN OPTION GRANTED BY CURRENT_ROLE;
 REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY foo; -- error
-REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY regress_priv_user2; -- error
+REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY regress_priv_user2; -- warning, noop
 REVOKE ADMIN OPTION FOR regress_priv_role FROM regress_priv_user1 GRANTED BY CURRENT_USER;
 REVOKE regress_priv_role FROM regress_priv_user1 GRANTED BY CURRENT_ROLE;
 DROP ROLE regress_priv_role;
@@ -288,7 +360,18 @@ BEGIN;
 RESET SESSION AUTHORIZATION;
 ALTER ROLE regress_priv_user1 NOINHERIT;
 SET SESSION AUTHORIZATION regress_priv_user1;
-DELETE FROM atest3;
+SAVEPOINT s1;
+DELETE FROM atest3; -- ok because grant-level option is unchanged
+ROLLBACK TO s1;
+RESET SESSION AUTHORIZATION;
+GRANT regress_priv_group2 TO regress_priv_user1 WITH INHERIT FALSE;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3; -- fail
+ROLLBACK TO s1;
+RESET SESSION AUTHORIZATION;
+REVOKE INHERIT OPTION FOR regress_priv_group2 FROM regress_priv_user1;
+SET SESSION AUTHORIZATION regress_priv_user1;
+DELETE FROM atest3; -- also fail
 ROLLBACK;
 
 -- views
@@ -1043,6 +1126,53 @@ SELECT has_table_privilege('regress_priv_user1', 'atest4', 'SELECT WITH GRANT OP
 \c -
 CREATE ROLE regress_sro_user;
 
+-- Check that index expressions and predicates are run as the table's owner
+
+-- A dummy index function checking current_user
+CREATE FUNCTION sro_ifun(int) RETURNS int AS $$
+BEGIN
+	-- Below we set the table's owner to regress_sro_user
+	ASSERT current_user = 'regress_sro_user',
+		format('sro_ifun(%s) called by %s', $1, current_user);
+	RETURN $1;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+-- Create a table owned by regress_sro_user
+CREATE TABLE sro_tab (a int);
+ALTER TABLE sro_tab OWNER TO regress_sro_user;
+INSERT INTO sro_tab VALUES (1), (2), (3);
+-- Create an expression index with a predicate
+CREATE INDEX sro_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)))
+	WHERE sro_ifun(a + 10) > sro_ifun(10);
+DROP INDEX sro_idx;
+-- Do the same concurrently
+CREATE INDEX CONCURRENTLY sro_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)))
+	WHERE sro_ifun(a + 10) > sro_ifun(10);
+-- REINDEX
+REINDEX TABLE sro_tab;
+REINDEX INDEX sro_idx;
+REINDEX TABLE CONCURRENTLY sro_tab;
+DROP INDEX sro_idx;
+-- CLUSTER
+CREATE INDEX sro_cluster_idx ON sro_tab ((sro_ifun(a) + sro_ifun(0)));
+CLUSTER sro_tab USING sro_cluster_idx;
+DROP INDEX sro_cluster_idx;
+-- BRIN index
+CREATE INDEX sro_brin ON sro_tab USING brin ((sro_ifun(a) + sro_ifun(0)));
+SELECT brin_desummarize_range('sro_brin', 0);
+SELECT brin_summarize_range('sro_brin', 0);
+DROP TABLE sro_tab;
+-- Check with a partitioned table
+CREATE TABLE sro_ptab (a int) PARTITION BY RANGE (a);
+ALTER TABLE sro_ptab OWNER TO regress_sro_user;
+CREATE TABLE sro_part PARTITION OF sro_ptab FOR VALUES FROM (1) TO (10);
+ALTER TABLE sro_part OWNER TO regress_sro_user;
+INSERT INTO sro_ptab VALUES (1), (2), (3);
+CREATE INDEX sro_pidx ON sro_ptab ((sro_ifun(a) + sro_ifun(0)))
+	WHERE sro_ifun(a + 10) > sro_ifun(10);
+REINDEX TABLE sro_ptab;
+REINDEX INDEX CONCURRENTLY sro_pidx;
+
 SET SESSION AUTHORIZATION regress_sro_user;
 CREATE FUNCTION unwanted_grant() RETURNS void LANGUAGE sql AS
 	'GRANT regress_priv_group2 TO regress_sro_user';
@@ -1068,6 +1198,23 @@ REFRESH MATERIALIZED VIEW sro_mv;
 \c -
 REFRESH MATERIALIZED VIEW sro_mv;
 BEGIN; SET CONSTRAINTS ALL IMMEDIATE; REFRESH MATERIALIZED VIEW sro_mv; COMMIT;
+
+-- REFRESH MATERIALIZED VIEW CONCURRENTLY use of eval_const_expressions()
+SET SESSION AUTHORIZATION regress_sro_user;
+CREATE FUNCTION unwanted_grant_nofail(int) RETURNS int
+	IMMUTABLE LANGUAGE plpgsql AS $$
+BEGIN
+	PERFORM unwanted_grant();
+	RAISE WARNING 'owned';
+	RETURN 1;
+EXCEPTION WHEN OTHERS THEN
+	RETURN 2;
+END$$;
+CREATE MATERIALIZED VIEW sro_index_mv AS SELECT 1 AS c;
+CREATE UNIQUE INDEX ON sro_index_mv (c) WHERE unwanted_grant_nofail(1) > 0;
+\c -
+REFRESH MATERIALIZED VIEW CONCURRENTLY sro_index_mv;
+REFRESH MATERIALIZED VIEW sro_index_mv;
 
 DROP OWNED BY regress_sro_user;
 DROP ROLE regress_sro_user;
@@ -1274,6 +1421,14 @@ SELECT has_table_privilege('regress_priv_user1', 'testns.acltest1', 'INSERT'); -
 ALTER DEFAULT PRIVILEGES FOR ROLE regress_priv_user1 REVOKE EXECUTE ON FUNCTIONS FROM public;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA testns GRANT USAGE ON SCHEMAS TO regress_priv_user2; -- error
+
+-- Test makeaclitem()
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT', TRUE);  -- single privilege
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, INSERT,  UPDATE , DELETE  ', FALSE);  -- multiple privileges
+SELECT makeaclitem('regress_priv_user1'::regrole, 'regress_priv_user2'::regrole,
+	'SELECT, fake_privilege', FALSE);  -- error
 
 --
 -- Testing blanket default grants is very hazardous since it might change
@@ -1642,3 +1797,58 @@ RESET ROLE;
 
 -- clean up
 DROP ROLE regress_readallstats;
+
+-- test role grantor machinery
+CREATE ROLE regress_group;
+CREATE ROLE regress_group_direct_manager;
+CREATE ROLE regress_group_indirect_manager;
+CREATE ROLE regress_group_member;
+
+GRANT regress_group TO regress_group_direct_manager WITH INHERIT FALSE, ADMIN TRUE;
+GRANT regress_group_direct_manager TO regress_group_indirect_manager;
+
+SET SESSION AUTHORIZATION regress_group_direct_manager;
+GRANT regress_group TO regress_group_member;
+SELECT member::regrole::text, CASE WHEN grantor = 10 THEN 'BOOTSTRAP SUPERUSER' ELSE grantor::regrole::text END FROM pg_auth_members WHERE roleid = 'regress_group'::regrole ORDER BY 1, 2;
+REVOKE regress_group FROM regress_group_member;
+
+SET SESSION AUTHORIZATION regress_group_indirect_manager;
+GRANT regress_group TO regress_group_member;
+SELECT member::regrole::text, CASE WHEN grantor = 10 THEN 'BOOTSTRAP SUPERUSER' ELSE grantor::regrole::text END FROM pg_auth_members WHERE roleid = 'regress_group'::regrole ORDER BY 1, 2;
+REVOKE regress_group FROM regress_group_member;
+
+RESET SESSION AUTHORIZATION;
+DROP ROLE regress_group;
+DROP ROLE regress_group_direct_manager;
+DROP ROLE regress_group_indirect_manager;
+DROP ROLE regress_group_member;
+
+-- test SET and INHERIT options with object ownership changes
+CREATE ROLE regress_roleoption_protagonist;
+CREATE ROLE regress_roleoption_donor;
+CREATE ROLE regress_roleoption_recipient;
+CREATE SCHEMA regress_roleoption;
+GRANT CREATE, USAGE ON SCHEMA regress_roleoption TO PUBLIC;
+GRANT regress_roleoption_donor TO regress_roleoption_protagonist WITH INHERIT TRUE, SET FALSE;
+GRANT regress_roleoption_recipient TO regress_roleoption_protagonist WITH INHERIT FALSE, SET TRUE;
+SET SESSION AUTHORIZATION regress_roleoption_protagonist;
+CREATE TABLE regress_roleoption.t1 (a int);
+CREATE TABLE regress_roleoption.t2 (a int);
+SET SESSION AUTHORIZATION regress_roleoption_donor;
+CREATE TABLE regress_roleoption.t3 (a int);
+SET SESSION AUTHORIZATION regress_roleoption_recipient;
+CREATE TABLE regress_roleoption.t4 (a int);
+SET SESSION AUTHORIZATION regress_roleoption_protagonist;
+ALTER TABLE regress_roleoption.t1 OWNER TO regress_roleoption_donor; -- fails, can't be come donor
+ALTER TABLE regress_roleoption.t2 OWNER TO regress_roleoption_recipient; -- works
+ALTER TABLE regress_roleoption.t3 OWNER TO regress_roleoption_protagonist; -- works
+ALTER TABLE regress_roleoption.t4 OWNER TO regress_roleoption_protagonist; -- fails, we don't inherit from recipient
+RESET SESSION AUTHORIZATION;
+DROP TABLE regress_roleoption.t1;
+DROP TABLE regress_roleoption.t2;
+DROP TABLE regress_roleoption.t3;
+DROP TABLE regress_roleoption.t4;
+DROP SCHEMA regress_roleoption;
+DROP ROLE regress_roleoption_recipient;
+DROP ROLE regress_roleoption_donor;
+DROP ROLE regress_roleoption_donor;

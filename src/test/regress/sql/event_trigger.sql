@@ -337,6 +337,10 @@ DROP INDEX evttrig.one_idx;
 DROP SCHEMA evttrig CASCADE;
 DROP TABLE a_temp_tbl;
 
+-- CREATE OPERATOR CLASS without FAMILY clause should report
+-- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS
+CREATE OPERATOR CLASS evttrigopclass FOR TYPE int USING btree AS STORAGE int;
+
 DROP EVENT TRIGGER regress_event_trigger_report_dropped;
 DROP EVENT TRIGGER regress_event_trigger_report_end;
 
@@ -374,6 +378,11 @@ alter table rewriteme
  add column onemore int default 0,
  add column another int default -1,
  alter column foo type numeric(10,4);
+
+-- matview rewrite when changing access method
+CREATE MATERIALIZED VIEW heapmv USING heap AS SELECT 1 AS a;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+DROP MATERIALIZED VIEW heapmv;
 
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);

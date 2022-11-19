@@ -285,6 +285,18 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 						strlcpy(strbuf, str, 37);
 
 						/*
+						 * In recent NetBSD, uuid_create() has started
+						 * producing v4 instead of v1 UUIDs.  Check the
+						 * version field and complain if it's not v1.
+						 */
+						if (strbuf[14] != '1')
+							ereport(ERROR,
+									(errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),
+							/* translator: %c will be a hex digit */
+									 errmsg("uuid_create() produced a version %c UUID instead of the expected version 1",
+											strbuf[14])));
+
+						/*
 						 * PTR, if set, replaces the trailing characters of
 						 * the uuid; this is to support v1mc, where a random
 						 * multicast MAC is used instead of the physical one
@@ -292,8 +304,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 						if (ptr && len <= 36)
 							strcpy(strbuf + (36 - len), ptr);
 					}
-					if (str)
-						free(str);
+					free(str);
 				}
 
 				if (status != uuid_s_ok)
@@ -366,8 +377,7 @@ uuid_generate_internal(int v, unsigned char *ns, const char *ptr, int len)
 				if (status == uuid_s_ok)
 					strlcpy(strbuf, str, 37);
 
-				if (str)
-					free(str);
+				free(str);
 
 				if (status != uuid_s_ok)
 					ereport(ERROR,

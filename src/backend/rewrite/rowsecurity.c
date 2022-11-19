@@ -824,7 +824,6 @@ add_with_check_options(Relation rel,
 		{
 			RowSecurityPolicy *policy = (RowSecurityPolicy *) lfirst(item);
 			Expr	   *qual = QUAL_FOR_WCO(policy);
-			WithCheckOption *wco;
 
 			if (qual != NULL)
 			{

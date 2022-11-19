@@ -476,6 +476,11 @@ NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_10_15
 NOTICE:  NORMAL: orig=f normal=t istemp=f type=table identity=evttrig.part_15_20 name={evttrig,part_15_20} args={}
 DROP TABLE a_temp_tbl;
 NOTICE:  NORMAL: orig=t normal=f istemp=t type=table identity=pg_temp.a_temp_tbl name={pg_temp,a_temp_tbl} args={}
+-- CREATE OPERATOR CLASS without FAMILY clause should report
+-- both CREATE OPERATOR FAMILY and CREATE OPERATOR CLASS
+CREATE OPERATOR CLASS evttrigopclass FOR TYPE int USING btree AS STORAGE int;
+NOTICE:  END: command_tag=CREATE OPERATOR FAMILY type=operator family identity=public.evttrigopclass USING btree
+NOTICE:  END: command_tag=CREATE OPERATOR CLASS type=operator class identity=public.evttrigopclass USING btree
 DROP EVENT TRIGGER regress_event_trigger_report_dropped;
 DROP EVENT TRIGGER regress_event_trigger_report_end;
 -- only allowed from within an event trigger function, should fail
@@ -511,6 +516,11 @@ alter table rewriteme
  add column another int default -1,
  alter column foo type numeric(10,4);
 NOTICE:  Table 'rewriteme' is being rewritten (reason = 4)
+-- matview rewrite when changing access method
+CREATE MATERIALIZED VIEW heapmv USING heap AS SELECT 1 AS a;
+ALTER MATERIALIZED VIEW heapmv SET ACCESS METHOD heap2;
+NOTICE:  Table 'heapmv' is being rewritten (reason = 8)
+DROP MATERIALIZED VIEW heapmv;
 -- shouldn't trigger a table_rewrite event
 alter table rewriteme alter column foo type numeric(12,4);
 begin;

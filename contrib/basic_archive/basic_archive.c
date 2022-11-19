@@ -40,9 +40,6 @@
 
 PG_MODULE_MAGIC;
 
-void _PG_init(void);
-void _PG_archive_module_init(ArchiveModuleCallbacks *cb);
-
 static char *archive_directory = NULL;
 static MemoryContext basic_archive_context;
 
@@ -102,8 +99,8 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 
 	/*
 	 * The default value is an empty string, so we have to accept that value.
-	 * Our check_configured callback also checks for this and prevents archiving
-	 * from proceeding if it is still empty.
+	 * Our check_configured callback also checks for this and prevents
+	 * archiving from proceeding if it is still empty.
 	 */
 	if (*newval == NULL || *newval[0] == '\0')
 		return true;
@@ -114,18 +111,18 @@ check_archive_directory(char **newval, void **extra, GucSource source)
 	 */
 	if (strlen(*newval) + 64 + 2 >= MAXPGPATH)
 	{
-		GUC_check_errdetail("archive directory too long");
+		GUC_check_errdetail("Archive directory too long.");
 		return false;
 	}
 
 	/*
-	 * Do a basic sanity check that the specified archive directory exists.  It
+	 * Do a basic sanity check that the specified archive directory exists. It
 	 * could be removed at some point in the future, so we still need to be
 	 * prepared for it not to exist in the actual archiving logic.
 	 */
 	if (stat(*newval, &st) != 0 || !S_ISDIR(st.st_mode))
 	{
-		GUC_check_errdetail("specified archive directory does not exist");
+		GUC_check_errdetail("Specified archive directory does not exist.");
 		return false;
 	}
 
@@ -155,18 +152,19 @@ basic_archive_file(const char *file, const char *path)
 	MemoryContext oldcontext;
 
 	/*
-	 * We run basic_archive_file_internal() in our own memory context so that we
-	 * can easily reset it during error recovery (thus avoiding memory leaks).
+	 * We run basic_archive_file_internal() in our own memory context so that
+	 * we can easily reset it during error recovery (thus avoiding memory
+	 * leaks).
 	 */
 	oldcontext = MemoryContextSwitchTo(basic_archive_context);
 
 	/*
-	 * Since the archiver operates at the bottom of the exception stack, ERRORs
-	 * turn into FATALs and cause the archiver process to restart.  However,
-	 * using ereport(ERROR, ...) when there are problems is easy to code and
-	 * maintain.  Therefore, we create our own exception handler to catch ERRORs
-	 * and return false instead of restarting the archiver whenever there is a
-	 * failure.
+	 * Since the archiver operates at the bottom of the exception stack,
+	 * ERRORs turn into FATALs and cause the archiver process to restart.
+	 * However, using ereport(ERROR, ...) when there are problems is easy to
+	 * code and maintain.  Therefore, we create our own exception handler to
+	 * catch ERRORs and return false instead of restarting the archiver
+	 * whenever there is a failure.
 	 */
 	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
 	{
@@ -220,7 +218,7 @@ basic_archive_file_internal(const char *file, const char *path)
 	char		temp[MAXPGPATH + 256];
 	struct stat st;
 	struct timeval tv;
-	uint64		epoch;
+	uint64		epoch;			/* milliseconds */
 
 	ereport(DEBUG3,
 			(errmsg("archiving \"%s\" via basic_archive", file)));
@@ -228,14 +226,14 @@ basic_archive_file_internal(const char *file, const char *path)
 	snprintf(destination, MAXPGPATH, "%s/%s", archive_directory, file);
 
 	/*
-	 * First, check if the file has already been archived.  If it already exists
-	 * and has the same contents as the file we're trying to archive, we can
-	 * return success (after ensuring the file is persisted to disk). This
-	 * scenario is possible if the server crashed after archiving the file but
-	 * before renaming its .ready file to .done.
+	 * First, check if the file has already been archived.  If it already
+	 * exists and has the same contents as the file we're trying to archive,
+	 * we can return success (after ensuring the file is persisted to disk).
+	 * This scenario is possible if the server crashed after archiving the
+	 * file but before renaming its .ready file to .done.
 	 *
-	 * If the archive file already exists but has different contents, something
-	 * might be wrong, so we just fail.
+	 * If the archive file already exists but has different contents,
+	 * something might be wrong, so we just fail.
 	 */
 	if (stat(destination, &st) == 0)
 	{
@@ -267,23 +265,24 @@ basic_archive_file_internal(const char *file, const char *path)
 	 */
 	gettimeofday(&tv, NULL);
 	if (pg_mul_u64_overflow((uint64) 1000, (uint64) tv.tv_sec, &epoch) ||
-		pg_add_u64_overflow(epoch, (uint64) tv.tv_usec, &epoch))
+		pg_add_u64_overflow(epoch, (uint64) (tv.tv_usec / 1000), &epoch))
 		elog(ERROR, "could not generate temporary file name for archiving");
 
 	snprintf(temp, sizeof(temp), "%s/%s.%s.%d." UINT64_FORMAT,
 			 archive_directory, "archtemp", file, MyProcPid, epoch);
 
 	/*
-	 * Copy the file to its temporary destination.  Note that this will fail if
-	 * temp already exists.
+	 * Copy the file to its temporary destination.  Note that this will fail
+	 * if temp already exists.
 	 */
 	copy_file(unconstify(char *, path), temp);
 
 	/*
 	 * Sync the temporary file to disk and move it to its final destination.
-	 * This will fail if destination already exists.
+	 * Note that this will overwrite any existing file, but this is only
+	 * possible if someone else created the file since the stat() above.
 	 */
-	(void) durable_rename_excl(temp, destination, ERROR);
+	(void) durable_rename(temp, destination, ERROR);
 
 	ereport(DEBUG1,
 			(errmsg("archived \"%s\" via basic_archive", file)));
@@ -318,9 +317,9 @@ compare_files(const char *file1, const char *file2)
 
 	for (;;)
 	{
-		int		nbytes = 0;
-		int		buf1_len = 0;
-		int		buf2_len = 0;
+		int			nbytes = 0;
+		int			buf1_len = 0;
+		int			buf2_len = 0;
 
 		while (buf1_len < CMP_BUF_SIZE)
 		{

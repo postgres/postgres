@@ -20,6 +20,8 @@
 #ifndef BITMAPSET_H
 #define BITMAPSET_H
 
+#include "nodes/nodes.h"
+
 /*
  * Forward decl to save including pg_list.h
  */
@@ -48,6 +50,9 @@ typedef int32 signedbitmapword; /* must be the matching signed type */
 
 typedef struct Bitmapset
 {
+	pg_node_attr(custom_copy_equal, special_read_write)
+
+	NodeTag		type;
 	int			nwords;			/* number of words in array */
 	bitmapword	words[FLEXIBLE_ARRAY_MEMBER];	/* really [nwords] */
 } Bitmapset;

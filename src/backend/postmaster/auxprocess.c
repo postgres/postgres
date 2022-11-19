@@ -81,7 +81,7 @@ AuxiliaryProcessMain(AuxProcType auxtype)
 			MyBackendType = B_WAL_RECEIVER;
 			break;
 		default:
-			elog(ERROR, "something has gone wrong");
+			elog(PANIC, "unrecognized process type: %d", (int) MyAuxProcType);
 			MyBackendType = B_INVALID;
 	}
 

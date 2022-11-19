@@ -98,6 +98,37 @@ two | 2
    1 |   2
 (1 row)
 
+-- \bind (extended query protocol)
+SELECT 1 \bind \g
+ ?column? 
+----------
+        1
+(1 row)
+
+SELECT $1 \bind 'foo' \g
+ ?column? 
+----------
+ foo
+(1 row)
+
+SELECT $1, $2 \bind 'foo' 'bar' \g
+ ?column? | ?column? 
+----------+----------
+ foo      | bar
+(1 row)
+
+-- errors
+-- parse error
+SELECT foo \bind \g
+ERROR:  column "foo" does not exist
+LINE 1: SELECT foo 
+               ^
+-- tcop error
+SELECT 1 \; SELECT 2 \bind \g
+ERROR:  cannot insert multiple commands into a prepared statement
+-- bind error
+SELECT $1, $2 \bind 'foo' \g
+ERROR:  bind message supplies 1 parameters, but prepared statement "" requires 2
 -- \gset
 select 10 as test01, 20 as test02, 'Hello' as test03 \gset pref01_
 \echo :pref01_test01 :pref01_test02 :pref01_test03
@@ -317,6 +348,7 @@ tuples_only              off
 unicode_border_linestyle single
 unicode_column_linestyle single
 unicode_header_linestyle single
+xheader_width            full
 -- test multi-line headers, wrapping, and newline indicators
 -- in aligned, unaligned, and wrapped formats
 prepare q as select array_to_string(array_agg(repeat('x',2*n)),E'\n') as "ab
@@ -5316,13 +5348,13 @@ AS $$
 $$;
 -- show both
 SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
+NOTICE:  warn 1.5
+CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
  one 
 -----
    1
 (1 row)
 
-NOTICE:  warn 1.5
-CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
  warn 
 ------
  t
@@ -5335,13 +5367,13 @@ CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
 
 -- \gset applies to last query only
 SELECT 3 AS three \; SELECT warn('3.5') \; SELECT 4 AS four \gset
+NOTICE:  warn 3.5
+CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
  three 
 -------
      3
 (1 row)
 
-NOTICE:  warn 3.5
-CONTEXT:  PL/pgSQL function warn(text) line 2 at RAISE
  warn 
 ------
  t
@@ -5481,7 +5513,7 @@ INSERT INTO bla VALUES ('Susie');         -- succeeds
 INSERT INTO bla VALUES ('Rosalyn') \;     -- will rollback
 SELECT 'before error' AS show \;          -- will show nevertheless!
   SELECT psql_error('boum!') \;           -- failure
-  SELECT 'after error' AS noshow;         -- hidden by preceeding error
+  SELECT 'after error' AS noshow;         -- hidden by preceding error
      show     
 --------------
  before error

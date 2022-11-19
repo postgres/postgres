@@ -111,7 +111,7 @@ static void show_incremental_sort_info(IncrementalSortState *incrsortstate,
 static void show_hash_info(HashState *hashstate, ExplainState *es);
 static void show_memoize_info(MemoizeState *mstate, List *ancestors,
 							  ExplainState *es);
-static void show_hashagg_info(AggState *hashstate, ExplainState *es);
+static void show_hashagg_info(AggState *aggstate, ExplainState *es);
 static void show_tidbitmap_info(BitmapHeapScanState *planstate,
 								ExplainState *es);
 static void show_instrumentation_count(const char *qlabel, int which,
@@ -970,6 +970,28 @@ ExplainQueryText(ExplainState *es, QueryDesc *queryDesc)
 {
 	if (queryDesc->sourceText)
 		ExplainPropertyText("Query Text", queryDesc->sourceText, es);
+}
+
+/*
+ * ExplainQueryParameters -
+ *	  add a "Query Parameters" node that describes the parameters of the query
+ *
+ * The caller should have set up the options fields of *es, as well as
+ * initializing the output buffer es->str.
+ *
+ */
+void
+ExplainQueryParameters(ExplainState *es, ParamListInfo params, int maxlen)
+{
+	char	   *str;
+
+	/* This check is consistent with errdetail_params() */
+	if (params == NULL || params->numParams <= 0 || maxlen == 0)
+		return;
+
+	str = BuildParamLogString(params, NULL, maxlen);
+	if (str && str[0] != '\0')
+		ExplainPropertyText("Query Parameters", str, es);
 }
 
 /*
@@ -3262,7 +3284,6 @@ show_hashagg_info(AggState *aggstate, ExplainState *es)
 
 	if (es->format != EXPLAIN_FORMAT_TEXT)
 	{
-
 		if (es->costs)
 			ExplainPropertyInteger("Planned Partitions", NULL,
 								   aggstate->hash_planned_partitions, es);
@@ -3830,13 +3851,7 @@ ExplainTargetRel(Plan *plan, Index rti, ExplainState *es)
 			break;
 		case T_TableFuncScan:
 			Assert(rte->rtekind == RTE_TABLEFUNC);
-			if (rte->tablefunc)
-				if (rte->tablefunc->functype == TFT_XMLTABLE)
-					objectname = "xmltable";
-				else /* Must be TFT_JSON_TABLE */
-					objectname = "json_table";
-			else
-				objectname = NULL;
+			objectname = "xmltable";
 			objecttag = "Table Function Name";
 			break;
 		case T_ValuesScan:
@@ -4068,10 +4083,30 @@ show_modifytable_info(ModifyTableState *mtstate, List *ancestors,
 			skipped_path = total - insert_path - update_path - delete_path;
 			Assert(skipped_path >= 0);
 
-			ExplainPropertyFloat("Tuples Inserted", NULL, insert_path, 0, es);
-			ExplainPropertyFloat("Tuples Updated", NULL, update_path, 0, es);
-			ExplainPropertyFloat("Tuples Deleted", NULL, delete_path, 0, es);
-			ExplainPropertyFloat("Tuples Skipped", NULL, skipped_path, 0, es);
+			if (es->format == EXPLAIN_FORMAT_TEXT)
+			{
+				if (total > 0)
+				{
+					ExplainIndentText(es);
+					appendStringInfoString(es->str, "Tuples:");
+					if (insert_path > 0)
+						appendStringInfo(es->str, " inserted=%.0f", insert_path);
+					if (update_path > 0)
+						appendStringInfo(es->str, " updated=%.0f", update_path);
+					if (delete_path > 0)
+						appendStringInfo(es->str, " deleted=%.0f", delete_path);
+					if (skipped_path > 0)
+						appendStringInfo(es->str, " skipped=%.0f", skipped_path);
+					appendStringInfoChar(es->str, '\n');
+				}
+			}
+			else
+			{
+				ExplainPropertyFloat("Tuples Inserted", NULL, insert_path, 0, es);
+				ExplainPropertyFloat("Tuples Updated", NULL, update_path, 0, es);
+				ExplainPropertyFloat("Tuples Deleted", NULL, delete_path, 0, es);
+				ExplainPropertyFloat("Tuples Skipped", NULL, skipped_path, 0, es);
+			}
 		}
 	}
 

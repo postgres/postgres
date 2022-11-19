@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2019-04-26 13:47+0000\n"
-"PO-Revision-Date: 2019-06-13 14:10+0300\n"
+"PO-Revision-Date: 2021-09-16 09:36+0200\n"
 "Last-Translator: Abdullah G. GüLNER\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "Language: tr\n"
@@ -179,7 +179,7 @@ msgstr "  -q, --quiet               hiçbir ileti yazma\n"
 #: clusterdb.c:281
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table(s) only\n"
-msgstr "  -t, --table=TABLO_ADI         sadece belirli (bir) tabloyu/tabloları cluster eder\n"
+msgstr "  -t, --table=TABLO_ADI     sadece belirli (bir) tabloyu/tabloları cluster eder\n"
 
 #: clusterdb.c:282 reindexdb.c:437
 #, c-format
@@ -238,7 +238,7 @@ msgstr "  -W, --password            parola sorulmasını sağla\n"
 #: clusterdb.c:291 dropdb.c:171 reindexdb.c:446 vacuumdb.c:1241
 #, c-format
 msgid "  --maintenance-db=DBNAME   alternate maintenance database\n"
-msgstr "  --maintenance-db=VTADI   alternatif bakım veritabanı\n"
+msgstr "  --maintenance-db=VTADI    alternatif bakım veritabanı\n"
 
 #: clusterdb.c:292
 #, c-format
@@ -379,12 +379,12 @@ msgstr "  -E, --encoding=ENCODING      veritabanı için dil kodlaması\n"
 #: createdb.c:256
 #, c-format
 msgid "  -l, --locale=LOCALE          locale settings for the database\n"
-msgstr "  -l, --locale=LOCALE         veritabanı için yerel ayarları\n"
+msgstr "  -l, --locale=LOCALE          veritabanı için yerel ayarları\n"
 
 #: createdb.c:257
 #, c-format
 msgid "      --lc-collate=LOCALE      LC_COLLATE setting for the database\n"
-msgstr "      --lc-collate=LOCALE     Veritabanı için LC_COLLATE ayarı\n"
+msgstr "      --lc-collate=LOCALE      Veritabanı için LC_COLLATE ayarı\n"
 
 #: createdb.c:258
 #, c-format
@@ -424,7 +424,7 @@ msgstr "  -p, --port=PORT              veritabanı sunucu portu\n"
 #: createdb.c:266
 #, c-format
 msgid "  -U, --username=USERNAME      user name to connect as\n"
-msgstr "  -U, --username=KULLANICI_ADI      bağlanılacak kullanıcı adı\n"
+msgstr "  -U, --username=KULLANICI_ADI bağlanılacak kullanıcı adı\n"
 
 #: createdb.c:267
 #, c-format
@@ -521,7 +521,7 @@ msgstr "  -D, --no-createdb         rol veritabanı oluşturamaz (varsayılan)\n
 #: createuser.c:351
 #, c-format
 msgid "  -g, --role=ROLE           new role will be a member of this role\n"
-msgstr "  -g, --role=ROL           yeni rol bu rolün üyesi olacaktır\n"
+msgstr "  -g, --role=ROL            yeni rol bu rolün üyesi olacaktır\n"
 
 #: createuser.c:352
 #, c-format
@@ -530,8 +530,7 @@ msgid ""
 "                            member of (default)\n"
 msgstr ""
 "  -i, --inherit             rol, üye olduğu rollerin yetkilerini \n"
-"                           miras alır (varsayılan)\n"
-"\n"
+"                            miras alır (varsayılan)\n"
 
 #: createuser.c:354
 #, c-format
@@ -675,7 +674,7 @@ msgid ""
 "                            role name if not specified\n"
 msgstr ""
 "  -i, --interactive         herhangi birşeyi silmeden önce uyarı ver, ve\n"
-"                           belirtilmemişse rol adının girilmesini iste\n"
+"                            belirtilmemişse rol adının girilmesini iste\n"
 
 #: dropuser.c:170
 #, c-format

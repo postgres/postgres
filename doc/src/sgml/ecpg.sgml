@@ -1483,6 +1483,10 @@ EXEC SQL END DECLARE SECTION;
 
     <sect4>
      <title>Typedefs</title>
+     <indexterm>
+      <primary>typedef</primary>
+      <secondary>in ECPG</secondary>
+     </indexterm>
 
      <para>
       Use the <literal>typedef</literal> keyword to map new types to already
@@ -1497,8 +1501,41 @@ EXEC SQL END DECLARE SECTION;
 <programlisting>
 EXEC SQL TYPE serial_t IS long;
 </programlisting>
-      This declaration does not need to be part of a declare section.
+      This declaration does not need to be part of a declare section;
+      that is, you can also write typedefs as normal C statements.
      </para>
+
+     <para>
+      Any word you declare as a typedef cannot be used as a SQL keyword
+      in <literal>EXEC SQL</literal> commands later in the same program.
+      For example, this won't work:
+<programlisting>
+EXEC SQL BEGIN DECLARE SECTION;
+    typedef int start;
+EXEC SQL END DECLARE SECTION;
+...
+EXEC SQL START TRANSACTION;
+</programlisting>
+      ECPG will report a syntax error for <literal>START
+      TRANSACTION</literal>, because it no longer
+      recognizes <literal>START</literal> as a SQL keyword,
+      only as a typedef.
+      (If you have such a conflict, and renaming the typedef
+      seems impractical, you could write the SQL command
+      using <link linkend="ecpg-dynamic">dynamic SQL</link>.)
+     </para>
+
+     <note>
+      <para>
+       In <productname>PostgreSQL</productname> releases before v16, use
+       of SQL keywords as typedef names was likely to result in syntax
+       errors associated with use of the typedef itself, rather than use
+       of the name as a SQL keyword.  The new behavior is less likely to
+       cause problems when an existing ECPG application is recompiled in
+       a new <productname>PostgreSQL</productname> release with new
+       keywords.
+      </para>
+     </note>
     </sect4>
 
     <sect4>
@@ -1890,7 +1927,8 @@ EXEC SQL SELECT b INTO :val :val_ind FROM test1;
 </programlisting>
     The indicator variable <varname>val_ind</varname> will be zero if
     the value was not null, and it will be negative if the value was
-    null.
+    null.  (See <xref linkend="ecpg-oracle-compat"/> to enable
+    Oracle-specific behavior.)
    </para>
 
    <para>
@@ -8275,7 +8313,7 @@ EXEC SQL CLOSE DATABASE;
       <term><literal>FREE cursor_name</literal></term>
       <listitem>
        <para>
-        Due to the differences how ECPG works compared to Informix's ESQL/C (i.e., which steps
+        Due to differences in how ECPG works compared to Informix's ESQL/C (namely, which steps
         are purely grammar transformations and which steps rely on the underlying run-time library)
         there is no <literal>FREE cursor_name</literal> statement in ECPG. This is because in ECPG,
         <literal>DECLARE CURSOR</literal> doesn't translate to a function call into
@@ -9797,6 +9835,42 @@ risnull(CINTTYPE, (char *) &i);
     </variablelist>
    </para>
   </sect2>
+ </sect1>
+
+ <sect1 id="ecpg-oracle-compat">
+  <title><productname>Oracle</productname> Compatibility Mode</title>
+  <para>
+   <command>ecpg</command> can be run in a so-called <firstterm>Oracle
+   compatibility mode</firstterm>. If this mode is active, it tries to
+   behave as if it were Oracle <productname>Pro*C</productname>.
+  </para>
+
+  <para>
+   Specifically, this mode changes <command>ecpg</command> in three ways:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Pad character arrays receiving character string types with
+      trailing spaces to the specified length
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Zero byte terminate these character arrays, and set the indicator
+      variable if truncation occurs
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Set the null indicator to <literal>-1</literal> when character
+      arrays receive empty character string types
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
  </sect1>
 
  <sect1 id="ecpg-develop">

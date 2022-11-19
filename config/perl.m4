@@ -11,11 +11,11 @@ if test "$PERL"; then
   pgac_perl_version=`$PERL -v 2>/dev/null | sed -n ['s/This is perl.*v[a-z ]*\([0-9]\.[0-9][0-9.]*\).*$/\1/p']`
   AC_MSG_NOTICE([using perl $pgac_perl_version])
   if echo "$pgac_perl_version" | sed ['s/[.a-z_]/ /g'] | \
-    $AWK '{ if ([$]1 == 5 && ([$]2 > 8 || ($[2] == 8 && [$]3 >= 3))) exit 1; else exit 0;}'
+    $AWK '{ if ([$]1 == 5 && ([$]2 >= 14)) exit 1; else exit 0;}'
   then
     AC_MSG_WARN([
 *** The installed version of Perl, $PERL, is too old to use with PostgreSQL.
-*** Perl version 5.8.3 or later is required, but this is $pgac_perl_version.])
+*** Perl version 5.14 or later is required, but this is $pgac_perl_version.])
     PERL=""
   fi
 fi
@@ -81,9 +81,9 @@ AC_MSG_RESULT([$perl_embed_ccflags])
 # PGAC_CHECK_PERL_EMBED_LDFLAGS
 # -----------------------------
 # We are after Embed's ldopts, but without the subset mentioned in
-# Config's ccdlflags; and also without any -arch flags, which recent
-# Apple releases put in unhelpfully.  (If you want a multiarch build
-# you'd better be specifying it in more places than plperl's final link.)
+# Config's ccdlflags and ldflags.  (Those are the choices of those who
+# built the Perl installation, which are not necessarily appropriate
+# for building PostgreSQL.)
 AC_DEFUN([PGAC_CHECK_PERL_EMBED_LDFLAGS],
 [AC_REQUIRE([PGAC_PATH_PERL])
 AC_MSG_CHECKING(for flags to link embedded Perl)
@@ -99,8 +99,8 @@ if test "$PORTNAME" = "win32" ; then
 	fi
 else
 	pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
-	pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
-	perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%" -e ["s/ -arch [-a-zA-Z0-9_]*//g"]`
+	pgac_tmp2=`$PERL -MConfig -e 'print "$Config{ccdlflags} $Config{ldflags}"'`
+	perl_embed_ldflags=`echo X"$pgac_tmp1" | sed -e "s/^X//" -e "s%$pgac_tmp2%%"`
 fi
 AC_SUBST(perl_embed_ldflags)dnl
 if test -z "$perl_embed_ldflags" ; then

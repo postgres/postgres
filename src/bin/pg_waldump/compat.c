@@ -46,19 +46,19 @@ timestamptz_to_time_t(TimestampTz t)
  * moved into src/common.  That's a large project though.
  */
 const char *
-timestamptz_to_str(TimestampTz dt)
+timestamptz_to_str(TimestampTz t)
 {
 	static char buf[MAXDATELEN + 1];
 	char		ts[MAXDATELEN + 1];
 	char		zone[MAXDATELEN + 1];
-	time_t		result = (time_t) timestamptz_to_time_t(dt);
+	time_t		result = (time_t) timestamptz_to_time_t(t);
 	struct tm  *ltime = localtime(&result);
 
 	strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", ltime);
 	strftime(zone, sizeof(zone), "%Z", ltime);
 
 	snprintf(buf, sizeof(buf), "%s.%06d %s",
-			 ts, (int) (dt % USECS_PER_SEC), zone);
+			 ts, (int) (t % USECS_PER_SEC), zone);
 
 	return buf;
 }

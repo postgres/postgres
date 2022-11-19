@@ -57,6 +57,13 @@ typedef struct RmgrData
 } RmgrData;
 </programlisting>
  </para>
+
+  <para>
+   The <filename>src/test/modules/test_custom_rmgrs</filename> module
+   contains a working example, which demonstrates usage of custom WAL
+   resource managers.
+  </para>
+
  <para>
   Then, register your new resource
   manager.
@@ -66,18 +73,18 @@ typedef struct RmgrData
  * Register a new custom WAL resource manager.
  *
  * Resource manager IDs must be globally unique across all extensions. Refer
- * to https://wiki.postgresql.org/wiki/CustomWALResourceManager to reserve a
+ * to https://wiki.postgresql.org/wiki/CustomWALResourceManagers to reserve a
  * unique RmgrId for your extension, to avoid conflicts with other extension
  * developers. During development, use RM_EXPERIMENTAL_ID to avoid needlessly
  * reserving a new ID.
  */
-extern void RegisterCustomRmgr(RmgrId rmid, RmgrData *rmgr);
+extern void RegisterCustomRmgr(RmgrId rmid, const RmgrData *rmgr);
 </programlisting>
   <function>RegisterCustomRmgr</function> must be called from the
   extension module's <link linkend="xfunc-c-dynload">_PG_init</link> function.
   While developing a new extension, use <literal>RM_EXPERIMENTAL_ID</literal>
-  for <parameter>rmid</parameter>. When you ready to release the extension to
-  users, reserve a new resource manager ID at the <ulink
+  for <parameter>rmid</parameter>. When you are ready to release the extension
+  to users, reserve a new resource manager ID at the <ulink
   url="https://wiki.postgresql.org/wiki/CustomWALResourceManagers">Custom WAL
   Resource Manager</ulink> page.
  </para>

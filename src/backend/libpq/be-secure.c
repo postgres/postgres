@@ -24,10 +24,8 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
-#endif
 
 #include "libpq/libpq.h"
 #include "miscadmin.h"
@@ -60,8 +58,8 @@ char	   *SSLECDHCurve;
 /* GUC variable: if false, prefer client ciphers */
 bool		SSLPreferServerCiphers;
 
-int			ssl_min_protocol_version;
-int			ssl_max_protocol_version;
+int			ssl_min_protocol_version = PG_TLS1_2_VERSION;
+int			ssl_max_protocol_version = PG_TLS_ANY;
 
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/

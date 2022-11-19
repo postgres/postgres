@@ -139,10 +139,11 @@ DROP TABLE stxdinh, stxdinh1, stxdinh2;
 CREATE TABLE stxdinp(i int, a int, b int) PARTITION BY RANGE (i);
 CREATE TABLE stxdinp1 PARTITION OF stxdinp FOR VALUES FROM (1) TO (100);
 INSERT INTO stxdinp SELECT 1, a/100, a/100 FROM generate_series(1, 999) a;
-CREATE STATISTICS stxdinp ON a, b FROM stxdinp;
+CREATE STATISTICS stxdinp ON (a + 1), a, b FROM stxdinp;
 VACUUM ANALYZE stxdinp; -- partitions are processed recursively
 SELECT 1 FROM pg_statistic_ext WHERE stxrelid = 'stxdinp'::regclass;
 SELECT * FROM check_estimated_rows('SELECT a, b FROM stxdinp GROUP BY 1, 2');
+SELECT * FROM check_estimated_rows('SELECT a + 1, b FROM ONLY stxdinp GROUP BY 1, 2');
 DROP TABLE stxdinp;
 
 -- basic test for statistics on expressions
@@ -165,14 +166,21 @@ CREATE STATISTICS ab1_exprstat_4 ON date_trunc('day', d) FROM ab1;
 -- date_trunc on timestamp is immutable
 CREATE STATISTICS ab1_exprstat_5 ON date_trunc('day', c) FROM ab1;
 
+-- check use of a boolean-returning expression
+CREATE STATISTICS ab1_exprstat_6 ON
+  (case a when 1 then true else false end), b FROM ab1;
+
 -- insert some data and run analyze, to test that these cases build properly
 INSERT INTO ab1
-SELECT
-    generate_series(1,10),
-    generate_series(1,10),
-    generate_series('2020-10-01'::timestamp, '2020-10-10'::timestamp, interval '1 day'),
-    generate_series('2020-10-01'::timestamptz, '2020-10-10'::timestamptz, interval '1 day');
+SELECT x / 10, x / 3,
+    '2020-10-01'::timestamp + x * interval '1 day',
+    '2020-10-01'::timestamptz + x * interval '1 day'
+FROM generate_series(1, 100) x;
 ANALYZE ab1;
+
+-- apply some stats
+SELECT * FROM check_estimated_rows('SELECT * FROM ab1 WHERE (case a when 1 then true else false end) AND b=2');
+
 DROP TABLE ab1;
 
 -- Verify supported object types for extended statistics
@@ -909,7 +917,8 @@ CREATE TABLE mcv_lists (
     b VARCHAR,
     filler3 DATE,
     c INT,
-    d TEXT
+    d TEXT,
+    ia INT[]
 )
 WITH (autovacuum_enabled = off);
 
@@ -958,8 +967,9 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE mod(a,7) = 1 A
 TRUNCATE mcv_lists;
 DROP STATISTICS mcv_lists_stats;
 
-INSERT INTO mcv_lists (a, b, c, filler1)
-     SELECT mod(i,100), mod(i,50), mod(i,25), i FROM generate_series(1,5000) s(i);
+INSERT INTO mcv_lists (a, b, c, ia, filler1)
+     SELECT mod(i,100), mod(i,50), mod(i,25), array[mod(i,25)], i
+       FROM generate_series(1,5000) s(i);
 
 ANALYZE mcv_lists;
 
@@ -1008,9 +1018,11 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY[4, 5]) AND b IN (''1'', ''2'', ''3'') AND c > ANY (ARRAY[1, 2, 3])');
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY[4, 5]) AND b IN (''1'', ''2'', NULL, ''3'') AND c > ANY (ARRAY[1, 2, NULL, 3])');
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = ANY (ARRAY[4,5]) AND 4 = ANY(ia)');
 
 -- create statistics
-CREATE STATISTICS mcv_lists_stats (mcv) ON a, b, c FROM mcv_lists;
+CREATE STATISTICS mcv_lists_stats (mcv) ON a, b, c, ia FROM mcv_lists;
 
 ANALYZE mcv_lists;
 
@@ -1061,6 +1073,8 @@ SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY[4, 5]) AND b IN (''1'', ''2'', ''3'') AND c > ANY (ARRAY[1, 2, 3])');
 
 SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a < ALL (ARRAY[4, 5]) AND b IN (''1'', ''2'', NULL, ''3'') AND c > ANY (ARRAY[1, 2, NULL, 3])');
+
+SELECT * FROM check_estimated_rows('SELECT * FROM mcv_lists WHERE a = ANY (ARRAY[4,5]) AND 4 = ANY(ia)');
 
 -- check change of unrelated column type does not reset the MCV statistics
 ALTER TABLE mcv_lists ALTER COLUMN d TYPE VARCHAR(64);
@@ -1555,12 +1569,12 @@ ANALYZE tststats.priv_test_tbl;
 
 -- Check printing info about extended statistics by \dX
 create table stts_t1 (a int, b int);
-create statistics stts_1 (ndistinct) on a, b from stts_t1;
-create statistics stts_2 (ndistinct, dependencies) on a, b from stts_t1;
-create statistics stts_3 (ndistinct, dependencies, mcv) on a, b from stts_t1;
+create statistics (ndistinct) on a, b from stts_t1;
+create statistics (ndistinct, dependencies) on a, b from stts_t1;
+create statistics (ndistinct, dependencies, mcv) on a, b from stts_t1;
 
 create table stts_t2 (a int, b int, c int);
-create statistics stts_4 on b, c from stts_t2;
+create statistics on b, c from stts_t2;
 
 create table stts_t3 (col1 int, col2 int, col3 int);
 create statistics stts_hoge on col1, col2, col3 from stts_t3;
@@ -1575,12 +1589,20 @@ analyze stts_t1;
 set search_path to public, stts_s1, stts_s2, tststats;
 
 \dX
-\dX stts_?
+\dX stts_t*
 \dX *stts_hoge
 \dX+
-\dX+ stts_?
+\dX+ stts_t*
 \dX+ *stts_hoge
 \dX+ stts_s2.stts_yama
+
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON a, b, (a+b), (a-b) FROM stts_t1;
+create statistics (mcv) ON (a+b), (a-b) FROM stts_t1;
+\dX stts_t*expr*
+drop statistics stts_t1_a_b_expr_expr_stat;
+drop statistics stts_t1_a_b_expr_expr_stat1;
+drop statistics stts_t1_expr_expr_stat;
 
 set search_path to public, stts_s1;
 \dX
@@ -1600,6 +1622,10 @@ CREATE USER regress_stats_user1;
 GRANT USAGE ON SCHEMA tststats TO regress_stats_user1;
 SET SESSION AUTHORIZATION regress_stats_user1;
 SELECT * FROM tststats.priv_test_tbl; -- Permission denied
+
+-- Check individual columns if we don't have table privilege
+SELECT * FROM tststats.priv_test_tbl
+  WHERE a = 1 and tststats.priv_test_tbl.* > (1, 1) is not null;
 
 -- Attempt to gain access using a leaky operator
 CREATE FUNCTION op_leak(int, int) RETURNS bool

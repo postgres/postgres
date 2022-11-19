@@ -774,6 +774,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->aggstar = agg_star;
 		aggref->aggvariadic = func_variadic;
 		aggref->aggkind = aggkind;
+		aggref->aggpresorted = false;
 		/* agglevelsup will be set by transformAggregateCall */
 		aggref->aggsplit = AGGSPLIT_SIMPLE; /* planner might change this */
 		aggref->aggno = -1;		/* planner will set aggno and aggtransno */

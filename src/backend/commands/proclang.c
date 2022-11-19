@@ -134,7 +134,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 
 		/* This is currently pointless, since we already checked superuser */
 #ifdef NOT_USED
-		if (!pg_language_ownercheck(oldform->oid, languageOwner))
+		if (!object_ownercheck(LanguageRelationId, oldform->oid, languageOwner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_LANGUAGE,
 						   languageName);
 #endif

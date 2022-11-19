@@ -110,7 +110,7 @@ log_locus_callback(const char **filename, uint64 *lineno)
 	}
 }
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 static void
 empty_signal_handler(SIGNAL_ARGS)
 {
@@ -247,8 +247,8 @@ main(int argc, char *argv[])
 	do
 	{
 #define PARAMS_ARRAY_SIZE	8
-		const char **keywords = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*keywords));
-		const char **values = pg_malloc(PARAMS_ARRAY_SIZE * sizeof(*values));
+		const char **keywords = pg_malloc_array(const char *, PARAMS_ARRAY_SIZE);
+		const char **values = pg_malloc_array(const char *, PARAMS_ARRAY_SIZE);
 
 		keywords[0] = "host";
 		values[0] = options.host;
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 
 	psql_setup_cancel_handler();
 
-#ifdef HAVE_POSIX_DECL_SIGWAIT
+#ifndef WIN32
 
 	/*
 	 * do_watch() needs signal handlers installed (otherwise sigwait() will
@@ -426,7 +426,14 @@ main(int argc, char *argv[])
 
 		if (options.single_txn)
 		{
-			if ((res = PSQLexec("COMMIT")) == NULL)
+			/*
+			 * Rollback the contents of the single transaction if the caller
+			 * has set ON_ERROR_STOP and one of the steps has failed.  This
+			 * check needs to match the one done a couple of lines above.
+			 */
+			res = PSQLexec((successResult != EXIT_SUCCESS && pset.on_error_stop) ?
+						   "ROLLBACK" : "COMMIT");
+			if (res == NULL)
 			{
 				if (pset.on_error_stop)
 				{
@@ -743,7 +750,7 @@ simple_action_list_append(SimpleActionList *list,
 {
 	SimpleActionListCell *cell;
 
-	cell = (SimpleActionListCell *) pg_malloc(sizeof(SimpleActionListCell));
+	cell = pg_malloc_object(SimpleActionListCell);
 
 	cell->next = NULL;
 	cell->action = action;

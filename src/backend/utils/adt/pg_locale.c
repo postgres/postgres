@@ -60,6 +60,7 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 #include "utils/formatting.h"
+#include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -118,7 +119,7 @@ static HTAB *collation_cache = NULL;
 
 
 #if defined(WIN32) && defined(LC_MESSAGES)
-static char *IsoLocaleName(const char *);	/* MSVC specific */
+static char *IsoLocaleName(const char *);
 #endif
 
 #ifdef USE_ICU
@@ -374,26 +375,16 @@ assign_locale_messages(const char *newval, void *extra)
 static void
 free_struct_lconv(struct lconv *s)
 {
-	if (s->decimal_point)
-		free(s->decimal_point);
-	if (s->thousands_sep)
-		free(s->thousands_sep);
-	if (s->grouping)
-		free(s->grouping);
-	if (s->int_curr_symbol)
-		free(s->int_curr_symbol);
-	if (s->currency_symbol)
-		free(s->currency_symbol);
-	if (s->mon_decimal_point)
-		free(s->mon_decimal_point);
-	if (s->mon_thousands_sep)
-		free(s->mon_thousands_sep);
-	if (s->mon_grouping)
-		free(s->mon_grouping);
-	if (s->positive_sign)
-		free(s->positive_sign);
-	if (s->negative_sign)
-		free(s->negative_sign);
+	free(s->decimal_point);
+	free(s->thousands_sep);
+	free(s->grouping);
+	free(s->int_curr_symbol);
+	free(s->currency_symbol);
+	free(s->mon_decimal_point);
+	free(s->mon_thousands_sep);
+	free(s->mon_grouping);
+	free(s->positive_sign);
+	free(s->negative_sign);
 }
 
 /*
@@ -960,7 +951,8 @@ cache_locale_time(void)
  * [2] https://docs.microsoft.com/en-us/windows/win32/intl/locale-names
  */
 
-#if _MSC_VER >= 1900
+#if defined(_MSC_VER)
+
 /*
  * Callback function for EnumSystemLocalesEx() in get_iso_localename().
  *
@@ -1099,8 +1091,11 @@ get_iso_localename(const char *winlocname)
 			return NULL;
 
 		/*
-		 * Simply replace the hyphen with an underscore.  See comments in
-		 * IsoLocaleName.
+		 * Since the message catalogs sit on a case-insensitive filesystem, we
+		 * need not standardize letter case here.  So long as we do not ship
+		 * message catalogs for which it would matter, we also need not
+		 * translate the script/variant portion, e.g.  uz-Cyrl-UZ to
+		 * uz_UZ@cyrillic.  Simply replace the hyphen with an underscore.
 		 */
 		hyphen = strchr(iso_lc_messages, '-');
 		if (hyphen)
@@ -1110,12 +1105,10 @@ get_iso_localename(const char *winlocname)
 
 	return NULL;
 }
-#endif							/* _MSC_VER >= 1900 */
 
 static char *
 IsoLocaleName(const char *winlocname)
 {
-#if defined(_MSC_VER)
 	static char iso_lc_messages[LOCALE_NAME_MAX_LENGTH];
 
 	if (pg_strcasecmp("c", winlocname) == 0 ||
@@ -1125,49 +1118,19 @@ IsoLocaleName(const char *winlocname)
 		return iso_lc_messages;
 	}
 	else
-	{
-#if (_MSC_VER >= 1900)			/* Visual Studio 2015 or later */
 		return get_iso_localename(winlocname);
-#else
-		_locale_t	loct;
-
-		loct = _create_locale(LC_CTYPE, winlocname);
-		if (loct != NULL)
-		{
-			size_t		rc;
-			char	   *hyphen;
-
-			/* Locale names use only ASCII, any conversion locale suffices. */
-			rc = wchar2char(iso_lc_messages, loct->locinfo->locale_name[LC_CTYPE],
-							sizeof(iso_lc_messages), NULL);
-			_free_locale(loct);
-			if (rc == -1 || rc == sizeof(iso_lc_messages))
-				return NULL;
-
-			/*
-			 * Since the message catalogs sit on a case-insensitive
-			 * filesystem, we need not standardize letter case here.  So long
-			 * as we do not ship message catalogs for which it would matter,
-			 * we also need not translate the script/variant portion, e.g.
-			 * uz-Cyrl-UZ to uz_UZ@cyrillic.  Simply replace the hyphen with
-			 * an underscore.
-			 *
-			 * Note that the locale name can be less-specific than the value
-			 * we would derive under earlier Visual Studio releases.  For
-			 * example, French_France.1252 yields just "fr".  This does not
-			 * affect any of the country-specific message catalogs available
-			 * as of this writing (pt_BR, zh_CN, zh_TW).
-			 */
-			hyphen = strchr(iso_lc_messages, '-');
-			if (hyphen)
-				*hyphen = '_';
-			return iso_lc_messages;
-		}
-#endif							/* Visual Studio 2015 or later */
-	}
-#endif							/* defined(_MSC_VER) */
-	return NULL;				/* Not supported on this version of msvc/mingw */
 }
+
+#else							/* !defined(_MSC_VER) */
+
+static char *
+IsoLocaleName(const char *winlocname)
+{
+	return NULL;				/* Not supported on MinGW */
+}
+
+#endif							/* defined(_MSC_VER) */
+
 #endif							/* WIN32 && LC_MESSAGES */
 
 
@@ -1625,7 +1588,7 @@ pg_newlocale_from_collation(Oid collid)
 		}
 
 		datum = SysCacheGetAttr(COLLOID, tp, Anum_pg_collation_collversion,
-									  &isnull);
+								&isnull);
 		if (!isnull)
 		{
 			char	   *actual_versionstr;
@@ -1729,7 +1692,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 		else
 			ereport(ERROR,
 					(errmsg("could not load locale \"%s\"", collcollate)));
-#elif defined(WIN32) && _WIN32_WINNT >= 0x0600
+#elif defined(WIN32)
 		/*
 		 * If we are targeting Windows Vista and above, we can ask for a name
 		 * given a collation name (earlier versions required a location code
@@ -1757,7 +1720,7 @@ get_collation_actual_version(char collprovider, const char *collcollate)
 							collcollate,
 							GetLastError())));
 		}
-		collversion = psprintf("%d.%d,%d.%d",
+		collversion = psprintf("%ld.%ld,%ld.%ld",
 							   (version.dwNLSVersion >> 8) & 0xFFFF,
 							   version.dwNLSVersion & 0xFF,
 							   (version.dwDefinedVersion >> 8) & 0xFFFF,
@@ -1992,7 +1955,7 @@ check_icu_locale(const char *icu_locale)
 {
 #ifdef USE_ICU
 	UCollator  *collator;
-	UErrorCode  status;
+	UErrorCode	status;
 
 	status = U_ZERO_ERROR;
 	collator = ucol_open(icu_locale, &status);

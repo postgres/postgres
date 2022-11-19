@@ -1151,6 +1151,7 @@ ensureCleanShutdown(const char *argv0)
 	appendPQExpBufferStr(postgres_cmd, " template1 < ");
 	appendShellString(postgres_cmd, DEVNULL);
 
+	fflush(NULL);
 	if (system(postgres_cmd->data) != 0)
 	{
 		pg_log_error("postgres single-user mode in target cluster failed");

@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir       = PostgreSQL::Test::Utils::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 my $node = PostgreSQL::Test::Cluster->new('main');
 my $port = $node->port;
@@ -30,7 +30,7 @@ my ($cmd, $stdout, $stderr, $result);
 
 command_fails_like(
 	[ "pg_dump", '-p', $port, '--include-foreign-data=s0', 'postgres' ],
-	qr/foreign-data wrapper \"dummy\" has no handler\r?\ndetail: Query was: .*t0/,
+	qr/foreign-data wrapper \"dummy\" has no handler\r?\npg_dump: detail: Query was: .*t0/,
 	"correctly fails to dump a foreign table from a dummy FDW");
 
 command_ok(

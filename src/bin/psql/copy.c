@@ -288,8 +288,7 @@ do_copy(const char *args)
 		{
 			if (options->program)
 			{
-				fflush(stdout);
-				fflush(stderr);
+				fflush(NULL);
 				errno = 0;
 				copystream = popen(options->file, PG_BINARY_R);
 			}
@@ -307,10 +306,9 @@ do_copy(const char *args)
 		{
 			if (options->program)
 			{
-				fflush(stdout);
-				fflush(stderr);
-				errno = 0;
+				fflush(NULL);
 				disable_sigpipe_trap();
+				errno = 0;
 				copystream = popen(options->file, PG_BINARY_W);
 			}
 			else
@@ -389,8 +387,7 @@ do_copy(const char *args)
 
 					pg_log_error("%s: %s", options->file,
 								 reason ? reason : "");
-					if (reason)
-						free(reason);
+					free(reason);
 				}
 				success = false;
 			}

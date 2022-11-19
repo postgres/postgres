@@ -431,13 +431,8 @@ recurse_dir(const char *datadir, const char *parentpath,
 			/* recurse to handle subdirectories */
 			recurse_dir(datadir, path, callback);
 		}
-#ifndef WIN32
 		else if (S_ISLNK(fst.st_mode))
-#else
-		else if (pgwin32_is_junction(fullpath))
-#endif
 		{
-#if defined(HAVE_READLINK) || defined(WIN32)
 			char		link_target[MAXPGPATH];
 			int			len;
 
@@ -460,10 +455,6 @@ recurse_dir(const char *datadir, const char *parentpath,
 			if ((parentpath && strcmp(parentpath, "pg_tblspc") == 0) ||
 				strcmp(path, "pg_wal") == 0)
 				recurse_dir(datadir, path, callback);
-#else
-			pg_fatal("\"%s\" is a symbolic link, but symbolic links are not supported on this platform",
-					 fullpath);
-#endif							/* HAVE_READLINK */
 		}
 	}
 

@@ -90,7 +90,7 @@ bool		trace_syncscan = false;
  */
 typedef struct ss_scan_location_t
 {
-	RelFileNode relfilenode;	/* identity of a relation */
+	RelFileLocator relfilelocator;	/* identity of a relation */
 	BlockNumber location;		/* last-reported location in the relation */
 } ss_scan_location_t;
 
@@ -115,7 +115,7 @@ typedef struct ss_scan_locations_t
 static ss_scan_locations_t *scan_locations;
 
 /* prototypes for internal functions */
-static BlockNumber ss_search(RelFileNode relfilenode,
+static BlockNumber ss_search(RelFileLocator relfilelocator,
 							 BlockNumber location, bool set);
 
 
@@ -159,9 +159,9 @@ SyncScanShmemInit(void)
 			 * these invalid entries will fall off the LRU list and get
 			 * replaced with real entries.
 			 */
-			item->location.relfilenode.spcNode = InvalidOid;
-			item->location.relfilenode.dbNode = InvalidOid;
-			item->location.relfilenode.relNode = InvalidOid;
+			item->location.relfilelocator.spcOid = InvalidOid;
+			item->location.relfilelocator.dbOid = InvalidOid;
+			item->location.relfilelocator.relNumber = InvalidRelFileNumber;
 			item->location.location = InvalidBlockNumber;
 
 			item->prev = (i > 0) ?
@@ -176,10 +176,10 @@ SyncScanShmemInit(void)
 
 /*
  * ss_search --- search the scan_locations structure for an entry with the
- *		given relfilenode.
+ *		given relfilelocator.
  *
  * If "set" is true, the location is updated to the given location.  If no
- * entry for the given relfilenode is found, it will be created at the head
+ * entry for the given relfilelocator is found, it will be created at the head
  * of the list with the given location, even if "set" is false.
  *
  * In any case, the location after possible update is returned.
@@ -188,7 +188,7 @@ SyncScanShmemInit(void)
  * data structure.
  */
 static BlockNumber
-ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
+ss_search(RelFileLocator relfilelocator, BlockNumber location, bool set)
 {
 	ss_lru_item_t *item;
 
@@ -197,7 +197,8 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 	{
 		bool		match;
 
-		match = RelFileNodeEquals(item->location.relfilenode, relfilenode);
+		match = RelFileLocatorEquals(item->location.relfilelocator,
+									 relfilelocator);
 
 		if (match || item->next == NULL)
 		{
@@ -207,7 +208,7 @@ ss_search(RelFileNode relfilenode, BlockNumber location, bool set)
 			 */
 			if (!match)
 			{
-				item->location.relfilenode = relfilenode;
+				item->location.relfilelocator = relfilelocator;
 				item->location.location = location;
 			}
 			else if (set)
@@ -255,7 +256,7 @@ ss_get_location(Relation rel, BlockNumber relnblocks)
 	BlockNumber startloc;
 
 	LWLockAcquire(SyncScanLock, LW_EXCLUSIVE);
-	startloc = ss_search(rel->rd_node, 0, false);
+	startloc = ss_search(rel->rd_locator, 0, false);
 	LWLockRelease(SyncScanLock);
 
 	/*
@@ -281,8 +282,8 @@ ss_get_location(Relation rel, BlockNumber relnblocks)
  * ss_report_location --- update the current scan location
  *
  * Writes an entry into the shared Sync Scan state of the form
- * (relfilenode, blocknumber), overwriting any existing entry for the
- * same relfilenode.
+ * (relfilelocator, blocknumber), overwriting any existing entry for the
+ * same relfilelocator.
  */
 void
 ss_report_location(Relation rel, BlockNumber location)
@@ -309,7 +310,7 @@ ss_report_location(Relation rel, BlockNumber location)
 	{
 		if (LWLockConditionalAcquire(SyncScanLock, LW_EXCLUSIVE))
 		{
-			(void) ss_search(rel->rd_node, location, true);
+			(void) ss_search(rel->rd_locator, location, true);
 			LWLockRelease(SyncScanLock);
 		}
 #ifdef TRACE_SYNCSCAN

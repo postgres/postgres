@@ -317,7 +317,7 @@ UPDATE pg_settings SET setting = reset_val WHERE name = 'configuration_parameter
 
    </sect2>
 
-   <sect2>
+   <sect2 id="config-setting-shell">
     <title>Parameter Interaction via the Shell</title>
 
      <para>
@@ -896,6 +896,13 @@ include_dir 'conf.d'
        </para>
       </listitem>
      </varlistentry>
+     </variablelist>
+     </sect2>
+
+     <sect2 id="runtime-config-tcp-settings">
+     <title>TCP Settings</title>
+
+     <variablelist>
 
      <varlistentry id="guc-tcp-keepalives-idle" xreflabel="tcp_keepalives_idle">
       <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)
@@ -2036,7 +2043,7 @@ include_dir 'conf.d'
         and <literal>mmap</literal> (to simulate shared memory using
         memory-mapped files stored in the data directory).
         Not all values are supported on all platforms; the first supported
-        option is the default for that platform.  The use of the
+        option is usually the default for that platform.  The use of the
         <literal>mmap</literal> option, which is not the default on any platform,
         is generally discouraged because the operating system may write
         modified pages back to disk repeatedly, increasing system I/O load;
@@ -2764,9 +2771,10 @@ include_dir 'conf.d'
         levels.  This parameter can only be set at server start.
        </para>
        <para>
-        In <literal>minimal</literal> level, no information is logged for
-        permanent relations for the remainder of a transaction that creates or
-        rewrites them.  This can make operations much faster (see
+        The <literal>minimal</literal> level generates the least WAL
+        volume.  It logs no row information for permanent relations
+        in transactions that create or
+        rewrite them.  This can make operations much faster (see
         <xref linkend="populate-pitr"/>).  Operations that initiate this
         optimization include:
         <simplelist>
@@ -2778,19 +2786,20 @@ include_dir 'conf.d'
          <member><command>REINDEX</command></member>
          <member><command>TRUNCATE</command></member>
         </simplelist>
-        But minimal WAL does not contain enough information to reconstruct the
-        data from a base backup and the WAL logs, so <literal>replica</literal> or
-        higher must be used to enable WAL archiving
-        (<xref linkend="guc-archive-mode"/>) and streaming replication.
+        However, minimal WAL does not contain sufficient information for
+        point-in-time recovery, so <literal>replica</literal> or
+        higher must be used to enable continuous archiving
+        (<xref linkend="guc-archive-mode"/>) and streaming binary replication.
+        In fact, the server will not even start in this mode if
+        <varname>max_wal_senders</varname> is non-zero.
         Note that changing <varname>wal_level</varname> to
-        <literal>minimal</literal> makes any base backups taken before
-        unavailable for archive recovery and standby server, which may
-        lead to data loss.
+        <literal>minimal</literal> makes previous base backups unusable
+        for point-in-time recovery and standby servers.
        </para>
        <para>
         In <literal>logical</literal> level, the same information is logged as
-        with <literal>replica</literal>, plus information needed to allow
-        extracting logical change sets from the WAL. Using a level of
+        with <literal>replica</literal>, plus information needed to
+        extract logical change sets from the WAL. Using a level of
         <literal>logical</literal> will increase the WAL volume, particularly if many
         tables are configured for <literal>REPLICA IDENTITY FULL</literal> and
         many <command>UPDATE</command> and <command>DELETE</command> statements are
@@ -3494,7 +3503,7 @@ include_dir 'conf.d'
         Maximum size to let the WAL grow during automatic
         checkpoints. This is a soft limit; WAL size can exceed
         <varname>max_wal_size</varname> under special circumstances, such as
-        heavy load, a failing <varname>archive_library</varname>, or a high
+        heavy load, a failing <varname>archive_command</varname> or <varname>archive_library</varname>, or a high
         <varname>wal_keep_size</varname> setting.
         If this value is specified without units, it is taken as megabytes.
         The default is 1 GB.
@@ -3543,6 +3552,7 @@ include_dir 'conf.d'
        <para>
         When <varname>archive_mode</varname> is enabled, completed WAL segments
         are sent to archive storage by setting
+        <xref linkend="guc-archive-command"/> or
         <xref linkend="guc-archive-library"/>. In addition to <literal>off</literal>,
         to disable, there are two modes: <literal>on</literal>, and
         <literal>always</literal>. During normal operation, there is no
@@ -3553,31 +3563,15 @@ include_dir 'conf.d'
         <xref linkend="continuous-archiving-in-standby"/> for details.
        </para>
        <para>
+        <varname>archive_mode</varname> is a separate setting from
+        <varname>archive_command</varname> and
+        <varname>archive_library</varname> so that
+        <varname>archive_command</varname> and
+        <varname>archive_library</varname> can be changed without leaving
+        archiving mode.
         This parameter can only be set at server start.
         <varname>archive_mode</varname> cannot be enabled when
         <varname>wal_level</varname> is set to <literal>minimal</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-archive-library" xreflabel="archive_library">
-      <term><varname>archive_library</varname> (<type>string</type>)
-      <indexterm>
-       <primary><varname>archive_library</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        The library to use for archiving completed WAL file segments.  If set to
-        an empty string (the default), archiving via shell is enabled, and
-        <xref linkend="guc-archive-command"/> is used.  Otherwise, the specified
-        shared library is used for archiving.  For more information, see
-        <xref linkend="backup-archiving-wal"/> and
-        <xref linkend="archive-modules"/>.
-       </para>
-       <para>
-        This parameter can only be set in the
-        <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3603,12 +3597,14 @@ include_dir 'conf.d'
        </para>
        <para>
         This parameter can only be set in the <filename>postgresql.conf</filename>
-        file or on the server command line.  It is ignored unless
+        file or on the server command line.  It is only used if
         <varname>archive_mode</varname> was enabled at server start and
-        <varname>archive_library</varname> specifies to archive via shell command.
+        <varname>archive_library</varname> is set to an empty string.  If both
+        <varname>archive_command</varname> and <varname>archive_library</varname>
+        are set, an error will be raised.
         If <varname>archive_command</varname> is an empty string (the default) while
-        <varname>archive_mode</varname> is enabled and <varname>archive_library</varname>
-        specifies archiving via shell, WAL archiving is temporarily
+        <varname>archive_mode</varname> is enabled (and <varname>archive_library</varname>
+        is set to an empty string), WAL archiving is temporarily
         disabled, but the server continues to accumulate WAL segment files in
         the expectation that a command will soon be provided.  Setting
         <varname>archive_command</varname> to a command that does nothing but
@@ -3616,6 +3612,31 @@ include_dir 'conf.d'
         Windows), effectively disables
         archiving, but also breaks the chain of WAL files needed for
         archive recovery, so it should only be used in unusual circumstances.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-archive-library" xreflabel="archive_library">
+      <term><varname>archive_library</varname> (<type>string</type>)
+      <indexterm>
+       <primary><varname>archive_library</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        The library to use for archiving completed WAL file segments.  If set to
+        an empty string (the default), archiving via shell is enabled, and
+        <xref linkend="guc-archive-command"/> is used.  If both
+        <varname>archive_command</varname> and <varname>archive_library</varname>
+        are set, an error will be raised.  Otherwise, the specified
+        shared library is used for archiving. The WAL archiver process is
+        restarted by the postmaster when this parameter changes. For more
+        information, see <xref linkend="backup-archiving-wal"/> and
+        <xref linkend="archive-modules"/>.
+       </para>
+       <para>
+        This parameter can only be set in the
+        <filename>postgresql.conf</filename> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3628,7 +3649,7 @@ include_dir 'conf.d'
       </term>
       <listitem>
        <para>
-        The <xref linkend="guc-archive-library"/> is only invoked for
+        The <xref linkend="guc-archive-command"/> or <xref linkend="guc-archive-library"/> is only invoked for
         completed WAL segments. Hence, if your server generates little WAL
         traffic (or has slack periods where it does so), there could be a
         long delay between the completion of a transaction and its safe
@@ -4228,7 +4249,7 @@ restore_command = 'copy "C:\\server\\archivedir\\%f" "%p"'  # Windows
        </term>
        <listitem>
        <para>
-        Specifies the minimum size of past log file segments kept in the
+        Specifies the minimum size of past WAL files kept in the
         <filename>pg_wal</filename>
         directory, in case a standby server needs to fetch them for streaming
         replication. If a standby
@@ -4482,7 +4503,8 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
       <listitem>
        <para>
         Specifies the number of transactions by which <command>VACUUM</command> and
-        <acronym>HOT</acronym> updates will defer cleanup of dead row versions. The
+        <link linkend="storage-hot"><acronym>HOT</acronym> updates</link>
+        will defer cleanup of dead row versions. The
         default is zero transactions, meaning that dead row versions can be
         removed as soon as possible, that is, as soon as they are no longer
         visible to any open transaction.  You may wish to set this to a
@@ -4821,7 +4843,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         needs to control the amount of time to wait for new WAL data to be
         available. For example, in archive recovery, it is possible to
         make the recovery more responsive in the detection of a new WAL
-        log file by reducing the value of this parameter. On a system with
+        file by reducing the value of this parameter. On a system with
         low WAL activity, increasing it reduces the amount of requests necessary
         to access WAL archives, something useful for example in cloud
         environments where the number of times an infrastructure is accessed
@@ -4922,7 +4944,7 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
      <variablelist>
 
      <varlistentry id="guc-max-logical-replication-workers" xreflabel="max_logical_replication_workers">
-      <term><varname>max_logical_replication_workers</varname> (<type>int</type>)
+      <term><varname>max_logical_replication_workers</varname> (<type>integer</type>)
       <indexterm>
        <primary><varname>max_logical_replication_workers</varname> configuration parameter</primary>
       </indexterm>
@@ -5041,20 +5063,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
        <para>
         Enables or disables the query planner's use of gather
         merge plan types. The default is <literal>on</literal>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-enable-groupby-reordering" xreflabel="enable_group_by_reordering">
-      <term><varname>enable_group_by_reordering</varname> (<type>boolean</type>)
-      <indexterm>
-       <primary><varname>enable_group_by_reordering</varname> configuration parameter</primary>
-      </indexterm>
-      </term>
-      <listitem>
-       <para>
-        Enables or disables reordering of keys in <literal>GROUP BY</literal>
-        clause. The default is <literal>on</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -6374,7 +6382,7 @@ local0.*    /var/log/postgresql
        <para>
         Example:  To keep 7 days of logs, one log file per day named
         <literal>server_log.Mon</literal>, <literal>server_log.Tue</literal>,
-        etc, and automatically overwrite last week's log with this week's log,
+        etc., and automatically overwrite last week's log with this week's log,
         set <varname>log_filename</varname> to <literal>server_log.%a</literal>,
         <varname>log_truncate_on_rotation</varname> to <literal>on</literal>, and
         <varname>log_rotation_age</varname> to <literal>1440</literal>.
@@ -6749,7 +6757,7 @@ local0.*    /var/log/postgresql
          setting has the default value of 10 seconds, then a messages will be
          logged for syncing the data directory after it has been in progress
          for 10 seconds and again after it has been in progress for 20 seconds,
-         but nothing will be logged for resetting unlogged operations.
+         but nothing will be logged for resetting unlogged relations.
         </para>
        </listitem>
      </varlistentry>
@@ -6850,6 +6858,13 @@ local0.*    /var/log/postgresql
     </sect2>
      <sect2 id="runtime-config-logging-what">
      <title>What to Log</title>
+
+     <note>
+      <para>
+       What you choose to log can have security implications;  see
+       <xref linkend="logfile-maintenance"/>.
+      </para>
+     </note>
 
      <variablelist>
 
@@ -7449,6 +7464,10 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
          planning).  Set <varname>log_min_error_statement</varname> to
          <literal>ERROR</literal> (or lower) to log such statements.
         </para>
+        <para>
+         Logged statements might reveal sensitive data and even contain
+         plaintext passwords.
+        </para>
        </note>
       </listitem>
      </varlistentry>
@@ -7663,12 +7682,13 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      </para>
 
      <para>
-      Each log line is serialized as a JSON object with the following
-      set of keys and their associated values.
+      Each log line is serialized as a JSON object with the set of keys and
+      their associated values shown in <xref
+      linkend="runtime-config-logging-jsonlog-keys-values"/>.
      </para>
 
-     <table>
-      <title>Keys and values of JSON log entries</title>
+     <table id="runtime-config-logging-jsonlog-keys-values">
+      <title>Keys and Values of JSON Log Entries</title>
       <tgroup cols="3">
        <thead>
         <row>
@@ -7785,7 +7805,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         </row>
         <row>
          <entry><literal>cursor_position</literal></entry>
-         <entry>string</entry>
+         <entry>number</entry>
          <entry>Cursor index into query string</entry>
         </row>
         <row>
@@ -7915,10 +7935,11 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         Enables the collection of information on the currently
         executing command of each session, along with its identifier and the
         time when that command began execution. This parameter is on by
-        default. Note that even when enabled, this information is not
-        visible to all users, only to superusers and the user owning
-        the session being reported on, so it should not represent a
-        security risk.
+        default. Note that even when enabled, this information is only
+        visible to superusers, roles with privileges of the
+        <literal>pg_read_all_stats</literal> role and the user owning the
+        sessions being reported on (including sessions belonging to a role they
+        have the privileges of), so it should not represent a security risk.
         Only superusers and users with the appropriate <literal>SET</literal>
         privilege can change this setting.
        </para>
@@ -8551,7 +8572,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
         alias <literal>pg_temp</literal><indexterm><primary>pg_temp</primary></indexterm>.  If it is not listed in the path then
         it is searched first (even before <literal>pg_catalog</literal>).  However,
         the temporary schema is only searched for relation (table, view,
-        sequence, etc) and data type names.  It is never searched for
+        sequence, etc.) and data type names.  It is never searched for
         function or operator names.
        </para>
 
@@ -10808,9 +10829,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      will accept a setting for any two-part parameter name.  Such variables
      are treated as placeholders and have no function until the module that
      defines them is loaded. When an extension module is loaded, it will add
-     its variable definitions, convert any placeholder values according to
-     those definitions, and issue warnings for any unrecognized placeholders
-     that begin with its extension name.
+     its variable definitions and convert any placeholder values according to
+     those definitions.  If there are any unrecognized placeholders
+     that begin with its extension name, warnings are issued and those
+     placeholders are removed.
     </para>
    </sect1>
 

@@ -228,8 +228,7 @@ DecodeTextArrayToBitmapset(Datum array)
 
 	if (ARR_NDIM(arr) != 1 || ARR_HASNULL(arr) || ARR_ELEMTYPE(arr) != TEXTOID)
 		elog(ERROR, "expected 1-D text array");
-	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-					  &elems, NULL, &nelems);
+	deconstruct_array_builtin(arr, TEXTOID, &elems, NULL, &nelems);
 
 	for (bms = NULL, i = 0; i < nelems; ++i)
 	{

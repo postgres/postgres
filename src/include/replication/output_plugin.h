@@ -35,6 +35,8 @@ typedef struct OutputPluginOptions
  */
 typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);
 
+extern PGDLLEXPORT void _PG_output_plugin_init(struct OutputPluginCallbacks *cb);
+
 /*
  * Callback that gets called in a user-defined plugin. ctx->private_data can
  * be set to some private data.

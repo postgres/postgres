@@ -20,7 +20,7 @@
 extern PlaceHolderVar *make_placeholder_expr(PlannerInfo *root, Expr *expr,
 											 Relids phrels);
 extern PlaceHolderInfo *find_placeholder_info(PlannerInfo *root,
-											  PlaceHolderVar *phv, bool create_new_ph);
+											  PlaceHolderVar *phv);
 extern void find_placeholders_in_jointree(PlannerInfo *root);
 extern void update_placeholder_eval_levels(PlannerInfo *root,
 										   SpecialJoinInfo *new_sjinfo);

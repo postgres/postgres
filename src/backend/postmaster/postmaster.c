@@ -70,16 +70,13 @@
 #include <time.h>
 #include <sys/wait.h>
 #include <ctype.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <sys/param.h>
 #include <netdb.h>
 #include <limits.h>
-
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 
 #ifdef USE_BONJOUR
 #include <dns_sd.h>
@@ -199,7 +196,7 @@ BackgroundWorker *MyBgworkerEntry = NULL;
 
 
 /* The socket number we are listening for connections on */
-int			PostPortNumber;
+int			PostPortNumber = DEF_PGPORT;
 
 /* The directory names for Unix socket(s) */
 char	   *Unix_socket_directories;
@@ -391,7 +388,6 @@ static void getInstallationPaths(const char *argv0);
 static void checkControlFile(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void reset_shared(void);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
@@ -418,7 +414,7 @@ static void report_fork_failure_to_client(Port *port, int errnum);
 static CAC_state canAcceptConnections(int backend_type);
 static bool RandomCancelKey(int32 *cancel_key);
 static void signal_child(pid_t pid, int signal);
-static bool SignalSomeChildren(int signal, int targets);
+static bool SignalSomeChildren(int signal, int target);
 static void TerminateChildren(int signal);
 
 #define SignalChildren(sig)			   SignalSomeChildren(sig, BACKEND_TYPE_ALL)
@@ -624,10 +620,10 @@ PostmasterMain(int argc, char *argv[])
 	 * is used by all child processes and client processes).  That has a
 	 * couple of special behaviors:
 	 *
-	 * 1. Except on Windows, we tell sigaction() to block all signals for the
-	 * duration of the signal handler.  This is faster than our old approach
-	 * of blocking/unblocking explicitly in the signal handler, and it should
-	 * also prevent excessive stack consumption if signals arrive quickly.
+	 * 1. We tell sigaction() to block all signals for the duration of the
+	 * signal handler.  This is faster than our old approach of
+	 * blocking/unblocking explicitly in the signal handler, and it should also
+	 * prevent excessive stack consumption if signals arrive quickly.
 	 *
 	 * 2. We do not set the SA_RESTART flag.  This is because signals will be
 	 * blocked at all times except when ServerLoop is waiting for something to
@@ -853,9 +849,8 @@ PostmasterMain(int argc, char *argv[])
 					}
 
 					SetConfigOption(name, value, PGC_POSTMASTER, PGC_S_ARGV);
-					free(name);
-					if (value)
-						free(value);
+					pfree(name);
+					pfree(value);
 					break;
 				}
 
@@ -913,6 +908,16 @@ PostmasterMain(int argc, char *argv[])
 			puts(config_val ? config_val : "");
 			ExitPostmaster(0);
 		}
+
+		/*
+		 * A runtime-computed GUC will be printed later on.  As we initialize
+		 * a server startup sequence, silence any log messages that may show
+		 * up in the output generated.  FATAL and more severe messages are
+		 * useful to show, even if one would only expect at least PANIC.  LOG
+		 * entries are hidden.
+		 */
+		SetConfigOption("log_min_messages", "FATAL", PGC_SUSET,
+						PGC_S_OVERRIDE);
 	}
 
 	/* Verify that DataDir looks reasonable */
@@ -1005,10 +1010,8 @@ PostmasterMain(int argc, char *argv[])
 	LocalProcessControlFile(false);
 
 	/*
-	 * Register the apply launcher.  Since it registers a background worker,
-	 * it needs to be called before InitializeMaxBackends(), and it's probably
-	 * a good idea to call it before any modules had chance to take the
-	 * background worker slots.
+	 * Register the apply launcher.  It's probably a good idea to call this
+	 * before any modules had a chance to take the background worker slots.
 	 */
 	ApplyLauncherRegister();
 
@@ -1029,10 +1032,15 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Now that loadable modules have had their chance to register background
-	 * workers, calculate MaxBackends.
+	 * Now that loadable modules have had their chance to alter any GUCs,
+	 * calculate MaxBackends.
 	 */
 	InitializeMaxBackends();
+
+	/*
+	 * Give preloaded libraries a chance to request additional shared memory.
+	 */
+	process_shmem_requests();
 
 	/*
 	 * Now that loadable modules have had their chance to request additional
@@ -1069,8 +1077,12 @@ PostmasterMain(int argc, char *argv[])
 
 	/*
 	 * Set up shared memory and semaphores.
+	 *
+	 * Note: if using SysV shmem and/or semas, each postmaster startup will
+	 * normally choose the same IPC keys.  This helps ensure that we will
+	 * clean up dead IPC objects if the postmaster crashes and is restarted.
 	 */
-	reset_shared();
+	CreateSharedMemoryAndSemaphores();
 
 	/*
 	 * Estimate number of openable files.  This must happen after setting up
@@ -1285,7 +1297,6 @@ PostmasterMain(int argc, char *argv[])
 	}
 #endif
 
-#ifdef HAVE_UNIX_SOCKETS
 	if (Unix_socket_directories)
 	{
 		char	   *rawstring;
@@ -1335,7 +1346,6 @@ PostmasterMain(int argc, char *argv[])
 		list_free_deep(elemlist);
 		pfree(rawstring);
 	}
-#endif
 
 	/*
 	 * check that we have some socket to listen on
@@ -1404,7 +1414,8 @@ PostmasterMain(int argc, char *argv[])
 		 * since there is no way to connect to the database in this case.
 		 */
 		ereport(FATAL,
-				(errmsg("could not load pg_hba.conf")));
+		/* translator: %s is a configuration file */
+				(errmsg("could not load %s", HbaFileName)));
 	}
 	if (!load_ident())
 	{
@@ -2269,11 +2280,7 @@ retry1:
 				 */
 				if (strcmp(nameptr, "application_name") == 0)
 				{
-					char	   *tmp_app_name = pstrdup(valptr);
-
-					pg_clean_ascii(tmp_app_name);
-
-					port->application_name = tmp_app_name;
+					port->application_name = pg_clean_ascii(valptr, 0);
 				}
 			}
 			offset = valoffset + strlen(valptr) + 1;
@@ -2591,9 +2598,9 @@ ConnCreate(int serverFd)
  * to do here.
  */
 static void
-ConnFree(Port *conn)
+ConnFree(Port *port)
 {
-	free(conn);
+	free(port);
 }
 
 
@@ -2712,37 +2719,12 @@ InitProcessGlobals(void)
 
 
 /*
- * reset_shared -- reset shared memory and semaphores
- */
-static void
-reset_shared(void)
-{
-	/*
-	 * Create or re-create shared memory and semaphores.
-	 *
-	 * Note: in each "cycle of life" we will normally assign the same IPC keys
-	 * (if using SysV shmem and/or semas).  This helps ensure that we will
-	 * clean up dead IPC objects if the postmaster crashes and is restarted.
-	 */
-	CreateSharedMemoryAndSemaphores();
-}
-
-
-/*
  * SIGHUP -- reread config files, and tell children to do same
  */
 static void
 SIGHUP_handler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-
-	/*
-	 * We rely on the signal mechanism to have blocked all signals ... except
-	 * on Windows, which lacks sigaction(), so we have to do it manually.
-	 */
-#ifdef WIN32
-	PG_SETMASK(&BlockSig);
-#endif
 
 	if (Shutdown <= SmartShutdown)
 	{
@@ -2771,11 +2753,11 @@ SIGHUP_handler(SIGNAL_ARGS)
 		if (!load_hba())
 			ereport(LOG,
 			/* translator: %s is a configuration file */
-					(errmsg("%s was not reloaded", "pg_hba.conf")));
+					(errmsg("%s was not reloaded", HbaFileName)));
 
 		if (!load_ident())
 			ereport(LOG,
-					(errmsg("%s was not reloaded", "pg_ident.conf")));
+					(errmsg("%s was not reloaded", IdentFileName)));
 
 #ifdef USE_SSL
 		/* Reload SSL configuration as well */
@@ -2800,10 +2782,6 @@ SIGHUP_handler(SIGNAL_ARGS)
 #endif
 	}
 
-#ifdef WIN32
-	PG_SETMASK(&UnBlockSig);
-#endif
-
 	errno = save_errno;
 }
 
@@ -2815,14 +2793,6 @@ static void
 pmdie(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-
-	/*
-	 * We rely on the signal mechanism to have blocked all signals ... except
-	 * on Windows, which lacks sigaction(), so we have to do it manually.
-	 */
-#ifdef WIN32
-	PG_SETMASK(&BlockSig);
-#endif
 
 	ereport(DEBUG2,
 			(errmsg_internal("postmaster received signal %d",
@@ -2851,8 +2821,8 @@ pmdie(SIGNAL_ARGS)
 
 			/*
 			 * If we reached normal running, we go straight to waiting for
-			 * client backends to exit.  If already in PM_STOP_BACKENDS or
-			 * a later state, do not change it.
+			 * client backends to exit.  If already in PM_STOP_BACKENDS or a
+			 * later state, do not change it.
 			 */
 			if (pmState == PM_RUN || pmState == PM_HOT_STANDBY)
 				connsAllowed = false;
@@ -2948,10 +2918,6 @@ pmdie(SIGNAL_ARGS)
 			break;
 	}
 
-#ifdef WIN32
-	PG_SETMASK(&UnBlockSig);
-#endif
-
 	errno = save_errno;
 }
 
@@ -2964,14 +2930,6 @@ reaper(SIGNAL_ARGS)
 	int			save_errno = errno;
 	int			pid;			/* process id of dead child process */
 	int			exitstatus;		/* its exit status */
-
-	/*
-	 * We rely on the signal mechanism to have blocked all signals ... except
-	 * on Windows, which lacks sigaction(), so we have to do it manually.
-	 */
-#ifdef WIN32
-	PG_SETMASK(&BlockSig);
-#endif
 
 	ereport(DEBUG4,
 			(errmsg_internal("reaping dead processes")));
@@ -3264,11 +3222,6 @@ reaper(SIGNAL_ARGS)
 	 * or actions to make.
 	 */
 	PostmasterStateMachine();
-
-	/* Done with signal handler */
-#ifdef WIN32
-	PG_SETMASK(&UnBlockSig);
-#endif
 
 	errno = save_errno;
 }
@@ -4010,7 +3963,8 @@ PostmasterStateMachine(void)
 		/* re-read control file into local memory */
 		LocalProcessControlFile(true);
 
-		reset_shared();
+		/* re-create shared memory and semaphores */
+		CreateSharedMemoryAndSemaphores();
 
 		StartupPID = StartupDataBase();
 		Assert(StartupPID != 0);
@@ -4462,7 +4416,7 @@ BackendInitialize(Port *port)
 	appendStringInfo(&ps_data, "%s ", port->user_name);
 	if (!am_walsender)
 		appendStringInfo(&ps_data, "%s ", port->database_name);
-	appendStringInfo(&ps_data, "%s", port->remote_host);
+	appendStringInfoString(&ps_data, port->remote_host);
 	if (port->remote_port[0] != '\0')
 		appendStringInfo(&ps_data, "(%s)", port->remote_port);
 
@@ -4896,7 +4850,7 @@ SubPostmasterMain(int argc, char *argv[])
 	 * If testing EXEC_BACKEND on Linux, you should run this as root before
 	 * starting the postmaster:
 	 *
-	 * echo 0 >/proc/sys/kernel/randomize_va_space
+	 * sysctl -w kernel.randomize_va_space=0
 	 *
 	 * This prevents using randomized stack and code addresses that cause the
 	 * child process's memory map to be different from the parent's, making it
@@ -5116,14 +5070,6 @@ sigusr1_handler(SIGNAL_ARGS)
 	int			save_errno = errno;
 
 	/*
-	 * We rely on the signal mechanism to have blocked all signals ... except
-	 * on Windows, which lacks sigaction(), so we have to do it manually.
-	 */
-#ifdef WIN32
-	PG_SETMASK(&BlockSig);
-#endif
-
-	/*
 	 * RECOVERY_STARTED and BEGIN_HOT_STANDBY signals are ignored in
 	 * unexpected states. If the startup process quickly starts up, completes
 	 * recovery, exits, we might process the death of the startup process
@@ -5262,10 +5208,6 @@ sigusr1_handler(SIGNAL_ARGS)
 		 */
 		signal_child(StartupPID, SIGUSR2);
 	}
-
-#ifdef WIN32
-	PG_SETMASK(&UnBlockSig);
-#endif
 
 	errno = save_errno;
 }
@@ -5655,7 +5597,11 @@ BackgroundWorkerInitializeConnection(const char *dbname, const char *username, u
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("database connection requirement not indicated during registration")));
 
-	InitPostgres(dbname, InvalidOid, username, InvalidOid, NULL, (flags & BGWORKER_BYPASS_ALLOWCONN) != 0);
+	InitPostgres(dbname, InvalidOid,	/* database to connect to */
+				 username, InvalidOid,	/* role to connect as */
+				 false,			/* never honor session_preload_libraries */
+				 (flags & BGWORKER_BYPASS_ALLOWCONN) != 0,	/* ignore datallowconn? */
+				 NULL);			/* no out_dbname */
 
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())
@@ -5678,7 +5624,11 @@ BackgroundWorkerInitializeConnectionByOid(Oid dboid, Oid useroid, uint32 flags)
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("database connection requirement not indicated during registration")));
 
-	InitPostgres(NULL, dboid, NULL, useroid, NULL, (flags & BGWORKER_BYPASS_ALLOWCONN) != 0);
+	InitPostgres(NULL, dboid,	/* database to connect to */
+				 NULL, useroid, /* role to connect as */
+				 false,			/* never honor session_preload_libraries */
+				 (flags & BGWORKER_BYPASS_ALLOWCONN) != 0,	/* ignore datallowconn? */
+				 NULL);			/* no out_dbname */
 
 	/* it had better not gotten out of "init" mode yet */
 	if (!IsInitProcessingMode())

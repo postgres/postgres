@@ -18,7 +18,7 @@ LIBS += $(PTHREAD_LIBS)
 # By default, do nothing.
 all:
 
-update-unicode: unicode_norm_table.h unicode_combining_table.h unicode_east_asian_fw_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
+update-unicode: unicode_norm_table.h unicode_nonspacing_table.h unicode_east_asian_fw_table.h unicode_normprops_table.h unicode_norm_hashfunc.h
 	mv $^ $(top_srcdir)/src/include/common/
 	$(MAKE) normalization-check
 
@@ -35,7 +35,7 @@ unicode_norm_hashfunc.h: unicode_norm_table.h
 unicode_norm_table.h: generate-unicode_norm_table.pl UnicodeData.txt CompositionExclusions.txt
 	$(PERL) $<
 
-unicode_combining_table.h: generate-unicode_combining_table.pl UnicodeData.txt
+unicode_nonspacing_table.h: generate-unicode_nonspacing_table.pl UnicodeData.txt
 	$(PERL) $^ >$@
 
 unicode_east_asian_fw_table.h: generate-unicode_east_asian_fw_table.pl EastAsianWidth.txt

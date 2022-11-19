@@ -1046,7 +1046,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
         <literal>@ -5.0</literal>
-        <returnvalue>5</returnvalue>
+        <returnvalue>5.0</returnvalue>
        </para></entry>
       </row>
 
@@ -1463,7 +1463,7 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        </para>
        <para>
        <literal>log(2.0, 64.0)</literal>
-       <returnvalue>6.0000000000</returnvalue>
+       <returnvalue>6.0000000000000000</returnvalue>
        </para></entry>
       </row>
 
@@ -1841,6 +1841,9 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
    subsequent <function>random()</function> calls in the current session
    can be repeated by re-issuing <function>setseed()</function> with the same
    argument.
+   Without any prior <function>setseed()</function> call in the same
+   session, the first <function>random()</function> call obtains a seed
+   from a platform-dependent source of random bits.
   </para>
 
   <para>
@@ -5601,7 +5604,7 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        String matches regular expression, case insensitively
+        String matches regular expression, case-insensitively
        </para>
        <para>
         <literal>'thomas' ~* 'T.*ma'</literal>
@@ -5629,7 +5632,7 @@ substring('foobar' similar '#"o_b#"%' escape '#')    <lineannotation>NULL</linea
         <returnvalue>boolean</returnvalue>
        </para>
        <para>
-        String does not match regular expression, case insensitively
+        String does not match regular expression, case-insensitively
        </para>
        <para>
         <literal>'thomas' !~* 'T.*ma'</literal>
@@ -6156,7 +6159,7 @@ regexp_substr('ABCDEFGHI', '(c..)(...)', 1, 1, 'i', 2)
    <para>
     A branch is zero or more <firstterm>quantified atoms</firstterm> or
     <firstterm>constraints</firstterm>, concatenated.
-    It matches a match for the first, followed by a match for the second, etc;
+    It matches a match for the first, followed by a match for the second, etc.;
     an empty branch matches the empty string.
    </para>
 
@@ -7418,22 +7421,22 @@ SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
        </row>
 
        <row>
-        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>OCCURRENCES_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_count(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>POSITION_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_instr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable></literal></entry>
+        <entry><literal>SUBSTRING_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable>)</literal></entry>
         <entry><literal>regexp_substr(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>)</literal></entry>
        </row>
 
        <row>
-        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable></literal></entry>
+        <entry><literal>TRANSLATE_REGEX(<replaceable>pattern</replaceable> IN <replaceable>string</replaceable> WITH <replaceable>replacement</replaceable>)</literal></entry>
         <entry><literal>regexp_replace(<replaceable>string</replaceable>, <replaceable>pattern</replaceable>, <replaceable>replacement</replaceable>)</literal></entry>
        </row>
       </tbody>
@@ -15146,6 +15149,12 @@ table2-mapping
    <type>jsonb</type>, though not for <type>json</type>.  The comparison
    operators follow the ordering rules for B-tree operations outlined in
    <xref linkend="json-indexing"/>.
+   See also <xref linkend="functions-aggregate"/> for the aggregate
+   function <function>json_agg</function> which aggregates record
+   values as JSON, the aggregate function
+   <function>json_object_agg</function> which aggregates pairs of values
+   into a JSON object, and their <type>jsonb</type> equivalents,
+   <function>jsonb_agg</function> and <function>jsonb_object_agg</function>.
   </para>
 
   <table id="functions-json-op-table">
@@ -15867,6 +15876,10 @@ table2-mapping
        <para>
         <literal>json_array_length('[1,2,3,{"f1":1,"f2":[5,6]},4]')</literal>
         <returnvalue>5</returnvalue>
+       </para>
+       <para>
+        <literal>jsonb_array_length('[]')</literal>
+        <returnvalue>0</returnvalue>
        </para></entry>
       </row>
 
@@ -16287,7 +16300,7 @@ table2-mapping
        </para>
        <para>
         <literal>jsonb_set_lax('[{"f1":1,"f2":null},2,null,3]', '{0,f1}', null)</literal>
-        <returnvalue>[{"f1":null,"f2":null},2,null,3]</returnvalue>
+        <returnvalue>[{"f1": null, "f2": null}, 2, null, 3]</returnvalue>
        </para>
        <para>
         <literal>jsonb_set_lax('[{"f1":99,"f2":null},2]', '{0,f3}', null, true, 'return_target')</literal>
@@ -16526,7 +16539,7 @@ table2-mapping
         comparisons.
        </para>
        <para>
-        <literal>jsonb_path_exists_tz('["2015-08-01 12:00:00 -05"]', '$[*] ? (@.datetime() &lt; "2015-08-02".datetime())')</literal>
+        <literal>jsonb_path_exists_tz('["2015-08-01 12:00:00-05"]', '$[*] ? (@.datetime() &lt; "2015-08-02".datetime())')</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -16597,15 +16610,6 @@ table2-mapping
      </tbody>
     </tgroup>
    </table>
-
-  <para>
-    See also <xref linkend="functions-aggregate"/> for the aggregate
-    function <function>json_agg</function> which aggregates record
-    values as JSON, the aggregate function
-    <function>json_object_agg</function> which aggregates pairs of values
-    into a JSON object, and their <type>jsonb</type> equivalents,
-    <function>jsonb_agg</function> and <function>jsonb_object_agg</function>.
-  </para>
  </sect2>
 
  <sect2 id="functions-sqljson-path">
@@ -17565,2418 +17569,6 @@ $.* ? (@ like_regex "^\\d+$")
     </para>
    </sect3>
   </sect2>
-
- <sect2 id="functions-sqljson">
-  <title>SQL/JSON Functions and Expressions</title>
-  <indexterm zone="functions-json">
-    <primary>SQL/JSON</primary>
-    <secondary>functions and expressions</secondary>
-  </indexterm>
-
- <para>
-  To provide native support for JSON data types within the SQL environment,
-  <productname>PostgreSQL</productname> implements the
-  <firstterm>SQL/JSON data model</firstterm>.
-  This model comprises sequences of items. Each item can hold SQL scalar
-  values, with an additional SQL/JSON null value, and composite data structures
-  that use JSON arrays and objects. The model is a formalization of the implied
-  data model in the JSON specification
-  <ulink url="https://tools.ietf.org/html/rfc7159">RFC 7159</ulink>.
- </para>
-
- <para>
-  SQL/JSON allows you to handle JSON data alongside regular SQL data,
-  with transaction support, including:
- </para>
-
- <itemizedlist>
-  <listitem>
-    <para>
-      Uploading JSON data into the database and storing it in
-      regular SQL columns as character or binary strings.
-    </para>
-  </listitem>
-  <listitem>
-    <para>
-      Generating JSON objects and arrays from relational data.
-    </para>
-  </listitem>
-  <listitem>
-    <para>
-     Querying JSON data using SQL/JSON query functions and
-     SQL/JSON path language expressions.
-    </para>
-  </listitem>
- </itemizedlist>
-
- <para>
-   All SQL/JSON functions fall into one of two groups.
-   <link linkend="functions-sqljson-producing">Constructor functions</link>
-   generate JSON data from values of SQL types.
-   <link linkend="functions-sqljson-querying">Query functions</link>
-   evaluate SQL/JSON path language expressions against JSON values
-   and produce values of SQL/JSON types, which are converted to SQL types.
- </para>
-
-  <sect3 id="functions-sqljson-producing">
-   <title>Producing JSON Content</title>
-
-  <para>
-    <productname>PostgreSQL</productname> provides several functions
-    that generate JSON data. Taking values of SQL types as input, these
-    functions construct JSON objects, JSON arrays or JSON scalars represented
-    as the <type>json</type> or <type>jsonb</type> types, or as
-    SQL character or binary strings.
-  </para>
-
-  <itemizedlist>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonparse"><literal>JSON</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonscalar"><literal>JSON_SCALAR</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonobject"><literal>JSON_OBJECT</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonobjectagg"><literal>JSON_OBJECTAGG</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonarray"><literal>JSON_ARRAY</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonarrayagg"><literal>JSON_ARRAYAGG</literal></link>
-      </para>
-    </listitem>
-  </itemizedlist>
-
-  <sect4 id="functions-jsonparse">
-   <title><literal>JSON</literal></title>
-   <indexterm><primary>json</primary></indexterm>
-<synopsis>
-<function>JSON</function> (
-  <parameter>expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional>
-  <optional> { WITH | WITHOUT } UNIQUE <optional> KEYS </optional> </optional>
-  <optional> RETURNING <replaceable class="parameter">json_data_type</replaceable> </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON</function> function generates <acronym>JSON</acronym>
-      from text data.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-      <variablelist>
-       <varlistentry>
-        <term>
-         <literal><parameter>expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-        </term>
-        <listitem>
-         <para>
-          The string <parameter>expression</parameter> provides the
-          <acronym>JSON</acronym> text data.
-          It can be any character string (<type>text</type>,
-          <type>char</type>, etc.) or binary string (<type>bytea</type>)
-          in UTF8 encoding.
-          If the <parameter>expression</parameter> is NULL an
-          <acronym>SQL</acronym> null value is returned.
-         </para>
-         <para>
-           The optional <literal>FORMAT</literal> clause is provided to conform
-           to the SQL/JSON standard.
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry>
-        <term>
-         <literal>{ WITH | WITHOUT } UNIQUE <optional> KEYS </optional></literal>
-        </term>
-        <listitem>
-        <para>
-         Defines whether duplicate keys are allowed:
-        </para>
-        <variablelist>
-         <varlistentry>
-          <term><literal>WITHOUT</literal></term>
-          <listitem>
-           <para>
-            Default. The constructed
-            <acronym>JSON</acronym> object can contain duplicate keys.
-           </para>
-          </listitem>
-         </varlistentry>
-         <varlistentry>
-          <term><literal>WITH</literal></term>
-           <listitem>
-            <para>
-             Duplicate keys are not allowed.
-             If the input data contains duplicate keys, an error is returned.
-            </para>
-           </listitem>
-         </varlistentry>
-        </variablelist>
-        <para>
-         Optionally, you can add the <literal>KEYS</literal> keyword for
-         semantic clarity.
-        </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry>
-        <term>
-         <literal>RETURNING <replaceable class="parameter">json_data_type</replaceable></literal>
-        </term>
-        <listitem>
-        <para>
-         The output clause that specifies the type (<type>json</type> or
-         <type>jsonb</type>) of the generated <acronym>JSON</acronym>.
-         The default is <type>json</type>.
-         </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Notes</title>
-     <para>
-      Alternatively, you can construct <acronym>JSON</acronym> values simply
-      using <productname>PostgreSQL</productname>-specific casts to
-      <type>json</type> and <type>jsonb</type> types.
-     </para>
-    </sect5>
-    <sect5>
-     <title>Examples</title>
-     <para>
-      Construct JSON using the provided strings:
-     </para>
-<screen>
-SELECT JSON('{ "a" : 123, "b": [ true, "foo" ], "a" : "bar" }');
-                       json
---------------------------------------------------
- { "a" : 123, "b": [ true, "foo" ], "a" : "bar" }
-(1 row)
-
-
-SELECT JSON('{"a": 123, "b": [true, "foo"], "a": "bar"}' RETURNING jsonb);
-               json
-----------------------------------
- {"a": "bar", "b": [true, "foo"]}
-(1 row)
-
-SELECT JSON('{"a": 123, "b": [true, "foo"], "a": "bar"}' WITH UNIQUE KEYS);
-ERROR:  duplicate JSON object key value
-</screen>
-    </sect5>
-   </sect4>
-
-  <sect4 id="functions-jsonscalar">
-   <title><literal>JSON_SCALAR</literal></title>
-   <indexterm><primary>json_scalar</primary></indexterm>
-
-<synopsis>
-<function>JSON_SCALAR</function> (
-  <parameter>expression</parameter>
-  <optional> RETURNING <replaceable class="parameter">json_data_type</replaceable> </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_SCALAR</function> function generates a
-      <acronym>JSON</acronym> scalar value from <acronym>SQL</acronym> data.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-      <variablelist>
-       <varlistentry>
-        <term>
-         <literal><parameter>expression</parameter></literal>
-        </term>
-        <listitem>
-         <para>
-          The <parameter>expression</parameter> provides the data for constructing a
-          <acronym>JSON</acronym> value.
-          For null input, <acronym>SQL</acronym>  null
-          (not a <acronym>JSON</acronym> null) value is returned.
-          For any scalar other than a number or a Boolean, the text
-          representation will be used, with escaping as necessary to make
-          it a valid <acronym>JSON</acronym> string value.
-          For details, see
-          <function>to_json()</function>/<function>to_jsonb()</function>
-          in <xref linkend="functions-json-creation-table"/>.
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry>
-        <term>
-         <literal>RETURNING <replaceable class="parameter">json_data_type</replaceable></literal>
-        </term>
-        <listitem>
-        <para>
-         The output clause that specifies the type (<type>json</type> or
-         <type>jsonb</type>) of the generated <acronym>JSON</acronym> scalar.
-         The default is <type>json</type>.
-         </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Notes</title>
-     <para>
-      Alternatively, you can construct <acronym>JSON</acronym> objects by
-      using the <productname>PostgreSQL</productname>-specific
-      <function>to_json()</function>/<function>to_jsonb()</function> functions.
-      See <xref linkend="functions-json-creation-table"/> for details.
-     </para>
-    </sect5>
-    <sect5>
-     <title>Examples</title>
-     <para>
-      Construct JSON scalars from the provided values of various types:
-     </para>
-<screen>
-SELECT JSON_SCALAR(123.45);
- json_scalar
--------------
- 123.45
-(1 row)
-
-SELECT JSON_SCALAR('123');
- json_scalar
--------------
- "123"
-(1 row)
-
-SELECT JSON_SCALAR(true);
- json_scalar
--------------
- true
-(1 row)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonobject">
-    <title><literal>JSON_OBJECT</literal></title>
-    <indexterm><primary>json_object</primary></indexterm>
-
-<synopsis>
-<function>JSON_OBJECT</function> (
-  <optional> { <parameter>key_expression</parameter> { VALUE | ':' }
-      <parameter>value_expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> }<optional>, ...</optional> </optional>
-  <optional> { NULL | ABSENT } ON NULL </optional>
-  <optional> { WITH | WITHOUT } UNIQUE <optional> KEYS </optional> </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_OBJECT</function> function generates a
-      <acronym>JSON</acronym> object from <acronym>SQL</acronym> or
-      <acronym>JSON</acronym> data.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-  <variablelist>
-
-   <varlistentry>
-    <term>
-      <literal>
-       <parameter>key_expression</parameter> { VALUE | ':' }
-       <parameter>value_expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional>
-      </literal>
-    </term>
-    <listitem>
-    <para>
-      The input clause that provides the data for constructing a <acronym>JSON</acronym> object:
-    </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-              <parameter>key_expression</parameter> is a scalar expression
-              defining the <acronym>JSON</acronym> key, which is implicitly
-              converted to the <type>text</type> type.
-              The provided expression cannot be <literal>NULL</literal> or
-              belong to a type that has a cast to <type>json</type>.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <parameter>value_expression</parameter> is an expression
-              that provides the input for the <acronym>JSON</acronym> value.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              The optional <literal>FORMAT</literal> clause is provided to
-              conform to the SQL/JSON standard.
-             </para>
-           </listitem>
-           </itemizedlist>
-      <para>
-        You must use a colon or the <literal>VALUE</literal> keyword as a
-        separator between the key and the value. Multiple key/value pairs are
-        separated by commas.
-      </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>{ NULL | ABSENT } ON NULL</literal>
-    </term>
-    <listitem>
-      <para>
-        Defines whether <literal>NULL</literal> values are allowed in the constructed
-        <acronym>JSON</acronym> object:
-        </para>
-        <variablelist>
-         <varlistentry>
-           <term><literal>NULL</literal></term>
-           <listitem>
-             <para>
-              Default. <literal>NULL</literal> values are allowed.
-             </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term><literal>ABSENT</literal></term>
-            <listitem>
-             <para>
-              If the value is <literal>NULL</literal>,
-              the corresponding key/value pair is omitted from the generated
-              <acronym>JSON</acronym> object.
-             </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-    <term>
-     <literal>{ WITH | WITHOUT } UNIQUE <optional> KEYS </optional></literal>
-    </term>
-    <listitem>
-     <para>Defines whether duplicate keys are allowed:
-     </para>
-       <variablelist>
-         <varlistentry>
-           <term><literal>WITHOUT</literal></term>
-           <listitem>
-             <para>
-              Default. The constructed
-              <acronym>JSON</acronym> object can contain duplicate keys.
-             </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term><literal>WITH</literal></term>
-            <listitem>
-             <para>
-              Duplicate keys are not allowed.
-              If the input data contains duplicate keys, an error is returned.
-              This check is performed before removing JSON items with NULL values.
-             </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-      <para>
-       Optionally, you can add the <literal>KEYS</literal> keyword for semantic clarity.
-      </para>
-    </listitem>
-  </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the type of the generated <acronym>JSON</acronym> object.
-       For details, see <xref linkend="sqljson-output-clause"/>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   </variablelist>
-    </sect5>
-
- <sect5>
-  <title>Notes</title>
-  <para>Alternatively, you can construct <acronym>JSON</acronym> objects by using the
-  <productname>PostgreSQL</productname>-specific <function>json_build_object()</function>/
-  <function>jsonb_build_object()</function> functions.
-  See <xref linkend="functions-json-creation-table"/> for details.
-  </para>
- </sect5>
-
-    <sect5>
-     <title>Examples</title>
-  <para>
-   Construct a JSON object from the provided key/value pairs of various types:
-  </para>
-<screen>
-SELECT JSON_OBJECT(
--- scalar JSON types
- 'key1': 'string',
- 'key2': '[1, 2]',
- 'key3' VALUE 123, -- alternative syntax for key-value delimiter
- 'key4': NULL,
--- other types
- 'key5': ARRAY[1, 2, 3], -- postgres array
- 'key6': jsonb '{"a": ["b", 1]}', -- composite json/jsonb
- 'key7': date '2017-09-30', -- datetime type
- 'key8': row(1, 'a'), -- row type
- 'key9': '[1, 2]' FORMAT JSON, -- same value as for key2, but with FORMAT
--- key can be an expression
-  'key' || 'last' : TRUE
-ABSENT ON NULL) AS json;
-                       json
-----------------------------------------------------
-{"key1" : "string", "key2" : "[1, 2]", "key3" : 123,
- "key5" : [1,2,3], "key6" : {"a": ["b", 1]},
- "key7" : "2017-09-30", "key8" : {"f1":1,"f2":"a"},
- "key9" : [1, 2], "keylast" : true}
-(1 row)
-</screen>
-
-  <para>
-   From the <structname>films</structname> table, select some data
-   about the films distributed by Paramount Pictures
-   (<literal>did</literal> = 103) and return JSON objects:
-  </para>
-<screen>
-SELECT
-JSON_OBJECT(
- 'code' VALUE f.code,
- 'title' VALUE f.title,
- 'did' VALUE f.did
-) AS paramount
-FROM films AS f
-WHERE f.did = 103;
-                    paramount
-----------------------------------------------------
-{"code" : "P_301", "title" : "Vertigo", "did" : 103}
-{"code" : "P_302", "title" : "Becket", "did" : 103}
-{"code" : "P_303", "title" : "48 Hrs", "did" : 103}
-(3 rows)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonobjectagg">
-   <title><literal>JSON_OBJECTAGG</literal></title>
-   <indexterm><primary>json_objectagg</primary></indexterm>
-
-<synopsis>
-<function>JSON_OBJECTAGG</function> (
-  <optional> { <parameter>key_expression</parameter> { VALUE | ':' } <parameter>value_expression</parameter> } </optional>
-  <optional> { NULL | ABSENT } ON NULL </optional>
-  <optional> { WITH | WITHOUT } UNIQUE <optional> KEYS </optional> </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_OBJECTAGG</function> function aggregates the provided data
-      into a <acronym>JSON</acronym> object. You can use this function to combine values
-      stored in different table columns into pairs.
-    </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal><parameter>key_expression</parameter> { VALUE | ':' } <parameter>value_expression</parameter></literal>
-    </term>
-    <listitem>
-
-    <para>
-      The input clause that provides the data to be aggregated as a <acronym>JSON</acronym> object:
-    </para>
-        <itemizedlist>
-          <listitem>
-            <para>
-              <parameter>key_expression</parameter> is a scalar expression
-              defining the <acronym>JSON</acronym> key, which is implicitly
-              converted to the <type>text</type> type.
-              The provided expression cannot be <literal>NULL</literal> or
-              belong to a type that has a cast to <type>json</type>.
-            </para>
-          </listitem>
-          <listitem>
-            <para>
-              <parameter>value_expression</parameter> is an expression that
-              provides the input for the <acronym>JSON</acronym> value preceded
-              by its type.
-              For <acronym>JSON</acronym> scalar types, you can omit the type.
-            </para>
-            <note>
-              <para>
-                The input value of the <literal>bytea</literal> type must be stored in <literal>UTF8</literal>
-                and contain a valid <literal>UTF8</literal> string. Otherwise, an error occurs.
-                <productname>PostgreSQL</productname> currently supports only <literal>UTF8</literal>.
-              </para>
-            </note>
-           </listitem>
-           </itemizedlist>
-      <para>
-        You must use a colon or the <literal>VALUE</literal> keyword as a separator between
-        keys and values. Multiple key/value pairs are separated by commas.
-      </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>{ NULL | ABSENT } ON NULL</literal>
-    </term>
-    <listitem>
-      <para>
-        Defines whether <literal>NULL</literal> values are allowed in the constructed
-        <acronym>JSON</acronym> object:
-        </para>
-      <variablelist>
-         <varlistentry>
-           <term><literal>NULL</literal></term>
-           <listitem>
-             <para>
-              Default. <literal>NULL</literal> values are allowed.
-             </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term><literal>ABSENT</literal></term>
-            <listitem>
-             <para>
-              If the value is <literal>NULL</literal>,
-              the corresponding key/value pair is omitted from the generated
-              <acronym>JSON</acronym> object.
-             </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry>
-    <term>
-     <literal>{ WITH | WITHOUT } UNIQUE <optional> KEYS </optional></literal>
-    </term>
-    <listitem>
-     <para>Defines whether duplicate keys are allowed:
-     </para>
-        <variablelist>
-         <varlistentry>
-           <term><literal>WITHOUT</literal></term>
-           <listitem>
-             <para>
-              Default. The constructed
-              <acronym>JSON</acronym> object can contain duplicate keys.
-             </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term><literal>WITH</literal></term>
-            <listitem>
-             <para>
-              Duplicate keys are not allowed.
-              If the input data contains duplicate keys, an error is returned.
-              This check is performed before removing JSON items with NULL values.
-             </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-      <para>
-        Optionally, you can add the <literal>KEYS</literal> keyword for semantic clarity.
-      </para>
-    </listitem>
-  </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the type of the generated <acronym>JSON</acronym> object.
-       For details, see <xref linkend="sqljson-output-clause"/>.
-      </para>
-     </listitem>
-   </varlistentry>
-
-  </variablelist>
-    </sect5>
-
- <sect5>
-  <title>Notes</title>
-  <para>Alternatively, you can create <acronym>JSON</acronym> objects by using
-  <productname>PostgreSQL</productname>-specific <function>json_object_agg()</function>/
-  <function>jsonb_object_agg()</function> aggregate functions.
-  See <xref linkend="functions-aggregate"/> for details.
-  </para>
- </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-  <para>
-    For films with <literal>did</literal> = 103, aggregate key/value pairs
-    of film genre (<literal>f.kind</literal>) and title (<literal>f.title</literal>)
-    into a single object:
-  </para>
-<screen>
-SELECT
-JSON_OBJECTAGG(
- f.kind VALUE f.title)
- AS films_list
-FROM films AS f
-where f.did = 103;
-                 films_list
-----------------------------------------------------
-{ "Action" : "Vertigo", "Drama" : "Becket", "Action" : "48 Hrs" }
-</screen>
-
-  <para>
-    Return the same object as <type>jsonb</type>. Note that only a single film of
-    the action genre is included as the <type>jsonb</type> type does not allow duplicate keys.
-  </para>
-<screen>
-SELECT
-JSON_OBJECTAGG(
-  f.kind VALUE f.title
-  RETURNING jsonb)
-AS films_list
-FROM films AS f
-where f.did = 103;
-                 films_list
-----------------------------------------------------
-{"Drama": "Becket", "Action": "48 Hrs"}
-</screen>
-
-  <para>
-    Return objects of film titles and length, grouped by the film genre:
-  </para>
-<screen>
-SELECT
-  f.kind,
-  JSON_OBJECTAGG(
-    f.title VALUE f.len
-) AS films_list
-FROM films AS f
-GROUP BY f.kind;
-
-     kind    |        films_list
--------------+----------------------------------
-Musical      | { "West Side Story" : "02:32:00", "The King and I" : "02:13:00", "Bed Knobs and Broomsticks" : "01:57:00" }
-Romantic     | { "The African Queen" : "01:43:00", "Une Femme est une Femme" : "01:25:00", "Storia di una donna" : "01:30:00" }
-Comedy       | { "Bananas" : "01:22:00", "There's a Girl in my Soup" : "01:36:00" }
-Drama        | { "The Third Man" : "01:44:00", "Becket" : "02:28:00", "War and Peace" : "05:57:00", "Yojimbo" : "01:50:00", "Das Boot" : "02:29:00" }
-Action       | { "Vertigo" : "02:08:00", "48 Hrs" : "01:37:00", "Taxi Driver" : "01:54:00", "Absence of Malice" : "01:55:00" }
-(5 rows)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonarray">
-    <title><literal>JSON_ARRAY</literal></title>
-    <indexterm><primary>json_array</primary></indexterm>
-
-<synopsis>
-<function>JSON_ARRAY</function> (
-  <optional> { <parameter>value_expression</parameter> <optional> FORMAT JSON </optional> } <optional>, ...</optional> </optional>
-  <optional> { NULL | ABSENT } ON NULL </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-</synopsis>
-<synopsis>JSON_ARRAY (
-  <optional> <replaceable class="parameter">query_expression</replaceable> </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_ARRAY</function> function constructs a <acronym>JSON</acronym> array from
-      the provided <acronym>SQL</acronym> or <acronym>JSON</acronym> data.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-  <variablelist>
-    <varlistentry>
-      <term>
-        <literal><parameter>value_expression</parameter></literal>
-      </term>
-      <listitem>
-
-        <para>
-          The input clause that provides the data for constructing a JSON array.
-          The <replaceable class="parameter">value_expression</replaceable> is an expression
-          that provides the input for the <acronym>JSON</acronym> value preceded by its type.
-          For <acronym>JSON</acronym> scalar types, you can omit the type.
-        </para>
-        <note>
-          <para>
-            The input value of the <literal>bytea</literal> type must be stored in <literal>UTF8</literal>
-            and contain a valid <literal>UTF8</literal> string. Otherwise, an error occurs.
-            <productname>PostgreSQL</productname> currently supports only <literal>UTF8</literal>.
-          </para>
-        </note>
-
-    </listitem>
-   </varlistentry>
-
-    <varlistentry>
-      <term>
-        <literal><replaceable class="parameter">query_expression</replaceable></literal>
-      </term>
-      <listitem>
-        <para>
-          An SQL query that provides the data for constructing a JSON array.
-          The query must return a single column that holds the values to be
-          used in the array.
-        </para>
-    </listitem>
-   </varlistentry>
-
-    <varlistentry>
-    <term>
-     <literal>{ NULL | ABSENT } ON NULL</literal>
-    </term>
-    <listitem>
-      <para>
-        Defines whether <literal>NULL</literal> values are allowed in the generated <acronym>JSON</acronym> array:
-      </para>
-       <variablelist>
-         <varlistentry>
-           <term><literal>NULL</literal></term>
-           <listitem>
-             <para>
-              <literal>NULL</literal> values are allowed.
-             </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-           <term><literal>ABSENT</literal></term>
-            <listitem>
-             <para>
-              Default. If the value is <literal>NULL</literal>,
-              the corresponding key/value pair is omitted from the generated
-              <acronym>JSON</acronym> object.
-             </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-        <para>
-          This clause is only supported for arrays built from an explicit list of values.
-          If you are using an SQL query to generate an array, NULL values are always
-          omitted.
-        </para>
-      </listitem>
-    </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the return type of the constructed <acronym>JSON</acronym> array.
-       For details, see <xref linkend="sqljson-output-clause"/>.
-      </para>
-     </listitem>
-   </varlistentry>
-
-</variablelist>
-    </sect5>
-
- <sect5>
-  <title>Notes</title>
-  <para>Alternatively, you can create <acronym>JSON</acronym> arrays by using
-  <productname>PostgreSQL</productname>-specific <function>json_build_array()</function>/
-  <function>jsonb_build_array()</function> functions.
-  See <xref linkend="functions-json"/> for details.
-  </para>
- </sect5>
-
-    <sect5>
-     <title>Examples</title>
-  <para>
-    From the <structname>films</structname> table, select some data
-    about the films distributed by Paramount Pictures
-    (<literal>did</literal> = 103) and return JSON arrays:
-  </para>
-<screen>
-SELECT
-JSON_ARRAY(
-  f.code,
-  f.title,
-  f.did
-) AS films
-FROM films AS f
-WHERE f.did = 103;
-                       films
-----------------------------------------------------
-["P_301", "Vertigo", 103]
-["P_302", "Becket", 103]
-["P_303", "48 Hrs", 103]
-(3 rows)
-</screen>
-  <para>
-    Construct a JSON array from the list of film titles returned from the
-    <structname>films</structname> table by a subquery:
-  </para>
-<screen>
-SELECT
-JSON_ARRAY(
-  SELECT
-  f.title
-FROM films AS f
-where f.did = 103)
-AS film_titles;
-                    film_titles
-----------------------------------------------------
-["Vertigo", "Becket", "48 Hrs"]
-(1 row)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonarrayagg">
-    <title><literal>JSON_ARRAYAGG</literal></title>
-    <indexterm><primary>json_arrayagg</primary></indexterm>
-
-<synopsis>
-<function>JSON_ARRAYAGG</function> (
-  <optional> <parameter>value_expression</parameter> </optional>
-  <optional> ORDER BY <replaceable class="parameter">sort_expression</replaceable> </optional>
-  <optional> { NULL | ABSENT } ON NULL </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_ARRAYAGG</function> function aggregates the provided <acronym>SQL</acronym>
-      or <acronym>JSON</acronym> data into a <acronym>JSON</acronym> array.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-  <variablelist>
-    <varlistentry>
-      <term>
-        <literal><parameter>value_expression</parameter></literal>
-      </term>
-      <listitem>
-
-        <para>
-          The input clause that provides the input data to be aggregated as
-          a <acronym>JSON</acronym> array.
-          The <parameter>value_expression</parameter> can be a value or a query
-          returning the values to be used as input in array construction.
-          You can provide multiple input values separated by commas.
-        </para>
-    </listitem>
-   </varlistentry>
-
-<varlistentry>
-      <term>
-        <literal>ORDER BY</literal>
-      </term>
-      <listitem>
-        <para>
-          Sorts the input data to be aggregated as a <acronym>JSON</acronym> array.
-          For details on the exact syntax of the <literal>ORDER BY</literal> clause, see <xref linkend="sql-orderby"/>.
-        </para>
-    </listitem>
-   </varlistentry>
-
-    <varlistentry>
-    <term>
-     <literal>{ NULL | ABSENT } ON NULL</literal>
-    </term>
-    <listitem>
-      <para>
-        Defines whether <literal>NULL</literal> values are allowed in the constructed array:
-          <itemizedlist>
-            <listitem>
-              <para>
-                <literal>NULL</literal> &mdash; <literal>NULL</literal> values are allowed.
-              </para>
-            </listitem>
-            <listitem>
-              <para>
-                <literal>ABSENT</literal> (default) &mdash; <literal>NULL</literal>
-                values are omitted from the generated array.
-              </para>
-            </listitem>
-          </itemizedlist>
-        </para>
-      </listitem>
-    </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the return type of the constructed <acronym>JSON</acronym> array.
-       For details, see <xref linkend="sqljson-output-clause"/>.
-     </para>
-     </listitem>
-   </varlistentry>
-
-</variablelist>
-    </sect5>
-
-<sect5>
-  <title>Notes</title>
-  <para>Alternatively, you can create <acronym>JSON</acronym> arrays by using
-  <productname>PostgreSQL</productname>-specific <function>json_agg()</function>/
-  <function>jsonb_agg()</function> functions.
-  See <xref linkend="functions-aggregate"/> for details.
-  </para>
- </sect5>
-
-    <sect5>
-     <title>Examples</title>
-     <para>
-       Construct an array of film titles sorted in alphabetical order:
-     </para>
-<screen>
-SELECT
-JSON_ARRAYAGG(
-  f.title
-ORDER BY f.title ASC) AS film_titles
-FROM films AS f;
-                    film_titles
-----------------------------------------------------
-["48 Hrs", "Absence of Malice", "Bananas", "Becket", "Bed Knobs and Broomsticks", "Das Boot", "Storia di una donna", "Taxi Driver", "The African Queen", "The King and I", "There's a Girl in my Soup", "The Third Man", "Une Femme est une Femme", "Vertigo", "War and Peace", "West Side Story", "Yojimbo"]
-(1 row)
-</screen>
-    </sect5>
-   </sect4>
-  </sect3>
-
-  <sect3 id="functions-sqljson-querying">
-   <title>Querying JSON</title>
-
-   <para>
-    SQL/JSON query functions evaluate SQL/JSON path language expressions
-    against JSON values, producing values of SQL/JSON types, which are
-    converted to SQL types. All SQL/JSON query functions accept several
-    common clauses described in <xref linkend="sqljson-common-clauses"/>.
-    For details on the SQL/JSON path language,
-    see <xref linkend="functions-sqljson-path"/>.
-   </para>
-
-  <itemizedlist>
-    <listitem>
-      <para>
-       <link linkend="functions-isjson-predicate"><literal>IS JSON</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonexists"><literal>JSON_EXISTS</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonvalue"><literal>JSON_VALUE</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonquery"><literal>JSON_QUERY</literal></link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-       <link linkend="functions-jsontable"><literal>JSON_TABLE</literal></link>
-      </para>
-    </listitem>
-  </itemizedlist>
-
-  <para>
-     In some usage examples for these functions,
-     the following small table storing some JSON data will be used:
-<programlisting>
-CREATE TABLE my_films (
-  js       text );
-
-INSERT INTO my_films VALUES (
-'{ "favorites" : [
-   { "kind" : "comedy", "films" : [
-     { "title" : "Bananas",
-       "director" : "Woody Allen"},
-     { "title" : "The Dinner Game",
-       "director" : "Francis Veber" } ] },
-   { "kind" : "horror", "films" : [
-     { "title" : "Psycho",
-       "director" : "Alfred Hitchcock" } ] },
-   { "kind" : "thriller", "films" : [
-     { "title" : "Vertigo",
-       "director" : "Alfred Hitchcock" } ] },
-   { "kind" : "drama", "films" : [
-     { "title" : "Yojimbo",
-       "director" : "Akira Kurosawa" } ] }
-  ] }');
-</programlisting>
-     </para>
-
-   <sect4 id="functions-jsonexists">
-    <title><literal>JSON_EXISTS</literal></title>
-    <indexterm><primary>json_exists</primary></indexterm>
-
-<synopsis>
-<function>JSON_EXISTS</function> (
-  <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> </optional>
-  <optional> { TRUE | FALSE | UNKNOWN | ERROR } ON ERROR </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_EXISTS</function> function checks whether the provided
-      <acronym>JSON</acronym> path expression can return any <acronym>SQL/JSON</acronym> items.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     The input data to query, the JSON path expression defining the query, and an optional <literal>PASSING</literal> clause.
-     See <xref linkend="sqljson-input-clause"/> for details.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the data type of the returned value.
-       The specified data type should have a cast from a <literal>boolean</literal>
-       type, which is returned by default.
-     </para>
-     </listitem>
-   </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>{ TRUE | FALSE | UNKNOWN | ERROR } ON ERROR</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines the return value if an error occurs. The default value is <literal>FALSE</literal>.
-     </para>
-     </listitem>
-   </varlistentry>
-
-   </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-  <para>
-    Check whether the provided <type>jsonb</type> data contains a
-    key/value pair with the <literal>key1</literal> key, and its value
-    contains an array with one or more elements bigger than 2:
-  </para>
-<screen>
-SELECT JSON_EXISTS(jsonb '{"key1": [1,2,3]}', 'strict $.key1[*] ? (@ > 2)');
- json_exists
--------------
- t
-(1 row)
-</screen>
-
-  <para>
-   Note the difference between strict and lax modes
-   if the required item does not exist:
-  </para>
-<screen>
--- Strict mode with ERROR on ERROR clause
-SELECT JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]' ERROR ON ERROR);
-ERROR: Invalid SQL/JSON subscript
-(1 row)
-</screen>
-
-<screen>
--- Lax mode
-SELECT JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'lax $.a[5]' ERROR ON ERROR);
- json_exists
--------------
- f
-(1 row)
-</screen>
-
-<screen>
--- Strict mode using the default value for the ON ERROR clause
-SELECT JSON_EXISTS(jsonb '{"a": [1,2,3]}', 'strict $.a[5]');
- json_exists
--------------
- f
-(1 row)
-</screen>
-
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonvalue">
-    <title><literal>JSON_VALUE</literal></title>
-    <indexterm><primary>json_value</primary></indexterm>
-
-<synopsis>
-<function>JSON_VALUE</function> (
-  <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> </optional>
-  <optional> { ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY </optional>
-  <optional> { ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR </optional>
-)
-  </synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-  <para>
-   The <function>JSON_VALUE</function> function extracts a value from the provided
-   <acronym>JSON</acronym> data and converts it to an <acronym>SQL</acronym> scalar.
-   If the specified JSON path expression returns more than one
-   <acronym>SQL/JSON</acronym> item, an error occurs. To extract
-   an <acronym>SQL/JSON</acronym> array or object, use <xref linkend="functions-jsonquery"/>.
-  </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-  <variablelist>
-
-   <varlistentry>
-    <term>
-     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     The input data to query, the JSON path expression defining the query, and an optional <literal>PASSING</literal> clause.
-     For details, see <xref linkend="functions-sqljson-path"/>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the data type of the returned value.
-       Out of the box, <productname>PostgreSQL</productname>
-       supports the following types: <literal>json</literal>, <literal>jsonb</literal>,
-       <literal>bytea</literal>, and character string types (<literal>text</literal>, <literal>char</literal>,
-       <literal>varchar</literal>, and <literal>nchar</literal>).
-       The extracted value must be a single <acronym>SQL/JSON</acronym> scalar item
-       and have a cast to the specified type. Otherwise, an error occurs.
-       By default, <function>JSON_VALUE</function> returns a string
-       of the <literal>text</literal> type.
-     </para>
-     </listitem>
-   </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>{ ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines the return value if no JSON value is found. The default is
-       <literal>NULL</literal>. If you use
-       <literal>DEFAULT <replaceable class="parameter">expression</replaceable></literal>,
-       the provided <replaceable class="parameter">expression</replaceable> is
-       evaluated and cast to the type specified in the <command>RETURNING</command> clause.
-     </para>
-     </listitem>
-   </varlistentry>
-
-     <varlistentry>
-    <term>
-     <literal>{ ERROR | NULL | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines the return value if an unhandled error occurs. The default is
-       <literal>NULL</literal>. If you use
-       <literal>DEFAULT <replaceable class="parameter">expression</replaceable></literal>,
-       the provided <replaceable class="parameter">expression</replaceable> is
-       evaluated and cast to the type specified in the <command>RETURNING</command> clause.
-     </para>
-     </listitem>
-   </varlistentry>
-
-   </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-     <para>
-      Extract an SQL/JSON value and return it as an SQL
-      scalar of the specified type. Note that
-      <command>JSON_VALUE</command> can only return a
-      single scalar, and the returned value must have a
-      cast to the specified return type:
-     </para>
-
-<screen>
-SELECT JSON_VALUE('"123.45"', '$' RETURNING float);
- json_value
-------------
-     123.45
-(1 row)
-
-SELECT JSON_VALUE('123.45', '$' RETURNING int ERROR ON ERROR);
- json_value
-------------
-        123
-(1 row)
-
-SELECT JSON_VALUE('"03:04 2015-02-01"', '$.datetime("HH24:MI YYYY-MM-DD")' RETURNING date);
- json_value
-------------
- 2015-02-01
-(1 row)
-
-SELECT JSON_VALUE('"123.45"', '$' RETURNING int ERROR ON ERROR);
-ERROR:  invalid input syntax for integer: "123.45"
-
-SELECT JSON_VALUE(jsonb '[1]', 'strict $' ERROR ON ERROR);
-ERROR: SQL/JSON scalar required
-
-SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' ERROR ON ERROR);
-ERROR: more than one SQL/JSON item
-</screen>
-
-     <para>
-       If the path expression returns an array, an object, or
-       multiple SQL/JSON items, an error is returned, as specified
-       in the <command>ON ERROR</command> clause:
-     </para>
-<screen>
-SELECT JSON_VALUE(jsonb '[1]', 'strict $' ERROR ON ERROR);
-ERROR: SQL/JSON scalar required
-
-SELECT JSON_VALUE(jsonb '{"a": 1}', 'strict $' ERROR ON ERROR);
-ERROR: SQL/JSON scalar required
-
-SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' ERROR ON ERROR);
-ERROR: more than one SQL/JSON item
-
-SELECT JSON_VALUE(jsonb '[1,2]', 'strict $[*]' DEFAULT 1 ON ERROR);
-1
-</screen>
-
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsonquery">
-    <title><literal>JSON_QUERY</literal></title>
-    <indexterm><primary>json_query</primary></indexterm>
-
-<synopsis>
-<function>JSON_QUERY</function> (
-  <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-  <optional> { WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER </optional>
-  <optional> { KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional> </optional>
-  <optional> { ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY </optional>
-  <optional> { ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR </optional>
-)
-  </synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-  <para>
-   The <function>JSON_QUERY</function> function extracts an <acronym>SQL/JSON</acronym>
-   array or object from <acronym>JSON</acronym> data. This function must return
-   a JSON string, so if the path expression returns a scalar or multiple SQL/JSON
-   items, you must wrap the result using the <literal>WITH WRAPPER</literal> clause.
-   To extract a single <acronym>SQL/JSON</acronym> value, you can use <xref linkend="functions-jsonvalue"/>.
-  </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-   <variablelist>
-
-   <varlistentry>
-    <term>
-     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     The input data to query, the JSON path expression defining the query, and an optional <literal>PASSING</literal> clause.
-     For details, see <xref linkend="functions-sqljson-path"/>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the data type of the returned value.
-       For details, see <xref linkend="sqljson-output-clause"/>.
-     </para>
-     </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>{ WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines whether to wrap a returned sequence of <acronym>SQL/JSON</acronym>
-       items into an <acronym>SQL/JSON</acronym> array.
-     </para>
-       <variablelist>
-        <varlistentry>
-        <term><literal>WITHOUT WRAPPER</literal></term>
-        <listitem>
-          <para>
-            Do not wrap the result.
-            This is the default behavior if the <literal>WRAPPER</literal>
-            clause is omitted.
-          </para>
-        </listitem>
-        </varlistentry>
-        <varlistentry>
-        <term><literal>WITH <optional>UNCONDITIONAL</optional> WRAPPER</literal></term>
-        <listitem>
-          <para>
-            Always wrap the result.
-          </para>
-        </listitem>
-        </varlistentry>
-        <varlistentry>
-        <term><literal>WITH CONDITIONAL WRAPPER</literal></term>
-        <listitem>
-          <para>
-            Wrap the result if the path
-            expression returns anything other than a single
-            <acronym>SQL/JSON</acronym> array or object.
-          </para>
-        </listitem>
-        </varlistentry>
-       </variablelist>
-     <para>
-       Optionally, you can add the <literal>ARRAY</literal> keyword for semantic clarity.
-     </para>
-     <important>
-      <para>You cannot use this clause together with the <literal>ON EMPTY</literal> clause.
-      </para>
-     </important>
-     </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>{ KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       Defines whether to keep or omit quotes if a scalar string is returned.
-       By default, scalar strings are returned with quotes. Using this
-       clause together with the <command>WITH WRAPPER</command> clause is not allowed.
-     </para>
-     <para>
-       Optionally, you can add the <literal>ON SCALAR STRING</literal> keywords for semantic clarity.
-     </para>
-     </listitem>
-   </varlistentry>
-
-  <varlistentry>
-    <term>
-     <literal>{ ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON EMPTY</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines the return value if no JSON value is found. The default is <literal>NULL</literal>.
-       If you use <literal>EMPTY <optional>ARRAY</optional></literal> or <literal>EMPTY OBJECT</literal>,
-       an empty JSON array [] or object {} is returned, respectively.
-       If you use <literal>DEFAULT <replaceable class="parameter">expression</replaceable></literal>,
-       the provided <replaceable class="parameter">expression</replaceable> is evaluated and cast
-       to the type specified in the <command>RETURNING</command> clause.
-     </para>
-     <para>
-       You cannot use this clause together with the <literal>WRAPPER</literal> clause.
-     </para>
-     </listitem>
-   </varlistentry>
-
-     <varlistentry>
-    <term>
-     <literal>{ ERROR | NULL | EMPTY { <optional> ARRAY </optional> | OBJECT } | DEFAULT <replaceable class="parameter">expression</replaceable> } ON ERROR</literal>
-    </term>
-    <listitem>
-     <para>
-       Defines the return value if an unhandled error occurs. The default is <literal>NULL</literal>.
-       If you use <literal>EMPTY <optional>ARRAY</optional></literal> or <literal>EMPTY OBJECT</literal>,
-       an empty JSON array <literal>[]</literal> or object <literal>{}</literal> are returned, respectively.
-       If you use <literal>DEFAULT <replaceable class="parameter">expression</replaceable></literal>,
-       the provided <replaceable class="parameter">expression</replaceable> is evaluated and cast
-       to the type specified in the <command>RETURNING</command> clause.
-     </para>
-     </listitem>
-   </varlistentry>
-
-   </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-     <para>
-      Extract all film genres listed in the <structname>my_films</structname> table:
-     </para>
-     <screen>
-SELECT
-    JSON_QUERY(js, '$.favorites[*].kind' WITH WRAPPER ERROR ON ERROR)
-FROM my_films;
- json_query
-------------
- ["comedy", "horror", "thriller", "drama"]
-(1 row)
-</screen>
-
-     <para>
-      Note that the same query will result in an error if you omit the
-      <command>WITH WRAPPER</command> clause, as it returns multiple SQL/JSON items:
-     </para>
-     <screen>
-SELECT
-    JSON_QUERY(js, '$.favorites[*].kind' ERROR ON ERROR)
-FROM my_films;
-ERROR: more than one SQL/JSON item
-</screen>
-
-     <para>
-       Compare the effect of different <literal>WRAPPER</literal> clauses:
-     </para>
-     <screen>
-SELECT
-    js,
-    JSON_QUERY(js, 'lax $[*]') AS "without",
-    JSON_QUERY(js, 'lax $[*]' WITH WRAPPER)  AS "with uncond",
-    JSON_QUERY(js, 'lax $[*]' WITH CONDITIONAL WRAPPER) AS "with cond"
-FROM
-    (VALUES (jsonb '[]'), ('[1]'), ('[[1,2,3]]'),  ('[{"a": 1}]'), ('[1, null, "2"]')) foo(js);
-       js       |  without  |  with uncond   |   with cond
-----------------+-----------+----------------+----------------
- []             | (null)    | (null)         | (null)
- [1]            | 1         | [1]            | [1]
- [[1, 2, 3]]    | [1, 2, 3] | [[1, 2, 3]]    | [1, 2, 3]
- [{"a": 1}]     | {"a": 1}  | [{"a": 1}]     | {"a": 1}
- [1, null, "2"] | (null)    | [1, null, "2"] | [1, null, "2"]
-(5 rows)
-</screen>
-
-<para>Compare quote handling for scalar types with and without the <command>OMIT QUOTES</command> clause:
-</para>
-     <screen>
-SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING text);
- json_query
-------------
- "aaa"
-(1 row)
-
-SELECT JSON_QUERY(jsonb '"aaa"', '$' RETURNING text OMIT QUOTES);
- json_query
-------------
- aaa
-(1 row)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-isjson-predicate">
-    <title><literal>IS JSON</literal></title>
-    <indexterm><primary>is_json</primary></indexterm>
-
-<synopsis>
-<replaceable class="parameter">expression</replaceable>
-  IS <optional> NOT </optional> JSON
-  <optional> { VALUE | SCALAR | ARRAY | OBJECT } </optional>
-  <optional> { WITH | WITHOUT } UNIQUE <optional> KEYS </optional> </optional>
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-  <para>
-   The <command>IS JSON</command> predicate tests whether the provided value is valid
-   <acronym>JSON</acronym> data. If you provide a specific JSON data type as a parameter,
-   you can check whether the value belongs to this type.
-   You can also use this predicate in the <command>IS NOT JSON</command> form.
-   The return values are:
-   <itemizedlist>
-    <listitem>
-      <para>
-        <literal>t</literal> if the value satisfies the specified condition.
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <literal>f</literal> if the value does not satisfy the specified condition.
-      </para>
-    </listitem>
-   </itemizedlist>
-  </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-
-<variablelist>
-
-   <varlistentry>
-    <term>
-     <literal><replaceable class="parameter">expression</replaceable></literal>
-    </term>
-    <listitem>
-
-    <para>
-      The input clause defining the value to test. You can provide the values
-      of <literal>json</literal>, <literal>jsonb</literal>,
-      <literal>bytea</literal>, or character string types.
-    </para>
-  </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>VALUE | SCALAR | ARRAY | OBJECT</literal>
-    </term>
-    <listitem>
-
-    <para>
-      Specifies the <acronym>JSON</acronym> data type to test for:
-      <itemizedlist>
-        <listitem>
-          <para>
-            <literal>VALUE</literal> (default) &mdash; any <acronym>JSON</acronym> type.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>SCALAR</literal> &mdash; <acronym>JSON</acronym> number, string, or boolean.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>ARRAY</literal> &mdash; <acronym>JSON</acronym> array.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>OBJECT</literal> &mdash; <acronym>JSON</acronym> object.
-          </para>
-        </listitem>
-      </itemizedlist>
-    </para>
-    </listitem>
-   </varlistentry>
-
-    <varlistentry>
-    <term>
-     <literal>{ WITH | WITHOUT } UNIQUE <optional> KEYS </optional></literal>
-    </term>
-    <listitem>
-     <para>Defines whether duplicate keys are allowed:
-      <itemizedlist>
-        <listitem>
-          <para>
-            <literal>WITHOUT</literal> (default) &mdash; the
-            <acronym>JSON</acronym> object can contain duplicate keys.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            <literal>WITH</literal> &mdash; duplicate keys are not allowed.
-            If the input data contains duplicate keys, it is considered to be invalid JSON.
-          </para>
-        </listitem>
-      </itemizedlist>
-      Optionally, you can add the <literal>KEYS</literal> keyword for semantic clarity.
-      </para>
-    </listitem>
-  </varlistentry>
-   </variablelist>
-
-    </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-     <para>
-      Compare the result returned by the <function>IS JSON</function>
-      predicate for different data types:
-     </para>
-     <screen>
-SELECT
-    js,
-    js IS JSON "is json",
-    js IS NOT JSON "is not json",
-    js IS JSON SCALAR "is scalar",
-    js IS JSON OBJECT "is object",
-    js IS JSON ARRAY "is array"
-FROM
-    (VALUES ('123'), ('"abc"'), ('{"a": "b"}'), ('[1,2]'), ('abc')) foo(js);
-
-     js     | is json | is not json | is scalar | is object | is array
-------------+---------+-------------+-----------+-----------|-------------
- 123        | t       | f           | t         | f         | f
- "abc"      | t       | f           | t         | f         | f
- {"a": "b"} | t       | f           | f         | t         | f
- [1,2]      | t       | f           | f         | f         | t
- abc        | f       | t           | f         | f         | f
-(5 rows)
-</screen>
-    </sect5>
-   </sect4>
-
-   <sect4 id="functions-jsontable">
-    <title><literal>JSON_TABLE</literal></title>
-    <indexterm><primary>json_table</primary></indexterm>
-
-<synopsis>
-JSON_TABLE (
-  <replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional> </optional>
-  COLUMNS ( <replaceable class="parameter">json_table_column</replaceable> <optional>, ...</optional> )
-  <optional>
-    PLAN ( <replaceable class="parameter">json_table_plan</replaceable> ) |
-    PLAN DEFAULT ( { INNER | OUTER } <optional> , { CROSS | UNION } </optional>
-                 | { CROSS | UNION } <optional> , { INNER | OUTER } </optional> )
-  </optional>
-)
-<phrase>
-where <replaceable class="parameter">json_table_column</replaceable> is:
-</phrase>
-    <replaceable>name</replaceable> <replaceable>type</replaceable> <optional> PATH <replaceable>json_path_specification</replaceable> </optional>
-        <optional> { WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER </optional>
-        <optional> { KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional> </optional>
-        <optional> { ERROR | NULL | DEFAULT <replaceable>expression</replaceable> } ON EMPTY </optional>
-        <optional> { ERROR | NULL | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
-  | <replaceable>name</replaceable> <replaceable>type</replaceable> FORMAT <replaceable>json_representation</replaceable>
-        <optional> PATH <replaceable>json_path_specification</replaceable> </optional>
-        <optional> { WITHOUT | WITH { CONDITIONAL | <optional>UNCONDITIONAL</optional> } } <optional> ARRAY </optional> WRAPPER </optional>
-        <optional> { KEEP | OMIT } QUOTES <optional> ON SCALAR STRING </optional> </optional>
-        <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON EMPTY </optional>
-        <optional> { ERROR | NULL | EMPTY { ARRAY | OBJECT } | DEFAULT <replaceable>expression</replaceable> } ON ERROR </optional>
-  | <replaceable>name</replaceable> <replaceable>type</replaceable> EXISTS <optional> PATH <replaceable>json_path_specification</replaceable> </optional>
-        <optional> { ERROR | TRUE | FALSE | UNKNOWN } ON ERROR </optional>
-  | NESTED PATH <replaceable>json_path_specification</replaceable> <optional> AS <replaceable>path_name</replaceable> </optional>
-        COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )
-  | <replaceable>name</replaceable> FOR ORDINALITY
-<phrase>
-<replaceable>json_table_plan</replaceable> is:
-</phrase>
-    <replaceable>json_path_name</replaceable> <optional> { OUTER | INNER } <replaceable>json_table_plan_primary</replaceable> </optional>
-  | <replaceable>json_table_plan_primary</replaceable> { UNION <replaceable>json_table_plan_primary</replaceable> } <optional>...</optional>
-  | <replaceable>json_table_plan_primary</replaceable> { CROSS <replaceable>json_table_plan_primary</replaceable> } <optional>...</optional>
-<phrase>
-<replaceable>json_table_plan_primary</replaceable> is:
-</phrase>
-    <replaceable>json_path_name</replaceable> | ( <replaceable>json_table_plan</replaceable> )
-
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_TABLE</function> function queries <acronym>JSON</acronym> data
-      and presents the results as a relational view, which can be accessed as a
-      regular SQL table. You can only use <function>JSON_TABLE</function> inside the
-      <literal>FROM</literal> clause of the <literal>SELECT</literal> statement
-      for an SQL table.
-     </para>
-
-     <para>
-      Taking JSON data as input, <function>JSON_TABLE</function> uses
-      a path expression to extract a part of the provided data that
-      will be used as a <firstterm>row pattern</firstterm> for the
-      constructed view. Each SQL/JSON item at the top level of the row pattern serves
-      as the source for a separate row in the constructed relational view.
-     </para>
-
-    <para>
-      To split the row pattern into columns, <function>JSON_TABLE</function>
-      provides the <literal>COLUMNS</literal> clause that defines the
-      schema of the created view. For each column to be constructed,
-      this clause provides a separate path expression that evaluates
-      the row pattern, extracts a JSON item, and returns it as a
-      separate SQL value for the specified column. If the required value
-      is stored in a nested level of the row pattern, it can be extracted
-      using the <literal>NESTED PATH</literal> subclause. Joining the
-      columns returned by <literal>NESTED PATH</literal> can add multiple
-      new rows to the constructed view. Such rows are called
-      <firstterm>child rows</firstterm>, as opposed to the <firstterm>parent row</firstterm>
-      that generates them.
-     </para>
-
-     <para>
-      The rows produced by <function>JSON_TABLE</function> are laterally
-      joined to the row that generated them, so you do not have to explicitly join
-      the constructed view with the original table holding <acronym>JSON</acronym>
-      data. Optionally, you can specify how to join the columns returned
-      by <literal>NESTED PATH</literal> using the <literal>PLAN</literal> clause.
-     </para>
-
-     <para>
-      Each <literal>NESTED PATH</literal> clause can generate one or more
-      columns, which are considered to be <firstterm>siblings</firstterm>
-      to each other. In relation to the columns returned directly from the row
-      expression or by the <literal>NESTED PATH</literal> clause of a
-      higher level, these columns are <firstterm>child</firstterm> columns.
-      Sibling columns are always joined first. Once they are processed,
-      the resulting rows are joined to the parent row.
-     </para>
-
-    </sect5>
-    <sect5>
-     <title>Parameters</title>
-
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional> <optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     The input data to query, the JSON path expression defining the query,
-     and an optional <literal>PASSING</literal> clause, as described in
-     <xref linkend="sqljson-input-clause"/>. The result of the input data
-     evaluation is called the <firstterm>row pattern</firstterm>. The row
-     pattern is used as the source for row values in the constructed view.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>COLUMNS( <replaceable class="parameter">json_table_column</replaceable> <optional>, ...</optional> )</literal>
-    </term>
-    <listitem>
-
-    <para>
-     The <literal>COLUMNS</literal> clause defining the schema of the
-     constructed view. In this clause, you must specify all the columns
-     to be filled with SQL/JSON items.
-     The <replaceable class="parameter">json_table_column</replaceable>
-     expression has the following syntax variants:
-    </para>
-
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal><replaceable>name</replaceable> <replaceable>type</replaceable>
-          <optional> PATH <replaceable>json_path_specification</replaceable> </optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     Inserts a single SQL/JSON item into each row of
-     the specified column.
-    </para>
-    <para>
-     The provided <literal>PATH</literal> expression parses the
-     row pattern defined by <replaceable>json_api_common_syntax</replaceable>
-     and fills the column with produced SQL/JSON items, one for each row.
-     If the <literal>PATH</literal> expression is omitted,
-     <function>JSON_TABLE</function> uses the
-     <literal>$.<replaceable>name</replaceable></literal> path expression,
-     where <replaceable>name</replaceable> is the provided column name.
-     In this case, the column name must correspond to one of the
-     keys within the SQL/JSON item produced by the row pattern.
-    </para>
-    <para>
-      Internally, <xref linkend="functions-jsonvalue"/> and
-      <xref linkend="functions-jsonquery"/> are used to produce resulting values.
-      <xref linkend="functions-jsonquery"/> is used for JSON, array, and
-      composite column types, <xref linkend="functions-jsonvalue"/> is used for
-      other types.
-    </para>
-    <para>
-     Optionally, you can add <literal>ON EMPTY</literal> and
-     <literal>ON ERROR</literal> clauses to define how to handle missing values
-     or structural errors.
-     <literal>WRAPPER</literal> and <literal>QUOTES</literal> clauses can only
-     be used with JSON, array, and composite types.
-     These clauses have the same syntax and semantics as in
-     <xref linkend="functions-jsonvalue"/> and
-     <xref linkend="functions-jsonquery"/>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal><replaceable>name</replaceable> <replaceable>type</replaceable> FORMAT <replaceable>json_representation</replaceable>
-          <optional> PATH <replaceable>json_path_specification</replaceable> </optional></literal>
-    </term>
-    <listitem>
-
-    <para>
-     Generates a column and inserts a composite SQL/JSON
-     item into each row of this column.
-    </para>
-    <para>
-     The provided <literal>PATH</literal> expression parses the
-     row pattern defined by <replaceable>json_api_common_syntax</replaceable>
-     and fills the column with produced SQL/JSON items, one for each row.
-     If the <literal>PATH</literal> expression is omitted,
-     <function>JSON_TABLE</function> uses the
-     <literal>$.<replaceable>name</replaceable></literal> path expression,
-     where <replaceable>name</replaceable> is the provided column name.
-     In this case, the column name must correspond to one of the
-     keys within the SQL/JSON item produced by the row pattern.
-    </para>
-    <para>
-      Internally, <xref linkend="functions-jsonquery"/> is used to produce
-      resulting values.
-    </para>
-    <para>
-     Optionally, you can add <literal>WRAPPER</literal>, <literal>QUOTES</literal>,
-     <literal>ON EMPTY</literal> and <literal>ON ERROR</literal> clauses
-     to define additional settings for the returned SQL/JSON items.
-     These clauses have the same syntax and semantics as
-     in <xref linkend="functions-jsonquery"/>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>
-       <replaceable>name</replaceable> <replaceable>type</replaceable>
-       EXISTS <optional> PATH <replaceable>json_path_specification</replaceable> </optional>
-     </literal>
-    </term>
-    <listitem>
-
-    <para>
-     Generates a column and inserts a boolean item into each row of this column.
-    </para>
-    <para>
-     The provided <literal>PATH</literal> expression parses the
-     row pattern defined by <replaceable>json_api_common_syntax</replaceable>,
-     checks whether any SQL/JSON items were returned, and fills the column with
-     resulting boolean value, one for each row.
-     The specified <replaceable>type</replaceable> should have cast from
-     <type>boolean</type>.
-     If the <literal>PATH</literal> expression is omitted,
-     <function>JSON_TABLE</function> uses the
-     <literal>$.<replaceable>name</replaceable></literal> path expression,
-     where <replaceable>name</replaceable> is the provided column name.
-    </para>
-    <para>
-     Optionally, you can add <literal>ON ERROR</literal> clause to define
-     error behavior.  This clause have the same syntax and semantics as in
-     <xref linkend="functions-jsonexists"/>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>NESTED PATH <replaceable>json_path_specification</replaceable> <optional> AS <replaceable>json_path_name</replaceable> </optional>
-          COLUMNS ( <replaceable>json_table_column</replaceable> <optional>, ...</optional> )</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Extracts SQL/JSON items from nested levels of the row pattern,
-     generates one or more columns as defined by the <literal>COLUMNS</literal>
-     subclause, and inserts the extracted SQL/JSON items into each row of these columns.
-     The <replaceable>json_table_column</replaceable> expression in the
-     <literal>COLUMNS</literal> subclause uses the same syntax as in the
-     parent <literal>COLUMNS</literal> clause.
-    </para>
-
-    <para>
-     The <literal>NESTED PATH</literal> syntax is recursive,
-     so you can go down multiple nested levels by specifying several
-     <literal>NESTED PATH</literal> subclauses within each other.
-     It allows to unnest the hierarchy of JSON objects and arrays
-     in a single function invocation rather than chaining several
-     <function>JSON_TABLE</function> expressions in an SQL statement.
-    </para>
-
-    <para>
-     You can use the <literal>PLAN</literal> clause to define how
-     to join the columns returned by <replaceable>NESTED PATH</replaceable> clauses.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal><replaceable>name</replaceable> FOR ORDINALITY</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Adds an ordinality column that provides sequential row numbering.
-     You can have only one ordinality column per table. Row numbering
-     is 1-based. For child rows that result from the <literal>NESTED PATH</literal>
-     clauses, the parent row number is repeated.
-    </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
-
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>AS <replaceable>json_path_name</replaceable></literal>
-    </term>
-    <listitem>
-
-    <para>
-     The optional <replaceable>json_path_name</replaceable> serves as an
-     identifier of the provided <replaceable>json_path_specification</replaceable>.
-     The path name must be unique and distinct from the column names.
-     When using the <literal>PLAN</literal> clause, you must specify the names
-     for all the paths, including the row pattern. Each path name can appear in
-     the <literal>PLAN</literal> clause only once.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>PLAN ( <replaceable class="parameter">json_table_plan</replaceable> )</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Defines how to join the data returned by <replaceable>NESTED PATH</replaceable>
-     clauses to the constructed view.
-    </para>
-    <para>
-     To join columns with parent/child relationship, you can use:
-    </para>
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal>INNER</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Use <literal>INNER JOIN</literal>, so that the parent row
-     is omitted from the output if it does not have any child rows
-     after joining the data returned by <literal>NESTED PATH</literal>.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>OUTER</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Use <literal>LEFT OUTER JOIN</literal>, so that the parent row
-     is always included into the output even if it does not have any child rows
-     after joining the data returned by <literal>NESTED PATH</literal>, with NULL values
-     inserted into the child columns if the corresponding
-     values are missing.
-    </para>
-    <para>
-     This is the default option for joining columns with parent/child relationship.
-    </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
-
-     <para>
-     To join sibling columns, you can use:
-    </para>
-
-  <variablelist>
-   <varlistentry>
-    <term>
-     <literal>UNION</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Use <literal>FULL OUTER JOIN ON FALSE</literal>, so that both parent and child
-     rows are included into the output, with NULL values inserted
-     into both child and parent columns for all missing values.
-    </para>
-    <para>
-     This is the default option for joining sibling columns.
-    </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>CROSS</literal>
-    </term>
-    <listitem>
-
-    <para>
-     Use <literal>CROSS JOIN</literal>, so that the output includes
-     a row for every possible combination of rows from the left-hand
-     and the right-hand columns.
-    </para>
-    </listitem>
-   </varlistentry>
-
-  </variablelist>
-
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
-     <literal>PLAN DEFAULT ( <replaceable>option</replaceable> <optional>, ... </optional> )</literal>
-    </term>
-    <listitem>
-     <para>
-      Overrides the default joining plans. The <literal>INNER</literal> and
-      <literal>OUTER</literal> options define the joining plan for parent/child
-      columns, while <literal>UNION</literal> and <literal>CROSS</literal>
-      affect the sibling columns. You can override the default plans for all columns at once.
-      Even though the path names are not included into the <literal>PLAN DEFAULT</literal>
-      clause, they must be provided for all the paths to conform to
-      the SQL/JSON standard.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Examples</title>
-
-     <para>
-      Query the <structname>my_films</structname> table holding
-      some JSON data about the films and create a view that
-      distributes the film genre, title, and director between separate columns:
-<screen>
-SELECT jt.* FROM
- my_films,
- JSON_TABLE ( js, '$.favorites[*]' COLUMNS (
-   id FOR ORDINALITY,
-   kind text PATH '$.kind',
-   NESTED PATH '$.films[*]' COLUMNS (
-     title text PATH '$.title',
-     director text PATH '$.director'))) AS jt;
-----+----------+------------------+-------------------
- id |   kind   |       title      |    director
-----+----------+------------------+-------------------
- 1  | comedy   | Bananas          | Woody Allen
- 1  | comedy   | The Dinner Game  | Francis Veber
- 2  | horror   | Psycho           | Alfred Hitchcock
- 3  | thriller | Vertigo          | Hitchcock
- 4  | drama    | Yojimbo          | Akira Kurosawa
- (5 rows)
-</screen>
-     </para>
-
-     <para>
-      Find a director that has done films in two different genres:
-<screen>
-SELECT
-  director1 AS director, title1, kind1, title2, kind2
-FROM
-  my_films,
-  JSON_TABLE ( js, '$.favorites' AS favs COLUMNS (
-    NESTED PATH '$[*]' AS films1 COLUMNS (
-      kind1 text PATH '$.kind',
-      NESTED PATH '$.films[*]' AS film1 COLUMNS (
-        title1 text PATH '$.title',
-        director1 text PATH '$.director')
-    ),
-    NESTED PATH '$[*]' AS films2 COLUMNS (
-      kind2 text PATH '$.kind',
-      NESTED PATH '$.films[*]' AS film2 COLUMNS (
-        title2 text PATH '$.title',
-        director2 text PATH '$.director'
-      )
-    )
-   )
-   PLAN (favs OUTER ((films1 INNER film1) CROSS (films2 INNER film2)))
-  ) AS jt
- WHERE kind1 > kind2 AND director1 = director2;
-</screen>
-     </para>
-    </sect5>
-   </sect4>
-  </sect3>
-
-  <sect3 id="functions-sqljson-serializing">
-   <title>Serializing JSON data</title>
-   <itemizedlist>
-    <listitem>
-      <para>
-       <link linkend="functions-jsonserialize"><literal>JSON_SERIALIZE</literal></link>
-      </para>
-    </listitem>
-   </itemizedlist>
-
-   <sect4 id="functions-jsonserialize">
-    <title><literal>JSON_SERIALAIZE</literal></title>
-    <indexterm><primary>json_serialize</primary></indexterm>
-
-<synopsis>
-JSON_SERIALIZE (
-  <parameter>expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional>
-  <optional> RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional> </optional>
-)
-</synopsis>
-
-    <sect5>
-     <title>Description</title>
-
-     <para>
-      The <function>JSON_SERIALIZE</function> function transforms an SQL/JSON value
-      into a character or binary string.
-     </para>
-    </sect5>
-
-    <sect5>
-     <title>Parameters</title>
-      <variablelist>
-       <varlistentry>
-        <term>
-         <literal><parameter>expression</parameter> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-        </term>
-        <listitem>
-         <para>
-          <acronym>JSON</acronym> typed expression that provides a data for
-          serialization.  Accepted JSON types (<type>json</type> and
-          <type>jsonb</type>), any character string types (<type>text</type>,
-          <type>char</type>, etc.), binary strings (<type>bytea</type>) in
-          UTF8 encoding.
-          For null input, null value is returned.
-         </para>
-         <para>
-           The optional <literal>FORMAT</literal> clause is provided to conform
-           to the SQL/JSON standard.
-         </para>
-        </listitem>
-       </varlistentry>
-       <varlistentry>
-        <term>
-         <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-        </term>
-        <listitem>
-        <para>
-         The output clause that specifies the target character or binary string
-         type (<type>text</type>, <type>char</type>, <type>bytea</type>, etc.).
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </sect5>
-
-    <sect5>
-     <title>Notes</title>
-     <para>
-      Alternatively, you can construct <acronym>JSON</acronym> values simply
-      using <productname>PostgreSQL</productname>-specific casts to
-      <type>json</type> and <type>jsonb</type> types.
-     </para>
-    </sect5>
-    <sect5>
-     <title>Examples</title>
-     <para>
-      Construct serialized JSON using the provided strings:
-     </para>
-<screen>
-SELECT JSON_SERIALIZE(JSON_SCALAR('foo'));
- json_serialize
-----------------
- "foo"
-(1 row)
-
-SELECT JSON_SERIALIZE('{"foo": "bar", "baz": [1, 2]}' RETURNING bytea);
-                        json_serialize
---------------------------------------------------------------
- \x7b22666f6f223a2022626172222c202262617a223a205b312c20325d7d
-(1 row)
-</screen>
-    </sect5>
-   </sect4>
-
-  </sect3>
-
-  <sect3 id="sqljson-common-clauses">
-   <title>SQL/JSON Common Clauses</title>
-
-   <sect4 id="sqljson-input-clause">
-    <title>SQL/JSON Input Clause</title>
-
-    <variablelist>
-  <varlistentry>
-    <term>
-     <literal><replaceable>context_item</replaceable>, <replaceable>path_expression</replaceable>
-<optional> PASSING { <replaceable>value</replaceable> AS <replaceable>varname</replaceable> } <optional>, ...</optional></optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The input clause specifies the JSON data to query and
-       the exact query path to be passed to SQL/JSON query functions:
-     </para>
-    <itemizedlist>
-     <listitem>
-      <para>
-       The <replaceable>context_item</replaceable> is the JSON data to query.
-      </para>
-      <note>
-       <para>
-        Currently for functions <function>JSON_VALUE</function>,
-        <function>JSON_EXISTS</function>, and <function>JSON_QUERY</function>
-        this must be a value of type <type>jsonb</type>.
-       </para>
-      </note>
-     </listitem>
-     <listitem>
-      <para>
-       The <replaceable>path_expression</replaceable> is an SQL/JSON path
-       expression that specifies the items to be retrieved from the JSON
-       data. For details on path expression syntax, see
-       <xref linkend="functions-sqljson-path"/>.
-      </para>
-      </listitem>
-      <listitem>
-      <para>
-       The optional <command>PASSING</command> clause provides the values for
-       the named variables used in the SQL/JSON path expression.
-      </para>
-     </listitem>
-    </itemizedlist>
-    <para>
-     The input clause is common for all SQL/JSON query functions.
-    </para>
-     </listitem>
-   </varlistentry>
-    </variablelist>
-
-   </sect4>
-
-   <sect4 id="sqljson-output-clause">
-    <title>SQL/JSON Output Clause</title>
-
-    <variablelist>
-  <varlistentry>
-    <term>
-     <literal>RETURNING <replaceable class="parameter">data_type</replaceable> <optional> FORMAT JSON <optional> ENCODING UTF8 </optional> </optional></literal>
-    </term>
-    <listitem>
-     <para>
-       The output clause that specifies the return type of the generated
-       <acronym>JSON</acronym> object. Out of the box, <productname>PostgreSQL</productname>
-       supports the following types: <type>json</type>, <type>jsonb</type>,
-       <type>bytea</type>, and character string types (<type>text</type>, <type>char</type>,
-       <type>varchar</type>, and <type>nchar</type>).
-       To use another type, you must create a cast from <type>json</type> to that type.
-       By default, the <type>json</type> type is returned.
-     </para>
-     <para>
-       The optional <literal>FORMAT</literal> clause is provided to conform to the SQL/JSON standard.
-      </para>
-     <para>
-       The output clause is common for both constructor and query SQL/JSON functions.
-     </para>
-     </listitem>
-   </varlistentry>
-    </variablelist>
-
-   </sect4>
-  </sect3>
-  </sect2>
-
  </sect1>
 
  <sect1 id="functions-sequence">
@@ -20720,10 +18312,19 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Returns the length of the requested array dimension.
+        (Produces NULL instead of 0 for empty or missing array dimensions.)
        </para>
        <para>
         <literal>array_length(array[1,2,3], 1)</literal>
         <returnvalue>3</returnvalue>
+       </para>
+       <para>
+        <literal>array_length(array[]::int[], 1)</literal>
+        <returnvalue>NULL</returnvalue>
+       </para>
+       <para>
+        <literal>array_length(array['text'], 2)</literal>
+        <returnvalue>NULL</returnvalue>
        </para></entry>
       </row>
 
@@ -21358,7 +18959,7 @@ SELECT NULLIF(value, '(none)') ...
         Is the element contained by the multirange?
        </para>
        <para>
-        <literal>42 &lt;@ '{[1,7)}'::int4multirange</literal>
+        <literal>4 &lt;@ '{[1,7)}'::int4multirange</literal>
         <returnvalue>t</returnvalue>
        </para></entry>
       </row>
@@ -22348,29 +19949,6 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>json_agg_strict</primary>
-        </indexterm>
-        <function>json_agg_strict</function> ( <type>anyelement</type> )
-        <returnvalue>json</returnvalue>
-       </para>
-       <para role="func_signature">
-        <indexterm>
-         <primary>jsonb_agg_strict</primary>
-        </indexterm>
-        <function>jsonb_agg_strict</function> ( <type>anyelement</type> )
-        <returnvalue>jsonb</returnvalue>
-       </para>
-       <para>
-        Collects all the input values, skipping nulls, into a JSON array.
-        Values are converted to JSON as per <function>to_json</function>
-        or <function>to_jsonb</function>.
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
          <primary>json_object_agg</primary>
         </indexterm>
         <function>json_object_agg</function> ( <parameter>key</parameter>
@@ -22389,97 +19967,9 @@ SELECT NULLIF(value, '(none)') ...
        </para>
        <para>
         Collects all the key/value pairs into a JSON object.  Key arguments
-        are coerced to text; value arguments are converted as per
-        <function>to_json</function> or <function>to_jsonb</function>
-        Values can be null, but keys cannot.
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>json_object_agg_strict</primary>
-        </indexterm>
-        <function>json_object_agg_strict</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>json</returnvalue>
-       </para>
-       <para role="func_signature">
-        <indexterm>
-         <primary>jsonb_object_agg_strict</primary>
-        </indexterm>
-        <function>jsonb_object_agg_strict</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>jsonb</returnvalue>
-       </para>
-       <para>
-        Collects all the key/value pairs into a JSON object.  Key arguments
-        are coerced to text; value arguments are converted as per
-        <function>to_json</function> or <function>to_jsonb</function>.
-        The <parameter>key</parameter> can not be null. If the
-        <parameter>value</parameter> is null then the entry is skipped,
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>json_object_agg_unique</primary>
-        </indexterm>
-        <function>json_object_agg_unique</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>json</returnvalue>
-       </para>
-       <para role="func_signature">
-        <indexterm>
-         <primary>jsonb_object_agg_unique</primary>
-        </indexterm>
-        <function>jsonb_object_agg_unique</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>jsonb</returnvalue>
-       </para>
-       <para>
-        Collects all the key/value pairs into a JSON object.  Key arguments
-        are coerced to text; value arguments are converted as per
-        <function>to_json</function> or <function>to_jsonb</function>.
-        Values can be null, but keys cannot.
-        If there is a duplicate key an error is thrown.
-       </para></entry>
-       <entry>No</entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
-         <primary>json_object_agg_unique_strict</primary>
-        </indexterm>
-        <function>json_object_agg_unique_strict</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>json</returnvalue>
-       </para>
-       <para role="func_signature">
-        <indexterm>
-         <primary>jsonb_object_agg_unique_strict</primary>
-        </indexterm>
-        <function>jsonb_object_agg_unique_strict</function> (
-         <parameter>key</parameter> <type>"any"</type>,
-         <parameter>value</parameter> <type>"any"</type> )
-        <returnvalue>jsonb</returnvalue>
-       </para>
-       <para>
-        Collects all the key/value pairs into a JSON object.  Key arguments
-        are coerced to text; value arguments are converted as per
-        <function>to_json</function> or <function>to_jsonb</function>.
-        The <parameter>key</parameter> can not be null. If the
-        <parameter>value</parameter> is null then the entry is skipped,
-        If there is a duplicate key an error is thrown.
+        are coerced to text; value arguments are converted as
+        per <function>to_json</function> or <function>to_jsonb</function>.
+        Values can be null, but not keys.
        </para></entry>
        <entry>No</entry>
       </row>
@@ -22549,7 +20039,7 @@ SELECT NULLIF(value, '(none)') ...
         </indexterm>
         <function>range_intersect_agg</function> ( <parameter>value</parameter>
          <type>anyrange</type> )
-        <returnvalue>anymultirange</returnvalue>
+        <returnvalue>anyrange</returnvalue>
        </para>
        <para role="func_signature">
         <function>range_intersect_agg</function> ( <parameter>value</parameter>
@@ -22657,12 +20147,7 @@ SELECT NULLIF(value, '(none)') ...
   <para>
    The aggregate functions <function>array_agg</function>,
    <function>json_agg</function>, <function>jsonb_agg</function>,
-   <function>json_agg_strict</function>, <function>jsonb_agg_strict</function>,
    <function>json_object_agg</function>, <function>jsonb_object_agg</function>,
-   <function>json_object_agg_strict</function>, <function>jsonb_object_agg_strict</function>,
-   <function>json_object_agg_unique</function>, <function>jsonb_object_agg_unique</function>,
-   <function>json_object_agg_unique_strict</function>,
-   <function>jsonb_object_agg_unique_strict</function>,
    <function>string_agg</function>,
    and <function>xmlagg</function>, as well as similar user-defined
    aggregate functions, produce meaningfully different result values
@@ -22681,13 +20166,6 @@ SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;
    additional processing, such as a join, because that might cause the
    subquery's output to be reordered before the aggregate is computed.
   </para>
-
-  <note>
-   <para>
-    In addition to the JSON aggregates shown here, see the <function>JSON_OBJECTAGG</function>
-    and <function>JSON_ARRAYAGG</function> constructors in <xref linkend="functions-sqljson"/>.
-   </para>
-  </note>
 
   <note>
     <indexterm>
@@ -25145,6 +22623,25 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>system_user</primary>
+        </indexterm>
+        <function>system_user</function>
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the authentication method and the identity (if any) that the
+        user presented during the authentication cycle before they were
+        assigned a database role. It is represented as
+        <literal>auth_method:identity</literal> or
+        <literal>NULL</literal> if the user has not been authenticated (for
+        example if <link linkend="auth-trust">Trust authentication</link> has
+        been used).
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>user</primary>
         </indexterm>
         <function>user</function>
@@ -25536,11 +23033,14 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
        <para>
         Does user have privilege for role?
         Allowable privilege types are
-        <literal>MEMBER</literal> and <literal>USAGE</literal>.
+        <literal>MEMBER</literal>, <literal>USAGE</literal>,
+        and <literal>SET</literal>.
         <literal>MEMBER</literal> denotes direct or indirect membership in
-        the role (that is, the right to do <command>SET ROLE</command>), while
+        the role without regard to what specific privileges may be conferred.
         <literal>USAGE</literal> denotes whether the privileges of the role
-        are immediately available without doing <command>SET ROLE</command>.
+        are immediately available without doing <command>SET ROLE</command>,
+        while <literal>SET</literal> denotes whether it is possible to change
+        to the role using the <literal>SET ROLE</literal> command.
         This function does not allow the special case of
         setting <parameter>user</parameter> to <literal>public</literal>,
         because the PUBLIC pseudo-role can never be a member of real roles.
@@ -25718,7 +23218,8 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
         If the grantee is the pseudo-role PUBLIC, it is represented by zero in
         the <parameter>grantee</parameter> column.  Each granted privilege is
         represented as <literal>SELECT</literal>, <literal>INSERT</literal>,
-        etc.  Note that each privilege is broken out as a separate row, so
+        etc (see <xref linkend="privilege-abbrevs-table"/> for a full list).
+        Note that each privilege is broken out as a separate row, so
         only one keyword appears in the <parameter>privilege_type</parameter>
         column.
        </para></entry>
@@ -25738,6 +23239,12 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
        </para>
        <para>
         Constructs an <type>aclitem</type> with the given properties.
+        <parameter>privileges</parameter> is a comma-separated list of
+        privilege names such as <literal>SELECT</literal>,
+        <literal>INSERT</literal>, etc, all of which are set in the
+        result.  (Case of the privilege string is not significant, and
+        extra whitespace is allowed between but not within privilege
+        names.)
        </para></entry>
       </row>
      </tbody>
@@ -26214,6 +23721,23 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_get_partkeydef</primary>
+        </indexterm>
+        <function>pg_get_partkeydef</function> ( <parameter>table</parameter> <type>oid</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Reconstructs the definition of a partitioned table's partition
+        key, in the form it would have in the <literal>PARTITION
+        BY</literal> clause of <command>CREATE TABLE</command>.
+        (This is a decompiled reconstruction, not the original text
+        of the command.)
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_get_ruledef</primary>
         </indexterm>
         <function>pg_get_ruledef</function> ( <parameter>rule</parameter> <type>oid</type> <optional>, <parameter>pretty</parameter> <type>boolean</type> </optional> )
@@ -26437,28 +23961,8 @@ SELECT currval(pg_get_serial_sequence('sometable', 'id'));
         Returns an array of the flags associated with the given GUC, or
         <literal>NULL</literal> if it does not exist. The result is
         an empty array if the GUC exists but there are no flags to show.
-        Only the most useful flags are exposed, as of the following:
-        <simplelist>
-         <member>
-          <literal>EXPLAIN</literal>: parameters included in
-          <command>EXPLAIN (SETTINGS)</command> commands.
-         </member>
-         <member>
-          <literal>NO_SHOW_ALL</literal>: parameters excluded from
-          <command>SHOW ALL</command> commands.
-         </member>
-         <member>
-          <literal>NO_RESET_ALL</literal>: parameters excluded from
-          <command>RESET ALL</command> commands.
-         </member>
-         <member>
-          <literal>NOT_IN_SAMPLE</literal>: parameters not included in
-          <filename>postgresql.conf</filename> by default.
-         </member>
-         <member>
-          <literal>RUNTIME_COMPUTED</literal>: runtime-computed parameters.
-         </member>
-        </simplelist>
+        Only the most useful flags listed in
+        <xref linkend="functions-pg-settings-flags"/> are exposed.
        </para></entry>
       </row>
 
@@ -26860,6 +24364,52 @@ SELECT collation for ('foo' COLLATE "de_DE");
       <entry><literal>can_include</literal></entry>
       <entry>Does the access method support the <literal>INCLUDE</literal>
         clause of <literal>CREATE INDEX</literal>?
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="functions-pg-settings-flags">
+   <title>GUC Flags</title>
+   <tgroup cols="2">
+    <thead>
+     <row><entry>Flag</entry><entry>Description</entry></row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><literal>EXPLAIN</literal></entry>
+      <entry>Parameters with this flag are included in
+       <command>EXPLAIN (SETTINGS)</command> commands.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>NO_SHOW_ALL</literal></entry>
+      <entry>Parameters with this flag are excluded from
+       <command>SHOW ALL</command> commands.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>NO_RESET</literal></entry>
+      <entry>Parameters with this flag do not support
+      <command>RESET</command> commands.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>NO_RESET_ALL</literal></entry>
+      <entry>Parameters with this flag are excluded from
+       <command>RESET ALL</command> commands.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>NOT_IN_SAMPLE</literal></entry>
+      <entry>Parameters with this flag are not included in
+       <filename>postgresql.conf</filename> by default.
+      </entry>
+     </row>
+     <row>
+      <entry><literal>RUNTIME_COMPUTED</literal></entry>
+      <entry>Parameters with this flag are runtime-computed ones.
       </entry>
      </row>
     </tbody>
@@ -28021,7 +25571,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         will be logged at
         <literal>LOG</literal> message level. They will appear in
         the server log based on the log configuration set
-        (See <xref linkend="runtime-config-logging"/> for more information),
+        (see <xref linkend="runtime-config-logging"/> for more information),
         but will not be sent to the client regardless of
         <xref linkend="guc-client-min-messages"/>.
        </para></entry>
@@ -28872,7 +26422,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
         <indexterm>
          <primary>pg_create_logical_replication_slot</primary>
         </indexterm>
-        <function>pg_create_logical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type>, <parameter>two_phase</parameter> <type>boolean</type> </optional> )
+        <function>pg_create_logical_replication_slot</function> ( <parameter>slot_name</parameter> <type>name</type>, <parameter>plugin</parameter> <type>name</type> <optional>, <parameter>temporary</parameter> <type>boolean</type>, <parameter>twophase</parameter> <type>boolean</type> </optional> )
         <returnvalue>record</returnvalue>
         ( <parameter>slot_name</parameter> <type>name</type>,
         <parameter>lsn</parameter> <type>pg_lsn</type> )
@@ -28885,7 +26435,7 @@ postgres=# SELECT * FROM pg_walfile_name_offset((pg_backup_stop()).lsn);
         the slot should not be permanently stored to disk and is only meant
         for use by the current session. Temporary slots are also
         released upon any error. The optional fourth parameter,
-        <parameter>two_phase</parameter>, when set to true, specifies
+        <parameter>twophase</parameter>, when set to true, specifies
         that the decoding of prepared transactions is enabled for this
         slot. A call to this function has the same effect as the replication
         protocol command <literal>CREATE_REPLICATION_SLOT ... LOGICAL</literal>.
@@ -29851,12 +27401,22 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
    </para>
 
    <para>
+    When granting privilege on these functions, note that the table entries
+    showing optional parameters are mostly implemented as several physical
+    functions with different parameter lists.  Privilege must be granted
+    separately on each such function, if it is to be
+    used.  <application>psql</application>'s <command>\df</command> command
+    can be useful to check what the actual function signatures are.
+   </para>
+
+   <para>
     Some of these functions take an optional <parameter>missing_ok</parameter>
     parameter, which specifies the behavior when the file or directory does
     not exist.  If <literal>true</literal>, the function
     returns <literal>NULL</literal> or an empty result set, as appropriate.
-    If <literal>false</literal>, an error is raised.  The default
-    is <literal>false</literal>.
+    If <literal>false</literal>, an error is raised.  (Failure conditions
+    other than <quote>file not found</quote> are reported as errors in any
+    case.)  The default is <literal>false</literal>.
    </para>
 
    <table id="functions-admin-genfile-table">
@@ -30075,7 +27635,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         <indexterm>
          <primary>pg_read_file</primary>
         </indexterm>
-        <function>pg_read_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional></optional> )
+        <function>pg_read_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
         <returnvalue>text</returnvalue>
        </para>
        <para>
@@ -30100,7 +27660,7 @@ SELECT pg_size_pretty(sum(pg_relation_size(relid))) AS total_size
         <indexterm>
          <primary>pg_read_binary_file</primary>
         </indexterm>
-        <function>pg_read_binary_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional></optional> )
+        <function>pg_read_binary_file</function> ( <parameter>filename</parameter> <type>text</type> <optional>, <parameter>offset</parameter> <type>bigint</type>, <parameter>length</parameter> <type>bigint</type> </optional> <optional>, <parameter>missing_ok</parameter> <type>boolean</type> </optional> )
         <returnvalue>bytea</returnvalue>
        </para>
        <para>

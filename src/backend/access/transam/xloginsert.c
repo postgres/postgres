@@ -70,7 +70,7 @@ typedef struct
 {
 	bool		in_use;			/* is this slot in use? */
 	uint8		flags;			/* REGBUF_* flags */
-	RelFileNode rnode;			/* identifies the relation and block */
+	RelFileLocator rlocator;	/* identifies the relation and block */
 	ForkNumber	forkno;
 	BlockNumber block;
 	Page		page;			/* page content */
@@ -257,7 +257,7 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 
 	regbuf = &registered_buffers[block_id];
 
-	BufferGetTag(buffer, &regbuf->rnode, &regbuf->forkno, &regbuf->block);
+	BufferGetTag(buffer, &regbuf->rlocator, &regbuf->forkno, &regbuf->block);
 	regbuf->page = BufferGetPage(buffer);
 	regbuf->flags = flags;
 	regbuf->rdata_tail = (XLogRecData *) &regbuf->rdata_head;
@@ -278,7 +278,7 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
 			if (i == block_id || !regbuf_old->in_use)
 				continue;
 
-			Assert(!RelFileNodeEquals(regbuf_old->rnode, regbuf->rnode) ||
+			Assert(!RelFileLocatorEquals(regbuf_old->rlocator, regbuf->rlocator) ||
 				   regbuf_old->forkno != regbuf->forkno ||
 				   regbuf_old->block != regbuf->block);
 		}
@@ -293,7 +293,7 @@ XLogRegisterBuffer(uint8 block_id, Buffer buffer, uint8 flags)
  * shared buffer pool (i.e. when you don't have a Buffer for it).
  */
 void
-XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
+XLogRegisterBlock(uint8 block_id, RelFileLocator *rlocator, ForkNumber forknum,
 				  BlockNumber blknum, Page page, uint8 flags)
 {
 	registered_buffer *regbuf;
@@ -308,7 +308,7 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
 
 	regbuf = &registered_buffers[block_id];
 
-	regbuf->rnode = *rnode;
+	regbuf->rlocator = *rlocator;
 	regbuf->forkno = forknum;
 	regbuf->block = blknum;
 	regbuf->page = page;
@@ -331,7 +331,7 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
 			if (i == block_id || !regbuf_old->in_use)
 				continue;
 
-			Assert(!RelFileNodeEquals(regbuf_old->rnode, regbuf->rnode) ||
+			Assert(!RelFileLocatorEquals(regbuf_old->rlocator, regbuf->rlocator) ||
 				   regbuf_old->forkno != regbuf->forkno ||
 				   regbuf_old->block != regbuf->block);
 		}
@@ -348,7 +348,7 @@ XLogRegisterBlock(uint8 block_id, RelFileNode *rnode, ForkNumber forknum,
  * XLogRecGetData().
  */
 void
-XLogRegisterData(char *data, int len)
+XLogRegisterData(char *data, uint32 len)
 {
 	XLogRecData *rdata;
 
@@ -386,7 +386,7 @@ XLogRegisterData(char *data, int len)
  * limited)
  */
 void
-XLogRegisterBufData(uint8 block_id, char *data, int len)
+XLogRegisterBufData(uint8 block_id, char *data, uint32 len)
 {
 	registered_buffer *regbuf;
 	XLogRecData *rdata;
@@ -399,8 +399,16 @@ XLogRegisterBufData(uint8 block_id, char *data, int len)
 		elog(ERROR, "no block with id %d registered with WAL insertion",
 			 block_id);
 
-	if (num_rdatas >= max_rdatas)
+	/*
+	 * Check against max_rdatas and ensure we do not register more data per
+	 * buffer than can be handled by the physical data format; i.e. that
+	 * regbuf->rdata_len does not grow beyond what
+	 * XLogRecordBlockHeader->data_length can hold.
+	 */
+	if (num_rdatas >= max_rdatas ||
+		regbuf->rdata_len + len > UINT16_MAX)
 		elog(ERROR, "too much WAL data");
+
 	rdata = &rdatas[num_rdatas++];
 
 	rdata->data = data;
@@ -757,18 +765,24 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		if (needs_data)
 		{
 			/*
+			 * When copying to XLogRecordBlockHeader, the length is narrowed
+			 * to an uint16.  Double-check that it is still correct.
+			 */
+			Assert(regbuf->rdata_len <= UINT16_MAX);
+
+			/*
 			 * Link the caller-supplied rdata chain for this buffer to the
 			 * overall list.
 			 */
 			bkpb.fork_flags |= BKPBLOCK_HAS_DATA;
-			bkpb.data_length = regbuf->rdata_len;
+			bkpb.data_length = (uint16) regbuf->rdata_len;
 			total_len += regbuf->rdata_len;
 
 			rdt_datas_last->next = regbuf->rdata_head;
 			rdt_datas_last = regbuf->rdata_tail;
 		}
 
-		if (prev_regbuf && RelFileNodeEquals(regbuf->rnode, prev_regbuf->rnode))
+		if (prev_regbuf && RelFileLocatorEquals(regbuf->rlocator, prev_regbuf->rlocator))
 		{
 			samerel = true;
 			bkpb.fork_flags |= BKPBLOCK_SAME_REL;
@@ -793,8 +807,8 @@ XLogRecordAssemble(RmgrId rmid, uint8 info,
 		}
 		if (!samerel)
 		{
-			memcpy(scratch, &regbuf->rnode, sizeof(RelFileNode));
-			scratch += sizeof(RelFileNode);
+			memcpy(scratch, &regbuf->rlocator, sizeof(RelFileLocator));
+			scratch += sizeof(RelFileLocator);
 		}
 		memcpy(scratch, &regbuf->block, sizeof(BlockNumber));
 		scratch += sizeof(BlockNumber);
@@ -959,9 +973,9 @@ XLogCompressBackupBlock(char *page, uint16 hole_offset, uint16 hole_length,
 /*
  * Determine whether the buffer referenced has to be backed up.
  *
- * Since we don't yet have the insert lock, fullPageWrites and forcePageWrites
- * could change later, so the result should be used for optimization purposes
- * only.
+ * Since we don't yet have the insert lock, fullPageWrites and runningBackups
+ * (which forces full-page writes) could change later, so the result should
+ * be used for optimization purposes only.
  */
 bool
 XLogCheckBufferNeedsBackup(Buffer buffer)
@@ -1031,7 +1045,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		int			flags = 0;
 		PGAlignedBlock copied_buffer;
 		char	   *origdata = (char *) BufferGetBlock(buffer);
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 		ForkNumber	forkno;
 		BlockNumber blkno;
 
@@ -1058,8 +1072,8 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
 		if (buffer_std)
 			flags |= REGBUF_STANDARD;
 
-		BufferGetTag(buffer, &rnode, &forkno, &blkno);
-		XLogRegisterBlock(0, &rnode, forkno, blkno, copied_buffer.data, flags);
+		BufferGetTag(buffer, &rlocator, &forkno, &blkno);
+		XLogRegisterBlock(0, &rlocator, forkno, blkno, copied_buffer.data, flags);
 
 		recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI_FOR_HINT);
 	}
@@ -1080,7 +1094,7 @@ XLogSaveBufferForHint(Buffer buffer, bool buffer_std)
  * the unused space to be left out from the WAL record, making it smaller.
  */
 XLogRecPtr
-log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
+log_newpage(RelFileLocator *rlocator, ForkNumber forknum, BlockNumber blkno,
 			Page page, bool page_std)
 {
 	int			flags;
@@ -1091,7 +1105,7 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
 		flags |= REGBUF_STANDARD;
 
 	XLogBeginInsert();
-	XLogRegisterBlock(0, rnode, forkNum, blkno, page, flags);
+	XLogRegisterBlock(0, rlocator, forknum, blkno, page, flags);
 	recptr = XLogInsert(RM_XLOG_ID, XLOG_FPI);
 
 	/*
@@ -1112,7 +1126,7 @@ log_newpage(RelFileNode *rnode, ForkNumber forkNum, BlockNumber blkno,
  * because we can write multiple pages in a single WAL record.
  */
 void
-log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
+log_newpages(RelFileLocator *rlocator, ForkNumber forknum, int num_pages,
 			 BlockNumber *blknos, Page *pages, bool page_std)
 {
 	int			flags;
@@ -1142,7 +1156,7 @@ log_newpages(RelFileNode *rnode, ForkNumber forkNum, int num_pages,
 		nbatch = 0;
 		while (nbatch < XLR_MAX_BLOCK_ID && i < num_pages)
 		{
-			XLogRegisterBlock(nbatch, rnode, forkNum, blknos[i], pages[i], flags);
+			XLogRegisterBlock(nbatch, rlocator, forknum, blknos[i], pages[i], flags);
 			i++;
 			nbatch++;
 		}
@@ -1177,16 +1191,16 @@ XLogRecPtr
 log_newpage_buffer(Buffer buffer, bool page_std)
 {
 	Page		page = BufferGetPage(buffer);
-	RelFileNode rnode;
-	ForkNumber	forkNum;
+	RelFileLocator rlocator;
+	ForkNumber	forknum;
 	BlockNumber blkno;
 
 	/* Shared buffers should be modified in a critical section. */
 	Assert(CritSectionCount > 0);
 
-	BufferGetTag(buffer, &rnode, &forkNum, &blkno);
+	BufferGetTag(buffer, &rlocator, &forknum, &blkno);
 
-	return log_newpage(&rnode, forkNum, blkno, page, page_std);
+	return log_newpage(&rlocator, forknum, blkno, page, page_std);
 }
 
 /*
@@ -1207,7 +1221,7 @@ log_newpage_buffer(Buffer buffer, bool page_std)
  * cause a deadlock through some other means.
  */
 void
-log_newpage_range(Relation rel, ForkNumber forkNum,
+log_newpage_range(Relation rel, ForkNumber forknum,
 				  BlockNumber startblk, BlockNumber endblk,
 				  bool page_std)
 {
@@ -1239,7 +1253,7 @@ log_newpage_range(Relation rel, ForkNumber forkNum,
 		nbufs = 0;
 		while (nbufs < XLR_MAX_BLOCK_ID && blkno < endblk)
 		{
-			Buffer		buf = ReadBufferExtended(rel, forkNum, blkno,
+			Buffer		buf = ReadBufferExtended(rel, forknum, blkno,
 												 RBM_NORMAL, NULL);
 
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);

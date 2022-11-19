@@ -11,8 +11,8 @@
 #include "postgres.h"
 
 #include "access/xact.h"
+#include "backup/basebackup_target.h"
 #include "miscadmin.h"
-#include "replication/basebackup_target.h"
 #include "storage/fd.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
@@ -37,20 +37,18 @@ typedef struct bbsink_shell
 	FILE	   *pipe;
 } bbsink_shell;
 
-void _PG_init(void);
-
 static void *shell_check_detail(char *target, char *target_detail);
 static bbsink *shell_get_sink(bbsink *next_sink, void *detail_arg);
 
 static void bbsink_shell_begin_archive(bbsink *sink,
-										const char *archive_name);
+									   const char *archive_name);
 static void bbsink_shell_archive_contents(bbsink *sink, size_t len);
 static void bbsink_shell_end_archive(bbsink *sink);
 static void bbsink_shell_begin_manifest(bbsink *sink);
 static void bbsink_shell_manifest_contents(bbsink *sink, size_t len);
 static void bbsink_shell_end_manifest(bbsink *sink);
 
-const bbsink_ops bbsink_shell_ops = {
+static const bbsink_ops bbsink_shell_ops = {
 	.begin_backup = bbsink_forward_begin_backup,
 	.begin_archive = bbsink_shell_begin_archive,
 	.archive_contents = bbsink_shell_archive_contents,
@@ -86,6 +84,8 @@ _PG_init(void)
 							   0,
 							   NULL, NULL, NULL);
 
+	MarkGUCPrefixReserved("basebackup_to_shell");
+
 	BaseBackupAddTarget("shell", shell_check_detail, shell_get_sink);
 }
 
@@ -99,7 +99,7 @@ shell_check_detail(char *target, char *target_detail)
 {
 	if (shell_required_role[0] != '\0')
 	{
-		Oid		roleid;
+		Oid			roleid;
 
 		StartTransactionCommand();
 		roleid = get_role_oid(shell_required_role, true);
@@ -123,8 +123,8 @@ static bbsink *
 shell_get_sink(bbsink *next_sink, void *detail_arg)
 {
 	bbsink_shell *sink;
-	bool	has_detail_escape = false;
-	char   *c;
+	bool		has_detail_escape = false;
+	char	   *c;
 
 	/*
 	 * Set up the bbsink.
@@ -169,15 +169,15 @@ shell_get_sink(bbsink *next_sink, void *detail_arg)
 	/*
 	 * Since we're passing the string provided by the user to popen(), it will
 	 * be interpreted by the shell, which is a potential security
-	 * vulnerability, since the user invoking this module is not necessarily
-	 * a superuser. To stay out of trouble, we must disallow any shell
+	 * vulnerability, since the user invoking this module is not necessarily a
+	 * superuser. To stay out of trouble, we must disallow any shell
 	 * metacharacters here; to be conservative and keep things simple, we
 	 * allow only alphanumerics.
 	 */
 	if (sink->target_detail != NULL)
 	{
-		char   *d;
-		bool	scary = false;
+		char	   *d;
+		bool		scary = false;
 
 		for (d = sink->target_detail; *d != '\0'; ++d)
 		{
@@ -208,7 +208,7 @@ static char *
 shell_construct_command(char *base_command, const char *filename,
 						char *target_detail)
 {
-	StringInfoData	buf;
+	StringInfoData buf;
 	char	   *c;
 
 	initStringInfo(&buf);
@@ -269,7 +269,7 @@ shell_construct_command(char *base_command, const char *filename,
 static void
 shell_finish_command(bbsink_shell *sink)
 {
-	int		pclose_rc;
+	int			pclose_rc;
 
 	/* There should be a command running. */
 	Assert(sink->current_command != NULL);
@@ -333,9 +333,8 @@ shell_send_data(bbsink_shell *sink, size_t len)
 		{
 			/*
 			 * The error we're about to throw would shut down the command
-			 * anyway, but we may get a more meaningful error message by
-			 * doing this. If not, we'll fall through to the generic error
-			 * below.
+			 * anyway, but we may get a more meaningful error message by doing
+			 * this. If not, we'll fall through to the generic error below.
 			 */
 			shell_finish_command(sink);
 			errno = EPIPE;

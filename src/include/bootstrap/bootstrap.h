@@ -34,8 +34,8 @@ extern PGDLLIMPORT int numattr;
 
 extern void BootstrapModeMain(int argc, char *argv[], bool check_only) pg_attribute_noreturn();
 
-extern void closerel(char *name);
-extern void boot_openrel(char *name);
+extern void closerel(char *relname);
+extern void boot_openrel(char *relname);
 
 extern void DefineAttr(char *name, char *type, int attnum, int nullness);
 extern void InsertOneTuple(void);
@@ -57,6 +57,6 @@ extern void boot_get_type_io_data(Oid typid,
 extern int	boot_yyparse(void);
 
 extern int	boot_yylex(void);
-extern void boot_yyerror(const char *str) pg_attribute_noreturn();
+extern void boot_yyerror(const char *message) pg_attribute_noreturn();
 
 #endif							/* BOOTSTRAP_H */

@@ -46,9 +46,9 @@ extern PGDLLIMPORT int log_statement;
 extern List *pg_parse_query(const char *query_string);
 extern List *pg_rewrite_query(Query *query);
 extern List *pg_analyze_and_rewrite_fixedparams(RawStmt *parsetree,
-									const char *query_string,
-									const Oid *paramTypes, int numParams,
-									QueryEnvironment *queryEnv);
+												const char *query_string,
+												const Oid *paramTypes, int numParams,
+												QueryEnvironment *queryEnv);
 extern List *pg_analyze_and_rewrite_varparams(RawStmt *parsetree,
 											  const char *query_string,
 											  Oid **paramTypes,
@@ -65,9 +65,6 @@ extern PlannedStmt *pg_plan_query(Query *querytree, const char *query_string,
 extern List *pg_plan_queries(List *querytrees, const char *query_string,
 							 int cursorOptions,
 							 ParamListInfo boundParams);
-
-extern bool check_max_stack_depth(int *newval, void **extra, GucSource source);
-extern void assign_max_stack_depth(int newval, void *extra);
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS) pg_attribute_noreturn();

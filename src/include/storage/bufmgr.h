@@ -17,7 +17,7 @@
 #include "storage/block.h"
 #include "storage/buf.h"
 #include "storage/bufpage.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 #include "utils/snapmgr.h"
 
@@ -69,6 +69,15 @@ extern PGDLLIMPORT bool zero_damaged_pages;
 extern PGDLLIMPORT int bgwriter_lru_maxpages;
 extern PGDLLIMPORT double bgwriter_lru_multiplier;
 extern PGDLLIMPORT bool track_io_timing;
+
+/* only applicable when prefetching is available */
+#ifdef USE_PREFETCH
+#define DEFAULT_EFFECTIVE_IO_CONCURRENCY 1
+#define DEFAULT_MAINTENANCE_IO_CONCURRENCY 10
+#else
+#define DEFAULT_EFFECTIVE_IO_CONCURRENCY 0
+#define DEFAULT_MAINTENANCE_IO_CONCURRENCY 0
+#endif
 extern PGDLLIMPORT int effective_io_concurrency;
 extern PGDLLIMPORT int maintenance_io_concurrency;
 
@@ -97,9 +106,104 @@ extern PGDLLIMPORT int32 *LocalRefCount;
 #define BUFFER_LOCK_SHARE		1
 #define BUFFER_LOCK_EXCLUSIVE	2
 
+
 /*
- * These routines are beaten on quite heavily, hence the macroization.
+ * prototypes for functions in bufmgr.c
  */
+extern PrefetchBufferResult PrefetchSharedBuffer(struct SMgrRelationData *smgr_reln,
+												 ForkNumber forkNum,
+												 BlockNumber blockNum);
+extern PrefetchBufferResult PrefetchBuffer(Relation reln, ForkNumber forkNum,
+										   BlockNumber blockNum);
+extern bool ReadRecentBuffer(RelFileLocator rlocator, ForkNumber forkNum,
+							 BlockNumber blockNum, Buffer recent_buffer);
+extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
+extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
+								 BlockNumber blockNum, ReadBufferMode mode,
+								 BufferAccessStrategy strategy);
+extern Buffer ReadBufferWithoutRelcache(RelFileLocator rlocator,
+										ForkNumber forkNum, BlockNumber blockNum,
+										ReadBufferMode mode, BufferAccessStrategy strategy,
+										bool permanent);
+extern void ReleaseBuffer(Buffer buffer);
+extern void UnlockReleaseBuffer(Buffer buffer);
+extern void MarkBufferDirty(Buffer buffer);
+extern void IncrBufferRefCount(Buffer buffer);
+extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
+								   BlockNumber blockNum);
+
+extern void InitBufferPoolAccess(void);
+extern void AtEOXact_Buffers(bool isCommit);
+extern void PrintBufferLeakWarning(Buffer buffer);
+extern void CheckPointBuffers(int flags);
+extern BlockNumber BufferGetBlockNumber(Buffer buffer);
+extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
+												   ForkNumber forkNum);
+extern void FlushOneBuffer(Buffer buffer);
+extern void FlushRelationBuffers(Relation rel);
+extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
+extern void CreateAndCopyRelationData(RelFileLocator src_rlocator,
+									  RelFileLocator dst_rlocator,
+									  bool permanent);
+extern void FlushDatabaseBuffers(Oid dbid);
+extern void DropRelationBuffers(struct SMgrRelationData *smgr_reln,
+								ForkNumber *forkNum,
+								int nforks, BlockNumber *firstDelBlock);
+extern void DropRelationsAllBuffers(struct SMgrRelationData **smgr_reln,
+									int nlocators);
+extern void DropDatabaseBuffers(Oid dbid);
+
+#define RelationGetNumberOfBlocks(reln) \
+	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
+
+extern bool BufferIsPermanent(Buffer buffer);
+extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
+
+#ifdef NOT_USED
+extern void PrintPinnedBufs(void);
+#endif
+extern void BufferGetTag(Buffer buffer, RelFileLocator *rlocator,
+						 ForkNumber *forknum, BlockNumber *blknum);
+
+extern void MarkBufferDirtyHint(Buffer buffer, bool buffer_std);
+
+extern void UnlockBuffers(void);
+extern void LockBuffer(Buffer buffer, int mode);
+extern bool ConditionalLockBuffer(Buffer buffer);
+extern void LockBufferForCleanup(Buffer buffer);
+extern bool ConditionalLockBufferForCleanup(Buffer buffer);
+extern bool IsBufferCleanupOK(Buffer buffer);
+extern bool HoldingBufferPinThatDelaysRecovery(void);
+
+extern void AbortBufferIO(void);
+
+extern void BufmgrCommit(void);
+extern bool BgBufferSync(struct WritebackContext *wb_context);
+
+extern void TestForOldSnapshot_impl(Snapshot snapshot, Relation relation);
+
+/* in buf_init.c */
+extern void InitBufferPool(void);
+extern Size BufferShmemSize(void);
+
+/* in localbuf.c */
+extern void AtProcExit_LocalBuffers(void);
+
+/* in freelist.c */
+extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
+extern void FreeAccessStrategy(BufferAccessStrategy strategy);
+
+
+/* inline functions */
+
+/*
+ * Although this header file is nominally backend-only, certain frontend
+ * programs like pg_waldump include it.  For compilers that emit static
+ * inline functions even when they're unused, that leads to unsatisfied
+ * external references; hence hide these with #ifndef FRONTEND.
+ */
+
+#ifndef FRONTEND
 
 /*
  * BufferIsValid
@@ -120,11 +224,14 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * even in non-assert-enabled builds can be significant.  Thus, we've
  * now demoted the range checks to assertions within the macro itself.
  */
-#define BufferIsValid(bufnum) \
-( \
-	AssertMacro((bufnum) <= NBuffers && (bufnum) >= -NLocBuffer), \
-	(bufnum) != InvalidBuffer  \
-)
+static inline bool
+BufferIsValid(Buffer bufnum)
+{
+	Assert(bufnum <= NBuffers);
+	Assert(bufnum >= -NLocBuffer);
+
+	return bufnum != InvalidBuffer;
+}
 
 /*
  * BufferGetBlock
@@ -133,14 +240,16 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * Note:
  *		Assumes buffer is valid.
  */
-#define BufferGetBlock(buffer) \
-( \
-	AssertMacro(BufferIsValid(buffer)), \
-	BufferIsLocal(buffer) ? \
-		LocalBufferBlockPointers[-(buffer) - 1] \
-	: \
-		(Block) (BufferBlocks + ((Size) ((buffer) - 1)) * BLCKSZ) \
-)
+static inline Block
+BufferGetBlock(Buffer buffer)
+{
+	Assert(BufferIsValid(buffer));
+
+	if (BufferIsLocal(buffer))
+		return LocalBufferBlockPointers[-buffer - 1];
+	else
+		return (Block) (BufferBlocks + ((Size) (buffer - 1)) * BLCKSZ);
+}
 
 /*
  * BufferGetPageSize
@@ -153,11 +262,12 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  *		(formatted) disk page.
  */
 /* XXX should dig out of buffer descriptor */
-#define BufferGetPageSize(buffer) \
-( \
-	AssertMacro(BufferIsValid(buffer)), \
-	(Size)BLCKSZ \
-)
+static inline Size
+BufferGetPageSize(Buffer buffer)
+{
+	AssertMacro(BufferIsValid(buffer));
+	return (Size) BLCKSZ;
+}
 
 /*
  * BufferGetPage
@@ -166,100 +276,11 @@ extern PGDLLIMPORT int32 *LocalRefCount;
  * When this is called as part of a scan, there may be a need for a nearby
  * call to TestForOldSnapshot().  See the definition of that for details.
  */
-#define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
-
-/*
- * prototypes for functions in bufmgr.c
- */
-extern PrefetchBufferResult PrefetchSharedBuffer(struct SMgrRelationData *smgr_reln,
-												 ForkNumber forkNum,
-												 BlockNumber blockNum);
-extern PrefetchBufferResult PrefetchBuffer(Relation reln, ForkNumber forkNum,
-										   BlockNumber blockNum);
-extern bool ReadRecentBuffer(RelFileNode rnode, ForkNumber forkNum,
-							 BlockNumber blockNum, Buffer recent_buffer);
-extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
-extern Buffer ReadBufferExtended(Relation reln, ForkNumber forkNum,
-								 BlockNumber blockNum, ReadBufferMode mode,
-								 BufferAccessStrategy strategy);
-extern Buffer ReadBufferWithoutRelcache(RelFileNode rnode,
-										ForkNumber forkNum, BlockNumber blockNum,
-										ReadBufferMode mode, BufferAccessStrategy strategy,
-										bool permanent);
-extern void ReleaseBuffer(Buffer buffer);
-extern void UnlockReleaseBuffer(Buffer buffer);
-extern void MarkBufferDirty(Buffer buffer);
-extern void IncrBufferRefCount(Buffer buffer);
-extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
-								   BlockNumber blockNum);
-
-extern void InitBufferPool(void);
-extern void InitBufferPoolAccess(void);
-extern void AtEOXact_Buffers(bool isCommit);
-extern void PrintBufferLeakWarning(Buffer buffer);
-extern void CheckPointBuffers(int flags);
-extern BlockNumber BufferGetBlockNumber(Buffer buffer);
-extern BlockNumber RelationGetNumberOfBlocksInFork(Relation relation,
-												   ForkNumber forkNum);
-extern void FlushOneBuffer(Buffer buffer);
-extern void FlushRelationBuffers(Relation rel);
-extern void FlushRelationsAllBuffers(struct SMgrRelationData **smgrs, int nrels);
-extern void CreateAndCopyRelationData(RelFileNode src_rnode,
-									  RelFileNode dst_rnode,
-									  bool permanent);
-extern void FlushDatabaseBuffers(Oid dbid);
-extern void DropRelFileNodeBuffers(struct SMgrRelationData *smgr_reln, ForkNumber *forkNum,
-								   int nforks, BlockNumber *firstDelBlock);
-extern void DropRelFileNodesAllBuffers(struct SMgrRelationData **smgr_reln, int nnodes);
-extern void DropDatabaseBuffers(Oid dbid);
-
-#define RelationGetNumberOfBlocks(reln) \
-	RelationGetNumberOfBlocksInFork(reln, MAIN_FORKNUM)
-
-extern bool BufferIsPermanent(Buffer buffer);
-extern XLogRecPtr BufferGetLSNAtomic(Buffer buffer);
-
-#ifdef NOT_USED
-extern void PrintPinnedBufs(void);
-#endif
-extern Size BufferShmemSize(void);
-extern void BufferGetTag(Buffer buffer, RelFileNode *rnode,
-						 ForkNumber *forknum, BlockNumber *blknum);
-
-extern void MarkBufferDirtyHint(Buffer buffer, bool buffer_std);
-
-extern void UnlockBuffers(void);
-extern void LockBuffer(Buffer buffer, int mode);
-extern bool ConditionalLockBuffer(Buffer buffer);
-extern void LockBufferForCleanup(Buffer buffer);
-extern bool ConditionalLockBufferForCleanup(Buffer buffer);
-extern bool IsBufferCleanupOK(Buffer buffer);
-extern bool HoldingBufferPinThatDelaysRecovery(void);
-
-extern void AbortBufferIO(void);
-
-extern void BufmgrCommit(void);
-extern bool BgBufferSync(struct WritebackContext *wb_context);
-
-extern void AtProcExit_LocalBuffers(void);
-
-extern void TestForOldSnapshot_impl(Snapshot snapshot, Relation relation);
-
-/* in freelist.c */
-extern BufferAccessStrategy GetAccessStrategy(BufferAccessStrategyType btype);
-extern void FreeAccessStrategy(BufferAccessStrategy strategy);
-
-
-/* inline functions */
-
-/*
- * Although this header file is nominally backend-only, certain frontend
- * programs like pg_waldump include it.  For compilers that emit static
- * inline functions even when they're unused, that leads to unsatisfied
- * external references; hence hide these with #ifndef FRONTEND.
- */
-
-#ifndef FRONTEND
+static inline Page
+BufferGetPage(Buffer buffer)
+{
+	return (Page) BufferGetBlock(buffer);
+}
 
 /*
  * Check whether the given snapshot is too old to have safely read the given

@@ -24,7 +24,6 @@ extern PGDLLIMPORT bool enable_geqo;
 extern PGDLLIMPORT int geqo_threshold;
 extern PGDLLIMPORT int min_parallel_table_scan_size;
 extern PGDLLIMPORT int min_parallel_index_scan_size;
-extern PGDLLIMPORT bool enable_group_by_reordering;
 
 /* Hook for plugins to get control in set_rel_pathlist() */
 typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,
@@ -170,8 +169,8 @@ extern void add_child_rel_equivalences(PlannerInfo *root,
 extern void add_child_join_rel_equivalences(PlannerInfo *root,
 											int nappinfos,
 											AppendRelInfo **appinfos,
-											RelOptInfo *parent_rel,
-											RelOptInfo *child_rel);
+											RelOptInfo *parent_joinrel,
+											RelOptInfo *child_joinrel);
 extern List *generate_implied_equalities_for_column(PlannerInfo *root,
 													RelOptInfo *rel,
 													ec_matches_callback_type callback,
@@ -203,12 +202,6 @@ typedef enum
 extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
 extern bool pathkeys_contained_in(List *keys1, List *keys2);
 extern bool pathkeys_count_contained_in(List *keys1, List *keys2, int *n_common);
-extern int group_keys_reorder_by_pathkeys(List *pathkeys,
-										  List **group_pathkeys,
-										  List **group_clauses);
-extern List *get_useful_group_keys_orderings(PlannerInfo *root, double nrows,
-											 List *path_pathkeys,
-											 List *pathkeys, List *clauses);
 extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 											Relids required_outer,
 											CostSelector cost_criterion,
@@ -255,6 +248,7 @@ extern List *truncate_useless_pathkeys(PlannerInfo *root,
 									   RelOptInfo *rel,
 									   List *pathkeys);
 extern bool has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel);
+extern List *append_pathkeys(List *target, List *source);
 extern PathKey *make_canonical_pathkey(PlannerInfo *root,
 									   EquivalenceClass *eclass, Oid opfamily,
 									   int strategy, bool nulls_first);

@@ -71,7 +71,7 @@ extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void add_other_rels_to_query(PlannerInfo *root);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
 extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
-								   Relids where_needed, bool create_new_ph);
+								   Relids where_needed);
 extern void find_lateral_references(PlannerInfo *root);
 extern void create_lateral_join_info(PlannerInfo *root);
 extern List *deconstruct_jointree(PlannerInfo *root);
@@ -115,6 +115,6 @@ extern Plan *set_plan_references(PlannerInfo *root, Plan *plan);
 extern bool trivial_subqueryscan(SubqueryScan *plan);
 extern void record_plan_function_dependency(PlannerInfo *root, Oid funcid);
 extern void record_plan_type_dependency(PlannerInfo *root, Oid typid);
-extern bool extract_query_dependencies_walker(Node *node, PlannerInfo *root);
+extern bool extract_query_dependencies_walker(Node *node, PlannerInfo *context);
 
 #endif							/* PLANMAIN_H */

@@ -83,7 +83,7 @@ static void statext_store(Oid statOid, bool inh,
 						  MVNDistinct *ndistinct, MVDependencies *dependencies,
 						  MCVList *mcv, Datum exprs, VacAttrStats **stats);
 static int	statext_compute_stattarget(int stattarget,
-									   int natts, VacAttrStats **stats);
+									   int nattrs, VacAttrStats **stats);
 
 /* Information needed to analyze a single simple expression. */
 typedef struct AnlExprData
@@ -99,7 +99,7 @@ static Datum serialize_expr_stats(AnlExprData *exprdata, int nexprs);
 static Datum expr_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 static AnlExprData *build_expr_data(List *exprs, int stattarget);
 
-static StatsBuildData *make_build_data(Relation onerel, StatExtEntry *stat,
+static StatsBuildData *make_build_data(Relation rel, StatExtEntry *stat,
 									   int numrows, HeapTuple *rows,
 									   VacAttrStats **stats, int stattarget);
 
@@ -1129,8 +1129,8 @@ build_sorted_items(StatsBuildData *data, int *nitems,
 	}
 
 	/* do the sort, using the multi-sort */
-	qsort_arg((void *) items, nrows, sizeof(SortItem),
-			  multi_sort_compare, mss);
+	qsort_interruptible((void *) items, nrows, sizeof(SortItem),
+						multi_sort_compare, mss);
 
 	return items;
 }
@@ -1316,10 +1316,38 @@ choose_best_statistics(List *stats, char requiredkind, bool inh,
  * statext_is_compatible_clause_internal
  *		Determines if the clause is compatible with MCV lists.
  *
- * Does the heavy lifting of actually inspecting the clauses for
- * statext_is_compatible_clause. It needs to be split like this because
- * of recursion.  The attnums bitmap is an input/output parameter collecting
- * attribute numbers from all compatible clauses (recursively).
+ * To be compatible, the given clause must be a combination of supported
+ * clauses built from Vars or sub-expressions (where a sub-expression is
+ * something that exactly matches an expression found in statistics objects).
+ * This function recursively examines the clause and extracts any
+ * sub-expressions that will need to be matched against statistics.
+ *
+ * Currently, we only support the following types of clauses:
+ *
+ * (a) OpExprs of the form (Var/Expr op Const), or (Const op Var/Expr), where
+ * the op is one of ("=", "<", ">", ">=", "<=")
+ *
+ * (b) (Var/Expr IS [NOT] NULL)
+ *
+ * (c) combinations using AND/OR/NOT
+ *
+ * (d) ScalarArrayOpExprs of the form (Var/Expr op ANY (Const)) or
+ * (Var/Expr op ALL (Const))
+ *
+ * In the future, the range of supported clauses may be expanded to more
+ * complex cases, for example (Var op Var).
+ *
+ * Arguments:
+ * clause: (sub)clause to be inspected (bare clause, not a RestrictInfo)
+ * relid: rel that all Vars in clause must belong to
+ * *attnums: input/output parameter collecting attribute numbers of all
+ *		mentioned Vars.  Note that we do not offset the attribute numbers,
+ *		so we can't cope with system columns.
+ * *exprs: input/output parameter collecting primitive subclauses within
+ *		the clause tree
+ *
+ * Returns false if there is something we definitively can't handle.
+ * On true return, we can proceed to match the *exprs against statistics.
  */
 static bool
 statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
@@ -1343,10 +1371,14 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		if (var->varlevelsup > 0)
 			return false;
 
-		/* Also skip system attributes (we don't allow stats on those). */
+		/*
+		 * Also reject system attributes and whole-row Vars (we don't allow
+		 * stats on those).
+		 */
 		if (!AttrNumberIsForUserDefinedAttr(var->varattno))
 			return false;
 
+		/* OK, record the attnum for later permissions checks. */
 		*attnums = bms_add_member(*attnums, var->varattno);
 
 		return true;
@@ -1420,13 +1452,18 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		RangeTblEntry *rte = root->simple_rte_array[relid];
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) clause;
 		Node	   *clause_expr;
+		bool		expronleft;
 
 		/* Only expressions with two arguments are considered compatible. */
 		if (list_length(expr->args) != 2)
 			return false;
 
 		/* Check if the expression has the right shape (one Var, one Const) */
-		if (!examine_opclause_args(expr->args, &clause_expr, NULL, NULL))
+		if (!examine_opclause_args(expr->args, &clause_expr, NULL, &expronleft))
+			return false;
+
+		/* We only support Var on left, Const on right */
+		if (!expronleft)
 			return false;
 
 		/*
@@ -1501,7 +1538,7 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
 		foreach(lc, expr->args)
 		{
 			/*
-			 * Had we found incompatible clause in the arguments, treat the
+			 * If we find an incompatible clause in the arguments, treat the
 			 * whole clause as incompatible.
 			 */
 			if (!statext_is_compatible_clause_internal(root,
@@ -1540,27 +1577,28 @@ statext_is_compatible_clause_internal(PlannerInfo *root, Node *clause,
  * statext_is_compatible_clause
  *		Determines if the clause is compatible with MCV lists.
  *
- * Currently, we only support the following types of clauses:
+ * See statext_is_compatible_clause_internal, above, for the basic rules.
+ * This layer deals with RestrictInfo superstructure and applies permissions
+ * checks to verify that it's okay to examine all mentioned Vars.
  *
- * (a) OpExprs of the form (Var/Expr op Const), or (Const op Var/Expr), where
- * the op is one of ("=", "<", ">", ">=", "<=")
+ * Arguments:
+ * clause: clause to be inspected (in RestrictInfo form)
+ * relid: rel that all Vars in clause must belong to
+ * *attnums: input/output parameter collecting attribute numbers of all
+ *		mentioned Vars.  Note that we do not offset the attribute numbers,
+ *		so we can't cope with system columns.
+ * *exprs: input/output parameter collecting primitive subclauses within
+ *		the clause tree
  *
- * (b) (Var/Expr IS [NOT] NULL)
- *
- * (c) combinations using AND/OR/NOT
- *
- * (d) ScalarArrayOpExprs of the form (Var/Expr op ANY (array)) or (Var/Expr
- * op ALL (array))
- *
- * In the future, the range of supported clauses may be expanded to more
- * complex cases, for example (Var op Var).
+ * Returns false if there is something we definitively can't handle.
+ * On true return, we can proceed to match the *exprs against statistics.
  */
 static bool
 statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 							 Bitmapset **attnums, List **exprs)
 {
 	RangeTblEntry *rte = root->simple_rte_array[relid];
-	RestrictInfo *rinfo = (RestrictInfo *) clause;
+	RestrictInfo *rinfo;
 	int			clause_relid;
 	Oid			userid;
 
@@ -1589,8 +1627,9 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 	}
 
 	/* Otherwise it must be a RestrictInfo. */
-	if (!IsA(rinfo, RestrictInfo))
+	if (!IsA(clause, RestrictInfo))
 		return false;
+	rinfo = (RestrictInfo *) clause;
 
 	/* Pseudoconstants are not really interesting here. */
 	if (rinfo->pseudoconstant)
@@ -1612,34 +1651,48 @@ statext_is_compatible_clause(PlannerInfo *root, Node *clause, Index relid,
 	 */
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
+	/* Table-level SELECT privilege is sufficient for all columns */
 	if (pg_class_aclcheck(rte->relid, userid, ACL_SELECT) != ACLCHECK_OK)
 	{
 		Bitmapset  *clause_attnums = NULL;
+		int			attnum = -1;
 
-		/* Don't have table privilege, must check individual columns */
+		/*
+		 * We have to check per-column privileges.  *attnums has the attnums
+		 * for individual Vars we saw, but there may also be Vars within
+		 * subexpressions in *exprs.  We can use pull_varattnos() to extract
+		 * those, but there's an impedance mismatch: attnums returned by
+		 * pull_varattnos() are offset by FirstLowInvalidHeapAttributeNumber,
+		 * while attnums within *attnums aren't.  Convert *attnums to the
+		 * offset style so we can combine the results.
+		 */
+		while ((attnum = bms_next_member(*attnums, attnum)) >= 0)
+		{
+			clause_attnums =
+				bms_add_member(clause_attnums,
+							   attnum - FirstLowInvalidHeapAttributeNumber);
+		}
+
+		/* Now merge attnums from *exprs into clause_attnums */
 		if (*exprs != NIL)
-		{
-			pull_varattnos((Node *) exprs, relid, &clause_attnums);
-			clause_attnums = bms_add_members(clause_attnums, *attnums);
-		}
-		else
-			clause_attnums = *attnums;
+			pull_varattnos((Node *) *exprs, relid, &clause_attnums);
 
-		if (bms_is_member(InvalidAttrNumber, clause_attnums))
+		attnum = -1;
+		while ((attnum = bms_next_member(clause_attnums, attnum)) >= 0)
 		{
-			/* Have a whole-row reference, must have access to all columns */
-			if (pg_attribute_aclcheck_all(rte->relid, userid, ACL_SELECT,
-										  ACLMASK_ALL) != ACLCHECK_OK)
-				return false;
-		}
-		else
-		{
-			/* Check the columns referenced by the clause */
-			int			attnum = -1;
+			/* Undo the offset */
+			AttrNumber	attno = attnum + FirstLowInvalidHeapAttributeNumber;
 
-			while ((attnum = bms_next_member(clause_attnums, attnum)) >= 0)
+			if (attno == InvalidAttrNumber)
 			{
-				if (pg_attribute_aclcheck(rte->relid, attnum, userid,
+				/* Whole-row reference, so must have access to all columns */
+				if (pg_attribute_aclcheck_all(rte->relid, userid, ACL_SELECT,
+											  ACLMASK_ALL) != ACLCHECK_OK)
+					return false;
+			}
+			else
+			{
+				if (pg_attribute_aclcheck(rte->relid, attno, userid,
 										  ACL_SELECT) != ACLCHECK_OK)
 					return false;
 			}
@@ -2345,10 +2398,7 @@ serialize_expr_stats(AnlExprData *exprdata, int nexprs)
 
 				for (n = 0; n < nnum; n++)
 					numdatums[n] = Float4GetDatum(stats->stanumbers[k][n]);
-				/* XXX knows more than it should about type float4: */
-				arry = construct_array(numdatums, nnum,
-									   FLOAT4OID,
-									   sizeof(float4), true, TYPALIGN_INT);
+				arry = construct_array_builtin(numdatums, nnum, FLOAT4OID);
 				values[i++] = PointerGetDatum(arry);	/* stanumbersN */
 			}
 			else

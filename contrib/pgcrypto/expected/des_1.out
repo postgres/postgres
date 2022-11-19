@@ -4,23 +4,23 @@
 -- no official test vectors atm
 -- from blowfish.sql
 SELECT encrypt('\x0123456789abcdef', '\xfedcba9876543210', 'des-ecb/pad:none');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- empty data
 select encrypt('', 'foo', 'des');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- 8 bytes key
 select encrypt('foo', '01234589', 'des');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- decrypt
 select encode(decrypt(encrypt('foo', '0123456', 'des'), '0123456', 'des'), 'escape');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 -- iv
 select encrypt_iv('foo', '0123456', 'abcd', 'des');
-ERROR:  encrypt_iv error: Cipher cannot be initialized ?
+ERROR:  encrypt_iv error: Cipher cannot be initialized
 select encode(decrypt_iv('\x50735067b073bb93', '0123456', 'abcd', 'des'), 'escape');
-ERROR:  decrypt_iv error: Cipher cannot be initialized ?
+ERROR:  decrypt_iv error: Cipher cannot be initialized
 -- long message
 select encrypt('Lets try a longer message.', '01234567', 'des');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized
 select encode(decrypt(encrypt('Lets try a longer message.', '01234567', 'des'), '01234567', 'des'), 'escape');
-ERROR:  encrypt error: Cipher cannot be initialized ?
+ERROR:  encrypt error: Cipher cannot be initialized

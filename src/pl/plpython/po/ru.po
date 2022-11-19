@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: plpython (PostgreSQL current)\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-09-03 11:22+0300\n"
+"POT-Creation-Date: 2021-08-14 06:29+0300\n"
 "PO-Revision-Date: 2019-08-29 15:42+0300\n"
 "Last-Translator: Alexander Lakhin <exclusion@gmail.com>\n"
 "Language-Team: Russian <pgsql-ru-general@postgresql.org>\n"
@@ -66,7 +66,7 @@ msgstr ""
 msgid "closing a cursor in an aborted subtransaction"
 msgstr "закрытие курсора в прерванной подтранзакции"
 
-#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:549
+#: plpy_elog.c:125 plpy_elog.c:126 plpy_plpymodule.c:548
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -255,56 +255,56 @@ msgstr "не удалось создать модуль spiexceptions"
 msgid "could not add the spiexceptions module"
 msgstr "не удалось добавить модуль spiexceptions"
 
-#: plpy_plpymodule.c:276
+#: plpy_plpymodule.c:275
 #, c-format
 msgid "could not generate SPI exceptions"
 msgstr "не удалось сгенерировать исключения SPI"
 
-#: plpy_plpymodule.c:444
+#: plpy_plpymodule.c:443
 #, c-format
 msgid "could not unpack arguments in plpy.elog"
 msgstr "не удалось распаковать аргументы в plpy.elog"
 
-#: plpy_plpymodule.c:453
+#: plpy_plpymodule.c:452
 msgid "could not parse error message in plpy.elog"
 msgstr "не удалось разобрать сообщение об ошибке в plpy.elog"
 
-#: plpy_plpymodule.c:470
+#: plpy_plpymodule.c:469
 #, c-format
 msgid "argument 'message' given by name and position"
 msgstr "аргумент 'message' задан и по имени, и по позиции"
 
-#: plpy_plpymodule.c:497
+#: plpy_plpymodule.c:496
 #, c-format
 msgid "'%s' is an invalid keyword argument for this function"
 msgstr "'%s' - недопустимое ключевое слово (аргумент) для этой функции"
 
-#: plpy_plpymodule.c:508 plpy_plpymodule.c:514
+#: plpy_plpymodule.c:507 plpy_plpymodule.c:513
 #, c-format
 msgid "invalid SQLSTATE code"
 msgstr "неверный код SQLSTATE"
 
-#: plpy_procedure.c:226
+#: plpy_procedure.c:225
 #, c-format
 msgid "trigger functions can only be called as triggers"
 msgstr "триггерные функции могут вызываться только в триггерах"
 
-#: plpy_procedure.c:230
+#: plpy_procedure.c:229
 #, c-format
 msgid "PL/Python functions cannot return type %s"
 msgstr "функции PL/Python не могут возвращать тип %s"
 
-#: plpy_procedure.c:308
+#: plpy_procedure.c:307
 #, c-format
 msgid "PL/Python functions cannot accept type %s"
 msgstr "функции PL/Python не могут принимать тип %s"
 
-#: plpy_procedure.c:398
+#: plpy_procedure.c:397
 #, c-format
 msgid "could not compile PL/Python function \"%s\""
 msgstr "не удалось скомпилировать функцию PL/Python \"%s\""
 
-#: plpy_procedure.c:401
+#: plpy_procedure.c:400
 #, c-format
 msgid "could not compile anonymous PL/Python code block"
 msgstr "не удалось скомпилировать анонимный блок кода PL/Python"
@@ -398,24 +398,24 @@ msgstr ""
 "не удалось преобразовать объект Python в cstring: похоже, представление "
 "строки Python содержит нулевые байты"
 
-#: plpy_typeio.c:1176
+#: plpy_typeio.c:1178
 #, c-format
 msgid "number of array dimensions exceeds the maximum allowed (%d)"
 msgstr "число размерностей массива превышает предел (%d)"
 
-#: plpy_typeio.c:1180
+#: plpy_typeio.c:1183
 #, c-format
 msgid "could not determine sequence length for function return value"
 msgstr ""
 "не удалось определить длину последовательности в возвращаемом функцией "
 "значении"
 
-#: plpy_typeio.c:1183 plpy_typeio.c:1187
+#: plpy_typeio.c:1188 plpy_typeio.c:1194
 #, c-format
 msgid "array size exceeds the maximum allowed"
 msgstr "размер массива превышает предел"
 
-#: plpy_typeio.c:1213
+#: plpy_typeio.c:1222
 #, c-format
 msgid ""
 "return value of function with array return type is not a Python sequence"
@@ -423,12 +423,12 @@ msgstr ""
 "возвращаемое значение функции с результатом-массивом не является "
 "последовательностью"
 
-#: plpy_typeio.c:1259
+#: plpy_typeio.c:1269
 #, c-format
 msgid "wrong length of inner sequence: has length %d, but %d was expected"
 msgstr "неверная длина внутренней последовательности: %d (ожидалось: %d)"
 
-#: plpy_typeio.c:1261
+#: plpy_typeio.c:1271
 #, c-format
 msgid ""
 "To construct a multidimensional array, the inner sequences must all have the "
@@ -437,17 +437,17 @@ msgstr ""
 "Для образования многомерного массива внутренние последовательности должны "
 "иметь одинаковую длину."
 
-#: plpy_typeio.c:1340
+#: plpy_typeio.c:1350
 #, c-format
 msgid "malformed record literal: \"%s\""
 msgstr "ошибка в литерале записи: \"%s\""
 
-#: plpy_typeio.c:1341
+#: plpy_typeio.c:1351
 #, c-format
 msgid "Missing left parenthesis."
 msgstr "Отсутствует левая скобка."
 
-#: plpy_typeio.c:1342 plpy_typeio.c:1543
+#: plpy_typeio.c:1352 plpy_typeio.c:1553
 #, c-format
 msgid ""
 "To return a composite type in an array, return the composite type as a "
@@ -456,12 +456,12 @@ msgstr ""
 "Чтобы возвратить составной тип в массиве, нужно возвратить составное "
 "значение в виде кортежа Python, например: \"[('foo',)]\"."
 
-#: plpy_typeio.c:1389
+#: plpy_typeio.c:1399
 #, c-format
 msgid "key \"%s\" not found in mapping"
 msgstr "ключ \"%s\" не найден в сопоставлении"
 
-#: plpy_typeio.c:1390
+#: plpy_typeio.c:1400
 #, c-format
 msgid ""
 "To return null in a column, add the value None to the mapping with the key "
@@ -470,17 +470,17 @@ msgstr ""
 "Чтобы присвоить столбцу NULL, добавьте в сопоставление значение None с "
 "ключом-именем столбца."
 
-#: plpy_typeio.c:1443
+#: plpy_typeio.c:1453
 #, c-format
 msgid "length of returned sequence did not match number of columns in row"
 msgstr "длина возвращённой последовательности не равна числу столбцов в строке"
 
-#: plpy_typeio.c:1541
+#: plpy_typeio.c:1551
 #, c-format
 msgid "attribute \"%s\" does not exist in Python object"
 msgstr "в объекте Python не существует атрибут \"%s\""
 
-#: plpy_typeio.c:1544
+#: plpy_typeio.c:1554
 #, c-format
 msgid ""
 "To return null in a column, let the returned object have an attribute named "

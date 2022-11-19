@@ -5,15 +5,21 @@
 
 use strict;
 use warnings;
+use Getopt::Long;
+
+my $output_path = '.';
 
 my $lastlockidx = -1;
 my $continue    = "\n";
 
+GetOptions(
+	'outdir:s'       => \$output_path);
+
 open my $lwlocknames, '<', $ARGV[0] or die;
 
 # Include PID in suffix in case parallel make runs this multiple times.
-my $htmp = "lwlocknames.h.tmp$$";
-my $ctmp = "lwlocknames.c.tmp$$";
+my $htmp = "$output_path/lwlocknames.h.tmp$$";
+my $ctmp = "$output_path/lwlocknames.c.tmp$$";
 open my $h, '>', $htmp or die "Could not open $htmp: $!";
 open my $c, '>', $ctmp or die "Could not open $ctmp: $!";
 
@@ -65,7 +71,7 @@ printf $h "#define NUM_INDIVIDUAL_LWLOCKS		%s\n", $lastlockidx + 1;
 close $h;
 close $c;
 
-rename($htmp, 'lwlocknames.h') || die "rename: $htmp: $!";
-rename($ctmp, 'lwlocknames.c') || die "rename: $ctmp: $!";
+rename($htmp, "$output_path/lwlocknames.h") || die "rename: $htmp to $output_path/lwlocknames.h: $!";
+rename($ctmp, "$output_path/lwlocknames.c") || die "rename: $ctmp: $!";
 
 close $lwlocknames;

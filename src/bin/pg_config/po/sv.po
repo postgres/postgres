@@ -1,13 +1,13 @@
 # Swedish message translation file for pg_config.
-# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 13\n"
+"Project-Id-Version: PostgreSQL 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-11 01:14+0000\n"
-"PO-Revision-Date: 2020-04-11 07:48+0200\n"
+"POT-Creation-Date: 2021-11-06 22:15+0000\n"
+"PO-Revision-Date: 2021-11-07 06:44+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -23,42 +23,42 @@ msgstr ""
 msgid "not recorded"
 msgstr "ej sparad"
 
-#: ../../common/exec.c:137 ../../common/exec.c:254 ../../common/exec.c:300
+#: ../../common/exec.c:136 ../../common/exec.c:253 ../../common/exec.c:299
 #, c-format
 msgid "could not identify current directory: %m"
 msgstr "kunde inte identifiera aktuell katalog: %m"
 
-#: ../../common/exec.c:156
+#: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ogiltig binär \"%s\""
 
-#: ../../common/exec.c:206
+#: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "kunde inte läsa binär \"%s\""
 
-#: ../../common/exec.c:214
+#: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "kunde inte hitta en \"%s\" att köra"
 
-#: ../../common/exec.c:270 ../../common/exec.c:309
+#: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "kunde inte byta katalog till \"%s\": %m"
 
-#: ../../common/exec.c:287
+#: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
 msgstr "kan inte läsa symbolisk länk \"%s\": %m"
 
-#: ../../common/exec.c:410
+#: ../../common/exec.c:409
 #, c-format
-msgid "pclose failed: %m"
-msgstr "pclose misslyckades: %m"
+msgid "%s() failed: %m"
+msgstr "%s() misslyckades: %m"
 
-#: ../../common/exec.c:539 ../../common/exec.c:584 ../../common/exec.c:676
+#: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
 msgstr "slut på minne"
 

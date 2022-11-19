@@ -12,7 +12,8 @@
 # smart and may not catch all cases.
 #
 # It's probably a good idea to run pgindent on any files that this
-# script modifies before committing.
+# script modifies before committing.  This script uses as arguments
+# a list of the header files to scan for the markings.
 #
 # Portions Copyright (c) 1996-2022, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
@@ -27,17 +28,18 @@ use warnings;
 for my $include_file (@ARGV)
 {
 	open(my $rfh, '<', $include_file) || die "$include_file: $!";
-	my $buffer = '';
+	my $buffer                = '';
 	my $num_pgdllimport_added = 0;
 
 	while (my $raw_line = <$rfh>)
 	{
-		my	$needs_pgdllimport = 1;
+		my $needs_pgdllimport = 1;
 
 		# By convention we declare global variables explicitly extern. We're
 		# looking for those not already marked with PGDLLIMPORT.
-		$needs_pgdllimport = 0 if $raw_line !~ /^extern\s+/
-			|| $raw_line =~ /PGDLLIMPORT/;
+		$needs_pgdllimport = 0
+		  if $raw_line !~ /^extern\s+/
+		  || $raw_line =~ /PGDLLIMPORT/;
 
 		# Make a copy of the line and perform a simple-minded comment strip.
 		# Also strip trailing whitespace.
@@ -47,8 +49,9 @@ for my $include_file (@ARGV)
 
 		# Variable declarations should end in a semicolon. If we see an
 		# opening parenthesis, it's probably a function declaration.
-		$needs_pgdllimport = 0 if $stripped_line !~ /;$/
-			|| $stripped_line =~ /\(/;
+		$needs_pgdllimport = 0
+		  if $stripped_line !~ /;$/
+		  || $stripped_line =~ /\(/;
 
 		# Add PGDLLIMPORT marker, if required.
 		if ($needs_pgdllimport)
@@ -67,7 +70,7 @@ for my $include_file (@ARGV)
 	if ($num_pgdllimport_added > 0)
 	{
 		printf "%s: adding %d PGDLLIMPORT markers\n",
-			$include_file, $num_pgdllimport_added;
+		  $include_file, $num_pgdllimport_added;
 		open(my $wfh, '>', $include_file) || die "$include_file: $!";
 		print $wfh $buffer;
 		close($wfh);

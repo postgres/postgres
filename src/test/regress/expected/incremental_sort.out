@@ -1439,7 +1439,7 @@ set parallel_setup_cost = 0;
 set parallel_tuple_cost = 0;
 set max_parallel_workers_per_gather = 2;
 create table t (a int, b int, c int);
-insert into t select mod(i,10),mod(i,10),i from generate_series(1,60000) s(i);
+insert into t select mod(i,10),mod(i,10),i from generate_series(1,10000) s(i);
 create index on t (a);
 analyze t;
 set enable_incremental_sort = off;
@@ -1487,14 +1487,12 @@ explain (costs off) select * from t union select * from t order by 1,3;
    ->  Unique
          ->  Sort
                Sort Key: t.a, t.b, t.c
-               ->  Append
-                     ->  Gather
-                           Workers Planned: 2
+               ->  Gather
+                     Workers Planned: 2
+                     ->  Parallel Append
                            ->  Parallel Seq Scan on t
-                     ->  Gather
-                           Workers Planned: 2
                            ->  Parallel Seq Scan on t t_1
-(13 rows)
+(11 rows)
 
 -- Full sort, not just incremental sort can be pushed below a gather merge path
 -- by generate_useful_gather_paths.
@@ -1673,16 +1671,4 @@ order by 1, 2;
                ->  Parallel Index Scan using tenk1_unique1 on tenk1
                ->  Function Scan on generate_series
 (7 rows)
-
--- Disallow pushing down sort when pathkey is an SRF.
-explain (costs off) select unique1 from tenk1 order by unnest('{1,2}'::int[]);
-                               QUERY PLAN                                
--------------------------------------------------------------------------
- Sort
-   Sort Key: (unnest('{1,2}'::integer[]))
-   ->  Gather
-         Workers Planned: 2
-         ->  ProjectSet
-               ->  Parallel Index Only Scan using tenk1_unique1 on tenk1
-(6 rows)
 

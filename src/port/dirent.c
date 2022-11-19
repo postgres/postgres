@@ -106,13 +106,17 @@ readdir(DIR *d)
 	}
 	strcpy(d->ret.d_name, fd.cFileName);	/* Both strings are MAX_PATH long */
 	d->ret.d_namlen = strlen(d->ret.d_name);
-	/* The only identified types are: directory, regular file or symbolic link */
-	if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
-		d->ret.d_type = DT_DIR;
-	/* For reparse points dwReserved0 field will contain the ReparseTag */
-	else if ((fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
-			 (fd.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT))
+
+	/*
+	 * For reparse points dwReserved0 field will contain the ReparseTag.  We
+	 * check this first, because reparse points are also reported as
+	 * directories.
+	 */
+	if ((fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0 &&
+		(fd.dwReserved0 == IO_REPARSE_TAG_MOUNT_POINT))
 		d->ret.d_type = DT_LNK;
+	else if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		d->ret.d_type = DT_DIR;
 	else
 		d->ret.d_type = DT_REG;
 

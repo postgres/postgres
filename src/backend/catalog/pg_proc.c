@@ -375,7 +375,7 @@ ProcedureCreate(const char *procedureName,
 					(errcode(ERRCODE_DUPLICATE_FUNCTION),
 					 errmsg("function \"%s\" already exists with same argument types",
 							procedureName)));
-		if (!pg_proc_ownercheck(oldproc->oid, proowner))
+		if (!object_ownercheck(ProcedureRelationId, oldproc->oid, proowner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_FUNCTION,
 						   procedureName);
 
@@ -710,7 +710,7 @@ ProcedureCreate(const char *procedureName,
 			AtEOXact_GUC(true, save_nestlevel);
 	}
 
-	/* ensure that stats are dropped if transaction commits */
+	/* ensure that stats are dropped if transaction aborts */
 	if (!is_update)
 		pgstat_create_function(retval);
 
@@ -1017,7 +1017,6 @@ function_parse_error_transpose(const char *prosrc)
 {
 	int			origerrposition;
 	int			newerrposition;
-	const char *queryText;
 
 	/*
 	 * Nothing to do unless we are dealing with a syntax error that has a
@@ -1035,11 +1034,22 @@ function_parse_error_transpose(const char *prosrc)
 	}
 
 	/* We can get the original query text from the active portal (hack...) */
-	Assert(ActivePortal && ActivePortal->status == PORTAL_ACTIVE);
-	queryText = ActivePortal->sourceText;
+	if (ActivePortal && ActivePortal->status == PORTAL_ACTIVE)
+	{
+		const char *queryText = ActivePortal->sourceText;
 
-	/* Try to locate the prosrc in the original text */
-	newerrposition = match_prosrc_to_query(prosrc, queryText, origerrposition);
+		/* Try to locate the prosrc in the original text */
+		newerrposition = match_prosrc_to_query(prosrc, queryText,
+											   origerrposition);
+	}
+	else
+	{
+		/*
+		 * Quietly give up if no ActivePortal.  This is an unusual situation
+		 * but it can happen in, e.g., logical replication workers.
+		 */
+		newerrposition = -1;
+	}
 
 	if (newerrposition > 0)
 	{
@@ -1193,10 +1203,7 @@ oid_array_to_list(Datum datum)
 	int			i;
 	List	   *result = NIL;
 
-	deconstruct_array(array,
-					  OIDOID,
-					  sizeof(Oid), true, TYPALIGN_INT,
-					  &values, NULL, &nelems);
+	deconstruct_array_builtin(array, OIDOID, &values, NULL, &nelems);
 	for (i = 0; i < nelems; i++)
 		result = lappend_oid(result, values[i]);
 	return result;

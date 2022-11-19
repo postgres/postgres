@@ -53,7 +53,7 @@ CREATE VIEW pg_group AS
     SELECT
         rolname AS groname,
         oid AS grosysid,
-        ARRAY(SELECT member FROM pg_auth_members WHERE roleid = oid) AS grolist
+        ARRAY(SELECT member FROM pg_auth_members WHERE roleid = pg_authid.oid) AS grolist
     FROM pg_authid
     WHERE NOT rolcanlogin;
 
@@ -368,7 +368,14 @@ CREATE VIEW pg_publication_tables AS
     SELECT
         P.pubname AS pubname,
         N.nspname AS schemaname,
-        C.relname AS tablename
+        C.relname AS tablename,
+        ( SELECT array_agg(a.attname ORDER BY a.attnum)
+          FROM pg_attribute a
+          WHERE a.attrelid = GPT.relid AND a.attnum > 0 AND
+                NOT a.attisdropped AND
+                (a.attnum = ANY(GPT.attrs) OR GPT.attrs IS NULL)
+        ) AS attnames,
+        pg_get_expr(GPT.qual, GPT.relid) AS rowfilter
     FROM pg_publication P,
          LATERAL pg_get_publication_tables(P.pubname) GPT,
          pg_class C JOIN pg_namespace N ON (N.oid = C.relnamespace)
@@ -649,8 +656,10 @@ CREATE VIEW pg_stat_all_tables AS
             N.nspname AS schemaname,
             C.relname AS relname,
             pg_stat_get_numscans(C.oid) AS seq_scan,
+            pg_stat_get_lastscan(C.oid) AS last_seq_scan,
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read,
             sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan,
+            max(pg_stat_get_lastscan(I.indexrelid)) AS last_idx_scan,
             sum(pg_stat_get_tuples_fetched(I.indexrelid))::bigint +
             pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch,
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins,
@@ -767,6 +776,7 @@ CREATE VIEW pg_stat_all_indexes AS
             C.relname AS relname,
             I.relname AS indexrelname,
             pg_stat_get_numscans(I.oid) AS idx_scan,
+            pg_stat_get_lastscan(I.oid) AS last_idx_scan,
             pg_stat_get_tuples_returned(I.oid) AS idx_tup_read,
             pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch
     FROM pg_class C JOIN
@@ -1290,8 +1300,8 @@ REVOKE ALL ON pg_replication_origin_status FROM public;
 -- All columns of pg_subscription except subconninfo are publicly readable.
 REVOKE ALL ON pg_subscription FROM public;
 GRANT SELECT (oid, subdbid, subskiplsn, subname, subowner, subenabled,
-              subbinary, substream, subtwophasestate, subdisableonerr, subslotname,
-              subsynccommit, subpublications)
+              subbinary, substream, subtwophasestate, subdisableonerr,
+              subslotname, subsynccommit, subpublications, suborigin)
     ON pg_subscription TO public;
 
 CREATE VIEW pg_stat_subscription_stats AS

@@ -87,7 +87,8 @@
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_index_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_index_pg_class_relfilenode = InvalidOid;
+RelFileNumber binary_upgrade_next_index_pg_class_relfilenumber =
+InvalidRelFileNumber;
 
 /*
  * Pointer-free representation of variables used when reindexing system
@@ -553,7 +554,7 @@ UpdateIndexRelation(Oid indexoid,
 	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
-	bool		nulls[Natts_pg_index];
+	bool		nulls[Natts_pg_index] = {0};
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
@@ -607,8 +608,6 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * Build a pg_index tuple
 	 */
-	MemSet(nulls, false, sizeof(nulls));
-
 	values[Anum_pg_index_indexrelid - 1] = ObjectIdGetDatum(indexoid);
 	values[Anum_pg_index_indrelid - 1] = ObjectIdGetDatum(heapoid);
 	values[Anum_pg_index_indnatts - 1] = Int16GetDatum(indexInfo->ii_NumIndexAttrs);
@@ -662,8 +661,8 @@ UpdateIndexRelation(Oid indexoid,
  *		parent index; otherwise InvalidOid.
  * parentConstraintId: if creating a constraint on a partition, the OID
  *		of the constraint in the parent; otherwise InvalidOid.
- * relFileNode: normally, pass InvalidOid to get new storage.  May be
- *		nonzero to attach an existing valid build.
+ * relFileNumber: normally, pass InvalidRelFileNumber to get new storage.
+ *		May be nonzero to attach an existing valid build.
  * indexInfo: same info executor uses to insert into the index
  * indexColNames: column names to use for index (List of char *)
  * accessMethodObjectId: OID of index AM to use
@@ -703,7 +702,7 @@ index_create(Relation heapRelation,
 			 Oid indexRelationId,
 			 Oid parentIndexRelid,
 			 Oid parentConstraintId,
-			 Oid relFileNode,
+			 RelFileNumber relFileNumber,
 			 IndexInfo *indexInfo,
 			 List *indexColNames,
 			 Oid accessMethodObjectId,
@@ -735,7 +734,7 @@ index_create(Relation heapRelation,
 	char		relkind;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
-	bool		create_storage = !OidIsValid(relFileNode);
+	bool		create_storage = !RelFileNumberIsValid(relFileNumber);
 
 	/* constraint flags can only be set when a constraint is requested */
 	Assert((constr_flags == 0) ||
@@ -751,7 +750,7 @@ index_create(Relation heapRelation,
 	/*
 	 * The index will be in the same namespace as its parent table, and is
 	 * shared across databases if and only if the parent is.  Likewise, it
-	 * will use the relfilenode map if and only if the parent does; and it
+	 * will use the relfilenumber map if and only if the parent does; and it
 	 * inherits the parent's relpersistence.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
@@ -902,12 +901,12 @@ index_create(Relation heapRelation,
 	/*
 	 * Allocate an OID for the index, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * The OID will be the relfilenumber as well, so make sure it doesn't
 	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(indexRelationId))
 	{
-		/* Use binary-upgrade override for pg_class.oid and relfilenode */
+		/* Use binary-upgrade override for pg_class.oid and relfilenumber */
 		if (IsBinaryUpgrade)
 		{
 			if (!OidIsValid(binary_upgrade_next_index_pg_class_oid))
@@ -918,26 +917,26 @@ index_create(Relation heapRelation,
 			indexRelationId = binary_upgrade_next_index_pg_class_oid;
 			binary_upgrade_next_index_pg_class_oid = InvalidOid;
 
-			/* Override the index relfilenode */
+			/* Override the index relfilenumber */
 			if ((relkind == RELKIND_INDEX) &&
-				(!OidIsValid(binary_upgrade_next_index_pg_class_relfilenode)))
+				(!RelFileNumberIsValid(binary_upgrade_next_index_pg_class_relfilenumber)))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("index relfilenode value not set when in binary upgrade mode")));
-			relFileNode = binary_upgrade_next_index_pg_class_relfilenode;
-			binary_upgrade_next_index_pg_class_relfilenode = InvalidOid;
+						 errmsg("index relfilenumber value not set when in binary upgrade mode")));
+			relFileNumber = binary_upgrade_next_index_pg_class_relfilenumber;
+			binary_upgrade_next_index_pg_class_relfilenumber = InvalidRelFileNumber;
 
 			/*
-			 * Note that we want create_storage = true for binary upgrade.
-			 * The storage we create here will be replaced later, but we need
-			 * to have something on disk in the meanwhile.
+			 * Note that we want create_storage = true for binary upgrade. The
+			 * storage we create here will be replaced later, but we need to
+			 * have something on disk in the meanwhile.
 			 */
 			Assert(create_storage);
 		}
 		else
 		{
 			indexRelationId =
-				GetNewRelFileNode(tableSpaceId, pg_class, relpersistence);
+				GetNewRelFileNumber(tableSpaceId, pg_class, relpersistence);
 		}
 	}
 
@@ -950,7 +949,7 @@ index_create(Relation heapRelation,
 								namespaceId,
 								tableSpaceId,
 								indexRelationId,
-								relFileNode,
+								relFileNumber,
 								accessMethodObjectId,
 								indexTupDesc,
 								relkind,
@@ -1408,7 +1407,7 @@ index_concurrently_create_copy(Relation heapRelation, Oid oldIndexId,
 							  InvalidOid,	/* indexRelationId */
 							  InvalidOid,	/* parentIndexRelid */
 							  InvalidOid,	/* parentConstraintId */
-							  InvalidOid,	/* relFileNode */
+							  InvalidRelFileNumber, /* relFileNumber */
 							  newInfo,
 							  indexColNames,
 							  indexRelation->rd_rel->relam,
@@ -1445,6 +1444,9 @@ index_concurrently_build(Oid heapRelationId,
 						 Oid indexRelationId)
 {
 	Relation	heapRel;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	Relation	indexRelation;
 	IndexInfo  *indexInfo;
 
@@ -1454,7 +1456,16 @@ index_concurrently_build(Oid heapRelationId,
 	/* Open and lock the parent heap relation */
 	heapRel = table_open(heapRelationId, ShareUpdateExclusiveLock);
 
-	/* And the target index relation */
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRel->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
 	indexRelation = index_open(indexRelationId, RowExclusiveLock);
 
 	/*
@@ -1469,6 +1480,12 @@ index_concurrently_build(Oid heapRelationId,
 
 	/* Now build the index */
 	index_build(heapRel, indexRelation, indexInfo, false, true);
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* Close both the relations, but keep the locks */
 	table_close(heapRel, NoLock);
@@ -2308,6 +2325,9 @@ index_drop(Oid indexId, bool concurrent, bool concurrent_lock_mode)
 	if (RELKIND_HAS_STORAGE(userIndexRelation->rd_rel->relkind))
 		RelationDropStorage(userIndexRelation);
 
+	/* ensure that stats are dropped if transaction commits */
+	pgstat_drop_relation(userIndexRelation);
+
 	/*
 	 * Close and flush the index's relcache entry, to ensure relcache doesn't
 	 * try to rebuild it while we're deleting catalog entries. We keep the
@@ -3006,7 +3026,7 @@ index_build(Relation heapRelation,
 	 * it -- but we must first check whether one already exists.  If, for
 	 * example, an unlogged relation is truncated in the transaction that
 	 * created it, or truncated twice in a subsequent transaction, the
-	 * relfilenode won't change, and nothing needs to be done here.
+	 * relfilenumber won't change, and nothing needs to be done here.
 	 */
 	if (indexRelation->rd_rel->relpersistence == RELPERSISTENCE_UNLOGGED &&
 		!smgrexists(RelationGetSmgr(indexRelation), INIT_FORKNUM))
@@ -3299,7 +3319,17 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* Open and lock the parent heap relation */
 	heapRelation = table_open(heapId, ShareUpdateExclusiveLock);
-	/* And the target index relation */
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
+
 	indexRelation = index_open(indexId, RowExclusiveLock);
 
 	/*
@@ -3311,16 +3341,6 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 
 	/* mark build is concurrent just for consistency */
 	indexInfo->ii_Concurrent = true;
-
-	/*
-	 * Switch to the table owner's userid, so that any index functions are run
-	 * as that user.  Also lock down security-restricted operations and
-	 * arrange to make GUC variable changes local to this command.
-	 */
-	GetUserIdAndSecContext(&save_userid, &save_sec_context);
-	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
-						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
-	save_nestlevel = NewGUCNestLevel();
 
 	/*
 	 * Scan the index and gather up all the TIDs into a tuplesort object.
@@ -3530,6 +3550,9 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	Relation	iRel,
 				heapRelation;
 	Oid			heapId;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	IndexInfo  *indexInfo;
 	volatile bool skipped_constraint = false;
 	PGRUsage	ru0;
@@ -3556,6 +3579,16 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	/* if relation is gone, leave */
 	if (!heapRelation)
 		return;
+
+	/*
+	 * Switch to the table owner's userid, so that any index functions are run
+	 * as that user.  Also lock down security-restricted operations and
+	 * arrange to make GUC variable changes local to this command.
+	 */
+	GetUserIdAndSecContext(&save_userid, &save_sec_context);
+	SetUserIdAndSecContext(heapRelation->rd_rel->relowner,
+						   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+	save_nestlevel = NewGUCNestLevel();
 
 	if (progress)
 	{
@@ -3650,7 +3683,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 		 * Schedule unlinking of the old index storage at transaction commit.
 		 */
 		RelationDropStorage(iRel);
-		RelationAssumeNewRelfilenode(iRel);
+		RelationAssumeNewRelfilelocator(iRel);
 
 		/* Make sure the reltablespace change is visible */
 		CommandCounterIncrement();
@@ -3680,7 +3713,7 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 	SetReindexProcessing(heapId, indexId);
 
 	/* Create a new physical relation for the index */
-	RelationSetNewRelfilenode(iRel, persistence);
+	RelationSetNewRelfilenumber(iRel, persistence);
 
 	/* Initialize the index and rebuild */
 	/* Note: we do not need to re-establish pkey setting */
@@ -3775,12 +3808,18 @@ reindex_index(Oid indexId, bool skip_constraint_checks, char persistence,
 				 errdetail_internal("%s",
 									pg_rusage_show(&ru0))));
 
-	if (progress)
-		pgstat_progress_end_command();
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/* Close rels, but keep locks */
 	index_close(iRel, NoLock);
 	table_close(heapRelation, NoLock);
+
+	if (progress)
+		pgstat_progress_end_command();
 }
 
 /*

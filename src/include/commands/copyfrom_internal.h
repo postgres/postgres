@@ -40,13 +40,16 @@ typedef enum EolType
 } EolType;
 
 /*
- * Represents the heap insert method to be used during COPY FROM.
+ * Represents the insert method to be used during COPY FROM.
  */
 typedef enum CopyInsertMethod
 {
-	CIM_SINGLE,					/* use table_tuple_insert or fdw routine */
-	CIM_MULTI,					/* always use table_multi_insert */
-	CIM_MULTI_CONDITIONAL		/* use table_multi_insert only if valid */
+	CIM_SINGLE,					/* use table_tuple_insert or
+								 * ExecForeignInsert */
+	CIM_MULTI,					/* always use table_multi_insert or
+								 * ExecForeignBatchInsert */
+	CIM_MULTI_CONDITIONAL		/* use table_multi_insert or
+								 * ExecForeignBatchInsert only if valid */
 } CopyInsertMethod;
 
 /*
@@ -58,7 +61,7 @@ typedef struct CopyFromStateData
 	/* low-level state data */
 	CopySource	copy_src;		/* type of copy source */
 	FILE	   *copy_file;		/* used if copy_src == COPY_FILE */
-	StringInfo	fe_msgbuf;		/* used if copy_src == COPY_NEW_FE */
+	StringInfo	fe_msgbuf;		/* used if copy_src == COPY_FRONTEND */
 
 	EolType		eol_type;		/* EOL type of input */
 	int			file_encoding;	/* file or remote side's character encoding */
@@ -81,6 +84,7 @@ typedef struct CopyFromStateData
 	uint64		cur_lineno;		/* line number for error messages */
 	const char *cur_attname;	/* current att for error messages */
 	const char *cur_attval;		/* current att value for error messages */
+	bool		relname_only;	/* don't output line number, att, etc. */
 
 	/*
 	 * Working state

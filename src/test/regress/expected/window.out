@@ -657,6 +657,23 @@ select first_value(max(x)) over (), y
          ->  Seq Scan on tenk1
 (4 rows)
 
+-- window functions returning pass-by-ref values from different rows
+select x, lag(x, 1) over (order by x), lead(x, 3) over (order by x)
+from (select x::numeric as x from generate_series(1,10) x);
+ x  | lag | lead 
+----+-----+------
+  1 |     |    4
+  2 |   1 |    5
+  3 |   2 |    6
+  4 |   3 |    7
+  5 |   4 |    8
+  6 |   5 |    9
+  7 |   6 |   10
+  8 |   7 |     
+  9 |   8 |     
+ 10 |   9 |     
+(10 rows)
+
 -- test non-default frame specifications
 SELECT four, ten,
 	sum(ten) over (partition by four order by ten),
@@ -3589,6 +3606,25 @@ WHERE rn < 3;
      3 | sales     |  2
 (6 rows)
 
+-- ensure that "unused" subquery columns are not removed when the column only
+-- exists in the run condition
+EXPLAIN (COSTS OFF)
+SELECT empno, depname FROM
+  (SELECT empno,
+          depname,
+          row_number() OVER (PARTITION BY depname ORDER BY empno) rn
+   FROM empsalary) emp
+WHERE rn < 3;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Subquery Scan on emp
+   ->  WindowAgg
+         Run Condition: (row_number() OVER (?) < 3)
+         ->  Sort
+               Sort Key: empsalary.depname, empsalary.empno
+               ->  Seq Scan on empsalary
+(6 rows)
+
 -- likewise with count(empno) instead of row_number()
 EXPLAIN (COSTS OFF)
 SELECT * FROM
@@ -3626,6 +3662,23 @@ WHERE c <= 3;
      4 | sales     |   4800 | 3
      3 | sales     |   4800 | 3
 (8 rows)
+
+-- Ensure we get the correct run condition when the window function is both
+-- monotonically increasing and decreasing.
+EXPLAIN (COSTS OFF)
+SELECT * FROM
+  (SELECT empno,
+          depname,
+          salary,
+          count(empno) OVER () c
+   FROM empsalary) emp
+WHERE c = 1;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ WindowAgg
+   Run Condition: (count(empsalary.empno) OVER (?) = 1)
+   ->  Seq Scan on empsalary
+(3 rows)
 
 -- Some more complex cases with multiple window clauses
 EXPLAIN (COSTS OFF)

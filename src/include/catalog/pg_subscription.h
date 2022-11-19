@@ -31,6 +31,18 @@
 #define LOGICALREP_TWOPHASE_STATE_PENDING 'p'
 #define LOGICALREP_TWOPHASE_STATE_ENABLED 'e'
 
+/*
+ * The subscription will request the publisher to only send changes that do not
+ * have any origin.
+ */
+#define LOGICALREP_ORIGIN_NONE "none"
+
+/*
+ * The subscription will request the publisher to send changes regardless
+ * of their origin.
+ */
+#define LOGICALREP_ORIGIN_ANY "any"
+
 /* ----------------
  *		pg_subscription definition. cpp turns this into
  *		typedef struct FormData_pg_subscription
@@ -87,14 +99,15 @@ CATALOG(pg_subscription,6100,SubscriptionRelationId) BKI_SHARED_RELATION BKI_ROW
 
 	/* List of publications subscribed to */
 	text		subpublications[1] BKI_FORCE_NOT_NULL;
+
+	/* Only publish data originating from the specified origin */
+	text		suborigin BKI_DEFAULT(LOGICALREP_ORIGIN_ANY);
 #endif
 } FormData_pg_subscription;
 
 typedef FormData_pg_subscription *Form_pg_subscription;
 
-DECLARE_TOAST(pg_subscription, 4183, 4184);
-#define PgSubscriptionToastTable 4183
-#define PgSubscriptionToastIndex 4184
+DECLARE_TOAST_WITH_MACRO(pg_subscription, 4183, 4184, PgSubscriptionToastTable, PgSubscriptionToastIndex);
 
 DECLARE_UNIQUE_INDEX_PKEY(pg_subscription_oid_index, 6114, SubscriptionObjectIndexId, on pg_subscription using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_subscription_subname_index, 6115, SubscriptionNameIndexId, on pg_subscription using btree(subdbid oid_ops, subname name_ops));
@@ -120,13 +133,13 @@ typedef struct Subscription
 	char	   *slotname;		/* Name of the replication slot */
 	char	   *synccommit;		/* Synchronous commit setting for worker */
 	List	   *publications;	/* List of publication names to subscribe to */
+	char	   *origin;			/* Only publish data originating from the
+								 * specified origin */
 } Subscription;
 
 extern Subscription *GetSubscription(Oid subid, bool missing_ok);
 extern void FreeSubscription(Subscription *sub);
 extern void DisableSubscription(Oid subid);
-extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
-extern char *get_subscription_name(Oid subid, bool missing_ok);
 
 extern int	CountDBSubscriptions(Oid dbid);
 

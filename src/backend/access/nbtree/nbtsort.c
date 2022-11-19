@@ -647,7 +647,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	if (wstate->btws_use_wal)
 	{
 		/* We use the XLOG_FPI record type for this */
-		log_newpage(&wstate->index->rd_node, MAIN_FORKNUM, blkno, page, true);
+		log_newpage(&wstate->index->rd_locator, MAIN_FORKNUM, blkno, page, true);
 	}
 
 	/*
@@ -1226,7 +1226,7 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 			/* Abbreviation is not supported here */
 			sortKey->abbreviate = false;
 
-			AssertState(sortKey->ssup_attno != 0);
+			Assert(sortKey->ssup_attno != 0);
 
 			strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
 				BTGreaterStrategyNumber : BTLessStrategyNumber;

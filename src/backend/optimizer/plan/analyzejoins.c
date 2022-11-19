@@ -388,8 +388,11 @@ remove_rel_from_query(PlannerInfo *root, int relid, Relids joinrelids)
 		Assert(!bms_is_member(relid, phinfo->ph_lateral));
 		if (bms_is_subset(phinfo->ph_needed, joinrelids) &&
 			bms_is_member(relid, phinfo->ph_eval_at))
+		{
 			root->placeholder_list = foreach_delete_current(root->placeholder_list,
 															l);
+			root->placeholder_array[phinfo->phid] = NULL;
+		}
 		else
 		{
 			phinfo->ph_eval_at = bms_del_member(phinfo->ph_eval_at, relid);

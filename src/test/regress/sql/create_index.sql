@@ -1072,8 +1072,12 @@ REINDEX INDEX CONCURRENTLY pg_class_oid_index; -- no catalog index
 REINDEX TABLE CONCURRENTLY pg_toast.pg_toast_1260; -- no catalog toast table
 REINDEX INDEX CONCURRENTLY pg_toast.pg_toast_1260_index; -- no catalog toast index
 REINDEX SYSTEM CONCURRENTLY postgres; -- not allowed for SYSTEM
+REINDEX (CONCURRENTLY) SYSTEM postgres; -- ditto
+REINDEX (CONCURRENTLY) SYSTEM;  -- ditto
 -- Warns about catalog relations
 REINDEX SCHEMA CONCURRENTLY pg_catalog;
+-- Not the current database
+REINDEX DATABASE not_current_database;
 
 -- Check the relation status, there should not be invalid indexes
 \d concur_reindex_tab

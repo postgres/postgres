@@ -50,6 +50,8 @@
 
 #include <dirent.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
@@ -59,11 +61,11 @@
 #include "sys/mman.h"
 #endif
 
-#include "access/transam.h"
 #include "access/xlog_internal.h"
 #include "catalog/pg_authid_d.h"
 #include "catalog/pg_class_d.h" /* pgrminclude ignore */
 #include "catalog/pg_collation_d.h"
+#include "catalog/pg_database_d.h"	/* pgrminclude ignore */
 #include "common/file_perm.h"
 #include "common/file_utils.h"
 #include "common/logging.h"
@@ -72,7 +74,6 @@
 #include "common/string.h"
 #include "common/username.h"
 #include "fe_utils/string_utils.h"
-#include "getaddrinfo.h"
 #include "getopt_long.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
@@ -242,9 +243,6 @@ static char backend_exec[MAXPGPATH];
 static char **replace_token(char **lines,
 							const char *token, const char *replacement);
 
-#ifndef HAVE_UNIX_SOCKETS
-static char **filter_lines_with_token(char **lines, const char *token);
-#endif
 static char **readfile(const char *path);
 static void writefile(char *path, char **lines);
 static FILE *popen_check(const char *command, const char *mode);
@@ -270,14 +268,14 @@ static void load_plpgsql(FILE *cmdfd);
 static void vacuum_db(FILE *cmdfd);
 static void make_template0(FILE *cmdfd);
 static void make_postgres(FILE *cmdfd);
-static void trapsig(int signum);
+static void trapsig(SIGNAL_ARGS);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
 static char *escape_quotes_bki(const char *src);
 static int	locale_date_order(const char *locale);
 static void check_locale_name(int category, const char *locale,
 							  char **canonname);
-static bool check_locale_encoding(const char *locale, int encoding);
+static bool check_locale_encoding(const char *locale, int user_enc);
 static void setlocales(void);
 static void usage(const char *progname);
 void		setup_pgdata(void);
@@ -419,36 +417,6 @@ replace_token(char **lines, const char *token, const char *replacement)
 }
 
 /*
- * make a copy of lines without any that contain the token
- *
- * a sort of poor man's grep -v
- */
-#ifndef HAVE_UNIX_SOCKETS
-static char **
-filter_lines_with_token(char **lines, const char *token)
-{
-	int			numlines = 1;
-	int			i,
-				src,
-				dst;
-	char	  **result;
-
-	for (i = 0; lines[i]; i++)
-		numlines++;
-
-	result = (char **) pg_malloc(numlines * sizeof(char *));
-
-	for (src = 0, dst = 0; src < numlines; src++)
-	{
-		if (lines[src] == NULL || strstr(lines[src], token) == NULL)
-			result[dst++] = lines[src];
-	}
-
-	return result;
-}
-#endif
-
-/*
  * get the lines from a text file
  */
 static char **
@@ -521,8 +489,7 @@ popen_check(const char *command, const char *mode)
 {
 	FILE	   *cmdfd;
 
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 	errno = 0;
 	cmdfd = popen(command, mode);
 	if (cmdfd == NULL)
@@ -842,11 +809,14 @@ set_null_conf(void)
  * segment in dsm_impl.c; if it doesn't work, we assume it won't work for
  * the postmaster either, and configure the cluster for System V shared
  * memory instead.
+ *
+ * We avoid choosing Solaris's implementation of shm_open() by default.  It
+ * can sleep and fail spuriously under contention.
  */
 static const char *
 choose_dsm_implementation(void)
 {
-#ifdef HAVE_SHM_OPEN
+#if defined(HAVE_SHM_OPEN) && !defined(__sun__)
 	int			ntries = 10;
 	pg_prng_state prng_state;
 
@@ -943,6 +913,7 @@ test_config_settings(void)
 				 test_conns, test_buffs,
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
+		fflush(NULL);
 		status = system(cmd);
 		if (status == 0)
 		{
@@ -979,6 +950,7 @@ test_config_settings(void)
 				 n_connections, test_buffs,
 				 dynamic_shared_memory_type,
 				 DEVNULL, DEVNULL);
+		fflush(NULL);
 		status = system(cmd);
 		if (status == 0)
 			break;
@@ -1042,12 +1014,8 @@ setup_config(void)
 				 n_buffers * (BLCKSZ / 1024));
 	conflines = replace_token(conflines, "#shared_buffers = 128MB", repltok);
 
-#ifdef HAVE_UNIX_SOCKETS
 	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = '%s'",
 			 DEFAULT_PGSOCKET_DIR);
-#else
-	snprintf(repltok, sizeof(repltok), "#unix_socket_directories = ''");
-#endif
 	conflines = replace_token(conflines, "#unix_socket_directories = '/tmp'",
 							  repltok);
 
@@ -1207,13 +1175,8 @@ setup_config(void)
 
 	conflines = readfile(hba_file);
 
-#ifndef HAVE_UNIX_SOCKETS
-	conflines = filter_lines_with_token(conflines, "@remove-line-for-nolocal@");
-#else
 	conflines = replace_token(conflines, "@remove-line-for-nolocal@", "");
-#endif
 
-#ifdef HAVE_IPV6
 
 	/*
 	 * Probe to see if there is really any platform support for IPv6, and
@@ -1255,15 +1218,6 @@ setup_config(void)
 									  "#host    replication     all             ::1");
 		}
 	}
-#else							/* !HAVE_IPV6 */
-	/* If we didn't compile IPV6 support at all, always comment it out */
-	conflines = replace_token(conflines,
-							  "host    all             all             ::1",
-							  "#host    all             all             ::1");
-	conflines = replace_token(conflines,
-							  "host    replication     all             ::1",
-							  "#host    replication     all             ::1");
-#endif							/* HAVE_IPV6 */
 
 	/* Replace default authentication methods */
 	conflines = replace_token(conflines,
@@ -1808,12 +1762,12 @@ make_template0(FILE *cmdfd)
 	 * the new cluster should be the result of a fresh initdb.)
 	 *
 	 * We use "STRATEGY = file_copy" here because checkpoints during initdb
-	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would
-	 * be a little bit slower and make the new cluster a little bit bigger.
+	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would be
+	 * a little bit slower and make the new cluster a little bit bigger.
 	 */
 	static const char *const template0_setup[] = {
-		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false OID = "
-		CppAsString2(Template0ObjectId)
+		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false"
+		" OID = " CppAsString2(Template0DbOid)
 		" STRATEGY = file_copy;\n\n",
 
 		/*
@@ -1862,7 +1816,8 @@ make_postgres(FILE *cmdfd)
 	 * OID to postgres and select the file_copy strategy.
 	 */
 	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres OID = " CppAsString2(PostgresObjectId) " STRATEGY = file_copy;\n\n",
+		"CREATE DATABASE postgres OID = " CppAsString2(PostgresDbOid)
+		" STRATEGY = file_copy;\n\n",
 		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
 		NULL
 	};
@@ -1893,10 +1848,10 @@ make_postgres(FILE *cmdfd)
  * So this will need some testing on Windows.
  */
 static void
-trapsig(int signum)
+trapsig(SIGNAL_ARGS)
 {
 	/* handle systems that reset the handler, like Windows (grr) */
-	pqsignal(signum, trapsig);
+	pqsignal(postgres_signal_arg, trapsig);
 	caught_signal = true;
 }
 
@@ -2079,6 +2034,27 @@ check_locale_encoding(const char *locale, int user_enc)
 							"misbehavior in various character string processing functions.",
 							pg_encoding_to_char(user_enc),
 							pg_encoding_to_char(locale_enc));
+		pg_log_error_hint("Rerun %s and either do not specify an encoding explicitly, "
+						  "or choose a matching combination.",
+						  progname);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * check if the chosen encoding matches is supported by ICU
+ *
+ * this should match the similar check in the backend createdb() function
+ */
+static bool
+check_icu_locale_encoding(int user_enc)
+{
+	if (!(is_encoding_supported_by_icu(user_enc)))
+	{
+		pg_log_error("encoding mismatch");
+		pg_log_error_detail("The encoding you selected (%s) is not supported with the ICU provider.",
+							pg_encoding_to_char(user_enc));
 		pg_log_error_hint("Rerun %s and either do not specify an encoding explicitly, "
 						  "or choose a matching combination.",
 						  progname);
@@ -2355,7 +2331,11 @@ setup_locale_encoding(void)
 	}
 
 	if (!encoding && locale_provider == COLLPROVIDER_ICU)
+	{
 		encodingid = PG_UTF8;
+		printf(_("The default database encoding has been set to \"%s\".\n"),
+			   pg_encoding_to_char(encodingid));
+	}
 	else if (!encoding)
 	{
 		int			ctype_enc;
@@ -2407,6 +2387,10 @@ setup_locale_encoding(void)
 	if (!check_locale_encoding(lc_ctype, encodingid) ||
 		!check_locale_encoding(lc_collate, encodingid))
 		exit(1);				/* check_locale_encoding printed the error */
+
+	if (locale_provider == COLLPROVIDER_ICU &&
+		!check_icu_locale_encoding(encodingid))
+		exit(1);
 }
 
 
@@ -2642,13 +2626,9 @@ create_xlog_or_symlink(void)
 				pg_fatal("could not access directory \"%s\": %m", xlog_dir);
 		}
 
-#ifdef HAVE_SYMLINK
 		if (symlink(xlog_dir, subdirloc) != 0)
 			pg_fatal("could not create symbolic link \"%s\": %m",
 					 subdirloc);
-#else
-		pg_fatal("symlinks are not supported on this platform");
-#endif
 	}
 	else
 	{

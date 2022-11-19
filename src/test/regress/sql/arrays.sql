@@ -754,3 +754,4 @@ FROM
 
 SELECT trim_array(ARRAY[1, 2, 3], -1); -- fail
 SELECT trim_array(ARRAY[1, 2, 3], 10); -- fail
+SELECT trim_array(ARRAY[]::int[], 1); -- fail

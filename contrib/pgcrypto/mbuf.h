@@ -78,39 +78,37 @@ struct PullFilterOps
  */
 MBuf	   *mbuf_create(int len);
 MBuf	   *mbuf_create_from_data(uint8 *data, int len);
-int			mbuf_tell(MBuf *mbuf);
 int			mbuf_avail(MBuf *mbuf);
 int			mbuf_size(MBuf *mbuf);
 int			mbuf_grab(MBuf *mbuf, int len, uint8 **data_p);
 int			mbuf_steal_data(MBuf *mbuf, uint8 **data_p);
-int			mbuf_append(MBuf *dst, const uint8 *buf, int cnt);
-int			mbuf_rewind(MBuf *mbuf);
+int			mbuf_append(MBuf *dst, const uint8 *buf, int len);
 int			mbuf_free(MBuf *mbuf);
 
 /*
  * Push filter
  */
-int			pushf_create(PushFilter **res, const PushFilterOps *ops, void *init_arg,
-						 PushFilter *next);
+int			pushf_create(PushFilter **mp_p, const PushFilterOps *op,
+						 void *init_arg, PushFilter *next);
 int			pushf_write(PushFilter *mp, const uint8 *data, int len);
 void		pushf_free_all(PushFilter *mp);
 void		pushf_free(PushFilter *mp);
 int			pushf_flush(PushFilter *mp);
 
-int			pushf_create_mbuf_writer(PushFilter **mp_p, MBuf *mbuf);
+int			pushf_create_mbuf_writer(PushFilter **res, MBuf *dst);
 
 /*
  * Pull filter
  */
-int			pullf_create(PullFilter **res, const PullFilterOps *ops,
+int			pullf_create(PullFilter **pf_p, const PullFilterOps *op,
 						 void *init_arg, PullFilter *src);
-int			pullf_read(PullFilter *mp, int len, uint8 **data_p);
-int			pullf_read_max(PullFilter *mp, int len,
+int			pullf_read(PullFilter *pf, int len, uint8 **data_p);
+int			pullf_read_max(PullFilter *pf, int len,
 						   uint8 **data_p, uint8 *tmpbuf);
-void		pullf_free(PullFilter *mp);
+void		pullf_free(PullFilter *pf);
 int			pullf_read_fixed(PullFilter *src, int len, uint8 *dst);
 
-int			pullf_create_mbuf_reader(PullFilter **pf_p, MBuf *mbuf);
+int			pullf_create_mbuf_reader(PullFilter **mp_p, MBuf *src);
 
 #define GETBYTE(pf, dst) \
 	do { \

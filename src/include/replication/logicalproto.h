@@ -219,7 +219,7 @@ extern LogicalRepRelId logicalrep_read_update(StringInfo in,
 											  bool *has_oldtuple, LogicalRepTupleData *oldtup,
 											  LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, TransactionId xid,
-									Relation rel, TupleTableSlot *oldtuple,
+									Relation rel, TupleTableSlot *oldslot,
 									bool binary);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
 											  LogicalRepTupleData *oldtup);
@@ -235,7 +235,7 @@ extern void logicalrep_write_rel(StringInfo out, TransactionId xid,
 extern LogicalRepRelation *logicalrep_read_rel(StringInfo in);
 extern void logicalrep_write_typ(StringInfo out, TransactionId xid,
 								 Oid typoid);
-extern void logicalrep_read_typ(StringInfo out, LogicalRepTyp *ltyp);
+extern void logicalrep_read_typ(StringInfo in, LogicalRepTyp *ltyp);
 extern void logicalrep_write_stream_start(StringInfo out, TransactionId xid,
 										  bool first_segment);
 extern TransactionId logicalrep_read_stream_start(StringInfo in,
@@ -243,7 +243,7 @@ extern TransactionId logicalrep_read_stream_start(StringInfo in,
 extern void logicalrep_write_stream_stop(StringInfo out);
 extern void logicalrep_write_stream_commit(StringInfo out, ReorderBufferTXN *txn,
 										   XLogRecPtr commit_lsn);
-extern TransactionId logicalrep_read_stream_commit(StringInfo out,
+extern TransactionId logicalrep_read_stream_commit(StringInfo in,
 												   LogicalRepCommitData *commit_data);
 extern void logicalrep_write_stream_abort(StringInfo out, TransactionId xid,
 										  TransactionId subxid);

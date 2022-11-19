@@ -77,35 +77,6 @@ gcc -shared -o foo.so foo.o
 
    <varlistentry>
     <term>
-     <systemitem class="osname">HP-UX</systemitem>
-     <indexterm><primary>HP-UX</primary><secondary>shared library</secondary></indexterm>
-    </term>
-    <listitem>
-     <para>
-      The compiler flag of the system compiler to create
-      <acronym>PIC</acronym> is <option>+z</option>.  When using
-      <application>GCC</application> it's <option>-fPIC</option>. The
-      linker flag for shared libraries is <option>-b</option>.  So:
-<programlisting>
-cc +z -c foo.c
-</programlisting>
-      or:
-<programlisting>
-gcc -fPIC -c foo.c
-</programlisting>
-      and then:
-<programlisting>
-ld -b -o foo.sl foo.o
-</programlisting>
-      <systemitem class="osname">HP-UX</systemitem> uses the extension
-      <filename>.sl</filename> for shared libraries, unlike most other
-      systems.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>
      <systemitem class="osname">Linux</systemitem>
      <indexterm><primary>Linux</primary><secondary>shared library</secondary></indexterm>
     </term>

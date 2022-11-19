@@ -466,5 +466,5 @@ pg_indexam_progress_phasename(PG_FUNCTION_ARGS)
 	if (!name)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(name));
+	PG_RETURN_DATUM(CStringGetTextDatum(name));
 }

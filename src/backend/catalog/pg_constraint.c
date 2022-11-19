@@ -112,8 +112,7 @@ CreateConstraintEntry(const char *constraintName,
 		conkey = (Datum *) palloc(constraintNKeys * sizeof(Datum));
 		for (i = 0; i < constraintNKeys; i++)
 			conkey[i] = Int16GetDatum(constraintKey[i]);
-		conkeyArray = construct_array(conkey, constraintNKeys,
-									  INT2OID, 2, true, TYPALIGN_SHORT);
+		conkeyArray = construct_array_builtin(conkey, constraintNKeys, INT2OID);
 	}
 	else
 		conkeyArray = NULL;
@@ -125,27 +124,22 @@ CreateConstraintEntry(const char *constraintName,
 		fkdatums = (Datum *) palloc(foreignNKeys * sizeof(Datum));
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = Int16GetDatum(foreignKey[i]);
-		confkeyArray = construct_array(fkdatums, foreignNKeys,
-									   INT2OID, 2, true, TYPALIGN_SHORT);
+		confkeyArray = construct_array_builtin(fkdatums, foreignNKeys, INT2OID);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(pfEqOp[i]);
-		conpfeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
+		conpfeqopArray = construct_array_builtin(fkdatums, foreignNKeys, OIDOID);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(ppEqOp[i]);
-		conppeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
+		conppeqopArray = construct_array_builtin(fkdatums, foreignNKeys, OIDOID);
 		for (i = 0; i < foreignNKeys; i++)
 			fkdatums[i] = ObjectIdGetDatum(ffEqOp[i]);
-		conffeqopArray = construct_array(fkdatums, foreignNKeys,
-										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
+		conffeqopArray = construct_array_builtin(fkdatums, foreignNKeys, OIDOID);
 
 		if (numFkDeleteSetCols > 0)
 		{
 			for (i = 0; i < numFkDeleteSetCols; i++)
 				fkdatums[i] = Int16GetDatum(fkDeleteSetCols[i]);
-			confdelsetcolsArray = construct_array(fkdatums, numFkDeleteSetCols,
-										   INT2OID, 2, true, TYPALIGN_SHORT);
+			confdelsetcolsArray = construct_array_builtin(fkdatums, numFkDeleteSetCols, INT2OID);
 		}
 		else
 			confdelsetcolsArray = NULL;
@@ -166,8 +160,7 @@ CreateConstraintEntry(const char *constraintName,
 		opdatums = (Datum *) palloc(constraintNKeys * sizeof(Datum));
 		for (i = 0; i < constraintNKeys; i++)
 			opdatums[i] = ObjectIdGetDatum(exclOp[i]);
-		conexclopArray = construct_array(opdatums, constraintNKeys,
-										 OIDOID, sizeof(Oid), true, TYPALIGN_INT);
+		conexclopArray = construct_array_builtin(opdatums, constraintNKeys, OIDOID);
 	}
 	else
 		conexclopArray = NULL;
@@ -992,8 +985,12 @@ get_relation_constraint_attnos(Oid relid, const char *conname,
 }
 
 /*
- * Return the OID of the constraint associated with the given index in the
+ * Return the OID of the constraint enforced by the given index in the
  * given relation; or InvalidOid if no such index is catalogued.
+ *
+ * Much like get_constraint_index, this function is concerned only with the
+ * one constraint that "owns" the given index.  Therefore, constraints of
+ * types other than unique, primary-key, and exclusion are ignored.
  */
 Oid
 get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
@@ -1018,6 +1015,13 @@ get_relation_idx_constraint_oid(Oid relationId, Oid indexId)
 		Form_pg_constraint constrForm;
 
 		constrForm = (Form_pg_constraint) GETSTRUCT(tuple);
+
+		/* See above */
+		if (constrForm->contype != CONSTRAINT_PRIMARY &&
+			constrForm->contype != CONSTRAINT_UNIQUE &&
+			constrForm->contype != CONSTRAINT_EXCLUSION)
+			continue;
+
 		if (constrForm->conindid == indexId)
 		{
 			constraintId = constrForm->oid;
@@ -1291,7 +1295,7 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 		}
 		else
 		{
-			int num_delete_cols;
+			int			num_delete_cols;
 
 			arr = DatumGetArrayTypeP(adatum);	/* ensure not toasted */
 			if (ARR_NDIM(arr) != 1 ||
@@ -1301,7 +1305,7 @@ DeconstructFkConstraintRow(HeapTuple tuple, int *numfks,
 			num_delete_cols = ARR_DIMS(arr)[0];
 			memcpy(fk_del_set_cols, ARR_DATA_PTR(arr), num_delete_cols * sizeof(int16));
 			if ((Pointer) arr != DatumGetPointer(adatum))
-				pfree(arr);				/* free de-toasted copy, if any */
+				pfree(arr);		/* free de-toasted copy, if any */
 
 			*num_fk_del_set_cols = num_delete_cols;
 		}

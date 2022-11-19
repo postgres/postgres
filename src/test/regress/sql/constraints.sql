@@ -310,11 +310,12 @@ CREATE TABLE UNIQUE_TBL (i int UNIQUE NULLS NOT DISTINCT, t text);
 
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
-INSERT INTO UNIQUE_TBL VALUES (1, 'three');
+INSERT INTO UNIQUE_TBL VALUES (1, 'three');  -- fail
 INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 INSERT INTO UNIQUE_TBL (t) VALUES ('six');
-INSERT INTO UNIQUE_TBL (t) VALUES ('seven');
+INSERT INTO UNIQUE_TBL (t) VALUES ('seven');  -- fail
+INSERT INTO UNIQUE_TBL (t) VALUES ('eight') ON CONFLICT DO NOTHING;  -- no-op
 
 SELECT * FROM UNIQUE_TBL;
 
@@ -428,6 +429,25 @@ SET CONSTRAINTS parted_uniq_tbl_i_key DEFERRED;
 INSERT INTO parted_uniq_tbl VALUES (1);	-- OK now, fail at commit
 COMMIT;
 DROP TABLE parted_uniq_tbl;
+
+-- test naming a constraint in a partition when a conflict exists
+CREATE TABLE parted_fk_naming (
+    id bigint NOT NULL default 1,
+    id_abc bigint,
+    CONSTRAINT dummy_constr FOREIGN KEY (id_abc)
+        REFERENCES parted_fk_naming (id),
+    PRIMARY KEY (id)
+)
+PARTITION BY LIST (id);
+CREATE TABLE parted_fk_naming_1 (
+    id bigint NOT NULL default 1,
+    id_abc bigint,
+    PRIMARY KEY (id),
+    CONSTRAINT dummy_constr CHECK (true)
+);
+ALTER TABLE parted_fk_naming ATTACH PARTITION parted_fk_naming_1 FOR VALUES IN ('1');
+SELECT conname FROM pg_constraint WHERE conrelid = 'parted_fk_naming_1'::regclass AND contype = 'f';
+DROP TABLE parted_fk_naming;
 
 -- test a HOT update that invalidates the conflicting tuple.
 -- the trigger should still fire and catch the violation

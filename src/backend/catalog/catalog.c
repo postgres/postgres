@@ -262,6 +262,8 @@ IsSharedRelation(Oid relationId)
 		relationId == AuthIdRolnameIndexId ||
 		relationId == AuthMemMemRoleIndexId ||
 		relationId == AuthMemRoleMemIndexId ||
+		relationId == AuthMemOidIndexId ||
+		relationId == AuthMemGrantorIndexId ||
 		relationId == DatabaseNameIndexId ||
 		relationId == DatabaseOidIndexId ||
 		relationId == DbRoleSettingDatidRolidIndexId ||
@@ -339,14 +341,18 @@ IsPinnedObject(Oid classId, Oid objectId)
 	 * robustness.
 	 */
 
-	/* template1 is not pinned */
-	if (classId == DatabaseRelationId &&
-		objectId == TemplateDbOid)
-		return false;
-
 	/* the public namespace is not pinned */
 	if (classId == NamespaceRelationId &&
 		objectId == PG_PUBLIC_NAMESPACE)
+		return false;
+
+	/*
+	 * Databases are never pinned.  It might seem that it'd be prudent to pin
+	 * at least template0; but we do this intentionally so that template0 and
+	 * template1 can be rebuilt from each other, thus letting them serve as
+	 * mutual backups (as long as you've not modified template1, anyway).
+	 */
+	if (classId == DatabaseRelationId)
 		return false;
 
 	/*
@@ -477,14 +483,14 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
 }
 
 /*
- * GetNewRelFileNode
- *		Generate a new relfilenode number that is unique within the
+ * GetNewRelFileNumber
+ *		Generate a new relfilenumber that is unique within the
  *		database of the given tablespace.
  *
- * If the relfilenode will also be used as the relation's OID, pass the
+ * If the relfilenumber will also be used as the relation's OID, pass the
  * opened pg_class catalog, and this routine will guarantee that the result
  * is also an unused OID within pg_class.  If the result is to be used only
- * as a relfilenode for an existing relation, pass NULL for pg_class.
+ * as a relfilenumber for an existing relation, pass NULL for pg_class.
  *
  * As with GetNewOidWithIndex(), there is some theoretical risk of a race
  * condition, but it doesn't seem worth worrying about.
@@ -492,17 +498,17 @@ GetNewOidWithIndex(Relation relation, Oid indexId, AttrNumber oidcolumn)
  * Note: we don't support using this in bootstrap mode.  All relations
  * created by bootstrap have preassigned OIDs, so there's no need.
  */
-Oid
-GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
+RelFileNumber
+GetNewRelFileNumber(Oid reltablespace, Relation pg_class, char relpersistence)
 {
-	RelFileNodeBackend rnode;
+	RelFileLocatorBackend rlocator;
 	char	   *rpath;
 	bool		collides;
 	BackendId	backend;
 
 	/*
 	 * If we ever get here during pg_upgrade, there's something wrong; all
-	 * relfilenode assignments during a binary-upgrade run should be
+	 * relfilenumber assignments during a binary-upgrade run should be
 	 * determined by commands in the dump script.
 	 */
 	Assert(!IsBinaryUpgrade);
@@ -518,19 +524,21 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 			break;
 		default:
 			elog(ERROR, "invalid relpersistence: %c", relpersistence);
-			return InvalidOid;	/* placate compiler */
+			return InvalidRelFileNumber;	/* placate compiler */
 	}
 
 	/* This logic should match RelationInitPhysicalAddr */
-	rnode.node.spcNode = reltablespace ? reltablespace : MyDatabaseTableSpace;
-	rnode.node.dbNode = (rnode.node.spcNode == GLOBALTABLESPACE_OID) ? InvalidOid : MyDatabaseId;
+	rlocator.locator.spcOid = reltablespace ? reltablespace : MyDatabaseTableSpace;
+	rlocator.locator.dbOid =
+		(rlocator.locator.spcOid == GLOBALTABLESPACE_OID) ?
+		InvalidOid : MyDatabaseId;
 
 	/*
 	 * The relpath will vary based on the backend ID, so we must initialize
 	 * that properly here to make sure that any collisions based on filename
 	 * are properly detected.
 	 */
-	rnode.backend = backend;
+	rlocator.backend = backend;
 
 	do
 	{
@@ -538,13 +546,13 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 
 		/* Generate the OID */
 		if (pg_class)
-			rnode.node.relNode = GetNewOidWithIndex(pg_class, ClassOidIndexId,
-													Anum_pg_class_oid);
+			rlocator.locator.relNumber = GetNewOidWithIndex(pg_class, ClassOidIndexId,
+															Anum_pg_class_oid);
 		else
-			rnode.node.relNode = GetNewObjectId();
+			rlocator.locator.relNumber = GetNewObjectId();
 
 		/* Check for existing file of same name */
-		rpath = relpath(rnode, MAIN_FORKNUM);
+		rpath = relpath(rlocator, MAIN_FORKNUM);
 
 		if (access(rpath, F_OK) == 0)
 		{
@@ -566,7 +574,7 @@ GetNewRelFileNode(Oid reltablespace, Relation pg_class, char relpersistence)
 		pfree(rpath);
 	} while (collides);
 
-	return rnode.node.relNode;
+	return rlocator.locator.relNumber;
 }
 
 /*

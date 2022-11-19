@@ -15,27 +15,27 @@
 
 #include "access/htup.h"
 #include "storage/itemptr.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "utils/relcache.h"
 
 /* struct definition is private to rewriteheap.c */
 typedef struct RewriteStateData *RewriteState;
 
-extern RewriteState begin_heap_rewrite(Relation OldHeap, Relation NewHeap,
-									   TransactionId OldestXmin, TransactionId FreezeXid,
-									   MultiXactId MultiXactCutoff);
+extern RewriteState begin_heap_rewrite(Relation old_heap, Relation new_heap,
+									   TransactionId oldest_xmin, TransactionId freeze_xid,
+									   MultiXactId cutoff_multi);
 extern void end_heap_rewrite(RewriteState state);
-extern void rewrite_heap_tuple(RewriteState state, HeapTuple oldTuple,
-							   HeapTuple newTuple);
-extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple oldTuple);
+extern void rewrite_heap_tuple(RewriteState state, HeapTuple old_tuple,
+							   HeapTuple new_tuple);
+extern bool rewrite_heap_dead_tuple(RewriteState state, HeapTuple old_tuple);
 
 /*
  * On-Disk data format for an individual logical rewrite mapping.
  */
 typedef struct LogicalRewriteMappingData
 {
-	RelFileNode old_node;
-	RelFileNode new_node;
+	RelFileLocator old_locator;
+	RelFileLocator new_locator;
 	ItemPointerData old_tid;
 	ItemPointerData new_tid;
 } LogicalRewriteMappingData;
@@ -52,6 +52,6 @@ typedef struct LogicalRewriteMappingData
  * ---
  */
 #define LOGICAL_REWRITE_FORMAT "map-%x-%x-%X_%X-%x-%x"
-void		CheckPointLogicalRewriteHeap(void);
+extern void CheckPointLogicalRewriteHeap(void);
 
 #endif							/* REWRITE_HEAP_H */

@@ -32,6 +32,7 @@
 
 #include "access/nbtree.h"
 #include "catalog/objectaccess.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/execExpr.h"
 #include "executor/nodeSubplan.h"
@@ -47,9 +48,6 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
-#include "utils/json.h"
-#include "utils/jsonb.h"
-#include "utils/jsonpath.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
@@ -88,40 +86,6 @@ static void ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 								  bool nullcheck);
 
 
-static ExprState *
-ExecInitExprInternal(Expr *node, PlanState *parent, ParamListInfo ext_params,
-					 Datum *caseval, bool *casenull)
-{
-	ExprState  *state;
-	ExprEvalStep scratch = {0};
-
-	/* Special case: NULL expression produces a NULL ExprState pointer */
-	if (node == NULL)
-		return NULL;
-
-	/* Initialize ExprState with empty step list */
-	state = makeNode(ExprState);
-	state->expr = node;
-	state->parent = parent;
-	state->ext_params = ext_params;
-	state->innermost_caseval = caseval;
-	state->innermost_casenull = casenull;
-
-	/* Insert EEOP_*_FETCHSOME steps as needed */
-	ExecInitExprSlots(state, (Node *) node);
-
-	/* Compile the expression proper */
-	ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
-
-	/* Finally, append a DONE step */
-	scratch.opcode = EEOP_DONE;
-	ExprEvalPushStep(state, &scratch);
-
-	ExecReadyExpr(state);
-
-	return state;
-}
-
 /*
  * ExecInitExpr: prepare an expression tree for execution
  *
@@ -159,7 +123,32 @@ ExecInitExprInternal(Expr *node, PlanState *parent, ParamListInfo ext_params,
 ExprState *
 ExecInitExpr(Expr *node, PlanState *parent)
 {
-	return ExecInitExprInternal(node, parent, NULL, NULL, NULL);
+	ExprState  *state;
+	ExprEvalStep scratch = {0};
+
+	/* Special case: NULL expression produces a NULL ExprState pointer */
+	if (node == NULL)
+		return NULL;
+
+	/* Initialize ExprState with empty step list */
+	state = makeNode(ExprState);
+	state->expr = node;
+	state->parent = parent;
+	state->ext_params = NULL;
+
+	/* Insert EEOP_*_FETCHSOME steps as needed */
+	ExecInitExprSlots(state, (Node *) node);
+
+	/* Compile the expression proper */
+	ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
+
+	/* Finally, append a DONE step */
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
 }
 
 /*
@@ -171,20 +160,32 @@ ExecInitExpr(Expr *node, PlanState *parent)
 ExprState *
 ExecInitExprWithParams(Expr *node, ParamListInfo ext_params)
 {
-	return ExecInitExprInternal(node, NULL, ext_params, NULL, NULL);
-}
+	ExprState  *state;
+	ExprEvalStep scratch = {0};
 
-/*
- * ExecInitExprWithCaseValue: prepare an expression tree for execution
- *
- * This is the same as ExecInitExpr, except that a pointer to the value for
- * CasTestExpr is passed here.
- */
-ExprState *
-ExecInitExprWithCaseValue(Expr *node, PlanState *parent,
-						  Datum *caseval, bool *casenull)
-{
-	return ExecInitExprInternal(node, parent, NULL, caseval, casenull);
+	/* Special case: NULL expression produces a NULL ExprState pointer */
+	if (node == NULL)
+		return NULL;
+
+	/* Initialize ExprState with empty step list */
+	state = makeNode(ExprState);
+	state->expr = node;
+	state->parent = NULL;
+	state->ext_params = ext_params;
+
+	/* Insert EEOP_*_FETCHSOME steps as needed */
+	ExecInitExprSlots(state, (Node *) node);
+
+	/* Compile the expression proper */
+	ExecInitExprRec(node, state, &state->resvalue, &state->resnull);
+
+	/* Finally, append a DONE step */
+	scratch.opcode = EEOP_DONE;
+	ExprEvalPushStep(state, &scratch);
+
+	ExecReadyExpr(state);
+
+	return state;
 }
 
 /*
@@ -1203,8 +1204,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				FmgrInfo   *finfo;
 				FunctionCallInfo fcinfo;
 				AclResult	aclresult;
-				FmgrInfo   *hash_finfo;
-				FunctionCallInfo hash_fcinfo;
 				Oid			cmpfuncid;
 
 				/*
@@ -1226,7 +1225,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				arrayarg = (Expr *) lsecond(opexpr->args);
 
 				/* Check permission to call function */
-				aclresult = pg_proc_aclcheck(cmpfuncid,
+				aclresult = object_aclcheck(ProcedureRelationId, cmpfuncid,
 											 GetUserId(),
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
@@ -1236,7 +1235,7 @@ ExecInitExprRec(Expr *node, ExprState *state,
 
 				if (OidIsValid(opexpr->hashfuncid))
 				{
-					aclresult = pg_proc_aclcheck(opexpr->hashfuncid,
+					aclresult = object_aclcheck(ProcedureRelationId, opexpr->hashfuncid,
 												 GetUserId(),
 												 ACL_EXECUTE);
 					if (aclresult != ACLCHECK_OK)
@@ -1262,18 +1261,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				 */
 				if (OidIsValid(opexpr->hashfuncid))
 				{
-					hash_finfo = palloc0(sizeof(FmgrInfo));
-					hash_fcinfo = palloc0(SizeForFunctionCallInfo(1));
-					fmgr_info(opexpr->hashfuncid, hash_finfo);
-					fmgr_info_set_expr((Node *) node, hash_finfo);
-					InitFunctionCallInfoData(*hash_fcinfo, hash_finfo,
-											 1, opexpr->inputcollid, NULL,
-											 NULL);
-
-					scratch.d.hashedscalararrayop.hash_finfo = hash_finfo;
-					scratch.d.hashedscalararrayop.hash_fcinfo_data = hash_fcinfo;
-					scratch.d.hashedscalararrayop.hash_fn_addr = hash_finfo->fn_addr;
-
 					/* Evaluate scalar directly into left function argument */
 					ExecInitExprRec(scalararg, state,
 									&fcinfo->args[0].value, &fcinfo->args[0].isnull);
@@ -1292,11 +1279,8 @@ ExecInitExprRec(Expr *node, ExprState *state,
 					scratch.d.hashedscalararrayop.inclause = opexpr->useOr;
 					scratch.d.hashedscalararrayop.finfo = finfo;
 					scratch.d.hashedscalararrayop.fcinfo_data = fcinfo;
-					scratch.d.hashedscalararrayop.fn_addr = finfo->fn_addr;
+					scratch.d.hashedscalararrayop.saop = opexpr;
 
-					scratch.d.hashedscalararrayop.hash_finfo = hash_finfo;
-					scratch.d.hashedscalararrayop.hash_fcinfo_data = hash_fcinfo;
-					scratch.d.hashedscalararrayop.hash_fn_addr = hash_finfo->fn_addr;
 
 					ExprEvalPushStep(state, &scratch);
 				}
@@ -2428,254 +2412,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
-		case T_JsonValueExpr:
-			{
-				JsonValueExpr *jve = (JsonValueExpr *) node;
-
-				ExecInitExprRec(jve->raw_expr, state, resv, resnull);
-
-				if (jve->formatted_expr)
-				{
-					Datum	   *innermost_caseval = state->innermost_caseval;
-					bool	   *innermost_isnull = state->innermost_casenull;
-
-					state->innermost_caseval = resv;
-					state->innermost_casenull = resnull;
-
-					ExecInitExprRec(jve->formatted_expr, state, resv, resnull);
-
-					state->innermost_caseval = innermost_caseval;
-					state->innermost_casenull = innermost_isnull;
-				}
-				break;
-			}
-
-		case T_JsonConstructorExpr:
-			{
-				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
-				List	   *args = ctor->args;
-				ListCell   *lc;
-				int			nargs = list_length(args);
-				int			argno = 0;
-
-				if (ctor->func)
-				{
-					ExecInitExprRec(ctor->func, state, resv, resnull);
-				}
-				else if ((ctor->type == JSCTOR_JSON_PARSE && !ctor->unique) ||
-						 ctor->type == JSCTOR_JSON_SERIALIZE)
-				{
-					/* Use the value of the first argument as a result */
-					ExecInitExprRec(linitial(args), state, resv, resnull);
-				}
-				else
-				{
-					scratch.opcode = EEOP_JSON_CONSTRUCTOR;
-					scratch.d.json_constructor.constructor = ctor;
-					scratch.d.json_constructor.arg_values = palloc(sizeof(Datum) * nargs);
-					scratch.d.json_constructor.arg_nulls = palloc(sizeof(bool) * nargs);
-					scratch.d.json_constructor.arg_types = palloc(sizeof(Oid) * nargs);
-					scratch.d.json_constructor.nargs = nargs;
-
-					foreach(lc, args)
-					{
-						Expr	   *arg = (Expr *) lfirst(lc);
-
-						scratch.d.json_constructor.arg_types[argno] = exprType((Node *) arg);
-
-						if (IsA(arg, Const))
-						{
-							/* Don't evaluate const arguments every round */
-							Const	   *con = (Const *) arg;
-
-							scratch.d.json_constructor.arg_values[argno] = con->constvalue;
-							scratch.d.json_constructor.arg_nulls[argno] = con->constisnull;
-						}
-						else
-						{
-							ExecInitExprRec(arg, state,
-											&scratch.d.json_constructor.arg_values[argno],
-											&scratch.d.json_constructor.arg_nulls[argno]);
-						}
-						argno++;
-					}
-
-					/* prepare type cache for datum_to_json[b]() */
-					if (ctor->type == JSCTOR_JSON_SCALAR)
-					{
-						bool		is_jsonb =
-							ctor->returning->format->format_type == JS_FORMAT_JSONB;
-
-						scratch.d.json_constructor.arg_type_cache =
-							palloc(sizeof(*scratch.d.json_constructor.arg_type_cache) * nargs);
-
-						for (int i = 0; i < nargs; i++)
-						{
-							int			category;
-							Oid			outfuncid;
-							Oid			typid = scratch.d.json_constructor.arg_types[i];
-
-							if (is_jsonb)
-							{
-								JsonbTypeCategory jbcat;
-
-								jsonb_categorize_type(typid, &jbcat, &outfuncid);
-
-								category = (int) jbcat;
-							}
-							else
-							{
-								JsonTypeCategory jscat;
-
-								json_categorize_type(typid, &jscat, &outfuncid);
-
-								category = (int) jscat;
-							}
-
-							scratch.d.json_constructor.arg_type_cache[i].outfuncid = outfuncid;
-							scratch.d.json_constructor.arg_type_cache[i].category = category;
-						}
-					}
-
-					ExprEvalPushStep(state, &scratch);
-				}
-
-				if (ctor->coercion)
-				{
-					Datum	   *innermost_caseval = state->innermost_caseval;
-					bool	   *innermost_isnull = state->innermost_casenull;
-
-					state->innermost_caseval = resv;
-					state->innermost_casenull = resnull;
-
-					ExecInitExprRec(ctor->coercion, state, resv, resnull);
-
-					state->innermost_caseval = innermost_caseval;
-					state->innermost_casenull = innermost_isnull;
-				}
-			}
-			break;
-
-		case T_JsonIsPredicate:
-			{
-				JsonIsPredicate *pred = (JsonIsPredicate *) node;
-
-				ExecInitExprRec((Expr *) pred->expr, state, resv, resnull);
-
-				scratch.opcode = EEOP_IS_JSON;
-				scratch.d.is_json.pred = pred;
-
-				ExprEvalPushStep(state, &scratch);
-				break;
-			}
-
-		case T_JsonExpr:
-			{
-				JsonExpr   *jexpr = castNode(JsonExpr, node);
-				ListCell   *argexprlc;
-				ListCell   *argnamelc;
-
-				scratch.opcode = EEOP_JSONEXPR;
-				scratch.d.jsonexpr.jsexpr = jexpr;
-
-				scratch.d.jsonexpr.formatted_expr =
-					palloc(sizeof(*scratch.d.jsonexpr.formatted_expr));
-
-				ExecInitExprRec((Expr *) jexpr->formatted_expr, state,
-								&scratch.d.jsonexpr.formatted_expr->value,
-								&scratch.d.jsonexpr.formatted_expr->isnull);
-
-				scratch.d.jsonexpr.pathspec =
-					palloc(sizeof(*scratch.d.jsonexpr.pathspec));
-
-				ExecInitExprRec((Expr *) jexpr->path_spec, state,
-								&scratch.d.jsonexpr.pathspec->value,
-								&scratch.d.jsonexpr.pathspec->isnull);
-
-				scratch.d.jsonexpr.res_expr =
-					palloc(sizeof(*scratch.d.jsonexpr.res_expr));
-
-				scratch.d.jsonexpr.result_expr = jexpr->result_coercion
-					? ExecInitExprWithCaseValue((Expr *) jexpr->result_coercion->expr,
-												state->parent,
-												&scratch.d.jsonexpr.res_expr->value,
-												&scratch.d.jsonexpr.res_expr->isnull)
-					: NULL;
-
-				scratch.d.jsonexpr.default_on_empty = !jexpr->on_empty ? NULL :
-					ExecInitExpr((Expr *) jexpr->on_empty->default_expr,
-								 state->parent);
-
-				scratch.d.jsonexpr.default_on_error =
-					ExecInitExpr((Expr *) jexpr->on_error->default_expr,
-								 state->parent);
-
-				if (jexpr->omit_quotes ||
-					(jexpr->result_coercion && jexpr->result_coercion->via_io))
-				{
-					Oid			typinput;
-
-					/* lookup the result type's input function */
-					getTypeInputInfo(jexpr->returning->typid, &typinput,
-									 &scratch.d.jsonexpr.input.typioparam);
-					fmgr_info(typinput, &scratch.d.jsonexpr.input.func);
-				}
-
-				scratch.d.jsonexpr.args = NIL;
-
-				forboth(argexprlc, jexpr->passing_values,
-						argnamelc, jexpr->passing_names)
-				{
-					Expr	   *argexpr = (Expr *) lfirst(argexprlc);
-					String	   *argname = lfirst_node(String, argnamelc);
-					JsonPathVariableEvalContext *var = palloc(sizeof(*var));
-
-					var->name = pstrdup(argname->sval);
-					var->typid = exprType((Node *) argexpr);
-					var->typmod = exprTypmod((Node *) argexpr);
-					var->estate = ExecInitExpr(argexpr, state->parent);
-					var->econtext = NULL;
-					var->mcxt = NULL;
-					var->evaluated = false;
-					var->value = (Datum) 0;
-					var->isnull = true;
-
-					scratch.d.jsonexpr.args =
-						lappend(scratch.d.jsonexpr.args, var);
-				}
-
-				scratch.d.jsonexpr.cache = NULL;
-
-				if (jexpr->coercions)
-				{
-					JsonCoercion **coercion;
-					struct JsonCoercionState *cstate;
-					Datum	   *caseval;
-					bool	   *casenull;
-
-					scratch.d.jsonexpr.coercion_expr =
-						palloc(sizeof(*scratch.d.jsonexpr.coercion_expr));
-
-					caseval = &scratch.d.jsonexpr.coercion_expr->value;
-					casenull = &scratch.d.jsonexpr.coercion_expr->isnull;
-
-					for (cstate = &scratch.d.jsonexpr.coercions.null,
-						 coercion = &jexpr->coercions->null;
-						 coercion <= &jexpr->coercions->composite;
-						 coercion++, cstate++)
-					{
-						cstate->coercion = *coercion;
-						cstate->estate = *coercion ?
-							ExecInitExprWithCaseValue((Expr *)(*coercion)->expr,
-													  state->parent,
-													  caseval, casenull) : NULL;
-					}
-				}
-
-				ExprEvalPushStep(state, &scratch);
-				break;
-			}
-
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -2727,7 +2463,7 @@ ExecInitFunc(ExprEvalStep *scratch, Expr *node, List *args, Oid funcid,
 	ListCell   *lc;
 
 	/* Check permission to call function */
-	aclresult = pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE);
+	aclresult = object_aclcheck(ProcedureRelationId, funcid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(funcid));
 	InvokeFunctionExecuteHook(funcid);
@@ -3674,19 +3410,30 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				scratch.resnull = &state->resnull;
 			}
 			argno++;
+
+			Assert(pertrans->numInputs == argno);
 		}
-		else if (pertrans->numSortCols == 0)
+		else if (!pertrans->aggsortrequired)
 		{
 			ListCell   *arg;
 
 			/*
-			 * Normal transition function without ORDER BY / DISTINCT.
+			 * Normal transition function without ORDER BY / DISTINCT or with
+			 * ORDER BY / DISTINCT but the planner has given us pre-sorted
+			 * input.
 			 */
 			strictargs = trans_fcinfo->args + 1;
 
 			foreach(arg, pertrans->aggref->args)
 			{
 				TargetEntry *source_tle = (TargetEntry *) lfirst(arg);
+
+				/*
+				 * Don't initialize args for any ORDER BY clause that might
+				 * exist in a presorted aggregate.
+				 */
+				if (argno == pertrans->numTransInputs)
+					break;
 
 				/*
 				 * Start from 1, since the 0th arg will be the transition
@@ -3697,11 +3444,13 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 								&trans_fcinfo->args[argno + 1].isnull);
 				argno++;
 			}
+			Assert(pertrans->numTransInputs == argno);
 		}
 		else if (pertrans->numInputs == 1)
 		{
 			/*
-			 * DISTINCT and/or ORDER BY case, with a single column sorted on.
+			 * Non-presorted DISTINCT and/or ORDER BY case, with a single
+			 * column sorted on.
 			 */
 			TargetEntry *source_tle =
 			(TargetEntry *) linitial(pertrans->aggref->args);
@@ -3713,11 +3462,14 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 							&state->resnull);
 			strictnulls = &state->resnull;
 			argno++;
+
+			Assert(pertrans->numInputs == argno);
 		}
 		else
 		{
 			/*
-			 * DISTINCT and/or ORDER BY case, with multiple columns sorted on.
+			 * Non-presorted DISTINCT and/or ORDER BY case, with multiple
+			 * columns sorted on.
 			 */
 			Datum	   *values = pertrans->sortslot->tts_values;
 			bool	   *nulls = pertrans->sortslot->tts_isnull;
@@ -3733,8 +3485,8 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 								&values[argno], &nulls[argno]);
 				argno++;
 			}
+			Assert(pertrans->numInputs == argno);
 		}
-		Assert(pertrans->numInputs == argno);
 
 		/*
 		 * For a strict transfn, nothing happens when there's a NULL input; we
@@ -3751,6 +3503,21 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 			scratch.d.agg_strict_input_check.args = strictargs;
 			scratch.d.agg_strict_input_check.jumpnull = -1; /* adjust later */
 			scratch.d.agg_strict_input_check.nargs = pertrans->numTransInputs;
+			ExprEvalPushStep(state, &scratch);
+			adjust_bailout = lappend_int(adjust_bailout,
+										 state->steps_len - 1);
+		}
+
+		/* Handle DISTINCT aggregates which have pre-sorted input */
+		if (pertrans->numDistinctCols > 0 && !pertrans->aggsortrequired)
+		{
+			if (pertrans->numDistinctCols > 1)
+				scratch.opcode = EEOP_AGG_PRESORTED_DISTINCT_MULTI;
+			else
+				scratch.opcode = EEOP_AGG_PRESORTED_DISTINCT_SINGLE;
+
+			scratch.d.agg_presorted_distinctcheck.pertrans = pertrans;
+			scratch.d.agg_presorted_distinctcheck.jumpdistinct = -1;	/* adjust later */
 			ExprEvalPushStep(state, &scratch);
 			adjust_bailout = lappend_int(adjust_bailout,
 										 state->steps_len - 1);
@@ -3816,6 +3583,12 @@ ExecBuildAggTrans(AggState *aggstate, AggStatePerPhase phase,
 				Assert(as->d.agg_deserialize.jumpnull == -1);
 				as->d.agg_deserialize.jumpnull = state->steps_len;
 			}
+			else if (as->opcode == EEOP_AGG_PRESORTED_DISTINCT_SINGLE ||
+					 as->opcode == EEOP_AGG_PRESORTED_DISTINCT_MULTI)
+			{
+				Assert(as->d.agg_presorted_distinctcheck.jumpdistinct == -1);
+				as->d.agg_presorted_distinctcheck.jumpdistinct = state->steps_len;
+			}
 			else
 				Assert(false);
 		}
@@ -3865,7 +3638,8 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	/*
 	 * Determine appropriate transition implementation.
 	 *
-	 * For non-ordered aggregates:
+	 * For non-ordered aggregates and ORDER BY / DISTINCT aggregates with
+	 * presorted input:
 	 *
 	 * If the initial value for the transition state doesn't exist in the
 	 * pg_aggregate table then we will let the first non-NULL value returned
@@ -3895,7 +3669,7 @@ ExecBuildAggTransCall(ExprState *state, AggState *aggstate,
 	 * process_ordered_aggregate_{single, multi} and
 	 * advance_transition_function.
 	 */
-	if (pertrans->numSortCols == 0)
+	if (!pertrans->aggsortrequired)
 	{
 		if (pertrans->transtypeByVal)
 		{
@@ -4024,7 +3798,7 @@ ExecBuildGroupingEqual(TupleDesc ldesc, TupleDesc rdesc,
 		AclResult	aclresult;
 
 		/* Check permission to call function */
-		aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+		aclresult = object_aclcheck(ProcedureRelationId, foid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 
@@ -4158,7 +3932,7 @@ ExecBuildParamSetEqual(TupleDesc desc,
 		AclResult	aclresult;
 
 		/* Check permission to call function */
-		aclresult = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE);
+		aclresult = object_aclcheck(ProcedureRelationId, foid, GetUserId(), ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FUNCTION, get_func_name(foid));
 

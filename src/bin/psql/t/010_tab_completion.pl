@@ -68,25 +68,26 @@ delete $ENV{LS_COLORS};
 
 # In a VPATH build, we'll be started in the source directory, but we want
 # to run in the build directory so that we can use relative paths to
-# access the tmp_check subdirectory; otherwise the output from filename
+# access the tab_comp_dir subdirectory; otherwise the output from filename
 # completion tests is too variable.
-if ($ENV{TESTDIR})
+if ($ENV{TESTDATADIR})
 {
-	chdir $ENV{TESTDIR} or die "could not chdir to \"$ENV{TESTDIR}\": $!";
+	chdir $ENV{TESTDATADIR} or die "could not chdir to \"$ENV{TESTDATADIR}\": $!";
 }
 
 # Create some junk files for filename completion testing.
+mkdir "tab_comp_dir";
 my $FH;
-open $FH, ">", "tmp_check/somefile"
-  or die("could not create file \"tmp_check/somefile\": $!");
+open $FH, ">", "tab_comp_dir/somefile"
+  or die("could not create file \"tab_comp_dir/somefile\": $!");
 print $FH "some stuff\n";
 close $FH;
-open $FH, ">", "tmp_check/afile123"
-  or die("could not create file \"tmp_check/afile123\": $!");
+open $FH, ">", "tab_comp_dir/afile123"
+  or die("could not create file \"tab_comp_dir/afile123\": $!");
 print $FH "more stuff\n";
 close $FH;
-open $FH, ">", "tmp_check/afile456"
-  or die("could not create file \"tmp_check/afile456\": $!");
+open $FH, ">", "tab_comp_dir/afile456"
+  or die("could not create file \"tab_comp_dir/afile456\": $!");
 print $FH "other stuff\n";
 close $FH;
 
@@ -212,10 +213,7 @@ check_completion(
 clear_line();
 
 # check case folding
-check_completion(
-	"select * from TAB\t",
-	qr/tab1 /,
-	"automatically fold case");
+check_completion("select * from TAB\t", qr/tab1 /, "automatically fold case");
 
 clear_query();
 
@@ -228,15 +226,10 @@ check_completion("\\DRD\t", qr/drds /, "complete \\DRD<tab> to \\drds");
 clear_line();
 
 # check completion of a schema-qualified name
-check_completion(
-	"select * from pub\t",
-	qr/public\./,
-	"complete schema when relevant");
+check_completion("select * from pub\t",
+	qr/public\./, "complete schema when relevant");
 
-check_completion(
-	"tab\t",
-	qr/tab1 /,
-	"complete schema-qualified name");
+check_completion("tab\t", qr/tab1 /, "complete schema-qualified name");
 
 clear_query();
 
@@ -280,16 +273,16 @@ clear_query();
 
 # check filename completion
 check_completion(
-	"\\lo_import tmp_check/some\t",
-	qr|tmp_check/somefile |,
+	"\\lo_import tab_comp_dir/some\t",
+	qr|tab_comp_dir/somefile |,
 	"filename completion with one possibility");
 
 clear_query();
 
 # note: readline might print a bell before the completion
 check_completion(
-	"\\lo_import tmp_check/af\t",
-	qr|tmp_check/af\a?ile|,
+	"\\lo_import tab_comp_dir/af\t",
+	qr|tab_comp_dir/af\a?ile|,
 	"filename completion with multiple possibilities");
 
 # broken versions of libedit require clear_line not clear_query here
@@ -299,15 +292,15 @@ clear_line();
 # note: broken versions of libedit want to backslash the closing quote;
 # not much we can do about that
 check_completion(
-	"COPY foo FROM tmp_check/some\t",
-	qr|'tmp_check/somefile\\?' |,
+	"COPY foo FROM tab_comp_dir/some\t",
+	qr|'tab_comp_dir/somefile\\?' |,
 	"quoted filename completion with one possibility");
 
 clear_line();
 
 check_completion(
-	"COPY foo FROM tmp_check/af\t",
-	qr|'tmp_check/afile|,
+	"COPY foo FROM tab_comp_dir/af\t",
+	qr|'tab_comp_dir/afile|,
 	"quoted filename completion with multiple possibilities");
 
 # some versions of readline/libedit require two tabs here, some only need one
@@ -315,7 +308,7 @@ check_completion(
 # the quotes might appear, too
 check_completion(
 	"\t\t",
-	qr|afile123'? +'?(tmp_check/)?afile456|,
+	qr|afile123'? +'?(tab_comp_dir/)?afile456|,
 	"offer multiple file choices");
 
 clear_line();
@@ -339,15 +332,10 @@ check_completion(
 clear_line();
 
 # check timezone name completion
-check_completion(
-	"SET timezone TO am\t",
-	qr|'America/|,
-	"offer partial timezone name");
+check_completion("SET timezone TO am\t",
+	qr|'America/|, "offer partial timezone name");
 
-check_completion(
-	"new_\t",
-	qr|New_York|,
-	"complete partial timezone name");
+check_completion("new_\t", qr|New_York|, "complete partial timezone name");
 
 clear_line();
 

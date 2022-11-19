@@ -248,7 +248,7 @@ parse_or_operator(TSQueryParserState pstate)
 		return false;
 
 	/* it shouldn't be a part of any word */
-	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalpha(ptr) || t_isdigit(ptr))
+	if (t_iseq(ptr, '-') || t_iseq(ptr, '_') || t_isalnum(ptr))
 		return false;
 
 	for (;;)
@@ -829,7 +829,7 @@ parse_tsquery(char *buf,
 
 	close_tsvector_parser(state.valstate);
 
-	if (list_length(state.polstr) == 0)
+	if (state.polstr == NIL)
 	{
 		ereport(NOTICE,
 				(errmsg("text-search query doesn't contain lexemes: \"%s\"",

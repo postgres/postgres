@@ -133,8 +133,8 @@ typedef struct MemoizeEntry
 static uint32 MemoizeHash_hash(struct memoize_hash *tb,
 							   const MemoizeKey *key);
 static bool MemoizeHash_equal(struct memoize_hash *tb,
-							  const MemoizeKey *params1,
-							  const MemoizeKey *params2);
+							  const MemoizeKey *key1,
+							  const MemoizeKey *key2);
 
 #define SH_PREFIX memoize
 #define SH_ELEMENT_TYPE MemoizeEntry
@@ -375,7 +375,7 @@ static void
 cache_purge_all(MemoizeState *mstate)
 {
 	uint64		evictions = mstate->hashtable->members;
-	PlanState *pstate = (PlanState *) mstate;
+	PlanState  *pstate = (PlanState *) mstate;
 
 	/*
 	 * Likely the most efficient way to remove all items is to just reset the
@@ -446,9 +446,13 @@ cache_reduce_memory(MemoizeState *mstate, MemoizeKey *specialkey)
 		 */
 		entry = memoize_lookup(mstate->hashtable, NULL);
 
-		/* A good spot to check for corruption of the table and LRU list. */
-		Assert(entry != NULL);
-		Assert(entry->key == key);
+		/*
+		 * Sanity check that we found the entry belonging to the LRU list
+		 * item.  A misbehaving hash or equality function could cause the
+		 * entry not to be found or the wrong entry to be found.
+		 */
+		if (unlikely(entry == NULL || entry->key != key))
+			elog(ERROR, "could not find memoization table entry");
 
 		/*
 		 * If we're being called to free memory while the cache is being

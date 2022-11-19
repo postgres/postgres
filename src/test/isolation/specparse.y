@@ -276,5 +276,3 @@ blocker:
 		;
 
 %%
-
-#include "specscanner.c"

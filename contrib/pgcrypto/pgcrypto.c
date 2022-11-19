@@ -45,7 +45,8 @@ PG_MODULE_MAGIC;
 /* private stuff */
 
 typedef int (*PFN) (const char *name, void **res);
-static void *find_provider(text *name, PFN pf, const char *desc, int silent);
+static void *find_provider(text *name, PFN provider_lookup, const char *desc,
+						   int silent);
 
 /* SQL function: hash(bytea, text) returns bytea */
 PG_FUNCTION_INFO_V1(pg_digest);

@@ -14,9 +14,9 @@
 
 #include <ctype.h>
 #include <fcntl.h>
-#include <sys/stat.h>
 #include <time.h>
 
+#include "common/file_utils.h"
 #include "datatype/timestamp.h"
 #include "miscadmin.h"
 #include "pgtz.h"
@@ -231,7 +231,7 @@ init_timezone_hashtable(void)
  * default timezone setting is later overridden from postgresql.conf.
  */
 pg_tz *
-pg_tzset(const char *name)
+pg_tzset(const char *tzname)
 {
 	pg_tz_cache *tzp;
 	struct state tzstate;
@@ -239,7 +239,7 @@ pg_tzset(const char *name)
 	char		canonname[TZ_STRLEN_MAX + 1];
 	char	   *p;
 
-	if (strlen(name) > TZ_STRLEN_MAX)
+	if (strlen(tzname) > TZ_STRLEN_MAX)
 		return NULL;			/* not going to fit */
 
 	if (!timezone_cache)
@@ -253,8 +253,8 @@ pg_tzset(const char *name)
 	 * a POSIX-style timezone spec.)
 	 */
 	p = uppername;
-	while (*name)
-		*p++ = pg_toupper((unsigned char) *name++);
+	while (*tzname)
+		*p++ = pg_toupper((unsigned char) *tzname++);
 	*p = '\0';
 
 	tzp = (pg_tz_cache *) hash_search(timezone_cache,
@@ -429,7 +429,6 @@ pg_tzenumerate_next(pg_tzenum *dir)
 	{
 		struct dirent *direntry;
 		char		fullname[MAXPGPATH * 2];
-		struct stat statbuf;
 
 		direntry = ReadDir(dir->dirdesc[dir->depth], dir->dirname[dir->depth]);
 
@@ -447,12 +446,8 @@ pg_tzenumerate_next(pg_tzenum *dir)
 
 		snprintf(fullname, sizeof(fullname), "%s/%s",
 				 dir->dirname[dir->depth], direntry->d_name);
-		if (stat(fullname, &statbuf) != 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m", fullname)));
 
-		if (S_ISDIR(statbuf.st_mode))
+		if (get_dirent_type(fullname, direntry, true, ERROR) == PGFILETYPE_DIR)
 		{
 			/* Step into the subdirectory */
 			if (dir->depth >= MAX_TZDIR_DEPTH - 1)

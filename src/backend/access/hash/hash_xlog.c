@@ -240,7 +240,6 @@ hash_xlog_add_ovfl_page(XLogReaderState *record)
 		{
 			Page		mappage = (Page) BufferGetPage(mapbuffer);
 			uint32	   *freep = NULL;
-			char	   *data;
 			uint32	   *bitmap_page_bit;
 
 			freep = HashPageGetBitmap(mappage);
@@ -352,11 +351,10 @@ hash_xlog_split_allocate_page(XLogReaderState *record)
 	}
 
 	/* replay the record for new bucket */
-	newbuf = XLogInitBufferForRedo(record, 1);
+	XLogReadBufferForRedoExtended(record, 1, RBM_ZERO_AND_CLEANUP_LOCK, true,
+								  &newbuf);
 	_hash_initbuf(newbuf, xlrec->new_bucket, xlrec->new_bucket,
 				  xlrec->new_bucket_flag, true);
-	if (!IsBufferCleanupOK(newbuf))
-		elog(PANIC, "hash_xlog_split_allocate_page: failed to acquire cleanup lock");
 	MarkBufferDirty(newbuf);
 	PageSetLSN(BufferGetPage(newbuf), lsn);
 
@@ -999,10 +997,11 @@ hash_xlog_vacuum_one_page(XLogReaderState *record)
 	 */
 	if (InHotStandby)
 	{
-		RelFileNode rnode;
+		RelFileLocator rlocator;
 
-		XLogRecGetBlockTag(record, 0, &rnode, NULL, NULL);
-		ResolveRecoveryConflictWithSnapshot(xldata->latestRemovedXid, rnode);
+		XLogRecGetBlockTag(record, 0, &rlocator, NULL, NULL);
+		ResolveRecoveryConflictWithSnapshot(xldata->snapshotConflictHorizon,
+											rlocator);
 	}
 
 	action = XLogReadBufferForRedoExtended(record, 0, RBM_NORMAL, true, &buffer);

@@ -67,6 +67,12 @@ chunk might later be repalloc'd larger; it can also be pfree'd without
 error.  Similarly, repalloc allows realloc'ing to zero size.
 
 * pfree and repalloc do not accept a NULL pointer.  This is intentional.
+(For repalloc, this is necessary: As mentioned above, repalloc does
+not depend on the current memory context.  But then it needs to know
+which memory context to do the allocation in.  So the first allocation
+has to be done outside of repalloc.  For pfree, this behavior is
+mostly historical and partially because the extra check would impact
+performance.)
 
 
 The Current Memory Context
@@ -378,35 +384,55 @@ MemoryContext like the parent and child contexts, and the name of the
 context.
 
 This is essentially an abstract superclass, and the behavior is
-determined by the "methods" pointer is its virtual function table
-(struct MemoryContextMethods).  Specific memory context types will use
-derived structs having these fields as their first fields.  All the
+determined by the "methods" pointer which references which set of
+MemoryContextMethods are to be used.  Specific memory context types will
+use derived structs having these fields as their first fields.  All the
 contexts of a specific type will have methods pointers that point to
-the same static table of function pointers.
+the corresponding element in the mcxt_methods[] array as defined in mcxt.c.
 
 While operations like allocating from and resetting a context take the
 relevant MemoryContext as a parameter, operations like free and
 realloc are trickier.  To make those work, we require all memory
 context types to produce allocated chunks that are immediately,
-without any padding, preceded by a pointer to the corresponding
-MemoryContext.
+without any padding, preceded by a uint64 value of which the least
+significant 3 bits are set to the owning context's MemoryContextMethodID.
+This allows the code to determine the correct MemoryContextMethods to
+use by looking up the mcxt_methods[] array using the 3 bits as an index
+into that array.
 
 If a type of allocator needs additional information about its chunks,
 like e.g. the size of the allocation, that information can in turn
-precede the MemoryContext.  This means the only overhead implied by
-the memory context mechanism is a pointer to its context, so we're not
-constraining context-type designers very much.
+either be encoded into the remaining 61 bits of the preceding uint64 value
+or if more space is required, additional values may be stored directly prior
+to the uint64 value.  It is up to the context implementation to manage this.
 
-Given this, routines like pfree determine their corresponding context
-with an operation like (although that is usually encapsulated in
-GetMemoryChunkContext())
+Given this, routines like pfree can determine which set of
+MemoryContextMethods to call the free_p function for by calling
+GetMemoryChunkMethodID() and finding the corresponding MemoryContextMethods
+in the mcxt_methods[] array.  For convenience, the MCXT_METHOD() macro is
+provided, making the code as simple as:
 
-    MemoryContext context = *(MemoryContext*) (((char *) pointer) - sizeof(void *));
+void
+pfree(void *pointer)
+{
+	MCXT_METHOD(pointer, free_p)(pointer);
+}
 
-and then invoke the corresponding method for the context
-
-    context->methods->free_p(pointer);
-
+All of the current memory contexts make use of the MemoryChunk header type
+which is defined in memutils_memorychunk.h.  This suits all of the existing
+context types well as it makes use of the remaining 61-bits of the uint64
+header to efficiently encode the size of the chunk of memory (or freelist
+index, in the case of aset.c) and the number of bytes which must be subtracted
+from the chunk in order to obtain a reference to the block that the chunk
+belongs to.  30 bits are used for each of these.  If more than 30 bits are
+required then the memory context must manage that itself.  This can be done by
+calling the MemoryChunkSetHdrMaskExternal() function on the given chunk.
+Currently, each memory context type stores large allocations on dedicated
+blocks (which always contain only a single chunk).  For these, finding the
+block is simple as we know that the chunk must be the first on the given
+block, so the block is always at a fixed offset to the chunk.  For these,
+finding the size of the chunk is also simple as the block always stores an
+endptr which we can use to calculate the size of the chunk.
 
 More Control Over aset.c Behavior
 ---------------------------------

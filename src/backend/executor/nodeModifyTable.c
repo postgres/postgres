@@ -795,9 +795,8 @@ ExecInsert(ModifyTableContext *context,
 		if (resultRelInfo->ri_BatchSize > 1)
 		{
 			/*
-			 * If a certain number of tuples have already been accumulated, or
-			 * a tuple has come for a different relation than that for the
-			 * accumulated tuples, perform the batch insert
+			 * When we've reached the desired batch size, perform the
+			 * insertion.
 			 */
 			if (resultRelInfo->ri_NumSlots == resultRelInfo->ri_BatchSize)
 			{
@@ -831,7 +830,7 @@ ExecInsert(ModifyTableContext *context,
 			{
 				TupleDesc	tdesc = CreateTupleDescCopy(slot->tts_tupleDescriptor);
 				TupleDesc	plan_tdesc =
-					CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
+				CreateTupleDescCopy(planSlot->tts_tupleDescriptor);
 
 				resultRelInfo->ri_Slots[resultRelInfo->ri_NumSlots] =
 					MakeSingleTupleTableSlot(tdesc, slot->tts_ops);
@@ -956,9 +955,11 @@ ExecInsert(ModifyTableContext *context,
 			 *
 			 * We loop back here if we find a conflict below, either during
 			 * the pre-check, or when we re-check after inserting the tuple
-			 * speculatively.
+			 * speculatively.  Better allow interrupts in case some bug makes
+			 * this an infinite loop.
 			 */
 	vlock:
+			CHECK_FOR_INTERRUPTS();
 			specConflict = false;
 			if (!ExecCheckIndexConstraints(resultRelInfo, slot, estate,
 										   &conflictTid, arbiterIndexes))
@@ -1263,7 +1264,7 @@ ExecDeleteEpilogue(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 							 false);
 
 		/*
-		 * We've already captured the NEW TABLE row, so make sure any AR
+		 * We've already captured the OLD TABLE row, so make sure any AR
 		 * DELETE trigger fired below doesn't capture it again.
 		 */
 		ar_delete_trig_tcs = NULL;
@@ -1372,7 +1373,7 @@ ExecDelete(ModifyTableContext *context,
 		 * special-case behavior needed for referential integrity updates in
 		 * transaction-snapshot mode transactions.
 		 */
-ldelete:;
+ldelete:
 		result = ExecDeleteAct(context, resultRelInfo, tupleid, changingPart);
 
 		switch (result)
@@ -1514,13 +1515,7 @@ ldelete:;
 					ereport(ERROR,
 							(errcode(ERRCODE_T_R_SERIALIZATION_FAILURE),
 							 errmsg("could not serialize access due to concurrent delete")));
-
-				/*
-				 * tuple already deleted; nothing to do. But MERGE might want
-				 * to handle it differently. We've already filled-in
-				 * actionInfo with sufficient information for MERGE to look
-				 * at.
-				 */
+				/* tuple already deleted; nothing to do */
 				return NULL;
 
 			default:
@@ -1854,7 +1849,7 @@ ExecUpdateAct(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	 * then trigger.c will have done table_tuple_lock to lock the correct
 	 * tuple, so there's no need to do them again.)
 	 */
-lreplace:;
+lreplace:
 
 	/* ensure slot is independent, consider e.g. EPQ */
 	ExecMaterializeSlot(slot);
@@ -2080,10 +2075,10 @@ ExecCrossPartitionUpdateForeignKey(ModifyTableContext *context,
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("cannot move tuple across partitions when a non-root ancestor of the source partition is directly referenced in a foreign key"),
-					 errdetail("A foreign key points to ancestor \"%s\", but not the root ancestor \"%s\".",
+					 errdetail("A foreign key points to ancestor \"%s\" but not the root ancestor \"%s\".",
 							   RelationGetRelationName(rInfo->ri_RelationDesc),
 							   RelationGetRelationName(rootRelInfo->ri_RelationDesc)),
-					 errhint("Consider defining the foreign key on \"%s\".",
+					 errhint("Consider defining the foreign key on table \"%s\".",
 							 RelationGetRelationName(rootRelInfo->ri_RelationDesc))));
 	}
 
@@ -2685,7 +2680,7 @@ ExecMergeMatched(ModifyTableContext *context, ResultRelInfo *resultRelInfo,
 	econtext->ecxt_innertuple = context->planSlot;
 	econtext->ecxt_outertuple = NULL;
 
-lmerge_matched:;
+lmerge_matched:
 
 	/*
 	 * This routine is only invoked for matched rows, and we must have found
@@ -2804,7 +2799,7 @@ lmerge_matched:;
 		{
 			case TM_Ok:
 				/* all good; perform final actions */
-				if (canSetTag)
+				if (canSetTag && commandType != CMD_NOTHING)
 					(estate->es_processed)++;
 
 				break;

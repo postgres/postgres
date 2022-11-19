@@ -3,9 +3,10 @@
  * tuplesort.c
  *	  Generalized tuple sorting routines.
  *
- * This module handles sorting of heap tuples, index tuples, or single
- * Datums (and could easily support other kinds of sortable objects,
- * if necessary).  It works efficiently for both small and large amounts
+ * This module provides a generalized facility for tuple sorting, which can be
+ * applied to different kinds of sortable objects.  Implementation of
+ * the particular sorting variants is given in tuplesortvariants.c.
+ * This module works efficiently for both small and large amounts
  * of data.  Small amounts are sorted in-memory using qsort().  Large
  * amounts are sorted using temporary files and a standard external sort
  * algorithm.
@@ -100,34 +101,16 @@
 
 #include <limits.h>
 
-#include "access/hash.h"
-#include "access/htup_details.h"
-#include "access/nbtree.h"
-#include "catalog/index.h"
 #include "catalog/pg_am.h"
 #include "commands/tablespace.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "pg_trace.h"
-#include "utils/datum.h"
-#include "utils/logtape.h"
-#include "utils/lsyscache.h"
+#include "storage/shmem.h"
 #include "utils/memutils.h"
 #include "utils/pg_rusage.h"
 #include "utils/rel.h"
-#include "utils/sortsupport.h"
 #include "utils/tuplesort.h"
-
-
-/* sort-type codes for sort__start probes */
-#define HEAP_SORT		0
-#define INDEX_SORT		1
-#define DATUM_SORT		2
-#define CLUSTER_SORT	3
-
-/* Sort parallel code from state for sort__start probes */
-#define PARALLEL_SORT(state)	((state)->shared == NULL ? 0 : \
-								 (state)->worker >= 0 ? 1 : 2)
 
 /*
  * Initial size of memtuples array.  We're trying to select this size so that
@@ -148,43 +131,6 @@ bool		trace_sort = false;
 bool		optimize_bounded_sort = true;
 #endif
 
-
-/*
- * The objects we actually sort are SortTuple structs.  These contain
- * a pointer to the tuple proper (might be a MinimalTuple or IndexTuple),
- * which is a separate palloc chunk --- we assume it is just one chunk and
- * can be freed by a simple pfree() (except during merge, when we use a
- * simple slab allocator).  SortTuples also contain the tuple's first key
- * column in Datum/nullflag format, and a source/input tape number that
- * tracks which tape each heap element/slot belongs to during merging.
- *
- * Storing the first key column lets us save heap_getattr or index_getattr
- * calls during tuple comparisons.  We could extract and save all the key
- * columns not just the first, but this would increase code complexity and
- * overhead, and wouldn't actually save any comparison cycles in the common
- * case where the first key determines the comparison result.  Note that
- * for a pass-by-reference datatype, datum1 points into the "tuple" storage.
- *
- * There is one special case: when the sort support infrastructure provides an
- * "abbreviated key" representation, where the key is (typically) a pass by
- * value proxy for a pass by reference type.  In this case, the abbreviated key
- * is stored in datum1 in place of the actual first key column.
- *
- * When sorting single Datums, the data value is represented directly by
- * datum1/isnull1 for pass by value types (or null values).  If the datatype is
- * pass-by-reference and isnull1 is false, then "tuple" points to a separately
- * palloc'd data value, otherwise "tuple" is NULL.  The value of datum1 is then
- * either the same pointer as "tuple", or is an abbreviated key value as
- * described above.  Accordingly, "tuple" is always used in preference to
- * datum1 as the authoritative value for pass-by-reference cases.
- */
-typedef struct
-{
-	void	   *tuple;			/* the tuple itself */
-	Datum		datum1;			/* value of first key column */
-	bool		isnull1;		/* is first key column NULL? */
-	int			srctape;		/* source tape number */
-} SortTuple;
 
 /*
  * During merge, we use a pre-allocated set of fixed-size slots to hold
@@ -236,22 +182,18 @@ typedef enum
 #define TAPE_BUFFER_OVERHEAD		BLCKSZ
 #define MERGE_BUFFER_SIZE			(BLCKSZ * 32)
 
-typedef int (*SortTupleComparator) (const SortTuple *a, const SortTuple *b,
-									Tuplesortstate *state);
 
 /*
  * Private state of a Tuplesort operation.
  */
 struct Tuplesortstate
 {
+	TuplesortPublic base;
 	TupSortStatus status;		/* enumerated value as shown above */
-	int			nKeys;			/* number of columns in sort key */
-	int			sortopt;		/* Bitmask of flags used to setup sort */
 	bool		bounded;		/* did caller specify a maximum number of
 								 * tuples to return? */
 	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
-	bool		tuples;			/* Can SortTuple.tuple ever be set? */
 	int64		availMem;		/* remaining memory available, in bytes */
 	int64		allowedMem;		/* total memory allowed, in bytes */
 	int			maxTapes;		/* max number of input tapes to merge in each
@@ -262,55 +204,7 @@ struct Tuplesortstate
 								 * space, false when it's value for in-memory
 								 * space */
 	TupSortStatus maxSpaceStatus;	/* sort status when maxSpace was reached */
-	MemoryContext maincontext;	/* memory context for tuple sort metadata that
-								 * persists across multiple batches */
-	MemoryContext sortcontext;	/* memory context holding most sort data */
-	MemoryContext tuplecontext; /* sub-context of sortcontext for tuple data */
 	LogicalTapeSet *tapeset;	/* logtape.c object for tapes in a temp file */
-
-	/*
-	 * These function pointers decouple the routines that must know what kind
-	 * of tuple we are sorting from the routines that don't need to know it.
-	 * They are set up by the tuplesort_begin_xxx routines.
-	 *
-	 * Function to compare two tuples; result is per qsort() convention, ie:
-	 * <0, 0, >0 according as a<b, a=b, a>b.  The API must match
-	 * qsort_arg_comparator.
-	 */
-	SortTupleComparator comparetup;
-
-	/*
-	 * Function to copy a supplied input tuple into palloc'd space and set up
-	 * its SortTuple representation (ie, set tuple/datum1/isnull1).  Also,
-	 * state->availMem must be decreased by the amount of space used for the
-	 * tuple copy (note the SortTuple struct itself is not counted).
-	 */
-	void		(*copytup) (Tuplesortstate *state, SortTuple *stup, void *tup);
-
-	/*
-	 * Function to write a stored tuple onto tape.  The representation of the
-	 * tuple on tape need not be the same as it is in memory; requirements on
-	 * the tape representation are given below.  Unless the slab allocator is
-	 * used, after writing the tuple, pfree() the out-of-line data (not the
-	 * SortTuple struct!), and increase state->availMem by the amount of
-	 * memory space thereby released.
-	 */
-	void		(*writetup) (Tuplesortstate *state, LogicalTape *tape,
-							 SortTuple *stup);
-
-	/*
-	 * Function to read a stored tuple from tape back into memory. 'len' is
-	 * the already-read length of the stored tuple.  The tuple is allocated
-	 * from the slab memory arena, or is palloc'd, see readtup_alloc().
-	 */
-	void		(*readtup) (Tuplesortstate *state, SortTuple *stup,
-							LogicalTape *tape, unsigned int len);
-
-	/*
-	 * Whether SortTuple's datum1 and isnull1 members are maintained by the
-	 * above routines.  If not, some sort specializations are disabled.
-	 */
-	bool		haveDatum1;
 
 	/*
 	 * This array holds the tuples now in sort memory.  If we are in state
@@ -427,20 +321,6 @@ struct Tuplesortstate
 	int			nParticipants;
 
 	/*
-	 * The sortKeys variable is used by every case other than the hash index
-	 * case; it is set by tuplesort_begin_xxx.  tupDesc is only used by the
-	 * MinimalTuple and CLUSTER routines, though.
-	 */
-	TupleDesc	tupDesc;
-	SortSupport sortKeys;		/* array of length nKeys */
-
-	/*
-	 * This variable is shared by the single-key MinimalTuple case and the
-	 * Datum case (which both use qsort_ssup()).  Otherwise it's NULL.
-	 */
-	SortSupport onlyKey;
-
-	/*
 	 * Additional state for managing "abbreviated key" sortsupport routines
 	 * (which currently may be used by all cases except the hash index case).
 	 * Tracks the intervals at which the optimization's effectiveness is
@@ -448,37 +328,6 @@ struct Tuplesortstate
 	 */
 	int64		abbrevNext;		/* Tuple # at which to next check
 								 * applicability */
-
-	/*
-	 * These variables are specific to the CLUSTER case; they are set by
-	 * tuplesort_begin_cluster.
-	 */
-	IndexInfo  *indexInfo;		/* info about index being used for reference */
-	EState	   *estate;			/* for evaluating index expressions */
-
-	/*
-	 * These variables are specific to the IndexTuple case; they are set by
-	 * tuplesort_begin_index_xxx and used only by the IndexTuple routines.
-	 */
-	Relation	heapRel;		/* table the index is being built on */
-	Relation	indexRel;		/* index being built */
-
-	/* These are specific to the index_btree subcase: */
-	bool		enforceUnique;	/* complain if we find duplicate tuples */
-	bool		uniqueNullsNotDistinct;	/* unique constraint null treatment */
-
-	/* These are specific to the index_hash subcase: */
-	uint32		high_mask;		/* masks for sortable part of hash code */
-	uint32		low_mask;
-	uint32		max_buckets;
-
-	/*
-	 * These variables are specific to the Datum case; they are set by
-	 * tuplesort_begin_datum and used only by the DatumTuple routines.
-	 */
-	Oid			datumType;
-	/* we need typelen in order to know how to copy the Datums. */
-	int			datumTypeLen;
 
 	/*
 	 * Resource snapshot for time of sort start.
@@ -544,10 +393,11 @@ struct Sharedsort
 			pfree(buf); \
 	} while(0)
 
-#define COMPARETUP(state,a,b)	((*(state)->comparetup) (a, b, state))
-#define COPYTUP(state,stup,tup) ((*(state)->copytup) (state, stup, tup))
-#define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
-#define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
+#define REMOVEABBREV(state,stup,count)	((*(state)->base.removeabbrev) (state, stup, count))
+#define COMPARETUP(state,a,b)	((*(state)->base.comparetup) (a, b, state))
+#define WRITETUP(state,tape,stup)	((*(state)->base.writetup) (state, tape, stup))
+#define READTUP(state,stup,tape,len) ((*(state)->base.readtup) (state, stup, tape, len))
+#define FREESTATE(state)	((state)->base.freestate ? (*(state)->base.freestate) (state) : (void) 0)
 #define LACKMEM(state)		((state)->availMem < 0 && !(state)->slabAllocatorUsed)
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
 #define FREEMEM(state,amt)	((state)->availMem += (amt))
@@ -596,27 +446,13 @@ struct Sharedsort
  * a lot better than what we were doing before 7.3.  As of 9.6, a
  * separate memory context is used for caller passed tuples.  Resetting
  * it at certain key increments significantly ameliorates fragmentation.
- * Note that this places a responsibility on copytup routines to use the
- * correct memory context for these tuples (and to not use the reset
- * context for anything whose lifetime needs to span multiple external
- * sort runs).  readtup routines use the slab allocator (they cannot use
+ * readtup routines use the slab allocator (they cannot use
  * the reset context because it gets deleted at the point that merging
  * begins).
  */
 
-/* When using this macro, beware of double evaluation of len */
-#define LogicalTapeReadExact(tape, ptr, len) \
-	do { \
-		if (LogicalTapeRead(tape, ptr, len) != (size_t) (len)) \
-			elog(ERROR, "unexpected end of data"); \
-	} while(0)
 
-
-static Tuplesortstate *tuplesort_begin_common(int workMem,
-											  SortCoordinate coordinate,
-											  int sortopt);
 static void tuplesort_begin_batch(Tuplesortstate *state);
-static void puttuple_common(Tuplesortstate *state, SortTuple *tuple);
 static bool consider_abort_common(Tuplesortstate *state);
 static void inittapes(Tuplesortstate *state, bool mergeruns);
 static void inittapestate(Tuplesortstate *state, int maxTapes);
@@ -636,37 +472,6 @@ static void tuplesort_heap_delete_top(Tuplesortstate *state);
 static void reversedirection(Tuplesortstate *state);
 static unsigned int getlen(LogicalTape *tape, bool eofOK);
 static void markrunend(LogicalTape *tape);
-static void *readtup_alloc(Tuplesortstate *state, Size tuplen);
-static int	comparetup_heap(const SortTuple *a, const SortTuple *b,
-							Tuplesortstate *state);
-static void copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_heap(Tuplesortstate *state, LogicalTape *tape,
-						  SortTuple *stup);
-static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
-						 LogicalTape *tape, unsigned int len);
-static int	comparetup_cluster(const SortTuple *a, const SortTuple *b,
-							   Tuplesortstate *state);
-static void copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_cluster(Tuplesortstate *state, LogicalTape *tape,
-							 SortTuple *stup);
-static void readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-							LogicalTape *tape, unsigned int len);
-static int	comparetup_index_btree(const SortTuple *a, const SortTuple *b,
-								   Tuplesortstate *state);
-static int	comparetup_index_hash(const SortTuple *a, const SortTuple *b,
-								  Tuplesortstate *state);
-static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_index(Tuplesortstate *state, LogicalTape *tape,
-						   SortTuple *stup);
-static void readtup_index(Tuplesortstate *state, SortTuple *stup,
-						  LogicalTape *tape, unsigned int len);
-static int	comparetup_datum(const SortTuple *a, const SortTuple *b,
-							 Tuplesortstate *state);
-static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
-static void writetup_datum(Tuplesortstate *state, LogicalTape *tape,
-						   SortTuple *stup);
-static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
-						  LogicalTape *tape, unsigned int len);
 static int	worker_get_identifier(Tuplesortstate *state);
 static void worker_freeze_result_tape(Tuplesortstate *state);
 static void worker_nomergeruns(Tuplesortstate *state);
@@ -697,13 +502,21 @@ qsort_tuple_unsigned_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 
 	compare = ApplyUnsignedSortComparator(a->datum1, a->isnull1,
 										  b->datum1, b->isnull1,
-										  &state->sortKeys[0]);
+										  &state->base.sortKeys[0]);
 	if (compare != 0)
 		return compare;
 
-	return state->comparetup(a, b, state);
+	/*
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
+	 */
+	if (state->base.onlyKey != NULL)
+		return 0;
+
+	return state->base.comparetup(a, b, state);
 }
 
+#if SIZEOF_DATUM >= 8
 /* Used if first key's comparator is ssup_datum_signed_compare */
 static pg_attribute_always_inline int
 qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
@@ -712,12 +525,21 @@ qsort_tuple_signed_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 
 	compare = ApplySignedSortComparator(a->datum1, a->isnull1,
 										b->datum1, b->isnull1,
-										&state->sortKeys[0]);
+										&state->base.sortKeys[0]);
+
 	if (compare != 0)
 		return compare;
 
-	return state->comparetup(a, b, state);
+	/*
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
+	 */
+	if (state->base.onlyKey != NULL)
+		return 0;
+
+	return state->base.comparetup(a, b, state);
 }
+#endif
 
 /* Used if first key's comparator is ssup_datum_int32_compare */
 static pg_attribute_always_inline int
@@ -726,12 +548,20 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 	int			compare;
 
 	compare = ApplyInt32SortComparator(a->datum1, a->isnull1,
-										b->datum1, b->isnull1,
-										&state->sortKeys[0]);
+									   b->datum1, b->isnull1,
+									   &state->base.sortKeys[0]);
+
 	if (compare != 0)
 		return compare;
 
-	return state->comparetup(a, b, state);
+	/*
+	 * No need to waste effort calling the tiebreak function when there are no
+	 * other keys to sort on.
+	 */
+	if (state->base.onlyKey != NULL)
+		return 0;
+
+	return state->base.comparetup(a, b, state);
 }
 
 /*
@@ -752,6 +582,7 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 #define ST_DEFINE
 #include "lib/sort_template.h"
 
+#if SIZEOF_DATUM >= 8
 #define ST_SORT qsort_tuple_signed
 #define ST_ELEMENT_TYPE SortTuple
 #define ST_COMPARE(a, b, state) qsort_tuple_signed_compare(a, b, state)
@@ -760,6 +591,7 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
 #define ST_SCOPE static
 #define ST_DEFINE
 #include "lib/sort_template.h"
+#endif
 
 #define ST_SORT qsort_tuple_int32
 #define ST_ELEMENT_TYPE SortTuple
@@ -810,7 +642,7 @@ qsort_tuple_int32_compare(SortTuple *a, SortTuple *b, Tuplesortstate *state)
  * sort options.  See TUPLESORT_* definitions in tuplesort.h
  */
 
-static Tuplesortstate *
+Tuplesortstate *
 tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 {
 	Tuplesortstate *state;
@@ -856,8 +688,9 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 		pg_rusage_init(&state->ru_start);
 #endif
 
-	state->sortopt = sortopt;
-	state->tuples = true;
+	state->base.sortopt = sortopt;
+	state->base.tuples = true;
+	state->abbrevNext = 10;
 
 	/*
 	 * workMem is forced to be at least 64KB, the current minimum valid value
@@ -866,8 +699,8 @@ tuplesort_begin_common(int workMem, SortCoordinate coordinate, int sortopt)
 	 * with very little memory.
 	 */
 	state->allowedMem = Max(workMem, 64) * (int64) 1024;
-	state->sortcontext = sortcontext;
-	state->maincontext = maincontext;
+	state->base.sortcontext = sortcontext;
+	state->base.maincontext = maincontext;
 
 	/*
 	 * Initial size of array must be more than ALLOCSET_SEPARATE_THRESHOLD;
@@ -926,7 +759,7 @@ tuplesort_begin_batch(Tuplesortstate *state)
 {
 	MemoryContext oldcontext;
 
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
+	oldcontext = MemoryContextSwitchTo(state->base.maincontext);
 
 	/*
 	 * Caller tuple (e.g. IndexTuple) memory context.
@@ -941,14 +774,14 @@ tuplesort_begin_batch(Tuplesortstate *state)
 	 * generation.c context as this keeps allocations more compact with less
 	 * wastage.  Allocations are also slightly more CPU efficient.
 	 */
-	if (state->sortopt & TUPLESORT_ALLOWBOUNDED)
-		state->tuplecontext = AllocSetContextCreate(state->sortcontext,
-													"Caller tuples",
-													ALLOCSET_DEFAULT_SIZES);
+	if (state->base.sortopt & TUPLESORT_ALLOWBOUNDED)
+		state->base.tuplecontext = AllocSetContextCreate(state->base.sortcontext,
+														 "Caller tuples",
+														 ALLOCSET_DEFAULT_SIZES);
 	else
-		state->tuplecontext = GenerationContextCreate(state->sortcontext,
-													  "Caller tuples",
-													  ALLOCSET_DEFAULT_SIZES);
+		state->base.tuplecontext = GenerationContextCreate(state->base.sortcontext,
+														   "Caller tuples",
+														   ALLOCSET_DEFAULT_SIZES);
 
 
 	state->status = TSS_INITIAL;
@@ -995,448 +828,6 @@ tuplesort_begin_batch(Tuplesortstate *state)
 	MemoryContextSwitchTo(oldcontext);
 }
 
-Tuplesortstate *
-tuplesort_begin_heap(TupleDesc tupDesc,
-					 int nkeys, AttrNumber *attNums,
-					 Oid *sortOperators, Oid *sortCollations,
-					 bool *nullsFirstFlags,
-					 int workMem, SortCoordinate coordinate, int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	MemoryContext oldcontext;
-	int			i;
-
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
-
-	AssertArg(nkeys > 0);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
-			 nkeys, workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = nkeys;
-
-	TRACE_POSTGRESQL_SORT_START(HEAP_SORT,
-								false,	/* no unique check */
-								nkeys,
-								workMem,
-								sortopt & TUPLESORT_RANDOMACCESS,
-								PARALLEL_SORT(state));
-
-	state->comparetup = comparetup_heap;
-	state->copytup = copytup_heap;
-	state->writetup = writetup_heap;
-	state->readtup = readtup_heap;
-	state->haveDatum1 = true;
-
-	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
-	state->abbrevNext = 10;
-
-	/* Prepare SortSupport data for each column */
-	state->sortKeys = (SortSupport) palloc0(nkeys * sizeof(SortSupportData));
-
-	for (i = 0; i < nkeys; i++)
-	{
-		SortSupport sortKey = state->sortKeys + i;
-
-		AssertArg(attNums[i] != 0);
-		AssertArg(sortOperators[i] != 0);
-
-		sortKey->ssup_cxt = CurrentMemoryContext;
-		sortKey->ssup_collation = sortCollations[i];
-		sortKey->ssup_nulls_first = nullsFirstFlags[i];
-		sortKey->ssup_attno = attNums[i];
-		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
-
-		PrepareSortSupportFromOrderingOp(sortOperators[i], sortKey);
-	}
-
-	/*
-	 * The "onlyKey" optimization cannot be used with abbreviated keys, since
-	 * tie-breaker comparisons may be required.  Typically, the optimization
-	 * is only of value to pass-by-value types anyway, whereas abbreviated
-	 * keys are typically only of value to pass-by-reference types.
-	 */
-	if (nkeys == 1 && !state->sortKeys->abbrev_converter)
-		state->onlyKey = state->sortKeys;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
-Tuplesortstate *
-tuplesort_begin_cluster(TupleDesc tupDesc,
-						Relation indexRel,
-						int workMem,
-						SortCoordinate coordinate, int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	BTScanInsert indexScanKey;
-	MemoryContext oldcontext;
-	int			i;
-
-	Assert(indexRel->rd_rel->relam == BTREE_AM_OID);
-
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin tuple sort: nkeys = %d, workMem = %d, randomAccess = %c",
-			 RelationGetNumberOfAttributes(indexRel),
-			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
-
-	TRACE_POSTGRESQL_SORT_START(CLUSTER_SORT,
-								false,	/* no unique check */
-								state->nKeys,
-								workMem,
-								sortopt & TUPLESORT_RANDOMACCESS,
-								PARALLEL_SORT(state));
-
-	state->comparetup = comparetup_cluster;
-	state->copytup = copytup_cluster;
-	state->writetup = writetup_cluster;
-	state->readtup = readtup_cluster;
-	state->abbrevNext = 10;
-
-	state->indexInfo = BuildIndexInfo(indexRel);
-
-	/*
-	 * If we don't have a simple leading attribute, we don't currently
-	 * initialize datum1, so disable optimizations that require it.
-	 */
-	if (state->indexInfo->ii_IndexAttrNumbers[0] == 0)
-		state->haveDatum1 = false;
-	else
-		state->haveDatum1 = true;
-
-	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
-
-	indexScanKey = _bt_mkscankey(indexRel, NULL);
-
-	if (state->indexInfo->ii_Expressions != NULL)
-	{
-		TupleTableSlot *slot;
-		ExprContext *econtext;
-
-		/*
-		 * We will need to use FormIndexDatum to evaluate the index
-		 * expressions.  To do that, we need an EState, as well as a
-		 * TupleTableSlot to put the table tuples into.  The econtext's
-		 * scantuple has to point to that slot, too.
-		 */
-		state->estate = CreateExecutorState();
-		slot = MakeSingleTupleTableSlot(tupDesc, &TTSOpsHeapTuple);
-		econtext = GetPerTupleExprContext(state->estate);
-		econtext->ecxt_scantuple = slot;
-	}
-
-	/* Prepare SortSupport data for each column */
-	state->sortKeys = (SortSupport) palloc0(state->nKeys *
-											sizeof(SortSupportData));
-
-	for (i = 0; i < state->nKeys; i++)
-	{
-		SortSupport sortKey = state->sortKeys + i;
-		ScanKey		scanKey = indexScanKey->scankeys + i;
-		int16		strategy;
-
-		sortKey->ssup_cxt = CurrentMemoryContext;
-		sortKey->ssup_collation = scanKey->sk_collation;
-		sortKey->ssup_nulls_first =
-			(scanKey->sk_flags & SK_BT_NULLS_FIRST) != 0;
-		sortKey->ssup_attno = scanKey->sk_attno;
-		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
-
-		AssertState(sortKey->ssup_attno != 0);
-
-		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
-
-		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
-	}
-
-	pfree(indexScanKey);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
-Tuplesortstate *
-tuplesort_begin_index_btree(Relation heapRel,
-							Relation indexRel,
-							bool enforceUnique,
-							bool uniqueNullsNotDistinct,
-							int workMem,
-							SortCoordinate coordinate,
-							int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	BTScanInsert indexScanKey;
-	MemoryContext oldcontext;
-	int			i;
-
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin index sort: unique = %c, workMem = %d, randomAccess = %c",
-			 enforceUnique ? 't' : 'f',
-			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
-
-	TRACE_POSTGRESQL_SORT_START(INDEX_SORT,
-								enforceUnique,
-								state->nKeys,
-								workMem,
-								sortopt & TUPLESORT_RANDOMACCESS,
-								PARALLEL_SORT(state));
-
-	state->comparetup = comparetup_index_btree;
-	state->copytup = copytup_index;
-	state->writetup = writetup_index;
-	state->readtup = readtup_index;
-	state->abbrevNext = 10;
-	state->haveDatum1 = true;
-
-	state->heapRel = heapRel;
-	state->indexRel = indexRel;
-	state->enforceUnique = enforceUnique;
-	state->uniqueNullsNotDistinct = uniqueNullsNotDistinct;
-
-	indexScanKey = _bt_mkscankey(indexRel, NULL);
-
-	/* Prepare SortSupport data for each column */
-	state->sortKeys = (SortSupport) palloc0(state->nKeys *
-											sizeof(SortSupportData));
-
-	for (i = 0; i < state->nKeys; i++)
-	{
-		SortSupport sortKey = state->sortKeys + i;
-		ScanKey		scanKey = indexScanKey->scankeys + i;
-		int16		strategy;
-
-		sortKey->ssup_cxt = CurrentMemoryContext;
-		sortKey->ssup_collation = scanKey->sk_collation;
-		sortKey->ssup_nulls_first =
-			(scanKey->sk_flags & SK_BT_NULLS_FIRST) != 0;
-		sortKey->ssup_attno = scanKey->sk_attno;
-		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
-
-		AssertState(sortKey->ssup_attno != 0);
-
-		strategy = (scanKey->sk_flags & SK_BT_DESC) != 0 ?
-			BTGreaterStrategyNumber : BTLessStrategyNumber;
-
-		PrepareSortSupportFromIndexRel(indexRel, strategy, sortKey);
-	}
-
-	pfree(indexScanKey);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
-Tuplesortstate *
-tuplesort_begin_index_hash(Relation heapRel,
-						   Relation indexRel,
-						   uint32 high_mask,
-						   uint32 low_mask,
-						   uint32 max_buckets,
-						   int workMem,
-						   SortCoordinate coordinate,
-						   int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	MemoryContext oldcontext;
-
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin index sort: high_mask = 0x%x, low_mask = 0x%x, "
-			 "max_buckets = 0x%x, workMem = %d, randomAccess = %c",
-			 high_mask,
-			 low_mask,
-			 max_buckets,
-			 workMem,
-			 sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = 1;			/* Only one sort column, the hash code */
-
-	state->comparetup = comparetup_index_hash;
-	state->copytup = copytup_index;
-	state->writetup = writetup_index;
-	state->readtup = readtup_index;
-	state->haveDatum1 = true;
-
-	state->heapRel = heapRel;
-	state->indexRel = indexRel;
-
-	state->high_mask = high_mask;
-	state->low_mask = low_mask;
-	state->max_buckets = max_buckets;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
-Tuplesortstate *
-tuplesort_begin_index_gist(Relation heapRel,
-						   Relation indexRel,
-						   int workMem,
-						   SortCoordinate coordinate,
-						   int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	MemoryContext oldcontext;
-	int			i;
-
-	oldcontext = MemoryContextSwitchTo(state->sortcontext);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin index sort: workMem = %d, randomAccess = %c",
-			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = IndexRelationGetNumberOfKeyAttributes(indexRel);
-
-	state->comparetup = comparetup_index_btree;
-	state->copytup = copytup_index;
-	state->writetup = writetup_index;
-	state->readtup = readtup_index;
-	state->haveDatum1 = true;
-
-	state->heapRel = heapRel;
-	state->indexRel = indexRel;
-
-	/* Prepare SortSupport data for each column */
-	state->sortKeys = (SortSupport) palloc0(state->nKeys *
-											sizeof(SortSupportData));
-
-	for (i = 0; i < state->nKeys; i++)
-	{
-		SortSupport sortKey = state->sortKeys + i;
-
-		sortKey->ssup_cxt = CurrentMemoryContext;
-		sortKey->ssup_collation = indexRel->rd_indcollation[i];
-		sortKey->ssup_nulls_first = false;
-		sortKey->ssup_attno = i + 1;
-		/* Convey if abbreviation optimization is applicable in principle */
-		sortKey->abbreviate = (i == 0);
-
-		AssertState(sortKey->ssup_attno != 0);
-
-		/* Look for a sort support function */
-		PrepareSortSupportFromGistIndexRel(indexRel, sortKey);
-	}
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
-Tuplesortstate *
-tuplesort_begin_datum(Oid datumType, Oid sortOperator, Oid sortCollation,
-					  bool nullsFirstFlag, int workMem,
-					  SortCoordinate coordinate, int sortopt)
-{
-	Tuplesortstate *state = tuplesort_begin_common(workMem, coordinate,
-												   sortopt);
-	MemoryContext oldcontext;
-	int16		typlen;
-	bool		typbyval;
-
-	oldcontext = MemoryContextSwitchTo(state->maincontext);
-
-#ifdef TRACE_SORT
-	if (trace_sort)
-		elog(LOG,
-			 "begin datum sort: workMem = %d, randomAccess = %c",
-			 workMem, sortopt & TUPLESORT_RANDOMACCESS ? 't' : 'f');
-#endif
-
-	state->nKeys = 1;			/* always a one-column sort */
-
-	TRACE_POSTGRESQL_SORT_START(DATUM_SORT,
-								false,	/* no unique check */
-								1,
-								workMem,
-								sortopt & TUPLESORT_RANDOMACCESS,
-								PARALLEL_SORT(state));
-
-	state->comparetup = comparetup_datum;
-	state->copytup = copytup_datum;
-	state->writetup = writetup_datum;
-	state->readtup = readtup_datum;
-	state->abbrevNext = 10;
-	state->haveDatum1 = true;
-
-	state->datumType = datumType;
-
-	/* lookup necessary attributes of the datum type */
-	get_typlenbyval(datumType, &typlen, &typbyval);
-	state->datumTypeLen = typlen;
-	state->tuples = !typbyval;
-
-	/* Prepare SortSupport data */
-	state->sortKeys = (SortSupport) palloc0(sizeof(SortSupportData));
-
-	state->sortKeys->ssup_cxt = CurrentMemoryContext;
-	state->sortKeys->ssup_collation = sortCollation;
-	state->sortKeys->ssup_nulls_first = nullsFirstFlag;
-
-	/*
-	 * Abbreviation is possible here only for by-reference types.  In theory,
-	 * a pass-by-value datatype could have an abbreviated form that is cheaper
-	 * to compare.  In a tuple sort, we could support that, because we can
-	 * always extract the original datum from the tuple as needed.  Here, we
-	 * can't, because a datum sort only stores a single copy of the datum; the
-	 * "tuple" field of each SortTuple is NULL.
-	 */
-	state->sortKeys->abbreviate = !typbyval;
-
-	PrepareSortSupportFromOrderingOp(sortOperator, state->sortKeys);
-
-	/*
-	 * The "onlyKey" optimization cannot be used with abbreviated keys, since
-	 * tie-breaker comparisons may be required.  Typically, the optimization
-	 * is only of value to pass-by-value types anyway, whereas abbreviated
-	 * keys are typically only of value to pass-by-reference types.
-	 */
-	if (!state->sortKeys->abbrev_converter)
-		state->onlyKey = state->sortKeys;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return state;
-}
-
 /*
  * tuplesort_set_bound
  *
@@ -1455,7 +846,7 @@ tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 	/* Assert we're called before loading any tuples */
 	Assert(state->status == TSS_INITIAL && state->memtupcount == 0);
 	/* Assert we allow bounded sorts */
-	Assert(state->sortopt & TUPLESORT_ALLOWBOUNDED);
+	Assert(state->base.sortopt & TUPLESORT_ALLOWBOUNDED);
 	/* Can't set the bound twice, either */
 	Assert(!state->bounded);
 	/* Also, this shouldn't be called in a parallel worker */
@@ -1483,13 +874,13 @@ tuplesort_set_bound(Tuplesortstate *state, int64 bound)
 	 * optimization.  Disable by setting state to be consistent with no
 	 * abbreviation support.
 	 */
-	state->sortKeys->abbrev_converter = NULL;
-	if (state->sortKeys->abbrev_full_comparator)
-		state->sortKeys->comparator = state->sortKeys->abbrev_full_comparator;
+	state->base.sortKeys->abbrev_converter = NULL;
+	if (state->base.sortKeys->abbrev_full_comparator)
+		state->base.sortKeys->comparator = state->base.sortKeys->abbrev_full_comparator;
 
 	/* Not strictly necessary, but be tidy */
-	state->sortKeys->abbrev_abort = NULL;
-	state->sortKeys->abbrev_full_comparator = NULL;
+	state->base.sortKeys->abbrev_abort = NULL;
+	state->base.sortKeys->abbrev_full_comparator = NULL;
 }
 
 /*
@@ -1512,7 +903,7 @@ static void
 tuplesort_free(Tuplesortstate *state)
 {
 	/* context swap probably not needed, but let's be safe */
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
 #ifdef TRACE_SORT
 	long		spaceUsed;
@@ -1559,21 +950,13 @@ tuplesort_free(Tuplesortstate *state)
 	TRACE_POSTGRESQL_SORT_DONE(state->tapeset != NULL, 0L);
 #endif
 
-	/* Free any execution state created for CLUSTER case */
-	if (state->estate != NULL)
-	{
-		ExprContext *econtext = GetPerTupleExprContext(state->estate);
-
-		ExecDropSingleTupleTableSlot(econtext->ecxt_scantuple);
-		FreeExecutorState(state->estate);
-	}
-
+	FREESTATE(state);
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * Free the per-sort memory context, thereby releasing all working memory.
 	 */
-	MemoryContextReset(state->sortcontext);
+	MemoryContextReset(state->base.sortcontext);
 }
 
 /*
@@ -1594,7 +977,7 @@ tuplesort_end(Tuplesortstate *state)
 	 * Free the main memory context, including the Tuplesortstate struct
 	 * itself.
 	 */
-	MemoryContextDelete(state->maincontext);
+	MemoryContextDelete(state->base.maincontext);
 }
 
 /*
@@ -1801,100 +1184,38 @@ noalloc:
 }
 
 /*
- * Accept one tuple while collecting input data for sort.
- *
- * Note that the input data is always copied; the caller need not save it.
+ * Shared code for tuple and datum cases.
  */
 void
-tuplesort_puttupleslot(Tuplesortstate *state, TupleTableSlot *slot)
+tuplesort_puttuple_common(Tuplesortstate *state, SortTuple *tuple, bool useAbbrev)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
-	/*
-	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the common code.
-	 */
-	COPYTUP(state, &stup, (void *) slot);
+	Assert(!LEADER(state));
 
-	puttuple_common(state, &stup);
+	/* Count the size of the out-of-line data */
+	if (tuple->tuple != NULL)
+		USEMEM(state, GetMemoryChunkSpace(tuple->tuple));
 
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * Accept one tuple while collecting input data for sort.
- *
- * Note that the input data is always copied; the caller need not save it.
- */
-void
-tuplesort_putheaptuple(Tuplesortstate *state, HeapTuple tup)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
-
-	/*
-	 * Copy the given tuple into memory we control, and decrease availMem.
-	 * Then call the common code.
-	 */
-	COPYTUP(state, &stup, (void *) tup);
-
-	puttuple_common(state, &stup);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * Collect one index tuple while collecting input data for sort, building
- * it from caller-supplied values.
- */
-void
-tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
-							  ItemPointer self, Datum *values,
-							  bool *isnull)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-	SortTuple	stup;
-	Datum		original;
-	IndexTuple	tuple;
-
-	stup.tuple = index_form_tuple(RelationGetDescr(rel), values, isnull);
-	tuple = ((IndexTuple) stup.tuple);
-	tuple->t_tid = *self;
-	USEMEM(state, GetMemoryChunkSpace(stup.tuple));
-	/* set up first-column key value */
-	original = index_getattr(tuple,
-							 1,
-							 RelationGetDescr(state->indexRel),
-							 &stup.isnull1);
-
-	MemoryContextSwitchTo(state->sortcontext);
-
-	if (!state->sortKeys || !state->sortKeys->abbrev_converter || stup.isnull1)
+	if (!useAbbrev)
 	{
 		/*
-		 * Store ordinary Datum representation, or NULL value.  If there is a
+		 * Leave ordinary Datum representation, or NULL value.  If there is a
 		 * converter it won't expect NULL values, and cost model is not
 		 * required to account for NULL, so in that case we avoid calling
 		 * converter and just set datum1 to zeroed representation (to be
 		 * consistent, and to support cheap inequality tests for NULL
 		 * abbreviated keys).
 		 */
-		stup.datum1 = original;
 	}
 	else if (!consider_abort_common(state))
 	{
 		/* Store abbreviated key representation */
-		stup.datum1 = state->sortKeys->abbrev_converter(original,
-														state->sortKeys);
+		tuple->datum1 = state->base.sortKeys->abbrev_converter(tuple->datum1,
+															   state->base.sortKeys);
 	}
 	else
 	{
-		/* Abort abbreviation */
-		int			i;
-
-		stup.datum1 = original;
-
 		/*
 		 * Set state to be consistent with never trying abbreviation.
 		 *
@@ -1904,114 +1225,8 @@ tuplesort_putindextuplevalues(Tuplesortstate *state, Relation rel,
 		 * sorted on tape, since serialized tuples lack abbreviated keys
 		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
 		 */
-		for (i = 0; i < state->memtupcount; i++)
-		{
-			SortTuple  *mtup = &state->memtuples[i];
-
-			tuple = mtup->tuple;
-			mtup->datum1 = index_getattr(tuple,
-										 1,
-										 RelationGetDescr(state->indexRel),
-										 &mtup->isnull1);
-		}
+		REMOVEABBREV(state, state->memtuples, state->memtupcount);
 	}
-
-	puttuple_common(state, &stup);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * Accept one Datum while collecting input data for sort.
- *
- * If the Datum is pass-by-ref type, the value will be copied.
- */
-void
-tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-	SortTuple	stup;
-
-	/*
-	 * Pass-by-value types or null values are just stored directly in
-	 * stup.datum1 (and stup.tuple is not used and set to NULL).
-	 *
-	 * Non-null pass-by-reference values need to be copied into memory we
-	 * control, and possibly abbreviated. The copied value is pointed to by
-	 * stup.tuple and is treated as the canonical copy (e.g. to return via
-	 * tuplesort_getdatum or when writing to tape); stup.datum1 gets the
-	 * abbreviated value if abbreviation is happening, otherwise it's
-	 * identical to stup.tuple.
-	 */
-
-	if (isNull || !state->tuples)
-	{
-		/*
-		 * Set datum1 to zeroed representation for NULLs (to be consistent,
-		 * and to support cheap inequality tests for NULL abbreviated keys).
-		 */
-		stup.datum1 = !isNull ? val : (Datum) 0;
-		stup.isnull1 = isNull;
-		stup.tuple = NULL;		/* no separate storage */
-		MemoryContextSwitchTo(state->sortcontext);
-	}
-	else
-	{
-		Datum		original = datumCopy(val, false, state->datumTypeLen);
-
-		stup.isnull1 = false;
-		stup.tuple = DatumGetPointer(original);
-		USEMEM(state, GetMemoryChunkSpace(stup.tuple));
-		MemoryContextSwitchTo(state->sortcontext);
-
-		if (!state->sortKeys->abbrev_converter)
-		{
-			stup.datum1 = original;
-		}
-		else if (!consider_abort_common(state))
-		{
-			/* Store abbreviated key representation */
-			stup.datum1 = state->sortKeys->abbrev_converter(original,
-															state->sortKeys);
-		}
-		else
-		{
-			/* Abort abbreviation */
-			int			i;
-
-			stup.datum1 = original;
-
-			/*
-			 * Set state to be consistent with never trying abbreviation.
-			 *
-			 * Alter datum1 representation in already-copied tuples, so as to
-			 * ensure a consistent representation (current tuple was just
-			 * handled).  It does not matter if some dumped tuples are already
-			 * sorted on tape, since serialized tuples lack abbreviated keys
-			 * (TSS_BUILDRUNS state prevents control reaching here in any
-			 * case).
-			 */
-			for (i = 0; i < state->memtupcount; i++)
-			{
-				SortTuple  *mtup = &state->memtuples[i];
-
-				mtup->datum1 = PointerGetDatum(mtup->tuple);
-			}
-		}
-	}
-
-	puttuple_common(state, &stup);
-
-	MemoryContextSwitchTo(oldcontext);
-}
-
-/*
- * Shared code for tuple and datum cases.
- */
-static void
-puttuple_common(Tuplesortstate *state, SortTuple *tuple)
-{
-	Assert(!LEADER(state));
 
 	switch (state->status)
 	{
@@ -2054,6 +1269,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 						 pg_rusage_show(&state->ru_start));
 #endif
 				make_bounded_heap(state);
+				MemoryContextSwitchTo(oldcontext);
 				return;
 			}
 
@@ -2061,7 +1277,10 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			 * Done if we still fit in available memory and have array slots.
 			 */
 			if (state->memtupcount < state->memtupsize && !LACKMEM(state))
+			{
+				MemoryContextSwitchTo(oldcontext);
 				return;
+			}
 
 			/*
 			 * Nope; time to switch to tape-based operation.
@@ -2115,14 +1334,15 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			elog(ERROR, "invalid tuplesort state");
 			break;
 	}
+	MemoryContextSwitchTo(oldcontext);
 }
 
 static bool
 consider_abort_common(Tuplesortstate *state)
 {
-	Assert(state->sortKeys[0].abbrev_converter != NULL);
-	Assert(state->sortKeys[0].abbrev_abort != NULL);
-	Assert(state->sortKeys[0].abbrev_full_comparator != NULL);
+	Assert(state->base.sortKeys[0].abbrev_converter != NULL);
+	Assert(state->base.sortKeys[0].abbrev_abort != NULL);
+	Assert(state->base.sortKeys[0].abbrev_full_comparator != NULL);
 
 	/*
 	 * Check effectiveness of abbreviation optimization.  Consider aborting
@@ -2137,19 +1357,19 @@ consider_abort_common(Tuplesortstate *state)
 		 * Check opclass-supplied abbreviation abort routine.  It may indicate
 		 * that abbreviation should not proceed.
 		 */
-		if (!state->sortKeys->abbrev_abort(state->memtupcount,
-										   state->sortKeys))
+		if (!state->base.sortKeys->abbrev_abort(state->memtupcount,
+												state->base.sortKeys))
 			return false;
 
 		/*
 		 * Finally, restore authoritative comparator, and indicate that
 		 * abbreviation is not in play by setting abbrev_converter to NULL
 		 */
-		state->sortKeys[0].comparator = state->sortKeys[0].abbrev_full_comparator;
-		state->sortKeys[0].abbrev_converter = NULL;
+		state->base.sortKeys[0].comparator = state->base.sortKeys[0].abbrev_full_comparator;
+		state->base.sortKeys[0].abbrev_converter = NULL;
 		/* Not strictly necessary, but be tidy */
-		state->sortKeys[0].abbrev_abort = NULL;
-		state->sortKeys[0].abbrev_full_comparator = NULL;
+		state->base.sortKeys[0].abbrev_abort = NULL;
+		state->base.sortKeys[0].abbrev_full_comparator = NULL;
 
 		/* Give up - expect original pass-by-value representation */
 		return true;
@@ -2164,7 +1384,7 @@ consider_abort_common(Tuplesortstate *state)
 void
 tuplesort_performsort(Tuplesortstate *state)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
 #ifdef TRACE_SORT
 	if (trace_sort)
@@ -2272,7 +1492,7 @@ tuplesort_performsort(Tuplesortstate *state)
  * by caller.  Note that fetched tuple is stored in memory that may be
  * recycled by any future fetch.
  */
-static bool
+bool
 tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 						  SortTuple *stup)
 {
@@ -2284,7 +1504,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 	switch (state->status)
 	{
 		case TSS_SORTEDINMEM:
-			Assert(forward || state->sortopt & TUPLESORT_RANDOMACCESS);
+			Assert(forward || state->base.sortopt & TUPLESORT_RANDOMACCESS);
 			Assert(!state->slabAllocatorUsed);
 			if (forward)
 			{
@@ -2328,7 +1548,7 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 			break;
 
 		case TSS_SORTEDONTAPE:
-			Assert(forward || state->sortopt & TUPLESORT_RANDOMACCESS);
+			Assert(forward || state->base.sortopt & TUPLESORT_RANDOMACCESS);
 			Assert(state->slabAllocatorUsed);
 
 			/*
@@ -2506,146 +1726,6 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 	}
 }
 
-/*
- * Fetch the next tuple in either forward or back direction.
- * If successful, put tuple in slot and return true; else, clear the slot
- * and return false.
- *
- * Caller may optionally be passed back abbreviated value (on true return
- * value) when abbreviation was used, which can be used to cheaply avoid
- * equality checks that might otherwise be required.  Caller can safely make a
- * determination of "non-equal tuple" based on simple binary inequality.  A
- * NULL value in leading attribute will set abbreviated value to zeroed
- * representation, which caller may rely on in abbreviated inequality check.
- *
- * If copy is true, the slot receives a tuple that's been copied into the
- * caller's memory context, so that it will stay valid regardless of future
- * manipulations of the tuplesort's state (up to and including deleting the
- * tuplesort).  If copy is false, the slot will just receive a pointer to a
- * tuple held within the tuplesort, which is more efficient, but only safe for
- * callers that are prepared to have any subsequent manipulation of the
- * tuplesort's state invalidate slot contents.
- */
-bool
-tuplesort_gettupleslot(Tuplesortstate *state, bool forward, bool copy,
-					   TupleTableSlot *slot, Datum *abbrev)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
-
-	if (!tuplesort_gettuple_common(state, forward, &stup))
-		stup.tuple = NULL;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	if (stup.tuple)
-	{
-		/* Record abbreviated key for caller */
-		if (state->sortKeys->abbrev_converter && abbrev)
-			*abbrev = stup.datum1;
-
-		if (copy)
-			stup.tuple = heap_copy_minimal_tuple((MinimalTuple) stup.tuple);
-
-		ExecStoreMinimalTuple((MinimalTuple) stup.tuple, slot, copy);
-		return true;
-	}
-	else
-	{
-		ExecClearTuple(slot);
-		return false;
-	}
-}
-
-/*
- * Fetch the next tuple in either forward or back direction.
- * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
- * context, and must not be freed by caller.  Caller may not rely on tuple
- * remaining valid after any further manipulation of tuplesort.
- */
-HeapTuple
-tuplesort_getheaptuple(Tuplesortstate *state, bool forward)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
-
-	if (!tuplesort_gettuple_common(state, forward, &stup))
-		stup.tuple = NULL;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return stup.tuple;
-}
-
-/*
- * Fetch the next index tuple in either forward or back direction.
- * Returns NULL if no more tuples.  Returned tuple belongs to tuplesort memory
- * context, and must not be freed by caller.  Caller may not rely on tuple
- * remaining valid after any further manipulation of tuplesort.
- */
-IndexTuple
-tuplesort_getindextuple(Tuplesortstate *state, bool forward)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
-
-	if (!tuplesort_gettuple_common(state, forward, &stup))
-		stup.tuple = NULL;
-
-	MemoryContextSwitchTo(oldcontext);
-
-	return (IndexTuple) stup.tuple;
-}
-
-/*
- * Fetch the next Datum in either forward or back direction.
- * Returns false if no more datums.
- *
- * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
- * in caller's context, and is now owned by the caller (this differs from
- * similar routines for other types of tuplesorts).
- *
- * Caller may optionally be passed back abbreviated value (on true return
- * value) when abbreviation was used, which can be used to cheaply avoid
- * equality checks that might otherwise be required.  Caller can safely make a
- * determination of "non-equal tuple" based on simple binary inequality.  A
- * NULL value will have a zeroed abbreviated value representation, which caller
- * may rely on in abbreviated inequality check.
- */
-bool
-tuplesort_getdatum(Tuplesortstate *state, bool forward,
-				   Datum *val, bool *isNull, Datum *abbrev)
-{
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
-	SortTuple	stup;
-
-	if (!tuplesort_gettuple_common(state, forward, &stup))
-	{
-		MemoryContextSwitchTo(oldcontext);
-		return false;
-	}
-
-	/* Ensure we copy into caller's memory context */
-	MemoryContextSwitchTo(oldcontext);
-
-	/* Record abbreviated key for caller */
-	if (state->sortKeys->abbrev_converter && abbrev)
-		*abbrev = stup.datum1;
-
-	if (stup.isnull1 || !state->tuples)
-	{
-		*val = stup.datum1;
-		*isNull = stup.isnull1;
-	}
-	else
-	{
-		/* use stup.tuple because stup.datum1 may be an abbreviation */
-		*val = datumCopy(PointerGetDatum(stup.tuple), false, state->datumTypeLen);
-		*isNull = false;
-	}
-
-	return true;
-}
 
 /*
  * Advance over N tuples in either forward or back direction,
@@ -2693,7 +1773,7 @@ tuplesort_skiptuples(Tuplesortstate *state, int64 ntuples, bool forward)
 			 * We could probably optimize these cases better, but for now it's
 			 * not worth the trouble.
 			 */
-			oldcontext = MemoryContextSwitchTo(state->sortcontext);
+			oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 			while (ntuples-- > 0)
 			{
 				SortTuple	stup;
@@ -2969,7 +2049,7 @@ mergeruns(Tuplesortstate *state)
 	Assert(state->status == TSS_BUILDRUNS);
 	Assert(state->memtupcount == 0);
 
-	if (state->sortKeys != NULL && state->sortKeys->abbrev_converter != NULL)
+	if (state->base.sortKeys != NULL && state->base.sortKeys->abbrev_converter != NULL)
 	{
 		/*
 		 * If there are multiple runs to be merged, when we go to read back
@@ -2977,19 +2057,19 @@ mergeruns(Tuplesortstate *state)
 		 * we don't care to regenerate them.  Disable abbreviation from this
 		 * point on.
 		 */
-		state->sortKeys->abbrev_converter = NULL;
-		state->sortKeys->comparator = state->sortKeys->abbrev_full_comparator;
+		state->base.sortKeys->abbrev_converter = NULL;
+		state->base.sortKeys->comparator = state->base.sortKeys->abbrev_full_comparator;
 
 		/* Not strictly necessary, but be tidy */
-		state->sortKeys->abbrev_abort = NULL;
-		state->sortKeys->abbrev_full_comparator = NULL;
+		state->base.sortKeys->abbrev_abort = NULL;
+		state->base.sortKeys->abbrev_full_comparator = NULL;
 	}
 
 	/*
 	 * Reset tuple memory.  We've freed all the tuples that we previously
 	 * allocated.  We will use the slab allocator from now on.
 	 */
-	MemoryContextResetOnly(state->tuplecontext);
+	MemoryContextResetOnly(state->base.tuplecontext);
 
 	/*
 	 * We no longer need a large memtuples array.  (We will allocate a smaller
@@ -3012,7 +2092,7 @@ mergeruns(Tuplesortstate *state)
 	 * From this point on, we no longer use the USEMEM()/LACKMEM() mechanism
 	 * to track memory usage of individual tuples.
 	 */
-	if (state->tuples)
+	if (state->base.tuples)
 		init_slab_allocator(state, state->nOutputTapes + 1);
 	else
 		init_slab_allocator(state, 0);
@@ -3026,7 +2106,7 @@ mergeruns(Tuplesortstate *state)
 	 * number of input tapes will not increase between passes.)
 	 */
 	state->memtupsize = state->nOutputTapes;
-	state->memtuples = (SortTuple *) MemoryContextAlloc(state->maincontext,
+	state->memtuples = (SortTuple *) MemoryContextAlloc(state->base.maincontext,
 														state->nOutputTapes * sizeof(SortTuple));
 	USEMEM(state, GetMemoryChunkSpace(state->memtuples));
 
@@ -3103,7 +2183,7 @@ mergeruns(Tuplesortstate *state)
 			 * sorted tape, we can stop at this point and do the final merge
 			 * on-the-fly.
 			 */
-			if ((state->sortopt & TUPLESORT_RANDOMACCESS) == 0
+			if ((state->base.sortopt & TUPLESORT_RANDOMACCESS) == 0
 				&& state->nInputRuns <= state->nInputTapes
 				&& !WORKER(state))
 			{
@@ -3159,6 +2239,8 @@ mergeonerun(Tuplesortstate *state)
 	 * the heap.
 	 */
 	beginmerge(state);
+
+	Assert(state->slabAllocatorUsed);
 
 	/*
 	 * Execute merge by repeatedly extracting lowest tuple in heap, writing it
@@ -3318,9 +2400,19 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	memtupwrite = state->memtupcount;
 	for (i = 0; i < memtupwrite; i++)
 	{
-		WRITETUP(state, state->destTape, &state->memtuples[i]);
-		state->memtupcount--;
+		SortTuple  *stup = &state->memtuples[i];
+
+		WRITETUP(state, state->destTape, stup);
+
+		/*
+		 * Account for freeing the tuple, but no need to do the actual pfree
+		 * since the tuplecontext is being reset after the loop.
+		 */
+		if (stup->tuple != NULL)
+			FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
 	}
+
+	state->memtupcount = 0;
 
 	/*
 	 * Reset tuple memory.  We've freed all of the tuples that we previously
@@ -3329,7 +2421,7 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 	 * AllocSetFree's bucketing by size class might be particularly bad if
 	 * this step wasn't taken.
 	 */
-	MemoryContextReset(state->tuplecontext);
+	MemoryContextReset(state->base.tuplecontext);
 
 	markrunend(state->destTape);
 
@@ -3347,9 +2439,9 @@ dumptuples(Tuplesortstate *state, bool alltuples)
 void
 tuplesort_rescan(Tuplesortstate *state)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
-	Assert(state->sortopt & TUPLESORT_RANDOMACCESS);
+	Assert(state->base.sortopt & TUPLESORT_RANDOMACCESS);
 
 	switch (state->status)
 	{
@@ -3380,9 +2472,9 @@ tuplesort_rescan(Tuplesortstate *state)
 void
 tuplesort_markpos(Tuplesortstate *state)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
-	Assert(state->sortopt & TUPLESORT_RANDOMACCESS);
+	Assert(state->base.sortopt & TUPLESORT_RANDOMACCESS);
 
 	switch (state->status)
 	{
@@ -3411,9 +2503,9 @@ tuplesort_markpos(Tuplesortstate *state)
 void
 tuplesort_restorepos(Tuplesortstate *state)
 {
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->sortcontext);
+	MemoryContext oldcontext = MemoryContextSwitchTo(state->base.sortcontext);
 
-	Assert(state->sortopt & TUPLESORT_RANDOMACCESS);
+	Assert(state->base.sortopt & TUPLESORT_RANDOMACCESS);
 
 	switch (state->status)
 	{
@@ -3629,27 +2721,26 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		 * Do we have the leading column's value or abbreviation in datum1,
 		 * and is there a specialization for its comparator?
 		 */
-		if (state->haveDatum1 && state->sortKeys)
+		if (state->base.haveDatum1 && state->base.sortKeys)
 		{
-			if (state->sortKeys[0].comparator == ssup_datum_unsigned_cmp)
+			if (state->base.sortKeys[0].comparator == ssup_datum_unsigned_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_unsigned");
 				qsort_tuple_unsigned(state->memtuples,
 									 state->memtupcount,
 									 state);
 				return;
 			}
-			else if (state->sortKeys[0].comparator == ssup_datum_signed_cmp)
+#if SIZEOF_DATUM >= 8
+			else if (state->base.sortKeys[0].comparator == ssup_datum_signed_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_signed");
 				qsort_tuple_signed(state->memtuples,
 								   state->memtupcount,
 								   state);
 				return;
 			}
-			else if (state->sortKeys[0].comparator == ssup_datum_int32_cmp)
+#endif
+			else if (state->base.sortKeys[0].comparator == ssup_datum_int32_cmp)
 			{
-				elog(DEBUG1, "qsort_tuple_int32");
 				qsort_tuple_int32(state->memtuples,
 								  state->memtupcount,
 								  state);
@@ -3658,18 +2749,16 @@ tuplesort_sort_memtuples(Tuplesortstate *state)
 		}
 
 		/* Can we use the single-key sort function? */
-		if (state->onlyKey != NULL)
+		if (state->base.onlyKey != NULL)
 		{
-			elog(DEBUG1, "qsort_ssup");
 			qsort_ssup(state->memtuples, state->memtupcount,
-					   state->onlyKey);
+					   state->base.onlyKey);
 		}
 		else
 		{
-			elog(DEBUG1, "qsort_tuple");
 			qsort_tuple(state->memtuples,
 						state->memtupcount,
-						state->comparetup,
+						state->base.comparetup,
 						state);
 		}
 	}
@@ -3786,10 +2875,10 @@ tuplesort_heap_replace_top(Tuplesortstate *state, SortTuple *tuple)
 static void
 reversedirection(Tuplesortstate *state)
 {
-	SortSupport sortKey = state->sortKeys;
+	SortSupport sortKey = state->base.sortKeys;
 	int			nkey;
 
-	for (nkey = 0; nkey < state->nKeys; nkey++, sortKey++)
+	for (nkey = 0; nkey < state->base.nKeys; nkey++, sortKey++)
 	{
 		sortKey->ssup_reverse = !sortKey->ssup_reverse;
 		sortKey->ssup_nulls_first = !sortKey->ssup_nulls_first;
@@ -3828,8 +2917,8 @@ markrunend(LogicalTape *tape)
  * We use next free slot from the slab allocator, or palloc() if the tuple
  * is too large for that.
  */
-static void *
-readtup_alloc(Tuplesortstate *state, Size tuplen)
+void *
+tuplesort_readtup_alloc(Tuplesortstate *state, Size tuplen)
 {
 	SlabSlot   *buf;
 
@@ -3840,7 +2929,7 @@ readtup_alloc(Tuplesortstate *state, Size tuplen)
 	Assert(state->slabFreeHead);
 
 	if (tuplen > SLAB_SLOT_SIZE || !state->slabFreeHead)
-		return MemoryContextAlloc(state->sortcontext, tuplen);
+		return MemoryContextAlloc(state->base.sortcontext, tuplen);
 	else
 	{
 		buf = state->slabFreeHead;
@@ -3851,789 +2940,6 @@ readtup_alloc(Tuplesortstate *state, Size tuplen)
 	}
 }
 
-
-/*
- * Routines specialized for HeapTuple (actually MinimalTuple) case
- */
-
-static int
-comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
-{
-	SortSupport sortKey = state->sortKeys;
-	HeapTupleData ltup;
-	HeapTupleData rtup;
-	TupleDesc	tupDesc;
-	int			nkey;
-	int32		compare;
-	AttrNumber	attno;
-	Datum		datum1,
-				datum2;
-	bool		isnull1,
-				isnull2;
-
-
-	/* Compare the leading sort key */
-	compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  sortKey);
-	if (compare != 0)
-		return compare;
-
-	/* Compare additional sort keys */
-	ltup.t_len = ((MinimalTuple) a->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	ltup.t_data = (HeapTupleHeader) ((char *) a->tuple - MINIMAL_TUPLE_OFFSET);
-	rtup.t_len = ((MinimalTuple) b->tuple)->t_len + MINIMAL_TUPLE_OFFSET;
-	rtup.t_data = (HeapTupleHeader) ((char *) b->tuple - MINIMAL_TUPLE_OFFSET);
-	tupDesc = state->tupDesc;
-
-	if (sortKey->abbrev_converter)
-	{
-		attno = sortKey->ssup_attno;
-
-		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
-		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
-
-		compare = ApplySortAbbrevFullComparator(datum1, isnull1,
-												datum2, isnull2,
-												sortKey);
-		if (compare != 0)
-			return compare;
-	}
-
-	sortKey++;
-	for (nkey = 1; nkey < state->nKeys; nkey++, sortKey++)
-	{
-		attno = sortKey->ssup_attno;
-
-		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
-		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
-
-		compare = ApplySortComparator(datum1, isnull1,
-									  datum2, isnull2,
-									  sortKey);
-		if (compare != 0)
-			return compare;
-	}
-
-	return 0;
-}
-
-static void
-copytup_heap(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/*
-	 * We expect the passed "tup" to be a TupleTableSlot, and form a
-	 * MinimalTuple using the exported interface for that.
-	 */
-	TupleTableSlot *slot = (TupleTableSlot *) tup;
-	Datum		original;
-	MinimalTuple tuple;
-	HeapTupleData htup;
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-
-	/* copy the tuple into sort storage */
-	tuple = ExecCopySlotMinimalTuple(slot);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	original = heap_getattr(&htup,
-							state->sortKeys[0].ssup_attno,
-							state->tupDesc,
-							&stup->isnull1);
-
-	MemoryContextSwitchTo(oldcontext);
-
-	if (!state->sortKeys->abbrev_converter || stup->isnull1)
-	{
-		/*
-		 * Store ordinary Datum representation, or NULL value.  If there is a
-		 * converter it won't expect NULL values, and cost model is not
-		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to zeroed representation (to be
-		 * consistent, and to support cheap inequality tests for NULL
-		 * abbreviated keys).
-		 */
-		stup->datum1 = original;
-	}
-	else if (!consider_abort_common(state))
-	{
-		/* Store abbreviated key representation */
-		stup->datum1 = state->sortKeys->abbrev_converter(original,
-														 state->sortKeys);
-	}
-	else
-	{
-		/* Abort abbreviation */
-		int			i;
-
-		stup->datum1 = original;
-
-		/*
-		 * Set state to be consistent with never trying abbreviation.
-		 *
-		 * Alter datum1 representation in already-copied tuples, so as to
-		 * ensure a consistent representation (current tuple was just
-		 * handled).  It does not matter if some dumped tuples are already
-		 * sorted on tape, since serialized tuples lack abbreviated keys
-		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
-		 */
-		for (i = 0; i < state->memtupcount; i++)
-		{
-			SortTuple  *mtup = &state->memtuples[i];
-
-			htup.t_len = ((MinimalTuple) mtup->tuple)->t_len +
-				MINIMAL_TUPLE_OFFSET;
-			htup.t_data = (HeapTupleHeader) ((char *) mtup->tuple -
-											 MINIMAL_TUPLE_OFFSET);
-
-			mtup->datum1 = heap_getattr(&htup,
-										state->sortKeys[0].ssup_attno,
-										state->tupDesc,
-										&mtup->isnull1);
-		}
-	}
-}
-
-static void
-writetup_heap(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
-{
-	MinimalTuple tuple = (MinimalTuple) stup->tuple;
-
-	/* the part of the MinimalTuple we'll write: */
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	unsigned int tupbodylen = tuple->t_len - MINIMAL_TUPLE_DATA_OFFSET;
-
-	/* total on-disk footprint: */
-	unsigned int tuplen = tupbodylen + sizeof(int);
-
-	LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(tape, (void *) tupbody, tupbodylen);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-
-	if (!state->slabAllocatorUsed)
-	{
-		FREEMEM(state, GetMemoryChunkSpace(tuple));
-		heap_free_minimal_tuple(tuple);
-	}
-}
-
-static void
-readtup_heap(Tuplesortstate *state, SortTuple *stup,
-			 LogicalTape *tape, unsigned int len)
-{
-	unsigned int tupbodylen = len - sizeof(int);
-	unsigned int tuplen = tupbodylen + MINIMAL_TUPLE_DATA_OFFSET;
-	MinimalTuple tuple = (MinimalTuple) readtup_alloc(state, tuplen);
-	char	   *tupbody = (char *) tuple + MINIMAL_TUPLE_DATA_OFFSET;
-	HeapTupleData htup;
-
-	/* read in the tuple proper */
-	tuple->t_len = tuplen;
-	LogicalTapeReadExact(tape, tupbody, tupbodylen);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
-	/* set up first-column key value */
-	htup.t_len = tuple->t_len + MINIMAL_TUPLE_OFFSET;
-	htup.t_data = (HeapTupleHeader) ((char *) tuple - MINIMAL_TUPLE_OFFSET);
-	stup->datum1 = heap_getattr(&htup,
-								state->sortKeys[0].ssup_attno,
-								state->tupDesc,
-								&stup->isnull1);
-}
-
-/*
- * Routines specialized for the CLUSTER case (HeapTuple data, with
- * comparisons per a btree index definition)
- */
-
-static int
-comparetup_cluster(const SortTuple *a, const SortTuple *b,
-				   Tuplesortstate *state)
-{
-	SortSupport sortKey = state->sortKeys;
-	HeapTuple	ltup;
-	HeapTuple	rtup;
-	TupleDesc	tupDesc;
-	int			nkey;
-	int32		compare;
-	Datum		datum1,
-				datum2;
-	bool		isnull1,
-				isnull2;
-
-	/* Be prepared to compare additional sort keys */
-	ltup = (HeapTuple) a->tuple;
-	rtup = (HeapTuple) b->tuple;
-	tupDesc = state->tupDesc;
-
-	/* Compare the leading sort key, if it's simple */
-	if (state->haveDatum1)
-	{
-		compare = ApplySortComparator(a->datum1, a->isnull1,
-									  b->datum1, b->isnull1,
-									  sortKey);
-		if (compare != 0)
-			return compare;
-
-		if (sortKey->abbrev_converter)
-		{
-			AttrNumber	leading = state->indexInfo->ii_IndexAttrNumbers[0];
-
-			datum1 = heap_getattr(ltup, leading, tupDesc, &isnull1);
-			datum2 = heap_getattr(rtup, leading, tupDesc, &isnull2);
-
-			compare = ApplySortAbbrevFullComparator(datum1, isnull1,
-													datum2, isnull2,
-													sortKey);
-		}
-		if (compare != 0 || state->nKeys == 1)
-			return compare;
-		/* Compare additional columns the hard way */
-		sortKey++;
-		nkey = 1;
-	}
-	else
-	{
-		/* Must compare all keys the hard way */
-		nkey = 0;
-	}
-
-	if (state->indexInfo->ii_Expressions == NULL)
-	{
-		/* If not expression index, just compare the proper heap attrs */
-
-		for (; nkey < state->nKeys; nkey++, sortKey++)
-		{
-			AttrNumber	attno = state->indexInfo->ii_IndexAttrNumbers[nkey];
-
-			datum1 = heap_getattr(ltup, attno, tupDesc, &isnull1);
-			datum2 = heap_getattr(rtup, attno, tupDesc, &isnull2);
-
-			compare = ApplySortComparator(datum1, isnull1,
-										  datum2, isnull2,
-										  sortKey);
-			if (compare != 0)
-				return compare;
-		}
-	}
-	else
-	{
-		/*
-		 * In the expression index case, compute the whole index tuple and
-		 * then compare values.  It would perhaps be faster to compute only as
-		 * many columns as we need to compare, but that would require
-		 * duplicating all the logic in FormIndexDatum.
-		 */
-		Datum		l_index_values[INDEX_MAX_KEYS];
-		bool		l_index_isnull[INDEX_MAX_KEYS];
-		Datum		r_index_values[INDEX_MAX_KEYS];
-		bool		r_index_isnull[INDEX_MAX_KEYS];
-		TupleTableSlot *ecxt_scantuple;
-
-		/* Reset context each time to prevent memory leakage */
-		ResetPerTupleExprContext(state->estate);
-
-		ecxt_scantuple = GetPerTupleExprContext(state->estate)->ecxt_scantuple;
-
-		ExecStoreHeapTuple(ltup, ecxt_scantuple, false);
-		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
-					   l_index_values, l_index_isnull);
-
-		ExecStoreHeapTuple(rtup, ecxt_scantuple, false);
-		FormIndexDatum(state->indexInfo, ecxt_scantuple, state->estate,
-					   r_index_values, r_index_isnull);
-
-		for (; nkey < state->nKeys; nkey++, sortKey++)
-		{
-			compare = ApplySortComparator(l_index_values[nkey],
-										  l_index_isnull[nkey],
-										  r_index_values[nkey],
-										  r_index_isnull[nkey],
-										  sortKey);
-			if (compare != 0)
-				return compare;
-		}
-	}
-
-	return 0;
-}
-
-static void
-copytup_cluster(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	HeapTuple	tuple = (HeapTuple) tup;
-	Datum		original;
-	MemoryContext oldcontext = MemoryContextSwitchTo(state->tuplecontext);
-
-	/* copy the tuple into sort storage */
-	tuple = heap_copytuple(tuple);
-	stup->tuple = (void *) tuple;
-	USEMEM(state, GetMemoryChunkSpace(tuple));
-
-	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * set up first-column key value, and potentially abbreviate, if it's a
-	 * simple column
-	 */
-	if (!state->haveDatum1)
-		return;
-
-	original = heap_getattr(tuple,
-							state->indexInfo->ii_IndexAttrNumbers[0],
-							state->tupDesc,
-							&stup->isnull1);
-
-	if (!state->sortKeys->abbrev_converter || stup->isnull1)
-	{
-		/*
-		 * Store ordinary Datum representation, or NULL value.  If there is a
-		 * converter it won't expect NULL values, and cost model is not
-		 * required to account for NULL, so in that case we avoid calling
-		 * converter and just set datum1 to zeroed representation (to be
-		 * consistent, and to support cheap inequality tests for NULL
-		 * abbreviated keys).
-		 */
-		stup->datum1 = original;
-	}
-	else if (!consider_abort_common(state))
-	{
-		/* Store abbreviated key representation */
-		stup->datum1 = state->sortKeys->abbrev_converter(original,
-														 state->sortKeys);
-	}
-	else
-	{
-		/* Abort abbreviation */
-		int			i;
-
-		stup->datum1 = original;
-
-		/*
-		 * Set state to be consistent with never trying abbreviation.
-		 *
-		 * Alter datum1 representation in already-copied tuples, so as to
-		 * ensure a consistent representation (current tuple was just
-		 * handled).  It does not matter if some dumped tuples are already
-		 * sorted on tape, since serialized tuples lack abbreviated keys
-		 * (TSS_BUILDRUNS state prevents control reaching here in any case).
-		 */
-		for (i = 0; i < state->memtupcount; i++)
-		{
-			SortTuple  *mtup = &state->memtuples[i];
-
-			tuple = (HeapTuple) mtup->tuple;
-			mtup->datum1 = heap_getattr(tuple,
-										state->indexInfo->ii_IndexAttrNumbers[0],
-										state->tupDesc,
-										&mtup->isnull1);
-		}
-	}
-}
-
-static void
-writetup_cluster(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
-{
-	HeapTuple	tuple = (HeapTuple) stup->tuple;
-	unsigned int tuplen = tuple->t_len + sizeof(ItemPointerData) + sizeof(int);
-
-	/* We need to store t_self, but not other fields of HeapTupleData */
-	LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(tape, &tuple->t_self, sizeof(ItemPointerData));
-	LogicalTapeWrite(tape, tuple->t_data, tuple->t_len);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeWrite(tape, &tuplen, sizeof(tuplen));
-
-	if (!state->slabAllocatorUsed)
-	{
-		FREEMEM(state, GetMemoryChunkSpace(tuple));
-		heap_freetuple(tuple);
-	}
-}
-
-static void
-readtup_cluster(Tuplesortstate *state, SortTuple *stup,
-				LogicalTape *tape, unsigned int tuplen)
-{
-	unsigned int t_len = tuplen - sizeof(ItemPointerData) - sizeof(int);
-	HeapTuple	tuple = (HeapTuple) readtup_alloc(state,
-												  t_len + HEAPTUPLESIZE);
-
-	/* Reconstruct the HeapTupleData header */
-	tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
-	tuple->t_len = t_len;
-	LogicalTapeReadExact(tape, &tuple->t_self, sizeof(ItemPointerData));
-	/* We don't currently bother to reconstruct t_tableOid */
-	tuple->t_tableOid = InvalidOid;
-	/* Read in the tuple body */
-	LogicalTapeReadExact(tape, tuple->t_data, tuple->t_len);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
-	/* set up first-column key value, if it's a simple column */
-	if (state->haveDatum1)
-		stup->datum1 = heap_getattr(tuple,
-									state->indexInfo->ii_IndexAttrNumbers[0],
-									state->tupDesc,
-									&stup->isnull1);
-}
-
-/*
- * Routines specialized for IndexTuple case
- *
- * The btree and hash cases require separate comparison functions, but the
- * IndexTuple representation is the same so the copy/write/read support
- * functions can be shared.
- */
-
-static int
-comparetup_index_btree(const SortTuple *a, const SortTuple *b,
-					   Tuplesortstate *state)
-{
-	/*
-	 * This is similar to comparetup_heap(), but expects index tuples.  There
-	 * is also special handling for enforcing uniqueness, and special
-	 * treatment for equal keys at the end.
-	 */
-	SortSupport sortKey = state->sortKeys;
-	IndexTuple	tuple1;
-	IndexTuple	tuple2;
-	int			keysz;
-	TupleDesc	tupDes;
-	bool		equal_hasnull = false;
-	int			nkey;
-	int32		compare;
-	Datum		datum1,
-				datum2;
-	bool		isnull1,
-				isnull2;
-
-
-	/* Compare the leading sort key */
-	compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  sortKey);
-	if (compare != 0)
-		return compare;
-
-	/* Compare additional sort keys */
-	tuple1 = (IndexTuple) a->tuple;
-	tuple2 = (IndexTuple) b->tuple;
-	keysz = state->nKeys;
-	tupDes = RelationGetDescr(state->indexRel);
-
-	if (sortKey->abbrev_converter)
-	{
-		datum1 = index_getattr(tuple1, 1, tupDes, &isnull1);
-		datum2 = index_getattr(tuple2, 1, tupDes, &isnull2);
-
-		compare = ApplySortAbbrevFullComparator(datum1, isnull1,
-												datum2, isnull2,
-												sortKey);
-		if (compare != 0)
-			return compare;
-	}
-
-	/* they are equal, so we only need to examine one null flag */
-	if (a->isnull1)
-		equal_hasnull = true;
-
-	sortKey++;
-	for (nkey = 2; nkey <= keysz; nkey++, sortKey++)
-	{
-		datum1 = index_getattr(tuple1, nkey, tupDes, &isnull1);
-		datum2 = index_getattr(tuple2, nkey, tupDes, &isnull2);
-
-		compare = ApplySortComparator(datum1, isnull1,
-									  datum2, isnull2,
-									  sortKey);
-		if (compare != 0)
-			return compare;		/* done when we find unequal attributes */
-
-		/* they are equal, so we only need to examine one null flag */
-		if (isnull1)
-			equal_hasnull = true;
-	}
-
-	/*
-	 * If btree has asked us to enforce uniqueness, complain if two equal
-	 * tuples are detected (unless there was at least one NULL field and NULLS
-	 * NOT DISTINCT was not set).
-	 *
-	 * It is sufficient to make the test here, because if two tuples are equal
-	 * they *must* get compared at some stage of the sort --- otherwise the
-	 * sort algorithm wouldn't have checked whether one must appear before the
-	 * other.
-	 */
-	if (state->enforceUnique && !(!state->uniqueNullsNotDistinct && equal_hasnull))
-	{
-		Datum		values[INDEX_MAX_KEYS];
-		bool		isnull[INDEX_MAX_KEYS];
-		char	   *key_desc;
-
-		/*
-		 * Some rather brain-dead implementations of qsort (such as the one in
-		 * QNX 4) will sometimes call the comparison routine to compare a
-		 * value to itself, but we always use our own implementation, which
-		 * does not.
-		 */
-		Assert(tuple1 != tuple2);
-
-		index_deform_tuple(tuple1, tupDes, values, isnull);
-
-		key_desc = BuildIndexValueDescription(state->indexRel, values, isnull);
-
-		ereport(ERROR,
-				(errcode(ERRCODE_UNIQUE_VIOLATION),
-				 errmsg("could not create unique index \"%s\"",
-						RelationGetRelationName(state->indexRel)),
-				 key_desc ? errdetail("Key %s is duplicated.", key_desc) :
-				 errdetail("Duplicate keys exist."),
-				 errtableconstraint(state->heapRel,
-									RelationGetRelationName(state->indexRel))));
-	}
-
-	/*
-	 * If key values are equal, we sort on ItemPointer.  This is required for
-	 * btree indexes, since heap TID is treated as an implicit last key
-	 * attribute in order to ensure that all keys in the index are physically
-	 * unique.
-	 */
-	{
-		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
-		BlockNumber blk2 = ItemPointerGetBlockNumber(&tuple2->t_tid);
-
-		if (blk1 != blk2)
-			return (blk1 < blk2) ? -1 : 1;
-	}
-	{
-		OffsetNumber pos1 = ItemPointerGetOffsetNumber(&tuple1->t_tid);
-		OffsetNumber pos2 = ItemPointerGetOffsetNumber(&tuple2->t_tid);
-
-		if (pos1 != pos2)
-			return (pos1 < pos2) ? -1 : 1;
-	}
-
-	/* ItemPointer values should never be equal */
-	Assert(false);
-
-	return 0;
-}
-
-static int
-comparetup_index_hash(const SortTuple *a, const SortTuple *b,
-					  Tuplesortstate *state)
-{
-	Bucket		bucket1;
-	Bucket		bucket2;
-	IndexTuple	tuple1;
-	IndexTuple	tuple2;
-
-	/*
-	 * Fetch hash keys and mask off bits we don't want to sort by. We know
-	 * that the first column of the index tuple is the hash key.
-	 */
-	Assert(!a->isnull1);
-	bucket1 = _hash_hashkey2bucket(DatumGetUInt32(a->datum1),
-								   state->max_buckets, state->high_mask,
-								   state->low_mask);
-	Assert(!b->isnull1);
-	bucket2 = _hash_hashkey2bucket(DatumGetUInt32(b->datum1),
-								   state->max_buckets, state->high_mask,
-								   state->low_mask);
-	if (bucket1 > bucket2)
-		return 1;
-	else if (bucket1 < bucket2)
-		return -1;
-
-	/*
-	 * If hash values are equal, we sort on ItemPointer.  This does not affect
-	 * validity of the finished index, but it may be useful to have index
-	 * scans in physical order.
-	 */
-	tuple1 = (IndexTuple) a->tuple;
-	tuple2 = (IndexTuple) b->tuple;
-
-	{
-		BlockNumber blk1 = ItemPointerGetBlockNumber(&tuple1->t_tid);
-		BlockNumber blk2 = ItemPointerGetBlockNumber(&tuple2->t_tid);
-
-		if (blk1 != blk2)
-			return (blk1 < blk2) ? -1 : 1;
-	}
-	{
-		OffsetNumber pos1 = ItemPointerGetOffsetNumber(&tuple1->t_tid);
-		OffsetNumber pos2 = ItemPointerGetOffsetNumber(&tuple2->t_tid);
-
-		if (pos1 != pos2)
-			return (pos1 < pos2) ? -1 : 1;
-	}
-
-	/* ItemPointer values should never be equal */
-	Assert(false);
-
-	return 0;
-}
-
-static void
-copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/* Not currently needed */
-	elog(ERROR, "copytup_index() should not be called");
-}
-
-static void
-writetup_index(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
-{
-	IndexTuple	tuple = (IndexTuple) stup->tuple;
-	unsigned int tuplen;
-
-	tuplen = IndexTupleSize(tuple) + sizeof(tuplen);
-	LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-	LogicalTapeWrite(tape, (void *) tuple, IndexTupleSize(tuple));
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeWrite(tape, (void *) &tuplen, sizeof(tuplen));
-
-	if (!state->slabAllocatorUsed)
-	{
-		FREEMEM(state, GetMemoryChunkSpace(tuple));
-		pfree(tuple);
-	}
-}
-
-static void
-readtup_index(Tuplesortstate *state, SortTuple *stup,
-			  LogicalTape *tape, unsigned int len)
-{
-	unsigned int tuplen = len - sizeof(unsigned int);
-	IndexTuple	tuple = (IndexTuple) readtup_alloc(state, tuplen);
-
-	LogicalTapeReadExact(tape, tuple, tuplen);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-	stup->tuple = (void *) tuple;
-	/* set up first-column key value */
-	stup->datum1 = index_getattr(tuple,
-								 1,
-								 RelationGetDescr(state->indexRel),
-								 &stup->isnull1);
-}
-
-/*
- * Routines specialized for DatumTuple case
- */
-
-static int
-comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
-{
-	int			compare;
-
-	compare = ApplySortComparator(a->datum1, a->isnull1,
-								  b->datum1, b->isnull1,
-								  state->sortKeys);
-	if (compare != 0)
-		return compare;
-
-	/* if we have abbreviations, then "tuple" has the original value */
-
-	if (state->sortKeys->abbrev_converter)
-		compare = ApplySortAbbrevFullComparator(PointerGetDatum(a->tuple), a->isnull1,
-												PointerGetDatum(b->tuple), b->isnull1,
-												state->sortKeys);
-
-	return compare;
-}
-
-static void
-copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup)
-{
-	/* Not currently needed */
-	elog(ERROR, "copytup_datum() should not be called");
-}
-
-static void
-writetup_datum(Tuplesortstate *state, LogicalTape *tape, SortTuple *stup)
-{
-	void	   *waddr;
-	unsigned int tuplen;
-	unsigned int writtenlen;
-
-	if (stup->isnull1)
-	{
-		waddr = NULL;
-		tuplen = 0;
-	}
-	else if (!state->tuples)
-	{
-		waddr = &stup->datum1;
-		tuplen = sizeof(Datum);
-	}
-	else
-	{
-		waddr = stup->tuple;
-		tuplen = datumGetSize(PointerGetDatum(stup->tuple), false, state->datumTypeLen);
-		Assert(tuplen != 0);
-	}
-
-	writtenlen = tuplen + sizeof(unsigned int);
-
-	LogicalTapeWrite(tape, (void *) &writtenlen, sizeof(writtenlen));
-	LogicalTapeWrite(tape, waddr, tuplen);
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeWrite(tape, (void *) &writtenlen, sizeof(writtenlen));
-
-	if (!state->slabAllocatorUsed && stup->tuple)
-	{
-		FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
-		pfree(stup->tuple);
-	}
-}
-
-static void
-readtup_datum(Tuplesortstate *state, SortTuple *stup,
-			  LogicalTape *tape, unsigned int len)
-{
-	unsigned int tuplen = len - sizeof(unsigned int);
-
-	if (tuplen == 0)
-	{
-		/* it's NULL */
-		stup->datum1 = (Datum) 0;
-		stup->isnull1 = true;
-		stup->tuple = NULL;
-	}
-	else if (!state->tuples)
-	{
-		Assert(tuplen == sizeof(Datum));
-		LogicalTapeReadExact(tape, &stup->datum1, tuplen);
-		stup->isnull1 = false;
-		stup->tuple = NULL;
-	}
-	else
-	{
-		void	   *raddr = readtup_alloc(state, tuplen);
-
-		LogicalTapeReadExact(tape, raddr, tuplen);
-		stup->datum1 = PointerGetDatum(raddr);
-		stup->isnull1 = false;
-		stup->tuple = raddr;
-	}
-
-	if (state->sortopt & TUPLESORT_RANDOMACCESS)	/* need trailing length
-													 * word? */
-		LogicalTapeReadExact(tape, &tuplen, sizeof(tuplen));
-}
 
 /*
  * Parallel sort routines
@@ -4878,16 +3184,12 @@ ssup_datum_unsigned_cmp(Datum x, Datum y, SortSupport ssup)
 		return 0;
 }
 
+#if SIZEOF_DATUM >= 8
 int
 ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
 {
-#if SIZEOF_DATUM == 8
-	int64		xx = (int64) x;
-	int64		yy = (int64) y;
-#else
-	int32		xx = (int32) x;
-	int32		yy = (int32) y;
-#endif
+	int64		xx = DatumGetInt64(x);
+	int64		yy = DatumGetInt64(y);
 
 	if (xx < yy)
 		return -1;
@@ -4896,12 +3198,13 @@ ssup_datum_signed_cmp(Datum x, Datum y, SortSupport ssup)
 	else
 		return 0;
 }
+#endif
 
 int
 ssup_datum_int32_cmp(Datum x, Datum y, SortSupport ssup)
 {
-	int32		xx = (int32) x;
-	int32		yy = (int32) y;
+	int32		xx = DatumGetInt32(x);
+	int32		yy = DatumGetInt32(y);
 
 	if (xx < yy)
 		return -1;

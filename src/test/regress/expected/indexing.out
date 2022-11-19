@@ -378,7 +378,7 @@ drop table idxpart;
 -- When a table is attached a partition and it already has an index, a
 -- duplicate index should not get created, but rather the index becomes
 -- attached to the parent's index.
-create table idxpart (a int, b int, c text) partition by range (a);
+create table idxpart (a int, b int, c text, d bool) partition by range (a);
 create index idxparti on idxpart (a);
 create index idxparti2 on idxpart (b, c);
 create table idxpart1 (like idxpart including indexes);
@@ -389,6 +389,7 @@ create table idxpart1 (like idxpart including indexes);
  a      | integer |           |          | 
  b      | integer |           |          | 
  c      | text    |           |          | 
+ d      | boolean |           |          | 
 Indexes:
     "idxpart1_a_idx" btree (a)
     "idxpart1_b_c_idx" btree (b, c)
@@ -415,6 +416,7 @@ alter table idxpart attach partition idxpart1 for values from (0) to (10);
  a      | integer |           |          | 
  b      | integer |           |          | 
  c      | text    |           |          | 
+ d      | boolean |           |          | 
 Partition of: idxpart FOR VALUES FROM (0) TO (10)
 Indexes:
     "idxpart1_a_idx" btree (a)
@@ -433,6 +435,68 @@ select relname, relkind, inhparent::regclass
  idxparti         | I       | 
  idxparti2        | I       | 
 (6 rows)
+
+-- While here, also check matching when creating an index after the fact.
+create index on idxpart1 ((a+b)) where d = true;
+\d idxpart1
+              Table "public.idxpart1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | text    |           |          | 
+ d      | boolean |           |          | 
+Partition of: idxpart FOR VALUES FROM (0) TO (10)
+Indexes:
+    "idxpart1_a_idx" btree (a)
+    "idxpart1_b_c_idx" btree (b, c)
+    "idxpart1_expr_idx" btree ((a + b)) WHERE d = true
+
+select relname, relkind, inhparent::regclass
+    from pg_class left join pg_index ix on (indexrelid = oid)
+	left join pg_inherits on (ix.indexrelid = inhrelid)
+	where relname like 'idxpart%' order by relname;
+      relname      | relkind | inhparent 
+-------------------+---------+-----------
+ idxpart           | p       | 
+ idxpart1          | r       | 
+ idxpart1_a_idx    | i       | idxparti
+ idxpart1_b_c_idx  | i       | idxparti2
+ idxpart1_expr_idx | i       | 
+ idxparti          | I       | 
+ idxparti2         | I       | 
+(7 rows)
+
+create index idxparti3 on idxpart ((a+b)) where d = true;
+\d idxpart1
+              Table "public.idxpart1"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ a      | integer |           |          | 
+ b      | integer |           |          | 
+ c      | text    |           |          | 
+ d      | boolean |           |          | 
+Partition of: idxpart FOR VALUES FROM (0) TO (10)
+Indexes:
+    "idxpart1_a_idx" btree (a)
+    "idxpart1_b_c_idx" btree (b, c)
+    "idxpart1_expr_idx" btree ((a + b)) WHERE d = true
+
+select relname, relkind, inhparent::regclass
+    from pg_class left join pg_index ix on (indexrelid = oid)
+	left join pg_inherits on (ix.indexrelid = inhrelid)
+	where relname like 'idxpart%' order by relname;
+      relname      | relkind | inhparent 
+-------------------+---------+-----------
+ idxpart           | p       | 
+ idxpart1          | r       | 
+ idxpart1_a_idx    | i       | idxparti
+ idxpart1_b_c_idx  | i       | idxparti2
+ idxpart1_expr_idx | i       | idxparti3
+ idxparti          | I       | 
+ idxparti2         | I       | 
+ idxparti3         | I       | 
+(8 rows)
 
 drop table idxpart;
 -- Verify that attaching an invalid index does not mark the parent index valid.

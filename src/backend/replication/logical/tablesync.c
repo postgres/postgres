@@ -124,7 +124,7 @@ static bool table_states_valid = false;
 static List *table_states_not_ready = NIL;
 static bool FetchTableStates(bool *started_tx);
 
-StringInfo	copybuf = NULL;
+static StringInfo copybuf = NULL;
 
 /*
  * Exit routine for synchronization worker.
@@ -291,6 +291,7 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 	{
 		TimeLineID	tli;
 		char		syncslotname[NAMEDATALEN] = {0};
+		char		originname[NAMEDATALEN] = {0};
 
 		MyLogicalRepWorker->relstate = SUBREL_STATE_SYNCDONE;
 		MyLogicalRepWorker->relstate_lsn = current_lsn;
@@ -299,7 +300,6 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 
 		/*
 		 * UpdateSubscriptionRelState must be called within a transaction.
-		 * That transaction will be ended within the finish_sync_worker().
 		 */
 		if (!IsTransactionState())
 			StartTransactionCommand();
@@ -333,6 +333,49 @@ process_syncing_tables_for_sync(XLogRecPtr current_lsn)
 		 * is dropped. So passing missing_ok = false.
 		 */
 		ReplicationSlotDropAtPubNode(LogRepWorkerWalRcvConn, syncslotname, false);
+
+		CommitTransactionCommand();
+		pgstat_report_stat(false);
+
+		/*
+		 * Start a new transaction to clean up the tablesync origin tracking.
+		 * This transaction will be ended within the finish_sync_worker().
+		 * Now, even, if we fail to remove this here, the apply worker will
+		 * ensure to clean it up afterward.
+		 *
+		 * We need to do this after the table state is set to SYNCDONE.
+		 * Otherwise, if an error occurs while performing the database
+		 * operation, the worker will be restarted and the in-memory state of
+		 * replication progress (remote_lsn) won't be rolled-back which would
+		 * have been cleared before restart. So, the restarted worker will use
+		 * invalid replication progress state resulting in replay of
+		 * transactions that have already been applied.
+		 */
+		StartTransactionCommand();
+
+		ReplicationOriginNameForLogicalRep(MyLogicalRepWorker->subid,
+										   MyLogicalRepWorker->relid,
+										   originname,
+										   sizeof(originname));
+
+		/*
+		 * Resetting the origin session removes the ownership of the slot.
+		 * This is needed to allow the origin to be dropped.
+		 */
+		replorigin_session_reset();
+		replorigin_session_origin = InvalidRepOriginId;
+		replorigin_session_origin_lsn = InvalidXLogRecPtr;
+		replorigin_session_origin_timestamp = 0;
+
+		/*
+		 * Drop the tablesync's origin tracking if exists.
+		 *
+		 * There is a chance that the user is concurrently performing refresh
+		 * for the subscription where we remove the table state and its origin
+		 * or the apply worker would have removed this origin. So passing
+		 * missing_ok = true.
+		 */
+		replorigin_drop_by_name(originname, true, false);
 
 		finish_sync_worker();
 	}
@@ -383,7 +426,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	 * immediate restarts.  We don't need it if there are no tables that need
 	 * syncing.
 	 */
-	if (table_states_not_ready && !last_start_times)
+	if (table_states_not_ready != NIL && !last_start_times)
 	{
 		HASHCTL		ctl;
 
@@ -397,7 +440,7 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 	 * Clean up the hash table when we're done with all tables (just to
 	 * release the bit of memory).
 	 */
-	else if (!table_states_not_ready && last_start_times)
+	else if (table_states_not_ready == NIL && last_start_times)
 	{
 		hash_destroy(last_start_times);
 		last_start_times = NULL;
@@ -454,20 +497,18 @@ process_syncing_tables_for_apply(XLogRecPtr current_lsn)
 				/*
 				 * Remove the tablesync origin tracking if exists.
 				 *
-				 * The normal case origin drop is done here instead of in the
-				 * process_syncing_tables_for_sync function because we don't
-				 * allow to drop the origin till the process owning the origin
-				 * is alive.
-				 *
 				 * There is a chance that the user is concurrently performing
 				 * refresh for the subscription where we remove the table
-				 * state and its origin and by this time the origin might be
-				 * already removed. So passing missing_ok = true.
+				 * state and its origin or the tablesync worker would have
+				 * already removed this origin. We can't rely on tablesync
+				 * worker to remove the origin tracking as if there is any
+				 * error while dropping we won't restart it to drop the
+				 * origin. So passing missing_ok = true.
 				 */
-				ReplicationOriginNameForTablesync(MyLogicalRepWorker->subid,
-												  rstate->relid,
-												  originname,
-												  sizeof(originname));
+				ReplicationOriginNameForLogicalRep(MyLogicalRepWorker->subid,
+												   rstate->relid,
+												   originname,
+												   sizeof(originname));
 				replorigin_drop_by_name(originname, true, false);
 
 				/*
@@ -707,7 +748,6 @@ fetch_remote_table_info(char *nspname, char *relname,
 	bool		isnull;
 	int			natt;
 	ListCell   *lc;
-	bool		first;
 	Bitmapset  *included_cols = NULL;
 
 	lrel->nspname = nspname;
@@ -753,56 +793,37 @@ fetch_remote_table_info(char *nspname, char *relname,
 	/*
 	 * Get column lists for each relation.
 	 *
-	 * For initial synchronization, column lists can be ignored in following
-	 * cases:
-	 *
-	 * 1) one of the subscribed publications for the table hasn't specified
-	 * any column list
-	 *
-	 * 2) one of the subscribed publications has puballtables set to true
-	 *
-	 * 3) one of the subscribed publications is declared as ALL TABLES IN
-	 * SCHEMA that includes this relation
-	 *
 	 * We need to do this before fetching info about column names and types,
 	 * so that we can skip columns that should not be replicated.
 	 */
 	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
 	{
 		WalRcvExecResult *pubres;
-		TupleTableSlot *slot;
-		Oid			attrsRow[] = {INT2OID};
+		TupleTableSlot *tslot;
+		Oid			attrsRow[] = {INT2VECTOROID};
 		StringInfoData pub_names;
-		bool		first = true;
-
 		initStringInfo(&pub_names);
 		foreach(lc, MySubscription->publications)
 		{
-			if (!first)
-				appendStringInfo(&pub_names, ", ");
+			if (foreach_current_index(lc) > 0)
+				appendStringInfoString(&pub_names, ", ");
 			appendStringInfoString(&pub_names, quote_literal_cstr(strVal(lfirst(lc))));
-			first = false;
 		}
 
 		/*
 		 * Fetch info about column lists for the relation (from all the
-		 * publications). We unnest the int2vector values, because that
-		 * makes it easier to combine lists by simply adding the attnums
-		 * to a new bitmap (without having to parse the int2vector data).
-		 * This preserves NULL values, so that if one of the publications
-		 * has no column list, we'll know that.
+		 * publications).
 		 */
 		resetStringInfo(&cmd);
 		appendStringInfo(&cmd,
-						 "SELECT DISTINCT unnest"
-						 "  FROM pg_publication p"
-						 "  LEFT OUTER JOIN pg_publication_rel pr"
-						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u)"
-						 "  LEFT OUTER JOIN unnest(pr.prattrs) ON TRUE,"
-						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
-						 " WHERE gpt.relid = %u"
+						 "SELECT DISTINCT"
+						 "  (CASE WHEN (array_length(gpt.attrs, 1) = c.relnatts)"
+						 "   THEN NULL ELSE gpt.attrs END)"
+						 "  FROM pg_publication p,"
+						 "  LATERAL pg_get_publication_tables(p.pubname) gpt,"
+						 "  pg_class c"
+						 " WHERE gpt.relid = %u AND c.oid = gpt.relid"
 						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
 						 lrel->remoteid,
 						 pub_names.data);
 
@@ -816,30 +837,47 @@ fetch_remote_table_info(char *nspname, char *relname,
 							nspname, relname, pubres->err)));
 
 		/*
-		 * Merge the column lists (from different publications) by creating
-		 * a single bitmap with all the attnums. If we find a NULL value,
-		 * that means one of the publications has no column list for the
-		 * table we're syncing.
+		 * We don't support the case where the column list is different for
+		 * the same table when combining publications. See comments atop
+		 * fetch_table_list. So there should be only one row returned.
+		 * Although we already checked this when creating the subscription, we
+		 * still need to check here in case the column list was changed after
+		 * creating the subscription and before the sync worker is started.
 		 */
-		slot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
-		while (tuplestore_gettupleslot(pubres->tuplestore, true, false, slot))
-		{
-			Datum	cfval = slot_getattr(slot, 1, &isnull);
+		if (tuplestore_tuple_count(pubres->tuplestore) > 1)
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot use different column lists for table \"%s.%s\" in different publications",
+						   nspname, relname));
 
-			/* NULL means empty column list, so we're done. */
-			if (isnull)
+		/*
+		 * Get the column list and build a single bitmap with the attnums.
+		 *
+		 * If we find a NULL value, it means all the columns should be
+		 * replicated.
+		 */
+		tslot = MakeSingleTupleTableSlot(pubres->tupledesc, &TTSOpsMinimalTuple);
+		if (tuplestore_gettupleslot(pubres->tuplestore, true, false, tslot))
+		{
+			Datum		cfval = slot_getattr(tslot, 1, &isnull);
+
+			if (!isnull)
 			{
-				bms_free(included_cols);
-				included_cols = NULL;
-				break;
+				ArrayType  *arr;
+				int			nelems;
+				int16	   *elems;
+
+				arr = DatumGetArrayTypeP(cfval);
+				nelems = ARR_DIMS(arr)[0];
+				elems = (int16 *) ARR_DATA_PTR(arr);
+
+				for (natt = 0; natt < nelems; natt++)
+					included_cols = bms_add_member(included_cols, elems[natt]);
 			}
 
-			included_cols = bms_add_member(included_cols,
-										DatumGetInt16(cfval));
-
-			ExecClearTuple(slot);
+			ExecClearTuple(tslot);
 		}
-		ExecDropSingleTupleTableSlot(slot);
+		ExecDropSingleTupleTableSlot(tslot);
 
 		walrcv_clear_result(pubres);
 
@@ -940,8 +978,8 @@ fetch_remote_table_info(char *nspname, char *relname,
 	 *
 	 * 2) one of the subscribed publications has puballtables set to true
 	 *
-	 * 3) one of the subscribed publications is declared as ALL TABLES IN
-	 * SCHEMA that includes this relation
+	 * 3) one of the subscribed publications is declared as TABLES IN SCHEMA
+	 * that includes this relation
 	 */
 	if (walrcv_server_version(LogRepWorkerWalRcvConn) >= 150000)
 	{
@@ -949,14 +987,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 
 		/* Build the pubname list. */
 		initStringInfo(&pub_names);
-		first = true;
 		foreach(lc, MySubscription->publications)
 		{
 			char	   *pubname = strVal(lfirst(lc));
 
-			if (first)
-				first = false;
-			else
+			if (foreach_current_index(lc) > 0)
 				appendStringInfoString(&pub_names, ", ");
 
 			appendStringInfoString(&pub_names, quote_literal_cstr(pubname));
@@ -965,14 +1000,11 @@ fetch_remote_table_info(char *nspname, char *relname,
 		/* Check for row filters. */
 		resetStringInfo(&cmd);
 		appendStringInfo(&cmd,
-						 "SELECT DISTINCT pg_get_expr(pr.prqual, pr.prrelid)"
-						 "  FROM pg_publication p"
-						 "  LEFT OUTER JOIN pg_publication_rel pr"
-						 "       ON (p.oid = pr.prpubid AND pr.prrelid = %u),"
+						 "SELECT DISTINCT pg_get_expr(gpt.qual, gpt.relid)"
+						 "  FROM pg_publication p,"
 						 "  LATERAL pg_get_publication_tables(p.pubname) gpt"
 						 " WHERE gpt.relid = %u"
 						 "   AND p.pubname IN ( %s )",
-						 lrel->remoteid,
 						 lrel->remoteid,
 						 pub_names.data);
 
@@ -1056,8 +1088,8 @@ copy_table(Relation rel)
 						 quote_qualified_identifier(lrel.nspname, lrel.relname));
 
 		/*
-		 * XXX Do we need to list the columns in all cases? Maybe we're replicating
-		 * all columns?
+		 * XXX Do we need to list the columns in all cases? Maybe we're
+		 * replicating all columns?
 		 */
 		for (int i = 0; i < lrel.natts; i++)
 		{
@@ -1067,7 +1099,7 @@ copy_table(Relation rel)
 			appendStringInfoString(&cmd, quote_identifier(lrel.attnames[i]));
 		}
 
-		appendStringInfo(&cmd, ") TO STDOUT");
+		appendStringInfoString(&cmd, ") TO STDOUT");
 	}
 	else
 	{
@@ -1155,22 +1187,10 @@ copy_table(Relation rel)
  */
 void
 ReplicationSlotNameForTablesync(Oid suboid, Oid relid,
-								char *syncslotname, int szslot)
+								char *syncslotname, Size szslot)
 {
 	snprintf(syncslotname, szslot, "pg_%u_sync_%u_" UINT64_FORMAT, suboid,
 			 relid, GetSystemIdentifier());
-}
-
-/*
- * Form the origin name for tablesync.
- *
- * Return the name in the supplied buffer.
- */
-void
-ReplicationOriginNameForTablesync(Oid suboid, Oid relid,
-								  char *originname, int szorgname)
-{
-	snprintf(originname, szorgname, "pg_%u_%u", suboid, relid);
 }
 
 /*
@@ -1242,10 +1262,10 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 		   MyLogicalRepWorker->relstate == SUBREL_STATE_FINISHEDCOPY);
 
 	/* Assign the origin tracking record name. */
-	ReplicationOriginNameForTablesync(MySubscription->oid,
-									  MyLogicalRepWorker->relid,
-									  originname,
-									  sizeof(originname));
+	ReplicationOriginNameForLogicalRep(MySubscription->oid,
+									   MyLogicalRepWorker->relid,
+									   originname,
+									   sizeof(originname));
 
 	if (MyLogicalRepWorker->relstate == SUBREL_STATE_DATASYNC)
 	{
@@ -1321,15 +1341,15 @@ LogicalRepSyncTableStart(XLogRecPtr *origin_startpos)
 
 	/*
 	 * COPY FROM does not honor RLS policies.  That is not a problem for
-	 * subscriptions owned by roles with BYPASSRLS privilege (or superuser, who
-	 * has it implicitly), but other roles should not be able to circumvent
-	 * RLS.  Disallow logical replication into RLS enabled relations for such
-	 * roles.
+	 * subscriptions owned by roles with BYPASSRLS privilege (or superuser,
+	 * who has it implicitly), but other roles should not be able to
+	 * circumvent RLS.  Disallow logical replication into RLS enabled
+	 * relations for such roles.
 	 */
 	if (check_enable_rls(RelationGetRelid(rel), InvalidOid, false) == RLS_ENABLED)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("\"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
+				 errmsg("user \"%s\" cannot replicate into relation with row-level security enabled: \"%s\"",
 						GetUserNameFromId(GetUserId(), true),
 						RelationGetRelationName(rel))));
 
@@ -1481,7 +1501,7 @@ FetchTableStates(bool *started_tx)
 		}
 
 		/* Fetch all non-ready tables. */
-		rstates = GetSubscriptionNotReadyRelations(MySubscription->oid);
+		rstates = GetSubscriptionRelations(MySubscription->oid, true);
 
 		/* Allocate the tracking info in a permanent memory context. */
 		oldctx = MemoryContextSwitchTo(CacheMemoryContext);
@@ -1500,7 +1520,7 @@ FetchTableStates(bool *started_tx)
 		 * if table_state_not_ready was empty we still need to check again to
 		 * see if there are 0 tables.
 		 */
-		has_subrels = (list_length(table_states_not_ready) > 0) ||
+		has_subrels = (table_states_not_ready != NIL) ||
 			HasSubscriptionRelations(MySubscription->oid);
 
 		table_states_valid = true;
@@ -1536,7 +1556,7 @@ AllTablesyncsReady(void)
 	 * Return false when there are no tables in subscription or not all tables
 	 * are in ready state; true otherwise.
 	 */
-	return has_subrels && list_length(table_states_not_ready) == 0;
+	return has_subrels && (table_states_not_ready == NIL);
 }
 
 /*

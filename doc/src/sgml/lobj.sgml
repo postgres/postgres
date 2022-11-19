@@ -114,7 +114,9 @@
     All large object manipulation using these functions
     <emphasis>must</emphasis> take place within an SQL transaction block,
     since large object file descriptors are only valid for the duration of
-    a transaction.
+    a transaction. Write operations, including <function>lo_open</function>
+    with the <symbol>INV_WRITE</symbol> mode, are not allowed in a read-only
+    transaction.
    </para>
 
    <para>

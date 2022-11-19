@@ -45,7 +45,7 @@ static int	verbose = 0;
 static int	compresslevel = 0;
 static int	noloop = 0;
 static int	standby_message_timeout = 10 * 1000;	/* 10 sec = default */
-static volatile bool time_to_stop = false;
+static volatile sig_atomic_t time_to_stop = false;
 static bool do_create_slot = false;
 static bool slot_exists_ok = false;
 static bool do_drop_slot = false;
@@ -63,7 +63,7 @@ static DIR *get_destination_dir(char *dest_folder);
 static void close_destination_dir(DIR *dest_dir, char *dest_folder);
 static XLogRecPtr FindStreamingStart(uint32 *tli);
 static void StreamLog(void);
-static bool stop_streaming(XLogRecPtr segendpos, uint32 timeline,
+static bool stop_streaming(XLogRecPtr xlogpos, uint32 timeline,
 						   bool segment_finished);
 
 static void
@@ -511,10 +511,8 @@ FindStreamingStart(uint32 *tli)
 				continue;
 			}
 #else
-			pg_log_error("could not check file \"%s\"",
-						 dirent->d_name);
-			pg_log_error_detail("This build does not support compression with %s.",
-								"LZ4");
+			pg_log_error("cannot check file \"%s\": compression with %s not supported by this build",
+						 dirent->d_name, "LZ4");
 			exit(1);
 #endif
 		}
@@ -564,10 +562,8 @@ StreamLog(void)
 {
 	XLogRecPtr	serverpos;
 	TimeLineID	servertli;
-	StreamCtl	stream;
+	StreamCtl	stream = {0};
 	char	   *sysidentifier;
-
-	MemSet(&stream, 0, sizeof(stream));
 
 	/*
 	 * Connect in replication mode to the server
@@ -660,7 +656,7 @@ StreamLog(void)
 
 	ReceiveXlogStream(conn, &stream);
 
-	if (!stream.walmethod->finish())
+	if (!stream.walmethod->ops->finish(stream.walmethod))
 	{
 		pg_log_info("could not finish writing WAL files: %m");
 		return;
@@ -669,19 +665,17 @@ StreamLog(void)
 	PQfinish(conn);
 	conn = NULL;
 
-	FreeWalDirectoryMethod();
-	pg_free(stream.walmethod);
-	pg_free(stream.sysidentifier);
+	stream.walmethod->ops->free(stream.walmethod);
 }
 
 /*
- * When sigint is called, just tell the system to exit at the next possible
- * moment.
+ * When SIGINT/SIGTERM are caught, just tell the system to exit at the next
+ * possible moment.
  */
 #ifndef WIN32
 
 static void
-sigint_handler(int signum)
+sigexit_handler(SIGNAL_ARGS)
 {
 	time_to_stop = true;
 }
@@ -867,7 +861,7 @@ main(int argc, char **argv)
 	 */
 	if (!parse_compress_algorithm(compression_algorithm_str,
 								  &compression_algorithm))
-		pg_fatal("unrecognized compression algorithm \"%s\"",
+		pg_fatal("unrecognized compression algorithm: \"%s\"",
 				 compression_algorithm_str);
 
 	parse_compress_specification(compression_algorithm, compression_detail,
@@ -877,38 +871,11 @@ main(int argc, char **argv)
 		pg_fatal("invalid compression specification: %s",
 				 error_detail);
 
-	/* Extract the compression level, if found in the specification */
-	if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) != 0)
-		compresslevel = compression_spec.level;
+	/* Extract the compression level */
+	compresslevel = compression_spec.level;
 
-	switch (compression_algorithm)
-	{
-		case PG_COMPRESSION_NONE:
-			/* nothing to do */
-			break;
-		case PG_COMPRESSION_GZIP:
-#ifdef HAVE_LIBZ
-			if ((compression_spec.options & PG_COMPRESSION_OPTION_LEVEL) == 0)
-			{
-				pg_log_info("no value specified for --compress, switching to default");
-				compresslevel = Z_DEFAULT_COMPRESSION;
-			}
-#else
-			pg_fatal("this build does not support compression with %s",
-					 "gzip");
-#endif
-			break;
-		case PG_COMPRESSION_LZ4:
-#ifndef USE_LZ4
-			pg_fatal("this build does not support compression with %s",
-					 "LZ4");
-#endif
-			break;
-		case PG_COMPRESSION_ZSTD:
-			pg_fatal("compression with %s is not yet supported", "ZSTD");
-			break;
-	}
-
+	if (compression_algorithm == PG_COMPRESSION_ZSTD)
+		pg_fatal("compression with %s is not yet supported", "ZSTD");
 
 	/*
 	 * Check existence of destination folder.
@@ -934,7 +901,8 @@ main(int argc, char **argv)
 	 * if one is needed, in GetConnection.)
 	 */
 #ifndef WIN32
-	pqsignal(SIGINT, sigint_handler);
+	pqsignal(SIGINT, sigexit_handler);
+	pqsignal(SIGTERM, sigexit_handler);
 #endif
 
 	/*

@@ -137,7 +137,7 @@ static void vm_extend(Relation rel, BlockNumber vm_nblocks);
  * any I/O.  Returns true if any bits have been cleared and false otherwise.
  */
 bool
-visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf, uint8 flags)
+visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer vmbuf, uint8 flags)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	int			mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
@@ -152,21 +152,21 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf, uint8 flags)
 	elog(DEBUG1, "vm_clear %s %d", RelationGetRelationName(rel), heapBlk);
 #endif
 
-	if (!BufferIsValid(buf) || BufferGetBlockNumber(buf) != mapBlock)
+	if (!BufferIsValid(vmbuf) || BufferGetBlockNumber(vmbuf) != mapBlock)
 		elog(ERROR, "wrong buffer passed to visibilitymap_clear");
 
-	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
-	map = PageGetContents(BufferGetPage(buf));
+	LockBuffer(vmbuf, BUFFER_LOCK_EXCLUSIVE);
+	map = PageGetContents(BufferGetPage(vmbuf));
 
 	if (map[mapByte] & mask)
 	{
 		map[mapByte] &= ~mask;
 
-		MarkBufferDirty(buf);
+		MarkBufferDirty(vmbuf);
 		cleared = true;
 	}
 
-	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+	LockBuffer(vmbuf, BUFFER_LOCK_UNLOCK);
 
 	return cleared;
 }
@@ -180,56 +180,56 @@ visibilitymap_clear(Relation rel, BlockNumber heapBlk, Buffer buf, uint8 flags)
  * shouldn't hold a lock on the heap page while doing that. Then, call
  * visibilitymap_set to actually set the bit.
  *
- * On entry, *buf should be InvalidBuffer or a valid buffer returned by
+ * On entry, *vmbuf should be InvalidBuffer or a valid buffer returned by
  * an earlier call to visibilitymap_pin or visibilitymap_get_status on the same
- * relation. On return, *buf is a valid buffer with the map page containing
+ * relation. On return, *vmbuf is a valid buffer with the map page containing
  * the bit for heapBlk.
  *
  * If the page doesn't exist in the map file yet, it is extended.
  */
 void
-visibilitymap_pin(Relation rel, BlockNumber heapBlk, Buffer *buf)
+visibilitymap_pin(Relation rel, BlockNumber heapBlk, Buffer *vmbuf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 
 	/* Reuse the old pinned buffer if possible */
-	if (BufferIsValid(*buf))
+	if (BufferIsValid(*vmbuf))
 	{
-		if (BufferGetBlockNumber(*buf) == mapBlock)
+		if (BufferGetBlockNumber(*vmbuf) == mapBlock)
 			return;
 
-		ReleaseBuffer(*buf);
+		ReleaseBuffer(*vmbuf);
 	}
-	*buf = vm_readbuf(rel, mapBlock, true);
+	*vmbuf = vm_readbuf(rel, mapBlock, true);
 }
 
 /*
  *	visibilitymap_pin_ok - do we already have the correct page pinned?
  *
- * On entry, buf should be InvalidBuffer or a valid buffer returned by
+ * On entry, vmbuf should be InvalidBuffer or a valid buffer returned by
  * an earlier call to visibilitymap_pin or visibilitymap_get_status on the same
  * relation.  The return value indicates whether the buffer covers the
  * given heapBlk.
  */
 bool
-visibilitymap_pin_ok(BlockNumber heapBlk, Buffer buf)
+visibilitymap_pin_ok(BlockNumber heapBlk, Buffer vmbuf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 
-	return BufferIsValid(buf) && BufferGetBlockNumber(buf) == mapBlock;
+	return BufferIsValid(vmbuf) && BufferGetBlockNumber(vmbuf) == mapBlock;
 }
 
 /*
  *	visibilitymap_set - set bit(s) on a previously pinned page
  *
  * recptr is the LSN of the XLOG record we're replaying, if we're in recovery,
- * or InvalidXLogRecPtr in normal running.  The page LSN is advanced to the
+ * or InvalidXLogRecPtr in normal running.  The VM page LSN is advanced to the
  * one provided; in normal running, we generate a new XLOG record and set the
- * page LSN to that value.  cutoff_xid is the largest xmin on the page being
- * marked all-visible; it is needed for Hot Standby, and can be
- * InvalidTransactionId if the page contains no tuples.  It can also be set
- * to InvalidTransactionId when a page that is already all-visible is being
- * marked all-frozen.
+ * page LSN to that value (though the heap page's LSN may *not* be updated;
+ * see below).  cutoff_xid is the largest xmin on the page being marked
+ * all-visible; it is needed for Hot Standby, and can be InvalidTransactionId
+ * if the page contains no tuples.  It can also be set to InvalidTransactionId
+ * when a page that is already all-visible is being marked all-frozen.
  *
  * Caller is expected to set the heap page's PD_ALL_VISIBLE bit before calling
  * this function. Except in recovery, caller should also pass the heap
@@ -283,12 +283,17 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
 			if (XLogRecPtrIsInvalid(recptr))
 			{
 				Assert(!InRecovery);
-				recptr = log_heap_visible(rel->rd_node, heapBuf, vmBuf,
+				recptr = log_heap_visible(rel->rd_locator, heapBuf, vmBuf,
 										  cutoff_xid, flags);
 
 				/*
 				 * If data checksums are enabled (or wal_log_hints=on), we
 				 * need to protect the heap page from being torn.
+				 *
+				 * If not, then we must *not* update the heap page's LSN. In
+				 * this case, the FPI for the heap page was omitted from the
+				 * WAL record inserted above, so it would be incorrect to
+				 * update the heap page's LSN.
 				 */
 				if (XLogHintBitIsNeeded())
 				{
@@ -314,11 +319,11 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  * Are all tuples on heapBlk visible to all or are marked frozen, according
  * to the visibility map?
  *
- * On entry, *buf should be InvalidBuffer or a valid buffer returned by an
+ * On entry, *vmbuf should be InvalidBuffer or a valid buffer returned by an
  * earlier call to visibilitymap_pin or visibilitymap_get_status on the same
- * relation. On return, *buf is a valid buffer with the map page containing
+ * relation. On return, *vmbuf is a valid buffer with the map page containing
  * the bit for heapBlk, or InvalidBuffer. The caller is responsible for
- * releasing *buf after it's done testing and setting bits.
+ * releasing *vmbuf after it's done testing and setting bits.
  *
  * NOTE: This function is typically called without a lock on the heap page,
  * so somebody else could change the bit just after we look at it.  In fact,
@@ -328,7 +333,7 @@ visibilitymap_set(Relation rel, BlockNumber heapBlk, Buffer heapBuf,
  * all concurrency issues!
  */
 uint8
-visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *buf)
+visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *vmbuf)
 {
 	BlockNumber mapBlock = HEAPBLK_TO_MAPBLOCK(heapBlk);
 	uint32		mapByte = HEAPBLK_TO_MAPBYTE(heapBlk);
@@ -341,23 +346,23 @@ visibilitymap_get_status(Relation rel, BlockNumber heapBlk, Buffer *buf)
 #endif
 
 	/* Reuse the old pinned buffer if possible */
-	if (BufferIsValid(*buf))
+	if (BufferIsValid(*vmbuf))
 	{
-		if (BufferGetBlockNumber(*buf) != mapBlock)
+		if (BufferGetBlockNumber(*vmbuf) != mapBlock)
 		{
-			ReleaseBuffer(*buf);
-			*buf = InvalidBuffer;
+			ReleaseBuffer(*vmbuf);
+			*vmbuf = InvalidBuffer;
 		}
 	}
 
-	if (!BufferIsValid(*buf))
+	if (!BufferIsValid(*vmbuf))
 	{
-		*buf = vm_readbuf(rel, mapBlock, false);
-		if (!BufferIsValid(*buf))
+		*vmbuf = vm_readbuf(rel, mapBlock, false);
+		if (!BufferIsValid(*vmbuf))
 			return false;
 	}
 
-	map = PageGetContents(BufferGetPage(*buf));
+	map = PageGetContents(BufferGetPage(*vmbuf));
 
 	/*
 	 * A single byte read is atomic.  There could be memory-ordering effects
@@ -668,7 +673,7 @@ vm_extend(Relation rel, BlockNumber vm_nblocks)
 	 * to keep checking for creation or extension of the file, which happens
 	 * infrequently.
 	 */
-	CacheInvalidateSmgr(reln->smgr_rnode);
+	CacheInvalidateSmgr(reln->smgr_rlocator);
 
 	UnlockRelationForExtension(rel, ExclusiveLock);
 }

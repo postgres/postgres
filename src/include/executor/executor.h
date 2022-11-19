@@ -218,7 +218,7 @@ extern LockTupleMode ExecUpdateLockMode(EState *estate, ResultRelInfo *relinfo);
 extern ExecRowMark *ExecFindRowMark(EState *estate, Index rti, bool missing_ok);
 extern ExecAuxRowMark *ExecBuildAuxRowMark(ExecRowMark *erm, List *targetlist);
 extern TupleTableSlot *EvalPlanQual(EPQState *epqstate, Relation relation,
-									Index rti, TupleTableSlot *testslot);
+									Index rti, TupleTableSlot *inputslot);
 extern void EvalPlanQualInit(EPQState *epqstate, EState *parentestate,
 							 Plan *subplan, List *auxrowmarks, int epqParam);
 extern void EvalPlanQualSetPlan(EPQState *epqstate,
@@ -239,7 +239,7 @@ extern PlanState *ExecInitNode(Plan *node, EState *estate, int eflags);
 extern void ExecSetExecProcNode(PlanState *node, ExecProcNodeMtd function);
 extern Node *MultiExecProcNode(PlanState *node);
 extern void ExecEndNode(PlanState *node);
-extern bool ExecShutdownNode(PlanState *node);
+extern void ExecShutdownNode(PlanState *node);
 extern void ExecSetTupleBound(int64 tuples_needed, PlanState *child_node);
 
 
@@ -265,8 +265,6 @@ ExecProcNode(PlanState *node)
  */
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
 extern ExprState *ExecInitExprWithParams(Expr *node, ParamListInfo ext_params);
-extern ExprState *ExecInitExprWithCaseValue(Expr *node, PlanState *parent,
-						  Datum *caseval, bool *casenull);
 extern ExprState *ExecInitQual(List *qual, PlanState *parent);
 extern ExprState *ExecInitCheck(List *qual, PlanState *parent);
 extern List *ExecInitExprList(List *nodes, PlanState *parent);
@@ -434,7 +432,7 @@ ExecQualAndReset(ExprState *state, ExprContext *econtext)
 }
 #endif
 
-extern bool ExecCheck(ExprState *state, ExprContext *context);
+extern bool ExecCheck(ExprState *state, ExprContext *econtext);
 
 /*
  * prototypes from functions in execSRF.c
@@ -475,7 +473,7 @@ extern void ExecInitResultSlot(PlanState *planstate,
 extern void ExecInitResultTupleSlotTL(PlanState *planstate,
 									  const TupleTableSlotOps *tts_ops);
 extern void ExecInitScanTupleSlot(EState *estate, ScanState *scanstate,
-								  TupleDesc tupleDesc,
+								  TupleDesc tupledesc,
 								  const TupleTableSlotOps *tts_ops);
 extern TupleTableSlot *ExecInitExtraTupleSlot(EState *estate,
 											  TupleDesc tupledesc,

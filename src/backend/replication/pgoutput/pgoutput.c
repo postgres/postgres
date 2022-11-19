@@ -16,6 +16,7 @@
 #include "catalog/partition.h"
 #include "catalog/pg_publication.h"
 #include "catalog/pg_publication_rel.h"
+#include "catalog/pg_subscription.h"
 #include "commands/defrem.h"
 #include "executor/executor.h"
 #include "fmgr.h"
@@ -35,8 +36,6 @@
 
 PG_MODULE_MAGIC;
 
-extern void _PG_output_plugin_init(OutputPluginCallbacks *cb);
-
 static void pgoutput_startup(LogicalDecodingContext *ctx,
 							 OutputPluginOptions *opt, bool is_init);
 static void pgoutput_shutdown(LogicalDecodingContext *ctx);
@@ -45,7 +44,7 @@ static void pgoutput_begin_txn(LogicalDecodingContext *ctx,
 static void pgoutput_commit_txn(LogicalDecodingContext *ctx,
 								ReorderBufferTXN *txn, XLogRecPtr commit_lsn);
 static void pgoutput_change(LogicalDecodingContext *ctx,
-							ReorderBufferTXN *txn, Relation rel,
+							ReorderBufferTXN *txn, Relation relation,
 							ReorderBufferChange *change);
 static void pgoutput_truncate(LogicalDecodingContext *ctx,
 							  ReorderBufferTXN *txn, int nrelations, Relation relations[],
@@ -81,6 +80,7 @@ static void pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 
 static bool publications_valid;
 static bool in_streaming;
+static bool publish_no_origin;
 
 static List *LoadPublications(List *pubnames);
 static void publication_invalidation_cb(Datum arg, int cacheid,
@@ -91,6 +91,8 @@ static void send_relation_and_attrs(Relation relation, TransactionId xid,
 static void send_repl_origin(LogicalDecodingContext *ctx,
 							 RepOriginId origin_id, XLogRecPtr origin_lsn,
 							 bool send_origin);
+static void update_replication_progress(LogicalDecodingContext *ctx,
+										bool skipped_xact);
 
 /*
  * Only 3 publication actions are used for row filtering ("insert", "update",
@@ -172,8 +174,8 @@ typedef struct RelationSyncEntry
 	Bitmapset  *columns;
 
 	/*
-	 * Private context to store additional data for this entry - state for
-	 * the row filter expressions, column list, etc.
+	 * Private context to store additional data for this entry - state for the
+	 * row filter expressions, column list, etc.
 	 */
 	MemoryContext entry_cxt;
 } RelationSyncEntry;
@@ -204,14 +206,13 @@ typedef struct RelationSyncEntry
  */
 typedef struct PGOutputTxnData
 {
-	bool		sent_begin_txn;	/* flag indicating whether BEGIN has
-								 * been sent */
-}		PGOutputTxnData;
+	bool		sent_begin_txn; /* flag indicating whether BEGIN has been sent */
+} PGOutputTxnData;
 
 /* Map used to remember which relation schemas we sent. */
 static HTAB *RelationSyncCache = NULL;
 
-static void init_rel_sync_cache(MemoryContext decoding_context);
+static void init_rel_sync_cache(MemoryContext cachectx);
 static void cleanup_rel_sync_cache(TransactionId xid, bool is_commit);
 static RelationSyncEntry *get_rel_sync_entry(PGOutputData *data,
 											 Relation relation);
@@ -286,6 +287,7 @@ parse_output_parameters(List *options, PGOutputData *data)
 	bool		messages_option_given = false;
 	bool		streaming_given = false;
 	bool		two_phase_option_given = false;
+	bool		origin_option_given = false;
 
 	data->binary = false;
 	data->streaming = false;
@@ -379,6 +381,24 @@ parse_output_parameters(List *options, PGOutputData *data)
 
 			data->two_phase = defGetBoolean(defel);
 		}
+		else if (strcmp(defel->defname, "origin") == 0)
+		{
+			if (origin_option_given)
+				ereport(ERROR,
+						errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("conflicting or redundant options"));
+			origin_option_given = true;
+
+			data->origin = defGetString(defel);
+			if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_NONE) == 0)
+				publish_no_origin = true;
+			else if (pg_strcasecmp(data->origin, LOGICALREP_ORIGIN_ANY) == 0)
+				publish_no_origin = false;
+			else
+				ereport(ERROR,
+						errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("unrecognized origin value: \"%s\"", data->origin));
+		}
 		else
 			elog(ERROR, "unrecognized pgoutput option: %s", defel->defname);
 	}
@@ -421,16 +441,16 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 		if (data->protocol_version > LOGICALREP_PROTO_MAX_VERSION_NUM)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("client sent proto_version=%d but we only support protocol %d or lower",
+					 errmsg("client sent proto_version=%d but server only supports protocol %d or lower",
 							data->protocol_version, LOGICALREP_PROTO_MAX_VERSION_NUM)));
 
 		if (data->protocol_version < LOGICALREP_PROTO_MIN_VERSION_NUM)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("client sent proto_version=%d but we only support protocol %d or higher",
+					 errmsg("client sent proto_version=%d but server only supports protocol %d or higher",
 							data->protocol_version, LOGICALREP_PROTO_MIN_VERSION_NUM)));
 
-		if (list_length(data->publication_names) < 1)
+		if (data->publication_names == NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("publication_names parameter missing")));
@@ -509,9 +529,9 @@ pgoutput_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
  * using bandwidth on something with little/no use for logical replication.
  */
 static void
-pgoutput_begin_txn(LogicalDecodingContext * ctx, ReorderBufferTXN * txn)
+pgoutput_begin_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn)
 {
-	PGOutputTxnData	*txndata = MemoryContextAllocZero(ctx->context,
+	PGOutputTxnData *txndata = MemoryContextAllocZero(ctx->context,
 													  sizeof(PGOutputTxnData));
 
 	txn->output_plugin_private = txndata;
@@ -558,7 +578,7 @@ pgoutput_commit_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	 * from this transaction has been sent to the downstream.
 	 */
 	sent_begin_txn = txndata->sent_begin_txn;
-	OutputPluginUpdateProgress(ctx, !sent_begin_txn);
+	update_replication_progress(ctx, !sent_begin_txn);
 	pfree(txndata);
 	txn->output_plugin_private = NULL;
 
@@ -597,7 +617,7 @@ static void
 pgoutput_prepare_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 					 XLogRecPtr prepare_lsn)
 {
-	OutputPluginUpdateProgress(ctx, false);
+	update_replication_progress(ctx, false);
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_prepare(ctx->out, txn, prepare_lsn);
@@ -611,7 +631,7 @@ static void
 pgoutput_commit_prepared_txn(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 							 XLogRecPtr commit_lsn)
 {
-	OutputPluginUpdateProgress(ctx, false);
+	update_replication_progress(ctx, false);
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_commit_prepared(ctx->out, txn, commit_lsn);
@@ -627,7 +647,7 @@ pgoutput_rollback_prepared_txn(LogicalDecodingContext *ctx,
 							   XLogRecPtr prepare_end_lsn,
 							   TimestampTz prepare_time)
 {
-	OutputPluginUpdateProgress(ctx, false);
+	update_replication_progress(ctx, false);
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_rollback_prepared(ctx->out, txn, prepare_end_lsn,
@@ -834,6 +854,7 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	MemoryContext oldctx;
 	int			idx;
 	bool		has_filter = true;
+	Oid			schemaid = get_rel_namespace(entry->publish_as_relid);
 
 	/*
 	 * Find if there are any row filters for this relation. If there are, then
@@ -847,26 +868,26 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 	 * are multiple lists (one for each operation) to which row filters will
 	 * be appended.
 	 *
-	 * FOR ALL TABLES implies "don't use row filter expression" so it takes
-	 * precedence.
+	 * FOR ALL TABLES and FOR TABLES IN SCHEMA implies "don't use row
+	 * filter expression" so it takes precedence.
 	 */
 	foreach(lc, publications)
 	{
 		Publication *pub = lfirst(lc);
 		HeapTuple	rftuple = NULL;
 		Datum		rfdatum = 0;
-		bool		pub_no_filter = false;
+		bool		pub_no_filter = true;
 
-		if (pub->alltables)
-		{
-			/*
-			 * If the publication is FOR ALL TABLES then it is treated the
-			 * same as if this table has no row filters (even if for other
-			 * publications it does).
-			 */
-			pub_no_filter = true;
-		}
-		else
+		/*
+		 * If the publication is FOR ALL TABLES, or the publication includes a
+		 * FOR TABLES IN SCHEMA where the table belongs to the referred
+		 * schema, then it is treated the same as if there are no row filters
+		 * (even if other publications have a row filter).
+		 */
+		if (!pub->alltables &&
+			!SearchSysCacheExists2(PUBLICATIONNAMESPACEMAP,
+								   ObjectIdGetDatum(schemaid),
+								   ObjectIdGetDatum(pub->oid)))
 		{
 			/*
 			 * Check for the presence of a row filter in this publication.
@@ -881,10 +902,6 @@ pgoutput_row_filter_init(PGOutputData *data, List *publications,
 				rfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, rftuple,
 										  Anum_pg_publication_rel_prqual,
 										  &pub_no_filter);
-			}
-			else
-			{
-				pub_no_filter = true;
 			}
 		}
 
@@ -978,42 +995,46 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 						  RelationSyncEntry *entry)
 {
 	ListCell   *lc;
+	bool		first = true;
+	Relation	relation = RelationIdGetRelation(entry->publish_as_relid);
 
 	/*
 	 * Find if there are any column lists for this relation. If there are,
-	 * build a bitmap merging all the column lists.
+	 * build a bitmap using the column lists.
 	 *
-	 * All the given publication-table mappings must be checked.
+	 * Multiple publications might have multiple column lists for this
+	 * relation.
 	 *
-	 * Multiple publications might have multiple column lists for this relation.
+	 * Note that we don't support the case where the column list is different
+	 * for the same table when combining publications. See comments atop
+	 * fetch_table_list. But one can later change the publication so we still
+	 * need to check all the given publication-table mappings and report an
+	 * error if any publications have a different column list.
 	 *
-	 * FOR ALL TABLES and FOR ALL TABLES IN SCHEMA implies "don't use column
-	 * list" so it takes precedence.
+	 * FOR ALL TABLES and FOR TABLES IN SCHEMA imply "don't use column list".
 	 */
 	foreach(lc, publications)
 	{
 		Publication *pub = lfirst(lc);
 		HeapTuple	cftuple = NULL;
 		Datum		cfdatum = 0;
+		Bitmapset  *cols = NULL;
 
 		/*
-		 * Assume there's no column list. Only if we find pg_publication_rel
-		 * entry with a column list we'll switch it to false.
-		 */
-		bool		pub_no_list = true;
-
-		/*
-		 * If the publication is FOR ALL TABLES then it is treated the same as if
-		 * there are no column lists (even if other publications have a list).
+		 * If the publication is FOR ALL TABLES then it is treated the same as
+		 * if there are no column lists (even if other publications have a
+		 * list).
 		 */
 		if (!pub->alltables)
 		{
+			bool		pub_no_list = true;
+
 			/*
 			 * Check for the presence of a column list in this publication.
 			 *
 			 * Note: If we find no pg_publication_rel row, it's a publication
-			 * defined for a whole schema, so it can't have a column list, just
-			 * like a FOR ALL TABLES publication.
+			 * defined for a whole schema, so it can't have a column list,
+			 * just like a FOR ALL TABLES publication.
 			 */
 			cftuple = SearchSysCache2(PUBLICATIONRELMAP,
 									  ObjectIdGetDatum(entry->publish_as_relid),
@@ -1021,51 +1042,48 @@ pgoutput_column_list_init(PGOutputData *data, List *publications,
 
 			if (HeapTupleIsValid(cftuple))
 			{
-				/*
-				 * Lookup the column list attribute.
-				 *
-				 * Note: We update the pub_no_list value directly, because if
-				 * the value is NULL, we have no list (and vice versa).
-				 */
+				/* Lookup the column list attribute. */
 				cfdatum = SysCacheGetAttr(PUBLICATIONRELMAP, cftuple,
 										  Anum_pg_publication_rel_prattrs,
 										  &pub_no_list);
 
-				/*
-				 * Build the column list bitmap in the per-entry context.
-				 *
-				 * We need to merge column lists from all publications, so we
-				 * update the same bitmapset. If the column list is null, we
-				 * interpret it as replicating all columns.
-				 */
+				/* Build the column list bitmap in the per-entry context. */
 				if (!pub_no_list)	/* when not null */
 				{
 					pgoutput_ensure_entry_cxt(data, entry);
 
-					entry->columns = pub_collist_to_bitmapset(entry->columns,
-															  cfdatum,
-															  entry->entry_cxt);
+					cols = pub_collist_to_bitmapset(cols, cfdatum,
+													entry->entry_cxt);
+
+					/*
+					 * If column list includes all the columns of the table,
+					 * set it to NULL.
+					 */
+					if (bms_num_members(cols) == RelationGetNumberOfAttributes(relation))
+					{
+						bms_free(cols);
+						cols = NULL;
+					}
 				}
+
+				ReleaseSysCache(cftuple);
 			}
 		}
 
-		/*
-		 * Found a publication with no column list, so we're done. But first
-		 * discard column list we might have from preceding publications.
-		 */
-		if (pub_no_list)
+		if (first)
 		{
-			if (cftuple)
-				ReleaseSysCache(cftuple);
-
-			bms_free(entry->columns);
-			entry->columns = NULL;
-
-			break;
+			entry->columns = cols;
+			first = false;
 		}
-
-		ReleaseSysCache(cftuple);
+		else if (!bms_equal(entry->columns, cols))
+			ereport(ERROR,
+					errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("cannot use different column lists for table \"%s.%s\" in different publications",
+						   get_namespace_name(RelationGetNamespace(relation)),
+						   RelationGetRelationName(relation)));
 	}							/* loop all subscribed publications */
+
+	RelationClose(relation);
 }
 
 /*
@@ -1219,9 +1237,9 @@ pgoutput_row_filter(Relation relation, TupleTableSlot *old_slot,
 	 * For updates, we can have only a new tuple when none of the replica
 	 * identity columns changed and none of those columns have external data
 	 * but we still need to evaluate the row filter for the new tuple as the
-	 * existing values of those columns might not match the filter. Also, users
-	 * can use constant expressions in the row filter, so we anyway need to
-	 * evaluate it for the new tuple.
+	 * existing values of those columns might not match the filter. Also,
+	 * users can use constant expressions in the row filter, so we anyway need
+	 * to evaluate it for the new tuple.
 	 *
 	 * For deletes, we only have the old tuple.
 	 */
@@ -1359,6 +1377,8 @@ pgoutput_change(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	ReorderBufferChangeType action = change->action;
 	TupleTableSlot *old_slot = NULL;
 	TupleTableSlot *new_slot = NULL;
+
+	update_replication_progress(ctx, false);
 
 	if (!is_publishable_relation(relation))
 		return;
@@ -1592,6 +1612,8 @@ pgoutput_truncate(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	Oid		   *relids;
 	TransactionId xid = InvalidTransactionId;
 
+	update_replication_progress(ctx, false);
+
 	/* Remember the xid for the change in streaming mode. See pgoutput_change. */
 	if (in_streaming)
 		xid = change->txn->xid;
@@ -1655,6 +1677,8 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 	PGOutputData *data = (PGOutputData *) ctx->output_plugin_private;
 	TransactionId xid = InvalidTransactionId;
 
+	update_replication_progress(ctx, false);
+
 	if (!data->messages)
 		return;
 
@@ -1666,8 +1690,7 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 		xid = txn->xid;
 
 	/*
-	 * Output BEGIN if we haven't yet. Avoid for non-transactional
-	 * messages.
+	 * Output BEGIN if we haven't yet. Avoid for non-transactional messages.
 	 */
 	if (transactional)
 	{
@@ -1690,12 +1713,16 @@ pgoutput_message(LogicalDecodingContext *ctx, ReorderBufferTXN *txn,
 }
 
 /*
- * Currently we always forward.
+ * Return true if the data is associated with an origin and the user has
+ * requested the changes that don't have an origin, false otherwise.
  */
 static bool
 pgoutput_origin_filter(LogicalDecodingContext *ctx,
 					   RepOriginId origin_id)
 {
+	if (publish_no_origin && origin_id != InvalidRepOriginId)
+		return true;
+
 	return false;
 }
 
@@ -1847,7 +1874,7 @@ pgoutput_stream_commit(struct LogicalDecodingContext *ctx,
 	Assert(!in_streaming);
 	Assert(rbtxn_is_streamed(txn));
 
-	OutputPluginUpdateProgress(ctx, false);
+	update_replication_progress(ctx, false);
 
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_stream_commit(ctx->out, txn, commit_lsn);
@@ -1868,7 +1895,7 @@ pgoutput_stream_prepare_txn(LogicalDecodingContext *ctx,
 {
 	Assert(rbtxn_is_streamed(txn));
 
-	OutputPluginUpdateProgress(ctx, false);
+	update_replication_progress(ctx, false);
 	OutputPluginPrepareWrite(ctx, true);
 	logicalrep_write_stream_prepare(ctx->out, txn, prepare_lsn);
 	OutputPluginWrite(ctx, true);
@@ -1915,15 +1942,7 @@ init_rel_sync_cache(MemoryContext cachectx)
 static bool
 get_schema_sent_in_streamed_txn(RelationSyncEntry *entry, TransactionId xid)
 {
-	ListCell   *lc;
-
-	foreach(lc, entry->streamed_txns)
-	{
-		if (xid == (uint32) lfirst_int(lc))
-			return true;
-	}
-
-	return false;
+	return list_member_xid(entry->streamed_txns, xid);
 }
 
 /*
@@ -1937,7 +1956,7 @@ set_schema_sent_in_streamed_txn(RelationSyncEntry *entry, TransactionId xid)
 
 	oldctx = MemoryContextSwitchTo(CacheMemoryContext);
 
-	entry->streamed_txns = lappend_int(entry->streamed_txns, xid);
+	entry->streamed_txns = lappend_xid(entry->streamed_txns, xid);
 
 	MemoryContextSwitchTo(oldctx);
 }
@@ -2071,15 +2090,15 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 			/*
 			 * Under what relid should we publish changes in this publication?
-			 * We'll use the top-most relid across all publications. Also track
-			 * the ancestor level for this publication.
+			 * We'll use the top-most relid across all publications. Also
+			 * track the ancestor level for this publication.
 			 */
-			Oid	pub_relid = relid;
-			int	ancestor_level = 0;
+			Oid			pub_relid = relid;
+			int			ancestor_level = 0;
 
 			/*
-			 * If this is a FOR ALL TABLES publication, pick the partition root
-			 * and set the ancestor level accordingly.
+			 * If this is a FOR ALL TABLES publication, pick the partition
+			 * root and set the ancestor level accordingly.
 			 */
 			if (pub->alltables)
 			{
@@ -2148,18 +2167,18 @@ get_rel_sync_entry(PGOutputData *data, Relation relation)
 
 				/*
 				 * We want to publish the changes as the top-most ancestor
-				 * across all publications. So we need to check if the
-				 * already calculated level is higher than the new one. If
-				 * yes, we can ignore the new value (as it's a child).
-				 * Otherwise the new value is an ancestor, so we keep it.
+				 * across all publications. So we need to check if the already
+				 * calculated level is higher than the new one. If yes, we can
+				 * ignore the new value (as it's a child). Otherwise the new
+				 * value is an ancestor, so we keep it.
 				 */
 				if (publish_ancestor_level > ancestor_level)
 					continue;
 
 				/*
-				 * If we found an ancestor higher up in the tree, discard
-				 * the list of publications through which we replicate it,
-				 * and use the new ancestor.
+				 * If we found an ancestor higher up in the tree, discard the
+				 * list of publications through which we replicate it, and use
+				 * the new ancestor.
 				 */
 				if (publish_ancestor_level < ancestor_level)
 				{
@@ -2240,7 +2259,7 @@ cleanup_rel_sync_cache(TransactionId xid, bool is_commit)
 		 */
 		foreach(lc, entry->streamed_txns)
 		{
-			if (xid == (uint32) lfirst_int(lc))
+			if (xid == lfirst_xid(lc))
 			{
 				if (is_commit)
 					entry->schema_sent = true;
@@ -2359,5 +2378,39 @@ send_repl_origin(LogicalDecodingContext *ctx, RepOriginId origin_id,
 
 			logicalrep_write_origin(ctx->out, origin, origin_lsn);
 		}
+	}
+}
+
+/*
+ * Try to update progress and send a keepalive message if too many changes were
+ * processed.
+ *
+ * For a large transaction, if we don't send any change to the downstream for a
+ * long time (exceeds the wal_receiver_timeout of standby) then it can timeout.
+ * This can happen when all or most of the changes are either not published or
+ * got filtered out.
+ */
+static void
+update_replication_progress(LogicalDecodingContext *ctx, bool skipped_xact)
+{
+	static int	changes_count = 0;
+
+	/*
+	 * We don't want to try sending a keepalive message after processing each
+	 * change as that can have overhead. Tests revealed that there is no
+	 * noticeable overhead in doing it after continuously processing 100 or so
+	 * changes.
+	 */
+#define CHANGES_THRESHOLD 100
+
+	/*
+	 * If we are at the end of transaction LSN, update progress tracking.
+	 * Otherwise, after continuously processing CHANGES_THRESHOLD changes, we
+	 * try to send a keepalive message if required.
+	 */
+	if (ctx->end_xact || ++changes_count >= CHANGES_THRESHOLD)
+	{
+		OutputPluginUpdateProgress(ctx, skipped_xact);
+		changes_count = 0;
 	}
 }

@@ -126,7 +126,7 @@ worker.  This includes:
     an index that is currently being rebuilt.
 
   - Active relmapper.c mapping state.  This is needed to allow consistent
-    answers when fetching the current relfilenode for relation oids of
+    answers when fetching the current relfilenumber for relation oids of
     mapped relations.
 
 To prevent unprincipled deadlocks when running in parallel mode, this code

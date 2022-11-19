@@ -4,7 +4,7 @@
 package MSBuildProject;
 
 #
-# Package that encapsulates a MSBuild project file (Visual C++ 2013 or greater)
+# Package that encapsulates a MSBuild project file (Visual C++ 2015 or greater)
 #
 # src/tools/msvc/MSBuildProject.pm
 #
@@ -312,8 +312,10 @@ sub WriteItemDefinitionGroup
 
 	my $targetmachine =
 	  $self->{platform} eq 'Win32' ? 'MachineX86' : 'MachineX64';
+	my $arch =
+	  $self->{platform} eq 'Win32' ? 'x86' : 'x86_64';
 
-	my $includes = join ';', @{$self->{includes}}, "";
+	my $includes = join ';', @{ $self->{includes} }, "";
 
 	print $f <<EOF;
   <ItemDefinitionGroup Condition="'\$(Configuration)|\$(Platform)'=='$cfgname|$self->{platform}'">
@@ -347,7 +349,6 @@ sub WriteItemDefinitionGroup
       <ProgramDatabaseFile>.\\$cfgname\\$self->{name}\\$self->{name}.pdb</ProgramDatabaseFile>
       <GenerateMapFile>false</GenerateMapFile>
       <MapFileName>.\\$cfgname\\$self->{name}\\$self->{name}.map</MapFileName>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <!-- Permit links to MinGW-built, 32-bit DLLs (default before VS2012). -->
       <ImageHasSafeExceptionHandlers/>
       <SubSystem>Console</SubSystem>
@@ -381,7 +382,7 @@ EOF
 		print $f <<EOF;
     <PreLinkEvent>
       <Message>Generate DEF file</Message>
-      <Command>perl src\\tools\\msvc\\gendef.pl $cfgname\\$self->{name} $self->{platform}</Command>
+      <Command>perl src\\tools\\msvc\\gendef.pl --arch $arch --deffile $cfgname\\$self->{name}\\$self->{name}.def $cfgname\\$self->{name}</Command>
     </PreLinkEvent>
 EOF
 	}
@@ -403,31 +404,6 @@ sub Footer
 </Project>
 EOF
 	return;
-}
-
-package VC2013Project;
-
-#
-# Package that encapsulates a Visual C++ 2013 project file
-#
-
-use strict;
-use warnings;
-use base qw(MSBuildProject);
-
-no warnings qw(redefine);    ## no critic
-
-sub new
-{
-	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
-	bless($self, $classname);
-
-	$self->{vcver}           = '12.00';
-	$self->{PlatformToolset} = 'v120';
-	$self->{ToolsVersion}    = '12.0';
-
-	return $self;
 }
 
 package VC2015Project;

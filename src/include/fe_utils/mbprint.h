@@ -24,6 +24,7 @@ extern int	pg_wcswidth(const char *pwcs, size_t len, int encoding);
 extern void pg_wcsformat(const unsigned char *pwcs, size_t len, int encoding,
 						 struct lineptr *lines, int count);
 extern void pg_wcssize(const unsigned char *pwcs, size_t len, int encoding,
-					   int *width, int *height, int *format_size);
+					   int *result_width, int *result_height,
+					   int *result_format_size);
 
 #endif							/* MBPRINT_H */

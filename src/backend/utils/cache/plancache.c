@@ -116,7 +116,7 @@ static void PlanCacheObjectCallback(Datum arg, int cacheid, uint32 hashvalue);
 static void PlanCacheSysCallback(Datum arg, int cacheid, uint32 hashvalue);
 
 /* GUC parameter */
-int			plan_cache_mode;
+int			plan_cache_mode = PLAN_CACHE_MODE_AUTO;
 
 /*
  * InitPlanCache: initialize module during InitPostgres.
@@ -689,10 +689,10 @@ RevalidateCachedQuery(CachedPlanSource *plansource,
 											  queryEnv);
 	else
 		tlist = pg_analyze_and_rewrite_fixedparams(rawtree,
-									   plansource->query_string,
-									   plansource->param_types,
-									   plansource->num_params,
-									   queryEnv);
+												   plansource->query_string,
+												   plansource->param_types,
+												   plansource->num_params,
+												   queryEnv);
 
 	/* Release snapshot if we got one */
 	if (snapshot_set)

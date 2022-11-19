@@ -1,12 +1,37 @@
 #!/bin/sh
 
-# src/tools/make_ctags
+# src/tools/make_ctags [-e] [-n]
+# If -e is specified, generate tags files for emacs.
+# If -n is specified, don't create symbolic links of tags file.
+usage="Usage:  $0 [-e][-n]"
+if [ $# -gt 2 ]
+then	echo $usage
+	exit 1
+fi
+
+MODE=
+NO_SYMLINK=
+TAGS_FILE="tags"
+
+while [ $# -gt 0 ]
+do
+	if [ $1 = "-e" ]
+	then	MODE="-e"
+		TAGS_FILE="TAGS"
+	elif [ $1 = "-n" ]
+	then	NO_SYMLINK="Y"
+	else
+		echo $usage
+		exit 1
+	fi
+	shift
+done
 
 command -v ctags >/dev/null || \
 	{ echo "'ctags' program not found" 1>&2; exit 1; }
 
-trap "rm -f /tmp/$$" 0 1 2 3 15
-rm -f ./tags
+trap "ret=$?; rm -rf /tmp/$$; exit $ret" 0 1 2 3 15
+rm -f ./$TAGS_FILE
 
 IS_EXUBERANT=""
 ctags --version 2>&1 | grep Exuberant && IS_EXUBERANT="Y"
@@ -34,9 +59,17 @@ then	FLAGS="--c-kinds=+dfmstuv"
 else	FLAGS="-dt"
 fi
 
+# Use -I option to ignore a macro
+if [ "$IS_EXUBERANT" ]
+then	IGNORE_IDENTIFIES="-I pg_node_attr+"
+else	IGNORE_IDENTIFIES=
+fi
+
 # this is outputting the tags into the file 'tags', and appending
-find `pwd`/ -type f -name '*.[chyl]' -print |
-	xargs ctags -a -f tags "$FLAGS"
+find `pwd`/ \( -name tmp_install -prune -o -name tmp_check -prune \) \
+	-o \( -name "*.[chly]" -o -iname "*makefile*" -o -name "*.mk" -o -name "*.in" \
+	-o -name "*.sql" -o -name "*.p[lm]" \) -type f -print |
+	xargs ctags $MODE -a -f $TAGS_FILE "$FLAGS" "$IGNORE_IDENTIFIES"
 
 # Exuberant tags has a header that we cannot sort in with the other entries
 # so we skip the sort step
@@ -45,10 +78,13 @@ find `pwd`/ -type f -name '*.[chyl]' -print |
 if [ ! "$IS_EXUBERANT" ]
 then	LC_ALL=C
 	export LC_ALL
-	sort tags >/tmp/$$ && mv /tmp/$$ tags
+	sort $TAGS_FILE >/tmp/$$ && mv /tmp/$$ $TAGS_FILE
 fi
 
-find . \( -name 'CVS' -prune \) -o \( -name .git -prune \) -o -type d -print |
-while read DIR
-do	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/tags "$DIR"/tags
-done
+# create symbolic links
+if [ ! "$NO_SYMLINK" ]
+then    find . \( -name 'CVS' -prune \) -o \( -name .git -prune \) -o -type d -print |
+	while read DIR
+	do	[ "$DIR" != "." ] && ln -f -s `echo "$DIR" | sed 's;/[^/]*;/..;g'`/$TAGS_FILE "$DIR"/$TAGS_FILE
+	done
+fi

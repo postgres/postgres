@@ -134,7 +134,7 @@ CREATE TABLE weather (
     differently than above, or even all on one line.  Two dashes
     (<quote><literal>--</literal></quote>) introduce comments.
     Whatever follows them is ignored up to the end of the line.  SQL
-    is case insensitive about key words and identifiers, except
+    is case-insensitive about key words and identifiers, except
     when identifiers are double-quoted to preserve the case (not done
     above).
    </para>
@@ -706,20 +706,20 @@ SELECT city FROM weather
     <indexterm><primary>HAVING</primary></indexterm>
 
     Aggregates are also very useful in combination with <literal>GROUP
-    BY</literal> clauses.  For example, we can get the maximum low
-    temperature observed in each city with:
+    BY</literal> clauses.  For example, we can get the number of readings
+    and the maximum low temperature observed in each city with:
 
 <programlisting>
-SELECT city, max(temp_lo)
+SELECT city, count(*), max(temp_lo)
     FROM weather
     GROUP BY city;
 </programlisting>
 
 <screen>
-     city      | max
----------------+-----
- Hayward       |  37
- San Francisco |  46
+     city      | count | max
+---------------+-------+-----
+ Hayward       |     1 |  37
+ San Francisco |     2 |  46
 (2 rows)
 </screen>
 
@@ -729,16 +729,16 @@ SELECT city, max(temp_lo)
     rows using <literal>HAVING</literal>:
 
 <programlisting>
-SELECT city, max(temp_lo)
+SELECT city, count(*), max(temp_lo)
     FROM weather
     GROUP BY city
     HAVING max(temp_lo) &lt; 40;
 </programlisting>
 
 <screen>
-  city   | max
----------+-----
- Hayward |  37
+  city   | count | max
+---------+-------+-----
+ Hayward |     1 |  37
 (1 row)
 </screen>
 
@@ -748,12 +748,18 @@ SELECT city, max(temp_lo)
     names begin with <quote><literal>S</literal></quote>, we might do:
 
 <programlisting>
-SELECT city, max(temp_lo)
+SELECT city, count(*), max(temp_lo)
     FROM weather
     WHERE city LIKE 'S%'            -- <co id="co.tutorial-agg-like"/>
-    GROUP BY city
-    HAVING max(temp_lo) &lt; 40;
+    GROUP BY city;
 </programlisting>
+
+<screen>
+     city      | count | max
+---------------+-------+-----
+ San Francisco |     2 |  46
+(1 row)
+</screen>
    <calloutlist>
     <callout arearefs="co.tutorial-agg-like">
      <para>
@@ -789,6 +795,34 @@ SELECT city, max(temp_lo)
     more efficient than adding the restriction to <literal>HAVING</literal>,
     because we avoid doing the grouping and aggregate calculations
     for all rows that fail the <literal>WHERE</literal> check.
+   </para>
+
+   <para>
+    Another way to select the rows that go into an aggregate
+    computation is to use <literal>FILTER</literal>, which is a
+    per-aggregate option:
+
+<programlisting>
+SELECT city, count(*) FILTER (WHERE temp_lo &lt; 45), max(temp_lo)
+    FROM weather
+    GROUP BY city;
+</programlisting>
+
+<screen>
+     city      | count | max
+---------------+-------+-----
+ Hayward       |     1 |  37
+ San Francisco |     1 |  46
+(2 rows)
+</screen>
+
+    <literal>FILTER</literal> is much like <literal>WHERE</literal>,
+    except that it removes rows only from the input of the particular
+    aggregate function that it is attached to.
+    Here, the <literal>count</literal> aggregate counts only
+    rows with <literal>temp_lo</literal> below 45; but the
+    <literal>max</literal> aggregate is still applied to all rows,
+    so it still finds the reading of 46.
    </para>
   </sect1>
 

@@ -243,8 +243,6 @@ int			NamedLWLockTrancheRequests = 0;
 /* points to data in shared memory: */
 NamedLWLockTranche *NamedLWLockTrancheArray = NULL;
 
-static bool lock_named_request_allowed = true;
-
 static void InitializeLWLocks(void);
 static inline void LWLockReportWaitStart(LWLock *lock);
 static inline void LWLockReportWaitEnd(void);
@@ -458,9 +456,6 @@ LWLockShmemSize(void)
 	for (i = 0; i < NamedLWLockTrancheRequests; i++)
 		size = add_size(size, strlen(NamedLWLockTrancheRequestArray[i].tranche_name) + 1);
 
-	/* Disallow adding any more named tranches. */
-	lock_named_request_allowed = false;
-
 	return size;
 }
 
@@ -673,13 +668,8 @@ LWLockRegisterTranche(int tranche_id, const char *tranche_name)
 				MemoryContextAllocZero(TopMemoryContext,
 									   newalloc * sizeof(char *));
 		else
-		{
-			LWLockTrancheNames = (const char **)
-				repalloc(LWLockTrancheNames, newalloc * sizeof(char *));
-			memset(LWLockTrancheNames + LWLockTrancheNamesAllocated,
-				   0,
-				   (newalloc - LWLockTrancheNamesAllocated) * sizeof(char *));
-		}
+			LWLockTrancheNames =
+				repalloc0_array(LWLockTrancheNames, const char *, LWLockTrancheNamesAllocated, newalloc);
 		LWLockTrancheNamesAllocated = newalloc;
 	}
 
@@ -691,12 +681,9 @@ LWLockRegisterTranche(int tranche_id, const char *tranche_name)
  *		Request that extra LWLocks be allocated during postmaster
  *		startup.
  *
- * This is only useful for extensions if called from the _PG_init hook
- * of a library that is loaded into the postmaster via
- * shared_preload_libraries.  Once shared memory has been allocated, calls
- * will be ignored.  (We could raise an error, but it seems better to make
- * it a no-op, so that libraries containing such calls can be reloaded if
- * needed.)
+ * This may only be called via the shmem_request_hook of a library that is
+ * loaded into the postmaster via shared_preload_libraries.  Calls from
+ * elsewhere will fail.
  *
  * The tranche name will be user-visible as a wait event name, so try to
  * use a name that fits the style for those.
@@ -706,8 +693,8 @@ RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 {
 	NamedLWLockTrancheRequest *request;
 
-	if (IsUnderPostmaster || !lock_named_request_allowed)
-		return;					/* too late */
+	if (!process_shmem_requests_in_progress)
+		elog(FATAL, "cannot request additional LWLocks outside shmem_request_hook");
 
 	if (NamedLWLockTrancheRequestArray == NULL)
 	{
@@ -824,7 +811,7 @@ LWLockAttemptLock(LWLock *lock, LWLockMode mode)
 {
 	uint32		old_state;
 
-	AssertArg(mode == LW_EXCLUSIVE || mode == LW_SHARED);
+	Assert(mode == LW_EXCLUSIVE || mode == LW_SHARED);
 
 	/*
 	 * Read once outside the loop, later iterations will get the newer value
@@ -1212,7 +1199,7 @@ LWLockAcquire(LWLock *lock, LWLockMode mode)
 	lwstats = get_lwlock_stats_entry(lock);
 #endif
 
-	AssertArg(mode == LW_SHARED || mode == LW_EXCLUSIVE);
+	Assert(mode == LW_SHARED || mode == LW_EXCLUSIVE);
 
 	PRINT_LWDEBUG("LWLockAcquire", lock, mode);
 
@@ -1376,7 +1363,7 @@ LWLockConditionalAcquire(LWLock *lock, LWLockMode mode)
 {
 	bool		mustwait;
 
-	AssertArg(mode == LW_SHARED || mode == LW_EXCLUSIVE);
+	Assert(mode == LW_SHARED || mode == LW_EXCLUSIVE);
 
 	PRINT_LWDEBUG("LWLockConditionalAcquire", lock, mode);
 
@@ -1921,13 +1908,39 @@ LWLockReleaseAll(void)
  * This is meant as debug support only.
  */
 bool
-LWLockHeldByMe(LWLock *l)
+LWLockHeldByMe(LWLock *lock)
 {
 	int			i;
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (held_lwlocks[i].lock == l)
+		if (held_lwlocks[i].lock == lock)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * LWLockHeldByMe - test whether my process holds any of an array of locks
+ *
+ * This is meant as debug support only.
+ */
+bool
+LWLockAnyHeldByMe(LWLock *lock, int nlocks, size_t stride)
+{
+	char	   *held_lock_addr;
+	char	   *begin;
+	char	   *end;
+	int			i;
+
+	begin = (char *) lock;
+	end = begin + nlocks * stride;
+	for (i = 0; i < num_held_lwlocks; i++)
+	{
+		held_lock_addr = (char *) held_lwlocks[i].lock;
+		if (held_lock_addr >= begin &&
+			held_lock_addr < end &&
+			(held_lock_addr - begin) % stride == 0)
 			return true;
 	}
 	return false;
@@ -1939,21 +1952,14 @@ LWLockHeldByMe(LWLock *l)
  * This is meant as debug support only.
  */
 bool
-LWLockHeldByMeInMode(LWLock *l, LWLockMode mode)
+LWLockHeldByMeInMode(LWLock *lock, LWLockMode mode)
 {
 	int			i;
 
 	for (i = 0; i < num_held_lwlocks; i++)
 	{
-		if (held_lwlocks[i].lock == l && held_lwlocks[i].mode == mode)
+		if (held_lwlocks[i].lock == lock && held_lwlocks[i].mode == mode)
 			return true;
 	}
 	return false;
-}
-
-/* temp debugging aid to analyze 019_replslot_limit failures */
-int
-LWLockHeldCount(void)
-{
-	return num_held_lwlocks;
 }

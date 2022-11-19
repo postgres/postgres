@@ -36,6 +36,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
+#include "utils/guc.h"
 #include "utils/index_selfuncs.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -108,7 +109,6 @@ brinhandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amhotblocking = false;
 	amroutine->amparallelvacuumoptions =
 		VACUUM_OPTION_PARALLEL_CLEANUP;
 	amroutine->amkeytype = InvalidOid;
@@ -330,7 +330,7 @@ brinbeginscan(Relation r, int nkeys, int norderbys)
 
 	scan = RelationGetIndexScan(r, nkeys, norderbys);
 
-	opaque = (BrinOpaque *) palloc(sizeof(BrinOpaque));
+	opaque = palloc_object(BrinOpaque);
 	opaque->bo_rmAccess = brinRevmapInitialize(r, &opaque->bo_pagesPerRange,
 											   scan->xs_snapshot);
 	opaque->bo_bdesc = brin_build_desc(r);
@@ -373,7 +373,6 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 			  **nullkeys;
 	int		   *nkeys,
 			   *nnullkeys;
-	int			keyno;
 	char	   *ptr;
 	Size		len;
 	char	   *tmp PG_USED_FOR_ASSERTS_ONLY;
@@ -396,7 +395,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	 * don't look them up here; we do that lazily the first time we see a scan
 	 * key reference each of them.  We rely on zeroing fn_oid to InvalidOid.
 	 */
-	consistentFn = palloc0(sizeof(FmgrInfo) * bdesc->bd_tupdesc->natts);
+	consistentFn = palloc0_array(FmgrInfo, bdesc->bd_tupdesc->natts);
 
 	/*
 	 * Make room for per-attribute lists of scan keys that we'll pass to the
@@ -455,7 +454,7 @@ bringetbitmap(IndexScanDesc scan, TIDBitmap *tbm)
 	memset(nnullkeys, 0, sizeof(int) * bdesc->bd_tupdesc->natts);
 
 	/* Preprocess the scan keys - split them into per-attribute arrays. */
-	for (keyno = 0; keyno < scan->numberOfKeys; keyno++)
+	for (int keyno = 0; keyno < scan->numberOfKeys; keyno++)
 	{
 		ScanKey		key = &scan->keyData[keyno];
 		AttrNumber	keyattno = key->sk_attno;
@@ -883,7 +882,7 @@ brinbuild(Relation heap, Relation index, IndexInfo *indexInfo)
 	/*
 	 * Return statistics
 	 */
-	result = (IndexBuildResult *) palloc(sizeof(IndexBuildResult));
+	result = palloc_object(IndexBuildResult);
 
 	result->heap_tuples = reltuples;
 	result->index_tuples = idxtuples;
@@ -927,7 +926,7 @@ brinbulkdelete(IndexVacuumInfo *info, IndexBulkDeleteResult *stats,
 {
 	/* allocate stats if first time through, else re-use existing struct */
 	if (stats == NULL)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 
 	return stats;
 }
@@ -946,7 +945,7 @@ brinvacuumcleanup(IndexVacuumInfo *info, IndexBulkDeleteResult *stats)
 		return stats;
 
 	if (!stats)
-		stats = (IndexBulkDeleteResult *) palloc0(sizeof(IndexBulkDeleteResult));
+		stats = palloc0_object(IndexBulkDeleteResult);
 	stats->num_pages = RelationGetNumberOfBlocks(info->index);
 	/* rest of stats is initialized by zeroing */
 
@@ -1008,6 +1007,9 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	Oid			heapoid;
 	Relation	indexRel;
 	Relation	heapRel;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 	double		numSummarized = 0;
 
 	if (RecoveryInProgress())
@@ -1031,9 +1033,30 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
+	{
 		heapRel = table_open(heapoid, ShareUpdateExclusiveLock);
+
+		/*
+		 * Autovacuum calls us.  For its benefit, switch to the table owner's
+		 * userid, so that any index functions are run as that user.  Also
+		 * lock down security-restricted operations and arrange to make GUC
+		 * variable changes local to this command.  This is harmless, albeit
+		 * unnecessary, when called from SQL, because we fail shortly if the
+		 * user does not own the index.
+		 */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(heapRel->rd_rel->relowner,
+							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+		save_nestlevel = NewGUCNestLevel();
+	}
 	else
+	{
 		heapRel = NULL;
+		/* Set these just to suppress "uninitialized variable" warnings */
+		save_userid = InvalidOid;
+		save_sec_context = -1;
+		save_nestlevel = -1;
+	}
 
 	indexRel = index_open(indexoid, ShareUpdateExclusiveLock);
 
@@ -1046,7 +1069,7 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 						RelationGetRelationName(indexRel))));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
-	if (!pg_class_ownercheck(indexoid, GetUserId()))
+	if (heapRel != NULL && !object_ownercheck(RelationRelationId, indexoid, save_userid))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
 					   RelationGetRelationName(indexRel));
 
@@ -1063,6 +1086,12 @@ brin_summarize_range(PG_FUNCTION_ARGS)
 
 	/* OK, do it */
 	brinsummarize(indexRel, heapRel, heapBlk, true, &numSummarized, NULL);
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	relation_close(indexRel, ShareUpdateExclusiveLock);
 	relation_close(heapRel, ShareUpdateExclusiveLock);
@@ -1102,6 +1131,9 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 	 * passed indexoid isn't an index then IndexGetRelation() will fail.
 	 * Rather than emitting a not-very-helpful error message, postpone
 	 * complaining, expecting that the is-it-an-index test below will fail.
+	 *
+	 * Unlike brin_summarize_range(), autovacuum never calls this.  Hence, we
+	 * don't switch userid.
 	 */
 	heapoid = IndexGetRelation(indexoid, true);
 	if (OidIsValid(heapoid))
@@ -1120,7 +1152,7 @@ brin_desummarize_range(PG_FUNCTION_ARGS)
 						RelationGetRelationName(indexRel))));
 
 	/* User must own the index (comparable to privileges needed for VACUUM) */
-	if (!pg_class_ownercheck(indexoid, GetUserId()))
+	if (!object_ownercheck(RelationRelationId, indexoid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_INDEX,
 					   RelationGetRelationName(indexRel));
 
@@ -1173,7 +1205,7 @@ brin_build_desc(Relation rel)
 	 * Obtain BrinOpcInfo for each indexed column.  While at it, accumulate
 	 * the number of columns stored, since the number is opclass-defined.
 	 */
-	opcinfo = (BrinOpcInfo **) palloc(sizeof(BrinOpcInfo *) * tupdesc->natts);
+	opcinfo = palloc_array(BrinOpcInfo*, tupdesc->natts);
 	for (keyno = 0; keyno < tupdesc->natts; keyno++)
 	{
 		FmgrInfo   *opcInfoFn;
@@ -1245,7 +1277,7 @@ initialize_brin_buildstate(Relation idxRel, BrinRevmap *revmap,
 {
 	BrinBuildState *state;
 
-	state = palloc(sizeof(BrinBuildState));
+	state = palloc_object(BrinBuildState);
 
 	state->bs_irel = idxRel;
 	state->bs_numtuples = 0;

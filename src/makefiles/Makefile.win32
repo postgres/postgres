@@ -10,8 +10,6 @@ endif
 
 override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
 
-AROPT = crs
-
 ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
 ifeq (,$(findstring libpqwalreceiver,$(subdir)))
@@ -69,7 +67,6 @@ win32ver.rc: $(top_srcdir)/src/port/win32ver.rc
 	sed -e 's;FILEDESC;$(PGFILEDESC);' \
 	    -e 's;VFT_APP;$(PGFTYPE);' \
 	    -e 's;_ICO_;$(PGICOSTR);' \
-	    -e 's;\(VERSION.*\),0 *$$;\1,'`date '+%y%j' | sed 's/^0*//'`';' \
 	    -e '/_INTERNAL_NAME_/$(if $(shlib),s;_INTERNAL_NAME_;"$(basename $(shlib))";,d)' \
 	    -e '/_ORIGINAL_NAME_/$(if $(shlib),s;_ORIGINAL_NAME_;"$(shlib)";,d)' \
 	  $< >$@

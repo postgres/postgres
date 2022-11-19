@@ -133,16 +133,6 @@ pgp_get_digest_name(int code)
 	return NULL;
 }
 
-const char *
-pgp_get_cipher_name(int code)
-{
-	const struct cipher_info *i = get_cipher_info(code);
-
-	if (i != NULL)
-		return i->name;
-	return NULL;
-}
-
 int
 pgp_get_cipher_key_size(int code)
 {

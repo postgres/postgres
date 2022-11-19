@@ -30,11 +30,6 @@
 #include <sys/param.h>
 #endif
 
-#if defined(_M_AMD64) && _MSC_VER == 1800
-#include <math.h>
-#include <versionhelpers.h>
-#endif
-
 #include "bootstrap/bootstrap.h"
 #include "common/username.h"
 #include "port/atomics.h"
@@ -68,7 +63,7 @@ main(int argc, char *argv[])
 	 * If supported on the current platform, set up a handler to be called if
 	 * the backend/postmaster crashes with a fatal signal or exception.
 	 */
-#if defined(WIN32) && defined(HAVE_MINIDUMP_TYPE)
+#if defined(WIN32)
 	pgwin32_install_crashdump_handler();
 #endif
 
@@ -290,23 +285,6 @@ startup_hacks(const char *progname)
 		_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
 		_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
 		_CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDERR);
-
-#if defined(_M_AMD64) && _MSC_VER == 1800
-
-		/*----------
-		 * Avoid crashing in certain floating-point operations if we were
-		 * compiled for x64 with MS Visual Studio 2013 and are running on
-		 * Windows prior to 7/2008R2 SP1 on an AVX2-capable CPU.
-		 *
-		 * Ref: https://connect.microsoft.com/VisualStudio/feedback/details/811093/visual-studio-2013-rtm-c-x64-code-generation-bug-for-avx2-instructions
-		 *----------
-		 */
-		if (!IsWindows7SP1OrGreater())
-		{
-			_set_FMA3_enable(0);
-		}
-#endif							/* defined(_M_AMD64) && _MSC_VER == 1800 */
-
 	}
 #endif							/* WIN32 */
 
@@ -373,7 +351,7 @@ help(const char *progname)
 	printf(_("  -?, --help         show this help, then exit\n"));
 
 	printf(_("\nDeveloper options:\n"));
-	printf(_("  -f s|i|n|m|h       forbid use of some plan types\n"));
+	printf(_("  -f s|i|o|b|t|n|m|h forbid use of some plan types\n"));
 	printf(_("  -n                 do not reinitialize shared memory after abnormal exit\n"));
 	printf(_("  -O                 allow system table structure changes\n"));
 	printf(_("  -P                 disable system indexes\n"));

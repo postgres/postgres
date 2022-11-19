@@ -202,6 +202,7 @@
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/pg_lfind.h"
 #include "storage/bufmgr.h"
 #include "storage/predicate.h"
 #include "storage/predicate_internals.h"
@@ -446,7 +447,7 @@ static void SerialSetActiveSerXmin(TransactionId xid);
 
 static uint32 predicatelock_hash(const void *key, Size keysize);
 static void SummarizeOldestCommittedSxact(void);
-static Snapshot GetSafeSnapshot(Snapshot snapshot);
+static Snapshot GetSafeSnapshot(Snapshot origSnapshot);
 static Snapshot GetSerializableTransactionSnapshotInt(Snapshot snapshot,
 													  VirtualTransactionId *sourcevxid,
 													  int sourcepid);
@@ -1685,8 +1686,8 @@ GetSerializableTransactionSnapshot(Snapshot snapshot)
 	/*
 	 * Can't use serializable mode while recovery is still active, as it is,
 	 * for example, on a hot standby.  We could get here despite the check in
-	 * check_XactIsoLevel() if default_transaction_isolation is set to
-	 * serializable, so phrase the hint accordingly.
+	 * check_transaction_isolation() if default_transaction_isolation is set
+	 * to serializable, so phrase the hint accordingly.
 	 */
 	if (RecoveryInProgress())
 		ereport(ERROR,
@@ -1997,7 +1998,7 @@ PageIsPredicateLocked(Relation relation, BlockNumber blkno)
 	PREDICATELOCKTARGET *target;
 
 	SET_PREDICATELOCKTARGETTAG_PAGE(targettag,
-									relation->rd_node.dbNode,
+									relation->rd_locator.dbOid,
 									relation->rd_id,
 									blkno);
 
@@ -2576,7 +2577,7 @@ PredicateLockRelation(Relation relation, Snapshot snapshot)
 		return;
 
 	SET_PREDICATELOCKTARGETTAG_RELATION(tag,
-										relation->rd_node.dbNode,
+										relation->rd_locator.dbOid,
 										relation->rd_id);
 	PredicateLockAcquire(&tag);
 }
@@ -2599,7 +2600,7 @@ PredicateLockPage(Relation relation, BlockNumber blkno, Snapshot snapshot)
 		return;
 
 	SET_PREDICATELOCKTARGETTAG_PAGE(tag,
-									relation->rd_node.dbNode,
+									relation->rd_locator.dbOid,
 									relation->rd_id,
 									blkno);
 	PredicateLockAcquire(&tag);
@@ -2638,13 +2639,13 @@ PredicateLockTID(Relation relation, ItemPointer tid, Snapshot snapshot,
 	 * level lock.
 	 */
 	SET_PREDICATELOCKTARGETTAG_RELATION(tag,
-										relation->rd_node.dbNode,
+										relation->rd_locator.dbOid,
 										relation->rd_id);
 	if (PredicateLockExists(&tag))
 		return;
 
 	SET_PREDICATELOCKTARGETTAG_TUPLE(tag,
-									 relation->rd_node.dbNode,
+									 relation->rd_locator.dbOid,
 									 relation->rd_id,
 									 ItemPointerGetBlockNumber(tid),
 									 ItemPointerGetOffsetNumber(tid));
@@ -2974,7 +2975,7 @@ DropAllPredicateLocksFromTable(Relation relation, bool transfer)
 	if (!PredicateLockingNeededForRelation(relation))
 		return;
 
-	dbId = relation->rd_node.dbNode;
+	dbId = relation->rd_locator.dbOid;
 	relId = relation->rd_id;
 	if (relation->rd_index == NULL)
 	{
@@ -3194,11 +3195,11 @@ PredicateLockPageSplit(Relation relation, BlockNumber oldblkno,
 	Assert(BlockNumberIsValid(newblkno));
 
 	SET_PREDICATELOCKTARGETTAG_PAGE(oldtargettag,
-									relation->rd_node.dbNode,
+									relation->rd_locator.dbOid,
 									relation->rd_id,
 									oldblkno);
 	SET_PREDICATELOCKTARGETTAG_PAGE(newtargettag,
-									relation->rd_node.dbNode,
+									relation->rd_locator.dbOid,
 									relation->rd_id,
 									newblkno);
 
@@ -4065,7 +4066,6 @@ static bool
 XidIsConcurrent(TransactionId xid)
 {
 	Snapshot	snap;
-	uint32		i;
 
 	Assert(TransactionIdIsValid(xid));
 	Assert(!TransactionIdEquals(xid, GetTopTransactionIdIfAny()));
@@ -4078,13 +4078,7 @@ XidIsConcurrent(TransactionId xid)
 	if (TransactionIdFollowsOrEquals(xid, snap->xmax))
 		return true;
 
-	for (i = 0; i < snap->xcnt; i++)
-	{
-		if (xid == snap->xip[i])
-			return true;
-	}
-
-	return false;
+	return pg_lfind32(xid, snap->xip, snap->xcnt);
 }
 
 bool
@@ -4478,7 +4472,7 @@ CheckForSerializableConflictIn(Relation relation, ItemPointer tid, BlockNumber b
 	if (tid != NULL)
 	{
 		SET_PREDICATELOCKTARGETTAG_TUPLE(targettag,
-										 relation->rd_node.dbNode,
+										 relation->rd_locator.dbOid,
 										 relation->rd_id,
 										 ItemPointerGetBlockNumber(tid),
 										 ItemPointerGetOffsetNumber(tid));
@@ -4488,14 +4482,14 @@ CheckForSerializableConflictIn(Relation relation, ItemPointer tid, BlockNumber b
 	if (blkno != InvalidBlockNumber)
 	{
 		SET_PREDICATELOCKTARGETTAG_PAGE(targettag,
-										relation->rd_node.dbNode,
+										relation->rd_locator.dbOid,
 										relation->rd_id,
 										blkno);
 		CheckTargetForConflictsIn(&targettag);
 	}
 
 	SET_PREDICATELOCKTARGETTAG_RELATION(targettag,
-										relation->rd_node.dbNode,
+										relation->rd_locator.dbOid,
 										relation->rd_id);
 	CheckTargetForConflictsIn(&targettag);
 }
@@ -4556,7 +4550,7 @@ CheckTableForSerializableConflictIn(Relation relation)
 
 	Assert(relation->rd_index == NULL); /* not an index relation */
 
-	dbId = relation->rd_node.dbNode;
+	dbId = relation->rd_locator.dbOid;
 	heapId = relation->rd_id;
 
 	LWLockAcquire(SerializablePredicateListLock, LW_EXCLUSIVE);

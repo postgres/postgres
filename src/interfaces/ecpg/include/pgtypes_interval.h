@@ -36,10 +36,10 @@ extern "C"
 #endif
 
 extern interval * PGTYPESinterval_new(void);
-extern void PGTYPESinterval_free(interval *);
-extern interval * PGTYPESinterval_from_asc(char *, char **);
-extern char *PGTYPESinterval_to_asc(interval *);
-extern int	PGTYPESinterval_copy(interval *, interval *);
+extern void PGTYPESinterval_free(interval *intvl);
+extern interval * PGTYPESinterval_from_asc(char *str, char **endptr);
+extern char *PGTYPESinterval_to_asc(interval *span);
+extern int	PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);
 
 #ifdef __cplusplus
 }

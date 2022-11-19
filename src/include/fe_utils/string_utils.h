@@ -24,7 +24,7 @@ extern PGDLLIMPORT int quote_all_identifiers;
 extern PQExpBuffer (*getLocalPQExpBuffer) (void);
 
 /* Functions */
-extern const char *fmtId(const char *identifier);
+extern const char *fmtId(const char *rawid);
 extern const char *fmtQualifiedId(const char *schema, const char *id);
 
 extern char *formatPGVersionNumber(int version_number, bool include_minor,

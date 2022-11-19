@@ -72,3 +72,32 @@ SELECT 1234::int4::casttesttype; -- Should work now
  foo1234
 (1 row)
 
+DROP FUNCTION int4_casttesttype(int4) CASCADE;
+NOTICE:  drop cascades to cast from integer to casttesttype
+-- Try it with a function that requires an implicit cast
+CREATE FUNCTION bar_int4_text(int4) RETURNS text LANGUAGE SQL AS
+$$ SELECT ('bar'::text || $1::text); $$;
+CREATE CAST (int4 AS casttesttype) WITH FUNCTION bar_int4_text(int4) AS IMPLICIT;
+SELECT 1234::int4::casttesttype; -- Should work now
+ casttesttype 
+--------------
+ bar1234
+(1 row)
+
+-- check dependencies generated for that
+SELECT pg_describe_object(classid, objid, objsubid) as obj,
+       pg_describe_object(refclassid, refobjid, refobjsubid) as objref,
+       deptype
+FROM pg_depend
+WHERE classid = 'pg_cast'::regclass AND
+      objid = (SELECT oid FROM pg_cast
+               WHERE castsource = 'int4'::regtype
+                 AND casttarget = 'casttesttype'::regtype)
+ORDER BY refclassid;
+                obj                |             objref              | deptype 
+-----------------------------------+---------------------------------+---------
+ cast from integer to casttesttype | type casttesttype               | n
+ cast from integer to casttesttype | function bar_int4_text(integer) | n
+ cast from integer to casttesttype | cast from text to casttesttype  | n
+(3 rows)
+

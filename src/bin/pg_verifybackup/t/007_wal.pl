@@ -5,7 +5,6 @@
 
 use strict;
 use warnings;
-use File::Path qw(rmtree);
 use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
@@ -15,7 +14,8 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 my $backup_path = $primary->backup_dir . '/test_wal';
-$primary->command_ok([ 'pg_basebackup', '-D', $backup_path, '--no-sync', '-cfast' ],
+$primary->command_ok(
+	[ 'pg_basebackup', '-D', $backup_path, '--no-sync', '-cfast' ],
 	"base backup ok");
 
 # Rename pg_wal.
@@ -69,7 +69,8 @@ $primary->safe_psql('postgres', 'SELECT pg_switch_wal()');
 my $backup_path2 = $primary->backup_dir . '/test_tli';
 # The base backup run below does a checkpoint, that removes the first segment
 # of the current timeline.
-$primary->command_ok([ 'pg_basebackup', '-D', $backup_path2, '--no-sync', '-cfast' ],
+$primary->command_ok(
+	[ 'pg_basebackup', '-D', $backup_path2, '--no-sync', '-cfast' ],
 	"base backup 2 ok");
 command_ok(
 	[ 'pg_verifybackup', $backup_path2 ],

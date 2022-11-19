@@ -412,7 +412,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
      of data files. They are dependent on metadata contained in the main
      data directory, and therefore cannot be attached to a different
      database cluster or backed up individually.  Similarly, if you lose
-     a tablespace (file deletion, disk failure, etc), the database cluster
+     a tablespace (file deletion, disk failure, etc.), the database cluster
      might become unreadable or unable to start.  Placing a tablespace
      on a temporary file system like a RAM disk risks the reliability of
      the entire cluster.
@@ -528,13 +528,6 @@ SELECT spcname FROM pg_tablespace;
 </synopsis>
    The <xref linkend="app-psql"/> program's <literal>\db</literal> meta-command
    is also useful for listing the existing tablespaces.
-  </para>
-
-  <para>
-   <productname>PostgreSQL</productname> makes use of symbolic links
-   to simplify the implementation of tablespaces. This
-   means that tablespaces can be used <emphasis>only</emphasis> on systems
-   that support symbolic links.
   </para>
 
   <para>

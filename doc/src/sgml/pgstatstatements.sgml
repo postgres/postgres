@@ -413,7 +413,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_generation_time</structfield> <type>bigint</type>
+       <structfield>jit_generation_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on generating JIT code, in milliseconds
@@ -431,7 +431,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_inlining_time</structfield> <type>bigint</type>
+       <structfield>jit_inlining_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on inlining functions, in milliseconds
@@ -449,7 +449,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_optimization_time</structfield> <type>bigint</type>
+       <structfield>jit_optimization_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on optimizing, in milliseconds
@@ -467,7 +467,7 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>jit_emission_time</structfield> <type>bigint</type>
+       <structfield>jit_emission_time</structfield> <type>double precision</type>
       </para>
       <para>
        Total time spent by the statement on emitting code, in milliseconds
@@ -487,7 +487,7 @@
 
   <para>
    Plannable queries (that is, <command>SELECT</command>, <command>INSERT</command>,
-   <command>UPDATE</command>, and <command>DELETE</command>) are combined into a single
+   <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>) are combined into a single
    <structname>pg_stat_statements</structname> entry whenever they have identical query
    structures according to an internal hash calculation.  Typically, two
    queries will be considered the same for this purpose if they are
@@ -783,7 +783,7 @@
       <varname>pg_stat_statements.track_utility</varname> controls whether
       utility commands are tracked by the module.  Utility commands are
       all those other than <command>SELECT</command>, <command>INSERT</command>,
-      <command>UPDATE</command> and <command>DELETE</command>.
+      <command>UPDATE</command>, <command>DELETE</command>, and <command>MERGE</command>.
       The default value is <literal>on</literal>.
       Only superusers can change this setting.
      </para>

@@ -415,9 +415,10 @@ SELECT doc-&gt;'site_name' FROM websites
   </para>
   <para>
     The default GIN operator class for <type>jsonb</type> supports queries with
-    top-level key-exists operators <literal>?</literal>, <literal>?&amp;</literal>
-    and <literal>?|</literal> operators and path/value-exists operator
-    <literal>@&gt;</literal>.
+    the key-exists operators <literal>?</literal>, <literal>?|</literal>
+    and <literal>?&amp;</literal>, the containment operator
+    <literal>@&gt;</literal>, and the <type>jsonpath</type> match
+    operators <literal>@?</literal> and <literal>@@</literal>.
     (For details of the semantics that these operators
     implement, see <xref linkend="functions-jsonb-op-table"/>.)
     An example of creating an index with this operator class is:
@@ -425,7 +426,8 @@ SELECT doc-&gt;'site_name' FROM websites
 CREATE INDEX idxgin ON api USING GIN (jdoc);
 </programlisting>
     The non-default GIN operator class <literal>jsonb_path_ops</literal>
-    supports indexing the <literal>@&gt;</literal> operator only.
+    does not support the key-exists operators, but it does support
+    <literal>@&gt;</literal>, <literal>@?</literal> and <literal>@@</literal>.
     An example of creating an index with this operator class is:
 <programlisting>
 CREATE INDEX idxginp ON api USING GIN (jdoc jsonb_path_ops);
@@ -482,22 +484,7 @@ CREATE INDEX idxgintags ON api USING GIN ((jdoc -&gt; 'tags'));
     (More information on expression indexes can be found in <xref
     linkend="indexes-expressional"/>.)
   </para>
-  <para>
-    Also, GIN index supports <literal>@@</literal> and <literal>@?</literal>
-    operators, which perform <literal>jsonpath</literal> matching.
-<programlisting>
-SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
-</programlisting>
-<programlisting>
-SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @? '$.tags[*] ? (@ == "qui")';
-</programlisting>
-    GIN index extracts statements of following form out of
-    <literal>jsonpath</literal>: <replaceable>accessors_chain</replaceable> = <replaceable>const</replaceable>.
-    Accessors chain may consist of <literal>.key</literal>,
-    <literal>[*]</literal>, and <literal>[<replaceable>index</replaceable>]</literal> accessors.
-    <literal>jsonb_ops</literal> additionally supports <literal>.*</literal>
-    and <literal>.**</literal> accessors.
-  </para>
+
   <para>
     Another approach to querying is to exploit containment, for example:
 <programlisting>
@@ -515,9 +502,32 @@ SELECT jdoc-&gt;'guid', jdoc-&gt;'name' FROM api WHERE jdoc @&gt; '{"tags": ["qu
   </para>
 
   <para>
+    GIN indexes also support the <literal>@?</literal>
+    and <literal>@@</literal> operators, which
+    perform <type>jsonpath</type> matching.  Examples are
+<programlisting>
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @? '$.tags[*] ? (@ == "qui")';
+</programlisting>
+<programlisting>
+SELECT jdoc->'guid', jdoc->'name' FROM api WHERE jdoc @@ '$.tags[*] == "qui"';
+</programlisting>
+    For these operators, a GIN index extracts clauses of the form
+    <literal><replaceable>accessors_chain</replaceable>
+    = <replaceable>constant</replaceable></literal> out of
+    the <type>jsonpath</type> pattern, and does the index search based on
+    the keys and values mentioned in these clauses.  The accessors chain
+    may include <literal>.<replaceable>key</replaceable></literal>,
+    <literal>[*]</literal>,
+    and <literal>[<replaceable>index</replaceable>]</literal> accessors.
+    The <literal>jsonb_ops</literal> operator class also
+    supports <literal>.*</literal> and <literal>.**</literal> accessors,
+    but the <literal>jsonb_path_ops</literal> operator class does not.
+  </para>
+
+  <para>
     Although the <literal>jsonb_path_ops</literal> operator class supports
-    only queries with the <literal>@&gt;</literal>, <literal>@@</literal>
-    and <literal>@?</literal> operators, it has notable
+    only queries with the <literal>@&gt;</literal>, <literal>@?</literal>
+    and <literal>@@</literal> operators, it has notable
     performance advantages over the default operator
     class <literal>jsonb_ops</literal>.  A <literal>jsonb_path_ops</literal>
     index is usually much smaller than a <literal>jsonb_ops</literal>
@@ -691,10 +701,10 @@ UPDATE table_name SET jsonb_field[2] = '2';
    assigned value can be placed.
 
 <programlisting>
--- Where jsonb_field was {}, it is now {'a': [{'b': 1}]}
+-- Where jsonb_field was {}, it is now {"a": [{"b": 1}]}
 UPDATE table_name SET jsonb_field['a'][0]['b'] = '1';
 
--- Where jsonb_field was [], it is now [null, {'a': 1}]
+-- Where jsonb_field was [], it is now [null, {"a": 1}]
 UPDATE table_name SET jsonb_field[1]['a'] = '1';
 </programlisting>
 

@@ -19,7 +19,6 @@
 #include "access/relscan.h"
 #include "access/sysattr.h"
 #include "access/table.h"
-#include "access/valid.h"
 #include "access/xact.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_operator.h"
@@ -240,6 +239,7 @@ GetCCHashEqFuncs(Oid keytype, CCHashFN *hashfunc, RegProcedure *eqfunc, CCFastEq
 		case REGOPERATOROID:
 		case REGCLASSOID:
 		case REGTYPEOID:
+		case REGCOLLATIONOID:
 		case REGCONFIGOID:
 		case REGDICTIONARYOID:
 		case REGROLEOID:

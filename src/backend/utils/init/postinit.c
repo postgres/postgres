@@ -58,7 +58,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/portal.h"
@@ -217,7 +217,8 @@ PerformAuthentication(Port *port)
 		 * since there is no way to connect to the database in this case.
 		 */
 		ereport(FATAL,
-				(errmsg("could not load pg_hba.conf")));
+		/* translator: %s is a configuration file */
+				(errmsg("could not load %s", HbaFileName)));
 	}
 
 	if (!load_ident())
@@ -358,7 +359,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 		 * and save a few cycles.)
 		 */
 		if (!am_superuser &&
-			pg_database_aclcheck(MyDatabaseId, GetUserId(),
+			object_aclcheck(DatabaseRelationId, MyDatabaseId, GetUserId(),
 								 ACL_CONNECT) != ACLCHECK_OK)
 			ereport(FATAL,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -391,7 +392,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	SetDatabaseEncoding(dbform->encoding);
 	/* Record it as a GUC internal option, too */
 	SetConfigOption("server_encoding", GetDatabaseEncodingName(),
-					PGC_INTERNAL, PGC_S_OVERRIDE);
+					PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 	/* If we have no other source of client_encoding, use server encoding */
 	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
 					PGC_BACKEND, PGC_S_DYNAMIC_DEFAULT);
@@ -429,6 +430,7 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 		iculocale = NULL;
 
 	default_locale.provider = dbform->datlocprovider;
+
 	/*
 	 * Default locale is currently always deterministic.  Nondeterministic
 	 * locales currently don't support pattern matching, which would break a
@@ -452,9 +454,10 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 
 		actual_versionstr = get_collation_actual_version(dbform->datlocprovider, dbform->datlocprovider == COLLPROVIDER_ICU ? iculocale : collate);
 		if (!actual_versionstr)
-			ereport(WARNING,
-					(errmsg("database \"%s\" has no actual collation version, but a version was recorded",
-							name)));
+			/* should not happen */
+			elog(WARNING,
+				 "database \"%s\" has no actual collation version, but a version was recorded",
+				 name);
 		else if (strcmp(actual_versionstr, collversionstr) != 0)
 			ereport(WARNING,
 					(errmsg("database \"%s\" has a collation version mismatch",
@@ -469,8 +472,8 @@ CheckMyDatabase(const char *name, bool am_superuser, bool override_allow_connect
 	}
 
 	/* Make the locale settings visible as GUC variables, too */
-	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_OVERRIDE);
-	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_OVERRIDE);
+	SetConfigOption("lc_collate", collate, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
+	SetConfigOption("lc_ctype", ctype, PGC_INTERNAL, PGC_S_DYNAMIC_DEFAULT);
 
 	check_strxfrm_bug();
 
@@ -538,9 +541,8 @@ pg_split_opts(char **argv, int *argcp, const char *optstr)
 /*
  * Initialize MaxBackends value from config options.
  *
- * This must be called after modules have had the chance to register background
- * workers in shared_preload_libraries, and before shared memory size is
- * determined.
+ * This must be called after modules have had the chance to alter GUCs in
+ * shared_preload_libraries and before shared memory size is determined.
  *
  * Note that in EXEC_BACKEND environment, the value is passed down from
  * postmaster to subprocesses via BackendParameters in SubPostmasterMain; only
@@ -559,6 +561,54 @@ InitializeMaxBackends(void)
 	/* internal error because the values were all checked previously */
 	if (MaxBackends > MAX_BACKENDS)
 		elog(ERROR, "too many backends configured");
+}
+
+/*
+ * GUC check_hook for max_connections
+ */
+bool
+check_max_connections(int *newval, void **extra, GucSource source)
+{
+	if (*newval + autovacuum_max_workers + 1 +
+		max_worker_processes + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for autovacuum_max_workers
+ */
+bool
+check_autovacuum_max_workers(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + *newval + 1 +
+		max_worker_processes + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for max_worker_processes
+ */
+bool
+check_max_worker_processes(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + autovacuum_max_workers + 1 +
+		*newval + max_wal_senders > MAX_BACKENDS)
+		return false;
+	return true;
+}
+
+/*
+ * GUC check_hook for max_wal_senders
+ */
+bool
+check_max_wal_senders(int *newval, void **extra, GucSource source)
+{
+	if (MaxConnections + autovacuum_max_workers + 1 +
+		max_worker_processes + *newval > MAX_BACKENDS)
+		return false;
+	return true;
 }
 
 /*
@@ -605,8 +655,8 @@ BaseInit(void)
 	InitTemporaryFileAccess();
 
 	/*
-	 * Initialize local buffers for WAL record construction, in case we
-	 * ever try to insert XLOG.
+	 * Initialize local buffers for WAL record construction, in case we ever
+	 * try to insert XLOG.
 	 */
 	InitXLogInsert();
 
@@ -622,29 +672,48 @@ BaseInit(void)
  * InitPostgres
  *		Initialize POSTGRES.
  *
+ * Parameters:
+ *	in_dbname, dboid: specify database to connect to, as described below
+ *	username, useroid: specify role to connect as, as described below
+ *	load_session_libraries: TRUE to honor [session|local]_preload_libraries
+ *	override_allow_connections: TRUE to connect despite !datallowconn
+ *	out_dbname: optional output parameter, see below; pass NULL if not used
+ *
  * The database can be specified by name, using the in_dbname parameter, or by
- * OID, using the dboid parameter.  In the latter case, the actual database
+ * OID, using the dboid parameter.  Specify NULL or InvalidOid respectively
+ * for the unused parameter.  If dboid is provided, the actual database
  * name can be returned to the caller in out_dbname.  If out_dbname isn't
  * NULL, it must point to a buffer of size NAMEDATALEN.
  *
- * Similarly, the username can be passed by name, using the username parameter,
+ * Similarly, the role can be passed by name, using the username parameter,
  * or by OID using the useroid parameter.
  *
- * In bootstrap mode no parameters are used.  The autovacuum launcher process
- * doesn't use any parameters either, because it only goes far enough to be
- * able to read pg_database; it doesn't connect to any particular database.
- * In walsender mode only username is used.
+ * In bootstrap mode the database and username parameters are NULL/InvalidOid.
+ * The autovacuum launcher process doesn't specify these parameters either,
+ * because it only goes far enough to be able to read pg_database; it doesn't
+ * connect to any particular database.  An autovacuum worker specifies a
+ * database but not a username; conversely, a physical walsender specifies
+ * username but not database.
  *
- * As of PostgreSQL 8.2, we expect InitProcess() was already called, so we
- * already have a PGPROC struct ... but it's not completely filled in yet.
+ * By convention, load_session_libraries should be passed as true in
+ * "interactive" sessions (including standalone backends), but false in
+ * background processes such as autovacuum.  Note in particular that it
+ * shouldn't be true in parallel worker processes; those have another
+ * mechanism for replicating their leader's set of loaded libraries.
+ *
+ * We expect that InitProcess() was already called, so we already have a
+ * PGPROC struct ... but it's not completely filled in yet.
  *
  * Note:
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
 void
-InitPostgres(const char *in_dbname, Oid dboid, const char *username,
-			 Oid useroid, char *out_dbname, bool override_allow_connections)
+InitPostgres(const char *in_dbname, Oid dboid,
+			 const char *username, Oid useroid,
+			 bool load_session_libraries,
+			 bool override_allow_connections,
+			 char *out_dbname)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 	bool		am_superuser;
@@ -694,10 +763,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	/*
-	 * If this is either a bootstrap process or a standalone backend, start
-	 * up the XLOG machinery, and register to have it closed down at exit.
-	 * In other cases, the startup process is responsible for starting up
-	 * the XLOG machinery, and the checkpointer for closing it down.
+	 * If this is either a bootstrap process or a standalone backend, start up
+	 * the XLOG machinery, and register to have it closed down at exit. In
+	 * other cases, the startup process is responsible for starting up the
+	 * XLOG machinery, and the checkpointer for closing it down.
 	 */
 	if (!IsUnderPostmaster)
 	{
@@ -835,6 +904,10 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 		Assert(MyProcPort != NULL);
 		PerformAuthentication(MyProcPort);
 		InitializeSessionUserId(username, useroid);
+		/* ensure that auth_method is actually valid, aka authn_id is not NULL */
+		if (MyClientConnectionInfo.authn_id)
+			InitializeSystemUser(MyClientConnectionInfo.authn_id,
+								 hba_authname(MyClientConnectionInfo.auth_method));
 		am_superuser = superuser();
 	}
 
@@ -908,7 +981,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	if (bootstrap)
 	{
-		MyDatabaseId = TemplateDbOid;
+		MyDatabaseId = Template1DbOid;
 		MyDatabaseTableSpace = DEFAULTTABLESPACE_OID;
 	}
 	else if (in_dbname != NULL)
@@ -1057,6 +1130,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	}
 
 	SetDatabasePath(fullpath);
+	pfree(fullpath);
 
 	/*
 	 * It's now possible to do real access to the system catalogs.
@@ -1106,6 +1180,16 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 
 	/* Initialize this backend's session state. */
 	InitializeSession();
+
+	/*
+	 * If this is an interactive session, load any libraries that should be
+	 * preloaded at backend start.  Since those are determined by GUCs, this
+	 * can't happen until GUC settings are complete, but we want it to happen
+	 * during the initial transaction in case anything that requires database
+	 * access needs to be done.
+	 */
+	if (load_session_libraries)
+		process_session_preload_libraries();
 
 	/* report this backend in the PgBackendStatus array */
 	if (!bootstrap)
@@ -1230,23 +1314,6 @@ ShutdownPostgres(int code, Datum arg)
 	 * them explicitly.
 	 */
 	LockReleaseAll(USER_LOCKMETHOD, true);
-
-	/*
-	 * temp debugging aid to analyze 019_replslot_limit failures
-	 *
-	 * If an error were thrown outside of a transaction nothing up to now
-	 * would have released lwlocks. We probably will add an
-	 * LWLockReleaseAll(). But for now make it easier to understand such cases
-	 * by warning if any lwlocks are held.
-	 */
-#ifdef USE_ASSERT_CHECKING
-	{
-		int held_lwlocks = LWLockHeldCount();
-		if (held_lwlocks)
-			elog(WARNING, "holding %d lwlocks at the end of ShutdownPostgres()",
-				 held_lwlocks);
-	}
-#endif
 }
 
 

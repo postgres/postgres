@@ -86,3 +86,11 @@ select * from spgist_domain_tbl where f1 = 'fo';
  fo
 (1 row)
 
+-- test an unlogged table, mostly to get coverage of spgistbuildempty
+create unlogged table spgist_unlogged_tbl(id serial, b box);
+create index spgist_unlogged_idx on spgist_unlogged_tbl using spgist (b);
+insert into spgist_unlogged_tbl(b)
+select box(point(i,j))
+  from generate_series(1,100,5) i,
+       generate_series(1,10,5) j;
+-- leave this table around, to help in testing dump/restore

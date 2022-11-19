@@ -72,7 +72,7 @@ typedef struct _parallelReadyList
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 							   const int compression, bool dosync, ArchiveMode mode,
 							   SetupWorkerPtrType setupWorkerPtr);
-static void _getObjectDescription(PQExpBuffer buf, TocEntry *te);
+static void _getObjectDescription(PQExpBuffer buf, const TocEntry *te);
 static void _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData);
 static char *sanitize_line(const char *str, bool want_hyphen);
 static void _doSetFixedOutputState(ArchiveHandle *AH);
@@ -640,8 +640,7 @@ RestoreArchive(Archive *AHX)
 		 * If we treated users as pg_dump'able objects then we'd need to reset
 		 * currUser here too.
 		 */
-		if (AH->currSchema)
-			free(AH->currSchema);
+		free(AH->currSchema);
 		AH->currSchema = NULL;
 	}
 
@@ -2067,8 +2066,7 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 
 	pg_log_debug("attempting to ascertain archive format");
 
-	if (AH->lookahead)
-		free(AH->lookahead);
+	free(AH->lookahead);
 
 	AH->readHeader = 0;
 	AH->lookaheadSize = 512;
@@ -2580,12 +2578,12 @@ ReadToc(ArchiveHandle *AH)
 			is_supported = false;
 		else
 		{
-				tmp = ReadStr(AH);
+			tmp = ReadStr(AH);
 
-				if (strcmp(tmp, "true") == 0)
-					is_supported = false;
+			if (strcmp(tmp, "true") == 0)
+				is_supported = false;
 
-				free(tmp);
+			free(tmp);
 		}
 
 		if (!is_supported)
@@ -3178,21 +3176,17 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname)
 	 * NOTE: currUser keeps track of what the imaginary session user in our
 	 * script is.  It's now effectively reset to the original userID.
 	 */
-	if (AH->currUser)
-		free(AH->currUser);
+	free(AH->currUser);
 	AH->currUser = NULL;
 
 	/* don't assume we still know the output schema, tablespace, etc either */
-	if (AH->currSchema)
-		free(AH->currSchema);
+	free(AH->currSchema);
 	AH->currSchema = NULL;
 
-	if (AH->currTableAm)
-		free(AH->currTableAm);
+	free(AH->currTableAm);
 	AH->currTableAm = NULL;
 
-	if (AH->currTablespace)
-		free(AH->currTablespace);
+	free(AH->currTablespace);
 	AH->currTablespace = NULL;
 
 	/* re-establish fixed state */
@@ -3219,8 +3213,7 @@ _becomeUser(ArchiveHandle *AH, const char *user)
 	 * NOTE: currUser keeps track of what the imaginary session user in our
 	 * script is
 	 */
-	if (AH->currUser)
-		free(AH->currUser);
+	free(AH->currUser);
 	AH->currUser = pg_strdup(user);
 }
 
@@ -3285,8 +3278,7 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 	else
 		ahprintf(AH, "%s;\n\n", qry->data);
 
-	if (AH->currSchema)
-		free(AH->currSchema);
+	free(AH->currSchema);
 	AH->currSchema = pg_strdup(schemaName);
 
 	destroyPQExpBuffer(qry);
@@ -3347,8 +3339,7 @@ _selectTablespace(ArchiveHandle *AH, const char *tablespace)
 	else
 		ahprintf(AH, "%s;\n\n", qry->data);
 
-	if (AH->currTablespace)
-		free(AH->currTablespace);
+	free(AH->currTablespace);
 	AH->currTablespace = pg_strdup(want);
 
 	destroyPQExpBuffer(qry);
@@ -3399,8 +3390,7 @@ _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
 
 	destroyPQExpBuffer(cmd);
 
-	if (AH->currTableAm)
-		free(AH->currTableAm);
+	free(AH->currTableAm);
 	AH->currTableAm = pg_strdup(want);
 }
 
@@ -3408,27 +3398,27 @@ _selectTableAccessMethod(ArchiveHandle *AH, const char *tableam)
  * Extract an object description for a TOC entry, and append it to buf.
  *
  * This is used for ALTER ... OWNER TO.
+ *
+ * If the object type has no owner, do nothing.
  */
 static void
-_getObjectDescription(PQExpBuffer buf, TocEntry *te)
+_getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 {
 	const char *type = te->desc;
-
-	/* Use ALTER TABLE for views and sequences */
-	if (strcmp(type, "VIEW") == 0 || strcmp(type, "SEQUENCE") == 0 ||
-		strcmp(type, "MATERIALIZED VIEW") == 0)
-		type = "TABLE";
 
 	/* objects that don't require special decoration */
 	if (strcmp(type, "COLLATION") == 0 ||
 		strcmp(type, "CONVERSION") == 0 ||
 		strcmp(type, "DOMAIN") == 0 ||
-		strcmp(type, "TABLE") == 0 ||
-		strcmp(type, "TYPE") == 0 ||
 		strcmp(type, "FOREIGN TABLE") == 0 ||
+		strcmp(type, "MATERIALIZED VIEW") == 0 ||
+		strcmp(type, "SEQUENCE") == 0 ||
+		strcmp(type, "STATISTICS") == 0 ||
+		strcmp(type, "TABLE") == 0 ||
 		strcmp(type, "TEXT SEARCH DICTIONARY") == 0 ||
 		strcmp(type, "TEXT SEARCH CONFIGURATION") == 0 ||
-		strcmp(type, "STATISTICS") == 0 ||
+		strcmp(type, "TYPE") == 0 ||
+		strcmp(type, "VIEW") == 0 ||
 	/* non-schema-specified objects */
 		strcmp(type, "DATABASE") == 0 ||
 		strcmp(type, "PROCEDURAL LANGUAGE") == 0 ||
@@ -3437,33 +3427,28 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te)
 		strcmp(type, "FOREIGN DATA WRAPPER") == 0 ||
 		strcmp(type, "SERVER") == 0 ||
 		strcmp(type, "PUBLICATION") == 0 ||
-		strcmp(type, "SUBSCRIPTION") == 0 ||
-		strcmp(type, "USER MAPPING") == 0)
+		strcmp(type, "SUBSCRIPTION") == 0)
 	{
 		appendPQExpBuffer(buf, "%s ", type);
 		if (te->namespace && *te->namespace)
 			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
 		appendPQExpBufferStr(buf, fmtId(te->tag));
-		return;
 	}
-
 	/* BLOBs just have a name, but it's numeric so must not use fmtId */
-	if (strcmp(type, "BLOB") == 0)
+	else if (strcmp(type, "BLOB") == 0)
 	{
 		appendPQExpBuffer(buf, "LARGE OBJECT %s", te->tag);
-		return;
 	}
-
 	/*
 	 * These object types require additional decoration.  Fortunately, the
 	 * information needed is exactly what's in the DROP command.
 	 */
-	if (strcmp(type, "AGGREGATE") == 0 ||
-		strcmp(type, "FUNCTION") == 0 ||
-		strcmp(type, "OPERATOR") == 0 ||
-		strcmp(type, "OPERATOR CLASS") == 0 ||
-		strcmp(type, "OPERATOR FAMILY") == 0 ||
-		strcmp(type, "PROCEDURE") == 0)
+	else if (strcmp(type, "AGGREGATE") == 0 ||
+			 strcmp(type, "FUNCTION") == 0 ||
+			 strcmp(type, "OPERATOR") == 0 ||
+			 strcmp(type, "OPERATOR CLASS") == 0 ||
+			 strcmp(type, "OPERATOR FAMILY") == 0 ||
+			 strcmp(type, "PROCEDURE") == 0)
 	{
 		/* Chop "DROP " off the front and make a modifiable copy */
 		char	   *first = pg_strdup(te->dropStmt + 5);
@@ -3482,9 +3467,24 @@ _getObjectDescription(PQExpBuffer buf, TocEntry *te)
 		free(first);
 		return;
 	}
-
-	pg_log_warning("don't know how to set owner for object type \"%s\"",
-				   type);
+	/* these object types don't have separate owners */
+	else if (strcmp(type, "CAST") == 0 ||
+			 strcmp(type, "CHECK CONSTRAINT") == 0 ||
+			 strcmp(type, "CONSTRAINT") == 0 ||
+			 strcmp(type, "DATABASE PROPERTIES") == 0 ||
+			 strcmp(type, "DEFAULT") == 0 ||
+			 strcmp(type, "FK CONSTRAINT") == 0 ||
+			 strcmp(type, "INDEX") == 0 ||
+			 strcmp(type, "RULE") == 0 ||
+			 strcmp(type, "TRIGGER") == 0 ||
+			 strcmp(type, "ROW SECURITY") == 0 ||
+			 strcmp(type, "POLICY") == 0 ||
+			 strcmp(type, "USER MAPPING") == 0)
+	{
+		/* do nothing */
+	}
+	else
+		pg_fatal("don't know how to set owner for object type \"%s\"", type);
 }
 
 /*
@@ -3585,8 +3585,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 * instead issue an ALTER OWNER command.  Schema "public" is special; when
 	 * a dump emits a comment in lieu of creating it, we use ALTER OWNER even
 	 * when using SET SESSION for all other objects.  We assume that anything
-	 * without a DROP command is not a separately ownable object.  All the
-	 * categories with DROP commands must appear in one list or the other.
+	 * without a DROP command is not a separately ownable object.
 	 */
 	if (!ropt->noOwner &&
 		(!ropt->use_setsessauth ||
@@ -3595,62 +3594,17 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 		te->owner && strlen(te->owner) > 0 &&
 		te->dropStmt && strlen(te->dropStmt) > 0)
 	{
-		if (strcmp(te->desc, "AGGREGATE") == 0 ||
-			strcmp(te->desc, "BLOB") == 0 ||
-			strcmp(te->desc, "COLLATION") == 0 ||
-			strcmp(te->desc, "CONVERSION") == 0 ||
-			strcmp(te->desc, "DATABASE") == 0 ||
-			strcmp(te->desc, "DOMAIN") == 0 ||
-			strcmp(te->desc, "FUNCTION") == 0 ||
-			strcmp(te->desc, "OPERATOR") == 0 ||
-			strcmp(te->desc, "OPERATOR CLASS") == 0 ||
-			strcmp(te->desc, "OPERATOR FAMILY") == 0 ||
-			strcmp(te->desc, "PROCEDURE") == 0 ||
-			strcmp(te->desc, "PROCEDURAL LANGUAGE") == 0 ||
-			strcmp(te->desc, "SCHEMA") == 0 ||
-			strcmp(te->desc, "EVENT TRIGGER") == 0 ||
-			strcmp(te->desc, "TABLE") == 0 ||
-			strcmp(te->desc, "TYPE") == 0 ||
-			strcmp(te->desc, "VIEW") == 0 ||
-			strcmp(te->desc, "MATERIALIZED VIEW") == 0 ||
-			strcmp(te->desc, "SEQUENCE") == 0 ||
-			strcmp(te->desc, "FOREIGN TABLE") == 0 ||
-			strcmp(te->desc, "TEXT SEARCH DICTIONARY") == 0 ||
-			strcmp(te->desc, "TEXT SEARCH CONFIGURATION") == 0 ||
-			strcmp(te->desc, "FOREIGN DATA WRAPPER") == 0 ||
-			strcmp(te->desc, "SERVER") == 0 ||
-			strcmp(te->desc, "STATISTICS") == 0 ||
-			strcmp(te->desc, "PUBLICATION") == 0 ||
-			strcmp(te->desc, "SUBSCRIPTION") == 0)
-		{
-			PQExpBuffer temp = createPQExpBuffer();
+		PQExpBufferData temp;
 
-			appendPQExpBufferStr(temp, "ALTER ");
-			_getObjectDescription(temp, te);
-			appendPQExpBuffer(temp, " OWNER TO %s;", fmtId(te->owner));
-			ahprintf(AH, "%s\n\n", temp->data);
-			destroyPQExpBuffer(temp);
-		}
-		else if (strcmp(te->desc, "CAST") == 0 ||
-				 strcmp(te->desc, "CHECK CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "DATABASE PROPERTIES") == 0 ||
-				 strcmp(te->desc, "DEFAULT") == 0 ||
-				 strcmp(te->desc, "FK CONSTRAINT") == 0 ||
-				 strcmp(te->desc, "INDEX") == 0 ||
-				 strcmp(te->desc, "RULE") == 0 ||
-				 strcmp(te->desc, "TRIGGER") == 0 ||
-				 strcmp(te->desc, "ROW SECURITY") == 0 ||
-				 strcmp(te->desc, "POLICY") == 0 ||
-				 strcmp(te->desc, "USER MAPPING") == 0)
-		{
-			/* these object types don't have separate owners */
-		}
-		else
-		{
-			pg_log_warning("don't know how to set owner for object type \"%s\"",
-						   te->desc);
-		}
+		initPQExpBuffer(&temp);
+		_getObjectDescription(&temp, te);
+		/*
+		 * If _getObjectDescription() didn't fill the buffer, then there is no
+		 * owner.
+		 */
+		if (temp.data[0])
+			ahprintf(AH, "ALTER %s OWNER TO %s;\n\n", temp.data, fmtId(te->owner));
+		termPQExpBuffer(&temp);
 	}
 
 	/*
@@ -3659,8 +3613,7 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, bool isData)
 	 */
 	if (_tocEntryIsACL(te))
 	{
-		if (AH->currUser)
-			free(AH->currUser);
+		free(AH->currUser);
 		AH->currUser = NULL;
 	}
 }
@@ -3991,17 +3944,13 @@ restore_toc_entries_prefork(ArchiveHandle *AH, TocEntry *pending_list)
 	DisconnectDatabase(&AH->public);
 
 	/* blow away any transient state from the old connection */
-	if (AH->currUser)
-		free(AH->currUser);
+	free(AH->currUser);
 	AH->currUser = NULL;
-	if (AH->currSchema)
-		free(AH->currSchema);
+	free(AH->currSchema);
 	AH->currSchema = NULL;
-	if (AH->currTablespace)
-		free(AH->currTablespace);
+	free(AH->currTablespace);
 	AH->currTablespace = NULL;
-	if (AH->currTableAm)
-		free(AH->currTableAm);
+	free(AH->currTableAm);
 	AH->currTableAm = NULL;
 }
 
@@ -4842,16 +4791,11 @@ DeCloneArchive(ArchiveHandle *AH)
 		destroyPQExpBuffer(AH->sqlparse.curCmd);
 
 	/* Clear any connection-local state */
-	if (AH->currUser)
-		free(AH->currUser);
-	if (AH->currSchema)
-		free(AH->currSchema);
-	if (AH->currTablespace)
-		free(AH->currTablespace);
-	if (AH->currTableAm)
-		free(AH->currTableAm);
-	if (AH->savedPassword)
-		free(AH->savedPassword);
+	free(AH->currUser);
+	free(AH->currSchema);
+	free(AH->currTablespace);
+	free(AH->currTableAm);
+	free(AH->savedPassword);
 
 	free(AH);
 }

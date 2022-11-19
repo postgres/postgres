@@ -142,19 +142,23 @@ typedef struct MinMaxMultiOptions
  * The Ranges struct stores the boundary values in a single array, but we
  * treat regular and single-point ranges differently to save space. For
  * regular ranges (with different boundary values) we have to store both
- * values, while for "single-point ranges" we only need to save one value.
+ * the lower and upper bound of the range, while for "single-point ranges"
+ * we only need to store a single value.
  *
  * The 'values' array stores boundary values for regular ranges first (there
  * are 2*nranges values to store), and then the nvalues boundary values for
  * single-point ranges. That is, we have (2*nranges + nvalues) boundary
  * values in the array.
  *
- * +---------------------------------+-------------------------------+
- * | ranges (sorted pairs of values) | sorted values (single points) |
- * +---------------------------------+-------------------------------+
+ * +-------------------------+----------------------------------+
+ * | ranges (2 * nranges of) | single point values (nvalues of) |
+ * +-------------------------+----------------------------------+
  *
  * This allows us to quickly add new values, and store outliers without
- * making the other ranges very wide.
+ * having to widen any of the existing range values.
+ *
+ * 'nsorted' denotes how many of 'nvalues' in the values[] array are sorted.
+ * When nsorted == nvalues, all single point values are sorted.
  *
  * We never store more than maxvalues values (as set by values_per_range
  * reloption). If needed we merge some of the ranges.
@@ -173,10 +177,10 @@ typedef struct Ranges
 	FmgrInfo   *cmp;
 
 	/* (2*nranges + nvalues) <= maxvalues */
-	int			nranges;		/* number of ranges in the array (stored) */
-	int			nsorted;		/* number of sorted values (ranges + points) */
-	int			nvalues;		/* number of values in the data array (all) */
-	int			maxvalues;		/* maximum number of values (reloption) */
+	int			nranges;		/* number of ranges in the values[] array */
+	int			nsorted;		/* number of nvalues which are sorted */
+	int			nvalues;		/* number of point values in values[] array */
+	int			maxvalues;		/* number of elements in the values[] array */
 
 	/*
 	 * We simply add the values into a large buffer, without any expensive
@@ -219,7 +223,8 @@ typedef struct SerializedRanges
 
 static SerializedRanges *brin_range_serialize(Ranges *range);
 
-static Ranges *brin_range_deserialize(int maxvalues, SerializedRanges *range);
+static Ranges *brin_range_deserialize(int maxvalues,
+									  SerializedRanges *serialized);
 
 
 /*
@@ -318,102 +323,99 @@ AssertCheckRanges(Ranges *ranges, FmgrInfo *cmpFn, Oid colloid)
 	 * Check that none of the values are not covered by ranges (both sorted
 	 * and unsorted)
 	 */
-	for (i = 0; i < ranges->nvalues; i++)
+	if (ranges->nranges > 0)
 	{
-		Datum		compar;
-		int			start,
-					end;
-		Datum		minvalue,
-					maxvalue;
-
-		Datum		value = ranges->values[2 * ranges->nranges + i];
-
-		if (ranges->nranges == 0)
-			break;
-
-		minvalue = ranges->values[0];
-		maxvalue = ranges->values[2 * ranges->nranges - 1];
-
-		/*
-		 * Is the value smaller than the minval? If yes, we'll recurse to the
-		 * left side of range array.
-		 */
-		compar = FunctionCall2Coll(cmpFn, colloid, value, minvalue);
-
-		/* smaller than the smallest value in the first range */
-		if (DatumGetBool(compar))
-			continue;
-
-		/*
-		 * Is the value greater than the maxval? If yes, we'll recurse to the
-		 * right side of range array.
-		 */
-		compar = FunctionCall2Coll(cmpFn, colloid, maxvalue, value);
-
-		/* larger than the largest value in the last range */
-		if (DatumGetBool(compar))
-			continue;
-
-		start = 0;				/* first range */
-		end = ranges->nranges - 1;	/* last range */
-		while (true)
+		for (i = 0; i < ranges->nvalues; i++)
 		{
-			int			midpoint = (start + end) / 2;
+			Datum		compar;
+			int			start,
+						end;
+			Datum		minvalue = ranges->values[0];
+			Datum		maxvalue = ranges->values[2 * ranges->nranges - 1];
+			Datum		value = ranges->values[2 * ranges->nranges + i];
 
-			/* this means we ran out of ranges in the last step */
-			if (start > end)
-				break;
-
-			/* copy the min/max values from the ranges */
-			minvalue = ranges->values[2 * midpoint];
-			maxvalue = ranges->values[2 * midpoint + 1];
-
-			/*
-			 * Is the value smaller than the minval? If yes, we'll recurse to
-			 * the left side of range array.
-			 */
 			compar = FunctionCall2Coll(cmpFn, colloid, value, minvalue);
 
-			/* smaller than the smallest value in this range */
-			if (DatumGetBool(compar))
-			{
-				end = (midpoint - 1);
-				continue;
-			}
-
 			/*
-			 * Is the value greater than the minval? If yes, we'll recurse to
-			 * the right side of range array.
+			 * If the value is smaller than the lower bound in the first range
+			 * then it cannot possibly be in any of the ranges.
 			 */
+			if (DatumGetBool(compar))
+				continue;
+
 			compar = FunctionCall2Coll(cmpFn, colloid, maxvalue, value);
 
-			/* larger than the largest value in this range */
+			/*
+			 * Likewise, if the value is larger than the upper bound of the
+			 * final range, then it cannot possibly be inside any of the
+			 * ranges.
+			 */
 			if (DatumGetBool(compar))
-			{
-				start = (midpoint + 1);
 				continue;
-			}
 
-			/* hey, we found a matching range */
-			Assert(false);
+			/* bsearch the ranges to see if 'value' fits within any of them */
+			start = 0;			/* first range */
+			end = ranges->nranges - 1;	/* last range */
+			while (true)
+			{
+				int			midpoint = (start + end) / 2;
+
+				/* this means we ran out of ranges in the last step */
+				if (start > end)
+					break;
+
+				/* copy the min/max values from the ranges */
+				minvalue = ranges->values[2 * midpoint];
+				maxvalue = ranges->values[2 * midpoint + 1];
+
+				/*
+				 * Is the value smaller than the minval? If yes, we'll recurse
+				 * to the left side of range array.
+				 */
+				compar = FunctionCall2Coll(cmpFn, colloid, value, minvalue);
+
+				/* smaller than the smallest value in this range */
+				if (DatumGetBool(compar))
+				{
+					end = (midpoint - 1);
+					continue;
+				}
+
+				/*
+				 * Is the value greater than the minval? If yes, we'll recurse
+				 * to the right side of range array.
+				 */
+				compar = FunctionCall2Coll(cmpFn, colloid, maxvalue, value);
+
+				/* larger than the largest value in this range */
+				if (DatumGetBool(compar))
+				{
+					start = (midpoint + 1);
+					continue;
+				}
+
+				/* hey, we found a matching range */
+				Assert(false);
+			}
 		}
 	}
 
-	/* and values in the unsorted part must not be in sorted part */
-	for (i = ranges->nsorted; i < ranges->nvalues; i++)
+	/* and values in the unsorted part must not be in the sorted part */
+	if (ranges->nsorted > 0)
 	{
 		compare_context cxt;
-		Datum		value = ranges->values[2 * ranges->nranges + i];
-
-		if (ranges->nsorted == 0)
-			break;
 
 		cxt.colloid = ranges->colloid;
 		cxt.cmpFn = ranges->cmp;
 
-		Assert(bsearch_arg(&value, &ranges->values[2 * ranges->nranges],
-						   ranges->nsorted, sizeof(Datum),
-						   compare_values, (void *) &cxt) == NULL);
+		for (i = ranges->nsorted; i < ranges->nvalues; i++)
+		{
+			Datum		value = ranges->values[2 * ranges->nranges + i];
+
+			Assert(bsearch_arg(&value, &ranges->values[2 * ranges->nranges],
+							   ranges->nsorted, sizeof(Datum),
+							   compare_values, (void *) &cxt) == NULL);
+		}
 	}
 #endif
 }
@@ -582,7 +584,6 @@ brin_range_serialize(Ranges *range)
 	int			typlen;
 	bool		typbyval;
 
-	int			i;
 	char	   *ptr;
 
 	/* simple sanity checks */
@@ -662,7 +663,7 @@ brin_range_serialize(Ranges *range)
 	 */
 	ptr = serialized->data;		/* start of the serialized data */
 
-	for (i = 0; i < nvalues; i++)
+	for (int i = 0; i < nvalues; i++)
 	{
 		if (typbyval)			/* simple by-value data types */
 		{
@@ -775,12 +776,12 @@ brin_range_deserialize(int maxvalues, SerializedRanges *serialized)
 			datalen += MAXALIGN(typlen);
 		else if (typlen == -1)	/* varlena */
 		{
-			datalen += MAXALIGN(VARSIZE_ANY(DatumGetPointer(ptr)));
-			ptr += VARSIZE_ANY(DatumGetPointer(ptr));
+			datalen += MAXALIGN(VARSIZE_ANY(ptr));
+			ptr += VARSIZE_ANY(ptr);
 		}
 		else if (typlen == -2)	/* cstring */
 		{
-			Size		slen = strlen(DatumGetCString(ptr)) + 1;
+			Size		slen = strlen(ptr) + 1;
 
 			datalen += MAXALIGN(slen);
 			ptr += slen;
@@ -924,8 +925,8 @@ has_matching_range(BrinDesc *bdesc, Oid colloid, Ranges *ranges,
 {
 	Datum		compar;
 
-	Datum		minvalue = ranges->values[0];
-	Datum		maxvalue = ranges->values[2 * ranges->nranges - 1];
+	Datum		minvalue;
+	Datum		maxvalue;
 
 	FmgrInfo   *cmpLessFn;
 	FmgrInfo   *cmpGreaterFn;
@@ -936,6 +937,9 @@ has_matching_range(BrinDesc *bdesc, Oid colloid, Ranges *ranges,
 
 	if (ranges->nranges == 0)
 		return false;
+
+	minvalue = ranges->values[0];
+	maxvalue = ranges->values[2 * ranges->nranges - 1];
 
 	/*
 	 * Otherwise, need to compare the new value with boundaries of all the
@@ -3034,7 +3038,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 	 * Detoast to get value with full 4B header (can't be stored in a toast
 	 * table, but can use 1B header).
 	 */
-	ranges = (SerializedRanges *) PG_DETOAST_DATUM(PG_GETARG_BYTEA_PP(0));
+	ranges = (SerializedRanges *) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(0));
 
 	/* lookup output func for the type */
 	getTypeOutputInfo(ranges->typid, &outfunc, &isvarlena);
@@ -3055,16 +3059,16 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 		char	   *a,
 				   *b;
 		text	   *c;
-		StringInfoData str;
+		StringInfoData buf;
 
-		initStringInfo(&str);
+		initStringInfo(&buf);
 
 		a = OutputFunctionCall(&fmgrinfo, ranges_deserialized->values[idx++]);
 		b = OutputFunctionCall(&fmgrinfo, ranges_deserialized->values[idx++]);
 
-		appendStringInfo(&str, "%s ... %s", a, b);
+		appendStringInfo(&buf, "%s ... %s", a, b);
 
-		c = cstring_to_text(str.data);
+		c = cstring_to_text_with_len(buf.data, buf.len);
 
 		astate_values = accumArrayResult(astate_values,
 										 PointerGetDatum(c),
@@ -3082,7 +3086,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 
 		getTypeOutputInfo(ANYARRAYOID, &typoutput, &typIsVarlena);
 
-		val = PointerGetDatum(makeArrayResult(astate_values, CurrentMemoryContext));
+		val = makeArrayResult(astate_values, CurrentMemoryContext);
 
 		extval = OidOutputFunctionCall(typoutput, val);
 
@@ -3096,15 +3100,9 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 	{
 		Datum		a;
 		text	   *b;
-		StringInfoData str;
-
-		initStringInfo(&str);
 
 		a = FunctionCall1(&fmgrinfo, ranges_deserialized->values[idx++]);
-
-		appendStringInfoString(&str, DatumGetCString(a));
-
-		b = cstring_to_text(str.data);
+		b = cstring_to_text(DatumGetCString(a));
 
 		astate_values = accumArrayResult(astate_values,
 										 PointerGetDatum(b),
@@ -3122,7 +3120,7 @@ brin_minmax_multi_summary_out(PG_FUNCTION_ARGS)
 
 		getTypeOutputInfo(ANYARRAYOID, &typoutput, &typIsVarlena);
 
-		val = PointerGetDatum(makeArrayResult(astate_values, CurrentMemoryContext));
+		val = makeArrayResult(astate_values, CurrentMemoryContext);
 
 		extval = OidOutputFunctionCall(typoutput, val);
 

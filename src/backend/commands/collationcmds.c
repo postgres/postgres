@@ -22,6 +22,8 @@
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_database.h"
+#include "catalog/pg_namespace.h"
 #include "commands/alter.h"
 #include "commands/collationcmds.h"
 #include "commands/comment.h"
@@ -75,7 +77,7 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 	collNamespace = QualifiedNameGetCreationNamespace(names, &collName);
 
-	aclresult = pg_namespace_aclcheck(collNamespace, GetUserId(), ACL_CREATE);
+	aclresult = object_aclcheck(NamespaceRelationId, collNamespace, GetUserId(), ACL_CREATE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, OBJECT_SCHEMA,
 					   get_namespace_name(collNamespace));
@@ -246,8 +248,9 @@ DefineCollation(ParseState *pstate, List *names, List *parameters, bool if_not_e
 
 		/*
 		 * Nondeterministic collations are currently only supported with ICU
-		 * because that's the only case where it can actually make a difference.
-		 * So we can save writing the code for the other providers.
+		 * because that's the only case where it can actually make a
+		 * difference. So we can save writing the code for the other
+		 * providers.
 		 */
 		if (!collisdeterministic && collprovider != COLLPROVIDER_ICU)
 			ereport(ERROR,
@@ -364,7 +367,12 @@ AlterCollation(AlterCollationStmt *stmt)
 	rel = table_open(CollationRelationId, RowExclusiveLock);
 	collOid = get_collation_oid(stmt->collname, false);
 
-	if (!pg_collation_ownercheck(collOid, GetUserId()))
+	if (collOid == DEFAULT_COLLATION_OID)
+		ereport(ERROR,
+				(errmsg("cannot refresh version of default collation"),
+				 errhint("Use ALTER DATABASE ... REFRESH COLLATION VERSION instead.")));
+
+	if (!object_ownercheck(CollationRelationId, collOid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_COLLATION,
 					   NameListToString(stmt->collname));
 
@@ -424,33 +432,61 @@ AlterCollation(AlterCollationStmt *stmt)
 Datum
 pg_collation_actual_version(PG_FUNCTION_ARGS)
 {
-	Oid			collid = PG_GETARG_OID(0);
-	HeapTuple	tp;
-	char		collprovider;
-	Datum		datum;
-	bool		isnull;
-	char	   *version;
+	Oid		 collid = PG_GETARG_OID(0);
+	char	 provider;
+	char	*locale;
+	char	*version;
+	Datum	 datum;
+	bool	 isnull;
 
-	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
-	if (!HeapTupleIsValid(tp))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("collation with OID %u does not exist", collid)));
-
-	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
-
-	if (collprovider != COLLPROVIDER_DEFAULT)
+	if (collid == DEFAULT_COLLATION_OID)
 	{
-		datum = SysCacheGetAttr(COLLOID, tp, collprovider == COLLPROVIDER_ICU ? Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate, &isnull);
+		/* retrieve from pg_database */
+
+		HeapTuple	dbtup = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(MyDatabaseId));
+		if (!HeapTupleIsValid(dbtup))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("database with OID %u does not exist", MyDatabaseId)));
+
+		provider = ((Form_pg_database) GETSTRUCT(dbtup))->datlocprovider;
+
+		datum = SysCacheGetAttr(DATABASEOID, dbtup,
+								provider == COLLPROVIDER_ICU ?
+								Anum_pg_database_daticulocale : Anum_pg_database_datcollate,
+								&isnull);
 		if (isnull)
-			elog(ERROR, "unexpected null in pg_collation");
-		version = get_collation_actual_version(collprovider, TextDatumGetCString(datum));
+			elog(ERROR, "unexpected null in pg_database");
+
+		locale = TextDatumGetCString(datum);
+
+		ReleaseSysCache(dbtup);
 	}
 	else
-		version = NULL;
+	{
+		/* retrieve from pg_collation */
 
-	ReleaseSysCache(tp);
+		HeapTuple	colltp		= SearchSysCache1(COLLOID, ObjectIdGetDatum(collid));
+		if (!HeapTupleIsValid(colltp))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("collation with OID %u does not exist", collid)));
 
+		provider = ((Form_pg_collation) GETSTRUCT(colltp))->collprovider;
+		Assert(provider != COLLPROVIDER_DEFAULT);
+		datum = SysCacheGetAttr(COLLOID, colltp,
+								provider == COLLPROVIDER_ICU ?
+								Anum_pg_collation_colliculocale : Anum_pg_collation_collcollate,
+								&isnull);
+		if (isnull)
+			elog(ERROR, "unexpected null in pg_collation");
+
+		locale = TextDatumGetCString(datum);
+
+		ReleaseSysCache(colltp);
+	}
+
+	version = get_collation_actual_version(provider, locale);
 	if (version)
 		PG_RETURN_TEXT_P(cstring_to_text(version));
 	else
@@ -710,6 +746,12 @@ pg_import_system_collations(PG_FUNCTION_ARGS)
 			}
 		}
 
+		/*
+		 * We don't check the return value of this, because we want to support
+		 * the case where there "locale" command does not exist.  (This is
+		 * unusual but can happen on minimalized Linux distributions, for
+		 * example.)  We will warn below if no locales could be found.
+		 */
 		ClosePipeStream(locale_a_handle);
 
 		/*

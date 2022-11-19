@@ -23,8 +23,6 @@
 
 PG_MODULE_MAGIC;
 
-void		_PG_init(void);
-
 /* parse table for fillRelOptions */
 relopt_parse_elt di_relopt_tab[6];
 
@@ -298,7 +296,6 @@ dihandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amhotblocking = true;
 	amroutine->amparallelvacuumoptions = VACUUM_OPTION_NO_PARALLEL;
 	amroutine->amkeytype = InvalidOid;
 

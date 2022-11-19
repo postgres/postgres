@@ -83,6 +83,7 @@
 <!ENTITY arch-dev   SYSTEM "arch-dev.sgml">
 <!ENTITY bki        SYSTEM "bki.sgml">
 <!ENTITY catalogs   SYSTEM "catalogs.sgml">
+<!ENTITY system-views  SYSTEM "system-views.sgml">
 <!ENTITY geqo       SYSTEM "geqo.sgml">
 <!ENTITY btree      SYSTEM "btree.sgml">
 <!ENTITY gist       SYSTEM "gist.sgml">
@@ -175,7 +176,7 @@
 <!ENTITY sourcerepo SYSTEM "sourcerepo.sgml">
 
 <!ENTITY release    SYSTEM "release.sgml">
-<!ENTITY release-15     SYSTEM "release-15.sgml">
+<!ENTITY release-16 SYSTEM "release-16.sgml">
 
 <!ENTITY limits     SYSTEM "limits.sgml">
 <!ENTITY acronyms   SYSTEM "acronyms.sgml">

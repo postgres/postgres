@@ -212,13 +212,13 @@ ExecGatherMerge(PlanState *pstate)
 
 			/* Initialize, or re-initialize, shared state needed by workers. */
 			if (!node->pei)
-				node->pei = ExecInitParallelPlan(node->ps.lefttree,
+				node->pei = ExecInitParallelPlan(outerPlanState(node),
 												 estate,
 												 gm->initParam,
 												 gm->num_workers,
 												 node->tuples_needed);
 			else
-				ExecParallelReinitialize(node->ps.lefttree,
+				ExecParallelReinitialize(outerPlanState(node),
 										 node->pei,
 										 gm->initParam);
 

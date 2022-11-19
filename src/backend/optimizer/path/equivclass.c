@@ -681,18 +681,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 
 			if (opcintype == cur_em->em_datatype &&
 				equal(expr, cur_em->em_expr))
-			{
-				/*
-				 * Match!
-				 *
-				 * Copy the sortref if it wasn't set yet. That may happen if the
-				 * ec was constructed from WHERE clause, i.e. it doesn't have a
-				 * target reference at all.
-				 */
-				if (cur_ec->ec_sortref == 0 && sortref > 0)
-					cur_ec->ec_sortref = sortref;
-				return cur_ec;
-			}
+				return cur_ec;	/* Match! */
 		}
 	}
 
@@ -986,7 +975,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 		 * one are effectively checking properties of targetexpr, so there's
 		 * no point in asking whether some other EC member would be better.)
 		 */
-		if (IS_SRF_CALL((Node *) em->em_expr))
+		if (expression_returns_set((Node *) em->em_expr))
 			continue;
 
 		/*
@@ -1014,7 +1003,7 @@ relation_can_be_sorted_early(PlannerInfo *root, RelOptInfo *rel,
 	 * member in this case; since SRFs can't appear in WHERE, they cannot
 	 * belong to multi-member ECs.)
 	 */
-	if (IS_SRF_CALL((Node *) em->em_expr))
+	if (expression_returns_set((Node *) em->em_expr))
 		return false;
 
 	return true;
@@ -1323,7 +1312,7 @@ generate_base_implied_equalities_no_const(PlannerInfo *root,
 										   PVC_RECURSE_WINDOWFUNCS |
 										   PVC_INCLUDE_PLACEHOLDERS);
 
-		add_vars_to_targetlist(root, vars, ec->ec_relids, false);
+		add_vars_to_targetlist(root, vars, ec->ec_relids);
 		list_free(vars);
 	}
 }
@@ -1393,7 +1382,9 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * whenever we select a particular pair of EquivalenceMembers to join,
  * we check to see if the pair matches any original clause (in ec_sources)
  * or previously-built clause (in ec_derives).  This saves memory and allows
- * re-use of information cached in RestrictInfos.
+ * re-use of information cached in RestrictInfos.  We also avoid generating
+ * commutative duplicates, i.e. if the algorithm selects "a.x = b.y" but
+ * we already have "b.y = a.x", we return the existing clause.
  *
  * join_relids should always equal bms_union(outer_relids, inner_rel->relids).
  * We could simplify this function's API by computing it internally, but in
@@ -1760,8 +1751,8 @@ generate_join_implied_equalities_broken(PlannerInfo *root,
 	if (IS_OTHER_REL(inner_rel) && result != NIL)
 		result = (List *) adjust_appendrel_attrs_multilevel(root,
 															(Node *) result,
-															inner_rel->relids,
-															inner_rel->top_parent_relids);
+															inner_rel,
+															inner_rel->top_parent);
 
 	return result;
 }
@@ -1801,7 +1792,8 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 /*
  * create_join_clause
  *	  Find or make a RestrictInfo comparing the two given EC members
- *	  with the given operator.
+ *	  with the given operator (or, possibly, its commutator, because
+ *	  the ordering of the operands in the result is not guaranteed).
  *
  * parent_ec is either equal to ec (if the clause is a potentially-redundant
  * join clause) or NULL (if not).  We have to treat this as part of the
@@ -1822,16 +1814,22 @@ create_join_clause(PlannerInfo *root,
 	/*
 	 * Search to see if we already built a RestrictInfo for this pair of
 	 * EquivalenceMembers.  We can use either original source clauses or
-	 * previously-derived clauses.  The check on opno is probably redundant,
-	 * but be safe ...
+	 * previously-derived clauses, and a commutator clause is acceptable.
+	 *
+	 * We used to verify that opno matches, but that seems redundant: even if
+	 * it's not identical, it'd better have the same effects, or the operator
+	 * families we're using are broken.
 	 */
 	foreach(lc, ec->ec_sources)
 	{
 		rinfo = (RestrictInfo *) lfirst(lc);
 		if (rinfo->left_em == leftem &&
 			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
+			rinfo->parent_ec == parent_ec)
+			return rinfo;
+		if (rinfo->left_em == rightem &&
+			rinfo->right_em == leftem &&
+			rinfo->parent_ec == parent_ec)
 			return rinfo;
 	}
 
@@ -1840,8 +1838,11 @@ create_join_clause(PlannerInfo *root,
 		rinfo = (RestrictInfo *) lfirst(lc);
 		if (rinfo->left_em == leftem &&
 			rinfo->right_em == rightem &&
-			rinfo->parent_ec == parent_ec &&
-			opno == ((OpExpr *) rinfo->clause)->opno)
+			rinfo->parent_ec == parent_ec)
+			return rinfo;
+		if (rinfo->left_em == rightem &&
+			rinfo->right_em == leftem &&
+			rinfo->parent_ec == parent_ec)
 			return rinfo;
 	}
 
@@ -2626,8 +2627,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 					child_expr = (Expr *)
 						adjust_appendrel_attrs_multilevel(root,
 														  (Node *) cur_em->em_expr,
-														  child_relids,
-														  top_parent_relids);
+														  child_rel,
+														  child_rel->top_parent);
 				}
 
 				/*
@@ -2768,8 +2769,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 					child_expr = (Expr *)
 						adjust_appendrel_attrs_multilevel(root,
 														  (Node *) cur_em->em_expr,
-														  child_relids,
-														  top_parent_relids);
+														  child_joinrel,
+														  child_joinrel->top_parent);
 				}
 
 				/*
@@ -2791,8 +2792,8 @@ add_child_join_rel_equivalences(PlannerInfo *root,
 					new_nullable_relids =
 						adjust_child_relids_multilevel(root,
 													   new_nullable_relids,
-													   child_relids,
-													   top_parent_relids);
+													   child_joinrel,
+													   child_joinrel->top_parent);
 
 				(void) add_eq_member(cur_ec, child_expr,
 									 new_relids, new_nullable_relids,

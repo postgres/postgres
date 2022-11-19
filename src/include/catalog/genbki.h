@@ -55,9 +55,13 @@
  * need stable OIDs for shared relations, and that includes toast tables
  * of shared relations.
  *
- * The macro definition is just to keep the C compiler from spitting up.
+ * The DECLARE_TOAST_WITH_MACRO variant is used when C macros are needed
+ * for the toast table/index OIDs (usually only for shared catalogs).
+ *
+ * The macro definitions are just to keep the C compiler from spitting up.
  */
 #define DECLARE_TOAST(name,toastoid,indexoid) extern int no_such_variable
+#define DECLARE_TOAST_WITH_MACRO(name,toastoid,indexoid,toastoidmacro,indexoidmacro) extern int no_such_variable
 
 /*
  * These lines are processed by genbki.pl to create the statements
@@ -79,6 +83,14 @@
 #define DECLARE_INDEX(name,oid,oidmacro,decl) extern int no_such_variable
 #define DECLARE_UNIQUE_INDEX(name,oid,oidmacro,decl) extern int no_such_variable
 #define DECLARE_UNIQUE_INDEX_PKEY(name,oid,oidmacro,decl) extern int no_such_variable
+
+/*
+ * These lines inform genbki.pl about manually-assigned OIDs that do not
+ * correspond to any entry in the catalog *.dat files, but should be subject
+ * to uniqueness verification and renumber_oids.pl renumbering.  A C macro
+ * to #define the given name is emitted into the corresponding *_d.h file.
+ */
+#define DECLARE_OID_DEFINING_MACRO(name,oid) extern int no_such_variable
 
 /*
  * These lines are processed by genbki.pl to create a table for use

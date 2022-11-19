@@ -396,7 +396,7 @@ static void prepare_projection_slot(AggState *aggstate,
 									TupleTableSlot *slot,
 									int currentSet);
 static void finalize_aggregates(AggState *aggstate,
-								AggStatePerAgg peragg,
+								AggStatePerAgg peraggs,
 								AggStatePerGroup pergroup);
 static TupleTableSlot *project_aggregates(AggState *aggstate);
 static void find_cols(AggState *aggstate, Bitmapset **aggregated,
@@ -407,12 +407,11 @@ static void build_hash_table(AggState *aggstate, int setno, long nbuckets);
 static void hashagg_recompile_expressions(AggState *aggstate, bool minslot,
 										  bool nullcheck);
 static long hash_choose_num_buckets(double hashentrysize,
-									long estimated_nbuckets,
-									Size memory);
+									long ngroups, Size memory);
 static int	hash_choose_num_partitions(double input_groups,
 									   double hashentrysize,
 									   int used_bits,
-									   int *log2_npartittions);
+									   int *log2_npartitions);
 static void initialize_hash_entry(AggState *aggstate,
 								  TupleHashTable hashtable,
 								  TupleHashEntry entry);
@@ -432,11 +431,11 @@ static HashAggBatch *hashagg_batch_new(LogicalTape *input_tape, int setno,
 									   int64 input_tuples, double input_card,
 									   int used_bits);
 static MinimalTuple hashagg_batch_read(HashAggBatch *batch, uint32 *hashp);
-static void hashagg_spill_init(HashAggSpill *spill, LogicalTapeSet *lts,
+static void hashagg_spill_init(HashAggSpill *spill, LogicalTapeSet *tapeset,
 							   int used_bits, double input_groups,
 							   double hashentrysize);
 static Size hashagg_spill_tuple(AggState *aggstate, HashAggSpill *spill,
-								TupleTableSlot *slot, uint32 hash);
+								TupleTableSlot *inputslot, uint32 hash);
 static void hashagg_spill_finish(AggState *aggstate, HashAggSpill *spill,
 								 int setno);
 static Datum GetAggInitVal(Datum textInitVal, Oid transtype);
@@ -583,7 +582,7 @@ initialize_aggregate(AggState *aggstate, AggStatePerTrans pertrans,
 	/*
 	 * Start a fresh sort operation for each DISTINCT/ORDER BY aggregate.
 	 */
-	if (pertrans->numSortCols > 0)
+	if (pertrans->aggsortrequired)
 	{
 		/*
 		 * In case of rescan, maybe there could be an uncompleted sort
@@ -880,7 +879,7 @@ process_ordered_aggregate_single(AggState *aggstate,
 	 */
 
 	while (tuplesort_getdatum(pertrans->sortstates[aggstate->current_set],
-							  true, newVal, isNull, &newAbbrevVal))
+							  true, false, newVal, isNull, &newAbbrevVal))
 	{
 		/*
 		 * Clear and select the working context for evaluation of the equality
@@ -901,24 +900,33 @@ process_ordered_aggregate_single(AggState *aggstate,
 											 pertrans->aggCollation,
 											 oldVal, *newVal)))))
 		{
-			/* equal to prior, so forget this one */
-			if (!pertrans->inputtypeByVal && !*isNull)
-				pfree(DatumGetPointer(*newVal));
+			MemoryContextSwitchTo(oldContext);
+			continue;
 		}
 		else
 		{
 			advance_transition_function(aggstate, pertrans, pergroupstate);
-			/* forget the old value, if any */
-			if (!oldIsNull && !pertrans->inputtypeByVal)
-				pfree(DatumGetPointer(oldVal));
-			/* and remember the new one for subsequent equality checks */
-			oldVal = *newVal;
+
+			MemoryContextSwitchTo(oldContext);
+
+			/*
+			 * Forget the old value, if any, and remember the new one for
+			 * subsequent equality checks.
+			 */
+			if (!pertrans->inputtypeByVal)
+			{
+				if (!oldIsNull)
+					pfree(DatumGetPointer(oldVal));
+				if (!*isNull)
+					oldVal = datumCopy(*newVal, pertrans->inputtypeByVal,
+									   pertrans->inputtypeLen);
+			}
+			else
+				oldVal = *newVal;
 			oldAbbrevVal = newAbbrevVal;
 			oldIsNull = *isNull;
 			haveOldVal = true;
 		}
-
-		MemoryContextSwitchTo(oldContext);
 	}
 
 	if (!oldIsNull && !pertrans->inputtypeByVal)
@@ -1029,6 +1037,8 @@ process_ordered_aggregate_multi(AggState *aggstate,
  *
  * The finalfn will be run, and the result delivered, in the
  * output-tuple context; caller's CurrentMemoryContext does not matter.
+ * (But note that in some cases, such as when there is no finalfn, the
+ * result might be a pointer to or into the agg's transition value.)
  *
  * The finalfn uses the state as set in the transno. This also might be
  * being used by another aggregate function, so it's important that we do
@@ -1113,20 +1123,12 @@ finalize_aggregate(AggState *aggstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*resultVal = pergroupstate->transValue;
+		*resultVal =
+			MakeExpandedObjectReadOnly(pergroupstate->transValue,
+									   pergroupstate->transValueIsNull,
+									   pertrans->transtypeLen);
 		*resultIsNull = pergroupstate->transValueIsNull;
 	}
-
-	/*
-	 * If result is pass-by-ref, make sure it is in the right context.
-	 */
-	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*resultVal)))
-		*resultVal = datumCopy(*resultVal,
-							   peragg->resulttypeByVal,
-							   peragg->resulttypeLen);
 
 	MemoryContextSwitchTo(oldContext);
 }
@@ -1177,18 +1179,12 @@ finalize_partialaggregate(AggState *aggstate,
 	}
 	else
 	{
-		/* Don't need MakeExpandedObjectReadOnly; datumCopy will copy it */
-		*resultVal = pergroupstate->transValue;
+		*resultVal =
+			MakeExpandedObjectReadOnly(pergroupstate->transValue,
+									   pergroupstate->transValueIsNull,
+									   pertrans->transtypeLen);
 		*resultIsNull = pergroupstate->transValueIsNull;
 	}
-
-	/* If result is pass-by-ref, make sure it is in the right context. */
-	if (!peragg->resulttypeByVal && !*resultIsNull &&
-		!MemoryContextContains(CurrentMemoryContext,
-							   DatumGetPointer(*resultVal)))
-		*resultVal = datumCopy(*resultVal,
-							   peragg->resulttypeByVal,
-							   peragg->resulttypeLen);
 
 	MemoryContextSwitchTo(oldContext);
 }
@@ -1296,20 +1292,19 @@ finalize_aggregates(AggState *aggstate,
 	Datum	   *aggvalues = econtext->ecxt_aggvalues;
 	bool	   *aggnulls = econtext->ecxt_aggnulls;
 	int			aggno;
-	int			transno;
 
 	/*
 	 * If there were any DISTINCT and/or ORDER BY aggregates, sort their
 	 * inputs and run the transition functions.
 	 */
-	for (transno = 0; transno < aggstate->numtrans; transno++)
+	for (int transno = 0; transno < aggstate->numtrans; transno++)
 	{
 		AggStatePerTrans pertrans = &aggstate->pertrans[transno];
 		AggStatePerGroup pergroupstate;
 
 		pergroupstate = &pergroup[transno];
 
-		if (pertrans->numSortCols > 0)
+		if (pertrans->aggsortrequired)
 		{
 			Assert(aggstate->aggstrategy != AGG_HASHED &&
 				   aggstate->aggstrategy != AGG_MIXED);
@@ -1322,6 +1317,21 @@ finalize_aggregates(AggState *aggstate,
 				process_ordered_aggregate_multi(aggstate,
 												pertrans,
 												pergroupstate);
+		}
+		else if (pertrans->numDistinctCols > 0 && pertrans->haslast)
+		{
+			pertrans->haslast = false;
+
+			if (pertrans->numDistinctCols == 1)
+			{
+				if (!pertrans->inputtypeByVal && !pertrans->lastisnull)
+					pfree(DatumGetPointer(pertrans->lastdatum));
+
+				pertrans->lastisnull = false;
+				pertrans->lastdatum = (Datum) 0;
+			}
+			else
+				ExecClearTuple(pertrans->uniqslot);
 		}
 	}
 
@@ -2656,8 +2666,8 @@ agg_refill_hash_table(AggState *aggstate)
 		prepare_hash_slot(perhash,
 						  aggstate->tmpcontext->ecxt_outertuple,
 						  hashslot);
-		entry = LookupTupleHashEntryHash(
-										 perhash->hashtable, hashslot, p_isnew, hash);
+		entry = LookupTupleHashEntryHash(perhash->hashtable, hashslot,
+										 p_isnew, hash);
 
 		if (entry != NULL)
 		{
@@ -3388,7 +3398,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		if (phaseidx > 0)
 		{
 			aggnode = list_nth_node(Agg, node->chain, phaseidx - 1);
-			sortnode = castNode(Sort, aggnode->plan.lefttree);
+			sortnode = castNode(Sort, outerPlan(aggnode));
 		}
 		else
 		{
@@ -3470,8 +3480,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			 */
 			if (aggnode->aggstrategy == AGG_SORTED)
 			{
-				int			i = 0;
-
 				Assert(aggnode->numCols > 0);
 
 				/*
@@ -3482,9 +3490,9 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 					(ExprState **) palloc0(aggnode->numCols * sizeof(ExprState *));
 
 				/* for each grouping set */
-				for (i = 0; i < phasedata->numsets; i++)
+				for (int k = 0; k < phasedata->numsets; k++)
 				{
-					int			length = phasedata->gset_lengths[i];
+					int			length = phasedata->gset_lengths[k];
 
 					if (phasedata->eqfunctions[length - 1] != NULL)
 						continue;
@@ -3563,7 +3571,6 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	{
 		Plan	   *outerplan = outerPlan(node);
 		uint64		totalGroups = 0;
-		int			i;
 
 		aggstate->hash_metacxt = AllocSetContextCreate(aggstate->ss.ps.state->es_query_cxt,
 													   "HashAgg meta context",
@@ -3586,8 +3593,8 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		 * when there is more than one grouping set, but should still be
 		 * reasonable.
 		 */
-		for (i = 0; i < aggstate->num_hashes; i++)
-			totalGroups += aggstate->perhash[i].aggnode->numGroups;
+		for (int k = 0; k < aggstate->num_hashes; k++)
+			totalGroups += aggstate->perhash[k].aggnode->numGroups;
 
 		hash_agg_set_limits(aggstate->hashentrysize, totalGroups, 0,
 							&aggstate->hash_mem_limit,
@@ -3669,7 +3676,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 		aggform = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 		/* Check permission to call aggregate function */
-		aclresult = pg_proc_aclcheck(aggref->aggfnoid, GetUserId(),
+		aclresult = object_aclcheck(ProcedureRelationId, aggref->aggfnoid, GetUserId(),
 									 ACL_EXECUTE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_AGGREGATE,
@@ -3736,7 +3743,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 
 			if (OidIsValid(finalfn_oid))
 			{
-				aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,
+				aclresult = object_aclcheck(ProcedureRelationId, finalfn_oid, aggOwner,
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -3745,7 +3752,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 			if (OidIsValid(serialfn_oid))
 			{
-				aclresult = pg_proc_aclcheck(serialfn_oid, aggOwner,
+				aclresult = object_aclcheck(ProcedureRelationId, serialfn_oid, aggOwner,
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -3754,7 +3761,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			}
 			if (OidIsValid(deserialfn_oid))
 			{
-				aclresult = pg_proc_aclcheck(deserialfn_oid, aggOwner,
+				aclresult = object_aclcheck(ProcedureRelationId, deserialfn_oid, aggOwner,
 											 ACL_EXECUTE);
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, OBJECT_FUNCTION,
@@ -3834,7 +3841,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 			else
 				transfn_oid = aggform->aggtransfn;
 
-			aclresult = pg_proc_aclcheck(transfn_oid, aggOwner, ACL_EXECUTE);
+			aclresult = object_aclcheck(ProcedureRelationId, transfn_oid, aggOwner, ACL_EXECUTE);
 			if (aclresult != ACLCHECK_OK)
 				aclcheck_error(aclresult, OBJECT_FUNCTION,
 							   get_func_name(transfn_oid));
@@ -4127,6 +4134,12 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	 * stick them into arrays.  We ignore ORDER BY for an ordered-set agg,
 	 * however; the agg's transfn and finalfn are responsible for that.
 	 *
+	 * When the planner has set the aggpresorted flag, the input to the
+	 * aggregate is already correctly sorted.  For ORDER BY aggregates we can
+	 * simply treat these as normal aggregates.  For presorted DISTINCT
+	 * aggregates an extra step must be added to remove duplicate consecutive
+	 * inputs.
+	 *
 	 * Note that by construction, if there is a DISTINCT clause then the ORDER
 	 * BY clause is a prefix of it (see transformDistinctClause).
 	 */
@@ -4134,18 +4147,27 @@ build_pertrans_for_aggref(AggStatePerTrans pertrans,
 	{
 		sortlist = NIL;
 		numSortCols = numDistinctCols = 0;
+		pertrans->aggsortrequired = false;
+	}
+	else if (aggref->aggpresorted && aggref->aggdistinct == NIL)
+	{
+		sortlist = NIL;
+		numSortCols = numDistinctCols = 0;
+		pertrans->aggsortrequired = false;
 	}
 	else if (aggref->aggdistinct)
 	{
 		sortlist = aggref->aggdistinct;
 		numSortCols = numDistinctCols = list_length(sortlist);
 		Assert(numSortCols >= list_length(aggref->aggorder));
+		pertrans->aggsortrequired = !aggref->aggpresorted;
 	}
 	else
 	{
 		sortlist = aggref->aggorder;
 		numSortCols = list_length(sortlist);
 		numDistinctCols = 0;
+		pertrans->aggsortrequired = (numSortCols > 0);
 	}
 
 	pertrans->numSortCols = numSortCols;

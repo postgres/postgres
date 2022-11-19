@@ -12,7 +12,7 @@
   <application>pgAdmin</application> and other administration and management tools can
   use to provide additional functionality, such as remote management
   of server log files.
-  Use of all these functions is only allowed to the superuser by default but may be
+  Use of all these functions is only allowed to database superusers by default, but may be
   allowed to other users by using the <command>GRANT</command> command.
  </para>
 
@@ -22,9 +22,10 @@
   functions in <xref linkend="functions-admin-genfile-table"/>, which
   provide read-only access.)
   Only files within the database cluster directory can be accessed, unless the
-  user is a superuser or given privileges of one of the pg_read_server_files,
-  or pg_write_server_files roles, as appropriate for the function, but either a
-  relative or absolute path is allowable.
+  user is a superuser or given privileges of one of the
+  <literal>pg_read_server_files</literal> or
+  <literal>pg_write_server_files</literal> roles, as appropriate for the
+  function, but either a relative or absolute path is allowable.
  </para>
 
  <table id="functions-adminpack-table">

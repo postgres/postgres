@@ -14,6 +14,7 @@
 #ifndef GUC_TABLES_H
 #define GUC_TABLES_H 1
 
+#include "lib/ilist.h"
 #include "utils/guc.h"
 
 /*
@@ -56,6 +57,7 @@ enum config_group
 	UNGROUPED,					/* use for options not shown in pg_settings */
 	FILE_LOCATIONS,
 	CONN_AUTH_SETTINGS,
+	CONN_AUTH_TCP,
 	CONN_AUTH_AUTH,
 	CONN_AUTH_SSL,
 	RESOURCES_MEM,
@@ -120,6 +122,8 @@ typedef struct guc_stack
 	/* masked value's source must be PGC_S_SESSION, so no need to store it */
 	GucContext	scontext;		/* context that set the prior value */
 	GucContext	masked_scontext;	/* context that set the masked value */
+	Oid			srole;			/* role that set the prior value */
+	Oid			masked_srole;	/* role that set the masked value */
 	config_var_value prior;		/* previous value of variable */
 	config_var_value masked;	/* SET value in a GUC_SET_LOCAL entry */
 } GucStack;
@@ -130,6 +134,15 @@ typedef struct guc_stack
  * The short description should be less than 80 chars in length. Some
  * applications may use the long description as well, and will append
  * it to the short description. (separated by a newline or '. ')
+ *
+ * srole is the role that set the current value, or BOOTSTRAP_SUPERUSERID
+ * if the value came from an internal source or the config file.  Similarly
+ * for reset_srole (which is usually BOOTSTRAP_SUPERUSERID, but not always).
+ *
+ * Variables that are currently of active interest for maintenance
+ * operations are linked into various lists using the xxx_link fields.
+ * The link fields are unused/garbage in variables not currently having
+ * the specified properties.
  *
  * Note that sourcefile/sourceline are kept here, and not pushed into stacked
  * values, although in principle they belong with some stacked value if the
@@ -152,8 +165,16 @@ struct config_generic
 	GucSource	reset_source;	/* source of the reset_value */
 	GucContext	scontext;		/* context that set the current value */
 	GucContext	reset_scontext; /* context that set the reset value */
+	Oid			srole;			/* role that set the current value */
+	Oid			reset_srole;	/* role that set the reset value */
 	GucStack   *stack;			/* stacked prior values */
 	void	   *extra;			/* "extra" pointer for current actual value */
+	dlist_node	nondef_link;	/* list link for variables that have source
+								 * different from PGC_S_DEFAULT */
+	slist_node	stack_link;		/* list link for variables that have non-NULL
+								 * stack */
+	slist_node	report_link;	/* list link for variables that have the
+								 * GUC_NEEDS_REPORT bit set in status */
 	char	   *last_reported;	/* if variable is GUC_REPORT, value last sent
 								 * to client (NULL if not yet sent) */
 	char	   *sourcefile;		/* file current setting is from (NULL if not
@@ -254,8 +275,25 @@ extern PGDLLIMPORT const char *const config_type_names[];
 extern PGDLLIMPORT const char *const GucContext_Names[];
 extern PGDLLIMPORT const char *const GucSource_Names[];
 
+/* data arrays defining all the built-in GUC variables */
+extern PGDLLIMPORT struct config_bool ConfigureNamesBool[];
+extern PGDLLIMPORT struct config_int ConfigureNamesInt[];
+extern PGDLLIMPORT struct config_real ConfigureNamesReal[];
+extern PGDLLIMPORT struct config_string ConfigureNamesString[];
+extern PGDLLIMPORT struct config_enum ConfigureNamesEnum[];
+
+/* lookup GUC variables, returning config_generic pointers */
+extern struct config_generic *find_option(const char *name,
+										  bool create_placeholders,
+										  bool skip_errors,
+										  int elevel);
+extern struct config_generic **get_explain_guc_options(int *num);
+
+/* get string value of variable */
+extern char *ShowGUCOption(struct config_generic *record, bool use_units);
+
 /* get the current set of variables */
-extern struct config_generic **get_guc_variables(void);
+extern struct config_generic **get_guc_variables(int *num_vars);
 
 extern void build_guc_variables(void);
 
@@ -263,6 +301,9 @@ extern void build_guc_variables(void);
 extern const char *config_enum_lookup_by_value(struct config_enum *record, int val);
 extern bool config_enum_lookup_by_name(struct config_enum *record,
 									   const char *value, int *retval);
-extern struct config_generic **get_explain_guc_options(int *num);
+extern char *config_enum_get_options(struct config_enum *record,
+									 const char *prefix,
+									 const char *suffix,
+									 const char *separator);
 
 #endif							/* GUC_TABLES_H */

@@ -636,7 +636,7 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Report the following statistics for each command after the benchmark
         finishes: the average per-statement latency (execution time from the
-        perspective of the client), the number of failures and the number of
+        perspective of the client), the number of failures, and the number of
         retries after serialization or deadlock errors in this command.  The
         report displays retry statistics only if the
         <option>--max-tries</option> option is not equal to 1.
@@ -814,19 +814,6 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
      </varlistentry>
 
      <varlistentry>
-      <term><option>--verbose-errors</option></term>
-      <listitem>
-       <para>
-        Print messages about all errors and failures (errors without retrying)
-        including which limit for retries was exceeded and how far it was
-        exceeded for the serialization/deadlock failures. (Note that in this
-        case the output can be significantly increased.).
-        See <xref linkend="failures-and-retries"/> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>--progress-timestamp</option></term>
       <listitem>
        <para>
@@ -900,6 +887,19 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
        <para>
         Show the actual code of builtin script <replaceable>scriptname</replaceable>
         on stderr, and exit immediately.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>--verbose-errors</option></term>
+      <listitem>
+       <para>
+        Print messages about all errors and failures (errors without retrying)
+        including which limit for retries was exceeded and how far it was
+        exceeded for the serialization/deadlock failures. (Note that in this
+        case the output can be significantly increased.).
+        See <xref linkend="failures-and-retries"/> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -1023,8 +1023,8 @@ pgbench <optional> <replaceable>options</replaceable> </optional> <replaceable>d
  <refsect1>
   <title>Notes</title>
 
- <refsect2 id="transactions-and-scripts" xreflabel="What is the &quot;Transaction&quot; Actually Performed in pgbench?">
-  <title>What is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
+ <refsect2 id="transactions-and-scripts" xreflabel="What Is the &quot;Transaction&quot; Actually Performed in pgbench?">
+  <title>What Is the <quote>Transaction</quote> Actually Performed in <application>pgbench</application>?</title>
 
   <para>
    <application>pgbench</application> executes test scripts chosen randomly
@@ -2884,6 +2884,22 @@ statement latencies in milliseconds, failures and retries:
    limit for retries was exceeded and how much it was exceeded by for the
    serialization/deadlock failures, use the <option>--verbose-errors</option>
    option.
+  </para>
+ </refsect2>
+
+ <refsect2>
+  <title>Table Access Methods</title>
+
+  <para>
+   You may specify the <link linkend="tableam">Table Access Method</link>
+   for the pgbench tables.  The environment variable <envar>PGOPTIONS</envar>
+   specifies database configuration options that are passed to PostgreSQL via
+   the command line (See <xref linkend="config-setting-shell"/>).
+   For example, a hypothetical default Table Access Method for the tables that
+   pgbench creates called <literal>wuzza</literal> can be specified with:
+<programlisting>
+PGOPTIONS='-c default_table_access_method=wuzza'
+</programlisting>
   </para>
  </refsect2>
 

@@ -36,7 +36,7 @@
 #include <unistd.h>
 
 #include "common/string.h"
-#include "parser/gramparse.h"
+#include "gramparse.h"
 #include "parser/parser.h"		/* only needed for GUC variables */
 #include "parser/scansup.h"
 #include "port/pg_bitutils.h"

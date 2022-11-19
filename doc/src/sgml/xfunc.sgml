@@ -1256,7 +1256,7 @@ SELECT x, CASE WHEN x &gt; 0 THEN generate_series(1, 5) ELSE 0 END FROM tab;
       described above; instead, a set-returning function could have at most
       one set-returning argument, and each nest of set-returning functions
       was run independently.  Also, conditional execution (set-returning
-      functions inside <literal>CASE</literal> etc) was previously allowed,
+      functions inside <literal>CASE</literal> etc.) was previously allowed,
       complicating things even more.
       Use of the <literal>LATERAL</literal> syntax is recommended when writing
       queries that need to work in older <productname>PostgreSQL</productname> versions,
@@ -1979,27 +1979,15 @@ PG_MODULE_MAGIC;
     <primary>_PG_init</primary>
    </indexterm>
    <indexterm zone="xfunc-c-dynload">
-    <primary>_PG_fini</primary>
-   </indexterm>
-   <indexterm zone="xfunc-c-dynload">
     <primary>library initialization function</primary>
-   </indexterm>
-   <indexterm zone="xfunc-c-dynload">
-    <primary>library finalization function</primary>
    </indexterm>
 
    <para>
-    Optionally, a dynamically loaded file can contain initialization and
-    finalization functions.  If the file includes a function named
+    Optionally, a dynamically loaded file can contain an initialization
+    function.  If the file includes a function named
     <function>_PG_init</function>, that function will be called immediately after
     loading the file.  The function receives no parameters and should
-    return void.  If the file includes a function named
-    <function>_PG_fini</function>, that function will be called immediately before
-    unloading the file.  Likewise, the function receives no parameters and
-    should return void.  Note that <function>_PG_fini</function> will only be called
-    during an unload of the file, not during process termination.
-    (Presently, unloads are disabled and will never occur, but this may
-    change in the future.)
+    return void.  There is presently no way to unload a dynamically loaded file.
    </para>
 
   </sect2>
@@ -2775,7 +2763,7 @@ c_overpaid(PG_FUNCTION_ARGS)
      is  null.   <function>GetAttributeByName</function> returns a <type>Datum</type>
      value that you can convert to the proper data type by using the
      appropriate <function>DatumGet<replaceable>XXX</replaceable>()</function>
-     macro.  Note that the return value is meaningless if the null flag is
+     function.  Note that the return value is meaningless if the null flag is
      set; always check the null flag before trying to do anything with the
      result.
     </para>
@@ -3414,21 +3402,29 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
      startup.  The add-in's shared library must be preloaded by specifying
      it in
      <xref linkend="guc-shared-preload-libraries"/><indexterm><primary>shared_preload_libraries</primary></indexterm>.
+     The shared library should register a <literal>shmem_request_hook</literal>
+     in its <function>_PG_init</function> function.  This
+     <literal>shmem_request_hook</literal> can reserve LWLocks or shared memory.
      Shared memory is reserved by calling:
 <programlisting>
 void RequestAddinShmemSpace(int size)
 </programlisting>
-     from your <function>_PG_init</function> function.
+     from your <literal>shmem_request_hook</literal>.
     </para>
     <para>
      LWLocks are reserved by calling:
 <programlisting>
 void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)
 </programlisting>
-     from <function>_PG_init</function>.  This will ensure that an array of
+     from your <literal>shmem_request_hook</literal>.  This will ensure that an array of
      <literal>num_lwlocks</literal> LWLocks is available under the name
      <literal>tranche_name</literal>.  Use <function>GetNamedLWLockTranche</function>
      to get a pointer to this array.
+    </para>
+    <para>
+     An example of a <literal>shmem_request_hook</literal> can be found in
+     <filename>contrib/pg_stat_statements/pg_stat_statements.c</filename> in the
+     <productname>PostgreSQL</productname> source tree.
     </para>
     <para>
      To avoid possible race-conditions, each backend should use the LWLock

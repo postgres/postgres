@@ -53,6 +53,25 @@ pg_stat_get_numscans(PG_FUNCTION_ARGS)
 
 
 Datum
+pg_stat_get_lastscan(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	TimestampTz result;
+	PgStat_StatTabEntry *tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = tabentry->lastscan;
+
+	if (result == 0)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_TIMESTAMPTZ(result);
+}
+
+
+Datum
 pg_stat_get_tuples_returned(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
@@ -415,7 +434,6 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
 	FuncCallContext *funcctx;
 	int		   *fctx;
-	int32		result;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -424,11 +442,10 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 
 		fctx = MemoryContextAlloc(funcctx->multi_call_memory_ctx,
-								  2 * sizeof(int));
+								  sizeof(int));
 		funcctx->user_fctx = fctx;
 
 		fctx[0] = 0;
-		fctx[1] = pgstat_fetch_stat_numbackends();
 	}
 
 	/* stuff done on every call of the function */
@@ -436,12 +453,22 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 	fctx = funcctx->user_fctx;
 
 	fctx[0] += 1;
-	result = fctx[0];
 
-	if (result <= fctx[1])
+	/*
+	 * We recheck pgstat_fetch_stat_numbackends() each time through, just in
+	 * case the local status data has been refreshed since we started.  It's
+	 * plenty cheap enough if not.  If a refresh does happen, we'll likely
+	 * miss or duplicate some backend IDs, but we're content not to crash.
+	 * (Refreshing midway through such a query would be problematic usage
+	 * anyway, since the backend IDs we've already returned might no longer
+	 * refer to extant sessions.)
+	 */
+	if (fctx[0] <= pgstat_fetch_stat_numbackends())
 	{
 		/* do when there is more left to send */
-		SRF_RETURN_NEXT(funcctx, Int32GetDatum(result));
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(fctx[0]);
+
+		SRF_RETURN_NEXT(funcctx, Int32GetDatum(local_beentry->backend_id));
 	}
 	else
 	{
@@ -481,32 +508,25 @@ pg_stat_get_progress_info(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("invalid command name: \"%s\"", cmd)));
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
-		Datum		values[PG_STAT_GET_PROGRESS_COLS];
-		bool		nulls[PG_STAT_GET_PROGRESS_COLS];
+		Datum		values[PG_STAT_GET_PROGRESS_COLS] = {0};
+		bool		nulls[PG_STAT_GET_PROGRESS_COLS] = {0};
 		int			i;
 
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
-
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
-
-		if (!local_beentry)
-			continue;
-
 		beentry = &local_beentry->backendStatus;
 
 		/*
 		 * Report values for only those backends which are running the given
 		 * command.
 		 */
-		if (!beentry || beentry->st_progress_command != cmdtype)
+		if (beentry->st_progress_command != cmdtype)
 			continue;
 
 		/* Value available to all callers */
@@ -545,43 +565,22 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 	int			pid = PG_ARGISNULL(0) ? -1 : PG_GETARG_INT32(0);
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* 1-based index */
 	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_ACTIVITY_COLS];
-		bool		nulls[PG_STAT_GET_ACTIVITY_COLS];
+		Datum		values[PG_STAT_GET_ACTIVITY_COLS] = {0};
+		bool		nulls[PG_STAT_GET_ACTIVITY_COLS] = {0};
 		LocalPgBackendStatus *local_beentry;
 		PgBackendStatus *beentry;
 		PGPROC	   *proc;
 		const char *wait_event_type = NULL;
 		const char *wait_event = NULL;
 
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
-
 		/* Get the next one in the list */
 		local_beentry = pgstat_fetch_stat_local_beentry(curr_backend);
-		if (!local_beentry)
-		{
-			int			i;
-
-			/* Ignore missing entries if looking for specific PID */
-			if (pid != -1)
-				continue;
-
-			for (i = 0; i < lengthof(nulls); i++)
-				nulls[i] = true;
-
-			nulls[5] = false;
-			values[5] = CStringGetTextDatum("<backend information not available>");
-
-			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc, values, nulls);
-			continue;
-		}
-
 		beentry = &local_beentry->backendStatus;
 
 		/* If looking for specific PID, ignore all the others */
@@ -741,11 +740,8 @@ pg_stat_get_activity(PG_FUNCTION_ARGS)
 			}
 			else
 			{
-				if (beentry->st_clientaddr.addr.ss_family == AF_INET
-#ifdef HAVE_IPV6
-					|| beentry->st_clientaddr.addr.ss_family == AF_INET6
-#endif
-					)
+				if (beentry->st_clientaddr.addr.ss_family == AF_INET ||
+					beentry->st_clientaddr.addr.ss_family == AF_INET6)
 				{
 					char		remote_host[NI_MAXHOST];
 					char		remote_port[NI_MAXSERV];
@@ -1111,9 +1107,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	switch (beentry->st_clientaddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		default:
 			PG_RETURN_NULL();
@@ -1130,7 +1124,7 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 
 	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 
-	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
+	PG_RETURN_DATUM(DirectFunctionCall1(inet_in,
 										 CStringGetDatum(remote_host)));
 }
 
@@ -1158,9 +1152,7 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	switch (beentry->st_clientaddr.addr.ss_family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
 		case AF_INET6:
-#endif
 			break;
 		case AF_UNIX:
 			PG_RETURN_INT32(-1);
@@ -1193,9 +1185,9 @@ pg_stat_get_db_numbackends(PG_FUNCTION_ARGS)
 	result = 0;
 	for (beid = 1; beid <= tot_backends; beid++)
 	{
-		PgBackendStatus *beentry = pgstat_fetch_stat_beentry(beid);
+		LocalPgBackendStatus *local_beentry = pgstat_fetch_stat_local_beentry(beid);
 
-		if (beentry && beentry->st_databaseid == dbid)
+		if (local_beentry->backendStatus.st_databaseid == dbid)
 			result++;
 	}
 
@@ -1747,14 +1739,10 @@ pg_stat_get_wal(PG_FUNCTION_ARGS)
 {
 #define PG_STAT_GET_WAL_COLS	9
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_WAL_COLS];
-	bool		nulls[PG_STAT_GET_WAL_COLS];
+	Datum		values[PG_STAT_GET_WAL_COLS] = {0};
+	bool		nulls[PG_STAT_GET_WAL_COLS] = {0};
 	char		buf[256];
 	PgStat_WalStats *wal_stats;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_WAL_COLS);
@@ -1818,7 +1806,7 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	int			i;
 	PgStat_SLRUStats *stats;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/* request SLRU stats from the cumulative stats system */
 	stats = pgstat_fetch_slru();
@@ -1826,8 +1814,8 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 	for (i = 0;; i++)
 	{
 		/* for each row */
-		Datum		values[PG_STAT_GET_SLRU_COLS];
-		bool		nulls[PG_STAT_GET_SLRU_COLS];
+		Datum		values[PG_STAT_GET_SLRU_COLS] = {0};
+		bool		nulls[PG_STAT_GET_SLRU_COLS] = {0};
 		PgStat_SLRUStats stat;
 		const char *name;
 
@@ -1837,8 +1825,6 @@ pg_stat_get_slru(PG_FUNCTION_ARGS)
 			break;
 
 		stat = stats[i];
-		MemSet(values, 0, sizeof(values));
-		MemSet(nulls, 0, sizeof(nulls));
 
 		values[0] = PointerGetDatum(cstring_to_text(name));
 		values[1] = Int64GetDatum(stat.blocks_zeroed);
@@ -2201,13 +2187,9 @@ Datum
 pg_stat_get_archiver(PG_FUNCTION_ARGS)
 {
 	TupleDesc	tupdesc;
-	Datum		values[7];
-	bool		nulls[7];
+	Datum		values[7] = {0};
+	bool		nulls[7] = {0};
 	PgStat_ArchiverStats *archiver_stats;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(7);
@@ -2274,14 +2256,10 @@ pg_stat_get_replication_slot(PG_FUNCTION_ARGS)
 	text	   *slotname_text = PG_GETARG_TEXT_P(0);
 	NameData	slotname;
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS];
-	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS];
+	Datum		values[PG_STAT_GET_REPLICATION_SLOT_COLS] = {0};
+	bool		nulls[PG_STAT_GET_REPLICATION_SLOT_COLS] = {0};
 	PgStat_StatReplSlotEntry *slotent;
 	PgStat_StatReplSlotEntry allzero;
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Initialise attributes information in the tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(PG_STAT_GET_REPLICATION_SLOT_COLS);
@@ -2348,8 +2326,8 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 #define PG_STAT_GET_SUBSCRIPTION_STATS_COLS	4
 	Oid			subid = PG_GETARG_OID(0);
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_GET_SUBSCRIPTION_STATS_COLS];
-	bool		nulls[PG_STAT_GET_SUBSCRIPTION_STATS_COLS];
+	Datum		values[PG_STAT_GET_SUBSCRIPTION_STATS_COLS] = {0};
+	bool		nulls[PG_STAT_GET_SUBSCRIPTION_STATS_COLS] = {0};
 	PgStat_StatSubEntry *subentry;
 	PgStat_StatSubEntry allzero;
 
@@ -2367,10 +2345,6 @@ pg_stat_get_subscription_stats(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "stats_reset",
 					   TIMESTAMPTZOID, -1, 0);
 	BlessTupleDesc(tupdesc);
-
-	/* Initialise values and NULL flags arrays */
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	if (!subentry)
 	{
@@ -2411,7 +2385,7 @@ pg_stat_have_stats(PG_FUNCTION_ARGS)
 	char	   *stats_type = text_to_cstring(PG_GETARG_TEXT_P(0));
 	Oid			dboid = PG_GETARG_OID(1);
 	Oid			objoid = PG_GETARG_OID(2);
-	PgStat_Kind	kind = pgstat_get_kind_from_str(stats_type);
+	PgStat_Kind kind = pgstat_get_kind_from_str(stats_type);
 
 	PG_RETURN_BOOL(pgstat_have_entry(kind, dboid, objoid));
 }

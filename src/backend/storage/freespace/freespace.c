@@ -111,7 +111,7 @@ static int	fsm_set_and_search(Relation rel, FSMAddress addr, uint16 slot,
 static BlockNumber fsm_search(Relation rel, uint8 min_cat);
 static uint8 fsm_vacuum_page(Relation rel, FSMAddress addr,
 							 BlockNumber start, BlockNumber end,
-							 bool *eof);
+							 bool *eof_p);
 
 
 /******** Public API ********/
@@ -196,7 +196,7 @@ RecordPageWithFreeSpace(Relation rel, BlockNumber heapBlk, Size spaceAvail)
  *		WAL replay
  */
 void
-XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
+XLogRecordPageWithFreeSpace(RelFileLocator rlocator, BlockNumber heapBlk,
 							Size spaceAvail)
 {
 	int			new_cat = fsm_space_avail_to_cat(spaceAvail);
@@ -211,8 +211,8 @@ XLogRecordPageWithFreeSpace(RelFileNode rnode, BlockNumber heapBlk,
 	blkno = fsm_logical_to_physical(addr);
 
 	/* If the page doesn't exist already, extend */
-	buf = XLogReadBufferExtended(rnode, FSM_FORKNUM, blkno, RBM_ZERO_ON_ERROR,
-								 InvalidBuffer);
+	buf = XLogReadBufferExtended(rlocator, FSM_FORKNUM, blkno,
+								 RBM_ZERO_ON_ERROR, InvalidBuffer);
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 	page = BufferGetPage(buf);

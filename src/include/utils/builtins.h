@@ -47,10 +47,10 @@ extern int16 pg_strtoint16(const char *s);
 extern int32 pg_strtoint32(const char *s);
 extern int64 pg_strtoint64(const char *s);
 extern int	pg_itoa(int16 i, char *a);
-extern int	pg_ultoa_n(uint32 l, char *a);
-extern int	pg_ulltoa_n(uint64 l, char *a);
-extern int	pg_ltoa(int32 l, char *a);
-extern int	pg_lltoa(int64 ll, char *a);
+extern int	pg_ultoa_n(uint32 value, char *a);
+extern int	pg_ulltoa_n(uint64 value, char *a);
+extern int	pg_ltoa(int32 value, char *a);
+extern int	pg_lltoa(int64 value, char *a);
 extern char *pg_ultostr_zeropad(char *str, uint32 value, int32 minwidth);
 extern char *pg_ultostr(char *str, uint32 value);
 

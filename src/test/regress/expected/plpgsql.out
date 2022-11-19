@@ -2256,6 +2256,33 @@ select refcursor_test2(20000, 20000) as "Should be false",
  f               | t
 (1 row)
 
+-- should fail
+create function constant_refcursor() returns refcursor as $$
+declare
+    rc constant refcursor;
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language plpgsql;
+select constant_refcursor();
+ERROR:  variable "rc" is declared CONSTANT
+CONTEXT:  PL/pgSQL function constant_refcursor() line 5 at OPEN
+-- but it's okay like this
+create or replace function constant_refcursor() returns refcursor as $$
+declare
+    rc constant refcursor := 'my_cursor_name';
+begin
+    open rc for select a from rc_test;
+    return rc;
+end
+$$ language plpgsql;
+select constant_refcursor();
+ constant_refcursor 
+--------------------
+ my_cursor_name
+(1 row)
+
 --
 -- tests for cursors with named parameter arguments
 --

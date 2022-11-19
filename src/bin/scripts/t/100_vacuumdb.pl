@@ -103,6 +103,8 @@ $node->safe_psql(
   CREATE TABLE funcidx (x int);
   INSERT INTO funcidx VALUES (0),(1),(2),(3);
   CREATE INDEX i0 ON funcidx ((f1(x)));
+  CREATE SCHEMA "Foo";
+  CREATE TABLE "Foo".bar(id int);
 |);
 $node->command_ok([qw|vacuumdb -Z --table="need""q(uot"(")x") postgres|],
 	'column list');
@@ -146,5 +148,45 @@ $node->issues_sql_like(
 	[ 'vacuumdb', '--min-xid-age', '2147483001', 'postgres' ],
 	qr/GREATEST.*relfrozenxid.*2147483001/,
 	'vacuumdb --table --min-xid-age');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--schema', '"Foo"', 'postgres' ],
+	qr/VACUUM "Foo".bar/,
+	'vacuumdb --schema');
+$node->issues_sql_like(
+	[ 'vacuumdb', '--exclude-schema', '"Foo"', 'postgres' ],
+	qr/(?:(?!VACUUM "Foo".bar).)*/,
+	'vacuumdb --exclude-schema');
+$node->command_fails_like(
+	[ 'vacuumdb', '-N', 'pg_catalog', '-t', 'pg_class', 'postgres', ],
+	qr/cannot vacuum specific table\(s\) and exclude schema\(s\) at the same time/,
+	'cannot use options -N and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-n', 'pg_catalog', '-t', 'pg_class', 'postgres' ],
+	qr/cannot vacuum all tables in schema\(s\) and specific table\(s\) at the same time/,
+	'cannot use options -n and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-n', 'pg_catalog', '-N', '"Foo"', 'postgres' ],
+	qr/cannot vacuum all tables in schema\(s\) and exclude schema\(s\) at the same time/,
+	'cannot use options -n and -N at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-N', '"Foo"' ],
+	qr/cannot exclude specific schema\(s\) in all databases/,
+	'cannot use options -a and -N at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-n', '"Foo"' ],
+	qr/cannot vacuum specific schema\(s\) in all databases/,
+	'cannot use options -a and -n at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-t', '"Foo".bar' ],
+	qr/cannot vacuum specific table\(s\) in all databases/,
+	'cannot use options -a and -t at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', '-d', 'postgres' ],
+	qr/cannot vacuum all databases and a specific one at the same time/,
+	'cannot use options -a and -d at the same time');
+$node->command_fails_like(
+	[ 'vacuumdb', '-a', 'postgres' ],
+	qr/cannot vacuum all databases and a specific one at the same time/,
+	'cannot use option -a and a dbname as argument at the same time');
 
 done_testing();

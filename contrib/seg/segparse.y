@@ -13,10 +13,7 @@
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
- * memory leaks if we error out during parsing.  Note this only works with
- * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
- * if possible, so there's not really much problem anyhow, at least if
- * you're building with gcc.
+ * memory leaks if we error out during parsing.
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
@@ -38,13 +35,15 @@ static char strbuf[25] = {
 %expect 0
 %name-prefix="seg_yy"
 
-%union {
-	struct BND {
-		float val;
-		char  ext;
-		char  sigd;
+%union
+{
+	struct BND
+	{
+		float		val;
+		char		ext;
+		char		sigd;
 	} bnd;
-	char * text;
+	char	   *text;
 }
 %token <text> SEGFLOAT
 %token <text> RANGE
@@ -119,7 +118,7 @@ range: boundary PLUMIN deviation
 boundary: SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float val = seg_atof($1);
+		float		val = seg_atof($1);
 
 		$$.ext = '\0';
 		$$.sigd = significant_digits($1);
@@ -128,7 +127,7 @@ boundary: SEGFLOAT
 	| EXTENSION SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float val = seg_atof($2);
+		float		val = seg_atof($2);
 
 		$$.ext = $1[0];
 		$$.sigd = significant_digits($2);
@@ -139,7 +138,7 @@ boundary: SEGFLOAT
 deviation: SEGFLOAT
 	{
 		/* temp variable avoids a gcc 3.3.x bug on Sparc64 */
-		float val = seg_atof($1);
+		float		val = seg_atof($1);
 
 		$$.ext = '\0';
 		$$.sigd = significant_digits($1);
@@ -153,11 +152,8 @@ deviation: SEGFLOAT
 static float
 seg_atof(const char *value)
 {
-	Datum datum;
+	Datum		datum;
 
 	datum = DirectFunctionCall1(float4in, CStringGetDatum(value));
 	return DatumGetFloat4(datum);
 }
-
-
-#include "segscan.c"

@@ -71,19 +71,23 @@ RESET ROLE
 
   <para>
    Using this command, it is possible to either add privileges or restrict
-   one's privileges.  If the session user role has the <literal>INHERIT</literal>
-   attribute, then it automatically has all the privileges of every role that
-   it could <command>SET ROLE</command> to; in this case <command>SET ROLE</command>
-   effectively drops all the privileges assigned directly to the session user
-   and to the other roles it is a member of, leaving only the privileges
-   available to the named role.  On the other hand, if the session user role
-   has the <literal>NOINHERIT</literal> attribute, <command>SET ROLE</command> drops the
-   privileges assigned directly to the session user and instead acquires the
-   privileges available to the named role.
+   one's privileges.  If the session user role has been granted memberships
+   <literal>WITH INHERIT TRUE</literal>, it automatically has all the
+   privileges of every such role. In this case, <command>SET ROLE</command>
+   effectively drops all the privileges except for those which the target role
+   directly possesses or inherits.  On the other hand, if the session user role
+   has been granted memberships <literal>WITH INHERIT FALSE</literal>, the
+   privileges of the granted roles can't be accessed by default. However, if
+   the role was granted <literal>WITH SET TRUE</literal>, the
+   session user can use <command>SET ROLE</command> to drop the privileges
+   assigned directly to the session user and instead acquire the privileges
+   available to the named role. If the role was granted <literal>WITH INHERIT
+   FALSE, SET FALSE</literal> then the privileges of that role cannot be
+   exercised either with or without <literal>SET ROLE</literal>.
   </para>
 
   <para>
-   In particular, when a superuser chooses to <command>SET ROLE</command> to a
+   Note that when a superuser chooses to <command>SET ROLE</command> to a
    non-superuser role, they lose their superuser privileges.
   </para>
 

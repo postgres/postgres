@@ -198,6 +198,10 @@ extern Oid	get_index_column_opclass(Oid index_oid, int attno);
 extern bool get_index_isreplident(Oid index_oid);
 extern bool get_index_isvalid(Oid index_oid);
 extern bool get_index_isclustered(Oid index_oid);
+extern Oid	get_publication_oid(const char *pubname, bool missing_ok);
+extern char *get_publication_name(Oid pubid, bool missing_ok);
+extern Oid	get_subscription_oid(const char *subname, bool missing_ok);
+extern char *get_subscription_name(Oid subid, bool missing_ok);
 
 #define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
 /* type_is_array_domain accepts both plain arrays and domains over arrays */

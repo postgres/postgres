@@ -15,10 +15,13 @@ SUBDIRS = \
 		  snapshot_too_old \
 		  spgist_name_ops \
 		  test_bloomfilter \
+		  test_copy_callbacks \
+		  test_custom_rmgrs \
 		  test_ddl_deparse \
 		  test_extensions \
 		  test_ginpostinglist \
 		  test_integerset \
+		  test_lfind \
 		  test_misc \
 		  test_oat_hooks \
 		  test_parser \
@@ -28,6 +31,7 @@ SUBDIRS = \
 		  test_regex \
 		  test_rls_hooks \
 		  test_shm_mq \
+		  test_slru \
 		  unsafe_tests \
 		  worker_spi
 

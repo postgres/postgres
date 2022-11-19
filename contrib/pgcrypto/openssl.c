@@ -209,13 +209,13 @@ px_find_digest(const char *name, PX_MD **res)
 	if (!ctx)
 	{
 		pfree(digest);
-		return -1;
+		return PXE_CIPHER_INIT;
 	}
 	if (EVP_DigestInit_ex(ctx, md, NULL) == 0)
 	{
 		EVP_MD_CTX_destroy(ctx);
 		pfree(digest);
-		return -1;
+		return PXE_CIPHER_INIT;
 	}
 
 	digest->algo = md;
@@ -373,7 +373,8 @@ gen_ossl_decrypt(PX_Cipher *c, int padding, const uint8 *data, unsigned dlen,
 				 uint8 *res, unsigned *rlen)
 {
 	OSSLCipher *od = c->ptr;
-	int			outlen, outlen2;
+	int			outlen,
+				outlen2;
 
 	if (!od->init)
 	{
@@ -402,7 +403,8 @@ gen_ossl_encrypt(PX_Cipher *c, int padding, const uint8 *data, unsigned dlen,
 				 uint8 *res, unsigned *rlen)
 {
 	OSSLCipher *od = c->ptr;
-	int			outlen, outlen2;
+	int			outlen,
+				outlen2;
 
 	if (!od->init)
 	{

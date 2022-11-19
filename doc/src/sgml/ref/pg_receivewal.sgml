@@ -40,7 +40,8 @@ PostgreSQL documentation
   <para>
    <application>pg_receivewal</application> streams the write-ahead
    log in real time as it's being generated on the server, and does not wait
-   for segments to complete like <xref linkend="guc-archive-library"/> does.
+   for segments to complete like <xref linkend="guc-archive-command"/> and
+   <xref linkend="guc-archive-library"/> do.
    For this reason, it is not necessary to set
    <xref linkend="guc-archive-timeout"/> when using
     <application>pg_receivewal</application>.
@@ -118,8 +119,9 @@ PostgreSQL documentation
 
   <para>
    In the absence of fatal errors, <application>pg_receivewal</application>
-   will run until terminated by the <systemitem>SIGINT</systemitem> signal
-   (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>).
+   will run until terminated by the <systemitem>SIGINT</systemitem>
+   (<keycombo action="simul"><keycap>Control</keycap><keycap>C</keycap></keycombo>)
+   or <systemitem>SIGTERM</systemitem> signal.
   </para>
  </refsect1>
 
@@ -457,7 +459,8 @@ PostgreSQL documentation
 
   <para>
    <application>pg_receivewal</application> will exit with status 0 when
-   terminated by the <systemitem>SIGINT</systemitem> signal.  (That is the
+   terminated by the <systemitem>SIGINT</systemitem> or
+   <systemitem>SIGTERM</systemitem> signal.  (That is the
    normal way to end it.  Hence it is not an error.)  For fatal errors or
    other signals, the exit status will be nonzero.
   </para>
@@ -486,11 +489,13 @@ PostgreSQL documentation
 
   <para>
    When using <application>pg_receivewal</application> instead of
+   <xref linkend="guc-archive-command"/> or
    <xref linkend="guc-archive-library"/> as the main WAL backup method, it is
    strongly recommended to use replication slots.  Otherwise, the server is
    free to recycle or remove write-ahead log files before they are backed up,
    because it does not have any information, either
-   from <xref linkend="guc-archive-library"/> or the replication slots, about
+   from <xref linkend="guc-archive-command"/> or
+   <xref linkend="guc-archive-library"/> or the replication slots, about
    how far the WAL stream has been archived.  Note, however, that a
    replication slot will fill up the server's disk space if the receiver does
    not keep up with fetching the WAL data.

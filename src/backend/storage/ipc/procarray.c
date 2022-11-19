@@ -58,6 +58,7 @@
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "port/pg_lfind.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
 #include "storage/spin.h"
@@ -262,6 +263,11 @@ static ProcArrayStruct *procArray;
 static PGPROC *allProcs;
 
 /*
+ * Cache to reduce overhead of repeated calls to TransactionIdIsInProgress()
+ */
+static TransactionId cachedXidIsNotInProgress = InvalidTransactionId;
+
+/*
  * Bookkeeping for tracking emulated transactions in recovery
  */
 static TransactionId *KnownAssignedXids;
@@ -338,7 +344,7 @@ static bool KnownAssignedXidExists(TransactionId xid);
 static void KnownAssignedXidsRemove(TransactionId xid);
 static void KnownAssignedXidsRemoveTree(TransactionId xid, int nsubxids,
 										TransactionId *subxids);
-static void KnownAssignedXidsRemovePreceding(TransactionId xid);
+static void KnownAssignedXidsRemovePreceding(TransactionId removeXid);
 static int	KnownAssignedXidsGet(TransactionId *xarray, TransactionId xmax);
 static int	KnownAssignedXidsGetAndSetXmin(TransactionId *xarray,
 										   TransactionId *xmin,
@@ -1172,8 +1178,8 @@ ProcArrayApplyRecoveryInfo(RunningTransactions running)
 		 *
 		 * We have to sort them logically, because in KnownAssignedXidsAdd we
 		 * call TransactionIdFollowsOrEquals and so on. But we know these XIDs
-		 * come from RUNNING_XACTS, which means there are only normal XIDs from
-		 * the same epoch, so this is safe.
+		 * come from RUNNING_XACTS, which means there are only normal XIDs
+		 * from the same epoch, so this is safe.
 		 */
 		qsort(xids, nxids, sizeof(TransactionId), xidLogicalComparator);
 
@@ -1396,7 +1402,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	 * already known to be completed, we can fall out without any access to
 	 * shared memory.
 	 */
-	if (TransactionIdIsKnownCompleted(xid))
+	if (TransactionIdEquals(cachedXidIsNotInProgress, xid))
 	{
 		xc_by_known_xact_inc();
 		return false;
@@ -1554,6 +1560,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	if (nxids == 0)
 	{
 		xc_no_overflow_inc();
+		cachedXidIsNotInProgress = xid;
 		return false;
 	}
 
@@ -1568,7 +1575,10 @@ TransactionIdIsInProgress(TransactionId xid)
 	xc_slow_answer_inc();
 
 	if (TransactionIdDidAbort(xid))
+	{
+		cachedXidIsNotInProgress = xid;
 		return false;
+	}
 
 	/*
 	 * It isn't aborted, so check whether the transaction tree it belongs to
@@ -1577,15 +1587,11 @@ TransactionIdIsInProgress(TransactionId xid)
 	 */
 	topxid = SubTransGetTopmostTransaction(xid);
 	Assert(TransactionIdIsValid(topxid));
-	if (!TransactionIdEquals(topxid, xid))
-	{
-		for (int i = 0; i < nxids; i++)
-		{
-			if (TransactionIdEquals(xids[i], topxid))
-				return true;
-		}
-	}
+	if (!TransactionIdEquals(topxid, xid) &&
+		pg_lfind32(topxid, xids, nxids))
+		return true;
 
+	cachedXidIsNotInProgress = xid;
 	return false;
 }
 
@@ -1659,13 +1665,7 @@ TransactionIdIsActive(TransactionId xid)
  * relations that's not required, since only backends in my own database could
  * ever see the tuples in them. Also, we can ignore concurrently running lazy
  * VACUUMs because (a) they must be working on other tables, and (b) they
- * don't need to do snapshot-based lookups.  Similarly, for the non-catalog
- * horizon, we can ignore CREATE INDEX CONCURRENTLY and REINDEX CONCURRENTLY
- * when they are working on non-partial, non-expressional indexes, for the
- * same reasons and because they can't run in transaction blocks.  (They are
- * not possible to ignore for catalogs, because CIC and RC do some catalog
- * operations.)  Do note that this means that CIC and RC must use a lock level
- * that conflicts with VACUUM.
+ * don't need to do snapshot-based lookups.
  *
  * This also computes a horizon used to truncate pg_subtrans. For that
  * backends in all databases have to be considered, and concurrently running
@@ -1715,6 +1715,9 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 	bool		in_recovery = RecoveryInProgress();
 	TransactionId *other_xids = ProcGlobal->xids;
 
+	/* inferred after ProcArrayLock is released */
+	h->catalog_oldest_nonremovable = InvalidTransactionId;
+
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
 	h->latest_completed = ShmemVariableCache->latestCompletedXid;
@@ -1734,7 +1737,6 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 
 		h->oldest_considered_running = initial;
 		h->shared_oldest_nonremovable = initial;
-		h->catalog_oldest_nonremovable = initial;
 		h->data_oldest_nonremovable = initial;
 
 		/*
@@ -1833,24 +1835,10 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 			(statusFlags & PROC_AFFECTS_ALL_HORIZONS) ||
 			in_recovery)
 		{
-			/*
-			 * We can ignore this backend if it's running CREATE INDEX
-			 * CONCURRENTLY or REINDEX CONCURRENTLY on a "safe" index -- but
-			 * only on vacuums of user-defined tables.
-			 */
-			if (!(statusFlags & PROC_IN_SAFE_IC))
-				h->data_oldest_nonremovable =
-					TransactionIdOlder(h->data_oldest_nonremovable, xmin);
-
-			/* Catalog tables need to consider all backends in this db */
-			h->catalog_oldest_nonremovable =
-				TransactionIdOlder(h->catalog_oldest_nonremovable, xmin);
+			h->data_oldest_nonremovable =
+				TransactionIdOlder(h->data_oldest_nonremovable, xmin);
 		}
 	}
-
-	/* catalog horizon should never be later than data */
-	Assert(TransactionIdPrecedesOrEquals(h->catalog_oldest_nonremovable,
-										 h->data_oldest_nonremovable));
 
 	/*
 	 * If in recovery fetch oldest xid in KnownAssignedXids, will be applied
@@ -1873,8 +1861,6 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 			TransactionIdOlder(h->shared_oldest_nonremovable, kaxmin);
 		h->data_oldest_nonremovable =
 			TransactionIdOlder(h->data_oldest_nonremovable, kaxmin);
-		h->catalog_oldest_nonremovable =
-			TransactionIdOlder(h->catalog_oldest_nonremovable, kaxmin);
 		/* temp relations cannot be accessed in recovery */
 	}
 	else
@@ -1901,9 +1887,6 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 		h->data_oldest_nonremovable =
 			TransactionIdRetreatedBy(h->data_oldest_nonremovable,
 									 vacuum_defer_cleanup_age);
-		h->catalog_oldest_nonremovable =
-			TransactionIdRetreatedBy(h->catalog_oldest_nonremovable,
-									 vacuum_defer_cleanup_age);
 		/* defer doesn't apply to temp relations */
 	}
 
@@ -1926,9 +1909,7 @@ ComputeXidHorizons(ComputeXidHorizonsResult *h)
 	h->shared_oldest_nonremovable =
 		TransactionIdOlder(h->shared_oldest_nonremovable,
 						   h->slot_catalog_xmin);
-	h->catalog_oldest_nonremovable =
-		TransactionIdOlder(h->catalog_oldest_nonremovable,
-						   h->slot_xmin);
+	h->catalog_oldest_nonremovable = h->data_oldest_nonremovable;
 	h->catalog_oldest_nonremovable =
 		TransactionIdOlder(h->catalog_oldest_nonremovable,
 						   h->slot_catalog_xmin);
@@ -2428,7 +2409,7 @@ GetSnapshotData(Snapshot snapshot)
 		 * We could try to store xids into xip[] first and then into subxip[]
 		 * if there are too many xids. That only works if the snapshot doesn't
 		 * overflow because we do not search subxip[] in that case. A simpler
-		 * way is to just store all xids in the subxact array because this is
+		 * way is to just store all xids in the subxip array because this is
 		 * by far the bigger array. We just leave the xip array empty.
 		 *
 		 * Either way we need to change the way XidInMVCCSnapshot() works
@@ -2685,17 +2666,14 @@ ProcArrayInstallRestoredXmin(TransactionId xmin, PGPROC *proc)
 		TransactionIdIsNormal(xid) &&
 		TransactionIdPrecedesOrEquals(xid, xmin))
 	{
-		/* Install xmin */
+		/*
+		 * Install xmin and propagate the statusFlags that affect how the
+		 * value is interpreted by vacuum.
+		 */
 		MyProc->xmin = TransactionXmin = xmin;
-
-		/* walsender cheats by passing proc == MyProc, don't check its flags */
-		if (proc != MyProc)
-		{
-			/* Flags being copied must be valid copy-able flags. */
-			Assert((proc->statusFlags & (~PROC_COPYABLE_FLAGS)) == 0);
-			MyProc->statusFlags = proc->statusFlags;
-			ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
-		}
+		MyProc->statusFlags = (MyProc->statusFlags & ~PROC_XMIN_FLAGS) |
+			(proc->statusFlags & PROC_XMIN_FLAGS);
+		ProcGlobal->statusFlags[MyProc->pgxactoff] = MyProc->statusFlags;
 
 		result = true;
 	}
@@ -3359,12 +3337,17 @@ GetCurrentVirtualXIDs(TransactionId limitXmin, bool excludeXmin0,
  * GetConflictingVirtualXIDs -- returns an array of currently active VXIDs.
  *
  * Usage is limited to conflict resolution during recovery on standby servers.
- * limitXmin is supplied as either latestRemovedXid, or InvalidTransactionId
- * in cases where we cannot accurately determine a value for latestRemovedXid.
+ * limitXmin is supplied as either a cutoff with snapshotConflictHorizon
+ * semantics, or InvalidTransactionId in cases where caller cannot accurately
+ * determine a safe snapshotConflictHorizon value.
  *
  * If limitXmin is InvalidTransactionId then we want to kill everybody,
  * so we're not worried if they have a snapshot or not, nor does it really
- * matter what type of lock we hold.
+ * matter what type of lock we hold.  Caller must avoid calling here with
+ * snapshotConflictHorizon style cutoffs that were set to InvalidTransactionId
+ * during original execution, since that actually indicates that there is
+ * definitely no need for a recovery conflict (the snapshotConflictHorizon
+ * convention for InvalidTransactionId values is the opposite of our own!).
  *
  * All callers that are checking xmins always now supply a valid and useful
  * value for limitXmin. The limitXmin is always lower than the lowest
@@ -4230,8 +4213,8 @@ GlobalVisTestIsRemovableXid(GlobalVisState *state, TransactionId xid)
 	/*
 	 * Convert 32 bit argument to FullTransactionId. We can do so safely
 	 * because we know the xid has to, at the very least, be between
-	 * [oldestXid, nextFullXid), i.e. within 2 billion of xid. To avoid taking
-	 * a lock to determine either, we can just compare with
+	 * [oldestXid, nextXid), i.e. within 2 billion of xid. To avoid taking a
+	 * lock to determine either, we can just compare with
 	 * state->definitely_needed, which was based on those value at the time
 	 * the current snapshot was built.
 	 */

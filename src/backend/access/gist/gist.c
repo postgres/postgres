@@ -78,7 +78,6 @@ gisthandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = true;
 	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amhotblocking = true;
 	amroutine->amparallelvacuumoptions =
 		VACUUM_OPTION_PARALLEL_BULKDEL | VACUUM_OPTION_PARALLEL_COND_CLEANUP;
 	amroutine->amkeytype = InvalidOid;
@@ -235,7 +234,6 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 	Page		page = BufferGetPage(buffer);
 	bool		is_leaf = (GistPageIsLeaf(page)) ? true : false;
 	XLogRecPtr	recptr;
-	int			i;
 	bool		is_split;
 
 	/*
@@ -421,7 +419,7 @@ gistplacetopage(Relation rel, Size freespace, GISTSTATE *giststate,
 		{
 			char	   *data = (char *) (ptr->list);
 
-			for (i = 0; i < ptr->block.num; i++)
+			for (int i = 0; i < ptr->block.num; i++)
 			{
 				IndexTuple	thistup = (IndexTuple) data;
 
@@ -1667,10 +1665,10 @@ gistprunepage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 
 	if (ndeletable > 0)
 	{
-		TransactionId latestRemovedXid = InvalidTransactionId;
+		TransactionId snapshotConflictHorizon = InvalidTransactionId;
 
 		if (XLogStandbyInfoActive() && RelationNeedsWAL(rel))
-			latestRemovedXid =
+			snapshotConflictHorizon =
 				index_compute_xid_horizon_for_tuples(rel, heapRel, buffer,
 													 deletable, ndeletable);
 
@@ -1696,7 +1694,7 @@ gistprunepage(Relation rel, Page page, Buffer buffer, Relation heapRel)
 
 			recptr = gistXLogDelete(buffer,
 									deletable, ndeletable,
-									latestRemovedXid);
+									snapshotConflictHorizon);
 
 			PageSetLSN(page, recptr);
 		}

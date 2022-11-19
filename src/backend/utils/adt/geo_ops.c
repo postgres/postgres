@@ -90,7 +90,7 @@ static inline float8 line_sl(LINE *line);
 static inline float8 line_invsl(LINE *line);
 static bool line_interpt_line(Point *result, LINE *l1, LINE *l2);
 static bool line_contain_point(LINE *line, Point *point);
-static float8 line_closept_point(Point *result, LINE *line, Point *pt);
+static float8 line_closept_point(Point *result, LINE *line, Point *point);
 
 /* Routines for line segments */
 static inline void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
@@ -98,8 +98,8 @@ static inline float8 lseg_sl(LSEG *lseg);
 static inline float8 lseg_invsl(LSEG *lseg);
 static bool lseg_interpt_line(Point *result, LSEG *lseg, LINE *line);
 static bool lseg_interpt_lseg(Point *result, LSEG *l1, LSEG *l2);
-static int	lseg_crossing(float8 x, float8 y, float8 px, float8 py);
-static bool lseg_contain_point(LSEG *lseg, Point *point);
+static int	lseg_crossing(float8 x, float8 y, float8 prev_x, float8 prev_y);
+static bool lseg_contain_point(LSEG *lseg, Point *pt);
 static float8 lseg_closept_point(Point *result, LSEG *lseg, Point *pt);
 static float8 lseg_closept_line(Point *result, LSEG *lseg, LINE *line);
 static float8 lseg_closept_lseg(Point *result, LSEG *on_lseg, LSEG *to_lseg);
@@ -115,7 +115,7 @@ static bool box_contain_point(BOX *box, Point *point);
 static bool box_contain_box(BOX *contains_box, BOX *contained_box);
 static bool box_contain_lseg(BOX *box, LSEG *lseg);
 static bool box_interpt_lseg(Point *result, BOX *box, LSEG *lseg);
-static float8 box_closept_point(Point *result, BOX *box, Point *point);
+static float8 box_closept_point(Point *result, BOX *box, Point *pt);
 static float8 box_closept_lseg(Point *result, BOX *box, LSEG *lseg);
 
 /* Routines for circles */
@@ -3833,6 +3833,9 @@ lseg_inside_poly(Point *a, Point *b, POLYGON *poly, int start)
 	bool		res = true,
 				intersection = false;
 
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	t.p[0] = *a;
 	t.p[1] = *b;
 	s.p[0] = poly->p[(start == 0) ? (poly->npts - 1) : (start - 1)];
@@ -4707,7 +4710,7 @@ circle_same(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(((isnan(circle1->radius) && isnan(circle1->radius)) ||
+	PG_RETURN_BOOL(((isnan(circle1->radius) && isnan(circle2->radius)) ||
 					FPeq(circle1->radius, circle2->radius)) &&
 				   point_eq_point(&circle1->center, &circle2->center));
 }

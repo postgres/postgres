@@ -122,7 +122,7 @@ typedef struct
 	bool		in_use;
 
 	/* Identify the block this refers to */
-	RelFileNode rnode;
+	RelFileLocator rlocator;
 	ForkNumber	forknum;
 	BlockNumber blkno;
 
@@ -363,7 +363,7 @@ extern DecodedXLogRecord *XLogNextRecord(XLogReaderState *state,
 										 char **errormsg);
 
 /* Release the previously returned record, if necessary. */
-extern void XLogReleasePreviousRecord(XLogReaderState *state);
+extern XLogRecPtr XLogReleasePreviousRecord(XLogReaderState *state);
 
 /* Try to read ahead, if there is data and space. */
 extern DecodedXLogRecord *XLogReadAhead(XLogReaderState *state,
@@ -372,6 +372,9 @@ extern DecodedXLogRecord *XLogReadAhead(XLogReaderState *state,
 /* Validate a page */
 extern bool XLogReaderValidatePageHeader(XLogReaderState *state,
 										 XLogRecPtr recptr, char *phdr);
+
+/* Forget error produced by XLogReaderValidatePageHeader(). */
+extern void XLogReaderResetError(XLogReaderState *state);
 
 /*
  * Error information from WALRead that both backend and frontend caller can
@@ -397,7 +400,7 @@ extern bool DecodeXLogRecord(XLogReaderState *state,
 							 DecodedXLogRecord *decoded,
 							 XLogRecord *record,
 							 XLogRecPtr lsn,
-							 char **errmsg);
+							 char **errormsg);
 
 /*
  * Macros that provide access to parts of the record most recently returned by
@@ -430,10 +433,10 @@ extern FullTransactionId XLogRecGetFullXid(XLogReaderState *record);
 extern bool RestoreBlockImage(XLogReaderState *record, uint8 block_id, char *page);
 extern char *XLogRecGetBlockData(XLogReaderState *record, uint8 block_id, Size *len);
 extern void XLogRecGetBlockTag(XLogReaderState *record, uint8 block_id,
-							   RelFileNode *rnode, ForkNumber *forknum,
+							   RelFileLocator *rlocator, ForkNumber *forknum,
 							   BlockNumber *blknum);
 extern bool XLogRecGetBlockTagExtended(XLogReaderState *record, uint8 block_id,
-									   RelFileNode *rnode, ForkNumber *forknum,
+									   RelFileLocator *rlocator, ForkNumber *forknum,
 									   BlockNumber *blknum,
 									   Buffer *prefetch_buffer);
 

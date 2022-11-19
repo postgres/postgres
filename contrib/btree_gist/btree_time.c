@@ -118,7 +118,7 @@ gbt_time_dist(const void *a, const void *b, FmgrInfo *flinfo)
 	i = DatumGetIntervalP(DirectFunctionCall2(time_mi_time,
 											  TimeADTGetDatumFast(*aa),
 											  TimeADTGetDatumFast(*bb)));
-	return (float8) Abs(INTERVAL_TO_SEC(i));
+	return fabs(INTERVAL_TO_SEC(i));
 }
 
 

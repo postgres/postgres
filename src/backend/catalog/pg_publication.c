@@ -115,8 +115,8 @@ check_publication_add_schema(Oid schemaid)
  * Returns if relation represented by oid and Form_pg_class entry
  * is publishable.
  *
- * Does same checks as the above, but does not need relation to be opened
- * and also does not throw errors.
+ * Does same checks as check_publication_add_relation() above, but does not
+ * need relation to be opened and also does not throw errors.
  *
  * XXX  This also excludes all tables with relid < FirstNormalObjectId,
  * ie all tables created during initdb.  This mainly affects the preinstalled
@@ -138,6 +138,37 @@ is_publishable_class(Oid relid, Form_pg_class reltuple)
 		!IsCatalogRelationOid(relid) &&
 		reltuple->relpersistence == RELPERSISTENCE_PERMANENT &&
 		relid >= FirstNormalObjectId;
+}
+
+/*
+ * Another variant of is_publishable_class(), taking a Relation.
+ */
+bool
+is_publishable_relation(Relation rel)
+{
+	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
+}
+
+/*
+ * SQL-callable variant of the above
+ *
+ * This returns null when the relation does not exist.  This is intended to be
+ * used for example in psql to avoid gratuitous errors when there are
+ * concurrent catalog changes.
+ */
+Datum
+pg_relation_is_publishable(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	bool		result;
+
+	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
+	if (!HeapTupleIsValid(tuple))
+		PG_RETURN_NULL();
+	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
+	ReleaseSysCache(tuple);
+	PG_RETURN_BOOL(result);
 }
 
 /*
@@ -180,15 +211,6 @@ filter_partitions(List *relids)
 }
 
 /*
- * Another variant of this, taking a Relation.
- */
-bool
-is_publishable_relation(Relation rel)
-{
-	return is_publishable_class(RelationGetRelid(rel), rel->rd_rel);
-}
-
-/*
  * Returns true if any schema is associated with the publication, false if no
  * schema is associated with the publication.
  */
@@ -217,28 +239,6 @@ is_schema_publication(Oid pubid)
 	table_close(pubschsrel, AccessShareLock);
 
 	return result;
-}
-
-/*
- * SQL-callable variant of the above
- *
- * This returns null when the relation does not exist.  This is intended to be
- * used for example in psql to avoid gratuitous errors when there are
- * concurrent catalog changes.
- */
-Datum
-pg_relation_is_publishable(PG_FUNCTION_ARGS)
-{
-	Oid			relid = PG_GETARG_OID(0);
-	HeapTuple	tuple;
-	bool		result;
-
-	tuple = SearchSysCache1(RELOID, ObjectIdGetDatum(relid));
-	if (!HeapTupleIsValid(tuple))
-		PG_RETURN_NULL();
-	result = is_publishable_class(relid, (Form_pg_class) GETSTRUCT(tuple));
-	ReleaseSysCache(tuple);
-	PG_RETURN_BOOL(result);
 }
 
 /*
@@ -378,9 +378,9 @@ publication_add_relation(Oid pubid, PublicationRelInfo *pri,
 	check_publication_add_relation(targetrel);
 
 	/*
-	 * Translate column names to attnums and make sure the column list contains
-	 * only allowed elements (no system or generated columns etc.). Also build
-	 * an array of attnums, for storing in the catalog.
+	 * Translate column names to attnums and make sure the column list
+	 * contains only allowed elements (no system or generated columns etc.).
+	 * Also build an array of attnums, for storing in the catalog.
 	 */
 	publication_translate_columns(pri->relation, pri->columns,
 								  &natts, &attarray);
@@ -513,13 +513,13 @@ publication_translate_columns(Relation targetrel, List *columns,
 		if (!AttrNumberIsForUserDefinedAttr(attnum))
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("cannot reference system column \"%s\" in publication column list",
+					errmsg("cannot use system column \"%s\" in publication column list",
 						   colname));
 
 		if (TupleDescAttr(tupdesc, attnum - 1)->attgenerated)
 			ereport(ERROR,
 					errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					errmsg("cannot reference generated column \"%s\" in publication column list",
+					errmsg("cannot use generated column \"%s\" in publication column list",
 						   colname));
 
 		if (bms_is_member(attnum, set))
@@ -555,11 +555,11 @@ pub_collist_to_bitmapset(Bitmapset *columns, Datum pubcols, MemoryContext mcxt)
 	ArrayType  *arr;
 	int			nelems;
 	int16	   *elems;
-	MemoryContext	oldcxt = NULL;
+	MemoryContext oldcxt = NULL;
 
 	/*
-	 * If an existing bitmap was provided, use it. Otherwise just use NULL
-	 * and build a new bitmap.
+	 * If an existing bitmap was provided, use it. Otherwise just use NULL and
+	 * build a new bitmap.
 	 */
 	if (columns)
 		result = columns;
@@ -837,7 +837,7 @@ GetAllTablesPublicationRelations(bool pubviaroot)
 /*
  * Gets the list of schema oids for a publication.
  *
- * This should only be used FOR ALL TABLES IN SCHEMA publications.
+ * This should only be used FOR TABLES IN SCHEMA publications.
  */
 List *
 GetPublicationSchemas(Oid pubid)
@@ -957,7 +957,7 @@ GetSchemaPublicationRelations(Oid schemaid, PublicationPartOpt pub_partopt)
 }
 
 /*
- * Gets the list of all relations published by FOR ALL TABLES IN SCHEMA
+ * Gets the list of all relations published by FOR TABLES IN SCHEMA
  * publication.
  */
 List *
@@ -1012,7 +1012,6 @@ GetPublication(Oid pubid)
 	return pub;
 }
 
-
 /*
  * Get Publication using name.
  */
@@ -1027,61 +1026,12 @@ GetPublicationByName(const char *pubname, bool missing_ok)
 }
 
 /*
- * get_publication_oid - given a publication name, look up the OID
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return InvalidOid.
- */
-Oid
-get_publication_oid(const char *pubname, bool missing_ok)
-{
-	Oid			oid;
-
-	oid = GetSysCacheOid1(PUBLICATIONNAME, Anum_pg_publication_oid,
-						  CStringGetDatum(pubname));
-	if (!OidIsValid(oid) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("publication \"%s\" does not exist", pubname)));
-	return oid;
-}
-
-/*
- * get_publication_name - given a publication Oid, look up the name
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return NULL.
- */
-char *
-get_publication_name(Oid pubid, bool missing_ok)
-{
-	HeapTuple	tup;
-	char	   *pubname;
-	Form_pg_publication pubform;
-
-	tup = SearchSysCache1(PUBLICATIONOID, ObjectIdGetDatum(pubid));
-
-	if (!HeapTupleIsValid(tup))
-	{
-		if (!missing_ok)
-			elog(ERROR, "cache lookup failed for publication %u", pubid);
-		return NULL;
-	}
-
-	pubform = (Form_pg_publication) GETSTRUCT(tup);
-	pubname = pstrdup(NameStr(pubform->pubname));
-
-	ReleaseSysCache(tup);
-
-	return pubname;
-}
-
-/*
- * Returns Oids of tables in a publication.
+ * Returns information of tables in a publication.
  */
 Datum
 pg_get_publication_tables(PG_FUNCTION_ARGS)
 {
+#define NUM_PUBLICATION_TABLES_ELEM	3
 	FuncCallContext *funcctx;
 	char	   *pubname = text_to_cstring(PG_GETARG_TEXT_PP(0));
 	Publication *publication;
@@ -1090,6 +1040,7 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
+		TupleDesc	tupdesc;
 		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
@@ -1136,6 +1087,16 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 				tables = filter_partitions(tables);
 		}
 
+		/* Construct a tuple descriptor for the result rows. */
+		tupdesc = CreateTemplateTupleDesc(NUM_PUBLICATION_TABLES_ELEM);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "attrs",
+						   INT2VECTOROID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "qual",
+						   PG_NODE_TREEOID, -1, 0);
+
+		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
 		funcctx->user_fctx = (void *) tables;
 
 		MemoryContextSwitchTo(oldcontext);
@@ -1147,9 +1108,54 @@ pg_get_publication_tables(PG_FUNCTION_ARGS)
 
 	if (funcctx->call_cntr < list_length(tables))
 	{
+		HeapTuple	pubtuple = NULL;
+		HeapTuple	rettuple;
 		Oid			relid = list_nth_oid(tables, funcctx->call_cntr);
+		Oid			schemaid = get_rel_namespace(relid);
+		Datum		values[NUM_PUBLICATION_TABLES_ELEM] = {0};
+		bool		nulls[NUM_PUBLICATION_TABLES_ELEM] = {0};
 
-		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
+		/*
+		 * Form tuple with appropriate data.
+		 */
+
+		publication = GetPublicationByName(pubname, false);
+
+		values[0] = ObjectIdGetDatum(relid);
+
+		/*
+		 * We don't consider row filters or column lists for FOR ALL TABLES or
+		 * FOR TABLES IN SCHEMA publications.
+		 */
+		if (!publication->alltables &&
+			!SearchSysCacheExists2(PUBLICATIONNAMESPACEMAP,
+								   ObjectIdGetDatum(schemaid),
+								   ObjectIdGetDatum(publication->oid)))
+			pubtuple = SearchSysCacheCopy2(PUBLICATIONRELMAP,
+										   ObjectIdGetDatum(relid),
+										   ObjectIdGetDatum(publication->oid));
+
+		if (HeapTupleIsValid(pubtuple))
+		{
+			/* Lookup the column list attribute. */
+			values[1] = SysCacheGetAttr(PUBLICATIONRELMAP, pubtuple,
+										Anum_pg_publication_rel_prattrs,
+										&(nulls[1]));
+
+			/* Null indicates no filter. */
+			values[2] = SysCacheGetAttr(PUBLICATIONRELMAP, pubtuple,
+										Anum_pg_publication_rel_prqual,
+										&(nulls[2]));
+		}
+		else
+		{
+			nulls[1] = true;
+			nulls[2] = true;
+		}
+
+		rettuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
+
+		SRF_RETURN_NEXT(funcctx, HeapTupleGetDatum(rettuple));
 	}
 
 	SRF_RETURN_DONE(funcctx);

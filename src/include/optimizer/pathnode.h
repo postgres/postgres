@@ -103,8 +103,11 @@ extern GatherMergePath *create_gather_merge_path(PlannerInfo *root,
 												 Relids required_outer,
 												 double *rows);
 extern SubqueryScanPath *create_subqueryscan_path(PlannerInfo *root,
-												  RelOptInfo *rel, Path *subpath,
-												  List *pathkeys, Relids required_outer);
+												  RelOptInfo *rel,
+												  Path *subpath,
+												  bool trivial_pathtarget,
+												  List *pathkeys,
+												  Relids required_outer);
 extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel,
 									  List *pathkeys, Relids required_outer);
 extern Path *create_valuesscan_path(PlannerInfo *root, RelOptInfo *rel,
@@ -233,8 +236,7 @@ extern GroupingSetsPath *create_groupingsets_path(PlannerInfo *root,
 												  List *having_qual,
 												  AggStrategy aggstrategy,
 												  List *rollups,
-												  const AggClauseCosts *agg_costs,
-												  double numGroups);
+												  const AggClauseCosts *agg_costs);
 extern MinMaxAggPath *create_minmaxagg_path(PlannerInfo *root,
 											RelOptInfo *rel,
 											PathTarget *target,

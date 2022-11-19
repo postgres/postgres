@@ -459,7 +459,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_l))
-					MemSet((void *) union_l, 0xff, siglen);
+					memset((void *) union_l, 0xff, siglen);
 			}
 			else
 			{
@@ -475,7 +475,7 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || ISALLTRUE(_j))
 			{
 				if (!ISALLTRUE(datum_r))
-					MemSet((void *) union_r, 0xff, siglen);
+					memset((void *) union_r, 0xff, siglen);
 			}
 			else
 			{
@@ -560,9 +560,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			key_count;
 		int			i;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		for (i = 0; res && i < key_count; ++i)
 		{
@@ -583,9 +581,7 @@ ghstore_consistent(PG_FUNCTION_ARGS)
 		int			key_count;
 		int			i;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		res = false;
 

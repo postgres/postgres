@@ -423,7 +423,7 @@ bbstreamer_tar_archiver_content(bbstreamer *streamer,
 		data = buffer;
 		len = pad_bytes;
 
-		/* Don't do this agian unless we replace another header. */
+		/* Don't do this again unless we replace another header. */
 		mystreamer->rearchive_member = false;
 	}
 	else if (context == BBSTREAMER_ARCHIVE_TRAILER)

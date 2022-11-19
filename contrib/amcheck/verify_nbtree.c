@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "storage/smgr.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/snapmgr.h"
 
@@ -158,7 +159,7 @@ static void bt_child_highkey_check(BtreeCheckState *state,
 								   Page loaded_child,
 								   uint32 target_level);
 static void bt_downlink_missing_check(BtreeCheckState *state, bool rightsplit,
-									  BlockNumber targetblock, Page target);
+									  BlockNumber blkno, Page page);
 static void bt_tuple_present_callback(Relation index, ItemPointer tid,
 									  Datum *values, bool *isnull,
 									  bool tupleIsAlive, void *checkstate);
@@ -249,6 +250,9 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 	Relation	indrel;
 	Relation	heaprel;
 	LOCKMODE	lockmode;
+	Oid			save_userid;
+	int			save_sec_context;
+	int			save_nestlevel;
 
 	if (parentcheck)
 		lockmode = ShareLock;
@@ -265,9 +269,27 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 	 */
 	heapid = IndexGetRelation(indrelid, true);
 	if (OidIsValid(heapid))
+	{
 		heaprel = table_open(heapid, lockmode);
+
+		/*
+		 * Switch to the table owner's userid, so that any index functions are
+		 * run as that user.  Also lock down security-restricted operations
+		 * and arrange to make GUC variable changes local to this command.
+		 */
+		GetUserIdAndSecContext(&save_userid, &save_sec_context);
+		SetUserIdAndSecContext(heaprel->rd_rel->relowner,
+							   save_sec_context | SECURITY_RESTRICTED_OPERATION);
+		save_nestlevel = NewGUCNestLevel();
+	}
 	else
+	{
 		heaprel = NULL;
+		/* Set these just to suppress "uninitialized variable" warnings */
+		save_userid = InvalidOid;
+		save_sec_context = -1;
+		save_nestlevel = -1;
+	}
 
 	/*
 	 * Open the target index relations separately (like relation_openrv(), but
@@ -325,6 +347,12 @@ bt_index_check_internal(Oid indrelid, bool parentcheck, bool heapallindexed,
 		bt_check_every_level(indrel, heaprel, heapkeyspace, parentcheck,
 							 heapallindexed, rootdescend);
 	}
+
+	/* Roll back any GUC changes executed by index functions */
+	AtEOXact_GUC(false, save_nestlevel);
+
+	/* Restore userid and security context */
+	SetUserIdAndSecContext(save_userid, save_sec_context);
 
 	/*
 	 * Release locks early. That's ok here because nothing in the called

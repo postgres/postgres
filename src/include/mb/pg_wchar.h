@@ -19,6 +19,8 @@
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
+#include "port/simd.h"
+
 /*
  * The pg_wchar type
  */
@@ -604,11 +606,11 @@ extern int	pg_encoding_wchar2mb_with_len(int encoding,
 extern int	pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2);
 extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
-extern size_t pg_wchar_strlen(const pg_wchar *wstr);
+extern size_t pg_wchar_strlen(const pg_wchar *str);
 extern int	pg_mblen(const char *mbstr);
 extern int	pg_dsplen(const char *mbstr);
 extern int	pg_mbstrlen(const char *mbstr);
-extern int	pg_mbstrlen_with_len(const char *mbstr, int len);
+extern int	pg_mbstrlen_with_len(const char *mbstr, int limit);
 extern int	pg_mbcliplen(const char *mbstr, int len, int limit);
 extern int	pg_encoding_mbcliplen(int encoding, const char *mbstr,
 								  int len, int limit);
@@ -639,7 +641,7 @@ extern int	pg_do_encoding_conversion_buf(Oid proc,
 										  int src_encoding,
 										  int dest_encoding,
 										  unsigned char *src, int srclen,
-										  unsigned char *dst, int dstlen,
+										  unsigned char *dest, int destlen,
 										  bool noError);
 
 extern char *pg_client_to_server(const char *s, int len);
@@ -704,24 +706,28 @@ extern WCHAR *pgwin32_message_to_UTF16(const char *str, int len, int *utf16len);
  * Verify a chunk of bytes for valid ASCII.
  *
  * Returns false if the input contains any zero bytes or bytes with the
- * high-bit set. Input len must be a multiple of 8.
+ * high-bit set. Input len must be a multiple of the chunk size (8 or 16).
  */
 static inline bool
 is_valid_ascii(const unsigned char *s, int len)
 {
-	uint64		chunk,
-				highbit_cum = UINT64CONST(0),
-				zero_cum = UINT64CONST(0x8080808080808080);
+	const unsigned char *const s_end = s + len;
+	Vector8		chunk;
+	Vector8		highbit_cum = vector8_broadcast(0);
+#ifdef USE_NO_SIMD
+	Vector8		zero_cum = vector8_broadcast(0x80);
+#endif
 
 	Assert(len % sizeof(chunk) == 0);
 
-	while (len > 0)
+	while (s < s_end)
 	{
-		memcpy(&chunk, s, sizeof(chunk));
+		vector8_load(&chunk, s);
+
+		/* Capture any zero bytes in this chunk. */
+#ifdef USE_NO_SIMD
 
 		/*
-		 * Capture any zero bytes in this chunk.
-		 *
 		 * First, add 0x7f to each byte. This sets the high bit in each byte,
 		 * unless it was a zero. If any resulting high bits are zero, the
 		 * corresponding high bits in the zero accumulator will be cleared.
@@ -732,22 +738,32 @@ is_valid_ascii(const unsigned char *s, int len)
 		 * any input bytes did have the high bit set, it doesn't matter
 		 * because we check for those separately.
 		 */
-		zero_cum &= (chunk + UINT64CONST(0x7f7f7f7f7f7f7f7f));
+		zero_cum &= (chunk + vector8_broadcast(0x7F));
+#else
 
-		/* Capture any set bits in this chunk. */
-		highbit_cum |= chunk;
+		/*
+		 * Set all bits in each lane of the highbit accumulator where input
+		 * bytes are zero.
+		 */
+		highbit_cum = vector8_or(highbit_cum,
+								 vector8_eq(chunk, vector8_broadcast(0)));
+#endif
+
+		/* Capture all set bits in this chunk. */
+		highbit_cum = vector8_or(highbit_cum, chunk);
 
 		s += sizeof(chunk);
-		len -= sizeof(chunk);
 	}
 
 	/* Check if any high bits in the high bit accumulator got set. */
-	if (highbit_cum & UINT64CONST(0x8080808080808080))
+	if (vector8_is_highbit_set(highbit_cum))
 		return false;
 
+#ifdef USE_NO_SIMD
 	/* Check if any high bits in the zero accumulator got cleared. */
-	if (zero_cum != UINT64CONST(0x8080808080808080))
+	if (zero_cum != vector8_broadcast(0x80))
 		return false;
+#endif
 
 	return true;
 }

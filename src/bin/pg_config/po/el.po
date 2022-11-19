@@ -3,19 +3,21 @@
 # This file is distributed under the same license as the pg_config (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:46+0000\n"
-"PO-Revision-Date: 2021-05-04 14:33+0200\n"
+"POT-Creation-Date: 2021-07-20 03:45+0000\n"
+"PO-Revision-Date: 2021-07-20 10:27+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 
 #: ../../common/config_info.c:134 ../../common/config_info.c:142
 #: ../../common/config_info.c:150 ../../common/config_info.c:158
@@ -32,32 +34,32 @@ msgstr "δεν ήταν δυνατή η αναγνώριση του τρέχον
 #: ../../common/exec.c:155
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "μη έγκυρο δυαδικό αρχείο “%s”"
+msgstr "μη έγκυρο δυαδικό αρχείο «%s»"
 
 #: ../../common/exec.c:205
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου  “%s”"
+msgstr "δεν ήταν δυνατή η ανάγνωση του δυαδικού αρχείου «%s»"
 
 #: ../../common/exec.c:213
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "δεν βρέθηκε το αρχείο “%s”  για να εκτελεστεί"
+msgstr "δεν βρέθηκε το αρχείο «%s» για να εκτελεστεί"
 
 #: ../../common/exec.c:269 ../../common/exec.c:308
 #, c-format
 msgid "could not change directory to \"%s\": %m"
-msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο “%s”: %m"
+msgstr "δεν ήταν δυνατή η μετάβαση στον κατάλογο «%s»: %m"
 
 #: ../../common/exec.c:286
 #, c-format
 msgid "could not read symbolic link \"%s\": %m"
-msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου  “%s”: %m"
+msgstr "δεν ήταν δυνατή η ανάγνωση του συμβολικού συνδέσμου «%s»: %m"
 
 #: ../../common/exec.c:409
 #, c-format
 msgid "%s() failed: %m"
-msgstr "%s () απέτυχε: %m"
+msgstr "%s() απέτυχε: %m"
 
 #: ../../common/exec.c:522 ../../common/exec.c:567 ../../common/exec.c:659
 msgid "out of memory"
@@ -85,7 +87,7 @@ msgid ""
 "  %s [OPTION]...\n"
 "\n"
 msgstr ""
-"  %s [ΕΠΙΛΟΓΗ]…\n"
+"  %s [ΕΠΙΛΟΓΗ]...\n"
 "\n"
 
 #: pg_config.c:77
@@ -96,17 +98,17 @@ msgstr "Επιλογές:\n"
 #: pg_config.c:78
 #, c-format
 msgid "  --bindir              show location of user executables\n"
-msgstr "  —bindir              εμφάνισε τη τοποθεσία των εκτελέσιμων αρχείων του χρήστη\n"
+msgstr "  --bindir              εμφάνισε τη τοποθεσία των εκτελέσιμων αρχείων του χρήστη\n"
 
 #: pg_config.c:79
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr "  —docdir              εμφάνισε τη τοποθεσία των αρχείων τεκμηρίωσης\n"
+msgstr "  --docdir              εμφάνισε τη τοποθεσία των αρχείων τεκμηρίωσης\n"
 
 #: pg_config.c:80
 #, c-format
 msgid "  --htmldir             show location of HTML documentation files\n"
-msgstr "  —htmldir             εμφάνισε τη τοποθεσία των αρχείων τεκμηρίωσης HTML\n"
+msgstr "  --htmldir             εμφάνισε τη τοποθεσία των αρχείων τεκμηρίωσης HTML\n"
 
 #: pg_config.c:81
 #, c-format
@@ -114,53 +116,53 @@ msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
 msgstr ""
-"  —includedir          εμφάνισε τη τοποθεσία των αρχείων κεφαλίδας C\n"
+"  --includedir          εμφάνισε τη τοποθεσία των αρχείων κεφαλίδας C\n"
 "                        των διεπαφών πελάτη\n"
 
 #: pg_config.c:83
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr "  —pkgincludedir       εμφάνισε τη τοποθεσία άλλων αρχείων κεφαλίδας C\n"
+msgstr "  --pkgincludedir       εμφάνισε τη τοποθεσία άλλων αρχείων κεφαλίδας C\n"
 
 #: pg_config.c:84
 #, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
-msgstr "  —includedir-server   εμφάνισε τη τοποθεσία των αρχείων κεφαλίδας C για τον διακομιστή\n"
+msgstr "  --includedir-server   εμφάνισε τη τοποθεσία των αρχείων κεφαλίδας C για τον διακομιστή\n"
 
 #: pg_config.c:85
 #, c-format
 msgid "  --libdir              show location of object code libraries\n"
-msgstr "  —libdir              εμφάνισε τη τοποθεσία των βιβλιοθηκών κώδικα αντικειμένων\n"
+msgstr "  --libdir              εμφάνισε τη τοποθεσία των βιβλιοθηκών κώδικα αντικειμένων\n"
 
 #: pg_config.c:86
 #, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  —pkglibdir           εμφάνισε τη τοποθεσία των δυναμικά φορτώσιμων ενοτήτων\n"
+msgstr "  --pkglibdir           εμφάνισε τη τοποθεσία των δυναμικά φορτώσιμων ενοτήτων\n"
 
 #: pg_config.c:87
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr "  —localedir           εμφάνισε τη τοποθεσία των αρχείων υποστήριξης εντοπιότητας\n"
+msgstr "  --localedir           εμφάνισε τη τοποθεσία των αρχείων υποστήριξης εντοπιότητας\n"
 
 #: pg_config.c:88
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  —mandir              εμφάνισε τη τοποθεσία των σελίδων τεκμηρίωσης\n"
+msgstr "  --mandir              εμφάνισε τη τοποθεσία των σελίδων τεκμηρίωσης\n"
 
 #: pg_config.c:89
 #, c-format
 msgid "  --sharedir            show location of architecture-independent support files\n"
-msgstr "  —sharedir            εμφάνισε τη τοποθεσία των ανεξάρτητων από την αρχιτεκτονική αρχείων υποστήριξης\n"
+msgstr "  --sharedir            εμφάνισε τη τοποθεσία των ανεξάρτητων από την αρχιτεκτονική αρχείων υποστήριξης\n"
 
 #: pg_config.c:90
 #, c-format
 msgid "  --sysconfdir          show location of system-wide configuration files\n"
-msgstr "  —sysconfdir          εμφάνισε την τοποθεσία των αρχείων ρύθμισης παραμέτρων όλου του συστήματος\n"
+msgstr "  --sysconfdir          εμφάνισε την τοποθεσία των αρχείων ρύθμισης παραμέτρων όλου του συστήματος\n"
 
 #: pg_config.c:91
 #, c-format
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  —pgxs                εμφάνισε τη τοποθεσία του makefile επέκτασης\n"
+msgstr "  --pgxs                εμφάνισε τη τοποθεσία του makefile επέκτασης\n"
 
 #: pg_config.c:92
 #, c-format
@@ -168,60 +170,59 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  —configure           εμφάνισε τις παραμέτρους που δόθηκαν ώστε να “ρυθμιστεί” το σενάριο\n"
+"  --configure           εμφάνισε τις παραμέτρους που δόθηκαν ώστε να «ρυθμιστεί» το σενάριο\n"
 "                        κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:94
 #, c-format
 msgid "  --cc                  show CC value used when PostgreSQL was built\n"
-msgstr "  —cc                  εμφάνισε την τιμή CC που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --cc                  εμφάνισε την τιμή CC που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:95
 #, c-format
 msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
-msgstr "  —cppflags            εμφάνισε την τιμή CPPFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --cppflags            εμφάνισε την τιμή CPPFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:96
 #, c-format
 msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
 msgstr ""
-"  —cflags              εμφάνισε την τιμή CFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
-"\n"
+"  --cflags              εμφάνισε την τιμή CFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:97
 #, c-format
 msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  —cflags_sl           εμφάνισε την τιμή CFLAGS_SL που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --cflags_sl           εμφάνισε την τιμή CFLAGS_SL που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:98
 #, c-format
 msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
-msgstr "  —ldflags             εμφάνισε την τιμή LDFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --ldflags             εμφάνισε την τιμή LDFLAGS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:99
 #, c-format
 msgid "  --ldflags_ex          show LDFLAGS_EX value used when PostgreSQL was built\n"
-msgstr "  —ldflags_ex          εμφάνισε την τιμή LDFLAGS_EX που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --ldflags_ex          εμφάνισε την τιμή LDFLAGS_EX που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:100
 #, c-format
 msgid "  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was built\n"
-msgstr "  —ldflags_sl          εμφάνισε την τιμή LDFLAGS_SL που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --ldflags_sl          εμφάνισε την τιμή LDFLAGS_SL που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:101
 #, c-format
 msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
-msgstr "  —libs                εμφάνισε την τιμή LIBS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
+msgstr "  --libs                εμφάνισε την τιμή LIBS που χρησιμοποιήθηκε κατά την κατασκευή της PostgreSQL\n"
 
 #: pg_config.c:102
 #, c-format
 msgid "  --version             show the PostgreSQL version\n"
-msgstr "  —version             εμφάνισε την έκδοση PostgreSQL\n"
+msgstr "  --version             εμφάνισε την έκδοση PostgreSQL\n"
 
 #: pg_config.c:103
 #, c-format
 msgid "  -?, --help            show this help, then exit\n"
-msgstr "  -?, —help               εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
+msgstr "  -?, --help            εμφάνισε αυτό το μήνυμα βοήθειας, στη συνέχεια έξοδος\n"
 
 #: pg_config.c:104
 #, c-format
@@ -247,7 +248,7 @@ msgstr "%s αρχική σελίδα: <%s>\n"
 #: pg_config.c:112
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_config.c:154
 #, c-format

@@ -1149,6 +1149,30 @@ SELECT generate_series(1, two), array(select generate_series(1, two))
            ->  Result
 (16 rows)
 
+-- must disallow pushing sort below gather when pathkey contains an SRF
+EXPLAIN (VERBOSE, COSTS OFF)
+SELECT unnest(ARRAY[]::integer[]) + 1 AS pathkey
+  FROM tenk1 t1 JOIN tenk1 t2 ON TRUE
+  ORDER BY pathkey;
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Sort
+   Output: (((unnest('{}'::integer[])) + 1))
+   Sort Key: (((unnest('{}'::integer[])) + 1))
+   ->  Result
+         Output: ((unnest('{}'::integer[])) + 1)
+         ->  ProjectSet
+               Output: unnest('{}'::integer[])
+               ->  Nested Loop
+                     ->  Gather
+                           Workers Planned: 4
+                           ->  Parallel Index Only Scan using tenk1_hundred on public.tenk1 t1
+                     ->  Materialize
+                           ->  Gather
+                                 Workers Planned: 4
+                                 ->  Parallel Index Only Scan using tenk1_hundred on public.tenk1 t2
+(15 rows)
+
 -- test passing expanded-value representations to workers
 CREATE FUNCTION make_some_array(int,int) returns int[] as
 $$declare x int[];

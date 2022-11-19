@@ -34,6 +34,7 @@
 #include "access/relation.h"
 #include "access/table.h"
 #include "access/tableam.h"
+#include "catalog/binary_upgrade.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -76,9 +77,9 @@
 
 /* Potentially set by pg_upgrade_support functions */
 Oid			binary_upgrade_next_heap_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_heap_pg_class_relfilenode = InvalidOid;
 Oid			binary_upgrade_next_toast_pg_class_oid = InvalidOid;
-Oid			binary_upgrade_next_toast_pg_class_relfilenode = InvalidOid;
+RelFileNumber binary_upgrade_next_heap_pg_class_relfilenumber = InvalidRelFileNumber;
+RelFileNumber binary_upgrade_next_toast_pg_class_relfilenumber = InvalidRelFileNumber;
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 								Relation new_rel_desc,
@@ -272,7 +273,7 @@ SystemAttributeByName(const char *attname)
  *		heap_create		- Create an uncataloged heap relation
  *
  *		Note API change: the caller must now always provide the OID
- *		to use for the relation.  The relfilenode may be (and in
+ *		to use for the relation.  The relfilenumber may be (and in
  *		the simplest cases is) left unspecified.
  *
  *		create_storage indicates whether or not to create the storage.
@@ -288,7 +289,7 @@ heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
 			Oid relid,
-			Oid relfilenode,
+			RelFileNumber relfilenumber,
 			Oid accessmtd,
 			TupleDesc tupDesc,
 			char relkind,
@@ -340,11 +341,11 @@ heap_create(const char *relname,
 	else
 	{
 		/*
-		 * If relfilenode is unspecified by the caller then create storage
+		 * If relfilenumber is unspecified by the caller then create storage
 		 * with oid same as relid.
 		 */
-		if (!OidIsValid(relfilenode))
-			relfilenode = relid;
+		if (!RelFileNumberIsValid(relfilenumber))
+			relfilenumber = relid;
 	}
 
 	/*
@@ -367,7 +368,7 @@ heap_create(const char *relname,
 									 tupDesc,
 									 relid,
 									 accessmtd,
-									 relfilenode,
+									 relfilenumber,
 									 reltablespace,
 									 shared_relation,
 									 mapped_relation,
@@ -384,11 +385,11 @@ heap_create(const char *relname,
 	if (create_storage)
 	{
 		if (RELKIND_HAS_TABLE_AM(rel->rd_rel->relkind))
-			table_relation_set_new_filenode(rel, &rel->rd_node,
-											relpersistence,
-											relfrozenxid, relminmxid);
+			table_relation_set_new_filelocator(rel, &rel->rd_locator,
+											   relpersistence,
+											   relfrozenxid, relminmxid);
 		else if (RELKIND_HAS_STORAGE(rel->rd_rel->relkind))
-			RelationCreateStorage(rel->rd_node, relpersistence, true);
+			RelationCreateStorage(rel->rd_locator, relpersistence, true);
 		else
 			Assert(false);
 	}
@@ -401,6 +402,9 @@ heap_create(const char *relname,
 	if (!create_storage && reltablespace != InvalidOid)
 		recordDependencyOnTablespace(RelationRelationId, relid,
 									 reltablespace);
+
+	/* ensure that stats are dropped if transaction aborts */
+	pgstat_create_relation(rel);
 
 	return rel;
 }
@@ -1068,7 +1072,7 @@ AddNewRelationType(const char *typeName,
  *	relkind: relkind for new rel
  *	relpersistence: rel's persistence status (permanent, temp, or unlogged)
  *	shared_relation: true if it's to be a shared relation
- *	mapped_relation: true if the relation will use the relfilenode map
+ *	mapped_relation: true if the relation will use the relfilenumber map
  *	oncommit: ON COMMIT marking (only relevant if it's a temp table)
  *	reloptions: reloptions in Datum form, or (Datum) 0 if none
  *	use_user_acl: true if should look for user-defined default permissions;
@@ -1114,7 +1118,7 @@ heap_create_with_catalog(const char *relname,
 	Oid			new_type_oid;
 
 	/* By default set to InvalidOid unless overridden by binary-upgrade */
-	Oid			relfilenode = InvalidOid;
+	RelFileNumber relfilenumber = InvalidRelFileNumber;
 	TransactionId relfrozenxid;
 	MultiXactId relminmxid;
 
@@ -1172,12 +1176,12 @@ heap_create_with_catalog(const char *relname,
 	/*
 	 * Allocate an OID for the relation, unless we were told what to use.
 	 *
-	 * The OID will be the relfilenode as well, so make sure it doesn't
+	 * The OID will be the relfilenumber as well, so make sure it doesn't
 	 * collide with either pg_class OIDs or existing physical files.
 	 */
 	if (!OidIsValid(relid))
 	{
-		/* Use binary-upgrade override for pg_class.oid and relfilenode */
+		/* Use binary-upgrade override for pg_class.oid and relfilenumber */
 		if (IsBinaryUpgrade)
 		{
 			/*
@@ -1195,13 +1199,13 @@ heap_create_with_catalog(const char *relname,
 					relid = binary_upgrade_next_toast_pg_class_oid;
 					binary_upgrade_next_toast_pg_class_oid = InvalidOid;
 
-					if (!OidIsValid(binary_upgrade_next_toast_pg_class_relfilenode))
+					if (!RelFileNumberIsValid(binary_upgrade_next_toast_pg_class_relfilenumber))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								  errmsg("toast relfilenode value not set when in binary upgrade mode")));
+								 errmsg("toast relfilenumber value not set when in binary upgrade mode")));
 
-					relfilenode = binary_upgrade_next_toast_pg_class_relfilenode;
-					binary_upgrade_next_toast_pg_class_relfilenode = InvalidOid;
+					relfilenumber = binary_upgrade_next_toast_pg_class_relfilenumber;
+					binary_upgrade_next_toast_pg_class_relfilenumber = InvalidRelFileNumber;
 				}
 			}
 			else
@@ -1216,20 +1220,20 @@ heap_create_with_catalog(const char *relname,
 
 				if (RELKIND_HAS_STORAGE(relkind))
 				{
-					if (!OidIsValid(binary_upgrade_next_heap_pg_class_relfilenode))
+					if (!RelFileNumberIsValid(binary_upgrade_next_heap_pg_class_relfilenumber))
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("relfilenode value not set when in binary upgrade mode")));
+								 errmsg("relfilenumber value not set when in binary upgrade mode")));
 
-					relfilenode = binary_upgrade_next_heap_pg_class_relfilenode;
-					binary_upgrade_next_heap_pg_class_relfilenode = InvalidOid;
+					relfilenumber = binary_upgrade_next_heap_pg_class_relfilenumber;
+					binary_upgrade_next_heap_pg_class_relfilenumber = InvalidRelFileNumber;
 				}
 			}
 		}
 
 		if (!OidIsValid(relid))
-			relid = GetNewRelFileNode(reltablespace, pg_class_desc,
-									  relpersistence);
+			relid = GetNewRelFileNumber(reltablespace, pg_class_desc,
+										relpersistence);
 	}
 
 	/*
@@ -1265,14 +1269,14 @@ heap_create_with_catalog(const char *relname,
 	 * remove the disk file again.)
 	 *
 	 * NB: Note that passing create_storage = true is correct even for binary
-	 * upgrade.  The storage we create here will be replaced later, but we need
-	 * to have something on disk in the meanwhile.
+	 * upgrade.  The storage we create here will be replaced later, but we
+	 * need to have something on disk in the meanwhile.
 	 */
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
 							   reltablespace,
 							   relid,
-							   relfilenode,
+							   relfilenumber,
 							   accessmtd,
 							   tupdesc,
 							   relkind,
@@ -1475,9 +1479,6 @@ heap_create_with_catalog(const char *relname,
 	 */
 	if (oncommit != ONCOMMIT_NOOP)
 		register_on_commit_action(relid, oncommit);
-
-	/* ensure that stats are dropped if transaction aborts */
-	pgstat_create_relation(new_rel_desc);
 
 	/*
 	 * ok, the relation has been cataloged, so close our relations and return
@@ -1708,15 +1709,11 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 		/* clear the missing value if any */
 		if (attStruct->atthasmissing)
 		{
-			Datum		valuesAtt[Natts_pg_attribute];
-			bool		nullsAtt[Natts_pg_attribute];
-			bool		replacesAtt[Natts_pg_attribute];
+			Datum		valuesAtt[Natts_pg_attribute] = {0};
+			bool		nullsAtt[Natts_pg_attribute] = {0};
+			bool		replacesAtt[Natts_pg_attribute] = {0};
 
 			/* update the tuple - set atthasmissing and attmissingval */
-			MemSet(valuesAtt, 0, sizeof(valuesAtt));
-			MemSet(nullsAtt, false, sizeof(nullsAtt));
-			MemSet(replacesAtt, false, sizeof(replacesAtt));
-
 			valuesAtt[Anum_pg_attribute_atthasmissing - 1] =
 				BoolGetDatum(false);
 			replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
@@ -1821,19 +1818,19 @@ heap_drop_with_catalog(Oid relid)
 	 */
 	if (rel->rd_rel->relkind == RELKIND_FOREIGN_TABLE)
 	{
-		Relation	rel;
-		HeapTuple	tuple;
+		Relation	ftrel;
+		HeapTuple	fttuple;
 
-		rel = table_open(ForeignTableRelationId, RowExclusiveLock);
+		ftrel = table_open(ForeignTableRelationId, RowExclusiveLock);
 
-		tuple = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
-		if (!HeapTupleIsValid(tuple))
+		fttuple = SearchSysCache1(FOREIGNTABLEREL, ObjectIdGetDatum(relid));
+		if (!HeapTupleIsValid(fttuple))
 			elog(ERROR, "cache lookup failed for foreign table %u", relid);
 
-		CatalogTupleDelete(rel, &tuple->t_self);
+		CatalogTupleDelete(ftrel, &fttuple->t_self);
 
-		ReleaseSysCache(tuple);
-		table_close(rel, RowExclusiveLock);
+		ReleaseSysCache(fttuple);
+		table_close(ftrel, RowExclusiveLock);
 	}
 
 	/*
@@ -2005,9 +2002,9 @@ RelationClearMissing(Relation rel)
 void
 SetAttrMissing(Oid relid, char *attname, char *value)
 {
-	Datum		valuesAtt[Natts_pg_attribute];
-	bool		nullsAtt[Natts_pg_attribute];
-	bool		replacesAtt[Natts_pg_attribute];
+	Datum		valuesAtt[Natts_pg_attribute] = {0};
+	bool		nullsAtt[Natts_pg_attribute] = {0};
+	bool		replacesAtt[Natts_pg_attribute] = {0};
 	Datum		missingval;
 	Form_pg_attribute attStruct;
 	Relation	attrrel,
@@ -2040,10 +2037,6 @@ SetAttrMissing(Oid relid, char *attname, char *value)
 								  Int32GetDatum(attStruct->atttypmod));
 
 	/* update the tuple - set atthasmissing and attmissingval */
-	MemSet(valuesAtt, 0, sizeof(valuesAtt));
-	MemSet(nullsAtt, false, sizeof(nullsAtt));
-	MemSet(replacesAtt, false, sizeof(replacesAtt));
-
 	valuesAtt[Anum_pg_attribute_atthasmissing - 1] = BoolGetDatum(true);
 	replacesAtt[Anum_pg_attribute_atthasmissing - 1] = true;
 	valuesAtt[Anum_pg_attribute_attmissingval - 1] = missingval;
@@ -2863,6 +2856,7 @@ CopyStatistics(Oid fromrelid, Oid torelid)
 	SysScanDesc scan;
 	ScanKeyData key[1];
 	Relation	statrel;
+	CatalogIndexState indstate = NULL;
 
 	statrel = table_open(StatisticRelationId, RowExclusiveLock);
 
@@ -2885,13 +2879,20 @@ CopyStatistics(Oid fromrelid, Oid torelid)
 
 		/* update the copy of the tuple and insert it */
 		statform->starelid = torelid;
-		CatalogTupleInsert(statrel, tup);
+
+		/* fetch index information when we know we need it */
+		if (indstate == NULL)
+			indstate = CatalogOpenIndexes(statrel);
+
+		CatalogTupleInsertWithInfo(statrel, tup, indstate);
 
 		heap_freetuple(tup);
 	}
 
 	systable_endscan(scan);
 
+	if (indstate != NULL)
+		CatalogCloseIndexes(indstate);
 	table_close(statrel, RowExclusiveLock);
 }
 
@@ -3219,9 +3220,8 @@ restart:
 		/*
 		 * If this constraint has a parent constraint which we have not seen
 		 * yet, keep track of it for the second loop, below.  Tracking parent
-		 * constraints allows us to climb up to the top-level constraint
-		 * and look for all possible relations referencing the partitioned
-		 * table.
+		 * constraints allows us to climb up to the top-level constraint and
+		 * look for all possible relations referencing the partitioned table.
 		 */
 		if (OidIsValid(con->conparentid) &&
 			!list_member_oid(parent_cons, con->conparentid))
@@ -3321,7 +3321,7 @@ StorePartitionKey(Relation rel,
 	Relation	pg_partitioned_table;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_partitioned_table];
-	bool		nulls[Natts_pg_partitioned_table];
+	bool		nulls[Natts_pg_partitioned_table] = {0};
 	ObjectAddress myself;
 	ObjectAddress referenced;
 	ObjectAddresses *addrs;
@@ -3346,8 +3346,6 @@ StorePartitionKey(Relation rel,
 		partexprDatum = (Datum) 0;
 
 	pg_partitioned_table = table_open(PartitionedRelationId, RowExclusiveLock);
-
-	MemSet(nulls, false, sizeof(nulls));
 
 	/* Only this can ever be NULL */
 	if (!partexprDatum)

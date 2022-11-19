@@ -22,7 +22,7 @@ NAME= pq
 SO_MAJOR_VERSION= 5
 SO_MINOR_VERSION= $(MAJORVERSION)
 
-override CPPFLAGS :=  -DFRONTEND -DUNSAFE_STAT_OK -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
+override CPPFLAGS :=  -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port -I$(top_srcdir)/src/port
 ifneq ($(PORTNAME), win32)
 override CFLAGS += $(PTHREAD_CFLAGS)
 endif
@@ -143,11 +143,13 @@ install: all installdirs install-lib
 test-build:
 	$(MAKE) -C test all
 
+check installcheck: export PATH := $(CURDIR)/test:$(PATH)
+
 check: test-build all
-	PATH="$(CURDIR)/test:$$PATH" && $(prove_check)
+	$(prove_check)
 
 installcheck: test-build all
-	PATH="$(CURDIR)/test:$$PATH" && $(prove_installcheck)
+	$(prove_installcheck)
 
 installdirs: installdirs-lib
 	$(MKDIR_P) '$(DESTDIR)$(includedir)' '$(DESTDIR)$(includedir_internal)' '$(DESTDIR)$(datadir)'

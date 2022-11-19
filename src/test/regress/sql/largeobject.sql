@@ -34,8 +34,8 @@ BEGIN;
 
 -- lo_open(lobjId oid, mode integer) returns integer
 -- The mode parameter to lo_open uses two constants:
---   INV_READ  = 0x20000
---   INV_WRITE = 0x40000
+--   INV_WRITE = 0x20000
+--   INV_READ  = 0x40000
 -- The return value is a file descriptor-like value which remains valid for the
 -- transaction.
 UPDATE lotest_stash_values SET fd = lo_open(loid, CAST(x'20000' | x'40000' AS integer));
@@ -270,6 +270,50 @@ SELECT lo_get(:newloid);
 SELECT lo_create(2121);
 
 COMMENT ON LARGE OBJECT 2121 IS 'testing comments';
+
+-- Test writes on large objects in read-only transactions
+START TRANSACTION READ ONLY;
+-- INV_READ ... ok
+SELECT lo_open(2121, x'40000'::int);
+-- INV_WRITE ... error
+SELECT lo_open(2121, x'20000'::int);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_create(42);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_creat(42);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_unlink(42);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lowrite(42, 'x');
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_import(:'filename');
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_truncate(42, 0);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_truncate64(42, 0);
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_from_bytea(0, 'x');
+ROLLBACK;
+
+START TRANSACTION READ ONLY;
+SELECT lo_put(42, 0, 'x');
+ROLLBACK;
 
 -- Clean up
 DROP TABLE lotest_stash_values;

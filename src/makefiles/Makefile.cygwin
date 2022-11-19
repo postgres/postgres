@@ -10,8 +10,6 @@ endif
 # (see http://sources.redhat.com/cygwin/faq/faq.html#SEC110)
 LIBS:=$(filter-out -lm -lc, $(LIBS))
 
-AROPT = crs
-
 override CPPFLAGS += -DWIN32_STACK_RLIMIT=$(WIN32_STACK_RLIMIT)
 
 ifneq (,$(findstring backend,$(subdir)))

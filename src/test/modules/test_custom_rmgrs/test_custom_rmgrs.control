@@ -1,0 +1,4 @@
+comment = 'Test code for custom WAL resource managers'
+default_version = '1.0'
+module_pathname = '$libdir/test_custom_rmgrs'
+relocatable = true

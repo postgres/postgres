@@ -22,7 +22,7 @@ extern void ExecReScanIncrementalSort(IncrementalSortState *node);
 /* parallel instrumentation support */
 extern void ExecIncrementalSortEstimate(IncrementalSortState *node, ParallelContext *pcxt);
 extern void ExecIncrementalSortInitializeDSM(IncrementalSortState *node, ParallelContext *pcxt);
-extern void ExecIncrementalSortInitializeWorker(IncrementalSortState *node, ParallelWorkerContext *pcxt);
+extern void ExecIncrementalSortInitializeWorker(IncrementalSortState *node, ParallelWorkerContext *pwcxt);
 extern void ExecIncrementalSortRetrieveInstrumentation(IncrementalSortState *node);
 
 #endif							/* NODEINCREMENTALSORT_H */

@@ -1337,7 +1337,8 @@ pg_group| SELECT pg_authid.rolname AS groname,
           WHERE (pg_auth_members.roleid = pg_authid.oid)) AS grolist
    FROM pg_authid
   WHERE (NOT pg_authid.rolcanlogin);
-pg_hba_file_rules| SELECT a.line_number,
+pg_hba_file_rules| SELECT a.rule_number,
+    a.line_number,
     a.type,
     a.database,
     a.user_name,
@@ -1346,13 +1347,14 @@ pg_hba_file_rules| SELECT a.line_number,
     a.auth_method,
     a.options,
     a.error
-   FROM pg_hba_file_rules() a(line_number, type, database, user_name, address, netmask, auth_method, options, error);
-pg_ident_file_mappings| SELECT a.line_number,
+   FROM pg_hba_file_rules() a(rule_number, line_number, type, database, user_name, address, netmask, auth_method, options, error);
+pg_ident_file_mappings| SELECT a.map_number,
+    a.line_number,
     a.map_name,
     a.sys_name,
     a.pg_username,
     a.error
-   FROM pg_ident_file_mappings() a(line_number, map_name, sys_name, pg_username, error);
+   FROM pg_ident_file_mappings() a(map_number, line_number, map_name, sys_name, pg_username, error);
 pg_indexes| SELECT n.nspname AS schemaname,
     c.relname AS tablename,
     i.relname AS indexname,
@@ -1423,10 +1425,11 @@ pg_prepared_statements| SELECT p.name,
     p.statement,
     p.prepare_time,
     p.parameter_types,
+    p.result_types,
     p.from_sql,
     p.generic_plans,
     p.custom_plans
-   FROM pg_prepared_statement() p(name, statement, prepare_time, parameter_types, from_sql, generic_plans, custom_plans);
+   FROM pg_prepared_statement() p(name, statement, prepare_time, parameter_types, result_types, from_sql, generic_plans, custom_plans);
 pg_prepared_xacts| SELECT p.transaction,
     p.gid,
     p.prepared,
@@ -1437,9 +1440,13 @@ pg_prepared_xacts| SELECT p.transaction,
      LEFT JOIN pg_database d ON ((p.dbid = d.oid)));
 pg_publication_tables| SELECT p.pubname,
     n.nspname AS schemaname,
-    c.relname AS tablename
+    c.relname AS tablename,
+    ( SELECT array_agg(a.attname ORDER BY a.attnum) AS array_agg
+           FROM pg_attribute a
+          WHERE ((a.attrelid = gpt.relid) AND (a.attnum > 0) AND (NOT a.attisdropped) AND ((a.attnum = ANY ((gpt.attrs)::smallint[])) OR (gpt.attrs IS NULL)))) AS attnames,
+    pg_get_expr(gpt.qual, gpt.relid) AS rowfilter
    FROM pg_publication p,
-    LATERAL pg_get_publication_tables((p.pubname)::text) gpt(relid),
+    LATERAL pg_get_publication_tables((p.pubname)::text) gpt(relid, attrs, qual),
     (pg_class c
      JOIN pg_namespace n ON ((n.oid = c.relnamespace)))
   WHERE (c.oid = gpt.relid);
@@ -1758,6 +1765,7 @@ pg_stat_all_indexes| SELECT c.oid AS relid,
     c.relname,
     i.relname AS indexrelname,
     pg_stat_get_numscans(i.oid) AS idx_scan,
+    pg_stat_get_lastscan(i.oid) AS last_idx_scan,
     pg_stat_get_tuples_returned(i.oid) AS idx_tup_read,
     pg_stat_get_tuples_fetched(i.oid) AS idx_tup_fetch
    FROM (((pg_class c
@@ -1769,8 +1777,10 @@ pg_stat_all_tables| SELECT c.oid AS relid,
     n.nspname AS schemaname,
     c.relname,
     pg_stat_get_numscans(c.oid) AS seq_scan,
+    pg_stat_get_lastscan(c.oid) AS last_seq_scan,
     pg_stat_get_tuples_returned(c.oid) AS seq_tup_read,
     (sum(pg_stat_get_numscans(i.indexrelid)))::bigint AS idx_scan,
+    max(pg_stat_get_lastscan(i.indexrelid)) AS last_idx_scan,
     ((sum(pg_stat_get_tuples_fetched(i.indexrelid)))::bigint + pg_stat_get_tuples_fetched(c.oid)) AS idx_tup_fetch,
     pg_stat_get_tuples_inserted(c.oid) AS n_tup_ins,
     pg_stat_get_tuples_updated(c.oid) AS n_tup_upd,
@@ -2102,6 +2112,7 @@ pg_stat_sys_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.relname,
     pg_stat_all_indexes.indexrelname,
     pg_stat_all_indexes.idx_scan,
+    pg_stat_all_indexes.last_idx_scan,
     pg_stat_all_indexes.idx_tup_read,
     pg_stat_all_indexes.idx_tup_fetch
    FROM pg_stat_all_indexes
@@ -2110,8 +2121,10 @@ pg_stat_sys_tables| SELECT pg_stat_all_tables.relid,
     pg_stat_all_tables.schemaname,
     pg_stat_all_tables.relname,
     pg_stat_all_tables.seq_scan,
+    pg_stat_all_tables.last_seq_scan,
     pg_stat_all_tables.seq_tup_read,
     pg_stat_all_tables.idx_scan,
+    pg_stat_all_tables.last_idx_scan,
     pg_stat_all_tables.idx_tup_fetch,
     pg_stat_all_tables.n_tup_ins,
     pg_stat_all_tables.n_tup_upd,
@@ -2146,6 +2159,7 @@ pg_stat_user_indexes| SELECT pg_stat_all_indexes.relid,
     pg_stat_all_indexes.relname,
     pg_stat_all_indexes.indexrelname,
     pg_stat_all_indexes.idx_scan,
+    pg_stat_all_indexes.last_idx_scan,
     pg_stat_all_indexes.idx_tup_read,
     pg_stat_all_indexes.idx_tup_fetch
    FROM pg_stat_all_indexes
@@ -2154,8 +2168,10 @@ pg_stat_user_tables| SELECT pg_stat_all_tables.relid,
     pg_stat_all_tables.schemaname,
     pg_stat_all_tables.relname,
     pg_stat_all_tables.seq_scan,
+    pg_stat_all_tables.last_seq_scan,
     pg_stat_all_tables.seq_tup_read,
     pg_stat_all_tables.idx_scan,
+    pg_stat_all_tables.last_idx_scan,
     pg_stat_all_tables.idx_tup_fetch,
     pg_stat_all_tables.n_tup_ins,
     pg_stat_all_tables.n_tup_upd,

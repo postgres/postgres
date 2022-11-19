@@ -26,7 +26,7 @@ relmap_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_relmap_update *xlrec = (xl_relmap_update *) rec;
 
-		appendStringInfo(buf, "database %u tablespace %u size %u",
+		appendStringInfo(buf, "database %u tablespace %u size %d",
 						 xlrec->dbid, xlrec->tsid, xlrec->nbytes);
 	}
 }

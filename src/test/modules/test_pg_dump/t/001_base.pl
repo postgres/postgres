@@ -8,7 +8,7 @@ use PostgreSQL::Test::Cluster;
 use PostgreSQL::Test::Utils;
 use Test::More;
 
-my $tempdir       = PostgreSQL::Test::Utils::tempdir;
+my $tempdir = PostgreSQL::Test::Utils::tempdir;
 
 ###############################################################
 # This structure is based off of the src/bin/pg_dump/t test

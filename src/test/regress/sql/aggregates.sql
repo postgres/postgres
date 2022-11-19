@@ -504,6 +504,49 @@ select t1.f1 from t1 left join t2 using (f1) group by f1;
 drop table t1, t2;
 
 --
+-- Test planner's selection of pathkeys for ORDER BY aggregates
+--
+
+-- Ensure we order by four.  This suits the most aggregate functions.
+explain (costs off)
+select sum(two order by two),max(four order by four), min(four order by four)
+from tenk1;
+
+-- Ensure we order by two.  It's a tie between ordering by two and four but
+-- we tiebreak on the aggregate's position.
+explain (costs off)
+select
+  sum(two order by two), max(four order by four),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Similar to above, but tiebreak on ordering by four
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two)
+from tenk1;
+
+-- Ensure this one orders by ten since there are 3 aggregates that require ten
+-- vs two that suit two and four.
+explain (costs off)
+select
+  max(four order by four), sum(two order by two),
+  min(four order by four), max(two order by two),
+  sum(ten order by ten), min(ten order by ten), max(ten order by ten)
+from tenk1;
+
+-- Try a case involving a GROUP BY clause where the GROUP BY column is also
+-- part of an aggregate's ORDER BY clause.  We want a sort order that works
+-- for the GROUP BY along with the first and the last aggregate.
+explain (costs off)
+select
+  sum(unique1 order by ten, two), sum(unique1 order by four),
+  sum(unique1 order by two, four)
+from tenk1
+group by ten;
+
+--
 -- Test combinations of DISTINCT and/or ORDER BY
 --
 
@@ -1024,105 +1067,6 @@ CREATE AGGREGATE balk(int4)
 SELECT balk(hundred) FROM tenk1;
 
 ROLLBACK;
-
--- GROUP BY optimization by reorder columns
-
-SELECT
-	i AS id,
-	i/2 AS p,
-	format('%60s', i%2) AS v,
-	i/4 AS c,
-	i/8 AS d,
-	(random() * (10000/8))::int as e --the same as d but no correlation with p
-	INTO btg
-FROM
-	generate_series(1, 10000) i;
-
-VACUUM btg;
-ANALYZE btg;
-
--- GROUP BY optimization by reorder columns by frequency
-
-SET enable_hashagg=off;
-SET max_parallel_workers= 0;
-SET max_parallel_workers_per_gather = 0;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY v, p, d ,c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, d, c ORDER BY p, v, d ,c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, d, e;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, e, d;
-
-CREATE STATISTICS btg_dep ON d, e, p FROM btg;
-ANALYZE btg;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, d, e;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, e, d;
-
-
--- GROUP BY optimization by reorder columns by index scan
-
-CREATE INDEX ON btg(p, v);
-SET enable_seqscan=off;
-SET enable_bitmapscan=off;
-VACUUM btg;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY p, v ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, p, c ORDER BY p, v;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, c, p, d;
-
-EXPLAIN (COSTS off)
-SELECT count(*) FROM btg GROUP BY v, c, p, d ORDER BY p, v;
-
-DROP TABLE btg;
-
-RESET enable_hashagg;
-RESET max_parallel_workers;
-RESET max_parallel_workers_per_gather;
-RESET enable_seqscan;
-RESET enable_bitmapscan;
-
 
 -- Secondly test the case of a parallel aggregate combiner function
 -- returning NULL. For that use normal transition function, but a

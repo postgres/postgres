@@ -1207,7 +1207,7 @@ CompactCheckpointerRequestQueue(void)
 		 * We use the request struct directly as a hashtable key.  This
 		 * assumes that any padding bytes in the structs are consistently the
 		 * same, which should be okay because we zeroed them in
-		 * CheckpointerShmemInit.  Note also that RelFileNode had better
+		 * CheckpointerShmemInit.  Note also that RelFileLocator had better
 		 * contain no pad bytes.
 		 */
 		request = &CheckpointerShmem->requests[n];

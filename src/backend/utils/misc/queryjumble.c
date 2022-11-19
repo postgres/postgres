@@ -45,7 +45,8 @@ int			compute_query_id = COMPUTE_QUERY_ID_AUTO;
 /* True when compute_query_id is ON, or AUTO and a module requests them */
 bool		query_id_enabled = false;
 
-static uint64 compute_utility_query_id(const char *str, int query_location, int query_len);
+static uint64 compute_utility_query_id(const char *query_text,
+									   int query_location, int query_len);
 static void AppendJumble(JumbleState *jstate,
 						 const unsigned char *item, Size size);
 static void JumbleQueryInternal(JumbleState *jstate, Query *query);
@@ -247,6 +248,7 @@ JumbleQueryInternal(JumbleState *jstate, Query *query)
 	JumbleExpr(jstate, (Node *) query->cteList);
 	JumbleRangeTable(jstate, query->rtable);
 	JumbleExpr(jstate, (Node *) query->jointree);
+	JumbleExpr(jstate, (Node *) query->mergeActionList);
 	JumbleExpr(jstate, (Node *) query->targetList);
 	JumbleExpr(jstate, (Node *) query->onConflict);
 	JumbleExpr(jstate, (Node *) query->returningList);
@@ -737,73 +739,14 @@ JumbleExpr(JumbleState *jstate, Node *node)
 				JumbleExpr(jstate, (Node *) conf->exclRelTlist);
 			}
 			break;
-		case T_JsonFormat:
+		case T_MergeAction:
 			{
-				JsonFormat *format = (JsonFormat *) node;
+				MergeAction *mergeaction = (MergeAction *) node;
 
-				APP_JUMB(format->type);
-				APP_JUMB(format->encoding);
-			}
-			break;
-		case T_JsonReturning:
-			{
-				JsonReturning *returning = (JsonReturning *) node;
-
-				JumbleExpr(jstate, (Node *) returning->format);
-				APP_JUMB(returning->typid);
-				APP_JUMB(returning->typmod);
-			}
-			break;
-		case T_JsonValueExpr:
-			{
-				JsonValueExpr *expr = (JsonValueExpr *) node;
-
-				JumbleExpr(jstate, (Node *) expr->raw_expr);
-				JumbleExpr(jstate, (Node *) expr->formatted_expr);
-				JumbleExpr(jstate, (Node *) expr->format);
-			}
-			break;
-		case T_JsonConstructorExpr:
-			{
-				JsonConstructorExpr *ctor = (JsonConstructorExpr *) node;
-
-				JumbleExpr(jstate, (Node *) ctor->func);
-				JumbleExpr(jstate, (Node *) ctor->coercion);
-				JumbleExpr(jstate, (Node *) ctor->returning);
-				APP_JUMB(ctor->type);
-				APP_JUMB(ctor->unique);
-				APP_JUMB(ctor->absent_on_null);
-			}
-			break;
-		case T_JsonIsPredicate:
-			{
-				JsonIsPredicate *pred = (JsonIsPredicate *) node;
-
-				JumbleExpr(jstate, (Node *) pred->expr);
-				JumbleExpr(jstate, (Node *) pred->format);
-				APP_JUMB(pred->unique_keys);
-				APP_JUMB(pred->value_type);
-			}
-			break;
-		case T_JsonExpr:
-			{
-				JsonExpr    *jexpr = (JsonExpr *) node;
-
-				APP_JUMB(jexpr->op);
-				JumbleExpr(jstate, jexpr->formatted_expr);
-				JumbleExpr(jstate, jexpr->path_spec);
-				foreach(temp, jexpr->passing_names)
-				{
-					APP_JUMB_STRING(lfirst_node(String, temp)->sval);
-				}
-				JumbleExpr(jstate, (Node *) jexpr->passing_values);
-				if (jexpr->on_empty)
-				{
-					APP_JUMB(jexpr->on_empty->btype);
-					JumbleExpr(jstate, jexpr->on_empty->default_expr);
-				}
-				APP_JUMB(jexpr->on_error->btype);
-				JumbleExpr(jstate, jexpr->on_error->default_expr);
+				APP_JUMB(mergeaction->matched);
+				APP_JUMB(mergeaction->commandType);
+				JumbleExpr(jstate, mergeaction->qual);
+				JumbleExpr(jstate, (Node *) mergeaction->targetList);
 			}
 			break;
 		case T_List:
@@ -878,11 +821,9 @@ JumbleExpr(JumbleState *jstate, Node *node)
 			{
 				TableFunc  *tablefunc = (TableFunc *) node;
 
-				APP_JUMB(tablefunc->functype);
 				JumbleExpr(jstate, tablefunc->docexpr);
 				JumbleExpr(jstate, tablefunc->rowexpr);
 				JumbleExpr(jstate, (Node *) tablefunc->colexprs);
-				JumbleExpr(jstate, (Node *) tablefunc->colvalexprs);
 			}
 			break;
 		case T_TableSampleClause:

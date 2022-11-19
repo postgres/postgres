@@ -114,7 +114,7 @@ static void dblink_security_check(PGconn *conn, remoteConn *rconn);
 static void dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 							 bool fail, const char *fmt,...) pg_attribute_printf(5, 6);
 static char *get_connect_string(const char *servername);
-static char *escape_param_str(const char *from);
+static char *escape_param_str(const char *str);
 static void validate_pkattnums(Relation rel,
 							   int2vector *pkattnums_arg, int32 pknumatts_arg,
 							   int **pkattnums, int *pknumatts);
@@ -157,8 +157,7 @@ dblink_res_internalerror(PGconn *conn, PGresult *res, const char *p2)
 {
 	char	   *msg = pchomp(PQerrorMessage(conn));
 
-	if (res)
-		PQclear(res);
+	PQclear(res);
 	elog(ERROR, "%s: %s", p2, msg);
 }
 
@@ -973,7 +972,7 @@ materializeResult(FunctionCallInfo fcinfo, PGconn *conn, PGresult *res)
 			rsinfo->setDesc = tupdesc;
 			MemoryContextSwitchTo(oldcontext);
 
-			values = (char **) palloc(nfields * sizeof(char *));
+			values = palloc_array(char *, nfields);
 
 			/* put all tuples into the tuplestore */
 			for (row = 0; row < ntuples; row++)
@@ -1277,7 +1276,7 @@ storeRow(volatile storeInfo *sinfo, PGresult *res, bool first)
 		 */
 		if (sinfo->cstrs)
 			pfree(sinfo->cstrs);
-		sinfo->cstrs = (char **) palloc(nfields * sizeof(char *));
+		sinfo->cstrs = palloc_array(char *, nfields);
 	}
 
 	/* Should have a single-row result if we get here */
@@ -1337,7 +1336,7 @@ dblink_get_connections(PG_FUNCTION_ARGS)
 	}
 
 	if (astate)
-		PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate,
+		PG_RETURN_DATUM(makeArrayResult(astate,
 											  CurrentMemoryContext));
 	else
 		PG_RETURN_NULL();
@@ -1619,7 +1618,7 @@ dblink_get_pkey(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 		Datum		result;
 
-		values = (char **) palloc(2 * sizeof(char *));
+		values = palloc_array(char *, 2);
 		values[0] = psprintf("%d", call_cntr + 1);
 		values[1] = results[call_cntr];
 
@@ -1934,7 +1933,7 @@ dblink_get_notify(PG_FUNCTION_ARGS)
 	else
 		conn = pconn->conn;
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	PQconsumeInput(conn);
 	while ((notify = PQnotifies(conn)) != NULL)
@@ -2009,27 +2008,32 @@ dblink_fdw_validator(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * Unknown option, or invalid option for the context specified, so
-			 * complain about it.  Provide a hint with list of valid options
-			 * for the context.
+			 * complain about it.  Provide a hint with a valid option that
+			 * looks similar, if there is one.
 			 */
-			StringInfoData buf;
 			const PQconninfoOption *opt;
+			const char *closest_match;
+			ClosestMatchState match_state;
+			bool		has_valid_options = false;
 
-			initStringInfo(&buf);
+			initClosestMatch(&match_state, def->defname, 4);
 			for (opt = options; opt->keyword; opt++)
 			{
 				if (is_valid_dblink_option(options, opt->keyword, context))
-					appendStringInfo(&buf, "%s%s",
-									 (buf.len > 0) ? ", " : "",
-									 opt->keyword);
+				{
+					has_valid_options = true;
+					updateClosestMatch(&match_state, opt->keyword);
+				}
 			}
+
+			closest_match = getClosestMatch(&match_state);
 			ereport(ERROR,
 					(errcode(ERRCODE_FDW_OPTION_NAME_NOT_FOUND),
 					 errmsg("invalid option \"%s\"", def->defname),
-					 buf.len > 0
-					 ? errhint("Valid options in this context are: %s",
-							   buf.data)
-					 : errhint("There are no valid options in this context.")));
+					 has_valid_options ? closest_match ?
+					 errhint("Perhaps you meant the option \"%s\".",
+							 closest_match) : 0 :
+					 errhint("There are no valid options in this context.")));
 		}
 	}
 
@@ -2084,7 +2088,7 @@ get_pkey_attnames(Relation rel, int16 *indnkeyatts)
 			*indnkeyatts = index->indnkeyatts;
 			if (*indnkeyatts > 0)
 			{
-				result = (char **) palloc(*indnkeyatts * sizeof(char *));
+				result = palloc_array(char *, *indnkeyatts);
 
 				for (i = 0; i < *indnkeyatts; i++)
 					result[i] = SPI_fname(tupdesc, index->indkey.values[i]);
@@ -2125,7 +2129,7 @@ get_text_array_contents(ArrayType *array, int *numitems)
 	get_typlenbyvalalign(ARR_ELEMTYPE(array),
 						 &typlen, &typbyval, &typalign);
 
-	values = (char **) palloc(nitems * sizeof(char *));
+	values = palloc_array(char *, nitems);
 
 	ptr = ARR_DATA_PTR(array);
 	bitmap = ARR_NULLBITMAP(array);
@@ -2756,8 +2760,7 @@ dblink_res_error(PGconn *conn, const char *conname, PGresult *res,
 	 * leaking all the strings too, but those are in palloc'd memory that will
 	 * get cleaned up eventually.
 	 */
-	if (res)
-		PQclear(res);
+	PQclear(res);
 
 	/*
 	 * Format the basic errcontext string.  Below, we'll add on something
@@ -2835,7 +2838,7 @@ get_connect_string(const char *servername)
 		fdw = GetForeignDataWrapper(fdwid);
 
 		/* Check permissions, user must have usage on the server. */
-		aclresult = pg_foreign_server_aclcheck(serverid, userid, ACL_USAGE);
+		aclresult = object_aclcheck(ForeignServerRelationId, serverid, userid, ACL_USAGE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, OBJECT_FOREIGN_SERVER, foreign_server->servername);
 
@@ -2930,7 +2933,7 @@ validate_pkattnums(Relation rel,
 				 errmsg("number of key attributes must be > 0")));
 
 	/* Allocate output array */
-	*pkattnums = (int *) palloc(pknumatts_arg * sizeof(int));
+	*pkattnums = palloc_array(int, pknumatts_arg);
 	*pknumatts = pknumatts_arg;
 
 	/* Validate attnums and convert to internal form */

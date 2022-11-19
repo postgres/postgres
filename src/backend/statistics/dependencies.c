@@ -354,7 +354,7 @@ statext_dependencies_build(StatsBuildData *data)
 
 	/* result */
 	MVDependencies *dependencies = NULL;
-	MemoryContext	cxt;
+	MemoryContext cxt;
 
 	Assert(data->nattnums >= 2);
 
@@ -1265,7 +1265,6 @@ dependency_is_compatible_expression(Node *clause, Index relid, List *statlist, N
 	else if (is_orclause(clause))
 	{
 		BoolExpr   *bool_expr = (BoolExpr *) clause;
-		ListCell   *lc;
 
 		/* start with no expression (we'll use the first match) */
 		*expr = NULL;
@@ -1693,7 +1692,6 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 				{
 					int			idx;
 					Node	   *expr;
-					int			k;
 					AttrNumber	unique_attnum = InvalidAttrNumber;
 					AttrNumber	attnum;
 
@@ -1741,15 +1739,15 @@ dependencies_clauselist_selectivity(PlannerInfo *root,
 					expr = (Node *) list_nth(stat->exprs, idx);
 
 					/* try to find the expression in the unique list */
-					for (k = 0; k < unique_exprs_cnt; k++)
+					for (int m = 0; m < unique_exprs_cnt; m++)
 					{
 						/*
 						 * found a matching unique expression, use the attnum
 						 * (derived from index of the unique expression)
 						 */
-						if (equal(unique_exprs[k], expr))
+						if (equal(unique_exprs[m], expr))
 						{
-							unique_attnum = -(k + 1) + attnum_offset;
+							unique_attnum = -(m + 1) + attnum_offset;
 							break;
 						}
 					}

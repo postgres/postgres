@@ -121,6 +121,17 @@ printsimple(TupleTableSlot *slot, DestReceiver *self)
 				}
 				break;
 
+			case OIDOID:
+				{
+					Oid			num = ObjectIdGetDatum(value);
+					char		str[10];	/* 10 digits */
+					int			len;
+
+					len = pg_ultoa_n(num, str);
+					pq_sendcountedtext(&buf, str, len, false);
+				}
+				break;
+
 			default:
 				elog(ERROR, "unsupported type OID: %u", attr->atttypid);
 		}

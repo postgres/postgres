@@ -319,8 +319,7 @@ typedef struct mXactCacheEnt
 } mXactCacheEnt;
 
 #define MAX_CACHE_ENTRIES	256
-static dlist_head MXactCache = DLIST_STATIC_INIT(MXactCache);
-static int	MXactCacheMembers = 0;
+static dclist_head MXactCache = DCLIST_STATIC_INIT(MXactCache);
 static MemoryContext MXactContext = NULL;
 
 #ifdef MULTIXACT_DEBUG
@@ -389,8 +388,8 @@ MultiXactIdCreate(TransactionId xid1, MultiXactStatus status1,
 	MultiXactId newMulti;
 	MultiXactMember members[2];
 
-	AssertArg(TransactionIdIsValid(xid1));
-	AssertArg(TransactionIdIsValid(xid2));
+	Assert(TransactionIdIsValid(xid1));
+	Assert(TransactionIdIsValid(xid2));
 
 	Assert(!TransactionIdEquals(xid1, xid2) || (status1 != status2));
 
@@ -445,8 +444,8 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid, MultiXactStatus status)
 	int			i;
 	int			j;
 
-	AssertArg(MultiXactIdIsValid(multi));
-	AssertArg(TransactionIdIsValid(xid));
+	Assert(MultiXactIdIsValid(multi));
+	Assert(TransactionIdIsValid(xid));
 
 	/* MultiXactIdSetOldestMember() must have been called already. */
 	Assert(MultiXactIdIsValid(OldestMemberMXactId[MyBackendId]));
@@ -1214,14 +1213,14 @@ GetNewMultiXactId(int nmembers, MultiXactOffset *offset)
  * range, that is, greater to or equal than oldestMultiXactId, and less than
  * nextMXact.  Otherwise, an error is raised.
  *
- * onlyLock must be set to true if caller is certain that the given multi
+ * isLockOnly must be set to true if caller is certain that the given multi
  * is used only to lock tuples; can be false without loss of correctness,
  * but passing a true means we can return quickly without checking for
  * old updates.
  */
 int
 GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
-					  bool from_pgupgrade, bool onlyLock)
+					  bool from_pgupgrade, bool isLockOnly)
 {
 	int			pageno;
 	int			prev_pageno;
@@ -1263,7 +1262,7 @@ GetMultiXactIdMembers(MultiXactId multi, MultiXactMember **members,
 	 * we can skip checking if the value is older than our oldest visible
 	 * multi.  It cannot possibly still be running.
 	 */
-	if (onlyLock &&
+	if (isLockOnly &&
 		MultiXactIdPrecedes(multi, OldestVisibleMXactId[MyBackendId]))
 	{
 		debug_elog2(DEBUG2, "GetMembers: a locker-only multi is too old");
@@ -1504,9 +1503,10 @@ mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 	/* sort the array so comparison is easy */
 	qsort(members, nmembers, sizeof(MultiXactMember), mxactMemberComparator);
 
-	dlist_foreach(iter, &MXactCache)
+	dclist_foreach(iter, &MXactCache)
 	{
-		mXactCacheEnt *entry = dlist_container(mXactCacheEnt, node, iter.cur);
+		mXactCacheEnt *entry = dclist_container(mXactCacheEnt, node,
+												iter.cur);
 
 		if (entry->nmembers != nmembers)
 			continue;
@@ -1518,7 +1518,7 @@ mXactCacheGetBySet(int nmembers, MultiXactMember *members)
 		if (memcmp(members, entry->members, nmembers * sizeof(MultiXactMember)) == 0)
 		{
 			debug_elog3(DEBUG2, "CacheGet: found %u", entry->multi);
-			dlist_move_head(&MXactCache, iter.cur);
+			dclist_move_head(&MXactCache, iter.cur);
 			return entry->multi;
 		}
 	}
@@ -1542,9 +1542,10 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 
 	debug_elog3(DEBUG2, "CacheGet: looking for %u", multi);
 
-	dlist_foreach(iter, &MXactCache)
+	dclist_foreach(iter, &MXactCache)
 	{
-		mXactCacheEnt *entry = dlist_container(mXactCacheEnt, node, iter.cur);
+		mXactCacheEnt *entry = dclist_container(mXactCacheEnt, node,
+												iter.cur);
 
 		if (entry->multi == multi)
 		{
@@ -1566,7 +1567,7 @@ mXactCacheGetById(MultiXactId multi, MultiXactMember **members)
 			 * This is acceptable only because we exit the iteration
 			 * immediately afterwards.
 			 */
-			dlist_move_head(&MXactCache, iter.cur);
+			dclist_move_head(&MXactCache, iter.cur);
 
 			*members = ptr;
 			return entry->nmembers;
@@ -1610,17 +1611,15 @@ mXactCachePut(MultiXactId multi, int nmembers, MultiXactMember *members)
 	/* mXactCacheGetBySet assumes the entries are sorted, so sort them */
 	qsort(entry->members, nmembers, sizeof(MultiXactMember), mxactMemberComparator);
 
-	dlist_push_head(&MXactCache, &entry->node);
-	if (MXactCacheMembers++ >= MAX_CACHE_ENTRIES)
+	dclist_push_head(&MXactCache, &entry->node);
+	if (dclist_count(&MXactCache) > MAX_CACHE_ENTRIES)
 	{
 		dlist_node *node;
-		mXactCacheEnt *entry;
 
-		node = dlist_tail_node(&MXactCache);
-		dlist_delete(node);
-		MXactCacheMembers--;
+		node = dclist_tail_node(&MXactCache);
+		dclist_delete_from(&MXactCache, node);
 
-		entry = dlist_container(mXactCacheEnt, node, node);
+		entry = dclist_container(mXactCacheEnt, node, node);
 		debug_elog3(DEBUG2, "CachePut: pruning cached multi %u",
 					entry->multi);
 
@@ -1700,8 +1699,7 @@ AtEOXact_MultiXact(void)
 	 * a child of TopTransactionContext, we needn't delete it explicitly.
 	 */
 	MXactContext = NULL;
-	dlist_init(&MXactCache);
-	MXactCacheMembers = 0;
+	dclist_init(&MXactCache);
 }
 
 /*
@@ -1767,8 +1765,7 @@ PostPrepare_MultiXact(TransactionId xid)
 	 * Discard the local MultiXactId cache like in AtEOXact_MultiXact.
 	 */
 	MXactContext = NULL;
-	dlist_init(&MXactCache);
-	MXactCacheMembers = 0;
+	dclist_init(&MXactCache);
 }
 
 /*

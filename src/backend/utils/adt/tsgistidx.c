@@ -102,7 +102,7 @@ static int	outbuf_maxlen = 0;
 Datum
 gtsvectorout(PG_FUNCTION_ARGS)
 {
-	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
+	SignTSVector *key = (SignTSVector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	char	   *outbuf;
 
 	if (outbuf_maxlen == 0)
@@ -700,7 +700,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 		costvector[j - 1].pos = j;
 		size_alpha = hemdistcache(&(cache[seed_1]), &(cache[j]), siglen);
 		size_beta = hemdistcache(&(cache[seed_2]), &(cache[j]), siglen);
-		costvector[j - 1].cost = Abs(size_alpha - size_beta);
+		costvector[j - 1].cost = abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
@@ -753,7 +753,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_l) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_l))
-					MemSet((void *) GETSIGN(datum_l), 0xff, siglen);
+					memset((void *) GETSIGN(datum_l), 0xff, siglen);
 			}
 			else
 			{
@@ -769,7 +769,7 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 			if (ISALLTRUE(datum_r) || cache[j].allistrue)
 			{
 				if (!ISALLTRUE(datum_r))
-					MemSet((void *) GETSIGN(datum_r), 0xff, siglen);
+					memset((void *) GETSIGN(datum_r), 0xff, siglen);
 			}
 			else
 			{

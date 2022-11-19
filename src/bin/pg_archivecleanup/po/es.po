@@ -1,12 +1,12 @@
 # Spanish message translation file for pg_archivecleanup
-# Copyright (c) 2017-2019, PostgreSQL Global Development Group
+# Copyright (c) 2017-2021, PostgreSQL Global Development Group
 # This file is distributed under the same license as the PostgreSQL package.
 #
 # Carlos Chapi <carlos.chapi@2ndquadrant.com>, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_archivecleanup (PostgreSQL) 12\n"
+"Project-Id-Version: pg_archivecleanup (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
 "POT-Creation-Date: 2020-09-13 10:47+0000\n"
 "PO-Revision-Date: 2020-09-12 23:13-0300\n"

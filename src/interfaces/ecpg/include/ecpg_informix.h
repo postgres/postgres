@@ -33,55 +33,55 @@ extern "C"
 {
 #endif
 
-extern int	rdatestr(date, char *);
-extern void rtoday(date *);
-extern int	rjulmdy(date, short *);
-extern int	rdefmtdate(date *, const char *, const char *);
-extern int	rfmtdate(date, const char *, char *);
-extern int	rmdyjul(short *, date *);
-extern int	rstrdate(const char *, date *);
-extern int	rdayofweek(date);
+extern int	rdatestr(date d, char *str);
+extern void rtoday(date * d);
+extern int	rjulmdy(date d, short *mdy);
+extern int	rdefmtdate(date * d, const char *fmt, const char *str);
+extern int	rfmtdate(date d, const char *fmt, char *str);
+extern int	rmdyjul(short *mdy, date * d);
+extern int	rstrdate(const char *str, date * d);
+extern int	rdayofweek(date d);
 
-extern int	rfmtlong(long, const char *, char *);
-extern int	rgetmsg(int, char *, int);
-extern int	risnull(int, const char *);
-extern int	rsetnull(int, char *);
-extern int	rtypalign(int, int);
-extern int	rtypmsize(int, int);
-extern int	rtypwidth(int, int);
-extern void rupshift(char *);
+extern int	rfmtlong(long lng_val, const char *fmt, char *outbuf);
+extern int	rgetmsg(int msgnum, char *s, int maxsize);
+extern int	risnull(int t, const char *ptr);
+extern int	rsetnull(int t, char *ptr);
+extern int	rtypalign(int offset, int type);
+extern int	rtypmsize(int type, int len);
+extern int	rtypwidth(int sqltype, int sqllen);
+extern void rupshift(char *str);
 
-extern int	byleng(char *, int);
-extern void ldchar(char *, int, char *);
+extern int	byleng(char *str, int len);
+extern void ldchar(char *src, int len, char *dest);
 
-extern void ECPG_informix_set_var(int, void *, int);
-extern void *ECPG_informix_get_var(int);
+extern void ECPG_informix_set_var(int number, void *pointer, int lineno);
+extern void *ECPG_informix_get_var(int number);
 extern void ECPG_informix_reset_sqlca(void);
 
 /* Informix defines these in decimal.h */
-int			decadd(decimal *, decimal *, decimal *);
-int			deccmp(decimal *, decimal *);
-void		deccopy(decimal *, decimal *);
-int			deccvasc(const char *, int, decimal *);
-int			deccvdbl(double, decimal *);
-int			deccvint(int, decimal *);
-int			deccvlong(long, decimal *);
-int			decdiv(decimal *, decimal *, decimal *);
-int			decmul(decimal *, decimal *, decimal *);
-int			decsub(decimal *, decimal *, decimal *);
-int			dectoasc(decimal *, char *, int, int);
-int			dectodbl(decimal *, double *);
-int			dectoint(decimal *, int *);
-int			dectolong(decimal *, long *);
+int			decadd(decimal *arg1, decimal *arg2, decimal *sum);
+int			deccmp(decimal *arg1, decimal *arg2);
+void		deccopy(decimal *src, decimal *target);
+int			deccvasc(const char *cp, int len, decimal *np);
+int			deccvdbl(double dbl, decimal *np);
+int			deccvint(int in, decimal *np);
+int			deccvlong(long lng, decimal *np);
+int			decdiv(decimal *n1, decimal *n2, decimal *result);
+int			decmul(decimal *n1, decimal *n2, decimal *result);
+int			decsub(decimal *n1, decimal *n2, decimal *result);
+int			dectoasc(decimal *np, char *cp, int len, int right);
+int			dectodbl(decimal *np, double *dblp);
+int			dectoint(decimal *np, int *ip);
+int			dectolong(decimal *np, long *lngp);
 
 /* Informix defines these in datetime.h */
-extern void dtcurrent(timestamp *);
-extern int	dtcvasc(char *, timestamp *);
-extern int	dtsub(timestamp *, timestamp *, interval *);
-extern int	dttoasc(timestamp *, char *);
-extern int	dttofmtasc(timestamp *, char *, int, char *);
-extern int	intoasc(interval *, char *);
-extern int	dtcvfmtasc(char *, char *, timestamp *);
+extern void dtcurrent(timestamp * ts);
+extern int	dtcvasc(char *str, timestamp * ts);
+extern int	dtsub(timestamp * ts1, timestamp * ts2, interval * iv);
+extern int	dttoasc(timestamp * ts, char *output);
+extern int	dttofmtasc(timestamp * ts, char *output, int str_len, char *fmtstr);
+extern int	intoasc(interval * i, char *str);
+extern int	dtcvfmtasc(char *inbuf, char *fmtstr, timestamp * dtvalue);
 
 #ifdef __cplusplus
 }

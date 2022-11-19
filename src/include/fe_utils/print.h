@@ -66,6 +66,15 @@ typedef enum printTextLineWrap
 	PRINT_LINE_WRAP_NEWLINE		/* Newline in data */
 } printTextLineWrap;
 
+typedef enum printXheaderWidthType
+{
+	/* Expanded header line width variants */
+	PRINT_XHEADER_FULL, /* do not truncate header line (this is the default) */
+	PRINT_XHEADER_COLUMN, /* only print header line above the first column */
+	PRINT_XHEADER_PAGE, /* header line must not be longer than terminal width */
+	PRINT_XHEADER_EXACT_WIDTH, /* explicitly specified width */
+} printXheaderWidthType;
+
 typedef struct printTextFormat
 {
 	/* A complete line style */
@@ -101,6 +110,8 @@ typedef struct printTableOpt
 	enum printFormat format;	/* see enum above */
 	unsigned short int expanded;	/* expanded/vertical output (if supported
 									 * by output format); 0=no, 1=yes, 2=auto */
+	printXheaderWidthType	expanded_header_width_type; /* width type for header line in expanded mode */
+	int				expanded_header_exact_width; /* explicit width for header line in expanded mode */
 	unsigned short int border;	/* Print a border around the table. 0=none,
 								 * 1=dividing lines, 2=full */
 	unsigned short int pager;	/* use pager for output (if to stdout and

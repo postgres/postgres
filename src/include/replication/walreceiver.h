@@ -12,9 +12,11 @@
 #ifndef _WALRECEIVER_H
 #define _WALRECEIVER_H
 
+#include <netdb.h>
+#include <sys/socket.h>
+
 #include "access/xlog.h"
 #include "access/xlogdefs.h"
-#include "getaddrinfo.h"		/* for NI_MAXHOST */
 #include "pgtime.h"
 #include "port/atomics.h"
 #include "replication/logicalproto.h"
@@ -183,6 +185,8 @@ typedef struct
 			bool		streaming;	/* Streaming of large transactions */
 			bool		twophase;	/* Streaming of two-phase transactions at
 									 * prepare time */
+			char	   *origin; /* Only publish data originating from the
+								 * specified origin */
 		}			logical;
 	}			proto;
 } WalRcvStreamOptions;
@@ -453,6 +457,7 @@ walrcv_clear_result(WalRcvExecResult *walres)
 /* prototypes for functions in walreceiver.c */
 extern void WalReceiverMain(void) pg_attribute_noreturn();
 extern void ProcessWalRcvInterrupts(void);
+extern void WalRcvForceReply(void);
 
 /* prototypes for functions in walreceiverfuncs.c */
 extern Size WalRcvShmemSize(void);
@@ -467,6 +472,5 @@ extern XLogRecPtr GetWalRcvFlushRecPtr(XLogRecPtr *latestChunkStart, TimeLineID 
 extern XLogRecPtr GetWalRcvWriteRecPtr(void);
 extern int	GetReplicationApplyDelay(void);
 extern int	GetReplicationTransferLatency(void);
-extern void WalRcvForceReply(void);
 
 #endif							/* _WALRECEIVER_H */

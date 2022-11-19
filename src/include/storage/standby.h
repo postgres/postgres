@@ -17,7 +17,7 @@
 #include "datatype/timestamp.h"
 #include "storage/lock.h"
 #include "storage/procsignal.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/standbydefs.h"
 
 /* User-settable GUC parameters */
@@ -29,10 +29,10 @@ extern PGDLLIMPORT bool log_recovery_conflict_waits;
 extern void InitRecoveryTransactionEnvironment(void);
 extern void ShutdownRecoveryTransactionEnvironment(void);
 
-extern void ResolveRecoveryConflictWithSnapshot(TransactionId latestRemovedXid,
-												RelFileNode node);
-extern void ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId latestRemovedFullXid,
-													   RelFileNode node);
+extern void ResolveRecoveryConflictWithSnapshot(TransactionId snapshotConflictHorizon,
+												RelFileLocator locator);
+extern void ResolveRecoveryConflictWithSnapshotFullXid(FullTransactionId snapshotConflictHorizon,
+													   RelFileLocator locator);
 extern void ResolveRecoveryConflictWithTablespace(Oid tsid);
 extern void ResolveRecoveryConflictWithDatabase(Oid dbid);
 
@@ -43,7 +43,7 @@ extern void StandbyDeadLockHandler(void);
 extern void StandbyTimeoutHandler(void);
 extern void StandbyLockTimeoutHandler(void);
 extern void LogRecoveryConflict(ProcSignalReason reason, TimestampTz wait_start,
-								TimestampTz cur_ts, VirtualTransactionId *wait_list,
+								TimestampTz now, VirtualTransactionId *wait_list,
 								bool still_waiting);
 
 /*

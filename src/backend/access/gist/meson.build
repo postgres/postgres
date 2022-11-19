@@ -1,0 +1,13 @@
+backend_sources += files(
+  'gist.c',
+  'gistbuild.c',
+  'gistbuildbuffers.c',
+  'gistget.c',
+  'gistproc.c',
+  'gistscan.c',
+  'gistsplit.c',
+  'gistutil.c',
+  'gistvacuum.c',
+  'gistvalidate.c',
+  'gistxlog.c',
+)

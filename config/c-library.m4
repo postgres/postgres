@@ -37,30 +37,6 @@ AC_DEFUN([PGAC_STRUCT_TIMEZONE],
 ])# PGAC_STRUCT_TIMEZONE
 
 
-# PGAC_FUNC_GETTIMEOFDAY_1ARG
-# ---------------------------
-# Check if gettimeofday() has only one arguments. (Normal is two.)
-# If so, define GETTIMEOFDAY_1ARG.
-AC_DEFUN([PGAC_FUNC_GETTIMEOFDAY_1ARG],
-[AC_CACHE_CHECK(whether gettimeofday takes only one argument,
-pgac_cv_func_gettimeofday_1arg,
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <sys/time.h>],
-[struct timeval *tp;
-struct timezone *tzp;
-gettimeofday(tp,tzp);])],
-[pgac_cv_func_gettimeofday_1arg=no],
-[pgac_cv_func_gettimeofday_1arg=yes])])
-if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
-  AC_DEFINE(GETTIMEOFDAY_1ARG, 1,
-            [Define to 1 if gettimeofday() takes only 1 argument.])
-fi
-AH_VERBATIM(GETTIMEOFDAY_1ARG_,
-[@%:@ifdef GETTIMEOFDAY_1ARG
-@%:@ define gettimeofday(a,b) gettimeofday(a)
-@%:@endif])dnl
-])# PGAC_FUNC_GETTIMEOFDAY_1ARG
-
-
 # PGAC_FUNC_STRERROR_R_INT
 # ---------------------------
 # Check if strerror_r() returns int (POSIX) rather than char * (GNU libc).
@@ -92,65 +68,19 @@ fi
 AC_DEFUN([PGAC_UNION_SEMUN],
 [AC_CHECK_TYPES([union semun], [], [],
 [#include <sys/types.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
-#endif])])# PGAC_UNION_SEMUN
+])])# PGAC_UNION_SEMUN
 
 
-# PGAC_STRUCT_SOCKADDR_UN
-# -----------------------
-# If `struct sockaddr_un' exists, define HAVE_STRUCT_SOCKADDR_UN.
-# If it is missing then one could define it.
-# (Requires test for <sys/un.h>!)
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
-[AC_CHECK_TYPES([struct sockaddr_un], [], [],
-[#include <sys/types.h>
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-])])# PGAC_STRUCT_SOCKADDR_UN
-
-
-# PGAC_STRUCT_SOCKADDR_STORAGE
+# PGAC_STRUCT_SOCKADDR_MEMBERS
 # ----------------------------
-# If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE.
-# If it is missing then one could define it.
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
-[AC_CHECK_TYPES([struct sockaddr_storage], [], [],
+# Check if struct sockaddr and subtypes have 4.4BSD-style length.
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_SA_LEN],
+[AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [],
 [#include <sys/types.h>
 #include <sys/socket.h>
-])])# PGAC_STRUCT_SOCKADDR_STORAGE
-
-# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
-# --------------------------------------
-# Check the members of `struct sockaddr_storage'.  We need to know about
-# ss_family and ss_len.  (Some platforms follow RFC 2553 and call them
-# __ss_family and __ss_len.)  We also check struct sockaddr's sa_len;
-# if we have to define our own `struct sockaddr_storage', this tells us
-# whether we need to provide an ss_len field.
-AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS],
-[AC_CHECK_MEMBERS([struct sockaddr_storage.ss_family,
-		   struct sockaddr_storage.__ss_family,
-		   struct sockaddr_storage.ss_len,
-		   struct sockaddr_storage.__ss_len,
-		   struct sockaddr.sa_len], [], [],
-[#include <sys/types.h>
-#include <sys/socket.h>
-])])# PGAC_STRUCT_SOCKADDR_STORAGE_MEMBERS
-
-
-# PGAC_STRUCT_ADDRINFO
-# -----------------------
-# If `struct addrinfo' exists, define HAVE_STRUCT_ADDRINFO.
-AC_DEFUN([PGAC_STRUCT_ADDRINFO],
-[AC_CHECK_TYPES([struct addrinfo], [], [],
-[#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-])])# PGAC_STRUCT_ADDRINFO
+])])# PGAC_STRUCT_SOCKADDR_MEMBERS
 
 
 # PGAC_TYPE_LOCALE_T

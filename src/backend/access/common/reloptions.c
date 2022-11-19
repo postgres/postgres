@@ -475,7 +475,7 @@ static relopt_real realRelOpts[] =
 };
 
 /* values from StdRdOptIndexCleanup */
-relopt_enum_elt_def StdRdOptIndexCleanupValues[] =
+static relopt_enum_elt_def StdRdOptIndexCleanupValues[] =
 {
 	{"auto", STDRD_OPTION_VACUUM_INDEX_CLEANUP_AUTO},
 	{"on", STDRD_OPTION_VACUUM_INDEX_CLEANUP_ON},
@@ -490,7 +490,7 @@ relopt_enum_elt_def StdRdOptIndexCleanupValues[] =
 };
 
 /* values from GistOptBufferingMode */
-relopt_enum_elt_def gistBufferingOptValues[] =
+static relopt_enum_elt_def gistBufferingOptValues[] =
 {
 	{"auto", GIST_OPTION_BUFFERING_AUTO},
 	{"on", GIST_OPTION_BUFFERING_ON},
@@ -499,7 +499,7 @@ relopt_enum_elt_def gistBufferingOptValues[] =
 };
 
 /* values from ViewOptCheckOption */
-relopt_enum_elt_def viewCheckOptValues[] =
+static relopt_enum_elt_def viewCheckOptValues[] =
 {
 	/* no value for NOT_SET */
 	{"local", VIEW_OPTION_CHECK_OPTION_LOCAL},
@@ -733,11 +733,11 @@ add_reloption(relopt_gen *newoption)
  * 		'relopt_struct_size'.
  */
 void
-init_local_reloptions(local_relopts *opts, Size relopt_struct_size)
+init_local_reloptions(local_relopts *relopts, Size relopt_struct_size)
 {
-	opts->options = NIL;
-	opts->validators = NIL;
-	opts->relopt_struct_size = relopt_struct_size;
+	relopts->options = NIL;
+	relopts->validators = NIL;
+	relopts->relopt_struct_size = relopt_struct_size;
 }
 
 /*
@@ -746,9 +746,9 @@ init_local_reloptions(local_relopts *opts, Size relopt_struct_size)
  *		build_local_reloptions().
  */
 void
-register_reloptions_validator(local_relopts *opts, relopts_validator validator)
+register_reloptions_validator(local_relopts *relopts, relopts_validator validator)
 {
-	opts->validators = lappend(opts->validators, validator);
+	relopts->validators = lappend(relopts->validators, validator);
 }
 
 /*
@@ -1177,8 +1177,7 @@ transformRelOptions(Datum oldOptions, List *defList, const char *namspace,
 		int			noldoptions;
 		int			i;
 
-		deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
-						  &oldoptions, NULL, &noldoptions);
+		deconstruct_array_builtin(array, TEXTOID, &oldoptions, NULL, &noldoptions);
 
 		for (i = 0; i < noldoptions; i++)
 		{
@@ -1345,8 +1344,7 @@ untransformRelOptions(Datum options)
 
 	array = DatumGetArrayTypeP(options);
 
-	deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
-					  &optiondatums, NULL, &noptions);
+	deconstruct_array_builtin(array, TEXTOID, &optiondatums, NULL, &noptions);
 
 	for (i = 0; i < noptions; i++)
 	{
@@ -1359,9 +1357,9 @@ untransformRelOptions(Datum options)
 		if (p)
 		{
 			*p++ = '\0';
-			val = (Node *) makeString(pstrdup(p));
+			val = (Node *) makeString(p);
 		}
-		result = lappend(result, makeDefElem(pstrdup(s), val, -1));
+		result = lappend(result, makeDefElem(s, val, -1));
 	}
 
 	return result;
@@ -1436,8 +1434,7 @@ parseRelOptionsInternal(Datum options, bool validate,
 	int			noptions;
 	int			i;
 
-	deconstruct_array(array, TEXTOID, -1, false, TYPALIGN_INT,
-					  &optiondatums, NULL, &noptions);
+	deconstruct_array_builtin(array, TEXTOID, &optiondatums, NULL, &noptions);
 
 	for (i = 0; i < noptions; i++)
 	{
@@ -1987,13 +1984,12 @@ build_local_reloptions(local_relopts *relopts, Datum options, bool validate)
 bytea *
 partitioned_table_reloptions(Datum reloptions, bool validate)
 {
-	/*
-	 * There are no options for partitioned tables yet, but this is able to do
-	 * some validation.
-	 */
-	return (bytea *) build_reloptions(reloptions, validate,
-									  RELOPT_KIND_PARTITIONED,
-									  0, NULL, 0);
+	if (validate && reloptions)
+		ereport(ERROR,
+				errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				errmsg("cannot specify storage parameters for a partitioned table"),
+				errhint("Specify storage parameters for its leaf partitions, instead."));
+	return NULL;
 }
 
 /*

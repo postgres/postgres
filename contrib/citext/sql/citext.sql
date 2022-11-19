@@ -696,7 +696,7 @@ SELECT to_timestamp('05 Dec 2000',         'DD Mon YYYY'::citext)
 SELECT COUNT(*) = 8::bigint AS t FROM try;
 INSERT INTO try
 VALUES ( to_char(  now()::timestamp,          'HH12:MI:SS') ),
-       ( to_char(  now() + '1 sec'::interval, 'HH12:MI:SS') ), -- timetamptz
+       ( to_char(  now() + '1 sec'::interval, 'HH12:MI:SS') ), -- timestamptz
        ( to_char(  '15h 2m 12s'::interval,    'HH24:MI:SS') ),
        ( to_char(  current_date,              '999') ),
        ( to_char(  125::int,                  '999') ),

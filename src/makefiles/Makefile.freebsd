@@ -1,5 +1,3 @@
-AROPT = cr
-
 export_dynamic = -Wl,-export-dynamic
 rpath = -Wl,-R'$(rpathdir)'
 

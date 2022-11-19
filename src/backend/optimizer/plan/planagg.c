@@ -137,8 +137,8 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 		return;
 
 	/*
-	 * Scan the tlist and HAVING qual to find all the aggregates and verify
-	 * all are MIN/MAX aggregates.  Stop as soon as we find one that isn't.
+	 * Examine all the aggregates and verify all are MIN/MAX aggregates.  Stop
+	 * as soon as we find one that isn't.
 	 */
 	aggs_list = NIL;
 	if (!can_minmax_aggs(root, &aggs_list))
@@ -227,25 +227,25 @@ preprocess_minmax_aggregates(PlannerInfo *root)
 
 /*
  * can_minmax_aggs
- *		Walk through all the aggregates in the query, and check
- *		if they are all MIN/MAX aggregates.  If so, build a list of the
- *		distinct aggregate calls in the tree.
+ *		Examine all the aggregates in the query, and check if they are
+ *		all MIN/MAX aggregates.  If so, build a list of MinMaxAggInfo
+ *		nodes for them.
  *
  * Returns false if a non-MIN/MAX aggregate is found, true otherwise.
- *
- * This does not descend into subqueries, and so should be used only after
- * reduction of sublinks to subplans.  There mustn't be outer-aggregate
- * references either.
  */
 static bool
 can_minmax_aggs(PlannerInfo *root, List **context)
 {
 	ListCell   *lc;
 
+	/*
+	 * This function used to have to scan the query for itself, but now we can
+	 * just thumb through the AggInfo list made by preprocess_aggrefs.
+	 */
 	foreach(lc, root->agginfos)
 	{
-		AggInfo    *agginfo = (AggInfo *) lfirst(lc);
-		Aggref	   *aggref = agginfo->representative_aggref;
+		AggInfo    *agginfo = lfirst_node(AggInfo, lc);
+		Aggref	   *aggref = linitial_node(Aggref, agginfo->aggrefs);
 		Oid			aggsortop;
 		TargetEntry *curTarget;
 		MinMaxAggInfo *mminfo;

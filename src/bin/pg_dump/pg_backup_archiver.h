@@ -457,7 +457,7 @@ extern bool checkSeek(FILE *fp);
 extern size_t WriteInt(ArchiveHandle *AH, int i);
 extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
-extern size_t WriteStr(ArchiveHandle *AH, const char *s);
+extern size_t WriteStr(ArchiveHandle *AH, const char *c);
 
 int			ReadOffset(ArchiveHandle *, pgoff_t *);
 size_t		WriteOffset(ArchiveHandle *, pgoff_t, int);

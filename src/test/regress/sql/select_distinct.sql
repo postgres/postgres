@@ -147,6 +147,32 @@ RESET parallel_setup_cost;
 RESET parallel_tuple_cost;
 
 --
+-- Test the planner's ability to use a LIMIT 1 instead of a Unique node when
+-- all of the distinct_pathkeys have been marked as redundant
+--
+
+-- Ensure we get a plan with a Limit 1
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four FROM tenk1 WHERE four = 0;
+
+-- Ensure the above gives us the correct result
+SELECT DISTINCT four FROM tenk1 WHERE four = 0;
+
+-- Ensure we get a plan with a Limit 1
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four FROM tenk1 WHERE four = 0 AND two <> 0;
+
+-- Ensure no rows are returned
+SELECT DISTINCT four FROM tenk1 WHERE four = 0 AND two <> 0;
+
+-- Ensure we get a plan with a Limit 1 when the SELECT list contains constants
+EXPLAIN (COSTS OFF)
+SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
+
+-- Ensure we only get 1 row
+SELECT DISTINCT four,1,2,3 FROM tenk1 WHERE four = 0;
+
+--
 -- Also, some tests of IS DISTINCT FROM, which doesn't quite deserve its
 -- very own regression file.
 --

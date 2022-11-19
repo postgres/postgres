@@ -41,7 +41,7 @@ CATALOG(pg_collation,3456,CollationRelationId)
 	int32		collencoding;	/* encoding for this collation; -1 = "all" */
 #ifdef CATALOG_VARLEN			/* variable-length fields start here */
 	text		collcollate BKI_DEFAULT(_null_);	/* LC_COLLATE setting */
-	text		collctype BKI_DEFAULT(_null_);		/* LC_CTYPE setting */
+	text		collctype BKI_DEFAULT(_null_);	/* LC_CTYPE setting */
 	text		colliculocale BKI_DEFAULT(_null_);	/* ICU locale ID */
 	text		collversion BKI_DEFAULT(_null_);	/* provider-dependent
 													 * version of collation

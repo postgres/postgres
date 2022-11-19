@@ -164,13 +164,13 @@ postgres=# select start_lsn, end_lsn, prev_lsn, xid, resource_manager, record_ty
                        per_record boolean DEFAULT false,
                        "resource_manager/record_type" OUT text,
                        count OUT int8,
-                       count_percentage OUT float4,
+                       count_percentage OUT float8,
                        record_length OUT int8,
-                       record_length_percentage OUT float4,
+                       record_length_percentage OUT float8,
                        fpi_length OUT int8,
-                       fpi_length_percentage OUT float4,
+                       fpi_length_percentage OUT float8,
                        combined_size OUT int8,
-                       combined_size_percentage OUT float4)
+                       combined_size_percentage OUT float8)
       returns setof record
      </function>
     </term>
@@ -241,13 +241,13 @@ postgres=# select * from pg_get_wal_stats('0/14AFC30', '0/15011D7', true) where 
                                        per_record boolean DEFAULT false,
                                        "resource_manager/record_type" OUT text,
                                        count OUT int8,
-                                       count_percentage OUT float4,
+                                       count_percentage OUT float8,
                                        record_length OUT int8,
-                                       record_length_percentage OUT float4,
+                                       record_length_percentage OUT float8,
                                        fpi_length OUT int8,
-                                       fpi_length_percentage OUT float4,
+                                       fpi_length_percentage OUT float8,
                                        combined_size OUT int8,
-                                       combined_size_percentage OUT float4)
+                                       combined_size_percentage OUT float8)
       returns setof record
      </function>
     </term>

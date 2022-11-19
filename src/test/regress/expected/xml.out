@@ -1145,6 +1145,9 @@ EXPLAIN (COSTS OFF, VERBOSE) SELECT * FROM xmltableview1;
          Table Function Call: XMLTABLE(('/ROWS/ROW'::text) PASSING (xmldata.data) COLUMNS id integer PATH ('@id'::text), _id FOR ORDINALITY, country_name text PATH ('COUNTRY_NAME/text()'::text) NOT NULL, country_id text PATH ('COUNTRY_ID'::text), region_id integer PATH ('REGION_ID'::text), size double precision PATH ('SIZE'::text), unit text PATH ('SIZE/@unit'::text), premier_name text DEFAULT ('not specified'::text) PATH ('PREMIER_NAME'::text))
 (7 rows)
 
+-- errors
+SELECT * FROM XMLTABLE (ROW () PASSING null COLUMNS v1 timestamp) AS f (v1, v2);
+ERROR:  XMLTABLE function has 1 columns available but 2 columns specified
 -- XMLNAMESPACES tests
 SELECT * FROM XMLTABLE(XMLNAMESPACES('http://x.y' AS zz),
                       '/zz:rows/zz:row'
@@ -1552,9 +1555,9 @@ SELECT * FROM XMLTABLE('*' PASSING '<a>a</a>' COLUMNS a xml PATH '.', b text PAT
 (1 row)
 
 \x
-SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH 'node()', y xml PATH '/');
+SELECT * FROM XMLTABLE('*' PASSING '<e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>' COLUMNS x xml PATH '/e/n2', y xml PATH '/');
 -[ RECORD 1 ]-----------------------------------------------------------
-x | pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post
+x | <n2>&amp;deep</n2>
 y | <e>pre<!--c1--><?pi arg?><![CDATA[&ent1]]><n2>&amp;deep</n2>post</e>+
   | 
 

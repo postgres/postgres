@@ -46,10 +46,7 @@ $node_subscriber->safe_psql('postgres',
 	  . "PUBLICATION tpub WITH (slot_name = tpub_slot, binary = true)");
 
 # Ensure nodes are in sync with each other
-$node_publisher->wait_for_catchup('tsub');
-$node_subscriber->poll_query_until('postgres',
-	"SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('s', 'r');"
-) or die "Timed out while waiting for subscriber to synchronize data";
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tsub');
 
 # Insert some content and make sure it's replicated across
 $node_publisher->safe_psql(

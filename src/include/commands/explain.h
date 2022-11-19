@@ -99,6 +99,7 @@ extern void ExplainPrintTriggers(ExplainState *es, QueryDesc *queryDesc);
 extern void ExplainPrintJITSummary(ExplainState *es, QueryDesc *queryDesc);
 
 extern void ExplainQueryText(ExplainState *es, QueryDesc *queryDesc);
+extern void ExplainQueryParameters(ExplainState *es, ParamListInfo params, int maxlen);
 
 extern void ExplainBeginOutput(ExplainState *es);
 extern void ExplainEndOutput(ExplainState *es);

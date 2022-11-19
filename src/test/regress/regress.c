@@ -39,6 +39,7 @@
 #include "parser/parse_coerce.h"
 #include "port/atomics.h"
 #include "storage/spin.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 #include "utils/lsyscache.h"
@@ -56,22 +57,22 @@
 
 #define EXPECT_EQ_U32(result_expr, expected_expr)	\
 	do { \
-		uint32		result = (result_expr); \
-		uint32		expected = (expected_expr); \
-		if (result != expected) \
+		uint32		actual_result = (result_expr); \
+		uint32		expected_result = (expected_expr); \
+		if (actual_result != expected_result) \
 			elog(ERROR, \
 				 "%s yielded %u, expected %s in file \"%s\" line %u", \
-				 #result_expr, result, #expected_expr, __FILE__, __LINE__); \
+				 #result_expr, actual_result, #expected_expr, __FILE__, __LINE__); \
 	} while (0)
 
 #define EXPECT_EQ_U64(result_expr, expected_expr)	\
 	do { \
-		uint64		result = (result_expr); \
-		uint64		expected = (expected_expr); \
-		if (result != expected) \
+		uint64		actual_result = (result_expr); \
+		uint64		expected_result = (expected_expr); \
+		if (actual_result != expected_result) \
 			elog(ERROR, \
 				 "%s yielded " UINT64_FORMAT ", expected %s in file \"%s\" line %u", \
-				 #result_expr, result, #expected_expr, __FILE__, __LINE__); \
+				 #result_expr, actual_result, #expected_expr, __FILE__, __LINE__); \
 	} while (0)
 
 #define LDELIM			'('
@@ -1110,7 +1111,7 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 	int			convertedbytes;
 	int			dstlen;
 	Datum		values[2];
-	bool		nulls[2];
+	bool		nulls[2] = {0};
 	HeapTuple	tuple;
 
 	if (src_encoding < 0)
@@ -1199,7 +1200,6 @@ test_enc_conversion(PG_FUNCTION_ARGS)
 		pfree(dst);
 	}
 
-	MemSet(nulls, 0, sizeof(nulls));
 	values[0] = Int32GetDatum(convertedbytes);
 	values[1] = PointerGetDatum(retval);
 	tuple = heap_form_tuple(tupdesc, values, nulls);
@@ -1219,15 +1219,15 @@ binary_coercible(PG_FUNCTION_ARGS)
 }
 
 /*
- * Return the column offset of the last data in the given array of
- * data types.  The input data types must be fixed-length data types.
+ * Return the length of the portion of a tuple consisting of the given array
+ * of data types.  The input data types must be fixed-length data types.
  */
-PG_FUNCTION_INFO_V1(get_column_offset);
+PG_FUNCTION_INFO_V1(get_columns_length);
 Datum
-get_column_offset(PG_FUNCTION_ARGS)
+get_columns_length(PG_FUNCTION_ARGS)
 {
-	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
-	Oid			*type_oids;
+	ArrayType  *ta = PG_GETARG_ARRAYTYPE_P(0);
+	Oid		   *type_oids;
 	int			ntypes;
 	int			column_offset = 0;
 
@@ -1241,7 +1241,7 @@ get_column_offset(PG_FUNCTION_ARGS)
 	ntypes = ArrayGetNItems(ARR_NDIM(ta), ARR_DIMS(ta));
 	for (int i = 0; i < ntypes; i++)
 	{
-		Oid typeoid = type_oids[i];
+		Oid			typeoid = type_oids[i];
 		int16		typlen;
 		bool		typbyval;
 		char		typalign;
@@ -1249,14 +1249,10 @@ get_column_offset(PG_FUNCTION_ARGS)
 		get_typlenbyvalalign(typeoid, &typlen, &typbyval, &typalign);
 
 		/* the data type must be fixed-length */
-		if (!(typbyval || (typlen > 0)))
+		if (typlen < 0)
 			elog(ERROR, "type %u is not fixed-length data type", typeoid);
 
-		column_offset = att_align_nominal(column_offset, typalign);
-
-		/* not include the last type size */
-		if (i != (ntypes - 1))
-			column_offset += typlen;
+		column_offset = att_align_nominal(column_offset + typlen, typalign);
 	}
 
 	PG_RETURN_INT32(column_offset);

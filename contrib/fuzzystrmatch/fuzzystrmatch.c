@@ -724,8 +724,8 @@ _soundex(const char *instr, char *outstr)
 {
 	int			count;
 
-	AssertArg(instr);
-	AssertArg(outstr);
+	Assert(instr);
+	Assert(outstr);
 
 	outstr[SOUNDEX_LEN] = '\0';
 

@@ -18,26 +18,11 @@
 
 #include "catalog/pg_collation.h"
 #include "fmgr.h"
+#include "jsonpath_internal.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
-#include "utils/jsonpath.h"
-
-/* struct JsonPathString is shared between scan and gram */
-typedef struct JsonPathString
-{
-	char	   *val;
-	int			len;
-	int			total;
-}			JsonPathString;
-
-union YYSTYPE;
-
-/* flex 2.5.4 doesn't bother with a decl for this */
-int	jsonpath_yylex(union YYSTYPE *yylval_param);
-int	jsonpath_yyparse(JsonPathParseResult **result);
-void jsonpath_yyerror(JsonPathParseResult **result, const char *message);
 
 static JsonPathParseItem *makeItemType(JsonPathItemType type);
 static JsonPathParseItem *makeItemString(JsonPathString *s);
@@ -60,10 +45,7 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
- * memory leaks if we error out during parsing.  Note this only works with
- * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
- * if possible, so there's not really much problem anyhow, at least if
- * you're building with gcc.
+ * memory leaks if we error out during parsing.
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
@@ -74,10 +56,10 @@ static JsonPathParseItem *makeItemLikeRegex(JsonPathParseItem *expr,
 %pure-parser
 %expect 0
 %name-prefix="jsonpath_yy"
-%error-verbose
 %parse-param {JsonPathParseResult **result}
 
-%union {
+%union
+{
 	JsonPathString		str;
 	List			   *elems;	/* list of JsonPathParseItem */
 	List			   *indexs;	/* list of integers */
@@ -131,6 +113,7 @@ result:
 										*result = palloc(sizeof(JsonPathParseResult));
 										(*result)->expr = $2;
 										(*result)->lax = $1;
+										(void) yynerrs;
 									}
 	| /* EMPTY */					{ *result = NULL; }
 	;
@@ -313,7 +296,7 @@ method:
 static JsonPathParseItem *
 makeItemType(JsonPathItemType type)
 {
-	JsonPathParseItem  *v = palloc(sizeof(*v));
+	JsonPathParseItem *v = palloc(sizeof(*v));
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -326,7 +309,7 @@ makeItemType(JsonPathItemType type)
 static JsonPathParseItem *
 makeItemString(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	if (s == NULL)
 	{
@@ -345,7 +328,7 @@ makeItemString(JsonPathString *s)
 static JsonPathParseItem *
 makeItemVariable(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemType(jpiVariable);
 	v->value.string.val = s->val;
@@ -357,7 +340,7 @@ makeItemVariable(JsonPathString *s)
 static JsonPathParseItem *
 makeItemKey(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemString(s);
 	v->type = jpiKey;
@@ -368,7 +351,7 @@ makeItemKey(JsonPathString *s)
 static JsonPathParseItem *
 makeItemNumeric(JsonPathString *s)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	v = makeItemType(jpiNumeric);
 	v->value.numeric =
@@ -383,7 +366,7 @@ makeItemNumeric(JsonPathString *s)
 static JsonPathParseItem *
 makeItemBool(bool val)
 {
-	JsonPathParseItem  *v = makeItemType(jpiBool);
+	JsonPathParseItem *v = makeItemType(jpiBool);
 
 	v->value.boolean = val;
 
@@ -393,7 +376,7 @@ makeItemBool(bool val)
 static JsonPathParseItem *
 makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *ra)
 {
-	JsonPathParseItem  *v = makeItemType(type);
+	JsonPathParseItem *v = makeItemType(type);
 
 	v->value.args.left = la;
 	v->value.args.right = ra;
@@ -404,7 +387,7 @@ makeItemBinary(JsonPathItemType type, JsonPathParseItem *la, JsonPathParseItem *
 static JsonPathParseItem *
 makeItemUnary(JsonPathItemType type, JsonPathParseItem *a)
 {
-	JsonPathParseItem  *v;
+	JsonPathParseItem *v;
 
 	if (type == jpiPlus && a->type == jpiNumeric && !a->next)
 		return a;
@@ -428,9 +411,9 @@ makeItemUnary(JsonPathItemType type, JsonPathParseItem *a)
 static JsonPathParseItem *
 makeItemList(List *list)
 {
-	JsonPathParseItem  *head,
-					   *end;
-	ListCell		   *cell;
+	JsonPathParseItem *head,
+			   *end;
+	ListCell   *cell;
 
 	head = end = (JsonPathParseItem *) linitial(list);
 
@@ -455,11 +438,11 @@ makeItemList(List *list)
 static JsonPathParseItem *
 makeIndexArray(List *list)
 {
-	JsonPathParseItem  *v = makeItemType(jpiIndexArray);
-	ListCell		   *cell;
-	int					i = 0;
+	JsonPathParseItem *v = makeItemType(jpiIndexArray);
+	ListCell   *cell;
+	int			i = 0;
 
-	Assert(list_length(list) > 0);
+	Assert(list != NIL);
 	v->value.array.nelems = list_length(list);
 
 	v->value.array.elems = palloc(sizeof(v->value.array.elems[0]) *
@@ -467,7 +450,7 @@ makeIndexArray(List *list)
 
 	foreach(cell, list)
 	{
-		JsonPathParseItem  *jpi = lfirst(cell);
+		JsonPathParseItem *jpi = lfirst(cell);
 
 		Assert(jpi->type == jpiSubscript);
 
@@ -481,7 +464,7 @@ makeIndexArray(List *list)
 static JsonPathParseItem *
 makeAny(int first, int last)
 {
-	JsonPathParseItem  *v = makeItemType(jpiAny);
+	JsonPathParseItem *v = makeItemType(jpiAny);
 
 	v->value.anybounds.first = (first >= 0) ? first : PG_UINT32_MAX;
 	v->value.anybounds.last = (last >= 0) ? last : PG_UINT32_MAX;
@@ -493,9 +476,9 @@ static JsonPathParseItem *
 makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				  JsonPathString *flags)
 {
-	JsonPathParseItem  *v = makeItemType(jpiLikeRegex);
-	int					i;
-	int					cflags;
+	JsonPathParseItem *v = makeItemType(jpiLikeRegex);
+	int			i;
+	int			cflags;
 
 	v->value.like_regex.expr = expr;
 	v->value.like_regex.pattern = pattern->val;
@@ -526,7 +509,7 @@ makeItemLikeRegex(JsonPathParseItem *expr, JsonPathString *pattern,
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("invalid input syntax for type %s", "jsonpath"),
-						 errdetail("unrecognized flag character \"%.*s\" in LIKE_REGEX predicate",
+						 errdetail("Unrecognized flag character \"%.*s\" in LIKE_REGEX predicate.",
 								   pg_mblen(flags->val + i), flags->val + i)));
 				break;
 		}
@@ -593,13 +576,3 @@ jspConvertRegexFlags(uint32 xflags)
 
 	return cflags;
 }
-
-/*
- * jsonpath_scan.l is compiled as part of jsonpath_gram.y.  Currently, this is
- * unavoidable because jsonpath_gram does not create a .h file to export its
- * token symbols.  If these files ever grow large enough to be worth compiling
- * separately, that could be fixed; but for now it seems like useless
- * complication.
- */
-
-#include "jsonpath_scan.c"

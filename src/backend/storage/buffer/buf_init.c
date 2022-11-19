@@ -116,7 +116,7 @@ InitBufferPool(void)
 		{
 			BufferDesc *buf = GetBufferDescriptor(i);
 
-			CLEAR_BUFFERTAG(buf->tag);
+			ClearBufferTag(&buf->tag);
 
 			pg_atomic_init_u32(&buf->state, 0);
 			buf->wait_backend_pgprocno = INVALID_PGPROCNO;

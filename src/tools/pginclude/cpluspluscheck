@@ -50,7 +50,9 @@ done
 # Create temp directory.
 tmp=`mktemp -d /tmp/$me.XXXXXX`
 
-trap 'rm -rf $tmp' 0 1 2 3 15
+trap "ret=$?; rm -rf $tmp; exit $ret" 0 1 2 3 15
+
+exit_status=0
 
 # Scan all of src/ and contrib/ for header files.
 for f in `cd "$srcdir" && find src contrib -name '*.h' -print`
@@ -63,7 +65,6 @@ do
 	test "$f" = src/include/port/cygwin.h && continue
 	test "$f" = src/include/port/darwin.h && continue
 	test "$f" = src/include/port/freebsd.h && continue
-	test "$f" = src/include/port/hpux.h && continue
 	test "$f" = src/include/port/linux.h && continue
 	test "$f" = src/include/port/netbsd.h && continue
 	test "$f" = src/include/port/openbsd.h && continue
@@ -72,6 +73,8 @@ do
 
 	# Additional Windows-specific headers.
 	test "$f" = src/include/port/win32_port.h && continue
+	test "$f" = src/include/port/win32/netdb.h && continue
+	test "$f" = src/include/port/win32/sys/resource.h && continue
 	test "$f" = src/include/port/win32/sys/socket.h && continue
 	test "$f" = src/include/port/win32_msvc/dirent.h && continue
 	test "$f" = src/include/port/win32_msvc/utime.h && continue
@@ -82,7 +85,6 @@ do
 	# relevant to our platform will be included by atomics.h.
 	test "$f" = src/include/port/atomics/arch-arm.h && continue
 	test "$f" = src/include/port/atomics/arch-hppa.h && continue
-	test "$f" = src/include/port/atomics/arch-ia64.h && continue
 	test "$f" = src/include/port/atomics/arch-ppc.h && continue
 	test "$f" = src/include/port/atomics/arch-x86.h && continue
 	test "$f" = src/include/port/atomics/fallback.h && continue
@@ -92,12 +94,12 @@ do
 	test "$f" = src/include/port/atomics/generic-msvc.h && continue
 	test "$f" = src/include/port/atomics/generic-sunpro.h && continue
 
-	# rusagestub.h is also platform-specific, and will be included
-	# by utils/pg_rusage.h if necessary.
-	test "$f" = src/include/rusagestub.h && continue
-
 	# sepgsql.h depends on headers that aren't there on most platforms.
 	test "$f" = contrib/sepgsql/sepgsql.h && continue
+
+	# nodetags.h cannot be included standalone: it's just a code fragment.
+	test "$f" = src/include/nodes/nodetags.h && continue
+	test "$f" = src/backend/nodes/nodetags.h && continue
 
 	# These files are not meant to be included standalone, because
 	# they contain lists that might have multiple use-cases.
@@ -114,16 +116,23 @@ do
 	test "$f" = src/pl/tcl/pltclerrcodes.h && continue
 
 	# Also not meant to be included standalone.
-	test "$f" = src/include/common/unicode_combining_table.h && continue
+	test "$f" = src/include/common/unicode_nonspacing_table.h && continue
 	test "$f" = src/include/common/unicode_east_asian_fw_table.h && continue
 
 	# We can't make these Bison output files compilable standalone
 	# without using "%code require", which old Bison versions lack.
 	# parser/gram.h will be included by parser/gramparse.h anyway.
-	test "$f" = src/include/parser/gram.h && continue
+	test "$f" = contrib/cube/cubeparse.h && continue
+	test "$f" = contrib/seg/segparse.h && continue
+	test "$f" = src/backend/bootstrap/bootparse.h && continue
 	test "$f" = src/backend/parser/gram.h && continue
+	test "$f" = src/backend/replication/repl_gram.h && continue
+	test "$f" = src/backend/replication/syncrep_gram.h && continue
+	test "$f" = src/backend/utils/adt/jsonpath_gram.h && continue
+	test "$f" = src/bin/pgbench/exprparse.h && continue
 	test "$f" = src/pl/plpgsql/src/pl_gram.h && continue
 	test "$f" = src/interfaces/ecpg/preproc/preproc.h && continue
+	test "$f" = src/test/isolation/specparse.h && continue
 
 	# ppport.h is not under our control, so we can't make it standalone.
 	test "$f" = src/pl/plperl/ppport.h && continue
@@ -162,14 +171,22 @@ do
 		EXTRAINCLUDES="$python_includespec" ;;
 	    src/interfaces/ecpg/*)
 		EXTRAINCLUDES="-I $builddir/src/interfaces/ecpg/include -I $srcdir/src/interfaces/ecpg/include" ;;
+		src/backend/parser/*)
+		EXTRAINCLUDES="-I $builddir/src/backend/parser/" ;;
+		src/backend/utils/adt/*)
+		EXTRAINCLUDES="-I $builddir/src/backend/utils/adt/" ;;
 	    *)
 		EXTRAINCLUDES="" ;;
 	esac
 
 	# Run the test.
-	${CXX:-g++} -I $builddir -I $srcdir \
+	if ! ${CXX:-g++} -I $builddir -I $srcdir \
 		-I $builddir/src/include -I $srcdir/src/include \
 		-I $builddir/src/interfaces/libpq -I $srcdir/src/interfaces/libpq \
 		$EXTRAINCLUDES $EXTRAFLAGS $CXXFLAGS -c $tmp/test.cpp
-
+	then
+		exit_status=1
+	fi
 done
+
+exit $exit_status

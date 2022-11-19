@@ -26,8 +26,8 @@ seq_desc(StringInfo buf, XLogReaderState *record)
 
 	if (info == XLOG_SEQ_LOG)
 		appendStringInfo(buf, "rel %u/%u/%u",
-						 xlrec->node.spcNode, xlrec->node.dbNode,
-						 xlrec->node.relNode);
+						 xlrec->locator.spcOid, xlrec->locator.dbOid,
+						 xlrec->locator.relNumber);
 }
 
 const char *

@@ -56,9 +56,24 @@ typedef struct NumericData *Numeric;
  * fmgr interface macros
  */
 
-#define DatumGetNumeric(X)		  ((Numeric) PG_DETOAST_DATUM(X))
-#define DatumGetNumericCopy(X)	  ((Numeric) PG_DETOAST_DATUM_COPY(X))
-#define NumericGetDatum(X)		  PointerGetDatum(X)
+static inline Numeric
+DatumGetNumeric(Datum X)
+{
+	return (Numeric) PG_DETOAST_DATUM(X);
+}
+
+static inline Numeric
+DatumGetNumericCopy(Datum X)
+{
+	return (Numeric) PG_DETOAST_DATUM_COPY(X);
+}
+
+static inline Datum
+NumericGetDatum(Numeric X)
+{
+	return PointerGetDatum(X);
+}
+
 #define PG_GETARG_NUMERIC(n)	  DatumGetNumeric(PG_GETARG_DATUM(n))
 #define PG_GETARG_NUMERIC_COPY(n) DatumGetNumericCopy(PG_GETARG_DATUM(n))
 #define PG_RETURN_NUMERIC(x)	  return NumericGetDatum(x)
@@ -68,7 +83,7 @@ typedef struct NumericData *Numeric;
  */
 extern bool numeric_is_nan(Numeric num);
 extern bool numeric_is_inf(Numeric num);
-int32		numeric_maximum_size(int32 typmod);
+extern int32 numeric_maximum_size(int32 typmod);
 extern char *numeric_out_sci(Numeric num, int scale);
 extern char *numeric_normalize(Numeric num);
 
@@ -85,6 +100,6 @@ extern Numeric numeric_div_opt_error(Numeric num1, Numeric num2,
 									 bool *have_error);
 extern Numeric numeric_mod_opt_error(Numeric num1, Numeric num2,
 									 bool *have_error);
-extern int32 numeric_int4_opt_error(Numeric num, bool *error);
+extern int32 numeric_int4_opt_error(Numeric num, bool *have_error);
 
 #endif							/* _PG_NUMERIC_H_ */

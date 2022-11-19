@@ -125,8 +125,8 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_prune *xlrec = (xl_heap_prune *) rec;
 
-		appendStringInfo(buf, "latestRemovedXid %u nredirected %u ndead %u",
-						 xlrec->latestRemovedXid,
+		appendStringInfo(buf, "snapshotConflictHorizon %u nredirected %u ndead %u",
+						 xlrec->snapshotConflictHorizon,
 						 xlrec->nredirected,
 						 xlrec->ndead);
 	}
@@ -140,15 +140,15 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 	{
 		xl_heap_freeze_page *xlrec = (xl_heap_freeze_page *) rec;
 
-		appendStringInfo(buf, "cutoff xid %u ntuples %u",
-						 xlrec->cutoff_xid, xlrec->ntuples);
+		appendStringInfo(buf, "snapshotConflictHorizon %u nplans %u",
+						 xlrec->snapshotConflictHorizon, xlrec->nplans);
 	}
 	else if (info == XLOG_HEAP2_VISIBLE)
 	{
 		xl_heap_visible *xlrec = (xl_heap_visible *) rec;
 
-		appendStringInfo(buf, "cutoff xid %u flags 0x%02X",
-						 xlrec->cutoff_xid, xlrec->flags);
+		appendStringInfo(buf, "snapshotConflictHorizon %u flags 0x%02X",
+						 xlrec->snapshotConflictHorizon, xlrec->flags);
 	}
 	else if (info == XLOG_HEAP2_MULTI_INSERT)
 	{
@@ -170,9 +170,9 @@ heap2_desc(StringInfo buf, XLogReaderState *record)
 		xl_heap_new_cid *xlrec = (xl_heap_new_cid *) rec;
 
 		appendStringInfo(buf, "rel %u/%u/%u; tid %u/%u",
-						 xlrec->target_node.spcNode,
-						 xlrec->target_node.dbNode,
-						 xlrec->target_node.relNode,
+						 xlrec->target_locator.spcOid,
+						 xlrec->target_locator.dbOid,
+						 xlrec->target_locator.relNumber,
 						 ItemPointerGetBlockNumber(&(xlrec->target_tid)),
 						 ItemPointerGetOffsetNumber(&(xlrec->target_tid)));
 		appendStringInfo(buf, "; cmin: %u, cmax: %u, combo: %u",

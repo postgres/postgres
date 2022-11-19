@@ -1297,6 +1297,11 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a write during a file copy operation.</entry>
      </row>
      <row>
+      <entry><literal>DSMAllocate</literal></entry>
+      <entry>Waiting for a dynamic shared memory segment to be
+       allocated.</entry>
+     </row>
+     <row>
       <entry><literal>DSMFillZeroWrite</literal></entry>
       <entry>Waiting to fill a dynamic shared memory backing file with
        zeroes.</entry>
@@ -1404,8 +1409,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
       <entry>Waiting for a read of the relation map file.</entry>
      </row>
      <row>
-      <entry><literal>RelationMapSync</literal></entry>
-      <entry>Waiting for the relation map file to reach durable storage.</entry>
+      <entry><literal>RelationMapReplace</literal></entry>
+      <entry>Waiting for durable replacement of a relation map file.</entry>
      </row>
      <row>
       <entry><literal>RelationMapWrite</literal></entry>
@@ -3012,6 +3017,17 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
      <row>
       <entry role="catalog_table_entry">
        <para role="column_definition">
+        <structfield>stats_reset</structfield> <type>timestamp with time zone</type>
+       </para>
+       <para>
+        Time at which these statistics were last reset
+       </para>
+      </entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry">
+       <para role="column_definition">
         <structfield>prefetch</structfield> <type>bigint</type>
        </para>
        <para>
@@ -4371,6 +4387,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_seq_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last sequential scan on this table, based on the
+       most recent transaction stop time
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>seq_tup_read</structfield> <type>bigint</type>
       </para>
       <para>
@@ -4384,6 +4410,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Number of index scans initiated on this table
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last index scan on this table, based on the
+       most recent transaction stop time
       </para></entry>
      </row>
 
@@ -4410,7 +4446,7 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
        <structfield>n_tup_upd</structfield> <type>bigint</type>
       </para>
       <para>
-       Number of rows updated (includes HOT updated rows)
+       Number of rows updated (includes <link linkend="storage-hot">HOT updated rows</link>)
       </para></entry>
      </row>
 
@@ -4635,6 +4671,16 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
       </para>
       <para>
        Number of index scans initiated on this index
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>last_idx_scan</structfield> <type>timestamptz</type>
+      </para>
+      <para>
+       The time of the last scan on this index, based on the
+       most recent transaction stop time
       </para></entry>
      </row>
 
@@ -5464,25 +5510,39 @@ SELECT pid, wait_event_type, wait_event FROM pg_stat_activity WHERE wait_event i
     </tgroup>
    </table>
 
+  <warning>
+   <para>
+    Using <function>pg_stat_reset()</function> also resets counters that
+    autovacuum uses to determine when to trigger a vacuum or an analyze.
+    Resetting these counters can cause autovacuum to not perform necessary
+    work, which can cause problems such as table bloat or out-dated
+    table statistics.  A database-wide <command>ANALYZE</command> is
+    recommended after the statistics have been reset.
+   </para>
+  </warning>
+
   <para>
    <function>pg_stat_get_activity</function>, the underlying function of
    the <structname>pg_stat_activity</structname> view, returns a set of records
    containing all the available information about each backend process.
    Sometimes it may be more convenient to obtain just a subset of this
-   information.  In such cases, an older set of per-backend statistics
+   information.  In such cases, another set of per-backend statistics
    access functions can be used; these are shown in <xref
    linkend="monitoring-stats-backend-funcs-table"/>.
-   These access functions use a backend ID number, which ranges from one
-   to the number of currently active backends.
+   These access functions use the session's backend ID number, which is a
+   small positive integer that is distinct from the backend ID of any
+   concurrent session, although a session's ID can be recycled as soon as
+   it exits.  The backend ID is used, among other things, to identify the
+   session's temporary schema if it has one.
    The function <function>pg_stat_get_backend_idset</function> provides a
-   convenient way to generate one row for each active backend for
+   convenient way to list all the active backends' ID numbers for
    invoking these functions.  For example, to show the <acronym>PID</acronym>s and
    current queries of all backends:
 
 <programlisting>
-SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
-       pg_stat_get_backend_activity(s.backendid) AS query
-    FROM (SELECT pg_stat_get_backend_idset() AS backendid) AS s;
+SELECT pg_stat_get_backend_pid(backendid) AS pid,
+       pg_stat_get_backend_activity(backendid) AS query
+FROM pg_stat_get_backend_idset() AS backendid;
 </programlisting>
   </para>
 
@@ -5510,8 +5570,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
         <returnvalue>setof integer</returnvalue>
        </para>
        <para>
-        Returns the set of currently active backend ID numbers (from 1 to the
-        number of active backends).
+        Returns the set of currently active backend ID numbers.
        </para></entry>
       </row>
 
@@ -5878,7 +5937,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   </table>
 
   <table id="analyze-phases">
-   <title>ANALYZE phases</title>
+   <title>ANALYZE Phases</title>
    <tgroup cols="2">
     <colspec colname="col1" colwidth="1*"/>
     <colspec colname="col2" colwidth="2*"/>
@@ -6808,7 +6867,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS pid,
   </table>
 
   <table id="basebackup-phases">
-   <title>Base backup phases</title>
+   <title>Base Backup Phases</title>
    <tgroup cols="2">
     <colspec colname="col1" colwidth="1*"/>
     <colspec colname="col2" colwidth="2*"/>

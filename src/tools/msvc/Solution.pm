@@ -220,7 +220,6 @@ sub GenerateFiles
 		ENABLE_GSS                 => $self->{options}->{gss} ? 1 : undef,
 		ENABLE_NLS                 => $self->{options}->{nls} ? 1 : undef,
 		ENABLE_THREAD_SAFETY       => 1,
-		GETTIMEOFDAY_1ARG          => undef,
 		HAVE_APPEND_HISTORY        => undef,
 		HAVE_ASN1_STRING_GET0_DATA => undef,
 		HAVE_ATOMICS               => 1,
@@ -228,7 +227,6 @@ sub GenerateFiles
 		HAVE_BACKTRACE_SYMBOLS     => undef,
 		HAVE_BIO_GET_DATA          => undef,
 		HAVE_BIO_METH_NEW          => undef,
-		HAVE_CLOCK_GETTIME         => undef,
 		HAVE_COMPUTED_GOTO         => undef,
 		HAVE_COPYFILE              => undef,
 		HAVE_COPYFILE_H            => undef,
@@ -244,42 +242,26 @@ sub GenerateFiles
 		HAVE_DECL_POSIX_FADVISE                     => 0,
 		HAVE_DECL_PREADV                            => 0,
 		HAVE_DECL_PWRITEV                           => 0,
-		HAVE_DECL_RTLD_GLOBAL                       => 0,
-		HAVE_DECL_RTLD_NOW                          => 0,
-		HAVE_DECL_SIGWAIT                           => 0,
 		HAVE_DECL_STRLCAT                           => 0,
 		HAVE_DECL_STRLCPY                           => 0,
 		HAVE_DECL_STRNLEN                           => 1,
-		HAVE_DECL_STRTOLL                           => 1,
-		HAVE_DECL_STRTOULL                          => 1,
-		HAVE_DLOPEN                                 => undef,
 		HAVE_EDITLINE_HISTORY_H                     => undef,
 		HAVE_EDITLINE_READLINE_H                    => undef,
 		HAVE_EXECINFO_H                             => undef,
 		HAVE_EXPLICIT_BZERO                         => undef,
-		HAVE_FDATASYNC                              => undef,
-		HAVE_FLS                                    => undef,
 		HAVE_FSEEKO                                 => 1,
-		HAVE_FUNCNAME__FUNC                         => undef,
-		HAVE_FUNCNAME__FUNCTION                     => 1,
 		HAVE_GCC__ATOMIC_INT32_CAS                  => undef,
 		HAVE_GCC__ATOMIC_INT64_CAS                  => undef,
 		HAVE_GCC__SYNC_CHAR_TAS                     => undef,
 		HAVE_GCC__SYNC_INT32_CAS                    => undef,
 		HAVE_GCC__SYNC_INT32_TAS                    => undef,
 		HAVE_GCC__SYNC_INT64_CAS                    => undef,
-		HAVE_GETADDRINFO                            => undef,
-		HAVE_GETHOSTBYNAME_R                        => undef,
 		HAVE_GETIFADDRS                             => undef,
 		HAVE_GETOPT                                 => undef,
 		HAVE_GETOPT_H                               => undef,
 		HAVE_GETOPT_LONG                            => undef,
 		HAVE_GETPEEREID                             => undef,
 		HAVE_GETPEERUCRED                           => undef,
-		HAVE_GETPWUID_R                             => undef,
-		HAVE_GETRLIMIT                              => undef,
-		HAVE_GETRUSAGE                              => undef,
-		HAVE_GETTIMEOFDAY                           => undef,
 		HAVE_GSSAPI_GSSAPI_H                        => undef,
 		HAVE_GSSAPI_H                               => undef,
 		HAVE_HMAC_CTX_FREE                          => undef,
@@ -295,11 +277,9 @@ sub GenerateFiles
 		HAVE_INTTYPES_H                             => undef,
 		HAVE_INT_OPTERR                             => undef,
 		HAVE_INT_OPTRESET                           => undef,
-		HAVE_IPV6                                   => 1,
 		HAVE_I_CONSTRAINT__BUILTIN_CONSTANT_P       => undef,
 		HAVE_KQUEUE                                 => undef,
 		HAVE_LANGINFO_H                             => undef,
-		HAVE_LDAP_H                                 => undef,
 		HAVE_LDAP_INITIALIZE                        => undef,
 		HAVE_LIBCRYPTO                              => undef,
 		HAVE_LIBLDAP                                => undef,
@@ -314,43 +294,29 @@ sub GenerateFiles
 		HAVE_LIBXSLT                                => undef,
 		HAVE_LIBZ                   => $self->{options}->{zlib} ? 1 : undef,
 		HAVE_LIBZSTD                => undef,
-		HAVE_LINK                   => undef,
 		HAVE_LOCALE_T               => 1,
 		HAVE_LONG_INT_64            => undef,
 		HAVE_LONG_LONG_INT_64       => 1,
-		HAVE_LZ4_H                  => undef,
 		HAVE_MBARRIER_H             => undef,
 		HAVE_MBSTOWCS_L             => 1,
 		HAVE_MEMORY_H               => 1,
 		HAVE_MEMSET_S               => undef,
-		HAVE_MINIDUMP_TYPE          => 1,
 		HAVE_MKDTEMP                => undef,
-		HAVE_NETINET_TCP_H          => undef,
-		HAVE_NET_IF_H               => undef,
 		HAVE_OPENSSL_INIT_SSL       => undef,
 		HAVE_OSSP_UUID_H            => undef,
 		HAVE_PAM_PAM_APPL_H         => undef,
-		HAVE_POLL                   => undef,
-		HAVE_POLL_H                 => undef,
-		HAVE_POSIX_DECL_SIGWAIT     => undef,
 		HAVE_POSIX_FADVISE          => undef,
 		HAVE_POSIX_FALLOCATE        => undef,
-		HAVE_PPC_LWARX_MUTEX_HINT   => undef,
 		HAVE_PPOLL                  => undef,
-		HAVE_PREAD                  => undef,
-		HAVE_PSTAT                  => undef,
 		HAVE_PS_STRINGS             => undef,
 		HAVE_PTHREAD                => undef,
 		HAVE_PTHREAD_BARRIER_WAIT   => undef,
 		HAVE_PTHREAD_IS_THREADED_NP => undef,
 		HAVE_PTHREAD_PRIO_INHERIT   => undef,
-		HAVE_PWRITE                 => undef,
 		HAVE_READLINE_H             => undef,
 		HAVE_READLINE_HISTORY_H     => undef,
 		HAVE_READLINE_READLINE_H    => undef,
-		HAVE_READLINK               => undef,
-		HAVE_READV                  => undef,
-		HAVE_RL_COMPLETION_MATCHES               => undef,
+		HAVE_RL_COMPLETION_MATCHES  => undef,
 		HAVE_RL_COMPLETION_SUPPRESS_QUOTE        => undef,
 		HAVE_RL_FILENAME_COMPLETION_FUNCTION     => undef,
 		HAVE_RL_FILENAME_QUOTE_CHARACTERS        => undef,
@@ -358,11 +324,8 @@ sub GenerateFiles
 		HAVE_RL_RESET_SCREEN_SIZE                => undef,
 		HAVE_RL_VARIABLE_BIND                    => undef,
 		HAVE_SECURITY_PAM_APPL_H                 => undef,
-		HAVE_SETENV                              => undef,
 		HAVE_SETPROCTITLE                        => undef,
 		HAVE_SETPROCTITLE_FAST                   => undef,
-		HAVE_SETSID                              => undef,
-		HAVE_SHM_OPEN                            => undef,
 		HAVE_SOCKLEN_T                           => 1,
 		HAVE_SPINLOCKS                           => 1,
 		HAVE_STDBOOL_H                           => 1,
@@ -376,45 +339,22 @@ sub GenerateFiles
 		HAVE_STRLCPY                             => undef,
 		HAVE_STRNLEN                             => 1,
 		HAVE_STRSIGNAL                           => undef,
-		HAVE_STRTOF                              => 1,
-		HAVE_STRTOLL                             => 1,
-		HAVE_STRTOQ                              => undef,
-		HAVE_STRTOULL                            => 1,
-		HAVE_STRTOUQ                             => undef,
-		HAVE_STRUCT_ADDRINFO                     => 1,
 		HAVE_STRUCT_CMSGCRED                     => undef,
 		HAVE_STRUCT_OPTION                       => undef,
 		HAVE_STRUCT_SOCKADDR_SA_LEN              => undef,
-		HAVE_STRUCT_SOCKADDR_STORAGE             => 1,
-		HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY   => 1,
-		HAVE_STRUCT_SOCKADDR_STORAGE_SS_LEN      => undef,
-		HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY => undef,
-		HAVE_STRUCT_SOCKADDR_STORAGE___SS_LEN    => undef,
-		HAVE_STRUCT_SOCKADDR_UN                  => undef,
 		HAVE_STRUCT_TM_TM_ZONE                   => undef,
 		HAVE_SYNC_FILE_RANGE                     => undef,
-		HAVE_SYMLINK                             => 1,
 		HAVE_SYNCFS                              => undef,
 		HAVE_SYSLOG                              => undef,
 		HAVE_SYS_EPOLL_H                         => undef,
 		HAVE_SYS_EVENT_H                         => undef,
-		HAVE_SYS_IPC_H                           => undef,
 		HAVE_SYS_PERSONALITY_H                   => undef,
 		HAVE_SYS_PRCTL_H                         => undef,
 		HAVE_SYS_PROCCTL_H                       => undef,
-		HAVE_SYS_PSTAT_H                         => undef,
-		HAVE_SYS_RESOURCE_H                      => undef,
-		HAVE_SYS_SELECT_H                        => undef,
-		HAVE_SYS_SEM_H                           => undef,
-		HAVE_SYS_SHM_H                           => undef,
 		HAVE_SYS_SIGNALFD_H                      => undef,
-		HAVE_SYS_SOCKIO_H                        => undef,
 		HAVE_SYS_STAT_H                          => 1,
-		HAVE_SYS_TAS_H                           => undef,
 		HAVE_SYS_TYPES_H                         => 1,
 		HAVE_SYS_UCRED_H                         => undef,
-		HAVE_SYS_UIO_H                           => undef,
-		HAVE_SYS_UN_H                            => undef,
 		HAVE_TERMIOS_H                           => undef,
 		HAVE_TYPEOF                              => undef,
 		HAVE_UCRED_H                             => undef,
@@ -422,17 +362,14 @@ sub GenerateFiles
 		HAVE_UINT8                               => undef,
 		HAVE_UNION_SEMUN                         => undef,
 		HAVE_UNISTD_H                            => 1,
-		HAVE_UNSETENV                            => undef,
 		HAVE_USELOCALE                           => undef,
 		HAVE_UUID_BSD                            => undef,
 		HAVE_UUID_E2FS                           => undef,
 		HAVE_UUID_OSSP                           => undef,
 		HAVE_UUID_H                              => undef,
 		HAVE_UUID_UUID_H                         => undef,
-		HAVE_WINLDAP_H                           => undef,
 		HAVE_WCSTOMBS_L                          => 1,
-		HAVE_WCTYPE_H                            => 1,
-		HAVE_WRITEV                              => undef,
+		HAVE_VISIBILITY_ATTRIBUTE                => undef,
 		HAVE_X509_GET_SIGNATURE_NID              => 1,
 		HAVE_X86_64_POPCNTQ                      => undef,
 		HAVE__BOOL                               => undef,
@@ -451,8 +388,6 @@ sub GenerateFiles
 		HAVE__CPUID                              => 1,
 		HAVE__GET_CPUID                          => undef,
 		HAVE__STATIC_ASSERT                      => undef,
-		HAVE___STRTOLL                           => undef,
-		HAVE___STRTOULL                          => undef,
 		INT64_MODIFIER                           => qq{"ll"},
 		LOCALE_T_IN_XLOCALE                      => undef,
 		MAXIMUM_ALIGNOF                          => 8,
@@ -541,7 +476,6 @@ sub GenerateFiles
 	if ($self->{options}->{lz4})
 	{
 		$define{HAVE_LIBLZ4} = 1;
-		$define{HAVE_LZ4_H}  = 1;
 		$define{USE_LZ4}     = 1;
 	}
 	if ($self->{options}->{zstd})
@@ -628,9 +562,8 @@ sub GenerateFiles
 			'src/backend/storage/lmgr/lwlocknames.txt'))
 	{
 		print "Generating lwlocknames.c and lwlocknames.h...\n";
-		chdir('src/backend/storage/lmgr');
-		system('perl generate-lwlocknames.pl lwlocknames.txt');
-		chdir('../../../..');
+		my $lmgr = 'src/backend/storage/lmgr';
+		system("perl $lmgr/generate-lwlocknames.pl --outdir $lmgr $lmgr/lwlocknames.txt");
 	}
 	if (IsNewer(
 			'src/include/storage/lwlocknames.h',
@@ -666,7 +599,7 @@ sub GenerateFiles
 	{
 		print "Generating errcodes.h...\n";
 		system(
-			'perl src/backend/utils/generate-errcodes.pl src/backend/utils/errcodes.txt > src/backend/utils/errcodes.h'
+			'perl src/backend/utils/generate-errcodes.pl --outfile src/backend/utils/errcodes.h src/backend/utils/errcodes.txt'
 		);
 		copyFile('src/backend/utils/errcodes.h',
 			'src/include/utils/errcodes.h');
@@ -695,9 +628,8 @@ sub GenerateFiles
 	if (IsNewer('src/bin/psql/sql_help.h', 'src/bin/psql/create_help.pl'))
 	{
 		print "Generating sql_help.h...\n";
-		chdir('src/bin/psql');
-		system("perl create_help.pl ../../../doc/src/sgml/ref sql_help");
-		chdir('../../..');
+		my $psql = 'src/bin/psql';
+		system("perl $psql/create_help.pl --docdir doc/src/sgml/ref --outdir $psql --basename sql_help");
 	}
 
 	if (IsNewer('src/common/kwlist_d.h', 'src/include/parser/kwlist.h'))
@@ -750,9 +682,8 @@ sub GenerateFiles
 			'src/backend/parser/gram.y'))
 	{
 		print "Generating preproc.y...\n";
-		chdir('src/interfaces/ecpg/preproc');
-		system('perl parse.pl < ../../../backend/parser/gram.y > preproc.y');
-		chdir('../../../..');
+		my $ecpg = 'src/interfaces/ecpg';
+		system("perl $ecpg/preproc/parse.pl --srcdir $ecpg/preproc --parser src/backend/parser/gram.y --output $ecpg/preproc/preproc.y");
 	}
 
 	unless (-f "src/port/pg_config_paths.h")
@@ -841,6 +772,44 @@ EOF
 		open(my $chs, '>', 'src/include/catalog/header-stamp')
 		  || confess "Could not touch header-stamp";
 		close($chs);
+	}
+
+	my $nmf = Project::read_file('src/backend/nodes/Makefile');
+	$nmf =~ s{\\\r?\n}{}g;
+	$nmf =~ /^node_headers\s*:?=(.*)$/gm
+	  || croak "Could not find node_headers in Makefile\n";
+	my @node_headers = split /\s+/, $1;
+	@node_headers = grep { $_ ne '' } @node_headers;
+	my @node_files = map { "src/include/$_" } @node_headers;
+
+	my $need_node_support = 0;
+	foreach my $nodefile (@node_files)
+	{
+		if (IsNewer('src/backend/nodes/node-support-stamp', $nodefile))
+		{
+			$need_node_support = 1;
+			last;
+		}
+	}
+	$need_node_support = 1
+	  if IsNewer(
+		'src/backend/nodes/node-support-stamp',
+		'src/backend/nodes/gen_node_support.pl');
+
+	if ($need_node_support)
+	{
+		system("perl src/backend/nodes/gen_node_support.pl --outdir src/backend/nodes @node_files");
+		open(my $f, '>', 'src/backend/nodes/node-support-stamp')
+		  || confess "Could not touch node-support-stamp";
+		close($f);
+	}
+
+	if (IsNewer(
+			'src/include/nodes/nodetags.h',
+			'src/backend/nodes/nodetags.h'))
+	{
+		copyFile('src/backend/nodes/nodetags.h',
+			'src/include/nodes/nodetags.h');
 	}
 
 	open(my $o, '>', "doc/src/sgml/version.sgml")
@@ -1218,34 +1187,6 @@ sub GetFakeConfigure
 	$cfg .= " --with-pgport=$port" if defined($port);
 
 	return $cfg;
-}
-
-package VS2013Solution;
-
-#
-# Package that encapsulates a Visual Studio 2013 solution file
-#
-
-use Carp;
-use strict;
-use warnings;
-use base qw(Solution);
-
-no warnings qw(redefine);    ## no critic
-
-sub new
-{
-	my $classname = shift;
-	my $self      = $classname->SUPER::_new(@_);
-	bless($self, $classname);
-
-	$self->{solutionFileVersion}        = '12.00';
-	$self->{vcver}                      = '12.00';
-	$self->{visualStudioName}           = 'Visual Studio 2013';
-	$self->{VisualStudioVersion}        = '12.0.21005.1';
-	$self->{MinimumVisualStudioVersion} = '10.0.40219.1';
-
-	return $self;
 }
 
 package VS2015Solution;

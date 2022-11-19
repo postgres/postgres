@@ -75,7 +75,6 @@ hashhandler(PG_FUNCTION_ARGS)
 	amroutine->amcanparallel = false;
 	amroutine->amcaninclude = false;
 	amroutine->amusemaintenanceworkmem = false;
-	amroutine->amhotblocking = true;
 	amroutine->amparallelvacuumoptions =
 		VACUUM_OPTION_PARALLEL_BULKDEL;
 	amroutine->amkeytype = INT4OID;

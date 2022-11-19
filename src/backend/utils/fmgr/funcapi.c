@@ -57,7 +57,7 @@ static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
 
 
 /*
- * SetSingleFuncCall
+ * InitMaterializedSRF
  *
  * Helper function to build the state of a set-returning function used
  * in the context of a single call with materialize mode.  This code
@@ -65,15 +65,15 @@ static TypeFuncClass get_type_func_class(Oid typid, Oid *base_typeid);
  * the TupleDesc used with the function and stores them into the
  * function's ReturnSetInfo.
  *
- * "flags" can be set to SRF_SINGLE_USE_EXPECTED, to use the tuple
+ * "flags" can be set to MAT_SRF_USE_EXPECTED_DESC, to use the tuple
  * descriptor coming from expectedDesc, which is the tuple descriptor
- * expected by the caller.  SRF_SINGLE_BLESS can be set to complete the
+ * expected by the caller.  MAT_SRF_BLESS can be set to complete the
  * information associated to the tuple descriptor, which is necessary
  * in some cases where the tuple descriptor comes from a transient
  * RECORD datatype.
  */
 void
-SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
+InitMaterializedSRF(FunctionCallInfo fcinfo, bits32 flags)
 {
 	bool		random_access;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -88,7 +88,7 @@ SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set")));
 	if (!(rsinfo->allowedModes & SFRM_Materialize) ||
-		((flags & SRF_SINGLE_USE_EXPECTED) != 0 && rsinfo->expectedDesc == NULL))
+		((flags & MAT_SRF_USE_EXPECTED_DESC) != 0 && rsinfo->expectedDesc == NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("materialize mode required, but it is not allowed in this context")));
@@ -101,7 +101,7 @@ SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
 	old_context = MemoryContextSwitchTo(per_query_ctx);
 
 	/* build a tuple descriptor for our result type */
-	if ((flags & SRF_SINGLE_USE_EXPECTED) != 0)
+	if ((flags & MAT_SRF_USE_EXPECTED_DESC) != 0)
 		stored_tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
 	else
 	{
@@ -110,7 +110,7 @@ SetSingleFuncCall(FunctionCallInfo fcinfo, bits32 flags)
 	}
 
 	/* If requested, bless the tuple descriptor */
-	if ((flags & SRF_SINGLE_BLESS) != 0)
+	if ((flags & MAT_SRF_BLESS) != 0)
 		BlessTupleDesc(stored_tupdesc);
 
 	random_access = (rsinfo->allowedModes & SFRM_Materialize_Random) != 0;
@@ -338,6 +338,40 @@ get_expr_result_type(Node *expr,
 		if (resultTupleDesc)
 			*resultTupleDesc = BlessTupleDesc(tupdesc);
 		return TYPEFUNC_COMPOSITE;
+	}
+	else if (expr && IsA(expr, Const) &&
+			 ((Const *) expr)->consttype == RECORDOID &&
+			 !((Const *) expr)->constisnull)
+	{
+		/*
+		 * When EXPLAIN'ing some queries with SEARCH/CYCLE clauses, we may
+		 * need to resolve field names of a RECORD-type Const.  The datum
+		 * should contain a typmod that will tell us that.
+		 */
+		HeapTupleHeader rec;
+		Oid			tupType;
+		int32		tupTypmod;
+
+		rec = DatumGetHeapTupleHeader(((Const *) expr)->constvalue);
+		tupType = HeapTupleHeaderGetTypeId(rec);
+		tupTypmod = HeapTupleHeaderGetTypMod(rec);
+		if (resultTypeId)
+			*resultTypeId = tupType;
+		if (tupType != RECORDOID || tupTypmod >= 0)
+		{
+			/* Should be able to look it up */
+			if (resultTupleDesc)
+				*resultTupleDesc = lookup_rowtype_tupdesc_copy(tupType,
+															   tupTypmod);
+			return TYPEFUNC_COMPOSITE;
+		}
+		else
+		{
+			/* This shouldn't really happen ... */
+			if (resultTupleDesc)
+				*resultTupleDesc = NULL;
+			return TYPEFUNC_RECORD;
+		}
 	}
 	else
 	{
@@ -1390,9 +1424,8 @@ get_func_arg_info(HeapTuple procTup,
 		*p_argnames = NULL;
 	else
 	{
-		deconstruct_array(DatumGetArrayTypeP(proargnames),
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &elems, NULL, &nelems);
+		deconstruct_array_builtin(DatumGetArrayTypeP(proargnames), TEXTOID,
+								  &elems, NULL, &nelems);
 		if (nelems != numargs)	/* should not happen */
 			elog(ERROR, "proargnames must have the same number of elements as the function has arguments");
 		*p_argnames = (char **) palloc(sizeof(char *) * numargs);
@@ -1506,8 +1539,7 @@ get_func_input_arg_names(Datum proargnames, Datum proargmodes,
 		ARR_HASNULL(arr) ||
 		ARR_ELEMTYPE(arr) != TEXTOID)
 		elog(ERROR, "proargnames is not a 1-D text array or it contains nulls");
-	deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-					  &argnames, NULL, &numargs);
+	deconstruct_array_builtin(arr, TEXTOID, &argnames, NULL, &numargs);
 	if (proargmodes != PointerGetDatum(NULL))
 	{
 		arr = DatumGetArrayTypeP(proargmodes);	/* ensure not toasted */
@@ -1621,8 +1653,7 @@ get_func_result_name(Oid functionId)
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array of length %d or it contains nulls",
 				 numargs);
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &argnames, NULL, &nargnames);
+		deconstruct_array_builtin(arr, TEXTOID, &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 
 		/* scan for output argument(s) */
@@ -1770,8 +1801,7 @@ build_function_result_tupdesc_d(char prokind,
 			ARR_ELEMTYPE(arr) != TEXTOID)
 			elog(ERROR, "proargnames is not a 1-D text array of length %d or it contains nulls",
 				 numargs);
-		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
-						  &argnames, NULL, &nargnames);
+		deconstruct_array_builtin(arr, TEXTOID, &argnames, NULL, &nargnames);
 		Assert(nargnames == numargs);
 	}
 

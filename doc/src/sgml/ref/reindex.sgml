@@ -21,7 +21,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { INDEX | TABLE | SCHEMA } [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable>
+REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { DATABASE | SYSTEM } [ CONCURRENTLY ] [ <replaceable class="parameter">name</replaceable> ]
 
 <phrase>where <replaceable class="parameter">option</replaceable> can be one of:</phrase>
 
@@ -126,8 +127,9 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
     <term><literal>DATABASE</literal></term>
     <listitem>
      <para>
-      Recreate all indexes within the current database.
-      Indexes on shared system catalogs are also processed.
+      Recreate all indexes within the current database, except system
+      catalogs.
+      Indexes on shared system catalogs are not processed.
       This form of <command>REINDEX</command> cannot be executed inside a
       transaction block.
      </para>
@@ -154,8 +156,8 @@ REINDEX [ ( <replaceable class="parameter">option</replaceable> [, ...] ) ] { IN
       The name of the specific index, table, or database to be
       reindexed.  Index and table names can be schema-qualified.
       Presently, <command>REINDEX DATABASE</command> and <command>REINDEX SYSTEM</command>
-      can only reindex the current database, so their parameter must match
-      the current database's name.
+      can only reindex the current database. Their parameter is optional,
+      and it must match the current database's name.
      </para>
     </listitem>
    </varlistentry>
@@ -475,8 +477,6 @@ Indexes:
     Like any long-running transaction, <command>REINDEX</command> on a table
     can affect which tuples can be removed by concurrent
     <command>VACUUM</command> on any other table.
-    Excepted from this are operations with the <literal>CONCURRENTLY</literal>
-    option for indexes that are not partial and do not index any expressions.
    </para>
 
    <para>

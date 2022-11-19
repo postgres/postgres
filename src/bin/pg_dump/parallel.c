@@ -53,13 +53,11 @@
 #include "postgres_fe.h"
 
 #ifndef WIN32
+#include <sys/select.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
 #endif
 
 #include "fe_utils/string_utils.h"

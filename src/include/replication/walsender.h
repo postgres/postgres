@@ -36,7 +36,7 @@ extern PGDLLIMPORT int wal_sender_timeout;
 extern PGDLLIMPORT bool log_replication_commands;
 
 extern void InitWalSender(void);
-extern bool exec_replication_command(const char *query_string);
+extern bool exec_replication_command(const char *cmd_string);
 extern void WalSndErrorCleanup(void);
 extern void WalSndResourceCleanup(bool isCommit);
 extern void WalSndSignals(void);

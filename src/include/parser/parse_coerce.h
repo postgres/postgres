@@ -32,6 +32,8 @@ typedef enum CoercionPathType
 
 
 extern bool IsBinaryCoercible(Oid srctype, Oid targettype);
+extern bool IsBinaryCoercibleWithCast(Oid srctype, Oid targettype,
+									  Oid *castoid);
 extern bool IsPreferredType(TYPCATEGORY category, Oid type);
 extern TYPCATEGORY TypeCategory(Oid type);
 

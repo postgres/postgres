@@ -261,7 +261,7 @@
      system catalog lookups can only be done within a transaction, and we
      do not wish to start a transaction immediately upon receiving a query
      string.  The raw parsing stage is sufficient to identify the transaction
-     control commands (<command>BEGIN</command>, <command>ROLLBACK</command>, etc), and
+     control commands (<command>BEGIN</command>, <command>ROLLBACK</command>, etc.), and
      these can then be correctly executed without any further analysis.
      Once we know that we are dealing with an actual query (such as
      <command>SELECT</command> or <command>UPDATE</command>), it is okay to

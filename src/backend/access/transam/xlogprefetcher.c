@@ -19,7 +19,7 @@
  * avoid a second buffer mapping table lookup.
  *
  * Currently, only the main fork is considered for prefetching.  Currently,
- * prefetching is only effective on systems where BufferPrefetch() does
+ * prefetching is only effective on systems where PrefetchBuffer() does
  * something useful (mainly Linux).
  *
  *-------------------------------------------------------------------------
@@ -44,7 +44,7 @@
 #include "storage/bufmgr.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
-#include "utils/guc.h"
+#include "utils/guc_hooks.h"
 #include "utils/hsearch.h"
 
 /*
@@ -72,7 +72,9 @@
 int			recovery_prefetch = RECOVERY_PREFETCH_TRY;
 
 #ifdef USE_PREFETCH
-#define RecoveryPrefetchEnabled() (recovery_prefetch != RECOVERY_PREFETCH_OFF)
+#define RecoveryPrefetchEnabled() \
+		(recovery_prefetch != RECOVERY_PREFETCH_OFF && \
+		 maintenance_io_concurrency > 0)
 #else
 #define RecoveryPrefetchEnabled() false
 #endif
@@ -138,7 +140,7 @@ struct XLogPrefetcher
 	dlist_head	filter_queue;
 
 	/* Book-keeping to avoid repeat prefetches. */
-	RelFileNode recent_rnode[XLOGPREFETCHER_SEQ_WINDOW_SIZE];
+	RelFileLocator recent_rlocator[XLOGPREFETCHER_SEQ_WINDOW_SIZE];
 	BlockNumber recent_block[XLOGPREFETCHER_SEQ_WINDOW_SIZE];
 	int			recent_idx;
 
@@ -161,7 +163,7 @@ struct XLogPrefetcher
  */
 typedef struct XLogPrefetcherFilter
 {
-	RelFileNode rnode;
+	RelFileLocator rlocator;
 	XLogRecPtr	filter_until_replayed;
 	BlockNumber filter_from_block;
 	dlist_node	link;
@@ -187,11 +189,11 @@ typedef struct XLogPrefetchStats
 } XLogPrefetchStats;
 
 static inline void XLogPrefetcherAddFilter(XLogPrefetcher *prefetcher,
-										   RelFileNode rnode,
+										   RelFileLocator rlocator,
 										   BlockNumber blockno,
 										   XLogRecPtr lsn);
 static inline bool XLogPrefetcherIsFiltered(XLogPrefetcher *prefetcher,
-											RelFileNode rnode,
+											RelFileLocator rlocator,
 											BlockNumber blockno);
 static inline void XLogPrefetcherCompleteFilters(XLogPrefetcher *prefetcher,
 												 XLogRecPtr replaying_lsn);
@@ -365,7 +367,7 @@ XLogPrefetcherAllocate(XLogReaderState *reader)
 {
 	XLogPrefetcher *prefetcher;
 	static HASHCTL hash_table_ctl = {
-		.keysize = sizeof(RelFileNode),
+		.keysize = sizeof(RelFileLocator),
 		.entrysize = sizeof(XLogPrefetcherFilter)
 	};
 
@@ -568,22 +570,23 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 				{
 					xl_dbase_create_file_copy_rec *xlrec =
 					(xl_dbase_create_file_copy_rec *) record->main_data;
-					RelFileNode rnode = {InvalidOid, xlrec->db_id, InvalidOid};
+					RelFileLocator rlocator =
+					{InvalidOid, xlrec->db_id, InvalidRelFileNumber};
 
 					/*
 					 * Don't try to prefetch anything in this database until
 					 * it has been created, or we might confuse the blocks of
-					 * different generations, if a database OID or relfilenode
-					 * is reused.  It's also more efficient than discovering
-					 * that relations don't exist on disk yet with ENOENT
-					 * errors.
+					 * different generations, if a database OID or
+					 * relfilenumber is reused.  It's also more efficient than
+					 * discovering that relations don't exist on disk yet with
+					 * ENOENT errors.
 					 */
-					XLogPrefetcherAddFilter(prefetcher, rnode, 0, record->lsn);
+					XLogPrefetcherAddFilter(prefetcher, rlocator, 0, record->lsn);
 
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 					elog(XLOGPREFETCHER_DEBUG_LEVEL,
 						 "suppressing prefetch in database %u until %X/%X is replayed due to raw file copy",
-						 rnode.dbNode,
+						 rlocator.dbOid,
 						 LSN_FORMAT_ARGS(record->lsn));
 #endif
 				}
@@ -601,19 +604,19 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 						 * Don't prefetch anything for this whole relation
 						 * until it has been created.  Otherwise we might
 						 * confuse the blocks of different generations, if a
-						 * relfilenode is reused.  This also avoids the need
+						 * relfilenumber is reused.  This also avoids the need
 						 * to discover the problem via extra syscalls that
 						 * report ENOENT.
 						 */
-						XLogPrefetcherAddFilter(prefetcher, xlrec->rnode, 0,
+						XLogPrefetcherAddFilter(prefetcher, xlrec->rlocator, 0,
 												record->lsn);
 
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 						elog(XLOGPREFETCHER_DEBUG_LEVEL,
 							 "suppressing prefetch in relation %u/%u/%u until %X/%X is replayed, which creates the relation",
-							 xlrec->rnode.spcNode,
-							 xlrec->rnode.dbNode,
-							 xlrec->rnode.relNode,
+							 xlrec->rlocator.spcOid,
+							 xlrec->rlocator.dbOid,
+							 xlrec->rlocator.relNumber,
 							 LSN_FORMAT_ARGS(record->lsn));
 #endif
 					}
@@ -627,16 +630,16 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 					 * Don't consider prefetching anything in the truncated
 					 * range until the truncation has been performed.
 					 */
-					XLogPrefetcherAddFilter(prefetcher, xlrec->rnode,
+					XLogPrefetcherAddFilter(prefetcher, xlrec->rlocator,
 											xlrec->blkno,
 											record->lsn);
 
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 					elog(XLOGPREFETCHER_DEBUG_LEVEL,
 						 "suppressing prefetch in relation %u/%u/%u from block %u until %X/%X is replayed, which truncates the relation",
-						 xlrec->rnode.spcNode,
-						 xlrec->rnode.dbNode,
-						 xlrec->rnode.relNode,
+						 xlrec->rlocator.spcOid,
+						 xlrec->rlocator.dbOid,
+						 xlrec->rlocator.relNumber,
 						 xlrec->blkno,
 						 LSN_FORMAT_ARGS(record->lsn));
 #endif
@@ -655,7 +658,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			if (!block->in_use)
 				continue;
 
-			Assert(!BufferIsValid(block->prefetch_buffer));;
+			Assert(!BufferIsValid(block->prefetch_buffer));
 
 			/*
 			 * Record the LSN of this record.  When it's replayed,
@@ -688,7 +691,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			}
 
 			/* Should we skip prefetching this block due to a filter? */
-			if (XLogPrefetcherIsFiltered(prefetcher, block->rnode, block->blkno))
+			if (XLogPrefetcherIsFiltered(prefetcher, block->rlocator, block->blkno))
 			{
 				XLogPrefetchIncrement(&SharedStats->skip_new);
 				return LRQ_NEXT_NO_IO;
@@ -698,7 +701,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			for (int i = 0; i < XLOGPREFETCHER_SEQ_WINDOW_SIZE; ++i)
 			{
 				if (block->blkno == prefetcher->recent_block[i] &&
-					RelFileNodeEquals(block->rnode, prefetcher->recent_rnode[i]))
+					RelFileLocatorEquals(block->rlocator, prefetcher->recent_rlocator[i]))
 				{
 					/*
 					 * XXX If we also remembered where it was, we could set
@@ -709,7 +712,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 					return LRQ_NEXT_NO_IO;
 				}
 			}
-			prefetcher->recent_rnode[prefetcher->recent_idx] = block->rnode;
+			prefetcher->recent_rlocator[prefetcher->recent_idx] = block->rlocator;
 			prefetcher->recent_block[prefetcher->recent_idx] = block->blkno;
 			prefetcher->recent_idx =
 				(prefetcher->recent_idx + 1) % XLOGPREFETCHER_SEQ_WINDOW_SIZE;
@@ -719,7 +722,7 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 			 * same relation (with some scheme to handle invalidations
 			 * safely), but for now we'll call smgropen() every time.
 			 */
-			reln = smgropen(block->rnode, InvalidBackendId);
+			reln = smgropen(block->rlocator, InvalidBackendId);
 
 			/*
 			 * If the relation file doesn't exist on disk, for example because
@@ -733,12 +736,12 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 				elog(XLOGPREFETCHER_DEBUG_LEVEL,
 					 "suppressing all prefetch in relation %u/%u/%u until %X/%X is replayed, because the relation does not exist on disk",
-					 reln->smgr_rnode.node.spcNode,
-					 reln->smgr_rnode.node.dbNode,
-					 reln->smgr_rnode.node.relNode,
+					 reln->smgr_rlocator.locator.spcOid,
+					 reln->smgr_rlocator.locator.dbOid,
+					 reln->smgr_rlocator.locator.relNumber,
 					 LSN_FORMAT_ARGS(record->lsn));
 #endif
-				XLogPrefetcherAddFilter(prefetcher, block->rnode, 0,
+				XLogPrefetcherAddFilter(prefetcher, block->rlocator, 0,
 										record->lsn);
 				XLogPrefetchIncrement(&SharedStats->skip_new);
 				return LRQ_NEXT_NO_IO;
@@ -754,13 +757,13 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 				elog(XLOGPREFETCHER_DEBUG_LEVEL,
 					 "suppressing prefetch in relation %u/%u/%u from block %u until %X/%X is replayed, because the relation is too small",
-					 reln->smgr_rnode.node.spcNode,
-					 reln->smgr_rnode.node.dbNode,
-					 reln->smgr_rnode.node.relNode,
+					 reln->smgr_rlocator.locator.spcOid,
+					 reln->smgr_rlocator.locator.dbOid,
+					 reln->smgr_rlocator.locator.relNumber,
 					 block->blkno,
 					 LSN_FORMAT_ARGS(record->lsn));
 #endif
-				XLogPrefetcherAddFilter(prefetcher, block->rnode, block->blkno,
+				XLogPrefetcherAddFilter(prefetcher, block->rlocator, block->blkno,
 										record->lsn);
 				XLogPrefetchIncrement(&SharedStats->skip_new);
 				return LRQ_NEXT_NO_IO;
@@ -793,9 +796,9 @@ XLogPrefetcherNextBlock(uintptr_t pgsr_private, XLogRecPtr *lsn)
 				 */
 				elog(ERROR,
 					 "could not prefetch relation %u/%u/%u block %u",
-					 reln->smgr_rnode.node.spcNode,
-					 reln->smgr_rnode.node.dbNode,
-					 reln->smgr_rnode.node.relNode,
+					 reln->smgr_rlocator.locator.spcOid,
+					 reln->smgr_rlocator.locator.dbOid,
+					 reln->smgr_rlocator.locator.relNumber,
 					 block->blkno);
 			}
 		}
@@ -831,7 +834,7 @@ pg_stat_get_recovery_prefetch(PG_FUNCTION_ARGS)
 	Datum		values[PG_STAT_GET_RECOVERY_PREFETCH_COLS];
 	bool		nulls[PG_STAT_GET_RECOVERY_PREFETCH_COLS];
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	for (int i = 0; i < PG_STAT_GET_RECOVERY_PREFETCH_COLS; ++i)
 		nulls[i] = false;
@@ -852,17 +855,17 @@ pg_stat_get_recovery_prefetch(PG_FUNCTION_ARGS)
 }
 
 /*
- * Don't prefetch any blocks >= 'blockno' from a given 'rnode', until 'lsn'
+ * Don't prefetch any blocks >= 'blockno' from a given 'rlocator', until 'lsn'
  * has been replayed.
  */
 static inline void
-XLogPrefetcherAddFilter(XLogPrefetcher *prefetcher, RelFileNode rnode,
+XLogPrefetcherAddFilter(XLogPrefetcher *prefetcher, RelFileLocator rlocator,
 						BlockNumber blockno, XLogRecPtr lsn)
 {
 	XLogPrefetcherFilter *filter;
 	bool		found;
 
-	filter = hash_search(prefetcher->filter_table, &rnode, HASH_ENTER, &found);
+	filter = hash_search(prefetcher->filter_table, &rlocator, HASH_ENTER, &found);
 	if (!found)
 	{
 		/*
@@ -875,9 +878,10 @@ XLogPrefetcherAddFilter(XLogPrefetcher *prefetcher, RelFileNode rnode,
 	else
 	{
 		/*
-		 * We were already filtering this rnode.  Extend the filter's lifetime
-		 * to cover this WAL record, but leave the lower of the block numbers
-		 * there because we don't want to have to track individual blocks.
+		 * We were already filtering this rlocator.  Extend the filter's
+		 * lifetime to cover this WAL record, but leave the lower of the block
+		 * numbers there because we don't want to have to track individual
+		 * blocks.
 		 */
 		filter->filter_until_replayed = lsn;
 		dlist_delete(&filter->link);
@@ -890,7 +894,7 @@ XLogPrefetcherAddFilter(XLogPrefetcher *prefetcher, RelFileNode rnode,
  * Have we replayed any records that caused us to begin filtering a block
  * range?  That means that relations should have been created, extended or
  * dropped as required, so we can stop filtering out accesses to a given
- * relfilenode.
+ * relfilenumber.
  */
 static inline void
 XLogPrefetcherCompleteFilters(XLogPrefetcher *prefetcher, XLogRecPtr replaying_lsn)
@@ -913,7 +917,7 @@ XLogPrefetcherCompleteFilters(XLogPrefetcher *prefetcher, XLogRecPtr replaying_l
  * Check if a given block should be skipped due to a filter.
  */
 static inline bool
-XLogPrefetcherIsFiltered(XLogPrefetcher *prefetcher, RelFileNode rnode,
+XLogPrefetcherIsFiltered(XLogPrefetcher *prefetcher, RelFileLocator rlocator,
 						 BlockNumber blockno)
 {
 	/*
@@ -925,13 +929,13 @@ XLogPrefetcherIsFiltered(XLogPrefetcher *prefetcher, RelFileNode rnode,
 		XLogPrefetcherFilter *filter;
 
 		/* See if the block range is filtered. */
-		filter = hash_search(prefetcher->filter_table, &rnode, HASH_FIND, NULL);
+		filter = hash_search(prefetcher->filter_table, &rlocator, HASH_FIND, NULL);
 		if (filter && filter->filter_from_block <= blockno)
 		{
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 			elog(XLOGPREFETCHER_DEBUG_LEVEL,
 				 "prefetch of %u/%u/%u block %u suppressed; filtering until LSN %X/%X is replayed (blocks >= %u filtered)",
-				 rnode.spcNode, rnode.dbNode, rnode.relNode, blockno,
+				 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber, blockno,
 				 LSN_FORMAT_ARGS(filter->filter_until_replayed),
 				 filter->filter_from_block);
 #endif
@@ -939,15 +943,15 @@ XLogPrefetcherIsFiltered(XLogPrefetcher *prefetcher, RelFileNode rnode,
 		}
 
 		/* See if the whole database is filtered. */
-		rnode.relNode = InvalidOid;
-		rnode.spcNode = InvalidOid;
-		filter = hash_search(prefetcher->filter_table, &rnode, HASH_FIND, NULL);
+		rlocator.relNumber = InvalidRelFileNumber;
+		rlocator.spcOid = InvalidOid;
+		filter = hash_search(prefetcher->filter_table, &rlocator, HASH_FIND, NULL);
 		if (filter)
 		{
 #ifdef XLOGPREFETCHER_DEBUG_LEVEL
 			elog(XLOGPREFETCHER_DEBUG_LEVEL,
 				 "prefetch of %u/%u/%u block %u suppressed; filtering until LSN %X/%X is replayed (whole database)",
-				 rnode.spcNode, rnode.dbNode, rnode.relNode, blockno,
+				 rlocator.spcOid, rlocator.dbOid, rlocator.relNumber, blockno,
 				 LSN_FORMAT_ARGS(filter->filter_until_replayed));
 #endif
 			return true;
@@ -983,6 +987,7 @@ XLogRecord *
 XLogPrefetcherReadRecord(XLogPrefetcher *prefetcher, char **errmsg)
 {
 	DecodedXLogRecord *record;
+	XLogRecPtr	replayed_up_to;
 
 	/*
 	 * See if it's time to reset the prefetching machinery, because a relevant
@@ -998,7 +1003,8 @@ XLogPrefetcherReadRecord(XLogPrefetcher *prefetcher, char **errmsg)
 
 		if (RecoveryPrefetchEnabled())
 		{
-			max_inflight = Max(maintenance_io_concurrency, 2);
+			Assert(maintenance_io_concurrency > 0);
+			max_inflight = maintenance_io_concurrency;
 			max_distance = max_inflight * XLOGPREFETCHER_DISTANCE_MULTIPLIER;
 		}
 		else
@@ -1016,14 +1022,34 @@ XLogPrefetcherReadRecord(XLogPrefetcher *prefetcher, char **errmsg)
 	}
 
 	/*
-	 * Release last returned record, if there is one.  We need to do this so
-	 * that we can check for empty decode queue accurately.
+	 * Release last returned record, if there is one, as it's now been
+	 * replayed.
 	 */
-	XLogReleasePreviousRecord(prefetcher->reader);
+	replayed_up_to = XLogReleasePreviousRecord(prefetcher->reader);
 
-	/* If there's nothing queued yet, then start prefetching. */
+	/*
+	 * Can we drop any filters yet?  If we were waiting for a relation to be
+	 * created or extended, it is now OK to access blocks in the covered
+	 * range.
+	 */
+	XLogPrefetcherCompleteFilters(prefetcher, replayed_up_to);
+
+	/*
+	 * All IO initiated by earlier WAL is now completed.  This might trigger
+	 * further prefetching.
+	 */
+	lrq_complete_lsn(prefetcher->streaming_read, replayed_up_to);
+
+	/*
+	 * If there's nothing queued yet, then start prefetching to cause at least
+	 * one record to be queued.
+	 */
 	if (!XLogReaderHasQueuedRecordOrError(prefetcher->reader))
+	{
+		Assert(lrq_inflight(prefetcher->streaming_read) == 0);
+		Assert(lrq_completed(prefetcher->streaming_read) == 0);
 		lrq_prefetch(prefetcher->streaming_read);
+	}
 
 	/* Read the next record. */
 	record = XLogNextRecord(prefetcher->reader, errmsg);
@@ -1037,12 +1063,13 @@ XLogPrefetcherReadRecord(XLogPrefetcher *prefetcher, char **errmsg)
 	Assert(record == prefetcher->reader->record);
 
 	/*
-	 * Can we drop any prefetch filters yet, given the record we're about to
-	 * return?  This assumes that any records with earlier LSNs have been
-	 * replayed, so if we were waiting for a relation to be created or
-	 * extended, it is now OK to access blocks in the covered range.
+	 * If maintenance_io_concurrency is set very low, we might have started
+	 * prefetching some but not all of the blocks referenced in the record
+	 * we're about to return.  Forget about the rest of the blocks in this
+	 * record by dropping the prefetcher's reference to it.
 	 */
-	XLogPrefetcherCompleteFilters(prefetcher, record->lsn);
+	if (record == prefetcher->record)
+		prefetcher->record = NULL;
 
 	/*
 	 * See if it's time to compute some statistics, because enough WAL has
@@ -1050,13 +1077,6 @@ XLogPrefetcherReadRecord(XLogPrefetcher *prefetcher, char **errmsg)
 	 */
 	if (unlikely(record->lsn >= prefetcher->next_stats_shm_lsn))
 		XLogPrefetcherComputeStats(prefetcher);
-
-	/*
-	 * The caller is about to replay this record, so we can now report that
-	 * all IO initiated because of early WAL must be finished. This may
-	 * trigger more readahead.
-	 */
-	lrq_complete_lsn(prefetcher->streaming_read, record->lsn);
 
 	Assert(record == prefetcher->reader->record);
 
@@ -1069,7 +1089,7 @@ check_recovery_prefetch(int *new_value, void **extra, GucSource source)
 #ifndef USE_PREFETCH
 	if (*new_value == RECOVERY_PREFETCH_ON)
 	{
-		GUC_check_errdetail("recovery_prefetch not supported on platforms that lack posix_fadvise().");
+		GUC_check_errdetail("recovery_prefetch is not supported on platforms that lack posix_fadvise().");
 		return false;
 	}
 #endif

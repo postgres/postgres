@@ -515,7 +515,7 @@
 
    <para>
     For reference purposes, a standard installation also contains files
-    <filename>Africa.txt</filename>, <filename>America.txt</filename>, etc, containing
+    <filename>Africa.txt</filename>, <filename>America.txt</filename>, etc., containing
     information about every time zone abbreviation known to be in use
     according to the IANA timezone database.  The zone name
     definitions found in these files can be copied and pasted into a custom

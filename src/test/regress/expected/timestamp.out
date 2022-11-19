@@ -2019,3 +2019,63 @@ SELECT make_timestamp(-44, 3, 15, 12, 30, 15);
 -- should fail
 select make_timestamp(0, 7, 15, 12, 30, 15);
 ERROR:  date field value out of range: 0-07-15
+-- generate_series for timestamp
+select * from generate_series('2020-01-01 00:00'::timestamp,
+                              '2020-01-02 03:00'::timestamp,
+                              '1 hour'::interval);
+     generate_series      
+--------------------------
+ Wed Jan 01 00:00:00 2020
+ Wed Jan 01 01:00:00 2020
+ Wed Jan 01 02:00:00 2020
+ Wed Jan 01 03:00:00 2020
+ Wed Jan 01 04:00:00 2020
+ Wed Jan 01 05:00:00 2020
+ Wed Jan 01 06:00:00 2020
+ Wed Jan 01 07:00:00 2020
+ Wed Jan 01 08:00:00 2020
+ Wed Jan 01 09:00:00 2020
+ Wed Jan 01 10:00:00 2020
+ Wed Jan 01 11:00:00 2020
+ Wed Jan 01 12:00:00 2020
+ Wed Jan 01 13:00:00 2020
+ Wed Jan 01 14:00:00 2020
+ Wed Jan 01 15:00:00 2020
+ Wed Jan 01 16:00:00 2020
+ Wed Jan 01 17:00:00 2020
+ Wed Jan 01 18:00:00 2020
+ Wed Jan 01 19:00:00 2020
+ Wed Jan 01 20:00:00 2020
+ Wed Jan 01 21:00:00 2020
+ Wed Jan 01 22:00:00 2020
+ Wed Jan 01 23:00:00 2020
+ Thu Jan 02 00:00:00 2020
+ Thu Jan 02 01:00:00 2020
+ Thu Jan 02 02:00:00 2020
+ Thu Jan 02 03:00:00 2020
+(28 rows)
+
+-- the LIMIT should allow this to terminate in a reasonable amount of time
+-- (but that unfortunately doesn't work yet for SELECT * FROM ...)
+select generate_series('2022-01-01 00:00'::timestamp,
+                       'infinity'::timestamp,
+                       '1 month'::interval) limit 10;
+     generate_series      
+--------------------------
+ Sat Jan 01 00:00:00 2022
+ Tue Feb 01 00:00:00 2022
+ Tue Mar 01 00:00:00 2022
+ Fri Apr 01 00:00:00 2022
+ Sun May 01 00:00:00 2022
+ Wed Jun 01 00:00:00 2022
+ Fri Jul 01 00:00:00 2022
+ Mon Aug 01 00:00:00 2022
+ Thu Sep 01 00:00:00 2022
+ Sat Oct 01 00:00:00 2022
+(10 rows)
+
+-- errors
+select * from generate_series('2020-01-01 00:00'::timestamp,
+                              '2020-01-02 03:00'::timestamp,
+                              '0 hour'::interval);
+ERROR:  step size cannot equal zero

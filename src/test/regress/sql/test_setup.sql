@@ -253,7 +253,7 @@ CREATE FUNCTION ttdummy ()
     AS :'regresslib'
     LANGUAGE C;
 
-CREATE FUNCTION get_column_offset (oid[])
+CREATE FUNCTION get_columns_length(oid[])
     RETURNS int
     AS :'regresslib'
     LANGUAGE C STRICT STABLE PARALLEL SAFE;

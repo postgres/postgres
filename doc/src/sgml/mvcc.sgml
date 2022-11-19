@@ -277,9 +277,10 @@
 
    <para>
     The table also shows that PostgreSQL's Repeatable Read implementation
-    does not allow phantom reads.  Stricter behavior is permitted by the
-    SQL standard: the four isolation levels only define which phenomena
-    must not happen, not which phenomena <emphasis>must</emphasis> happen.
+    does not allow phantom reads.  This is acceptable under the SQL
+    standard because the standard specifies which anomalies must
+    <emphasis>not</emphasis> occur at certain isolation levels;  higher
+    guarantees are acceptable.
     The behavior of the available isolation levels is detailed in the
     following subsections.
    </para>
@@ -359,8 +360,8 @@
     behaves similarly. In Read Committed mode, each row proposed for insertion
     will either insert or update. Unless there are unrelated errors, one of
     those two outcomes is guaranteed.  If a conflict originates in another
-    transaction whose effects are not yet visible to the <command>INSERT
-    </command>, the <command>UPDATE</command> clause will affect that row,
+    transaction whose effects are not yet visible to the <command>INSERT</command>,
+    the <command>UPDATE</command> clause will affect that row,
     even though possibly <emphasis>no</emphasis> version of that row is
     conventionally visible to the command.
    </para>
@@ -371,6 +372,38 @@
     the outcome of another transaction whose effects are not visible
     to the <command>INSERT</command> snapshot.  Again, this is only
     the case in Read Committed mode.
+   </para>
+
+   <para>
+    <command>MERGE</command> allows the user to specify various
+    combinations of <command>INSERT</command>, <command>UPDATE</command>
+    and <command>DELETE</command> subcommands. A <command>MERGE</command>
+    command with both <command>INSERT</command> and <command>UPDATE</command>
+    subcommands looks similar to <command>INSERT</command> with an
+    <literal>ON CONFLICT DO UPDATE</literal> clause but does not
+    guarantee that either <command>INSERT</command> or
+    <command>UPDATE</command> will occur.
+    If <command>MERGE</command> attempts an <command>UPDATE</command> or
+    <command>DELETE</command> and the row is concurrently updated but
+    the join condition still passes for the current target and the
+    current source tuple, then <command>MERGE</command> will behave
+    the same as the <command>UPDATE</command> or
+    <command>DELETE</command> commands and perform its action on the
+    updated version of the row.  However, because <command>MERGE</command>
+    can specify several actions and they can be conditional, the
+    conditions for each action are re-evaluated on the updated version of
+    the row, starting from the first action, even if the action that had
+    originally matched appears later in the list of actions.
+    On the other hand, if the row is concurrently updated or deleted so
+    that the join condition fails, then <command>MERGE</command> will
+    evaluate the condition's <literal>NOT MATCHED</literal> actions next,
+    and execute the first one that succeeds.
+    If <command>MERGE</command> attempts an <command>INSERT</command>
+    and a unique index is present and a duplicate row is concurrently
+    inserted, then a uniqueness violation error is raised;
+    <command>MERGE</command> does not attempt to avoid such
+    errors by restarting evaluation of <literal>MATCHED</literal>
+    conditions.
    </para>
 
    <para>
@@ -420,37 +453,6 @@ COMMIT;
     <command>UPDATE</command> completes and <command>DELETE</command>
     obtains a lock, the new row value is no longer <literal>10</literal> but
     <literal>11</literal>, which no longer matches the criteria.
-   </para>
-
-   <para>
-    <command>MERGE</command> allows the user to specify various
-    combinations of <command>INSERT</command>, <command>UPDATE</command>
-    or <command>DELETE</command> subcommands. A <command>MERGE</command>
-    command with both <command>INSERT</command> and <command>UPDATE</command>
-    subcommands looks similar to <command>INSERT</command> with an
-    <literal>ON CONFLICT DO UPDATE</literal> clause but does not
-    guarantee that either <command>INSERT</command> or
-    <command>UPDATE</command> will occur.
-    If MERGE attempts an <command>UPDATE</command> or
-    <command>DELETE</command> and the row is concurrently updated but
-    the join condition still passes for the current target and the
-    current source tuple, then <command>MERGE</command> will behave
-    the same as the <command>UPDATE</command> or
-    <command>DELETE</command> commands and perform its action on the
-    updated version of the row.  However, because <command>MERGE</command>
-    can specify several actions and they can be conditional, the
-    conditions for each action are re-evaluated on the updated version of
-    the row, starting from the first action, even if the action that had
-    originally matched appears later in the list of actions.
-    On the other hand, if the row is concurrently updated or deleted so
-    that the join condition fails, then <command>MERGE</command> will
-    evaluate the condition's <literal>NOT MATCHED</literal> actions next,
-    and execute the first one that succeeds.
-    If <command>MERGE</command> attempts an <command>INSERT</command>
-    and a unique index is present and a duplicate row is concurrently
-    inserted, then a uniqueness violation is raised.
-    <command>MERGE</command> does not attempt to avoid the
-    error by executing an <command>UPDATE</command>.
    </para>
 
    <para>
@@ -516,8 +518,9 @@ COMMIT;
    </para>
 
    <para>
-    <command>UPDATE</command>, <command>DELETE</command>, <command>SELECT
-    FOR UPDATE</command>, and <command>SELECT FOR SHARE</command> commands
+    <command>UPDATE</command>, <command>DELETE</command>,
+    <command>MERGE</command>, <command>SELECT FOR UPDATE</command>,
+    and <command>SELECT FOR SHARE</command> commands
     behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the transaction start time.  However, such a
@@ -905,7 +908,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
       <title>Table-Level Lock Modes</title>
       <varlistentry>
        <term>
-        <literal>ACCESS SHARE</literal>
+        <literal>ACCESS SHARE</literal> (<literal>AccessShareLock</literal>)
        </term>
        <listitem>
         <para>
@@ -923,7 +926,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>ROW SHARE</literal>
+        <literal>ROW SHARE</literal> (<literal>RowShareLock</literal>)
        </term>
        <listitem>
         <para>
@@ -946,7 +949,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>ROW EXCLUSIVE</literal>
+        <literal>ROW EXCLUSIVE</literal> (<literal>RowExclusiveLock</literal>)
        </term>
        <listitem>
         <para>
@@ -969,7 +972,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>SHARE UPDATE EXCLUSIVE</literal>
+        <literal>SHARE UPDATE EXCLUSIVE</literal> (<literal>ShareUpdateExclusiveLock</literal>)
        </term>
        <listitem>
         <para>
@@ -995,7 +998,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>SHARE</literal>
+        <literal>SHARE</literal> (<literal>ShareLock</literal>)
        </term>
        <listitem>
         <para>
@@ -1015,7 +1018,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>SHARE ROW EXCLUSIVE</literal>
+        <literal>SHARE ROW EXCLUSIVE</literal> (<literal>ShareRowExclusiveLock</literal>)
        </term>
        <listitem>
         <para>
@@ -1037,7 +1040,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>EXCLUSIVE</literal>
+        <literal>EXCLUSIVE</literal> (<literal>ExclusiveLock</literal>)
        </term>
        <listitem>
         <para>
@@ -1059,7 +1062,7 @@ ERROR:  could not serialize access due to read/write dependencies among transact
 
       <varlistentry>
        <term>
-        <literal>ACCESS EXCLUSIVE</literal>
+        <literal>ACCESS EXCLUSIVE</literal> (<literal>AccessExclusiveLock</literal>)
        </term>
        <listitem>
         <para>

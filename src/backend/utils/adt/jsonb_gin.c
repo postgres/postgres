@@ -567,7 +567,7 @@ extract_jsp_path_expr(JsonPathGinContext *cxt, JsonPathGinPath path,
 	/* extract a list of nodes to be AND-ed */
 	List	   *nodes = extract_jsp_path_expr_nodes(cxt, path, jsp, scalar);
 
-	if (list_length(nodes) <= 0)
+	if (nodes == NIL)
 		/* no nodes were extracted => full scan is needed for this path */
 		return NULL;
 
@@ -885,9 +885,7 @@ gin_extract_jsonb_query(PG_FUNCTION_ARGS)
 		int			i,
 					j;
 
-		deconstruct_array(query,
-						  TEXTOID, -1, false, TYPALIGN_INT,
-						  &key_datums, &key_nulls, &key_count);
+		deconstruct_array_builtin(query, TEXTOID, &key_datums, &key_nulls, &key_count);
 
 		entries = (Datum *) palloc(sizeof(Datum) * key_count);
 

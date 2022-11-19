@@ -585,6 +585,9 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_DATA_FILE_WRITE:
 			event_name = "DataFileWrite";
 			break;
+		case WAIT_EVENT_DSM_ALLOCATE:
+			event_name = "DSMAllocate";
+			break;
 		case WAIT_EVENT_DSM_FILL_ZERO_WRITE:
 			event_name = "DSMFillZeroWrite";
 			break;
@@ -630,8 +633,8 @@ pgstat_get_wait_io(WaitEventIO w)
 		case WAIT_EVENT_RELATION_MAP_READ:
 			event_name = "RelationMapRead";
 			break;
-		case WAIT_EVENT_RELATION_MAP_SYNC:
-			event_name = "RelationMapSync";
+		case WAIT_EVENT_RELATION_MAP_REPLACE:
+			event_name = "RelationMapReplace";
 			break;
 		case WAIT_EVENT_RELATION_MAP_WRITE:
 			event_name = "RelationMapWrite";

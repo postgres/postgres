@@ -106,6 +106,14 @@ GetSubscription(Oid subid, bool missing_ok)
 	Assert(!isnull);
 	sub->publications = textarray_to_stringlist(DatumGetArrayTypeP(datum));
 
+	/* Get origin */
+	datum = SysCacheGetAttr(SUBSCRIPTIONOID,
+							tup,
+							Anum_pg_subscription_suborigin,
+							&isnull);
+	Assert(!isnull);
+	sub->origin = TextDatumGetCString(datum);
+
 	ReleaseSysCache(tup);
 
 	return sub;
@@ -198,56 +206,6 @@ DisableSubscription(Oid subid)
 }
 
 /*
- * get_subscription_oid - given a subscription name, look up the OID
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return InvalidOid.
- */
-Oid
-get_subscription_oid(const char *subname, bool missing_ok)
-{
-	Oid			oid;
-
-	oid = GetSysCacheOid2(SUBSCRIPTIONNAME, Anum_pg_subscription_oid,
-						  MyDatabaseId, CStringGetDatum(subname));
-	if (!OidIsValid(oid) && !missing_ok)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("subscription \"%s\" does not exist", subname)));
-	return oid;
-}
-
-/*
- * get_subscription_name - given a subscription OID, look up the name
- *
- * If missing_ok is false, throw an error if name not found.  If true, just
- * return NULL.
- */
-char *
-get_subscription_name(Oid subid, bool missing_ok)
-{
-	HeapTuple	tup;
-	char	   *subname;
-	Form_pg_subscription subform;
-
-	tup = SearchSysCache1(SUBSCRIPTIONOID, ObjectIdGetDatum(subid));
-
-	if (!HeapTupleIsValid(tup))
-	{
-		if (!missing_ok)
-			elog(ERROR, "cache lookup failed for subscription %u", subid);
-		return NULL;
-	}
-
-	subform = (Form_pg_subscription) GETSTRUCT(tup);
-	subname = pstrdup(NameStr(subform->subname));
-
-	ReleaseSysCache(tup);
-
-	return subname;
-}
-
-/*
  * Convert text array to list of strings.
  *
  * Note: the resulting list of strings is pallocated here.
@@ -260,9 +218,7 @@ textarray_to_stringlist(ArrayType *textarray)
 				i;
 	List	   *res = NIL;
 
-	deconstruct_array(textarray,
-					  TEXTOID, -1, false, TYPALIGN_INT,
-					  &elems, NULL, &nelems);
+	deconstruct_array_builtin(textarray, TEXTOID, &elems, NULL, &nelems);
 
 	if (nelems == 0)
 		return NIL;
@@ -527,65 +483,14 @@ HasSubscriptionRelations(Oid subid)
 }
 
 /*
- * Get all relations for subscription.
+ * Get the relations for the subscription.
  *
- * Returned list is palloc'ed in current memory context.
+ * If not_ready is true, return only the relations that are not in a ready
+ * state, otherwise return all the relations of the subscription.  The
+ * returned list is palloc'ed in the current memory context.
  */
 List *
-GetSubscriptionRelations(Oid subid)
-{
-	List	   *res = NIL;
-	Relation	rel;
-	HeapTuple	tup;
-	ScanKeyData skey[1];
-	SysScanDesc scan;
-
-	rel = table_open(SubscriptionRelRelationId, AccessShareLock);
-
-	ScanKeyInit(&skey[0],
-				Anum_pg_subscription_rel_srsubid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(subid));
-
-	scan = systable_beginscan(rel, InvalidOid, false,
-							  NULL, 1, skey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_subscription_rel subrel;
-		SubscriptionRelState *relstate;
-		Datum		d;
-		bool		isnull;
-
-		subrel = (Form_pg_subscription_rel) GETSTRUCT(tup);
-
-		relstate = (SubscriptionRelState *) palloc(sizeof(SubscriptionRelState));
-		relstate->relid = subrel->srrelid;
-		relstate->state = subrel->srsubstate;
-		d = SysCacheGetAttr(SUBSCRIPTIONRELMAP, tup,
-							Anum_pg_subscription_rel_srsublsn, &isnull);
-		if (isnull)
-			relstate->lsn = InvalidXLogRecPtr;
-		else
-			relstate->lsn = DatumGetLSN(d);
-
-		res = lappend(res, relstate);
-	}
-
-	/* Cleanup */
-	systable_endscan(scan);
-	table_close(rel, AccessShareLock);
-
-	return res;
-}
-
-/*
- * Get all relations for subscription that are not in a ready state.
- *
- * Returned list is palloc'ed in current memory context.
- */
-List *
-GetSubscriptionNotReadyRelations(Oid subid)
+GetSubscriptionRelations(Oid subid, bool not_ready)
 {
 	List	   *res = NIL;
 	Relation	rel;
@@ -601,10 +506,11 @@ GetSubscriptionNotReadyRelations(Oid subid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(subid));
 
-	ScanKeyInit(&skey[nkeys++],
-				Anum_pg_subscription_rel_srsubstate,
-				BTEqualStrategyNumber, F_CHARNE,
-				CharGetDatum(SUBREL_STATE_READY));
+	if (not_ready)
+		ScanKeyInit(&skey[nkeys++],
+					Anum_pg_subscription_rel_srsubstate,
+					BTEqualStrategyNumber, F_CHARNE,
+					CharGetDatum(SUBREL_STATE_READY));
 
 	scan = systable_beginscan(rel, InvalidOid, false,
 							  NULL, nkeys, skey);

@@ -37,17 +37,15 @@ PG_FUNCTION_INFO_V1(pg_get_wal_stats);
 PG_FUNCTION_INFO_V1(pg_get_wal_stats_till_end_of_wal);
 
 static bool IsFutureLSN(XLogRecPtr lsn, XLogRecPtr *curr_lsn);
-static XLogReaderState *InitXLogReaderState(XLogRecPtr lsn,
-											XLogRecPtr *first_record);
-static XLogRecord *ReadNextXLogRecord(XLogReaderState *xlogreader,
-									  XLogRecPtr first_record);
-static void GetWALRecordInfo(XLogReaderState *record, XLogRecPtr lsn,
-							 Datum *values, bool *nulls, uint32 ncols);
+static XLogReaderState *InitXLogReaderState(XLogRecPtr lsn);
+static XLogRecord *ReadNextXLogRecord(XLogReaderState *xlogreader);
+static void GetWALRecordInfo(XLogReaderState *record, Datum *values,
+							 bool *nulls, uint32 ncols);
 static XLogRecPtr ValidateInputLSNs(bool till_end_of_wal,
 									XLogRecPtr start_lsn, XLogRecPtr end_lsn);
 static void GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 							  XLogRecPtr end_lsn);
-static void GetXLogSummaryStats(XLogStats * stats, ReturnSetInfo *rsinfo,
+static void GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 								Datum *values, bool *nulls, uint32 ncols,
 								bool stats_per_record);
 static void FillXLogStatsRow(const char *name, uint64 n, uint64 total_count,
@@ -86,12 +84,14 @@ IsFutureLSN(XLogRecPtr lsn, XLogRecPtr *curr_lsn)
  * Intialize WAL reader and identify first valid LSN.
  */
 static XLogReaderState *
-InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
+InitXLogReaderState(XLogRecPtr lsn)
 {
 	XLogReaderState *xlogreader;
+	ReadLocalXLogPageNoWaitPrivate *private_data;
+	XLogRecPtr	first_valid_record;
 
 	/*
-	 * Reading WAL below the first page of the first sgements isn't allowed.
+	 * Reading WAL below the first page of the first segments isn't allowed.
 	 * This is a bootstrap WAL page and the page_read callback fails to read
 	 * it.
 	 */
@@ -100,11 +100,14 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 				(errmsg("could not read WAL at LSN %X/%X",
 						LSN_FORMAT_ARGS(lsn))));
 
+	private_data = (ReadLocalXLogPageNoWaitPrivate *)
+		palloc0(sizeof(ReadLocalXLogPageNoWaitPrivate));
+
 	xlogreader = XLogReaderAllocate(wal_segment_size, NULL,
 									XL_ROUTINE(.page_read = &read_local_xlog_page_no_wait,
 											   .segment_open = &wal_segment_open,
 											   .segment_close = &wal_segment_close),
-									NULL);
+									private_data);
 
 	if (xlogreader == NULL)
 		ereport(ERROR,
@@ -113,9 +116,9 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
 				 errdetail("Failed while allocating a WAL reading processor.")));
 
 	/* first find a valid recptr to start from */
-	*first_record = XLogFindNextRecord(xlogreader, lsn);
+	first_valid_record = XLogFindNextRecord(xlogreader, lsn);
 
-	if (XLogRecPtrIsInvalid(*first_record))
+	if (XLogRecPtrIsInvalid(first_valid_record))
 		ereport(ERROR,
 				(errmsg("could not find a valid record after %X/%X",
 						LSN_FORMAT_ARGS(lsn))));
@@ -132,28 +135,38 @@ InitXLogReaderState(XLogRecPtr lsn, XLogRecPtr *first_record)
  *
  * We guard against ordinary errors trying to read WAL that hasn't been
  * written yet by limiting end_lsn to the flushed WAL, but that can also
- * encounter errors if the flush pointer falls in the middle of a record.
+ * encounter errors if the flush pointer falls in the middle of a record. In
+ * that case we'll return NULL.
  */
 static XLogRecord *
-ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
+ReadNextXLogRecord(XLogReaderState *xlogreader)
 {
 	XLogRecord *record;
-	char	*errormsg;
+	char	   *errormsg;
 
 	record = XLogReadRecord(xlogreader, &errormsg);
 
 	if (record == NULL)
 	{
+		ReadLocalXLogPageNoWaitPrivate *private_data;
+
+		/* return NULL, if end of WAL is reached */
+		private_data = (ReadLocalXLogPageNoWaitPrivate *)
+			xlogreader->private_data;
+
+		if (private_data->end_of_wal)
+			return NULL;
+
 		if (errormsg)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read WAL at %X/%X: %s",
-							LSN_FORMAT_ARGS(first_record), errormsg)));
+							LSN_FORMAT_ARGS(xlogreader->EndRecPtr), errormsg)));
 		else
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not read WAL at %X/%X",
-							LSN_FORMAT_ARGS(first_record))));
+							LSN_FORMAT_ARGS(xlogreader->EndRecPtr))));
 	}
 
 	return record;
@@ -163,16 +176,16 @@ ReadNextXLogRecord(XLogReaderState *xlogreader, XLogRecPtr first_record)
  * Get a single WAL record info.
  */
 static void
-GetWALRecordInfo(XLogReaderState *record, XLogRecPtr lsn,
-				 Datum *values, bool *nulls, uint32 ncols)
+GetWALRecordInfo(XLogReaderState *record, Datum *values,
+				 bool *nulls, uint32 ncols)
 {
 	const char *id;
-	RmgrData desc;
-	uint32	fpi_len = 0;
+	RmgrData	desc;
+	uint32		fpi_len = 0;
 	StringInfoData rec_desc;
 	StringInfoData rec_blk_ref;
-	uint32	main_data_len;
-	int	i = 0;
+	uint32		main_data_len;
+	int			i = 0;
 
 	desc = GetRmgr(XLogRecGetRmid(record));
 	id = desc.rm_identify(XLogRecGetInfo(record));
@@ -189,7 +202,7 @@ GetWALRecordInfo(XLogReaderState *record, XLogRecPtr lsn,
 
 	main_data_len = XLogRecGetDataLen(record);
 
-	values[i++] = LSNGetDatum(lsn);
+	values[i++] = LSNGetDatum(record->ReadRecPtr);
 	values[i++] = LSNGetDatum(record->EndRecPtr);
 	values[i++] = LSNGetDatum(XLogRecGetPrev(record));
 	values[i++] = TransactionIdGetDatum(XLogRecGetXid(record));
@@ -214,12 +227,11 @@ Datum
 pg_get_wal_record_info(PG_FUNCTION_ARGS)
 {
 #define PG_GET_WAL_RECORD_INFO_COLS 11
-	Datum	result;
-	Datum	values[PG_GET_WAL_RECORD_INFO_COLS];
-	bool	nulls[PG_GET_WAL_RECORD_INFO_COLS];
+	Datum		result;
+	Datum		values[PG_GET_WAL_RECORD_INFO_COLS] = {0};
+	bool		nulls[PG_GET_WAL_RECORD_INFO_COLS] = {0};
 	XLogRecPtr	lsn;
 	XLogRecPtr	curr_lsn;
-	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
@@ -244,16 +256,17 @@ pg_get_wal_record_info(PG_FUNCTION_ARGS)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	xlogreader = InitXLogReaderState(lsn, &first_record);
+	xlogreader = InitXLogReaderState(lsn);
 
-	(void) ReadNextXLogRecord(xlogreader, first_record);
+	if (!ReadNextXLogRecord(xlogreader))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not read WAL at %X/%X",
+						LSN_FORMAT_ARGS(xlogreader->EndRecPtr))));
 
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
+	GetWALRecordInfo(xlogreader, values, nulls, PG_GET_WAL_RECORD_INFO_COLS);
 
-	GetWALRecordInfo(xlogreader, first_record, values, nulls,
-					 PG_GET_WAL_RECORD_INFO_COLS);
-
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
 	tuple = heap_form_tuple(tupdesc, values, nulls);
@@ -312,41 +325,28 @@ GetWALRecordsInfo(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 				  XLogRecPtr end_lsn)
 {
 #define PG_GET_WAL_RECORDS_INFO_COLS 11
-	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum	values[PG_GET_WAL_RECORDS_INFO_COLS];
-	bool	nulls[PG_GET_WAL_RECORDS_INFO_COLS];
+	Datum		values[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
+	bool		nulls[PG_GET_WAL_RECORDS_INFO_COLS] = {0};
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
-	xlogreader = InitXLogReaderState(start_lsn, &first_record);
+	xlogreader = InitXLogReaderState(start_lsn);
 
-	Assert(xlogreader);
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
-
-	for (;;)
+	while (ReadNextXLogRecord(xlogreader) &&
+		   xlogreader->EndRecPtr <= end_lsn)
 	{
-		(void) ReadNextXLogRecord(xlogreader, first_record);
+		GetWALRecordInfo(xlogreader, values, nulls,
+						 PG_GET_WAL_RECORDS_INFO_COLS);
 
-		if (xlogreader->EndRecPtr <= end_lsn)
-		{
-			GetWALRecordInfo(xlogreader, xlogreader->currRecPtr, values, nulls,
-							 PG_GET_WAL_RECORDS_INFO_COLS);
-
-			tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
-								 values, nulls);
-		}
-
-		/* if we read up to end_lsn, we're done */
-		if (xlogreader->EndRecPtr >= end_lsn)
-			break;
+		tuplestore_putvalues(rsinfo->setResult, rsinfo->setDesc,
+							 values, nulls);
 
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
 
 #undef PG_GET_WAL_RECORDS_INFO_COLS
@@ -406,11 +406,11 @@ FillXLogStatsRow(const char *name,
 				 uint64 tot_len, uint64 total_len,
 				 Datum *values, bool *nulls, uint32 ncols)
 {
-	double	n_pct,
-			rec_len_pct,
-			fpi_len_pct,
-			tot_len_pct;
-	int	i = 0;
+	double		n_pct,
+				rec_len_pct,
+				fpi_len_pct,
+				tot_len_pct;
+	int			i = 0;
 
 	n_pct = 0;
 	if (total_count != 0)
@@ -430,13 +430,13 @@ FillXLogStatsRow(const char *name,
 
 	values[i++] = CStringGetTextDatum(name);
 	values[i++] = Int64GetDatum(n);
-	values[i++] = Float4GetDatum(n_pct);
+	values[i++] = Float8GetDatum(n_pct);
 	values[i++] = Int64GetDatum(rec_len);
-	values[i++] = Float4GetDatum(rec_len_pct);
+	values[i++] = Float8GetDatum(rec_len_pct);
 	values[i++] = Int64GetDatum(fpi_len);
-	values[i++] = Float4GetDatum(fpi_len_pct);
+	values[i++] = Float8GetDatum(fpi_len_pct);
 	values[i++] = Int64GetDatum(tot_len);
-	values[i++] = Float4GetDatum(tot_len_pct);
+	values[i++] = Float8GetDatum(tot_len_pct);
 
 	Assert(i == ncols);
 }
@@ -449,11 +449,11 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 					Datum *values, bool *nulls, uint32 ncols,
 					bool stats_per_record)
 {
-	uint64	total_count = 0;
-	uint64	total_rec_len = 0;
-	uint64	total_fpi_len = 0;
-	uint64	total_len = 0;
-	int	ri;
+	uint64		total_count = 0;
+	uint64		total_rec_len = 0;
+	uint64		total_fpi_len = 0;
+	uint64		total_len = 0;
+	int			ri;
 
 	/*
 	 * Each row shows its percentages of the total, so make a first pass to
@@ -476,7 +476,7 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 		uint64		rec_len;
 		uint64		fpi_len;
 		uint64		tot_len;
-		RmgrData 	desc;
+		RmgrData	desc;
 
 		if (!RmgrIdIsValid(ri))
 			continue;
@@ -488,7 +488,7 @@ GetXLogSummaryStats(XLogStats *stats, ReturnSetInfo *rsinfo,
 
 		if (stats_per_record)
 		{
-			int rj;
+			int			rj;
 
 			for (rj = 0; rj < MAX_XLINFO_TYPES; rj++)
 			{
@@ -542,37 +542,26 @@ GetWalStats(FunctionCallInfo fcinfo, XLogRecPtr start_lsn,
 			XLogRecPtr end_lsn, bool stats_per_record)
 {
 #define PG_GET_WAL_STATS_COLS 9
-	XLogRecPtr	first_record;
 	XLogReaderState *xlogreader;
-	XLogStats stats;
+	XLogStats	stats = {0};
 	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-	Datum	values[PG_GET_WAL_STATS_COLS];
-	bool	nulls[PG_GET_WAL_STATS_COLS];
+	Datum		values[PG_GET_WAL_STATS_COLS] = {0};
+	bool		nulls[PG_GET_WAL_STATS_COLS] = {0};
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
-	xlogreader = InitXLogReaderState(start_lsn, &first_record);
+	xlogreader = InitXLogReaderState(start_lsn);
 
-	MemSet(&stats, 0, sizeof(stats));
-
-	for (;;)
+	while (ReadNextXLogRecord(xlogreader) &&
+		   xlogreader->EndRecPtr <= end_lsn)
 	{
-		(void) ReadNextXLogRecord(xlogreader, first_record);
-
-		if (xlogreader->EndRecPtr <= end_lsn)
-			XLogRecStoreStats(&stats, xlogreader);
-
-		/* if we read up to end_lsn, we're done */
-		if (xlogreader->EndRecPtr >= end_lsn)
-			break;
+		XLogRecStoreStats(&stats, xlogreader);
 
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	pfree(xlogreader->private_data);
 	XLogReaderFree(xlogreader);
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	GetXLogSummaryStats(&stats, rsinfo, values, nulls,
 						PG_GET_WAL_STATS_COLS,
@@ -592,7 +581,7 @@ pg_get_wal_stats(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn;
-	bool	stats_per_record;
+	bool		stats_per_record;
 
 	start_lsn = PG_GETARG_LSN(0);
 	end_lsn = PG_GETARG_LSN(1);
@@ -616,7 +605,7 @@ pg_get_wal_stats_till_end_of_wal(PG_FUNCTION_ARGS)
 {
 	XLogRecPtr	start_lsn;
 	XLogRecPtr	end_lsn = InvalidXLogRecPtr;
-	bool	stats_per_record;
+	bool		stats_per_record;
 
 	start_lsn = PG_GETARG_LSN(0);
 	stats_per_record = PG_GETARG_BOOL(1);

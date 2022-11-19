@@ -354,7 +354,7 @@ void
 parsetext(Oid cfgId, ParsedText *prs, char *buf, int buflen)
 {
 	int			type,
-				lenlemm;
+				lenlemm = 0;	/* silence compiler warning */
 	char	   *lemm = NULL;
 	LexizeData	ldata;
 	TSLexeme   *norms;
@@ -529,7 +529,7 @@ void
 hlparsetext(Oid cfgId, HeadlineParsedText *prs, TSQuery query, char *buf, int buflen)
 {
 	int			type,
-				lenlemm;
+				lenlemm = 0;	/* silence compiler warning */
 	char	   *lemm = NULL;
 	LexizeData	ldata;
 	TSLexeme   *norms;

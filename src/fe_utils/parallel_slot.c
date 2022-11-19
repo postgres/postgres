@@ -12,15 +12,13 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef WIN32
-#define FD_SETSIZE 1024			/* must set before winsock2.h is included */
+#if defined(WIN32) && FD_SETSIZE < 1024
+#error FD_SETSIZE needs to have been increased
 #endif
 
 #include "postgres_fe.h"
 
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif
 
 #include "common/logging.h"
 #include "fe_utils/cancel.h"
@@ -237,7 +235,7 @@ wait_on_slots(ParallelSlotArray *sa)
 	if (cancelconn == NULL)
 		return false;
 
-	SetCancelConn(sa->slots->connection);
+	SetCancelConn(cancelconn);
 	i = select_loop(maxFd, &slotset);
 	ResetCancelConn();
 

@@ -17,14 +17,14 @@
 #include "postgres_fe.h"
 #endif
 
+static void log_error(const char *fmt,...) pg_attribute_printf(1, 2);
+
 
 /*
  * Utility wrapper for frontend and backend when reporting an error
  * message.
  */
-static
-pg_attribute_printf(1, 2)
-void
+static void
 log_error(const char *fmt,...)
 {
 	va_list		ap;

@@ -255,8 +255,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 
 			if (confirmed)
 			{
-				if (current->value)
-					pg_free(current->value);
+				pg_free(current->value);
 				current->value = new_value;
 
 				/*
@@ -272,7 +271,7 @@ SetVariable(VariableSpace space, const char *name, const char *value)
 					free(current);
 				}
 			}
-			else if (new_value)
+			else
 				pg_free(new_value); /* current->value is left unchanged */
 
 			return confirmed;

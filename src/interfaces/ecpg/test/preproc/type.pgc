@@ -5,7 +5,8 @@ EXEC SQL include ../regression;
 
 EXEC SQL typedef long mmInteger;
 EXEC SQL typedef char mmChar;
-EXEC SQL typedef short mmSmallInt;
+EXEC SQL typedef short access;	/* matches an unreserved SQL keyword */
+EXEC SQL typedef access access_renamed;
 
 exec sql type string is char[11];
 typedef char string[11];
@@ -18,7 +19,7 @@ struct TBempl
 {
   mmInteger idnum;
   mmChar name[21];
-  mmSmallInt accs;
+  access accs;
 };
 EXEC SQL END DECLARE SECTION;
 
@@ -28,6 +29,7 @@ main (void)
   EXEC SQL BEGIN DECLARE SECTION;
   struct TBempl empl;
   string str;
+  access accs_val = 320;
   c ptr = NULL;
   struct varchar
   {
@@ -55,7 +57,7 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  EXEC SQL insert into empl values (1, 'user name', 320, 'first str', 'second str', 'third str');
+  EXEC SQL insert into empl values (1, 'user name', :accs_val, 'first str', 'second str', 'third str');
   if (sqlca.sqlcode)
     {
       printf ("insert error = %ld\n", sqlca.sqlcode);

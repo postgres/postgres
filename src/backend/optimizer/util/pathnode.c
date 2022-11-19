@@ -1326,23 +1326,32 @@ create_append_path(PlannerInfo *root,
 	Assert(!parallel_aware || pathnode->path.parallel_safe);
 
 	/*
-	 * If there's exactly one child path, the Append is a no-op and will be
-	 * discarded later (in setrefs.c); therefore, we can inherit the child's
-	 * size and cost, as well as its pathkeys if any (overriding whatever the
-	 * caller might've said).  Otherwise, we must do the normal costsize
+	 * If there's exactly one child path then the output of the Append is
+	 * necessarily ordered the same as the child's, so we can inherit the
+	 * child's pathkeys if any, overriding whatever the caller might've said.
+	 * Furthermore, if the child's parallel awareness matches the Append's,
+	 * then the Append is a no-op and will be discarded later (in setrefs.c).
+	 * Then we can inherit the child's size and cost too, effectively charging
+	 * zero for the Append.  Otherwise, we must do the normal costsize
 	 * calculation.
 	 */
 	if (list_length(pathnode->subpaths) == 1)
 	{
 		Path	   *child = (Path *) linitial(pathnode->subpaths);
 
-		pathnode->path.rows = child->rows;
-		pathnode->path.startup_cost = child->startup_cost;
-		pathnode->path.total_cost = child->total_cost;
+		if (child->parallel_aware == parallel_aware)
+		{
+			pathnode->path.rows = child->rows;
+			pathnode->path.startup_cost = child->startup_cost;
+			pathnode->path.total_cost = child->total_cost;
+		}
+		else
+			cost_append(pathnode);
+		/* Must do this last, else cost_append complains */
 		pathnode->path.pathkeys = child->pathkeys;
 	}
 	else
-		cost_append(pathnode, root);
+		cost_append(pathnode);
 
 	/* If the caller provided a row estimate, override the computed value. */
 	if (rows >= 0)
@@ -1476,10 +1485,13 @@ create_merge_append_path(PlannerInfo *root,
 
 	/*
 	 * Now we can compute total costs of the MergeAppend.  If there's exactly
-	 * one child path, the MergeAppend is a no-op and will be discarded later
-	 * (in setrefs.c); otherwise we do the normal cost calculation.
+	 * one child path and its parallel awareness matches that of the
+	 * MergeAppend, then the MergeAppend is a no-op and will be discarded
+	 * later (in setrefs.c); otherwise we do the normal cost calculation.
 	 */
-	if (list_length(subpaths) == 1)
+	if (list_length(subpaths) == 1 &&
+		((Path *) linitial(subpaths))->parallel_aware ==
+		pathnode->path.parallel_aware)
 	{
 		pathnode->path.startup_cost = input_startup_cost;
 		pathnode->path.total_cost = input_total_cost;
@@ -1986,9 +1998,15 @@ create_gather_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
  * create_subqueryscan_path
  *	  Creates a path corresponding to a scan of a subquery,
  *	  returning the pathnode.
+ *
+ * Caller must pass trivial_pathtarget = true if it believes rel->reltarget to
+ * be trivial, ie just a fetch of all the subquery output columns in order.
+ * While we could determine that here, the caller can usually do it more
+ * efficiently (or at least amortize it over multiple calls).
  */
 SubqueryScanPath *
 create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
+						 bool trivial_pathtarget,
 						 List *pathkeys, Relids required_outer)
 {
 	SubqueryScanPath *pathnode = makeNode(SubqueryScanPath);
@@ -2005,7 +2023,8 @@ create_subqueryscan_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath,
 	pathnode->path.pathkeys = pathkeys;
 	pathnode->subpath = subpath;
 
-	cost_subqueryscan(pathnode, root, rel, pathnode->path.param_info);
+	cost_subqueryscan(pathnode, root, rel, pathnode->path.param_info,
+					  trivial_pathtarget);
 
 	return pathnode;
 }
@@ -3158,7 +3177,6 @@ create_agg_path(PlannerInfo *root,
  * 'having_qual' is the HAVING quals if any
  * 'rollups' is a list of RollupData nodes
  * 'agg_costs' contains cost info about the aggregate functions to be computed
- * 'numGroups' is the estimated total number of groups
  */
 GroupingSetsPath *
 create_groupingsets_path(PlannerInfo *root,
@@ -3167,8 +3185,7 @@ create_groupingsets_path(PlannerInfo *root,
 						 List *having_qual,
 						 AggStrategy aggstrategy,
 						 List *rollups,
-						 const AggClauseCosts *agg_costs,
-						 double numGroups)
+						 const AggClauseCosts *agg_costs)
 {
 	GroupingSetsPath *pathnode = makeNode(GroupingSetsPath);
 	PathTarget *target = rel->reltarget;
@@ -3613,7 +3630,8 @@ create_lockrows_path(PlannerInfo *root, RelOptInfo *rel,
 
 /*
  * create_modifytable_path
- *	  Creates a pathnode that represents performing INSERT/UPDATE/DELETE mods
+ *	  Creates a pathnode that represents performing INSERT/UPDATE/DELETE/MERGE
+ *	  mods
  *
  * 'rel' is the parent relation associated with the result
  * 'subpath' is a Path producing source data
@@ -3903,10 +3921,23 @@ reparameterize_path(PlannerInfo *root, Path *path,
 		case T_SubqueryScan:
 			{
 				SubqueryScanPath *spath = (SubqueryScanPath *) path;
+				Path	   *subpath = spath->subpath;
+				bool		trivial_pathtarget;
+
+				/*
+				 * If existing node has zero extra cost, we must have decided
+				 * its target is trivial.  (The converse is not true, because
+				 * it might have a trivial target but quals to enforce; but in
+				 * that case the new node will too, so it doesn't matter
+				 * whether we get the right answer here.)
+				 */
+				trivial_pathtarget =
+					(subpath->total_cost == spath->path.total_cost);
 
 				return (Path *) create_subqueryscan_path(root,
 														 rel,
-														 spath->subpath,
+														 subpath,
+														 trivial_pathtarget,
 														 spath->path.pathkeys,
 														 required_outer);
 			}
@@ -3996,8 +4027,8 @@ reparameterize_path_by_child(PlannerInfo *root, Path *path,
 #define ADJUST_CHILD_ATTRS(node) \
 	((node) = \
 	 (List *) adjust_appendrel_attrs_multilevel(root, (Node *) (node), \
-												child_rel->relids, \
-												child_rel->top_parent_relids))
+												child_rel, \
+												child_rel->top_parent))
 
 #define REPARAMETERIZE_CHILD_PATH(path) \
 do { \
@@ -4214,8 +4245,8 @@ do { \
 	old_ppi = new_path->param_info;
 	required_outer =
 		adjust_child_relids_multilevel(root, old_ppi->ppi_req_outer,
-									   child_rel->relids,
-									   child_rel->top_parent_relids);
+									   child_rel,
+									   child_rel->top_parent);
 
 	/* If we already have a PPI for this parameterization, just return it */
 	new_ppi = find_param_path_info(new_path->parent, required_outer);

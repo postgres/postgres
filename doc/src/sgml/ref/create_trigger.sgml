@@ -131,7 +131,7 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name
      <row>
       <entry align="center"><command>TRUNCATE</command></entry>
       <entry align="center">&mdash;</entry>
-      <entry align="center">Tables</entry>
+      <entry align="center">Tables and foreign tables</entry>
      </row>
      <row>
       <entry align="center" morerows="1"><literal>AFTER</literal></entry>
@@ -142,7 +142,7 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER <replaceable class="parameter">name
      <row>
       <entry align="center"><command>TRUNCATE</command></entry>
       <entry align="center">&mdash;</entry>
-      <entry align="center">Tables</entry>
+      <entry align="center">Tables and foreign tables</entry>
      </row>
      <row>
       <entry align="center" morerows="1"><literal>INSTEAD OF</literal></entry>

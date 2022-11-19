@@ -16,7 +16,7 @@ $primary->start;
 
 # Include a user-defined tablespace in the hopes of detecting problems in that
 # area.
-my $source_ts_path   =PostgreSQL::Test::Utils::tempdir_short();
+my $source_ts_path   = PostgreSQL::Test::Utils::tempdir_short();
 my $source_ts_prefix = $source_ts_path;
 $source_ts_prefix =~ s!(^[A-Z]:/[^/]*)/.*!$1!;
 

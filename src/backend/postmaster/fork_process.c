@@ -37,13 +37,8 @@ fork_process(void)
 
 	/*
 	 * Flush stdio channels just before fork, to avoid double-output problems.
-	 * Ideally we'd use fflush(NULL) here, but there are still a few non-ANSI
-	 * stdio libraries out there (like SunOS 4.1.x) that coredump if we do.
-	 * Presently stdout and stderr are the only stdio output channels used by
-	 * the postmaster, so fflush'ing them should be sufficient.
 	 */
-	fflush(stdout);
-	fflush(stderr);
+	fflush(NULL);
 
 #ifdef LINUX_PROFILE
 

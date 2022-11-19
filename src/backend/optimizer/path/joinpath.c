@@ -610,7 +610,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 											hash_operators,
 											extra->inner_unique,
 											binary_mode,
-											outer_path->parent->rows);
+											outer_path->rows);
 	}
 
 	return NULL;
@@ -1258,7 +1258,7 @@ sort_inner_and_outer(PlannerInfo *root,
 
 	foreach(l, all_pathkeys)
 	{
-		PathKey	   *front_pathkey = (PathKey *) lfirst(l);
+		PathKey    *front_pathkey = (PathKey *) lfirst(l);
 		List	   *cur_mergeclauses;
 		List	   *outerkeys;
 		List	   *innerkeys;

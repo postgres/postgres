@@ -26,7 +26,7 @@ extern PGDLLIMPORT post_parse_analyze_hook_type post_parse_analyze_hook;
 
 
 extern Query *parse_analyze_fixedparams(RawStmt *parseTree, const char *sourceText,
-							const Oid *paramTypes, int numParams, QueryEnvironment *queryEnv);
+										const Oid *paramTypes, int numParams, QueryEnvironment *queryEnv);
 extern Query *parse_analyze_varparams(RawStmt *parseTree, const char *sourceText,
 									  Oid **paramTypes, int *numParams, QueryEnvironment *queryEnv);
 extern Query *parse_analyze_withcb(RawStmt *parseTree, const char *sourceText,
@@ -43,7 +43,7 @@ extern List *transformInsertRow(ParseState *pstate, List *exprlist,
 								List *stmtcols, List *icolumns, List *attrnos,
 								bool strip_indirection);
 extern List *transformUpdateTargetList(ParseState *pstate,
-									   List *targetList);
+									   List *origTlist);
 extern Query *transformTopLevelStmt(ParseState *pstate, RawStmt *parseTree);
 extern Query *transformStmt(ParseState *pstate, Node *parseTree);
 

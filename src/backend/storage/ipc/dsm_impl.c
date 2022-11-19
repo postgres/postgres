@@ -49,19 +49,17 @@
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 #ifndef WIN32
 #include <sys/mman.h>
-#endif
-#include <sys/stat.h>
-#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>
-#endif
-#ifdef HAVE_SYS_SHM_H
 #include <sys/shm.h>
+#include <sys/stat.h>
 #endif
 
 #include "common/file_perm.h"
+#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "portability/mem.h"
@@ -111,7 +109,7 @@ const struct config_enum_entry dynamic_shared_memory_options[] = {
 };
 
 /* Implementation selector. */
-int			dynamic_shared_memory_type;
+int			dynamic_shared_memory_type = DEFAULT_DYNAMIC_SHARED_MEMORY_TYPE;
 
 /* Amount of space reserved for DSM segments in the main area. */
 int			min_dynamic_shared_memory;
@@ -261,7 +259,7 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 	if ((fd = shm_open(name, flags, PG_FILE_MODE_OWNER)) == -1)
 	{
 		ReleaseExternalFD();
-		if (errno != EEXIST)
+		if (op == DSM_OP_ATTACH || errno != EEXIST)
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
 					 errmsg("could not open shared memory segment \"%s\": %m",
@@ -305,14 +303,6 @@ dsm_impl_posix(dsm_op op, dsm_handle handle, Size request_size,
 		ReleaseExternalFD();
 		shm_unlink(name);
 		errno = save_errno;
-
-		/*
-		 * If we received a query cancel or termination signal, we will have
-		 * EINTR set here.  If the caller said that errors are OK here, check
-		 * for interrupts immediately.
-		 */
-		if (errno == EINTR && elevel >= ERROR)
-			CHECK_FOR_INTERRUPTS();
 
 		ereport(elevel,
 				(errcode_for_dynamic_shared_memory(),
@@ -361,41 +351,58 @@ static int
 dsm_impl_posix_resize(int fd, off_t size)
 {
 	int			rc;
-
-	/* Truncate (or extend) the file to the requested size. */
-	rc = ftruncate(fd, size);
+	int			save_errno;
+	sigset_t	save_sigmask;
 
 	/*
-	 * On Linux, a shm_open fd is backed by a tmpfs file.  After resizing with
-	 * ftruncate, the file may contain a hole.  Accessing memory backed by a
+	 * Block all blockable signals, except SIGQUIT.  posix_fallocate() can run
+	 * for quite a long time, and is an all-or-nothing operation.  If we
+	 * allowed SIGUSR1 to interrupt us repeatedly (for example, due to recovery
+	 * conflicts), the retry loop might never succeed.
+	 */
+	if (IsUnderPostmaster)
+		sigprocmask(SIG_SETMASK, &BlockSig, &save_sigmask);
+
+	pgstat_report_wait_start(WAIT_EVENT_DSM_ALLOCATE);
+#if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
+	/*
+	 * On Linux, a shm_open fd is backed by a tmpfs file.  If we were to use
+	 * ftruncate, the file would contain a hole.  Accessing memory backed by a
 	 * hole causes tmpfs to allocate pages, which fails with SIGBUS if there
 	 * is no more tmpfs space available.  So we ask tmpfs to allocate pages
 	 * here, so we can fail gracefully with ENOSPC now rather than risking
 	 * SIGBUS later.
+	 *
+	 * We still use a traditional EINTR retry loop to handle SIGCONT.
+	 * posix_fallocate() doesn't restart automatically, and we don't want
+	 * this to fail if you attach a debugger.
 	 */
-#if defined(HAVE_POSIX_FALLOCATE) && defined(__linux__)
-	if (rc == 0)
+	do
 	{
-		/*
-		 * We may get interrupted.  If so, just retry unless there is an
-		 * interrupt pending.  This avoids the possibility of looping forever
-		 * if another backend is repeatedly trying to interrupt us.
-		 */
-		pgstat_report_wait_start(WAIT_EVENT_DSM_FILL_ZERO_WRITE);
-		do
-		{
-			rc = posix_fallocate(fd, 0, size);
-		} while (rc == EINTR && !(ProcDiePending || QueryCancelPending));
-		pgstat_report_wait_end();
+		rc = posix_fallocate(fd, 0, size);
+	} while (rc == EINTR);
 
-		/*
-		 * The caller expects errno to be set, but posix_fallocate() doesn't
-		 * set it.  Instead it returns error numbers directly.  So set errno,
-		 * even though we'll also return rc to indicate success or failure.
-		 */
-		errno = rc;
+	/*
+	 * The caller expects errno to be set, but posix_fallocate() doesn't
+	 * set it.  Instead it returns error numbers directly.  So set errno,
+	 * even though we'll also return rc to indicate success or failure.
+	 */
+	errno = rc;
+#else
+	/* Extend the file to the requested size. */
+	do
+	{
+		rc = ftruncate(fd, size);
+	} while (rc < 0 && errno == EINTR);
+#endif
+	pgstat_report_wait_end();
+
+	if (IsUnderPostmaster)
+	{
+		save_errno = errno;
+		sigprocmask(SIG_SETMASK, &save_sigmask, NULL);
+		errno = save_errno;
 	}
-#endif							/* HAVE_POSIX_FALLOCATE && __linux__ */
 
 	return rc;
 }
@@ -500,7 +507,7 @@ dsm_impl_sysv(dsm_op op, dsm_handle handle, Size request_size,
 
 		if ((ident = shmget(key, segsize, flags)) == -1)
 		{
-			if (errno != EEXIST)
+			if (op == DSM_OP_ATTACH || errno != EEXIST)
 			{
 				int			save_errno = errno;
 
@@ -822,7 +829,7 @@ dsm_impl_mmap(dsm_op op, dsm_handle handle, Size request_size,
 	flags = O_RDWR | (op == DSM_OP_CREATE ? O_CREAT | O_EXCL : 0);
 	if ((fd = OpenTransientFile(name, flags)) == -1)
 	{
-		if (errno != EEXIST)
+		if (op == DSM_OP_ATTACH || errno != EEXIST)
 			ereport(elevel,
 					(errcode_for_dynamic_shared_memory(),
 					 errmsg("could not open shared memory segment \"%s\": %m",

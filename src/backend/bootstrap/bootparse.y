@@ -36,10 +36,7 @@
 /*
  * Bison doesn't allocate anything that needs to live across parser calls,
  * so we can easily have it use palloc instead of malloc.  This prevents
- * memory leaks if we error out during parsing.  Note this only works with
- * bison >= 2.0.  However, in bison 1.875 the default is to use alloca()
- * if possible, so there's not really much problem anyhow, at least if
- * you're building with gcc.
+ * memory leaks if we error out during parsing.
  */
 #define YYMALLOC palloc
 #define YYFREE   pfree
@@ -167,9 +164,9 @@ Boot_CreateStmt:
 				}
 		  RPAREN
 				{
-					TupleDesc tupdesc;
-					bool	shared_relation;
-					bool	mapped_relation;
+					TupleDesc	tupdesc;
+					bool		shared_relation;
+					bool		mapped_relation;
 
 					do_start();
 
@@ -218,7 +215,7 @@ Boot_CreateStmt:
 					}
 					else
 					{
-						Oid id;
+						Oid			id;
 
 						id = heap_create_with_catalog($2,
 													  PG_CATALOG_NAMESPACE,
@@ -269,8 +266,8 @@ Boot_InsertStmt:
 Boot_DeclareIndexStmt:
 		  XDECLARE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
-					IndexStmt *stmt = makeNode(IndexStmt);
-					Oid		relationId;
+					IndexStmt  *stmt = makeNode(IndexStmt);
+					Oid			relationId;
 
 					elog(DEBUG4, "creating index \"%s\"", $3);
 
@@ -287,9 +284,9 @@ Boot_DeclareIndexStmt:
 					stmt->excludeOpNames = NIL;
 					stmt->idxcomment = NULL;
 					stmt->indexOid = InvalidOid;
-					stmt->oldNode = InvalidOid;
+					stmt->oldNumber = InvalidRelFileNumber;
 					stmt->oldCreateSubid = InvalidSubTransactionId;
-					stmt->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
+					stmt->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
 					stmt->unique = false;
 					stmt->primary = false;
 					stmt->isconstraint = false;
@@ -321,8 +318,8 @@ Boot_DeclareIndexStmt:
 Boot_DeclareUniqueIndexStmt:
 		  XDECLARE UNIQUE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
-					IndexStmt *stmt = makeNode(IndexStmt);
-					Oid		relationId;
+					IndexStmt  *stmt = makeNode(IndexStmt);
+					Oid			relationId;
 
 					elog(DEBUG4, "creating unique index \"%s\"", $4);
 
@@ -339,9 +336,9 @@ Boot_DeclareUniqueIndexStmt:
 					stmt->excludeOpNames = NIL;
 					stmt->idxcomment = NULL;
 					stmt->indexOid = InvalidOid;
-					stmt->oldNode = InvalidOid;
+					stmt->oldNumber = InvalidRelFileNumber;
 					stmt->oldCreateSubid = InvalidSubTransactionId;
-					stmt->oldFirstRelfilenodeSubid = InvalidSubTransactionId;
+					stmt->oldFirstRelfilelocatorSubid = InvalidSubTransactionId;
 					stmt->unique = true;
 					stmt->primary = false;
 					stmt->isconstraint = false;
@@ -400,7 +397,8 @@ boot_index_params:
 boot_index_param:
 		boot_ident boot_ident
 				{
-					IndexElem *n = makeNode(IndexElem);
+					IndexElem  *n = makeNode(IndexElem);
+
 					n->name = $1;
 					n->expr = NULL;
 					n->indexcolname = NULL;
@@ -487,5 +485,3 @@ boot_ident:
 		| XNULL			{ $$ = pstrdup($1); }
 		;
 %%
-
-#include "bootscanner.c"

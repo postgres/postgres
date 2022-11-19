@@ -1,84 +1,124 @@
 # LANGUAGE message translation file for pg_test_fsync
-# Copyright (C) 2018 PostgreSQL Global Development Group
+# Copyright (C) 2022 PostgreSQL Global Development Group
 # This file is distributed under the same license as the pg_test_fsync (PostgreSQL) package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2018.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_test_fsync (PostgreSQL) 10\n"
-"Report-Msgid-Bugs-To: pgsql-bugs@postgresql.org\n"
-"POT-Creation-Date: 2018-01-30 16:17+0900\n"
-"PO-Revision-Date: 2018-01-30 17:07+0900\n"
+"Project-Id-Version: pg_test_fsync (PostgreSQL 15)\n"
+"Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
+"POT-Creation-Date: 2022-05-11 14:17+0900\n"
+"PO-Revision-Date: 2022-05-10 15:25+0900\n"
+"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
+"Language-Team: \n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"Last-Translator: Michihide Hotta <hotta@net-newbie.com>\n"
-"Language-Team: \n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 1.8.13\n"
+
+#: ../../../src/common/logging.c:277
+#, c-format
+msgid "error: "
+msgstr "エラー: "
+
+#: ../../../src/common/logging.c:284
+#, c-format
+msgid "warning: "
+msgstr "警告: "
+
+#: ../../../src/common/logging.c:295
+#, c-format
+msgid "detail: "
+msgstr "詳細: "
+
+#: ../../../src/common/logging.c:302
+#, c-format
+msgid "hint: "
+msgstr "ヒント: "
 
 #. translator: maintain alignment with NA_FORMAT
-#: pg_test_fsync.c:30
+#: pg_test_fsync.c:32
 #, c-format
 msgid "%13.3f ops/sec  %6.0f usecs/op\n"
 msgstr "%13.3f 操作/秒  %6.0f マイクロ秒/操作\n"
 
-#: pg_test_fsync.c:49
+#: pg_test_fsync.c:50
 #, c-format
-msgid "Could not create thread for alarm\n"
-msgstr "アラーム用のスレッドを生成できませんでした\n"
+msgid "could not create thread for alarm"
+msgstr "アラーム用のスレッドを生成できませんでした"
 
-#: pg_test_fsync.c:154
+#: pg_test_fsync.c:95
+#, c-format
+msgid "%s: %m"
+msgstr "%s: %m"
+
+#: pg_test_fsync.c:159
 #, c-format
 msgid "Usage: %s [-f FILENAME] [-s SECS-PER-TEST]\n"
 msgstr "使用法: %s [-f ファイル名] [-s テストあたりの秒数]\n"
 
-#: pg_test_fsync.c:178 pg_test_fsync.c:190
+#: pg_test_fsync.c:185
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "\"%s --help\" で詳細を確認してください。\n"
+msgid "invalid argument for option %s"
+msgstr "オプション%sの引数が不正です"
 
-#: pg_test_fsync.c:188
+#: pg_test_fsync.c:186 pg_test_fsync.c:198 pg_test_fsync.c:207
 #, c-format
-msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: コマンドライン引数が多すぎます（先頭は \"%s\"）\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "詳細は\"%s --help\"を実行してください。"
 
-#: pg_test_fsync.c:195
+#: pg_test_fsync.c:192
 #, c-format
-msgid "%d second per test\n"
-msgid_plural "%d seconds per test\n"
-msgstr[0] "テスト１件あたり %d 秒\n"
+msgid "%s must be in range %u..%u"
+msgstr "%sは%u..%uの範囲でなければなりません"
 
-#: pg_test_fsync.c:200
+#: pg_test_fsync.c:205
+#, c-format
+msgid "too many command-line arguments (first is \"%s\")"
+msgstr "コマンドライン引数が多すぎます。(先頭は\"%s\")"
+
+#: pg_test_fsync.c:211
+#, c-format
+msgid "%u second per test\n"
+msgid_plural "%u seconds per test\n"
+msgstr[0] "テスト１件あたり %u秒\n"
+
+#: pg_test_fsync.c:216
 #, c-format
 msgid "O_DIRECT supported on this platform for open_datasync and open_sync.\n"
 msgstr "このプラットフォームでは open_datasync と open_sync について O_DIRECT がサポートされています。\n"
 
-#: pg_test_fsync.c:202
+#: pg_test_fsync.c:218
+#, c-format
+msgid "F_NOCACHE supported on this platform for open_datasync and open_sync.\n"
+msgstr "このプラットフォームでは open_datasync と open_sync について F_NOCACHE がサポートされています。\n"
+
+#: pg_test_fsync.c:220
 #, c-format
 msgid "Direct I/O is not supported on this platform.\n"
 msgstr "このプラットフォームではダイレクト I/O がサポートされていません。\n"
 
-#: pg_test_fsync.c:227 pg_test_fsync.c:291 pg_test_fsync.c:315
-#: pg_test_fsync.c:338 pg_test_fsync.c:479 pg_test_fsync.c:491
-#: pg_test_fsync.c:507 pg_test_fsync.c:513 pg_test_fsync.c:538
+#: pg_test_fsync.c:245 pg_test_fsync.c:336 pg_test_fsync.c:361
+#: pg_test_fsync.c:385 pg_test_fsync.c:529 pg_test_fsync.c:541
+#: pg_test_fsync.c:557 pg_test_fsync.c:563 pg_test_fsync.c:585
 msgid "could not open output file"
 msgstr "出力ファイルをオープンできませんでした"
 
-#: pg_test_fsync.c:230 pg_test_fsync.c:272 pg_test_fsync.c:297
-#: pg_test_fsync.c:321 pg_test_fsync.c:344 pg_test_fsync.c:382
-#: pg_test_fsync.c:440 pg_test_fsync.c:481 pg_test_fsync.c:509
-#: pg_test_fsync.c:540
+#: pg_test_fsync.c:249 pg_test_fsync.c:319 pg_test_fsync.c:345
+#: pg_test_fsync.c:370 pg_test_fsync.c:394 pg_test_fsync.c:433
+#: pg_test_fsync.c:492 pg_test_fsync.c:531 pg_test_fsync.c:559
+#: pg_test_fsync.c:590
 msgid "write failed"
 msgstr "書き込みに失敗"
 
-#: pg_test_fsync.c:234 pg_test_fsync.c:323 pg_test_fsync.c:346
-#: pg_test_fsync.c:483 pg_test_fsync.c:515
+#: pg_test_fsync.c:253 pg_test_fsync.c:372 pg_test_fsync.c:396
+#: pg_test_fsync.c:533 pg_test_fsync.c:565
 msgid "fsync failed"
 msgstr "fsync に失敗"
 
-#: pg_test_fsync.c:248
+#: pg_test_fsync.c:292
 #, c-format
 msgid ""
 "\n"
@@ -87,7 +127,7 @@ msgstr ""
 "\n"
 "１個の %dkB write を使ってファイル同期メソッドを比較します:\n"
 
-#: pg_test_fsync.c:250
+#: pg_test_fsync.c:294
 #, c-format
 msgid ""
 "\n"
@@ -96,26 +136,21 @@ msgstr ""
 "\n"
 "２個の %dkB write を使ってファイル同期メソッドを比較します:\n"
 
-#: pg_test_fsync.c:251
+#: pg_test_fsync.c:295
 #, c-format
 msgid "(in wal_sync_method preference order, except fdatasync is Linux's default)\n"
 msgstr "（wal_sync_method の指定順の中で、Linux のデフォルトである fdatasync は除きます）\n"
 
-#: pg_test_fsync.c:262 pg_test_fsync.c:365 pg_test_fsync.c:431
+#: pg_test_fsync.c:306 pg_test_fsync.c:413 pg_test_fsync.c:480
 msgid "n/a*"
 msgstr "利用不可*"
 
-#: pg_test_fsync.c:274 pg_test_fsync.c:300 pg_test_fsync.c:325
-#: pg_test_fsync.c:348 pg_test_fsync.c:384 pg_test_fsync.c:442
-msgid "seek failed"
-msgstr "seek 失敗"
-
-#: pg_test_fsync.c:280 pg_test_fsync.c:305 pg_test_fsync.c:353
-#: pg_test_fsync.c:390 pg_test_fsync.c:448
+#: pg_test_fsync.c:325 pg_test_fsync.c:351 pg_test_fsync.c:401
+#: pg_test_fsync.c:439 pg_test_fsync.c:498
 msgid "n/a"
 msgstr "利用不可"
 
-#: pg_test_fsync.c:395
+#: pg_test_fsync.c:444
 #, c-format
 msgid ""
 "* This file system and its mount options do not support direct\n"
@@ -124,7 +159,7 @@ msgstr ""
 "* このファイルシステムとそのマウントオプションではダイレクト I/O をサポート\n"
 "  していません。例）ジャーナルモードの ext4。\n"
 
-#: pg_test_fsync.c:403
+#: pg_test_fsync.c:452
 #, c-format
 msgid ""
 "\n"
@@ -133,7 +168,7 @@ msgstr ""
 "\n"
 "open_sync を異なった write サイズで比較します:\n"
 
-#: pg_test_fsync.c:404
+#: pg_test_fsync.c:453
 #, c-format
 msgid ""
 "(This is designed to compare the cost of writing 16kB in different write\n"
@@ -142,27 +177,27 @@ msgstr ""
 "(これは open_sync の write サイズを変えながら、16kB write のコストを\n"
 "比較するよう指定されています。)\n"
 
-#: pg_test_fsync.c:407
+#: pg_test_fsync.c:456
 msgid " 1 * 16kB open_sync write"
 msgstr " 1 * 16kB open_sync write"
 
-#: pg_test_fsync.c:408
+#: pg_test_fsync.c:457
 msgid " 2 *  8kB open_sync writes"
 msgstr " 2 *  8kB open_sync writes"
 
-#: pg_test_fsync.c:409
+#: pg_test_fsync.c:458
 msgid " 4 *  4kB open_sync writes"
 msgstr " 4 *  4kB open_sync writes"
 
-#: pg_test_fsync.c:410
+#: pg_test_fsync.c:459
 msgid " 8 *  2kB open_sync writes"
 msgstr " 8 *  2kB open_sync writes"
 
-#: pg_test_fsync.c:411
+#: pg_test_fsync.c:460
 msgid "16 *  1kB open_sync writes"
 msgstr "16 *  1kB open_sync writes"
 
-#: pg_test_fsync.c:464
+#: pg_test_fsync.c:514
 #, c-format
 msgid ""
 "\n"
@@ -171,7 +206,7 @@ msgstr ""
 "\n"
 "書き込みなしのファイルディスクリプタ上の fsync の方が優れているかをテストします:\n"
 
-#: pg_test_fsync.c:465
+#: pg_test_fsync.c:515
 #, c-format
 msgid ""
 "(If the times are similar, fsync() can sync data written on a different\n"
@@ -180,7 +215,7 @@ msgstr ""
 "（もし実行時間が同等であれば、fsync() は異なったファイルディスクリプタ上で\n"
 "データを sync できることになります。）\n"
 
-#: pg_test_fsync.c:530
+#: pg_test_fsync.c:580
 #, c-format
 msgid ""
 "\n"
@@ -189,7 +224,14 @@ msgstr ""
 "\n"
 "%dkB の sync なし write:\n"
 
-#: pg_test_fsync.c:607
-#, c-format
-msgid "%s: %s\n"
-msgstr "%s: %s\n"
+#~ msgid "Try \"%s --help\" for more information.\n"
+#~ msgstr "\"%s --help\" で詳細を確認してください。\n"
+
+#~ msgid "%s: too many command-line arguments (first is \"%s\")\n"
+#~ msgstr "%s: コマンドライン引数が多すぎます（先頭は \"%s\"）\n"
+
+#~ msgid "seek failed"
+#~ msgstr "seek 失敗"
+
+#~ msgid "%s: %s\n"
+#~ msgstr "%s: %s\n"

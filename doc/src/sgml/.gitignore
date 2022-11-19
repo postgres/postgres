@@ -18,7 +18,7 @@
 /keywords-table.sgml
 /version.sgml
 # Assorted byproducts from building the above
-/postgres.xml
+/postgres-full.xml
 /INSTALL.html
 /INSTALL.xml
 /postgres-US.fo

@@ -1349,8 +1349,23 @@ set_subqueryscan_references(PlannerInfo *root,
  * We can delete it if it has no qual to check and the targetlist just
  * regurgitates the output of the child plan.
  *
- * This might be called repeatedly on a SubqueryScan node, so we cache the
- * result in the SubqueryScan node to avoid repeated computation.
+ * This can be called from mark_async_capable_plan(), a helper function for
+ * create_append_plan(), before set_subqueryscan_references(), to determine
+ * triviality of a SubqueryScan that is a child of an Append node.  So we
+ * cache the result in the SubqueryScan node to avoid repeated computation.
+ *
+ * Note: when called from mark_async_capable_plan(), we determine the result
+ * before running finalize_plan() on the SubqueryScan node (if needed) and
+ * set_plan_references() on the subplan tree, but this would be safe, because
+ * 1) finalize_plan() doesn't modify the tlist or quals for the SubqueryScan
+ *	  node (or that for any plan node in the subplan tree), and
+ * 2) set_plan_references() modifies the tlist for every plan node in the
+ *	  subplan tree, but keeps const/resjunk columns as const/resjunk ones and
+ *	  preserves the length and order of the tlist, and
+ * 3) set_plan_references() might delete the topmost plan node like an Append
+ *	  or MergeAppend from the subplan tree and pull up the child plan node,
+ *	  but in that case, the tlist for the child plan node exactly matches the
+ *	  parent.
  */
 bool
 trivial_subqueryscan(SubqueryScan *plan)
@@ -1359,7 +1374,7 @@ trivial_subqueryscan(SubqueryScan *plan)
 	ListCell   *lp,
 			   *lc;
 
-	/* We might have detected this already (see mark_async_capable_plan) */
+	/* We might have detected this already; in which case reuse the result */
 	if (plan->scanstatus == SUBQUERY_SCAN_TRIVIAL)
 		return true;
 	if (plan->scanstatus == SUBQUERY_SCAN_NONTRIVIAL)
@@ -1621,15 +1636,18 @@ set_append_references(PlannerInfo *root,
 	/*
 	 * See if it's safe to get rid of the Append entirely.  For this to be
 	 * safe, there must be only one child plan and that child plan's parallel
-	 * awareness must match that of the Append's.  The reason for the latter
-	 * is that the if the Append is parallel aware and the child is not then
-	 * the calling plan may execute the non-parallel aware child multiple
-	 * times.
+	 * awareness must match the Append's.  The reason for the latter is that
+	 * if the Append is parallel aware and the child is not, then the calling
+	 * plan may execute the non-parallel aware child multiple times.  (If you
+	 * change these rules, update create_append_path to match.)
 	 */
-	if (list_length(aplan->appendplans) == 1 &&
-		((Plan *) linitial(aplan->appendplans))->parallel_aware == aplan->plan.parallel_aware)
-		return clean_up_removed_plan_level((Plan *) aplan,
-										   (Plan *) linitial(aplan->appendplans));
+	if (list_length(aplan->appendplans) == 1)
+	{
+		Plan	   *p = (Plan *) linitial(aplan->appendplans);
+
+		if (p->parallel_aware == aplan->plan.parallel_aware)
+			return clean_up_removed_plan_level((Plan *) aplan, p);
+	}
 
 	/*
 	 * Otherwise, clean up the Append as needed.  It's okay to do this after
@@ -1693,15 +1711,19 @@ set_mergeappend_references(PlannerInfo *root,
 	/*
 	 * See if it's safe to get rid of the MergeAppend entirely.  For this to
 	 * be safe, there must be only one child plan and that child plan's
-	 * parallel awareness must match that of the MergeAppend's.  The reason
-	 * for the latter is that the if the MergeAppend is parallel aware and the
-	 * child is not then the calling plan may execute the non-parallel aware
-	 * child multiple times.
+	 * parallel awareness must match the MergeAppend's.  The reason for the
+	 * latter is that if the MergeAppend is parallel aware and the child is
+	 * not, then the calling plan may execute the non-parallel aware child
+	 * multiple times.  (If you change these rules, update
+	 * create_merge_append_path to match.)
 	 */
-	if (list_length(mplan->mergeplans) == 1 &&
-		((Plan *) linitial(mplan->mergeplans))->parallel_aware == mplan->plan.parallel_aware)
-		return clean_up_removed_plan_level((Plan *) mplan,
-										   (Plan *) linitial(mplan->mergeplans));
+	if (list_length(mplan->mergeplans) == 1)
+	{
+		Plan	   *p = (Plan *) linitial(mplan->mergeplans);
+
+		if (p->parallel_aware == mplan->plan.parallel_aware)
+			return clean_up_removed_plan_level((Plan *) mplan, p);
+	}
 
 	/*
 	 * Otherwise, clean up the MergeAppend as needed.  It's okay to do this

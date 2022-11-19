@@ -94,8 +94,8 @@
 
 
 /* GUC variables */
-int			xmlbinary;
-int			xmloption;
+int			xmlbinary = XMLBINARY_BASE64;
+int			xmloption = XMLOPTION_CONTENT;
 
 #ifdef USE_LIBXML
 
@@ -121,7 +121,7 @@ static xmlParserInputPtr xmlPgEntityLoader(const char *URL, const char *ID,
 										   xmlParserCtxtPtr ctxt);
 static void xml_errorHandler(void *data, xmlErrorPtr error);
 static void xml_ereport_by_code(int level, int sqlcode,
-								const char *msg, int errcode);
+								const char *msg, int code);
 static void chopStringInfoNewlines(StringInfo str);
 static void appendStringInfoLineSeparator(StringInfo str);
 
@@ -4017,9 +4017,9 @@ xpath_internal(text *xpath_expr_text, xmltype *data, ArrayType *namespaces,
 
 		Assert(ARR_ELEMTYPE(namespaces) == TEXTOID);
 
-		deconstruct_array(namespaces, TEXTOID, -1, false, TYPALIGN_INT,
-						  &ns_names_uris, &ns_names_uris_nulls,
-						  &ns_count);
+		deconstruct_array_builtin(namespaces, TEXTOID,
+								  &ns_names_uris, &ns_names_uris_nulls,
+								  &ns_count);
 
 		Assert((ns_count % 2) == 0);	/* checked above */
 		ns_count /= 2;			/* count pairs only */
@@ -4174,7 +4174,7 @@ xpath(PG_FUNCTION_ARGS)
 	astate = initArrayResult(XMLOID, CurrentMemoryContext, true);
 	xpath_internal(xpath_expr_text, data, namespaces,
 				   NULL, astate);
-	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	PG_RETURN_DATUM(makeArrayResult(astate, CurrentMemoryContext));
 #else
 	NO_XML_SUPPORT();
 	return 0;
@@ -4500,7 +4500,7 @@ XmlTableSetColumnFilter(TableFuncScanState *state, const char *path, int colnum)
 	XmlTableBuilderData *xtCxt;
 	xmlChar    *xstr;
 
-	AssertArg(PointerIsValid(path));
+	Assert(PointerIsValid(path));
 
 	xtCxt = GetXmlTableBuilderPrivateData(state, "XmlTableSetColumnFilter");
 

@@ -1577,7 +1577,11 @@ addRangeTableEntryForRelation(ParseState *pstate,
  * Then, construct and return a ParseNamespaceItem for the new RTE.
  *
  * This is much like addRangeTableEntry() except that it makes a subquery RTE.
- * Note that an alias clause *must* be supplied.
+ *
+ * If the subquery does not have an alias, the auto-generated relation name in
+ * the returned ParseNamespaceItem will be marked as not visible, and so only
+ * unqualified references to the subquery columns will be allowed, and the
+ * relation name will not conflict with others in the pstate's namespace list.
  */
 ParseNamespaceItem *
 addRangeTableEntryForSubquery(ParseState *pstate,
@@ -1587,7 +1591,6 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias->aliasname;
 	Alias	   *eref;
 	int			numaliases;
 	List	   *coltypes,
@@ -1595,6 +1598,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 			   *colcollations;
 	int			varattno;
 	ListCell   *tlistitem;
+	ParseNamespaceItem *nsitem;
 
 	Assert(pstate != NULL);
 
@@ -1602,7 +1606,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->subquery = subquery;
 	rte->alias = alias;
 
-	eref = copyObject(alias);
+	eref = alias ? copyObject(alias) : makeAlias("unnamed_subquery", NIL);
 	numaliases = list_length(eref->colnames);
 
 	/* fill in any unspecified alias columns, and extract column type info */
@@ -1634,7 +1638,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("table \"%s\" has %d columns available but %d columns specified",
-						refname, varattno, numaliases)));
+						eref->aliasname, varattno, numaliases)));
 
 	rte->eref = eref;
 
@@ -1665,8 +1669,15 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	 * Build a ParseNamespaceItem, but don't add it to the pstate's namespace
 	 * list --- caller must do that if appropriate.
 	 */
-	return buildNSItemFromLists(rte, list_length(pstate->p_rtable),
-								coltypes, coltypmods, colcollations);
+	nsitem = buildNSItemFromLists(rte, list_length(pstate->p_rtable),
+								  coltypes, coltypmods, colcollations);
+
+	/*
+	 * Mark it visible as a relation name only if it had a user-written alias.
+	 */
+	nsitem->p_rel_visible = (alias != NULL);
+
+	return nsitem;
 }
 
 /*
@@ -1830,8 +1841,16 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 			/*
 			 * Use the column definition list to construct a tupdesc and fill
-			 * in the RangeTblFunction's lists.
+			 * in the RangeTblFunction's lists.  Limit number of columns to
+			 * MaxHeapAttributeNumber, because CheckAttributeNamesTypes will.
 			 */
+			if (list_length(coldeflist) > MaxHeapAttributeNumber)
+				ereport(ERROR,
+						(errcode(ERRCODE_TOO_MANY_COLUMNS),
+						 errmsg("column definition lists can have at most %d entries",
+								MaxHeapAttributeNumber),
+						 parser_errposition(pstate,
+											exprLocation((Node *) coldeflist))));
 			tupdesc = CreateTemplateTupleDesc(list_length(coldeflist));
 			i = 1;
 			foreach(col, coldeflist)
@@ -1911,6 +1930,15 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (rangefunc->ordinality)
 			totalatts++;
 
+		/* Disallow more columns than will fit in a tuple */
+		if (totalatts > MaxTupleAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("functions in FROM can return at most %d columns",
+							MaxTupleAttributeNumber),
+					 parser_errposition(pstate,
+										exprLocation((Node *) funcexprs))));
+
 		/* Merge the tuple descs of each function into a composite one */
 		tupdesc = CreateTemplateTupleDesc(totalatts);
 		natts = 0;
@@ -1989,12 +2017,25 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 							   bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias ? alias->aliasname :
-		pstrdup(tf->functype == TFT_XMLTABLE ? "xmltable" : "json_table");
+	char	   *refname;
 	Alias	   *eref;
 	int			numaliases;
 
 	Assert(pstate != NULL);
+
+	/* Disallow more columns than will fit in a tuple */
+	if (list_length(tf->colnames) > MaxTupleAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("functions in FROM can return at most %d columns",
+						MaxTupleAttributeNumber),
+				 parser_errposition(pstate,
+									exprLocation((Node *) tf))));
+	Assert(list_length(tf->coltypes) == list_length(tf->colnames));
+	Assert(list_length(tf->coltypmods) == list_length(tf->colnames));
+	Assert(list_length(tf->colcollations) == list_length(tf->colnames));
+
+	refname = alias ? alias->aliasname : pstrdup("xmltable");
 
 	rte->rtekind = RTE_TABLEFUNC;
 	rte->relid = InvalidOid;
@@ -2012,6 +2053,13 @@ addRangeTableEntryForTableFunc(ParseState *pstate,
 	if (numaliases < list_length(tf->colnames))
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(tf->colnames, numaliases));
+
+	if (numaliases > list_length(tf->colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("%s function has %d columns available but %d columns specified",
+						"XMLTABLE",
+						list_length(tf->colnames), numaliases)));
 
 	rte->eref = eref;
 
@@ -2191,6 +2239,12 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	if (numaliases < list_length(colnames))
 		eref->colnames = list_concat(eref->colnames,
 									 list_copy_tail(colnames, numaliases));
+
+	if (numaliases > list_length(colnames))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("join expression \"%s\" has %d columns available but %d columns specified",
+						eref->aliasname, list_length(colnames), numaliases)));
 
 	rte->eref = eref;
 
@@ -2505,6 +2559,10 @@ addRangeTableEntryForENR(ParseState *pstate,
  * This is used when we have not yet done transformLockingClause, but need
  * to know the correct lock to take during initial opening of relations.
  *
+ * Note that refname may be NULL (for a subquery without an alias), in which
+ * case the relation can't be locked by name, but it might still be locked if
+ * a locking clause requests that all tables be locked.
+ *
  * Note: we pay no attention to whether it's FOR UPDATE vs FOR SHARE,
  * since the table-level lock is the same either way.
  */
@@ -2529,7 +2587,7 @@ isLockedRefname(ParseState *pstate, const char *refname)
 			/* all tables used in query */
 			return true;
 		}
-		else
+		else if (refname != NULL)
 		{
 			/* just the named tables */
 			ListCell   *l2;
@@ -3168,6 +3226,9 @@ expandNSItemAttrs(ParseState *pstate, ParseNamespaceItem *nsitem,
  *
  * "*" is returned if the given attnum is InvalidAttrNumber --- this case
  * occurs when a Var represents a whole tuple of a relation.
+ *
+ * It is caller's responsibility to not call this on a dropped attribute.
+ * (You will get some answer for such cases, but it might not be sensible.)
  */
 char *
 get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)

@@ -63,13 +63,10 @@
  * compiler barrier.
  *
  */
-#if defined(__arm__) || defined(__arm) || \
-	defined(__aarch64__) || defined(__aarch64)
+#if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 #include "port/atomics/arch-arm.h"
 #elif defined(__i386__) || defined(__i386) || defined(__x86_64__)
 #include "port/atomics/arch-x86.h"
-#elif defined(__ia64__) || defined(__ia64)
-#include "port/atomics/arch-ia64.h"
 #elif defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__) || defined(__powerpc64__)
 #include "port/atomics/arch-ppc.h"
 #elif defined(__hppa) || defined(__hppa__)
@@ -95,8 +92,6 @@
 #include "port/atomics/generic-gcc.h"
 #elif defined(_MSC_VER)
 #include "port/atomics/generic-msvc.h"
-#elif defined(__hpux) && defined(__ia64) && !defined(__GNUC__)
-#include "port/atomics/generic-acc.h"
 #elif defined(__SUNPRO_C) && !defined(__GNUC__)
 #include "port/atomics/generic-sunpro.h"
 #else

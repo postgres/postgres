@@ -3,12 +3,14 @@
 # This file is distributed under the same license as the pg_test_timing (PostgreSQL) package.
 # Georgios Kokolatos <gkokolatos@pm.me>, 2021
 #
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_test_timing (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-05-25 05:47+0000\n"
-"PO-Revision-Date: 2021-04-28 10:43+0200\n"
+"POT-Creation-Date: 2021-07-20 03:46+0000\n"
+"PO-Revision-Date: 2021-07-20 10:42+0200\n"
 "Last-Translator: Georgios Kokolatos <gkokolatos@pm.me>\n"
 "Language-Team: \n"
 "Language: el\n"
@@ -16,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 3.0\n"
 
 #: pg_test_timing.c:59
 #, c-format
@@ -31,7 +33,7 @@ msgstr "%s: μη έγκυρη παράμετρος για την επιλογή 
 #: pg_test_timing.c:83 pg_test_timing.c:97 pg_test_timing.c:109
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Δοκιμάστε “%s —help” για περισσότερες πληροφορίες.\n"
+msgstr "Δοκιμάστε «%s --help» για περισσότερες πληροφορίες.\n"
 
 #: pg_test_timing.c:90
 #, c-format
@@ -41,7 +43,7 @@ msgstr "%s: %s πρέπει να βρίσκεται εντός εύρους %u..
 #: pg_test_timing.c:107
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: πάρα πολλοί παραμέτροι εισόδου από την γραμμή εντολών (πρώτη είναι η “%s”)\n"
+msgstr "%s: πάρα πολλοί παράμετροι εισόδου από την γραμμή εντολών (η πρώτη είναι η «%s»)\n"
 
 #: pg_test_timing.c:115
 #, c-format
@@ -72,13 +74,13 @@ msgstr "< us"
 #: pg_test_timing.c:187
 #, no-c-format
 msgid "% of total"
-msgstr "% of συνολικά"
+msgstr "% του συνόλου"
 
 #: pg_test_timing.c:188
 msgid "count"
-msgstr "count"
+msgstr "μετρητής"
 
 #: pg_test_timing.c:197
 #, c-format
 msgid "Histogram of timing durations:\n"
-msgstr "Ιστόγραμμα διαρκειών χρονισμού\n"
+msgstr "Ιστόγραμμα διαρκειών χρονισμού:\n"

@@ -22,7 +22,7 @@
   <productname>Windows</productname>. The simplest way to build with
   Microsoft tools is to install <productname>Visual Studio 2022</productname>
   and use the included compiler. It is also possible to build with the full
-  <productname>Microsoft Visual C++ 2013 to 2022</productname>.
+  <productname>Microsoft Visual C++ 2015 to 2022</productname>.
   In some cases that requires the installation of the
   <productname>Windows SDK</productname> in addition to the compiler.
  </para>
@@ -77,19 +77,13 @@
  <para>
   Both 32-bit and 64-bit builds are possible with the Microsoft Compiler suite.
   32-bit PostgreSQL builds are possible with
-  <productname>Visual Studio 2013</productname> to
+  <productname>Visual Studio 2015</productname> to
   <productname>Visual Studio 2022</productname>,
   as well as standalone Windows SDK releases 8.1a to 10.
   64-bit PostgreSQL builds are supported with
   <productname>Microsoft Windows SDK</productname> version 8.1a to 10 or
-  <productname>Visual Studio 2013</productname> and above. Compilation
-  is supported down to <productname>Windows 7</productname> and
-  <productname>Windows Server 2008 R2 SP1</productname> when building with
-  <productname>Visual Studio 2013</productname> to
-  <productname>Visual Studio 2022</productname>.
+  <productname>Visual Studio 2015</productname> and above.
    <!--
-       For 2013 requirements:
-       https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2013-sysrequirements-vs
        For 2015 requirements:
        https://docs.microsoft.com/en-us/visualstudio/productinfo/vs2015-sysrequirements-vs
        For 2017 requirements:
@@ -128,7 +122,7 @@
  </para>
 
  <para>
-  Before you build, you may need to edit the file <filename>config.pl</filename>
+  Before you build, you can create the file <filename>config.pl</filename>
   to reflect any configuration options you want to change, or the paths to
   any third party libraries to use. The complete configuration is determined
   by first reading and parsing the file <filename>config_default.pl</filename>,
@@ -196,7 +190,7 @@ $ENV{MSBFLAGS}="/m";
       or Cygwin Perl will not work. It must also be present in the PATH.
       Binaries can be downloaded from
       <ulink url="https://www.activestate.com"></ulink>
-      (Note: version 5.8.3 or later is required,
+      (Note: version 5.14 or later is required,
       the free Standard Distribution is sufficient).
      </para></listitem>
     </varlistentry>
@@ -225,8 +219,8 @@ $ENV{MSBFLAGS}="/m";
      <para>
       <productname>Bison</productname> and <productname>Flex</productname> are
       required to build from Git, but not required when building from a release
-      file. Only <productname>Bison</productname> 1.875 or versions 2.2 and later
-      will work. <productname>Flex</productname> must be version 2.5.31 or later.
+      file. Only <productname>Bison</productname> versions 2.3 and later
+      will work. <productname>Flex</productname> must be version 2.5.35 or later.
      </para>
 
      <para>
@@ -307,10 +301,10 @@ $ENV{MSBFLAGS}="/m";
     </varlistentry>
 
     <varlistentry>
-     <term><productname>ZSTD</productname></term>
+     <term><productname>Zstandard</productname></term>
      <listitem><para>
-      Required for supporting <productname>ZSTD</productname> compression
-      method. Binaries and source can be downloaded from
+      Required for supporting <productname>Zstandard</productname> compression.
+      Binaries and source can be downloaded from
       <ulink url="https://github.com/facebook/zstd/releases"></ulink>.
      </para></listitem>
     </varlistentry>
@@ -358,8 +352,7 @@ $ENV{MSBFLAGS}="/m";
   <title>Special Considerations for 64-Bit Windows</title>
 
   <para>
-   PostgreSQL will only build for the x64 architecture on 64-bit Windows, there
-   is no support for Itanium processors.
+   PostgreSQL will only build for the x64 architecture on 64-bit Windows.
   </para>
 
   <para>
@@ -494,8 +487,9 @@ $ENV{CONFIG}="Debug";
       As of this writing, <literal>IPC::Run</literal> is not included in the
       ActiveState Perl installation, nor in the ActiveState Perl Package
       Manager (PPM) library. To install, download the
-      <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from CPAN,
-      at <ulink url="https://metacpan.org/release/IPC-Run"></ulink>, and
+      <filename>IPC-Run-&lt;version&gt;.tar.gz</filename> source archive from
+      <acronym>CPAN</acronym>,
+      at <ulink url="https://metacpan.org/dist/IPC-Run"></ulink>, and
       uncompress. Edit the <filename>buildenv.pl</filename> file, and add a PERL5LIB
       variable to point to the <filename>lib</filename> subdirectory from the
       extracted archive. For example:
@@ -526,6 +520,11 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
   </para>
 
   <para>
+    Additionally, the behavior of TAP tests can be controlled by a set of
+    environment variables, see <xref linkend="regress-tap-vars" />.
+  </para>
+
+  <para>
    Some of the TAP tests depend on a set of external commands that would
    optionally trigger tests related to them. Each one of those variables
    can be set or unset in <filename>buildenv.pl</filename>:
@@ -544,6 +543,15 @@ $ENV{PROVE_TESTS}='t/020*.pl t/010*.pl'
      <listitem><para>
       Path to a <application>lz4</application> command. The default is
       <literal>lz4</literal>, which will search for a command by that
+      name in the configured <envar>PATH</envar>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><varname>OPENSSL</varname></term>
+     <listitem><para>
+      Path to a <application>openssl</application> command. The default is
+      <literal>openssl</literal>, which will search for a command by that
       name in the configured <envar>PATH</envar>.
      </para></listitem>
     </varlistentry>

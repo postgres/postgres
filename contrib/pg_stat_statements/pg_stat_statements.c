@@ -252,6 +252,7 @@ static int	exec_nested_level = 0;
 static int	plan_nested_level = 0;
 
 /* Saved hook values in case of unload */
+static shmem_request_hook_type prev_shmem_request_hook = NULL;
 static shmem_startup_hook_type prev_shmem_startup_hook = NULL;
 static post_parse_analyze_hook_type prev_post_parse_analyze_hook = NULL;
 static planner_hook_type prev_planner_hook = NULL;
@@ -282,11 +283,12 @@ static const struct config_enum_entry track_options[] =
 	{NULL, 0, false}
 };
 
-static int	pgss_max;			/* max # statements to track */
-static int	pgss_track;			/* tracking level */
-static bool pgss_track_utility; /* whether to track utility commands */
-static bool pgss_track_planning;	/* whether to track planning duration */
-static bool pgss_save;			/* whether to save stats across shutdown */
+static int	pgss_max = 5000;	/* max # statements to track */
+static int	pgss_track = PGSS_TRACK_TOP;	/* tracking level */
+static bool pgss_track_utility = true;	/* whether to track utility commands */
+static bool pgss_track_planning = false;	/* whether to track planning
+											 * duration */
+static bool pgss_save = true;	/* whether to save stats across shutdown */
 
 
 #define pgss_enabled(level) \
@@ -304,9 +306,6 @@ static bool pgss_save;			/* whether to save stats across shutdown */
 
 /*---- Function declarations ----*/
 
-void		_PG_init(void);
-void		_PG_fini(void);
-
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset);
 PG_FUNCTION_INFO_V1(pg_stat_statements_reset_1_7);
 PG_FUNCTION_INFO_V1(pg_stat_statements_1_2);
@@ -317,6 +316,7 @@ PG_FUNCTION_INFO_V1(pg_stat_statements_1_10);
 PG_FUNCTION_INFO_V1(pg_stat_statements);
 PG_FUNCTION_INFO_V1(pg_stat_statements_info);
 
+static void pgss_shmem_request(void);
 static void pgss_shmem_startup(void);
 static void pgss_shmem_shutdown(int code, Datum arg);
 static void pgss_post_parse_analyze(ParseState *pstate, Query *query,
@@ -398,7 +398,7 @@ _PG_init(void)
 							&pgss_max,
 							5000,
 							100,
-							INT_MAX,
+							INT_MAX / 2,
 							PGC_POSTMASTER,
 							0,
 							NULL,
@@ -453,16 +453,10 @@ _PG_init(void)
 	MarkGUCPrefixReserved("pg_stat_statements");
 
 	/*
-	 * Request additional shared resources.  (These are no-ops if we're not in
-	 * the postmaster process.)  We'll allocate or attach to the shared
-	 * resources in pgss_shmem_startup().
-	 */
-	RequestAddinShmemSpace(pgss_memsize());
-	RequestNamedLWLockTranche("pg_stat_statements", 1);
-
-	/*
 	 * Install hooks.
 	 */
+	prev_shmem_request_hook = shmem_request_hook;
+	shmem_request_hook = pgss_shmem_request;
 	prev_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = pgss_shmem_startup;
 	prev_post_parse_analyze_hook = post_parse_analyze_hook;
@@ -482,20 +476,17 @@ _PG_init(void)
 }
 
 /*
- * Module unload callback
+ * shmem_request hook: request additional shared resources.  We'll allocate or
+ * attach to the shared resources in pgss_shmem_startup().
  */
-void
-_PG_fini(void)
+static void
+pgss_shmem_request(void)
 {
-	/* Uninstall hooks. */
-	shmem_startup_hook = prev_shmem_startup_hook;
-	post_parse_analyze_hook = prev_post_parse_analyze_hook;
-	planner_hook = prev_planner_hook;
-	ExecutorStart_hook = prev_ExecutorStart;
-	ExecutorRun_hook = prev_ExecutorRun;
-	ExecutorFinish_hook = prev_ExecutorFinish;
-	ExecutorEnd_hook = prev_ExecutorEnd;
-	ProcessUtility_hook = prev_ProcessUtility;
+	if (prev_shmem_request_hook)
+		prev_shmem_request_hook();
+
+	RequestAddinShmemSpace(pgss_memsize());
+	RequestNamedLWLockTranche("pg_stat_statements", 1);
 }
 
 /*
@@ -817,8 +808,7 @@ error:
 			(errcode_for_file_access(),
 			 errmsg("could not write file \"%s\": %m",
 					PGSS_DUMP_FILE ".tmp")));
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 	if (file)
 		FreeFile(file);
 	unlink(PGSS_DUMP_FILE ".tmp");
@@ -1093,6 +1083,8 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 {
 	Node	   *parsetree = pstmt->utilityStmt;
 	uint64		saved_queryId = pstmt->queryId;
+	int			saved_stmt_location = pstmt->stmt_location;
+	int			saved_stmt_len = pstmt->stmt_len;
 
 	/*
 	 * Force utility statements to get queryId zero.  We do this even in cases
@@ -1158,6 +1150,16 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 		}
 		PG_END_TRY();
 
+		/*
+		 * CAUTION: do not access the *pstmt data structure again below here.
+		 * If it was a ROLLBACK or similar, that data structure may have been
+		 * freed.  We must copy everything we still need into local variables,
+		 * which we did above.
+		 *
+		 * For the same reason, we can't risk restoring pstmt->queryId to its
+		 * former value, which'd otherwise be a good idea.
+		 */
+
 		INSTR_TIME_SET_CURRENT(duration);
 		INSTR_TIME_SUBTRACT(duration, start);
 
@@ -1182,8 +1184,8 @@ pgss_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 
 		pgss_store(queryString,
 				   saved_queryId,
-				   pstmt->stmt_location,
-				   pstmt->stmt_len,
+				   saved_stmt_location,
+				   saved_stmt_len,
 				   PGSS_EXEC,
 				   INSTR_TIME_GET_MILLISEC(duration),
 				   rows,
@@ -1551,7 +1553,10 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 	HASH_SEQ_STATUS hash_seq;
 	pgssEntry  *entry;
 
-	/* Superusers or roles with the privileges of pg_read_all_stats members are allowed */
+	/*
+	 * Superusers or roles with the privileges of pg_read_all_stats members
+	 * are allowed
+	 */
 	is_allowed_role = has_privs_of_role(userid, ROLE_PG_READ_ALL_STATS);
 
 	/* hash table must exist already */
@@ -1560,7 +1565,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 				 errmsg("pg_stat_statements must be loaded via shared_preload_libraries")));
 
-	SetSingleFuncCall(fcinfo, 0);
+	InitMaterializedSRF(fcinfo, 0);
 
 	/*
 	 * Check we have the expected number of output arguments.  Aside from
@@ -1662,8 +1667,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 			pgss->extent != extent ||
 			pgss->gc_count != gc_count)
 		{
-			if (qbuffer)
-				free(qbuffer);
+			free(qbuffer);
 			qbuffer = qtext_load_file(&qbuffer_size);
 		}
 	}
@@ -1847,8 +1851,7 @@ pg_stat_statements_internal(FunctionCallInfo fcinfo,
 
 	LWLockRelease(pgss->lock);
 
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 }
 
 /* Number of output arguments (columns) for pg_stat_statements_info */
@@ -1862,8 +1865,8 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 {
 	pgssGlobalStats stats;
 	TupleDesc	tupdesc;
-	Datum		values[PG_STAT_STATEMENTS_INFO_COLS];
-	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS];
+	Datum		values[PG_STAT_STATEMENTS_INFO_COLS] = {0};
+	bool		nulls[PG_STAT_STATEMENTS_INFO_COLS] = {0};
 
 	if (!pgss || !pgss_hash)
 		ereport(ERROR,
@@ -1873,9 +1876,6 @@ pg_stat_statements_info(PG_FUNCTION_ARGS)
 	/* Build a tuple descriptor for our result type */
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
-
-	MemSet(values, 0, sizeof(values));
-	MemSet(nulls, 0, sizeof(nulls));
 
 	/* Read global statistics for pg_stat_statements */
 	{
@@ -2099,6 +2099,18 @@ qtext_store(const char *query, int query_len,
 
 	*query_offset = off;
 
+	/*
+	 * Don't allow the file to grow larger than what qtext_load_file can
+	 * (theoretically) handle.  This has been seen to be reachable on 32-bit
+	 * platforms.
+	 */
+	if (unlikely(query_len >= MaxAllocHugeSize - off))
+	{
+		errno = EFBIG;			/* not quite right, but it'll do */
+		fd = -1;
+		goto error;
+	}
+
 	/* Now write the data into the successfully-reserved part of the file */
 	fd = OpenTransientFile(PGSS_TEXT_FILE, O_RDWR | O_CREAT | PG_BINARY);
 	if (fd < 0)
@@ -2284,8 +2296,14 @@ need_gc_qtexts(void)
 		SpinLockRelease(&s->mutex);
 	}
 
-	/* Don't proceed if file does not exceed 512 bytes per possible entry */
-	if (extent < 512 * pgss_max)
+	/*
+	 * Don't proceed if file does not exceed 512 bytes per possible entry.
+	 *
+	 * Here and in the next test, 32-bit machines have overflow hazards if
+	 * pgss_max and/or mean_query_len are large.  Force the multiplications
+	 * and comparisons to be done in uint64 arithmetic to forestall trouble.
+	 */
+	if ((uint64) extent < (uint64) 512 * pgss_max)
 		return false;
 
 	/*
@@ -2295,7 +2313,7 @@ need_gc_qtexts(void)
 	 * query length in order to prevent garbage collection from thrashing
 	 * uselessly.
 	 */
-	if (extent < pgss->mean_query_len * pgss_max * 2)
+	if ((uint64) extent < (uint64) pgss->mean_query_len * pgss_max * 2)
 		return false;
 
 	return true;
@@ -2451,8 +2469,7 @@ gc_fail:
 	/* clean up resources */
 	if (qfile)
 		FreeFile(qfile);
-	if (qbuffer)
-		free(qbuffer);
+	free(qbuffer);
 
 	/*
 	 * Since the contents of the external file are now uncertain, mark all

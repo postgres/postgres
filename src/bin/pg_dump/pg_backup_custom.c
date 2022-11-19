@@ -40,7 +40,7 @@ static void _StartData(ArchiveHandle *AH, TocEntry *te);
 static void _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
-static int	_ReadByte(ArchiveHandle *);
+static int	_ReadByte(ArchiveHandle *AH);
 static void _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
 static void _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
@@ -632,8 +632,7 @@ _skipData(ArchiveHandle *AH)
 		{
 			if (blkLen > buflen)
 			{
-				if (buf)
-					free(buf);
+				free(buf);
 				buf = (char *) pg_malloc(blkLen);
 				buflen = blkLen;
 			}
@@ -649,8 +648,7 @@ _skipData(ArchiveHandle *AH)
 		blkLen = ReadInt(AH);
 	}
 
-	if (buf)
-		free(buf);
+	free(buf);
 }
 
 /*
@@ -956,11 +954,11 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 	int			byt;
 
 	/*
-	 * Note: if we are at EOF with a pre-1.3 input file, we'll pg_fatal() inside
-	 * ReadInt rather than returning EOF.  It doesn't seem worth jumping
-	 * through hoops to deal with that case better, because no such files are
-	 * likely to exist in the wild: only some 7.1 development versions of
-	 * pg_dump ever generated such files.
+	 * Note: if we are at EOF with a pre-1.3 input file, we'll pg_fatal()
+	 * inside ReadInt rather than returning EOF.  It doesn't seem worth
+	 * jumping through hoops to deal with that case better, because no such
+	 * files are likely to exist in the wild: only some 7.1 development
+	 * versions of pg_dump ever generated such files.
 	 */
 	if (AH->version < K_VERS_1_3)
 		*type = BLK_DATA;

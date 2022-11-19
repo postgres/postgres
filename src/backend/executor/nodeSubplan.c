@@ -26,7 +26,6 @@
  */
 #include "postgres.h"
 
-#include <limits.h>
 #include <math.h>
 
 #include "access/htup_details.h"
@@ -35,6 +34,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "utils/array.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -245,6 +245,21 @@ ExecScanSubPlan(SubPlanState *node,
 	 * ones, so this should be safe.)  Unlike ExecReScanSetParamPlan, we do
 	 * *not* set bits in the parent plan node's chgParam, because we don't
 	 * want to cause a rescan of the parent.
+	 *
+	 * Note: we are also relying on MULTIEXPR SubPlans not sharing any output
+	 * parameters with other SubPlans, because if one does then it is unclear
+	 * which SubPlanState node the parameter's execPlan field will be pointing
+	 * to when we come to evaluate the parameter.  We can allow plain initplan
+	 * SubPlans to share output parameters, because it doesn't actually matter
+	 * which initplan SubPlan we reference as long as they all point to the
+	 * same underlying subplan.  However, that fails to hold for MULTIEXPRs
+	 * because they can have non-empty args lists, and the "same" args might
+	 * have mutated into different forms in different parts of a plan tree.
+	 * There is currently no problem because MULTIEXPR can appear only in an
+	 * UPDATE's top-level target list, so it won't get duplicated anyplace.
+	 * Postgres versions before v14 had to make concrete efforts to avoid
+	 * sharing output parameters across different clones of a MULTIEXPR, and
+	 * the problem could recur someday.
 	 */
 	if (subLinkType == MULTIEXPR_SUBLINK)
 	{
@@ -498,7 +513,7 @@ buildSubPlanHash(SubPlanState *node, ExprContext *econtext)
 	node->havehashrows = false;
 	node->havenullrows = false;
 
-	nbuckets = (long) Min(planstate->plan->plan_rows, (double) LONG_MAX);
+	nbuckets = clamp_cardinality_to_long(planstate->plan->plan_rows);
 	if (nbuckets < 1)
 		nbuckets = 1;
 

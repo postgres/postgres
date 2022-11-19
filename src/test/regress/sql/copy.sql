@@ -204,8 +204,26 @@ create table header_copytest (
 	b int,
 	c text
 );
+-- Make sure it works with with dropped columns
+alter table header_copytest drop column c;
+alter table header_copytest add column c text;
+copy header_copytest to stdout with (header match);
 copy header_copytest from stdin with (header wrong_choice);
+-- works
 copy header_copytest from stdin with (header match);
+a	b	c
+1	2	foo
+\.
+copy header_copytest (c, a, b) from stdin with (header match);
+c	a	b
+bar	3	4
+\.
+copy header_copytest from stdin with (header match, format csv);
+a,b,c
+5,6,baz
+\.
+-- errors
+copy header_copytest (c, b, a) from stdin with (header match);
 a	b	c
 1	2	foo
 \.
@@ -225,8 +243,28 @@ copy header_copytest from stdin with (header match);
 a	b	d
 1	2	foo
 \.
-copy header_copytest from stdin with (header match, format csv);
-a,b,c
-1,2,foo
+SELECT * FROM header_copytest ORDER BY a;
+
+-- Drop an extra column, in the middle of the existing set.
+alter table header_copytest drop column b;
+-- works
+copy header_copytest (c, a) from stdin with (header match);
+c	a
+foo	7
 \.
+copy header_copytest (a, c) from stdin with (header match);
+a	c
+8	foo
+\.
+-- errors
+copy header_copytest from stdin with (header match);
+a	........pg.dropped.2........	c
+1	2	foo
+\.
+copy header_copytest (a, c) from stdin with (header match);
+a	c	b
+1	foo	2
+\.
+
+SELECT * FROM header_copytest ORDER BY a;
 drop table header_copytest;

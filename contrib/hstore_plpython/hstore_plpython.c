@@ -7,8 +7,6 @@
 
 PG_MODULE_MAGIC;
 
-extern void _PG_init(void);
-
 /* Linkage to functions in plpython module */
 typedef char *(*PLyObject_AsString_t) (PyObject *plrv);
 static PLyObject_AsString_t PLyObject_AsString_p;
@@ -99,7 +97,7 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 		PyObject   *key;
 
 		key = PLyUnicode_FromStringAndSize(HSTORE_KEY(entries, base, i),
-										  HSTORE_KEYLEN(entries, i));
+										   HSTORE_KEYLEN(entries, i));
 		if (HSTORE_VALISNULL(entries, i))
 			PyDict_SetItem(dict, key, Py_None);
 		else
@@ -107,7 +105,7 @@ hstore_to_plpython(PG_FUNCTION_ARGS)
 			PyObject   *value;
 
 			value = PLyUnicode_FromStringAndSize(HSTORE_VAL(entries, base, i),
-												HSTORE_VALLEN(entries, i));
+												 HSTORE_VALLEN(entries, i));
 			PyDict_SetItem(dict, key, value);
 			Py_XDECREF(value);
 		}

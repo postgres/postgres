@@ -238,8 +238,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
        <para>
         The name of the index method to be used.  Choices are
         <literal>btree</literal>, <literal>hash</literal>,
-        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>, and
-        <literal>brin</literal>.
+        <literal>gist</literal>, <literal>spgist</literal>, <literal>gin</literal>,
+        <literal>brin</literal>, or user-installed access methods like
+        <link linkend="bloom">bloom</link>.
         The default method is <literal>btree</literal>.
        </para>
       </listitem>
@@ -578,8 +579,10 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     </term>
     <listitem>
     <para>
-     Defines whether a summarization run is invoked for the previous page
+     Defines whether a summarization run is queued for the previous page
      range whenever an insertion is detected on the next one.
+     See <xref linkend="brin-operation"/> for more details.
+     The default is <literal>off</literal>.
     </para>
     </listitem>
    </varlistentry>
@@ -622,7 +625,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
    </para>
 
    <para>
-    In a concurrent index build, the index is actually entered into
+    In a concurrent index build, the index is actually entered as an
+    <quote>invalid</quote> index into
     the system catalogs in one transaction, then two table scans occur in
     two more transactions.  Before each table scan, the index build must
     wait for existing transactions that have modified the table to terminate.
@@ -631,7 +635,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <replaceable class=
     scan to terminate, including transactions used by any phase of concurrent
     index builds on other tables, if the indexes involved are partial or have
     columns that are not simple column references.
-    Then finally the index can be marked ready for use,
+    Then finally the index can be marked <quote>valid</quote> and ready for use,
     and the <command>CREATE INDEX</command> command terminates.
     Even then, however, the index may not be immediately usable for queries:
     in the worst case, it cannot be used as long as transactions exist that
@@ -860,8 +864,6 @@ Indexes:
    Like any long-running transaction, <command>CREATE INDEX</command> on a
    table can affect which tuples can be removed by concurrent
    <command>VACUUM</command> on any other table.
-   Excepted from this are operations with the <literal>CONCURRENTLY</literal>
-   option for indexes that are not partial and do not index any expressions.
   </para>
 
   <para>

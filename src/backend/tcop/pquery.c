@@ -440,8 +440,8 @@ PortalStart(Portal portal, ParamListInfo params,
 	QueryDesc  *queryDesc;
 	int			myeflags;
 
-	AssertArg(PortalIsValid(portal));
-	AssertState(portal->status == PORTAL_DEFINED);
+	Assert(PortalIsValid(portal));
+	Assert(portal->status == PORTAL_DEFINED);
 
 	/*
 	 * Set up global portal context pointers.
@@ -694,7 +694,7 @@ PortalRun(Portal portal, long count, bool isTopLevel, bool run_once,
 	MemoryContext savePortalContext;
 	MemoryContext saveMemoryContext;
 
-	AssertArg(PortalIsValid(portal));
+	Assert(PortalIsValid(portal));
 
 	TRACE_POSTGRESQL_QUERY_EXECUTE_START();
 
@@ -1399,7 +1399,7 @@ PortalRunFetch(Portal portal,
 	MemoryContext savePortalContext;
 	MemoryContext oldContext;
 
-	AssertArg(PortalIsValid(portal));
+	Assert(PortalIsValid(portal));
 
 	/*
 	 * Check for improper portal use, and mark portal active.

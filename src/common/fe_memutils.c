@@ -104,8 +104,7 @@ pg_strdup(const char *in)
 void
 pg_free(void *ptr)
 {
-	if (ptr != NULL)
-		free(ptr);
+	free(ptr);
 }
 
 /*

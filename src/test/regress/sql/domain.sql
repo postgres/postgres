@@ -154,6 +154,15 @@ create rule silly as on delete to dcomptable do instead
   update dcomptable set d1.r = (d1).r - 1, d1.i = (d1).i + 1 where (d1).i > 0;
 \d+ dcomptable
 
+create function makedcomp(r float8, i float8) returns dcomptype
+as 'select row(r, i)' language sql;
+
+select makedcomp(1,2);
+select makedcomp(2,1);  -- fail
+select * from makedcomp(1,2) m;
+select m, m is not null from makedcomp(1,2) m;
+
+drop function makedcomp(float8, float8);
 drop table dcomptable;
 drop type comptype cascade;
 

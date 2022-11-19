@@ -279,15 +279,7 @@ extern PGDLLIMPORT bool VacuumCostActive;
 
 /* in tcop/postgres.c */
 
-#if defined(__ia64__) || defined(__ia64)
-typedef struct
-{
-	char	   *stack_base_ptr;
-	char	   *register_stack_base_ptr;
-} pg_stack_base_t;
-#else
 typedef char *pg_stack_base_t;
-#endif
 
 extern pg_stack_base_t set_stack_base(void);
 extern void restore_stack_base(pg_stack_base_t base);
@@ -324,18 +316,19 @@ extern void SwitchBackToLocalLatch(void);
 typedef enum BackendType
 {
 	B_INVALID = 0,
+	B_ARCHIVER,
 	B_AUTOVAC_LAUNCHER,
 	B_AUTOVAC_WORKER,
 	B_BACKEND,
 	B_BG_WORKER,
 	B_BG_WRITER,
 	B_CHECKPOINTER,
+	B_LOGGER,
+	B_STANDALONE_BACKEND,
 	B_STARTUP,
 	B_WAL_RECEIVER,
 	B_WAL_SENDER,
 	B_WAL_WRITER,
-	B_ARCHIVER,
-	B_LOGGER,
 } BackendType;
 
 extern PGDLLIMPORT BackendType MyBackendType;
@@ -359,11 +352,14 @@ extern bool InSecurityRestrictedOperation(void);
 extern bool InNoForceRLSOperation(void);
 extern void GetUserIdAndContext(Oid *userid, bool *sec_def_context);
 extern void SetUserIdAndContext(Oid userid, bool sec_def_context);
-extern void InitializeSessionUserId(const char *rolename, Oid useroid);
+extern void InitializeSessionUserId(const char *rolename, Oid roleid);
 extern void InitializeSessionUserIdStandalone(void);
 extern void SetSessionAuthorization(Oid userid, bool is_superuser);
 extern Oid	GetCurrentRoleId(void);
 extern void SetCurrentRoleId(Oid roleid, bool is_superuser);
+extern void InitializeSystemUser(const char *authn_id,
+								 const char *auth_method);
+extern const char *GetSystemUser(void);
 
 /* in utils/misc/superuser.c */
 extern bool superuser(void);	/* current user is superuser */
@@ -411,7 +407,7 @@ extern PGDLLIMPORT ProcessingMode Mode;
 
 #define SetProcessingMode(mode) \
 	do { \
-		AssertArg((mode) == BootstrapProcessing || \
+		Assert((mode) == BootstrapProcessing || \
 				  (mode) == InitProcessing || \
 				  (mode) == NormalProcessing); \
 		Mode = (mode); \
@@ -457,14 +453,18 @@ extern PGDLLIMPORT AuxProcType MyAuxProcType;
 /* in utils/init/postinit.c */
 extern void pg_split_opts(char **argv, int *argcp, const char *optstr);
 extern void InitializeMaxBackends(void);
-extern void InitPostgres(const char *in_dbname, Oid dboid, const char *username,
-						 Oid useroid, char *out_dbname, bool override_allow_connections);
+extern void InitPostgres(const char *in_dbname, Oid dboid,
+						 const char *username, Oid useroid,
+						 bool load_session_libraries,
+						 bool override_allow_connections,
+						 char *out_dbname);
 extern void BaseInit(void);
 
 /* in utils/init/miscinit.c */
 extern PGDLLIMPORT bool IgnoreSystemIndexes;
 extern PGDLLIMPORT bool process_shared_preload_libraries_in_progress;
 extern PGDLLIMPORT bool process_shared_preload_libraries_done;
+extern PGDLLIMPORT bool process_shmem_requests_in_progress;
 extern PGDLLIMPORT char *session_preload_libraries_string;
 extern PGDLLIMPORT char *shared_preload_libraries_string;
 extern PGDLLIMPORT char *local_preload_libraries_string;
@@ -478,8 +478,16 @@ extern bool RecheckDataDirLockFile(void);
 extern void ValidatePgVersion(const char *path);
 extern void process_shared_preload_libraries(void);
 extern void process_session_preload_libraries(void);
+extern void process_shmem_requests(void);
 extern void pg_bindtextdomain(const char *domain);
 extern bool has_rolreplication(Oid roleid);
+
+typedef void (*shmem_request_hook_type) (void);
+extern PGDLLIMPORT shmem_request_hook_type shmem_request_hook;
+
+extern Size EstimateClientConnectionInfoSpace(void);
+extern void SerializeClientConnectionInfo(Size maxsize, char *start_address);
+extern void RestoreClientConnectionInfo(char *conninfo);
 
 /* in executor/nodeHash.c */
 extern size_t get_hash_memory_limit(void);

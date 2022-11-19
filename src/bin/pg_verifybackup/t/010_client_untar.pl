@@ -15,73 +15,74 @@ my $primary = PostgreSQL::Test::Cluster->new('primary');
 $primary->init(allows_streaming => 1);
 $primary->start;
 
-my $backup_path = $primary->backup_dir . '/client-backup';
+my $backup_path  = $primary->backup_dir . '/client-backup';
 my $extract_path = $primary->backup_dir . '/extracted-backup';
 
 my @test_configuration = (
 	{
 		'compression_method' => 'none',
-		'backup_flags' => [],
-		'backup_archive' => 'base.tar',
-		'enabled' => 1
+		'backup_flags'       => [],
+		'backup_archive'     => 'base.tar',
+		'enabled'            => 1
 	},
 	{
 		'compression_method' => 'gzip',
-		'backup_flags' => ['--compress', 'client-gzip:5'],
-		'backup_archive' => 'base.tar.gz',
+		'backup_flags'       => [ '--compress', 'client-gzip:5' ],
+		'backup_archive'     => 'base.tar.gz',
 		'decompress_program' => $ENV{'GZIP_PROGRAM'},
-		'decompress_flags' => [ '-d' ],
-		'enabled' => check_pg_config("#define HAVE_LIBZ 1")
+		'decompress_flags'   => ['-d'],
+		'enabled'            => check_pg_config("#define HAVE_LIBZ 1")
 	},
 	{
 		'compression_method' => 'lz4',
-		'backup_flags' => ['--compress', 'client-lz4:5'],
-		'backup_archive' => 'base.tar.lz4',
+		'backup_flags'       => [ '--compress', 'client-lz4:5' ],
+		'backup_archive'     => 'base.tar.lz4',
 		'decompress_program' => $ENV{'LZ4'},
-		'decompress_flags' => [ '-d' ],
-		'output_file' => 'base.tar',
-		'enabled' => check_pg_config("#define USE_LZ4 1")
+		'decompress_flags'   => ['-d'],
+		'output_file'        => 'base.tar',
+		'enabled'            => check_pg_config("#define USE_LZ4 1")
 	},
 	{
 		'compression_method' => 'zstd',
-		'backup_flags' => ['--compress', 'client-zstd:5'],
-		'backup_archive' => 'base.tar.zst',
+		'backup_flags'       => [ '--compress', 'client-zstd:5' ],
+		'backup_archive'     => 'base.tar.zst',
 		'decompress_program' => $ENV{'ZSTD'},
-		'decompress_flags' => [ '-d' ],
-		'enabled' => check_pg_config("#define USE_ZSTD 1")
+		'decompress_flags'   => ['-d'],
+		'enabled'            => check_pg_config("#define USE_ZSTD 1")
 	},
 	{
 		'compression_method' => 'parallel zstd',
-		'backup_flags' => ['--compress', 'client-zstd:workers=3'],
-		'backup_archive' => 'base.tar.zst',
+		'backup_flags'       => [ '--compress', 'client-zstd:workers=3' ],
+		'backup_archive'     => 'base.tar.zst',
 		'decompress_program' => $ENV{'ZSTD'},
-		'decompress_flags' => [ '-d' ],
-		'enabled' => check_pg_config("#define USE_ZSTD 1"),
-		'possibly_unsupported' => qr/could not set compression worker count to 3: Unsupported parameter/
-	}
-);
+		'decompress_flags'   => ['-d'],
+		'enabled'            => check_pg_config("#define USE_ZSTD 1"),
+		'possibly_unsupported' =>
+		  qr/could not set compression worker count to 3: Unsupported parameter/
+	});
 
 for my $tc (@test_configuration)
 {
 	my $method = $tc->{'compression_method'};
 
-	SKIP: {
+  SKIP:
+	{
 		skip "$method compression not supported by this build", 3
-			if ! $tc->{'enabled'};
+		  if !$tc->{'enabled'};
 		skip "no decompressor available for $method", 3
 		  if exists $tc->{'decompress_program'}
 		  && (!defined $tc->{'decompress_program'}
-		    || $tc->{'decompress_program'} eq '');
+			|| $tc->{'decompress_program'} eq '');
 
 		# Take a client-side backup.
-		my @backup      = (
+		my @backup = (
 			'pg_basebackup', '-D', $backup_path,
 			'-Xfetch', '--no-sync', '-cfast', '-Ft');
-		push @backup, @{$tc->{'backup_flags'}};
+		push @backup, @{ $tc->{'backup_flags'} };
 		my $backup_stdout = '';
 		my $backup_stderr = '';
 		my $backup_result = $primary->run_log(\@backup, '>', \$backup_stdout,
-											  '2>', \$backup_stderr);
+			'2>', \$backup_stderr);
 		if ($backup_stdout ne '')
 		{
 			print "# standard output was:\n$backup_stdout";
@@ -90,8 +91,9 @@ for my $tc (@test_configuration)
 		{
 			print "# standard error was:\n$backup_stderr";
 		}
-		if (! $backup_result && $tc->{'possibly_unsupported'} &&
-			$backup_stderr =~ /$tc->{'possibly_unsupported'}/)
+		if (  !$backup_result
+			&& $tc->{'possibly_unsupported'}
+			&& $backup_stderr =~ /$tc->{'possibly_unsupported'}/)
 		{
 			skip "compression with $method not supported by this build", 3;
 		}
@@ -103,30 +105,31 @@ for my $tc (@test_configuration)
 		# Verify that the we got the files we expected.
 		my $backup_files = join(',',
 			sort grep { $_ ne '.' && $_ ne '..' } slurp_dir($backup_path));
-		my $expected_backup_files = join(',',
-			sort ('backup_manifest', $tc->{'backup_archive'}));
-		is($backup_files,$expected_backup_files,
+		my $expected_backup_files =
+		  join(',', sort ('backup_manifest', $tc->{'backup_archive'}));
+		is($backup_files, $expected_backup_files,
 			"found expected backup files, compression $method");
 
 		# Decompress.
 		if (exists $tc->{'decompress_program'})
 		{
 			my @decompress = ($tc->{'decompress_program'});
-			push @decompress, @{$tc->{'decompress_flags'}}
-				if $tc->{'decompress_flags'};
+			push @decompress, @{ $tc->{'decompress_flags'} }
+			  if $tc->{'decompress_flags'};
 			push @decompress, $backup_path . '/' . $tc->{'backup_archive'};
 			push @decompress, $backup_path . '/' . $tc->{'output_file'}
-				if $tc->{'output_file'};
+			  if $tc->{'output_file'};
 			system_or_bail(@decompress);
 		}
 
-		SKIP: {
+	  SKIP:
+		{
 			my $tar = $ENV{TAR};
 			# don't check for a working tar here, to accommodate various odd
 			# cases such as AIX. If tar doesn't work the init_from_backup below
 			# will fail.
 			skip "no tar program available", 1
-				if (!defined $tar || $tar eq '');
+			  if (!defined $tar || $tar eq '');
 
 			# Untar.
 			mkdir($extract_path);
@@ -134,8 +137,12 @@ for my $tc (@test_configuration)
 				'-C', $extract_path);
 
 			# Verify.
-			$primary->command_ok([ 'pg_verifybackup', '-n',
-				'-m', "$backup_path/backup_manifest", '-e', $extract_path ],
+			$primary->command_ok(
+				[
+					'pg_verifybackup', '-n',
+					'-m', "$backup_path/backup_manifest",
+					'-e', $extract_path
+				],
 				"verify backup, compression $method");
 		}
 

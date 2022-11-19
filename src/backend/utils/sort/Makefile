@@ -16,9 +16,11 @@ override CPPFLAGS := -I. -I$(srcdir) $(CPPFLAGS)
 
 OBJS = \
 	logtape.o \
+	qsort_interruptible.o \
 	sharedtuplestore.o \
 	sortsupport.o \
 	tuplesort.o \
+	tuplesortvariants.o \
 	tuplestore.o
 
 include $(top_srcdir)/src/backend/common.mk

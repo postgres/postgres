@@ -760,7 +760,7 @@ _hash_initbitmapbuffer(Buffer buf, uint16 bmsize, bool initpage)
 
 	/* set all of the bits to 1 */
 	freep = HashPageGetBitmap(pg);
-	MemSet(freep, 0xFF, bmsize);
+	memset(freep, 0xFF, bmsize);
 
 	/*
 	 * Set pd_lower just past the end of the bitmap page data.  We could even

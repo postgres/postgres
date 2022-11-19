@@ -17,10 +17,11 @@ CREATE TEXT SEARCH TEMPLATE addr_ts_temp (lexize=dsimple_lexize);
 CREATE TEXT SEARCH PARSER addr_ts_prs
     (start = prsd_start, gettoken = prsd_nexttoken, end = prsd_end, lextypes = prsd_lextype);
 CREATE TABLE addr_nsp.gentable (
-	a serial primary key CONSTRAINT a_chk CHECK (a > 0),
-	b text DEFAULT 'hello');
+    a serial primary key CONSTRAINT a_chk CHECK (a > 0),
+    b text DEFAULT 'hello'
+);
 CREATE TABLE addr_nsp.parttable (
-	a int PRIMARY KEY
+    a int PRIMARY KEY
 ) PARTITION BY RANGE (a);
 CREATE VIEW addr_nsp.genview AS SELECT * from addr_nsp.gentable;
 CREATE MATERIALIZED VIEW addr_nsp.genmatview AS SELECT * FROM addr_nsp.gentable;
@@ -40,15 +41,16 @@ ALTER DEFAULT PRIVILEGES FOR ROLE regress_addr_user REVOKE DELETE ON TABLES FROM
 -- this transform would be quite unsafe to leave lying around,
 -- except that the SQL language pays no attention to transforms:
 CREATE TRANSFORM FOR int LANGUAGE SQL (
-	FROM SQL WITH FUNCTION prsd_lextype(internal),
-	TO SQL WITH FUNCTION int4recv(internal));
+    FROM SQL WITH FUNCTION prsd_lextype(internal),
+    TO SQL WITH FUNCTION int4recv(internal));
 -- suppress warning that depends on wal_level
 SET client_min_messages = 'ERROR';
 CREATE PUBLICATION addr_pub FOR TABLE addr_nsp.gentable;
-CREATE PUBLICATION addr_pub_schema FOR ALL TABLES IN SCHEMA addr_nsp;
+CREATE PUBLICATION addr_pub_schema FOR TABLES IN SCHEMA addr_nsp;
 RESET client_min_messages;
 CREATE SUBSCRIPTION regress_addr_sub CONNECTION '' PUBLICATION bar WITH (connect = false, slot_name = NONE);
-WARNING:  tables were not subscribed, you will have to run ALTER SUBSCRIPTION ... REFRESH PUBLICATION to subscribe the tables
+WARNING:  subscription was created, but is not connected
+HINT:  To initiate replication, you must manually create the replication slot, enable the subscription, and refresh the subscription.
 CREATE STATISTICS addr_nsp.gentable_stat ON a, b FROM addr_nsp.gentable;
 -- test some error cases
 SELECT pg_get_object_address('stone', '{}', '{}');
@@ -60,17 +62,17 @@ ERROR:  name or argument lists may not contain nulls
 -- unrecognized object types
 DO $$
 DECLARE
-	objtype text;
+    objtype text;
 BEGIN
-	FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
-		('toast table column'), ('view column'), ('materialized view column')
-	LOOP
-		BEGIN
-			PERFORM pg_get_object_address(objtype, '{one}', '{}');
-		EXCEPTION WHEN invalid_parameter_value THEN
-			RAISE WARNING 'error for %: %', objtype, sqlerrm;
-		END;
-	END LOOP;
+    FOR objtype IN VALUES ('toast table'), ('index column'), ('sequence column'),
+        ('toast table column'), ('view column'), ('materialized view column')
+    LOOP
+        BEGIN
+            PERFORM pg_get_object_address(objtype, '{one}', '{}');
+        EXCEPTION WHEN invalid_parameter_value THEN
+            RAISE WARNING 'error for %: %', objtype, sqlerrm;
+        END;
+    END LOOP;
 END;
 $$;
 WARNING:  error for toast table: unsupported object type "toast table"
@@ -90,35 +92,35 @@ select * from pg_get_object_address('function of access method', '{btree,integer
 ERROR:  function 99 (int4, int4) of operator family integer_ops for access method btree does not exist
 DO $$
 DECLARE
-	objtype text;
-	names	text[];
-	args	text[];
+    objtype text;
+    names   text[];
+    args    text[];
 BEGIN
-	FOR objtype IN VALUES
-		('table'), ('index'), ('sequence'), ('view'),
-		('materialized view'), ('foreign table'),
-		('table column'), ('foreign table column'),
-		('aggregate'), ('function'), ('procedure'), ('type'), ('cast'),
-		('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
-		('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
-		('text search parser'), ('text search dictionary'),
-		('text search template'), ('text search configuration'),
-		('policy'), ('user mapping'), ('default acl'), ('transform'),
-		('operator of access method'), ('function of access method'),
-		('publication relation')
-	LOOP
-		FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
-		LOOP
-			FOR args IN VALUES ('{}'), ('{integer}')
-			LOOP
-				BEGIN
-					PERFORM pg_get_object_address(objtype, names, args);
-				EXCEPTION WHEN OTHERS THEN
-						RAISE WARNING 'error for %,%,%: %', objtype, names, args, sqlerrm;
-				END;
-			END LOOP;
-		END LOOP;
-	END LOOP;
+    FOR objtype IN VALUES
+        ('table'), ('index'), ('sequence'), ('view'),
+        ('materialized view'), ('foreign table'),
+        ('table column'), ('foreign table column'),
+        ('aggregate'), ('function'), ('procedure'), ('type'), ('cast'),
+        ('table constraint'), ('domain constraint'), ('conversion'), ('default value'),
+        ('operator'), ('operator class'), ('operator family'), ('rule'), ('trigger'),
+        ('text search parser'), ('text search dictionary'),
+        ('text search template'), ('text search configuration'),
+        ('policy'), ('user mapping'), ('default acl'), ('transform'),
+        ('operator of access method'), ('function of access method'),
+        ('publication namespace'), ('publication relation')
+    LOOP
+        FOR names IN VALUES ('{eins}'), ('{addr_nsp, zwei}'), ('{eins, zwei, drei}')
+        LOOP
+            FOR args IN VALUES ('{}'), ('{integer}')
+            LOOP
+                BEGIN
+                    PERFORM pg_get_object_address(objtype, names, args);
+                EXCEPTION WHEN OTHERS THEN
+                    RAISE WARNING 'error for %,%,%: %', objtype, names, args, sqlerrm;
+                END;
+            END LOOP;
+        END LOOP;
+    END LOOP;
 END;
 $$;
 WARNING:  error for table,{eins},{}: relation "eins" does not exist
@@ -285,10 +287,10 @@ WARNING:  error for policy,{eins,zwei,drei},{}: schema "eins" does not exist
 WARNING:  error for policy,{eins,zwei,drei},{integer}: schema "eins" does not exist
 WARNING:  error for user mapping,{eins},{}: argument list length must be exactly 1
 WARNING:  error for user mapping,{eins},{integer}: user mapping for user "eins" on server "integer" does not exist
-WARNING:  error for user mapping,{addr_nsp,zwei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: user mapping for user "addr_nsp" on server "integer" does not exist
-WARNING:  error for user mapping,{eins,zwei,drei},{}: argument list length must be exactly 1
-WARNING:  error for user mapping,{eins,zwei,drei},{integer}: user mapping for user "eins" on server "integer" does not exist
+WARNING:  error for user mapping,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for user mapping,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for user mapping,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for user mapping,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for default acl,{eins},{}: argument list length must be exactly 1
 WARNING:  error for default acl,{eins},{integer}: unrecognized default ACL object type "i"
 WARNING:  error for default acl,{addr_nsp,zwei},{}: argument list length must be exactly 1
@@ -313,6 +315,12 @@ WARNING:  error for function of access method,{addr_nsp,zwei},{}: name list leng
 WARNING:  error for function of access method,{addr_nsp,zwei},{integer}: name list length must be at least 3
 WARNING:  error for function of access method,{eins,zwei,drei},{}: argument list length must be exactly 2
 WARNING:  error for function of access method,{eins,zwei,drei},{integer}: argument list length must be exactly 2
+WARNING:  error for publication namespace,{eins},{}: argument list length must be exactly 1
+WARNING:  error for publication namespace,{eins},{integer}: schema "eins" does not exist
+WARNING:  error for publication namespace,{addr_nsp,zwei},{}: name list length must be exactly 1
+WARNING:  error for publication namespace,{addr_nsp,zwei},{integer}: name list length must be exactly 1
+WARNING:  error for publication namespace,{eins,zwei,drei},{}: name list length must be exactly 1
+WARNING:  error for publication namespace,{eins,zwei,drei},{integer}: name list length must be exactly 1
 WARNING:  error for publication relation,{eins},{}: argument list length must be exactly 1
 WARNING:  error for publication relation,{eins},{integer}: relation "eins" does not exist
 WARNING:  error for publication relation,{addr_nsp,zwei},{}: argument list length must be exactly 1
@@ -374,127 +382,129 @@ SELECT pg_get_object_address('subscription', '{one}', '{}');
 ERROR:  subscription "one" does not exist
 SELECT pg_get_object_address('subscription', '{one,two}', '{}');
 ERROR:  name list length must be exactly 1
+-- Make sure that NULL handling is correct.
+\pset null 'NULL'
+-- Temporarily disable fancy output, so as future additions never create
+-- a large amount of diffs.
+\a\t
 -- test successful cases
 WITH objects (type, name, args) AS (VALUES
-				('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
-				('table', '{addr_nsp, parttable}'::text[], '{}'::text[]),
-				('index', '{addr_nsp, gentable_pkey}', '{}'),
-				('index', '{addr_nsp, parttable_pkey}', '{}'),
-				('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
-				-- toast table
-				('view', '{addr_nsp, genview}', '{}'),
-				('materialized view', '{addr_nsp, genmatview}', '{}'),
-				('foreign table', '{addr_nsp, genftable}', '{}'),
-				('table column', '{addr_nsp, gentable, b}', '{}'),
-				('foreign table column', '{addr_nsp, genftable, a}', '{}'),
-				('aggregate', '{addr_nsp, genaggr}', '{int4}'),
-				('function', '{pg_catalog, pg_identify_object}', '{pg_catalog.oid, pg_catalog.oid, int4}'),
-				('procedure', '{addr_nsp, proc}', '{int4}'),
-				('type', '{pg_catalog._int4}', '{}'),
-				('type', '{addr_nsp.gendomain}', '{}'),
-				('type', '{addr_nsp.gencomptype}', '{}'),
-				('type', '{addr_nsp.genenum}', '{}'),
-				('cast', '{int8}', '{int4}'),
-				('collation', '{default}', '{}'),
-				('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
-				('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
-				('conversion', '{pg_catalog, koi8_r_to_mic}', '{}'),
-				('default value', '{addr_nsp, gentable, b}', '{}'),
-				('language', '{plpgsql}', '{}'),
-				-- large object
-				('operator', '{+}', '{int4, int4}'),
-				('operator class', '{btree, int4_ops}', '{}'),
-				('operator family', '{btree, integer_ops}', '{}'),
-				('operator of access method', '{btree,integer_ops,1}', '{integer,integer}'),
-				('function of access method', '{btree,integer_ops,2}', '{integer,integer}'),
-				('rule', '{addr_nsp, genview, _RETURN}', '{}'),
-				('trigger', '{addr_nsp, gentable, t}', '{}'),
-				('schema', '{addr_nsp}', '{}'),
-				('text search parser', '{addr_ts_prs}', '{}'),
-				('text search dictionary', '{addr_ts_dict}', '{}'),
-				('text search template', '{addr_ts_temp}', '{}'),
-				('text search configuration', '{addr_ts_conf}', '{}'),
-				('role', '{regress_addr_user}', '{}'),
-				-- database
-				-- tablespace
-				('foreign-data wrapper', '{addr_fdw}', '{}'),
-				('server', '{addr_fserv}', '{}'),
-				('user mapping', '{regress_addr_user}', '{integer}'),
-				('default acl', '{regress_addr_user,public}', '{r}'),
-				('default acl', '{regress_addr_user}', '{r}'),
-				-- extension
-				-- event trigger
-				('policy', '{addr_nsp, gentable, genpol}', '{}'),
-				('transform', '{int}', '{sql}'),
-				('access method', '{btree}', '{}'),
-				('publication', '{addr_pub}', '{}'),
-				('publication namespace', '{addr_nsp}', '{addr_pub_schema}'),
-				('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
-				('subscription', '{regress_addr_sub}', '{}'),
-				('statistics object', '{addr_nsp, gentable_stat}', '{}')
-        )
+    ('table', '{addr_nsp, gentable}'::text[], '{}'::text[]),
+    ('table', '{addr_nsp, parttable}'::text[], '{}'::text[]),
+    ('index', '{addr_nsp, gentable_pkey}', '{}'),
+    ('index', '{addr_nsp, parttable_pkey}', '{}'),
+    ('sequence', '{addr_nsp, gentable_a_seq}', '{}'),
+    -- toast table
+    ('view', '{addr_nsp, genview}', '{}'),
+    ('materialized view', '{addr_nsp, genmatview}', '{}'),
+    ('foreign table', '{addr_nsp, genftable}', '{}'),
+    ('table column', '{addr_nsp, gentable, b}', '{}'),
+    ('foreign table column', '{addr_nsp, genftable, a}', '{}'),
+    ('aggregate', '{addr_nsp, genaggr}', '{int4}'),
+    ('function', '{pg_catalog, pg_identify_object}', '{pg_catalog.oid, pg_catalog.oid, int4}'),
+    ('procedure', '{addr_nsp, proc}', '{int4}'),
+    ('type', '{pg_catalog._int4}', '{}'),
+    ('type', '{addr_nsp.gendomain}', '{}'),
+    ('type', '{addr_nsp.gencomptype}', '{}'),
+    ('type', '{addr_nsp.genenum}', '{}'),
+    ('cast', '{int8}', '{int4}'),
+    ('collation', '{default}', '{}'),
+    ('table constraint', '{addr_nsp, gentable, a_chk}', '{}'),
+    ('domain constraint', '{addr_nsp.gendomain}', '{domconstr}'),
+    ('conversion', '{pg_catalog, koi8_r_to_mic}', '{}'),
+    ('default value', '{addr_nsp, gentable, b}', '{}'),
+    ('language', '{plpgsql}', '{}'),
+    -- large object
+    ('operator', '{+}', '{int4, int4}'),
+    ('operator class', '{btree, int4_ops}', '{}'),
+    ('operator family', '{btree, integer_ops}', '{}'),
+    ('operator of access method', '{btree,integer_ops,1}', '{integer,integer}'),
+    ('function of access method', '{btree,integer_ops,2}', '{integer,integer}'),
+    ('rule', '{addr_nsp, genview, _RETURN}', '{}'),
+    ('trigger', '{addr_nsp, gentable, t}', '{}'),
+    ('schema', '{addr_nsp}', '{}'),
+    ('text search parser', '{addr_ts_prs}', '{}'),
+    ('text search dictionary', '{addr_ts_dict}', '{}'),
+    ('text search template', '{addr_ts_temp}', '{}'),
+    ('text search configuration', '{addr_ts_conf}', '{}'),
+    ('role', '{regress_addr_user}', '{}'),
+    -- database
+    -- tablespace
+    ('foreign-data wrapper', '{addr_fdw}', '{}'),
+    ('server', '{addr_fserv}', '{}'),
+    ('user mapping', '{regress_addr_user}', '{integer}'),
+    ('default acl', '{regress_addr_user,public}', '{r}'),
+    ('default acl', '{regress_addr_user}', '{r}'),
+    -- extension
+    -- event trigger
+    ('policy', '{addr_nsp, gentable, genpol}', '{}'),
+    ('transform', '{int}', '{sql}'),
+    ('access method', '{btree}', '{}'),
+    ('publication', '{addr_pub}', '{}'),
+    ('publication namespace', '{addr_nsp}', '{addr_pub_schema}'),
+    ('publication relation', '{addr_nsp, gentable}', '{addr_pub}'),
+    ('subscription', '{regress_addr_sub}', '{}'),
+    ('statistics object', '{addr_nsp, gentable_stat}', '{}')
+  )
 SELECT (pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)).*,
-	-- test roundtrip through pg_identify_object_as_address
-	ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)) =
-	ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.objsubid))
-	  FROM objects, pg_get_object_address(type, name, args) addr1,
-			pg_identify_object_as_address(classid, objid, objsubid) ioa(typ,nms,args),
-			pg_get_object_address(typ, nms, ioa.args) as addr2
-	ORDER BY addr1.classid, addr1.objid, addr1.objsubid;
-           type            |   schema   |       name        |                               identity                               | ?column? 
----------------------------+------------+-------------------+----------------------------------------------------------------------+----------
- default acl               |            |                   | for role regress_addr_user in schema public on tables                | t
- default acl               |            |                   | for role regress_addr_user on tables                                 | t
- type                      | pg_catalog | _int4             | integer[]                                                            | t
- type                      | addr_nsp   | gencomptype       | addr_nsp.gencomptype                                                 | t
- type                      | addr_nsp   | genenum           | addr_nsp.genenum                                                     | t
- type                      | addr_nsp   | gendomain         | addr_nsp.gendomain                                                   | t
- function                  | pg_catalog |                   | pg_catalog.pg_identify_object(pg_catalog.oid,pg_catalog.oid,integer) | t
- aggregate                 | addr_nsp   |                   | addr_nsp.genaggr(integer)                                            | t
- procedure                 | addr_nsp   |                   | addr_nsp.proc(integer)                                               | t
- sequence                  | addr_nsp   | gentable_a_seq    | addr_nsp.gentable_a_seq                                              | t
- table                     | addr_nsp   | gentable          | addr_nsp.gentable                                                    | t
- table column              | addr_nsp   | gentable          | addr_nsp.gentable.b                                                  | t
- index                     | addr_nsp   | gentable_pkey     | addr_nsp.gentable_pkey                                               | t
- table                     | addr_nsp   | parttable         | addr_nsp.parttable                                                   | t
- index                     | addr_nsp   | parttable_pkey    | addr_nsp.parttable_pkey                                              | t
- view                      | addr_nsp   | genview           | addr_nsp.genview                                                     | t
- materialized view         | addr_nsp   | genmatview        | addr_nsp.genmatview                                                  | t
- foreign table             | addr_nsp   | genftable         | addr_nsp.genftable                                                   | t
- foreign table column      | addr_nsp   | genftable         | addr_nsp.genftable.a                                                 | t
- role                      |            | regress_addr_user | regress_addr_user                                                    | t
- server                    |            | addr_fserv        | addr_fserv                                                           | t
- user mapping              |            |                   | regress_addr_user on server integer                                  | t
- foreign-data wrapper      |            | addr_fdw          | addr_fdw                                                             | t
- access method             |            | btree             | btree                                                                | t
- operator of access method |            |                   | operator 1 (integer, integer) of pg_catalog.integer_ops USING btree  | t
- function of access method |            |                   | function 2 (integer, integer) of pg_catalog.integer_ops USING btree  | t
- default value             |            |                   | for addr_nsp.gentable.b                                              | t
- cast                      |            |                   | (bigint AS integer)                                                  | t
- table constraint          | addr_nsp   |                   | a_chk on addr_nsp.gentable                                           | t
- domain constraint         | addr_nsp   |                   | domconstr on addr_nsp.gendomain                                      | t
- conversion                | pg_catalog | koi8_r_to_mic     | pg_catalog.koi8_r_to_mic                                             | t
- language                  |            | plpgsql           | plpgsql                                                              | t
- schema                    |            | addr_nsp          | addr_nsp                                                             | t
- operator class            | pg_catalog | int4_ops          | pg_catalog.int4_ops USING btree                                      | t
- operator                  | pg_catalog |                   | pg_catalog.+(integer,integer)                                        | t
- rule                      |            |                   | "_RETURN" on addr_nsp.genview                                        | t
- trigger                   |            |                   | t on addr_nsp.gentable                                               | t
- operator family           | pg_catalog | integer_ops       | pg_catalog.integer_ops USING btree                                   | t
- policy                    |            |                   | genpol on addr_nsp.gentable                                          | t
- statistics object         | addr_nsp   | gentable_stat     | addr_nsp.gentable_stat                                               | t
- collation                 | pg_catalog | "default"         | pg_catalog."default"                                                 | t
- transform                 |            |                   | for integer on language sql                                          | t
- text search dictionary    | addr_nsp   | addr_ts_dict      | addr_nsp.addr_ts_dict                                                | t
- text search parser        | addr_nsp   | addr_ts_prs       | addr_nsp.addr_ts_prs                                                 | t
- text search configuration | addr_nsp   | addr_ts_conf      | addr_nsp.addr_ts_conf                                                | t
- text search template      | addr_nsp   | addr_ts_temp      | addr_nsp.addr_ts_temp                                                | t
- subscription              |            | regress_addr_sub  | regress_addr_sub                                                     | t
- publication               |            | addr_pub          | addr_pub                                                             | t
- publication relation      |            |                   | addr_nsp.gentable in publication addr_pub                            | t
- publication namespace     |            |                   | addr_nsp in publication addr_pub_schema                              | t
-(50 rows)
-
+        -- test roundtrip through pg_identify_object_as_address
+        ROW(pg_identify_object(addr1.classid, addr1.objid, addr1.objsubid)) =
+          ROW(pg_identify_object(addr2.classid, addr2.objid, addr2.objsubid)) AS roundtrip
+FROM objects,
+     pg_get_object_address(type, name, args) AS addr1,
+     pg_identify_object_as_address(classid, objid, objsubid) AS ioa (typ, nms, args),
+     pg_get_object_address(typ, nms, ioa.args) AS addr2
+ORDER BY addr1.classid, addr1.objid, addr1.objsubid;
+default acl|NULL|NULL|for role regress_addr_user in schema public on tables|t
+default acl|NULL|NULL|for role regress_addr_user on tables|t
+type|pg_catalog|_int4|integer[]|t
+type|addr_nsp|gencomptype|addr_nsp.gencomptype|t
+type|addr_nsp|genenum|addr_nsp.genenum|t
+type|addr_nsp|gendomain|addr_nsp.gendomain|t
+function|pg_catalog|NULL|pg_catalog.pg_identify_object(pg_catalog.oid,pg_catalog.oid,integer)|t
+aggregate|addr_nsp|NULL|addr_nsp.genaggr(integer)|t
+procedure|addr_nsp|NULL|addr_nsp.proc(integer)|t
+sequence|addr_nsp|gentable_a_seq|addr_nsp.gentable_a_seq|t
+table|addr_nsp|gentable|addr_nsp.gentable|t
+table column|addr_nsp|gentable|addr_nsp.gentable.b|t
+index|addr_nsp|gentable_pkey|addr_nsp.gentable_pkey|t
+table|addr_nsp|parttable|addr_nsp.parttable|t
+index|addr_nsp|parttable_pkey|addr_nsp.parttable_pkey|t
+view|addr_nsp|genview|addr_nsp.genview|t
+materialized view|addr_nsp|genmatview|addr_nsp.genmatview|t
+foreign table|addr_nsp|genftable|addr_nsp.genftable|t
+foreign table column|addr_nsp|genftable|addr_nsp.genftable.a|t
+role|NULL|regress_addr_user|regress_addr_user|t
+server|NULL|addr_fserv|addr_fserv|t
+user mapping|NULL|NULL|regress_addr_user on server integer|t
+foreign-data wrapper|NULL|addr_fdw|addr_fdw|t
+access method|NULL|btree|btree|t
+operator of access method|NULL|NULL|operator 1 (integer, integer) of pg_catalog.integer_ops USING btree|t
+function of access method|NULL|NULL|function 2 (integer, integer) of pg_catalog.integer_ops USING btree|t
+default value|NULL|NULL|for addr_nsp.gentable.b|t
+cast|NULL|NULL|(bigint AS integer)|t
+table constraint|addr_nsp|NULL|a_chk on addr_nsp.gentable|t
+domain constraint|addr_nsp|NULL|domconstr on addr_nsp.gendomain|t
+conversion|pg_catalog|koi8_r_to_mic|pg_catalog.koi8_r_to_mic|t
+language|NULL|plpgsql|plpgsql|t
+schema|NULL|addr_nsp|addr_nsp|t
+operator class|pg_catalog|int4_ops|pg_catalog.int4_ops USING btree|t
+operator|pg_catalog|NULL|pg_catalog.+(integer,integer)|t
+rule|NULL|NULL|"_RETURN" on addr_nsp.genview|t
+trigger|NULL|NULL|t on addr_nsp.gentable|t
+operator family|pg_catalog|integer_ops|pg_catalog.integer_ops USING btree|t
+policy|NULL|NULL|genpol on addr_nsp.gentable|t
+statistics object|addr_nsp|gentable_stat|addr_nsp.gentable_stat|t
+collation|pg_catalog|"default"|pg_catalog."default"|t
+transform|NULL|NULL|for integer on language sql|t
+text search dictionary|addr_nsp|addr_ts_dict|addr_nsp.addr_ts_dict|t
+text search parser|addr_nsp|addr_ts_prs|addr_nsp.addr_ts_prs|t
+text search configuration|addr_nsp|addr_ts_conf|addr_nsp.addr_ts_conf|t
+text search template|addr_nsp|addr_ts_temp|addr_nsp.addr_ts_temp|t
+subscription|NULL|regress_addr_sub|regress_addr_sub|t
+publication|NULL|addr_pub|addr_pub|t
+publication relation|NULL|NULL|addr_nsp.gentable in publication addr_pub|t
+publication namespace|NULL|NULL|addr_nsp in publication addr_pub_schema|t
 ---
 --- Cleanup resources
 ---
@@ -528,11 +538,6 @@ DROP USER regress_addr_user;
 --
 -- Checks for invalid objects
 --
--- Make sure that NULL handling is correct.
-\pset null 'NULL'
--- Temporarily disable fancy output, so as future additions never create
--- a large amount of diffs.
-\a\t
 -- Keep this list in the same order as getObjectIdentityParts()
 -- in objectaddress.c.
 WITH objects (classid, objid, objsubid) AS (VALUES
@@ -562,6 +567,7 @@ WITH objects (classid, objid, objsubid) AS (VALUES
     ('pg_ts_template'::regclass, 0, 0), -- no TS template
     ('pg_ts_config'::regclass, 0, 0), -- no TS configuration
     ('pg_authid'::regclass, 0, 0), -- no role
+    ('pg_auth_members'::regclass, 0, 0),  -- no role membership
     ('pg_database'::regclass, 0, 0), -- no database
     ('pg_tablespace'::regclass, 0, 0), -- no tablespace
     ('pg_foreign_data_wrapper'::regclass, 0, 0), -- no FDW
@@ -570,8 +576,10 @@ WITH objects (classid, objid, objsubid) AS (VALUES
     ('pg_default_acl'::regclass, 0, 0), -- no default ACL
     ('pg_extension'::regclass, 0, 0), -- no extension
     ('pg_event_trigger'::regclass, 0, 0), -- no event trigger
+    ('pg_parameter_acl'::regclass, 0, 0), -- no parameter ACL
     ('pg_policy'::regclass, 0, 0), -- no policy
     ('pg_publication'::regclass, 0, 0), -- no publication
+    ('pg_publication_namespace'::regclass, 0, 0), -- no publication namespace
     ('pg_publication_rel'::regclass, 0, 0), -- no publication relation
     ('pg_subscription'::regclass, 0, 0), -- no subscription
     ('pg_transform'::regclass, 0, 0) -- no transformation
@@ -591,6 +599,7 @@ ORDER BY objects.classid, objects.objid, objects.objsubid;
 ("(relation,,,)")|("(relation,,)")|NULL
 ("(""table column"",,,)")|("(""table column"",,)")|NULL
 ("(role,,,)")|("(role,,)")|NULL
+("(""role membership"",,,)")|("(""role membership"",,)")|NULL
 ("(database,,,)")|("(database,,)")|NULL
 ("(server,,,)")|("(server,,)")|NULL
 ("(""user mapping"",,,)")|("(""user mapping"",,)")|NULL
@@ -623,5 +632,7 @@ ORDER BY objects.classid, objects.objid, objects.objsubid;
 ("(subscription,,,)")|("(subscription,,)")|NULL
 ("(publication,,,)")|("(publication,,)")|NULL
 ("(""publication relation"",,,)")|("(""publication relation"",,)")|NULL
+("(""publication namespace"",,,)")|("(""publication namespace"",,)")|NULL
+("(""parameter ACL"",,,)")|("(""parameter ACL"",,)")|NULL
 -- restore normal output mode
 \a\t

@@ -77,8 +77,8 @@ NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: ADD CONSTRAINT (and recurse)
-NOTICE:    subcommand: ADD CONSTRAINT (and recurse)
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_table_datatype_id_fkey on table fkey_table
+NOTICE:    subcommand: type ADD CONSTRAINT (and recurse) desc constraint fkey_big_id on table fkey_table
 -- Typed table
 CREATE TABLE employees OF employee_type (
     PRIMARY KEY (name),
@@ -86,7 +86,7 @@ CREATE TABLE employees OF employee_type (
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: SET NOT NULL
+NOTICE:    subcommand: type SET NOT NULL desc column name of table employees
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Inheritance
 CREATE TABLE person (
@@ -136,7 +136,7 @@ CREATE TABLE like_fkey_table (
 );
 NOTICE:  DDL test: type simple, tag CREATE TABLE
 NOTICE:  DDL test: type alter table, tag ALTER TABLE
-NOTICE:    subcommand: ALTER COLUMN SET DEFAULT (precooked)
+NOTICE:    subcommand: type ALTER COLUMN SET DEFAULT (precooked) desc column id of table like_fkey_table
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 NOTICE:  DDL test: type simple, tag CREATE INDEX
 -- Volatile table types

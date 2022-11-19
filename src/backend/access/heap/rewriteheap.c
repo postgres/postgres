@@ -102,7 +102,6 @@
  */
 #include "postgres.h"
 
-#include <sys/stat.h>
 #include <unistd.h>
 
 #include "access/heapam.h"
@@ -113,6 +112,7 @@
 #include "access/xact.h"
 #include "access/xloginsert.h"
 #include "catalog/catalog.h"
+#include "common/file_utils.h"
 #include "lib/ilist.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -195,8 +195,7 @@ typedef struct RewriteMappingFile
 	TransactionId xid;			/* xid that might need to see the row */
 	int			vfd;			/* fd of mappings file */
 	off_t		off;			/* how far have we written yet */
-	uint32		num_mappings;	/* number of in-memory mappings */
-	dlist_head	mappings;		/* list of in-memory mappings */
+	dclist_head mappings;		/* list of in-memory mappings */
 	char		path[MAXPGPATH];	/* path, for error messages */
 } RewriteMappingFile;
 
@@ -318,7 +317,7 @@ end_heap_rewrite(RewriteState state)
 	if (state->rs_buffer_valid)
 	{
 		if (RelationNeedsWAL(state->rs_new_rel))
-			log_newpage(&state->rs_new_rel->rd_node,
+			log_newpage(&state->rs_new_rel->rd_locator,
 						MAIN_FORKNUM,
 						state->rs_blockno,
 						state->rs_buffer,
@@ -679,7 +678,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 
 			/* XLOG stuff */
 			if (RelationNeedsWAL(state->rs_new_rel))
-				log_newpage(&state->rs_new_rel->rd_node,
+				log_newpage(&state->rs_new_rel->rd_locator,
 							MAIN_FORKNUM,
 							state->rs_blockno,
 							page,
@@ -742,7 +741,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
  * When doing logical decoding - which relies on using cmin/cmax of catalog
  * tuples, via xl_heap_new_cid records - heap rewrites have to log enough
  * information to allow the decoding backend to update its internal mapping
- * of (relfilenode,ctid) => (cmin, cmax) to be correct for the rewritten heap.
+ * of (relfilelocator,ctid) => (cmin, cmax) to be correct for the rewritten heap.
  *
  * For that, every time we find a tuple that's been modified in a catalog
  * relation within the xmin horizon of any decoding slot, we log a mapping
@@ -863,9 +862,10 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		Oid			dboid;
 		uint32		len;
 		int			written;
+		uint32		num_mappings = dclist_count(&src->mappings);
 
 		/* this file hasn't got any new mappings */
-		if (src->num_mappings == 0)
+		if (num_mappings == 0)
 			continue;
 
 		if (state->rs_old_rel->rd_rel->relisshared)
@@ -873,7 +873,7 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		else
 			dboid = MyDatabaseId;
 
-		xlrec.num_mappings = src->num_mappings;
+		xlrec.num_mappings = num_mappings;
 		xlrec.mapped_rel = RelationGetRelid(state->rs_old_rel);
 		xlrec.mapped_xid = src->xid;
 		xlrec.mapped_db = dboid;
@@ -881,31 +881,30 @@ logical_heap_rewrite_flush_mappings(RewriteState state)
 		xlrec.start_lsn = state->rs_begin_lsn;
 
 		/* write all mappings consecutively */
-		len = src->num_mappings * sizeof(LogicalRewriteMappingData);
+		len = num_mappings * sizeof(LogicalRewriteMappingData);
 		waldata_start = waldata = palloc(len);
 
 		/*
 		 * collect data we need to write out, but don't modify ondisk data yet
 		 */
-		dlist_foreach_modify(iter, &src->mappings)
+		dclist_foreach_modify(iter, &src->mappings)
 		{
 			RewriteMappingDataEntry *pmap;
 
-			pmap = dlist_container(RewriteMappingDataEntry, node, iter.cur);
+			pmap = dclist_container(RewriteMappingDataEntry, node, iter.cur);
 
 			memcpy(waldata, &pmap->map, sizeof(pmap->map));
 			waldata += sizeof(pmap->map);
 
 			/* remove from the list and free */
-			dlist_delete(&pmap->node);
+			dclist_delete_from(&src->mappings, &pmap->node);
 			pfree(pmap);
 
 			/* update bookkeeping */
 			state->rs_num_rewrite_mappings--;
-			src->num_mappings--;
 		}
 
-		Assert(src->num_mappings == 0);
+		Assert(dclist_count(&src->mappings) == 0);
 		Assert(waldata == waldata_start + len);
 
 		/*
@@ -1001,8 +1000,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 				 LSN_FORMAT_ARGS(state->rs_begin_lsn),
 				 xid, GetCurrentTransactionId());
 
-		dlist_init(&src->mappings);
-		src->num_mappings = 0;
+		dclist_init(&src->mappings);
 		src->off = 0;
 		memcpy(src->path, path, sizeof(path));
 		src->vfd = PathNameOpenFile(path,
@@ -1016,8 +1014,7 @@ logical_rewrite_log_mapping(RewriteState state, TransactionId xid,
 	pmap = MemoryContextAlloc(state->rs_cxt,
 							  sizeof(RewriteMappingDataEntry));
 	memcpy(&pmap->map, map, sizeof(LogicalRewriteMappingData));
-	dlist_push_tail(&src->mappings, &pmap->node);
-	src->num_mappings++;
+	dclist_push_tail(&src->mappings, &pmap->node);
 	state->rs_num_rewrite_mappings++;
 
 	/*
@@ -1080,9 +1077,9 @@ logical_rewrite_heap_tuple(RewriteState state, ItemPointerData old_tid,
 		return;
 
 	/* fill out mapping information */
-	map.old_node = state->rs_old_rel->rd_node;
+	map.old_locator = state->rs_old_rel->rd_locator;
 	map.old_tid = old_tid;
-	map.new_node = state->rs_new_rel->rd_node;
+	map.new_locator = state->rs_new_rel->rd_locator;
 	map.new_tid = new_tid;
 
 	/* ---
@@ -1213,7 +1210,6 @@ CheckPointLogicalRewriteHeap(void)
 	mappings_dir = AllocateDir("pg_logical/mappings");
 	while ((mapping_de = ReadDir(mappings_dir, "pg_logical/mappings")) != NULL)
 	{
-		struct stat statbuf;
 		Oid			dboid;
 		Oid			relid;
 		XLogRecPtr	lsn;
@@ -1221,13 +1217,16 @@ CheckPointLogicalRewriteHeap(void)
 		TransactionId create_xid;
 		uint32		hi,
 					lo;
+		PGFileType	de_type;
 
 		if (strcmp(mapping_de->d_name, ".") == 0 ||
 			strcmp(mapping_de->d_name, "..") == 0)
 			continue;
 
 		snprintf(path, sizeof(path), "pg_logical/mappings/%s", mapping_de->d_name);
-		if (lstat(path, &statbuf) == 0 && !S_ISREG(statbuf.st_mode))
+		de_type = get_dirent_type(path, mapping_de, false, DEBUG1);
+
+		if (de_type != PGFILETYPE_ERROR && de_type != PGFILETYPE_REG)
 			continue;
 
 		/* Skip over files that cannot be ours. */

@@ -116,6 +116,18 @@ DO
 LANGUAGE plpgsql
 $$
 DECLARE
+    x constant int := 3;
+    y int := 4;
+BEGIN
+    CALL test_proc6(2, x, y);  -- error because x is constant
+END;
+$$;
+
+
+DO
+LANGUAGE plpgsql
+$$
+DECLARE
     x int := 3;
     y int := 4;
 BEGIN

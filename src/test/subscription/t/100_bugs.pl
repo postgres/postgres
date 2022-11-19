@@ -69,6 +69,11 @@ $node_publisher->wait_for_catchup('sub1');
 
 pass('index predicates do not cause crash');
 
+# We'll re-use these nodes below, so drop their replication state.
+# We don't bother to drop the tables though.
+$node_subscriber->safe_psql('postgres', "DROP SUBSCRIPTION sub1");
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub1");
+
 $node_publisher->stop('fast');
 $node_subscriber->stop('fast');
 
@@ -81,9 +86,12 @@ $node_subscriber->stop('fast');
 # identity set before accepting updates.  If it did not it would cause
 # an error when an update was attempted.
 
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher2');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+# Although we don't use node_subscriber in this test, keep its logfile
+# name in step with node_publisher for later tests.
+$node_subscriber->rotate_logfile();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE PUBLICATION pub FOR ALL TABLES");
@@ -102,7 +110,11 @@ is( $node_publisher->psql(
 	'update to unlogged table without replica identity with FOR ALL TABLES publication'
 );
 
+# Again, drop replication state but not tables.
+$node_publisher->safe_psql('postgres', "DROP PUBLICATION pub");
+
 $node_publisher->stop('fast');
+
 
 # Bug #16643 - https://postgr.es/m/16643-eaadeb2a1a58d28c@postgresql.org
 #
@@ -144,12 +156,7 @@ $node_twoways->safe_psql('d2',
 # We cannot rely solely on wait_for_catchup() here; it isn't sufficient
 # when tablesync workers might still be running. So in addition to that,
 # verify that tables are synced.
-# XXX maybe this should be integrated in wait_for_catchup() itself.
-$node_twoways->wait_for_catchup('testsub');
-my $synced_query =
-  "SELECT count(1) = 0 FROM pg_subscription_rel WHERE srsubstate NOT IN ('r', 's');";
-$node_twoways->poll_query_until('d2', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+$node_twoways->wait_for_subscription_sync($node_twoways, 'testsub', 'd2');
 
 is($node_twoways->safe_psql('d2', "SELECT count(f) FROM t"),
 	$rows * 2, "2x$rows rows in t");
@@ -231,13 +238,12 @@ $node_sub->stop('fast');
 # target table's relcache was not being invalidated. This leads to skipping
 # UPDATE/DELETE operations during apply on the subscriber side as the columns
 # required to search corresponding rows won't get logged.
-$node_publisher = PostgreSQL::Test::Cluster->new('publisher3');
-$node_publisher->init(allows_streaming => 'logical');
-$node_publisher->start;
 
-$node_subscriber = PostgreSQL::Test::Cluster->new('subscriber3');
-$node_subscriber->init(allows_streaming => 'logical');
-$node_subscriber->start;
+$node_publisher->rotate_logfile();
+$node_publisher->start();
+
+$node_subscriber->rotate_logfile();
+$node_subscriber->start();
 
 $node_publisher->safe_psql('postgres',
 	"CREATE TABLE tab_replidentity_index(a int not null, b int not null)");
@@ -278,11 +284,8 @@ $node_subscriber->safe_psql('postgres',
 	"CREATE SUBSCRIPTION tap_sub CONNECTION '$publisher_connstr' PUBLICATION tap_pub"
 );
 
-$node_publisher->wait_for_catchup('tap_sub');
-
-# Also wait for initial table sync to finish
-$node_subscriber->poll_query_until('postgres', $synced_query)
-  or die "Timed out while waiting for subscriber to synchronize data";
+# Wait for initial table sync to finish
+$node_subscriber->wait_for_subscription_sync($node_publisher, 'tap_sub');
 
 is( $node_subscriber->safe_psql(
 		'postgres', "SELECT * FROM tab_replidentity_index"),

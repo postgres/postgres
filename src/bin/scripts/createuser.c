@@ -28,29 +28,34 @@ int
 main(int argc, char *argv[])
 {
 	static struct option long_options[] = {
-		{"host", required_argument, NULL, 'h'},
-		{"port", required_argument, NULL, 'p'},
-		{"username", required_argument, NULL, 'U'},
-		{"role", required_argument, NULL, 'g'},
-		{"no-password", no_argument, NULL, 'w'},
-		{"password", no_argument, NULL, 'W'},
-		{"echo", no_argument, NULL, 'e'},
+		{"admin", required_argument, NULL, 'a'},
+		{"connection-limit", required_argument, NULL, 'c'},
 		{"createdb", no_argument, NULL, 'd'},
 		{"no-createdb", no_argument, NULL, 'D'},
-		{"superuser", no_argument, NULL, 's'},
-		{"no-superuser", no_argument, NULL, 'S'},
-		{"createrole", no_argument, NULL, 'r'},
-		{"no-createrole", no_argument, NULL, 'R'},
+		{"echo", no_argument, NULL, 'e'},
+		{"encrypted", no_argument, NULL, 'E'},
+		{"role", required_argument, NULL, 'g'},
+		{"host", required_argument, NULL, 'h'},
 		{"inherit", no_argument, NULL, 'i'},
 		{"no-inherit", no_argument, NULL, 'I'},
 		{"login", no_argument, NULL, 'l'},
 		{"no-login", no_argument, NULL, 'L'},
+		{"member", required_argument, NULL, 'm'},
+		{"port", required_argument, NULL, 'p'},
+		{"pwprompt", no_argument, NULL, 'P'},
+		{"createrole", no_argument, NULL, 'r'},
+		{"no-createrole", no_argument, NULL, 'R'},
+		{"superuser", no_argument, NULL, 's'},
+		{"no-superuser", no_argument, NULL, 'S'},
+		{"username", required_argument, NULL, 'U'},
+		{"valid-until", required_argument, NULL, 'v'},
+		{"no-password", no_argument, NULL, 'w'},
+		{"password", no_argument, NULL, 'W'},
 		{"replication", no_argument, NULL, 1},
 		{"no-replication", no_argument, NULL, 2},
 		{"interactive", no_argument, NULL, 3},
-		{"connection-limit", required_argument, NULL, 'c'},
-		{"pwprompt", no_argument, NULL, 'P'},
-		{"encrypted", no_argument, NULL, 'E'},
+		{"bypassrls", no_argument, NULL, 4},
+		{"no-bypassrls", no_argument, NULL, 5},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -62,6 +67,8 @@ main(int argc, char *argv[])
 	char	   *port = NULL;
 	char	   *username = NULL;
 	SimpleStringList roles = {NULL, NULL};
+	SimpleStringList members = {NULL, NULL};
+	SimpleStringList admins = {NULL, NULL};
 	enum trivalue prompt_password = TRI_DEFAULT;
 	ConnParams	cparams;
 	bool		echo = false;
@@ -69,6 +76,7 @@ main(int argc, char *argv[])
 	int			conn_limit = -2;	/* less than minimum valid value */
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
+	char	   *pwexpiry = NULL;
 
 	/* Tri-valued variables.  */
 	enum trivalue createdb = TRI_DEFAULT,
@@ -76,7 +84,8 @@ main(int argc, char *argv[])
 				createrole = TRI_DEFAULT,
 				inherit = TRI_DEFAULT,
 				login = TRI_DEFAULT,
-				replication = TRI_DEFAULT;
+				replication = TRI_DEFAULT,
+				bypassrls = TRI_DEFAULT;
 
 	PQExpBufferData sql;
 
@@ -89,31 +98,18 @@ main(int argc, char *argv[])
 
 	handle_help_version_opts(argc, argv, "createuser", help);
 
-	while ((c = getopt_long(argc, argv, "h:p:U:g:wWedDsSrRiIlLc:PE",
+	while ((c = getopt_long(argc, argv, "a:c:dDeEg:h:iIlLm:p:PrRsSU:v:wW",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
-			case 'h':
-				host = pg_strdup(optarg);
+			case 'a':
+				simple_string_list_append(&admins, optarg);
 				break;
-			case 'p':
-				port = pg_strdup(optarg);
-				break;
-			case 'U':
-				username = pg_strdup(optarg);
-				break;
-			case 'g':
-				simple_string_list_append(&roles, optarg);
-				break;
-			case 'w':
-				prompt_password = TRI_NO;
-				break;
-			case 'W':
-				prompt_password = TRI_YES;
-				break;
-			case 'e':
-				echo = true;
+			case 'c':
+				if (!option_parse_int(optarg, "-c/--connection-limit",
+									  -1, INT_MAX, &conn_limit))
+					exit(1);
 				break;
 			case 'd':
 				createdb = TRI_YES;
@@ -121,17 +117,17 @@ main(int argc, char *argv[])
 			case 'D':
 				createdb = TRI_NO;
 				break;
-			case 's':
-				superuser = TRI_YES;
+			case 'e':
+				echo = true;
 				break;
-			case 'S':
-				superuser = TRI_NO;
+			case 'E':
+				/* no-op, accepted for backward compatibility */
 				break;
-			case 'r':
-				createrole = TRI_YES;
+			case 'g':
+				simple_string_list_append(&roles, optarg);
 				break;
-			case 'R':
-				createrole = TRI_NO;
+			case 'h':
+				host = pg_strdup(optarg);
 				break;
 			case 'i':
 				inherit = TRI_YES;
@@ -145,16 +141,38 @@ main(int argc, char *argv[])
 			case 'L':
 				login = TRI_NO;
 				break;
-			case 'c':
-				if (!option_parse_int(optarg, "-c/--connection-limit",
-									  -1, INT_MAX, &conn_limit))
-					exit(1);
+			case 'm':
+				simple_string_list_append(&members, optarg);
+				break;
+			case 'p':
+				port = pg_strdup(optarg);
 				break;
 			case 'P':
 				pwprompt = true;
 				break;
-			case 'E':
-				/* no-op, accepted for backward compatibility */
+			case 'r':
+				createrole = TRI_YES;
+				break;
+			case 'R':
+				createrole = TRI_NO;
+				break;
+			case 's':
+				superuser = TRI_YES;
+				break;
+			case 'S':
+				superuser = TRI_NO;
+				break;
+			case 'U':
+				username = pg_strdup(optarg);
+				break;
+			case 'v':
+				pwexpiry = pg_strdup(optarg);
+				break;
+			case 'w':
+				prompt_password = TRI_NO;
+				break;
+			case 'W':
+				prompt_password = TRI_YES;
 				break;
 			case 1:
 				replication = TRI_YES;
@@ -164,6 +182,12 @@ main(int argc, char *argv[])
 				break;
 			case 3:
 				interactive = true;
+				break;
+			case 4:
+				bypassrls = TRI_YES;
+				break;
+			case 5:
+				bypassrls = TRI_NO;
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -304,8 +328,17 @@ main(int argc, char *argv[])
 		appendPQExpBufferStr(&sql, " REPLICATION");
 	if (replication == TRI_NO)
 		appendPQExpBufferStr(&sql, " NOREPLICATION");
+	if (bypassrls == TRI_YES)
+		appendPQExpBufferStr(&sql, " BYPASSRLS");
+	if (bypassrls == TRI_NO)
+		appendPQExpBufferStr(&sql, " NOBYPASSRLS");
 	if (conn_limit >= -1)
 		appendPQExpBuffer(&sql, " CONNECTION LIMIT %d", conn_limit);
+	if (pwexpiry != NULL)
+	{
+		appendPQExpBufferStr(&sql, " VALID UNTIL ");
+		appendStringLiteralConn(&sql, pwexpiry, conn);
+	}
 	if (roles.head != NULL)
 	{
 		SimpleStringListCell *cell;
@@ -320,6 +353,35 @@ main(int argc, char *argv[])
 				appendPQExpBufferStr(&sql, fmtId(cell->val));
 		}
 	}
+	if (members.head != NULL)
+	{
+		SimpleStringListCell *cell;
+
+		appendPQExpBufferStr(&sql, " ROLE ");
+
+		for (cell = members.head; cell; cell = cell->next)
+		{
+			if (cell->next)
+				appendPQExpBuffer(&sql, "%s,", fmtId(cell->val));
+			else
+				appendPQExpBufferStr(&sql, fmtId(cell->val));
+		}
+	}
+	if (admins.head != NULL)
+	{
+		SimpleStringListCell *cell;
+
+		appendPQExpBufferStr(&sql, " ADMIN ");
+
+		for (cell = admins.head; cell; cell = cell->next)
+		{
+			if (cell->next)
+				appendPQExpBuffer(&sql, "%s,", fmtId(cell->val));
+			else
+				appendPQExpBufferStr(&sql, fmtId(cell->val));
+		}
+	}
+
 	appendPQExpBufferChar(&sql, ';');
 
 	if (echo)
@@ -346,6 +408,8 @@ help(const char *progname)
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [ROLENAME]\n"), progname);
 	printf(_("\nOptions:\n"));
+	printf(_("  -a, --admin=ROLE          this role will be a member of new role with admin\n"
+			 "                            option\n"));
 	printf(_("  -c, --connection-limit=N  connection limit for role (default: no limit)\n"));
 	printf(_("  -d, --createdb            role can create new databases\n"));
 	printf(_("  -D, --no-createdb         role cannot create databases (default)\n"));
@@ -356,14 +420,19 @@ help(const char *progname)
 	printf(_("  -I, --no-inherit          role does not inherit privileges\n"));
 	printf(_("  -l, --login               role can login (default)\n"));
 	printf(_("  -L, --no-login            role cannot login\n"));
+	printf(_("  -m, --member=ROLE         this role will be a member of new role\n"));
 	printf(_("  -P, --pwprompt            assign a password to new role\n"));
 	printf(_("  -r, --createrole          role can create new roles\n"));
 	printf(_("  -R, --no-createrole       role cannot create roles (default)\n"));
 	printf(_("  -s, --superuser           role will be superuser\n"));
 	printf(_("  -S, --no-superuser        role will not be superuser (default)\n"));
+	printf(_("  -v, --valid-until=TIMESTAMP\n"
+			 "                            password expiration date for role\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("  --interactive             prompt for missing role name and attributes rather\n"
 			 "                            than using defaults\n"));
+	printf(_("  --bypassrls               role can bypass row-level security (RLS) policy\n"));
+	printf(_("  --no-bypassrls            role cannot bypass row-level security (RLS) policy\n"));
 	printf(_("  --replication             role can initiate replication\n"));
 	printf(_("  --no-replication          role cannot initiate replication\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));

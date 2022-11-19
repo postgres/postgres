@@ -16,7 +16,7 @@
 
 #include <sys/stat.h>
 
-#ifdef HAVE_DLOPEN
+#ifndef WIN32
 #include <dlfcn.h>
 
 /*
@@ -28,7 +28,7 @@
 #undef bool
 #endif
 #endif
-#endif							/* HAVE_DLOPEN */
+#endif							/* !WIN32 */
 
 #include "fmgr.h"
 #include "lib/stringinfo.h"
@@ -37,9 +37,8 @@
 #include "utils/hsearch.h"
 
 
-/* signatures for PostgreSQL-specific library init/fini functions */
+/* signature for PostgreSQL-specific library init function */
 typedef void (*PG_init_t) (void);
-typedef void (*PG_fini_t) (void);
 
 /* hashtable entry for rendezvous variables */
 typedef struct
@@ -79,7 +78,6 @@ char	   *Dynamic_library_path;
 static void *internal_load_library(const char *libname);
 static void incompatible_module_error(const char *libname,
 									  const Pg_magic_struct *module_magic_data) pg_attribute_noreturn();
-static void internal_unload_library(const char *libname);
 static bool file_exists(const char *name);
 static char *expand_dynamic_library_name(const char *name);
 static void check_restricted_library_name(const char *name);
@@ -154,9 +152,6 @@ load_file(const char *filename, bool restricted)
 	/* Expand the possibly-abbreviated filename to an exact path name */
 	fullname = expand_dynamic_library_name(filename);
 
-	/* Unload the library if currently loaded */
-	internal_unload_library(fullname);
-
 	/* Load the shared library */
 	(void) internal_load_library(fullname);
 
@@ -179,6 +174,11 @@ lookup_external_function(void *filehandle, const char *funcname)
  * loaded.  Return the pg_dl* handle for the file.
  *
  * Note: libname is expected to be an exact name for the library file.
+ *
+ * NB: There is presently no way to unload a dynamically loaded file.  We might
+ * add one someday if we can convince ourselves we have safe protocols for un-
+ * hooking from hook function pointers, releasing custom GUC variables, and
+ * perhaps other things that are definitely unsafe currently.
  */
 static void *
 internal_load_library(const char *libname)
@@ -240,7 +240,7 @@ internal_load_library(const char *libname)
 		if (file_scanner->handle == NULL)
 		{
 			load_error = dlerror();
-			free((char *) file_scanner);
+			free(file_scanner);
 			/* errcode_for_file_access might not be appropriate here? */
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -263,7 +263,7 @@ internal_load_library(const char *libname)
 
 				/* try to close library */
 				dlclose(file_scanner->handle);
-				free((char *) file_scanner);
+				free(file_scanner);
 
 				/* issue suitable complaint */
 				incompatible_module_error(libname, &module_magic_data);
@@ -273,7 +273,7 @@ internal_load_library(const char *libname)
 		{
 			/* try to close library */
 			dlclose(file_scanner->handle);
-			free((char *) file_scanner);
+			free(file_scanner);
 			/* complain */
 			ereport(ERROR,
 					(errmsg("incompatible library \"%s\": missing magic block",
@@ -400,77 +400,12 @@ incompatible_module_error(const char *libname,
 			 errdetail_internal("%s", details.data)));
 }
 
-/*
- * Unload the specified dynamic-link library file, if it is loaded.
- *
- * Note: libname is expected to be an exact name for the library file.
- *
- * XXX for the moment, this is disabled, resulting in LOAD of an already-loaded
- * library always being a no-op.  We might re-enable it someday if we can
- * convince ourselves we have safe protocols for un-hooking from hook function
- * pointers, releasing custom GUC variables, and perhaps other things that
- * are definitely unsafe currently.
- */
-static void
-internal_unload_library(const char *libname)
-{
-#ifdef NOT_USED
-	DynamicFileList *file_scanner,
-			   *prv,
-			   *nxt;
-	struct stat stat_buf;
-	PG_fini_t	PG_fini;
-
-	/*
-	 * We need to do stat() in order to determine whether this is the same
-	 * file as a previously loaded file; it's also handy so as to give a good
-	 * error message if bogus file name given.
-	 */
-	if (stat(libname, &stat_buf) == -1)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not access file \"%s\": %m", libname)));
-
-	/*
-	 * We have to zap all entries in the list that match on either filename or
-	 * inode, else internal_load_library() will still think it's present.
-	 */
-	prv = NULL;
-	for (file_scanner = file_list; file_scanner != NULL; file_scanner = nxt)
-	{
-		nxt = file_scanner->next;
-		if (strcmp(libname, file_scanner->filename) == 0 ||
-			SAME_INODE(stat_buf, *file_scanner))
-		{
-			if (prv)
-				prv->next = nxt;
-			else
-				file_list = nxt;
-
-			/*
-			 * If the library has a _PG_fini() function, call it.
-			 */
-			PG_fini = (PG_fini_t) dlsym(file_scanner->handle, "_PG_fini");
-			if (PG_fini)
-				(*PG_fini) ();
-
-			clear_external_function_hash(file_scanner->handle);
-			dlclose(file_scanner->handle);
-			free((char *) file_scanner);
-			/* prv does not change */
-		}
-		else
-			prv = file_scanner;
-	}
-#endif							/* NOT_USED */
-}
-
 static bool
 file_exists(const char *name)
 {
 	struct stat st;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	if (stat(name, &st) == 0)
 		return !S_ISDIR(st.st_mode);
@@ -499,7 +434,7 @@ expand_dynamic_library_name(const char *name)
 	char	   *new;
 	char	   *full;
 
-	AssertArg(name);
+	Assert(name);
 
 	have_slash = (first_dir_separator(name) != NULL);
 
@@ -567,7 +502,7 @@ substitute_libpath_macro(const char *name)
 {
 	const char *sep_ptr;
 
-	AssertArg(name != NULL);
+	Assert(name != NULL);
 
 	/* Currently, we only recognize $libdir at the start of the string */
 	if (name[0] != '$')
@@ -599,9 +534,9 @@ find_in_dynamic_libpath(const char *basename)
 	const char *p;
 	size_t		baselen;
 
-	AssertArg(basename != NULL);
-	AssertArg(first_dir_separator(basename) == NULL);
-	AssertState(Dynamic_library_path != NULL);
+	Assert(basename != NULL);
+	Assert(first_dir_separator(basename) == NULL);
+	Assert(Dynamic_library_path != NULL);
 
 	p = Dynamic_library_path;
 	if (strlen(p) == 0)

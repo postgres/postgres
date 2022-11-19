@@ -51,6 +51,7 @@ typedef enum CopyDest
 {
 	COPY_FILE,					/* to file (or a piped program) */
 	COPY_FRONTEND,				/* to frontend */
+	COPY_CALLBACK				/* to callback function */
 } CopyDest;
 
 /*
@@ -85,6 +86,7 @@ typedef struct CopyToStateData
 	List	   *attnumlist;		/* integer list of attnums to copy */
 	char	   *filename;		/* filename, or NULL for STDOUT */
 	bool		is_program;		/* is 'filename' a program to popen? */
+	copy_data_dest_cb data_dest_cb; /* function for writing data */
 
 	CopyFormatOptions opts;
 	Node	   *whereClause;	/* WHERE condition (or NULL) */
@@ -247,6 +249,9 @@ CopySendEndOfRow(CopyToState cstate)
 			/* Dump the accumulated row as one CopyData message */
 			(void) pq_putmessage('d', fe_msgbuf->data, fe_msgbuf->len);
 			break;
+		case COPY_CALLBACK:
+			cstate->data_dest_cb(fe_msgbuf->data, fe_msgbuf->len);
+			break;
 	}
 
 	/* Update the progress */
@@ -336,6 +341,17 @@ EndCopy(CopyToState cstate)
 
 /*
  * Setup CopyToState to read tuples from a table or a query for COPY TO.
+ *
+ * 'rel': Relation to be copied
+ * 'raw_query': Query whose results are to be copied
+ * 'queryRelId': OID of base relation to convert to a query (for RLS)
+ * 'filename': Name of server-local file to write, NULL for STDOUT
+ * 'is_program': true if 'filename' is program to execute
+ * 'data_dest_cb': Callback that processes the output data
+ * 'attnamelist': List of char *, columns to include. NIL selects all cols.
+ * 'options': List of DefElem. See copy_opt_item in gram.y for selections.
+ *
+ * Returns a CopyToState, to be passed to DoCopyTo() and related functions.
  */
 CopyToState
 BeginCopyTo(ParseState *pstate,
@@ -344,11 +360,12 @@ BeginCopyTo(ParseState *pstate,
 			Oid queryRelId,
 			const char *filename,
 			bool is_program,
+			copy_data_dest_cb data_dest_cb,
 			List *attnamelist,
 			List *options)
 {
 	CopyToState cstate;
-	bool		pipe = (filename == NULL);
+	bool		pipe = (filename == NULL && data_dest_cb == NULL);
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
 	MemoryContext oldcontext;
@@ -439,8 +456,8 @@ BeginCopyTo(ParseState *pstate,
 		 * locks on the source table(s).
 		 */
 		rewritten = pg_analyze_and_rewrite_fixedparams(raw_query,
-										   pstate->p_sourcetext, NULL, 0,
-										   NULL);
+													   pstate->p_sourcetext, NULL, 0,
+													   NULL);
 
 		/* check that we got back something we can work with */
 		if (rewritten == NIL)
@@ -591,52 +608,6 @@ BeginCopyTo(ParseState *pstate,
 		}
 	}
 
-	/* Convert FORCE_NOT_NULL name list to per-column flags, check validity */
-	cstate->opts.force_notnull_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
-	if (cstate->opts.force_notnull)
-	{
-		List	   *attnums;
-		ListCell   *cur;
-
-		attnums = CopyGetAttnums(tupDesc, cstate->rel, cstate->opts.force_notnull);
-
-		foreach(cur, attnums)
-		{
-			int			attnum = lfirst_int(cur);
-			Form_pg_attribute attr = TupleDescAttr(tupDesc, attnum - 1);
-
-			if (!list_member_int(cstate->attnumlist, attnum))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE_NOT_NULL column \"%s\" not referenced by COPY",
-								NameStr(attr->attname))));
-			cstate->opts.force_notnull_flags[attnum - 1] = true;
-		}
-	}
-
-	/* Convert FORCE_NULL name list to per-column flags, check validity */
-	cstate->opts.force_null_flags = (bool *) palloc0(num_phys_attrs * sizeof(bool));
-	if (cstate->opts.force_null)
-	{
-		List	   *attnums;
-		ListCell   *cur;
-
-		attnums = CopyGetAttnums(tupDesc, cstate->rel, cstate->opts.force_null);
-
-		foreach(cur, attnums)
-		{
-			int			attnum = lfirst_int(cur);
-			Form_pg_attribute attr = TupleDescAttr(tupDesc, attnum - 1);
-
-			if (!list_member_int(cstate->attnumlist, attnum))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("FORCE_NULL column \"%s\" not referenced by COPY",
-								NameStr(attr->attname))));
-			cstate->opts.force_null_flags[attnum - 1] = true;
-		}
-	}
-
 	/* Use client encoding when ENCODING option is not specified. */
 	if (cstate->opts.file_encoding < 0)
 		cstate->file_encoding = pg_get_client_encoding();
@@ -656,7 +627,13 @@ BeginCopyTo(ParseState *pstate,
 
 	cstate->copy_dest = COPY_FILE;	/* default */
 
-	if (pipe)
+	if (data_dest_cb)
+	{
+		progress_vals[1] = PROGRESS_COPY_TYPE_CALLBACK;
+		cstate->copy_dest = COPY_CALLBACK;
+		cstate->data_dest_cb = data_dest_cb;
+	}
+	else if (pipe)
 	{
 		progress_vals[1] = PROGRESS_COPY_TYPE_PIPE;
 
@@ -765,11 +742,13 @@ EndCopyTo(CopyToState cstate)
 
 /*
  * Copy from relation or query TO file.
+ *
+ * Returns the number of rows processed.
  */
 uint64
 DoCopyTo(CopyToState cstate)
 {
-	bool		pipe = (cstate->filename == NULL);
+	bool		pipe = (cstate->filename == NULL && cstate->data_dest_cb == NULL);
 	bool		fe_copy = (pipe && whereToSendOutput == DestRemote);
 	TupleDesc	tupDesc;
 	int			num_phys_attrs;
@@ -862,7 +841,7 @@ DoCopyTo(CopyToState cstate)
 
 				if (cstate->opts.csv_mode)
 					CopyAttributeOutCSV(cstate, colname, false,
-									list_length(cstate->attnumlist) == 1);
+										list_length(cstate->attnumlist) == 1);
 				else
 					CopyAttributeOutText(cstate, colname);
 			}

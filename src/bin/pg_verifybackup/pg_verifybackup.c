@@ -134,7 +134,7 @@ static void verify_backup_file(verifier_context *context,
 static void report_extra_backup_files(verifier_context *context);
 static void verify_backup_checksums(verifier_context *context);
 static void verify_file_checksum(verifier_context *context,
-								 manifest_file *m, char *pathname);
+								 manifest_file *m, char *fullpath);
 static void parse_required_wal(verifier_context *context,
 							   char *pg_waldump_path,
 							   char *wal_directory,
@@ -811,6 +811,7 @@ parse_required_wal(verifier_context *context, char *pg_waldump_path,
 								  pg_waldump_path, wal_directory, this_wal_range->tli,
 								  LSN_FORMAT_ARGS(this_wal_range->start_lsn),
 								  LSN_FORMAT_ARGS(this_wal_range->end_lsn));
+		fflush(NULL);
 		if (system(pg_waldump_cmd) != 0)
 			report_backup_error(context,
 								"WAL parsing failed for timeline %u",

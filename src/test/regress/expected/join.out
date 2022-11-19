@@ -1984,8 +1984,8 @@ USING (name);
 ------+----+----
  bb   | 12 | 13
  cc   | 22 | 23
- ee   | 42 |   
  dd   |    | 33
+ ee   | 42 |   
 (4 rows)
 
 -- Cases with non-nullable expressions in subquery results;
@@ -2019,8 +2019,8 @@ NATURAL FULL JOIN
 ------+------+------+------+------
  bb   |   12 |    2 |   13 |    3
  cc   |   22 |    2 |   23 |    3
- ee   |   42 |    2 |      |     
  dd   |      |      |   33 |    3
+ ee   |   42 |    2 |      |     
 (4 rows)
 
 SELECT * FROM
@@ -2437,6 +2437,37 @@ select count(*) from
  10000
 (1 row)
 
+set enable_hashjoin = 0;
+set enable_nestloop = 0;
+set enable_hashagg = 0;
+--
+-- Check that we use the pathkeys from a prefix of the group by / order by
+-- clause for the join pathkeys when that prefix covers all join quals.  We
+-- expect this to lead to an incremental sort for the group by / order by.
+--
+explain (costs off)
+select x.thousand, x.twothousand, count(*)
+from tenk1 x inner join tenk1 y on x.thousand = y.thousand
+group by x.thousand, x.twothousand
+order by x.thousand desc, x.twothousand;
+                                    QUERY PLAN                                    
+----------------------------------------------------------------------------------
+ GroupAggregate
+   Group Key: x.thousand, x.twothousand
+   ->  Incremental Sort
+         Sort Key: x.thousand DESC, x.twothousand
+         Presorted Key: x.thousand
+         ->  Merge Join
+               Merge Cond: (y.thousand = x.thousand)
+               ->  Index Only Scan Backward using tenk1_thous_tenthous on tenk1 y
+               ->  Sort
+                     Sort Key: x.thousand DESC
+                     ->  Seq Scan on tenk1 x
+(11 rows)
+
+reset enable_hashagg;
+reset enable_nestloop;
+reset enable_hashjoin;
 --
 -- Clean up
 --
@@ -2501,6 +2532,39 @@ ERROR:  column t1.x does not exist
 LINE 1: select t1.x from t1 join t3 on (t1.a = t3.x);
                ^
 HINT:  Perhaps you meant to reference the column "t3.x".
+-- Test matching of locking clause with wrong alias
+select t1.*, t2.*, unnamed_join.* from
+  t1 join t2 on (t1.a = t2.a), t3 as unnamed_join
+  for update of unnamed_join;
+ a | b | a | b | x | y 
+---+---+---+---+---+---
+(0 rows)
+
+select foo.*, unnamed_join.* from
+  t1 join t2 using (a) as foo, t3 as unnamed_join
+  for update of unnamed_join;
+ a | x | y 
+---+---+---
+(0 rows)
+
+select foo.*, unnamed_join.* from
+  t1 join t2 using (a) as foo, t3 as unnamed_join
+  for update of foo;
+ERROR:  FOR UPDATE cannot be applied to a join
+LINE 3:   for update of foo;
+                        ^
+select bar.*, unnamed_join.* from
+  (t1 join t2 using (a) as foo) as bar, t3 as unnamed_join
+  for update of foo;
+ERROR:  relation "foo" in FOR UPDATE clause not found in FROM clause
+LINE 3:   for update of foo;
+                        ^
+select bar.*, unnamed_join.* from
+  (t1 join t2 using (a) as foo) as bar, t3 as unnamed_join
+  for update of bar;
+ERROR:  FOR UPDATE cannot be applied to a join
+LINE 3:   for update of bar;
+                        ^
 --
 -- regression test for 8.1 merge right join bug
 --
@@ -2585,6 +2649,69 @@ WHERE d.f1 IS NULL;
     1
  9999
 (3 rows)
+
+--
+-- basic semijoin and antijoin recognition tests
+--
+explain (costs off)
+select a.* from tenk1 a
+where unique1 in (select unique2 from tenk1 b);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Semi Join
+   Hash Cond: (a.unique1 = b.unique2)
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(5 rows)
+
+-- sadly, this is not an antijoin
+explain (costs off)
+select a.* from tenk1 a
+where unique1 not in (select unique2 from tenk1 b);
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on tenk1 a
+   Filter: (NOT (hashed SubPlan 1))
+   SubPlan 1
+     ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(4 rows)
+
+explain (costs off)
+select a.* from tenk1 a
+where exists (select 1 from tenk1 b where a.unique1 = b.unique2);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Semi Join
+   Hash Cond: (a.unique1 = b.unique2)
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(5 rows)
+
+explain (costs off)
+select a.* from tenk1 a
+where not exists (select 1 from tenk1 b where a.unique1 = b.unique2);
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Anti Join
+   Hash Cond: (a.unique1 = b.unique2)
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(5 rows)
+
+explain (costs off)
+select a.* from tenk1 a left join tenk1 b on a.unique1 = b.unique2
+where b.unique2 is null;
+                         QUERY PLAN                         
+------------------------------------------------------------
+ Hash Anti Join
+   Hash Cond: (a.unique1 = b.unique2)
+   ->  Seq Scan on tenk1 a
+   ->  Hash
+         ->  Index Only Scan using tenk1_unique2 on tenk1 b
+(5 rows)
 
 --
 -- regression test for proper handling of outer joins within antijoins
@@ -3085,7 +3212,7 @@ where i41.f1 > 0;
          ->  Seq Scan on int4_tbl i41
                Filter: (f1 > 0)
          ->  Nested Loop
-               Join Filter: (i41.f1 = i42.f1)
+               Join Filter: (i42.f1 = i41.f1)
                ->  Seq Scan on int8_tbl i81
                ->  Materialize
                      ->  Seq Scan on int4_tbl i42
@@ -3673,8 +3800,8 @@ select * from tenk1 t1 left join
   (tenk1 t2 join tenk1 t3 on t2.thousand = t3.unique2)
   on t1.hundred = t2.hundred and t1.ten = t3.ten
 where t1.unique1 = 1;
-                          QUERY PLAN                          
---------------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Nested Loop Left Join
    ->  Index Scan using tenk1_unique1 on tenk1 t1
          Index Cond: (unique1 = 1)
@@ -3684,20 +3811,17 @@ where t1.unique1 = 1;
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = t1.hundred)
-         ->  Memoize
-               Cache Key: t2.thousand
-               Cache Mode: logical
-               ->  Index Scan using tenk1_unique2 on tenk1 t3
-                     Index Cond: (unique2 = t2.thousand)
-(14 rows)
+         ->  Index Scan using tenk1_unique2 on tenk1 t3
+               Index Cond: (unique2 = t2.thousand)
+(11 rows)
 
 explain (costs off)
 select * from tenk1 t1 left join
   (tenk1 t2 join tenk1 t3 on t2.thousand = t3.unique2)
   on t1.hundred = t2.hundred and t1.ten + t2.ten = t3.ten
 where t1.unique1 = 1;
-                          QUERY PLAN                          
---------------------------------------------------------------
+                       QUERY PLAN                       
+--------------------------------------------------------
  Nested Loop Left Join
    ->  Index Scan using tenk1_unique1 on tenk1 t1
          Index Cond: (unique1 = 1)
@@ -3707,12 +3831,9 @@ where t1.unique1 = 1;
                Recheck Cond: (t1.hundred = hundred)
                ->  Bitmap Index Scan on tenk1_hundred
                      Index Cond: (hundred = t1.hundred)
-         ->  Memoize
-               Cache Key: t2.thousand
-               Cache Mode: logical
-               ->  Index Scan using tenk1_unique2 on tenk1 t3
-                     Index Cond: (unique2 = t2.thousand)
-(14 rows)
+         ->  Index Scan using tenk1_unique2 on tenk1 t3
+               Index Cond: (unique2 = t2.thousand)
+(11 rows)
 
 explain (costs off)
 select count(*) from
@@ -4530,6 +4651,34 @@ select a.q2, b.q1
 reset enable_hashjoin;
 reset enable_nestloop;
 --
+-- test join strength reduction with a SubPlan providing the proof
+--
+explain (costs off)
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+                        QUERY PLAN                        
+----------------------------------------------------------
+ Hash Join
+   Hash Cond: (b.unique2 = a.unique1)
+   ->  Seq Scan on onek b
+         Filter: (SubPlan 1)
+         SubPlan 1
+           ->  Seq Scan on int8_tbl c
+                 Filter: (q1 < b.unique1)
+   ->  Hash
+         ->  Index Only Scan using onek_unique1 on onek a
+(9 rows)
+
+select a.unique1, b.unique2
+  from onek a left join onek b on a.unique1 = b.unique2
+  where b.unique2 = any (select q1 from int8_tbl c where c.q1 < b.unique1);
+ unique1 | unique2 
+---------+---------
+     123 |     123
+(1 row)
+
+--
 -- test join removal
 --
 begin;
@@ -4618,20 +4767,18 @@ select d.* from d left join (select * from b group by b.id, b.c_id) s
 explain (costs off)
 select d.* from d left join (select distinct * from b) s
   on d.a = s.id;
-                 QUERY PLAN                  
----------------------------------------------
- Merge Left Join
-   Merge Cond: (d.a = s.id)
+              QUERY PLAN              
+--------------------------------------
+ Merge Right Join
+   Merge Cond: (b.id = d.a)
+   ->  Unique
+         ->  Sort
+               Sort Key: b.id, b.c_id
+               ->  Seq Scan on b
    ->  Sort
          Sort Key: d.a
          ->  Seq Scan on d
-   ->  Sort
-         Sort Key: s.id
-         ->  Subquery Scan on s
-               ->  HashAggregate
-                     Group Key: b.id, b.c_id
-                     ->  Seq Scan on b
-(11 rows)
+(9 rows)
 
 -- check join removal works when uniqueness of the join condition is enforced
 -- by a UNION
@@ -4815,7 +4962,7 @@ where ss.stringu2 !~* ss.case1;
                                          QUERY PLAN                                         
 --------------------------------------------------------------------------------------------
  Nested Loop
-   Join Filter: (CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END = t0.f1)
+   Join Filter: (t0.f1 = CASE t1.ten WHEN 0 THEN 'doh!'::text ELSE NULL::text END)
    ->  Nested Loop
          ->  Seq Scan on int4_tbl i4
          ->  Index Scan using tenk1_unique2 on tenk1 t1
@@ -5180,11 +5327,11 @@ explain (costs off)
    Sort Key: a.q1, a.q2, x.q1, x.q2, (a.q1)
    ->  Nested Loop
          ->  Seq Scan on int8_tbl a
-         ->  Hash Right Join
-               Hash Cond: ((a.q1) = x.q2)
-               ->  Seq Scan on int4_tbl y
+         ->  Hash Left Join
+               Hash Cond: (x.q2 = (a.q1))
+               ->  Seq Scan on int8_tbl x
                ->  Hash
-                     ->  Seq Scan on int8_tbl x
+                     ->  Seq Scan on int4_tbl y
 (9 rows)
 
 select * from int8_tbl a,
@@ -5735,10 +5882,10 @@ select * from
  Nested Loop
    Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint)), d.q1, (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2)), ((COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2)))
    ->  Hash Right Join
-         Output: c.q1, c.q2, a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, '42'::bigint)), (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
+         Output: c.q1, c.q2, a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint)), d.q1, (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
          Hash Cond: (d.q1 = c.q2)
          ->  Nested Loop
-               Output: a.q1, a.q2, b.q1, d.q1, (COALESCE(b.q2, '42'::bigint)), (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
+               Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint)), d.q1, (COALESCE((COALESCE(b.q2, '42'::bigint)), d.q2))
                ->  Hash Left Join
                      Output: a.q1, a.q2, b.q1, (COALESCE(b.q2, '42'::bigint))
                      Hash Cond: (a.q2 = b.q1)
@@ -5878,6 +6025,9 @@ select * from
  3 | 3
 (6 rows)
 
+-- check the number of columns specified
+SELECT * FROM (int8_tbl i cross join int4_tbl j) ss(a,b,c,d);
+ERROR:  join expression "ss" has 3 columns available but 4 columns specified
 -- check we don't try to do a unique-ified semijoin with LATERAL
 explain (verbose, costs off)
 select * from
@@ -5924,8 +6074,8 @@ lateral (select * from int8_tbl t1,
                                      where q2 = (select greatest(t1.q1,t2.q2))
                                        and (select v.id=0)) offset 0) ss2) ss
          where t1.q1 = ss.q2) ss0;
-                           QUERY PLAN                            
------------------------------------------------------------------
+                              QUERY PLAN                              
+----------------------------------------------------------------------
  Nested Loop
    Output: "*VALUES*".column1, t1.q1, t1.q2, ss2.q1, ss2.q2
    ->  Seq Scan on public.int8_tbl t1
@@ -5946,10 +6096,10 @@ lateral (select * from int8_tbl t1,
                              One-Time Filter: $4
                              InitPlan 1 (returns $2)
                                ->  Result
-                                     Output: GREATEST($0, t2.q2)
+                                     Output: GREATEST(t1.q1, t2.q2)
                              InitPlan 2 (returns $4)
                                ->  Result
-                                     Output: ($3 = 0)
+                                     Output: ("*VALUES*".column1 = 0)
                              ->  Seq Scan on public.int8_tbl t3
                                    Output: t3.q1, t3.q2
                                    Filter: (t3.q2 = $2)
@@ -6338,39 +6488,44 @@ select * from j1 natural join j2;
 explain (verbose, costs off)
 select * from j1
 inner join (select distinct id from j3) j3 on j1.id = j3.id;
-            QUERY PLAN             
------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
-   ->  HashAggregate
+   ->  Unique
          Output: j3.id
-         Group Key: j3.id
-         ->  Seq Scan on public.j3
+         ->  Sort
                Output: j3.id
+               Sort Key: j3.id
+               ->  Seq Scan on public.j3
+                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-(11 rows)
+(13 rows)
 
 -- ensure group by clause allows the inner to become unique
 explain (verbose, costs off)
 select * from j1
 inner join (select id from j3 group by id) j3 on j1.id = j3.id;
-            QUERY PLAN             
------------------------------------
+               QUERY PLAN                
+-----------------------------------------
  Nested Loop
    Output: j1.id, j3.id
    Inner Unique: true
    Join Filter: (j1.id = j3.id)
-   ->  HashAggregate
+   ->  Group
          Output: j3.id
          Group Key: j3.id
-         ->  Seq Scan on public.j3
+         ->  Sort
                Output: j3.id
+               Sort Key: j3.id
+               ->  Seq Scan on public.j3
+                     Output: j3.id
    ->  Seq Scan on public.j1
          Output: j1.id
-(11 rows)
+(14 rows)
 
 drop table j1;
 drop table j2;
@@ -6469,7 +6624,7 @@ where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1;
 -----------------------------------------
  Merge Join
    Merge Cond: (j1.id1 = j2.id1)
-   Join Filter: (j1.id2 = j2.id2)
+   Join Filter: (j2.id2 = j1.id2)
    ->  Index Scan using j1_id1_idx on j1
    ->  Index Scan using j2_id1_idx on j2
 (5 rows)
@@ -6491,7 +6646,7 @@ where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 = any (array[1]);
 ----------------------------------------------------
  Merge Join
    Merge Cond: (j1.id1 = j2.id1)
-   Join Filter: (j1.id2 = j2.id2)
+   Join Filter: (j2.id2 = j1.id2)
    ->  Index Scan using j1_id1_idx on j1
    ->  Index Scan using j2_id1_idx on j2
          Index Cond: (id1 = ANY ('{1}'::integer[]))
@@ -6514,7 +6669,7 @@ where j1.id1 % 1000 = 1 and j2.id1 % 1000 = 1 and j2.id1 >= any (array[1,5]);
 -------------------------------------------------------
  Merge Join
    Merge Cond: (j1.id1 = j2.id1)
-   Join Filter: (j1.id2 = j2.id2)
+   Join Filter: (j2.id2 = j1.id2)
    ->  Index Scan using j1_id1_idx on j1
    ->  Index Only Scan using j2_pkey on j2
          Index Cond: (id1 >= ANY ('{1,5}'::integer[]))

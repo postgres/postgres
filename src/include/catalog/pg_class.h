@@ -223,7 +223,7 @@ DECLARE_INDEX(pg_class_tblspc_relfilenode_index, 3455, ClassTblspcRelfilenodeInd
 	 (relkind) == RELKIND_TOASTVALUE || \
 	 (relkind) == RELKIND_MATVIEW)
 
-extern int errdetail_relkind_not_supported(char relkind);
+extern int	errdetail_relkind_not_supported(char relkind);
 
 #endif							/* EXPOSE_TO_CLIENT_CODE */
 

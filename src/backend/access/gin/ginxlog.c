@@ -95,13 +95,13 @@ ginRedoInsertEntry(Buffer buffer, bool isLeaf, BlockNumber rightblkno, void *rda
 
 	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), offset, false, false) == InvalidOffsetNumber)
 	{
-		RelFileNode node;
+		RelFileLocator locator;
 		ForkNumber	forknum;
 		BlockNumber blknum;
 
-		BufferGetTag(buffer, &node, &forknum, &blknum);
+		BufferGetTag(buffer, &locator, &forknum, &blknum);
 		elog(ERROR, "failed to add item to index page in %u/%u/%u",
-			 node.spcNode, node.dbNode, node.relNode);
+			 locator.spcOid, locator.dbOid, locator.relNumber);
 	}
 }
 

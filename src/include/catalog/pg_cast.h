@@ -95,6 +95,8 @@ typedef enum CoercionMethod
 extern ObjectAddress CastCreate(Oid sourcetypeid,
 								Oid targettypeid,
 								Oid funcid,
+								Oid incastid,
+								Oid outcastid,
 								char castcontext,
 								char castmethod,
 								DependencyType behavior);

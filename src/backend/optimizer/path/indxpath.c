@@ -99,7 +99,6 @@ static void get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 								 List **considered_relids);
 static bool eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
 								List *indexjoinclauses);
-static bool bms_equal_any(Relids relids, List *relids_list);
 static void get_index_paths(PlannerInfo *root, RelOptInfo *rel,
 							IndexOptInfo *index, IndexClauseSet *clauses,
 							List **bitindexpaths);
@@ -153,6 +152,7 @@ static IndexClause *match_clause_to_indexcol(PlannerInfo *root,
 											 RestrictInfo *rinfo,
 											 int indexcol,
 											 IndexOptInfo *index);
+static bool IsBooleanOpfamily(Oid opfamily);
 static IndexClause *match_boolean_index_clause(PlannerInfo *root,
 											   RestrictInfo *rinfo,
 											   int indexcol, IndexOptInfo *index);
@@ -361,7 +361,6 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 	if (bitjoinpaths != NIL)
 	{
 		List	   *all_path_outers;
-		ListCell   *lc;
 
 		/* Identify each distinct parameterization seen in bitjoinpaths */
 		all_path_outers = NIL;
@@ -370,8 +369,8 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 			Path	   *path = (Path *) lfirst(lc);
 			Relids		required_outer = PATH_REQ_OUTER(path);
 
-			if (!bms_equal_any(required_outer, all_path_outers))
-				all_path_outers = lappend(all_path_outers, required_outer);
+			all_path_outers = list_append_unique(all_path_outers,
+												 required_outer);
 		}
 
 		/* Now, for each distinct parameterization set ... */
@@ -517,7 +516,7 @@ consider_index_join_outer_rels(PlannerInfo *root, RelOptInfo *rel,
 		int			num_considered_relids;
 
 		/* If we already tried its relids set, no need to do so again */
-		if (bms_equal_any(clause_relids, *considered_relids))
+		if (list_member(*considered_relids, clause_relids))
 			continue;
 
 		/*
@@ -612,7 +611,7 @@ get_join_index_paths(PlannerInfo *root, RelOptInfo *rel,
 	int			indexcol;
 
 	/* If we already considered this relids set, don't repeat the work */
-	if (bms_equal_any(relids, *considered_relids))
+	if (list_member(*considered_relids, relids))
 		return;
 
 	/* Identify indexclauses usable with this relids set */
@@ -689,25 +688,6 @@ eclass_already_used(EquivalenceClass *parent_ec, Relids oldrelids,
 
 		if (rinfo->parent_ec == parent_ec &&
 			bms_is_subset(rinfo->clause_relids, oldrelids))
-			return true;
-	}
-	return false;
-}
-
-/*
- * bms_equal_any
- *		True if relids is bms_equal to any member of relids_list
- *
- * Perhaps this should be in bitmapset.c someday.
- */
-static bool
-bms_equal_any(Relids relids, List *relids_list)
-{
-	ListCell   *lc;
-
-	foreach(lc, relids_list)
-	{
-		if (bms_equal(relids, (Relids) lfirst(lc)))
 			return true;
 	}
 	return false;
@@ -1303,11 +1283,11 @@ generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 			}
 			else
 			{
-				RestrictInfo *rinfo = castNode(RestrictInfo, orarg);
+				RestrictInfo *ri = castNode(RestrictInfo, orarg);
 				List	   *orargs;
 
-				Assert(!restriction_is_or_clause(rinfo));
-				orargs = list_make1(rinfo);
+				Assert(!restriction_is_or_clause(ri));
+				orargs = list_make1(ri);
 
 				indlist = build_paths_for_OR(root, rel,
 											 orargs,
@@ -2188,7 +2168,7 @@ match_clause_to_index(PlannerInfo *root,
 		/* Ignore duplicates */
 		foreach(lc, clauseset->indexclauses[indexcol])
 		{
-			IndexClause *iclause = (IndexClause *) lfirst(lc);
+			iclause = (IndexClause *) lfirst(lc);
 
 			if (iclause->rinfo == rinfo)
 				return;
@@ -2341,6 +2321,23 @@ match_clause_to_indexcol(PlannerInfo *root,
 	}
 
 	return NULL;
+}
+
+/*
+ * IsBooleanOpfamily
+ *	  Detect whether an opfamily supports boolean equality as an operator.
+ *
+ * If the opfamily OID is in the range of built-in objects, we can rely
+ * on hard-wired knowledge of which built-in opfamilies support this.
+ * For extension opfamilies, there's no choice but to do a catcache lookup.
+ */
+static bool
+IsBooleanOpfamily(Oid opfamily)
+{
+	if (opfamily < FirstNormalObjectId)
+		return IsBuiltinBooleanOpfamily(opfamily);
+	else
+		return op_in_opfamily(BooleanEqualOperator, opfamily);
 }
 
 /*
@@ -3026,14 +3023,12 @@ expand_indexqual_rowcompare(PlannerInfo *root,
 
 			rc->rctype = (RowCompareType) op_strategy;
 			rc->opnos = new_ops;
-			rc->opfamilies = list_truncate(list_copy(clause->opfamilies),
-										   matching_cols);
-			rc->inputcollids = list_truncate(list_copy(clause->inputcollids),
-											 matching_cols);
-			rc->largs = list_truncate(copyObject(var_args),
-									  matching_cols);
-			rc->rargs = list_truncate(copyObject(non_var_args),
-									  matching_cols);
+			rc->opfamilies = list_copy_head(clause->opfamilies,
+											matching_cols);
+			rc->inputcollids = list_copy_head(clause->inputcollids,
+											  matching_cols);
+			rc->largs = list_copy_head(var_args, matching_cols);
+			rc->rargs = list_copy_head(non_var_args, matching_cols);
 			iclause->indexquals = list_make1(make_simple_restrictinfo(root,
 																	  (Expr *) rc));
 		}
@@ -3378,12 +3373,13 @@ check_index_predicates(PlannerInfo *root, RelOptInfo *rel)
 	 * Normally we remove quals that are implied by a partial index's
 	 * predicate from indrestrictinfo, indicating that they need not be
 	 * checked explicitly by an indexscan plan using this index.  However, if
-	 * the rel is a target relation of UPDATE/DELETE/SELECT FOR UPDATE, we
-	 * cannot remove such quals from the plan, because they need to be in the
-	 * plan so that they will be properly rechecked by EvalPlanQual testing.
-	 * Some day we might want to remove such quals from the main plan anyway
-	 * and pass them through to EvalPlanQual via a side channel; but for now,
-	 * we just don't remove implied quals at all for target relations.
+	 * the rel is a target relation of UPDATE/DELETE/MERGE/SELECT FOR UPDATE,
+	 * we cannot remove such quals from the plan, because they need to be in
+	 * the plan so that they will be properly rechecked by EvalPlanQual
+	 * testing.  Some day we might want to remove such quals from the main
+	 * plan anyway and pass them through to EvalPlanQual via a side channel;
+	 * but for now, we just don't remove implied quals at all for target
+	 * relations.
 	 */
 	is_target_rel = (bms_is_member(rel->relid, root->all_result_relids) ||
 					 get_plan_rowmark(root->rowMarks, rel->relid) != NULL);

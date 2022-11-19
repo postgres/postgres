@@ -35,7 +35,7 @@
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/md.h"
-#include "storage/relfilenode.h"
+#include "storage/relfilelocator.h"
 #include "storage/smgr.h"
 #include "storage/sync.h"
 #include "utils/hsearch.h"
@@ -89,11 +89,11 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
 
 
 /* Populate a file tag describing an md.c segment file. */
-#define INIT_MD_FILETAG(a,xx_rnode,xx_forknum,xx_segno) \
+#define INIT_MD_FILETAG(a,xx_rlocator,xx_forknum,xx_segno) \
 ( \
 	memset(&(a), 0, sizeof(FileTag)), \
 	(a).handler = SYNC_HANDLER_MD, \
-	(a).rnode = (xx_rnode), \
+	(a).rlocator = (xx_rlocator), \
 	(a).forknum = (xx_forknum), \
 	(a).segno = (xx_segno) \
 )
@@ -116,26 +116,28 @@ static MemoryContext MdCxt;		/* context for all MdfdVec objects */
  * mdnblocks().
  */
 #define EXTENSION_DONT_CHECK_SIZE	(1 << 4)
+/* don't try to open a segment, if not already open */
+#define EXTENSION_DONT_OPEN			(1 << 5)
 
 
 /* local routines */
-static void mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum,
+static void mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum,
 						 bool isRedo);
 static MdfdVec *mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior);
 static void register_dirty_segment(SMgrRelation reln, ForkNumber forknum,
 								   MdfdVec *seg);
-static void register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
+static void register_unlink_segment(RelFileLocatorBackend rlocator, ForkNumber forknum,
 									BlockNumber segno);
-static void register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
+static void register_forget_request(RelFileLocatorBackend rlocator, ForkNumber forknum,
 									BlockNumber segno);
 static void _fdvec_resize(SMgrRelation reln,
 						  ForkNumber forknum,
 						  int nseg);
 static char *_mdfd_segpath(SMgrRelation reln, ForkNumber forknum,
 						   BlockNumber segno);
-static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forkno,
+static MdfdVec *_mdfd_openseg(SMgrRelation reln, ForkNumber forknum,
 							  BlockNumber segno, int oflags);
-static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forkno,
+static MdfdVec *_mdfd_getseg(SMgrRelation reln, ForkNumber forknum,
 							 BlockNumber blkno, bool skipFsync, int behavior);
 static BlockNumber _mdnblocks(SMgrRelation reln, ForkNumber forknum,
 							  MdfdVec *seg);
@@ -158,7 +160,7 @@ mdinit(void)
  * Note: this will return true for lingering files, with pending deletions
  */
 bool
-mdexists(SMgrRelation reln, ForkNumber forkNum)
+mdexists(SMgrRelation reln, ForkNumber forknum)
 {
 	/*
 	 * Close it first, to ensure that we notice if the fork has been unlinked
@@ -166,9 +168,9 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
 	 * which already closes relations when dropping them.
 	 */
 	if (!InRecovery)
-		mdclose(reln, forkNum);
+		mdclose(reln, forknum);
 
-	return (mdopenfork(reln, forkNum, EXTENSION_RETURN_NULL) != NULL);
+	return (mdopenfork(reln, forknum, EXTENSION_RETURN_NULL) != NULL);
 }
 
 /*
@@ -177,16 +179,16 @@ mdexists(SMgrRelation reln, ForkNumber forkNum)
  * If isRedo is true, it's okay for the relation to exist already.
  */
 void
-mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
+mdcreate(SMgrRelation reln, ForkNumber forknum, bool isRedo)
 {
 	MdfdVec    *mdfd;
 	char	   *path;
 	File		fd;
 
-	if (isRedo && reln->md_num_open_segs[forkNum] > 0)
+	if (isRedo && reln->md_num_open_segs[forknum] > 0)
 		return;					/* created and opened already... */
 
-	Assert(reln->md_num_open_segs[forkNum] == 0);
+	Assert(reln->md_num_open_segs[forknum] == 0);
 
 	/*
 	 * We may be using the target table space for the first time in this
@@ -197,11 +199,11 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 	 * should be here and not in commands/tablespace.c?  But that would imply
 	 * importing a lot of stuff that smgr.c oughtn't know, either.
 	 */
-	TablespaceCreateDbspace(reln->smgr_rnode.node.spcNode,
-							reln->smgr_rnode.node.dbNode,
+	TablespaceCreateDbspace(reln->smgr_rlocator.locator.spcOid,
+							reln->smgr_rlocator.locator.dbOid,
 							isRedo);
 
-	path = relpath(reln->smgr_rnode, forkNum);
+	path = relpath(reln->smgr_rlocator, forknum);
 
 	fd = PathNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY);
 
@@ -223,8 +225,8 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 
 	pfree(path);
 
-	_fdvec_resize(reln, forkNum, 1);
-	mdfd = &reln->md_seg_fds[forkNum][0];
+	_fdvec_resize(reln, forknum, 1);
+	mdfd = &reln->md_seg_fds[forknum][0];
 	mdfd->mdfd_vfd = fd;
 	mdfd->mdfd_segno = 0;
 }
@@ -232,19 +234,19 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
 /*
  *	mdunlink() -- Unlink a relation.
  *
- * Note that we're passed a RelFileNodeBackend --- by the time this is called,
+ * Note that we're passed a RelFileLocatorBackend --- by the time this is called,
  * there won't be an SMgrRelation hashtable entry anymore.
  *
- * forkNum can be a fork number to delete a specific fork, or InvalidForkNumber
+ * forknum can be a fork number to delete a specific fork, or InvalidForkNumber
  * to delete all forks.
  *
  * For regular relations, we don't unlink the first segment file of the rel,
  * but just truncate it to zero length, and record a request to unlink it after
  * the next checkpoint.  Additional segments can be unlinked immediately,
- * however.  Leaving the empty file in place prevents that relfilenode
- * number from being reused.  The scenario this protects us from is:
+ * however.  Leaving the empty file in place prevents that relfilenumber
+ * from being reused.  The scenario this protects us from is:
  * 1. We delete a relation (and commit, and actually remove its file).
- * 2. We create a new relation, which by chance gets the same relfilenode as
+ * 2. We create a new relation, which by chance gets the same relfilenumber as
  *	  the just-deleted one (OIDs must've wrapped around for that to happen).
  * 3. We crash before another checkpoint occurs.
  * During replay, we would delete the file and then recreate it, which is fine
@@ -252,18 +254,30 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * But if we didn't WAL-log insertions, but instead relied on fsyncing the
  * file after populating it (as we do at wal_level=minimal), the contents of
  * the file would be lost forever.  By leaving the empty file until after the
- * next checkpoint, we prevent reassignment of the relfilenode number until
- * it's safe, because relfilenode assignment skips over any existing file.
+ * next checkpoint, we prevent reassignment of the relfilenumber until it's
+ * safe, because relfilenumber assignment skips over any existing file.
+ *
+ * Additional segments, if any, are truncated and then unlinked.  The reason
+ * for truncating is that other backends may still hold open FDs for these at
+ * the smgr level, so that the kernel can't remove the file yet.  We want to
+ * reclaim the disk space right away despite that.
  *
  * We do not need to go through this dance for temp relations, though, because
  * we never make WAL entries for temp rels, and so a temp rel poses no threat
- * to the health of a regular rel that has taken over its relfilenode number.
+ * to the health of a regular rel that has taken over its relfilenumber.
  * The fact that temp rels and regular rels have different file naming
- * patterns provides additional safety.
+ * patterns provides additional safety.  Other backends shouldn't have open
+ * FDs for them, either.
+ *
+ * We also don't do it while performing a binary upgrade.  There is no reuse
+ * hazard in that case, since after a crash or even a simple ERROR, the
+ * upgrade fails and the whole cluster must be recreated from scratch.
+ * Furthermore, it is important to remove the files from disk immediately,
+ * because we may be about to reuse the same relfilenumber.
  *
  * All the above applies only to the relation's main fork; other forks can
  * just be removed immediately, since they are not needed to prevent the
- * relfilenode number from being recycled.  Also, we do not carefully
+ * relfilenumber from being recycled.  Also, we do not carefully
  * track whether other forks have been created or not, but just attempt to
  * unlink them unconditionally; so we should never complain about ENOENT.
  *
@@ -272,20 +286,23 @@ mdcreate(SMgrRelation reln, ForkNumber forkNum, bool isRedo)
  * for later, since during redo there's no possibility of creating a
  * conflicting relation.
  *
+ * Note: we currently just never warn about ENOENT at all.  We could warn in
+ * the main-fork, non-isRedo case, but it doesn't seem worth the trouble.
+ *
  * Note: any failure should be reported as WARNING not ERROR, because
  * we are usually not in a transaction anymore when this is called.
  */
 void
-mdunlink(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
+mdunlink(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
 	/* Now do the per-fork work */
-	if (forkNum == InvalidForkNumber)
+	if (forknum == InvalidForkNumber)
 	{
-		for (forkNum = 0; forkNum <= MAX_FORKNUM; forkNum++)
-			mdunlinkfork(rnode, forkNum, isRedo);
+		for (forknum = 0; forknum <= MAX_FORKNUM; forknum++)
+			mdunlinkfork(rlocator, forknum, isRedo);
 	}
 	else
-		mdunlinkfork(rnode, forkNum, isRedo);
+		mdunlinkfork(rlocator, forknum, isRedo);
 }
 
 /*
@@ -313,37 +330,46 @@ do_truncate(const char *path)
 }
 
 static void
-mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
+mdunlinkfork(RelFileLocatorBackend rlocator, ForkNumber forknum, bool isRedo)
 {
 	char	   *path;
 	int			ret;
+	int			save_errno;
 
-	path = relpath(rnode, forkNum);
+	path = relpath(rlocator, forknum);
 
 	/*
-	 * Delete or truncate the first segment.
+	 * Truncate and then unlink the first segment, or just register a request
+	 * to unlink it later, as described in the comments for mdunlink().
 	 */
-	if (isRedo || forkNum != MAIN_FORKNUM || RelFileNodeBackendIsTemp(rnode))
+	if (isRedo || IsBinaryUpgrade || forknum != MAIN_FORKNUM ||
+		RelFileLocatorBackendIsTemp(rlocator))
 	{
-		if (!RelFileNodeBackendIsTemp(rnode))
+		if (!RelFileLocatorBackendIsTemp(rlocator))
 		{
 			/* Prevent other backends' fds from holding on to the disk space */
 			ret = do_truncate(path);
 
 			/* Forget any pending sync requests for the first segment */
-			register_forget_request(rnode, forkNum, 0 /* first seg */ );
+			save_errno = errno;
+			register_forget_request(rlocator, forknum, 0 /* first seg */ );
+			errno = save_errno;
 		}
 		else
 			ret = 0;
 
 		/* Next unlink the file, unless it was already found to be missing */
-		if (ret == 0 || errno != ENOENT)
+		if (ret >= 0 || errno != ENOENT)
 		{
 			ret = unlink(path);
 			if (ret < 0 && errno != ENOENT)
+			{
+				save_errno = errno;
 				ereport(WARNING,
 						(errcode_for_file_access(),
 						 errmsg("could not remove file \"%s\": %m", path)));
+				errno = save_errno;
+			}
 		}
 	}
 	else
@@ -352,30 +378,37 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 		ret = do_truncate(path);
 
 		/* Register request to unlink first segment later */
-		register_unlink_segment(rnode, forkNum, 0 /* first seg */ );
+		save_errno = errno;
+		register_unlink_segment(rlocator, forknum, 0 /* first seg */ );
+		errno = save_errno;
 	}
 
 	/*
 	 * Delete any additional segments.
+	 *
+	 * Note that because we loop until getting ENOENT, we will correctly
+	 * remove all inactive segments as well as active ones.  Ideally we'd
+	 * continue the loop until getting exactly that errno, but that risks an
+	 * infinite loop if the problem is directory-wide (for instance, if we
+	 * suddenly can't read the data directory itself).  We compromise by
+	 * continuing after a non-ENOENT truncate error, but stopping after any
+	 * unlink error.  If there is indeed a directory-wide problem, additional
+	 * unlink attempts wouldn't work anyway.
 	 */
-	if (ret >= 0)
+	if (ret >= 0 || errno != ENOENT)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		BlockNumber segno;
 
-		/*
-		 * Note that because we loop until getting ENOENT, we will correctly
-		 * remove all inactive segments as well as active ones.
-		 */
 		for (segno = 1;; segno++)
 		{
 			sprintf(segpath, "%s.%u", path, segno);
 
-			if (!RelFileNodeBackendIsTemp(rnode))
+			if (!RelFileLocatorBackendIsTemp(rlocator))
 			{
 				/*
 				 * Prevent other backends' fds from holding on to the disk
-				 * space.
+				 * space.  We're done if we see ENOENT, though.
 				 */
 				if (do_truncate(segpath) < 0 && errno == ENOENT)
 					break;
@@ -384,7 +417,7 @@ mdunlinkfork(RelFileNodeBackend rnode, ForkNumber forkNum, bool isRedo)
 				 * Forget any pending sync requests for this segment before we
 				 * try to unlink.
 				 */
-				register_forget_request(rnode, forkNum, segno);
+				register_forget_request(rlocator, forknum, segno);
 			}
 
 			if (unlink(segpath) < 0)
@@ -435,7 +468,7 @@ mdextend(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
 				 errmsg("cannot extend file \"%s\" beyond %u blocks",
-						relpath(reln->smgr_rnode, forknum),
+						relpath(reln->smgr_rlocator, forknum),
 						InvalidBlockNumber)));
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync, EXTENSION_CREATE);
@@ -488,7 +521,7 @@ mdopenfork(SMgrRelation reln, ForkNumber forknum, int behavior)
 	if (reln->md_num_open_segs[forknum] > 0)
 		return &reln->md_seg_fds[forknum][0];
 
-	path = relpath(reln->smgr_rnode, forknum);
+	path = relpath(reln->smgr_rlocator, forknum);
 
 	fd = PathNameOpenFile(path, O_RDWR | PG_BINARY);
 
@@ -551,12 +584,6 @@ mdclose(SMgrRelation reln, ForkNumber forknum)
 	}
 }
 
-void
-mdrelease(void)
-{
-	closeAllVfds();
-}
-
 /*
  *	mdprefetch() -- Initiate asynchronous read of the specified block of a relation
  */
@@ -605,11 +632,14 @@ mdwriteback(SMgrRelation reln, ForkNumber forknum,
 					segnum_end;
 
 		v = _mdfd_getseg(reln, forknum, blocknum, true /* not used */ ,
-						 EXTENSION_RETURN_NULL);
+						 EXTENSION_DONT_OPEN);
 
 		/*
 		 * We might be flushing buffers of already removed relations, that's
-		 * ok, just ignore that case.
+		 * ok, just ignore that case.  If the segment file wasn't open already
+		 * (ie from a recent mdwrite()), then we don't want to re-open it, to
+		 * avoid a race with PROCSIGNAL_BARRIER_SMGRRELEASE that might leave
+		 * us with a descriptor to a file that is about to be unlinked.
 		 */
 		if (!v)
 			return;
@@ -646,10 +676,10 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	MdfdVec    *v;
 
 	TRACE_POSTGRESQL_SMGR_MD_READ_START(forknum, blocknum,
-										reln->smgr_rnode.node.spcNode,
-										reln->smgr_rnode.node.dbNode,
-										reln->smgr_rnode.node.relNode,
-										reln->smgr_rnode.backend);
+										reln->smgr_rlocator.locator.spcOid,
+										reln->smgr_rlocator.locator.dbOid,
+										reln->smgr_rlocator.locator.relNumber,
+										reln->smgr_rlocator.backend);
 
 	v = _mdfd_getseg(reln, forknum, blocknum, false,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
@@ -661,10 +691,10 @@ mdread(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_READ);
 
 	TRACE_POSTGRESQL_SMGR_MD_READ_DONE(forknum, blocknum,
-									   reln->smgr_rnode.node.spcNode,
-									   reln->smgr_rnode.node.dbNode,
-									   reln->smgr_rnode.node.relNode,
-									   reln->smgr_rnode.backend,
+									   reln->smgr_rlocator.locator.spcOid,
+									   reln->smgr_rlocator.locator.dbOid,
+									   reln->smgr_rlocator.locator.relNumber,
+									   reln->smgr_rlocator.backend,
 									   nbytes,
 									   BLCKSZ);
 
@@ -716,10 +746,10 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 #endif
 
 	TRACE_POSTGRESQL_SMGR_MD_WRITE_START(forknum, blocknum,
-										 reln->smgr_rnode.node.spcNode,
-										 reln->smgr_rnode.node.dbNode,
-										 reln->smgr_rnode.node.relNode,
-										 reln->smgr_rnode.backend);
+										 reln->smgr_rlocator.locator.spcOid,
+										 reln->smgr_rlocator.locator.dbOid,
+										 reln->smgr_rlocator.locator.relNumber,
+										 reln->smgr_rlocator.backend);
 
 	v = _mdfd_getseg(reln, forknum, blocknum, skipFsync,
 					 EXTENSION_FAIL | EXTENSION_CREATE_RECOVERY);
@@ -731,10 +761,10 @@ mdwrite(SMgrRelation reln, ForkNumber forknum, BlockNumber blocknum,
 	nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ, seekpos, WAIT_EVENT_DATA_FILE_WRITE);
 
 	TRACE_POSTGRESQL_SMGR_MD_WRITE_DONE(forknum, blocknum,
-										reln->smgr_rnode.node.spcNode,
-										reln->smgr_rnode.node.dbNode,
-										reln->smgr_rnode.node.relNode,
-										reln->smgr_rnode.backend,
+										reln->smgr_rlocator.locator.spcOid,
+										reln->smgr_rlocator.locator.dbOid,
+										reln->smgr_rlocator.locator.relNumber,
+										reln->smgr_rlocator.backend,
 										nbytes,
 										BLCKSZ);
 
@@ -843,7 +873,7 @@ mdtruncate(SMgrRelation reln, ForkNumber forknum, BlockNumber nblocks)
 			return;
 		ereport(ERROR,
 				(errmsg("could not truncate file \"%s\" to %u blocks: it's only %u blocks now",
-						relpath(reln->smgr_rnode, forknum),
+						relpath(reln->smgr_rlocator, forknum),
 						nblocks, curnblk)));
 	}
 	if (nblocks == curnblk)
@@ -984,7 +1014,7 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, reln->smgr_rnode.node, forknum, seg->mdfd_segno);
+	INIT_MD_FILETAG(tag, reln->smgr_rlocator.locator, forknum, seg->mdfd_segno);
 
 	/* Temp relations should never be fsync'd */
 	Assert(!SmgrIsTemp(reln));
@@ -1006,15 +1036,15 @@ register_dirty_segment(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
  * register_unlink_segment() -- Schedule a file to be deleted after next checkpoint
  */
 static void
-register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
+register_unlink_segment(RelFileLocatorBackend rlocator, ForkNumber forknum,
 						BlockNumber segno)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
+	INIT_MD_FILETAG(tag, rlocator.locator, forknum, segno);
 
 	/* Should never be used with temp relations */
-	Assert(!RelFileNodeBackendIsTemp(rnode));
+	Assert(!RelFileLocatorBackendIsTemp(rlocator));
 
 	RegisterSyncRequest(&tag, SYNC_UNLINK_REQUEST, true /* retryOnError */ );
 }
@@ -1023,12 +1053,12 @@ register_unlink_segment(RelFileNodeBackend rnode, ForkNumber forknum,
  * register_forget_request() -- forget any fsyncs for a relation fork's segment
  */
 static void
-register_forget_request(RelFileNodeBackend rnode, ForkNumber forknum,
+register_forget_request(RelFileLocatorBackend rlocator, ForkNumber forknum,
 						BlockNumber segno)
 {
 	FileTag		tag;
 
-	INIT_MD_FILETAG(tag, rnode.node, forknum, segno);
+	INIT_MD_FILETAG(tag, rlocator.locator, forknum, segno);
 
 	RegisterSyncRequest(&tag, SYNC_FORGET_REQUEST, true /* retryOnError */ );
 }
@@ -1040,13 +1070,13 @@ void
 ForgetDatabaseSyncRequests(Oid dbid)
 {
 	FileTag		tag;
-	RelFileNode rnode;
+	RelFileLocator rlocator;
 
-	rnode.dbNode = dbid;
-	rnode.spcNode = 0;
-	rnode.relNode = 0;
+	rlocator.dbOid = dbid;
+	rlocator.spcOid = 0;
+	rlocator.relNumber = 0;
 
-	INIT_MD_FILETAG(tag, rnode, InvalidForkNumber, InvalidBlockNumber);
+	INIT_MD_FILETAG(tag, rlocator, InvalidForkNumber, InvalidBlockNumber);
 
 	RegisterSyncRequest(&tag, SYNC_FILTER_REQUEST, true /* retryOnError */ );
 }
@@ -1055,7 +1085,7 @@ ForgetDatabaseSyncRequests(Oid dbid)
  * DropRelationFiles -- drop files of all given relations
  */
 void
-DropRelationFiles(RelFileNode *delrels, int ndelrels, bool isRedo)
+DropRelationFiles(RelFileLocator *delrels, int ndelrels, bool isRedo)
 {
 	SMgrRelation *srels;
 	int			i;
@@ -1130,7 +1160,7 @@ _mdfd_segpath(SMgrRelation reln, ForkNumber forknum, BlockNumber segno)
 	char	   *path,
 			   *fullpath;
 
-	path = relpath(reln->smgr_rnode, forknum);
+	path = relpath(reln->smgr_rlocator, forknum);
 
 	if (segno > 0)
 	{
@@ -1202,7 +1232,8 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 
 	/* some way to handle non-existent segments needs to be specified */
 	Assert(behavior &
-		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL));
+		   (EXTENSION_FAIL | EXTENSION_CREATE | EXTENSION_RETURN_NULL |
+			EXTENSION_DONT_OPEN));
 
 	targetseg = blkno / ((BlockNumber) RELSEG_SIZE);
 
@@ -1212,6 +1243,10 @@ _mdfd_getseg(SMgrRelation reln, ForkNumber forknum, BlockNumber blkno,
 		v = &reln->md_seg_fds[forknum][targetseg];
 		return v;
 	}
+
+	/* The caller only wants the segment if we already had it open. */
+	if (behavior & EXTENSION_DONT_OPEN)
+		return NULL;
 
 	/*
 	 * The target segment is not yet open. Iterate over all the segments
@@ -1341,7 +1376,7 @@ _mdnblocks(SMgrRelation reln, ForkNumber forknum, MdfdVec *seg)
 int
 mdsyncfiletag(const FileTag *ftag, char *path)
 {
-	SMgrRelation reln = smgropen(ftag->rnode, InvalidBackendId);
+	SMgrRelation reln = smgropen(ftag->rlocator, InvalidBackendId);
 	File		file;
 	bool		need_to_close;
 	int			result,
@@ -1391,7 +1426,7 @@ mdunlinkfiletag(const FileTag *ftag, char *path)
 	char	   *p;
 
 	/* Compute the path. */
-	p = relpathperm(ftag->rnode, MAIN_FORKNUM);
+	p = relpathperm(ftag->rlocator, MAIN_FORKNUM);
 	strlcpy(path, p, MAXPGPATH);
 	pfree(p);
 
@@ -1413,5 +1448,5 @@ mdfiletagmatches(const FileTag *ftag, const FileTag *candidate)
 	 * We'll return true for all candidates that have the same database OID as
 	 * the ftag from the SYNC_FILTER_REQUEST request, so they're forgotten.
 	 */
-	return ftag->rnode.dbNode == candidate->rnode.dbNode;
+	return ftag->rlocator.dbOid == candidate->rlocator.dbOid;
 }

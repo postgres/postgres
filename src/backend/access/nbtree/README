@@ -528,17 +528,17 @@ from the index immediately; since index scans only stop "between" pages,
 no scan can lose its place from such a deletion.  We separate the steps
 because we allow LP_DEAD to be set with only a share lock (it's like a
 hint bit for a heap tuple), but physically deleting tuples requires an
-exclusive lock.  We also need to generate a latestRemovedXid value for
+exclusive lock.  We also need to generate a snapshotConflictHorizon for
 each deletion operation's WAL record, which requires additional
 coordinating with the tableam when the deletion actually takes place.
-(This latestRemovedXid value may be used to generate a recovery conflict
-during subsequent REDO of the record by a standby.)
+(snapshotConflictHorizon value may be used to generate a conflict during
+subsequent REDO of the record by a standby.)
 
 Delaying and batching index tuple deletion like this enables a further
 optimization: opportunistic checking of "extra" nearby index tuples
 (tuples that are not LP_DEAD-set) when they happen to be very cheap to
 check in passing (because we already know that the tableam will be
-visiting their table block to generate a latestRemovedXid value).  Any
+visiting their table block to generate a snapshotConflictHorizon).  Any
 index tuples that turn out to be safe to delete will also be deleted.
 Simple deletion will behave as if the extra tuples that actually turn
 out to be delete-safe had their LP_DEAD bits set right from the start.

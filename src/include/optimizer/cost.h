@@ -91,7 +91,8 @@ extern void cost_tidrangescan(Path *path, PlannerInfo *root,
 							  RelOptInfo *baserel, List *tidrangequals,
 							  ParamPathInfo *param_info);
 extern void cost_subqueryscan(SubqueryScanPath *path, PlannerInfo *root,
-							  RelOptInfo *baserel, ParamPathInfo *param_info);
+							  RelOptInfo *baserel, ParamPathInfo *param_info,
+							  bool trivial_pathtarget);
 extern void cost_functionscan(Path *path, PlannerInfo *root,
 							  RelOptInfo *baserel, ParamPathInfo *param_info);
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
@@ -114,9 +115,7 @@ extern void cost_incremental_sort(Path *path,
 								  Cost input_startup_cost, Cost input_total_cost,
 								  double input_tuples, int width, Cost comparison_cost, int sort_mem,
 								  double limit_tuples);
-extern Cost cost_sort_estimate(PlannerInfo *root, List *pathkeys,
-							   int nPresortedKeys, double tuples);
-extern void cost_append(AppendPath *path, PlannerInfo *root);
+extern void cost_append(AppendPath *apath);
 extern void cost_merge_append(Path *path, PlannerInfo *root,
 							  List *pathkeys, int n_streams,
 							  Cost input_startup_cost, Cost input_total_cost,
@@ -168,7 +167,7 @@ extern void final_cost_hashjoin(PlannerInfo *root, HashPath *path,
 								JoinCostWorkspace *workspace,
 								JoinPathExtraData *extra);
 extern void cost_gather(GatherPath *path, PlannerInfo *root,
-						RelOptInfo *baserel, ParamPathInfo *param_info, double *rows);
+						RelOptInfo *rel, ParamPathInfo *param_info, double *rows);
 extern void cost_gather_merge(GatherMergePath *path, PlannerInfo *root,
 							  RelOptInfo *rel, ParamPathInfo *param_info,
 							  Cost input_startup_cost, Cost input_total_cost,

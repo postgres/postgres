@@ -113,8 +113,8 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 	if (funcctx->call_cntr < list_length(partitions))
 	{
 		Datum		result;
-		Datum		values[PG_PARTITION_TREE_COLS];
-		bool		nulls[PG_PARTITION_TREE_COLS];
+		Datum		values[PG_PARTITION_TREE_COLS] = {0};
+		bool		nulls[PG_PARTITION_TREE_COLS] = {0};
 		HeapTuple	tuple;
 		Oid			parentid = InvalidOid;
 		Oid			relid = list_nth_oid(partitions, funcctx->call_cntr);
@@ -126,8 +126,6 @@ pg_partition_tree(PG_FUNCTION_ARGS)
 		/*
 		 * Form tuple with appropriate data.
 		 */
-		MemSet(nulls, 0, sizeof(nulls));
-		MemSet(values, 0, sizeof(values));
 
 		/* relid */
 		values[0] = ObjectIdGetDatum(relid);
@@ -240,9 +238,9 @@ pg_partition_ancestors(PG_FUNCTION_ARGS)
 
 	if (funcctx->call_cntr < list_length(ancestors))
 	{
-		Oid			relid = list_nth_oid(ancestors, funcctx->call_cntr);
+		Oid			resultrel = list_nth_oid(ancestors, funcctx->call_cntr);
 
-		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(relid));
+		SRF_RETURN_NEXT(funcctx, ObjectIdGetDatum(resultrel));
 	}
 
 	SRF_RETURN_DONE(funcctx);

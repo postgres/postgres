@@ -44,7 +44,7 @@
  * PX error codes
  */
 #define PXE_OK						0
-#define PXE_ERR_GENERIC				-1
+/* -1 is unused */
 #define PXE_NO_HASH					-2
 #define PXE_NO_CIPHER				-3
 /* -4 is unused */
@@ -176,7 +176,7 @@ int			px_find_combo(const char *name, PX_Combo **res);
 void		px_THROW_ERROR(int err) pg_attribute_noreturn();
 const char *px_strerror(int err);
 
-const char *px_resolve_alias(const PX_Alias *aliases, const char *name);
+const char *px_resolve_alias(const PX_Alias *list, const char *name);
 
 void		px_set_debug_handler(void (*handler) (const char *));
 

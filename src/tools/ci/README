@@ -37,6 +37,10 @@ repository will automatically trigger CI builds. These are visible from the
 commit history / PRs, and can also be viewed in the cirrus-ci UI at
 https://cirrus-ci.com/github/<username>/<reponame>/
 
+Hint: all build log files are uploaded to cirrus-ci and can be downloaded
+from the "Artifacts" section fron the cirrus-ci UI after clicking into a
+specific task on a build's summary page.
+
 
 Images used for CI
 ==================
@@ -57,7 +61,7 @@ Controlling CI via commit messages
 The behavior of CI can be controlled by special content in commit
 messages. Currently the following controls are available:
 
-- ci-os-only: {(freebsd|linux|macos|windows)}
+- ci-os-only: {(freebsd|linux|macos|windows|mingw)}
 
   Only runs CI on operating systems specified. This can be useful when
   addressing portability issues affecting only a subset of platforms.

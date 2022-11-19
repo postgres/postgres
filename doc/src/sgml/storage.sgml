@@ -1075,4 +1075,74 @@ data. Empty in ordinary tables.</entry>
  </sect2>
 </sect1>
 
+<sect1 id="storage-hot">
+
+ <title>Heap-Only Tuples (<acronym>HOT</acronym>)</title>
+
+ <para>
+  To allow for high concurrency, <productname>PostgreSQL</productname>
+  uses <link linkend="mvcc-intro">multiversion concurrency
+  control</link> (<acronym>MVCC</acronym>) to store rows.  However,
+  <acronym>MVCC</acronym> has some downsides for update queries.
+  Specifically, updates require new versions of rows to be added to
+  tables.  This can also require new index entries for each updated row,
+  and removal of old versions of rows and their index entries can be
+  expensive.
+ </para>
+
+ <para>
+  To help reduce the overhead of updates,
+  <productname>PostgreSQL</productname> has an optimization called
+  heap-only tuples (<acronym>HOT</acronym>).  This optimization is
+  possible when:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The update does not modify any columns referenced by the table's
+     indexes, including expression and partial indexes.
+     </para>
+   </listitem>
+   <listitem>
+    <para>
+     There is sufficient free space on the page containing the old row
+     for the updated row.
+    </para>
+   </listitem>
+  </itemizedlist>
+
+  In such cases, heap-only tuples provide two optimizations:
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     New index entries are not needed to represent updated rows.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Old versions of updated rows can be completely removed during normal
+     operation, including <command>SELECT</command>s, instead of requiring
+     periodic vacuum operations.  (This is possible because indexes
+     do not reference their <link linkend="storage-page-layout">page
+     item identifiers</link>.)
+    </para>
+   </listitem>
+  </itemizedlist>
+ </para>
+
+ <para>
+  In summary, heap-only tuple updates can only be created
+  if columns used by indexes are not updated.  You can
+  increase the likelihood of sufficient page space for
+  <acronym>HOT</acronym> updates by decreasing a table's <link
+  linkend="sql-createtable"><literal>fillfactor</literal></link>.
+  If you don't, <acronym>HOT</acronym> updates will still happen because
+  new rows will naturally migrate to new pages and existing pages with
+  sufficient free space for new row versions.  The system view <link
+  linkend="monitoring-pg-stat-all-tables-view">pg_stat_all_tables</link>
+  allows monitoring of the occurrence of HOT and non-HOT updates.
+ </para>
+</sect1>
+
 </chapter>

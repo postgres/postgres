@@ -58,7 +58,6 @@ static void copy_xact_xlog_xid(void);
 static void set_frozenxids(bool minmxid_only);
 static void make_outputdirs(char *pgdata);
 static void setup(char *argv0, bool *live_check);
-static void cleanup(void);
 
 ClusterInfo old_cluster,
 			new_cluster;
@@ -82,6 +81,10 @@ main(int argc, char **argv)
 	char	   *deletion_script_file_name = NULL;
 	bool		live_check = false;
 
+	/*
+	 * pg_upgrade doesn't currently use common/logging.c, but initialize it
+	 * anyway because we might call common code that does.
+	 */
 	pg_logging_init(argv[0]);
 	set_pglocale_pgservice(argv[0], PG_TEXTDOMAIN("pg_upgrade"));
 
@@ -100,7 +103,7 @@ main(int argc, char **argv)
 	 * output directories with correct permissions.
 	 */
 	if (!GetDataDirectoryCreatePerm(new_cluster.pgdata))
-		pg_fatal("could not read permissions of directory \"%s\": %s\n",
+		pg_fatal("could not read permissions of directory \"%s\": %s",
 				 new_cluster.pgdata, strerror(errno));
 
 	umask(pg_mode_mask);
@@ -134,7 +137,7 @@ main(int argc, char **argv)
 	pg_log(PG_REPORT,
 		   "\n"
 		   "Performing Upgrade\n"
-		   "------------------\n");
+		   "------------------");
 
 	prepare_new_cluster();
 
@@ -198,13 +201,13 @@ main(int argc, char **argv)
 	pg_log(PG_REPORT,
 		   "\n"
 		   "Upgrade Complete\n"
-		   "----------------\n");
+		   "----------------");
 
 	output_completion_banner(deletion_script_file_name);
 
 	pg_free(deletion_script_file_name);
 
-	cleanup();
+	cleanup_output_dirs();
 
 	return 0;
 }
@@ -221,36 +224,75 @@ make_outputdirs(char *pgdata)
 	char	  **filename;
 	time_t		run_time = time(NULL);
 	char		filename_path[MAXPGPATH];
+	char		timebuf[128];
+	struct timeval time;
+	time_t		tt;
+	int			len;
 
-	log_opts.basedir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
-	log_opts.dumpdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s", pgdata, DUMP_OUTPUTDIR);
-	log_opts.logdir = (char *) pg_malloc(MAXPGPATH);
-	snprintf(log_opts.logdir, MAXPGPATH, "%s/%s", pgdata, LOG_OUTPUTDIR);
+	log_opts.rootdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.rootdir, MAXPGPATH, "%s/%s", pgdata, BASE_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("directory path for new cluster is too long");
 
-	if (mkdir(log_opts.basedir, pg_dir_create_mode))
-		pg_fatal("could not create directory \"%s\": %m\n", log_opts.basedir);
-	if (mkdir(log_opts.dumpdir, pg_dir_create_mode))
-		pg_fatal("could not create directory \"%s\": %m\n", log_opts.dumpdir);
-	if (mkdir(log_opts.logdir, pg_dir_create_mode))
-		pg_fatal("could not create directory \"%s\": %m\n", log_opts.logdir);
+	/* BASE_OUTPUTDIR/$timestamp/ */
+	gettimeofday(&time, NULL);
+	tt = (time_t) time.tv_sec;
+	strftime(timebuf, sizeof(timebuf), "%Y%m%dT%H%M%S", localtime(&tt));
+	/* append milliseconds */
+	snprintf(timebuf + strlen(timebuf), sizeof(timebuf) - strlen(timebuf),
+			 ".%03d", (int) (time.tv_usec / 1000));
+	log_opts.basedir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.basedir, MAXPGPATH, "%s/%s", log_opts.rootdir,
+				   timebuf);
+	if (len >= MAXPGPATH)
+		pg_fatal("directory path for new cluster is too long");
 
-	snprintf(filename_path, sizeof(filename_path), "%s/%s", log_opts.logdir,
-			 INTERNAL_LOG_FILE);
+	/* BASE_OUTPUTDIR/$timestamp/dump/ */
+	log_opts.dumpdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.dumpdir, MAXPGPATH, "%s/%s/%s", log_opts.rootdir,
+				   timebuf, DUMP_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("directory path for new cluster is too long");
+
+	/* BASE_OUTPUTDIR/$timestamp/log/ */
+	log_opts.logdir = (char *) pg_malloc0(MAXPGPATH);
+	len = snprintf(log_opts.logdir, MAXPGPATH, "%s/%s/%s", log_opts.rootdir,
+				   timebuf, LOG_OUTPUTDIR);
+	if (len >= MAXPGPATH)
+		pg_fatal("directory path for new cluster is too long");
+
+	/*
+	 * Ignore the error case where the root path exists, as it is kept the
+	 * same across runs.
+	 */
+	if (mkdir(log_opts.rootdir, pg_dir_create_mode) < 0 && errno != EEXIST)
+		pg_fatal("could not create directory \"%s\": %m", log_opts.rootdir);
+	if (mkdir(log_opts.basedir, pg_dir_create_mode) < 0)
+		pg_fatal("could not create directory \"%s\": %m", log_opts.basedir);
+	if (mkdir(log_opts.dumpdir, pg_dir_create_mode) < 0)
+		pg_fatal("could not create directory \"%s\": %m", log_opts.dumpdir);
+	if (mkdir(log_opts.logdir, pg_dir_create_mode) < 0)
+		pg_fatal("could not create directory \"%s\": %m", log_opts.logdir);
+
+	len = snprintf(filename_path, sizeof(filename_path), "%s/%s",
+				   log_opts.logdir, INTERNAL_LOG_FILE);
+	if (len >= sizeof(filename_path))
+		pg_fatal("directory path for new cluster is too long");
+
 	if ((log_opts.internal = fopen_priv(filename_path, "a")) == NULL)
-		pg_fatal("could not open log file \"%s\": %m\n", filename_path);
+		pg_fatal("could not open log file \"%s\": %m", filename_path);
 
 	/* label start of upgrade in logfiles */
 	for (filename = output_files; *filename != NULL; filename++)
 	{
-		snprintf(filename_path, sizeof(filename_path), "%s/%s",
-				 log_opts.logdir, *filename);
+		len = snprintf(filename_path, sizeof(filename_path), "%s/%s",
+					   log_opts.logdir, *filename);
+		if (len >= sizeof(filename_path))
+			pg_fatal("directory path for new cluster is too long");
 		if ((fp = fopen_priv(filename_path, "a")) == NULL)
-			pg_fatal("could not write to log file \"%s\": %m\n", filename_path);
+			pg_fatal("could not write to log file \"%s\": %m", filename_path);
 
-		/* Start with newline because we might be appending to a file. */
-		fprintf(fp, "\n"
+		fprintf(fp,
 				"-----------------------------------------------------------------\n"
 				"  pg_upgrade run on %s"
 				"-----------------------------------------------------------------\n\n",
@@ -279,7 +321,7 @@ setup(char *argv0, bool *live_check)
 		char		exec_path[MAXPGPATH];
 
 		if (find_my_exec(argv0, exec_path) < 0)
-			pg_fatal("%s: could not find own program executable\n", argv0);
+			pg_fatal("%s: could not find own program executable", argv0);
 		/* Trim off program name and keep just path */
 		*last_dir_separator(exec_path) = '\0';
 		canonicalize_path(exec_path);
@@ -306,7 +348,7 @@ setup(char *argv0, bool *live_check)
 		{
 			if (!user_opts.check)
 				pg_fatal("There seems to be a postmaster servicing the old cluster.\n"
-						 "Please shutdown that postmaster and try again.\n");
+						 "Please shutdown that postmaster and try again.");
 			else
 				*live_check = true;
 		}
@@ -319,7 +361,7 @@ setup(char *argv0, bool *live_check)
 			stop_postmaster(false);
 		else
 			pg_fatal("There seems to be a postmaster servicing the new cluster.\n"
-					 "Please shutdown that postmaster and try again.\n");
+					 "Please shutdown that postmaster and try again.");
 	}
 }
 
@@ -491,7 +533,7 @@ remove_new_subdir(const char *subdir, bool rmtopdir)
 
 	snprintf(new_path, sizeof(new_path), "%s/%s", new_cluster.pgdata, subdir);
 	if (!rmtree(new_path, rmtopdir))
-		pg_fatal("could not delete directory \"%s\"\n", new_path);
+		pg_fatal("could not delete directory \"%s\"", new_path);
 
 	check_ok();
 }
@@ -744,15 +786,4 @@ set_frozenxids(bool minmxid_only)
 	PQfinish(conn_template1);
 
 	check_ok();
-}
-
-
-static void
-cleanup(void)
-{
-	fclose(log_opts.internal);
-
-	/* Remove dump and log files? */
-	if (!log_opts.retain)
-		(void) rmtree(log_opts.basedir, true);
 }

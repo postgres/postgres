@@ -1,14 +1,14 @@
 # Swedish message translation file for resetxlog.
-# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020.
+# Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004, 2005, 2006, 2017, 2018, 2019, 2020, 2021, 2022.
 # Peter Eisentraut <peter_e@gmx.net>, 2010.
 # Mats Erik Andersson <bsd@gisladisker.se>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 13\n"
+"Project-Id-Version: PostgreSQL 15\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2020-04-13 16:46+0000\n"
-"PO-Revision-Date: 2020-04-13 23:40+0200\n"
+"POT-Creation-Date: 2022-04-11 19:48+0000\n"
+"PO-Revision-Date: 2022-04-11 22:01+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <pgsql-translators@postgresql.org>\n"
 "Language: sv\n"
@@ -17,20 +17,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: ../../../src/common/logging.c:236
-#, c-format
-msgid "fatal: "
-msgstr "fatalt: "
-
-#: ../../../src/common/logging.c:243
+#: ../../../src/common/logging.c:273
 #, c-format
 msgid "error: "
 msgstr "fel: "
 
-#: ../../../src/common/logging.c:250
+#: ../../../src/common/logging.c:280
 #, c-format
 msgid "warning: "
 msgstr "varning: "
+
+#: ../../../src/common/logging.c:291
+#, c-format
+msgid "detail: "
+msgstr "detalj: "
+
+#: ../../../src/common/logging.c:298
+#, c-format
+msgid "hint: "
+msgstr "tips: "
 
 #: ../../common/restricted_token.c:64
 #, c-format
@@ -67,117 +72,123 @@ msgstr "kunde inte starta process för kommando \"%s\": felkod %lu"
 msgid "could not re-execute with restricted token: error code %lu"
 msgstr "kunde inte köra igen med token för begränsad åtkomst: felkod %lu"
 
-#: ../../common/restricted_token.c:194
+#: ../../common/restricted_token.c:193
 #, c-format
 msgid "could not get exit code from subprocess: error code %lu"
 msgstr "kunde inte hämta statuskod för underprocess: felkod %lu"
 
 #. translator: the second %s is a command line argument (-e, etc)
-#: pg_resetwal.c:160 pg_resetwal.c:175 pg_resetwal.c:190 pg_resetwal.c:197
-#: pg_resetwal.c:221 pg_resetwal.c:236 pg_resetwal.c:244 pg_resetwal.c:269
-#: pg_resetwal.c:283
+#: pg_resetwal.c:163 pg_resetwal.c:176 pg_resetwal.c:189 pg_resetwal.c:202
+#: pg_resetwal.c:209 pg_resetwal.c:228 pg_resetwal.c:241 pg_resetwal.c:249
+#: pg_resetwal.c:269 pg_resetwal.c:280
 #, c-format
 msgid "invalid argument for option %s"
 msgstr "ogiltigt argument för flaggan %s"
 
-#: pg_resetwal.c:161 pg_resetwal.c:176 pg_resetwal.c:191 pg_resetwal.c:198
-#: pg_resetwal.c:222 pg_resetwal.c:237 pg_resetwal.c:245 pg_resetwal.c:270
-#: pg_resetwal.c:284 pg_resetwal.c:310 pg_resetwal.c:323 pg_resetwal.c:331
+#: pg_resetwal.c:164 pg_resetwal.c:177 pg_resetwal.c:190 pg_resetwal.c:203
+#: pg_resetwal.c:210 pg_resetwal.c:229 pg_resetwal.c:242 pg_resetwal.c:250
+#: pg_resetwal.c:270 pg_resetwal.c:281 pg_resetwal.c:303 pg_resetwal.c:316
+#: pg_resetwal.c:323
 #, c-format
-msgid "Try \"%s --help\" for more information.\n"
-msgstr "Försök med \"%s --help\" för mer information.\n"
+msgid "Try \"%s --help\" for more information."
+msgstr "Försök med \"%s --help\" för mer information."
 
-#: pg_resetwal.c:166
+#: pg_resetwal.c:168
 #, c-format
 msgid "transaction ID epoch (-e) must not be -1"
 msgstr "Epoch (-e) för transaktions-ID får inte vara -1."
 
 #: pg_resetwal.c:181
 #, c-format
-msgid "transaction ID (-x) must not be 0"
-msgstr "Transaktions-ID (-x) får inte vara 0."
+msgid "oldest transaction ID (-u) must be greater than or equal to %u"
+msgstr "äldsta transaktions-ID (-u) måste vara större än eller lika med %u"
 
-#: pg_resetwal.c:205 pg_resetwal.c:212
+#: pg_resetwal.c:194
+#, c-format
+msgid "transaction ID (-x) must be greater than or equal to %u"
+msgstr "transaktions-ID (-x) måste vara större än eller lika med %u"
+
+#: pg_resetwal.c:216 pg_resetwal.c:220
 #, c-format
 msgid "transaction ID (-c) must be either 0 or greater than or equal to 2"
 msgstr "transaktions-ID (-c) måste antingen vara 0 eller större än eller lika med 2"
 
-#: pg_resetwal.c:227
+#: pg_resetwal.c:233
 #, c-format
 msgid "OID (-o) must not be 0"
 msgstr "OID (-o) får inte vara 0."
 
-#: pg_resetwal.c:250
+#: pg_resetwal.c:254
 #, c-format
 msgid "multitransaction ID (-m) must not be 0"
 msgstr "Multitransaktions-ID (-m) får inte vara 0."
 
-#: pg_resetwal.c:260
+#: pg_resetwal.c:261
 #, c-format
 msgid "oldest multitransaction ID (-m) must not be 0"
 msgstr "Äldsta multitransaktions-ID (-m) får inte vara 0."
 
-#: pg_resetwal.c:275
+#: pg_resetwal.c:274
 #, c-format
 msgid "multitransaction offset (-O) must not be -1"
 msgstr "Multitransaktionsoffset (-O) får inte vara -1."
 
-#: pg_resetwal.c:299
+#: pg_resetwal.c:296
 #, c-format
 msgid "argument of --wal-segsize must be a number"
 msgstr "argumentet till --wal-segsize måste vara ett tal"
 
-#: pg_resetwal.c:304
+#: pg_resetwal.c:298
 #, c-format
 msgid "argument of --wal-segsize must be a power of 2 between 1 and 1024"
 msgstr "argumentet till --wal-segsize måste vara en tvåpotens mellan 1 och 1024"
 
-#: pg_resetwal.c:321
+#: pg_resetwal.c:314
 #, c-format
 msgid "too many command-line arguments (first is \"%s\")"
 msgstr "för många kommandoradsargument (första är \"%s\")"
 
-#: pg_resetwal.c:330
+#: pg_resetwal.c:322
 #, c-format
 msgid "no data directory specified"
 msgstr "ingen datakatalog angiven"
 
-#: pg_resetwal.c:344
+#: pg_resetwal.c:336
 #, c-format
 msgid "cannot be executed by \"root\""
 msgstr "kan inte köras av \"root\""
 
-#: pg_resetwal.c:345
+#: pg_resetwal.c:337
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser."
-msgstr "Du måste köra %s som PostgreSQL:s superanvändare."
+msgstr "Du måste köra %s som PostgreSQL:s superuser."
 
-#: pg_resetwal.c:356
+#: pg_resetwal.c:347
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr "kunde inte läsa rättigheter på katalog \"%s\": %m"
 
-#: pg_resetwal.c:365
+#: pg_resetwal.c:353
 #, c-format
 msgid "could not change directory to \"%s\": %m"
 msgstr "kunde inte byta katalog till \"%s\": %m"
 
-#: pg_resetwal.c:381 pg_resetwal.c:544 pg_resetwal.c:595
+#: pg_resetwal.c:366 pg_resetwal.c:518 pg_resetwal.c:566
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "kunde inte öppna filen \"%s\" för läsning: %m"
 
-#: pg_resetwal.c:388
+#: pg_resetwal.c:371
 #, c-format
 msgid "lock file \"%s\" exists"
 msgstr "låsfil med namn \"%s\" finns redan"
 
-#: pg_resetwal.c:389
+#: pg_resetwal.c:372
 #, c-format
 msgid "Is a server running?  If not, delete the lock file and try again."
 msgstr "Kör servern redan? Om inte, radera låsfilen och försök igen."
 
-#: pg_resetwal.c:492
+#: pg_resetwal.c:467
 #, c-format
 msgid ""
 "\n"
@@ -187,7 +198,7 @@ msgstr ""
 "Om dessa värden verkar godtagbara, använd då -f för att\n"
 "framtvinga återställning.\n"
 
-#: pg_resetwal.c:504
+#: pg_resetwal.c:479
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -198,32 +209,32 @@ msgstr ""
 "write-ahead-loggen kan medföra att data förloras. Om du ändå\n"
 "vill fortsätta, använd -f för att framtvinga återställning.\n"
 
-#: pg_resetwal.c:518
+#: pg_resetwal.c:493
 #, c-format
 msgid "Write-ahead log reset\n"
 msgstr "Återställning av write-ahead-log\n"
 
-#: pg_resetwal.c:553
+#: pg_resetwal.c:525
 #, c-format
 msgid "unexpected empty file \"%s\""
 msgstr "oväntad tom fil \"%s\""
 
-#: pg_resetwal.c:555 pg_resetwal.c:611
+#: pg_resetwal.c:527 pg_resetwal.c:581
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: pg_resetwal.c:564
+#: pg_resetwal.c:535
 #, c-format
 msgid "data directory is of wrong version"
 msgstr "datakatalogen har fel version"
 
-#: pg_resetwal.c:565
+#: pg_resetwal.c:536
 #, c-format
 msgid "File \"%s\" contains \"%s\", which is not compatible with this program's version \"%s\"."
 msgstr "Filen \"%s\" innehåller \"%s\", vilket inte är kompatibelt med detta programmets version \"%s\"."
 
-#: pg_resetwal.c:598
+#: pg_resetwal.c:569
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -233,24 +244,24 @@ msgstr ""
 "Om du är säker på att sökvägen till datakatalogen är riktig,\n"
 "utför då \"touch %s\" och försök sedan igen."
 
-#: pg_resetwal.c:629
+#: pg_resetwal.c:597
 #, c-format
 msgid "pg_control exists but has invalid CRC; proceed with caution"
 msgstr "pg_control existerar men har ogiltig CRC. Fortsätt med varsamhet."
 
-#: pg_resetwal.c:638
+#: pg_resetwal.c:606
 #, c-format
 msgid "pg_control specifies invalid WAL segment size (%d byte); proceed with caution"
 msgid_plural "pg_control specifies invalid WAL segment size (%d bytes); proceed with caution"
 msgstr[0] "pg_control anger ogiltig WAL-segmentstorlek (%d byte); fortsätt med varsamhet."
 msgstr[1] "pg_control anger ogiltig WAL-segmentstorlek (%d byte); fortsätt med varsamhet."
 
-#: pg_resetwal.c:649
+#: pg_resetwal.c:617
 #, c-format
 msgid "pg_control exists but is broken or wrong version; ignoring it"
 msgstr "pg_control existerar men är trasig eller har fel version. Den ignoreras."
 
-#: pg_resetwal.c:744
+#: pg_resetwal.c:712
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -259,7 +270,7 @@ msgstr ""
 "Gissade värden för pg_control:\n"
 "\n"
 
-#: pg_resetwal.c:746
+#: pg_resetwal.c:714
 #, c-format
 msgid ""
 "Current pg_control values:\n"
@@ -271,168 +282,168 @@ msgstr ""
 # November 26th, 2014: Insert six additional space characters
 # for best alignment with Swedish translation.
 # Translations should be checked against those of pg_controldata.
-#: pg_resetwal.c:748
+#: pg_resetwal.c:716
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "Versionsnummer för pg_control:              %u\n"
 
-#: pg_resetwal.c:750
+#: pg_resetwal.c:718
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Katalogversion:                             %u\n"
 
-#: pg_resetwal.c:752
+#: pg_resetwal.c:720
 #, c-format
 msgid "Database system identifier:           %llu\n"
 msgstr "Databasens systemidentifierare:             %llu\n"
 
-#: pg_resetwal.c:754
+#: pg_resetwal.c:722
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "TimeLineID vid senaste kontrollpunkt:       %u\n"
 
-#: pg_resetwal.c:756
+#: pg_resetwal.c:724
 #, c-format
 msgid "Latest checkpoint's full_page_writes: %s\n"
 msgstr "Senaste kontrollpunktens full_page_writes:  %s\n"
 
-#: pg_resetwal.c:757
+#: pg_resetwal.c:725
 msgid "off"
 msgstr "av"
 
-#: pg_resetwal.c:757
+#: pg_resetwal.c:725
 msgid "on"
 msgstr "på"
 
-#: pg_resetwal.c:758
+#: pg_resetwal.c:726
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u:%u\n"
 msgstr "NextXID vid senaste kontrollpunkt:          %u:%u\n"
 
-#: pg_resetwal.c:761
+#: pg_resetwal.c:729
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "NextOID vid senaste kontrollpunkt:          %u\n"
 
-#: pg_resetwal.c:763
+#: pg_resetwal.c:731
 #, c-format
 msgid "Latest checkpoint's NextMultiXactId:  %u\n"
 msgstr "NextMultiXactId vid senaste kontrollpunkt:  %u\n"
 
-#: pg_resetwal.c:765
+#: pg_resetwal.c:733
 #, c-format
 msgid "Latest checkpoint's NextMultiOffset:  %u\n"
 msgstr "NextMultiOffset vid senaste kontrollpunkt:  %u\n"
 
-#: pg_resetwal.c:767
+#: pg_resetwal.c:735
 #, c-format
 msgid "Latest checkpoint's oldestXID:        %u\n"
 msgstr "oldestXID vid senaste kontrollpunkt:        %u\n"
 
-#: pg_resetwal.c:769
+#: pg_resetwal.c:737
 #, c-format
 msgid "Latest checkpoint's oldestXID's DB:   %u\n"
 msgstr "DB för oldestXID vid senaste kontrollpunkt: %u\n"
 
 # FIXME: too wide
-#: pg_resetwal.c:771
+#: pg_resetwal.c:739
 #, c-format
 msgid "Latest checkpoint's oldestActiveXID:  %u\n"
 msgstr "oldestActiveXID vid senaste kontrollpunkt:  %u\n"
 
-#: pg_resetwal.c:773
+#: pg_resetwal.c:741
 #, c-format
 msgid "Latest checkpoint's oldestMultiXid:   %u\n"
 msgstr "oldestMultiXid vid senaste kontrollpunkt:   %u\n"
 
-#: pg_resetwal.c:775
+#: pg_resetwal.c:743
 #, c-format
 msgid "Latest checkpoint's oldestMulti's DB: %u\n"
 msgstr "DB för oldestMulti vid senaste kontrollpkt: %u\n"
 
-#: pg_resetwal.c:777
+#: pg_resetwal.c:745
 #, c-format
 msgid "Latest checkpoint's oldestCommitTsXid:%u\n"
 msgstr "oldestCommitTsXid vid senaste kontrollpunkt:%u\n"
 
-#: pg_resetwal.c:779
+#: pg_resetwal.c:747
 #, c-format
 msgid "Latest checkpoint's newestCommitTsXid:%u\n"
 msgstr "newestCommitTsXid vid senaste kontrollpunkt:%u\n"
 
-#: pg_resetwal.c:781
+#: pg_resetwal.c:749
 #, c-format
 msgid "Maximum data alignment:               %u\n"
 msgstr "Maximal jämkning av data (alignment):       %u\n"
 
-#: pg_resetwal.c:784
+#: pg_resetwal.c:752
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Databasens blockstorlek:                    %u\n"
 
-#: pg_resetwal.c:786
+#: pg_resetwal.c:754
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "Block per segment i en stor relation:       %u\n"
 
-#: pg_resetwal.c:788
+#: pg_resetwal.c:756
 #, c-format
 msgid "WAL block size:                       %u\n"
 msgstr "Blockstorlek i transaktionsloggen:          %u\n"
 
-#: pg_resetwal.c:790 pg_resetwal.c:876
+#: pg_resetwal.c:758 pg_resetwal.c:844
 #, c-format
 msgid "Bytes per WAL segment:                %u\n"
 msgstr "Segmentstorlek i transaktionsloggen:        %u\n"
 
-#: pg_resetwal.c:792
+#: pg_resetwal.c:760
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Maximal längd för identifierare:            %u\n"
 
-#: pg_resetwal.c:794
+#: pg_resetwal.c:762
 #, c-format
 msgid "Maximum columns in an index:          %u\n"
 msgstr "Maximalt antal kolonner i ett index:        %u\n"
 
-#: pg_resetwal.c:796
+#: pg_resetwal.c:764
 #, c-format
 msgid "Maximum size of a TOAST chunk:        %u\n"
 msgstr "Maximal storlek för en TOAST-enhet:         %u\n"
 
-#: pg_resetwal.c:798
+#: pg_resetwal.c:766
 #, c-format
 msgid "Size of a large-object chunk:         %u\n"
 msgstr "Storlek för large-object-enheter:           %u\n"
 
-#: pg_resetwal.c:801
+#: pg_resetwal.c:769
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Representation av dag och tid:              %s\n"
 
-#: pg_resetwal.c:802
+#: pg_resetwal.c:770
 msgid "64-bit integers"
 msgstr "64-bitars heltal"
 
-#: pg_resetwal.c:803
+#: pg_resetwal.c:771
 #, c-format
 msgid "Float8 argument passing:              %s\n"
 msgstr "Åtkomst till float8-argument:               %s\n"
 
-#: pg_resetwal.c:804
+#: pg_resetwal.c:772
 msgid "by reference"
 msgstr "referens"
 
-#: pg_resetwal.c:804
+#: pg_resetwal.c:772
 msgid "by value"
 msgstr "värdeåtkomst"
 
-#: pg_resetwal.c:805
+#: pg_resetwal.c:773
 #, c-format
 msgid "Data page checksum version:           %u\n"
 msgstr "Checksummaversion för datasidor:            %u\n"
 
-#: pg_resetwal.c:819
+#: pg_resetwal.c:787
 #, c-format
 msgid ""
 "\n"
@@ -447,102 +458,102 @@ msgstr ""
 
 # November 26th, 2014: Insert additional spacing to fit
 # with the first translated text, which uses most characters.
-#: pg_resetwal.c:823
+#: pg_resetwal.c:791
 #, c-format
 msgid "First log segment after reset:        %s\n"
 msgstr "Första loggsegment efter återställning: %s\n"
 
-#: pg_resetwal.c:827
+#: pg_resetwal.c:795
 #, c-format
 msgid "NextMultiXactId:                      %u\n"
 msgstr "NextMultiXactId:                        %u\n"
 
-#: pg_resetwal.c:829
+#: pg_resetwal.c:797
 #, c-format
 msgid "OldestMultiXid:                       %u\n"
 msgstr "OldestMultiXid:                         %u\n"
 
-#: pg_resetwal.c:831
+#: pg_resetwal.c:799
 #, c-format
 msgid "OldestMulti's DB:                     %u\n"
 msgstr "DB för OldestMulti:                     %u\n"
 
-#: pg_resetwal.c:837
+#: pg_resetwal.c:805
 #, c-format
 msgid "NextMultiOffset:                      %u\n"
 msgstr "NextMultiOffset:                        %u\n"
 
-#: pg_resetwal.c:843
+#: pg_resetwal.c:811
 #, c-format
 msgid "NextOID:                              %u\n"
 msgstr "NextOID:                                %u\n"
 
-#: pg_resetwal.c:849
+#: pg_resetwal.c:817
 #, c-format
 msgid "NextXID:                              %u\n"
 msgstr "NextXID:                                %u\n"
 
-#: pg_resetwal.c:851
+#: pg_resetwal.c:819
 #, c-format
 msgid "OldestXID:                            %u\n"
 msgstr "OldestXID:                              %u\n"
 
-#: pg_resetwal.c:853
+#: pg_resetwal.c:821
 #, c-format
 msgid "OldestXID's DB:                       %u\n"
 msgstr "DB för OldestXID:                       %u\n"
 
-#: pg_resetwal.c:859
+#: pg_resetwal.c:827
 #, c-format
 msgid "NextXID epoch:                        %u\n"
 msgstr "Epoch för NextXID:                       %u\n"
 
-#: pg_resetwal.c:865
+#: pg_resetwal.c:833
 #, c-format
 msgid "oldestCommitTsXid:                    %u\n"
 msgstr "oldestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:870
+#: pg_resetwal.c:838
 #, c-format
 msgid "newestCommitTsXid:                    %u\n"
 msgstr "newestCommitTsXid:                    %u\n"
 
-#: pg_resetwal.c:956 pg_resetwal.c:1024 pg_resetwal.c:1071
+#: pg_resetwal.c:922 pg_resetwal.c:981 pg_resetwal.c:1016
 #, c-format
 msgid "could not open directory \"%s\": %m"
 msgstr "kunde inte öppna katalog \"%s\": %m"
 
-#: pg_resetwal.c:991 pg_resetwal.c:1044 pg_resetwal.c:1094
+#: pg_resetwal.c:954 pg_resetwal.c:995 pg_resetwal.c:1033
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "kunde inte läsa katalog \"%s\": %m"
 
-#: pg_resetwal.c:997 pg_resetwal.c:1050 pg_resetwal.c:1100
+#: pg_resetwal.c:957 pg_resetwal.c:998 pg_resetwal.c:1036
 #, c-format
 msgid "could not close directory \"%s\": %m"
 msgstr "kunde inte stänga katalog \"%s\": %m"
 
-#: pg_resetwal.c:1036 pg_resetwal.c:1086
+#: pg_resetwal.c:990 pg_resetwal.c:1028
 #, c-format
 msgid "could not delete file \"%s\": %m"
 msgstr "kunde inte radera fil \"%s\": %m"
 
-#: pg_resetwal.c:1167
+#: pg_resetwal.c:1100
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: pg_resetwal.c:1177 pg_resetwal.c:1190
+#: pg_resetwal.c:1108 pg_resetwal.c:1120
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: pg_resetwal.c:1197
+#: pg_resetwal.c:1125
 #, c-format
 msgid "fsync error: %m"
 msgstr "misslyckad fsync: %m"
 
-#: pg_resetwal.c:1208
+#: pg_resetwal.c:1134
 #, c-format
 msgid ""
 "%s resets the PostgreSQL write-ahead log.\n"
@@ -551,7 +562,7 @@ msgstr ""
 "%s återställer write-ahead-log för PostgreSQL.\n"
 "\n"
 
-#: pg_resetwal.c:1209
+#: pg_resetwal.c:1135
 #, c-format
 msgid ""
 "Usage:\n"
@@ -562,84 +573,89 @@ msgstr ""
 "  %s [FLAGGA]... DATAKATALOG\n"
 "\n"
 
-#: pg_resetwal.c:1210
+#: pg_resetwal.c:1136
 #, c-format
 msgid "Options:\n"
 msgstr "Flaggor:\n"
 
-#: pg_resetwal.c:1211
+#: pg_resetwal.c:1137
 #, c-format
 msgid ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
-"                                 set oldest and newest transactions bearing\n"
-"                                 commit timestamp (zero means no change)\n"
+"                                   set oldest and newest transactions bearing\n"
+"                                   commit timestamp (zero means no change)\n"
 msgstr ""
 "  -c, --commit-timestamp-ids=XID,XID\n"
-"                                 sätt äldsta och nyaste transaktionerna som\n"
-"                                 kan ha commit-tidstämpel (noll betyder\n"
-"                                 ingen ändring)\n"
+"                                   sätt äldsta och nyaste transaktionerna som\n"
+"                                   kan ha commit-tidstämpel (noll betyder\n"
+"                                   ingen ändring)\n"
 
-#: pg_resetwal.c:1214
+#: pg_resetwal.c:1140
 #, c-format
-msgid " [-D, --pgdata=]DATADIR          data directory\n"
-msgstr " [-D, --pgdata=]DATADIR          datakatalog\n"
+msgid " [-D, --pgdata=]DATADIR            data directory\n"
+msgstr " [-D, --pgdata=]DATADIR            datakatalog\n"
 
-#: pg_resetwal.c:1215
+#: pg_resetwal.c:1141
 #, c-format
-msgid "  -e, --epoch=XIDEPOCH           set next transaction ID epoch\n"
-msgstr "  -e, --epoch=XIDEPOCH           sätter epoch för nästa transaktions-ID\n"
+msgid "  -e, --epoch=XIDEPOCH             set next transaction ID epoch\n"
+msgstr "  -e, --epoch=XIDEPOCH             sätter epoch för nästa transaktions-ID\n"
 
-#: pg_resetwal.c:1216
+#: pg_resetwal.c:1142
 #, c-format
-msgid "  -f, --force                    force update to be done\n"
-msgstr "  -f, --force                    framtvinga uppdatering\n"
+msgid "  -f, --force                      force update to be done\n"
+msgstr "  -f, --force                      framtvinga uppdatering\n"
 
-#: pg_resetwal.c:1217
+#: pg_resetwal.c:1143
 #, c-format
-msgid "  -l, --next-wal-file=WALFILE    set minimum starting location for new WAL\n"
-msgstr "  -l, --next-wal-file=WALFIL     sätt minsta startposition för ny WAL\n"
+msgid "  -l, --next-wal-file=WALFILE      set minimum starting location for new WAL\n"
+msgstr "  -l, --next-wal-file=WALFIL       sätt minsta startposition för ny WAL\n"
 
-#: pg_resetwal.c:1218
+#: pg_resetwal.c:1144
 #, c-format
-msgid "  -m, --multixact-ids=MXID,MXID  set next and oldest multitransaction ID\n"
-msgstr "  -m, --multixact-ids=MXID,MXID  sätt nästa och äldsta multitransaktions-ID\n"
+msgid "  -m, --multixact-ids=MXID,MXID    set next and oldest multitransaction ID\n"
+msgstr "  -m, --multixact-ids=MXID,MXID    sätt nästa och äldsta multitransaktions-ID\n"
 
-#: pg_resetwal.c:1219
+#: pg_resetwal.c:1145
 #, c-format
-msgid "  -n, --dry-run                  no update, just show what would be done\n"
-msgstr "  -n, --dry-run                  ingen updatering; visa bara planerade åtgärder\n"
+msgid "  -n, --dry-run                    no update, just show what would be done\n"
+msgstr "  -n, --dry-run                    ingen updatering; visa bara planerade åtgärder\n"
 
-#: pg_resetwal.c:1220
+#: pg_resetwal.c:1146
 #, c-format
-msgid "  -o, --next-oid=OID             set next OID\n"
-msgstr "  -o, --next-oid=OID             sätt nästa OID\n"
+msgid "  -o, --next-oid=OID               set next OID\n"
+msgstr "  -o, --next-oid=OID               sätt nästa OID\n"
 
-#: pg_resetwal.c:1221
+#: pg_resetwal.c:1147
 #, c-format
-msgid "  -O, --multixact-offset=OFFSET  set next multitransaction offset\n"
-msgstr "  -O, --multixact-offset=OFFSET  sätt nästa multitransaktionsoffset\n"
+msgid "  -O, --multixact-offset=OFFSET    set next multitransaction offset\n"
+msgstr "  -O, --multixact-offset=OFFSET    sätt nästa multitransaktionsoffset\n"
 
-#: pg_resetwal.c:1222
+#: pg_resetwal.c:1148
 #, c-format
-msgid "  -V, --version                  output version information, then exit\n"
-msgstr "  -V, --version                  skriv ut versioninformation och avsluta sedan\n"
+msgid "  -u, --oldest-transaction-id=XID  set oldest transaction ID\n"
+msgstr "  -u, --oldest-transaction-id=XID  sätt äldsta transaktions-ID\n"
 
-#: pg_resetwal.c:1223
+#: pg_resetwal.c:1149
 #, c-format
-msgid "  -x, --next-transaction-id=XID  set next transaction ID\n"
-msgstr "  -x, --next-transaction-id=XID  sätt nästa transaktions-ID\n"
+msgid "  -V, --version                    output version information, then exit\n"
+msgstr "  -V, --version                    visa versionsinformation, avsluta sedan\n"
 
-#: pg_resetwal.c:1224
+#: pg_resetwal.c:1150
 #, c-format
-msgid "      --wal-segsize=SIZE         size of WAL segments, in megabytes\n"
-msgstr "      --wal-segsize=STORLEK      storlek på WAL-segment i megabyte\n"
+msgid "  -x, --next-transaction-id=XID    set next transaction ID\n"
+msgstr "  -x, --next-transaction-id=XID    sätt nästa transaktions-ID\n"
 
-#: pg_resetwal.c:1225
+#: pg_resetwal.c:1151
 #, c-format
-msgid "  -?, --help                     show this help, then exit\n"
-msgstr "  -?, --help                     visa denna hjälp och avsluta sedan\n"
+msgid "      --wal-segsize=SIZE           size of WAL segments, in megabytes\n"
+msgstr "      --wal-segsize=STORLEK        storlek på WAL-segment i megabyte\n"
 
-#: pg_resetwal.c:1226
+#: pg_resetwal.c:1152
+#, c-format
+msgid "  -?, --help                       show this help, then exit\n"
+msgstr "  -?, --help                       visa denna hjälp, avsluta sedan\n"
+
+#: pg_resetwal.c:1153
 #, c-format
 msgid ""
 "\n"
@@ -648,10 +664,7 @@ msgstr ""
 "\n"
 "Rapportera fel till <%s>.\n"
 
-#: pg_resetwal.c:1227
+#: pg_resetwal.c:1154
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "hemsida för %s: <%s>\n"
-
-#~ msgid "could not load advapi32.dll: error code %lu"
-#~ msgstr "kunde inte ladda advapi32.dll: felkod %lu"

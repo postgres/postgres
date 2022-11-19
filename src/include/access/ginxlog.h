@@ -110,7 +110,7 @@ typedef struct
 
 typedef struct ginxlogSplit
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	BlockNumber rrlink;			/* right link, or root's blocknumber if root
 								 * split */
 	BlockNumber leftChildBlkno; /* valid on a non-leaf split */
@@ -167,7 +167,7 @@ typedef struct ginxlogDeletePage
  */
 typedef struct ginxlogUpdateMeta
 {
-	RelFileNode node;
+	RelFileLocator locator;
 	GinMetaPageData metadata;
 	BlockNumber prevTail;
 	BlockNumber newRightlink;

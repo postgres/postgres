@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_amcheck (PostgreSQL) 14\n"
 "Report-Msgid-Bugs-To: pgsql-bugs@lists.postgresql.org\n"
-"POT-Creation-Date: 2021-06-08 23:18+0000\n"
-"PO-Revision-Date: 2021-06-09 18:00+0800\n"
+"POT-Creation-Date: 2021-08-14 05:48+0000\n"
+"PO-Revision-Date: 2021-08-15 18:00+0800\n"
 "Last-Translator: Jie Zhang <zhangjie2@fujitsu.com>\n"
 "Language-Team: Chinese (Simplified) <zhangjie2@fujitsu.com>\n"
 "Language: zh_CN\n"
@@ -50,13 +50,13 @@ msgid "%s"
 msgstr "%s"
 
 #: ../../fe_utils/query_utils.c:33 ../../fe_utils/query_utils.c:58
-#: pg_amcheck.c:1645 pg_amcheck.c:2084
+#: pg_amcheck.c:1646 pg_amcheck.c:2085
 #, c-format
 msgid "query failed: %s"
 msgstr "查询失败: %s"
 
 #: ../../fe_utils/query_utils.c:34 ../../fe_utils/query_utils.c:59
-#: pg_amcheck.c:597 pg_amcheck.c:1116 pg_amcheck.c:1646 pg_amcheck.c:2085
+#: pg_amcheck.c:597 pg_amcheck.c:1116 pg_amcheck.c:1647 pg_amcheck.c:2086
 #, c-format
 msgid "query was: %s"
 msgstr "查询是: %s"
@@ -136,20 +136,35 @@ msgstr "正在跳过数据库\"%s\"：未安装amcheck"
 msgid "in database \"%s\": using amcheck version \"%s\" in schema \"%s\""
 msgstr "在数据库\"%1$s\"中：在模式\"%3$s\"中使用amcheck版本\"%2$s\""
 
+#: pg_amcheck.c:638
+msgid "no heap tables to check matching \"%s\""
+msgstr "没有要检查匹配\"%s\"的堆表"
+
+#: pg_amcheck.c:641
+#, c-format
+msgid "no btree indexes to check matching \"%s\""
+msgstr "没有要检查匹配\"%s\"的B树索引"
+
+#: pg_amcheck.c:644
+msgid "no relations to check in schemas matching \"%s\""
+msgstr "在模式中没有要检查匹配\"%s\"的关系"
+
+#: pg_amcheck.c:647
+msgid "no relations to check matching \"%s\""
+msgstr "没有要检查匹配\"%s\"的关系"
+
 #: pg_amcheck.c:676
 #, c-format
 msgid "no relations to check"
 msgstr "没有要检查的关系"
 
 #: pg_amcheck.c:762
-#, c-format
-msgid "checking heap table \"%s\".\"%s\".\"%s\""
-msgstr "正在检查堆表\"%s\".\"%s\".\"%s\""
+msgid "checking heap table \"%s.%s.%s\""
+msgstr "正在检查堆表\"%s.%s.%s\""
 
 #: pg_amcheck.c:778
-#, c-format
-msgid "checking btree index \"%s\".\"%s\".\"%s\""
-msgstr "检查btree索引\"%s\".\"%s\".\"%s\""
+msgid "checking btree index \"%s.%s.%s\""
+msgstr "检查B树索引\"%s.%s.%s\""
 
 #: pg_amcheck.c:911
 #, c-format
@@ -161,17 +176,42 @@ msgstr "向数据库\"%s\"发送命令时出错: %s"
 msgid "command was: %s"
 msgstr "命令是: %s"
 
-#: pg_amcheck.c:1113
+#: pg_amcheck.c:1031
 #, c-format
-msgid "btree index \"%s\".\"%s\".\"%s\": btree checking function returned unexpected number of rows: %d"
-msgstr "B树索引\"%s\".\"%s\".\"%s\":B树检查函数返回了意外的行数: %d"
+msgid "heap table \"%s.%s.%s\", block %s, offset %s, attribute %s:\n"
+msgstr "堆表\"%s.%s.%s\"，块%s，偏移量%s，属性%s:\n"
+
+#: pg_amcheck.c:1038
+#, c-format
+msgid "heap table \"%s.%s.%s\", block %s, offset %s:\n"
+msgstr "堆表\"%s.%s.%s\"，块%s，偏移量%s:\n"
+
+#: pg_amcheck.c:1044
+msgid "heap table \"%s.%s.%s\", block %s:\n"
+msgstr "堆表\"%s.%s.%s\",块%s:\n"
+
+#: pg_amcheck.c:1049 pg_amcheck.c:1060
+msgid "heap table \"%s.%s.%s\":\n"
+msgstr "堆表\"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1064 pg_amcheck.c:1131
+msgid "query was: %s\n"
+msgstr "查询是: %s\n"
+
+#: pg_amcheck.c:1113
+msgid "btree index \"%s.%s.%s\": btree checking function returned unexpected number of rows: %d"
+msgstr "B树索引\"%s.%s.%s\":B树检查函数返回了意外的行数: %d"
 
 #: pg_amcheck.c:1117
 #, c-format
 msgid "Are %s's and amcheck's versions compatible?"
 msgstr "%s和amcheck的版本兼容吗?"
 
-#: pg_amcheck.c:1151
+#: pg_amcheck.c:1127
+msgid "btree index \"%s.%s.%s\":\n"
+msgstr "B树索引\"%s.%s.%s\":\n"
+
+#: pg_amcheck.c:1152
 #, c-format
 msgid ""
 "%s checks objects in a PostgreSQL database for corruption.\n"
@@ -180,17 +220,17 @@ msgstr ""
 "%s检查PostgreSQL数据库中的对象是否损坏.\n"
 "\n"
 
-#: pg_amcheck.c:1152
+#: pg_amcheck.c:1153
 #, c-format
 msgid "Usage:\n"
 msgstr "使用方法:\n"
 
-#: pg_amcheck.c:1153
+#: pg_amcheck.c:1154
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [选项]... [数据库名字]\n"
 
-#: pg_amcheck.c:1154
+#: pg_amcheck.c:1155
 #, c-format
 msgid ""
 "\n"
@@ -199,77 +239,77 @@ msgstr ""
 "\n"
 "目标选项:\n"
 
-#: pg_amcheck.c:1155
+#: pg_amcheck.c:1156
 #, c-format
 msgid "  -a, --all                       check all databases\n"
 msgstr "  -a, --all                       检查所有数据库\n"
 
-#: pg_amcheck.c:1156
+#: pg_amcheck.c:1157
 #, c-format
 msgid "  -d, --database=PATTERN          check matching database(s)\n"
 msgstr "  -d, --database=PATTERN          检查匹配的数据库\n"
 
-#: pg_amcheck.c:1157
+#: pg_amcheck.c:1158
 #, c-format
 msgid "  -D, --exclude-database=PATTERN  do NOT check matching database(s)\n"
 msgstr "  -D, --exclude-database=PATTERN  不检查匹配的数据库\n"
 
-#: pg_amcheck.c:1158
+#: pg_amcheck.c:1159
 #, c-format
 msgid "  -i, --index=PATTERN             check matching index(es)\n"
 msgstr "  -i, --index=PATTERN             检查匹配的索引\n"
 
-#: pg_amcheck.c:1159
+#: pg_amcheck.c:1160
 #, c-format
 msgid "  -I, --exclude-index=PATTERN     do NOT check matching index(es)\n"
 msgstr "  -I, --exclude-index=PATTERN     不检查匹配的索引\n"
 
-#: pg_amcheck.c:1160
+#: pg_amcheck.c:1161
 #, c-format
 msgid "  -r, --relation=PATTERN          check matching relation(s)\n"
 msgstr "  -r, --relation=PATTERN          检查匹配的关系\n"
 
-#: pg_amcheck.c:1161
+#: pg_amcheck.c:1162
 #, c-format
 msgid "  -R, --exclude-relation=PATTERN  do NOT check matching relation(s)\n"
 msgstr "  -R, --exclude-relation=PATTERN  不检查匹配的关系\n"
 
-#: pg_amcheck.c:1162
+#: pg_amcheck.c:1163
 #, c-format
 msgid "  -s, --schema=PATTERN            check matching schema(s)\n"
 msgstr "  -s, --schema=PATTERN            检查匹配的模式\n"
 
-#: pg_amcheck.c:1163
+#: pg_amcheck.c:1164
 #, c-format
 msgid "  -S, --exclude-schema=PATTERN    do NOT check matching schema(s)\n"
 msgstr "  -S, --exclude-schema=PATTERN    不检查匹配模式\n"
 
-#: pg_amcheck.c:1164
+#: pg_amcheck.c:1165
 #, c-format
 msgid "  -t, --table=PATTERN             check matching table(s)\n"
 msgstr "  -t, --table=PATTERN             检查匹配的表\n"
 
-#: pg_amcheck.c:1165
+#: pg_amcheck.c:1166
 #, c-format
 msgid "  -T, --exclude-table=PATTERN     do NOT check matching table(s)\n"
 msgstr "  -T, --exclude-table=PATTERN     不检查匹的配表\n"
 
-#: pg_amcheck.c:1166
+#: pg_amcheck.c:1167
 #, c-format
 msgid "      --no-dependent-indexes      do NOT expand list of relations to include indexes\n"
 msgstr "      --no-dependent-indexes      不要展开关系列表以包含索引\n"
 
-#: pg_amcheck.c:1167
+#: pg_amcheck.c:1168
 #, c-format
 msgid "      --no-dependent-toast        do NOT expand list of relations to include TOAST tables\n"
 msgstr "      --no-dependent-toast        不要展开关系列表以包括TOAST表\n"
 
-#: pg_amcheck.c:1168
+#: pg_amcheck.c:1169
 #, c-format
 msgid "      --no-strict-names           do NOT require patterns to match objects\n"
 msgstr "      --no-strict-names           不需要模式来匹配对象\n"
 
-#: pg_amcheck.c:1169
+#: pg_amcheck.c:1170
 #, c-format
 msgid ""
 "\n"
@@ -278,32 +318,32 @@ msgstr ""
 "\n"
 "表检查选项:\n"
 
-#: pg_amcheck.c:1170
+#: pg_amcheck.c:1171
 #, c-format
 msgid "      --exclude-toast-pointers    do NOT follow relation TOAST pointers\n"
 msgstr "      --exclude-toast-pointers    不要遵循关系TOAST指示\n"
 
-#: pg_amcheck.c:1171
+#: pg_amcheck.c:1172
 #, c-format
 msgid "      --on-error-stop             stop checking at end of first corrupt page\n"
 msgstr "      --on-error-stop             在第一个损坏页的末尾停止检查\n"
 
-#: pg_amcheck.c:1172
+#: pg_amcheck.c:1173
 #, c-format
 msgid "      --skip=OPTION               do NOT check \"all-frozen\" or \"all-visible\" blocks\n"
 msgstr "      --skip=OPTION               不要检查\"all-frozen\"或\"all-visible\"块\n"
 
-#: pg_amcheck.c:1173
+#: pg_amcheck.c:1174
 #, c-format
 msgid "      --startblock=BLOCK          begin checking table(s) at the given block number\n"
 msgstr "      --startblock=BLOCK          在给定的块编号处开始检查表\n"
 
-#: pg_amcheck.c:1174
+#: pg_amcheck.c:1175
 #, c-format
 msgid "      --endblock=BLOCK            check table(s) only up to the given block number\n"
 msgstr "      --endblock=BLOCK            检查表仅限于给定的块编号\n"
 
-#: pg_amcheck.c:1175
+#: pg_amcheck.c:1176
 #, c-format
 msgid ""
 "\n"
@@ -312,22 +352,21 @@ msgstr ""
 "\n"
 "B树索引检查选项:\n"
 
-#: pg_amcheck.c:1176
-#, c-format
-msgid "      --heapallindexed            check all heap tuples are found within indexes\n"
+#: pg_amcheck.c:1177
+msgid "      --heapallindexed            check that all heap tuples are found within indexes\n"
 msgstr "      --heapallindexed            检查是否在索引中找到所有堆元组\n"
 
-#: pg_amcheck.c:1177
+#: pg_amcheck.c:1178
 #, c-format
 msgid "      --parent-check              check index parent/child relationships\n"
 msgstr "      --parent-check              检查索引父/子关系\n"
 
-#: pg_amcheck.c:1178
+#: pg_amcheck.c:1179
 #, c-format
 msgid "      --rootdescend               search from root page to refind tuples\n"
 msgstr "      --rootdescend               从根页搜索到重新填充元组\n"
 
-#: pg_amcheck.c:1179
+#: pg_amcheck.c:1180
 #, c-format
 msgid ""
 "\n"
@@ -336,37 +375,37 @@ msgstr ""
 "\n"
 "联接选项:\n"
 
-#: pg_amcheck.c:1180
+#: pg_amcheck.c:1181
 #, c-format
 msgid "  -h, --host=HOSTNAME             database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME             数据库服务器主机或套接字目录\n"
 
-#: pg_amcheck.c:1181
+#: pg_amcheck.c:1182
 #, c-format
 msgid "  -p, --port=PORT                 database server port\n"
 msgstr "  -p, --port=PORT                 数据库服务器端口\n"
 
-#: pg_amcheck.c:1182
+#: pg_amcheck.c:1183
 #, c-format
 msgid "  -U, --username=USERNAME         user name to connect as\n"
 msgstr "  -U, --username=USERNAME         要连接的用户名\n"
 
-#: pg_amcheck.c:1183
+#: pg_amcheck.c:1184
 #, c-format
 msgid "  -w, --no-password               never prompt for password\n"
 msgstr "  -w, --no-password               从不提示输入密码\n"
 
-#: pg_amcheck.c:1184
+#: pg_amcheck.c:1185
 #, c-format
 msgid "  -W, --password                  force password prompt\n"
 msgstr "  -W, --password                  强制密码提示\n"
 
-#: pg_amcheck.c:1185
+#: pg_amcheck.c:1186
 #, c-format
 msgid "      --maintenance-db=DBNAME     alternate maintenance database\n"
 msgstr "      --maintenance-db=DBNAME     备用维护数据库\n"
 
-#: pg_amcheck.c:1186
+#: pg_amcheck.c:1187
 #, c-format
 msgid ""
 "\n"
@@ -375,47 +414,47 @@ msgstr ""
 "\n"
 "其它选项:\n"
 
-#: pg_amcheck.c:1187
+#: pg_amcheck.c:1188
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      显示发送到服务端的命令\n"
 
-#: pg_amcheck.c:1188
+#: pg_amcheck.c:1189
 #, c-format
 msgid "  -j, --jobs=NUM                  use this many concurrent connections to the server\n"
 msgstr "  -j, --jobs=NUM                  使用这么多到服务器的并发连接\n"
 
-#: pg_amcheck.c:1189
+#: pg_amcheck.c:1190
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     不写任何信息\n"
 
-#: pg_amcheck.c:1190
+#: pg_amcheck.c:1191
 #, c-format
 msgid "  -P, --progress                  show progress information\n"
 msgstr "  -P, --progress                  显示进度信息\n"
 
-#: pg_amcheck.c:1191
+#: pg_amcheck.c:1192
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   写大量的输出\n"
 
-#: pg_amcheck.c:1192
+#: pg_amcheck.c:1193
 #, c-format
 msgid "  -V, --version                   output version information, then exit\n"
 msgstr "  -V, --version                   输出版本信息, 然后退出\n"
 
-#: pg_amcheck.c:1193
+#: pg_amcheck.c:1194
 #, c-format
 msgid "      --install-missing           install missing extensions\n"
 msgstr "      --install-missing           安装缺少的扩展\n"
 
-#: pg_amcheck.c:1194
+#: pg_amcheck.c:1195
 #, c-format
 msgid "  -?, --help                      show this help, then exit\n"
 msgstr "  -?, --help                      显示此帮助信息, 然后退出\n"
 
-#: pg_amcheck.c:1196
+#: pg_amcheck.c:1197
 #, c-format
 msgid ""
 "\n"
@@ -424,37 +463,38 @@ msgstr ""
 "\n"
 "臭虫报告至<%s>.\n"
 
-#: pg_amcheck.c:1197
+#: pg_amcheck.c:1198
 #, c-format
 msgid "%s home page: <%s>\n"
 msgstr "%s 主页: <%s>\n"
 
-#: pg_amcheck.c:1255
-#, c-format
-msgid "%*s/%s relations (%d%%) %*s/%s pages (%d%%) %*s"
-msgstr "%*s/%s 关系 (%d%%) %*s/%s 页 (%d%%) %*s"
+#: pg_amcheck.c:1256
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) %*s"
+msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%) %*s"
 
-#: pg_amcheck.c:1266
-#, c-format
-msgid "%*s/%s relations (%d%%) %*s/%s pages (%d%%), (%s%-*.*s)"
-msgstr "%*s/%s 关系 (%d%%) %*s/%s 页 (%d%%), (%s%-*.*s)"
+#: pg_amcheck.c:1267
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%) (%s%-*.*s)"
+msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%) (%s%-*.*s)"
 
-#: pg_amcheck.c:1281
-#, c-format
-msgid "%*s/%s relations (%d%%) %*s/%s pages (%d%%)"
-msgstr "%*s/%s 关系 (%d%%) %*s/%s 页 (%d%%)"
+#: pg_amcheck.c:1282
+msgid "%*s/%s relations (%d%%), %*s/%s pages (%d%%)"
+msgstr "%*s/%s 关系 (%d%%), %*s/%s 页 (%d%%)"
 
-#: pg_amcheck.c:1550 pg_amcheck.c:1692
+#: pg_amcheck.c:1551 pg_amcheck.c:1693
 #, c-format
 msgid "including database \"%s\""
 msgstr "包含的数据库\"%s\""
 
-#: pg_amcheck.c:1672
+#: pg_amcheck.c:1673
 #, c-format
 msgid "internal error: received unexpected database pattern_id %d"
 msgstr "内部错误:收到意外的数据库pattern_id %d"
 
-#: pg_amcheck.c:2126
+#: pg_amcheck.c:1677
+msgid "no connectable databases to check matching \"%s\""
+msgstr "没有可连接的数据库来检查匹配的\"%s\""
+
+#: pg_amcheck.c:2127
 #, c-format
 msgid "internal error: received unexpected relation pattern_id %d"
 msgstr "内部错误:收到意外的关系pattern_id %d"
