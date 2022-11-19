@@ -1,3 +1,8 @@
+-- This test script fails if debug_discard_caches is enabled, because cache
+-- flushes cause extra calls of the OAT hook in recomputeNamespacePath,
+-- resulting in more NOTICE messages than are in the expected output.
+SET debug_discard_caches = 0;
+
 -- Creating privileges on a placeholder GUC should create entries in the
 -- pg_parameter_acl catalog which conservatively grant no privileges to public.
 CREATE ROLE regress_role_joe;
