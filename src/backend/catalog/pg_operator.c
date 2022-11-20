@@ -827,11 +827,10 @@ makeOperatorDependencies(HeapTuple tuple,
 
 	/*
 	 * NOTE: we do not consider the operator to depend on the associated
-	 * operators oprcom and oprnegate. We would not want to delete this
-	 * operator if those go away, but only reset the link fields; which is not
-	 * a function that the dependency code can presently handle.  (Something
-	 * could perhaps be done with objectSubId though.)	For now, it's okay to
-	 * let those links dangle if a referenced operator is removed.
+	 * operators oprcom and oprnegate.  We do not want to delete this operator
+	 * if those go away, but only reset the link fields; which is not a
+	 * function that the dependency logic can handle.  (It's taken care of
+	 * manually within RemoveOperatorById, instead.)
 	 */
 
 	/* Dependency on implementation function */
