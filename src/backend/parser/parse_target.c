@@ -1895,24 +1895,6 @@ FigureColnameInternal(Node *node, char **name)
 				case SVFOP_LOCALTIMESTAMP_N:
 					*name = "localtimestamp";
 					return 2;
-				case SVFOP_CURRENT_ROLE:
-					*name = "current_role";
-					return 2;
-				case SVFOP_CURRENT_USER:
-					*name = "current_user";
-					return 2;
-				case SVFOP_USER:
-					*name = "user";
-					return 2;
-				case SVFOP_SESSION_USER:
-					*name = "session_user";
-					return 2;
-				case SVFOP_CURRENT_CATALOG:
-					*name = "current_catalog";
-					return 2;
-				case SVFOP_CURRENT_SCHEMA:
-					*name = "current_schema";
-					return 2;
 			}
 			break;
 		case T_XmlExpr:

@@ -15231,15 +15231,24 @@ func_expr_common_subexpr:
 				}
 			| CURRENT_ROLE
 				{
-					$$ = makeSQLValueFunction(SVFOP_CURRENT_ROLE, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("current_role"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| CURRENT_USER
 				{
-					$$ = makeSQLValueFunction(SVFOP_CURRENT_USER, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("current_user"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| SESSION_USER
 				{
-					$$ = makeSQLValueFunction(SVFOP_SESSION_USER, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("session_user"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| SYSTEM_USER
 				{
@@ -15250,15 +15259,24 @@ func_expr_common_subexpr:
 				}
 			| USER
 				{
-					$$ = makeSQLValueFunction(SVFOP_USER, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("user"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| CURRENT_CATALOG
 				{
-					$$ = makeSQLValueFunction(SVFOP_CURRENT_CATALOG, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("current_catalog"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| CURRENT_SCHEMA
 				{
-					$$ = makeSQLValueFunction(SVFOP_CURRENT_SCHEMA, -1, @1);
+					$$ = (Node *) makeFuncCall(SystemFuncName("current_schema"),
+											   NIL,
+											   COERCE_SQL_SYNTAX,
+											   @1);
 				}
 			| CAST '(' a_expr AS Typename ')'
 				{ $$ = makeTypeCast($3, $5, @1); }

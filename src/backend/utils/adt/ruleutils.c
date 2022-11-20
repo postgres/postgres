@@ -9169,24 +9169,6 @@ get_rule_expr(Node *node, deparse_context *context,
 						appendStringInfo(buf, "LOCALTIMESTAMP(%d)",
 										 svf->typmod);
 						break;
-					case SVFOP_CURRENT_ROLE:
-						appendStringInfoString(buf, "CURRENT_ROLE");
-						break;
-					case SVFOP_CURRENT_USER:
-						appendStringInfoString(buf, "CURRENT_USER");
-						break;
-					case SVFOP_USER:
-						appendStringInfoString(buf, "USER");
-						break;
-					case SVFOP_SESSION_USER:
-						appendStringInfoString(buf, "SESSION_USER");
-						break;
-					case SVFOP_CURRENT_CATALOG:
-						appendStringInfoString(buf, "CURRENT_CATALOG");
-						break;
-					case SVFOP_CURRENT_SCHEMA:
-						appendStringInfoString(buf, "CURRENT_SCHEMA");
-						break;
 				}
 			}
 			break;
@@ -10288,6 +10270,24 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			appendStringInfoChar(buf, ')');
 			return true;
 
+		case F_CURRENT_CATALOG:
+			appendStringInfoString(buf, "CURRENT_CATALOG");
+			return true;
+		case F_CURRENT_ROLE:
+			appendStringInfoString(buf, "CURRENT_ROLE");
+			return true;
+		case F_CURRENT_SCHEMA:
+			appendStringInfoString(buf, "CURRENT_SCHEMA");
+			return true;
+		case F_CURRENT_USER:
+			appendStringInfoString(buf, "CURRENT_USER");
+			return true;
+		case F_USER:
+			appendStringInfoString(buf, "USER");
+			return true;
+		case F_SESSION_USER:
+			appendStringInfoString(buf, "SESSION_USER");
+			return true;
 		case F_SYSTEM_USER:
 			appendStringInfoString(buf, "SYSTEM_USER");
 			return true;

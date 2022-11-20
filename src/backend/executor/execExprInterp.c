@@ -2495,15 +2495,10 @@ ExecEvalParamExtern(ExprState *state, ExprEvalStep *op, ExprContext *econtext)
 void
 ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op)
 {
-	LOCAL_FCINFO(fcinfo, 0);
 	SQLValueFunction *svf = op->d.sqlvaluefunction.svf;
 
 	*op->resnull = false;
 
-	/*
-	 * Note: current_schema() can return NULL.  current_user() etc currently
-	 * cannot, but might as well code those cases the same way for safety.
-	 */
 	switch (svf->op)
 	{
 		case SVFOP_CURRENT_DATE:
@@ -2524,28 +2519,6 @@ ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op)
 		case SVFOP_LOCALTIMESTAMP:
 		case SVFOP_LOCALTIMESTAMP_N:
 			*op->resvalue = TimestampGetDatum(GetSQLLocalTimestamp(svf->typmod));
-			break;
-		case SVFOP_CURRENT_ROLE:
-		case SVFOP_CURRENT_USER:
-		case SVFOP_USER:
-			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-			*op->resvalue = current_user(fcinfo);
-			*op->resnull = fcinfo->isnull;
-			break;
-		case SVFOP_SESSION_USER:
-			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-			*op->resvalue = session_user(fcinfo);
-			*op->resnull = fcinfo->isnull;
-			break;
-		case SVFOP_CURRENT_CATALOG:
-			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-			*op->resvalue = current_database(fcinfo);
-			*op->resnull = fcinfo->isnull;
-			break;
-		case SVFOP_CURRENT_SCHEMA:
-			InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
-			*op->resvalue = current_schema(fcinfo);
-			*op->resnull = fcinfo->isnull;
 			break;
 	}
 }
