@@ -101,9 +101,9 @@ use warnings;
 
 use Carp;
 use Config;
-use Fcntl qw(:mode);
+use Fcntl qw(:mode :flock :seek :DEFAULT);
 use File::Basename;
-use File::Path qw(rmtree);
+use File::Path qw(rmtree mkpath);
 use File::Spec;
 use File::stat qw(stat);
 use File::Temp ();
@@ -117,11 +117,14 @@ use Time::HiRes qw(usleep);
 use Scalar::Util qw(blessed);
 
 our ($use_tcp, $test_localhost, $test_pghost, $last_host_assigned,
-	$last_port_assigned, @all_nodes, $died);
+	$last_port_assigned, @all_nodes, $died, $portdir);
 
 # the minimum version we believe to be compatible with this package without
 # subclassing.
 our $min_compat = 12;
+
+# list of file reservations made by get_free_port
+my @port_reservation_files;
 
 INIT
 {
@@ -148,6 +151,21 @@ INIT
 
 	# Tracking of last port value assigned to accelerate free port lookup.
 	$last_port_assigned = int(rand() * 16384) + 49152;
+
+	# Set the port lock directory
+
+	# If we're told to use a directory (e.g. from a buildfarm client)
+	# explicitly, use that
+	$portdir = $ENV{PG_TEST_PORT_DIR};
+	# Otherwise, try to use a directory at the top of the build tree
+	# or as a last resort use the tmp_check directory
+	my $build_dir = $ENV{MESON_BUILD_ROOT}
+	  || $ENV{top_builddir}
+	  || $PostgreSQL::Test::Utils::tmp_check ;
+	$portdir ||= "$build_dir/portlock";
+	$portdir =~ s!\\!/!g;
+	# Make sure the directory exists
+	mkpath($portdir) unless -d $portdir;
 }
 
 =pod
@@ -1479,8 +1497,8 @@ start other, non-Postgres servers.
 Ports assigned to existing PostgreSQL::Test::Cluster objects are automatically
 excluded, even if those servers are not currently running.
 
-XXX A port available now may become unavailable by the time we start
-the desired service.
+The port number is reserved so that other concurrent test programs will not
+try to use the same port.
 
 Note: this is not an instance method. As it's not exported it should be
 called from outside the module as C<PostgreSQL::Test::Cluster::get_free_port()>.
@@ -1532,6 +1550,7 @@ sub get_free_port
 					last;
 				}
 			}
+			$found = _reserve_port($port) if $found;
 		}
 	}
 
@@ -1562,6 +1581,40 @@ sub can_bind
 	return $ret;
 }
 
+# Internal routine to reserve a port number
+# Returns 1 if successful, 0 if port is already reserved.
+sub _reserve_port
+{
+	my $port = shift;
+	# open in rw mode so we don't have to reopen it and lose the lock
+	my $filename = "$portdir/$port.rsv";
+	sysopen(my $portfile, $filename, O_RDWR|O_CREAT)
+	  || die "opening port file $filename: $!";
+	# take an exclusive lock to avoid concurrent access
+	flock($portfile, LOCK_EX) || die "locking port file $filename: $!";
+	# see if someone else has or had a reservation of this port
+	my $pid = <$portfile>;
+	chomp $pid;
+	if ($pid +0 > 0)
+	{
+		if (kill 0, $pid)
+		{
+			# process exists and is owned by us, so we can't reserve this port
+			flock($portfile, LOCK_UN);
+			close($portfile);
+			return 0;
+		}
+	}
+	# All good, go ahead and reserve the port
+	seek($portfile, 0, SEEK_SET);
+	# print the pid with a fixed width so we don't leave any trailing junk
+	print $portfile sprintf("%10d\n",$$);
+	flock($portfile, LOCK_UN);
+	close($portfile);
+	push(@port_reservation_files, $filename);
+	return 1;
+}
+
 # Automatically shut down any still-running nodes (in the same order the nodes
 # were created in) when the test script exits.
 END
@@ -1588,6 +1641,8 @@ END
 		$node->clean_node
 		  if $exit_code == 0 && PostgreSQL::Test::Utils::all_tests_passing();
 	}
+
+	unlink @port_reservation_files;
 
 	$? = $exit_code;
 }
