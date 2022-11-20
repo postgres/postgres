@@ -1849,6 +1849,6 @@ DROP TABLE regress_roleoption.t2;
 DROP TABLE regress_roleoption.t3;
 DROP TABLE regress_roleoption.t4;
 DROP SCHEMA regress_roleoption;
+DROP ROLE regress_roleoption_protagonist;
+DROP ROLE regress_roleoption_donor;
 DROP ROLE regress_roleoption_recipient;
-DROP ROLE regress_roleoption_donor;
-DROP ROLE regress_roleoption_donor;
