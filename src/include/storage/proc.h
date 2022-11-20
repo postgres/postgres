@@ -134,7 +134,7 @@ struct PGPROC
 	bool		recoveryConflictPending;
 
 	/* Info about LWLock the process is currently waiting for, if any. */
-	bool		lwWaiting;		/* true if waiting for an LW lock */
+	uint8		lwWaiting;		/* see LWLockWaitState */
 	uint8		lwWaitMode;		/* lwlock mode being waited for */
 	proclist_node lwWaitLink;	/* position in LW lock wait list */
 
