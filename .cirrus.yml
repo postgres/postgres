@@ -420,15 +420,6 @@ task:
 
   env:
     TEST_JOBS: 8 # wild guess, data based value welcome
-    # Avoid re-installing over and over
-    NO_TEMP_INSTALL: 1
-
-    # startcreate_script starts a postgres instance that we don't want to get
-    # killed at the end of that script (it's stopped in stop_script). Can't
-    # trivially use background_scripts because a) need pg_ctl's dropping of
-    # permissions b) need to wait for startup to have finished, and we don't
-    # currently have a tool for that...
-    CIRRUS_ESCAPING_PROCESSES: 1
 
     # Cirrus defaults to SetErrorMode(SEM_NOGPFAULTERRORBOX | ...). That
     # prevents crash reporting from working unless binaries do SetErrorMode()
