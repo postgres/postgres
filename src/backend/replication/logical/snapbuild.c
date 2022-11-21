@@ -566,11 +566,18 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 {
 	Snapshot	snap;
 	TransactionId xid;
+	TransactionId safeXid;
 	TransactionId *newxip;
 	int			newxcnt = 0;
 
-	Assert(!FirstSnapshotSet);
 	Assert(XactIsoLevel == XACT_REPEATABLE_READ);
+	Assert(builder->building_full_snapshot);
+
+	/* don't allow older snapshots */
+	InvalidateCatalogSnapshot(); /* about to overwrite MyProc->xmin */
+	if (HaveRegisteredOrActiveSnapshot())
+		elog(ERROR, "cannot build an initial slot snapshot when snapshots exist");
+	Assert(!HistoricSnapshotActive());
 
 	if (builder->state != SNAPBUILD_CONSISTENT)
 		elog(ERROR, "cannot build an initial slot snapshot before reaching a consistent state");
@@ -588,18 +595,18 @@ SnapBuildInitialSnapshot(SnapBuild *builder)
 	 * We know that snap->xmin is alive, enforced by the logical xmin
 	 * mechanism. Due to that we can do this without locks, we're only
 	 * changing our own value.
+	 *
+	 * Building an initial snapshot is expensive and an unenforced xmin
+	 * horizon would have bad consequences, therefore always double-check that
+	 * the horizon is enforced.
 	 */
-#ifdef USE_ASSERT_CHECKING
-	{
-		TransactionId safeXid;
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+	safeXid = GetOldestSafeDecodingTransactionId(false);
+	LWLockRelease(ProcArrayLock);
 
-		LWLockAcquire(ProcArrayLock, LW_SHARED);
-		safeXid = GetOldestSafeDecodingTransactionId(false);
-		LWLockRelease(ProcArrayLock);
-
-		Assert(TransactionIdPrecedesOrEquals(safeXid, snap->xmin));
-	}
-#endif
+	if (TransactionIdFollows(safeXid, snap->xmin))
+		elog(ERROR, "cannot build an initial slot snapshot as oldest safe xid %u follows snapshot's xmin %u",
+			 safeXid, snap->xmin);
 
 	MyProc->xmin = snap->xmin;
 
