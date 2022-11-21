@@ -1914,10 +1914,6 @@ prsd_end(PG_FUNCTION_ARGS)
  */
 
 /* token type classification macros */
-#define LEAVETOKEN(x)	( (x)==SPACE )
-#define COMPLEXTOKEN(x) ( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
-#define ENDPUNCTOKEN(x) ( (x)==SPACE )
-
 #define TS_IDIGNORE(x)	( (x)==TAG_T || (x)==PROTOCOL || (x)==SPACE || (x)==XMLENTITY )
 #define HLIDREPLACE(x)	( (x)==TAG_T )
 #define HLIDSKIP(x)		( (x)==URL_T || (x)==NUMHWORD || (x)==ASCIIHWORD || (x)==HWORD )
