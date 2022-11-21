@@ -235,8 +235,28 @@ task:
     CCACHE_DIR: /tmp/ccache_dir
     DEBUGINFOD_URLS: "https://debuginfod.debian.net"
 
-    CFLAGS: -Og -ggdb
-    CXXFLAGS: -Og -ggdb
+    # Enable a reasonable set of sanitizers. Use the linux task for that, as
+    # it one of the fastest tasks (without sanitizers). Also several of the
+    # sanitizers work best on linux.
+    #
+    # The overhead of alignment sanitizer is low, undefined behaviour has
+    # moderate overhead. Test alignment sanitizer in the meson task, as it
+    # does both 32 and 64 bit builds and is thus more likely to expose
+    # alignment bugs.
+    #
+    # Address sanitizer in contrast is somewhat expensive. Enable it in the
+    # autoconf task, as the meson task tests both 32 and 64bit.
+    #
+    # disable_coredump=0, abort_on_error=1: for useful backtraces in case of crashes
+    # print_stacktraces=1,verbosity=2, duh
+    # detect_leaks=0: too many uninteresting leak errors in short-lived binaries
+    UBSAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:verbosity=2
+    ASAN_OPTIONS: print_stacktrace=1:disable_coredump=0:abort_on_error=1:detect_leaks=0
+
+    # SANITIZER_FLAGS is set in the tasks below
+    CFLAGS: -Og -ggdb -fno-sanitize-recover=all $SANITIZER_FLAGS
+    CXXFLAGS: $CFLAGS
+    LDFLAGS: $SANITIZER_FLAGS
     CC: ccache gcc
     CXX: ccache g++
 
@@ -280,6 +300,9 @@ task:
   matrix:
     - name: Linux - Debian Bullseye - Autoconf
 
+      env:
+        SANITIZER_FLAGS: -fsanitize=address
+
       configure_script: |
         su postgres <<-EOF
           ./configure \
@@ -306,6 +329,7 @@ task:
 
       env:
         CCACHE_MAXSIZE: "400M" # tests two different builds
+        SANITIZER_FLAGS: -fsanitize=alignment,undefined
 
       configure_script: |
         su postgres <<-EOF
