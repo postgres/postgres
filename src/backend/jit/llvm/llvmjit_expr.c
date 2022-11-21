@@ -1549,12 +1549,6 @@ llvm_compile_expr(ExprState *state)
 					break;
 				}
 
-			case EEOP_SQLVALUEFUNCTION:
-				build_EvalXFunc(b, mod, "ExecEvalSQLValueFunction",
-								v_state, op);
-				LLVMBuildBr(b, opblocks[opno + 1]);
-				break;
-
 			case EEOP_CURRENTOFEXPR:
 				build_EvalXFunc(b, mod, "ExecEvalCurrentOfExpr",
 								v_state, op);

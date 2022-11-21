@@ -61,8 +61,6 @@ static Node *transformArrayExpr(ParseState *pstate, A_ArrayExpr *a,
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r, bool allowDefault);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
-static Node *transformSQLValueFunction(ParseState *pstate,
-									   SQLValueFunction *svf);
 static Node *transformXmlExpr(ParseState *pstate, XmlExpr *x);
 static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize *xs);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
@@ -238,11 +236,6 @@ transformExprRecurse(ParseState *pstate, Node *expr)
 
 		case T_MinMaxExpr:
 			result = transformMinMaxExpr(pstate, (MinMaxExpr *) expr);
-			break;
-
-		case T_SQLValueFunction:
-			result = transformSQLValueFunction(pstate,
-											   (SQLValueFunction *) expr);
 			break;
 
 		case T_XmlExpr:
@@ -2189,51 +2182,6 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 	newm->args = newcoercedargs;
 	newm->location = m->location;
 	return (Node *) newm;
-}
-
-static Node *
-transformSQLValueFunction(ParseState *pstate, SQLValueFunction *svf)
-{
-	/*
-	 * All we need to do is insert the correct result type and (where needed)
-	 * validate the typmod, so we just modify the node in-place.
-	 */
-	switch (svf->op)
-	{
-		case SVFOP_CURRENT_DATE:
-			svf->type = DATEOID;
-			break;
-		case SVFOP_CURRENT_TIME:
-			svf->type = TIMETZOID;
-			break;
-		case SVFOP_CURRENT_TIME_N:
-			svf->type = TIMETZOID;
-			svf->typmod = anytime_typmod_check(true, svf->typmod);
-			break;
-		case SVFOP_CURRENT_TIMESTAMP:
-			svf->type = TIMESTAMPTZOID;
-			break;
-		case SVFOP_CURRENT_TIMESTAMP_N:
-			svf->type = TIMESTAMPTZOID;
-			svf->typmod = anytimestamp_typmod_check(true, svf->typmod);
-			break;
-		case SVFOP_LOCALTIME:
-			svf->type = TIMEOID;
-			break;
-		case SVFOP_LOCALTIME_N:
-			svf->type = TIMEOID;
-			svf->typmod = anytime_typmod_check(false, svf->typmod);
-			break;
-		case SVFOP_LOCALTIMESTAMP:
-			svf->type = TIMESTAMPOID;
-			break;
-		case SVFOP_LOCALTIMESTAMP_N:
-			svf->type = TIMESTAMPOID;
-			svf->typmod = anytimestamp_typmod_check(false, svf->typmod);
-			break;
-	}
-
-	return (Node *) svf;
 }
 
 static Node *

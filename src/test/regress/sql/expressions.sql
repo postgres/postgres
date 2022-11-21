@@ -3,7 +3,7 @@
 --
 
 --
--- Tests for SQLValueFunction
+-- Tests for various FuncCalls with COERCE_SQL_SYNTAX.
 --
 
 

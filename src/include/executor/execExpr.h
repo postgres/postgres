@@ -170,7 +170,6 @@ typedef enum ExprEvalOp
 	EEOP_DISTINCT,
 	EEOP_NOT_DISTINCT,
 	EEOP_NULLIF,
-	EEOP_SQLVALUEFUNCTION,
 	EEOP_CURRENTOFEXPR,
 	EEOP_NEXTVALUEEXPR,
 	EEOP_ARRAYEXPR,
@@ -415,12 +414,6 @@ typedef struct ExprEvalStep
 			FmgrInfo   *finfo_in;
 			FunctionCallInfo fcinfo_data_in;
 		}			iocoerce;
-
-		/* for EEOP_SQLVALUEFUNCTION */
-		struct
-		{
-			SQLValueFunction *svf;
-		}			sqlvaluefunction;
 
 		/* for EEOP_NEXTVALUEEXPR */
 		struct
@@ -741,7 +734,6 @@ extern void ExecEvalParamExec(ExprState *state, ExprEvalStep *op,
 							  ExprContext *econtext);
 extern void ExecEvalParamExtern(ExprState *state, ExprEvalStep *op,
 								ExprContext *econtext);
-extern void ExecEvalSQLValueFunction(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalCurrentOfExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalNextValueExpr(ExprState *state, ExprEvalStep *op);
 extern void ExecEvalRowNull(ExprState *state, ExprEvalStep *op,

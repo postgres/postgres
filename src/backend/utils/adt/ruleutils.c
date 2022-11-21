@@ -8150,7 +8150,6 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_RowExpr:
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
-		case T_SQLValueFunction:
 		case T_XmlExpr:
 		case T_NextValueExpr:
 		case T_NullIfExpr:
@@ -9130,49 +9129,6 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
-		case T_SQLValueFunction:
-			{
-				SQLValueFunction *svf = (SQLValueFunction *) node;
-
-				/*
-				 * Note: this code knows that typmod for time, timestamp, and
-				 * timestamptz just prints as integer.
-				 */
-				switch (svf->op)
-				{
-					case SVFOP_CURRENT_DATE:
-						appendStringInfoString(buf, "CURRENT_DATE");
-						break;
-					case SVFOP_CURRENT_TIME:
-						appendStringInfoString(buf, "CURRENT_TIME");
-						break;
-					case SVFOP_CURRENT_TIME_N:
-						appendStringInfo(buf, "CURRENT_TIME(%d)", svf->typmod);
-						break;
-					case SVFOP_CURRENT_TIMESTAMP:
-						appendStringInfoString(buf, "CURRENT_TIMESTAMP");
-						break;
-					case SVFOP_CURRENT_TIMESTAMP_N:
-						appendStringInfo(buf, "CURRENT_TIMESTAMP(%d)",
-										 svf->typmod);
-						break;
-					case SVFOP_LOCALTIME:
-						appendStringInfoString(buf, "LOCALTIME");
-						break;
-					case SVFOP_LOCALTIME_N:
-						appendStringInfo(buf, "LOCALTIME(%d)", svf->typmod);
-						break;
-					case SVFOP_LOCALTIMESTAMP:
-						appendStringInfoString(buf, "LOCALTIMESTAMP");
-						break;
-					case SVFOP_LOCALTIMESTAMP_N:
-						appendStringInfo(buf, "LOCALTIMESTAMP(%d)",
-										 svf->typmod);
-						break;
-				}
-			}
-			break;
-
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;
@@ -9698,7 +9654,6 @@ looks_like_function(Node *node)
 		case T_NullIfExpr:
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
-		case T_SQLValueFunction:
 		case T_XmlExpr:
 			/* these are all accepted by func_expr_common_subexpr */
 			return true;
@@ -10043,6 +9998,33 @@ get_windowfunc_expr(WindowFunc *wfunc, deparse_context *context)
 }
 
 /*
+ * get_func_sql_syntax_time
+ *
+ * Parse back argument of SQL-syntax function call related to a time or a
+ * timestamp.  These require a specific handling when their typmod is given
+ * by the function caller through their SQL keyword.
+ */
+static void
+get_func_sql_syntax_time(List *args, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	Const	   *cons;
+
+	if (list_length(args) != 1)
+		return;
+
+	cons = (Const *) linitial(args);
+	Assert(IsA(cons, Const));
+
+	if (!cons->constisnull)
+	{
+		appendStringInfoString(buf, "(");
+		get_rule_expr((Node *) cons, context, false);
+		appendStringInfoString(buf, ")");
+	}
+}
+
+/*
  * get_func_sql_syntax		- Parse back a SQL-syntax function call
  *
  * Returns true if we successfully deparsed, false if we did not
@@ -10290,6 +10272,26 @@ get_func_sql_syntax(FuncExpr *expr, deparse_context *context)
 			return true;
 		case F_SYSTEM_USER:
 			appendStringInfoString(buf, "SYSTEM_USER");
+			return true;
+
+		case F_CURRENT_DATE:
+			appendStringInfoString(buf, "CURRENT_DATE");
+			return true;
+		case F_CURRENT_TIME:
+			appendStringInfoString(buf, "CURRENT_TIME");
+			get_func_sql_syntax_time(expr->args, context);
+			return true;
+		case F_CURRENT_TIMESTAMP:
+			appendStringInfoString(buf, "CURRENT_TIMESTAMP");
+			get_func_sql_syntax_time(expr->args, context);
+			return true;
+		case F_LOCALTIME:
+			appendStringInfoString(buf, "LOCALTIME");
+			get_func_sql_syntax_time(expr->args, context);
+			return true;
+		case F_LOCALTIMESTAMP:
+			appendStringInfoString(buf, "LOCALTIMESTAMP");
+			get_func_sql_syntax_time(expr->args, context);
 			return true;
 
 		case F_XMLEXISTS:

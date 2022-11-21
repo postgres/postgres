@@ -2397,8 +2397,6 @@ SQLFunctionCache
 SQLFunctionCachePtr
 SQLFunctionParseInfo
 SQLFunctionParseInfoPtr
-SQLValueFunction
-SQLValueFunctionOp
 SSL
 SSLExtensionInfoContext
 SSL_CTX

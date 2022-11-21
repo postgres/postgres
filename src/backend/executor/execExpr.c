@@ -2210,17 +2210,6 @@ ExecInitExprRec(Expr *node, ExprState *state,
 				break;
 			}
 
-		case T_SQLValueFunction:
-			{
-				SQLValueFunction *svf = (SQLValueFunction *) node;
-
-				scratch.opcode = EEOP_SQLVALUEFUNCTION;
-				scratch.d.sqlvaluefunction.svf = svf;
-
-				ExprEvalPushStep(state, &scratch);
-				break;
-			}
-
 		case T_XmlExpr:
 			{
 				XmlExpr    *xexpr = (XmlExpr *) node;
