@@ -2902,7 +2902,7 @@ SELECT plainto_tsquery('supernova star');
     url="https://www.cs.hmc.edu/~geoff/ispell.html">Ispell</ulink>.
     Also, some more modern dictionary file formats are supported &mdash; <ulink
     url="https://en.wikipedia.org/wiki/MySpell">MySpell</ulink> (OO &lt; 2.0.1)
-    and <ulink url="https://sourceforge.net/projects/hunspell/">Hunspell</ulink>
+    and <ulink url="https://hunspell.github.io/">Hunspell</ulink>
     (OO &gt;= 2.0.2).  A large list of dictionaries is available on the <ulink
     url="https://wiki.openoffice.org/wiki/Dictionaries">OpenOffice
     Wiki</ulink>.
