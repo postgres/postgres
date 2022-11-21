@@ -30,33 +30,60 @@ typedef struct
 } LexDescr;
 
 /*
- * Interface to headline generator
+ * Interface to headline generator (tsparser's prsheadline function)
+ *
+ * HeadlineParsedText describes the text that is to be highlighted.
+ * Some fields are passed from the core code to the prsheadline function,
+ * while others are output from the prsheadline function.
+ *
+ * The principal data is words[], an array of HeadlineWordEntry,
+ * one entry per token, of length curwords.
+ * The fields of HeadlineWordEntry are:
+ *
+ * in, selected, replace, skip: these flags are initially zero
+ * and may be set by the prsheadline function.  A consecutive group
+ * of tokens marked "in" form a "fragment" to be output.
+ * Such tokens may additionally be marked selected, replace, or skip
+ * to modify how they are shown.  (If you set more than one of those
+ * bits, you get an unspecified one of those behaviors.)
+ *
+ * type, len, pos, word: filled by core code to describe the token.
+ *
+ * item: if the token matches any operand of the tsquery of interest,
+ * a pointer to such an operand.  (If there are multiple matching
+ * operands, we generate extra copies of the HeadlineWordEntry to hold
+ * all the pointers.  The extras are marked with repeated = 1 and should
+ * be ignored except for checking the item pointer.)
  */
 typedef struct
 {
-	uint32		selected:1,
-				in:1,
-				replace:1,
-				repeated:1,
-				skip:1,
-				unused:3,
-				type:8,
-				len:16;
-	WordEntryPos pos;
-	char	   *word;
-	QueryOperand *item;
+	uint32		selected:1,		/* token is to be highlighted */
+				in:1,			/* token is part of headline */
+				replace:1,		/* token is to be replaced with a space */
+				repeated:1,		/* duplicate entry to hold item pointer */
+				skip:1,			/* token is to be skipped (not output) */
+				unused:3,		/* available bits */
+				type:8,			/* parser's token category */
+				len:16;			/* length of token */
+	WordEntryPos pos;			/* position of token */
+	char	   *word;			/* text of token (not null-terminated) */
+	QueryOperand *item;			/* a matching query operand, or NULL if none */
 } HeadlineWordEntry;
 
 typedef struct
 {
+	/* Fields filled by core code before calling prsheadline function: */
 	HeadlineWordEntry *words;
-	int32		lenwords;
-	int32		curwords;
-	int32		vectorpos;		/* positions a-la tsvector */
-	char	   *startsel;
+	int32		lenwords;		/* allocated length of words[] */
+	int32		curwords;		/* current number of valid entries */
+	int32		vectorpos;		/* used by ts_parse.c in filling pos fields */
+
+	/* The prsheadline function must fill these fields: */
+	/* Strings for marking selected tokens and separating fragments: */
+	char	   *startsel;		/* palloc'd strings */
 	char	   *stopsel;
 	char	   *fragdelim;
-	int16		startsellen;
+	int16		startsellen;	/* lengths of strings */
 	int16		stopsellen;
 	int16		fragdelimlen;
 } HeadlineParsedText;
