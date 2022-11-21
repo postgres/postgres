@@ -352,11 +352,10 @@ help(const char *progname)
 
 	printf(_("\nDeveloper options:\n"));
 	printf(_("  -f s|i|o|b|t|n|m|h forbid use of some plan types\n"));
-	printf(_("  -n                 do not reinitialize shared memory after abnormal exit\n"));
 	printf(_("  -O                 allow system table structure changes\n"));
 	printf(_("  -P                 disable system indexes\n"));
 	printf(_("  -t pa|pl|ex        show timings after each query\n"));
-	printf(_("  -T                 send SIGSTOP to all backend processes if one dies\n"));
+	printf(_("  -T                 send SIGABRT to all backend processes if one dies\n"));
 	printf(_("  -W NUM             wait NUM seconds to allow attach from a debugger\n"));
 
 	printf(_("\nOptions for single-user mode:\n"));

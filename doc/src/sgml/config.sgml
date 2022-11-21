@@ -11500,6 +11500,62 @@ LOG:  CleanUpLock: deleting: lock(0xb7acd844) id(24688,24696,0,0,0,1)
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-send-abort-for-crash" xreflabel="send_abort_for_crash">
+      <term><varname>send_abort_for_crash</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>send_abort_for_crash</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        By default, after a backend crash the postmaster will stop remaining
+        child processes by sending them <systemitem>SIGQUIT</systemitem>
+        signals, which permits them to exit more-or-less gracefully.  When
+        this option is set to <literal>on</literal>,
+        <systemitem>SIGABRT</systemitem> is sent instead.  That normally
+        results in production of a core dump file for each such child
+        process.
+        This can be handy for investigating the states of other processes
+        after a crash.  It can also consume lots of disk space in the event
+        of repeated crashes, so do not enable this on systems you are not
+        monitoring carefully.
+        Beware that no support exists for cleaning up the core file(s)
+        automatically.
+        This parameter can only be set in
+        the <filename>postgresql.conf</filename> file or on the server
+        command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-send-abort-for-kill" xreflabel="send_abort_for_kill">
+      <term><varname>send_abort_for_kill</varname> (<type>boolean</type>)
+      <indexterm>
+       <primary><varname>send_abort_for_kill</varname> configuration parameter</primary>
+      </indexterm>
+      </term>
+      <listitem>
+       <para>
+        By default, after attempting to stop a child process with
+        <systemitem>SIGQUIT</systemitem>, the postmaster will wait five
+        seconds and then send <systemitem>SIGKILL</systemitem> to force
+        immediate termination.  When this option is set
+        to <literal>on</literal>, <systemitem>SIGABRT</systemitem> is sent
+        instead of <systemitem>SIGKILL</systemitem>.  That normally results
+        in production of a core dump file for each such child process.
+        This can be handy for investigating the states
+        of <quote>stuck</quote> child processes.  It can also consume lots
+        of disk space in the event of repeated crashes, so do not enable
+        this on systems you are not monitoring carefully.
+        Beware that no support exists for cleaning up the core file(s)
+        automatically.
+        This parameter can only be set in
+        the <filename>postgresql.conf</filename> file or on the server
+        command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
   </sect1>
   <sect1 id="runtime-config-short">

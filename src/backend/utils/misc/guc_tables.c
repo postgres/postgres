@@ -1227,6 +1227,26 @@ struct config_bool ConfigureNamesBool[] =
 		true,
 		NULL, NULL, NULL
 	},
+	{
+		{"send_abort_for_crash", PGC_SIGHUP, DEVELOPER_OPTIONS,
+			gettext_noop("Send SIGABRT not SIGQUIT to child processes after backend crash."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&send_abort_for_crash,
+		false,
+		NULL, NULL, NULL
+	},
+	{
+		{"send_abort_for_kill", PGC_SIGHUP, DEVELOPER_OPTIONS,
+			gettext_noop("Send SIGABRT not SIGKILL to stuck child processes."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&send_abort_for_kill,
+		false,
+		NULL, NULL, NULL
+	},
 
 	{
 		{"log_duration", PGC_SUSET, LOGGING_WHAT,
