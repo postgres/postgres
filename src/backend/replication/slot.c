@@ -778,6 +778,7 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 		ReplicationSlot *s = &ReplicationSlotCtl->replication_slots[i];
 		TransactionId effective_xmin;
 		TransactionId effective_catalog_xmin;
+		bool		invalidated;
 
 		if (!s->in_use)
 			continue;
@@ -785,7 +786,13 @@ ReplicationSlotsComputeRequiredXmin(bool already_locked)
 		SpinLockAcquire(&s->mutex);
 		effective_xmin = s->effective_xmin;
 		effective_catalog_xmin = s->effective_catalog_xmin;
+		invalidated = (!XLogRecPtrIsInvalid(s->data.invalidated_at) &&
+					   XLogRecPtrIsInvalid(s->data.restart_lsn));
 		SpinLockRelease(&s->mutex);
+
+		/* invalidated slots need not apply */
+		if (invalidated)
+			continue;
 
 		/* check the data xmin */
 		if (TransactionIdIsValid(effective_xmin) &&

@@ -3946,6 +3946,9 @@ ProcArraySetReplicationSlotXmin(TransactionId xmin, TransactionId catalog_xmin,
 
 	if (!already_locked)
 		LWLockRelease(ProcArrayLock);
+
+	elog(DEBUG1, "xmin required by slots: data %u, catalog %u",
+		 xmin, catalog_xmin);
 }
 
 /*
