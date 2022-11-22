@@ -53,6 +53,7 @@
 #include "common/pg_prng.h"
 #include "port/atomics.h"
 #include "storage/s_lock.h"
+#include "utils/wait_event.h"
 
 #define MIN_SPINS_PER_DELAY 10
 #define MAX_SPINS_PER_DELAY 1000
@@ -136,7 +137,17 @@ perform_spin_delay(SpinDelayStatus *status)
 		if (status->cur_delay == 0) /* first time to delay? */
 			status->cur_delay = MIN_DELAY_USEC;
 
+		/*
+		 * Once we start sleeping, the overhead of reporting a wait event is
+		 * justified. Actively spinning easily stands out in profilers, but
+		 * sleeping with an exponential backoff is harder to spot...
+		 *
+		 * We might want to report something more granular at some point, but
+		 * this is better than nothing.
+		 */
+		pgstat_report_wait_start(WAIT_EVENT_SPIN_DELAY);
 		pg_usleep(status->cur_delay);
+		pgstat_report_wait_end();
 
 #if defined(S_LOCK_TEST)
 		fprintf(stdout, "*");
