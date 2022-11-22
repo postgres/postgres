@@ -197,7 +197,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 2: USING (SELECT * FROM source WHERE t.tid > sid) s
                                           ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 --
 -- initial tests
 --
@@ -618,7 +618,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 5:  INSERT (tid, balance) VALUES (t.tid, s.delta);
                                        ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 -- and again with a constant ON clause
 BEGIN;
 MERGE INTO target t
@@ -629,7 +629,7 @@ WHEN NOT MATCHED THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 5:  INSERT (tid, balance) VALUES (t.tid, s.delta);
                                        ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 SELECT * FROM target ORDER BY tid;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
@@ -724,7 +724,7 @@ WHEN NOT MATCHED AND t.balance = 100 THEN
 ERROR:  invalid reference to FROM-clause entry for table "t"
 LINE 3: WHEN NOT MATCHED AND t.balance = 100 THEN
                              ^
-HINT:  There is an entry for table "t", but it cannot be referenced from this part of the query.
+DETAIL:  There is an entry for table "t", but it cannot be referenced from this part of the query.
 SELECT * FROM wq_target;
 ERROR:  current transaction is aborted, commands ignored until end of transaction block
 ROLLBACK;
