@@ -564,24 +564,6 @@ WHEN MATCHED AND t.tableoid >= 0 THEN
 	UPDATE SET balance = t.balance + s.balance;
 SELECT * FROM wq_target;
 
--- test preventing WHEN conditions from writing to the database
-create or replace function merge_when_and_write() returns boolean
-language plpgsql as
-$$
-BEGIN
-	INSERT INTO target VALUES (100, 100);
-	RETURN TRUE;
-END;
-$$;
-
-BEGIN;
-MERGE INTO wq_target t
-USING wq_source s ON t.tid = s.sid
-WHEN MATCHED AND (merge_when_and_write()) THEN
-	UPDATE SET balance = t.balance + s.balance;
-ROLLBACK;
-drop function merge_when_and_write();
-
 DROP TABLE wq_target, wq_source;
 
 -- test triggers
