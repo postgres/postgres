@@ -29,6 +29,7 @@ CustomScanState *
 ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 {
 	CustomScanState *css;
+	const TupleTableSlotOps *slotOps;
 	Relation	scan_rel = NULL;
 	Index		scanrelid = cscan->scan.scanrelid;
 	int			tlistvarno;
@@ -64,6 +65,14 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 	}
 
 	/*
+	 * Use a custom slot if specified in CustomScanState or use virtual slot
+	 * otherwise.
+	 */
+	slotOps = css->slotOps;
+	if (!slotOps)
+		slotOps = &TTSOpsVirtual;
+
+	/*
 	 * Determine the scan tuple type.  If the custom scan provider provided a
 	 * targetlist describing the scan tuples, use that; else use base
 	 * relation's rowtype.
@@ -73,14 +82,14 @@ ExecInitCustomScan(CustomScan *cscan, EState *estate, int eflags)
 		TupleDesc	scan_tupdesc;
 
 		scan_tupdesc = ExecTypeFromTL(cscan->custom_scan_tlist);
-		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc, &TTSOpsVirtual);
+		ExecInitScanTupleSlot(estate, &css->ss, scan_tupdesc, slotOps);
 		/* Node's targetlist will contain Vars with varno = INDEX_VAR */
 		tlistvarno = INDEX_VAR;
 	}
 	else
 	{
 		ExecInitScanTupleSlot(estate, &css->ss, RelationGetDescr(scan_rel),
-							  &TTSOpsVirtual);
+							  slotOps);
 		/* Node's targetlist will contain Vars with varno = scanrelid */
 		tlistvarno = scanrelid;
 	}
