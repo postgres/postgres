@@ -1519,7 +1519,7 @@ sub _reserve_port
 	# take an exclusive lock to avoid concurrent access
 	flock($portfile, LOCK_EX) || die "locking port file $filename: $!";
 	# see if someone else has or had a reservation of this port
-	my $pid = <$portfile>;
+	my $pid = <$portfile> || "0";
 	chomp $pid;
 	if ($pid +0 > 0)
 	{
