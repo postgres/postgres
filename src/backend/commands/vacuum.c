@@ -579,18 +579,9 @@ vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
 
 	if ((options & VACOPT_VACUUM) != 0)
 	{
-		if (reltuple->relisshared)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser can vacuum it",
-							relname)));
-		else if (reltuple->relnamespace == PG_CATALOG_NAMESPACE)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser or database owner can vacuum it",
-							relname)));
-		else
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
-							relname)));
+		ereport(WARNING,
+				(errmsg("permission denied to vacuum \"%s\", skipping it",
+						relname)));
 
 		/*
 		 * For VACUUM ANALYZE, both logs could show up, but just generate
@@ -601,20 +592,9 @@ vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
 	}
 
 	if ((options & VACOPT_ANALYZE) != 0)
-	{
-		if (reltuple->relisshared)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser can analyze it",
-							relname)));
-		else if (reltuple->relnamespace == PG_CATALOG_NAMESPACE)
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only superuser or database owner can analyze it",
-							relname)));
-		else
-			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only table or database owner can analyze it",
-							relname)));
-	}
+		ereport(WARNING,
+				(errmsg("permission denied to analyze \"%s\", skipping it",
+						relname)));
 
 	return false;
 }
