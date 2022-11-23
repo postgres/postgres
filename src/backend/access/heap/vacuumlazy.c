@@ -360,12 +360,7 @@ heap_vacuum_rel(Relation rel, VacuumParams *params,
 	 * an aggressive VACUUM then lazy_scan_heap cannot leave behind unfrozen
 	 * XIDs < FreezeLimit (all MXIDs < MultiXactCutoff also need to go away).
 	 */
-	aggressive = vacuum_set_xid_limits(rel,
-									   params->freeze_min_age,
-									   params->multixact_freeze_min_age,
-									   params->freeze_table_age,
-									   params->multixact_freeze_table_age,
-									   &OldestXmin, &OldestMxact,
+	aggressive = vacuum_set_xid_limits(rel, params, &OldestXmin, &OldestMxact,
 									   &FreezeLimit, &MultiXactCutoff);
 
 	skipwithvm = true;

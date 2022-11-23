@@ -286,15 +286,11 @@ extern void vac_update_relstats(Relation relation,
 								bool *frozenxid_updated,
 								bool *minmulti_updated,
 								bool in_outer_xact);
-extern bool vacuum_set_xid_limits(Relation rel,
-								  int freeze_min_age,
-								  int multixact_freeze_min_age,
-								  int freeze_table_age,
-								  int multixact_freeze_table_age,
-								  TransactionId *oldestXmin,
-								  MultiXactId *oldestMxact,
-								  TransactionId *freezeLimit,
-								  MultiXactId *multiXactCutoff);
+extern bool vacuum_set_xid_limits(Relation rel, const VacuumParams *params,
+								  TransactionId *OldestXmin,
+								  MultiXactId *OldestMxact,
+								  TransactionId *FreezeLimit,
+								  MultiXactId *MultiXactCutoff);
 extern bool vacuum_xid_failsafe_check(TransactionId relfrozenxid,
 									  MultiXactId relminmxid);
 extern void vac_update_datfrozenxid(void);
