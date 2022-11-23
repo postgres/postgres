@@ -77,6 +77,13 @@ typedef struct
 #define token_matches(t, k)  (strcmp(t->string, k) == 0)
 
 /*
+ * Memory context holding the list of TokenizedAuthLines when parsing
+ * HBA or ident configuration files.  This is created when opening the first
+ * file (depth of 0).
+ */
+static MemoryContext tokenize_context = NULL;
+
+/*
  * pre-parsed content of HBA config file: list of HbaLine structs.
  * parsed_hba_context is the memory context where it lives.
  */
@@ -121,9 +128,9 @@ static const char *const UserAuthName[] =
 };
 
 
-static List *tokenize_inc_file(List *tokens, const char *outer_filename,
-							   const char *inc_filename, int elevel,
-							   int depth, char **err_msg);
+static List *tokenize_expand_file(List *tokens, const char *outer_filename,
+								  const char *inc_filename, int elevel,
+								  int depth, char **err_msg);
 static bool parse_hba_auth_opt(char *name, char *val, HbaLine *hbaline,
 							   int elevel, char **err_msg);
 static int	regcomp_auth_token(AuthToken *token, char *filename, int line_num,
@@ -437,24 +444,35 @@ next_field_expand(const char *filename, char **lineptr,
 
 		/* Is this referencing a file? */
 		if (!initial_quote && buf[0] == '@' && buf[1] != '\0')
-			tokens = tokenize_inc_file(tokens, filename, buf + 1,
-									   elevel, depth + 1, err_msg);
+			tokens = tokenize_expand_file(tokens, filename, buf + 1,
+										  elevel, depth + 1, err_msg);
 		else
+		{
+			MemoryContext oldcxt;
+
+			/*
+			 * lappend() may do its own allocations, so move to the context
+			 * for the list of tokens.
+			 */
+			oldcxt = MemoryContextSwitchTo(tokenize_context);
 			tokens = lappend(tokens, make_auth_token(buf, initial_quote));
+			MemoryContextSwitchTo(oldcxt);
+		}
 	} while (trailing_comma && (*err_msg == NULL));
 
 	return tokens;
 }
 
 /*
- * tokenize_inc_file
+ * tokenize_expand_file
  *		Expand a file included from another file into an hba "field"
  *
  * Opens and tokenises a file included from another HBA config file with @,
  * and returns all values found therein as a flat list of AuthTokens.  If a
  * @-token is found, recursively expand it.  The newly read tokens are
  * appended to "tokens" (so that foo,bar,@baz does what you expect).
- * All new tokens are allocated in caller's memory context.
+ * All new tokens are allocated in the memory context dedicated to the
+ * list of TokenizedAuthLines, aka tokenize_context.
  *
  * In event of an error, log a message at ereport level elevel, and also
  * set *err_msg to a string describing the error.  Note that the result
@@ -462,18 +480,17 @@ next_field_expand(const char *filename, char **lineptr,
  * there was an error.
  */
 static List *
-tokenize_inc_file(List *tokens,
-				  const char *outer_filename,
-				  const char *inc_filename,
-				  int elevel,
-				  int depth,
-				  char **err_msg)
+tokenize_expand_file(List *tokens,
+					 const char *outer_filename,
+					 const char *inc_filename,
+					 int elevel,
+					 int depth,
+					 char **err_msg)
 {
 	char	   *inc_fullname;
 	FILE	   *inc_file;
 	List	   *inc_lines;
 	ListCell   *inc_line;
-	MemoryContext linecxt;
 
 	inc_fullname = AbsoluteConfigLocation(inc_filename, outer_filename);
 	inc_file = open_auth_file(inc_fullname, elevel, depth, err_msg);
@@ -486,13 +503,15 @@ tokenize_inc_file(List *tokens,
 	}
 
 	/* There is possible recursion here if the file contains @ */
-	linecxt = tokenize_auth_file(inc_fullname, inc_file, &inc_lines, elevel,
-								 depth);
+	tokenize_auth_file(inc_fullname, inc_file, &inc_lines, elevel,
+					   depth);
 
-	FreeFile(inc_file);
 	pfree(inc_fullname);
 
-	/* Copy all tokens found in the file and append to the tokens list */
+	/*
+	 * Move all the tokens found in the file to the tokens list.  These are
+	 * already saved in tokenize_context.
+	 */
 	foreach(inc_line, inc_lines)
 	{
 		TokenizedAuthLine *tok_line = (TokenizedAuthLine *) lfirst(inc_line);
@@ -513,14 +532,38 @@ tokenize_inc_file(List *tokens,
 			foreach(inc_token, inc_tokens)
 			{
 				AuthToken  *token = lfirst(inc_token);
+				MemoryContext oldcxt;
 
-				tokens = lappend(tokens, copy_auth_token(token));
+				/*
+				 * lappend() may do its own allocations, so move to the
+				 * context for the list of tokens.
+				 */
+				oldcxt = MemoryContextSwitchTo(tokenize_context);
+				tokens = lappend(tokens, token);
+				MemoryContextSwitchTo(oldcxt);
 			}
 		}
 	}
 
-	MemoryContextDelete(linecxt);
+	free_auth_file(inc_file, depth);
 	return tokens;
+}
+
+/*
+ * free_auth_file
+ *		Free a file opened by open_auth_file().
+ */
+void
+free_auth_file(FILE *file, int depth)
+{
+	FreeFile(file);
+
+	/* If this is the last cleanup, remove the tokenization context */
+	if (depth == 0)
+	{
+		MemoryContextDelete(tokenize_context);
+		tokenize_context = NULL;
+	}
 }
 
 /*
@@ -558,6 +601,22 @@ open_auth_file(const char *filename, int elevel, int depth,
 		return NULL;
 	}
 
+	/*
+	 * When opening the top-level file, create the memory context used for the
+	 * tokenization.  This will be closed with this file when coming back to
+	 * this level of cleanup.
+	 */
+	if (depth == 0)
+	{
+		/*
+		 * A context may be present, but assume that it has been eliminated
+		 * already.
+		 */
+		tokenize_context = AllocSetContextCreate(CurrentMemoryContext,
+												 "tokenize_context",
+												 ALLOCSET_START_SMALL_SIZES);
+	}
+
 	file = AllocateFile(filename, "r");
 	if (file == NULL)
 	{
@@ -570,6 +629,8 @@ open_auth_file(const char *filename, int elevel, int depth,
 		if (err_msg)
 			*err_msg = psprintf("could not open file \"%s\": %s",
 								filename, strerror(save_errno));
+		/* the caller may care about some specific errno */
+		errno = save_errno;
 		return NULL;
 	}
 
@@ -593,31 +654,33 @@ tokenize_error_callback(void *arg)
  *		Tokenize the given file.
  *
  * The output is a list of TokenizedAuthLine structs; see the struct definition
- * in libpq/hba.h.
+ * in libpq/hba.h.  This is the central piece in charge of parsing the
+ * authentication files.  All the operations of this function happen in its own
+ * local memory context, easing the cleanup of anything allocated here.  This
+ * matters a lot when reloading authentication files in the postmaster.
  *
  * filename: the absolute path to the target file
  * file: the already-opened target file
- * tok_lines: receives output list
+ * tok_lines: receives output list, saved into tokenize_context
  * elevel: message logging level
  * depth: level of recursion when tokenizing the target file
  *
  * Errors are reported by logging messages at ereport level elevel and by
  * adding TokenizedAuthLine structs containing non-null err_msg fields to the
  * output list.
- *
- * Return value is a memory context which contains all memory allocated by
- * this function (it's a child of caller's context).
  */
-MemoryContext
+void
 tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 				   int elevel, int depth)
 {
 	int			line_number = 1;
 	StringInfoData buf;
 	MemoryContext linecxt;
-	MemoryContext oldcxt;
+	MemoryContext funccxt;		/* context of this function's caller */
 	ErrorContextCallback tokenerrcontext;
 	tokenize_error_callback_arg callback_arg;
+
+	Assert(tokenize_context);
 
 	callback_arg.filename = filename;
 	callback_arg.linenum = line_number;
@@ -627,14 +690,19 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 	tokenerrcontext.previous = error_context_stack;
 	error_context_stack = &tokenerrcontext;
 
+	/*
+	 * Do all the local tokenization in its own context, to ease the cleanup
+	 * of any memory allocated while tokenizing.
+	 */
 	linecxt = AllocSetContextCreate(CurrentMemoryContext,
 									"tokenize_auth_file",
 									ALLOCSET_SMALL_SIZES);
-	oldcxt = MemoryContextSwitchTo(linecxt);
+	funccxt = MemoryContextSwitchTo(linecxt);
 
 	initStringInfo(&buf);
 
-	*tok_lines = NIL;
+	if (depth == 0)
+		*tok_lines = NIL;
 
 	while (!feof(file) && !ferror(file))
 	{
@@ -694,7 +762,17 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 											  elevel, depth, &err_msg);
 			/* add field to line, unless we are at EOL or comment start */
 			if (current_field != NIL)
+			{
+				MemoryContext oldcxt;
+
+				/*
+				 * lappend() may do its own allocations, so move to the
+				 * context for the list of tokens.
+				 */
+				oldcxt = MemoryContextSwitchTo(tokenize_context);
 				current_line = lappend(current_line, current_field);
+				MemoryContextSwitchTo(oldcxt);
+			}
 		}
 
 		/*
@@ -703,25 +781,27 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 		if (current_line != NIL || err_msg != NULL)
 		{
 			TokenizedAuthLine *tok_line;
+			MemoryContext oldcxt;
 
+			oldcxt = MemoryContextSwitchTo(tokenize_context);
 			tok_line = (TokenizedAuthLine *) palloc(sizeof(TokenizedAuthLine));
 			tok_line->fields = current_line;
 			tok_line->file_name = pstrdup(filename);
 			tok_line->line_num = line_number;
 			tok_line->raw_line = pstrdup(buf.data);
-			tok_line->err_msg = err_msg;
+			tok_line->err_msg = err_msg ? pstrdup(err_msg) : NULL;
 			*tok_lines = lappend(*tok_lines, tok_line);
+			MemoryContextSwitchTo(oldcxt);
 		}
 
 		line_number += continuations + 1;
 		callback_arg.linenum = line_number;
 	}
 
-	MemoryContextSwitchTo(oldcxt);
+	MemoryContextSwitchTo(funccxt);
+	MemoryContextDelete(linecxt);
 
 	error_context_stack = tokenerrcontext.previous;
-
-	return linecxt;
 }
 
 
@@ -2409,7 +2489,6 @@ load_hba(void)
 	ListCell   *line;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
-	MemoryContext linecxt;
 	MemoryContext oldcxt;
 	MemoryContext hbacxt;
 
@@ -2420,8 +2499,7 @@ load_hba(void)
 		return false;
 	}
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &hba_lines, LOG, 0);
-	FreeFile(file);
+	tokenize_auth_file(HbaFileName, file, &hba_lines, LOG, 0);
 
 	/* Now parse all the lines */
 	Assert(PostmasterContext);
@@ -2472,7 +2550,7 @@ load_hba(void)
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	MemoryContextSwitchTo(oldcxt);
 
 	if (!ok)
@@ -2776,7 +2854,6 @@ load_ident(void)
 			   *parsed_line_cell;
 	List	   *new_parsed_lines = NIL;
 	bool		ok = true;
-	MemoryContext linecxt;
 	MemoryContext oldcxt;
 	MemoryContext ident_context;
 	IdentLine  *newline;
@@ -2789,8 +2866,7 @@ load_ident(void)
 		return false;
 	}
 
-	linecxt = tokenize_auth_file(IdentFileName, file, &ident_lines, LOG, 0);
-	FreeFile(file);
+	tokenize_auth_file(IdentFileName, file, &ident_lines, LOG, 0);
 
 	/* Now parse all the lines */
 	Assert(PostmasterContext);
@@ -2826,7 +2902,7 @@ load_ident(void)
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	MemoryContextSwitchTo(oldcxt);
 
 	if (!ok)

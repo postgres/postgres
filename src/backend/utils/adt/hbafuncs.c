@@ -370,7 +370,6 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	List	   *hba_lines = NIL;
 	ListCell   *line;
 	int			rule_number = 0;
-	MemoryContext linecxt;
 	MemoryContext hbacxt;
 	MemoryContext oldcxt;
 
@@ -382,8 +381,7 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 */
 	file = open_auth_file(HbaFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3, 0);
-	FreeFile(file);
+	tokenize_auth_file(HbaFileName, file, &hba_lines, DEBUG3, 0);
 
 	/* Now parse all the lines */
 	hbacxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -408,7 +406,7 @@ fill_hba_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	/* Free parse_hba_line memory */
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(hbacxt);
@@ -514,7 +512,6 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	List	   *ident_lines = NIL;
 	ListCell   *line;
 	int			map_number = 0;
-	MemoryContext linecxt;
 	MemoryContext identcxt;
 	MemoryContext oldcxt;
 
@@ -526,8 +523,7 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	 */
 	file = open_auth_file(IdentFileName, ERROR, 0, NULL);
 
-	linecxt = tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3, 0);
-	FreeFile(file);
+	tokenize_auth_file(IdentFileName, file, &ident_lines, DEBUG3, 0);
 
 	/* Now parse all the lines */
 	identcxt = AllocSetContextCreate(CurrentMemoryContext,
@@ -553,7 +549,7 @@ fill_ident_view(Tuplestorestate *tuple_store, TupleDesc tupdesc)
 	}
 
 	/* Free tokenizer memory */
-	MemoryContextDelete(linecxt);
+	free_auth_file(file, 0);
 	/* Free parse_ident_line memory */
 	MemoryContextSwitchTo(oldcxt);
 	MemoryContextDelete(identcxt);

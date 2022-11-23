@@ -179,7 +179,8 @@ extern IdentLine *parse_ident_line(TokenizedAuthLine *tok_line, int elevel);
 extern bool pg_isblank(const char c);
 extern FILE *open_auth_file(const char *filename, int elevel, int depth,
 							char **err_msg);
-extern MemoryContext tokenize_auth_file(const char *filename, FILE *file,
-										List **tok_lines, int elevel, int depth);
+extern void free_auth_file(FILE *file, int depth);
+extern void tokenize_auth_file(const char *filename, FILE *file,
+							   List **tok_lines, int elevel, int depth);
 
 #endif							/* HBA_H */
