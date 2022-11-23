@@ -6542,6 +6542,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 
 	if (tuple->t_infomask & HEAP_XMAX_IS_MULTI)
 	{
+		/* Raw xmax is a MultiXactId */
 		TransactionId newxmax;
 		uint16		flags;
 		TransactionId mxid_oldest_xid_out = *relfrozenxid_out;
@@ -6640,6 +6641,7 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 	}
 	else if (TransactionIdIsNormal(xid))
 	{
+		/* Raw xmax is normal XID */
 		if (TransactionIdPrecedes(xid, relfrozenxid))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATA_CORRUPTED),
@@ -6670,9 +6672,10 @@ heap_prepare_freeze_tuple(HeapTupleHeader tuple,
 				*relfrozenxid_out = xid;
 		}
 	}
-	else if ((tuple->t_infomask & HEAP_XMAX_INVALID) ||
-			 !TransactionIdIsValid(HeapTupleHeaderGetRawXmax(tuple)))
+	else if (!TransactionIdIsValid(xid))
 	{
+		/* Raw xmax is InvalidTransactionId XID */
+		Assert((tuple->t_infomask & HEAP_XMAX_IS_MULTI) == 0);
 		freeze_xmax = false;
 		xmax_already_frozen = true;
 		/* No need for relfrozenxid_out handling for already-frozen xmax */
