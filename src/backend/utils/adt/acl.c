@@ -626,9 +626,9 @@ aclitemout(PG_FUNCTION_ARGS)
 
 	for (i = 0; i < N_ACL_RIGHTS; ++i)
 	{
-		if (ACLITEM_GET_PRIVS(*aip) & (1 << i))
+		if (ACLITEM_GET_PRIVS(*aip) & (UINT64CONST(1) << i))
 			*p++ = ACL_ALL_RIGHTS_STR[i];
-		if (ACLITEM_GET_GOPTIONS(*aip) & (1 << i))
+		if (ACLITEM_GET_GOPTIONS(*aip) & (UINT64CONST(1) << i))
 			*p++ = '*';
 	}
 
@@ -1786,7 +1786,7 @@ aclexplode(PG_FUNCTION_ARGS)
 				break;
 		}
 		aidata = &aidat[idx[0]];
-		priv_bit = 1 << idx[1];
+		priv_bit = UINT64CONST(1) << idx[1];
 
 		if (ACLITEM_GET_PRIVS(*aidata) & priv_bit)
 		{
