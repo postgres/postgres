@@ -489,7 +489,7 @@ tokenize_expand_file(List *tokens,
 {
 	char	   *inc_fullname;
 	FILE	   *inc_file;
-	List	   *inc_lines;
+	List	   *inc_lines = NIL;
 	ListCell   *inc_line;
 
 	inc_fullname = AbsoluteConfigLocation(inc_filename, outer_filename);
