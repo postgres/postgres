@@ -2313,7 +2313,7 @@ FATAL:  database "testdb" does not exist
 </programlisting>
     The database you are trying to connect to does not exist. Note that
     if you do not specify a database name, it defaults to the database
-    user name, which might or might not be the right thing.
+    user name.
    </para>
 
    <tip>
