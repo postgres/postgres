@@ -290,12 +290,20 @@ _hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup,
 	{
 		itup_off = PageGetMaxOffsetNumber(page) + 1;
 
+#ifdef USE_ASSERT_CHECKING
 		/* ensure this tuple's hashkey is >= the final existing tuple */
-		Assert(PageGetMaxOffsetNumber(page) == 0 ||
-			   _hash_get_indextuple_hashkey((IndexTuple)
-											PageGetItem(page, PageGetItemId(page,
-																			PageGetMaxOffsetNumber(page)))) <=
-			   _hash_get_indextuple_hashkey(itup));
+		if (PageGetMaxOffsetNumber(page) > 0)
+		{
+			IndexTuple	lasttup;
+			ItemId		itemid;
+
+			itemid = PageGetItemId(page, PageGetMaxOffsetNumber(page));
+			lasttup = (IndexTuple) PageGetItem(page, itemid);
+
+			Assert(_hash_get_indextuple_hashkey(lasttup) <=
+				   _hash_get_indextuple_hashkey(itup));
+		}
+#endif
 	}
 	else
 	{
