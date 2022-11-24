@@ -601,22 +601,6 @@ open_auth_file(const char *filename, int elevel, int depth,
 		return NULL;
 	}
 
-	/*
-	 * When opening the top-level file, create the memory context used for the
-	 * tokenization.  This will be closed with this file when coming back to
-	 * this level of cleanup.
-	 */
-	if (depth == 0)
-	{
-		/*
-		 * A context may be present, but assume that it has been eliminated
-		 * already.
-		 */
-		tokenize_context = AllocSetContextCreate(CurrentMemoryContext,
-												 "tokenize_context",
-												 ALLOCSET_START_SMALL_SIZES);
-	}
-
 	file = AllocateFile(filename, "r");
 	if (file == NULL)
 	{
@@ -632,6 +616,22 @@ open_auth_file(const char *filename, int elevel, int depth,
 		/* the caller may care about some specific errno */
 		errno = save_errno;
 		return NULL;
+	}
+
+	/*
+	 * When opening the top-level file, create the memory context used for the
+	 * tokenization.  This will be closed with this file when coming back to
+	 * this level of cleanup.
+	 */
+	if (depth == 0)
+	{
+		/*
+		 * A context may be present, but assume that it has been eliminated
+		 * already.
+		 */
+		tokenize_context = AllocSetContextCreate(CurrentMemoryContext,
+												 "tokenize_context",
+												 ALLOCSET_START_SMALL_SIZES);
 	}
 
 	return file;
