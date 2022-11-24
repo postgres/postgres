@@ -79,7 +79,7 @@ typedef struct
 /*
  * Memory context holding the list of TokenizedAuthLines when parsing
  * HBA or ident configuration files.  This is created when opening the first
- * file (depth of 0).
+ * file (depth of CONF_FILE_START_DEPTH).
  */
 static MemoryContext tokenize_context = NULL;
 
@@ -620,7 +620,7 @@ free_auth_file(FILE *file, int depth)
 	FreeFile(file);
 
 	/* If this is the last cleanup, remove the tokenization context */
-	if (depth == 0)
+	if (depth == CONF_FILE_START_DEPTH)
 	{
 		MemoryContextDelete(tokenize_context);
 		tokenize_context = NULL;
@@ -650,7 +650,7 @@ open_auth_file(const char *filename, int elevel, int depth,
 	 * avoid dumping core due to stack overflow if an include file loops back
 	 * to itself.  The maximum nesting depth is pretty arbitrary.
 	 */
-	if (depth > 10)
+	if (depth > CONF_FILE_MAX_DEPTH)
 	{
 		ereport(elevel,
 				(errcode_for_file_access(),
@@ -684,7 +684,7 @@ open_auth_file(const char *filename, int elevel, int depth,
 	 * tokenization.  This will be closed with this file when coming back to
 	 * this level of cleanup.
 	 */
-	if (depth == 0)
+	if (depth == CONF_FILE_START_DEPTH)
 	{
 		/*
 		 * A context may be present, but assume that it has been eliminated
@@ -762,7 +762,7 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 
 	initStringInfo(&buf);
 
-	if (depth == 0)
+	if (depth == CONF_FILE_START_DEPTH)
 		*tok_lines = NIL;
 
 	while (!feof(file) && !ferror(file))

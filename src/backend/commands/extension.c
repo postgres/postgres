@@ -60,6 +60,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/conffiles.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -515,7 +516,8 @@ parse_extension_control_file(ExtensionControlFile *control,
 	 * Parse the file content, using GUC's file parsing code.  We need not
 	 * check the return value since any errors will be thrown at ERROR level.
 	 */
-	(void) ParseConfigFp(file, filename, 0, ERROR, &head, &tail);
+	(void) ParseConfigFp(file, filename, CONF_FILE_START_DEPTH, ERROR,
+						 &head, &tail);
 
 	FreeFile(file);
 

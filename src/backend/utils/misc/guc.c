@@ -44,6 +44,7 @@
 #include "utils/acl.h"
 #include "utils/backend_status.h"
 #include "utils/builtins.h"
+#include "utils/conffiles.h"
 #include "utils/float.h"
 #include "utils/guc_tables.h"
 #include "utils/memutils.h"
@@ -287,7 +288,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	head = tail = NULL;
 
 	if (!ParseConfigFile(ConfigFileName, true,
-						 NULL, 0, 0, elevel,
+						 NULL, 0, CONF_FILE_START_DEPTH, elevel,
 						 &head, &tail))
 	{
 		/* Syntax error(s) detected in the file, so bail out */
@@ -304,7 +305,7 @@ ProcessConfigFileInternal(GucContext context, bool applySettings, int elevel)
 	if (DataDir)
 	{
 		if (!ParseConfigFile(PG_AUTOCONF_FILENAME, false,
-							 NULL, 0, 0, elevel,
+							 NULL, 0, CONF_FILE_START_DEPTH, elevel,
 							 &head, &tail))
 		{
 			/* Syntax error(s) detected in the file, so bail out */
@@ -4582,7 +4583,8 @@ AlterSystemSetConfigFile(AlterSystemStmt *altersysstmt)
 								AutoConfFileName)));
 
 			/* parse it */
-			if (!ParseConfigFp(infile, AutoConfFileName, 0, LOG, &head, &tail))
+			if (!ParseConfigFp(infile, AutoConfFileName, CONF_FILE_START_DEPTH,
+							   LOG, &head, &tail))
 				ereport(ERROR,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not parse contents of file \"%s\"",

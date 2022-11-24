@@ -202,7 +202,7 @@ ParseConfigFile(const char *config_file, bool strict,
 	 * avoid dumping core due to stack overflow if an include file loops back
 	 * to itself.  The maximum nesting depth is pretty arbitrary.
 	 */
-	if (depth > 10)
+	if (depth > CONF_FILE_MAX_DEPTH)
 	{
 		ereport(elevel,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -321,7 +321,8 @@ GUC_flex_fatal(const char *msg)
  * Input parameters:
  *	fp: file pointer from AllocateFile for the configuration file to parse
  *	config_file: absolute or relative path name of the configuration file
- *	depth: recursion depth (should be 0 in the outermost call)
+ *	depth: recursion depth (should be CONF_FILE_START_DEPTH in the outermost
+ *	call)
  *	elevel: error logging level to use
  * Input/Output parameters:
  *	head_p, tail_p: head and tail of linked list of name/value pairs
