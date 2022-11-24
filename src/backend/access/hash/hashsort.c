@@ -145,7 +145,8 @@ _h_indexbuild(HSpool *hspool, Relation heapRel)
 		Assert(hashkey >= lasthashkey);
 #endif
 
-		_hash_doinsert(hspool->index, itup, heapRel);
+		/* the tuples are sorted by hashkey, so pass 'sorted' as true */
+		_hash_doinsert(hspool->index, itup, heapRel, true);
 
 		pgstat_progress_update_param(PROGRESS_CREATEIDX_TUPLES_DONE,
 									 ++tups_done);

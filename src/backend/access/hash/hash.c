@@ -231,7 +231,7 @@ hashbuildCallback(Relation index,
 		itup = index_form_tuple(RelationGetDescr(index),
 								index_values, index_isnull);
 		itup->t_tid = *tid;
-		_hash_doinsert(index, itup, buildstate->heapRel);
+		_hash_doinsert(index, itup, buildstate->heapRel, false);
 		pfree(itup);
 	}
 
@@ -265,7 +265,7 @@ hashinsert(Relation rel, Datum *values, bool *isnull,
 	itup = index_form_tuple(RelationGetDescr(rel), index_values, index_isnull);
 	itup->t_tid = *ht_ctid;
 
-	_hash_doinsert(rel, itup, heapRel);
+	_hash_doinsert(rel, itup, heapRel, false);
 
 	pfree(itup);
 

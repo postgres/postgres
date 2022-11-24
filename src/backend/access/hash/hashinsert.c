@@ -32,9 +32,12 @@ static void _hash_vacuum_one_page(Relation rel, Relation hrel,
  *
  *		This routine is called by the public interface routines, hashbuild
  *		and hashinsert.  By here, itup is completely filled in.
+ *
+ * 'sorted' must only be passed as 'true' when inserts are done in hashkey
+ * order.
  */
 void
-_hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel)
+_hash_doinsert(Relation rel, IndexTuple itup, Relation heapRel, bool sorted)
 {
 	Buffer		buf = InvalidBuffer;
 	Buffer		bucket_buf;
@@ -198,7 +201,7 @@ restart_insert:
 	START_CRIT_SECTION();
 
 	/* found page with enough space, so add the item here */
-	itup_off = _hash_pgaddtup(rel, buf, itemsz, itup);
+	itup_off = _hash_pgaddtup(rel, buf, itemsz, itup, sorted);
 	MarkBufferDirty(buf);
 
 	/* metapage operations */
@@ -263,21 +266,43 @@ restart_insert:
  *
  * Returns the offset number at which the tuple was inserted.  This function
  * is responsible for preserving the condition that tuples in a hash index
- * page are sorted by hashkey value.
+ * page are sorted by hashkey value, however, if the caller is certain that
+ * the hashkey for the tuple being added is >= the hashkeys of all existing
+ * tuples on the page, then the 'appendtup' flag may be passed as true.  This
+ * saves from having to binary search for the correct location to insert the
+ * tuple.
  */
 OffsetNumber
-_hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup)
+_hash_pgaddtup(Relation rel, Buffer buf, Size itemsize, IndexTuple itup,
+			   bool appendtup)
 {
 	OffsetNumber itup_off;
 	Page		page;
-	uint32		hashkey;
 
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
 
-	/* Find where to insert the tuple (preserving page's hashkey ordering) */
-	hashkey = _hash_get_indextuple_hashkey(itup);
-	itup_off = _hash_binsearch(page, hashkey);
+	/*
+	 * Find where to insert the tuple (preserving page's hashkey ordering). If
+	 * 'appendtup' is true then we just insert it at the end.
+	 */
+	if (appendtup)
+	{
+		itup_off = PageGetMaxOffsetNumber(page) + 1;
+
+		/* ensure this tuple's hashkey is >= the final existing tuple */
+		Assert(PageGetMaxOffsetNumber(page) == 0 ||
+			   _hash_get_indextuple_hashkey((IndexTuple)
+											PageGetItem(page, PageGetItemId(page,
+																			PageGetMaxOffsetNumber(page)))) <=
+			   _hash_get_indextuple_hashkey(itup));
+	}
+	else
+	{
+		uint32		hashkey = _hash_get_indextuple_hashkey(itup);
+
+		itup_off = _hash_binsearch(page, hashkey);
+	}
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off, false, false)
 		== InvalidOffsetNumber)
