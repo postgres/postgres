@@ -89,8 +89,8 @@
   </para>
 
   <para>
-   Each record specifies a connection type, a client IP address range
-   (if relevant for the connection type), a database name, a user name,
+   Each authentication record specifies a connection type, a client IP address
+   range (if relevant for the connection type), a database name, a user name,
    and the authentication method to be used for connections matching
    these parameters. The first record with a matching connection type,
    client address, requested database, and user name is used to perform
@@ -101,19 +101,37 @@
   </para>
 
   <para>
+   Each record can be an include directive or an authentication record.
+   Include directives specify files that can be included, that contain
+   additional records. The records will be inserted in place of the
+   include records. These records only contain two fields:
+   <literal>include</literal>, <literal>include_if_exists</literal> or
+   <literal>include_dir</literal> directive and the file or directory to be
+   included. The file or directory can be a relative of absolute path, and can
+   be double-quoted.  For the <literal>include_dir</literal> form, all files
+   not starting with a <literal>.</literal> and ending with
+   <literal>.conf</literal> will be included. Multiple files within an include
+   directory are processed in file name order (according to C locale rules,
+   i.e., numbers before letters, and uppercase letters before lowercase ones).
+  </para>
+
+  <para>
    A record can have several formats:
 <synopsis>
-local         <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable> <optional><replaceable>auth-options</replaceable></optional>
-host          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostssl       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnossl     <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostgssenc    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-host          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostssl       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnossl     <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostgssenc    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
-hostnogssenc  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+local               <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable> <optional><replaceable>auth-options</replaceable></optional>
+host                <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl             <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl           <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostgssenc          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnogssenc        <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>address</replaceable>     <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+host                <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostssl             <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnossl           <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostgssenc          <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+hostnogssenc        <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>      <replaceable>auth-method</replaceable>  <optional><replaceable>auth-options</replaceable></optional>
+include             <replaceable>file</replaceable>
+include_if_exists   <replaceable>file</replaceable>
+include_dir         <replaceable>directory</replaceable>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -655,6 +673,39 @@ openssl x509 -in myclient.crt -noout --subject -nameopt RFC2253 | sed "s/^subjec
       </para>
      </listitem>
     </varlistentry>
+
+    <varlistentry>
+     <term><literal>include</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the contents of the given file.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>include_if_exists</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the content of the given file if the
+       file exists. Otherwise, a message is logged to indicate that the file
+       has been skipped.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>include_dir</literal></term>
+     <listitem>
+      <para>
+       This line will be replaced by the contents of all the files found in
+       the directory, if they don't start with a <literal>.</literal> and end
+       with <literal>.conf</literal>, processed in file name order (according
+       to C locale rules, i.e., numbers before letters, and uppercase letters
+       before lowercase ones).
+      </para>
+     </listitem>
+    </varlistentry>
    </variablelist>
   </para>
 
@@ -863,9 +914,12 @@ local   db1,db2,@demodbs  all                                   md5
    cluster's data directory.  (It is possible to place the map file
    elsewhere, however; see the <xref linkend="guc-ident-file"/>
    configuration parameter.)
-   The ident map file contains lines of the general form:
+   The ident map file contains lines of the general forms:
 <synopsis>
 <replaceable>map-name</replaceable> <replaceable>system-username</replaceable> <replaceable>database-username</replaceable>
+<replaceable>include</replaceable> <replaceable>file</replaceable>
+<replaceable>include_if_exists</replaceable> <replaceable>file</replaceable>
+<replaceable>include_dir</replaceable> <replaceable>directory</replaceable>
 </synopsis>
    Comments, whitespace and line continuations are handled in the same way as in
    <filename>pg_hba.conf</filename>.  The
@@ -874,6 +928,10 @@ local   db1,db2,@demodbs  all                                   md5
    two fields specify an operating system user name and a matching
    database user name. The same <replaceable>map-name</replaceable> can be
    used repeatedly to specify multiple user-mappings within a single map.
+  </para>
+  <para>
+   As for <filename>pg_hba.conf</filename>, the lines in this file can
+   be include directives, following the same rules.
   </para>
   <para>
    There is no restriction regarding how many database users a given

@@ -464,15 +464,73 @@ next_field_expand(const char *filename, char **lineptr,
 }
 
 /*
+ * tokenize_include_file
+ *		Include a file from another file into an hba "field".
+ *
+ * Opens and tokenises a file included from another authentication file
+ * with one of the include records ("include", "include_if_exists" or
+ * "include_dir"), and assign all values found to an existing list of
+ * list of AuthTokens.
+ *
+ * All new tokens are allocated in the memory context dedicated to the
+ * tokenization, aka tokenize_context.
+ *
+ * If missing_ok is true, ignore a missing file.
+ *
+ * In event of an error, log a message at ereport level elevel, and also
+ * set *err_msg to a string describing the error.  Note that the result
+ * may be non-NIL anyway, so *err_msg must be tested to determine whether
+ * there was an error.
+ */
+static void
+tokenize_include_file(const char *outer_filename,
+					  const char *inc_filename,
+					  List **tok_lines,
+					  int elevel,
+					  int depth,
+					  bool missing_ok,
+					  char **err_msg)
+{
+	char	   *inc_fullname;
+	FILE	   *inc_file;
+
+	inc_fullname = AbsoluteConfigLocation(inc_filename, outer_filename);
+	inc_file = open_auth_file(inc_fullname, elevel, depth, err_msg);
+
+	if (!inc_file)
+	{
+		if (errno == ENOENT && missing_ok)
+		{
+			ereport(elevel,
+					(errmsg("skipping missing authentication file \"%s\"",
+							inc_fullname)));
+			*err_msg = NULL;
+			pfree(inc_fullname);
+			return;
+		}
+
+		/* error in err_msg, so leave and report */
+		pfree(inc_fullname);
+		Assert(err_msg);
+		return;
+	}
+
+	tokenize_auth_file(inc_fullname, inc_file, tok_lines, elevel,
+					   depth);
+	free_auth_file(inc_file, depth);
+	pfree(inc_fullname);
+}
+
+/*
  * tokenize_expand_file
  *		Expand a file included from another file into an hba "field"
  *
  * Opens and tokenises a file included from another HBA config file with @,
  * and returns all values found therein as a flat list of AuthTokens.  If a
- * @-token is found, recursively expand it.  The newly read tokens are
- * appended to "tokens" (so that foo,bar,@baz does what you expect).
- * All new tokens are allocated in the memory context dedicated to the
- * list of TokenizedAuthLines, aka tokenize_context.
+ * @-token or include record is found, recursively expand it.  The newly
+ * read tokens are appended to "tokens" (so that foo,bar,@baz does what you
+ * expect).  All new tokens are allocated in the memory context dedicated
+ * to the list of TokenizedAuthLines, aka tokenize_context.
  *
  * In event of an error, log a message at ereport level elevel, and also
  * set *err_msg to a string describing the error.  Note that the result
@@ -502,7 +560,10 @@ tokenize_expand_file(List *tokens,
 		return tokens;
 	}
 
-	/* There is possible recursion here if the file contains @ */
+	/*
+	 * There is possible recursion here if the file contains @ or an include
+	 * records.
+	 */
 	tokenize_auth_file(inc_fullname, inc_file, &inc_lines, elevel,
 					   depth);
 
@@ -706,6 +767,8 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 
 	while (!feof(file) && !ferror(file))
 	{
+		TokenizedAuthLine *tok_line;
+		MemoryContext oldcxt;
 		char	   *lineptr;
 		List	   *current_line = NIL;
 		char	   *err_msg = NULL;
@@ -763,8 +826,6 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 			/* add field to line, unless we are at EOL or comment start */
 			if (current_field != NIL)
 			{
-				MemoryContext oldcxt;
-
 				/*
 				 * lappend() may do its own allocations, so move to the
 				 * context for the list of tokens.
@@ -776,24 +837,115 @@ tokenize_auth_file(const char *filename, FILE *file, List **tok_lines,
 		}
 
 		/*
-		 * Reached EOL; emit line to TokenizedAuthLine list unless it's boring
+		 * Reached EOL; no need to emit line to TokenizedAuthLine list if it's
+		 * boring.
 		 */
-		if (current_line != NIL || err_msg != NULL)
-		{
-			TokenizedAuthLine *tok_line;
-			MemoryContext oldcxt;
+		if (current_line == NIL && err_msg == NULL)
+			goto next_line;
 
-			oldcxt = MemoryContextSwitchTo(tokenize_context);
-			tok_line = (TokenizedAuthLine *) palloc(sizeof(TokenizedAuthLine));
-			tok_line->fields = current_line;
-			tok_line->file_name = pstrdup(filename);
-			tok_line->line_num = line_number;
-			tok_line->raw_line = pstrdup(buf.data);
-			tok_line->err_msg = err_msg ? pstrdup(err_msg) : NULL;
-			*tok_lines = lappend(*tok_lines, tok_line);
-			MemoryContextSwitchTo(oldcxt);
+		/* If the line is valid, check if that's an include directive */
+		if (err_msg == NULL && list_length(current_line) == 2)
+		{
+			AuthToken  *first,
+					   *second;
+
+			first = linitial(linitial_node(List, current_line));
+			second = linitial(lsecond_node(List, current_line));
+
+			if (strcmp(first->string, "include") == 0)
+			{
+				tokenize_include_file(filename, second->string, tok_lines,
+									  elevel, depth + 1, false, &err_msg);
+
+				if (err_msg)
+					goto process_line;
+
+				/*
+				 * tokenize_auth_file() has taken care of creating the
+				 * TokenizedAuthLines.
+				 */
+				goto next_line;
+			}
+			else if (strcmp(first->string, "include_dir") == 0)
+			{
+				char	  **filenames;
+				char	   *dir_name = second->string;
+				int			num_filenames;
+				StringInfoData err_buf;
+
+				filenames = GetConfFilesInDir(dir_name, filename, elevel,
+											  &num_filenames, &err_msg);
+
+				if (!filenames)
+				{
+					/* the error is in err_msg, so create an entry */
+					goto process_line;
+				}
+
+				initStringInfo(&err_buf);
+				for (int i = 0; i < num_filenames; i++)
+				{
+					tokenize_include_file(filename, filenames[i], tok_lines,
+										  elevel, depth + 1, false, &err_msg);
+					/* cumulate errors if any */
+					if (err_msg)
+					{
+						if (err_buf.len > 0)
+							appendStringInfoChar(&err_buf, '\n');
+						appendStringInfoString(&err_buf, err_msg);
+					}
+				}
+
+				/* clean up things */
+				for (int i = 0; i < num_filenames; i++)
+					pfree(filenames[i]);
+				pfree(filenames);
+
+				/*
+				 * If there were no errors, the line is fully processed,
+				 * bypass the general TokenizedAuthLine processing.
+				 */
+				if (err_buf.len == 0)
+					goto next_line;
+
+				/* Otherwise, process the cumulated errors, if any. */
+				err_msg = err_buf.data;
+				goto process_line;
+			}
+			else if (strcmp(first->string, "include_if_exists") == 0)
+			{
+
+				tokenize_include_file(filename, second->string, tok_lines,
+									  elevel, depth + 1, true, &err_msg);
+				if (err_msg)
+					goto process_line;
+
+				/*
+				 * tokenize_auth_file() has taken care of creating the
+				 * TokenizedAuthLines.
+				 */
+				goto next_line;
+			}
 		}
 
+process_line:
+
+		/*
+		 * General processing: report the error if any and emit line to the
+		 * TokenizedAuthLine.  This is saved in the memory context dedicated
+		 * to this list.
+		 */
+		oldcxt = MemoryContextSwitchTo(tokenize_context);
+		tok_line = (TokenizedAuthLine *) palloc0(sizeof(TokenizedAuthLine));
+		tok_line->fields = current_line;
+		tok_line->file_name = pstrdup(filename);
+		tok_line->line_num = line_number;
+		tok_line->raw_line = pstrdup(buf.data);
+		tok_line->err_msg = err_msg ? pstrdup(err_msg) : NULL;
+		*tok_lines = lappend(*tok_lines, tok_line);
+		MemoryContextSwitchTo(oldcxt);
+
+next_line:
 		line_number += continuations + 1;
 		callback_arg.linenum = line_number;
 	}

@@ -1004,10 +1004,19 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>file_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the file containing this rule
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>line_number</structfield> <type>int4</type>
       </para>
       <para>
-       Line number of this rule in <filename>pg_hba.conf</filename>
+       Line number of this rule in <literal>file_name</literal>
       </para></entry>
      </row>
 
@@ -1154,10 +1163,19 @@
 
      <row>
       <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>file_name</structfield> <type>text</type>
+      </para>
+      <para>
+       Name of the file containing this map
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
        <structfield>line_number</structfield> <type>int4</type>
       </para>
       <para>
-       Line number of this map in <filename>pg_ident.conf</filename>
+       Line number of this map in <literal>file_name</literal>
       </para></entry>
      </row>
 
