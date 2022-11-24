@@ -4365,7 +4365,7 @@ BackendInitialize(Port *port)
 	if (am_walsender)
 		appendStringInfo(&ps_data, "%s ", GetBackendTypeDesc(B_WAL_SENDER));
 	appendStringInfo(&ps_data, "%s ", port->user_name);
-	if (!am_walsender)
+	if (port->database_name[0] != '\0')
 		appendStringInfo(&ps_data, "%s ", port->database_name);
 	appendStringInfoString(&ps_data, port->remote_host);
 	if (port->remote_port[0] != '\0')
