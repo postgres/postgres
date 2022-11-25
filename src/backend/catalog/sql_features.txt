@@ -264,7 +264,7 @@ F401	Extended joined table	01	NATURAL JOIN	YES
 F401	Extended joined table	02	FULL OUTER JOIN	YES	
 F401	Extended joined table	04	CROSS JOIN	YES	
 F402	Named column joins for LOBs, arrays, and multisets			YES	
-F403	Partitioned joined tables			NO	
+F403	Partitioned join tables			NO	
 F404	Range variable for common column names			YES	
 F411	Time zone specification			YES	differences regarding literal interpretation
 F421	National character			YES	
@@ -297,7 +297,7 @@ F611	Indicator data types			YES
 F641	Row and table constructors			YES	
 F651	Catalog name qualifiers			YES	
 F661	Simple tables			YES	
-F671	Subqueries in CHECK			NO	intentionally omitted
+F671	Subqueries in CHECK constraints			NO	intentionally omitted
 F672	Retrospective check constraints			YES	
 F673	Reads SQL-data routine invocations in CHECK constraints			NO	
 F690	Collation support			YES	but no character set support
@@ -397,13 +397,13 @@ S281	Nested collection types			NO
 S291	Unique constraint on entire row			NO	
 S301	Enhanced UNNEST			YES	
 S401	Distinct types based on array types			NO	
-S402	Distinct types based on distinct types			NO	
+S402	Distinct types based on multiset types			NO	
 S403	ARRAY_MAX_CARDINALITY			NO	
 S404	TRIM_ARRAY			YES	
 T011	Timestamp in Information Schema			NO	
 T021	BINARY and VARBINARY data types			NO	
 T022	Advanced support for BINARY and VARBINARY data types			NO	
-T023	Compound binary literal			NO	
+T023	Compound binary literals			NO	
 T024	Spaces in binary literals			NO	
 T031	BOOLEAN data type			YES	
 T041	Basic LOB data type support			NO	
@@ -437,7 +437,7 @@ T174	Identity columns			YES
 T175	Generated columns			NO	mostly supported
 T176	Sequence generator support			NO	supported except for NEXT VALUE FOR
 T177	Sequence generator support: simple restart option			YES	
-T178	Identity columns:  simple restart option			YES	
+T178	Identity columns: simple restart option			YES	
 T180	System-versioned tables			NO	
 T181	Application-time period tables			NO	
 T191	Referential action RESTRICT			YES	
@@ -511,7 +511,7 @@ T613	Sampling			YES
 T614	NTILE function			YES	
 T615	LEAD and LAG functions			YES	
 T616	Null treatment option for LEAD and LAG functions			NO	
-T617	FIRST_VALUE and LAST_VALUE function			YES	
+T617	FIRST_VALUE and LAST_VALUE functions			YES	
 T618	NTH_VALUE function			NO	function exists, but some options missing
 T619	Nested window functions			NO	
 T620	WINDOW clause: GROUPS option			YES	
@@ -558,7 +558,7 @@ M005	Foreign schema support			NO
 M006	GetSQLString routine			NO	
 M007	TransmitRequest			NO	
 M009	GetOpts and GetStatistics routines			NO	
-M010	Foreign data wrapper support			NO	different API
+M010	Foreign-data wrapper support			NO	different API
 M011	Datalinks via Ada			NO	
 M012	Datalinks via C			NO	
 M013	Datalinks via COBOL			NO	
@@ -566,15 +566,15 @@ M014	Datalinks via Fortran			NO
 M015	Datalinks via M			NO	
 M016	Datalinks via Pascal			NO	
 M017	Datalinks via PL/I			NO	
-M018	Foreign data wrapper interface routines in Ada			NO	
-M019	Foreign data wrapper interface routines in C			NO	different API
-M020	Foreign data wrapper interface routines in COBOL			NO	
-M021	Foreign data wrapper interface routines in Fortran			NO	
-M022	Foreign data wrapper interface routines in MUMPS			NO	
-M023	Foreign data wrapper interface routines in Pascal			NO	
-M024	Foreign data wrapper interface routines in PL/I			NO	
+M018	Foreign-data wrapper interface routines in Ada			NO	
+M019	Foreign-data wrapper interface routines in C			NO	different API
+M020	Foreign-data wrapper interface routines in COBOL			NO	
+M021	Foreign-data wrapper interface routines in Fortran			NO	
+M022	Foreign-data wrapper interface routines in MUMPS			NO	
+M023	Foreign-data wrapper interface routines in Pascal			NO	
+M024	Foreign-data wrapper interface routines in PL/I			NO	
 M030	SQL-server foreign data support			NO	
-M031	Foreign data wrapper general routines			NO	
+M031	Foreign-data wrapper general routines			NO	
 X010	XML type			YES	
 X011	Arrays of XML type			YES	
 X012	Multisets of XML type			NO	
@@ -593,7 +593,7 @@ X036	XMLComment			YES
 X037	XMLPI			YES	
 X038	XMLText			NO	
 X040	Basic table mapping			YES	
-X041	Basic table mapping: nulls absent			YES	
+X041	Basic table mapping: null absent			YES	
 X042	Basic table mapping: null as nil			YES	
 X043	Basic table mapping: table as forest			YES	
 X044	Basic table mapping: table as element			YES	
@@ -603,7 +603,7 @@ X047	Basic table mapping: metadata mapping			YES
 X048	Basic table mapping: base64 encoding of binary strings			YES	
 X049	Basic table mapping: hex encoding of binary strings			YES	
 X050	Advanced table mapping			YES	
-X051	Advanced table mapping: nulls absent			YES	
+X051	Advanced table mapping: null absent			YES	
 X052	Advanced table mapping: null as nil			YES	
 X053	Advanced table mapping: table as forest			YES	
 X054	Advanced table mapping: table as element			YES	
@@ -614,16 +614,16 @@ X058	Advanced table mapping: base64 encoding of binary strings			YES
 X059	Advanced table mapping: hex encoding of binary strings			YES	
 X060	XMLParse: character string input and CONTENT option			YES	
 X061	XMLParse: character string input and DOCUMENT option			YES	
-X065	XMLParse: BLOB input and CONTENT option			NO	
-X066	XMLParse: BLOB input and DOCUMENT option			NO	
+X065	XMLParse: binary string input and CONTENT option			NO	
+X066	XMLParse: binary string input and DOCUMENT option			NO	
 X068	XMLSerialize: BOM			NO	
 X069	XMLSerialize: INDENT			NO	
 X070	XMLSerialize: character string serialization and CONTENT option			YES	
 X071	XMLSerialize: character string serialization and DOCUMENT option			YES	
 X072	XMLSerialize: character string serialization			YES	
-X073	XMLSerialize: BLOB serialization and CONTENT option			NO	
-X074	XMLSerialize: BLOB serialization and DOCUMENT option			NO	
-X075	XMLSerialize: BLOB serialization			NO	
+X073	XMLSerialize: binary string serialization and CONTENT option			NO	
+X074	XMLSerialize: binary string serialization and DOCUMENT option			NO	
+X075	XMLSerialize: binary string serialization			NO	
 X076	XMLSerialize: VERSION			NO	
 X077	XMLSerialize: explicit ENCODING option			NO	
 X078	XMLSerialize: explicit XML declaration			NO	
@@ -656,9 +656,9 @@ X142	IS VALID predicate: ACCORDING TO clause			NO
 X143	IS VALID predicate: ELEMENT clause			NO	
 X144	IS VALID predicate: schema location			NO	
 X145	IS VALID predicate outside check constraints			NO	
-X151	IS VALID predicate with DOCUMENT option			NO	
-X152	IS VALID predicate with CONTENT option			NO	
-X153	IS VALID predicate with SEQUENCE option			NO	
+X151	IS VALID predicate: with DOCUMENT option			NO	
+X152	IS VALID predicate: with CONTENT option			NO	
+X153	IS VALID predicate: with SEQUENCE option			NO	
 X155	IS VALID predicate: NAMESPACE without ELEMENT clause			NO	
 X157	IS VALID predicate: NO NAMESPACE with ELEMENT clause			NO	
 X160	Basic Information Schema for registered XML Schemas			NO	
