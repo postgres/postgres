@@ -182,7 +182,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				 errmsg("cannot execute MERGE on relation \"%s\"",
 						RelationGetRelationName(pstate->p_target_relation)),
 				 errdetail_relkind_not_supported(pstate->p_target_relation->rd_rel->relkind)));
-	if (pstate->p_target_relation->rd_rel->relhasrules)
+	if (pstate->p_target_relation->rd_rules != NULL &&
+		pstate->p_target_relation->rd_rules->numLocks > 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot execute MERGE on relation \"%s\"",
