@@ -5568,19 +5568,6 @@ FROM pg_stat_get_backend_idset() AS backendid;
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>pg_stat_get_backend_idset</primary>
-        </indexterm>
-        <function>pg_stat_get_backend_idset</function> ()
-        <returnvalue>setof integer</returnvalue>
-       </para>
-       <para>
-        Returns the set of currently active backend ID numbers.
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
          <primary>pg_stat_get_backend_activity</primary>
         </indexterm>
         <function>pg_stat_get_backend_activity</function> ( <type>integer</type> )
@@ -5646,6 +5633,19 @@ FROM pg_stat_get_backend_idset() AS backendid;
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
+         <primary>pg_stat_get_backend_idset</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_idset</function> ()
+        <returnvalue>setof integer</returnvalue>
+       </para>
+       <para>
+        Returns the set of currently active backend ID numbers.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
          <primary>pg_stat_get_backend_pid</primary>
         </indexterm>
         <function>pg_stat_get_backend_pid</function> ( <type>integer</type> )
@@ -5685,20 +5685,6 @@ FROM pg_stat_get_backend_idset() AS backendid;
       <row>
        <entry role="func_table_entry"><para role="func_signature">
         <indexterm>
-         <primary>pg_stat_get_backend_wait_event_type</primary>
-        </indexterm>
-        <function>pg_stat_get_backend_wait_event_type</function> ( <type>integer</type> )
-        <returnvalue>text</returnvalue>
-       </para>
-       <para>
-        Returns the wait event type name if this backend is currently waiting,
-        otherwise NULL.  See <xref linkend="wait-event-table"/> for details.
-       </para></entry>
-      </row>
-
-      <row>
-       <entry role="func_table_entry"><para role="func_signature">
-        <indexterm>
          <primary>pg_stat_get_backend_wait_event</primary>
         </indexterm>
         <function>pg_stat_get_backend_wait_event</function> ( <type>integer</type> )
@@ -5708,6 +5694,20 @@ FROM pg_stat_get_backend_idset() AS backendid;
         Returns the wait event name if this backend is currently waiting,
         otherwise NULL. See <xref linkend="wait-event-activity-table"/> through
         <xref linkend="wait-event-timeout-table"/>.
+       </para></entry>
+      </row>
+
+      <row>
+       <entry role="func_table_entry"><para role="func_signature">
+        <indexterm>
+         <primary>pg_stat_get_backend_wait_event_type</primary>
+        </indexterm>
+        <function>pg_stat_get_backend_wait_event_type</function> ( <type>integer</type> )
+        <returnvalue>text</returnvalue>
+       </para>
+       <para>
+        Returns the wait event type name if this backend is currently waiting,
+        otherwise NULL.  See <xref linkend="wait-event-table"/> for details.
        </para></entry>
       </row>
 
