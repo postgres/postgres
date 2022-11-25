@@ -6012,6 +6012,362 @@ FROM pg_stat_get_backend_idset() AS backendid;
   </note>
  </sect2>
 
+ <sect2 id="cluster-progress-reporting">
+  <title>CLUSTER Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_cluster</primary>
+  </indexterm>
+
+  <para>
+   Whenever <command>CLUSTER</command> or <command>VACUUM FULL</command> is
+   running, the <structname>pg_stat_progress_cluster</structname> view will
+   contain a row for each backend that is currently running either command.
+   The tables below describe the information that will be reported and
+   provide information about how to interpret it.
+  </para>
+
+  <table id="pg-stat-progress-cluster-view" xreflabel="pg_stat_progress_cluster">
+   <title><structname>pg_stat_progress_cluster</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table being clustered.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
+       The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>phase</structfield> <type>text</type>
+      </para>
+      <para>
+       Current processing phase. See <xref linkend="cluster-phases"/>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>cluster_index_relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       If the table is being scanned using an index, this is the OID of the
+       index being used; otherwise, it is zero.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples scanned.
+       This counter only advances when the phase is
+       <literal>seq scanning heap</literal>,
+       <literal>index scanning heap</literal>
+       or <literal>writing new heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_tuples_written</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap tuples written.
+       This counter only advances when the phase is
+       <literal>seq scanning heap</literal>,
+       <literal>index scanning heap</literal>
+       or <literal>writing new heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Total number of heap blocks in the table.  This number is reported
+       as of the beginning of <literal>seq scanning heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>heap_blks_scanned</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of heap blocks scanned.  This counter only advances when the
+       phase is <literal>seq scanning heap</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>index_rebuild_count</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of indexes rebuilt.  This counter only advances when the phase
+       is <literal>rebuilding index</literal>.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <table id="cluster-phases">
+   <title>CLUSTER and VACUUM FULL Phases</title>
+   <tgroup cols="2">
+    <colspec colname="col1" colwidth="1*"/>
+    <colspec colname="col2" colwidth="2*"/>
+    <thead>
+    <row>
+      <entry>Phase</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+   <tbody>
+    <row>
+     <entry><literal>initializing</literal></entry>
+     <entry>
+       The command is preparing to begin scanning the heap.  This phase is
+       expected to be very brief.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>seq scanning heap</literal></entry>
+     <entry>
+       The command is currently scanning the table using a sequential scan.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>index scanning heap</literal></entry>
+     <entry>
+       <command>CLUSTER</command> is currently scanning the table using an index scan.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>sorting tuples</literal></entry>
+     <entry>
+       <command>CLUSTER</command> is currently sorting tuples.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>writing new heap</literal></entry>
+     <entry>
+       <command>CLUSTER</command> is currently writing the new heap.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>swapping relation files</literal></entry>
+     <entry>
+       The command is currently swapping newly-built files into place.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>rebuilding index</literal></entry>
+     <entry>
+       The command is currently rebuilding an index.
+     </entry>
+    </row>
+    <row>
+     <entry><literal>performing final cleanup</literal></entry>
+     <entry>
+       The command is performing final cleanup.  When this phase is
+       completed, <command>CLUSTER</command>
+       or <command>VACUUM FULL</command> will end.
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
+ <sect2 id="copy-progress-reporting">
+  <title>COPY Progress Reporting</title>
+
+  <indexterm>
+   <primary>pg_stat_progress_copy</primary>
+  </indexterm>
+
+  <para>
+   Whenever <command>COPY</command> is running, the
+   <structname>pg_stat_progress_copy</structname> view will contain one row
+   for each backend that is currently running a <command>COPY</command> command.
+   The table below describes the information that will be reported and provides
+   information about how to interpret it.
+  </para>
+
+  <table id="pg-stat-progress-copy-view" xreflabel="pg_stat_progress_copy">
+   <title><structname>pg_stat_progress_copy</structname> View</title>
+   <tgroup cols="1">
+    <thead>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       Column Type
+      </para>
+      <para>
+       Description
+      </para></entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>pid</structfield> <type>integer</type>
+      </para>
+      <para>
+       Process ID of backend.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>datname</structfield> <type>name</type>
+      </para>
+      <para>
+       Name of the database to which this backend is connected.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>relid</structfield> <type>oid</type>
+      </para>
+      <para>
+       OID of the table on which the <command>COPY</command> command is
+       executed. It is set to <literal>0</literal> if copying from a
+       <command>SELECT</command> query.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>command</structfield> <type>text</type>
+      </para>
+      <para>
+       The command that is running: <literal>COPY FROM</literal>, or
+       <literal>COPY TO</literal>.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>type</structfield> <type>text</type>
+      </para>
+      <para>
+       The io type that the data is read from or written to:
+       <literal>FILE</literal>, <literal>PROGRAM</literal>,
+       <literal>PIPE</literal> (for <command>COPY FROM STDIN</command> and
+       <command>COPY TO STDOUT</command>), or <literal>CALLBACK</literal>
+       (used for example during the initial table synchronization in
+       logical replication).
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bytes_processed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of bytes already processed by <command>COPY</command> command.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>bytes_total</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Size of source file for <command>COPY FROM</command> command in bytes.
+       It is set to <literal>0</literal> if not available.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_processed</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tuples already processed by <command>COPY</command> command.
+      </para></entry>
+     </row>
+
+     <row>
+      <entry role="catalog_table_entry"><para role="column_definition">
+       <structfield>tuples_excluded</structfield> <type>bigint</type>
+      </para>
+      <para>
+       Number of tuples not processed because they were excluded by the
+       <command>WHERE</command> clause of the <command>COPY</command> command.
+      </para></entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect2>
+
  <sect2 id="create-index-progress-reporting">
   <title>CREATE INDEX Progress Reporting</title>
 
@@ -6542,229 +6898,6 @@ FROM pg_stat_get_backend_idset() AS backendid;
    </tbody>
    </tgroup>
   </table>
-
- </sect2>
-
- <sect2 id="cluster-progress-reporting">
-  <title>CLUSTER Progress Reporting</title>
-
-  <indexterm>
-   <primary>pg_stat_progress_cluster</primary>
-  </indexterm>
-
-  <para>
-   Whenever <command>CLUSTER</command> or <command>VACUUM FULL</command> is
-   running, the <structname>pg_stat_progress_cluster</structname> view will
-   contain a row for each backend that is currently running either command.
-   The tables below describe the information that will be reported and
-   provide information about how to interpret it.
-  </para>
-
-  <table id="pg-stat-progress-cluster-view" xreflabel="pg_stat_progress_cluster">
-   <title><structname>pg_stat_progress_cluster</structname> View</title>
-   <tgroup cols="1">
-    <thead>
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       Column Type
-      </para>
-      <para>
-       Description
-      </para></entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>pid</structfield> <type>integer</type>
-      </para>
-      <para>
-       Process ID of backend.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datid</structfield> <type>oid</type>
-      </para>
-      <para>
-       OID of the database to which this backend is connected.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datname</structfield> <type>name</type>
-      </para>
-      <para>
-       Name of the database to which this backend is connected.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>relid</structfield> <type>oid</type>
-      </para>
-      <para>
-       OID of the table being clustered.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>command</structfield> <type>text</type>
-      </para>
-      <para>
-       The command that is running. Either <literal>CLUSTER</literal> or <literal>VACUUM FULL</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>phase</structfield> <type>text</type>
-      </para>
-      <para>
-       Current processing phase. See <xref linkend="cluster-phases"/>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>cluster_index_relid</structfield> <type>oid</type>
-      </para>
-      <para>
-       If the table is being scanned using an index, this is the OID of the
-       index being used; otherwise, it is zero.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>heap_tuples_scanned</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of heap tuples scanned.
-       This counter only advances when the phase is
-       <literal>seq scanning heap</literal>,
-       <literal>index scanning heap</literal>
-       or <literal>writing new heap</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>heap_tuples_written</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of heap tuples written.
-       This counter only advances when the phase is
-       <literal>seq scanning heap</literal>,
-       <literal>index scanning heap</literal>
-       or <literal>writing new heap</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>heap_blks_total</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Total number of heap blocks in the table.  This number is reported
-       as of the beginning of <literal>seq scanning heap</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>heap_blks_scanned</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of heap blocks scanned.  This counter only advances when the
-       phase is <literal>seq scanning heap</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>index_rebuild_count</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of indexes rebuilt.  This counter only advances when the phase
-       is <literal>rebuilding index</literal>.
-      </para></entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
-
-  <table id="cluster-phases">
-   <title>CLUSTER and VACUUM FULL Phases</title>
-   <tgroup cols="2">
-    <colspec colname="col1" colwidth="1*"/>
-    <colspec colname="col2" colwidth="2*"/>
-    <thead>
-    <row>
-      <entry>Phase</entry>
-      <entry>Description</entry>
-     </row>
-    </thead>
-
-   <tbody>
-    <row>
-     <entry><literal>initializing</literal></entry>
-     <entry>
-       The command is preparing to begin scanning the heap.  This phase is
-       expected to be very brief.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>seq scanning heap</literal></entry>
-     <entry>
-       The command is currently scanning the table using a sequential scan.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>index scanning heap</literal></entry>
-     <entry>
-       <command>CLUSTER</command> is currently scanning the table using an index scan.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>sorting tuples</literal></entry>
-     <entry>
-       <command>CLUSTER</command> is currently sorting tuples.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>writing new heap</literal></entry>
-     <entry>
-       <command>CLUSTER</command> is currently writing the new heap.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>swapping relation files</literal></entry>
-     <entry>
-       The command is currently swapping newly-built files into place.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>rebuilding index</literal></entry>
-     <entry>
-       The command is currently rebuilding an index.
-     </entry>
-    </row>
-    <row>
-     <entry><literal>performing final cleanup</literal></entry>
-     <entry>
-       The command is performing final cleanup.  When this phase is
-       completed, <command>CLUSTER</command>
-       or <command>VACUUM FULL</command> will end.
-     </entry>
-    </row>
-   </tbody>
-   </tgroup>
-  </table>
  </sect2>
 
  <sect2 id="basebackup-progress-reporting">
@@ -6940,140 +7073,6 @@ FROM pg_stat_get_backend_idset() AS backendid;
    </tgroup>
   </table>
 
- </sect2>
-
- <sect2 id="copy-progress-reporting">
-  <title>COPY Progress Reporting</title>
-
-  <indexterm>
-   <primary>pg_stat_progress_copy</primary>
-  </indexterm>
-
-  <para>
-   Whenever <command>COPY</command> is running, the
-   <structname>pg_stat_progress_copy</structname> view will contain one row
-   for each backend that is currently running a <command>COPY</command> command.
-   The table below describes the information that will be reported and provides
-   information about how to interpret it.
-  </para>
-
-  <table id="pg-stat-progress-copy-view" xreflabel="pg_stat_progress_copy">
-   <title><structname>pg_stat_progress_copy</structname> View</title>
-   <tgroup cols="1">
-    <thead>
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       Column Type
-      </para>
-      <para>
-       Description
-      </para></entry>
-     </row>
-    </thead>
-
-    <tbody>
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>pid</structfield> <type>integer</type>
-      </para>
-      <para>
-       Process ID of backend.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datid</structfield> <type>oid</type>
-      </para>
-      <para>
-       OID of the database to which this backend is connected.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>datname</structfield> <type>name</type>
-      </para>
-      <para>
-       Name of the database to which this backend is connected.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>relid</structfield> <type>oid</type>
-      </para>
-      <para>
-       OID of the table on which the <command>COPY</command> command is
-       executed. It is set to <literal>0</literal> if copying from a
-       <command>SELECT</command> query.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>command</structfield> <type>text</type>
-      </para>
-      <para>
-       The command that is running: <literal>COPY FROM</literal>, or
-       <literal>COPY TO</literal>.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>type</structfield> <type>text</type>
-      </para>
-      <para>
-       The io type that the data is read from or written to:
-       <literal>FILE</literal>, <literal>PROGRAM</literal>,
-       <literal>PIPE</literal> (for <command>COPY FROM STDIN</command> and
-       <command>COPY TO STDOUT</command>), or <literal>CALLBACK</literal>
-       (used for example during the initial table synchronization in
-       logical replication).
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>bytes_processed</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of bytes already processed by <command>COPY</command> command.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>bytes_total</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Size of source file for <command>COPY FROM</command> command in bytes.
-       It is set to <literal>0</literal> if not available.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>tuples_processed</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of tuples already processed by <command>COPY</command> command.
-      </para></entry>
-     </row>
-
-     <row>
-      <entry role="catalog_table_entry"><para role="column_definition">
-       <structfield>tuples_excluded</structfield> <type>bigint</type>
-      </para>
-      <para>
-       Number of tuples not processed because they were excluded by the
-       <command>WHERE</command> clause of the <command>COPY</command> command.
-      </para></entry>
-     </row>
-    </tbody>
-   </tgroup>
-  </table>
  </sect2>
 
  </sect1>
