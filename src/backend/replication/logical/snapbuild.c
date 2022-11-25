@@ -377,6 +377,9 @@ AllocateSnapshotBuilder(ReorderBuffer *reorder,
 
 	MemoryContextSwitchTo(oldcontext);
 
+	/* The initial running transactions array must be empty. */
+	Assert(NInitialRunningXacts == 0 && InitialRunningXacts == NULL);
+
 	return builder;
 }
 
@@ -397,6 +400,10 @@ FreeSnapshotBuilder(SnapBuild *builder)
 
 	/* other resources are deallocated via memory context reset */
 	MemoryContextDelete(context);
+
+	/* InitialRunningXacts is freed along with the context */
+	NInitialRunningXacts = 0;
+	InitialRunningXacts = NULL;
 }
 
 /*
