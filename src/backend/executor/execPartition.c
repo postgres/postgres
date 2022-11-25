@@ -934,6 +934,13 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 
 	Assert(partRelInfo->ri_BatchSize >= 1);
 
+	/*
+	 * If doing batch insert, setup back-link so we can easily find the
+	 * mtstate again.
+	 */
+	if (partRelInfo->ri_BatchSize > 1)
+		partRelInfo->ri_ModifyTableState = mtstate;
+
 	partRelInfo->ri_CopyMultiInsertBuffer = NULL;
 
 	/*

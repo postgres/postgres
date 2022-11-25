@@ -524,6 +524,9 @@ typedef struct ResultRelInfo
 
 	/* for use by copyfrom.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;
+
+	/* for use by nodeModifyTable.c when performing batch-inserts */
+	struct ModifyTableState *ri_ModifyTableState;
 } ResultRelInfo;
 
 /* ----------------
@@ -645,6 +648,12 @@ typedef struct EState
 	int			es_jit_flags;
 	struct JitContext *es_jit;
 	struct JitInstrumentation *es_jit_worker_instr;
+
+	/*
+	 * The following list contains ResultRelInfos for foreign tables on which
+	 * batch-inserts are to be executed.
+	 */
+	List	   *es_insert_pending_result_relations;
 } EState;
 
 
