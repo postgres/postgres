@@ -68,7 +68,7 @@ static char full_buf[DEFAULT_XLOG_SEG_SIZE],
 		   *filename = FSYNC_FILENAME;
 static struct timeval start_t,
 			stop_t;
-static bool alarm_triggered = false;
+static sig_atomic_t alarm_triggered = false;
 
 
 static void handle_args(int argc, char *argv[]);

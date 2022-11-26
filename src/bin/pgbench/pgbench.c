@@ -310,7 +310,7 @@ const char *progname;
 
 #define WSEP '@'				/* weight separator */
 
-volatile bool timer_exceeded = false;	/* flag from signal handler */
+volatile sig_atomic_t timer_exceeded = false;	/* flag from signal handler */
 
 /*
  * We don't want to allocate variables one by one; for efficiency, add a
