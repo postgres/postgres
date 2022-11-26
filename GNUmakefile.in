@@ -57,7 +57,7 @@ $(call recurse,distprep coverage,doc src config contrib)
 # it's not built by default
 $(call recurse,clean,doc contrib src config)
 clean:
-	rm -rf tmp_install/
+	rm -rf tmp_install/ portlock/
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 
@@ -68,7 +68,7 @@ distclean maintainer-clean:
 	$(MAKE) -C contrib $@
 	$(MAKE) -C config $@
 	$(MAKE) -C src $@
-	rm -rf tmp_install/
+	rm -rf tmp_install/ portlock/
 # Garbage from autoconf:
 	@rm -rf autom4te.cache/
 	rm -f config.cache config.log config.status GNUmakefile
