@@ -562,7 +562,7 @@ tokenize_expand_file(List *tokens,
 
 	/*
 	 * There is possible recursion here if the file contains @ or an include
-	 * records.
+	 * record.
 	 */
 	tokenize_auth_file(inc_fullname, inc_file, &inc_lines, elevel,
 					   depth);
