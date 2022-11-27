@@ -588,8 +588,6 @@ SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;    -- wrong
 <programlisting>
 SELECT * FROM people AS mother JOIN people AS child ON mother.id = child.mother_id;
 </programlisting>
-     Additionally, an alias is required if the table reference is a
-     subquery (see <xref linkend="queries-subqueries"/>).
     </para>
 
     <para>
@@ -639,9 +637,9 @@ SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
 
     <para>
      Subqueries specifying a derived table must be enclosed in
-     parentheses and <emphasis>must</emphasis> be assigned a table
-     alias name (as in <xref linkend="queries-table-aliases"/>).  For
-     example:
+     parentheses.  They may be assigned a table alias name, and optionally
+     column alias names (as in <xref linkend="queries-table-aliases"/>).
+     For example:
 <programlisting>
 FROM (SELECT * FROM table1) AS alias_name
 </programlisting>
@@ -660,9 +658,17 @@ FROM (SELECT * FROM table1) AS alias_name
 FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
      AS names(first, last)
 </programlisting>
-     Again, a table alias is required.  Assigning alias names to the columns
+     Again, a table alias is optional.  Assigning alias names to the columns
      of the <command>VALUES</command> list is optional, but is good practice.
      For more information see <xref linkend="queries-values"/>.
+    </para>
+
+    <para>
+     According to the SQL standard, a table alias name must be supplied
+     for a subquery.  <productname>PostgreSQL</productname>
+     allows <literal>AS</literal> and the alias to be omitted, but
+     writing one is good practice in SQL code that might be ported to
+     another system.
     </para>
    </sect3>
 
