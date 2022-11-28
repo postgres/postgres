@@ -7501,7 +7501,7 @@ log_line_prefix = '%m [%p] %q%u@%d/%a '
         Temporary files can be
         created for sorts, hashes, and temporary query results.
         If enabled by this setting, a log entry is emitted for each
-        temporary file when it is deleted.
+        temporary file, with the file size specified in bytes, when it is deleted.
         A value of zero logs all temporary file information, while positive
         values log only files whose size is greater than or equal to
         the specified amount of data.
