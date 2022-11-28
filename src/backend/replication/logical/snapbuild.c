@@ -1464,11 +1464,10 @@ SnapBuildFindSnapshot(SnapBuild *builder, XLogRecPtr lsn, xl_running_xacts *runn
 	/*
 	 * c) transition from FULL_SNAPSHOT to CONSISTENT.
 	 *
-	 * In FULL_SNAPSHOT state (see d) ), and this xl_running_xacts'
-	 * oldestRunningXid is >= than nextXid from when we switched to
-	 * FULL_SNAPSHOT.  This means all transactions that are currently in
-	 * progress have a catalog snapshot, and all their changes have been
-	 * collected.  Switch to CONSISTENT.
+	 * In FULL_SNAPSHOT state, and this xl_running_xacts' oldestRunningXid is
+	 * >= than nextXid from when we switched to FULL_SNAPSHOT.  This means all
+	 * transactions that are currently in progress have a catalog snapshot,
+	 * and all their changes have been collected.  Switch to CONSISTENT.
 	 */
 	else if (builder->state == SNAPBUILD_FULL_SNAPSHOT &&
 			 TransactionIdPrecedesOrEquals(builder->next_phase_at,
