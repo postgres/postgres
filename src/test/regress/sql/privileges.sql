@@ -1858,6 +1858,9 @@ CREATE ROLE regress_no_priv;
 CREATE ROLE regress_only_vacuum;
 CREATE ROLE regress_only_analyze;
 CREATE ROLE regress_both;
+CREATE ROLE regress_only_vacuum_all IN ROLE pg_vacuum_all_tables;
+CREATE ROLE regress_only_analyze_all IN ROLE pg_analyze_all_tables;
+CREATE ROLE regress_both_all IN ROLE pg_vacuum_all_tables, pg_analyze_all_tables;
 
 CREATE TABLE vacanalyze_test (a INT);
 GRANT VACUUM ON vacanalyze_test TO regress_only_vacuum, regress_both;
@@ -1887,8 +1890,29 @@ ANALYZE vacanalyze_test;
 VACUUM (ANALYZE) vacanalyze_test;
 RESET ROLE;
 
+SET ROLE regress_only_vacuum_all;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+SET ROLE regress_only_analyze_all;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+SET ROLE regress_both_all;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
 DROP TABLE vacanalyze_test;
 DROP ROLE regress_no_priv;
 DROP ROLE regress_only_vacuum;
 DROP ROLE regress_only_analyze;
 DROP ROLE regress_both;
+DROP ROLE regress_only_vacuum_all;
+DROP ROLE regress_only_analyze_all;
+DROP ROLE regress_both_all;

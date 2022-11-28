@@ -4202,6 +4202,26 @@ pg_class_aclmask_ext(Oid table_oid, Oid roleid, AclMode mask,
 		has_privs_of_role(roleid, ROLE_PG_WRITE_ALL_DATA))
 		result |= (mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE));
 
+	/*
+	 * Check if ACL_VACUUM is being checked and, if so, and not already set as
+	 * part of the result, then check if the user is a member of the
+	 * pg_vacuum_all_tables role, which allows VACUUM on all relations.
+	 */
+	if (mask & ACL_VACUUM &&
+		!(result & ACL_VACUUM) &&
+		has_privs_of_role(roleid, ROLE_PG_VACUUM_ALL_TABLES))
+		result |= ACL_VACUUM;
+
+	/*
+	 * Check if ACL_ANALYZE is being checked and, if so, and not already set as
+	 * part of the result, then check if the user is a member of the
+	 * pg_analyze_all_tables role, which allows ANALYZE on all relations.
+	 */
+	if (mask & ACL_ANALYZE &&
+		!(result & ACL_ANALYZE) &&
+		has_privs_of_role(roleid, ROLE_PG_ANALYZE_ALL_TABLES))
+		result |= ACL_ANALYZE;
+
 	return result;
 }
 
