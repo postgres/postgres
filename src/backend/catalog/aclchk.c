@@ -3420,6 +3420,10 @@ string_to_privilege(const char *privname)
 		return ACL_SET;
 	if (strcmp(privname, "alter system") == 0)
 		return ACL_ALTER_SYSTEM;
+	if (strcmp(privname, "vacuum") == 0)
+		return ACL_VACUUM;
+	if (strcmp(privname, "analyze") == 0)
+		return ACL_ANALYZE;
 	if (strcmp(privname, "rule") == 0)
 		return 0;				/* ignore old RULE privileges */
 	ereport(ERROR,
@@ -3461,6 +3465,10 @@ privilege_to_string(AclMode privilege)
 			return "SET";
 		case ACL_ALTER_SYSTEM:
 			return "ALTER SYSTEM";
+		case ACL_VACUUM:
+			return "VACUUM";
+		case ACL_ANALYZE:
+			return "ANALYZE";
 		default:
 			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}

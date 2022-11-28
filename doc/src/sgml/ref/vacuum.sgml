@@ -357,7 +357,8 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ANALYZE ] [ <replaceable class="paramet
 
    <para>
     To vacuum a table, one must ordinarily be the table's owner or a
-    superuser.  However, database owners are allowed to
+    superuser or have the <literal>VACUUM</literal> privilege on the table.
+    However, database owners are allowed to
     vacuum all tables in their databases, except shared catalogs.
     (The restriction for shared catalogs means that a true database-wide
     <command>VACUUM</command> can only be performed by a superuser.)

@@ -457,6 +457,8 @@ do { \
 				CONVERT_PRIV('d', "DELETE");
 				CONVERT_PRIV('t', "TRIGGER");
 				CONVERT_PRIV('D', "TRUNCATE");
+				CONVERT_PRIV('v', "VACUUM");
+				CONVERT_PRIV('z', "ANALYZE");
 			}
 		}
 

@@ -295,8 +295,8 @@ extern bool vacuum_xid_failsafe_check(TransactionId relfrozenxid,
 									  MultiXactId relminmxid);
 extern void vac_update_datfrozenxid(void);
 extern void vacuum_delay_point(void);
-extern bool vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple,
-									 bits32 options);
+extern bool vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
+											 bits32 options);
 extern Relation vacuum_open_relation(Oid relid, RangeVar *relation,
 									 bits32 options, bool verbose,
 									 LOCKMODE lmode);

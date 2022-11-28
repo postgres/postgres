@@ -149,7 +149,8 @@ ANALYZE [ VERBOSE ] [ <replaceable class="parameter">table_and_columns</replacea
 
   <para>
    To analyze a table, one must ordinarily be the table's owner or a
-   superuser.  However, database owners are allowed to
+   superuser or have the <literal>ANALYZE</literal> privilege on the table.
+   However, database owners are allowed to
    analyze all tables in their databases, except shared catalogs.
    (The restriction for shared catalogs means that a true database-wide
    <command>ANALYZE</command> can only be performed by a superuser.)

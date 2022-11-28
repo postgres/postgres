@@ -1147,7 +1147,7 @@ static const SchemaQuery Query_for_trigger_of_table = {
 #define Privilege_options_of_grant_and_revoke \
 "SELECT", "INSERT", "UPDATE", "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER", \
 "CREATE", "CONNECT", "TEMPORARY", "EXECUTE", "USAGE", "SET", "ALTER SYSTEM", \
-"ALL"
+"VACUUM", "ANALYZE", "ALL"
 
 /*
  * These object types were introduced later than our support cutoff of
@@ -3782,7 +3782,8 @@ psql_completion(const char *text, int start, int end)
 		if (HeadMatches("ALTER", "DEFAULT", "PRIVILEGES"))
 			COMPLETE_WITH("SELECT", "INSERT", "UPDATE",
 						  "DELETE", "TRUNCATE", "REFERENCES", "TRIGGER",
-						  "CREATE", "EXECUTE", "USAGE", "ALL");
+						  "CREATE", "EXECUTE", "USAGE", "VACUUM", "ANALYZE",
+						  "ALL");
 		else if (TailMatches("GRANT"))
 			COMPLETE_WITH_QUERY_PLUS(Query_for_list_of_roles,
 									 Privilege_options_of_grant_and_revoke);

@@ -547,32 +547,35 @@ vacuum(List *relations, VacuumParams *params,
 }
 
 /*
- * Check if a given relation can be safely vacuumed or analyzed.  If the
- * user is not the relation owner, issue a WARNING log message and return
- * false to let the caller decide what to do with this relation.  This
- * routine is used to decide if a relation can be processed for VACUUM or
- * ANALYZE.
+ * Check if the current user has privileges to vacuum or analyze the relation.
+ * If not, issue a WARNING log message and return false to let the caller
+ * decide what to do with this relation.  This routine is used to decide if a
+ * relation can be processed for VACUUM or ANALYZE.
  */
 bool
-vacuum_is_relation_owner(Oid relid, Form_pg_class reltuple, bits32 options)
+vacuum_is_permitted_for_relation(Oid relid, Form_pg_class reltuple,
+								 bits32 options)
 {
 	char	   *relname;
+	AclMode		mode = 0;
 
 	Assert((options & (VACOPT_VACUUM | VACOPT_ANALYZE)) != 0);
 
 	/*
-	 * Check permissions.
-	 *
-	 * We allow the user to vacuum or analyze a table if he is superuser, the
-	 * table owner, or the database owner (but in the latter case, only if
-	 * it's not a shared relation).  object_ownercheck includes the
-	 * superuser case.
-	 *
-	 * Note we choose to treat permissions failure as a WARNING and keep
-	 * trying to vacuum or analyze the rest of the DB --- is this appropriate?
+	 * A role has privileges to vacuum or analyze the relation if any of the
+	 * following are true:
+	 *   - the role is a superuser
+	 *   - the role owns the relation
+	 *   - the role owns the current database and the relation is not shared
+	 *   - the role has been granted privileges to vacuum/analyze the relation
 	 */
+	if (options & VACOPT_VACUUM)
+		mode |= ACL_VACUUM;
+	if (options & VACOPT_ANALYZE)
+		mode |= ACL_ANALYZE;
 	if (object_ownercheck(RelationRelationId, relid, GetUserId()) ||
-		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared))
+		(object_ownercheck(DatabaseRelationId, MyDatabaseId, GetUserId()) && !reltuple->relisshared) ||
+		pg_class_aclcheck(relid, GetUserId(), mode) == ACLCHECK_OK)
 		return true;
 
 	relname = NameStr(reltuple->relname);
@@ -787,10 +790,10 @@ expand_vacuum_rel(VacuumRelation *vrel, int options)
 		classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 		/*
-		 * Make a returnable VacuumRelation for this rel if user is a proper
-		 * owner.
+		 * Make a returnable VacuumRelation for this rel if the user has the
+		 * required privileges.
 		 */
-		if (vacuum_is_relation_owner(relid, classForm, options))
+		if (vacuum_is_permitted_for_relation(relid, classForm, options))
 		{
 			oldcontext = MemoryContextSwitchTo(vac_context);
 			vacrels = lappend(vacrels, makeVacuumRelation(vrel->relation,
@@ -877,7 +880,7 @@ get_all_vacuum_rels(int options)
 		Oid			relid = classForm->oid;
 
 		/* check permissions of relation */
-		if (!vacuum_is_relation_owner(relid, classForm, options))
+		if (!vacuum_is_permitted_for_relation(relid, classForm, options))
 			continue;
 
 		/*
@@ -1797,7 +1800,9 @@ vac_truncate_clog(TransactionId frozenXID,
  *		be stale.
  *
  *		Returns true if it's okay to proceed with a requested ANALYZE
- *		operation on this table.
+ *		operation on this table.  Note that if vacuuming fails because the user
+ *		does not have the required privileges, this function returns true since
+ *		the user might have been granted privileges to ANALYZE the relation.
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.  The
@@ -1889,21 +1894,20 @@ vacuum_rel(Oid relid, RangeVar *relation, VacuumParams *params)
 	}
 
 	/*
-	 * Check if relation needs to be skipped based on ownership.  This check
+	 * Check if relation needs to be skipped based on privileges.  This check
 	 * happens also when building the relation list to vacuum for a manual
 	 * operation, and needs to be done additionally here as VACUUM could
-	 * happen across multiple transactions where relation ownership could have
-	 * changed in-between.  Make sure to only generate logs for VACUUM in this
-	 * case.
+	 * happen across multiple transactions where privileges could have changed
+	 * in-between.  Make sure to only generate logs for VACUUM in this case.
 	 */
-	if (!vacuum_is_relation_owner(RelationGetRelid(rel),
-								  rel->rd_rel,
-								  params->options & VACOPT_VACUUM))
+	if (!vacuum_is_permitted_for_relation(RelationGetRelid(rel),
+										  rel->rd_rel,
+										  VACOPT_VACUUM))
 	{
 		relation_close(rel, lmode);
 		PopActiveSnapshot();
 		CommitTransactionCommand();
-		return false;
+		return true;	/* user might have the ANALYZE privilege */
 	}
 
 	/*

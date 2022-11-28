@@ -1852,3 +1852,43 @@ DROP SCHEMA regress_roleoption;
 DROP ROLE regress_roleoption_protagonist;
 DROP ROLE regress_roleoption_donor;
 DROP ROLE regress_roleoption_recipient;
+
+-- VACUUM and ANALYZE
+CREATE ROLE regress_no_priv;
+CREATE ROLE regress_only_vacuum;
+CREATE ROLE regress_only_analyze;
+CREATE ROLE regress_both;
+
+CREATE TABLE vacanalyze_test (a INT);
+GRANT VACUUM ON vacanalyze_test TO regress_only_vacuum, regress_both;
+GRANT ANALYZE ON vacanalyze_test TO regress_only_analyze, regress_both;
+
+SET ROLE regress_no_priv;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+SET ROLE regress_only_vacuum;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+SET ROLE regress_only_analyze;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+SET ROLE regress_both;
+VACUUM vacanalyze_test;
+ANALYZE vacanalyze_test;
+VACUUM (ANALYZE) vacanalyze_test;
+RESET ROLE;
+
+DROP TABLE vacanalyze_test;
+DROP ROLE regress_no_priv;
+DROP ROLE regress_only_vacuum;
+DROP ROLE regress_only_analyze;
+DROP ROLE regress_both;
