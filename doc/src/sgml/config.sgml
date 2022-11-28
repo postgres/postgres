@@ -4610,24 +4610,6 @@ ANY <replaceable class="parameter">num_sync</replaceable> ( <replaceable class="
         </listitem>
        </varlistentry>
 
-       <varlistentry id="guc-promote-trigger-file" xreflabel="promote_trigger_file">
-        <term><varname>promote_trigger_file</varname> (<type>string</type>)
-        <indexterm>
-          <primary><varname>promote_trigger_file</varname> configuration parameter</primary>
-        </indexterm>
-        </term>
-        <listitem>
-         <para>
-          Specifies a trigger file whose presence ends recovery in the
-          standby.  Even if this value is not set, you can still promote
-          the standby using <command>pg_ctl promote</command> or calling
-          <function>pg_promote()</function>.
-          This parameter can only be set in the <filename>postgresql.conf</filename>
-          file or on the server command line.
-         </para>
-        </listitem>
-       </varlistentry>
-
      <varlistentry id="guc-hot-standby" xreflabel="hot_standby">
       <term><varname>hot_standby</varname> (<type>boolean</type>)
       <indexterm>

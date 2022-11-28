@@ -34,14 +34,11 @@
    </para>
 
    <para>
-    The
-    <literal>trigger_file</literal>
-    <indexterm>
-     <primary>trigger_file</primary>
-     <see>promote_trigger_file</see>
-    </indexterm>
-    setting has been renamed to
-    <xref linkend="guc-promote-trigger-file"/>.
+    PostgreSQL 15 and below had a setting
+    <literal>promote_trigger_file</literal>, or
+    <literal>trigger_file</literal> before 12.
+    Use <command>pg_ctl promote</command> or call
+    <function>pg_promote()</function> to promote a standby instead.
    </para>
 
    <para>

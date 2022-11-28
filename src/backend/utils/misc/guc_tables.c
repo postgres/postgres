@@ -3820,16 +3820,6 @@ struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"promote_trigger_file", PGC_SIGHUP, REPLICATION_STANDBY,
-			gettext_noop("Specifies a file name whose presence ends recovery in the standby."),
-			NULL
-		},
-		&PromoteTriggerFile,
-		"",
-		NULL, NULL, NULL
-	},
-
-	{
 		{"primary_conninfo", PGC_SIGHUP, REPLICATION_STANDBY,
 			gettext_noop("Sets the connection string to be used to connect to the sending server."),
 			NULL,

@@ -65,7 +65,6 @@ extern PGDLLIMPORT TimestampTz recoveryTargetTime;
 extern PGDLLIMPORT const char *recoveryTargetName;
 extern PGDLLIMPORT XLogRecPtr recoveryTargetLSN;
 extern PGDLLIMPORT RecoveryTargetType recoveryTarget;
-extern PGDLLIMPORT char *PromoteTriggerFile;
 extern PGDLLIMPORT bool wal_receiver_create_temp_slot;
 extern PGDLLIMPORT RecoveryTargetTimeLineGoal recoveryTargetTimeLineGoal;
 extern PGDLLIMPORT TimeLineID recoveryTargetTLIRequested;
