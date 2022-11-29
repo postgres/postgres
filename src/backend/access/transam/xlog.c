@@ -12447,6 +12447,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						wait_time = wal_retrieve_retry_interval -
 							TimestampDifferenceMilliseconds(last_fail_time, now);
 
+						/* Do background tasks that might benefit us later. */
+						KnownAssignedTransactionIdsIdleMaintenance();
+
 						WaitLatch(&XLogCtl->recoveryWakeupLatch,
 								  WL_LATCH_SET | WL_TIMEOUT | WL_POSTMASTER_DEATH,
 								  wait_time, WAIT_EVENT_RECOVERY_WAL_STREAM);
@@ -12641,6 +12644,9 @@ WaitForWALToBecomeAvailable(XLogRecPtr RecPtr, bool randAccess,
 						WalRcvForceReply();
 						streaming_reply_sent = true;
 					}
+
+					/* Do any background tasks that might benefit us later. */
+					KnownAssignedTransactionIdsIdleMaintenance();
 
 					/*
 					 * Wait for more WAL to arrive. Time out after 5 seconds
