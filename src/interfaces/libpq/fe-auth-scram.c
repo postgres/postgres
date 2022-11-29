@@ -768,7 +768,8 @@ pg_fe_scram_build_verifier(const char *password)
 	/*
 	 * Normalize the password with SASLprep.  If that doesn't work, because
 	 * the password isn't valid UTF-8 or contains prohibited characters, just
-	 * proceed with the original password.  (See comments at top of file.)
+	 * proceed with the original password.  (See comments at the top of
+	 * auth-scram.c.)
 	 */
 	rc = pg_saslprep(password, &prep_password);
 	if (rc == SASLPREP_OOM)
