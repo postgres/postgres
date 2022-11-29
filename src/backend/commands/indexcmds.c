@@ -1290,7 +1290,8 @@ DefineIndex(Oid relationId,
 				childidxs = RelationGetIndexList(childrel);
 				attmap =
 					build_attrmap_by_name(RelationGetDescr(childrel),
-										  parentDesc);
+										  parentDesc,
+										  false);
 
 				foreach(cell, childidxs)
 				{

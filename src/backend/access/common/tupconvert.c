@@ -107,7 +107,7 @@ convert_tuples_by_name(TupleDesc indesc,
 	int			n = outdesc->natts;
 
 	/* Verify compatibility and prepare attribute-number map */
-	attrMap = build_attrmap_by_name_if_req(indesc, outdesc);
+	attrMap = build_attrmap_by_name_if_req(indesc, outdesc, false);
 
 	if (attrMap == NULL)
 	{

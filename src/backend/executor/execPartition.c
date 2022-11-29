@@ -582,7 +582,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		 */
 		part_attmap =
 			build_attrmap_by_name(RelationGetDescr(partrel),
-								  RelationGetDescr(firstResultRel));
+								  RelationGetDescr(firstResultRel),
+								  false);
 		wcoList = (List *)
 			map_variable_attnos((Node *) wcoList,
 								firstVarno, 0,
@@ -639,7 +640,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (part_attmap == NULL)
 			part_attmap =
 				build_attrmap_by_name(RelationGetDescr(partrel),
-									  RelationGetDescr(firstResultRel));
+									  RelationGetDescr(firstResultRel),
+									  false);
 		returningList = (List *)
 			map_variable_attnos((Node *) returningList,
 								firstVarno, 0,
@@ -780,7 +782,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 				if (part_attmap == NULL)
 					part_attmap =
 						build_attrmap_by_name(RelationGetDescr(partrel),
-											  RelationGetDescr(firstResultRel));
+											  RelationGetDescr(firstResultRel),
+											  false);
 				onconflset = (List *)
 					map_variable_attnos((Node *) onconflset,
 										INNER_VAR, 0,
@@ -878,7 +881,8 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 		if (part_attmap == NULL)
 			part_attmap =
 				build_attrmap_by_name(RelationGetDescr(partrel),
-									  RelationGetDescr(firstResultRel));
+									  RelationGetDescr(firstResultRel),
+									  false);
 
 		if (unlikely(!leaf_part_rri->ri_projectNewInfoValid))
 			ExecInitMergeTupleSlots(mtstate, leaf_part_rri);
@@ -1147,7 +1151,8 @@ ExecInitPartitionDispatchInfo(EState *estate,
 		 * routing.
 		 */
 		pd->tupmap = build_attrmap_by_name_if_req(RelationGetDescr(parent_pd->reldesc),
-												  tupdesc);
+												  tupdesc,
+												  false);
 		pd->tupslot = pd->tupmap ?
 			MakeSingleTupleTableSlot(tupdesc, &TTSOpsVirtual) : NULL;
 	}

@@ -42,9 +42,11 @@ extern void free_attrmap(AttrMap *map);
 
 /* Conversion routines to build mappings */
 extern AttrMap *build_attrmap_by_name(TupleDesc indesc,
-									  TupleDesc outdesc);
+									  TupleDesc outdesc,
+									  bool missing_ok);
 extern AttrMap *build_attrmap_by_name_if_req(TupleDesc indesc,
-											 TupleDesc outdesc);
+											 TupleDesc outdesc,
+											 bool missing_ok);
 extern AttrMap *build_attrmap_by_position(TupleDesc indesc,
 										  TupleDesc outdesc,
 										  const char *msg);
