@@ -3175,16 +3175,6 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 					jtnode = j->larg;
 				}
 				break;
-			case JOIN_RIGHT:
-				/* Mirror-image of the JOIN_LEFT case */
-				if ((varno = get_result_relid(root, j->larg)) != 0 &&
-					(j->quals == NULL ||
-					 !find_dependent_phvs(root, varno)))
-				{
-					remove_result_refs(root, varno, j->rarg);
-					jtnode = j->rarg;
-				}
-				break;
 			case JOIN_SEMI:
 
 				/*
@@ -3193,14 +3183,17 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 				 * LHS, since we should either return the LHS row or not.  For
 				 * simplicity we inject the filter qual into a new FromExpr.
 				 *
-				 * Unlike the LEFT/RIGHT cases, we just Assert that there are
-				 * no PHVs that need to be evaluated at the semijoin's RHS,
-				 * since the rest of the query couldn't reference any outputs
-				 * of the semijoin's RHS.
+				 * There is a fine point about PHVs that are supposed to be
+				 * evaluated at the RHS.  Such PHVs could only appear in the
+				 * semijoin's qual, since the rest of the query cannot
+				 * reference any outputs of the semijoin's RHS.  Therefore,
+				 * they can't actually go to null before being examined, and
+				 * it'd be OK to just remove the PHV wrapping.  We don't have
+				 * infrastructure for that, but remove_result_refs() will
+				 * relabel them as to be evaluated at the LHS, which is fine.
 				 */
 				if ((varno = get_result_relid(root, j->rarg)) != 0)
 				{
-					Assert(!find_dependent_phvs(root, varno));
 					remove_result_refs(root, varno, j->larg);
 					if (j->quals)
 						jtnode = (Node *)
@@ -3214,6 +3207,7 @@ remove_useless_results_recurse(PlannerInfo *root, Node *jtnode)
 				/* We have no special smarts for these cases */
 				break;
 			default:
+				/* Note: JOIN_RIGHT should be gone at this point */
 				elog(ERROR, "unrecognized join type: %d",
 					 (int) j->jointype);
 				break;
