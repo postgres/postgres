@@ -82,6 +82,7 @@ tests += {
   'sd': meson.current_source_dir(),
   'bd': meson.current_build_dir(),
   'tap': {
+    'env': {'GZIP_PROGRAM': gzip.path()},
     'tests': [
       't/001_basic.pl',
       't/002_pg_dump.pl',
