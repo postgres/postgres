@@ -956,27 +956,12 @@ parse_max_rate(char *src)
  * at a later stage.
  */
 static void
-parse_compress_options(char *option, char **algorithm, char **detail,
-					   CompressionLocation *locationres)
+backup_parse_compress_options(char *option, char **algorithm, char **detail,
+							  CompressionLocation *locationres)
 {
-	char	   *sep;
-	char	   *endp;
-
 	/*
-	 * Check whether the compression specification consists of a bare integer.
-	 *
-	 * If so, for backward compatibility, assume gzip.
+	 * Strip off any "client-" or "server-" prefix, calculating the location.
 	 */
-	(void) strtol(option, &endp, 10);
-	if (*endp == '\0')
-	{
-		*locationres = COMPRESS_LOCATION_UNSPECIFIED;
-		*algorithm = pstrdup("gzip");
-		*detail = pstrdup(option);
-		return;
-	}
-
-	/* Strip off any "client-" or "server-" prefix. */
 	if (strncmp(option, "server-", 7) == 0)
 	{
 		*locationres = COMPRESS_LOCATION_SERVER;
@@ -990,27 +975,8 @@ parse_compress_options(char *option, char **algorithm, char **detail,
 	else
 		*locationres = COMPRESS_LOCATION_UNSPECIFIED;
 
-	/*
-	 * Check whether there is a compression detail following the algorithm
-	 * name.
-	 */
-	sep = strchr(option, ':');
-	if (sep == NULL)
-	{
-		*algorithm = pstrdup(option);
-		*detail = NULL;
-	}
-	else
-	{
-		char	   *alg;
-
-		alg = palloc((sep - option) + 1);
-		memcpy(alg, option, sep - option);
-		alg[sep - option] = '\0';
-
-		*algorithm = alg;
-		*detail = pstrdup(sep + 1);
-	}
+	/* fallback to the common parsing for the algorithm and detail */
+	parse_compress_options(option, algorithm, detail);
 }
 
 /*
@@ -2411,8 +2377,8 @@ main(int argc, char **argv)
 				compressloc = COMPRESS_LOCATION_UNSPECIFIED;
 				break;
 			case 'Z':
-				parse_compress_options(optarg, &compression_algorithm,
-									   &compression_detail, &compressloc);
+				backup_parse_compress_options(optarg, &compression_algorithm,
+											  &compression_detail, &compressloc);
 				break;
 			case 'c':
 				if (pg_strcasecmp(optarg, "fast") == 0)

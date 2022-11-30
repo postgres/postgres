@@ -356,3 +356,66 @@ validate_compress_specification(pg_compress_specification *spec)
 
 	return NULL;
 }
+
+#ifdef FRONTEND
+
+/*
+ * Basic parsing of a value specified through a command-line option, commonly
+ * -Z/--compress.
+ *
+ * The parsing consists of a METHOD:DETAIL string fed later to
+ * parse_compress_specification().  This only extracts METHOD and DETAIL.
+ * If only an integer is found, the method is implied by the value specified.
+ */
+void
+parse_compress_options(const char *option, char **algorithm, char **detail)
+{
+	char	   *sep;
+	char	   *endp;
+	long		result;
+
+	/*
+	 * Check whether the compression specification consists of a bare integer.
+	 *
+	 * For backward-compatibility, assume "none" if the integer found is zero
+	 * and "gzip" otherwise.
+	 */
+	result = strtol(option, &endp, 10);
+	if (*endp == '\0')
+	{
+		if (result == 0)
+		{
+			*algorithm = pstrdup("none");
+			*detail = NULL;
+		}
+		else
+		{
+			*algorithm = pstrdup("gzip");
+			*detail = pstrdup(option);
+		}
+		return;
+	}
+
+	/*
+	 * Check whether there is a compression detail following the algorithm
+	 * name.
+	 */
+	sep = strchr(option, ':');
+	if (sep == NULL)
+	{
+		*algorithm = pstrdup(option);
+		*detail = NULL;
+	}
+	else
+	{
+		char	   *alg;
+
+		alg = palloc((sep - option) + 1);
+		memcpy(alg, option, sep - option);
+		alg[sep - option] = '\0';
+
+		*algorithm = alg;
+		*detail = pstrdup(sep + 1);
+	}
+}
+#endif							/* FRONTEND */
