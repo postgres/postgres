@@ -57,7 +57,8 @@ pgrowlocks(text) returns setof record
      <row>
       <entry><structfield>locker</structfield></entry>
       <entry><type>xid</type></entry>
-      <entry>Transaction ID of locker, or multixact ID if multitransaction</entry>
+      <entry>Transaction ID of locker, or multixact ID if
+      multitransaction;  see <xref linkend="transaction-id"/></entry>
      </row>
      <row>
       <entry><structfield>multi</structfield></entry>
