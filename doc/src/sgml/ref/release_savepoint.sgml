@@ -21,7 +21,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>RELEASE SAVEPOINT</refname>
-  <refpurpose>destroy a previously defined savepoint</refpurpose>
+  <refpurpose>release a previously defined savepoint</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -34,23 +34,13 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>RELEASE SAVEPOINT</command> destroys a savepoint previously defined
-   in the current transaction.
-  </para>
-
-  <para>
-   Destroying a savepoint makes it unavailable as a rollback point,
-   but it has no other user visible behavior.  It does not undo the
-   effects of commands executed after the savepoint was established.
-   (To do that, see <xref linkend="sql-rollback-to"/>.)
-   Destroying a savepoint when
-   it is no longer needed allows the system to reclaim some resources
-   earlier than transaction end.
-  </para>
-
-  <para>
-   <command>RELEASE SAVEPOINT</command> also destroys all savepoints that were
-   established after the named savepoint was established.
+   <command>RELEASE SAVEPOINT</command> releases the named savepoint and
+   all active savepoints that were created after the named savepoint,
+   and frees their resources.  All changes made since the creation of
+   the savepoint that didn't already get rolled back are merged into
+   the transaction or savepoint that was active when the named savepoint
+   was created.  Changes made after <command>RELEASE SAVEPOINT</command>
+   will also be part of this active transaction or savepoint.
   </para>
  </refsect1>
 
@@ -62,7 +52,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
     <term><replaceable>savepoint_name</replaceable></term>
     <listitem>
      <para>
-      The name of the savepoint to destroy.
+      The name of the savepoint to release.
      </para>
     </listitem>
    </varlistentry>
@@ -78,7 +68,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
 
   <para>
    It is not possible to release a savepoint when the transaction is in
-   an aborted state.
+   an aborted state;  to do that, use <xref linkend="sql-rollback-to"/>.
   </para>
 
   <para>
@@ -93,7 +83,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
   <title>Examples</title>
 
   <para>
-   To establish and later destroy a savepoint:
+   To establish and later release a savepoint:
 <programlisting>
 BEGIN;
     INSERT INTO table1 VALUES (3);
@@ -104,6 +94,36 @@ COMMIT;
 </programlisting>
    The above transaction will insert both 3 and 4.
   </para>
+
+  <para>
+   A more complex example with multiple nested subtransactions:
+<programlisting>
+BEGIN;
+    INSERT INTO table1 VALUES (1);
+    SAVEPOINT sp1;
+    INSERT INTO table1 VALUES (2);
+    SAVEPOINT sp2;
+    INSERT INTO table1 VALUES (3);
+    RELEASE SAVEPOINT sp2;
+    INSERT INTO table1 VALUES (4))); -- generates an error
+</programlisting>
+   In this example, the application requests the release of the savepoint
+   <literal>sp2</literal>, which inserted 3.  This changes the insert's
+   transaction context to <literal>sp1</literal>.  When the statement
+   attempting to insert value 4 generates an error, the insertion of 2 and
+   4 are lost because they are in the same, now-rolled back savepoint,
+   and value 3 is in the same transaction context.  The application can
+   now only choose one of these two commands, since all other commands
+   will be ignored:
+<programlisting>
+   ROLLBACK;
+   ROLLBACK TO SAVEPOINT sp1;
+</programlisting>
+   Choosing <command>ROLLBACK</command> will abort everything, including
+   value 1, whereas <command>ROLLBACK TO SAVEPOINT sp1</command> will retain
+   value 1 and allow the transaction to continue.
+  </para>
+
  </refsect1>
 
  <refsect1>
