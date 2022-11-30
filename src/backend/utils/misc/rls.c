@@ -51,7 +51,7 @@
 int
 check_enable_rls(Oid relid, Oid checkAsUser, bool noError)
 {
-	Oid			user_id = checkAsUser ? checkAsUser : GetUserId();
+	Oid			user_id = OidIsValid(checkAsUser) ? checkAsUser : GetUserId();
 	HeapTuple	tuple;
 	Form_pg_class classform;
 	bool		relrowsecurity;

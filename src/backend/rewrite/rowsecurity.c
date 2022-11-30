@@ -128,7 +128,7 @@ get_row_security_policies(Query *root, RangeTblEntry *rte, int rt_index,
 		return;
 
 	/* Switch to checkAsUser if it's set */
-	user_id = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+	user_id = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
 
 	/* Determine the state of RLS for this, pass checkAsUser explicitly */
 	rls_status = check_enable_rls(rte->relid, rte->checkAsUser, false);

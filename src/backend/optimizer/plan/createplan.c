@@ -4148,6 +4148,9 @@ create_foreignscan_plan(PlannerInfo *root, ForeignPath *best_path,
 	/* Copy cost data from Path to Plan; no need to make FDW do this */
 	copy_generic_path_info(&scan_plan->scan.plan, &best_path->path);
 
+	/* Copy user OID to access as; likewise no need to make FDW do this */
+	scan_plan->checkAsUser = rel->userid;
+
 	/* Copy foreign server OID; likewise, no need to make FDW do this */
 	scan_plan->fs_server = rel->serverid;
 
@@ -5794,7 +5797,8 @@ make_foreignscan(List *qptlist,
 	node->operation = CMD_SELECT;
 	node->resultRelation = 0;
 
-	/* fs_server will be filled in by create_foreignscan_plan */
+	/* checkAsUser, fs_server will be filled in by create_foreignscan_plan */
+	node->checkAsUser = InvalidOid;
 	node->fs_server = InvalidOid;
 	node->fdw_exprs = fdw_exprs;
 	node->fdw_private = fdw_private;

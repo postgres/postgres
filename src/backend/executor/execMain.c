@@ -631,7 +631,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	 * call it once in ExecCheckRTPerms and pass the userid down from there.
 	 * But for now, no need for the extra clutter.
 	 */
-	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
+	userid = OidIsValid(rte->checkAsUser) ? rte->checkAsUser : GetUserId();
 
 	/*
 	 * We must have *all* the requiredPerms bits, but some of the bits can be

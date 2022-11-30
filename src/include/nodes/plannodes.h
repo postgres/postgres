@@ -703,6 +703,8 @@ typedef struct ForeignScan
 	Scan		scan;
 	CmdType		operation;		/* SELECT/INSERT/UPDATE/DELETE */
 	Index		resultRelation; /* direct modification target's RT index */
+	Oid			checkAsUser;	/* user to perform the scan as; 0 means to
+								 * check as current user */
 	Oid			fs_server;		/* OID of foreign server */
 	List	   *fdw_exprs;		/* expressions that FDW may evaluate */
 	List	   *fdw_private;	/* private data for FDW */

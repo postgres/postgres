@@ -901,7 +901,7 @@ typedef struct RelOptInfo
 	 */
 	/* identifies server for the table or join */
 	Oid			serverid;
-	/* identifies user to check access as */
+	/* identifies user to check access as; 0 means to check as current user */
 	Oid			userid;
 	/* join is only valid for current user */
 	bool		useridiscurrent;
