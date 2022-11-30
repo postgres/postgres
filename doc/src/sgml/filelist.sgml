@@ -104,6 +104,7 @@
 <!ENTITY protocol   SYSTEM "protocol.sgml">
 <!ENTITY sources    SYSTEM "sources.sgml">
 <!ENTITY storage    SYSTEM "storage.sgml">
+<!ENTITY transaction     SYSTEM "xact.sgml">
 <!ENTITY tablesample-method SYSTEM "tablesample-method.sgml">
 <!ENTITY generic-wal SYSTEM "generic-wal.sgml">
 <!ENTITY custom-rmgr SYSTEM "custom-rmgr.sgml">

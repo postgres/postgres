@@ -271,6 +271,7 @@ break is not needed in a wider output rendering.
   &brin;
   &hash;
   &storage;
+  &transaction;
   &bki;
   &planstats;
   &backup-manifest;
