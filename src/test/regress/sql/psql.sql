@@ -1380,6 +1380,70 @@ SELECT 1 AS one \; SELECT warn('1.5') \; SELECT 2 AS two ;
 DROP FUNCTION warn(TEXT);
 
 --
+-- \g with file
+--
+\getenv abs_builddir PG_ABS_BUILDDIR
+\set g_out_file :abs_builddir '/results/psql-output1'
+
+CREATE TEMPORARY TABLE reload_output(
+  lineno int NOT NULL GENERATED ALWAYS AS IDENTITY,
+  line text
+);
+
+SELECT 1 AS a \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+SELECT 2 AS b\; SELECT 3 AS c\; SELECT 4 AS d \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+COPY (SELECT 'foo') TO STDOUT \; COPY (SELECT 'bar') TO STDOUT \g :g_out_file
+COPY reload_output(line) FROM :'g_out_file';
+
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+
+--
+-- \o with file
+--
+\set o_out_file :abs_builddir '/results/psql-output2'
+
+\o :o_out_file
+SELECT max(unique1) FROM onek;
+SELECT 1 AS a\; SELECT 2 AS b\; SELECT 3 AS c;
+
+-- COPY TO file
+-- The data goes to :g_out_file and the status to :o_out_file
+\set QUIET false
+COPY (SELECT unique1 FROM onek ORDER BY unique1 LIMIT 10) TO :'g_out_file';
+-- DML command status
+UPDATE onek SET unique1 = unique1 WHERE false;
+\set QUIET true
+\o
+
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+
+-- Multiple COPY TO STDOUT with output file
+\o :o_out_file
+-- The data goes to :o_out_file with no status generated.
+COPY (SELECT 'foo1') TO STDOUT \; COPY (SELECT 'bar1') TO STDOUT;
+-- Combination of \o and \g file with multiple COPY queries.
+COPY (SELECT 'foo2') TO STDOUT \; COPY (SELECT 'bar2') TO STDOUT \g :g_out_file
+\o
+
+-- Check the contents of the files generated.
+COPY reload_output(line) FROM :'g_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+TRUNCATE TABLE reload_output;
+COPY reload_output(line) FROM :'o_out_file';
+SELECT line FROM reload_output ORDER BY lineno;
+
+DROP TABLE reload_output;
+
+--
 -- AUTOCOMMIT and combined queries
 --
 \set AUTOCOMMIT off
