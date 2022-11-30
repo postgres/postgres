@@ -1395,7 +1395,8 @@
       </para>
       <para>
        Virtual ID of the transaction targeted by the lock,
-       or null if the target is not a virtual transaction ID
+       or null if the target is not a virtual transaction ID;  see
+       <xref linkend="transactions"/>
       </para></entry>
      </row>
 
@@ -1404,8 +1405,8 @@
        <structfield>transactionid</structfield> <type>xid</type>
       </para>
       <para>
-       ID of the transaction targeted by the lock,
-       or null if the target is not a transaction ID
+       ID of the transaction targeted by the lock, or null if the target
+       is not a transaction ID;  <xref linkend="transactions"/>
       </para></entry>
      </row>
 
