@@ -7017,12 +7017,14 @@ local0.*    /var/log/postgresql
             </row>
             <row>
              <entry><literal>%v</literal></entry>
-             <entry>Virtual transaction ID (backendID/localXID)</entry>
+             <entry>Virtual transaction ID (backendID/localXID);  see
+             <xref linkend="transaction-id"/></entry>
              <entry>no</entry>
             </row>
             <row>
              <entry><literal>%x</literal></entry>
-             <entry>Transaction ID (0 if none is assigned)</entry>
+             <entry>Transaction ID (0 if none is assigned);  see
+             <xref linkend="transaction-id"/></entry>
              <entry>no</entry>
             </row>
             <row>

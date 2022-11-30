@@ -1644,7 +1644,8 @@
      <literal>3</literal> (values under that are reserved) and the
      epoch value is incremented by one.
      In some contexts, the epoch and xid values are
-     considered together as a single 64-bit value.
+     considered together as a single 64-bit value;  see <xref
+     linkend="transaction-id"/> for more details.
     </para>
     <para>
      For more information, see

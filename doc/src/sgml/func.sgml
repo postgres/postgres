@@ -24100,7 +24100,10 @@ SELECT collation for ('foo' COLLATE "de_DE");
        <para>
         Returns the current transaction's ID.  It will assign a new one if the
         current transaction does not have one already (because it has not
-        performed any database updates).
+        performed any database updates);  see <xref
+        linkend="transaction-id"/> for details.  If executed in a
+        subtransaction, this will return the top-level transaction ID;
+        see <xref linkend="subxacts"/> for details.
        </para></entry>
       </row>
 
@@ -24117,6 +24120,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
         ID is assigned yet.  (It's best to use this variant if the transaction
         might otherwise be read-only, to avoid unnecessary consumption of an
         XID.)
+        If executed in a subtransaction, this will return the top-level
+        transaction ID.
        </para></entry>
       </row>
 
@@ -24160,6 +24165,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
        <para>
         Returns a current <firstterm>snapshot</firstterm>, a data structure
         showing which transaction IDs are now in-progress.
+        Only top-level transaction IDs are included in the snapshot;
+        subtransaction IDs are not shown;  see <xref linkend="subxacts"/>
+        for details.
        </para></entry>
       </row>
 
@@ -24214,7 +24222,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
         Is the given transaction ID <firstterm>visible</firstterm> according
         to this snapshot (that is, was it completed before the snapshot was
         taken)?  Note that this function will not give the correct answer for
-        a subtransaction ID.
+        a subtransaction ID (subxid);  see <xref linkend="subxacts"/> for
+        details.
        </para></entry>
       </row>
      </tbody>
@@ -24226,8 +24235,9 @@ SELECT collation for ('foo' COLLATE "de_DE");
     wraps around every 4 billion transactions.  However,
     the functions shown in <xref linkend="functions-pg-snapshot"/> use a
     64-bit type <type>xid8</type> that does not wrap around during the life
-    of an installation, and can be converted to <type>xid</type> by casting if
-    required.  The data type <type>pg_snapshot</type> stores information about
+    of an installation and can be converted to <type>xid</type> by casting if
+    required;  see <xref linkend="transaction-id"/> for details.
+    The data type <type>pg_snapshot</type> stores information about
     transaction ID visibility at a particular moment in time.  Its components
     are described in <xref linkend="functions-pg-snapshot-parts"/>.
     <type>pg_snapshot</type>'s textual representation is
@@ -24273,7 +24283,7 @@ SELECT collation for ('foo' COLLATE "de_DE");
         xmax</literal> and not in this list was already completed at the time
         of the snapshot, and thus is either visible or dead according to its
         commit status.  This list does not include the transaction IDs of
-        subtransactions.
+        subtransactions (subxids).
        </entry>
       </row>
      </tbody>

@@ -897,7 +897,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
        <structfield>backend_xid</structfield> <type>xid</type>
       </para>
       <para>
-       Top-level transaction identifier of this backend, if any.
+       Top-level transaction identifier of this backend, if any;  see
+       <xref linkend="transaction-id"/>.
       </para></entry>
      </row>
 
@@ -1860,7 +1861,8 @@ postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: ser
      </row>
      <row>
       <entry><literal>virtualxid</literal></entry>
-      <entry>Waiting to acquire a virtual transaction ID lock.</entry>
+      <entry>Waiting to acquire a virtual transaction ID lock;  see
+      <xref linkend="transaction-id"/>.</entry>
      </row>
     </tbody>
    </tgroup>
