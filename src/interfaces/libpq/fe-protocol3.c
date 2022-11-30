@@ -466,7 +466,7 @@ static void
 handleSyncLoss(PGconn *conn, char id, int msgLength)
 {
 	libpq_append_conn_error(conn, "lost synchronization with server: got message type \"%c\", length %d",
-					  id, msgLength);
+							id, msgLength);
 	/* build an error result holding the error message */
 	pqSaveErrorResult(conn);
 	conn->asyncStatus = PGASYNC_READY;	/* drop out of PQgetResult wait loop */
