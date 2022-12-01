@@ -7120,7 +7120,7 @@ FROM pg_stat_get_backend_idset() AS backendid;
    explicitly tell the configure script to make the probes available
    in <productname>PostgreSQL</productname>. To include DTrace support
    specify <option>--enable-dtrace</option> to configure.  See <xref
-   linkend="install-procedure"/> for further information.
+   linkend="configure-options-devel"/> for further information.
   </para>
   </sect2>
 

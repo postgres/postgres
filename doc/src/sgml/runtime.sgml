@@ -1857,7 +1857,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     <step>
      <para>
       Install the new version of <productname>PostgreSQL</productname> as
-      outlined in <xref linkend="install-procedure"/>.
+      outlined in <xref linkend="installation"/>.
      </para>
     </step>
 

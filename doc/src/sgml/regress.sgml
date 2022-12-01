@@ -123,7 +123,7 @@ make installcheck-parallel
   </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="regress-additional">
    <title>Additional Test Suites</title>
 
   <para>
