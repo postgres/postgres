@@ -1598,6 +1598,10 @@ repeat('Pg', 4) <returnvalue>PgPgPgPg</returnvalue>
        <para>
         <literal>round(42.4382, 2)</literal>
         <returnvalue>42.44</returnvalue>
+       </para>
+       <para>
+        <literal>round(1234.56, -1)</literal>
+        <returnvalue>1230</returnvalue>
        </para></entry>
       </row>
 
