@@ -1790,6 +1790,7 @@ select pg_get_viewdef('tt20v', true);
 -- reverse-listing of various special function syntaxes required by SQL
 create view tt201v as
 select
+  ('2022-12-01'::date + '1 day'::interval) at time zone 'UTC' as atz,
   extract(day from now()) as extr,
   (now(), '1 day'::interval) overlaps
     (current_timestamp(2), '1 day'::interval) as o,
@@ -1812,10 +1813,11 @@ select
 select pg_get_viewdef('tt201v', true);
                                         pg_get_viewdef                                         
 -----------------------------------------------------------------------------------------------
-  SELECT EXTRACT(day FROM now()) AS extr,                                                     +
+  SELECT (('12-01-2022'::date + '@ 1 day'::interval) AT TIME ZONE 'UTC'::text) AS atz,        +
+     EXTRACT(day FROM now()) AS extr,                                                         +
      ((now(), '@ 1 day'::interval) OVERLAPS (CURRENT_TIMESTAMP(2), '@ 1 day'::interval)) AS o,+
-     (('foo'::text) IS NORMALIZED) AS isn,                                                    +
-     (('foo'::text) IS NFKC NORMALIZED) AS isnn,                                              +
+     ('foo'::text IS NORMALIZED) AS isn,                                                      +
+     ('foo'::text IS NFKC NORMALIZED) AS isnn,                                                +
      NORMALIZE('foo'::text) AS n,                                                             +
      NORMALIZE('foo'::text, NFKD) AS nfkd,                                                    +
      OVERLAY('foo'::text PLACING 'bar'::text FROM 2) AS ovl,                                  +

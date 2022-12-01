@@ -608,6 +608,7 @@ select pg_get_viewdef('tt20v', true);
 
 create view tt201v as
 select
+  ('2022-12-01'::date + '1 day'::interval) at time zone 'UTC' as atz,
   extract(day from now()) as extr,
   (now(), '1 day'::interval) overlaps
     (current_timestamp(2), '1 day'::interval) as o,
