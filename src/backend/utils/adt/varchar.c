@@ -1020,6 +1020,7 @@ hashbpchar(PG_FUNCTION_ARGS)
 			buf = palloc(bsize);
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
+			pfree(uchar);
 
 			result = hash_any(buf, bsize);
 
@@ -1081,6 +1082,7 @@ hashbpcharextended(PG_FUNCTION_ARGS)
 			buf = palloc(bsize);
 			ucol_getSortKey(mylocale->info.icu.ucol,
 							uchar, ulen, buf, bsize);
+			pfree(uchar);
 
 			result = hash_any_extended(buf, bsize, PG_GETARG_INT64(1));
 
