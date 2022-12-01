@@ -1,0 +1,121 @@
+Parsed test spec with 2 sessions
+
+starting permutation: s1_begin s2_begin s1_refresh s2_read s2_insert s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s2_insert: INSERT INTO orders VALUES ('2022-04-02', 'orange', 15);
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s1_refresh s2_read s2_update s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s2_update: UPDATE orders SET num = num + 1;
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s2_read s1_refresh s2_insert s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_insert: INSERT INTO orders VALUES ('2022-04-02', 'orange', 15);
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s2_read s1_refresh s2_update s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_update: UPDATE orders SET num = num + 1;
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s2_read s2_insert s1_refresh s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s2_insert: INSERT INTO orders VALUES ('2022-04-02', 'orange', 15);
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s2_read s2_update s1_refresh s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s2_update: UPDATE orders SET num = num + 1;
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s1_refresh s2_insert s2_read s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_insert: INSERT INTO orders VALUES ('2022-04-02', 'orange', 15);
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions
+
+starting permutation: s1_begin s2_begin s1_refresh s2_update s2_read s1_commit s2_commit
+step s1_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s2_begin: BEGIN ISOLATION LEVEL SERIALIZABLE;
+step s1_refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY order_summary;
+step s2_update: UPDATE orders SET num = num + 1;
+step s2_read: SELECT max(date) FROM order_summary;
+       max
+----------
+04-01-2022
+(1 row)
+
+step s1_commit: COMMIT;
+step s2_commit: COMMIT;
+ERROR:  could not serialize access due to read/write dependencies among transactions

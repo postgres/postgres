@@ -490,14 +490,13 @@ static void ReleasePredicateLocksLocal(void);
 
 /*
  * Does this relation participate in predicate locking? Temporary and system
- * relations are exempt, as are materialized views.
+ * relations are exempt.
  */
 static inline bool
 PredicateLockingNeededForRelation(Relation relation)
 {
 	return !(relation->rd_id < FirstUnpinnedObjectId ||
-			 RelationUsesLocalBuffers(relation) ||
-			 relation->rd_rel->relkind == RELKIND_MATVIEW);
+			 RelationUsesLocalBuffers(relation));
 }
 
 /*
