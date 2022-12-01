@@ -237,7 +237,7 @@ su - postgres
       can download an add-on package from <ulink
       url="https://www.gnu.org/software/gettext/"></ulink>.
       If you are using the <application>Gettext</application> implementation in
-      the <acronym>GNU</acronym> C library then you will additionally
+      the <acronym>GNU</acronym> C library, then you will additionally
       need the <productname>GNU Gettext</productname> package for some
       utility programs.  For any of the other implementations you will
       not need it.
