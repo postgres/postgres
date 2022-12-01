@@ -4,9 +4,8 @@
  <title>Reliability and the Write-Ahead Log</title>
 
  <para>
-  This chapter explains how to control the reliability of
-  <productname>PostgreSQL</productname>, including details about the
-  Write-Ahead Log.
+  This chapter explains how the Write-Ahead Log is used to obtain
+  efficient, reliable operation.
  </para>
 
  <sect1 id="wal-reliability">
@@ -896,5 +895,4 @@
    seem to be a problem in practice.
   </para>
  </sect1>
-
 </chapter>
