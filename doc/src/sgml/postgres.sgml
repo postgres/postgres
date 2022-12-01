@@ -260,7 +260,6 @@
   &brin;
   &hash;
   &storage;
-  &transaction;
   &bki;
   &planstats;
 
