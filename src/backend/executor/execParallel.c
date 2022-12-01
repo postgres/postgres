@@ -183,6 +183,7 @@ ExecSerializePlan(Plan *plan, EState *estate)
 	pstmt->dependsOnRole = false;
 	pstmt->parallelModeNeeded = false;
 	pstmt->planTree = plan;
+	pstmt->partPruneInfos = estate->es_part_prune_infos;
 	pstmt->rtable = estate->es_range_table;
 	pstmt->resultRelations = NIL;
 	pstmt->appendRelations = NIL;

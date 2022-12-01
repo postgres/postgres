@@ -1791,6 +1791,9 @@ adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)
  *		Initialize data structure needed for run-time partition pruning and
  *		do initial pruning if needed
  *
+ * 'root_parent_relids' identifies the relation to which both the parent plan
+ * and the PartitionPruneInfo given by 'part_prune_index' belong.
+ *
  * On return, *initially_valid_subplans is assigned the set of indexes of
  * child subplans that must be initialized along with the parent plan node.
  * Initial pruning is performed here if needed and in that case only the
@@ -1803,11 +1806,24 @@ adjust_partition_colnos_using_map(List *colnos, AttrMap *attrMap)
 PartitionPruneState *
 ExecInitPartitionPruning(PlanState *planstate,
 						 int n_total_subplans,
-						 PartitionPruneInfo *pruneinfo,
+						 int part_prune_index,
+						 Bitmapset *root_parent_relids,
 						 Bitmapset **initially_valid_subplans)
 {
 	PartitionPruneState *prunestate;
 	EState	   *estate = planstate->state;
+	PartitionPruneInfo *pruneinfo;
+
+	/* Obtain the pruneinfo we need, and make sure it's the right one */
+	pruneinfo = list_nth(estate->es_part_prune_infos, part_prune_index);
+	if (!bms_equal(root_parent_relids, pruneinfo->root_parent_relids))
+		ereport(ERROR,
+				errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg_internal("mismatching PartitionPruneInfo found at part_prune_index %d",
+								part_prune_index),
+				errdetail_internal("plan node relids %s, pruneinfo relids %s",
+								   bmsToString(root_parent_relids),
+								   bmsToString(pruneinfo->root_parent_relids)));
 
 	/* We may need an expression context to evaluate partition exprs */
 	ExecAssignExprContext(estate, planstate);
