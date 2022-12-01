@@ -9187,8 +9187,7 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry></entry>
       <entry>
        Virtual ID of the transaction targeted by the lock,
-       or null if the target is not a virtual transaction ID;  see
-       <xref linkend="transactions"/>
+       or null if the target is not a virtual transaction ID
       </entry>
      </row>
      <row>
@@ -9196,8 +9195,8 @@ SCRAM-SHA-256$<replaceable>&lt;iteration count&gt;</replaceable>:<replaceable>&l
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of the transaction targeted by the lock, or null if the target
-       is not a transaction ID;  <xref linkend="transactions"/>
+       ID of the transaction targeted by the lock,
+       or null if the target is not a transaction ID
       </entry>
      </row>
      <row>

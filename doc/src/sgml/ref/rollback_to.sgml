@@ -35,9 +35,8 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
 
   <para>
    Roll back all commands that were executed after the savepoint was
-   established and then start a new subtransaction at the same transaction level.
-   The savepoint remains valid and can be rolled back to again later,
-   if needed.
+   established.  The savepoint remains valid and can be rolled back to
+   again later, if needed.
   </para>
 
   <para>
