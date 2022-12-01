@@ -342,17 +342,6 @@ su - postgres
    for a list) or at <ulink
    url="ftp://ftp.gnu.org/gnu/"></ulink>.
   </para>
-
-  <para>
-   Also check that you have sufficient disk space. You will need about
-   350 MB for the source tree during compilation and about 60 MB for
-   the installation directory. An empty database cluster takes about
-   40 MB; databases take about five times the amount of space that a
-   flat text file with the same data would take. If you are going to
-   run the regression tests you will temporarily need up to an extra
-   300 MB. Use the <command>df</command> command to check free disk
-   space.
-  </para>
  </sect1>
 
  <sect1 id="install-getsource">
