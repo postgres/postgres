@@ -123,6 +123,8 @@ my @no_equal;
 my @no_read;
 # node types we don't want read/write support for
 my @no_read_write;
+# node types that have handmade read/write support
+my @special_read_write;
 # node types we don't want any support functions for, just node tags
 my @nodetag_only;
 
@@ -152,9 +154,12 @@ my @extra_tags = qw(
 # since we won't use its internal structure here anyway.
 push @node_types, qw(List);
 # Lists are specially treated in all four support files, too.
-push @no_copy,       qw(List);
-push @no_equal,      qw(List);
-push @no_read_write, qw(List);
+# (Ideally we'd mark List as "special copy/equal" not "no copy/equal".
+# But until there's other use-cases for that, just hot-wire the tests
+# that would need to distinguish.)
+push @no_copy,            qw(List);
+push @no_equal,           qw(List);
+push @special_read_write, qw(List);
 
 # Nodes with custom copy/equal implementations are skipped from
 # .funcs.c but need case statements in .switch.c.
@@ -338,16 +343,7 @@ foreach my $infile (@ARGV)
 						}
 						elsif ($attr eq 'special_read_write')
 						{
-							# This attribute is called
-							# "special_read_write" because there is
-							# special treatment in outNode() and
-							# nodeRead() for these nodes.  For this
-							# script, it's the same as
-							# "no_read_write", but calling the
-							# attribute that externally would probably
-							# be confusing, since read/write support
-							# does in fact exist.
-							push @no_read_write, $in_struct;
+							push @special_read_write, $in_struct;
 						}
 						elsif ($attr =~ /^nodetag_number\((\d+)\)$/)
 						{
@@ -681,6 +677,9 @@ _equal${n}(const $n *a, const $n *b)
 {
 " unless $struct_no_equal;
 
+	# track already-processed fields to support field order checks
+	my %previous_fields;
+
 	# print instructions for each field
 	foreach my $f (@{ $node_type_info{$n}->{fields} })
 	{
@@ -697,6 +696,10 @@ _equal${n}(const $n *a, const $n *b)
 			if ($a =~ /^array_size\(([\w.]+)\)$/)
 			{
 				$array_size_field = $1;
+				# insist that we copy or compare the array size first!
+				die
+				  "array size field $array_size_field for field $n.$f must precede $f\n"
+				  if (!$previous_fields{$array_size_field});
 			}
 			elsif ($a =~ /^copy_as\(([\w.]+)\)$/)
 			{
@@ -786,6 +789,17 @@ _equal${n}(const $n *a, const $n *b)
 		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
 			and elem $1, @node_types)
 		{
+			die
+			  "node type \"$1\" lacks copy support, which is required for struct \"$n\" field \"$f\"\n"
+			  if (elem $1, @no_copy or elem $1, @nodetag_only)
+			  and $1 ne 'List'
+			  and !$copy_ignore;
+			die
+			  "node type \"$1\" lacks equal support, which is required for struct \"$n\" field \"$f\"\n"
+			  if (elem $1, @no_equal or elem $1, @nodetag_only)
+			  and $1 ne 'List'
+			  and !$equal_ignore;
+
 			print $cff "\tCOPY_NODE_FIELD($f);\n"    unless $copy_ignore;
 			print $eff "\tCOMPARE_NODE_FIELD($f);\n" unless $equal_ignore;
 		}
@@ -809,6 +823,8 @@ _equal${n}(const $n *a, const $n *b)
 			die
 			  "could not handle type \"$t\" in struct \"$n\" field \"$f\"\n";
 		}
+
+		$previous_fields{$f} = 1;
 	}
 
 	print $cff "
@@ -851,6 +867,7 @@ foreach my $n (@node_types)
 	next if elem $n, @abstract_types;
 	next if elem $n, @nodetag_only;
 	next if elem $n, @no_read_write;
+	next if elem $n, @special_read_write;
 
 	my $no_read = (elem $n, @no_read);
 
@@ -891,6 +908,11 @@ _read${n}(void)
 ";
 	}
 
+	# track already-processed fields to support field order checks
+	# (this isn't quite redundant with the previous loop, since
+	# we may be considering structs that lack copy/equal support)
+	my %previous_fields;
+
 	# print instructions for each field
 	foreach my $f (@{ $node_type_info{$n}->{fields} })
 	{
@@ -906,6 +928,10 @@ _read${n}(void)
 			if ($a =~ /^array_size\(([\w.]+)\)$/)
 			{
 				$array_size_field = $1;
+				# insist that we read the array size first!
+				die
+				  "array size field $array_size_field for field $n.$f must precede $f\n"
+				  if (!$previous_fields{$array_size_field} && !$no_read);
 			}
 			elsif ($a =~ /^read_as\(([\w.]+)\)$/)
 			{
@@ -1083,6 +1109,14 @@ _read${n}(void)
 		elsif (($t =~ /^(\w+)\*$/ or $t =~ /^struct\s+(\w+)\*$/)
 			and elem $1, @node_types)
 		{
+			die
+			  "node type \"$1\" lacks write support, which is required for struct \"$n\" field \"$f\"\n"
+			  if (elem $1, @no_read_write or elem $1, @nodetag_only);
+			die
+			  "node type \"$1\" lacks read support, which is required for struct \"$n\" field \"$f\"\n"
+			  if (elem $1, @no_read or elem $1, @nodetag_only)
+			  and !$no_read;
+
 			print $off "\tWRITE_NODE_FIELD($f);\n";
 			print $rff "\tREAD_NODE_FIELD($f);\n" unless $no_read;
 		}
@@ -1145,6 +1179,8 @@ _read${n}(void)
 		{
 			print $rff "\tlocal_node->$f = $read_as_field;\n" unless $no_read;
 		}
+
+		$previous_fields{$f} = 1;
 	}
 
 	print $off "}
