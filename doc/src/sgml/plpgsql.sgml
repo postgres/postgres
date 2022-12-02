@@ -4230,10 +4230,10 @@ ASSERT <replaceable class="parameter">condition</replaceable> <optional> , <repl
 
 <programlisting>
 CREATE TABLE emp (
-    empname text,
-    salary integer,
-    last_date timestamp,
-    last_user text
+    empname           text,
+    salary            integer,
+    last_date         timestamp,
+    last_user         text
 );
 
 CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
@@ -4292,7 +4292,7 @@ CREATE TABLE emp_audit(
     stamp             timestamp NOT NULL,
     userid            text      NOT NULL,
     empname           text      NOT NULL,
-    salary integer
+    salary            integer
 );
 
 CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
@@ -4589,7 +4589,7 @@ CREATE TABLE emp_audit(
     stamp             timestamp NOT NULL,
     userid            text      NOT NULL,
     empname           text      NOT NULL,
-    salary integer
+    salary            integer
 );
 
 CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
