@@ -1151,6 +1151,39 @@ is( $node_subscriber->safe_psql(
 4||),
 	'publication containing both parent and child relation');
 
+# TEST: Only columns in the column list should exist in the old tuple of UPDATE
+# and DELETE.
+
+$node_publisher->safe_psql(
+	'postgres', qq(
+	CREATE TABLE test_oldtuple_col (a int PRIMARY KEY, b int, c int);
+	CREATE PUBLICATION pub_check_oldtuple FOR TABLE test_oldtuple_col (a, b);
+	INSERT INTO test_oldtuple_col VALUES(1, 2, 3);
+	SELECT * FROM pg_create_logical_replication_slot('test_slot', 'pgoutput');
+	UPDATE test_oldtuple_col SET a = 2;
+	DELETE FROM test_oldtuple_col;
+));
+
+
+# Check at 7th byte of binary data for the number of columns in the old tuple.
+#
+# 7 = 1 (count from 1) + 1 byte (message type) + 4 byte (relid) + 1 byte (flag
+# for old key).
+#
+# The message type of UPDATE is 85('U').
+# The message type of DELETE is 68('D').
+$result = $node_publisher->safe_psql(
+	'postgres', qq(
+		SELECT substr(data, 7, 2) = int2send(2::smallint)
+		FROM pg_logical_slot_peek_binary_changes('test_slot', NULL, NULL,
+			'proto_version', '1',
+			'publication_names', 'pub_check_oldtuple')
+		WHERE get_byte(data, 0) = 85 OR get_byte(data, 0) = 68
+));
+
+is( $result, qq(t
+t), 'check the number of columns in the old tuple');
+
 
 # TEST: With a table included in multiple publications with different column
 # lists, we should catch the error when creating the subscription.

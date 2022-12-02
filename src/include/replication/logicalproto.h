@@ -220,7 +220,7 @@ extern LogicalRepRelId logicalrep_read_update(StringInfo in,
 											  LogicalRepTupleData *newtup);
 extern void logicalrep_write_delete(StringInfo out, TransactionId xid,
 									Relation rel, TupleTableSlot *oldslot,
-									bool binary);
+									bool binary, Bitmapset *columns);
 extern LogicalRepRelId logicalrep_read_delete(StringInfo in,
 											  LogicalRepTupleData *oldtup);
 extern void logicalrep_write_truncate(StringInfo out, TransactionId xid,
