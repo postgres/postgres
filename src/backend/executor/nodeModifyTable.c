@@ -3481,7 +3481,7 @@ ExecPrepareTupleRouting(ModifyTableState *mtstate,
 	/*
 	 * Convert the tuple, if necessary.
 	 */
-	map = partrel->ri_RootToPartitionMap;
+	map = ExecGetRootToChildMap(partrel, estate);
 	if (map != NULL)
 	{
 		TupleTableSlot *new_slot = partrel->ri_PartitionTupleSlot;

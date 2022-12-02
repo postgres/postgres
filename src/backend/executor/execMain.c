@@ -1256,9 +1256,11 @@ InitResultRelInfo(ResultRelInfo *resultRelInfo,
 	 * this field is filled in ExecInitModifyTable().
 	 */
 	resultRelInfo->ri_RootResultRelInfo = partition_root_rri;
-	resultRelInfo->ri_RootToPartitionMap = NULL;	/* set by
-													 * ExecInitRoutingInfo */
-	resultRelInfo->ri_PartitionTupleSlot = NULL;	/* ditto */
+	/* Set by ExecGetRootToChildMap */
+	resultRelInfo->ri_RootToChildMap = NULL;
+	resultRelInfo->ri_RootToChildMapValid = false;
+	/* Set by ExecInitRoutingInfo */
+	resultRelInfo->ri_PartitionTupleSlot = NULL;
 	resultRelInfo->ri_ChildToRootMap = NULL;
 	resultRelInfo->ri_ChildToRootMapValid = false;
 	resultRelInfo->ri_CopyMultiInsertBuffer = NULL;

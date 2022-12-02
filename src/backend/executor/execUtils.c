@@ -1253,6 +1253,45 @@ ExecGetChildToRootMap(ResultRelInfo *resultRelInfo)
 	return resultRelInfo->ri_ChildToRootMap;
 }
 
+/*
+ * Returns the map needed to convert given root result relation's tuples to
+ * the rowtype of the given child relation.  Note that a NULL result is valid
+ * and means that no conversion is needed.
+ */
+TupleConversionMap *
+ExecGetRootToChildMap(ResultRelInfo *resultRelInfo, EState *estate)
+{
+	/* Mustn't get called for a non-child result relation. */
+	Assert(resultRelInfo->ri_RootResultRelInfo);
+
+	/* If we didn't already do so, compute the map for this child. */
+	if (!resultRelInfo->ri_RootToChildMapValid)
+	{
+		ResultRelInfo *rootRelInfo = resultRelInfo->ri_RootResultRelInfo;
+		TupleDesc	indesc = RelationGetDescr(rootRelInfo->ri_RelationDesc);
+		TupleDesc	outdesc = RelationGetDescr(resultRelInfo->ri_RelationDesc);
+		Relation	childrel = resultRelInfo->ri_RelationDesc;
+		AttrMap    *attrMap;
+		MemoryContext oldcontext;
+
+		/*
+		 * When this child table is not a partition (!relispartition), it may
+		 * have columns that are not present in the root table, which we ask
+		 * to ignore by passing true for missing_ok.
+		 */
+		oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+		attrMap = build_attrmap_by_name_if_req(indesc, outdesc,
+											   !childrel->rd_rel->relispartition);
+		if (attrMap)
+			resultRelInfo->ri_RootToChildMap =
+				convert_tuples_by_name_attrmap(indesc, outdesc, attrMap);
+		MemoryContextSwitchTo(oldcontext);
+		resultRelInfo->ri_RootToChildMapValid = true;
+	}
+
+	return resultRelInfo->ri_RootToChildMap;
+}
+
 /* Return a bitmap representing columns being inserted */
 Bitmapset *
 ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
@@ -1273,10 +1312,10 @@ ExecGetInsertedCols(ResultRelInfo *relinfo, EState *estate)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
 
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->insertedCols);
+		if (map != NULL)
+			return execute_attr_map_cols(map->attrMap, rte->insertedCols);
 		else
 			return rte->insertedCols;
 	}
@@ -1307,10 +1346,10 @@ ExecGetUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
 
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->updatedCols);
+		if (map != NULL)
+			return execute_attr_map_cols(map->attrMap, rte->updatedCols);
 		else
 			return rte->updatedCols;
 	}
@@ -1333,10 +1372,10 @@ ExecGetExtraUpdatedCols(ResultRelInfo *relinfo, EState *estate)
 	{
 		ResultRelInfo *rootRelInfo = relinfo->ri_RootResultRelInfo;
 		RangeTblEntry *rte = exec_rt_fetch(rootRelInfo->ri_RangeTableIndex, estate);
+		TupleConversionMap *map = ExecGetRootToChildMap(relinfo, estate);
 
-		if (relinfo->ri_RootToPartitionMap != NULL)
-			return execute_attr_map_cols(relinfo->ri_RootToPartitionMap->attrMap,
-										 rte->extraUpdatedCols);
+		if (map != NULL)
+			return execute_attr_map_cols(map->attrMap, rte->extraUpdatedCols);
 		else
 			return rte->extraUpdatedCols;
 	}

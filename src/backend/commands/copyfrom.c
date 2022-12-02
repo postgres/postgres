@@ -1088,7 +1088,7 @@ CopyFrom(CopyFromState cstate)
 			 * We might need to convert from the root rowtype to the partition
 			 * rowtype.
 			 */
-			map = resultRelInfo->ri_RootToPartitionMap;
+			map = ExecGetRootToChildMap(resultRelInfo, estate);
 			if (insertMethod == CIM_SINGLE || !leafpart_use_multi_insert)
 			{
 				/* non batch insert */

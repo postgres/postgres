@@ -539,22 +539,6 @@ typedef struct ResultRelInfo
 	ExprState  *ri_PartitionCheckExpr;
 
 	/*
-	 * Information needed by tuple routing target relations
-	 *
-	 * RootResultRelInfo gives the target relation mentioned in the query, if
-	 * it's a partitioned table. It is not set if the target relation
-	 * mentioned in the query is an inherited table, nor when tuple routing is
-	 * not needed.
-	 *
-	 * RootToPartitionMap and PartitionTupleSlot, initialized by
-	 * ExecInitRoutingInfo, are non-NULL if partition has a different tuple
-	 * format than the root table.
-	 */
-	struct ResultRelInfo *ri_RootResultRelInfo;
-	TupleConversionMap *ri_RootToPartitionMap;
-	TupleTableSlot *ri_PartitionTupleSlot;
-
-	/*
 	 * Map to convert child result relation tuples to the format of the table
 	 * actually mentioned in the query (called "root").  Computed only if
 	 * needed.  A NULL map value indicates that no conversion is needed, so we
@@ -562,6 +546,26 @@ typedef struct ResultRelInfo
 	 */
 	TupleConversionMap *ri_ChildToRootMap;
 	bool		ri_ChildToRootMapValid;
+
+	/*
+	 * As above, but in the other direction.
+	 */
+	TupleConversionMap *ri_RootToChildMap;
+	bool		ri_RootToChildMapValid;
+
+	/*
+	 * Information needed by tuple routing target relations
+	 *
+	 * RootResultRelInfo gives the target relation mentioned in the query, if
+	 * it's a partitioned table. It is not set if the target relation
+	 * mentioned in the query is an inherited table, nor when tuple routing is
+	 * not needed.
+	 *
+	 * PartitionTupleSlot is non-NULL if RootToChild conversion is needed and
+	 * the relation is a partition.
+	 */
+	struct ResultRelInfo *ri_RootResultRelInfo;
+	TupleTableSlot *ri_PartitionTupleSlot;
 
 	/* for use by copyfrom.c when performing multi-inserts */
 	struct CopyMultiInsertBuffer *ri_CopyMultiInsertBuffer;

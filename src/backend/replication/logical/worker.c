@@ -2193,7 +2193,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 	remoteslot_part = partrelinfo->ri_PartitionTupleSlot;
 	if (remoteslot_part == NULL)
 		remoteslot_part = table_slot_create(partrel, &estate->es_tupleTable);
-	map = partrelinfo->ri_RootToPartitionMap;
+	map = ExecGetRootToChildMap(partrelinfo, estate);
 	if (map != NULL)
 	{
 		attrmap = map->attrMap;
@@ -2353,7 +2353,7 @@ apply_handle_tuple_routing(ApplyExecutionData *edata,
 					if (remoteslot_part == NULL)
 						remoteslot_part = table_slot_create(partrel_new,
 															&estate->es_tupleTable);
-					map = partrelinfo_new->ri_RootToPartitionMap;
+					map = ExecGetRootToChildMap(partrelinfo_new, estate);
 					if (map != NULL)
 					{
 						remoteslot_part = execute_attr_map_slot(map->attrMap,

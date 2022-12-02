@@ -463,7 +463,7 @@ ExecFindPartition(ModifyTableState *mtstate,
 			 */
 			if (is_leaf)
 			{
-				TupleConversionMap *map = rri->ri_RootToPartitionMap;
+				TupleConversionMap *map = ExecGetRootToChildMap(rri, estate);
 
 				if (map)
 					slot = execute_attr_map_slot(map->attrMap, rootslot,
@@ -727,7 +727,7 @@ ExecInitPartitionInfo(ModifyTableState *mtstate, EState *estate,
 			OnConflictSetState *onconfl = makeNode(OnConflictSetState);
 			TupleConversionMap *map;
 
-			map = leaf_part_rri->ri_RootToPartitionMap;
+			map = ExecGetRootToChildMap(leaf_part_rri, estate);
 
 			Assert(node->onConflictSet != NIL);
 			Assert(rootResultRelInfo->ri_onConflict != NULL);
@@ -977,33 +977,24 @@ ExecInitRoutingInfo(ModifyTableState *mtstate,
 					int partidx,
 					bool is_borrowed_rel)
 {
-	ResultRelInfo *rootRelInfo = partRelInfo->ri_RootResultRelInfo;
 	MemoryContext oldcxt;
 	int			rri_index;
 
 	oldcxt = MemoryContextSwitchTo(proute->memcxt);
 
 	/*
-	 * Set up a tuple conversion map to convert a tuple routed to the
-	 * partition from the parent's type to the partition's.
+	 * Set up tuple conversion between root parent and the partition if the
+	 * two have different rowtypes.  If conversion is indeed required, also
+	 * initialize a slot dedicated to storing this partition's converted
+	 * tuples.  Various operations that are applied to tuples after routing,
+	 * such as checking constraints, will refer to this slot.
 	 */
-	partRelInfo->ri_RootToPartitionMap =
-		convert_tuples_by_name(RelationGetDescr(rootRelInfo->ri_RelationDesc),
-							   RelationGetDescr(partRelInfo->ri_RelationDesc));
-
-	/*
-	 * If a partition has a different rowtype than the root parent, initialize
-	 * a slot dedicated to storing this partition's tuples.  The slot is used
-	 * for various operations that are applied to tuples after routing, such
-	 * as checking constraints.
-	 */
-	if (partRelInfo->ri_RootToPartitionMap != NULL)
+	if (ExecGetRootToChildMap(partRelInfo, estate) != NULL)
 	{
 		Relation	partrel = partRelInfo->ri_RelationDesc;
 
 		/*
-		 * Initialize the slot itself setting its descriptor to this
-		 * partition's TupleDesc; TupleDesc reference will be released at the
+		 * This pins the partition's TupleDesc, which will be released at the
 		 * end of the command.
 		 */
 		partRelInfo->ri_PartitionTupleSlot =
