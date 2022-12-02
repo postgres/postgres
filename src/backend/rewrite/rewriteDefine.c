@@ -239,7 +239,6 @@ DefineQueryRewrite(const char *rulename,
 	Relation	event_relation;
 	ListCell   *l;
 	Query	   *query;
-	bool		RelisBecomingView = false;
 	Oid			ruleId = InvalidOid;
 	ObjectAddress address;
 
@@ -311,7 +310,18 @@ DefineQueryRewrite(const char *rulename,
 		/*
 		 * Rules ON SELECT are restricted to view definitions
 		 *
-		 * So there cannot be INSTEAD NOTHING, ...
+		 * So this had better be a view, ...
+		 */
+		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&
+			event_relation->rd_rel->relkind != RELKIND_MATVIEW)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("relation \"%s\" cannot have ON SELECT rules",
+							RelationGetRelationName(event_relation)),
+					 errdetail_relkind_not_supported(event_relation->rd_rel->relkind)));
+
+		/*
+		 * ... there cannot be INSTEAD NOTHING, ...
 		 */
 		if (action == NIL)
 			ereport(ERROR,
@@ -407,93 +417,6 @@ DefineQueryRewrite(const char *rulename,
 								ViewSelectRuleName)));
 			rulename = pstrdup(ViewSelectRuleName);
 		}
-
-		/*
-		 * Are we converting a relation to a view?
-		 *
-		 * If so, check that the relation is empty because the storage for the
-		 * relation is going to be deleted.  Also insist that the rel not be
-		 * involved in partitioning, nor have any triggers, indexes, child or
-		 * parent tables, RLS policies, or RLS enabled.  (Note: some of these
-		 * tests are too strict, because they will reject relations that once
-		 * had such but don't anymore.  But we don't really care, because this
-		 * whole business of converting relations to views is just an obsolete
-		 * kluge to allow dump/reload of views that participate in circular
-		 * dependencies.)
-		 */
-		if (event_relation->rd_rel->relkind != RELKIND_VIEW &&
-			event_relation->rd_rel->relkind != RELKIND_MATVIEW)
-		{
-			TableScanDesc scanDesc;
-			Snapshot	snapshot;
-			TupleTableSlot *slot;
-
-			if (event_relation->rd_rel->relkind == RELKIND_PARTITIONED_TABLE)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot convert partitioned table \"%s\" to a view",
-								RelationGetRelationName(event_relation))));
-
-			/* only case left: */
-			Assert(event_relation->rd_rel->relkind == RELKIND_RELATION);
-
-			if (event_relation->rd_rel->relispartition)
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("cannot convert partition \"%s\" to a view",
-								RelationGetRelationName(event_relation))));
-
-			snapshot = RegisterSnapshot(GetLatestSnapshot());
-			scanDesc = table_beginscan(event_relation, snapshot, 0, NULL);
-			slot = table_slot_create(event_relation, NULL);
-			if (table_scan_getnextslot(scanDesc, ForwardScanDirection, slot))
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it is not empty",
-								RelationGetRelationName(event_relation))));
-			ExecDropSingleTupleTableSlot(slot);
-			table_endscan(scanDesc);
-			UnregisterSnapshot(snapshot);
-
-			if (event_relation->rd_rel->relhastriggers)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has triggers",
-								RelationGetRelationName(event_relation)),
-						 errhint("In particular, the table cannot be involved in any foreign key relationships.")));
-
-			if (event_relation->rd_rel->relhasindex)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has indexes",
-								RelationGetRelationName(event_relation))));
-
-			if (event_relation->rd_rel->relhassubclass)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has child tables",
-								RelationGetRelationName(event_relation))));
-
-			if (has_superclass(RelationGetRelid(event_relation)))
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has parent tables",
-								RelationGetRelationName(event_relation))));
-
-			if (event_relation->rd_rel->relrowsecurity)
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has row security enabled",
-								RelationGetRelationName(event_relation))));
-
-			if (relation_has_policies(event_relation))
-				ereport(ERROR,
-						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-						 errmsg("could not convert table \"%s\" to a view because it has row security policies",
-								RelationGetRelationName(event_relation))));
-
-			RelisBecomingView = true;
-		}
 	}
 	else
 	{
@@ -567,94 +490,6 @@ DefineQueryRewrite(const char *rulename,
 		 * rule.
 		 */
 		SetRelationRuleStatus(event_relid, true);
-	}
-
-	/* ---------------------------------------------------------------------
-	 * If the relation is becoming a view:
-	 * - delete the associated storage files
-	 * - get rid of any system attributes in pg_attribute; a view shouldn't
-	 *	 have any of those
-	 * - remove the toast table; there is no need for it anymore, and its
-	 *	 presence would make vacuum slightly more complicated
-	 * - set relkind to RELKIND_VIEW, and adjust other pg_class fields
-	 *	 to be appropriate for a view
-	 *
-	 * NB: we had better have AccessExclusiveLock to do this ...
-	 * ---------------------------------------------------------------------
-	 */
-	if (RelisBecomingView)
-	{
-		Relation	relationRelation;
-		Oid			toastrelid;
-		HeapTuple	classTup;
-		Form_pg_class classForm;
-
-		relationRelation = table_open(RelationRelationId, RowExclusiveLock);
-		toastrelid = event_relation->rd_rel->reltoastrelid;
-
-		/* drop storage while table still looks like a table  */
-		RelationDropStorage(event_relation);
-		DeleteSystemAttributeTuples(event_relid);
-
-		/*
-		 * Drop the toast table if any.  (This won't take care of updating the
-		 * toast fields in the relation's own pg_class entry; we handle that
-		 * below.)
-		 */
-		if (OidIsValid(toastrelid))
-		{
-			ObjectAddress toastobject;
-
-			/*
-			 * Delete the dependency of the toast relation on the main
-			 * relation so we can drop the former without dropping the latter.
-			 */
-			deleteDependencyRecordsFor(RelationRelationId, toastrelid,
-									   false);
-
-			/* Make deletion of dependency record visible */
-			CommandCounterIncrement();
-
-			/* Now drop toast table, including its index */
-			toastobject.classId = RelationRelationId;
-			toastobject.objectId = toastrelid;
-			toastobject.objectSubId = 0;
-			performDeletion(&toastobject, DROP_RESTRICT,
-							PERFORM_DELETION_INTERNAL);
-		}
-
-		/*
-		 * SetRelationRuleStatus may have updated the pg_class row, so we must
-		 * advance the command counter before trying to update it again.
-		 */
-		CommandCounterIncrement();
-
-		/*
-		 * Fix pg_class entry to look like a normal view's, including setting
-		 * the correct relkind and removal of reltoastrelid of the toast table
-		 * we potentially removed above.
-		 */
-		classTup = SearchSysCacheCopy1(RELOID, ObjectIdGetDatum(event_relid));
-		if (!HeapTupleIsValid(classTup))
-			elog(ERROR, "cache lookup failed for relation %u", event_relid);
-		classForm = (Form_pg_class) GETSTRUCT(classTup);
-
-		classForm->relam = InvalidOid;
-		classForm->reltablespace = InvalidOid;
-		classForm->relpages = 0;
-		classForm->reltuples = -1;
-		classForm->relallvisible = 0;
-		classForm->reltoastrelid = InvalidOid;
-		classForm->relhasindex = false;
-		classForm->relkind = RELKIND_VIEW;
-		classForm->relfrozenxid = InvalidTransactionId;
-		classForm->relminmxid = InvalidMultiXactId;
-		classForm->relreplident = REPLICA_IDENTITY_NOTHING;
-
-		CatalogTupleUpdate(relationRelation, &classTup->t_self, classTup);
-
-		heap_freetuple(classTup);
-		table_close(relationRelation, RowExclusiveLock);
 	}
 
 	ObjectAddressSet(address, RewriteRelationId, ruleId);

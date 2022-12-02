@@ -2707,54 +2707,26 @@ ERROR:  cannot drop rule _RETURN on view rules_fooview because view rules_foovie
 HINT:  You can drop view rules_fooview instead.
 drop view rules_fooview;
 --
--- test conversion of table to view (needed to load some pg_dump files)
+-- We used to allow converting a table to a view by creating a "_RETURN"
+-- rule for it, but no more.
 --
 create table rules_fooview (x int, y text);
-select xmin, * from rules_fooview;
- xmin | x | y 
-------+---+---
-(0 rows)
-
 create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
-select * from rules_fooview;
- x |  y  
----+-----
- 1 | aaa
-(1 row)
-
-select xmin, * from rules_fooview;  -- fail, views don't have such a column
-ERROR:  column "xmin" does not exist
-LINE 1: select xmin, * from rules_fooview;
-               ^
-select reltoastrelid, relkind, relfrozenxid
-  from pg_class where oid = 'rules_fooview'::regclass;
- reltoastrelid | relkind | relfrozenxid 
----------------+---------+--------------
-             0 | v       |            0
-(1 row)
-
-drop view rules_fooview;
--- cannot convert an inheritance parent or child to a view, though
-create table rules_fooview (x int, y text);
-create table rules_fooview_child () inherits (rules_fooview);
-create rule "_RETURN" as on select to rules_fooview do instead
-  select 1 as x, 'aaa'::text as y;
-ERROR:  could not convert table "rules_fooview" to a view because it has child tables
-create rule "_RETURN" as on select to rules_fooview_child do instead
-  select 1 as x, 'aaa'::text as y;
-ERROR:  could not convert table "rules_fooview_child" to a view because it has parent tables
-drop table rules_fooview cascade;
-NOTICE:  drop cascades to table rules_fooview_child
+ERROR:  relation "rules_fooview" cannot have ON SELECT rules
+DETAIL:  This operation is not supported for tables.
+drop table rules_fooview;
 -- likewise, converting a partitioned table or partition to view is not allowed
 create table rules_fooview (x int, y text) partition by list (x);
 create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
-ERROR:  cannot convert partitioned table "rules_fooview" to a view
+ERROR:  relation "rules_fooview" cannot have ON SELECT rules
+DETAIL:  This operation is not supported for partitioned tables.
 create table rules_fooview_part partition of rules_fooview for values in (1);
 create rule "_RETURN" as on select to rules_fooview_part do instead
   select 1 as x, 'aaa'::text as y;
-ERROR:  cannot convert partition "rules_fooview_part" to a view
+ERROR:  relation "rules_fooview_part" cannot have ON SELECT rules
+DETAIL:  This operation is not supported for tables.
 drop table rules_fooview;
 --
 -- check for planner problems with complex inherited UPDATES

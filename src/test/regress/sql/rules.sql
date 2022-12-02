@@ -884,33 +884,14 @@ drop rule "_RETURN" on rules_fooview;
 drop view rules_fooview;
 
 --
--- test conversion of table to view (needed to load some pg_dump files)
+-- We used to allow converting a table to a view by creating a "_RETURN"
+-- rule for it, but no more.
 --
 
 create table rules_fooview (x int, y text);
-select xmin, * from rules_fooview;
-
 create rule "_RETURN" as on select to rules_fooview do instead
   select 1 as x, 'aaa'::text as y;
-
-select * from rules_fooview;
-select xmin, * from rules_fooview;  -- fail, views don't have such a column
-
-select reltoastrelid, relkind, relfrozenxid
-  from pg_class where oid = 'rules_fooview'::regclass;
-
-drop view rules_fooview;
-
--- cannot convert an inheritance parent or child to a view, though
-create table rules_fooview (x int, y text);
-create table rules_fooview_child () inherits (rules_fooview);
-
-create rule "_RETURN" as on select to rules_fooview do instead
-  select 1 as x, 'aaa'::text as y;
-create rule "_RETURN" as on select to rules_fooview_child do instead
-  select 1 as x, 'aaa'::text as y;
-
-drop table rules_fooview cascade;
+drop table rules_fooview;
 
 -- likewise, converting a partitioned table or partition to view is not allowed
 create table rules_fooview (x int, y text) partition by list (x);
