@@ -537,7 +537,7 @@ SELECT c FROM test ORDER BY c ~&gt; 3 DESC LIMIT 5;
   <title>Defaults</title>
 
   <para>
-   I believe this union:
+   This union:
   </para>
 <programlisting>
 select cube_union('(0,5,2),(2,3,1)', '0');
@@ -548,7 +548,7 @@ cube_union
 </programlisting>
 
    <para>
-    does not contradict common sense, neither does the intersection
+    does not contradict common sense, neither does the intersection:
    </para>
 
 <programlisting>
@@ -560,8 +560,8 @@ cube_inter
 </programlisting>
 
    <para>
-    In all binary operations on differently-dimensioned cubes, I assume the
-    lower-dimensional one to be a Cartesian projection, i. e., having zeroes
+    In all binary operations on differently-dimensioned cubes,
+    the lower-dimensional one is assumed to be a Cartesian projection, i. e., having zeroes
     in place of coordinates omitted in the string representation. The above
     examples are equivalent to:
    </para>

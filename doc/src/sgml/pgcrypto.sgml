@@ -415,8 +415,8 @@ gen_salt(type text [, iter_count integer ]) returns text
     <listitem>
      <para>
       <literal>crypt-bf</literal> numbers are taken using a simple program that
-      loops over 1000 8-character passwords.  That way I can show the speed
-      with different numbers of iterations.  For reference: <literal>john
+      loops over 1000 8-character passwords.  That way the speed
+      with different numbers of iterations can be shown.  For reference: <literal>john
       -test</literal> shows 13506 loops/sec for <literal>crypt-bf/5</literal>.
       (The very small
       difference in results is in accordance with the fact that the
