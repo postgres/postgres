@@ -327,7 +327,8 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 
 	setFilePath(AH, fname, tctx->filename);
 
-	ctx->dataFH = cfopen_write(fname, PG_BINARY_W, AH->compression);
+	ctx->dataFH = cfopen_write(fname, PG_BINARY_W,
+							   AH->compression_spec);
 	if (ctx->dataFH == NULL)
 		pg_fatal("could not open output file \"%s\": %m", fname);
 }
@@ -573,6 +574,7 @@ _CloseArchive(ArchiveHandle *AH)
 	if (AH->mode == archModeWrite)
 	{
 		cfp		   *tocFH;
+		pg_compress_specification compression_spec = {0};
 		char		fname[MAXPGPATH];
 
 		setFilePath(AH, fname, "toc.dat");
@@ -581,7 +583,8 @@ _CloseArchive(ArchiveHandle *AH)
 		ctx->pstate = ParallelBackupStart(AH);
 
 		/* The TOC is always created uncompressed */
-		tocFH = cfopen_write(fname, PG_BINARY_W, 0);
+		compression_spec.algorithm = PG_COMPRESSION_NONE;
+		tocFH = cfopen_write(fname, PG_BINARY_W, compression_spec);
 		if (tocFH == NULL)
 			pg_fatal("could not open output file \"%s\": %m", fname);
 		ctx->dataFH = tocFH;
@@ -639,12 +642,14 @@ static void
 _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
+	pg_compress_specification compression_spec = {0};
 	char		fname[MAXPGPATH];
 
 	setFilePath(AH, fname, "blobs.toc");
 
 	/* The blob TOC file is never compressed */
-	ctx->blobsTocFH = cfopen_write(fname, "ab", 0);
+	compression_spec.algorithm = PG_COMPRESSION_NONE;
+	ctx->blobsTocFH = cfopen_write(fname, "ab", compression_spec);
 	if (ctx->blobsTocFH == NULL)
 		pg_fatal("could not open output file \"%s\": %m", fname);
 }
@@ -662,7 +667,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 
 	snprintf(fname, MAXPGPATH, "%s/blob_%u.dat", ctx->directory, oid);
 
-	ctx->dataFH = cfopen_write(fname, PG_BINARY_W, AH->compression);
+	ctx->dataFH = cfopen_write(fname, PG_BINARY_W, AH->compression_spec);
 
 	if (ctx->dataFH == NULL)
 		pg_fatal("could not open output file \"%s\": %m", fname);

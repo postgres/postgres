@@ -23,6 +23,7 @@
 #ifndef PG_BACKUP_H
 #define PG_BACKUP_H
 
+#include "common/compression.h"
 #include "fe_utils/simple_list.h"
 #include "libpq-fe.h"
 
@@ -143,7 +144,8 @@ typedef struct _restoreOptions
 
 	int			noDataForFailedTables;
 	int			exit_on_error;
-	int			compression;
+	pg_compress_specification compression_spec; /* Specification for
+												 * compression */
 	int			suppressDumpWarnings;	/* Suppress output of WARNING entries
 										 * to stderr */
 	bool		single_txn;
@@ -303,7 +305,8 @@ extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-							  const int compression, bool dosync, ArchiveMode mode,
+							  const pg_compress_specification compression_spec,
+							  bool dosync, ArchiveMode mode,
 							  SetupWorkerPtrType setupDumpWorker);
 
 /* The --list option */

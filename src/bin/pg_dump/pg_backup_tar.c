@@ -194,7 +194,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 		 * possible since gzdopen uses buffered IO which totally screws file
 		 * positioning.
 		 */
-		if (AH->compression != 0)
+		if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 			pg_fatal("compression is not supported by tar archive format");
 	}
 	else
@@ -328,7 +328,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 			}
 		}
 
-		if (AH->compression == 0)
+		if (AH->compression_spec.algorithm == PG_COMPRESSION_NONE)
 			tm->nFH = ctx->tarFH;
 		else
 			pg_fatal("compression is not supported by tar archive format");
@@ -383,7 +383,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 
 		umask(old_umask);
 
-		if (AH->compression == 0)
+		if (AH->compression_spec.algorithm == PG_COMPRESSION_NONE)
 			tm->nFH = tm->tmpFH;
 		else
 			pg_fatal("compression is not supported by tar archive format");
@@ -401,7 +401,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 static void
 tarClose(ArchiveHandle *AH, TAR_MEMBER *th)
 {
-	if (AH->compression != 0)
+	if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 		pg_fatal("compression is not supported by tar archive format");
 
 	if (th->mode == 'w')
@@ -800,7 +800,6 @@ _CloseArchive(ArchiveHandle *AH)
 		memcpy(ropt, AH->public.ropt, sizeof(RestoreOptions));
 		ropt->filename = NULL;
 		ropt->dropSchema = 1;
-		ropt->compression = 0;
 		ropt->superuser = NULL;
 		ropt->suppressDumpWarnings = true;
 
@@ -888,7 +887,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	if (oid == 0)
 		pg_fatal("invalid OID for large object (%u)", oid);
 
-	if (AH->compression != 0)
+	if (AH->compression_spec.algorithm != PG_COMPRESSION_NONE)
 		pg_fatal("compression is not supported by tar archive format");
 
 	sprintf(fname, "blob_%u.dat", oid);

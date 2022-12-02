@@ -64,7 +64,7 @@
 /* typedef appears in compress_io.h */
 struct CompressorState
 {
-	CompressionAlgorithm comprAlg;
+	pg_compress_specification compression_spec;
 	WriteFunc	writeF;
 
 #ifdef HAVE_LIBZ
@@ -73,9 +73,6 @@ struct CompressorState
 	size_t		zlibOutSize;
 #endif
 };
-
-static void ParseCompressionOption(int compression, CompressionAlgorithm *alg,
-								   int *level);
 
 /* Routines that support zlib compressed data I/O */
 #ifdef HAVE_LIBZ
@@ -93,57 +90,30 @@ static void ReadDataFromArchiveNone(ArchiveHandle *AH, ReadFunc readF);
 static void WriteDataToArchiveNone(ArchiveHandle *AH, CompressorState *cs,
 								   const char *data, size_t dLen);
 
-/*
- * Interprets a numeric 'compression' value. The algorithm implied by the
- * value (zlib or none at the moment), is returned in *alg, and the
- * zlib compression level in *level.
- */
-static void
-ParseCompressionOption(int compression, CompressionAlgorithm *alg, int *level)
-{
-	if (compression == Z_DEFAULT_COMPRESSION ||
-		(compression > 0 && compression <= 9))
-		*alg = COMPR_ALG_LIBZ;
-	else if (compression == 0)
-		*alg = COMPR_ALG_NONE;
-	else
-	{
-		pg_fatal("invalid compression code: %d", compression);
-		*alg = COMPR_ALG_NONE;	/* keep compiler quiet */
-	}
-
-	/* The level is just the passed-in value. */
-	if (level)
-		*level = compression;
-}
-
 /* Public interface routines */
 
 /* Allocate a new compressor */
 CompressorState *
-AllocateCompressor(int compression, WriteFunc writeF)
+AllocateCompressor(const pg_compress_specification compression_spec,
+				   WriteFunc writeF)
 {
 	CompressorState *cs;
-	CompressionAlgorithm alg;
-	int			level;
-
-	ParseCompressionOption(compression, &alg, &level);
 
 #ifndef HAVE_LIBZ
-	if (alg == COMPR_ALG_LIBZ)
+	if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 		pg_fatal("not built with zlib support");
 #endif
 
 	cs = (CompressorState *) pg_malloc0(sizeof(CompressorState));
 	cs->writeF = writeF;
-	cs->comprAlg = alg;
+	cs->compression_spec = compression_spec;
 
 	/*
 	 * Perform compression algorithm specific initialization.
 	 */
 #ifdef HAVE_LIBZ
-	if (alg == COMPR_ALG_LIBZ)
-		InitCompressorZlib(cs, level);
+	if (cs->compression_spec.algorithm == PG_COMPRESSION_GZIP)
+		InitCompressorZlib(cs, cs->compression_spec.level);
 #endif
 
 	return cs;
@@ -154,15 +124,12 @@ AllocateCompressor(int compression, WriteFunc writeF)
  * out with ahwrite().
  */
 void
-ReadDataFromArchive(ArchiveHandle *AH, int compression, ReadFunc readF)
+ReadDataFromArchive(ArchiveHandle *AH, pg_compress_specification compression_spec,
+					ReadFunc readF)
 {
-	CompressionAlgorithm alg;
-
-	ParseCompressionOption(compression, &alg, NULL);
-
-	if (alg == COMPR_ALG_NONE)
+	if (compression_spec.algorithm == PG_COMPRESSION_NONE)
 		ReadDataFromArchiveNone(AH, readF);
-	if (alg == COMPR_ALG_LIBZ)
+	if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 	{
 #ifdef HAVE_LIBZ
 		ReadDataFromArchiveZlib(AH, readF);
@@ -179,17 +146,22 @@ void
 WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 				   const void *data, size_t dLen)
 {
-	switch (cs->comprAlg)
+	switch (cs->compression_spec.algorithm)
 	{
-		case COMPR_ALG_LIBZ:
+		case PG_COMPRESSION_GZIP:
 #ifdef HAVE_LIBZ
 			WriteDataToArchiveZlib(AH, cs, data, dLen);
 #else
 			pg_fatal("not built with zlib support");
 #endif
 			break;
-		case COMPR_ALG_NONE:
+		case PG_COMPRESSION_NONE:
 			WriteDataToArchiveNone(AH, cs, data, dLen);
+			break;
+		case PG_COMPRESSION_LZ4:
+			/* fallthrough */
+		case PG_COMPRESSION_ZSTD:
+			pg_fatal("invalid compression method");
 			break;
 	}
 }
@@ -201,7 +173,7 @@ void
 EndCompressor(ArchiveHandle *AH, CompressorState *cs)
 {
 #ifdef HAVE_LIBZ
-	if (cs->comprAlg == COMPR_ALG_LIBZ)
+	if (cs->compression_spec.algorithm == PG_COMPRESSION_GZIP)
 		EndCompressorZlib(AH, cs);
 #endif
 	free(cs);
@@ -453,20 +425,27 @@ cfopen_read(const char *path, const char *mode)
 {
 	cfp		   *fp;
 
+	pg_compress_specification compression_spec = {0};
+
 #ifdef HAVE_LIBZ
 	if (hasSuffix(path, ".gz"))
-		fp = cfopen(path, mode, 1);
+	{
+		compression_spec.algorithm = PG_COMPRESSION_GZIP;
+		fp = cfopen(path, mode, compression_spec);
+	}
 	else
 #endif
 	{
-		fp = cfopen(path, mode, 0);
+		compression_spec.algorithm = PG_COMPRESSION_NONE;
+		fp = cfopen(path, mode, compression_spec);
 #ifdef HAVE_LIBZ
 		if (fp == NULL)
 		{
 			char	   *fname;
 
 			fname = psprintf("%s.gz", path);
-			fp = cfopen(fname, mode, 1);
+			compression_spec.algorithm = PG_COMPRESSION_GZIP;
+			fp = cfopen(fname, mode, compression_spec);
 			free_keep_errno(fname);
 		}
 #endif
@@ -479,26 +458,27 @@ cfopen_read(const char *path, const char *mode)
  * be a filemode as accepted by fopen() and gzopen() that indicates writing
  * ("w", "wb", "a", or "ab").
  *
- * If 'compression' is non-zero, a gzip compressed stream is opened, and
- * 'compression' indicates the compression level used. The ".gz" suffix
- * is automatically added to 'path' in that case.
+ * If 'compression_spec.algorithm' is GZIP, a gzip compressed stream is opened,
+ * and 'compression_spec.level' used. The ".gz" suffix is automatically added to
+ * 'path' in that case.
  *
  * On failure, return NULL with an error code in errno.
  */
 cfp *
-cfopen_write(const char *path, const char *mode, int compression)
+cfopen_write(const char *path, const char *mode,
+			 const pg_compress_specification compression_spec)
 {
 	cfp		   *fp;
 
-	if (compression == 0)
-		fp = cfopen(path, mode, 0);
+	if (compression_spec.algorithm == PG_COMPRESSION_NONE)
+		fp = cfopen(path, mode, compression_spec);
 	else
 	{
 #ifdef HAVE_LIBZ
 		char	   *fname;
 
 		fname = psprintf("%s.gz", path);
-		fp = cfopen(fname, mode, compression);
+		fp = cfopen(fname, mode, compression_spec);
 		free_keep_errno(fname);
 #else
 		pg_fatal("not built with zlib support");
@@ -509,26 +489,27 @@ cfopen_write(const char *path, const char *mode, int compression)
 }
 
 /*
- * Opens file 'path' in 'mode'. If 'compression' is non-zero, the file
+ * Opens file 'path' in 'mode'. If compression is GZIP, the file
  * is opened with libz gzopen(), otherwise with plain fopen().
  *
  * On failure, return NULL with an error code in errno.
  */
 cfp *
-cfopen(const char *path, const char *mode, int compression)
+cfopen(const char *path, const char *mode,
+	   const pg_compress_specification compression_spec)
 {
 	cfp		   *fp = pg_malloc(sizeof(cfp));
 
-	if (compression != 0)
+	if (compression_spec.algorithm == PG_COMPRESSION_GZIP)
 	{
 #ifdef HAVE_LIBZ
-		if (compression != Z_DEFAULT_COMPRESSION)
+		if (compression_spec.level != Z_DEFAULT_COMPRESSION)
 		{
 			/* user has specified a compression level, so tell zlib to use it */
 			char		mode_compression[32];
 
 			snprintf(mode_compression, sizeof(mode_compression), "%s%d",
-					 mode, compression);
+					 mode, compression_spec.level);
 			fp->compressedfp = gzopen(path, mode_compression);
 		}
 		else

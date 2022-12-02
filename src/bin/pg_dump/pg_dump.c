@@ -105,6 +105,8 @@ static Oid	g_last_builtin_oid; /* value of the last builtin oid */
 /* The specified names/patterns should to match at least one entity */
 static int	strict_names = 0;
 
+static pg_compress_algorithm compression_algorithm = PG_COMPRESSION_NONE;
+
 /*
  * Object inclusion/exclusion lists
  *
@@ -340,10 +342,14 @@ main(int argc, char **argv)
 	const char *dumpsnapshot = NULL;
 	char	   *use_role = NULL;
 	int			numWorkers = 1;
-	int			compressLevel = -1;
 	int			plainText = 0;
 	ArchiveFormat archiveFormat = archUnknown;
 	ArchiveMode archiveMode;
+	pg_compress_specification compression_spec = {0};
+	char	   *compression_detail = NULL;
+	char	   *compression_algorithm_str = "none";
+	char	   *error_detail = NULL;
+	bool		user_compression_defined = false;
 
 	static DumpOptions dopt;
 
@@ -561,10 +567,10 @@ main(int argc, char **argv)
 				dopt.aclsSkip = true;
 				break;
 
-			case 'Z':			/* Compression Level */
-				if (!option_parse_int(optarg, "-Z/--compress", 0, 9,
-									  &compressLevel))
-					exit_nicely(1);
+			case 'Z':			/* Compression */
+				parse_compress_options(optarg, &compression_algorithm_str,
+									   &compression_detail);
+				user_compression_defined = true;
 				break;
 
 			case 0:
@@ -687,22 +693,49 @@ main(int argc, char **argv)
 	if (archiveFormat == archNull)
 		plainText = 1;
 
-	/* Custom and directory formats are compressed by default, others not */
-	if (compressLevel == -1)
+	/*
+	 * Compression options
+	 */
+	if (!parse_compress_algorithm(compression_algorithm_str,
+								  &compression_algorithm))
+		pg_fatal("unrecognized compression algorithm: \"%s\"",
+				 compression_algorithm_str);
+
+	parse_compress_specification(compression_algorithm, compression_detail,
+								 &compression_spec);
+	error_detail = validate_compress_specification(&compression_spec);
+	if (error_detail != NULL)
+		pg_fatal("invalid compression specification: %s",
+				 error_detail);
+
+	switch (compression_algorithm)
 	{
-#ifdef HAVE_LIBZ
-		if (archiveFormat == archCustom || archiveFormat == archDirectory)
-			compressLevel = Z_DEFAULT_COMPRESSION;
-		else
-#endif
-			compressLevel = 0;
+		case PG_COMPRESSION_NONE:
+			/* fallthrough */
+		case PG_COMPRESSION_GZIP:
+			break;
+		case PG_COMPRESSION_ZSTD:
+			pg_fatal("compression with %s is not yet supported", "ZSTD");
+			break;
+		case PG_COMPRESSION_LZ4:
+			pg_fatal("compression with %s is not yet supported", "LZ4");
+			break;
 	}
 
-#ifndef HAVE_LIBZ
-	if (compressLevel != 0)
-		pg_log_warning("requested compression not available in this installation -- archive will be uncompressed");
-	compressLevel = 0;
+	/*
+	 * Custom and directory formats are compressed by default with gzip when
+	 * available, not the others.
+	 */
+	if ((archiveFormat == archCustom || archiveFormat == archDirectory) &&
+		!user_compression_defined)
+	{
+#ifdef HAVE_LIBZ
+		parse_compress_specification(PG_COMPRESSION_GZIP, NULL,
+									 &compression_spec);
+#else
+		/* Nothing to do in the default case */
 #endif
+	}
 
 	/*
 	 * If emitting an archive format, we always want to emit a DATABASE item,
@@ -716,8 +749,8 @@ main(int argc, char **argv)
 		pg_fatal("parallel backup only supported by the directory format");
 
 	/* Open the output file */
-	fout = CreateArchive(filename, archiveFormat, compressLevel, dosync,
-						 archiveMode, setupDumpWorker);
+	fout = CreateArchive(filename, archiveFormat, compression_spec,
+						 dosync, archiveMode, setupDumpWorker);
 
 	/* Make dump options accessible right away */
 	SetArchiveOptions(fout, &dopt, NULL);
@@ -948,10 +981,7 @@ main(int argc, char **argv)
 	ropt->sequence_data = dopt.sequence_data;
 	ropt->binary_upgrade = dopt.binary_upgrade;
 
-	if (compressLevel == -1)
-		ropt->compression = 0;
-	else
-		ropt->compression = compressLevel;
+	ropt->compression_spec = compression_spec;
 
 	ropt->suppressDumpWarnings = true;	/* We've already shown them */
 
@@ -998,7 +1028,8 @@ help(const char *progname)
 	printf(_("  -j, --jobs=NUM               use this many parallel jobs to dump\n"));
 	printf(_("  -v, --verbose                verbose mode\n"));
 	printf(_("  -V, --version                output version information, then exit\n"));
-	printf(_("  -Z, --compress=0-9           compression level for compressed formats\n"));
+	printf(_("  -Z, --compress=METHOD[:LEVEL]\n"
+			 "                               compress as specified\n"));
 	printf(_("  --lock-wait-timeout=TIMEOUT  fail after waiting TIMEOUT for a table lock\n"));
 	printf(_("  --no-sync                    do not wait for changes to be written safely to disk\n"));
 	printf(_("  -?, --help                   show this help, then exit\n"));

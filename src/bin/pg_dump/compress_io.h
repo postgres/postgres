@@ -21,12 +21,6 @@
 #define ZLIB_OUT_SIZE	4096
 #define ZLIB_IN_SIZE	4096
 
-typedef enum
-{
-	COMPR_ALG_NONE,
-	COMPR_ALG_LIBZ
-} CompressionAlgorithm;
-
 /* Prototype for callback function to WriteDataToArchive() */
 typedef void (*WriteFunc) (ArchiveHandle *AH, const char *buf, size_t len);
 
@@ -46,8 +40,10 @@ typedef size_t (*ReadFunc) (ArchiveHandle *AH, char **buf, size_t *buflen);
 /* struct definition appears in compress_io.c */
 typedef struct CompressorState CompressorState;
 
-extern CompressorState *AllocateCompressor(int compression, WriteFunc writeF);
-extern void ReadDataFromArchive(ArchiveHandle *AH, int compression,
+extern CompressorState *AllocateCompressor(const pg_compress_specification compression_spec,
+										   WriteFunc writeF);
+extern void ReadDataFromArchive(ArchiveHandle *AH,
+								const pg_compress_specification compression_spec,
 								ReadFunc readF);
 extern void WriteDataToArchive(ArchiveHandle *AH, CompressorState *cs,
 							   const void *data, size_t dLen);
@@ -56,9 +52,13 @@ extern void EndCompressor(ArchiveHandle *AH, CompressorState *cs);
 
 typedef struct cfp cfp;
 
-extern cfp *cfopen(const char *path, const char *mode, int compression);
+extern cfp *cfopen(const char *path, const char *mode,
+				   const pg_compress_specification compression_spec);
+extern cfp *cfdopen(int fd, const char *mode,
+					pg_compress_specification compression_spec);
 extern cfp *cfopen_read(const char *path, const char *mode);
-extern cfp *cfopen_write(const char *path, const char *mode, int compression);
+extern cfp *cfopen_write(const char *path, const char *mode,
+						 const pg_compress_specification compression_spec);
 extern int	cfread(void *ptr, int size, cfp *fp);
 extern int	cfwrite(const void *ptr, int size, cfp *fp);
 extern int	cfgetc(cfp *fp);

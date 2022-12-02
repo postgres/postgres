@@ -428,7 +428,6 @@ CompiledExprState
 CompositeIOData
 CompositeTypeStmt
 CompoundAffixFlag
-CompressionAlgorithm
 CompressionLocation
 CompressorState
 ComputeXidHorizonsResult
