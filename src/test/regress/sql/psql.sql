@@ -1271,8 +1271,16 @@ reset work_mem;
 \df has_database_privilege oid text
 \df has_database_privilege oid text -
 \dfa bit* small*
+\df *._pg_expandarray
 \do - pg_catalog.int4
 \do && anyarray *
+
+-- check \sf
+\sf information_schema._pg_expandarray
+\sf+ information_schema._pg_expandarray
+\sf+ interval_pl_time
+\sf ts_debug(text)
+\sf+ ts_debug(text)
 
 -- AUTOCOMMIT
 
