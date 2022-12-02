@@ -86,6 +86,12 @@ typedef enum NodeTag
  *
  * - copy_as(VALUE): In copyObject(), replace the field's value with VALUE.
  *
+ * - copy_as_scalar: In copyObject(), copy the field as a scalar value
+ *   (e.g. a pointer) even if it is a node-type pointer.
+ *
+ * - equal_as_scalar: In equal(), compare the field as a scalar value
+ *   even if it is a node-type pointer.
+ *
  * - equal_ignore: Ignore the field for equality.
  *
  * - equal_ignore_if_zero: Ignore the field for equality if it is zero.

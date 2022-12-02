@@ -171,9 +171,6 @@ my @custom_read_write;
 # Track node types with manually assigned NodeTag numbers.
 my %manual_nodetag_number;
 
-# EquivalenceClasses are never moved, so just shallow-copy the pointer
-push @scalar_types, qw(EquivalenceClass* EquivalenceMember*);
-
 # This is a struct, so we can copy it by assignment.  Equal support is
 # currently not required.
 push @scalar_types, qw(QualCost);
@@ -454,9 +451,14 @@ foreach my $infile (@ARGV)
 								&& $attr !~ /^copy_as\(\w+\)$/
 								&& $attr !~ /^read_as\(\w+\)$/
 								&& !elem $attr,
-								qw(equal_ignore equal_ignore_if_zero read_write_ignore
-								write_only_relids write_only_nondefault_pathtarget write_only_req_outer)
-							  )
+								qw(copy_as_scalar
+								equal_as_scalar
+								equal_ignore
+								equal_ignore_if_zero
+								read_write_ignore
+								write_only_relids
+								write_only_nondefault_pathtarget
+								write_only_req_outer))
 							{
 								die
 								  "$infile:$lineno: unrecognized attribute \"$attr\"\n";
@@ -691,6 +693,8 @@ _equal${n}(const $n *a, const $n *b)
 		# extract per-field attributes
 		my $array_size_field;
 		my $copy_as_field;
+		my $copy_as_scalar  = 0;
+		my $equal_as_scalar = 0;
 		foreach my $a (@a)
 		{
 			if ($a =~ /^array_size\(([\w.]+)\)$/)
@@ -705,18 +709,40 @@ _equal${n}(const $n *a, const $n *b)
 			{
 				$copy_as_field = $1;
 			}
+			elsif ($a eq 'copy_as_scalar')
+			{
+				$copy_as_scalar = 1;
+			}
+			elsif ($a eq 'equal_as_scalar')
+			{
+				$equal_as_scalar = 1;
+			}
 			elsif ($a eq 'equal_ignore')
 			{
 				$equal_ignore = 1;
 			}
 		}
 
-		# override type-specific copy method if copy_as is specified
+		# override type-specific copy method if requested
 		if (defined $copy_as_field)
 		{
 			print $cff "\tnewnode->$f = $copy_as_field;\n"
 			  unless $copy_ignore;
 			$copy_ignore = 1;
+		}
+		elsif ($copy_as_scalar)
+		{
+			print $cff "\tCOPY_SCALAR_FIELD($f);\n"
+			  unless $copy_ignore;
+			$copy_ignore = 1;
+		}
+
+		# override type-specific equal method if requested
+		if ($equal_as_scalar)
+		{
+			print $eff "\tCOMPARE_SCALAR_FIELD($f);\n"
+			  unless $equal_ignore;
+			$equal_ignore = 1;
 		}
 
 		# select instructions by field type

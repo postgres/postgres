@@ -1279,7 +1279,9 @@ typedef struct StatisticExtInfo
  *
  * NB: EquivalenceClasses are never copied after creation.  Therefore,
  * copyObject() copies pointers to them as pointers, and equal() compares
- * pointers to EquivalenceClasses via pointer equality.
+ * pointers to EquivalenceClasses via pointer equality.  This is implemented
+ * by putting copy_as_scalar and equal_as_scalar attributes on fields that
+ * are pointers to EquivalenceClasses.  The same goes for EquivalenceMembers.
  */
 typedef struct EquivalenceClass
 {
@@ -1370,7 +1372,8 @@ typedef struct PathKey
 
 	NodeTag		type;
 
-	EquivalenceClass *pk_eclass;	/* the value that is ordered */
+	/* the value that is ordered */
+	EquivalenceClass *pk_eclass pg_node_attr(copy_as_scalar, equal_as_scalar);
 	Oid			pk_opfamily;	/* btree opfamily defining the ordering */
 	int			pk_strategy;	/* sort direction (ASC or DESC) */
 	bool		pk_nulls_first; /* do NULLs come before normal values? */
@@ -2478,7 +2481,7 @@ typedef struct RestrictInfo
 	 * Generating EquivalenceClass.  This field is NULL unless clause is
 	 * potentially redundant.
 	 */
-	EquivalenceClass *parent_ec pg_node_attr(equal_ignore, read_write_ignore);
+	EquivalenceClass *parent_ec pg_node_attr(copy_as_scalar, equal_ignore, read_write_ignore);
 
 	/*
 	 * cache space for cost and selectivity
@@ -2506,13 +2509,13 @@ typedef struct RestrictInfo
 	 */
 
 	/* EquivalenceClass containing lefthand */
-	EquivalenceClass *left_ec pg_node_attr(equal_ignore, read_write_ignore);
+	EquivalenceClass *left_ec pg_node_attr(copy_as_scalar, equal_ignore, read_write_ignore);
 	/* EquivalenceClass containing righthand */
-	EquivalenceClass *right_ec pg_node_attr(equal_ignore, read_write_ignore);
+	EquivalenceClass *right_ec pg_node_attr(copy_as_scalar, equal_ignore, read_write_ignore);
 	/* EquivalenceMember for lefthand */
-	EquivalenceMember *left_em pg_node_attr(equal_ignore);
+	EquivalenceMember *left_em pg_node_attr(copy_as_scalar, equal_ignore);
 	/* EquivalenceMember for righthand */
-	EquivalenceMember *right_em pg_node_attr(equal_ignore);
+	EquivalenceMember *right_em pg_node_attr(copy_as_scalar, equal_ignore);
 
 	/*
 	 * List of MergeScanSelCache structs.  Those aren't Nodes, so hard to
