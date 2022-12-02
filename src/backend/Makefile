@@ -100,8 +100,14 @@ ifeq ($(PORTNAME), aix)
 postgres: $(POSTGRES_IMP)
 	$(CC) $(CFLAGS) $(call expand_subsys,$(OBJS)) $(LDFLAGS) $(LDFLAGS_EX) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -Wl,-brtllib -o $@
 
+# Linking to a single .o with -r is a lot faster than building a .a or passing
+# all objects to MKLDEXPORT.
+#
+# It looks alluring to use $(CC) -r instead of ld -r, but that doesn't
+# trivially work with gcc, due to gcc specific static libraries linked in with
+# -r.
 $(POSTGRES_IMP): $(OBJS)
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(call expand_subsys,$^)
+	ld -r -o SUBSYS.o $(call expand_subsys,$^)
 	$(MKLDEXPORT) SUBSYS.o . > $@
 	@rm -f SUBSYS.o
 

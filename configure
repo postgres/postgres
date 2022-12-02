@@ -693,7 +693,6 @@ STRIP_SHARED_LIB
 STRIP_STATIC_LIB
 STRIP
 with_gnu_ld
-LD
 LDFLAGS_SL
 LDFLAGS_EX
 ZSTD_LIBS
@@ -9641,7 +9640,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_gnu_ld" >&5
 $as_echo "$ac_cv_prog_gnu_ld" >&6; }
 with_gnu_ld=$ac_cv_prog_gnu_ld
-
 
 
 

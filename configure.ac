@@ -1132,7 +1132,6 @@ AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 
 PGAC_PROG_LD
-AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
 PGAC_CHECK_STRIP
 AC_CHECK_TOOL(AR, ar, ar)
