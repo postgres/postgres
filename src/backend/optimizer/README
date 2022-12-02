@@ -13,6 +13,15 @@ exhaustively considering all possible join trees.  (But each join considered
 by /geqo is given to /path to create paths for, so we consider all possible
 implementation paths for each specific join pair even in GEQO mode.)
 
+これらのディレクトリは、パーサから返されたQuery構造体を取ります。エク
+ゼキュータが使用する計画を生成します。/planディレクトリは実際の出力計
+画を生成し、/pathコードはテーブルを結合するすべての可能な方法を生成し
+ます。/prepは、特殊な場合にさまざまな前処理ステップを処理します。/util
+はユーティリティです。/geqoは独立した"遺伝的最適化"プランナーです。---
+可能なすべてのジョインツリーを網羅的に検討するのではなく、ジョインツリー
+空間の半ランダム検索を行います。(ただし、各結合は/geqoが/pathに与えら
+れてパスが作成されるので、GEQOモードであっても、それぞれの特定のジョイ
+ン・ペアに対する実装パスのすべての可能なものを考慮します。
 
 Paths and Join Pairs
 --------------------
@@ -24,6 +33,13 @@ executor.  (There is pretty nearly a one-to-one correspondence between the
 Path and Plan trees, but Path nodes omit info that won't be needed during
 planning, and include info needed for planning that won't be needed by the
 executor.)
+
+計画/最適化プロセスでは、クエリーを実行するさまざまな方法を表す「パス」
+ツリーを構築します。目的のリレーションを生成する最も安価なパスを選択し、
+それをPlanに変換してエグゼキュータに渡します。(パスツリーとプランツリー
+ほとんど1対1で対応していますが、ただし、パスノードでは計画に必要な情報
+を省略することもありますし、エクゼキュータが必要としない情報を含めるこ
+ともあります)
 
 The optimizer builds a RelOptInfo structure for each base relation used in
 the query.  Base rels are either primitive tables, or subquery subselects
@@ -41,10 +57,31 @@ that is cheapest according to the planner's cost estimates.  The final plan
 is derived from the cheapest Path for the RelOptInfo that includes all the
 base rels of the query.
 
+オプティマイザは、クエリで使用されるベースリレーションごとにRelOptInfo
+構造体を構築します。Base relsはプリミティブなテーブルか、プランナの別
+の再帰呼び出しによって計画されるサブクエリのsubselectのいずれかです。
+RelOptInfoは、計画時に考慮される結合関係ごとにも作成されます。結合リレー
+ションは単純にベースリレーションの組合せです。任意のbaserelsセットに対
+して1つのジョインRelOptInfoが存在します---たとえば、ジョイン{A B C}は、
+AとBを結合してからCを追加するか、BとCを結合してからAを追加するかどうか
+にかかわらず、同じRelOptInfoによって表されます。joinrelを構築するこれ
+らの異なる方法は、パスで表現されます。各RelOptInfoに対して、そのリレー
+ションのスキャンまたはジョインを実装するための妥当そうな方法を表わすパ
+スのリストを作成します。relに対して妥当そうなパスをすべて検討したら、
+プランナの費用見積に従って最も安価なパスを選択します。最終計画は、クエ
+リのすべてのベースリレーションを含むRelOptInfoの最も安いパスから派生し
+ます。
+
 Possible Paths for a primitive table relation include plain old sequential
 scan, plus index scans for any indexes that exist on the table, plus bitmap
 index scans using one or more indexes.  Specialized RTE types, such as
 function RTEs, may have only one possible Path.
+
+プリミティブテーブルリレーションで使用可能なパスには、単なる古典的なシー
+ケンシャルスキャンに加え、テーブルに存在するすべてのインデックスをスキャ
+ンするインデックススキャン、1つ以上のインデックスをスキャンするビット
+マップインデックススキャンが含まれます。特殊なRTEタイプ、たとえば関数
+RTEsは、1つのパスのみを持つかもしれません。
 
 Joins always occur using two RelOptInfos.  One is outer, the other inner.
 Outers drive lookups of values in the inner.  In a nested loop, lookups of
@@ -57,11 +94,25 @@ hashjoin, the inner is scanned first and all its rows are entered in a
 hashtable, then the outer is scanned and for each row we lookup the join
 key in the hashtable.
 
+結合は常に2つのRelOptInfosを使用して行われます。1つは外側で、もう1つは
+内側です。アウターはインナーの値のルックアップを駆動します。ネストされ
+たループでは、内部の値のルックアップは外部タプルごとに一致する内部行を
+検索するために内部パスを1回スキャンすることによって発生します。マージ
+結合では、内部行と外部行は順に並んでいるので、結合全体の実行に必要なス
+キャンは1回だけです。内部パスと外部パスの両方が同期してスキャンされま
+す。(マージ結合では、内側と外側の違いはあまりありません.) ハッシュ結合
+では、内部が最初にスキャンされ、すべての行がハッシュテーブルに格納され
+ます。そして外部がスキャンされ、各行に対してハッシュテーブルの結合キー
+が検索されます。
+
 A Path for a join relation is actually a tree structure, with the topmost
 Path node representing the last-applied join method.  It has left and right
 subpaths that represent the scan or join methods used for the two input
 relations.
 
+結合リレーションのPathは実際にはツリー構造であり、一番上のPathノードは
+最後に適用された結合メソッドを表します。2つの入力リレーションに使用さ
+れるスキャンまたはジョイン方式を表す左および右のサブパスがあります。
 
 Join Tree Construction
 ----------------------
@@ -69,6 +120,10 @@ Join Tree Construction
 The optimizer generates optimal query plans by doing a more-or-less
 exhaustive search through the ways of executing the query.  The best Path
 tree is found by a recursive process:
+
+オプティマイザは、クエリの実行方法をほぼ網羅的に検索することによって、
+最適なクエリ・プランを生成します。最適なパスツリーは、再帰的なプロセス
+によって検索されます。
 
 1) Take each base relation in the query, and make a RelOptInfo structure
 for it.  Find each potentially useful way of accessing the relation,
@@ -82,9 +137,25 @@ RelOptInfo.joininfo list including all the join clauses that involve this
 relation.  For example, the WHERE clause "tab1.col1 = tab2.col1" generates
 entries in both tab1 and tab2's joininfo lists.
 
+1)クエリ内の各ベースリレーションを取得し、そのRelOptInfo構造を作成しま
+す。シーケンシャルスキャンやインデックススキャンなど、リレーションにア
+クセスするための潜在的に有用な各方法を検索し、それらの方法を表すパスを
+作成します。特定のリレーションに対して作成されたすべてのパスは、その
+RelOptInfo.pathlistに配置されます(実際には、明らかに劣った選択肢である
+パスは、パスリストに入る前に破棄されます---パスリストに入ることは、潜
+在的に有用なソート順とリレーションのパラメータ化を生成する最も安価な方
+法です)。また、このリレーションに関連するすべての結合句を含む
+RelOptInfo.joininfoリストを作成します。たとえば、WHERE句
+"tab1.col1=tab2.col1"は、tab1とtab2の両方のjoininfoリストにエントリを
+生成します。
+
 If we have only a single base relation in the query, we are done.
 Otherwise we have to figure out how to join the base relations into a
 single join relation.
+
+クエリーにベースリレーションが1つしかない場合は、これで終了です。そう
+でない場合は、ベースリレーションを単一の結合リレーションに結合する方法
+を理解する必要があります。
 
 2) Normally, any explicit JOIN clauses are "flattened" so that we just
 have a list of relations to join.  However, FULL OUTER JOIN clauses are
@@ -101,10 +172,29 @@ or inner at each join.  We consider all these possibilities in building
 Paths. We generate a Path for each feasible join method, and select the
 cheapest Path.
 
+2)通常、明示的なJOIN句は「フラット化」されるため、結合するリレーション
+の1つのリストがあるだけです。ただし、join_collapse_limitまたは
+from_collapse_limi制限によってフラット化プロセスが停止した場合、FULL
+OUTER JOIN句はフラット化されず、他の種類のJOINもフラット化されない可能
+性があります。したがって、最終的には、任意の順序で結合されるリレーショ
+ンのリストを含む計画問題が発生します。この場合、個々のitemはサブリスト
+である可能性があり、そのサブリストは、兄弟への結合を検討する前に結合す
+る必要があります。これらの部分問題を再帰的にボトムアップに処理します。
+ジョインリスト構造体は、可能なジョイン順序を制約しますが、それぞれのジョ
+イン実装方法(nestloop、merge、hash)を制約せず、各ジョインでどのrelが
+outeまたはinnerと見なされるかを指定しないことに注意してください。これ
+らすべての可能性については、Pathsの生成で検討します。実現可能な結合方
+式ごとにPathを生成し、最も安価なPathを選択します。
+
 For each planning problem, therefore, we will have a list of relations
 that are either base rels or joinrels constructed per sub-join-lists.
 We can join these rels together in any order the planner sees fit.
 The standard (non-GEQO) planner does this as follows:
+
+したがって、各計画問題に対して、サブ結合リストごとに構築された基本リレー
+ションまたはjoinrelsのいずれかであるリレーションのリストがあります。こ
+れらのrelは、プランナが適切と判断する任意の順序で結合できます。標準(非
+GEQO)プランナは以下のようにします。
 
 Consider joining each RelOptInfo to each other RelOptInfo for which there
 is a usable joinclause, and generate a Path for each possible join method
@@ -116,10 +206,25 @@ clauses.  Note that join-order restrictions induced by outer joins and
 IN/EXISTS clauses are also checked, to ensure that we find a workable join
 order in cases where those restrictions force a clauseless join to be done.)
 
+使用可能なJOIN句により、各RelOptInfoを他のRelOptInfoに結合することを検
+討し、そのような各ペアに対して可能なJOIN方式ごとにPathを生成します。
+(JOIN句のないRelOptInfoがある場合は、句なしの直積結合を生成する以外に
+選択の余地はありません。したがって、このrelを互いに結合することを検討
+します。しかし、JOIN句が存在する場合には、使用可能なJOIN句を使用する結
+合のみを考慮します。外部結合とIN/EXISTS句によって引き起こされるジョイ
+ン順序の制限もチェックされることに注意してください。これは、これらの制
+限によって句なしのジョインを完了させるために、実行可能なジョイン順序が
+確実に見つかるようにするためです。
+
 If we only had two relations in the list, we are done: we just pick
 the cheapest path for the join RelOptInfo.  If we had more than two, we now
 need to consider ways of joining join RelOptInfos to each other to make
 join RelOptInfos that represent more than two list items.
+
+リストに2つのリレーションしかない場合は、これで終わりです。結合
+RelOptInfoの最も安価なパスを選択するだけです。3つ以上ある場合は、3つ以
+上のリスト項目を表す結合RelOptInfosを作成するために、結合RelOptInfosを
+互いに結合する方法を考慮する必要があります。
 
 The join tree is constructed using a "dynamic programming" algorithm:
 in the first pass (already described) we consider ways to create join rels
@@ -130,6 +235,16 @@ relation that includes all list items --- obviously there can be only one
 join rel at this top level, whereas there can be more than one join rel
 at lower levels.  At each level we use joins that follow available join
 clauses, if possible, just as described for the first level.
+
+結合ツリーは、最初のパス(すでに説明した)で「動的プログラミング」アルゴ
+リズムを使用して構築されます。ここでは、正確に2つのリスト項目を表す結
+合relを作成する方法を検討します。2番目のパスでは、正確に3つのリスト項
+目を表す結合リレーションの作成方法が考慮されます。次のパスでは4つの項
+目が考慮されます。最後のパスでは、すべてのリスト項目を含む最終的な結合
+リレーションの作成方法が考慮されます。当然ながら、この最上位レベルでは
+結合relのみを使用できますが、下位レベルでは複数の結合relを使用できます。
+各レベルでは、可能であれば、最初のレベルで説明したように、使用可能な結
+合句に続く結合を使用します。
 
 For example:
 
@@ -167,6 +282,16 @@ all the ways to produce the same set of joined base rels will share the
 same RelOptInfo, so the paths produced from different join combinations
 that produce equivalent joinrels will compete in add_path().
 
+ここでは、左辺のプラン(上位の結合の外側のrelはjoinrelですが、内側のrel
+は常に単一のリスト項目です)、右辺のプラン(外側のreは常に単一の項目です)、
+およびブッシー・プラン(内側と外側の両方自体が結合します)を考えます。た
+とえば、{1 2 3 4}を構築する場合、{1 2 3}を{4}(左辺)に、{4}を{1 2 3}(右
+辺)に、{1 2}を{3 4}(ブッシー)に結合することを検討します。jointreeのス
+キャン・コードはこれらの潜在的な結合の組み合わせを一度に1つずつ生成し
+ますが、結合された結合されたベースrel同じ集合を生成するすべての方法は
+同じRelOptInfoを共有します。したがって、同等のjoinrelsを生成する異なる
+結合の組み合わせから生成されたパスは、add_path()で競合します。
+
 The dynamic-programming approach has an important property that's not
 immediately obvious: we will finish constructing all paths for a given
 relation before we construct any paths for relations containing that rel.
@@ -177,9 +302,22 @@ without worrying that maybe there is already a reference to that path in
 some higher-level join path.  Without this, memory management for paths
 would be much more complicated.
 
+動的プログラミングのアプローチには、直ちに自明ではない重要なプロパティ
+があります。つまり、特定のリレーションのすべてのパスの構築を完了してか
+ら、そのリレーションを含むリレーションのパスを構築します。これは、上位
+レベルの関係がそれを知る必要がある前に、各reの「最も安価なパス」を確実
+に識別できることを意味します。また、同じrelの別のパスの方が優れている
+ことがわかったときに、そのパスへの参照がすでに上位レベルの結合パスにあ
+る可能性を心配することなく、安全にパスを破棄することができます。これが
+ないと、パスのメモリ管理ははるかに複雑になります。
+
 Once we have built the final join rel, we use either the cheapest path
 for it or the cheapest path with the desired ordering (if that's cheaper
 than applying a sort to the cheapest other path).
+
+最後の結合relを作成したら、それに対して最も安価なpatを使用するか、望ま
+しいソート順で最も安価なパスを使用します(最も安価な他のパスにソートを
+適用するよりも安価な場合)。
 
 If the query contains one-sided outer joins (LEFT or RIGHT joins), or
 IN or EXISTS WHERE clauses that were converted to semijoins or antijoins,
@@ -189,6 +327,13 @@ whether a proposed join is illegal.  (The same consultation allows it to
 see which join style should be applied for a valid join, ie, JOIN_INNER,
 JOIN_LEFT, etc.)
 
+クエリに片側外部ジョイン(LEFTまたはRIGHTジョイン)、セミジョインまたは
+アンチジョインに変換されたIN、EXISTS WHERE句が含まれている場合、ジョイ
+ンの順序の一部が正しくない可能性があります。これらは、join_is_legalに"
+特別な"結合のサイドリストを調べさせて、提案された結合が不正かどうかを
+判断させることで除外されます。(同じチェックによって、有効なジョインに
+どのジョイン・スタイルを適用すべきか、つまりJOIN_INNER JOIN_LEFTなどを
+確認することができます。
 
 Valid OUTER JOIN Optimizations
 ------------------------------
@@ -196,11 +341,16 @@ Valid OUTER JOIN Optimizations
 The planner's treatment of outer join reordering is based on the following
 identities:
 
+外部結合の並び替えに関するプランナの処理は、次の恒等式に基づいています。
+
 1.	(A leftjoin B on (Pab)) innerjoin C on (Pac)
 	= (A innerjoin C on (Pac)) leftjoin B on (Pab)
 
 where Pac is a predicate referencing A and C, etc (in this case, clearly
 Pac cannot reference B, or the transformation is nonsensical).
+
+ここで、PacはAとCなどを参照する述語です(この場合、明らかにPacはBを参照
+できないか、変換が無意味です)。
 
 2.	(A leftjoin B on (Pab)) leftjoin C on (Pac)
 	= (A leftjoin C on (Pac)) leftjoin B on (Pab)
@@ -213,11 +363,22 @@ Identity 3 only holds if predicate Pbc must fail for all-null B rows
 strict, the first form might produce some rows with nonnull C columns
 where the second form would make those entries null.
 
+恒等式3は、述語PbcがすべてNULLのB行に対して失敗することが確実な場合に
+のみ成り立ちます(つまり、PbcはBの少なくとも1つの列に対して厳密です)。
+Pbcが厳密でない場合、最初の形式ではNULL以外のC列を持つ行が生成されます
+が、2番目の形式ではこれらのエントリがNULLになります。
+
 RIGHT JOIN is equivalent to LEFT JOIN after switching the two input
 tables, so the same identities work for right joins.
 
+2つの入力テーブルを入れ替えた後のRIGHT JOINはLEFT JOINと同じであるため、
+右結合に対しても同じ恒等式が成立します。
+
 An example of a case that does *not* work is moving an innerjoin into or
 out of the nullable side of an outer join:
+
+動作＊しない＊例としては、内部結合を外部結合のNULL許容側に移動したり、
+NULL許容側から移動したりする場合があります。
 
 	A leftjoin (B join C on (Pbc)) on (Pab)
 	!= (A leftjoin B on (Pab)) join C on (Pbc)
@@ -228,11 +389,24 @@ antijoin, but not into or out of the righthand side.  Likewise, an inner
 join, left join, or antijoin can be reassociated into or out of the
 lefthand side of a semijoin, but not into or out of the righthand side.
 
+SEMIジョインの動作は少し異なります。セミジョインは、別のセミジョイン、
+左結合、またはアンチジョインの左側に再関連付けできますが、右側に再関連
+付けすることはできません。同様に、内部結合、左結合、またはアンチジョイ
+ンは、SEMIジョインの左側に対して再関連付けできますが、右側に対して再関
+連付けできません。
+
 ANTI joins work approximately like LEFT joins, except that identity 3
 fails if the join to C is an antijoin (even if Pbc is strict, and in
 both the cases where the other join is a leftjoin and where it is an
 antijoin).  So we can't reorder antijoins into or out of the RHS of a
 leftjoin or antijoin, even if the relevant clause is strict.
+
+ANTIジョインは、LEFTジョインとほぼ同じように機能しますが、Cへのジョイ
+ンがアンチジョインの場合(Pbcが厳密であっても、また、もう一方のジョイン
+が左結合である場合とアンチジョインである場合の両方で)、恒等式3が成立し
+ない点が異なります。したがって、たとえ関連する句がstrictであっても、左
+結合のRHSまたはアンチジョインに対してアンチジョインをリオーダーしたり、
+リオーダーしたりすることはできません。
 
 The current code does not attempt to re-order FULL JOINs at all.
 FULL JOIN ordering is enforced by not collapsing FULL JOIN nodes when
@@ -241,6 +415,14 @@ JOIN nodes are normally collapsed so that they participate fully in the
 join order search.  To avoid generating illegal join orders, the planner
 creates a SpecialJoinInfo node for each non-inner join, and join_is_legal
 checks this list to decide if a proposed join is legal.
+
+現在のコードでは、FULL JOINの順序変更はまったく試行されません。FULL
+JOINの順序付けは、jointreeを"joinlist"表現に変換する際にFULL JOINノー
+ドを畳み込まないことによって強制されます。他のタイプのJOINノードは通常、
+結合順序の検索に完全に参加するように畳みこまれます。不正な結合順序を生
+成しないようにするために、プランナは内部結合ではない結合ごとに
+SpecialJoinInfoノードを作成し、join_is_legaがこのリストをチェックして、
+提案された結合が正当かどうかを判断します。
 
 What we store in SpecialJoinInfo nodes are the minimum sets of Relids
 required on each side of the join to form the outer join.  Note that
@@ -253,8 +435,24 @@ can't join a rel within or partly within an RHS boundary to one outside
 the boundary, unless the proposed join is a LEFT join that can associate
 into the SpecialJoinInfo's RHS using identity 3.
 
+SpecialJoinInfoノードに格納されるのは、外部結合を形成するために結合の
+各側で必要なRelidの最小セットです。これらは最小値であることに注意して
+ください。明示的な最大値はありません。なぜなら、外部結合の構文上のrels
+にrelsを結合することは正当な場合があるからです。恒等式1および2により、
+FULL以外の結合は、外部結合の左側に自由に関連付けることができますが、場
+合によっては右側に関連付けることができません。したがって、
+join_is_legalによって強制される制限は、提案された結合は、恒等式3を使用
+してSpecialJoinInfoのRHSに関連付けることができるLEFTジョインでない限り、
+RHS境界内または境界内の一部にあるrelを1つのoutsidに結合できないという
+ことです。
+
 The use of minimum Relid sets has some pitfalls; consider a query like
+
+最小限のRelidセットの使用には、いくつかの落とし穴があります。以下のよ
+うな問い合わせを考えてください。
+
 	A leftjoin (B leftjoin (C innerjoin D) on (Pbcd)) on Pa
+
 where Pa doesn't mention B/C/D at all.  In this case a naive computation
 would give the upper leftjoin's min LHS as {A} and min RHS as {C,D} (since
 we know that the innerjoin can't associate out of the leftjoin's RHS, and
@@ -262,11 +460,26 @@ enforce that by including its relids in the leftjoin's min RHS).  And the
 lower leftjoin has min LHS of {B} and min RHS of {C,D}.  Given such
 information, join_is_legal would think it's okay to associate the upper
 join into the lower join's RHS, transforming the query to
+
+ここで、PaはB/C/Dについてまったく言及していません。この場合、単純な計
+算では、上部leftjoinの最小LHSは{A}、最小RHSは{C,D}となります(
+innerjoinはleftjoinのRHSから関連付けられないできないことがわかっており、
+そのrelidsをleftjoinの最小RHSに含めることによってそれを強制します)。ま
+た、下部leftjoinの最小LHSは{B}であり、最小RHSは{C,D}です。そうした情報
+により、join_is_legalは、上位ジョインを下位ジョインのRHSに関連付けても
+問題ないとみなし、以下の問い合わせへと変換します。
+
 	B leftjoin (A leftjoin (C innerjoin D) on Pa) on (Pbcd)
+
 which yields totally wrong answers.  We prevent that by forcing the min RHS
 for the upper join to include B.  This is perhaps overly restrictive, but
 such cases don't arise often so it's not clear that it's worth developing a
 more complicated system.
+
+これで全く間違った答えが返ってきます。これを防ぐには、上位ジョインの最
+小RHSにBを含めるように強制します。これはおそらく過度に制限的ですが、そ
+のようなケースはめったに発生しないため、より複雑なシステムを開発する価
+値があるかどうかはわかりません。
 
 
 Pulling Up Subqueries
@@ -281,9 +494,22 @@ compared to considering it as part of the entire plan search space.
 Therefore, at the start of the planning process the planner looks for
 simple subqueries and pulls them up into the main query's jointree.
 
+前述したように、範囲テーブルに現れるサブクエリは独立して計画され、外側
+のクエリの計画中は「ブラックボックス」として扱われます。これは、サブク
+エリが集約、GROUP、DISTINCTなどの機能を使用する場合に必要です。しかし、
+サブクエリが単純スキャンまたはジョインだけの場合、サブクエリをブラック・
+ボックスとして扱うと、プラン・サーチ・スペース全体の一部として考える場
+合に比べて、質の悪い計画が生成される可能性があります。したがって、計画
+プロセスの開始時に、プランナは単純な副問い合わせを見て、それらを主問い
+合わせのjointreeに引き上げます。
+
 Pulling up a subquery may result in FROM-list joins appearing below the top
 of the join tree.  Each FROM-list is planned using the dynamic-programming
 search method described above.
+
+サブクエリをプルアップすると、結合ツリーの最上部の下にFROMリスト結合が
+現れることがあります。各FROMリストは、上記の動的プログラミング検索方法
+を使用して計画されます。
 
 If pulling up a subquery produces a FROM-list as a direct child of another
 FROM-list, then we can merge the two FROM-lists together.  Once that's
@@ -294,11 +520,20 @@ search has runtime exponential in the number of FROM-items considered.
 Therefore, we don't merge FROM-lists if the result would have too many
 FROM-items in one list.
 
+サブクエリをプルアップすると、FROM-listがFROM-listの直接の子として生成
+される場合、2つのFROM-listをマージできます。これが完了すると、サブクエ
+リは外部クエリの絶対不可欠な部分となり、結合ツリーのサーチスペースはまっ
+たく制約されなくなります。しかし、動的プログラミングの検索では、考慮さ
+れるFROM項目の数が実行時に指数関数的に増加するため、計画時間が不快に長
+くなる可能性があります。したがって、結果が1つのリストに多すぎるFROM項
+目を持つ場合は、FROMリストをマージしません。
 
 Optimizer Functions
 -------------------
 
 The primary entry point is planner().
+
+主エントリポイントはplanner()です。
 
 planner()
 set up for recursive handling of subqueries
@@ -418,12 +653,27 @@ is, but mergejoin needs suitably ordered inputs.  Therefore, all paths
 generated during the optimization process are marked with their sort order
 (to the extent that it is known) for possible use by a higher-level merge.
 
+オプティマイザは、パスによって返されるタプルの順序付けにかなりの時間を
+費やします。これが有用な理由は、パスのソート順がわかっていれば、そのパ
+スをマージ・ジョインの左または右の入力として使用し、明示的なソート・ス
+テップを避けることができるからです。Nestloops結合とハッシュ結合では、
+実際には入力の順序は関係ありませんが、マージ結合では適切な順序の入力が
+必要です。したがって、最適化プロセス中に生成されたすべてのパスは、より
+高いレベルのマージで使用できるように、(既知の範囲で)ソート順でマークさ
+れます。
+
 It is also possible to avoid an explicit sort step to implement a user's
 ORDER BY clause if the final path has the right ordering already, so the
 sort ordering is of interest even at the top level.  grouping_planner() will
 look for the cheapest path with a sort order matching the desired order,
 then compare its cost to the cost of using the cheapest-overall path and
 doing an explicit sort on that.
+
+また、最終パスの順序が正しい場合は、明示的なソート手順を使用せずにユー
+ザのORDER BY句を実装することもできます。したがって、最上位レベルであっ
+てもソート順序が重要になります。grouping_planner()は希望する順序にマッ
+チするソート順を持つ最も安いパスを探し、そのコストを最も安いパス全体の
+コストと比較し、明示的なソートを行います。
 
 When we are generating paths for a particular RelOptInfo, we discard a path
 if it is more expensive than another known path that has the same or better
@@ -432,6 +682,13 @@ achieve a given sort order (without an explicit sort, that is).  In this
 way, the next level up will have the maximum freedom to build mergejoins
 without sorting, since it can pick from any of the paths retained for its
 inputs.
+
+特定のRelOptInfoのパスを生成する場合、同じまたはより良いソート順を持つ
+別の既知のパスよりもコストが高いパスは破棄されます。特定のソート順序を
+実現するための唯一の既知の方法であるパスを破棄することはありません(つ
+まり、明示的なソートなしで)。このようにして、次のレベルでは、入力用に
+保持されている任意のパスから選択できるため、ソートせずにマージ・ジョイ
+ンを構築するための最大限の自由度が得られます。
 
 
 EquivalenceClasses
@@ -457,6 +714,23 @@ clause A = C, even though this appeared nowhere explicitly in the original
 query.  This may allow us to explore join paths that otherwise would have
 been rejected as requiring Cartesian-product joins.
 
+クエリのqual句のdeconstruct_jointree()スキャン中に、外部ジョインによっ
+て適用が遅延されないmergejoinableの等価句A=Bを探します。これらは「等価
+句」と呼ばれます。1つを見つけたら、式AとBを含むEquivalenceClassを作成
+して、この知識を記録します。後で別の同値節B=Cが見つかった場合は、{A B}
+の既存のEquivalenceClassにCを追加します。これには、2つの既存の
+EquivalenceClassesのマージが必要になる場合があります。スキャンの最後に
+は、互いに推移的に等しいことがわかっている値のセットがあります。したがっ
+て、任意の値のペアの比較を制限または結合句として使用できます(これらの
+値がスキャンまたは結合で使用可能な場合)。さらに、すべての比較ではなく、
+1つの比較のみをテストする必要があります。そのため、同等性句は標準の品
+質分布プロセスから削除されます。代わりに、制約またはジョイン句のリスト
+を準備するときに、各EquivalenceClassが句に寄与できるかどうかを調べ、寄
+与できる場合は、比較する値の適切なペアを選択します。たとえば、Aの関係
+をCの関係に結合しようとする場合、元のクエリでは明示的にどこにも現れな
+かったとしても、A=C句を生成できます。これにより、デカルト積結合が必要
+であるとして拒否されていた結合パスを調べることができます。
+
 Sometimes an EquivalenceClass may contain a pseudo-constant expression
 (i.e., one not containing Vars or Aggs of the current query level, nor
 volatile functions).  In this case we do not follow the policy of
@@ -467,6 +741,15 @@ we effectively generate the restriction clauses A = 42 and B = 42, and then
 we need not bother with explicitly testing the join clause A = B when the
 relations are joined.  In effect, all the class members can be tested at
 relation-scan level and there's never a need for join tests.
+
+EquivalenceClassに擬似定数式が含まれていることがあります(つまり、現在
+の問い合わせレベルのVarやAggsを含まない式や、volatile関数を含まない式)。
+この場合、結合句を動的に生成するポリシーには従いません。代わりに、クラ
+スの可変メンバーの1つを最初に計算できる場合は常に、制約句「var=const」
+を動的に生成します。たとえば、A=BとB=42がある場合、制限句A=42とB=42が
+実質的に生成されるため、関係が結合されるときに結合句A=Bを明示的にテス
+トする必要はありません。実際には、すべてのクラス・メンバーをリレーショ
+ン・スキャン・レベルでテストすることができ、結合テストは必要ありません。
 
 The precise technical interpretation of an EquivalenceClass is that it
 asserts that at any plan node where more than one of its member values
@@ -483,6 +766,20 @@ all (except pseudo-constants) have gone to null.  (This requires a
 limitation that non-constant members be strict, else they might not go
 to null when the other members do.)  Consider for example
 
+EquivalenceClassの正確な技術的解釈は、2つ以上のメンバー値を計算できる
+計画ノードでは、すべての値が等しくない出力行が、クエリー結果に影響を与
+えずに破棄できると主張することです。(プランのすべてのレベルで
+EquivalenceClassesを強制する必要があります。したがって、ジョインでは、
+その子の1つで計算可能な値の等価性を再チェックする必要はありません)。
+「すべての場所で有効」な通常のEquivalenceClassの場合、すべての
+mergejoinable演算子が厳密であるため、値はすべて非NULLであると推測でき
+ます。ただし、外部ジョインのNULL許容側の下にある等価句を使用して
+EquivalenceClassesを形成することもできます。これらのクラスでは、すべて
+の値が等しいか、またはすべて(擬似定数を除く)がNULLになったと解釈されま
+す。(これには、非定数メンバーが厳密であるという制限が必要です。そうで
+ないと、他のメンバーがnullになるときに非定数メンバーがnullにならない可
+能性があります。)次の例を考えてみてください。
+
 	SELECT *
 	  FROM a LEFT JOIN
 	       (SELECT * FROM b JOIN c ON b.y = c.z WHERE b.y = 10) ss
@@ -496,6 +793,13 @@ to push any derived clauses as far down as possible.)  But once above the
 outer join it's no longer necessarily the case that b.y = 10, and thus we
 cannot use such EquivalenceClasses to conclude that sorting is unnecessary
 (see discussion of PathKeys below).
+
+外部ジョイン以下のEquivalenceClass{b.y c.z 10}を形成し、cをスキャンし
+ながらc.z=10を適用できます。(外部結合遅延句がEquivalenceClassesを形成
+することを禁止する理由は、派生句をできるだけ下位にプッシュできるように
+するためです)。しかし、外部結合の上になると、b.y=10である必要はなくな
+ります。したがって、このようなEquivalenceClassesを使用してソートが不要
+であると結論づけることはできません(後述のPathKeysの説明を参照)。
 
 In this example, notice also that a.x = ss.y (really a.x = b.y) is not an
 equivalence clause because its applicability to b is delayed by the outer
@@ -511,6 +815,19 @@ implemented as a gating Result filter, since more usually the potential
 contradiction involves Param values rather than just Consts, and thus has
 to be checked at runtime.)
 
+この例では、a.x=ss.y(実際にはa.x=b.y)は、bへの適用性が外部ジョインによっ
+て遅延されるため、等価句ではないことにも注意してください。したがって、
+b.yを等価クラス{a.x 42}に挿入しようとはしません。しかし、a.xが外部結合
+の上の42に等しくなっていることがわかるので、外部結合の下のクラス{b.y
+42}を形成することができます。b.y=42を持たないb/c行は外部結合の結果に寄
+与できないため、この制限を追加できます。したがって、このような行を計算
+する必要はありません。このクラスは{b.y c.z 10}とマージされ、10=42とい
+う矛盾が生じます。これにより、プランナはb/c結合を計算する必要がないこ
+とを推測できます。なぜなら、どの行も外部結合に寄与できないからです。
+(これはゲートResultフィルタとして実装されます。これは、通常、潜在的な
+矛盾にはConstsだけでなくParam値が含まれるため、実行時にチェックする必
+要があるためです)。
+
 To aid in determining the sort ordering(s) that can work with a mergejoin,
 we mark each mergejoinable clause with the EquivalenceClasses of its left
 and right inputs.  For an equivalence clause, these are of course the same
@@ -520,6 +837,15 @@ the left and right inputs.  This may result in creating single-item
 equivalence "classes", though of course these are still subject to merging
 if other equivalence clauses are later found to bear on the same
 expressions.
+
+マージ・ジョインで使用できるソート順を決定するために、各mergejoinable
+句に左入力と右入力のEquivalenceClassesをマークします。同値句については、
+これらはもちろん同じEquivalenceClassです。非同値mergejoinable句(外部ジョ
+イン条件など)の場合は、左入力と右入力に対して2つの個別の
+EquivalenceClassesを生成します。これにより、単一項目の
+Equivalence"Classes"が作成される可能性がありますが、もちろん、他の同値
+句が後で同じ式に関連していることが判明した場合、これらはマージの対象と
+なります。
 
 Another way that we may form a single-item EquivalenceClass is in creation
 of a PathKey to represent a desired sort order (see below).  This is a bit
@@ -535,6 +861,19 @@ that a single-item EquivalenceClass {a.x} is *not* meant to imply an
 assertion that a.x = a.x; the practical effect of this is that a.x could
 be NULL.
 
+単一項目のEquivalenceClassを形成するもう1つの方法は、必要なソート順を
+表すPathKeyを作成することです(以下を参照)。このようなEquivalenceClass
+には集約関数やvolatile式が含まれる場合があるため、これは上記の場合とは
+少し異なります。(volatile関数を含む句は、その最上位演算子が
+mergejoinableであっても、決してmergejoinableとは見なされません。したがっ
+て、volatile式がEquivalenceClassesに入ることはありません。集約はWHERE
+では許可されないため、mergejoinable句では見つかりません)。これは、均一
+なパスキー表現を維持するための便利な方法です。このような
+EquivalenceClassは他のものとマージされることはありません。特に、単一項
+目のEquivalenceClass{a.x}は、a.x=a.xという主張を意味する*ものでは*ない
+ことに注意してください。これの実際的な効果は、a.xがNULLである可能性が
+あることです。
+
 An EquivalenceClass also contains a list of btree opfamily OIDs, which
 determines what the equalities it represents actually "mean".  All the
 equivalence clauses that contribute to an EquivalenceClass must have
@@ -544,6 +883,14 @@ it's possible that it belongs to more than one.  We keep track of all the
 families to ensure that we can make use of an index belonging to any one of
 the families for mergejoin purposes.)
 
+EquivalenceClassには、btree opfamily OIDのリストも含まれています。これ
+は、それが実際に「意味」を表す同等性を決定します。EquivalenceClassに寄
+与するすべての等価句は、同じopfamilyのセットに属する等価演算子を持たな
+ければなりません。(注:ほとんどの場合、特定の等価演算子は1つのファミリ
+だけに属しますが、複数のファミリに属することもあります。すべてのファミ
+リを追跡して、いずれかのファミリに属するインデックスをマージ結合の目的
+で使用できるようにします)。
+
 An EquivalenceClass can contain "em_is_child" members, which are copies
 of members that contain appendrel parent relation Vars, transposed to
 contain the equivalent child-relation variables or expressions.  These
@@ -552,6 +899,13 @@ affect the class's overall properties at all.  They are kept only to
 simplify matching of child-relation expressions to EquivalenceClasses.
 Most operations on EquivalenceClasses should ignore child members.
 
+EquivalenceClassには"em_is_child"メンバを含めることができます。これは
+appendrelの親リレーションVarsを含むメンバのコピーであり、同等の子リレー
+ション変数または式を含むように転置されています。これらのメンバーは
+EquivalenceClassの完全なメンバーでは*なく*、クラスの全体的なプロパティ
+にはまったく影響しません。これらは、子リレーション式と
+EquivalenceClassesのマッチングを簡略化するためだけに保持されます。
+EquivalenceClassesでの操作では、子メンバーは無視されます。
 
 PathKeys
 --------
@@ -560,6 +914,11 @@ The PathKeys data structure represents what is known about the sort order
 of the tuples generated by a particular Path.  A path's pathkeys field is a
 list of PathKey nodes, where the n'th item represents the n'th sort key of
 the result.  Each PathKey contains these fields:
+
+PathKeysデータ構造体は、特定のPathによって生成されたタプルのソート順に
+ついてわかっていることを表します。パスのpathkeysフィールドはPathKeyノー
+ドのリストであり、n番目の項目は結果のn番目のソートキーを表します。各
+PathKeyには、次のフィールドがあります。
 
 	* a reference to an EquivalenceClass
 	* a btree opfamily OID (must match one of those in the EC)
@@ -571,6 +930,12 @@ various members of an EquivalenceClass are known equal according to the
 opfamily, we can consider a path sorted by any one of them to be sorted by
 any other too; this is what justifies referencing the whole
 EquivalenceClass rather than just one member of it.
+
+EquivalenceClassは、ソートされる値を表します。1つのEquivalenceClassの
+さまざまなメンバーはopfamilyに従って同等であることがわかっているので、
+それらのいずれか1つによってソートされたパスは、他のいずれかによっても
+ソートされると考えることができます。これが、EquivalenceClassの1つのメ
+ンバーだけでなく全体を参照することを正当化する理由です。
 
 In single/base relation RelOptInfo's, the Paths represent various ways
 of scanning the relation and the resulting ordering of the tuples.
@@ -584,17 +949,41 @@ index ordering.  (Actually, since an index can be scanned either forward or
 backward, there are two possible sort orders and two possible PathKey lists
 it can generate.)
 
+単一/ベースリレーションRelOptInfoでは、パスはリレーションをスキャンす
+るさまざまな方法と、結果として生じるタプルの順序付けを表します。シーケ
+ンシャルスキャンパスにはNIL pathkeysがあります。これは、順序が不明であ
+ることを示します。インデックススキャンには、選択されたインデックスの順
+序を表すPath.pathkeysがあります(存在する場合)。単一キーインデックスで
+は単一パスキーリストが作成されますが、複数列インデックスではキーインデッ
+クス列ごとに1つの要素を持つリストが生成されます。カバリングインデック
+スのINCLUDE句で指定された非キー列は、対応するPathKeysをリストに持ちま
+せん。これは、がインデックスの順序に影響を与えないためです。(実際には、
+インデックスは順方向または逆方向にスキャンできるため、2つのソート順と2
+つのPathKeyリストを生成できます)。
+
 Note that a bitmap scan has NIL pathkeys since we can say nothing about
 the overall order of its result.  Also, an indexscan on an unordered type
 of index generates NIL pathkeys.  However, we can always create a pathkey
 by doing an explicit sort.  The pathkeys for a Sort plan's output just
 represent the sort key fields and the ordering operators used.
 
+結果の全体的な順序については何も言えないため、ビットマップスキャンには
+NIL pathkeysがあることに注意してください。また、インデックスの順序なし
+タイプに対するindexscanは、NIL pathkeysを生成します。ただし、明示的な
+ソートを実行することで、常にパスキーを作成できます。ソート計画の出力の
+pathkeysは、使用されるソート・キー・フィールドと順序付け演算子を表しま
+す。
+
 Things get more interesting when we consider joins.  Suppose we do a
 mergejoin between A and B using the mergeclause A.X = B.Y.  The output
 of the mergejoin is sorted by X --- but it is also sorted by Y.  Again,
 this can be represented by a PathKey referencing an EquivalenceClass
 containing both X and Y.
+
+ジョインを考えると、さらに興味深いものになります。mergeclause A.X=B.Y
+を使用して、AとBの間でマージ結合を行うとします。mergejoinの出力はXでソー
+トされます。--- Yでもソートされます。この場合も、XとYの両方を含む
+EquivalenceClassを参照するPathKeyで表すことができます。
 
 With a little further thought, it becomes apparent that nestloop joins
 can also produce sorted output.  For example, if we do a nestloop join
@@ -612,6 +1001,22 @@ a hashjoin path.)  Exception: a RIGHT or FULL join doesn't preserve the
 ordering of its outer relation, because it might insert nulls at random
 points in the ordering.
 
+もう少し考えてみると、ネストループ結合でもソートされた出力を生成できる
+ことが明らかになります。たとえば、外部リレーションAと内部リレーションB
+の間でネストループ結合を行うと、Aに関連するpathkeysはすべて結合結果に
+対して有効になります。つまり、Aからのタプルの順序は変更されません。さ
+らに興味深いことに、同等性句A.X=B.Yがあり、A.Xが外部リレーションAのパ
+スキーであった場合、B.Yは結合結果のパスキーであると断言できます。Xは以
+前に順序付けられており、現在も順序付けられています。また、Yの結合値はX
+の結合値と等しいため、Yも順序付けられる必要があります。これは、Yに対し
+て明示的なソートもマージ結合も使用していない場合でも当てはまります。
+(注:外部リレーションの順序を保持するためにハッシュ結合を使用することは
+できません。なぜなら、エクゼキュータが結合を「バッチ処理」する可能性が
+あるためです。そのため、ハッシュ結合パスには常にpathkeysをNILに設定し
+ます。)例外:RIGHT結合またはFULL結合では、外部リレーションの順序は保持
+されません。これは、順序付けのランダムなポイントにNULLが挿入される可能
+性があるためです。
+
 In general, we can justify using EquivalenceClasses as the basis for
 pathkeys because, whenever we scan a relation containing multiple
 EquivalenceClass members or join two relations each containing
@@ -622,6 +1027,17 @@ join, and therefore that if the tuples are sorted by one of the values,
 they can be considered sorted by any other as well.  It does not matter
 whether the test clause is used as a mergeclause, or merely enforced
 after-the-fact as a qpqual filter.
+
+一般的に、EquivalenceClassesをpathkeysの基礎として使用することは正当化
+できます。なぜなら、複数のEquivalenceClassメンバーを含むリレーションを
+スキャンしたり、それぞれがEquivalenceClassメンバーを含む2つのリレーショ
+ンを結合したりする場合は常に、EquivalenceClassから派生した制限または結
+合句を適用するからです。これにより、EquivalenceClassにリストされた任意
+の2つの値が、スキャンまたはジョインによって生成されたすべてのタプルで
+実際に等しいことが保証されます。したがって、タプルがいずれかの値でソー
+トされた場合、他の値でもソートされたと見なすことができます。テスト句が
+mergeclauseとして使用されるか、qpqualフィルタとして事後的に適用される
+かは問題ではありません。
 
 Note that there is no particular difficulty in labeling a path's sort
 order with a PathKey referencing an EquivalenceClass that contains
@@ -634,25 +1050,53 @@ to simple pointer comparison, which is a huge savings because add_path
 has to make a large number of PathKey comparisons in deciding whether
 competing Paths are equivalently sorted.
 
+パスの出力にまだ結合されていない変数を含むEquivalenceClassを参照する
+PathKeyを使用して、パスのソート順にラベルを付けることは特に困難ではな
+いことに注意してください。このようなエントリは、(まだ)関連性がないもの
+として単純に無視できます。これにより、結合計画プロセス全体で同じ
+EquivalenceClassesを使用できます。実際、複数の同一のPathKeyオブジェク
+トを生成しないように注意することで、EquivalenceClassesとPathKeysの比較
+を単純なポインタ比較に減らすことができます。add_pathは、競合するPathが
+同等にソートされているかどうかを判断する際に、多数のPathKey比較を行う
+必要があるため、これは大きな節約になります。
+
 Pathkeys are also useful to represent an ordering that we wish to achieve,
 since they are easily compared to the pathkeys of a potential candidate
 path.  So, SortGroupClause lists are turned into pathkeys lists for use
 inside the optimizer.
+
+Pathkeysは、潜在的な候補パスのpathkeysと容易に比較されるため、達成した
+い順序を表すのにも役立ちます。そのため、SortGroupClauseリストは
+pathkeysリストに変換され、オプティマイザ内部で使用されます。
 
 An additional refinement we can make is to insist that canonical pathkey
 lists (sort orderings) do not mention the same EquivalenceClass more than
 once.  For example, in all these cases the second sort column is redundant,
 because it cannot distinguish values that are the same according to the
 first sort column:
+
+私たちが行うことができる追加の改良は、標準的なパスキーリスト(ソート順
+序)が同じEquivalenceClassを2回以上言及しないように主張することです。た
+とえば、これらのすべての場合において、2番目のソート列は冗長です。これ
+は、最初のソート列に従って同じ値を区別できないためです。
+
 	SELECT ... ORDER BY x, x
 	SELECT ... ORDER BY x, x DESC
 	SELECT ... WHERE x = y ORDER BY x, y
+
 Although a user probably wouldn't write "ORDER BY x,x" directly, such
 redundancies are more probable once equivalence classes have been
 considered.  Also, the system may generate redundant pathkey lists when
 computing the sort ordering needed for a mergejoin.  By eliminating the
 redundancy, we save time and improve planning, since the planner will more
 easily recognize equivalent orderings as being equivalent.
+
+ユーザはおそらく"ORDER BY x,x"を直接書くことはないでしょうが、同等性ク
+ラスが考慮されると、このような冗長性の可能性は高くなります。また、シス
+テムは、マージ結合に必要なソート順を計算するときに、冗長なパスキーリス
+トを生成する場合があります。冗長性を排除することで、時間が節約され、計
+画が改善されます。これは、計画担当者が同等のオーダーを同等であると認識
+しやすくなるためです。
 
 Another interesting property is that if the underlying EquivalenceClass
 contains a constant and is not below an outer join, then the pathkey is
@@ -670,6 +1114,23 @@ produces correctly ordered data without a sort step.  We used to have very
 ugly ad-hoc code to recognize that in limited contexts, but discarding
 constant ECs from pathkeys makes it happen cleanly and automatically.
 
+もう1つの興味深い特性は、基礎となるEquivalenceClassに定数が含まれ、外
+部ジョインの下にない場合、パスキーは完全に冗長であり、でソートする必要
+はありません!すべての行に同じ定数値が含まれている必要があるため、ソー
+トする必要はありません。(ECが外部ジョインの下にある場合は、まだソート
+する必要があります。これは、一部の行がNULLになっていて、他の行はNULLに
+なっていない可能性があるためです。この場合、ソートするためにconstでな
+いメンバーを選択することに注意する必要があります。すべての非constメン
+バーが同じ計画レベルでヌルになるという仮定は、ここでは重要です。そうで
+ないと、同じソート順が生成されない可能性があります。)これは、ユーザが
+"...WHERE x=42 ORDER BY x"と書く可能性が低いため、無意味に見えるかもし
+れませんが、これにより、特定のインデックス列がソート順と無関係であるこ
+とを認識できます。"... WHERE x=42 ORDER BY y"では、(x,y)のインデックス
+をスキャンすることで、ソートステップなしで正しく順序付けられたデータが
+生成されます。私たちは、限られたコンテキストでそれを認識するために非常
+に醜いアドホックコードを持っていましたが、pathkeysから定数ECを破棄する
+ことで、それがきれいに自動的に行われるようになります。
+
 You might object that a below-outer-join EquivalenceClass doesn't always
 represent the same values at every level of the join tree, and so using
 it to uniquely identify a sort order is dubious.  This is true, but we
@@ -679,6 +1140,14 @@ if a path was sorted by {a.x} below an outer join, we'll re-sort if that
 sort ordering was important; and so using the same PathKey for both sort
 orderings doesn't create any real problem.
 
+外部ジョイン以下のEquivalenceClassが必ずしもジョイン・ツリーのすべての
+レベルで同じ値を表すとは限らないので、ソート順を一意に識別するためにそ
+れを使用することは疑わしいと考える人もいるかもしれません。これは本当で
+すが、外部ジョインはnull許容入力の順序をすべて破壊すると常に考えている
+ので、明示的に事実を扱うことを避けることができます。したがって、パスが
+外部ジョインの下で{a.x}によってソートされた場合でも、そのソート順が重
+要であれば再ソートします。したがって、両方のソート順に同じPathKeyを使
+用しても、実際の問題は発生しません。
 
 Order of processing for EquivalenceClasses and PathKeys
 -------------------------------------------------------
@@ -697,12 +1166,30 @@ time we construct PathKeys for the query's ORDER BY and related clauses.
 the creation of new EquivalenceClasses, but this cannot result in merging
 existing classes, so canonical-ness is not lost.)
 
+上述したように、計画中のEquivalenceClassesとPathKeysの処理には、特定の
+一連の段階があります。クエリのqualsの最初のスキャン中
+(deconstruct_jointreeの後にrethink_outer_join_clausesが続く)に、quals
+内で見つかったmergejoinable句に基づいてEquivalenceClassesを構築します。
+このプロセスの最後には、異なる変数の等価性について私たちが知ることがで
+きるすべてのことがわかっているので、その後、EquivalenceClassesのさらな
+る統合はありません。その時点で、EquivalenceClassesを「標準」とみなし、
+それらを参照する標準PathKeysを構築することができます・この時点で、クエ
+リのORDER BYおよび関連する句のPathKeysを作成します。(他の場所にない順
+序付け式は、新しいEquivalenceClassesを作成しますが、既存のクラスをマー
+ジすることはできないため、標準性は失われません)。
+
 Because all the EquivalenceClasses are known before we begin path
 generation, we can use them as a guide to which indexes are of interest:
 if an index's column is not mentioned in any EquivalenceClass then that
 index's sort order cannot possibly be helpful for the query.  This allows
 short-circuiting of much of the processing of create_index_paths() for
 irrelevant indexes.
+
+パス生成を開始する前にすべてのEquivalenceClassesがわかっているため、ど
+のインデックスが対象となるかのガイドとして使用できます。インデックスの
+カラムがどのEquivalenceClassにも指定されていない場合、そのインデックス
+のソート順はクエリには役立ちません。これにより、無関係なインデックスに
+対するcreate_index_paths()の処理の大部分を省略することができます。
 
 There are some cases where planner.c constructs additional
 EquivalenceClasses and PathKeys after query_planner has completed.
@@ -713,12 +1200,23 @@ producing such a sort order, meaning an explicit sort will always be needed.
 Currently this happens only for queries involving multiple window functions
 with different orderings, for which extra sorts are needed anyway.
 
+query_plannerが完了した後で、planner.cが追加のEquivalenceClassesと
+PathKeysを作成する場合があります。このような場合、query_plannerで考慮
+されなかったソート順を表すために、追加のEC/PKが必要になります。
+query_plannerがこのようなソート順を生成する計画を返すことは不可能であ
+り、明示的なソートが常に必要になるため、このような状況は最小限に抑える
+必要があります。現在、これは、順序が異なる複数のウィンドウ関数を含むク
+エリに対してのみ発生します。このためには、いずれにしても追加のソートが
+必要です。
 
 Parameterized Paths
 -------------------
 
 The naive way to join two relations using a clause like WHERE A.X = B.Y
 is to generate a nestloop plan like this:
+
+WHERE A.X=B.Yのような句を使用して2つのリレーションを結合する単純な方法
+は、次のようなネストループ計画を生成することです。
 
 	NestLoop
 		Filter: A.X = B.Y
@@ -729,6 +1227,11 @@ We can make this better by using a merge or hash join, but it still
 requires scanning all of both input relations.  If A is very small and B is
 very large, but there is an index on B.Y, it can be enormously better to do
 something like this:
+
+マージまたはハッシュ結合を使用することでこれを改善できますが、それでも
+両方の入力リレーションをすべてスキャンする必要があります。Aが非常に小
+さく、Bが非常に大きいが、B.Yにインデックスがある場合は、次のようにした
+方が非常に良い場合があります。
 
 	NestLoop
 		-> Seq Scan on A
@@ -744,8 +1247,21 @@ A, that will dominate every other consideration.  (As A gets larger, this
 gets less attractive, and eventually a merge or hash join will win instead.
 So we have to cost out all the alternatives to decide what to do.)
 
+ここでは、Aからスキャンされた各行に対して、ネストループ計画ノードがA.X
+の現在の値をBのスキャンに渡すことを期待しています。これにより、
+indexscanはA.Xを1回の呼び出しで定数として扱い、インデックスキーとして
+使用することができます。これは、Bのすべてをフェッチすることを避けるこ
+とができる唯一の計画タイプであり、Aから来る少数の行に対しては、他のす
+べての考慮事項を支配します。(Aが大きくなるにつれて、これはあまり魅力的
+でなくなり、最終的にはマージまたはハッシュ結合が代わりに勝利します。そ
+のため、何をするかを決定するためには、すべての選択肢を犠牲にする必要が
+あります。)
+
 It can be useful for the parameter value to be passed down through
 intermediate layers of joins, for example:
+
+次のように、パラメータ値を結合の中間レイヤを介して渡す場合に便利です。
+例を示します。
 
 	NestLoop
 		-> Seq Scan on A
@@ -760,6 +1276,11 @@ because it's possible to reorder the joins so that a parameter is used
 immediately below the nestloop node that provides it.  But in the
 presence of outer joins, such join reordering may not be possible.
 
+すべての結合が単純な内部結合である場合、結合の順序を変更して、結合を提
+供するnestloopノードのすぐ下でパラメータが使用されるようにすることがで
+きるため、通常は必要ありません。ただし、外部ジョインが存在する場合は、
+このようなジョインの順序変更は不可能です。
+
 Also, the bottom-level scan might require parameters from more than one
 other relation.  In principle we could join the other relations first
 so that all the parameters are supplied from a single nestloop level.
@@ -767,6 +1288,14 @@ But if those other relations have no join clause in common (which is
 common in star-schema queries for instance), the planner won't consider
 joining them directly to each other.  In such a case we need to be able
 to create a plan like
+
+また、最下位レベルのスキャンでは、他の複数のリレーションからのパラメー
+タが必要になる場合があります。原則として、最初に他のリレーションを結合
+して、すべてのパラメータが単一のネストループレベルから提供されるように
+することができます。しかし、これらの他のリレーションに共通の結合句がな
+い場合(たとえば、スター・スキーマ・クエリでは一般的です)、プランナはそ
+れらを互いに直接結合することを考慮しません。そのような場合は以下のよう
+な計画を作ることができる必要があります。
 
     NestLoop
         -> Seq Scan on SmallTable1 A
@@ -778,14 +1307,26 @@ to create a plan like
 so we should be willing to pass down A.AID through a join even though
 there is no join order constraint forcing the plan to look like this.
 
+したがって、結合順序の制約がなく、計画が次のようになる場合でも、結合を
+介してA.AIDを渡す必要があります。
+
 Before version 9.2, Postgres used ad-hoc methods for planning and
 executing nestloop queries of this kind, and those methods could not
 handle passing parameters down through multiple join levels.
+
+バージョン9.2以前では、Postgresはこの種のネストループクエリの計画と実
+行にアドホックメソッドを使用していましたが、これらのメソッドは複数の結
+合レベルを通じてパラメータを渡すことができませんでした。
 
 To plan such queries, we now use a notion of a "parameterized path",
 which is a path that makes use of a join clause to a relation that's not
 scanned by the path.  In the example two above, we would construct a
 path representing the possibility of doing this:
+
+このような問い合わせを計画するために、「パラメータ化されたパス」という
+概念を使用します。これは、パスによってスキャンされないリレーションへの
+結合句を使用するパスです。2つ上の例では、これを行う可能性を表すパスを
+作成します。
 
 	-> Index Scan using C_Z_IDX on C
 		Index Condition: C.Z = A.X
@@ -795,6 +1336,12 @@ this is only one of the possible access paths for C; we'd still have a
 plain unparameterized seqscan, and perhaps other possibilities.)  The
 parameterization marker does not prevent joining the path to B, so one of
 the paths generated for the joinrel {B C} will represent
+
+このパスは、リレーションAによってパラメータ化されているとマークされま
+す。(これはCで可能なアクセスパスの1つでしかないことに注意してください。
+パラメータ化されていないプレーンなseqscanや、おそらく他の可能性もあり
+ます。)パラメータ化マーカーはパスをBに結合することを妨げないので、
+joinrel{B C}に対して生成されたパスの1つは以下のようになります。
 
 	Hash Join
 		Join Condition: B.Y = C.W
@@ -809,6 +1356,13 @@ possible join types.  So we will form a join path representing the query
 plan shown above, and it will compete in the usual way with paths built
 from non-parameterized scans.
 
+このパスは、まだAによってパラメータ化されているとマークされています。
+{B C}をAに結合して完全な結合ツリーを形成しようとする場合、このようなパ
+スはネストループ結合の内側としてのみ使用できます。他の可能な結合タイプ
+では無視されます。したがって、上記のクエリ・プランを表すジョイン・パス
+を作成し、パラメータ化されていないスキャンから構築されたパスと通常の方
+法で競合します。
+
 While all ordinary paths for a particular relation generate the same set
 of rows (since they must all apply the same set of restriction clauses),
 parameterized paths typically generate fewer rows than less-parameterized
@@ -818,6 +1372,16 @@ merit.  A path that costs more than another, but generates fewer rows,
 must be kept since the smaller number of rows might save work at some
 intermediate join level.  (It would not save anything if joined
 immediately to the source of the parameters.)
+
+特定のリレーションの通常のパスはすべて同じ行のセットを生成しますが(す
+べて同じ制限句のセットを適用する必要があるため)、パラメータ化されたパ
+スは通常、パラメータ化されていないパスよりも少ない行を生成します。これ
+は、パラメータ化されたパスには処理する追加の句があるためです。これは、
+生成される行の数を追加の性能指数として考慮する必要があることを意味しま
+す。別のパスよりもコストがかかりますが、生成される行の数が少ないパスは
+保持する必要があります。これは、行の数が少ないと、中間ジョインレベルで
+の作業が節約される可能性があるためです。(パラメータのソースにすぐに結
+合された場合は、何も保存されません)。
 
 To keep cost estimation rules relatively simple, we make an implementation
 restriction that all paths for a given relation of the same parameterization
@@ -835,11 +1399,33 @@ pre-filtering of join paths in add_path_precheck.  Without this rule we
 could never reject a parameterized path in advance of computing its rowcount
 estimate, which would greatly reduce the value of the pre-filter mechanism.
 
+コスト推定規則を比較的単純に保つために,同じパラメータ化の与えられた関
+係(すなわち,パラメータを供給する外部関係の同じ集合)に対するすべてのパ
+スが同じ行数推定値を持たなければならないという実装制限を行った。これは、
+そのような各パスが、指定された外部リレーションで使用可能な*all*結合句
+を適用することを主張することによって正当化されます。たとえば、異なるパ
+スは、インデックス句として使用するために異なるジョイン句を選択する場合
+がありますが、その場合は、同じ外部リレーションから使用可能な他のジョイ
+ン句をフィルタ条件として適用する必要があります。これにより、返される行
+のセットが一定に保たれます。この制限は、完成した計画の品質を低下させる
+ものではありません。つまり、移動可能な結合句を可能な限り低い評価レベル
+に常に押し下げる必要があるということです。これはいずれにしても良いこと
+です。この制限は、add_path_precheckで結合パスの事前フィルタリングをサ
+ポートする場合に特に便利です。このルールがなければ、行カウントの推定値
+を計算する前にパラメータ化されたパスを拒否することはできません。これは、
+プリフィルタメカニズムの値を大幅に削減します。
+
 To limit planning time, we have to avoid generating an unreasonably large
 number of parameterized paths.  We do this by only generating parameterized
 relation scan paths for index scans, and then only for indexes for which
 suitable join clauses are available.  There are also heuristics in join
 planning that try to limit the number of parameterized paths considered.
+
+計画時間を制限するには、パラメータ化されたパスを大量に生成しないように
+する必要があります。これを行うには、インデックススキャン用のパラメータ
+化されたリレーションスキャンパスを生成し、適切な結合句が使用可能なイン
+デックスに対してのみ生成します。また、ジョイン計画には、考慮されるパラ
+メータ化されたパスの数を制限しようとする経験則もあります。
 
 In particular, there's been a deliberate policy decision to favor hash
 joins over merge joins for parameterized join steps (those occurring below
@@ -856,6 +1442,21 @@ uninteresting, these choices do not affect any requirement for the final
 output order of a query --- they only make it harder to use a merge join
 at a lower level.  The savings in planning work justifies that.
 
+特に、パラメーター化された結合ステップ(下位結合の入力にパラメーターを
+提供するネスト・ループの下で発生するステップ)については、マージ結合よ
+りもハッシュ結合を優先するという意図的なポリシー決定がありました。私た
+ちはマージ結合を完全に無視するわけではありませんが、joinpath.cはパラメー
+タ化された入力を使用して潜在的なマージ結合の空間を完全に探索するわけで
+はありません。また、add_pathはパラメータ化されたパスをpathkeysのないパ
+スとして扱うため、コストと行数だけが競合し、特別なソート順を生成するこ
+とはありません。明示的なソート手順なしでマージを実行するのに有用なパス
+を破棄する可能性があるため、これによりマージ結合に対するバイアスが追加
+されます。パラメータ化されたパスは最終的にはネストループ内で使用されな
+ければならず、ネストループ内でのソート順は重要ではないため、これらの選
+択はクエリの最終的な出力順序の要件に影響しません。これらの選択は、下位
+レベルでのマージ結合の使用を困難にするだけです。計画作業の節約はそれを
+正当化します。
+
 Similarly, parameterized paths do not normally get preference in add_path
 for having cheap startup cost; that's seldom of much value when on the
 inside of a nestloop, so it seems not worth keeping extra paths solely for
@@ -863,6 +1464,13 @@ that.  An exception occurs for parameterized paths for the RHS relation of
 a SEMI or ANTI join: in those cases, we can stop the inner scan after the
 first match, so it's primarily startup not total cost that we care about.
 
+同様に、パラメータ化されたパスは、通常、add_pathでは起動コストが安価で
+あることを優先されません。これは、ネストループ内ではほとんど価値がない
+ため、そのためだけに余分なパスを保持する価値はないようです。SEMIジョイ
+ンまたはANTIジョインのRHSリレーションのパラメータ化されたパスでは例外
+が発生します。これらの場合、最初の一致の後で内部スキャンを停止できます。
+したがって、問題となるのは主にスタートアップコストであり、総コストでは
+ありません。
 
 LATERAL subqueries
 ------------------
@@ -878,6 +1486,17 @@ parameterized paths still apply, though; in particular, each such path is
 still expected to enforce any join clauses that can be pushed down to it,
 so that all paths of the same parameterization have the same rowcount.
 
+9.3では、FROMのサブクエリ(およびFROMの関数)からのSQL標準のLATERAL参照
+をサポートしています。プランナは、ラテラル参照を含むRTEに対してパラメー
+タ化されたパスを生成することによって、これらを実装します。このような場
+合、そのリレーションの*すべての*パスは、少なくともそのラテラル参照で使
+用されるリレーションのセットによってパラメータ化されます。(また、この
+ようなサブクエリを含むジョインリレーションは、パラメータ化されていない
+パスを持たない場合があります)。ただし、パラメータ化されたパスに対して
+上記で行った他のすべてのコメントは引き続き適用されます。特に、このよう
+な各パスは、同じパラメータ化のすべてのパスが同じ行数を持つように、プッ
+シュダウンできるジョイン句を強制することが期待されます。
+
 We also allow LATERAL subqueries to be flattened (pulled up into the parent
 query) by the optimizer, but only when this does not introduce lateral
 references into JOIN/ON quals that would refer to relations outside the
@@ -890,6 +1509,20 @@ PHV in the quals or targetlist of a plan node requires that node to appear
 on the inside of a nestloop join relative to the rel(s) supplying the
 lateral reference.  (Perhaps now that that stuff works, we could relax the
 pullup restriction?)
+
+また、LATERALサブクエリをオプティマイザでフラット化(親クエリにプルアッ
+プ)することもできます。ただし、これによってJOIN/ON条件にラテラル参照が
+導入されない場合に限ります。ラテラル参照は、JOIN/ON条件の下または上に
+ある最下位の外部ジョインの外側にあるリレーションを参照します。このよう
+な条件の意味は不明確です。この制約があっても、LATERALサブクエリをプル
+アップすると、構文スコープ外のリレーションへのラテラル参照を含む
+PlaceHolderVarsが作成される可能性があることに注意してください。我々は、
+依然として、そのようなPHVをそれらの構文上の位置またはそれより低い位置
+で評価しますが、プランノードのqualsまたはtargetlist内にそのようなPHVが
+存在することは、ノードが、横方向参照を供給するrel(s)に対してネストルー
+プジョインの内側に現れることを必要とします。(おそらく、これが機能する
+ようになったので、プルアップの制限を緩和することができるかもしれないで
+す？)
 
 
 Security-level constraints on qual clauses
@@ -907,14 +1540,34 @@ unnecessarily inefficient plans, a leakproof qual is not delayed by
 security-level considerations, even if it has a higher syntactic
 security_level than another qual.
 
+行レベルのセキュリティとセキュリティバリアビューを効率的にサポートする
+ために、qual句(RestrictInfoノード)を「security_level」フィールドでマー
+クします。基本的な概念は、より低いsecurity_levelを持つqualは、より高い
+security_levelを持つqualよりも先に評価されなければならないということで
+す。これにより、機密データを公開する可能性のある「漏洩性」条件は、セキュ
+リティ上重要な行を除外するためのセキュリティ・バリア条件が満たされるま
+で評価されません。しかし、多くの限定条件は「漏洩防止」であり、つまり、
+データを公開しないために使用する関数を信頼している。不必要に非効率的な
+計画を避けるために、たとえ他の制約よりも高い構文上のsecurity_levelを持っ
+ていても、漏洩防止制約はセキュリティレベルの考慮によって遅延されません。
+
 In a query that contains no use of RLS or security-barrier views, all
 quals will have security_level zero, so that none of these restrictions
 kick in; we don't even need to check leakproofness of qual conditions.
+
+RLSやセキュリティー・バリア・ビューを使用しない問い合わせでは、すべて
+のqualsはsecurity_level 0を持つため、これらの制限は一切適用されません。
+つまり、quals条件の漏洩防止性をチェックする必要もありません。
 
 If there are security-barrier quals, they get security_level zero (and
 possibly higher, if there are multiple layers of barriers).  Regular quals
 coming from the query text get a security_level one more than the highest
 level used for barrier quals.
+
+security-barrier qualsがある場合、それらはsecurity_level 0を取得します
+(バリアーの層が複数ある場合は、より高くなる可能性があります)。照会テキ
+ストからの通常のqualsは、バリアqualsに使用される最高レベルよりも1つ高
+いsecurity_levelを取得します。
 
 When new qual clauses are generated by EquivalenceClass processing,
 they must be assigned a security_level.  This is trickier than it seems.
@@ -933,6 +1586,22 @@ the query quals, then it's possible for the leaky_function qual to be
 evaluated first, allowing leaky_function to see data from rows that
 possibly don't pass the barrier condition.
 
+EquivalenceClass処理によって新しいqual句が生成される場合、それらに
+security_levelを割り当てる必要があります。これは意外と難しいです。最初
+の直感は、EquivalenceClassのソースクォリティの中で最大のレベルを使用す
+ることは安全であるということですが、それはまったく安全ではありません。
+なぜなら、それはセキュリティバリアクォリティの望ましくない遅延を許容す
+るからです。バリア条件「t.x=t.y」とクエリ条件「t.x=constant」を考え、
+バリア条件がチェックされる前に評価してはならない別のクエリ条件
+「leaky_function(t.z)」があるとします。EC{t.x,t.y,constant}があります。
+これにより、EC条件が「t.x=constant AND t.y=constant」に置き換えられま
+す。(後者の条件ではt.y上のインデックスの使用が許可される可能性がありま
+すが、元のqualsからは検出されないため、この動作も放棄したくはありませ
+ん)。これらの生成されたqualsにクエリqualsと同じsecurity_levelが割り当
+てられている場合、leaky_function qualsが最初に評価され、leaky_function
+がバリアー条件をパスしない可能性のある行のデータを参照できるようになり
+ます。
+
 Instead, our handling of security levels with ECs works like this:
 * Quals are not accepted as source clauses for ECs in the first place
 unless they are leakproof or have security_level zero.
@@ -944,6 +1613,15 @@ be leakproof.  When no such operator can be found, the EC is treated as
 "broken" and we fall back to emitting its source clauses without any
 additional derived quals.
 
+代わりに、ECでのセキュリティレベルの処理は次のように機能します。*Quals
+は、リークがないか、security_level 0でない限り、最初からECのソース句と
+して受け入れられません。*ECから派生したqualsには、ECのsource節の中にあ
+る(最大ではなく)最小のsecurity_levelが割り当てられます。*ECのsource句
+で検出された最大security_levelが0を超える場合、導出されたqualsに対して
+選択された等価演算子はリークプルーフである必要があります。そのような演
+算子が見つからない場合、ECは「壊れた」ものとして扱われ、追加の派生条件
+なしでsource句を発行することに戻ります。
+
 These rules together ensure that an untrusted qual clause (one with
 security_level above zero) cannot cause an EC to generate a leaky derived
 clause.  This makes it safe to use the minimum not maximum security_level
@@ -953,8 +1631,20 @@ small in practice because most btree equality operators are leakproof.
 Also, by making exceptions for level-zero quals, we ensure that there is
 no plan degradation when no barrier quals are present.
 
+これらの規則を組み合わせることで、信頼されていないqual句
+(security_levelが0より大きい句)によって、ECが漏洩性のある派生句を生成
+することがないようになります。これにより、派生句に対して最大ではなく最
+小のsecurity_levelを使用しても安全です。このルールでは、派生句をまった
+く生成できないために計画が不適切になる可能性がありますが、ほとんどの
+btree等価演算子は漏洩がないため、実際にはそのリスクはわずかです。また、
+レベル0条件に対して例外を作成することによって、バリア条件が存在しない
+場合に計画の劣化がないことを保証します。
+
 Once we have security levels assigned to all clauses, enforcement
 of barrier-qual ordering restrictions boils down to two rules:
+
+すべての句にセキュリティレベルを割り当てると、バリア品質の順序付け制限
+の適用は、次の2つのルールに要約されます。
 
 * Table scan plan nodes must not select quals for early execution
 (for example, use them as index qualifiers in an indexscan) unless
@@ -963,10 +1653,22 @@ qual that is due to be executed at the same plan node.  (Use the
 utility function restriction_is_securely_promotable() to check
 whether it's okay to select a qual for early execution.)
 
+*テーブル・スキャン・プラン・ノードは、リークがないか、同じプラン・ノー
+ドで実行される予定の他のqualeよりもsecurity_levelが高くない場合を除き、
+早期実行のためにqualeを選択してはなりません(たとえば、indexscanでイン
+デックス修飾子として使用します)。(早期実行のために制約条件を選択しても
+よいかどうかをチェックするには、ユーティリティー関数
+restriction_is_securely_promotable()を使用してください。)
+
 * Normal execution of a list of quals must execute them in an order
 that satisfies the same security rule, ie higher security_levels must
 be evaluated later unless leakproof.  (This is handled in a single place
 by order_qual_clauses() in createplan.c.)
+
+*qualsのリストの通常の実行は、同じセキュリティルールを満たす順序で実行
+する必要があります。つまり、リークがない場合を除き、より高い
+security_levelsを後で評価する必要があります。(createplan.cでは、
+order_qual_clauses()によって1箇所で処理されます。
 
 order_qual_clauses() uses a heuristic to decide exactly what to do with
 leakproof clauses.  Normally it sorts clauses by security_level then cost,
@@ -978,6 +1680,18 @@ we could put it first.  We choose to sort leakproof quals as if they
 have security_level zero, but only when their cost is less than 10X
 cpu_operator_cost; that restriction alleviates the opposite problem of
 doing expensive quals first just because they're leakproof.
+
+order_qual_clauses()はヒューリスティックを使用して、リーク防止句をどう
+するかを正確に決定します。通常は、security_level、costの順に句をソート
+しますが、ソートが安定していることに注意して、明確な理由なしに句をリオー
+ダーしないようにします。しかし、これは非常に高価なqualが、より高い
+security_levelの安価なqualeの前に実行される結果になる可能性があります。
+安い方の品質が漏れやすいのであれば、私たちには選択肢がありませんが、漏
+れにくいのであれば、私たちはそれを最初に置くことができます。我々は、そ
+れらがsecurity_level 0を持っているかのように、しかしそれらのコストが
+10X cpu_operator_cost未満である場合にのみ、リークプルーフqualsをソート
+することを選択します;この制限は、それらがリークプルーフであるという理
+由だけで高価なqualsを最初に実行するという反対の問題を軽減します。
 
 Additional rules will be needed to support safe handling of join quals
 when there is a mix of security levels among join quals; for example, it
@@ -993,6 +1707,18 @@ security-barrier views be flattened into the parent query, allowing more
 flexibility of planning while still preserving required ordering of qual
 evaluation.  But that will come later.
 
+ジョイン条件間でセキュリティレベルが混在する場合、ジョイン条件の安全な
+処理をサポートするために、追加の規則が必要になります。たとえば、セキュ
+リティレベルが高い漏れやすい条件が、セキュリティレベルが低い他の条件よ
+りも低いジョインレベルで評価されないようにする必要があります。現在のと
+ころ、セキュリティ優先条件は、RLSポリシーまたはセキュリティバリアビュー
+からの単一テーブル制限条件のみであり、セキュリティバリアビューサブクエ
+リは親クエリにフラット化されないため、考慮する必要はありません。したがっ
+て、セキュリティ優先条件の適用は、テーブルスキャンレベルでのみ行われま
+す。ジョイン条件間のセキュリティレベルを安全に処理するためのルールが追
+加されたことで、セキュリティバリアビューを親クエリにフラット化すること
+が可能になり、必要な条件評価の順序を維持しながら、柔軟な計画が可能にな
+ります。しかし、それは後になります。
 
 Post scan/join planning
 -----------------------
@@ -1005,11 +1731,25 @@ steps and thus opportunities for optimization choices.  These steps, like
 scan/join planning, are handled by constructing Paths representing the
 different ways to do a step, then choosing the cheapest Path.
 
+ここまでは、スキャン/ジョイン計画、つまりSQLクエリのFROM句とWHERE句の
+実装についてのみ説明してきました。しかし、プランナはGROUP BYや集約、そ
+の他の問い合わせの高度な機能の扱い方も決定しなければなりません。多くの
+場合、これらのステップを行うための複数の方法があり、従って最適化の選択
+肢があります。これらのステップは、スキャン/ジョイン計画と同様に、1つの
+ステップを実行するためのさまざまな方法を表すパスを構築し、最も安価なパ
+スを選択することによって処理されます。
+
 Since all Paths require a RelOptInfo as "parent", we create RelOptInfos
 representing the outputs of these upper-level processing steps.  These
 RelOptInfos are mostly dummy, but their pathlist lists hold all the Paths
 considered useful for each step.  Currently, we may create these types of
 additional RelOptInfos during upper-level planning:
+
+すべてのPathは「親」としてRelOptInfoを必要とするため、これらの上位レベ
+ルの処理ステップの出力を表すRelOptInfosを作成します。これらの
+RelOptInfosはほとんどダミーですが、それらのパスリストリストには、各ス
+テップで有用と考えられるすべてのパスが含まれています。現時点では、上位
+レベルの計画時に次のタイプの追加RelOptInfosを作成できます。
 
 UPPERREL_SETOP		result of UNION/INTERSECT/EXCEPT, if any
 UPPERREL_PARTIAL_GROUP_AGG	result of partial grouping/aggregation, if any
@@ -1025,6 +1765,11 @@ LockRows (SELECT FOR UPDATE), LIMIT/OFFSET, and ModifyTable.  There is no
 flexibility about the order in which these steps are done, and thus no need
 to subdivide this stage more finely.
 
+UPPERREL_FINALは、最終処理ステップ(現在はLockRows(SELECT FOR UPDATE)、
+LIMIT/OFFSETおよびModifyTable)を表すために使用されます。これらのステッ
+プが実行される順序には柔軟性がないため、この段階をさらに細かく分割する
+必要はありません。
+
 These "upper relations" are identified by the UPPERREL enum values shown
 above, plus a relids set, which allows there to be more than one upperrel
 of the same kind.  We use NULL for the relids if there's no need for more
@@ -1034,10 +1779,21 @@ the future.  For example, in planning set operations, we might need the
 relids to denote which subset of the leaf SELECTs has been combined in a
 particular group of Paths that are competing with each other.
 
+これらの「上位リレーション」は、上記のUPPERREL列挙値と、同じ種類の
+upperrelを複数存在させるrelidsセットによって識別されます。同じ種類の
+upperrelが複数必要ない場合は、relidsにNULLを使用します。現在、実際には、
+relids・セットは常にNULLであるため痕跡的ですが、将来的には変更されるこ
+とが予想されます。例えば、集合操作を計画する際に、リーフSE LE CTのどの
+部分集合が、互いに競合するパスの特定のグループ内で結合されたかを示すた
+めに、relidsが必要になることがあります。
+
 The result of subquery_planner() is always returned as a set of Paths
 stored in the UPPERREL_FINAL rel with NULL relids.  The other types of
 upperrels are created only if needed for the particular query.
 
+subquery_planner()の結果は、常にUPPERREL_FINAL relに格納されたパスの集
+合としてNULL relids付きで返されます。他のタイプのupperrelsは、特定のク
+エリで必要な場合にのみ作成されます。
 
 Parallel Query and Partial Paths
 --------------------------------
@@ -1058,6 +1814,20 @@ often very limited due to the difficulty of avoiding pipeline stalls.
 Consequently, we do not currently attempt to generate query plans that
 use this technique.
 
+並列クエリでは、クエリ全体またはクエリの一部で実行する必要がある作業を
+分割して、その作業の一部を1つ以上のワーカープロセス(パラレルワーカーと
+呼ばれます)で実行できるようにします。並列ワーカは動的バックグラウンド
+ワーカのサブタイプです。詳細については、
+src/backend/access/transam/README.parallelを参照してください。並列クエ
+リに関する学術文献では、並列実行戦略は基本的に2つのカテゴリに分類でき
+ることが示唆されています。1つは、クエリの実行が複数のステージに分割さ
+れ、各ステージが個別のプロセスによって処理されるパイプライン並列処理で
+あり、もう1つは、データが複数のプロセス間で分割され、各プロセスがその
+サブセットを処理するパーティショニング並列処理です。しかし、文献によれ
+ば、パイプラインの失速を回避することが困難であるため、パイプラインの並
+列処理による利益は非常に限られていることが多いとのことです。したがって、
+現在のところ、この手法を使用する問い合わせ計画の生成は試みていません。
+
 Instead, we focus on partitioning parallelism, which does not require
 that the underlying table be partitioned.  It only requires that (1)
 there is some method of dividing the data from at least one of the base
@@ -1072,6 +1842,20 @@ invoked with parallel_aware = true, this node will, in effect, partition
 the table on a block by block basis, returning a subset of the tuples from
 the relation in each worker where that scan node is executed.
 
+その代わりに、基礎となるテーブルをパーティション化する必要のないパーティ
+ション化並列処理に焦点を当てます。必要なのは、(1)複数のプロセス間のリ
+レーションに含まれる少なくとも1つのベーステーブルのデータを分割する何
+らかの方法があり、(2)各プロセスがデータの独自の部分を処理できるように
+し、(3)結果を収集することだけです。要件(2)および(3)は、エクゼキュータ
+ノードのGather(またはGatherMerge)によって満たされます。Gather(またはAs
+ia)は、任意の数のワーカープロセスを起動し、そのすべてのワーカープロセ
+スで1つの子計画を実行します。また、子がリーダーをビジー状態に保つのに
+十分なデータを生成しない場合は、リーダーでも実行します。要件(1)はテー
+ブルスキャンノードによって処理されます。parallel_aware=trueを指定して
+このノードを呼び出すと、実際にはブロック単位でテーブルが分割され、スキャ
+ンノードが実行される各worker内のリレーションからタプルのサブセットが返
+されます。
+
 Just as we do for non-parallel access methods, we build Paths to
 represent access strategies that can be used in a parallel plan.  These
 are, in essence, the same strategies that are available in the
@@ -1085,12 +1869,29 @@ only a subset of the results in each worker - must be kept separate from
 ordinary paths (see RelOptInfo's partial_pathlist and the function
 add_partial_path).
 
+非並行アクセス方式の場合と同様に、並行プランで使用できるアクセス方式を
+表すパスを作成します。これらは、本質的には非並行計画で使用可能な戦略と
+同じですが、重要な違いがあります。収集ノードの下を通るパスは、各ワーカー
+のクエリ結果のサブセットのみを返し、すべてを返すわけではありません。実
+際に実行可能なパスを形成するには、[Gather]ノードの(かなり大きな)コスト
+を考慮する必要があります。このため、Gatherノードの下で実行されるパス
+(各ワーカーの結果のサブセットのみを返すため、「部分」パスと呼ばれます)
+は、通常のパスとは別にしておく必要があります(RelOptInfoの
+partial_pathlistとadd_partial_path関数を参照してください)。
+
 One of the keys to making parallel query effective is to run as much of
 the query in parallel as possible.  Therefore, we expect it to generally
 be desirable to postpone the Gather stage until as near to the top of the
 plan as possible.  Expanding the range of cases in which more work can be
 pushed below the Gather (and costing them accurately) is likely to keep us
 busy for a long time to come.
+
+並列クエリーを効果的にするための鍵の1つは、できるだけ多くのクエリーを
+並行して実行することです。したがって、一般的には、Gatherステージをでき
+るだけ計画の最上位近くまで延期することが望ましいと考えられます。より多
+くの作業をギャザーの下に押し込むことができるケースの範囲を拡大すると
+(そして正確にコストをかけると)、私たちは長い間忙しくなる可能性がありま
+す。
 
 Partitionwise joins
 -------------------
@@ -1110,6 +1911,20 @@ into joins between their partitions is called partitionwise join. We will use
 term "partitioned relation" for either a partitioned table or a join between
 compatibly partitioned tables.
 
+結合表のパーティション・キー間に等結合条件が存在する場合、同様にパーティ
+ション化された2つの表間の結合は、一致するパーティション間の結合に分割
+できます。パーティション・キー間の等結合は、1つのパーティション化され
+た表の特定の行に対するすべての結合パートナーが、他のパーティション化さ
+れた表の対応するパーティションに存在しなければならないことを意味します。
+このため、パーティション化された表間の結合は、一致するパーティション間
+の結合に分割されます。結果の結合は結合関係と同じ方法で分割されるため、
+パーティション・キー間に等結合条件を持つ同様に分割されたテーブル間のN
+方向結合を、一致するパーティション間のN方向結合に分割できます。パーティ
+ション化された表間の結合をパーティション間の結合に分割するこの方法は、
+パーティション単位の結合と呼ばれます。パーティション化されたテーブルま
+たは互換性のあるパーティション化されたテーブル間の結合に対して、「パー
+ティション化された関係」という用語を使用します。
+
 Even if the joining relations don't have exactly the same partition bounds,
 partitionwise join can still be applied by using an advanced
 partition-matching algorithm.  For both the joining relations, the algorithm
@@ -1122,6 +1937,19 @@ partition bounds for the join relation, to allow partitionwise join for
 computing the join.  The algorithm is implemented in partition_bounds_merge().
 For an N-way join relation considered partitioned this way, not every pair of
 joining relations can use partitionwise join.  For example:
+
+結合関係が正確に同じパーティション境界を持たない場合でも、高度なパーティ
+ションマッチングアルゴリズムを使用することで、パーティション単位の結合
+を適用できます。両方の結合関係に対して、アルゴリズムは、1つの結合関係
+のすべてのパーティションが、他の結合関係の1つのパーティションとのみ一
+致するかどうかをチェックします。このような場合、結合リレーション間の結
+合は、一致するパーティション間の結合に分割できます。その場合、結合関係
+は分割されていると考えることができます。このアルゴリズムは、一致するパー
+ティションのペアに加えて、結合関係のパーティション境界を生成し、結合を
+計算するためのパーティション単位の結合を可能にします。このアルゴリズム
+はpartition_bounds_merge()で実装されています。この方法で分割された
+N-way結合リレーションの場合、結合リレーションのすべてのペアがパーティ
+ション結合を使用できるわけではありません。次に例を示します。
 
 	(A leftjoin B on (Pab)) innerjoin C on (Pac)
 
@@ -1137,6 +1965,19 @@ on outer join reordering).  Whether an N-way join can use partitionwise join
 is determined based on the first pair of joining relations that are both
 partitioned and can use partitionwise join.
 
+ここで、A、B、およびCはパーティション化された表であり、AはBおよびCと比
+較して追加のパーティションを持ちます。{A B}の結合にパーティション単位
+の結合を考慮すると、Aの余分なパーティションには、null許容側に一致する
+パーティションがありません。これは、現在のパーティション単位の結合の実
+装では処理できないケースです。したがって、{A B}はパーティション化され
+ているとは見なされず、3-way結合で考慮される{A B}とCのペアはパーティショ
+ン結合を使用できません。一方、{A C}とBのペアはパーティション単位の結合
+を使用できます。これは、{A C}が余分なパーティションを削除することによっ
+てパーティション化されたと見なされるためです(外部結合の並べ替えについ
+てはidentity 1を参照してください)。N-way結合でパーティション結合を使用
+できるかどうかは、パーティション化され、かつパーティション結合を使用で
+きる結合リレーションの最初のペアに基づいて決定されます。
+
 The partitioning properties of a partitioned relation are stored in its
 RelOptInfo.  The information about data types of partition keys are stored in
 PartitionSchemeData structure. The planner maintains a list of canonical
@@ -1145,6 +1986,15 @@ any two partitioned relations with same partitioning scheme point to the same
 PartitionSchemeData object.  This reduces memory consumed by
 PartitionSchemeData objects and makes it easy to compare the partition schemes
 of joining relations.
+
+パーティション化リレーションのパーティションプロパティは、その
+RelOptInfoに格納されます。パーティションキーのデータ型に関する情報は、
+PartitionSchemeData構造体に格納される。プランナは標準的な分割スキーム
+(異なるPartitionSchemeDataオブジェクト)のリストを保持しているので、同
+じ分割スキームを持つ2つの分割された関係のRelOptInfoは同じ
+PartitionSchemeDataオブジェクトを指します。これにより、
+PartitionSchemeData・オブジェクトによって消費されるメモリーが削減され、
+結合関係の分割スキームの比較が容易になります。
 
 Partitionwise aggregates/grouping
 ---------------------------------
@@ -1158,3 +2008,16 @@ breaking down aggregation or grouping over a partitioned relation into
 aggregation or grouping over its partitions is called partitionwise
 aggregation.  Especially when the partition keys match the GROUP BY clause,
 this can be significantly faster than the regular method.
+
+GROUP BY句にすべてのパーティション・キーが含まれている場合、特定のグルー
+プに属するすべての行は1つのパーティションから取得する必要があります。
+したがって、各パーティションに対して完全に個別に集計を実行できます。そ
+れ以外の場合は、パーティションごとに部分集計を計算して、個々のパーティ
+ションの結果を追加した後に確定できます。パーティション化された関係の集
+約またはグループ化を、そのパーティションの集約またはグループ化に分割す
+るこの手法は、パーティション単位の集約と呼ばれます。特にパーティション
+キーがGROUP BY句と一致する場合は、通常の方法よりも大幅に高速になります。
+
+-----------------------------------------------------------
+* 本テキストの翻訳には、みんなの自動翻訳@TexTraを利用しました
+-----------------------------------------------------------
