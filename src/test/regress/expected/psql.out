@@ -5165,6 +5165,13 @@ List of access methods
  pg_catalog | bit_xor | smallint         | smallint            | agg
 (3 rows)
 
+\df *._pg_expandarray
+                                             List of functions
+       Schema       |      Name       | Result data type |            Argument data types            | Type 
+--------------------+-----------------+------------------+-------------------------------------------+------
+ information_schema | _pg_expandarray | SETOF record     | anyarray, OUT x anyelement, OUT n integer | func
+(1 row)
+
 \do - pg_catalog.int4
                                List of operators
    Schema   | Name | Left arg type | Right arg type | Result type | Description 
@@ -5179,6 +5186,61 @@ List of access methods
  pg_catalog | &&   | anyarray      | anyarray       | boolean     | overlaps
 (1 row)
 
+-- check \sf
+\sf information_schema._pg_expandarray
+CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
+ RETURNS SETOF record
+ LANGUAGE sql
+ IMMUTABLE PARALLEL SAFE STRICT
+AS $function$select $1[s],
+        s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
+        from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
+                                        pg_catalog.array_upper($1,1),
+                                        1) as g(s)$function$
+\sf+ information_schema._pg_expandarray
+        CREATE OR REPLACE FUNCTION information_schema._pg_expandarray(anyarray, OUT x anyelement, OUT n integer)
+         RETURNS SETOF record
+         LANGUAGE sql
+         IMMUTABLE PARALLEL SAFE STRICT
+1       AS $function$select $1[s],
+2               s operator(pg_catalog.-) pg_catalog.array_lower($1,1) operator(pg_catalog.+) 1
+3               from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
+4                                               pg_catalog.array_upper($1,1),
+5                                               1) as g(s)$function$
+\sf+ interval_pl_time
+        CREATE OR REPLACE FUNCTION pg_catalog.interval_pl_time(interval, time without time zone)
+         RETURNS time without time zone
+         LANGUAGE sql
+         IMMUTABLE PARALLEL SAFE STRICT COST 1
+1       RETURN ($2 + $1)
+\sf ts_debug(text)
+CREATE OR REPLACE FUNCTION pg_catalog.ts_debug(document text, OUT alias text, OUT description text, OUT token text, OUT dictionaries regdictionary[], OUT dictionary regdictionary, OUT lexemes text[])
+ RETURNS SETOF record
+ LANGUAGE sql
+ STABLE PARALLEL SAFE STRICT
+BEGIN ATOMIC
+ SELECT ts_debug.alias,
+     ts_debug.description,
+     ts_debug.token,
+     ts_debug.dictionaries,
+     ts_debug.dictionary,
+     ts_debug.lexemes
+    FROM ts_debug(get_current_ts_config(), ts_debug.document) ts_debug(alias, description, token, dictionaries, dictionary, lexemes);
+END
+\sf+ ts_debug(text)
+        CREATE OR REPLACE FUNCTION pg_catalog.ts_debug(document text, OUT alias text, OUT description text, OUT token text, OUT dictionaries regdictionary[], OUT dictionary regdictionary, OUT lexemes text[])
+         RETURNS SETOF record
+         LANGUAGE sql
+         STABLE PARALLEL SAFE STRICT
+1       BEGIN ATOMIC
+2        SELECT ts_debug.alias,
+3            ts_debug.description,
+4            ts_debug.token,
+5            ts_debug.dictionaries,
+6            ts_debug.dictionary,
+7            ts_debug.lexemes
+8           FROM ts_debug(get_current_ts_config(), ts_debug.document) ts_debug(alias, description, token, dictionaries, dictionary, lexemes);
+9       END
 -- check describing invalid multipart names
 \dA regression.heap
 improper qualified name (too many dotted names): regression.heap
