@@ -88,15 +88,15 @@ libpgport.a: $(OBJS)
 thread.o: CFLAGS+=$(PTHREAD_CFLAGS)
 thread_shlib.o: CFLAGS+=$(PTHREAD_CFLAGS)
 
-# all versions of pg_crc32c_sse42.o need CFLAGS_SSE42
-pg_crc32c_sse42.o: CFLAGS+=$(CFLAGS_SSE42)
-pg_crc32c_sse42_shlib.o: CFLAGS+=$(CFLAGS_SSE42)
-pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_SSE42)
+# all versions of pg_crc32c_sse42.o need CFLAGS_CRC
+pg_crc32c_sse42.o: CFLAGS+=$(CFLAGS_CRC)
+pg_crc32c_sse42_shlib.o: CFLAGS+=$(CFLAGS_CRC)
+pg_crc32c_sse42_srv.o: CFLAGS+=$(CFLAGS_CRC)
 
-# all versions of pg_crc32c_armv8.o need CFLAGS_ARMV8_CRC32C
-pg_crc32c_armv8.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
-pg_crc32c_armv8_shlib.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
-pg_crc32c_armv8_srv.o: CFLAGS+=$(CFLAGS_ARMV8_CRC32C)
+# all versions of pg_crc32c_armv8.o need CFLAGS_CRC
+pg_crc32c_armv8.o: CFLAGS+=$(CFLAGS_CRC)
+pg_crc32c_armv8_shlib.o: CFLAGS+=$(CFLAGS_CRC)
+pg_crc32c_armv8_srv.o: CFLAGS+=$(CFLAGS_CRC)
 
 #
 # Shared library versions of object files

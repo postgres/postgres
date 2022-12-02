@@ -645,8 +645,7 @@ MSGMERGE
 MSGFMT_FLAGS
 MSGFMT
 PG_CRC32C_OBJS
-CFLAGS_ARMV8_CRC32C
-CFLAGS_SSE42
+CFLAGS_CRC
 LIBOBJS
 OPENSSL
 ZSTD
@@ -17957,7 +17956,7 @@ fi
 #
 # First check if the _mm_crc32_u8 and _mm_crc32_u64 intrinsics can be used
 # with the default compiler flags. If not, check if adding the -msse4.2
-# flag helps. CFLAGS_SSE42 is set to -msse4.2 if that's required.
+# flag helps. CFLAGS_CRC is set to -msse4.2 if that's required.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=" >&5
 $as_echo_n "checking for _mm_crc32_u8 and _mm_crc32_u32 with CFLAGS=... " >&6; }
 if ${pgac_cv_sse42_crc32_intrinsics_+:} false; then :
@@ -17992,7 +17991,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_sse42_crc32_intrinsics_" >&5
 $as_echo "$pgac_cv_sse42_crc32_intrinsics_" >&6; }
 if test x"$pgac_cv_sse42_crc32_intrinsics_" = x"yes"; then
-  CFLAGS_SSE42=""
+  CFLAGS_CRC=""
   pgac_sse42_crc32_intrinsics=yes
 fi
 
@@ -18031,12 +18030,11 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_sse42_crc32_intrinsics__msse4_2" >&5
 $as_echo "$pgac_cv_sse42_crc32_intrinsics__msse4_2" >&6; }
 if test x"$pgac_cv_sse42_crc32_intrinsics__msse4_2" = x"yes"; then
-  CFLAGS_SSE42="-msse4.2"
+  CFLAGS_CRC="-msse4.2"
   pgac_sse42_crc32_intrinsics=yes
 fi
 
 fi
-
 
 # Are we targeting a processor that supports SSE 4.2? gcc, clang and icc all
 # define __SSE4_2__ in that case.
@@ -18064,7 +18062,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 #
 # First check if __crc32c* intrinsics can be used with the default compiler
 # flags. If not, check if adding -march=armv8-a+crc flag helps.
-# CFLAGS_ARMV8_CRC32C is set if the extra flag is required.
+# CFLAGS_CRC is set if the extra flag is required.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=" >&5
 $as_echo_n "checking for __crc32cb, __crc32ch, __crc32cw, and __crc32cd with CFLAGS=... " >&6; }
 if ${pgac_cv_armv8_crc32c_intrinsics_+:} false; then :
@@ -18101,7 +18099,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_armv8_crc32c_intrinsics_" >&5
 $as_echo "$pgac_cv_armv8_crc32c_intrinsics_" >&6; }
 if test x"$pgac_cv_armv8_crc32c_intrinsics_" = x"yes"; then
-  CFLAGS_ARMV8_CRC32C=""
+  CFLAGS_CRC=""
   pgac_armv8_crc32c_intrinsics=yes
 fi
 
@@ -18142,11 +18140,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" >&5
 $as_echo "$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" >&6; }
 if test x"$pgac_cv_armv8_crc32c_intrinsics__march_armv8_apcrc" = x"yes"; then
-  CFLAGS_ARMV8_CRC32C="-march=armv8-a+crc"
+  CFLAGS_CRC="-march=armv8-a+crc"
   pgac_armv8_crc32c_intrinsics=yes
 fi
 
 fi
+
 
 
 # Select CRC-32C implementation.
@@ -18176,7 +18175,7 @@ if test x"$USE_SLICING_BY_8_CRC32C" = x"" && test x"$USE_SSE42_CRC32C" = x"" && 
       USE_SSE42_CRC32C_WITH_RUNTIME_CHECK=1
     else
       # Use ARM CRC Extension if available.
-      if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$CFLAGS_ARMV8_CRC32C" = x""; then
+      if test x"$pgac_armv8_crc32c_intrinsics" = x"yes" && test x"$CFLAGS_CRC" = x""; then
         USE_ARMV8_CRC32C=1
       else
         # ARM CRC Extension, with runtime check?
