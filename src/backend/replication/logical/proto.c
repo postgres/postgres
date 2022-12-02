@@ -478,7 +478,7 @@ logicalrep_write_update(StringInfo out, TransactionId xid, Relation rel,
 			pq_sendbyte(out, 'O');	/* old tuple follows */
 		else
 			pq_sendbyte(out, 'K');	/* old key follows */
-		logicalrep_write_tuple(out, rel, oldslot, binary, NULL);
+		logicalrep_write_tuple(out, rel, oldslot, binary, columns);
 	}
 
 	pq_sendbyte(out, 'N');		/* new tuple follows */
@@ -531,7 +531,8 @@ logicalrep_read_update(StringInfo in, bool *has_oldtuple,
  */
 void
 logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
-						TupleTableSlot *oldslot, bool binary)
+						TupleTableSlot *oldslot, bool binary,
+						Bitmapset *columns)
 {
 	Assert(rel->rd_rel->relreplident == REPLICA_IDENTITY_DEFAULT ||
 		   rel->rd_rel->relreplident == REPLICA_IDENTITY_FULL ||
@@ -551,7 +552,7 @@ logicalrep_write_delete(StringInfo out, TransactionId xid, Relation rel,
 	else
 		pq_sendbyte(out, 'K');	/* old key follows */
 
-	logicalrep_write_tuple(out, rel, oldslot, binary, NULL);
+	logicalrep_write_tuple(out, rel, oldslot, binary, columns);
 }
 
 /*
