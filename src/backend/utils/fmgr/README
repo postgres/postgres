@@ -78,11 +78,7 @@ to find out the OID of the specific function being called.
 context is NULL for an "ordinary" function call, but may point to additional
 info when the function is called in certain contexts.  (For example, the
 trigger manager will pass information about the current trigger event here.)
-If context is used, it should point to some subtype of Node; the particular
-kind of context is indicated by the node type field.  (A callee should
-always check the node type before assuming it knows what kind of context is
-being passed.)  fmgr itself puts no other restrictions on the use of this
-field.
+Further details appear in "Function Call Contexts" below.
 
 resultinfo is NULL when calling any function from which a simple Datum
 result is expected.  It may point to some subtype of Node if the function
@@ -234,6 +230,42 @@ A function should never try to re-TOAST its result value; it should just
 deliver an untoasted result that's been palloc'd in the current memory
 context.  When and if the value is actually stored into a tuple, the
 tuple toaster will decide whether toasting is needed.
+
+
+Function Call Contexts
+----------------------
+
+If a caller passes a non-NULL pointer in fcinfo->context, it should point
+to some subtype of Node; the particular kind of context is indicated by the
+node type field.  (A callee should always check the node type, via IsA(),
+before assuming it knows what kind of context is being passed.)  fmgr
+itself puts no other restrictions on the use of this field.
+
+Current uses of this convention include:
+
+* Trigger functions are passed an instance of struct TriggerData,
+containing information about the trigger context.  (The trigger function
+does not receive any normal arguments.)  See commands/trigger.h for
+more information and macros that are commonly used by trigger functions.
+
+* Aggregate functions (or to be precise, their transition and final
+functions) are passed an instance of struct AggState, that is the executor
+state node for the calling Agg plan node; or if they are called as window
+functions, they receive an instance of struct WindowAggState.  It is
+recommended that these pointers be used only via AggCheckCallContext()
+and sibling functions, which are declared in fmgr.h but are documented
+only with their source code in src/backend/executor/nodeAgg.c.  Typically
+these context nodes are only of interest when the transition and final
+functions wish to optimize execution based on knowing that they are being
+used within an aggregate rather than as standalone SQL functions.
+
+* True window functions receive an instance of struct WindowObject.
+(Like trigger functions, they don't receive any normal arguments.)
+See windowapi.h for more information.
+
+* Procedures are passed an instance of struct CallContext, containing
+information about the context of the CALL statement, particularly
+whether it is within an "atomic" execution context.
 
 
 Functions Accepting or Returning Sets
