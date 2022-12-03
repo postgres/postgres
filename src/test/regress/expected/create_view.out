@@ -1990,6 +1990,29 @@ select pg_get_viewdef('tt26v', true);
     FROM ( VALUES (1,2,3)) v(x, y, z);
 (1 row)
 
+-- Test that changing the relkind of a relcache entry doesn't cause
+-- trouble. Prior instances of where it did:
+-- CALDaNm2yXz+zOtv7y5zBd5WKT8O0Ld3YxikuU3dcyCvxF7gypA@mail.gmail.com
+-- CALDaNm3oZA-8Wbps2Jd1g5_Gjrr-x3YWrJPek-mF5Asrrvz2Dg@mail.gmail.com
+CREATE TABLE tt26(c int);
+BEGIN;
+CREATE TABLE tt27(c int);
+SAVEPOINT q;
+CREATE RULE "_RETURN" AS ON SELECT TO tt27 DO INSTEAD SELECT * FROM tt26;
+SELECT * FROM tt27;
+ c 
+---
+(0 rows)
+
+ROLLBACK TO q;
+CREATE RULE "_RETURN" AS ON SELECT TO tt27 DO INSTEAD SELECT * FROM tt26;
+ROLLBACK;
+BEGIN;
+CREATE TABLE tt28(c int);
+CREATE RULE "_RETURN" AS ON SELECT TO tt28 DO INSTEAD SELECT * FROM tt26;
+CREATE RULE "_RETURN" AS ON SELECT TO tt28 DO INSTEAD SELECT * FROM tt26;
+ERROR:  "tt28" is already a view
+ROLLBACK;
 -- clean up all the random objects we made above
 DROP SCHEMA temp_view_test CASCADE;
 NOTICE:  drop cascades to 27 other objects
@@ -2021,7 +2044,7 @@ drop cascades to view aliased_view_2
 drop cascades to view aliased_view_3
 drop cascades to view aliased_view_4
 DROP SCHEMA testviewschm2 CASCADE;
-NOTICE:  drop cascades to 74 other objects
+NOTICE:  drop cascades to 75 other objects
 DETAIL:  drop cascades to table t1
 drop cascades to view temporal1
 drop cascades to view temporal2
@@ -2096,3 +2119,4 @@ drop cascades to view tt23v
 drop cascades to view tt24v
 drop cascades to view tt25v
 drop cascades to view tt26v
+drop cascades to table tt26
