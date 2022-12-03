@@ -2626,6 +2626,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		bool		keep_rules;
 		bool		keep_policies;
 		bool		keep_partkey;
+		bool		keep_pgstats;
 
 		/* Build temporary entry, but don't link it into hashtable */
 		newrel = RelationBuildDesc(save_relid, false);
@@ -2666,6 +2667,21 @@ RelationClearRelation(Relation relation, bool rebuild)
 		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
 		/* partkey is immutable once set up, so we can always keep it */
 		keep_partkey = (relation->rd_partkey != NULL);
+
+		/*
+		 * Keep stats pointers, except when the relkind changes (e.g. when
+		 * converting tables into views). Different kinds of relations might
+		 * have different types of stats.
+		 *
+		 * If we don't want to keep the stats, unlink the stats and relcache
+		 * entry (and do so before entering the "critical section"
+		 * below). This is important because otherwise
+		 * PgStat_TableStatus->relation would get out of sync with
+		 * relation->pgstat_info.
+		 */
+		keep_pgstats = relation->rd_rel->relkind == newrel->rd_rel->relkind;
+		if (!keep_pgstats)
+			pgstat_unlink_relation(relation);
 
 		/*
 		 * Perform swapping of the relcache entry contents.  Within this
@@ -2720,9 +2736,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 			SWAPFIELD(RowSecurityDesc *, rd_rsdesc);
 		/* toast OID override must be preserved */
 		SWAPFIELD(Oid, rd_toastoid);
+
 		/* pgstat_info / enabled must be preserved */
-		SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
-		SWAPFIELD(bool, pgstat_enabled);
+		if (keep_pgstats)
+		{
+			SWAPFIELD(struct PgStat_TableStatus *, pgstat_info);
+			SWAPFIELD(bool, pgstat_enabled);
+		}
+
 		/* preserve old partition key if we have one */
 		if (keep_partkey)
 		{
