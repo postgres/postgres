@@ -124,7 +124,8 @@ AllocateCompressor(const pg_compress_specification compression_spec,
  * out with ahwrite().
  */
 void
-ReadDataFromArchive(ArchiveHandle *AH, pg_compress_specification compression_spec,
+ReadDataFromArchive(ArchiveHandle *AH,
+					const pg_compress_specification compression_spec,
 					ReadFunc readF)
 {
 	if (compression_spec.algorithm == PG_COMPRESSION_NONE)
