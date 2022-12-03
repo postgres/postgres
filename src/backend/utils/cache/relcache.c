@@ -2661,6 +2661,13 @@ RelationClearRelation(Relation relation, bool rebuild)
 			elog(ERROR, "relation %u deleted while still in use", save_relid);
 		}
 
+		/*
+		 * If we were to, again, have cases of the relkind of a relcache entry
+		 * changing, we would need to ensure that pgstats does not get
+		 * confused.
+		 */
+		Assert(relation->rd_rel->relkind == newrel->rd_rel->relkind);
+
 		keep_tupdesc = equalTupleDescs(relation->rd_att, newrel->rd_att);
 		keep_rules = equalRuleLocks(relation->rd_rules, newrel->rd_rules);
 		keep_policies = equalRSDesc(relation->rd_rsdesc, newrel->rd_rsdesc);
