@@ -91,15 +91,15 @@ decimalLength64(const uint64 v)
  * Allows any number of leading or trailing whitespace characters. Will throw
  * ereport() upon bad input format or overflow.
  *
- * NB: Accumulate input as a negative number, to deal with two's complement
+ * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
- * positive number.
+ * signed positive number.
  */
 int16
 pg_strtoint16(const char *s)
 {
 	const char *ptr = s;
-	int16		tmp = 0;
+	uint16		tmp = 0;
 	bool		neg = false;
 
 	/* skip leading spaces */
@@ -122,11 +122,10 @@ pg_strtoint16(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		int8		digit = (*ptr++ - '0');
-
-		if (unlikely(pg_mul_s16_overflow(tmp, 10, &tmp)) ||
-			unlikely(pg_sub_s16_overflow(tmp, digit, &tmp)))
+		if (unlikely(tmp > (PG_INT16_MAX / 10)))
 			goto out_of_range;
+
+		tmp = tmp * 10 + (*ptr++ - '0');
 	}
 
 	/* allow trailing whitespace, but not other trailing chars */
@@ -136,15 +135,18 @@ pg_strtoint16(const char *s)
 	if (unlikely(*ptr != '\0'))
 		goto invalid_syntax;
 
-	if (!neg)
+	if (neg)
 	{
-		/* could fail if input is most negative number */
-		if (unlikely(tmp == PG_INT16_MIN))
+		/* check the negative equivalent will fit without overflowing */
+		if (tmp > (uint16) (-(PG_INT16_MIN + 1)) + 1)
 			goto out_of_range;
-		tmp = -tmp;
+		return -((int16) tmp);
 	}
 
-	return tmp;
+	if (tmp > PG_INT16_MAX)
+		goto out_of_range;
+
+	return (int16) tmp;
 
 out_of_range:
 	ereport(ERROR,
@@ -167,15 +169,15 @@ invalid_syntax:
  * Allows any number of leading or trailing whitespace characters. Will throw
  * ereport() upon bad input format or overflow.
  *
- * NB: Accumulate input as a negative number, to deal with two's complement
+ * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
- * positive number.
+ * signed positive number.
  */
 int32
 pg_strtoint32(const char *s)
 {
 	const char *ptr = s;
-	int32		tmp = 0;
+	uint32		tmp = 0;
 	bool		neg = false;
 
 	/* skip leading spaces */
@@ -198,11 +200,10 @@ pg_strtoint32(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		int8		digit = (*ptr++ - '0');
-
-		if (unlikely(pg_mul_s32_overflow(tmp, 10, &tmp)) ||
-			unlikely(pg_sub_s32_overflow(tmp, digit, &tmp)))
+		if (unlikely(tmp > (PG_INT32_MAX / 10)))
 			goto out_of_range;
+
+		tmp = tmp * 10 + (*ptr++ - '0');
 	}
 
 	/* allow trailing whitespace, but not other trailing chars */
@@ -212,15 +213,18 @@ pg_strtoint32(const char *s)
 	if (unlikely(*ptr != '\0'))
 		goto invalid_syntax;
 
-	if (!neg)
+	if (neg)
 	{
-		/* could fail if input is most negative number */
-		if (unlikely(tmp == PG_INT32_MIN))
+		/* check the negative equivalent will fit without overflowing */
+		if (tmp > (uint32) (-(PG_INT32_MIN + 1)) + 1)
 			goto out_of_range;
-		tmp = -tmp;
+		return -((int32) tmp);
 	}
 
-	return tmp;
+	if (tmp > PG_INT32_MAX)
+		goto out_of_range;
+
+	return (int32) tmp;
 
 out_of_range:
 	ereport(ERROR,
@@ -243,24 +247,16 @@ invalid_syntax:
  * Allows any number of leading or trailing whitespace characters. Will throw
  * ereport() upon bad input format or overflow.
  *
- * NB: Accumulate input as a negative number, to deal with two's complement
+ * NB: Accumulate input as an unsigned number, to deal with two's complement
  * representation of the most negative number, which can't be represented as a
- * positive number.
+ * signed positive number.
  */
 int64
 pg_strtoint64(const char *s)
 {
 	const char *ptr = s;
-	int64		tmp = 0;
+	uint64		tmp = 0;
 	bool		neg = false;
-
-	/*
-	 * Do our own scan, rather than relying on sscanf which might be broken
-	 * for long long.
-	 *
-	 * As INT64_MIN can't be stored as a positive 64 bit integer, accumulate
-	 * value as a negative number.
-	 */
 
 	/* skip leading spaces */
 	while (*ptr && isspace((unsigned char) *ptr))
@@ -282,11 +278,10 @@ pg_strtoint64(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		int8		digit = (*ptr++ - '0');
-
-		if (unlikely(pg_mul_s64_overflow(tmp, 10, &tmp)) ||
-			unlikely(pg_sub_s64_overflow(tmp, digit, &tmp)))
+		if (unlikely(tmp > (PG_INT64_MAX / 10)))
 			goto out_of_range;
+
+		tmp = tmp * 10 + (*ptr++ - '0');
 	}
 
 	/* allow trailing whitespace, but not other trailing chars */
@@ -296,15 +291,18 @@ pg_strtoint64(const char *s)
 	if (unlikely(*ptr != '\0'))
 		goto invalid_syntax;
 
-	if (!neg)
+	if (neg)
 	{
-		/* could fail if input is most negative number */
-		if (unlikely(tmp == PG_INT64_MIN))
+		/* check the negative equivalent will fit without overflowing */
+		if (tmp > (uint64) (-(PG_INT64_MIN + 1)) + 1)
 			goto out_of_range;
-		tmp = -tmp;
+		return -((int64) tmp);
 	}
 
-	return tmp;
+	if (tmp > PG_INT64_MAX)
+		goto out_of_range;
+
+	return (int64) tmp;
 
 out_of_range:
 	ereport(ERROR,
