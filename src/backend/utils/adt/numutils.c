@@ -122,7 +122,7 @@ pg_strtoint16(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		if (unlikely(tmp > (PG_INT16_MAX / 10)))
+		if (unlikely(tmp > -(PG_INT16_MIN / 10)))
 			goto out_of_range;
 
 		tmp = tmp * 10 + (*ptr++ - '0');
@@ -200,7 +200,7 @@ pg_strtoint32(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		if (unlikely(tmp > (PG_INT32_MAX / 10)))
+		if (unlikely(tmp > -(PG_INT32_MIN / 10)))
 			goto out_of_range;
 
 		tmp = tmp * 10 + (*ptr++ - '0');
@@ -278,7 +278,7 @@ pg_strtoint64(const char *s)
 	/* process digits */
 	while (*ptr && isdigit((unsigned char) *ptr))
 	{
-		if (unlikely(tmp > (PG_INT64_MAX / 10)))
+		if (unlikely(tmp > -(PG_INT64_MIN / 10)))
 			goto out_of_range;
 
 		tmp = tmp * 10 + (*ptr++ - '0');
