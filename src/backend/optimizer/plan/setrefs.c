@@ -349,10 +349,10 @@ set_plan_references(PlannerInfo *root, Plan *plan)
 	}
 
 	/* Also fix up the information in PartitionPruneInfos. */
-	foreach (lc, root->partPruneInfos)
+	foreach(lc, root->partPruneInfos)
 	{
 		PartitionPruneInfo *pruneinfo = lfirst(lc);
-		ListCell  *l;
+		ListCell   *l;
 
 		pruneinfo->root_parent_relids =
 			offset_relid_set(pruneinfo->root_parent_relids, rtoffset);

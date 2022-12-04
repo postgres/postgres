@@ -5416,7 +5416,7 @@ examine_simple_variable(PlannerInfo *root, Var *var,
 			 * onerel->userid if it's set, in case we're accessing the table
 			 * via a view.
 			 */
-			userid = OidIsValid(onerel->userid) ?  onerel->userid : GetUserId();
+			userid = OidIsValid(onerel->userid) ? onerel->userid : GetUserId();
 
 			vardata->acl_ok =
 				rte->securityQuals == NIL &&
