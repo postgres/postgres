@@ -3937,9 +3937,15 @@ reparameterize_path(PlannerInfo *root, Path *path,
 		case T_Memoize:
 			{
 				MemoizePath *mpath = (MemoizePath *) path;
+				Path	   *spath = mpath->subpath;
 
+				spath = reparameterize_path(root, spath,
+											required_outer,
+											loop_count);
+				if (spath == NULL)
+					return NULL;
 				return (Path *) create_memoize_path(root, rel,
-													mpath->subpath,
+													spath,
 													mpath->param_exprs,
 													mpath->hash_operators,
 													mpath->singlerow,
