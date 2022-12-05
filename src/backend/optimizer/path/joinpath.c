@@ -490,6 +490,7 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 				 Path *outer_path, JoinType jointype,
 				 JoinPathExtraData *extra)
 {
+	RelOptInfo *top_outerrel;
 	List	   *param_exprs;
 	List	   *hash_operators;
 	ListCell   *lc;
@@ -579,10 +580,21 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 			return NULL;
 	}
 
+	/*
+	 * When considering a partitionwise join, we have clauses that reference
+	 * the outerrel's top parent not outerrel itself.
+	 */
+	if (outerrel->reloptkind == RELOPT_OTHER_MEMBER_REL)
+		top_outerrel = find_base_rel(root, bms_singleton_member(outerrel->top_parent_relids));
+	else if (outerrel->reloptkind == RELOPT_OTHER_JOINREL)
+		top_outerrel = find_join_rel(root, outerrel->top_parent_relids);
+	else
+		top_outerrel = outerrel;
+
 	/* Check if we have hash ops for each parameter to the path */
 	if (paraminfo_get_equal_hashops(root,
 									inner_path->param_info,
-									outerrel,
+									top_outerrel,
 									innerrel,
 									&param_exprs,
 									&hash_operators,

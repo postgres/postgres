@@ -1508,8 +1508,8 @@ typedef struct MemoizePath
 {
 	Path		path;
 	Path	   *subpath;		/* outerpath to cache tuples from */
-	List	   *hash_operators; /* hash operators for each key */
-	List	   *param_exprs;	/* cache keys */
+	List	   *hash_operators; /* OIDs of hash equality ops for cache keys */
+	List	   *param_exprs;	/* expressions that are cache keys */
 	bool		singlerow;		/* true if the cache entry is to be marked as
 								 * complete after caching the first record. */
 	bool		binary_mode;	/* true when cache key should be compared bit
