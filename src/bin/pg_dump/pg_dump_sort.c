@@ -75,11 +75,11 @@ enum dbObjectTypePriorities
 	PRIO_TABLE_ATTACH,
 	PRIO_DUMMY_TYPE,
 	PRIO_ATTRDEF,
-	PRIO_BLOB,
+	PRIO_LARGE_OBJECT,
 	PRIO_PRE_DATA_BOUNDARY,		/* boundary! */
 	PRIO_TABLE_DATA,
 	PRIO_SEQUENCE_SET,
-	PRIO_BLOB_DATA,
+	PRIO_LARGE_OBJECT_DATA,
 	PRIO_POST_DATA_BOUNDARY,	/* boundary! */
 	PRIO_CONSTRAINT,
 	PRIO_INDEX,
@@ -136,8 +136,8 @@ static const int dbObjectTypePriority[] =
 	PRIO_FOREIGN_SERVER,		/* DO_FOREIGN_SERVER */
 	PRIO_DEFAULT_ACL,			/* DO_DEFAULT_ACL */
 	PRIO_TRANSFORM,				/* DO_TRANSFORM */
-	PRIO_BLOB,					/* DO_BLOB */
-	PRIO_BLOB_DATA,				/* DO_BLOB_DATA */
+	PRIO_LARGE_OBJECT,			/* DO_LARGE_OBJECT */
+	PRIO_LARGE_OBJECT_DATA,		/* DO_LARGE_OJECT_DATA */
 	PRIO_PRE_DATA_BOUNDARY,		/* DO_PRE_DATA_BOUNDARY */
 	PRIO_POST_DATA_BOUNDARY,	/* DO_POST_DATA_BOUNDARY */
 	PRIO_EVENT_TRIGGER,			/* DO_EVENT_TRIGGER */
@@ -1463,14 +1463,14 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 					 "DEFAULT ACL %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
-		case DO_BLOB:
+		case DO_LARGE_OBJECT:
 			snprintf(buf, bufsize,
-					 "BLOB  (ID %d OID %u)",
+					 "LARGE OBJECT  (ID %d OID %u)",
 					 obj->dumpId, obj->catId.oid);
 			return;
-		case DO_BLOB_DATA:
+		case DO_LARGE_OBJECT_DATA:
 			snprintf(buf, bufsize,
-					 "BLOB DATA  (ID %d)",
+					 "LARGE OBJECT DATA  (ID %d)",
 					 obj->dumpId);
 			return;
 		case DO_POLICY:

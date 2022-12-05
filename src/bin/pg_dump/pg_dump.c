@@ -283,9 +283,9 @@ static char *convertRegProcReference(const char *proc);
 static char *getFormattedOperatorName(const char *oproid);
 static char *convertTSFunction(Archive *fout, Oid funcOid);
 static const char *getFormattedTypeName(Archive *fout, Oid oid, OidOptions opts);
-static void getBlobs(Archive *fout);
-static void dumpBlob(Archive *fout, const BlobInfo *binfo);
-static int	dumpBlobs(Archive *fout, const void *arg);
+static void getLOs(Archive *fout);
+static void dumpLO(Archive *fout, const LoInfo *binfo);
+static int	dumpLOs(Archive *fout, const void *arg);
 static void dumpPolicy(Archive *fout, const PolicyInfo *polinfo);
 static void dumpPublication(Archive *fout, const PublicationInfo *pubinfo);
 static void dumpPublicationTable(Archive *fout, const PublicationRelInfo *pubrinfo);
@@ -356,7 +356,9 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
+		{"large-objects", no_argument, NULL, 'b'},
 		{"no-blobs", no_argument, NULL, 'B'},
+		{"no-large-objects", no_argument, NULL, 'B'},
 		{"clean", no_argument, NULL, 'c'},
 		{"create", no_argument, NULL, 'C'},
 		{"dbname", required_argument, NULL, 'd'},
@@ -460,12 +462,12 @@ main(int argc, char **argv)
 				dopt.dataOnly = true;
 				break;
 
-			case 'b':			/* Dump blobs */
-				dopt.outputBlobs = true;
+			case 'b':			/* Dump LOs */
+				dopt.outputLOs = true;
 				break;
 
-			case 'B':			/* Don't dump blobs */
-				dopt.dontOutputBlobs = true;
+			case 'B':			/* Don't dump LOs */
+				dopt.dontOutputLOs = true;
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to create */
@@ -841,16 +843,16 @@ main(int argc, char **argv)
 	}
 
 	/*
-	 * Dumping blobs is the default for dumps where an inclusion switch is not
-	 * used (an "include everything" dump).  -B can be used to exclude blobs
-	 * from those dumps.  -b can be used to include blobs even when an
+	 * Dumping LOs is the default for dumps where an inclusion switch is not
+	 * used (an "include everything" dump).  -B can be used to exclude LOs
+	 * from those dumps.  -b can be used to include LOs even when an
 	 * inclusion switch is used.
 	 *
-	 * -s means "schema only" and blobs are data, not schema, so we never
-	 * include blobs when -s is used.
+	 * -s means "schema only" and LOs are data, not schema, so we never
+	 * include LOs when -s is used.
 	 */
-	if (dopt.include_everything && !dopt.schemaOnly && !dopt.dontOutputBlobs)
-		dopt.outputBlobs = true;
+	if (dopt.include_everything && !dopt.schemaOnly && !dopt.dontOutputLOs)
+		dopt.outputLOs = true;
 
 	/*
 	 * Collect role names so we can map object owner OIDs to names.
@@ -875,15 +877,15 @@ main(int argc, char **argv)
 		getTableData(&dopt, tblinfo, numTables, RELKIND_SEQUENCE);
 
 	/*
-	 * In binary-upgrade mode, we do not have to worry about the actual blob
+	 * In binary-upgrade mode, we do not have to worry about the actual LO
 	 * data or the associated metadata that resides in the pg_largeobject and
 	 * pg_largeobject_metadata tables, respectively.
 	 *
-	 * However, we do need to collect blob information as there may be
-	 * comments or other information on blobs that we do need to dump out.
+	 * However, we do need to collect LO information as there may be
+	 * comments or other information on LOs that we do need to dump out.
 	 */
-	if (dopt.outputBlobs || dopt.binary_upgrade)
-		getBlobs(fout);
+	if (dopt.outputLOs || dopt.binary_upgrade)
+		getLOs(fout);
 
 	/*
 	 * Collect dependency data to assist in ordering the objects.
@@ -1036,8 +1038,10 @@ help(const char *progname)
 
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only              dump only the data, not the schema\n"));
-	printf(_("  -b, --blobs                  include large objects in dump\n"));
-	printf(_("  -B, --no-blobs               exclude large objects in dump\n"));
+	printf(_("  -b, --large-objects, --blobs\n"
+			 "                               include large objects in dump\n"));
+	printf(_("  -B, --no-large-objects, --no-blobs\n"
+			 "                               exclude large objects in dump\n"));
 	printf(_("  -c, --clean                  clean (drop) database objects before recreating\n"));
 	printf(_("  -C, --create                 include commands to create database in dump\n"));
 	printf(_("  -e, --extension=PATTERN      dump the specified extension(s) only\n"));
@@ -3409,16 +3413,16 @@ dumpSearchPath(Archive *AH)
 
 
 /*
- * getBlobs:
+ * getLOs:
  *	Collect schema-level data about large objects
  */
 static void
-getBlobs(Archive *fout)
+getLOs(Archive *fout)
 {
 	DumpOptions *dopt = fout->dopt;
-	PQExpBuffer blobQry = createPQExpBuffer();
-	BlobInfo   *binfo;
-	DumpableObject *bdata;
+	PQExpBuffer loQry = createPQExpBuffer();
+	LoInfo	   *loinfo;
+	DumpableObject *lodata;
 	PGresult   *res;
 	int			ntups;
 	int			i;
@@ -3429,13 +3433,13 @@ getBlobs(Archive *fout)
 
 	pg_log_info("reading large objects");
 
-	/* Fetch BLOB OIDs, and owner/ACL data */
-	appendPQExpBufferStr(blobQry,
+	/* Fetch LO OIDs, and owner/ACL data */
+	appendPQExpBufferStr(loQry,
 						 "SELECT oid, lomowner, lomacl, "
 						 "acldefault('L', lomowner) AS acldefault "
 						 "FROM pg_largeobject_metadata");
 
-	res = ExecuteSqlQuery(fout, blobQry->data, PGRES_TUPLES_OK);
+	res = ExecuteSqlQuery(fout, loQry->data, PGRES_TUPLES_OK);
 
 	i_oid = PQfnumber(res, "oid");
 	i_lomowner = PQfnumber(res, "lomowner");
@@ -3445,40 +3449,40 @@ getBlobs(Archive *fout)
 	ntups = PQntuples(res);
 
 	/*
-	 * Each large object has its own BLOB archive entry.
+	 * Each large object has its own "BLOB" archive entry.
 	 */
-	binfo = (BlobInfo *) pg_malloc(ntups * sizeof(BlobInfo));
+	loinfo = (LoInfo *) pg_malloc(ntups * sizeof(LoInfo));
 
 	for (i = 0; i < ntups; i++)
 	{
-		binfo[i].dobj.objType = DO_BLOB;
-		binfo[i].dobj.catId.tableoid = LargeObjectRelationId;
-		binfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
-		AssignDumpId(&binfo[i].dobj);
+		loinfo[i].dobj.objType = DO_LARGE_OBJECT;
+		loinfo[i].dobj.catId.tableoid = LargeObjectRelationId;
+		loinfo[i].dobj.catId.oid = atooid(PQgetvalue(res, i, i_oid));
+		AssignDumpId(&loinfo[i].dobj);
 
-		binfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_oid));
-		binfo[i].dacl.acl = pg_strdup(PQgetvalue(res, i, i_lomacl));
-		binfo[i].dacl.acldefault = pg_strdup(PQgetvalue(res, i, i_acldefault));
-		binfo[i].dacl.privtype = 0;
-		binfo[i].dacl.initprivs = NULL;
-		binfo[i].rolname = getRoleName(PQgetvalue(res, i, i_lomowner));
+		loinfo[i].dobj.name = pg_strdup(PQgetvalue(res, i, i_oid));
+		loinfo[i].dacl.acl = pg_strdup(PQgetvalue(res, i, i_lomacl));
+		loinfo[i].dacl.acldefault = pg_strdup(PQgetvalue(res, i, i_acldefault));
+		loinfo[i].dacl.privtype = 0;
+		loinfo[i].dacl.initprivs = NULL;
+		loinfo[i].rolname = getRoleName(PQgetvalue(res, i, i_lomowner));
 
-		/* Blobs have data */
-		binfo[i].dobj.components |= DUMP_COMPONENT_DATA;
+		/* LOs have data */
+		loinfo[i].dobj.components |= DUMP_COMPONENT_DATA;
 
-		/* Mark whether blob has an ACL */
+		/* Mark whether LO has an ACL */
 		if (!PQgetisnull(res, i, i_lomacl))
-			binfo[i].dobj.components |= DUMP_COMPONENT_ACL;
+			loinfo[i].dobj.components |= DUMP_COMPONENT_ACL;
 
 		/*
-		 * In binary-upgrade mode for blobs, we do *not* dump out the blob
+		 * In binary-upgrade mode for LOs, we do *not* dump out the LO
 		 * data, as it will be copied by pg_upgrade, which simply copies the
 		 * pg_largeobject table. We *do* however dump out anything but the
 		 * data, as pg_upgrade copies just pg_largeobject, but not
 		 * pg_largeobject_metadata, after the dump is restored.
 		 */
 		if (dopt->binary_upgrade)
-			binfo[i].dobj.dump &= ~DUMP_COMPONENT_DATA;
+			loinfo[i].dobj.dump &= ~DUMP_COMPONENT_DATA;
 	}
 
 	/*
@@ -3487,77 +3491,77 @@ getBlobs(Archive *fout)
 	 */
 	if (ntups > 0)
 	{
-		bdata = (DumpableObject *) pg_malloc(sizeof(DumpableObject));
-		bdata->objType = DO_BLOB_DATA;
-		bdata->catId = nilCatalogId;
-		AssignDumpId(bdata);
-		bdata->name = pg_strdup("BLOBS");
-		bdata->components |= DUMP_COMPONENT_DATA;
+		lodata = (DumpableObject *) pg_malloc(sizeof(DumpableObject));
+		lodata->objType = DO_LARGE_OBJECT_DATA;
+		lodata->catId = nilCatalogId;
+		AssignDumpId(lodata);
+		lodata->name = pg_strdup("BLOBS");
+		lodata->components |= DUMP_COMPONENT_DATA;
 	}
 
 	PQclear(res);
-	destroyPQExpBuffer(blobQry);
+	destroyPQExpBuffer(loQry);
 }
 
 /*
- * dumpBlob
+ * dumpLO
  *
  * dump the definition (metadata) of the given large object
  */
 static void
-dumpBlob(Archive *fout, const BlobInfo *binfo)
+dumpLO(Archive *fout, const LoInfo *loinfo)
 {
 	PQExpBuffer cquery = createPQExpBuffer();
 	PQExpBuffer dquery = createPQExpBuffer();
 
 	appendPQExpBuffer(cquery,
 					  "SELECT pg_catalog.lo_create('%s');\n",
-					  binfo->dobj.name);
+					  loinfo->dobj.name);
 
 	appendPQExpBuffer(dquery,
 					  "SELECT pg_catalog.lo_unlink('%s');\n",
-					  binfo->dobj.name);
+					  loinfo->dobj.name);
 
-	if (binfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
-		ArchiveEntry(fout, binfo->dobj.catId, binfo->dobj.dumpId,
-					 ARCHIVE_OPTS(.tag = binfo->dobj.name,
-								  .owner = binfo->rolname,
+	if (loinfo->dobj.dump & DUMP_COMPONENT_DEFINITION)
+		ArchiveEntry(fout, loinfo->dobj.catId, loinfo->dobj.dumpId,
+					 ARCHIVE_OPTS(.tag = loinfo->dobj.name,
+								  .owner = loinfo->rolname,
 								  .description = "BLOB",
 								  .section = SECTION_PRE_DATA,
 								  .createStmt = cquery->data,
 								  .dropStmt = dquery->data));
 
 	/* Dump comment if any */
-	if (binfo->dobj.dump & DUMP_COMPONENT_COMMENT)
-		dumpComment(fout, "LARGE OBJECT", binfo->dobj.name,
-					NULL, binfo->rolname,
-					binfo->dobj.catId, 0, binfo->dobj.dumpId);
+	if (loinfo->dobj.dump & DUMP_COMPONENT_COMMENT)
+		dumpComment(fout, "LARGE OBJECT", loinfo->dobj.name,
+					NULL, loinfo->rolname,
+					loinfo->dobj.catId, 0, loinfo->dobj.dumpId);
 
 	/* Dump security label if any */
-	if (binfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
-		dumpSecLabel(fout, "LARGE OBJECT", binfo->dobj.name,
-					 NULL, binfo->rolname,
-					 binfo->dobj.catId, 0, binfo->dobj.dumpId);
+	if (loinfo->dobj.dump & DUMP_COMPONENT_SECLABEL)
+		dumpSecLabel(fout, "LARGE OBJECT", loinfo->dobj.name,
+					 NULL, loinfo->rolname,
+					 loinfo->dobj.catId, 0, loinfo->dobj.dumpId);
 
 	/* Dump ACL if any */
-	if (binfo->dobj.dump & DUMP_COMPONENT_ACL)
-		dumpACL(fout, binfo->dobj.dumpId, InvalidDumpId, "LARGE OBJECT",
-				binfo->dobj.name, NULL,
-				NULL, binfo->rolname, &binfo->dacl);
+	if (loinfo->dobj.dump & DUMP_COMPONENT_ACL)
+		dumpACL(fout, loinfo->dobj.dumpId, InvalidDumpId, "LARGE OBJECT",
+				loinfo->dobj.name, NULL,
+				NULL, loinfo->rolname, &loinfo->dacl);
 
 	destroyPQExpBuffer(cquery);
 	destroyPQExpBuffer(dquery);
 }
 
 /*
- * dumpBlobs:
+ * dumpLOs:
  *	dump the data contents of all large objects
  */
 static int
-dumpBlobs(Archive *fout, const void *arg)
+dumpLOs(Archive *fout, const void *arg)
 {
-	const char *blobQry;
-	const char *blobFetchQry;
+	const char *loQry;
+	const char *loFetchQry;
 	PGconn	   *conn = GetConnection(fout);
 	PGresult   *res;
 	char		buf[LOBBUFSIZE];
@@ -3568,38 +3572,38 @@ dumpBlobs(Archive *fout, const void *arg)
 	pg_log_info("saving large objects");
 
 	/*
-	 * Currently, we re-fetch all BLOB OIDs using a cursor.  Consider scanning
+	 * Currently, we re-fetch all LO OIDs using a cursor.  Consider scanning
 	 * the already-in-memory dumpable objects instead...
 	 */
-	blobQry =
-		"DECLARE bloboid CURSOR FOR "
+	loQry =
+		"DECLARE looid CURSOR FOR "
 		"SELECT oid FROM pg_largeobject_metadata ORDER BY 1";
 
-	ExecuteSqlStatement(fout, blobQry);
+	ExecuteSqlStatement(fout, loQry);
 
 	/* Command to fetch from cursor */
-	blobFetchQry = "FETCH 1000 IN bloboid";
+	loFetchQry = "FETCH 1000 IN looid";
 
 	do
 	{
 		/* Do a fetch */
-		res = ExecuteSqlQuery(fout, blobFetchQry, PGRES_TUPLES_OK);
+		res = ExecuteSqlQuery(fout, loFetchQry, PGRES_TUPLES_OK);
 
 		/* Process the tuples, if any */
 		ntups = PQntuples(res);
 		for (i = 0; i < ntups; i++)
 		{
-			Oid			blobOid;
+			Oid			loOid;
 			int			loFd;
 
-			blobOid = atooid(PQgetvalue(res, i, 0));
-			/* Open the BLOB */
-			loFd = lo_open(conn, blobOid, INV_READ);
+			loOid = atooid(PQgetvalue(res, i, 0));
+			/* Open the LO */
+			loFd = lo_open(conn, loOid, INV_READ);
 			if (loFd == -1)
 				pg_fatal("could not open large object %u: %s",
-						 blobOid, PQerrorMessage(conn));
+						 loOid, PQerrorMessage(conn));
 
-			StartBlob(fout, blobOid);
+			StartLO(fout, loOid);
 
 			/* Now read it in chunks, sending data to archive */
 			do
@@ -3607,14 +3611,14 @@ dumpBlobs(Archive *fout, const void *arg)
 				cnt = lo_read(conn, loFd, buf, LOBBUFSIZE);
 				if (cnt < 0)
 					pg_fatal("error reading large object %u: %s",
-							 blobOid, PQerrorMessage(conn));
+							 loOid, PQerrorMessage(conn));
 
 				WriteData(fout, buf, cnt);
 			} while (cnt > 0);
 
 			lo_close(conn, loFd);
 
-			EndBlob(fout, blobOid);
+			EndLO(fout, loOid);
 		}
 
 		PQclear(res);
@@ -9483,7 +9487,7 @@ dumpCommentExtended(Archive *fout, const char *type,
 	if (dopt->no_comments)
 		return;
 
-	/* Comments are schema not data ... except blob comments are data */
+	/* Comments are schema not data ... except LO comments are data */
 	if (strcmp(type, "LARGE OBJECT") != 0)
 	{
 		if (dopt->dataOnly)
@@ -9491,7 +9495,7 @@ dumpCommentExtended(Archive *fout, const char *type,
 	}
 	else
 	{
-		/* We do dump blob comments in binary-upgrade mode */
+		/* We do dump LO comments in binary-upgrade mode */
 		if (dopt->schemaOnly && !dopt->binary_upgrade)
 			return;
 	}
@@ -9971,10 +9975,10 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 		case DO_DEFAULT_ACL:
 			dumpDefaultACL(fout, (const DefaultACLInfo *) dobj);
 			break;
-		case DO_BLOB:
-			dumpBlob(fout, (const BlobInfo *) dobj);
+		case DO_LARGE_OBJECT:
+			dumpLO(fout, (const LoInfo *) dobj);
 			break;
-		case DO_BLOB_DATA:
+		case DO_LARGE_OBJECT_DATA:
 			if (dobj->dump & DUMP_COMPONENT_DATA)
 			{
 				TocEntry   *te;
@@ -9983,19 +9987,19 @@ dumpDumpableObject(Archive *fout, DumpableObject *dobj)
 								  ARCHIVE_OPTS(.tag = dobj->name,
 											   .description = "BLOBS",
 											   .section = SECTION_DATA,
-											   .dumpFn = dumpBlobs));
+											   .dumpFn = dumpLOs));
 
 				/*
 				 * Set the TocEntry's dataLength in case we are doing a
 				 * parallel dump and want to order dump jobs by table size.
 				 * (We need some size estimate for every TocEntry with a
 				 * DataDumper function.)  We don't currently have any cheap
-				 * way to estimate the size of blobs, but it doesn't matter;
+				 * way to estimate the size of LOs, but it doesn't matter;
 				 * let's just set the size to a large value so parallel dumps
-				 * will launch this job first.  If there's lots of blobs, we
+				 * will launch this job first.  If there's lots of LOs, we
 				 * win, and if there aren't, we don't lose much.  (If you want
 				 * to improve on this, really what you should be thinking
-				 * about is allowing blob dumping to be parallelized, not just
+				 * about is allowing LO dumping to be parallelized, not just
 				 * getting a smarter estimate for the single TOC entry.)
 				 */
 				te->dataLength = INT_MAX;
@@ -14467,7 +14471,7 @@ dumpACL(Archive *fout, DumpId objDumpId, DumpId altDumpId,
 	if (dopt->aclsSkip)
 		return InvalidDumpId;
 
-	/* --data-only skips ACLs *except* BLOB ACLs */
+	/* --data-only skips ACLs *except* large object ACLs */
 	if (dopt->dataOnly && strcmp(type, "LARGE OBJECT") != 0)
 		return InvalidDumpId;
 
@@ -14589,7 +14593,7 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 	if (dopt->no_security_labels)
 		return;
 
-	/* Security labels are schema not data ... except blob labels are data */
+	/* Security labels are schema not data ... except large object labels are data */
 	if (strcmp(type, "LARGE OBJECT") != 0)
 	{
 		if (dopt->dataOnly)
@@ -14597,7 +14601,7 @@ dumpSecLabel(Archive *fout, const char *type, const char *name,
 	}
 	else
 	{
-		/* We do dump blob security labels in binary-upgrade mode */
+		/* We do dump large object security labels in binary-upgrade mode */
 		if (dopt->schemaOnly && !dopt->binary_upgrade)
 			return;
 	}
@@ -17945,13 +17949,13 @@ addBoundaryDependencies(DumpableObject **dobjs, int numObjs,
 			case DO_FDW:
 			case DO_FOREIGN_SERVER:
 			case DO_TRANSFORM:
-			case DO_BLOB:
+			case DO_LARGE_OBJECT:
 				/* Pre-data objects: must come before the pre-data boundary */
 				addObjectDependency(preDataBound, dobj->dumpId);
 				break;
 			case DO_TABLE_DATA:
 			case DO_SEQUENCE_SET:
-			case DO_BLOB_DATA:
+			case DO_LARGE_OBJECT_DATA:
 				/* Data objects: must come between the boundaries */
 				addObjectDependency(dobj, preDataBound->dumpId);
 				addObjectDependency(postDataBound, dobj->dumpId);

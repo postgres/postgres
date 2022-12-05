@@ -52,13 +52,13 @@ static void _PrintExtraToc(ArchiveHandle *AH, TocEntry *te);
 
 static void _PrintData(ArchiveHandle *AH);
 static void _skipData(ArchiveHandle *AH);
-static void _skipBlobs(ArchiveHandle *AH);
+static void _skipLOs(ArchiveHandle *AH);
 
-static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
-static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _LoadBlobs(ArchiveHandle *AH, bool drop);
+static void _StartLOs(ArchiveHandle *AH, TocEntry *te);
+static void _StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndLOs(ArchiveHandle *AH, TocEntry *te);
+static void _LoadLOs(ArchiveHandle *AH, bool drop);
 
 static void _PrepParallelRestore(ArchiveHandle *AH);
 static void _Clone(ArchiveHandle *AH);
@@ -123,10 +123,10 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	AH->WriteExtraTocPtr = _WriteExtraToc;
 	AH->PrintExtraTocPtr = _PrintExtraToc;
 
-	AH->StartBlobsPtr = _StartBlobs;
-	AH->StartBlobPtr = _StartBlob;
-	AH->EndBlobPtr = _EndBlob;
-	AH->EndBlobsPtr = _EndBlobs;
+	AH->StartLOsPtr = _StartLOs;
+	AH->StartLOPtr = _StartLO;
+	AH->EndLOPtr = _EndLO;
+	AH->EndLOsPtr = _EndLOs;
 
 	AH->PrepParallelRestorePtr = _PrepParallelRestore;
 	AH->ClonePtr = _Clone;
@@ -303,8 +303,8 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 
 /*
  * Called by archiver when dumper calls WriteData. This routine is
- * called for both BLOB and TABLE data; it is the responsibility of
- * the format to manage each kind of data using StartBlob/StartData.
+ * called for both LO and table data; it is the responsibility of
+ * the format to manage each kind of data using StartLO/StartData.
  *
  * It should only be called from within a DataDumper routine.
  *
@@ -340,14 +340,14 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 /*
  * Called by the archiver when starting to save all BLOB DATA (not schema).
  * This routine should save whatever format-specific information is needed
- * to read the BLOBs back into memory.
+ * to read the LOs back into memory.
  *
  * It is called just prior to the dumper's DataDumper routine.
  *
  * Optional, but strongly recommended.
  */
 static void
-_StartBlobs(ArchiveHandle *AH, TocEntry *te)
+_StartLOs(ArchiveHandle *AH, TocEntry *te)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
@@ -361,14 +361,14 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 }
 
 /*
- * Called by the archiver when the dumper calls StartBlob.
+ * Called by the archiver when the dumper calls StartLO.
  *
  * Mandatory.
  *
  * Must save the passed OID for retrieval at restore-time.
  */
 static void
-_StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_StartLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
@@ -381,12 +381,12 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 }
 
 /*
- * Called by the archiver when the dumper calls EndBlob.
+ * Called by the archiver when the dumper calls EndLO.
  *
  * Optional.
  */
 static void
-_EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
+_EndLO(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 
@@ -401,9 +401,9 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
  * Optional.
  */
 static void
-_EndBlobs(ArchiveHandle *AH, TocEntry *te)
+_EndLOs(ArchiveHandle *AH, TocEntry *te)
 {
-	/* Write out a fake zero OID to mark end-of-blobs. */
+	/* Write out a fake zero OID to mark end-of-LOs. */
 	WriteInt(AH, 0);
 }
 
@@ -488,7 +488,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 					break;
 
 				case BLK_BLOBS:
-					_skipBlobs(AH);
+					_skipLOs(AH);
 					break;
 
 				default:		/* Always have a default */
@@ -536,7 +536,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te)
 			break;
 
 		case BLK_BLOBS:
-			_LoadBlobs(AH, AH->public.ropt->dropSchema);
+			_LoadLOs(AH, AH->public.ropt->dropSchema);
 			break;
 
 		default:				/* Always have a default */
@@ -570,32 +570,32 @@ _PrintData(ArchiveHandle *AH)
 }
 
 static void
-_LoadBlobs(ArchiveHandle *AH, bool drop)
+_LoadLOs(ArchiveHandle *AH, bool drop)
 {
 	Oid			oid;
 
-	StartRestoreBlobs(AH);
+	StartRestoreLOs(AH);
 
 	oid = ReadInt(AH);
 	while (oid != 0)
 	{
-		StartRestoreBlob(AH, oid, drop);
+		StartRestoreLO(AH, oid, drop);
 		_PrintData(AH);
-		EndRestoreBlob(AH, oid);
+		EndRestoreLO(AH, oid);
 		oid = ReadInt(AH);
 	}
 
-	EndRestoreBlobs(AH);
+	EndRestoreLOs(AH);
 }
 
 /*
- * Skip the BLOBs from the current file position.
- * BLOBS are written sequentially as data blocks (see below).
- * Each BLOB is preceded by its original OID.
- * A zero OID indicates the end of the BLOBS.
+ * Skip the LOs from the current file position.
+ * LOs are written sequentially as data blocks (see below).
+ * Each LO is preceded by its original OID.
+ * A zero OID indicates the end of the LOs.
  */
 static void
-_skipBlobs(ArchiveHandle *AH)
+_skipLOs(ArchiveHandle *AH)
 {
 	Oid			oid;
 
@@ -726,7 +726,7 @@ _ReadBuf(ArchiveHandle *AH, void *buf, size_t len)
  * If an archive is to be written, this routine must call:
  *		WriteHead			to save the archive header
  *		WriteToc			to save the TOC entries
- *		WriteDataChunks		to save all DATA & BLOBs.
+ *		WriteDataChunks		to save all data & LOs.
  *
  */
 static void

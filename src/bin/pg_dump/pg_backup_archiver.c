@@ -554,7 +554,7 @@ RestoreArchive(Archive *AHX)
 						 */
 						if (strncmp(te->desc, "BLOB", 4) == 0)
 						{
-							DropBlobIfExists(AH, te->catalogId.oid);
+							DropLOIfExists(AH, te->catalogId.oid);
 						}
 						else
 						{
@@ -1224,44 +1224,44 @@ PrintTOCSummary(Archive *AHX)
 }
 
 /***********
- * BLOB Archival
+ * Large Object Archival
  ***********/
 
-/* Called by a dumper to signal start of a BLOB */
+/* Called by a dumper to signal start of a LO */
 int
-StartBlob(Archive *AHX, Oid oid)
+StartLO(Archive *AHX, Oid oid)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	if (!AH->StartBlobPtr)
+	if (!AH->StartLOPtr)
 		pg_fatal("large-object output not supported in chosen format");
 
-	AH->StartBlobPtr(AH, AH->currToc, oid);
+	AH->StartLOPtr(AH, AH->currToc, oid);
 
 	return 1;
 }
 
-/* Called by a dumper to signal end of a BLOB */
+/* Called by a dumper to signal end of a LO */
 int
-EndBlob(Archive *AHX, Oid oid)
+EndLO(Archive *AHX, Oid oid)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
-	if (AH->EndBlobPtr)
-		AH->EndBlobPtr(AH, AH->currToc, oid);
+	if (AH->EndLOPtr)
+		AH->EndLOPtr(AH, AH->currToc, oid);
 
 	return 1;
 }
 
 /**********
- * BLOB Restoration
+ * Large Object Restoration
  **********/
 
 /*
- * Called by a format handler before any blobs are restored
+ * Called by a format handler before any LOs are restored
  */
 void
-StartRestoreBlobs(ArchiveHandle *AH)
+StartRestoreLOs(ArchiveHandle *AH)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
@@ -1273,14 +1273,14 @@ StartRestoreBlobs(ArchiveHandle *AH)
 			ahprintf(AH, "BEGIN;\n\n");
 	}
 
-	AH->blobCount = 0;
+	AH->loCount = 0;
 }
 
 /*
- * Called by a format handler after all blobs are restored
+ * Called by a format handler after all LOs are restored
  */
 void
-EndRestoreBlobs(ArchiveHandle *AH)
+EndRestoreLOs(ArchiveHandle *AH)
 {
 	RestoreOptions *ropt = AH->public.ropt;
 
@@ -1294,21 +1294,21 @@ EndRestoreBlobs(ArchiveHandle *AH)
 
 	pg_log_info(ngettext("restored %d large object",
 						 "restored %d large objects",
-						 AH->blobCount),
-				AH->blobCount);
+						 AH->loCount),
+				AH->loCount);
 }
 
 
 /*
- * Called by a format handler to initiate restoration of a blob
+ * Called by a format handler to initiate restoration of a LO
  */
 void
-StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
+StartRestoreLO(ArchiveHandle *AH, Oid oid, bool drop)
 {
-	bool		old_blob_style = (AH->version < K_VERS_1_12);
+	bool		old_lo_style = (AH->version < K_VERS_1_12);
 	Oid			loOid;
 
-	AH->blobCount++;
+	AH->loCount++;
 
 	/* Initialize the LO Buffer */
 	AH->lo_buf_used = 0;
@@ -1316,12 +1316,12 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 	pg_log_info("restoring large object with OID %u", oid);
 
 	/* With an old archive we must do drop and create logic here */
-	if (old_blob_style && drop)
-		DropBlobIfExists(AH, oid);
+	if (old_lo_style && drop)
+		DropLOIfExists(AH, oid);
 
 	if (AH->connection)
 	{
-		if (old_blob_style)
+		if (old_lo_style)
 		{
 			loOid = lo_create(AH->connection, oid);
 			if (loOid == 0 || loOid != oid)
@@ -1335,7 +1335,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 	}
 	else
 	{
-		if (old_blob_style)
+		if (old_lo_style)
 			ahprintf(AH, "SELECT pg_catalog.lo_open(pg_catalog.lo_create('%u'), %d);\n",
 					 oid, INV_WRITE);
 		else
@@ -1343,11 +1343,11 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop)
 					 oid, INV_WRITE);
 	}
 
-	AH->writingBlob = 1;
+	AH->writingLO = true;
 }
 
 void
-EndRestoreBlob(ArchiveHandle *AH, Oid oid)
+EndRestoreLO(ArchiveHandle *AH, Oid oid)
 {
 	if (AH->lo_buf_used > 0)
 	{
@@ -1355,7 +1355,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 		dump_lo_buf(AH);
 	}
 
-	AH->writingBlob = 0;
+	AH->writingLO = false;
 
 	if (AH->connection)
 	{
@@ -1645,7 +1645,7 @@ RestoringToDB(ArchiveHandle *AH)
 }
 
 /*
- * Dump the current contents of the LO data buffer while writing a BLOB
+ * Dump the current contents of the LO data buffer while writing a LO
  */
 static void
 dump_lo_buf(ArchiveHandle *AH)
@@ -1673,10 +1673,10 @@ dump_lo_buf(ArchiveHandle *AH)
 							  AH->lo_buf_used,
 							  AH);
 
-		/* Hack: turn off writingBlob so ahwrite doesn't recurse to here */
-		AH->writingBlob = 0;
+		/* Hack: turn off writingLO so ahwrite doesn't recurse to here */
+		AH->writingLO = false;
 		ahprintf(AH, "SELECT pg_catalog.lowrite(0, %s);\n", buf->data);
-		AH->writingBlob = 1;
+		AH->writingLO = true;
 
 		destroyPQExpBuffer(buf);
 	}
@@ -1695,7 +1695,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 {
 	int			bytes_written = 0;
 
-	if (AH->writingBlob)
+	if (AH->writingLO)
 	{
 		size_t		remaining = size * nmemb;
 
@@ -2324,7 +2324,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 }
 
 /*
- * Write out all data (tables & blobs)
+ * Write out all data (tables & LOs)
  */
 void
 WriteDataChunks(ArchiveHandle *AH, ParallelState *pstate)
@@ -2418,8 +2418,8 @@ WriteDataChunksForTocEntry(ArchiveHandle *AH, TocEntry *te)
 
 	if (strcmp(te->desc, "BLOBS") == 0)
 	{
-		startPtr = AH->StartBlobsPtr;
-		endPtr = AH->EndBlobsPtr;
+		startPtr = AH->StartLOsPtr;
+		endPtr = AH->EndLOsPtr;
 	}
 	else
 	{
@@ -2965,7 +2965,7 @@ _tocEntryRequired(TocEntry *te, teSection curSection, ArchiveHandle *AH)
 	if (!te->hadDumper)
 	{
 		/*
-		 * Special Case: If 'SEQUENCE SET' or anything to do with BLOBs, then
+		 * Special Case: If 'SEQUENCE SET' or anything to do with LOs, then
 		 * it is considered a data entry.  We don't need to check for the
 		 * BLOBS entry or old-style BLOB COMMENTS, because they will have
 		 * hadDumper = true ... but we do need to check new-style BLOB ACLs,
@@ -3451,7 +3451,7 @@ _getObjectDescription(PQExpBuffer buf, const TocEntry *te)
 			appendPQExpBuffer(buf, "%s.", fmtId(te->namespace));
 		appendPQExpBufferStr(buf, fmtId(te->tag));
 	}
-	/* BLOBs just have a name, but it's numeric so must not use fmtId */
+	/* LOs just have a name, but it's numeric so must not use fmtId */
 	else if (strcmp(type, "BLOB") == 0)
 	{
 		appendPQExpBuffer(buf, "LARGE OBJECT %s", te->tag);

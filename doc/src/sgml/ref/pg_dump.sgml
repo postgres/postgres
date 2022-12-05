@@ -132,7 +132,8 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-b</option></term>
-      <term><option>--blobs</option></term>
+      <term><option>--large-objects</option></term>
+      <term><option>--blobs</option> (deprecated)</term>
       <listitem>
        <para>
         Include large objects in the dump.  This is the default behavior
@@ -140,7 +141,7 @@ PostgreSQL documentation
         <option>--schema-only</option> is specified.  The <option>-b</option>
         switch is therefore only useful to add large objects to dumps
         where a specific schema or table has been requested.  Note that
-        blobs are considered data and therefore will be included when
+        large objects are considered data and therefore will be included when
         <option>--data-only</option> is used, but not
         when <option>--schema-only</option> is.
        </para>
@@ -149,7 +150,8 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-B</option></term>
-      <term><option>--no-blobs</option></term>
+      <term><option>--no-large-objects</option></term>
+      <term><option>--no-blobs</option> (deprecated)</term>
       <listitem>
        <para>
         Exclude large objects in the dump.
@@ -323,7 +325,7 @@ PostgreSQL documentation
           <para>
            Output a directory-format archive suitable for input into
            <application>pg_restore</application>. This will create a directory
-           with one file for each table and blob being dumped, plus a
+           with one file for each table and large object being dumped, plus a
            so-called Table of Contents file describing the dumped objects in a
            machine-readable format that <application>pg_restore</application>
            can read. A directory format archive can be manipulated with
@@ -434,9 +436,9 @@ PostgreSQL documentation
 
        <note>
         <para>
-         Non-schema objects such as blobs are not dumped when <option>-n</option> is
-         specified.  You can add blobs back to the dump with the
-         <option>--blobs</option> switch.
+         Non-schema objects such as large objects are not dumped when <option>-n</option> is
+         specified.  You can add large objects back to the dump with the
+         <option>--large-objects</option> switch.
         </para>
        </note>
 

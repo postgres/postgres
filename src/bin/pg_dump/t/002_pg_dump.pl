@@ -316,10 +316,10 @@ my %pgdump_runs = (
 			'--no-toast-compression', 'postgres',
 		],
 	},
-	no_blobs => {
+	no_large_objects => {
 		dump_cmd => [
 			'pg_dump',                      '--no-sync',
-			"--file=$tempdir/no_blobs.sql", '-B',
+			"--file=$tempdir/no_large_objects.sql", '-B',
 			'postgres',
 		],
 	},
@@ -428,9 +428,9 @@ my %pgdump_runs = (
 			'--section=post-data', '--no-sync', 'postgres',
 		],
 	},
-	test_schema_plus_blobs => {
+	test_schema_plus_large_objects => {
 		dump_cmd => [
-			'pg_dump', "--file=$tempdir/test_schema_plus_blobs.sql",
+			'pg_dump', "--file=$tempdir/test_schema_plus_large_objects.sql",
 
 			'--schema=dump_test', '-b', '-B', '--no-sync', 'postgres',
 		],
@@ -479,10 +479,10 @@ my %pgdump_runs = (
 # Tests which target the 'dump_test' schema, specifically.
 my %dump_test_schema_runs = (
 	only_dump_test_schema  => 1,
-	test_schema_plus_blobs => 1,);
+	test_schema_plus_large_objects => 1,);
 
 # Tests which are considered 'full' dumps by pg_dump, but there
-# are flags used to exclude specific items (ACLs, blobs, etc).
+# are flags used to exclude specific items (ACLs, LOs, etc).
 my %full_runs = (
 	binary_upgrade           => 1,
 	clean                    => 1,
@@ -494,7 +494,7 @@ my %full_runs = (
 	exclude_test_table       => 1,
 	exclude_test_table_data  => 1,
 	no_toast_compression     => 1,
-	no_blobs                 => 1,
+	no_large_objects         => 1,
 	no_owner                 => 1,
 	no_privs                 => 1,
 	no_table_access_method   => 1,
@@ -691,10 +691,10 @@ my %tests = (
 			data_only              => 1,
 			inserts                => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1,
+			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
-			no_blobs    => 1,
+			no_large_objects => 1,
 			no_owner    => 1,
 			schema_only => 1,
 		},
@@ -1028,7 +1028,7 @@ my %tests = (
 		},
 	},
 
-	'BLOB create (using lo_from_bytea)' => {
+	'LO create (using lo_from_bytea)' => {
 		create_order => 50,
 		create_sql =>
 		  'SELECT pg_catalog.lo_from_bytea(0, \'\\x310a320a330a340a350a360a370a380a390a\');',
@@ -1039,15 +1039,15 @@ my %tests = (
 			data_only              => 1,
 			inserts                => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1,
+			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
 			schema_only => 1,
-			no_blobs    => 1,
+			no_large_objects => 1,
 		},
 	},
 
-	'BLOB load (using lo_from_bytea)' => {
+	'LO load (using lo_from_bytea)' => {
 		regexp => qr/^
 			\QSELECT pg_catalog.lo_open\E \('\d+',\ \d+\);\n
 			\QSELECT pg_catalog.lowrite(0, \E
@@ -1060,11 +1060,11 @@ my %tests = (
 			data_only              => 1,
 			inserts                => 1,
 			section_data           => 1,
-			test_schema_plus_blobs => 1,
+			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
 			binary_upgrade => 1,
-			no_blobs       => 1,
+			no_large_objects => 1,
 			schema_only    => 1,
 		},
 	},
@@ -1212,10 +1212,10 @@ my %tests = (
 			data_only              => 1,
 			inserts                => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1,
+			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
-			no_blobs    => 1,
+			no_large_objects => 1,
 			schema_only => 1,
 		},
 	},
@@ -3189,7 +3189,7 @@ my %tests = (
 			exclude_test_table      => 1,
 			exclude_test_table_data => 1,
 			no_toast_compression    => 1,
-			no_blobs                => 1,
+			no_large_objects        => 1,
 			no_privs                => 1,
 			no_owner                => 1,
 			no_table_access_method  => 1,
@@ -3198,7 +3198,7 @@ my %tests = (
 			pg_dumpall_exclude      => 1,
 			schema_only             => 1,
 			section_post_data       => 1,
-			test_schema_plus_blobs  => 1,
+			test_schema_plus_large_objects => 1,
 		},
 		unlike => {
 			exclude_dump_test_schema => 1,
@@ -3264,7 +3264,7 @@ my %tests = (
 			exclude_test_table       => 1,
 			exclude_test_table_data  => 1,
 			no_toast_compression     => 1,
-			no_blobs                 => 1,
+			no_large_objects         => 1,
 			no_privs                 => 1,
 			no_owner                 => 1,
 			no_table_access_method   => 1,
@@ -3280,7 +3280,7 @@ my %tests = (
 			pg_dumpall_globals       => 1,
 			pg_dumpall_globals_clean => 1,
 			section_pre_data         => 1,
-			test_schema_plus_blobs   => 1,
+			test_schema_plus_large_objects => 1,
 		},
 	},
 
@@ -3607,11 +3607,11 @@ my %tests = (
 			data_only              => 1,
 			inserts                => 1,
 			section_pre_data       => 1,
-			test_schema_plus_blobs => 1,
+			test_schema_plus_large_objects => 1,
 			binary_upgrade         => 1,
 		},
 		unlike => {
-			no_blobs    => 1,
+			no_large_objects => 1,
 			no_privs    => 1,
 			schema_only => 1,
 		},

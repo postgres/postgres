@@ -274,7 +274,7 @@ my %pgdump_runs = (
 # as the regexps are used for each run the test applies to.
 
 # Tests which are considered 'full' dumps by pg_dump, but there
-# are flags used to exclude specific items (ACLs, blobs, etc).
+# are flags used to exclude specific items (ACLs, LOs, etc).
 my %full_runs = (
 	binary_upgrade    => 1,
 	clean             => 1,

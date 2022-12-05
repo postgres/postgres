@@ -70,7 +70,7 @@ typedef z_stream *z_streamp;
 /* Historical version numbers (checked in code) */
 #define K_VERS_1_0	MAKE_ARCHIVE_VERSION(1, 0, 0)
 #define K_VERS_1_2	MAKE_ARCHIVE_VERSION(1, 2, 0)	/* Allow No ZLIB */
-#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBs */
+#define K_VERS_1_3	MAKE_ARCHIVE_VERSION(1, 3, 0)	/* BLOBS */
 #define K_VERS_1_4	MAKE_ARCHIVE_VERSION(1, 4, 0)	/* Date & name in header */
 #define K_VERS_1_5	MAKE_ARCHIVE_VERSION(1, 5, 0)	/* Handle dependencies */
 #define K_VERS_1_6	MAKE_ARCHIVE_VERSION(1, 6, 0)	/* Schema field in TOCs */
@@ -145,10 +145,10 @@ typedef void (*StartDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 typedef void (*WriteDataPtrType) (ArchiveHandle *AH, const void *data, size_t dLen);
 typedef void (*EndDataPtrType) (ArchiveHandle *AH, TocEntry *te);
 
-typedef void (*StartBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
-typedef void (*StartBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
-typedef void (*EndBlobsPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartLOsPtrType) (ArchiveHandle *AH, TocEntry *te);
+typedef void (*StartLOPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndLOPtrType) (ArchiveHandle *AH, TocEntry *te, Oid oid);
+typedef void (*EndLOsPtrType) (ArchiveHandle *AH, TocEntry *te);
 
 typedef int (*WriteBytePtrType) (ArchiveHandle *AH, const int i);
 typedef int (*ReadBytePtrType) (ArchiveHandle *AH);
@@ -285,10 +285,10 @@ struct _archiveHandle
 	PrintExtraTocPtrType PrintExtraTocPtr;	/* Extra TOC info for format */
 	PrintTocDataPtrType PrintTocDataPtr;
 
-	StartBlobsPtrType StartBlobsPtr;
-	EndBlobsPtrType EndBlobsPtr;
-	StartBlobPtrType StartBlobPtr;
-	EndBlobPtrType EndBlobPtr;
+	StartLOsPtrType StartLOsPtr;
+	EndLOsPtrType EndLOsPtr;
+	StartLOPtrType StartLOPtr;
+	EndLOPtrType EndLOPtr;
 
 	SetupWorkerPtrType SetupWorkerPtr;
 	WorkerJobDumpPtrType WorkerJobDumpPtr;
@@ -313,9 +313,9 @@ struct _archiveHandle
 	ArchiverOutput outputKind;	/* Flag for what we're currently writing */
 	bool		pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
 
-	int			loFd;			/* BLOB fd */
-	int			writingBlob;	/* Flag */
-	int			blobCount;		/* # of blobs restored */
+	int			loFd;
+	bool		writingLO;
+	int			loCount;		/* # of LOs restored */
 
 	char	   *fSpec;			/* Archive File Spec */
 	FILE	   *FH;				/* General purpose file handle */
@@ -456,10 +456,10 @@ extern size_t WriteStr(ArchiveHandle *AH, const char *c);
 int			ReadOffset(ArchiveHandle *, pgoff_t *);
 size_t		WriteOffset(ArchiveHandle *, pgoff_t, int);
 
-extern void StartRestoreBlobs(ArchiveHandle *AH);
-extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid, bool drop);
-extern void EndRestoreBlob(ArchiveHandle *AH, Oid oid);
-extern void EndRestoreBlobs(ArchiveHandle *AH);
+extern void StartRestoreLOs(ArchiveHandle *AH);
+extern void StartRestoreLO(ArchiveHandle *AH, Oid oid, bool drop);
+extern void EndRestoreLO(ArchiveHandle *AH, Oid oid);
+extern void EndRestoreLOs(ArchiveHandle *AH);
 
 extern void InitArchiveFmt_Custom(ArchiveHandle *AH);
 extern void InitArchiveFmt_Null(ArchiveHandle *AH);
@@ -469,7 +469,7 @@ extern void InitArchiveFmt_Tar(ArchiveHandle *AH);
 extern bool isValidTarHeader(char *header);
 
 extern void ReconnectToServer(ArchiveHandle *AH, const char *dbname);
-extern void DropBlobIfExists(ArchiveHandle *AH, Oid oid);
+extern void DropLOIfExists(ArchiveHandle *AH, Oid oid);
 
 void		ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
 int			ahprintf(ArchiveHandle *AH, const char *fmt,...) pg_attribute_printf(2, 3);

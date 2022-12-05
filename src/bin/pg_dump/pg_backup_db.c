@@ -542,11 +542,11 @@ CommitTransaction(Archive *AHX)
 }
 
 void
-DropBlobIfExists(ArchiveHandle *AH, Oid oid)
+DropLOIfExists(ArchiveHandle *AH, Oid oid)
 {
 	/*
 	 * If we are not restoring to a direct database connection, we have to
-	 * guess about how to detect whether the blob exists.  Assume new-style.
+	 * guess about how to detect whether the LO exists.  Assume new-style.
 	 */
 	if (AH->connection == NULL ||
 		PQserverVersion(AH->connection) >= 90000)
