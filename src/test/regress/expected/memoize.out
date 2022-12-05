@@ -197,6 +197,45 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
 (8 rows)
 
 DROP TABLE strtest;
+-- Ensure memoize works with partitionwise join
+SET enable_partitionwise_join TO on;
+CREATE TABLE prt (a int) PARTITION BY RANGE(a);
+CREATE TABLE prt_p1 PARTITION OF prt FOR VALUES FROM (0) TO (10);
+CREATE TABLE prt_p2 PARTITION OF prt FOR VALUES FROM (10) TO (20);
+INSERT INTO prt VALUES (0), (0), (0), (0);
+INSERT INTO prt VALUES (10), (10), (10), (10);
+CREATE INDEX iprt_p1_a ON prt_p1 (a);
+CREATE INDEX iprt_p2_a ON prt_p2 (a);
+ANALYZE prt;
+SELECT explain_memoize('
+SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
+                                     explain_memoize                                      
+------------------------------------------------------------------------------------------
+ Append (actual rows=32 loops=N)
+   ->  Nested Loop (actual rows=16 loops=N)
+         ->  Index Only Scan using iprt_p1_a on prt_p1 t1_1 (actual rows=4 loops=N)
+               Heap Fetches: N
+         ->  Memoize (actual rows=4 loops=N)
+               Cache Key: t1_1.a
+               Cache Mode: logical
+               Hits: 3  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
+               ->  Index Only Scan using iprt_p1_a on prt_p1 t2_1 (actual rows=4 loops=N)
+                     Index Cond: (a = t1_1.a)
+                     Heap Fetches: N
+   ->  Nested Loop (actual rows=16 loops=N)
+         ->  Index Only Scan using iprt_p2_a on prt_p2 t1_2 (actual rows=4 loops=N)
+               Heap Fetches: N
+         ->  Memoize (actual rows=4 loops=N)
+               Cache Key: t1_2.a
+               Cache Mode: logical
+               Hits: 3  Misses: 1  Evictions: Zero  Overflows: 0  Memory Usage: NkB
+               ->  Index Only Scan using iprt_p2_a on prt_p2 t2_2 (actual rows=4 loops=N)
+                     Index Cond: (a = t1_2.a)
+                     Heap Fetches: N
+(21 rows)
+
+DROP TABLE prt;
+RESET enable_partitionwise_join;
 -- Exercise Memoize code that flushes the cache when a parameter changes which
 -- is not part of the cache key.
 -- Ensure we get a Memoize plan
