@@ -1350,18 +1350,11 @@ bootstrap_template1(void)
 static void
 setup_auth(FILE *cmdfd)
 {
-	const char *const *line;
-	static const char *const pg_authid_setup[] = {
-		/*
-		 * The authid table shouldn't be readable except through views, to
-		 * ensure passwords are not publicly visible.
-		 */
-		"REVOKE ALL ON pg_authid FROM public;\n\n",
-		NULL
-	};
-
-	for (line = pg_authid_setup; *line != NULL; line++)
-		PG_CMD_PUTS(*line);
+	/*
+	 * The authid table shouldn't be readable except through views, to
+	 * ensure passwords are not publicly visible.
+	 */
+	PG_CMD_PUTS("REVOKE ALL ON pg_authid FROM public;\n\n");
 
 	if (superuser_password)
 		PG_CMD_PRINTF("ALTER USER \"%s\" WITH PASSWORD E'%s';\n\n",
@@ -1433,18 +1426,11 @@ get_su_pwd(void)
 static void
 setup_depend(FILE *cmdfd)
 {
-	const char *const *line;
-	static const char *const pg_depend_setup[] = {
-		/*
-		 * Advance the OID counter so that subsequently-created objects aren't
-		 * pinned.
-		 */
-		"SELECT pg_stop_making_pinned_objects();\n\n",
-		NULL
-	};
-
-	for (line = pg_depend_setup; *line != NULL; line++)
-		PG_CMD_PUTS(*line);
+	/*
+	 * Advance the OID counter so that subsequently-created objects aren't
+	 * pinned.
+	 */
+	PG_CMD_PUTS("SELECT pg_stop_making_pinned_objects();\n\n");
 }
 
 /*
@@ -1530,147 +1516,138 @@ setup_collation(FILE *cmdfd)
 static void
 setup_privileges(FILE *cmdfd)
 {
-	char	  **line;
-	char	  **priv_lines;
-	static char *privileges_setup[] = {
-		"UPDATE pg_class "
-		"  SET relacl = (SELECT array_agg(a.acl) FROM "
-		" (SELECT E'=r/\"$POSTGRES_SUPERUSERNAME\"' as acl "
-		"  UNION SELECT unnest(pg_catalog.acldefault("
-		"    CASE WHEN relkind = " CppAsString2(RELKIND_SEQUENCE) " THEN 's' "
-		"         ELSE 'r' END::\"char\"," CppAsString2(BOOTSTRAP_SUPERUSERID) "::oid))"
-		" ) as a) "
-		"  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
-		CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
-		CppAsString2(RELKIND_SEQUENCE) ")"
-		"  AND relacl IS NULL;\n\n",
-		"GRANT USAGE ON SCHEMA pg_catalog, public TO PUBLIC;\n\n",
-		"REVOKE ALL ON pg_largeobject FROM PUBLIC;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_class'),"
-		"        0,"
-		"        relacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_class"
-		"    WHERE"
-		"        relacl IS NOT NULL"
-		"        AND relkind IN (" CppAsString2(RELKIND_RELATION) ", "
-		CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
-		CppAsString2(RELKIND_SEQUENCE) ");\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        pg_class.oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_class'),"
-		"        pg_attribute.attnum,"
-		"        pg_attribute.attacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_class"
-		"        JOIN pg_attribute ON (pg_class.oid = pg_attribute.attrelid)"
-		"    WHERE"
-		"        pg_attribute.attacl IS NOT NULL"
-		"        AND pg_class.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
-		CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
-		CppAsString2(RELKIND_SEQUENCE) ");\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_proc'),"
-		"        0,"
-		"        proacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_proc"
-		"    WHERE"
-		"        proacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_type'),"
-		"        0,"
-		"        typacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_type"
-		"    WHERE"
-		"        typacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_language'),"
-		"        0,"
-		"        lanacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_language"
-		"    WHERE"
-		"        lanacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE "
-		"         relname = 'pg_largeobject_metadata'),"
-		"        0,"
-		"        lomacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_largeobject_metadata"
-		"    WHERE"
-		"        lomacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE relname = 'pg_namespace'),"
-		"        0,"
-		"        nspacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_namespace"
-		"    WHERE"
-		"        nspacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class WHERE "
-		"         relname = 'pg_foreign_data_wrapper'),"
-		"        0,"
-		"        fdwacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_foreign_data_wrapper"
-		"    WHERE"
-		"        fdwacl IS NOT NULL;\n\n",
-		"INSERT INTO pg_init_privs "
-		"  (objoid, classoid, objsubid, initprivs, privtype)"
-		"    SELECT"
-		"        oid,"
-		"        (SELECT oid FROM pg_class "
-		"         WHERE relname = 'pg_foreign_server'),"
-		"        0,"
-		"        srvacl,"
-		"        'i'"
-		"    FROM"
-		"        pg_foreign_server"
-		"    WHERE"
-		"        srvacl IS NOT NULL;\n\n",
-		NULL
-	};
-
-	priv_lines = replace_token(privileges_setup, "$POSTGRES_SUPERUSERNAME",
-							   escape_quotes(username));
-	for (line = priv_lines; *line != NULL; line++)
-		PG_CMD_PUTS(*line);
+	PG_CMD_PRINTF("UPDATE pg_class "
+				  "  SET relacl = (SELECT array_agg(a.acl) FROM "
+				  " (SELECT E'=r/\"%s\"' as acl "
+				  "  UNION SELECT unnest(pg_catalog.acldefault("
+				  "    CASE WHEN relkind = " CppAsString2(RELKIND_SEQUENCE) " THEN 's' "
+				  "         ELSE 'r' END::\"char\"," CppAsString2(BOOTSTRAP_SUPERUSERID) "::oid))"
+				  " ) as a) "
+				  "  WHERE relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+				  CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
+				  CppAsString2(RELKIND_SEQUENCE) ")"
+				  "  AND relacl IS NULL;\n\n",
+				  escape_quotes(username));
+	PG_CMD_PUTS("GRANT USAGE ON SCHEMA pg_catalog, public TO PUBLIC;\n\n");
+	PG_CMD_PUTS("REVOKE ALL ON pg_largeobject FROM PUBLIC;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_class'),"
+				"        0,"
+				"        relacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_class"
+				"    WHERE"
+				"        relacl IS NOT NULL"
+				"        AND relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+				CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
+				CppAsString2(RELKIND_SEQUENCE) ");\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        pg_class.oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_class'),"
+				"        pg_attribute.attnum,"
+				"        pg_attribute.attacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_class"
+				"        JOIN pg_attribute ON (pg_class.oid = pg_attribute.attrelid)"
+				"    WHERE"
+				"        pg_attribute.attacl IS NOT NULL"
+				"        AND pg_class.relkind IN (" CppAsString2(RELKIND_RELATION) ", "
+				CppAsString2(RELKIND_VIEW) ", " CppAsString2(RELKIND_MATVIEW) ", "
+				CppAsString2(RELKIND_SEQUENCE) ");\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_proc'),"
+				"        0,"
+				"        proacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_proc"
+				"    WHERE"
+				"        proacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_type'),"
+				"        0,"
+				"        typacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_type"
+				"    WHERE"
+				"        typacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_language'),"
+				"        0,"
+				"        lanacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_language"
+				"    WHERE"
+				"        lanacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE "
+				"         relname = 'pg_largeobject_metadata'),"
+				"        0,"
+				"        lomacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_largeobject_metadata"
+				"    WHERE"
+				"        lomacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE relname = 'pg_namespace'),"
+				"        0,"
+				"        nspacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_namespace"
+				"    WHERE"
+				"        nspacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class WHERE "
+				"         relname = 'pg_foreign_data_wrapper'),"
+				"        0,"
+				"        fdwacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_foreign_data_wrapper"
+				"    WHERE"
+				"        fdwacl IS NOT NULL;\n\n");
+	PG_CMD_PUTS("INSERT INTO pg_init_privs "
+				"  (objoid, classoid, objsubid, initprivs, privtype)"
+				"    SELECT"
+				"        oid,"
+				"        (SELECT oid FROM pg_class "
+				"         WHERE relname = 'pg_foreign_server'),"
+				"        0,"
+				"        srvacl,"
+				"        'i'"
+				"    FROM"
+				"        pg_foreign_server"
+				"    WHERE"
+				"        srvacl IS NOT NULL;\n\n");
 }
 
 /*
@@ -1746,8 +1723,6 @@ vacuum_db(FILE *cmdfd)
 static void
 make_template0(FILE *cmdfd)
 {
-	const char *const *line;
-
 	/*
 	 * pg_upgrade tries to preserve database OIDs across upgrades. It's smart
 	 * enough to drop and recreate a conflicting database with the same name,
@@ -1765,42 +1740,36 @@ make_template0(FILE *cmdfd)
 	 * are cheap. "STRATEGY = wal_log" would generate more WAL, which would be
 	 * a little bit slower and make the new cluster a little bit bigger.
 	 */
-	static const char *const template0_setup[] = {
-		"CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false"
-		" OID = " CppAsString2(Template0DbOid)
-		" STRATEGY = file_copy;\n\n",
+	PG_CMD_PUTS("CREATE DATABASE template0 IS_TEMPLATE = true ALLOW_CONNECTIONS = false"
+				" OID = " CppAsString2(Template0DbOid)
+				" STRATEGY = file_copy;\n\n");
 
-		/*
-		 * template0 shouldn't have any collation-dependent objects, so unset
-		 * the collation version.  This disables collation version checks when
-		 * making a new database from it.
-		 */
-		"UPDATE pg_database SET datcollversion = NULL WHERE datname = 'template0';\n\n",
+	/*
+	 * template0 shouldn't have any collation-dependent objects, so unset
+	 * the collation version.  This disables collation version checks when
+	 * making a new database from it.
+	 */
+	PG_CMD_PUTS("UPDATE pg_database SET datcollversion = NULL WHERE datname = 'template0';\n\n");
 
-		/*
-		 * While we are here, do set the collation version on template1.
-		 */
-		"UPDATE pg_database SET datcollversion = pg_database_collation_actual_version(oid) WHERE datname = 'template1';\n\n",
+	/*
+	 * While we are here, do set the collation version on template1.
+	 */
+	PG_CMD_PUTS("UPDATE pg_database SET datcollversion = pg_database_collation_actual_version(oid) WHERE datname = 'template1';\n\n");
 
-		/*
-		 * Explicitly revoke public create-schema and create-temp-table
-		 * privileges in template1 and template0; else the latter would be on
-		 * by default
-		 */
-		"REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n\n",
-		"REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n\n",
+	/*
+	 * Explicitly revoke public create-schema and create-temp-table
+	 * privileges in template1 and template0; else the latter would be on
+	 * by default
+	 */
+	PG_CMD_PUTS("REVOKE CREATE,TEMPORARY ON DATABASE template1 FROM public;\n\n");
+	PG_CMD_PUTS("REVOKE CREATE,TEMPORARY ON DATABASE template0 FROM public;\n\n");
 
-		"COMMENT ON DATABASE template0 IS 'unmodifiable empty database';\n\n",
+	PG_CMD_PUTS("COMMENT ON DATABASE template0 IS 'unmodifiable empty database';\n\n");
 
-		/*
-		 * Finally vacuum to clean up dead rows in pg_database
-		 */
-		"VACUUM pg_database;\n\n",
-		NULL
-	};
-
-	for (line = template0_setup; *line; line++)
-		PG_CMD_PUTS(*line);
+	/*
+	 * Finally vacuum to clean up dead rows in pg_database
+	 */
+	PG_CMD_PUTS("VACUUM pg_database;\n\n");
 }
 
 /*
@@ -1809,21 +1778,13 @@ make_template0(FILE *cmdfd)
 static void
 make_postgres(FILE *cmdfd)
 {
-	const char *const *line;
-
 	/*
 	 * Just as we did for template0, and for the same reasons, assign a fixed
 	 * OID to postgres and select the file_copy strategy.
 	 */
-	static const char *const postgres_setup[] = {
-		"CREATE DATABASE postgres OID = " CppAsString2(PostgresDbOid)
-		" STRATEGY = file_copy;\n\n",
-		"COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n",
-		NULL
-	};
-
-	for (line = postgres_setup; *line; line++)
-		PG_CMD_PUTS(*line);
+	PG_CMD_PUTS("CREATE DATABASE postgres OID = " CppAsString2(PostgresDbOid)
+				" STRATEGY = file_copy;\n\n");
+	PG_CMD_PUTS("COMMENT ON DATABASE postgres IS 'default administrative connection database';\n\n");
 }
 
 /*
