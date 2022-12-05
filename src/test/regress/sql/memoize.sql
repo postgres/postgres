@@ -104,6 +104,25 @@ SELECT * FROM strtest s1 INNER JOIN strtest s2 ON s1.t >= s2.t;', false);
 
 DROP TABLE strtest;
 
+-- Ensure memoize works with partitionwise join
+SET enable_partitionwise_join TO on;
+
+CREATE TABLE prt (a int) PARTITION BY RANGE(a);
+CREATE TABLE prt_p1 PARTITION OF prt FOR VALUES FROM (0) TO (10);
+CREATE TABLE prt_p2 PARTITION OF prt FOR VALUES FROM (10) TO (20);
+INSERT INTO prt VALUES (0), (0), (0), (0);
+INSERT INTO prt VALUES (10), (10), (10), (10);
+CREATE INDEX iprt_p1_a ON prt_p1 (a);
+CREATE INDEX iprt_p2_a ON prt_p2 (a);
+ANALYZE prt;
+
+SELECT explain_memoize('
+SELECT * FROM prt t1 INNER JOIN prt t2 ON t1.a = t2.a;', false);
+
+DROP TABLE prt;
+
+RESET enable_partitionwise_join;
+
 -- Exercise Memoize code that flushes the cache when a parameter changes which
 -- is not part of the cache key.
 

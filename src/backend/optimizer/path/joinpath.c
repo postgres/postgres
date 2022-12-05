@@ -597,7 +597,8 @@ get_memoize_path(PlannerInfo *root, RelOptInfo *innerrel,
 	/* Check if we have hash ops for each parameter to the path */
 	if (paraminfo_get_equal_hashops(root,
 									inner_path->param_info,
-									outerrel,
+									outerrel->top_parent ?
+									outerrel->top_parent : outerrel,
 									innerrel,
 									&param_exprs,
 									&hash_operators,
