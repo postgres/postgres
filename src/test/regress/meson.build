@@ -12,6 +12,8 @@ regress_sources = pg_regress_c + files(
 host_tuple_cc = cc.get_id()
 if host_system == 'windows' and host_tuple_cc == 'gcc'
   host_tuple_cc = 'mingw'
+elif host_system == 'cygwin' and host_tuple_cc == 'gcc'
+  host_tuple_cc = 'cygwin'
 endif
 host_tuple = '@0@-@1@-@2@'.format(host_cpu, host_system, host_tuple_cc)
 

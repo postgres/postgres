@@ -211,6 +211,10 @@ if host_system == 'aix'
 
 elif host_system == 'cygwin'
   cppflags += '-D_GNU_SOURCE'
+  dlsuffix = '.dll'
+  mod_link_args_fmt = ['@0@']
+  mod_link_with_name = 'lib@0@.exe.a'
+  mod_link_with_dir = 'libdir'
 
 elif host_system == 'darwin'
   dlsuffix = '.dylib'
@@ -2310,8 +2314,8 @@ gnugetopt_dep = cc.find_library('gnugetopt', required: false)
 #   (i.e., allow '-' as a flag character), so use our version on those platforms
 # - We want to use system's getopt_long() only if the system provides struct
 #   option
-always_replace_getopt = host_system in ['windows', 'openbsd', 'solaris']
-always_replace_getopt_long = host_system == 'windows' or not cdata.has('HAVE_STRUCT_OPTION')
+always_replace_getopt = host_system in ['windows', 'cygwin', 'openbsd', 'solaris']
+always_replace_getopt_long = host_system in ['windows', 'cygwin'] or not cdata.has('HAVE_STRUCT_OPTION')
 
 # Required on BSDs
 execinfo_dep = cc.find_library('execinfo', required: false)

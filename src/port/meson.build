@@ -40,6 +40,10 @@ if host_system == 'windows'
     'win32setlocale.c',
     'win32stat.c',
   )
+elif host_system == 'cygwin'
+  pgport_sources += files(
+    'dirmod.c',
+  )
 endif
 
 if cc.get_id() == 'msvc'
