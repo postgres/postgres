@@ -364,22 +364,22 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter tuples_deleted;
 	PgStat_Counter tuples_hot_updated;
 
-	PgStat_Counter n_live_tuples;
-	PgStat_Counter n_dead_tuples;
-	PgStat_Counter changes_since_analyze;
-	PgStat_Counter inserts_since_vacuum;
+	PgStat_Counter live_tuples;
+	PgStat_Counter dead_tuples;
+	PgStat_Counter mod_since_analyze;
+	PgStat_Counter ins_since_vacuum;
 
 	PgStat_Counter blocks_fetched;
 	PgStat_Counter blocks_hit;
 
-	TimestampTz vacuum_timestamp;	/* user initiated vacuum */
+	TimestampTz last_vacuum_time;	/* user initiated vacuum */
 	PgStat_Counter vacuum_count;
-	TimestampTz autovac_vacuum_timestamp;	/* autovacuum initiated */
-	PgStat_Counter autovac_vacuum_count;
-	TimestampTz analyze_timestamp;	/* user initiated */
+	TimestampTz last_autovacuum_time;	/* autovacuum initiated */
+	PgStat_Counter autovacuum_count;
+	TimestampTz last_analyze_time;	/* user initiated */
 	PgStat_Counter analyze_count;
-	TimestampTz autovac_analyze_timestamp;	/* autovacuum initiated */
-	PgStat_Counter autovac_analyze_count;
+	TimestampTz last_autoanalyze_time;	/* autovacuum initiated */
+	PgStat_Counter autoanalyze_count;
 } PgStat_StatTabEntry;
 
 typedef struct PgStat_WalStats

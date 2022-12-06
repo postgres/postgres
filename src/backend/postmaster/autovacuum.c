@@ -3081,9 +3081,9 @@ relation_needs_vacanalyze(Oid relid,
 	if (PointerIsValid(tabentry) && AutoVacuumingActive())
 	{
 		reltuples = classForm->reltuples;
-		vactuples = tabentry->n_dead_tuples;
-		instuples = tabentry->inserts_since_vacuum;
-		anltuples = tabentry->changes_since_analyze;
+		vactuples = tabentry->dead_tuples;
+		instuples = tabentry->ins_since_vacuum;
+		anltuples = tabentry->mod_since_analyze;
 
 		/* If the table hasn't yet been vacuumed, take reltuples as zero */
 		if (reltuples < 0)

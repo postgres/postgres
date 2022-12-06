@@ -271,7 +271,7 @@ physical tuple by eliminating an intermediate heap-only tuple or
 replacing a physical root tuple by a redirect pointer, a decrement in
 the table's number of dead tuples is reported to pgstats, which may
 postpone autovacuuming.  Note that we do not count replacing a root tuple
-by a DEAD line pointer as decrementing n_dead_tuples; we still want
+by a DEAD line pointer as decrementing dead_tuples; we still want
 autovacuum to run to clean up the index entries and DEAD item.
 
 This area probably needs further work ...
