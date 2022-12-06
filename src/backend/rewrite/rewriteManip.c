@@ -316,6 +316,39 @@ contains_multiexpr_param(Node *node, void *context)
 	return expression_tree_walker(node, contains_multiexpr_param, context);
 }
 
+/*
+ * CombineRangeTables
+ * 		Adds the RTEs of 'src_rtable' into 'dst_rtable'
+ *
+ * This also adds the RTEPermissionInfos of 'src_perminfos' (belonging to the
+ * RTEs in 'src_rtable') into *dst_perminfos and also updates perminfoindex of
+ * the RTEs in 'src_rtable' to now point to the perminfos' indexes in
+ * *dst_perminfos.
+ *
+ * Note that this changes both 'dst_rtable' and 'dst_perminfo' destructively,
+ * so the caller should have better passed safe-to-modify copies.
+ */
+void
+CombineRangeTables(List **dst_rtable, List **dst_perminfos,
+				   List *src_rtable, List *src_perminfos)
+{
+	ListCell   *l;
+	int			offset = list_length(*dst_perminfos);
+
+	if (offset > 0)
+	{
+		foreach(l, src_rtable)
+		{
+			RangeTblEntry *rte = lfirst_node(RangeTblEntry, l);
+
+			if (rte->perminfoindex > 0)
+				rte->perminfoindex += offset;
+		}
+	}
+
+	*dst_perminfos = list_concat(*dst_perminfos, src_perminfos);
+	*dst_rtable = list_concat(*dst_rtable, src_rtable);
+}
 
 /*
  * OffsetVarNodes - adjust Vars when appending one query's RT to another

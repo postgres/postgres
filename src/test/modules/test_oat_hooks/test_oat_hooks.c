@@ -55,7 +55,7 @@ static void REGRESS_object_access_hook_str(ObjectAccessType access,
 										   int subId, void *arg);
 static void REGRESS_object_access_hook(ObjectAccessType access, Oid classId,
 									   Oid objectId, int subId, void *arg);
-static bool REGRESS_exec_check_perms(List *rangeTabls, bool do_abort);
+static bool REGRESS_exec_check_perms(List *rangeTabls, List *rteperminfos, bool do_abort);
 static void REGRESS_utility_command(PlannedStmt *pstmt,
 									const char *queryString, bool readOnlyTree,
 									ProcessUtilityContext context,
@@ -345,7 +345,7 @@ REGRESS_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, i
 }
 
 static bool
-REGRESS_exec_check_perms(List *rangeTabls, bool do_abort)
+REGRESS_exec_check_perms(List *rangeTabls, List *rteperminfos, bool do_abort)
 {
 	bool		am_super = superuser_arg(GetUserId());
 	bool		allow = true;
@@ -361,7 +361,7 @@ REGRESS_exec_check_perms(List *rangeTabls, bool do_abort)
 
 	/* Forward to next hook in the chain */
 	if (next_exec_check_perms_hook &&
-		!(*next_exec_check_perms_hook) (rangeTabls, do_abort))
+		!(*next_exec_check_perms_hook) (rangeTabls, rteperminfos, do_abort))
 		allow = false;
 
 	if (allow)

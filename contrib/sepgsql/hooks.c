@@ -287,17 +287,17 @@ sepgsql_object_access(ObjectAccessType access,
  * Entrypoint of DML permissions
  */
 static bool
-sepgsql_exec_check_perms(List *rangeTabls, bool abort)
+sepgsql_exec_check_perms(List *rangeTbls, List *rteperminfos, bool abort)
 {
 	/*
 	 * If security provider is stacking and one of them replied 'false' at
 	 * least, we don't need to check any more.
 	 */
 	if (next_exec_check_perms_hook &&
-		!(*next_exec_check_perms_hook) (rangeTabls, abort))
+		!(*next_exec_check_perms_hook) (rangeTbls, rteperminfos, abort))
 		return false;
 
-	if (!sepgsql_dml_privileges(rangeTabls, abort))
+	if (!sepgsql_dml_privileges(rangeTbls, rteperminfos, abort))
 		return false;
 
 	return true;

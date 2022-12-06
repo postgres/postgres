@@ -2187,6 +2187,7 @@ RI_ConstraintInfo
 RI_QueryHashEntry
 RI_QueryKey
 RTEKind
+RTEPermissionInfo
 RWConflict
 RWConflictPoolHeader
 Range
@@ -3264,6 +3265,7 @@ fix_scan_expr_context
 fix_upper_expr_context
 fix_windowagg_cond_context
 flatten_join_alias_vars_context
+flatten_rtes_walker_context
 float4
 float4KEY
 float8

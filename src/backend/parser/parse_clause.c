@@ -225,7 +225,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * analysis, we will add the ACL_SELECT bit back again; see
 	 * markVarForSelectPriv and its callers.
 	 */
-	nsitem->p_rte->requiredPerms = requiredPerms;
+	nsitem->p_perminfo->requiredPerms = requiredPerms;
 
 	/*
 	 * If UPDATE/DELETE, add table to joinlist and namespace.
@@ -3226,16 +3226,17 @@ transformOnConflictArbiter(ParseState *pstate,
 		if (infer->conname)
 		{
 			Oid			relid = RelationGetRelid(pstate->p_target_relation);
-			RangeTblEntry *rte = pstate->p_target_nsitem->p_rte;
+			RTEPermissionInfo *perminfo = pstate->p_target_nsitem->p_perminfo;
 			Bitmapset  *conattnos;
 
 			conattnos = get_relation_constraint_attnos(relid, infer->conname,
 													   false, constraint);
 
 			/* Make sure the rel as a whole is marked for SELECT access */
-			rte->requiredPerms |= ACL_SELECT;
+			perminfo->requiredPerms |= ACL_SELECT;
 			/* Mark the constrained columns as requiring SELECT access */
-			rte->selectedCols = bms_add_members(rte->selectedCols, conattnos);
+			perminfo->selectedCols = bms_add_members(perminfo->selectedCols,
+													 conattnos);
 		}
 	}
 

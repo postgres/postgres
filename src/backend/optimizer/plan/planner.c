@@ -57,6 +57,7 @@
 #include "optimizer/tlist.h"
 #include "parser/analyze.h"
 #include "parser/parse_agg.h"
+#include "parser/parse_relation.h"
 #include "parser/parsetree.h"
 #include "partitioning/partdesc.h"
 #include "rewrite/rewriteManip.h"
@@ -306,6 +307,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	glob->subroots = NIL;
 	glob->rewindPlanIDs = NULL;
 	glob->finalrtable = NIL;
+	glob->finalrteperminfos = NIL;
 	glob->finalrowmarks = NIL;
 	glob->resultRelations = NIL;
 	glob->appendRelations = NIL;
@@ -493,6 +495,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 
 	/* final cleanup of the plan */
 	Assert(glob->finalrtable == NIL);
+	Assert(glob->finalrteperminfos == NIL);
 	Assert(glob->finalrowmarks == NIL);
 	Assert(glob->resultRelations == NIL);
 	Assert(glob->appendRelations == NIL);
@@ -521,6 +524,7 @@ standard_planner(Query *parse, const char *query_string, int cursorOptions,
 	result->planTree = top_plan;
 	result->partPruneInfos = glob->partPruneInfos;
 	result->rtable = glob->finalrtable;
+	result->permInfos = glob->finalrteperminfos;
 	result->resultRelations = glob->resultRelations;
 	result->appendRelations = glob->appendRelations;
 	result->subplans = glob->subplans;
@@ -6266,6 +6270,7 @@ plan_cluster_use_sort(Oid tableOid, Oid indexOid)
 	rte->inh = false;
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);
+	addRTEPermissionInfo(&query->rteperminfos, rte);
 
 	/* Set up RTE/RelOptInfo arrays */
 	setup_simple_rel_arrays(root);
@@ -6393,6 +6398,7 @@ plan_create_index_workers(Oid tableOid, Oid indexOid)
 	rte->inh = true;
 	rte->inFromCl = true;
 	query->rtable = list_make1(rte);
+	addRTEPermissionInfo(&query->rteperminfos, rte);
 
 	/* Set up RTE/RelOptInfo arrays */
 	setup_simple_rel_arrays(root);

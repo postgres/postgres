@@ -23,6 +23,7 @@
 #include "commands/tablecmds.h"
 #include "executor/executor.h"
 #include "nodes/bitmapset.h"
+#include "parser/parsetree.h"
 #include "sepgsql.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -277,38 +278,33 @@ check_relation_privileges(Oid relOid,
  * Entrypoint of the DML permission checks
  */
 bool
-sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation)
+sepgsql_dml_privileges(List *rangeTbls, List *rteperminfos,
+					   bool abort_on_violation)
 {
 	ListCell   *lr;
 
-	foreach(lr, rangeTabls)
+	foreach(lr, rteperminfos)
 	{
-		RangeTblEntry *rte = lfirst(lr);
+		RTEPermissionInfo *perminfo = lfirst_node(RTEPermissionInfo, lr);
 		uint32		required = 0;
 		List	   *tableIds;
 		ListCell   *li;
 
 		/*
-		 * Only regular relations shall be checked
-		 */
-		if (rte->rtekind != RTE_RELATION)
-			continue;
-
-		/*
 		 * Find out required permissions
 		 */
-		if (rte->requiredPerms & ACL_SELECT)
+		if (perminfo->requiredPerms & ACL_SELECT)
 			required |= SEPG_DB_TABLE__SELECT;
-		if (rte->requiredPerms & ACL_INSERT)
+		if (perminfo->requiredPerms & ACL_INSERT)
 			required |= SEPG_DB_TABLE__INSERT;
-		if (rte->requiredPerms & ACL_UPDATE)
+		if (perminfo->requiredPerms & ACL_UPDATE)
 		{
-			if (!bms_is_empty(rte->updatedCols))
+			if (!bms_is_empty(perminfo->updatedCols))
 				required |= SEPG_DB_TABLE__UPDATE;
 			else
 				required |= SEPG_DB_TABLE__LOCK;
 		}
-		if (rte->requiredPerms & ACL_DELETE)
+		if (perminfo->requiredPerms & ACL_DELETE)
 			required |= SEPG_DB_TABLE__DELETE;
 
 		/*
@@ -323,10 +319,10 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation)
 		 * expand rte->relid into list of OIDs of inheritance hierarchy, then
 		 * checker routine will be invoked for each relations.
 		 */
-		if (!rte->inh)
-			tableIds = list_make1_oid(rte->relid);
+		if (!perminfo->inh)
+			tableIds = list_make1_oid(perminfo->relid);
 		else
-			tableIds = find_all_inheritors(rte->relid, NoLock, NULL);
+			tableIds = find_all_inheritors(perminfo->relid, NoLock, NULL);
 
 		foreach(li, tableIds)
 		{
@@ -339,12 +335,12 @@ sepgsql_dml_privileges(List *rangeTabls, bool abort_on_violation)
 			 * child table has different attribute numbers, so we need to fix
 			 * up them.
 			 */
-			selectedCols = fixup_inherited_columns(rte->relid, tableOid,
-												   rte->selectedCols);
-			insertedCols = fixup_inherited_columns(rte->relid, tableOid,
-												   rte->insertedCols);
-			updatedCols = fixup_inherited_columns(rte->relid, tableOid,
-												  rte->updatedCols);
+			selectedCols = fixup_inherited_columns(perminfo->relid, tableOid,
+												   perminfo->selectedCols);
+			insertedCols = fixup_inherited_columns(perminfo->relid, tableOid,
+												   perminfo->insertedCols);
+			updatedCols = fixup_inherited_columns(perminfo->relid, tableOid,
+												  perminfo->updatedCols);
 
 			/*
 			 * check permissions on individual tables

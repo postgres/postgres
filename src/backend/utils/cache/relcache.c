@@ -847,8 +847,8 @@ RelationBuildRuleLock(Relation relation)
 
 		/*
 		 * Scan through the rule's actions and set the checkAsUser field on
-		 * all rtable entries. We have to look at the qual as well, in case it
-		 * contains sublinks.
+		 * all RTEPermissionInfos. We have to look at the qual as well, in
+		 * case it contains sublinks.
 		 *
 		 * The reason for doing this when the rule is loaded, rather than when
 		 * it is stored, is that otherwise ALTER TABLE OWNER would have to

@@ -215,6 +215,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 	 */
 	qry->targetList = NIL;
 	qry->rtable = pstate->p_rtable;
+	qry->rteperminfos = pstate->p_rteperminfos;
 
 	/*
 	 * Transform the join condition.  This includes references to the target
@@ -287,7 +288,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 				{
 					List	   *exprList = NIL;
 					ListCell   *lc;
-					RangeTblEntry *rte;
+					RTEPermissionInfo *perminfo;
 					ListCell   *icols;
 					ListCell   *attnos;
 					List	   *icolumns;
@@ -346,7 +347,7 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 					 * of expressions. Also, mark all the target columns as
 					 * needing insert permissions.
 					 */
-					rte = pstate->p_target_nsitem->p_rte;
+					perminfo = pstate->p_target_nsitem->p_perminfo;
 					forthree(lc, exprList, icols, icolumns, attnos, attrnos)
 					{
 						Expr	   *expr = (Expr *) lfirst(lc);
@@ -360,8 +361,8 @@ transformMergeStmt(ParseState *pstate, MergeStmt *stmt)
 											  false);
 						action->targetList = lappend(action->targetList, tle);
 
-						rte->insertedCols =
-							bms_add_member(rte->insertedCols,
+						perminfo->insertedCols =
+							bms_add_member(perminfo->insertedCols,
 										   attr_num - FirstLowInvalidHeapAttributeNumber);
 					}
 				}

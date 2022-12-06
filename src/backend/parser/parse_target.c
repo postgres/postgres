@@ -1132,7 +1132,7 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 *
 		 * Note: this code is a lot like transformColumnRef; it's tempting to
 		 * call that instead and then replace the resulting whole-row Var with
-		 * a list of Vars.  However, that would leave us with the RTE's
+		 * a list of Vars.  However, that would leave us with the relation's
 		 * selectedCols bitmap showing the whole row as needing select
 		 * permission, as well as the individual columns.  That would be
 		 * incorrect (since columns added later shouldn't need select
@@ -1367,6 +1367,7 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 	else
 	{
 		RangeTblEntry *rte = nsitem->p_rte;
+		RTEPermissionInfo *perminfo = nsitem->p_perminfo;
 		List	   *vars;
 		ListCell   *l;
 
@@ -1381,7 +1382,10 @@ ExpandSingleTable(ParseState *pstate, ParseNamespaceItem *nsitem,
 		 * target relation of UPDATE/DELETE, which cannot be under a join.)
 		 */
 		if (rte->rtekind == RTE_RELATION)
-			rte->requiredPerms |= ACL_SELECT;
+		{
+			Assert(perminfo != NULL);
+			perminfo->requiredPerms |= ACL_SELECT;
+		}
 
 		/* Require read access to each column */
 		foreach(l, vars)
@@ -1414,11 +1418,11 @@ ExpandRowReference(ParseState *pstate, Node *expr,
 	/*
 	 * If the rowtype expression is a whole-row Var, we can expand the fields
 	 * as simple Vars.  Note: if the RTE is a relation, this case leaves us
-	 * with the RTE's selectedCols bitmap showing the whole row as needing
-	 * select permission, as well as the individual columns.  However, we can
-	 * only get here for weird notations like (table.*).*, so it's not worth
-	 * trying to clean up --- arguably, the permissions marking is correct
-	 * anyway for such cases.
+	 * with its RTEPermissionInfo's selectedCols bitmap showing the whole row
+	 * as needing select permission, as well as the individual columns.
+	 * However, we can only get here for weird notations like (table.*).*, so
+	 * it's not worth trying to clean up --- arguably, the permissions marking
+	 * is correct anyway for such cases.
 	 */
 	if (IsA(expr, Var) &&
 		((Var *) expr)->varattno == InvalidAttrNumber)

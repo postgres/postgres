@@ -507,6 +507,7 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 			WRITE_CHAR_FIELD(relkind);
 			WRITE_INT_FIELD(rellockmode);
 			WRITE_NODE_FIELD(tablesample);
+			WRITE_UINT_FIELD(perminfoindex);
 			break;
 		case RTE_SUBQUERY:
 			WRITE_NODE_FIELD(subquery);
@@ -560,11 +561,6 @@ _outRangeTblEntry(StringInfo str, const RangeTblEntry *node)
 	WRITE_BOOL_FIELD(lateral);
 	WRITE_BOOL_FIELD(inh);
 	WRITE_BOOL_FIELD(inFromCl);
-	WRITE_UINT64_FIELD(requiredPerms);
-	WRITE_OID_FIELD(checkAsUser);
-	WRITE_BITMAPSET_FIELD(selectedCols);
-	WRITE_BITMAPSET_FIELD(insertedCols);
-	WRITE_BITMAPSET_FIELD(updatedCols);
 	WRITE_BITMAPSET_FIELD(extraUpdatedCols);
 	WRITE_NODE_FIELD(securityQuals);
 }

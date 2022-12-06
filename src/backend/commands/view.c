@@ -367,7 +367,7 @@ DefineViewRules(Oid viewOid, Query *viewParse, bool replace)
  * by 2...
  *
  * These extra RT entries are not actually used in the query,
- * except for run-time locking and permission checking.
+ * except for run-time locking.
  *---------------------------------------------------------------
  */
 static Query *
@@ -378,7 +378,9 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	ParseNamespaceItem *nsitem;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
+	RTEPermissionInfo *rte_perminfo1;
 	ParseState *pstate;
+	ListCell   *lc;
 
 	/*
 	 * Make a copy of the given parsetree.  It's not so much that we don't
@@ -405,15 +407,38 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 										   makeAlias("old", NIL),
 										   false, false);
 	rt_entry1 = nsitem->p_rte;
+	rte_perminfo1 = nsitem->p_perminfo;
 	nsitem = addRangeTableEntryForRelation(pstate, viewRel,
 										   AccessShareLock,
 										   makeAlias("new", NIL),
 										   false, false);
 	rt_entry2 = nsitem->p_rte;
 
-	/* Must override addRangeTableEntry's default access-check flags */
-	rt_entry1->requiredPerms = 0;
-	rt_entry2->requiredPerms = 0;
+	/*
+	 * Add only the "old" RTEPermissionInfo at the head of view query's list
+	 * and update the other RTEs' perminfoindex accordingly.  When rewriting a
+	 * query on the view, ApplyRetrieveRule() will transfer the view
+	 * relation's permission details into this RTEPermissionInfo.  That's
+	 * needed because the view's RTE itself will be transposed into a subquery
+	 * RTE that can't carry the permission details; see the code stanza toward
+	 * the end of ApplyRetrieveRule() for how that's done.
+	 */
+	viewParse->rteperminfos = lcons(rte_perminfo1, viewParse->rteperminfos);
+	foreach(lc, viewParse->rtable)
+	{
+		RangeTblEntry *rte = lfirst(lc);
+
+		if (rte->perminfoindex > 0)
+			rte->perminfoindex += 1;
+	}
+
+	/*
+	 * Also make the "new" RTE's RTEPermissionInfo undiscoverable.  This is a
+	 * bit of a hack given that all the non-child RTE_RELATION entries really
+	 * should have a RTEPermissionInfo, but this dummy "new" RTE is going to
+	 * go away anyway in the very near future.
+	 */
+	rt_entry2->perminfoindex = 0;
 
 	new_rt = lcons(rt_entry1, lcons(rt_entry2, viewParse->rtable));
 

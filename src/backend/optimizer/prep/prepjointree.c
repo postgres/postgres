@@ -176,13 +176,6 @@ transform_MERGE_to_join(Query *parse)
 	joinrte->lateral = false;
 	joinrte->inh = false;
 	joinrte->inFromCl = true;
-	joinrte->requiredPerms = 0;
-	joinrte->checkAsUser = InvalidOid;
-	joinrte->selectedCols = NULL;
-	joinrte->insertedCols = NULL;
-	joinrte->updatedCols = NULL;
-	joinrte->extraUpdatedCols = NULL;
-	joinrte->securityQuals = NIL;
 
 	/*
 	 * Add completed RTE to pstate's range table list, so that we know its
@@ -1206,11 +1199,12 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	}
 
 	/*
-	 * Now append the adjusted rtable entries to upper query. (We hold off
-	 * until after fixing the upper rtable entries; no point in running that
-	 * code on the subquery ones too.)
+	 * Now append the adjusted rtable entries and their perminfos to upper
+	 * query. (We hold off until after fixing the upper rtable entries; no
+	 * point in running that code on the subquery ones too.)
 	 */
-	parse->rtable = list_concat(parse->rtable, subquery->rtable);
+	CombineRangeTables(&parse->rtable, &parse->rteperminfos,
+					   subquery->rtable, subquery->rteperminfos);
 
 	/*
 	 * Pull up any FOR UPDATE/SHARE markers, too.  (OffsetVarNodes already
@@ -1346,9 +1340,10 @@ pull_up_simple_union_all(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte)
 	}
 
 	/*
-	 * Append child RTEs to parent rtable.
+	 * Append child RTEs (and their perminfos) to parent rtable.
 	 */
-	root->parse->rtable = list_concat(root->parse->rtable, rtable);
+	CombineRangeTables(&root->parse->rtable, &root->parse->rteperminfos,
+					   rtable, subquery->rteperminfos);
 
 	/*
 	 * Recursively scan the subquery's setOperations tree and add

@@ -28,6 +28,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
+#include "parser/parse_relation.h"
 #include "utils/hsearch.h"
 #include "utils/lsyscache.h"
 
@@ -223,7 +224,25 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptInfo *parent)
 	rel->rel_parallel_workers = -1; /* set up in get_relation_info */
 	rel->amflags = 0;
 	rel->serverid = InvalidOid;
-	rel->userid = rte->checkAsUser;
+	if (rte->rtekind == RTE_RELATION)
+	{
+		/*
+		 * Get the userid from the relation's RTEPermissionInfo, though only
+		 * the tables mentioned in query are assigned RTEPermissionInfos.
+		 * Child relations (otherrels) simply use the parent's value.
+		 */
+		if (parent == NULL)
+		{
+			RTEPermissionInfo *perminfo;
+
+			perminfo = getRTEPermissionInfo(root->parse->rteperminfos, rte);
+			rel->userid = perminfo->checkAsUser;
+		}
+		else
+			rel->userid = parent->userid;
+	}
+	else
+		rel->userid = InvalidOid;
 	rel->useridiscurrent = false;
 	rel->fdwroutine = NULL;
 	rel->fdw_private = NULL;

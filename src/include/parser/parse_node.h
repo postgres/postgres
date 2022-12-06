@@ -111,6 +111,9 @@ typedef Node *(*CoerceParamHook) (ParseState *pstate, Param *param,
  * Note that neither relname nor refname of these entries are necessarily
  * unique; searching the rtable by name is a bad idea.
  *
+ * p_rteperminfos: list of RTEPermissionInfo containing an entry corresponding
+ * to each RTE_RELATION entry in p_rtable.
+ *
  * p_joinexprs: list of JoinExpr nodes associated with p_rtable entries.
  * This is one-for-one with p_rtable, but contains NULLs for non-join
  * RTEs, and may be shorter than p_rtable if the last RTE(s) aren't joins.
@@ -181,6 +184,8 @@ struct ParseState
 	ParseState *parentParseState;	/* stack link */
 	const char *p_sourcetext;	/* source text, or NULL if not available */
 	List	   *p_rtable;		/* range table so far */
+	List	   *p_rteperminfos; /* list of RTEPermissionInfo nodes for each
+								 * RTE_RELATION entry in rtable */
 	List	   *p_joinexprs;	/* JoinExprs for RTE_JOIN p_rtable entries */
 	List	   *p_joinlist;		/* join items so far (will become FromExpr
 								 * node's fromlist) */
@@ -234,7 +239,8 @@ struct ParseState
  * join's first N columns, the net effect is just that we expose only those
  * join columns via this nsitem.)
  *
- * p_rte and p_rtindex link to the underlying rangetable entry.
+ * p_rte and p_rtindex link to the underlying rangetable entry, and
+ * p_perminfo to the entry in rteperminfos.
  *
  * The p_nscolumns array contains info showing how to construct Vars
  * referencing the names appearing in the p_names->colnames list.
@@ -271,6 +277,7 @@ struct ParseNamespaceItem
 	Alias	   *p_names;		/* Table and column names */
 	RangeTblEntry *p_rte;		/* The relation's rangetable entry */
 	int			p_rtindex;		/* The relation's index in the rangetable */
+	RTEPermissionInfo *p_perminfo;	/* The relation's rteperminfos entry */
 	/* array of same length as p_names->colnames: */
 	ParseNamespaceColumn *p_nscolumns;	/* per-column data */
 	bool		p_rel_visible;	/* Relation name is visible? */

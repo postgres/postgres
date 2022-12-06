@@ -1294,10 +1294,25 @@ SET SESSION AUTHORIZATION regress_rule_user1;
 INSERT INTO ruletest_v1 VALUES (1);
 
 RESET SESSION AUTHORIZATION;
+
+-- Test that main query's relation's permissions are checked before
+-- the rule action's relation's.
+CREATE TABLE ruletest_t3 (x int);
+CREATE RULE rule2 AS ON UPDATE TO ruletest_t1
+    DO INSTEAD INSERT INTO ruletest_t2 VALUES (OLD.*);
+REVOKE ALL ON ruletest_t2 FROM regress_rule_user1;
+REVOKE ALL ON ruletest_t3 FROM regress_rule_user1;
+ALTER TABLE ruletest_t1 OWNER TO regress_rule_user1;
+SET SESSION AUTHORIZATION regress_rule_user1;
+UPDATE ruletest_t1 t1 SET x = 0 FROM ruletest_t3 t3 WHERE t1.x = t3.x;
+
+RESET SESSION AUTHORIZATION;
 SELECT * FROM ruletest_t1;
 SELECT * FROM ruletest_t2;
 
 DROP VIEW ruletest_v1;
+DROP RULE rule2 ON ruletest_t1;
+DROP TABLE ruletest_t3;
 DROP TABLE ruletest_t2;
 DROP TABLE ruletest_t1;
 

@@ -99,6 +99,10 @@ extern ParseNamespaceItem *addRangeTableEntryForCTE(ParseState *pstate,
 extern ParseNamespaceItem *addRangeTableEntryForENR(ParseState *pstate,
 													RangeVar *rv,
 													bool inFromCl);
+extern RTEPermissionInfo *addRTEPermissionInfo(List **rteperminfos,
+											   RangeTblEntry *rte);
+extern RTEPermissionInfo *getRTEPermissionInfo(List *rteperminfos,
+											   RangeTblEntry *rte);
 extern bool isLockedRefname(ParseState *pstate, const char *refname);
 extern void addNSItemToQuery(ParseState *pstate, ParseNamespaceItem *nsitem,
 							 bool addToJoinList,

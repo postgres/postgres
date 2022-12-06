@@ -113,6 +113,9 @@ typedef struct PlannerGlobal
 	/* "flat" rangetable for executor */
 	List	   *finalrtable;
 
+	/* "flat" list of RTEPermissionInfos */
+	List	   *finalrteperminfos;
+
 	/* "flat" list of PlanRowMarks */
 	List	   *finalrowmarks;
 

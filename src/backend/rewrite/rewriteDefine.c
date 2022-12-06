@@ -632,14 +632,14 @@ checkRuleResultList(List *targetList, TupleDesc resultDesc, bool isSelect,
 /*
  * setRuleCheckAsUser
  *		Recursively scan a query or expression tree and set the checkAsUser
- *		field to the given userid in all rtable entries.
+ *		field to the given userid in all RTEPermissionInfos of the query.
  *
  * Note: for a view (ON SELECT rule), the checkAsUser field of the OLD
- * RTE entry will be overridden when the view rule is expanded, and the
- * checkAsUser field of the NEW entry is irrelevant because that entry's
- * requiredPerms bits will always be zero.  However, for other types of rules
- * it's important to set these fields to match the rule owner.  So we just set
- * them always.
+ * RTE entry's RTEPermissionInfo will be overridden when the view rule is
+ * expanded, and the checkAsUser for the NEW RTE entry's RTEPermissionInfo is
+ * irrelevant because its requiredPerms bits will always be zero.  However, for
+ * other types of rules it's important to set these fields to match the rule
+ * owner.  So we just set them always.
  */
 void
 setRuleCheckAsUser(Node *node, Oid userid)
@@ -666,18 +666,21 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 {
 	ListCell   *l;
 
-	/* Set all the RTEs in this query node */
+	/* Set in all RTEPermissionInfos for this query. */
+	foreach(l, qry->rteperminfos)
+	{
+		RTEPermissionInfo *perminfo = lfirst_node(RTEPermissionInfo, l);
+
+		perminfo->checkAsUser = userid;
+	}
+
+	/* Now recurse to any subquery RTEs */
 	foreach(l, qry->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		if (rte->rtekind == RTE_SUBQUERY)
-		{
-			/* Recurse into subquery in FROM */
 			setRuleCheckAsUser_Query(rte->subquery, userid);
-		}
-		else
-			rte->checkAsUser = userid;
 	}
 
 	/* Recurse into subquery-in-WITH */

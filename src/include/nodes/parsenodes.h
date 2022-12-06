@@ -154,6 +154,8 @@ typedef struct Query
 	List	   *cteList;		/* WITH list (of CommonTableExpr's) */
 
 	List	   *rtable;			/* list of range table entries */
+	List	   *rteperminfos;	/* list of RTEPermissionInfo nodes for the
+								 * rtable entries having perminfoindex > 0 */
 	FromExpr   *jointree;		/* table join tree (FROM and WHERE clauses);
 								 * also USING clause for MERGE */
 
@@ -968,37 +970,6 @@ typedef struct PartitionCmd
  *	  control visibility.  But it is needed by ruleutils.c to determine
  *	  whether RTEs should be shown in decompiled queries.
  *
- *	  requiredPerms and checkAsUser specify run-time access permissions
- *	  checks to be performed at query startup.  The user must have *all*
- *	  of the permissions that are OR'd together in requiredPerms (zero
- *	  indicates no permissions checking).  If checkAsUser is not zero,
- *	  then do the permissions checks using the access rights of that user,
- *	  not the current effective user ID.  (This allows rules to act as
- *	  setuid gateways.)  Permissions checks only apply to RELATION RTEs.
- *
- *	  For SELECT/INSERT/UPDATE permissions, if the user doesn't have
- *	  table-wide permissions then it is sufficient to have the permissions
- *	  on all columns identified in selectedCols (for SELECT) and/or
- *	  insertedCols and/or updatedCols (INSERT with ON CONFLICT DO UPDATE may
- *	  have all 3).  selectedCols, insertedCols and updatedCols are bitmapsets,
- *	  which cannot have negative integer members, so we subtract
- *	  FirstLowInvalidHeapAttributeNumber from column numbers before storing
- *	  them in these fields.  A whole-row Var reference is represented by
- *	  setting the bit for InvalidAttrNumber.
- *
- *	  updatedCols is also used in some other places, for example, to determine
- *	  which triggers to fire and in FDWs to know which changed columns they
- *	  need to ship off.
- *
- *	  Generated columns that are caused to be updated by an update to a base
- *	  column are listed in extraUpdatedCols.  This is not considered for
- *	  permission checking, but it is useful in those places that want to know
- *	  the full set of columns being updated as opposed to only the ones the
- *	  user explicitly mentioned in the query.  (There is currently no need for
- *	  an extraInsertedCols, but it could exist.)  Note that extraUpdatedCols
- *	  is populated during query rewrite, NOT in the parser, since generated
- *	  columns could be added after a rule has been parsed and stored.
- *
  *	  securityQuals is a list of security barrier quals (boolean expressions),
  *	  to be tested in the listed order before returning a row from the
  *	  relation.  It is always NIL in parser output.  Entries are added by the
@@ -1054,11 +1025,16 @@ typedef struct RangeTblEntry
 	 * current query; this happens if a DO ALSO rule simply scans the original
 	 * target table.  We leave such RTEs with their original lockmode so as to
 	 * avoid getting an additional, lesser lock.
+	 *
+	 * perminfoindex is 1-based index of the RTEPermissionInfo belonging to
+	 * this RTE in the containing struct's list of same; 0 if permissions need
+	 * not be checked for this RTE.
 	 */
 	Oid			relid;			/* OID of the relation */
 	char		relkind;		/* relation kind (see pg_class.relkind) */
 	int			rellockmode;	/* lock level that query requires on the rel */
 	struct TableSampleClause *tablesample;	/* sampling info, or NULL */
+	Index		perminfoindex;
 
 	/*
 	 * Fields valid for a subquery RTE (else NULL):
@@ -1178,14 +1154,64 @@ typedef struct RangeTblEntry
 	bool		lateral;		/* subquery, function, or values is LATERAL? */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause? */
+	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
+	List	   *securityQuals;	/* security barrier quals to apply, if any */
+} RangeTblEntry;
+
+/*
+ * RTEPermissionInfo
+ * 		Per-relation information for permission checking. Added to the Query
+ * 		node by the parser when adding the corresponding RTE to the query
+ * 		range table and subsequently editorialized on by the rewriter if
+ * 		needed after rule expansion.
+ *
+ * Only the relations directly mentioned in the query are checked for
+ * accesss permissions by the core executor, so only their RTEPermissionInfos
+ * are present in the Query.  However, extensions may want to check inheritance
+ * children too, depending on the value of rte->inh, so it's copied in 'inh'
+ * for their perusal.
+ *
+ * requiredPerms and checkAsUser specify run-time access permissions checks
+ * to be performed at query startup.  The user must have *all* of the
+ * permissions that are OR'd together in requiredPerms (never 0!).  If
+ * checkAsUser is not zero, then do the permissions checks using the access
+ * rights of that user, not the current effective user ID.  (This allows rules
+ * to act as setuid gateways.)
+ *
+ * For SELECT/INSERT/UPDATE permissions, if the user doesn't have table-wide
+ * permissions then it is sufficient to have the permissions on all columns
+ * identified in selectedCols (for SELECT) and/or insertedCols and/or
+ * updatedCols (INSERT with ON CONFLICT DO UPDATE may have all 3).
+ * selectedCols, insertedCols and updatedCols are bitmapsets, which cannot have
+ * negative integer members, so we subtract FirstLowInvalidHeapAttributeNumber
+ * from column numbers before storing them in these fields.  A whole-row Var
+ * reference is represented by setting the bit for InvalidAttrNumber.
+ *
+ * updatedCols is also used in some other places, for example, to determine
+ * which triggers to fire and in FDWs to know which changed columns they need
+ * to ship off.
+ *
+ * Generated columns that are caused to be updated by an update to a base
+ * column are listed in extraUpdatedCols.  This is not considered for
+ * permission checking, but it is useful in those places that want to know the
+ * full set of columns being updated as opposed to only the ones the user
+ * explicitly mentioned in the query.  (There is currently no need for an
+ * extraInsertedCols, but it could exist.)  Note that extraUpdatedCols is
+ * populated during query rewrite, NOT in the parser, since generated columns
+ * could be added after a rule has been parsed and stored.
+ */
+typedef struct RTEPermissionInfo
+{
+	NodeTag		type;
+
+	Oid			relid;			/* relation OID */
+	bool		inh;			/* separately check inheritance children? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	Oid			checkAsUser;	/* if valid, check access as this role */
 	Bitmapset  *selectedCols;	/* columns needing SELECT permission */
 	Bitmapset  *insertedCols;	/* columns needing INSERT permission */
 	Bitmapset  *updatedCols;	/* columns needing UPDATE permission */
-	Bitmapset  *extraUpdatedCols;	/* generated columns being updated */
-	List	   *securityQuals;	/* security barrier quals to apply, if any */
-} RangeTblEntry;
+} RTEPermissionInfo;
 
 /*
  * RangeTblFunction -

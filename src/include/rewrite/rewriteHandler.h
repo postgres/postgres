@@ -25,6 +25,7 @@ extern void AcquireRewriteLocks(Query *parsetree,
 extern Node *build_column_default(Relation rel, int attrno);
 
 extern void fill_extraUpdatedCols(RangeTblEntry *target_rte,
+								  RTEPermissionInfo *target_perminfo,
 								  Relation target_relation);
 
 extern Query *get_view_query(Relation view);
