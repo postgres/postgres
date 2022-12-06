@@ -2400,6 +2400,18 @@ check_and_push_window_quals(Query *subquery, RangeTblEntry *rte, Index rti,
 		return true;
 
 	/*
+	 * Currently, we restrict this optimization to strict OpExprs.  The reason
+	 * for this is that during execution, once the runcondition becomes false,
+	 * we stop evaluating WindowFuncs.  To avoid leaving around stale window
+	 * function result values, we set them to NULL.  Having only strict
+	 * OpExprs here ensures that we properly filter out the tuples with NULLs
+	 * in the top-level WindowAgg.
+	 */
+	set_opfuncid(opexpr);
+	if (!func_strict(opexpr->opfuncid))
+		return true;
+
+	/*
 	 * Check for plain Vars that reference window functions in the subquery.
 	 * If we find any, we'll ask find_window_run_conditions() if 'opexpr' can
 	 * be used as part of the run condition.
