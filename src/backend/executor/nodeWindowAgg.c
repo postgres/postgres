@@ -2300,7 +2300,27 @@ ExecWindowAgg(PlanState *pstate)
 						continue;
 					}
 					else
+					{
 						winstate->status = WINDOWAGG_PASSTHROUGH;
+
+						/*
+						 * If we're not the top-window, we'd better NULLify
+						 * the aggregate results.  In pass-through mode we no
+						 * longer update these and this avoids the old stale
+						 * results lingering.  Some of these might be byref
+						 * types so we can't have them pointing to free'd
+						 * memory.  The planner insisted that quals used in
+						 * the runcondition are strict, so the top-level
+						 * WindowAgg will filter these NULLs out in the filter
+						 * clause.
+						 */
+						numfuncs = winstate->numfuncs;
+						for (i = 0; i < numfuncs; i++)
+						{
+							econtext->ecxt_aggvalues[i] = (Datum) 0;
+							econtext->ecxt_aggnulls[i] = true;
+						}
+					}
 				}
 				else
 				{
