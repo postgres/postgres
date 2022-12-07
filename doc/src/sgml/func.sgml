@@ -22168,6 +22168,14 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
  <sect1 id="functions-info">
   <title>System Information Functions and Operators</title>
 
+   <para>
+    The functions described in this section are used to obtain various
+    information about a <productname>PostgreSQL</productname> installation.
+   </para>
+
+  <sect2 id="functions-info-session">
+   <title>Session Information Functions</title>
+
   <para>
    <xref linkend="functions-info-session-table"/> shows several
    functions that extract session and system information.
@@ -22710,6 +22718,11 @@ SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
     and <function>current_user</function>, but <productname>PostgreSQL</productname>
     does not, since it unifies users and roles into a single kind of entity.)
    </para>
+
+  </sect2>
+
+  <sect2 id="functions-info-access">
+   <title>Access Privilege Inquiry Functions</title>
 
   <indexterm>
    <primary>privilege</primary>
@@ -23256,6 +23269,11 @@ SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
     </tgroup>
    </table>
 
+  </sect2>
+
+  <sect2 id="functions-info-schema">
+   <title>Schema Visibility Inquiry Functions</title>
+
   <para>
    <xref linkend="functions-info-schema-table"/> shows functions that
    determine whether a certain object is <firstterm>visible</firstterm> in the
@@ -23482,6 +23500,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     Note that it would not make much sense to test a non-schema-qualified
     type name in this way &mdash; if the name can be recognized at all, it must be visible.
    </para>
+
+  </sect2>
+
+  <sect2 id="functions-info-catalog">
+   <title>System Catalog Information Functions</title>
 
   <para>
    <xref linkend="functions-info-catalog-table"/> lists functions that
@@ -24421,6 +24444,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
    </tgroup>
   </table>
 
+  </sect2>
+
+  <sect2 id="functions-info-object">
+   <title>Object Information and Addressing Functions</title>
+
   <para>
    <xref linkend="functions-info-object-table"/> lists functions related to
    database object identification and addressing.
@@ -24554,6 +24582,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
     </tgroup>
    </table>
 
+  </sect2>
+
+  <sect2 id="functions-info-comment">
+   <title>Comment Information Functions</title>
+
    <indexterm>
     <primary>comment</primary>
     <secondary sortas="database objects">about database objects</secondary>
@@ -24647,6 +24680,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
      </tbody>
     </tgroup>
    </table>
+
+  </sect2>
+
+  <sect2 id="functions-info-snapshot">
+   <title>Transaction ID and Snapshot Information Functions</title>
 
    <para>
     The functions shown in <xref linkend="functions-pg-snapshot"/>
@@ -25003,6 +25041,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
     </tgroup>
    </table>
 
+  </sect2>
+
+  <sect2 id="functions-info-commit-timestamp">
+   <title>Committed Transaction Information Functions</title>
+
    <para>
     The functions shown in <xref linkend="functions-commit-timestamp"/>
     provide information about when past transactions were committed.
@@ -25074,6 +25117,11 @@ SELECT collation for ('foo' COLLATE "de_DE");
      </tbody>
     </tgroup>
    </table>
+
+  </sect2>
+
+  <sect2 id="functions-info-controldata">
+   <title>Control Data Functions</title>
 
    <para>
     The functions shown in <xref linkend="functions-controldata"/>
@@ -25412,6 +25460,8 @@ SELECT collation for ('foo' COLLATE "de_DE");
      </tbody>
     </tgroup>
    </table>
+
+  </sect2>
 
   </sect1>
 
