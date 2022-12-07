@@ -64,9 +64,7 @@ ryu_sources = files(
 )
 ryu_cflags = []
 
-if using_declaration_after_statement_warning
-  ryu_cflags += ['-Wno-declaration-after-statement']
-endif
+ryu_cflags += cflags_no_decl_after_statement
 
 config_info_sources = files('config_info.c',)
 config_info_cflags = [

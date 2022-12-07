@@ -172,6 +172,9 @@ option('PYTHON', type : 'array', value: ['python3', 'python'],
 option('SED', type : 'string', value: 'gsed',
   description: 'path to sed binary')
 
+option('STRIP', type : 'string', value: 'strip',
+  description: 'path to strip binary, used for PGXS emulation')
+
 option('TAR', type : 'string', value: 'tar',
   description: 'path to tar binary')
 

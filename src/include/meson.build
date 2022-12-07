@@ -49,8 +49,14 @@ else
   var_cxxflags = ''
 endif
 var_cppflags = ' '.join(cppflags)
-var_cflags_sl = '-fPIC' #FIXME
-var_ldflags = ' '.join(ldflags + get_option('c_link_args'))
+var_cflags_sl = ' '.join(cc.get_supported_arguments('-fPIC'))
+# explicitly add -Wl,--as-needed, normally added by meson, but we want it for
+# PGXS compatibility
+var_ldflags = ' '.join(
+  ldflags
+  + cc.get_supported_link_arguments('-Wl,--as-needed')
+  + get_option('c_link_args')
+)
 var_ldflags_sl = ''.join(ldflags_sl)
 var_ldflags_ex = '' # FIXME
 # FIXME - some extensions might directly use symbols from one of libs. If

@@ -337,9 +337,6 @@ program_zstd = find_program(get_option('ZSTD'), native: true, required: false)
 dtrace = find_program(get_option('DTRACE'), native: true, required: get_option('dtrace'))
 missing = find_program('config/missing', native: true)
 
-# used by PGXS
-install_sh = find_program('config/install-sh', native: true)
-
 bison_flags = []
 if bison.found()
   bison_version_c = run_command(bison, '--version', check: true)
@@ -1741,11 +1738,10 @@ endif
 
 # A few places with imported code get a pass on -Wdeclaration-after-statement, remember
 # the result for them
+cflags_no_decl_after_statement = []
 if cc.has_argument('-Wdeclaration-after-statement')
   cflags_warn += '-Wdeclaration-after-statement'
-  using_declaration_after_statement_warning = true
-else
-  using_declaration_after_statement_warning = false
+  cflags_no_decl_after_statement += '-Wno-declaration-after-statement'
 endif
 
 
