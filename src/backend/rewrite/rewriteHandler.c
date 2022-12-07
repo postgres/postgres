@@ -1884,8 +1884,9 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->inh = false;			/* must not be set for a subquery */
 
 	/*
-	 * We move the view's permission check data down to its rangetable. The
-	 * checks will actually be done against the OLD entry therein.
+	 * We move the view's permission check data down to its RTEPermissionInfo
+	 * contained in the view query, which the OLD entry in its range table
+	 * points to.
 	 */
 	subrte = rt_fetch(PRS2_OLD_VARNO, rule_action->rtable);
 	Assert(subrte->relid == relation->rd_id);
