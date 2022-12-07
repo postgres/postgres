@@ -2108,6 +2108,12 @@ ninja
     detailed information about interpreting the test results. You can
     repeat this test at any later time by issuing the same command.
    </para>
+
+   <para>
+    To run pg_regress and pg_isolation_regress tests against a running
+    postgres instance, specify <userinput>--setup running</userinput> as an
+    argument to <userinput>meson test</userinput>.
+   </para>
   </step>
 
   <step id="meson-install">

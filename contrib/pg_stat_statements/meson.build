@@ -41,5 +41,9 @@ tests += {
       'pg_stat_statements',
     ],
     'regress_args': ['--temp-config', files('pg_stat_statements.conf')],
+    # Disabled because these tests require
+    # "shared_preload_libraries=pg_stat_statements", which typical
+    # runningcheck users do not have (e.g. buildfarm clients).
+    'runningcheck': false,
   },
 }

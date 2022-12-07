@@ -25,5 +25,8 @@ tests += {
     'regress_args': [
       '--temp-config', files('basic_archive.conf'),
     ],
+    # Disabled because these tests require "shared_preload_libraries=basic_archive",
+    # which typical runningcheck users do not have (e.g. buildfarm clients).
+    'runningcheck': false,
   },
 }

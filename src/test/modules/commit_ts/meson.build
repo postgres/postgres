@@ -6,6 +6,9 @@ tests += {
     'sql': [
       'commit_timestamp',
     ],
+    # Disabled because these tests require "track_commit_timestamp = on",
+    # which typical runningcheck users do not have (e.g. buildfarm clients).
+    'runningcheck': false,
   },
   'tap': {
     'tests': [

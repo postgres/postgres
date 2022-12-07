@@ -195,6 +195,21 @@ task:
       meson test $MTEST_ARGS --num-processes ${TEST_JOBS}
     EOF
 
+  # test runningcheck, freebsd chosen because it's currently fast enough
+  test_running_script: |
+    su postgres <<-EOF
+      set -e
+      ulimit -c unlimited
+      meson test $MTEST_ARGS --quiet --suite setup
+      export LD_LIBRARY_PATH="$(pwd)/build/tmp_install/usr/local/pgsql/lib/:$LD_LIBRARY_PATH"
+      mkdir -p build/testrun
+      build/tmp_install/usr/local/pgsql/bin/initdb -N build/runningcheck --no-instructions -A trust
+      echo "include '$(pwd)/src/tools/ci/pg_ci_base.conf'" >> build/runningcheck/postgresql.conf
+      build/tmp_install/usr/local/pgsql/bin/pg_ctl -c -o '-c fsync=off' -D build/runningcheck -l build/testrun/runningcheck.log start
+      meson test $MTEST_ARGS --num-processes ${TEST_JOBS} --setup running
+      build/tmp_install/usr/local/pgsql/bin/pg_ctl -D build/runningcheck stop
+    EOF
+
   on_failure:
     <<: *on_failure_meson
     cores_script: src/tools/ci/cores_backtrace.sh freebsd /tmp/cores

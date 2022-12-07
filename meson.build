@@ -2920,6 +2920,20 @@ endif
 # Test Generation
 ###############################################################
 
+# When using a meson version understanding exclude_suites, define a
+# 'tmp_install' test setup (the default) that excludes tests running against a
+# pre-existing install and a 'running' setup that conflicts with creation of
+# the temporary installation and tap tests (which don't support running
+# against a running server).
+
+running_suites = []
+install_suites = []
+if meson.version().version_compare('>=0.57')
+  runningcheck = true
+else
+  runningcheck = false
+endif
+
 testwrap = files('src/tools/testwrap')
 
 foreach test_dir : tests
@@ -2927,7 +2941,6 @@ foreach test_dir : tests
     testwrap,
     '--basedir', meson.build_root(),
     '--srcdir', test_dir['sd'],
-    '--testgroup', test_dir['name'],
   ]
 
   foreach kind, v : test_dir
@@ -2940,55 +2953,94 @@ foreach test_dir : tests
     if kind in ['regress', 'isolation', 'ecpg']
       if kind == 'regress'
         runner = pg_regress
+        fallback_dbname = 'regression_@0@'
       elif kind == 'isolation'
         runner = pg_isolation_regress
+        fallback_dbname = 'isolation_regression_@0@'
       elif kind == 'ecpg'
         runner = pg_regress_ecpg
+        fallback_dbname = 'ecpg_regression_@0@'
       endif
 
-      test_output = test_result_dir / test_dir['name'] / kind
+      test_group = test_dir['name']
+      test_group_running = test_dir['name'] + '-running'
 
-      test_command = [
+      test_output = test_result_dir / test_group / kind
+      test_output_running = test_result_dir / test_group_running/ kind
+
+      # Unless specified by the test, choose a non-conflicting database name,
+      # to avoid conflicts when running against existing server.
+      dbname = t.get('dbname',
+        fallback_dbname.format(test_dir['name']))
+
+      test_command_base = [
         runner.full_path(),
         '--inputdir', t.get('inputdir', test_dir['sd']),
         '--expecteddir', t.get('expecteddir', test_dir['sd']),
-        '--outputdir', test_output,
-        '--temp-instance', test_output / 'tmp_check',
         '--bindir', '',
         '--dlpath', test_dir['bd'],
         '--max-concurrent-tests=20',
-        '--port', testport.to_string(),
+        '--dbname', dbname,
       ] + t.get('regress_args', [])
 
+      test_selection = []
       if t.has_key('schedule')
-        test_command += ['--schedule', t['schedule'],]
+        test_selection += ['--schedule', t['schedule'],]
       endif
 
       if kind == 'isolation'
-        test_command += t.get('specs', [])
+        test_selection += t.get('specs', [])
       else
-        test_command += t.get('sql', [])
+        test_selection += t.get('sql', [])
       endif
 
       env = test_env
       env.prepend('PATH', temp_install_bindir, test_dir['bd'])
 
       test_kwargs = {
-        'suite': [test_dir['name']],
         'priority': 10,
         'timeout': 1000,
         'depends': test_deps + t.get('deps', []),
         'env': env,
       } + t.get('test_kwargs', {})
 
-      test(test_dir['name'] / kind,
+      test(test_group / kind,
         python,
-        args: testwrap_base + [
+        args: [
+          testwrap_base,
+          '--testgroup', test_group,
           '--testname', kind,
-          '--', test_command,
+          '--',
+          test_command_base,
+          '--outputdir', test_output,
+          '--temp-instance', test_output / 'tmp_check',
+          '--port', testport.to_string(),
+          test_selection,
         ],
+        suite: test_group,
         kwargs: test_kwargs,
       )
+      install_suites += test_group
+
+      # some tests can't support running against running DB
+      if runningcheck and t.get('runningcheck', true)
+        test(test_group_running / kind,
+          python,
+          args: [
+            testwrap_base,
+            '--testgroup', test_group_running,
+            '--testname', kind,
+            '--',
+            test_command_base,
+            '--outputdir', test_output_running,
+            test_selection,
+          ],
+          is_parallel: t.get('runningcheck-parallel', true),
+          suite: test_group_running,
+          kwargs: test_kwargs,
+        )
+        running_suites += test_group_running
+      endif
 
       testport += 1
     elif kind == 'tap'
@@ -3011,9 +3063,10 @@ foreach test_dir : tests
         env.set(name, value)
       endforeach
 
+      test_group = test_dir['name']
       test_kwargs = {
         'protocol': 'tap',
-        'suite': [test_dir['name']],
+        'suite': test_group,
         'timeout': 1000,
         'depends': test_deps + t.get('deps', []),
         'env': env,
@@ -3033,12 +3086,14 @@ foreach test_dir : tests
           python,
           kwargs: test_kwargs,
           args: testwrap_base + [
+            '--testgroup', test_dir['name'],
             '--testname', onetap_p,
             '--', test_command,
             test_dir['sd'] / onetap,
           ],
         )
       endforeach
+      install_suites += test_group
     else
       error('unknown kind @0@ of test in @1@'.format(kind, test_dir['sd']))
     endif
@@ -3047,6 +3102,14 @@ foreach test_dir : tests
 
 endforeach # directories with tests
 
+# repeat condition so meson realizes version dependency
+if meson.version().version_compare('>=0.57')
+  add_test_setup('tmp_install',
+    is_default: true,
+    exclude_suites: running_suites)
+  add_test_setup('running',
+    exclude_suites: ['setup'] + install_suites)
+endif
 
 
 ###############################################################

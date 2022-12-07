@@ -67,5 +67,6 @@ tests += {
       'priority': 40,
       'timeout': 1000,
     },
+    'dbname': 'isolation_regression',
   },
 }

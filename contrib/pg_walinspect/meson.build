@@ -28,6 +28,9 @@ tests += {
     'sql': [
       'pg_walinspect',
     ],
+    # Disabled because these tests require "wal_level=replica", which
+    # some runningcheck users do not have (e.g. buildfarm clients).
     'regress_args': ['--temp-config', files('walinspect.conf')],
+    'runningcheck': false,
   },
 }

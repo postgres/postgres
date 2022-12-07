@@ -30,6 +30,8 @@ tests += {
     'sql': [
       'worker_spi',
     ],
-    'regress_args': ['--temp-config', files('dynamic.conf'), '--dbname=contrib_regression'],
+    'dbname': 'contrib_regression',
+    'regress_args': ['--temp-config', files('dynamic.conf')],
+    'runningcheck': false,
   },
 }

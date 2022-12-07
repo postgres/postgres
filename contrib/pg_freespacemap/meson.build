@@ -33,5 +33,8 @@ tests += {
     'regress_args': [
       '--temp-config', files('pg_freespacemap.conf')
     ],
+    # Disabled because these tests require "autovacuum=off", which
+    # typical runningcheck users do not have (e.g. buildfarm clients).
+    'runningcheck': false,
   },
 }

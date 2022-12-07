@@ -31,5 +31,6 @@ tests += {
       'test_slru',
     ],
     'regress_args': ['--temp-config', files('test_slru.conf')],
+    'runningcheck': false,
   },
 }

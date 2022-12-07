@@ -25,5 +25,6 @@ tests += {
       'test_oat_hooks',
     ],
     'regress_args': ['--no-locale', '--encoding=UTF8'],
+    'runningcheck': false,
   },
 }
