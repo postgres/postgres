@@ -278,35 +278,35 @@ typedef struct PgStat_CheckpointerStats
 
 typedef struct PgStat_StatDBEntry
 {
-	PgStat_Counter n_xact_commit;
-	PgStat_Counter n_xact_rollback;
-	PgStat_Counter n_blocks_fetched;
-	PgStat_Counter n_blocks_hit;
-	PgStat_Counter n_tuples_returned;
-	PgStat_Counter n_tuples_fetched;
-	PgStat_Counter n_tuples_inserted;
-	PgStat_Counter n_tuples_updated;
-	PgStat_Counter n_tuples_deleted;
+	PgStat_Counter xact_commit;
+	PgStat_Counter xact_rollback;
+	PgStat_Counter blocks_fetched;
+	PgStat_Counter blocks_hit;
+	PgStat_Counter tuples_returned;
+	PgStat_Counter tuples_fetched;
+	PgStat_Counter tuples_inserted;
+	PgStat_Counter tuples_updated;
+	PgStat_Counter tuples_deleted;
 	TimestampTz last_autovac_time;
-	PgStat_Counter n_conflict_tablespace;
-	PgStat_Counter n_conflict_lock;
-	PgStat_Counter n_conflict_snapshot;
-	PgStat_Counter n_conflict_bufferpin;
-	PgStat_Counter n_conflict_startup_deadlock;
-	PgStat_Counter n_temp_files;
-	PgStat_Counter n_temp_bytes;
-	PgStat_Counter n_deadlocks;
-	PgStat_Counter n_checksum_failures;
+	PgStat_Counter conflict_tablespace;
+	PgStat_Counter conflict_lock;
+	PgStat_Counter conflict_snapshot;
+	PgStat_Counter conflict_bufferpin;
+	PgStat_Counter conflict_startup_deadlock;
+	PgStat_Counter temp_files;
+	PgStat_Counter temp_bytes;
+	PgStat_Counter deadlocks;
+	PgStat_Counter checksum_failures;
 	TimestampTz last_checksum_failure;
-	PgStat_Counter n_block_read_time;	/* times in microseconds */
-	PgStat_Counter n_block_write_time;
-	PgStat_Counter n_sessions;
-	PgStat_Counter total_session_time;
-	PgStat_Counter total_active_time;
-	PgStat_Counter total_idle_in_xact_time;
-	PgStat_Counter n_sessions_abandoned;
-	PgStat_Counter n_sessions_fatal;
-	PgStat_Counter n_sessions_killed;
+	PgStat_Counter blk_read_time;	/* times in microseconds */
+	PgStat_Counter blk_write_time;
+	PgStat_Counter sessions;
+	PgStat_Counter session_time;
+	PgStat_Counter active_time;
+	PgStat_Counter idle_in_transaction_time;
+	PgStat_Counter sessions_abandoned;
+	PgStat_Counter sessions_fatal;
+	PgStat_Counter sessions_killed;
 
 	TimestampTz stat_reset_timestamp;
 } PgStat_StatDBEntry;

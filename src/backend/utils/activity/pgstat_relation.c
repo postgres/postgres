@@ -819,13 +819,13 @@ pgstat_relation_flush_cb(PgStat_EntryRef *entry_ref, bool nowait)
 
 	/* The entry was successfully flushed, add the same to database stats */
 	dbentry = pgstat_prep_database_pending(dboid);
-	dbentry->n_tuples_returned += lstats->t_counts.t_tuples_returned;
-	dbentry->n_tuples_fetched += lstats->t_counts.t_tuples_fetched;
-	dbentry->n_tuples_inserted += lstats->t_counts.t_tuples_inserted;
-	dbentry->n_tuples_updated += lstats->t_counts.t_tuples_updated;
-	dbentry->n_tuples_deleted += lstats->t_counts.t_tuples_deleted;
-	dbentry->n_blocks_fetched += lstats->t_counts.t_blocks_fetched;
-	dbentry->n_blocks_hit += lstats->t_counts.t_blocks_hit;
+	dbentry->tuples_returned += lstats->t_counts.t_tuples_returned;
+	dbentry->tuples_fetched += lstats->t_counts.t_tuples_fetched;
+	dbentry->tuples_inserted += lstats->t_counts.t_tuples_inserted;
+	dbentry->tuples_updated += lstats->t_counts.t_tuples_updated;
+	dbentry->tuples_deleted += lstats->t_counts.t_tuples_deleted;
+	dbentry->blocks_fetched += lstats->t_counts.t_blocks_fetched;
+	dbentry->blocks_hit += lstats->t_counts.t_blocks_hit;
 
 	return true;
 }

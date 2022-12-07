@@ -938,148 +938,85 @@ pg_stat_get_db_numbackends(PG_FUNCTION_ARGS)
 }
 
 
-Datum
-pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+#define PG_STAT_GET_DBENTRY_INT64(stat)							\
+Datum															\
+CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
+{																\
+	Oid			dbid = PG_GETARG_OID(0);						\
+	int64		result;											\
+	PgStat_StatDBEntry *dbentry;								\
+																\
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)	\
+		result = 0;												\
+	else														\
+		result = (int64) (dbentry->stat);						\
+																\
+	PG_RETURN_INT64(result);									\
+}																\
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_xact_commit);
+/* pg_stat_get_db_blocks_fetched */
+PG_STAT_GET_DBENTRY_INT64(blocks_fetched);
 
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_blocks_hit */
+PG_STAT_GET_DBENTRY_INT64(blocks_hit);
 
+/* pg_stat_get_db_conflict_bufferpin */
+PG_STAT_GET_DBENTRY_INT64(conflict_bufferpin);
 
-Datum
-pg_stat_get_db_xact_rollback(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_conflict_lock */
+PG_STAT_GET_DBENTRY_INT64(conflict_lock);
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_xact_rollback);
+/* pg_stat_get_db_conflict_snapshot */
+PG_STAT_GET_DBENTRY_INT64(conflict_snapshot);
 
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_conflict_startup_deadlock */
+PG_STAT_GET_DBENTRY_INT64(conflict_startup_deadlock);
 
+/* pg_stat_get_db_conflict_tablespace */
+PG_STAT_GET_DBENTRY_INT64(conflict_tablespace);
 
-Datum
-pg_stat_get_db_blocks_fetched(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_deadlocks */
+PG_STAT_GET_DBENTRY_INT64(deadlocks);
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_blocks_fetched);
+/* pg_stat_get_db_sessions */
+PG_STAT_GET_DBENTRY_INT64(sessions);
 
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_sessions_abandoned */
+PG_STAT_GET_DBENTRY_INT64(sessions_abandoned);
 
+/* pg_stat_get_db_sessions_fatal */
+PG_STAT_GET_DBENTRY_INT64(sessions_fatal);
 
-Datum
-pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_sessions_killed */
+PG_STAT_GET_DBENTRY_INT64(sessions_killed);
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_blocks_hit);
+/* pg_stat_get_db_temp_bytes */
+PG_STAT_GET_DBENTRY_INT64(temp_bytes);
 
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_temp_files */
+PG_STAT_GET_DBENTRY_INT64(temp_files);
 
+/* pg_stat_get_db_tuples_deleted */
+PG_STAT_GET_DBENTRY_INT64(tuples_deleted);
 
-Datum
-pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_tuples_fetched */
+PG_STAT_GET_DBENTRY_INT64(tuples_fetched);
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_tuples_returned);
+/* pg_stat_get_db_tuples_inserted */
+PG_STAT_GET_DBENTRY_INT64(tuples_inserted);
 
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_tuples_returned */
+PG_STAT_GET_DBENTRY_INT64(tuples_returned);
 
+/* pg_stat_get_db_tuples_updated */
+PG_STAT_GET_DBENTRY_INT64(tuples_updated);
 
-Datum
-pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_xact_commit */
+PG_STAT_GET_DBENTRY_INT64(xact_commit);
 
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_tuples_fetched);
+/* pg_stat_get_db_xact_rollback */
+PG_STAT_GET_DBENTRY_INT64(xact_rollback);
 
-	PG_RETURN_INT64(result);
-}
-
-
-Datum
-pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_tuples_inserted);
-
-	PG_RETURN_INT64(result);
-}
-
-
-Datum
-pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_tuples_updated);
-
-	PG_RETURN_INT64(result);
-}
-
-
-Datum
-pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_tuples_deleted);
-
-	PG_RETURN_INT64(result);
-}
 
 Datum
 pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS)
@@ -1099,111 +1036,6 @@ pg_stat_get_db_stat_reset_time(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(result);
 }
 
-Datum
-pg_stat_get_db_temp_files(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = dbentry->n_temp_files;
-
-	PG_RETURN_INT64(result);
-}
-
-
-Datum
-pg_stat_get_db_temp_bytes(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = dbentry->n_temp_bytes;
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_conflict_tablespace(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_conflict_tablespace);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_conflict_lock(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_conflict_lock);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_conflict_snapshot(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_conflict_snapshot);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_conflict_bufferpin(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_conflict_bufferpin);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_conflict_startup_deadlock(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_conflict_startup_deadlock);
-
-	PG_RETURN_INT64(result);
-}
 
 Datum
 pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS)
@@ -1215,26 +1047,11 @@ pg_stat_get_db_conflict_all(PG_FUNCTION_ARGS)
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
-		result = (int64) (dbentry->n_conflict_tablespace +
-						  dbentry->n_conflict_lock +
-						  dbentry->n_conflict_snapshot +
-						  dbentry->n_conflict_bufferpin +
-						  dbentry->n_conflict_startup_deadlock);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_deadlocks(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = (int64) (dbentry->n_deadlocks);
+		result = (int64) (dbentry->conflict_tablespace +
+						  dbentry->conflict_lock +
+						  dbentry->conflict_snapshot +
+						  dbentry->conflict_bufferpin +
+						  dbentry->conflict_startup_deadlock);
 
 	PG_RETURN_INT64(result);
 }
@@ -1252,7 +1069,7 @@ pg_stat_get_db_checksum_failures(PG_FUNCTION_ARGS)
 	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
 		result = 0;
 	else
-		result = (int64) (dbentry->n_checksum_failures);
+		result = (int64) (dbentry->checksum_failures);
 
 	PG_RETURN_INT64(result);
 }
@@ -1278,131 +1095,36 @@ pg_stat_get_db_checksum_last_failure(PG_FUNCTION_ARGS)
 		PG_RETURN_TIMESTAMPTZ(result);
 }
 
-Datum
-pg_stat_get_db_blk_read_time(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	double		result;
-	PgStat_StatDBEntry *dbentry;
+#define PG_STAT_GET_DBENTRY_FLOAT8(stat)						\
+Datum															\
+CppConcat(pg_stat_get_db_,stat)(PG_FUNCTION_ARGS)				\
+{																\
+	Oid			dbid = PG_GETARG_OID(0);						\
+	double		result;											\
+	PgStat_StatDBEntry *dbentry;								\
+																\
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)	\
+		result = 0;												\
+	else														\
+		result = ((double) dbentry->stat) / 1000.0;				\
+																\
+	PG_RETURN_FLOAT8(result);									\
+}																\
 
-	/* convert counter from microsec to millisec for display */
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = ((double) dbentry->n_block_read_time) / 1000.0;
+/* pg_stat_get_db_active_time */
+PG_STAT_GET_DBENTRY_FLOAT8(active_time);
 
-	PG_RETURN_FLOAT8(result);
-}
+/* pg_stat_get_db_blk_read_time */
+PG_STAT_GET_DBENTRY_FLOAT8(blk_read_time);
 
-Datum
-pg_stat_get_db_blk_write_time(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	double		result;
-	PgStat_StatDBEntry *dbentry;
+/* pg_stat_get_db_blk_write_time */
+PG_STAT_GET_DBENTRY_FLOAT8(blk_write_time);
 
-	/* convert counter from microsec to millisec for display */
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
-		result = 0;
-	else
-		result = ((double) dbentry->n_block_write_time) / 1000.0;
+/* pg_stat_get_db_idle_in_transaction_time */
+PG_STAT_GET_DBENTRY_FLOAT8(idle_in_transaction_time);
 
-	PG_RETURN_FLOAT8(result);
-}
-
-Datum
-pg_stat_get_db_session_time(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	double		result = 0.0;
-	PgStat_StatDBEntry *dbentry;
-
-	/* convert counter from microsec to millisec for display */
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = ((double) dbentry->total_session_time) / 1000.0;
-
-	PG_RETURN_FLOAT8(result);
-}
-
-Datum
-pg_stat_get_db_active_time(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	double		result = 0.0;
-	PgStat_StatDBEntry *dbentry;
-
-	/* convert counter from microsec to millisec for display */
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = ((double) dbentry->total_active_time) / 1000.0;
-
-	PG_RETURN_FLOAT8(result);
-}
-
-Datum
-pg_stat_get_db_idle_in_transaction_time(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	double		result = 0.0;
-	PgStat_StatDBEntry *dbentry;
-
-	/* convert counter from microsec to millisec for display */
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = ((double) dbentry->total_idle_in_xact_time) / 1000.0;
-
-	PG_RETURN_FLOAT8(result);
-}
-
-Datum
-pg_stat_get_db_sessions(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result = 0;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = (int64) (dbentry->n_sessions);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_sessions_abandoned(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result = 0;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = (int64) (dbentry->n_sessions_abandoned);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_sessions_fatal(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result = 0;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = (int64) (dbentry->n_sessions_fatal);
-
-	PG_RETURN_INT64(result);
-}
-
-Datum
-pg_stat_get_db_sessions_killed(PG_FUNCTION_ARGS)
-{
-	Oid			dbid = PG_GETARG_OID(0);
-	int64		result = 0;
-	PgStat_StatDBEntry *dbentry;
-
-	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) != NULL)
-		result = (int64) (dbentry->n_sessions_killed);
-
-	PG_RETURN_INT64(result);
-}
+/* pg_stat_get_db_session_time */
+PG_STAT_GET_DBENTRY_FLOAT8(session_time);
 
 Datum
 pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
