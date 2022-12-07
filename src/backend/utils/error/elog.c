@@ -176,8 +176,15 @@ static char formatted_log_time[FORMATTED_TS_LEN];
 
 
 static const char *err_gettext(const char *str) pg_attribute_format_arg(1);
+static ErrorData *get_error_stack_entry(void);
+static void set_stack_entry_domain(ErrorData *edata, const char *domain);
+static void set_stack_entry_location(ErrorData *edata,
+									 const char *filename, int lineno,
+									 const char *funcname);
+static bool matches_backtrace_functions(const char *funcname);
 static pg_noinline void set_backtrace(ErrorData *edata, int num_skip);
 static void set_errdata_field(MemoryContextData *cxt, char **ptr, const char *str);
+static void FreeErrorDataContents(ErrorData *edata);
 static void write_console(const char *line, int len);
 static const char *process_log_prefix_padding(const char *p, int *ppadding);
 static void log_line_prefix(StringInfo buf, ErrorData *edata);
@@ -434,27 +441,13 @@ errstart(int elevel, const char *domain)
 			debug_query_string = NULL;
 		}
 	}
-	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
-	{
-		/*
-		 * Wups, stack not big enough.  We treat this as a PANIC condition
-		 * because it suggests an infinite loop of errors during error
-		 * recovery.
-		 */
-		errordata_stack_depth = -1; /* make room on stack */
-		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
-	}
 
 	/* Initialize data for this error frame */
-	edata = &errordata[errordata_stack_depth];
-	MemSet(edata, 0, sizeof(ErrorData));
+	edata = get_error_stack_entry();
 	edata->elevel = elevel;
 	edata->output_to_server = output_to_server;
 	edata->output_to_client = output_to_client;
-	/* the default text domain is the backend's */
-	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
-	/* initialize context_domain the same way (see set_errcontext_domain()) */
-	edata->context_domain = edata->domain;
+	set_stack_entry_domain(edata, domain);
 	/* Select default errcode based on elevel */
 	if (elevel >= ERROR)
 		edata->sqlerrcode = ERRCODE_INTERNAL_ERROR;
@@ -462,8 +455,6 @@ errstart(int elevel, const char *domain)
 		edata->sqlerrcode = ERRCODE_WARNING;
 	else
 		edata->sqlerrcode = ERRCODE_SUCCESSFUL_COMPLETION;
-	/* errno is saved here so that error parameter eval can't change it */
-	edata->saved_errno = errno;
 
 	/*
 	 * Any allocations for this error state level should go into ErrorContext
@@ -472,32 +463,6 @@ errstart(int elevel, const char *domain)
 
 	recursion_depth--;
 	return true;
-}
-
-/*
- * Checks whether the given funcname matches backtrace_functions; see
- * check_backtrace_functions.
- */
-static bool
-matches_backtrace_functions(const char *funcname)
-{
-	char	   *p;
-
-	if (!backtrace_symbol_list || funcname == NULL || funcname[0] == '\0')
-		return false;
-
-	p = backtrace_symbol_list;
-	for (;;)
-	{
-		if (*p == '\0')			/* end of backtrace_symbol_list */
-			break;
-
-		if (strcmp(funcname, p) == 0)
-			return true;
-		p += strlen(p) + 1;
-	}
-
-	return false;
 }
 
 /*
@@ -520,23 +485,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	CHECK_STACK_DEPTH();
 
 	/* Save the last few bits of error state into the stack entry */
-	if (filename)
-	{
-		const char *slash;
-
-		/* keep only base name, useful especially for vpath builds */
-		slash = strrchr(filename, '/');
-		if (slash)
-			filename = slash + 1;
-		/* Some Windows compilers use backslashes in __FILE__ strings */
-		slash = strrchr(filename, '\\');
-		if (slash)
-			filename = slash + 1;
-	}
-
-	edata->filename = filename;
-	edata->lineno = lineno;
-	edata->funcname = funcname;
+	set_stack_entry_location(edata, filename, lineno, funcname);
 
 	elevel = edata->elevel;
 
@@ -546,6 +495,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	 */
 	oldcontext = MemoryContextSwitchTo(ErrorContext);
 
+	/* Collect backtrace, if enabled and we didn't already */
 	if (!edata->backtrace &&
 		edata->funcname &&
 		backtrace_functions &&
@@ -596,31 +546,7 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	EmitErrorReport();
 
 	/* Now free up subsidiary data attached to stack entry, and release it */
-	if (edata->message)
-		pfree(edata->message);
-	if (edata->detail)
-		pfree(edata->detail);
-	if (edata->detail_log)
-		pfree(edata->detail_log);
-	if (edata->hint)
-		pfree(edata->hint);
-	if (edata->context)
-		pfree(edata->context);
-	if (edata->backtrace)
-		pfree(edata->backtrace);
-	if (edata->schema_name)
-		pfree(edata->schema_name);
-	if (edata->table_name)
-		pfree(edata->table_name);
-	if (edata->column_name)
-		pfree(edata->column_name);
-	if (edata->datatype_name)
-		pfree(edata->datatype_name);
-	if (edata->constraint_name)
-		pfree(edata->constraint_name);
-	if (edata->internalquery)
-		pfree(edata->internalquery);
-
+	FreeErrorDataContents(edata);
 	errordata_stack_depth--;
 
 	/* Exit error-handling context */
@@ -683,6 +609,120 @@ errfinish(const char *filename, int lineno, const char *funcname)
 	 * in a loop that otherwise fails to check for interrupts.
 	 */
 	CHECK_FOR_INTERRUPTS();
+}
+
+/*
+ * get_error_stack_entry --- allocate and initialize a new stack entry
+ *
+ * The entry should be freed, when we're done with it, by calling
+ * FreeErrorDataContents() and then decrementing errordata_stack_depth.
+ *
+ * Returning the entry's address is just a notational convenience,
+ * since it had better be errordata[errordata_stack_depth].
+ *
+ * Although the error stack is not large, we don't expect to run out of space.
+ * Using more than one entry implies a new error report during error recovery,
+ * which is possible but already suggests we're in trouble.  If we exhaust the
+ * stack, almost certainly we are in an infinite loop of errors during error
+ * recovery, so we give up and PANIC.
+ *
+ * (Note that this is distinct from the recursion_depth checks, which
+ * guard against recursion while handling a single stack entry.)
+ */
+static ErrorData *
+get_error_stack_entry(void)
+{
+	ErrorData  *edata;
+
+	/* Allocate error frame */
+	errordata_stack_depth++;
+	if (unlikely(errordata_stack_depth >= ERRORDATA_STACK_SIZE))
+	{
+		/* Wups, stack not big enough */
+		errordata_stack_depth = -1; /* make room on stack */
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+	}
+
+	/* Initialize error frame to all zeroes/NULLs */
+	edata = &errordata[errordata_stack_depth];
+	memset(edata, 0, sizeof(ErrorData));
+
+	/* Save errno immediately to ensure error parameter eval can't change it */
+	edata->saved_errno = errno;
+
+	return edata;
+}
+
+/*
+ * set_stack_entry_domain --- fill in the internationalization domain
+ */
+static void
+set_stack_entry_domain(ErrorData *edata, const char *domain)
+{
+	/* the default text domain is the backend's */
+	edata->domain = domain ? domain : PG_TEXTDOMAIN("postgres");
+	/* initialize context_domain the same way (see set_errcontext_domain()) */
+	edata->context_domain = edata->domain;
+}
+
+/*
+ * set_stack_entry_location --- fill in code-location details
+ *
+ * Store the values of __FILE__, __LINE__, and __func__ from the call site.
+ * We make an effort to normalize __FILE__, since compilers are inconsistent
+ * about how much of the path they'll include, and we'd prefer that the
+ * behavior not depend on that (especially, that it not vary with build path).
+ */
+static void
+set_stack_entry_location(ErrorData *edata,
+						 const char *filename, int lineno,
+						 const char *funcname)
+{
+	if (filename)
+	{
+		const char *slash;
+
+		/* keep only base name, useful especially for vpath builds */
+		slash = strrchr(filename, '/');
+		if (slash)
+			filename = slash + 1;
+		/* Some Windows compilers use backslashes in __FILE__ strings */
+		slash = strrchr(filename, '\\');
+		if (slash)
+			filename = slash + 1;
+	}
+
+	edata->filename = filename;
+	edata->lineno = lineno;
+	edata->funcname = funcname;
+}
+
+/*
+ * matches_backtrace_functions --- checks whether the given funcname matches
+ * backtrace_functions
+ *
+ * See check_backtrace_functions.
+ */
+static bool
+matches_backtrace_functions(const char *funcname)
+{
+	const char *p;
+
+	if (!backtrace_symbol_list || funcname == NULL || funcname[0] == '\0')
+		return false;
+
+	p = backtrace_symbol_list;
+	for (;;)
+	{
+		if (*p == '\0')			/* end of backtrace_symbol_list */
+			break;
+
+		if (strcmp(funcname, p) == 0)
+			return true;
+		p += strlen(p) + 1;
+	}
+
+	return false;
 }
 
 
@@ -1612,6 +1652,18 @@ CopyErrorData(void)
 void
 FreeErrorData(ErrorData *edata)
 {
+	FreeErrorDataContents(edata);
+	pfree(edata);
+}
+
+/*
+ * FreeErrorDataContents --- free the subsidiary data of an ErrorData.
+ *
+ * This can be used on either an error stack entry or a copied ErrorData.
+ */
+static void
+FreeErrorDataContents(ErrorData *edata)
+{
 	if (edata->message)
 		pfree(edata->message);
 	if (edata->detail)
@@ -1636,7 +1688,6 @@ FreeErrorData(ErrorData *edata)
 		pfree(edata->constraint_name);
 	if (edata->internalquery)
 		pfree(edata->internalquery);
-	pfree(edata);
 }
 
 /*
@@ -1742,18 +1793,7 @@ ReThrowError(ErrorData *edata)
 	recursion_depth++;
 	MemoryContextSwitchTo(ErrorContext);
 
-	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
-	{
-		/*
-		 * Wups, stack not big enough.  We treat this as a PANIC condition
-		 * because it suggests an infinite loop of errors during error
-		 * recovery.
-		 */
-		errordata_stack_depth = -1; /* make room on stack */
-		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
-	}
-
-	newedata = &errordata[errordata_stack_depth];
+	newedata = get_error_stack_entry();
 	memcpy(newedata, edata, sizeof(ErrorData));
 
 	/* Make copies of separately-allocated fields */
@@ -1854,26 +1894,11 @@ GetErrorContextStack(void)
 	ErrorContextCallback *econtext;
 
 	/*
-	 * Okay, crank up a stack entry to store the info in.
+	 * Crank up a stack entry to store the info in.
 	 */
 	recursion_depth++;
 
-	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
-	{
-		/*
-		 * Wups, stack not big enough.  We treat this as a PANIC condition
-		 * because it suggests an infinite loop of errors during error
-		 * recovery.
-		 */
-		errordata_stack_depth = -1; /* make room on stack */
-		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
-	}
-
-	/*
-	 * Things look good so far, so initialize our error frame
-	 */
-	edata = &errordata[errordata_stack_depth];
-	MemSet(edata, 0, sizeof(ErrorData));
+	edata = get_error_stack_entry();
 
 	/*
 	 * Set up assoc_context to be the caller's context, so any allocations
