@@ -1131,8 +1131,6 @@ LDFLAGS="$LDFLAGS $LIBDIRS"
 AC_ARG_VAR(LDFLAGS_EX, [extra linker flags for linking executables only])
 AC_ARG_VAR(LDFLAGS_SL, [extra linker flags for linking shared libraries only])
 
-PGAC_PROG_LD
-AC_SUBST(with_gnu_ld)
 PGAC_CHECK_STRIP
 AC_CHECK_TOOL(AR, ar, ar)
 if test "$PORTNAME" = "win32"; then
@@ -2371,6 +2369,12 @@ elif test "$PORTNAME" = "openbsd"; then
 else
   PGAC_PROG_CC_LDFLAGS_OPT([-Wl,--as-needed], $link_test_func)
 fi
+
+# For linkers that understand --export-dynamic, add that to the LDFLAGS_EX_BE
+# (backend specific ldflags). One some platforms this will always fail (e.g.,
+# windows), but on others it depends on the choice of linker (e.g., solaris).
+PGAC_PROG_CC_LD_VARFLAGS_OPT(LDFLAGS_EX_BE, [-Wl,--export-dynamic], $link_test_func)
+AC_SUBST(LDFLAGS_EX_BE)
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then

@@ -1,4 +1,3 @@
-export_dynamic = -Wl,-E
 rpath = -Wl,-R'$(rpathdir)'
 
 

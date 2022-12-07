@@ -468,28 +468,37 @@ AC_DEFUN([PGAC_PROG_CXX_CFLAGS_OPT],
 
 
 
-# PGAC_PROG_CC_LDFLAGS_OPT
+# PGAC_PROG_CC_LD_VARFLAGS_OPT
 # ------------------------
 # Given a string, check if the compiler supports the string as a
-# command-line option. If it does, add the string to LDFLAGS.
+# command-line option. If it does, add to the given variable.
 # For reasons you'd really rather not know about, this checks whether
 # you can link to a particular function, not just whether you can link.
 # In fact, we must actually check that the resulting program runs :-(
-AC_DEFUN([PGAC_PROG_CC_LDFLAGS_OPT],
-[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_cc_ldflags_$1])])dnl
-AC_CACHE_CHECK([whether $CC supports $1], [Ac_cachevar],
+AC_DEFUN([PGAC_PROG_CC_LD_VARFLAGS_OPT],
+[define([Ac_cachevar], [AS_TR_SH([pgac_cv_prog_cc_$1_$2])])dnl
+AC_CACHE_CHECK([whether $CC supports $2, for $1], [Ac_cachevar],
 [pgac_save_LDFLAGS=$LDFLAGS
-LDFLAGS="$pgac_save_LDFLAGS $1"
-AC_RUN_IFELSE([AC_LANG_PROGRAM([extern void $2 (); void (*fptr) () = $2;],[])],
+LDFLAGS="$pgac_save_LDFLAGS $2"
+AC_RUN_IFELSE([AC_LANG_PROGRAM([extern void $3 (); void (*fptr) () = $3;],[])],
               [Ac_cachevar=yes],
               [Ac_cachevar=no],
               [Ac_cachevar="assuming no"])
 LDFLAGS="$pgac_save_LDFLAGS"])
 if test x"$Ac_cachevar" = x"yes"; then
-  LDFLAGS="$LDFLAGS $1"
+  $1="${$1} $2"
 fi
 undefine([Ac_cachevar])dnl
+])# PGAC_PROG_CC_LD_VARFLAGS_OPT
+
+# PGAC_PROG_CC_LDFLAGS_OPT
+# ------------------------
+# Convenience wrapper around PGAC_PROG_CC_LD_VARFLAGS_OPT that adds to
+# LDFLAGS.
+AC_DEFUN([PGAC_PROG_CC_LDFLAGS_OPT],
+[PGAC_PROG_CC_LD_VARFLAGS_OPT(LDFLAGS, [$1], [$2])
 ])# PGAC_PROG_CC_LDFLAGS_OPT
+
 
 # PGAC_HAVE_GCC__SYNC_CHAR_TAS
 # ----------------------------

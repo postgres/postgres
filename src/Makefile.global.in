@@ -289,7 +289,6 @@ LDAP_LIBS_FE = @LDAP_LIBS_FE@
 LDAP_LIBS_BE = @LDAP_LIBS_BE@
 UUID_LIBS = @UUID_LIBS@
 LLVM_LIBS=@LLVM_LIBS@
-with_gnu_ld = @with_gnu_ld@
 
 # It's critical that within LDFLAGS, all -L switches pointing to build-tree
 # directories come before any -L switches pointing to external directories.
@@ -313,6 +312,7 @@ endif
 LDFLAGS = $(LDFLAGS_INTERNAL) @LDFLAGS@
 
 LDFLAGS_EX = @LDFLAGS_EX@
+LDFLAGS_EX_BE = @LDFLAGS_EX_BE@
 # LDFLAGS_SL might have already been assigned by calling makefile
 LDFLAGS_SL += @LDFLAGS_SL@
 WINDRES = @WINDRES@
