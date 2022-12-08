@@ -1980,7 +1980,7 @@ FileClose(File file)
  * to read into.
  */
 int
-FilePrefetch(File file, off_t offset, int amount, uint32 wait_event_info)
+FilePrefetch(File file, off_t offset, off_t amount, uint32 wait_event_info)
 {
 #if defined(USE_POSIX_FADVISE) && defined(POSIX_FADV_WILLNEED)
 	int			returnCode;
@@ -2031,7 +2031,7 @@ FileWriteback(File file, off_t offset, off_t nbytes, uint32 wait_event_info)
 }
 
 int
-FileRead(File file, char *buffer, int amount, off_t offset,
+FileRead(File file, void *buffer, size_t amount, off_t offset,
 		 uint32 wait_event_info)
 {
 	int			returnCode;
@@ -2039,7 +2039,7 @@ FileRead(File file, char *buffer, int amount, off_t offset,
 
 	Assert(FileIsValid(file));
 
-	DO_DB(elog(LOG, "FileRead: %d (%s) " INT64_FORMAT " %d %p",
+	DO_DB(elog(LOG, "FileRead: %d (%s) " INT64_FORMAT " %zu %p",
 			   file, VfdCache[file].fileName,
 			   (int64) offset,
 			   amount, buffer));
@@ -2087,7 +2087,7 @@ retry:
 }
 
 int
-FileWrite(File file, char *buffer, int amount, off_t offset,
+FileWrite(File file, const void *buffer, size_t amount, off_t offset,
 		  uint32 wait_event_info)
 {
 	int			returnCode;
