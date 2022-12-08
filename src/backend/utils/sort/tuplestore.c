@@ -1468,7 +1468,7 @@ getlen(Tuplestorestate *state, bool eofOK)
 	unsigned int len;
 	size_t		nbytes;
 
-	nbytes = BufFileRead(state->myfile, (void *) &len, sizeof(len));
+	nbytes = BufFileRead(state->myfile, &len, sizeof(len));
 	if (nbytes == sizeof(len))
 		return len;
 	if (nbytes != 0 || !eofOK)
@@ -1512,10 +1512,10 @@ writetup_heap(Tuplestorestate *state, void *tup)
 	/* total on-disk footprint: */
 	unsigned int tuplen = tupbodylen + sizeof(int);
 
-	BufFileWrite(state->myfile, (void *) &tuplen, sizeof(tuplen));
-	BufFileWrite(state->myfile, (void *) tupbody, tupbodylen);
+	BufFileWrite(state->myfile, &tuplen, sizeof(tuplen));
+	BufFileWrite(state->myfile, tupbody, tupbodylen);
 	if (state->backward)		/* need trailing length word? */
-		BufFileWrite(state->myfile, (void *) &tuplen, sizeof(tuplen));
+		BufFileWrite(state->myfile, &tuplen, sizeof(tuplen));
 
 	FREEMEM(state, GetMemoryChunkSpace(tuple));
 	heap_free_minimal_tuple(tuple);
@@ -1533,7 +1533,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 	USEMEM(state, GetMemoryChunkSpace(tuple));
 	/* read in the tuple proper */
 	tuple->t_len = tuplen;
-	nread = BufFileRead(state->myfile, (void *) tupbody, tupbodylen);
+	nread = BufFileRead(state->myfile, tupbody, tupbodylen);
 	if (nread != (size_t) tupbodylen)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -1541,7 +1541,7 @@ readtup_heap(Tuplestorestate *state, unsigned int len)
 						nread, (size_t) tupbodylen)));
 	if (state->backward)		/* need trailing length word? */
 	{
-		nread = BufFileRead(state->myfile, (void *) &tuplen, sizeof(tuplen));
+		nread = BufFileRead(state->myfile, &tuplen, sizeof(tuplen));
 		if (nread != sizeof(tuplen))
 			ereport(ERROR,
 					(errcode_for_file_access(),

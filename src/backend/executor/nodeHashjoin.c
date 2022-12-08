@@ -1227,8 +1227,8 @@ ExecHashJoinSaveTuple(MinimalTuple tuple, uint32 hashvalue,
 		*fileptr = file;
 	}
 
-	BufFileWrite(file, (void *) &hashvalue, sizeof(uint32));
-	BufFileWrite(file, (void *) tuple, tuple->t_len);
+	BufFileWrite(file, &hashvalue, sizeof(uint32));
+	BufFileWrite(file, tuple, tuple->t_len);
 }
 
 /*
@@ -1260,7 +1260,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	 * we can read them both in one BufFileRead() call without any type
 	 * cheating.
 	 */
-	nread = BufFileRead(file, (void *) header, sizeof(header));
+	nread = BufFileRead(file, header, sizeof(header));
 	if (nread == 0)				/* end of file */
 	{
 		ExecClearTuple(tupleSlot);
@@ -1275,7 +1275,7 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 	tuple = (MinimalTuple) palloc(header[1]);
 	tuple->t_len = header[1];
 	nread = BufFileRead(file,
-						(void *) ((char *) tuple + sizeof(uint32)),
+						((char *) tuple + sizeof(uint32)),
 						header[1] - sizeof(uint32));
 	if (nread != header[1] - sizeof(uint32))
 		ereport(ERROR,
