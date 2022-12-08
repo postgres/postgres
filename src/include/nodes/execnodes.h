@@ -575,9 +575,6 @@ typedef struct ResultRelInfo
 	 * one of its ancestors; see ExecCrossPartitionUpdateForeignKey().
 	 */
 	List	   *ri_ancestorResultRels;
-
-	/* for use by nodeModifyTable.c when performing batch-inserts */
-	struct ModifyTableState *ri_ModifyTableState;
 } ResultRelInfo;
 
 /* ----------------
@@ -703,10 +700,11 @@ typedef struct EState
 	struct JitInstrumentation *es_jit_worker_instr;
 
 	/*
-	 * The following list contains ResultRelInfos for foreign tables on which
-	 * batch-inserts are to be executed.
+	 * Lists of ResultRelInfos for foreign tables on which batch-inserts are
+	 * to be executed and owning ModifyTableStates, stored in the same order.
 	 */
 	List	   *es_insert_pending_result_relations;
+	List	   *es_insert_pending_modifytables;
 } EState;
 
 
