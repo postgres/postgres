@@ -419,7 +419,19 @@ meson_bin = find_program(meson_binpath, native: true)
 
 cdata.set('USE_ASSERT_CHECKING', get_option('cassert') ? 1 : false)
 
-cdata.set('BLCKSZ', get_option('blocksize').to_int() * 1024, description:
+blocksize = get_option('blocksize').to_int() * 1024
+
+if get_option('segsize_blocks') != 0
+  if get_option('segsize') != 1
+    warning('both segsize and segsize_blocks specified, segsize_blocks wins')
+  endif
+
+  segsize = get_option('segsize_blocks')
+else
+  segsize = (get_option('segsize') * 1024 * 1024 * 1024) / blocksize
+endif
+
+cdata.set('BLCKSZ', blocksize, description:
 '''Size of a disk block --- this also limits the size of a tuple. You can set
    it bigger if you need bigger tuples (although TOAST should reduce the need
    to have large tuples, since fields can be spread across multiple tuples).
@@ -429,7 +441,7 @@ cdata.set('BLCKSZ', get_option('blocksize').to_int() * 1024, description:
    Changing BLCKSZ requires an initdb.''')
 
 cdata.set('XLOG_BLCKSZ', get_option('wal_blocksize').to_int() * 1024)
-cdata.set('RELSEG_SIZE', get_option('segsize') * 131072)
+cdata.set('RELSEG_SIZE', segsize)
 cdata.set('DEF_PGPORT', get_option('pgport'))
 cdata.set_quoted('DEF_PGPORT_STR', get_option('pgport').to_string())
 cdata.set_quoted('PG_KRB_SRVNAM', get_option('krb_srvnam'))
@@ -3132,9 +3144,11 @@ if meson.version().version_compare('>=0.57')
 
   summary(
     {
-      'data block size': cdata.get('BLCKSZ'),
-      'WAL block size': cdata.get('XLOG_BLCKSZ') / 1024,
-      'segment size': cdata.get('RELSEG_SIZE') / 131072,
+      'data block size': '@0@ kB'.format(cdata.get('BLCKSZ') / 1024),
+      'WAL block size': '@0@ kB'.format(cdata.get('XLOG_BLCKSZ') / 1024),
+      'segment size': get_option('segsize_blocks') != 0 ?
+        '@0@ blocks'.format(cdata.get('RELSEG_SIZE')) :
+        '@0@ GB'.format(get_option('segsize')),
     },
     section: 'Data layout',
   )

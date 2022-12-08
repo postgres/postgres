@@ -13,6 +13,9 @@ option('wal_blocksize', type : 'combo',
 option('segsize', type : 'integer', value : 1,
   description : '''Segment size, in gigabytes''')
 
+option('segsize_blocks', type : 'integer', value: 0,
+  description : '''Segment size, in blocks''')
+
 
 # Miscellaneous options
 

@@ -842,6 +842,7 @@ enable_dtrace
 enable_tap_tests
 with_blocksize
 with_segsize
+with_segsize_blocks
 with_wal_blocksize
 with_CC
 with_llvm
@@ -1551,6 +1552,8 @@ Optional Packages:
   --with-blocksize=BLOCKSIZE
                           set table block size in kB [8]
   --with-segsize=SEGSIZE  set table segment size in GB [1]
+  --with-segsize-blocks=SEGSIZE_BLOCKS
+                          set table segment size in blocks [0]
   --with-wal-blocksize=BLOCKSIZE
                           set WAL block size in kB [8]
   --with-CC=CMD           set compiler (deprecated)
@@ -3731,8 +3734,6 @@ _ACEOF
 #
 # Relation segment size
 #
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for segment size" >&5
-$as_echo_n "checking for segment size... " >&6; }
 
 
 
@@ -3756,12 +3757,52 @@ else
 fi
 
 
-# this expression is set up to avoid unnecessary integer overflow
-# blocksize is already guaranteed to be a factor of 1024
-RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
-test $? -eq 0 || exit 1
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${segsize}GB" >&5
+
+
+
+# Check whether --with-segsize-blocks was given.
+if test "${with_segsize_blocks+set}" = set; then :
+  withval=$with_segsize_blocks;
+  case $withval in
+    yes)
+      as_fn_error $? "argument required for --with-segsize-blocks option" "$LINENO" 5
+      ;;
+    no)
+      as_fn_error $? "argument required for --with-segsize-blocks option" "$LINENO" 5
+      ;;
+    *)
+      segsize_blocks=$withval
+      ;;
+  esac
+
+else
+  segsize_blocks=0
+fi
+
+
+
+# If --with-segsize-blocks is non-zero, it is used, --with-segsize
+# otherwise. segsize-blocks is only really useful for developers wanting to
+# test segment related code. Warn if both are used.
+if test $segsize_blocks -ne 0 -a $segsize -ne 1; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: both --with-segsize and --with-segsize-blocks specified, --with-segsize-blocks wins" >&5
+$as_echo "$as_me: WARNING: both --with-segsize and --with-segsize-blocks specified, --with-segsize-blocks wins" >&2;}
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for segment size" >&5
+$as_echo_n "checking for segment size... " >&6; }
+if test $segsize_blocks -eq 0; then
+  # this expression is set up to avoid unnecessary integer overflow
+  # blocksize is already guaranteed to be a factor of 1024
+  RELSEG_SIZE=`expr '(' 1024 / ${blocksize} ')' '*' ${segsize} '*' 1024`
+  test $? -eq 0 || exit 1
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${segsize}GB" >&5
 $as_echo "${segsize}GB" >&6; }
+else
+  RELSEG_SIZE=$segsize_blocks
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${RELSEG_SIZE} blocks" >&5
+$as_echo "${RELSEG_SIZE} blocks" >&6; }
+fi
 
 
 cat >>confdefs.h <<_ACEOF
@@ -15450,9 +15491,11 @@ _ACEOF
 
 
 
-# If we don't have largefile support, can't handle segsize >= 2GB.
-if test "$ac_cv_sizeof_off_t" -lt 8 -a "$segsize" != "1"; then
-   as_fn_error $? "Large file support is not enabled. Segment size cannot be larger than 1GB." "$LINENO" 5
+# If we don't have largefile support, can't handle segment size >= 2GB.
+if test "$ac_cv_sizeof_off_t" -lt 8; then
+  if expr $RELSEG_SIZE '*' $blocksize '>=' 2 '*' 1024 '*' 1024; then
+    as_fn_error $? "Large file support is not enabled. Segment size cannot be larger than 1GB." "$LINENO" 5
+  fi
 fi
 
 # The cast to long int works around a bug in the HP C Compiler

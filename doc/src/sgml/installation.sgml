@@ -1681,6 +1681,20 @@ build-postgresql:
         </para>
        </listitem>
       </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-segsize-blocks=SEGSIZE_BLOCKS</option></term>
+       <listitem>
+        <para>
+         Specify the segment size in blocks. If both
+         <option>--with-segsize</option> and this option are specified, this
+         option wins.
+
+         This option is only for developers, to test segment related code.
+        </para>
+       </listitem>
+      </varlistentry>
+
      </variablelist>
 
    </sect3>
@@ -3097,6 +3111,20 @@ ninja install
        </para>
       </listitem>
      </varlistentry>
+
+      <varlistentry>
+       <term><option>-Dsegsize_blocks=SEGSIZE_BLOCKS</option></term>
+       <listitem>
+        <para>
+         Specify the segment size in blocks. If both
+         <option>-Dsegsize</option> and this option are specified, this option
+         wins.
+
+         This option is only for developers, to test segment related code.
+        </para>
+       </listitem>
+      </varlistentry>
+
     </variablelist>
    </sect3>
   </sect2>

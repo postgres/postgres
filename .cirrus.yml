@@ -323,6 +323,7 @@ task:
           ./configure \
             --enable-cassert --enable-debug --enable-tap-tests \
             --enable-nls \
+            --with-segsize-blocks=8 \
             \
             ${LINUX_CONFIGURE_FEATURES} \
             \
@@ -491,6 +492,7 @@ task:
       -Dextra_lib_dirs=${brewpath}/lib \
       -Dcassert=true \
       -Dssl=openssl -Duuid=e2fs -Ddtrace=auto \
+      -Dsegsize_blocks=6 \
       -DPG_TEST_EXTRA="$PG_TEST_EXTRA" \
       build
 
