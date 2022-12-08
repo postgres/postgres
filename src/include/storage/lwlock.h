@@ -59,6 +59,9 @@ typedef struct LWLock
  */
 #define LWLOCK_PADDED_SIZE	PG_CACHE_LINE_SIZE
 
+StaticAssertDecl(sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
+				 "Miscalculated LWLock padding");
+
 /* LWLock, padded to a full cache line size */
 typedef union LWLockPadded
 {

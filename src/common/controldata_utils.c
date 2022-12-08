@@ -149,14 +149,6 @@ update_controlfile(const char *DataDir,
 	char		buffer[PG_CONTROL_FILE_SIZE];
 	char		ControlFilePath[MAXPGPATH];
 
-	/*
-	 * Apply the same static assertions as in backend's WriteControlFile().
-	 */
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
-					 "pg_control is too large for atomic disk writes");
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
-					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
-
 	/* Update timestamp  */
 	ControlFile->time = (pg_time_t) time(NULL);
 

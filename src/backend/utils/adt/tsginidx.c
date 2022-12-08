@@ -236,8 +236,6 @@ gin_tsquery_consistent(PG_FUNCTION_ARGS)
 		 * query.
 		 */
 		gcv.first_item = GETQUERY(query);
-		StaticAssertStmt(sizeof(GinTernaryValue) == sizeof(bool),
-						 "sizes of GinTernaryValue and bool are not equal");
 		gcv.check = (GinTernaryValue *) check;
 		gcv.map_item_operand = (int *) (extra_data[0]);
 

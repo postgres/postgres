@@ -467,6 +467,13 @@ typedef struct BTVacState
 #define BT_IS_POSTING				0x2000
 
 /*
+ * Mask allocated for number of keys in index tuple must be able to fit
+ * maximum possible number of index attributes
+ */
+StaticAssertDecl(BT_OFFSET_MASK >= INDEX_MAX_KEYS,
+				 "BT_OFFSET_MASK can't fit INDEX_MAX_KEYS");
+
+/*
  * Note: BTreeTupleIsPivot() can have false negatives (but not false
  * positives) when used with !heapkeyspace indexes
  */

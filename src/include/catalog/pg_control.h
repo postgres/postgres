@@ -247,4 +247,12 @@ typedef struct ControlFileData
  */
 #define PG_CONTROL_FILE_SIZE		8192
 
+/*
+ * Ensure that the size of the pg_control data structure is sane.
+ */
+StaticAssertDecl(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
+				 "pg_control is too large for atomic disk writes");
+StaticAssertDecl(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
+				 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
+
 #endif							/* PG_CONTROL_H */

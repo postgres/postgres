@@ -426,6 +426,9 @@ do { \
 	(tup)->t_choice.t_heap.t_field3.t_xvac = (xid); \
 } while (0)
 
+StaticAssertDecl(MaxOffsetNumber < SpecTokenOffsetNumber,
+				 "invalid speculative token constant");
+
 #define HeapTupleHeaderIsSpeculative(tup) \
 ( \
 	(ItemPointerGetOffsetNumberNoCheck(&(tup)->t_ctid) == SpecTokenOffsetNumber) \

@@ -306,7 +306,7 @@ AllocSetFreeIndex(Size size)
 					tsize;
 
 		/* Statically assert that we only have a 16-bit input value. */
-		StaticAssertStmt(ALLOC_CHUNK_LIMIT < (1 << 16),
+		StaticAssertDecl(ALLOC_CHUNK_LIMIT < (1 << 16),
 						 "ALLOC_CHUNK_LIMIT must be less than 64kB");
 
 		tsize = size - 1;
@@ -358,10 +358,10 @@ AllocSetContextCreateInternal(MemoryContext parent,
 	AllocBlock	block;
 
 	/* ensure MemoryChunk's size is properly maxaligned */
-	StaticAssertStmt(ALLOC_CHUNKHDRSZ == MAXALIGN(ALLOC_CHUNKHDRSZ),
+	StaticAssertDecl(ALLOC_CHUNKHDRSZ == MAXALIGN(ALLOC_CHUNKHDRSZ),
 					 "sizeof(MemoryChunk) is not maxaligned");
 	/* check we have enough space to store the freelist link */
-	StaticAssertStmt(sizeof(AllocFreeListLink) <= (1 << ALLOC_MINBITS),
+	StaticAssertDecl(sizeof(AllocFreeListLink) <= (1 << ALLOC_MINBITS),
 					 "sizeof(AllocFreeListLink) larger than minimum allocation size");
 
 	/*

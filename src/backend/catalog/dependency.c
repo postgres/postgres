@@ -191,6 +191,12 @@ static const Oid object_classes[] = {
 	TransformRelationId			/* OCLASS_TRANSFORM */
 };
 
+/*
+ * Make sure object_classes is kept up to date with the ObjectClass enum.
+ */
+StaticAssertDecl(lengthof(object_classes) == LAST_OCLASS + 1,
+				 "object_classes[] must cover all ObjectClasses");
+
 
 static void findDependentObjects(const ObjectAddress *object,
 								 int objflags,
@@ -2549,12 +2555,6 @@ add_object_address(ObjectClass oclass, Oid objectId, int32 subId,
 				   ObjectAddresses *addrs)
 {
 	ObjectAddress *item;
-
-	/*
-	 * Make sure object_classes is kept up to date with the ObjectClass enum.
-	 */
-	StaticAssertStmt(lengthof(object_classes) == LAST_OCLASS + 1,
-					 "object_classes[] must cover all ObjectClasses");
 
 	/* enlarge array if needed */
 	if (addrs->numrefs >= addrs->maxrefs)

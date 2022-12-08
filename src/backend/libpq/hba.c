@@ -127,6 +127,12 @@ static const char *const UserAuthName[] =
 	"peer"
 };
 
+/*
+ * Make sure UserAuthName[] tracks additions to the UserAuth enum
+ */
+StaticAssertDecl(lengthof(UserAuthName) == USER_AUTH_LAST + 1,
+				 "UserAuthName[] must match the UserAuth enum");
+
 
 static List *tokenize_expand_file(List *tokens, const char *outer_filename,
 								  const char *inc_filename, int elevel,
@@ -3117,11 +3123,5 @@ hba_getauthmethod(hbaPort *port)
 const char *
 hba_authname(UserAuth auth_method)
 {
-	/*
-	 * Make sure UserAuthName[] tracks additions to the UserAuth enum
-	 */
-	StaticAssertStmt(lengthof(UserAuthName) == USER_AUTH_LAST + 1,
-					 "UserAuthName[] must match the UserAuth enum");
-
 	return UserAuthName[auth_method];
 }

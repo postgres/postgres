@@ -5783,10 +5783,6 @@ heap_finish_speculative(Relation relation, ItemPointer tid)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	/* SpecTokenOffsetNumber should be distinguishable from any real offset */
-	StaticAssertStmt(MaxOffsetNumber < SpecTokenOffsetNumber,
-					 "invalid speculative token constant");
-
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
@@ -7921,7 +7917,7 @@ index_delete_sort(TM_IndexDeleteOp *delstate)
 	const int	gaps[9] = {1968, 861, 336, 112, 48, 21, 7, 3, 1};
 
 	/* Think carefully before changing anything here -- keep swaps cheap */
-	StaticAssertStmt(sizeof(TM_IndexDelete) <= 8,
+	StaticAssertDecl(sizeof(TM_IndexDelete) <= 8,
 					 "element size exceeds 8 bytes");
 
 	for (int g = 0; g < lengthof(gaps); g++)

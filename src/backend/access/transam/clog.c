@@ -275,7 +275,7 @@ TransactionIdSetPageStatus(TransactionId xid, int nsubxids,
 						   bool all_xact_same_page)
 {
 	/* Can't use group update when PGPROC overflows. */
-	StaticAssertStmt(THRESHOLD_SUBTRANS_CLOG_OPT <= PGPROC_MAX_CACHED_SUBXIDS,
+	StaticAssertDecl(THRESHOLD_SUBTRANS_CLOG_OPT <= PGPROC_MAX_CACHED_SUBXIDS,
 					 "group clog threshold less than PGPROC cached subxids");
 
 	/*

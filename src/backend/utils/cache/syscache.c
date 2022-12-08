@@ -1040,6 +1040,9 @@ static const struct cachedesc cacheinfo[] = {
 	}
 };
 
+StaticAssertDecl(lengthof(cacheinfo) == SysCacheSize,
+				 "SysCacheSize does not match syscache.c's array");
+
 static CatCache *SysCache[SysCacheSize];
 
 static bool CacheInitialized = false;
@@ -1067,9 +1070,6 @@ void
 InitCatalogCache(void)
 {
 	int			cacheId;
-
-	StaticAssertStmt(lengthof(cacheinfo) == SysCacheSize,
-					 "SysCacheSize does not match syscache.c's array");
 
 	Assert(!CacheInitialized);
 

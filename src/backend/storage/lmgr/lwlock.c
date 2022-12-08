@@ -108,6 +108,9 @@ extern slock_t *ShmemLock;
 /* Must be greater than MAX_BACKENDS - which is 2^23-1, so we're fine. */
 #define LW_SHARED_MASK				((uint32) ((1 << 24)-1))
 
+StaticAssertDecl(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
+				 "MAX_BACKENDS too big for lwlock.c");
+
 /*
  * There are three sorts of LWLock "tranches":
  *
@@ -466,12 +469,6 @@ LWLockShmemSize(void)
 void
 CreateLWLocks(void)
 {
-	StaticAssertStmt(LW_VAL_EXCLUSIVE > (uint32) MAX_BACKENDS,
-					 "MAX_BACKENDS too big for lwlock.c");
-
-	StaticAssertStmt(sizeof(LWLock) <= LWLOCK_PADDED_SIZE,
-					 "Miscalculated LWLock padding");
-
 	if (!IsUnderPostmaster)
 	{
 		Size		spaceLocks = LWLockShmemSize();

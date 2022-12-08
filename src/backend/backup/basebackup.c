@@ -370,7 +370,7 @@ perform_base_backup(basebackup_options *opt, bbsink *sink)
 			else
 			{
 				/* Properly terminate the tarfile. */
-				StaticAssertStmt(2 * TAR_BLOCK_SIZE <= BLCKSZ,
+				StaticAssertDecl(2 * TAR_BLOCK_SIZE <= BLCKSZ,
 								 "BLCKSZ too small for 2 tar blocks");
 				memset(sink->bbs_buffer, 0, 2 * TAR_BLOCK_SIZE);
 				bbsink_archive_contents(sink, 2 * TAR_BLOCK_SIZE);
@@ -1745,7 +1745,7 @@ _tarWriteHeader(bbsink *sink, const char *filename, const char *linktarget,
 		 * large enough to fit an entire tar block. We double-check by means
 		 * of these assertions.
 		 */
-		StaticAssertStmt(TAR_BLOCK_SIZE <= BLCKSZ,
+		StaticAssertDecl(TAR_BLOCK_SIZE <= BLCKSZ,
 						 "BLCKSZ too small for tar block");
 		Assert(sink->bbs_buffer_length >= TAR_BLOCK_SIZE);
 

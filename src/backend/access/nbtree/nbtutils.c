@@ -2486,13 +2486,6 @@ _bt_check_natts(Relation rel, bool heapkeyspace, Page page, OffsetNumber offnum)
 	Assert(offnum >= FirstOffsetNumber &&
 		   offnum <= PageGetMaxOffsetNumber(page));
 
-	/*
-	 * Mask allocated for number of keys in index tuple must be able to fit
-	 * maximum possible number of index attributes
-	 */
-	StaticAssertStmt(BT_OFFSET_MASK >= INDEX_MAX_KEYS,
-					 "BT_OFFSET_MASK can't fit INDEX_MAX_KEYS");
-
 	itup = (IndexTuple) PageGetItem(page, PageGetItemId(page, offnum));
 	tupnatts = BTreeTupleGetNAtts(itup, rel);
 

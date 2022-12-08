@@ -3884,15 +3884,6 @@ WriteControlFile(void)
 	char		buffer[PG_CONTROL_FILE_SIZE];	/* need not be aligned */
 
 	/*
-	 * Ensure that the size of the pg_control data structure is sane.  See the
-	 * comments for these symbols in pg_control.h.
-	 */
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_MAX_SAFE_SIZE,
-					 "pg_control is too large for atomic disk writes");
-	StaticAssertStmt(sizeof(ControlFileData) <= PG_CONTROL_FILE_SIZE,
-					 "sizeof(ControlFileData) exceeds PG_CONTROL_FILE_SIZE");
-
-	/*
 	 * Initialize version and compatibility-check fields
 	 */
 	ControlFile->pg_control_version = PG_CONTROL_VERSION;

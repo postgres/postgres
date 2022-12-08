@@ -4187,7 +4187,8 @@ int64_div_fast_to_numeric(int64 val1, int log10val2)
 	{
 		static int	pow10[] = {1, 10, 100, 1000};
 
-		StaticAssertStmt(lengthof(pow10) == DEC_DIGITS, "mismatch with DEC_DIGITS");
+		StaticAssertDecl(lengthof(pow10) == DEC_DIGITS, "mismatch with DEC_DIGITS");
+
 		if (unlikely(pg_mul_s64_overflow(val1, pow10[DEC_DIGITS - m], &val1)))
 		{
 			/*

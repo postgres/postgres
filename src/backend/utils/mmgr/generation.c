@@ -167,7 +167,7 @@ GenerationContextCreate(MemoryContext parent,
 	GenerationBlock *block;
 
 	/* ensure MemoryChunk's size is properly maxaligned */
-	StaticAssertStmt(Generation_CHUNKHDRSZ == MAXALIGN(Generation_CHUNKHDRSZ),
+	StaticAssertDecl(Generation_CHUNKHDRSZ == MAXALIGN(Generation_CHUNKHDRSZ),
 					 "sizeof(MemoryChunk) is not maxaligned");
 
 	/*

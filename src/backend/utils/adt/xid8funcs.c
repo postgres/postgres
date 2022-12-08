@@ -75,6 +75,14 @@ typedef struct
 	((MaxAllocSize - offsetof(pg_snapshot, xip)) / sizeof(FullTransactionId))
 
 /*
+ * Compile-time limits on the procarray (MAX_BACKENDS processes plus
+ * MAX_BACKENDS prepared transactions) guarantee nxip won't be too large.
+ */
+StaticAssertDecl(MAX_BACKENDS * 2 <= PG_SNAPSHOT_MAX_NXIP,
+				 "possible overflow in pg_current_snapshot()");
+
+
+/*
  * Helper to get a TransactionId from a 64-bit xid with wraparound detection.
  *
  * It is an ERROR if the xid is in the future.  Otherwise, returns true if
@@ -401,13 +409,6 @@ pg_current_snapshot(PG_FUNCTION_ARGS)
 	cur = GetActiveSnapshot();
 	if (cur == NULL)
 		elog(ERROR, "no active snapshot set");
-
-	/*
-	 * Compile-time limits on the procarray (MAX_BACKENDS processes plus
-	 * MAX_BACKENDS prepared transactions) guarantee nxip won't be too large.
-	 */
-	StaticAssertStmt(MAX_BACKENDS * 2 <= PG_SNAPSHOT_MAX_NXIP,
-					 "possible overflow in pg_current_snapshot()");
 
 	/* allocate */
 	nxip = cur->xcnt;

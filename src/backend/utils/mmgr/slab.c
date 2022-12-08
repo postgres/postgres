@@ -151,7 +151,7 @@ SlabContextCreate(MemoryContext parent,
 	int			i;
 
 	/* ensure MemoryChunk's size is properly maxaligned */
-	StaticAssertStmt(Slab_CHUNKHDRSZ == MAXALIGN(Slab_CHUNKHDRSZ),
+	StaticAssertDecl(Slab_CHUNKHDRSZ == MAXALIGN(Slab_CHUNKHDRSZ),
 					 "sizeof(MemoryChunk) is not maxaligned");
 	Assert(MAXALIGN(chunkSize) <= MEMORYCHUNK_MAX_VALUE);
 

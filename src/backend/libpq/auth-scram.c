@@ -1443,7 +1443,7 @@ scram_mock_salt(const char *username)
 	 * not larger than the SHA256 digest length.  If the salt is smaller, the
 	 * caller will just ignore the extra data.)
 	 */
-	StaticAssertStmt(PG_SHA256_DIGEST_LENGTH >= SCRAM_DEFAULT_SALT_LEN,
+	StaticAssertDecl(PG_SHA256_DIGEST_LENGTH >= SCRAM_DEFAULT_SALT_LEN,
 					 "salt length greater than SHA256 digest length");
 
 	ctx = pg_cryptohash_create(PG_SHA256);
