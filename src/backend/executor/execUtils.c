@@ -127,8 +127,10 @@ CreateExecutorState(void)
 	estate->es_result_relations = NULL;
 	estate->es_opened_result_relations = NIL;
 	estate->es_tuple_routing_result_relations = NIL;
-	estate->es_insert_pending_result_relations = NIL;
 	estate->es_trig_target_relations = NIL;
+
+	estate->es_insert_pending_result_relations = NIL;
+	estate->es_insert_pending_modifytables = NIL;
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;

@@ -742,10 +742,12 @@ ExecInsert(ModifyTableState *mtstate,
 
 			/*
 			 * If these are the first tuples stored in the buffers, add the
-			 * target rel to the es_insert_pending_result_relations list,
-			 * except in the case where flushing was done above, in which case
-			 * the target rel would already have been added to the list, so no
-			 * need to do this.
+			 * target rel and the mtstate to the
+			 * es_insert_pending_result_relations and
+			 * es_insert_pending_modifytables lists respectively, execpt in
+			 * the case where flushing was done above, in which case they
+			 * would already have been added to the lists, so no need to do
+			 * this.
 			 */
 			if (resultRelInfo->ri_NumSlots == 0 && !flushed)
 			{
@@ -754,6 +756,8 @@ ExecInsert(ModifyTableState *mtstate,
 				estate->es_insert_pending_result_relations =
 					lappend(estate->es_insert_pending_result_relations,
 							resultRelInfo);
+				estate->es_insert_pending_modifytables =
+					lappend(estate->es_insert_pending_modifytables, mtstate);
 			}
 			Assert(list_member_ptr(estate->es_insert_pending_result_relations,
 								   resultRelInfo));
@@ -1445,12 +1449,14 @@ ldelete:;
 static void
 ExecPendingInserts(EState *estate)
 {
-	ListCell   *lc;
+	ListCell   *l1,
+			   *l2;
 
-	foreach(lc, estate->es_insert_pending_result_relations)
+	forboth(l1, estate->es_insert_pending_result_relations,
+			l2, estate->es_insert_pending_modifytables)
 	{
-		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(lc);
-		ModifyTableState *mtstate = resultRelInfo->ri_ModifyTableState;
+		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l1);
+		ModifyTableState *mtstate = (ModifyTableState *) lfirst(l2);
 
 		Assert(mtstate);
 		ExecBatchInsert(mtstate, resultRelInfo,
@@ -1462,7 +1468,9 @@ ExecPendingInserts(EState *estate)
 	}
 
 	list_free(estate->es_insert_pending_result_relations);
+	list_free(estate->es_insert_pending_modifytables);
 	estate->es_insert_pending_result_relations = NIL;
+	estate->es_insert_pending_modifytables = NIL;
 }
 
 /*
@@ -3183,13 +3191,6 @@ ExecInitModifyTable(ModifyTable *node, EState *estate, int eflags)
 		}
 		else
 			resultRelInfo->ri_BatchSize = 1;
-
-		/*
-		 * If doing batch insert, setup back-link so we can easily find the
-		 * mtstate again.
-		 */
-		if (resultRelInfo->ri_BatchSize > 1)
-			resultRelInfo->ri_ModifyTableState = mtstate;
 	}
 
 	/*
