@@ -3270,32 +3270,49 @@ dumpDatabaseConfig(Archive *AH, PQExpBuffer outbuf,
 	PGresult   *res;
 
 	/* First collect database-specific options */
-	printfPQExpBuffer(buf, "SELECT unnest(setconfig) FROM pg_db_role_setting "
+	printfPQExpBuffer(buf, "SELECT unnest(setconfig)");
+	if (AH->remoteVersion >= 160000)
+		appendPQExpBufferStr(buf, ", unnest(setuser)");
+	appendPQExpBuffer(buf, " FROM pg_db_role_setting "
 					  "WHERE setrole = 0 AND setdatabase = '%u'::oid",
 					  dboid);
 
 	res = ExecuteSqlQuery(AH, buf->data, PGRES_TUPLES_OK);
 
 	for (int i = 0; i < PQntuples(res); i++)
-		makeAlterConfigCommand(conn, PQgetvalue(res, i, 0),
+	{
+		char	   *userset = NULL;
+
+		if (AH->remoteVersion >= 160000)
+			userset = PQgetvalue(res, i, 1);
+		makeAlterConfigCommand(conn, PQgetvalue(res, i, 0), userset,
 							   "DATABASE", dbname, NULL, NULL,
 							   outbuf);
+	}
 
 	PQclear(res);
 
 	/* Now look for role-and-database-specific options */
-	printfPQExpBuffer(buf, "SELECT rolname, unnest(setconfig) "
-					  "FROM pg_db_role_setting s, pg_roles r "
+	printfPQExpBuffer(buf, "SELECT rolname, unnest(setconfig)");
+	if (AH->remoteVersion >= 160000)
+		appendPQExpBufferStr(buf, ", unnest(setuser)");
+	appendPQExpBuffer(buf, " FROM pg_db_role_setting s, pg_roles r "
 					  "WHERE setrole = r.oid AND setdatabase = '%u'::oid",
 					  dboid);
 
 	res = ExecuteSqlQuery(AH, buf->data, PGRES_TUPLES_OK);
 
 	for (int i = 0; i < PQntuples(res); i++)
-		makeAlterConfigCommand(conn, PQgetvalue(res, i, 1),
+	{
+		char	   *userset = NULL;
+
+		if (AH->remoteVersion >= 160000)
+			userset = PQgetvalue(res, i, 2);
+		makeAlterConfigCommand(conn, PQgetvalue(res, i, 1), userset,
 							   "ROLE", PQgetvalue(res, i, 0),
 							   "DATABASE", dbname,
 							   outbuf);
+	}
 
 	PQclear(res);
 

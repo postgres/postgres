@@ -706,6 +706,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	if (fcache->proconfig)
 	{
 		ProcessGUCArray(fcache->proconfig,
+						NULL,
 						(superuser() ? PGC_SUSET : PGC_USERSET),
 						PGC_S_SESSION,
 						GUC_ACTION_SAVE);

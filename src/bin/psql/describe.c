@@ -3769,13 +3769,16 @@ listDbRoleSettings(const char *pattern, const char *pattern2)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf, "SELECT rolname AS \"%s\", datname AS \"%s\",\n"
-					  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"\n"
-					  "FROM pg_catalog.pg_db_role_setting s\n"
-					  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
-					  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n",
+					  "pg_catalog.array_to_string(setconfig, E'\\n') AS \"%s\"",
 					  gettext_noop("Role"),
 					  gettext_noop("Database"),
 					  gettext_noop("Settings"));
+	if (pset.sversion >= 160000)
+		appendPQExpBuffer(&buf, ",\npg_catalog.array_to_string(setuser, E'\\n') AS \"%s\"",
+						  gettext_noop("User set"));
+	appendPQExpBuffer(&buf, "\nFROM pg_catalog.pg_db_role_setting s\n"
+					  "LEFT JOIN pg_catalog.pg_database d ON d.oid = setdatabase\n"
+					  "LEFT JOIN pg_catalog.pg_roles r ON r.oid = setrole\n");
 	if (!validateSQLNamePattern(&buf, pattern, false, false,
 								NULL, "r.rolname", NULL, NULL, &havewhere, 1))
 		goto error_return;
